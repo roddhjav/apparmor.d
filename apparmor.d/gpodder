@@ -1,0 +1,91 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/gpodder
+profile gpodder @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/freedesktop.org>
+  #include <abstractions/fonts>
+  #include <abstractions/fontconfig-cache-read>
+  #include <abstractions/gtk>
+  #include <abstractions/python>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/user-download-strict>
+  #include <abstractions/openssl>
+  #include <abstractions/ssl_certs>
+  #include <abstractions/deny-root-dir-access>
+
+  @{exec_path} r,
+  /{usr/,}bin/python3.[0-9]* r,
+
+  /{usr/,}bin/ r,
+  /{usr/,}bin/dash rix,
+
+  /{usr/,}bin/uname rix,
+
+  owner @{HOME}/ r,
+  owner @{HOME}/gPodder/ rw,
+  owner @{HOME}/gPodder/** rwk,
+
+  /usr/share/gpodder/{,**} r,
+
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/mounts r,
+  owner @{PROC}/@{pid}/mountinfo r,
+
+  /etc/fstab r,
+
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+
+  owner /var/tmp/etilqs_[0-9a-f]* rw,
+
+  /etc/mime.types r,
+
+  /usr/share/*/*.desktop r,
+
+  /{usr/,}bin/xdg-settings    rPUx,
+
+  /{usr/,}bin/xdg-open                                    rCx -> open,
+  /{usr/,}lib/@{multiarch}/glib-[0-9]*/gio-launch-desktop rCx -> open,
+
+  # A/V players
+  /{usr/,}bin/smplayer        rPUx,
+  /{usr/,}bin/vlc             rPUx,
+  /{usr/,}bin/mpv             rPUx,
+
+  # Open in a web browser
+  /{usr/,}lib/firefox/firefox rPUx,
+
+  # file_inherit
+  owner /dev/tty[0-9]* rw,
+
+
+  profile open {
+    #include <abstractions/base>
+    #include <abstractions/xdg-open>
+
+    /{usr/,}bin/xdg-open mr,
+    /{usr/,}lib/@{multiarch}/glib-[0-9]*/gio-launch-desktop mr,
+
+    # Allowed apps to open
+    /{usr/,}lib/firefox/firefox rPUx,
+
+    # file_inherit
+    owner @{HOME}/.xsession-errors w,
+
+  }
+
+  #include if exists <local/gpodder>
+}

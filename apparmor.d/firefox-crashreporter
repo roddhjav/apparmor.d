@@ -1,0 +1,64 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2018-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{MOZ_LIBDIR} = /{usr/,}lib/firefox
+@{MOZ_HOMEDIR} = @{HOME}/.mozilla
+@{MOZ_CACHEDIR} = @{HOME}/.cache/mozilla
+
+@{exec_path} = @{MOZ_LIBDIR}/crashreporter
+profile firefox-crashreporter @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/gtk>
+  #include <abstractions/freedesktop.org>
+  #include <abstractions/fonts>
+  #include <abstractions/fontconfig-cache-read>
+  #include <abstractions/deny-root-dir-access>
+
+  signal (receive) set=(term, kill) peer=firefox,
+
+  @{exec_path} mr,
+
+  @{MOZ_LIBDIR}/minidump-analyzer rPx,
+
+  /{usr/,}bin/mv rix,
+
+  owner "@{MOZ_HOMEDIR}/firefox/Crash Reports/{,**}" rw,
+  owner "@{MOZ_HOMEDIR}/firefox/Crash Reports/crashreporter.ini" rw,
+  owner "@{MOZ_HOMEDIR}/firefox/Crash Reports/submit.log" rw,
+  owner "@{MOZ_HOMEDIR}/firefox/Crash Reports/events/[0-9a-f]*" rw,
+  owner "@{MOZ_HOMEDIR}/firefox/Crash Reports/pending/[0-9a-f]*.{dmp,extra}" rw,
+
+  owner @{MOZ_HOMEDIR}/firefox/*.*/minidumps/{,**} rw,
+  owner @{MOZ_HOMEDIR}/firefox/*.*/minidumps/[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*.{dmp,extra} rw,
+
+  owner @{MOZ_HOMEDIR}/firefox/*.*/crashes/{,**} rw,
+  owner @{MOZ_HOMEDIR}/firefox/*.*/crashes/events/[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]* rw,
+
+        /tmp/ r,
+  owner /tmp/[0-9a-f]*.{dmp,extra} rw,
+  owner /tmp/firefox/.parentlock w,
+        /var/tmp/ r,
+
+  /etc/passwd r,
+
+  owner /dev/shm/org.mozilla.ipc.[0-9]*.[0-9]* r,
+
+  # file_inherit
+  owner @{MOZ_CACHEDIR}/firefox/*.*/** r,
+  owner @{MOZ_HOMEDIR}/firefox/*.*/extensions/*.xpi r,
+  owner @{HOME}/.xsession-errors w,
+
+  #include if exists <local/firefox-crashreporter>
+}

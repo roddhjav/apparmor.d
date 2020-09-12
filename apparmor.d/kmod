@@ -1,0 +1,64 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{BUILD_DIR} = /media/debuilder/
+
+@{exec_path}  = /{usr/,}bin/{kmod,lsmod}
+@{exec_path} += /{usr/,}sbin/{depmod,insmod,lsmod,rmmod,modinfo,modprobe}
+profile kmod @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+
+  # To load/unload kernel modules
+  #  modprobe: ERROR: could not insert '*': Operation not permitted
+  #
+  #  modprobe: ERROR: ../libkmod/libkmod-module.c:799 kmod_module_remove_module() could not remove
+  #  '*': Operation not permitted
+  capability sys_module,
+
+  # For error logs to go through the syslog mechanism (as LOG_DAEMON with level LOG_NOTICE) rather
+  # than to standard error.
+  capability syslog,
+
+  @{exec_path} mr,
+
+  /{usr/,}lib/modprobe.d/{,*.conf} r,
+  /etc/modprobe.d/{,*.conf} r,
+
+  /{usr/,}lib/modules/*/modules.* rw,
+
+  /var/lib/dkms/**/module/*.ko r,
+  /usr/src/*/*.ko r,
+
+  @{sys}/module/{,**} r,
+
+  @{PROC}/cmdline r,
+  @{PROC}/modules r,
+
+  # Needed for static-nodes
+  #capability dac_override,
+  #owner @{PROC}/@{pid}/fd/1 w,
+
+  # For local kernel build
+  owner /tmp/depmod.*/lib/modules/*/ r,
+  owner /tmp/depmod.*/lib/modules/*/modules.* rw,
+  owner @{BUILD_DIR}/**/System.map r,
+  owner @{BUILD_DIR}/**/debian/*/lib/modules/*/ r,
+  owner @{BUILD_DIR}/**/debian/*/lib/modules/*/modules.* rw,
+  owner @{BUILD_DIR}/**/debian/*/lib/modules/*/kernel/{,**/} r,
+  owner @{BUILD_DIR}/**/debian/*/lib/modules/*/kernel/**/*.ko r,
+
+  #include if exists <local/kmod>
+}

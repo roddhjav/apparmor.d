@@ -1,0 +1,76 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/querybts
+profile querybts @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/gtk>
+  #include <abstractions/fonts>
+  #include <abstractions/fontconfig-cache-read>
+  #include <abstractions/freedesktop.org>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/python>
+  #include <abstractions/openssl>
+  #include <abstractions/ssl_certs>
+  #include <abstractions/apt-common>
+  #include <abstractions/deny-root-dir-access>
+
+  @{exec_path} r,
+  /{usr/,}bin/python3.[0-9]* r,
+
+  /{usr/,}bin/ r,
+  /{usr/,}bin/dash      rix,
+  /{usr/,}bin/stty      rix,
+  /{usr/,}sbin/ldconfig rix,
+
+  /{usr/,}bin/xdg-open  rCx -> open,
+
+  /{usr/,}bin/dpkg      rPx -> child-dpkg,
+
+  /etc/reportbug.conf r,
+  owner @{HOME}/.reportbugrc r,
+
+  /etc/mime.types r,
+  /etc/inputrc r,
+
+  /etc/dpkg/origins/ r,
+  /etc/dpkg/origins/debian r,
+
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/mounts r,
+  owner @{PROC}/@{pid}/fd/ r,
+
+  /etc/fstab r,
+
+  # Allowed apps to open
+  /{usr/,}lib/firefox/firefox rPUx,
+
+
+  profile open {
+    #include <abstractions/base>
+    #include <abstractions/xdg-open>
+
+    /{usr/,}bin/xdg-open mr,
+
+    # Allowed apps to open
+    /{usr/,}lib/firefox/firefox rPUx,
+
+    # file_inherit
+    owner @{HOME}/.xsession-errors w,
+
+  }
+
+  #include if exists <local/querybts>
+}

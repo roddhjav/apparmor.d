@@ -1,0 +1,153 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2017-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/psi-plus
+profile psi-plus @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/X>
+  #include <abstractions/gtk>
+  #include <abstractions/fonts>
+  #include <abstractions/fontconfig-cache-read>
+  #include <abstractions/freedesktop.org>
+  #include <abstractions/enchant>
+  #include <abstractions/user-download-strict>
+  #include <abstractions/qt5-compose-cache-write>
+  #include <abstractions/qt5-settings-write>
+  #include <abstractions/mesa>
+  #include <abstractions/dri-enumerate>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/openssl>
+  #include <abstractions/ssl_certs>
+  #include <abstractions/thumbnails-cache-read>
+  #include <abstractions/deny-root-dir-access>
+
+  signal (send) set=(term, kill) peer=child-lsb_release,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/lsb_release rPx -> child-lsb_release,
+  /{usr/,}bin/xdg-open    rCx -> open,
+
+  # Needed for GPG/PGP support
+  /{usr/,}bin/gpg         rCx -> gpg,
+
+  # Needed for playing sound events
+  /{usr/,}bin/aplay       rCx -> aplay,
+
+  # PSI files
+  /usr/share/psi-plus/{,**} r,
+
+  # PSI config files
+  owner @{HOME}/ r,
+  owner @{HOME}/.config/psi+/ rw,
+  owner @{HOME}/.config/psi+/** rwkl -> @{HOME}/.config/psi+/#[0-9]*[0-9],
+
+  owner @{HOME}/.local/share/psi+/ rw,
+  owner @{HOME}/.local/share/psi+/** rwk,
+
+  # To configure Qt5 settings (theme, font, icons, etc.) under DE/WM without Qt integration
+  owner @{HOME}/.config/qt5ct/{,**} r,
+  /usr/share/qt5ct/** r,
+
+  # Cache files
+  owner @{HOME}/.cache/ rw,
+  owner @{HOME}/.cache/psi+/{,**} rw,
+  owner @{HOME}/.cache/#[0-9]*[0-9] rw,
+
+  /var/lib/dbus/machine-id r,
+  /etc/machine-id r,
+
+  # Autostart
+  owner @{HOME}/.config/autostart/psi-plus.desktop rw,
+
+  /etc/debian_version r,
+
+  /dev/shm/#[0-9]*[0-9] rw,
+
+  deny owner @{PROC}/@{pid}/cmdline r,
+  deny       @{PROC}/sys/kernel/random/boot_id r,
+       owner @{PROC}/@{pid}/mountinfo r,
+       owner @{PROC}/@{pid}/mounts r,
+
+  /etc/fstab r,
+
+  owner /var/tmp/etilqs_[0-9a-f]* rw,
+
+  owner /tmp/#[0-9]*[0-9] rw,
+  owner /tmp/Psi+.* rwl -> /tmp/#[0-9]*[0-9],
+
+  /{var/,}run/systemd/inhibit/[0-9]*.ref rw,
+
+  /usr/share/hwdata/pnp.ids r,
+
+  # file_inherit
+  owner @{HOME}/.xsession-errors w,
+
+  # Allowed apps to open
+  /{usr/,}lib/firefox/firefox rPUx,
+
+  # file_inherit
+  owner /dev/tty[0-9]* rw,
+
+
+  profile aplay {
+    #include <abstractions/base>
+    #include <abstractions/audio>
+
+    /{usr/,}bin/aplay mr,
+    #/{usr/,}bin/pulseaudio rPUx,
+
+    /var/lib/dbus/machine-id r,
+    /etc/machine-id r,
+
+    /usr/share/psi-plus/sound/** r,
+
+    owner @{HOME}/.Xauthority r,
+
+    # file_inherit
+    deny /dev/dri/card[0-9]* rw,
+
+  }
+
+  profile gpg {
+    #include <abstractions/base>
+
+    /{usr/,}bin/gpg mr,
+
+    owner @{HOME}/.gnupg/ rw,
+    owner @{HOME}/.gnupg/** rwkl -> @{HOME}/.gnupg/**,
+
+    # file_inherit
+    deny /dev/dri/card[0-9]* rw,
+
+  }
+
+  profile open {
+    #include <abstractions/base>
+    #include <abstractions/xdg-open>
+
+    /{usr/,}bin/xdg-open mr,
+
+    # Allowed apps to open
+    /{usr/,}lib/firefox/firefox rPUx,
+
+    # file_inherit
+    owner @{HOME}/.xsession-errors w,
+
+  }
+
+  #include if exists <local/psi-plus>
+}

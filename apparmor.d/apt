@@ -1,0 +1,177 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{BUILD_DIR} = /media/debuilder/
+
+@{exec_path} = /{usr/,}bin/apt
+profile apt @{exec_path} flags=(complain) {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/apt-common>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/ssl_certs>
+
+  # To remove the following errors:
+  #  W: chmod 0700 of directory /var/lib/apt/lists/partial failed - SetupAPTPartialDirectory
+  #     (1: Operation not permitted)
+  #  W: chmod 0700 of directory /var/lib/apt/lists/auxfiles failed - SetupAPTPartialDirectory
+  #     (1: Operation not permitted)
+  #  W: chmod 0600 of file /var/lib/apt/lists/deb.debian.org_debian_dists_sid_InRelease failed -
+  #     Item::QueueURI (1: Operation not permitted)
+  capability fowner,
+
+  # To remove the following errors:
+  #  W: chown to _apt:root of directory /var/lib/apt/lists/partial failed - SetupAPTPartialDirectory
+  #  (1: Operation not permitted)
+  #  W: chown to _apt:root of directory /var/lib/apt/lists/auxfiles failed - SetupAPTPartialDirectory
+  #  (1: Operation not permitted)
+  capability chown,
+
+  # The "_apt" user is created by the postinst script of the "apt" package. It's the owner of the
+  # dirs "/var/cache/apt/archives/partial/" and "/var/lib/apt/lists/partial/" . The "_apt" user is
+  # used by APT to download packages, package list, and other things using APT methods as an
+  # unprivileged user/group (_apt/nogroup).
+  #
+  # To remove the following errors:
+  #  E: setgroups 65534 failed - setgroups (1: Operation not permitted)
+  #  E: setegid 65534 failed - setegid (1: Operation not permitted)
+  #  E: seteuid 100 failed - seteuid (1: Operation not permitted)
+  #  E: setgroups 0 failed - setgroups (1: Operation not permitted)
+  capability setuid,
+  capability setgid,
+
+  # To remove the following errors:
+  #  W: Problem unlinking the file /var/lib/apt/lists/partial/*_InRelease -
+  #     PrepareFiles (13: Permission denied)
+  #  E: Unable to read /var/lib/apt/lists/partial/ - open (13: Permission denied)
+  capability dac_read_search,
+
+  # To remove the following errors:
+  #  E: Failed to fetch https://**.deb  rename failed, Permission denied
+  #     (/var/cache/apt/archives/partial/*.deb -> /var/cache/apt/archives/*.deb).
+  #  E: Unable to fetch some archives, maybe run apt-get update or try with --fix-missing?
+  capability dac_override,
+
+  # Needed? (##FIXME##)
+  capability kill,
+  capability fsetid,
+
+  signal (send) peer=apt-methods-*,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/dash     rix,
+  /{usr/,}bin/test     rix,
+  /{usr/,}bin/{,e}grep rix,
+
+  /{usr/,}bin/ps                 rPx,
+  /{usr/,}bin/dpkg               rPx,
+  /{usr/,}bin/apt-listbugs       rPx,
+  /{usr/,}bin/apt-listchanges    rPx,
+  /{usr/,}bin/apt-show-versions  rPx,
+  /{usr/,}sbin/dpkg-preconfigure rPx,
+  /{usr/,}bin/debtags            rPx,
+  /{usr/,}sbin/localepurge       rPx,
+  /{usr/,}bin/appstreamcli       rPx,
+  /{usr/,}bin/adequate           rPx,
+  /{usr/,}sbin/update-command-not-found      rPx,
+  /usr/share/command-not-found/cnf-update-db rPx,
+  /{usr/,}bin/dpkg-source        rcx -> dpkg-source,
+
+  # Methods to use to download packages from the net
+  /{usr/,}lib/apt/methods/*      rPx,
+
+  /var/lib/apt/lists/** rw,
+  /var/lib/apt/lists/lock rwk,
+  /var/lib/apt/extended_states{,.*} rw,
+
+  /var/log/apt/eipp.log.xz w,
+  /var/log/apt/{term,history}.log w,
+
+  # For editing the sources.list file
+  /etc/apt/sources.list rwk,
+  /{usr/,}bin/sensible-editor rCx -> editor,
+  /{usr/,}bin/vim.*           rCx -> editor,
+
+  /var/lib/dpkg/** r,
+  /var/lib/dpkg/lock{,-frontend} rwk,
+
+  owner @{PROC}/@{pid}/fd/ r,
+
+  owner /tmp/apt.conf.* rw,
+  owner /tmp/apt.data.* rw,
+  owner /tmp/apt-dpkg-install-*/ rw,
+  owner /tmp/apt-dpkg-install-*/[0-9]*-*.deb w,
+
+  /var/cache/apt/ r,
+  /var/cache/apt/** rwk,
+
+  # For package building
+  @{BUILD_DIR}/** rwkl -> @{BUILD_DIR}/**,
+
+
+  profile editor flags=(complain) {
+    #include <abstractions/base>
+    #include <abstractions/nameservice-strict>
+
+    /{usr/,}bin/sensible-editor mr,
+    /{usr/,}bin/vim.*           mrix,
+    /{usr/,}bin/dash             rix,
+    /{usr/,}bin/which            rix,
+
+    owner @{HOME}/.selected_editor r,
+
+    /usr/share/vim/{,**} r,
+    /etc/vim/{,**} r,
+    owner @{HOME}/.viminfo{,.tmp} rw,
+
+    owner @{HOME}/.fzf/plugin/ r,
+    owner @{HOME}/.fzf/plugin/fzf.vim r,
+
+    /etc/apt/sources.list rw,
+
+  }
+
+  profile dpkg-source flags=(complain) {
+    #include <abstractions/base>
+    #include <abstractions/perl>
+    #include <abstractions/nameservice-strict>
+
+    /{usr/,}bin/dpkg-source mr,
+    /{usr/,}bin/perl r,
+
+    /{usr/,}bin/tar     rix,
+    /{usr/,}bin/bunzip2 rix,
+    /{usr/,}bin/gunzip  rix,
+    /{usr/,}bin/gzip    rix,
+    /{usr/,}bin/xz      rix,
+    /{usr/,}bin/rm      rix,
+    /{usr/,}bin/chmod   rix,
+
+    /{usr/,}bin/patch   rix,
+
+    /etc/dpkg/origins/debian r,
+
+               owner @{BUILD_DIR}/** rwkl -> @{BUILD_DIR}/**,
+               owner @{HOME}/**      rwkl -> @{HOME}/**,
+    audit deny owner @{HOME}/.*     mrwkl,
+    audit deny owner @{HOME}/.*/     rw,
+    audit deny owner @{HOME}/.*/**  mrwkl,
+
+  }
+
+  #include if exists <local/apt>
+}
+

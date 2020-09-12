@@ -1,0 +1,86 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2018-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/kwalletd5
+profile kwalletd5 @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/X>
+  #include <abstractions/gtk>
+  #include <abstractions/fonts>
+  #include <abstractions/fontconfig-cache-read>
+  #include <abstractions/freedesktop.org>
+  #include <abstractions/mesa>
+  #include <abstractions/qt5-compose-cache-write>
+  #include <abstractions/wayland>
+  #include <abstractions/dri-enumerate>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/audio>
+  #include <abstractions/deny-root-dir-access>
+
+  @{exec_path} mr,
+
+  /{usr/,}lib/@{multiarch}/qt5/plugins/kf5/org.kde.kwindowsystem.platforms/KF5WindowSystemX11Plugin.so mr,
+
+  owner @{HOME}/.config/kwalletrc r,
+
+  owner @{HOME}/.config/kdeglobals r,
+  owner @{HOME}/.cache/icon-cache.kcache rw,
+
+  owner @{HOME}/.local/share/kwalletd/ rw,
+  owner @{HOME}/.local/share/kwalletd/#[0-9]*[0-9] rw,
+  owner @{HOME}/.local/share/kwalletd/*.salt rw,
+  owner @{HOME}/.local/share/kwalletd/*.kwl rw,
+  owner @{HOME}/.local/share/kwalletd/*.kwl.* rwl -> @{HOME}/.local/share/kwalletd/#[0-9]*[0-9],
+
+  # To configure Qt5 settings (theme, font, icons, etc.) under DE/WM without Qt integration
+  owner @{HOME}/.config/qt5ct/{,**} r,
+  /usr/share/qt5ct/** r,
+
+  /var/lib/dbus/machine-id r,
+  /etc/machine-id r,
+
+  /dev/shm/#[0-9]*[0-9] rw,
+
+  owner @{PROC}/@{pid}/cmdline r,
+  owner @{PROC}/@{pid}/fd/ r,
+        @{PROC}/sys/kernel/random/boot_id r,
+        @{PROC}/sys/kernel/core_pattern r,
+
+  owner /tmp/kwalletd5.* rw,
+
+  /usr/share/hwdata/pnp.ids r,
+
+  # For GPG encrypted wallets
+  /{usr/,}bin/gpgconf rCx -> gpg,
+  /{usr/,}bin/gpg     rCx -> gpg,
+  /{usr/,}bin/gpgsm   rCx -> gpg,
+
+
+  profile gpg {
+    #include <abstractions/base>
+
+    /{usr/,}bin/gpgconf mr,
+    /{usr/,}bin/gpg mr,
+    /{usr/,}bin/gpgsm mr,
+
+    owner @{HOME}/.gnupg/ rw,
+    owner @{HOME}/.gnupg/** rwkl -> @{HOME}/.gnupg/**,
+
+  }
+
+  #include if exists <local/kwalletd5>
+}
+

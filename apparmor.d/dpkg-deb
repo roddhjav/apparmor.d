@@ -1,0 +1,49 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{BUILD_DIR} = /media/debuilder/
+
+@{exec_path} = /{usr/,}bin/dpkg-deb
+profile dpkg-deb @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/nameservice-strict>
+
+  #capability sys_tty_config,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/tar rix,
+  /{usr/,}bin/rm  rix,
+
+  owner /var/lib/dpkg/tmp.ci/ w,
+  owner /var/lib/dpkg/tmp.ci/* w,
+
+  # For creating deb packages
+  owner /tmp/dpkg-deb.* rw,
+
+  owner /tmp/dpkg-deb.*/ rw,
+  owner /tmp/dpkg-deb.*/* rw,
+
+  # For extracting deb packages to /tmp/
+  owner /tmp/** rw,
+
+  /var/cache/apt/archives/*.deb r,
+
+  # For package building
+  @{BUILD_DIR}/** rwkl -> @{BUILD_DIR}/**,
+
+  #include if exists <local/dpkg-deb>
+}

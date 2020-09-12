@@ -1,0 +1,47 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{DISCORD_LIBDIR} = /usr/share/discord
+@{DISCORD_HOMEDIR} = @{HOME}/.config/discord
+@{DISCORD_CACHEDIR} = @{HOME}/.cache/discord
+
+@{exec_path} = @{DISCORD_LIBDIR}/chrome-sandbox
+
+profile discord-chrome-sandbox @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/deny-root-dir-access>
+
+  # For kernel unprivileged user namespaces
+  capability sys_admin,
+  capability sys_chroot,
+  capability setuid,
+  capability setgid,
+
+  # optional
+  capability sys_resource,
+
+  @{exec_path} mr,
+
+  # Do not strip env to avoid errors like the following:
+  #   /usr/share/discord/Discord: error while loading shared libraries: libffmpeg.so: cannot open
+  #   shared object file: No such file or directory
+  #   [1]    777862 trace trap  discord
+  @{DISCORD_LIBDIR}/Discord rpx,
+
+             @{PROC}/@{pids}/ r,
+  deny owner @{PROC}/@{pid}/oom_{,score_}adj rw,
+
+  #include if exists <local/discord-chrome-sandbox>
+}

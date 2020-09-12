@@ -1,0 +1,43 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2015 Cameron Norman <camerontnorman@gmail.com>
+#    Copyright (C) 2017-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/redshift
+profile redshift @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/deny-root-dir-access>
+
+  @{exec_path} mr,
+
+  dbus send
+       bus=system
+       path=/org/freedesktop/GeoClue2/Client/[0-9]*[0-9],
+
+  dbus receive
+       bus=system
+       path=/org/freedesktop/GeoClue2/Manager,
+
+  # Allow but log any other dbus activity
+  audit dbus bus=system,
+
+  # Redshift config files
+  owner @{HOME}/.config/redshift/{,**} rw,
+  owner @{HOME}/.config/redshift.conf rw,
+
+  owner @{HOME}/.Xauthority r,
+  owner /tmp/xauth-[0-9]*-_[0-9] r,
+
+  #include if exists <local/redshift>
+}

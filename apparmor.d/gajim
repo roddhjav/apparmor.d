@@ -1,0 +1,107 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2015-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/gajim
+profile gajim @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/gtk>
+  #include <abstractions/fonts>
+  #include <abstractions/fontconfig-cache-read>
+  #include <abstractions/freedesktop.org>
+  #include <abstractions/dri-common>
+  #include <abstractions/dri-enumerate>
+  #include <abstractions/mesa>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/user-download-strict>
+  #include <abstractions/python>
+  #include <abstractions/openssl>
+  #include <abstractions/ssl_certs>
+  #include <abstractions/deny-root-dir-access>
+
+  @{exec_path} r,
+
+  /{usr/,}bin/ r,
+  /{usr/,}bin/dash      rix,
+  /{usr/,}bin/uname     rix,
+  /{usr/,}sbin/ldconfig rix,
+
+  # To play sounds
+  /{usr/,}bin/aplay            rCx -> audio,
+  /{usr/,}bin/pacat            rCx -> audio,
+
+  # Needed for GPG/PGP support
+  /{usr/,}bin/gpg              rCx -> gpg,
+
+  # External apps
+  /{usr/,}bin/xdg-settings    rPUx,
+  /{usr/,}lib/firefox/firefox rPUx,
+
+  # Gajim plugins
+  /usr/share/gajim/plugins/{,**} r,
+
+  # Gajim home files
+  owner @{HOME}/ r,
+  owner @{HOME}/.config/gajim/{,**} rw,
+  owner @{HOME}/.local/share/gajim/ rw,
+  owner @{HOME}/.local/share/gajim/** rwk,
+
+  # Cache
+  owner @{HOME}/.cache/ rw,
+  owner @{HOME}/.cache/gajim/ rw,
+  owner @{HOME}/.cache/gajim/** rwk,
+
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/mounts r,
+  owner @{PROC}/@{pid}/mountinfo r,
+
+  /etc/fstab r,
+
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+
+  # TMP files locations (first in /tmp/ , /var/tmp/ and @{HOME}/)
+  owner /tmp/* rw,
+  # owner /var/tmp/* rw,
+  # owner @{HOME}/* rw,
+
+  # Silencer
+  deny /usr/share/gajim/** w,
+
+
+  profile audio {
+    #include <abstractions/base>
+    #include <abstractions/audio>
+
+    /{usr/,}bin/aplay mr,
+    /{usr/,}bin/pacat mr,
+
+    owner @{HOME}/.Xauthority r,
+
+    /etc/machine-id r,
+    /var/lib/dbus/machine-id r,
+
+  }
+
+  profile gpg {
+    #include <abstractions/base>
+
+    /{usr/,}bin/gpg mr,
+
+    owner @{HOME}/.gnupg/ rw,
+    owner @{HOME}/.gnupg/** rwkl -> @{HOME}/.gnupg/**,
+
+  }
+
+  #include if exists <local/gajim>
+}

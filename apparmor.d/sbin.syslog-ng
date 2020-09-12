@@ -1,0 +1,68 @@
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2006-2009 Novell/SUSE
+#    Copyright (C) 2006 Christian Boltz
+#    Copyright (C) 2010 Canonical Ltd.
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#include <tunables/global>
+
+#define this to be where syslog-ng is chrooted
+@{CHROOT_BASE}=""
+
+profile syslog-ng /{usr/,}{bin,sbin}/syslog-ng flags=(complain) {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/nameservice>
+  #include <abstractions/mysql>
+  #include <abstractions/openssl>
+  #include <abstractions/python>
+
+  capability chown,
+  capability dac_override,
+  capability dac_read_search,
+  capability fsetid,
+  capability fowner,
+  capability sys_tty_config,
+  capability sys_resource,
+  capability syslog,
+
+  unix (receive) type=dgram,
+  unix (receive) type=stream,
+
+  /dev/log w,
+  /dev/syslog w,
+  /dev/tty10 rw,
+  /dev/xconsole rw,
+  /dev/kmsg r,
+  /etc/machine-id r,
+  /etc/syslog-ng/* r,
+  /etc/syslog-ng/conf.d/ r,
+  /etc/syslog-ng/conf.d/* r,
+  @{PROC}/kmsg r,
+  /etc/hosts.deny r,
+  /etc/hosts.allow r,
+  /{usr/,}{bin,sbin}/syslog-ng mr,
+  @{sys}/devices/system/cpu/online r,
+  /usr/share/syslog-ng/** r,
+  /var/lib/syslog-ng/syslog-ng-?????.qf rw,
+  # chrooted applications
+  @{CHROOT_BASE}/var/lib/*/dev/log w,
+  @{CHROOT_BASE}/var/lib/syslog-ng/syslog-ng.persist* rw,
+  @{CHROOT_BASE}/var/log/** w,
+  @{CHROOT_BASE}/{,var/}run/syslog-ng.pid krw,
+  @{CHROOT_BASE}/{,var/}run/syslog-ng.ctl rw,
+  /{var,var/run,run}/log/journal/ r,
+  /{var,var/run,run}/log/journal/*/ r,
+  /{var,var/run,run}/log/journal/*/*.journal r,
+  /{var/,}run/syslog-ng.ctl a,
+  /{var/,}run/syslog-ng/additional-log-sockets.conf r,
+
+  # Site-specific additions and overrides. See local/README for details.
+  #include <local/sbin.syslog-ng>
+}

@@ -1,0 +1,31 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/update-desktop-database
+profile update-desktop-database @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+
+  @{exec_path} mr,
+
+  /usr/share/applications/{,**/} r,
+  /usr/share/applications/**.desktop r,
+  /usr/share/applications/.mimeinfo.cache.* rw,
+  /usr/share/applications/mimeinfo.cache w,
+
+  /usr/share/*/*.desktop r,
+
+  #include if exists <local/update-desktop-database>
+}

@@ -1,0 +1,57 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/networkctl
+profile networkctl @{exec_path} flags=(complain) {
+  #include <abstractions/base>
+
+  # To be able to manage network interfaces,
+  capability net_admin,
+
+  # Needed? (#FIXME#)
+  audit deny capability sys_resource,
+  audit deny capability sys_module,
+
+  signal send peer=child-pager,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/pager            rPx -> child-pager,
+  /{usr/,}bin/less             rPx -> child-pager,
+  /{usr/,}bin/more             rPx -> child-pager,
+
+  @{sys}/devices/**/net/**/uevent r,
+
+  /{var/,}run/systemd/netif/links/[0-9]* r,
+  /{var/,}run/systemd/netif/state r,
+
+  owner @{PROC}/@{pid}/stat r,
+        @{PROC}/sys/kernel/random/boot_id r,
+
+  /etc/udev/hwdb.bin r,
+
+  # To be able to read logs
+  /{var/,}run/log/ r,
+  /{run,var}/log/journal/ r,
+  /{run,var}/log/journal/[0-9a-f]*/ r,
+  /{run,var}/log/journal/[0-9a-f]*/user-[0-9a-f]*.journal* r,
+  /{run,var}/log/journal/[0-9a-f]*/system.journal* r,
+  /{run,var}/log/journal/[0-9a-f]*/system@[0-9a-f]*.journal* r,
+
+  /var/lib/dbus/machine-id r,
+  /etc/machine-id r,
+
+  #include if exists <local/networkctld>
+}

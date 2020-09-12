@@ -1,0 +1,79 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/i3lock-fancy
+profile i3lock-fancy @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/fonts>
+  #include <abstractions/fontconfig-cache-read>
+
+  @{exec_path} r,
+
+  /{usr/,}bin/bash     rix,
+  /{usr/,}bin/rm       rix,
+  /{usr/,}bin/fc-match rix,
+  /{usr/,}bin/getopt   rix,
+  /{usr/,}bin/mktemp   rix,
+  /{usr/,}bin/gawk     rix,
+  /{usr/,}bin/basename rix,
+  /{usr/,}bin/env      rix,
+
+  /{usr/,}bin/i3lock   rPx,
+  /{usr/,}bin/xrandr   rPx,
+
+  /{usr/,}bin/convert-im6.q16 rCx -> imagemagic,
+  /{usr/,}bin/import-im6.q16  rCx -> imagemagic,
+  /{usr/,}bin/scrot           rCx -> imagemagic,
+
+  owner /tmp/tmp.*.png rw,
+  owner /tmp/tmp.* rw,
+  owner /tmp/sh-thd.* rw,
+
+  /usr/share/i3lock-fancy/{,*} r,
+
+  # file_inherit
+  owner /dev/tty[0-9]* rw,
+
+
+  profile imagemagic {
+    #include <abstractions/base>
+    #include <abstractions/fonts>
+    #include <abstractions/fontconfig-cache-read>
+
+    /{usr/,}bin/convert-im6.q16 mr,
+    /{usr/,}bin/import-im6.q16  mr,
+    /{usr/,}bin/scrot           mr,
+
+    /usr/share/ImageMagick-[0-9]/*.xml r,
+    /etc/ImageMagick-[0-9]/*.xml r,
+
+    owner @{HOME}/.Xauthority r,
+
+    /usr/share/i3lock-fancy/**.png r,
+
+    # For gray scale (doesn't seem to be required). It produces files like /home/*/PIHFhJ .
+    deny owner @{HOME}/* rw,
+
+    owner /tmp/tmp.*.png rw,
+
+    # file_inherit
+    owner /dev/tty[0-9]* rw,
+
+
+  }
+
+  #include if exists <local/i3lock-fancy>
+}

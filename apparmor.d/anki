@@ -1,0 +1,197 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/anki
+profile anki @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/opencl-intel>
+  #include <abstractions/gtk>
+  #include <abstractions/fonts>
+  #include <abstractions/fontconfig-cache-read>
+  #include <abstractions/freedesktop.org>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/python>
+  #include <abstractions/audio>
+  #include <abstractions/mesa>
+  #include <abstractions/qt5-settings-write>
+  #include <abstractions/qt5-compose-cache-write>
+  #include <abstractions/user-download-strict>
+  #include <abstractions/trash>
+  #include <abstractions/openssl>
+  #include <abstractions/ssl_certs>
+  #include <abstractions/deny-root-dir-access>
+
+  signal (send) set=(term, kill) peer=anki//mpv,
+
+  @{exec_path} r,
+  /{usr/,}bin/python3.[0-9]* r,
+
+  /{usr/,}sbin/ldconfig rix,
+
+  /{usr/,}bin/ r,
+  /{usr/,}bin/lsb_release rPx -> child-lsb_release,
+  /{usr/,}bin/xdg-open    rCx -> open,
+  /{usr/,}bin/mpv         rCx -> mpv,
+  # For recording sounds while creating decks
+  /{usr/,}bin/lame        rCx -> lame,
+
+  /{usr/,}lib/@{multiarch}/qt5/libexec/QtWebEngineProcess rix,
+  /usr/share/qt5/**/*.pak r,
+  owner @{HOME}/.config/qt5ct/{,**} r,
+  /usr/share/qt5ct/** r,
+
+  owner @{HOME}/ r,
+  owner @{HOME}/.cache/ rw,
+  owner @{HOME}/.cache/qtshadercache/ rw,
+  owner @{HOME}/.cache/qtshadercache/#[0-9]*[0-9] rw,
+  owner @{HOME}/.cache/qtshadercache/[0-9a-f]* rwl -> @{HOME}/.cache/qtshadercache/#[0-9]*[0-9],
+  owner @{HOME}/.cache/qtshadercache-*-little_endian-*/#[0-9]*[0-9] rw,
+  owner @{HOME}/.cache/qtshadercache-*-little_endian-*/[0-9a-f]* rwl -> @{HOME}/.cache/qtshadercache-*-little_endian-*/#[0-9]*[0-9],
+
+  /usr/share/anki/{,**} r,
+
+  /usr/share/javascript/**/*.js r,
+
+  owner @{HOME}/.local/share/Anki{,2}/ rw,
+  owner @{HOME}/.local/share/Anki{,2}/** rwk,
+
+  # To remove the following error:
+  #  Error initializing NSS with a persistent database
+  owner @{HOME}/.pki/ rw,
+  owner @{HOME}/.pki/nssdb/ rw,
+  owner @{HOME}/.pki/nssdb/pkcs11.txt rw,
+  owner @{HOME}/.pki/nssdb/{cert9,key4}.db rwk,
+  owner @{HOME}/.pki/nssdb/{cert9,key4}.db-journal rw,
+
+  # If one is blocked, the others are probed.
+  deny owner @{HOME}/#[0-9]*[0-9] mrw,
+       owner @{HOME}/.glvnd* mrw,
+  #    owner /tmp/#[0-9]*[0-9] mrw,
+  #    owner /tmp/.glvnd* mrw,
+
+  # The /proc/ dir is needed to avoid the following error:
+  #  [:FATAL:sandbox_linux.cc(172)] Check failed: proc_fd_ >= 0 (-1 vs. 0)
+             @{PROC}/ r,
+       owner @{PROC}/@{pid}/fd/ r,
+  deny owner @{PROC}/@{pid}/mem r,
+       owner @{PROC}/@{pid}/task/ r,
+  deny owner @{PROC}/@{pid}/task/@{tid}/status r,
+             @{PROC}/sys/kernel/yama/ptrace_scope r,
+  deny owner @{PROC}/@{pid}/oom_{,score_}adj rw,
+  deny owner @{PROC}/@{pid}/cmdline r,
+  # To remove the following error:
+  #  GLib-GIO-WARNING **: Error creating IO channel for /proc/self/mountinfo: Permission denied
+  #  (g-file-error-quark, 2)
+       owner @{PROC}/@{pid}/mountinfo r,
+       owner @{PROC}/@{pid}/mounts r,
+  deny       @{PROC}/sys/kernel/random/boot_id r,
+  deny       @{PROC}/vmstat r,
+  deny owner @{PROC}/@{pid}/setgroups w,
+
+  /etc/fstab r,
+
+    /var/tmp/ r,
+        /tmp/ r,
+  owner /tmp/* rw,
+  owner /tmp/anki_temp/ rw,
+  owner /tmp/anki_temp/** rwk,
+  owner /tmp/mozilla_*/*.apkg r,
+
+  owner /dev/shm/.org.chromium.Chromium.* rw,
+        /dev/shm/#[0-9]*[0-9] rw,
+
+  @{sys}/devices/pci[0-9]*/**/irq r,
+  @{sys}/devices/pci[0-9]*/**/{vendor,device} r,
+
+  /usr/share/hwdata/pnp.ids r,
+
+  /etc/mime.types r,
+
+  # SyncThread
+  /{usr/,}bin/dash rix,
+  /{usr/,}bin/uname rix,
+  /etc/ r,
+  /etc/debian_version r,
+
+  /var/lib/dbus/machine-id r,
+  /etc/machine-id r,
+
+  # file_inherit
+  owner /dev/tty[0-9]* rw,
+  owner @{HOME}/.xsession-errors w,
+
+  # Allowed apps to open
+  /{usr/,}lib/firefox/firefox rPUx,
+
+
+  profile mpv {
+    #include <abstractions/base>
+    #include <abstractions/fonts>
+    #include <abstractions/fontconfig-cache-read>
+    #include <abstractions/audio>
+
+    signal (receive) set=(term, kill) peer=anki,
+
+    /{usr/,}bin/mpv mr,
+
+    /etc/mpv/encoding-profiles.conf r,
+
+    owner /tmp/mpv.* rw,
+
+    # For playing sets' sounds
+    owner @{HOME}/.local/share/Anki{,2}/*/collection.media/ r,
+    owner @{HOME}/.local/share/Anki{,2}/*/collection.media/*.{mp3,wav} r,
+    owner @{HOME}/.local/share/Anki{,2}/pulse/ r,
+    owner @{HOME}/.local/share/Anki{,2}/pulse/cookie rk,
+
+    owner @{HOME}/.Xauthority r,
+
+    /var/lib/dbus/machine-id r,
+    /etc/machine-id r,
+
+    @{sys}/devices/system/node/ r,
+    @{sys}/devices/system/node/node[0-9]*/meminfo r,
+
+    # file_inherit
+    owner /dev/tty[0-9]* rw,
+    owner @{HOME}/.xsession-errors w,
+
+  }
+
+  profile lame {
+    #include <abstractions/base>
+
+    /{usr/,}bin/lame mr,
+
+    owner @{HOME}/.local/share/Anki{,2}/*/collection.media/rec.{mp3,wav} rw,
+
+  }
+
+  profile open {
+    #include <abstractions/base>
+    #include <abstractions/xdg-open>
+
+    /{usr/,}bin/xdg-open mr,
+
+    # Allowed apps to open
+    /{usr/,}lib/firefox/firefox rPUx,
+
+    # file_inherit
+    owner @{HOME}/.xsession-errors w,
+
+  }
+
+  #include if exists <local/anki>
+}

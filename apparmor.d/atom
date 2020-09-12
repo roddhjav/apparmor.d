@@ -1,0 +1,206 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /usr/share/atom{,-beta,-nightly,-dev}/atom /{usr/,}bin/atom
+profile atom @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/opencl-intel>
+  #include <abstractions/gtk>
+  #include <abstractions/freedesktop.org>
+  #include <abstractions/fonts>
+  #include <abstractions/fontconfig-cache-read>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/enchant>
+  # The following doesn't seem to be needed
+  ##include <abstractions/mesa>
+  ##include <abstractions/consoles>
+  ##include <abstractions/audio>
+  ##include <abstractions/user-download-strict>
+  #include <abstractions/thumbnails-cache-read>
+  ##include <abstractions/zsh>
+  ##include <abstractions/fzf>
+  #include <abstractions/deny-dconf>
+  #include <abstractions/deny-root-dir-access>
+
+  ptrace (read) peer=child-lsb_release,
+  ptrace (read) peer=xdg-settings,
+
+  @{exec_path} mrix,
+
+  /usr/share/atom/** r,
+  /usr/share/atom/libffmpeg.so mr,
+  /usr/share/atom/libnode.so mr,
+  /usr/share/atom/resources/**/bin/* rix,
+  /usr/share/atom/resources/**.node mr,
+  /usr/share/atom/resources/**/libexec/** rix,
+
+  deny /{usr/,}local/bin/ r,
+  deny /{usr/,}bin/ r,
+  #/{usr/,}bin/bash      rix,
+  #/{usr/,}bin/zsh       rix,
+  #/{usr/,}bin/env       rix,
+  #/{usr/,}bin/rmdir     rix,
+  #/{usr/,}bin/{,e}grep  rix,
+  #/{usr/,}bin/ls        rix,
+  #/{usr/,}bin/gawk      rix,
+  #/{usr/,}bin/tty       rix,
+  #/{usr/,}bin/dircolors rix,
+  #/{usr/,}bin/cut       rix,
+  #/{usr/,}bin/xwininfo  rix,
+  #/{usr/,}bin/date      rix,
+  # The expr and uname tools are needed or Atom won't start with the following error:
+  #  Your platform () is not supported.
+  /{usr/,}bin/expr       rix,
+  /{usr/,}bin/uname      rix,
+  # The following also are needed to start Atom
+  /{usr/,}bin/basename  rix,
+  /{usr/,}bin/readlink  rix,
+  /{usr/,}bin/dirname   rix,
+  /{usr/,}bin/mkdir     rix,
+  /{usr/,}bin/nohup     rix,
+  /{usr/,}bin/cat       rix,
+  # The dash shell is needed to install packages. If you don't want to install any, coment the
+  # following line out.
+  #/{usr/,}bin/dash     rix,
+
+  /{usr/,}bin/lsb_release   rPx -> child-lsb_release,
+  /{usr/,}bin/xdg-open      rCx -> open,
+
+  /{usr/,}bin/xdg-settings rPUx,
+
+  /{usr/,}bin/git          rPUx,
+
+  # Needed to sign commits
+  /{usr/,}bin/gpg           rCx -> gpg,
+
+  #      /home/ r,
+  # Reading of the user home dir is required or the following error will be printed:
+  #  Unexpected end of JSON input:
+  #owner @{HOME}/ r,
+  owner @{HOME}/.atom/ rw,
+  owner @{HOME}/.atom/** rwkl -> @{HOME}/.atom/**,
+  owner @{HOME}/.config/Atom/ rw,
+  owner @{HOME}/.config/Atom/** rwkl -> @{HOME}/.config/Atom/**,
+
+  # Git dirs
+        / r,
+        /media/ r,
+  owner /media/*/ r,
+  owner /media/*/atom/ r,
+  owner /media/*/atom/** rwkl -> /media/*/atom/**,
+
+  owner @{HOME}/.config/git/config r,
+
+  # To remove the following error:
+  #  Error initializing NSS with a persistent database
+  deny owner @{HOME}/.pki/ rw,
+  deny owner @{HOME}/.pki/nssdb/ rw,
+  deny owner @{HOME}/.pki/nssdb/pkcs11.txt rw,
+  deny owner @{HOME}/.pki/nssdb/{cert9,key4}.db rwk,
+  deny owner @{HOME}/.pki/nssdb/{cert9,key4}.db-journal rw,
+
+  /etc/fstab r,
+
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+
+  # Needed or atom gets crash with the following error:
+  #  FATAL:proc_util.cc(36)] : Permission denied (13)
+             @{PROC}/ r,
+  #
+  deny       @{PROC}/vmstat r,
+             @{PROC}/sys/kernel/yama/ptrace_scope r,
+             @{PROC}/@{pid}/fd/ r,
+  # Needed to remove the following error:
+  #  Failed to activate the metrics package
+  #  EACCES: permission denied, uv_resident_set_memory
+             @{PROC}/@{pids}/stat r,
+  # To remove the following error:
+  #  Failed to adjust OOM score of renderer with pid : Permission denied
+  deny owner @{PROC}/@{pid}/oom_{,score_}adj rw,
+       owner @{PROC}/@{pids}/task/ r,
+  deny owner @{PROC}/@{pids}/task/@{tid}/status r,
+       owner @{PROC}/@{pid}/mountinfo r,
+       owner @{PROC}/@{pid}/mounts r,
+  deny owner @{PROC}/@{pid}/loginuid r,
+
+  deny       /dev/shm/ r,
+       owner /dev/shm/.org.chromium.Chromium.* rw,
+
+  /var/lib/dbus/machine-id r,
+  /etc/machine-id r,
+
+  deny @{sys}/devices/virtual/tty/tty[0-9]/active r,
+  deny @{sys}/devices/system/cpu/cpufreq/policy[0-9]/cpuinfo_max_freq r,
+       @{sys}/kernel/mm/transparent_hugepage/enabled r,
+
+  # To remove the following error:
+  #  pcilib: Cannot open /sys/bus/pci/devices/0000:03:00.0/irq: Permission denied
+  # The irq file is needed to render pages.
+  deny @{sys}/devices/pci[0-9]*/**/irq r,
+
+        /var/tmp/ r,
+        /tmp/ r,
+  owner /tmp/.org.chromium.Chromium.* rw,
+  owner /tmp/atom-[0-9a-f]*.sock rw,
+  owner "/tmp/Atom Crashes/" rw,
+  owner /tmp/github-[0-9]*-[0-9]*-*.*/ rw,
+  owner /tmp/github-[0-9]*-[0-9]*-*.*/** rw,
+  owner /tmp/github-[0-9]*-[0-9]*-*.*/git-{credential,askpass}-atom.{js,sh} rwix,
+  owner /tmp/github-[0-9]*-[0-9]*-*.*/linux-ssh-wrapper.sh rwix,
+  owner /tmp/github-[0-9]*-[0-9]*-*.*/gpg-wrapper.sh rwix,
+  owner /tmp/apm-install-dir-[0-9]*-[0-9]*-*.*/ rw,
+  owner /tmp/apm-install-dir-[0-9]*-[0-9]*-*.*/** rw,
+  owner /tmp/net-export/ rw,
+
+  # file_inherit
+  owner @{HOME}/.xsession-errors w,
+
+  # Allowed apps to open
+  /{usr/,}lib/firefox/firefox rPUx,
+
+
+  profile gpg {
+    #include <abstractions/base>
+    #include <abstractions/consoles>
+    #include <abstractions/fonts>
+    #include <abstractions/fontconfig-cache-read>
+
+    /{usr/,}bin/gpg mr,
+
+    owner @{HOME}/.gnupg/ rw,
+    owner @{HOME}/.gnupg/** rwkl -> @{HOME}/.gnupg/**,
+
+    # file_inherit
+    owner @{HOME}/.xsession-errors w,
+      /usr/share/atom/** r,
+
+  }
+
+  profile open {
+    #include <abstractions/base>
+    #include <abstractions/xdg-open>
+
+    /{usr/,}bin/xdg-open mr,
+
+    # Allowed apps to open
+    /{usr/,}lib/firefox/firefox rPUx,
+
+    # file_inherit
+    owner @{HOME}/.xsession-errors w,
+
+  }
+
+  #include if exists <local/atom>
+}

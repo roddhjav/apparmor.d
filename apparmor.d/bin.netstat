@@ -1,0 +1,56 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2002-2005 Novell/SUSE
+#    Copyright (C) 2017 Christian Boltz
+#    Copyright (C) 2018-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+# evolution, amongst other things, calls this program. I didn't want to
+# give evolution access to significant chunks of /proc
+#
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/netstat
+profile netstat @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/nameservice>
+
+  capability dac_read_search,
+  capability syslog,
+  capability sys_ptrace,
+
+  ptrace (trace,read),
+
+  @{exec_path} rmix,
+
+  /etc/networks r,
+  @{PROC} r,
+  @{PROC}/@{pids}/cmdline r,
+  @{PROC}/net r,
+  @{PROC}/net/* r,
+  @{PROC}/@{pids}/fd/ r,
+  @{PROC}/@{pid}/attr/current r,
+  @{PROC}/@{pid}/net/netstat r,
+  @{PROC}/@{pid}/net/raw r,
+  @{PROC}/@{pid}/net/snmp r,
+  @{PROC}/@{pid}/net/raw6 r,
+  @{PROC}/@{pid}/net/tcp r,
+  @{PROC}/@{pid}/net/tcp6 r,
+  @{PROC}/@{pid}/net/udp r,
+  @{PROC}/@{pid}/net/udp6 r,
+  @{PROC}/@{pid}/net/udplite r,
+  @{PROC}/@{pid}/net/udplite6 r,
+  @{PROC}/@{pid}/net/unix r,
+  # For  "netstat -i"
+  @{PROC}/@{pid}/net/dev r,
+
+}

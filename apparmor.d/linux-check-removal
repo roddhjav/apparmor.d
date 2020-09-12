@@ -1,0 +1,58 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/linux-check-removal
+profile linux-check-removal @{exec_path} flags=(complain) {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/perl>
+
+  @{exec_path} r,
+  /{usr/,}bin/perl r,
+
+  # Think what to do about this (#FIXME#)
+  /usr/share/debconf/frontend         rPx,
+  #/usr/share/debconf/frontend        rCx -> frontend,
+
+
+  profile frontend flags=(complain) {
+    #include <abstractions/base>
+    #include <abstractions/consoles>
+    #include <abstractions/perl>
+    #include <abstractions/nameservice-strict>
+
+    /usr/share/debconf/frontend r,
+    /{usr/,}bin/perl r,
+
+    /{usr/,}bin/linux-check-removal rPx,
+
+    /{usr/,}bin/dash     rix,
+    /{usr/,}bin/stty     rix,
+    /{usr/,}bin/locale   rix,
+
+    # The following is needed when debconf uses dialog/whiptail frontend.
+    /{usr/,}bin/whiptail rPx,
+    owner /tmp/file* w,
+
+    /usr/share/debconf/confmodule r,
+
+    /etc/debconf.conf r,
+    owner /var/cache/debconf/{config,passwords,templates}.dat{,-new,-old} rwk,
+    /usr/share/debconf/templates/adequate.templates r,
+
+  }
+
+  #include if exists <local/linux-check-removal>
+}

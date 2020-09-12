@@ -1,0 +1,41 @@
+# vim:syntax=apparmor
+# Users of this abstraction need to #include the ubuntu-helpers abstraction
+# in the toplevel profile. Eg:
+# #include <abstractions/ubuntu-helpers>
+
+  # Apport
+  /usr/bin/apport-bug Cx -> sanitized_helper,
+
+  # Package installation
+  /usr/bin/apturl Cxr -> sanitized_helper,
+  /usr/bin/gnome-codec-install Cxr -> sanitized_helper,
+  /usr/lib/gstreamer0.10/gstreamer-0.10/gst-plugin-scanner ix,
+  /usr/lib/@{multiarch}/gstreamer0.10/gstreamer-0.10/gst-plugin-scanner ix,
+  /usr/share/software-center/software-center Cxr -> sanitized_helper,
+
+  # Input Methods
+  /usr/bin/scim Cx -> sanitized_helper,
+  /usr/bin/scim-bridge Cx -> sanitized_helper,
+
+  # File managers
+  /usr/bin/nautilus Cxr -> sanitized_helper,
+  /usr/bin/{t,T}hunar Cxr -> sanitized_helper,
+  /usr/bin/dolphin Cxr -> sanitized_helper,
+
+  # Themes
+  /usr/bin/gnome-appearance-properties Cxr -> sanitized_helper,
+
+  # Kubuntu
+  /usr/lib/mozilla/kmozillahelper Cxr -> sanitized_helper,
+
+  # Exo-aware applications
+  /usr/bin/exo-open ixr,
+  /usr/lib/@{multiarch}/xfce4/exo-1/exo-helper-1 ixr,
+  /etc/xdg/xdg-xubuntu/xfce4/helpers.rc r,
+  /etc/xdg/xfce4/helpers.rc r,
+
+  # unity webapps integration. Could go in its own abstraction
+  owner /run/user/*/dconf/user rw,
+  owner @{HOME}/.local/share/unity-webapps/availableapps*.db rwk,
+  /usr/bin/debconf-communicate Cxr -> sanitized_helper,
+  owner @{HOME}/.config/libaccounts-glib/accounts.db rk,

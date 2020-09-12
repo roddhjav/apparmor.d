@@ -1,0 +1,42 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}sbin/blkid
+profile blkid @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/disks-read>
+
+  @{exec_path} mr,
+
+  /etc/blkid.conf r,
+
+  # The standard location of the cache file
+  # Without owner here if this tool should be used as a regular user
+  /{,var/}run/blkid/blkid.tab{,-*} rw,
+  /{,var/}run/blkid/blkid.tab.old rwl -> /{,var/}run/blkid/blkid.tab,
+  # When the system doesn't have the /run/ dir, the cache file is placed under /etc/
+  /etc/blkid.tab{,-*} rw,
+  /etc/blkid.tab.old rwl -> /etc/blkid.tab,
+
+  # For the EVALUATE=scan method
+  @{PROC}/partitions r,
+
+  # Image files
+  @{HOME}/** r,
+  /media/*/** r,
+
+  #include if exists <local/blkid>
+}

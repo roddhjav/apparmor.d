@@ -1,0 +1,59 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/fusermount{,3}
+profile fusermount @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/nameservice-strict>
+
+  # To mount anything:
+  #  fusermount: mount failed: Operation not permitted
+  capability sys_admin,
+
+  # This is needed when mounting MTP devices via some file manager:
+  #  fusermount: mount failed: Permission denied
+  capability dac_read_search,
+
+  @{exec_path} mr,
+
+  # Where to mount ISO files
+  owner @{HOME}/*/ rw,
+  owner @{HOME}/*/*/ rw,
+  owner @{HOME}/.cache/**/ rw,
+
+  # Be able to mount ISO images
+  mount fstype={fuse,fuse.*} -> /home/*/*/,
+  mount fstype={fuse,fuse.*} -> /home/*/*/*/,
+  mount fstype={fuse,fuse.*} -> /home/*/.cache/**/,
+
+  # Be able to unmount the ISO images
+  umount /home/*/*/,
+  umount /home/*/*/*/,
+  umount /home/*/.cache/**/,
+
+  # Image files to be mounted
+  owner @{HOME}/**.{iso,img,bin,mdf,nrg} rwk,
+  owner /media/*/**.{iso,img,bin,mdf,nrg} rwk,
+  owner @{HOME}/**.{ISO,IMG,BIN,MDF,NRG} rwk,
+  owner /media/*/**.{ISO,IMG,BIN,MDF,NRG} rwk,
+
+  /etc/fuse.conf r,
+
+  /dev/fuse rw,
+
+  @{PROC}/@{pid}/mounts r,
+
+  #include if exists <local/fusermount>
+}

@@ -1,0 +1,82 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/repo
+profile repo @{exec_path} flags=(complain) {
+  #include <abstractions/base>
+  #include <abstractions/python>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/openssl>
+  #include <abstractions/ssl_certs>
+  #include <abstractions/deny-root-dir-access>
+
+  @{exec_path} r,
+  /{usr/,}bin/python3.[0-9]* rix,
+  /{usr/,}bin/python2.[0-9]* rix,
+
+  /{usr/,}bin/               r,
+  /{usr/,}bin/env            rix,
+  /{usr/,}bin/dash           rix,
+  /{usr/,}bin/uname          rix,
+
+  /{usr/,}bin/git            rix,
+  /{usr/,}lib/git-core/git   rix,
+  /{usr/,}lib/git-core/git-* rix,
+
+  /{usr/,}bin/curl           rCx -> curl,
+  /{usr/,}bin/gpg            rCx -> gpg,
+
+  # Android source dir
+  owner /media/Android/** rwkl -> /media/Android/**,
+  owner /media/Android/**/.repo/repo/main.py rix,
+
+  owner @{HOME}/.repoconfig/{,**} rw,
+  owner @{HOME}/.repo_.gitconfig.json rw,
+
+  owner @{HOME}/.config/git/config r,
+  owner @{HOME}/.gitconfig r,
+
+  /usr/share/git-core/{,**} r,
+
+  owner /tmp/.git_vtag_tmp* rw,
+
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/mounts r,
+
+  owner /dev/shm/* rw,
+  owner /dev/shm/sem.mp* rwl -> /dev/shm/*,
+
+
+  profile curl flags=(complain) {
+    #include <abstractions/base>
+    #include <abstractions/nameservice-strict>
+    #include <abstractions/openssl>
+    #include <abstractions/ssl_certs>
+
+    /{usr/,}bin/curl mr,
+
+  }
+
+  profile gpg flags=(complain) {
+    #include <abstractions/base>
+
+    /{usr/,}bin/gpg mr,
+
+    owner @{HOME}/.repoconfig/gnupg/** rwkl -> @{HOME}/.repoconfig/gnupg/**,
+
+  }
+
+  #include if exists <local/repo>
+}

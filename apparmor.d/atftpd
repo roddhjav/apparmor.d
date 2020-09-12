@@ -1,0 +1,35 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2017-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}sbin/atftpd
+profile atftpd @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/nameservice>
+
+  # to run atftpd daemon as nobody/nogroup
+  capability setgid,
+  capability setuid,
+
+  @{exec_path} mr,
+
+  # FTP dirs (add "w" if you need write permissions and hence upload files)
+  /tftpboot/{,**} r,
+  /srv/tftp/{,**} r,
+
+  # for libwrap (TCP Wrapper) support
+  /etc/hosts.{,allow,deny} r,
+
+  #include if exists <local/atftpd>
+}

@@ -1,0 +1,70 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}sbin/userdel
+profile userdel @{exec_path} flags=(attach_disconnected) {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/nameservice-strict>
+
+  # The userdel command is issued as root and its task is to delete regular user accounts. It
+  # optionally can remove user files (via --remove). Because of that, the userdel command needs the
+  # following CAPs to be able to do so.
+  capability dac_read_search,
+  capability dac_override,
+
+  # To write records to the kernel auditing log.
+  capability audit_write,
+
+  # To set the right permission to the files in the /etc/ dir).
+  capability chown,
+  capability fsetid,
+
+  # To prevent removing a user when it's used by some process.
+  capability sys_ptrace,
+  ptrace (read),
+
+  @{exec_path} mr,
+
+  /etc/login.defs r,
+
+  @{PROC}/ r,
+  @{PROC}/@{pids}/task/ r,
+
+  /etc/{passwd,shadow,gshadow,group,subuid,subgid} rw,
+  /etc/{passwd,shadow,gshadow,group,subuid,subgid}.@{pid} w,
+  /etc/{passwd,shadow,gshadow,group,subuid,subgid}- w,
+  /etc/{passwd,shadow,gshadow,group,subuid,subgid}+ rw,
+
+  /etc/passwd.lock  wl -> /etc/passwd.@{pid},
+  /etc/shadow.lock  wl -> /etc/shadow.@{pid},
+  /etc/group.lock   wl -> /etc/group.@{pid},
+  /etc/gshadow.lock wl -> /etc/gshadow.@{pid},
+  /etc/subuid.lock  wl -> /etc/subuid.@{pid},
+  /etc/subgid.lock  wl -> /etc/subgid.@{pid},
+
+  # A process first uses lckpwdf() to lock the lock file, thereby gaining exclusive rights to
+  # modify the /etc/passwd or /etc/shadow password database.
+  /etc/.pwd.lock rwk,
+
+  # To remove user home files
+  @{HOME}/ rw,
+  @{HOME}/** w,
+
+  # To remove user mail
+  /var/mail/* w,
+
+  #include if exists <local/userdel>
+}

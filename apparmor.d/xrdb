@@ -1,0 +1,48 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/xrdb
+profile xrdb @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/deny-root-dir-access>
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/dash rix,
+  /{usr/,}bin/{,@{multiarch}-}cpp-[0-9]* rix,
+  /{usr/,}lib/gcc/@{multiarch}/[0-9]*/cc1 rix,
+  /usr/include/stdc-predef.h r,
+
+  owner @{HOME}/.Xauthority r,
+
+  /etc/X11/Xresources/x11-common r,
+
+  # The location of the .Xresources file
+  owner @{HOME}/.Xresources r,
+  owner @{HOME}/.config/.Xresources r,
+  owner @{HOME}/.config/Xresources/.Xresources r,
+  # If the .Xresources file includes some additional files
+  owner @{HOME}/.config/Xresources/* r,
+
+  owner /tmp/xauth-[0-9]*-_[0-9] r,
+  owner /tmp/kcminit.* r,
+
+  # file_inherit
+  owner /dev/tty[0-9]* rw,
+  owner @{HOME}/.xsession-errors w,
+
+  #include if exists <local/xrdb>
+}
+

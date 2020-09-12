@@ -1,0 +1,32 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}lib/eject/dmcrypt-get-device
+profile dmcrypt-get-device @{exec_path} flags=(complain) {
+  #include <abstractions/base>
+
+  capability sys_admin,
+  capability setgid,
+  capability setuid,
+
+  @{exec_path} mr,
+
+  owner @{PROC}/@{pid}/mounts r,
+        @{PROC}/devices r,
+
+  /dev/mapper/control rw,
+
+  #include if exists <local/dmcrypt-get-device>
+}

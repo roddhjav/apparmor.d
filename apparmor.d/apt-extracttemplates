@@ -1,0 +1,39 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{BUILD_DIR} = /media/debuilder/
+
+@{exec_path} = /{usr/,}bin/apt-extracttemplates
+profile apt-extracttemplates @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/apt-common>
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/dpkg rPx -> child-dpkg,
+
+  owner @{PROC}/@{pid}/fd/ r,
+
+  /var/cache/apt/ r,
+  /var/cache/apt/** rwk,
+
+  owner /tmp/*.{config,template}.?????? rw,
+
+  # For package building
+  @{BUILD_DIR}/** rwkl -> @{BUILD_DIR}/**,
+
+  #include if exists <local/apt-extracttemplates>
+}

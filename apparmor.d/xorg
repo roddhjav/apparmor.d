@@ -1,0 +1,159 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2017-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+# The attach_disconnected flag is needed when xserver is started via startx, or the mouse/keyboard
+# won't work.
+#  operation="getattr" info="Failed name lookup - disconnected path" error=-13 profile="xorg"
+#  name="dev/dri/card*"
+#  operation="getattr" info="Failed name lookup - disconnected path" error=-13 profile="xorg"
+#  name="dev/input/event*"
+@{exec_path}  = /{usr/,}bin/X
+@{exec_path} += /{usr/,}bin/Xorg
+@{exec_path} += /{usr/,}lib/xorg/Xorg
+profile xorg @{exec_path} flags=(attach_disconnected) {
+  #include <abstractions/base>
+  #include <abstractions/opencl-intel>
+  #include <abstractions/fonts>
+  #include <abstractions/fontconfig-cache-read>
+  #include <abstractions/freedesktop.org>
+  #include <abstractions/mesa>
+  #include <abstractions/nameservice-strict>
+  ##include <abstractions/deny-root-dir-access>
+
+  # When the Xserver is started via startx as a regular user, there's no need for any of the
+  # following CAPs. When some DM is used instead, some of the CAPs are needed.
+  # Tested so far with LightDM and SDDM.
+  #
+  # In the case of most of the DMs, the sys_admin CAP is needed becasue if it's denied then Xserver
+  # has the following issue:
+  #  (EE) modeset(0): drmSetMaster failed: Permission denied
+  #capability sys_admin,
+  #
+  # It looks like the Xserver started via LightDM can work just fine without the rest of the
+  # following CAPs.
+  #
+  # This has something to do with attaching the System V shared memory segments:
+  #  shmat(131103, NULL, 0)            = -1 EACCES (Permission denied)
+  #capability ipc_owner,
+  #
+  # For SDDM to read some /proc/ and /sys/ files:
+  #capability dac_read_search,
+  #
+  # These can be denied.
+  #deny capability dac_override,
+  #deny capability sys_rawio,
+  deny capability sys_nice,
+
+  # for KDE/SDDM
+  #capability sys_tty_config,
+
+  signal (send) set=(usr1),
+
+  signal (receive) peer=lightdm,
+  signal (receive) peer=sddm,
+  signal (receive) peer=xinit,
+
+  @{exec_path} mrix,
+
+  /{usr/,}bin/dash     rix,
+  /{usr/,}bin/xkbcomp  rPx,
+  /{usr/,}bin/pkexec   rPx,
+
+  # Xorg files
+  /etc/X11/{,**} r,
+  /{usr/,}lib/xorg/ r,
+  /{usr/,}lib/xorg/modules/ r,
+  /{usr/,}lib/xorg/modules/** mr,
+
+  #
+  /var/lib/xkb/server-[0-9]*.xkm rw,
+
+  # Log files
+  owner /var/log/Xorg.[0-9].log{,.old} rw,
+  owner /var/log/Xorg.pid-@{pid}.log{,.old} rw,
+  owner @{HOME}/.local/share/xorg/ rw,
+  owner @{HOME}/.local/share/xorg/Xorg.[0-9].log{,.old} rw,
+  owner @{HOME}/.local/share/xorg/Xorg.pid-@{pid}.log{,.old} rw,
+  owner @{HOME}/.xsession-errors w,
+
+  # TMP files
+  owner /tmp/.X11-unix/ rw,
+  owner /tmp/.X11-unix/X* rwk,
+  owner /tmp/.tX[0-9]-lock rwk,
+  owner /tmp/.X[0-9]-lock rwkl -> /tmp/.tX[0-9]-lock,
+  owner /tmp/server-* rwk,
+  owner /tmp/serverauth.* r,
+
+  # Graphic card modules
+  /dev/vga_arbiter rw,
+  @{sys}/module/i915/{,**} r,
+
+  # Input devices (keyboard, mouse, etc)
+  /dev/input/event[0-9]* rw,
+
+  /usr/share/libinput/ r,
+  /usr/share/libinput/[0-9][0-9]-*.quirks r,
+
+  # Screen backlight
+  @{sys}/devices/pci[0-9]*/**/backlight/*/{,max_}brightness r,
+  @{sys}/devices/pci[0-9]*/**/backlight/*/brightness rw,
+
+  # Display Xserver on a specific TTY
+  owner /dev/tty[0-9]* rw,
+
+  # Needed for SDDM display manager
+  /{,var/}run/sddm/{,**} rw,
+
+  # Needed for LightDM display manager
+  /{,var/}run/lightdm/{,**} rw,
+  /var/log/lightdm/x-*.log* rw,
+
+  @{sys}/bus/ r,
+  @{sys}/bus/pci/devices/ r,
+  @{sys}/class/ r,
+  @{sys}/class/{tty,input,drm}/ r,
+  @{sys}/devices/**/{uevent,name,id,config} r,
+  @{sys}/devices/pci[0-9]*/**/ r,
+  @{sys}/devices/pci[0-9]*/**/boot_vga r,
+
+  /{,var/}run/udev/data/+input* r,          # for mouse, keyboard, touchpad
+  /{,var/}run/udev/data/+platform* r,       # for ?
+  /{,var/}run/udev/data/+drm:card[0-9]-* r, # for screen outputs
+  #/{,var/}run/udev/data/+dmi* r,           # for ?
+  /{,var/}run/udev/data/+acpi* r,           # for ?
+  /{,var/}run/udev/data/+hid* r,            # for HID-Compliant Keyboard
+  /{,var/}run/udev/data/+pci* r,            # for VGA compatible controller
+  /{,var/}run/udev/data/+usb* r,            # for USB mouse and keyboard
+  /{,var/}run/udev/data/+serio* r,          # for touchpad?
+  /{,var/}run/udev/data/c4:[0-9]*   r,      # for /dev/tty[0-9]*
+  /{,var/}run/udev/data/c5:[0-9]*   r,      # for /dev/tty, /dev/console, /dev/ptmx
+  /{,var/}run/udev/data/c13:[0-9]*  r,      # for /dev/input/*
+  /{,var/}run/udev/data/c189:[0-9]* r,      # for /dev/bus/usb/**
+  /{,var/}run/udev/data/c226:[0-9]* r,      # for /dev/dri/card*
+
+  @{PROC}/@{pids}/cmdline r,
+  @{PROC}/cmdline r,
+  @{PROC}/mtrr rw,
+
+  #
+  /dev/shm/shmfd-* rw,
+  /dev/shm/#[0-9]*[0-9] rw,
+
+  /etc/glvnd/egl_vendor.d/ r,
+  /usr/share/glvnd/egl_vendor.d/ r,
+  /usr/share/glvnd/egl_vendor.d/[0-9][0-9]_*.json r,
+
+  #include if exists <local/xorg>
+}

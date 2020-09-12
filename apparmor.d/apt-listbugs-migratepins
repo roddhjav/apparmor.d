@@ -1,0 +1,34 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /usr/libexec/apt-listbugs/migratepins
+profile apt-listbugs-migratepins @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/ruby>
+
+  @{exec_path} r,
+  /{usr/,}bin/ruby2.[0-9]* rix,
+
+  /usr/share/rubygems-integration/*/specifications/ r,
+  /usr/share/rubygems-integration/*/specifications/* r,
+
+  /etc/apt/preferences r,
+
+  owner /tmp/pin_migration_*-@{pid}-*/ w,
+  owner /tmp/pin_migration_*-@{pid}-*/preferences w,
+  owner /tmp/pin_migration_*-@{pid}-*/apt-listbugs w,
+
+  #include if exists <local/apt-listbugs-migratepins>
+}

@@ -1,0 +1,66 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+# Note: This profile does not specify an attachment path because it is
+# intended to be used only via "Px -> child-lsb_release" exec transitions
+# from other profiles. We want to confine the lsb_release(1) utility when
+# it is invoked from other confined applications, but not when it is used
+# in regular (unconfined) shell scripts or run directly by the user.
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+# Do not attach to /{usr/,}bin/lsb_release by default
+profile child-lsb_release {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/python>
+
+  signal (receive) set=(term, kill),
+
+  owner @{PROC}/@{pid}/fd/ r,
+
+  /{usr/,}bin/lsb_release r,
+  /{usr/,}bin/python3.[0-9]* r,
+
+  /etc/debian_version r,
+#  /etc/default/apport r,
+  /etc/dpkg/origins/** r,
+#  /etc/lsb-release r,
+#  /etc/lsb-release.d/ r,
+
+#  /{usr/,}bin/bash ixr,
+#  /{usr/,}bin/dash ixr,
+#  /{usr/,}bin/basename ixr,
+
+#  /{usr/,}bin/getopt ixr,
+#  /{usr/,}bin/sed ixr,
+#  /{usr/,}bin/tr ixr,
+
+  /{usr/,}bin/dpkg-query rPx,
+  /{usr/,}bin/apt-cache  rPx,
+
+  /{usr/,}bin/ r,
+#  /usr/include/python*/pyconfig.h r,
+  /usr/share/distro-info/*.csv r,
+#  /usr/share/dpkg/** r,
+#  /usr/share/terminfo/** r,
+#  /var/lib/dpkg/** r,
+
+  # file_inherit
+  owner /dev/tty[0-9]* rw,
+  owner @{HOME}/.xsession-errors w,
+#  deny /tmp/gtalkplugin.log w,
+  /dev/dri/card[0-9]* rw,
+
+  #include if exists <local/child-lsb_release>
+}

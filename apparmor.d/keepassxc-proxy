@@ -1,0 +1,44 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2018-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/keepassxc-proxy
+profile keepassxc-proxy @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/deny-root-dir-access>
+
+  signal (receive) set=(term, kill),
+
+  @{exec_path} mr,
+
+  # file_inherit
+  deny owner /{var/,}run/user/[0-9]*/.[a-zA-Z]*/{,s} rw,
+  deny owner /{var/,}run/user/[0-9]*/kpxc_server rw,
+  deny       /dev/shm/org.chromium.* rw,
+  deny owner /dev/shm/org.mozilla.ipc.[0-9]*.[0-9]* rw,
+  #
+  deny owner @{HOME}/.mozilla/** rw,
+  deny owner @{HOME}/.cache/mozilla/** rw,
+  deny owner /media/*/.mozilla/** rw,
+  deny owner /tmp/firefox*/.parentlock rw,
+  deny owner /tmp/tmp-*.xpi rw,
+  deny owner /tmp/tmpaddon r,
+  deny owner @{HOME}/.config/google-chrome/** rw,
+  deny owner @{HOME}/.config/chromium/** rw,
+  #
+  owner @{HOME}/.xsession-errors w,
+
+  #include if exists <local/keepassxc-proxy>
+}

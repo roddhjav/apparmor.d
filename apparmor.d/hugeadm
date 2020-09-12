@@ -1,0 +1,67 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/hugeadm
+profile hugeadm @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/nameservice-strict>
+
+  # To mount anything under /var/lib/hugetlbfs/** .
+  capability sys_admin,
+
+  # For chown on the /var/lib/hugetlbfs/ dir and subdirs.
+  capability chown,
+
+  # For chmod on the /var/lib/hugetlbfs/ dir and subdirs.
+  capability fowner,
+
+  # For setting the set-group-ID bit on the /var/lib/hugetlbfs/group/*/ dirs.
+  capability fsetid,
+
+  # To create /var/lib/hugetlbfs/user/*/pagesize-*/ subdir because the /var/lib/hugetlbfs/user/*/
+  # parent dir is owned by a different user than root with the "drwx------" permissions.
+  capability dac_read_search,
+  capability dac_override,
+
+  @{exec_path} mr,
+
+  mount fstype=hugetlbfs -> /var/lib/hugetlbfs/pagesize-*/,
+  mount fstype=hugetlbfs -> /var/lib/hugetlbfs/{user,group}/*/pagesize-*/,
+  mount fstype=hugetlbfs -> /var/lib/hugetlbfs/global/pagesize-*/,
+
+  /var/lib/hugetlbfs/ w,
+  /var/lib/hugetlbfs/pagesize-*/ w,
+  /var/lib/hugetlbfs/{user,group}/ w,
+  /var/lib/hugetlbfs/{user,group}/*/ w,
+  /var/lib/hugetlbfs/{user,group}/*/pagesize-*/ w,
+  /var/lib/hugetlbfs/global/ w,
+  /var/lib/hugetlbfs/global/pagesize-*/ w,
+
+        @{PROC}/zoneinfo r,
+  owner @{PROC}/@{pid}/mounts r,
+        @{PROC}/sys/vm/nr_overcommit_hugepages r,
+  # For the "--set-recommended-min_free_kbytes" parameter.
+  owner @{PROC}/sys/vm/min_free_kbytes w,
+  # For the "--set-recommended-shmmax" parameter.
+  owner @{PROC}/sys/kernel/shmmax w,
+  # For the "--set-shm-group" parameter.
+  owner @{PROC}/sys/vm/hugetlb_shm_group w,
+
+        @{sys}/kernel/mm/hugepages/ r,
+        @{sys}/kernel/mm/transparent_hugepage/* r,
+  owner @{sys}/kernel/mm/transparent_hugepage/* rw,
+
+  #include if exists <local/hugeadm>
+}

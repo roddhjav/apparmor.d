@@ -1,0 +1,45 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/newgrp
+profile newgrp @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/nameservice-strict>
+
+  # To write records to the kernel auditing log.
+  capability audit_write,
+
+  # To remove the following errors:
+  #  setgroups: Operation not permitted
+  #  setgid: Operation not permitted
+  capability setgid,
+
+  # newgrp is a SETUID binary
+  capability setuid,
+
+  @{exec_path} mr,
+
+  # Shells to use
+  /{usr/,}bin/{,b,d,rb}ash rPUx,
+  /{usr/,}bin/{c,k,tc,z}sh rPUx,
+
+  /etc/{passwd,group,shadow,gshadow} r,
+
+  /etc/login.defs r,
+
+  owner @{PROC}/@{pid}/loginuid r,
+
+  #include if exists <local/newgrp>
+}

@@ -1,0 +1,45 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2017-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/fuseiso
+profile fuseiso @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/nameservice-strict>
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/fusermount{,3} rPx,
+
+  # Where to mount ISO files
+  owner @{HOME}/*/ rw,
+  owner @{HOME}/*/*/ rw,
+
+  # Be able to mount ISO images
+  mount fstype=fuse.fuseiso -> /home/*/*/,
+  mount fstype=fuse.fuseiso -> /home/*/*/*/,
+
+  # Image files to be mounted
+  owner @{HOME}/**.{iso,img,bin,mdf,nrg} rwk,
+  owner /media/*/**.{iso,img,bin,mdf,nrg} rwk,
+  owner @{HOME}/**.{ISO,IMG,BIN,MDF,NRG} rwk,
+  owner /media/*/**.{ISO,IMG,BIN,MDF,NRG} rwk,
+
+  owner @{HOME}/.mtab.fuseiso rwk,
+  owner @{HOME}/.mtab.fuseiso.new rw,
+
+  /dev/fuse rw,
+
+  #include if exists <local/fuseiso>
+}

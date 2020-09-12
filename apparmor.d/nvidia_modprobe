@@ -1,0 +1,63 @@
+# vim:syntax=apparmor
+
+#include <tunables/global>
+
+profile nvidia_modprobe {
+  #include <abstractions/base>
+
+  # Capabilities
+
+  capability chown,
+  capability mknod,
+  capability setuid,
+  capability sys_admin,
+
+  # Main executable
+
+  /usr/bin/nvidia-modprobe mr,
+
+  # Other executables
+
+  /usr/bin/kmod Cx -> kmod,
+
+  # System files
+
+  /dev/nvidia-uvm w,
+  /dev/nvidia-uvm-tools w,
+  @{sys}/bus/pci/devices/ r,
+  @{sys}/devices/pci[0-9]*/**/config r,
+  @{PROC}/devices r,
+  @{PROC}/modules r,
+  @{PROC}/sys/kernel/modprobe r,
+
+  # Child profiles
+
+  profile kmod {
+    #include <abstractions/base>
+
+    # Capabilities
+
+    capability sys_module,
+
+    # Main executable
+
+    /usr/bin/kmod mrix,
+
+    # Other executables
+
+    /{,usr/}bin/{,ba,da}sh ix,
+
+    # System files
+
+    /etc/modprobe.d/{,*.conf} r,
+    /etc/nvidia/current/*.conf r,
+    @{sys}/module/ipmi_devintf/initstate r,
+    @{sys}/module/ipmi_msghandler/initstate r,
+    @{sys}/module/nvidia/initstate r,
+    @{PROC}/cmdline r,
+  }
+
+  # Site-specific additions and overrides. See local/README for details.
+  #include <local/nvidia_modprobe>
+}
+

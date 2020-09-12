@@ -1,0 +1,31 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/qtchooser
+profile qtchooser @{exec_path} flags=(complain) {
+  #include <abstractions/base>
+
+  @{exec_path} mr,
+
+  /{usr/,}lib/qt5/bin/qdbus rPUx,
+  /{usr/,}lib/qt5/bin/qmake rPUx,
+
+  /usr/share/qtchooser/{,*.conf} r,
+
+  # file_inherit
+  owner @{HOME}/.xsession-errors w,
+
+  #include if exists <local/qtchooser>
+}

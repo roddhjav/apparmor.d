@@ -1,0 +1,79 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2018-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/filezilla
+profile filezilla @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/gtk>
+  #include <abstractions/fonts>
+  #include <abstractions/fontconfig-cache-read>
+  #include <abstractions/freedesktop.org>
+  #include <abstractions/nameservice>
+  #include <abstractions/user-download-strict>
+  #include <abstractions/deny-root-dir-access>
+
+  signal (send) set=(term, kill) peer=fzsftp,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/dash        rix,
+  /{usr/,}bin/uname       rix,
+
+  # When using SFTP protocol
+  /{usr/,}bin/fzsftp      rPx,
+
+  /{usr/,}bin/lsb_release rPx -> child-lsb_release,
+
+  owner @{HOME}/ r,
+  owner @{HOME}/.config/filezilla/ rw,
+  owner @{HOME}/.config/filezilla/* rwk,
+
+  owner @{HOME}/.cache/filezilla/ rw,
+  owner @{HOME}/.cache/filezilla/default_*.png rw,
+
+  /usr/share/filezilla/{,**} r,
+
+  owner @{PROC}/@{pid}/fd/ r,
+  # To remove the following error:
+  #  GLib-GIO-WARNING **: Error creating IO channel for /proc/self/mountinfo: Permission denied
+  #  (g-file-error-quark, 2)
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/mounts r,
+
+  /etc/fstab r,
+
+  # Creating new files on FTP
+        /tmp/ r,
+  owner /tmp/fz[0-9]temp-[0-9]*/ rw,
+  owner /tmp/fz[0-9]temp-[0-9]*/fz*-lockfile rwk,
+  owner /tmp/fz[0-9]temp-[0-9]*/empty_file_* rw,
+
+  # External apps
+  /{usr/,}lib/firefox/firefox rPUx,
+
+  # FTP share folder
+  owner /media/*/ftp/ r,
+  owner /media/*/ftp/** rw,
+
+  # Silencer
+  / r,
+  /*/ r,
+  /*/*/ r,
+
+  # file_inherit
+  owner /dev/tty[0-9]* rw,
+
+  #include if exists <local/filezilla>
+}

@@ -1,0 +1,109 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2018-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/sddm-greeter
+profile sddm-greeter @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/opencl-intel>
+  #include <abstractions/freedesktop.org>
+  #include <abstractions/fonts>
+  #include <abstractions/fontconfig-cache-read>
+  #include <abstractions/mesa>
+  #include <abstractions/nameservice-strict>
+
+  @{exec_path} mr,
+
+  owner /var/lib/sddm/** rw,
+  owner /var/lib/sddm/#[0-9]*[0-9] mrw,
+  owner /var/lib/sddm/.cache/** mrwkl -> /var/lib/sddm/.cache/**,
+        /var/lib/sddm/state.conf r,
+
+  /usr/share/sddm/{,**} r,
+
+  /etc/sddm.conf.d/{,*} r,
+  /etc/sddm.conf r,
+
+  # QT
+  /{usr/,}lib/@{multiarch}/qt5/plugins/kf5/org.kde.kwindowsystem.platforms/*.so mr,
+  /{usr/,}lib/@{multiarch}/qt5/plugins/plasma/dataengine/*.so mr,
+  /{usr/,}lib/@{multiarch}/qt5/qml/QtQuick/Controls/**.qmlc mr,
+  /{usr/,}lib/@{multiarch}/qt5/qml/QtQuick/Controls/Private/*.jsc mr,
+  /{usr/,}lib/@{multiarch}/qt5/qml/QtGraphicalEffects/private/DropShadowBase.qmlc mr,
+
+  # List of graphical sessions
+  /usr/share/xsessions/{,*.desktop} r,
+  /usr/share/wayland-sessions/{,*.desktop} r,
+
+  # Themes
+  /usr/share/plasma/desktoptheme/** r,
+  /usr/share/desktop-base/softwaves-theme/login/*.svg r,
+
+  # User avatars
+  /var/lib/AccountsService/icons/*.icon r,
+
+  # All the following is for the test mode
+  #------------------------------------------------------------------
+  owner @{HOME}/.cache/ rw,
+  owner @{HOME}/.cache/sddm-greeter/ rw,
+  owner @{HOME}/.cache/sddm-greeter/qmlcache/ rw,
+  owner @{HOME}/.cache/sddm-greeter/qmlcache/#[0-9]*[0-9] rw,
+  owner @{HOME}/.cache/sddm-greeter/qmlcache/[a-f0-9]*.jsc* rwl -> @{HOME}/.cache/sddm-greeter/qmlcache/#[0-9]*[0-9],
+  owner @{HOME}/.cache/sddm-greeter/qmlcache/[a-f0-9]*.qmlc* rwl -> @{HOME}/.cache/sddm-greeter/qmlcache/#[0-9]*[0-9],
+
+  owner @{HOME}/.cache/qtshadercache/ rw,
+  owner @{HOME}/.cache/qtshadercache/#[0-9]*[0-9] rw,
+  owner @{HOME}/.cache/qtshadercache/[0-9a-f]* rwl -> @{HOME}/.cache/qtshadercache/#[0-9]*[0-9],
+  owner @{HOME}/.cache/qtshadercache-*-little_endian-*/#[0-9]*[0-9] rw,
+  owner @{HOME}/.cache/qtshadercache-*-little_endian-*/[0-9a-f]* rwl -> @{HOME}/.cache/qtshadercache-*-little_endian-*/#[0-9]*[0-9],
+
+  owner @{HOME}/.config/qt5ct/{,**} r,
+  /usr/share/qt5ct/** r,
+
+  # If one is blocked, the others are probed.
+  deny owner @{HOME}/#[0-9]*[0-9] mrw,
+       owner @{HOME}/.glvnd* mrw,
+  #    owner /tmp/#[0-9]*[0-9] mrw,
+  #    owner /tmp/.glvnd* mrw,
+
+  owner @{HOME}/.config/kdeglobals r,
+  owner @{HOME}/.config/plasmarc r,
+  owner @{HOME}/.cache/icon-cache.kcache rw,
+  owner @{HOME}/.cache/plasma_theme_*.kcache rw,
+  owner @{HOME}/.cache/plasma-svgelements-* rw,
+
+  #include <abstractions/qt5-compose-cache-write>
+
+  owner @{PROC}/@{pid}/cmdline r,
+  #------------------------------------------------------------------
+
+  /etc/fstab r,
+
+  /usr/share/hwdata/pnp.ids r,
+
+  owner /{,var/}run/sddm/{,*} rw,
+
+  /{usr/,}lib/@{multiarch}/ld-*.so mr,
+
+  owner @{PROC}/@{pid}/mounts r,
+        @{PROC}/sys/kernel/core_pattern r,
+
+  /var/lib/dbus/machine-id r,
+  /etc/machine-id r,
+
+  # file_inherit
+  #/dev/tty[0-9]* rw,
+
+  #include if exists <local/sddm-greeter>
+}

@@ -1,0 +1,57 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/{btrfs,btrfsck}
+profile btrfs @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/disks-write>
+  #include <abstractions/user-download-strict>
+
+  capability sys_admin,
+  capability fowner,
+  capability sys_rawio,
+
+  @{exec_path} mr,
+
+  /{var/,}run/blkid/blkid.tab{,-*} rw,
+  /{var/,}run/blkid/blkid.tab.old rwl -> /run/blkid/blkid.tab,
+
+  owner @{PROC}/@{pid}/mounts r,
+        @{PROC}/partitions r,
+
+  # For fsck of the btrfs filesystem directly from gparted
+  owner /tmp/gparted-*/ rw,
+
+  # For scrub
+  /var/lib/btrfs/ rw,
+  /var/lib/btrfs/scrub.progress.[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]* rw,
+  /var/lib/btrfs/scrub.status.[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*{,_tmp} rwk,
+
+  # Saved metadata
+  /media/*/ r,
+  /media/*/ext2_saved/ rw,
+  /media/*/ext2_saved/image rw,
+  /media/*/*/ r,
+  /media/*/*/ext2_saved/ rw,
+  /media/*/*/ext2_saved/image rw,
+
+  # To be able to manage btrfs volumes
+  owner @{HOME}/**.{iso,img,bin,mdf,nrg} rwk,
+  owner /media/*/**.{iso,img,bin,mdf,nrg} rwk,
+  owner @{HOME}/**.{ISO,IMG,BIN,MDF,NRG} rwk,
+  owner /media/*/**.{ISO,IMG,BIN,MDF,NRG} rwk,
+
+  #include if exists <local/btrfs>
+}

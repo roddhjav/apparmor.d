@@ -1,0 +1,30 @@
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2002-2009 Novell/SUSE
+#    Copyright (C) 2010 Canonical Ltd.
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#include <tunables/global>
+profile traceroute /usr/{{bin,sbin}/traceroute,bin/linux-traceroute,bin/traceroute.db} {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/nameservice>
+
+  deny capability net_admin, # noisy setsockopt() calls
+  capability net_raw,
+
+  network inet raw,
+  network inet6 raw,
+
+  /usr/{{bin,sbin}/traceroute,bin/linux-traceroute,bin/traceroute.db} mrix,
+  @{PROC}/net/route r,
+  @{PROC}/sys/net/ipv4/{tcp_ecn,tcp_sack,tcp_timestamps,tcp_window_scaling} r,
+
+  # Site-specific additions and overrides. See local/README for details.
+  #include <local/usr.sbin.traceroute>
+}

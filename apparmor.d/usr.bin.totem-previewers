@@ -1,0 +1,41 @@
+# vim:syntax=apparmor
+# Author: Jamie Strandboge <jamie@canonical.com>
+
+#include <tunables/global>
+
+/usr/bin/totem-video-thumbnailer flags=(attach_disconnected) {
+  #include <abstractions/totem>
+
+  # Probably needed due to this program being run with bwrap
+  @{HOMEDIRS} w,
+  owner @{HOME}/ w,
+
+  # Allow read on almost anything in @{HOME}. Lenient, but private-files-strict is in
+  # effect.
+  #include <abstractions/private-files-strict>
+  owner @{HOME}/[^.]*    rw,
+  owner @{HOME}/[^.]*/** rw,
+
+  # Not needed by nautilus, but maybe other applications
+  owner /**.[pP][nN][gG] w,
+  owner /**.[jJ][pP]{,[eE]}[gG] w,
+
+  /usr/bin/totem-video-thumbnailer rm,
+
+  # Site-specific additions and overrides. See local/README for details.
+  #include <local/usr.bin.totem-previewers>
+}
+
+/usr/bin/totem-audio-preview flags=(attach_disconnected) {
+  #include <abstractions/totem>
+  #include <abstractions/audio>
+
+  # Allow read on anything in @{HOME}. Lenient, but private-files-strict is in
+  # effect.
+  #include <abstractions/private-files-strict>
+  owner @{HOME}/[^.]*    rw,
+  owner @{HOME}/[^.]*/** rw,
+
+  # Site-specific additions and overrides. See local/README for details.
+  #include <local/usr.bin.totem-previewers>
+}

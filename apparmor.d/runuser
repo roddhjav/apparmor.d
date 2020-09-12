@@ -1,0 +1,52 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}sbin/runuser
+profile runuser @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/authentication>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/wutmp>
+
+  # To remove the following errors:
+  #  runuser: cannot set user id: Operation not permitted
+  capability setuid,
+
+  # To remove the following errrors:
+  #  runuser: cannot set groups: Operation not permitted
+  capability setgid,
+
+  # To write records to the kernel auditing log.
+  capability audit_write,
+
+  # Needed? (#FIXME#)
+  capability sys_resource,
+
+  @{exec_path} mr,
+
+  # Shells to use
+  /{usr/,}bin/{,b,d,rb}ash rpux,
+  /{usr/,}bin/{c,k,tc,z}sh rpux,
+
+  owner @{PROC}/@{pid}/loginuid r,
+        @{PROC}/1/limits r,
+
+  /etc/security/limits.d/ r,
+
+  /etc/default/runuser r,
+
+  #include if exists <local/runuser>
+}

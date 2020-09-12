@@ -1,0 +1,42 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2018-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}lib/polkit-[0-9]/polkit-agent-helper-[0-9]
+profile polkit-agent-helper @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/authentication>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/consoles>
+  #include <abstractions/deny-root-dir-access>
+
+  signal (receive) set=(term, kill) peer=polkit-*-authentication-agent,
+  signal (receive) set=(term, kill) peer=pkexec,
+
+  capability setgid,
+  capability setuid,
+
+  capability audit_write,
+
+  # Needed?
+  deny capability sys_nice,
+
+  @{exec_path} mr,
+
+  # file_inherit
+  owner /dev/tty[0-9]* rw,
+  owner @{HOME}/.xsession-errors w,
+
+  #include if exists <local/polkit-agent-helper>
+}

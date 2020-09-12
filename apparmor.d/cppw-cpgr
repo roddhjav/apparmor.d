@@ -1,0 +1,42 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}sbin/cp{pw,gr}
+profile cppw-cpgr @{exec_path} {
+  #include <abstractions/base>
+
+  # To set the right permission to the files in the /etc/ dir.
+  capability chown,
+  capability fsetid,
+
+  @{exec_path} mr,
+
+  /etc/{passwd,shadow,gshadow,group} rw,
+  /etc/{passwd,shadow,gshadow,group}.@{pid} rw,
+  /etc/{passwd,shadow,gshadow,group}.new rw,
+  /etc/passwd.lock  wl -> /etc/passwd.@{pid},
+  /etc/shadow.lock  wl -> /etc/shadow.@{pid},
+  /etc/gshadow.lock wl -> /etc/gshadow.@{pid},
+  /etc/group.lock   wl -> /etc/group.@{pid},
+
+  # A process first uses lckpwdf() to lock the lock file, thereby gaining exclusive rights to
+  # modify the /etc/passwd or /etc/shadow password database.
+  /etc/.pwd.lock rwk,
+
+  # Source of the files to be replaced
+  owner /root/* r,
+
+  #include if exists <local/cppw-cpgr>
+}

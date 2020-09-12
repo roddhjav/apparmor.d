@@ -1,0 +1,37 @@
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2002-2005 Novell/SUSE
+#    Copyright (C) 2015 Canonical, Ltd.
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+# used with postfix/*
+
+
+  capability            setuid,
+  capability            setgid,
+  capability            sys_chroot,
+
+  # postfix's master can send us signals
+  signal receive peer=/usr/lib/postfix/master,
+  signal receive peer=postfix-master,
+
+  unix (send, receive) peer=(label=/usr/lib/postfix/master),
+  unix (send, receive) peer=(label=postfix-master),
+
+  /etc/mailname         r,
+  /etc/postfix/*.cf     r,
+  /etc/postfix/*.db     rk,
+  @{PROC}/net/if_inet6  r,
+  /usr/lib/postfix/*.so mr,
+  /usr/lib{,32,64}/sasl2/*    mr,
+  /usr/lib{,32,64}/sasl2/     r,
+  /usr/lib/@{multiarch}/sasl2/*      mr,
+  /usr/lib/@{multiarch}/sasl2/       r,
+
+  /var/spool/postfix/etc/*        r,
+  /var/spool/postfix/lib/lib*.so* mr,
+  /var/spool/postfix/lib/@{multiarch}/lib*.so* mr,

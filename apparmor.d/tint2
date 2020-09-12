@@ -1,0 +1,69 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2017-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/tint2
+profile tint2 @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/freedesktop.org>
+  #include <abstractions/fonts>
+  #include <abstractions/fontconfig-cache-read>
+  #include <abstractions/deny-root-dir-access>
+  #include <abstractions/app-launcher-user>
+
+  @{exec_path} mr,
+
+  # Tint2 files
+  /usr/share/tint2/{,**} r,
+
+  # Tint2 config files
+  /etc/xdg/tint2/tint2rc r,
+  owner @{HOME}/.config/tint2/{,*} rw,
+
+  # Tint2 cache files
+  owner @{HOME}/.cache/ rw,
+  owner @{HOME}/.cache/tint2/ rw,
+  owner @{HOME}/.cache/tint2/[0-9a-f]*.png w,
+  owner @{HOME}/.cache/tint2/icon.cache rwk,
+
+  # Launcher config files
+  owner @{HOME}/.config/launchers/{,*.desktop} r,
+  owner @{HOME}/.config/launchers/icons/{,*.png} r,
+
+  /{usr/,}lib/@{multiarch}/imlib2/loaders/*.so mr,
+
+  # Some missing icons
+  /usr/share/**.png r,
+
+  owner @{HOME}/.Xauthority r,
+
+  owner /tmp/tint2-@{pid}-[0-9]*.png rw,
+
+  # Battery applet
+  @{sys}/class/power_supply/ r,
+  @{sys}/devices/**/power_supply/**/* r,
+
+  @{sys}/fs/cgroup/** r,
+
+  /dev/shm/#[0-9]*[0-9] rw,
+
+  owner @{PROC}/@{pid}/cgroup r,
+  owner @{PROC}/@{pid}/mountinfo r,
+
+  # file_inherit
+  owner /dev/tty[0-9]* rw,
+  owner @{HOME}/.xsession-errors w,
+
+  #include if exists <local/tint2>
+}

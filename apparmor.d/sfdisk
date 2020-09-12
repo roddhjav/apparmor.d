@@ -1,0 +1,43 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}sbin/sfdisk
+profile sfdisk @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/disks-write>
+
+  # Needed to avoid the following error:
+  #  ioctl(3, BLKRRPART)              = -1 EACCES (Permission denied)
+  #
+  #  Checking that no-one is using this disk right now ... FAILED
+  #  This disk is currently in use - repartitioning is probably a bad idea.
+  #  Umount all file systems, and swapoff all swap partitions on this disk.
+  #  Use the --no-reread flag to suppress this check.
+  capability sys_admin,
+
+  @{exec_path} mr,
+
+  # For disk images
+  owner @{HOME}/**.{iso,img,bin,mdf,nrg} rwk,
+  owner /media/*/**.{iso,img,bin,mdf,nrg} rwk,
+  owner @{HOME}/**.{ISO,IMG,BIN,MDF,NRG} rwk,
+  owner /media/*/**.{ISO,IMG,BIN,MDF,NRG} rwk,
+
+  # For backups
+  owner @{HOME}/**.{bak,back} rwk,
+  owner /media/*/**.{bak,back} rwk,
+
+  #include if exists <local/sfdisk>
+}

@@ -1,0 +1,39 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2017-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/gnome-keyring-daemon
+profile gnome-keyring-daemon @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/deny-root-dir-access>
+
+  # Remove the following error:
+  #  gnome-keyring-daemon: insufficient process capabilities, unsecure memory might get used
+  capability ipc_lock,
+
+  @{exec_path} mr,
+
+  # Keyrings location
+  owner @{HOME}/.local/share/keyrings/ rw,
+  owner @{HOME}/.local/share/keyrings/* rwl,
+
+  # Seahorse and SSH keys
+  owner @{HOME}/.ssh/ r,
+  owner @{HOME}/.ssh/** r,
+
+  owner /{,var/}run/user/[0-9]*/keyring/ rw,
+  owner /{,var/}run/user/[0-9]*/keyring/* rw,
+
+  #include if exists <local/gnome-keyring-daemon>
+}

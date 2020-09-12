@@ -1,0 +1,51 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/dbus-daemon
+profile dbus-daemon @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/nameservice-strict>
+
+  capability setgid,
+  capability setuid,
+  capability sys_resource,
+
+  signal (receive) set=(term, kill),
+
+  @{exec_path} mr,
+
+  /usr/libexec/* rPUx,
+
+  owner @{PROC}/@{pid}/mounts r,
+  owner @{PROC}/@{pid}/oom_score_adj rw,
+        @{PROC}/@{pids}/cmdline r,
+        @{PROC}/sys/kernel/random/boot_id r,
+
+  /usr/share/dbus-1/ r,
+  /usr/share/dbus-1/** r,
+  /etc/dbus-1/ r,
+  /etc/dbus-1/** r,
+
+  /usr/share/defaults/**.conf r,
+
+        /{var/,}run/systemd/users/[0-9]* r,
+  owner /{var/,}run/user/[0-9]*/dbus-1/ rw,
+  owner /{var/,}run/user/[0-9]*/dbus-1/services/ rw,
+
+  # file_inherit
+  owner /dev/tty[0-9]* rw,
+
+  #include if exists <local/dbus-daemon>
+}

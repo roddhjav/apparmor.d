@@ -1,0 +1,33 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}sbin/on_ac_power /{usr/,}bin/on_ac_power
+profile on-ac-power @{exec_path} {
+  #include <abstractions/base>
+
+  @{exec_path} r,
+  /{usr/,}bin/dash r,
+
+  /{usr/,}bin/awk   rix,
+  /{usr/,}bin/cat   rix,
+
+  @{sys}/class/power_supply/ r,
+  @{sys}/devices/**/power_supply/**/{online,type} r,
+
+  @{PROC}/pmu/info r,
+  @{PROC}/apm r,
+
+  #include if exists <local/on-ac-power>
+}

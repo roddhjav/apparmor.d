@@ -1,0 +1,38 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2018-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/curl
+profile curl @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/user-download-strict>
+  #include <abstractions/openssl>
+  #include <abstractions/ssl_certs>
+
+  @{exec_path} mr,
+
+  /usr/share/publicsuffix/public_suffix_list.* r,
+
+  @{PROC}/@{pids}/stat r,
+  @{PROC}/@{pids}/net/dev r,
+  @{PROC}/@{pids}/net/tcp{,6} r,
+  @{PROC}/@{pids}/cmdline r,
+  @{PROC}/diskstats r,
+  @{PROC}/uptime r,
+  @{PROC}/loadavg r,
+
+  #include if exists <local/curl>
+}

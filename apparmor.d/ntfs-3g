@@ -1,0 +1,54 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2018-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path}  = /{usr/,}bin/{low,}ntfs{,-3g}
+@{exec_path} += /{usr/,}sbin/mount.{low,}ntfs{,-3g}
+profile ntfs-3g @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/disks-write>
+  # When UserMapping is placed under /.NTFS-3G/UserMapping on the NTFS volume
+  #include <abstractions/nameservice-strict>
+
+  # Needed in order to mount ntfs disks
+  capability setgid,
+  capability setuid,
+  capability sys_admin,
+
+  @{exec_path} mr,
+
+        @{PROC}/@{pids}/task/@{tid}/status r,
+  owner @{PROC}/@{pid}/mounts r,
+        @{PROC}/@{pids}/mountinfo r,
+        @{PROC}/swaps r,
+
+  /dev/fuse rw,
+
+  # Mount points
+  /media/*/ r,
+  /media/*/*/ r,
+  /mnt/ r,
+  /mnt/*/ r,
+
+  # Allow to mount ntfs disks only under the /media/ and /mnt/ dirs
+  mount fstype=fuseblk /dev/sd[a-z][0-9]* -> /media/*/,
+  mount fstype=fuseblk /dev/sd[a-z][0-9]* -> /media/*/*/,
+  mount fstype=fuseblk /dev/sd[a-z][0-9]* -> /mnt/,
+  mount fstype=fuseblk /dev/sd[a-z][0-9]* -> /mnt/*/,
+
+  # kmod is used to load the fuse kernel module
+  /{usr/,}bin/kmod rPx,
+
+  #include if exists <local/ntfs-3g>
+}

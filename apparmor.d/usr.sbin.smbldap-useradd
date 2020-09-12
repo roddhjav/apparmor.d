@@ -1,0 +1,37 @@
+# Last Modified: Tue Jan  3 00:17:40 2012
+#include <tunables/global>
+
+profile smbldap-useradd /usr/{bin,sbin}/smbldap-useradd flags=(complain) {
+  #include <abstractions/base>
+  #include <abstractions/bash>
+  #include <abstractions/nameservice>
+  #include <abstractions/perl>
+
+  /dev/tty rw,
+  /{,usr/}bin/bash ix,
+  /etc/init.d/nscd Cx,
+  /etc/shadow r,
+  /etc/smbldap-tools/smbldap.conf r,
+  /etc/smbldap-tools/smbldap_bind.conf r,
+  /usr/{bin,sbin}/smbldap-useradd r,
+  /usr/{bin,sbin}/smbldap_tools.pm r,
+  /var/log/samba/log.smbd w,
+
+  # Site-specific additions and overrides. See local/README for details.
+  #include <local/usr.sbin.smbldap-useradd>
+
+  profile /etc/init.d/nscd flags=(complain) {
+    #include <abstractions/base>
+    #include <abstractions/nameservice>
+
+    capability sys_ptrace,
+
+    /{,usr/}bin/bash r,
+    /{,usr/}bin/mountpoint rix,
+    /{,usr/}bin/systemctl rix,
+    /dev/tty rw,
+    /etc/init.d/nscd r,
+    /etc/rc.status r,
+
+  }
+}

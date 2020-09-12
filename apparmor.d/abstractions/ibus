@@ -1,0 +1,29 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2010 Canonical Ltd.
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+  # abstraction for ibus input methods
+  owner @{HOME}/.config/ibus/ r,
+  owner @{HOME}/.config/ibus/bus/ rw,
+  owner @{HOME}/.config/ibus/bus/* rw,
+
+  # abstract path in ibus < 1.5.22 uses /tmp
+  unix (connect, receive, send)
+       type=stream
+       peer=(addr="@/tmp/ibus/dbus-*"),
+
+  # abstract path in ibus >= 1.5.22 uses $XDG_CACHE_HOME (ie, @{HOME}/.cache)
+  # This should use this, but due to LP: #1856738 we cannot
+  #unix (connect, receive, send)
+  #    type=stream
+  #    peer=(addr="@@{HOME}/.cache/ibus/dbus-*"),
+  unix (connect, receive, send)
+       type=stream
+       peer=(addr="@/home/*/.cache/ibus/dbus-*"),

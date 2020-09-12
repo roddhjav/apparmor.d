@@ -1,0 +1,56 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/apt-listbugs
+profile apt-listbugs @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/ruby>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/openssl>
+
+  #capability sys_tty_config,
+
+  @{exec_path} r,
+  /{usr/,}bin/ruby2.[0-9]* rix,
+
+  /{usr/,}bin/dash       rix,
+  /{usr/,}bin/logname    rix,
+
+  /{usr/,}bin/apt-config rPx,
+  /{usr/,}bin/dpkg-query rPx,
+
+  /usr/local/lib/site_ruby/[0-9].[0-9].[0-9]/**.rb r,
+
+  /usr/share/rubygems-integration/*/specifications/ r,
+  /usr/share/rubygems-integration/*/specifications/* r,
+
+  /etc/apt/listbugs/{,*} r,
+
+  @{PROC}/@{pid}/loginuid r,
+
+  # The following is needed when apt-listbugs uses debcconf GUI frontends.
+  #include <abstractions/gtk>
+  #include <abstractions/fonts>
+  #include <abstractions/fontconfig-cache-read>
+  #include <abstractions/freedesktop.org>
+  capability dac_read_search,
+  /{usr/,}bin/lsb_release rPx -> child-lsb_release,
+  /{usr/,}bin/hostname    rPx,
+  owner @{PROC}/@{pid}/mounts r,
+  @{HOME}/.Xauthority r,
+
+  #include if exists <local/apt-listbugs>
+}

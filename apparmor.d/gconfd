@@ -1,0 +1,30 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2017-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}lib/@{multiarch}/gconf/gconfd-[0-9]
+profile gconfd @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/nameservice-strict>
+
+  @{exec_path} mr,
+
+  /var/lib/gconf/** r,
+  /etc/gconf/** r,
+
+  owner @{HOME}/.gconf/ rw,
+  owner @{HOME}/.gconf/.testing.writeability rw,
+
+  #include if exists <local/gconfd>
+}

@@ -1,0 +1,32 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/wavemon
+profile wavemon @{exec_path} {
+  #include <abstractions/base>
+
+  # To scan WiFi networks
+  capability net_admin,
+
+  @{exec_path} mr,
+
+  owner @{HOME}/.wavemonrc rw,
+
+  /etc/nsswitch.conf r,
+
+  @{PROC}/@{pid}/net/dev r,
+
+  #include if exists <local/wavemon>
+}

@@ -1,0 +1,83 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2018-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}sbin/vsftpd
+profile vsftpd @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/nameservice>
+  #include <abstractions/openssl>
+  #include <abstractions/deny-root-dir-access>
+
+  # Only for local users authentication
+  #include <abstractions/authentication>
+
+  # To be able to listen on ports < 1024
+  capability net_bind_service,
+
+  # To be able to chroot local users
+  capability sys_chroot,
+
+  # To run vsftpd as ftp:ftp
+  capability setgid,
+  capability setuid,
+
+  # To change ownership of uploaded files
+  capability chown,
+
+  # Something to do with local users (?)
+  capability audit_write,
+
+  # Needed when container isolation is set (isolate=YES and isolate_network=YES), but vsftpd can
+  # work witout it as its code is set up to continue happily if container isolation is not
+  # available (when first written, many kernels didn't have the underlying support).
+  capability sys_admin,
+
+  # Needed when vsftpd maintains sessions (session_support=YES)
+  capability net_admin,
+  capability dac_read_search,
+  # If session_support=YES, vsftpd will also try and update utmp and wtmp
+  #include <abstractions/wutmp>
+
+  # To validate allowed users shells
+  /etc/shells r,
+
+  # List of users disallowed FTP access
+  /etc/ftpusers r,
+
+  # For libwrap (TCP Wrapper) support (tcp_wrappers=YES)
+  /etc/hosts.{allow,deny} r,
+
+  # vsftpd config files
+  /etc/vsftpd.conf r,
+  /etc/vsftpd/**/ r,
+  /etc/vsftpd/* r,
+  /etc/vsftpd/users/* r,
+
+  # Certs for SSL/TLS conection
+  /etc/vsftpd/certs/*.crt r,
+  /etc/vsftpd/certs/*.key r,
+
+  # Logs
+  /var/log/vsftpd.log wk,
+  /var/log/xferlog w,
+
+  # A directory which vsftpd will try to change into after a user login
+  # Set "rw" when vsftpd allows users to send files
+  # The "k" flag is needed when lock_upload_files=YES
+  /media/ftp/ r,
+  /media/ftp/** rwk,
+
+  #include if exists <local/vsftpd>
+}

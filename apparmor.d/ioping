@@ -1,0 +1,55 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/ioping
+profile ioping @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/disks-read>
+
+  # For pinging other users files as root.
+  capability dac_read_search,
+  capability dac_override,
+
+  @{exec_path} mr,
+
+  owner @{PROC}/@{pid}/mountinfo r,
+
+  # The RW set on dirs means that the dirs can be pinged, which is safe write operation. In the
+  # case of files, this write operation can damage files, so we allow only to read the files. When
+  # pinging dirs, a file similar to "#1573619" is created in that dir, so it's allowed as well.
+  / rw,
+  /#[0-9]*[0-9] rw,
+  /**/ rw,
+  /**/#[0-9]*[0-9] rw,
+
+  # Allow pinging files, but without write operation. Like in the case of dirs, when pinging dirs
+  # there's also created the file similar to "#1573619" .
+  /usr/**   r,
+  /lib/**   r,
+  /bin/*    r,
+  /sbin/*   r,
+  /etc/**   r,
+  /boot/**  r,
+  /opt/**   r,
+  /var/**   r,
+  /media/** r,
+  /tmp/**   r,
+  /home/**  r,
+
+  # This was created when ioping was used on an external SD card.
+  /**/ioping.tmp.* w,
+
+  #include if exists <local/ioping>
+}

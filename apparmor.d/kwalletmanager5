@@ -1,0 +1,82 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2018-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/kwalletmanager5
+profile kwalletmanager5 @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/X>
+  #include <abstractions/gtk>
+  #include <abstractions/fonts>
+  #include <abstractions/fontconfig-cache-read>
+  #include <abstractions/freedesktop.org>
+  #include <abstractions/audio>
+  #include <abstractions/user-download-strict>
+  #include <abstractions/qt5-compose-cache-write>
+  #include <abstractions/qt5-settings-write>
+  #include <abstractions/mesa>
+  #include <abstractions/dri-enumerate>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/deny-root-dir-access>
+
+  @{exec_path} mr,
+
+  /{usr/,}lib/@{multiarch}/qt5/plugins/kf5/org.kde.kwindowsystem.platforms/KF5WindowSystemX11Plugin.so mr,
+  /{usr/,}lib/@{multiarch}/qt5/plugins/kf5/FrameworkIntegrationPlugin.so mr,
+  /{usr/,}lib/@{multiarch}/qt5/plugins/phonon_platform/kde.so mr,
+  /{usr/,}lib/@{multiarch}/qt5/plugins/phonon4qt5_backend/phonon_vlc.so mr,
+
+  /usr/share/kxmlgui5/kwalletmanager5/kwalletmanager.rc r,
+
+  owner @{HOME}/.config/#[0-9]*[0-9] rw,
+  owner @{HOME}/.config/kwalletrc rw,
+  owner @{HOME}/.config/kwalletrc.lock rwk,
+  owner @{HOME}/.config/kwalletrc.* rwl -> @{HOME}/.config/#[0-9]*[0-9],
+  owner @{HOME}/.config/kwalletmanager5rc rw,
+  owner @{HOME}/.config/kwalletmanager5rc.lock rwk,
+  owner @{HOME}/.config/kwalletmanager5rc.* rwl -> @{HOME}/.config/#[0-9]*[0-9],
+  owner @{HOME}/.config/session/#[0-9]*[0-9] rw,
+  owner @{HOME}/.config/session/kwalletmanager5_* rwl -> @{HOME}/.config/session/#[0-9]*[0-9],
+  owner @{HOME}/.config/session/kwalletmanager5_*.lock rwk,
+
+  owner @{HOME}/.config/kdeglobals r,
+  owner @{HOME}/.cache/icon-cache.kcache rw,
+
+  # To configure Qt5 settings (theme, font, icons, etc.) under DE/WM without Qt integration
+  owner @{HOME}/.config/qt5ct/{,**} r,
+  /usr/share/qt5ct/** r,
+
+  deny owner @{PROC}/@{pid}/cmdline r,
+             @{PROC}/sys/kernel/core_pattern r,
+  deny       @{PROC}/sys/kernel/random/boot_id r,
+             @{PROC}/@{pid}/mountinfo r,
+             @{PROC}/@{pid}/mounts r,
+
+  /etc/fstab r,
+
+  /etc/xdg/ui/ui_standards.rc r,
+
+  /var/lib/dbus/machine-id r,
+  /etc/machine-id r,
+
+  /usr/share/hwdata/pnp.ids r,
+
+  /dev/shm/ r,
+  /dev/shm/#[0-9]*[0-9] rw,
+
+  owner /tmp/xauth-[0-9]*-_[0-9] r,
+
+  #include if exists <local/kwalletmanager5>
+}

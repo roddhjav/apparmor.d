@@ -1,0 +1,48 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2018-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/dumpcap
+profile dumpcap @{exec_path} {
+  #include <abstractions/base>
+
+  # To capture packekts
+  capability net_raw,
+  capability net_admin,
+
+  signal (receive) peer=wireshark,
+
+  @{exec_path} mr,
+
+  @{sys}/class/net/ r,
+  @{sys}/bus/usb/devices/ r,
+  @{sys}/devices/virtual/net/*/type r,
+  @{sys}/devices/pci[0-9]*/**/net/*/type r,
+
+  @{PROC}/@{pid}/net/dev r,
+  @{PROC}/@{pid}/net/psched r,
+
+  /dev/ r,
+
+  # Traffic log files
+  owner /tmp/wireshark_*_[0-9]*_*.pcapng rw,
+  owner /tmp/*.pcap rw,
+
+  # file_inherit
+  owner @{HOME}/.xsession-errors w,
+  /usr/share/GeoIP/* r,
+  /dev/dri/card[0-9] rw,
+
+  #include if exists <local/dumpcap>
+}

@@ -1,0 +1,105 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2018-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}sbin/dhclient-script
+profile dhclient-script @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/nameservice>
+  #include <abstractions/openssl>
+  #include <abstractions/ssl_certs>
+
+  # Needed?
+  audit deny capability sys_module,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/dash mrix,
+
+  /{usr/,}bin/ping      rPx,
+  /{usr/,}bin/run-parts rCx -> run-parts,
+
+  # To remove the following error:
+  #  /sbin/dhclient-script: 133: hostname: Permission denied
+  /{usr/,}bin/hostname  rPx,
+
+  # To read scripts
+  /etc/dhcp/dhclient-{enter,exit}-hooks.d/{,*} r,
+
+  # For debug script
+  /{usr/,}bin/date rix,
+  /etc/dhcp/debug r,
+  owner /tmp/dhclient-script.debug rw,
+
+  # For ddclient script
+  /{usr/,}sbin/ddclient rPx,
+  /etc/default/ddclient r,
+  /{usr/,}bin/logger    rix,
+
+  # For samba script
+  /{usr/,}bin/mv rix,
+  /etc/samba/dhcp.conf{,.new} rw,
+  # For netbios name servers settings from a DHCP server
+  /var/lib/samba/dhcp.conf{,.new} rw,
+
+  # Many scripts may use the ip tool
+  capability net_admin,
+  /{usr/,}bin/ip        rix,
+
+  # For loadbalance
+  /etc/iproute2/rt_tables r,
+  /etc/iproute2/rt_tables.d/{,*} r,
+  owner @{PROC}/@{pid}/loginuid r,
+
+  # For updating the /etc/resolv.conf file
+  /{usr/,}bin/readlink  rix,
+  /{usr/,}bin/rm rix,
+  /{usr/,}bin/chown     rix,
+  /{usr/,}bin/chmod     rix,
+  /{usr/,}bin/sed       rix,
+  /etc/fstab r,
+  /etc/resolv.conf.dhclient-new.@{pid} rw,
+  /etc/resolv.conf rw,
+
+  # For stable-privacy addresses
+  /{usr/,}sbin/sysctl   rix,
+  /{usr/,}bin/head      rix,
+  /{usr/,}bin/xxd       rix,
+  /{usr/,}bin/paste     rix,
+  /{usr/,}bin/fold      rix,
+  /{usr/,}bin/tr        rix,
+  @{PROC}sys/net/ipv6/conf/*/stable_secret w,
+
+  # For printing env
+  /{usr/,}bin/printenv  rix,
+  owner /tmp/variables.txt w,
+
+  # file_inherit
+  /var/lib/dhcp/dhclient.leases r,
+
+
+  profile run-parts {
+    #include <abstractions/base>
+
+    /{usr/,}bin/run-parts mr,
+
+    /etc/dhcp/dhclient-{enter,exit}-hooks.d/ r,
+
+    # file_inherit
+    owner /var/lib/dhcp/dhclient.leases r,
+
+  }
+
+  #include if exists <local/dhclient-script>
+}

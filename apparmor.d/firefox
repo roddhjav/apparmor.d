@@ -1,0 +1,214 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2015-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{MOZ_LIBDIR} = /{usr/,}lib/firefox{,-esr}
+@{MOZ_HOMEDIR} = @{HOME}/.mozilla
+@{MOZ_CACHEDIR} = @{HOME}/.cache/mozilla
+
+@{exec_path} = @{MOZ_LIBDIR}/firefox{,-bin,-esr}
+profile firefox @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/opencl-intel>
+  #include <abstractions/gtk>
+  #include <abstractions/fonts>
+  #include <abstractions/fontconfig-cache-read>
+  #include <abstractions/freedesktop.org>
+  #include <abstractions/mesa-cache-write>
+  #include <abstractions/audio>
+  #include <abstractions/enchant>
+  #include <abstractions/user-download-strict>
+  #include <abstractions/thumbnails-cache-read>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/deny-dconf>
+  #include <abstractions/deny-root-dir-access>
+  ##include <abstractions/nvidia>
+
+
+  ptrace peer=@{profile_name},
+
+  signal (send) set=(term, kill) peer=keepassxc-proxy,
+  signal (send) set=(term, kill) peer=firefox-*,
+
+  @{exec_path} mrix,
+
+  # The following rules are needed only when the kernel.unprivileged_userns_clone option is set
+  # to "1".
+  capability sys_admin,
+  capability sys_chroot,
+  owner @{PROC}/@{pid}/setgroups w,
+  owner @{PROC}/@{pid}/gid_map w,
+  owner @{PROC}/@{pid}/uid_map w,
+
+  /{usr/,}bin/dash rix,
+
+  # Firefox files
+  @{MOZ_LIBDIR}/{,**}  r,
+  @{MOZ_LIBDIR}/*.so  mr,
+  @{MOZ_LIBDIR}/crashreporter     rPx,
+  @{MOZ_LIBDIR}/minidump-analyzer rPx,
+  @{MOZ_LIBDIR}/pingsender        rPx,
+  @{MOZ_LIBDIR}/plugin-container  rPx,
+  /usr/share/firefox/{,**} r,
+  /etc/firefox/{,**} r,
+
+  # Firefox plugins & extensions
+  /{usr/,}lib/mozilla/plugins/ r,
+  /{usr/,}lib/mozilla/plugins/libvlcplugin.so mr,
+  /usr/share/mozilla/extensions/{,**} r,
+  /usr/share/webext/{,**} r,
+
+  # To be able to read docs
+  /usr/share/doc/{,**} r,
+
+  # Firefox home files
+  owner @{MOZ_HOMEDIR}/ rw,
+  owner @{MOZ_HOMEDIR}/{extensions,systemextensionsdev}/ rw,
+  owner @{MOZ_HOMEDIR}/firefox/ rw,
+  owner @{MOZ_HOMEDIR}/firefox/installs.ini rw,
+  owner @{MOZ_HOMEDIR}/firefox/profiles.ini rw,
+  owner @{MOZ_HOMEDIR}/firefox/*/ rw,
+  owner @{MOZ_HOMEDIR}/firefox/*/** rwk,
+  # For keepassxc integration
+  owner @{MOZ_HOMEDIR}/native-messaging-hosts/org.keepassxc.keepassxc_browser.json r,
+
+  # Cache
+  owner @{HOME}/.cache/ rw,
+  owner @{MOZ_CACHEDIR}/ rw,
+  owner @{MOZ_CACHEDIR}/** rwk,
+
+  owner @{HOME}/.cache/gstreamer-[0-9]*/ rw,
+  owner @{HOME}/.cache/gstreamer-[0-9]*/registry.x86_64.bin{,.tmp*} rw,
+
+  deny @{sys}/devices/system/cpu/present r,
+  deny @{sys}/devices/system/cpu/cpufreq/policy[0-9]/cpuinfo_max_freq r,
+  deny @{sys}/devices/system/cpu/cpu[0-9]/cache/index[0-9]/size r,
+
+       owner @{PROC}/@{pid}/fd/ r,
+       owner @{PROC}/@{pid}/cgroup r,
+  deny owner @{PROC}/@{pid}/stat r,
+  deny owner @{PROC}/@{pids}/cmdline r,
+  deny owner @{PROC}/@{pids}/environ r,
+       owner @{PROC}/@{pid}/task/ r,
+  deny owner @{PROC}/@{pid}/task/@{tid}/stat r,
+  # To remove the following error:
+  #  GLib-GIO-WARNING **: Error creating IO channel for /proc/self/mountinfo: Permission denied
+  #  (g-file-error-quark, 2)
+       owner @{PROC}/@{pid}/mountinfo r,
+       owner @{PROC}/@{pid}/mounts r,
+  # About:memory
+  deny owner @{PROC}/@{pid}/statm r,
+  deny owner @{PROC}/@{pid}/smaps r,
+  # Link Monitor (since 49.0.1)
+  deny       @{PROC}/@{pid}/net/arp r,
+  deny       @{PROC}/@{pid}/net/route r,
+  #
+  deny       @{PROC}/@{pid}/net/if_inet6 r,
+
+  /etc/mime.types r,
+  /etc/mailcap r,
+
+  # Set default browser
+  /{usr/,}bin/update-mime-database rPUx,
+  owner @{HOME}/.config/mimeapps.list{,.*} rw,
+  owner @{HOME}/.local/share/mime/packages/user-extension-{htm,html,xht,xhtml,shtml}.xml rw,
+  owner @{HOME}/.local/share/mime/packages/user-extension-{htm,html,xht,xhtml,shtml}.xml.* rw,
+
+  # KDE system keyring
+  /{usr/,}lib/@{multiarch}/qt5/plugins/kf5/org.kde.kwindowsystem.platforms/KF5WindowSystemX11Plugin.so mr,
+  /usr/share/xul-ext/kwallet5/* r,
+  /etc/xul-ext/kwallet5.js r,
+
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+
+  /var/lib/dbus/machine-id r,
+  /etc/machine-id r,
+
+    /var/tmp/ r,
+        /tmp/ r,
+  owner /tmp/* rw,
+  owner /tmp/firefox_*/ rw,
+  owner /tmp/firefox_*/* rwk,
+  owner /tmp/firefox/ rw,
+  owner /tmp/firefox/* rwk,
+  owner /tmp/mozilla_*/ rw,
+  owner /tmp/mozilla_*/* rw,
+  owner /tmp/Temp-*/ rw,
+
+  deny /dev/ r,
+  deny /dev/shm/ r,
+  owner /dev/shm/org.chromium.* rw,
+  owner /dev/shm/org.mozilla.ipc.@{pid}.[0-9]* rw,
+
+  /etc/fstab r,
+
+  # Silencer
+  deny /{usr/,}lib/firefox/** w,
+
+  /{usr/,}bin/gpa              rPUx,
+  /{usr/,}bin/keepassxc-proxy  rPUx, # For storing passwords externally
+
+  /{usr/,}bin/lsb_release       rPx -> child-lsb_release,
+
+  /{usr/,}bin/xdg-open                                    rCx -> open,
+  /{usr/,}bin/exo-open                                    rCx -> open,
+  /{usr/,}lib/@{multiarch}/glib-[0-9]*/gio-launch-desktop rCx -> open,
+
+  # Allowed apps to open
+  /{usr/,}bin/vlc              rPx,
+  /{usr/,}bin/qbittorrent      rPx,
+  /{usr/,}bin/smplayer         rPx,
+  /{usr/,}bin/geany            rPx,
+  /{usr/,}bin/okular           rPx,
+  /{usr/,}bin/viewnior        rPUx,
+  /{usr/,}bin/xarchiver        rPx,
+  /{usr/,}bin/engrampa         rPx,
+  /{usr/,}bin/thunderbird      rPx,
+  /{usr/,}bin/telegram-desktop rPx,
+  /{usr/,}bin/spacefm          rPx,
+  /{usr/,}bin/qpdfview         rPx,
+
+  # file_inherit
+  owner /dev/tty[0-9]* rw,
+
+
+  profile open {
+    #include <abstractions/base>
+    #include <abstractions/xdg-open>
+
+    /{usr/,}bin/xdg-open                                    mr,
+    /{usr/,}bin/exo-open                                    mr,
+    /{usr/,}lib/@{multiarch}/glib-[0-9]*/gio-launch-desktop mr,
+
+    # Allowed apps to open
+    /{usr/,}bin/vlc              rPx,
+    /{usr/,}bin/qbittorrent      rPx,
+    /{usr/,}bin/smplayer         rPx,
+    /{usr/,}bin/geany            rPx,
+    /{usr/,}bin/okular           rPx,
+    /{usr/,}bin/viewnior        rPUx,
+    /{usr/,}bin/xarchiver        rPx,
+    /{usr/,}bin/engrampa         rPx,
+    /{usr/,}bin/thunderbird      rPx,
+    /{usr/,}bin/telegram-desktop rPx,
+    /{usr/,}bin/spacefm          rPx,
+    /{usr/,}bin/qpdfview         rPx,
+
+    # file_inherit
+    owner @{HOME}/.xsession-errors w,
+
+  }
+
+  #include if exists <local/firefox>
+}

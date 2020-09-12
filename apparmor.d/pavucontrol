@@ -1,0 +1,46 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2017-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/pavucontrol
+profile pavucontrol @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/gtk>
+  #include <abstractions/fonts>
+  #include <abstractions/fontconfig-cache-read>
+  #include <abstractions/freedesktop.org>
+  #include <abstractions/audio>
+  #include <abstractions/deny-root-dir-access>
+
+  @{exec_path} mr,
+
+  # Pavucontrol files
+  /usr/share/pavucontrol/pavucontrol.glade r,
+
+  # Pavucontrol config files
+  owner @{HOME}/.config/pavucontrol.ini* rw,
+
+  /var/lib/dbus/machine-id r,
+  /etc/machine-id r,
+
+  owner @{PROC}/@{pid}/cmdline r,
+
+  # Missing icons
+  /usr/share/**/icons/**/*.png r,
+
+  # file_inherit
+  owner /dev/tty[0-9]* rw,
+
+  #include if exists <local/pavucontrol>
+}

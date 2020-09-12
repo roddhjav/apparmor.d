@@ -1,0 +1,112 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2018-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{JD_INSTALLDIR} = /home/*/jd2
+@{JD_SH_PATH} = /home/*/[dD]ownload{,s}
+@{JD_SH_PATH} += /home/*/[dD]esktop
+
+@{exec_path} = @{JD_SH_PATH}/JD2Setup_{x86,x64}.sh
+profile jdownloader-install @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/freedesktop.org>
+  #include <abstractions/fonts>
+  #include <abstractions/fontconfig-cache-read>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/deny-root-dir-access>
+
+  @{exec_path} r,
+
+  /{usr/,}bin/basename rix,
+  /{usr/,}bin/dirname  rix,
+  /{usr/,}bin/which    rix,
+  /{usr/,}bin/expr     rix,
+  /{usr/,}bin/mkdir    rix,
+  /{usr/,}bin/rm       rix,
+  /{usr/,}bin/tail     rix,
+  /{usr/,}bin/gunzip   rix,
+  /{usr/,}bin/gzip     rix,
+  /{usr/,}bin/tar      rix,
+  /{usr/,}bin/gawk     rix,
+  /{usr/,}bin/ls       rix,
+  /{usr/,}bin/{,e}grep rix,
+  /{usr/,}bin/df       rix,
+  /{usr/,}bin/nohup    rix,
+
+  /{usr/,}bin/dash     rix,
+
+  # Check for old JD installations
+  deny /opt/ r,
+
+  owner @{JD_SH_PATH}/JD2Setup_{x86,x64}.sh.[0-9]*.dir/ rw,
+  owner @{JD_SH_PATH}/JD2Setup_{x86,x64}.sh.[0-9]*.dir/** rwk,
+  owner @{JD_SH_PATH}/JD2Setup_{x86,x64}.sh.[0-9]*.dir/jre/bin/unpack200 rix,
+  owner @{JD_SH_PATH}/JD2Setup_{x86,x64}.sh.[0-9]*.dir/jre/bin/java rix,
+  owner @{JD_SH_PATH}/JD2Setup_{x86,x64}.sh.[0-9]*.dir/jre/lib/*/jli/libjli.so mrw,
+  owner @{JD_SH_PATH}/JD2Setup_{x86,x64}.sh.[0-9]*.dir/jre/lib/*/server/libjvm.so mrw,
+  owner @{JD_SH_PATH}/JD2Setup_{x86,x64}.sh.[0-9]*.dir/jre/lib/*/*.so mrw,
+  owner @{JD_SH_PATH}/install4jError[0-9]*.log rw,
+
+  owner @{HOME}/.oracle_jre_usage/[0-9a-f]*.timestamp rw,
+  owner @{HOME}/.java/.userPrefs/.user.lock.* rwk,
+  owner @{HOME}/.java/fonts/[0-9]*/fcinfo*.tmp rw,
+  owner @{HOME}/.java/fonts/[0-9]*/fcinfo-*.properties rw,
+  owner @{HOME}/.java/.userPrefs/com/install4j/installations/prefs.tmp rw,
+  owner @{HOME}/.java/.userPrefs/com/install4j/installations/prefs.xml rw,
+
+  owner @{HOME}/.install4j rw,
+
+  # While creating the desktop icon
+  owner @{HOME}/.local/share/applications/i4j[0-9]*.tmp rw,
+  owner @{HOME}/.local/share/applications/JDownloader*.desktop rw,
+
+        /tmp/ r,
+  owner /tmp/_jdinstall/ rw,
+  owner /tmp/JD2Setup_{x86,x64}.sh.[0-9]*.dir/ rw,
+  owner /tmp/JD2Setup_{x86,x64}.sh.[0-9]*.dir/sfx_archive.tar.gz rw,
+  owner /tmp/hsperfdata_*/ rw,
+  owner /tmp/hsperfdata_*/@{pid} rw,
+  owner /tmp/appwork[0-9]*[0-9] rw,
+  owner /tmp/i4j*.log rw,
+  owner /tmp/i4j*.sh rw,
+  owner /tmp/i4*.tmp rw,
+  owner /tmp/imageio[0-9]*.tmp rw,
+  owner /tmp/install4jError[0-9]*.log rw,
+
+  owner @{HOME}/.Xauthority r,
+
+       owner @{PROC}/@{pid}/fd/ r,
+  deny       @{PROC}/@{pid}/net/ipv6_route r,
+  deny       @{PROC}/@{pid}/net/if_inet6 r,
+       owner @{PROC}/@{pid}/mountinfo r,
+       owner @{PROC}/@{pid}/mounts r,
+
+  # What's this for?
+  deny owner @{HOME}/.mozilla/firefox/ r,
+  deny owner @{HOME}/.mozilla/firefox/*.default/prefs.js r,
+
+  # Needed when installing JD
+             / r,
+             /home/ r,
+       owner @{HOME}/ r,
+       owner @{JD_INSTALLDIR}/ rw,
+       owner @{JD_INSTALLDIR}/** rw,
+  deny owner @{JD_INSTALLDIR}/jre/bin/java rx,
+  deny owner @{JD_INSTALLDIR}/jre/lib/*/jli/libjli.so m,
+  deny owner @{JD_INSTALLDIR}/jre/lib/*/server/libjvm.so m,
+  deny owner @{JD_INSTALLDIR}/jre/lib/*/*.so m,
+  deny owner @{JD_INSTALLDIR}/JDownloader2 rx,
+
+  #include if exists <local/jdownloader-install>
+}

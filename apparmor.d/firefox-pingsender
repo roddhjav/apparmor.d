@@ -1,0 +1,38 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{MOZ_LIBDIR} = /{usr/,}lib/firefox
+@{MOZ_HOMEDIR} = @{HOME}/.mozilla
+@{MOZ_CACHEDIR} = @{HOME}/.cache/mozilla
+
+@{exec_path} = @{MOZ_LIBDIR}/pingsender
+profile firefox-pingsender @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/openssl>
+  #include <abstractions/ssl_certs>
+  #include <abstractions/deny-root-dir-access>
+
+  signal (receive) set=(term, kill) peer=firefox,
+
+  @{exec_path} mr,
+
+  owner @{HOME}/.mozilla/firefox/*.*/saved-telemetry-pings/[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]* rw,
+
+  # file_inherit
+  owner /dev/tty[0-9]* rw,
+
+  #include if exists <local/firefox-pingsender>
+}

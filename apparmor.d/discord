@@ -1,0 +1,205 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{DISCORD_LIBDIR} = /usr/share/discord
+@{DISCORD_HOMEDIR} = @{HOME}/.config/discord
+@{DISCORD_CACHEDIR} = @{HOME}/.cache/discord
+
+@{exec_path} = @{DISCORD_LIBDIR}/Discord /{usr/,}bin/discord
+profile discord @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/opencl-intel>
+  #include <abstractions/gtk>
+  #include <abstractions/freedesktop.org>
+  #include <abstractions/fonts>
+  #include <abstractions/fontconfig-cache-read>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/audio>
+  #include <abstractions/mesa>
+  #include <abstractions/user-download-strict>
+  #include <abstractions/thumbnails-cache-read>
+  #include <abstractions/deny-root-dir-access>
+
+  signal (send) set=(kill, term) peer=@{profile_name}//lsb_release,
+
+  # Needed for Game Activity
+  deny capability sys_ptrace,
+  deny ptrace (read),
+
+  @{exec_path} mrix,
+
+  # The following rules are needed only when the kernel.unprivileged_userns_clone option is set
+  # to "1".
+  capability sys_admin,
+  capability sys_chroot,
+  owner @{PROC}/@{pid}/setgroups w,
+  owner @{PROC}/@{pid}/gid_map w,
+  owner @{PROC}/@{pid}/uid_map w,
+
+  /{usr/,}bin/dash        rix,
+
+  /{usr/,}bin/xdg-open     rCx -> open,
+  #/{usr/,}bin/lsb_release rCx -> lsb_release,
+  #/{usr/,}bin/xdg-mime    rCx -> xdg-mime,
+  deny /{usr/,}bin/lsb_release mrx,
+  deny /{usr/,}bin/xdg-mime mrx,
+
+    @{DISCORD_LIBDIR}/ r,
+    @{DISCORD_LIBDIR}/** r,
+  # @{DISCORD_LIBDIR}/**.so mr,
+  # @{DISCORD_LIBDIR}/libEGL.so mr,
+  # @{DISCORD_LIBDIR}/libGLESv2.so mr,
+  # To remove the following error:
+  #  discord-canary: error while loading shared libraries: libffmpeg.so: cannot open shared object
+  #  file: No such file or directory
+    @{DISCORD_LIBDIR}/libffmpeg.so mr,
+  # @{DISCORD_LIBDIR}/swiftshader/libEGL.so mr,
+  # @{DISCORD_LIBDIR}/swiftshader/libGLESv2.so mr,
+    @{DISCORD_LIBDIR}/chrome-sandbox rPx,
+
+  owner @{DISCORD_HOMEDIR}/ rw,
+  owner @{DISCORD_HOMEDIR}/** rwk,
+  owner @{DISCORD_HOMEDIR}/[0-9]*/modules/discord_[a-z]*/*.node mrwk,
+  owner @{DISCORD_HOMEDIR}/[0-9]*/modules/discord_[a-z]*/lib*.so.[0-9] mrw,
+
+  # Reading of the /proc/ dir is needed to start discord.
+  # Otherwise it returns the following error:
+  #  [:FATAL:proc_util.cc(36)] : Permission denied (13)
+             @{PROC}/ r,
+       owner @{PROC}/@{pid}/fd/ r,
+  deny       @{PROC}/vmstat r,
+  deny owner @{PROC}/@{pid}/oom_{,score_}adj rw,
+       owner @{PROC}/@{pids}/task/ r,
+  deny owner @{PROC}/@{pids}/task/@{tid}/status r,
+  deny       @{PROC}/@{pids}/stat r,
+  deny owner @{PROC}/@{pids}/statm r,
+  deny       @{PROC}/@{pids}/cmdline r,
+             @{PROC}/sys/kernel/yama/ptrace_scope r,
+             @{PROC}/sys/fs/inotify/max_user_watches r,
+       owner @{PROC}/@{pid}/mountinfo r,
+       owner @{PROC}/@{pid}/mounts r,
+
+  /etc/fstab r,
+
+  # To avoid the following error:
+  #   kernel: traps: Discord[] trap int3 ip:7fa5b7541885 sp:7ffff5539c40 error:0
+  #   in libglib-2.0.so.0.6000.6[7fa5b7508000+80000]
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+
+  deny @{sys}/devices/system/cpu/cpufreq/policy[0-9]/cpuinfo_max_freq r,
+  deny @{sys}/devices/virtual/tty/tty[0-9]/active r,
+  # To remove the following error:
+  # pcilib: Cannot open /sys/bus/pci/devices/0000:03:00.0/irq: Permission denied
+  @{sys}/devices/pci[0-9]*/**/irq r,
+
+  deny       /dev/ r,
+  deny       /dev/shm/ rw,
+       owner /dev/shm/.org.chromium.Chromium.* rw,
+
+        /var/tmp/ r,
+        /tmp/ r,
+  owner /tmp/net-export/ rw,
+  owner /tmp/discord.sock rw,
+  owner /tmp/.org.chromium.Chromium.*/ rw,
+  owner /tmp/.org.chromium.Chromium.*/discord1_[0-9]*.png rw,
+  owner /tmp/.org.chromium.Chromium.*/SingletonCookie rw,
+  owner /tmp/.org.chromium.Chromium.*/SS rw,
+  owner "/tmp/Discord Crashes/" rw,
+
+  owner @{HOME}/.pki/ rw,
+  owner @{HOME}/.pki/nssdb/ rw,
+  owner @{HOME}/.pki/nssdb/pkcs11.txt rw,
+  owner @{HOME}/.pki/nssdb/{cert9,key4}.db rwk,
+  owner @{HOME}/.pki/nssdb/{cert9,key4}.db-journal rw,
+
+  owner /{var/,}run/user/[0-9]*/discord-ipc-[0-9] rw,
+
+  /var/lib/dbus/machine-id r,
+  /etc/machine-id r,
+
+  # Allowed apps to open
+  /{usr/,}lib/firefox/firefox rPx,
+
+  # file_inherit
+  owner /dev/tty[0-9]* rw,
+
+
+  profile xdg-mime {
+    #include <abstractions/base>
+    #include <abstractions/freedesktop.org>
+
+    /{usr/,}bin/xdg-mime mr,
+
+    /{usr/,}bin/dash     r,
+    /{usr/,}bin/gawk     rix,
+    /{usr/,}bin/cut      rix,
+    /{usr/,}bin/{,e}grep rix,
+    /{usr/,}bin/head     rix,
+    /{usr/,}bin/sed      rix,
+
+    # file_inherit
+    /usr/share/discord/** r,
+    owner /dev/shm/.org.chromium.Chromium.* rw,
+    owner @{HOME}/.config/discord/GPUCache/data_[0-9] rw,
+    owner @{HOME}/.config/discord/*/modules/discord_desktop_core/core.asar r,
+    owner @{HOME}/.config/discord/GPUCache/index rw,
+
+  }
+
+  profile lsb_release {
+    #include <abstractions/base>
+    #include <abstractions/consoles>
+    #include <abstractions/python>
+
+    signal (receive) set=(kill, term) peer=discord,
+
+    /{usr/,}bin/lsb_release r,
+    /{usr/,}bin/python3.[0-9]* r,
+
+    /{usr/,}bin/ r,
+    /{usr/,}bin/apt-cache rPx,
+
+    owner @{PROC}/@{pid}/fd/ r,
+
+    /etc/debian_version r,
+    /etc/dpkg/origins/debian r,
+    /usr/share/distro-info/debian.csv r,
+
+    # file_inherit
+    deny /usr/share/discord/** r,
+    deny owner /dev/shm/.org.chromium.Chromium.* rw,
+    deny owner @{HOME}/.config/discord/GPUCache/data_[0-9] rw,
+    deny owner @{HOME}/.config/discord/*/modules/discord_desktop_core/core.asar r,
+    deny owner @{HOME}/.config/discord/GPUCache/index rw,
+
+  }
+
+  profile open {
+    #include <abstractions/base>
+    #include <abstractions/xdg-open>
+
+    /{usr/,}bin/xdg-open mr,
+
+    # Allowed apps to open
+    /{usr/,}lib/firefox/firefox rPx,
+
+    # file_inherit
+    owner @{HOME}/.xsession-errors w,
+
+  }
+
+  #include if exists <local/discord>
+}

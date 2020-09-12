@@ -1,0 +1,35 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/apt-cache
+profile apt-cache @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/apt-common>
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/dpkg rPx -> child-dpkg,
+
+  /var/lib/dpkg/** r,
+  /var/lib/dpkg/lock{,-frontend} rwk,
+
+  owner @{PROC}/@{pid}/fd/ r,
+
+  /var/cache/apt/ r,
+  /var/cache/apt/** rwk,
+
+  #include if exists <local/apt-cache>
+}

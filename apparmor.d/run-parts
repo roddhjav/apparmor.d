@@ -1,0 +1,115 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/run-parts
+profile run-parts @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+
+  @{exec_path} mr,
+
+  # This is for motd PAM module (see: /etc/pam.d/login) when "noupdate" isn't specified
+  /etc/update-motd.d/ r,
+  /etc/update-motd.d/[0-9]*-[a-z]* rCx -> motd,
+
+  # The "/etc/kernel/" dirs are for the pre/post scripts of the linux-{header,image} packages
+  /etc/kernel/header_postinst.d/ r,
+  /etc/kernel/header_postinst.d/dkms      rCx -> kernel-pre-post,
+
+  /etc/kernel/postinst.d/ r,
+  /etc/kernel/postinst.d/apt-auto-removal rCx -> kernel-pre-post,
+  /etc/kernel/postinst.d/dkms             rCx -> kernel-pre-post,
+  /etc/kernel/postinst.d/initramfs-tools  rCx -> kernel-pre-post,
+  /etc/kernel/postinst.d/zz-update-grub   rCx -> kernel-pre-post,
+
+  /etc/kernel/postrm.d/ r,
+  /etc/kernel/postrm.d/initramfs-tools    rCx -> kernel-pre-post,
+  /etc/kernel/postrm.d/zz-update-grub     rCx -> kernel-pre-post,
+
+  /etc/kernel/preinst.d/ r,
+  /etc/kernel/preinst.d/intel-microcode   rCx -> kernel-pre-post,
+
+  /etc/kernel/prerm.d/ r,
+  /etc/kernel/prerm.d/dkms                rCx -> kernel-pre-post,
+
+  owner /tmp/#[0-9]*[0-9] rw,
+
+
+  profile motd {
+    #include <abstractions/base>
+
+    /etc/update-motd.d/[0-9]*-[a-z]* r,
+
+    /{usr/,}bin/dash r,
+    /{usr/,}bin/uname rix,
+    /{usr/,}bin/cat rix,
+
+  }
+
+  profile kernel-pre-post {
+    #include <abstractions/base>
+    #include <abstractions/consoles>
+
+    /etc/kernel/header_postinst.d/* r,
+    /etc/kernel/{postinst,postrm,preinst,prerm}.d/* r,
+
+    /{usr/,}bin/bash r,
+    /{usr/,}bin/dash r,
+
+    /{usr/,}bin/{,e}grep rix,
+    /{usr/,}bin/rm       rix,
+    /{usr/,}bin/rmdir    rix,
+    /{usr/,}bin/dirname  rix,
+    /{usr/,}bin/sed      rix,
+    /{usr/,}bin/gawk     rix,
+    /{usr/,}bin/sort     rix,
+    /{usr/,}bin/cut      rix,
+    /{usr/,}bin/tr       rix,
+    /{usr/,}bin/mv       rix,
+    /{usr/,}bin/cat      rix,
+    /{usr/,}bin/chmod    rix,
+    /{usr/,}bin/uname    rix,
+    /{usr/,}bin/which    rix,
+
+    /{usr/,}bin/kmod     rix,
+
+    /{usr/,}bin/dpkg                     rPx -> child-dpkg,
+
+    /{usr/,}sbin/dkms                    rPx,
+    /{usr/,}sbin/update-initramfs        rPx,
+    /{usr/,}lib/dkms/dkms_autoinstaller  rPx,
+
+    /{usr/,}bin/apt-config               rPx,
+
+    # (#FIXME#)
+    /{usr/,}sbin/update-grub             rPUx,
+    /{usr/,}bin/systemd-detect-virt      rPUx,
+
+    / r,
+    /etc/apt/apt.conf.d/01autoremove-kernels{,.dpkg-new} rw,
+
+    # For kmod
+    @{PROC}/cmdline r,
+    /etc/modprobe.d/ r,
+    /etc/modprobe.d/*.conf r,
+    /{usr/,}lib/modules/*/updates/ w,
+    /{usr/,}lib/modules/*/updates/dkms/ w,
+
+    @{PROC}/devices r,
+
+  }
+
+  #include if exists <local/run-parts>
+}

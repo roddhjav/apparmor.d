@@ -1,0 +1,124 @@
+# vim:syntax=apparmor
+#
+# abstraction used by evince binaries
+#
+
+  #include <abstractions/gnome>
+  #include <abstractions/p11-kit>
+  #include <abstractions/ubuntu-helpers>
+
+  @{PROC}/[0-9]*/fd/ r,
+  @{PROC}/[0-9]*/mountinfo r,
+  owner @{PROC}/[0-9]*/auxv r,
+  owner @{PROC}/[0-9]*/status r,
+
+  # Doesn't seem to be required, but noisy. Maybe allow 'r' for 'b*' if needed.
+  # Possibly move to an abstraction if anything else needs it.
+  deny /run/udev/data/** r,
+
+  # move out to the gnome abstraction if anyone else needs these
+  /dev/.udev/{data,db}/* r,
+  /etc/udev/udev.conf r,
+  /sys/devices/**/block/**/uevent r,
+
+  # apport
+  /etc/default/apport r,
+
+  # XFCE
+  /etc/xfce4/defaults.list r,
+
+  # Lubuntu
+  /etc/xdg/lubuntu/applications/defaults.list r,
+
+  # evince specific
+  /etc/ r,
+  /etc/fstab r,
+  /etc/texmf/ r,
+  /etc/texmf/** r,
+  /etc/xpdf/* r,
+  owner @{HOME}/.config/evince/   rw,
+  owner @{HOME}/.config/evince/** rwkl,
+
+  /usr/bin/gs-esp ixr,
+  /usr/bin/mktexpk Cx -> sanitized_helper,
+  /usr/bin/mktextfm Cx -> sanitized_helper,
+  /usr/bin/dvipdfm Cx -> sanitized_helper,
+  /usr/bin/dvipdfmx Cx -> sanitized_helper,
+
+  # supported archivers
+  /bin/gzip ixr,
+  /bin/bzip2 ixr,
+  /usr/bin/unrar* ixr,
+  /usr/bin/unzip ixr,
+  /usr/bin/7zr ixr,
+  /usr/lib/p7zip/7zr ixr,
+  /usr/bin/7za ixr,
+  /usr/lib/p7zip/7za ixr,
+  /usr/bin/zipnote ixr,
+  /bin/tar ixr,
+  /usr/bin/xz ixr,
+
+  # allow read access to anything in /usr/share, for plugins and input methods
+  /usr/local/share/** r,
+  /usr/share/** r,
+  /usr/lib/ghostscript/** mr,
+  /var/lib/ghostscript/** r,
+  /var/lib/texmf/** r,
+
+  # from http://live.gnome.org/Evince/SupportedDocumentFormats. Allow
+  # read for all supported file formats
+  /**.[bB][mM][pP]     r,
+  /**.[dD][jJ][vV][uU] r,
+  /**.[dD][vV][iI]     r,
+  /**.[gG][iI][fF]     r,
+  /**.[jJ][pP][gG]     r,
+  /**.[jJ][pP][eE][gG] r,
+  /**.[oO][dD][pP]     r,
+  /**.[fFpP][dD][fF]   r,
+  /**.[pP][nN][mM]     r,
+  /**.[pP][nN][gG]     r,
+  /**.[pP][sS]         r,
+  /**.[eE][pP][sS]     r,
+  /**.[eE][pP][sS][fFiI23] r,
+  /**.[tT][iI][fF]     r,
+  /**.[tT][iI][fF][fF] r,
+  /**.[xX][pP][mM]     r,
+  /**.[gG][zZ]         r,
+  /**.[bB][zZ]2        r,
+  /**.[cC][bB][rRzZ7]  r,
+  /**.[xX][zZ]         r,
+
+  # Use abstractions/private-files instead of abstractions/private-files-strict
+  # and add the sensitive files manually to work around LP: #451422. The goal
+  # is to disallow access to the .mozilla folder in general, but to allow
+  # access to the Cache directory, which the browser may tell evince to open
+  # from directly.
+
+  #include <abstractions/private-files>
+  audit deny @{HOME}/.gnupg/** mrwkl,
+  audit deny @{HOME}/.ssh/** mrwkl,
+  audit deny @{HOME}/.gnome2_private/** mrwkl,
+  audit deny @{HOME}/.gnome2/keyrings/** mrwkl,
+  audit deny @{HOME}/.kde/share/apps/kwallet/** mrwkl,
+  audit deny @{HOME}/.pki/nssdb/** w,
+
+  audit deny @{HOME}/.mozilla/*/*/* mrwkl,
+  audit deny @{HOME}/.mozilla/**/bookmarkbackups/** mrwkl,
+  audit deny @{HOME}/.mozilla/**/chrome/** mrwkl,
+  audit deny @{HOME}/.mozilla/**/extensions/** mrwkl,
+  audit deny @{HOME}/.mozilla/**/gm_scripts/** mrwkl,
+
+  audit deny @{HOME}/.config/chromium/** mrwkl,
+  audit deny @{HOME}/.evolution/** mrwkl,
+  audit deny @{HOME}/.config/evolution/** mrwkl,
+  audit deny @{HOME}/.kde/share/config/** mrwkl,
+  audit deny @{HOME}/.kde/share/apps/kmail/** mrwkl,
+  audit deny @{HOME}/.{,mozilla-}thunderbird/*/* mrwkl,
+  audit deny @{HOME}/.{,mozilla-}thunderbird/*/[^C][^a][^c][^h][^e]*/** mrwkl,
+
+  # When LP: #451422 is fixed, change the above to simply be:
+  ##include <abstractions/private-files-strict>
+  #owner @{HOME}/.mozilla/**/*Cache/* r,
+
+  # Site-specific additions and overrides. See local/README for details.
+  #include <local/usr.bin.evince>

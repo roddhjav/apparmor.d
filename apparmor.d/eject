@@ -1,0 +1,35 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2018-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/eject
+profile eject @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/disks-write>
+
+  capability sys_rawio,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/dash rix,
+
+  /{usr/,}lib/eject/dmcrypt-get-device rPx,
+
+  owner @{PROC}/@{pid}/mounts r,
+  owner @{PROC}/@{pid}/mountinfo r,
+
+  /etc/fstab r,
+
+  #include if exists <local/eject>
+}

@@ -1,0 +1,272 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{AS_LIBDIR}     = /media/*/android-studio
+@{AS_SDKDIR}     = /media/*/SDK
+@{AS_HOMEDIR}    = @{HOME}/.AndroidStudio*
+@{AS_PROJECTDIR} = @{HOME}/AndroidStudioProjects
+
+@{exec_path}  = @{AS_LIBDIR}/bin/studio.sh
+profile android-studio @{exec_path} {
+  #include <abstractions/base>
+  #icnlude <abstractions/consoles>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/gtk>
+  #include <abstractions/fonts>
+  #include <abstractions/fontconfig-cache-read>
+  #include <abstractions/freedesktop.org>
+  #include <abstractions/ssl_certs>
+  #include <abstractions/dri-common>
+  #include <abstractions/dri-enumerate>
+  #include <abstractions/mesa>
+  #include <abstractions/audio>
+  #include <abstractions/deny-root-dir-access>
+
+  # The following rules are needed only when the kernel.unprivileged_userns_clone option is set
+  # to "1".
+  capability sys_admin,
+  capability sys_chroot,
+  owner @{PROC}/@{pid}/setgroups w,
+  owner @{PROC}/@{pid}/gid_map w,
+  owner @{PROC}/@{pid}/uid_map w,
+
+  capability sys_ptrace,
+
+  signal (send) set=(term, kill) peer=android-studio//lsb-release,
+
+  @{exec_path} r,
+  /{usr/,}bin/dash r,
+
+  /{usr/,}bin/which       rix,
+  /{usr/,}bin/uname       rix,
+  /{usr/,}bin/{,e}grep    rix,
+  /{usr/,}bin/cut         rix,
+  /{usr/,}bin/readlink    rix,
+  /{usr/,}bin/xargs       rix,
+  /{usr/,}bin/dirname     rix,
+  /{usr/,}bin/mktemp      rix,
+  /{usr/,}bin/rm          rix,
+  /{usr/,}bin/cat         rix,
+  /{usr/,}bin/sed         rix,
+
+  /{usr/,}sbin/ldconfig   rix,
+  /{usr/,}bin/chmod       rix,
+  /{usr/,}bin/chattr      rix,
+  /{usr/,}bin/setsid      rix,
+  /{usr/,}bin/nice        rix,
+  /{usr/,}bin/kill        rix,
+
+  /{usr/,}bin/lsusb       rPx,
+  /{usr/,}bin/xprop       rPx,
+  /{usr/,}bin/xdg-mime    rPx,
+  /{usr/,}bin/ps          rPx,
+  /{usr/,}bin/git         rPx,
+
+  /{usr/,}bin/lsb_release rCx -> lsb-release,
+  /{usr/,}bin/gpg         rCx -> gpg,
+  /{usr/,}bin/xdg-open    rCx -> open,
+
+  /{usr/,}lib/jvm/java-[0-9]*-openjdk-*/jre/bin/* rix,
+
+  /etc/java-[0-9]*-openjdk/** r,
+  /usr/share/java/java-atk-wrapper.jar r,
+
+  /etc/ssl/certs/java/cacerts r,
+
+  / r,
+  /home/ r,
+  /media/ r,
+  /media/*/ r,
+  /usr/ r,
+  /{usr/,}lib/ r,
+
+  @{AS_LIBDIR}/ rw,
+  @{AS_LIBDIR}/** mrwkix,
+
+  # A standard system android SDK location.
+  # Currently there is only the target platform of API Level 23 packaged, so only apps targeted at
+  # android-23 can be built with only Debian packages. Only Build-Tools 24.0.0 is available, so in
+  # order to use the SDK, build scripts need to be modified.
+  /{usr/,}lib/android-sdk/ r,
+  /{usr/,}lib/android-sdk/** mrkix,
+  /usr/share/android-sdk-platform-*/{,**} r,
+  deny /{usr/,}lib/android-sdk/build-tools/*/package.xml w,
+  deny /{usr/,}lib/android-sdk/platforms/android-*/package.xml w,
+  deny /{usr/,}lib/android-sdk/.knownPackages w,
+
+  # This one is used if the standard android SDK location is missing
+  @{AS_SDKDIR}/ rw,
+  @{AS_SDKDIR}/** mrwkix,
+
+  owner @{AS_HOMEDIR}/ rw,
+  owner @{AS_HOMEDIR}/** mrwkix,
+
+  owner @{AS_PROJECTDIR}/ rw,
+  owner @{AS_PROJECTDIR}/** rwk,
+
+  owner @{HOME}/AndroidStudio/ rw,
+  owner @{HOME}/AndroidStudio/DeviceExplorer/ rw,
+  owner @{HOME}/AndroidStudio/DeviceExplorer/** rw,
+
+  owner "@{HOME}/.config/Android Open Source Project/" rw,
+  owner "@{HOME}/.config/Android Open Source Project/**" rwk,
+
+  owner @{HOME}/.cache/ rw,
+  owner "@{HOME}/.cache/Android Open Source Project/" rw,
+  owner "@{HOME}/.cache/Android Open Source Project/**" rw,
+
+  owner @{HOME}/.gradle/ rw,
+  owner @{HOME}/.gradle/** mrwkix,
+
+  owner @{HOME}/ r,
+  owner @{HOME}/.android/ rw,
+  owner @{HOME}/.android/** rwkl -> @{HOME}/.android/**,
+
+  owner @{HOME}/.local/share/Google/ rw,
+  owner @{HOME}/.local/share/Google/consentOptions/ rw,
+  owner @{HOME}/.local/share/Google/consentOptions/accepted rw,
+
+  owner @{HOME}/.local/share/kotlin/ rw,
+  owner @{HOME}/.local/share/kotlin/** rw,
+
+  owner "@{HOME}/.local/share/Android Open Source Project/" rw,
+  owner "@{HOME}/.local/share/Android Open Source Project/**" rwk,
+
+  owner @{HOME}/.java/ rw,
+  owner @{HOME}/.java/fonts/ rw,
+  owner @{HOME}/.java/fonts/*/ rw,
+  owner @{HOME}/.java/fonts/*/fcinfo*.tmp rw,
+  owner @{HOME}/.java/fonts/*/fcinfo*.properties rw,
+  owner @{HOME}/.java/.userPrefs/ rw,
+  owner @{HOME}/.java/.userPrefs/** rwk,
+
+  owner @{HOME}/.pki/ rw,
+  owner @{HOME}/.pki/nssdb/ rw,
+  owner @{HOME}/.pki/nssdb/pkcs11.txt rw,
+  owner @{HOME}/.pki/nssdb/{cert9,key4}.db rwk,
+  owner @{HOME}/.pki/nssdb/{cert9,key4}.db-journal rw,
+
+  owner @{HOME}/.emulator_console_auth_token rw,
+
+  deny owner @{HOME}/Desktop/* rw,
+
+        @{PROC}/ r,
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/cgroup r,
+        @{PROC}/@{pid}/net/if_inet6 r,
+        @{PROC}/@{pid}/net/ipv6_route r,
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/cmdline r,
+  owner @{PROC}/@{pid}/mounts r,
+  owner @{PROC}/@{pid}/mem r,
+  owner @{PROC}/@{pid}/oom_{,score_}adj rw,
+  owner @{PROC}/@{pids}/task/ r,
+  owner @{PROC}/@{pids}/task/@{tid}/status r,
+  owner @{PROC}/@{pids}/stat r,
+        @{PROC}/sys/net/core/somaxconn r,
+        @{PROC}/sys/fs/inotify/max_user_watches r,
+        @{PROC}/sys/kernel/yama/ptrace_scope r,
+        @{PROC}/partitions r,
+        @{PROC}/vmstat r,
+
+  @{sys}/fs/cgroup/*/** r,
+
+    /var/tmp/ r,
+        /tmp/ r,
+  owner /tmp/** rwk,
+  owner /tmp/native-platform[0-9]*dir/*.so rwm,
+
+  owner /{var,}run/user/[0-9]*/avd/ rw,
+  owner /{var,}run/user/[0-9]*/avd/running/ rw,
+  owner /{var,}run/user/[0-9]*/avd/running/pid_@{pid}.ini rw,
+
+  /usr/share/hwdata/pnp.ids r,
+
+  /var/lib/dbus/machine-id r,
+  /etc/machine-id r,
+
+  owner /dev/shm/.org.chromium.Chromium.* rw,
+
+  /dev/kvm rw,
+
+  /dev/bus/usb/ r,
+  /dev/bus/usb/[0-9]*/ r,
+  /dev/bus/usb/[0-9]*/[0-9]* rw,
+
+  @{sys}/devices/pci[0-9]*/**/usb[0-9]/**/serial r,
+  @{sys}/devices/virtual/block/**/rotational r,
+
+
+  profile gpg {
+    #include <abstractions/base>
+
+    /{usr/,}bin/gpg mr,
+
+  }
+
+  profile lsb-release {
+    #include <abstractions/base>
+    #include <abstractions/consoles>
+    #include <abstractions/python>
+
+    signal (receive) set=(term, kill) peer=android-studio,
+
+    /{usr/,}bin/lsb_release r,
+    /{usr/,}bin/python3.[0-9]* r,
+
+    /{usr/,}bin/ r,
+    /{usr/,}bin/apt-cache  rPx,
+
+    owner @{PROC}/@{pid}/fd/ r,
+
+    /etc/dpkg/origins/** r,
+    /etc/debian_version r,
+    /usr/share/distro-info/*.csv r,
+
+    owner /tmp/android-*/emulator-* w,
+    owner /tmp/android-*/[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*/opengl_* w,
+
+    # file_inherit
+    owner @{HOME}/.android/avd/** r,
+    /dev/dri/card[0-9]* rw,
+
+  }
+
+  profile open {
+    #include <abstractions/base>
+    #include <abstractions/xdg-open>
+
+    /{usr/,}bin/xdg-open mr,
+
+    /{usr/,}bin/dash rix,
+
+    # Allowed apps to open
+    /{usr/,}bin/spacefm          rPx,
+    /{usr/,}bin/smplayer         rPx,
+    /{usr/,}bin/vlc              rPx,
+    /{usr/,}bin/mpv              rPx,
+    /{usr/,}bin/geany            rPx,
+    /{usr/,}bin/viewnior        rPUx,
+    /{usr/,}bin/qpdfview         rPx,
+    /{usr/,}bin/ebook-viewer     rPx,
+    /{usr/,}lib/firefox/firefox  rPx,
+
+    # file_inherit
+    owner @{HOME}/.xsession-errors w,
+
+  }
+
+  #include if exists <local/android-studio>
+}

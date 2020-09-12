@@ -1,0 +1,28 @@
+# vim:syntax=apparmor
+
+  # Allow read to all files user has DAC access to and write access to all
+  # files owned by the user in $HOME.
+  @{HOME}/ r,
+  @{HOME}/** r,
+  owner @{HOME}/** w,
+
+  # Do not allow read and/or write to particularly sensitive/problematic files
+  #include <abstractions/private-files>
+  audit deny @{HOME}/.ssh/{,**} mrwkl,
+  audit deny @{HOME}/.gnome2_private/{,**} mrwkl,
+  audit deny @{HOME}/.kde{,4}/{,share/,share/apps/} w,
+  audit deny @{HOME}/.kde{,4}/share/apps/kwallet/{,**} mrwkl,
+
+  # Comment this out if using gpg plugin/addons
+  audit deny @{HOME}/.gnupg/{,**} mrwkl,
+
+  # Allow read to all files user has DAC access to and write for files the user
+  # owns on removable media and filesystems.
+  /media/** r,
+  /mnt/** r,
+  /srv/** r,
+  /net/** r,
+  owner /media/** w,
+  owner /mnt/** w,
+  owner /srv/** w,
+  owner /net/** w,

@@ -1,0 +1,28 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/dpkg-divert
+profile dpkg-divert @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+
+  @{exec_path} mr,
+
+  /var/lib/dpkg/** r,
+
+  /usr/share/*/**.dpkg-divert.tmp w,
+
+  #include if exists <local/dpkg-divert>
+}

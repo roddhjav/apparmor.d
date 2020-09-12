@@ -1,0 +1,58 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+# Video/audio extensions:
+# a52, aac, ac3, mka, flac, mp1, mp2, mp3, mpc, oga, oma, wav, wv, wm, wma, 3g2, 3gp, 3gp2, 3gpp,
+# asf, avi, divx, m1v, m2v, m4v, mkv, mov, mp4, mpa, mpe, mpg, mpeg, mpeg1, mpeg2, mpeg4, ogg, ogm,
+# ogx, ogv, rm, rmvb, webm, wmv, wtv, mp2t
+@{mediainfo_ext}  = [aA]{52,[aA][cC],[cC]3}
+@{mediainfo_ext} += [mM][kK][aA]
+@{mediainfo_ext} += [fF][lL][aA][cC]
+@{mediainfo_ext} += [mM][pP][123cC]
+@{mediainfo_ext} += [oO][gGmM][aA]
+@{mediainfo_ext} += [wW]{,[aA]}[vV]
+@{mediainfo_ext} += [wW][mM]{,[aA]}
+@{mediainfo_ext} += 3[gG]{[2pP],[pP][2pP]}
+@{mediainfo_ext} += [aA][sS][fF]
+@{mediainfo_ext} += [aA][vV][iI]
+@{mediainfo_ext} += [dD][iI][vV][xX]
+@{mediainfo_ext} += [mM][124][vV]
+@{mediainfo_ext} += [mM][kKoO][vV]
+@{mediainfo_ext} += [mM][pP][4aAeEgG]
+@{mediainfo_ext} += [mM][pP][eE][gG]{,[124]}
+@{mediainfo_ext} += [oO][gG][gGmMxXvV]
+@{mediainfo_ext} += [rR][mM]{,[vV][bB]}
+@{mediainfo_ext} += [wW][eE][bB][mM]
+@{mediainfo_ext} += [wW][mMtT][vV]
+@{mediainfo_ext} += [mM][pP]2[tT]
+
+@{exec_path} = /{usr/,}bin/mediainfo
+profile mediainfo @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/deny-root-dir-access>
+
+  @{exec_path} mr,
+
+  # Which media files mediainfo should be able to open
+        / r,
+        /home/ r,
+  owner @{HOME}/ r,
+  owner @{HOME}/**/ r,
+        /media/ r,
+  owner /media/**/ r,
+  owner /{home,media}/**.@{mediainfo_ext} r,
+
+  #include if exists <local/mediainfo>
+}

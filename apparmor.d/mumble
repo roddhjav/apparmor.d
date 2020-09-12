@@ -1,0 +1,96 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2018-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/mumble
+profile mumble @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/X>
+  #include <abstractions/gtk>
+  #include <abstractions/freedesktop.org>
+  #include <abstractions/fonts>
+  #include <abstractions/fontconfig-cache-read>
+  #include <abstractions/audio>
+  #include <abstractions/user-download-strict>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/dri-enumerate>
+  #include <abstractions/mesa>
+  #include <abstractions/qt5-settings-write>
+  #include <abstractions/qt5-compose-cache-write>
+  #include <abstractions/user-download-strict>
+  #include <abstractions/openssl>
+  #include <abstractions/ssl_certs>
+  #include <abstractions/deny-root-dir-access>
+
+  @{exec_path} mrix,
+
+  /{usr/,}bin/lsb_release rPx -> child-lsb_release,
+  /{usr/,}bin/xdg-open    rCx -> open,
+
+  # Mumble home files
+  owner @{HOME}/ r,
+  owner @{HOME}/.config/Mumble/ rw,
+  owner @{HOME}/.config/Mumble/** rwkl -> @{HOME}/.config/Mumble/#[0-9]*[0-9],
+  owner @{HOME}/.local/share/Mumble/ rw,
+  owner @{HOME}/.local/share/Mumble/** rwk,
+  owner @{HOME}/.MumbleOverlayPipe rw,
+  owner @{HOME}/.MumbleSocket rw,
+
+  owner @{HOME}/.jackdrc r,
+
+  /etc/machine-id r,
+  /var/lib/dbus/machine-id r,
+
+  /dev/shm/MumbleLink.[0-9]*[0-9] rw,
+  /dev/shm/#[0-9]*[0-9] rw,
+
+  owner /{var/,}run/user/[0-9]*/MumbleSocket rw,
+  owner /{var/,}run/user/[0-9]*/MumbleOverlayPipe rw,
+
+  deny owner @{PROC}/@{pid}/cmdline r,
+       owner @{PROC}/@{pid}/fd/ r,
+       owner @{PROC}/@{pid}/mountinfo r,
+       owner @{PROC}/@{pid}/mounts r,
+  deny       @{PROC}/sys/kernel/random/boot_id r,
+
+  /etc/fstab r,
+
+  owner @{HOME}/.config/qt5ct/{,**} r,
+  /usr/share/qt5ct/** r,
+
+  /usr/share/hwdata/pnp.ids r,
+
+  # Allowed apps to open
+  /{usr/,}lib/firefox/firefox rPUx,
+
+  # file_inherit
+  owner /dev/tty[0-9]* rw,
+
+
+  profile open {
+    #include <abstractions/base>
+    #include <abstractions/xdg-open>
+
+    /{usr/,}bin/xdg-open mr,
+
+    # Allowed apps to open
+    /{usr/,}lib/firefox/firefox rPUx,
+
+    # file_inherit
+    owner @{HOME}/.xsession-errors w,
+
+  }
+
+  #include if exists <local/mumble>
+}

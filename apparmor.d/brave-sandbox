@@ -1,0 +1,39 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+@{BRAVE_INSTALLDIR} = /opt/brave.com/brave{,-beta,-dev}
+@{BRAVE_HOMEDIR} = @{HOME}/.config/BraveSoftware/Brave-Browser{,-Beta,-Dev}
+@{BRAVE_CACHEDIR} = @{HOME}/.cache/BraveSoftware/Brave-Browser{,-Beta,-Dev}
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = @{BRAVE_INSTALLDIR}/{brave,chrome}-sandbox
+profile brave-sandbox @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/deny-root-dir-access>
+
+  # For kernel unprivileged user namespaces
+  capability sys_admin,
+  capability sys_chroot,
+  capability setuid,
+  capability setgid,
+
+  @{exec_path} mr,
+
+  @{BRAVE_INSTALLDIR}/brave rPx,
+
+        @{PROC}/@{pids}/ r,
+  deny owner @{PROC}/@{pid}/oom_{,score_}adj rw,
+
+  #include if exists <local/brave-sandbox>
+}

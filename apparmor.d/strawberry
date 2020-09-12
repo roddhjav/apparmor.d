@@ -1,0 +1,134 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/strawberry
+profile strawberry @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/X>
+  #include <abstractions/gtk>
+  #include <abstractions/freedesktop.org>
+  #include <abstractions/fonts>
+  #include <abstractions/fontconfig-cache-read>
+  #include <abstractions/dri-enumerate>
+  #include <abstractions/mesa>
+  #include <abstractions/audio>
+  #include <abstractions/qt5-compose-cache-write>
+  #include <abstractions/qt5-settings-write>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/openssl>
+  #include <abstractions/ssl_certs>
+  #include <abstractions/deny-root-dir-access>
+
+  signal (send) set=(term, kill) peer=strawberry-tagreader,
+
+  signal (receive) set=(term, kill) peer=anyremote//*,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/strawberry-tagreader rPx,
+  /{usr/,}lib/@{multiarch}/gstreamer[0-9]*.[0-9]*/gstreamer-[0-9]*.[0-9]*/gst-plugin-scanner rPUx,
+
+  /{usr/,}bin/xdg-open             rCx -> open,
+
+  # Media library
+        / r,
+        /media/ r,
+  owner /media/Kabi/ r,
+  owner /media/Kabi/mp3/ r,
+  owner /media/Kabi/mp3/** rw,
+
+  owner @{HOME}/ r,
+  owner @{HOME}/.config/strawberry/ rw,
+  owner @{HOME}/.config/strawberry/* rwkl -> @{HOME}/.config/strawberry/#[0-9]*[0-9],
+
+  owner @{HOME}/.local/share/strawberry/ rw,
+  owner @{HOME}/.local/share/strawberry/** rwk,
+
+  owner @{HOME}/.cache/ rw,
+  owner @{HOME}/.cache/strawberry/ rw,
+  owner @{HOME}/.cache/strawberry/** rwl -> @{HOME}/.cache/strawberry/networkcache/prepared/#[0-9]*[0-9],
+
+  owner @{HOME}/.cache/gstreamer-[0-9]*/ rw,
+  owner @{HOME}/.cache/gstreamer-[0-9]*/registry.x86_64.bin{,.tmp*} rw,
+
+  owner @{HOME}/.cache/xine-lib/ rw,
+  owner @{HOME}/.cache/xine-lib/plugins.cache{,.new} rw,
+
+  owner @{HOME}/.config/qt5ct/{,**} r,
+  /usr/share/qt5ct/** r,
+
+       owner @{PROC}/@{pid}/mountinfo r,
+       owner @{PROC}/@{pid}/mounts r,
+  deny owner @{PROC}/@{pid}/cmdline r,
+       owner @{PROC}/@{pid}/fd/ r,
+  deny       @{PROC}/sys/kernel/random/boot_id r,
+
+  /{var/,}run/mount/utab r,
+
+  /etc/fstab r,
+
+  deny /dev/ r,
+       /dev/shm/#[0-9]*[0-9] rw,
+       /dev/sr[0-9]* r,
+
+  @{sys}/devices/system/node/ r,
+  @{sys}/devices/system/node/node[0-9]/meminfo r,
+
+  # The orcexec.* file is JIT compiled code for various GStreamer elements.
+  # If one is blocked the next is used instead.
+  owner /{var/,}run/user/[0-9]*/orcexec.* mrw,
+  #owner @{HOME}/orcexec.* mrw,
+  #owner /tmp/orcexec.* mrw,
+
+  owner /tmp/qipc_{systemsem,sharedmemory}_*[a-f0-9]* rw,
+  owner /tmp/.*/ rw,
+  owner /tmp/.*/s rw,
+  owner /tmp/strawberry*[0-9] w,
+  owner /tmp/strawberry-cover-*.jpg rwl -> /tmp/#[0-9]*[0-9],
+  owner /tmp/#[0-9]*[0-9] rw,
+  owner /tmp/*= w,
+
+  owner /var/tmp/etilqs_[0-9a-f]* rw,
+
+  /var/lib/dbus/machine-id r,
+  /etc/machine-id r,
+
+  /usr/share/hwdata/pnp.ids r,
+
+  # Allowed apps to open
+  /{usr/,}lib/firefox/firefox rPUx,
+
+  # file_inherit
+  owner /dev/tty[0-9]* rw,
+  owner @{HOME}/.anyRemote/anyremote.stdout w,
+
+
+  profile open {
+    #include <abstractions/base>
+    #include <abstractions/xdg-open>
+
+    /{usr/,}bin/xdg-open mr,
+
+    # Allowed apps to open
+    /{usr/,}lib/firefox/firefox rPUx,
+
+    # file_inherit
+    owner @{HOME}/.xsession-errors w,
+
+  }
+
+  #include if exists <local/strawberry>
+}

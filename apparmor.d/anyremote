@@ -1,0 +1,168 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/anyremote
+profile anyremote @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/deny-root-dir-access>
+
+  signal (receive) set=(int, term, kill),
+  signal (send) set=(term, kill),
+
+  @{exec_path} rm,
+
+  /{usr/,}bin/dash     rix,
+  /{usr/,}bin/bash     rix,
+  /{usr/,}bin/cat      rix,
+  /{usr/,}bin/rm       rix,
+  /{usr/,}bin/{,e}grep rix,
+  /{usr/,}bin/cut      rix,
+  /{usr/,}bin/id       rix,
+  /{usr/,}bin/mv       rix,
+  /{usr/,}bin/expr     rix,
+  /{usr/,}bin/which    rix,
+  /{usr/,}bin/head     rix,
+  /{usr/,}bin/wc       rix,
+  /{usr/,}bin/tr       rix,
+  /{usr/,}bin/mkdir    rix,
+  /{usr/,}bin/tail     rix,
+  /{usr/,}bin/gawk     rix,
+  /{usr/,}bin/sed      rix,
+  /{usr/,}bin/md5sum   rix,
+  /{usr/,}bin/basename rix,
+  /{usr/,}bin/sleep    rix,
+  /{usr/,}bin/find     rix,
+
+  /{usr/,}bin/convert-im6.q16 rCx -> imagemagic,
+  /{usr/,}bin/killall         rCx -> killall,
+  /{usr/,}bin/pgrep           rCx -> pgrep,
+  /{usr/,}lib/qt5/bin/qdbus   rCx -> qdbus,
+  /{usr/,}bin/curl            rCx -> curl,
+
+  /{usr/,}bin/pacmd           rPx,
+  /{usr/,}bin/pactl           rPx,
+  /{usr/,}bin/wmctrl          rPx,
+  /{usr/,}bin/qtchooser       rPx,
+  /{usr/,}bin/ps              rPx,
+
+  # Players
+  /{usr/,}bin/smplayer        rPx,
+  /{usr/,}bin/amarok          rPx,
+  /{usr/,}bin/vlc             rPx,
+  /{usr/,}bin/mpv             rPx,
+  /{usr/,}bin/strawberry      rPx,
+
+  owner /tmp/amarok_covers/ rw,
+  owner /tmp/*.png rw,
+
+  owner @{HOME}/.anyRemote/{,**} rw,
+  owner @{HOME}/.anyRemote/imdb-mf.sh rix,
+
+  /usr/share/anyremote/{,**} r,
+  /usr/share/anyremote/cfg-data/Utils/*.sh rix,
+
+  # Video dirs
+        / r,
+        /media/ r,
+        /media/Zami/ r,
+  owner /media/Zami/Film/ r,
+  owner /media/Zami/Film/** r,
+
+  deny @{PROC}/sys/kernel/osrelease r,
+
+  owner @{HOME}/.Xauthority r,
+
+
+  profile imagemagic {
+    #include <abstractions/base>
+
+    /{usr/,}bin/convert-im6.q16 mr,
+
+    /usr/share/ImageMagick-[0-9]/*.xml rw,
+    /etc/ImageMagick-[0-9]/*.xml r,
+
+    /usr/share/anyremote/cfg-data/Icons/common/*.png r,
+    owner @{HOME}/.anyRemote/*.png rw,
+
+    owner @{HOME}/.kde/share/apps/amarok/albumcovers/cache/* r,
+
+          /tmp/ r,
+    owner /tmp/*.png rw,
+    owner /tmp/amarok_covers/* rw,
+    owner /tmp/magick-* rw,
+
+  }
+
+  profile killall {
+    #include <abstractions/base>
+    #include <abstractions/consoles>
+
+    capability sys_ptrace,
+
+    signal (send) set=(term, kill),
+
+    ptrace (read),
+
+    /{usr/,}bin/killall mr,
+
+    # The /proc/ dir is needed to avoid the following error:
+    #  /proc: Permission denied
+         @{PROC}/ r,
+         @{PROC}/@{pids}/stat r,
+
+    # file_inherit
+    owner @{HOME}/.anyRemote/anyremote.stdout w,
+
+  }
+
+  profile pgrep {
+    #include <abstractions/base>
+    #include <abstractions/consoles>
+
+    signal (send) set=(term, kill),
+
+    /{usr/,}bin/pgrep mr,
+
+    # The /proc/ dir and the cmdline have to be radable to avoid pgrep segfault.
+         @{PROC}/ r,
+         @{PROC}/@{pids}/cmdline r,
+    deny @{PROC}/sys/kernel/osrelease r,
+
+    # file_inherit
+    owner @{HOME}/.anyRemote/anyremote.stdout w,
+
+  }
+
+  profile curl {
+    #include <abstractions/base>
+    #include <abstractions/nameservice-strict>
+    #include <abstractions/openssl>
+    #include <abstractions/ssl_certs>
+
+    /{usr/,}bin/curl mr,
+
+  }
+
+    profile qdbus {
+    #include <abstractions/base>
+
+    /{usr/,}lib/qt5/bin/qdbus mr,
+
+  }
+
+  #include if exists <local/anyremote>
+}

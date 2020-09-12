@@ -1,0 +1,205 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+# PDF extensions
+# pdf, epub, txt, html, mhtml, ps, mobi, djvu
+@{calibre_ext}  = [pP][dF][fF]
+@{calibre_ext} += [eE][pP][uU][bB]
+@{calibre_ext} += [tT][xX][tT]
+@{calibre_ext} += {[mM],}[hH][tT][mM][lL]
+@{calibre_ext} += [pP][sS]
+@{calibre_ext} += [mM][oO][bB][iI]
+@{calibre_ext} += [dD][jJ][vV][uU]
+
+@{exec_path}  = /{usr/,}bin/calibre{,-parallel,-debug,-server,-smtp,-complete,-customize}
+@{exec_path} += /{usr/,}bin/calibredb
+@{exec_path} += /{usr/,}bin/ebook{-viewer,-edit,-device,-meta,-polish,-convert}
+@{exec_path} += /{usr/,}bin/fetch-ebook-metadata
+@{exec_path} += /{usr/,}bin/lrs2lrf /{usr/,}bin/lrf2lrs /{usr/,}bin/lrfviewer
+@{exec_path} += /{usr/,}bin/web2disk
+profile calibre @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/opencl-intel>
+  #include <abstractions/gtk>
+  #include <abstractions/fonts>
+  #include <abstractions/fontconfig-cache-read>
+  #include <abstractions/freedesktop.org>
+  #include <abstractions/mesa>
+  #include <abstractions/qt5-compose-cache-write>
+  #include <abstractions/qt5-settings-write>
+  #include <abstractions/thumbnails-cache-read>
+  #include <abstractions/user-download-strict>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/trash>
+  #include <abstractions/python>
+  #include <abstractions/openssl>
+  #include <abstractions/ssl_certs>
+  #include <abstractions/deny-root-dir-access>
+
+  # The following rules are needed only when the kernel.unprivileged_userns_clone option is set
+  # to "1".
+  capability sys_admin,
+  capability sys_chroot,
+  owner @{PROC}/@{pid}/setgroups w,
+  owner @{PROC}/@{pid}/gid_map w,
+  owner @{PROC}/@{pid}/uid_map w,
+
+  capability sys_ptrace,
+
+  @{exec_path} mrix,
+  /{usr/,}bin/python3.[0-9]* r,
+
+  #/{usr/,}bin/ r,
+
+  /{usr/,}bin/dash             rix,
+  /{usr/,}sbin/ldconfig        rix,
+  /{usr/,}bin/uname            rix,
+  /{usr/,}bin/file             rix,
+
+  /{usr/,}bin/pdftoppm        rPUx, # (#FIXME#)
+  /{usr/,}bin/pdfinfo         rPUx,
+  /{usr/,}bin/pdftohtml       rPUx,
+
+  /{usr/,}bin/xdg-open         rCx -> open,
+  /{usr/,}bin/xdg-mime         rPx,
+
+  # Which files calibre should be able to open
+        / r,
+        /home/ r,
+  owner @{HOME}/ r,
+  owner @{HOME}/**/ r,
+        /media/ r,
+  owner /media/**/ r,
+  owner /{home,media}/**.@{calibre_ext} rw,
+
+  /usr/share/calibre/{,**} r,
+
+  owner /media/*/Calibre_Library/ r,
+  owner /media/*/Calibre_Library*/ rw,
+  owner /media/*/Calibre_Library*/** rwkl -> /media/*/Calibre_Library*/**,
+
+  owner @{HOME}/.config/calibre/ rw,
+  owner @{HOME}/.config/calibre/** rwk,
+
+  owner @{HOME}/.local/share/calibre-ebook.com/ rw,
+  owner @{HOME}/.local/share/calibre-ebook.com/calibre/ rw,
+  owner @{HOME}/.local/share/calibre-ebook.com/calibre/** rwk,
+
+  owner @{HOME}/.cache/ rw,
+  owner @{HOME}/.cache/calibre/ rw,
+  owner @{HOME}/.cache/calibre/** rwkl -> @{HOME}/.cache/calibre/**,
+
+  owner @{HOME}/.cache/qtshadercache/ rw,
+  owner @{HOME}/.cache/qtshadercache/#[0-9]*[0-9] rw,
+  owner @{HOME}/.cache/qtshadercache/[0-9a-f]* rwl -> @{HOME}/.cache/qtshadercache/#[0-9]*[0-9],
+  owner @{HOME}/.cache/qtshadercache-*-little_endian-*/#[0-9]*[0-9] rw,
+  owner @{HOME}/.cache/qtshadercache-*-little_endian-*/[0-9a-f]* rwl -> @{HOME}/.cache/qtshadercache-*-little_endian-*/#[0-9]*[0-9],
+
+  owner @{HOME}/.cache/gstreamer-[0-9]*/ rw,
+  owner @{HOME}/.cache/gstreamer-[0-9]*/registry.x86_64.bin{,.tmp*} rw,
+
+  owner /tmp/calibre_*_tmp_*/{,**} rw,
+  owner /tmp/calibre-*/{,**} rw,
+  owner /tmp/[0-9]*-*/ rw,
+  owner /tmp/[0-9]*-*/** rwl -> /tmp/[0-9]*-*/**,
+  owner /tmp/* rw,
+
+             @{PROC}/ r,
+       owner @{PROC}/@{pid}/fd/ r,
+       owner @{PROC}/@{pids}/task/ r,
+       owner @{PROC}/@{pids}/task/@{tid}/status r,
+       owner @{PROC}/@{pids}/stat r,
+       owner @{PROC}/@{pid}/mountinfo r,
+       owner @{PROC}/@{pid}/mounts r,
+  deny owner @{PROC}/@{pid}/oom_{,score_}adj rw,
+  deny owner @{PROC}/@{pid}/cmdline r,
+             @{PROC}/@{pid}/net/route r,
+  deny       @{PROC}/sys/kernel/random/boot_id r,
+             @{PROC}/sys/kernel/yama/ptrace_scope r,
+             @{PROC}/sys/fs/inotify/max_user_watches r,
+             @{PROC}/vmstat r,
+
+  /etc/fstab r,
+
+  owner @{HOME}/.config/qt5ct/{,**} r,
+  /usr/share/qt5ct/** r,
+
+  # no new privs
+  /{usr/,}lib/@{multiarch}/qt5/libexec/QtWebEngineProcess rix,
+  /usr/share/qt5/**.pak r,
+
+  # For sending books to a phone
+  /dev/bus/usb/ r,
+  /dev/bus/usb/** rw,
+
+  @{sys}/class/ r,
+  @{sys}/bus/ r,
+  @{sys}/bus/usb/devices/ r,
+  @{sys}/devices/pci[0-9]*/**/usb[0-9]/{,**/} r,
+  @{sys}/devices/pci[0-9]*/**/usb[0-9]/{,**/}{bDeviceClass,bcdDevice,manufacturer,product} r,
+  @{sys}/devices/pci[0-9]*/**/usb[0-9]/{,**/}{busnum,devnum} r,
+  @{sys}/devices/pci[0-9]*/**/usb[0-9]/{,**/}{idVendor,idProduct} r,
+  @{sys}/devices/pci[0-9]*/**/usb[0-9]/{,**/}serial r,
+  @{sys}/devices/pci[0-9]*/**/usb[0-9]/{,**/}{speed,descriptors,bConfigurationValue,interface} r,
+
+  @{sys}/devices/pci[0-9]*/**/irq r,
+
+  /{,var/}run/udev/data/+usb* r,            #
+  /{,var/}run/udev/data/c189:[0-9]* r,      # for /dev/bus/usb/**
+
+        /dev/shm/ r,
+        /dev/shm/#[0-9]*[0-9] rw,
+  owner /dev/shm/.org.chromium.Chromium.* rw,
+
+  /var/lib/dbus/machine-id r,
+  /etc/machine-id r,
+
+  /usr/share/hwdata/pnp.ids r,
+
+  /etc/mime.types r,
+  /etc/inputrc r,
+  /etc/magic r,
+
+  # file_inherit
+  owner /dev/tty[0-9]* rw,
+  owner @{HOME}/.xsession-errors w,
+
+
+  profile open {
+    #include <abstractions/base>
+    #include <abstractions/xdg-open>
+
+    /{usr/,}bin/xdg-open mr,
+
+    /{usr/,}bin/dash rix,
+
+    # Allowed apps to open
+    /{usr/,}lib/firefox/firefox  rPx,
+    /{usr/,}bin/qpdfview         rPx,
+    /{usr/,}bin/viewnior        rPUx,
+    /{usr/,}bin/spacefm          rPx,
+    /{usr/,}bin/chromium         rPx,
+    /{usr/,}bin/ebook-viewer     rPx,
+    /{usr/,}bin/ebook-edit       rPx,
+
+    owner /{home,media}/**.@{calibre_ext} rw,
+
+    # file_inherit
+    owner @{HOME}/.xsession-errors w,
+
+  }
+
+  #include if exists <local/calibre>
+}

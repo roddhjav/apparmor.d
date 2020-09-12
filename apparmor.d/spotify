@@ -1,0 +1,94 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/spotify /usr/share/spotify/spotify
+profile spotify @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/opencl-intel>
+  #include <abstractions/audio>
+  #include <abstractions/gtk>
+  #include <abstractions/fonts>
+  #include <abstractions/fontconfig-cache-read>
+  #include <abstractions/freedesktop.org>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/mesa>
+  #include <abstractions/user-download-strict>
+  #include <abstractions/thumbnails-cache-read>
+  #include <abstractions/openssl>
+  #include <abstractions/ssl_certs>
+  #include <abstractions/deny-root-dir-access>
+
+  @{exec_path} mrix,
+
+  /usr/share/spotify/{,**} r,
+  /usr/share/spotify/libcef.so mr,
+  /usr/share/spotify/swiftshader/libGLESv2.so mr,
+  /usr/share/spotify/swiftshader/libEGL.so mr,
+
+  owner @{HOME}/.config/spotify/ rw,
+  owner @{HOME}/.config/spotify/** rw,
+
+  owner @{HOME}/.cache/ rw,
+  owner @{HOME}/.cache/spotify/ rw,
+  owner @{HOME}/.cache/spotify/** rwk,
+
+  owner @{HOME}/.Xauthority r,
+
+  # The /proc/ dir is needed to avoid the following errors:
+  #  [:FATAL:proc_util.cc(36)] : Permission denied (13)
+  #  [:FATAL:sandbox_linux.cc(484)] : Permission denied (13)
+             @{PROC}/ r,
+       owner @{PROC}/@{pid}/fd/ r,
+  deny owner @{PROC}/@{pids}/task/ r,
+  deny owner @{PROC}/@{pids}/task/@{tid}/stat r,
+  deny owner @{PROC}/@{pids}/task/@{tid}/status r,
+  deny       @{PROC}/@{pids}/stat r,
+  deny owner @{PROC}/@{pid}/cmdline r,
+  deny owner @{PROC}/@{pids}/oom_score_adj w,
+  deny       @{PROC}/vmstat r,
+             @{PROC}sys/kernel/yama/ptrace_scope r,
+       owner @{PROC}/@{pid}/mountinfo r,
+       owner @{PROC}/@{pid}/mounts r,
+
+  /etc/fstab r,
+
+  owner /dev/shm/.org.chromium.Chromium.* rw,
+
+  deny @{sys}/devices/virtual/tty/tty[0-9]*/active r,
+  # To remove the following error:
+  #  pcilib: Cannot open /sys/bus/pci/devices/0000:03:00.0/irq: Permission denied
+  deny @{sys}/devices/pci[0-9]*/**/irq r,
+
+  deny /var/lib/dbus/machine-id r,
+  deny /etc/machine-id r,
+
+  /usr/share/X11/XErrorDB r,
+
+        /tmp/ r,
+  owner /tmp/[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]* rw,
+
+  # What's this for?
+  #owner /tmp/[0-9]*.[0-9]*.[0-9]*.[0-9]*-linux-*.zip rw,
+
+  /var/tmp/ r,
+
+  deny owner @{HOME}/.pki/ rw,
+  deny owner @{HOME}/.pki/nssdb/ rw,
+  deny owner @{HOME}/.pki/nssdb/pkcs11.txt rw,
+  deny owner @{HOME}/.pki/nssdb/{cert9,key4}.db rwk,
+  deny owner @{HOME}/.pki/nssdb/{cert9,key4}.db-journal rw,
+
+  #include if exists <local/spotify>
+}

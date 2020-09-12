@@ -1,0 +1,53 @@
+# vim:syntax=apparmor
+# Author: Jamie Strandboge <jamie@canonical.com>
+
+# Description: Limit executable access and reasonable read access. A look at
+# the gconf schema files for totem-video-thumbnailer reveals at least the
+# following files:
+#  3gpp, ac3, acm, aiff, amr-wb, ape, asf, asx, au, avi, basic, divx, dv, flac,
+#  flc, fli, flic, flv, google-video-pointer, gpp, gsm, m4a, m4v, matroska,
+#  midi, mod, mp3, mp4, mp4es, mpeg, mpt2, msvideo, ms-wm, musepack,mxf,
+#  netshow, nsv, off, ogm, pict, pn-realaudio, prs.sid, quicktime, ram,
+#  realpix, rn, sbc, sdp, shorten, speex, theora, totem-stream, tta, ultravox,
+#  vivo, vorbis, wav, wavpack, wax, webm, wma, wmv, wmx, wpl, wvx, x-anim,
+#  x-it, xm
+#
+# While ideally we would narrow down our read access to the above, this is
+# a maintenance problem and doesn't work for files without extensions.
+
+  #include <abstractions/gnome>
+  #include <abstractions/gstreamer>
+  #include <abstractions/nameservice>
+  #include <abstractions/dbus-session>
+
+  # Allow read on all directories
+  /**/ r,
+
+  # Allow read on removable media and files in /usr/share and /usr/local/share
+  /usr/local/share/** r,
+  /usr/share/** r,
+  /{media,mnt,opt,srv}/** r,
+
+  owner @{HOME}/.cache/mesa/** rwk,
+  owner @{HOME}/.cache/thumbnails/** rw,
+  owner @{HOME}/.cache/totem/ rw,
+  owner @{HOME}/.cache/totem/** rwk,
+  owner @{HOME}/.cache/totem-* rwk,
+  owner @{HOME}/.cache/tracker/db-locale.txt r,
+  owner @{HOME}/.cache/tracker/meta.db{,-shm,-journal,-wal} rwk,
+  owner @{HOME}/.cache/tracker/ontologies.gvdb r,
+  owner @{HOME}/.config/totem/ rwk,
+  owner @{HOME}/.config/totem/** rwk,
+  owner @{HOME}/.local/share/grilo-plugins/ rwk,
+  owner @{HOME}/.local/share/grilo-plugins/*.db{,-shm,-journal,-wal} rwk,
+  owner @{HOME}/.local/share/gvfs-metadata/** r,
+  owner @{HOME}/.local/share/totem/ rwk,
+  owner @{HOME}/.local/share/tracker/data/tracker-store.journal rwk,
+
+  owner @{PROC}/@{pid}/{mountinfo,status} r,
+
+  /run/udev/data/c* r,
+  /run/udev/data/+drm:card* r,
+  /run/udev/data/+usb* r,
+
+  /sys/devices/system/node/*/meminfo r,

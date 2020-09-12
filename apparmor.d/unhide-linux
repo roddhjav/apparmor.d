@@ -1,0 +1,44 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}sbin/unhide{,-linux}
+profile unhide-linux @{exec_path} {
+  #include <abstractions/base>
+
+  capability kill,
+  capability sys_ptrace,
+
+  ptrace (read),
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/dash rix,
+  /{usr/,}bin/ps   rix,
+
+  @{PROC}/ r,
+  @{PROC}/uptime r,
+  @{PROC}/@{pids}/ r,
+  @{PROC}/@{pids}/stat r,
+  @{PROC}/@{pids}/cmdline r,
+  @{PROC}/@{pids}/task/ r,
+  @{PROC}/@{pids}/task/@{tid}/ r,
+  @{PROC}/@{pids}/task/@{tid}/status r,
+  @{PROC}/@{pids}/task/@{tid}/stat r,
+  @{PROC}/@{pids}/task/@{tid}/cmdline r,
+  @{PROC}/sys/kernel/pid_max r,
+  @{PROC}/sys/kernel/osrelease r,
+
+  #include if exists <local/unhide-linux>
+}

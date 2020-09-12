@@ -1,0 +1,35 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2018-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/polipo
+profile polipo @{exec_path} {
+  #include <abstractions/base>
+
+  @{exec_path} mr,
+
+  /etc/polipo/* r,
+
+  owner /var/log/polipo/ r,
+  owner /var/log/polipo/polipo.log w,
+
+  # Cache dir
+  owner /var/cache/polipo/{,*} rw,
+  owner @{HOME}/.polipo-cache/{,*} rw,
+
+  # Nameservice
+  /etc/resolv.conf r,
+
+  #include if exists <local/polipo>
+}

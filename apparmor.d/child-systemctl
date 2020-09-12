@@ -1,0 +1,45 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+# Note: This profile does not specify an attachment path because it is
+# intended to be used only via "Px -> child-systemctl" exec transitions
+# from other profiles. We want to confine the systemctl(1) utility when
+# it is invoked from other confined applications, but not when it is
+# used in regular (unconfined) shell scripts or run directly by the user.
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+# Do not attach to /{usr/,}bin/systemctl by default
+profile child-systemctl {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/wutmp>
+
+  capability sys_ptrace,
+
+  ptrace (read),
+
+  /{usr/,}bin/systemctl mr,
+
+  owner @{PROC}/@{pid}/stat r,
+        @{PROC}/sys/kernel/osrelease r,
+        @{PROC}/1/environ r,
+        @{PROC}/1/sched r,
+        @{PROC}/cmdline r,
+
+  @{sys}/firmware/efi/efivars/SecureBoot-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]* r,
+
+  /dev/kmsg w,
+
+  #include if exists <local/child-systemctl>
+}

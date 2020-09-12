@@ -1,0 +1,79 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2018-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{SIGNAL_INSTALLDIR} = "/opt/Signal{, Beta}"
+@{SIGNAL_HOMEDIR} = "@{HOME}/.config/Signal{, Beta}"
+
+@{exec_path} = @{SIGNAL_INSTALLDIR}/signal-desktop{,-beta}
+profile signal-desktop @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/opencl-intel>
+  #include <abstractions/gtk>
+  #include <abstractions/freedesktop.org>
+  #include <abstractions/fonts>
+  #include <abstractions/fontconfig-cache-read>
+  #include <abstractions/audio>
+  #include <abstractions/mesa>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/deny-root-dir-access>
+
+  @{exec_path} mr,
+
+  # Signal installation dir
+  @{SIGNAL_INSTALLDIR}/ r,
+  @{SIGNAL_INSTALLDIR}/** r,
+  @{SIGNAL_INSTALLDIR}/libnode.so mr,
+  @{SIGNAL_INSTALLDIR}/libffmpeg.so mr,
+  @{SIGNAL_INSTALLDIR}/chrome-sandbox rPx,
+
+  # Signal home dirs
+  @{SIGNAL_HOMEDIR}/ rw,
+  @{SIGNAL_HOMEDIR}/** rwk,
+
+  #owner @{HOME}/.pki/nssdb/pkcs11.txt r,
+  #owner @{HOME}/.pki/nssdb/cert9.db rwk,
+  #owner @{HOME}/.pki/nssdb/key4.db rwk,
+
+  # Signal wants the /tmp/ dir to be mounted with the "exec" flag. If this is not acceptable in
+  # your system, use the TMPDIR variable to set some other tmp dir.
+  /tmp/ r,
+  owner /tmp/.org.chromium.Chromium.* mrw,
+  /var/tmp/ r,
+  owner @{SIGNAL_HOMEDIR}/tmp/.org.chromium.Chromium.* mrw,
+
+  @{sys}/devices/system/cpu/cpufreq/policy[0-9]/cpuinfo_max_freq r,
+  @{sys}/devices/pci[0-9]*/**/{irq,vendor,device} r,
+  @{sys}/devices/virtual/tty/tty[0-9]/active r,
+
+             @{PROC}/ r,
+       owner @{PROC}/@{pid}/fd/ r,
+  deny owner @{PROC}/@{pid}/oom_{,score_}adj rw,
+       owner @{PROC}/@{pids}/task/ r,
+       owner @{PROC}/@{pids}/task/@{tid}/status r,
+             @{PROC}/@{pids}/stat r,
+             @{PROC}/vmstat r,
+
+  deny /dev/shm/ r,
+       /dev/shm/.org.chromium.Chromium.* rw,
+
+  /var/lib/dbus/machine-id r,
+  /etc/machine-id r,
+
+  /{usr/,}bin/xdg-settings rPUx,
+
+  /{usr/,}bin/getconf rix,
+
+  #include if exists <local/signal-desktop>
+}

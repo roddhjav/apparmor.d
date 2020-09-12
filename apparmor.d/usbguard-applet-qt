@@ -1,0 +1,58 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2018-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/usbguard-applet-qt
+profile usbguard-applet-qt @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/X>
+  #include <abstractions/gtk>
+  #include <abstractions/fonts>
+  #include <abstractions/fontconfig-cache-read>
+  #include <abstractions/freedesktop.org>
+  #include <abstractions/mesa>
+  #include <abstractions/qt5-compose-cache-write>
+  #include <abstractions/dri-enumerate>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/deny-root-dir-access>
+
+  # Needed?
+  ptrace (read),
+
+  @{exec_path} mr,
+
+  owner @{HOME}/.config/USBGuard/ rw,
+  owner @{HOME}/.config/USBGuard/* rwkl -> @{HOME}/.config/USBGuard/#[0-9]*[0-9],
+
+  /dev/shm/#[0-9]*[0-9] rw,
+  /dev/shm/qb-usbguard-{request,response,event}-[0-9]*-[0-9]*-[0-9]*-{header,data} rw,
+  /dev/shm/qb-[0-9]*-[0-9]*-[0-9]*-*/qb-{request,response,event}-usbguard-{header,data} rw,
+
+  owner /{,var/}run/user/[0-9]*/sni-qt_usbguard-applet-qt_[0-9]*-[a-zA-Z0-9]*/{,**} rw,
+
+  owner @{PROC}/@{pid}/cmdline r,
+        @{PROC}/sys/kernel/random/boot_id r,
+        @{PROC}/sys/kernel/core_pattern r,
+
+  /usr/share/hwdata/pnp.ids r,
+
+  # To configure Qt5 settings (theme, font, icons, etc.) under DE/WM without Qt integration
+  owner @{HOME}/.config/qt5ct/{,**} r,
+  /usr/share/qt5ct/** r,
+
+  /var/lib/dbus/machine-id r,
+  /etc/machine-id r,
+
+  #include if exists <local/usbguard-applet-qt>
+}

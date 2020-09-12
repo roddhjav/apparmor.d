@@ -1,0 +1,139 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2017-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/xinit
+profile xinit @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/deny-root-dir-access>
+
+  @{exec_path} mr,
+
+  signal (receive) set=(usr1) peer=xorg,
+
+  signal (send) set=(term, kill) peer=xorg,
+  signal (send) set=(hup),
+
+  /etc/X11/xinit/xinitrc   rix,
+  /etc/X11/xinit/xserverrc rix,
+
+  /{usr/,}bin/rm       rix,
+  /{usr/,}bin/touch    rix,
+  /{usr/,}bin/{,e}grep rix,
+  /{usr/,}bin/sed      rix,
+  /{usr/,}bin/which    rix,
+  /{usr/,}bin/cat      rix,
+  /{usr/,}bin/tempfile rix,
+  /{usr/,}bin/date     rix,
+  /{usr/,}bin/chmod    rix,
+  /{usr/,}bin/head     rix,
+  /{usr/,}bin/gawk     rix,
+  /{usr/,}bin/id       rix,
+
+  /{usr/,}bin/dbus-update-activation-environment rix,
+
+  /{usr/,}bin/gpgconf     rCx -> gpg,
+  /{usr/,}bin/run-parts   rCx -> run-parts,
+  /{usr/,}bin/udevadm     rCx -> udevadm,
+
+  /{usr/,}bin/xrdb        rPx,
+  /{usr/,}bin/numlockx    rPx,
+  /{usr/,}bin/xhost       rPx,
+  /{usr/,}bin/glxinfo     rPx,
+  /{usr/,}bin/flatpak    rPUx,
+
+  # Allowed GUI sessions to start
+  /{usr/,}bin/openbox-session      rPx,
+  /{usr/,}bin/enlightenment_start rPUx,
+  /{usr/,}bin/sway                rPUx,
+  /{usr/,}bin/ssh-agent            rPx,
+
+  owner /tmp/file* rw,
+
+  /{usr/,}bin/X           rPx,
+  /{usr/,}bin/Xorg        rPx,
+
+  /etc/X11/{,**} r,
+
+  /etc/default/{,*} r,
+
+  # Xsession logs
+  owner @{HOME}/.xsession-errors w,
+
+  owner @{HOME}/.Xauthority r,
+
+
+  profile run-parts {
+    #include <abstractions/base>
+
+    /{usr/,}bin/run-parts mr,
+
+    /etc/X11/Xsession.d/ r,
+    /etc/X11/Xresources/ r,
+
+    # file_inherit
+    owner /dev/tty[0-9]* rw,
+    owner @{HOME}/.xsession-errors w,
+
+  }
+
+  profile gpg {
+    #include <abstractions/base>
+
+    /{usr/,}bin/gpgconf mr,
+
+    /{usr/,}bin/gpg-agent rix,
+
+    owner @{HOME}/.gnupg/ rw,
+    owner @{HOME}/.gnupg/** rwkl -> @{HOME}/.gnupg/**,
+
+    @{PROC}/@{pid}/fd/ r,
+
+    # file_inherit
+    owner /dev/tty[0-9]* rw,
+    owner @{HOME}/.xsession-errors w,
+
+  }
+
+  profile udevadm {
+    #include <abstractions/base>
+
+    /{usr/,}bin/udevadm mr,
+
+    /etc/udev/udev.conf r,
+
+    owner @{PROC}/@{pid}/stat r,
+          @{PROC}/cmdline r,
+          @{PROC}/1/sched r,
+          @{PROC}/1/environ r,
+          @{PROC}/sys/kernel/osrelease r,
+
+    @{sys}/firmware/efi/efivars/SecureBoot-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]* r,
+
+    @{sys}/bus/ r,
+    @{sys}/bus/*/devices/ r,
+    @{sys}/class/ r,
+    @{sys}/class/*/ r,
+    @{sys}/devices/**/uevent r,
+    /{var/,}run/udev/data/* r,
+
+    # file_inherit
+    owner /dev/tty[0-9]* rw,
+    owner @{HOME}/.xsession-errors w,
+
+  }
+
+  #include if exists <local/xinit>
+}

@@ -1,0 +1,221 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{BRAVE_INSTALLDIR} = /opt/brave.com/brave{,-beta,-dev}
+@{BRAVE_HOMEDIR} = @{HOME}/.config/BraveSoftware/Brave-Browser{,-Beta,-Dev}
+@{BRAVE_CACHEDIR} = @{HOME}/.cache/BraveSoftware/Brave-Browser{,-Beta,-Dev}
+
+@{exec_path} = @{BRAVE_INSTALLDIR}/brave{,-beta,-dev}
+profile brave @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/opencl-intel>
+  #include <abstractions/gtk>
+  #include <abstractions/freedesktop.org>
+  #include <abstractions/fonts>
+  #include <abstractions/fontconfig-cache-read>
+  #include <abstractions/mesa>
+  #include <abstractions/audio>
+  #include <abstractions/user-download-strict>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/thumbnails-cache-read>
+  #include <abstractions/deny-dconf>
+  #include <abstractions/deny-root-dir-access>
+
+  capability sys_ptrace,
+
+  # The following rules are needed only when the kernel.unprivileged_userns_clone option is set
+  # to "1".
+  capability sys_admin,
+  capability sys_chroot,
+  owner @{PROC}/@{pid}/setgroups w,
+  owner @{PROC}/@{pid}/gid_map w,
+  owner @{PROC}/@{pid}/uid_map w,
+
+  ptrace (read),
+
+  @{exec_path} mrix,
+
+  @{BRAVE_INSTALLDIR}/{,**} r,
+  @{BRAVE_INSTALLDIR}/{brave,chrome}-sandbox rPx,
+  @{BRAVE_INSTALLDIR}/brave-browser{,-beta,-dev} rPx,
+  @{BRAVE_INSTALLDIR}/swiftshader/libGLESv2.so mr,
+  @{BRAVE_INSTALLDIR}/swiftshader/libEGL.so mr,
+
+  # When installing/removing extensions
+  /{usr/,}bin/basename rix,
+  /{usr/,}bin/cut      rix,
+  /{usr/,}bin/sed      rix,
+  /{usr/,}bin/mkdir    rix,
+  /{usr/,}bin/touch    rix,
+  /{usr/,}bin/rm       rix,
+  /{usr/,}bin/mktemp   rix,
+  /{usr/,}bin/cat      rix,
+  /{usr/,}bin/{,e}grep rix,
+
+       /etc/opt/chrome/ r,
+  deny /etc/opt/chrome/ w,
+
+  # For "brave --help"
+  /{usr/,}bin/man               rPUx,
+
+  # For storing passwords externally
+  /{usr/,}bin/keepassxc-proxy   rPUx,
+
+  /{usr/,}bin/lsb_release        rPx -> child-lsb_release,
+
+  # no new privs
+  #deny /{usr/,}bin/xdg-desktop-menu  rx,
+
+  /{usr/,}bin/xdg-open           rCx -> open,
+  /{usr/,}bin/xdg-settings      rPUx,
+  /{usr/,}bin/xdg-mime          rPUx,
+
+  /usr/share/chromium/extensions/ r,
+
+  # To remove the following error:
+  #  Error initializing NSS with a persistent database
+  owner @{HOME}/.pki/ rw,
+  owner @{HOME}/.pki/nssdb/ rw,
+  owner @{HOME}/.pki/nssdb/pkcs11.txt rw,
+  owner @{HOME}/.pki/nssdb/{cert9,key4}.db rwk,
+  owner @{HOME}/.pki/nssdb/{cert9,key4}.db-journal rw,
+
+  owner @{HOME}/ r,
+  owner @{HOME}/.config/BraveSoftware/ w,
+  owner @{BRAVE_HOMEDIR}/ rw,
+  owner @{BRAVE_HOMEDIR}/** rwk,
+  # For Widevine plugin
+  owner @{BRAVE_HOMEDIR}/WidevineCdm/libwidevinecdm.so mrw,
+
+  # Cache files
+  owner @{HOME}/.cache/ rw,
+  owner @{HOME}/.cache/BraveSoftware/ rw,
+  owner @{BRAVE_CACHEDIR}/{,**/} rw,
+  owner @{BRAVE_CACHEDIR}/*/**/{*-,}index rw,
+  owner @{BRAVE_CACHEDIR}/*/**/[a-f0-9]*_? rw,
+  owner @{BRAVE_CACHEDIR}/*/**/todelete_* rw,
+
+  # For importing data (bookmarks, cookies, etc) from Firefox
+  owner @{HOME}/.mozilla/firefox/profiles.ini r,
+  owner @{HOME}/.mozilla/firefox/*/ r,
+  owner @{HOME}/.mozilla/firefox/*/compatibility.ini r,
+  owner @{HOME}/.mozilla/firefox/*/search{,-metadata}.json r,
+  owner @{HOME}/.mozilla/firefox/*/.parentlock rwk,
+  owner @{HOME}/.mozilla/firefox/*/{places,cookies,favicons,formhistory,}.sqlite{,-wal,-shm,-journal} rwk,
+  owner @{HOME}/.mozilla/firefox/*/{cert9,key4}.db rwk,
+  owner @{HOME}/.mozilla/firefox/*/logins.json r,
+  # For importing data from Chromium
+  owner "@{HOME}/.config/chromium/Local State" r,
+  owner @{HOME}/.config/chromium/Singleton{Lock,Socket,Cookie} w,
+  owner "@{HOME}/.config/chromium/*/Login Data{,-journal}" rwk,
+  owner @{HOME}/.config/chromium/*/ r,
+  owner @{HOME}/.config/chromium/*/{History,Cookies,Favicons,Bookmarks} rwk,
+
+  owner @{HOME}/.config/menus/applications-merged/ r,
+  owner @{HOME}/.config/menus/applications-merged/xdg-desktop-menu-dummy.menu r,
+
+  /etc/fstab r,
+
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+
+  # Needed or Brave crash with the following error:
+  #  illegal hardware instruction
+             @{PROC}/ r,
+  #
+  deny       @{PROC}/vmstat r,
+  deny       @{PROC}/stat r,
+             @{PROC}/sys/kernel/yama/ptrace_scope r,
+             @{PROC}/@{pid}/fd/ r,
+  deny       @{PROC}/@{pids}/stat r,
+  deny       @{PROC}/@{pids}/statm r,
+  # To remove the following error:
+  #  Failed to adjust OOM score of renderer with pid : Permission denied
+  deny owner @{PROC}/@{pid}/oom_{,score_}adj rw,
+  #
+  deny       @{PROC}/@{pids}/cmdline r,
+       owner @{PROC}/@{pids}/task/ r,
+  deny       @{PROC}/@{pids}/task/@{tid}/status r,
+  deny owner @{PROC}/@{pid}/limits r,
+       owner @{PROC}/@{pid}/mountinfo r,
+       owner @{PROC}/@{pid}/mounts r,
+       owner @{PROC}/@{pid}/clear_refs w,
+             @{PROC}/sys/fs/inotify/max_user_watches r,
+  deny       @{PROC}filesystems r,
+
+  owner /dev/shm/.org.chromium.Chromium.* rw,
+  owner /dev/shm/org.chromium.Chromium.shmem.[A-F0-9]*._service_shmem rw,
+
+  /dev/bus/usb/[0-9]*/[0-9]* rw,
+
+  # For downloading files
+  owner @{HOME}/.local/share/.org.chromium.Chromium.* rw,
+
+  /var/lib/dbus/machine-id r,
+  /etc/machine-id r,
+
+  # Udev enumeration
+  @{sys}/bus/ r,
+  @{sys}/bus/**/devices/ r,
+  @{sys}/devices/**/uevent r,
+  @{sys}/class/ r,
+  @{sys}/class/**/ r,
+  /{,var/}run/udev/data/* r,
+  @{sys}/devices/pci[0-9]*/**/usb[0-9]/{,**/}{descriptors,manufacturer,product,serial,bConfigurationValue} r,
+  @{sys}/devices/pci[0-9]*/**/usb[0-9]/{,**/}{busnum,devnum} r,
+
+  @{sys}/devices/virtual/tty/tty[0-9]/active r,
+  @{sys}/devices/system/cpu/online r,
+
+  # To remove the following error:
+  #  pcilib: Cannot open /sys/bus/pci/devices/0000:03:00.0/irq: Permission denied
+  # The irq file is needed to render pages.
+  @{sys}/devices/pci[0-9]*/**/irq r,
+
+  @{sys}/devices/system/cpu/cpufreq/policy[0-9]/cpuinfo_max_freq r,
+
+        /var/tmp/ r,
+        /tmp/ r,
+  owner /tmp/.org.chromium.Chromium.* rw,
+  owner /tmp/.org.chromium.Chromium.*/{,**} rw,
+  # For installing/updating/removing extensions
+  owner /tmp/scoped_dir*/{,**} rw,
+  owner /tmp/tmp.* rw,
+  # For brave://net-export/
+  owner /tmp/net-export/ rw,
+
+  # Silencer
+  deny @{BRAVE_INSTALLDIR}/** w,
+
+  # file_inherit
+  owner @{HOME}/.xsession-errors w,
+
+
+  profile open {
+    #include <abstractions/base>
+    #include <abstractions/xdg-open>
+
+    /{usr/,}bin/xdg-open mr,
+
+    # Allowed apps to open
+
+
+    # file_inherit
+    owner @{HOME}/.xsession-errors w,
+
+  }
+
+  #include if exists <local/brave>
+}

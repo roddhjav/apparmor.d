@@ -1,0 +1,62 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/systemd-analyze
+profile systemd-analyze @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/systemd-common>
+
+  # Needed for the prctl's PR_SET_MM option:
+  #  prctl(PR_SET_MM, PR_SET_MM_ARG_START, 0x721691edc000, 0, 0) = -1 EPERM (Operation not permitted)
+  capability sys_resource,
+
+  signal (send) peer=child-pager,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/pager     rPx -> child-pager,
+  /{usr/,}bin/less      rPx -> child-pager,
+  /{usr/,}bin/more      rPx -> child-pager,
+  /{usr/,}bin/man       rPx,
+
+  owner @{PROC}/@{pid}/cgroup r,
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/comm r,
+        @{PROC}/swaps r,
+
+  # For systemd-analyze cat-config
+  /etc/systemd/** r,
+  /{usr/,}lib/systemd/** r,
+
+  @{sys}/fs/cgroup/{systemd,unified}/** r,
+  @{sys}/fs/cgroup/{systemd,unified}/**/cgroup.procs rw,
+  @{sys}/firmware/acpi/tables/FPDT r,
+
+  @{sys}/module/**/uevent r,
+  @{sys}/devices/**/uevent r,
+  /{var/,}run/udev/data/* r,
+
+  /{var/,}run/udev/tags/systemd/ r,
+  /{var/,}run/systemd/system/ r,
+  /{var/,}run/systemd/userdb/io.systemd.DynamicUser w,
+
+  owner /tmp/systemd-temporary-*/ rw,
+
+  /usr/ r,
+
+  /etc/default/locale r,
+
+  #include if exists <local/systemd-analyze>
+}

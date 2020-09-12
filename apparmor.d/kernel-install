@@ -1,0 +1,78 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/kernel-install
+profile kernel-install @{exec_path} flags=(complain) {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/nameservice-strict>
+
+  @{exec_path} r,
+  /{usr/,}bin/bash r,
+
+  /{usr/,}bin/dash r,
+
+  /{usr/,}bin/mountpoint rix,
+  /{usr/,}bin/sort       rix,
+  /{usr/,}bin/rm         rix,
+  /{usr/,}bin/mkdir      rix,
+  /{usr/,}bin/cp         rix,
+  /{usr/,}bin/chown      rix,
+  /{usr/,}bin/chmod      rix,
+  /{usr/,}bin/basename   rix,
+
+  /{usr/,}bin/kmod       rCx -> kmod,
+
+  /{usr/,}lib/kernel/install.d/ r,
+  /{usr/,}lib/kernel/install.d/[0-9][0-9]-*.install rix,
+
+  /etc/kernel/install.d/ r,
+  /etc/kernel/install.d/*.install rix,
+
+  owner /tmp/sh-thd.* rw,
+
+  owner /boot/{vmlinuz,initrd.img}-* r,
+  owner /boot/[a-f0-9]*/*/ rw,
+  owner /boot/[a-f0-9]*/*/{linux,initrd} w,
+  owner /boot/loader/ rw,
+  owner /boot/loader/entries/ rw,
+  owner /boot/loader/entries/*.conf w,
+
+  /{usr/,}lib/modules/*/modules.* w,
+
+  /etc/os-release r,
+  /{usr/,}lib/os-release r,
+
+  /etc/kernel/tries r,
+
+  /etc/kernel/cmdline r,
+  @{PROC}/cmdline r,
+
+  /var/lib/dbus/machine-id r,
+  /etc/machine-id r,
+
+
+  profile kmod flags=(complain) {
+    #include <abstractions/base>
+
+    /{usr/,}bin/kmod mr,
+
+    #@{PROC}/cmdline r,
+    #@{PROC}/modules r,
+
+  }
+
+  #include if exists <local/kernel-install>
+}

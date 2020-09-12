@@ -1,0 +1,52 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/umount
+profile umount @{exec_path} flags=(complain) {
+  #include <abstractions/base>
+
+  # To be able to umount anything
+  #  umount2("/mnt", 0)               = -1 EPERM (Operation not permitted)
+  #
+  #  umount: /mnt: must be superuser to unmount.
+  capability sys_admin,
+
+  capability setuid,
+  capability setgid,
+
+  umount,
+
+  @{exec_path} mr,
+
+  # Mount points
+  /media/*/ r,
+  /media/*/*/ r,
+  /mnt/ r,
+  /mnt/*/ r,
+  /media/cdrom[0-9]/ r,
+
+  /etc/mtab r,
+  /etc/fstab r,
+
+  owner @{PROC}/@{pid}/mountinfo r,
+
+  @{sys}/devices/virtual/block/dm-[0-9]*/dm/name r,
+
+  owner /{,var/}run/mount/ rw,
+  owner /{,var/}run/mount/utab{,.*} rw,
+  owner /{,var/}run/mount/utab.lock wk,
+
+  #include if exists <local/umount>
+}

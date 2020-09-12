@@ -1,0 +1,45 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2017-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/gpgconf
+profile gpgconf @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/nameservice-strict>
+
+  @{exec_path} mrix,
+
+  /{usr/,}bin/gpg-connect-agent rPx,
+  /{usr/,}bin/gpg               rPx,
+  /{usr/,}bin/gpg-agent         rPx,
+  /{usr/,}bin/dirmngr           rPx,
+  /{usr/,}bin/gpgsm             rPx,
+  /{usr/,}lib/gnupg/scdaemon    rPx,
+
+  /{usr/,}bin/pinentry-*        rPx,
+
+  owner @{HOME}/.gnupg/** rwkl -> @{HOME}/.gnupg/**,
+
+  owner @{PROC}/@{pid}/task/@{tid}/stat rw,
+  owner @{PROC}/@{pid}/task/@{tid}/comm rw,
+  owner @{PROC}/@{pid}/fd/ r,
+
+  /etc/inputrc r,
+
+  # file_inherit
+  owner @{HOME}/.xsession-errors w,
+
+  #include if exists <local/gpgconf>
+}

@@ -1,0 +1,30 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/btrfs-find-root
+profile btrfs-find-root @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/disks-read>
+
+  @{exec_path} mr,
+
+  # A place for file images
+  owner @{HOME}/**.{iso,img,bin,mdf,nrg} rwk,
+  owner /media/*/**.{iso,img,bin,mdf,nrg} rwk,
+  owner @{HOME}/**.{ISO,IMG,BIN,MDF,NRG} rwk,
+  owner /media/*/**.{ISO,IMG,BIN,MDF,NRG} rwk,
+
+  #include if exists <local/btrfs-find-root>
+}

@@ -1,0 +1,43 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2017-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}sbin/hddtemp
+profile hddtemp @{exec_path} {
+  #include <abstractions/base>
+
+  # To remove the following errors:
+  #  /dev/sda: Permission denied
+  capability sys_rawio,
+
+  # There's the following error in strace:
+  #  ioctl(3, HDIO_DRIVE_CMD, 0x7ffdfeafc074) = -1 EACCES (Permission denied)
+  # This should be covered by CAP_SYS_RAWIO instead.
+  # (see: https://www.kernel.org/doc/Documentation/ioctl/hdio.rst)
+  # It looks like hddtemp works just fine without it.
+  deny capability sys_admin,
+
+  @{exec_path} mr,
+
+  # Monitored hard drives
+  /dev/sd[a-z] r,
+
+  # Database file that allows hddtemp to recognize supported drives
+  /etc/hddtemp.db r,
+
+  # Needed when the hddtemp daemon is started in the TCP/IP mode
+  /etc/gai.conf r,
+
+  #include if exists <local/hddtemp>
+}

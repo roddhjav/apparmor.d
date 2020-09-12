@@ -1,0 +1,118 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+#
+# The following profile assumes that:
+#   openvpn is started as root with dropping privileges
+#   iptables is used
+#   config files are stored in:       /etc/openvpn/*.{conf,ovpn}
+#   certs/keys are stored in:         /etc/openvpn/certs/*.{key,crt}
+#   auth credentials are stored in:   /etc/openvpn/auth/*.auth
+#   logs are redirected to:           /var/log/openvpn/*.log
+#   DNS/resolver script is stored in: /etc/openvpn/update-resolv-conf{,.sh}
+# If a user wants to type user/pass interactively, systemd-ask-password is invoked for that.
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}sbin/openvpn
+profile openvpn @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/openssl>
+
+  capability net_admin,
+  # These are needed when user/group are set in a OpenVPN config file
+  capability setuid,
+  capability setgid,
+
+  @{exec_path} mr,
+
+  # OpenVPN config
+  /etc/openvpn/*.{conf,ovpn} r,
+  /etc/openvpn/auth/*.auth r,
+  /etc/openvpn/certs/*.{key,crt} r,
+
+  /var/log/openvpn/*.log w,
+
+  /{,var/}run/openvpn/*.{pid,status} rw,
+
+  /{usr/,}bin/ip                        rix,
+  /{usr/,}bin/systemd-ask-password      rCx -> systemd-ask-password,
+  /etc/openvpn/update-resolv-conf{,.sh} rCx -> update-resolv,
+  /etc/openvpn/force-user-traffic-via-vpn.sh rCx -> force-user-traffic-via-vpn,
+
+  /dev/net/tun rw,
+
+  owner @{PROC}/@{pid}/net/route r,
+
+
+  profile systemd-ask-password {
+    #include <abstractions/base>
+    #include <abstractions/consoles>
+
+    /{usr/,}bin/systemd-ask-password mr,
+
+          @{PROC}/filesystems r,
+    owner @{PROC}/@{pid}/stat r,
+
+  }
+
+  profile update-resolv {
+    #include <abstractions/base>
+    #include <abstractions/consoles>
+    #include <abstractions/nameservice-strict>
+
+    capability net_admin,
+
+    /etc/openvpn/update-resolv-conf.sh r,
+
+    /{usr/,}bin/bash rix,
+    /{usr/,}bin/cut rix,
+    /{usr/,}bin/which rix,
+    /{usr/,}bin/ip rix,
+    /{usr/,}sbin/xtables-nft-multi rix,
+
+    /etc/iproute2/rt_tables r,
+    /etc/iproute2/rt_tables.d/ r,
+
+  }
+
+  profile force-user-traffic-via-vpn {
+    #include <abstractions/base>
+    #include <abstractions/consoles>
+    #include <abstractions/nameservice-strict>
+
+    capability net_admin,
+
+    /etc/openvpn/force-user-traffic-via-vpn.sh r,
+
+    /{usr/,}bin/dash     rix,
+    #/{usr/,}bin/bash     rix,
+    /{usr/,}bin/sed      rix,
+    /{usr/,}bin/cut      rix,
+    /{usr/,}bin/{,e}grep rix,
+    /{usr/,}bin/ip       rix,
+    /{usr/,}sbin/nft     rix,
+    /{usr/,}bin/env      rix,
+
+    /etc/iproute2/rt_realms r,
+    /etc/iproute2/group r,
+    /etc/iproute2/rt_tables.d/ r,
+    /etc/iproute2/rt_tables rw,
+    /etc/iproute2/sed* rw,
+
+    owner @{PROC}/sys/net/ipv{4,}/route/flush w,
+
+  }
+
+  #include if exists <local/openvpn>
+}

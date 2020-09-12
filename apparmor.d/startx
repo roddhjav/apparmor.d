@@ -1,0 +1,49 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/startx
+profile startx @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/deny-root-dir-access>
+
+  @{exec_path} r,
+  /{usr/,}bin/dash r,
+
+  /{usr/,}bin/hostname  rix,
+  /{usr/,}bin/mcookie   rix,
+  /{usr/,}bin/mktemp    rix,
+  /{usr/,}bin/tty       rix,
+  /{usr/,}bin/expr      rix,
+  /{usr/,}bin/{,e}grep  rix,
+  /{usr/,}bin/sed       rix,
+  /{usr/,}bin/rm        rix,
+  /{usr/,}bin/deallocvt rix,
+
+  /{usr/,}bin/xauth     rPx,
+  /{usr/,}bin/xinit     rPx,
+
+  /etc/X11/xinit/xinitrc r,
+  /etc/X11/xinit/xserverrc r,
+
+  owner @{HOME}/.xinitrc r,
+  owner @{HOME}/.xserverrc r,
+
+  owner /tmp/serverauth.* rw,
+
+  owner /dev/tty[0-9]* rw,
+  #include if exists <local/startx>
+}

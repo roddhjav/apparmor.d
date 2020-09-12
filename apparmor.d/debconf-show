@@ -1,0 +1,34 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/debconf-show
+profile debconf-show @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/perl>
+  #include <abstractions/nameservice-strict>
+
+  @{exec_path} r,
+  /{usr/,}bin/perl r,
+
+  /{usr/,}bin/locale rix,
+
+  /etc/debconf.conf r,
+
+  /var/cache/debconf/{config,passwords,templates}.dat r,
+
+  /etc/shadow r,
+
+  #include if exists <local/debconf-show>
+}

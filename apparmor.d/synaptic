@@ -1,0 +1,182 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+@{BUILD_DIR} = /media/debuilder/
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}sbin/synaptic /{usr/,}bin/synaptic-pkexec
+profile synaptic @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/gtk>
+  #include <abstractions/fonts>
+  #include <abstractions/fontconfig-cache-read>
+  #include <abstractions/freedesktop.org>
+  #include <abstractions/apt-common>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/deny-dconf>
+
+  # To remove the following errors:
+  #  W: chmod 0700 of directory /var/lib/apt/lists/partial failed - SetupAPTPartialDirectory
+  #     (1: Operation not permitted)
+  #  W: chmod 0700 of directory /var/lib/apt/lists/auxfiles failed - SetupAPTPartialDirectory
+  #     (1: Operation not permitted)
+  #  W: chmod 0600 of file /var/lib/apt/lists/deb.debian.org_debian_dists_sid_InRelease failed -
+  #     Item::QueueURI (1: Operation not permitted)
+  capability fowner,
+
+  # To remove the following errors:
+  #  W: chown to _apt:root of directory /var/lib/apt/lists/partial failed - SetupAPTPartialDirectory
+  #  (1: Operation not permitted)
+  #  W: chown to _apt:root of directory /var/lib/apt/lists/auxfiles failed - SetupAPTPartialDirectory
+  #  (1: Operation not permitted)
+  capability chown,
+
+  # To remove the following errors:
+  #  E: setgroups 65534 failed - setgroups (1: Operation not permitted)
+  #  E: setegid 65534 failed - setegid (1: Operation not permitted)
+  #  E: seteuid 100 failed - seteuid (1: Operation not permitted)
+  #  E: setgroups 0 failed - setgroups (1: Operation not permitted)
+  capability setuid,
+  capability setgid,
+
+  # To remove the following errors:
+  #  W: Problem unlinking the file /var/lib/apt/lists/partial/*_InRelease -
+  #     PrepareFiles (13: Permission denied)
+  #  E: Unable to read /var/lib/apt/lists/partial/ - open (13: Permission denied)
+  capability dac_read_search,
+
+  # To remove the following errors:
+  #  E: Failed to fetch https://**.deb  rename failed, Permission denied
+  #     (/var/cache/apt/archives/partial/*.deb -> /var/cache/apt/archives/*.deb).
+  #  E: Unable to fetch some archives, maybe run apt-get update or try with --fix-missing?
+  capability dac_override,
+
+  # Needed? (##FIXME##)
+  capability kill,
+  capability fsetid,
+  deny capability sys_nice,
+
+  signal (send) peer=apt-methods-*,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/dash     rix,
+  /{usr/,}bin/test     rix,
+  /{usr/,}bin/{,e}grep rix,
+
+  # For update-apt-xapian-index
+  /{usr/,}bin/nice     rix,
+  /{usr/,}bin/ionice   rix,
+
+  # When synaptic is run as root, it wants to exec dbus-launch, and hence it creates the two
+  # following root processes:
+  #  dbus-launch --autolaunch e0a30ad97cd6421c85247839ccef9db2 --binary-syntax --close-stderr
+  #  /usr/bin/dbus-daemon --syslog-only --fork --print-pid 5 --print-address 7 --session
+  #
+  # Should this be allowed? Synaptic works fine without this.
+  #/{usr/,}bin/dbus-launch        rCx -> dbus,
+  #/{usr/,}bin/dbus-send          rCx -> dbus,
+  deny /{usr/,}bin/dbus-launch rx,
+  deny /{usr/,}bin/dbus-send   rx,
+
+  /{usr/,}bin/ps                 rPx,
+  /{usr/,}bin/dpkg               rPx,
+  /{usr/,}bin/apt-listbugs       rPx,
+  /{usr/,}bin/apt-listchanges    rPx,
+  /{usr/,}bin/apt-show-versions  rPx,
+  /{usr/,}sbin/dpkg-preconfigure rPx,
+  /{usr/,}bin/debtags            rPx,
+  /{usr/,}sbin/localepurge       rPx,
+  /{usr/,}bin/appstreamcli       rPx,
+  /{usr/,}bin/adequate           rPx,
+  /{usr/,}sbin/update-command-not-found      rPx,
+  /usr/share/command-not-found/cnf-update-db rPx,
+  /{usr/,}sbin/update-apt-xapian-index       rPx,
+  /{usr/,}bin/lsb_release        rPx -> child-lsb_release,
+  /{usr/,}bin/deborphan          rPx,
+  /{usr/,}bin/tasksel            rPx,
+  /{usr/,}bin/pkexec             rPx,
+
+  # Methods to use to download packages from the net
+  /{usr/,}lib/apt/methods/*      rPx,
+
+  /var/lib/apt/lists/** rw,
+  /var/lib/apt/lists/lock rwk,
+  /var/lib/apt/extended_states{,.*} rw,
+
+  /etc/apt/apt.conf.d/99synaptic rw,
+
+  /var/log/apt/eipp.log.xz w,
+  /var/log/apt/{term,history}.log w,
+
+  # For editing the sources.list file
+  /etc/apt/sources.list.d/ r,
+  /etc/apt/sources.list.d/*.list rw,
+  /etc/apt/sources.list rwk,
+
+  /var/lib/apt-xapian-index/index r,
+  /var/cache/apt-xapian-index/index.[0-9]/*.glass r,
+  /var/cache/apt-xapian-index/index.[0-9]/iamglass r,
+
+  /var/lib/dpkg/** r,
+  /var/lib/dpkg/lock{,-frontend} rwk,
+
+  owner /tmp/apt-dpkg-install-*/ rw,
+  owner /tmp/apt-dpkg-install-*/[0-9]*-*.deb w,
+
+  /var/cache/apt/ r,
+  /var/cache/apt/** rwk,
+
+  /usr/share/synaptic/{,**} r,
+  owner @{HOME}/.synaptic/ rw,
+  owner @{HOME}/.synaptic/** rwk,
+  /{var/,}run/synaptic.socket w,
+
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/mountinfo r,
+
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+
+  /etc/fstab r,
+
+  /var/lib/dbus/machine-id r,
+  /etc/machine-id r,
+
+  # Synaptic is a GUI app started by root, so without "owner"
+  @{HOME}/.Xauthority r,
+
+  # For package building
+  @{BUILD_DIR}/** rwkl -> @{BUILD_DIR}/**,
+
+  # file_inherit
+  owner /dev/tty[0-9]* rw,
+
+
+  profile dbus {
+    #include <abstractions/base>
+    #include <abstractions/nameservice-strict>
+
+    /{usr/,}bin/dbus-launch   mr,
+    /{usr/,}bin/dbus-send     mr,
+    /{usr/,}bin/dbus-daemon rPUx,
+
+    # for dbus-launch
+    owner @{HOME}/.dbus/session-bus/[0-9a-f]*-[0-9] w,
+
+    @{HOME}/.Xauthority r,
+  }
+
+  #include if exists <local/synaptic>
+}

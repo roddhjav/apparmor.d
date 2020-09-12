@@ -1,0 +1,42 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2018-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{CHROMIUM_INSTALLDIR} = /{usr/,}lib/chromium
+@{CHROMIUM_HOMEDIR} = @{HOME}/.config/chromium
+@{CHROMIUM_CACHEDIR} = @{HOME}/.cache/chromium
+
+@{exec_path} = @{CHROMIUM_INSTALLDIR}/chrome-sandbox
+
+profile chromium-chrome-sandbox @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/deny-root-dir-access>
+
+  # For kernel unprivileged user namespaces
+  capability sys_admin,
+  capability sys_chroot,
+  capability setuid,
+  capability setgid,
+
+  # optional
+  capability sys_resource,
+
+  @{exec_path} mr,
+  @{CHROMIUM_INSTALLDIR}/chromium rPx,
+
+             @{PROC}/@{pids}/ r,
+  deny owner @{PROC}/@{pid}/oom_{,score_}adj rw,
+
+  #include if exists <local/chromium-chrome-sandbox>
+}

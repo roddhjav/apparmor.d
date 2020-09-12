@@ -1,0 +1,89 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2017-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+# Video/audio extensions:
+# a52, aac, ac3, mka, flac, mp1, mp2, mp3, mpc, oga, oma, wav, wv, wm, wma, 3g2, 3gp, 3gp2, 3gpp,
+# asf, avi, divx, m1v, m2v, m4v, mkv, mov, mp4, mpa, mpe, mpg, mpeg, mpeg1, mpeg2, mpeg4, ogg, ogm,
+# ogx, ogv, rm, rmvb, webm, wmv, wtv, mp2t
+@{ffmpeg_ext}  = [aA]{52,[aA][cC],[cC]3}
+@{ffmpeg_ext} += [mM][kK][aA]
+@{ffmpeg_ext} += [fF][lL][aA][cC]
+@{ffmpeg_ext} += [mM][pP][123cC]
+@{ffmpeg_ext} += [oO][gGmM][aA]
+@{ffmpeg_ext} += [wW]{,[aA]}[vV]
+@{ffmpeg_ext} += [wW][mM]{,[aA]}
+@{ffmpeg_ext} += 3[gG]{[2pP],[pP][2pP]}
+@{ffmpeg_ext} += [aA][sS][fF]
+@{ffmpeg_ext} += [aA][vV][iI]
+@{ffmpeg_ext} += [dD][iI][vV][xX]
+@{ffmpeg_ext} += [mM][124][vV]
+@{ffmpeg_ext} += [mM][kKoO][vV]
+@{ffmpeg_ext} += [mM][pP][4aAeEgG]
+@{ffmpeg_ext} += [mM][pP][eE][gG]{,[124]}
+@{ffmpeg_ext} += [oO][gG][gGmMxXvV]
+@{ffmpeg_ext} += [rR][mM]{,[vV][bB]}
+@{ffmpeg_ext} += [wW][eE][bB][mM]
+@{ffmpeg_ext} += [wW][mMtT][vV]
+@{ffmpeg_ext} += [mM][pP]2[tT]
+
+# Subtitle extensions:
+# srt, txt, sub
+@{ffmpeg_ext} += [sS][rR][tT]
+@{ffmpeg_ext} += [tT][xX][tT]
+@{ffmpeg_ext} += [sS][uU][bB]
+
+# FFmpeg specific extensions:
+# ts, part
+@{ffmpeg_ext} += [tT][sS]
+@{ffmpeg_ext} += [pP][aA][rR][tT]
+
+@{exec_path} = /{usr/,}bin/ffmpeg
+profile ffmpeg @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/dri-common>
+  #include <abstractions/audio>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/ssl_certs>
+  #include <abstractions/user-download-strict>
+  #include <abstractions/deny-root-dir-access>
+
+  @{exec_path}  mr,
+
+  # Which files ffmpeg should be able to open
+        / r,
+        /home/ r,
+  owner @{HOME}/ r,
+  owner @{HOME}/**/ r,
+        /media/ r,
+  owner /media/**/ r,
+  owner /{home,media}/**.@{ffmpeg_ext}{,.[0-9]*} rw,
+  owner /media/Grafi/* rw,
+
+  @{sys}/devices/system/node/ r,
+  @{sys}/devices/system/node/node[0-9]/meminfo r,
+
+  owner @{HOME}/.Xauthority r,
+
+  /var/lib/dbus/machine-id r,
+  /etc/machine-id r,
+
+  # To generate thumbnails in some apps
+  owner /tmp/*.{png,jpg} rw,
+
+  # TMP files for apps using ffmpeg
+  owner /tmp/vidcutter/** rw,
+
+  #include if exists <local/ffmpeg>
+}

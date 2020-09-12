@@ -1,0 +1,62 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2018-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}lib/@{multiarch}/libexec/polkit-kde-authentication-agent-[0-9]
+profile polkit-kde-authentication-agent @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/X>
+  #include <abstractions/gtk>
+  #include <abstractions/fonts>
+  #include <abstractions/fontconfig-cache-read>
+  #include <abstractions/freedesktop.org>
+  #include <abstractions/qt5-compose-cache-write>
+  #include <abstractions/wayland>
+  #include <abstractions/dri-enumerate>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/mesa>
+  #include <abstractions/deny-root-dir-access>
+
+  signal (send) set=(term, kill) peer=polkit-agent-helper,
+
+  @{exec_path} mr,
+
+  /{usr/,}lib/polkit-[0-9]/polkit-agent-helper-[0-9] rPx,
+
+  /{usr/,}lib/@{multiarch}/qt5/plugins/kf5/org.kde.kwindowsystem.platforms/KF5WindowSystemX11Plugin.so mr,
+
+  @{PROC}/@{pid}/cmdline r,
+  @{PROC}/@{pid}/cgroup r,
+  @{PROC}/@{pid}/fd/ r,
+  @{PROC}/sys/kernel/core_pattern r,
+
+  /var/lib/dbus/machine-id r,
+  /etc/machine-id r,
+
+  owner @{HOME}/.config/qt5ct/{,**} r,
+  /usr/share/qt5ct/** r,
+
+  /usr/share/hwdata/pnp.ids r,
+
+  owner @{HOME}/.config/kdeglobals r,
+  owner @{HOME}/.cache/icon-cache.kcache rw,
+
+  /dev/shm/#[0-9]*[0-9] rw,
+
+  owner /tmp/#[0-9]*[0-9] rw,
+  owner /tmp/polkit-kde-authentication-agent-[0-9].* rwl -> /tmp/#[0-9]*[0-9],
+
+  #include if exists <local/polkit-kde-authentication-agent>
+}

@@ -1,0 +1,43 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+# Note: This profile does not specify an attachment path because it is
+# intended to be used only via "Px -> child-dpkg" exec transitions from
+# other profiles. We want to confine the dpkg(1) utility when it
+# is invoked from other confined applications, but not when it is used
+# in regular (unconfined) shell scripts or run directly by the user.
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+# Do not attach to /{usr/,}bin/dpkg by default
+profile child-dpkg {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+
+  # Needed?
+  deny capability setgid,
+
+  /{usr/,}bin/dpkg mr,
+
+  /{usr/,}bin/dpkg-query rPx,
+
+  /etc/dpkg/dpkg.cfg.d/{,*} r,
+  /etc/dpkg/dpkg.cfg r,
+
+  /var/lib/dpkg/** r,
+
+  # file_inherit
+  /tmp/#[0-9]*[0-9] rw,
+
+  #include if exists <local/child-dpkg>
+}

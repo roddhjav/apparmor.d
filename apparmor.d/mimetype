@@ -1,0 +1,38 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/mimetype
+profile mimetype @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/perl>
+
+  @{exec_path} r,
+  /usr/bin/perl r,
+
+  /usr/share/mime/**.xml r,
+  /usr/share/mime/globs r,
+  /usr/share/mime/aliases r,
+  /usr/share/mime/magic r,
+
+  owner @{HOME}/.local/share/mime/**.xml r,
+  owner @{HOME}/.local/share/mime/globs r,
+  owner @{HOME}/.local/share/mime/aliases r,
+  owner @{HOME}/.local/share/mime/magic r,
+
+  # To read files
+  /** r,
+
+  #include if exists <local/mimetype>
+}

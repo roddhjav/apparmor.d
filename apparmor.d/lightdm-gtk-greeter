@@ -1,0 +1,85 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2017-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}sbin/lightdm-gtk-greeter
+profile lightdm-gtk-greeter @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/X>
+  #include <abstractions/fonts>
+  #include <abstractions/fontconfig-cache-read>
+  #include <abstractions/freedesktop.org>
+  #include <abstractions/dri-enumerate>
+  #include <abstractions/nameservice-strict>
+
+  signal (receive) set=(term, kill) peer=lightdm,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/locale rix,
+
+  /{usr/,}lib/systemd/systemd rCx -> systemd,
+
+  # LightDM files
+  /usr/share/lightdm/{,**} r,
+  /var/lib/lightdm/{,**} rw,
+
+  # List of graphical sessions
+  # The X sessions are covered by abstractions/X
+  /usr/share/wayland-sessions/{,*.desktop} r,
+
+  # Greeter theme
+  /var/lib/AccountsService/{,**} r,
+  /usr/share/desktop-base/{,**} r,
+
+  # LightDM config files
+  /etc/lightdm/{,**} r,
+
+  # LightDM logs
+  /var/log/lightdm/{,**} rw,
+
+  owner @{HOME}/.face r,
+
+  owner @{PROC}/@{pid}/fd/ r,
+
+  # For account icons
+  @{HOME}/.dmrc r,
+  @{HOME}/.face r,
+
+  /{usr/,}lib/at-spi2-core/at-spi-bus-launcher rPUx,
+  /usr/libexec/at-spi-bus-launcher             rPUx,
+
+
+  profile systemd {
+    #include <abstractions/base>
+
+    /{usr/,}lib/systemd/systemd mr,
+
+    /etc/systemd/user.conf r,
+
+    owner @{PROC}/@{pid}/stat r,
+          @{PROC}/1/environ r,
+          @{PROC}/1/sched r,
+          @{PROC}/cmdline r,
+          @{PROC}/sys/kernel/osrelease r,
+
+    @{sys}/firmware/efi/efivars/SecureBoot-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]* r,
+
+    # file_inherit
+    /var/log/lightdm/seat[0-9]*-greeter.log w,
+
+  }
+
+  #include if exists <local/lightdm-gtk-greeter>
+}

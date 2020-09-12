@@ -1,0 +1,154 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}sbin/mkinitramfs
+profile mkinitramfs @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+
+  capability syslog,
+  capability chown,
+  capability fowner,
+  capability fsetid,
+
+  @{exec_path} r,
+  /{usr/,}bin/dash rix,
+
+  /{usr/,}bin/getopt    rix,
+  /{usr/,}bin/basename  rix,
+  /{usr/,}bin/{,e}grep  rix,
+  /{usr/,}bin/touch     rix,
+  /{usr/,}bin/readlink  rix,
+  /{usr/,}bin/mktemp    rix,
+  /{usr/,}bin/chmod     rix,
+  /{usr/,}bin/ln        rix,
+  /{usr/,}bin/mkdir     rix,
+  /{usr/,}bin/cp        rix,
+  /{usr/,}bin/cat       rix,
+  /{usr/,}bin/dirname   rix,
+  /{usr/,}bin/sed       rix,
+  /{usr/,}bin/tsort     rix,
+  /{usr/,}bin/rm        rix,
+  /{usr/,}bin/id        rix,
+  /{usr/,}bin/gzip      rix,
+  /{usr/,}bin/sort      rix,
+  /{usr/,}bin/cpio      rix,
+  /{usr/,}bin/env       rix,
+  /{usr/,}bin/rmdir     rix,
+
+  /{usr/,}bin/ldd       rCx -> ldd,
+  /{usr/,}sbin/ldconfig rCx -> ldconfig,
+  /{usr/,}bin/find      rCx -> find,
+  /{usr/,}bin/kmod      rCx -> kmod,
+
+  /{usr/,}bin/dpkg      rPx -> child-dpkg,
+
+  # What to do with it? (#FIXME#)
+  /usr/share/initramfs-tools/hooks/*     rPUx,
+  /usr/share/initramfs-tools/scripts/*/* rPUx,
+  /etc/initramfs-tools/hooks/*           rPUx,
+  /etc/initramfs-tools/scripts/*/*       rPUx,
+
+  /usr/share/initramfs-tools/{,**} r,
+  /etc/initramfs-tools/{,**} r,
+
+  / r,
+  /etc/ r,
+  /etc/modprobe.d/{,*.conf} r,
+
+  owner /boot/initrd.img-*.new rw,
+
+  owner /var/tmp/mkinitramfs_*/ rw,
+  owner /var/tmp/mkinitramfs_*/** rwl -> /var/tmp/mkinitramfs_*/**,
+        /var/tmp/mkinitramfs_*/usr/lib/modules/*/modules.{order,builtin} rw,
+  owner /var/tmp/mkinitramfs-* rw,
+
+  @{PROC}/modules r,
+
+
+  profile ldd {
+    #include <abstractions/base>
+    #include <abstractions/consoles>
+
+    /{usr/,}bin/ldd mr,
+
+    /{usr/,}bin/kmod mr,
+    /{usr/,}bin/bash r,
+
+    /{usr/,}lib/@{multiarch}/ld-*.so rix,
+    /{usr/,}lib{,x}32/ld-*.so        rix,
+
+  }
+
+  profile ldconfig {
+    #include <abstractions/base>
+    #include <abstractions/consoles>
+
+    capability sys_chroot,
+
+    /{usr/,}sbin/ldconfig mr,
+
+    owner /var/tmp/mkinitramfs_*/etc/ld.so.conf r,
+    owner /var/tmp/mkinitramfs_*/etc/ld.so.conf.d/{,*.conf} r,
+
+    owner /var/tmp/mkinitramfs_*/{usr/,}lib{,32,x32}/ r,
+    owner /var/tmp/mkinitramfs_*/{usr/,}lib/@{multiarch}/ r,
+    owner /var/tmp/mkinitramfs_*/{usr/,}lib/@{multiarch}/*.so* rw,
+    owner /var/tmp/mkinitramfs_*/{usr/,}lib{,32,x32}/*.so* rw,
+
+    owner /var/tmp/mkinitramfs_*/etc/ld.so.cache{,~} rw,
+
+    owner /var/tmp/mkinitramfs_*/var/cache/ldconfig/ rw,
+    owner /var/tmp/mkinitramfs_*/var/cache/ldconfig/aux-cache{,~} rw,
+
+  }
+
+  profile find {
+    #include <abstractions/base>
+    #include <abstractions/consoles>
+
+    /{usr/,}bin/find mr,
+
+    # pwd dir
+    / r,
+    /root/ r,
+
+    /usr/share/initramfs-tools/scripts/{,**/} r,
+    /etc/initramfs-tools/scripts/{,**/} r,
+
+    owner /var/tmp/mkinitramfs_*/{,**/} r,
+
+  }
+
+  profile kmod {
+    #include <abstractions/base>
+    #include <abstractions/consoles>
+
+    /{usr/,}bin/kmod mr,
+
+    @{PROC}/cmdline r,
+
+    /etc/modprobe.d/ r,
+    /etc/modprobe.d/*.conf r,
+
+    owner /var/tmp/mkinitramfs_*/usr/lib/modules/*/ r,
+    owner /var/tmp/mkinitramfs_*/usr/lib/modules/*/modules.* rw,
+    owner /var/tmp/mkinitramfs_*/usr/lib/modules/*/kernel/{,**/} r,
+    owner /var/tmp/mkinitramfs_*/usr/lib/modules/*/kernel/**/*.ko r,
+
+  }
+
+  #include if exists <local/mkinitramfs>
+}

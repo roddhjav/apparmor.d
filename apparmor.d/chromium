@@ -1,0 +1,65 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2018-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{CHROMIUM_INSTALLDIR} = /{usr/,}lib/chromium
+@{CHROMIUM_HOMEDIR} = @{HOME}/.config/chromium
+@{CHROMIUM_CACHEDIR} = @{HOME}/.cache/chromium
+
+@{exec_path} = /{usr/,}bin/chromium
+profile chromium @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/freedesktop.org>
+  #include <abstractions/deny-root-dir-access>
+
+  @{exec_path} r,
+
+  @{CHROMIUM_INSTALLDIR}/chromium rPx,
+
+  /{usr/,}bin/dash     rix,
+  /{usr/,}bin/uname    rix,
+  /{usr/,}bin/{,e}grep rix,
+  /{usr/,}bin/expr     rix,
+  /{usr/,}bin/cat      rix,
+  /{usr/,}bin/rm       rix,
+  /{usr/,}bin/cut      rix,
+  /{usr/,}bin/tr       rix,
+  /{usr/,}bin/ls       rix,
+  /{usr/,}bin/mktemp   rix,
+
+  # For chromium -g
+  /{usr/,}bin/gdb   rPUx,
+
+  owner /tmp/chromiumargs.?????? rw,
+
+  # For a temp profile
+  owner /tmp/tmp.*/ rw,
+  owner /tmp/tmp.*/** rwk,
+
+  # For "chromium --help"
+  /{usr/,}bin/man rPUx,
+  /{usr/,}bin/sed rix,
+
+  /etc/chromium.d/{,*} r,
+
+  /etc/debian_version r,
+
+  /usr/share/chromium/extensions/ r,
+
+  # file_inherit
+  owner /dev/tty[0-9]* rw,
+  owner @{HOME}/.xsession-errors w,
+
+  #include if exists <local/chromium>
+}

@@ -1,0 +1,123 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /usr/share/debconf/frontend
+profile frontend @{exec_path} flags=(complain) {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/perl>
+  #include <abstractions/nameservice-strict>
+
+  #capability sys_tty_config,
+
+  @{exec_path} r,
+  /{usr/,}bin/perl r,
+
+  /{usr/,}bin/dash     rix,
+  /{usr/,}bin/stty     rix,
+  /{usr/,}bin/locale   rix,
+
+  # debconf apps
+  /{usr/,}bin/adequate                     rPx,
+  /{usr/,}bin/debconf-apt-progress         rPx,
+  /{usr/,}lib/tasksel/tasksel-debconf      rPx -> tasksel,
+  /{usr/,}bin/linux-check-removal          rPx,
+  /{usr/,}bin/ucf                          rPx,
+  /{usr/,}sbin/pam-auth-update             rPx,
+  /usr/share/debian-security-support/check-support-status.hook rPx,
+
+  # Run the package maintainer's scripts
+  # What to do with it? Maintainer scripts can use lots of tools. (#FIXME#)
+  #/var/lib/dpkg/info/*.{config,templates} rPUx,
+  #/var/lib/dpkg/info/*.{preinst,postinst} rPUx,
+  #/var/lib/dpkg/info/*.{prerm,postrm}     rPUx,
+  /var/lib/dpkg/info/*.control            r,
+  #/var/lib/dpkg/tmp.ci/{config,templates} rPUx,
+  #/var/lib/dpkg/tmp.ci/{preinst,postinst} rPUx,
+  #/var/lib/dpkg/tmp.ci/{prerm,postrm}     rPUx,
+  /var/lib/dpkg/tmp.ci/control            r,
+  /var/lib/dpkg/info/*.{config,templates} rCx -> scripts,
+  /var/lib/dpkg/info/*.{preinst,postinst} rCx -> scripts,
+  /var/lib/dpkg/info/*.{prerm,postrm}     rCx -> scripts,
+  /var/lib/dpkg/tmp.ci/{config,templates} rCx -> scripts,
+  /var/lib/dpkg/tmp.ci/{preinst,postinst} rCx -> scripts,
+  /var/lib/dpkg/tmp.ci/{prerm,postrm}     rCx -> scripts,
+
+  # DKMS scipts
+  # What to do with it? (#FIXME#)
+  /{usr/,}lib/dkms/common.postinst        rPUx,
+  /{usr/,}lib/dkms/dkms-*                 rPUx,
+  /{usr/,}lib/dkms/dkms_*                 rPUx,
+
+  /etc/debconf.conf r,
+  /usr/share/debconf/{,**} r,
+  owner /var/cache/debconf/* rwk,
+
+  /etc/inputrc r,
+
+  /etc/shadow r,
+
+  # The following is needed when debconf uses GUI frontends.
+  #include <abstractions/gtk>
+  #include <abstractions/fonts>
+  #include <abstractions/fontconfig-cache-read>
+  #include <abstractions/freedesktop.org>
+  capability dac_read_search,
+  /{usr/,}bin/lsb_release rPx -> child-lsb_release,
+  /{usr/,}bin/hostname    rPx,
+  owner @{PROC}/@{pid}/mounts r,
+  @{HOME}/.Xauthority r,
+
+  # The following is needed when debconf uses dialog/whiptail frontend.
+  /{usr/,}bin/whiptail    rPx,
+  owner /tmp/file* w,
+
+
+  profile scripts flags=(complain) {
+    #include <abstractions/base>
+    #include <abstractions/consoles>
+
+    # What's this for? (#FIXME#)
+    capability dac_read_search,
+
+    /var/lib/dpkg/info/*.config             r,
+    /var/lib/dpkg/info/*.{preinst,postinst} r,
+    /var/lib/dpkg/info/*.{prerm,postrm}     r,
+    /var/lib/dpkg/tmp.ci/config             r,
+    /var/lib/dpkg/tmp.ci/{preinst,postinst} r,
+    /var/lib/dpkg/tmp.ci/{prerm,postrm}     r,
+
+    /               r,
+
+    /{usr/,}bin/    r,
+    /{usr/,}bin/*   rPUx,
+
+    /{usr/,}sbin/   r,
+    /{usr/,}sbin/*  rPUx,
+
+    /{usr/,}lib/    r,
+    /{usr/,}lib/**  rPUx,
+
+    /usr/share/**   r,
+    /usr/share/**   rPUx,
+
+    /etc/**         rw,
+    /var/cache/**   rw,
+    owner /tmp/**   rw,
+
+  }
+
+  #include if exists <local/frontend>
+}

@@ -1,0 +1,122 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /usr/share/debian-security-support/check-support-status.hook
+profile check-support-status-hook @{exec_path} flags=(complain) {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/nameservice-strict>
+
+  @{exec_path} r,
+  /{usr/,}bin/dash r,
+
+  /{usr/,}bin/getent rix,
+  /{usr/,}bin/mkdir  rix,
+  /{usr/,}bin/chown  rix,
+  /{usr/,}bin/stat   rix,
+  /{usr/,}bin/mktemp rix,
+  /{usr/,}bin/rm     rix,
+
+  /{usr/,}sbin/adduser             rPx,
+  /{usr/,}bin/check-support-status rPx,
+  /{usr/,}bin/debconf-escape       rCx -> debconf-escape,
+  /{usr/,}sbin/runuser             rCx -> runuser,
+
+  # Think what to do about this (#FIXME#)
+  /usr/share/debconf/frontend      rPx,
+  #/usr/share/debconf/frontend     rCx -> frontend,
+
+  /usr/share/debconf/confmodule r,
+
+  owner /tmp/debian-security-support.postinst.*/ rw,
+  owner /tmp/debian-security-support.postinst.*/output rw,
+
+
+  profile debconf-escape flags=(complain) {
+    #include <abstractions/base>
+    #include <abstractions/consoles>
+    #include <abstractions/perl>
+
+    /{usr/,}bin/debconf-escape r,
+    /{usr/,}bin/perl r,
+
+    owner /tmp/debian-security-support.postinst.*/output r,
+
+  }
+
+  profile frontend flags=(complain) {
+    #include <abstractions/base>
+    #include <abstractions/consoles>
+    #include <abstractions/perl>
+    #include <abstractions/nameservice-strict>
+
+    /usr/share/debconf/frontend r,
+    /{usr/,}bin/perl r,
+
+    /usr/share/debian-security-support/check-support-status.hook rPx,
+
+    /{usr/,}bin/dash     rix,
+    /{usr/,}bin/stty     rix,
+    /{usr/,}bin/locale   rix,
+
+    /etc/debconf.conf r,
+    owner /var/cache/debconf/{config,passwords,templates}.dat{,-new,-old} rwk,
+
+    # The following is needed when debconf uses GUI frontends.
+    #include <abstractions/gtk>
+    #include <abstractions/fonts>
+    #include <abstractions/fontconfig-cache-read>
+    #include <abstractions/freedesktop.org>
+    capability dac_read_search,
+    /{usr/,}bin/lsb_release rPx -> child-lsb_release,
+    /{usr/,}bin/hostname    rPx,
+    owner @{PROC}/@{pid}/mounts r,
+    @{HOME}/.Xauthority r,
+
+  }
+
+  profile runuser flags=(complain) {
+    #include <abstractions/base>
+    #include <abstractions/consoles>
+    #include <abstractions/nameservice-strict>
+    #include <abstractions/authentication>
+
+    # To remove the following errors:
+    #  runuser: cannot set user id: Operation not permitted
+    capability setuid,
+
+    # To remove the following errrors:
+    #  runuser: cannot set groups: Operation not permitted
+    capability setgid,
+
+    # To write records to the kernel auditing log.
+    capability audit_write,
+
+    /{usr/,}sbin/runuser mr,
+
+    /{usr/,}bin/bash rix,
+
+    /{usr/,}bin/check-support-status rPx,
+
+    owner @{PROC}/@{pids}/loginuid r,
+          @{PROC}/1/limits r,
+
+    /etc/security/limits.d/ r,
+
+    owner /tmp/debian-security-support.postinst.*/output w,
+  }
+
+  #include if exists <local/check-support-status-hook>
+}

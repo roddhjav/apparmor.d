@@ -1,0 +1,193 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2015-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/conky
+profile conky @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/freedesktop.org>
+  #include <abstractions/fonts>
+  #include <abstractions/fontconfig-cache-read>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/openssl>
+  #include <abstractions/ssl_certs>
+  #include <abstractions/deny-root-dir-access>
+
+  @{exec_path} mr,
+
+  # Needed tools to render conky output
+  /{usr/,}bin/dash     rix,
+  /{usr/,}bin/bash     rix,
+  /{usr/,}bin/cp       rix,
+  /{usr/,}bin/rm       rix,
+  /{usr/,}bin/sed      rix,
+  /{usr/,}bin/{,e}grep rix,
+  /{usr/,}bin/gawk     rix,
+  /{usr/,}bin/tr       rix,
+  /{usr/,}bin/uniq     rix,
+  /{usr/,}bin/head     rix,
+  /{usr/,}bin/cut      rix,
+  /{usr/,}bin/date     rix,
+  /{usr/,}bin/cat      rix,
+  /{usr/,}bin/wc       rix,
+  /{usr/,}bin/sed      rix,
+
+  # To remove the following error:
+  #  .conky/Accuweather_conky_script/accuweather: line 917: /usr/bin/pkill: Permission denied
+  /{usr/,}bin/pgrep   rix,
+  @{PROC}/sys/kernel/osrelease r,
+
+  # Browsers to fetch remote content
+  /{usr/,}bin/wget rCx -> browse,
+  /{usr/,}bin/curl rCx -> browse,
+  /{usr/,}bin/lynx rCx -> browse,
+  /{usr/,}bin/w3m  rCx -> browse,
+
+  # Conky home files
+  owner @{HOME}/ r,
+  owner @{HOME}/.conky/ r,
+  owner @{HOME}/.conky/** rw,
+
+  # Display images (graphic) inside of the conky window
+  /{usr/,}lib/@{multiarch}/imlib2/loaders/*.so mr,
+
+  # Get the PRETTY_NAME name from /etc/os-release link
+  /etc/ r,
+
+  # Get the kernel version and its architecture via "uname -r"
+  /{usr/,}bin/uname rix,
+
+  # Display machine's hostname
+  /etc/hostname r,
+
+  # Display machine's uptime
+  @{PROC}/uptime r,
+
+  # Get the number of CPU cores
+  @{sys}/devices/system/cpu/present r,
+
+  # Get the current frequency of the CPU
+  @{sys}/devices/system/cpu/cpufreq/policy[0-9]*/scaling_cur_freq r,
+
+  # Get load average values for 1, 5 and 15 minutes
+  @{PROC}/loadavg r,
+
+  # Display processes' status
+  @{PROC}/ r,
+  # Get the PID value
+  @{PROC}/@{pid}/stat r,
+  # Get the name, %CPU and %RAM values
+  @{PROC}/@{pid}/cmdline r,
+  owner @{PROC}/@{pid}/io r,
+  # Not needed
+  deny capability sys_ptrace,
+  deny ptrace (trace, read),
+
+  # Display the hard disk model name
+  @{sys}/devices/pci[0-9]*/**/{usb,ata}[0-9]/**/model r,
+  @{sys}/block/sd[a-z]/device/model r,
+  # Display the disk write/read speed
+  @{PROC}/diskstats r,
+  # Get the mount point names
+  owner @{PROC}/@{pid}/mounts r,
+  # /etc/mtab r,
+
+  # Display WiFi network status, which includes the following:
+  #  ESSID, AP's MAC, bitrate, signal strength, IP address and down/up speed
+  @{PROC}/@{pid}/net/dev r,
+  # Display IPv6 address of an interface
+  @{PROC}/@{pid}/net/if_inet6 r,
+
+  # Display the number of active TCP/TCP6 connections
+  @{PROC}/@{pid}/net/tcp{,6} r,
+
+  # Xserver auth cookie for clients
+  owner @{HOME}/.Xauthority r,
+
+  /dev/shm/#[0-9]*[0-9] rw,
+
+  # Temperatures and Fans
+  /{usr/,}bin/sensors rPUx,
+  @{sys}/devices/**/hwmon[0-9]*/temp[0-9]*_input r,
+  @{sys}/devices/**/hwmon/hwmon[0-9]*/temp[0-9]*_input r,
+  @{sys}/class/hwmon/ r,
+  @{PROC}/acpi/ibm/fan r,
+
+  # Display network data transfer status
+  /{usr/,}bin/vnstat rPUx,
+
+  # Display Secure Boot status
+  /{usr/,}bin/mokutil rPUx,
+
+  @{PROC}/@{pid}/net/route r,
+
+  owner /tmp/xauth-[0-9]*-_[0-9] r,
+
+  /usr/share/X11/XErrorDB r,
+
+  # file_inherit
+  owner /dev/tty[0-9]* rw,
+  owner @{HOME}/.xsession-errors w,
+
+
+  profile browse {
+    #include <abstractions/base>
+    #include <abstractions/consoles>
+    #include <abstractions/nameservice-strict>
+    #include <abstractions/openssl>
+    #include <abstractions/ssl_certs>
+
+    /{usr/,}bin/wget mr,
+    /{usr/,}bin/curl mr,
+    /{usr/,}bin/lynx mr,
+    /{usr/,}bin/w3m  mr,
+
+    /{usr/,}bin/dash rix,
+
+    /etc/mime.types r,
+    /etc/mailcap r,
+
+    /etc/lynx/* r,
+    /etc/wgetrc r,
+    /etc/w3m/config r,
+    /etc/w3m/mailcap r,
+
+    owner @{HOME}/.wget-hsts rwk,
+    owner @{HOME}/.w3m/ rw,
+    owner @{HOME}/.w3m/** rw,
+
+    owner @{HOME}/.conky/** rw,
+
+    /usr/share/publicsuffix/public_suffix_list.* r,
+
+    # file_inherit
+    owner /dev/tty[0-9]* rw,
+    deny @{PROC}/@{pids}/net/dev r,
+    deny @{PROC}/@{pids}/net/tcp r,
+    deny @{PROC}/@{pids}/net/tcp6 r,
+    deny @{PROC}/@{pids}/net/if_inet6 r,
+    deny @{PROC}/@{pids}/stat r,
+    deny @{PROC}/diskstats r,
+    deny @{PROC}/uptime r,
+    deny @{PROC}/loadavg r,
+    deny @{PROC}/@{pids}/cmdline r,
+    deny @{PROC}/@{pids}/io r,
+    deny @{PROC}/@{pid}/net/route r,
+    deny @{sys}/devices/**/hwmon/**/temp*_input r,
+
+  }
+
+  #include if exists <local/conky>
+}

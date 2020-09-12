@@ -1,0 +1,84 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/fwupd /{usr/,}lib/fwupd/fwupd
+profile fwupd @{exec_path} flags=(complain,attach_disconnected) {
+  #include <abstractions/base>
+  #include <abstractions/nameservice-strict>
+
+  # This is needed in order to read/write from/to the /dev/tpm0 , device which is owned by tss:tss
+  capability dac_override,
+
+  capability sys_rawio,
+  capability syslog,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/gpg         rCx -> gpg,
+  /{usr/,}bin/gpgconf     rCx -> gpg,
+  /{usr/,}bin/gpgsm       rCx -> gpg,
+
+        /usr/share/fwupd/** r,
+  owner /var/cache/fwupd/** rw,
+  owner /var/lib/fwupd/** r,
+  owner /var/lib/fwupd/pending.db rwk,
+
+  /etc/fwupd/** r,
+
+  # In order to get to this file, the attach_disconnected flag has to be set
+  owner @{HOME}/.cache/fwupd/lvfs-metadata.xml.gz r,
+
+  /usr/share/mime/mime.cache r,
+
+  @{PROC}/modules r,
+
+  /dev/mem r,
+  /dev/tpm[0-9] rw,
+  /dev/drm_dp_aux[0-9]* rw,
+  /dev/sd[a-z] r,
+  /dev/bus/usb/ r,
+  /dev/bus/usb/[0-9]*/[0-9]* rw,
+
+  @{sys}/**/ r,
+  @{sys}/devices/** r,
+
+  @{sys}/firmware/dmi/tables/smbios_entry_point r,
+  @{sys}/firmware/dmi/tables/DMI r,
+  @{sys}/kernel/security/tpm[0-9]/binary_bios_measurements r,
+  @{sys}/kernel/security/lockdown r,
+
+  /{var,}run/udev/data/* r,
+
+  /{var,}run/motd.d/fwupd/85-fwupd w,
+  /{var,}run/motd.d/fwupd/.goutputstream-* rw,
+
+  /etc/machine-id r,
+  /var/lib/dbus/machine-id r,
+
+
+  profile gpg {
+    #include <abstractions/base>
+
+    /{usr/,}bin/gpg        mr,
+    /{usr/,}bin/gpgconf    mr,
+    /{usr/,}bin/gpgsm      mr,
+
+    owner /var/lib/fwupd/gnupg/ rw,
+    owner /var/lib/fwupd/gnupg/** rwkl -> /var/lib/fwupd/gnupg/**,
+
+  }
+
+  #include if exists <local/fwupd>
+}

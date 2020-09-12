@@ -1,0 +1,38 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/xautolock
+profile xautolock @{exec_path} {
+  #include <abstractions/base>
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/dash rix,
+  /{usr/,}bin/env  rix,
+
+  # Locker apps to launch.
+  /{usr/,}bin/i3lock-fancy         rPx,
+  /{usr/,}bin/light-locker         rPx,
+  /{usr/,}bin/light-locker-command rPx,
+
+  /{usr/,}bin/xset                 rPx,
+
+  owner @{HOME}/.Xauthority r,
+
+  # file_inherit
+  owner /dev/tty[0-9]* rw,
+
+  #include if exists <local/xautolock>
+}

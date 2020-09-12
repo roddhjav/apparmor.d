@@ -1,0 +1,41 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2018-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}sbin/hdparm
+profile hdparm @{exec_path} flags=(complain) {
+  #include <abstractions/base>
+  #include <abstractions/disks-read>
+
+  # To remove the following errors:
+  #  re-writing sector *: BLKFLSBUF failed: Permission denied
+  capability sys_admin,
+
+  # To remove the following errors:
+  #  /dev/sda: HDIO_DRIVE_CMD(identify) failed: Operation not permitted
+  capability sys_rawio,
+
+  @{exec_path} mr,
+
+  /etc/hdparm.conf r,
+
+  # for hdparm --fibmap
+  @{PROC}/devices r,
+
+  # Image files
+  @{HOME}/** r,
+  /media/*/** r,
+
+  #include if exists <local/hdparm>
+}

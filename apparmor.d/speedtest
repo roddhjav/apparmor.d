@@ -1,0 +1,38 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/speedtest{,-cli}
+profile speedtest @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/openssl>
+  #include <abstractions/ssl_certs>
+  #include <abstractions/deny-root-dir-access>
+
+  @{exec_path} r,
+  /{usr/,}bin/python3.[0-9]* r,
+
+  /{usr/,}bin/ r,
+  /{usr/,}bin/file  rix,
+  /{usr/,}bin/uname rix,
+
+  owner @{PROC}/@{pid}/fd/ r,
+
+  /usr/local/lib/python*/dist-packages/ r,
+
+  /etc/magic r,
+
+  #include if exists <local/speedtest>
+}

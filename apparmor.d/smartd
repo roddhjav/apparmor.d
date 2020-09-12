@@ -1,0 +1,47 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2018-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}sbin/smartd
+profile smartd @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/disks-read>
+
+  # To remove the following errors:
+  #  Device: /dev/disk/by-id/ata-*, IE (SMART) not enabled, skip device
+  #  Try 'smartctl -s on /dev/disk/by-id/ata-*' to turn on SMART features
+  #  Unable to register SCSI device /dev/disk/by-id/ata-* at line * of file /etc/smartd.conf
+  #  Device: /dev/disk/by-id/ata-*, not available
+  capability sys_rawio,
+
+  @{exec_path} mr,
+
+  /etc/smartd.conf r,
+
+  /var/lib/smartmontools/smartd.*.state{,~} rw,
+  /var/lib/smartmontools/attrlog.*.csv rw,
+
+  # Plugin directory for smartd warning script
+  /etc/smartmontools/smartd_warning.d/ r,
+
+  # Drive database location
+  /var/lib/smartmontools/drivedb/drivedb.h r,
+  /etc/smart_drivedb.h r,
+
+  # Needed when smartd-runner scans for drives
+  /dev/ r,
+  @{PROC}/devices r,
+
+  #include if exists <local/smartd>
+}

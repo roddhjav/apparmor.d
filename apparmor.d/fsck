@@ -1,0 +1,43 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}sbin/fsck
+profile fsck @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/disks-read>
+
+  @{exec_path} mr,
+
+  /{usr/,}sbin/e2fsck rPx,
+  /{usr/,}sbin/fsck.* rPx,
+
+  /etc/fstab r,
+
+        @{PROC}/partitions r,
+  owner @{PROC}/@{pid}/mountinfo r,
+
+  owner /{,var/}run/fsck/ rw,
+  owner /{,var/}run/fsck/*.lock rwk,
+
+  # When a mount dir is passed to fsck as an argument.
+  /media/*/ r,
+  /boot/ r,
+  /home/ r,
+
+  owner /{,var/}run/blkid/blkid.tab{,-*} rw,
+  owner /{,var/}run/blkid/blkid.tab.old rwl -> /{,var/}run/blkid/blkid.tab,
+
+  #include if exists <local/fsck>
+}

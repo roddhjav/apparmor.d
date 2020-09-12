@@ -1,0 +1,151 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2017-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+# Video/audio extensions:
+# a52, aac, ac3, mka, flac, mp1, mp2, mp3, mpc, oga, oma, wav, wv, wm, wma, 3g2, 3gp, 3gp2, 3gpp,
+# asf, avi, divx, m1v, m2v, m4v, mkv, mov, mp4, mpa, mpe, mpg, mpeg, mpeg1, mpeg2, mpeg4, ogg, ogm,
+# ogx, ogv, rm, rmvb, webm, wmv, wtv, mp2t
+@{smplayer_ext}  = [aA]{52,[aA][cC],[cC]3}
+@{smplayer_ext} += [mM][kK][aA]
+@{smplayer_ext} += [fF][lL][aA][cC]
+@{smplayer_ext} += [mM][pP][123cC]
+@{smplayer_ext} += [oO][gGmM][aA]
+@{smplayer_ext} += [wW]{,[aA]}[vV]
+@{smplayer_ext} += [wW][mM]{,[aA]}
+@{smplayer_ext} += 3[gG]{[2pP],[pP][2pP]}
+@{smplayer_ext} += [aA][sS][fF]
+@{smplayer_ext} += [aA][vV][iI]
+@{smplayer_ext} += [dD][iI][vV][xX]
+@{smplayer_ext} += [mM][124][vV]
+@{smplayer_ext} += [mM][kKoO][vV]
+@{smplayer_ext} += [mM][pP][4aAeEgG]
+@{smplayer_ext} += [mM][pP][eE][gG]{,[124]}
+@{smplayer_ext} += [oO][gG][gGmMxXvV]
+@{smplayer_ext} += [rR][mM]{,[vV][bB]}
+@{smplayer_ext} += [wW][eE][bB][mM]
+@{smplayer_ext} += [wW][mMtT][vV]
+@{smplayer_ext} += [mM][pP]2[tT]
+
+# Image extensions
+# bmp, jpg, jpeg, png, gif
+@{smplayer_ext} += [bB][mM][pP]
+@{smplayer_ext} += [jJ][pP]{,[eE]}[gG]
+@{smplayer_ext} += [pP][nN][gG]
+@{smplayer_ext} += [gG][iI][fF]
+
+# Subtitle extensions:
+# srt, txt, sub
+@{smplayer_ext} += [sS][rR][tT]
+@{smplayer_ext} += [tT][xX][tT]
+@{smplayer_ext} += [sS][uU][bB]
+
+# Playlist extensions:
+# m3u, m3u8, pls
+@{smplayer_ext} += [mM]3[uU]{,8}
+@{smplayer_ext} += [pP][lL][sS]
+
+# For Qbittorrent !qB extension
+@{smplayer_ext} += "!qB"
+
+
+@{exec_path} = /{usr/,}bin/smplayer
+profile smplayer @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/X>
+  #include <abstractions/gtk>
+  #include <abstractions/fonts>
+  #include <abstractions/fontconfig-cache-read>
+  #include <abstractions/freedesktop.org>
+  #include <abstractions/mesa>
+  #include <abstractions/audio>
+  #include <abstractions/qt5-compose-cache-write>
+  #include <abstractions/qt5-settings-write>
+  #include <abstractions/wayland>
+  #include <abstractions/dri-enumerate>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/user-download-strict>
+  #include <abstractions/openssl>
+  #include <abstractions/deny-root-dir-access>
+
+  # Needed for hardware decoding
+  ##include <abstractions/nvidia>
+
+  signal (send) set=(term, kill),
+  signal (receive) set=(term, kill),
+
+  @{exec_path} mrix,
+
+  # Which media files SMPlayer should be able to open
+        / r,
+        /home/ r,
+  owner @{HOME}/ r,
+  owner @{HOME}/**/ r,
+        /media/ r,
+  owner /media/**/ r,
+        /tmp/ r,
+  owner /tmp/mozilla_*/ r,
+  owner /{home,media,tmp/mozilla_*}/**.@{smplayer_ext} rw,
+
+  # SMPlayer config files
+  owner @{HOME}/.config/smplayer/ rw,
+  owner @{HOME}/.config/smplayer/* rwkl -> @{HOME}/.config/smplayer/#[0-9]*[0-9],
+
+  # To configure Qt5 settings (theme, font, icons, etc.) under DE/WM without Qt integration
+  owner @{HOME}/.config/qt5ct/{,**} r,
+  /usr/share/qt5ct/** r,
+
+  owner @{HOME}/.cache/#[0-9]*[0-9] rw,
+
+  /var/lib/dbus/machine-id r,
+  /etc/machine-id r,
+
+  deny owner @{PROC}/@{pid}/stat r,
+  deny owner @{PROC}/@{pid}/cmdline r,
+  deny       @{PROC}/sys/kernel/random/boot_id r,
+             @{PROC}/@{pid}/mountinfo r,
+             @{PROC}/@{pid}/mounts r,
+
+  /etc/fstab r,
+
+  deny /dev/ r,
+       /dev/shm/#[0-9]*[0-9] rw,
+
+  owner /tmp/qtsingleapp-smplay-* rw,
+  owner /tmp/qtsingleapp-smplay-*-lockfile rwk,
+
+  /usr/share/hwdata/pnp.ids r,
+
+  # For the builtin thumbnail generator
+  owner /tmp/smplayer_preview/ rw,
+  owner /tmp/smplayer_preview/[0-9]*.{jpg,png} rw,
+
+  owner /tmp/smplayer-mpv-* w,
+
+  # External apps
+  /{usr/,}bin/mpv        rPUx,
+  /{usr/,}bin/smtube     rPUx,
+  /{usr/,}bin/youtube-dl rPUx,
+
+  # PulseAudio (to use "pacmd")
+  /{usr/,}bin/pacmd      rPUx,
+
+  # file_inherit
+  owner /dev/tty[0-9]* rw,
+  owner @{HOME}/.anyRemote/anyremote.stdout w,
+
+  #include if exists <local/smplayer>
+}
+

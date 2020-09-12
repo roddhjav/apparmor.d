@@ -1,0 +1,113 @@
+# vim:syntax=apparmor
+
+#include <tunables/global>
+
+/usr/bin/man {
+  #include <abstractions/base>
+
+  # Use a special profile when man calls anything groff-related.  We only
+  # include the programs that actually parse input data in a non-trivial
+  # way, not wrappers such as groff and nroff, since the latter would need a
+  # broader profile.
+  /usr/bin/eqn rmCx -> &man_groff,
+  /usr/bin/grap rmCx -> &man_groff,
+  /usr/bin/pic rmCx -> &man_groff,
+  /usr/bin/preconv rmCx -> &man_groff,
+  /usr/bin/refer rmCx -> &man_groff,
+  /usr/bin/tbl rmCx -> &man_groff,
+  /usr/bin/troff rmCx -> &man_groff,
+  /usr/bin/vgrind rmCx -> &man_groff,
+
+  # Similarly, use a special profile when man calls decompressors and other
+  # simple filters.
+  /{,usr/}bin/bzip2 rmCx -> &man_filter,
+  /{,usr/}bin/gzip rmCx -> &man_filter,
+  /usr/bin/col rmCx -> &man_filter,
+  /usr/bin/compress rmCx -> &man_filter,
+  /usr/bin/iconv rmCx -> &man_filter,
+  /usr/bin/lzip.lzip rmCx -> &man_filter,
+  /usr/bin/tr rmCx -> &man_filter,
+  /usr/bin/xz rmCx -> &man_filter,
+
+  # Allow basically anything in terms of file system access, subject to DAC.
+  # The purpose of this profile isn't to confine man itself (that might be
+  # nice in the future, but is tricky since it's quite configurable), but to
+  # confine the processes it calls that parse untrusted data.
+  /** mrixwlk,
+  unix,
+
+  capability setuid,
+  capability setgid,
+
+  # Ordinary permission checks sometimes involve checking whether the
+  # process has this capability, which can produce audit log messages.
+  # Silence them.
+  deny capability dac_override,
+  deny capability dac_read_search,
+
+  signal peer=@{profile_name},
+  signal peer=/usr/bin/man//&man_groff,
+  signal peer=/usr/bin/man//&man_filter,
+
+  # Site-specific additions and overrides.  See local/README for details.
+  #include <local/usr.bin.man>
+}
+
+profile man_groff {
+  #include <abstractions/base>
+  # Recent kernels revalidate open FDs, and there are often some still
+  # open on TTYs.  This is temporary until man learns to close irrelevant
+  # open FDs before execve.
+  #include <abstractions/consoles>
+  # man always runs its groff pipeline with the input file open on stdin,
+  # so we can skip <abstractions/user-manpages>.
+
+  /usr/bin/eqn rm,
+  /usr/bin/grap rm,
+  /usr/bin/pic rm,
+  /usr/bin/preconv rm,
+  /usr/bin/refer rm,
+  /usr/bin/tbl rm,
+  /usr/bin/troff rm,
+  /usr/bin/vgrind rm,
+
+  /etc/groff/** r,
+  /etc/papersize r,
+  /usr/lib/groff/site-tmac/** r,
+  /usr/share/groff/** r,
+
+  /tmp/groff* rw,
+
+  signal peer=/usr/bin/man,
+  # @{profile_name} doesn't seem to work here.
+  signal peer=/usr/bin/man//&man_groff,
+}
+
+profile man_filter {
+  #include <abstractions/base>
+  # Recent kernels revalidate open FDs, and there are often some still
+  # open on TTYs.  This is temporary until man learns to close irrelevant
+  # open FDs before execve.
+  #include <abstractions/consoles>
+
+  /{,usr/}bin/bzip2 rm,
+  /{,usr/}bin/gzip rm,
+  /usr/bin/col rm,
+  /usr/bin/compress rm,
+  /usr/bin/iconv rm,
+  /usr/bin/lzip.lzip rm,
+  /usr/bin/tr rm,
+  /usr/bin/xz rm,
+
+  # Manual pages can be more or less anywhere, especially with "man -l", and
+  # there's no harm in allowing wide read access here since the worst it can
+  # do is feed data to the invoking man process.
+  /** r,
+
+  # Allow writing cat pages.
+  /var/cache/man/** w,
+
+  signal peer=/usr/bin/man,
+  # @{profile_name} doesn't seem to work here.
+  signal peer=/usr/bin/man//&man_filter,
+}

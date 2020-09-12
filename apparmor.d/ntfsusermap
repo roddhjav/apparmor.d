@@ -1,0 +1,33 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/ntfsusermap
+profile ntfsusermap @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/disks-read>
+  #include <abstractions/nameservice-strict>
+
+  capability sys_admin,
+
+  @{exec_path} mr,
+
+  owner @{PROC}/@{pid}/mounts r,
+
+  # Where to save the UserMapping file
+  owner /root/UserMapping w,
+  owner /tmp/UserMapping w,
+
+  #include if exists <local/ntfsusermap>
+}

@@ -1,0 +1,45 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2018-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/ssh-agent
+profile ssh-agent @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/openssl>
+
+  @{exec_path} mr,
+
+  owner /tmp/ssh-*/ rw,
+  owner /tmp/ssh-*/agent.* rw,
+
+  # When SSH agent is not used with GPG
+  /{usr/,}bin/openbox-session       rPx,
+  /{usr/,}bin/startkde             rPUx,
+  /{usr/,}bin/sway                 rPUx,
+  /{usr/,}bin/enlightenment_start  rPUx,
+
+  # When started via systemd
+  /{var/,}run/user/[0-9]*/openssh_agent rw,
+
+  # askpass apps
+  #/{usr/,}lib/ssh/x11-ssh-askpass rPUx,
+  #/{usr/,}bin/ksshaskpass         rPUx,
+  /{usr/,}bin/kwalletaskpass       rPUx,
+
+  # file_inherit
+  owner /dev/tty[0-9]* rw,
+  owner @{HOME}/.xsession-errors w,
+
+  #include if exists <local/ssh-agent>
+}

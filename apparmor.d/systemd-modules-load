@@ -1,0 +1,35 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}lib/systemd/systemd-modules-load
+profile systemd-modules-load @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/systemd-common>
+
+  # To load kernel modules
+  capability sys_module,
+
+  @{exec_path} mr,
+
+  @{sys}/module/*/initstate r,
+
+  /etc/modules r,
+  /etc/modprobe.d/ r,
+  /etc/modprobe.d/*.conf r,
+  /etc/modules-load.d/ r,
+  /etc/modules-load.d/*.conf r,
+
+  #include if exists <local/systemd-modules-load>
+}

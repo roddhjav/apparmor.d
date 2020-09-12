@@ -1,0 +1,30 @@
+# vim:syntax=apparmor
+# OpenCL access requirements for NVIDIA implementation
+
+  #include <abstractions/nvidia>
+  #include <abstractions/opencl-common>
+
+  # Executables
+
+  # https://github.com/NVIDIA/nvidia-modprobe
+  # This setuid executable is used to create various device files and load the
+  # the nvidia kernel module.
+  /usr/bin/nvidia-modprobe Px -> nvidia_modprobe,
+
+  # System files
+
+  # libnvidia-opencl.so rules:
+  /dev/nvidia-uvm rw,
+  /dev/nvidia-uvm-tools rw,
+  @{sys}/devices/pci[0-9]*/**/config r,
+  @{sys}/devices/system/memory/block_size_bytes r,
+  /usr/share/nvidia/** r,
+  @{PROC}/devices r,
+  @{PROC}/sys/vm/mmap_min_addr r,
+
+  # User files
+
+  owner @{HOME}/.nv/ComputeCache/ w,
+  owner @{HOME}/.nv/ComputeCache/** rw,
+  owner @{HOME}/.nv/ComputeCache/index rwk,
+

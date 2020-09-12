@@ -1,0 +1,43 @@
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2002-2009 Novell/SUSE
+#    Copyright (C) 2010 Canonical Ltd.
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#include <tunables/global>
+
+profile syslogd /{usr/,}{bin,sbin}/syslogd flags=(complain) {
+  #include <abstractions/base>
+  #include <abstractions/nameservice>
+  #include <abstractions/consoles>
+
+  capability sys_tty_config,
+  capability dac_override,
+  capability dac_read_search,
+  capability setuid,
+  capability setgid,
+  capability syslog,
+
+  unix (receive) type=dgram,
+  unix (receive) type=stream,
+
+  /dev/log                      wl,
+  /var/lib/*/dev/log            wl,
+
+  /dev/tty*                     w,
+  /dev/xconsole                 rw,
+  /etc/syslog.conf              r,
+  /{usr/,}{bin,sbin}/syslogd    rmix,
+  /var/log/**                   rw,
+  /{,var/}run/syslogd.pid          krwl,
+  /{,var/}run/utmp                 rw,
+  /var/spool/compaq/nic/messages_fifo rw,
+
+  # Site-specific additions and overrides. See local/README for details.
+  #include <local/sbin.syslogd>
+}

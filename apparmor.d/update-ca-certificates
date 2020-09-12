@@ -1,0 +1,105 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}sbin/update-ca-certificates
+profile update-ca-certificates @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/ssl_certs>
+
+  @{exec_path} r,
+  /{usr/,}bin/dash r,
+
+  /{usr/,}bin/basename  rix,
+  /{usr/,}bin/cat       rix,
+  /{usr/,}bin/chmod     rix,
+  /{usr/,}bin/mktemp    rix,
+  /{usr/,}bin/mv        rix,
+  /{usr/,}bin/readlink  rix,
+  /{usr/,}bin/rm        rix,
+  /{usr/,}bin/sed       rix,
+  /{usr/,}bin/sort      rix,
+  /{usr/,}bin/wc        rix,
+  /{usr/,}bin/find      rix,
+  /{usr/,}bin/ln        rix,
+  /{usr/,}bin/test      rix,
+
+  /{usr/,}bin/openssl   rix,
+
+  /etc/ca-certificates/update.d/jks-keystore rCx -> jks-keystore,
+  /{usr/,}bin/run-parts                      rCx -> run-parts,
+
+  /etc/ca-certificates.conf r,
+  /etc/ssl/certs/ca-certificates.crt rw,
+  /etc/ssl/certs/*.pem rw,
+  /etc/ssl/certs/[0-9a-f]*.[0-9] rw,
+
+  /{usr/,}lib/locale/locale-archive r,
+
+  owner /tmp/ca-certificates{,.crt}.tmp.* rw,
+
+  @{PROC}/filesystems r,
+
+
+  profile run-parts {
+    #include <abstractions/base>
+
+    /{usr/,}bin/run-parts mr,
+
+    /etc/ca-certificates/update.d/ r,
+
+    # file_inherit
+    owner /dev/pts/[0-9]* rw,
+
+  }
+
+  profile jks-keystore {
+    #include <abstractions/base>
+    #include <abstractions/nameservice-strict>
+    #include <abstractions/ssl_certs>
+
+    /etc/ca-certificates/update.d/jks-keystore mr,
+
+    /{usr/,}lib/jvm/java-[0-9]*-openjdk-*/jre/bin/java rix,
+
+    /{usr/,}bin/dash       rix,
+    /{usr/,}bin/sed        rix,
+    /{usr/,}bin/head       rix,
+    /{usr/,}bin/mountpoint rix,
+    /{usr/,}bin/dpkg-query rPx,
+    /{usr/,}bin/dpkg       rPx -> child-dpkg,
+
+    /usr/share/ca-certificates-java/ca-certificates-java.jar r,
+    /usr/share/java/java-atk-wrapper.jar r,
+
+    /etc/default/cacerts r,
+    /etc/ssl/certs/java/cacerts rw,
+
+    /etc/java-[0-9]*-openjdk/{,**} r,
+
+    owner @{PROC}/@{pid}/cgroup r,
+    owner @{PROC}/@{pid}/mountinfo r,
+    @{sys}/fs/cgroup/** r,
+
+    owner /tmp/hsperfdata_root/ rw,
+    owner /tmp/hsperfdata_root/[0-9]*[0-9] rw,
+
+    # file_inherit
+    owner /dev/pts/[0-9]* rw,
+
+  }
+
+  #include if exists <local/update-ca-certificates>
+}

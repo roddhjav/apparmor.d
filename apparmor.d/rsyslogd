@@ -1,0 +1,59 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2018-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+# Debugging the syslogger can be difficult if it can't write to the file
+# that the kernel is logging denials to. In these cases, you can do the
+# following:
+# watch -n 1 'dmesg | tail -5'
+
+@{exec_path} = /{usr/,}sbin/rsyslogd
+profile rsyslogd @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/nameservice>
+
+  capability syslog,
+
+  # for remote logs
+  capability net_admin,
+
+  # Needed?
+  deny capability sys_nice,
+
+  # for creating new log files and changing their owner/group
+  capability chown,
+
+  @{exec_path} mr,
+
+  /{usr/,}lib/@{multiarch}/rsyslog/*.so mr,
+
+  # rsyslog configuration
+  /etc/rsyslog.conf r,
+  /etc/rsyslog.d/{,**} r,
+  /var/spool/rsyslog/ r,
+  /var/spool/rsyslog/** rw,
+
+  owner /{,var/}run/rsyslogd.pid{,.tmp} rwk,
+  owner /{,var/}run/systemd/journal/syslog w,
+
+  # log files and devices
+  /var/log/** rw,
+  @{PROC}/kmsg r,
+
+  # a cert for gtls module
+  /etc/CA/*.crt r,
+  /etc/CA/*.key r,
+
+  #include if exists <local/rsyslogd>
+}

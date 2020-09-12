@@ -1,0 +1,75 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2018-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/xdg-screensaver
+profile xdg-screensaver @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/deny-root-dir-access>
+
+  @{exec_path} r,
+
+  /{usr/,}bin/dash         rix,
+  /{usr/,}bin/mv           rix,
+  /{usr/,}bin/{,e}grep     rix,
+  /{usr/,}bin/sed          rix,
+  /{usr/,}bin/which        rix,
+  /{usr/,}bin/cat          rix,
+  /{usr/,}bin/uname        rix,
+
+  /{usr/,}bin/xprop        rPx,
+  /{usr/,}bin/xdg-mime     rPx,
+  /{usr/,}bin/xset         rPx,
+  /{usr/,}bin/hostname     rPx,
+
+  /{usr/,}bin/xautolock    rCx -> xautolock,
+  /{usr/,}bin/dbus-send    rCx -> dbus,
+
+  /dev/dri/card[0-9] rw,
+
+  owner @{HOME}/.Xauthority r,
+  owner /tmp/xauth-[0-9]*-_[0-9] r,
+
+  # file_inherit
+  owner @{HOME}/.xsession-errors w,
+  /dev/dri/card[0-9]* rw,
+
+
+  profile xautolock {
+    #include <abstractions/base>
+    #include <abstractions/consoles>
+
+    /{usr/,}bin/xautolock mr,
+
+    # file_inherit
+    /dev/dri/card[0-9]* rw,
+
+    owner @{HOME}/.Xauthority r,
+
+  }
+
+  profile dbus {
+    #include <abstractions/base>
+    #include <abstractions/consoles>
+
+    /{usr/,}bin/dbus-send     mr,
+
+    # file_inherit
+    /dev/dri/card[0-9]* rw,
+
+  }
+
+  #include if exists <local/xdg-screensaver>
+}

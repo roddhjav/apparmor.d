@@ -1,0 +1,150 @@
+#include <tunables/global>
+#include <tunables/torbrowser>
+
+@{torbrowser_firefox_executable} = /home/*/.local/share/torbrowser/tbb/{i686,x86_64}/tor-browser_*/Browser/firefox.real
+
+profile torbrowser_firefox @{torbrowser_firefox_executable} {
+  #include <abstractions/audio>
+  #include <abstractions/gnome>
+
+  # Uncomment the following lines if you want to give the Tor Browser read-write
+  # access to most of your personal files.
+  # #include <abstractions/user-download>
+  # @{HOME}/ r,
+
+  # Audio support
+  /{,usr/}bin/pulseaudio Pixr,
+
+  #dbus,
+  network netlink raw,
+  network tcp,
+
+  ptrace (trace) peer=@{profile_name},
+  signal (receive, send) set=("term") peer=@{profile_name},
+
+  deny /etc/host.conf r,
+  deny /etc/hosts r,
+  deny /etc/nsswitch.conf r,
+  deny /etc/resolv.conf r,
+  deny /etc/passwd r,
+  deny /etc/group r,
+  deny /etc/mailcap r,
+
+  /etc/machine-id r,
+  /var/lib/dbus/machine-id r,
+
+  /dev/ r,
+  /dev/shm/ r,
+
+  owner @{PROC}/@{pid}/environ r,
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/stat r,
+  owner @{PROC}/@{pid}/status r,
+  owner @{PROC}/@{pid}/task/*/stat r,
+  @{PROC}/sys/kernel/random/uuid r,
+
+  owner @{torbrowser_installation_dir}/ r,
+  owner @{torbrowser_installation_dir}/* r,
+  owner @{torbrowser_installation_dir}/.** rwk,
+  owner @{torbrowser_installation_dir}/update.test/ rwk,
+  owner @{torbrowser_home_dir}/.** rwk,
+  owner @{torbrowser_home_dir}/ rw,
+  owner @{torbrowser_home_dir}/** rwk,
+  owner @{torbrowser_home_dir}.bak/ rwk,
+  owner @{torbrowser_home_dir}.bak/** rwk,
+  owner @{torbrowser_home_dir}/*.so mr,
+  owner @{torbrowser_home_dir}/.cache/fontconfig/ rwk,
+  owner @{torbrowser_home_dir}/.cache/fontconfig/** rwkl,
+  owner @{torbrowser_home_dir}/browser/** r,
+  owner @{torbrowser_home_dir}/{,browser/}components/*.so mr,
+  owner @{torbrowser_home_dir}/Downloads/ rwk,
+  owner @{torbrowser_home_dir}/Downloads/** rwk,
+  owner @{torbrowser_home_dir}/firefox rix,
+  owner @{torbrowser_home_dir}/{,TorBrowser/UpdateInfo/}updates/[0-9]*/* rw,
+  owner @{torbrowser_home_dir}/{,TorBrowser/UpdateInfo/}updates/[0-9]*/{,MozUpdater/bgupdate/}updater ix,
+  owner @{torbrowser_home_dir}/updater ix,
+  owner @{torbrowser_home_dir}/TorBrowser/Data/Browser/.parentwritetest rw,
+  owner @{torbrowser_home_dir}/TorBrowser/Data/Browser/profiles.ini r,
+  owner @{torbrowser_home_dir}/TorBrowser/Data/Browser/profile.default/{,**} rwk,
+  owner @{torbrowser_home_dir}/TorBrowser/Data/fontconfig/fonts.conf r,
+  owner @{torbrowser_home_dir}/fonts/* l,
+  owner @{torbrowser_home_dir}/TorBrowser/Tor/tor px,
+  owner @{torbrowser_home_dir}/TorBrowser/Tor/ r,
+  owner @{torbrowser_home_dir}/TorBrowser/Tor/*.so mr,
+  owner @{torbrowser_home_dir}/TorBrowser/Tor/*.so.* mr,
+
+  # parent Firefox process when restarting after upgrade, Web Content processes
+  owner @{torbrowser_firefox_executable} pxmr -> torbrowser_firefox,
+
+  /etc/mailcap r,
+  /etc/mime.types r,
+
+  /usr/share/ r,
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+  /usr/share/mime/ r,
+  /usr/share/themes/ r,
+  /usr/share/applications/** rk,
+  /usr/share/gnome/applications/ r,
+  /usr/share/gnome/applications/kde4/ r,
+  /usr/share/poppler/cMap/ r,
+
+  # Distribution homepage
+  /usr/share/homepage/ r,
+  /usr/share/homepage/** r,
+
+  /sys/devices/system/cpu/ r,
+  /sys/devices/system/cpu/present r,
+  /sys/devices/system/node/ r,
+  /sys/devices/system/node/node[0-9]*/meminfo r,
+  deny /sys/devices/virtual/block/*/uevent r,
+
+  # Should use abstractions/gstreamer instead once merged upstream
+  /etc/udev/udev.conf r,
+  /run/udev/data/+pci:* r,
+  /sys/devices/pci[0-9]*/**/uevent r,
+  owner /{dev,run}/shm/shmfd-* rw,
+
+  # Required for multiprocess Firefox (aka Electrolysis, i.e. e10s)
+  owner /{dev,run}/shm/org.chromium.* rw,
+  owner /dev/shm/org.mozilla.ipc.[0-9]*.[0-9]* rw, # for Chromium IPC
+
+  # Deny access to DRM nodes, that's granted by the X abstraction, which is
+  # sourced by the gnome abstraction, that we include.
+  deny /dev/dri/** rwklx,
+
+  # Silence denial logs about permissions we don't need
+  deny /dev/dri/   rwklx,
+  deny @{HOME}/.cache/fontconfig/ rw,
+  deny @{HOME}/.cache/fontconfig/** rw,
+  deny @{HOME}/.config/gtk-2.0/ rw,
+  deny @{HOME}/.config/gtk-2.0/** rw,
+  deny @{PROC}/@{pid}/net/route r,
+  deny /sys/devices/system/cpu/cpufreq/policy[0-9]*/cpuinfo_max_freq r,
+  deny /sys/devices/system/cpu/*/cache/index[0-9]*/size r,
+  deny /run/user/[0-9]*/dconf/user rw,
+  deny /usr/bin/lsb_release x,
+  deny capability sys_admin,
+
+  # Silence denial logs about PulseAudio
+  deny /etc/pulse/client.conf r,
+  deny /usr/bin/pulseaudio x,
+
+  # KDE 4
+  owner @{HOME}/.kde/share/config/* r,
+
+  # Xfce4
+  /etc/xfce4/defaults.list r,
+  /usr/share/xfce4/applications/ r,
+
+  # u2f (tested with Yubikey 4)
+  /sys/class/ r,
+  /sys/bus/ r,
+  /sys/class/hidraw/ r,
+  /run/udev/data/c24{7,9}:* r,
+  /dev/hidraw* rw,
+  # Yubikey NEO also needs this:
+  /sys/devices/**/hidraw/hidraw*/uevent r,
+
+  #include <local/torbrowser.Browser.firefox>
+}

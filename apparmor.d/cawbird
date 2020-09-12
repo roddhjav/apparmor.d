@@ -1,0 +1,88 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/cawbird
+profile cawbird @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/gtk>
+  #include <abstractions/fonts>
+  #include <abstractions/fontconfig-cache-read>
+  #include <abstractions/freedesktop.org>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/ssl_certs>
+  #include <abstractions/enchant>
+  #include <abstractions/audio>
+  #include <abstractions/deny-root-dir-access>
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/dash        rix,
+
+  /{usr/,}bin/xdg-open    rCx -> open,
+  /{usr/,}bin/exo-open    rCx -> open,
+
+  /{usr/,}lib/@{multiarch}/gstreamer[0-9]*.[0-9]*/gstreamer-[0-9]*.[0-9]*/gst-plugin-scanner rPx,
+
+  owner @{HOME}/.config/cawbird/ rw,
+  owner @{HOME}/.config/cawbird/** rwk,
+
+  owner @{HOME}/.cache/ rw,
+  owner @{HOME}/.cache/cawbird-* rw,
+
+  owner @{HOME}/.cache/gstreamer-[0-9]*/ rw,
+  owner @{HOME}/.cache/gstreamer-[0-9]*/registry.x86_64.bin{,.tmp*} rw,
+
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+
+  /usr/share/xml/iso-codes/iso_[0-9]*-[0-9]*.xml r,
+
+  # This is needed as cawbird stores its settings in the dconf database.
+  #include <abstractions/dconf>
+  /{var/,}run/user/[0-9]*/dconf/user rw,
+
+  /var/lib/dbus/machine-id r,
+  /etc/machine-id r,
+
+  @{sys}/devices/system/node/ r,
+  @{sys}/devices/system/node/node0/meminfo r,
+
+  # The orcexec.* file is JIT compiled code for various GStreamer elements.
+  # If one is blocked the next is used instead.
+  owner /{var/,}run/user/[0-9]*/orcexec.* mrw,
+  #owner @{HOME}/orcexec.* mrw,
+  #owner /tmp/orcexec.* mrw,
+
+  /dev/ r,
+  /dev/dri/ r,
+
+  owner @{PROC}/@{pid}/fd/ r,
+
+
+  profile open {
+    #include <abstractions/base>
+    #include <abstractions/xdg-open>
+
+    /{usr/,}bin/xdg-open mr,
+
+    # Allowed apps to open
+    /{usr/,}lib/firefox/firefox rPUx,
+
+    # file_inherit
+    owner @{HOME}/.xsession-errors w,
+
+  }
+
+  #include if exists <local/cawbird>
+}

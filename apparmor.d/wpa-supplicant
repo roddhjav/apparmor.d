@@ -1,0 +1,58 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2018-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}sbin/wpa_supplicant
+profile wpa-supplicant @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/nameservice>
+  #include <abstractions/openssl>
+
+  # To remove the following errors:
+  #  wpa_supplicant[]: wlan0: Failed to initialize driver interface
+  capability net_admin,
+  capability net_raw,
+
+  # To remove the following errors:
+  #  wpa_supplicant[]: Failed to initialize control interface 'DIR=/run/wpa_supplicant
+  #  GROUP=netdev'. You may have another wpa_supplicant process already running or the file was
+  #  left by an unclean termination of wpa_supplicant in which case you will need  to manually
+  #  remove this file before starting wpa_supplicant again.
+  capability chown,
+
+  # Needed? (#FIXME#)
+  capability fsetid,
+  audit deny capability sys_module,
+
+  @{exec_path} mr,
+
+  owner /{,var/}run/wpa_supplicant/ rw,
+  owner /{,var/}run/wpa_supplicant/wlan* rw,
+  owner /{,var/}run/wpa_supplicant.wlan*.pid rw,
+
+  /etc/wpa_supplicant/wpa_supplicant.conf r,
+
+  /dev/rfkill r,
+
+  @{PROC}/sys/net/ipv[4,6]/conf/wlan[0-9]/drop_* rw,
+
+  @{sys}/devices/pci[0-9]*/**/ieee80211/phy[0-9]/name r,
+
+  # For wpa_gui
+  #capability dac_override,
+  #/etc/wpa_supplicant/wpa_supplicant.conf w,
+  #/etc/wpa_supplicant/wpa_supplicant.conf.tmp rw,
+
+  #include if exists <local/wpa-supplicant>
+}

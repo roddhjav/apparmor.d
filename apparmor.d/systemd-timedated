@@ -1,0 +1,37 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2018-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}lib/systemd/systemd-timedated
+profile systemd-timedated @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/systemd-common>
+
+  capability sys_time,
+
+  @{exec_path} mr,
+
+  /dev/rtc[0-9] r,
+
+  /etc/.#adjtime* rw,
+  /etc/adjtime rw,
+
+  /etc/.#localtime* rw,
+  /etc/localtime rw,
+
+  /etc/.#timezone* rw,
+  /etc/timezone rw,
+
+  #include if exists <local/systemd-timedated>
+}

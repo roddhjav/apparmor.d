@@ -1,0 +1,65 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/jgmenu{,_run}
+profile jgmenu @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/gtk>
+  #include <abstractions/fonts>
+  #include <abstractions/fontconfig-cache-read>
+  #include <abstractions/freedesktop.org>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/deny-root-dir-access>
+  #include <abstractions/app-launcher-user>
+
+  @{exec_path} mrix,
+
+  /{usr/,}bin/dash   rix,
+  /{usr/,}bin/zsh    rix,
+  /{usr/,}bin/mkdir  rix,
+  /{usr/,}bin/find   rix,
+  /{usr/,}bin/wc     rix,
+  /{usr/,}bin/cat    rix,
+
+  /{usr/,}lib/jgmenu/jgmenu-*    rix,
+
+  owner @{HOME}/.jgmenu-lockfile rwk,
+
+  owner @{HOME}/.config/tint2/tint2rc r,
+
+  owner @{HOME}/.config/jgmenu/ rw,
+  owner @{HOME}/.config/jgmenu/** rw,
+
+  owner @{HOME}/.cache/ rw,
+  owner @{HOME}/.cache/jgmenu/ rw,
+  owner @{HOME}/.cache/jgmenu/** rw,
+
+  owner @{HOME}/.Xauthority r,
+
+  owner @{PROC}/@{pid}/loginuid r,
+
+  # For zsh shell
+  /etc/zsh/zshenv r,
+
+  # For missing apps icon and desktop files
+  /usr/share/**.png r,
+  /usr/share/**.desktop r,
+
+  # file_inherit
+  owner /dev/tty[0-9]* rw,
+
+  #include if exists <local/jgmenu>
+}
