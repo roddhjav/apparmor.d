@@ -1,0 +1,112 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}sbin/dkms
+profile dkms @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+
+  @{exec_path} r,
+  /{usr/,}bin/bash r,
+
+  /{usr/,}bin/head     rix,
+  /{usr/,}bin/ls       rix,
+  /{usr/,}bin/uname    rix,
+  /{usr/,}bin/nproc    rix,
+  /{usr/,}bin/mktemp   rix,
+  /{usr/,}bin/cut      rix,
+  /{usr/,}bin/rm       rix,
+  /{usr/,}bin/sed      rix,
+  /{usr/,}bin/readlink rix,
+  /{usr/,}bin/diff     rix,
+  /{usr/,}bin/wc       rix,
+  /{usr/,}bin/rmdir    rix,
+  /{usr/,}bin/find     rix,
+  /{usr/,}bin/{,e}grep rix,
+  /{usr/,}bin/gawk     rix,
+  /{usr/,}bin/cp       rix,
+  /{usr/,}bin/date     rix,
+  /{usr/,}bin/ln       rix,
+  /{usr/,}bin/mkdir    rix,
+  /{usr/,}bin/mv       rix,
+  /{usr/,}bin/dash     rix,
+  /{usr/,}bin/cat      rix,
+  /{usr/,}bin/echo     rix,
+  /{usr/,}bin/pwd      rix,
+  /{usr/,}bin/getconf  rix,
+  /{usr/,}bin/xargs    rix,
+
+  /{usr/,}bin/make                        rix,
+  /{usr/,}bin/{,@{multiarch}-}*           rix,
+  /{usr/,}lib/gcc/@{multiarch}/[0-9]*/cc1 rix,
+
+  /{usr/,}bin/kmod        rCx -> kmod,
+  /{usr/,}bin/lsb_release rPx -> child-lsb_release,
+
+  /{usr/,}lib/linux-kbuild-*/scripts/** rix,
+  capability setuid,
+  capability setgid,
+  /proc/sys/kernel/osrelease r,
+  /usr/lib/linux-kbuild-*/tools/objtool/objtool rix,
+
+  / r,
+  /{usr/,}lib/modules/*/updates/ rw,
+  /{usr/,}lib/modules/*/updates/dkms/ rw,
+  /{usr/,}lib/modules/*/updates/dkms/*.ko rw,
+
+  /var/lib/dkms/ r,
+  /var/lib/dkms/** rw,
+
+  /etc/dkms/{,**} r,
+
+  # For building module in /usr/src/ subdirs
+  /usr/src/** rw,
+  /usr/src/linux-headers-*/scripts/gcc-plugins/*.so mr,
+  /usr/src/linux-headers-*/scripts/**              rix,
+  /usr/src/linux-headers-*/tools/**                rix,
+  /usr/include/**.h r,
+
+  # For autosign modules
+  owner /etc/kernel_key/sign-kernel.sh rix,
+  owner /etc/kernel_key/*.key r,
+  owner /etc/kernel_key/*.crt r,
+
+  owner @{HOME}/ r,
+
+  owner /tmp/cc*.s rw,
+  owner /tmp/dkms.*/ rw,
+  owner /tmp/tmp.* rw,
+  owner /tmp/sh-thd.* rw,
+
+  owner @{PROC}/@{pid}/fd/ r,
+
+
+  profile kmod {
+    #include <abstractions/base>
+    #include <abstractions/consoles>
+
+    /{usr/,}bin/kmod mr,
+
+    @{PROC}/cmdline r,
+
+    /{usr/,}lib/modules/*/modules.* rw,
+    /var/lib/dkms/**/module/*.ko r,
+
+    owner /boot/System.map-* r,
+
+  }
+
+  #include if exists <local/dkms>
+}

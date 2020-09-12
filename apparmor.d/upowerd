@@ -1,0 +1,60 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2018-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}lib/upower/upowerd /usr/libexec/upowerd
+profile upowerd @{exec_path} {
+  #include <abstractions/base>
+
+  @{exec_path} mr,
+
+  # UPower config file
+  /etc/UPower/UPower.conf r,
+
+  # The history data for the power device
+  /var/lib/upower/history-*.dat{,.*} rw,
+
+  # Are all of these needed? (#FIXME#)
+  /dev/bus/usb/ r,
+  /dev/input/event* r,
+  @{sys}/bus/ r,
+  @{sys}/bus/usb/devices/ r,
+  @{sys}/bus/hid/devices/ r,
+  @{sys}/class/ r,
+  @{sys}/class/leds/ r,
+  @{sys}/class/power_supply/ r,
+  @{sys}/class/input/ r,
+  @{sys}/devices/ r,
+  @{sys}/devices/**/power_supply/**/* r,
+  @{sys}/devices/**/uevent r,
+  @{sys}/devices/**/capabilities/* r,
+  @{sys}/devices/pci[0-9]*/**/usb[0-9]/{,**/}{busnum,devnum,speed,descriptors} r,
+  @{sys}/devices/virtual/dmi/id/product_name r,
+
+  @{sys}/devices/platform/**/leds/**/max_brightness r,
+  @{sys}/devices/platform/**/leds/**/brightness rw,
+  @{sys}/devices/platform/**/leds/**/brightness_hw_changed r,
+
+  /{,var/}run/udev/data/ r,
+  /{,var/}run/udev/data/+power_supply* r,
+  /{,var/}run/udev/data/+input* r,
+  /{,var/}run/udev/data/+usb* r,
+  /{,var/}run/udev/data/+hid* r,
+  /{,var/}run/udev/data/c13:[0-9]*  r, # for /dev/input/*
+  /{,var/}run/udev/data/c189:[0-9]* r, # for /dev/bus/usb/**
+
+  /{,var/}run/systemd/inhibit/[0-9]*.ref rw,
+
+  #include if exists <local/upowerd>
+}

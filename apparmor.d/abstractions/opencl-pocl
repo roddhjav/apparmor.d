@@ -1,0 +1,76 @@
+# vim:syntax=apparmor
+# OpenCL access requirements for POCL implementation
+
+  #include <abstractions/opencl-common>
+
+  # Executables
+
+  /usr/bin/{,@{multiarch}-}ld.bfd Cx -> opencl_pocl_ld,
+  /usr/lib/llvm-[0-9]*.[0-9]*/bin/clang Cx -> opencl_pocl_clang,
+
+  # System files
+
+  / r, # libpocl.so -> libhwloc.so
+  @{sys}/bus/pci/slots/ r, # libpocl.so -> hwloc_topology_load() from libhwloc.so
+  @{sys}/bus/{cpu,node}/devices/ r, # libpocl.so -> libhwlock.so
+  @{sys}/class/net/ r, # libpocl.so -> hwloc_pci_traverse_lookuposdevices_cb() from libhwloc.so
+  @{sys}/devices/pci[0-9]*/**/ r, # for libpocl ->  hwloc_linux_lookup_block_class() from libhwloc.so
+  @{sys}/devices/pci[0-9]*/**/block/*/dev r, # libpocl.so -> hwloc_linux_lookup_host_block_class() from libhwloc.so
+  @{sys}/devices/pci[0-9]*/**/{class,local_cpus} r, # libpocl.so -> libhwlock.so
+  @{sys}/devices/pci[0-9]*/*/net/*/address r, # libpocl.so ->  hwloc_pci_traverse_lookuposdevices_cb() from libhwloc.so
+  @{sys}/devices/system/cpu/ r, # libpocl.so -> libnuma.so
+  @{sys}/devices/system/cpu/cpu[0-9]*/cache/index[0-9]*/* r, # libpocl.so -> libhwloc.so
+  @{sys}/devices/system/cpu/cpu[0-9]*/online r, # libpocl.so -> libhwlock.so
+  @{sys}/devices/system/cpu/cpu[0-9]*/topology/* r, # *_siblings, physical_package_id and lot's of others, for libpocl.so -> libhwloc.so
+  @{sys}/devices/system/cpu/cpufreq/policy[0-9]*/* r, # for clGetPlatformIDs() from libpocl.so
+  @{sys}/devices/system/cpu/possible r, # libpocl.so -> libhwloc.so
+  @{sys}/devices/virtual/dmi/id/{,*} r, # libpocl.so -> libhwloc.so
+  @{sys}/fs/cgroup/cpuset/cpuset.{cpus,mems} r, # libpocl.so -> libhwloc.so
+  @{sys}/kernel/mm/hugepages{/,/**} r, # libpocl.so -> libhwloc.so
+  /usr/share/pocl/** r,
+  /{,var/}run/udev/data/*:* r, # libpocl.so -> hwloc_linux_block_class_fillinfos() from libhwloc.so
+
+  # User files
+
+  owner @{HOME}/.cache/pocl/ w,
+  owner @{HOME}/.cache/pocl/kcache/ w,
+  owner @{HOME}/.cache/pocl/kcache/** rw,
+  owner @{HOME}/.cache/pocl/kcache/**.so mrw, # dangerous!
+  owner @{PROC}/@{pid}/{cgroup,cpuset,status} r, # libpocl.so -> libhwloc.so, status for libpocl.so -> libnuma.so
+
+  # Child profiles
+
+  profile opencl_pocl_ld {
+    #include <abstractions/base>
+
+    # Main executables
+
+    /usr/bin/{,@{multiarch}-}ld.bfd mr,
+
+    # User files
+
+    owner @{HOME}/.cache/pocl/kcache/tempfile*.so rw,
+    owner @{HOME}/.cache/pocl/kcache/**.so.o r,
+  }
+
+  profile opencl_pocl_clang {
+    #include <abstractions/base>
+
+    # Main executables
+
+    /usr/lib/llvm-[0-9]*.[0-9]*/bin/clang mr,
+
+    # Additional executables
+
+    /usr/bin/{,@{multiarch}-}ld.bfd ix, # TODO: transfer to opencl_ld child profile?
+
+    # System files
+
+    /etc/debian-version r,
+    /etc/lsb-release r,
+
+    # User files
+
+    owner @{HOME}/.cache/pocl/kcache/*/*/*/*/*.so{,.o} rw,
+  }
+

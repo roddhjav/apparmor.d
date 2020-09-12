@@ -1,0 +1,53 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}lib/systemd/systemd-networkd
+profile systemd-networkd @{exec_path} flags=(complain) {
+  #include <abstractions/base>
+  #include <abstractions/systemd-common>
+
+  capability net_admin,
+  capability net_raw,
+  capability net_bind_service,
+
+  @{exec_path} mr,
+
+  /etc/systemd/networkd.conf r,
+  /etc/systemd/network/ r,
+  /etc/systemd/network/[0-9][0-9]-*.{netdev,network,link} r,
+
+  owner /{var/,}run/systemd/netif/links/.#* rw,
+  owner /{var/,}run/systemd/netif/links/[0-9]* rw,
+  owner /{var/,}run/systemd/netif/leases/[0-9]* rw,
+  owner /{var/,}run/systemd/netif/leases/.#* rw,
+  owner /{var/,}run/systemd/netif/.#state* rw,
+  owner /{var/,}run/systemd/netif/.#state rw,
+  owner /{var/,}run/systemd/netif/state rw,
+
+  # To be able to configure network interfaces
+        @{PROC}/sys/net/ipv{4,6}/** rw,
+
+  @{sys}/devices/virtual/dmi/id/product_name r,
+  @{sys}/devices/virtual/dmi/id/{sys,board,bios}_vendor r,
+
+  @{sys}/devices/**/net/** r,
+
+  /{var/,}run/udev/data/n[0-9]* r,
+
+  /var/lib/dbus/machine-id r,
+  /etc/machine-id r,
+
+  #include if exists <local/systemd-networkd>
+}

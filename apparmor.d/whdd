@@ -1,0 +1,42 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2017-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}sbin/whdd
+profile whdd @{exec_path} {
+  #include <abstractions/base>
+
+  capability sys_rawio,
+  capability sys_admin,
+
+  # Needed?
+  deny capability sys_nice,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/dash     rix,
+  /{usr/,}bin/{,e}grep rix,
+  /{usr/,}bin/gawk     rix,
+  /{usr/,}bin/tr       rix,
+
+  # To read SMART attributes
+  /{usr/,}sbin/smartctl rPx,
+
+  owner @{PROC}/@{pid}/mounts r,
+        @{PROC}/partitions r,
+
+  /dev/sd[a-z] rw,
+
+  #include if exists <local/whdd>
+}

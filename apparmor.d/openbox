@@ -1,0 +1,89 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/openbox
+profile openbox @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/fonts>
+  #include <abstractions/fontconfig-cache-read>
+  #include <abstractions/freedesktop.org>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/deny-root-dir-access>
+
+  signal (send) set=(term, kill),
+
+  @{exec_path} mr,
+
+  /{usr/,}lib/@{multiarch}/openbox-autostart rCx -> autostart,
+
+  # Apps allowed to run
+  /{usr/,}sbin/* rPUx,
+  /{usr/,}bin/*  rPUx,
+  /usr/libexec/* rPUx,
+
+  /usr/share/themes/*/openbox-3/themerc r,
+
+  /etc/xdg/openbox/* r,
+
+  owner @{HOME}/ r,
+  owner @{HOME}/.config/openbox/* r,
+
+  owner @{HOME}/.config/obmenu-generator/icons/[0-9a-f]*.png r,
+
+  owner @{HOME}/.cache/ rw,
+  owner @{HOME}/.cache/openbox/ rw,
+  owner @{HOME}/.cache/openbox/openbox.log rw,
+
+  owner @{HOME}/.Xauthority r,
+
+  owner @{PROC}/@{pid}/fd/ r,
+
+  # file_inherit
+  owner /dev/tty[0-9]* rw,
+  owner @{HOME}/.xsession-errors w,
+
+
+  profile autostart {
+    #include <abstractions/base>
+
+    /{usr/,}lib/@{multiarch}/openbox-autostart mr,
+    /{usr/,}lib/@{multiarch}/openbox-xdg-autostart rix,
+
+    /{usr/,}bin/dash  rix,
+    /{usr/,}bin/which rix,
+
+    # Apps allowed to run
+    /{usr/,}bin/*                      rPUx,
+    /usr/libexec/*                     rPUx,
+    /{usr/,}lib/@{multiarch}/xfce4/*/* rPUx,
+    /{usr/,}lib/@{multiarch}/polkit-mate/polkit-mate-authentication-agent-1 rPUx,
+
+    /usr/local/lib/python*/dist-packages/ r,
+
+    owner @{HOME}/.config/openbox/autostart r,
+    /etc/xdg/openbox/autostart r,
+
+    owner @{HOME}/.config/autostart/{,*} r,
+    /etc/xdg/autostart/{,*} r,
+
+    # file_inherit
+    owner @{HOME}/.xsession-errors w,
+      owner /dev/tty[0-9]* rw,
+
+    #include if exists <local/openbox_autostart>
+  }
+
+  #include if exists <local/openbox>
+}

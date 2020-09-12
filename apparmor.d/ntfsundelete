@@ -1,0 +1,32 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}sbin/ntfsundelete
+profile ntfsundelete @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/disks-read>
+
+  capability sys_admin,
+
+  @{exec_path} mr,
+
+  owner @{PROC}/@{pid}/mounts r,
+
+  # The recovery dir
+  owner /tmp/ntfs-recovery/ r,
+  owner /tmp/ntfs-recovery/* rw,
+
+  #include if exists <local/ntfsundelete>
+}

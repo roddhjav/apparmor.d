@@ -1,0 +1,46 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2018-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}lib/colord/colord-sane /usr/libexec/colord-sane
+profile colord-sane @{exec_path} flags=(complain) {
+  #include <abstractions/base>
+
+  @{exec_path} mr,
+
+  /etc/sane.d/{,**} r,
+
+  /etc/snmp/snmp.conf r,
+  /var/lib/snmp/mibs/{iana,ietf}/ r,
+  /var/lib/snmp/mibs/{iana,ietf}/[A-Z]* r,
+
+  /var/lib/snmp/{mib,cert}_indexes/ rw,
+  /usr/share/snmp/mibs/{,*} r,
+
+  /dev/bus/usb/ r,
+
+  @{sys}/bus/ r,
+  @{sys}/bus/usb/devices/ r,
+  @{sys}/bus/scsi/devices/ r,
+  @{sys}/class/ r,
+  @{sys}/devices/pci[0-9]*/**/usb[0-9]/{,**/}{uevent,busnum,devnum,speed,descriptors} r,
+  @{sys}/devices/pci[0-9]*/**/{vendor,model,type} r,
+
+  /{var/,}run/udev/data/c189:[0-9]* r, # for /dev/bus/usb/**
+  /{var/,}run/udev/data/+usb:* r,      #
+
+  @{PROC}/sys/dev/parport/ r,
+
+  #include if exists <local/colord-sane>
+}

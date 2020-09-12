@@ -1,0 +1,36 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+# Note: This profile does not specify an attachment path because it is
+# intended to be used only via "Px -> child-pager" exec transitions from
+# other profiles. We want to confine the pager(1) utility when it
+# is invoked from other confined applications, but not when it is used
+# in regular (unconfined) shell scripts or run directly by the user.
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+# Do not attach to /{usr/,}bin/pager by default
+profile child-pager {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+
+  signal (receive) set=(stop, cont, term, kill),
+
+  /{usr/,}bin/pager mr,
+  /{usr/,}bin/less  mr,
+  /{usr/,}bin/more  mr,
+
+  owner @{HOME}/.lesshs* rw,
+
+  #include if exists <local/child-pager>
+}

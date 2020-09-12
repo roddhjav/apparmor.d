@@ -1,0 +1,53 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2018-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/xdg-desktop-menu
+profile xdg-desktop-menu @{exec_path} flags=(complain) {
+  #include <abstractions/base>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/consoles>
+  #include <abstractions/deny-root-dir-access>
+
+  @{exec_path} r,
+
+  /{usr/,}bin/dash     rix,
+  /{usr/,}bin/mkdir    rix,
+  /{usr/,}bin/sed      rix,
+  /{usr/,}bin/cut      rix,
+  /{usr/,}bin/basename rix,
+  /{usr/,}bin/rm       rix,
+  /{usr/,}bin/cp       rix,
+  /{usr/,}bin/cat      rix,
+  /{usr/,}bin/touch    rix,
+  /{usr/,}bin/gawk     rix,
+  /{usr/,}bin/whoami   rix,
+  /{usr/,}bin/mv       rix,
+  /{usr/,}bin/{,e}grep rix,
+  /{usr/,}bin/readlink rix,
+
+  /{usr/,}bin/update-desktop-database rPx,
+
+  owner @{HOME}/.config/menus/applications-merged/xdg-desktop-menu-dummy.menu rw,
+  owner @{HOME}/.local/share/applications/chrome-*.desktop rw,
+  owner @{HOME}/.gnome/apps/chrome-*.desktop rw,
+
+  /usr/share/applications/*.desktop rw,
+  /usr/share/*/*.desktop r,
+
+  /usr/share/applications/defaults.list r,
+  /usr/share/applications/defaults.list.new w,
+
+  #include if exists <local/xdg-desktop-menu>
+}

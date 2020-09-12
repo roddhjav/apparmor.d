@@ -1,0 +1,50 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/journalctl
+profile systemd-journalctl @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/systemd-common>
+
+  capability sys_resource,
+
+  signal (send) peer=child-pager,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/pager rPx -> child-pager,
+  /{usr/,}bin/less  rPx -> child-pager,
+  /{usr/,}bin/more  rPx -> child-pager,
+
+  /{run,var}/log/journal/ r,
+  /{run,var}/log/journal/[0-9a-f]*/ r,
+  /{run,var}/log/journal/[0-9a-f]*/user-[0-9a-f]*.journal* rw,
+  /{run,var}/log/journal/[0-9a-f]*/system.journal* r,
+  /{run,var}/log/journal/[0-9a-f]*/system@[0-9a-f]*.journal* rw,
+
+  # For --setup-keys and --verify
+  owner /{run,var}/log/journal/[0-9a-f]*/fss.tmp.* rw,
+  owner /{run,var}/log/journal/[0-9a-f]*/fss wl -> /var/log/journal/[0-9a-f]*/fss.tmp.*,
+  owner /var/tmp/#[0-9]* rw,
+
+  /var/lib/systemd/catalog/database rw,
+  /var/lib/systemd/catalog/.#database* rw,
+
+  /var/lib/dbus/machine-id r,
+  /etc/machine-id r,
+
+  #include if exists <local/systemd-journalctl>
+}

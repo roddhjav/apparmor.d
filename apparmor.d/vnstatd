@@ -1,0 +1,38 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2018-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}sbin/vnstatd
+profile vnstatd @{exec_path} {
+  #include <abstractions/base>
+
+  @{exec_path} mr,
+
+  # vnstat daemon config
+  /etc/vnstat.conf r,
+
+  # To determine capacity of a network interface
+  @{sys}/devices/pci[0-9]*/**/net/**/speed r,
+  @{sys}/devices/virtual/net/**/speed r,
+
+  # To collect interfaces' data
+  @{PROC}/@{pid}/net/dev r,
+
+  # To store the collected data
+  owner /var/lib/vnstat/ rw,
+  owner /var/lib/vnstat/vnstat.db rwk,
+  owner /var/lib/vnstat/vnstat.db-journal rw,
+
+  #include if exists <local/vnstatd>
+}

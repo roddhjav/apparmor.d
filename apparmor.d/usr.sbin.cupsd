@@ -1,0 +1,217 @@
+# vim:syntax=apparmor
+# Last Modified: Thu Aug  2 12:54:46 2007
+# Author: Martin Pitt <martin.pitt@ubuntu.com>
+
+#include <tunables/global>
+
+/usr/sbin/cupsd flags=(attach_disconnected) {
+  #include <abstractions/base>
+  #include <abstractions/bash>
+  #include <abstractions/authentication>
+  #include <abstractions/dbus>
+  #include <abstractions/fonts>
+  #include <abstractions/nameservice>
+  #include <abstractions/perl>
+  #include <abstractions/user-tmp>
+
+  capability chown,
+  capability fowner,
+  capability fsetid,
+  capability kill,
+  capability net_bind_service,
+  capability setgid,
+  capability setuid,
+  capability audit_write,
+  capability wake_alarm,
+  deny capability block_suspend,
+
+  # noisy
+  deny signal (send) set=("term") peer=unconfined,
+
+  # nasty, but we limit file access pretty tightly, and cups chowns a
+  # lot of files to 'lp' which it cannot read/write afterwards any
+  # more
+  capability dac_override,
+  capability dac_read_search,
+
+  # the bluetooth backend needs this
+  network bluetooth,
+
+  # the dnssd backend uses those
+  network x25 seqpacket,
+  network ax25 dgram,
+  network netrom seqpacket,
+  network rose dgram,
+  network ipx dgram,
+  network appletalk dgram,
+  network econet dgram,
+  network ash dgram,
+
+  /{usr/,}bin/bash ixr,
+  /{usr/,}bin/dash ixr,
+  /{usr/,}bin/hostname ixr,
+  /dev/lp* rw,
+  deny /dev/tty rw,  # silence noise
+  /dev/ttyS* rw,
+  /dev/ttyUSB* rw,
+  /dev/usb/lp* rw,
+  /dev/bus/usb/ r,
+  /dev/bus/usb/** rw,
+  /dev/parport* rw,
+  /etc/cups/ rw,
+  /etc/cups/** rw,
+  /etc/cups/interfaces/* ixrw,
+  /etc/foomatic/* r,
+  /etc/gai.conf r,
+  /etc/papersize r,
+  /etc/pnm2ppa.conf r,
+  /etc/printcap rwl,
+  /etc/ssl/** r,
+  @{PROC}/net/ r,
+  @{PROC}/net/* r,
+  @{PROC}/sys/dev/parport/** r,
+  @{PROC}/*/net/ r,
+  @{PROC}/*/net/** r,
+  @{PROC}/*/auxv r,
+  @{PROC}/sys/crypto/** r,
+  /sys/** r,
+  /usr/bin/* ixr,
+  /usr/sbin/* ixr,
+  /{usr/,}bin/* ixr,
+  /{usr/,}sbin/* ixr,
+  /usr/lib/** rm,
+
+  # backends which come with CUPS can be confined
+  /usr/lib/cups/backend/bluetooth ixr,
+  /usr/lib/cups/backend/dnssd ixr,
+  /usr/lib/cups/backend/http ixr,
+  /usr/lib/cups/backend/ipp ixr,
+  /usr/lib/cups/backend/lpd ixr,
+  /usr/lib/cups/backend/mdns ixr,
+  /usr/lib/cups/backend/parallel ixr,
+  /usr/lib/cups/backend/serial ixr,
+  /usr/lib/cups/backend/snmp ixr,
+  /usr/lib/cups/backend/socket ixr,
+  /usr/lib/cups/backend/usb ixr,
+
+  # we treat cups-pdf specially, since it needs to write into /home
+  # and thus needs extra paranoia
+  /usr/lib/cups/backend/cups-pdf Px,
+
+  # allow communicating with cups-pdf via Unix sockets
+  unix peer=(label=/usr/lib/cups/backend/cups-pdf),
+
+  # third party backends get no restrictions as they often need high
+  # privileges and this is beyond our control
+  /usr/lib/cups/backend/* Cx -> third_party,
+
+  /usr/lib/cups/cgi-bin/* ixr,
+  /usr/lib/cups/daemon/* ixr,
+  /usr/lib/cups/monitor/* ixr,
+  /usr/lib/cups/notifier/* ixr,
+  # filters and drivers (PPD generators) are always run as non-root,
+  # and there are a lot of third-party drivers which we cannot predict
+  /usr/lib/cups/filter/** Cxr -> third_party,
+  /usr/lib/cups/driver/* Cxr -> third_party,
+  /usr/local/** rm,
+  /usr/local/lib/cups/** rix,
+  /usr/share/** r,
+  /{,var/}run/** rm,
+  /{,var/}run/avahi-daemon/socket rw,
+  deny /{,var/}run/samba/ rw,
+  /{,var/}run/samba/** rw,
+  /var/cache/samba/*.tdb r,
+  /var/{cache,lib}/samba/printing/printers.tdb r,
+  /{,var/}run/cups/ rw,
+  /{,var/}run/cups/** rw,
+  /var/cache/cups/ rw,
+  /var/cache/cups/** rwk,
+  /var/log/cups/ rw,
+  /var/log/cups/* rw,
+  /var/spool/cups/ rw,
+  /var/spool/cups/** rw,
+
+  # third-party printer drivers; no known structure here
+  /opt/** rix,
+
+  # FIXME: no policy ATM for hplip and Brother drivers
+  /usr/bin/hpijs Cx -> third_party,
+  /usr/Brother/** Cx -> third_party,
+
+  # Kerberos authentication
+  /etc/krb5.conf r,
+  deny /etc/krb5.conf w,
+  /etc/krb5.keytab rk,
+  /etc/cups/krb5.keytab rwk,
+  /tmp/krb5cc* k,
+
+  # likewise authentication
+  /etc/likewise r,
+  /etc/likewise/* r,
+
+  # silence noise
+  deny /etc/udev/udev.conf r,
+
+  signal peer=/usr/sbin/cupsd//third_party,
+  unix peer=(label=/usr/sbin/cupsd//third_party),
+  profile third_party flags=(attach_disconnected) {
+    # third party backends, filters, and drivers get relatively no restrictions
+    # as they often need high privileges, are unpredictable or otherwise beyond
+    # our control
+    file,
+    capability,
+    audit deny capability mac_admin,
+    network,
+    dbus,
+    signal,
+    ptrace,
+    unix,
+  }
+
+  # Site-specific additions and overrides. See local/README for details.
+  #include <local/usr.sbin.cupsd>
+}
+
+# separate profile since this needs to write into /home
+/usr/lib/cups/backend/cups-pdf {
+  #include <abstractions/base>
+  #include <abstractions/fonts>
+  #include <abstractions/nameservice>
+  #include <abstractions/user-tmp>
+
+  capability chown,
+  capability fowner,
+  capability fsetid,
+  capability setgid,
+  capability setuid,
+
+  # unfortunate, but required for when $HOME is 700
+  capability dac_override,
+  capability dac_read_search,
+
+  # allow communicating with cupsd via Unix sockets
+  unix peer=(label=/usr/sbin/cupsd),
+
+  @{PROC}/*/auxv r,
+
+  /{usr/,}bin/dash ixr,
+  /{usr/,}bin/bash ixr,
+  /{usr/,}bin/cp ixr,
+  /etc/papersize r,
+  /etc/cups/cups-pdf.conf r,
+  /etc/cups/ppd/*.ppd r,
+  /usr/bin/gs ixr,
+  /usr/lib/cups/backend/cups-pdf mr,
+  /usr/lib/ghostscript/** mr,
+  /usr/share/** r,
+  /var/log/cups/cups-pdf*_log w,
+  /var/spool/cups/** r,
+  /var/spool/cups-pdf/** rw,
+
+  # allow read and write on almost anything in @{HOME} (lenient, but
+  # private-files-strict is in effect), to support customized "Out"
+  # setting in cups-pdf.conf (Debian#940578)
+  #include <abstractions/private-files-strict>
+  @{HOME}/[^.]*/{,**/} rw,
+  @{HOME}/[^.]*/**     rw,
+}

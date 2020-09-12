@@ -1,0 +1,136 @@
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2009 John Dong <jdong@ubuntu.com>
+#    Copyright (C) 2010 Canonical Ltd.
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+@{TFTP_DIR}=/var/tftp /srv/tftpboot
+
+#include <tunables/global>
+
+# This profile has the name "/usr/sbin/dnsmasq", but attaches to both /usr/bin/dnsmasq and /usr/sbin/dnsmasq.
+# We are sorry for the confusion ;-) but this trick is needed to support distributions with merged bin and sbin
+# while not breaking the libvirtd profile that has rules with peer=/usr/sbin/dnsmasq
+# Future versions of AppArmor (> 2.13.x) will have "dnsmasq" as profile name.
+
+profile /usr/sbin/dnsmasq /usr/{bin,sbin}/dnsmasq flags=(attach_disconnected) {
+  #include <abstractions/base>
+  #include <abstractions/dbus>
+  #include <abstractions/nameservice>
+
+  capability chown,
+  capability net_bind_service,
+  capability setgid,
+  capability setuid,
+  capability dac_override,
+  capability net_admin,         # for DHCP server
+  capability net_raw,           # for DHCP server ping checks
+  network inet raw,
+  network inet6 raw,
+
+  signal (receive) peer=/usr/{bin,sbin}/libvirtd,
+  signal (receive) peer=/usr/sbin/libvirtd,
+  signal (receive) peer=libvirtd,
+  ptrace (readby) peer=/usr/{bin,sbin}/libvirtd,
+  ptrace (readby) peer=/usr/sbin/libvirtd,
+  ptrace (readby) peer=libvirtd,
+
+  owner /dev/tty rw,
+
+  owner @{PROC}/@{pid}/fd/ r,
+
+  /etc/dnsmasq.conf r,
+  /etc/dnsmasq.d/ r,
+  /etc/dnsmasq.d/* r,
+  /etc/dnsmasq.d-available/ r,
+  /etc/dnsmasq.d-available/* r,
+  /etc/ethers r,
+  /etc/NetworkManager/dnsmasq.d/ r,
+  /etc/NetworkManager/dnsmasq.d/* r,
+  /etc/NetworkManager/dnsmasq-shared.d/ r,
+  /etc/NetworkManager/dnsmasq-shared.d/* r,
+
+  /usr/{bin,sbin}/dnsmasq mr,
+
+  /var/log/dnsmasq*.log w,
+
+  /usr/share/dnsmasq/ r,
+  /usr/share/dnsmasq/* r,
+
+  /{,var/}run/*dnsmasq*.pid w,
+  /{,var/}run/dnsmasq-forwarders.conf r,
+  /{,var/}run/dnsmasq/ r,
+  /{,var/}run/dnsmasq/* rw,
+
+  /var/lib/misc/dnsmasq.leases rw, # Required only for DHCP server usage
+
+  /{,usr/}bin/{ba,da,}sh ix, # Required to execute --dhcp-script argument
+
+  # access to iface mtu needed for Router Advertisement messages in IPv6
+  # Neighbor Discovery protocol (RFC 2461)
+  @{PROC}/sys/net/ipv6/conf/*/mtu r,
+
+  # for the read-only TFTP server
+  @{TFTP_DIR}/ r,
+  @{TFTP_DIR}/** r,
+
+  # libvirt config and hosts file for dnsmasq
+  /var/lib/libvirt/dnsmasq/          r,
+  /var/lib/libvirt/dnsmasq/*         r,
+
+  # libvirt pid files for dnsmasq
+  /{,var/}run/libvirt/network/      r,
+  /{,var/}run/libvirt/network/*.pid rw,
+
+  # libvirt lease helper
+  /usr/lib{,64}/libvirt/libvirt_leaseshelper Cx -> libvirt_leaseshelper,
+
+  # lxc-net pid and lease files
+  /{,var/}run/lxc/dnsmasq.pid    rw,
+  /var/lib/misc/dnsmasq.*.leases rw,
+
+  # lxd-bridge pid and lease files
+  /{,var/}run/lxd-bridge/dnsmasq.pid   rw,
+  /var/lib/lxd-bridge/dnsmasq.*.leases rw,
+  /var/lib/lxd/networks/*/dnsmasq.* r,
+  /var/lib/lxd/networks/*/dnsmasq.leases rw,
+  /var/lib/lxd/networks/*/dnsmasq.pid rw,
+
+  # NetworkManager integration
+  /var/lib/NetworkManager/dnsmasq-*.leases rw,
+  /{,var/}run/nm-dns-dnsmasq.conf r,
+  /{,var/}run/nm-dnsmasq-*.pid rw,
+  /{,var/}run/sendsigs.omit.d/*dnsmasq.pid w,
+  /{,var/}run/NetworkManager/dnsmasq.conf r,
+  /{,var/}run/NetworkManager/dnsmasq.pid w,
+  /{,var/}run/NetworkManager/NetworkManager.pid w,
+
+  profile libvirt_leaseshelper {
+    #include <abstractions/base>
+
+    /etc/libnl-3/classid r,
+
+    /usr/lib{,64}/libvirt/libvirt_leaseshelper m,
+
+    owner @{PROC}/@{pid}/net/psched r,
+    owner @{PROC}/@{pid}/status r,
+
+    @{sys}/devices/system/cpu/ r,
+    @{sys}/devices/system/node/ r,
+    @{sys}/devices/system/node/*/meminfo r,
+
+    # libvirt lease and status files for dnsmasq
+    /var/lib/libvirt/dnsmasq/*.leases  rw,
+    /var/lib/libvirt/dnsmasq/*.status* rw,
+
+    /{,var/}run/leaseshelper.pid rwk,
+  }
+
+  # Site-specific additions and overrides. See local/README for details.
+  #include <local/usr.sbin.dnsmasq>
+}

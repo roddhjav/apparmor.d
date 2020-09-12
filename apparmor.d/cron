@@ -1,0 +1,127 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}sbin/cron
+profile cron @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/authentication>
+  #include <abstractions/wutmp>
+
+  capability setuid,
+  capability setgid,
+  capability dac_read_search,
+  capability audit_write,
+  capability sys_resource,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/dash   rix,
+  /{usr/,}bin/nice   rix,
+  /{usr/,}bin/ionice rix,
+
+  /etc/crontab r,
+
+  # All stuff that is executed via the /etc/cron.d/ dir
+  /etc/cron.d/{,*} r,
+  /{usr/,}sbin/cron-apt                 rPx,
+  /{usr/,}bin/debsecan                  rPx,
+  /{usr/,}lib/@{multiarch}/e2fsprogs/e2scrub_all_cron rPUx,
+  /{usr/,}sbin/e2scrub_all             rPUx,
+  /etc/cron.daily/popularity-contest    rPx,
+  /usr/local/bin/update-blacklist.sh   rPUx,
+  /{usr/,}lib/sysstat/debian-sa1       rPUx,
+
+  # All stuff that is executed via the user crontab files
+  /{usr/,}bin/apt-file                  rPx,
+  /{usr/,}bin/apt-key                   rPx,
+  /{usr/,}bin/rsync                    rPUx,
+  /usr/share/rsync/scripts/rrsync      rPUx,
+  /{usr/,}bin/gpg                       rPx,
+  /{usr/,}sbin/update-pciids            rPx,
+
+  # Cron scripts in the /etc/cron.*/ dir to execute
+  /{usr/,}bin/run-parts                 rCx -> run-parts,
+
+  # Send results using email
+  /{usr/,}sbin/exim4                    rPx,
+
+  /var/spool/cron/crontabs/{,*} r,
+
+  owner /{,var/}run/crond.pid rwk,
+  owner /{,var/}run/crond.reboot rw,
+
+  owner /tmp/#[0-9]*[0-9] rw,
+
+  owner @{PROC}/@{pid}/uid_map r,
+  owner @{PROC}/@{pid}/loginuid rw,
+
+  /etc/environment r,
+
+  /etc/default/locale r,
+
+  @{PROC}/1/limits r,
+  /etc/security/limits.d/ r,
+
+  profile run-parts {
+    #include <abstractions/base>
+
+    /{usr/,}bin/run-parts mr,
+
+    /etc/cron.hourly/ r,
+
+    /etc/cron.daily/ r,
+    /etc/cron.daily/apt-listbugs         rPx,
+    /etc/cron.daily/apt-show-versions    rPx,
+    /etc/cron.daily/bsdmainutils        rPUx,
+    /etc/cron.daily/debtags             rPUx,
+    /etc/cron.daily/exim4-base          rPUx,
+    /etc/cron.daily/logrotate            rPx,
+    /etc/cron.daily/mlocate              rPx,
+    /etc/cron.daily/dlocate              rPx,
+    /etc/cron.daily/passwd              rPUx,
+    /etc/cron.daily/apt-compat          rPUx,
+    /etc/cron.daily/aptitude             rPx,
+    /etc/cron.daily/debsums              rPx,
+    /etc/cron.daily/dpkg                rPUx,
+    /etc/cron.daily/man-db              rPUx,
+    /etc/cron.daily/popularity-contest   rPx,
+    /etc/cron.daily/sysstat              rPx,
+    /etc/cron.daily/spamassassin        rPUx,
+
+    #/etc/cron.daily/opera-browser                                             rPUx,
+    #/etc/cron.daily/google-chrome{,-beta,-unstable}                           rPUx,
+    #/opt/google/chrome{,-beta,-unstable}/cron/google-chrome{,-beta,-unstable} rPUx,
+    #/opt/brave.com/brave/cron/brave-browser{,-beta,-dev}                      rPUx,
+    #/opt/brave.com/brave{,-beta,-dev}/cron/brave-browser{,-beta,-dev}         rPUx,
+
+    /etc/cron.monthly/ r,
+    /etc/cron.monthly/debsums            rPx,
+    /etc/cron.monthly/vrms              rPUx,
+
+    /etc/cron.weekly/ r,
+    /etc/cron.weekly/apt-xapian-index    rPx,
+    /etc/cron.weekly/debsums             rPx,
+    /etc/cron.weekly/man-db             rPUx,
+    /etc/cron.weekly/tor                rPUx,
+
+    # file_inherit
+    owner /tmp/#[0-9]*[0-9] rw,
+
+    #include if exists <local/cron_run-parts>
+  }
+
+  #include if exists <local/cron>
+}

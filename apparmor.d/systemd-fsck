@@ -1,0 +1,34 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}lib/systemd/systemd-fsck
+profile systemd-fsck @{exec_path} flags=(complain) {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/disks-read>
+  #include <abstractions/systemd-common>
+
+  capability net_admin,
+  capability sys_resource,
+
+  @{exec_path} mr,
+
+  /{usr/,}sbin/fsck   rPx,
+  /{usr/,}sbin/e2fsck rPx,
+
+  owner /{var/,}run/systemd/quotacheck w,
+
+  #include if exists <local/systemd-fsck>
+}

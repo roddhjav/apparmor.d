@@ -1,0 +1,55 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path}  = /{usr/,}sbin/check-bios-nx
+profile check-bios-nx @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+
+  # To remove the following errors:
+  #  /usr/sbin/check-bios-nx: 19: cannot create /dev/stderr: Permission denied
+  capability dac_override,
+
+  @{exec_path} r,
+  /{usr/,}bin/dash r,
+
+  /{usr/,}bin/uname    rix,
+  /{usr/,}bin/{,e}grep rix,
+  /{usr/,}bin/getopt   rix,
+
+  /{usr/,}bin/kmod     rCx -> kmod,
+
+  /{usr/,}sbin/rdmsr   rPx,
+
+  owner @{PROC}/@{pid}/fd/2 w,
+
+
+    profile kmod {
+    #include <abstractions/base>
+
+    /{usr/,}bin/kmod mr,
+
+    /etc/modprobe.d/ r,
+    /etc/modprobe.d/*.conf r,
+    /usr/lib/modprobe.d/ r,
+    /usr/lib/modprobe.d/*.conf r,
+    /usr/lib/modules/*/modules.* r,
+
+    @{PROC}/cmdline r,
+
+  }
+
+  #include if exists <local/check-bios-nx>
+}

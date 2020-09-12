@@ -1,0 +1,56 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2018-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/hexchat
+profile hexchat @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/gtk>
+  #include <abstractions/freedesktop.org>
+  #include <abstractions/fonts>
+  #include <abstractions/fontconfig-cache-read>
+  #include <abstractions/enchant>
+  #include <abstractions/user-download-strict>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/openssl>
+  #include <abstractions/ssl_certs>
+  # For python/perl plugins
+  #include <abstractions/python>
+  #include <abstractions/perl>
+  #include <abstractions/deny-root-dir-access>
+
+  @{exec_path} mr,
+
+  # Hexchat plugins
+  /{usr/,}lib/@{multiarch}/hexchat/** r,
+  /{usr/,}lib/@{multiarch}/hexchat/plugins/*.so mr,
+
+  # Hexchat home files
+  owner @{HOME}/ r,
+  owner @{HOME}/.config/hexchat/ rw,
+  owner @{HOME}/.config/hexchat/** rw,
+
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/mountinfo r,
+
+  /etc/fstab r,
+
+  # External apps
+  /{usr/,}lib/firefox/firefox rPUx,
+
+  # file_inherit
+  owner /dev/tty[0-9]* rw,
+
+  #include if exists <local/hexchat>
+}

@@ -1,0 +1,154 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/spectre-meltdown-checker
+profile spectre-meltdown-checker @{exec_path} {
+  #include <abstractions/base>
+
+  # Needed to read the /dev/cpu/[0-9]*/msr device
+  capability sys_rawio,
+
+  # Needed to read system logs
+  capability syslog,
+
+  @{exec_path} r,
+  /{usr/,}bin/dash r,
+
+  /{usr/,}bin/dirname  rix,
+  /{usr/,}bin/uname    rix,
+  /{usr/,}bin/cut      rix,
+  /{usr/,}bin/{,e}grep rix,
+  /{usr/,}bin/head     rix,
+  /{usr/,}bin/gawk     rix,
+  /{usr/,}bin/sed      rix,
+  /{usr/,}bin/od       rix,
+  /{usr/,}bin/dd       rix,
+  /{usr/,}bin/id       rix,
+  /{usr/,}bin/gunzip   rix,
+  /{usr/,}bin/gzip     rix,
+  /{usr/,}bin/mktemp   rix,
+  /{usr/,}bin/tr       rix,
+  /{usr/,}bin/stat     rix,
+  /{usr/,}bin/tail     rix,
+  /{usr/,}bin/xz       rix,
+  /{usr/,}bin/seq      rix,
+  /{usr/,}bin/rm       rix,
+  /{usr/,}bin/sort     rix,
+  /{usr/,}bin/cat      rix,
+  /{usr/,}bin/basename rix,
+  /{usr/,}bin/perl     rix,
+  /{usr/,}bin/base64   rix,
+  /{usr/,}bin/unzip    rix,
+  /{usr/,}bin/{,@{multiarch}-}readelf rix,
+  /{usr/,}bin/{,@{multiarch}-}strings rix,
+  /{usr/,}bin/{,@{multiarch}-}objdump rix,
+  /{usr/,}sbin/iucode_tool            rix,
+  /{usr/,}bin/dmesg                   rix,
+
+  /{usr/,}bin/pgrep    rCx -> pgrep,
+  /{usr/,}bin/ccache   rCx -> ccache,
+  /{usr/,}bin/kmod     rCx -> kmod,
+
+  # To fetch MCE.db from the MCExtractor project
+  /{usr/,}bin/wget     rCx -> mcedb,
+  /{usr/,}bin/sqlite3  rCx -> mcedb,
+  owner /tmp/mcedb-* rw,
+  owner /tmp/smc-* rw,
+  owner /tmp/intelfw-*/ rw,
+  owner /tmp/intelfw-*/fw.zip rw,
+  owner /tmp/intelfw-*/Intel-Linux-Processor-Microcode-Data-Files-master/ rw,
+  owner /tmp/intelfw-*/Intel-Linux-Processor-Microcode-Data-Files-master/** rw,
+
+  owner @{HOME}/.mcedb rw,
+  owner /{usr/,}bin/spectre-meltdown-checker w,
+
+  owner /tmp/{config,kernel}-* rw,
+
+  owner /dev/cpu/[0-9]*/cpuid r,
+  owner /dev/cpu/[0-9]*/msr rw,
+  owner /dev/kmsg r,
+
+  /boot/{config,vmlinuz,System.map}-* r,
+
+  @{sys}/devices/system/cpu/vulnerabilities/* r,
+
+  @{PROC}/ r,
+  @{PROC}/config.gz r,
+  @{PROC}/cmdline r,
+  @{PROC}/kallsyms r,
+  @{PROC}/modules r,
+
+  /var/lib/dbus/machine-id r,
+  /etc/machine-id r,
+
+
+  profile ccache {
+    #include <abstractions/base>
+
+    /{usr/,}bin/ccache mr,
+
+    /{usr/,}bin/{,@{multiarch}-}gcc-[0-9]* rix,
+
+    /media/ccache/*/** rw,
+
+  }
+
+  profile pgrep {
+    #include <abstractions/base>
+
+    /{usr/,}bin/pgrep mr,
+
+    # The /proc/ dir and the cmdline file have to be radable to avoid pgrep segfault.
+         @{PROC}/ r,
+         @{PROC}/@{pids}/cmdline r,
+         @{PROC}/sys/kernel/osrelease r,
+
+  }
+
+  profile mcedb {
+    #include <abstractions/base>
+    #include <abstractions/consoles>
+    #include <abstractions/nameservice-strict>
+    #include <abstractions/openssl>
+    #include <abstractions/ssl_certs>
+
+    /{usr/,}bin/wget mr,
+    /{usr/,}bin/sqlite3 mr,
+
+    /etc/wgetrc r,
+    owner @{HOME}/.wget-hsts rwk,
+
+          /tmp/ r,
+    owner /tmp/mcedb-* rwk,
+    owner /tmp/intelfw-*/fw.zip rw,
+
+    /usr/share/publicsuffix/public_suffix_list.* r,
+
+  }
+
+  profile kmod {
+    #include <abstractions/base>
+
+    /{usr/,}bin/kmod mr,
+
+    /etc/modprobe.d/ r,
+    /etc/modprobe.d/*.conf r,
+
+    @{PROC}/cmdline r,
+
+  }
+
+  #include if exists <local/spectre-meltdown-checker>
+}

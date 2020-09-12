@@ -1,0 +1,63 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2018-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}lib/@{multiarch}/xfce[0-9]/exo-[0-9]/exo-helper-[0-9]
+profile exo-helper @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/app-launcher-user>
+
+  # These are needed when there's no default application set in the ~/.config/xfce4/helpers.rc
+  #include <abstractions/gtk>
+  #include <abstractions/fonts>
+  #include <abstractions/fontconfig-cache-read>
+  #include <abstractions/freedesktop.org>
+
+  @{exec_path} mr,
+
+  /usr/share/ r,
+  /usr/share/xfce4/ r,
+  /usr/share/xfce4/helpers/ r,
+  /usr/share/xfce4/helpers/*.desktop r,
+  /usr/local/share/ r,
+  owner @{HOME}/.local/share/ r,
+  owner @{HOME}/.local/share/xfce4/ r,
+  owner @{HOME}/.local/share/xfce4/helpers/ r,
+
+  /etc/xdg/{,xdg-*/}xfce4/helpers.rc r,
+
+  owner @{HOME}/.config/xfce4/helpers.rc rw,
+  owner @{HOME}/.config/xfce4/helpers.rc.@{pid}.tmp rw,
+  owner @{HOME}/.local/share/xfce4/helpers/*.desktop rw,
+  owner @{HOME}/.local/share/xfce4/helpers/*.desktop.@{pid}.tmp rw,
+
+  owner @{HOME}/.config/mimeapps.list{,.*} rw,
+
+  # Some missing icons
+  /usr/share/**.png r,
+
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/mounts r,
+
+  /etc/fstab r,
+
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+
+  # file_inherit
+  owner /dev/tty[0-9]* rw,
+
+  #include if exists <local/exo-helper>
+}

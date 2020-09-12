@@ -1,0 +1,61 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/syncthing
+profile syncthing @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/ssl_certs>
+  #include <abstractions/deny-root-dir-access>
+
+  @{exec_path} mrix,
+
+  /{usr/,}bin/xdg-open  rCx -> open,
+  /{usr/,}bin/ip        rix,
+
+  owner @{HOME}/ r,
+  owner @{HOME}/.config/syncthing/ rw,
+  owner @{HOME}/.config/syncthing/** rwk,
+
+  # The sync folders
+  #owner @{HOME}/Sync/{,**} rw,
+  owner /media/*/syncthing/{,**} rw,
+
+  /etc/mime.types r,
+
+  @{PROC}/sys/net/core/somaxconn r,
+
+  @{sys}/kernel/mm/transparent_hugepage/hpage_pmd_size r,
+
+  # Silecne the noise
+  deny /etc/ssl/certs/java/ r,
+
+
+  profile open {
+    #include <abstractions/base>
+    #include <abstractions/xdg-open>
+
+    /{usr/,}bin/xdg-open mr,
+
+    # Allowed apps to open
+    /{usr/,}lib/firefox/firefox rPUx,
+
+    # file_inherit
+    owner @{HOME}/.xsession-errors w,
+
+  }
+
+  #include if exists <local/syncthing>
+}

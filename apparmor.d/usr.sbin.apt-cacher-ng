@@ -1,0 +1,33 @@
+# Author: Felix Geyer <debfx@ubuntu.com>
+
+@{APT_CACHER_NG_CACHE_DIR}=/var/cache/apt-cacher-ng
+
+#include <tunables/global>
+
+profile apt-cacher-ng /usr/sbin/apt-cacher-ng {
+  #include <abstractions/base>
+  #include <abstractions/nameservice>
+  #include <abstractions/user-tmp>
+
+  /etc/apt-cacher-ng/ r,
+  /etc/apt-cacher-ng/** r,
+  /etc/hosts.{deny,allow} r,
+
+  /var/lib/apt-cacher-ng/** r,
+  /{,var/}run/apt-cacher-ng/* rw,
+  @{APT_CACHER_NG_CACHE_DIR}/ r,
+  @{APT_CACHER_NG_CACHE_DIR}/** rw,
+  /var/log/apt-cacher-ng/ r,
+  /var/log/apt-cacher-ng/* rw,
+  /{,var/}run/systemd/notify w,
+
+  /{usr/,}bin/dash ixr,
+  /{usr/,}bin/ed ixr,
+  /{usr/,}bin/red ixr,
+  /{usr/,}bin/sed ixr,
+
+  /usr/lib/apt-cacher-ng/acngtool ixr,
+
+  # Site-specific additions and overrides. See local/README for details.
+  #include <local/usr.sbin.apt-cacher-ng>
+}

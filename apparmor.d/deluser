@@ -1,0 +1,67 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}sbin/del{user,group}
+profile deluser @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/perl>
+  #include <abstractions/consoles>
+  #include <abstractions/nameservice-strict>
+
+  # The deluser command is issued as root and its task is to delete regular user accounts. It
+  # optionally can remove user files (via --remove-home or --remove-all-files) or create a backup.
+  # Because of that, the deluser command needs the following CAPs to be able to do so.
+  capability dac_read_search,
+  capability dac_override,
+
+  @{exec_path} r,
+  /{usr/,}bin/perl r,
+
+  /{usr/,}bin/dash      rix,
+
+  /{usr/,}sbin/userdel  rPx,
+  /{usr/,}sbin/groupdel rPx,
+  /{usr/,}bin/gpasswd   rPx,
+
+  /{usr/,}bin/crontab   rPx,
+
+  /{usr/,}bin/mount     rCx -> mount,
+
+  /etc/adduser.conf r,
+  /etc/deluser.conf r,
+
+  owner /etc/shadow r,
+
+  # This is for the "--remove-all-files" flag, which it used to remove all files owned by the user
+  # that's going to be deleted. Basically it scans all the files in the system in each dir and look
+  # for matches. This also includes files required by the "--remove-home" flag as well as the
+  # "--backup" and --backup-to flags.
+  /   r,
+  /** rw,
+
+
+  profile mount {
+    #include <abstractions/base>
+
+    /{usr/,}bin/mount mr,
+
+    @{PROC}/@{pid}/mountinfo r,
+
+    @{sys}/devices/virtual/block/**/name r,
+
+  }
+
+  #include if exists <local/deluser>
+}

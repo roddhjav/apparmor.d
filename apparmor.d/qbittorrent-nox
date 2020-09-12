@@ -1,0 +1,72 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2015-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{TORRENT_DIR} = /media/*/torrent
+
+@{exec_path} = /{usr/,}bin/qbittorrent-nox
+profile qbittorrent-nox @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/openssl>
+  #include <abstractions/ssl_certs>
+  #include <abstractions/deny-root-dir-access>
+
+  @{exec_path} mr,
+
+  # Qbittorrent home dirs
+  owner @{HOME}/.config/qBittorrent/ rw,
+  owner @{HOME}/.config/qBittorrent/** rwkl -> @{HOME}/.config/qBittorrent/#[0-9]*[0-9],
+  owner @{HOME}/.local/share/data/qBittorrent/ rw,
+  owner @{HOME}/.local/share/data/qBittorrent/** rwl -> @{HOME}/.local/share/data/qBittorrent/**/#[0-9]*[0-9],
+
+  # Cache dir
+  owner @{HOME}/.cache/ rw,
+  owner @{HOME}/.cache/#[0-9]*[0-9] rw,
+  owner @{HOME}/.cache/qBittorrent/{,**} rw,
+
+  # Torrent files
+        /media/ r,
+  owner /media/*/ r,
+  owner @{TORRENT_DIR}/ r,
+  owner @{TORRENT_DIR}/** rw,
+
+  /dev/disk/by-label/ r,
+
+  /dev/shm/#[0-9]*[0-9] rw,
+
+       owner @{PROC}/@{pid}/mountinfo r,
+       owner @{PROC}/@{pid}/mounts r,
+  deny       @{PROC}/sys/kernel/random/boot_id r,
+
+
+  /var/lib/dbus/machine-id r,
+  /etc/machine-id r,
+
+  /usr/share/mime/mime.cache r,
+  /usr/share/mime/types r,
+  owner @{HOME}/.local/share/mime/mime.cache r,
+  owner @{HOME}/.local/share/mime/types r,
+
+  # TMP
+  owner /tmp/qtsingleapp-qBitto-* rw,
+  owner /tmp/qtsingleapp-qBitto-*-lockfile rwk,
+  owner /tmp/.qBittorrent/ rw,
+  owner /tmp/.qBittorrent/#[0-9]*[0-9] rw,
+  owner /tmp/.qBittorrent/[a-zA-Z]* rwl -> /tmp/.qBittorrent/#[0-9]*[0-9],
+  owner /tmp/mozilla_*/*.torrent rw,
+  owner /tmp/.*/{,s} rw,
+
+  #include if exists <local/qbittorrent-nox>
+}

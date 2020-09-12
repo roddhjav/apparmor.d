@@ -1,0 +1,89 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}sbin/update-smart-drivedb
+profile update-smart-drivedb @{exec_path} {
+  #include <abstractions/base>
+
+  @{exec_path} r,
+  /{usr/,}bin/dash r,
+
+  /{usr/,}bin/cat     rix,
+  /{usr/,}bin/dirname rix,
+  /{usr/,}bin/sed     rix,
+  /{usr/,}bin/rm      rix,
+  /{usr/,}bin/dd      rix,
+  /{usr/,}bin/wc      rix,
+  /{usr/,}bin/touch   rix,
+  /{usr/,}bin/mkdir   rix,
+  /{usr/,}bin/chmod   rix,
+  /{usr/,}bin/mv      rix,
+  /{usr/,}bin/cmp     rix,
+
+  /{usr/,}sbin/smartctl rPx,
+
+  /{usr/,}bin/gpg       rCx -> gpg,
+  /{usr/,}bin/wget      rCx -> browse,
+  /{usr/,}bin/curl      rCx -> browse,
+  /{usr/,}bin/lynx      rCx -> browse,
+
+  /var/lib/smartmontools/drivedb/drivedb.h{,.*} rw,
+
+  owner /var/lib/smartmontools/drivedb/.gnupg.[0-9]*.tmp/{,**} rw,
+
+
+  profile gpg {
+    #include <abstractions/base>
+
+    /{usr/,}bin/gpg mr,
+
+    /{usr/,}bin/gpg-agent rix,
+
+    owner @{PROC}/@{pid}/fd/ r,
+
+    /var/lib/smartmontools/drivedb/drivedb.h.new.raw{,.asc} r,
+
+    owner /var/lib/smartmontools/drivedb/.gnupg.[0-9]*.tmp/ rw,
+    owner /var/lib/smartmontools/drivedb/.gnupg.[0-9]*.tmp/** rwkl -> /var/lib/smartmontools/drivedb/.gnupg.[0-9]*.tmp/**,
+
+  }
+
+  profile browse {
+    #include <abstractions/base>
+    #include <abstractions/nameservice-strict>
+    #include <abstractions/openssl>
+    #include <abstractions/ssl_certs>
+
+    /{usr/,}bin/wget mr,
+    /{usr/,}bin/curl mr,
+    /{usr/,}bin/lynx mr,
+
+    /{usr/,}bin/dash rix,
+
+    /etc/mime.types r,
+    /etc/mailcap r,
+
+    /etc/lynx/* r,
+    /etc/wgetrc r,
+    owner @{HOME}/.wget-hsts rwk,
+
+    /usr/share/publicsuffix/public_suffix_list.* r,
+
+    /var/lib/smartmontools/drivedb/drivedb.h.new{,.raw.asc} w,
+
+  }
+
+  #include if exists <local/update-smart-drivedb>
+}

@@ -1,0 +1,78 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{REPO_DIR}  = /media/debuilder/repo
+@{BUILD_DIR} = /media/debuilder/
+
+@{exec_path} = /{usr/,}bin/reprepro
+profile reprepro @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/deny-root-dir-access>
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/gpgconf rCx -> gpg,
+  /{usr/,}bin/gpg     rCx -> gpg,
+  /{usr/,}bin/gpgsm   rCx -> gpg,
+
+  owner @{PROC}/@{pid}/fd/ r,
+
+  # The repository dir
+  owner @{REPO_DIR}/debian/ r,
+  owner @{REPO_DIR}/debian/conf/{distributions,options} r,
+
+  owner @{REPO_DIR}/debian/db/lockfile rw,
+  owner @{REPO_DIR}/debian/db/version{,.new} rw,
+  owner @{REPO_DIR}/debian/db/packages.db rw,
+  owner @{REPO_DIR}/debian/db/references.db rw,
+  owner @{REPO_DIR}/debian/db/release.caches.db rw,
+  owner @{REPO_DIR}/debian/db/contents.cache.db rw,
+  owner @{REPO_DIR}/debian/db/checksums.db rw,
+
+  owner @{REPO_DIR}/debian/dists/*/*/binary-*/Packages{,.gz} w,
+  owner @{REPO_DIR}/debian/dists/*/*/binary-*/Packages{,.gz}.new rw,
+  owner @{REPO_DIR}/debian/dists/*/*/source/Sources{,.gz} w,
+  owner @{REPO_DIR}/debian/dists/*/*/source/Sources{,.gz}.new rw,
+  owner @{REPO_DIR}/debian/dists/*/{In,}Release{,.new} rw,
+  owner @{REPO_DIR}/debian/dists/*/Release.gpg{,.new} rw,
+
+  owner @{REPO_DIR}/debian/**/ w,
+  owner @{REPO_DIR}/debian/pool/*/*/*/*.tar.* rw,
+  owner @{REPO_DIR}/debian/pool/*/*/*/*.dsc rw,
+  owner @{REPO_DIR}/debian/pool/*/*/*/*.deb rw,
+  owner @{REPO_DIR}/debian/pool/*/*/*/*.git rw,
+
+  # Dirs containing .deb files
+  owner @{REPO_DIR}/*.deb r,
+
+  # For package building
+  owner @{BUILD_DIR}/pbuilder/result/*.{dsc,changes} r,
+  owner @{BUILD_DIR}/pbuilder/result/*.deb r,
+  owner @{BUILD_DIR}/pbuilder/result/*.tar.* r,
+
+  profile gpg {
+    #include <abstractions/base>
+
+    /{usr/,}bin/gpgconf mr,
+    /{usr/,}bin/gpg mr,
+    /{usr/,}bin/gpgsm mr,
+
+    owner @{HOME}/.gnupg/ rw,
+    owner @{HOME}/.gnupg/** rwkl -> @{HOME}/.gnupg/**,
+
+  }
+
+  #include if exists <local/reprepro>
+}

@@ -1,0 +1,36 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/aptitude-run-state-bundle
+profile aptitude-run-state-bundle @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/user-download-strict>
+
+  @{exec_path} r,
+  /{usr/,}bin/bash r,
+
+  /{usr/,}bin/tar    rix,
+  /{usr/,}bin/bzip2  rix,
+  /{usr/,}bin/mktemp rix,
+  /{usr/,}bin/rm     rix,
+
+  /{usr/,}bin/aptitude-curses rPx,
+
+  owner /tmp/aptitudebug.*/{,**} rw,
+
+  #include if exists <local/aptitude-run-state-bundle>
+}

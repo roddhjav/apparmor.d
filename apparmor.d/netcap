@@ -1,0 +1,41 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/netcap
+profile netcap @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+
+  capability sys_ptrace,
+
+  # To get access to all of the @{PROC}/@{pids}/fd/ dirs, which sometimes can be owned by other
+  # users than root, for instance systemd-timesync.
+  capability dac_read_search,
+
+  ptrace (read),
+
+  @{exec_path} mr,
+
+        @{PROC}/ r,
+        @{PROC}/@{pids}/stat r,
+        @{PROC}/@{pids}/fd/ r,
+  owner @{PROC}/@{pid}/net/tcp{,6} r,
+  owner @{PROC}/@{pid}/net/udp{,6} r,
+  owner @{PROC}/@{pid}/net/raw{,6} r,
+  owner @{PROC}/@{pid}/net/packet r,
+  owner @{PROC}/@{pid}/net/dev r,
+
+  #include if exists <local/netcap>
+}

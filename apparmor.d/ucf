@@ -1,0 +1,111 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/ucf
+profile ucf @{exec_path} flags=(complain) {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+
+  @{exec_path} r,
+  /{usr/,}bin/bash r,
+  /{usr/,}bin/dash           r,
+
+  /{usr/,}bin/basename       rix,
+  /{usr/,}bin/seq            rix,
+  /{usr/,}bin/cp             rix,
+  /{usr/,}bin/mv             rix,
+  /{usr/,}bin/rm             rix,
+  /{usr/,}bin/{,e}grep       rix,
+  /{usr/,}bin/which          rix,
+  /{usr/,}bin/md5sum         rix,
+  /{usr/,}bin/sed            rix,
+  /{usr/,}bin/getopt         rix,
+  /{usr/,}bin/mkdir          rix,
+  /{usr/,}bin/cat            rix,
+  /{usr/,}bin/id             rix,
+  /{usr/,}bin/readlink       rix,
+  /{usr/,}bin/perl           rix,
+  /{usr/,}bin/gawk           rix,
+  /{usr/,}bin/tr             rix,
+  /{usr/,}bin/dirname        rix,
+  /{usr/,}bin/stat           rix,
+
+  /{usr/,}bin/dpkg-query     rPx,
+  /{usr/,}bin/dpkg-divert    rPx,
+
+  /{usr/,}bin/sensible-pager rCx -> pager,
+
+  # Think what to do about this (#FIXME#)
+  /usr/share/debconf/frontend     rPx,
+  #/usr/share/debconf/frontend    rCx -> frontend,
+
+  /etc/ucf.conf r,
+  /var/lib/ucf/** rw,
+
+  owner /tmp/* rw,
+  /etc/default/* rw,
+
+  # For md5sum
+  /etc/** r,
+  /usr/share/*/conffiles/* r,
+  /{var/,}run/* r,
+
+  # For writing new config files
+  /etc/** rw,
+
+  /usr/share/debconf/confmodule r,
+
+
+  profile pager flags=(complain) {
+    #include <abstractions/base>
+    #include <abstractions/consoles>
+
+    /{usr/,}bin/sensible-pager mr,
+
+  }
+
+  profile frontend flags=(complain) {
+    #include <abstractions/base>
+    #include <abstractions/consoles>
+    #include <abstractions/perl>
+    #include <abstractions/nameservice-strict>
+
+    /usr/share/debconf/frontend r,
+    /{usr/,}bin/perl r,
+
+    /{usr/,}bin/ucf rPx,
+
+    /{usr/,}bin/dash     rix,
+    /{usr/,}bin/stty     rix,
+    /{usr/,}bin/locale   rix,
+
+    /etc/debconf.conf r,
+    owner /var/cache/debconf/{config,passwords,templates}.dat{,-new,-old} rwk,
+
+    # The following is needed when debconf uses GUI frontends.
+    #include <abstractions/gtk>
+    #include <abstractions/fonts>
+    #include <abstractions/fontconfig-cache-read>
+    #include <abstractions/freedesktop.org>
+    capability dac_read_search,
+    /{usr/,}bin/lsb_release rPx -> child-lsb_release,
+    /{usr/,}bin/hostname    rPx,
+    owner @{PROC}/@{pid}/mounts r,
+    @{HOME}/.Xauthority r,
+
+  }
+
+  #include if exists <local/ucf>
+}

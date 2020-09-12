@@ -1,0 +1,83 @@
+# Lenient profile that is intended to be used when 'Ux' is desired but
+# does not provide enough environment sanitizing. This effectively is an
+# open profile that blacklists certain known dangerous files and also
+# does not allow any capabilities. For example, it will not allow 'm' on files
+# owned be the user invoking the program. While this provides some additional
+# protection, please use with care as applications running under this profile
+# are effectively running without any AppArmor protection. Use this profile
+# only if the process absolutely must be run (effectively) unconfined.
+#
+# Usage:
+# Because this abstraction defines the sanitized_helper profile, it must only
+# be #included once. Therefore this abstraction should typically not be
+# included in other abstractions so as to avoid parser errors regarding
+# multiple definitions.
+#
+# Limitations:
+# 1. This does not work for root owned processes, because of the way we use
+#    owner matching in the sanitized helper. We could do a better job with
+#    this to support root, but it would make the policy harder to understand
+#    and going unconfined as root is not desirable any way.
+#
+# 2. For this sanitized_helper to work, the program running in the sanitized
+#    environment must open symlinks directly in order for AppArmor to mediate
+#    it. This is confirmed to work with:
+#     - compiled code which can load shared libraries
+#     - python imports
+#    It is known not to work with:
+#     - perl includes
+# 3. Sanitizing ruby and java
+#
+# Use at your own risk. This profile was developed as an interim workaround for
+# LP: #851986 until AppArmor utilizes proper environment filtering.
+
+profile sanitized_helper {
+  #include <abstractions/base>
+  #include <abstractions/X>
+
+  # Allow all networking
+  network inet,
+  network inet6,
+
+  # Allow all DBus communications
+  #include <abstractions/dbus-session-strict>
+  #include <abstractions/dbus-strict>
+  dbus,
+
+  # Needed for Google Chrome
+  ptrace (trace) peer=**//sanitized_helper,
+
+  # Allow exec of anything, but under this profile. Allow transition
+  # to other profiles if they exist.
+  /{usr/,usr/local/,}{bin,sbin}/* Pixr,
+
+  # Allow exec of libexec applications in /usr/lib* and /usr/local/lib*
+  /usr/{,local/}lib*/{,**/}* Pixr,
+
+  # Allow exec of software-center scripts. We may need to allow wider
+  # permissions for /usr/share, but for now just do this. (LP: #972367)
+  /usr/share/software-center/* Pixr,
+
+  # Allow exec of texlive font build scripts (LP: #1010909)
+  /usr/share/texlive/texmf{,-dist}/web2c/{,**/}* Pixr,
+
+  # While the chromium and chrome sandboxes are setuid root, they only link
+  # in limited libraries so glibc's secure execution should be enough to not
+  # require the santized_helper (ie, LD_PRELOAD will only use standard system
+  # paths (man ld.so)).
+  /usr/lib/chromium-browser/chromium-browser-sandbox PUxr,
+  /usr/lib/chromium{,-browser}/chrome-sandbox PUxr,
+  /opt/google/chrome{,-beta,-unstable}/chrome-sandbox PUxr,
+  /opt/google/chrome{,-beta,-unstable}/google-chrome Pixr,
+  /opt/google/chrome{,-beta,-unstable}/chrome Pixr,
+  /opt/google/chrome{,-beta,-unstable}/{,**/}lib*.so{,.*} m,
+
+  # Full access
+  / r,
+  /** rwkl,
+  /{,usr/,usr/local/}lib{,32,64}/{,**/}*.so{,.*} m,
+
+  # Dangerous files
+  audit deny owner /**/* m,              # compiled libraries
+  audit deny owner /**/*.py* r,          # python imports
+}

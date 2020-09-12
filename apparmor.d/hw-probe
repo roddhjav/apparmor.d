@@ -1,0 +1,228 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/hw-probe
+profile hw-probe @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/perl>
+
+  capability sys_admin,
+
+  @{exec_path} r,
+  /{usr/,}bin/perl r,
+
+  /{usr/,}bin/pwd         rix,
+  /{usr/,}bin/{,e}grep    rix,
+  /{usr/,}bin/dash        rix,
+  /{usr/,}bin/gawk        rix,
+  /{usr/,}bin/sleep       rix,
+  /{usr/,}bin/md5sum      rix,
+  /{usr/,}bin/uname       rix,
+
+  /{usr/,}bin/dd          rix,
+
+  /{usr/,}bin/efivar      rix,
+  /{usr/,}bin/efibootmgr  rix,
+
+  /{usr/,}bin/lsb_release rPx -> child-lsb_release,
+  /{usr/,}bin/dpkg        rPx -> child-dpkg,
+
+  /{usr/,}sbin/dkms       rPx,
+  /{usr/,}sbin/fdisk      rPx,
+  /{usr/,}bin/upower      rPx,
+  /{usr/,}sbin/hdparm     rPx,
+  /{usr/,}sbin/smartctl   rPx,
+  /{usr/,}bin/sensors     rPx,
+  /{usr/,}bin/lsblk       rPx,
+  /{usr/,}bin/dmesg       rPx,
+  /{usr/,}bin/hciconfig   rPx,
+  /{usr/,}bin/uptime      rPx,
+  /{usr/,}sbin/rfkill     rPx,
+  /{usr/,}sbin/biosdecode rPx,
+  /{usr/,}sbin/dmidecode  rPx,
+  /{usr/,}bin/edid-decode rPx,
+  /{usr/,}bin/cpupower    rPx,
+  /{usr/,}bin/acpi        rPx,
+  /{usr/,}bin/lspci       rPx,
+  /{usr/,}bin/lscpu       rPx,
+  /{usr/,}bin/lsusb       rPx,
+  /{usr/,}bin/usb-devices rPx,
+  /{usr/,}sbin/hwinfo     rPx,
+  /{usr/,}bin/glxinfo     rPx,
+  /{usr/,}sbin/i2cdetect  rPx,
+  /{usr/,}bin/glxgears    rPx,
+  /{usr/,}sbin/memtester  rPx,
+  /{usr/,}bin/xrandr      rPx,
+  /{usr/,}bin/inxi        rPx,
+  /{usr/,}bin/aplay       rPx,
+  /{usr/,}bin/amixer      rPx,
+  /{usr/,}bin/xdpyinfo    rPx,
+  /{usr/,}bin/df          rPx,
+  /{usr/,}bin/cpuid       rPx,
+  /{usr/,}bin/xinput      rPx,
+
+  /{usr/,}bin/systemctl   rPx -> child-systemctl,
+
+  /{usr/,}bin/find            rCx -> find,
+  /{usr/,}bin/journalctl      rCx -> journalctl,
+  /{usr/,}bin/systemd-analyze rCx -> systemd-analyze,
+  /{usr/,}bin/killall         rCx -> killall,
+  /{usr/,}bin/udevadm         rCx -> udevadm,
+  /{usr/,}bin/kmod            rCx -> kmod,
+  /{usr/,}sbin/iw             rCx -> netconfig,
+  /{usr/,}sbin/ifconfig       rCx -> netconfig,
+  /{usr/,}sbin/iwconfig       rCx -> netconfig,
+  /{usr/,}sbin/ethtool        rCx -> netconfig,
+
+  owner /root/HW_PROBE/{,**} rw,
+
+  owner /tmp/*/ rw,
+  owner /tmp/*/cpu_perf rw,
+
+  /var/log/Xorg.[0-9].log{,.old} r,
+  /etc/X11/xorg.conf.d/{,*.conf} r,
+  /usr/share/X11/xorg.conf.d/{,*.conf} r,
+
+  /etc/modprobe.d/{,*.conf} r,
+
+  @{sys}/class/drm/ r,
+  @{sys}/class/power_supply/ r,
+
+  @{sys}/devices/virtual/dmi/id/* r,
+  @{sys}/devices/pci[0-9]*/**/drm/card[0-9]/*/edid r,
+  @{sys}/devices/**/power_supply/*/uevent r,
+
+  @{sys}/firmware/efi/efivars/ r,
+  @{sys}/firmware/efi/efivars/* r,
+
+  @{PROC}/scsi/scsi r,
+  @{PROC}/ioports r,
+  @{PROC}/interrupts r,
+  @{PROC}/bus/input/devices r,
+
+
+  profile find {
+    #include <abstractions/base>
+    #include <abstractions/nameservice-strict>
+
+    capability dac_read_search,
+
+    /{usr/,}bin/find mr,
+
+    /dev/{,**} r,
+
+  }
+
+  profile journalctl {
+    #include <abstractions/base>
+
+    /{usr/,}bin/journalctl mr,
+
+    /{var/,}run/log/ rw,
+    /{run,var}/log/journal/ rw,
+    /{run,var}/log/journal/[0-9a-f]*/ rw,
+    /{run,var}/log/journal/[0-9a-f]*/user-[0-9a-f]*.journal* rw,
+    /{run,var}/log/journal/[0-9a-f]*/system.journal* rw,
+    /{run,var}/log/journal/[0-9a-f]*/system@[0-9a-f]*.journal* rw,
+
+    owner @{PROC}/@{pid}/stat r,
+
+    /var/lib/dbus/machine-id r,
+    /etc/machine-id r,
+
+  }
+
+  profile systemd-analyze {
+    #include <abstractions/base>
+
+    /{usr/,}bin/systemd-analyze mr,
+
+    owner @{PROC}/@{pid}/stat r,
+
+  }
+
+  profile killall {
+    #include <abstractions/base>
+
+    capability sys_ptrace,
+
+    signal (send) set=(int, term, kill),
+
+    ptrace (read),
+
+    /{usr/,}bin/killall mr,
+
+    # The /proc/ dir is needed to avoid the following error:
+    #  /proc: Permission denied
+         @{PROC}/ r,
+         @{PROC}/@{pids}/stat r,
+
+  }
+
+  profile udevadm {
+    #include <abstractions/base>
+
+    /{usr/,}bin/udevadm mr,
+
+    /etc/udev/udev.conf r,
+
+    owner @{PROC}/@{pid}/stat r,
+          @{PROC}/cmdline r,
+          @{PROC}/1/sched r,
+          @{PROC}/1/environ r,
+          @{PROC}/sys/kernel/osrelease r,
+
+    @{sys}/bus/ r,
+    @{sys}/bus/*/devices/ r,
+    @{sys}/class/ r,
+    @{sys}/class/*/ r,
+    @{sys}/devices/**/uevent r,
+    /{var/,}run/udev/data/* r,
+
+  }
+
+  profile kmod {
+    #include <abstractions/base>
+
+    /{usr/,}bin/kmod mr,
+
+    @{PROC}/cmdline r,
+    @{PROC}/modules r,
+
+    @{sys}/module/*/ r,
+    @{sys}/module/*/{coresize,refcnt} r,
+    @{sys}/module/*/holders/ r,
+
+  }
+
+  profile netconfig {
+    #include <abstractions/base>
+
+    # Not needed
+    deny capability net_admin,
+    deny capability net_raw,
+
+    /{usr/,}sbin/iw       mr,
+    /{usr/,}sbin/ifconfig mr,
+    /{usr/,}sbin/iwconfig mr,
+    /{usr/,}sbin/ethtool  mr,
+
+    owner @{PROC}/@{pid}/net/if_inet6 r,
+    owner @{PROC}/@{pid}/net/dev r,
+
+  }
+
+  #include if exists <local/hw-probe>
+}

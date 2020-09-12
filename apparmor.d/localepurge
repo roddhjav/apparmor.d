@@ -1,0 +1,66 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}sbin/localepurge
+profile localepurge @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+
+  @{exec_path} r,
+  /{usr/,}bin/bash r,
+
+  /{usr/,}bin/fgrep    rix,
+  /{usr/,}bin/chmod    rix,
+  /{usr/,}bin/mkdir    rix,
+  /{usr/,}bin/touch    rix,
+  /{usr/,}bin/ls       rix,
+  /{usr/,}bin/{,e}grep rix,
+  /{usr/,}bin/sort     rix,
+  /{usr/,}bin/mv       rix,
+  /{usr/,}bin/rm       rix,
+  /{usr/,}bin/tr       rix,
+  /{usr/,}bin/du       rix,
+  /{usr/,}bin/xargs    rix,
+  /{usr/,}bin/basename rix,
+  /{usr/,}bin/find     rix,
+
+  /{usr/,}bin/df       rPx,
+
+  owner @{PROC}/@{pid}/fd/ r,
+
+  /etc/locale.nopurge r,
+
+  owner /var/cache/localepurge/localelist r,
+  owner /var/cache/localepurge/localelist-new{,.temp} rw,
+
+  # Dirs cleaned from locales
+  /usr/share/{locale,man,omf,calendar}/{,**/} r,
+  /usr/share/{locale,man,omf,calendar}/**/** w,
+  /usr/share/{gnome/,}help/{,**/} r,
+  /usr/share/{gnome/,}help/**/** w,
+  /usr/share/cups/{templates,locale,doc-root}/{,**/} r,
+  /usr/share/cups/{templates,locale,doc-root}/**/** w,
+  /usr/share/vim/ r,
+  /usr/share/vim/vim[0-9]*/lang/{,**/} r,
+  /usr/share/vim/vim[0-9]*/lang/**/** w,
+  /usr/share/X11/locale/{,**/} r,
+  /usr/share/X11/locale/**/** w,
+  /usr/share/aptitude/{,*} r,
+  /usr/share/aptitude/* w,
+
+  /tmp/ r,
+
+  #include if exists <local/localepurge>
+}

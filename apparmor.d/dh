@@ -1,0 +1,76 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{BUILD_DIR} = /media/debuilder/
+
+@{exec_path}  = /{usr/,}bin/dh
+@{exec_path} += /{usr/,}bin/dh_*
+profile dh @{exec_path} flags=(complain) {
+  #include <abstractions/base>
+  #include <abstractions/perl>
+
+  @{exec_path} r,
+  /{usr/,}bin/perl r,
+
+  /{usr/,}bin/dh_*  rix,
+
+  /{usr/,}bin/dash  rix,
+  /{usr/,}bin/make  rix,
+  /{usr/,}bin/find  rix,
+  /{usr/,}bin/rm    rix,
+  /{usr/,}bin/mkdir rix,
+
+  # What to do with it? The "rules" file is just a make file and can use any tool. (#FIXME#)
+  owner @{BUILD_DIR}/**/debian/rules rcx -> debian-rules,
+  owner @{BUILD_DIR}/**              rcx -> debian-rules,
+  owner @{BUILD_DIR}/**             rwkl -> @{BUILD_DIR}/**,
+
+  /etc/dpkg/origins/debian r,
+
+  /usr/share/dpkg/cputable r,
+  /usr/share/dpkg/tupletable r,
+
+  owner @{HOME}/.config/dpkg/buildflags.conf r,
+
+  /usr/share/dpkg/* r,
+
+
+  profile debian-rules flags=(complain) {
+    #include <abstractions/base>
+
+    owner @{BUILD_DIR}/**/debian/rules rix,
+    owner @{BUILD_DIR}/**              rix,
+    owner @{BUILD_DIR}/**              rwkl -> /media/debuilder/*/**,
+
+    /{usr/,}bin/dash            rix,
+    /{usr/,}bin/make            rix,
+
+    # Don't strip env here
+    /{usr/,}bin/*              rpux,
+
+    /usr/share/dpkg/* r,
+
+    / r,
+    /usr/include/{,**} r,
+
+    # Key to sign the kernel and its modules
+    /etc/kernel_key/* r,
+
+    owner /tmp/cpiolist.* rw,
+
+  }
+
+  #include if exists <local/dh>
+}

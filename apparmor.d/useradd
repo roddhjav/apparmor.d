@@ -1,0 +1,93 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}sbin/useradd
+profile useradd @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/nameservice-strict>
+
+  # To create a user home dir and give it proper permissions:
+  #  mkdir("/home/user", 000)      = 0
+  #  chown("/home/user", 0, 0)     = 0
+  #  chmod("/home/user", 0755)     = 0
+  #  chown("/home/user/", 1001, 1001) = 0
+  #  chmod("/home/user/", 0755)    = 0
+  capability chown,
+  capability fowner,
+
+  # To set the set-group-ID bit for the user home dir.
+  capability fsetid,
+
+  # To copy files from the /etc/skel/ dir to the newly created user dir, which now has a different
+  # owner.
+  capability dac_read_search,
+  capability dac_override,
+
+  # To write records to the kernel auditing log.
+  capability audit_write,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/usermod     rPx,
+
+  /{usr/,}sbin/pam_tally2 rCx -> pam_tally2,
+
+  /etc/login.defs r,
+
+  /etc/default/useradd r,
+
+  /etc/{passwd,shadow,gshadow,group,subuid,subgid} rw,
+  /etc/{passwd,shadow,gshadow,group,subuid,subgid}.@{pid} w,
+  /etc/{passwd,shadow,gshadow,group,subuid,subgid}- w,
+  /etc/{passwd,shadow,gshadow,group,subuid,subgid}+ rw,
+
+  /etc/passwd.lock  wl -> /etc/passwd.@{pid},
+  /etc/shadow.lock  wl -> /etc/shadow.@{pid},
+  /etc/group.lock   wl -> /etc/group.@{pid},
+  /etc/gshadow.lock wl -> /etc/gshadow.@{pid},
+  /etc/subuid.lock  wl -> /etc/subuid.@{pid},
+  /etc/subgid.lock  wl -> /etc/subgid.@{pid},
+
+  # A process first uses lckpwdf() to lock the lock file, thereby gaining exclusive rights to
+  # modify the /etc/passwd or /etc/shadow password database.
+  /etc/.pwd.lock rwk,
+
+  /var/log/faillog rw,
+  /var/log/lastlog rw,
+
+  # To create user dirs
+  @{HOME}/ rw,
+
+  # To copy files from /etc/skel/ to user dirs
+  @{HOME}/.* w,
+  /etc/skel/{,.*} r,
+
+
+  profile pam_tally2 {
+    #include <abstractions/base>
+    #include <abstractions/consoles>
+    #include <abstractions/nameservice-strict>
+
+    capability audit_write,
+
+    /{usr/,}sbin/pam_tally2 mr,
+
+    /var/log/tallylog rw,
+
+  }
+
+  #include if exists <local/useradd>
+}

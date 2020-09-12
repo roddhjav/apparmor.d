@@ -1,0 +1,96 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/apt-key
+profile apt-key @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/dash     rix,
+  /{usr/,}bin/rm       rix,
+  /{usr/,}bin/sed      rix,
+  /{usr/,}bin/cp       rix,
+  /{usr/,}bin/cat      rix,
+  /{usr/,}bin/cmp      rix,
+  /{usr/,}bin/find     rix,
+  /{usr/,}bin/cut      rix,
+  /{usr/,}bin/mktemp   rix,
+  /{usr/,}bin/chmod    rix,
+  /{usr/,}bin/touch    rix,
+  /{usr/,}bin/readlink rix,
+  /{usr/,}bin/sort     rix,
+  /{usr/,}bin/comm     rix,
+  /{usr/,}bin/{,e}grep rix,
+  /{usr/,}bin/id       rix,
+  /{usr/,}bin/tr       rix,
+  /{usr/,}bin/uniq     rix,
+  /{usr/,}bin/wc       rix,
+
+  /{usr/,}bin/gpgconf    rCx -> gpg,
+  /{usr/,}bin/gpg        rCx -> gpg,
+
+  /{usr/,}bin/dpkg-query rPx,
+  /{usr/,}bin/apt-config rPx,
+
+  / r,
+  /etc/apt/trusted.gpg r,
+  /etc/apt/trusted.gpg.d/{,*.gpg} r,
+
+  owner /tmp/apt-key-gpghome.*/{,**} rw,
+
+
+  profile gpg {
+    #include <abstractions/base>
+    #include <abstractions/consoles>
+    #include <abstractions/ssl_certs>
+
+    /{usr/,}bin/gpg     mr,
+    /{usr/,}bin/gpgconf mr,
+
+    /{usr/,}bin/dirmngr           rix,
+    /{usr/,}bin/gpg-agent         rix,
+    /{usr/,}bin/gpg-connect-agent rix,
+
+    /etc/apt/.#lk0x[a-f0-9]*.@{pid} rw,
+    /etc/apt/.#lk0x[a-f0-9]*.@{pid}x rwl -> /etc/apt/.#lk0x[a-f0-9]*.@{pid},
+    /etc/apt/trusted.gpg{,~,.tmp} rw,
+    /etc/apt/trusted.gpg.lock rwl -> /etc/apt/.#lk0x[a-f0-9]*.@{pid},
+
+    /etc/apt/trusted.gpg.d/ r,
+    /etc/apt/trusted.gpg.d/.#lk0x[a-f0-9]*.@{pid} rw,
+    /etc/apt/trusted.gpg.d/.#lk0x[a-f0-9]*.@{pid}x rwl -> /etc/apt/trusted.gpg.d/.#lk0x[a-f0-9]*.@{pid},
+    /etc/apt/trusted.gpg.d/*.gpg r,
+    /etc/apt/trusted.gpg.d/*.gpg.lock rwl -> /etc/apt/trusted.gpg.d/.#lk0x[a-f0-9]*.@{pid},
+
+    owner /tmp/apt-key-gpghome.*/ rw,
+    owner /tmp/apt-key-gpghome.*/** rwkl -> /tmp/apt-key-gpghome.*/**,
+
+    owner @{PROC}/@{pid}/fd/ r,
+    owner @{PROC}/@{pid}/task/@{tid}/comm rw,
+
+    /usr/share/gnupg/sks-keyservers.netCA.pem r,
+
+    /etc/hosts r,
+    /etc/inputrc r,
+
+    # File_inherit
+    owner /tmp/apt-key-gpghome.*/gpgoutput.{log,err} w,
+
+  }
+
+  #include if exists <local/apt-key>
+}

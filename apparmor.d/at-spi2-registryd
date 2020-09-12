@@ -1,0 +1,35 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2018-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}lib/at-spi2-core/at-spi2-registryd /usr/libexec/at-spi2-registryd
+profile at-spi2-registryd @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/deny-root-dir-access>
+
+  # Needed?
+  deny capability sys_nice,
+
+  @{exec_path} mr,
+
+  owner @{HOME}/.Xauthority r,
+  /var/lib/lightdm/.Xauthority r,
+
+  # file_inherit
+  owner @{HOME}/.xsession-errors w,
+  owner /dev/tty[0-9]* rw,
+
+  #include if exists <local/at-spi2-registryd>
+}

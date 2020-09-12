@@ -1,0 +1,66 @@
+# vim:syntax=apparmor
+# Users of this abstraction need to #include the ubuntu-helpers abstraction
+# in the toplevel profile. Eg:
+# #include <abstractions/ubuntu-helpers>
+
+  #include <abstractions/X>
+
+  # Pulseaudio
+  /usr/bin/pulseaudio Pixr,
+
+  # Image viewers
+  /usr/bin/eog Cxr -> sanitized_helper,
+  /usr/bin/gimp* Cxr -> sanitized_helper,
+  /usr/bin/shotwell Cxr -> sanitized_helper,
+  /usr/bin/digikam Cxr -> sanitized_helper,
+  /usr/bin/f-spot Cxr -> sanitized_helper,
+  /usr/bin/gwenview Cxr -> sanitized_helper,
+
+  #include <abstractions/ubuntu-media-players>
+  owner @{HOME}/.adobe/ w,
+  owner @{HOME}/.adobe/** rw,
+  owner @{HOME}/.macromedia/ w,
+  owner @{HOME}/.macromedia/** rw,
+  /opt/real/RealPlayer/mozilla/nphelix.so rm,
+  /usr/bin/lpstat Cxr -> sanitized_helper,
+  /usr/bin/lpr Cxr -> sanitized_helper,
+
+  # npviewer
+  /usr/lib/nspluginwrapper/i386/linux/npviewer{,.bin} ixr,
+  /var/lib/ r,
+  /var/lib/**/*.so mr,
+  /usr/bin/setarch ixr,
+
+  # Bittorrent clients
+  #include <abstractions/ubuntu-bittorrent-clients>
+
+  # Mozplugger
+  /etc/mozpluggerrc r,
+  /usr/bin/mozplugger-helper Cxr -> sanitized_helper,
+
+  # Archivers
+  /usr/bin/ark Cxr -> sanitized_helper,
+  /usr/bin/file-roller Cxr -> sanitized_helper,
+  /usr/bin/xarchiver Cxr -> sanitized_helper,
+  /usr/local/lib{,32,64}/*.so* mr,
+
+  # News feed readers
+  #include <abstractions/ubuntu-feed-readers>
+
+  # Googletalk
+  /opt/google/talkplugin/*.so mr,
+  /opt/google/talkplugin/lib/*.so mr,
+  /opt/google/talkplugin/GoogleTalkPlugin ixr,
+  owner @{HOME}/.config/google-googletalkplugin/** rw,
+
+  # If we allow the above, nvidia based systems will also need this
+  #include <abstractions/nvidia>
+
+  # Virus scanners
+  /usr/bin/clamscan Cx -> sanitized_helper,
+
+  # gxine (LP: #1057642)
+  /var/lib/xine/gxine.desktop r,
+
+  # For WebRTC camera access (LP: #1665535)
+  /dev/video[0-9]* rw,

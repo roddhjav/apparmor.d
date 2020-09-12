@@ -1,0 +1,114 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/adequate
+profile adequate @{exec_path} flags=(complain) {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/perl>
+  #include <abstractions/nameservice-strict>
+
+  #capability sys_tty_config,
+
+  @{exec_path} r,
+  /{usr/,}bin/perl r,
+
+  /{usr/,}sbin/ldconfig           rix,
+
+  # It wants to ldd all binaries/libs in packages.
+  /{usr/,}bin/ldd                 rCx -> ldd,
+
+  # Think what to do about this (#FIXME#)
+  /usr/share/debconf/frontend     rPx,
+  #/usr/share/debconf/frontend    rCx -> frontend,
+
+  /{usr/,}bin/pkg-config          rCx -> pkg-config,
+  /{usr/,}bin/dpkg                rPx -> child-dpkg,
+  /{usr/,}bin/dpkg-query          rPx,
+  /{usr/,}bin/update-alternatives rPx,
+
+  /var/lib/adequate/pending rwk,
+
+  /etc/shadow r,
+
+  /usr/share/python{,3}/debian_defaults r,
+  /usr/share/doc/*/copyright r,
+  /usr/share/**/__pycache__/ r,
+  /usr/**/*.py r,
+
+
+  profile ldd flags=(complain) {
+    #include <abstractions/base>
+    #include <abstractions/consoles>
+
+    /{usr/,}bin/ldd mr,
+
+    /{usr/,}bin/*               mr,
+    /{usr/,}sbin/*              mr,
+    /usr/games/*                mr,
+    /{usr/,}lib{,x}{,32,64}/**  mr,
+    /{usr/,}lib/@{multiarch}/** mr,
+    /usr/share/**                r,
+
+    /opt/google/chrome{,-beta,-unstable}/google-chrome{,-beta,-unstable} mr,
+
+    /{usr/,}lib/@{multiarch}/ld-*.so rix,
+    /{usr/,}lib{,x}32/ld-*.so        rix,
+
+  }
+
+  profile frontend flags=(complain) {
+    #include <abstractions/base>
+    #include <abstractions/consoles>
+    #include <abstractions/perl>
+    #include <abstractions/nameservice-strict>
+
+    /usr/share/debconf/frontend r,
+    /{usr/,}bin/perl r,
+
+    /{usr/,}bin/adequate rPx,
+
+    /{usr/,}bin/dash     rix,
+    /{usr/,}bin/stty     rix,
+    /{usr/,}bin/locale   rix,
+
+    /etc/debconf.conf r,
+    owner /var/cache/debconf/{config,passwords,templates}.dat{,-new,-old} rwk,
+    /usr/share/debconf/templates/adequate.templates r,
+
+    # The following is needed when debconf uses GUI frontends.
+    #include <abstractions/gtk>
+    #include <abstractions/fonts>
+    #include <abstractions/fontconfig-cache-read>
+    #include <abstractions/freedesktop.org>
+    capability dac_read_search,
+    /{usr/,}bin/lsb_release rPx -> child-lsb_release,
+    /{usr/,}bin/hostname    rPx,
+    owner @{PROC}/@{pid}/mounts r,
+    @{HOME}/.Xauthority r,
+
+    /etc/shadow r,
+
+  }
+
+  profile pkg-config flags=(complain) {
+    #include <abstractions/base>
+
+    /{usr/,}bin/pkg-config mr,
+
+  }
+
+  #include if exists <local/adequate>
+}

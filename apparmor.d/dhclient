@@ -1,0 +1,49 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2018-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}sbin/dhclient
+profile dhclient @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/openssl>
+
+  # To remove the following errors:
+  #  dhclient[]: Open a socket for LPF: Operation not permitted
+  capability net_raw,
+
+  # To remove the following errors:
+  #  dhclient[]: Can't bind to dhcp address: Permission denied
+  capability net_bind_service,
+
+  # Needed?
+  #capability net_admin,
+  audit deny capability sys_module,
+
+  @{exec_path} mr,
+
+  # To run dhclient scripts
+  /{usr/,}sbin/dhclient-script rPx,
+
+  /etc/dhclient.conf r,
+  /etc/dhcp/{,**} r,
+
+  /var/lib/dhcp{,3}/dhclient* rw,
+  owner /{,var/}run/dhclient*.pid rw,
+  owner /{,var/}run/dhclient*.lease* rw,
+
+  owner @{PROC}/@{pid}/task/@{tid}/comm rw,
+
+  #include if exists <local/dhclient>
+}

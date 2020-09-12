@@ -1,0 +1,102 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/xarchiver
+profile xarchiver @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/gtk>
+  #include <abstractions/fonts>
+  #include <abstractions/fontconfig-cache-read>
+  #include <abstractions/freedesktop.org>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/user-download-strict>
+  #include <abstractions/thumbnails-cache-read>
+  #include <abstractions/deny-root-dir-access>
+
+  @{exec_path} mrix,
+
+  /{usr/,}bin/dash rix,
+  /{usr/,}bin/ls rix,
+  /{usr/,}bin/rm rix,
+  /{usr/,}bin/mv rix,
+  /{usr/,}bin/cp rix,
+
+  # Archivers
+  /{usr/,}bin/7z            rix,
+  /{usr/,}lib/p7zip/7z      rix,
+  /{usr/,}bin/unrar-nonfree rix,
+  /{usr/,}bin/zip           rix,
+  /{usr/,}bin/unzip         rix,
+  /{usr/,}bin/tar           rix,
+  /{usr/,}bin/xz            rix,
+  /{usr/,}bin/bzip2         rix,
+  /{usr/,}bin/cpio          rix,
+  /{usr/,}bin/gzip          rix,
+  # For deb packages
+  /{usr/,}bin/{,@{multiarch}-}ar rix,
+
+  /{usr/,}bin/xdg-open      rCx -> open,
+
+  owner @{HOME}/.config/xarchiver/ rw,
+  owner @{HOME}/.config/xarchiver/xarchiverrc{,.*} rw,
+
+  owner @{HOME}/.bz2 rw,
+
+        / r,
+        /home/ r,
+  #owner @{HOME}/ r,
+  #owner @{HOME}/** rw,
+        /media/ r,
+        /media/** rw,
+        /tmp/ r,
+  owner /tmp/** rw,
+
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+
+  owner @{PROC}/@{pid}/fd/ r,
+        @{PROC}/@{pid}/mountinfo r,
+        @{PROC}/@{pid}/mounts r,
+
+  /etc/fstab r,
+
+  # Allowed apps to open
+  /{usr/,}bin/engrampa  rPUx,
+  /{usr/,}bin/geany     rPUx,
+  /{usr/,}bin/viewnior  rPUx,
+
+  # file_inherit
+  owner /dev/tty[0-9]* rw,
+
+
+  profile open {
+    #include <abstractions/base>
+    #include <abstractions/xdg-open>
+
+    /{usr/,}bin/xdg-open mr,
+
+    /{usr/,}bin/dash       rix,
+
+    # Allowed apps to open
+    /{usr/,}bin/engrampa  rPUx,
+    /{usr/,}bin/geany     rPUx,
+    /{usr/,}bin/viewnior  rPUx,
+
+    # file_inherit
+    owner @{HOME}/.xsession-errors w,
+
+  }
+
+  #include if exists <local/xarchiver>
+}

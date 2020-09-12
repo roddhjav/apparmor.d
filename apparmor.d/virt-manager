@@ -1,0 +1,125 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path}  = /{usr/,}bin/virt-manager
+@{exec_path} += /usr/share/virt-manager/virt-manager
+profile virt-manager @{exec_path} flags=(complain) {
+  #include <abstractions/base>
+  #include <abstractions/python>
+  #include <abstractions/gtk>
+  #include <abstractions/fonts>
+  #include <abstractions/fontconfig-cache-read>
+  #include <abstractions/freedesktop.org>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/ssl_certs>
+  #include <abstractions/openssl>
+  #include <abstractions/audio>
+  #include <abstractions/mesa>
+  #include <abstractions/dri-common>
+  #include <abstractions/dri-enumerate>
+  #include <abstractions/thumbnails-cache-read>
+  #include <abstractions/user-download-strict>
+  #include <abstractions/deny-dconf>
+
+  @{exec_path} rix,
+  /{usr/,}bin/dash r,
+  /{usr/,}bin/python3.[0-9]* r,
+
+  /{usr/,}bin/ r,
+  /{usr/,}bin/getfacl   rix,
+  /{usr/,}bin/setfacl   rix,
+
+  /{usr/,}sbin/libvirtd rPx,
+
+  /usr/share/virt-manager/{,**} r,
+
+  owner @{HOME}/ r,
+  owner @{HOME}/.cache/ rw,
+  owner @{HOME}/.cache/virt-manager/ rw,
+  owner @{HOME}/.cache/virt-manager/** rw,
+
+  # For disk images
+  /media/ r,
+  /media/*/ r,
+  @{HOME}/**.{iso,img,bin,mdf,nrg} r,
+  /media/*/**.{iso,img,bin,mdf,nrg} r,
+  @{HOME}/**.{ISO,IMG,BIN,MDF,NRG} r,
+  /media/*/**.{ISO,IMG,BIN,MDF,NRG} r,
+
+  # System VM images
+  #owner /var/lib/libvirt/images/ r,
+
+  # User VM images
+  #owner @{HOME}/.local/share/libvirt/ rw,
+  #owner @{HOME}/.local/share/libvirt/images/ rw,
+  #owner @{HOME}/.local/share/libvirt/images/* rw,
+
+  #owner /media/*/VM/ r,
+
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+
+  /usr/share/osinfo/{,**} r,
+  /usr/share/gtksourceview-4/{,**} r,
+
+  /usr/share/misc/pci.ids r,
+  /var/lib/usbutils/usb.ids r,
+
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/mounts r,
+  owner @{PROC}/@{pid}/fd/ r,
+
+  /dev/ r,
+
+  # For USB devices
+  /dev/bus/usb/ r,
+  @{sys}/bus/ r,
+  @{sys}/class/ r,
+  @{sys}/bus/usb/devices/ r,
+  @{sys}/devices/pci[0-9]*/**/usb[0-9]/**/uevent r,
+  @{sys}/devices/pci[0-9]*/**/usb[0-9]/**/{busnum,devnum,speed,descriptors} r,
+  @{sys}/devices/pci[0-9]*/**/usb[0-9]/uevent r,
+  @{sys}/devices/pci[0-9]*/**/usb[0-9]/{busnum,devnum,speed,descriptors} r,
+  /{var/,}run/udev/data/+usb:* r,
+  /{var/,}run/udev/data/c189:[0-9]* r, # for /dev/bus/usb/** r,
+
+  @{sys}/devices/pci[0-9]*/**/drm/ r,
+
+  /etc/fstab r,
+
+  /{var/,}run/mount/utab r,
+
+  owner /{var/,}run/user/[0-9]*/libvirt/libvirtd.lock rwk,
+
+  @{sys}/devices/system/node/ r,
+  @{sys}/devices/system/node/node[0-9]*/meminfo r,
+
+  /var/lib/dbus/machine-id r,
+  /etc/machine-id r,
+
+  /etc/glvnd/egl_vendor.d/ r,
+  /usr/share/glvnd/egl_vendor.d/ r,
+  /usr/share/glvnd/egl_vendor.d/[0-9][0-9]_*.json r,
+
+  # The orcexec.* file is JIT compiled code for various GStreamer elements.
+  # If one is blocked the next is used instead.
+  owner /{var/,}run/user/[0-9]*/orcexec.* mrw,
+  #owner @{HOME}/orcexec.* mrw,
+  #owner /tmp/orcexec.* mrw,
+
+  # Silecne the noise
+  deny /usr/share/virt-manager/{,**} w,
+
+  #include if exists <local/virt-manager>
+}

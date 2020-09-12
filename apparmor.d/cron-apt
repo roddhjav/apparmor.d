@@ -1,0 +1,92 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2018-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}sbin/cron-apt
+profile cron-apt @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/nameservice-strict>
+
+  # Needed?
+  capability setgid,
+
+  @{exec_path} r,
+
+  /{usr/,}bin/dash        rix,
+  /{usr/,}bin/dotlockfile rix,
+  /{usr/,}bin/sed         rix,
+  /{usr/,}bin/mktemp      rix,
+  /{usr/,}bin/diff        rix,
+  /{usr/,}bin/mkdir       rix,
+  /{usr/,}bin/rmdir       rix,
+  /{usr/,}bin/rm          rix,
+  /{usr/,}bin/{,e}grep    rix,
+  /{usr/,}bin/md5sum      rix,
+  /{usr/,}bin/stat        rix,
+  /{usr/,}bin/date        rix,
+  /{usr/,}bin/cat         rix,
+  /{usr/,}bin/expr        rix,
+  /{usr/,}bin/cp          rix,
+  /{usr/,}bin/dd          rix,
+  /{usr/,}bin/cksum       rix,
+  /{usr/,}bin/gawk        rix,
+  /{usr/,}bin/sleep       rix,
+  /{usr/,}bin/mv          rix,
+  /{usr/,}bin/logger      rix,
+  /{usr/,}bin/ls          rix,
+  /{usr/,}bin/touch       rix,
+  /{usr/,}bin/uname       rix,
+  /{usr/,}bin/fold        rix,
+
+  /{usr/,}bin/apt-get     rPx,
+  /{usr/,}bin/apt-file    rPx,
+  /{usr/,}bin/aptitude{,-curses} rPx,
+  /{usr/,}sbin/exim4      rPx,
+
+  /usr/share/cron-apt/{,*} r,
+
+  /etc/cron-apt/{,*/} r,
+  /etc/cron-apt/config r,
+  /etc/cron-apt/refrain r,
+  /etc/cron-apt/action.d/[0-9]-* r,
+
+  /var/lib/cron-apt/{,**/} w,
+  /var/lib/cron-apt/.lk@{pid}* rw,
+  /var/lib/cron-apt/lockfile rwl -> /var/lib/cron-apt/.lk@{pid}*,
+  /var/lib/cron-apt/_-_etc_-_cron-apt_-_config/mailchanges/[0-9]-*-[0-9a-f]* rw,
+
+  # Logs
+  /var/log/cron-apt/ r,
+  /var/log/cron-apt/error w,
+  /var/log/cron-apt/temp rw,
+  /var/log/cron-apt/mail rw,
+  /var/log/cron-apt/lastfullmessage rw,
+
+  # For the "ls" command
+  /{usr/,}lib/locale/locale-archive r,
+
+  # TMP
+  owner /tmp/cron-apt.*/ rw,
+  owner /tmp/cron-apt.*/difftemp rw,
+  owner /tmp/cron-apt.*/lockfile rw,
+  owner /tmp/cron-apt.*/initlog rw,
+  owner /tmp/cron-apt.*/status rw,
+  owner /tmp/cron-apt.*/run{log,error,mail,syslog} rw,
+  owner /tmp/cron-apt.*/action{log,error,mail,syslog} rw,
+
+  # file_inherit
+  owner /tmp/#[0-9]*[0-9] rw,
+
+  #include if exists <local/cron-apt>
+}

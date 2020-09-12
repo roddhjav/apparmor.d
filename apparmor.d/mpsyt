@@ -1,0 +1,66 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2017-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/mpsyt
+profile mpsyt @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/python>
+  #include <abstractions/user-download-strict>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/openssl>
+  #include <abstractions/ssl_certs>
+  #include <abstractions/deny-root-dir-access>
+
+  signal (send) set=(term, kill) peer=mpv,
+
+  @{exec_path} r,
+  /{usr/,}bin/python3.[0-9]* r,
+
+  /{usr/,}bin/ r,
+  /{usr/,}bin/tset      rix,
+  /{usr/,}sbin/ldconfig rix,
+  /{usr/,}bin/uname     rix,
+
+  /{usr/,}bin/mpv      rPUx,
+  /{usr/,}bin/ffmpeg   rPUx,
+  /{usr/,}bin/ffprobe  rPUx,
+
+  # MPV config files
+  /etc/mpv/* r,
+  owner @{HOME}/.config/mpv/* r,
+
+  # mps-yt config files
+  owner @{HOME}/.config/mps-youtube/{,**} rw,
+
+  # Cache files
+  owner @{HOME}/.cache/youtube-dl/youtube-sigfuncs/js_*.json{,.*.tmp} rw,
+
+  # Download DIR
+  /media/Kabi/YT/ r,
+  /media/Kabi/YT/** rw,
+
+  /etc/inputrc r,
+  /etc/mime.types r,
+
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/mounts r,
+
+        /tmp/ r,
+  owner /tmp/[a-z0-9]* rw,
+  owner /tmp/mpsyt-input* rw,
+  owner /tmp/mpsyt-mpv*.sock rw,
+
+  #include if exists <local/mpsyt>
+}

@@ -1,0 +1,71 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+# When any of the "*ns" parameters is used, the following error will be printed:
+#  "Failed name lookup - disconnected path" error=-13 profile="ps" name="".
+@{exec_path} = /{usr/,}bin/ps
+profile ps @{exec_path} flags=(attach_disconnected) {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/nameservice-strict>
+
+  # To be able to read the /proc/ files of all processes in the system.
+  capability dac_read_search,
+
+  capability sys_ptrace,
+
+  ptrace (read),
+
+  @{exec_path} mr,
+
+  # The "/proc/" dir is needed to avoid the following error:
+  #  error: can not access /proc
+  # The "stat" file is needed to avoid the following error:
+  #  Error, do this: mount -t proc proc /proc
+  # The "uptime" file is needed to avoid the following error:
+  #  Error: /proc must be mounted
+
+       @{PROC}/ r,
+
+       @{PROC}/@{pids}/stat r,
+       @{PROC}/@{pids}/cmdline r,
+       @{PROC}/@{pids}/task/ r,
+       @{PROC}/@{pids}/task/@{tid}/stat r,
+       @{PROC}/@{pids}/task/@{tid}/status r,
+       @{PROC}/@{pids}/task/@{tid}/cmdline r,
+
+       @{PROC}/@{pids}/wchan r,
+       @{PROC}/@{pids}/attr/current r,
+       @{PROC}/@{pids}/cgroup r,
+       @{PROC}/@{pids}/statm r,
+       @{PROC}/@{pids}/loginuid r,
+
+       @{PROC}/sys/kernel/osrelease r,
+       @{PROC}/sys/kernel/pid_max r,
+       @{PROC}/tty/drivers r,
+       @{PROC}/uptime r,
+
+  /{var/,}run/systemd/sessions/[0-9]* r,
+
+  @{sys}/devices/system/node/ r,
+  @{sys}/devices/system/node/node[0-9]*/meminfo r,
+  @{sys}/devices/system/node/node[0-9]*/cpumap r,
+
+  # file_inherit
+  owner /dev/tty[0-9]* rw,
+  owner @{HOME}/.xsession-errors w,
+
+  #include if exists <local/ps>
+}

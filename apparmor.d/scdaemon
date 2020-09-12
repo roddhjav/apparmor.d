@@ -1,0 +1,38 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2017-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}lib/gnupg/scdaemon
+profile scdaemon @{exec_path} {
+  #include <abstractions/base>
+
+  @{exec_path} mr,
+
+  owner @{HOME}/.gnupg/scdaemon.conf r,
+
+  owner /{,var/}run/user/[0-9]*/gnupg/S.scdaemon rw,
+
+  @{PROC}/@{pid}/task/@{tid}/comm rw,
+
+  /{var/,}run/udev/data/c189:[0-9]* r, # for /dev/bus/usb/**
+  /{var/,}run/udev/data/+usb:* r,      #
+
+  /dev/bus/usb/ r,
+  @{sys}/bus/ r,
+  @{sys}/bus/usb/devices/ r,
+  @{sys}/class/ r,
+  @{sys}/devices/pci[0-9]*/**/{busnum,devnum,descriptors,speed,uevent,bConfigurationValue} r,
+
+  #include if exists <local/scdaemon>
+}

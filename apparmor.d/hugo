@@ -1,0 +1,44 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{HUGO_DIR} = /media/debuilder/hugo
+
+@{exec_path} = /{usr/,}bin/hugo
+profile hugo @{exec_path} {
+  #include <abstractions/base>
+
+  @{exec_path} mr,
+
+  # Hugo dirs
+  owner @{HOME}/hugo/ r,
+  owner @{HOME}/hugo/** r,
+  owner @{HOME}/hugo/**/public/ rw,
+  owner @{HOME}/hugo/**/public/** rw,
+  owner @{HUGO_DIR}/ r,
+  owner @{HUGO_DIR}/** r,
+  owner @{HUGO_DIR}/**/public/ rw,
+  owner @{HUGO_DIR}/**/public/** rw,
+
+  owner /tmp/hugo_cache/ rw,
+  owner /tmp/hugo_cache/**/ rw,
+
+  @{sys}/kernel/mm/transparent_hugepage/hpage_pmd_size r,
+
+  @{PROC}/sys/net/core/somaxconn r,
+
+  /etc/mime.types r,
+
+  #include if exists <local/hugo>
+}

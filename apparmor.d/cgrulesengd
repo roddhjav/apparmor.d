@@ -1,0 +1,52 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}sbin/cgrulesengd
+profile cgrulesengd @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/nameservice-strict>
+
+  # For creating Unix domain sockets/IPC sockets:
+  #  socket(AF_NETLINK, SOCK_DGRAM, NETLINK_CONNECTOR) = 3
+  #  ...
+  #  bind(3, {sa_family=AF_NETLINK, nl_pid=13284, nl_groups=0x000001}, 12) = -1 EPERM (Operation
+  #   not permitted)
+  capability net_admin,
+
+  # To remove the following errors:
+  #  readlink("/proc/12/exe", 0x7ffc9fa85cd0, 4096) = -1 EACCES (Permission denied)
+  capability sys_ptrace,
+
+  # To be able to read the /proc/ files of all processes in the system.
+  capability dac_read_search,
+
+  ptrace (read),
+
+  @{exec_path} mr,
+
+  @{sys}/fs/cgroup/**/tasks w,
+
+        @{PROC}/ r,
+        @{PROC}/@{pids}/cmdline r,
+  owner @{PROC}/@{pid}/mounts r,
+        @{PROC}/cgroups r,
+
+  owner /{var/,}run/cgred.socket w,
+
+  /etc/cgconfig.conf r,
+  /etc/cgrules.conf r,
+
+  #include if exists <local/cgrulesengd>
+}

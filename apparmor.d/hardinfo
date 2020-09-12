@@ -1,0 +1,173 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/hardinfo
+profile hardinfo @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/gtk>
+  #include <abstractions/fonts>
+  #include <abstractions/fontconfig-cache-read>
+  #include <abstractions/freedesktop.org>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/user-download-strict>
+
+  # This is needed to display some content of devices -> resources
+  capability sys_admin,
+
+  # This is for benchmarks
+  capability sys_nice,
+
+  @{exec_path} mrix,
+
+  /{usr/,}bin/dash            rix,
+  /{usr/,}bin/bash            rix,
+  /{usr/,}bin/locale          rix,
+  /{usr/,}bin/ldd             rix,
+  /{usr/,}bin/tr              rix,
+  /{usr/,}bin/python3.[0-9]*  rix,
+  /{usr/,}bin/perl            rix,
+  /{usr/,}bin/ruby2.[0-9]*    rix,
+  /{usr/,}bin/make            rix,
+  /{usr/,}bin/strace          rix,
+  /{usr/,}bin/gdb             rix,
+  /{usr/,}bin/last            rix,
+  /{usr/,}bin/iconv           rix,
+  /{usr/,}sbin/route          rix,
+  /{usr/,}bin/valgrind{,.bin} rix,
+  /{usr/,}lib/@{multiarch}/valgrind/memcheck-*-linux rix,
+
+  /{usr/,}bin/lsb_release rPx -> child-lsb_release,
+  /{usr/,}bin/xdg-open    rCx -> open,
+  /{usr/,}bin/ccache      rCx -> ccache,
+  /{usr/,}bin/kmod        rCx -> kmod,
+
+  /{usr/,}bin/glxinfo     rPx,
+  /{usr/,}bin/xdpyinfo    rPx,
+  /{usr/,}bin/lspci       rPx,
+  /{usr/,}bin/lsusb       rPx,
+  /{usr/,}bin/netstat     rPx,
+  /{usr/,}bin/qtchooser   rPx,
+
+  /{usr/,}lib/jvm/java-[0-9]*-openjdk-amd64/bin/javac rCx -> javac,
+
+  /usr/share/hardinfo/{,**} r,
+
+  @{sys}/class/power_supply/ r,
+  @{sys}/class/thermal/ r,
+  @{sys}/bus/i2c/drivers/eeprom/ r,
+
+  @{sys}/devices/system/cpu/** r,
+  @{sys}/devices/virtual/dmi/id/* r,
+  @{sys}/devices/virtual/thermal/thermal_zone[0-9]/hwmon[0-9]/temp* r,
+  @{sys}/devices/virtual/thermal/thermal_zone[0-9]/temp* r,
+  @{sys}/devices/platform/**/hwmon/hwmon[0-9]*/temp* r,
+  @{sys}/devices/platform/**/hwmon/hwmon[0-9]*/fan* r,
+  @{sys}/devices/pci[0-9]*/**/eeprom r,
+  @{sys}/devices/pci[0-9]*/**/hwmon/hwmon[0-9]*/temp* r,
+  @{sys}/devices/**/power_supply/** r,
+
+        @{PROC}/@{pid}/net/wireless r,
+        @{PROC}/@{pid}/net/dev r,
+        @{PROC}/@{pid}/net/arp r,
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/mounts r,
+        @{PROC}/@{pids}/loginuid r,
+        @{PROC}/uptime r,
+        @{PROC}/loadavg r,
+        @{PROC}/ioports r,
+        @{PROC}/iomem r,
+        @{PROC}/dma r,
+        @{PROC}/asound/cards r,
+        @{PROC}/scsi/scsi r,
+        @{PROC}/bus/input/devices r,
+        @{PROC}/sys/kernel/random/entropy_avail r,
+        @{PROC}/@{pids}/net/route r,
+
+  /etc/fstab r,
+  /etc/exports r,
+
+  /var/log/wtmp r,
+
+  owner @{HOME}/.hardinfo/ rw,
+
+  owner /tmp/#[0-9]*[0-9] rw,
+
+  # Allowed apps to open
+  /{usr/,}lib/firefox/firefox rPUx,
+
+  # file_inherit
+  owner /dev/tty[0-9]* rw,
+
+
+  profile ccache {
+    #include <abstractions/base>
+
+    /{usr/,}bin/ccache mr,
+
+    /{usr/,}bin/{,@{multiarch}-}gcc-[0-9]* rix,
+
+    /media/ccache/*/** rw,
+
+  }
+
+  profile javac {
+    #include <abstractions/base>
+    #include <abstractions/nameservice-strict>
+
+    /{usr/,}lib/jvm/java-[0-9]*-openjdk-amd64/bin/javac mr,
+
+    /etc/java-[0-9]*-openjdk/jvm-amd64.cfg r,
+
+    /usr/share/java/*.jar r,
+
+    owner @{PROC}/@{pid}/mountinfo r,
+    owner @{PROC}/@{pid}/cgroup r,
+
+    /sys/fs/cgroup/** r,
+
+    owner /tmp/hsperfdata_*/ rw,
+    owner /tmp/hsperfdata_*/@{pid} rw,
+
+  }
+
+  profile open {
+    #include <abstractions/base>
+    #include <abstractions/xdg-open>
+
+    /{usr/,}bin/xdg-open mr,
+
+    # Allowed apps to open
+    /{usr/,}lib/firefox/firefox rPUx,
+
+    # file_inherit
+    owner @{HOME}/.xsession-errors w,
+
+  }
+
+  profile kmod {
+    #include <abstractions/base>
+
+    /{usr/,}bin/kmod mr,
+
+    @{PROC}/cmdline r,
+    @{PROC}/modules r,
+    @{PROC}/ioports r,
+
+  }
+
+  #include if exists <local/hardinfo>
+}

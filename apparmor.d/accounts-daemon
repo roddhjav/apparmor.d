@@ -1,0 +1,40 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}lib/accountsservice/accounts-daemon /usr/libexec/accounts-daemon
+profile accounts-daemon @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/wutmp>
+  #include <abstractions/nameservice-strict>
+
+  # Needed?
+  deny capability sys_nice,
+
+  @{exec_path} mr,
+
+  owner /var/lib/AccountsService/ r,
+  owner /var/lib/AccountsService/** rw,
+
+  /usr/share/accountsservice/{,**} r,
+
+  /usr/share/dbus-1/interfaces/org.freedesktop.DisplayManager.AccountsService.xml r,
+
+  /etc/shells r,
+  /etc/shadow r,
+
+  /var/log/wtmp r,
+
+  #include if exists <local/accounts-daemon>
+}

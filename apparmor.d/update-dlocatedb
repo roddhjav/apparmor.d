@@ -1,0 +1,67 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}sbin/update-dlocatedb
+profile update-dlocatedb @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+
+  @{exec_path} mr,
+  /{usr/,}bin/dash rix,
+
+  /{usr/,}bin/cat    rix,
+  /{usr/,}bin/uname  rix,
+  /{usr/,}bin/sed    rix,
+  /{usr/,}bin/sort   rix,
+  /{usr/,}bin/uniq   rix,
+
+  /{usr/,}bin/ionice rix,
+
+  /usr/share/dlocate/updatedb rCx -> updatedb,
+  /{usr/,}bin/dpkg            rPx -> child-dpkg,
+
+  owner @{PROC}/@{pid}/fd/2 w,
+
+  /var/lib/dlocate/dpkg-list w,
+
+
+  profile updatedb {
+    #include <abstractions/base>
+    #include <abstractions/perl>
+
+    /usr/share/dlocate/updatedb r,
+    /{usr/,}bin/perl r,
+
+    /etc/default/dlocate r,
+
+    /var/lib/dlocate/ r,
+    /var/lib/dlocate/dlocatedb rw,
+    /var/lib/dlocate/dlocatedb.stamps{,.new} rw,
+    /var/lib/dlocate/dlocatedb.{new,old} rw,
+    link /var/lib/dlocate/dlocatedb.old -> /var/lib/dlocate/dlocatedb,
+
+    /var/lib/dpkg/diversions r,
+
+    /var/lib/dpkg/info/   r,
+    /var/lib/dpkg/info/*.list r,
+
+    # For compression
+    /{usr/,}bin/gzip rix,
+    /var/lib/dlocate/dlocatedb.gz rw,
+
+  }
+
+  #include if exists <local/update-dlocatedb>
+}

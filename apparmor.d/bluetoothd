@@ -1,0 +1,42 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2015-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}lib/bluetooth/bluetoothd
+profile bluetoothd @{exec_path} {
+  #include <abstractions/base>
+
+  # Needed for configuring HCI interfaces
+  capability net_admin,
+  capability net_bind_service,
+
+  @{exec_path} mr,
+
+  /{usr/,}lib/@{multiarch}/bluetooth/plugins/*.so mr,
+
+  /etc/bluetooth/{,*.conf} r,
+
+  /dev/uinput rw,
+  /dev/rfkill rw,
+  /dev/hidraw[0-9]* rw,
+
+  /{,var/}run/sdp rw,
+
+  @{sys}/devices/virtual/dmi/id/chassis_type r,
+  @{sys}/devices/platform/**/rfkill/**/name r,
+
+  /var/lib/bluetooth/{,**} rw,
+
+  #include if exists <local/bluetoothd>
+}

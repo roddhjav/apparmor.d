@@ -1,0 +1,60 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/pkexec
+profile pkexec @{exec_path} flags=(complain) {
+  #include <abstractions/base>
+  #include <abstractions/authentication>
+  #include <abstractions/wutmp>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/consoles>
+
+  signal (send) set=(term, kill) peer=polkit-agent-helper,
+
+  capability sys_ptrace,
+  capability audit_write,
+
+  # gdbus
+  capability setgid,
+  # gmain
+  capability setuid,
+
+  # Needed?
+  deny capability sys_nice,
+
+  ptrace (read),
+
+  @{exec_path} mr,
+
+  /etc/shells r,
+  /etc/environment r,
+  /etc/default/locale r,
+
+        @{PROC}/@{pids}/stat r,
+  owner @{PROC}/@{pid}/fd/ r,
+
+  # Apps to be run via pkexec
+  /{usr/,}sbin/*               rPUx,
+  /{usr/,}bin/*                rPUx,
+  /{usr/,}lib/gvfs/gvfsd-admin rPUx, #(#FIXME#)
+
+  /{usr/,}lib/polkit-[0-9]/polkit-agent-helper-[0-9] rPx,
+
+  # file_inherit
+  owner /dev/tty[0-9]* rw,
+  owner @{HOME}/.xsession-errors w,
+
+  #include if exists <local/pkexec>
+}

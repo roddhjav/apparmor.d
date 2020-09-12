@@ -1,0 +1,62 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2018-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/gpa
+profile gpa @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/gtk>
+  #include <abstractions/freedesktop.org>
+  #include <abstractions/fonts>
+  #include <abstractions/fontconfig-cache-read>
+  #include <abstractions/user-download-strict>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/deny-root-dir-access>
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/gpgconf           rPx,
+  /{usr/,}bin/gpg-connect-agent rPx,
+  /{usr/,}bin/gpg               rPx,
+  /{usr/,}bin/gpgsm             rPx,
+
+  /usr/share/gpa/{,*} r,
+
+  owner @{HOME}/.gnupg/gpa.conf rw,
+  owner @{HOME}/.gnupg/S.uiserver rw,
+
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/mountinfo r,
+
+  /tmp/ r,
+
+  # To create/verify singatures
+  owner /**.{asc,sig,sign} rw,
+
+  # To encrypt/decrypt files
+  owner /**.{gpg,txt} rw,
+
+  # Files to verify
+  owner /**.tar.gz r,
+
+  owner /tmp/xauth-[0-9]*-_[0-9] r,
+
+  # External apps
+  /{usr/,}lib/firefox/firefox rPUx,
+
+  # file_inherit
+  owner /dev/tty[0-9]* rw,
+
+  #include if exists <local/gpa>
+}

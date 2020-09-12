@@ -1,0 +1,33 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}sbin/{mkfs.fat,mkfs.msdos,mkfs.vfat,mkdosfs}
+profile mkfs-fat @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/disks-write>
+  #include <abstractions/user-download-strict>
+
+  @{exec_path} mr,
+
+  owner @{PROC}/@{pid}/mounts r,
+
+  # A place for file images
+  owner @{HOME}/**.{iso,img,bin,mdf,nrg} rwk,
+  owner /media/*/**.{iso,img,bin,mdf,nrg} rwk,
+  owner @{HOME}/**.{ISO,IMG,BIN,MDF,NRG} rwk,
+  owner /media/*/**.{ISO,IMG,BIN,MDF,NRG} rwk,
+
+  #include if exists <local/mkfs-fat>
+}

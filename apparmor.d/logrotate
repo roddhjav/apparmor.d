@@ -1,0 +1,88 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}sbin/logrotate
+profile logrotate @{exec_path} flags=(attach_disconnected,complain) {
+  #include <abstractions/base>
+  #include <abstractions/nameservice-strict>
+
+  # Needed for logfiles owned by other users than root, for instance exim.
+  capability dac_read_search,
+  capability dac_override,
+
+  capability chown,
+  capability setgid,
+  capability setuid,
+  capability fsetid,
+  capability fowner,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/dash                   rix,
+  /{usr/,}bin/ls                     rix,
+  /{usr/,}bin/gzip                   rix,
+  /{usr/,}sbin/invoke-rc.d           rix,
+  /{usr/,}lib/rsyslog/rsyslog-rotate rix,
+
+  # no new privs
+  #/{usr/,}bin/systemctl              rCx -> systemctl,
+  /{usr/,}bin/systemctl rix,
+  /{usr/,}sbin/runlevel rix,
+  #include <abstractions/wutmp>
+  ptrace (read),
+  capability sys_ptrace,
+  owner @{PROC}/@{pid}/stat r,
+        @{PROC}/1/environ r,
+        @{PROC}/1/sched r,
+        @{PROC}/cmdline r,
+        @{PROC}/sys/kernel/osrelease r,
+
+  /etc/ r,
+  /etc/logrotate.conf rk,
+  /etc/logrotate.d/ r,
+  /etc/logrotate.d/* rk,
+
+  /var/lib/logrotate/status{,.tmp} rw,
+
+  /var/log/** rw,
+
+  # Needed to remove the following error:
+  #  logrotate[]: error: could not change directory to '.'
+  / r,
+
+  @{sys}/firmware/efi/efivars/SecureBoot-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]* r,
+
+
+  profile systemctl flags=(attach_disconnected, complain) {
+    #include <abstractions/base>
+    #include <abstractions/wutmp>
+
+    capability sys_ptrace,
+    ptrace (read),
+
+    /{usr/,}bin/systemctl mr,
+
+    owner @{PROC}/@{pid}/stat r,
+          @{PROC}/1/environ r,
+          @{PROC}/1/sched r,
+          @{PROC}/cmdline r,
+          @{PROC}/sys/kernel/osrelease r,
+
+    /dev/kmsg rw,
+
+  }
+
+  #include if exists <local/logrotate>
+}

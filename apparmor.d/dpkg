@@ -1,0 +1,148 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/dpkg
+profile dpkg @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+
+  # To set proper ownership/permissions of installed files.
+  capability chown,
+  capability fowner,
+  capability fsetid,
+
+  # These are needed because dpkg wants to read/write files from/to directories owned by different
+  # users than root, for instance files in the /usr/share/polkit-1/ dir , which is owned by the
+  # "polkitd" user with the "drwx------" permissions.
+  capability dac_read_search,
+  capability dac_override,
+
+  # Needed? (##FIXME##)
+  capability setgid,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/dash        rix,
+  /{usr/,}bin/rm          rix,
+
+  /{usr/,}bin/dpkg-query  rPx,
+  # Do not strip env to avoid errors like the following:
+  #  ERROR: ld.so: object 'libfakeroot-sysv.so' from LD_PRELOAD cannot be preloaded (cannot open
+  #  shared object file): ignored.
+  /{usr/,}bin/dpkg-deb    rpx,
+  /{usr/,}bin/dpkg-split  rPx,
+
+  /usr/share/debian-security-support/check-support-status.hook rPx,
+
+  /{usr/,}bin/pager       rCx -> diff,
+  /{usr/,}bin/less        rCx -> diff,
+  /{usr/,}bin/more        rCx -> diff,
+  /{usr/,}bin/diff        rCx -> diff,
+
+  # Run the package maintainer's scripts
+  # What to do with it? Maintainer scripts can use lots of tools. (#FIXME#)
+  # Move it to a child profile once more transitions will be available
+  /var/lib/dpkg/ r,
+  /var/lib/dpkg/** rwkl -> /var/lib/dpkg/**,
+  /var/lib/dpkg/info/*.{config,templates} rPUx,
+  /var/lib/dpkg/info/*.{preinst,postinst} rPUx,
+  /var/lib/dpkg/info/*.{prerm,postrm}     rPUx,
+  /var/lib/dpkg/info/*.control            r,
+  /var/lib/dpkg/tmp.ci/{config,templates} rPUx,
+  /var/lib/dpkg/tmp.ci/{preinst,postinst} rPUx,
+  /var/lib/dpkg/tmp.ci/{prerm,postrm}     rPUx,
+  /var/lib/dpkg/tmp.ci/control            r,
+  #/var/lib/dpkg/info/*.{config,templates} rCx -> scripts,
+  #/var/lib/dpkg/info/*.{preinst,postinst} rCx -> scripts,
+  #/var/lib/dpkg/info/*.{prerm,postrm}     rCx -> scripts,
+  #/var/lib/dpkg/tmp.ci/{config,templates} rCx -> scripts,
+  #/var/lib/dpkg/tmp.ci/{preinst,postinst} rCx -> scripts,
+  #/var/lib/dpkg/tmp.ci/{prerm,postrm}     rCx -> scripts,
+
+  /etc/dpkg/dpkg.cfg.d/{,*} r,
+  /etc/dpkg/dpkg.cfg r,
+
+  owner @{PROC}/@{pid}/fd/ r,
+
+  owner /tmp/apt-dpkg-install-*/ r,
+
+  /var/log/dpkg.log w,
+
+  # Basically, dpkg needs R/W permissions to the following files since it installs them.
+  # It also needs the L permission when a package is reinstalled.
+  /usr/    r,
+  /usr/**  rwl -> /usr/**,
+  /lib/    r,
+  /lib/**  rwl -> /lib/** ,
+  /bin/    r,
+  /bin/*   rwl -> /bin/*,
+  /sbin/   r,
+  /sbin/*  rwl -> /sbin/*,
+  /etc/    r,
+  /etc/**  rwl -> /etc/**,
+  /boot/   r,
+  /boot/** rwl -> /boot/**,
+  /opt/    r,
+  /opt/**  rwl -> /opt/**,
+  # Without backups/, cache/, log/, mail/, opt/, tmp/ .
+  /var/lib/      r,
+  /var/lib/**    rwl -> /var/lib/**,
+  /var/local/    r,
+  /var/local/**  rwl -> /var/local/**,
+  /var/spool/    r,
+  /var/spool/**  rwl -> /var/spool/**,
+  # To create log and cache dirs
+  /var/log/**/   rw,
+  /var/cache/**/ rw,
+
+  # file_inherit
+  owner /dev/tty[0-9]* rw,
+
+
+  profile diff {
+    #include <abstractions/base>
+    #include <abstractions/consoles>
+
+    /{usr/,}bin/pager mr,
+    /{usr/,}bin/less  mr,
+    /{usr/,}bin/more  mr,
+    /{usr/,}bin/diff  mr,
+
+    owner @{HOME}/.lesshst r,
+
+    # Diff changed config files
+    /etc/** r,
+
+  }
+
+  profile scripts {
+    #include <abstractions/base>
+
+    /var/lib/dpkg/info/*.config             r,
+    /var/lib/dpkg/info/*.{preinst,postinst} r,
+    /var/lib/dpkg/info/*.{prerm,postrm}     r,
+    /var/lib/dpkg/tmp.ci/config             r,
+    /var/lib/dpkg/tmp.ci/{preinst,postinst} r,
+    /var/lib/dpkg/tmp.ci/{prerm,postrm}     r,
+
+    /{usr/,}bin/    r,
+    /{usr/,}bin/*   rPUx,
+    /{usr/,}sbin/   r,
+    /{usr/,}sbin/*  rPUx,
+
+  }
+
+  #include if exists <local/dpkg>
+}

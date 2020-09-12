@@ -1,0 +1,45 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/dconf-editor
+profile dconf-editor @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/gtk>
+  #include <abstractions/fonts>
+  #include <abstractions/fontconfig-cache-read>
+  #include <abstractions/freedesktop.org>
+  #include <abstractions/dconf>
+  #include <abstractions/deny-root-dir-access>
+
+  @{exec_path} mr,
+
+  owner /{var/,}run/user/[0-9]*/dconf/ rw,
+  owner /{var/,}run/user/[0-9]*/dconf/user rw,
+
+  # When GSETTINGS_BACKEND=keyfile
+  owner @{HOME}/.config/glib-2.0/ rw,
+  owner @{HOME}/.config/glib-2.0/settings/ rw,
+  owner @{HOME}/.config/glib-2.0/settings/keyfile rw,
+  owner @{HOME}/.config/glib-2.0/settings/.goutputstream-* rw,
+
+  /usr/share/glib-2.0/schemas/{,*} r,
+
+  owner @{HOME}/.Xauthority r,
+
+  # file_inherit
+  owner /dev/tty[0-9]* rw,
+
+  #include if exists <local/dconf-editor>
+}

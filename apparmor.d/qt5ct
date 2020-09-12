@@ -1,0 +1,63 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/qt5ct
+profile qt5ct @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/base>
+  #include <abstractions/gtk>
+  #include <abstractions/fonts>
+  #include <abstractions/fontconfig-cache-read>
+  #include <abstractions/freedesktop.org>
+  #include <abstractions/dri-common>
+  #include <abstractions/dri-enumerate>
+  #include <abstractions/mesa>
+  #include <abstractions/qt5-compose-cache-write>
+  #include <abstractions/nameservice-strict>
+
+  @{exec_path} mr,
+
+  owner @{HOME}/.config/qt5ct/ rw,
+  owner @{HOME}/.config/qt5ct/** rwk,
+  owner @{HOME}/.config/qt5ct/qt5ct.conf.* rwl -> @{HOME}/.config/qt5ct/#[0-9]*[0-9],
+  owner @{HOME}/.config/qt5ct/colors/*.conf rwl -> @{HOME}/.config/qt5ct/colors/#[0-9]*[0-9],
+
+  owner @{HOME}/.config/fontconfig/ rw,
+  owner @{HOME}/.config/fontconfig/** rw,
+  owner @{HOME}/.config/fontconfig/fonts.conf.back rwl -> @{HOME}/.config/fontconfig/#[0-9]*[0-9],
+
+  owner @{HOME}/.config/kdeglobals r,
+
+  owner @{HOME}/.cache/ rw,
+  owner @{HOME}/.cache/icon-cache.kcache rw,
+
+  /usr/share/qt5ct/** r,
+
+  /usr/share/xsessions/{,*.desktop} r,
+
+  owner @{PROC}/@{pid}/cmdline r,
+        @{PROC}//sys/kernel/random/boot_id r,
+
+  /etc/X11/cursors/*.theme r,
+
+  /etc/machine-id r,
+  /var/lib/dbus/machine-id r,
+
+  /usr/share/hwdata/pnp.ids r,
+
+  /dev/shm/#[0-9]*[0-9] rw,
+
+  #include if exists <local/qt5ct>
+}

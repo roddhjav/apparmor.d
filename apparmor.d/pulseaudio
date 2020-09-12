@@ -1,0 +1,87 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2017-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/pulseaudio
+profile pulseaudio @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/audio>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/deny-root-dir-access>
+
+  ptrace (trace) peer=@{profile_name},
+
+  signal (receive) peer=pacmd,
+
+  @{exec_path} mrix,
+
+  /{usr/,}lib/@{multiarch}/pulse/gconf-helper mrix,
+
+  # PulseAudio files
+  /usr/share/pulseaudio/** r,
+  /{usr/,}lib/pulse-*/modules/*.so mr,
+
+  # PulseAudio home config files
+  owner @{HOME}/.config/pulse/{,**} rw,
+
+  # Needed when PulseAudio is started via the start-pulseaudio-x11 script
+  owner @{HOME}/.Xauthority r,
+
+  # TCP wrap
+  /etc/hosts.{allow,deny} r,
+
+  owner /{,var/}run/user/[0-9]*/ rw,
+  owner /{,var/}run/user/[0-9]*/pulse/{,*} rw,
+
+  /usr/share/applications/{,**} r,
+
+  @{sys}/bus/ r,
+  @{sys}/class/ r,
+  @{sys}/class/sound/ r,
+  @{sys}/devices/**/sound/**/{uevent,pcm_class} r,
+  /{,var/}run/udev/data/+sound* r,
+  /{,var/}run/udev/data/c116:[0-9]* r, # For ALSA
+
+  @{sys}/devices/virtual/dmi/id/{bios_vendor,board_vendor,sys_vendor} r,
+  @{sys}/devices/system/node/ r,
+  @{sys}/devices/system/node/node[0-9]/meminfo r,
+
+  /{,var/}run/systemd/users/[0-9]* r,
+
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/stat r,
+
+  /var/lib/dbus/machine-id r,
+  /etc/machine-id r,
+
+  # The orcexec.* file is JIT compiled code for various GStreamer elements.
+  # If one is blocked the next is used instead.
+  owner /{var/,}run/user/[0-9]*/orcexec.* mrw,
+  #owner @{HOME}/orcexec.* mrw,
+  #owner /tmp/orcexec.* mrw,
+
+  # For SDDM
+  owner /var/lib/sddm/.config/pulse/ rw,
+  owner /var/lib/sddm/.config/pulse/*-{device,stream}-volumes.tdb rw,
+  owner /var/lib/sddm/.config/pulse/*-default-{sink,source} rw,
+  owner /var/lib/sddm/.config/pulse/*-card-database.tdb rw,
+  owner /var/lib/sddm/.config/pulse/cookie rwk,
+
+  # file_inherit
+  owner /dev/tty[0-9]* rw,
+  owner @{HOME}/.xsession-errors w,
+
+  #include if exists <local/pulseaudio>
+}

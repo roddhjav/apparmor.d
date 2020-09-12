@@ -1,0 +1,157 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+# Video/audio extensions:
+# a52, aac, ac3, mka, flac, mp1, mp2, mp3, mpc, oga, oma, wav, wv, wm, wma, 3g2, 3gp, 3gp2, 3gpp,
+# asf, avi, divx, m1v, m2v, m4v, mkv, mov, mp4, mpa, mpe, mpg, mpeg, mpeg1, mpeg2, mpeg4, ogg, ogm,
+# ogx, ogv, rm, rmvb, webm, wmv, wtv, mp2t
+@{vidcutter_ext}  = [aA]{52,[aA][cC],[cC]3}
+@{vidcutter_ext} += [mM][kK][aA]
+@{vidcutter_ext} += [fF][lL][aA][cC]
+@{vidcutter_ext} += [mM][pP][123cC]
+@{vidcutter_ext} += [oO][gGmM][aA]
+@{vidcutter_ext} += [wW]{,[aA]}[vV]
+@{vidcutter_ext} += [wW][mM]{,[aA]}
+@{vidcutter_ext} += 3[gG]{[2pP],[pP][2pP]}
+@{vidcutter_ext} += [aA][sS][fF]
+@{vidcutter_ext} += [aA][vV][iI]
+@{vidcutter_ext} += [dD][iI][vV][xX]
+@{vidcutter_ext} += [mM][124][vV]
+@{vidcutter_ext} += [mM][kKoO][vV]
+@{vidcutter_ext} += [mM][pP][4aAeEgG]
+@{vidcutter_ext} += [mM][pP][eE][gG]{,[124]}
+@{vidcutter_ext} += [oO][gG][gGmMxXvV]
+@{vidcutter_ext} += [rR][mM]{,[vV][bB]}
+@{vidcutter_ext} += [wW][eE][bB][mM]
+@{vidcutter_ext} += [wW][mMtT][vV]
+@{vidcutter_ext} += [mM][pP]2[tT]
+
+@{exec_path} = /{usr/,}bin/vidcutter
+profile vidcutter @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/X>
+  #include <abstractions/gtk>
+  #include <abstractions/freedesktop.org>
+  #include <abstractions/fonts>
+  #include <abstractions/fontconfig-cache-read>
+  #include <abstractions/dri-enumerate>
+  #include <abstractions/mesa>
+  #include <abstractions/qt5-settings-write>
+  #include <abstractions/qt5-compose-cache-write>
+  #include <abstractions/user-download-strict>
+  #include <abstractions/audio>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/python>
+  #include <abstractions/openssl>
+  #include <abstractions/ssl_certs>
+  #include <abstractions/deny-dconf>
+  #include <abstractions/deny-root-dir-access>
+
+  @{exec_path} r,
+  /{usr/,}bin/python3.[0-9]* r,
+
+  /{usr/,}bin/ r,
+  /{usr/,}sbin/ldconfig  rix,
+
+  /{usr/,}bin/ffmpeg    rPUx,
+  /{usr/,}bin/ffprobe   rPUx,
+  /{usr/,}bin/mediainfo rPUx,
+
+  /{usr/,}bin/xdg-open                                    rCx -> open,
+  /{usr/,}lib/@{multiarch}/glib-[0-9]*/gio-launch-desktop rCx -> open,
+
+  # Which files vidcutter should be able to open
+        / r,
+        /home/ r,
+  owner @{HOME}/ r,
+  owner @{HOME}/**/ r,
+        /media/ r,
+  owner /media/**/ r,
+  owner /{home,media}/**.@{vidcutter_ext} rw,
+
+  owner @{HOME}/ r,
+  owner @{HOME}/.config/vidcutter/ rw,
+  owner @{HOME}/.config/vidcutter/* rwkl -> @{HOME}/.config/vidcutter/#[0-9]*[0-9],
+
+  # If one is blocked, the others are probed.
+  deny owner @{HOME}/#[0-9]*[0-9] mrw,
+       owner @{HOME}/.glvnd* mrw,
+  #    owner /tmp/#[0-9]*[0-9] mrw,
+  #    owner /tmp/.glvnd* mrw,
+
+  owner @{HOME}/.cache/ rw,
+  owner @{HOME}/.cache/qtshadercache/ rw,
+  owner @{HOME}/.cache/qtshadercache/#[0-9]*[0-9] rw,
+  owner @{HOME}/.cache/qtshadercache/[0-9a-f]* rwl -> @{HOME}/.cache/qtshadercache/#[0-9]*[0-9],
+  owner @{HOME}/.cache/qtshadercache-*-little_endian-*/#[0-9]*[0-9] rw,
+  owner @{HOME}/.cache/qtshadercache-*-little_endian-*/[0-9a-f]* rwl -> @{HOME}/.cache/qtshadercache-*-little_endian-*/#[0-9]*[0-9],
+
+  owner @{HOME}/.config/qt5ct/{,**} r,
+  /usr/share/qt5ct/** r,
+
+  deny owner @{PROC}/@{pid}/cmdline r,
+       owner @{PROC}/@{pid}/fd/ r,
+  # To remove the following error:
+  #  GLib-GIO-WARNING **: Error creating IO channel for /proc/self/mountinfo: Permission denied
+  #  (g-file-error-quark, 2)
+       owner @{PROC}/@{pid}/mountinfo r,
+       owner @{PROC}/@{pid}/mounts r,
+  deny       @{PROC}/sys/kernel/random/boot_id r,
+
+  @{sys}/devices/system/node/ r,
+  @{sys}/devices/system/node/node[0-9]*/meminfo r,
+
+  owner /tmp/vidcutter-[0-9A-F]*-[0-9A-F]*-[0-9A-F]*-[0-9A-F]*-[0-9A-F]* w,
+  owner /tmp/#[0-9]*[0-9] rw,
+  owner /tmp/*.jpg rwl -> /tmp/#[0-9]*[0-9],
+  owner /tmp/vidcutter/{,*} rw,
+
+  deny /dev/ r,
+       /dev/shm/#[0-9]*[0-9] rw,
+       /dev/disk/*/ r,
+
+  /etc/vdpau_wrapper.cfg r,
+
+  /etc/fstab r,
+
+  /usr/share/hwdata/pnp.ids r,
+
+  /var/lib/dbus/machine-id r,
+  /etc/machine-id r,
+
+  # Allowed apps to open
+  /{usr/,}lib/firefox/firefox rPUx,
+
+  # file_inherit
+  owner /dev/tty[0-9]* rw,
+
+
+  profile open {
+    #include <abstractions/base>
+    #include <abstractions/xdg-open>
+
+    /{usr/,}bin/xdg-open mr,
+    /{usr/,}lib/@{multiarch}/glib-[0-9]*/gio-launch-desktop mr,
+
+    # Allowed apps to open
+    /{usr/,}lib/firefox/firefox rPUx,
+
+    # file_inherit
+    owner @{HOME}/.xsession-errors w,
+
+  }
+
+  #include if exists <local/vidcutter>
+}

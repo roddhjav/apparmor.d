@@ -1,0 +1,42 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2018-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/wget
+profile wget @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/user-download-strict>
+  #include <abstractions/openssl>
+  #include <abstractions/ssl_certs>
+
+  # For downloading files as root to user owned dirs
+  capability dac_read_search,
+  capability dac_override,
+
+  @{exec_path} mr,
+
+  /etc/wgetrc r,
+
+  owner @{HOME}/.wget-hsts rwk,
+
+  /usr/share/publicsuffix/public_suffix_list.* r,
+
+  # For apt
+  owner /var/cache/google-android-build-tools-*-installer/build-tools_*-linux.zip w,
+  owner /var/cache/google-android-platform-*-installer/platform-*.zip w,
+
+  #include if exists <local/wget>
+}

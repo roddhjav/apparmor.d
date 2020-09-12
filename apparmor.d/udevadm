@@ -1,0 +1,87 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path}  = /{usr/,}bin/udevadm
+@{exec_path} += /{usr/,}lib/systemd/systemd-udevd
+profile udevadm @{exec_path} flags=(complain,attach_disconnected) {
+  #include <abstractions/base>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/consoles>
+  #include <abstractions/systemd-common>
+
+  # (##FIXME##)
+  capability sys_admin,
+  capability net_admin,
+  capability dac_read_search,
+  capability dac_override,
+  capability sys_ptrace,
+  capability sys_resource,
+  capability chown,
+  capability fsetid,
+  capability sys_module,
+
+  ptrace (read),
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/chgrp rix,
+  /{usr/,}bin/chmod rix,
+
+  /{usr/,}sbin/*                rPUx,
+
+  /{usr/,}lib/udev/*            rPUx,
+  /{usr/,}lib/systemd/systemd-* rPUx,
+  /{usr/,}lib/crda/*            rPUx,
+
+  /etc/console-setup/*.sh       rPUx,
+
+  /etc/default/* r,
+
+  /etc/udev/ r,
+  /etc/udev/udev.conf r,
+  /etc/udev/rules.d/ r,
+  /etc/udev/rules.d/[0-9][0-9]-*.rules r,
+
+  /etc/udev/hwdb.d/ r,
+  /etc/udev/hwdb.d/[0-9][0-9]-*.hwdb r,
+  /etc/udev/hwdb.bin rw,
+  /etc/udev/.#hwdb.bin* rw,
+
+  /etc/modprobe.d/ r,
+  /etc/modprobe.d/*.conf r,
+
+  /etc/systemd/network/ r,
+  /etc/systemd/network/[0-9][0-9]-*.link r,
+
+  /{var/,}run/udev/ rw,
+  /{var/,}run/udev/** rw,
+
+  /{var/,}run/systemd/seats/seat[0-9]* r,
+
+  @{sys}/** rw,
+
+  /dev/ rw,
+  /dev/** rwk,
+
+  owner @{PROC}/@{pid}/oom_score_adj rw,
+  owner @{PROC}/@{pid}/fd/ r,
+        @{PROC}/@{pids}/cgroup r,
+        @{PROC}/sys/kernel/random/boot_id r,
+
+  # file_inherit
+  owner @{HOME}/.xsession-errors w,
+
+  #include if exists <local/udevadm>
+}

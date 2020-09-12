@@ -1,0 +1,70 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/youtube-viewer
+profile youtube-viewer @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/perl>
+  #include <abstractions/openssl>
+  #include <abstractions/ssl_certs>
+  #include <abstractions/deny-root-dir-access>
+
+  signal (receive) set=(hup, winch) peer=gtk-youtube-viewer//xterm,
+
+  @{exec_path} r,
+  /{usr/,}bin/perl r,
+
+  /{usr/,}bin/dash    rix,
+  /{usr/,}bin/infocmp rix,
+  /{usr/,}bin/stty    rix,
+
+  /{usr/,}bin/wget    rCx -> wget,
+
+  owner @{HOME}/.config/youtube-viewer/{,*} rw,
+  owner @{HOME}/.cache/youtube-viewer/{,*} rw,
+  owner @{HOME}/Downloads/youtube-viewer/{,*} rw,
+
+  /etc/inputrc r,
+
+  # Players
+  /{usr/,}bin/mpv      rPUx,
+  /{usr/,}bin/vlc      rPUx,
+  /{usr/,}bin/smplayer rPUx,
+
+  /{usr/,}bin/ffmpeg   rPUx,
+
+
+  profile wget {
+    #include <abstractions/base>
+    #include <abstractions/consoles>
+    #include <abstractions/nameservice-strict>
+    #include <abstractions/user-download-strict>
+    #include <abstractions/ssl_certs>
+
+    signal (receive) set=(hup, winch) peer=gtk-youtube-viewer//xterm,
+
+    /{usr/,}bin/wget mr,
+
+    /etc/wgetrc r,
+
+    owner @{HOME}/.wget-hsts r,
+    owner @{HOME}/wget-log{,.[0-9]*} rw,
+
+  }
+
+  #include if exists <local/youtube-viewer>
+}

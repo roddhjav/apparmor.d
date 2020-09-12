@@ -1,0 +1,64 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/mount
+profile mount @{exec_path} flags=(complain) {
+  #include <abstractions/base>
+  #include <abstractions/disks-write>
+  #include <abstractions/nameservice-strict>
+
+  # To be able to mount anything
+  #  mount("/dev/sdb1", "/mnt", "ext4", 0, NULL) = -1 EPERM (Operation not permitted)
+  #  write(2, "/mnt: permission denied.", 24) = 24
+  capability sys_admin,
+
+  # For NTFS mounts
+  capability setgid,
+  capability setuid,
+
+  mount,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/ntfs-3g     rPx,
+  /{usr/,}sbin/mount.cifs rPx,
+
+  # Mount points
+  /media/*/ r,
+  /media/*/*/ r,
+  /mnt/ r,
+  /mnt/*/ r,
+  /media/cdrom[0-9]/ r,
+
+  # Mount iso/img files
+  owner @{HOME}/**.{iso,img,bin,mdf,nrg} rwk,
+  owner /media/*/**.{iso,img,bin,mdf,nrg} rwk,
+  owner @{HOME}/**.{ISO,IMG,BIN,MDF,NRG} rwk,
+  owner /media/*/**.{ISO,IMG,BIN,MDF,NRG} rwk,
+
+  # The special /dev/loop-control file can be used to create and destroy loop devices or to find
+  # the first available loop device.
+  /dev/loop-control rw,
+
+  /etc/fstab r,
+
+  owner @{PROC}/@{pid}/mountinfo r,
+
+  owner /{,var/}run/mount/ rw,
+  owner /{,var/}run/mount/utab{,.*} rw,
+  owner /{,var/}run/mount/utab.lock wk,
+
+  #include if exists <local/mount>
+}

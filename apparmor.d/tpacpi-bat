@@ -1,0 +1,36 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2017-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/tpacpi-bat
+profile tpacpi-bat @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/perl>
+
+  @{exec_path} mr,
+  /{usr/,}bin/perl r,
+
+  /{usr/,}bin/dash rix,
+  /{usr/,}bin/cat rix,
+
+  # To load the acpi_call module
+  /{usr/,}bin/kmod rPx,
+
+  @{PROC}/acpi/call rw,
+
+  @{sys}/devices/virtual/dmi/id/product_version r,
+  @{sys}/devices/**/path r,
+
+  #include if exists <local/tpacpi-bat>
+}

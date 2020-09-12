@@ -1,0 +1,77 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{BUILD_DIR} = /media/debuilder/
+
+@{exec_path} = /{usr/,}bin/uscan
+profile uscan @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/perl>
+  #include <abstractions/openssl>
+  #include <abstractions/ssl_certs>
+
+  @{exec_path} r,
+  /{usr/,}bin/perl r,
+
+  /{usr/,}bin/bash rix,
+  /{usr/,}bin/pwd  rix,
+  /{usr/,}bin/find rix,
+  /{usr/,}bin/file rix,
+
+  /{usr/,}bin/tar   rix,
+  /{usr/,}bin/gzip  rix,
+  /{usr/,}bin/bzip2 rix,
+
+  /{usr/,}bin/uupdate  rPUx,
+
+  # To run custom maintainer scripts
+  owner @{BUILD_DIR}/**/debian/* rPUx,
+
+  /{usr/,}bin/gpg       rCx -> gpg,
+  /{usr/,}bin/gpgv      rCx -> gpg,
+
+  /etc/dpkg/origins/debian r,
+
+  /etc/devscripts.conf r,
+  /etc/magic r,
+
+  # For package building
+  owner @{BUILD_DIR}/** rwkl -> @{BUILD_DIR}/**,
+
+
+  # For GPG keys
+  owner /tmp/*/ rw,
+  owner /tmp/*/trustedkeys.gpg w,
+
+  profile gpg {
+    #include <abstractions/base>
+
+    /{usr/,}bin/gpg  mr,
+    /{usr/,}bin/gpgv mr,
+
+    owner @{HOME}/.gnupg/gpg.conf r,
+    owner @{HOME}/.gnupg/pubring.{gpg,kbx} r,
+
+    owner /tmp/*/trustedkeys.gpg rw,
+
+    owner @{BUILD_DIR}/**/debian/upstream/signing-key.asc r,
+    owner @{BUILD_DIR}/**/*.tar.* r,
+
+  }
+
+  #include if exists <local/uscan>
+}

@@ -1,0 +1,89 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}sbin/{ifup,ifdown,ifquery}
+profile ifup @{exec_path} {
+  #include <abstractions/base>
+
+  # To be able to manage network interfaces.
+  capability net_admin,
+
+  # Needed?
+  audit deny capability sys_module,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/dash  rix,
+  /{usr/,}bin/ip    rix,
+  /{usr/,}bin/sleep rix,
+
+  /{usr/,}sbin/dhclient  rPx,
+  /{usr/,}bin/macchanger rPx,
+
+  /{usr/,}bin/run-parts  rCx -> run-parts,
+
+  /etc/network/interfaces r,
+  /etc/network/interfaces.d/{,*} r,
+
+  /{var/,}run/network/ rw,
+  /{var/,}run/network/{.,}ifstate* rwk,
+  /{var/,}run/network/{ifup,ifdown}-*.pid rw,
+
+  # For setting a USB modem
+  owner /dev/ttyUSB[0-9]* rw,
+
+
+  profile run-parts {
+    #include <abstractions/base>
+
+    /{usr/,}bin/run-parts mr,
+
+    /etc/network/if-down.d/ r,
+    /etc/network/if-down.d/openvpn             rPUx,
+    /etc/network/if-down.d/wpasupplicant       rPUx,
+    /etc/wpa_supplicant/ifupdown.sh            rPUx,
+
+    /etc/network/if-post-down.d/ r,
+    /etc/network/if-post-down.d/bridge         rPUx,
+    /etc/network/if-post-down.d/hostapd        rPUx,
+    /etc/hostapd/ifupdown.sh                   rPUx,
+    /etc/network/if-post-down.d/ifenslave      rPUx,
+    /etc/network/if-post-down.d/macchanger     rPUx,
+    /etc/macchanger/ifupdown.sh                rPUx,
+    /etc/network/if-post-down.d/wireless-tools rPUx,
+    /etc/network/if-post-down.d/wpasupplicant  rPUx,
+
+    /etc/network/if-pre-up.d/ r,
+    /etc/network/if-pre-up.d/bridge            rPUx,
+    /{usr/,}lib/bridge-utils/ifupdown.sh       rPUx,
+    /etc/network/if-pre-up.d/ethtool           rPUx,
+    /etc/network/if-pre-up.d/hostapd           rPUx,
+    /etc/network/if-pre-up.d/ifenslave         rPUx,
+    /etc/network/if-pre-up.d/macchanger        rPUx,
+    /etc/network/if-pre-up.d/wireless-tools    rPUx,
+    /etc/network/if-pre-up.d/wpasupplicant     rPUx,
+    # For stable-privacy IPv6 addresses
+    /etc/network/if-pre-up.d/random-secret     rPUx,
+
+    /etc/network/if-up.d/ r,
+    /etc/network/if-up.d/ethtool               rPUx,
+    /etc/network/if-up.d/ifenslave             rPUx,
+    /etc/network/if-up.d/openvpn               rPUx,
+    /etc/network/if-up.d/wpasupplicant         rPUx,
+
+  }
+
+  #include if exists <local/ifup>
+}

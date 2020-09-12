@@ -1,0 +1,35 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/gpodder-migrate2tres
+profile gpodder-migrate2tres @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/python>
+  #include <abstractions/deny-root-dir-access>
+
+  @{exec_path} r,
+  /{usr/,}bin/python3.[0-9]* r,
+
+  /{usr/,}bin/ r,
+  /{usr/,}bin/dash rix,
+  /{usr/,}bin/uname rix,
+
+  owner @{PROC}/@{pid}/fd/ r,
+
+  owner @{HOME}/gPodder/ rw,
+  owner @{HOME}/gPodder/** rwk,
+
+  #include if exists <local/gpodder-migrate2tres>
+}

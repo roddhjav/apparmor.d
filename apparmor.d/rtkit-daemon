@@ -1,0 +1,44 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2018-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+
+@{exec_path} = /usr/libexec/rtkit-daemon
+profile rtkit-daemon @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/nameservice-strict>
+
+  # To raise process nice and set scheduling policies (real-time) and priorities
+  capability sys_nice,
+
+  # To chroot /proc/
+  capability sys_chroot,
+
+  # To run daemon as rtkit:rtkit
+  capability setgid,
+  capability setuid,
+
+  # The two are visible in systemd service, but it doesn't seem they're needed
+  #capability dac_read_search,
+  #capability sys_ptrace,
+
+  @{exec_path} mr,
+
+  # When applying policies to processes
+  @{PROC}/@{pids}/stat r,
+  @{PROC}/@{pids}/task/@{tid}/stat r,
+  @{PROC}/@{pids}/limits r,
+
+  #include if exists <local/rtkit-daemon>
+}

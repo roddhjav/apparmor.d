@@ -1,0 +1,46 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2018-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{OPERA_INSTALLDIR} = /{usr/,}lib/@{multiarch}/opera{,-beta,-developer}
+@{OPERA_HOMEDIR} = @{HOME}/.config/opera{,-beta,-developer}
+@{OPERA_CACHEDIR} = @{HOME}/.cache/opera{,-beta,-developer}
+
+@{exec_path} = @{OPERA_INSTALLDIR}/opera_sandbox
+profile opera-sandbox @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/fonts>
+  #include <abstractions/fontconfig-cache-read>
+  #include <abstractions/deny-root-dir-access>
+
+  # For kernel unprivileged user namespaces
+  capability sys_admin,
+  capability sys_chroot,
+  capability setuid,
+  capability setgid,
+
+  # optional
+  capability sys_resource,
+
+  signal (receive) set=(term, kill) peer=opera,
+
+  @{exec_path} mr,
+
+  @{OPERA_INSTALLDIR}/opera{,-beta,-developer} rPx,
+
+             @{PROC}/@{pids}/ r,
+  deny owner @{PROC}/@{pid}/oom_{,score_}adj rw,
+
+  #include if exists <local/opera-sandbox>
+}

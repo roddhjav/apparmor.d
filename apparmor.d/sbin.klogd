@@ -1,0 +1,35 @@
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2002-2009 Novell/SUSE
+#    Copyright (C) 2010 Canonical Ltd.
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#include <tunables/global>
+
+profile klogd /{usr/,}{bin,sbin}/klogd flags=(complain) {
+  #include <abstractions/base>
+
+  capability sys_admin, # for backward compatibility with kernel <= 2.6.37
+  capability syslog,
+
+  network inet stream,
+
+  /boot/System.map*     r,
+  @{PROC}/kmsg		r,
+  @{PROC}/kallsyms	r,
+  /dev/tty		rw,
+
+  /{usr/,}{bin,sbin}/klogd	rmix,
+  /var/log/boot.msg     rwl,
+  /{,var/}run/klogd.pid    krwl,
+  /{,var/}run/klogd/klogd.pid krwl,
+  /{,var/}run/klogd/kmsg   r,
+
+  # Site-specific additions and overrides. See local/README for details.
+  #include <local/sbin.klogd>
+}

@@ -1,0 +1,43 @@
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2002-2005 Novell/SUSE
+#    Copyright (C) 2009-2010 Canonical Ltd.
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#include <tunables/global>
+profile nscd /usr/{bin,sbin}/nscd flags=(complain) {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/nameservice>
+  #include <abstractions/ssl_certs>
+
+  deny capability block_suspend,
+  capability net_bind_service,
+  capability setgid,
+  capability setuid,
+
+  /etc/netgroup r,
+  /etc/nscd.conf r,
+  /usr/{bin,sbin}/nscd rmix,
+  /{,var/}run/.nscd_socket wl,
+  /{,var/}run/nscd/ rw,
+  /{,var/}run/nscd/db* rwl,
+  /{,var/}run/nscd/socket wl,
+  /{var/cache,var/lib,var/run,run}/nscd/{passwd,group,services,hosts,netgroup} rw,
+  /{,var/}run/{nscd/,}nscd.pid rwl,
+  /var/lib/libvirt/dnsmasq/ r,
+  /var/lib/libvirt/dnsmasq/*.status r,
+  /var/log/nscd.log rw,
+  @{PROC}/@{pid}/cmdline r,
+  @{PROC}/@{pid}/fd/ r,
+  @{PROC}/@{pid}/fd/* r,
+  @{PROC}/@{pid}/mounts r,
+
+  # Site-specific additions and overrides. See local/README for details.
+  #include <local/usr.sbin.nscd>
+}

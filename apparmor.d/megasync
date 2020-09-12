@@ -1,0 +1,110 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2015-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{SYNC_FOLDER}=/media/*/cloud_storage
+
+@{exec_path} = /{usr/,}bin/megasync
+profile megasync @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/X>
+  #include <abstractions/gtk>
+  #include <abstractions/freedesktop.org>
+  #include <abstractions/fonts>
+  #include <abstractions/fontconfig-cache-read>
+  #include <abstractions/dri-enumerate>
+  #include <abstractions/mesa>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/qt5-compose-cache-write>
+  #include <abstractions/qt5-settings-write>
+  #include <abstractions/user-download-strict>
+  #include <abstractions/openssl>
+  #include <abstractions/ssl_certs>
+  #include <abstractions/deny-root-dir-access>
+
+  @{exec_path} mrix,
+
+  /{usr/,}bin/bash     rix,
+  /{usr/,}bin/{,e}grep rix,
+  /{usr/,}bin/gawk     rix,
+
+  /{usr/,}bin/xrdb     rPx,
+  /{usr/,}bin/xdg-mime rPx,
+
+  /{usr/,}bin/xdg-open rCx -> open,
+
+  # Megasync home files
+  owner @{HOME}/ r,
+  owner "@{HOME}/.local/share/data/Mega Limited/" rw,
+  owner "@{HOME}/.local/share/data/Mega Limited/**" rwkl -> "@{HOME}/.local/share/data/Mega Limited/MEGAsync/#[0-9]*[0-9]",
+
+  # To configure Qt5 settings (theme, font, icons, etc.) under DE/WM without Qt integration
+  owner @{HOME}/.config/qt5ct/{,**} r,
+  /usr/share/qt5ct/** r,
+
+  owner @{HOME}/.config/QtProject.conf r,
+
+  # Sync folder
+  #/ r,
+  #/media/ r,
+  #/media/*/ r,
+  owner @{SYNC_FOLDER}/ r,
+  owner @{SYNC_FOLDER}/** rwl -> @{SYNC_FOLDER}/**,
+
+  # Proc filesystem
+  deny owner @{PROC}/@{pid}/cmdline r,
+  deny       @{PROC}/sys/kernel/random/boot_id r,
+       owner @{PROC}/@{pid}/mounts r,
+       owner @{PROC}/@{pid}/mountinfo r,
+
+  /etc/fstab r,
+
+  # Autostart
+  owner @{HOME}/.config/autostart/#[0-9]*[0-9] rw,
+  owner @{HOME}/.config/autostart/megasync.desktop rwl -> @{HOME}/.config/autostart/#[0-9]*[0-9],
+
+  /dev/shm/#[0-9]*[0-9] rw,
+
+  /etc/machine-id r,
+  /var/lib/dbus/machine-id r,
+
+  /usr/share/hwdata/pnp.ids r,
+
+  # Allowed apps to open
+  /{usr/,}lib/firefox/firefox rPx,
+  /{usr/,}bin/spacefm         rPx,
+
+  # file_inherit
+  owner /dev/tty[0-9]* rw,
+
+
+  profile open {
+    #include <abstractions/base>
+    #include <abstractions/xdg-open>
+
+    /{usr/,}bin/xdg-open mr,
+
+    # Allowed apps to open
+    /{usr/,}lib/firefox/firefox rPx,
+    /{usr/,}bin/spacefm         rPx,
+
+    # file_inherit
+    owner "@{HOME}/.local/share/data/Mega Limited/MEGAsync/logs/MEGAsync.log" rw,
+    owner @{HOME}/.xsession-errors w,
+
+  }
+
+  #include if exists <local/megasync>
+}

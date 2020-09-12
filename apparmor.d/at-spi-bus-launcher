@@ -1,0 +1,45 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2018-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}lib/at-spi2-core/at-spi-bus-launcher /usr/libexec/at-spi-bus-launcher
+profile at-spi-bus-launcher @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/deny-dconf>
+  #include <abstractions/deny-root-dir-access>
+
+  # Needed?
+  deny capability sys_nice,
+
+  signal (send) set=(term, kill) peer=dbus-daemon,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/dbus-daemon rPUx,
+
+  owner @{PROC}/@{pid}/fd/ r,
+
+  owner @{HOME}/.Xauthority r,
+  /var/lib/lightdm/.Xauthority r,
+
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+
+  # file_inherit
+  owner /dev/tty[0-9]* rw,
+  owner @{HOME}/.xsession-errors w,
+  /var/log/lightdm/seat[0-9]*-greeter.log w,
+
+  #include if exists <local/at-spi-bus-launcher>
+}

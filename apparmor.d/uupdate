@@ -1,0 +1,62 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{BUILD_DIR} = /media/debuilder/
+
+@{exec_path} = /{usr/,}bin/uupdate
+profile uupdate @{exec_path} flags=(complain) {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/perl>
+  #include <abstractions/nameservice-strict>
+
+  @{exec_path} r,
+  /{usr/,}bin/bash r,
+
+  /{usr/,}bin/basename rix,
+  /{usr/,}bin/which    rix,
+  /{usr/,}bin/tr       rix,
+  /{usr/,}bin/{,e}grep rix,
+  /{usr/,}bin/getopt   rix,
+  /{usr/,}bin/cut      rix,
+  /{usr/,}bin/mktemp   rix,
+  /{usr/,}bin/ls       rix,
+  /{usr/,}bin/wc       rix,
+  /{usr/,}bin/mv       rix,
+  /{usr/,}bin/rm       rix,
+  /{usr/,}bin/cp       rix,
+  /{usr/,}bin/expr     rix,
+
+  /{usr/,}bin/perl     rix,
+  /{usr/,}bin/chmod    rix,
+  /{usr/,}bin/md5sum   rix,
+
+  /{usr/,}bin/tar      rix,
+  /{usr/,}bin/bzip2    rix,
+  /{usr/,}bin/xz       rix,
+
+  # FIXME
+  /{usr/,}bin/debchange           rPUx,
+  /{usr/,}bin/dpkg-vendor         rPUx,
+  /{usr/,}bin/dpkg-parsechangelog rPUx,
+  /{usr/,}bin/dpkg                 rPx -> child-dpkg,
+
+  /etc/devscripts.conf r,
+
+  # For package building
+  owner @{BUILD_DIR}/** rwkl -> @{BUILD_DIR}/**,
+
+  #include if exists <local/uupdates>
+}

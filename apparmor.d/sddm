@@ -1,0 +1,212 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2018-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/sddm
+profile sddm @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/freedesktop.org>
+  #include <abstractions/fonts>
+  #include <abstractions/fontconfig-cache-read>
+  #include <abstractions/authentication>
+  #include <abstractions/wutmp>
+  #include <abstractions/dri-common>
+  #include <abstractions/nameservice-strict>
+
+  # To remove the following errors:
+  #  chown("/tmp/sddm-:0-YPUOCV", 123, 132) = -1 EPERM (Operation not permitted)
+  capability chown,
+
+  # To remove the following errors:
+  #  sddm-helper[]: pam_keyinit(sddm-greeter:session): Unable to change GID to 132 temporarily
+  #  sddm-helper[]: setgid( 132 ) failed for user:  "sddm"
+  capability setgid,
+
+  # To remove the following errors:
+  #  sddm-helper[]: pam_keyinit(sddm-greeter:session): Unable to change UID to 123 temporarily
+  #  sddm-helper[]: pam_unix(sddm-greeter:session): session opened for user sddm by (uid=0)
+  capability setuid,
+
+  # To remove the following errors:
+  #  sddm-helper[]: pam_limits(sddm-greeter:session): Could not set limit for 'nofile' to soft=1024,
+  #   hard=1048576: Operation not permitted; uid=0,euid=0
+  #  sddm-helper[*]: pam_limits(sddm-greeter:session): Could not set limit for 'memlock' to
+  #   soft=1017930240, hard=1017930240: Operation not permitted; uid=0,euid=0
+  capability sys_resource,
+
+  # To be able to display messages
+  #  sddm-greeter[98834]: Connected to the daemon.
+  #  sddm[98806]: Message received from greeter: Connect
+  #  ...
+  #  sddm-greeter[98834]: Message received from daemon: Capabilities
+  #  sddm-greeter[98834]: Message received from daemon: HostName
+  #  ...
+  #  sddm[98806]: Message received from greeter: Login
+  #  ...
+  #  sddm-greeter[98834]: Message received from daemon: LoginSucceeded
+  capability audit_write,
+
+  # To read the /var/lib/sddm/state.conf file
+  capability dac_read_search,
+
+  # Needed?
+  #capability sys_tty_config,
+  deny capability net_admin,
+
+  ptrace (trace) peer=@{profile_name},
+
+  signal (send) set=(kill, term) peer=xorg,
+
+  @{exec_path} mr,
+
+  /{usr/,}lib/@{multiarch}/sddm/sddm-helper rix,
+  /{usr/,}bin/dash mrix,
+
+  /{usr/,}bin/sddm-greeter rPx,
+  /etc/sddm/Xsession       rPx,
+  /{usr/,}bin/Xorg         rPx,
+
+  /{usr/,}bin/xauth        rCx -> xauth,
+  /{usr/,}bin/xsetroot     rPx,
+  /{usr/,}bin/sway        rPUx,
+
+  # System keyrings
+  /{usr/,}bin/gnome-keyring-daemon rPx,
+  /{usr/,}bin/kwalletd5            rPx,
+
+  # SDDM scripts
+  # What to do with it? (#FIXME#)
+  /usr/share/sddm/scripts/Xsetup          rPUx,
+  /usr/share/sddm/scripts/Xstop           rPUx,
+  /usr/share/sddm/scripts/wayland-session rPUx,
+  /usr/share/sddm/scripts/Xsession        rPUx,
+  #/usr/share/sddm/scripts/Xsetup          rCx -> sddm-scripts,
+  #/usr/share/sddm/scripts/Xstop           rCx -> sddm-scripts,
+  #/usr/share/sddm/scripts/wayland-session rCx -> sddm-scripts,
+  #/usr/share/sddm/scripts/Xsession        rCx -> sddm-scripts,
+
+  # Create kwallet dirs and files
+  owner @{HOME}/.local/share/kwalletd/ rw,
+  owner @{HOME}/.local/share/kwalletd/kdewallet.salt rw,
+        @{HOME}/.local/share/kwalletd/kdewallet.salt r,
+  owner /{,var/}run/user/[0-9]*/kwallet5.socket rw,
+  /var/log/btmp wk,
+
+  # Themes
+  /usr/share/sddm/themes/** r,
+  /usr/share/plasma/desktoptheme/** r,
+  /usr/share/desktop-base/softwaves-theme/login/*.svg r,
+
+  # List of graphical sessions
+  /usr/share/xsessions/{,*.desktop} r,
+  /usr/share/wayland-sessions/{,*.desktop} r,
+
+  owner /var/lib/sddm/** rw,
+  owner /var/lib/sddm/.cache/sddm-greeter/qmlcache/*.jsc mrw,
+  owner /var/lib/sddm/.cache/sddm-greeter/qmlcache/*.qmlc mrw,
+        /var/lib/sddm/state.conf rw,
+
+  /etc/sddm.conf.d/{,*} r,
+  /etc/sddm.conf r,
+
+  # User avatars
+  /usr/share/sddm/faces/.*.icon r,
+  /var/lib/AccountsService/icons/*.icon r,
+
+  # QT
+  /{usr/,}lib/@{multiarch}/qt5/plugins/kf5/org.kde.kwindowsystem.platforms/*.so mr,
+  /{usr/,}lib/@{multiarch}/qt5/plugins/plasma/dataengine/*.so mr,
+  /{usr/,}lib/@{multiarch}/qt5/qml/QtQuick/Controls/**.qmlc mr,
+  /{usr/,}lib/@{multiarch}/qt5/qml/QtQuick/Controls/Private/*.jsc mr,
+
+  # TMP files
+  owner /tmp/sddm-auth* rw,
+        /tmp/sddm-* rw,
+  owner /tmp/*/{,s} rw,
+
+  owner /{,var/}run/sddm/ rw,
+        /{,var/}run/sddm/* w,
+
+  # Session error logs
+  # Creating the dir structure is needed when a new user is logging in for the very first time
+  # using SDDM.
+  owner @{HOME}/.local/ w,
+  owner @{HOME}/.local/share/ w,
+  owner @{HOME}/.local/share/sddm/ w,
+
+  /{usr/,}lib/@{multiarch}/ld-*.so mr,
+
+  /etc/security/limits.d/ r,
+
+  owner @{HOME}/.Xauthority rw,
+
+  /etc/default/locale r,
+  /etc/environment r,
+
+  owner @{PROC}/@{pid}/loginuid rw,
+  owner @{PROC}/@{pid}/mounts r,
+  owner @{PROC}/@{pid}/uid_map r,
+  owner @{PROC}/1/limits r,
+        @{PROC}/sys/kernel/core_pattern r,
+
+  / r,
+
+  # Run SDDM on a specific TTY
+  /dev/tty[0-9]* rw,
+
+  /{,var/}run/systemd/sessions/[0-9]*.ref rw,
+
+
+  profile sddm-scripts {
+    #include <abstractions/base>
+    #include <abstractions/consoles>
+    #include <abstractions/bash>
+
+    /usr/share/sddm/scripts/Xsetup r,
+    /usr/share/sddm/scripts/Xstop r,
+    /usr/share/sddm/scripts/wayland-session r,
+    /usr/share/sddm/scripts/Xsession r,
+    /{usr/,}bin/dash r,
+
+    /{usr/,}bin/bash     rix,
+    /{usr/,}bin/zsh      rix,
+
+    /{usr/,}bin/id       rix,
+    /{usr/,}bin/flatpak rPUx,
+    /{usr/,}bin/sway    rPUx,
+
+    /{usr/,}bin/dbus-run-session  rix,
+    /{usr/,}bin/dbus-daemon      rPUx,
+
+  }
+
+  profile xauth {
+    #include <abstractions/base>
+
+    /{usr/,}bin/xauth mr,
+
+    owner @{HOME}/.Xauthority-c  w,
+    owner @{HOME}/.Xauthority-l  wl -> @{HOME}/.Xauthority-c,
+    owner @{HOME}/.Xauthority-n rw,
+    owner @{HOME}/.Xauthority   rwl -> @{HOME}/.Xauthority-n,
+
+    owner /{var/,}run/sddm/\{[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*\}-c  w,
+    owner /{var/,}run/sddm/\{[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*\}-l  wl -> /{var/,}run/sddm/\{[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*\}-c,
+    owner /{var/,}run/sddm/\{[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*\}-n rw,
+    owner /{var/,}run/sddm/\{[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*\}   rwl -> /{var/,}run/sddm/\{[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*\}-n,
+
+  }
+
+  #include if exists <local/sddm>
+}

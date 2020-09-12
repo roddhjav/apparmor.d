@@ -1,0 +1,71 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}sbin/gparted
+profile gparted @{exec_path} {
+  #include <abstractions/base>
+
+  @{exec_path} r,
+  /{usr/,}bin/dash rix,
+
+  /{usr/,}bin/{,e}grep rix,
+  /{usr/,}bin/cut      rix,
+  /{usr/,}bin/id       rix,
+  /{usr/,}bin/sed      rix,
+  /{usr/,}bin/mkdir    rix,
+  /{usr/,}bin/rm       rix,
+
+  /{usr/,}lib/udisks2/udisks2-inhibit  rix,
+  /usr/libexec/udisks2/udisks2-inhibit rix,
+  /{var/,}run/udev/rules.d/ rw,
+  /{var/,}run/udev/rules.d/90-udisks-inhibit.rules rw,
+
+  /{usr/,}bin/udevadm     rCx -> udevadm,
+
+  /{usr/,}sbin/gpartedbin rPx,
+  /{usr/,}bin/ps          rPx,
+  /{usr/,}bin/xhost       rPx,
+  /{usr/,}bin/pkexec      rPx,
+  /{usr/,}bin/systemctl   rPx -> child-systemctl,
+
+  # file_inherit
+  owner /dev/tty[0-9]* rw,
+
+
+  profile udevadm {
+    #include <abstractions/base>
+
+    ptrace (read),
+
+    /{usr/,}bin/udevadm mr,
+
+    /etc/udev/udev.conf r,
+
+    owner @{PROC}/@{pid}/stat r,
+          @{PROC}/cmdline r,
+          @{PROC}/1/sched r,
+          @{PROC}/1/environ r,
+          @{PROC}/sys/kernel/osrelease r,
+          @{PROC}/sys/kernel/random/boot_id r,
+
+    @{sys}/** r,
+    @{sys}/devices/virtual/block/**/uevent rw,
+    @{sys}/devices/pci[0-9]*/**/block/**/uevent rw,
+    /{var/,}run/udev/data/* r,
+
+  }
+
+  #include if exists <local/gparted>
+}

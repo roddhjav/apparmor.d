@@ -1,0 +1,31 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2018-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}sbin/smartctl
+profile smartctl @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/disks-read>
+
+  # To remove the following errors:
+  #  Probable ATA device behind a SAT layer
+  #  Try an additional '-d ata' or '-d sat' argument.
+  capability sys_rawio,
+
+  @{exec_path} mr,
+
+  /var/lib/smartmontools/** r,
+
+  #include if exists <local/smartctl>
+}

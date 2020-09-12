@@ -1,0 +1,60 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2017-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/gpg-agent
+profile gpg-agent @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/nameservice-strict>
+
+  signal (receive) peer=pinentry-*,
+
+  @{exec_path} mr,
+
+  /{usr/,}lib/gnupg/scdaemon rPx,
+
+  /usr/share/gnupg/* r,
+
+  owner @{HOME}/.gnupg/ rw,
+  owner @{HOME}/.gnupg/gpg-agent.conf r,
+  owner @{HOME}/.gnupg/private-keys-v1.d/ rw,
+  owner @{HOME}/.gnupg/private-keys-v1.d/[0-9A-F]*.key rw,
+
+  owner /var/lib/*/.gnupg/ rw,
+  owner /var/lib/*/.gnupg/private-keys-v1.d/ rw,
+  owner /var/lib/*/.gnupg/private-keys-v1.d/[0-9A-F]*.key rw,
+  owner /var/lib/*/.gnupg/S.gpg-agent rw,
+
+  owner /var/lib/*/gnupg/ rw,
+  owner /var/lib/*/gnupg/private-keys-v1.d/ rw,
+  owner /var/lib/*/gnupg/private-keys-v1.d/[0-9A-F]*.key rw,
+  owner /var/lib/*/gnupg/S.gpg-agent rw,
+
+  # For debuild
+  owner /tmp/dpkg-import-key.*/private-keys-v1.d/ w,
+  owner /{var/,}run/user/[0-9]*/gnupg/d.*/S.gpg-agent{,.extra,.browser,.ssh} w,
+
+  @{PROC}/@{pid}/fd/ r,
+
+  # PIN-entry apps
+  /{usr/,}bin/pinentry-* rPx,
+
+  # file_inherit
+  owner @{HOME}/.xsession-errors w,
+
+  # Silencer
+  deny /{usr/,}bin/.gnupg/ w,
+
+  #include if exists <local/gpg-agent>
+}

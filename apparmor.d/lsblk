@@ -1,0 +1,30 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/lsblk
+profile lsblk @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/disks-read>
+  #include <abstractions/nameservice-strict>
+
+  @{exec_path} mr,
+
+        @{PROC}/swaps r,
+  owner @{PROC}/@{pid}/mountinfo r,
+
+  /{var/,}run/mount/utab r,
+
+  #include if exists <local/lsblk>
+}

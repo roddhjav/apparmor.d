@@ -1,0 +1,92 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{BUILD_DIR} = /media/debuilder/
+
+@{exec_path} = /{usr/,}lib/apt/methods/gpgv
+profile apt-methods-gpgv @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/nameservice-strict>
+
+  # The "_apt" user is created by the postinst script of the "apt" package. It's the owner of the
+  # dirs "/var/cache/apt/archives/partial/" and "/var/lib/apt/lists/partial/" . The "_apt" user is
+  # used by APT to download packages, package list, and other things using APT methods as an
+  # unprivileged user/group (_apt/nogroup).
+  capability setgid,
+  capability setuid,
+
+  signal (receive) peer=apt,
+  signal (receive) peer=apt-get,
+  signal (receive) peer=aptitude,
+  signal (receive) peer=synaptic,
+
+  @{exec_path} mr,
+
+  # The following get "no new privs" so "rix" them
+  /{usr/,}bin/apt-key           rix,
+  /{usr/,}bin/apt-config        rix,
+  /{usr/,}bin/dpkg              rix,
+  /{usr/,}bin/gpg-connect-agent rix,
+  /{usr/,}bin/gpgconf           rix,
+  /{usr/,}bin/find              rix,
+  /{usr/,}bin/gpgv              rix,
+
+  /{usr/,}bin/cat       rix,
+  /{usr/,}bin/chmod     rix,
+  /{usr/,}bin/cmp       rix,
+  /{usr/,}bin/cp        rix,
+  /{usr/,}bin/mktemp    rix,
+  /{usr/,}bin/readlink  rix,
+  /{usr/,}bin/rm        rix,
+  /{usr/,}bin/sed       rix,
+  /{usr/,}bin/sort      rix,
+  /{usr/,}bin/touch     rix,
+
+  /etc/dpkg/dpkg.cfg.d/{,*} r,
+  /etc/dpkg/dpkg.cfg r,
+
+  /etc/apt/apt.conf.d/{,*} r,
+  /etc/apt/apt.conf r,
+
+  /etc/apt/trusted.gpg.d/{,*.gpg} r,
+  /etc/apt/trusted.gpg r,
+
+  owner /tmp/apt-key-gpghome.*/ rw,
+  owner /tmp/apt-key-gpghome.*/** rwkl -> /tmp/apt-key-gpghome.*/**,
+  owner /tmp/apt.{conf,sig,data}.* rw,
+
+        /var/lib/apt/lists/{,**} r,
+  owner /var/lib/apt/lists/* rw,
+  owner /var/lib/apt/lists/partial/* rw,
+
+  /usr/share/dpkg/cputable r,
+  /usr/share/dpkg/tupletable r,
+
+  /var/lib/dpkg/arch r,
+
+  @{PROC}/@{pid}/fd/ r,
+
+  / r,
+
+  # For package building
+  @{BUILD_DIR}/** rwkl -> @{BUILD_DIR}/**,
+
+  # file_inherit
+  owner /dev/tty[0-9]* rw,
+  /var/log/cron-apt/temp w,
+
+  #include if exists <local/apt-methods-gpgv>
+}

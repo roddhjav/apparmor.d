@@ -1,0 +1,30 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/btrfstune
+profile btrfstune @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/disks-write>
+
+  @{exec_path} mr,
+
+        @{PROC}/partitions r,
+  owner @{PROC}/@{pid}/mounts r,
+
+  owner /{,var/}run/blkid/blkid.tab{,-*} rw,
+  owner /{,var/}run/blkid/blkid.tab.old rwl -> /{,var/}run/blkid/blkid.tab,
+
+  #include if exists <local/btrfstune>
+}

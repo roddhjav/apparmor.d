@@ -1,0 +1,72 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}lib/systemd/systemd-journald
+profile systemd-journald @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/systemd-common>
+
+  capability syslog,
+  capability sys_ptrace,
+  capability dac_read_search,
+
+  @{exec_path} mr,
+
+  /etc/systemd/journald.conf r,
+
+  /{var/,}run/log/ rw,
+  /{run,var}/log/journal/ rw,
+  /{run,var}/log/journal/[0-9a-f]*/ rw,
+  /{run,var}/log/journal/[0-9a-f]*/user-[0-9a-f]*.journal* rw,
+  /{run,var}/log/journal/[0-9a-f]*/system.journal* rw,
+  /{run,var}/log/journal/[0-9a-f]*/system@[0-9a-f]*.journal* rw,
+  /{run,var}/log/journal/[0-9a-f]*/fss rw,
+
+  owner /{var/,}run/systemd/journal/{,**} rw,
+  owner /{var/,}run/systemd/notify rw,
+
+  /{var/,}run/udev/data/c189:[0-9]*  r, # for /dev/bus/usb/**
+  /{var/,}run/udev/data/c10:224      r, # for /dev/tpm0
+  /{var/,}run/udev/data/+usb:*       r,
+  /{var/,}run/udev/data/+pci:*       r,
+  /{var/,}run/udev/data/+hid:*       r,
+  /{var/,}run/udev/data/+acpi:*      r,
+  /{var/,}run/udev/data/+scsi:*      r,
+  /{var/,}run/udev/data/+bluetooth:* r,
+  /{var/,}run/udev/data/+usb-serial:* r,
+  /{var/,}run/udev/data/+platform:regulatory.[0-9]* r,
+  /{var/,}run/udev/data/+platform:simple-framebuffer.[0-9]* r,
+
+  @{sys}/devices/**/uevent r,
+  @{sys}/firmware/efi/efivars/SecureBoot-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]* r,
+
+  @{PROC}/@{pids}/comm r,
+  @{PROC}/@{pids}/cmdline r,
+  @{PROC}/@{pids}/attr/current r,
+  @{PROC}/@{pids}/sessionid r,
+  @{PROC}/@{pids}/loginuid r,
+  @{PROC}/@{pids}/cgroup r,
+  @{PROC}/sys/kernel/random/boot_id r,
+  @{PROC}/sys/kernel/hostname r,
+
+  /dev/kmsg rw,
+
+
+  /var/lib/dbus/machine-id r,
+  /etc/machine-id r,
+
+  #include if exists <local/systemd-journald>
+}

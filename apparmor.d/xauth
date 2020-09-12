@@ -1,0 +1,35 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/xauth
+profile xauth @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/deny-root-dir-access>
+
+  @{exec_path} mr,
+
+  owner @{HOME}/.Xauthority-c  w,
+  owner @{HOME}/.Xauthority-l  wl -> @{HOME}/.Xauthority-c,
+  owner @{HOME}/.Xauthority-n rw,
+  owner @{HOME}/.Xauthority   rwl -> @{HOME}/.Xauthority-n,
+
+  owner /tmp/serverauth.*-c  w,
+  owner /tmp/serverauth.*-l  wl -> /tmp/serverauth.*-c,
+  owner /tmp/serverauth.*-n rw,
+  owner /tmp/serverauth.*   rwl -> /tmp/serverauth.*-n,
+
+  #include if exists <local/xauth>
+}

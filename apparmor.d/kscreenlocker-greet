@@ -1,0 +1,83 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}lib/@{multiarch}/libexec/kscreenlocker_greet
+profile kscreenlocker-greet @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/fonts>
+  #include <abstractions/fontconfig-cache-read>
+  #include <abstractions/freedesktop.org>
+  #include <abstractions/dri-common>
+  #include <abstractions/dri-enumerate>
+  #include <abstractions/mesa>
+  #include <abstractions/qt5-compose-cache-write>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/deny-root-dir-access>
+
+  signal (send) peer=kcheckpass,
+
+  @{exec_path} mr,
+
+  /{usr/,}lib/@{multiarch}/libexec/kcheckpass rPx,
+
+  /usr/share/plasma/** r,
+  /usr/share/wallpapers/Path/contents/images/*.{jpg,png} r,
+
+  # List of graphical sessions
+  /usr/share/xsessions/{,*.desktop} r,
+  /usr/share/wayland-sessions/{,*.desktop} r,
+
+  owner @{HOME}/.Xauthority r,
+
+  owner @{HOME}/.config/kdeglobals r,
+  owner @{HOME}/.config/kscreenlockerrc r,
+
+  owner @{HOME}/.config/qt5ct/{,**} r,
+  /usr/share/qt5ct/** r,
+
+  owner @{HOME}/.cache/ rw,
+  owner @{HOME}/.cache/qtshadercache/ rw,
+  owner @{HOME}/.cache/qtshadercache/#[0-9]*[0-9] rw,
+  owner @{HOME}/.cache/qtshadercache/[0-9a-f]* rwl -> @{HOME}/.cache/qtshadercache/#[0-9]*[0-9],
+  owner @{HOME}/.cache/qtshadercache-*-little_endian-*/#[0-9]*[0-9] rw,
+  owner @{HOME}/.cache/qtshadercache-*-little_endian-*/[0-9a-f]* rwl -> @{HOME}/.cache/qtshadercache-*-little_endian-*/#[0-9]*[0-9],
+
+  owner @{HOME}/.cache/plasma-svgelements-default_v* r,
+
+  # If one is blocked, the others are probed.
+  deny owner @{HOME}/#[0-9]*[0-9] mrw,
+       owner @{HOME}/.glvnd* mrw,
+  #    owner /tmp/#[0-9]*[0-9] mrw,
+  #    owner /tmp/.glvnd* mrw,
+
+  @{PROC}/@{pid}/cmdline r,
+  @{PROC}/@{pid}/mounts r,
+  @{PROC}/sys/kernel/core_pattern r,
+
+  /etc/fstab r,
+
+  /usr/share/hwdata/pnp.ids r,
+
+  # Audio player covers
+  owner /tmp/*-cover-*.{jpg,png} r,
+
+  /var/lib/dbus/machine-id r,
+  /etc/machine-id r,
+
+  # file_inherit
+  owner @{HOME}/.xsession-errors w,
+
+  #include if exists <local/kscreenlocker-greet>
+}

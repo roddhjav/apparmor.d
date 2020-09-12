@@ -1,0 +1,132 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2017-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /etc/X11/Xsession
+profile x11-xsession @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/nameservice-strict>
+
+  @{exec_path} r,
+  /{usr/,}bin/dash rix,
+
+  /{usr/,}bin/rm       rix,
+  /{usr/,}bin/touch    rix,
+  /{usr/,}bin/{,e}grep rix,
+  /{usr/,}bin/cat      rix,
+  /{usr/,}bin/which    rix,
+  /{usr/,}bin/id       rix,
+  /{usr/,}bin/chmod    rix,
+  /{usr/,}bin/date     rix,
+  /{usr/,}bin/gawk     rix,
+  /{usr/,}bin/tempfile rix,
+  /{usr/,}bin/sed      rix,
+  /{usr/,}bin/head     rix,
+  /{usr/,}bin/fold     rix,
+
+  /{usr/,}bin/dbus-update-activation-environment rCx -> dbus,
+
+  /{usr/,}bin/gpgconf           rCx -> gpg,
+  /{usr/,}bin/run-parts         rCx -> run-parts,
+  /{usr/,}bin/udevadm           rCx -> udevadm,
+
+  /{usr/,}bin/flatpak          rPUx,
+  /{usr/,}bin/xrdb              rPx,
+  /{usr/,}bin/numlockx          rPx,
+  /{usr/,}bin/xhost             rPx,
+  /{usr/,}bin/glxinfo           rPx,
+
+  # Allowed GUI sessions to start
+  /{usr/,}bin/openbox-session   rPx,
+  /{usr/,}bin/enlightenment_start rPUx,
+  /{usr/,}bin/sway             rPUx,
+  /{usr/,}bin/ssh-agent         rPx,
+
+  owner /tmp/file* rw,
+
+  /etc/default/{,*} r,
+
+  /etc/X11/{,**} r,
+
+  owner @{HOME}/.Xauthority r,
+
+  # Xsession logs
+  owner @{HOME}/.xsession-errors w,
+
+
+  profile run-parts {
+    #include <abstractions/base>
+
+    /{usr/,}bin/run-parts mr,
+
+    /etc/X11/Xsession.d/ r,
+    /etc/X11/Xresources/ r,
+
+    /etc/default/kexec.d/ r,
+
+    # file_inherit
+    owner @{HOME}/.xsession-errors w,
+
+  }
+
+  profile dbus {
+    #include <abstractions/base>
+
+    /{usr/,}bin/dbus-update-activation-environment mr,
+
+    # file_inherit
+    owner @{HOME}/.xsession-errors w,
+
+  }
+
+  profile gpg {
+    #include <abstractions/base>
+
+    /{usr/,}bin/gpgconf mr,
+
+    /{usr/,}bin/gpg-agent rix,
+
+    owner @{HOME}/.gnupg/ rw,
+    owner @{HOME}/.gnupg/** rwkl -> @{HOME}/.gnupg/**,
+
+    @{PROC}/@{pid}/fd/ r,
+
+  }
+
+  profile udevadm {
+    #include <abstractions/base>
+
+    /{usr/,}bin/udevadm mr,
+
+    /etc/udev/udev.conf r,
+
+    owner @{PROC}/@{pid}/stat r,
+          @{PROC}/cmdline r,
+          @{PROC}/1/sched r,
+          @{PROC}/1/environ r,
+          @{PROC}/sys/kernel/osrelease r,
+
+    @{sys}/firmware/efi/efivars/SecureBoot-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]* r,
+
+    @{sys}/bus/ r,
+    @{sys}/bus/*/devices/ r,
+    @{sys}/class/ r,
+    @{sys}/class/*/ r,
+    @{sys}/devices/**/uevent r,
+    /{var/,}run/udev/data/* r,
+
+  }
+
+  #include if exists <local/x11-xsession>
+}

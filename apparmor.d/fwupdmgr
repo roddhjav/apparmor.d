@@ -1,0 +1,53 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/fwupdmgr
+profile fwupdmgr @{exec_path} flags=(complain) {
+  #include <abstractions/base>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/ssl_certs>
+  #include <abstractions/deny-dconf>
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/dbus-launch  rCx -> dbus,
+
+  owner @{HOME}/.cache/ rw,
+  owner @{HOME}/.cache/fwupd/ rw,
+  owner @{HOME}/.cache/fwupd/lvfs-metadata.xml.gz{,.*} rw,
+
+  owner /var/cache/private/fwupdmgr/fwupd/lvfs-metadata.xml.gz{,.asc}.* rw,
+  owner /var/cache/private/fwupdmgr/fwupd/lvfs-metadata.xml.gz{,.asc} rw,
+
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+
+  owner @{PROC}/@{pid}/fd/ r,
+
+  /etc/machine-id r,
+  /var/lib/dbus/machine-id r,
+
+
+  profile dbus {
+    #include <abstractions/base>
+    #include <abstractions/nameservice-strict>
+
+    /{usr/,}bin/dbus-launch mr,
+
+    owner @{HOME}/.Xauthority r,
+
+  }
+
+  #include if exists <local/fwupdmgr>
+}

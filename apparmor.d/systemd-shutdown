@@ -1,0 +1,38 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}lib/systemd/systemd-shutdown
+profile systemd-shutdown @{exec_path} flags=(complain) {
+  #include <abstractions/base>
+  #include <abstractions/systemd-common>
+
+  capability sys_resource,
+  capability sys_boot,
+  capability kill,
+
+  signal (send) set=(stop, cont, term, kill),
+
+  @{exec_path} mr,
+
+        @{PROC}/ r,
+        @{PROC}/@{pid}/fd/ r,
+        @{PROC}/@{pids}/cmdline r,
+        @{PROC}/1/cgroup r,
+  owner @{PROC}/@{pid}/comm r,
+  owner @{PROC}/sys/kernel/core_pattern w,
+  owner @{PROC}/sys/kernel/printk rw,
+
+  #include if exists <local/systemd-shutdown>
+}

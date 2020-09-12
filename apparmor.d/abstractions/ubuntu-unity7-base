@@ -1,0 +1,100 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2013-2014 Canonical Ltd.
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#
+# Rules common to applications running under Unity 7
+#
+
+#include <abstractions/gnome>
+
+#include <abstractions/dbus-session-strict>
+#include <abstractions/dbus-strict>
+
+  #
+  # Access required for connecting to/communication with Unity HUD
+  #
+  dbus (send)
+       bus=session
+       path="/com/canonical/hud",
+  dbus (send)
+       bus=session
+       interface="com.canonical.hud.*",
+  dbus (send)
+       bus=session
+       path="/com/canonical/hud/applications/*",
+  dbus (receive)
+       bus=session
+       path="/com/canonical/hud",
+  dbus (receive)
+       bus=session
+       interface="com.canonical.hud.*",
+
+  #
+  # Allow access for connecting to/communication with the appmenu
+  #
+  # dbusmenu
+  dbus (send)
+       bus=session
+       interface="com.canonical.AppMenu.*",
+  dbus (receive, send)
+        bus=session
+        path=/com/canonical/menu/**,
+
+  # gmenu
+  dbus (receive, send)
+       bus=session
+       interface=org.gtk.Actions,
+  dbus (receive, send)
+       bus=session
+       interface=org.gtk.Menus,
+
+  #
+  # Access required for using freedesktop notifications
+  #
+  dbus (send)
+       bus=session
+       path=/org/freedesktop/Notifications
+       member=GetCapabilities,
+  dbus (send)
+       bus=session
+       path=/org/freedesktop/Notifications
+       member=GetServerInformation,
+  dbus (send)
+       bus=session
+       path=/org/freedesktop/Notifications
+       member=Notify,
+  dbus (receive)
+       bus=session
+       member="Notify"
+       peer=(name="org.freedesktop.DBus"),
+  dbus (receive)
+       bus=session
+       path=/org/freedesktop/Notifications
+       member=NotificationClosed,
+  dbus (send)
+       bus=session
+       path=/org/freedesktop/Notifications
+       member=CloseNotification,
+
+  # accessibility
+  dbus (send)
+       bus=session
+       peer=(name=org.a11y.Bus),
+  dbus (receive)
+       bus=session
+       interface=org.a11y.atspi*,
+  dbus (receive, send)
+       bus=accessibility,
+
+  #
+  # Deny potentially dangerous access
+  #
+  deny dbus bus=session path=/com/canonical/[Uu]nity/[Dd]ebug**,

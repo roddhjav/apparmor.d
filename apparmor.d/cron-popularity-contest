@@ -1,0 +1,149 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /etc/cron.daily/popularity-contest
+profile cron-popularity-contest @{exec_path} {
+  #include <abstractions/base>
+
+  @{exec_path} r,
+  /{usr/,}bin/dash rix,
+
+  /{usr/,}sbin/popularity-contest rPx,
+
+  /{usr/,}bin/logger rix,
+  /{usr/,}bin/date   rix,
+  /{usr/,}bin/mktemp rix,
+  /{usr/,}bin/mkdir  rix,
+  /{usr/,}bin/rm     rix,
+  /{usr/,}bin/mv     rix,
+  /{usr/,}bin/cat    rix,
+  /{usr/,}bin/setsid rix,
+
+  # To send reports via TOR
+  /{usr/,}bin/torify   rix,
+  /{usr/,}bin/torsocks rix,
+  /{usr/,}sbin/getcap  rix,
+
+  /usr/share/popularity-contest/popcon-upload rCx -> popcon-upload,
+  /{usr/,}bin/gpg      rCx -> gpg,
+  /{usr/,}sbin/runuser rCx -> runuser,
+  /{usr/,}bin/savelog  rCx -> savelog,
+
+  /usr/share/popularity-contest/default.conf r,
+
+  /etc/popularity-contest.conf r,
+
+  /var/log/popularity-contest{,.new} rw,
+  /var/log/popularity-contest{,.new}.gpg rw,
+
+  # Store last successful http submission timestamp
+  /var/lib/popularity-contest/ rw,
+  /var/lib/popularity-contest/lastsub rw,
+
+  owner /tmp/tmp.*/ rw,
+  owner /tmp/tmp.*/random_seed w,
+
+  # file_inherit
+  owner /tmp/#[0-9]*[0-9] rw,
+
+
+  profile savelog {
+    #include <abstractions/base>
+
+    /{usr/,}bin/savelog mr,
+
+    /{usr/,}bin/date     rix,
+    /{usr/,}bin/basename rix,
+    /{usr/,}bin/which    rix,
+    /{usr/,}bin/dirname  rix,
+    /{usr/,}bin/rm       rix,
+    /{usr/,}bin/mv       rix,
+    /{usr/,}bin/touch    rix,
+    /{usr/,}bin/gzip     rix,
+
+    /{usr/,}bin/dash r,
+
+    /var/log/ r,
+    /var/log/popularity-contest.[0-9]*.gz rw,
+    /var/log/popularity-contest.[0-9]* rw,
+    /var/log/popularity-contest rw,
+
+    # file_inherit
+    owner /tmp/#[0-9]*[0-9] rw,
+
+  }
+
+  profile runuser {
+    #include <abstractions/base>
+    #include <abstractions/consoles>
+    #include <abstractions/nameservice-strict>
+    #include <abstractions/authentication>
+
+    /{usr/,}sbin/runuser mr,
+
+    /{usr/,}bin/dash rix,
+
+    /{usr/,}sbin/popularity-contest rPx,
+
+    owner @{PROC}/@{pids}/loginuid r,
+          @{PROC}/1/limits r,
+
+    /etc/security/limits.d/ r,
+
+    /var/log/popularity-contest.new w,
+
+    # file_inherit
+    owner /tmp/#[0-9]*[0-9] rw,
+
+  }
+
+  profile gpg {
+    #include <abstractions/base>
+    #include <abstractions/nameservice-strict>
+
+    /{usr/,}bin/gpg mr,
+
+    /usr/share/popularity-contest/debian-popcon.gpg r,
+
+    /var/log/popularity-contest.new r,
+    /var/log/popularity-contest.new.gpg rw,
+
+    owner /tmp/tmp.*/** rwkl -> /tmp/tmp.*/**,
+
+    # file_inherit
+    owner /tmp/#[0-9]*[0-9] rw,
+
+  }
+
+  profile popcon-upload {
+    #include <abstractions/base>
+    #include <abstractions/nameservice-strict>
+    #include <abstractions/perl>
+
+    /usr/share/popularity-contest/popcon-upload r,
+    /{usr/,}bin/perl r,
+
+    /{usr/,}bin/gzip rix,
+
+    /var/log/ r,
+    /var/log/popularity-contest.new.gpg r,
+
+    # file_inherit
+    owner /tmp/#[0-9]*[0-9] rw,
+
+  }
+
+  #include if exists <local/cron-popularity-contest>
+}

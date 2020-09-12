@@ -1,0 +1,130 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{BUILD_DIR} = /media/debuilder/
+
+@{exec_path} = /{usr/,}bin/git
+profile git @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/ssl_certs>
+  #include <abstractions/nameservice-strict>
+
+  @{exec_path} mr,
+
+  /{usr/,}lib/git-core/git   rix,
+  /{usr/,}lib/git-core/git-* rix,
+
+  # When you mistype a command, git checks the $PATH variable and search its exec dirs to give you
+  # the most similar commands, which it thinks can be used instead. Git binaries are all under
+  # /usr/bin/ , so allow only this location.
+  /{usr/,}bin/ r,
+  deny /{usr/,}sbin/ r,
+  deny /usr/local/bin/ r,
+  deny /usr/games/ r,
+  deny /usr/local/games/ r,
+
+  # These are needed for "git submodule update"
+  /{usr/,}bin/basename    rix,
+  /{usr/,}bin/sed         rix,
+  /{usr/,}bin/gettext.sh  rix,
+  /{usr/,}bin/uname       rix,
+  /{usr/,}bin/envsubst    rix,
+  /{usr/,}bin/gettext     rix,
+
+  /{usr/,}bin/dash        rix,
+  /{usr/,}bin/{,e}grep    rix,
+
+  /{usr/,}bin/pager       rPx -> child-pager,
+  /{usr/,}bin/less        rPx -> child-pager,
+  /{usr/,}bin/more        rPx -> child-pager,
+
+  /{usr/,}bin/man         rPx,
+
+  # For signing commits
+  /{usr/,}bin/gpg         rCx -> gpg,
+
+  # For SSH support
+  /{usr/,}bin/ssh         rCx -> ssh,
+
+  # Difftools
+  /{usr/,}bin/meld       rPUx,
+
+  owner @{HOME}/.config/git/ rw,
+  owner @{HOME}/.config/git/config rw,
+
+  /usr/share/git-core/{,**} r,
+
+  # For diffs
+  owner /tmp/git-difftool.*/ rw,
+  owner /tmp/git-difftool.*/right/{,**} rw,
+  owner /tmp/git-difftool.*/left/{,**} rw,
+  owner /tmp/* rw,
+
+  # For git log --show-signature
+  owner /tmp/.git_vtag_tmp* rw,
+
+  # For android studio
+  owner /tmp/git-commit-msg-.txt rw,
+
+  # For package building
+  owner @{HOME}/*/            rw,
+  owner @{HOME}/*/**          rwkl -> @{HOME}/*/**,
+  owner @{BUILD_DIR}/**       rwkl -> @{BUILD_DIR}/**,
+  owner @{BUILD_DIR}/**/bin/*  rCx -> exec,
+
+  /etc/mailname r,
+
+
+  profile gpg {
+    #include <abstractions/base>
+    #include <abstractions/consoles>
+
+    /{usr/,}bin/gpg mr,
+
+    owner @{HOME}/.gnupg/ rw,
+    owner @{HOME}/.gnupg/** rwkl -> @{HOME}/.gnupg/**,
+
+    owner /tmp/.git_vtag_tmp* r,
+
+  }
+
+  profile ssh {
+    #include <abstractions/base>
+    #include <abstractions/nameservice-strict>
+    #include <abstractions/openssl>
+
+    /{usr/,}bin/ssh mr,
+
+    /etc/ssh/ssh_config.d/{,*} r,
+    /etc/ssh/ssh_config r,
+
+    owner @{HOME}/.ssh/* r,
+    owner @{HOME}/.ssh/known_hosts rw,
+
+    owner @{PROC}/@{pid}/fd/ r,
+
+    owner /tmp/git@*:[0-9]* rwl -> /tmp/git@*:[0-9]*.*,
+
+  }
+
+  profile exec {
+    #include <abstractions/base>
+
+    owner @{BUILD_DIR}/**/bin/* mr,
+
+  }
+
+  #include if exists <local/git>
+}

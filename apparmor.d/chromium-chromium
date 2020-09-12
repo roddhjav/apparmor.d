@@ -1,0 +1,204 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2018-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{CHROMIUM_INSTALLDIR} = /{usr/,}lib/chromium
+@{CHROMIUM_HOMEDIR} = @{HOME}/.config/chromium
+@{CHROMIUM_CACHEDIR} = @{HOME}/.cache/chromium
+
+@{exec_path} = @{CHROMIUM_INSTALLDIR}/chromium
+profile chromium-chromium @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/opencl-intel>
+  #include <abstractions/gtk>
+  #include <abstractions/freedesktop.org>
+  #include <abstractions/fonts>
+  #include <abstractions/fontconfig-cache-read>
+  #include <abstractions/mesa>
+  #include <abstractions/audio>
+  #include <abstractions/user-download-strict>
+  #include <abstractions/thumbnails-cache-read>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/ssl_certs>
+  #include <abstractions/deny-dconf>
+  #include <abstractions/deny-root-dir-access>
+
+  # The following rules are needed only when the kernel.unprivileged_userns_clone option is set
+  # to "1".
+  capability sys_admin,
+  capability sys_chroot,
+  owner @{PROC}/@{pid}/setgroups w,
+  owner @{PROC}/@{pid}/gid_map w,
+  owner @{PROC}/@{pid}/uid_map w,
+
+  ptrace (trace) peer=@{profile_name},
+  ptrace (read) peer=xdg-settings,
+  ptrace (read) peer=keepassxc-proxy,
+  ptrace (read) peer=child-lsb_release,
+
+  signal (send) set=(term, kill) peer=keepassxc-proxy,
+
+  @{exec_path} mrix,
+
+  @{CHROMIUM_INSTALLDIR}/chrome-sandbox rPx,
+
+  # For storing passwords externally
+  /{usr/,}bin/keepassxc-proxy   rPUx,
+
+  /{usr/,}bin/lsb_release        rPx -> child-lsb_release,
+  /{usr/,}bin/xdg-mime          rPUx,
+  /{usr/,}bin/xdg-open           rCx -> open,
+  /{usr/,}bin/xdg-settings      rPUx,
+  /{usr/,}bin/xdg-desktop-menu  rPUx,
+  /{usr/,}bin/xdg-icon-resource rPUx,
+
+  # To remove the following error:
+  #  Error initializing NSS with a persistent database
+  owner @{HOME}/.pki/ rw,
+  owner @{HOME}/.pki/nssdb/ rw,
+  owner @{HOME}/.pki/nssdb/pkcs11.txt rw,
+  owner @{HOME}/.pki/nssdb/{cert9,key4}.db rwk,
+  owner @{HOME}/.pki/nssdb/{cert9,key4}.db-journal rw,
+
+  # Chromium files
+  /usr/share/chromium/{,**} r,
+
+  # Chrome extensions (for Debian)
+  /usr/share/webext/{,**} r,
+
+  /usr/share/mozilla/extensions/{,**} r,
+
+  /etc/chromium/ r,
+  /etc/chromium/master_preferences r,
+
+  # Chromium home files
+  owner @{HOME}/ r,
+  owner @{CHROMIUM_HOMEDIR}/ rw,
+  owner @{CHROMIUM_HOMEDIR}/** rwk,
+  owner @{CHROMIUM_HOMEDIR}/WidevineCdm/*/_platform_specific/linux_*/libwidevinecdm.so mrw,
+
+  owner @{HOME}/.local/share/.org.chromium.Chromium.* rw,
+
+  # Cache files
+  owner @{HOME}/.cache/ rw,
+  owner @{CHROMIUM_CACHEDIR}/{,**/} rw,
+  owner @{CHROMIUM_CACHEDIR}/*/**/{*-,}index rw,
+  owner @{CHROMIUM_CACHEDIR}/*/**/[a-f0-9]*_? rw,
+  owner @{CHROMIUM_CACHEDIR}/*/**/todelete_* rw,
+
+  # For importing data (bookmarks, cookies, etc) from Firefox
+  owner @{HOME}/.mozilla/firefox/profiles.ini r,
+  owner @{HOME}/.mozilla/firefox/*/ r,
+  owner @{HOME}/.mozilla/firefox/*/compatibility.ini r,
+  owner @{HOME}/.mozilla/firefox/*/search{,-metadata}.json r,
+  owner @{HOME}/.mozilla/firefox/*/.parentlock rwk,
+  owner @{HOME}/.mozilla/firefox/*/{places,cookies,favicons,formhistory,}.sqlite{,-wal,-shm,-journal} rwk,
+  owner @{HOME}/.mozilla/firefox/*/{cert9,key4}.db rwk,
+  owner @{HOME}/.mozilla/firefox/*/logins.json r,
+
+  /etc/fstab r,
+
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+
+  # Needed or chromium gets crash with the following error:
+  #  FATAL:sandbox_linux.cc(172)] Check failed: proc_fd_ >= 0 (-1 vs. 0)
+             @{PROC}/ r,
+  #
+  deny       @{PROC}/vmstat r,
+             @{PROC}/sys/kernel/yama/ptrace_scope r,
+             @{PROC}/@{pid}/fd/ r,
+  deny       @{PROC}/@{pids}/stat r,
+  deny       @{PROC}/@{pids}/statm r,
+  # To remove the following error:
+  #  Failed to adjust OOM score of renderer with pid : Permission denied
+  deny owner @{PROC}/@{pid}/oom_{,score_}adj rw,
+  #
+  deny       @{PROC}/@{pids}/cmdline r,
+  deny owner @{PROC}/@{pids}/environ r,
+       owner @{PROC}/@{pids}/task/ r,
+  deny       @{PROC}/@{pids}/task/@{tid}/stat r,
+  deny       @{PROC}/@{pids}/task/@{tid}/status r,
+  deny owner @{PROC}/@{pid}/limits r,
+  deny owner @{PROC}/@{pid}/mem r,
+       owner @{PROC}/@{pid}/mountinfo r,
+       owner @{PROC}/@{pid}/mounts r,
+  # To remove the following error:
+  #  file_path_watcher_linux.cc(71)] Failed to read /proc/sys/fs/inotify/max_user_watches
+             @{PROC}/sys/fs/inotify/max_user_watches r,
+
+   deny /dev/shm/ r,
+  owner /dev/shm/.org.chromium.Chromium.* rw,
+
+  /var/lib/dbus/machine-id r,
+  /etc/machine-id r,
+
+  # Udev enumeration
+  @{sys}/bus/ r,
+  @{sys}/bus/**/devices/ r,
+  @{sys}/devices/**/uevent r,
+  @{sys}/class/ r,
+  @{sys}/class/**/ r,
+  /{,var/}run/udev/data/* r,
+  @{sys}/devices/pci[0-9]*/**/usb[0-9]/{,**/}{descriptors,manufacturer,product,serial,bConfigurationValue} r,
+  @{sys}/devices/pci[0-9]*/**/usb[0-9]/{,**/}{busnum,devnum} r,
+
+  deny @{sys}/devices/virtual/tty/tty[0-9]/active r,
+
+  @{sys}/devices/virtual/dmi/id/sys_vendor r,
+  @{sys}/devices/virtual/dmi/id/product_name r,
+  @{sys}/devices/system/cpu/cpufreq/policy[0-9]*/cpuinfo_max_freq r,
+
+  # To remove the following error:
+  #  pcilib: Cannot open /sys/bus/pci/devices/0000:03:00.0/irq: Permission denied
+  # The irq file is needed to render pages.
+  @{sys}/devices/pci[0-9]*/**/irq r,
+
+        /var/tmp/ r,
+        /tmp/ r,
+  owner /tmp/.org.chromium.Chromium.* rw,
+  owner /tmp/.org.chromium.Chromium.*/{,**} rw,
+
+  # For the temp profile
+  owner /tmp/tmp.*/ rw,
+  owner /tmp/tmp.*/** rwk,
+
+  # For installing/updating extensions
+  owner /tmp/scoped_dir*/ rw,
+  owner /tmp/scoped_dir*/** rw,
+
+  # Silencer
+  deny @{CHROMIUM_INSTALLDIR}/** w,
+
+  # file_inherit
+  owner /dev/tty[0-9]* rw,
+
+
+  profile open {
+    #include <abstractions/base>
+    #include <abstractions/xdg-open>
+
+    /{usr/,}bin/xdg-open mr,
+
+    /{usr/,}bin/dash rix,
+
+    # Allowed apps to open
+    /{usr/,}bin/smplayer rPx,
+
+    # file_inherit
+    owner @{HOME}/.xsession-errors w,
+
+  }
+
+  #include if exists <local/chromium-chromium>
+}

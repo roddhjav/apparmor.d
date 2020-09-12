@@ -1,0 +1,72 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/sudo
+profile sudo @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/authentication>
+  #include <abstractions/wutmp>
+  #include <abstractions/nameservice-strict>
+# #include <pam/mappings>
+
+  # To remove the following errors:
+  #  sudo: unable to change to root gid: Operation not permitted
+  capability setgid,
+
+  # To remove the following errors:
+  #  sudo: PERM_SUDOERS: setresuid(-1, 1, -1): Operation not permitted
+  #  sudo: no valid sudoers sources found, quitting
+  #  sudo: setresuid() [0, 0, 0] -> [1000, -1, -1]: Operation not permitted
+  capability setuid,
+
+  # To write records to the kernel auditing log.
+  capability audit_write,
+
+  # Needed? (#FIXME#)
+  capability sys_resource,
+
+  signal,
+
+  @{exec_path} mr,
+
+  # Shells to use
+  /{usr/,}bin/{,b,d,rb}ash rpux,
+  /{usr/,}bin/{c,k,tc,z}sh rpux,
+
+  /{usr/,}bin/[a-z0-9]* rPUx,
+  /{usr/,}sbin/[a-z0-9]* rPUx,
+
+  /dev/ r,
+
+  # For timestampdir
+  owner /{var/,}run/sudo/ rw,
+  owner /{var/,}run/sudo/ts/ rw,
+  owner /{var/,}run/sudo/ts/* rwk,
+
+  @{PROC}/@{pid}/fd/ r,
+  @{PROC}/@{pids}/stat r,
+
+  /etc/sudo.conf r,
+
+  /etc/sudoers r,
+  /etc/sudoers.d/{,*} r,
+
+  # file_inherit
+  owner /dev/tty[0-9]* rw,
+  owner @{HOME}/.xsession-errors w,
+
+  #include if exists <local/sudo>
+}

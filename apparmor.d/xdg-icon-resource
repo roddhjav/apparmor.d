@@ -1,0 +1,50 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2018-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/xdg-icon-resource
+profile xdg-icon-resource @{exec_path} flags=(complain) {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/deny-root-dir-access>
+
+  @{exec_path} r,
+
+  /{usr/,}bin/dash     rix,
+  /{usr/,}bin/{,e}grep rix,
+  /{usr/,}bin/whoami   rix,
+  /{usr/,}bin/sed      rix,
+  /{usr/,}bin/basename rix,
+  /{usr/,}bin/mkdir    rix,
+  /{usr/,}bin/cp       rix,
+  /{usr/,}bin/rm       rix,
+  /{usr/,}bin/readlink rix,
+  /{usr/,}bin/touch    rix,
+
+  /{usr/,}bin/gtk-update-icon-cache rPUx,
+
+  /usr/share/icons/**.png rw,
+  /usr/share/icons/*/.xdg-icon-resource-dummy rw,
+
+  /usr/share/**/icons/**.png r,
+
+  owner /tmp/.com.google.Chrome.*/chrome-*.png r,
+
+  owner @{HOME}/.local/share/icons/**/apps/chrome-*.png rw,
+  owner @{HOME}/.local/share/icons/**/.xdg-icon-resource-dummy rw,
+  /opt/**/*.png r,
+
+  #include if exists <local/xdg-icon-resource>
+}

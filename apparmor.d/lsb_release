@@ -1,0 +1,40 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2015-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/lsb_release
+profile lsb_release @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/python>
+
+  @{exec_path} r,
+  /{usr/,}bin/python3.[0-9]* r,
+
+  /{usr/,}bin/ r,
+  /{usr/,}bin/apt-cache  rPx,
+  /{usr/,}bin/dpkg-query rPx,
+
+  /etc/lsb-release r,
+  /etc/debian_version r,
+  /etc/dpkg/origins/debian r,
+  /usr/share/distro-info/debian.csv r,
+
+  owner @{PROC}/@{pid}/fd/ r,
+
+  # file_inherit
+  owner @{HOME}/.xsession-errors w,
+
+  #include if exists <local/lsb_release>
+}

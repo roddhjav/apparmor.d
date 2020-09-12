@@ -1,0 +1,70 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/updatedb.mlocate
+profile updatedb-mlocate @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/nameservice-strict>
+
+  capability dac_read_search,
+  capability fowner,
+  capability chown,
+  capability fsetid,
+
+  @{exec_path} mr,
+
+  /{usr/,}sbin/on_ac_power rPx,
+
+  / r,
+  /boot/ r,
+  /boot/**/ r,
+
+  /home/ r,
+  @{HOME}/ r,
+  @{HOME}/**/ r,
+
+  /etc/ r,
+  /etc/**/ r,
+
+  /usr/ r,
+  /usr/**/ r,
+
+  /var/ r,
+  /var/**/ r,
+
+  /opt/ r,
+  /opt/**/ r,
+
+  /srv/ r,
+  /srv/**/ r,
+
+  # Silence the noise
+  deny /efi/ r,
+  deny /hugepages/ r,
+  deny /lost+found/ r,
+  deny /mnt/ r,
+
+  /{var/,}run/mlocate.daily.lock r,
+
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/mounts r,
+
+  /var/lib/mlocate/mlocate.db rwk,
+  /var/lib/mlocate/mlocate.db.* rw,
+
+  /etc/updatedb.conf r,
+
+  #include if exists <local/updatedb-mlocate>
+}

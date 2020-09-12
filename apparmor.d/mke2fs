@@ -1,0 +1,46 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}sbin/{mke2fs,mkfs.ext2,mkfs.ext3,mkfs.ext4}
+profile mke2fs @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/disks-write>
+  #include <abstractions/user-download-strict>
+
+  @{exec_path} mr,
+
+  # To check for badblocks
+  /{usr/,}bin/dash       rix,
+  /{usr/,}sbin/badblocks rPx,
+
+  /etc/mke2fs.conf r,
+
+  owner @{PROC}/@{pid}/mounts r,
+        @{PROC}/swaps r,
+
+  owner /{,var/}run/blkid/blkid.tab{,-*} rw,
+  owner /{,var/}run/blkid/blkid.tab.old rwl -> /{,var/}run/blkid/blkid.tab,
+
+  # A place for file images
+  owner @{HOME}/**.{iso,img,bin,mdf,nrg} rwk,
+  owner /media/*/**.{iso,img,bin,mdf,nrg} rwk,
+  owner @{HOME}/**.{ISO,IMG,BIN,MDF,NRG} rwk,
+  owner /media/*/**.{ISO,IMG,BIN,MDF,NRG} rwk,
+
+  # For virt-resize
+  owner /var/tmp/.guestfs-[0-9]*/** rwk,
+
+  #include if exists <local/mke2fs>
+}

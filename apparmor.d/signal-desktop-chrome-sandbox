@@ -1,0 +1,30 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{SIGNAL_INSTALLDIR} = "/opt/Signal{, Beta}"
+@{SIGNAL_HOMEDIR} = "@{HOME}/.config/Signal{, Beta}"
+
+@{exec_path} = @{SIGNAL_INSTALLDIR}/signal-desktop{,-beta}
+profile signal-desktop-chrome-sandbox @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/deny-root-dir-access>
+
+  @{exec_path} mr,
+
+  @{SIGNAL_INSTALLDIR}/signal-desktop rPx,
+
+  #include if exists <local/signal-desktop-chrome-sandbox>
+}
+

@@ -1,0 +1,75 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/lxappearance
+profile lxappearance @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/gtk>
+  #include <abstractions/fonts>
+  #include <abstractions/fontconfig-cache-read>
+  #include <abstractions/freedesktop.org>
+
+  @{exec_path} mr,
+
+  # When lxappearance is run as root, it wants to exec dbus-launch, and hence it creates the two
+  # following root processes:
+  #  dbus-launch --autolaunch e0a30ad97cd6421c85247839ccef9db2 --binary-syntax --close-stderr
+  #  /usr/bin/dbus-daemon --syslog-only --fork --print-pid 5 --print-address 7 --session
+  #
+  # Should this be allowed? Lxappearance works fine without this.
+  #/{usr/,}bin/dbus-launch        rCx -> dbus,
+  #/{usr/,}bin/dbus-send          rCx -> dbus,
+  deny /{usr/,}bin/dbus-launch rx,
+  deny /{usr/,}bin/dbus-send   rx,
+
+  /usr/share/lxappearance/{,**} r,
+
+  owner @{HOME}/.themes/{,**} r,
+  owner @{HOME}/.icons/{,**} rw,
+
+  owner @{HOME}/.gtkrc-2.0{,.*} rw,
+  owner @{HOME}/.config/gtk-3.0/settings.ini{,.*} rw,
+
+  /etc/X11/cursors/*.theme r,
+
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/mounts r,
+
+  /etc/fstab r,
+
+  /etc/machine-id r,
+  /var/lib/dbus/machine-id r,
+
+  # file_inherit
+  owner /dev/tty[0-9]* rw,
+
+
+  profile dbus {
+    #include <abstractions/base>
+    #include <abstractions/nameservice-strict>
+
+    /{usr/,}bin/dbus-launch   mr,
+    /{usr/,}bin/dbus-send     mr,
+    /{usr/,}bin/dbus-daemon rPUx,
+
+    # for dbus-launch
+    owner @{HOME}/.dbus/session-bus/[0-9a-f]*-[0-9] w,
+
+    @{HOME}/.Xauthority r,
+  }
+
+  #include if exists <local/lxappearance>
+}

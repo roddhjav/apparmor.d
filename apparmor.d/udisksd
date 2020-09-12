@@ -1,0 +1,152 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2018-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}lib/udisks2/udisksd /usr/libexec/udisks2/udisksd
+profile udisksd @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/disks-write>
+
+  # To remove the following errors:
+  #  udisksd[]: Error probing device: Error sending ATA command IDENTIFY DEVICE to '/dev/sda':
+  #  SGIO v3 ioctl failed (v4 not supported): Operation not permitted (g-io-error-quark, 14)
+  capability sys_rawio,
+
+  # To allow users to mount volumes
+  #  Error mounting /dev/sd*: GDBus.Error:org.freedesktop.UDisks2.Error.Failed:
+  #  Error mounting /dev/sd* at /media/*/*: Operation not permitted.
+  capability sys_admin,
+
+  # Needed?
+  deny capability sys_nice,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/dash            rix,
+  /{usr/,}bin/umount          rix,
+
+  /{usr/,}bin/eject           rPx,
+  /{usr/,}sbin/dumpe2fs       rPx,
+  /{usr/,}sbin/dmidecode      rPx,
+
+  /{usr/,}sbin/lvm           rPUx,
+
+  /{usr/,}bin/systemctl       rPx -> child-systemctl,
+
+  /{usr/,}bin/systemd-escape  rCx -> systemd-escape,
+
+  # Allow mounting of removable devices
+  mount fstype={btrfs,ext*,vfat,iso9660,udf} /dev/sd[a-z]       -> /media/*/*/,
+  mount fstype={btrfs,ext*,vfat,iso9660,udf} /dev/sd[a-z][0-9]* -> /media/*/*/,
+  # Allow mounting of loop devices (ISO files)
+  mount fstype={btrfs,ext*,vfat,iso9660,udf} /dev/loop[0-9]*        -> /media/*/*/,
+  mount fstype={btrfs,ext*,vfat,iso9660,udf} /dev/loop[0-9]*p[0-9]* -> /media/*/*/,
+  # Allow mounting of cdrom
+  mount fstype={btrfs,ext*,vfat,iso9660,udf} /dev/loop[0-9]* -> /media/cdrom[0-9]/,
+  mount fstype={iso9660,udf}                 /dev/sr[0-9]*   -> /media/cdrom[0-9]/,
+  # Allow mounting od sd cards
+  mount fstype={btrfs,ext*,vfat,iso9660,udf} /dev/mmcblk[0-9]         -> /media/*/*/,
+  mount fstype={btrfs,ext*,vfat,iso9660,udf} /dev/mmcblk[0-9]*p[0-9]* -> /media/*/*/,
+  # Allow unmounting
+  umount /media/*/,
+  umount /media/*/*/,
+  umount /media/cdrom[0-9]/,
+
+  # Be able to create/delete dirs for removable media
+  /media/*/ rw,
+  /media/*/*/ rw,
+  /media/cdrom[0-9]/ rw,
+
+  # Udisks2 config files
+  /etc/udisks2/ r,
+  /etc/udisks2/udisks2.conf r,
+
+  # For mounting NTFS disks
+  capability setuid,
+  capability setgid,
+  /{usr/,}bin/ntfs-3g rPx,
+
+  /etc/libblockdev/conf.d/ r,
+  /etc/libblockdev/conf.d/[0-9][0-9]-default.cfg r,
+
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/mounts r,
+  owner @{PROC}/@{pid}/fd/ r,
+        @{PROC}/swaps r,
+        @{PROC}/devices r,
+
+  # To be able to initialize device-mapper disk devices
+  /dev/mapper/control rw,
+
+  # The special /dev/loop-control file can be used to create and destroy loop devices or to find
+  # the first available loop device.
+  /dev/loop-control rw,
+
+  # To check whether the x-udisks-auth option was used to specify that additional authorization is
+  # required to mount/unlock a device
+  /etc/fstab r,
+  /etc/crypttab r,
+
+  # To be able to operate on encryted devices
+  /{var/,}run/cryptsetup/ r,
+  /{var/,}run/cryptsetup/L* rwk,
+
+  @{sys}/fs/ r,
+  @{sys}/bus/ r,
+  @{sys}/class/ r,
+
+  @{sys}/devices/pci[0-9]*/**/{ata,usb,mmc}[0-9]/{,**/}uevent w,
+
+  # For powering off USB devices
+  @{sys}/devices/pci[0-9]*/**/{ata,usb,mmc}[0-9]/{,**/}remove rw,
+
+  @{sys}/devices/virtual/bdi/**/read_ahead_kb r,
+
+  /{var/,}run/ r,
+
+  # Info on mounted devices
+  /{var/,}run/mount/utab{,.*} rw,
+  /{var/,}run/mount/utab.lock rwk,
+  /var/lib/udisks2/mounted-fs{,*} rw,
+
+  /{var/,}run/udisks2/ rw,
+  /{var/,}run/udisks2/loop{,.*} rw,
+  /{var/,}run/udisks2/unlocked-luks{,.*} rw,
+  /{var/,}run/udisks2/mounted-fs{,.*} rw,
+
+  /{var/,}run/systemd/seats/seat[0-9]* r,
+
+
+  profile systemd-escape {
+    #include <abstractions/base>
+
+    ptrace (read),
+
+    /{usr/,}bin/systemd-escape mr,
+
+          @{PROC}/cmdline r,
+          @{PROC}/1/sched r,
+          @{PROC}/1/environ r,
+          @{PROC}/sys/kernel/osrelease r,
+    owner @{PROC}/@{pid}/stat r,
+
+    @{sys}/firmware/efi/efivars/SecureBoot-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]* r,
+
+    /dev/kmsg w,
+
+  }
+
+  #include if exists <local/udisksd>
+}

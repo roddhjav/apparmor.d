@@ -1,0 +1,112 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2002-2005 Novell/SUSE
+#    Copyright (C) 2018-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+# pcap pcapng
+@{wireshark_ext} = [pP][cC][aA][pP]{,[nN][gG]}
+
+@{exec_path} = /{usr/,}bin/wireshark
+profile wireshark @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/nameservice>
+  #include <abstractions/X>
+  #include <abstractions/freedesktop.org>
+  #include <abstractions/fonts>
+  #include <abstractions/fontconfig-cache-read>
+  #include <abstractions/gtk>
+  #include <abstractions/user-download-strict>
+  #include <abstractions/dri-enumerate>
+  #include <abstractions/mesa>
+  #include <abstractions/qt5-compose-cache-write>
+  #include <abstractions/qt5-settings-write>
+
+  signal (send) peer=dumpcap,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/dumpcap          rPx,
+  /{usr/,}bin/xdg-open         rCx -> open,
+
+  # For reading pcaps
+        / r,
+        /tmp/ r,
+        /home/ r,
+  owner @{HOME}/ r,
+  owner @{HOME}/**/ r,
+        /media/ r,
+  owner /media/**/ r,
+  owner /{tmp,home,media}/**.@{wireshark_ext}{,.gz} rw,
+
+  # Wireshark files
+  /usr/share/wireshark/** r,
+  /{usr/,}lib/@{multiarch}/wireshark/extcap/* rix,
+  /{usr/,}lib/@{multiarch}/wireshark/plugins/*/{codecs,epan,wiretap}/*.so mr,
+  /etc/wireshark/init.lua r,
+
+  # Wireshark home files
+  owner @{HOME}/.wireshark/{,*} rw,
+  owner @{HOME}/.config/wireshark/{,*} rw,
+
+  # To configure Qt5 settings (theme, font, icons, etc.) under DE/WM without Qt integration
+  owner @{HOME}/.config/qt5ct/{,**} r,
+  /usr/share/qt5ct/** r,
+
+  deny       @{PROC}/sys/kernel/random/boot_id r,
+  deny owner @{PROC}/@{pid}/cmdline r,
+       owner @{PROC}/@{pid}/fd/ r,
+             @{PROC}/@{pid}/net/dev r,
+             @{PROC}/@{pid}/mountinfo r,
+             @{PROC}/@{pid}/mounts r,
+
+  /etc/fstab r,
+
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+
+  /usr/share/hwdata/pnp.ids r,
+
+  /usr/share/GeoIP/{,**} r,
+
+  /dev/shm/#[0-9]*[0-9] rw,
+
+  /var/lib/dbus/machine-id r,
+  /etc/machine-id r,
+
+  owner /tmp/wireshark_extcap_ciscodump_[0-9]*_* rw,
+
+  # Allowed apps to open
+  /{usr/,}lib/firefox/firefox rPUx,
+
+  # file_inherit
+  owner /dev/tty[0-9]* rw,
+  owner @{HOME}/.xsession-errors w,
+
+
+  profile open {
+    #include <abstractions/base>
+    #include <abstractions/xdg-open>
+
+    /{usr/,}bin/xdg-open mr,
+
+    # Allowed apps to open
+    /{usr/,}lib/firefox/firefox rPUx,
+
+    # file_inherit
+    owner @{HOME}/.xsession-errors w,
+
+  }
+
+  #include if exists <local/wireshark>
+}

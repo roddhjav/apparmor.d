@@ -1,0 +1,123 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+# Ebooks extensions
+# pdf, epub, djvu
+@{qpdfview_ext}   = [pP][dD][fF]
+@{qpdfview_ext}  += [eE][pP][uU][bB]
+@{qpdfview_ext}  += [dD][jJ][vV][uU]
+
+@{exec_path} = /{usr/,}bin/qpdfview
+profile qpdfview @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/X>
+  #include <abstractions/gtk>
+  #include <abstractions/fonts>
+  #include <abstractions/fontconfig-cache-read>
+  #include <abstractions/freedesktop.org>
+  #include <abstractions/mesa>
+  #include <abstractions/user-download-strict>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/dri-enumerate>
+  #include <abstractions/qt5-settings-write>
+  #include <abstractions/qt5-compose-cache-write>
+  #include <abstractions/thumbnails-cache-read>
+  #include <abstractions/deny-root-dir-access>
+
+  @{exec_path} mr,
+
+  # For PDF's internal compression
+  /{usr/,}bin/gzip     rix,
+  /{usr/,}bin/bzip2    rix,
+  /{usr/,}bin/xz       rix,
+
+  /{usr/,}bin/xdg-open rCx -> open,
+
+  # Which media files qpdfview should be able to open
+        / r,
+        /home/ r,
+  owner @{HOME}/ r,
+  owner @{HOME}/**/ r,
+        /media/ r,
+  owner /media/**/ r,
+        /tmp/ r,
+        /tmp/mozilla_*/ r,
+  owner /{home,media,tmp/mozilla_*}/**.@{qpdfview_ext} rw,
+
+  owner @{HOME}/.config/qpdfview/ rw,
+  owner @{HOME}/.config/qpdfview/* rwkl -> @{HOME}/.config/qpdfview/#[0-9]*[0-9],
+
+  owner @{HOME}/.local/share/qpdfview/ rw,
+  owner @{HOME}/.local/share/qpdfview/** rwk,
+
+  owner @{HOME}/.config/qt5ct/{,**} r,
+  /usr/share/qt5ct/** r,
+
+  /var/lib/dbus/machine-id r,
+  /etc/machine-id r,
+
+  /dev/shm/#[0-9]*[0-9] rw,
+
+  deny owner @{PROC}/@{pid}/cmdline r,
+  deny       @{PROC}/sys/kernel/random/boot_id r,
+       owner @{PROC}/@{pid}/mountinfo r,
+       owner @{PROC}/@{pid}/mounts r,
+
+  /etc/fstab r,
+
+  /usr/share/poppler/**     r,
+
+  /usr/share/hwdata/pnp.ids r,
+
+  # Print
+  owner /tmp/[0-9a-f]* rw,
+
+  # Save as
+  owner /tmp/#[0-9]*[0-9] rw,
+  owner /tmp/qpdfview.*.pdf rwl -> /tmp/#[0-9]*[0-9],
+
+  /usr/share/djvu/** r,
+
+  # Plugins
+  #/{usr/,}bin/libqpdfview_ps.so mr,
+  #/{usr/,}bin/libqpdfview_djvu.so mr,
+  #/{usr/,}lib/qpdfview/libqpdfview_ps.so mr,
+  #/{usr/,}lib/qpdfview/libqpdfview_djvu.so mr,
+
+  # Allowed apps to open
+  /{usr/,}lib/firefox/firefox rPUx,
+
+  # file_inherit
+  owner /dev/tty[0-9]* rw,
+
+
+  profile open {
+    #include <abstractions/base>
+    #include <abstractions/xdg-open>
+
+    /{usr/,}bin/xdg-open mr,
+
+    # Allowed apps to open
+    /{usr/,}lib/firefox/firefox rPUx,
+
+    # file_inherit
+    owner @{HOME}/.xsession-errors w,
+
+  }
+
+  #include if exists <local/qpdfview>
+}
+
+

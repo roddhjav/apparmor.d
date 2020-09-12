@@ -1,0 +1,36 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}sbin/kexec
+profile kexec @{exec_path} flags=(complain) {
+  #include <abstractions/base>
+
+  capability sys_boot,
+
+  @{exec_path} mr,
+
+  owner /boot/{initrd.img,vmlinuz}-* r,
+
+  @{sys}/firmware/memmap/ r,
+  @{sys}/firmware/memmap/[0-9]*/{start,end,type} r,
+  @{sys}/kernel/boot_params/data r,
+
+        @{PROC}/cmdline r,
+  owner @{PROC}/@{pid}/mounts r,
+
+  /dev/fb[0-9] r,
+
+  #include if exists <local/kexec>
+}

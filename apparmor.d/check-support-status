@@ -1,0 +1,78 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/check-support-status
+profile check-support-status @{exec_path} flags=(complain) {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+
+  @{exec_path} rix,
+  /{usr/,}bin/dash r,
+
+  /etc/debian_version r,
+
+  /{usr/,}bin/gettext.sh r,
+  /{usr/,}bin/cat        rix,
+  /{usr/,}bin/{,e}grep   rix,
+  /{usr/,}bin/cut        rix,
+  /{usr/,}bin/date       rix,
+  /{usr/,}bin/getopt     rix,
+  /{usr/,}bin/fold       rix,
+  /{usr/,}bin/mktemp     rix,
+  /{usr/,}bin/rm         rix,
+  /{usr/,}bin/awk        rix,
+  /{usr/,}bin/comm       rix,
+  /{usr/,}bin/mkdir      rix,
+  /{usr/,}bin/mv         rix,
+  /{usr/,}bin/find       rix,
+  /{usr/,}bin/wc         rix,
+  /{usr/,}bin/basename   rix,
+  /{usr/,}bin/gawk       rix,
+  /{usr/,}bin/sort       rix,
+  /{usr/,}bin/head       rix,
+  /{usr/,}bin/gettext    rix,
+  /{usr/,}bin/sed        rix,
+  /{usr/,}bin/envsubst   rix,
+  /{usr/,}bin/dirname    rix,
+
+  /{usr/,}bin/dpkg-query rPx,
+  /{usr/,}bin/dpkg       rPx -> child-dpkg,
+
+  /{usr/,}bin/debconf-escape rCx -> debconf-escape,
+
+  / r,
+        /tmp/ r,
+  owner /tmp/debian-security-support.*/{,**} rw,
+        /tmp/debian-security-support.postinst.*/output w,
+
+  owner /var/lib/debian-security-support/security-support.semaphore rw,
+  owner /var/lib/debian-security-support/tmp.* rw,
+
+  /usr/share/debian-security-support/* r,
+
+
+  profile debconf-escape flags=(complain) {
+    #include <abstractions/base>
+    #include <abstractions/perl>
+
+    /{usr/,}bin/debconf-escape r,
+    /{usr/,}bin/perl r,
+
+    owner /tmp/debian-security-support.postinst.*/output r,
+
+  }
+
+  #include if exists <local/check-support-status>
+}

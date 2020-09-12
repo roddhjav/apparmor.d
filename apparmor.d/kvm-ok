@@ -1,0 +1,51 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path}  = /{usr/,}sbin/kvm-ok
+profile kvm-ok @{exec_path} {
+  #include <abstractions/base>
+
+  @{exec_path} r,
+  /{usr/,}bin/dash r,
+
+  /{usr/,}bin/uname    rix,
+  /{usr/,}bin/{,e}grep rix,
+  /{usr/,}bin/id       rix,
+
+  /{usr/,}bin/kmod     rCx -> kmod,
+
+  /{usr/,}sbin/rdmsr   rPx,
+
+  #/proc/cpuinfo r,
+  #/dev/kvm r,
+  #/dev/cpu/[0-9]*/msr r,
+
+
+  profile kmod {
+    #include <abstractions/base>
+
+    /{usr/,}bin/kmod mr,
+
+    /etc/modprobe.d/ r,
+    /etc/modprobe.d/*.conf r,
+    /usr/lib/modprobe.d/ r,
+    /usr/lib/modprobe.d/*.conf r,
+
+    @{PROC}/cmdline r,
+
+  }
+
+  #include if exists <local/kvm-ok>
+}

@@ -1,0 +1,148 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /usr/share/code/{bin/,}code /{usr/,}bin/code
+profile code @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/opencl-intel>
+  #include <abstractions/gtk>
+  #include <abstractions/freedesktop.org>
+  #include <abstractions/fonts>
+  #include <abstractions/fontconfig-cache-read>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/ssl_certs>
+  # The following doesn't seem to be needed
+  ##include <abstractions/mesa>
+  ##include <abstractions/consoles>
+  ##include <abstractions/audio>
+  ##include <abstractions/user-download-strict>
+  #include <abstractions/thumbnails-cache-read>
+  #include <abstractions/deny-dconf>
+  #include <abstractions/deny-root-dir-access>
+
+  ptrace (read) peer=child-lsb_release,
+
+  @{exec_path} mrix,
+
+  /usr/share/code/** r,
+  /usr/share/code/libffmpeg.so mr,
+  /usr/share/code/resources/**/bin/* rix,
+  /usr/share/code/resources/**.node mr,
+
+  # The bash shell is needed only when you want to start code via bin/code. Also the shells are
+  # needed if you plan to operate on the built in terminal. If you don't need the built in terminal
+  # and want to use the linux one, the following three lines can be commented out.
+  # /{usr/,}bin/bash      rix,
+  # /{usr/,}bin/zsh       rix,
+  # /{usr/,}bin/dash      rix,
+
+  #/{usr/,}bin/dirname     rix,
+  #/{usr/,}bin/{,e}grep    rix,
+  #/{usr/,}bin/id          rix,
+  #/{usr/,}bin/readlink    rix,
+  #/{usr/,}bin/which       rix,
+  #/{usr/,}sbin/ifconfig   rix,
+
+  /{usr/,}bin/lsb_release rPx -> child-lsb_release,
+
+  /{usr/,}bin/git        rPUx,
+
+  # Needed to sign commits
+  /{usr/,}bin/gpg        rPUx -> gpg,
+
+  #      /home/ r,
+  # Reading of the user home dir is required or the following error will be printed:
+  #  Unexpected end of JSON input:
+  #owner @{HOME}/ r,
+  owner @{HOME}/.config/Code/ rw,
+  owner @{HOME}/.config/Code/** rwkl -> {HOME}/.config/Code/**,
+  owner @{HOME}/.vscode/ rw,
+  owner @{HOME}/.vscode/** rwlk -> @{HOME}/.vscode/**,
+
+  # Git dirs
+        / r,
+        /media/ r,
+  owner /media/*/ r,
+  owner /media/*/code/ r,
+  owner /media/*/code/** rwkl -> /media/*/code/**,
+
+  # To remove the following error:
+  #  Error initializing NSS with a persistent database
+  deny owner @{HOME}/.pki/ rw,
+  deny owner @{HOME}/.pki/nssdb/ rw,
+  deny owner @{HOME}/.pki/nssdb/pkcs11.txt rw,
+  deny owner @{HOME}/.pki/nssdb/{cert9,key4}.db rwk,
+  deny owner @{HOME}/.pki/nssdb/{cert9,key4}.db-journal rw,
+
+  /etc/fstab r,
+
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+
+  # Needed or code gets crash with the following error:
+  #  FATAL:proc_util.cc(36)] : Permission denied (13)
+             @{PROC}/ r,
+  #
+  deny       @{PROC}/version r,
+  #
+  deny       @{PROC}/vmstat r,
+             @{PROC}/@{pid}/fd/ r,
+  # Needed to remove the following error:
+  #  Failed to activate the metrics package
+  #  EACCES: permission denied, uv_resident_set_memory
+  deny       @{PROC}/@{pids}/stat r,
+  deny       @{PROC}/@{pids}/statm r,
+  # To remove the following error:
+  #  Failed to adjust OOM score of renderer with pid : Permission denied
+  deny owner @{PROC}/@{pid}/oom_{,score_}adj rw,
+       owner @{PROC}/@{pids}/task/ r,
+  deny owner @{PROC}/@{pids}/task/@{tid}/status r,
+       owner @{PROC}/@{pid}/mountinfo r,
+       owner @{PROC}/@{pid}/mounts r,
+  deny owner @{PROC}/@{pid}/net/dev r,
+  deny owner @{PROC}/@{pid}/net/if_inet6 r,
+  deny owner @{PROC}/@{pids}/cmdline r,
+
+  deny       /dev/shm/ r,
+       owner /dev/shm/.org.chromium.Chromium.* rw,
+
+  /var/lib/dbus/machine-id r,
+  /etc/machine-id r,
+
+  deny @{sys}/devices/virtual/tty/tty[0-9]/active r,
+  deny @{sys}/devices/system/cpu/cpufreq/policy[0-9]/cpuinfo_max_freq r,
+
+  # To remove the following error:
+  #  pcilib: Cannot open /sys/bus/pci/devices/0000:03:00.0/irq: Permission denied
+  # The irq file is needed to render pages.
+  deny @{sys}/devices/pci[0-9]*/**/irq r,
+
+        /var/tmp/ r,
+        /tmp/ r,
+  owner "/tmp/VSCode Crashes/" rw,
+  owner /tmp/vscode-typescript[0-9]*/ rw,
+
+  owner /{var/,}run/user/[0-9]*/vscode-[0-9a-f]*-*-{shared,main}.sock rw,
+  owner /{var/,}run/user/[0-9]*/vscode-git-askpass-[0-9a-f]*.sock rw,
+
+  owner /tmp/vscode-ipc-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*.sock rw,
+  # For installing extensions
+  owner /tmp/[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]* rw,
+
+  # file_inherit
+  owner @{HOME}/.xsession-errors w,
+
+  #include if exists <local/code>
+}
+

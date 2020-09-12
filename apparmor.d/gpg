@@ -1,0 +1,68 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2017-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/gpg
+profile gpg @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/user-download-strict>
+  #include <abstractions/nameservice-strict>
+
+  @{exec_path} mrix,
+
+  /{usr/,}bin/gpgconf           rPx,
+  /{usr/,}bin/gpg-connect-agent rPx,
+  /{usr/,}bin/gpg-agent         rPx,
+  /{usr/,}bin/dirmngr           rPx,
+  /{usr/,}bin/gpgsm             rPx,
+  /{usr/,}lib/gnupg/scdaemon    rPx,
+
+  # GPG config files
+  owner @{HOME}/ r,
+  owner @{HOME}/.gnupg/ rw,
+  owner @{HOME}/.gnupg/** rwkl -> @{HOME}/.gnupg/**,
+
+  owner /var/lib/*/gnupg/ rw,
+  owner /var/lib/*/gnupg/** rwkl -> /var/lib/*/gnupg/**,
+
+  owner /var/lib/*/.gnupg/ rw,
+  owner /var/lib/*/.gnupg/** rwkl -> /var/lib/*/.gnupg/**,
+
+  # For flatpak
+  owner /tmp/ostree-gpg-*/ r,
+  owner /tmp/ostree-gpg-*/** rwkl -> /tmp/ostree-gpg-*/**,
+
+  # For ToR Browser
+  owner @{HOME}/.local/share/torbrowser/gnupg_homedir/ r,
+  owner @{HOME}/.local/share/torbrowser/gnupg_homedir/** rwkl -> @{HOME}/.local/share/torbrowser/gnupg_homedir/**,
+
+  # For spamassassin
+  owner /var/lib/spamassassin/sa-update-keys/** rwkl -> /var/lib/spamassassin/sa-update-keys/**,
+
+  # Verify files
+  owner @{HOME}/** r,
+  owner /media/*/** r,
+
+  owner @{PROC}/@{pid}/task/@{tid}/stat rw,
+  owner @{PROC}/@{pid}/task/@{tid}/comm rw,
+  owner @{PROC}/@{pid}/fd/ r,
+
+  /etc/inputrc r,
+
+  # file_inherit
+  /tmp/#[0-9]*[0-9] rw,
+
+  #include if exists <local/gpg>
+}

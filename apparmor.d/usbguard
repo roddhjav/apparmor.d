@@ -1,0 +1,37 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2018-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/usbguard
+profile usbguard @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+
+  @{exec_path} mr,
+
+  /etc/usbguard/*.conf rw,
+  /etc/usbguard/IPCAccessControl.d/{,*} rw,
+
+  /dev/shm/qb-usbguard-{request,response,event}-[0-9]*-[0-9]*-[0-9]*-{header,data} rw,
+  /dev/shm/qb-[0-9]*-[0-9]*-[0-9]*-*/qb-{request,response,event}-usbguard-{header,data} rw,
+
+  # For "usbguard generate-policy"
+  @{sys}/bus/usb/devices/{,**} r,
+  @{sys}/devices/pci[0-9]*/**/uevent rw,
+  @{sys}/devices/pci[0-9]*/**/usb[0-9]/{,**/}{authorized_default,authorized,remove} rw,
+  @{sys}/devices/pci[0-9]*/**/usb[0-9]/{,**/}{descriptors,product,idProduct,idVendor,serial} r,
+  @{sys}/devices/pci[0-9]*/**/usb[0-9]/**/connect_type r,
+
+  #include if exists <local/usbguard>
+}

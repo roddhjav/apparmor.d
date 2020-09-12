@@ -1,0 +1,39 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/filecap
+profile filecap @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+
+  @{exec_path} mr,
+
+  # The default behavior is to check only the directories in the PATH environmental variable.
+  /{usr/,}sbin/ r,
+  /{usr/,}sbin/* r,
+  /{usr/,}bin/ r,
+  /{usr/,}bin/* r,
+  /usr/local/sbin/ r,
+  /usr/local/sbin/* r,
+  /usr/local/bin/ r,
+  /usr/local/bin/* r,
+
+  # It's also possible to check any dir/file in the system by using the "-a" flag.
+  #capability dac_read_search,
+  #/ r,
+  #/** r,
+
+  #include if exists <local/filecap>
+}

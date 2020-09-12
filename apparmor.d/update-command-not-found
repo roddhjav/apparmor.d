@@ -1,0 +1,52 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path}  = /usr/share/command-not-found/cnf-update-db
+@{exec_path} += /{usr/,}sbin/update-command-not-found
+profile update-command-not-found @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/python>
+
+  #capability sys_tty_config,
+
+  @{exec_path} r,
+  /{usr/,}bin/python3.[0-9]* r,
+
+  /{usr/,}lib/apt/apt-helper rix,
+
+  /{usr/,}bin/dpkg        rPx -> child-dpkg,
+
+  /var/lib/command-not-found/ r,
+  /var/lib/command-not-found/commands.db* rwk,
+
+  /usr/share/command-not-found/{,**} r,
+
+  /etc/apt/apt.conf.d/{,*} r,
+  /etc/apt/apt.conf r,
+
+  /usr/share/dpkg/cputable r,
+  /usr/share/dpkg/tupletable r,
+
+  /var/lib/apt/lists/ r,
+  /var/lib/apt/lists/*_Contents-* r,
+
+  owner @{PROC}/@{pid}/fd/ r,
+
+  # file_inherit
+  /var/log/cron-apt/temp w,
+
+  #include if exists <local/update-command-not-found>
+}

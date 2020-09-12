@@ -1,0 +1,30 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path}  = /{usr/,}bin/install-printerdriver
+@{exec_path} += /usr/share/system-config-printer/install-printerdriver.py
+profile install-printerdriver @{exec_path} flags=(complain) {
+  #include <abstractions/base>
+  #include <abstractions/python>
+
+  @{exec_path} mrix,
+
+  /{usr/,}bin/dash r,
+  /{usr/,}bin/python3.[0-9]* r,
+
+  /usr/share/system-config-printer/{,**} r,
+
+  #include if exists <local/install-printerdriver>
+}

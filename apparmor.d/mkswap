@@ -1,0 +1,30 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}sbin/mkswap
+profile mkswap @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/disks-write>
+
+  @{exec_path} mr,
+
+  owner @{PROC}/@{pid}/mounts r,
+        @{PROC}/swaps r,
+
+  # SWAP file common locations
+  owner /swapfile rw,
+
+  #include if exists <local/mkswap>
+}

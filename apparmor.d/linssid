@@ -1,0 +1,114 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}sbin/linssid /{usr/,}bin/linssid-pkexec
+profile linssid @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/X>
+  #include <abstractions/gtk>
+  #include <abstractions/fonts>
+  #include <abstractions/fontconfig-cache-read>
+  #include <abstractions/freedesktop.org>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/dri-enumerate>
+  #include <abstractions/mesa>
+
+  # For reading/saving config/log files when linssid is started via pkexec
+  #capability dac_read_search,
+  #capability dac_override,
+
+  # Needed?
+  deny capability sys_admin,
+  deny capability sys_nice,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/dash rix,
+  /{usr/,}bin/cat  rix,
+
+  # When linssid is run as root, it wants to exec dbus-launch, and hence it creates the two
+  # following root processes:
+  #  dbus-launch --autolaunch e0a30ad97cd6421c85247839ccef9db2 --binary-syntax --close-stderr
+  #  /usr/bin/dbus-daemon --syslog-only --fork --print-pid 5 --print-address 7 --session
+  #
+  # Should this be allowed? Linssid works fine without this.
+  #/{usr/,}bin/dbus-launch        rCx -> dbus,
+  #/{usr/,}bin/dbus-send          rCx -> dbus,
+  deny /{usr/,}bin/dbus-launch rx,
+  deny /{usr/,}bin/dbus-send   rx,
+
+  /{usr/,}sbin/iw         rCx -> iw,
+  /{usr/,}bin/pkexec      rPx,
+
+  # For regular run as root user
+  owner @{HOME}/.linssid.prefs rw,
+  owner @{HOME}/LinSSID.datalog rw,
+  # For pkexec
+  #@{HOME}/.linssid.prefs rw,
+  #@{HOME}/LinSSID.datalog rw,
+
+  /usr/share/linssid/{,*} r,
+
+  /usr/share/hwdata/pnp.ids r,
+
+  owner @{HOME}/.config/qt5ct/{,**} r,
+  /usr/share/qt5ct/** r,
+
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/net/wireless r,
+  owner @{PROC}/@{pid}/cmdline r,
+
+  owner /tmp/runtime-root/ rw,
+  owner /tmp/linssid_* rw,
+
+  /var/lib/dbus/machine-id r,
+  /etc/machine-id r,
+
+  # file_inherit
+  owner /dev/tty[0-9]* rw,
+
+
+  profile iw {
+    #include <abstractions/base>
+
+    capability net_admin,
+    deny capability sys_module,
+
+    /{usr/,}sbin/iw mr,
+
+    # file_inherit
+    owner @{HOME}/.linssid.prefs rw,
+    owner @{HOME}/LinSSID.datalog rw,
+    owner /tmp/linssid_* rw,
+    owner /dev/dri/card[0-9]* rw,
+
+  }
+
+  profile dbus {
+    #include <abstractions/base>
+    #include <abstractions/nameservice-strict>
+
+    /{usr/,}bin/dbus-launch   mr,
+    /{usr/,}bin/dbus-send     mr,
+    /{usr/,}bin/dbus-daemon rPUx,
+
+    # for dbus-launch
+    owner @{HOME}/.dbus/session-bus/[0-9a-f]*-[0-9] w,
+
+    @{HOME}/.Xauthority r,
+  }
+
+  #include if exists <local/linssid>
+}

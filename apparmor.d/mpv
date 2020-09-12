@@ -1,0 +1,155 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2017-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+# Video/audio extensions:
+# a52, aac, ac3, mka, flac, mp1, mp2, mp3, mpc, oga, oma, wav, wv, wm, wma, 3g2, 3gp, 3gp2, 3gpp,
+# asf, avi, divx, m1v, m2v, m4v, mkv, mov, mp4, mpa, mpe, mpg, mpeg, mpeg1, mpeg2, mpeg4, ogg, ogm,
+# ogx, ogv, rm, rmvb, webm, wmv, wtv, mp2t
+@{mpv_ext}  = [aA]{52,[aA][cC],[cC]3}
+@{mpv_ext} += [mM][kK][aA]
+@{mpv_ext} += [fF][lL][aA][cC]
+@{mpv_ext} += [mM][pP][123cC]
+@{mpv_ext} += [oO][gGmM][aA]
+@{mpv_ext} += [wW]{,[aA]}[vV]
+@{mpv_ext} += [wW][mM]{,[aA]}
+@{mpv_ext} +=  3[gG]{[2pP],[pP][2pP]}
+@{mpv_ext} += [aA][sS][fF]
+@{mpv_ext} += [aA][vV][iI]
+@{mpv_ext} += [dD][iI][vV][xX]
+@{mpv_ext} += [mM][124][vV]
+@{mpv_ext} += [mM][kKoO][vV]
+@{mpv_ext} += [mM][pP][4aAeEgG]
+@{mpv_ext} += [mM][pP][eE][gG]{,[124]}
+@{mpv_ext} += [oO][gG][gGmMxXvV]
+@{mpv_ext} += [rR][mM]{,[vV][bB]}
+@{mpv_ext} += [wW][eE][bB][mM]
+@{mpv_ext} += [wW][mMtT][vV]
+@{mpv_ext} += [mM][pP]2[tT]
+
+# Image extensions
+# bmp, jpg, jpeg, png, gif
+@{mpv_ext} += [bB][mM][pP]
+@{mpv_ext} += [jJ][pP]{,[eE]}[gG]
+@{mpv_ext} += [pP][nN][gG]
+@{mpv_ext} += [gG][iI][fF]
+
+# Subtitle extensions:
+# srt, txt, sub
+@{mpv_ext} += [sS][rR][tT]
+@{mpv_ext} += [tT][xX][tT]
+@{mpv_ext} += [sS][uU][bB]
+
+# Playlist extensions:
+# m3u, m3u8, pls
+@{mpv_ext} += [mM]3[uU]{,8}
+@{mpv_ext} += [pP][lL][sS]
+
+# For Qbittorrent !qB extension
+@{mpv_ext} += "!qB"
+
+
+@{exec_path} = /{usr/,}bin/mpv
+profile mpv @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/opencl-intel>
+  #include <abstractions/fonts>
+  #include <abstractions/fontconfig-cache-read>
+  #include <abstractions/freedesktop.org>
+  #include <abstractions/mesa>
+  #include <abstractions/audio>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/vulkan>
+  #include <abstractions/user-download-strict>
+  #include <abstractions/openssl>
+  #include <abstractions/ssl_certs>
+  #include <abstractions/deny-root-dir-access>
+
+  signal (receive) set=(term, kill),
+
+  signal (send) set=(term, kill) peer=youtube-dl,
+
+  @{exec_path} mr,
+
+  # MPV config files
+  /etc/mpv/* r,
+  owner @{HOME}/.config/mpv/ rw,
+  owner @{HOME}/.config/mpv/* rw,
+
+  # Which files MPV should be able to open
+        / r,
+        /home/ r,
+  owner @{HOME}/ r,
+  owner @{HOME}/**/ r,
+        /media/ r,
+  owner /media/**/ r,
+        /tmp/ r,
+  owner /tmp/mpsyt-input* rw,
+  owner /tmp/mpsyt-mpv*.sock rw,
+  owner /tmp/smplayer-mpv-* rw,
+  owner /tmp/mozilla_*/ r,
+  owner /{home,media,tmp/mozilla_*}/**.@{mpv_ext} rw,
+
+  # For the SMPlayer's builtin thumbnail generator
+  owner /tmp/smplayer_preview/[0-9]*.{jpg,png} w,
+
+  # For SMPlayer's screenshots
+  owner /tmp/smplayer_screenshots/cap_*.{jpg,png} w,
+
+  # Media downloaded by firefox
+  #deny owner /tmp/mozilla_*/* r,
+
+  /etc/machine-id r,
+  /var/lib/dbus/machine-id r,
+
+  owner @{PROC}/@{pid}/cmdline r,
+  owner @{PROC}/@{pid}/task/ r,
+
+  ##include <abstractions/nvidia>
+  /etc/vdpau_wrapper.cfg r,
+
+  /etc/glvnd/egl_vendor.d/ r,
+  /usr/share/glvnd/egl_vendor.d/ r,
+  /usr/share/glvnd/egl_vendor.d/[0-9][0-9]_*.json r,
+
+  # What's this for? (since v0.30.0)
+  @{sys}/bus/ r,
+  @{sys}/class/ r,
+  #
+  @{sys}/class/input/ r,
+  @{sys}/devices/**/input/**/uevent r,
+  @{sys}/devices/**/input/**/capabilities/* r,
+  /dev/input/event[0-9]* r,
+  /{var/,}run/udev/data/+input:input[0-9]* r,
+  /{var/,}run/udev/data/c13:[0-9]* r,  # for /dev/input/*
+  #
+  @{sys}/class/sound/ r,
+  @{sys}/devices/**/sound/**/uevent r,
+  @{sys}/devices/**/sound/**/capabilities/* r,
+  /{var/,}run/udev/data/+sound:* r,
+  /{var/,}run/udev/data/c116:[0-9]* r, # for ALSA
+
+  # Be able to turn off the screensaver while playing movies
+  /{usr/,}bin/xdg-screensaver rPUx,
+
+  # External apps
+  /{usr/,}bin/youtube-dl rPUx,
+
+  # file_inherit
+  owner /dev/tty[0-9]* rw,
+  owner @{HOME}/.xsession-errors w,
+
+  #include if exists <local/mpv>
+}

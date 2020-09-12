@@ -1,0 +1,42 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/i3lock
+profile i3lock @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/fonts>
+  #include <abstractions/fontconfig-cache-read>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/authentication>
+  #include <abstractions/wutmp>
+
+  @{exec_path} mr,
+
+  /usr/sbin/unix_chkpwd rPx,
+
+  owner @{HOME}/.Xauthority r,
+
+  # For background image.
+  owner @{HOME}/*.png r,
+  owner @{HOME}/*/*.png r,
+
+  # When using also i3lock-fancy.
+  owner /tmp/tmp.*.png r,
+
+  # file_inherit
+  owner /dev/tty[0-9]* rw,
+
+  #include if exists <local/i3lock>
+}

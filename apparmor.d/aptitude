@@ -1,0 +1,189 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{BUILD_DIR} = /media/debuilder/
+
+@{exec_path} = /{usr/,}bin/aptitude{,-curses}
+profile aptitude @{exec_path} flags=(complain) {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/apt-common>
+
+  # To remove the following errors:
+  #  W: chmod 0700 of directory /var/lib/apt/lists/partial failed - SetupAPTPartialDirectory
+  #     (1: Operation not permitted)
+  #  W: chmod 0700 of directory /var/lib/apt/lists/auxfiles failed - SetupAPTPartialDirectory
+  #     (1: Operation not permitted)
+  #  W: chmod 0600 of file /var/lib/apt/lists/deb.debian.org_debian_dists_sid_InRelease failed -
+  #     Item::QueueURI (1: Operation not permitted)
+  capability fowner,
+
+  # To remove the following errors:
+  #  W: chown to _apt:root of directory /var/lib/apt/lists/partial failed - SetupAPTPartialDirectory
+  #  (1: Operation not permitted)
+  #  W: chown to _apt:root of directory /var/lib/apt/lists/auxfiles failed - SetupAPTPartialDirectory
+  #  (1: Operation not permitted)
+  capability chown,
+
+  # The "_apt" user is created by the postinst script of the "apt" package. It's the owner of the
+  # dirs "/var/cache/apt/archives/partial/" and "/var/lib/apt/lists/partial/" . The "_apt" user is
+  # used by APT to download packages, package list, and other things using APT methods as an
+  # unprivileged user/group (_apt/nogroup).
+  #
+  # To remove the following errors:
+  #  E: setgroups 65534 failed - setgroups (1: Operation not permitted)
+  #  E: setegid 65534 failed - setegid (1: Operation not permitted)
+  #  E: seteuid 100 failed - seteuid (1: Operation not permitted)
+  #  E: setgroups 0 failed - setgroups (1: Operation not permitted)
+  capability setuid,
+  capability setgid,
+
+  # To remove the following errors:
+  #  W: Problem unlinking the file /var/lib/apt/lists/partial/*_InRelease -
+  #     PrepareFiles (13: Permission denied)
+  #  E: Unable to read /var/lib/apt/lists/partial/ - open (13: Permission denied)
+  capability dac_read_search,
+
+  # To remove the following errors:
+  #  E: Failed to fetch https://**.deb  rename failed, Permission denied
+  #     (/var/cache/apt/archives/partial/*.deb -> /var/cache/apt/archives/*.deb).
+  #  E: Unable to fetch some archives, maybe run apt-get update or try with --fix-missing?
+  capability dac_override,
+
+  # Needed? (##FIXME##)
+  capability kill,
+  capability fsetid,
+  capability sys_chroot,
+  #capability sys_tty_config,
+
+  signal (send) peer=apt-methods-*,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/dash     rix,
+  /{usr/,}bin/test     rix,
+  /{usr/,}bin/{,e}grep rix,
+
+  /{usr/,}bin/ps                 rPx,
+  /{usr/,}bin/dpkg               rPx,
+  /{usr/,}bin/apt-listbugs       rPx,
+  /{usr/,}bin/apt-listchanges    rPx,
+  /{usr/,}bin/apt-show-versions  rPx,
+  /{usr/,}sbin/dpkg-preconfigure rPx,
+  /{usr/,}bin/debtags            rPx,
+  /{usr/,}sbin/localepurge       rPx,
+  /{usr/,}bin/appstreamcli       rPx,
+  /{usr/,}bin/adequate           rPx,
+  /{usr/,}sbin/update-command-not-found      rPx,
+  /usr/share/command-not-found/cnf-update-db rPx,
+
+  # Methods to use to download packages from the net
+  /{usr/,}lib/apt/methods/*      rPx,
+
+  /var/lib/apt/lists/** rw,
+  /var/lib/apt/lists/lock rwk,
+  /var/lib/apt/extended_states{,.*} rw,
+
+  /var/log/apt/eipp.log.xz w,
+  /var/log/apt/{term,history}.log w,
+  /var/log/aptitude w,
+
+  # For downloading the source of packages (showsrc/source options)
+  /{usr/,}bin/apt rPx,
+
+  # For changelogs
+  owner /tmp/aptitude-*.@{pid}:*/cache{ContentCompressed,Extracted}* rw,
+  owner /tmp/aptitude-*.@{pid}:*/aptitude-download-* rw,
+  owner /tmp/aptitude-*.@{pid}:*/parsedchangelog* w,
+  owner @{HOME}/.cache/ rw,
+  owner @{HOME}/.cache/aptitude/ rw,
+  owner @{HOME}/.cache/aptitude/metadata-download{,-journal} rw,
+  owner @{HOME}/.cache/aptitude/metadata-download rwk,
+  /{usr/,}bin/sensible-pager rCx -> pager,
+
+  # For aptitude-run-state-bundle
+  owner /tmp/aptitudebug.*/ r,
+  owner /tmp/aptitudebug.*/** rwk,
+
+  /var/lib/apt-xapian-index/index r,
+  /var/cache/apt-xapian-index/index.[0-9]/*.glass r,
+  /var/cache/apt-xapian-index/index.[0-9]/iamglass r,
+
+  /var/lib/dpkg/** r,
+  /var/lib/dpkg/lock{,-frontend} rwk,
+
+  owner @{PROC}/@{pid}/fd/ r,
+
+  owner /tmp/aptitude-*.@{pid}:*/ rw,
+  owner /tmp/aptitude-*.@{pid}:*/{pkgstates,control}* rw,
+        /tmp/aptitude-*.@{pid}:*/pkgstates* r,
+  owner /tmp/apt-dpkg-install-*/ rw,
+  owner /tmp/apt-dpkg-install-*/[0-9]*-*.deb w,
+
+  /var/cache/apt/ r,
+  /var/cache/apt/** rwk,
+
+  # For the interactive mode
+  /usr/share/tasksel/descs/ r,
+  /usr/share/tasksel/descs/debian-tasks.desc r,
+  owner @{HOME}/.aptitude/ rw,
+  owner @{HOME}/.aptitude/config rw,
+  owner @{HOME}/.aptitude/config@{pid} rw,
+  /tmp/apt-changelog-*/ rw,
+  /var/lib/debtags/vocabulary r,
+  /{usr/,}bin/su rPx,
+
+  /{var/,}run/lock/aptitude rwk,
+  /usr/share/aptitude/ r,
+  /usr/share/aptitude/* r,
+  /var/lib/aptitude/pkgstates{,.old,.new} rw,
+  /var/lib/aptitude/pkgstates.old rwl -> /var/lib/aptitude/pkgstates,
+
+  /var/lib/debtags/package-tags r,
+
+  # When run in a TTY, to remove the following error:
+  #  aptitude[]: *** err
+  #  aptitude[]: /dev/tty2: Permission denied
+  #  aptitude[]: *** err
+  #  aptitude[]: Oh, oh, it's an error! possibly I die!
+  /dev/tty[0-9]* rw,
+
+  # For package building
+  @{BUILD_DIR}/** rwkl -> @{BUILD_DIR}/**,
+
+  # file_inherit
+  /var/log/cron-apt/temp w,
+
+
+  profile pager flags=(complain) {
+    #include <abstractions/base>
+    #include <abstractions/consoles>
+
+    /{usr/,}bin/sensible-pager mr,
+    /{usr/,}bin/dash r,
+
+    /{usr/,}bin/which rix,
+    /{usr/,}bin/less  rix,
+
+    owner @{HOME}/.less* rw,
+
+    owner /tmp/aptitude-*.@{pid}:*/aptitude-download-* rw,
+
+  }
+
+  #include if exists <local/aptitude>
+}
+

@@ -1,0 +1,93 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/apt-listchanges
+profile apt-listchanges @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/python>
+  #include <abstractions/nameservice-strict>
+
+  #capability sys_tty_config,
+
+  @{exec_path} r,
+  /{usr/,}bin/python3.[0-9]* r,
+
+  /{usr/,}bin/ r,
+  /{usr/,}bin/dash           rix,
+  /{usr/,}bin/tar            rix,
+
+  /{usr/,}bin/hostname       rPx,
+  /{usr/,}bin/dpkg-deb       rPx,
+  /{usr/,}bin/sensible-pager rCx -> pager,
+  # Send results using email
+  /{usr/,}sbin/exim4         rPx,
+
+  /usr/share/apt-listchanges/{,**} r,
+
+  /etc/apt/listchanges.conf r,
+
+  /usr/share/dpkg/cputable r,
+  /usr/share/dpkg/tupletable r,
+
+  /var/lib/dpkg/status r,
+
+  /var/lib/apt/listchanges{,-new}.db rw,
+  /var/lib/apt/listchanges-old.db rwl -> /var/lib/apt/listchanges.db,
+
+  owner @{PROC}/@{pid}/fd/ r,
+
+  owner /tmp/* rw,
+  owner /tmp/apt-listchanges*/ rw,
+  owner /tmp/apt-listchanges*/**/ rw,
+  owner /tmp/apt-listchanges*/*/*/*/*/changelog.gz rw,
+  owner /tmp/apt-listchanges*/*/*/*/*/changelog.Debian*.gz rw,
+  owner /tmp/apt-listchanges*/*/*/*/*/NEWS.Debian.gz rw,
+  owner /tmp/apt-listchanges*/*/*/*/*/*/changelog.gz rw,
+  owner /tmp/apt-listchanges*/*/*/*/*/*/changelog/changelog_to_file rw,
+  owner /tmp/apt-listchanges*/*/*/*/*/*/changelog/simple_changelog rw,
+
+  # The following is needed when apt-listchanges uses debcconf GUI frontends.
+  #include <abstractions/gtk>
+  #include <abstractions/fonts>
+  #include <abstractions/fontconfig-cache-read>
+  #include <abstractions/freedesktop.org>
+  capability dac_read_search,
+  /{usr/,}bin/lsb_release rPx -> child-lsb_release,
+  /{usr/,}bin/hostname    rPx,
+  owner @{PROC}/@{pid}/mounts r,
+  @{HOME}/.Xauthority r,
+
+
+  profile pager {
+    #include <abstractions/base>
+    #include <abstractions/consoles>
+
+    #capability sys_tty_config,
+
+    /{usr/,}bin/sensible-pager mr,
+
+    /{usr/,}bin/dash  rix,
+    /{usr/,}bin/which rix,
+    /{usr/,}bin/less  rix,
+
+    owner @{HOME}/.less* rw,
+
+    owner /tmp/apt-listchanges-tmp*.txt r,
+
+  }
+
+  #include if exists <local/apt-listchanges>
+}

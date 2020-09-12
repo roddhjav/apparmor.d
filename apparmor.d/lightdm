@@ -1,0 +1,130 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2017-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}sbin/lightdm
+profile lightdm @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/X>
+  #include <abstractions/fonts>
+  #include <abstractions/fontconfig-cache-read>
+  #include <abstractions/freedesktop.org>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/authentication>
+  #include <abstractions/wutmp>
+
+  # To remove the following errors:
+  #  lightdm[]: Could not chown user data directory /var/lib/lightdm/data/lightdm: Error setting
+  #  owner: Operation not permitted
+  capability chown,
+  capability fowner,
+  capability fsetid,
+
+  # To remove the following errors:
+  #  write(2, "Failed to initialize supplementary groups for lightdm:
+  #  Operation not permitted\n", 79) = 79
+  capability setgid,
+
+  # To remove the following errors:
+  #  write(1, "Bail out! ERROR:privileges.c:30:privileges_drop: assertion failed:
+  #  (setresuid (uid, uid, -1) == 0)\n", 99) = 99
+  capability setuid,
+
+  # To remove the following errors:
+  #  lightdm[]: Could not enumerate user data directory /var/lib/lightdm/data: Error opening
+  #  directory '/var/lib/lightdm/data': Permission denied
+  capability dac_read_search,
+
+  # To remove the following errors:
+  #  Error using VT_ACTIVATE 7 on /dev/tty0: Operation not permitted
+  capability sys_tty_config,
+
+  # To be able to kill the X-server
+  capability kill,
+
+  # To remove the following errors:
+  #  pam_limits(su-l:session): Could not set limit for 'nofile' to soft=1024, hard=1048576:
+  #   Operation not permitted; uid=1000,euid=0
+  #  pam_limits(su-l:session): Could not set limit for 'memlock' to soft=1017930240,
+  #   hard=1017930240: Operation not permitted; uid=1000,euid=0
+  capability sys_resource,
+
+  # Needed?
+  capability audit_write,
+  deny capability sys_nice,
+  deny capability net_admin,
+
+  signal (send) set=(term, kill, usr1),
+  signal (receive) set=(usr1) peer=xorg,
+
+  @{exec_path} mrix,
+
+  /{usr/,}bin/plymouth             mrix,
+
+  /{usr/,}bin/Xorg                  rPx,
+  /{usr/,}sbin/lightdm-gtk-greeter  rPx,
+  /{usr/,}bin/startx                rPx,
+
+  /etc/X11/Xsession                rPUx,
+  /{usr/,}bin/gnome-keyring-daemon rPUx,
+
+  /{usr/,}bin/rm rix,
+
+  # LightDM files
+  /usr/share/lightdm/{,**} r,
+  /usr/share/xgreeters/{,**} r,
+  /var/lib/lightdm/{,**} rw,
+
+  # List of graphical sessions
+  # The X sessions are covered by abstractions/X
+  /usr/share/wayland-sessions/{,*.desktop} r,
+
+  /tmp/.X[0-9]*-lock r,
+
+  # LightDM config files
+  /etc/lightdm/{,**} r,
+
+  # LightDM logs
+  /var/log/lightdm/{,**} rw,
+  /var/log/btmp wk,
+
+  /{,var/}run/lightdm/{,**} rw,
+  /{,var/}run/lightdm.pid rw,
+
+  @{PROC}/1/limits r,
+  /etc/security/limits.d/ r,
+
+  owner @{PROC}/@{pid}/uid_map r,
+  owner @{PROC}/@{pid}/loginuid rw,
+  owner @{PROC}/@{pid}/fd/ r,
+        @{PROC}/cmdline r,
+
+  /etc/environment r,
+  /etc/default/locale r,
+
+  /dev/tty[0-9]* r,
+
+  # Xsession logs
+  owner @{HOME}/.xsession-errors{,.old} rw,
+
+  owner @{HOME}/.Xauthority rw,
+
+  owner @{HOME}/.dmrc* rw,
+  /var/cache/lightdm/dmrc/*.dmrc* rw,
+
+  /{usr/,}lib/at-spi2-core/at-spi-bus-launcher rPUx,
+  /usr/libexec/at-spi-bus-launcher             rPUx,
+
+  #include if exists <local/lightdm>
+}

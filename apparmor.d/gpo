@@ -1,0 +1,49 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/gpo
+profile gpo @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/python>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/user-download-strict>
+  #include <abstractions/openssl>
+  #include <abstractions/ssl_certs>
+  #include <abstractions/deny-root-dir-access>
+
+  @{exec_path} r,
+  /{usr/,}bin/python3.[0-9]* r,
+
+  /{usr/,}bin/ r,
+  /{usr/,}bin/dash      rix,
+  /{usr/,}bin/uname     rix,
+  /{usr/,}bin/pager     rPx -> child-pager,
+  /{usr/,}bin/less      rPx -> child-pager,
+  /{usr/,}bin/more      rPx -> child-pager,
+
+  owner @{PROC}/@{pid}/fd/ r,
+
+  owner @{HOME}/gPodder/ rw,
+  owner @{HOME}/gPodder/** rwk,
+
+  /usr/share/gpodder/extensions/{,*.py} r,
+
+  /etc/inputrc r,
+
+  owner /var/tmp/etilqs_[0-9a-f]* rw,
+
+  #include if exists <local/gpo>
+}

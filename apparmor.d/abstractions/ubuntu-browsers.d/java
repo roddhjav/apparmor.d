@@ -1,0 +1,118 @@
+# vim:syntax=apparmor
+
+  # Java plugin
+  owner @{HOME}/.java/deployment/deployment.properties k,
+  /etc/java-*/ r,
+  /etc/java-*/** r,
+  /usr/lib/jvm/java-[1-9]{,[0-9]}-openjdk/{,jre/}lib/*/IcedTeaPlugin.so mr,
+  /usr/lib/jvm/java-[1-9]{,[0-9]}-openjdk-{amd64,armel,armhf,i386,powerpc}/{,jre/}lib/*/IcedTeaPlugin.so mr,
+  /usr/lib/jvm/java-[1-9]{,[0-9]}-openjdk/{,jre/}bin/java cx -> browser_openjdk,
+  /usr/lib/jvm/java-[1-9]{,[0-9]}-openjdk-{amd64,armel,armhf,i386,powerpc}/{,jre/}bin/java cx -> browser_openjdk,
+  /usr/lib/jvm/java-*-sun-1.*/jre/bin/java{,_vm} cx -> browser_java,
+  /usr/lib/jvm/java-*-sun-1.*/jre/lib/*/libnp*.so cx -> browser_java,
+  /usr/lib/j2*-ibm/jre/bin/java cx -> browser_java,
+  owner /{,var/}run/user/*/icedteaplugin-*/   rw,
+  owner /{,var/}run/user/*/icedteaplugin-*/** rwk,
+
+  # Profile for the supported OpenJDK in Ubuntu. This doesn't require the
+  # unfortunate workarounds of the proprietary Javas, so have a separate
+  # profile.
+  profile browser_openjdk {
+    #include <abstractions/base>
+    #include <abstractions/fonts>
+    #include <abstractions/gnome>
+    #include <abstractions/kde>
+    #include <abstractions/nameservice>
+    #include <abstractions/ssl_certs>
+    #include <abstractions/user-tmp>
+    #include <abstractions/private-files-strict>
+
+    network inet stream,
+    network inet6 stream,
+    @{PROC}/@{pid}/net/if_inet6 r,
+    @{PROC}/@{pid}/net/ipv6_route r,
+
+    /etc/java-*/ r,
+    /etc/java-*/** r,
+    /etc/lsb-release r,
+    /etc/ssl/certs/java/* r,
+    /etc/timezone r,
+    /etc/writable/timezone r,
+
+    @{PROC}/@{pid}/ r,
+    @{PROC}/@{pid}/fd/ r,
+    @{PROC}/filesystems r,
+    @{sys}/devices/system/cpu/ r,
+    @{sys}/devices/system/cpu/** r,
+    /usr/share/** r,
+    /var/lib/dbus/machine-id r,
+
+    /usr/bin/env ix,
+    /usr/lib/jvm/java-[1-9]{,[0-9]}-openjdk/{,jre/}bin/java ix,
+    /usr/lib/jvm/java-[1-9]{,[0-9]}-openjdk-{amd64,armel,armhf,i386,powerpc}/{,jre/}bin/java ix,
+    /usr/lib/jvm/java-{6,7}-openjdk*/jre/lib/i386/client/classes.jsa m,
+
+    # Why would java need this?
+    deny /usr/bin/gconftool-2 x,
+
+    owner /{,var/}run/user/[0-9]*/icedteaplugin-*-*/[0-9]*-icedteanp-appletviewer-to-plugin rw,
+    owner /{,var/}run/user/[0-9]*/icedteaplugin-*-*/[0-9]*-icedteanp-plugin-{,debug-}to-appletviewer r,
+    owner @{HOME}/ r,
+    owner @{HOME}/** rwk,
+  }
+
+  # Profile for commercial Javas. These need workarounds to work right (eg
+  # Sun's forcing of an executable stack (LP: #535247)).
+  profile browser_java {
+    #include <abstractions/base>
+    #include <abstractions/fonts>
+    #include <abstractions/gnome>
+    #include <abstractions/kde>
+    #include <abstractions/nameservice>
+    #include <abstractions/ssl_certs>
+    #include <abstractions/user-tmp>
+    #include <abstractions/private-files-strict>
+
+    network inet stream,
+    network inet6 stream,
+    @{PROC}/@{pid}/net/if_inet6 r,
+    @{PROC}/@{pid}/net/ipv6_route r,
+    @{PROC}/loadavg r,
+
+    /etc/debian_version r,
+    /etc/java-*/ r,
+    /etc/java-*/** r,
+    /etc/lsb-release r,
+    /etc/ssl/certs/java/* r,
+    /etc/timezone r,
+    /etc/writable/timezone r,
+
+    @{PROC}/@{pid}/ r,
+    @{PROC}/@{pid}/fd/ r,
+    @{PROC}/filesystems r,
+    @{sys}/devices/system/cpu/ r,
+    @{sys}/devices/system/cpu/** r,
+    /usr/share/** r,
+    /var/lib/dbus/machine-id r,
+
+    /usr/bin/env ix,
+    /usr/lib/jvm/java-*-sun-1.*/jre/bin/java{,_vm} ix,
+    /usr/lib/jvm/java-*-sun-1.*/jre/lib/i386/client/classes.jsa m,
+    /usr/lib/j2*-ibm/jre/bin/java ix,
+
+    # noisy, can't write here anyway
+    deny /etc/.java/ w,
+    deny /etc/.java/** w,
+
+    deny /usr/bin/gconftool-2 x,
+
+    owner @{HOME}/ r,
+    owner @{HOME}/** rwk,
+
+    # These are seriously unfortunate, but required due to LP: #535247
+    /etc/passwd m,
+    owner @{HOME}/.java/**/cache/** m,
+    owner /tmp/** m,
+    /usr/lib{,32,64}/jvm/**/*.jar mr,
+    /usr/share/fonts/** m,
+  }

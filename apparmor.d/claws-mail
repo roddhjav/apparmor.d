@@ -1,0 +1,93 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/claws-mail
+profile claws-mail @{exec_path} flags=(complain) {
+  #include <abstractions/base>
+  #include <abstractions/gtk>
+  #include <abstractions/fonts>
+  #include <abstractions/fontconfig-cache-read>
+  #include <abstractions/freedesktop.org>
+  #include <abstractions/enchant>
+  #include <abstractions/user-download-strict>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/audio>
+  #include <abstractions/thumbnails-cache-read>
+  #include <abstractions/ssl_certs>
+  #include <abstractions/deny-root-dir-access>
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/dash rix,
+  /{usr/,}bin/which rix,
+
+  /{usr/,}bin/gpg     rCx -> gpg,
+  /{usr/,}bin/gpgsm   rCx -> gpg,
+  /{usr/,}bin/gpgconf rCx -> gpg,
+
+  # For Orage integration
+  /{usr/,}bin/orage  rPUx,
+
+  # For sending local mails
+  /{usr/,}sbin/exim4 rPUx,
+
+  # For editing in an external editor
+  /{usr/,}bin/geany  rPUx,
+
+  owner @{HOME}/ r,
+  owner @{HOME}/.claws-mail/ rw,
+  owner @{HOME}/.claws-mail/** rwl -> @{HOME}/.claws-mail/**,
+
+  owner /tmp/claws-mail-[0-9]*/ rw,
+  owner /tmp/claws-mail-[0-9]*/[0-9a-f]* rw,
+  owner /tmp/claws-mail-[0-9]*/[0-9a-f]*.lock rwk,
+
+  owner /var/mail/* rwk,
+
+  owner @{HOME}/Mail/ rw,
+  owner @{HOME}/Mail/** rwl -> @{HOME}/Mail/**,
+
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/mounts r,
+
+  /etc/fstab r,
+
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+
+  /var/lib/dbus/machine-id r,
+  /etc/machine-id r,
+
+  /usr/share/sounds/freedesktop/stereo/*.oga r,
+  /usr/share/publicsuffix/*.dafsa r,
+
+  # file_inherit
+  owner @{HOME}/.xsession-errors w,
+
+
+  profile gpg {
+    #include <abstractions/base>
+
+    /{usr/,}bin/gpg mr,
+    /{usr/,}bin/gpgsm mr,
+    /{usr/,}bin/gpgconf mr,
+
+    owner @{HOME}/.gnupg/ rw,
+    owner @{HOME}/.gnupg/** rwkl -> @{HOME}/.gnupg/**,
+
+  }
+
+  #include if exists <local/claws-mail>
+}

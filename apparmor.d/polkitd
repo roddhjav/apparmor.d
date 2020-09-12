@@ -1,0 +1,50 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2018-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}lib/polkit-1/polkitd
+profile polkitd @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/nameservice-strict>
+
+  # Tu run as polkitd:nogroup
+  capability setuid,
+  capability setgid,
+
+  # What's this for?
+  capability net_admin,
+
+  @{exec_path} mr,
+
+  @{PROC}/@{pids}/stat r,
+  @{PROC}/@{pids}/cmdline r,
+  @{PROC}/@{pids}/task/@{tid}/stat r,
+  @{PROC}/@{pids}/cgroup r,
+
+  # System rules
+  /etc/polkit-1/rules.d/{,[0-9][0-9]-*.rules} r,
+
+  # Vendor rules
+  /usr/share/polkit-1/rules.d/{,*.rules} r,
+
+  # Vendor policies
+  /usr/share/polkit-1/actions/{,*.policy} r,
+
+  owner /var/lib/polkit-1/.cache/ rw,
+
+  /{,var/}run/systemd/sessions/* r,
+  /{,var/}run/systemd/users/[0-9]* r,
+
+  #include if exists <local/polkitd>
+}

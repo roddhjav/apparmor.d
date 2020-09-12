@@ -1,0 +1,124 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2018-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{JD_INSTALLDIR} = /home/*/jd2
+
+@{exec_path} = @{JD_INSTALLDIR}/*JDownloader*
+profile jdownloader @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/freedesktop.org>
+  #include <abstractions/fonts>
+  #include <abstractions/fontconfig-cache-read>
+  #include <abstractions/freedesktop.org>
+  #include <abstractions/user-download-strict>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/deny-root-dir-access>
+
+  @{exec_path} rix,
+
+  /{usr/,}bin/basename rix,
+  /{usr/,}bin/dirname  rix,
+  /{usr/,}bin/expr     rix,
+  /{usr/,}bin/cut      rix,
+  /{usr/,}bin/ls       rix,
+  /{usr/,}bin/{,e}grep rix,
+  /{usr/,}bin/find     rix,
+  /{usr/,}bin/sed      rix,
+  /{usr/,}bin/chmod    rix,
+
+  /{usr/,}bin/ffmpeg   rPx,
+
+  # These are needed when the above tools are in some nonstandard locations
+  #/{usr/,}bin/which   rix,
+  #/usr/ r,
+  #/usr/local/ r,
+  #/{usr/,}bin/ r,
+  #/{usr/,}lib/ r,
+
+  deny /opt/ r,
+
+  owner @{HOME}/ r,
+  owner @{JD_INSTALLDIR}/ rw,
+  owner @{JD_INSTALLDIR}/** rwk,
+  owner @{JD_INSTALLDIR}/jre/bin/java rix,
+  owner @{JD_INSTALLDIR}/jre/lib/*/jli/libjli.so mrw,
+  owner @{JD_INSTALLDIR}/jre/lib/*/server/libjvm.so mrw,
+  owner @{JD_INSTALLDIR}/jre/lib/*/*.so mrw,
+  owner @{JD_INSTALLDIR}/tmp/jna/jna[0-9]*.tmp mrw,
+  owner @{JD_INSTALLDIR}/tmp/7zip/SevenZipJBinding-*/lib7-Zip-JBinding.so mrw,
+
+  owner @{HOME}/.oracle_jre_usage/[0-9a-f]*.timestamp rw,
+  owner @{HOME}/.java/.userPrefs/.user.lock.* rwk,
+  owner @{HOME}/.java/.userPrefs/com/install4j/installations/prefs.xml rw,
+  owner @{HOME}/.java/fonts/[0-9]*/ rw,
+  owner @{HOME}/.java/fonts/[0-9]*/fcinfo*.tmp rw,
+  owner @{HOME}/.java/fonts/[0-9]*/fcinfo-*.properties rw,
+
+  owner @{HOME}/.install4j rw,
+
+  owner /tmp/hsperfdata_*/ rw,
+  owner /tmp/hsperfdata_*/@{pid} rw,
+  # If the @{JD_INSTALLDIR}/tmp/ dir can't be accessed, the /tmp/ dir will be used instead
+  owner /tmp/SevenZipJBinding-*/ rw,
+  owner /tmp/SevenZipJBinding-*/lib7-Zip-JBinding.so mrw,
+  # For auto updates
+  owner /tmp/lastChanceSrc[0-9]*lch rw,
+  owner /tmp/lastChanceDst[0-9]*.jar rw,
+  owner /tmp/i4j_log_jd2_[0-9]*.log rw,
+  owner /tmp/install4jError[0-9]*.log rw,
+
+  owner @{HOME}/.Xauthority r,
+
+  # What's this for?
+  deny owner @{HOME}/.mozilla/firefox/ r,
+  deny owner @{HOME}/.mozilla/firefox/*.default/prefs.js r,
+
+       owner @{PROC}/@{pid}/fd/ r,
+  deny       @{PROC}/@{pid}/net/ipv6_route r,
+  deny       @{PROC}/@{pid}/net/if_inet6 r,
+       owner @{PROC}/@{pid}/mountinfo r,
+       owner @{PROC}/@{pid}/mounts r,
+  deny owner @{PROC}/@{pid}/cmdline r,
+  deny       @{PROC}/asound/version r,
+
+  # For Reconnect -> Share Settings/Get Route
+  #/{usr/,}bin/netstat rix,
+  #/{usr/,}sbin/route rix,
+  #/{usr/,}bin/ping rix,
+  #/{usr/,}bin/ip rix,
+  #@{PROC}/@{pid}/net/route r,
+
+  # To open a web browser for CAPTCHA
+  /{usr/,}bin/xdg-open                                    rCx -> open,
+  /{usr/,}lib/@{multiarch}/glib-[0-9]*/gio-launch-desktop rCx -> open,
+
+
+  profile open {
+    #include <abstractions/base>
+    #include <abstractions/xdg-open>
+
+    /{usr/,}bin/xdg-open mr,
+    /{usr/,}lib/@{multiarch}/glib-[0-9]*/gio-launch-desktop mr,
+
+    # Allowed apps to open
+    /{usr/,}lib/firefox/firefox rPUx,
+
+    # file_inherit
+    owner @{HOME}/.xsession-errors w,
+
+  }
+
+  #include if exists <local/jdownloader>
+}

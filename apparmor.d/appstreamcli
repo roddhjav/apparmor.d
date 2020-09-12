@@ -1,0 +1,66 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/appstreamcli
+profile appstreamcli @{exec_path} flags=(complain) {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+
+  @{exec_path} mr,
+
+  # For file valudation using the network
+  /{usr/,}bin/curl rCx -> curl,
+
+  /etc/appstream.conf r,
+
+  owner @{PROC}/@{pid}/fd/ r,
+
+  owner @{HOME}/.cache/ rw,
+  owner @{HOME}/.cache/appstream-cache-*.mdb rw,
+
+  /usr/share/appdata/ r,
+  /var/lib/app-info/yaml/ r,
+  /var/lib/app-info/yaml/*_Components-*.yml.gz w,
+
+  owner /var/cache/app-info/{,**} rw,
+  owner /tmp/appstream-cache-*.mdb rw,
+
+  owner @{HOME}/.local/share/mime/mime.cache r,
+  /usr/share/mime/mime.cache r,
+
+  /usr/share/applications/{,*.desktop} r,
+
+  /usr/share/metainfo/ r,
+  /usr/share/metainfo/*.{metainfo,appdata}.xml r,
+
+  /var/lib/apt/lists/ r,
+  /var/lib/apt/lists/*_Components-*.gz r,
+
+  # file_inherit
+  /var/log/cron-apt/temp w,
+
+
+  profile curl {
+    #include <abstractions/base>
+    #include <abstractions/nameservice-strict>
+    #include <abstractions/openssl>
+    #include <abstractions/ssl_certs>
+
+    /{usr/,}bin/curl mr,
+
+  }
+
+  #include if exists <local/appstreamcli>
+}

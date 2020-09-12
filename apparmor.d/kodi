@@ -1,0 +1,111 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/kodi /{usr/,}lib/@{multiarch}/kodi/kodi.bin
+profile kodi @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/X>
+  #include <abstractions/audio>
+  #include <abstractions/dri-enumerate>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/mesa>
+  #include <abstractions/python>
+  #include <abstractions/ssl_certs>
+  #include <abstractions/deny-root-dir-access>
+
+  @{exec_path} mr,
+
+  /{usr/,}lib/@{multiarch}/kodi/kodi.bin   mrix,
+  /{usr/,}lib/@{multiarch}/kodi/kodi-xrandr rPx,
+
+  /{usr/,}bin/dash        rix,
+  /{usr/,}bin/mv          rix,
+  /{usr/,}bin/find        rix,
+  /{usr/,}bin/date        rix,
+  /{usr/,}bin/uname       rix,
+  /{usr/,}bin/basename    rix,
+  /{usr/,}bin/cat         rix,
+  /{usr/,}bin/cut         rix,
+  /{usr/,}bin/dirname     rix,
+  /{usr/,}sbin/ldconfig   rix,
+
+  /{usr/,}bin/lsb_release rPx -> child-lsb_release,
+  /{usr/,}bin/df          rCx -> df,
+
+  /usr/share/kodi/{,**} r,
+
+  owner @{HOME}/.kodi/ rw,
+  owner @{HOME}/.kodi/** rwk,
+
+  owner @{HOME}/core w,
+  owner @{HOME}/kodi_crashlog-[0-9]*_[0-9]*.log w,
+
+  owner @{HOME}/.icons/default/index.theme r,
+
+  /usr/share/publicsuffix/* r,
+
+  /usr/share/icons/*/index.theme r,
+  /etc/mime.types r,
+
+  # Media lib
+  / r,
+  /media/ r,
+  /media/{Kabi,Zami}/ r,
+  /media/Kabi/mp3/{,**} r,
+  /media/Zami/{Film,Serial}/{,**} r,
+
+  /etc/timezone r,
+  /etc/fstab r,
+
+  /etc/glvnd/egl_vendor.d/ r,
+  /usr/share/glvnd/egl_vendor.d/ r,
+  /usr/share/glvnd/egl_vendor.d/[0-9][0-9]_*.json r,
+
+  owner @{PROC}/@{pid}/mounts r,
+        @{PROC}/@{pid}/net/dev r,
+        @{PROC}/sys/kernel/core_pattern r,
+        @{PROC}/@{pid}/net/route r,
+
+  @{sys}/**/ r,
+  @{sys}/devices/**/uevent r,
+  @{sys}/devices/pci[0-9]*/**/usb[0-9]/{bDeviceClass,idProduct,idVendor} r,
+  @{sys}/devices/pci[0-9]*/**/usb[0-9]/**/{bDeviceClass,idProduct,idVendor} r,
+  @{sys}/devices/system/node/node0/meminfo r,
+  @{sys}/devices/system/node/ r,
+  @{sys}/devices/system/cpu/cpufreq/policy[0-9]*/scaling_cur_freq r,
+  @{sys}/devices/virtual/thermal/thermal_zone[0-9]*/temp r,
+
+  /{var/,}run/udev/data/* r,
+
+  /var/lib/dbus/machine-id r,
+  /etc/machine-id r,
+
+  profile df {
+    #include <abstractions/base>
+
+    /{usr/,}bin/df mr,
+
+    owner @{PROC}/@{pid}/mountinfo r,
+
+    # file_inherit
+    /usr/share/kodi/** r,
+    /sys/devices/virtual/thermal/thermal_zone[0-9]*/temp r,
+    /sys/devices/system/cpu/cpufreq/policy[0-9]*/scaling_cur_freq r,
+    /home/morfik/.kodi/temp/kodi.log w,
+
+  }
+
+  #include if exists <local/kodi>
+}

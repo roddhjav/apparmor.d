@@ -1,0 +1,38 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2018-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}lib/dconf/dconf-service /usr/libexec/dconf-service
+profile dconf-service @{exec_path} {
+  #include <abstractions/base>
+
+  # Needed?
+  deny capability sys_nice,
+
+  @{exec_path} mr,
+
+  owner /{,var/}run/user/[0-9]*/dconf/ rw,
+  owner /{,var/}run/user/[0-9]*/dconf/user rw,
+
+  owner @{HOME}/.config/dconf/ rw,
+  owner @{HOME}/.config/dconf/user{,.*} rw,
+
+  owner @{HOME}/.cache/ rw,
+  owner @{HOME}/.cache/dconf/ rw,
+  owner @{HOME}/.cache/dconf/user rw,
+
+  @{PROC}/cmdline r,
+
+  #include if exists <local/dconf-service>
+}

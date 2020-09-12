@@ -1,0 +1,139 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2018-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{KP_DB} = @{HOME}/keepass-baza
+
+@{exec_path} = /{usr/,}bin/keepassxc
+profile keepassxc @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/X>
+  #include <abstractions/freedesktop.org>
+  #include <abstractions/fonts>
+  #include <abstractions/fontconfig-cache-read>
+  #include <abstractions/gtk>
+  #include <abstractions/mesa>
+  #include <abstractions/qt5-compose-cache-write>
+  #include <abstractions/dri-enumerate>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/user-download-strict>
+  #include <abstractions/qt5-settings-write>
+  #include <abstractions/openssl>
+  #include <abstractions/ssl_certs>
+  #include <abstractions/deny-root-dir-access>
+
+  @{exec_path} mrix,
+
+  /usr/share/keepassxc/{,**} r,
+
+  owner @{HOME}/.config/keepassxc/ rw,
+  owner @{HOME}/.config/keepassxc/* rwkl -> @{HOME}/.config/keepassxc/#[0-9]*[0-9],
+
+  owner @{HOME}/.cache/keepassxc/ rw,
+  owner @{HOME}/.cache/keepassxc/* rwkl -> @{HOME}/.cache/keepassxc/#[0-9]*[0-9],
+
+  # Database location
+          / r,
+          /home/ r,
+  owner @{HOME}/ r,
+  owner @{KP_DB}/ r,
+  owner @{KP_DB}/#[0-9]*[0-9] rw,
+  owner @{KP_DB}/*.kdbx* rwl -> @{KP_DB}/#[0-9]*[0-9],
+  #For export to a CSV file
+  owner @{KP_DB}/*.csv rw,
+
+  # For SSH keys
+  owner @{HOME}/.ssh/ r,
+  owner @{HOME}/.ssh/*_rsa r,
+  owner @{HOME}/.ssh/*_ed25519 r,
+  owner @{HOME}/.ssh/*.pub r,
+
+  # To configure Qt5 settings (theme, font, icons, etc.) under DE/WM without Qt integration
+  owner @{HOME}/.config/qt5ct/{,**} r,
+  /usr/share/qt5ct/** r,
+
+  owner /tmp/keepassxc-*.lock{,.rmlock} rwk,
+  owner /tmp/keepassxc-*.socket rw,
+  # When $USER is not set
+  owner /tmp/keepassxc.lock rw,
+  owner /tmp/keepassxc.socket rw,
+
+  owner /tmp/.[a-zA-Z]*/{,s} rw,
+
+  owner /tmp/#[0-9]*[0-9] rw,
+  owner /tmp/*.*.gpgkey rwl -> /tmp/#[0-9]*[0-9],
+  owner /tmp/*.*.settings rwl -> /tmp/#[0-9]*[0-9],
+
+  deny       @{PROC}/sys/kernel/random/boot_id r,
+  deny owner @{PROC}/@{pid}/cmdline r,
+       owner @{PROC}/@{pids}/comm r,
+       owner @{PROC}/@{pid}/mountinfo r,
+       owner @{PROC}/@{pid}/mounts r,
+
+  /etc/fstab r,
+
+  @{sys}/bus/ r,
+  @{sys}/bus/usb/devices/ r,
+  @{sys}/class/ r,
+  @{sys}/devices/pci[0-9]*/**/usb[0-9]/{,**/}{uevent,speed,descriptors} r,
+  @{sys}/devices/pci[0-9]*/**/usb[0-9]/{,**/}{busnum,devnum} r,
+
+  /{var/,}run/udev/data/c189:[0-9]* r, # for /dev/bus/usb/**
+  /{var/,}run/udev/data/+usb:* r,      #
+
+  /dev/bus/usb/ r,
+  /dev/shm/#[0-9]*[0-9] rw,
+
+  # For browser integration
+  owner @{HOME}/.config/google-chrome{,-beta,-unstable}/NativeMessagingHosts/org.keepassxc.keepassxc_browser.json rw,
+  owner @{HOME}/.config/chromium/NativeMessagingHosts/org.keepassxc.keepassxc_browser.json rw,
+  owner @{HOME}/.config/BraveSoftware/Brave-Browser{,-Beta,-Dev}/NativeMessagingHosts/org.keepassxc.keepassxc_browser.json rw,
+  owner @{HOME}/.mozilla/native-messaging-hosts/org.keepassxc.keepassxc_browser.json rw,
+  owner /{var/,}run/user/[0-9]*/.[a-zA-Z]*/{,s} rw,
+  owner /{var/,}run/user/[0-9]*/kpxc_server rw,
+
+  owner /{var/,}run/user/[0-9]*/org.keepassxc.KeePassXC.BrowserServer w,
+
+  /var/lib/dbus/machine-id r,
+  /etc/machine-id r,
+
+  /usr/share/hwdata/pnp.ids r,
+
+  /{usr/,}bin/xdg-open   rCx -> open,
+
+  # file_inherit
+  owner /dev/tty[0-9]* rw,
+
+  # Allowed apps to open
+  /{usr/,}lib/firefox/firefox rPUx,
+  /{usr/,}bin/geany           rPUx,
+
+
+  profile open {
+    #include <abstractions/base>
+    #include <abstractions/xdg-open>
+
+    /{usr/,}bin/xdg-open mr,
+
+    # Allowed apps to open
+    /{usr/,}lib/firefox/firefox rPUx,
+    /{usr/,}bin/geany           rPUx,
+
+    # file_inherit
+    owner @{HOME}/.xsession-errors w,
+
+  }
+
+  #include if exists <local/keepassxc>
+}

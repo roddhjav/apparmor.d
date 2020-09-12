@@ -1,0 +1,63 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{BUILD_DIR} = /media/debuilder/
+
+@{exec_path} = /{usr/,}bin/dput /usr/share/dput/execute-dput
+profile execute-dput @{exec_path} flags=(complain) {
+  #include <abstractions/base>
+  #include <abstractions/python>
+  #include <abstractions/nameservice-strict>
+  #include <abstractions/deny-root-dir-access>
+
+  @{exec_path} r,
+  /{usr/,}bin/python3.[0-9]* r,
+
+  /{usr/,}bin/dash    rix,
+
+  /{usr/,}bin/dpkg    rPx -> child-dpkg,
+
+  /{usr/,}bin/gpgconf           rCx -> gpg,
+  /{usr/,}bin/gpg               rCx -> gpg,
+  /{usr/,}bin/gpgsm             rCx -> gpg,
+
+  /usr/share/dput/{,**} r,
+
+  /etc/dput.cf r,
+  owner @{HOME}/.dput.cf r,
+
+  owner @{PROC}/@{pid}/fd/ r,
+
+  # sources dir
+  owner @{BUILD_DIR}/**.changes r,
+  owner @{BUILD_DIR}/**.dsc r,
+  owner @{BUILD_DIR}/**.buildinfo r,
+  owner @{BUILD_DIR}/**.tar.xz r,
+
+
+  profile gpg {
+    #include <abstractions/base>
+
+    /{usr/,}bin/gpgconf mr,
+    /{usr/,}bin/gpg mr,
+    /{usr/,}bin/gpgsm mr,
+
+    owner @{HOME}/.gnupg/ rw,
+    owner @{HOME}/.gnupg/** rwkl -> @{HOME}/.gnupg/**,
+
+  }
+
+  #include if exists <local/execute-dput>
+}

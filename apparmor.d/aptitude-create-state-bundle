@@ -1,0 +1,40 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/aptitude-create-state-bundle
+profile aptitude-create-state-bundle @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/nameservice-strict>
+
+  @{exec_path} r,
+  /{usr/,}bin/bash r,
+
+  /{usr/,}bin/which rix,
+  /{usr/,}bin/tar   rix,
+  /{usr/,}bin/bzip2 rix,
+  /{usr/,}bin/gzip  rix,
+
+  # Files included in the bundle
+  owner @{HOME}/.aptitude/{,*} r,
+  /var/lib/aptitude/{,*} r,
+  /var/lib/apt/{,**} r,
+  /var/cache/apt/ r,
+  /var/cache/apt/*.bin r,
+  /etc/apt/{,**} r,
+  /var/lib/dpkg/status r,
+
+  #include if exists <local/aptitude-create-state-bundle>
+}

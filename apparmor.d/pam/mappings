@@ -1,0 +1,76 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2019-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+#
+# See more at: https://gitlab.com/apparmor/apparmor/wikis/Pam_apparmor_example
+
+#
+# This file contains the mappings from users to roles for the binaries
+# confined with AppArmor and configured for use with libpam-apparmor. Users
+# without a mapping will not be able to login.
+#
+# The default hat is a confined user. The hat contains only the permissions
+# necessary to transition to the user's login shell. All other permissions have
+# been moved into the default_user profile.
+^DEFAULT {
+  #include <abstractions/authentication>
+  #include <abstractions/nameservice>
+  capability dac_override,
+  capability setgid,
+  capability setuid,
+  /etc/default/su r,
+  /etc/environment r,
+  @{HOMEDIRS}/.xauth* w,
+  /{usr/,}bin/{,b,d,rb}ash Px -> default_user,
+  /{usr/,}bin/{c,k,tc,z}sh Px -> default_user,
+}
+
+# morfik is a confined user. The hat contains only the permissions necessary
+# to transition to gray's login shell. All other permissions have been
+# moved into the confined_user profile.
+^morfik {
+  #include <abstractions/authentication>
+  #include <abstractions/nameservice>
+
+  capability dac_override,
+  capability audit_write,
+  capability setgid,
+  capability setuid,
+
+  /{usr/,}bin/{,b,d,rb}ash Px -> confined_user,
+  /{usr/,}bin/{c,k,tc,z}sh Px -> confined_user,
+
+  /etc/default/su r,
+  /etc/environment r,
+  @{HOMEDIRS}/.xauth* w,
+
+}
+
+# Don't confine members whose primary group is 'admin' who are not specifically
+# confined. Systems without this special primary group may want to define an
+# unconfined 'root' hat in this manner (depending on site policy).
+^root {
+  #include <abstractions/authentication>
+  #include <abstractions/nameservice>
+  #include <abstractions/wutmp>
+
+  capability dac_override,
+  capability audit_write,
+  capability setgid,
+  capability setuid,
+
+  /{usr/,}bin/{,b,d,rb}ash Ux,
+  /{usr/,}bin/{c,k,tc,z}sh Ux,
+
+  /etc/default/su r,
+  /etc/environment r,
+  @{HOMEDIRS}/.xauth* w,
+
+}

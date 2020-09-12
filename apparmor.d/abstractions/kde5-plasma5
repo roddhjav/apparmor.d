@@ -1,0 +1,67 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2018-2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+  #abi <abi/3.0>,
+
+  #include <abstractions/thumbnails-cache-read>
+
+  # KDE/Plasma5 themes
+  #/{usr/,}lib/@{multiarch}/qt5/plugins/platformthemes/KDEPlasmaPlatformTheme.so mr,
+  #/{usr/,}lib/@{multiarch}/qt5/plugins/styles/breeze.so mr,
+  #/usr/share/plasma/look-and-feel/** r,
+  #/usr/share/color-schemes/*.colors r,
+
+  #/usr/share/kservices5/{,**/} r,
+  #/usr/share/kservices5/*.protocol r,
+
+  #/usr/share/knotifications5/plasma_workspace.notifyrc r,
+
+  # For app config (in order to work the KDE_APP_NAME variable has to be set in profile which
+  # includes this abstraction)
+  #owner @{HOME}/.config/#[0-9]*[0-9] rwk,
+  #owner @{HOME}/.config/@{KDE_APP_NAME}rc* rwlk -> @{HOME}/.config/#[0-9]*[0-9],
+  #owner /{var/,}run/user/[0-9]*/#[0-9]*[0-9] rw,
+  #owner /{var/,}run/user/[0-9]*/@{KDE_APP_NAME}*.slave-socket rwl -> /{var/,}run/user/[0-9]*/#[0-9]*[0-9],
+
+  # Common KDE config files
+  #owner @{HOME}/.config/#[0-9]*[0-9] rw,
+  #owner @{HOME}/.config/kdeglobals* rwkl -> @{HOME}/.config/#[0-9]*[0-9],
+  #owner @{HOME}/.config/baloofilerc r,
+  #owner @{HOME}/.config/dolphinrc r,
+  #owner @{HOME}/.config/trashrc r,
+  #owner @{HOME}/.config/knfsshare r,
+  #owner /**/.directory r,
+
+  # For bookmarks
+  #/{usr/,}bin/keditbookmarks rPUx,
+  #owner @{HOME}/.local/share/kfile/ rw,
+  #owner @{HOME}/.local/share/kfile/#[0-9]*[0-9] rw,
+  #owner @{HOME}/.local/share/kfile/bookmarks.xml* rwl -> @{HOME}/.local/share/kfile/#[0-9]*[0-9],
+
+  # Common cache files
+  #owner @{HOME}/.cache/icon-cache.kcache rw,
+  #owner @{HOME}/.cache/ksycoca5_* r,
+
+  # Think what to do about this #FIXME#
+  # It seems when a QT app is started in Plasma5/KDE5 environment it also wants the following.
+  ##include <abstractions/recent-documents-write>
+  #signal (send) set=(term, kill) peer=unconfined,
+  #deny @{sys}/bus/ r,
+  #deny @{sys}/bus/usb/devices/ r,
+  #deny @{sys}/class/ r,
+  #deny /{var/,}run/udev/data/b8:[0-9]* r,   # for /dev/sda1 , etc.
+  #deny /{var/,}run/udev/data/c189:[0-9]* r, # for /dev/bus/usb/001/001 , etc.
+  #deny /{var/,}run/udev/data/+usb:* r,      #
+  #/etc/exports r,
+  #/etc/xdg/menus/ r,
+  #/usr/share/mime/ r,
+  #owner @{HOME}/.config/menus/ r,
+  #owner @{HOME}/.config/menus/applications-merged/ r,

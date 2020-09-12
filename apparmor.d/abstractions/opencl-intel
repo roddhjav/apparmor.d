@@ -1,0 +1,17 @@
+# vim:syntax=apparmor
+# OpenCL access requirements for Intel implementation
+
+  #include <abstractions/opencl-common>
+
+  # for libcl.so (libOpenCL.so -> beignet/libcl.so calls XOpenDisplay())
+  #include <abstractions/X>
+
+  # for libOpenCL.so -> beignet/libcl.so -> libpciaccess.so
+  #include <abstractions/dri-enumerate>
+
+  # System files
+
+  /dev/dri/card[0-9]* rw, # beignet/libcl.so
+  @{sys}/devices/pci[0-9]*/**/{class,config,resource,revision} r, # libcl.so -> libdrm_intel.so -> libpciaccess.so (move to dri-enumerate ?)
+  /usr/lib/@{multiarch}/beignet/** r,
+

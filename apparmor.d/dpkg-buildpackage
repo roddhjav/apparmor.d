@@ -1,0 +1,111 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{BUILD_DIR} = /media/debuilder/
+
+@{exec_path} = /{usr/,}bin/dpkg-buildpackage
+profile dpkg-buildpackage @{exec_path} flags=(complain) {
+  #include <abstractions/base>
+  #include <abstractions/perl>
+
+  @{exec_path} r,
+  /{usr/,}bin/perl r,
+
+  /{usr/,}bin/dash                rix,
+  /{usr/,}bin/getopt              rix,
+  /{usr/,}bin/sed                 rix,
+  /{usr/,}bin/cut                 rix,
+  /{usr/,}bin/getconf             rix,
+  /{usr/,}bin/fakeroot-sysv       rix,
+  /{usr/,}bin/faked-sysv          rix,
+
+  /{usr/,}bin/dh                  rPx,
+  /{usr/,}bin/dpkg-buildflags     rPx,
+  /{usr/,}bin/dpkg-architecture   rPx,
+  /{usr/,}bin/dpkg-genbuildinfo   rPx,
+  /{usr/,}bin/dpkg-genchanges     rPx,
+  /{usr/,}bin/dpkg-checkbuilddeps rPx,
+
+  /{usr/,}bin/dpkg-source         rcx -> dpkg-source,
+
+  # What to do with it? The "rules" file is just a make file and can use any tool. (#FIXME#)
+  owner @{BUILD_DIR}/**/debian/rules rcx -> debian-rules,
+  owner @{BUILD_DIR}/**             rwkl -> @{BUILD_DIR}/**,
+
+  /etc/dpkg/origins/debian r,
+
+
+  profile dpkg-source flags=(complain) {
+    #include <abstractions/base>
+    #include <abstractions/nameservice-strict>
+    #include <abstractions/perl>
+
+    /{usr/,}bin/dpkg-source mr,
+    /{usr/,}bin/perl r,
+
+    /{usr/,}bin/tar     rix,
+    /{usr/,}bin/bunzip2 rix,
+    /{usr/,}bin/gunzip  rix,
+    /{usr/,}bin/gzip    rix,
+    /{usr/,}bin/xz      rix,
+    /{usr/,}bin/rm      rix,
+    /{usr/,}bin/cp      rix,
+    /{usr/,}bin/chmod   rix,
+    /{usr/,}bin/patch   rix,
+    /{usr/,}bin/diff    rix,
+
+    /etc/dpkg/origins/debian r,
+
+    owner /tmp/*.diff.* rw,
+    owner /tmp/* rw,
+
+    /usr/share/dpkg/tupletable r,
+    /usr/share/dpkg/cputable r,
+
+               owner @{BUILD_DIR}/** rwkl -> @{BUILD_DIR}/**,
+               owner @{HOME}/**      rwkl -> @{HOME}/**,
+    audit deny owner @{HOME}/.*     mrwkl,
+    audit deny owner @{HOME}/.*/     rw,
+    audit deny owner @{HOME}/.*/**  mrwkl,
+
+  }
+
+  profile debian-rules flags=(complain) {
+    #include <abstractions/base>
+
+    owner @{BUILD_DIR}/**/debian/rules rix,
+    owner @{BUILD_DIR}/**              rix,
+    owner @{BUILD_DIR}/**              rwkl -> @{BUILD_DIR}/*/**,
+
+    /{usr/,}bin/dash            rix,
+    /{usr/,}bin/make            rix,
+
+    # Don't strip env here
+    /{usr/,}bin/*              rpux,
+
+    /usr/share/dpkg/* r,
+
+    / r,
+    /usr/include/{,**} r,
+
+    # Key to sign the kernel and its modules
+    /etc/kernel_key/* r,
+
+    owner /tmp/cpiolist.* rw,
+
+  }
+
+  #include if exists <local/dpkg-buildpackage>
+}
