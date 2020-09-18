@@ -18,6 +18,7 @@
 @{exec_path} = /{usr/,}bin/git
 profile git @{exec_path} {
   #include <abstractions/base>
+  #include <abstractions/consoles>
   #include <abstractions/ssl_certs>
   #include <abstractions/nameservice-strict>
 
@@ -60,6 +61,9 @@ profile git @{exec_path} {
 
   # Difftools
   /{usr/,}bin/meld       rPUx,
+
+  /{usr/,}bin/sensible-editor rCx -> editor,
+  /{usr/,}bin/vim.*           rCx -> editor,
 
   owner @{HOME}/.config/git/ rw,
   owner @{HOME}/.config/git/config rw,
@@ -123,6 +127,30 @@ profile git @{exec_path} {
     #include <abstractions/base>
 
     owner @{BUILD_DIR}/**/bin/* mr,
+
+  }
+
+  profile editor flags=(complain) {
+    #include <abstractions/base>
+    #include <abstractions/nameservice-strict>
+
+    /{usr/,}bin/sensible-editor mr,
+    /{usr/,}bin/vim.*           mrix,
+    /{usr/,}bin/dash             rix,
+    /{usr/,}bin/which            rix,
+
+    owner @{HOME}/.selected_editor r,
+
+    /usr/share/vim/{,**} r,
+    /etc/vim/{,**} r,
+    owner @{HOME}/.viminfo{,.tmp} rw,
+
+    owner @{HOME}/.fzf/plugin/ r,
+    owner @{HOME}/.fzf/plugin/fzf.vim r,
+
+    # The git repository files
+    owner /media/debuilder/ r,
+    owner /media/debuilder/** rw,
 
   }
 
