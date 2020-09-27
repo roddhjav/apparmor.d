@@ -1,0 +1,91 @@
+# vim:syntax=apparmor
+# Updated for Ubuntu by: Jamie Strandboge <jamie@canonical.com>
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2002-2005 Novell/SUSE
+#    Copyright (C) 2009-2012 Canonical Ltd.
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#include <tunables/global>
+#include <tunables/ntpd>
+/usr/sbin/ntpd flags=(attach_disconnected) {
+  #include <abstractions/base>
+  #include <abstractions/nameservice>
+  #include <abstractions/user-tmp>
+  #include <abstractions/openssl>
+
+  capability ipc_lock,
+  capability net_admin,
+  capability net_bind_service,
+  capability setgid,
+  capability setuid,
+  capability sys_chroot,
+  capability sys_resource,
+  capability sys_time,
+  capability sys_nice,
+
+  # Needed to create logs
+  #capability dac_override,
+
+  # ntp uses AF_INET, AF_INET6 and AF_UNSPEC
+  network dgram,
+  network stream,
+
+  @{PROC}/net/if_inet6 r,
+  @{PROC}/*/net/if_inet6 r,
+  @{NTPD_DEVICE} rw,
+  # pps devices are almost exclusively used with NTP
+  /dev/pps[0-9]* rw,
+
+  /{,s}bin/      r,
+  /usr/{,s}bin/  r,
+  /usr/local/{,s}bin/  r,
+  /usr/sbin/ntpd rmix,
+
+  /etc/ntpsec/ntp.conf r,
+  /etc/ntpsec/ntp.d/ r,
+  /etc/ntpsec/ntp.d/*.conf r,
+  /run/ntpsec/ntp.conf.dhcp r,
+
+  /etc/ntpsec/cert-chain.pem r,
+  /etc/ntpsec/key.pem r,
+  /etc/ntpsec/ntp.keys r,
+
+  /var/lib/ntpsec/ntp.drift rw,
+  /var/lib/ntpsec/ntp.drift-tmp rw,
+  /var/lib/ntpsec/nts-keys rw,
+  /usr/share/zoneinfo/leap-seconds.list rw,
+
+  /var/log/ntp w,
+  /var/log/ntp.log w,
+  /var/log/ntpd w,
+  /var/log/ntpsec/clockstats* rwl,
+  /var/log/ntpsec/loopstats*  rwl,
+  /var/log/ntpsec/peerstats*  rwl,
+  /var/log/ntpsec/protostats* rwl,
+  /var/log/ntpsec/rawstats*   rwl,
+  /var/log/ntpsec/sysstats*   rwl,
+  /var/log/ntpsec/usestats.*  rwl,
+
+  /{,var/}run/ntpd.pid w,
+
+  # to be able to check for running ntpdate
+  /run/lock/ntpsec-ntpdate wk,
+
+  # To sign replies to MS-SNTP clients by the smbd daemon /var/lib/samba
+  /var/lib/samba/ntp_signd/socket rw,
+
+  # For use with clocks that report via shared memory (e.g. gpsd),
+  # you may need to give ntpd access to all of shared memory, though
+  # this can be considered dangerous. See https://launchpad.net/bugs/722815
+  # for details. To enable, add this to local/usr.sbin.ntpd:
+  #     capability ipc_owner,
+
+  # Site-specific additions and overrides. See local/README for details.
+  #include <local/usr.sbin.ntpd>
+}
