@@ -1,0 +1,99 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+#abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{BACKUP_DIR} = /media/Arti/backup-*
+
+@{exec_path} = /{usr/,}bin/borg
+profile borg @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/python>
+
+  # For reading files of other users as root
+  capability dac_read_search,
+
+  # Needed to mount backup files
+  capability sys_admin,
+
+  #
+  capability fowner,
+
+  @{exec_path} r,
+  /{usr/,}bin/python3.[0-9]* r,
+
+  /usr/bin/uname                     rix,
+  /usr/sbin/ldconfig                 rix,
+  /{usr/,}bin/{,@{multiarch}-}ld.bfd rix,
+
+  /{usr/,}bin/ccache                 rCx -> ccache,
+
+  /usr/bin/fusermount{,3}            rPx,
+
+  mount fstype=fuse -> /media/*/,
+  umount /media/*/,
+
+  /dev/fuse rw,
+
+  owner @{PROC}/@{pid}/fd/ r,
+
+  owner @{HOME}/.cache/ rw,
+  owner @{HOME}/.cache/borg/ rw,
+  owner @{HOME}/.cache/borg/** rw,
+
+  owner @{HOME}/.config/borg/ rw,
+  owner @{HOME}/.config/borg/** rw,
+
+  # If /tmp/ isn't accessible, then /var/tmp/ is used.
+  owner /tmp/* rw,
+  owner /tmp/tmp*/ rw,
+  owner /tmp/tmp*/idx rw,
+  owner /var/tmp/* rw,
+  owner /var/tmp/tmp*/ rw,
+  owner /var/tmp/tmp*/idx rw,
+
+  # Dirs that can be backed up
+  /            r,
+  /boot/{,**}  r,
+  /efi/{,**}   r,
+  /etc/{,**}   r,
+  /home/{,**}  r,
+  /media/{,**} r,
+  /mnt/{,**}   r,
+  /opt/{,**}   r,
+  /root/{,**}  r,
+  /srv/{,**}   r,
+  /usr/{,**}   r,
+  /var/{,**}   r,
+
+  # The backup dirs
+  owner @{BACKUP_DIR}/ r,
+  owner @{BACKUP_DIR}/** rwkl -> @{BACKUP_DIR}/**,
+
+  # For exporting the key
+  owner /**/key w,
+
+
+  profile ccache {
+    #include <abstractions/base>
+
+    /{usr/,}bin/ccache mr,
+
+    /{usr/,}bin/{,@{multiarch}-}gcc-[0-9]* rix,
+
+    /media/ccache/*/** rw,
+
+  }
+
+  #include if exists <local/borg>
+}
