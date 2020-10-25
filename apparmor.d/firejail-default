@@ -2,6 +2,10 @@
 # Generic Firejail AppArmor profile
 #########################################
 
+# AppArmor 3.0 uses the @{run} variable in <abstractions/dbus-strict>
+# and <abstractions/dbus-session-strict>.
+#include <tunables/global>
+
 ##########
 # A simple PID declaration based on Ubuntu's @{pid}
 # Ubuntu keeps it under tunables/kernelvars and include it via tunables/global.
@@ -19,6 +23,8 @@ profile firejail-default flags=(attach_disconnected,mediate_deleted) {
 #include <abstractions/dbus-strict>
 #include <abstractions/dbus-session-strict>
 dbus,
+# Add rule in order to avoid dbus-*=filter breakage (#3432)
+owner /{,var/}run/firejail/dbus/[0-9]*/[0-9]*-user w,
 
 ##########
 # With ptrace it is possible to inspect and hijack running programs.
@@ -47,6 +53,10 @@ owner /{,run/firejail/mnt/oroot/}{,var/}run/firejail/mnt/trace w,
 owner /{,run/firejail/mnt/oroot/}{,var/}run/user/[0-9]*/** w,
 owner /{,run/firejail/mnt/oroot/}{run,dev}/shm/** w,
 
+# Allow writing to /var/mail and /var/spool/mail (for mail clients)
+# Uncomment to enable
+#owner /var/{mail,spool/mail}/** w,
+
 # Allow writing to removable media
 owner /{,var/}run/media/** w,
 
@@ -60,18 +70,17 @@ owner /{,var/}run/media/** w,
 # Allow access to pcscd socket (smartcards)
 /{,var/}run/pcscd/pcscd.comm w,
 
-# Needed for firefox sandbox
-/proc/@{PID}/{uid_map,gid_map,setgroups} w,
+# Needed for browser self-sandboxing
+owner /proc/@{PID}/{uid_map,gid_map,setgroups} w,
 
 # Needed for electron apps
 /proc/@{PID}/comm w,
+# Needed for nslookup, dig, host
+/proc/@{PID}/task/@{PID}/comm w,
 
-# Silence noise
-deny /proc/@{PID}/oom_adj w,
-deny /proc/@{PID}/oom_score_adj w,
-
-# Uncomment to silence all denied write warnings
-#deny /sys/** w,
+# Used by chromium
+owner /proc/@{PID}/oom_score_adj w,
+owner /proc/@{PID}/clear_refs w,
 
 ##########
 # Allow running programs only from well-known system directories. If you need
@@ -80,7 +89,7 @@ deny /proc/@{PID}/oom_score_adj w,
 /{,run/firejail/mnt/oroot/}{,usr/,usr/local/}bin/** ix,
 /{,run/firejail/mnt/oroot/}{,usr/,usr/local/}sbin/** ix,
 /{,run/firejail/mnt/oroot/}{,usr/,usr/local/}games/** ix,
-/{,run/firejail/mnt/oroot/}{,usr/,usr/local/}lib{,32,64}/** ix,
+/{,run/firejail/mnt/oroot/}{,usr/,usr/local/}lib{,32,64,exec}/** ix,
 /{,run/firejail/mnt/oroot/}{,usr/,usr/local/}opt/** ix,
 #/{,run/firejail/mnt/oroot/}home/** ix,
 

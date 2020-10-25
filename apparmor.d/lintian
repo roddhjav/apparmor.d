@@ -53,6 +53,7 @@ profile lintian @{exec_path} flags=(complain) {
   /{usr/,}bin/filterdiff         rix,
   /{usr/,}bin/lexgrog            rix,
   /{usr/,}bin/mv                 rix,
+  /usr/bin/cp rix,
 
   /{usr/,}bin/{,@{multiarch}-}ar      rix,
   /{usr/,}bin/{,@{multiarch}-}readelf rix,
@@ -64,6 +65,8 @@ profile lintian @{exec_path} flags=(complain) {
   /{usr/,}bin/dpkg-deb           rPx,
   /{usr/,}bin/man                rPx,
   /{usr/,}bin/dpkg-architecture  rPx,
+
+  /usr/share/intltool-debian/* rCx -> intltool,
 
   /usr/share/lintian/{,**} rk,
 
@@ -85,6 +88,8 @@ profile lintian @{exec_path} flags=(complain) {
   owner /tmp/*/random_seed w,
 
   owner /tmp/* rw,
+  owner /tmp/lintian-po-debconf-*/ rw,
+  owner /tmp/lintian-po-debconf-*/** rw,
 
   # For pbuilder
   owner @{BUILD_DIR}/**.{changes,dsc,buildinfo,tar.*,deb} rk,
@@ -158,7 +163,27 @@ profile lintian @{exec_path} flags=(complain) {
     owner /tmp/*.gpg.lock rwl -> /tmp/.#lk0x[0-9a-f]*.*.@{pid},
     owner /tmp/.#lk0x[0-9a-f]*.*.@{pid} rw,
     owner /tmp/.#lk0x[0-9a-f]*.*.@{pid}x rwl -> /tmp/.#lk0x[0-9a-f]*.*.@{pid},
-    owner /{var/,}run/user/[0-9]*/gnupg/d.*/ rw,
+    owner @{run}/user/[0-9]*/gnupg/d.*/ rw,
+
+    # file_inherit
+    owner /tmp/* rw,
+
+  }
+
+
+  profile intltool flags=(complain) {
+    #include <abstractions/base>
+    #include <abstractions/perl>
+
+    /usr/share/intltool-debian/* mrix,
+
+    /usr/bin/dash rix,
+    /usr/bin/xgettext rix,
+
+    /usr/share/gettext/** r,
+    /usr/share/gettext-*/** r,
+
+    owner /tmp/lintian-po-debconf-*/** rw,
 
     # file_inherit
     owner /tmp/* rw,
