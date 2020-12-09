@@ -23,7 +23,7 @@ profile cron-apt @{exec_path} {
 
   @{exec_path} r,
 
-  /{usr/,}bin/dash        rix,
+  /{usr/,}bin/{,ba,da}sh  rix,
   /{usr/,}bin/dotlockfile rix,
   /{usr/,}bin/sed         rix,
   /{usr/,}bin/mktemp      rix,
@@ -61,10 +61,13 @@ profile cron-apt @{exec_path} {
   /etc/cron-apt/refrain r,
   /etc/cron-apt/action.d/[0-9]-* r,
 
-  /var/lib/cron-apt/{,**/} w,
-  /var/lib/cron-apt/.lk@{pid}* rw,
-  /var/lib/cron-apt/lockfile rwl -> /var/lib/cron-apt/.lk@{pid}*,
-  /var/lib/cron-apt/_-_etc_-_cron-apt_-_config/mailchanges/[0-9]-*-[0-9a-f]* rw,
+  # For shell pwd
+  / r,
+  /etc/ r,
+  /root/ r,
+
+  /var/lib/cron-apt/ rw,
+  /var/lib/cron-apt/** rwl -> /var/lib/cron-apt/**,
 
   # Logs
   /var/log/cron-apt/ r,
@@ -77,6 +80,7 @@ profile cron-apt @{exec_path} {
   /{usr/,}lib/locale/locale-archive r,
 
   # TMP
+        /tmp/ r,
   owner /tmp/cron-apt.*/ rw,
   owner /tmp/cron-apt.*/difftemp rw,
   owner /tmp/cron-apt.*/lockfile rw,

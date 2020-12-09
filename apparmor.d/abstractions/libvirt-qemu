@@ -32,6 +32,9 @@
   # only modify its comm value or those in its thread group.
   owner @{PROC}/@{pid}/task/@{tid}/comm rw,
   @{PROC}/sys/kernel/cap_last_cap r,
+  @{PROC}/sys/vm/overcommit_memory r,
+  # detect hardware capabilities via qemu_getauxval
+  owner @{PROC}/*/auxv r,
 
   # For hostdev access. The actual devices will be added dynamically
   /sys/bus/usb/devices/ r,
@@ -165,6 +168,11 @@
   # for Debian/Ubuntu qemu-block-extra / RPMs qemu-block-* (LP: #1554761)
   /usr/{lib,lib64}/qemu/*.so mr,
   /usr/lib/@{multiarch}/qemu/*.so mr,
+
+  # let qemu load old shared objects after upgrades (LP: #1847361)
+  /{var/,}run/qemu/*/*.so mr,
+  # but explicitly deny writing to these files
+  audit deny /{var/,}run/qemu/*/*.so w,
 
   # swtpm
   /{usr/,}bin/swtpm rmix,

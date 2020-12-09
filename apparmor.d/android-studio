@@ -32,6 +32,7 @@ profile android-studio @{exec_path} {
   #include <abstractions/dri-enumerate>
   #include <abstractions/mesa>
   #include <abstractions/audio>
+  #include <abstractions/python>
   #include <abstractions/deny-root-dir-access>
 
   # The following rules are needed only when the kernel.unprivileged_userns_clone option is set
@@ -47,7 +48,9 @@ profile android-studio @{exec_path} {
   signal (send) set=(term, kill) peer=android-studio//lsb-release,
 
   @{exec_path} r,
-  /{usr/,}bin/dash r,
+  /{usr/,}bin/{,ba,da}sh  rix,
+
+  /{usr/,}bin/python3.[0-9]* r,
 
   /{usr/,}bin/which       rix,
   /{usr/,}bin/uname       rix,
@@ -91,6 +94,7 @@ profile android-studio @{exec_path} {
   /media/*/ r,
   /usr/ r,
   /{usr/,}lib/ r,
+  /{usr/,}lib{x32,32,64}/ r,
 
   @{AS_LIBDIR}/ rw,
   @{AS_LIBDIR}/** mrwkix,
@@ -120,12 +124,31 @@ profile android-studio @{exec_path} {
   owner @{HOME}/AndroidStudio/DeviceExplorer/ rw,
   owner @{HOME}/AndroidStudio/DeviceExplorer/** rw,
 
+  owner @{HOME}/Android/ rw,
+  owner @{HOME}/Android/** mrwkix,
+
   owner "@{HOME}/.config/Android Open Source Project/" rw,
   owner "@{HOME}/.config/Android Open Source Project/**" rwk,
+
+  owner @{HOME}/.config/Google/ rw,
+  owner @{HOME}/.config/Google/** rwk,
 
   owner @{HOME}/.cache/ rw,
   owner "@{HOME}/.cache/Android Open Source Project/" rw,
   owner "@{HOME}/.cache/Android Open Source Project/**" rw,
+
+  owner @{HOME}/.cache/Google/ rw,
+  owner @{HOME}/.cache/Google/** rwk,
+  # To remove the following error:
+  #   Location: /home/morfik/.cache/Google/AndroidStudio4.1/tmp
+  #   java.io.IOException: Cannot run program
+  #   "/home/morfik/.cache/Google/AndroidStudio4.1/tmp/ij659840309.tmp": error=13, Permission denied
+  owner @{HOME}/.cache/Google/AndroidStudio*/tmp/ij[0-9]*.tmp rwkix,
+  #
+  owner @{HOME}/.cache/Google/AndroidStudio*/tmp/jna[0-9]*.tmp mrwk,
+
+  owner @{HOME}/.cache/JNA/ rw,
+  owner @{HOME}/.cache/JNA/** rw,
 
   owner @{HOME}/.gradle/ rw,
   owner @{HOME}/.gradle/** mrwkix,
@@ -135,8 +158,7 @@ profile android-studio @{exec_path} {
   owner @{HOME}/.android/** rwkl -> @{HOME}/.android/**,
 
   owner @{HOME}/.local/share/Google/ rw,
-  owner @{HOME}/.local/share/Google/consentOptions/ rw,
-  owner @{HOME}/.local/share/Google/consentOptions/accepted rw,
+  owner @{HOME}/.local/share/Google/** rw,
 
   owner @{HOME}/.local/share/kotlin/ rw,
   owner @{HOME}/.local/share/kotlin/** rw,
@@ -214,6 +236,9 @@ profile android-studio @{exec_path} {
 
     /{usr/,}bin/gpg mr,
 
+    owner @{HOME}/.gnupg/ rw,
+    owner @{HOME}/.gnupg/** rwkl -> @{HOME}/.gnupg/**,
+
   }
 
   profile lsb-release {
@@ -250,7 +275,11 @@ profile android-studio @{exec_path} {
 
     /{usr/,}bin/xdg-open mr,
 
-    /{usr/,}bin/dash rix,
+    /{usr/,}bin/{,ba,da}sh       rix,
+
+    owner @{HOME}/ r,
+
+    owner @{run}/user/[0-9]*/ r,
 
     # Allowed apps to open
     /{usr/,}bin/spacefm          rPx,
