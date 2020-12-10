@@ -1,7 +1,9 @@
 # vim:syntax=apparmor
 # OpenCL access requirements for POCL implementation
 
-  #include <abstractions/opencl-common>
+  abi <abi/3.0>,
+
+  include <abstractions/opencl-common>
 
   # Executables
 
@@ -28,7 +30,7 @@
   @{sys}/fs/cgroup/cpuset/cpuset.{cpus,mems} r, # libpocl.so -> libhwloc.so
   @{sys}/kernel/mm/hugepages{/,/**} r, # libpocl.so -> libhwloc.so
   /usr/share/pocl/** r,
-  /{,var/}run/udev/data/*:* r, # libpocl.so -> hwloc_linux_block_class_fillinfos() from libhwloc.so
+  @{run}/udev/data/*:* r, # libpocl.so -> hwloc_linux_block_class_fillinfos() from libhwloc.so
 
   # User files
 
@@ -41,7 +43,7 @@
   # Child profiles
 
   profile opencl_pocl_ld {
-    #include <abstractions/base>
+    include <abstractions/base>
 
     # Main executables
 
@@ -54,7 +56,7 @@
   }
 
   profile opencl_pocl_clang {
-    #include <abstractions/base>
+    include <abstractions/base>
 
     # Main executables
 
@@ -74,3 +76,6 @@
     owner @{HOME}/.cache/pocl/kcache/*/*/*/*/*.so{,.o} rw,
   }
 
+
+  # Include additions to the abstraction
+  include if exists <abstractions/opencl-pocl.d>

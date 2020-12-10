@@ -9,21 +9,27 @@
 #
 # ------------------------------------------------------------------
 
-#abi <abi/3.0>,
+abi <abi/3.0>,
 
-#include <tunables/global>
+include <tunables/global>
 
 @{exec_path} = /{usr/,}bin/mpsyt
 profile mpsyt @{exec_path} {
-  #include <abstractions/base>
-  #include <abstractions/python>
-  #include <abstractions/user-download-strict>
-  #include <abstractions/nameservice-strict>
-  #include <abstractions/openssl>
-  #include <abstractions/ssl_certs>
-  #include <abstractions/deny-root-dir-access>
+  include <abstractions/base>
+  include <abstractions/python>
+  include <abstractions/user-download-strict>
+  include <abstractions/nameservice-strict>
+  include <abstractions/openssl>
+  include <abstractions/ssl_certs>
+  include <abstractions/deny-root-dir-access>
 
   signal (send) set=(term, kill) peer=mpv,
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
 
   @{exec_path} r,
   /{usr/,}bin/python3.[0-9]* r,
@@ -62,5 +68,8 @@ profile mpsyt @{exec_path} {
   owner /tmp/mpsyt-input* rw,
   owner /tmp/mpsyt-mpv*.sock rw,
 
-  #include if exists <local/mpsyt>
+  # Silencer
+  /usr/lib/python3/** w,
+
+  include if exists <local/mpsyt>
 }

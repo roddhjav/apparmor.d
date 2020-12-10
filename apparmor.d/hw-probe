@@ -9,16 +9,19 @@
 #
 # ------------------------------------------------------------------
 
-#abi <abi/3.0>,
+abi <abi/3.0>,
 
-#include <tunables/global>
+include <tunables/global>
 
 @{exec_path} = /{usr/,}bin/hw-probe
 profile hw-probe @{exec_path} {
-  #include <abstractions/base>
-  #include <abstractions/perl>
+  include <abstractions/base>
+  include <abstractions/perl>
 
   capability sys_admin,
+
+  network inet dgram,
+  network inet6 dgram,
 
   @{exec_path} r,
   /{usr/,}bin/perl r,
@@ -32,6 +35,7 @@ profile hw-probe @{exec_path} {
   /{usr/,}bin/uname       rix,
 
   /{usr/,}bin/dd          rix,
+  /{usr/,}bin/tar         rix,
 
   /{usr/,}bin/efivar      rix,
   /{usr/,}bin/efibootmgr  rix,
@@ -85,6 +89,7 @@ profile hw-probe @{exec_path} {
   /{usr/,}sbin/ifconfig       rCx -> netconfig,
   /{usr/,}sbin/iwconfig       rCx -> netconfig,
   /{usr/,}sbin/ethtool        rCx -> netconfig,
+  /{usr/,}bin/curl            rCx -> curl,
 
   owner /root/HW_PROBE/{,**} rw,
 
@@ -114,8 +119,8 @@ profile hw-probe @{exec_path} {
 
 
   profile find {
-    #include <abstractions/base>
-    #include <abstractions/nameservice-strict>
+    include <abstractions/base>
+    include <abstractions/nameservice-strict>
 
     capability dac_read_search,
 
@@ -123,10 +128,12 @@ profile hw-probe @{exec_path} {
 
     /dev/{,**} r,
 
+    /root/ r,
+
   }
 
   profile journalctl {
-    #include <abstractions/base>
+    include <abstractions/base>
 
     /{usr/,}bin/journalctl mr,
 
@@ -145,7 +152,7 @@ profile hw-probe @{exec_path} {
   }
 
   profile systemd-analyze {
-    #include <abstractions/base>
+    include <abstractions/base>
 
     /{usr/,}bin/systemd-analyze mr,
 
@@ -154,7 +161,7 @@ profile hw-probe @{exec_path} {
   }
 
   profile killall {
-    #include <abstractions/base>
+    include <abstractions/base>
 
     capability sys_ptrace,
 
@@ -172,7 +179,7 @@ profile hw-probe @{exec_path} {
   }
 
   profile udevadm {
-    #include <abstractions/base>
+    include <abstractions/base>
 
     /{usr/,}bin/udevadm mr,
 
@@ -194,7 +201,7 @@ profile hw-probe @{exec_path} {
   }
 
   profile kmod {
-    #include <abstractions/base>
+    include <abstractions/base>
 
     /{usr/,}bin/kmod mr,
 
@@ -208,11 +215,18 @@ profile hw-probe @{exec_path} {
   }
 
   profile netconfig {
-    #include <abstractions/base>
+    include <abstractions/base>
 
     # Not needed
     deny capability net_admin,
     deny capability net_raw,
+
+    network inet dgram,
+    network inet6 dgram,
+    network ipx dgram,
+    network ax25 dgram,
+    network appletalk dgram,
+    network netlink raw,
 
     /{usr/,}sbin/iw       mr,
     /{usr/,}sbin/ifconfig mr,
@@ -224,5 +238,16 @@ profile hw-probe @{exec_path} {
 
   }
 
-  #include if exists <local/hw-probe>
+  profile curl {
+    include <abstractions/base>
+    include <abstractions/nameservice-strict>
+    include <abstractions/openssl>
+    include <abstractions/ssl_certs>
+
+    /{usr/,}bin/curl mr,
+
+  }
+
+
+  include if exists <local/hw-probe>
 }

@@ -10,18 +10,21 @@
 #
 # ------------------------------------------------------------------
 
-#include <tunables/global>
+abi <abi/3.0>,
+
+include <tunables/global>
 
 #define this to be where syslog-ng is chrooted
 @{CHROOT_BASE}=""
 
 profile syslog-ng /{usr/,}{bin,sbin}/syslog-ng flags=(complain) {
-  #include <abstractions/base>
-  #include <abstractions/consoles>
-  #include <abstractions/nameservice>
-  #include <abstractions/mysql>
-  #include <abstractions/openssl>
-  #include <abstractions/python>
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/nameservice>
+  include <abstractions/mysql>
+  include <abstractions/openssl>
+  include <abstractions/python>
+  include <abstractions/hosts_access>
 
   capability chown,
   capability dac_override,
@@ -45,8 +48,6 @@ profile syslog-ng /{usr/,}{bin,sbin}/syslog-ng flags=(complain) {
   /etc/syslog-ng/conf.d/ r,
   /etc/syslog-ng/conf.d/* r,
   @{PROC}/kmsg r,
-  /etc/hosts.deny r,
-  /etc/hosts.allow r,
   /{usr/,}{bin,sbin}/syslog-ng mr,
   @{sys}/devices/system/cpu/online r,
   /usr/share/syslog-ng/** r,
@@ -55,14 +56,14 @@ profile syslog-ng /{usr/,}{bin,sbin}/syslog-ng flags=(complain) {
   @{CHROOT_BASE}/var/lib/*/dev/log w,
   @{CHROOT_BASE}/var/lib/syslog-ng/syslog-ng.persist* rw,
   @{CHROOT_BASE}/var/log/** w,
-  @{CHROOT_BASE}/{,var/}run/syslog-ng.pid krw,
-  @{CHROOT_BASE}/{,var/}run/syslog-ng.ctl rw,
+  @{CHROOT_BASE}/@{run}/syslog-ng.pid krw,
+  @{CHROOT_BASE}/@{run}/syslog-ng.ctl rw,
   /{var,var/run,run}/log/journal/ r,
   /{var,var/run,run}/log/journal/*/ r,
   /{var,var/run,run}/log/journal/*/*.journal r,
-  /{var/,}run/syslog-ng.ctl a,
-  /{var/,}run/syslog-ng/additional-log-sockets.conf r,
+  @{run}/syslog-ng.ctl a,
+  @{run}/syslog-ng/additional-log-sockets.conf r,
 
   # Site-specific additions and overrides. See local/README for details.
-  #include <local/sbin.syslog-ng>
+  include if exists <local/sbin.syslog-ng>
 }

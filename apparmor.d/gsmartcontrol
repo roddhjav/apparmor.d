@@ -9,18 +9,19 @@
 #
 # ------------------------------------------------------------------
 
-#abi <abi/3.0>,
+abi <abi/3.0>,
 
-#include <tunables/global>
+include <tunables/global>
 
 @{exec_path} = /{usr/,}sbin/gsmartcontrol
 profile gsmartcontrol @{exec_path} {
-  #include <abstractions/base>
-  #include <abstractions/gtk>
-  #include <abstractions/fonts>
-  #include <abstractions/fontconfig-cache-read>
-  #include <abstractions/freedesktop.org>
-  #include <abstractions/nameservice-strict>
+  include <abstractions/base>
+  include <abstractions/gtk>
+  include <abstractions/fonts>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/freedesktop.org>
+  include <abstractions/nameservice-strict>
+  include <abstractions/deny-dconf>
 
   capability dac_read_search,
 
@@ -30,6 +31,7 @@ profile gsmartcontrol @{exec_path} {
   @{exec_path} mr,
 
   /{usr/,}sbin/smartctl rPx,
+  /{usr/,}bin/xterm     rCx -> terminal,
 
   # When gsmartcontrol is run as root, it wants to exec dbus-launch, and hence it creates the two
   # following root processes:
@@ -73,8 +75,8 @@ profile gsmartcontrol @{exec_path} {
 
 
   profile dbus {
-    #include <abstractions/base>
-    #include <abstractions/nameservice-strict>
+    include <abstractions/base>
+    include <abstractions/nameservice-strict>
 
     /{usr/,}bin/dbus-launch   mr,
     /{usr/,}bin/dbus-send     mr,
@@ -86,5 +88,33 @@ profile gsmartcontrol @{exec_path} {
     @{HOME}/.Xauthority r,
   }
 
-  #include if exists <local/gsmartcontrol>
+  profile terminal {
+    include <abstractions/base>
+    include <abstractions/consoles>
+    include <abstractions/nameservice-strict>
+    include <abstractions/freedesktop.org>
+
+    capability setuid,
+    capability setgid,
+    capability fsetid,
+
+    /{usr/,}bin/xterm mr,
+
+    /usr/sbin/update-smart-drivedb rPx,
+
+    owner @{HOME}/.Xauthority r,
+
+    /etc/shells r,
+
+    /etc/X11/app-defaults/XTerm-color r,
+    /etc/X11/app-defaults/XTerm r,
+    /etc/X11/cursors/*.theme r,
+
+    /usr/include/X11/bitmaps/vlines2 r,
+
+    /dev/ptmx rw,
+
+  }
+
+  include if exists <local/gsmartcontrol>
 }

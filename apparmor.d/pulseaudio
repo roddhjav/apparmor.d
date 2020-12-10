@@ -9,21 +9,25 @@
 #
 # ------------------------------------------------------------------
 
-#abi <abi/3.0>,
+abi <abi/3.0>,
 
-#include <tunables/global>
+include <tunables/global>
 
 @{exec_path} = /{usr/,}bin/pulseaudio
 profile pulseaudio @{exec_path} {
-  #include <abstractions/base>
-  #include <abstractions/consoles>
-  #include <abstractions/audio>
-  #include <abstractions/nameservice-strict>
-  #include <abstractions/deny-root-dir-access>
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/audio>
+  include <abstractions/nameservice-strict>
+  include <abstractions/deny-root-dir-access>
 
   ptrace (trace) peer=@{profile_name},
 
   signal (receive) peer=pacmd,
+
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
 
   @{exec_path} mrix,
 
@@ -83,5 +87,5 @@ profile pulseaudio @{exec_path} {
   owner /dev/tty[0-9]* rw,
   owner @{HOME}/.xsession-errors w,
 
-  #include if exists <local/pulseaudio>
+  include if exists <local/pulseaudio>
 }

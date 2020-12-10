@@ -9,21 +9,27 @@
 #
 # ------------------------------------------------------------------
 
-#abi <abi/3.0>,
+abi <abi/3.0>,
 
-#include <tunables/global>
+include <tunables/global>
 
 @{exec_path} = /{usr/,}bin/youtube-viewer
 profile youtube-viewer @{exec_path} {
-  #include <abstractions/base>
-  #include <abstractions/consoles>
-  #include <abstractions/nameservice-strict>
-  #include <abstractions/perl>
-  #include <abstractions/openssl>
-  #include <abstractions/ssl_certs>
-  #include <abstractions/deny-root-dir-access>
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+  include <abstractions/perl>
+  include <abstractions/openssl>
+  include <abstractions/ssl_certs>
+  include <abstractions/deny-root-dir-access>
 
   signal (receive) set=(hup, winch) peer=gtk-youtube-viewer//xterm,
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
 
   @{exec_path} r,
   /{usr/,}bin/perl r,
@@ -49,11 +55,11 @@ profile youtube-viewer @{exec_path} {
 
 
   profile wget {
-    #include <abstractions/base>
-    #include <abstractions/consoles>
-    #include <abstractions/nameservice-strict>
-    #include <abstractions/user-download-strict>
-    #include <abstractions/ssl_certs>
+    include <abstractions/base>
+    include <abstractions/consoles>
+    include <abstractions/nameservice-strict>
+    include <abstractions/user-download-strict>
+    include <abstractions/ssl_certs>
 
     signal (receive) set=(hup, winch) peer=gtk-youtube-viewer//xterm,
 
@@ -66,5 +72,5 @@ profile youtube-viewer @{exec_path} {
 
   }
 
-  #include if exists <local/youtube-viewer>
+  include if exists <local/youtube-viewer>
 }

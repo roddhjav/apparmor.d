@@ -1,0 +1,22 @@
+# vim:syntax=apparmor
+
+# This file contains basic permissions for php-fpm workers
+
+  abi <abi/3.0>,
+
+  # load common libraries and their support files
+  include <abstractions/base>
+  # common php files and support files that php needs
+  include <abstractions/php>
+
+  signal (receive) peer=php-fpm,
+
+  # This is some php opcaching file
+  /tmp/.ZendSem.* rwk,
+
+  # I think this is adaptive memory management
+  /sys/devices/system/node/* r,
+  /sys/devices/system/node/*/meminfo r,
+  /sys/devices/system/node/ r,
+
+  include if exists <abstractions/php-worker.d>

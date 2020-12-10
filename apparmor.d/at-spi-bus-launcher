@@ -9,22 +9,25 @@
 #
 # ------------------------------------------------------------------
 
-#abi <abi/3.0>,
+abi <abi/3.0>,
 
-#include <tunables/global>
+include <tunables/global>
 
 @{exec_path}  = /{usr/,}lib/at-spi2-core/at-spi-bus-launcher
 @{exec_path} += /usr/libexec/at-spi-bus-launcher
 profile at-spi-bus-launcher @{exec_path} {
-  #include <abstractions/base>
-  #include <abstractions/nameservice-strict>
-  #include <abstractions/deny-dconf>
-  #include <abstractions/deny-root-dir-access>
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+  include <abstractions/deny-dconf>
+  include <abstractions/deny-root-dir-access>
 
   # Needed?
   deny capability sys_nice,
 
   signal (send) set=(term, kill) peer=dbus-daemon,
+
+  network inet stream,
+  network inet6 stream,
 
   @{exec_path} mr,
 
@@ -42,5 +45,5 @@ profile at-spi-bus-launcher @{exec_path} {
   owner @{HOME}/.xsession-errors w,
   /var/log/lightdm/seat[0-9]*-greeter.log w,
 
-  #include if exists <local/at-spi-bus-launcher>
+  include if exists <local/at-spi-bus-launcher>
 }

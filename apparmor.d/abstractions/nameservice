@@ -9,30 +9,27 @@
 #
 # ------------------------------------------------------------------
 
+  abi <abi/3.0>,
+
   # Many programs wish to perform nameservice-like operations, such as
   # looking up users by name or id, groups by name or id, hosts by name
   # or IP, etc. These operations may be performed through files, dns,
   # NIS, NIS+, LDAP, hesiod, wins, etc. Allow them all here.
-  /etc/group              r,
-  /etc/host.conf          r,
-  /etc/hosts              r,
-  /etc/nsswitch.conf      r,
-  /etc/gai.conf           r,
-  /etc/passwd             r,
-  /etc/protocols          r,
+  @{etc_ro}/group          r,
+  @{etc_ro}/host.conf      r,
+  @{etc_ro}/hosts          r,
+  @{etc_ro}/nsswitch.conf  r,
+  @{etc_ro}/gai.conf       r,
+  @{etc_ro}/passwd         r,
+  @{etc_ro}/protocols      r,
 
   # libtirpc (used for NIS/YP login) needs this
-  /etc/netconfig r,
+  @{etc_ro}/netconfig r,
 
   # When using libnss-extrausers, the passwd and group files are merged from
   # an alternate path
   /var/lib/extrausers/group  r,
   /var/lib/extrausers/passwd r,
-
-  # NSS records from systemd-userdbd.service
-  @{run}/systemd/userdb/ r,
-  @{run}/systemd/userdb/io.systemd.{NameServiceSwitch,Multiplexer,DynamicUser,Home} r,
-  @{PROC}/sys/kernel/random/boot_id r,
 
   # When using sssd, the passwd and group files are stored in an alternate path
   # and the nss plugin also needs to talk to a pipe
@@ -41,56 +38,68 @@
   /var/lib/sss/mc/passwd  r,
   /var/lib/sss/pipes/nss  rw,
 
-  /etc/resolv.conf        r,
+  @{etc_ro}/resolv.conf r,
   # On systems where /etc/resolv.conf is managed programmatically, it is
-  # a symlink to /{,var/}run/(whatever program is managing it)/resolv.conf.
-  /{,var/}run/{resolvconf,NetworkManager,systemd/resolve,connman,netconfig}/resolv.conf r,
-  /etc/resolvconf/run/resolv.conf r,
-  /{,var/}run/systemd/resolve/stub-resolv.conf r,
+  # a symlink to @{run}/(whatever program is managing it)/resolv.conf.
+  @{run}/{resolvconf,NetworkManager,systemd/resolve,connman,netconfig}/resolv.conf r,
+  @{etc_ro}/resolvconf/run/resolv.conf  r,
+  @{run}/systemd/resolve/stub-resolv.conf r,
 
-  /etc/samba/lmhosts      r,
-  /etc/services           r,
+  @{etc_ro}/samba/lmhosts  r,
+  @{etc_ro}/services       r,
   # db backend
   /var/lib/misc/*.db      r,
   # The Name Service Cache Daemon can cache lookups, sometimes leading
   # to vast speed increases when working with network-based lookups.
-  /{,var/}run/.nscd_socket   rw,
-  /{,var/}run/nscd/socket    rw,
+  @{run}/.nscd_socket   rw,
+  @{run}/nscd/socket    rw,
   /{var/db,var/cache,var/lib,var/run,run}/nscd/{passwd,group,services,hosts}    r,
   # nscd renames and unlinks files in it's operation that clients will
   # have open
-  /{,var/}run/nscd/db*  rmix,
+  @{run}/nscd/db*  rmix,
 
   # The nss libraries are sometimes used in addition to PAM; make sure
   # they are available
   /{usr/,}lib{,32,64}/libnss_*.so*      mr,
   /{usr/,}lib/@{multiarch}/libnss_*.so*      mr,
-  /etc/default/nss               r,
+  @{etc_ro}/default/nss               r,
 
   # avahi-daemon is used for mdns4 resolution
-  /{,var/}run/avahi-daemon/socket rw,
+  @{run}/avahi-daemon/socket rw,
 
   # libnl-3-200 via libnss-gw-name
   @{PROC}/@{pid}/net/psched r,
-  /etc/libnl-*/classid r,
+  @{etc_ro}/libnl-*/classid r,
 
   # nis
-  #include <abstractions/nis>
+  include <abstractions/nis>
 
   # ldap
-  #include <abstractions/ldapclient>
+  include <abstractions/ldapclient>
 
   # winbind
-  #include <abstractions/winbind>
+  include <abstractions/winbind>
 
   # likewise
-  #include <abstractions/likewise>
+  include <abstractions/likewise>
 
   # mdnsd
-  #include <abstractions/mdns>
+  include <abstractions/mdns>
 
   # kerberos
-  #include <abstractions/kerberosclient>
+  include <abstractions/kerberosclient>
+
+  #libnss-systemd
+  include <abstractions/nss-systemd>
+
+  # Also allow lookups for systemd-exec's DynamicUsers via D-Bus
+  #   https://www.freedesktop.org/software/systemd/man/systemd.exec.html
+  dbus send
+       bus=system
+       path="/org/freedesktop/systemd1"
+       interface="org.freedesktop.systemd1.Manager"
+       member="{GetDynamicUsers,LookupDynamicUserByName,LookupDynamicUserByUID}"
+       peer=(name="org.freedesktop.systemd1"),
 
   # TCP/UDP network access
   network inet  stream,
@@ -104,3 +113,6 @@
 
   # interface details
   @{PROC}/@{pid}/net/route r,
+
+  # Include additions to the abstraction
+  include if exists <abstractions/nameservice.d>

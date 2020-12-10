@@ -19,20 +19,24 @@
 #   DNS/resolver script is stored in: /etc/openvpn/update-resolv-conf{,.sh}
 # If a user wants to type user/pass interactively, systemd-ask-password is invoked for that.
 
-#abi <abi/3.0>,
+abi <abi/3.0>,
 
-#include <tunables/global>
+include <tunables/global>
 
 @{exec_path} = /{usr/,}sbin/openvpn
 profile openvpn @{exec_path} {
-  #include <abstractions/base>
-  #include <abstractions/nameservice-strict>
-  #include <abstractions/openssl>
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+  include <abstractions/openssl>
 
   capability net_admin,
   # These are needed when user/group are set in a OpenVPN config file
   capability setuid,
   capability setgid,
+
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
 
   @{exec_path} mr,
 
@@ -56,8 +60,8 @@ profile openvpn @{exec_path} {
 
 
   profile systemd-ask-password {
-    #include <abstractions/base>
-    #include <abstractions/consoles>
+    include <abstractions/base>
+    include <abstractions/consoles>
 
     /{usr/,}bin/systemd-ask-password mr,
 
@@ -67,9 +71,9 @@ profile openvpn @{exec_path} {
   }
 
   profile update-resolv {
-    #include <abstractions/base>
-    #include <abstractions/consoles>
-    #include <abstractions/nameservice-strict>
+    include <abstractions/base>
+    include <abstractions/consoles>
+    include <abstractions/nameservice-strict>
 
     capability net_admin,
 
@@ -87,11 +91,13 @@ profile openvpn @{exec_path} {
   }
 
   profile force-user-traffic-via-vpn {
-    #include <abstractions/base>
-    #include <abstractions/consoles>
-    #include <abstractions/nameservice-strict>
+    include <abstractions/base>
+    include <abstractions/consoles>
+    include <abstractions/nameservice-strict>
 
     capability net_admin,
+
+    network netlink raw,
 
     /etc/openvpn/ r,
     /etc/openvpn/force-user-traffic-via-vpn.sh r,
@@ -114,5 +120,5 @@ profile openvpn @{exec_path} {
 
   }
 
-  #include if exists <local/openvpn>
+  include if exists <local/openvpn>
 }

@@ -9,21 +9,21 @@
 #
 # ------------------------------------------------------------------
 
-#abi <abi/3.0>,
+abi <abi/3.0>,
 
-#include <tunables/global>
+include <tunables/global>
 
 @{exec_path} = /{usr/,}sbin/linssid /{usr/,}bin/linssid-pkexec
 profile linssid @{exec_path} {
-  #include <abstractions/base>
-  #include <abstractions/X>
-  #include <abstractions/gtk>
-  #include <abstractions/fonts>
-  #include <abstractions/fontconfig-cache-read>
-  #include <abstractions/freedesktop.org>
-  #include <abstractions/nameservice-strict>
-  #include <abstractions/dri-enumerate>
-  #include <abstractions/mesa>
+  include <abstractions/base>
+  include <abstractions/X>
+  include <abstractions/gtk>
+  include <abstractions/fonts>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/freedesktop.org>
+  include <abstractions/nameservice-strict>
+  include <abstractions/dri-enumerate>
+  include <abstractions/mesa>
 
   # For reading/saving config/log files when linssid is started via pkexec
   #capability dac_read_search,
@@ -76,15 +76,20 @@ profile linssid @{exec_path} {
   /var/lib/dbus/machine-id r,
   /etc/machine-id r,
 
+  # For shell pwd
+  /root/ r,
+
   # file_inherit
   owner /dev/tty[0-9]* rw,
 
 
   profile iw {
-    #include <abstractions/base>
+    include <abstractions/base>
 
     capability net_admin,
     deny capability sys_module,
+
+    network netlink raw,
 
     /{usr/,}sbin/iw mr,
 
@@ -97,8 +102,8 @@ profile linssid @{exec_path} {
   }
 
   profile dbus {
-    #include <abstractions/base>
-    #include <abstractions/nameservice-strict>
+    include <abstractions/base>
+    include <abstractions/nameservice-strict>
 
     /{usr/,}bin/dbus-launch   mr,
     /{usr/,}bin/dbus-send     mr,
@@ -110,5 +115,5 @@ profile linssid @{exec_path} {
     @{HOME}/.Xauthority r,
   }
 
-  #include if exists <local/linssid>
+  include if exists <local/linssid>
 }

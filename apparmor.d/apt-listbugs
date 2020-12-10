@@ -9,19 +9,25 @@
 #
 # ------------------------------------------------------------------
 
-#abi <abi/3.0>,
+abi <abi/3.0>,
 
-#include <tunables/global>
+include <tunables/global>
 
 @{exec_path} = /{usr/,}bin/apt-listbugs
 profile apt-listbugs @{exec_path} {
-  #include <abstractions/base>
-  #include <abstractions/consoles>
-  #include <abstractions/ruby>
-  #include <abstractions/nameservice-strict>
-  #include <abstractions/openssl>
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/ruby>
+  include <abstractions/nameservice-strict>
+  include <abstractions/openssl>
 
   #capability sys_tty_config,
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
 
   @{exec_path} r,
   /{usr/,}bin/ruby2.[0-9]* rix,
@@ -42,15 +48,15 @@ profile apt-listbugs @{exec_path} {
   @{PROC}/@{pid}/loginuid r,
 
   # The following is needed when apt-listbugs uses debcconf GUI frontends.
-  #include <abstractions/gtk>
-  #include <abstractions/fonts>
-  #include <abstractions/fontconfig-cache-read>
-  #include <abstractions/freedesktop.org>
+  include <abstractions/gtk>
+  include <abstractions/fonts>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/freedesktop.org>
   capability dac_read_search,
   /{usr/,}bin/lsb_release rPx -> child-lsb_release,
   /{usr/,}bin/hostname    rPx,
   owner @{PROC}/@{pid}/mounts r,
   @{HOME}/.Xauthority r,
 
-  #include if exists <local/apt-listbugs>
+  include if exists <local/apt-listbugs>
 }

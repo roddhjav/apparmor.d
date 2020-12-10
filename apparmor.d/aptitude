@@ -9,18 +9,18 @@
 #
 # ------------------------------------------------------------------
 
-#abi <abi/3.0>,
+abi <abi/3.0>,
 
-#include <tunables/global>
+include <tunables/global>
 
 @{BUILD_DIR} = /media/debuilder/
 
 @{exec_path} = /{usr/,}bin/aptitude{,-curses}
 profile aptitude @{exec_path} flags=(complain) {
-  #include <abstractions/base>
-  #include <abstractions/consoles>
-  #include <abstractions/nameservice-strict>
-  #include <abstractions/apt-common>
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+  include <abstractions/apt-common>
 
   # To remove the following errors:
   #  W: chmod 0700 of directory /var/lib/apt/lists/partial failed - SetupAPTPartialDirectory
@@ -67,6 +67,7 @@ profile aptitude @{exec_path} flags=(complain) {
   capability kill,
   capability fsetid,
   capability sys_chroot,
+  capability net_admin,
   #capability sys_tty_config,
 
   signal (send) peer=apt-methods-*,
@@ -162,6 +163,8 @@ profile aptitude @{exec_path} flags=(complain) {
   #  aptitude[]: Oh, oh, it's an error! possibly I die!
   /dev/tty[0-9]* rw,
 
+  /dev/ptmx rw,
+
   # For package building
   @{BUILD_DIR}/** rwkl -> @{BUILD_DIR}/**,
 
@@ -169,9 +172,9 @@ profile aptitude @{exec_path} flags=(complain) {
   /var/log/cron-apt/temp w,
 
 
-  profile pager flags=(complain) {
-    #include <abstractions/base>
-    #include <abstractions/consoles>
+  profile pager {
+    include <abstractions/base>
+    include <abstractions/consoles>
 
     /{usr/,}bin/                r,
     /{usr/,}bin/sensible-pager mr,
@@ -189,6 +192,6 @@ profile aptitude @{exec_path} flags=(complain) {
 
   }
 
-  #include if exists <local/aptitude>
+  include if exists <local/aptitude>
 }
 

@@ -9,19 +9,22 @@
 #
 # ------------------------------------------------------------------
 
-#abi <abi/3.0>,
+abi <abi/3.0>,
 
-#include <tunables/global>
+include <tunables/global>
 
 @{exec_path} = /{usr/,}bin/anyremote
 profile anyremote @{exec_path} {
-  #include <abstractions/base>
-  #include <abstractions/consoles>
-  #include <abstractions/nameservice-strict>
-  #include <abstractions/deny-root-dir-access>
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+  include <abstractions/deny-root-dir-access>
 
   signal (receive) set=(int, term, kill),
   signal (send) set=(term, kill),
+
+  network inet stream,
+  network inet6 stream,
 
   @{exec_path} rm,
 
@@ -68,6 +71,9 @@ profile anyremote @{exec_path} {
   owner /tmp/amarok_covers/ rw,
   owner /tmp/*.png rw,
 
+  # For shell pwd
+  owner @{HOME}/ r,
+
   owner @{HOME}/.anyRemote/{,**} rw,
   owner @{HOME}/.anyRemote/imdb-mf.sh rix,
 
@@ -87,7 +93,7 @@ profile anyremote @{exec_path} {
 
 
   profile imagemagic {
-    #include <abstractions/base>
+    include <abstractions/base>
 
     /{usr/,}bin/convert-im6.q16 mr,
 
@@ -107,8 +113,8 @@ profile anyremote @{exec_path} {
   }
 
   profile killall {
-    #include <abstractions/base>
-    #include <abstractions/consoles>
+    include <abstractions/base>
+    include <abstractions/consoles>
 
     capability sys_ptrace,
 
@@ -129,8 +135,8 @@ profile anyremote @{exec_path} {
   }
 
   profile pgrep {
-    #include <abstractions/base>
-    #include <abstractions/consoles>
+    include <abstractions/base>
+    include <abstractions/consoles>
 
     signal (send) set=(term, kill),
 
@@ -147,21 +153,21 @@ profile anyremote @{exec_path} {
   }
 
   profile curl {
-    #include <abstractions/base>
-    #include <abstractions/nameservice-strict>
-    #include <abstractions/openssl>
-    #include <abstractions/ssl_certs>
+    include <abstractions/base>
+    include <abstractions/nameservice-strict>
+    include <abstractions/openssl>
+    include <abstractions/ssl_certs>
 
     /{usr/,}bin/curl mr,
 
   }
 
     profile qdbus {
-    #include <abstractions/base>
+    include <abstractions/base>
 
     /{usr/,}lib/qt5/bin/qdbus mr,
 
   }
 
-  #include if exists <local/anyremote>
+  include if exists <local/anyremote>
 }

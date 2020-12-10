@@ -9,15 +9,15 @@
 #
 # ------------------------------------------------------------------
 
-#abi <abi/3.0>,
+abi <abi/3.0>,
 
-#include <tunables/global>
+include <tunables/global>
 
 @{exec_path} = /{usr/,}sbin/userdel
 profile userdel @{exec_path} flags=(attach_disconnected) {
-  #include <abstractions/base>
-  #include <abstractions/consoles>
-  #include <abstractions/nameservice-strict>
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
 
   # The userdel command is issued as root and its task is to delete regular user accounts. It
   # optionally can remove user files (via --remove). Because of that, the userdel command needs the
@@ -35,6 +35,8 @@ profile userdel @{exec_path} flags=(attach_disconnected) {
   # To prevent removing a user when it's used by some process.
   capability sys_ptrace,
   ptrace (read),
+
+  network netlink raw,
 
   @{exec_path} mr,
 
@@ -66,5 +68,5 @@ profile userdel @{exec_path} flags=(attach_disconnected) {
   # To remove user mail
   /var/mail/* w,
 
-  #include if exists <local/userdel>
+  include if exists <local/userdel>
 }

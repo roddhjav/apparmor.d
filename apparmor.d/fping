@@ -9,21 +9,26 @@
 #
 # ------------------------------------------------------------------
 
-#abi <abi/3.0>,
+abi <abi/3.0>,
 
-#include <tunables/global>
+include <tunables/global>
 
 @{exec_path} = /{usr/,}bin/fping{,6}
 profile fping @{exec_path} {
-  #include <abstractions/base>
-  #include <abstractions/nameservice-strict>
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
 
   # This CAP can be blocked when the net.ipv4.ping_group_range sysctl parametr is set. Otherwise it
   # will return the following error:
   #  fping: can't create socket (must run as root?)
   deny capability net_raw,
 
+  network inet dgram,
+  network inet6 dgram,
+  network inet raw,
+  network inet6 raw,
+
   @{exec_path} mr,
 
-  #include if exists <local/fping>
+  include if exists <local/fping>
 }

@@ -9,17 +9,18 @@
 #
 # ------------------------------------------------------------------
 
+  abi <abi/3.0>,
+
   # unique per-machine identifier
   /etc/machine-id r,
   /var/lib/dbus/machine-id r,
-  owner /run/user/*/bus rw,
 
   unix (connect, receive, send)
        type=stream
        peer=(addr="@/tmp/dbus-*"),
 
   # dbus with systemd and --enable-user-session
-  owner /run/user/[0-9]*/bus rw,
+  owner @{run}/user/[0-9]*/bus rw,
 
   dbus send
        bus=session
@@ -27,3 +28,6 @@
        interface=org.freedesktop.DBus
        member={Hello,AddMatch,RemoveMatch,GetNameOwner,NameHasOwner,StartServiceByName}
        peer=(name=org.freedesktop.DBus),
+
+  # Include additions to the abstraction
+  include if exists <abstractions/dbus-session-strict.d>

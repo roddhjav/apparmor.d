@@ -9,15 +9,15 @@
 #
 # ------------------------------------------------------------------
 
-#abi <abi/3.0>,
+abi <abi/3.0>,
 
-#include <tunables/global>
+include <tunables/global>
 
 @{exec_path} = /{usr/,}sbin/update-ca-certificates
 profile update-ca-certificates @{exec_path} {
-  #include <abstractions/base>
-  #include <abstractions/consoles>
-  #include <abstractions/ssl_certs>
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/ssl_certs>
 
   @{exec_path} r,
   /{usr/,}bin/{,ba,da}sh rix,
@@ -38,9 +38,11 @@ profile update-ca-certificates @{exec_path} {
 
   /{usr/,}bin/openssl    rix,
 
+  /etc/ca-certificates/update.d/             r,
   /etc/ca-certificates/update.d/jks-keystore rCx -> jks-keystore,
   /{usr/,}bin/run-parts                      rCx -> run-parts,
 
+  /etc/ r,
   /etc/ca-certificates.conf r,
   /etc/ssl/certs/ca-certificates.crt rw,
   /etc/ssl/certs/*.pem rw,
@@ -48,13 +50,19 @@ profile update-ca-certificates @{exec_path} {
 
   /{usr/,}lib/locale/locale-archive r,
 
+        /tmp/ r,
   owner /tmp/ca-certificates{,.crt}.tmp.* rw,
+
+  # For shell pwd
+  /root/ r,
+
+  /usr/local/share/ r,
 
   @{PROC}/filesystems r,
 
 
   profile run-parts {
-    #include <abstractions/base>
+    include <abstractions/base>
 
     /{usr/,}bin/run-parts mr,
 
@@ -66,13 +74,16 @@ profile update-ca-certificates @{exec_path} {
   }
 
   profile jks-keystore {
-    #include <abstractions/base>
-    #include <abstractions/nameservice-strict>
-    #include <abstractions/ssl_certs>
+    include <abstractions/base>
+    include <abstractions/nameservice-strict>
+    include <abstractions/ssl_certs>
 
     /etc/ca-certificates/update.d/jks-keystore mr,
 
+    /{usr/,}lib/ r,
     /{usr/,}lib/jvm/java-[0-9]*-openjdk-*/jre/bin/java rix,
+    /{usr/,}lib/jvm/java-[0-9]*-openjdk-*/bin/java     rix,
+    /{usr/,}lib/jvm/java-[0-9]*-openjdk-*/lib/server/classes.jsa mr,
 
     /{usr/,}bin/{,ba,da}sh rix,
     /{usr/,}bin/sed        rix,
@@ -89,6 +100,8 @@ profile update-ca-certificates @{exec_path} {
 
     /etc/java-[0-9]*-openjdk/{,**} r,
 
+    owner @{PROC}/@{pid}/coredump_filter rw,
+    owner @{PROC}/@{pid}/coredump rw,
     owner @{PROC}/@{pid}/cgroup r,
     owner @{PROC}/@{pid}/mountinfo r,
     @{sys}/fs/cgroup/** r,
@@ -101,5 +114,5 @@ profile update-ca-certificates @{exec_path} {
 
   }
 
-  #include if exists <local/update-ca-certificates>
+  include if exists <local/update-ca-certificates>
 }
