@@ -9,18 +9,24 @@
 #
 # ------------------------------------------------------------------
 
-#abi <abi/3.0>,
+abi <abi/3.0>,
 
-#include <tunables/global>
+include <tunables/global>
 
 @{BUILD_DIR} = /media/debuilder/
 
 @{exec_path} = /{usr/,}bin/git
 profile git @{exec_path} {
-  #include <abstractions/base>
-  #include <abstractions/consoles>
-  #include <abstractions/ssl_certs>
-  #include <abstractions/nameservice-strict>
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/ssl_certs>
+  include <abstractions/nameservice-strict>
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+
 
   @{exec_path} mr,
 
@@ -92,8 +98,8 @@ profile git @{exec_path} {
 
 
   profile gpg {
-    #include <abstractions/base>
-    #include <abstractions/consoles>
+    include <abstractions/base>
+    include <abstractions/consoles>
 
     /{usr/,}bin/gpg mr,
 
@@ -105,9 +111,9 @@ profile git @{exec_path} {
   }
 
   profile ssh {
-    #include <abstractions/base>
-    #include <abstractions/nameservice-strict>
-    #include <abstractions/openssl>
+    include <abstractions/base>
+    include <abstractions/nameservice-strict>
+    include <abstractions/openssl>
 
     /{usr/,}bin/ssh mr,
 
@@ -124,15 +130,15 @@ profile git @{exec_path} {
   }
 
   profile exec {
-    #include <abstractions/base>
+    include <abstractions/base>
 
     owner @{BUILD_DIR}/**/bin/* mr,
 
   }
 
-  profile editor flags=(complain) {
-    #include <abstractions/base>
-    #include <abstractions/nameservice-strict>
+  profile editor {
+    include <abstractions/base>
+    include <abstractions/nameservice-strict>
 
     /{usr/,}bin/sensible-editor mr,
     /{usr/,}bin/vim.*           mrix,
@@ -154,5 +160,5 @@ profile git @{exec_path} {
 
   }
 
-  #include if exists <local/git>
+  include if exists <local/git>
 }

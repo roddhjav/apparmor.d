@@ -9,13 +9,13 @@
 #
 # ------------------------------------------------------------------
 
-#abi <abi/3.0>,
+abi <abi/3.0>,
 
-#include <tunables/global>
+include <tunables/global>
 
 @{exec_path} = /{usr/,}bin/spectre-meltdown-checker
 profile spectre-meltdown-checker @{exec_path} {
-  #include <abstractions/base>
+  include <abstractions/base>
 
   # Needed to read the /dev/cpu/[0-9]*/msr device
   capability sys_rawio,
@@ -26,6 +26,7 @@ profile spectre-meltdown-checker @{exec_path} {
   @{exec_path} r,
   /{usr/,}bin/{,ba,da}sh rix,
 
+  /{usr/,}bin/           r,
   /{usr/,}bin/dirname    rix,
   /{usr/,}bin/uname      rix,
   /{usr/,}bin/cut        rix,
@@ -38,6 +39,9 @@ profile spectre-meltdown-checker @{exec_path} {
   /{usr/,}bin/id         rix,
   /{usr/,}bin/gunzip     rix,
   /{usr/,}bin/gzip       rix,
+  /{usr/,}bin/zstd       rix,
+  /{usr/,}bin/bunzip2    rix,
+  /{usr/,}bin/lzop       rix,
   /{usr/,}bin/mktemp     rix,
   /{usr/,}bin/tr         rix,
   /{usr/,}bin/stat       rix,
@@ -56,6 +60,7 @@ profile spectre-meltdown-checker @{exec_path} {
   /{usr/,}bin/{,@{multiarch}-}objdump rix,
   /{usr/,}sbin/iucode_tool            rix,
   /{usr/,}bin/dmesg                   rix,
+  /{usr/,}bin/mount      rix,
 
   /{usr/,}bin/pgrep      rCx -> pgrep,
   /{usr/,}bin/ccache     rCx -> ccache,
@@ -74,15 +79,18 @@ profile spectre-meltdown-checker @{exec_path} {
   owner @{HOME}/.mcedb rw,
   owner /{usr/,}bin/spectre-meltdown-checker w,
 
+        /tmp/ r,
   owner /tmp/{config,kernel}-* rw,
 
   owner /dev/cpu/[0-9]*/cpuid r,
   owner /dev/cpu/[0-9]*/msr rw,
   owner /dev/kmsg r,
 
+  /boot/ r,
   /boot/{config,vmlinuz,System.map}-* r,
 
   @{sys}/devices/system/cpu/vulnerabilities/* r,
+  @{sys}/module/kvm_intel/parameters/ept r,
 
   @{PROC}/ r,
   @{PROC}/config.gz r,
@@ -93,9 +101,13 @@ profile spectre-meltdown-checker @{exec_path} {
   /var/lib/dbus/machine-id r,
   /etc/machine-id r,
 
+  # For shell pwd
+  /root/ r,
+  /etc/ r,
+
 
   profile ccache {
-    #include <abstractions/base>
+    include <abstractions/base>
 
     /{usr/,}bin/ccache mr,
 
@@ -106,7 +118,7 @@ profile spectre-meltdown-checker @{exec_path} {
   }
 
   profile pgrep {
-    #include <abstractions/base>
+    include <abstractions/base>
 
     /{usr/,}bin/pgrep mr,
 
@@ -118,11 +130,11 @@ profile spectre-meltdown-checker @{exec_path} {
   }
 
   profile mcedb {
-    #include <abstractions/base>
-    #include <abstractions/consoles>
-    #include <abstractions/nameservice-strict>
-    #include <abstractions/openssl>
-    #include <abstractions/ssl_certs>
+    include <abstractions/base>
+    include <abstractions/consoles>
+    include <abstractions/nameservice-strict>
+    include <abstractions/openssl>
+    include <abstractions/ssl_certs>
 
     /{usr/,}bin/wget mr,
     /{usr/,}bin/sqlite3 mr,
@@ -139,7 +151,7 @@ profile spectre-meltdown-checker @{exec_path} {
   }
 
   profile kmod {
-    #include <abstractions/base>
+    include <abstractions/base>
 
     /{usr/,}bin/kmod mr,
 
@@ -150,5 +162,5 @@ profile spectre-meltdown-checker @{exec_path} {
 
   }
 
-  #include if exists <local/spectre-meltdown-checker>
+  include if exists <local/spectre-meltdown-checker>
 }

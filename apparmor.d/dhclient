@@ -9,15 +9,15 @@
 #
 # ------------------------------------------------------------------
 
-#abi <abi/3.0>,
+abi <abi/3.0>,
 
-#include <tunables/global>
+include <tunables/global>
 
 @{exec_path} = /{usr/,}sbin/dhclient
 profile dhclient @{exec_path} {
-  #include <abstractions/base>
-  #include <abstractions/nameservice-strict>
-  #include <abstractions/openssl>
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+  include <abstractions/openssl>
 
   # To remove the following errors:
   #  dhclient[]: Open a socket for LPF: Operation not permitted
@@ -30,6 +30,11 @@ profile dhclient @{exec_path} {
   # Needed?
   #capability net_admin,
   audit deny capability sys_module,
+
+  network inet dgram,
+  network inet6 dgram,
+  network netlink raw,
+  network packet raw,
 
   @{exec_path} mr,
 
@@ -45,5 +50,5 @@ profile dhclient @{exec_path} {
 
   owner @{PROC}/@{pid}/task/@{tid}/comm rw,
 
-  #include if exists <local/dhclient>
+  include if exists <local/dhclient>
 }

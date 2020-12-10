@@ -9,12 +9,14 @@
 #
 # ------------------------------------------------------------------
 
-#include <tunables/global>
+abi <abi/3.0>,
+
+include <tunables/global>
 profile nscd /usr/{bin,sbin}/nscd flags=(complain) {
-  #include <abstractions/base>
-  #include <abstractions/consoles>
-  #include <abstractions/nameservice>
-  #include <abstractions/ssl_certs>
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/nameservice>
+  include <abstractions/ssl_certs>
 
   deny capability block_suspend,
   capability net_bind_service,
@@ -24,12 +26,12 @@ profile nscd /usr/{bin,sbin}/nscd flags=(complain) {
   /etc/netgroup r,
   /etc/nscd.conf r,
   /usr/{bin,sbin}/nscd rmix,
-  /{,var/}run/.nscd_socket wl,
-  /{,var/}run/nscd/ rw,
-  /{,var/}run/nscd/db* rwl,
-  /{,var/}run/nscd/socket wl,
+  @{run}/.nscd_socket wl,
+  @{run}/nscd/ rw,
+  @{run}/nscd/db* rwl,
+  @{run}/nscd/socket wl,
   /{var/cache,var/lib,var/run,run}/nscd/{passwd,group,services,hosts,netgroup} rw,
-  /{,var/}run/{nscd/,}nscd.pid rwl,
+  @{run}/{nscd/,}nscd.pid rwl,
   /var/lib/libvirt/dnsmasq/ r,
   /var/lib/libvirt/dnsmasq/*.status r,
   /var/log/nscd.log rw,
@@ -39,5 +41,5 @@ profile nscd /usr/{bin,sbin}/nscd flags=(complain) {
   @{PROC}/@{pid}/mounts r,
 
   # Site-specific additions and overrides. See local/README for details.
-  #include <local/usr.sbin.nscd>
+  include if exists <local/usr.sbin.nscd>
 }

@@ -9,9 +9,9 @@
 #
 # ------------------------------------------------------------------
 
-#abi <abi/3.0>,
+abi <abi/3.0>,
 
-#include <tunables/global>
+include <tunables/global>
 
 @{FT_LIBDIR} =  /{usr/,}lib/freetube
 @{FT_LIBDIR} += /{usr/,}lib/freetube-vue
@@ -20,20 +20,20 @@
 
 @{exec_path} = @{FT_LIBDIR}/freetube{,-vue}
 profile freetube @{exec_path} {
-  #include <abstractions/base>
-  #include <abstractions/consoles>
-  #include <abstractions/opencl-intel>
-  #include <abstractions/freedesktop.org>
-  #include <abstractions/fonts>
-  #include <abstractions/fontconfig-cache-read>
-  #include <abstractions/gtk>
-  #include <abstractions/mesa>
-  #include <abstractions/audio>
-  #include <abstractions/nameservice-strict>
-  #include <abstractions/user-download-strict>
-  #include <abstractions/thumbnails-cache-read>
-  #include <abstractions/deny-dconf>
-  #include <abstractions/deny-root-dir-access>
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/opencl-intel>
+  include <abstractions/freedesktop.org>
+  include <abstractions/fonts>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/gtk>
+  include <abstractions/mesa>
+  include <abstractions/audio>
+  include <abstractions/nameservice-strict>
+  include <abstractions/user-download-strict>
+  include <abstractions/thumbnails-cache-read>
+  include <abstractions/deny-dconf>
+  include <abstractions/deny-root-dir-access>
 
   # The following rules are needed only when the kernel.unprivileged_userns_clone option is set
   # to "1".
@@ -42,6 +42,12 @@ profile freetube @{exec_path} {
   owner @{PROC}/@{pid}/setgroups w,
   owner @{PROC}/@{pid}/gid_map w,
   owner @{PROC}/@{pid}/uid_map w,
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
 
   @{exec_path} mrix,
 
@@ -61,7 +67,7 @@ profile freetube @{exec_path} {
   owner /tmp/.org.chromium.Chromium.*/ rw,
   owner /tmp/.org.chromium.Chromium.*/SingletonCookie w,
   owner /tmp/.org.chromium.Chromium.*/SS w,
-  owner /tmp/.org.chromium.Chromium.* w,
+  owner /tmp/.org.chromium.Chromium.* rw,
   owner /tmp/net-export/ rw,
 
         /dev/shm/ r,
@@ -106,6 +112,8 @@ profile freetube @{exec_path} {
   /var/lib/dbus/machine-id r,
   /etc/machine-id r,
 
+  owner @{run}/user/[0-9]*/ r,
+
   # no new privs
   /{usr/,}bin/xdg-settings    rPx,
 
@@ -119,8 +127,8 @@ profile freetube @{exec_path} {
 
 
   profile open {
-    #include <abstractions/base>
-    #include <abstractions/xdg-open>
+    include <abstractions/base>
+    include <abstractions/xdg-open>
 
     /{usr/,}bin/xdg-open mr,
 
@@ -136,5 +144,5 @@ profile freetube @{exec_path} {
 
   }
 
-  #include if exists <local/freetube>
+  include if exists <local/freetube>
 }

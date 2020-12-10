@@ -9,20 +9,22 @@
 #
 # ------------------------------------------------------------------
 
-#abi <abi/3.0>,
+abi <abi/3.0>,
 
-#include <tunables/global>
+include <tunables/global>
 
 @{exec_path} = /{usr/,}bin/dbus-daemon
 profile dbus-daemon @{exec_path} {
-  #include <abstractions/base>
-  #include <abstractions/nameservice-strict>
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
 
   capability setgid,
   capability setuid,
   capability sys_resource,
 
   signal (receive) set=(term, kill),
+
+  network netlink raw,
 
   @{exec_path} mr,
 
@@ -40,6 +42,8 @@ profile dbus-daemon @{exec_path} {
 
   /usr/share/defaults/**.conf r,
 
+  @{sys}/module/apparmor/parameters/enabled r,
+
         @{run}/systemd/users/[0-9]* r,
   owner @{run}/user/[0-9]*/dbus-1/ rw,
   owner @{run}/user/[0-9]*/dbus-1/services/ rw,
@@ -47,5 +51,5 @@ profile dbus-daemon @{exec_path} {
   # file_inherit
   owner /dev/tty[0-9]* rw,
 
-  #include if exists <local/dbus-daemon>
+  include if exists <local/dbus-daemon>
 }

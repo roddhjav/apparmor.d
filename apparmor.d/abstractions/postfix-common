@@ -11,16 +11,16 @@
 # ------------------------------------------------------------------
 # used with postfix/*
 
+  abi <abi/3.0>,
+
 
   capability            setuid,
   capability            setgid,
   capability            sys_chroot,
 
   # postfix's master can send us signals
-  signal receive peer=/usr/lib/postfix/master,
   signal receive peer=postfix-master,
 
-  unix (send, receive) peer=(label=/usr/lib/postfix/master),
   unix (send, receive) peer=(label=postfix-master),
 
   /etc/mailname         r,
@@ -37,3 +37,8 @@
   /var/spool/postfix/etc/*        r,
   /var/spool/postfix/lib/lib*.so* mr,
   /var/spool/postfix/lib/@{multiarch}/lib*.so* mr,
+
+  /etc/postfix/dynamicmaps.cf.d/  r,
+
+  # Include additions to the abstraction
+  include if exists <abstractions/postfix-common.d>

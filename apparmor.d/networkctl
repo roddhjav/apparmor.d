@@ -9,13 +9,13 @@
 #
 # ------------------------------------------------------------------
 
-#abi <abi/3.0>,
+abi <abi/3.0>,
 
-#include <tunables/global>
+include <tunables/global>
 
 @{exec_path} = /{usr/,}bin/networkctl
 profile networkctl @{exec_path} flags=(complain) {
-  #include <abstractions/base>
+  include <abstractions/base>
 
   # To be able to manage network interfaces,
   capability net_admin,
@@ -25,6 +25,10 @@ profile networkctl @{exec_path} flags=(complain) {
   audit deny capability sys_module,
 
   signal send peer=child-pager,
+
+  network inet dgram,
+  network inet6 dgram,
+  network netlink raw,
 
   @{exec_path} mr,
 
@@ -37,6 +41,7 @@ profile networkctl @{exec_path} flags=(complain) {
   @{run}/systemd/netif/links/[0-9]* r,
   @{run}/systemd/netif/state r,
 
+  owner @{PROC}/@{pid}/cgroup r,
   owner @{PROC}/@{pid}/stat r,
         @{PROC}/sys/kernel/random/boot_id r,
 
@@ -53,5 +58,5 @@ profile networkctl @{exec_path} flags=(complain) {
   /var/lib/dbus/machine-id r,
   /etc/machine-id r,
 
-  #include if exists <local/networkctld>
+  include if exists <local/networkctld>
 }

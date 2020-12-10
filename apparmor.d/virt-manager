@@ -9,29 +9,33 @@
 #
 # ------------------------------------------------------------------
 
-#abi <abi/3.0>,
+abi <abi/3.0>,
 
-#include <tunables/global>
+include <tunables/global>
 
 @{exec_path}  = /{usr/,}bin/virt-manager
 @{exec_path} += /usr/share/virt-manager/virt-manager
-profile virt-manager @{exec_path} flags=(complain) {
-  #include <abstractions/base>
-  #include <abstractions/python>
-  #include <abstractions/gtk>
-  #include <abstractions/fonts>
-  #include <abstractions/fontconfig-cache-read>
-  #include <abstractions/freedesktop.org>
-  #include <abstractions/nameservice-strict>
-  #include <abstractions/ssl_certs>
-  #include <abstractions/openssl>
-  #include <abstractions/audio>
-  #include <abstractions/mesa>
-  #include <abstractions/dri-common>
-  #include <abstractions/dri-enumerate>
-  #include <abstractions/thumbnails-cache-read>
-  #include <abstractions/user-download-strict>
-  #include <abstractions/deny-dconf>
+profile virt-manager @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/python>
+  include <abstractions/gtk>
+  include <abstractions/fonts>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/freedesktop.org>
+  include <abstractions/nameservice-strict>
+  include <abstractions/ssl_certs>
+  include <abstractions/openssl>
+  include <abstractions/audio>
+  include <abstractions/mesa>
+  include <abstractions/dri-common>
+  include <abstractions/dri-enumerate>
+  include <abstractions/thumbnails-cache-read>
+  include <abstractions/user-download-strict>
+  include <abstractions/deny-dconf>
+
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
 
   @{exec_path} rix,
   /{usr/,}bin/{,ba,da}sh rix,
@@ -84,6 +88,7 @@ profile virt-manager @{exec_path} flags=(complain) {
   owner @{PROC}/@{pid}/mountinfo r,
   owner @{PROC}/@{pid}/mounts r,
   owner @{PROC}/@{pid}/fd/ r,
+        @{PROC}/@{pid}/net/route r,
 
   /dev/ r,
 
@@ -126,5 +131,5 @@ profile virt-manager @{exec_path} flags=(complain) {
   # Silecne the noise
   deny /usr/share/virt-manager/{,**} w,
 
-  #include if exists <local/virt-manager>
+  include if exists <local/virt-manager>
 }

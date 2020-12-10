@@ -9,18 +9,18 @@
 #
 # ------------------------------------------------------------------
 
-#abi <abi/3.0>,
+abi <abi/3.0>,
 
-#include <tunables/global>
+include <tunables/global>
 
 @{BUILD_DIR} = /media/debuilder/
 
 @{exec_path} = /{usr/,}bin/apt-get
 profile apt-get @{exec_path} flags=(complain) {
-  #include <abstractions/base>
-  #include <abstractions/consoles>
-  #include <abstractions/apt-common>
-  #include <abstractions/nameservice-strict>
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/apt-common>
+  include <abstractions/nameservice-strict>
 
   # To remove the following errors:
   #  W: chmod 0700 of directory /var/lib/apt/lists/partial failed - SetupAPTPartialDirectory
@@ -66,6 +66,7 @@ profile apt-get @{exec_path} flags=(complain) {
   # Needed? (##FIXME##)
   capability kill,
   capability fsetid,
+  capability net_admin,
 
   signal (send) peer=apt-methods-*,
 
@@ -114,6 +115,8 @@ profile apt-get @{exec_path} flags=(complain) {
 
   owner @{PROC}/@{pid}/fd/ r,
 
+  /dev/ptmx rw,
+
         /tmp/ r,
   owner /tmp/apt-tmp-index.* rw,
   owner /tmp/apt-dpkg-install-*/ rw,
@@ -129,9 +132,9 @@ profile apt-get @{exec_path} flags=(complain) {
   owner /var/log/cron-apt/temp w,
 
 
-  profile pager flags=(complain) {
-    #include <abstractions/base>
-    #include <abstractions/consoles>
+  profile pager {
+    include <abstractions/base>
+    include <abstractions/consoles>
 
     capability dac_read_search,
 
@@ -153,9 +156,9 @@ profile apt-get @{exec_path} flags=(complain) {
   }
 
   profile dpkg-source flags=(complain) {
-    #include <abstractions/base>
-    #include <abstractions/nameservice-strict>
-    #include <abstractions/perl>
+    include <abstractions/base>
+    include <abstractions/nameservice-strict>
+    include <abstractions/perl>
 
     /{usr/,}bin/dpkg-source mr,
     /{usr/,}bin/perl r,
@@ -180,5 +183,5 @@ profile apt-get @{exec_path} flags=(complain) {
 
   }
 
-  #include if exists <local/apt-get>
+  include if exists <local/apt-get>
 }

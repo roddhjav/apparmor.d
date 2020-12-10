@@ -11,13 +11,14 @@
 #
 # ------------------------------------------------------------------
 
-  #abi <abi/3.0>,
+  abi <abi/3.0>,
 
-  #include <abstractions/dri-common>
+  include <abstractions/dri-common>
 
 
   # .ICEauthority files required for X authentication, per user
   owner @{HOME}/.ICEauthority r,
+  owner @{run}/user/*/ICEauthority r,
 
   # .Xauthority files required for X connections, per user
   owner @{HOME}/.Xauthority r,
@@ -30,7 +31,7 @@
   owner @{run}/user/*/xauth_* r,
 
   # the unix socket to use to connect to the display
-  /tmp/.X11-unix/* rw,
+  /tmp/.X11-unix/* r,
   unix (connect, receive, send)
        type=stream
        peer=(addr="@/tmp/.X11-unix/X[0-9]*"),
@@ -58,7 +59,10 @@
   /etc/X11/cursors/**             r,
 
   # Xwayland
-  owner /run/user/*/.mutter-Xwaylandauth.* r,
+  owner @{run}/user/*/.mutter-Xwaylandauth.* r,
 
   # Available Xsessions
   /usr/share/xsessions/{,*.desktop} r,
+
+  # Include additions to the abstraction
+  include if exists <abstractions/X.d>

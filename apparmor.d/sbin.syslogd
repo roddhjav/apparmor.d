@@ -9,12 +9,14 @@
 #
 # ------------------------------------------------------------------
 
-#include <tunables/global>
+abi <abi/3.0>,
+
+include <tunables/global>
 
 profile syslogd /{usr/,}{bin,sbin}/syslogd flags=(complain) {
-  #include <abstractions/base>
-  #include <abstractions/nameservice>
-  #include <abstractions/consoles>
+  include <abstractions/base>
+  include <abstractions/nameservice>
+  include <abstractions/consoles>
 
   capability sys_tty_config,
   capability dac_override,
@@ -34,10 +36,10 @@ profile syslogd /{usr/,}{bin,sbin}/syslogd flags=(complain) {
   /etc/syslog.conf              r,
   /{usr/,}{bin,sbin}/syslogd    rmix,
   /var/log/**                   rw,
-  /{,var/}run/syslogd.pid          krwl,
-  /{,var/}run/utmp                 rw,
+  @{run}/syslogd.pid          krwl,
+  @{run}/utmp                 rw,
   /var/spool/compaq/nic/messages_fifo rw,
 
   # Site-specific additions and overrides. See local/README for details.
-  #include <local/sbin.syslogd>
+  include if exists <local/sbin.syslogd>
 }

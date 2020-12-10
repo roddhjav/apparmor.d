@@ -9,17 +9,21 @@
 #
 # ------------------------------------------------------------------
 
-#abi <abi/3.0>,
+abi <abi/3.0>,
 
-#include <tunables/global>
+include <tunables/global>
 
 @{exec_path} = /{usr/,}sbin/gparted
 profile gparted @{exec_path} {
-  #include <abstractions/base>
+  include <abstractions/base>
 
   @{exec_path} r,
   /{usr/,}bin/{,ba,da}sh  rix,
 
+  /{usr/,}sbin/           r,
+  /{usr/,}sbin/gpartedbin rPx,
+
+  /{usr/,}bin/            r,
   /{usr/,}bin/{,e}grep    rix,
   /{usr/,}bin/cut         rix,
   /{usr/,}bin/id          rix,
@@ -33,19 +37,26 @@ profile gparted @{exec_path} {
   @{run}/udev/rules.d/90-udisks-inhibit.rules rw,
 
   /{usr/,}bin/udevadm     rCx -> udevadm,
+  /{usr/,}sbin/killall5   rCx -> killall,
 
-  /{usr/,}sbin/gpartedbin rPx,
   /{usr/,}bin/ps          rPx,
   /{usr/,}bin/xhost       rPx,
   /{usr/,}bin/pkexec      rPx,
   /{usr/,}bin/systemctl   rPx -> child-systemctl,
+
+  # For shell pwd
+  / r,
+  /root/ r,
+
+  /usr/local/bin/ r,
+  /usr/local/sbin/ r,
 
   # file_inherit
   owner /dev/tty[0-9]* rw,
 
 
   profile udevadm {
-    #include <abstractions/base>
+    include <abstractions/base>
 
     ptrace (read),
 
@@ -67,5 +78,25 @@ profile gparted @{exec_path} {
 
   }
 
-  #include if exists <local/gparted>
+  profile killall flags=(attach_disconnected) {
+    include <abstractions/base>
+    include <abstractions/consoles>
+
+    capability sys_ptrace,
+
+    signal (send) set=(int, term, kill),
+
+    ptrace (read),
+
+    /{usr/,}sbin/killall5 mr,
+
+    # The /proc/ dir is needed to avoid the following error:
+    #  /proc: Permission denied
+         @{PROC}/ r,
+         @{PROC}/@{pids}/stat r,
+         @{PROC}/@{pids}/cmdline r,
+
+  }
+
+  include if exists <local/gparted>
 }

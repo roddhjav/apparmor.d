@@ -9,16 +9,22 @@
 #
 # ------------------------------------------------------------------
 
-#abi <abi/3.0>,
+abi <abi/3.0>,
 
-#include <tunables/global>
+include <tunables/global>
 
 @{exec_path} = /{usr/,}bin/inxi
 profile inxi @{exec_path} {
-  #include <abstractions/base>
-  #include <abstractions/nameservice-strict>
-  #include <abstractions/perl>
-  #include <abstractions/openssl>
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+  include <abstractions/perl>
+  include <abstractions/openssl>
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
 
   @{exec_path} r,
   /{usr/,}bin/perl r,
@@ -77,6 +83,9 @@ profile inxi @{exec_path} {
   @{HOME}/.local/share/xorg/ r,
   @{HOME}/.local/share/xorg/Xorg.[0-9]*.log r,
 
+  # For shell pwd
+  /root/ r,
+
   @{run}/ r,
 
   @{PROC}/asound/ r,
@@ -103,10 +112,13 @@ profile inxi @{exec_path} {
   @{sys}/bus/usb/devices/ r,
   @{sys}/devices/{,**} r,
   @{sys}/module/*/version r,
+  @{sys}/power/wakeup_count r,
 
 
   profile ip {
-    #include <abstractions/base>
+    include <abstractions/base>
+
+    network netlink raw,
 
     /{usr/,}bin/ip mr,
 
@@ -117,7 +129,7 @@ profile inxi @{exec_path} {
   }
 
   profile systemd {
-    #include <abstractions/base>
+    include <abstractions/base>
 
     /{usr/,}lib/systemd/systemd mr,
 
@@ -131,7 +143,7 @@ profile inxi @{exec_path} {
   }
 
   profile udevadm {
-    #include <abstractions/base>
+    include <abstractions/base>
 
     /{usr/,}bin/udevadm mr,
 
@@ -149,7 +161,7 @@ profile inxi @{exec_path} {
   }
 
   profile kmod {
-    #include <abstractions/base>
+    include <abstractions/base>
 
     /{usr/,}bin/kmod mr,
 
@@ -158,5 +170,5 @@ profile inxi @{exec_path} {
 
   }
 
-  #include if exists <local/inxi>
+  include if exists <local/inxi>
 }

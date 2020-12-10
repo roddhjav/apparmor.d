@@ -1,5 +1,7 @@
 # vim:syntax=apparmor
 
+  abi <abi/3.0>,
+
 # This abstraction is designed to be used in a child profile to limit what
 # confined application can invoke via kde-open5 helper.
 #
@@ -18,40 +20,40 @@
 #
 # # out-of-line child profile
 # profile foo//kde-open5 {
-#   #include <abstractions/kde-open5>
+#   include <abstractions/kde-open5>
 #
 #   # needed for ubuntu-* abstractions
-#   #include <abstractions/ubuntu-helpers>
+#   include <abstractions/ubuntu-helpers>
 #
 #   # Only allow to handle http[s]: and mailto: links
-#   #include <abstractions/ubuntu-browsers>
-#   #include <abstractions/ubuntu-email>
+#   include <abstractions/ubuntu-browsers>
+#   include <abstractions/ubuntu-email>
 #
 #   # Add if accesibility access is considered as required
 #   # (for message boxe in case exo-open fails)
-#   #include <abstractions/dbus-accessibility>
+#   include <abstractions/dbus-accessibility>
 #
 #   # Add if audio support for message box is
 #   # considered as required.
-#   #include if exists <abstractions/gstreamer>
+#   include if exists <abstractions/gstreamer>
 #
 #   # < add additional allowed applications here >
 # }
 # ```
 
-  #include <abstractions/audio> # for alert messages
-  #include <abstractions/base>
-  #include <abstractions/dbus-accessibility-strict>
-  #include <abstractions/dbus-network-manager-strict>
-  #include <abstractions/dbus-session-strict>
-  #include <abstractions/dbus-strict>
-  #include <abstractions/kde-icon-cache-write>
-  #include <abstractions/kde>
-  #include <abstractions/nameservice> # for IceProcessMessages () from libICE.so (called by libQtCore.so)
-  #include <abstractions/openssl>
-  #include <abstractions/qt5>
-  #include <abstractions/recent-documents-write>
-  #include <abstractions/X>
+  include <abstractions/audio> # for alert messages
+  include <abstractions/base>
+  include <abstractions/dbus-accessibility-strict>
+  include <abstractions/dbus-network-manager-strict>
+  include <abstractions/dbus-session-strict>
+  include <abstractions/dbus-strict>
+  include <abstractions/kde-icon-cache-write>
+  include <abstractions/kde>
+  include <abstractions/nameservice> # for IceProcessMessages () from libICE.so (called by libQtCore.so)
+  include <abstractions/openssl>
+  include <abstractions/qt5>
+  include <abstractions/recent-documents-write>
+  include <abstractions/X>
 
   # Main executables
 
@@ -96,9 +98,9 @@
   # User files
 
   owner /tmp/xauth-[0-9]*-_[0-9] r, # for libQt5XcbQpa.so
-  owner /{,var/}run/user/[0-9]*/#[0-9]* rw, # for /run/user/1000/#13
-  owner /{,var/}run/user/[0-9]*/kioclient*slave-socket lrw -> /{,var/}/run/user/[0-9]/#[0-9]*, # for KIO::Slave::holdSlave(QString const&, QUrl const&) () from libKF5KIOCore.so (not 100% sure)
+  owner @{run}/user/[0-9]*/#[0-9]* rw, # for /run/user/1000/#13
+  owner @{run}/user/[0-9]*/kioclient*slave-socket lrw -> @{run}/user/[0-9]/#[0-9]*, # for KIO::Slave::holdSlave(QString const&, QUrl const&) () from libKF5KIOCore.so (not 100% sure)
   owner @{HOME}/.cache/kio_http/ rw,
 
   # Include additions to the abstraction
-  #include if exists <abstractions/kde-open5.d>
+  include if exists <abstractions/kde-open5.d>

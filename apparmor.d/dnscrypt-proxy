@@ -9,15 +9,15 @@
 #
 # ------------------------------------------------------------------
 
-#abi <abi/3.0>,
+abi <abi/3.0>,
 
-#include <tunables/global>
+include <tunables/global>
 
 @{exec_path} = /{usr/,}sbin/dnscrypt-proxy
 profile dnscrypt-proxy @{exec_path} {
-  #include <abstractions/base>
-  #include <abstractions/nameservice-strict>
-  #include <abstractions/ssl_certs>
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+  include <abstractions/ssl_certs>
 
   # To bind to the 53 tcp/udp port (when systemd's sockets aren't used).
   capability net_bind_service,
@@ -25,6 +25,14 @@ profile dnscrypt-proxy @{exec_path} {
   # Needed for privilege drop (to run as _dnscrypt-proxy:nogroup).
   capability setgid,
   capability setuid,
+
+  # Needed?
+  capability net_admin,
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
 
   @{exec_path} mrix,
 
@@ -70,5 +78,5 @@ profile dnscrypt-proxy @{exec_path} {
   # Needed?
   deny /etc/ssl/certs/java/ r,
 
-  #include if exists <local/dnscrypt-proxy>
+  include if exists <local/dnscrypt-proxy>
 }
