@@ -1,0 +1,59 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}lib/apt/apt.systemd.daily
+profile apt-systemd-daily @{exec_path} {
+  include <abstractions/base>
+
+  @{exec_path} mrix,
+  /{usr/,}bin/{,ba,da}sh rix,
+
+  /{usr/,}bin/flock      rix,
+  /{usr/,}bin/cmp        rix,
+  /{usr/,}bin/cp         rix,
+  /{usr/,}bin/rm         rix,
+  /{usr/,}bin/mv         rix,
+  /{usr/,}bin/savelog    rix,
+  /{usr/,}bin/which      rix,
+  /{usr/,}bin/touch      rix,
+  /{usr/,}bin/basename   rix,
+  /{usr/,}bin/date       rix,
+  /{usr/,}bin/find       rix,
+  /{usr/,}bin/du         rix,
+  /{usr/,}bin/stat       rix,
+  /{usr/,}bin/sort       rix,
+  /{usr/,}bin/uniq       rix,
+  /{usr/,}bin/wc         rix,
+  /{usr/,}bin/seq        rix,
+
+  /{usr/,}bin/apt-config rPx,
+  /{usr/,}bin/apt-get    rPx,
+
+  /etc/default/locale    r,
+
+  # The /daily_lock file is only used when the /var/lib/apt/daily_lock can be accessed.
+  #/daily_lock w,
+  /var/lib/apt/daily_lock wk,
+
+  /var/lib/apt/extended_states r,
+
+  /var/backups/apt.extended_states.[0-9]* r,
+
+  /var/cache/apt/ r,
+  /var/cache/apt/archives/ r,
+  /var/cache/apt/backup/ r,
+
+  include if exists <local/apt-systemd-daily>
+}
