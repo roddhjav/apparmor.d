@@ -1,0 +1,46 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2020 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/picom{,-trans}
+profile picom @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/dri-common>
+  include <abstractions/nameservice-strict>
+  include <abstractions/mesa-cache-write>
+  include <abstractions/deny-root-dir-access>
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/sed      rix,
+  /{usr/,}bin/xargs    rix,
+  /{usr/,}bin/{,e}grep rix,
+  /{usr/,}bin/echo     rix,
+
+  # For migrating from compton.
+  owner @{HOME}/.config/compton.conf r,
+
+  owner @{HOME}/.config/picom.conf r,
+
+  owner @{HOME}/.Xauthority r,
+
+  @{sys}/devices/pci[0-9]*/**/{uevent,vendor,device,subsystem_vendor,subsystem_device} r,
+
+  owner @{PROC}/@{pid}/fd/ r,
+
+  # file_inherit
+  owner /dev/tty[0-9]* rw,
+
+  include if exists <local/picom>
+}

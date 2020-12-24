@@ -17,6 +17,10 @@ include <tunables/global>
 profile apt-systemd-daily @{exec_path} {
   include <abstractions/base>
 
+  # Needed to remove the following error:
+  # apt.systemd.daily[]: find: ‘/var/cache/apt/archives/partial’: Permission denied
+  capability dac_read_search,
+
   @{exec_path} mrix,
   /{usr/,}bin/{,ba,da}sh rix,
 
@@ -29,6 +33,7 @@ profile apt-systemd-daily @{exec_path} {
   /{usr/,}bin/which      rix,
   /{usr/,}bin/touch      rix,
   /{usr/,}bin/basename   rix,
+  /{usr/,}bin/dirname    rix,
   /{usr/,}bin/date       rix,
   /{usr/,}bin/find       rix,
   /{usr/,}bin/du         rix,
@@ -37,6 +42,8 @@ profile apt-systemd-daily @{exec_path} {
   /{usr/,}bin/uniq       rix,
   /{usr/,}bin/wc         rix,
   /{usr/,}bin/seq        rix,
+  /{usr/,}bin/xargs      rix,
+  /{usr/,}bin/gzip       rix,
 
   /{usr/,}bin/apt-config rPx,
   /{usr/,}bin/apt-get    rPx,
@@ -49,11 +56,18 @@ profile apt-systemd-daily @{exec_path} {
 
   /var/lib/apt/extended_states r,
 
-  /var/backups/apt.extended_states.[0-9]* r,
+  /var/backups/ r,
+  /var/backups/apt.extended_states rw,
+  /var/backups/apt.extended_states.[0-9]* rw,
+  /var/backups/apt.extended_states.[0-9]*.gz w,
 
   /var/cache/apt/ r,
   /var/cache/apt/archives/ r,
+  /var/cache/apt/archives/partial/ r,
+  /var/cache/apt/archives/*.deb rw,
   /var/cache/apt/backup/ r,
+
+  owner @{PROC}/@{pid}/fd/ r,
 
   include if exists <local/apt-systemd-daily>
 }
