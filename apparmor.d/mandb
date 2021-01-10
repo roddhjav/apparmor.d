@@ -1,0 +1,38 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2020-2021 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/mandb
+profile mandb @{exec_path} flags=(complain) {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+
+  @{exec_path} mr,
+
+  /etc/manpath.config r,
+
+  /var/cache/man/ r,
+  /var/cache/man/** rwk,
+
+  /usr/share/man/ r,
+  /usr/share/man/** r,
+
+  /usr/share/*/man/man[0-9]*/*.[0-9]*.gz r,
+
+  /usr/local/share/man/ r,
+  /usr/local/share/man/** r,
+
+  include if exists <local/mandb>
+}

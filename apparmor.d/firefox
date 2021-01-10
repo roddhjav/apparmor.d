@@ -20,12 +20,14 @@ include <tunables/global>
 @{exec_path} = @{MOZ_LIBDIR}/firefox{,-bin,-esr}
 profile firefox @{exec_path} {
   include <abstractions/base>
+  include <abstractions/wayland>
   include <abstractions/opencl-intel>
+  include <abstractions/vulkan>
   include <abstractions/gtk>
   include <abstractions/fonts>
   include <abstractions/fontconfig-cache-read>
   include <abstractions/freedesktop.org>
-  include <abstractions/mesa-cache-write>
+  include <abstractions/mesa>
   include <abstractions/audio>
   include <abstractions/enchant>
   include <abstractions/user-download-strict>
@@ -56,15 +58,15 @@ profile firefox @{exec_path} {
   owner @{PROC}/@{pid}/gid_map w,
   owner @{PROC}/@{pid}/uid_map w,
 
-  /{usr/,}bin/{,ba,da}sh rix,
+  /{usr/,}bin/{,ba,da}sh          rix,
 
   # Firefox files
   @{MOZ_LIBDIR}/{,**}  r,
   @{MOZ_LIBDIR}/*.so  mr,
   @{MOZ_LIBDIR}/crashreporter     rPx,
   @{MOZ_LIBDIR}/minidump-analyzer rPx,
-  #@{MOZ_LIBDIR}/pingsender        rPx,
-  #@{MOZ_LIBDIR}/plugin-container  rPx,
+  #@{MOZ_LIBDIR}/pingsender       rPx,
+  #@{MOZ_LIBDIR}/plugin-container rPx,
   /usr/share/firefox/{,**} r,
   /etc/firefox/{,**} r,
 
@@ -134,6 +136,9 @@ profile firefox @{exec_path} {
   /{usr/,}lib/@{multiarch}/qt5/plugins/kf5/org.kde.kwindowsystem.platforms/KF5WindowSystemX11Plugin.so mr,
   /usr/share/xul-ext/kwallet5/* r,
   /etc/xul-ext/kwallet5.js r,
+
+  # For wayland
+  owner /dev/shm/wayland.mozilla.ipc.[0-9]* rw,
 
   /usr/share/glib-2.0/schemas/gschemas.compiled r,
 

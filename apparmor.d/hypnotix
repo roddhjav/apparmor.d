@@ -1,0 +1,98 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2021 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+# Playlist extensions:
+# m3u, m3u8, pls
+@{hypnotix_ext}  = [mM]3[uU]{,8}
+@{hypnotix_ext} += [pP][lL][sS]
+
+@{exec_path}  = /{usr/,}bin/hypnotix
+@{exec_path} += /{usr/,}lib/hypnotix/hypnotix.py
+profile hypnotix @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/opencl-intel>
+  include <abstractions/vulkan>
+  include <abstractions/audio>
+  include <abstractions/gtk>
+  include <abstractions/fonts>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/freedesktop.org>
+  include <abstractions/mesa>
+  include <abstractions/nameservice-strict>
+  include <abstractions/user-download-strict>
+  include <abstractions/openssl>
+  include <abstractions/ssl_certs>
+  include <abstractions/python>
+
+  signal (send) set=(term, kill) peer=youtube-dl,
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  @{exec_path} rix,
+  /{usr/,}bin/python3.[0-9]*  r,
+
+  /{usr/,}bin/{,ba,da}sh      rix,
+
+  /{usr/,}sbin/ldconfig       rix,
+  /{usr/,}bin/mkdir           rix,
+
+  /{usr/,}bin/xdg-screensaver rPx,
+  /{usr/,}bin/youtube-dl      rPx,
+
+  /{usr/,}lib/firefox/firefox rPUx,
+
+  # Which files hypnotix should be able to open
+        / r,
+        /home/ r,
+  owner @{HOME}/ r,
+  owner @{HOME}/**/ r,
+        /media/ r,
+  owner /media/**/ r,
+  owner /{home,media}/**.@{hypnotix_ext} r,
+
+  # To be able to store settings
+  include <abstractions/dconf>
+  owner @{run}/user/[0-9]*/dconf/ rw,
+  owner @{run}/user/[0-9]*/dconf/user rw,
+
+  /usr/share/hypnotix/{,**} r,
+
+  owner @{HOME}/.hypnotix/ rw,
+  owner @{HOME}/.hypnotix/** rw,
+
+       owner @{PROC}/@{pid}/fd/ r,
+       owner @{PROC}/@{pid}/mounts r,
+  deny owner @{PROC}/@{pid}/cmdline r,
+
+  @{sys}/devices/pci[0-9]*/**/drm/ r,
+
+  /dev/ r,
+
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+
+  /etc/vdpau_wrapper.cfg r,
+
+  /var/lib/dbus/machine-id r,
+  /etc/machine-id r,
+
+  # Silencer
+  /{usr/,}lib/hypnotix/** w,
+
+  include if exists <local/hypnotix>
+}

@@ -1,7 +1,7 @@
 # vim:syntax=apparmor
 # ------------------------------------------------------------------
 #
-#    Copyright (C) 2020 Mikhail Morfikov
+#    Copyright (C) 2020-2021 Mikhail Morfikov
 #
 #    This program is free software; you can redistribute it and/or
 #    modify it under the terms of version 2 of the GNU General Public
@@ -16,6 +16,7 @@ include <tunables/global>
 @{exec_path} = /{usr/,}sbin/mount.cifs
 profile mount.cifs @{exec_path} flags=(complain) {
   include <abstractions/base>
+  include <abstractions/nameservice-strict>
 
   # To mount anything.
   capability sys_admin,
@@ -28,6 +29,8 @@ profile mount.cifs @{exec_path} flags=(complain) {
   network netlink raw,
 
   @{exec_path} mr,
+
+  /{usr/,}bin/systemd-ask-password rPUx,
 
   /etc/fstab r,
 

@@ -1,7 +1,7 @@
 # vim:syntax=apparmor
 # ------------------------------------------------------------------
 #
-#    Copyright (C) 2017-2020 Mikhail Morfikov
+#    Copyright (C) 2017-2021 Mikhail Morfikov
 #
 #    This program is free software; you can redistribute it and/or
 #    modify it under the terms of version 2 of the GNU General Public
@@ -25,12 +25,13 @@ include <tunables/global>
 profile xorg @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/opencl-intel>
+  include <abstractions/vulkan>
   include <abstractions/fonts>
   include <abstractions/fontconfig-cache-read>
   include <abstractions/freedesktop.org>
   include <abstractions/mesa>
   include <abstractions/nameservice-strict>
-  ##include <abstractions/deny-root-dir-access>
+  include <abstractions/deny-root-dir-access>
 
   # When the Xserver is started via startx as a regular user, there's no need for any of the
   # following CAPs. When some DM is used instead, some of the CAPs are needed.
@@ -56,7 +57,7 @@ profile xorg @{exec_path} flags=(attach_disconnected) {
   #deny capability sys_rawio,
   deny capability sys_nice,
 
-  # for KDE/SDDM
+  # For KDE/SDDM
   #capability sys_tty_config,
 
   signal (send) set=(usr1),
@@ -154,10 +155,6 @@ profile xorg @{exec_path} flags=(attach_disconnected) {
   #
   /dev/shm/shmfd-* rw,
   /dev/shm/#[0-9]*[0-9] rw,
-
-  /etc/glvnd/egl_vendor.d/ r,
-  /usr/share/glvnd/egl_vendor.d/ r,
-  /usr/share/glvnd/egl_vendor.d/[0-9][0-9]_*.json r,
 
   include if exists <local/xorg>
 }
