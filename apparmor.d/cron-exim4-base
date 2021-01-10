@@ -1,0 +1,43 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2020-2021 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /etc/cron.daily/exim4-base
+profile cron-exim4-base @{exec_path} flags=(complain) {
+  include <abstractions/base>
+
+  capability dac_read_search,
+
+  @{exec_path} r,
+  /{usr/,}bin/{,ba,da}sh rix,
+
+  /{usr/,}bin/sed        rix,
+  /{usr/,}bin/{,e}grep   rix,
+  /{usr/,}bin/logger     rix,
+  /{usr/,}bin/mail       rix,
+  /{usr/,}bin/hostname   rix,
+  /{usr/,}bin/xargs      rix,
+  /{usr/,}bin/find       rix,
+  /{usr/,}sbin/eximstats rix,
+
+  /{usr/,}sbin/exim4     rPx,
+
+  /etc/default/exim4 r,
+
+  /var/spool/exim4/db/ r,
+
+  owner @{PROC}/@{pid}/fd/ r,
+
+  include if exists <local/cron-exim4-base>
+}

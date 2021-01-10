@@ -1,0 +1,84 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2020-2021 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/labwc
+profile labwc @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/wayland>
+  include <abstractions/vulkan>
+  include <abstractions/consoles>
+  include <abstractions/fonts>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/freedesktop.org>
+  include <abstractions/nameservice-strict>
+  include <abstractions/dri-common>
+  include <abstractions/dri-enumerate>
+  include <abstractions/mesa>
+  include <abstractions/deny-root-dir-access>
+
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  # Apps allowed to run
+  /{usr/,}sbin/* rPUx,
+  /{usr/,}bin/*  rPUx,
+  /usr/libexec/* rPUx,
+
+  owner @{HOME}/.config/labwc/ r,
+  owner @{HOME}/.config/labwc/* r,
+
+  /usr/share/libinput/ r,
+  /usr/share/libinput/*.quirks r,
+
+  /usr/share/themes/**/themerc r,
+
+  /usr/share/X11/xkb/** r,
+
+  owner /dev/shm/wayland.mozilla.ipc.[0-9]* rw,
+
+  @{sys}/bus/ r,
+  @{sys}/class/ r,
+  @{sys}/class/drm/ r,
+  @{sys}/class/input/ r,
+  @{sys}/devices/pci[0-9]*/**/boot_vga r,
+  @{sys}/devices/**/uevent r,
+
+  @{run}/udev/data/+input* r,          # for mouse, keyboard, touchpad
+  @{run}/udev/data/+platform* r,       # for ?
+  @{run}/udev/data/+drm:card[0-9]-* r, # for screen outputs
+  @{run}/udev/data/+acpi* r,           # for ?
+  @{run}/udev/data/+hid* r,            # for HID-Compliant Keyboard
+  @{run}/udev/data/+pci* r,            # for VGA compatible controller
+  @{run}/udev/data/+usb* r,            # for USB mouse and keyboard
+  @{run}/udev/data/+sound:card* r,     # for sound
+  @{run}/udev/data/+serio* r,          # for touchpad?
+  @{run}/udev/data/c13:[0-9]*  r,      # for /dev/input/*
+  @{run}/udev/data/c189:[0-9]* r,      # for /dev/bus/usb/**
+  @{run}/udev/data/c226:[0-9]* r,      # for /dev/dri/card*
+
+  @{run}/systemd/sessions/[0-9]* r,
+  @{run}/systemd/seats/seat[0-9]* r,
+
+  @{run}/user/[0-9]*/wayland-[0-9].lock k,
+
+  owner @{PROC}/@{pid}/fd/ r,
+
+  owner /tmp/.X[0-9]*-lock rw,
+  owner /tmp/.X11-unix/ rw,
+  owner /tmp/.X11-unix/X[0-9]* rw,
+
+  include if exists <local/labwc>
+}
