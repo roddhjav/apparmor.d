@@ -31,6 +31,7 @@ profile keepassxc @{exec_path} {
   include <abstractions/qt5-settings-write>
   include <abstractions/openssl>
   include <abstractions/ssl_certs>
+  include <abstractions/devices-usb>
   include <abstractions/deny-root-dir-access>
 
   network inet dgram,
@@ -90,16 +91,6 @@ profile keepassxc @{exec_path} {
 
   /etc/fstab r,
 
-  @{sys}/bus/ r,
-  @{sys}/bus/usb/devices/ r,
-  @{sys}/class/ r,
-  @{sys}/devices/pci[0-9]*/**/usb[0-9]/{,**/}{uevent,speed,descriptors} r,
-  @{sys}/devices/pci[0-9]*/**/usb[0-9]/{,**/}{busnum,devnum} r,
-
-  @{run}/udev/data/c189:[0-9]* r, # for /dev/bus/usb/**
-  @{run}/udev/data/+usb:* r,      #
-
-  /dev/bus/usb/ r,
   /dev/shm/#[0-9]*[0-9] rw,
 
   # For browser integration
@@ -132,6 +123,11 @@ profile keepassxc @{exec_path} {
     include <abstractions/xdg-open>
 
     /{usr/,}bin/xdg-open mr,
+
+    /{usr/,}bin/{,ba,da}sh      rix,
+    /{usr/,}bin/gawk            rix,
+    /{usr/,}bin/readlink        rix,
+    /{usr/,}bin/basename        rix,
 
     owner @{HOME}/ r,
 

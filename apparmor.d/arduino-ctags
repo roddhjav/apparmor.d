@@ -1,7 +1,7 @@
 # vim:syntax=apparmor
 # ------------------------------------------------------------------
 #
-#    Copyright (C) 2019-2021 Mikhail Morfikov
+#    Copyright (C) 2021 Mikhail Morfikov
 #
 #    This program is free software; you can redistribute it and/or
 #    modify it under the terms of version 2 of the GNU General Public
@@ -13,22 +13,15 @@ abi <abi/3.0>,
 
 include <tunables/global>
 
-@{exec_path} = /{usr/,}bin/usb-devices
-profile usb-devices @{exec_path} {
+@{exec_path} = /{usr/,}bin/arduino-ctags
+profile arduino-ctags @{exec_path} {
   include <abstractions/base>
-  include <abstractions/devices-usb>
 
-  @{exec_path} r,
-  /{usr/,}bin/{,ba,da}sh rix,
+  @{exec_path} mr,
 
-  /{usr/,}bin/cat        rix,
-  /{usr/,}bin/cut        rix,
-  /{usr/,}bin/{,e}grep   rix,
-  /{usr/,}bin/basename   rix,
-  /{usr/,}bin/readlink   rix,
+  owner /tmp/tags.* rw,
 
-  # For shell pwd
-  /root/ r,
+  owner /tmp/arduino_build_[0-9]*/** r,
 
-  include if exists <local/usb-devices>
+  include if exists <local/arduino-ctags>
 }

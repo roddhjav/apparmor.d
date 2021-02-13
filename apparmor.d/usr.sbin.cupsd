@@ -2,17 +2,17 @@
 # Last Modified: Thu Aug  2 12:54:46 2007
 # Author: Martin Pitt <martin.pitt@ubuntu.com>
 
-include <tunables/global>
+#include <tunables/global>
 
 /usr/sbin/cupsd flags=(attach_disconnected) {
-  include <abstractions/base>
-  include <abstractions/bash>
-  include <abstractions/authentication>
-  include <abstractions/dbus>
-  include <abstractions/fonts>
-  include <abstractions/nameservice>
-  include <abstractions/perl>
-  include <abstractions/user-tmp>
+  #include <abstractions/base>
+  #include <abstractions/bash>
+  #include <abstractions/authentication>
+  #include <abstractions/dbus>
+  #include <abstractions/fonts>
+  #include <abstractions/nameservice>
+  #include <abstractions/perl>
+  #include <abstractions/user-tmp>
 
   capability chown,
   capability fowner,
@@ -46,6 +46,11 @@ include <tunables/global>
   network appletalk dgram,
   network econet dgram,
   network ash dgram,
+
+  # CUPS is of systemd service type "notify" now, meaning that cupsd notifies
+  # systemd when it is up and running, give CUPS access to systemd's
+  # notification socket
+  /run/systemd/notify w,
 
   /{usr/,}bin/bash ixr,
   /{usr/,}bin/dash ixr,
@@ -169,15 +174,15 @@ include <tunables/global>
   }
 
   # Site-specific additions and overrides. See local/README for details.
-  include <local/usr.sbin.cupsd>
+  #include <local/usr.sbin.cupsd>
 }
 
 # separate profile since this needs to write into /home
 /usr/lib/cups/backend/cups-pdf {
-  include <abstractions/base>
-  include <abstractions/fonts>
-  include <abstractions/nameservice>
-  include <abstractions/user-tmp>
+  #include <abstractions/base>
+  #include <abstractions/fonts>
+  #include <abstractions/nameservice>
+  #include <abstractions/user-tmp>
 
   capability chown,
   capability fowner,
@@ -211,7 +216,7 @@ include <tunables/global>
   # allow read and write on almost anything in @{HOME} (lenient, but
   # private-files-strict is in effect), to support customized "Out"
   # setting in cups-pdf.conf (Debian#940578)
-  include <abstractions/private-files-strict>
+  #include <abstractions/private-files-strict>
   @{HOME}/[^.]*/{,**/} rw,
   @{HOME}/[^.]*/**     rw,
 }
