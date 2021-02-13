@@ -1,0 +1,56 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2021 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/arduino-builder
+profile arduino-builder @{exec_path} {
+  include <abstractions/base>
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/                           r,
+  /{usr/,}bin/avr-g++                    rix,
+  /{usr/,}bin/avr-gcc                    rix,
+  /{usr/,}bin/avr-gcc-ar                 rix,
+  /{usr/,}bin/avr-size                   rix,
+  /{usr/,}bin/avrdude                    rix,
+  /{usr/,}lib/gcc/avr/[0-9]*/cc1plus     rix,
+  /{usr/,}lib/gcc/avr/[0-9]*/cc1         rix,
+  /{usr/,}lib/gcc/avr/[0-9]*/collect2    rix,
+  /{usr/,}lib/gcc/avr/[0-9]*/lto-wrapper rix,
+  /{usr/,}lib/gcc/avr/[0-9]*/lto1        rix,
+  /{usr/,}lib/avr/bin/as                 rix,
+  /{usr/,}lib/avr/bin/ar                 rix,
+  /{usr/,}lib/avr/bin/ld                 rix,
+  /{usr/,}lib/avr/bin/objcopy            rix,
+
+  /{usr/,}bin/arduino-ctags              rPx,
+
+  /usr/share/arduino/{,**} r,
+  /usr/share/arduino-builder/{,**} r,
+
+  /usr/share/doc/arduino/{,**} r,
+
+  owner @{HOME}/Arduino/{,**} r,
+
+  @{sys}/kernel/mm/transparent_hugepage/hpage_pmd_size r,
+
+        /tmp/ r,
+  owner /tmp/cc* rw,
+  owner /tmp/untitled[0-9]*.tmp/{,**} rw,
+  owner /tmp/arduino_{build,cache}_[0-9]*/{,**} rw,
+  owner /tmp/arduino_modified_sketch_[0-9]*/{,**} rw,
+
+  include if exists <local/arduino-builder>
+}

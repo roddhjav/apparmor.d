@@ -13,8 +13,9 @@ abi <abi/3.0>,
 
 include <tunables/global>
 
-@{exec_path} = /{usr/,}bin/system-config-printer /usr/share/system-config-printer/system-config-printer.py
-profile system-config-printer @{exec_path} {
+@{exec_path}  = /{usr/,}bin/system-config-printer
+@{exec_path} += /usr/share/system-config-printer/system-config-printer.py
+profile system-config-printer @{exec_path} flags=(complain) {
   include <abstractions/base>
   include <abstractions/python>
   include <abstractions/nameservice-strict>
@@ -23,7 +24,6 @@ profile system-config-printer @{exec_path} {
   include <abstractions/fontconfig-cache-read>
   include <abstractions/freedesktop.org>
   include <abstractions/openssl>
-  include <abstractions/deny-dconf>
   include <abstractions/deny-root-dir-access>
 
   network inet stream,
@@ -34,23 +34,55 @@ profile system-config-printer @{exec_path} {
   /{usr/,}bin/{,ba,da}sh     rix,
   /{usr/,}bin/python3.[0-9]* r,
 
+  /{usr/,}lib/cups/*/* rCx -> cups,
+
+  # For HP printers
+  /usr/share/hplip/query.py rPUx,
+
   /usr/share/system-config-printer/{,**} r,
+
+  /usr/share/cups/data/testprint r,
+
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+
+  /etc/fstab r,
+
+  /etc/cups/cupsd.conf r,
+
+  /etc/cupshelpers/preferreddrivers.xml r,
+
+  /etc/papersize r,
+
+  # To set the default printer
+  owner @{HOME}/.cups/ rw,
+  owner @{HOME}/.cups/lpoptions rw,
+
+  owner /tmp/* rw,
 
   owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/stat r,
   owner @{PROC}/@{pid}/mounts r,
   owner @{PROC}/@{pid}/mountinfo r,
 
-  /etc/fstab r,
-
-  /etc/cups/cupsd.conf r,
-
-  /usr/share/glib-2.0/schemas/gschemas.compiled r,
-
-  owner /tmp/* rw,
+  include <abstractions/dconf>
+  @{run}/user/[0-9]*/dconf/ rw,
+  @{run}/user/[0-9]*/dconf/user rw,
 
   # file_inherit
   owner /dev/tty[0-9]* rw,
+
+
+  profile cups flags=(complain) {
+    include <abstractions/base>
+
+    network inet dgram,
+    network inet6 dgram,
+
+    /{usr/,}lib/cups/*/* mr,
+
+    /etc/cups/snmp.conf r,
+
+  }
 
   include if exists <local/system-config-printer>
 }

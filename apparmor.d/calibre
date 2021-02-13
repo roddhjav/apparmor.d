@@ -46,6 +46,7 @@ profile calibre @{exec_path} {
   include <abstractions/python>
   include <abstractions/openssl>
   include <abstractions/ssl_certs>
+  include <abstractions/devices-usb>
   include <abstractions/deny-root-dir-access>
 
   # The following rules are needed only when the kernel.unprivileged_userns_clone option is set
@@ -142,24 +143,7 @@ profile calibre @{exec_path} {
   /{usr/,}lib/@{multiarch}/qt5/libexec/QtWebEngineProcess rix,
   /usr/share/qt5/**.pak r,
 
-  # For sending books to a phone
-  /dev/bus/usb/ r,
-  /dev/bus/usb/** rw,
-
-  @{sys}/class/ r,
-  @{sys}/bus/ r,
-  @{sys}/bus/usb/devices/ r,
-  @{sys}/devices/pci[0-9]*/**/usb[0-9]/{,**/} r,
-  @{sys}/devices/pci[0-9]*/**/usb[0-9]/{,**/}{bDeviceClass,bcdDevice,manufacturer,product} r,
-  @{sys}/devices/pci[0-9]*/**/usb[0-9]/{,**/}{busnum,devnum} r,
-  @{sys}/devices/pci[0-9]*/**/usb[0-9]/{,**/}{idVendor,idProduct} r,
-  @{sys}/devices/pci[0-9]*/**/usb[0-9]/{,**/}serial r,
-  @{sys}/devices/pci[0-9]*/**/usb[0-9]/{,**/}{speed,descriptors,bConfigurationValue,interface} r,
-
   @{sys}/devices/pci[0-9]*/**/irq r,
-
-  @{run}/udev/data/+usb* r,            #
-  @{run}/udev/data/c189:[0-9]* r,      # for /dev/bus/usb/**
 
         /dev/shm/ r,
         /dev/shm/#[0-9]*[0-9] rw,
@@ -185,7 +169,10 @@ profile calibre @{exec_path} {
 
     /{usr/,}bin/xdg-open mr,
 
-    /{usr/,}bin/{,ba,da}sh rix,
+    /{usr/,}bin/{,ba,da}sh      rix,
+    /{usr/,}bin/gawk            rix,
+    /{usr/,}bin/readlink        rix,
+    /{usr/,}bin/basename        rix,
 
     owner @{HOME}/ r,
 

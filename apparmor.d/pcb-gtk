@@ -1,0 +1,51 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2021 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/pcb-gtk
+profile pcb-gtk @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/X>
+  include <abstractions/gtk>
+  include <abstractions/fonts>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/freedesktop.org>
+  include <abstractions/dri-enumerate>
+  include <abstractions/mesa>
+  include <abstractions/nameservice-strict>
+  include <abstractions/user-download-strict>
+
+  @{exec_path} mr,
+
+  /usr/share/pcb/ListLibraryContents.sh rix,
+
+  /{usr/,}bin/dash rix,
+  /{usr/,}bin/cat  rix,
+  /{usr/,}bin/tr   rix,
+
+  /usr/share/pcb/ r,
+  /usr/share/pcb/** r,
+
+  owner @{HOME}/.pcb/ rw,
+  owner @{HOME}/.pcb/preferences rw,
+
+  owner @{HOME}/PCB.[0-9]*.backup rw,
+
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/mounts r,
+
+  /etc/fstab r,
+
+  include if exists <local/pcb-gtk>
+}

@@ -17,6 +17,10 @@ include <tunables/global>
 profile usbguard @{exec_path} {
   include <abstractions/base>
   include <abstractions/consoles>
+    include <abstractions/devices-usb>
+
+  # Needed to create policy (usbguard generate-policy)
+  network netlink dgram,
 
   @{exec_path} mr,
 
@@ -27,11 +31,7 @@ profile usbguard @{exec_path} {
   /dev/shm/qb-[0-9]*-[0-9]*-[0-9]*-*/qb-{request,response,event}-usbguard-{header,data} rw,
 
   # For "usbguard generate-policy"
-  @{sys}/bus/usb/devices/{,**} r,
-  @{sys}/devices/pci[0-9]*/**/uevent rw,
-  @{sys}/devices/pci[0-9]*/**/usb[0-9]/{,**/}{authorized_default,authorized,remove} rw,
-  @{sys}/devices/pci[0-9]*/**/usb[0-9]/{,**/}{descriptors,product,idProduct,idVendor,serial} r,
-  @{sys}/devices/pci[0-9]*/**/usb[0-9]/**/connect_type r,
+  @{sys}/devices/pci[0-9]*/**/uevent r,
 
   include if exists <local/usbguard>
 }
