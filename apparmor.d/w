@@ -1,7 +1,7 @@
 # vim:syntax=apparmor
 # ------------------------------------------------------------------
 #
-#    Copyright (C) 2020-2021 Mikhail Morfikov
+#    Copyright (C) 2021 Mikhail Morfikov
 #
 #    This program is free software; you can redistribute it and/or
 #    modify it under the terms of version 2 of the GNU General Public
@@ -13,14 +13,22 @@ abi <abi/3.0>,
 
 include <tunables/global>
 
-@{exec_path} = /etc/cron.{hourly,daily,weekly,monthly}/debtags
-profile cron-debtags @{exec_path} {
+@{exec_path} = /{usr/,}bin/w
+profile w @{exec_path} {
   include <abstractions/base>
+  include <abstractions/nameservice-strict>
+  include <abstractions/wutmp>
 
-  @{exec_path} r,
-  /{usr/,}bin/{,ba,da}sh rix,
+  ptrace (read),
 
-  /usr/bin/debtags       rPx,
+  @{exec_path} mr,
 
-  include if exists <local/cron-debtags>
+  @{PROC}/ r,
+  @{PROC}/uptime r,
+  @{PROC}/sys/kernel/osrelease r,
+  @{PROC}/loadavg r,
+  @{PROC}/@{pids}/stat r,
+  @{PROC}/@{pids}/cmdline r,
+
+  include if exists <local/w>
 }
