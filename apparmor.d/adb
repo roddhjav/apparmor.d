@@ -1,0 +1,38 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2021 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path}  = /{usr/,}bin/adb
+@{exec_path} += /{usr/,}lib/android-sdk/platform-tools/adb
+profile adb @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+  include <abstractions/devices-usb>
+  include <abstractions/user-download-strict>
+
+  # For adb kill-server:
+  #  cannot connect to daemon at tcp:5037: Permission denied
+  network inet stream,
+  network inet6 stream,
+
+  @{exec_path} mrix,
+
+  owner /tmp/adb.[0-9]*.log rw,
+
+  owner @{HOME}/.android/ rw,
+  owner @{HOME}/.android/adb.[0-9]* rw,
+  owner @{HOME}/.android/adbkey rw,
+
+  include if exists <local/adb>
+}
