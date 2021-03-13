@@ -1,0 +1,86 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2021 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path}  = /{usr/,}bin/font-manager
+profile font-manager @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/gtk>
+  include <abstractions/fonts>
+  include <abstractions/fontconfig-cache-write>
+  include <abstractions/freedesktop.org>
+  include <abstractions/nameservice-strict>
+  include <abstractions/ssl_certs>
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  @{exec_path} r,
+
+  /{usr/,}lib/@{multiarch}/webkit*gtk-*/WebKitWebProcess     rix,
+  /{usr/,}lib/@{multiarch}/webkit*gtk-*/WebKitNetworkProcess rix,
+
+  /{usr/,}lib/@{multiarch}/gstreamer[0-9]*.[0-9]*/gstreamer-[0-9]*.[0-9]*/gst-plugin-scanner rPUx,
+
+  owner @{HOME}/.cache/ rw,
+  owner @{HOME}/.cache/font-manager/ rw,
+  owner @{HOME}/.cache/font-manager/* rwk,
+
+  owner @{HOME}/.cache/gstreamer-[0-9]*/ rw,
+  owner @{HOME}/.cache/gstreamer-[0-9]*/registry.*.bin{,.tmp*} rw,
+
+  owner @{HOME}/.config/font-manager/ rw,
+  owner @{HOME}/.config/font-manager/* rw,
+
+  owner @{HOME}/.config/fontconfig/ rw,
+  owner @{HOME}/.config/fontconfig/conf.d/ rw,
+  owner @{HOME}/.config/fontconfig/conf.d/* rw,
+
+  owner @{HOME}/.local/share/fonts/ rw,
+  owner "@{HOME}/.local/share/fonts/Google Fonts/" rw,
+  owner "@{HOME}/.local/share/fonts/Google Fonts/**" rw,
+
+  owner @{HOME}/.local/share/ r,
+  owner @{HOME}/.local/share/gvfs-metadata/** r,
+
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+
+  owner @{PROC}/@{pid}/cgroup r,
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/statm r,
+  owner @{PROC}/@{pid}/cmdline r,
+  owner @{PROC}/@{pid}/smaps r,
+        @{PROC}zoneinfo r,
+
+  @{sys}/devices/virtual/dmi/id/chassis_type r,
+  @{sys}/firmware/acpi/pm_profile r,
+  @{sys}/devices/system/node/ r,
+  @{sys}/fs/cgroup/{,**} r,
+
+  /dev/ r,
+  /dev/dri/ r,
+
+  include <abstractions/dconf>
+  @{run}/user/[0-9]*/dconf/ rw,
+  @{run}/user/[0-9]*/dconf/user rw,
+
+  # Silencer
+       owner /var/cache/fontconfig/ w,
+  deny       /var/cache/fontconfig/ w,
+
+  include if exists <local/font-manager>
+}

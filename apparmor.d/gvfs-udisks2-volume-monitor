@@ -1,0 +1,63 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2021 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path}  = /{usr/,}lib/gvfs/gvfs-udisks2-volume-monitor
+@{exec_path} += /usr/libexec/gvfs-udisks2-volume-monitor
+profile gvfs-udisks2-volume-monitor @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+  include <abstractions/disks-read>
+  include <abstractions/devices-usb>
+
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  signal (send) set=(term, kill) peer=mount,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/lsof   rix,
+
+  /{usr/,}bin/mount  rPx,
+  /{usr/,}bin/umount rPx,
+
+  include <abstractions/dconf>
+  owner @{run}/user/[0-9]*/dconf/ w,
+  owner @{run}/user/[0-9]*/dconf/user rw,
+
+  /etc/fstab r,
+
+  # Mount points
+  /media/*/ r,
+  /media/*/*/ r,
+  @{HOME}/*/*/ r,
+  @{HOME}/*/*/**/ r,
+
+  owner @{HOME}/.local/share/mime/treemagic r,
+  /usr/share/mime/treemagic r,
+
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+
+  @{run}/mount/utab r,
+
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/mounts r,
+  owner @{PROC}/@{pid}/cgroup r,
+        @{PROC}/1/cgroup r,
+
+  include if exists <local/gvfs-udisks2-volume-monitor>
+}

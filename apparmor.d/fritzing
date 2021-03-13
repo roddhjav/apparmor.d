@@ -1,0 +1,79 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2021 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/fritzing{,.real}
+profile fritzing @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/X>
+  include <abstractions/gtk>
+  include <abstractions/fonts>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/freedesktop.org>
+  include <abstractions/nameservice-strict>
+  include <abstractions/mesa>
+  include <abstractions/dri-enumerate>
+  include <abstractions/qt5-settings-write>
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink dgram,
+  network netlink raw,
+
+  @{exec_path} mrix,
+
+  owner @{HOME}/.config/Fritzing/ rw,
+  owner @{HOME}/.config/Fritzing/** rwkl -> @{HOME}/.config/Fritzing/**,
+
+  owner @{HOME}/Documents/Fritzing/ rw,
+  owner @{HOME}/Documents/Fritzing/** rw,
+
+  # To configure Qt5 settings (theme, font, icons, etc.) under DE/WM without Qt integration
+  owner @{HOME}/.config/qt5ct/{,**} r,
+  /usr/share/qt5ct/** r,
+
+  /usr/share/fritzing/{,**} r,
+
+  /usr/share/hwdata/pnp.ids r,
+
+  owner @{PROC}/@{pid}/cmdline r,
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/mounts r,
+
+  /etc/fstab r,
+
+  /var/lib/dbus/machine-id r,
+  /etc/machine-id r,
+
+  /etc/debian_version r,
+
+  @{sys}/bus/ r,
+  @{sys}/class/ r,
+  @{sys}/class/tty/ r,
+  @{sys}/devices/**/tty*/uevent r,
+  @{sys}/devices/**/tty/**/uevent r,
+
+  @{run}/udev/data/c5:[0-9]*   r,      # for /dev/tty, /dev/console, /dev/ptmx
+  @{run}/udev/data/c4:[0-9]*   r,      # for /dev/tty[0-9]*
+  @{run}/udev/data/c166:[0-9]* r,      # for /dev/ttyACM[0-9]*
+
+  /dev/ttyS[0-9]* rw,
+  /dev/ttyACM[0-9]* rw,
+
+  owner @{run}/lock/LCK..ttyACM[0-9]* rwk,
+
+  include if exists <local/fritzing>
+}

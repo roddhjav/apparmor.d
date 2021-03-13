@@ -1,0 +1,40 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2021 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/ssh
+profile ssh @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+  include <abstractions/openssl>
+
+  network inet stream,
+  network inet6 stream,
+
+  @{exec_path} mr,
+
+  owner @{PROC}/@{pid}/fd/ r,
+
+  owner @{HOME}/.ssh/ r,
+  owner @{HOME}/.ssh/config r,
+  owner @{HOME}/.ssh/known_hosts r,
+  owner @{HOME}/.ssh/*_rsa{,.pub} r,
+  owner @{HOME}/.ssh/*_ed25519{,.pub} r,
+
+  /etc/ssh/ssh_config r,
+  /etc/ssh/ssh_config.d/ r,
+
+  include if exists <local/ssh>
+}
