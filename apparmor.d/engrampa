@@ -23,7 +23,6 @@ profile engrampa @{exec_path} {
   include <abstractions/nameservice-strict>
   include <abstractions/user-download-strict>
   include <abstractions/thumbnails-cache-read>
-  include <abstractions/deny-dconf>
   include <abstractions/deny-root-dir-access>
 
   @{exec_path} mr,
@@ -45,11 +44,16 @@ profile engrampa @{exec_path} {
   /{usr/,}bin/bzip2         rix,
   /{usr/,}bin/cpio          rix,
   /{usr/,}bin/gzip          rix,
+  /{usr/,}bin/zstd          rix,
   # For deb packages
   /{usr/,}bin/dpkg-deb      rix,
 
   /{usr/,}lib/@{multiarch}/glib-[0-9]*/gio-launch-desktop rCx -> open,
   /{usr/,}bin/xdg-open                                    rCx -> open,
+
+  include <abstractions/dconf>
+  owner @{run}/user/[0-9]*/dconf/ rw,
+  owner @{run}/user/[0-9]*/dconf/user rw,
 
   owner @{HOME}/.config/engrampa/ rw,
 
@@ -69,6 +73,7 @@ profile engrampa @{exec_path} {
   owner @{HOME}/.config/mimeapps.list{,.*} rw,
 
   owner @{HOME}/.local/share/ r,
+  owner @{HOME}/.local/share/gvfs-metadata/** r,
 
   /usr/share/engrampa/{,**} r,
 

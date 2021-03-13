@@ -126,6 +126,8 @@ profile mpv @{exec_path} {
   ##include <abstractions/nvidia>
   /etc/vdpau_wrapper.cfg r,
 
+  #/etc/samba/smb.conf r,
+
   # What's this for? (since v0.30.0)
   @{sys}/bus/ r,
   @{sys}/class/ r,
@@ -144,7 +146,7 @@ profile mpv @{exec_path} {
   @{run}/udev/data/c116:[0-9]* r, # for ALSA
 
   # Be able to turn off the screensaver while playing movies
-  /{usr/,}bin/xdg-screensaver rPUx,
+  /{usr/,}bin/xdg-screensaver rCx -> xdg-screensaver,
 
   # External apps
   /{usr/,}bin/youtube-dl rPUx,
@@ -152,6 +154,30 @@ profile mpv @{exec_path} {
   # file_inherit
   owner /dev/tty[0-9]* rw,
   owner @{HOME}/.xsession-errors w,
+
+
+  profile xdg-screensaver {
+    include <abstractions/base>
+    include <abstractions/consoles>
+
+    /{usr/,}bin/xdg-screensaver mr,
+
+    /{usr/,}bin/{,ba,da}sh   rix,
+    /{usr/,}bin/mv           rix,
+    /{usr/,}bin/{,e}grep     rix,
+    /{usr/,}bin/sed          rix,
+    /{usr/,}bin/which        rix,
+    /{usr/,}bin/xset         rix,
+    /{usr/,}bin/xautolock    rix,
+    /{usr/,}bin/dbus-send    rix,
+
+    owner @{HOME}/.Xauthority r,
+
+    # file_inherit
+    /dev/dri/card[0-9]* rw,
+    network inet stream,
+    network inet6 stream,
+  }
 
   include if exists <local/mpv>
 }

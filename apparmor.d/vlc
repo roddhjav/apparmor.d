@@ -141,7 +141,7 @@ profile vlc @{exec_path} {
   /usr/share/hwdata/pnp.ids r,
 
   # Be able to turn off the screensaver while playing movies
-  /{usr/,}bin/xdg-screensaver rPUx,
+  /{usr/,}bin/xdg-screensaver rCx -> xdg-screensaver,
 
   # Silencer
   deny /{usr/,}lib/@{multiarch}/vlc/{,**} w,
@@ -149,6 +149,30 @@ profile vlc @{exec_path} {
   # file_inherit
   owner /dev/tty[0-9]* rw,
   owner @{HOME}/.anyRemote/anyremote.stdout w,
+
+
+  profile xdg-screensaver {
+    include <abstractions/base>
+    include <abstractions/consoles>
+
+    /{usr/,}bin/xdg-screensaver mr,
+
+    /{usr/,}bin/{,ba,da}sh   rix,
+    /{usr/,}bin/mv           rix,
+    /{usr/,}bin/{,e}grep     rix,
+    /{usr/,}bin/sed          rix,
+    /{usr/,}bin/which        rix,
+    /{usr/,}bin/xset         rix,
+    /{usr/,}bin/xautolock    rix,
+    /{usr/,}bin/dbus-send    rix,
+
+    owner @{HOME}/.Xauthority r,
+
+    # file_inherit
+    /dev/dri/card[0-9]* rw,
+    network inet stream,
+    network inet6 stream,
+  }
 
   include if exists <local/vlc>
 }
