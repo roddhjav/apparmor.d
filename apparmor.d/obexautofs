@@ -1,0 +1,47 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2021 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/obexautofs
+profile obexautofs @{exec_path} {
+  include <abstractions/base>
+
+  network bluetooth seqpacket,
+  network bluetooth stream,
+  network bluetooth raw,
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  /usr/bin/fusermount{,3} rPx,
+
+  owner @{HOME}/bluetooth/ r,
+  mount fstype=fuse.obexautofs -> @{HOME}/bluetooth/,
+
+  @{sys}/bus/ r,
+  @{sys}/class/ r,
+  @{sys}/bus/usb/devices/ r,
+  @{sys}/devices/pci[0-9]*/**/usb[0-9]/bConfigurationValue r,
+  @{sys}/devices/pci[0-9]*/**/usb[0-9]/**/bConfigurationValue r,
+  @{sys}/devices/pci[0-9]*/**/usb[0-9]/{uevent,busnum,devnum,speed,descriptors} r,
+  @{sys}/devices/pci[0-9]*/**/usb[0-9]/**/{uevent,busnum,devnum,speed,descriptors} r,
+
+  @{run}/udev/data/+usb:* r,
+  @{run}/udev/data/c189:* r,
+
+  /dev/bus/usb/ r,
+  /dev/fuse rw,
+
+  include if exists <local/obexautofs>
+}
