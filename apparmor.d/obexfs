@@ -1,0 +1,34 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2021 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/obexfs
+profile obexfs @{exec_path} {
+  include <abstractions/base>
+
+  network bluetooth raw,
+  network bluetooth seqpacket,
+  network bluetooth stream,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/fusermount{,3} rPx,
+
+  owner @{HOME}/bluetooth/ r,
+  mount fstype=fuse.obexfs -> @{HOME}/bluetooth/,
+
+  /dev/fuse rw,
+
+  include if exists <local/obexfs>
+}

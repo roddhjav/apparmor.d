@@ -1,0 +1,34 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2021 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/obexpushd
+profile obexpushd @{exec_path} {
+  include <abstractions/base>
+
+  # For listening on tcp/*:650
+  capability net_bind_service,
+
+  network bluetooth stream,
+  network irda stream,
+  network inet stream,
+  network inet6 stream,
+
+  @{exec_path} mr,
+
+  # For receiving files
+  owner @{HOME}/bluetooth/* w,
+
+  include if exists <local/obexpushd>
+}

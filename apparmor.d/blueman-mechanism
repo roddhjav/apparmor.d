@@ -1,0 +1,53 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2021 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /usr/libexec/blueman-mechanism
+profile blueman-mechanism @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/python>
+  include <abstractions/nameservice-strict>
+
+  capability net_admin,
+  deny capability sys_nice,
+
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  @{exec_path} r,
+  /{usr/,}bin/python3.[0-9]* r,
+
+  /usr/libexec/ r,
+
+  /var/lib/blueman/network.state rw,
+
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/mounts r,
+
+  /dev/rfkill rw,
+
+  # For network AP
+  #/{usr/,}bin/ip                 rix,
+  #/{usr/,}sbin/xtables-nft-multi rix,
+  #/{usr/,}sbin/dnsmasq           rPx,
+  #/{usr/,}sbin/dhclient          rPx,
+  #      @{PROC}/sys/net/ipv4/ip_forward w,
+  #      @{PROC}/sys/net/ipv4/conf/ r,
+  #      @{PROC}/sys/net/ipv4/conf/*/forwarding w,
+  #owner @{run}/blueman-iptables rw,
+  #owner @{run}/blueman-netconfig rw,
+
+  include if exists <local/blueman-mechanism>
+}
