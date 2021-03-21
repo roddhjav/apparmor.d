@@ -1,0 +1,102 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2021 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path}  = /usr/games/gzdoom
+@{exec_path} += /opt/gzdoom/gzdoom
+profile gzdoom @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/X>
+  include <abstractions/gtk>
+  include <abstractions/fonts>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/freedesktop.org>
+  include <abstractions/nameservice-strict>
+  include <abstractions/audio>
+  include <abstractions/dri-enumerate>
+  include <abstractions/mesa>
+
+  network netlink raw,
+
+  ptrace (trace) peer=@{profile_name},
+
+  @{exec_path} mrix,
+
+  /{usr/,}bin/{,ba,da}sh      rix,
+
+  /{usr/,}bin/zsh             rix,
+  /{usr/,}bin/uname           rix,
+  /{usr/,}bin/xmessage        rix,
+  /{usr/,}bin/gdb             rix,
+  /{usr/,}bin/iconv           rix,
+
+  /opt/gzdoom/ r,
+  /opt/gzdoom/** mr,
+
+  /etc/gdb/gdbinit.d/ r,
+  /etc/gdb/gdbinit r,
+
+       /usr/share/gdb/{,**} r,
+       /usr/share/gcc/{,**} r,
+  deny /usr/share/gdb/{,**} w,
+  deny /usr/share/gcc/{,**} w,
+
+  /etc/zsh/zshenv r,
+
+  /etc/X11/app-defaults/* r,
+
+  /etc/machine-id r,
+  /var/lib/dbus/machine-id r,
+
+  @{sys}/devices/pci[0-9]*/**/usb[0-9]/**/uevent r,
+
+  owner @{HOME}/ r,
+  owner @{HOME}/.config/gzdoom/ rw,
+  owner @{HOME}/.config/gzdoom/** rw,
+
+  owner @{HOME}/.config/zdoom/ rw,
+  owner @{HOME}/.config/zdoom/** rwk,
+
+  owner @{HOME}/gzdoom-crash.log rw,
+
+  owner @{HOME}/gdb-respfile-* rw,
+
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pids}/mem r,
+  owner @{PROC}/@{pids}/task/@{tid}/stat r,
+  owner @{PROC}/@{pids}/task/@{tid}/comm r,
+  owner @{PROC}/@{pids}/task/@{tid}/maps r,
+  owner @{PROC}/@{pids}/task/ r,
+  owner @{PROC}/@{pid}/loginuid r,
+  owner @{PROC}/@{pid}/cmdline r,
+
+  @{sys}/bus/ r,
+  @{sys}/class/ r,
+  @{sys}/class/sound/ r,
+  @{sys}/class/input/ r,
+  @{sys}/class/hidraw/ r,
+
+  @{sys}/devices/**/uevent r,
+  @{sys}/devices/**/sound/**/{uevent,ev,rel,key,abs} r,
+  @{sys}/devices/**/input/**/{uevent,ev,rel,key,abs} r,
+
+  @{run}/udev/data/+sound:* r,
+  @{run}/udev/data/+input:* r,
+  @{run}/udev/data/c13:[0-9]* r,    # For /dev/input/*
+  @{run}/udev/data/c116:[0-9]* r,   # For ALSA
+  @{run}/udev/data/c240:[0-9]* r,   # For USB HID
+
+  include if exists <local/gzdoom>
+}

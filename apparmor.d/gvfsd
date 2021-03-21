@@ -23,51 +23,14 @@ profile gvfsd @{exec_path} {
   /{usr/,}bin/{,ba,da}sh   rix,
 
   # Don't strip env here.
-  /{usr/,}lib/gvfs/gvfsd-* rcx -> backends,
-  /usr/libexec/gvfsd-*     rcx -> backends,
+  /{usr/,}lib/gvfs/gvfsd-* rPx,
+  /usr/libexec/gvfsd-*     rPx,
 
   /usr/share/gvfs/{,**} r,
 
   owner @{run}/user/[0-9]*/gvfs/ rw,
 
   owner @{PROC}/@{pid}/fd/ r,
-
-
-  profile backends {
-    include <abstractions/base>
-    include <abstractions/consoles>
-    include <abstractions/nameservice>
-    include <abstractions/freedesktop.org>
-    include <abstractions/trash>
-    include <abstractions/disks-read>
-    include <abstractions/devices-usb>
-    include <abstractions/user-download-strict>
-
-    mount fstype={fuse,fuse.*} -> @{run}/user/[0-9]*/gvfs/,
-
-    /{usr/,}lib/gvfs/gvfsd-* mr,
-    /usr/libexec/gvfsd-*     mr,
-
-    /{usr/,}bin/ssh          rPx,
-    /usr/bin/fusermount{,3}  rPx,
-
-    /dev/ptmx rw,
-    /dev/fuse rw,
-
-    owner @{PROC}/@{pid}/fd/ r,
-    owner @{PROC}/@{pid}/mountinfo r,
-    owner @{PROC}/@{pid}/mounts r,
-
-    owner @{run}/samba/ rw,
-          @{run}/mount/utab r,
-
-    /usr/share/glib-2.0/schemas/gschemas.compiled r,
-
-    include <abstractions/dconf>
-    owner @{run}/user/[0-9]*/dconf/ rw,
-    owner @{run}/user/[0-9]*/dconf/user rw,
-
-  }
 
   include if exists <local/gvfsd>
 }

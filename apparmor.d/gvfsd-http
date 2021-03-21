@@ -1,0 +1,34 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2021 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path}  = /{usr/,}lib/gvfs/gvfsd-http
+@{exec_path} += /usr/libexec/gvfsd-http
+profile gvfsd-http @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/freedesktop.org>
+  include <abstractions/nameservice-strict>
+
+  network inet stream,
+  network inet6 stream,
+  network inet dgram,
+  network inet6 dgram,
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+
+  include if exists <local/gvfsd-http>
+}
