@@ -1,0 +1,36 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2021 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path}  = /{usr/,}lib/gvfs/gvfsd-trash
+@{exec_path} += /usr/libexec/gvfsd-trash
+profile gvfsd-trash @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+  include <abstractions/freedesktop.org>
+  include <abstractions/trash>
+
+  # When mounting a SMB share
+  network inet stream,
+  network inet6 stream,
+
+  @{exec_path} mr,
+
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/mounts r,
+
+  @{run}/mount/utab r,
+
+  include if exists <local/gvfsd-trash>
+}

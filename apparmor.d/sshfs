@@ -1,0 +1,33 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2021 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/sshfs
+profile sshfs @{exec_path} flags=(complain) {
+  include <abstractions/base>
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/ssh            rPx,
+  /{usr/,}bin/fusermount{,3} rPx,
+
+  /dev/fuse rw,
+
+  mount fstype=fuse.sshfs -> @{HOME}/*/,
+  mount fstype=fuse.sshfs -> @{HOME}/*/*/,
+  mount fstype=fuse.sshfs -> /media/*/,
+  mount fstype=fuse.sshfs -> /media/*/*/,
+
+  include if exists <local/sshfs>
+}

@@ -29,7 +29,7 @@ profile htop @{exec_path} {
 
   capability sys_ptrace,
 
-  # Needed?
+  # Needed? (for system state)
   audit deny capability net_admin,
 
   signal (send),
@@ -45,6 +45,10 @@ profile htop @{exec_path} {
   @{PROC}/tty/drivers r,
   @{PROC}/sys/kernel/osrelease r,
   @{PROC}/sys/kernel/pid_max r,
+  @{PROC}/pressure/cpu r,
+  @{PROC}/pressure/io r,
+  @{PROC}/pressure/memory r,
+  @{PROC}/diskstats r,
 
   @{PROC}/@{pids}/cmdline r,
   @{PROC}/@{pids}/stat r,
@@ -69,11 +73,25 @@ profile htop @{exec_path} {
   @{PROC}/@{pids}/task/@{tid}/status r,
   @{PROC}/@{pids}/task/@{tid}/io r,
   @{PROC}/@{pids}/task/@{tid}/comm r,
+  @{PROC}/@{pids}/net/dev r,
 
   owner @{PROC}/@{pid}/smaps_rollup r,
 
   @{sys}/devices/virtual/block/zram[0-9]*/{disksize,mm_stat} r,
   @{sys}/devices/system/cpu/cpufreq/policy[0-9]*/scaling_cur_freq r,
+  @{sys}/class/i2c-adapter/ r,
+  @{sys}/devices/pci[0-9]*/**/i2c-[0-9]*/name r,
+  @{sys}/class/hwmon/ r,
+  @{sys}/class/power_supply/ r,
+  @{sys}/devices/**/power_supply/**/{uevent,type,online} r,
+  @{sys}/devices/**/hwmon/ r,
+  @{sys}/devices/**/hwmon/{name,temp*} r,
+  @{sys}/devices/**/hwmon/**/ r,
+  @{sys}/devices/**/hwmon/**/{name,temp*} r,
+  @{sys}/devices/**/hwmon[0-9]*/ r,
+  @{sys}/devices/**/hwmon[0-9]*/{name,temp*} r,
+  @{sys}/devices/**/hwmon[0-9]*/**/ r,
+  @{sys}/devices/**/hwmon[0-9]*/**/{name,temp*} r,
 
   owner @{HOME}/.config/htop/ rw,
   owner @{HOME}/.config/htop/htoprc rw,
@@ -84,6 +102,9 @@ profile htop @{exec_path} {
   #  htop[]: *** err
   #  htop[]: Oh, oh, it's an error! possibly I die!
   /dev/tty[0-9]* rw,
+
+  /etc/sensors.d/ r,
+  /etc/sensors3.conf r,
 
   include if exists <local/htop>
 }
