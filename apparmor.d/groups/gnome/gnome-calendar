@@ -1,0 +1,37 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/gnome-calendar
+profile gnome-calendar @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/fonts>
+  include <abstractions/nameservice-strict>
+  include <abstractions/ssl_certs>
+  include <abstractions/openssl>
+  include <abstractions/fonts>
+  include <abstractions/gtk>
+
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+  /usr/share/icons/{,**} r,
+  /usr/share/X11/xkb/{,**} r,
+
+  owner @{user_share_dirs}/recently-used.xbel r,
+  owner @{user_config_dirs}/user-dirs.dirs r,
+
+  include <abstractions/dconf>
+  owner @{run}/user/[0-9]*/dconf/ rw,
+  owner @{run}/user/[0-9]*/dconf/user rw,
+
+  /run/user/1000/gdm/Xauthority r,
+
+  include if exists <local/gnome-calendar>
+}
