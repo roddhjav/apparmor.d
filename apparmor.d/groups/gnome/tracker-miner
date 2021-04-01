@@ -1,0 +1,42 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}lib/tracker-miner-fs-3
+profile tracker-miner @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/private-files>
+  include <abstractions/private-files-strict>
+
+  @{exec_path} mr,
+
+  /usr/share/tracker3/{,**} r,
+  /usr/share/tracker3-miners/{,**} r,
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+  /usr/share/applications/{,mimeinfo.cache} r,
+  /usr/share/mime/mime.cache r,
+
+  owner /var/tmp/etilqs_[0-9a-f]* rw,
+
+  # Allow to search user files
+  owner @{HOME}/{,**} r,
+  owner /media/*/{,**} r,
+  owner /tmp/*/{,**} r,
+
+  owner @{user_share_dirs}/{applications/,mime/mime.cache} r,
+  owner @{user_config_dirs}/user-dirs.dirs r,
+  owner @{user_config_dirs}/tracker3/{,**} rwk,
+  owner @{user_cache_dirs}/tracker3/files/{,**} rwk,
+
+  @{PROC}/sys/fs/inotify/max_user_watches r,
+
+  include <abstractions/dconf>
+  owner @{run}/user/[0-9]*/dconf/ rw,
+  owner @{run}/user/[0-9]*/dconf/user rw,
+
+  include if exists <local/tracker-miner>
+}
