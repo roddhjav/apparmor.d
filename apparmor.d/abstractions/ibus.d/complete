@@ -1,0 +1,18 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2020-2021 Mikhail Morfikov
+#               2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+  # abstract path in ibus < 1.5.22 uses /tmp
+  unix (connect, receive, send)
+      type=stream
+      peer=(addr="@/tmp/ibus/dbus-*"),
+
+  # abstract path in ibus >= 1.5.22 uses $XDG_CACHE_HOME (ie, @{user_cache_dirs})
+  # This should use this, but due to LP: #1856738 we cannot
+  #unix (connect, receive, send)
+  #    type=stream
+  #    peer=(addr="@@{user_cache_dirs}/ibus/dbus-*"),
+  unix (connect, receive, send)
+      type=stream
+      peer=(addr="@/home/*/.cache/ibus/dbus-*"),

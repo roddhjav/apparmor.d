@@ -1,0 +1,26 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2020-2021 Mikhail Morfikov
+#               2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+  /etc/writable/localtime        r,
+  /usr/share/locale/             r,
+
+  # Allow to receive some signals
+  signal (receive)                           peer=top,
+  signal (receive)                           peer=htop,
+  signal (receive) set=(term,kill,stop,cont) peer=systemd-shutdown,
+  signal (receive) set=(term,kill)           peer=openbox,
+  signal (receive) set=(hup)                 peer=xinit,
+  signal (receive) set=(term,kill)           peer=su,
+  signal (receive)                           peer=sudo,
+
+  # Allow to write a user defined fifo log devices
+  owner /dev/log-xsession w,
+  owner /dev/log-gnupg w,
+
+  deny owner @{HOME}/.Private/ r,
+  deny owner @{HOME}/.Private/** mrixwlk,
+
+  deny owner @{HOMEDIRS}/.ecryptfs/*/.Private/ r,
+  deny owner @{HOMEDIRS}/.ecryptfs/*/.Private/** mrixwlk,
