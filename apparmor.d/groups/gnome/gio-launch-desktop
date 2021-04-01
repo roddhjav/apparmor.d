@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2018-2021 Mikhail Morfikov
+#               2021 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -13,8 +14,11 @@ profile gio-launch-desktop @{exec_path} {
   include <abstractions/base>
   include <abstractions/consoles>
   include <abstractions/app-launcher-user>
+  include <abstractions/trash>
 
   @{exec_path} mr,
+  /{usr/,}bin/          r,
+  /{usr/,}bin/[a-z0-9]* rPUx,
 
   # System files
   /etc/gnome/defaults.list r,
@@ -29,6 +33,13 @@ profile gio-launch-desktop @{exec_path} {
 
   # file_inherit
   owner @{HOME}/.xsession-errors w,
+  owner @{user_share_dirs}/mime/{subclasses,icons,generic-icons} r,
+  owner @{user_share_dirs}/mime/{mime.cache,aliases,magic} r,
+  owner @{user_share_dirs}/mime/globs* r,
+  owner @{user_share_dirs}/applications/{mimeapps.list,mimeinfo.cache} r,
+
+  # Required by many gio command
+  owner @{HOME}/{,**} rw,
 
   include if exists <local/gio-launch-desktop>
 }
