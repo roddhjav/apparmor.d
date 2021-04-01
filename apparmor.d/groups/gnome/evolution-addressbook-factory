@@ -1,0 +1,34 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}lib/evolution-addressbook-factory
+profile evolution-addressbook-factory @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+  include <abstractions/ssl_certs>
+  include <abstractions/p11-kit>
+
+  network inet stream,
+  network inet6 stream,
+  network inet dgram,
+  network inet6 dgram,
+  network netlink raw,
+  
+  @{exec_path} mr,
+  @{exec_path}-subprocess rix,
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+
+  owner @{user_share_dirs}/evolution/{,**} rwk,
+  owner @{user_cache_dirs}/evolution/addressbook/{,**} rwk,
+
+  include <abstractions/dconf>
+  owner @{run}/user/[0-9]*/dconf/ rw,
+  owner @{run}/user/[0-9]*/dconf/user rw,
+
+  include if exists <local/evolution-addressbook-factory>
+}
