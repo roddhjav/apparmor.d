@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2021 Mikhail Morfikov
+#               2021 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -10,10 +11,24 @@ include <tunables/global>
 @{exec_path} += /usr/{lib,libexec}/gvfsd-recent
 profile gvfsd-recent @{exec_path} {
   include <abstractions/base>
+  include <abstractions/nameservice-strict>
+  include <abstractions/thumbnails-cache-read>
 
   @{exec_path} mr,
+  /usr/share/mime/mime.cache r,
 
-  owner @{user_share_dirs}/recently-used.xbel r,
+  owner @{HOME}/.zshenv r,
+  owner @{user_config_dirs}/user-dirs.dirs r,
+  owner @{HOME}/.local/share/recently-used.xbel r,
+
+  owner @{run}/user/[0-9]*/gvfsd/ rw,
+  owner @{run}/user/[0-9]*/gvfsd/socket-[a-zA-z0-9]* rw,
+  
+  owner @{PROC}/81380/mountinfo r,
+        @{PROC}/sys/kernel/random/boot_id r,
+
+  @{run}/systemd/userdb/ r,
+  @{run}/mount/utab r,
 
   include if exists <local/gvfsd-recent>
 }
