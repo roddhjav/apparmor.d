@@ -1,0 +1,136 @@
+#!/usr/bin/env bash
+# Configure the apparmor.d package
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+readonly ROOT=_build
+declare -a REMOVE_LIST
+
+_die()  { echo "$@" && exit 1; }
+_cd() { cd "$1" || _die "unable to move into $1"; }
+_init() { rm -rf "${ROOT:?}" && rsync -a --exclude=.git . "$ROOT"; }
+
+# Remove files or directories in the package
+remove_files() {
+	msg="Remove unneeded profiles/resources:"
+	for path in "${REMOVE_LIST[@]}"; do
+    	[[ ! -e "${ROOT:?}/$path" ]] && continue
+    	msg+=$'\n'"  $(stat -c '%A  %u:%g' "${ROOT:?}/$path")  $path"
+	done
+	echo "$msg"
+
+	for path in "${REMOVE_LIST[@]}"; do
+		rm -rf "${ROOT:?}/$path"
+	done
+}
+
+# Set the distribution, flavor & groups
+configure() {
+	echo "Set the configuration for $DISTRIBUTION."
+	if [[ "$DISTRIBUTION" == archlinux ]]; then
+		REMOVE_LIST+=(
+			apparmor.d/abstractions/apt-common
+			apparmor.d/groups/apt
+			apparmor.d/groups/cron
+		)
+
+	elif [[ "$DISTRIBUTION" == debian ]]; then
+		REMOVE_LIST+=(
+			apparmor.d/groups/pacman
+			root/usr/share/libalpm/hooks/apparmor.hook
+		)
+
+	else
+		_die  "Distribution $DISTRIBUTION not supported."
+
+	fi
+
+	echo "Set the configuration for a $FLAVOR."
+	if [[ "$FLAVOR" == server ]]; then
+		REMOVE_LIST+=(
+			apparmor.d/groups/apps
+			apparmor.d/groups/browsers
+			apparmor.d/groups/desktop
+			apparmor.d/groups/gnome
+			apparmor.d/groups/gvfs
+			apparmor.d/groups/network/NetworkManager
+			apparmor.d/groups/network/nm-*
+		)
+
+	fi
+}
+
+# Initialise the apparmor.d with the selected configuration.
+initialise() {
+	_init
+	remove_files
+
+	mkdir "${ROOT:?}/apparmor.d/profiles"
+	mv "${ROOT:?}/apparmor.d/groups/"*/* "${ROOT:?}/apparmor.d/profiles/"
+	rm -rf "${ROOT:?}/apparmor.d/groups/"
+	for dir in profiles-a-l profiles-m-z; do
+		mv "${ROOT:?}/apparmor.d/$dir/"* "${ROOT:?}/apparmor.d/profiles/"
+		rm -rf "${ROOT:?}/apparmor.d/$dir"
+	done
+}
+
+# Generate the apparmor.d directory with profile from the manifest
+generate() {
+	echo "Generated apparmor.d directory: $ROOT"
+    while read -r profile; do
+        IFS=' ' read -r -a manifest <<< "$profile"
+        profile="${manifest[0]}" flags="${manifest[1]}"
+
+        [[ "$profile" =~ ^\# ]] && continue
+		path="${ROOT:?}/apparmor.d/profiles/$profile"
+        [[ -f "$path" ]] || _die "Profile $profile not found"
+
+		# If flags is set, overwrite profile flag
+        if [[ -n "$flags" ]]; then
+			# Remove all flags definition, then set manifest' flags
+			sed -e "s/flags=(.*)//" \
+			 	-e "s/ {$/ flags=(${flags//,/ }) {/" \
+				-i "$path"
+        fi
+
+        mv "$path" "${ROOT:?}/apparmor.d/"
+
+    done <profiles.manifest
+
+    rm -rf "${ROOT:?}/apparmor.d/profiles"
+}
+
+# Print help message
+cmd_help() {
+	cat <<-_EOF
+	./configure [options] - Configure the apparmor.d package
+
+	Options:
+	    --distribution=DIST Set the target Linux distribution (Archlinux, Debian)
+	    --flavor=FLAVOR     Special flavor specific configuration (desktop, server)
+	    --help              Print this help message and exit.
+	_EOF
+}
+
+main() {
+	local opts err
+	opts="$(getopt -o h -l distribution:,flavor:,groups:,help -n "$PROGRAM" -- "$@")"
+	err=$?
+	eval set -- "$opts"
+	while true; do case $1 in
+		--distribution) DISTRIBUTION="$2"; shift 2 ;;
+		--flavor) FLAVOR="$2"; shift 2 ;;
+		-h|--help) shift; cmd_help; exit 0 ;;
+		--) shift; break ;;
+	esac done
+
+	[[ $err -ne 0 ]] && { cmd_help; exit 1; }
+
+	configure
+	initialise
+	generate
+
+	exit 0
+}
+
+main "$@"
