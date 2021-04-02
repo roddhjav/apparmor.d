@@ -1,0 +1,31 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2019 krathalan https://git.sr.ht/~krathalan/apparmor-profiles/
+#               2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-3.0-only
+
+# Version of less profiled: 563
+
+abi <abi/3.0>,
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/less
+profile less @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/bash>
+
+  # less can be used to view protected files
+  capability dac_read_search,
+  capability dac_override,
+
+  @{exec_path} mr,
+
+  /{,**} r,
+
+  # Source highlighting
+  /usr/bin/{bash,dash} mrix,
+  /usr/bin/source-highlight mrix,
+  /usr/bin/src-hilite-lesspipe.sh mrix,
+
+  # Silence unnecessary permissions
+  deny /{,**} w,
+}
