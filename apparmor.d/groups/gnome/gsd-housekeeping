@@ -1,0 +1,36 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}lib/gsd-housekeeping
+profile gsd-housekeeping @{exec_path} flags=(attach_disconnected complain) {
+  include <abstractions/base>
+  include <abstractions/thumbnails-cache-read>
+
+  @{exec_path} mr,
+
+  /etc/fstab r,
+
+  /usr/share/gdm/greeter-dconf-defaults r,
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+
+  owner @{user_cache_dirs}/thumbnails/fail/gnome-thumbnail-factory/ r,
+
+  include <abstractions/dconf>
+  owner @{run}/user/[0-9]*/dconf/ rw,
+  owner @{run}/user/[0-9]*/dconf/user rw,
+  /usr/share/dconf/profile/gdm r,
+  /var/lib/gdm/.config/dconf/user r,
+
+  owner @{PROC}/@{pids}/mountinfo r,
+
+  @{run}/mount/utab r,
+
+  owner /dev/tty[0-9]* rw,
+
+  include if exists <local/gsd-housekeeping>
+}

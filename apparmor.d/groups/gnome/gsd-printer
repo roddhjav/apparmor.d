@@ -1,0 +1,20 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}lib/gsd-printer
+profile gsd-printer @{exec_path} flags=(attach_disconnected complain) {
+  include <abstractions/base>
+
+  signal (receive) set=(hup) peer=gsd-print-notifications,
+
+  @{exec_path} mr,
+
+  owner /dev/tty[0-9]* rw,
+
+  include if exists <local/gsd-printer>
+}

@@ -1,0 +1,46 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}lib/gsd-xsettings
+profile gsd-xsettings @{exec_path} flags=(complain) {
+  include <abstractions/base>
+  include <abstractions/gtk>
+  include <abstractions/fonts>
+  include <abstractions/fontconfig-cache-read>
+
+  @{exec_path} mr,
+  /{usr/,}bin/xrdb rPx,
+
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+  /usr/share/drirc.d/{,*} r,
+
+  /etc/xdg/Xwayland-session.d/ r,
+  /etc/xdg/Xwayland-session.d/00-xrdb rix,
+
+  owner @{user_cache_dirs}/mesa_shader_cache/index rw,
+
+  include <abstractions/dconf>
+  owner @{run}/user/[0-9]*/dconf/ rw,
+  owner @{run}/user/[0-9]*/dconf/user rw,
+  /usr/share/dconf/profile/gdm r,
+  /var/lib/gdm/.config/dconf/user r,
+
+  @{sys}/devices/pci[0-9]*/**/{device,vendor,uevent} r,
+  @{sys}/devices/pci[0-9]*/**/{subsystem_device,subsystem_vendor} r,
+
+  owner @{run}/user/@{pid}/.mutter-Xwaylandauth.[a-zA-z0-9]* r,
+ 
+  owner @{PROC}/@{pid}/fd/ r,
+
+  /dev/dri/ r,
+
+  /dev/tty rw,
+  /dev/tty[0-9]* rw,
+
+  include if exists <local/gsd-xsettings>
+}
