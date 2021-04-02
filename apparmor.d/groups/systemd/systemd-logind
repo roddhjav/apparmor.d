@@ -1,0 +1,91 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}lib/systemd/systemd-logind
+profile systemd-logind @{exec_path} flags=(complain) {
+  include <abstractions/base>
+  include <abstractions/disks-write>
+  include <abstractions/devices-usb>
+  include <abstractions/systemd-common>
+
+  capability sys_tty_config,
+  capability chown,
+  capability dac_override,
+  capability sys_admin,
+
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  /etc/systemd/sleep.conf r,
+  /etc/systemd/logind.conf r,
+  /etc/passwd r,
+  /etc/nsswitch.conf r,
+
+  /boot/{,**} r,
+
+  /var/lib/systemd/linger/ r,
+
+  @{run}/utmp rk,
+
+  @{run}/udev/tags/master-of-seat/ r,
+  @{run}/udev/tags/power-switch/ r,
+  @{run}/udev/tags/uaccess/ r,
+  @{run}/udev/static_node-tags/uaccess/ r,
+
+  @{run}/udev/data/c10:[0-9]* r,
+  @{run}/udev/data/c13:[0-9]* r,  # for /dev/input/*
+  @{run}/udev/data/c116:[0-9]* r, # for ALSA
+  @{run}/udev/data/c226:[0-9]* r, # for /dev/dri/card* 
+  @{run}/udev/data/c238:[0-9]* r,
+
+  @{run}/udev/data/+input* r,          # for mouse, keyboard, touchpad
+  @{run}/udev/data/+drm:card[0-9]-* r, # for screen outputs
+  @{run}/udev/data/+backlight:intel_backlight r,
+
+  @{run}/systemd/seats/ r,
+  @{run}/systemd/seats/.#seat* rw,
+  @{run}/systemd/seats/seat0 rw,
+  @{run}/systemd/inhibit/ r,
+  @{run}/systemd/inhibit/[0-9]*{,.ref} rw,
+  @{run}/systemd/inhibit/.#* rw,
+  @{run}/systemd/sessions/ r,
+  @{run}/systemd/sessions/[0-9]*{,.ref} rw,
+  @{run}/systemd/sessions/.#* rw,
+  @{run}/systemd/users/ r,
+  @{run}/systemd/users/[0-9]* rw,
+  @{run}/systemd/users/.#* rw,
+  @{run}/systemd/userdb/ r,
+
+  /dev/input/event[0-9]* rw,  # Input devices (keyboard, mouse, etc)
+  /dev/dri/card[0-9]* rw,
+  /dev/tty[0-9]* rw,
+  /dev/nvme* r,
+
+  @{sys}/module/vt/parameters/default_utf8 r,
+  @{sys}/fs/cgroup/memory/memory.limit_in_bytes r,
+  @{sys}/devices/virtual/tty/tty[0-9]*/active r,
+  @{sys}/devices/**/{uevent,enabled,status} r,
+  @{sys}/devices/**/brightness rw,
+
+  @{sys}/class/drm/ r,
+  @{sys}/power/{state,resume_offset,resume,disk} r,
+
+  @{sys}/firmware/efi/efivars/OsIndicationsSupported-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]* r,
+  @{sys}/firmware/efi/efivars/OsIndications-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]* r,
+  @{sys}/firmware/efi/efivars/LoaderEntries-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]* r,
+  @{sys}/firmware/efi/efivars/LoaderFeatures-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]* r,
+
+  @{PROC}/swaps r,
+  @{PROC}/[0-9]*/cgroup r,
+  @{PROC}/[0-9]*/stat r,
+  @{PROC}/[0-9]*/sessionid r,
+  @{PROC}/[0-9]*/fd/ r,
+
+  include if exists <local/systemd-logind>
+}

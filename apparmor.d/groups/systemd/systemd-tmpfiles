@@ -1,0 +1,49 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/systemd-tmpfiles
+profile systemd-tmpfiles @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/systemd-common>
+  include <abstractions/nameservice-strict>
+
+  capability dac_read_search,
+  capability fsetid,
+  capability mknod,
+  capability fowner,
+
+  @{exec_path} mr,
+
+  /etc/machine-id r,
+  /usr/share/factory/{,**} r,
+
+  # Config file locations
+  /etc/tmpfiles.d/
+  /etc/tmpfiles.d/{,*.conf} r,
+  @{run}/tmpfiles.d/{,*.conf} r,
+  /usr/lib/tmpfiles.d/{,*.conf} r,
+  @{user_config_dirs}/user-tmpfiles.d/{,*.conf} r,
+  @{run}/user/@{pid}/user-tmpfiles.d/{,*.conf} r,
+  @{user_share_dirs}/user-tmpfiles.d/{,*.conf} r,
+  /usr/share/user-tmpfiles.d/{,*.conf} r,
+
+  # Where the tmpfiles can be created,
+  /{,*} rw,
+  /dev/{,**} rw,
+  /var/{,**} rwk,
+  /run/{,**} rw,
+  /tmp/{,**} rwk,
+  /srv/{,**} rw,
+
+  @{run}/systemd/userdb/ r,
+  @{sys}/devices/system/cpu/microcode/reload w,
+
+  @{PROC}/@{pid}/net/unix r,
+
+  include if exists <local/systemd-tmpfiles>
+}
