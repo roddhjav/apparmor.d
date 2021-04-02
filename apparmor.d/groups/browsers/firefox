@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2015-2020 Mikhail Morfikov
+#               2021 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -59,8 +60,8 @@ profile firefox @{exec_path} {
   @{MOZ_LIBDIR}/*.so  mr,
   @{MOZ_LIBDIR}/crashreporter     rPx,
   @{MOZ_LIBDIR}/minidump-analyzer rPx,
-  #@{MOZ_LIBDIR}/pingsender       rPx,
-  #@{MOZ_LIBDIR}/plugin-container rPx,
+  @{MOZ_LIBDIR}/pingsender        rPx,
+  @{MOZ_LIBDIR}/plugin-container  rPx,
   /usr/share/firefox/{,**} r,
   /etc/firefox/{,**} r,
 
@@ -72,6 +73,9 @@ profile firefox @{exec_path} {
 
   # To be able to read docs
   /usr/share/doc/{,**} r,
+
+  #
+  /usr/{lib,libexec}/gvfsd-metadata rPx -> gvfsd-metadata,
 
   # Firefox home files
   owner @{MOZ_HOMEDIR}/ rw,
@@ -186,6 +190,14 @@ profile firefox @{exec_path} {
   # file_inherit
   owner /dev/tty[0-9]* rw,
 
+  /etc/opensc.conf r,
+
+  owner @{HOME}/ r,
+  @{sys}/cgroup/cpu,cpuacct/user.slice/cpu.cfs_quota_us r,
+  @{sys}/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us r,
+
+  @{user_share_dirs}/gvfs-metadata/home r,
+  @{user_share_dirs}/gvfs-metadata/home-*.log r,
 
   include <abstractions/dconf>
   owner @{run}/user/[0-9]*/dconf/ rw,
