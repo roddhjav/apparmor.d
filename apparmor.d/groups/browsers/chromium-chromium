@@ -28,6 +28,8 @@ profile chromium-chromium @{exec_path} {
   include <abstractions/deny-dconf>
   include <abstractions/deny-root-dir-access>
 
+  ptrace (read) peer=chrome-gnome-shell,
+
   # The following rules are needed only when the kernel.unprivileged_userns_clone option is set
   # to "1".
   capability sys_admin,
@@ -52,6 +54,7 @@ profile chromium-chromium @{exec_path} {
   @{exec_path} mrix,
 
   @{CHROMIUM_INSTALLDIR}/chrome-sandbox rPx,
+  /{usr/,}bin/chrome-gnome-shell        rPx,
 
   # For storing passwords externally
   /{usr/,}bin/keepassxc-proxy   rPUx,
@@ -79,12 +82,16 @@ profile chromium-chromium @{exec_path} {
 
   /usr/share/mozilla/extensions/{,**} r,
 
+  /etc/libva.conf r,
   /etc/chromium/ r,
   /etc/chromium/master_preferences r,
+  /etc/chromium/native-messaging-hosts/*.json r,
 
   # Chromium home files
   owner @{HOME}/ r,
+  owner @{user_share_dirs}/ r,
   owner @{user_config_dirs}/ r,
+  owner @{user_config_dirs}/gtk-3.0/servers r,
   owner @{CHROMIUM_HOMEDIR}/ rw,
   owner @{CHROMIUM_HOMEDIR}/** rwk,
   owner @{CHROMIUM_HOMEDIR}/WidevineCdm/*/_platform_specific/linux_*/libwidevinecdm.so mrw,
