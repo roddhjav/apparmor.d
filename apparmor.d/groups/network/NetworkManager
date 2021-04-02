@@ -1,0 +1,79 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/NetworkManager
+profile NetworkManager @{exec_path} flags=(attach_disconnected complain) {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+  include <abstractions/ssl_certs>
+  include <abstractions/openssl>
+
+  network inet stream,
+  network inet6 stream,
+  network inet dgram,
+  network inet6 dgram,
+  network inet raw,
+  network inet6 raw,
+  network netlink raw,
+  network packet dgram,
+
+  capability net_admin,
+  capability net_raw,
+  capability net_bind_service,
+  capability dac_override,
+  capability audit_write,
+
+  @{exec_path} mr,
+
+  /{usr/,}lib/nm-dhcp-helper rPx,
+  /{usr/,}lib/nm-dispatcher rPx,
+  /{usr/,}lib/nm-iface-helper rPx,
+  /{usr/,}lib/nm-initrd-generator rPx,
+  /{usr/,}lib/nm-openvpn-auth-dialog rPx,
+  /{usr/,}lib/nm-openvpn-service rPx,
+  /{usr/,}lib/nm-openvpn-service-openvpn-helper rPx,
+ 
+  /{usr/,}bin/systemctl rPx -> child-systemctl,
+  /{usr/,}bin/{,ba,da}sh rix,
+
+  /etc/ r,
+  /etc/resolv.conf rw,
+  /etc/resolv.conf.[0-9A-Z]* rw,
+
+  /etc/NetworkManager/{,**} r,
+  /etc/NetworkManager/system-connections/{,**} w,
+
+  /etc/machine-id r,
+  /var/lib/NetworkManager/{,**} rw,
+
+  @{PROC}/@{pid}/stat r,
+  @{PROC}/@{pid}/fd/ r,
+  @{PROC}/sys/net/** rw,
+  @{PROC}/sys/kernel/random/boot_id r,
+
+  @{sys}/bus/ r,
+  @{sys}/class/ r,
+  @{sys}/class/rfkill/ r,
+  @{sys}/class/net/ r,
+  @{sys}/class/net/rfkill/ r,
+
+  @{run}/NetworkManager/{,**} rw,
+  @{run}/systemd/inhibit/[0-9]*.ref rw,
+  @{run}/udev/data/n[0-9]* r,
+  @{run}/udev/data/+rfkill:* r,
+  @{run}/udev/data/+platform* r,
+  @{run}/udev/data/+pci* r,
+
+  @{sys}/devices/**/uevent r,
+  @{sys}/devices/virtual/net/lo/{,*} r,
+  @{sys}/devices/virtual/net/tun0/{,**} r,
+  @{sys}/devices/pci[0-9]*/**/net/*/{,**} r,
+  @{sys}/devices/pci[0-9]*/**/usb[0-9]/**/net/{,**} r,
+
+  include if exists <local/NetworkManager>
+}
