@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# Review AppArmor generated messages
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+#
+
+readonly LOGFILE=/var/log/audit/audit.log
+
+# Parses AppArmor logs to hide unnecessary information and remove duplicates.
+_apparmor_log() {
+    local state="$1" profile="${2}"
+    grep -a "$state" "$LOGFILE" \
+        | grep "profile=\"$profile.*\"" \
+        | grep -v laddr \
+        | sed -e 's/AVC //' \
+              -e "s/apparmor=\"$state\"/$state/" \
+              -e 's/type=msg=audit(.*): //' \
+              -e 's/pid=.* comm/comm/' \
+              -e 's/ fsuid.*//' \
+        | awk '!x[$0]++'
+
+}
+
+_apparmor_log DENIED "$@"
+_apparmor_log ALLOWED "$@"
