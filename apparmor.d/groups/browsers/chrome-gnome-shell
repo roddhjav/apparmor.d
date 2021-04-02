@@ -1,0 +1,34 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/chrome-gnome-shell
+profile chrome-gnome-shell @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/python>
+  include <abstractions/nameservice-strict>
+  include <abstractions/ssl_certs>
+  include <abstractions/openssl>
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  @{exec_path} mr,
+  /{usr/,}bin/python3.[0-9]* r,
+
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+
+  owner @{HOME}/.config/dconf/user r,
+
+  owner @{run}/user/@{pid}/dconf/user rw,
+  owner @{PROC}/@{pid}/mounts r,
+
+  include if exists <local/chrome-gnome-shell>
+}
