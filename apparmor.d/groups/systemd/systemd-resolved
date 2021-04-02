@@ -1,0 +1,51 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2020 krathalan https://git.sr.ht/~krathalan/apparmor-profiles/
+#               2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-3.0-only
+
+# Version of program profiled: 247.3
+
+abi <abi/3.0>,
+include <tunables/global>
+
+@{exec_path} = /{usr/,}lib/systemd/systemd-resolved
+profile systemd-resolved @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+  include <abstractions/p11-kit>
+  include <abstractions/ssl_certs>
+  # include <abstractions/krathalans-networking>
+
+  capability net_bind_service,
+  capability net_raw,
+  capability setpcap,
+
+  network unix stream,
+  network unix dgram,
+
+  network inet dgram,
+  network inet stream,
+  network inet6 dgram,
+  network inet6 stream,
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  # Runtime directories
+  /{,var/}run/systemd/netif/links/* r,
+  /{,var/}run/systemd/resolve/{,**} rw,
+
+  # Config
+  /etc/systemd/resolved.conf r,
+  /etc/systemd/resolved.conf.d/{,*} r,
+
+  # Proc
+  owner @{PROC}/*/stat r,
+  @{PROC}/cmdline r,
+  @{PROC}/sys/kernel/hostname r,
+  @{PROC}/sys/kernel/osrelease r,
+  @{PROC}/sys/kernel/random/boot_id r,
+
+  # System access
+  @{sys}/firmware/efi/efivars/SecureBoot-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]* r,
+}

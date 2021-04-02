@@ -1,0 +1,36 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/systemd-sysusers
+profile systemd-sysusers @{exec_path} {
+  include <abstractions/base>
+
+  @{exec_path} mr,
+
+  # Config file locations
+  /etc/sysusers.d/*.conf r,
+  @{run}/sysusers.d/*.conf r,
+  /usr/lib/sysusers.d/*.conf r,
+
+  # Where the users can be created,
+  /home/{,*} rw,
+  /var/{,**} rw,
+  /run/{,**} rw,
+
+  /etc/ r,
+  /etc/passwd r,
+  /etc/group r,
+  /etc/gshadow r,
+  /etc/.#group* rw,
+  /etc/.#gshadow* rw,
+  /etc/.pwd.lock rwk,
+
+  owner @{PROC}/@{pid}/stat r,
+
+  include if exists <local/systemd-sysusers>
+}
