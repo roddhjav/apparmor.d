@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2018-2021 Mikhail Morfikov
+#               2021 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -24,6 +25,8 @@ profile polkit-agent-helper @{exec_path} {
 
   # Needed?
   deny capability sys_nice,
+  capability dac_override,
+  capability net_admin,
 
   network netlink raw,
 
@@ -32,6 +35,8 @@ profile polkit-agent-helper @{exec_path} {
   # file_inherit
   owner /dev/tty[0-9]* rw,
   owner @{HOME}/.xsession-errors w,
+
+  @{run}/faillock/[a-zA-z0-9]* rw,
 
   include if exists <local/polkit-agent-helper>
 }
