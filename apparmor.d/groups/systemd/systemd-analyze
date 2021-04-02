@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2020-2021 Mikhail Morfikov
+#               2021 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -17,7 +18,11 @@ profile systemd-analyze @{exec_path} {
 
   signal (send) peer=child-pager,
 
+  network inet dgram,
+  network netlink raw,
+
   @{exec_path} mr,
+  /{usr/,}lib/systemd/system-environment-generators/* rix,
 
   /{usr/,}bin/pager     rPx -> child-pager,
   /{usr/,}bin/less      rPx -> child-pager,
@@ -35,6 +40,7 @@ profile systemd-analyze @{exec_path} {
 
   @{sys}/fs/cgroup/{,**} r,
   @{sys}/fs/cgroup/{systemd,unified}/**/cgroup.procs rw,
+  @{sys}/fs/cgroup/unified/**/init.scope/ rw,
   @{sys}/firmware/acpi/tables/FPDT r,
 
   @{sys}/module/**/uevent r,
@@ -50,6 +56,13 @@ profile systemd-analyze @{exec_path} {
   /usr/ r,
 
   /etc/default/locale r,
+  /etc/locale.conf r,
+
+  @{sys}/firmware/efi/efivars/LoaderTimeInitUSec-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]* r,
+  @{sys}/firmware/efi/efivars/LoaderTimeExecUSec-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]* r,
+
+  /dev/tty rw,
+  /dev/pts/1 rw,
 
   include if exists <local/systemd-analyze>
 }
