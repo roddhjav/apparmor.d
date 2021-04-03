@@ -9,15 +9,13 @@ arch=("any")
 url="https://gitlab.com/archlex/hardening/$pkgname"
 license=('GPL2')
 depends=('apparmor')
-source=("git+file://$PWD?signed")
-sha512sums=('SKIP')
-validpgpkeys=("06A26D531D56C42D66805049C5469996F0DF68EC")
 
 pkgver() {
   date +%y.%m%d
 }
 
 prepare() {
+  git clone "$startdir" "$srcdir/$pkgname"
   cd "$srcdir/$pkgname"
 
   ./configure --distribution=archlinux --flavor=desktop
