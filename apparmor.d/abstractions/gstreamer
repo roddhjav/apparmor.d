@@ -1,45 +1,53 @@
-# vim:syntax=apparmor
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2019-2021 Mikhail Morfikov
+# SPDX-License-Identifier: GPL-2.0-only
 
-  include <abstractions/base>
-  include <abstractions/p11-kit>
-  include <abstractions/X>
+  abi <abi/3.0>,
+
+  ##include <abstractions/p11-kit>
+  ##include <abstractions/X>
 
   # TODO: adjust when support finer-grained netlink rules
-  network netlink raw,
+  #network netlink raw,
 
-  /etc/udev/udev.conf r,
-  /etc/wildmidi/wildmidi.cfg r,
+  #/etc/udev/udev.conf r,
+  #/etc/wildmidi/wildmidi.cfg r,
 
   /dev/ r,
   /dev/bus/usb/ r,
   /dev/dri/ r,
 
   # /dev/shm is a symlink to /run/shm on ubuntu
-  owner /{dev,run}/shm/shmfd-* rw,
+  #owner /{dev,run}/shm/shmfd-* rw,
 
-  /run/udev/data/c* r,
-  /run/udev/data/+pci:* r,
-  /run/udev/data/+usb* r,
+  #
+  @{run}/udev/data/c81:*  r,     # For video4linux
+  @{run}/udev/data/c226:* r,     # For /dev/dri/card[0-9]*
+  @{run}/udev/data/+drm:* r,     # For screen outputs
+  #@{run}/udev/data/+pci:* r,
+  @{run}/udev/data/+usb:* r,
 
-  /sys/bus/ r,
-  /sys/bus/usb/devices/ r,
-  /sys/class/ r,
-  /sys/class/drm/ r,
-  /sys/devices/pci[0-9]*/**/{busnum,config,devnum,descriptors,speed,uevent} r,
-  /sys/devices/system/node/ r,
-  /sys/devices/system/node/*/meminfo r,
+  @{sys}/bus/ r,
+  @{sys}/bus/usb/devices/ r,
+  @{sys}/class/ r,
+  @{sys}/class/drm/ r,
+  @{sys}/devices/pci[0-9]*/**/{busnum,config,devnum,descriptors,speed,uevent} r,
+  @{sys}/devices/system/node/ r,
+  @{sys}/devices/system/node/node[0-9]*/meminfo r,
 
-  owner /tmp/orcexec.* mrw,
-  owner /{,var/}run/user/[0-9]*/orcexec.* mrw,
-  # needed if /tmp is mounted noexec:
-  owner @{HOME}/orcexec.* mr,
+  # The orcexec.* file is JIT compiled code for various GStreamer elements.
+  # If one is blocked the next is used instead.
+  # The orcexec file is placed under /home/user/ also when the /tmp/ dir is mounted with the noexec
+  # flag.
+  owner @{run}/user/[0-9]*/orcexec.* mrw,
+  #owner /tmp/orcexec.* mrw,
+  #owner @{HOME}/orcexec.* mrw,
 
-  /usr/lib/frei0r-[0-9]/*.so m,
-  # /usr/lib/@{multiarch}/dri/** mr,
-  /usr/lib/@{multiarch}/gstreamer[0-9]*.[0-9]*/gstreamer-[0-9]*.[0-9]*/gst-plugin-scanner mrix,
-  /usr/lib/@{multiarch}/libproxy/*/modules/*.so mr,
-  /usr/lib/@{multiarch}/libvisual-[0-9].[0-9]/*/*.so m,
+  /{usr/,}lib/frei0r-[0-9]/*.so mr,
+  /{usr/,}lib/@{multiarch}/gstreamer[0-9]*.[0-9]*/gstreamer-[0-9]*.[0-9]*/gst-plugin-scanner mrix,
+  /{usr/,}lib/@{multiarch}/libproxy/*/modules/*.so mr,
+  /{usr/,}lib/@{multiarch}/libproxy/*/pxgsettings ixr,
+  /{usr/,}lib/@{multiarch}/libvisual-[0-9].[0-9]/*/*.so mr,
 
-  owner @{HOME}/{.cache/,.}gstreamer-[0-9]*.[0-9]*/ rw,
-  owner @{HOME}/{.cache/,.}gstreamer-[0-9]*.[0-9]*/registry.*.bin rw,
-  owner @{HOME}/{.cache/,.}gstreamer-[0-9]*.[0-9]*/registry.*.bin.tmp* rw,
+  owner @{HOME}/{.cache/,.}gstreamer-[0-9]*/ rw,
+  owner @{HOME}/{.cache/,.}gstreamer-[0-9]*/registry.*.bin{,.tmp*} rw,

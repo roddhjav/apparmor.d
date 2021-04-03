@@ -17,10 +17,13 @@ profile obexautofs @{exec_path} {
 
   @{exec_path} mr,
 
-  /usr/bin/fusermount{,3} rPx,
+  /{usr/,}bin/fusermount{,3} rCx -> fusermount,
 
-  owner @{HOME}/bluetooth/ r,
-  mount fstype=fuse.obexautofs -> @{HOME}/bluetooth/,
+  owner @{HOME}/*/ r,
+  owner @{HOME}/*/*/ r,
+
+  mount fstype=fuse.obexautofs -> @{HOME}/*/,
+  mount fstype=fuse.obexautofs -> @{HOME}/*/*/,
 
   @{sys}/bus/ r,
   @{sys}/class/ r,
@@ -31,10 +34,31 @@ profile obexautofs @{exec_path} {
   @{sys}/devices/pci[0-9]*/**/usb[0-9]/**/{uevent,busnum,devnum,speed,descriptors} r,
 
   @{run}/udev/data/+usb:* r,
-  @{run}/udev/data/c189:* r,
+  @{run}/udev/data/c189:* r,  # for /dev/bus/usb/**
 
   /dev/bus/usb/ r,
   /dev/fuse rw,
+
+
+  profile fusermount {
+    include <abstractions/base>
+    include <abstractions/nameservice-strict>
+
+    # To mount anything:
+    capability sys_admin,
+
+    /{usr/,}bin/fusermount{,3} mr,
+
+    /etc/fuse.conf r,
+
+    /dev/fuse rw,
+
+    mount fstype={fuse,fuse.obexautofs} -> @{HOME}/*/,
+    mount fstype={fuse,fuse.obexautofs} -> @{HOME}/*/*/,
+
+    @{PROC}/@{pid}/mounts r,
+
+  }
 
   include if exists <local/obexautofs>
 }

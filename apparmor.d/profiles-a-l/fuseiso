@@ -13,15 +13,17 @@ profile fuseiso @{exec_path} {
 
   @{exec_path} mr,
 
-  /{usr/,}bin/fusermount{,3} rPx,
+  /{usr/,}bin/fusermount{,3} rCx -> fusermount,
 
   # Where to mount ISO files
   owner @{HOME}/*/ rw,
   owner @{HOME}/*/*/ rw,
+  owner @{HOME}/.cache/**/ r,
 
   # Be able to mount ISO images
   mount fstype=fuse.fuseiso -> @{HOME}/*/,
   mount fstype=fuse.fuseiso -> @{HOME}/*/*/,
+  mount fstype=fuse.fuseiso -> @{HOME}/.cache/**/,
 
   # Image files to be mounted
   owner @{HOME}/**.{iso,img,bin,mdf,nrg} rwk,
@@ -33,6 +35,36 @@ profile fuseiso @{exec_path} {
   owner @{HOME}/.mtab.fuseiso.new rw,
 
   /dev/fuse rw,
+
+
+  profile fusermount {
+    include <abstractions/base>
+    include <abstractions/nameservice-strict>
+
+    # To mount anything:
+    capability sys_admin,
+
+    capability dac_read_search,
+
+    /{usr/,}bin/fusermount{,3} mr,
+
+    mount fstype={fuse,fuse.fuseiso} -> @{HOME}/*/,
+    mount fstype={fuse,fuse.fuseiso} -> @{HOME}/*/*/,
+    mount fstype={fuse,fuse.fuseiso} -> @{HOME}/.cache/**/,
+
+    /dev/fuse rw,
+
+    /etc/fuse.conf r,
+
+    @{PROC}/@{pid}/mounts r,
+
+    # Image files to be mounted
+    owner @{HOME}/**.{iso,img,bin,mdf,nrg} r,
+    owner /media/*/**.{iso,img,bin,mdf,nrg} r,
+    owner @{HOME}/**.{ISO,IMG,BIN,MDF,NRG} r,
+    owner /media/*/**.{ISO,IMG,BIN,MDF,NRG} r,
+
+  }
 
   include if exists <local/fuseiso>
 }

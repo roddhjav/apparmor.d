@@ -47,7 +47,7 @@ profile appimage-beyond-all-reason @{exec_path} {
 
   /{usr/,}bin/x86_64-linux-gnu-addr2line rix,
 
-  /{usr/,}bin/fusermount{,3}             rPx,
+  /{usr/,}bin/fusermount{,3}             rCx -> fusermount,
 
   mount fstype={fuse,fuse.*} -> /tmp/.mount_Beyond*/,
 
@@ -104,6 +104,32 @@ profile appimage-beyond-all-reason @{exec_path} {
 
   /var/lib/dbus/machine-id r,
   /etc/machine-id r,
+
+
+  profile fusermount {
+    include <abstractions/base>
+    include <abstractions/nameservice-strict>
+
+    # To mount anything:
+    capability sys_admin,
+
+    capability dac_read_search,
+
+    /{usr/,}bin/fusermount{,3} mr,
+
+    mount fstype={fuse,fuse.*.AppImage} -> /tmp/.mount_*/,
+    umount /tmp/.mount_*/,
+
+    /dev/fuse rw,
+
+    /etc/fuse.conf r,
+
+    owner @{HOME}/**.AppImage r,
+    owner /media/*/**.AppImage r,
+
+    @{PROC}/@{pid}/mounts r,
+
+  }
 
   include if exists <local/appimage-beyond-all-reason>
 }

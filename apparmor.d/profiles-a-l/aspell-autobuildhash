@@ -1,0 +1,74 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Mikhail Morfikov
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}sbin/aspell-autobuildhash
+profile aspell-autobuildhash @{exec_path} flags=(complain) {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/perl>
+
+  @{exec_path} r,
+  /{usr/,}bin/perl r,
+
+  /{usr/,}bin/{,ba,da}sh           rix,
+  /{usr/,}bin/which                rix,
+  /{usr/,}bin/precat               rix,
+  /{usr/,}bin/zcat                 rix,
+  /{usr/,}bin/gzip                 rix,
+  /{usr/,}bin/basename             rix,
+  /{usr/,}bin/prezip-bin           rix,
+
+  /{usr/,}bin/dpkg-trigger         rPx,
+  /{usr/,}bin/aspell               rPx,
+
+  # Think what to do about this (#FIXME#)
+  /usr/share/debconf/frontend      rPx,
+  #/usr/share/debconf/frontend     rCx -> frontend,
+
+  /usr/share/aspell/{,*} r,
+
+  /usr/lib/aspell/{,*} r,
+  /usr/lib/aspell/*.rws rw,
+
+  /var/lib/aspell/ r,
+  /var/lib/aspell/* rw,
+
+
+  profile frontend {
+    include <abstractions/base>
+    include <abstractions/consoles>
+    include <abstractions/perl>
+    include <abstractions/nameservice-strict>
+
+    /usr/share/debconf/frontend r,
+    /{usr/,}bin/perl r,
+
+    /{usr/,}sbin/aspell-autobuildhash rPx,
+
+    /{usr/,}bin/{,ba,da}sh rix,
+    /{usr/,}bin/stty       rix,
+    /{usr/,}bin/locale     rix,
+
+    /etc/debconf.conf r,
+    owner /var/cache/debconf/{config,passwords,templates}.dat{,-new,-old} rwk,
+
+    # The following is needed when debconf uses GUI frontends.
+    include <abstractions/gtk>
+    include <abstractions/fonts>
+    include <abstractions/fontconfig-cache-read>
+    include <abstractions/freedesktop.org>
+    capability dac_read_search,
+    /{usr/,}bin/lsb_release rPx -> child-lsb_release,
+    /{usr/,}bin/hostname    rix,
+    owner @{PROC}/@{pid}/mounts r,
+    @{HOME}/.Xauthority r,
+
+  }
+
+  include if exists <local/aspell-autobuildhash>
+}

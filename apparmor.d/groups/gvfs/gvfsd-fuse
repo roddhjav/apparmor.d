@@ -13,13 +13,34 @@ profile gvfsd-fuse @{exec_path} {
 
   @{exec_path} mr,
 
-  /{usr/,}bin/fusermount{,3} rPx,
+  /{usr/,}bin/fusermount{,3} rCx -> fusermount,
 
   mount fstype={fuse,fuse.*} -> @{run}/user/[0-9]*/gvfs/,
 
-   @{PROC}/sys/fs/pipe-max-size r,
-
   /dev/fuse rw,
+
+
+  profile fusermount {
+    include <abstractions/base>
+    include <abstractions/nameservice-strict>
+
+    # To mount anything:
+    capability sys_admin,
+
+    capability dac_read_search,
+
+    /{usr/,}bin/fusermount{,3} mr,
+
+    mount fstype={fuse,fuse.*} -> @{run}/user/[0-9]*/gvfs/,
+    umount @{run}/user/[0-9]*/**/,
+
+    /etc/fuse.conf r,
+
+    /dev/fuse rw,
+
+    @{PROC}/@{pid}/mounts r,
+
+  }
 
   include if exists <local/gvfsd-fuse>
 }
