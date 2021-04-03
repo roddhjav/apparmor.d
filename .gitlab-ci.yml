@@ -1,0 +1,67 @@
+---
+
+variables:
+  PKGDEST: $CI_PROJECT_DIR/packages
+  PACKAGER: 'Alexandre Pujol <alexandre@pujol.io>'
+
+stages:
+  - lint
+  - package
+  - preprocess
+
+
+# Code Linter
+# -----------
+
+bash:
+  stage: lint
+  image: koalaman/shellcheck-alpine
+  script:
+    - shellcheck --shell=bash
+        PKGBUILD
+        debian/apparmor.d.postinst debian/apparmor.d.postrm
+
+
+# Package Build
+# -------------
+
+archlinux:
+  stage: package
+  image: registry.gitlab.com/archlex/packages/builders/arch
+  script:
+    - updpkgsums
+    - sudo pacman -Syu --noconfirm --noprogressbar
+    - makepkg -s --noconfirm --noprogressbar
+  artifacts:
+    expire_in: 1 day
+    paths:
+      - $PKGDEST/*
+
+debian:
+  stage: package
+  image: registry.gitlab.com/archlex/packages/builders/debian
+  script:
+    - VERSION="$(date +%y.%m%d)-1"
+    - mkdir -p "$PKGDEST"
+    - sudo apt-get update -q && sudo apt-get install -y config-package-dev dh-apparmor
+    - dch --newversion=$VERSION --urgency=medium --distribution=stable --controlmaint "Release $VERSION"
+    - dpkg-buildpackage -b -d --no-sign
+    - mv ../*.deb $PKGDEST/
+  artifacts:
+    expire_in: 1 day
+    paths:
+      - $PKGDEST/*.deb
+
+
+# Profile Preprocessing
+# ---------------------
+
+apparmor:
+  stage: preprocess
+  image: archlinux
+  dependencies:
+    - archlinux
+  script:
+    - pacman -Syu --noconfirm --noprogressbar apparmor
+    - pacman -U --noconfirm --noprogressbar $PKGDEST/*
+    - apparmor_parser --preprocess /etc/apparmor.d 1> /dev/null
