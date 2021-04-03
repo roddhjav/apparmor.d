@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2018-2021 Mikhail Morfikov
+#               2021 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -22,6 +23,11 @@ profile ssh-agent @{exec_path} {
   /{usr/,}bin/sway                 rPUx,
   /{usr/,}bin/enlightenment_start  rPUx,
 
+  # SSH keys
+  owner @{HOME}/@{XDG_SSH_DIR}/ rw,
+  owner @{HOME}/@{XDG_SSH_DIR}/* r,
+  owner @{HOME}/@{XDG_PROJECTS_DIR}/**/ssh/{,*} r,
+
   # When started via systemd
   @{run}/user/[0-9]*/openssh_agent rw,
 
@@ -33,6 +39,8 @@ profile ssh-agent @{exec_path} {
   # file_inherit
   owner /dev/tty[0-9]* rw,
   owner @{HOME}/.xsession-errors w,
+
+  @{run}/user/1000/keyring/.ssh rw,
 
   include if exists <local/ssh-agent>
 }
