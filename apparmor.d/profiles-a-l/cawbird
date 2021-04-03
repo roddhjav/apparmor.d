@@ -17,6 +17,7 @@ profile cawbird @{exec_path} {
   include <abstractions/ssl_certs>
   include <abstractions/enchant>
   include <abstractions/audio>
+  include <abstractions/gstreamer>
   include <abstractions/deny-root-dir-access>
 
   @{exec_path} mr,
@@ -26,16 +27,11 @@ profile cawbird @{exec_path} {
   /{usr/,}bin/xdg-open    rCx -> open,
   /{usr/,}bin/exo-open    rCx -> open,
 
-  /{usr/,}lib/@{multiarch}/gstreamer[0-9]*.[0-9]*/gstreamer-[0-9]*.[0-9]*/gst-plugin-scanner rPx,
-
   owner @{user_config_dirs}/cawbird/ rw,
   owner @{user_config_dirs}/cawbird/** rwk,
 
   owner @{user_cache_dirs}/ rw,
   owner @{user_cache_dirs}/cawbird-* rw,
-
-  owner @{user_cache_dirs}/gstreamer-[0-9]*/ rw,
-  owner @{user_cache_dirs}/gstreamer-[0-9]*/registry.*.bin{,.tmp*} rw,
 
   /usr/share/glib-2.0/schemas/gschemas.compiled r,
 
@@ -48,18 +44,6 @@ profile cawbird @{exec_path} {
 
   /var/lib/dbus/machine-id r,
   /etc/machine-id r,
-
-  @{sys}/devices/system/node/ r,
-  @{sys}/devices/system/node/node0/meminfo r,
-
-  # The orcexec.* file is JIT compiled code for various GStreamer elements.
-  # If one is blocked the next is used instead.
-  owner @{run}/user/[0-9]*/orcexec.* mrw,
-  #owner @{HOME}/orcexec.* mrw,
-  #owner /tmp/orcexec.* mrw,
-
-  /dev/ r,
-  /dev/dri/ r,
 
   owner @{PROC}/@{pid}/fd/ r,
 

@@ -1,0 +1,161 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Mikhail Morfikov
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/psi
+profile psi @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/X>
+  include <abstractions/gtk>
+  include <abstractions/fonts>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/freedesktop.org>
+  include <abstractions/enchant>
+  include <abstractions/user-download-strict>
+  include <abstractions/qt5-compose-cache-write>
+  include <abstractions/qt5-settings-write>
+  include <abstractions/mesa>
+  include <abstractions/dri-enumerate>
+  include <abstractions/nameservice-strict>
+  include <abstractions/openssl>
+  include <abstractions/ssl_certs>
+  include <abstractions/thumbnails-cache-read>
+  include <abstractions/deny-root-dir-access>
+
+  signal (send) set=(term, kill) peer=child-lsb_release,
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink dgram,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/lsb_release rPx -> child-lsb_release,
+  /{usr/,}bin/xdg-open    rCx -> open,
+
+  # Needed for GPG/PGP support
+  /{usr/,}bin/gpg         rCx -> gpg,
+
+  # Needed for playing sound events
+  /{usr/,}bin/aplay       rCx -> aplay,
+
+  # PSI files
+  /usr/share/psi/{,**} r,
+
+  # PSI config files
+  owner @{HOME}/ r,
+  owner @{user_config_dirs}/psi/ rw,
+  owner @{user_config_dirs}/psi/** rwkl -> @{user_config_dirs}/psi/#[0-9]*[0-9],
+
+  owner @{user_share_dirs}/psi/ rw,
+  owner @{user_share_dirs}/psi/** rwk,
+
+  # To configure Qt5 settings (theme, font, icons, etc.) under DE/WM without Qt integration
+  owner @{user_config_dirs}/qt5ct/{,**} r,
+  /usr/share/qt5ct/** r,
+
+  # Cache files
+  owner @{user_cache_dirs}/ rw,
+  owner @{user_cache_dirs}/psi/{,**} rw,
+  owner @{user_cache_dirs}/#[0-9]*[0-9] rw,
+
+  /var/lib/dbus/machine-id r,
+  /etc/machine-id r,
+
+  # Autostart
+  owner @{user_config_dirs}/autostart/psi.desktop rw,
+
+  /etc/debian_version r,
+
+  /dev/shm/#[0-9]*[0-9] rw,
+
+  deny owner @{PROC}/@{pid}/cmdline r,
+  deny       @{PROC}/sys/kernel/random/boot_id r,
+       owner @{PROC}/@{pid}/mountinfo r,
+       owner @{PROC}/@{pid}/mounts r,
+
+  /etc/fstab r,
+
+  owner /var/tmp/etilqs_[0-9a-f]* rw,
+
+  owner /tmp/#[0-9]*[0-9] rw,
+  owner /tmp/Psi.* rwl -> /tmp/#[0-9]*[0-9],
+
+  @{run}/systemd/inhibit/[0-9]*.ref rw,
+
+  /usr/share/hwdata/pnp.ids r,
+
+  # file_inherit
+  owner @{HOME}/.xsession-errors w,
+
+  # Allowed apps to open
+  /{usr/,}lib/firefox/firefox rPUx,
+
+  # file_inherit
+  owner /dev/tty[0-9]* rw,
+
+
+  profile aplay {
+    include <abstractions/base>
+    include <abstractions/audio>
+
+    /{usr/,}bin/aplay mr,
+    #/{usr/,}bin/pulseaudio rPUx,
+
+    /var/lib/dbus/machine-id r,
+    /etc/machine-id r,
+
+    /usr/share/psi/sound/** r,
+
+    owner @{HOME}/.Xauthority r,
+
+    # file_inherit
+    /dev/dri/card[0-9]* rw,
+
+  }
+
+  profile gpg {
+    include <abstractions/base>
+
+    /{usr/,}bin/gpg mr,
+
+    owner @{HOME}/.gnupg/ rw,
+    owner @{HOME}/.gnupg/** rwkl -> @{HOME}/.gnupg/**,
+
+    # file_inherit
+    /dev/dri/card[0-9]* rw,
+
+  }
+
+  profile open {
+    include <abstractions/base>
+    include <abstractions/xdg-open>
+
+    /{usr/,}bin/xdg-open mr,
+
+    /{usr/,}bin/{,ba,da}sh      rix,
+    /{usr/,}bin/gawk            rix,
+    /{usr/,}bin/readlink        rix,
+    /{usr/,}bin/basename        rix,
+
+    owner @{HOME}/ r,
+
+    owner @{run}/user/[0-9]*/ r,
+
+    # Allowed apps to open
+    /{usr/,}lib/firefox/firefox rPUx,
+
+    # file_inherit
+    owner @{HOME}/.xsession-errors w,
+
+  }
+
+  include if exists <local/psi>
+}

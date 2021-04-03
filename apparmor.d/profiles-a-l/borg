@@ -33,11 +33,12 @@ profile borg @{exec_path} {
   /{usr/,}bin/{,@{multiarch}-}ld.bfd rix,
 
   /{usr/,}bin/ccache                 rCx -> ccache,
-
-  /usr/bin/fusermount{,3}            rPx,
+  /usr/bin/fusermount{,3}            rCx -> fusermount,
 
   mount fstype=fuse -> /media/*/,
+  mount fstype=fuse -> /media/*/*/,
   umount /media/*/,
+  umount /media/*/*/,
 
   /dev/fuse rw,
 
@@ -88,6 +89,20 @@ profile borg @{exec_path} {
     /{usr/,}bin/{,@{multiarch}-}gcc-[0-9]* rix,
 
     /media/ccache/*/** rw,
+
+  }
+
+  profile fusermount {
+    include <abstractions/base>
+    include <abstractions/nameservice-strict>
+
+    # To mount anything:
+    capability sys_admin,
+
+    /{usr/,}bin/fusermount{,3} mr,
+
+    umount /media/*/,
+    umount /media/*/*/,
 
   }
 

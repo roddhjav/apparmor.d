@@ -23,8 +23,8 @@ profile quiterss @{exec_path} {
   include <abstractions/wayland>
   include <abstractions/openssl>
   include <abstractions/ssl_certs>
+  include <abstractions/gstreamer>
   include <abstractions/deny-root-dir-access>
-
   # This one is needed when you want to receive sound notifications
   include <abstractions/audio>
 
@@ -39,8 +39,6 @@ profile quiterss @{exec_path} {
 
   /{usr/,}bin/xdg-open rCx -> open,
 
-  /{usr/,}lib/@{multiarch}/gstreamer[0-9]*.[0-9]*/gstreamer-[0-9]*.[0-9]*/gst-plugin-scanner rPUx,
-
   # To configure Qt5 settings (theme, font, icons, etc.) under DE/WM without Qt integration
   owner @{user_config_dirs}/qt5ct/{,**} r,
   /usr/share/qt5ct/** r,
@@ -52,9 +50,6 @@ profile quiterss @{exec_path} {
   owner @{user_share_dirs}/QuiteRss/** rwkl -> @{user_share_dirs}/QuiteRss/QuiteRss/**,
   owner @{user_cache_dirs}/QuiteRss/ rw,
   owner @{user_cache_dirs}/QuiteRss/** rwl -> @{user_cache_dirs}/QuiteRss/**,
-
-  owner @{user_cache_dirs}/gstreamer-[0-9]*/ rw,
-  owner @{user_cache_dirs}/gstreamer-[0-9]*/registry.*.bin{,.tmp*} rw,
 
        owner @{PROC}/@{pid}/fd/ r,
   deny       @{PROC}/sys/kernel/random/boot_id r,
@@ -69,14 +64,7 @@ profile quiterss @{exec_path} {
 
   /usr/share/hwdata/pnp.ids r,
 
-  # The orcexec.* file is JIT compiled code for various GStreamer elements.
-  # If one is blocked the next is used instead.
-  owner @{run}/user/[0-9]*/orcexec.* mrw,
-  #owner @{HOME}/orcexec.* mrw,
-  #owner /tmp/orcexec.* mrw,
-
-  deny /dev/ r,
-       /dev/shm/#[0-9]*[0-9] rw,
+  /dev/shm/#[0-9]*[0-9] rw,
 
   owner /tmp/qtsingleapp-quiter-[0-9]*-[0-9]* rw,
   owner /tmp/qtsingleapp-quiter-[0-9]*-[0-9]*-lockfile rwk,

@@ -1,0 +1,57 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Mikhail Morfikov
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path}  = /{usr/,}bin/archivemount
+profile archivemount @{exec_path} {
+  include <abstractions/base>
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/fusermount{,3} rCx -> fusermount,
+
+        /**.{tar,tar.gz,zip} r,
+        /**.{TAR,TAR.GZ,ZIP} r,
+  owner /**.{tar,tar.gz,zip} w,
+  owner /**.{TAR,TAR.GZ,ZIP} w,
+
+  owner @{HOME}/ r,
+  owner @{HOME}/*/ r,
+  owner @{HOME}/*/*/ r,
+
+  mount fstype=fuse.archivemount -> @{HOME}/*/,
+  mount fstype=fuse.archivemount -> @{HOME}/*/*/,
+
+  /dev/fuse rw,
+
+
+  profile fusermount {
+    include <abstractions/base>
+    include <abstractions/nameservice-strict>
+
+    # To mount anything:
+    capability sys_admin,
+
+    /{usr/,}bin/fusermount{,3} mr,
+
+    mount fstype={fuse,fuse.archivemount} -> @{HOME}/*/,
+    mount fstype={fuse,fuse.archivemount} -> @{HOME}/*/*/,
+
+    /dev/fuse rw,
+
+    /etc/fuse.conf r,
+
+    owner @{HOME}/ r,
+    /**.{tar,tar.gz,zip} r,
+    /**.{TAR,TAR.GZ,ZIP} r,
+
+    @{PROC}/@{pid}/mounts r,
+
+  }
+
+  include if exists <local/archivemount>
+}

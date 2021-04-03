@@ -9,11 +9,12 @@ include <tunables/global>
 @{exec_path} = /{usr/,}bin/gajim
 profile gajim @{exec_path} {
   include <abstractions/base>
+  include <abstractions/X>
   include <abstractions/gtk>
   include <abstractions/fonts>
   include <abstractions/fontconfig-cache-read>
   include <abstractions/freedesktop.org>
-  include <abstractions/dri-common>
+  include <abstractions/audio>
   include <abstractions/dri-enumerate>
   include <abstractions/mesa>
   include <abstractions/nameservice-strict>
@@ -21,7 +22,8 @@ profile gajim @{exec_path} {
   include <abstractions/python>
   include <abstractions/openssl>
   include <abstractions/ssl_certs>
-  include <abstractions/deny-dconf>
+  include <abstractions/gstreamer>
+  include <abstractions/enchant>
   include <abstractions/deny-root-dir-access>
 
   network inet dgram,
@@ -38,22 +40,26 @@ profile gajim @{exec_path} {
   /{usr/,}{s,}bin/ldconfig  rix,
 
   # To play sounds
-  /{usr/,}bin/aplay      rCx -> audio,
-  /{usr/,}bin/pacat      rCx -> audio,
+  /{usr/,}bin/aplay      rix,
+  /{usr/,}bin/pacat      rix,
 
   # Needed for GPG/PGP support
   /{usr/,}bin/gpg        rCx -> gpg,
+  /{usr/,}bin/gpgconf    rCx -> gpg,
+  /{usr/,}bin/gpgsm      rCx -> gpg,
 
   # External apps
-  /{usr/,}bin/xdg-settings    rPUx,
-  /{usr/,}lib/firefox/firefox rPUx,
+  /{usr/,}bin/xdg-settings    rPx,
+  /{usr/,}lib/firefox/firefox rPx,
+  /{usr/,}bin/spacefm         rPx,
 
   # Gajim plugins
   /usr/share/gajim/plugins/{,**} r,
 
   # Gajim home files
   owner @{HOME}/ r,
-  owner @{user_config_dirs}/gajim/{,**} rw,
+  owner @{user_config_dirs}/gajim/ rw,
+  owner @{user_config_dirs}/gajim/** rwk,
   owner @{user_share_dirs}/gajim/ rw,
   owner @{user_share_dirs}/gajim/** rwk,
 
@@ -62,44 +68,61 @@ profile gajim @{exec_path} {
   owner @{user_cache_dirs}/gajim/ rw,
   owner @{user_cache_dirs}/gajim/** rwk,
 
+  owner @{HOME}/.cache/farstream/ rw,
+  owner @{HOME}/.cache/farstream/codecs.audio.x86_64.cache{,.tmp*} rw,
+
   owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/mounts r,
   owner @{PROC}/@{pid}/mountinfo r,
+
+  /etc/machine-id r,
+  /var/lib/dbus/machine-id r,
 
   /etc/fstab r,
 
   /usr/share/glib-2.0/schemas/gschemas.compiled r,
 
+  /usr/share/xml/iso-codes/iso_[0-9]*-[0-9]*.xml r,
+
+  # For video streaming
+  @{sys}/class/video4linux/ r,
+  /dev/video[0-9]* rw,
+
   # TMP files locations (first in /tmp/ , /var/tmp/ and @{HOME}/)
+    /var/tmp/ r,
+        /tmp/ r,
   owner /tmp/* rw,
-  # owner /var/tmp/* rw,
-  # owner @{HOME}/* rw,
+
+  include <abstractions/dconf>
+  owner @{run}/user/[0-9]*/dconf/ rw,
+  owner @{run}/user/[0-9]*/dconf/user rw,
 
   # Silencer
   deny /usr/share/gajim/** w,
 
 
-  profile audio {
-    include <abstractions/base>
-    include <abstractions/audio>
-
-    /{usr/,}bin/aplay mr,
-    /{usr/,}bin/pacat mr,
-
-    owner @{HOME}/.Xauthority r,
-
-    /etc/machine-id r,
-    /var/lib/dbus/machine-id r,
-
-  }
-
   profile gpg {
     include <abstractions/base>
 
-    /{usr/,}bin/gpg mr,
+    /{usr/,}bin/gpg     mr,
+    /{usr/,}bin/gpgconf mr,
+    /{usr/,}bin/gpgsm   mr,
+
+    /{usr/,}bin/gpg-agent      rix,
+    /{usr/,}lib/gnupg/scdaemon rix,
+
+    # without owner
+    @{PROC}/@{pid}/fd/ r,
+    @{PROC}/@{pid}/task/@{tid}/comm rw,
+
+    owner @{run}/user/[0-9]*/gnupg/d.*/ rw,
+    owner @{run}/user/[0-9]*/gnupg/d.*/S.gpg-agent{,.extra,.browser,.ssh} w,
 
     owner @{HOME}/@{XDG_GPG_DIR}/ rw,
     owner @{HOME}/@{XDG_GPG_DIR}/** rwkl -> @{HOME}/@{XDG_GPG_DIR}/**,
+
+    owner @{HOME}/.local/share/gajim/openpgp/ rw,
+    owner @{HOME}/.local/share/gajim/openpgp/** rwkl -> @{HOME}/.local/share/gajim/openpgp/**,
 
   }
 

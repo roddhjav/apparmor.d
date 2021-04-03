@@ -26,6 +26,7 @@ profile strawberry @{exec_path} {
   include <abstractions/openssl>
   include <abstractions/ssl_certs>
   include <abstractions/devices-usb>
+  include <abstractions/gstreamer>
   include <abstractions/deny-root-dir-access>
 
   signal (send) set=(term, kill) peer=strawberry-tagreader,
@@ -42,7 +43,6 @@ profile strawberry @{exec_path} {
   @{exec_path} mr,
 
   /{usr/,}bin/strawberry-tagreader rPx,
-  /{usr/,}lib/@{multiarch}/gstreamer[0-9]*.[0-9]*/gstreamer-[0-9]*.[0-9]*/gst-plugin-scanner rPUx,
 
   /{usr/,}bin/xdg-open             rCx -> open,
 
@@ -68,9 +68,6 @@ profile strawberry @{exec_path} {
   owner @{user_cache_dirs}/strawberry/ rw,
   owner @{user_cache_dirs}/strawberry/** rwl -> @{user_cache_dirs}/strawberry/networkcache/prepared/#[0-9]*[0-9],
 
-  owner @{user_cache_dirs}/gstreamer-[0-9]*/ rw,
-  owner @{user_cache_dirs}/gstreamer-[0-9]*/registry.*.bin{,.tmp*} rw,
-
   owner @{user_cache_dirs}/xine-lib/ rw,
   owner @{user_cache_dirs}/xine-lib/plugins.cache{,.new} rw,
 
@@ -87,18 +84,8 @@ profile strawberry @{exec_path} {
 
   /etc/fstab r,
 
-  deny /dev/ r,
-       /dev/shm/#[0-9]*[0-9] rw,
-       /dev/sr[0-9]* r,
-
-  @{sys}/devices/system/node/ r,
-  @{sys}/devices/system/node/node[0-9]/meminfo r,
-
-  # The orcexec.* file is JIT compiled code for various GStreamer elements.
-  # If one is blocked the next is used instead.
-  owner @{run}/user/[0-9]*/orcexec.* mrw,
-  #owner @{HOME}/orcexec.* mrw,
-  #owner /tmp/orcexec.* mrw,
+  /dev/shm/#[0-9]*[0-9] rw,
+  /dev/sr[0-9]* r,
 
   owner /tmp/qipc_{systemsem,sharedmemory}_*[a-f0-9]* rw,
   owner /tmp/.*/ rw,
