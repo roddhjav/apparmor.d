@@ -1,12 +1,11 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2020-2021 Mikhail Morfikov
+#               2021 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
 
 include <tunables/global>
-
-@{BUILD_DIR} = /media/debuilder/
 
 @{exec_path}  = /{usr/,}bin/git
 @{exec_path} += /{usr/,}bin/git-*
@@ -67,8 +66,8 @@ profile git @{exec_path} {
   /{usr/,}bin/sensible-editor rCx -> editor,
   /{usr/,}bin/vim.*           rCx -> editor,
 
-  owner @{user_config_dirs}/git/ rw,
-  owner @{user_config_dirs}/git/config rw,
+  owner @{HOME}/.gitconfig rw,
+  owner @{user_config_dirs}/git/{,*} rw,
 
   /usr/share/git-core/{,**} r,
 
@@ -85,10 +84,10 @@ profile git @{exec_path} {
   owner /tmp/git-commit-msg-.txt rw,
 
   # For package building
-  owner @{HOME}/*/            rw,
-  owner @{HOME}/*/**          rwkl -> @{HOME}/*/**,
-  owner @{BUILD_DIR}/**       rwkl -> @{BUILD_DIR}/**,
-  owner @{BUILD_DIR}/**/bin/*  rCx -> exec,
+  owner @{HOME}/*/                   rw,
+  owner @{HOME}/*/**                 rwkl -> @{HOME}/*/**,
+  owner @{user_build_dirs}/**        rwkl -> @{user_build_dirs}/**,
+  owner @{user_build_dirs}/**/bin/*  rCx -> exec,
 
   /etc/mailname r,
 
@@ -133,7 +132,7 @@ profile git @{exec_path} {
   profile exec {
     include <abstractions/base>
 
-    owner @{BUILD_DIR}/**/bin/* mr,
+    owner @{user_build_dirs}/**/bin/* mr,
 
   }
 
@@ -156,8 +155,8 @@ profile git @{exec_path} {
     owner @{HOME}/.fzf/plugin/fzf.vim r,
 
     # The git repository files
-    owner @{BUILD_DIR}/ r,
-    owner @{BUILD_DIR}/** rw,
+    owner @{user_build_dirs}/ r,
+    owner @{user_build_dirs}/** rw,
 
   }
 
