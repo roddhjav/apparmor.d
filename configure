@@ -6,8 +6,8 @@
 readonly ROOT=_build
 declare -a REMOVE_LIST
 
-_die()  { echo "$@" && exit 1; }
-_cd() { cd "$1" || _die "unable to move into $1"; }
+_die()  { printf '%s\n' "$*" >&2 && exit 1; }
+_warning() { printf 'Warning: %s\n' "$*" >&2; }
 _init() { rm -rf "${ROOT:?}" && rsync -a --exclude=.git . "$ROOT"; }
 
 # Remove files or directories in the package
@@ -84,8 +84,8 @@ generate() {
         [[ "$profile" =~ ^\# ]] && continue
 		path="${ROOT:?}/apparmor.d/profiles/$profile"
         if [[ ! -f "$path" ]]; then
-			[[ "$DISTRIBUTION" == debian ]] && continue
-			_die "Profile $profile not found"
+			_warning "Profile $profile not found"
+			contine
 		fi
 
 		# If flags is set, overwrite profile flag
