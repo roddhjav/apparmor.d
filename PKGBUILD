@@ -18,7 +18,7 @@ prepare() {
   git clone "$startdir" "$srcdir/$pkgname"
   cd "$srcdir/$pkgname"
 
-  ./configure --distribution=archlinux --flavor=desktop
+  ./configure --distribution=archlinux
 }
 
 package() {
