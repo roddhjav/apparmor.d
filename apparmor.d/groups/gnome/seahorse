@@ -1,0 +1,36 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/seahorse
+profile seahorse @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/ssl_certs>
+  include <abstractions/p11-kit>
+  include <abstractions/gtk>
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/gpgconf  rPx,
+  /{usr/,}bin/gpg      rUx,
+  /{usr/,}bin/gpgsm    rPx,
+
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+  /usr/share/icons/{,**} r,
+  /usr/share/X11/xkb/**  r,
+  
+  # Seahorse and SSH keys
+  owner @{HOME}/@{XDG_SSH_DIR}/{,**} r,
+
+  include <abstractions/dconf>
+  owner @{run}/user/[0-9]*/dconf/ rw,
+  owner @{run}/user/[0-9]*/dconf/user rw,
+
+  @{PROC}/[0-9]*/fd/ r,
+
+  include if exists <local/seahorse>
+}
