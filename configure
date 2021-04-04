@@ -45,19 +45,6 @@ configure() {
 
 	fi
 
-	echo "Set the configuration for a $FLAVOR."
-	if [[ "$FLAVOR" == server ]]; then
-		REMOVE_LIST+=(
-			apparmor.d/groups/apps
-			apparmor.d/groups/browsers
-			apparmor.d/groups/desktop
-			apparmor.d/groups/gnome
-			apparmor.d/groups/gvfs
-			apparmor.d/groups/network/NetworkManager
-			apparmor.d/groups/network/nm-*
-		)
-
-	fi
 }
 
 # Initialise the apparmor.d with the selected configuration.
@@ -110,19 +97,17 @@ cmd_help() {
 
 	Options:
 	    --distribution=DIST Set the target Linux distribution (Archlinux, Debian)
-	    --flavor=FLAVOR     Special flavor specific configuration (desktop, server)
 	    --help              Print this help message and exit.
 	_EOF
 }
 
 main() {
 	local opts err
-	opts="$(getopt -o h -l distribution:,flavor:,groups:,help -n "$PROGRAM" -- "$@")"
+	opts="$(getopt -o h -l distribution:,help -n "$PROGRAM" -- "$@")"
 	err=$?
 	eval set -- "$opts"
 	while true; do case $1 in
 		--distribution) DISTRIBUTION="$2"; shift 2 ;;
-		--flavor) FLAVOR="$2"; shift 2 ;;
 		-h|--help) shift; cmd_help; exit 0 ;;
 		--) shift; break ;;
 	esac done
