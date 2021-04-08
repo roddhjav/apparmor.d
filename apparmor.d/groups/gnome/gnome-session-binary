@@ -1,0 +1,85 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}lib/gnome-session-binary
+profile gnome-session-binary @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+  include <abstractions/gtk>
+
+  signal (send) set=(term) peer=gsd-*,
+  signal (receive) set=(term) peer=gdm-wayland-session,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/{,z,ba,da}sh                                 rix,
+  /{usr/,}bin/xdg-user-dirs-gtk-update                     rix,
+  /{usr/,}lib/gnome-session-check-accelerated              rix,
+  /{usr/,}lib/gnome-session-check-accelerated-gl-helper    rix,
+  /{usr/,}lib/gnome-session-check-accelerated-gles-helper  rix,
+  /{usr/,}lib/gnome-session-failed                         rix,
+  /{usr/,}lib/gnome-shell-overrides-migration.sh           rix,
+
+  /{usr/,}bin/aa-notify                                    rPx,
+  /{usr/,}bin/blueman-applet                               rPx,
+  /{usr/,}bin/gnome-keyring-daemon                         rPx,
+  /{usr/,}bin/gnome-shell                                  rPx,
+  /{usr/,}bin/xbrlapi                                      rPx,
+  /{usr/,}lib/evolution-data-server/evolution-alarm-notify rPx,
+  /{usr/,}lib/gsd-*                                        rPx,
+
+  /{usr/,}bin/pkcs11-register                              rUx,
+  /{usr/,}bin/start-pulseaudio-x11                         rUx,
+
+  /usr/share/applications/org.gnome.Shell.desktop r,
+  /usr/share/gdm/greeter-dconf-defaults r,
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+  /usr/share/gnome-session/sessions/*.session r,
+
+  owner @{user_config_dirs}/gnome-session/saved-session/ r,
+  owner @{user_config_dirs}/gtk-3.0/bookmarks rw,
+  owner @{user_config_dirs}/gtk-3.0/bookmarks.[0-9A-Z]* rw,
+
+  # Users xdg
+  owner @{user_config_dirs}/user-dirs.dirs r,
+  owner @{user_config_dirs}/user-dirs.locale r,
+
+  # Autostart
+  /etc/xdg/autostart/{,*.desktop} r,
+  /usr/share/gdm/greeter/autostart/{,*.desktop} r,
+  owner @{user_config_dirs}/autostart/{,*.desktop} r,
+
+  # Dconf
+  include <abstractions/dconf>
+  owner @{run}/user/[0-9]*/dconf/ rw,
+  owner @{run}/user/[0-9]*/dconf/user rw,
+  /usr/share/dconf/profile/gdm r,
+  /var/lib/gdm/.config/dconf/user r,
+
+  # Temp files
+  /tmp/.ICE-unix/[0-9]* rw,
+
+  owner @{run}/user/[0-9]*/.mutter-Xwaylandauth.[0-9A-Z]* r,
+  owner @{run}/user/[0-9]*/gnome-session-leader-fifo rw,
+  owner @{run}/user/[0-9]*/ICEauthority{,-[a-z]} rwl,
+        @{run}/systemd/users/[0-9]* r,
+        @{run}/systemd/sessions/[0-9].ref rw,
+        @{run}/systemd/sessions/[0-9] r,
+        @{run}/systemd/inhibit/[0-9]*.ref rw,
+
+  @{sys}/devices/**/{vendor,device} r,
+
+  owner @{PROC}/@{pid}/loginuid r,
+  owner @{PROC}/@{pid}/fd/ r,
+        @{PROC}/@{pid}/cgroup r,
+
+  /dev/null r,
+  /dev/tty rw,
+
+  include if exists <local/gnome-session-binary>
+}

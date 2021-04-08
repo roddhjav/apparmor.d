@@ -1,0 +1,130 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/gnome-shell
+profile gnome-shell @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/app-launcher-user>
+  include <abstractions/audio>
+  include <abstractions/dri-common>
+  include <abstractions/gnome>
+  include <abstractions/mesa>
+  include <abstractions/nameservice-strict>
+  include <abstractions/p11-kit>
+  include <abstractions/ssl_certs>
+
+  capability sys_nice,
+
+  network inet stream,
+  network inet6 stream,
+  network inet dgram,
+  network inet6 dgram,
+  network netlink raw,
+
+  ptrace (read),
+
+  signal (send) set=(term) peer=polkit*,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/Xwayland                   rPx,
+  /{usr/,}{lib,libexec}/polkit-1/polkit* rPx,
+  /{usr/,}{lib,libexec}/*                rPUx,
+
+  /usr/share/desktop-directories/{,*.directory} r,
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+  /usr/share/gnome-shell/{,**} r,
+  /usr/share/libgweather/Locations.xml r,
+  /usr/share/libinput/ r,
+  /usr/share/libinput/[0-9][0-9]-*.quirks r,
+  /usr/share/libwacom/{,*.stylus,*.tablet} r,
+  /usr/share/wayland-sessions/{,*.desktop} r,
+  /usr/share/xml/iso-codes/iso_[0-9]*-[0-9]*.xml r,
+  /usr/share/xsessions/{,*.desktop} r,
+
+  /etc/machine-id r,
+  /var/lib/dbus/machine-id r,
+
+  owner @{HOME}/@{XDG_WALLPAPERS_DIR}/{,**} r,
+  owner @{HOME}/.mozilla/firefox/firefox-mpris/{,*} r,
+
+  owner @{user_config_dirs}/monitors.xml r,
+  owner @{user_config_dirs}/ibus/* r,
+
+  owner @{user_share_dirs}/gnome-shell/{,**} rw,
+  owner @{user_share_dirs}/gnome-shell/extensions/{,**} r,
+
+  owner @{user_cache_dirs}/libgweather/{,**} r,
+
+  include <abstractions/dconf>
+  owner @{run}/user/[0-9]*/dconf/ rw,
+  owner @{run}/user/[0-9]*/dconf/user rw,
+
+  owner @{run}/user/[0-9]*/gnome-shell/{,**} rw,
+  owner @{run}/user/[0-9]*/gnome-shell-disable-extensions rw,
+  owner @{run}/user/[0-9]*/wayland-[0-9].lock rwk,
+  owner @{run}/user/[0-9]*/gdm/Xauthority r,
+
+  @{run}/systemd/users/[0-9]* r,
+  @{run}/systemd/sessions/[0-9] r,
+  @{run}/systemd/inhibit/[0-9]*.ref rw,
+
+  @{run}/udev/tags/seat/ r,
+
+  @{run}/udev/data/+input* r,       # for mouse, keyboard, touchpad
+  @{run}/udev/data/+platform* r,
+  @{run}/udev/data/+dmi:id r,
+  @{run}/udev/data/+acpi* r,
+  @{run}/udev/data/+pci* r,         # for VGA compatible controller
+  @{run}/udev/data/+sound:card* r,  # for sound
+  @{run}/udev/data/+usb* r,         # for USB mouse and keyboard
+  @{run}/udev/data/+i2c:* r,
+  @{run}/udev/data/c10:[0-9]* r,
+  @{run}/udev/data/c13:[0-9]* r,    # for /dev/input/*
+  @{run}/udev/data/c189:[0-9]*  r,  # for /dev/bus/usb/**
+  @{run}/udev/data/c226:[0-9]* r,   # for /dev/dri/card* 
+
+  @{sys}/bus/ r,
+  @{sys}/class/ r,
+  @{sys}/class/net/ r,
+  @{sys}/class/input/ r,
+  @{sys}/class/hwmon/ r,
+  @{sys}/class/power_supply/ r,
+  @{sys}/**/uevent r,
+  @{sys}/devices/virtual/net/*/statistics/{rx_bytes,tx_bytes} r,
+  @{sys}/devices/**/power_supply/**/{type,online} r,
+  @{sys}/devices/**/hwmon/{,name,temp*,fan*} r,
+  @{sys}/devices/**/hwmon/**/{,name,temp*,fan*} r,
+  @{sys}/devices/**/hwmon[0-9]*/{,name,temp*,fan*} r,
+  @{sys}/devices/**/hwmon[0-9]*/**/{,name,temp*,fan*} r,
+  @{sys}/devices/pci[0-9]*/**/boot_vga r,
+  @{sys}/devices/pci[0-9]*/**/{device,vendor} r,
+  @{sys}/devices/pci[0-9]*/**/{subsystem_device,subsystem_vendor} r,
+  @{sys}/devices/pci[0-9]*/**/input[0-9]*/{properties,name} r,
+  @{sys}/devices/pci[0-9]*/**/net/*/statistics/{rx_bytes,tx_bytes} r,
+
+  owner @{PROC}/[0-9]*/fd/ r,
+  owner @{PROC}/[0-9]*/cgroup r,
+  owner @{PROC}/[0-9]*/mounts r,
+  owner @{PROC}/[0-9]*/attr/current r,
+        @{PROC}/[0-9]*/stat r,
+        @{PROC}/[0-9]*/task/[0-9]*/stat r,
+        @{PROC}/[0-9]*/net/* r,
+        @{PROC}/sys/kernel/osrelease r,
+        @{PROC}/1/cgroup r,
+        @{PROC}/cmdline r,
+
+  /dev/input/event[0-9]* rw,
+
+  owner /tmp/.X[0-9]-lock rw,
+  owner /tmp/[0-9A-Z]*.shell-extension.zip rw,
+  owner /tmp/gdkpixbuf-xpm-tmp.[0-9A-Z]* rw,
+        /tmp/.X11-unix/X[0-9] rw,
+
+  include if exists <local/gnome-shell>
+}

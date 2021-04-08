@@ -1,0 +1,43 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /etc/gdm/Xsession
+profile sddm-xsession @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+  include <abstractions/bash>
+
+  @{exec_path} r,
+
+  /{usr/,}bin/{,ba,da}sh      rix,
+  /{usr/,}bin/zsh             rix,
+  /{usr/,}bin/{,e}grep        rix,
+  /{usr/,}bin/gnome-session   rix,
+  /{usr/,}bin/gsettings       rix,
+  /{usr/,}bin/id              rix,
+
+  /{usr/,}bin/dbus-update-activation-environment    rCx -> dbus,
+  /{usr/,}bin/systemctl                             rPx -> child-systemctl,
+  /{usr/,}bin/xhost                                 rPx,
+  /{usr/,}lib/gnome-session-binary                  rPx,
+
+  /etc/X11/{,**} r,
+
+  profile dbus {
+    include <abstractions/base>
+
+    /{usr/,}bin/dbus-update-activation-environment mr,
+
+    # file_inherit
+    owner @{HOME}/.xsession-errors w,
+
+  }
+
+  include if exists <local/sddm-xsession>
+}
