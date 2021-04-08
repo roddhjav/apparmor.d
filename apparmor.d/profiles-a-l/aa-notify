@@ -1,0 +1,34 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/aa-notify
+profile aa-notify @{exec_path} flags=(complain) {
+  include <abstractions/base>
+  include <abstractions/python>
+  include <abstractions/nameservice-strict>
+
+  ptrace (read),
+
+  @{exec_path} mr,
+
+  /etc/apparmor/*.conf r,
+  /etc/inputrc r,
+
+  /usr/share/terminfo/x/xterm-256color r,
+  /usr/share/terminfo/d/dumb r,
+  /var/log/audit/audit.log r,
+
+  owner /tmp/[a-z0-9]* r,
+  owner /tmp/apparmor-bugreport-[a-z0-9]*.txt rw,
+
+  @{PROC}/ r,
+  @{PROC}/@{pid}/stat r,
+  @{PROC}/@{pid}/cmdline r,
+
+  include if exists <local/aa-notify>
+}
