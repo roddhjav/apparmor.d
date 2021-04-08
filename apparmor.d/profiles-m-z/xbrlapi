@@ -1,0 +1,21 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/xbrlapi
+profile xbrlapi @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+
+  network inet stream,
+  network inet6 stream,
+
+  @{exec_path} mr,
+
+  /dev/tty[0-9]* rw,
+
+  include if exists <local/xbrlapi>
+}
