@@ -1,0 +1,46 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}lib/gdm-wayland-session
+profile gdm-wayland-session @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+  include <abstractions/zsh>
+  include <abstractions/bash>
+
+  signal (send) set=(term) peer=dbus-run-session,
+  signal (send) set=(term) peer=gnome-session-binary,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/{,ba,da}sh           rix,
+  /{usr/,}bin/zsh                  rix,
+  /{usr/,}bin/tty                  rix,
+  /{usr/,}bin/grep                 rix,
+  /{usr/,}bin/gnome-session        rix,
+  /{usr/,}bin/gsettings            rix,
+
+  /{usr/,}bin/dbus-run-session     rPx,
+  /{usr/,}bin/dbus-daemon          rPx,
+  /{usr/,}lib/gnome-session-binary rPx,
+
+  /etc/gdm/custom.conf r,
+
+  /usr/share/gdm/gdm.schemas r,
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/loginuid r,
+
+  include <abstractions/dconf>
+  owner @{run}/user/[0-9]*/dconf/ rw,
+  owner @{run}/user/[0-9]*/dconf/user rw,
+
+  include if exists <local/gdm-wayland-session>
+}
