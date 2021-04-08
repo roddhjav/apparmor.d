@@ -1,0 +1,27 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/auditd
+profile auditd @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+
+  capability fsetid,
+  capability chown,
+
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  /var/log/audit/audit.log rw,
+  /var/log/audit/audit.log.[0-9] rw,
+
+  @{run}/systemd/userdb/ r,
+
+  include if exists <local/auditd>
+}
