@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2020-2021 Mikhail Morfikov
+#               2021 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -7,7 +8,7 @@ abi <abi/3.0>,
 include <tunables/global>
 
 @{exec_path} = /{usr/,}bin/dbus-daemon
-profile dbus-daemon @{exec_path} {
+profile dbus-daemon @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/consoles>
   include <abstractions/nameservice-strict>
@@ -23,27 +24,44 @@ profile dbus-daemon @{exec_path} {
   network bluetooth stream,
   network bluetooth seqpacket,
 
+  ptrace (read) peer=unconfined,
+
   @{exec_path} mr,
 
-  /usr/libexec/* rPUx,
+  /{usr/,}{lib,libexec}/* rPUx,
+  /{usr/,}bin/ r,
+  /{usr/,}bin/[a-z0-9]* rPUx,
+
+  /etc/dbus-1/{,**} r,
+  /usr/share/dbus-1/{,**} r,
+  /usr/share/defaults/**.conf r,
+
+  owner @{user_share_dirs}/dbus-1/{,**} r,
 
   owner @{PROC}/@{pid}/mounts r,
   owner @{PROC}/@{pid}/oom_score_adj rw,
         @{PROC}/@{pids}/cmdline r,
+        @{PROC}/1/environ r,
+        @{PROC}/cmdline r,
+        @{PROC}/sys/kernel/osrelease r,
         @{PROC}/sys/kernel/random/boot_id r,
-
-  /usr/share/dbus-1/ r,
-  /usr/share/dbus-1/** r,
-  /etc/dbus-1/ r,
-  /etc/dbus-1/** r,
-
-  /usr/share/defaults/**.conf r,
 
   @{sys}/module/apparmor/parameters/enabled r,
 
+        @{run}/systemd/inhibit/[0-9]*.ref rw,
+        @{run}/systemd/sessions/[0-9].ref rw,
         @{run}/systemd/users/[0-9]* r,
   owner @{run}/user/[0-9]*/dbus-1/ rw,
   owner @{run}/user/[0-9]*/dbus-1/services/ rw,
+
+  # Extra rules for GDM 
+  /var/lib/gdm/.local/share/icc/ r,
+  /var/lib/gdm/.local/share/icc/edid-*.icc r,
+
+  /dev/dri/card[0-9]* rw,
+  /dev/input/event[0-9]* rw,
+
+  /tmp/dbus-[0-9a-zA-Z]* rw,
 
   # file_inherit
   owner /dev/tty[0-9]* rw,
