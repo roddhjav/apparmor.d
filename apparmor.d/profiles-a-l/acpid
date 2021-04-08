@@ -1,0 +1,36 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/acpid
+profile acpid @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+
+  capability mknod,
+
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/{,ba,da}sh        rix,
+  /{usr/,}bin/logger            rix,
+
+  /etc/acpi/{,**} r,
+  /etc/acpi/handler.sh rix,
+
+  /dev/input/{,**} r,
+  /dev/tty rw,
+  /dev/null r,
+
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/loginuid r,
+
+  @{run}/acpid.socket rw,
+
+  include if exists <local/acpid>
+}
