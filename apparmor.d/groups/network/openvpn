@@ -1,16 +1,22 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2019-2021 Mikhail Morfikov
+#               2021 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 #
 # The following profile assumes that:
 #   openvpn is started as root with dropping privileges
 #   iptables is used
-#   config files are stored in:       /etc/openvpn/*.{conf,ovpn}
-#   certs/keys are stored in:         /etc/openvpn/certs/*.{key,crt}
+#   config files can be stored in:
+#     - /etc/openvpn/*.{conf,ovpn}
+#     - /etc/openvpn/{client,server}/*.{conf,ovpn}
+#   certs/keys can be are stored in:
+#     - /etc/openvpn/certs/*.{key,crt}
+#     - $HOME/.cert/**/*.pem
 #   auth credentials are stored in:   /etc/openvpn/auth/*.auth
 #   logs are redirected to:           /var/log/openvpn/*.log
 #   DNS/resolver script is stored in: /etc/openvpn/update-resolv-conf{,.sh}
-# If a user wants to type user/pass interactively, systemd-ask-password is invoked for that.
+# If a user wants to type user/pass interactively, systemd-ask-password is
+# invoked for that.
 
 abi <abi/3.0>,
 
@@ -31,25 +37,38 @@ profile openvpn @{exec_path} {
   capability setuid,
   capability setgid,
 
+  capability dac_read_search,
+  capability dac_override,
+
+  network inet dgram,
+  network inet6 dgram,
   network inet stream,
   network inet6 stream,
   network netlink raw,
+
+  signal (receive) set=(term) peer=nm-openvpn-service,
 
   @{exec_path} mr,
 
   # OpenVPN config
   /etc/openvpn/*.{conf,ovpn} r,
+  /etc/openvpn/client/*.{conf,ovpn} r,
+  /etc/openvpn/client/*_userpass.txt r,
+  /etc/openvpn/server/*.{conf,ovpn} r,
   /etc/openvpn/auth/*.auth r,
   /etc/openvpn/certs/*.{key,crt} r,
+  @{HOME}/.cert/{,**} r,
 
   /var/log/openvpn/*.log w,
 
   @{run}/openvpn/*.{pid,status} rw,
+  @{run}/NetworkManager/nm-openvpn-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]* rw,
 
-  /{usr/,}bin/ip                        rix,
-  /{usr/,}bin/systemd-ask-password      rCx -> systemd-ask-password,
-  /etc/openvpn/update-resolv-conf{,.sh} rCx -> update-resolv,
-  /etc/openvpn/force-user-traffic-via-vpn.sh rCx -> force-user-traffic-via-vpn,
+  /{usr/,}bin/ip                                rix,
+  /{usr/,}bin/systemd-ask-password              rCx -> systemd-ask-password,
+  /{usr/,}lib/nm-openvpn-service-openvpn-helper rPx,
+  /etc/openvpn/force-user-traffic-via-vpn.sh    rCx -> force-user-traffic-via-vpn,
+  /etc/openvpn/update-resolv-conf{,.sh}         rCx -> update-resolv,
 
   /dev/net/tun rw,
 
