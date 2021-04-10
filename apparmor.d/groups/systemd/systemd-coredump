@@ -1,0 +1,52 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2021 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path}  = /{usr/,}lib/systemd/systemd-coredump
+profile systemd-coredump @{exec_path} flags=(complain) {
+  include <abstractions/base>
+  include <abstractions/systemd-common>
+
+  capability setpcap,
+  capability setuid,
+  capability setgid,
+  capability dac_read_search,
+  capability sys_ptrace,
+  # Needed?
+  deny capability net_admin,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/* r,
+  /{usr/,}sbin/* r,
+  /usr/libexec/** r,
+
+  /etc/systemd/coredump.conf r,
+
+        /var/lib/systemd/coredump/ r,
+  owner /var/lib/systemd/coredump/#[0-9]* rw,
+  owner /var/lib/systemd/coredump/core.*.[0-9]*.[0-9a-f]*.[0-9]*.[0-9]*.zst rwl -> /var/lib/systemd/coredump/#[0-9]*,
+
+  owner @{PROC}/@{pid}/setgroups r,
+        @{PROC}/@{pids}/comm r,
+        @{PROC}/@{pids}/cgroup r,
+        @{PROC}/@{pids}/cmdline r,
+        @{PROC}/@{pids}/limits r,
+        @{PROC}/@{pids}/mountinfo r,
+        @{PROC}/@{pids}/environ r,
+        @{PROC}/@{pids}/fd/ r,
+        @{PROC}/@{pids}/fdinfo/[0-9]* r,
+
+  include if exists <local/systemd-coredump>
+}

@@ -1,0 +1,49 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Mikhail Morfikov
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/warzone2100
+profile warzone2100 @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/X>
+  include <abstractions/freedesktop.org>
+  include <abstractions/vulkan>
+  include <abstractions/mesa>
+  include <abstractions/dri-enumerate>
+  include <abstractions/nameservice-strict>
+  include <abstractions/audio>
+  include <abstractions/deny-root-dir-access>
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  deny ptrace (read),
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/{,ba,da}sh   rix,
+  /{usr/,}bin/which        rix,
+
+  owner @{user_share_dirs}/warzone2100-*/ rw,
+  owner @{user_share_dirs}/warzone2100-*/** rw,
+
+  # What's this for?
+  deny owner @{user_share_dirs}/applications/*.desktop w,
+
+  /usr/share/warzone2100/{,**} r,
+
+  /var/lib/dbus/machine-id r,
+  /etc/machine-id r,
+
+  deny @{PROC}/@{pids}/cmdline r,
+       @{PROC}/@{pids}/stat r,
+
+  include if exists <local/warzone2100>
+}

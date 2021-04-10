@@ -1,0 +1,84 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Mikhail Morfikov
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/utox
+profile utox @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/gtk>
+  include <abstractions/fonts>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/freedesktop.org>
+  include <abstractions/user-download-strict>
+  include <abstractions/nameservice-strict>
+  include <abstractions/audio>
+  include <abstractions/deny-root-dir-access>
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/xdg-open    rCx -> open,
+
+  owner @{HOME}/ r,
+  owner @{user_config_dirs}/tox/ rw,
+  owner @{user_config_dirs}/tox/** rw,
+
+  /var/lib/dbus/machine-id r,
+  /etc/machine-id r,
+
+  deny owner @{PROC}/@{pid}/cmdline r,
+
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+
+  include <abstractions/dconf>
+  owner @{run}/user/[0-9]*/dconf/ rw,
+  owner @{run}/user/[0-9]*/dconf/user rw,
+
+  # For video support
+  owner /dev/shm/libv4l-* rw,
+        /dev/video[0-9]* rw,
+  @{sys}/devices/pci[0-9]*/**/usb[0-9]/**/video4linux/video[0-9]*/dev r,
+  @{sys}/devices/pci[0-9]*/**/usb[0-9]/**/{modalias,speed} r,
+  @{sys}/devices/virtual/dmi/id/sys_vendor r,
+  @{sys}/devices/virtual/dmi/id/product_{name,version} r,
+  @{sys}/devices/virtual/dmi/id/board_{vendor,name,version} r,
+
+
+  profile open {
+    include <abstractions/base>
+    include <abstractions/xdg-open>
+
+    /{usr/,}bin/xdg-open mr,
+
+    /{usr/,}bin/{,ba,da}sh      rix,
+    /{usr/,}bin/gawk            rix,
+    /{usr/,}bin/readlink        rix,
+    /{usr/,}bin/basename        rix,
+
+    owner @{HOME}/ r,
+
+    owner @{run}/user/[0-9]*/ r,
+
+    # Allowed apps to open
+    /{usr/,}lib/firefox/firefox rPUx,
+    /{usr/,}bin/viewnior        rPUx,
+
+    # file_inherit
+    owner @{HOME}/.xsession-errors w,
+    owner @{user_config_dirs}/tox/[0-9A-F].ftinfo w,
+    owner @{user_config_dirs}/tox/[0-9A-F].ftoutfo w,
+    deny /dev/video[0-9]* rw,
+
+  }
+
+  include if exists <local/utox>
+}

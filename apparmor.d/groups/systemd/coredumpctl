@@ -1,0 +1,81 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2021 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path}  = /{usr/,}bin/coredumpctl
+profile coredumpctl @{exec_path} flags=(complain) {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+
+  signal (send) peer=child-pager,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/gdb   rCx -> gdb,
+
+  /{usr/,}bin/pager rPx -> child-pager,
+  /{usr/,}bin/less  rPx -> child-pager,
+  /{usr/,}bin/more  rPx -> child-pager,
+
+  owner /tmp/*.coredump w,
+  owner /tmp/core.* w,
+
+  owner /var/tmp/coredump-* rw,
+
+  /var/lib/systemd/coredump/core.*.[0-9]*.[0-9a-f]*.[0-9]*.[0-9]*.zst r,
+
+  /{run,var}/log/journal/ r,
+  /{run,var}/log/journal/[0-9a-f]*/ r,
+  /{run,var}/log/journal/[0-9a-f]*/user-[0-9a-f]*.journal* r,
+  /{run,var}/log/journal/[0-9a-f]*/system.journal* r,
+  /{run,var}/log/journal/[0-9a-f]*/system@[0-9a-f]*.journal* r,
+
+  owner @{PROC}/@{pid}/cgroup r,
+        @{PROC}/1/cgroup r,
+
+  /var/lib/dbus/machine-id r,
+  /etc/machine-id r,
+
+
+  profile gdb {
+    include <abstractions/base>
+    include <abstractions/python>
+
+    ptrace (trace),
+
+    /{usr/,}bin/gdb mr,
+
+    /{usr/,}bin/iconv rix,
+    /{usr/,}bin/* r,
+    /{usr/,}sbin/* r,
+
+    @{PROC}/@{pids}/fd/  r,
+
+    /etc/inputrc r,
+
+    /etc/gdb/** r,
+    /usr/share/gdb/{,**} r,
+    /usr/share/glib-2.0/gdb/{,**} r,
+    /usr/share/gcc-[0-9]*/python/{,**} r,
+    /usr/share/gcc/** r,
+
+    owner /var/tmp/coredump-* rw,
+
+    # Silencer
+    deny /usr/share/** w,
+
+  }
+
+  include if exists <local/coredumpctl>
+}
