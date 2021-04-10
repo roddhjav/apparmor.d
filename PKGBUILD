@@ -2,16 +2,17 @@
 # shellcheck disable=SC2034,SC2154,SC2164
 
 pkgname=apparmor.d
-pkgver=21.0402
+pkgver=21
 pkgrel=1
 pkgdesc="Full set of apparmor profiles"
 arch=("any")
 url="https://gitlab.com/archlex/hardening/$pkgname"
 license=('GPL2')
 depends=('apparmor')
+makedepends=('bc')
 
 pkgver() {
-  date +%y.%m%d
+  echo "$pkgver + .1" | bc
 }
 
 prepare() {
