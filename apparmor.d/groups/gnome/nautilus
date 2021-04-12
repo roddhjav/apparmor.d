@@ -1,0 +1,55 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/nautilus
+profile nautilus @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/app-launcher-user>
+  include <abstractions/gnome>
+  include <abstractions/nameservice-strict>
+  include <abstractions/openssl>
+
+  @{exec_path} mr,
+  /{usr/,}bin/{,ba,da}sh rix,
+
+  /usr/share/nautilus/{,**} r,
+  /usr/share/tracker3/{,**} r,
+
+  owner @{user_share_dirs}/nautilus/{,**} rwk,
+
+  # Full access to user's data
+  / r,
+  owner @{HOME}/{,**} rw,
+  owner @{run}/user/@{pid}/{,**} rw,
+  owner /media/*/{,**} rw,
+  owner /mnt/*/{,**} rw,
+  owner /tmp/{,**} rw,
+
+  # Silencer for non user's data
+  deny /boot rw,
+  # deny /var rw,
+  deny /opt rw,
+  deny /root rw,
+  deny /tmp/.* rw,
+
+  include <abstractions/dconf>
+  owner @{run}/user/[0-9]*/dconf/ rw,
+  owner @{run}/user/[0-9]*/dconf/user rw,
+
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/mountinfo r,
+        @{PROC}/sys/kernel/random/boot_id r,
+
+  @{run}/mount/utab r,
+  @{run}/systemd/userdb/ r,
+
+  /dev/tty rw,
+  /dev/dri/card[0-9]* rw,
+
+  include if exists <local/nautilus>
+}
