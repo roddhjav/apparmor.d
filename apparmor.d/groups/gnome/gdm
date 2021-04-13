@@ -1,0 +1,55 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/gdm
+profile gdm @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/wutmp>
+  include <abstractions/nameservice-strict>
+
+  capability chown,
+  capability fsetid,
+  capability kill,
+  capability net_admin,
+  capability sys_nice,
+
+  ptrace (read) peer=unconfined,
+
+  signal (send) set=(term) peer=confined,
+
+  @{exec_path} mr,
+
+  /{usr/,}lib/gdm-session-worker rPx,
+
+  /usr/share/gdm/gdm.schemas r,
+  /usr/share/wayland-sessions/*.desktop r,
+
+  /etc/gdm/custom.conf r,
+  /etc/locale.conf r,
+
+  /var/{lib,log}/gdm/ rw,
+
+  @{run}/gdm/ rw,
+  @{run}/gdm/gdm.pid rw,
+  @{run}/gdm/greeter/ rw,
+  @{run}/systemd/seats/seat[0-9]* r,
+  @{run}/systemd/sessions/[0-9].ref r,
+  @{run}/systemd/userdb/ r,
+  @{run}/systemd/users/[0-9]* r,
+
+  @{sys}/devices/virtual/tty/tty[0-9]*/active r,
+
+  owner @{PROC}/@{pid}/fd/ r,
+        @{PROC}/@{pid}/cgroup r,
+        @{PROC}/1/environ r,
+        @{PROC}/cmdline r,
+        @{PROC}/sys/kernel/osrelease r,
+        @{PROC}/sys/kernel/random/boot_id r,
+
+  include if exists <local/gdm>
+}
