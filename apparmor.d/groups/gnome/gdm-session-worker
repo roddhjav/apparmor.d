@@ -12,9 +12,6 @@ profile gdm-session-worker @{exec_path} flags=(attach_disconnected) {
   include <abstractions/authentication>
   include <abstractions/nameservice-strict>
 
-  signal (receive) set=term peer=gdm,
-  signal (send) set=term peer=gdm-wayland-session,
-
   capability audit_write,
   capability chown,
   capability dac_override,
@@ -27,6 +24,10 @@ profile gdm-session-worker @{exec_path} flags=(attach_disconnected) {
   capability sys_nice,
   capability sys_tty_config,
 
+  signal (send) set=hup peer=gsd-*,
+  signal (send) set=hup peer=gnome-*,
+  signal (send) set=hup peer=xwayland,
+  signal (send) set=term peer=gdm-wayland-session,
   signal (receive) set=term peer=gdm,
 
   network netlink raw,
@@ -46,6 +47,7 @@ profile gdm-session-worker @{exec_path} flags=(attach_disconnected) {
   /etc/security/limits.d/{,*.conf} r,
 
   /usr/share/gdm/gdm.schemas r,
+  /usr/share/wayland-sessions/*.desktop r,
 
   @{run}/faillock/[a-zA-z0-9]* rwk,
   @{run}/systemd/sessions/[0-9].ref rw,
