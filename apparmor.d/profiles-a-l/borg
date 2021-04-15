@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2020-2021 Mikhail Morfikov
+#               2021 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -29,9 +30,11 @@ profile borg @{exec_path} {
   /{usr/,}bin/python3.[0-9]* r,
 
   /usr/bin/uname                     rix,
-  /usr/sbin/ldconfig                 rix,
+  /{usr/,}{s,}bin/ldconfig           rix,
   /{usr/,}bin/{,@{multiarch}-}ld.bfd rix,
 
+  /usr/bin/pass                      rPUx,
+  /usr/bin/ssh                       rPx,
   /{usr/,}bin/ccache                 rCx -> ccache,
   /usr/bin/fusermount{,3}            rCx -> fusermount,
 
@@ -43,6 +46,9 @@ profile borg @{exec_path} {
   /dev/fuse rw,
 
   owner @{PROC}/@{pid}/fd/ r,
+        @{PROC}/sys/kernel/random/boot_id r,
+
+  @{run}/systemd/userdb/ r,
 
   owner @{user_cache_dirs}/ rw,
   owner @{user_cache_dirs}/borg/ rw,
