@@ -1,0 +1,22 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/xdg-user-dirs-update
+profile xdg-user-dirs-update @{exec_path} {
+  include <abstractions/base>
+
+  @{exec_path} mr,
+
+  /etc/xdg/user-dirs.conf r,
+  /etc/xdg/user-dirs.defaults r,
+  /var/lib/gdm/.config/user-dirs.dirs r,
+
+  owner @{user_config_dirs}/user-dirs.dirs r,
+
+  include if exists <local/xdg-user-dirs-update>
+}
