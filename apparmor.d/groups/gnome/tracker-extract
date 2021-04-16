@@ -1,0 +1,32 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}lib/tracker-extract-3
+profile tracker-extract @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/gstreamer>
+  include <abstractions/openssl>
+
+  @{exec_path} mr,
+
+  /usr/share/tracker3/{,**} r,
+  /usr/share/tracker3-miners/{,**} r,
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+  /usr/share/applications/*.desktop r,
+  /usr/share/mime/mime.cache r,
+
+  owner @{user_share_dirs}/gvfs-metadata/** r,
+
+  include <abstractions/dconf>
+  owner @{run}/user/[0-9]*/dconf/ rw,
+  owner @{run}/user/[0-9]*/dconf/user rw,
+
+  /tmp/tracker-extract-3-files.*/{,*} rw,
+
+  include if exists <local/tracker-extract>
+}
