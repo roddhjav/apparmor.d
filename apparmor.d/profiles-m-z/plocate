@@ -1,0 +1,22 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Mikhail Morfikov
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/plocate
+profile plocate @{exec_path} {
+  include <abstractions/base>
+
+  # For running as root
+  capability dac_read_search,
+  capability setgid,
+
+  @{exec_path} mr,
+
+  /var/lib/plocate/plocate.db r,
+
+  include if exists <local/plocate>
+}

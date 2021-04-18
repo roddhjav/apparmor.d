@@ -1,0 +1,30 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Mikhail Morfikov
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /etc/cron.{hourly,daily,weekly,monthly}/plocate
+profile cron-plocate @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+
+  @{exec_path} r,
+  /{usr/,}bin/{,ba,da}sh rix,
+
+  /{usr/,}bin/which      rix,
+  /{usr/,}bin/true       rix,
+  /{usr/,}bin/flock      rix,
+  /{usr/,}bin/nocache    rix,
+  /{usr/,}bin/ionice     rix,
+  /{usr/,}bin/nice       rix,
+
+  /{usr/,}sbin/updatedb.plocate rPx,
+  /{usr/,}sbin/on_ac_power      rPx,
+
+  @{run}/plocate.daily.lock rwk,
+
+  include if exists <local/cron-plocate>
+}

@@ -1,0 +1,21 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Mikhail Morfikov
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}sbin/plocate-build
+profile plocate-build @{exec_path} {
+  include <abstractions/base>
+
+  @{exec_path} mr,
+
+  /var/lib/mlocate/mlocate.db r,
+
+  /var/lib/mlocate/#[0-9]* rw,
+  /var/lib/mlocate/plocate.db rwl -> /var/lib/mlocate/#[0-9]*,
+
+  include if exists <local/plocate-build>
+}
