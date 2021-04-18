@@ -1,0 +1,39 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Mikhail Morfikov
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}sbin/updatedb.plocate
+profile updatedb.plocate @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+
+  capability dac_read_search,
+  capability chown,
+  capability fowner,
+  capability sys_ptrace,
+
+  ptrace (read),
+
+  @{exec_path} mr,
+
+  /etc/updatedb.conf r,
+
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/mounts r,
+
+  /var/lib/plocate/plocate.db rw,
+  /var/lib/plocate/#[0-9]* rw,
+  /var/lib/plocate/plocate.db rwl -> /var/lib/plocate/#[0-9]*,
+
+  / r,
+  /**/ r,
+
+  # file_inherit
+  @{run}/plocate.daily.lock r,
+
+  include if exists <local/updatedb.plocate>
+}
