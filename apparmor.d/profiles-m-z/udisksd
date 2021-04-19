@@ -47,25 +47,26 @@ profile udisksd @{exec_path} flags=(attach_disconnected) {
   /{usr/,}bin/systemd-escape  rCx -> systemd-escape,
 
   # Allow mounting of removable devices
-  mount fstype={btrfs,ext*,vfat,iso9660,udf} /dev/sd[a-z]       -> /{media,mnt}/*/*/,
-  mount fstype={btrfs,ext*,vfat,iso9660,udf} /dev/sd[a-z][0-9]* -> /{media,mnt}/*/*/,
+  mount fstype={btrfs,ext*,vfat,iso9660,udf} /dev/sd[a-z]       -> @{MOUNTS}/*/*/,
+  mount fstype={btrfs,ext*,vfat,iso9660,udf} /dev/sd[a-z][0-9]* -> @{MOUNTS}/*/*/,
+  mount fstype={btrfs,ext*,vfat,iso9660,udf} /dev/dm-[0-9]*     -> @{MOUNTS}/*/*/,
   # Allow mounting of loop devices (ISO files)
-  mount fstype={btrfs,ext*,vfat,iso9660,udf} /dev/loop[0-9]*        -> /{media,mnt}/*/*/,
-  mount fstype={btrfs,ext*,vfat,iso9660,udf} /dev/loop[0-9]*p[0-9]* -> /{media,mnt}/*/*/,
+  mount fstype={btrfs,ext*,vfat,iso9660,udf} /dev/loop[0-9]*        -> @{MOUNTS}/*/*/,
+  mount fstype={btrfs,ext*,vfat,iso9660,udf} /dev/loop[0-9]*p[0-9]* -> @{MOUNTS}/*/*/,
   # Allow mounting of cdrom
   mount fstype={btrfs,ext*,vfat,iso9660,udf} /dev/loop[0-9]* -> /media/cdrom[0-9]/,
   mount fstype={iso9660,udf}                 /dev/sr[0-9]*   -> /media/cdrom[0-9]/,
   # Allow mounting od sd cards
-  mount fstype={btrfs,ext*,vfat,iso9660,udf} /dev/mmcblk[0-9]         -> /{media,mnt}/*/*/,
-  mount fstype={btrfs,ext*,vfat,iso9660,udf} /dev/mmcblk[0-9]*p[0-9]* -> /{media,mnt}/*/*/,
+  mount fstype={btrfs,ext*,vfat,iso9660,udf} /dev/mmcblk[0-9]         -> @{MOUNTS}/*/*/,
+  mount fstype={btrfs,ext*,vfat,iso9660,udf} /dev/mmcblk[0-9]*p[0-9]* -> @{MOUNTS}/*/*/,
   # Allow unmounting
-  umount /{media,mnt}/*/,
-  umount /{media,mnt}/*/*/,
+  umount @{MOUNTS}/*/,
+  umount @{MOUNTS}/*/*/,
   umount /media/cdrom[0-9]/,
 
   # Be able to create/delete dirs for removable media
-  /{media,mnt}/*/ rw,
-  /{media,mnt}/*/*/ rw,
+  @{MOUNTS}/*/ rw,
+  @{MOUNTS}/*/*/ rw,
   /media/cdrom[0-9]/ rw,
 
   # Udisks2 config files
