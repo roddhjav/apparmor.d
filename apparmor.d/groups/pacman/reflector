@@ -1,0 +1,37 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/reflector
+profile reflector @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/python>
+  include <abstractions/nameservice-strict>
+  include <abstractions/openssl>
+  include <abstractions/ssl_certs>
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  @{exec_path} mr,
+  /{usr/,}bin/  r,
+
+  /etc/xdg/reflector/reflector.conf r,
+  /etc/pacman.d/mirrorlist rw,
+
+  owner @{user_cache_dirs}/mirrorstatus.json rw,
+  /var/cache/reflector/mirrorstatus.json rw,
+
+  @{PROC}/1/environ r,
+  @{PROC}/cmdline r,
+  @{PROC}/sys/kernel/osrelease r,
+
+  include if exists <local/reflector>
+}
