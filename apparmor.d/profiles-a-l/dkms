@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2019-2021 Mikhail Morfikov
+#               2021 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -10,6 +11,11 @@ include <tunables/global>
 profile dkms @{exec_path} {
   include <abstractions/base>
   include <abstractions/consoles>
+
+  capability dac_read_search,
+  capability mknod,
+  capability setgid,
+  capability setuid,
 
   @{exec_path} r,
   /{usr/,}bin/{,ba,da}sh rix,
@@ -48,15 +54,14 @@ profile dkms @{exec_path} {
   /{usr/,}bin/lsb_release rPx -> child-lsb_release,
 
   /{usr/,}lib/linux-kbuild-*/scripts/** rix,
-  capability setuid,
-  capability setgid,
-  /proc/sys/kernel/osrelease r,
+  /{usr/,}lib/modules/*/build/scripts/** rix,
   /{usr/,}lib/linux-kbuild-*/tools/objtool/objtool rix,
 
   / r,
   /{usr/,}lib/modules/*/updates/ rw,
   /{usr/,}lib/modules/*/updates/dkms/ rw,
   /{usr/,}lib/modules/*/updates/dkms/*.ko rw,
+  /{usr/,}lib/modules/*/kernel/drivers/{,**.ko.xz} rw,
 
   /var/lib/dkms/ r,
   /var/lib/dkms/** rw,
@@ -84,7 +89,7 @@ profile dkms @{exec_path} {
   owner /tmp/* rw,
 
   owner @{PROC}/@{pid}/fd/ r,
-
+        @{PROC}/sys/kernel/osrelease r,
 
   profile kmod {
     include <abstractions/base>
