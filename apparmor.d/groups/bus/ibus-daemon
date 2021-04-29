@@ -1,0 +1,34 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/ibus-daemon
+profile ibus-daemon @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+
+  signal (receive) set=(usr1) peer=gnome-shell,
+  signal (send) set=(term) peer=ibus*,
+
+  @{exec_path} mr,
+  
+  /{usr/,}lib/ibus/ibus-* rPx,
+
+  /usr/share/ibus/{,**} r,
+  /var/lib/dbus/machine-id r,
+
+  owner @{user_config_dirs}/ibus/{,**} rw,
+  owner @{user_cache_dirs}/ibus/{,**} rw,
+  /var/lib/gdm/.config/ibus/{,**} rw,
+  /var/lib/gdm/.cache/ibus/{,**} rw,
+
+  owner @{PROC}/@{pids}/fd/ r,
+
+  owner /dev/tty[0-9]* rw,
+
+  include if exists <local/ibus-daemon>
+}

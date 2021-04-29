@@ -1,0 +1,30 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}lib/ibus/ibus-portal
+profile ibus-portal @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+
+  signal (receive) set=(term, hup) peer=gdm*,
+
+  @{exec_path} mr,
+
+  /{usr/,}lib/gio/modules/{,*} r,
+  /{usr/,}lib/locale/locale-archive r,
+
+  /usr/share/locale/locale.alias r,
+
+  /var/lib/dbus/machine-id r,
+  /var/lib/gdm/.config/ibus/bus/[0-9a-f]*-unix-wayland-[0-9] r,
+  owner @{user_config_dirs}/ibus/bus/[0-9a-f]*-unix-wayland-[0-9] r,
+
+  owner /dev/tty[0-9]* rw,
+  /dev/null rw,
+
+  include if exists <local/ibus-portal>
+}
