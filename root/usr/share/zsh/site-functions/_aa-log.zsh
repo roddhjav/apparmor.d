@@ -7,11 +7,11 @@ _aa-log () {
 }
 
 __aa_profiles() {
-	find -L /etc/apparmor.d -type f \
-		| sed -e 's#/etc/apparmor.d/##' \
-			  -e '/abi/d' \
+	find -L /etc/apparmor.d -type f -printf '%P\n' \
+		| sed -e '/abi/d' \
 			  -e '/abstractions/d' \
 			  -e '/local/d' \
+			  -e '/tunables/d' \
 		| sort
 }
 
