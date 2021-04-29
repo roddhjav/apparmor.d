@@ -1,0 +1,35 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}lib/ibus/ibus-dconf
+profile ibus-dconf @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+
+  signal (receive) set=term peer=ibus-daemon,
+
+  @{exec_path} mr,
+
+  /usr/share/gdm/greeter-dconf-defaults r,
+
+  /etc/dconf/profile/ibus r,
+  /etc/dconf/db/ibus r,
+  /var/lib/dbus/machine-id r,
+
+  owner @{user_config_dirs}/ibus/bus/[0-9a-f]*-unix-wayland-[0-9] r,
+  /var/lib/gdm/.config/ibus/bus/[0-9a-f]*-unix-wayland-[0-9] r,
+
+  include <abstractions/dconf>
+  owner @{run}/user/@{uid}/dconf/ rw,
+  owner @{run}/user/@{uid}/dconf/user rw,
+  /usr/share/dconf/profile/gdm r,
+  /var/lib/gdm/.config/dconf/user r,
+
+  owner /dev/tty[0-9]* rw,
+
+  include if exists <local/ibus-dconf>
+}
