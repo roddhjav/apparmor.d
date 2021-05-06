@@ -11,8 +11,6 @@ profile browserpass @{exec_path} {
   include <abstractions/base>
   include <abstractions/nameservice-strict>
 
-  deny network inet6 stream,
-  deny network inet stream,
   network netlink raw,
 
   @{exec_path} mr,
@@ -27,10 +25,13 @@ profile browserpass @{exec_path} {
 
   @{sys}/kernel/mm/transparent_hugepage/hpage_pmd_size r,
 
-  @{user_share_dirs}/gvfs-metadata/home r,
-  @{user_share_dirs}/gvfs-metadata/home-*.log r,
-
   owner @{PROC}/@{pid}/mountinfo r,
+
+  # Silencer
+  deny network inet6 stream,
+  deny network inet stream,
+  deny owner @{user_share_dirs}/gvfs-metadata/{,**} r,
+  deny owner @{HOME}/@{XDG_DOWNLOAD_DIR}/{,**} r,
 
   include if exists <local/browserpass>
 }
