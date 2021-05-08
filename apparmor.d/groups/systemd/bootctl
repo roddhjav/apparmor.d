@@ -1,0 +1,55 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/bootctl
+profile bootctl @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/systemd-common>
+  include <abstractions/disks-read>
+
+  signal (send) peer=child-pager,
+
+  ptrace (read) peer=unconfined,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/less       rPx -> child-pager,
+
+  /boot/ r,
+  /boot/EFI/{,**} r,
+  /boot/loader/{,**} r,
+  /boot/EFI/BOOT/.#BOOT*.EFI[0-9a-f]* rw,
+  /boot/EFI/BOOT/BOOTX64.EFI w,
+  /boot/EFI/systemd/.#systemd-boot*.efi[0-9a-f]* rw,
+  /boot/EFI/systemd/systemd-boot*.efi w,
+  /boot/loader/.#bootctlrandom-seed[0-9a-f]* rw,
+  /boot/loader/random-seed w,
+
+  @{sys}/devices/virtual/dmi/id/{sys_vendor,product_version,product_name} r,
+
+  @{sys}/firmware/efi/efivars/ r,
+  @{sys}/firmware/efi/efivars/Boot[0-9A-F]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]* r,
+  @{sys}/firmware/efi/efivars/BootOrder-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]* r,
+  @{sys}/firmware/efi/efivars/LoaderDevicePartUUID-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]* r,
+  @{sys}/firmware/efi/efivars/LoaderEntries-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]* r,
+  @{sys}/firmware/efi/efivars/LoaderFeatures-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]* r,
+  @{sys}/firmware/efi/efivars/LoaderFirmwareInfo-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]* r,
+  @{sys}/firmware/efi/efivars/LoaderFirmwareType-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]* r,
+  @{sys}/firmware/efi/efivars/LoaderImageIdentifier-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]* r,
+  @{sys}/firmware/efi/efivars/LoaderInfo-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]* r,
+  @{sys}/firmware/efi/efivars/LoaderSystemToken-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]* r,
+  @{sys}/firmware/efi/efivars/OsIndications-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]* r,
+  @{sys}/firmware/efi/efivars/OsIndicationsSupported-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]* r,
+  @{sys}/firmware/efi/efivars/SecureBoot-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]* r,
+  @{sys}/firmware/efi/efivars/SetupMode-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]* r,
+
+ owner @{PROC}/@{pid}/cgroup r,
+       @{PROC}/sys/kernel/random/poolsize r,
+
+  include if exists <local/bootctl>
+}
