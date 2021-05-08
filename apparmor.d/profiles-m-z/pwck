@@ -1,0 +1,32 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/pwck
+profile pwck @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+
+  @{exec_path} mr,
+
+  /{usr/,}{s,}bin/nscd rix,
+
+  /etc/login.defs r,
+  /etc/.pwd.lock wk,
+  /etc/passwd rw,
+  /etc/passwd.[0-9]* rw,
+  /etc/passwd.lock wl,
+  /etc/shadow rw,
+  /etc/shadow.[0-9]* rw,
+  /etc/shadow.lock wl,
+
+  @{run}/systemd/userdb/ r,
+
+  @{PROC}/sys/kernel/random/boot_id r,
+
+  include if exists <local/pwck>
+}
