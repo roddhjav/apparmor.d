@@ -13,7 +13,7 @@ profile gdm-xsession @{exec_path} {
   include <abstractions/consoles>
   include <abstractions/nameservice-strict>
 
-  @{exec_path} r,
+  @{exec_path} mr,
 
   /{usr/,}bin/{,ba,da}sh      rix,
   /{usr/,}bin/zsh             rix,
@@ -21,22 +21,26 @@ profile gdm-xsession @{exec_path} {
   /{usr/,}bin/gnome-session   rix,
   /{usr/,}bin/gsettings       rix,
   /{usr/,}bin/id              rix,
+  /{usr/,}bin/tty             rix,
 
   /{usr/,}bin/dbus-update-activation-environment    rCx -> dbus,
   /{usr/,}bin/systemctl                             rPx -> child-systemctl,
   /{usr/,}bin/xhost                                 rPx,
   /{usr/,}lib/gnome-session-binary                  rPx,
 
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
   /etc/X11/{,**} r,
+
+  include <abstractions/dconf>
+  owner @{run}/user/@{uid}/dconf/ rw,
+  owner @{run}/user/@{uid}/dconf/user rw,
 
   profile dbus {
     include <abstractions/base>
 
     /{usr/,}bin/dbus-update-activation-environment mr,
 
-    # file_inherit
     owner @{HOME}/.xsession-errors w,
-
   }
 
   include if exists <local/gdm-xsession>
