@@ -49,24 +49,34 @@ initialise() {
 	_init
 	remove_files
 
-	mkdir "${ROOT:?}/apparmor.d/profiles"
-	mv "${ROOT:?}/apparmor.d/groups/"*/* "${ROOT:?}/apparmor.d/profiles/"
+	echo "Ignore profiles in profiles.ignore."
+    while read -r profile; do
+		[[ "$profile" =~ ^\# ]] && continue
+		if [[ "$profile" == */ ]]; then
+			find "$ROOT/apparmor.d" -iname "${profile////}" -type d -exec rm -r {} \; 
+		else
+			find "$ROOT/apparmor.d" -iname "$profile" -type f -exec rm {} \;
+		fi
+    done <profiles.ignore
+
+	echo "Synchronise all profiles."
+	mv "${ROOT:?}/apparmor.d/groups/"*/* "${ROOT:?}/apparmor.d/"
 	rm -rf "${ROOT:?}/apparmor.d/groups/"
 	for dir in profiles-a-l profiles-m-z; do
-		mv "${ROOT:?}/apparmor.d/$dir/"* "${ROOT:?}/apparmor.d/profiles/"
+		mv "${ROOT:?}/apparmor.d/$dir/"* "${ROOT:?}/apparmor.d/"
 		rm -rf "${ROOT:?}/apparmor.d/$dir"
 	done
 }
 
-# Generate the apparmor.d directory with profile from the manifest
-generate() {
-	echo "Generated apparmor.d directory: $ROOT"
+# Set flags on some profile
+setflags() {
+	echo "Set apparmor flags from profiles.flags"
     while read -r profile; do
         IFS=' ' read -r -a manifest <<< "$profile"
         profile="${manifest[0]}" flags="${manifest[1]}"
 
         [[ "$profile" =~ ^\# ]] && continue
-		path="${ROOT:?}/apparmor.d/profiles/$profile"
+		path="${ROOT:?}/apparmor.d/$profile"
         if [[ ! -f "$path" ]]; then
 			_warning "Profile $profile not found"
 			continue
@@ -80,11 +90,7 @@ generate() {
 				-i "$path"
         fi
 
-        mv "$path" "${ROOT:?}/apparmor.d/"
-
-    done <profiles.manifest
-
-    rm -rf "${ROOT:?}/apparmor.d/profiles"
+    done <profiles.flags
 }
 
 # Print help message
@@ -113,7 +119,7 @@ main() {
 
 	configure
 	initialise
-	generate
+	setflags
 
 	exit 0
 }
