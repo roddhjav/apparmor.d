@@ -1,0 +1,35 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/paccache
+profile paccache @{exec_path} {
+  include <abstractions/base>
+  
+  capability dac_read_search,
+  capability mknod,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/cat          rix,
+  /{usr/,}bin/gettext      rix,
+  /{usr/,}bin/pacman-conf  rPx,
+  /{usr/,}bin/pacman       rPUx,
+  /{usr/,}bin/tput         rix,
+  /{usr/,}bin/pacsort      rix,
+  /{usr/,}bin/gawk         rix,
+  /{usr/,}bin/bash         rix,
+
+  /usr/share/makepkg/util/*.sh r,
+  /usr/share/terminfo/x/xterm-256color r,
+
+  /var/cache/pacman/pkg/{,*} rw,
+
+  /dev/tty rw,
+
+  include if exists <local/paccache>
+}
