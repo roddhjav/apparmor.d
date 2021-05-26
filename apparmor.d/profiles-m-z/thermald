@@ -1,0 +1,54 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2015-2020 Mikhail Morfikov
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}sbin/thermald
+profile thermald @{exec_path} {
+  include <abstractions/base>
+
+  @{exec_path} mr,
+
+  owner @{run}/thermald/ rw,
+  owner @{run}/thermald/thd_preference.conf rw,
+  owner @{run}/thermald/thd_preference.conf.save w,
+  owner @{run}/thermald/thermald.pid rwk,
+
+  /etc/thermald/thermal-conf.xml r,
+  /etc/thermald/thermal-cpu-cdev-order.xml r,
+
+  @{sys}/class/hwmon/ r,
+  @{sys}/class/thermal/ r,
+  @{sys}/devices/platform/ r,
+
+  @{sys}/devices/system/cpu/present r,
+  @{sys}/devices/system/cpu/intel_pstate/max_perf_pct r,
+  @{sys}/devices/system/cpu/intel_pstate/status r,
+
+  @{sys}/devices/pci[0-9]*/**/drm/**/intel_backlight/max_brightness r,
+
+  @{sys}/devices/**/hwmon[0-9]*/name r,
+  @{sys}/devices/**/hwmon[0-9]*/temp[0-9]*_{max,crit} r,
+
+  @{sys}/devices/virtual/dmi/id/product_name r,
+  @{sys}/devices/virtual/dmi/id/product_uuid r,
+
+  @{sys}/devices/virtual/thermal/**/{type,temp} r,
+
+  @{sys}/devices/virtual/thermal/thermal_zone[0-9]*/ r,
+  @{sys}/devices/virtual/thermal/thermal_zone[0-9]*/trip_point_[0-9]*_temp rw,
+  @{sys}/devices/virtual/thermal/thermal_zone[0-9]*/trip_point_[0-9]*_type r,
+
+  @{sys}/devices/virtual/thermal/cooling_device[0-9]*/cur_state rw,
+  @{sys}/devices/virtual/thermal/cooling_device[0-9]*/max_state r,
+
+  @{sys}/devices/virtual/powercap/intel-rapl/ r,
+  @{sys}/devices/virtual/powercap/intel-rapl/**/name r,
+  @{sys}/devices/virtual/powercap/intel-rapl/intel-rapl:[0-9]*/ r,
+  @{sys}/devices/virtual/powercap/intel-rapl/intel-rapl:[0-9]*/* r,
+
+  include if exists <local/thermald>
+}
