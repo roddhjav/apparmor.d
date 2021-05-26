@@ -7,11 +7,13 @@ abi <abi/3.0>,
 include <tunables/global>
 
 @{exec_path} = /{usr/,}lib/dconf/dconf-service /usr/{lib,libexec}/dconf-service
-profile dconf-service @{exec_path} {
+profile dconf-service @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
 
   # Needed?
   deny capability sys_nice,
+
+  signal (receive) set=term peer=gdm,
 
   @{exec_path} mr,
 
@@ -24,8 +26,11 @@ profile dconf-service @{exec_path} {
   owner @{user_cache_dirs}/ rw,
   owner @{user_cache_dirs}/dconf/ rw,
   owner @{user_cache_dirs}/dconf/user rw,
+  /var/lib/gdm/.config/dconf/user r,
 
   @{PROC}/cmdline r,
+
+  /dev/tty[0-9]* rw,
 
   include if exists <local/dconf-service>
 }
