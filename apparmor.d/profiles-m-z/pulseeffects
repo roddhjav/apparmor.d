@@ -1,0 +1,44 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2015-2020 Mikhail Morfikov
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/pulseeffects
+profile pulseeffects @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/gtk>
+  include <abstractions/fonts>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/freedesktop.org>
+  include <abstractions/nameservice-strict>
+  include <abstractions/gstreamer>
+
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  /etc/pipewire/pipewire.conf r,
+  /etc/pipewire/client.conf r,
+
+  owner @{HOME}/.config/PulseEffects/ rw,
+  owner @{HOME}/.config/PulseEffects/** rw,
+
+  owner @{HOME}/.config/autostart/pulseeffects-service.desktop w,
+
+  owner @{PROC}/@{pid}/cmdline r,
+  owner @{PROC}/@{pid}/fd/ r,
+
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+
+  include <abstractions/dconf>
+  owner @{run}/user/@{uid}/dconf/ rw,
+  owner @{run}/user/@{uid}/dconf/user rw,
+
+  # file_inherit
+  owner /dev/tty[0-9]* rw,
+
+  include if exists <local/pulseeffects>
+}

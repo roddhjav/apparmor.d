@@ -1,5 +1,5 @@
 # apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2015-2020 Mikhail Morfikov
+# Copyright (C) 2015-2021 Mikhail Morfikov
 #               2021 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
@@ -100,6 +100,12 @@ profile firefox @{exec_path} {
   deny @{sys}/devices/system/cpu/cpufreq/policy[0-9]/cpuinfo_max_freq r,
   deny @{sys}/devices/system/cpu/cpu[0-9]/cache/index[0-9]/size r,
 
+  # For Cryptographic Attestation of Personhood
+  #@{sys}/bus/ r,
+  #@{sys}/class/ r,
+  #@{sys}/class/hidraw/ r,
+  #@{run}/udev/data/c241:[0-9]* r,  # dynamic
+
        owner @{PROC}/@{pid}/fd/ r,
        owner @{PROC}/@{pid}/cgroup r,
   deny owner @{PROC}/@{pid}/stat r,
@@ -126,6 +132,7 @@ profile firefox @{exec_path} {
 
   # Set default browser
   /{usr/,}bin/update-mime-database rPx,
+  owner @{user_config_dirs}/ r,
   owner @{user_config_dirs}/mimeapps.list{,.*} rw,
   owner @{user_share_dirs}/mime/packages/user-extension-{htm,html,xht,xhtml,shtml}.xml rw,
   owner @{user_share_dirs}/mime/packages/user-extension-{htm,html,xht,xhtml,shtml}.xml.* rw,

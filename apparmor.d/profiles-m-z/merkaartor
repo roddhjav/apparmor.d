@@ -1,0 +1,62 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Mikhail Morfikov
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/merkaartor
+profile merkaartor @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/gtk>
+  include <abstractions/fonts>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/freedesktop.org>
+  include <abstractions/mesa>
+  include <abstractions/dri-common>
+  include <abstractions/dri-enumerate>
+  include <abstractions/qt5-settings-write>
+  include <abstractions/nameservice-strict>
+  include <abstractions/ssl_certs>
+  include <abstractions/openssl>
+  include <abstractions/user-download-strict>
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink dgram,
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  /usr/share/merkaartor/{,**} r,
+
+  owner @{HOME}/.config/Merkaartor/ rw,
+  owner @{HOME}/.config/Merkaartor/* rwkl -> @{HOME}/.config/Merkaartor/,
+
+  owner @{HOME}/.merkaartor/ rw,
+  owner @{HOME}/.merkaartor/* rw,
+
+  owner @{HOME}/merkaartor.log rw,
+
+  /var/lib/dbus/machine-id r,
+  /etc/machine-id r,
+
+  # To configure Qt5 settings (theme, font, icons, etc.) under DE/WM without Qt integration
+  owner @{HOME}/.config/qt5ct/{,**} r,
+  /usr/share/qt5ct/** r,
+
+  /usr/share/hwdata/pnp.ids r,
+
+  deny owner @{PROC}/@{pid}/cmdline r,
+
+  owner /tmp/qtsingleapp-merkaa-* rw,
+  owner /tmp/qtsingleapp-merkaa-*-lockfile rwk,
+
+  @{sys}/devices/system/node/ r,
+  @{sys}/devices/system/node/node[0-9]*/meminfo r,
+
+  include if exists <local/merkaartor>
+}

@@ -1,0 +1,36 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2015-2020 Mikhail Morfikov
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/pipewire-pulse
+profile pipewire-pulse @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+
+  ptrace (read) peer=pipewire,
+  ptrace (read) peer=pipewire-media-session,
+
+  # Needed for all sound/music apps.
+  ptrace (read),
+
+  @{exec_path} mr,
+
+  /etc/pipewire/client.conf r,
+
+  /etc/pipewire/pipewire-pulse.conf r,
+
+  owner @{run}/user/@{uid}/pulse/pid w,
+
+  @{sys}/devices/virtual/dmi/id/product_name r,
+  @{sys}/devices/virtual/dmi/id/sys_vendor r,
+  @{sys}/devices/virtual/dmi/id/board_vendor r,
+  @{sys}/devices/virtual/dmi/id/bios_vendor r,
+
+  / r,
+
+  include if exists <local/pipewire-pulse>
+}
