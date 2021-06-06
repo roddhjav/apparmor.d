@@ -10,29 +10,30 @@ include <tunables/global>
 @{exec_path}  = /{usr/,}lib/systemd/systemd-coredump
 profile systemd-coredump @{exec_path} flags=(attach_disconnected complain) {
   include <abstractions/base>
+  include <abstractions/nameservice-strict>
   include <abstractions/openssl>
   include <abstractions/systemd-common>
-  include <abstractions/nameservice-strict>
 
+  capability dac_read_search,
+  capability setgid,
   capability setpcap,
   capability setuid,
-  capability setgid,
-  capability dac_read_search,
   capability sys_ptrace,
   # Needed?
-  deny capability net_admin,
+  # deny capability net_admin,
 
   @{exec_path} mr,
 
   /{usr/,}bin/* r,
   /{usr/,}sbin/* r,
-  /usr/libexec/** r,
+  /usr/{lib,libexec}/** r,
 
   /etc/systemd/coredump.conf r,
 
-        /var/lib/systemd/coredump/ r,
-  owner /var/lib/systemd/coredump/#[0-9]* rw,
-  owner /var/lib/systemd/coredump/core.*.[0-9]*.[0-9a-f]*.[0-9]*.[0-9]*{,.zst} rwl -> /var/lib/systemd/coredump/#[0-9]*,
+  /var/lib/systemd/coredump/ r,
+  /var/lib/systemd/coredump/#[0-9]* rwl,
+  /var/lib/systemd/coredump/core.*.@{uid}.[0-9a-f]*.[0-9]*.[0-9]*.zst rwl,
+  /var/lib/systemd/coredump/core.*.@{uid}.[0-9a-f]*.[0-9]*.[0-9]* rwl,
 
   owner @{PROC}/@{pid}/setgroups r,
         @{PROC}/@{pids}/comm r,
