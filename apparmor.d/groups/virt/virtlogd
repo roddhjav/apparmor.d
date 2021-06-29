@@ -1,0 +1,35 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/virtlogd
+profile virtlogd @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/openssl>
+  include <abstractions/nameservice-strict>
+
+  ptrace (read) peer=libvirtd,
+  ptrace (read) peer=unconfined,
+
+  @{exec_path} mr,
+
+  /etc/libvirt/virtlogd.conf r,
+
+  /var/log/libvirt/qemu/*.log rw,
+
+  @{run}/virtlogd.pid rwk,
+
+  @{sys}/devices/system/node/ r,
+  @{sys}/devices/system/node/node[0-9]*/meminfo r,
+
+  owner @{PROC}/@{pid}/stat r,
+        @{PROC}/1/environ r,
+        @{PROC}/cmdline r,
+        @{PROC}/sys/kernel/osrelease r,
+
+  include if exists <local/virtlogd>
+}
