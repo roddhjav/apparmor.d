@@ -1,6 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
-# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
 
@@ -17,6 +17,8 @@ profile rngd @{exec_path} {
   capability sys_nice,
   capability dac_read_search,
 
+  network netlink raw,
+
   /etc/opensc.conf r,
   /etc/conf.d/rngd r,
 
@@ -26,8 +28,12 @@ profile rngd @{exec_path} {
   @{PROC}/sys/kernel/random/poolsize r,
   @{PROC}/sys/kernel/random/write_wakeup_threshold rw,
 
+  /dev/ r,
   /dev/hwrng r,
   /dev/random w,
+
+  @{sys}/bus/ r,
+  @{sys}/class/ r,
 
   include if exists <local/rngd>
 }
