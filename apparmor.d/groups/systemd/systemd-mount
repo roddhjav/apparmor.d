@@ -1,0 +1,25 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/systemd-mount
+@{exec_path} += /{usr/,}bin/systemd-umount
+profile systemd-mount @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/disks-write>
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/pager rPx -> child-pager,
+  /{usr/,}bin/less  rPx -> child-pager,
+  /{usr/,}bin/more  rPx -> child-pager,
+
+  @{sys}/bus/ r,
+  @{sys}/class/ r,
+
+  include if exists <local/systemd-mount>
+}
