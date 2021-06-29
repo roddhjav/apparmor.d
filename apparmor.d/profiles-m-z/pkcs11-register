@@ -1,0 +1,23 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/pkcs11-register
+profile pkcs11-register @{exec_path} {
+  include <abstractions/base>
+
+  @{exec_path} mr,
+
+  /etc/opensc.conf r,
+
+  owner @{HOME}/.pki/nssdb/pkcs11.txt r,
+  owner @{HOME}/.mozilla/firefox/profiles.ini r,
+  owner @{HOME}/.mozilla/firefox/*/pkcs11.txt r,
+  owner @{HOME}/.thunderbird/profiles.ini r,
+
+  include if exists <local/pkcs11-register>
+}
