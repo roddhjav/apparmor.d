@@ -9,7 +9,7 @@ include <tunables/global>
 
 @{exec_path}  = /{usr/,}bin/virt-manager
 @{exec_path} += /usr/share/virt-manager/virt-manager
-profile virt-manager @{exec_path} {
+profile virt-manager @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/X>
   include <abstractions/vulkan>
@@ -38,13 +38,25 @@ profile virt-manager @{exec_path} {
   /{usr/,}bin/python3.[0-9]* r,
 
   /{usr/,}bin/ r,
+  /{usr/,}bin/env       rix,
   /{usr/,}bin/getfacl   rix,
   /{usr/,}bin/setfacl   rix,
 
   /{usr/,}{s,}bin/libvirtd rPx,
 
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+  /usr/share/gtksourceview-4/{,**} r,
+  /usr/share/hwdata/*.ids r,
+  /usr/share/ladspa/rdf/{,ladspa.rdfs} r,
+  /usr/share/misc/*.ids r,
+  /usr/share/osinfo/{,**} r,
   /usr/share/virt-manager/{,**} r,
   /usr/share/virtio/{,*} r,
+  /var/lib/usbutils/*.ids r,
+
+  /etc/fstab r,
+  /etc/libnl/classid r,
+  /etc/libva.conf r,
 
   owner @{HOME}/ r,
   owner @{user_cache_dirs}/ rw,
@@ -60,7 +72,7 @@ profile virt-manager @{exec_path} {
   @{MOUNTS}/*/**.{ISO,IMG,BIN,MDF,NRG} r,
 
   # System VM images
-  #owner /var/lib/libvirt/images/ r,
+  /var/lib/libvirt/images/{,**} rw,
 
   # User VM images
   owner @{user_share_dirs}/ r,
@@ -68,23 +80,13 @@ profile virt-manager @{exec_path} {
   owner @{HOME}/@{XDG_VM_DIR}/{,**} rw,
   owner @{MOUNTS}/*/@{XDG_VM_DIR}/{,**} rw,
 
-  /usr/share/glib-2.0/schemas/gschemas.compiled r,
-
-  /usr/share/osinfo/{,**} r,
-  /usr/share/gtksourceview-4/{,**} r,
-
-  /usr/share/hwdata/*.ids r,
-  /usr/share/misc/*.ids r,
-  /var/lib/usbutils/*.ids r,
-
   owner @{PROC}/@{pid}/mountinfo r,
   owner @{PROC}/@{pid}/mounts r,
   owner @{PROC}/@{pid}/fd/ r,
         @{PROC}/@{pid}/net/route r,
 
   @{sys}/devices/pci[0-9]*/**/drm/ r,
-
-  /etc/fstab r,
+  @{sys}/devices/virtual/drm/ttm/uevent r,
 
         @{run}/mount/utab r,
 
