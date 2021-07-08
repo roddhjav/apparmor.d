@@ -1,0 +1,33 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/systemd-delta
+profile systemd-delta @{exec_path} {
+  include <abstractions/base>
+
+  signal (send) peer=child-pager,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/less  rPx -> child-pager,
+
+  /etc/binfmt.d/{,**} r,
+  /etc/modprobe.d/{,**} r,
+  /etc/modules-load.d/{,**} r,
+  /etc/sysctl.d/{,**} r,
+  /etc/systemd/system/{,**} r,
+  /etc/systemd/user/{,**} r,
+  /etc/tmpfiles.d/{,**} r,
+  /etc/udev/rules.d/{,**} r,
+  @{run}/systemd/system/{,**} r,
+  @{run}/tmpfiles.d/{,**} r,
+
+  @{PROC}/@{pids}/cgroup r,
+
+  include if exists <local/systemd-delta>
+}
