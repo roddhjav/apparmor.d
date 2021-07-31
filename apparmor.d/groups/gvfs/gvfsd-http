@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2021 Mikhail Morfikov
+#               2021 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -12,6 +13,7 @@ profile gvfsd-http @{exec_path} {
   include <abstractions/base>
   include <abstractions/freedesktop.org>
   include <abstractions/nameservice-strict>
+  include <abstractions/p11-kit>
 
   network inet stream,
   network inet6 stream,
@@ -22,6 +24,12 @@ profile gvfsd-http @{exec_path} {
   @{exec_path} mr,
 
   /usr/share/glib-2.0/schemas/gschemas.compiled r,
+
+  include <abstractions/dconf>
+  owner @{run}/user/@{uid}/dconf/ rw,
+  owner @{run}/user/@{uid}/dconf/user rw,
+
+  owner @{run}/user/@{uid}/gvfsd/socket-* rw,
 
   include if exists <local/gvfsd-http>
 }

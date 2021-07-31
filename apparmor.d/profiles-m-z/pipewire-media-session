@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2015-2020 Mikhail Morfikov
+#               2021 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -15,6 +16,7 @@ profile pipewire-media-session @{exec_path} {
 
   @{exec_path} mr,
 
+  /usr/share/pipewire/media-session.d/{,**} r,
   /etc/pipewire/media-session.d/*.conf r,
 
   owner @{user_config_dirs}/pipewire/ rw,
@@ -41,14 +43,18 @@ profile pipewire-media-session @{exec_path} {
   @{sys}/class/video4linux/ r,
 
   @{sys}/devices/**/sound/**/uevent r,
+  @{sys}/devices/pci[0-9]*/**/video4linux/video[0-9]*/uevent r,
 
   @{run}/udev/data/+sound:card[0-9]* r, # For sound
+  @{run}/udev/data/c81:[0-9]*  r,       # For video4linux
   @{run}/udev/data/c116:[0-9]* r,       # For ALSA
 
   @{run}/systemd/users/@{uid} r,
 
   @{sys}/devices/system/node/ r,
   @{sys}/devices/system/node/node[0-9]*/meminfo r,
+
+  /dev/video[0-9]* rw,
 
   include if exists <local/pipewire-media-session>
 }
