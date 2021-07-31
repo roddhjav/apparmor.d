@@ -1,0 +1,108 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/gnome-control-center
+profile gnome-control-center @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/audio>
+  include <abstractions/dri-common>
+  include <abstractions/dri-enumerate>
+  include <abstractions/gnome>
+  include <abstractions/gstreamer>
+  include <abstractions/nameservice-strict>
+  include <abstractions/openssl>
+  include <abstractions/p11-kit>
+  include <abstractions/ssl_certs>
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  signal (send) set=(kill) peer=unconfined,
+
+  @{exec_path} mr,
+  /{usr/,}bin/bwrap      rPUx,
+  /{usr/,}bin/gcm-viewer rix,
+  /{usr/,}bin/locale     rix,
+  /{usr/,}bin/openvpn    rPx,
+  /{usr/,}lib/gnome-control-center-print-renderer     rPx,
+  /{usr/,}lib/webkit2gtk-{3,4}.0/WebKitNetworkProcess rix,
+
+  /usr/share/backgrounds/gnome/* r,
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+  /usr/share/glvnd/egl_vendor.d/{,*.json} r,
+  /usr/share/gnome-background-properties/{,**} r,
+  /usr/share/gnome-bluetooth/{,**} r,
+  /usr/share/gnome-color-manager/{,**} r,
+  /usr/share/gnome-shell/search-providers/{,**} r,
+  /usr/share/gnome/gnome-version.xml r,
+  /usr/share/mime/{,**} r,
+  /usr/share/pipewire/client.conf r,
+  /usr/share/thumbnailers/{,*} r,
+  /usr/share/xml/iso-codes/iso_[0-9]*-[0-9]*.xml r,
+  /usr/share/zoneinfo/{,**} r,
+
+  /etc/machine-id r,
+  /var/lib/dbus/machine-id r,
+
+  owner @{HOME}/@{XDG_WALLPAPERS_DIR}/{,**} r,
+  owner @{user_cache_dirs}/gnome-control-center/{,**} rw,
+  owner @{user_cache_dirs}/mesa_shader_cache/index rw,
+  owner @{user_cache_dirs}/thumbnails/{,**} rw,
+  owner @{user_config_dirs}/gnome-control-center/{,**} rw,
+  owner @{user_config_dirs}/ibus/bus/[0-9a-f]*-unix-wayland-[0-9] r,
+  owner @{user_share_dirs}/backgrounds/{,**} rw,
+  owner @{user_share_dirs}/gvfs-metadata/home{,-*.log} r,
+  owner @{user_share_dirs}/icc/{,edid-*} r,
+  owner @{user_share_dirs}/webkitgtk/{,**} r,
+  owner @{user_share_dirs}/webkitgtk/databases/indexeddb/* rw,
+  owner @{user_share_dirs}/webkitgtk/localstorage/{,**} rwk,
+
+  include <abstractions/dconf>
+  owner @{run}/user/@{uid}/dconf/ rw,
+  owner @{run}/user/@{uid}/dconf/user rw,
+
+  owner @{run}/user/@{uid}/webkitgtk/{,**} rw,
+        @{run}/systemd/users/@{uid} r,
+        @{run}/systemd/sessions/ r,
+        @{run}/systemd/sessions/[0-9]* r,
+
+  @{run}/udev/data/+input* r,       # for mouse, keyboard, touchpad
+  @{run}/udev/data/+pci* r,
+  @{run}/udev/data/c13:[0-9]* r,    # for /dev/input/*
+  @{run}/udev/data/n[0-9]* r,
+
+  @{sys}/bus/ r,
+  @{sys}/class/ r,
+  @{sys}/class/input/ r,
+  @{sys}/devices/**/{name,vendor,product,uevent} r,
+  @{sys}/devices/platform/**/uevent r,
+  @{sys}/devices/virtual/**/uevent r,
+  @{sys}/devices/pci[0-9]*/**/drm/ r,
+  @{sys}/devices/virtual/dmi/id/chassis_type r,
+
+  owner @{sys}/fs/cgroup/user.slice/user-[0-9]*.slice/user@[0-9]*.service/{,**} rw,
+
+  owner @{PROC}/@{pid}/cgroup r,
+  owner @{PROC}/@{pid}/cmdline r,
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/stat r,
+  owner @{PROC}/@{pid}/statm r,
+  owner @{PROC}/@{pid}/task/*/comm rw,
+        @{PROC}/cmdline r,
+        @{PROC}/sys/dev/i915/perf_stream_paranoid r,
+        @{PROC}/zoneinfo r,
+
+  /dev/ r,
+  /dev/video[0-9]* rw,
+
+  include if exists <local/gnome-control-center>
+}
