@@ -1,0 +1,34 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/gnome-disk-image-mounter
+profile gnome-disk-image-mounter @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/freedesktop.org>
+  include <abstractions/gtk>
+
+  @{exec_path} mr,
+
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+  /usr/share/X11/xkb/{,**} r,
+
+  # Allow to mount user files
+  owner @{HOME}/{,**} r,
+  owner @{MOUNTS}/*/{,**} r,
+  owner /tmp/*/{,**} r,
+
+  include <abstractions/dconf>
+  owner @{run}/user/@{uid}/dconf/ rw,
+  owner @{run}/user/@{uid}/dconf/user rw,
+
+  owner @{PROC}/@{pid}/mountinfo r,
+
+  @{run}/mount/utab r,
+
+  include if exists <local/gnome-disk-image-mounter>
+}
