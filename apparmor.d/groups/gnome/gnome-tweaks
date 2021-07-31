@@ -1,0 +1,37 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/gnome-tweaks
+profile gnome-tweaks @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/audio>
+  include <abstractions/gnome>
+  include <abstractions/python>
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/ r,
+  /{usr/,}bin/ps rPx,
+  /{usr/,}bin/python3.[0-9]* rix,
+
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+  /usr/share/gnome-tweaks/{,**} r,
+
+  /etc/xdg/autostart/{,**} r,
+
+  owner @{user_config_dirs}/autostart/{,*.desktop} r,
+  owner @{user_share_dirs}/gnome-shell/extensions/**/schemas/* r,
+  owner @{user_share_dirs}/recently-used.xbel* rw,
+  owner @{user_share_dirs}/sounds/ r,
+
+  include <abstractions/dconf>
+  owner @{run}/user/@{uid}/dconf/ rw,
+  owner @{run}/user/@{uid}/dconf/user rw,
+
+  include if exists <local/gnome-tweaks>
+}
