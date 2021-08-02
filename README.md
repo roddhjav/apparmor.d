@@ -9,7 +9,7 @@
 
 ## Description 
 
-A set of over 800 AppArmor profiles which aims is to confine most of Linux base applications and processes.
+A set of over 1000 AppArmor profiles which aims is to confine most of Linux base applications and processes.
 
 **Goals & Purpose**
 - Support all distribution that support AppArmor (currenlty Archlinux and Debian),
@@ -34,10 +34,6 @@ We take inspiration from the [Android/ChromeOS Security Model][android_model] an
 This is fundamentally different from how AppArmor is used on Linux server as it is common to only confine the applications that face the internet and/or the users.
 
 
-## Tests
-
-A full test suite to ensure compatibility across distributions and softwares is
-still a work in progress.
 
 ## Installation
 
@@ -60,6 +56,37 @@ Build using standard Debian package build tools:
 ```sh
 dpkg-buildpackage -b -d -us -ui --sign-key=<gpg-id>
 ```
+
+## Usage
+
+Once installed and with the rules enabled, you can ensure the rules are loaded
+with `sudo aa-satus`, it should give something like:
+```
+apparmor module is loaded.
+1042 profiles are loaded.
+753 profiles are in enforce mode.
+   ...
+289 profiles are in complain mode.
+   ...
+0 profiles are in kill mode.
+0 profiles are in unconfined mode.
+119 processes have profiles defined.
+90 processes are in enforce mode.
+   ...
+29 processes are in complain mode.
+   ...
+0 processes are unconfined but have a profile defined.
+0 processes are in mixed mode.
+0 processes are in kill mode.
+```
+
+You can also list the current processes alongside with their security profile with
+`ps auxZ`. Most of the process should then be confined.
+
+## Tests
+
+A full test suite to ensure compatibility across distributions and softwares is still a work in progress.
+
 
 ## Contribution
 
