@@ -1,0 +1,22 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}lib/geoclue
+profile geoclue @{exec_path} {
+  include <abstractions/base>
+
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  /etc/geoclue/{,**} r,
+
+  @{PROC}/@{pids}/cgroup r,
+
+  include if exists <local/geoclue>
+}
