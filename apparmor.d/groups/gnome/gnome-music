@@ -1,0 +1,59 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/gnome-music
+profile gnome-music @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/audio>
+  include <abstractions/gnome>
+  include <abstractions/gstreamer>
+  include <abstractions/nameservice-strict>
+  include <abstractions/python>
+  include <abstractions/openssl>
+
+  network inet stream,
+  network inet6 stream,
+  network inet dgram,
+  network inet6 dgram,
+  network netlink raw,
+
+  @{exec_path} mr,
+  /{usr/,}bin/ r,
+  /{usr/,}bin/python3.[0-9]* rix,
+
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+  /usr/share/grilo-plugins/grl-lua-factory/{,*} r,
+  /usr/share/org.gnome.Music/{,**} r,
+  /usr/share/tracker3/{,**} r,
+
+  /etc/machine-id r,
+
+  owner @{HOME}/@{XDG_MUSIC_DIR}/{,**} r,
+  owner @{MOUNTS}/*/@{XDG_MUSIC_DIR}/{,**} r,
+
+  owner @{user_cache_dirs}/gnome-music/{,**} rwk,
+  owner @{user_cache_dirs}/media-art/album-*.jpeg rw,
+  owner @{user_share_dirs}/grilo-plugins/ rwk,
+  owner @{user_share_dirs}/grilo-plugins/*.db{,-shm,-journal,-wal} rwk,
+  owner @{user_share_dirs}/gvfs-metadata/root{,-*.log} r,
+
+  owner /tmp/grilo-plugin-cache-[0-9A-Z]*/ rw,
+  owner @{run}/user/@{uid}/orcexec.[0-9a-zA-Z]* rw,
+
+  @{run}/systemd/inhibit/[0-9]*.ref rw,
+
+  include <abstractions/dconf>
+  owner @{run}/user/@{uid}/dconf/ rw,
+  owner @{run}/user/@{uid}/dconf/user rw,
+
+  owner @{PROC}/@{pid}/mounts r,
+
+  /dev/shm/ r,
+
+  include if exists <local/gnome-music>
+}
