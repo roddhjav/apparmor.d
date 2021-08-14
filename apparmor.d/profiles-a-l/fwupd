@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2020-2021 Mikhail Morfikov
+#               2021 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -9,13 +10,20 @@ include <tunables/global>
 @{exec_path} = /{usr/,}bin/fwupd /{usr/,}lib/fwupd/fwupd
 profile fwupd @{exec_path} flags=(complain,attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/disks-read>
   include <abstractions/nameservice-strict>
+  include <abstractions/openssl>
 
-  # This is needed in order to read/write from/to the /dev/tpm0 , device which is owned by tss:tss
   capability dac_override,
-
+  capability dac_read_search,
+  capability linux_immutable,
+  capability mknod,
+  capability sys_admin,
+  capability sys_nice,
   capability sys_rawio,
   capability syslog,
+
+  network netlink raw,
 
   @{exec_path} mr,
 
@@ -23,12 +31,17 @@ profile fwupd @{exec_path} flags=(complain,attach_disconnected) {
   /{usr/,}bin/gpgconf     rCx -> gpg,
   /{usr/,}bin/gpgsm       rCx -> gpg,
 
-        /usr/share/fwupd/** r,
-  owner /var/cache/fwupd/** rw,
-  owner /var/lib/fwupd/** r,
-  owner /var/lib/fwupd/pending.db rwk,
-
+  /etc/pki/fwupd/** r,
   /etc/fwupd/** r,
+  /usr/share/fwupd/** r,
+
+  /var/cache/fwupd/** rw,
+  /var/lib/fwupd/{,**} rw,
+  /var/lib/fwupd/pending.db rwk,
+
+  /boot/{,**} r,
+  /boot/EFI/arch/fwupdx[0-9]*.efi rw,
+  /boot/EFI/arch/fw/fwupd-*.cap{,.*} rw,
 
   # In order to get to this file, the attach_disconnected flag has to be set
   owner @{user_cache_dirs}/fwupd/lvfs-metadata.xml.gz r,
@@ -36,37 +49,51 @@ profile fwupd @{exec_path} flags=(complain,attach_disconnected) {
   /usr/share/mime/mime.cache r,
 
   @{PROC}/modules r,
+  @{PROC}/cmdline r,
+  @{PROC}/swaps r,
+  @{PROC}/sys/kernel/tainted r,
+  @{PROC}/@{pids}/mountinfo r,
+  @{PROC}/@{pids}/mounts r,
+  @{PROC}/@{pids}/fd/ r,
 
   /dev/mem r,
+  /dev/mei[0-9]* rw,
   /dev/tpm[0-9] rw,
   /dev/drm_dp_aux[0-9]* rw,
   /dev/sd[a-z] r,
   /dev/bus/usb/ r,
   /dev/bus/usb/[0-9]*/[0-9]* rw,
+  /dev/wmi/* r,
 
   @{sys}/**/ r,
   @{sys}/devices/** r,
 
-  @{sys}/firmware/dmi/tables/smbios_entry_point r,
+  @{sys}/firmware/acpi/** r,
   @{sys}/firmware/dmi/tables/DMI r,
-  @{sys}/kernel/security/tpm[0-9]/binary_bios_measurements r,
+  @{sys}/firmware/dmi/tables/smbios_entry_point r,
+  @{sys}/firmware/efi/** r,
+  @{sys}/firmware/efi/efivars/BootNext-* rw,
+  @{sys}/firmware/efi/efivars/fwupd-ux-capsule-* rw,
   @{sys}/kernel/security/lockdown r,
+  @{sys}/kernel/security/tpm[0-9]/binary_bios_measurements r,
+  @{sys}/power/mem_sleep r,
 
   /{var,}run/udev/data/* r,
+  /{var,}run/motd.d/fwupd/{,**} rw,
 
-  /{var,}run/motd.d/fwupd/85-fwupd w,
-  /{var,}run/motd.d/fwupd/.goutputstream-* rw,
+  @{run}/systemd/inhibit/[0-9]*.ref rw,
 
   /etc/machine-id r,
   /var/lib/dbus/machine-id r,
 
-
-  profile gpg {
+  profile gpg flags=(complain) {
     include <abstractions/base>
+    include <abstractions/nameservice-strict>
 
     /{usr/,}bin/gpg        mr,
     /{usr/,}bin/gpgconf    mr,
     /{usr/,}bin/gpgsm      mr,
+    /{usr/,}bin/gpg-agent  mr,
 
     owner /var/lib/fwupd/gnupg/ rw,
     owner /var/lib/fwupd/gnupg/** rwkl -> /var/lib/fwupd/gnupg/**,

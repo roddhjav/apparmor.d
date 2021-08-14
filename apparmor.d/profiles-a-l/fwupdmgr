@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2020-2021 Mikhail Morfikov
+#               2021 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -11,11 +12,20 @@ profile fwupdmgr @{exec_path} flags=(complain) {
   include <abstractions/base>
   include <abstractions/nameservice-strict>
   include <abstractions/ssl_certs>
-  include <abstractions/deny-dconf>
+  include <abstractions/openssl>
+
+  signal (send),
+
+  network inet stream,
+  network inet6 stream,
+  network inet dgram,
+  network inet6 dgram,
+  network netlink raw,
 
   @{exec_path} mr,
 
   /{usr/,}bin/dbus-launch  rCx -> dbus,
+  /{usr/,}bin/pkttyagent rux, # TODO: Work in progress
 
   owner @{user_cache_dirs}/ rw,
   owner @{user_cache_dirs}/fwupd/ rw,
@@ -31,6 +41,11 @@ profile fwupdmgr @{exec_path} flags=(complain) {
   /etc/machine-id r,
   /var/lib/dbus/machine-id r,
 
+  /dev/tty rw,
+
+  include <abstractions/dconf>
+  owner @{run}/user/@{uid}/dconf/ rw,
+  owner @{run}/user/@{uid}/dconf/user rw,
 
   profile dbus {
     include <abstractions/base>
