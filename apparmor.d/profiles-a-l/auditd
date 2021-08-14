@@ -12,17 +12,23 @@ profile auditd @{exec_path} {
   include <abstractions/nameservice-strict>
 
   capability audit_control,
-  capability fsetid,
   capability chown,
+  capability fsetid,
+  capability sys_resource,
 
   network netlink raw,
 
   @{exec_path} mr,
 
-  /var/log/audit/audit.log rw,
-  /var/log/audit/audit.log.[0-9] rw,
+  /etc/audit/{,**} r,
+
+  /var/log/audit/{,**} rw,
 
   @{run}/systemd/userdb/ r,
+
+  owner @{PROC}/@{pid}/attr/current r,
+  owner @{PROC}/@{pid}/loginuid r,
+  owner @{PROC}/@{pid}/oom_score_adj r,
 
   include if exists <local/auditd>
 }
