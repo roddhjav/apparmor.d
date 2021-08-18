@@ -8,7 +8,8 @@ include <tunables/global>
 @{SIGNAL_INSTALLDIR} = "/opt/Signal{, Beta}"
 @{SIGNAL_HOMEDIR} = "@{user_config_dirs}/Signal{, Beta}"
 
-@{exec_path} = @{SIGNAL_INSTALLDIR}/signal-desktop{,-beta}
+#@{exec_path} = @{SIGNAL_INSTALLDIR}/signal-desktop{,-beta}  # (#FIXME#)
+@{exec_path} = "/opt/Signal{, Beta}/signal-desktop{,-beta}"  # (#FIXME#)
 profile signal-desktop @{exec_path} {
   include <abstractions/base>
   include <abstractions/consoles>
@@ -22,14 +23,36 @@ profile signal-desktop @{exec_path} {
   include <abstractions/nameservice-strict>
   include <abstractions/deny-root-dir-access>
 
-  @{exec_path} mr,
+  # Needed?
+  deny capability sys_ptrace,
 
-  # Signal installation dir
+  # The following rules are needed only when the kernel.unprivileged_userns_clone option is set
+  # to "1".
+  capability sys_admin,
+  capability sys_chroot,
+  owner @{PROC}/@{pid}/setgroups w,
+  owner @{PROC}/@{pid}/gid_map w,
+  owner @{PROC}/@{pid}/uid_map w,
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  @{exec_path} mrix,
+
+  # Signal installation dir (#FIXME#)
   @{SIGNAL_INSTALLDIR}/ r,
   @{SIGNAL_INSTALLDIR}/** r,
   @{SIGNAL_INSTALLDIR}/libnode.so mr,
   @{SIGNAL_INSTALLDIR}/libffmpeg.so mr,
+  @{SIGNAL_INSTALLDIR}/{swiftshader/,}libGLESv2.so mr,
+  @{SIGNAL_INSTALLDIR}/{swiftshader/,}libEGL.so mr,
   @{SIGNAL_INSTALLDIR}/chrome-sandbox rPx,
+  @{SIGNAL_INSTALLDIR}/resources/app.asar.unpacked/node_modules/**.node mr,
+  @{SIGNAL_INSTALLDIR}/resources/app.asar.unpacked/node_modules/**.so mr,
+  @{SIGNAL_INSTALLDIR}/resources/app.asar.unpacked/node_modules/**.so.[0-9]* mr,
 
   # Signal home dirs
   @{SIGNAL_HOMEDIR}/ rw,
@@ -42,13 +65,17 @@ profile signal-desktop @{exec_path} {
   # Signal wants the /tmp/ dir to be mounted with the "exec" flag. If this is not acceptable in
   # your system, use the TMPDIR variable to set some other tmp dir.
   /tmp/ r,
-  owner /tmp/.org.chromium.Chromium.* mrw,
+  owner /tmp/.org.chromium.Chromium.*/ rw,
+  owner /tmp/.org.chromium.Chromium.*/SingletonCookie w,
+  owner /tmp/.org.chromium.Chromium.*/SS w,
+  owner /tmp/.org.chromium.Chromium.* rw,
   /var/tmp/ r,
   owner @{SIGNAL_HOMEDIR}/tmp/.org.chromium.Chromium.* mrw,
 
   @{sys}/devices/system/cpu/cpufreq/policy[0-9]/cpuinfo_max_freq r,
   @{sys}/devices/pci[0-9]*/**/{irq,vendor,device} r,
   @{sys}/devices/virtual/tty/tty[0-9]/active r,
+  @{sys}/fs/cgroup/** r,
 
              @{PROC}/ r,
        owner @{PROC}/@{pid}/fd/ r,
@@ -56,6 +83,10 @@ profile signal-desktop @{exec_path} {
        owner @{PROC}/@{pids}/task/ r,
        owner @{PROC}/@{pids}/task/@{tid}/status r,
              @{PROC}/@{pids}/stat r,
+       owner @{PROC}/@{pids}/statm r,
+  deny owner @{PROC}/@{pid}/cmdline r,
+             @{PROC}/sys/kernel/yama/ptrace_scope r,
+             @{PROC}/sys/fs/inotify/max_user_watches r,
              @{PROC}/vmstat r,
 
   deny /dev/shm/ r,
@@ -64,6 +95,7 @@ profile signal-desktop @{exec_path} {
   /var/lib/dbus/machine-id r,
   /etc/machine-id r,
 
+  # No new privs
   /{usr/,}bin/xdg-settings rPUx,
 
   /{usr/,}bin/getconf rix,

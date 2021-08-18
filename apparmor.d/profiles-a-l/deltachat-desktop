@@ -1,0 +1,129 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Mikhail Morfikov
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{DCD_LIBDIR} =  /{usr/,}lib/deltachat-desktop
+@{DCD_LIBDIR} += /{usr/,}lib/deltachat
+@{DCD_LIBDIR} += /opt/DeltaChat/
+
+@{exec_path}   = /usr/bin/deltachat-desktop
+@{exec_path}  += /opt/DeltaChat/deltachat-desktop
+#@{exec_path} += @{DCD_LIBDIR}/deltachat-desktop
+profile deltachat-desktop @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/gtk>
+  include <abstractions/fonts>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/freedesktop.org>
+  include <abstractions/nameservice-strict>
+  include <abstractions/ssl_certs>
+  include <abstractions/user-download-strict>
+
+  # The following rules are needed only when the kernel.unprivileged_userns_clone option is set
+  # to "1".
+  capability sys_admin,
+  capability sys_chroot,
+  owner @{PROC}/@{pid}/setgroups w,
+  owner @{PROC}/@{pid}/gid_map w,
+  owner @{PROC}/@{pid}/uid_map w,
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  @{exec_path} mrix,
+
+  @{DCD_LIBDIR}/ r,
+  @{DCD_LIBDIR}/** r,
+  @{DCD_LIBDIR}/libffmpeg.so mr,
+  @{DCD_LIBDIR}/{swiftshader/,}libGLESv2.so mr,
+  @{DCD_LIBDIR}/{swiftshader/,}libEGL.so mr,
+  @{DCD_LIBDIR}/resources/app.asar.unpacked/node_modules/**.node mr,
+  @{DCD_LIBDIR}/resources/app.asar.unpacked/node_modules/**.so mr,
+  @{DCD_LIBDIR}/resources/app.asar.unpacked/node_modules/**.so.[0-9]* mr,
+  @{DCD_LIBDIR}/chrome-sandbox rPx,
+
+  owner @{HOME}/.config/DeltaChat/ rw,
+  owner @{HOME}/.config/DeltaChat/** rwk,
+
+  include <abstractions/dconf>
+  owner @{run}/user/@{uid}/dconf/ rw,
+  owner @{run}/user/@{uid}/dconf/user rw,
+
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+
+        /var/tmp/ r,
+        /tmp/ r,
+  owner /tmp/.org.chromium.Chromium.*/ rw,
+  owner /tmp/.org.chromium.Chromium.*/SingletonCookie w,
+  owner /tmp/.org.chromium.Chromium.*/SS w,
+  owner /tmp/.org.chromium.Chromium.*/*.png rw,
+  owner /tmp/.org.chromium.Chromium.* rw,
+  owner /tmp/[0-9a-f]*/ rw,
+  owner /tmp/[0-9a-f]*/db.sqlite-blobs/ rw,
+  owner /tmp/[0-9a-f]*/db.sqlite rwk,
+  owner /tmp/[0-9a-f]*/db.sqlite-journal rw,
+
+             @{PROC}/ r,
+       owner @{PROC}/@{pid}/fd/ r,
+             @{PROC}/@{pids}/task/ r,
+             @{PROC}/@{pids}/task/@{tid}/status r,
+             @{PROC}/@{pids}/stat r,
+       owner @{PROC}/@{pids}/statm r,
+  deny owner @{PROC}/@{pid}/cmdline r,
+       owner @{PROC}/@{pids}/oom_{,score_}adj r,
+  deny owner @{PROC}/@{pids}/oom_{,score_}adj w,
+       owner @{PROC}/@{pid}/cgroup r,
+             @{PROC}/sys/kernel/yama/ptrace_scope r,
+             @{PROC}/sys/fs/inotify/max_user_watches r,
+
+        /dev/ r,
+        /dev/shm/ r,
+  owner /dev/shm/.org.chromium.Chromium.* rw,
+
+  # (#FIXME#)
+  deny @{sys}/bus/pci/devices/ r,
+
+  deny @{sys}/devices/virtual/tty/tty0/active r,
+
+  # no new privs
+  /{usr/,}bin/xdg-settings    rPx,
+
+  /{usr/,}bin/xdg-open        rCx -> open,
+
+  # Allowed apps to open
+  /{usr/,}lib/firefox/firefox rPx,
+
+
+  profile open {
+    include <abstractions/base>
+    include <abstractions/xdg-open>
+
+    /{usr/,}bin/xdg-open mr,
+
+    /{usr/,}bin/{,ba,da}sh      rix,
+    /{usr/,}bin/gawk            rix,
+    /{usr/,}bin/readlink        rix,
+    /{usr/,}bin/basename        rix,
+
+    owner @{HOME}/ r,
+
+    owner @{run}/user/@{uid}/ r,
+
+    # Allowed apps to open
+    /{usr/,}lib/firefox/firefox rPx,
+
+    # file_inherit
+    owner @{HOME}/.xsession-errors w,
+
+  }
+
+  include if exists <local/deltachat-desktop>
+}
