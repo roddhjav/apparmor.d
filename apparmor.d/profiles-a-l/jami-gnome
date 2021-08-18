@@ -1,0 +1,63 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Mikhail Morfikov
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/jami-gnome
+profile jami-gnome @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/gtk>
+  include <abstractions/fonts>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/freedesktop.org>
+  include <abstractions/dri-common>
+  include <abstractions/dri-enumerate>
+  include <abstractions/mesa>
+  include <abstractions/nameservice-strict>
+  include <abstractions/user-download-strict>
+
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  owner @{HOME}/.cache/ rw,
+  owner @{HOME}/.cache/jami-gnome/ rw,
+  owner @{HOME}/.cache/jami-gnome/** rw,
+
+  owner @{HOME}/.local/share/jami/ rw,
+  owner @{HOME}/.local/share/jami/** rwkl -> @{HOME}/.local/share/jami/,
+
+  owner @{HOME}/.config/autostart/jami-gnome.desktop w,
+
+  owner @{HOME}/.local/share/ r,
+  owner @{HOME}/.local/share/webkitgtk/deviceidhashsalts/1/ r,
+  owner @{HOME}/.local/share/webkitgtk/databases/indexeddb/v0 w,
+  owner @{HOME}/.local/share/webkitgtk/databases/indexeddb/v1/ w,
+
+  /{usr/,}lib/@{multiarch}/webkit2gtk-4.0/WebKitNetworkProcess rix,
+  /{usr/,}lib/@{multiarch}/webkit2gtk-4.0/WebKitWebProcess rix,
+
+  include <abstractions/dconf>
+  owner @{run}/user/@{uid}/dconf/ rw,
+  owner @{run}/user/@{uid}/dconf/user rw,
+
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+
+  /usr/share/ring/{,**} r,
+  /usr/share/sounds/jami-gnome/{,**} r,
+
+       owner @{PROC}/@{pid}/statm r,
+       owner @{PROC}/@{pid}/smaps r,
+  deny owner @{PROC}/@{pid}/cmdline r,
+       owner @{PROC}/@{pid}/cgroup r,
+             @{PROC}/zoneinfo r,
+
+  @{sys}/firmware/acpi/pm_profile r,
+  @{sys}/devices/virtual/dmi/id/chassis_type r,
+  @{sys}/fs/cgroup/** r,
+
+  include if exists <local/jami-gnome>
+}

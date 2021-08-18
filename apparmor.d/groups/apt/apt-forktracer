@@ -1,0 +1,40 @@
+# vim:syntax=apparmor
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2021 Mikhail Morfikov
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/apt-forktracer
+profile apt-forktracer @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/python>
+  include <abstractions/apt-common>
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/ r,
+  /{usr/,}bin/dpkg rPx -> child-dpkg,
+
+  /usr/share/apt-forktracer/{,**} r,
+
+  /var/lib/apt/lists/ r,
+  /var/lib/apt/lists/*_InRelease r,
+
+  /usr/share/distro-info/debian.csv r,
+
+  owner @{PROC}/@{pid}/fd/ r,
+
+  /var/lib/dbus/machine-id r,
+  /etc/machine-id r,
+
+  include if exists <local/apt-forktracer>
+}
