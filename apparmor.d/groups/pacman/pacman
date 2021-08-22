@@ -1,0 +1,119 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/pacman
+profile pacman @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/disks-read>
+  include <abstractions/nameservice-strict>
+  include <abstractions/openssl>
+  include <abstractions/ssl_certs>
+
+  capability audit_write,
+  capability chown,
+  capability dac_override,
+  capability dac_read_search,
+  capability fowner,
+  capability fsetid,
+  capability net_admin,
+  capability setfcap,
+  capability setgid,
+  capability setuid,
+  capability sys_chroot,
+  capability sys_resource,
+
+  network inet stream,
+  network inet6 stream,
+  network inet dgram,
+  network inet6 dgram,
+  network netlink raw,
+
+  unix (receive) type=stream,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/gpg          rCx -> gpg,
+  /{usr/,}bin/gpgconf      rCx -> gpg,
+  /{usr/,}bin/gpgsm        rCx -> gpg,
+  /{usr/,}{s,}bin/ldconfig rix,
+  /{usr/,}bin/{,ba}sh      rix,
+
+  # Pacman hooks & install scripts
+  /{usr/,}bin/arch-audit                  rPx,
+  /{usr/,}bin/bootctl                     rPx,
+  /{usr/,}bin/env                         rix,
+  /{usr/,}bin/fc-cache                    rPx,
+  /{usr/,}bin/gdk-pixbuf-query-loaders    rPx,
+  /{usr/,}bin/glib-compile-schemas        rPx,
+  /{usr/,}bin/gtk-query-immodules-3.0     rPx,
+  /{usr/,}bin/install-info                rPx,
+  /{usr/,}bin/killall                     rPx,
+  /{usr/,}bin/pacdiff                     rPx,
+  /{usr/,}bin/sysctl                      rPx,
+  /{usr/,}bin/systemctl                   rPx -> child-systemctl,
+  /{usr/,}bin/update-ca-trust             rPx,
+  /{usr/,}bin/update-desktop-database     rPx,
+  /{usr/,}bin/update-mime-database        rPx,
+  /{usr/,}bin/vercmp                      rix,
+  /{usr/,}lib/dkms/alpm-hook              rPx,
+  /{usr/,}lib/ghc-*/bin/ghc-pkg           rix,
+  /{usr/,}lib/systemd/systemd-*           rPx,
+  /{usr/,}lib/vlc/vlc-cache-gen           rPx,
+  /usr/share/libalpm/scripts/*            rPx,
+
+  # Install/update packages
+  / r,
+  /boot/{,**} rwl,
+  /etc/{,**} rwl,
+  /opt/{,**} rwl,
+  /srv/{,**} rwl,
+  /usr/{,**} rwl,
+  /var/{,**} rwl,
+
+  # Read packages files
+  @{user_pkg_dirs}/**.pkg.tar.zst{,.sig} r,
+
+  owner /var/lib/pacman/{,**} rwl,
+  owner /tmp/alpm_*/{,**} rw,
+  owner /tmp/checkup-db-[0-9]*/sync/*.db.part rw,
+
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/stat r,
+  owner @{PROC}/@{pid}/mounts r,
+        @{PROC}/sys/kernel/osrelease r,
+        @{PROC}/1/environ r,
+
+  @{run}/utmp rk,
+
+  # Silencer, 
+  deny /tmp/ r,
+  deny @{HOME}/ r,
+  deny @{HOME}/@{XDG_PROJECTS_DIR}/** r,
+
+  profile gpg {
+    include <abstractions/base>
+
+    capability dac_read_search,
+
+    /{usr/,}bin/gpg     mr,
+    /{usr/,}bin/gpgconf mr,
+    /{usr/,}bin/gpgsm   mr,
+
+    /{usr/,}bin/dirmngr           rix,
+    /{usr/,}bin/gpg-agent         rix,
+    /{usr/,}bin/gpg-connect-agent rix,
+
+    @{HOME}/@{XDG_GPG_DIR}/*.conf r,
+
+    owner /etc/pacman.d/gnupg/ rw,
+    owner /etc/pacman.d/gnupg/** rwkl,
+  }
+
+  include if exists <local/pacman>
+}

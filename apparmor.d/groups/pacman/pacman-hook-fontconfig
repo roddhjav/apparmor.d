@@ -1,0 +1,23 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /usr/share/libalpm/scripts/40-fontconfig-config
+profile pacman-hook-fontconfig @{exec_path} {
+  include <abstractions/base>
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/bash  rix,
+  /{usr/,}bin/ln    rix,
+  /{usr/,}bin/rm    rix,
+
+  /etc/fonts/conf.d/* rwl,
+  /usr/share/fontconfig/conf.default/* r,
+
+  include if exists <local/pacman-hook-fontconfig>
+}

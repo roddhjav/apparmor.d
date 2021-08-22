@@ -1,0 +1,38 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /usr/share/libalpm/scripts/mkinitcpio-install
+profile pacman-hook-mkinitcpio-install @{exec_path} {
+  include <abstractions/base>
+
+  capability dac_read_search,
+  capability mknod,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/bash       rix,
+  /{usr/,}bin/compgen    rix,
+  /{usr/,}bin/install    rix,
+  /{usr/,}bin/mkinitcpio rPx,
+  /{usr/,}bin/mv         rix,
+  /{usr/,}bin/sed        rix,
+
+  /usr/share/mkinitcpio/*.preset r,
+
+  /etc/mkinitcpio.d/{,**} r,
+
+  owner /boot/vmlinuz-* rw,
+
+  /dev/tty rw,
+
+  # Inherit Silencer
+  deny network inet6 stream,
+  deny network inet stream,
+
+  include if exists <local/pacman-hook-mkinitcpio-install>
+}

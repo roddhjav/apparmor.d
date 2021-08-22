@@ -1,0 +1,33 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /usr/share/libalpm/scripts/gtk-update-icon-cache
+profile pacman-hook-gtk @{exec_path} {
+  include <abstractions/base>
+
+  capability dac_read_search,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/bash  rix,
+  /{usr/,}bin/rm    rix,
+  /{usr/,}bin/rmdir rix,
+
+  /{usr/,}bin/gtk-update-icon-cache rPx,
+  /{usr/,}bin/gtk4-update-icon-cache rPx,
+
+  /usr/share/icons/{,**} rw,
+
+  /dev/tty rw,
+
+  # Inherit Silencer
+  deny network inet6 stream,
+  deny network inet stream,
+
+  include if exists <local/pacman-hook-gtk>
+}

@@ -1,0 +1,39 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /usr/share/libalpm/scripts/systemd-hook
+profile pacman-hook-systemd @{exec_path} {
+  include <abstractions/base>
+
+  capability dac_read_search,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/bash  rix,
+  /{usr/,}bin/touch rix,
+
+  /{usr/,}bin/journalctl           rPx,
+  /{usr/,}bin/systemctl            rPx -> child-systemctl,
+  /{usr/,}bin/systemd-binfmt       rPx,
+  /{usr/,}bin/systemd-detect-virt  rPx,
+  /{usr/,}bin/systemd-hwdb         rPx,
+  /{usr/,}bin/systemd-sysctl       rPx,
+  /{usr/,}bin/systemd-sysusers     rPx,
+  /{usr/,}bin/systemd-tmpfiles     rPx,
+  /{usr/,}bin/udevadm              rPx,
+
+  /usr/ rw,
+
+  /dev/tty rw,
+
+  # Inherit silencer
+  deny network inet6 stream,
+  deny network inet stream,
+
+  include if exists <local/pacman-hook-systemd>
+}
