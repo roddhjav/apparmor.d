@@ -1,0 +1,30 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /usr/share/libalpm/scripts/detect-old-perl-modules.sh
+profile pacman-hook-perl @{exec_path} {
+  include <abstractions/base>
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/perl    rix,
+  /{usr/,}bin/bash    rix,
+  /{usr/,}bin/find    rix,
+  /{usr/,}bin/pacman  rPx,
+  /{usr/,}bin/sed     rix,
+
+  /{usr/,}lib/perl[0-9]*/{,**} r,
+
+  /dev/tty rw,
+
+  # Inherit silencer
+  deny network inet6 stream,
+  deny network inet stream,
+
+  include if exists <local/pacman-hook-perl>
+}
