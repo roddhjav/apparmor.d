@@ -62,6 +62,8 @@ profile borg @{exec_path} {
   owner /tmp/* rw,
   owner /tmp/tmp*/ rw,
   owner /tmp/tmp*/idx rw,
+  owner /tmp/borg-cache-*/ rw,
+  owner /tmp/borg-cache-*/* rw,
   owner /var/tmp/* rw,
   owner /var/tmp/tmp*/ rw,
   owner /var/tmp/tmp*/idx rw,
@@ -111,10 +113,16 @@ profile borg @{exec_path} {
 
     /{usr/,}bin/fusermount{,3} mr,
 
+    /etc/fuse.conf r,
+
     umount @{MOUNTS}/*/,
     umount @{MOUNTS}/*/*/,
 
+    owner @{PROC}/@{pid}/mounts r,
+
+    /dev/fuse rw,
   }
 
+  include if exists <distribution/borg.d>
   include if exists <local/borg>
 }
