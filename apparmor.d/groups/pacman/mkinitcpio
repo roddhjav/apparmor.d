@@ -1,0 +1,94 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/mkinitcpio
+profile mkinitcpio @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+
+  capability mknod,
+  capability dac_read_search,
+  capability sys_chroot,
+  capability sys_admin,
+
+  unix (receive) type=stream,
+
+  @{exec_path} rmix,
+
+  /{usr/,}bin/{,ba}sh             rix,
+  /{usr/,}bin/bsdtar              rix,
+  /{usr/,}bin/cat                 rix,
+  /{usr/,}bin/cp                  rix,
+  /{usr/,}bin/dd                  rix,
+  /{usr/,}bin/find                rix,
+  /{usr/,}bin/findmnt             rix,
+  /{usr/,}bin/fsck                rix,
+  /{usr/,}bin/gawk                rix,
+  /{usr/,}bin/grep                rix,
+  /{usr/,}bin/hexdump             rix,
+  /{usr/,}bin/install             rix,
+  /{usr/,}bin/ldconfig            rix,
+  /{usr/,}bin/ldd                 rix,
+  /{usr/,}bin/ln                  rix,
+  /{usr/,}bin/mktemp              rix,
+  /{usr/,}bin/readlink            rix,
+  /{usr/,}bin/rm                  rix,
+  /{usr/,}bin/sed                 rix,
+  /{usr/,}bin/sort                rix,
+  /{usr/,}bin/stat                rix,
+  /{usr/,}bin/tee                 rix,
+  /{usr/,}bin/touch               rix,
+  /{usr/,}bin/tput                rix,
+  /{usr/,}bin/uname               rix,
+  /{usr/,}bin/xz                  rix,
+  /{usr/,}bin/zstd                rix,
+
+  /{usr/,}bin/{depmod,insmod}     rPx,
+  /{usr/,}bin/{kmod,lsmod}        rPx,
+  /{usr/,}bin/{modinfo,rmmod}     rPx,
+  /{usr/,}bin/modprobe            rPx,
+
+  /{usr/,}lib/initcpio/busybox    rix,
+  /{usr/,}lib/ld-*.so             rix,
+
+  /etc/fstab r,
+  /etc/lvm/lvm.conf r,
+  /etc/mkinitcpio.conf r,
+  /etc/mkinitcpio.d/{,**} r,
+  /etc/modprobe.d/{,*} r,
+
+  /usr/share/terminfo/x/xterm-256color r,
+
+  # Can copy any program to the initframs
+  /{usr/,}bin/ r,
+  /{usr/,}bin/[a-z0-9]* rm,
+  /{usr/,}lib/systemd/systemd-* rm,
+
+  # Manage /boot
+  / r,
+  /boot/initramfs-*.img rw,
+  /boot/vmlinuz-* r,
+
+  @{sys}/class/block/ r,
+  @{sys}/devices/{,**} r,
+
+  # Temp files
+  owner @{run}/initramfs/{,**} rw,
+  owner @{run}/mkinitcpio.*/{,**} rw,
+  owner /tmp/mkinitcpio.*/{,**} rw,
+
+  owner @{PROC}/[0-9]*/mountinfo r,
+
+  # Inherit silencer
+  deny @{HOME}/** r,
+  deny network inet6 stream,
+  deny network inet stream,
+
+  include if exists <local/mkinitcpio>
+}
