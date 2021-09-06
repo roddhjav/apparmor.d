@@ -21,10 +21,10 @@ profile repo @{exec_path} {
   network inet6 dgram,
   network inet stream,
   network inet6 stream,
+  network netlink raw,
 
   @{exec_path} r,
   /{usr/,}bin/python3.[0-9]* rix,
-  /{usr/,}bin/python2.[0-9]* rix,
 
   /{usr/,}bin/               r,
   /{usr/,}bin/env            rix,
@@ -37,6 +37,7 @@ profile repo @{exec_path} {
 
   /{usr/,}bin/curl           rCx -> curl,
   /{usr/,}bin/gpg            rCx -> gpg,
+  /{usr/,}bin/ssh            rPx,
 
   # Android source dir
   owner @{ANDROID_SOURCE_DIR}/** rwkl -> @{ANDROID_SOURCE_DIR}/**,
@@ -45,18 +46,23 @@ profile repo @{exec_path} {
   owner @{HOME}/.repoconfig/{,**} rw,
   owner @{HOME}/.repo_.gitconfig.json rw,
 
-  owner @{user_config_dirs}/git/config r,
-  owner @{HOME}/.gitconfig r,
+  owner @{user_config_dirs}/git/config rw,
+  owner @{HOME}/.gitconfig rw,
+  owner @{HOME}/.gitconfig.lock rwk,
 
   /usr/share/git-core/{,**} r,
 
   owner /tmp/.git_vtag_tmp* rw,
+  owner /tmp/ssh-*/ rw,
 
   owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/mounts r,
 
   owner /dev/shm/* rw,
   owner /dev/shm/sem.mp* rwl -> /dev/shm/*,
+
+  # Silencer
+  deny /etc/.repo_gitconfig.json w,
 
 
   profile curl {
