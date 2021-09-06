@@ -9,8 +9,19 @@ include <tunables/global>
 @{exec_path} = /etc/cron.daily/exim4-base
 profile cron-exim4-base @{exec_path} {
   include <abstractions/base>
+  include <abstractions/nameservice-strict>
+  include <abstractions/authentication>
+  include <abstractions/consoles>
 
   capability dac_read_search,
+  capability setgid,
+  capability setuid,
+  capability audit_write,
+  capability sys_ptrace,
+
+  ptrace (read),
+
+  network netlink raw,
 
   @{exec_path} r,
   /{usr/,}bin/{,ba,da}sh rix,
@@ -25,12 +36,21 @@ profile cron-exim4-base @{exec_path} {
   /{usr/,}sbin/eximstats rix,
 
   /{usr/,}sbin/exim4     rPx,
+  /{usr/,}sbin/exim_tidydb       rix,
+
+  /{usr/,}sbin/start-stop-daemon rix,
+  /{usr/,}sbin/runuser           rix,
 
   /etc/default/exim4 r,
 
   /var/spool/exim4/db/ r,
+  /var/spool/exim4/db/* rwk,
 
+        @{PROC}/ r,
   owner @{PROC}/@{pid}/fd/ r,
+        @{PROC}/1/limits r,
+
+  /etc/security/limits.d/ r,
 
   include if exists <local/cron-exim4-base>
 }

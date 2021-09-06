@@ -16,9 +16,11 @@
 
   ptrace (readby, tracedby) peer=libvirtd,
   ptrace (readby, tracedby) peer=/usr/sbin/libvirtd,
+  ptrace (readby, tracedby) peer=virtqemud,
 
   signal (receive) peer=libvirtd,
   signal (receive) peer=/usr/sbin/libvirtd,
+  signal (receive) peer=virtqemud,
 
   /dev/kvm rw,
   /dev/net/tun rw,
@@ -35,6 +37,8 @@
   @{PROC}/sys/vm/overcommit_memory r,
   # detect hardware capabilities via qemu_getauxval
   owner @{PROC}/*/auxv r,
+  # allow reading libnl's classid file
+  /etc/libnl{,-3}/classid r,
 
   # For hostdev access. The actual devices will be added dynamically
   /sys/bus/usb/devices/ r,
@@ -221,6 +225,7 @@
   # allow connect with openGraphicsFD to work
   unix (send, receive) type=stream addr=none peer=(label=libvirtd),
   unix (send, receive) type=stream addr=none peer=(label=/usr/sbin/libvirtd),
+  unix (send, receive) type=stream addr=none peer=(label=virtqemud),
 
   # for gathering information about available host resources
   /sys/devices/system/cpu/ r,
