@@ -44,8 +44,7 @@ profile udisksd @{exec_path} flags=(attach_disconnected) {
   /{usr/,}{s,}bin/lvm         rPUx,
 
   /{usr/,}bin/systemctl       rPx -> child-systemctl,
-
-  /{usr/,}bin/systemd-escape  rCx -> systemd-escape,
+  /{usr/,}bin/systemd-escape  rPx,
 
   # Allow mounting of removable devices
   mount fstype={btrfs,ext*,vfat,iso9660,udf} /dev/sd[a-z]       -> @{MOUNTS}/*/*/,
@@ -130,25 +129,6 @@ profile udisksd @{exec_path} flags=(attach_disconnected) {
 
   @{run}/systemd/seats/seat[0-9]* r,
   @{run}/systemd/inhibit/[0-9]*.ref rw,
-
-  profile systemd-escape {
-    include <abstractions/base>
-
-    ptrace (read),
-
-    /{usr/,}bin/systemd-escape mr,
-
-          @{PROC}/cmdline r,
-          @{PROC}/1/sched r,
-          @{PROC}/1/environ r,
-          @{PROC}/sys/kernel/osrelease r,
-    owner @{PROC}/@{pid}/stat r,
-
-    @{sys}/firmware/efi/efivars/SecureBoot-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]* r,
-
-    /dev/kmsg w,
-
-  }
 
   include if exists <local/udisksd>
 }
