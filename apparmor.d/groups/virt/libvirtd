@@ -1,0 +1,144 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) Libvirt Team
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}{,s}bin/libvirtd
+profile libvirtd @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/dbus>
+
+  capability audit_write,
+  capability bpf,
+  capability chown,
+  capability dac_override,
+  capability dac_read_search,
+  capability fowner,
+  capability fsetid,
+  capability ipc_lock,
+  capability kill,
+  capability mknod,
+  capability net_admin,
+  capability net_raw,
+  capability perfmon,
+  capability setgid,
+  capability setpcap,
+  capability setuid,
+  capability sys_admin,
+  capability sys_chroot,
+  capability sys_module,
+  capability sys_nice,
+  capability sys_pacct,
+  capability sys_ptrace,
+  capability sys_resource,
+
+  network inet stream,
+  network inet dgram,
+  network inet6 stream,
+  network inet6 dgram,
+  network netlink raw,
+  network packet dgram,
+  network packet raw,
+
+  mount options=(rw,rslave)  -> /,
+  mount options=(rw, nosuid) -> /{var/,}run/libvirt/qemu/*.dev/,
+  umount /{var/,}run/libvirt/qemu/*.dev/,
+
+  # libvirt provides any mounts under /dev to qemu namespaces
+  mount options=(rw, move) /dev/ -> /{,var/}run/libvirt/qemu/*.dev/,
+  mount options=(rw, move) /dev/** -> /{,var/}run/libvirt/qemu/*{,/},
+  mount options=(rw, move) /{,var/}run/libvirt/qemu/*.dev/ -> /dev/,
+  mount options=(rw, move) /{,var/}run/libvirt/qemu/*{,/} -> /dev/**,
+
+  # for --p2p migrations
+  unix (send, receive) type=stream addr=none peer=(label=unconfined addr=none),
+
+  ptrace (read,trace) peer=unconfined,
+  ptrace (read,trace) peer=@{profile_name},
+  ptrace (read,trace) peer=dnsmasq,
+  ptrace (read,trace) peer=libvirt-*,
+  ptrace (read,trace) peer=virt-manager,
+
+  signal (send) peer=dnsmasq,
+  signal (read, send) peer=libvirt-*,
+  signal (send) set=(kill, term) peer=unconfined,
+
+  # For communication/control to qemu-bridge-helper
+  unix (send, receive) type=stream addr=none peer=(label=libvirtd//qemu_bridge_helper),
+  signal (send) set=(term) peer=libvirtd//qemu_bridge_helper,
+
+  # allow connect with openGraphicsFD, direction reversed in newer versions
+  unix (send, receive) type=stream addr=none peer=(label=libvirt-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*),
+  # unconfined also required if guests run without security module
+  unix (send, receive) type=stream addr=none peer=(label=unconfined),
+
+  # required if guests run unconfined seclabel type='none' but libvirtd is confined
+  signal (read, send) peer=unconfined,
+
+  # Very lenient profile for libvirtd since we want to first focus on confining
+  # the guests. Guests will have a very restricted profile.
+  / r,
+  /** rwmkl,
+
+  /bin/* PUx,
+  /sbin/* PUx,
+  /usr/bin/* PUx,
+  /{usr/,}{,s}bin/virtlogd rPx,
+  /usr/sbin/* PUx,
+  /{usr/,}lib/udev/scsi_id PUx,
+  /usr/{lib,lib64}/xen-common/bin/xen-toolstack PUx,
+  /usr/{lib,lib64}/xen/bin/* Ux,
+  @{libexec}/xen-*/bin/libxl-save-helper PUx,
+  @{libexec}/xen-*/bin/pygrub PUx,
+  /usr/{lib,lib64,lib/qemu,libexec}/vhost-user-gpu PUx,
+  /usr/{lib,lib64,lib/qemu,libexec}/virtiofsd PUx,
+
+  # Required by nwfilter_ebiptables_driver.c:ebiptablesWriteToTempFile() to
+  # read and run an ebtables script.
+  /var/lib/libvirt/virtd* ixr,
+
+  # force the use of virt-aa-helper
+  audit deny /{usr/,}{s,}bin/apparmor_parser rwxl,
+  audit deny /etc/apparmor.d/libvirt/** wxl,
+  audit deny /sys/kernel/security/apparmor/features rwxl,
+  audit deny /sys/kernel/security/apparmor/matching rwxl,
+  audit deny /sys/kernel/security/apparmor/.* rwxl,
+  /sys/kernel/security/apparmor/profiles r,
+  /usr/lib/libvirt/* PUxr,
+  /usr/lib/libvirt/libvirt_parthelper ix,
+  /usr/lib/libvirt/libvirt_iohelper ix,
+  /etc/libvirt/hooks/** rmix,
+  /etc/xen/scripts/** rmix,
+
+  # allow changing to our UUID-based named profiles
+  change_profile -> libvirt-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*,
+
+  /usr/{lib,lib64,lib/qemu,libexec}/qemu-bridge-helper Cx -> qemu_bridge_helper,
+  # child profile for bridge helper process
+  profile qemu_bridge_helper {
+    include <abstractions/base>
+
+    capability setuid,
+    capability setgid,
+    capability setpcap,
+    capability net_admin,
+
+    network inet stream,
+
+    # For communication/control from libvirtd
+    unix (send, receive) type=stream addr=none peer=(label=libvirtd),
+    signal (receive) set=("term") peer=libvirtd,
+
+    /dev/net/tun rw,
+    /etc/qemu/** r,
+    owner @{PROC}/*/status r,
+
+    /usr/{lib,lib64,lib/qemu,libexec}/qemu-bridge-helper rmix,
+  }
+
+  include if exists <local/libvirtd>
+}
