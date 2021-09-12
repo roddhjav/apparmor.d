@@ -1,0 +1,34 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/containerd
+profile containerd @{exec_path} {
+  include <abstractions/base>
+
+  capability dac_read_search,
+  capability net_admin,
+  capability sys_admin,
+
+  signal (receive) set=term peer=dockerd,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/containerd-shim-runc-v2 rPUx,
+  /{usr/,}bin/kmod                    rPx,
+
+  /var/lib/docker/containerd/{,**} rwk,
+  @{run}/docker/containerd/{,**} rwk,
+
+  @{sys}/kernel/mm/transparent_hugepage/hpage_pmd_size r,
+
+  owner @{PROC}/@{pids}/uid_map r,
+  owner @{PROC}/@{pids}/mountinfo r,
+        @{PROC}/sys/net/core/somaxconn r,
+
+  include if exists <local/containerd>
+}
