@@ -1,0 +1,30 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/libvirt-dbus
+profile libvirt-dbus @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/openssl>
+
+  @{exec_path} mr,
+
+  /{usr/,}{s,}bin/libvirtd rPUx,
+
+  /usr/share/dbus-1/interfaces/org.libvirt.*.xml r,
+
+  owner @{user_cache_dirs}/libvirt/libvirtd.lock rwk,
+
+  @{run}/user/@{uid}/libvirt/libvirtd.lock rwk,
+
+  @{sys}/devices/system/node/ r,
+  @{sys}/devices/system/node/node*/meminfo r,
+
+  owner @{PROC}/@{pid}/fd/ r,
+
+  include if exists <local/libvirt-dbus>
+}
