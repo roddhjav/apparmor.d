@@ -1,0 +1,31 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/userdbctl
+profile userdbctl @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+
+  capability dac_read_search,
+  capability sys_resource,
+
+  @{exec_path} mr,
+  
+  /{usr/,}bin/less rPx -> child-pager,
+
+  /etc/group r,
+  /etc/shadow r,
+  /etc/gshadow r,
+
+  @{run}/systemd/userdb/ r,
+
+  @{PROC}/@{pid}/cgroup r,
+  @{PROC}/sys/kernel/random/boot_id r,
+
+  include if exists <local/userdbctl>
+}
