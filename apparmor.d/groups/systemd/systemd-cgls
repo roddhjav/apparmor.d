@@ -1,0 +1,28 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/systemd-cgls
+profile systemd-cgls @{exec_path} {
+  include <abstractions/base>
+
+  ptrace (read),
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/pager     rPx -> child-pager,
+  /{usr/,}bin/less      rPx -> child-pager,
+  /{usr/,}bin/more      rPx -> child-pager,
+
+  @{sys}/fs/cgroup/{,**} r,
+
+  @{PROC}/@{pids}/cgroup r,
+  @{PROC}/@{pids}/cmdline r,
+  @{PROC}/@{pids}/stat r,
+
+  include if exists <local/systemd-cgls>
+}
