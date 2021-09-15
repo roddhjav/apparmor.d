@@ -1,0 +1,36 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/firecfg
+profile firecfg @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+
+  capability dac_read_search,
+  capability mknod,
+  capability setgid,
+  capability setuid,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/{,ba,da}sh  rix,
+  /{usr/,}bin/apparmor_parser rPx,
+
+  /etc/login.defs r,
+  /etc/firejail/firejail.users r,
+
+  /usr/local/bin/ r,
+  /usr/local/bin/* rw,
+
+  /usr/share/applications/ r,
+  /usr/share/applications/*.desktop r,
+
+  /dev/tty rw,
+
+  include if exists <local/firecfg>
+}
