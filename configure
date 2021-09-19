@@ -4,52 +4,28 @@
 # SPDX-License-Identifier: GPL-2.0-only
 
 readonly ROOT=.build
-declare -a REMOVE_LIST
 
 _die()  { printf '%s\n' "$*" >&2 && exit 1; }
-_warning() { printf 'Warning: %s\n' "$*" >&2; }
-_init() { rm -rf "${ROOT:?}" && rsync -a --exclude=.git . "$ROOT"; }
+_warning() { printf '  Warning: %s\n' "$*" >&2; }
 
-# Remove files or directories in the package
-remove_files() {
-	msg="Remove unneeded profiles/resources:"
-	for path in "${REMOVE_LIST[@]}"; do
-    	[[ ! -e "${ROOT:?}/$path" ]] && continue
-    	msg+=$'\n'"  $(stat -c '%A  %u:%g' "${ROOT:?}/$path")  $path"
-	done
-	echo "$msg"
-
-	for path in "${REMOVE_LIST[@]}"; do
-		rm -rf "${ROOT:?}/$path"
+# Displace files in the package sources
+# $@ List of files to displace
+_displace_files() {
+	for path in "$@"; do
+		mv "${ROOT:?}/$path" "${ROOT:?}/$path.apparmor.d"
 	done
 }
 
-# Set the distribution, flavor & groups
+# Initialise a new clean apparmor.d build directory
+initialise() {
+	rm -rf "${ROOT:?}" && rsync -a --exclude=.git . "$ROOT"
+}
+
+# Set the distribution specificities
 configure() {
 	echo "Set the configuration for $DISTRIBUTION."
-	if [[ "$DISTRIBUTION" == archlinux ]]; then
-		REMOVE_LIST+=(
-			apparmor.d/abstractions/apt-common
-			apparmor.d/groups/apt
-			apparmor.d/groups/cron
-		)
 
-	elif [[ "$DISTRIBUTION" == debian ]]; then
-		REMOVE_LIST+=(
-			apparmor.d/groups/pacman
-			root/usr/share/libalpm/hooks/apparmor.hook
-		)
-
-	fi
-
-}
-
-# Initialise the apparmor.d with the selected configuration.
-initialise() {
-	_init
-	remove_files
-
-	echo "Ignore profiles in profiles.ignore."
+	echo "  Ignore profiles in profiles.ignore."
     while read -r profile; do
 		[[ "$profile" =~ ^\# ]] && continue
 		if [[ "$profile" == */ ]]; then
@@ -59,6 +35,39 @@ initialise() {
 		fi
     done <profiles.ignore
 
+	case "$DISTRIBUTION" in
+		archlinux)
+			echo "  Ignore non Archlinux profiles."
+			rm -rf \
+				"${ROOT:?}"/apparmor.d/abstractions/apt-common \
+				"${ROOT:?}"/apparmor.d/groups/apt \
+				"${ROOT:?}"/apparmor.d/groups/cron
+
+			;;
+
+		debian)
+			echo "  Ignore non Debian profiles."
+			rm -rf \
+				"${ROOT:?}"/apparmor.d/groups/pacman \
+				"${ROOT:?}"/root/usr/share/libalpm/hooks/apparmor.hook
+
+			echo "  Debian does not support abi 3.0 yet."
+			find "$ROOT/apparmor.d" -type f  -exec sed -i -e "s;abi <abi/3.0>,;;" {} \;
+
+			echo "  Debian does not have etc tunable."
+			sed -i -e '/etc/d' "$ROOT/apparmor.d/tunables/global"
+
+			echo "  Displace overwritten files."
+			_displace_files apparmor.d/tunables/global apparmor.d/tunables/xdg-user-dirs
+
+			;;
+
+		*)  _die "$DISTRIBUTION is not a supported distribution." ;;
+	esac
+}
+
+# Synchronise all profile in a new apparmor.d directory.
+synchronise() {
 	echo "Synchronise all profiles."
 	mv "${ROOT:?}/apparmor.d/groups/"*/* "${ROOT:?}/apparmor.d/"
 	rm -rf "${ROOT:?}/apparmor.d/groups/"
@@ -75,7 +84,7 @@ setflags() {
         IFS=' ' read -r -a manifest <<< "$profile"
         profile="${manifest[0]}" flags="${manifest[1]}"
 
-        [[ "$profile" =~ ^\# ]] && continue
+        [[ "$profile" =~ ^\# || -z "$profile" ]] && continue
 		path="${ROOT:?}/apparmor.d/$profile"
         if [[ ! -f "$path" ]]; then
 			_warning "Profile $profile not found"
@@ -99,7 +108,7 @@ cmd_help() {
 	./configure [options] - Configure the apparmor.d package
 
 	Options:
-	    --distribution=DIST Set the target Linux distribution (Archlinux, Debian)
+	    --distribution=DIST Set the target Linux distribution: archlinux, debian
 	    --help              Print this help message and exit.
 	_EOF
 }
@@ -117,8 +126,9 @@ main() {
 
 	[[ $err -ne 0 ]] && { cmd_help; exit 1; }
 
-	configure
 	initialise
+	configure
+	synchronise
 	setflags
 
 	exit 0
