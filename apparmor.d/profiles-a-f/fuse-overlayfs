@@ -1,0 +1,31 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/fuse-overlayfs
+profile fuse-overlayfs @{exec_path} {
+  include <abstractions/base>
+
+  capability sys_admin,
+  capability dac_override,
+  capability dac_read_search,
+  capability chown,
+
+  @{exec_path} mr,
+
+  mount fstype=fuse.* options=(rw,nodev,noatime) @{user_share_dirs}/containers/storage/overlay/**/ -> **,
+
+  owner @{user_share_dirs}/containers/storage/overlay/{,**} rw,
+
+  @{PROC}/sys/kernel/overflowgid r,
+  @{PROC}/sys/kernel/overflowuid r,
+  @{PROC}/sys/fs/pipe-max-size r,
+
+  /dev/fuse rw,
+
+  include if exists <local/fuse-overlayfs>
+}
