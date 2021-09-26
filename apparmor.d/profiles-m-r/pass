@@ -1,0 +1,94 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/pass
+profile pass @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/base64    rix,
+  /{usr/,}bin/bash      rix,
+  /{usr/,}bin/cat       rix,
+  /{usr/,}bin/cp        rix,
+  /{usr/,}bin/diff      rix,
+  /{usr/,}bin/dirname   rix,
+  /{usr/,}bin/env       rix,
+  /{usr/,}bin/find      rix,
+  /{usr/,}bin/getopt    rix,
+  /{usr/,}bin/grep      rix,
+  /{usr/,}bin/head      rix,
+  /{usr/,}bin/mkdir     rix,
+  /{usr/,}bin/mktemp    rix,
+  /{usr/,}bin/mv        rix,
+  /{usr/,}bin/pkill     rix,
+  /{usr/,}bin/rm        rix,
+  /{usr/,}bin/rmdir     rix,
+  /{usr/,}bin/sed       rix,
+  /{usr/,}bin/shred     rix,
+  /{usr/,}bin/sleep     rix,
+  /{usr/,}bin/sort      rix,
+  /{usr/,}bin/tail      rix,
+  /{usr/,}bin/touch     rix,
+  /{usr/,}bin/tr        rix,
+  /{usr/,}bin/tree      rix,
+  /{usr/,}bin/tty       rix,
+  /{usr/,}bin/which     rix,
+
+  /{usr/,}bin/git             rPx,
+  /{usr/,}bin/gpg{2,}         rUx,
+  /{usr/,}bin/vim             rCx -> editor,
+  /{usr/,}bin/wl-{copy,paste} rPx,
+  /{usr/,}bin/xclip           rPx,
+
+  # Pass extensions
+  /{usr/,}bin/oathtool       rix,   # pass-otp
+  /{usr/,}bin/python3.[0-9]* rPx -> pass-extension-python,  # pass-import, pass-audit
+  /{usr/,}bin/qrencode       rPUx,  # pass-otp
+  /{usr/,}bin/tomb           rPUx,  # pass-tomb
+
+  /usr/share/terminfo/x/xterm-256color r,
+
+  owner @{HOME}/.password-store/{,**} rw,
+  owner @{HOME}/@{XDG_PROJECTS_DIR}/**/*-store/{,**} rw,
+  owner @{user_config_dirs}/password-store/{,**} rw,
+  owner /dev/shm/pass.*/{,*} rw,
+
+  owner @{PROC}/@{pids}/cmdline r,
+        @{PROC}/ r,
+        @{PROC}/sys/kernel/osrelease r,
+        @{PROC}/uptime r,
+
+  /dev/tty rw,
+
+  profile editor {
+    include <abstractions/base>
+    include <abstractions/nameservice-strict>
+
+    /{usr/,}bin/vim mrix,
+
+    /etc/vim/{,**} r,
+    /etc/vimrc r,
+    /usr/share/terminfo/x/xterm-256color r,
+    /usr/share/vim/{,**} r,
+    /tmp/ r,
+
+    owner @{HOME}/.fzf/plugin/ r,
+    owner @{HOME}/.fzf/plugin/fzf.vim r,
+    owner @{HOME}/.viminfo{,.tmp} rw,
+    owner @{user_cache_dirs}/vim/{,**} rw,
+    owner @{user_config_dirs}/vim/{,**} rw,
+    /dev/shm/pass.*/{,*} rw,
+
+    deny owner @{HOME}/ r,
+  }
+
+  include if exists <usr/pass.d>
+  include if exists <local/pass>
+}
