@@ -1,0 +1,27 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/newuidmap
+profile newuidmap @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+
+  capability setuid,
+  capability sys_admin,
+
+  @{exec_path} mr,
+
+  /etc/subuid r,
+
+  @{PROC}/@{pids}/ r,
+  @{PROC}/@{pids}/logingid r,
+  @{PROC}/@{pids}/loginuid r,
+  @{PROC}/@{pids}/uid_map w,
+
+  include if exists <local/newuidmap>
+}
