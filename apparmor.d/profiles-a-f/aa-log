@@ -1,0 +1,28 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/aa-log
+profile aa-log @{exec_path} {
+  include <abstractions/base>
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/{,ba,da}sh  rix,
+  /{usr/,}bin/awk         rix,
+  /{usr/,}bin/gawk        rix,
+  /{usr/,}bin/grep        rix,
+  /{usr/,}bin/sed         rix,
+
+  /usr/share/terminfo/x/xterm-256color r,
+
+  /var/log/audit/audit.log r,
+
+  /dev/tty rw,
+
+  include if exists <local/aa-log>
+}
