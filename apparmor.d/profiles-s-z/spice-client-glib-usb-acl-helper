@@ -1,0 +1,24 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}lib/spice-client-glib-usb-acl-helper
+profile spice-client-glib-usb-acl-helper @{exec_path} {
+  include <abstractions/base>
+
+  capability sys_ptrace,
+  capability fowner,
+
+  @{exec_path} mr,
+
+  /{usr/,}lib/gconv/gconv-modules r,
+
+  owner @{PROC}/@{pid}/stat r,
+        @{PROC}/sys/kernel/cap_last_cap r,
+
+  include if exists <local/spice-client-glib-usb-acl-helper>
+}
