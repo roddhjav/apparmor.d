@@ -10,50 +10,51 @@ include <tunables/global>
 @{exec_path} = /{usr/,}bin/pipewire-media-session
 profile pipewire-media-session @{exec_path} {
   include <abstractions/base>
+  include <abstractions/devices-usb>
   include <abstractions/nameservice-strict>
 
+  network bluetooth raw,
+  network bluetooth seqpacket,
+  network bluetooth stream,
   network netlink raw,
 
   @{exec_path} mr,
 
-  /usr/share/pipewire/media-session.d/{,**} r,
-  /etc/pipewire/media-session.d/*.conf r,
-
-  owner @{user_config_dirs}/pipewire/ rw,
-  owner @{user_config_dirs}/pipewire/** rw,
-
-  /dev/snd/controlC[0-9]* rw,
-  /dev/snd/pcmC[0-9]*D[0-9]*p rw,
-  /dev/snd/pcmC[0-9]*D[0-9]*c rw,
-
   /usr/share/alsa-card-profile/{,**} r,
   /usr/share/alsa/{,**} r,
-  /etc/alsa/{,**} r,
+  /usr/share/pipewire/media-session.d/{,**} r,
 
-  /dev/shm/ r,
-  @{run}/shm/ r,
+  /etc/alsa/{,**} r,
+  /etc/pipewire/media-session.d/*.conf r,
   /etc/pulse/{,**} r,
+
+  owner @{HOME}/.local/state/ rw,
+  owner @{HOME}/.local/state/pipewire/{,**} rw,
+  owner @{user_config_dirs}/pipewire/ rw,
+  owner @{user_config_dirs}/pipewire/** rw,
   owner @{user_config_dirs}/pulse/ rw,
   owner @{user_config_dirs}/pulse/cookie rwk,
   owner @{run}/user/@{uid}/pulse/ rw,
 
-  @{sys}/bus/ r,
-  @{sys}/class/ r,
+  @{run}/shm/ r,
+  @{run}/udev/data/+sound:card[0-9]* r, # For sound
+  @{run}/udev/data/c116:[0-9]* r,       # for ALSA
+
   @{sys}/class/sound/ r,
   @{sys}/class/video4linux/ r,
 
   @{sys}/devices/**/sound/**/uevent r,
   @{sys}/devices/pci[0-9]*/**/video4linux/video[0-9]*/uevent r,
-
-  @{run}/udev/data/+sound:card[0-9]* r, # For sound
-  @{run}/udev/data/c81:[0-9]*  r,       # For video4linux
-  @{run}/udev/data/c116:[0-9]* r,       # For ALSA
+  @{sys}/devices/system/node/ r,
+  @{sys}/devices/system/node/node[0-9]*/meminfo r,
+  @{sys}/devices/pci[0-9]*/**/modalias r,
 
   @{run}/systemd/users/@{uid} r,
 
-  @{sys}/devices/system/node/ r,
-  @{sys}/devices/system/node/node[0-9]*/meminfo r,
-
+  /dev/shm/ r,
+  /dev/snd/controlC[0-9]* rw,
+  /dev/snd/pcmC[0-9]*D[0-9]*p rw,
+  /dev/snd/pcmC[0-9]*D[0-9]*c rw,
   /dev/video[0-9]* rw,
 
   include if exists <local/pipewire-media-session>
