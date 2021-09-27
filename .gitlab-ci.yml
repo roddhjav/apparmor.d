@@ -6,7 +6,7 @@ variables:
 
 stages:
   - lint
-  - package
+  - build
   - preprocess
 
 
@@ -26,7 +26,7 @@ bash:
 # -------------
 
 archlinux:
-  stage: package
+  stage: build
   image: registry.gitlab.com/archlex/packages/builders/arch
   script:
     - updpkgsums
@@ -38,7 +38,7 @@ archlinux:
       - $PKGDEST/*
 
 debian:
-  stage: package
+  stage: build
   image: registry.gitlab.com/archlex/packages/builders/debian
   script:
     - VERSION="$(date +%y.%m%d)-1"
@@ -56,7 +56,7 @@ debian:
 # Profile Preprocessing
 # ---------------------
 
-apparmor:
+preprocess-archlinux:
   stage: preprocess
   image: archlinux
   dependencies:
@@ -67,4 +67,15 @@ apparmor:
         --overwrite etc/apparmor.d/tunables/global
         --overwrite etc/apparmor.d/tunables/xdg-user-dirs
         $PKGDEST/*
+    - apparmor_parser --preprocess /etc/apparmor.d 1> /dev/null
+
+preprocess-debian:
+  stage: preprocess
+  image: debian
+  dependencies:
+    - debian
+  script:
+    - apt-get update -q
+    - apt-get install -y apparmor
+    - dpkg --install $PKGDEST/*
     - apparmor_parser --preprocess /etc/apparmor.d 1> /dev/null
