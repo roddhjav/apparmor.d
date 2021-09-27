@@ -8,6 +8,14 @@ readonly ROOT=.build
 _die()  { printf '%s\n' "$*" >&2 && exit 1; }
 _warning() { printf '  Warning: %s\n' "$*" >&2; }
 
+has_option() {
+    local item option="$1";
+    for item in "${OPTIONS[@]}"; do
+       [[ "$item" == "$option" ]] && return 0
+    done
+    return 1
+}
+
 # Displace files in the package sources
 # $@ List of files to displace
 _displace_files() {
@@ -52,7 +60,7 @@ configure() {
 				"${ROOT:?}"/root/usr/share/libalpm/hooks/apparmor.hook
 
 			echo "  Debian does not support abi 3.0 yet."
-			find "$ROOT/apparmor.d" -type f  -exec sed -i -e "s;abi <abi/3.0>,;;" {} \;
+			find "$ROOT/apparmor.d" -type f  -exec sed -e '/abi /d' -i {} \;
 
 			echo "  Debian does not have etc tunable."
 			sed -i -e '/etc/d' "$ROOT/apparmor.d/tunables/global"
@@ -100,6 +108,25 @@ setflags() {
         fi
 
     done <profiles.flags
+
+	if has_option complain; then
+		setflag_complain
+	fi
+}
+
+# Set complain flag on all profile (Dev only)
+setflag_complain() {
+	echo "Set complain flag on all profile"
+	for path in "${ROOT:?}/apparmor.d/"*; do
+		[[ -d "$path" ]] && continue
+		flags="$(grep -o -m 1 'flags=(.*)' "$path" | cut -d '(' -f2 | cut -d ')' -f1)"
+		[[ "$flags" =~ complain ]] && continue
+		echo -n .
+		sed -e "s/flags=(.*)//" \
+		 	-e "s/ {$/ flags=(complain $flags) {/" \
+			-i "$path"
+	done
+	echo
 }
 
 # Print help message
@@ -109,17 +136,21 @@ cmd_help() {
 
 	Options:
 	    --distribution=DIST Set the target Linux distribution: archlinux, debian
+	    --options=OPT       Set prefefined build options.
 	    --help              Print this help message and exit.
 	_EOF
 }
 
 main() {
 	local opts err
-	opts="$(getopt -o h -l distribution:,help -n "$PROGRAM" -- "$@")"
+	opts="$(getopt -o h -l distribution:,options:,help -n "$PROGRAM" -- "$@")"
 	err=$?
 	eval set -- "$opts"
 	while true; do case $1 in
 		--distribution) DISTRIBUTION="$2"; shift 2 ;;
+		--options) 
+			# shellcheck disable=SC2206
+			OPTIONS=(${2//,/ }); shift 2 ;;
 		-h|--help) shift; cmd_help; exit 0 ;;
 		--) shift; break ;;
 	esac done
