@@ -1,0 +1,94 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/man
+profile man @{exec_path} {
+  include <abstractions/base>
+
+  signal peer=man//man_groff,
+  signal peer=man//man_filter,
+
+  @{exec_path} mr,
+
+  # Use a special profile when man calls anything groff-related. We only include
+  # the programs that actually parse input data in a non-trivial way, not
+  # wrappers such as groff and nroff, since they would need a broader profile.
+  /{usr/,}bin/eqn      rCx -> man_groff,
+  /{usr/,}bin/grap     rCx -> man_groff,
+  /{usr/,}bin/pic      rCx -> man_groff,
+  /{usr/,}bin/preconv  rCx -> man_groff,
+  /{usr/,}bin/refer    rCx -> man_groff,
+  /{usr/,}bin/tbl      rCx -> man_groff,
+  /{usr/,}bin/troff    rCx -> man_groff,
+  /{usr/,}bin/vgrind   rCx -> man_groff,
+
+  # Use a special profile when man calls decompressors and other simple filters.
+  /{usr/,}bin/bzip2      rCx -> man_filter,
+  /{usr/,}bin/gzip       rCx -> man_filter,
+  /{usr/,}bin/col        rCx -> man_filter,
+  /{usr/,}bin/compress   rCx -> man_filter,
+  /{usr/,}bin/iconv      rCx -> man_filter,
+  /{usr/,}bin/lzip.lzip  rCx -> man_filter,
+  /{usr/,}bin/tr         rCx -> man_filter,
+  /{usr/,}bin/xz         rCx -> man_filter,
+
+  profile man_groff {
+    include <abstractions/base>
+    include <abstractions/consoles>
+
+    signal peer=man,
+
+    /{usr/,}bin/eqn      rm,
+    /{usr/,}bin/grap     rm,
+    /{usr/,}bin/pic      rm,
+    /{usr/,}bin/preconv  rm,
+    /{usr/,}bin/refer    rm,
+    /{usr/,}bin/tbl      rm,
+    /{usr/,}bin/troff    rm,
+    /{usr/,}bin/vgrind   rm,
+
+    /{usr/,}lib/groff/site-tmac/** r,
+    /usr/share/groff/** r,
+
+    /etc/groff/** r,
+    /etc/papersize r,
+  
+    /tmp/groff* rw,
+    owner /tmp/* rw,
+  }
+
+  profile man_filter {
+    include <abstractions/base>
+    include <abstractions/consoles>
+
+    signal peer=man,
+
+    /{usr/,}bin/bzip2      rm,
+    /{usr/,}bin/gzip       rm,
+    /{usr/,}bin/col        rm,
+    /{usr/,}bin/compress   rm,
+    /{usr/,}bin/iconv      rm,
+    /{usr/,}bin/lzip.lzip  rm,
+    /{usr/,}bin/tr         rm,
+    /{usr/,}bin/xz         rm,
+
+    # Manual pages can be more or less anywhere, especially with "man -l", and
+    # there's no harm in allowing wide read access here since the worst it can
+    # do is feed data to the invoking man process.
+          /usr/** r,
+    owner @{HOME}/@{XDG_DATA_HOME}/** r,
+    owner @{HOME}/@{XDG_PROJECTS_DIR}/** r,
+    owner @{user_cache_dirs}/** r,
+    owner @{MOUNTS}/*/@{XDG_DATA_HOME}/** r,
+    owner @{MOUNTS}/*/@{XDG_PROJECTS_DIR}/** r,
+
+    /var/cache/man/** w,
+  }
+
+  include if exists <local/man>
+}
