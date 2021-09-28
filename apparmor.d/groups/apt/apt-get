@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2019-2021 Mikhail Morfikov
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -9,55 +10,19 @@ include <tunables/global>
 @{exec_path} = /{usr/,}bin/apt-get
 profile apt-get @{exec_path} flags=(complain) {
   include <abstractions/base>
-  include <abstractions/consoles>
   include <abstractions/apt-common>
+  include <abstractions/consoles>
   include <abstractions/nameservice-strict>
 
-  # To remove the following errors:
-  #  W: chmod 0700 of directory /var/lib/apt/lists/partial failed - SetupAPTPartialDirectory
-  #     (1: Operation not permitted)
-  #  W: chmod 0700 of directory /var/lib/apt/lists/auxfiles failed - SetupAPTPartialDirectory
-  #     (1: Operation not permitted)
-  #  W: chmod 0600 of file /var/lib/apt/lists/deb.debian.org_debian_dists_sid_InRelease failed -
-  #     Item::QueueURI (1: Operation not permitted)
-  capability fowner,
-
-  # To remove the following errors:
-  #  W: chown to _apt:root of directory /var/lib/apt/lists/partial failed - SetupAPTPartialDirectory
-  #  (1: Operation not permitted)
-  #  W: chown to _apt:root of directory /var/lib/apt/lists/auxfiles failed - SetupAPTPartialDirectory
-  #  (1: Operation not permitted)
   capability chown,
-
-  # The "_apt" user is created by the postinst script of the "apt" package. It's the owner of the
-  # dirs "/var/cache/apt/archives/partial/" and "/var/lib/apt/lists/partial/" . The "_apt" user is
-  # used by APT to download packages, package list, and other things using APT methods as an
-  # unprivileged user/group (_apt/nogroup).
-  #
-  # To remove the following errors:
-  #  E: setgroups 65534 failed - setgroups (1: Operation not permitted)
-  #  E: setegid 65534 failed - setegid (1: Operation not permitted)
-  #  E: seteuid 100 failed - seteuid (1: Operation not permitted)
-  #  E: setgroups 0 failed - setgroups (1: Operation not permitted)
-  capability setuid,
-  capability setgid,
-
-  # To remove the following errors:
-  #  W: Problem unlinking the file /var/lib/apt/lists/partial/*_InRelease -
-  #     PrepareFiles (13: Permission denied)
-  #  E: Unable to read /var/lib/apt/lists/partial/ - open (13: Permission denied)
-  capability dac_read_search,
-
-  # To remove the following errors:
-  #  E: Failed to fetch https://**.deb  rename failed, Permission denied
-  #     (/var/cache/apt/archives/partial/*.deb -> /var/cache/apt/archives/*.deb).
-  #  E: Unable to fetch some archives, maybe run apt-get update or try with --fix-missing?
   capability dac_override,
-
-  # Needed? (##FIXME##)
-  capability kill,
+  capability dac_read_search,
+  capability fowner,
   capability fsetid,
-  audit deny capability net_admin,
+  capability kill,
+  capability net_admin,
+  capability setgid,
+  capability setuid,
 
   signal (send) peer=apt-methods-*,
 
