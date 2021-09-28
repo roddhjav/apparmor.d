@@ -1,0 +1,29 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}lib/apparmor/apparmor.systemd
+profile apparmor.systemd @{exec_path} {
+  include <abstractions/base>
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/{,ba,da}sh        rix,
+  /{usr/,}{s,}bin/aa-status     rPx,
+  /{usr/,}sbin/apparmor_parser  rPx,
+
+  /{usr/,}lib/apparmor/rc.apparmor.functions r,
+
+  @{sys}/fs/cgroup/systemd/ r,
+  @{sys}/kernel/security/apparmor/{,**} r,
+  @{sys}/module/apparmor/ r,
+
+  @{PROC}/filesystems r,
+  @{PROC}/mounts r,
+
+  include if exists <local/apparmor.systemd>
+}
