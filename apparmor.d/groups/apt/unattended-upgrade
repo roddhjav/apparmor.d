@@ -1,0 +1,29 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/unattended-upgrade
+profile unattended-upgrade @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/python>
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/python3.[0-9]*  rix,
+  /{usr/,}bin/uname           rix,
+  /{usr/,}bin/dpkg            rPx,
+  /{usr/,}bin/lsb_release     rPx -> lsb_release,
+
+  /var/log/unattended-upgrades/*.log rw,
+
+  owner @{run}/unattended-upgrades.pid rw,
+  owner @{run}/unattended-upgrades.lock rwk,
+
+  owner @{PROC}/@{pids}/fd/ r,
+
+  include if exists <local/unattended-upgrade>
+}
