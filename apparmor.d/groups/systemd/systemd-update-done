@@ -1,0 +1,29 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}lib/systemd/systemd-update-done
+profile systemd-update-done @{exec_path} {
+  include <abstractions/base>
+
+  capability net_admin,
+
+  ptrace (read) peer=unconfined,
+
+  @{exec_path} mr,
+
+  /etc/.#.updated[0-9a-zA-Z]* rw,
+  /etc/.updated w,
+  /var/.#.updated[0-9a-zA-Z]* rw,
+  /var/.updated w,
+
+  @{PROC}/1/environ r,
+  @{PROC}/cmdline r,
+  @{PROC}/sys/kernel/osrelease r,
+
+  include if exists <local/systemd-update-done>
+}
