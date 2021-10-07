@@ -1,0 +1,58 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/cockpit-bridge
+profile cockpit-bridge @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/app-launcher-root>
+  include <abstractions/nameservice-strict>
+  include <abstractions/consoles>
+
+  capability dac_read_search,
+  capability sys_nice,
+
+  network inet dgram,
+  network inet stream,
+  network inet6 dgram,
+  network inet6 stream,
+
+  signal (send) set=term peer=dbus-daemon,
+  signal (send) set=term peer=ssh-agent,
+  signal (send) set=term peer=sudo,
+  signal (send) set=term peer=unconfined,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/journalctl rPx,
+
+  /usr/share/cockpit/{,**} r,
+
+  /etc/cockpit/{,**} r,
+  /etc/machine-id r,
+  /etc/motd r,
+  /etc/shadow r,
+
+  owner @{user_cache_dirs}/ssh-agent.[0-9A-Z]* rw,
+
+  @{run}/systemd/userdb/ r,
+  @{run}/user/@{uid}/ssh-agent.[0-9A-Z]* rw,
+  @{run}/utmp r,
+
+  owner @{PROC}/@{pid}/cgroup r,
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/mounts r,
+        @{PROC}/@{pids}/net/dev r,
+        @{PROC}/1/cgroup r,
+        @{PROC}/diskstats r,
+        @{PROC}/sys/kernel/random/boot_id r,
+        @{PROC}/uptime r,
+
+  /dev/ptmx rw,
+
+  include if exists <local/cockpit-bridge>
+}

@@ -1,0 +1,49 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}lib/cockpit/cockpit-session
+profile cockpit-session @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+  include <abstractions/authentication>
+
+  capability audit_write,
+  capability dac_read_search,
+  capability net_admin,
+  capability setgid,
+  capability setuid,
+
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/{,z,ba,da}sh    rix,
+  /{usr/,}bin/cockpit-bridge  rPx,
+
+  /etc/environment r,
+  /etc/group r,
+  /etc/motd r,
+  /etc/security/limits.d/{,*.conf} r,
+  /etc/shells r,
+
+  @{run}/faillock/[a-zA-z0-9]* rwk,
+  @{run}/systemd/sessions/[0-9].ref rw,
+  @{run}/systemd/userdb/ r,
+  @{run}/utmp rwk,
+
+  /var/log/btmp rw,
+  /var/log/lastlog rw,
+  /var/log/wtmp rwk,
+
+  owner @{PROC}/@{pid}/loginuid rw,
+  owner @{PROC}/@{pid}/uid_map r,
+        @{PROC}/@{pids}/fd/ r,
+        @{PROC}/sys/kernel/random/boot_id r,
+
+  include if exists <local/cockpit-session>
+}
