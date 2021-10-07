@@ -1,0 +1,22 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}lib/xdg-permission-store
+profile xdg-permission-store @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+
+  signal (receive) set=(term) peer=gdm,
+
+  @{exec_path} mr,
+
+  @{HOME}/@{XDG_DATA_HOME}/flatpak/db/gnome rw,
+
+  /dev/tty[0-9]* rw,
+
+  include if exists <local/xdg-permission-store>
+}
