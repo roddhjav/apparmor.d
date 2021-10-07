@@ -1,0 +1,30 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}lib/systemd/systemd-update-utmp
+profile systemd-update-utmp @{exec_path} {
+  include <abstractions/base>
+
+  capability audit_write,
+  capability net_admin,
+
+  network netlink raw,
+
+  ptrace (read) peer=unconfined,
+
+  @{exec_path} mr,
+
+  owner /var/log/wtmp rwk,
+  owner @{run}/utmp rwk,
+
+  @{PROC}/1/environ r,
+  @{PROC}/cmdline r,
+  @{PROC}/sys/kernel/osrelease r,
+
+  include if exists <local/systemd-update-utmp>
+}
