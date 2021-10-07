@@ -1,0 +1,29 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}sbin/resolvconf
+profile resolvconf @{exec_path} {
+  include <abstractions/base>
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/{,ba,da}sh  rix,
+  /{usr/,}bin/cat         rix,
+  /{usr/,}bin/flock       rix,
+  /{usr/,}bin/mv          rix,
+  /{usr/,}bin/rm          rix,
+  /{usr/,}bin/run-parts   rix,
+  /{usr/,}bin/sed         rix,
+
+  /etc/resolvconf/update.d/libc mr,
+
+  owner @{run}/resolvconf/{,**} rw,
+  owner @{run}/resolvconf/run-lock wk,
+
+  include if exists <local/resolvconf>
+}
