@@ -9,21 +9,33 @@ include <tunables/global>
 @{exec_path} = /{usr/,}lib/apparmor/apparmor.systemd
 profile apparmor.systemd @{exec_path} {
   include <abstractions/base>
+  include <abstractions/nameservice-strict>
 
   @{exec_path} mr,
 
-  /{usr/,}bin/{,ba,da}sh        rix,
-  /{usr/,}{s,}bin/aa-status     rPx,
-  /{usr/,}sbin/apparmor_parser  rPx,
-
+  /{usr/,}bin/{,ba,da}sh           rix,
+  /{usr/,}bin/getconf              rix,
+  /{usr/,}bin/grep                 rix,
+  /{usr/,}bin/ls                   rix,
+  /{usr/,}bin/xargs                rix,
+  /{usr/,}{s,}bin/aa-status        rPx,
+  /{usr/,}{s,}bin/apparmor_parser  rPx,
+  
   /{usr/,}lib/apparmor/rc.apparmor.functions r,
+
+  /etc/apparmor.d/ r,
 
   @{sys}/fs/cgroup/systemd/ r,
   @{sys}/kernel/security/apparmor/{,**} r,
   @{sys}/module/apparmor/ r,
 
+  @{PROC}/@{pids}/fd/ r,
+  @{PROC}/@{pids}/maps r,
+  @{PROC}/@{pids}/mounts r,
   @{PROC}/filesystems r,
   @{PROC}/mounts r,
+
+  /dev/tty rw,
 
   include if exists <local/apparmor.systemd>
 }

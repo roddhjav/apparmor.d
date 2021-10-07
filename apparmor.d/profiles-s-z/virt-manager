@@ -1,6 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2020-2021 Mikhail Morfikov
-#               2021 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -11,23 +11,23 @@ include <tunables/global>
 @{exec_path} += /usr/share/virt-manager/virt-manager
 profile virt-manager @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/X>
-  include <abstractions/vulkan>
-  include <abstractions/gtk>
-  include <abstractions/fonts>
-  include <abstractions/fontconfig-cache-read>
-  include <abstractions/freedesktop.org>
-  include <abstractions/nameservice-strict>
-  include <abstractions/ssl_certs>
-  include <abstractions/openssl>
   include <abstractions/audio>
-  include <abstractions/mesa>
+  include <abstractions/devices-usb>
   include <abstractions/dri-enumerate>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/fonts>
+  include <abstractions/freedesktop.org>
+  include <abstractions/gstreamer>
+  include <abstractions/gtk>
+  include <abstractions/mesa>
+  include <abstractions/nameservice-strict>
+  include <abstractions/openssl>
+  include <abstractions/python>
+  include <abstractions/ssl_certs>
   include <abstractions/thumbnails-cache-read>
   include <abstractions/user-download-strict>
-  include <abstractions/python>
-  include <abstractions/devices-usb>
-  include <abstractions/gstreamer>
+  include <abstractions/vulkan>
+  include <abstractions/X>
 
   network inet stream,
   network inet6 stream,
@@ -42,8 +42,8 @@ profile virt-manager @{exec_path} flags=(attach_disconnected) {
   /{usr/,}bin/getfacl   rix,
   /{usr/,}bin/setfacl   rix,
 
-  /{usr/,}{s,}bin/libvirtd rPx,
-  /{usr/,}lib/spice-client-glib-usb-acl-helper rPx,
+  /{usr/,}{s,}bin/libvirtd                      rPx,
+  /{usr/,}lib/spice-client-glib-usb-acl-helper  rPx,
 
   /usr/share/glib-2.0/schemas/gschemas.compiled r,
   /usr/share/gtksourceview-4/{,**} r,
@@ -54,6 +54,9 @@ profile virt-manager @{exec_path} flags=(attach_disconnected) {
   /usr/share/virt-manager/{,**} r,
   /usr/share/virtio/{,*} r,
   /var/lib/usbutils/*.ids r,
+
+  /var/lib/dbus/machine-id r,
+  /etc/machine-id r,
 
   /etc/fstab r,
   /etc/libnl/classid r,
@@ -81,24 +84,23 @@ profile virt-manager @{exec_path} flags=(attach_disconnected) {
   owner @{HOME}/@{XDG_VM_DIR}/{,**} rw,
   owner @{MOUNTS}/*/@{XDG_VM_DIR}/{,**} rw,
 
-  owner @{PROC}/@{pid}/mountinfo r,
-  owner @{PROC}/@{pid}/mounts r,
-  owner @{PROC}/@{pid}/fd/ r,
-        @{PROC}/@{pid}/net/route r,
+        @{run}/mount/utab r,
+        @{run}/udev/data/c51[0-9]:[0-9]* r,
+  owner @{run}/user/@{uid}/libvirt/libvirtd.lock rwk,
 
   @{sys}/devices/pci[0-9]*/**/drm/ r,
   @{sys}/devices/virtual/drm/ttm/uevent r,
 
-        @{run}/mount/utab r,
-
-  owner @{run}/user/@{uid}/libvirt/libvirtd.lock rwk,
-
-  /var/lib/dbus/machine-id r,
-  /etc/machine-id r,
-
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/mounts r,
+  owner @{PROC}/@{pid}/fd/ r,
+        @{PROC}/@{pids}/net/route r,
+        
   include <abstractions/dconf>
   owner @{run}/user/@{uid}/dconf/ rw,
   owner @{run}/user/@{uid}/dconf/user rw,
+
+  /dev/video[0-9]* rw,
 
   # Silence the noise
   deny /usr/share/virt-manager/{,**} w,

@@ -37,58 +37,70 @@ profile man @{exec_path} {
   /{usr/,}bin/tr         rCx -> man_filter,
   /{usr/,}bin/xz         rCx -> man_filter,
 
-  profile man_groff {
-    include <abstractions/base>
-    include <abstractions/consoles>
+  /{usr/,}bin/pager      rPx -> child-pager,
+  /{usr/,}bin/less       rPx -> child-pager,
+  /{usr/,}bin/more       rPx -> child-pager,
 
-    signal peer=man,
+  /usr/**/man/** r,
+  /var/**/man/** r,
+  /var/cache/man/index.db rk,
 
-    /{usr/,}bin/eqn      rm,
-    /{usr/,}bin/grap     rm,
-    /{usr/,}bin/pic      rm,
-    /{usr/,}bin/preconv  rm,
-    /{usr/,}bin/refer    rm,
-    /{usr/,}bin/tbl      rm,
-    /{usr/,}bin/troff    rm,
-    /{usr/,}bin/vgrind   rm,
+  /etc/man_db.conf r,
 
-    /{usr/,}lib/groff/site-tmac/** r,
-    /usr/share/groff/** r,
-
-    /etc/groff/** r,
-    /etc/papersize r,
-  
-    /tmp/groff* rw,
-    owner /tmp/* rw,
-  }
-
-  profile man_filter {
-    include <abstractions/base>
-    include <abstractions/consoles>
-
-    signal peer=man,
-
-    /{usr/,}bin/bzip2      rm,
-    /{usr/,}bin/gzip       rm,
-    /{usr/,}bin/col        rm,
-    /{usr/,}bin/compress   rm,
-    /{usr/,}bin/iconv      rm,
-    /{usr/,}bin/lzip.lzip  rm,
-    /{usr/,}bin/tr         rm,
-    /{usr/,}bin/xz         rm,
-
-    # Manual pages can be more or less anywhere, especially with "man -l", and
-    # there's no harm in allowing wide read access here since the worst it can
-    # do is feed data to the invoking man process.
-          /usr/** r,
-    owner @{HOME}/@{XDG_DATA_HOME}/** r,
-    owner @{HOME}/@{XDG_PROJECTS_DIR}/** r,
-    owner @{user_cache_dirs}/** r,
-    owner @{MOUNTS}/*/@{XDG_DATA_HOME}/** r,
-    owner @{MOUNTS}/*/@{XDG_PROJECTS_DIR}/** r,
-
-    /var/cache/man/** w,
-  }
+  /dev/tty r,
 
   include if exists <local/man>
+}
+
+profile man_groff {
+  include <abstractions/base>
+  include <abstractions/consoles>
+
+  signal peer=man,
+
+  /{usr/,}bin/eqn      rm,
+  /{usr/,}bin/grap     rm,
+  /{usr/,}bin/pic      rm,
+  /{usr/,}bin/preconv  rm,
+  /{usr/,}bin/refer    rm,
+  /{usr/,}bin/tbl      rm,
+  /{usr/,}bin/troff    rm,
+  /{usr/,}bin/vgrind   rm,
+
+  /{usr/,}lib/groff/site-tmac/** r,
+  /usr/share/groff/** r,
+
+  /etc/groff/** r,
+  /etc/papersize r,
+
+  /tmp/groff* rw,
+  owner /tmp/* rw,
+}
+
+profile man_filter {
+  include <abstractions/base>
+  include <abstractions/consoles>
+
+  signal peer=man,
+
+  /{usr/,}bin/bzip2      rm,
+  /{usr/,}bin/gzip       rm,
+  /{usr/,}bin/col        rm,
+  /{usr/,}bin/compress   rm,
+  /{usr/,}bin/iconv      rm,
+  /{usr/,}bin/lzip.lzip  rm,
+  /{usr/,}bin/tr         rm,
+  /{usr/,}bin/xz         rm,
+
+  # Manual pages can be more or less anywhere, especially with "man -l", and
+  # there's no harm in allowing wide read access here since the worst it can
+  # do is feed data to the invoking man process.
+        /usr/** r,
+  owner @{HOME}/@{XDG_DATA_HOME}/** r,
+  owner @{HOME}/@{XDG_PROJECTS_DIR}/** r,
+  owner @{user_cache_dirs}/** r,
+  owner @{MOUNTS}/*/@{XDG_DATA_HOME}/** r,
+  owner @{MOUNTS}/*/@{XDG_PROJECTS_DIR}/** r,
+
+  /var/cache/man/** w,
 }
