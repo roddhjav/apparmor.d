@@ -1,0 +1,24 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}lib/cockpit/cockpit-ws
+profile cockpit-ws @{exec_path} {
+  include <abstractions/base>
+
+  @{exec_path} mr,
+
+  /{usr/,}lib/cockpit/cockpit-session  rPx,
+
+  /usr/share/cockpit/{,**} r,
+  /etc/cockpit/ws-certs.d/ r,
+
+  owner @{PROC}/@{pid}/cgroup r,
+  owner @{PROC}/@{pid}/fd/ r,
+
+  include if exists <local/cockpit-ws>
+}
