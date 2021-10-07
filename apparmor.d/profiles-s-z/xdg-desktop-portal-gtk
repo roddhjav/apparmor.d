@@ -1,0 +1,25 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}lib/xdg-desktop-portal-gtk
+profile xdg-desktop-portal-gtk @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/fonts>
+  include <abstractions/freedesktop.org>
+
+  @{exec_path} mr,
+
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+  /usr/share/themes/{,**} r,
+  /usr/share/X11/xkb/{,**} r,
+
+  include <abstractions/dconf>
+  owner @{run}/user/@{uid}/dconf/user rw,
+
+  include if exists <local/xdg-desktop-portal-gtk>
+}
