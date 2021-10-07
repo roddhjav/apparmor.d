@@ -1,0 +1,25 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}lib/systemd/systemd-sleep
+profile systemd-sleep @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/systemd-common>
+
+  capability net_admin,
+  capability sys_resource,
+
+  @{exec_path} mr,
+
+  /etc/systemd/sleep.conf r,
+  /etc/systemd/sleep.conf.d/{,*} r,
+
+  @{sys}/power/state rw,
+
+  include if exists <local/systemd-sleep>
+}
