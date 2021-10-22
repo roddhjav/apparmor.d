@@ -1,0 +1,26 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Mikhail Morfikov
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}sbin/wpa_cli
+profile wpa-cli @{exec_path} {
+  include <abstractions/base>
+
+  @{exec_path} mr,
+
+  /{usr/,}sbin/wpa_action rPx,
+
+  owner @{run}/wpa_supplicant/ r,
+  owner /tmp/wpa_ctrl_@{pid}-[0-9] rw,
+
+  # for interactive mode
+  /etc/inputrc r,
+  owner @{HOME}/.wpa_cli_history rw,
+  owner @{HOME}/.wpa_cli_history-[0-9]*.tmp rw,
+
+  include if exists <local/wpa-cli>
+}

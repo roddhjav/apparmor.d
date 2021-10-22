@@ -49,6 +49,9 @@ profile gajim @{exec_path} {
   /{usr/,}bin/gpgconf    rCx -> gpg,
   /{usr/,}bin/gpgsm      rCx -> gpg,
 
+  /{usr/,}bin/ccache                 rCx -> ccache,
+  /{usr/,}bin/{,@{multiarch}-}ld.bfd rCx -> ccache,
+
   # External apps
   /{usr/,}bin/xdg-settings    rPx,
   /{usr/,}lib/firefox/firefox rPx,
@@ -97,6 +100,27 @@ profile gajim @{exec_path} {
   # Silencer
   deny /usr/share/gajim/** w,
 
+
+  profile ccache {
+    include <abstractions/base>
+    include <abstractions/consoles>
+
+    /{usr/,}bin/ccache mr,
+
+    /{usr/,}lib/llvm-[0-9]*/bin/clang      rix,
+    /{usr/,}bin/{,@{multiarch}-}gcc-[0-9]* rix,
+    /{usr/,}bin/{,@{multiarch}-}g++-[0-9]* rix,
+    /{usr/,}bin/{,@{multiarch}-}ld.bfd     rix,
+    /{usr/,}lib/gcc/@{multiarch}/[0-9]*/collect2 rix,
+
+    owner /tmp/cc* rw,
+    owner /tmp/tmp* rw,
+
+    /media/ccache/*/** rw,
+
+    /etc/debian_version r,
+
+  }
 
   profile gpg {
     include <abstractions/base>
