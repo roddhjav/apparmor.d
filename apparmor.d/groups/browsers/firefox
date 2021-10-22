@@ -1,7 +1,9 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2015-2021 Mikhail Morfikov
-#               2021 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
+
+# Warning: Such a profile is limitted as it gives access to a lot of resources.
 
 abi <abi/3.0>,
 
@@ -14,22 +16,22 @@ include <tunables/global>
 @{exec_path} = @{MOZ_LIBDIR}/firefox{,-bin,-esr}
 profile firefox @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/wayland>
-  include <abstractions/opencl-intel>
-  include <abstractions/vulkan>
-  include <abstractions/gtk>
-  include <abstractions/fonts>
-  include <abstractions/fontconfig-cache-read>
-  include <abstractions/freedesktop.org>
-  include <abstractions/mesa>
   include <abstractions/audio>
+  include <abstractions/deny-root-dir-access>
   include <abstractions/enchant>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/fonts>
+  include <abstractions/freedesktop.org>
+  include <abstractions/gtk>
+  include <abstractions/mesa>
+  include <abstractions/nameservice-strict>
+  include <abstractions/opencl-intel>
+  include <abstractions/ssl_certs>
+  include <abstractions/thumbnails-cache-read>
   include <abstractions/user-download-strict>
   include <abstractions/user-read>
-  include <abstractions/thumbnails-cache-read>
-  include <abstractions/nameservice-strict>
-  include <abstractions/ssl_certs>
-  include <abstractions/deny-root-dir-access>
+  include <abstractions/vulkan>
+  include <abstractions/wayland>
   ##include <abstractions/nvidia>
 
   ptrace peer=@{profile_name},
@@ -210,16 +212,14 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
   @{sys}/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us r,
 
   owner @{user_share_dirs}/ r,
-  owner @{user_share_dirs}/gvfs-metadata/home r,
-  owner @{user_share_dirs}/gvfs-metadata/home-*.log r,
-  owner @{user_share_dirs}/gvfs-metadata/root r,
-  owner @{user_share_dirs}/gvfs-metadata/root-*.log r,
+  owner @{user_share_dirs}/gvfs-metadata/{,*} r,
 
   include <abstractions/dconf>
   owner @{run}/user/@{uid}/dconf/ rw,
   owner @{run}/user/@{uid}/dconf/user rw,
 
   # Silencer
+  deny capability sys_ptrace,
   deny owner @{HOME}/.* r,
 
   profile open {
@@ -252,6 +252,7 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
     /{usr/,}bin/telegram-desktop rPx,
     /{usr/,}bin/spacefm          rPx,
     /{usr/,}bin/qpdfview         rPx,
+    /{usr/,}bin/evince           rPx,
     /usr/share/xfce4/exo/exo-compose-mail rPx,
 
     # file_inherit

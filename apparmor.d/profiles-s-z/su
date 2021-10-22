@@ -9,25 +9,16 @@ include <tunables/global>
 @{exec_path} = /{usr/,}bin/su
 profile su @{exec_path} {
   include <abstractions/base>
-  include <abstractions/consoles>
   include <abstractions/authentication>
-  include <abstractions/wutmp>
+  include <abstractions/consoles>
   include <abstractions/nameservice-strict>
+  include <abstractions/wutmp>
 # include <pam/mappings>
 
-  # To remove the following errors:
-  #  su: cannot set groups: Operation not permitted
-  capability setgid,
-
-  # To remove the following errors:
-  #  su: cannot set user id: Operation not permitted
-  capability setuid,
-
-  # To write records to the kernel auditing log.
   capability audit_write,
-
-  # Needed?
-  audit deny capability net_bind_service,
+  capability setgid,
+  capability setuid,
+  #audit deny capability net_bind_service,
 
   signal (send)    set=(term,kill),
   signal (receive) set=(int,quit,term),
@@ -43,15 +34,13 @@ profile su @{exec_path} {
   # Fake shells to politely refuse a login
   #/{usr/,}{s,}bin/nologin rpux,
 
+  /etc/default/locale r,
   /etc/environment r,
+  /etc/security/limits.d/ r,
+  /etc/shells r,
 
         @{PROC}/1/limits r,
   owner @{PROC}/@{pid}/loginuid r,
-
-  /etc/default/locale r,
-  /etc/security/limits.d/ r,
-
-  /etc/shells r,
 
   # For pam_securetty
   @{PROC}/cmdline r,
