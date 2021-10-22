@@ -9,43 +9,26 @@ include <tunables/global>
 @{exec_path} = /{usr/,}bin/sudo
 profile sudo @{exec_path} {
   include <abstractions/base>
-  include <abstractions/consoles>
   include <abstractions/authentication>
-  include <abstractions/wutmp>
+  include <abstractions/consoles>
   include <abstractions/nameservice-strict>
+  include <abstractions/wutmp>
 # include <pam/mappings>
 
-  # To remove the following errors:
-  #  sudo: unable to change to root gid: Operation not permitted
-  capability setgid,
-
-  # To remove the following errors:
-  #  sudo: PERM_SUDOERS: setresuid(-1, 1, -1): Operation not permitted
-  #  sudo: no valid sudoers sources found, quitting
-  #  sudo: setresuid() [0, 0, 0] -> [1000, -1, -1]: Operation not permitted
-  capability setuid,
-
-  # To write records to the kernel auditing log.
+  # capability mknod,
   capability audit_write,
-
-  # For changing ownership of the /var/log/sudo.log file
   capability chown,
-
-  # Needed? (#FIXME#)
-  capability sys_resource,
-  capability net_admin,
-  capability sys_ptrace,
-  capability dac_read_search,
   capability dac_override,
-  capability mknod,
-  ptrace read,
+  capability dac_read_search,
+  capability net_admin,
+  capability setgid,
+  capability setuid,
+  capability sys_ptrace,
+  capability sys_resource,
 
-  # To remove the following error:
-  #  sudo: PAM account management error: Permission denied
-  #  sudo: unable to open audit system: Permission denied
-  #  sudo: a password is required
   network netlink raw,
 
+  ptrace (read),
   signal,
 
   @{exec_path} mr,
@@ -54,21 +37,9 @@ profile sudo @{exec_path} {
   /{usr/,}bin/{,b,d,rb}ash rpux,
   /{usr/,}bin/{c,k,tc,z}sh rpux,
 
-  /{usr/,}bin/[a-z0-9]* rPUx,
-  /{usr/,}{s,}bin/[a-z0-9]* rPUx,
-  /{usr/,}lib/cockpit/cockpit-askpass rPx,
-
-  /dev/ r,
-  /dev/ptmx rw,
-
-  # For timestampdir
-  owner @{run}/sudo/ rw,
-  owner @{run}/sudo/ts/ rw,
-  owner @{run}/sudo/ts/* rwk,
-        @{run}/faillock/{,*} rwk,
-
-  @{PROC}/@{pid}/fd/ r,
-  @{PROC}/@{pids}/stat r,
+  /{usr/,}bin/[a-z0-9]*               rPUx,
+  /{usr/,}{s,}bin/[a-z0-9]*           rPUx,
+  /{usr/,}lib/cockpit/cockpit-askpass rPUx,
 
   /etc/sudo.conf r,
 
@@ -79,9 +50,21 @@ profile sudo @{exec_path} {
 
   /var/log/sudo.log wk,
 
-  # file_inherit
+  # For timestampdir
+  owner @{run}/sudo/ rw,
+  owner @{run}/sudo/ts/ rw,
+  owner @{run}/sudo/ts/* rwk,
+        @{run}/faillock/{,*} rwk,
+
+  @{PROC}/@{pid}/fd/ r,
+  @{PROC}/@{pids}/stat r,
+
+  # File Inherit
   owner /dev/tty[0-9]* rw,
   owner @{HOME}/.xsession-errors w,
+
+  /dev/ r,
+  /dev/ptmx rw,
 
   include if exists <local/sudo>
 }
