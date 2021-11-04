@@ -1,0 +1,27 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/dconf
+profile dconf @{exec_path} {
+  include <abstractions/base>
+
+  capability sys_nice,
+
+  @{exec_path} mr,
+
+  /etc/dconf/{,**} r,
+  /etc/dconf/db/** rw,
+
+  owner @{run}/user/@{uid}/dconf/ rw,
+  owner @{run}/user/@{uid}/dconf/user rw,
+
+  owner @{user_config_dirs}/dconf/ rw,
+  owner @{user_config_dirs}/dconf/user{,.*} rw,
+
+  include if exists <local/dconf>
+}
