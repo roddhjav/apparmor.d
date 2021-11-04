@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2018-2021 Mikhail Morfikov
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -14,13 +15,12 @@ profile ntfs-3g @{exec_path} {
   # When UserMapping is placed under /.NTFS-3G/UserMapping on the NTFS volume
   include <abstractions/nameservice-strict>
 
-  # Needed in order to mount ntfs disks
+  capability dac_override,
+  capability dac_read_search,
+  capability mknod,
   capability setgid,
   capability setuid,
   capability sys_admin,
-  capability dac_read_search,
-  capability dac_override,
-  capability mknod,
 
   @{exec_path} mr,
 
@@ -35,12 +35,13 @@ profile ntfs-3g @{exec_path} {
   @{MOUNTS}/*/ r,
   @{MOUNTS}/*/*/ r,
 
-
-  # Allow to mount ntfs disks only under the /media/ and /mnt/ dirs
+  # Allow to mount ntfs disks only under the /media/, /run/media, and /mnt/ dirs
   mount fstype=fuseblk /dev/sd[a-z][0-9]* -> @{MOUNTS}/*/,
   mount fstype=fuseblk /dev/sd[a-z][0-9]* -> @{MOUNTS}/*/*/,
   mount fstype=fuseblk /dev/sd[a-z][0-9]* -> /mnt/,
   mount fstype=fuseblk /dev/sd[a-z][0-9]* -> /mnt/*/,
+  mount fstype=fuseblk /dev/mmcblk[0-9]*p[0-9]* -> @{MOUNTS}/*/,
+  mount fstype=fuseblk /dev/mmcblk[0-9]*p[0-9]* -> @{MOUNTS}/*/*/,
 
   # Allow to mount encrypted partition
   mount fstype=fuseblk /dev/dm-[0-9]* -> @{MOUNTS}/*/,
