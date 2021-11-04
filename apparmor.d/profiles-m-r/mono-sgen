@@ -1,0 +1,21 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/mono-sgen
+profile mono-sgen @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/ssl_certs>
+
+  @{exec_path} mr,
+
+  /usr/share/.mono/{,**} rw,
+
+  /etc/mono/{,**} r,
+
+  include if exists <local/mono-sgen>
+}
