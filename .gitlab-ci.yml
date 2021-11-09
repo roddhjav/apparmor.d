@@ -1,5 +1,8 @@
 ---
 
+include:
+  - template: Security/SAST.gitlab-ci.yml
+
 variables:
   PKGDEST: $CI_PROJECT_DIR/packages
   PACKAGER: 'Alexandre Pujol <alexandre@pujol.io>'
@@ -20,6 +23,28 @@ bash:
     - shellcheck --shell=bash
         PKGBUILD
         debian/apparmor.d.postinst debian/apparmor.d.postrm
+
+golangci-lint:
+  stage: lint
+  image: golangci/golangci-lint
+  script:
+    - cd src && golangci-lint run
+
+goreport:
+  stage: lint
+  image: golang
+  before_script:
+    - cd /tmp
+    - git clone https://github.com/gojp/goreportcard.git
+    - cd goreportcard
+    - make install
+    - go install ./cmd/goreportcard-cli
+    - cd $CI_PROJECT_DIR
+  script:
+    - goreportcard-cli -v -t 90
+
+sast:
+  stage: lint
 
 
 # Package Build
