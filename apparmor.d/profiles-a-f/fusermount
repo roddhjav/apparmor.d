@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2020-2021 Mikhail Morfikov
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -11,11 +12,8 @@ profile fusermount @{exec_path} {
   include <abstractions/base>
   include <abstractions/nameservice-strict>
 
-  # To mount anything:
-  #  fusermount: mount failed: Operation not permitted
+  capability dac_read_search,
   capability sys_admin,
-
-  #capability dac_read_search,
 
   @{exec_path} mr,
 
@@ -23,6 +21,7 @@ profile fusermount @{exec_path} {
   owner @{HOME}/*/ rw,
   owner @{HOME}/*/*/ rw,
   owner @{user_cache_dirs}/**/ rw,
+  owner @{run}/user/@{uid}/doc/ r,
 
   # Be able to mount ISO images
   mount fstype={fuse,fuse.*} -> @{HOME}/*/,
@@ -30,6 +29,7 @@ profile fusermount @{exec_path} {
   mount fstype={fuse,fuse.*} -> @{HOME}/.cache/**/,
   mount fstype={fuse,fuse.*} -> @{MOUNTS}/*/,
   mount fstype={fuse,fuse.*} -> @{MOUNTS}/*/*/,
+  mount fstype={fuse,fuse.*} -> @{run}/user/@{uid}/doc/,
 
   umount @{HOME}/*/,
   umount @{HOME}/*/*/,
@@ -37,6 +37,7 @@ profile fusermount @{exec_path} {
   umount @{MOUNTS}/*/,
   umount @{MOUNTS}/*/*/,
   umount /tmp/.mount_*/,
+  umount @{run}/user/@{uid}/doc/,
 
   /etc/fuse.conf r,
 

@@ -9,13 +9,48 @@ include <tunables/global>
 @{exec_path} = /{usr/,}bin/mono-sgen
 profile mono-sgen @{exec_path} {
   include <abstractions/base>
+  include <abstractions/audio>
+  include <abstractions/dri-common>
+  include <abstractions/dri-enumerate>
+  include <abstractions/freedesktop.org>
+  include <abstractions/mesa>
+  include <abstractions/nameservice-strict>
   include <abstractions/ssl_certs>
+  include <abstractions/vulkan>
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
 
   @{exec_path} mr,
+
+  /{usr/,}bin/ r,
+  /{usr/,}local/bin/ r,
+  /{usr/,}bin/* rPUx,
 
   /usr/share/.mono/{,**} rw,
 
   /etc/mono/{,**} r,
+  /etc/machine-id r,
+
+  owner @{user_config_dirs}/openra/{,**} rw,
+  owner @{user_config_dirs}/.mono/{,**} r,
+  owner @{run}/user/@{uid}/.mutter-Xwaylandauth.* rw,
+
+  owner /tmp/*.* rw,
+  owner /tmp/CASESENSITIVETEST* rw,
+  owner /dev/shm/mono.* rw,
+        /dev/shm/ r,
+
+  @{sys}/devices/pci[0-9]*/**/uevent r,
+  @{sys}/devices/pci[0-9]*/**/vendor r,
+  @{sys}/devices/pci[0-9]*/**/device r,
+  @{sys}/devices/pci[0-9]*/**/subsystem_vendor r,
+  @{sys}/devices/pci[0-9]*/**/subsystem_device r,
+
+  owner @{PROC}/@{pid}/fd/ r,
 
   include if exists <local/mono-sgen>
 }

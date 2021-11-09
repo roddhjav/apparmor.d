@@ -10,6 +10,10 @@ include <tunables/global>
 profile systemd-binfmt @{exec_path} {
   include <abstractions/base>
 
+  capability net_admin,
+
+  ptrace (read) peer=unconfined,
+
   @{exec_path} mr,
 
   # Config file locations
@@ -18,6 +22,10 @@ profile systemd-binfmt @{exec_path} {
   /usr/lib/binfmt.d/*.conf r,
 
   owner @{PROC}/@{pid}/stat r,
+        @{PROC}/1/environ r,
+        @{PROC}/cmdline r,
+        @{PROC}/sys/fs/binfmt_misc/status w,
+        @{PROC}/sys/kernel/osrelease r,
 
   include if exists <local/systemd-binfmt>
 }
