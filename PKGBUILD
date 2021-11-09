@@ -5,10 +5,11 @@ pkgname=apparmor.d
 pkgver=0.001
 pkgrel=1
 pkgdesc="Full set of apparmor profiles"
-arch=("any")
+arch=("x86_64")
 url="https://github.com/roddhjav/$pkgname"
 license=('GPL2')
 depends=('apparmor')
+makedepends=('go' 'git')
 
 pkgver() {
     cd "$srcdir/$pkgname"
@@ -20,6 +21,16 @@ prepare() {
   cd "$srcdir/$pkgname"
 
   ./configure --distribution=archlinux
+}
+
+build() {
+  cd "$srcdir/$pkgname/src"
+  export CGO_CPPFLAGS="${CPPFLAGS}"
+  export CGO_CFLAGS="${CFLAGS}"
+  export CGO_CXXFLAGS="${CXXFLAGS}"
+  export CGO_LDFLAGS="${LDFLAGS}"
+  export GOFLAGS="-buildmode=pie -trimpath -ldflags=-linkmode=external -mod=readonly -modcacherw"
+  go build -o ../.build/ ./cmd/aa-log
 }
 
 package() {
@@ -45,6 +56,6 @@ package() {
       "$pkgdir/usr/lib/systemd/system/$service.d/apparmor.conf"
   done
 
-  # Set special access rights
-  chmod 0755 "$pkgdir"/usr/bin/*
+  # Internal tool
+  install -Dm755 .build/aa-log "$pkgdir"/usr/bin/aa-log
 }
