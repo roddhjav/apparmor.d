@@ -26,13 +26,10 @@ const (
 )
 
 // AppArmorLog describes a apparmor log entry
-type AppArmorLog struct {
-	State     string
-	Profile   string
-	Operation string
-	Name      string
-	Content   string
-}
+type AppArmorLog map[string]string
+
+// AppArmorLogs describes all apparmor log entries
+type AppArmorLogs []AppArmorLog
 
 func removeDuplicateLog(logs []string) []string {
 	list := []string{}
@@ -47,7 +44,7 @@ func removeDuplicateLog(logs []string) []string {
 	return list
 }
 
-func parseApparmorLogs(file *os.File, profile string) []AppArmorLog {
+func NewApparmorLogs(file *os.File, profile string) AppArmorLogs {
 	log := ""
 	exp := fmt.Sprintf("^.*apparmor=(\"DENIED\"|\"ALLOWED\").* profile=\"%s.*\".*$", profile)
 	isAppArmorLog := regexp.MustCompile(exp)
@@ -77,48 +74,62 @@ func parseApparmorLogs(file *os.File, profile string) []AppArmorLog {
 	logs = removeDuplicateLog(logs)
 
 	// Parse log into ApparmorLog struct
-	aaLogs := make([]AppArmorLog, 0)
-	getState := regexp.MustCompile(`apparmor=\"([A-Z]*)\"`)
-	getProfile := regexp.MustCompile(`profile=\"([A-Za-z0-9_.\-/]*)\" `)
-	getOperation := regexp.MustCompile(`operation="(\w+)"`)
-	getName := regexp.MustCompile(` name=([A-Za-z0-9_.\-/#"]*)`)
-	cleanContent := []*regexp.Regexp{getState, getProfile, getOperation, getName}
+	aaLogs := make(AppArmorLogs, 0)
 	for _, log := range logs {
-		name := ""
-		names := getName.FindStringSubmatch(log)
-		if len(names) >= 2 {
-			name = strings.Trim(names[1], `"`)
+		tmp := strings.Split(log, " ")
+		aa := make(AppArmorLog)
+		for _, item := range tmp {
+			kv := strings.Split(item, "=")
+			if len(kv) >= 2 {
+				aa[kv[0]] = strings.Trim(kv[1], `"`)
+			}
 		}
-
-		content := log
-		for _, clean := range cleanContent {
-			content = clean.ReplaceAllLiteralString(content, "")
-		}
-		aaLogs = append(aaLogs,
-			AppArmorLog{
-				State:     getState.FindStringSubmatch(log)[1],
-				Profile:   getProfile.FindStringSubmatch(log)[1],
-				Operation: getOperation.FindStringSubmatch(log)[1],
-				Name:      name,
-				Content:   content[2:],
-			})
+		aaLogs = append(aaLogs, aa)
 	}
 
 	return aaLogs
 }
 
-func printFormatedApparmorLogs(aaLogs []AppArmorLog) {
+func (aaLogs AppArmorLogs) String() string {
+	res := ""
 	state := map[string]string{
 		"DENIED":  BoldRed + "DENIED " + Reset,
 		"ALLOWED": BoldGreen + "ALLOWED" + Reset,
 	}
-	for _, log := range aaLogs {
-		fmt.Println(state[log.State],
-			FgBlue+log.Profile,
-			FgYellow+log.Operation,
-			FgMagenta+log.Name+Reset,
-			log.Content)
+	keys := []string{
+		"profile", "operation", "name", "info", "comm", "laddr",
+		"lport", "faddr", "fport", "family", "sock_type", "protocol",
+		"requested_mask", "denied_mask", // "fsuid", "ouid", "FSUID", "OUID",
 	}
+	colors := map[string]string{
+		"profile":        FgBlue,
+		"operation":      FgYellow,
+		"name":           FgMagenta,
+		"requested_mask": "requested_mask=" + BoldRed,
+		"denied_mask":    "denied_mask=" + BoldRed,
+	}
+	for _, log := range aaLogs {
+		res += state[log["apparmor"]]
+		delete(log, "apparmor")
+
+		for _, key := range keys {
+			if log[key] != "" {
+				if colors[key] != "" {
+					res += " " + colors[key] + log[key] + Reset
+				} else {
+					res += " " + key + "=" + log[key]
+				}
+				delete(log, key)
+			}
+		}
+
+		for key, value := range log {
+			res += " " + key + "=" + value
+		}
+		res += "\n"
+	}
+	return res
+}
 }
 
 func main() {
@@ -138,6 +149,6 @@ func main() {
 		}
 	}()
 
-	aaLogs := parseApparmorLogs(file, profile)
-	printFormatedApparmorLogs(aaLogs)
+	aaLogs := NewApparmorLogs(file, profile)
+	fmt.Print(aaLogs.String())
 }
