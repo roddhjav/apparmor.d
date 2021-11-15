@@ -130,7 +130,6 @@ func (aaLogs AppArmorLogs) String() string {
 	}
 	return res
 }
-}
 
 func main() {
 	profile := ""
