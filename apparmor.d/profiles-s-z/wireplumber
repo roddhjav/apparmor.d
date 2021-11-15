@@ -1,0 +1,46 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/wireplumber
+profile wireplumber @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/audio>
+  include <abstractions/devices-usb>
+  include <abstractions/nameservice-strict>
+
+  network bluetooth raw,
+  network bluetooth seqpacket,
+  network bluetooth stream,
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  /usr/share/alsa-card-profile/{,**} r,
+  /usr/share/spa-*/bluez[0-9]*/{,*} r,
+  /usr/share/wireplumber/{,**} r,
+
+  owner @{HOME}/.local/state/wireplumber/{,**} rw,
+
+  @{run}/systemd/users/@{uid} r,
+
+  @{run}/udev/data/+sound:card[0-9]* r, # For sound
+  @{run}/udev/data/c81:[0-9]*  r,       # For video4linux
+  @{run}/udev/data/c116:[0-9]* r,       # for ALSA
+
+  @{sys}/bus/ r,
+  @{sys}/class/ r,
+  @{sys}/class/sound/ r,
+  @{sys}/class/video4linux/ r,
+  @{sys}/devices/**/sound/**/uevent r,
+  @{sys}/devices/pci[0-9]*/**/modalias r,
+  @{sys}/devices/pci[0-9]*/**/video4linux/video[0-9]*/uevent r,
+
+  /dev/video[0-9]* rw,
+
+  include if exists <local/wireplumber>
+}
