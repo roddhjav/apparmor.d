@@ -10,27 +10,49 @@ include <tunables/global>
 profile pacman-key @{exec_path} {
   include <abstractions/base>
   
+  capability dac_read_search,
+  capability mknod,
+
   @{exec_path} mr,
 
   /{usr/,}bin/basename     rix,
+  /{usr/,}bin/bash         rix,
+  /{usr/,}bin/gawk         rix,
   /{usr/,}bin/gettext      rix,
   /{usr/,}bin/gpg          rCx -> gpg,
   /{usr/,}bin/grep         rix,
   /{usr/,}bin/pacman-conf  rPx,
   /{usr/,}bin/tput         rix,
+  /{usr/,}bin/wc           rix,
 
   /usr/share/makepkg/{,**} r,
   /usr/share/terminfo/x/xterm-256color r,
 
   /dev/tty rw,
 
+  # Inherit Silencer
+  deny network inet6 stream,
+  deny network inet stream,
+
   profile gpg {
     include <abstractions/base>
 
-    /{usr/,}bin/gpg mr,
-  
+    capability dac_read_search,
+    capability mknod,
+
+    /{usr/,}bin/gpg        mr,
+    /{usr/,}bin/gpg-agent  mr,
+
+    /usr/share/pacman/keyrings/* r,
+
     /etc/pacman.d/gnupg/ rw,
     /etc/pacman.d/gnupg/** rwkl,
+
+    owner @{PROC}/@{pid}/fd/ r,
+
+    # Inherit Silencer
+    deny network inet6 stream,
+    deny network inet stream,
   }
 
   include if exists <local/pacman-key>
