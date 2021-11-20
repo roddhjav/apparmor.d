@@ -12,11 +12,11 @@ include <tunables/global>
 @{MOZ_LIBDIR} = /{usr/,}lib/firefox{,-esr}
 @{MOZ_HOMEDIR} = @{HOME}/.mozilla
 @{MOZ_CACHEDIR} = @{user_cache_dirs}/mozilla
-
 @{exec_path} = @{MOZ_LIBDIR}/firefox{,-bin,-esr}
 profile firefox @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/audio>
+  include <abstractions/dconf>
   include <abstractions/deny-root-dir-access>
   include <abstractions/enchant>
   include <abstractions/fontconfig-cache-read>
@@ -25,6 +25,7 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
   include <abstractions/gtk>
   include <abstractions/mesa>
   include <abstractions/nameservice-strict>
+  include <abstractions/nvidia>
   include <abstractions/opencl-intel>
   include <abstractions/ssl_certs>
   include <abstractions/thumbnails-cache-read>
@@ -32,7 +33,10 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
   include <abstractions/user-read>
   include <abstractions/vulkan>
   include <abstractions/wayland>
-  ##include <abstractions/nvidia>
+
+  # Needed only when the kernel.unprivileged_userns_clone option is set to "1".
+  capability sys_admin,
+  capability sys_chroot,
 
   ptrace peer=@{profile_name},
 
@@ -47,39 +51,58 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
 
   @{exec_path} mrix,
 
-  # The following rules are needed only when the kernel.unprivileged_userns_clone option is set
-  # to "1".
-  capability sys_admin,
-  capability sys_chroot,
-  owner @{PROC}/@{pid}/setgroups w,
-  owner @{PROC}/@{pid}/gid_map w,
-  owner @{PROC}/@{pid}/uid_map w,
-
   /{usr/,}bin/{,ba,da}sh          rix,
 
-  # Firefox files
-  @{MOZ_LIBDIR}/{,**}  r,
-  @{MOZ_LIBDIR}/*.so  mr,
+  @{MOZ_LIBDIR}/{,**}             r,
+  @{MOZ_LIBDIR}/*.so              mr,
   @{MOZ_LIBDIR}/crashreporter     rPx,
   @{MOZ_LIBDIR}/minidump-analyzer rPx,
   @{MOZ_LIBDIR}/pingsender        rPx,
   @{MOZ_LIBDIR}/plugin-container  rPx,
-  /usr/share/firefox/{,**} r,
-  /etc/firefox/{,**} r,
 
-  # Firefox plugins & extensions
+  @{libexec}/gvfsd-metadata       rPx -> gvfsd-metadata,
+  /{usr/,}bin/browserpass         rPx,
+  /{usr/,}bin/gpa                 rPUx,
+  /{usr/,}bin/keepassxc-proxy     rPUx,
+  /{usr/,}bin/lsb_release         rPx -> lsb_release,
+
+  # Allowed apps to open
+  /{usr/,}bin/xdg-open                                    rCx -> open,
+  /{usr/,}bin/exo-open                                    rCx -> open,
+  /{usr/,}lib/@{multiarch}/glib-[0-9]*/gio-launch-desktop rCx -> open,
+  /{usr/,}bin/engrampa         rPx,
+  /{usr/,}bin/geany            rPx,
+  /{usr/,}bin/okular           rPx,
+  /{usr/,}bin/qbittorrent      rPx,
+  /{usr/,}bin/qpdfview         rPx,
+  /{usr/,}bin/smplayer         rPx,
+  /{usr/,}bin/spacefm          rPx,
+  /{usr/,}bin/telegram-desktop rPx,
+  /{usr/,}bin/thunderbird      rPx,
+  /{usr/,}bin/viewnior        rPUx,
+  /{usr/,}bin/vlc              rPx,
+  /{usr/,}bin/xarchiver        rPx,
+
   /{usr/,}lib/mozilla/plugins/ r,
   /{usr/,}lib/mozilla/plugins/libvlcplugin.so mr,
+  /usr/share/doc/{,**} r,
+  /usr/share/firefox/{,**} r,
   /usr/share/mozilla/extensions/{,**} r,
   /usr/share/webext/{,**} r,
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
 
-  # To be able to read docs
-  /usr/share/doc/{,**} r,
+  /etc/firefox/{,**} r,
+  /etc/fstab r,
+  /etc/libva.conf r,
+  /etc/mailcap r,
+  /etc/mime.types r,
+  /etc/opensc.conf r,
 
-  #
-  @{libexec}/gvfsd-metadata rPx -> gvfsd-metadata,
+  /var/lib/dbus/machine-id r,
+  /etc/machine-id r,
 
-  # Firefox home files
+  owner @{HOME}/ r,
+
   owner @{MOZ_HOMEDIR}/ rw,
   owner @{MOZ_HOMEDIR}/{extensions,systemextensionsdev}/ rw,
   owner @{MOZ_HOMEDIR}/firefox/ rw,
@@ -87,17 +110,22 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
   owner @{MOZ_HOMEDIR}/firefox/profiles.ini rw,
   owner @{MOZ_HOMEDIR}/firefox/*/ rw,
   owner @{MOZ_HOMEDIR}/firefox/*/** rwk,
-  # For keepassxc integration
   owner @{MOZ_HOMEDIR}/native-messaging-hosts/org.keepassxc.keepassxc_browser.json r,
 
-  # Cache
-  owner @{user_cache_dirs}/ rw,
   owner @{MOZ_CACHEDIR}/ rw,
   owner @{MOZ_CACHEDIR}/** rwk,
-
+  owner @{user_cache_dirs}/ rw,
   owner @{user_cache_dirs}/gstreamer-[0-9]*/ rw,
   owner @{user_cache_dirs}/gstreamer-[0-9]*/registry.*.bin{,.tmp*} rw,
 
+  owner @{user_share_dirs}/ r,
+  owner @{user_share_dirs}/gvfs-metadata/{,*} r,
+
+  owner @{run}/user/@{uid}/dconf/ rw,
+  owner @{run}/user/@{uid}/dconf/user rw,
+
+       @{sys}/cgroup/cpu,cpuacct/user.slice/cpu.cfs_quota_us r,
+       @{sys}/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us r,
   deny @{sys}/devices/system/cpu/present r,
   deny @{sys}/devices/system/cpu/cpufreq/policy[0-9]/cpuinfo_max_freq r,
   deny @{sys}/devices/system/cpu/cpu[0-9]/cache/index[0-9]/size r,
@@ -115,26 +143,13 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
   deny owner @{PROC}/@{pids}/environ r,
        owner @{PROC}/@{pid}/task/ r,
   deny owner @{PROC}/@{pid}/task/@{tid}/stat r,
-  # To remove the following error:
-  #  GLib-GIO-WARNING **: Error creating IO channel for /proc/self/mountinfo: Permission denied
-  #  (g-file-error-quark, 2)
        owner @{PROC}/@{pid}/mountinfo r,
        owner @{PROC}/@{pid}/mounts r,
-  # About:memory
   deny owner @{PROC}/@{pid}/statm r,
   deny owner @{PROC}/@{pid}/smaps r,
-  # Link Monitor (since 49.0.1)
              @{PROC}/@{pid}/net/arp r,
-             @{PROC}/@{pid}/net/route r,
-  #
              @{PROC}/@{pid}/net/if_inet6 r,
-
-  /etc/mime.types r,
-  /etc/mailcap r,
-
-  include <abstractions/dconf>
-  owner @{run}/user/@{uid}/dconf/ rw,
-  owner @{run}/user/@{uid}/dconf/user rw,
+             @{PROC}/@{pid}/net/route r,
 
   # Set default browser
   /{usr/,}bin/update-mime-database rPx,
@@ -150,11 +165,6 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
 
   # For wayland
   owner /dev/shm/wayland.mozilla.ipc.[0-9]* rw,
-
-  /usr/share/glib-2.0/schemas/gschemas.compiled r,
-
-  /var/lib/dbus/machine-id r,
-  /etc/machine-id r,
 
     /var/tmp/ r,
         /tmp/ r,
@@ -172,53 +182,17 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
   owner /dev/shm/org.chromium.* rw,
   owner /dev/shm/org.mozilla.ipc.@{pid}.[0-9]* rw,
 
-  /etc/fstab r,
+  # Needed only when the kernel.unprivileged_userns_clone option is set to "1".
+  owner @{PROC}/@{pid}/setgroups w,
+  owner @{PROC}/@{pid}/gid_map w,
+  owner @{PROC}/@{pid}/uid_map w,
+
+  # File Inherit
+  owner /dev/tty[0-9]* rw,
+  owner /dev/dri/card[0-9]* rw,
 
   # Silencer
   deny /{usr/,}lib/firefox/** w,
-
-  /{usr/,}bin/gpa              rPUx,
-  /{usr/,}bin/keepassxc-proxy  rPUx, # For storing passwords externally
-  /{usr/,}bin/browserpass       rPx,
-
-  /{usr/,}bin/lsb_release       rPx -> lsb_release,
-
-  /{usr/,}bin/xdg-open                                    rCx -> open,
-  /{usr/,}bin/exo-open                                    rCx -> open,
-  /{usr/,}lib/@{multiarch}/glib-[0-9]*/gio-launch-desktop rCx -> open,
-
-  # Allowed apps to open
-  /{usr/,}bin/vlc              rPx,
-  /{usr/,}bin/qbittorrent      rPx,
-  /{usr/,}bin/smplayer         rPx,
-  /{usr/,}bin/geany            rPx,
-  /{usr/,}bin/okular           rPx,
-  /{usr/,}bin/viewnior        rPUx,
-  /{usr/,}bin/xarchiver        rPx,
-  /{usr/,}bin/engrampa         rPx,
-  /{usr/,}bin/thunderbird      rPx,
-  /{usr/,}bin/telegram-desktop rPx,
-  /{usr/,}bin/spacefm          rPx,
-  /{usr/,}bin/qpdfview         rPx,
-
-  # file_inherit
-  owner /dev/tty[0-9]* rw,
-  /dev/dri/card[0-9]* rw,
-
-  /etc/opensc.conf r,
-
-  owner @{HOME}/ r,
-  @{sys}/cgroup/cpu,cpuacct/user.slice/cpu.cfs_quota_us r,
-  @{sys}/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us r,
-
-  owner @{user_share_dirs}/ r,
-  owner @{user_share_dirs}/gvfs-metadata/{,*} r,
-
-  include <abstractions/dconf>
-  owner @{run}/user/@{uid}/dconf/ rw,
-  owner @{run}/user/@{uid}/dconf/user rw,
-
-  # Silencer
   deny capability sys_ptrace,
   deny owner @{HOME}/.* r,
 
@@ -240,19 +214,19 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
     owner @{run}/user/@{uid}/ r,
 
     # Allowed apps to open
-    /{usr/,}bin/vlc              rPx,
-    /{usr/,}bin/qbittorrent      rPx,
-    /{usr/,}bin/smplayer         rPx,
+    /{usr/,}bin/engrampa         rPx,
+    /{usr/,}bin/evince           rPx,
     /{usr/,}bin/geany            rPx,
     /{usr/,}bin/okular           rPx,
-    /{usr/,}bin/viewnior        rPUx,
-    /{usr/,}bin/xarchiver        rPx,
-    /{usr/,}bin/engrampa         rPx,
-    /{usr/,}bin/thunderbird      rPx,
-    /{usr/,}bin/telegram-desktop rPx,
-    /{usr/,}bin/spacefm          rPx,
+    /{usr/,}bin/qbittorrent      rPx,
     /{usr/,}bin/qpdfview         rPx,
-    /{usr/,}bin/evince           rPx,
+    /{usr/,}bin/smplayer         rPx,
+    /{usr/,}bin/spacefm          rPx,
+    /{usr/,}bin/telegram-desktop rPx,
+    /{usr/,}bin/thunderbird      rPx,
+    /{usr/,}bin/viewnior        rPUx,
+    /{usr/,}bin/vlc              rPx,
+    /{usr/,}bin/xarchiver        rPx,
     /usr/share/xfce4/exo/exo-compose-mail rPx,
 
     # file_inherit
