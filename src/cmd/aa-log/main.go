@@ -33,8 +33,7 @@ type AppArmorLogs []AppArmorLog
 
 func removeDuplicateLog(logs []string) []string {
 	list := []string{}
-	keys := make(map[string]interface{})
-	keys[""] = true
+	keys := map[string]interface{}{"": true}
 	for _, log := range logs {
 		if _, v := keys[log]; !v {
 			keys[log] = true
@@ -96,11 +95,13 @@ func (aaLogs AppArmorLogs) String() string {
 		"DENIED":  BoldRed + "DENIED " + Reset,
 		"ALLOWED": BoldGreen + "ALLOWED" + Reset,
 	}
+	// Order of impression
 	keys := []string{
 		"profile", "operation", "name", "info", "comm", "laddr",
 		"lport", "faddr", "fport", "family", "sock_type", "protocol",
-		"requested_mask", "denied_mask", // "fsuid", "ouid", "FSUID", "OUID",
+		"requested_mask", "denied_mask", "signal", "peer", // "fsuid", "ouid", "FSUID", "OUID",
 	}
+	// Optional colors template to use
 	colors := map[string]string{
 		"profile":        FgBlue,
 		"operation":      FgYellow,
@@ -109,8 +110,8 @@ func (aaLogs AppArmorLogs) String() string {
 		"denied_mask":    "denied_mask=" + BoldRed,
 	}
 	for _, log := range aaLogs {
+		seen := map[string]bool{"apparmor": true}
 		res += state[log["apparmor"]]
-		delete(log, "apparmor")
 
 		for _, key := range keys {
 			if log[key] != "" {
@@ -119,12 +120,14 @@ func (aaLogs AppArmorLogs) String() string {
 				} else {
 					res += " " + key + "=" + log[key]
 				}
-				delete(log, key)
+				seen[key] = true
 			}
 		}
 
 		for key, value := range log {
-			res += " " + key + "=" + value
+			if !seen[key] {
+				res += " " + key + "=" + value
+			}
 		}
 		res += "\n"
 	}
@@ -139,12 +142,13 @@ func main() {
 
 	file, err := os.Open(LogFile)
 	if err != nil {
-		fmt.Println(err.Error())
-		return
+		fmt.Println(err)
+		os.Exit(1)
 	}
 	defer func() {
 		if err := file.Close(); err != nil {
 			fmt.Println("Error closing file:", err)
+			os.Exit(1)
 		}
 	}()
 
