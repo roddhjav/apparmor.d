@@ -31,6 +31,15 @@ type AppArmorLog map[string]string
 // AppArmorLogs describes all apparmor log entries
 type AppArmorLogs []AppArmorLog
 
+var quoted bool
+
+func splitQuoted(r rune) bool {
+	if r == '"' {
+		quoted = !quoted
+	}
+	return !quoted && r == ' '
+}
+
 func removeDuplicateLog(logs []string) []string {
 	list := []string{}
 	keys := map[string]interface{}{"": true}
@@ -45,7 +54,10 @@ func removeDuplicateLog(logs []string) []string {
 
 func NewApparmorLogs(file *os.File, profile string) AppArmorLogs {
 	log := ""
-	exp := fmt.Sprintf("^.*apparmor=(\"DENIED\"|\"ALLOWED\").* profile=\"%s.*\".*$", profile)
+	exp := "apparmor=(\"DENIED\"|\"ALLOWED\")"
+	if profile != "" {
+		exp = fmt.Sprintf(exp+".* profile=\"%s.*\"", profile)
+	}
 	isAppArmorLog := regexp.MustCompile(exp)
 
 	// Select Apparmor logs
@@ -58,15 +70,14 @@ func NewApparmorLogs(file *os.File, profile string) AppArmorLogs {
 	}
 
 	// Clean logs
-	cleanAppArmorLogs := []*regexp.Regexp{
-		regexp.MustCompile(`type=AVC msg=audit(.*): `),
-		regexp.MustCompile(` fsuid.*`),
+	regexAppArmorLogs := map[*regexp.Regexp]string{
+		regexp.MustCompile(`type=AVC msg=audit(.*): apparmor`): "apparmor",
+		regexp.MustCompile(` fsuid.*`):                         "",
+		regexp.MustCompile(`pid=.* comm`):                      "comm",
 	}
-	for _, clean := range cleanAppArmorLogs {
-		log = clean.ReplaceAllLiteralString(log, "")
+	for regex, value := range regexAppArmorLogs {
+		log = regex.ReplaceAllLiteralString(log, value)
 	}
-	replaceAppArmorLogs := regexp.MustCompile(`pid=.* comm`)
-	log = replaceAppArmorLogs.ReplaceAllLiteralString(log, "comm")
 
 	// Remove doublon in logs
 	logs := strings.Split(log, "\n")
@@ -75,12 +86,18 @@ func NewApparmorLogs(file *os.File, profile string) AppArmorLogs {
 	// Parse log into ApparmorLog struct
 	aaLogs := make(AppArmorLogs, 0)
 	for _, log := range logs {
-		tmp := strings.Split(log, " ")
+		quoted = false
+		tmp := strings.FieldsFunc(log, splitQuoted)
+
 		aa := make(AppArmorLog)
 		for _, item := range tmp {
 			kv := strings.Split(item, "=")
 			if len(kv) >= 2 {
-				aa[kv[0]] = strings.Trim(kv[1], `"`)
+				if strings.Contains(kv[1], " ") {
+					aa[kv[0]] = kv[1]
+				} else {
+					aa[kv[0]] = strings.Trim(kv[1], `"`)
+				}
 			}
 		}
 		aaLogs = append(aaLogs, aa)
