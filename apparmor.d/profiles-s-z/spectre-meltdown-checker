@@ -16,6 +16,10 @@ profile spectre-meltdown-checker @{exec_path} {
   # Needed to read system logs
   capability syslog,
 
+  # Used by readlink
+  capability sys_ptrace,
+  ptrace (read),
+
   @{exec_path} r,
   /{usr/,}bin/{,ba,da}sh rix,
 
@@ -56,6 +60,7 @@ profile spectre-meltdown-checker @{exec_path} {
   /{usr/,}bin/mount      rix,
   /{usr/,}bin/find       rix,
   /{usr/,}bin/xargs      rix,
+  /{usr/,}bin/readlink   rix,
   
   /{usr/,}bin/pgrep      rCx -> pgrep,
   /{usr/,}bin/ccache     rCx -> ccache,
@@ -92,7 +97,11 @@ profile spectre-meltdown-checker @{exec_path} {
   @{PROC}/cmdline r,
   @{PROC}/kallsyms r,
   @{PROC}/modules r,
-  @{PROC}/@{pid}/status r,
+
+  # find and denoise
+  @{PROC}/@{pid}/{status,exe} r,
+  @{PROC}/@{pid}/fd/ r,
+  @{PROC}/*/ r,
 
   /var/lib/dbus/machine-id r,
   /etc/machine-id r,
@@ -153,6 +162,11 @@ profile spectre-meltdown-checker @{exec_path} {
 
   profile kmod {
     include <abstractions/base>
+
+    capability sys_module,
+
+    owner /sys/module/cpuid/** r,
+    owner /sys/module/msr/** r,
 
     /{usr/,}bin/kmod mr,
 
