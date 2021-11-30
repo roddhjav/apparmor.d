@@ -1,6 +1,8 @@
 [<img src="https://gitlab.com/uploads/-/system/project/avatar/25600351/logo.png" align="right" height="110"/>][project]
 
-# apparmor.d [![][build]][project]
+# apparmor.d
+
+[![][build]][project] [![][quality]][goreportcard]
 
 **Full set of AppArmor profiles**
 
@@ -117,6 +119,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 [upstream]: https://gitlab.com/morfikov/apparmemall
 [project]: https://gitlab.com/roddhjav/apparmor.d
 [build]: https://gitlab.com/roddhjav/apparmor.d/badges/master/pipeline.svg?style=flat-square
+[quality]: https://img.shields.io/badge/go%20report-A+-brightgreen.svg?style=flat-square
+[goreportcard]: https://goreportcard.com/report/github.com/roddhjav/apparmor.d
 
 [android_model]: https://arxiv.org/pdf/1904.05572
 [clipos]: https://clip-os.org/en/
