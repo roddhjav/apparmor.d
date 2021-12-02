@@ -1,0 +1,37 @@
+name: Ubuntu
+
+on: [push, pull_request, workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Check out repository code
+        uses: actions/checkout@v2
+
+      - name: Install Build dependencies 
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y \
+            devscripts debhelper config-package-dev \
+            auditd apparmor-profiles
+
+      - name: Build the apparmor.d package
+        run: dpkg-buildpackage -b -d --no-sign
+
+      - name: Install apparmor.d
+        run: sudo dpkg --install ../apparmor.d_*_all.deb
+
+      - name: Reload AppArmor
+        run: | 
+          sudo systemctl restart apparmor.service || true
+          sudo systemctl status apparmor.service
+
+      - name: Show AppArmor log
+        run: sudo aa-log
+
+      - name: Verify apparmor status
+        run: |
+          aa-status
+          sudo aa-status

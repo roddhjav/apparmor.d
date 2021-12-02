@@ -5,16 +5,8 @@
 
 readonly ROOT=.build
 
-_die()  { printf '%s\n' "$*" >&2 && exit 1; }
+_die()  { printf 'Error: %s\n' "$*" >&2 && exit 1; }
 _warning() { printf '  Warning: %s\n' "$*" >&2; }
-
-has_option() {
-    local item option="$1";
-    for item in "${OPTIONS[@]}"; do
-       [[ "$item" == "$option" ]] && return 0
-    done
-    return 1
-}
 
 # Displace files in the package sources
 # $@ List of files to displace
@@ -24,15 +16,13 @@ _displace_files() {
 	done
 }
 
-# Initialise a new clean apparmor.d build directory
-initialise() {
+# Initialize a new clean apparmor.d build directory
+initialize() {
 	rm -rf "${ROOT:?}" && rsync -a --exclude=.git . "$ROOT"
 }
 
-# Set the distribution specificities
-configure() {
-	echo "Set the configuration for $DISTRIBUTION."
-
+# Ignore profiles in profiles.ignore
+ignore() {
 	echo "  Ignore profiles in profiles.ignore."
     while read -r profile; do
 		[[ "$profile" =~ ^\# ]] && continue
@@ -42,14 +32,21 @@ configure() {
 			find "$ROOT/apparmor.d" -iname "$profile" -type f -exec rm {} \;
 		fi
     done <profiles.ignore
+}
 
+# Set the distribution specificities
+configure() {
 	case "$DISTRIBUTION" in
 		archlinux)
 			echo "  Ignore non Archlinux profiles."
 			rm -rf \
 				"${ROOT:?}"/apparmor.d/abstractions/apt-common \
 				"${ROOT:?}"/apparmor.d/groups/apt \
-				"${ROOT:?}"/apparmor.d/groups/cron
+				"${ROOT:?}"/apparmor.d/groups/cron \
+				"${ROOT:?}"/root/etc/initramfs-tools
+
+			echo "  Configure libexec."
+			sed -i -e '/Debian/d' "$ROOT/apparmor.d/tunables/extend"
 
 			;;
 
@@ -59,14 +56,24 @@ configure() {
 				"${ROOT:?}"/apparmor.d/groups/pacman \
 				"${ROOT:?}"/root/usr/share/libalpm/hooks/apparmor.hook
 
+			echo "  Configure libexec."
+			sed -i -e '/Archlinux/d' "$ROOT/apparmor.d/tunables/extend"
+
 			echo "  Debian does not support abi 3.0 yet."
-			find "$ROOT/apparmor.d" -type f  -exec sed -e '/abi /d' -i {} \;
+			find "$ROOT/apparmor.d" -type f -exec sed -e '/abi /d' -i {} \;
 
 			echo "  Debian does not have etc tunable."
 			sed -i -e '/etc/d' "$ROOT/apparmor.d/tunables/global"
 
 			echo "  Displace overwritten files."
 			_displace_files apparmor.d/tunables/global apparmor.d/tunables/xdg-user-dirs
+
+			if [[ "$(lsb_release -is)" == "Ubuntu" ]]; then
+				echo "  Ubuntu LTS compatibility."
+				echo "@{run}=/run/ /var/run/" > "$ROOT/apparmor.d/tunables/run"
+				sed -i -e '/capability bpf/d' -e '/capability perfmon/d' \
+					"$ROOT/apparmor.d/groups/virt/libvirtd"
+			fi
 
 			;;
 
@@ -109,13 +116,15 @@ setflags() {
 
     done <profiles.flags
 
-	if has_option complain; then
-		setflag_complain
-	fi
+}
+
+# Set AppArmor for full system policy
+full() {
+	echo WIP
 }
 
 # Set complain flag on all profile (Dev only)
-setflag_complain() {
+complain() {
 	echo "Set complain flag on all profile"
 	for path in "${ROOT:?}/apparmor.d/"*; do
 		[[ -d "$path" ]] && continue
@@ -135,34 +144,35 @@ cmd_help() {
 	./configure [options] - Configure the apparmor.d package
 
 	Options:
-	    --distribution=DIST Set the target Linux distribution: archlinux, debian
-	    --options=OPT       Set prefefined build options.
-	    --help              Print this help message and exit.
+	    -d DIST, --dist=DIST Set the target Linux distribution: archlinux, debian
+		-f, --full           Set AppArmor for full system policy
+	    -c, --complain       Set complain flag on all profiles
+	    -h, --help           Print this help message and exit
 	_EOF
 }
 
 main() {
-	local opts err
-	opts="$(getopt -o h -l distribution:,options:,help -n "$PROGRAM" -- "$@")"
+	local opts err full=0 complain=0
+	small_arg="d:cfh"
+	long_arg="dist:,complain,full,help"
+	opts="$(getopt -o $small_arg -l $long_arg -n "$PROGRAM" -- "$@")"
 	err=$?
 	eval set -- "$opts"
 	while true; do case $1 in
-		--distribution) DISTRIBUTION="$2"; shift 2 ;;
-		--options) 
-			# shellcheck disable=SC2206
-			OPTIONS=(${2//,/ }); shift 2 ;;
+		-d|--dist) DISTRIBUTION="$2"; shift 2 ;;
+		-f|--full) full=1; shift ;; 
+		-c|--complain) complain=1; shift ;;
 		-h|--help) shift; cmd_help; exit 0 ;;
 		--) shift; break ;;
 	esac done
-
 	[[ $err -ne 0 ]] && { cmd_help; exit 1; }
 
-	initialise
-	configure
-	synchronise
-	setflags
-
-	exit 0
+	echo "Set the configuration for $DISTRIBUTION."
+	initialize || _die "initializing build directory"
+	ignore || _die "removing ignored profiles"
+	configure || _die "configuring distributaion"
+	synchronise || _die "merging profiles"
+	setflags || _die "settings flags"
 }
 
 main "$@"
