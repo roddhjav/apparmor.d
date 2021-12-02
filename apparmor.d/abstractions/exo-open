@@ -1,0 +1,76 @@
+# vim:syntax=apparmor
+
+  abi <abi/3.0>,
+
+# This abstraction is designed to be used in a child profile to limit what
+# confined application can invoke via exo-open helper.
+#
+# NOTE: most likely you want to use xdg-open abstraction instead for better
+# portability across desktop environments, unless you are sure that confined
+# application only uses /usr/bin/exo-open directly.
+#
+# Usage example:
+#
+# ```
+# profile foo /usr/bin/foo {
+# ...
+# /usr/bin/exo-open rPx -> foo//exo-open,
+# ...
+# } # end of main profile
+#
+# # out-of-line child profile
+# profile foo//exo-open {
+#   include <abstractions/exo-open>
+#
+#   # needed for ubuntu-* abstractions
+#   include <abstractions/ubuntu-helpers>
+#
+#   # Only allow to handle http[s]: and mailto: links
+#   include <abstractions/ubuntu-browsers>
+#   include <abstractions/ubuntu-email>
+#
+#   # Add if accesibility access is considered as required
+#   # (for message boxe in case exo-open fails)
+#   include <abstractions/dbus-accessibility>
+#
+#   # < add additional allowed applications here >
+# }
+
+  include <abstractions/X>
+  include <abstractions/audio> # for alert messages
+  include <abstractions/base>
+  include <abstractions/dbus-session-strict>
+  include <abstractions/gnome>
+
+  # Main executables
+
+  /usr/bin/exo-open rix,
+  /usr/lib{32,64,/@{multiarch}}/xfce4/exo-[0-9]/exo-helper-[0-9] ix,
+
+  # Other executables
+
+  /{,usr/}bin/which rix,
+
+  # Deny DBus
+
+  # for GTK error message dialog, not required exo-open to work.
+  deny dbus send
+    bus=session
+    path=/org/gtk/vfs/mounttracker,
+
+  # System files
+
+  /etc/xdg/{,xdg-*/}xfce4/helpers.rc r,
+  /etc/xfce4/defaults.list r, # TODO: move into xfce4 abstraction?
+  /usr/share/sounds/freedesktop/** r, # for message box alert sound
+  /usr/share/xfce4/helpers/*.desktop r,
+  /usr/share/{xfce{,4},xubuntu}/applications/{,*.list} r,
+
+  # User files
+
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{HOME}/.config/xfce4/helpers.rc r,
+  owner @{HOME}/.local/share/xfce4/helpers/*.desktop r,
+
+  # Include additions to the abstraction
+  include if exists <abstractions/exo-open.d>
