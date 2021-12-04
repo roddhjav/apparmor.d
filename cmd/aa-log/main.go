@@ -40,6 +40,13 @@ func splitQuoted(r rune) bool {
 	return !quoted && r == ' '
 }
 
+func toQuote(str string) string {
+	if strings.Contains(str, " ") {
+		return `"` + str + `"`
+	}
+	return str
+}
+
 func removeDuplicateLog(logs []string) []string {
 	list := []string{}
 	keys := map[string]interface{}{"": true}
@@ -52,6 +59,7 @@ func removeDuplicateLog(logs []string) []string {
 	return list
 }
 
+// NewApparmorLogs return a new ApparmorLogs list of map from a log file
 func NewApparmorLogs(file *os.File, profile string) AppArmorLogs {
 	log := ""
 	exp := "apparmor=(\"DENIED\"|\"ALLOWED\")"
@@ -93,11 +101,7 @@ func NewApparmorLogs(file *os.File, profile string) AppArmorLogs {
 		for _, item := range tmp {
 			kv := strings.Split(item, "=")
 			if len(kv) >= 2 {
-				if strings.Contains(kv[1], " ") {
-					aa[kv[0]] = kv[1]
-				} else {
-					aa[kv[0]] = strings.Trim(kv[1], `"`)
-				}
+				aa[kv[0]] = strings.Trim(kv[1], `"`)
 			}
 		}
 		aaLogs = append(aaLogs, aa)
@@ -106,6 +110,7 @@ func NewApparmorLogs(file *os.File, profile string) AppArmorLogs {
 	return aaLogs
 }
 
+// String returns a formatted AppArmor logs string
 func (aaLogs AppArmorLogs) String() string {
 	res := ""
 	state := map[string]string{
@@ -133,9 +138,9 @@ func (aaLogs AppArmorLogs) String() string {
 		for _, key := range keys {
 			if log[key] != "" {
 				if colors[key] != "" {
-					res += " " + colors[key] + log[key] + Reset
+					res += " " + colors[key] + toQuote(log[key]) + Reset
 				} else {
-					res += " " + key + "=" + log[key]
+					res += " " + key + "=" + toQuote(log[key])
 				}
 				seen[key] = true
 			}
@@ -143,7 +148,7 @@ func (aaLogs AppArmorLogs) String() string {
 
 		for key, value := range log {
 			if !seen[key] {
-				res += " " + key + "=" + value
+				res += " " + key + "=" + toQuote(value)
 			}
 		}
 		res += "\n"
