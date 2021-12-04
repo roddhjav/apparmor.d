@@ -5,19 +5,19 @@
 
 %:
 	dh $@ --with=config-package
-
-override_dh_auto_configure:
-	./configure --dist=debian
 	export CGO_CPPFLAGS="${CPPFLAGS}"
 	export CGO_CFLAGS="${CFLAGS}"
 	export CGO_CXXFLAGS="${CXXFLAGS}"
 	export CGO_LDFLAGS="${LDFLAGS}"
 	export GOFLAGS="-buildmode=pie -trimpath -ldflags=-linkmode=external -mod=readonly -modcacherw"
-	go build -o .build/ ./cmd/aa-log
+	go build ./cmd/aa-log
+
+override_dh_auto_configure:
+	./configure
 
 override_dh_install:
 	mv systemd system
 	find system -type f -exec \
 		install -Dm0644 {} $$(pwd)/debian/apparmor.d/usr/lib/systemd/{}.d/apparmor.conf \; 
-	install -Dm755 .build/aa-log $$(pwd)/debian/apparmor.d/usr/bin/aa-log
+	install -Dm755 aa-log $$(pwd)/debian/apparmor.d/usr/bin/aa-log
 	dh_install

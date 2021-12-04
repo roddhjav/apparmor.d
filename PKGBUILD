@@ -12,15 +12,15 @@ depends=('apparmor')
 makedepends=('go' 'git')
 
 pkgver() {
-    cd "$srcdir/$pkgname"
-    echo "0.$(git rev-list --count HEAD)"
+  cd "$srcdir/$pkgname"
+  echo "0.$(git rev-list --count HEAD)"
 }
 
 prepare() {
   git clone "$startdir" "$srcdir/$pkgname"
   cd "$srcdir/$pkgname"
 
-  ./configure --distribution=archlinux
+  ./configure
 }
 
 build() {

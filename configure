@@ -3,10 +3,14 @@
 # Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
+DISTRIBUTION="$(lsb_release --id --short)"
+readonly DISTRIBUTION="${DISTRIBUTION,,}"
 readonly ROOT=.build
 
 _die()  { printf 'Error: %s\n' "$*" >&2 && exit 1; }
-_warning() { printf '  Warning: %s\n' "$*" >&2; }
+_warning() { printf '   Warning: %s\n' "$*" >&2; }
+_title() { printf '%s\n' "$*" >&2; }
+_msg() { printf ' - %s\n' "$*" >&2; }
 
 # Displace files in the package sources
 # $@ List of files to displace
@@ -18,61 +22,63 @@ _displace_files() {
 
 # Initialize a new clean apparmor.d build directory
 initialize() {
-	rm -rf "${ROOT:?}" && rsync -a --exclude=.git . "$ROOT"
+	rm -rf "${ROOT:?}"
+	rsync -a ./apparmor.d "$ROOT"
+	rsync -a ./root "$ROOT"
 }
 
-# Ignore profiles in profiles.ignore
+# Ignore profiles and files as defined in dists/ignore/
 ignore() {
-	echo "  Ignore profiles in profiles.ignore."
-    while read -r profile; do
-		[[ "$profile" =~ ^\# ]] && continue
-		if [[ "$profile" == */ ]]; then
-			find "$ROOT/apparmor.d" -iname "${profile////}" -type d -exec rm -r {} \; 
-		else
-			find "$ROOT/apparmor.d" -iname "$profile" -type f -exec rm {} \;
-		fi
-    done <profiles.ignore
+	for name in main.ignore "$DISTRIBUTION.ignore"; do
+		_msg "Ignore profiles/files in dists/ignore/$name"
+		while read -r profile; do
+			[[ "$profile" =~ ^\# ]] && continue
+			if [[ -e "$profile" ]]; then
+				rm -r "${ROOT:?}/$profile"
+			else
+				find "$ROOT/apparmor.d" -iname "$profile" -type f -exec rm {} \;
+			fi
+		done <"dists/ignore/$name"
+	done
+}
+
+# Synchronise all profiles in a new apparmor.d directory.
+synchronise() {
+	_msg "Synchronise all profiles."
+	mv "${ROOT:?}/apparmor.d/groups/"*/* "${ROOT:?}/apparmor.d/"
+	rm -rf "${ROOT:?}/apparmor.d/groups/"
+	mv "${ROOT:?}/apparmor.d/profiles-"*-*/* "${ROOT:?}/apparmor.d/"
+	rm -rf "${ROOT:?}/apparmor.d/profiles-"*
 }
 
 # Set the distribution specificities
 configure() {
 	case "$DISTRIBUTION" in
-		archlinux)
-			echo "  Ignore non Archlinux profiles."
-			rm -rf \
-				"${ROOT:?}"/apparmor.d/abstractions/apt-common \
-				"${ROOT:?}"/apparmor.d/groups/apt \
-				"${ROOT:?}"/apparmor.d/groups/cron \
-				"${ROOT:?}"/root/etc/initramfs-tools
-
-			echo "  Configure libexec."
+		arch)
+			_msg "Configure libexec."
 			sed -i -e '/Debian/d' "$ROOT/apparmor.d/tunables/extend"
 
 			;;
 
-		debian)
-			echo "  Ignore non Debian profiles."
-			rm -rf \
-				"${ROOT:?}"/apparmor.d/groups/pacman \
-				"${ROOT:?}"/root/usr/share/libalpm/hooks/apparmor.hook
-
-			echo "  Configure libexec."
+		debian|ubuntu)
+			_msg "Configure libexec."
 			sed -i -e '/Archlinux/d' "$ROOT/apparmor.d/tunables/extend"
 
-			echo "  Debian does not support abi 3.0 yet."
+			_msg "$DISTRIBUTION does not support abi 3.0 yet."
 			find "$ROOT/apparmor.d" -type f -exec sed -e '/abi /d' -i {} \;
 
-			echo "  Debian does not have etc tunable."
+			_msg "$DISTRIBUTION does not have etc tunable."
 			sed -i -e '/etc/d' "$ROOT/apparmor.d/tunables/global"
 
-			echo "  Displace overwritten files."
+			_msg "Displace overwritten files."
 			_displace_files apparmor.d/tunables/global apparmor.d/tunables/xdg-user-dirs
 
-			if [[ "$(lsb_release -is)" == "Ubuntu" ]]; then
-				echo "  Ubuntu LTS compatibility."
+			if [[ "$DISTRIBUTION" == "ubuntu" ]]; then
+				_msg "Ubuntu LTS compatibility."
 				echo "@{run}=/run/ /var/run/" > "$ROOT/apparmor.d/tunables/run"
 				sed -i -e '/capability bpf/d' -e '/capability perfmon/d' \
-					"$ROOT/apparmor.d/groups/virt/libvirtd"
+					"$ROOT/apparmor.d/libvirtd"
+				cp -a dists/ubuntu/abstractions/* $ROOT/apparmor.d/abstractions
 			fi
 
 			;;
@@ -81,51 +87,37 @@ configure() {
 	esac
 }
 
-# Synchronise all profile in a new apparmor.d directory.
-synchronise() {
-	echo "Synchronise all profiles."
-	mv "${ROOT:?}/apparmor.d/groups/"*/* "${ROOT:?}/apparmor.d/"
-	rm -rf "${ROOT:?}/apparmor.d/groups/"
-	for dir in profiles-a-f profiles-g-l profiles-m-r profiles-s-z; do
-		mv "${ROOT:?}/apparmor.d/$dir/"* "${ROOT:?}/apparmor.d/"
-		rm -rf "${ROOT:?}/apparmor.d/$dir"
-	done
-}
-
 # Set flags on some profile
-setflags() {
-	echo "Set apparmor flags from profiles.flags"
-    while read -r profile; do
-        IFS=' ' read -r -a manifest <<< "$profile"
-        profile="${manifest[0]}" flags="${manifest[1]}"
+flags() {
+	for name in main.flags "$DISTRIBUTION.flags"; do
+		_msg "Set profiles flags from dists/flags/$name"
 
-        [[ "$profile" =~ ^\# || -z "$profile" ]] && continue
-		path="${ROOT:?}/apparmor.d/$profile"
-        if [[ ! -f "$path" ]]; then
-			_warning "Profile $profile not found"
-			continue
-		fi
+		while read -r profile; do
+			IFS=' ' read -r -a manifest <<< "$profile"
+			profile="${manifest[0]}" flags="${manifest[1]}"
 
-		# If flags is set, overwrite profile flag
-        if [[ -n "$flags" ]]; then
-			# Remove all flags definition, then set manifest' flags
-			sed -e "s/flags=(.*)//" \
-			 	-e "s/ {$/ flags=(${flags//,/ }) {/" \
-				-i "$path"
-        fi
+			[[ "$profile" =~ ^\# || -z "$profile" ]] && continue
+			path="${ROOT:?}/apparmor.d/$profile"
+			if [[ ! -f "$path" ]]; then
+				_warning "Profile $profile not found"
+				continue
+			fi
 
-    done <profiles.flags
+			# If flags is set, overwrite profile flag
+			if [[ -n "$flags" ]]; then
+				# Remove all flags definition, then set manifest' flags
+				sed -e "s/flags=(.*)//" \
+					-e "s/ {$/ flags=(${flags//,/ }) {/" \
+					-i "$path"
+			fi
 
-}
-
-# Set AppArmor for full system policy
-full() {
-	echo WIP
+		done <"dists/flags/$name"
+	done
 }
 
 # Set complain flag on all profile (Dev only)
 complain() {
-	echo "Set complain flag on all profile"
+	_msg "Set complain flag on all profiles"
 	for path in "${ROOT:?}/apparmor.d/"*; do
 		[[ -d "$path" ]] && continue
 		flags="$(grep -o -m 1 'flags=(.*)' "$path" | cut -d '(' -f2 | cut -d ')' -f1)"
@@ -138,41 +130,50 @@ complain() {
 	echo
 }
 
+# Set AppArmor for full system policy
+# See https://gitlab.com/apparmor/apparmor/-/wikis/FullSystemPolicy
+full() {
+	cp -a apparmor.d/groups/_full/* "$ROOT/apparmor.d/"
+}
+
 # Print help message
 cmd_help() {
 	cat <<-_EOF
 	./configure [options] - Configure the apparmor.d package
 
 	Options:
-	    -d DIST, --dist=DIST Set the target Linux distribution: archlinux, debian
-		-f, --full           Set AppArmor for full system policy
-	    -c, --complain       Set complain flag on all profiles
-	    -h, --help           Print this help message and exit
+	    -f, --full      Set AppArmor for full system policy
+	    -c, --complain  Set complain flag on all profiles
+	    -h, --help      Print this help message and exit
 	_EOF
 }
 
 main() {
-	local opts err full=0 complain=0
-	small_arg="d:cfh"
-	long_arg="dist:,complain,full,help"
+	local opts err
+	FULL=0
+	COMPLAIN=0
+	small_arg="cfh"
+	long_arg="complain,full,help"
 	opts="$(getopt -o $small_arg -l $long_arg -n "$PROGRAM" -- "$@")"
 	err=$?
 	eval set -- "$opts"
 	while true; do case $1 in
-		-d|--dist) DISTRIBUTION="$2"; shift 2 ;;
-		-f|--full) full=1; shift ;; 
-		-c|--complain) complain=1; shift ;;
+		-f|--full) FULL=1; shift ;; 
+		-c|--complain) COMPLAIN=1; shift ;;
 		-h|--help) shift; cmd_help; exit 0 ;;
 		--) shift; break ;;
 	esac done
 	[[ $err -ne 0 ]] && { cmd_help; exit 1; }
 
-	echo "Set the configuration for $DISTRIBUTION."
+	_title "Set the configuration for $DISTRIBUTION."
 	initialize || _die "initializing build directory"
 	ignore || _die "removing ignored profiles"
-	configure || _die "configuring distributaion"
 	synchronise || _die "merging profiles"
-	setflags || _die "settings flags"
+	configure || _die "configuring distributaion"
+	flags || _die "settings flags"
+	[[ "$COMPLAIN" == 1 ]] && complain
+	[[ "$FULL" == 1 ]] && full
+	return 0
 }
 
 main "$@"
