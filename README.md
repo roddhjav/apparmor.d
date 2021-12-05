@@ -62,6 +62,14 @@ dpkg-buildpackage -b -d --no-sign
 sudo dpkg --install ../apparmor.d_*_all.deb
 ```
 
+**Partial install**
+
+For test purpose, you can install a specific profile with the following commands. The tool will also install required abstractions and tunables:
+```
+sudo ./pick <profiles-name>
+```
+
+
 ## Usage
 
 **Enabled profiles**
