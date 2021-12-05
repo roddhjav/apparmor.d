@@ -1,0 +1,80 @@
+#!/usr/bin/env bash
+# pick - Install some AppArmor profile(s)
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+_set_complain() {
+	local path="$1"
+	[[ -d "$path" ]] && return
+	flags="$(grep -o -m 1 'flags=(.*)' "$path" | cut -d '(' -f2 | cut -d ')' -f1)"
+	[[ "$flags" =~ complain ]] && return
+	sed -e "s/flags=(.*)//" \
+	 	-e "s/ {$/ flags=(complain $flags) {/" \
+		-i "$path"
+}
+
+_install_abstractions() {
+	mapfile -t abstractions < <(find apparmor.d/abstractions/ -type f -printf "%P\n")
+	for file in "${abstractions[@]}"; do
+		install -Dm0644 "apparmor.d/abstractions/$file" \
+						"/etc/apparmor.d/abstractions/$file"
+	done
+}
+
+_install_tunables() {
+	for path in apparmor.d/tunables/*; do
+		install -Dm0644 "$path" "/etc/apparmor.d/tunables/$(basename "$path")"
+	done
+}
+
+_reload_apparmor() {
+	systemctl restart apparmor || true
+	systemctl status apparmor
+	return $?
+}
+
+pick() {
+	for profile in "$@"; do
+		path="$(find apparmor.d -iname "$profile" -type f)"
+		if [[ -f "$path" ]]; then
+			install -Dm0644 "$path" "/etc/apparmor.d/$profile"
+			[[ "$COMPLAIN" == 1 ]] && _set_complain "/etc/apparmor.d/$profile"
+		fi
+	done
+	return $?
+}
+
+# Print help message
+cmd_help() {
+	cat <<-_EOF
+	./pick [options] <profiles> - Install some AppArmor profile(s)
+
+	Options:
+	    -c, --complain  Set profile on complain mode
+	    -h, --help      Print this help message and exit
+	_EOF
+}
+
+main() {
+	local opts err
+
+	small_arg="ch"
+	long_arg="complain,help"
+	opts="$(getopt -o $small_arg -l $long_arg -n "$PROGRAM" -- "$@")"
+	err=$?
+	eval set -- "$opts"
+	while true; do case $1 in
+		-c|--complain) COMPLAIN=1; shift ;;
+		-h|--help) shift; cmd_help; exit 0 ;;
+		--) shift; break ;;
+	esac done
+	[[ $err -ne 0 ]] && { cmd_help; exit 1; }
+
+	_install_abstractions
+	_install_tunables
+	pick "$@" && _reload_apparmor
+	return $?
+}
+
+COMPLAIN=0
+main "$@"
