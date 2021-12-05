@@ -2,7 +2,7 @@
 
 # apparmor.d
 
-[![][build]][project] [![][quality]][goreportcard]
+[![][workflow]][action] [![][build]][project]  [![][quality]][goreportcard]
 
 **Full set of AppArmor profiles**
 
@@ -14,14 +14,17 @@
 A set of over 1000 AppArmor profiles which aims is to confine most of Linux base applications and processes.
 
 **Goals & Purpose**
-- Support all distribution that support AppArmor (currenlty Archlinux and Debian),
+- Support all distributions that support AppArmor:
+  * *Currenlty*: Archlinux, Debian 11 and the last Ubuntu LTS.
 - Target both desktop and server,
-- Confine all root processes (bluetooth, dbus, polkit, networkmanager, systemd...),
-- Confine all Desktop environments (currently only Gnome),
+- Confine all root processes. Eg: all systemd tools, bluetooth, dbus, polkit,
+  NetworkManager, OpenVPN, GDM, rtkit, colord...
+- Confine all Desktop environments:
+  * *Currently only Gnome*, see `apparmor.d/groups/gnome`
+- Confine all user services: Eg: Pipewire, Gvfsd, dbus, xdg, xwayland...
+- Confine some "special" user applications: web browser, file browser...
 - Should not break a normal usage of the confined software.
 - Fully tested (Work in progress),
-
-**Note:** This work is part of a bigger linux security project.
 
 > This project is based on the excellent work from [Morfikov][upstream] and aims
 to extend it to more Linux distributions and desktop environements.
@@ -41,7 +44,6 @@ This is fundamentally different from how AppArmor is used on Linux server as it 
 
 **Requirements**
 * An `apparmor` based linux distribution.
-* A `systemd` based linux distribution.
 * Base profiles and abstractions shipped with AppArmor are supposed to be
   installed.
 
@@ -56,26 +58,29 @@ makepkg -si
 
 Build using standard Debian package build tools:
 ```sh
-dpkg-buildpackage -b -d -us -ui --sign-key=<gpg-id>
+dpkg-buildpackage -b -d --no-sign
+sudo dpkg --install ../apparmor.d_*_all.deb
 ```
 
 ## Usage
+
+**Enabled profiles**
 
 Once installed and with the rules enabled, you can ensure the rules are loaded
 with `sudo aa-satus`, it should give something like:
 ```
 apparmor module is loaded.
-1042 profiles are loaded.
-753 profiles are in enforce mode.
+1137 profiles are loaded.
+794 profiles are in enforce mode.
    ...
-289 profiles are in complain mode.
+343 profiles are in complain mode.
    ...
 0 profiles are in kill mode.
 0 profiles are in unconfined mode.
-119 processes have profiles defined.
-90 processes are in enforce mode.
+130 processes have profiles defined.
+108 processes are in enforce mode.
    ...
-29 processes are in complain mode.
+22 processes are in complain mode.
    ...
 0 processes are unconfined but have a profile defined.
 0 processes are in mixed mode.
@@ -85,9 +90,41 @@ apparmor module is loaded.
 You can also list the current processes alongside with their security profile with
 `ps auxZ`. Most of the process should then be confined.
 
+**AppArmor Log**
+
+The provided command `aa-log` allow you review AppArmor generated messages in a
+colorfull way:
+
+```
+$ aa-log
+   ...
+```
+
+`aa-log` can optionally be given a profile name as argument to
+only shows the log for a given profile:
+```
+$ aa-log dnsmasq
+DENIED  dnsmasq open /proc/sys/kernel/osrelease comm=dnsmasq requested_mask=r denied_mask=r
+DENIED  dnsmasq open /proc/1/environ comm=dnsmasq requested_mask=r denied_mask=r
+DENIED  dnsmasq open /proc/cmdline comm=dnsmasq requested_mask=r denied_mask=r
+```
+
+
 ## Tests
 
 A full test suite to ensure compatibility across distributions and softwares is still a work in progress.
+
+Here an overview of the current CI jobs:
+
+**On Gitlab CI**
+- Package build for all supported distribution
+- Profiles preprocessing verification for all supported distribution
+- Go based command linting and unit tests
+
+**On Github Action**
+- Integration test on the ubuntu-latest VM: run a simple list of tasks with
+  all the rules enabled and ensure no new issue has been raised. Github Action
+  is used as it offers a direct access to a VM with AppArmor included.
 
 
 ## Contribution
@@ -119,6 +156,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 [upstream]: https://gitlab.com/morfikov/apparmemall
 [project]: https://gitlab.com/roddhjav/apparmor.d
 [build]: https://gitlab.com/roddhjav/apparmor.d/badges/master/pipeline.svg?style=flat-square
+[workflow]: https://img.shields.io/endpoint.svg?url=https%3A%2F%2Factions-badge.atrox.dev%2Froddhjav%2Fapparmor.d%2Fbadge&style=flat-square
+[action]: https://actions-badge.atrox.dev/roddhjav/apparmor.d/goto
 [quality]: https://img.shields.io/badge/go%20report-A+-brightgreen.svg?style=flat-square
 [goreportcard]: https://goreportcard.com/report/github.com/roddhjav/apparmor.d
 
