@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2019-2021 Mikhail Morfikov
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -12,17 +13,11 @@ profile umount @{exec_path} flags=(complain) {
   include <abstractions/consoles>
   include <abstractions/nameservice-strict>
 
-  # To be able to umount anything
-  #  umount2("/mnt", 0)               = -1 EPERM (Operation not permitted)
-  #
-  #  umount: /mnt: must be superuser to unmount.
-  capability sys_admin,
-
-  capability setuid,
-  capability setgid,
-
-  capability dac_read_search,
   capability chown,
+  capability dac_read_search,
+  capability setgid,
+  capability setuid,
+  capability sys_admin,
 
   umount,
 
@@ -31,8 +26,8 @@ profile umount @{exec_path} flags=(complain) {
 
   @{exec_path} mr,
 
-  /{usr/,}sbin/umount.*   rPx,
-  /{usr/,}sbin/mount.*    rPx,
+  /{usr/,}sbin/umount.*  rPx,
+  /{usr/,}sbin/mount.*   rPx,
 
   # Mount points
   @{HOME}/ r,
