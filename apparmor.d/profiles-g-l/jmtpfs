@@ -17,12 +17,18 @@ profile jmtpfs @{exec_path} {
 
   /{usr/,}bin/fusermount{,3} rCx -> fusermount,
 
+  owner /tmp/tmp* rw,
+  owner /tmp/#[0-9]* rw,
+
   # Mount points
   owner @{HOME}/*/ r,
   owner @{HOME}/*/*/ r,
 
+  owner @{HOME}/.cache/*/mtp{,-[0-9]*}/ rw,
+
   mount fstype={fuse,fuse.jmtpfs} -> @{HOME}/*/,
   mount fstype={fuse,fuse.jmtpfs} -> @{HOME}/*/*/,
+  mount fstype={fuse,fuse.jmtpfs} -> @{HOME}/.cache/*/*/,
 
   /etc/magic r,
 
@@ -36,10 +42,14 @@ profile jmtpfs @{exec_path} {
     # To mount anything:
     capability sys_admin,
 
+    #
+    capability dac_read_search,
+
     /{usr/,}bin/fusermount{,3} mr,
 
     mount fstype={fuse,fuse.jmtpfs} -> @{HOME}/*/,
     mount fstype={fuse,fuse.jmtpfs} -> @{HOME}/*/*/,
+    mount fstype={fuse,fuse.jmtpfs} -> @{HOME}/.cache/*/*/,
 
     /etc/fuse.conf r,
 
