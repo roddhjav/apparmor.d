@@ -8,6 +8,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 )
@@ -156,24 +157,32 @@ func (aaLogs AppArmorLogs) String() string {
 	return res
 }
 
-func main() {
+func aaLog(args []string, path string) error {
 	profile := ""
-	if len(os.Args) >= 2 {
-		profile = os.Args[1]
+	if len(args) >= 2 {
+		profile = args[1]
 	}
 
-	file, err := os.Open(LogFile)
+	file, err := os.Open(filepath.Clean(path))
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return err
 	}
+	/* #nosec G307 */
 	defer func() {
 		if err := file.Close(); err != nil {
-			fmt.Println("Error closing file:", err)
-			os.Exit(1)
+			fmt.Println(err)
 		}
 	}()
 
 	aaLogs := NewApparmorLogs(file, profile)
 	fmt.Print(aaLogs.String())
+	return err
+}
+
+func main() {
+	err := aaLog(os.Args, LogFile)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 }

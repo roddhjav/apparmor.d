@@ -127,3 +127,32 @@ func TestAppArmorLogs_String(t *testing.T) {
 		})
 	}
 }
+
+func Test_app(t *testing.T) {
+	tests := []struct {
+		name    string
+		args    []string
+		path    string
+		wantErr bool
+	}{
+		{
+			name:    "OK",
+			args:    []string{"aa-log", ""},
+			path:    "../../tests/audit.log",
+			wantErr: false,
+		},
+		{
+			name:    "No logfile",
+			args:    []string{"aa-log", ""},
+			path:    "../../tests/log",
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := aaLog(tt.args, tt.path); (err != nil) != tt.wantErr {
+				t.Errorf("aaLog() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
