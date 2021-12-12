@@ -16,6 +16,7 @@ A set of over 1000 AppArmor profiles which aims is to confine most of Linux base
 **Goals & Purpose**
 - Support all distributions that support AppArmor:
   * *Currenlty*: Archlinux, Debian 11 and the last Ubuntu LTS.
+  * Not (yet) tested on openSUSE
 - Target both desktop and server,
 - Confine all root processes. Eg: all systemd tools, bluetooth, dbus, polkit,
   NetworkManager, OpenVPN, GDM, rtkit, colord...
