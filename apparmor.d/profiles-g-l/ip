@@ -1,23 +1,18 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2019-2021 Mikhail Morfikov
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
 
 include <tunables/global>
 
-# When "ip netns" is issued, the following error will be printed:
-#  "Failed name lookup - disconnected path" error=-13 profile="ip" name="".
 @{exec_path} = /{usr/,}bin/ip
 profile ip @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
 
-  # To be able to manage network interfaces.
   capability net_admin,
-
-  # Needed?
-  #capability sys_admin,
-  audit deny capability sys_module,
+  capability sys_module,
 
   network netlink raw,
 

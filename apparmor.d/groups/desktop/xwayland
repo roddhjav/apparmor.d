@@ -13,6 +13,8 @@ profile xwayland @{exec_path} flags=(attach_disconnected) {
   include <abstractions/dri-enumerate>
   include <abstractions/mesa>
   include <abstractions/nameservice-strict>
+  include <abstractions/opencl-nvidia>
+  include <abstractions/vulkan>
 
   signal (receive) set=(term hup) peer=gdm*,
   signal (receive) set=(term hup) peer=gnome-shell,
@@ -22,20 +24,19 @@ profile xwayland @{exec_path} flags=(attach_disconnected) {
   /{usr/,}bin/{,ba,da}sh rix,
   /{usr/,}bin/xkbcomp    rPx,
 
-  /usr/share/glvnd/egl_vendor.d/{,*.json} r,
+  /usr/share/egl/{,**} r,
   /usr/share/X11/xkb/rules/evdev r,
 
-  # TMP files
   owner /tmp/server-[0-9]*.xkm rwk,
-
-  # Display Xserver on a specific TTY
-  /dev/tty[0-9]* rw,
-  /dev/tty rw,
-
-  # Needed for Mutter
   owner @{run}/user/@{uid}/.mutter-Xwaylandauth.[a-zA-z0-9]* rw,
 
+  @{sys}/bus/pci/devices/ r,
+
   owner @{PROC}/@{pids}/cmdline r,
+  owner @{PROC}/@{pids}/comm r,
+
+  /dev/tty[0-9]* rw,
+  /dev/tty rw,
 
   include if exists <local/xwayland>
 }
