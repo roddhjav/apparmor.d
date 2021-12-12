@@ -19,6 +19,9 @@ profile su @{exec_path} {
   capability setgid,
   capability setuid,
   #audit deny capability net_bind_service,
+  capability sys_resource,
+  # No clear purpose, deny until needed
+  deny capability net_admin,
 
   signal (send)    set=(term,kill),
   signal (receive) set=(int,quit,term),
@@ -45,6 +48,10 @@ profile su @{exec_path} {
   # For pam_securetty
   @{PROC}/cmdline r,
   @{sys}/devices/virtual/tty/console/active r,
+  
+  # pseudo-terminal
+  capability chown,
+  /dev/{,pts/}ptmx rw,
 
   include if exists <local/su>
 }
