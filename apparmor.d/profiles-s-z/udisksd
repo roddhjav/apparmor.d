@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2018-2021 Mikhail Morfikov
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -10,22 +11,16 @@ include <tunables/global>
 @{exec_path} += @{libexec}/udisks2/udisksd
 profile udisksd @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/nameservice-strict>
   include <abstractions/disks-write>
-
-  # To remove the following errors:
-  #  udisksd[]: Error probing device: Error sending ATA command IDENTIFY DEVICE to '/dev/sda':
-  #  SGIO v3 ioctl failed (v4 not supported): Operation not permitted (g-io-error-quark, 14)
-  capability sys_rawio,
-
-  # To allow users to mount volumes
-  #  Error mounting /dev/sd*: GDBus.Error:org.freedesktop.UDisks2.Error.Failed:
-  #  Error mounting /dev/sd* at /media/*/*: Operation not permitted.
-  capability sys_admin,
+  include <abstractions/nameservice-strict>
 
   capability chown,
-  capability dac_read_search,
   capability dac_override,
+  capability dac_read_search,
+  capability sys_admin,
+  capability sys_rawio,
+  capability setuid,
+  capability setgid,
 
   # Needed?
   deny capability sys_nice,
@@ -37,28 +32,27 @@ profile udisksd @{exec_path} flags=(attach_disconnected) {
   /{usr/,}bin/{,ba,da}sh      rix,
   /{usr/,}bin/umount          rix,
 
-  /{usr/,}bin/eject           rPx,
-  /{usr/,}{s,}bin/dumpe2fs    rPx,
   /{usr/,}{s,}bin/dmidecode   rPx,
-
+  /{usr/,}{s,}bin/dumpe2fs    rPx,
   /{usr/,}{s,}bin/lvm         rPUx,
-
+  /{usr/,}bin/eject           rPx,
+  /{usr/,}bin/ntfs-3g         rPx,
   /{usr/,}bin/systemctl       rPx -> child-systemctl,
   /{usr/,}bin/systemd-escape  rPx,
 
   # Allow mounting of removable devices
-  mount fstype={btrfs,ext*,vfat,iso9660,udf} /dev/{s,v}d[a-z]*       -> @{MOUNTS}/*/*/,
-  mount fstype={btrfs,ext*,vfat,iso9660,udf} /dev/{s,v}d[a-z]*[0-9]* -> @{MOUNTS}/*/*/,
-  mount fstype={btrfs,ext*,vfat,iso9660,udf} /dev/dm-[0-9]*     -> @{MOUNTS}/*/*/,
+  mount fstype={btrfs,ext*,vfat,iso9660,udf,ntfs3} /dev/{s,v}d[a-z]*       -> @{MOUNTS}/*/*/,
+  mount fstype={btrfs,ext*,vfat,iso9660,udf,ntfs3} /dev/{s,v}d[a-z]*[0-9]* -> @{MOUNTS}/*/*/,
+  mount fstype={btrfs,ext*,vfat,iso9660,udf,ntfs3} /dev/dm-[0-9]*     -> @{MOUNTS}/*/*/,
   # Allow mounting of loop devices (ISO files)
-  mount fstype={btrfs,ext*,vfat,iso9660,udf} /dev/loop[0-9]*        -> @{MOUNTS}/*/*/,
-  mount fstype={btrfs,ext*,vfat,iso9660,udf} /dev/loop[0-9]*p[0-9]* -> @{MOUNTS}/*/*/,
+  mount fstype={btrfs,ext*,vfat,iso9660,udf,ntfs3} /dev/loop[0-9]*        -> @{MOUNTS}/*/*/,
+  mount fstype={btrfs,ext*,vfat,iso9660,udf,ntfs3} /dev/loop[0-9]*p[0-9]* -> @{MOUNTS}/*/*/,
   # Allow mounting of cdrom
-  mount fstype={btrfs,ext*,vfat,iso9660,udf} /dev/loop[0-9]* -> /media/cdrom[0-9]/,
-  mount fstype={iso9660,udf}                 /dev/sr[0-9]*   -> /media/cdrom[0-9]/,
+  mount fstype={btrfs,ext*,vfat,iso9660,udf,ntfs3} /dev/loop[0-9]* -> /media/cdrom[0-9]/,
+  mount fstype={iso9660,udf,ntfs3}                 /dev/sr[0-9]*   -> /media/cdrom[0-9]/,
   # Allow mounting od sd cards
-  mount fstype={btrfs,ext*,vfat,iso9660,udf} /dev/mmcblk[0-9]         -> @{MOUNTS}/*/*/,
-  mount fstype={btrfs,ext*,vfat,iso9660,udf} /dev/mmcblk[0-9]*p[0-9]* -> @{MOUNTS}/*/*/,
+  mount fstype={btrfs,ext*,vfat,iso9660,udf,ntfs3} /dev/mmcblk[0-9]         -> @{MOUNTS}/*/*/,
+  mount fstype={btrfs,ext*,vfat,iso9660,udf,ntfs3} /dev/mmcblk[0-9]*p[0-9]* -> @{MOUNTS}/*/*/,
   # Allow unmounting
   umount @{MOUNTS}/*/,
   umount @{MOUNTS}/*/*/,
@@ -72,11 +66,6 @@ profile udisksd @{exec_path} flags=(attach_disconnected) {
   # Udisks2 config files
   /etc/udisks2/ r,
   /etc/udisks2/udisks2.conf r,
-
-  # For mounting NTFS disks
-  capability setuid,
-  capability setgid,
-  /{usr/,}bin/ntfs-3g rPx,
 
   /etc/libblockdev/conf.d/ r,
   /etc/libblockdev/conf.d/[0-9][0-9]-default.cfg r,
