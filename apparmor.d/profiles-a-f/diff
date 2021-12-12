@@ -1,0 +1,27 @@
+# vim:syntax=apparmor
+# apparmor.d - Full set of apparmor profiles
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{DIFF_PATHS_RO} = /etc @{HOME} /srv /tmp /var /usr/share /usr/lib/systemd
+
+@{exec_path} = /{,usr/}bin/diff
+profile diff @{exec_path} {
+  @{exec_path} r,
+  include <abstractions/base>
+  include <abstractions/private-files-strict>
+
+  @{DIFF_PATHS_RO}/** r,
+  @{MOUNTS}/**        r,
+
+  deny /var/log/{,**/}*.gz r,
+
+  # Extremely sensitive files
+  audit deny /etc/**.key             mrwkl,
+  audit deny /etc/ssh/ssh_host_*_key mrwkl,
+
+  include if exists <local/diff>
+}
