@@ -1,0 +1,62 @@
+# vim:syntax=apparmor
+# apparmor.d - Full set of apparmor profiles
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{GRC_PATHS_RO} = /etc @{HOME} /srv /tmp /var /usr/share /usr/lib/systemd
+
+@{exec_path} = /{,usr/}bin/grc
+profile grc @{exec_path} {
+  @{exec_path} r,
+  include <abstractions/base>
+  include <abstractions/private-files-strict>
+
+  # python-strict
+  /{,usr/}lib{,32,64}/python3.[0-9]{,[0-9]}/**.{egg,py,pth}       r,
+  /{,usr/}lib{,32,64}/python3.[0-9]{,[0-9]}/{site,dist}-packages/ r,
+  /{,usr/}local/lib{,32,64}/python3.[0-9]{,[0-9]}/**.{egg,py,pth}       r,
+  /{,usr/}local/lib{,32,64}/python3.[0-9]{,[0-9]}/{site,dist}-packages/ r,
+  /{,usr/}bin/python3.[0-9]{,[0-9]} r,
+
+  owner @{HOME}/.grc/** r,
+        /etc/grc.conf r,
+        /{,usr/}{,local/}share/grc/{,**} r,
+
+  /{,usr/}bin/grcat       rix,
+  /{,usr/}bin/cat         rix,
+  /{,usr/}bin/tail        rix,
+  /{,usr/}bin/head        rix,
+  /{,usr/}bin/{,g,m}awk   rix,
+  /{,usr/}bin/{,e}grep    rix,
+  /{,usr/}bin/sed         rix,
+  /{,usr/}bin/less        rix,
+
+  /{,usr/}bin/ping        rPx,
+  /{,usr/}bin/traceroute  rPx,
+  /{,usr/}bin/df          rPx,
+  /{,usr/}bin/dfc         rPx,
+  /{,usr/}bin/ss          rPx,
+  /{,usr/}bin/ls          rPx,
+  /{,usr/}bin/ps          rPx,
+  /{,usr/}bin/ip          rPx,
+  /{,usr/}bin/lsblk       rPx,
+  /{,usr/}bin/diff        rPx,
+  /{,usr/}sbin/blkid      rPx,
+
+  @{GRC_PATHS_RO}/**  r,
+  @{MOUNTS}/**        r,
+
+  deny /var/log/{,**/}*.gz r,
+
+  # Extremely sensitive files
+  audit deny /etc/**.key             mrwkl,
+  audit deny /etc/ssh/ssh_host_*_key mrwkl,
+
+  # Noise
+  deny /{,usr/}bin/ r,
+
+  include if exists <local/grc>
+}

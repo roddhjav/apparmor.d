@@ -1,0 +1,39 @@
+# vim:syntax=apparmor
+# apparmor.d - Full set of apparmor profiles
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{,usr/}bin/ss
+profile ss @{exec_path} {
+  @{exec_path} r,
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+
+  capability net_admin,
+  capability dac_read_search,
+  capability sys_ptrace,
+
+  ptrace (read),
+
+  /etc/iproute2/{,**} r,
+
+  @{PROC} r,
+  @{PROC}/sys/net/ipv{4,6}/ip_local_port_range r,
+  @{PROC}/@{pid}/fd/ r,
+  @{PROC}/@{pid}/stat r,
+  @{PROC}/@{pid}/attr/current r,
+  @{PROC}/@{pid}/net/sockstat r,
+  @{PROC}/@{pid}/net/snmp r,
+
+  owner /tmp/*.ss     rw,
+  owner @{HOME}/*.ss  rw,
+
+  # [e]xtended
+  @{PROC}/@{pid}/mounts r,
+  @{sys}/fs/cgroup/{,**/} r,
+
+  include if exists <local/ss>
+}
