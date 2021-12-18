@@ -1,4 +1,3 @@
-# vim:syntax=apparmor
 # apparmor.d - Full set of apparmor profiles
 # SPDX-License-Identifier: GPL-2.0-only
 
@@ -18,22 +17,30 @@ profile ss @{exec_path} {
 
   ptrace (read),
 
+  signal (receive) set=(int) peer=grc,
+
   /etc/iproute2/{,**} r,
 
-  @{PROC} r,
-  @{PROC}/sys/net/ipv{4,6}/ip_local_port_range r,
-  @{PROC}/@{pid}/fd/ r,
-  @{PROC}/@{pid}/stat r,
-  @{PROC}/@{pid}/attr/current r,
-  @{PROC}/@{pid}/net/sockstat r,
-  @{PROC}/@{pid}/net/snmp r,
+        @{PROC} r,
+        @{PROC}/sys/net/ipv{4,6}/ip_local_port_range r,
+        @{PROC}/@{pid}/fd/ r,
+        @{PROC}/@{pid}/stat r,
+        @{PROC}/@{pid}/attr/current r,
+  owner @{PROC}/@{pid}/net/sockstat r,
+  owner @{PROC}/@{pid}/net/snmp r,
+  owner @{PROC}/@{pid}/net/unix r,
+  owner @{PROC}/@{pid}/net/raw r,
+  owner @{PROC}/@{pid}/net/tcp r,
+  owner @{PROC}/@{pid}/net/udp r,
+
+  # [e]xtended
+  owner @{PROC}/@{pid}/mounts r,
+        @{sys}/fs/cgroup/{,**/} r,
+
+  network netlink raw,
 
   owner /tmp/*.ss     rw,
   owner @{HOME}/*.ss  rw,
-
-  # [e]xtended
-  @{PROC}/@{pid}/mounts r,
-  @{sys}/fs/cgroup/{,**/} r,
 
   include if exists <local/ss>
 }

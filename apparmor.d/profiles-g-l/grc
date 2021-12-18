@@ -1,4 +1,3 @@
-# vim:syntax=apparmor
 # apparmor.d - Full set of apparmor profiles
 # SPDX-License-Identifier: GPL-2.0-only
 
@@ -14,6 +13,14 @@ profile grc @{exec_path} {
   include <abstractions/base>
   include <abstractions/private-files-strict>
 
+       capability dac_read_search,
+  # No visible effect
+  deny capability dac_override,
+
+  signal (send) set=(int) peer=ss,
+  signal (send) set=(int) peer=ping,
+  signal (send) set=(int) peer=traceroute,
+
   # python-strict
   /{,usr/}lib{,32,64}/python3.[0-9]{,[0-9]}/**.{egg,py,pth}       r,
   /{,usr/}lib{,32,64}/python3.[0-9]{,[0-9]}/{site,dist}-packages/ r,
@@ -23,7 +30,7 @@ profile grc @{exec_path} {
 
   owner @{HOME}/.grc/** r,
         /etc/grc.conf r,
-        /{,usr/}{,local/}share/grc/{,**} r,
+        /usr/{,local/}share/grc/{,**} r,
 
   /{,usr/}bin/grcat       rix,
   /{,usr/}bin/cat         rix,
@@ -33,18 +40,18 @@ profile grc @{exec_path} {
   /{,usr/}bin/{,e}grep    rix,
   /{,usr/}bin/sed         rix,
   /{,usr/}bin/less        rix,
+  /{,usr/}bin/ls          rix,
 
   /{,usr/}bin/ping        rPx,
-  /{,usr/}bin/traceroute  rPx,
   /{,usr/}bin/df          rPx,
   /{,usr/}bin/dfc         rPx,
   /{,usr/}bin/ss          rPx,
-  /{,usr/}bin/ls          rPx,
   /{,usr/}bin/ps          rPx,
   /{,usr/}bin/ip          rPx,
   /{,usr/}bin/lsblk       rPx,
   /{,usr/}bin/diff        rPx,
   /{,usr/}sbin/blkid      rPx,
+  /usr/{{bin,sbin}/traceroute,bin/linux-traceroute,bin/traceroute.db} rPx,
 
   @{GRC_PATHS_RO}/**  r,
   @{MOUNTS}/**        r,
@@ -56,7 +63,7 @@ profile grc @{exec_path} {
   audit deny /etc/ssh/ssh_host_*_key mrwkl,
 
   # Noise
-  deny /{,usr/}bin/ r,
+  deny /usr/bin/ r,
 
   include if exists <local/grc>
 }
