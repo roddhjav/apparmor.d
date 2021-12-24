@@ -6,7 +6,7 @@ abi <abi/3.0>,
 
 include <tunables/global>
 
-@{exec_path} = /{usr/,}bin/acpid
+@{exec_path} = /{usr/,}{,s}bin/acpid
 profile acpid @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/nameservice-strict>
@@ -22,15 +22,34 @@ profile acpid @{exec_path} flags=(attach_disconnected) {
 
   /etc/acpi/{,**} r,
   /etc/acpi/handler.sh rix,
+  /etc/acpi/powerbtn-acpi-support.sh rix,
 
   /dev/input/{,**} r,
   /dev/tty rw,
-  /dev/null r,
 
   owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/loginuid r,
 
-  @{run}/acpid.socket rw,
+  owner @{run}/acpid.socket rw,
+  owner @{run}/acpid.pid    rw,
+
+  /usr/share/acpi-support/** r,
+
+  # powerbtn-acpi-support.sh
+  /{usr/,}bin/sed   rix,
+
+  /{usr/,}bin/ps    rPx,
+
+  /{usr/,}bin/fgconsole rCx,
+  profile fgconsole /usr/bin/fgconsole {
+    /{usr/,}bin/fgconsole r,
+    include <abstractions/base>
+
+    capability sys_tty_config,
+
+          /dev/tty       rw,
+    owner /dev/tty[0-9]* rw,
+  }
 
   include if exists <local/acpid>
 }
