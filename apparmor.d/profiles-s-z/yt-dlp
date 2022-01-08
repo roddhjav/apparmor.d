@@ -1,0 +1,73 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Mikhail Morfikov
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+# Video/audio extensions:
+# a52, aac, ac3, mka, flac, mp1, mp2, mp3, mpc, oga, oma, wav, wv, wm, wma, 3g2, 3gp, 3gp2, 3gpp,
+# asf, avi, divx, m1v, m2v, m4v, mkv, mov, mp4, mpa, mpe, mpg, mpeg, mpeg1, mpeg2, mpeg4, ogg, ogm,
+# ogx, ogv, rm, rmvb, webm, wmv, wtv, mp2t, m4a
+@{ytdlp_ext}  = [aA]{52,[aA][cC],[cC]3}
+@{ytdlp_ext} += [mM][kK][aA]
+@{ytdlp_ext} += [fF][lL][aA][cC]
+@{ytdlp_ext} += [mM][pP][123cC]
+@{ytdlp_ext} += [oO][gGmM][aA]
+@{ytdlp_ext} += [wW]{,[aA]}[vV]
+@{ytdlp_ext} += [wW][mM]{,[aA]}
+@{ytdlp_ext} += 3[gG]{[2pP],[pP][2pP]}
+@{ytdlp_ext} += [aA][sS][fF]
+@{ytdlp_ext} += [aA][vV][iI]
+@{ytdlp_ext} += [dD][iI][vV][xX]
+@{ytdlp_ext} += [mM][124][vV]
+@{ytdlp_ext} += [mM][kKoO][vV]
+@{ytdlp_ext} += [mM][pP][4aAeEgG]
+@{ytdlp_ext} += [mM][pP][eE][gG]{,[124]}
+@{ytdlp_ext} += [oO][gG][gGmMxXvV]
+@{ytdlp_ext} += [rR][mM]{,[vV][bB]}
+@{ytdlp_ext} += [wW][eE][bB][mM]
+@{ytdlp_ext} += [wW][mMtT][vV]
+@{ytdlp_ext} += [mM][pP]2[tT]
+@{ytdlp_ext} += [mM]4[aA]
+
+# The ytdl specific file extensions
+# ytdl, part, tmp, temp
+@{ytdlp_ext} += [yY][tT][dD][lL]
+@{ytdlp_ext} += part{,-*}
+@{ytdlp_ext} += [tT]{,[eE]}[mM][pP]
+
+@{exec_path} = /{usr/,}bin/yt-dlp
+profile yt-dlp @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/python>
+  include <abstractions/nameservice-strict>
+  include <abstractions/openssl>
+  include <abstractions/ssl_certs>
+  include <abstractions/user-download-strict>
+  include <abstractions/deny-root-dir-access>
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  @{exec_path} r,
+  /{usr/,}bin/python3.[0-9]* r,
+
+  /{usr/,}bin/ r,
+  /{usr/,}bin/file rix,
+
+  # Which files yt-dlp should be able to open
+  owner /media/**/ r,
+  owner /media/**.@{ytdlp_ext} rw,
+
+  owner @{PROC}/@{pid}/fd/ r,
+
+  /etc/magic r,
+
+
+  include if exists <local/yt-dlp>
+}
