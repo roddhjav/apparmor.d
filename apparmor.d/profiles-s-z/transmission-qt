@@ -1,0 +1,67 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Mikhail Morfikov
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{TORRENT_DIR} = /media/*/torrent
+
+@{exec_path} = /{usr/,}bin/transmission-qt
+profile transmission-qt @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/gtk>
+  include <abstractions/fonts>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/freedesktop.org>
+  include <abstractions/user-download-strict>
+  include <abstractions/private-files-strict>
+  include <abstractions/dri-common>
+  include <abstractions/dri-enumerate>
+  include <abstractions/qt5>
+  include <abstractions/qt5-settings-write>
+  include <abstractions/mesa>
+  include <abstractions/nameservice-strict>
+  include <abstractions/openssl>
+  include <abstractions/ssl_certs>
+  include <abstractions/deny-root-dir-access>
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink dgram,
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  # Torrent files
+        /media/ r,
+  owner /media/*/ r,
+  owner @{TORRENT_DIR}/ r,
+  owner @{TORRENT_DIR}/** rw,
+
+  owner @{HOME}/.config/transmission/ rw,
+  owner @{HOME}/.config/transmission/** rwk,
+
+  owner @{HOME}/.cache/ rw,
+  owner @{HOME}/.cache/transmission/ rw,
+  owner @{HOME}/.cache/transmission/** rwk,
+
+  owner /tmp/tr_session_id_* rwk,
+
+  deny owner @{PROC}/@{pid}/cmdline r,
+       owner @{PROC}/@{pid}/mountinfo r,
+       owner @{PROC}/@{pid}/mounts r,
+             @{PROC}/@{pid}/net/route r,
+             @{PROC}/sys/kernel/random/uuid r,
+
+  # To configure Qt5 settings (theme, font, icons, etc.) under DE/WM without Qt integration
+  owner @{HOME}/.config/qt5ct/{,**} r,
+  /usr/share/qt5ct/** r,
+
+  /usr/share/hwdata/pnp.ids r,
+
+  include if exists <local/transmission-qt>
+}
