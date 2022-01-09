@@ -1,0 +1,57 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}{,s}bin/tailscaled
+profile tailscaled @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+  include <abstractions/ssl_certs>
+
+  capability dac_read_search,
+  capability mknod,
+  capability net_admin,
+  capability sys_ptrace,
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  ptrace (read),
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/ip                     rix,
+  /{usr/,}{s,}bin/xtables-nft-multi  rix,
+
+  /{usr/,}bin/systemctl  rPx -> child-systemctl,
+
+  /etc/iproute2/rt_tables r,
+
+  owner /var/lib/tailscale/{,**} rw,
+  owner @{run}/tailscale/{,**} rw,
+
+  @{sys}/kernel/mm/transparent_hugepage/hpage_pmd_size r,
+
+  @{PROC}/ r,
+  @{PROC}/@{pid}/mounts r,
+  @{PROC}/@{pid}/net/{,**} r,
+  @{PROC}/sys/net/{,**} r,
+  @{PROC}/@{pids}/cmdline r,
+  @{PROC}/@{pids}/fd/ r,
+  @{PROC}/1/cgroup r,
+  @{PROC}/1/stat r,
+  @{PROC}/1/environ r,
+  @{PROC}/cmdline r,
+  @{PROC}/sys/kernel/osrelease r,
+
+  /dev/net/tun rw,
+
+  include if exists <local/tailscaled>
+}

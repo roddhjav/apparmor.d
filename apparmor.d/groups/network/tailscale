@@ -1,0 +1,31 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/tailscale
+profile tailscale @{exec_path} {
+  include <abstractions/base>
+
+  ptrace (read),
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/ip rPx,
+
+  @{sys}/kernel/mm/transparent_hugepage/hpage_pmd_size r,
+
+  @{PROC}/ r,
+  @{PROC}/@{pids}/stat r,
+
+  include if exists <local/tailscale>
+}
