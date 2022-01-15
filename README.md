@@ -138,7 +138,8 @@ Here an overview of the current CI jobs:
 
 ## Contribution
 
-Feedbacks, contributors, pull requests, are all very welcome.
+Feedbacks, contributors, pull requests are all very welcome. Please read the
+[`CONTRIBUTING.md`](CONTRIBUTING.md) file for more details on the contribution process.
 
 
 ## License
