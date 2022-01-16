@@ -1,0 +1,45 @@
+# apparmor.d - Full set of apparmor profiles
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{,usr/}bin/ss
+profile ss @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+
+  capability net_admin,
+  capability dac_read_search,
+  capability sys_ptrace,
+
+  ptrace (read),  # unconfined, TODO
+
+  network netlink raw,
+
+  @{exec_path} r,
+
+  /etc/iproute2/{,**} r,
+
+  owner /tmp/*.ss     rw,
+  owner @{HOME}/*.ss  rw,
+
+        @{PROC} r,
+        @{PROC}/sys/net/ipv{4,6}/ip_local_port_range r,
+        @{PROC}/@{pids}/fd/ r,
+        @{PROC}/@{pids}/stat r,
+        @{PROC}/@{pids}/attr/current r,
+  owner @{PROC}/@{pids}/net/sockstat r,
+  owner @{PROC}/@{pids}/net/snmp r,
+  owner @{PROC}/@{pids}/net/unix r,
+  owner @{PROC}/@{pids}/net/raw r,
+  owner @{PROC}/@{pids}/net/tcp r,
+  owner @{PROC}/@{pids}/net/udp r,
+
+  # [e]xtended
+  owner @{PROC}/@{pids}/mounts r,
+        @{sys}/fs/cgroup/{,**/} r,
+
+  include if exists <local/ss>
+}
