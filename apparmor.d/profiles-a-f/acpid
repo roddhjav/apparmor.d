@@ -17,7 +17,7 @@ profile acpid @{exec_path} flags=(attach_disconnected) {
 
   @{exec_path} mr,
 
-  /{usr/,}bin/{,ba,da}sh        rix,
+  /{usr/,}bin/{ba,da,}sh        rix,
   /{usr/,}bin/logger            rix,
 
   /etc/acpi/powerbtn-acpi-support.sh rPx -> acpid//powerbtn-acpi-support.sh,
@@ -39,12 +39,6 @@ profile acpid @{exec_path} flags=(attach_disconnected) {
 
 profile acpid//powerbtn-acpi-support.sh flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/wutmp>
-
-       capability sys_ptrace,
-  deny capability net_admin,  # ??
-
-  ptrace (read),  # unconfined, tighten later, TODO
 
   /etc/acpi/powerbtn-acpi-support.sh r,
 
@@ -68,7 +62,7 @@ profile acpid//powerbtn-acpi-support.sh flags=(attach_disconnected) {
     capability sys_tty_config,
 
     /{usr/,}bin/fgconsole r,
-  
+
           /dev/tty       rw,
     owner /dev/tty[0-9]* rw,
   }
@@ -79,8 +73,6 @@ profile acpid//powerbtn-acpi-support.sh flags=(attach_disconnected) {
 
   @{PROC} r,
   @{PROC}/uptime r,
-  @{PROC}/sys/kernel/osrelease r,
-  @{PROC}/@{pids}/stat r,
   @{PROC}/@{pids}/cmdline r,
 
   include if exists <local/acpid_powerbtn-acpi-support.sh>
