@@ -12,9 +12,9 @@ profile pulseaudio @{exec_path} {
   include <abstractions/base>
   include <abstractions/consoles>
   include <abstractions/audio>
+  include <abstractions/dbus-strict>
+  include <abstractions/dbus-session-strict>
   include <abstractions/nameservice-strict>
-#  include <abstractions/dbus-strict>
-#  include <abstractions/dbus-session-strict>
   include <abstractions/deny-root-dir-access>
 
   ptrace (trace) peer=@{profile_name},
@@ -31,7 +31,7 @@ profile pulseaudio @{exec_path} {
   @{exec_path} mrix,
 
   /{usr/,}lib/@{multiarch}/pulse/gconf-helper mrix,
-  /{usr/,}lib/pulse/gsettings-helper mrix,
+  /{usr/,}lib{exec,}/pulse/gsettings-helper mrix,
 
   # PulseAudio files
   /usr/share/pulseaudio/{,**} r,
@@ -45,7 +45,7 @@ profile pulseaudio @{exec_path} {
   owner @{HOME}/.Xauthority r,
 
   # Needed when PulseAudio is started via gdm
-  owner @{run}/user/@{uid}/gdm/Xauthority r,
+  owner @{run}/user/@{uid}/gdm{[1-9],}/Xauthority r,
   owner @{run}/user/@{uid}/.mutter-Xwaylandauth.* r,
   owner @{HOME}/.ICEauthority r,
 
@@ -53,7 +53,8 @@ profile pulseaudio @{exec_path} {
   /etc/hosts.{allow,deny} r,
 
   owner @{run}/user/@{uid}/ rw,
-  owner @{run}/user/@{uid}/pulse/{,*} rw,
+  owner @{run}/user/@{uid}/pulse/{,*}   rw,
+  owner @{run}/user/@{uid}/pulse/*.lock   k,
 
   /usr/share/applications/{,**} r,
   /usr/share/glib-2.0/schemas/gschemas.compiled r,
@@ -64,42 +65,36 @@ profile pulseaudio @{exec_path} {
   @{sys}/devices/**/sound/**/{uevent,pcm_class} r,
   @{run}/udev/data/+sound* r,
   @{run}/udev/data/c116:[0-9]* r, # For ALSA
-  
+
   @{sys}/devices/virtual/dmi/id/{bios_vendor,board_vendor,sys_vendor} r,
   @{sys}/devices/system/node/ r,
   @{sys}/devices/system/node/node[0-9]/meminfo r,
+  @{sys}/module/apparmor/parameters/enabled r,
 
   @{run}/systemd/users/@{uid} r,
 
-  owner @{run}/user/@{uid}/dconf/        w,
+  owner @{run}/user/@{uid}/dconf/       rw,
   owner @{run}/user/@{uid}/dconf/user   rw,
   owner @{run}/user/@{uid}/ICEauthority r,
+  owner @{run}/user/@{uid}/systemd/notify rw,
 
   owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/stat r,
 
   # DBus
-  owner @{run}/user/@{uid}/systemd/notify rw,
-
-  # include?
-        @{run}/dbus/system_bus_socket rw,
-  owner @{run}/user/@{uid}/bus        rw,
-  /etc/machine-id r,
-  /var/lib/dbus/machine-id r,
-
   dbus (send)
      bus=session
      path=/org/freedesktop/DBus
      interface=org.freedesktop.DBus
-     member={Hello,RequestName,AddMatch,RemoveMatch,GetNameOwner,ReleaseName}
+     member={RequestName,ReleaseName}
      peer=(name=org.freedesktop.DBus),
 
-  dbus (send)
-     bus=system
+  dbus (receive)
+     bus=session
      path=/org/freedesktop/DBus
      interface=org.freedesktop.DBus
-     member={Hello,AddMatch}
-     peer=(name=org.freedesktop.DBus),
+     member={Hello,RequestName,ReleaseName}
+     peer=(name=:*),
 
   dbus (receive)
      bus=session
@@ -108,20 +103,39 @@ profile pulseaudio @{exec_path} {
 
   dbus (bind)
      bus=session
-     name=org.PulseAudio1,
+     name=org.freedesktop.ReserveDevice[0-9].Audio[0-9],
 
   dbus (bind)
      bus=session
-     name=org.freedesktop.ReserveDevice1.Audio0,
+     name=org.PulseAudio[0-9],
+
+  dbus (bind)
+     bus=session
+     name=org.pulseaudio*,
 
   dbus (send)
      bus=system
-     path=/org/freedesktop/RealtimeKit1
-     member={Get,MakeThreadHighPriority,MakeThreadRealtime},
+     path=/org/freedesktop/DBus
+     interface=org.freedesktop.DBus
+     member={Hello,AddMatch,RemoveMatch}
+     peer=(name=org.freedesktop.DBus),
 
-  unix (send receive connect) type=stream peer=(addr=@/tmp/.X11-unix/[0-9]*),
-  unix (send receive connect) type=stream peer=(addr=@/tmp/.ICE-unix/[0-9]*),
-  
+  dbus (send)
+     bus=system
+     path=/org/freedesktop/RealtimeKit[0-9]
+     member={Get,MakeThreadHighPriority,MakeThreadRealtime}
+     peer=(name=org.freedesktop.RealtimeKit[0-9]),
+
+  dbus (send)
+     bus=system
+     path=/
+     interface=org.freedesktop.DBus.ObjectManager
+     member=GetManagedObjects
+     peer=(name=org.bluez),
+
+  unix (send receive connect) type=stream peer=(addr=@/tmp/.X11-unix/*),
+  unix (send receive connect) type=stream peer=(addr=@/tmp/.ICE-unix/*),
+
   # The orcexec.* file is JIT compiled code for various GStreamer elements.
   # If one is blocked the next is used instead.
   owner @{run}/user/@{uid}/orcexec.* mrw,
@@ -129,7 +143,9 @@ profile pulseaudio @{exec_path} {
   #owner /tmp/orcexec.* mrw,
 
   # For GDM
-  /var/lib/gdm/.config/pulse/ rw,
+  owner /var/lib/gdm{[1-9],}/.config/pulse/{,**}  rw,
+  owner /var/lib/gdm{[1-9],}/.config/pulse/cookie   k,
+  owner /var/lib/gdm{[1-9],}/.config/dconf/user   r,
 
   # For SDDM
   owner /var/lib/sddm/.config/pulse/ rw,
@@ -138,13 +154,17 @@ profile pulseaudio @{exec_path} {
   owner /var/lib/sddm/.config/pulse/*-card-database.tdb rw,
   owner /var/lib/sddm/.config/pulse/cookie rwk,
 
+  # For lightdm
+  owner /var/lib/lightdm/.config/pulse/{,**}  rw,
+  owner /var/lib/lightdm/.config/pulse/cookie   k,
+
   # file_inherit
   owner /dev/tty[0-9]* rw,
   owner @{HOME}/.xsession-errors w,
 
-  # Ubuntu
+  # Snap
   /var/lib/snapd/desktop/applications/ r,
-  /usr/{,local/}share/ubuntu/applications/{,*} r,
+  /usr/{local/,}share/ubuntu/applications/{,*} r,
 
   include if exists <local/pulseaudio>
 }
