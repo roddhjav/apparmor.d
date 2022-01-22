@@ -1,0 +1,24 @@
+# apparmor.d - Full set of apparmor profiles
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{,usr/}bin/host
+profile host @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/openssl>
+  include <abstractions/nameservice-strict>
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+
+  @{exec_path} r,
+
+  owner @{PROC}/@{pids}/task/@{tid}/comm rw,
+
+  include if exists <local/host>
+}
