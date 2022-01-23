@@ -1,0 +1,49 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/evince /{usr/,}bin/evinced
+profile evince @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/dconf>
+  include <abstractions/deny-root-dir-access>
+  include <abstractions/gnome>
+  include <abstractions/openssl>
+  include <abstractions/user-download-strict>
+  include <abstractions/user-read>
+  include <abstractions/user-write>
+
+  deny network inet,
+  deny network inet6,
+
+  @{exec_path} rix,
+
+  /{usr/,}bin/{,ba,da}sh          rix,
+  /{usr/,}bin/gio-launch-desktop  rPx,
+
+  /usr/share/evince/{,**} r,
+  /usr/share/poppler/{,**} r,
+  /usr/share/thumbnailers/{,*} r,
+  /usr/share/themes/{,**} r,
+
+  owner @{user_share_dirs}/ r,
+  owner @{user_cache_dirs}/thumbnails/{,**} rw,
+  owner @{user_config_dirs}/evince/{,*} rw,
+
+  owner @{run}/user/@{uid}/dconf/user rw,
+
+  owner /tmp/evince-*/{,**} rw,
+        /tmp/gtkprint* rw,
+        /tmp/*.pdf r,
+
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/mountinfo r,
+
+  /dev/tty rw,
+
+  include if exists <local/evince>
+}
