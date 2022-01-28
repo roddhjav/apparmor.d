@@ -35,7 +35,7 @@ _reload_apparmor() {
 
 pick() {
 	for profile in "$@"; do
-		path="$(find apparmor.d -iname "$profile" -type f)"
+		path="$(find apparmor.d -iname "$profile" -type f -not -path './apparmor.d/tunables/*' -not -path './apparmor.d/abstractions/*')"
 		if [[ -f "$path" ]]; then
 			install -Dm0644 "$path" "/etc/apparmor.d/$profile"
 			[[ "$COMPLAIN" == 1 ]] && _set_complain "/etc/apparmor.d/$profile"
@@ -57,7 +57,6 @@ cmd_help() {
 
 main() {
 	local opts err
-
 	small_arg="ch"
 	long_arg="complain,help"
 	opts="$(getopt -o $small_arg -l $long_arg -n "$PROGRAM" -- "$@")"
