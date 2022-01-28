@@ -52,7 +52,10 @@ This is fundamentally different from how AppArmor is used on Linux server as it 
 
 Build and install the package with:
 ```sh
-makepkg -si
+makepkg -s
+sudo pacman -U apparmor.d-*.pkg.tar.zst \
+  --overwrite etc/apparmor.d/tunables/global \
+  --overwrite etc/apparmor.d/tunables/xdg-user-dirs
 ```
 
 **Debian**
@@ -110,7 +113,7 @@ $ aa-log
 ```
 
 `aa-log` can optionally be given a profile name as argument to
-only shows the log for a given profile:
+only show the log for a given profile:
 ```
 $ aa-log dnsmasq
 DENIED  dnsmasq open /proc/sys/kernel/osrelease comm=dnsmasq requested_mask=r denied_mask=r
