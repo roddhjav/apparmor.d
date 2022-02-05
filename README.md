@@ -122,6 +122,35 @@ DENIED  dnsmasq open /proc/cmdline comm=dnsmasq requested_mask=r denied_mask=r
 ```
 
 
+## Personalisation
+
+**AppArmor configuration**
+
+As they are a lot of rules, it is recommended to enable caching AppArmor profiles.
+In `/etc/apparmor/parser.conf`, uncomment `write-cache`.
+See [Speed up AppArmor Start] on the Arch Wiki for more information.
+
+
+**Personal directories**
+
+The profiles heavily use the XDG directory variables defined in `/etc/apparmor.d/tunables/xdg-user-dirs`. You can personalise these values with by creating a
+file such as `/etc/apparmor.d/tunables/xdg-user-dirs.d/perso` with (for example)
+the following content:
+```sh
+@{XDG_VIDEOS_DIR}+="Films"
+@{XDG_MUSIC_DIR}+="Musique"
+@{XDG_PICTURES_DIR}+="Images"
+@{XDG_BOOKS_DIR}+="BD" "Comics"
+@{XDG_PROJECTS_DIR}+="Git" "Papers"
+```
+
+**Local profiles**
+
+You can extend a profile with your own rules by creating a file in the 
+`/etc/apparmor.d/local/` directory. For example, to extend the `gnome-shell`
+profile, create a file `/etc/apparmor.d/local/gnome-shell` and add your rules.
+Then, reload the apparmor rules with `sudo systemctl restart apparmor`.
+
 ## Tests
 
 A full test suite to ensure compatibility across distributions and softwares is still a work in progress.
@@ -176,3 +205,4 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 [android_model]: https://arxiv.org/pdf/1904.05572
 [clipos]: https://clip-os.org/en/
+[Speed up AppArmor Start]: https://wiki.archlinux.org/title/AppArmor#Speed-up_AppArmor_start_by_caching_profiles
