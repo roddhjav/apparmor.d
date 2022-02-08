@@ -58,6 +58,8 @@ sudo pacman -U apparmor.d-*.pkg.tar.zst \
   --overwrite etc/apparmor.d/tunables/xdg-user-dirs
 ```
 
+> Note: for a first install, it is recommanded to install all profiles in complain mode. See [Complain mode](#troubleshooting)
+
 **Debian**
 
 Build using standard Debian package build tools:
@@ -65,6 +67,8 @@ Build using standard Debian package build tools:
 dpkg-buildpackage -b -d --no-sign
 sudo dpkg --install ../apparmor.d_*_all.deb
 ```
+
+> Note: for a first install, it is recommanded to install all profiles in complain mode. See [Complain mode](#troubleshooting)
 
 **Partial install**
 
@@ -105,7 +109,7 @@ You can also list the current processes alongside with their security profile wi
 **AppArmor Log**
 
 The provided command `aa-log` allow you review AppArmor generated messages in a
-colorfull way:
+colorful way:
 
 ```
 $ aa-log
@@ -150,6 +154,49 @@ You can extend a profile with your own rules by creating a file in the
 `/etc/apparmor.d/local/` directory. For example, to extend the `gnome-shell`
 profile, create a file `/etc/apparmor.d/local/gnome-shell` and add your rules.
 Then, reload the apparmor rules with `sudo systemctl restart apparmor`.
+
+
+## Troubleshooting
+
+**Complain mode**
+
+On first install and for test purposes, it is recommended to pass all profiles
+in *complain* mode. To do this, edit `PKGBUILD` on Archlinux or `debian/rules`
+on Debian and add the `--complain` option to the configure script. Then build
+the package as usual:
+```sh
+./configure --complain 
+```
+
+**AppArmor messages**
+
+Ensure that `auditd` is installed and running on your system in order to read
+AppArmor log from `/var/log/audit/audit.log`. Then you can see the log with `aa-log`
+
+
+**System Recovery**
+
+Issue in some core profiles like the systemd tools, or the desktop environment
+can fully break your system. This should not happen a lot, but if it does here
+is the procces to recover your system on Archlinux:
+1. Boot from a Archlinux live USB
+1. If you root partition is encryped, decrypt it: `cryptsetup open /dev/<your-disk-id> vg0`
+1. Mount your root partition: `mount /dev/<your-plain-disk-id> /mnt`
+1. Chroot into your system: `arch-chroot /mnt`
+1. Check the AppArmor messages to see what profile is faulty: `aa-log`
+1. Temporarily fix the issue with either:
+   - When only one profile is faultly, remove it: `rm /etc/apparmor.d/<profile-name>`
+   - Otherwise, you can also remove the package: `pacman -R apparmor.d`
+   - Alternativelly, you may temporarily disable apparmor as it will allow you to
+     boot and studdy the log: `systemctl disable apparmor`
+1. Exit, umount, and reboot:
+   ```sh
+   exit
+   umount -R /mnt
+   reboot
+   ```
+1. Create an issue and report the output of `aa-log`
+
 
 ## Tests
 
