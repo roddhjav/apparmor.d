@@ -6,6 +6,7 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -13,7 +14,13 @@ import (
 	"strings"
 )
 
-// LogFile is the path to the file to query
+// Command line options
+var (
+	help bool
+	path string
+)
+
+// LogFile is the default path to the file to query
 const LogFile = "/var/log/audit/audit.log"
 
 // Colors
@@ -157,12 +164,7 @@ func (aaLogs AppArmorLogs) String() string {
 	return res
 }
 
-func aaLog(args []string, path string) error {
-	profile := ""
-	if len(args) >= 2 {
-		profile = args[1]
-	}
-
+func aaLog(path string, profile string) error {
 	file, err := os.Open(filepath.Clean(path))
 	if err != nil {
 		return err
@@ -179,8 +181,36 @@ func aaLog(args []string, path string) error {
 	return err
 }
 
+func init() {
+	flag.BoolVar(&help, "h", false, "Show this help message and exit.")
+	flag.StringVar(&path, "f", LogFile,
+		"Set a log`file` or a prefix to the default log file.")
+}
+
 func main() {
-	err := aaLog(os.Args, LogFile)
+	flag.Parse()
+	if help {
+		fmt.Printf(`aa-log [-h] [-f file] [profile]
+
+  Review AppArmor generated messages in a colorful way.
+  It can be given an optional profile name to filter the output with.
+
+`)
+		flag.PrintDefaults()
+		os.Exit(0)
+	}
+
+	profile := ""
+	if len(flag.Args()) >= 1 {
+		profile = flag.Args()[0]
+	}
+
+	logfile := filepath.Clean(LogFile + "." + path)
+	if _, err := os.Stat(logfile); err != nil {
+		logfile = path
+	}
+
+	err := aaLog(logfile, profile)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
