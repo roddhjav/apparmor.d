@@ -3,6 +3,10 @@
 
 _aa-log () {
 	local IFS=$'\n'
+	_arguments : \
+		-f'[set a logfile or a prefix to the default log file]:_files' \
+		-h'[display help information]'
+
 	_values -C 'profile names' ${$(__aa_profiles):-""}
 }
 
