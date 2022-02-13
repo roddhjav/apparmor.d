@@ -18,13 +18,12 @@ profile su @{exec_path} {
   capability audit_write,
   capability setgid,
   capability setuid,
+  capability dac_read_search,
   #audit deny capability net_bind_service,
-  capability sys_resource,
-  # No clear purpose, deny until needed
-  deny capability net_admin,
 
   signal (send)    set=(term,kill),
   signal (receive) set=(int,quit,term),
+  signal (receive) set=(cont,hup) peer=sudo,
 
   network netlink raw,
 
@@ -43,15 +42,48 @@ profile su @{exec_path} {
   /etc/shells r,
 
         @{PROC}/1/limits r,
-  owner @{PROC}/@{pid}/loginuid r,
+        @{PROC}/sys/kernel/random/boot_id r,
+  owner @{PROC}/@{pids}/loginuid r,
+  owner @{PROC}/@{pids}/cgroup r,
+  owner @{PROC}/@{pids}/mountinfo r,
 
   # For pam_securetty
   @{PROC}/cmdline r,
   @{sys}/devices/virtual/tty/console/active r,
-  
+
+  # Upstreaming
+  capability sys_resource,
+  # No clear purpose, deny until needed
+  deny capability net_admin,
+
   # pseudo-terminal
   capability chown,
+
   /dev/{,pts/}ptmx rw,
+
+  /var/log/btmp wk,
+
+  @{run}/dbus/system_bus_socket rw,
+  @{run}/systemd/userdb/ r,
+  @{run}/systemd/userdb/io.systemd.Machine rw,
+  @{run}/systemd/userdb/io.systemd.DynamicUser rw,
+
+  dbus (send)
+     bus=system
+     path=/org/freedesktop/DBus
+     interface=org.freedesktop.DBus
+     member=Hello
+     peer=(name=org.freedesktop.DBus),
+
+  dbus (send)
+    bus=system
+    path=/org/freedesktop/login[1-9]
+    interface=org.freedesktop.login[1-9].Manager
+    member={CreateSession,ReleaseSession},
+
+  unix (bind) type=dgram,
+
+  owner /dev/tty[0-9]* rw,
 
   include if exists <local/su>
 }
