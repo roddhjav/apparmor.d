@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: GPL-2.0-only
 # Useful info:
 # http://kb.mozillazine.org/Files_and_folders_in_the_profile_-_Thunderbird
-#
 
 abi <abi/3.0>,
 
@@ -19,6 +18,9 @@ profile thunderbird @{exec_path} {
   include <abstractions/base>
   include <abstractions/consoles>
   include <abstractions/opencl-intel>
+  include <abstractions/nvidia>
+  include <abstractions/vulkan>
+  include <abstractions/mesa>
   include <abstractions/gtk>
   include <abstractions/fonts>
   include <abstractions/fontconfig-cache-read>
@@ -27,11 +29,14 @@ profile thunderbird @{exec_path} {
   include <abstractions/enchant>
   include <abstractions/user-download-strict>
   include <abstractions/thumbnails-cache-read>
-  include <abstractions/mesa>
   include <abstractions/nameservice-strict>
   include <abstractions/openssl>
   include <abstractions/deny-dconf>
   include <abstractions/deny-root-dir-access>
+  include <abstractions/ibus>
+  include <abstractions/dbus-strict>
+  include <abstractions/dbus-session-strict>
+  include if exists <abstractions/ubuntu-unity7-base>
 
   ptrace peer=@{profile_name},
 
@@ -122,6 +127,7 @@ profile thunderbird @{exec_path} {
        owner @{PROC}/@{pid}/stat r,
        owner @{PROC}/@{pid}/statm r,
        owner @{PROC}/@{pid}/smaps r,
+       owner @{PROC}/@{pids}/comm r,
   deny owner @{PROC}/@{pids}/cmdline r,
   deny owner @{PROC}/@{pids}/environ r,
        owner @{PROC}/@{pid}/task/ r,
@@ -135,9 +141,6 @@ profile thunderbird @{exec_path} {
   deny       @{PROC}/@{pid}/net/route r,
   # for dig
        owner @{PROC}/@{pid}/task/@{tid}/comm rw,
-
-  /var/lib/dbus/machine-id r,
-  /etc/machine-id r,
 
   # TMP files
         /var/tmp/ r,
@@ -189,6 +192,37 @@ profile thunderbird @{exec_path} {
   owner /dev/tty[0-9]* rw,
   owner @{HOME}/.xsession-errors w,
 
+  # DBus
+  dbus send
+    bus=system
+    path=/org/freedesktop/RealtimeKit[0-9]
+    member={Get,MakeThreadHighPriority,MakeThreadRealtime}
+    peer=(name=org.freedesktop.RealtimeKit[0-9]),
+
+  dbus send
+    bus=session
+    path=/ca/desrt/dconf/Writer/user
+    interface=ca.desrt.dconf.Writer
+    member={Change,Notify}
+    peer=(name=ca.desrt.dconf),
+
+  dbus send
+    bus=system
+    path=/org/freedesktop/UPower
+    interface=org.freedesktop.UPower
+    member=EnumerateDevices
+    peer=(name=org.freedesktop.UPower),
+
+  # gnome-tiny
+  /etc/gtk-{3,4}.[0-9]*/{,**} r,
+  /etc/gnome/defaults.list r,
+  /usr/share/gtk-{3,4}.[0-9]*/{,**} r,
+  @{run}/mount/utab r,
+
+  owner @{run}/user/@{uid}/ICEauthority r,
+
+  @{sys}/cgroup/cpu,cpuacct/user.slice/cpu.cfs_quota_us r,
+  @{sys}/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us r,
 
   profile gpg {
     include <abstractions/base>
@@ -202,7 +236,7 @@ profile thunderbird @{exec_path} {
     /{usr/,}bin/gpg               mr,
     /{usr/,}bin/gpg-connect-agent mr,
     /{usr/,}bin/gpgsm             mr,
-    /{usr/,}bin/gpg-agent        rix,
+    /{usr/,}bin/gpg-agent          rix,
 
     owner @{HOME}/@{XDG_GPG_DIR}/ rw,
     owner @{HOME}/@{XDG_GPG_DIR}/** rwkl -> @{HOME}/@{XDG_GPG_DIR}/**,
@@ -237,6 +271,7 @@ profile thunderbird @{exec_path} {
     deny owner /dev/shm/org.mozilla.ipc.[0-9]*.[0-9]* rw,
          owner /tmp/ns* rw,
 
+    include if exists <local/thunderbird_gpg>
   }
 
   profile open {
@@ -248,7 +283,7 @@ profile thunderbird @{exec_path} {
     /{usr/,}lib/@{multiarch}/glib-[0-9]*/gio-launch-desktop mr,
 
     /{usr/,}bin/{,ba,da}sh      rix,
-    /{usr/,}bin/gawk            rix,
+    /{usr/,}bin/{,m,g}awk       rix,
     /{usr/,}bin/readlink        rix,
     /{usr/,}bin/basename        rix,
 
@@ -266,6 +301,7 @@ profile thunderbird @{exec_path} {
     # file_inherit
     owner @{HOME}/.xsession-errors w,
 
+    include if exists <local/thunderbird_open>
   }
 
   include if exists <local/thunderbird>
