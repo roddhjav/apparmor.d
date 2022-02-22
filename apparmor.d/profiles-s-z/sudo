@@ -7,6 +7,8 @@ abi <abi/3.0>,
 
 include <tunables/global>
 
+@{PATH} = /usr/local/sbin /usr/local/bin /usr/sbin /usr/bin /sbin /bin
+
 @{exec_path} = /{usr/,}bin/sudo
 profile sudo @{exec_path} {
   include <abstractions/base>
@@ -27,10 +29,14 @@ profile sudo @{exec_path} {
   capability sys_ptrace,
   capability sys_resource,
 
-  network netlink raw,
+  network netlink raw,   # PAM
+  # DNS query?
+#  network inet dgram,
+#  network inet6 dgram,
 
   ptrace (read),
   signal,
+  signal (send) set=(cont,hup) peer=su,
 
   @{exec_path} mr,
   @{libexec}/sudo/** mr,
@@ -39,8 +45,7 @@ profile sudo @{exec_path} {
   /{usr/,}bin/{,b,d,rb}ash rpux,
   /{usr/,}bin/{c,k,tc,z}sh rpux,
 
-  /{usr/,}bin/[a-z0-9]*               rPUx,
-  /{usr/,}{s,}bin/[a-z0-9]*           rPUx,
+  @{PATH}/[a-z0-9]*                   rPUx,
   /{usr/,}lib/cockpit/cockpit-askpass rPUx,
 
   /etc/environment r,
@@ -49,6 +54,7 @@ profile sudo @{exec_path} {
   /etc/sudo.conf r,
   /etc/sudoers r,
   /etc/sudoers.d/{,*} r,
+  /etc/default/locale r,
 
   /var/log/sudo.log wk,
 
@@ -58,7 +64,7 @@ profile sudo @{exec_path} {
   owner @{run}/sudo/ts/* rwk,
         @{run}/faillock/{,*} rwk,
 
-  @{PROC}/@{pid}/fd/ r,
+  @{PROC}/@{pids}/fd/ r,
   @{PROC}/@{pids}/stat r,
   @{PROC}/1/limits r,
 
@@ -66,7 +72,16 @@ profile sudo @{exec_path} {
   owner /dev/tty[0-9]* rw,
   owner @{HOME}/.xsession-errors w,
 
-  /dev/ r,
+  owner /var/lib/sudo/lectured/* rw,
+
+  owner @{HOME}/.sudo_as_admin_successful rw,
+
+  @{run}/systemd/userdb/ r,
+  @{run}/systemd/userdb/io.systemd.DynamicUser rw,
+
+  @{PROC}/sys/kernel/random/boot_id r,
+
+  /dev/ r,    # interactive login
   /dev/ptmx rw,
 
   include if exists <local/sudo>
