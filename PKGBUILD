@@ -34,19 +34,19 @@ build() {
 }
 
 package() {
-  local _build='.build/apparmor.d'
+  local _build='.build'
   cd "$srcdir/$pkgname"
 
-  # Install all files from root/
-  mapfile -t root < <(find root -type f -printf "%P\n")
+  # Install all files from $_build/root
+  mapfile -t root < <(find "$_build/root" -type f -printf "%P\n")
   for file in "${root[@]}"; do
-    install -Dm0644 "root/$file" "$pkgdir/$file"
+    install -Dm0644 "$_build/root/$file" "$pkgdir/$file"
   done
 
-  # Install all files from $_build
-  mapfile -t build < <(find "$_build/" -type f -printf "%P\n")
-  for file in "${build[@]}"; do
-    install -Dm0644 "$_build/$file" "$pkgdir/etc/apparmor.d/$file"
+  # Install all files from $_build/apparmor.d
+  mapfile -t apparmor < <(find "$_build/apparmor.d" -type f -printf "%P\n")
+  for file in "${apparmor[@]}"; do
+    install -Dm0644 "$_build/apparmor.d/$file" "$pkgdir/etc/apparmor.d/$file"
   done
 
   # Ensure some systemd services do not start before apparmor rules are loaded
