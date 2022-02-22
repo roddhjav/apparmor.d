@@ -1,0 +1,43 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /opt/net.downloadhelper.coapp/bin/net.downloadhelper.coapp-*
+profile downloadhelper @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+  include <abstractions/openssl>
+  include <abstractions/user-download-strict>
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  /opt/ r,
+  /opt/net.downloadhelper.coapp/ r,
+  /opt/net.downloadhelper.coapp/bin/ r,
+  /opt/net.downloadhelper.coapp/converter/build/** rix,
+
+  owner @{HOME}/.mozilla/firefox/[0-9a-z]*.default/.parentlock rw,
+  owner @{HOME}/.mozilla/firefox/[0-9a-z]*.default/extensions/* r,
+  owner @{user_cache_dirs}/mozilla/firefox/[0-9a-z]*.default/startupCache/scriptCache-*.bin r,
+  owner @{user_cache_dirs}/mozilla/firefox/[0-9a-z]*.default/startupCache/startupCache.*.little r,
+  owner @{user_cache_dirs}/mozilla/firefox/[0-9a-z]*.default/safebrowsing-updating/google[0-9]/goog-phish-proto-[0-9]*.vlpset rw,
+
+  owner /tmp/vdh-*.tmp rw,
+
+  @{sys}/devices/system/node/ r,
+  @{sys}/devices/system/node/node[0-9]*/meminfo r,
+
+  deny @{PROC}/version r,
+
+  include if exists <local/downloadhelper>
+}
