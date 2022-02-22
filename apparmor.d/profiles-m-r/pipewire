@@ -1,6 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2015-2020 Mikhail Morfikov
-#               2021 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -10,9 +10,9 @@ include <tunables/global>
 @{exec_path} = /{usr/,}bin/pipewire
 profile pipewire @{exec_path} {
   include <abstractions/base>
+  include <abstractions/audio>
   include <abstractions/nameservice-strict>
 
-  # Needed for all sound/music apps.
   ptrace (read),
 
   @{exec_path} mr,
@@ -21,23 +21,11 @@ profile pipewire @{exec_path} {
 
   /etc/machine-id r,
   /etc/pipewire/client.conf r,
+  /etc/pipewire/pipewire-pulse.conf.d/{,*} r,
   /etc/pipewire/pipewire.conf r,
+  /etc/pipewire/pipewire.conf.d/{,*} r,
 
   owner @{run}/user/@{uid}/pipewire-[0-9]*.lock rwk,
-
-  /dev/snd/controlC[0-9]* rw,
-  /dev/snd/pcmC[0-9]*D[0-9]*p rw,
-  /dev/snd/pcmC[0-9]*D[0-9]*c rw,
-
-  /usr/share/alsa/{,**} r,
-  /etc/alsa/{,**} r,
-
-  /dev/shm/ r,
-  @{run}/shm/ r,
-  /etc/pulse/{,**} r,
-  owner @{user_config_dirs}/pulse/ rw,
-  owner @{user_config_dirs}/pulse/cookie rwk,
-  owner @{run}/user/@{uid}/pulse/ r,
 
   @{sys}/devices/virtual/dmi/id/product_name r,
   @{sys}/devices/virtual/dmi/id/sys_vendor r,
@@ -46,7 +34,6 @@ profile pipewire @{exec_path} {
 
   / r,
 
-  /dev/snd/seq rw,
   /dev/video[0-9]* rw,
 
   include if exists <local/pipewire>

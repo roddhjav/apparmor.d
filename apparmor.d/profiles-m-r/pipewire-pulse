@@ -8,8 +8,9 @@ abi <abi/3.0>,
 include <tunables/global>
 
 @{exec_path} = /{usr/,}bin/pipewire-pulse
-profile pipewire-pulse @{exec_path} {
+profile pipewire-pulse @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/audio>
   include <abstractions/nameservice-strict>
 
   capability sys_ptrace,
@@ -18,10 +19,14 @@ profile pipewire-pulse @{exec_path} {
 
   @{exec_path} mr,
 
+  /{usr/,}bin/pactl rix,
+
+  /var/lib/dbus/machine-id r,
   /etc/machine-id r,
 
   /etc/pipewire/client.conf r,
   /etc/pipewire/pipewire-pulse.conf r,
+  /etc/pipewire/pipewire-pulse.conf.d/{,*} r,
   /usr/share/pipewire/client.conf r,
   /usr/share/pipewire/pipewire-pulse.conf r,
 
@@ -33,6 +38,7 @@ profile pipewire-pulse @{exec_path} {
   @{sys}/devices/virtual/dmi/id/bios_vendor r,
 
   / r,
+  /.flatpak-info r,
 
   include if exists <local/pipewire-pulse>
 }
