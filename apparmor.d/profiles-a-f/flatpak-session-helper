@@ -1,0 +1,28 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}lib/flatpak-session-helper
+profile flatpak-session-helper @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+  include <abstractions/p11-kit>
+  include <abstractions/ssl_certs>
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/p11-kit                 rix,
+  /{usr/,}lib/p11-kit/p11-kit-server  rix,
+  /{usr/,}lib/p11-kit/p11-kit-remote  rix,
+
+  owner @{run}/user/@{uid}/.flatpak-helper/{,**} rw,
+  owner @{run}/user/@{uid}/.flatpak-helper/pkcs11-flatpak-[0-9]* rw,
+  
+  owner @{PROC}/@{pids}/fd/ r,
+
+  include if exists <local/flatpak-session-helper>
+}
