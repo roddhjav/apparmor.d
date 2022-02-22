@@ -1,6 +1,9 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2018-2021 Mikhail Morfikov
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
+
+# Warning: Such a profile is limitted as it gives access to a lot of resources.
 
 abi <abi/3.0>,
 
@@ -164,14 +167,12 @@ profile chromium-chromium @{exec_path} flags=(attach_disconnected) {
 
   deny @{sys}/devices/virtual/tty/tty[0-9]/active r,
 
-  @{sys}/devices/virtual/dmi/id/sys_vendor r,
-  @{sys}/devices/virtual/dmi/id/product_name r,
-  @{sys}/devices/system/cpu/cpufreq/policy[0-9]*/cpuinfo_max_freq r,
-
-  # To remove the following error:
-  #  pcilib: Cannot open /sys/bus/pci/devices/0000:03:00.0/irq: Permission denied
-  # The irq file is needed to render pages.
   @{sys}/devices/pci[0-9]*/**/irq r,
+  @{sys}/devices/pci[0-9]*/**/usb[0-9]*/**/report_descriptor r,
+  @{sys}/devices/system/cpu/cpufreq/policy[0-9]*/cpuinfo_max_freq r,
+  @{sys}/devices/virtual/**/report_descriptor r,
+  @{sys}/devices/virtual/dmi/id/product_name r,
+  @{sys}/devices/virtual/dmi/id/sys_vendor r,
 
         /var/tmp/ r,
         /tmp/ r,
