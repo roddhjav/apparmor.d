@@ -1,6 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2020-2021 Mikhail Morfikov
-# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2020-2022 Mikhail Morfikov
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -63,52 +63,39 @@ profile git @{exec_path} {
   /{usr/,}bin/more        rPx -> child-pager,
 
   /{usr/,}bin/man         rPx,
-
-  # For signing commits
-  /{usr/,}bin/gpg         rCx -> gpg,
-
-  # For SSH support
-  /{usr/,}bin/ssh         rCx -> ssh,
-
-  # Difftools
   /{usr/,}bin/meld       rPUx,
+  /{usr/,}lib/code/extensions/git/dist/askpass.sh rPx,
+  /usr/share/aurpublish/*.hook rPx,
 
+  /{usr/,}bin/gpg             rCx -> gpg,
+  /{usr/,}bin/ssh             rCx -> ssh,
   /{usr/,}bin/sensible-editor rCx -> editor,
   /{usr/,}bin/vim             rCx -> editor,
   /{usr/,}bin/vim.*           rCx -> editor,
+  
+  /usr/share/git-core/{,**} r,
+  /usr/share/terminfo/x/xterm-256color r,
 
-  /{usr/,}lib/code/extensions/git/dist/askpass.sh rPx,
-  /usr/share/aurpublish/*.hook rPx,
+  /etc/mailname r,
+
+  owner @{HOME}/@{XDG_PROJECTS_DIR}/   rw,
+  owner @{HOME}/@{XDG_PROJECTS_DIR}/** rwkl -> @{HOME}/@{XDG_PROJECTS_DIR}/**,
+  owner /tmp/**        rwkl -> /tmp/**,
+  owner /tmp/**/bin/*  rCx -> exec,
 
   owner @{HOME}/.gitconfig r,
   owner @{HOME}/.netrc r,
   owner @{user_config_dirs}/git/{,*} rw,
 
-  /usr/share/git-core/{,**} r,
-  /usr/share/terminfo/x/xterm-256color r,
-
-  # For diffs
-  owner /tmp/git-difftool.*/ rw,
+  owner /tmp/git-difftool.*/ rw,             # For diffs
   owner /tmp/git-difftool.*/right/{,**} rw,
   owner /tmp/git-difftool.*/left/{,**} rw,
   owner /tmp/* rw,
-  # For TWRP-device-tree-generator
-  owner /tmp/tmp*/ rw,
+  owner /tmp/tmp*/ rw,                       # For TWRP-device-tree-generator
   owner /tmp/tmp*/** rwkl -> /tmp/tmp*/**,
+  owner /tmp/.git_vtag_tmp* rw,              # For git log --show-signature
+  owner /tmp/git-commit-msg-.txt rw,         # For android studio
 
-  # For git log --show-signature
-  owner /tmp/.git_vtag_tmp* rw,
-
-  # For android studio
-  owner /tmp/git-commit-msg-.txt rw,
-
-  # For package building
-  owner @{HOME}/*/                   rw,
-  owner @{HOME}/*/**                 rwkl -> @{HOME}/*/**,
-  owner /tmp/**        rwkl -> /tmp/**,
-  owner /tmp/**/bin/*  rCx -> exec,
-
-  /etc/mailname r,
 
   profile gpg {
     include <abstractions/base>
@@ -121,6 +108,7 @@ profile git @{exec_path} {
 
     owner /tmp/.git_vtag_tmp* r,
 
+    deny @{user_share_dirs}/gvfs-metadata/* r,
   }
 
   profile ssh {
@@ -143,10 +131,11 @@ profile git @{exec_path} {
     owner @{HOME}/@{XDG_SSH_DIR}/known_hosts{,.*} rw,
     owner @{HOME}/@{XDG_SSH_DIR}/known_hosts.old rwl,
 
-    owner @{PROC}/@{pid}/fd/ r,
-
     owner /tmp/git@*:[0-9]* rwl -> /tmp/git@*:[0-9]*.*,
 
+    owner @{PROC}/@{pid}/fd/ r,
+
+    deny @{user_share_dirs}/gvfs-metadata/* r,
   }
 
   profile exec {
@@ -166,19 +155,22 @@ profile git @{exec_path} {
     /{usr/,}bin/{,ba,da}sh       rix,
     /{usr/,}bin/which{,.debianutils}            rix,
 
-    owner @{HOME}/.selected_editor r,
-
+    /usr/share/vim/{,**} r,
     /usr/share/terminfo/x/xterm-256color r,
 
-    /usr/share/vim/{,**} r,
     /etc/vimrc r,
     /etc/vim/{,**} r,
-    owner @{user_cache_dirs}/vim/{,**} rw,
-    owner @{user_config_dirs}/vim/{,**} r,
-    owner @{HOME}/.viminfo{,.tmp} rw,
+
+    owner @{HOME}/@{XDG_PROJECTS_DIR}/**/.git/COMMIT_EDITMSG rw,
+    owner @{HOME}/@{XDG_PROJECTS_DIR}/**/.git/[0-9]* rw,
 
     owner @{HOME}/.fzf/plugin/ r,
     owner @{HOME}/.fzf/plugin/fzf.vim r,
+    owner @{HOME}/.selected_editor r,
+    owner @{HOME}/.viminfo{,.tmp} rw,
+
+    owner @{user_cache_dirs}/vim/{,**} rw,
+    owner @{user_config_dirs}/vim/{,**} r,
 
     # The git repository files
     owner @{user_build_dirs}/ r,
