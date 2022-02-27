@@ -19,6 +19,7 @@ profile systemd-coredump @{exec_path} flags=(attach_disconnected) {
   capability setgid,
   capability setpcap,
   capability setuid,
+  capability sys_admin,
   capability sys_ptrace,
 
   @{exec_path} mr,
@@ -27,12 +28,15 @@ profile systemd-coredump @{exec_path} flags=(attach_disconnected) {
   /{usr/,}sbin/* r,
   @{libexec}/** r,
   /opt/** r,
+  / r,
+
+  mount -> /,
 
   /etc/systemd/coredump.conf r,
 
-  /var/lib/systemd/coredump/ r,
-  /var/lib/systemd/coredump/** rwl,
-  /var/lib/systemd/coredump/#[0-9]* rwl,
+        /var/lib/systemd/coredump/ r,
+  owner /var/lib/systemd/coredump/#[0-9]* rw,
+  owner /var/lib/systemd/coredump/core.*.zst rwl -> /var/lib/systemd/coredump/#[0-9]*,
 
   owner @{PROC}/@{pid}/setgroups r,
         @{PROC}/@{pids}/comm r,

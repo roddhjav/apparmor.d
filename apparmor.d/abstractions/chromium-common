@@ -1,0 +1,41 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Mikhail Morfikov
+# SPDX-License-Identifier: GPL-2.0-only
+
+  abi <abi/3.0>,
+
+  # The following rules are needed only when the kernel.unprivileged_userns_clone option is set
+  # to "1".
+  capability sys_admin,
+  capability sys_chroot,
+  capability setuid,
+  capability setgid,
+  owner @{PROC}/@{pid}/setgroups w,
+  owner @{PROC}/@{pid}/gid_map w,
+  owner @{PROC}/@{pid}/uid_map w,
+
+        /var/tmp/ r,
+        /tmp/ r,
+  owner /tmp/.org.chromium.Chromium.*/ rw,
+  owner /tmp/.org.chromium.Chromium.*/SingletonCookie w,
+  owner /tmp/.org.chromium.Chromium.*/SingletonSocket w,
+  owner /tmp/.org.chromium.Chromium.*/SS w,
+  owner /tmp/.org.chromium.Chromium.* rw,
+  owner /tmp/scoped_dir*/ rw,
+  owner /tmp/scoped_dir*/SingletonCookie w,
+  owner /tmp/scoped_dir*/SingletonSocket w,
+  owner /tmp/scoped_dir*/SS w,
+
+        /dev/shm/ r,
+  owner /dev/shm/.org.chromium.Chromium.* rw,
+
+  owner @{HOME}/.local/share/.org.chromium.Chromium.* rw,
+
+  # Should this be read-only? (##FIXME##)
+  # To remove the following error:
+  #  Error initializing NSS with a persistent database
+  owner @{HOME}/.pki/ rw,
+  owner @{HOME}/.pki/nssdb/ rw,
+  owner @{HOME}/.pki/nssdb/pkcs11.txt rw,
+  owner @{HOME}/.pki/nssdb/{cert9,key4}.db rwk,
+  owner @{HOME}/.pki/nssdb/{cert9,key4}.db-journal rw,

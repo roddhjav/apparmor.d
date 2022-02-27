@@ -28,7 +28,6 @@ profile chromium-chromium @{exec_path} flags=(attach_disconnected) {
   include <abstractions/thumbnails-cache-read>
   include <abstractions/nameservice-strict>
   include <abstractions/ssl_certs>
-  include <abstractions/deny-root-dir-access>
 
   ptrace (read) peer=chrome-gnome-shell,
 
@@ -46,6 +45,7 @@ profile chromium-chromium @{exec_path} flags=(attach_disconnected) {
   ptrace (read) peer=lsb_release,
 
   signal (send) set=(term, kill) peer=keepassxc-proxy,
+  signal (receive) peer=chromium-chrome-crashpad-handler,
 
   network inet dgram,
   network inet6 dgram,
@@ -55,9 +55,9 @@ profile chromium-chromium @{exec_path} flags=(attach_disconnected) {
 
   @{exec_path} mrix,
 
-  /{usr/,}bin/chrome-gnome-shell          rPx,
-  @{CHROMIUM_INSTALLDIR}/chrome-sandbox   rPx,
-  @{CHROMIUM_INSTALLDIR}/crashpad_handler rPx,
+  /{usr/,}bin/chrome-gnome-shell                  rPx,
+  @{CHROMIUM_INSTALLDIR}/chrome-sandbox           rPx,
+  @{CHROMIUM_INSTALLDIR}/chrome_crashpad_handler  rPx,
 
   # For storing passwords externally
   /{usr/,}bin/keepassxc-proxy   rPUx,
@@ -69,14 +69,6 @@ profile chromium-chromium @{exec_path} flags=(attach_disconnected) {
   /{usr/,}bin/xdg-settings       rPx,
   /{usr/,}bin/xdg-desktop-menu   rPx,
   /{usr/,}bin/xdg-icon-resource  rPx,
-
-  # To remove the following error:
-  #  Error initializing NSS with a persistent database
-  owner @{HOME}/.pki/ rw,
-  owner @{HOME}/.pki/nssdb/ rw,
-  owner @{HOME}/.pki/nssdb/pkcs11.txt rw,
-  owner @{HOME}/.pki/nssdb/{cert9,key4}.db rwk,
-  owner @{HOME}/.pki/nssdb/{cert9,key4}.db-journal rw,
 
   # Chromium files
   /usr/share/chromium/{,**} r,
@@ -121,36 +113,39 @@ profile chromium-chromium @{exec_path} flags=(attach_disconnected) {
 
   /etc/fstab r,
 
+  include <abstractions/dconf>
+  owner @{run}/user/@{uid}/dconf/ rw,
+  owner @{run}/user/@{uid}/dconf/user rw,
+
   /usr/share/glib-2.0/schemas/gschemas.compiled r,
 
   # Needed or chromium gets crash with the following error:
   #  FATAL:sandbox_linux.cc(172)] Check failed: proc_fd_ >= 0 (-1 vs. 0)
              @{PROC}/ r,
   #
-  deny       @{PROC}/vmstat r,
+             @{PROC}/vmstat r,
              @{PROC}/sys/kernel/yama/ptrace_scope r,
              @{PROC}/@{pid}/fd/ r,
-  deny       @{PROC}/@{pids}/stat r,
-  deny       @{PROC}/@{pids}/statm r,
+             @{PROC}/@{pids}/stat r,
+             @{PROC}/@{pids}/statm r,
   # To remove the following error:
   #  Failed to adjust OOM score of renderer with pid : Permission denied
-  deny owner @{PROC}/@{pid}/oom_{,score_}adj rw,
+       owner @{PROC}/@{pid}/oom_{,score_}adj rw,
   #
   deny       @{PROC}/@{pids}/cmdline r,
-  deny owner @{PROC}/@{pids}/environ r,
+       owner @{PROC}/@{pids}/environ r,
        owner @{PROC}/@{pids}/task/ r,
-  deny       @{PROC}/@{pids}/task/@{tid}/stat r,
+             @{PROC}/@{pids}/task/@{tid}/stat r,
              @{PROC}/@{pids}/task/@{tid}/status r,
-  deny owner @{PROC}/@{pid}/limits r,
-  deny owner @{PROC}/@{pid}/mem r,
+       owner @{PROC}/@{pid}/limits r,
+       owner @{PROC}/@{pid}/mem r,
        owner @{PROC}/@{pid}/mountinfo r,
        owner @{PROC}/@{pid}/mounts r,
   # To remove the following error:
   #  file_path_watcher_linux.cc(71)] Failed to read /proc/sys/fs/inotify/max_user_watches
              @{PROC}/sys/fs/inotify/max_user_watches r,
-
-   deny /dev/shm/ r,
-  owner /dev/shm/.org.chromium.Chromium.* rw,
+  #
+       owner @{PROC}/@{pids}/clear_refs w,
 
   /var/lib/dbus/machine-id r,
   /etc/machine-id r,
@@ -174,18 +169,9 @@ profile chromium-chromium @{exec_path} flags=(attach_disconnected) {
   @{sys}/devices/virtual/dmi/id/product_name r,
   @{sys}/devices/virtual/dmi/id/sys_vendor r,
 
-        /var/tmp/ r,
-        /tmp/ r,
-  owner /tmp/.org.chromium.Chromium.* rw,
-  owner /tmp/.org.chromium.Chromium.*/{,**} rw,
-
   # For the temp profile
   owner /tmp/tmp.*/ rw,
   owner /tmp/tmp.*/** rwk,
-
-  # For installing/updating extensions
-  owner /tmp/scoped_dir*/ rw,
-  owner /tmp/scoped_dir*/** rw,
 
   # Silencer
   deny @{CHROMIUM_INSTALLDIR}/** w,

@@ -1,0 +1,96 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Mikhail Morfikov
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+# Ebooks extensions
+# pdf, epub, djvu
+@{atril_ext}   = [pP][dD][fF]
+@{atril_ext}  += [eE][pP][uU][bB]
+@{atril_ext}  += [dD][jJ][vV][uU]
+
+# PNG preview
+@{atril_ext}  += [pP][nN][gG]
+
+@{exec_path} = /{usr/,}bin/atril{,-*}
+profile atril @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/gtk>
+  include <abstractions/fonts>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/freedesktop.org>
+  include <abstractions/user-download-strict>
+  include <abstractions/private-files-strict>
+  include <abstractions/nameservice-strict>
+
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  /usr/lib/x86_64-linux-gnu/webkit2gtk-4.0/WebKitNetworkProcess rix,
+  /usr/lib/x86_64-linux-gnu/webkit2gtk-4.0/WebKitWebProcess rix,
+
+  # Which media files atril should be able to open
+        / r,
+        /home/ r,
+  owner @{HOME}/ r,
+  owner @{HOME}/**/ r,
+        @{MOUNTS}/ r,
+  owner @{MOUNTS}/**/ r,
+        /tmp/ r,
+        /tmp/mozilla_*/ r,
+  owner /{home,media,tmp}/**.@{atril_ext} rw,
+
+  /usr/share/atril/{,**} r,
+
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+
+  include <abstractions/dconf>
+  owner @{run}/user/@{uid}/dconf/ rw,
+  owner @{run}/user/@{uid}/dconf/user rw,
+
+       owner @{PROC}/@{pid}/mountinfo r,
+       owner @{PROC}/@{pid}/mounts r,
+       owner @{PROC}/@{pid}/statm r,
+  deny owner @{PROC}/@{pid}/cmdline r,
+       owner @{PROC}/@{pid}/cgroup r,
+             @{PROC}/zoneinfo r,
+
+  /sys/firmware/acpi/pm_profile r,
+  /sys/devices/virtual/dmi/id/chassis_type r,
+  /sys/fs/cgroup/** r,
+
+  /etc/fstab r,
+
+  /usr/share/poppler/** r,
+
+  owner @{user_config_dirs}/atril/ rw,
+  owner @{user_config_dirs}/atril/* rw,
+
+  owner @{user_cache_dirs}/atril/ rw,
+  owner @{user_cache_dirs}/atril/** rw,
+
+  owner @{user_share_dirs}/gvfs-metadata/home r,
+  owner @{user_share_dirs}/gvfs-metadata/home-*.log r,
+
+  owner /tmp/gtkprint_* rw,
+  owner /tmp/atril-@{pid}/ rw,
+  owner /tmp/atril-@{pid}/*/ rw,
+  owner /tmp/atril-@{pid}/*/mimetype rw,
+  owner /tmp/atril-@{pid}/*/META-INF/ rw,
+  owner /tmp/atril-@{pid}/*/META-INF/container.xml rw,
+  owner /tmp/atril-@{pid}/*/index_split_[0-9]*.html rw,
+  owner /tmp/atril-@{pid}/*/page_styles.css rw,
+  owner /tmp/atril-@{pid}/*/titlepage.xhtml rw,
+  owner /tmp/atril-@{pid}/*/stylesheet.css rw,
+  owner /tmp/atril-@{pid}/*/images/ rw,
+  owner /tmp/atril-@{pid}/*/images/*.jpg rw,
+  owner /tmp/atril-@{pid}/*/toc.ncx rw,
+  owner /tmp/atril-@{pid}/*/content.opf rw,
+  owner /tmp/atril-@{pid}/*/META-INF/calibre_bookmarks.txt rw,
+
+  include if exists <local/atril>
+}
