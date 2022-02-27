@@ -24,18 +24,9 @@ profile brave @{exec_path} {
   include <abstractions/user-download-strict>
   include <abstractions/nameservice-strict>
   include <abstractions/thumbnails-cache-read>
-  include <abstractions/deny-dconf>
-  include <abstractions/deny-root-dir-access>
+  include <abstractions/chromium-common>
 
   capability sys_ptrace,
-
-  # The following rules are needed only when the kernel.unprivileged_userns_clone option is set
-  # to "1".
-  capability sys_admin,
-  capability sys_chroot,
-  owner @{PROC}/@{pid}/setgroups w,
-  owner @{PROC}/@{pid}/gid_map w,
-  owner @{PROC}/@{pid}/uid_map w,
 
   ptrace (read),
 
@@ -78,14 +69,6 @@ profile brave @{exec_path} {
 
   /usr/share/chromium/extensions/ r,
 
-  # To remove the following error:
-  #  Error initializing NSS with a persistent database
-  owner @{HOME}/.pki/ rw,
-  owner @{HOME}/.pki/nssdb/ rw,
-  owner @{HOME}/.pki/nssdb/pkcs11.txt rw,
-  owner @{HOME}/.pki/nssdb/{cert9,key4}.db rwk,
-  owner @{HOME}/.pki/nssdb/{cert9,key4}.db-journal rw,
-
   owner @{HOME}/ r,
   owner @{user_config_dirs}/BraveSoftware/ w,
   owner @{BRAVE_HOMEDIR}/ rw,
@@ -122,6 +105,10 @@ profile brave @{exec_path} {
 
   /etc/fstab r,
 
+  include <abstractions/dconf>
+  owner @{run}/user/@{uid}/dconf/ rw,
+  owner @{run}/user/@{uid}/dconf/user rw,
+
   /usr/share/glib-2.0/schemas/gschemas.compiled r,
 
   # Needed or Brave crash with the following error:
@@ -148,13 +135,9 @@ profile brave @{exec_path} {
              @{PROC}/sys/fs/inotify/max_user_watches r,
   deny       @{PROC}filesystems r,
 
-  owner /dev/shm/.org.chromium.Chromium.* rw,
   owner /dev/shm/org.chromium.Chromium.shmem.[A-F0-9]*._service_shmem rw,
 
   /dev/bus/usb/[0-9]*/[0-9]* rw,
-
-  # For downloading files
-  owner @{user_share_dirs}/.org.chromium.Chromium.* rw,
 
   /var/lib/dbus/machine-id r,
   /etc/machine-id r,
@@ -179,21 +162,11 @@ profile brave @{exec_path} {
 
   @{sys}/devices/system/cpu/cpufreq/policy[0-9]/cpuinfo_max_freq r,
 
-        /var/tmp/ r,
-        /tmp/ r,
-  owner /tmp/.org.chromium.Chromium.* rw,
-  owner /tmp/.org.chromium.Chromium.*/{,**} rw,
-  # For installing/updating/removing extensions
-  owner /tmp/scoped_dir*/{,**} rw,
-  owner /tmp/tmp.* rw,
   # For brave://net-export/
   owner /tmp/net-export/ rw,
 
   # Silencer
   deny @{BRAVE_INSTALLDIR}/** w,
-
-  # file_inherit
-  owner @{HOME}/.xsession-errors w,
 
 
   profile open {

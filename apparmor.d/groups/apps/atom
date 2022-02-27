@@ -16,6 +16,7 @@ profile atom @{exec_path} {
   include <abstractions/fontconfig-cache-read>
   include <abstractions/nameservice-strict>
   include <abstractions/enchant>
+  include <abstractions/chromium-common>
   # The following doesn't seem to be needed
   ##include <abstractions/mesa>
   ##include <abstractions/consoles>
@@ -24,8 +25,6 @@ profile atom @{exec_path} {
   include <abstractions/thumbnails-cache-read>
   ##include <abstractions/zsh>
   ##include <abstractions/fzf>
-  include <abstractions/deny-dconf>
-  include <abstractions/deny-root-dir-access>
 
   ptrace (read) peer=lsb_release,
   ptrace (read) peer=xdg-settings,
@@ -93,15 +92,11 @@ profile atom @{exec_path} {
 
   owner @{user_config_dirs}/git/config r,
 
-  # To remove the following error:
-  #  Error initializing NSS with a persistent database
-  deny owner @{HOME}/.pki/ rw,
-  deny owner @{HOME}/.pki/nssdb/ rw,
-  deny owner @{HOME}/.pki/nssdb/pkcs11.txt rw,
-  deny owner @{HOME}/.pki/nssdb/{cert9,key4}.db rwk,
-  deny owner @{HOME}/.pki/nssdb/{cert9,key4}.db-journal rw,
-
   /etc/fstab r,
+
+  include <abstractions/dconf>
+  owner @{run}/user/@{uid}/dconf/ rw,
+  owner @{run}/user/@{uid}/dconf/user rw,
 
   /usr/share/glib-2.0/schemas/gschemas.compiled r,
 
@@ -125,9 +120,6 @@ profile atom @{exec_path} {
        owner @{PROC}/@{pid}/mounts r,
   deny owner @{PROC}/@{pid}/loginuid r,
 
-  deny       /dev/shm/ r,
-       owner /dev/shm/.org.chromium.Chromium.* rw,
-
   /var/lib/dbus/machine-id r,
   /etc/machine-id r,
 
@@ -140,9 +132,6 @@ profile atom @{exec_path} {
   # The irq file is needed to render pages.
   deny @{sys}/devices/pci[0-9]*/**/irq r,
 
-        /var/tmp/ r,
-        /tmp/ r,
-  owner /tmp/.org.chromium.Chromium.* rw,
   owner /tmp/atom-[0-9a-f]*.sock rw,
   owner "/tmp/Atom Crashes/" rw,
   owner /tmp/github-[0-9]*-[0-9]*-*.*/ rw,
@@ -153,9 +142,6 @@ profile atom @{exec_path} {
   owner /tmp/apm-install-dir-[0-9]*-[0-9]*-*.*/ rw,
   owner /tmp/apm-install-dir-[0-9]*-[0-9]*-*.*/** rw,
   owner /tmp/net-export/ rw,
-
-  # file_inherit
-  owner @{HOME}/.xsession-errors w,
 
   # Allowed apps to open
   /{usr/,}lib/firefox/firefox rPUx,

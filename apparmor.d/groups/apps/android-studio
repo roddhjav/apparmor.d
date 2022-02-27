@@ -27,15 +27,7 @@ profile android-studio @{exec_path} {
   include <abstractions/audio>
   include <abstractions/python>
   include <abstractions/devices-usb>
-  include <abstractions/deny-root-dir-access>
-
-  # The following rules are needed only when the kernel.unprivileged_userns_clone option is set
-  # to "1".
-  capability sys_admin,
-  capability sys_chroot,
-  owner @{PROC}/@{pid}/setgroups w,
-  owner @{PROC}/@{pid}/gid_map w,
-  owner @{PROC}/@{pid}/uid_map w,
+  include <abstractions/chromium-common>
 
   capability sys_ptrace,
 
@@ -174,12 +166,6 @@ profile android-studio @{exec_path} {
   owner @{HOME}/.java/.userPrefs/ rw,
   owner @{HOME}/.java/.userPrefs/** rwk,
 
-  owner @{HOME}/.pki/ rw,
-  owner @{HOME}/.pki/nssdb/ rw,
-  owner @{HOME}/.pki/nssdb/pkcs11.txt rw,
-  owner @{HOME}/.pki/nssdb/{cert9,key4}.db rwk,
-  owner @{HOME}/.pki/nssdb/{cert9,key4}.db-journal rw,
-
   owner @{HOME}/.emulator_console_auth_token rw,
 
   deny owner @{HOME}/Desktop/* rw,
@@ -206,8 +192,6 @@ profile android-studio @{exec_path} {
 
   @{sys}/fs/cgroup/{,**} r,
 
-    /var/tmp/ r,
-        /tmp/ r,
   owner /tmp/** rwk,
   owner /tmp/native-platform[0-9]*dir/*.so rwm,
 
@@ -219,8 +203,6 @@ profile android-studio @{exec_path} {
 
   /var/lib/dbus/machine-id r,
   /etc/machine-id r,
-
-  owner /dev/shm/.org.chromium.Chromium.* rw,
 
   /dev/kvm rw,
 

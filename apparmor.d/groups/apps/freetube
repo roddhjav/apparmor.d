@@ -25,16 +25,7 @@ profile freetube @{exec_path} {
   include <abstractions/nameservice-strict>
   include <abstractions/user-download-strict>
   include <abstractions/thumbnails-cache-read>
-  include <abstractions/deny-dconf>
-  include <abstractions/deny-root-dir-access>
-
-  # The following rules are needed only when the kernel.unprivileged_userns_clone option is set
-  # to "1".
-  capability sys_admin,
-  capability sys_chroot,
-  owner @{PROC}/@{pid}/setgroups w,
-  owner @{PROC}/@{pid}/gid_map w,
-  owner @{PROC}/@{pid}/uid_map w,
+  include <abstractions/chromium-common>
 
   network inet dgram,
   network inet6 dgram,
@@ -55,17 +46,6 @@ profile freetube @{exec_path} {
   owner @{user_config_dirs}/FreeTube/ rw,
   owner @{user_config_dirs}/FreeTube/** rwk,
 
-        /var/tmp/ r,
-        /tmp/ r,
-  owner /tmp/.org.chromium.Chromium.*/ rw,
-  owner /tmp/.org.chromium.Chromium.*/SingletonCookie w,
-  owner /tmp/.org.chromium.Chromium.*/SS w,
-  owner /tmp/.org.chromium.Chromium.* rw,
-  owner /tmp/net-export/ rw,
-
-        /dev/shm/ r,
-  owner /dev/shm/.org.chromium.Chromium.* rw,
-
   # The /proc/ dir is needed to avoid the following error:
   #   traps: freetube[] trap int3 ip:56499eca9d26 sp:7ffcab073060 error:0 in
   #          freetube[56499b8a8000+531e000]
@@ -84,7 +64,12 @@ profile freetube @{exec_path} {
              @{PROC}/sys/kernel/yama/ptrace_scope r,
   deny       @{PROC}/vmstat r,
              @{PROC}/sys/fs/inotify/max_user_watches r,
+
   /etc/fstab r,
+
+  include <abstractions/dconf>
+  owner @{run}/user/@{uid}/dconf/ rw,
+  owner @{run}/user/@{uid}/dconf/user rw,
 
   /usr/share/glib-2.0/schemas/gschemas.compiled r,
 
@@ -96,10 +81,6 @@ profile freetube @{exec_path} {
   #  pcilib: Cannot open /sys/bus/pci/devices/0000:03:00.0/irq: Permission denied
   # The irq file is needed to render pages.
   deny @{sys}/devices/pci[0-9]*/**/irq r,
-
-  # Needed?
-  deny owner @{HOME}/.pki/ rw,
-  deny owner @{HOME}/.pki/** rwk,
 
   /var/lib/dbus/machine-id r,
   /etc/machine-id r,

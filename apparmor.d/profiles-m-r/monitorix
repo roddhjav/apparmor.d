@@ -1,0 +1,106 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Mikhail Morfikov
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/monitorix
+profile monitorix @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/perl>
+  include <abstractions/nameservice-strict>
+  include <abstractions/fonts>
+  include <abstractions/fontconfig-cache-read>
+
+  capability net_admin,
+  capability chown,
+  capability fowner,
+  capability setgid,
+  capability fsetid,
+  capability setuid,
+  capability dac_override,
+  capability kill,
+
+  network netlink raw,
+  network inet stream,
+  network inet6 stream,
+
+  ptrace (read),
+
+  signal (receive) set=(hup) peer=logroate,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/{,ba,da}sh         rix,
+  /{usr/,}bin/{,e}grep           rix,
+  /{usr/,}bin/df                 rix,
+  /{usr/,}bin/cat                rix,
+  /{usr/,}bin/tail               rix,
+  /{usr/,}bin/gawk               rix,
+  /{usr/,}bin/free               rix,
+  /{usr/,}bin/ss                 rix,
+  /{usr/,}bin/who                rix,
+  /{usr/,}sbin/lvm               rix,
+  /{usr/,}sbin/xtables-nft-multi rix,
+  /{usr/,}bin/sensors            rix,
+  /{usr/,}bin/getconf            rix,
+  /{usr/,}bin/ps                 rix,
+
+  /etc/monitorix/monitorix.conf r,
+  /etc/monitorix/conf.d/ r,
+  /etc/monitorix/conf.d/[0-9][0-9]-*.conf r,
+
+  /var/log/monitorix w,
+  /var/log/monitorix-* w,
+
+  owner @{run}/monitorix.pid w,
+
+  /var/lib/monitorix/*.rrd* rwk,
+  /var/lib/monitorix/www/** rw,
+  /var/lib/monitorix/www/cgi/monitorix.cgi rwix,
+
+  / r,
+  /tmp/ r,
+  /etc/shadow r,
+
+  /dev/tty r,
+
+  @{run}/utmp rk,
+
+        @{PROC}/ r,
+        @{PROC}/swaps r,
+        @{PROC}/diskstats r,
+        @{PROC}/loadavg r,
+        @{PROC}/sys/kernel/random/entropy_avail r,
+        @{PROC}/uptime r,
+        @{PROC}/interrupts r,
+        @{PROC}/sys/fs/dentry-state r,
+        @{PROC}/sys/fs/file-nr r,
+        @{PROC}/sys/fs/inode-nr r,
+        @{PROC}/sys/kernel/osrelease r,
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/mounts r,
+  owner @{PROC}/@{pid}/net/dev r,
+  owner @{PROC}/@{pid}/net/ip_tables_names r,
+  owner @{PROC}/@{pid}/net/ip6_tables_names r,
+        @{PROC}/@{pid}/net/udp{,6} r,
+        @{PROC}/@{pid}/net/tcp{,6} r,
+        @{PROC}/sys/kernel/pid_max r,
+        @{PROC}/@{pids}/stat r,
+        @{PROC}/@{pids}/cmdline r,
+        @{PROC}/@{pids}/fdinfo/ r,
+        @{PROC}/@{pids}/io r,
+
+  @{sys}/class/i2c-adapter/ r,
+  @{sys}/devices/pci[0-9]*/**/i2c-[0-9]*/name r,
+  @{sys}/class/hwmon/ r,
+  @{sys}/devices/**/thermal*/{,**} r,
+  @{sys}/devices/**/hwmon*/{,**} r,
+
+  /etc/sensors3.conf r,
+  /etc/sensors.d/ r,
+
+  include if exists <local/monitorix>
+}

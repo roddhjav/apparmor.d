@@ -6,11 +6,13 @@ abi <abi/3.0>,
 
 include <tunables/global>
 
-@{DISCORD_LIBDIR} = /usr/share/discord
-@{DISCORD_HOMEDIR} = @{user_config_dirs}/discord
-@{DISCORD_CACHEDIR} = @{user_cache_dirs}/discord
+@{DISCORD_LIBDIR}   = /usr/share/discord
+@{DISCORD_LIBDIR}  += /usr/share/discord-ptb
+@{DISCORD_HOMEDIR}  = @{HOME}/.config/discord
+@{DISCORD_HOMEDIR} += @{HOME}/.config/discordptb
+@{DISCORD_CACHEDIR} = @{HOME}/.cache/discord
 
-@{exec_path} = @{DISCORD_LIBDIR}/Discord /{usr/,}bin/discord
+@{exec_path} = @{DISCORD_LIBDIR}/Discord{,PTB} /{usr/,}bin/discord{,-ptb}
 profile discord @{exec_path} {
   include <abstractions/base>
   include <abstractions/consoles>
@@ -24,7 +26,7 @@ profile discord @{exec_path} {
   include <abstractions/mesa>
   include <abstractions/user-download-strict>
   include <abstractions/thumbnails-cache-read>
-  include <abstractions/deny-root-dir-access>
+  include <abstractions/chromium-common>
 
   signal (send) set=(kill, term) peer=@{profile_name}//lsb_release,
 
@@ -40,14 +42,6 @@ profile discord @{exec_path} {
 
   @{exec_path} mrix,
 
-  # The following rules are needed only when the kernel.unprivileged_userns_clone option is set
-  # to "1".
-  capability sys_admin,
-  capability sys_chroot,
-  owner @{PROC}/@{pid}/setgroups w,
-  owner @{PROC}/@{pid}/gid_map w,
-  owner @{PROC}/@{pid}/uid_map w,
-
   /{usr/,}bin/{,ba,da}sh   rix,
 
   /{usr/,}bin/xdg-open     rCx -> open,
@@ -59,11 +53,8 @@ profile discord @{exec_path} {
     @{DISCORD_LIBDIR}/ r,
     @{DISCORD_LIBDIR}/** r,
   # @{DISCORD_LIBDIR}/**.so mr,
-  # @{DISCORD_LIBDIR}/libEGL.so mr,
-  # @{DISCORD_LIBDIR}/libGLESv2.so mr,
-  # To remove the following error:
-  #  discord-canary: error while loading shared libraries: libffmpeg.so: cannot open shared object
-  #  file: No such file or directory
+    @{DISCORD_LIBDIR}/libEGL.so mr,
+    @{DISCORD_LIBDIR}/libGLESv2.so mr,
     @{DISCORD_LIBDIR}/libffmpeg.so mr,
   # @{DISCORD_LIBDIR}/swiftshader/libEGL.so mr,
   # @{DISCORD_LIBDIR}/swiftshader/libGLESv2.so mr,
@@ -85,7 +76,11 @@ profile discord @{exec_path} {
        owner @{PROC}/@{pids}/task/ r,
              @{PROC}/@{pids}/task/@{tid}/status r,
   deny       @{PROC}/@{pids}/stat r,
-  deny owner @{PROC}/@{pids}/statm r,
+  # Needed to remove the following error:
+  #  Error occurred in handler for 'DISCORD_PROCESS_UTILS_GET_MEMORY_INFO': [Error: Failed to
+  #  create memory dump]
+       owner @{PROC}/@{pids}/statm r,
+  #
   deny       @{PROC}/@{pids}/cmdline r,
              @{PROC}/sys/kernel/yama/ptrace_scope r,
              @{PROC}/sys/fs/inotify/max_user_watches r,
@@ -106,24 +101,10 @@ profile discord @{exec_path} {
   @{sys}/devices/pci[0-9]*/**/irq r,
 
   deny       /dev/ r,
-  deny       /dev/shm/ rw,
-       owner /dev/shm/.org.chromium.Chromium.* rw,
 
-        /var/tmp/ r,
-        /tmp/ r,
   owner /tmp/net-export/ rw,
   owner /tmp/discord.sock rw,
-  owner /tmp/.org.chromium.Chromium.*/ rw,
-  owner /tmp/.org.chromium.Chromium.*/discord1_[0-9]*.png rw,
-  owner /tmp/.org.chromium.Chromium.*/SingletonCookie rw,
-  owner /tmp/.org.chromium.Chromium.*/SS rw,
   owner "/tmp/Discord Crashes/" rw,
-
-  owner @{HOME}/.pki/ rw,
-  owner @{HOME}/.pki/nssdb/ rw,
-  owner @{HOME}/.pki/nssdb/pkcs11.txt rw,
-  owner @{HOME}/.pki/nssdb/{cert9,key4}.db rwk,
-  owner @{HOME}/.pki/nssdb/{cert9,key4}.db-journal rw,
 
   owner @{run}/user/@{uid}/discord-ipc-[0-9] rw,
 

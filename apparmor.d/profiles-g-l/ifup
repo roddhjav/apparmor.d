@@ -23,14 +23,20 @@ profile ifup @{exec_path} {
   /{usr/,}bin/{,ba,da}sh rix,
   /{usr/,}bin/ip         rix,
   /{usr/,}bin/sleep      rix,
+  /{usr/,}bin/seq        rix,
 
   /{usr/,}{s,}bin/dhclient  rPx,
   /{usr/,}bin/macchanger rPx,
 
+  /{usr/,}lib/ifupdown/*.sh rix,
+
   /{usr/,}bin/run-parts  rCx -> run-parts,
+  /{usr/,}bin/kmod       rCx -> kmod,
+  /{usr/,}sbin/sysctl    rCx -> sysctl,
 
   /etc/network/interfaces r,
   /etc/network/interfaces.d/{,*} r,
+  /etc/iproute2/rt_scopes r,
 
   @{run}/network/ rw,
   @{run}/network/{.,}ifstate* rwk,
@@ -79,6 +85,38 @@ profile ifup @{exec_path} {
     /etc/network/if-up.d/chrony                rPUx,
     /etc/network/if-up.d/openvpn               rPUx,
     /etc/network/if-up.d/wpasupplicant         rPUx,
+
+  }
+
+  profile kmod {
+    include <abstractions/base>
+
+    /{usr/,}bin/kmod mr,
+
+    @{sys}/module/** r,
+
+    @{PROC}/cmdline r,
+    @{PROC}/modules r,
+
+    /etc/modprobe.d/ r,
+    /etc/modprobe.d/*.conf r,
+
+  }
+
+  profile sysctl {
+    include <abstractions/base>
+
+#    capability mac_admin,
+#    capability sys_admin,
+#    capability sys_resource,
+
+    /{usr/,}sbin/sysctl mr,
+
+    @{PROC}/sys/ r,
+    @{PROC}/sys/** r,
+
+    @{PROC}/sys/net/ipv6/conf/*/accept_ra rw,
+    @{PROC}/sys/net/ipv6/conf/*/autoconf rw,
 
   }
 

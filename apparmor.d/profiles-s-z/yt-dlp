@@ -41,12 +41,12 @@ include <tunables/global>
 @{exec_path} = /{usr/,}bin/yt-dlp
 profile yt-dlp @{exec_path} {
   include <abstractions/base>
+  include <abstractions/consoles>
   include <abstractions/python>
   include <abstractions/nameservice-strict>
   include <abstractions/openssl>
   include <abstractions/ssl_certs>
   include <abstractions/user-download-strict>
-  include <abstractions/deny-root-dir-access>
 
   network inet dgram,
   network inet6 dgram,
@@ -58,16 +58,22 @@ profile yt-dlp @{exec_path} {
   /{usr/,}bin/python3.[0-9]* r,
 
   /{usr/,}bin/ r,
-  /{usr/,}bin/file rix,
+  /{usr/,}bin/file    rix,
+
+  /{usr/,}bin/ffmpeg  rPx,
+  /{usr/,}bin/ffprobe rPx,
 
   # Which files yt-dlp should be able to open
   owner /media/**/ r,
   owner /media/**.@{ytdlp_ext} rw,
 
+  owner @{HOME}/.cache/ rw,
+  owner @{HOME}/.cache/yt-dlp/ rw,
+  owner @{HOME}/.cache/yt-dlp/** rw,
+
   owner @{PROC}/@{pid}/fd/ r,
 
   /etc/magic r,
-
 
   include if exists <local/yt-dlp>
 }

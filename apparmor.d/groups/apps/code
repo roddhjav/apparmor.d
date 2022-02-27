@@ -16,14 +16,13 @@ profile code @{exec_path} {
   include <abstractions/fontconfig-cache-read>
   include <abstractions/nameservice-strict>
   include <abstractions/ssl_certs>
+  include <abstractions/chromium-common>
   # The following doesn't seem to be needed
   ##include <abstractions/mesa>
   ##include <abstractions/consoles>
   ##include <abstractions/audio>
   ##include <abstractions/user-download-strict>
   include <abstractions/thumbnails-cache-read>
-  include <abstractions/deny-dconf>
-  include <abstractions/deny-root-dir-access>
 
   ptrace (read) peer=lsb_release,
 
@@ -70,15 +69,11 @@ profile code @{exec_path} {
   owner @{MOUNTS}/*/code/ r,
   owner @{MOUNTS}/*/code/** rwkl -> @{MOUNTS}/*/code/**,
 
-  # To remove the following error:
-  #  Error initializing NSS with a persistent database
-  deny owner @{HOME}/.pki/ rw,
-  deny owner @{HOME}/.pki/nssdb/ rw,
-  deny owner @{HOME}/.pki/nssdb/pkcs11.txt rw,
-  deny owner @{HOME}/.pki/nssdb/{cert9,key4}.db rwk,
-  deny owner @{HOME}/.pki/nssdb/{cert9,key4}.db-journal rw,
-
   /etc/fstab r,
+
+  include <abstractions/dconf>
+  owner @{run}/user/@{uid}/dconf/ rw,
+  owner @{run}/user/@{uid}/dconf/user rw,
 
   /usr/share/glib-2.0/schemas/gschemas.compiled r,
 
@@ -106,9 +101,6 @@ profile code @{exec_path} {
   deny owner @{PROC}/@{pid}/net/if_inet6 r,
   deny owner @{PROC}/@{pids}/cmdline r,
 
-  deny       /dev/shm/ r,
-       owner /dev/shm/.org.chromium.Chromium.* rw,
-
   /var/lib/dbus/machine-id r,
   /etc/machine-id r,
 
@@ -120,8 +112,6 @@ profile code @{exec_path} {
   # The irq file is needed to render pages.
   deny @{sys}/devices/pci[0-9]*/**/irq r,
 
-        /var/tmp/ r,
-        /tmp/ r,
   owner "/tmp/VSCode Crashes/" rw,
   owner /tmp/vscode-typescript[0-9]*/ rw,
 
@@ -132,9 +122,5 @@ profile code @{exec_path} {
   # For installing extensions
   owner /tmp/@{uuid} rw,
 
-  # file_inherit
-  owner @{HOME}/.xsession-errors w,
-
   include if exists <local/code>
 }
-

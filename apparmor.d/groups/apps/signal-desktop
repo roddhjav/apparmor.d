@@ -22,18 +22,10 @@ profile signal-desktop @{exec_path} {
   include <abstractions/mesa>
   include <abstractions/nameservice-strict>
   include <abstractions/user-download-strict>
-  include <abstractions/deny-root-dir-access>
+  include <abstractions/chromium-common>
 
   # Needed?
   deny capability sys_ptrace,
-
-  # The following rules are needed only when the kernel.unprivileged_userns_clone option is set
-  # to "1".
-  capability sys_admin,
-  capability sys_chroot,
-  owner @{PROC}/@{pid}/setgroups w,
-  owner @{PROC}/@{pid}/gid_map w,
-  owner @{PROC}/@{pid}/uid_map w,
 
   network inet dgram,
   network inet6 dgram,
@@ -59,18 +51,8 @@ profile signal-desktop @{exec_path} {
   @{SIGNAL_HOMEDIR}/ rw,
   @{SIGNAL_HOMEDIR}/** rwk,
 
-  #owner @{HOME}/.pki/nssdb/pkcs11.txt r,
-  #owner @{HOME}/.pki/nssdb/cert9.db rwk,
-  #owner @{HOME}/.pki/nssdb/key4.db rwk,
-
   # Signal wants the /tmp/ dir to be mounted with the "exec" flag. If this is not acceptable in
   # your system, use the TMPDIR variable to set some other tmp dir.
-  /tmp/ r,
-  owner /tmp/.org.chromium.Chromium.*/ rw,
-  owner /tmp/.org.chromium.Chromium.*/SingletonCookie w,
-  owner /tmp/.org.chromium.Chromium.*/SS w,
-  owner /tmp/.org.chromium.Chromium.* rw,
-  /var/tmp/ r,
   owner @{SIGNAL_HOMEDIR}/tmp/.org.chromium.Chromium.* mrw,
 
   @{sys}/devices/system/cpu/cpufreq/policy[0-9]/cpuinfo_max_freq r,
@@ -89,9 +71,6 @@ profile signal-desktop @{exec_path} {
              @{PROC}/sys/kernel/yama/ptrace_scope r,
              @{PROC}/sys/fs/inotify/max_user_watches r,
              @{PROC}/vmstat r,
-
-  deny /dev/shm/ r,
-       /dev/shm/.org.chromium.Chromium.* rw,
 
   /var/lib/dbus/machine-id r,
   /etc/machine-id r,

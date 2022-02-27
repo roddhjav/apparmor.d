@@ -24,15 +24,7 @@ profile google-chrome-chrome @{exec_path} {
   include <abstractions/thumbnails-cache-read>
   include <abstractions/nameservice-strict>
   include <abstractions/ssl_certs>
-  include <abstractions/deny-root-dir-access>
-
-  # The following rules are needed only when the kernel.unprivileged_userns_clone option is set
-  # to "1".
-  capability sys_admin,
-  capability sys_chroot,
-  owner @{PROC}/@{pid}/setgroups w,
-  owner @{PROC}/@{pid}/gid_map w,
-  owner @{PROC}/@{pid}/uid_map w,
+  include <abstractions/chromium-common>
 
   ptrace (trace) peer=@{profile_name},
 
@@ -69,20 +61,10 @@ profile google-chrome-chrome @{exec_path} {
   /{usr/,}bin/xdg-mime          rPx,
   /{usr/,}bin/xdg-settings      rPx,
 
-  # To remove the following error:
-  #  Error initializing NSS with a persistent database
-  owner @{HOME}/.pki/ rw,
-  owner @{HOME}/.pki/nssdb/ rw,
-  owner @{HOME}/.pki/nssdb/pkcs11.txt rw,
-  owner @{HOME}/.pki/nssdb/{cert9,key4}.db rwk,
-  owner @{HOME}/.pki/nssdb/{cert9,key4}.db-journal rw,
-
   # Google Chrome home files
   owner @{HOME}/ r,
   owner @{CHROME_HOMEDIR}/ rw,
   owner @{CHROME_HOMEDIR}/** rwk,
-  # Flashplayer
-  owner @{CHROME_HOMEDIR}/PepperFlash/**/libpepflashplayer.so mr,
 
   owner @{user_share_dirs}/.com.google.Chrome.* rw,
 
@@ -141,8 +123,6 @@ profile google-chrome-chrome @{exec_path} {
        owner @{PROC}/@{pid}/mounts r,
   deny       @{PROC}/diskstats r,
 
-  owner /dev/shm/.com.google.Chrome.* rw,
-
   # To play DRM media (protected content)
   @{CHROME_INSTALLDIR}/libwidevinecdm.so mr,
   @{CHROME_INSTALLDIR}/libwidevinecdmadapter.so mr,
@@ -167,13 +147,6 @@ profile google-chrome-chrome @{exec_path} {
   #  pcilib: Cannot open /sys/bus/pci/devices/0000:03:00.0/irq: Permission denied
   # The irq file is needed to render pages.
   @{sys}/devices/pci[0-9]*/**/irq r,
-
-        /var/tmp/ r,
-        /tmp/ r,
-  owner /tmp/.com.google.Chrome.* rw,
-  owner /tmp/.com.google.Chrome.*/{,**} rw,
-  # For installing/updating extensions
-  owner /tmp/scoped_dir*/{,**} rw,
 
   # Silencer
   deny @{CHROME_INSTALLDIR}/** w,
