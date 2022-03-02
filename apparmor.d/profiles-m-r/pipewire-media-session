@@ -1,6 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2015-2020 Mikhail Morfikov
-#               2021 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2015-2022 Mikhail Morfikov
+# Copyright (C) 2021-2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -10,6 +10,7 @@ include <tunables/global>
 @{exec_path} = /{usr/,}bin/pipewire-media-session
 profile pipewire-media-session @{exec_path} {
   include <abstractions/base>
+  include <abstractions/audio>
   include <abstractions/devices-usb>
   include <abstractions/nameservice-strict>
 
@@ -21,25 +22,19 @@ profile pipewire-media-session @{exec_path} {
   @{exec_path} mr,
 
   /usr/share/alsa-card-profile/{,**} r,
-  /usr/share/alsa/{,**} r,
   /usr/share/pipewire/*.conf r,
   /usr/share/pipewire/media-session.d/{,**} r,
   /usr/share/spa-*/bluez[0-9]*/{,*} r,
 
-  /etc/alsa/{,**} r,
   /etc/pipewire/*.conf r,
   /etc/pipewire/media-session.d/*.conf r,
-  /etc/pulse/{,**} r,
 
   owner @{HOME}/.local/state/ rw,
   owner @{HOME}/.local/state/pipewire/{,**} rw,
   owner @{user_config_dirs}/pipewire/ rw,
   owner @{user_config_dirs}/pipewire/** rw,
   owner @{user_config_dirs}/pulse/ rw,
-  owner @{user_config_dirs}/pulse/cookie rwk,
-  owner @{run}/user/@{uid}/pulse/ rw,
 
-  @{run}/shm/ r,
   @{run}/udev/data/+sound:card[0-9]* r, # For sound
   @{run}/udev/data/c116:[0-9]* r,       # for ALSA
 
@@ -54,10 +49,6 @@ profile pipewire-media-session @{exec_path} {
 
   @{run}/systemd/users/@{uid} r,
 
-  /dev/shm/ r,
-  /dev/snd/controlC[0-9]* rw,
-  /dev/snd/pcmC[0-9]*D[0-9]*p rw,
-  /dev/snd/pcmC[0-9]*D[0-9]*c rw,
   /dev/video[0-9]* rw,
 
   include if exists <local/pipewire-media-session>
