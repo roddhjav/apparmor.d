@@ -1,6 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2018-2021 Mikhail Morfikov
-# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2018-2022 Mikhail Morfikov
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 # Warning: Such a profile is limitted as it gives access to a lot of resources.
@@ -9,44 +9,32 @@ abi <abi/3.0>,
 
 include <tunables/global>
 
-@{CHROMIUM_INSTALLDIR} = /{usr/,}lib/chromium
-@{CHROMIUM_HOMEDIR} = @{user_config_dirs}/chromium
-@{CHROMIUM_CACHEDIR} = @{user_cache_dirs}/chromium
-
-@{exec_path} = @{CHROMIUM_INSTALLDIR}/chromium
+@{exec_path} = /{usr/,}lib/chromium/chromium
 profile chromium-chromium @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/opencl-intel>
-  include <abstractions/gtk>
-  include <abstractions/freedesktop.org>
-  include <abstractions/fonts>
-  include <abstractions/fontconfig-cache-read>
-  include <abstractions/mesa>
   include <abstractions/audio>
+  include <abstractions/chromium-common>
+  include <abstractions/dconf>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/fonts>
+  include <abstractions/freedesktop.org>
+  include <abstractions/gtk>
+  include <abstractions/mesa>
+  include <abstractions/nameservice-strict>
+  include <abstractions/opencl-intel>
+  include <abstractions/ssl_certs>
+  include <abstractions/thumbnails-cache-read>
   include <abstractions/user-download-strict>
   include <abstractions/user-read>
-  include <abstractions/thumbnails-cache-read>
-  include <abstractions/nameservice-strict>
-  include <abstractions/ssl_certs>
-  include <abstractions/chromium-common>
 
   capability sys_ptrace,
 
-  ptrace (read) peer=chrome-gnome-shell,
-
-  # The following rules are needed only when the kernel.unprivileged_userns_clone option is set
-  # to "1".
-  capability sys_admin,
-  capability sys_chroot,
-  owner @{PROC}/@{pid}/setgroups w,
-  owner @{PROC}/@{pid}/gid_map w,
-  owner @{PROC}/@{pid}/uid_map w,
-
-  ptrace (trace) peer=@{profile_name},
   ptrace (read) peer=browserpass,
+  ptrace (read) peer=chrome-gnome-shell,
   ptrace (read) peer=keepassxc-proxy,
   ptrace (read) peer=lsb_release,
   ptrace (read) peer=xdg-settings,
+  ptrace (trace) peer=@{profile_name},
 
   signal (send) set=(term, kill) peer=keepassxc-proxy,
   signal (receive) peer=chromium-chrome-crashpad-handler,
@@ -59,51 +47,51 @@ profile chromium-chromium @{exec_path} flags=(attach_disconnected) {
 
   @{exec_path} mrix,
 
-  /{usr/,}bin/chrome-gnome-shell                  rPx,
-  @{CHROMIUM_INSTALLDIR}/chrome-sandbox           rPx,
-  @{CHROMIUM_INSTALLDIR}/chrome_crashpad_handler  rPx,
+  /{usr/,}bin/chrome-gnome-shell                rPx,
+  /{usr/,}lib/chromium/chrome-sandbox           rPx,
+  /{usr/,}lib/chromium/chrome_crashpad_handler  rPx,
 
   # For storing passwords externally
   /{usr/,}bin/keepassxc-proxy   rPUx,
   /{usr/,}bin/browserpass       rPx,
 
   /{usr/,}bin/lsb_release        rPx -> lsb_release,
+  /{usr/,}bin/xdg-desktop-menu   rPx,
+  /{usr/,}bin/xdg-icon-resource  rPx,
   /{usr/,}bin/xdg-mime           rPx,
   /{usr/,}bin/xdg-open           rCx -> open,
   /{usr/,}bin/xdg-settings       rPx,
-  /{usr/,}bin/xdg-desktop-menu   rPx,
-  /{usr/,}bin/xdg-icon-resource  rPx,
 
-  # Chromium files
   /usr/share/chromium/{,**} r,
-
-  # Chrome extensions (for Debian)
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+  /usr/share/mozilla/extensions/{,**} r,
   /usr/share/webext/{,**} r,
 
-  /usr/share/mozilla/extensions/{,**} r,
-
-  /etc/libva.conf r,
   /etc/chromium/ r,
   /etc/chromium/master_preferences r,
   /etc/chromium/native-messaging-hosts/*.json r,
+  /etc/fstab r,
+  /etc/libva.conf r,
+  /etc/opensc.conf r,
 
-  # Chromium home files
+  /var/lib/dbus/machine-id r,
+  /etc/machine-id r,
+
   owner @{HOME}/ r,
-  owner @{user_share_dirs}/ r,
+
   owner @{user_config_dirs}/ r,
+  owner @{user_config_dirs}/chromium/ rw,
+  owner @{user_config_dirs}/chromium/** rwk,
+  owner @{user_config_dirs}/chromium/WidevineCdm/*/_platform_specific/linux_*/libwidevinecdm.so mrw,
   owner @{user_config_dirs}/gtk-3.0/servers r,
-  owner @{CHROMIUM_HOMEDIR}/ rw,
-  owner @{CHROMIUM_HOMEDIR}/** rwk,
-  owner @{CHROMIUM_HOMEDIR}/WidevineCdm/*/_platform_specific/linux_*/libwidevinecdm.so mrw,
 
-  owner @{user_share_dirs}/.org.chromium.Chromium.* rw,
-
-  # Cache files
   owner @{user_cache_dirs}/ rw,
-  owner @{CHROMIUM_CACHEDIR}/{,**/} rw,
-  owner @{CHROMIUM_CACHEDIR}/*/**/{*-,}index rw,
-  owner @{CHROMIUM_CACHEDIR}/*/**/[a-f0-9]*_? rw,
-  owner @{CHROMIUM_CACHEDIR}/*/**/todelete_* rw,
+  owner @{user_cache_dirs}/chromium/{,**/} rw,
+  owner @{user_cache_dirs}/chromium/*/**/{*-,}index rw,
+  owner @{user_cache_dirs}/chromium/*/**/[a-f0-9]*_? rw,
+  owner @{user_cache_dirs}/chromium/*/**/todelete_* rw,
+
+  owner @{user_share_dirs}/ r,
 
   # For importing data (bookmarks, cookies, etc) from Firefox
   # owner @{HOME}/.mozilla/firefox/profiles.ini r,
@@ -115,27 +103,20 @@ profile chromium-chromium @{exec_path} flags=(attach_disconnected) {
   # owner @{HOME}/.mozilla/firefox/*/{cert9,key4}.db rwk,
   # owner @{HOME}/.mozilla/firefox/*/logins.json r,
 
-  /etc/fstab r,
-
-  include <abstractions/dconf>
   owner @{run}/user/@{uid}/dconf/ rw,
   owner @{run}/user/@{uid}/dconf/user rw,
 
-  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+  owner /tmp/tmp.*/ rw,
+  owner /tmp/tmp.*/** rwk,
+  owner /tmp/scoped_dir*/{,**} rw,
 
-  # Needed or chromium gets crash with the following error:
-  #  FATAL:sandbox_linux.cc(172)] Check failed: proc_fd_ >= 0 (-1 vs. 0)
              @{PROC}/ r,
-  #
              @{PROC}/vmstat r,
              @{PROC}/sys/kernel/yama/ptrace_scope r,
              @{PROC}/@{pid}/fd/ r,
              @{PROC}/@{pids}/stat r,
              @{PROC}/@{pids}/statm r,
-  # To remove the following error:
-  #  Failed to adjust OOM score of renderer with pid : Permission denied
        owner @{PROC}/@{pid}/oom_{,score_}adj rw,
-  #
   deny       @{PROC}/@{pids}/cmdline r,
        owner @{PROC}/@{pids}/environ r,
        owner @{PROC}/@{pids}/task/ r,
@@ -145,60 +126,43 @@ profile chromium-chromium @{exec_path} flags=(attach_disconnected) {
        owner @{PROC}/@{pid}/mem r,
        owner @{PROC}/@{pid}/mountinfo r,
        owner @{PROC}/@{pid}/mounts r,
-  # To remove the following error:
-  #  file_path_watcher_linux.cc(71)] Failed to read /proc/sys/fs/inotify/max_user_watches
              @{PROC}/sys/fs/inotify/max_user_watches r,
-  #
        owner @{PROC}/@{pids}/clear_refs w,
 
-  /var/lib/dbus/machine-id r,
-  /etc/machine-id r,
+  @{run}/udev/data/* r,
 
-  # Udev enumeration
   @{sys}/bus/ r,
   @{sys}/bus/**/devices/ r,
-  @{sys}/devices/**/uevent r,
   @{sys}/class/ r,
   @{sys}/class/**/ r,
-  @{run}/udev/data/* r,
-  @{sys}/devices/pci[0-9]*/**/usb[0-9]/{,**/}{descriptors,manufacturer,product,serial,bConfigurationValue} r,
-  @{sys}/devices/pci[0-9]*/**/usb[0-9]/{,**/}{busnum,devnum} r,
-
-  deny @{sys}/devices/virtual/tty/tty[0-9]/active r,
-
+  @{sys}/devices/**/uevent r,
   @{sys}/devices/pci[0-9]*/**/irq r,
-  @{sys}/devices/pci[0-9]*/**/usb[0-9]*/**/report_descriptor r,
+  @{sys}/devices/pci[0-9]*/**/report_descriptor r,
+  @{sys}/devices/pci[0-9]*/**/usb[0-9]/{,**/}{busnum,devnum} r,
+  @{sys}/devices/pci[0-9]*/**/usb[0-9]/{,**/}{descriptors,manufacturer,product,serial,bConfigurationValue} r,
+  @{sys}/devices/pci[0-9]*/**/usb[0-9]/**/{idProduct,idVendor,interface} r,
   @{sys}/devices/system/cpu/cpufreq/policy[0-9]*/cpuinfo_max_freq r,
   @{sys}/devices/virtual/**/report_descriptor r,
   @{sys}/devices/virtual/dmi/id/product_name r,
   @{sys}/devices/virtual/dmi/id/sys_vendor r,
 
-  # For the temp profile
-  owner /tmp/tmp.*/ rw,
-  owner /tmp/tmp.*/** rwk,
+  deny @{sys}/devices/virtual/tty/tty[0-9]/active r,
 
-  # Silencer
-  deny @{CHROMIUM_INSTALLDIR}/** w,
-  deny @{user_share_dirs}/gvfs-metadata/* r,
+  /dev/ r,
+  /dev/video[0-9]* rw,
+  /dev/hidraw[0-9]* rw,
 
   # file_inherit
   owner /dev/tty[0-9]* rw,
 
-  # Video support
-  /dev/ r,
-  /dev/video[0-9]* rw,
-  @{sys}/devices/pci[0-9]*/**/usb[0-9]/**/{idProduct,idVendor,interface} r,
-
-  /etc/opensc.conf r,
-
-  include <abstractions/dconf>
-  owner @{run}/user/@{uid}/dconf/ rw,
-  owner @{run}/user/@{uid}/dconf/user rw,
+  # Silencer
+  deny /{usr/,}lib/chromium/** w,
+  deny @{user_share_dirs}/gvfs-metadata/* r,
 
   profile open {
     include <abstractions/base>
-    include <abstractions/xdg-open>
     include <abstractions/app-launcher-user>
+    include <abstractions/xdg-open>
 
     /{usr/,}bin/xdg-open mr,
 
@@ -207,12 +171,12 @@ profile chromium-chromium @{exec_path} flags=(attach_disconnected) {
     /{usr/,}bin/readlink        rix,
     /{usr/,}bin/basename        rix,
 
+    # Allowed apps to open
+    /{usr/,}bin/smplayer        rPx,
+
     owner @{HOME}/ r,
 
     owner @{run}/user/@{uid}/ r,
-
-    # Allowed apps to open
-    /{usr/,}bin/smplayer rPx,
 
     # file_inherit
     owner @{HOME}/.xsession-errors w,

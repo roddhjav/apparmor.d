@@ -1,6 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2015-2021 Mikhail Morfikov
-# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2015-2022 Mikhail Morfikov
+# Copyright (C) 2021-2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 # Warning: Such a profile is limitted as it gives access to a lot of resources.
@@ -11,7 +11,6 @@ include <tunables/global>
 
 @{MOZ_LIBDIR} = /{usr/,}lib/firefox{,-esr}
 @{MOZ_HOMEDIR} = @{HOME}/.mozilla
-@{MOZ_CACHEDIR} = @{user_cache_dirs}/mozilla
 @{exec_path} = @{MOZ_LIBDIR}/firefox{,-bin,-esr}
 profile firefox @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
@@ -33,9 +32,8 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
   include <abstractions/vulkan>
   include <abstractions/wayland>
 
-  # Needed only when the kernel.unprivileged_userns_clone option is set to "1".
-  capability sys_admin,
-  capability sys_chroot,
+  capability sys_admin, # If kernel.unprivileged_userns_clone = 1
+  capability sys_chroot, # If kernel.unprivileged_userns_clone = 1
 
   ptrace peer=@{profile_name},
 
@@ -59,11 +57,12 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
   @{MOZ_LIBDIR}/pingsender        rPx,
   @{MOZ_LIBDIR}/plugin-container  rPx,
 
-  @{libexec}/gvfsd-metadata       rPx -> gvfsd-metadata,
+  @{libexec}/gvfsd-metadata       rPx,
   /{usr/,}bin/browserpass         rPx,
   /{usr/,}bin/gpa                 rPUx,
   /{usr/,}bin/keepassxc-proxy     rPUx,
   /{usr/,}bin/lsb_release         rPx -> lsb_release,
+  /{usr/,}bin/update-mime-database rPx,
   /opt/net.downloadhelper.coapp/bin/net.downloadhelper.coapp*  rPx,
 
   # Allowed apps to open
@@ -83,14 +82,17 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
   /{usr/,}bin/vlc              rPx,
   /{usr/,}bin/xarchiver        rPx,
 
+  /{usr/,}lib/@{multiarch}/qt5/plugins/kf5/org.kde.kwindowsystem.platforms/KF5WindowSystemX11Plugin.so mr,
   /{usr/,}lib/mozilla/plugins/ r,
   /{usr/,}lib/mozilla/plugins/libvlcplugin.so mr,
+
   /usr/share/doc/{,**} r,
   /usr/share/egl/{,**} r,
   /usr/share/firefox/{,**} r,
   /usr/share/glib-2.0/schemas/gschemas.compiled r,
   /usr/share/mozilla/extensions/{,**} r,
   /usr/share/webext/{,**} r,
+  /usr/share/xul-ext/kwallet5/* r,
 
   /etc/firefox/{,**} r,
   /etc/fstab r,
@@ -98,6 +100,7 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
   /etc/mailcap r,
   /etc/mime.types r,
   /etc/opensc.conf r,
+  /etc/xul-ext/kwallet5.js r,
 
   /var/lib/dbus/machine-id r,
   /etc/machine-id r,
@@ -113,60 +116,22 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
   owner @{MOZ_HOMEDIR}/firefox/*/** rwk,
   owner @{MOZ_HOMEDIR}/native-messaging-hosts/org.keepassxc.keepassxc_browser.json r,
 
-  owner @{MOZ_CACHEDIR}/ rw,
-  owner @{MOZ_CACHEDIR}/** rwk,
+  owner @{user_config_dirs}/ r,
+  owner @{user_config_dirs}/mimeapps.list{,.*} rw,
+
   owner @{user_cache_dirs}/ rw,
   owner @{user_cache_dirs}/gstreamer-[0-9]*/ rw,
   owner @{user_cache_dirs}/gstreamer-[0-9]*/registry.*.bin{,.tmp*} rw,
+  owner @{user_cache_dirs}/mozilla/ rw,
+  owner @{user_cache_dirs}/mozilla/** rwk,
 
   owner @{user_share_dirs}/ r,
   owner @{user_share_dirs}/gvfs-metadata/{,*} r,
-
-  owner @{run}/user/@{uid}/dconf/ rw,
-  owner @{run}/user/@{uid}/dconf/user rw,
-
-       @{sys}/cgroup/cpu,cpuacct/user.slice/cpu.cfs_quota_us r,
-       @{sys}/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us r,
-  deny @{sys}/devices/system/cpu/present r,
-  deny @{sys}/devices/system/cpu/cpufreq/policy[0-9]/cpuinfo_max_freq r,
-  deny @{sys}/devices/system/cpu/cpu[0-9]/cache/index[0-9]/size r,
-
-  # For Cryptographic Attestation of Personhood
-  @{sys}/bus/ r,
-  @{sys}/class/ r,
-  @{sys}/class/hidraw/ r,
-  @{run}/udev/data/c241:[0-9]* r,  # dynamic
-
-       owner @{PROC}/@{pid}/fd/ r,
-       owner @{PROC}/@{pid}/cgroup r,
-       owner @{PROC}/@{pid}/comm r,
-  deny owner @{PROC}/@{pid}/stat r,
-  deny owner @{PROC}/@{pids}/cmdline r,
-  deny owner @{PROC}/@{pids}/environ r,
-       owner @{PROC}/@{pid}/task/ r,
-  deny owner @{PROC}/@{pid}/task/@{tid}/stat r,
-       owner @{PROC}/@{pid}/mountinfo r,
-       owner @{PROC}/@{pid}/mounts r,
-  deny owner @{PROC}/@{pid}/statm r,
-  deny owner @{PROC}/@{pid}/smaps r,
-             @{PROC}/@{pid}/net/arp r,
-             @{PROC}/@{pid}/net/if_inet6 r,
-             @{PROC}/@{pid}/net/route r,
-
-  # Set default browser
-  /{usr/,}bin/update-mime-database rPx,
-  owner @{user_config_dirs}/ r,
-  owner @{user_config_dirs}/mimeapps.list{,.*} rw,
   owner @{user_share_dirs}/mime/packages/user-extension-{htm,html,xht,xhtml,shtml}.xml rw,
   owner @{user_share_dirs}/mime/packages/user-extension-{htm,html,xht,xhtml,shtml}.xml.* rw,
 
-  # KDE system keyring
-  /{usr/,}lib/@{multiarch}/qt5/plugins/kf5/org.kde.kwindowsystem.platforms/KF5WindowSystemX11Plugin.so mr,
-  /usr/share/xul-ext/kwallet5/* r,
-  /etc/xul-ext/kwallet5.js r,
-
-  # For wayland
-  owner /dev/shm/wayland.mozilla.ipc.[0-9]* rw,
+  owner @{run}/user/@{uid}/dconf/ rw,
+  owner @{run}/user/@{uid}/dconf/user rw,
 
     /var/tmp/ r,
         /tmp/ r,
@@ -179,19 +144,45 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
   owner /tmp/mozilla_*/* rw,
   owner /tmp/Temp-*/ rw,
 
-  deny /dev/ r,
-  deny /dev/shm/ r,
-  owner /dev/shm/org.chromium.* rw,
-  owner /dev/shm/org.mozilla.ipc.@{pid}.[0-9]* rw,
+  @{run}/udev/data/* r,
 
-  # Needed only when the kernel.unprivileged_userns_clone option is set to "1".
-  owner @{PROC}/@{pid}/setgroups w,
-  owner @{PROC}/@{pid}/gid_map w,
-  owner @{PROC}/@{pid}/uid_map w,
+       @{sys}/bus/ r,
+       @{sys}/cgroup/cpu,cpuacct/user.slice/cpu.cfs_quota_us r,
+       @{sys}/class/ r,
+       @{sys}/class/**/ r,
+       @{sys}/devices/**/uevent r,
+       @{sys}/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us r,
+  deny @{sys}/devices/system/cpu/cpu[0-9]/cache/index[0-9]/size r,
+  deny @{sys}/devices/system/cpu/cpufreq/policy[0-9]/cpuinfo_max_freq r,
+  deny @{sys}/devices/system/cpu/present r,
 
-  # File Inherit
-  owner /dev/tty[0-9]* rw,
-  owner /dev/dri/card[0-9]* rw,
+             @{PROC}/@{pid}/net/arp r,
+             @{PROC}/@{pid}/net/if_inet6 r,
+             @{PROC}/@{pid}/net/route r,
+       owner @{PROC}/@{pid}/cgroup r,
+       owner @{PROC}/@{pid}/comm r,
+       owner @{PROC}/@{pid}/fd/ r,
+       owner @{PROC}/@{pid}/gid_map w, # If kernel.unprivileged_userns_clone = 1
+       owner @{PROC}/@{pid}/mountinfo r,
+       owner @{PROC}/@{pid}/mounts r,
+       owner @{PROC}/@{pid}/setgroups w, # If kernel.unprivileged_userns_clone = 1
+       owner @{PROC}/@{pid}/task/ r,
+       owner @{PROC}/@{pid}/uid_map w, # If kernel.unprivileged_userns_clone = 1
+  deny owner @{PROC}/@{pid}/smaps r,
+  deny owner @{PROC}/@{pid}/stat r,
+  deny owner @{PROC}/@{pid}/statm r,
+  deny owner @{PROC}/@{pid}/task/@{tid}/stat r,
+  deny owner @{PROC}/@{pids}/cmdline r,
+  deny owner @{PROC}/@{pids}/environ r,
+
+             /dev/ r,
+             /dev/hidraw[0-9]* rw,
+       owner /dev/dri/card[0-9]* rw, # File Inherit
+       owner /dev/shm/org.chromium.* rw,
+       owner /dev/shm/org.mozilla.ipc.@{pid}.[0-9]* rw,
+       owner /dev/shm/wayland.mozilla.ipc.[0-9]* rw,
+       owner /dev/tty[0-9]* rw, # File Inherit
+  deny       /dev/shm/ r,
 
   # Silencer
   deny /{usr/,}lib/firefox/** w,
@@ -211,25 +202,25 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
     /{usr/,}bin/readlink        rix,
     /{usr/,}bin/basename        rix,
 
+    # Allowed apps to open
+    /{usr/,}bin/engrampa                   rPx,
+    /{usr/,}bin/evince                     rPx,
+    /{usr/,}bin/geany                      rPx,
+    /{usr/,}bin/okular                     rPx,
+    /{usr/,}bin/qbittorrent                rPx,
+    /{usr/,}bin/qpdfview                   rPx,
+    /{usr/,}bin/smplayer                   rPx,
+    /{usr/,}bin/spacefm                    rPx,
+    /{usr/,}bin/telegram-desktop           rPx,
+    /{usr/,}bin/thunderbird                rPx,
+    /{usr/,}bin/viewnior                  rPUx,
+    /{usr/,}bin/vlc                        rPx,
+    /{usr/,}bin/xarchiver                  rPx,
+    /usr/share/xfce4/exo/exo-compose-mail  rPx,
+
     owner @{HOME}/ r,
 
     owner @{run}/user/@{uid}/ r,
-
-    # Allowed apps to open
-    /{usr/,}bin/engrampa         rPx,
-    /{usr/,}bin/evince           rPx,
-    /{usr/,}bin/geany            rPx,
-    /{usr/,}bin/okular           rPx,
-    /{usr/,}bin/qbittorrent      rPx,
-    /{usr/,}bin/qpdfview         rPx,
-    /{usr/,}bin/smplayer         rPx,
-    /{usr/,}bin/spacefm          rPx,
-    /{usr/,}bin/telegram-desktop rPx,
-    /{usr/,}bin/thunderbird      rPx,
-    /{usr/,}bin/viewnior        rPUx,
-    /{usr/,}bin/vlc              rPx,
-    /{usr/,}bin/xarchiver        rPx,
-    /usr/share/xfce4/exo/exo-compose-mail rPx,
 
     # file_inherit
     owner @{HOME}/.xsession-errors w,
