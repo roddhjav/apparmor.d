@@ -1,14 +1,11 @@
 # apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2018-2021 Mikhail Morfikov
+# Copyright (C) 2018-2022 Mikhail Morfikov
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
 
 include <tunables/global>
-
-@{CHROMIUM_INSTALLDIR} = /{usr/,}lib/chromium
-@{CHROMIUM_HOMEDIR} = @{user_config_dirs}/chromium
-@{CHROMIUM_CACHEDIR} = @{user_cache_dirs}/chromium
 
 @{exec_path} = /{usr/,}bin/chromium
 profile chromium @{exec_path} flags=(attach_disconnected) {
@@ -17,44 +14,38 @@ profile chromium @{exec_path} flags=(attach_disconnected) {
 
   @{exec_path} r,
 
-  @{CHROMIUM_INSTALLDIR}/chromium rPx,
+  /{usr/,}lib/chromium/chromium rPx,
 
   /{usr/,}bin/{,ba,da}sh rix,
-  /{usr/,}bin/uname      rix,
   /{usr/,}bin/{,e}grep   rix,
-  /{usr/,}bin/expr       rix,
   /{usr/,}bin/cat        rix,
-  /{usr/,}bin/rm         rix,
   /{usr/,}bin/cut        rix,
-  /{usr/,}bin/tr         rix,
+  /{usr/,}bin/expr       rix,
   /{usr/,}bin/ls         rix,
   /{usr/,}bin/mktemp     rix,
+  /{usr/,}bin/rm         rix,
+  /{usr/,}bin/sed        rix,
+  /{usr/,}bin/tr         rix,
+  /{usr/,}bin/uname      rix,
 
-  # For chromium -g
   /{usr/,}bin/gdb   rPUx,
-
-  owner @{user_share_dirs}/gvfs-metadata/{,*} r,
-
-  owner /tmp/chromiumargs.?????? rw,
-
-  # For a temp profile
-  owner /tmp/tmp.*/ rw,
-  owner /tmp/tmp.*/** rwk,
-
-  # For "chromium --help"
-  /{usr/,}bin/man rPUx,
-  /{usr/,}bin/sed rix,
-
-  /etc/chromium.d/{,*} r,
-
-  /etc/debian_version r,
+  /{usr/,}bin/man   rPUx,
 
   /usr/share/chromium/extensions/ r,
 
-  # file_inherit
-  owner /dev/tty[0-9]* rw,
+  /etc/chromium.d/{,*} r,
+  /etc/debian_version r,
+
   owner @{HOME}/.xsession-errors w,
-  /dev/dri/card[0-9] rw,
+
+  owner /tmp/chromiumargs.?????? rw,
+  owner /tmp/tmp.*/ rw,
+  owner /tmp/tmp.*/** rwk,
+
+  owner /dev/tty[0-9]* rw,
+        /dev/dri/card[0-9] rw,
+
+  deny @{user_share_dirs}/gvfs-metadata/* r,
 
   include if exists <local/chromium>
 }

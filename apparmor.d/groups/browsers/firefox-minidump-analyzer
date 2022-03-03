@@ -1,14 +1,13 @@
 # apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2018-2021 Mikhail Morfikov
+# Copyright (C) 2018-2022 Mikhail Morfikov
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
 
 include <tunables/global>
 
-@{MOZ_LIBDIR} = /{usr/,}lib/firefox
 @{MOZ_HOMEDIR} = @{HOME}/.mozilla
-@{MOZ_CACHEDIR} = @{user_cache_dirs}/mozilla
 
 @{exec_path} = /{usr/,}lib/firefox/minidump-analyzer
 profile firefox-minidump-analyzer @{exec_path} {
@@ -18,8 +17,8 @@ profile firefox-minidump-analyzer @{exec_path} {
 
   @{exec_path} mr,
 
-  owner /tmp/[0-9a-f]*.{dmp,extra} rw,
-  owner /tmp/firefox/.parentlock w,
+  owner @{HOME}/.mozilla/firefox/m-oyw579q8.default/extensions/*.xpi r,
+  owner @{HOME}/.xsession-errors w,
 
   owner "@{MOZ_HOMEDIR}/firefox/Crash Reports/" rw,
   owner "@{MOZ_HOMEDIR}/firefox/Crash Reports/pending/" rw,
@@ -28,12 +27,13 @@ profile firefox-minidump-analyzer @{exec_path} {
   owner @{MOZ_HOMEDIR}/firefox/*.*/minidumps/ rw,
   owner @{MOZ_HOMEDIR}/firefox/*.*/minidumps/@{uuid}.{dmp,extra} rw,
 
+  owner @{user_cache_dirs}/mozilla/firefox/*.*/startupCache/*Cache* r,
+
+  owner /tmp/[0-9a-f]*.{dmp,extra} rw,
+  owner /tmp/firefox/.parentlock w,
+
   owner /dev/shm/org.mozilla.ipc.[0-9]*.[0-9]* r,
 
-  # file_inherit
-  owner @{MOZ_CACHEDIR}/firefox/*.*/startupCache/*Cache* r,
-  owner @{HOME}/.xsession-errors w,
-  owner @{HOME}/.mozilla/firefox/m-oyw579q8.default/extensions/*.xpi r,
   /dev/dri/renderD128 rw,
 
   include if exists <local/firefox-minidump-analyzer>

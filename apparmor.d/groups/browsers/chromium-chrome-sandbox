@@ -1,33 +1,25 @@
 # apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2018-2021 Mikhail Morfikov
+# Copyright (C) 2018-2022 Mikhail Morfikov
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
 
 include <tunables/global>
 
-@{CHROMIUM_INSTALLDIR} = /{usr/,}lib/chromium
-@{CHROMIUM_HOMEDIR} = @{user_config_dirs}/chromium
-@{CHROMIUM_CACHEDIR} = @{user_cache_dirs}/chromium
-
-@{exec_path} = @{CHROMIUM_INSTALLDIR}/chrome-sandbox
-
+@{exec_path} = /{usr/,}lib/chromium/chrome-sandbox
 profile chromium-chrome-sandbox @{exec_path} {
   include <abstractions/base>
 
-  # For kernel unprivileged user namespaces
   capability sys_admin,
   capability sys_chroot,
   capability setuid,
   capability setgid,
-
   capability dac_override,
-
-  # optional
   capability sys_resource,
 
   @{exec_path} mr,
-  @{CHROMIUM_INSTALLDIR}/chromium rPx,
+  /{usr/,}lib/chromium/chromium rPx,
 
              @{PROC}/@{pids}/ r,
   deny owner @{PROC}/@{pid}/oom_{,score_}adj rw,
