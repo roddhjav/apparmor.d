@@ -1,6 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2020-2021 Mikhail Morfikov
-# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2020-2022 Mikhail Morfikov
+# Copyright (C) 2021-2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -44,27 +44,13 @@ profile fwupd @{exec_path} flags=(complain,attach_disconnected) {
   /boot/EFI/arch/fwupdx[0-9]*.efi rw,
   /boot/EFI/arch/fw/fwupd-*.cap{,.*} rw,
 
-  # In order to get to this file, the attach_disconnected flag has to be set
-  owner @{user_cache_dirs}/fwupd/lvfs-metadata.xml.gz r,
-
   /usr/share/mime/mime.cache r,
 
-  @{PROC}/modules r,
-  @{PROC}/cmdline r,
-  @{PROC}/swaps r,
-  @{PROC}/sys/kernel/tainted r,
-  @{PROC}/@{pids}/mountinfo r,
-  @{PROC}/@{pids}/mounts r,
-  @{PROC}/@{pids}/fd/ r,
+  /etc/machine-id r,
+  /var/lib/dbus/machine-id r,
 
-  /dev/mem r,
-  /dev/mei[0-9]* rw,
-  /dev/tpm[0-9] rw,
-  /dev/drm_dp_aux[0-9]* rw,
-  /dev/sd[a-z]* r,
-  /dev/bus/usb/ r,
-  /dev/bus/usb/[0-9]*/[0-9]* rw,
-  /dev/wmi/* r,
+  # In order to get to this file, the attach_disconnected flag has to be set
+  owner @{user_cache_dirs}/fwupd/lvfs-metadata.xml.gz r,
 
   @{sys}/**/ r,
   @{sys}/devices/** r,
@@ -79,13 +65,30 @@ profile fwupd @{exec_path} flags=(complain,attach_disconnected) {
   @{sys}/kernel/security/tpm[0-9]/binary_bios_measurements r,
   @{sys}/power/mem_sleep r,
 
-  @{run}/udev/data/* r,
+  @{run}/motd.d/ r,
+  @{run}/motd.d/[0-9]*-fwupd* rw,
   @{run}/motd.d/fwupd/{,**} rw,
-
+  @{run}/mount/utab r,
   @{run}/systemd/inhibit/[0-9]*.ref rw,
+  @{run}/udev/data/* r,
 
-  /etc/machine-id r,
-  /var/lib/dbus/machine-id r,
+  @{PROC}/@{pids}/fd/ r,
+  @{PROC}/@{pids}/mountinfo r,
+  @{PROC}/@{pids}/mounts r,
+  @{PROC}/1/cgroup r,
+  @{PROC}/cmdline r,
+  @{PROC}/modules r,
+  @{PROC}/swaps r,
+  @{PROC}/sys/kernel/tainted r,
+
+  /dev/bus/usb/ r,
+  /dev/bus/usb/[0-9]*/[0-9]* rw,
+  /dev/drm_dp_aux[0-9]* rw,
+  /dev/mei[0-9]* rw,
+  /dev/mem r,
+  /dev/sd[a-z]* r,
+  /dev/tpm[0-9]* rw,
+  /dev/wmi/* r,
 
   profile gpg flags=(complain) {
     include <abstractions/base>

@@ -1,6 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2020-2021 Mikhail Morfikov
-# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2020-2022 Mikhail Morfikov
+# Copyright (C) 2021-2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -17,11 +17,15 @@ profile fusermount @{exec_path} {
 
   @{exec_path} mr,
 
+  /etc/fuse.conf r,
+  /etc/machine-id r,
+
   # Where to mount ISO files
   owner @{HOME}/*/ rw,
   owner @{HOME}/*/*/ rw,
   owner @{user_cache_dirs}/**/ rw,
         @{run}/user/@{uid}/doc/ r,
+        /var/tmp/flatpak-cache-*/*/ r,
 
   # Be able to mount ISO images
   mount fstype={fuse,fuse.*} -> @{HOME}/*/,
@@ -30,6 +34,7 @@ profile fusermount @{exec_path} {
   mount fstype={fuse,fuse.*} -> @{MOUNTS}/*/,
   mount fstype={fuse,fuse.*} -> @{MOUNTS}/*/*/,
   mount fstype={fuse,fuse.*} -> @{run}/user/@{uid}/*/,
+  mount fstype={fuse,fuse.*} -> /var/tmp/flatpak-cache-*/*/,
 
   umount @{HOME}/*/,
   umount @{HOME}/*/*/,
@@ -38,13 +43,11 @@ profile fusermount @{exec_path} {
   umount @{MOUNTS}/*/*/,
   umount /tmp/.mount_*/,
   umount @{run}/user/@{uid}/*/,
-
-  /etc/fuse.conf r,
-  /etc/machine-id r,
-
-  /dev/fuse rw,
+  umount /var/tmp/flatpak-cache-*/*/,
 
   @{PROC}/@{pid}/mounts r,
+
+  /dev/fuse rw,
 
   include if exists <local/fusermount>
 }
