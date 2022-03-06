@@ -1,0 +1,23 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Roman Beslik <me@beroal.in.ua>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/ssh-keygen
+
+profile ssh-keygen @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+  include <abstractions/openssl>
+  include <abstractions/consoles> # for entering a passphrase for a key
+
+  @{exec_path} mr,
+
+  owner @{HOME}/@{XDG_SSH_DIR}/ w,
+  owner @{HOME}/@{XDG_SSH_DIR}/*_*{,.pub} rw,
+
+  include if exists <local/ssh-keygen>
+}
