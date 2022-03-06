@@ -10,12 +10,15 @@ include <tunables/global>
 profile gdm-x-session @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
 
-  signal (receive) set=term peer=gdm*,
-  signal (send) set=term peer=unconfined,
+  signal (receive) set=term peer=gdm{,-session-worker},
+  # signal (send) set=term peer=unconfined,
+  signal (send) set=term peer=dbus-run-session,
+  signal (send) set=term peer=xorg,
+  signal (send) set=term peer=gnome-session-binary,
 
   @{exec_path} mr,
 
-  /{usr/,}bin/Xorg              rUx,
+  /{usr/,}bin/Xorg              rPx,
   /{usr/,}bin/dbus-run-session  rPx,
   /etc/gdm/Xsession             rPx,
 
