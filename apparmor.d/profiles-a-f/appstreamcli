@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2019-2021 Mikhail Morfikov
+# Copyright (C) 2019-2022 Mikhail Morfikov
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -11,43 +12,42 @@ profile appstreamcli @{exec_path} flags=(complain) {
   include <abstractions/base>
   include <abstractions/consoles>
 
+  capability dac_read_search,
+
   @{exec_path} mr,
 
-  # For file valudation using the network
+  # For file validation using the network
   /{usr/,}bin/curl rCx -> curl,
 
-  /etc/appstream.conf r,
+  /usr/share/appdata/ r,
+  /usr/share/applications/{,*.desktop} r,
+  /usr/share/metainfo/ r,
+  /usr/share/metainfo/*.{metainfo,appdata}.xml r,
+  /usr/share/mime/mime.cache r,
 
-  owner @{PROC}/@{pid}/fd/ r,
+  /etc/appstream.conf r,
 
   owner @{user_cache_dirs}/ rw,
   owner @{user_cache_dirs}/appstream-cache-*.mdb rw,
   owner @{user_cache_dirs}/appstream/ rw,
   owner @{user_cache_dirs}/appstream/appcache-*.mdb rw,
-
-  /usr/share/appdata/ r,
+  owner @{user_share_dirs}/mime/mime.cache r,
+  
   /var/lib/app-info/yaml/ r,
   /var/lib/app-info/yaml/*_Components-*.yml.gz w,
+  /var/lib/apt/lists/ r,
+  /var/lib/apt/lists/*_Components-*.gz r,
+  /var/lib/flatpak/appstream/{,**} r,
 
+        /var/cache/swcatalog/cache/{,**} rw,
   owner /var/cache/app-info/{,**} rw,
   owner /tmp/appstream-cache-*.mdb rw,
   owner /tmp/appstream/ rw,
   owner /tmp/appstream/appcache-*.mdb rw,
 
-  owner @{user_share_dirs}/mime/mime.cache r,
-  /usr/share/mime/mime.cache r,
-
-  /usr/share/applications/{,*.desktop} r,
-
-  /usr/share/metainfo/ r,
-  /usr/share/metainfo/*.{metainfo,appdata}.xml r,
-
-  /var/lib/apt/lists/ r,
-  /var/lib/apt/lists/*_Components-*.gz r,
-
-  # file_inherit
   /var/log/cron-apt/temp w,
 
+  owner @{PROC}/@{pid}/fd/ r,
 
   profile curl {
     include <abstractions/base>
