@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2019-2021 Mikhail Morfikov
+# Copyright (C) 2019-2022 Mikhail Morfikov
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -17,21 +18,21 @@ profile xkbcomp @{exec_path} flags=(attach_disconnected) {
   /var/lib/xkb/server-[0-9]*.xkm w,
 
   owner @{HOME}/.Xauthority r,
-
   owner @{HOME}/*.{xkb,xkm} rw,
+
+  owner @{user_share_dirs}/xorg/Xorg.[0-9].log w,
+
+        /var/lib/gdm/.local/share/xorg/Xorg.[0-9].log w,
+  owner /var/log/lightdm/x-[0-9]*.log w,
 
   owner /tmp/server-[0-9]*.xkm rwk,
 
-  # file_inherit
-  owner /dev/tty[0-9]* rw,
-  deny /var/log/Xorg.[0-9]*.log w,
-  deny /dev/input/event[0-9]* rw,
-  owner @{user_share_dirs}/xorg/Xorg.[0-9].log w,
-  owner /var/log/lightdm/x-[0-9]*.log w,
   /dev/dri/card[0-9]* rw,
-
-  /dev/tty[0-9]* rw,
   /dev/tty rw,
+  /dev/tty[0-9]* rw,
+  
+  deny /dev/input/event[0-9]* rw,
+  deny /var/log/Xorg.[0-9]*.log w,
 
   include if exists <local/xkbcomp>
 }

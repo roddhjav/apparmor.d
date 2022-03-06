@@ -9,6 +9,7 @@ include <tunables/global>
 
 @{exec_path}  = /{usr/,}bin/X
 @{exec_path} += /{usr/,}bin/Xorg
+@{exec_path} += /{usr/,}lib/Xorg{,.wrap}
 @{exec_path} += /{usr/,}lib/xorg/Xorg
 profile xorg @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
@@ -21,31 +22,14 @@ profile xorg @{exec_path} flags=(attach_disconnected) {
   include <abstractions/mesa>
   include <abstractions/nameservice-strict>
 
-  # When the Xserver is started via startx as a regular user, there's no need for any of the
-  # following CAPs. When some DM is used instead, some of the CAPs are needed.
-  # Tested so far with LightDM and SDDM.
-  #
-  # In the case of most of the DMs, the sys_admin CAP is needed becasue if it's denied then Xserver
-  # has the following issue:
-  #  (EE) modeset(0): drmSetMaster failed: Permission denied
-  #capability sys_admin,
-  #
-  # It looks like the Xserver started via LightDM can work just fine without the rest of the
-  # following CAPs.
-  #
-  # This has something to do with attaching the System V shared memory segments:
-  #  shmat(131103, NULL, 0)            = -1 EACCES (Permission denied)
-  #capability ipc_owner,
-  #
-  # For SDDM to read some /proc/ and /sys/ files:
-  #capability dac_read_search,
-  #
+  capability setgid,
+  capability setuid,
+  capability sys_admin,
+
   # These can be denied.
   #deny capability dac_override,
   #deny capability sys_rawio,
-  deny capability sys_nice,
-
-  # For KDE/SDDM
+  # deny capability sys_nice,
   #capability sys_tty_config,
 
   signal (send) set=(usr1),
@@ -53,6 +37,7 @@ profile xorg @{exec_path} flags=(attach_disconnected) {
   signal (receive) peer=lightdm,
   signal (receive) peer=sddm,
   signal (receive) peer=xinit,
+  signal (receive) set=term peer=gdm{,-x-session},
 
   network netlink raw,
 
@@ -62,68 +47,56 @@ profile xorg @{exec_path} flags=(attach_disconnected) {
   /{usr/,}bin/xkbcomp    rPx,
   /{usr/,}bin/pkexec     rPx,
 
-  # Xorg files
-  /etc/X11/{,**} r,
   /{usr/,}lib/xorg/ r,
   /{usr/,}lib/xorg/modules/ r,
   /{usr/,}lib/xorg/modules/** mr,
 
-  #
   /var/lib/xkb/server-[0-9]*.xkm rw,
 
-  # Log files
-  owner /var/log/Xorg.[0-9].log{,.old} rw,
-  owner /var/log/Xorg.pid-@{pid}.log{,.old} rw,
+  /usr/share/egl/{,**} rw,
+  /usr/share/libinput/ r,
+  /usr/share/libinput/[0-9][0-9]-*.quirks r,
+
+  /etc/X11/{,**} r,
+
   owner @{HOME}/ r,
+  owner @{HOME}/.xsession-errors w,
+
   owner @{user_share_dirs}/xorg/ rw,
   owner @{user_share_dirs}/xorg/Xorg.[0-9].log{,.old} rw,
   owner @{user_share_dirs}/xorg/Xorg.pid-@{pid}.log{,.old} rw,
-  owner @{HOME}/.xsession-errors w,
 
-  # TMP files
+  owner /var/lib/gdm/.local/share/xorg/Xorg.pid-@{pid}.log{,.old} rw,
+  owner /var/log/lightdm/x-*.log* rw,
+  owner /var/log/Xorg.[0-9].log{,.old} rw,
+  owner /var/log/Xorg.pid-@{pid}.log{,.old} rw,
+
+  @{run}/nvidia-xdriver-* rw,
+  @{run}/sddm/{,**} rw,
+  @{run}/lightdm/{,**} rw,
+
         /tmp/ r,
-  # These are only needed when using abstract sockets. When Xserver is started with
-  # "-nolisten local" , you don't need the following rules.
-  #owner /tmp/.X11-unix/ rw,
-  #owner /tmp/.X11-unix/X* rwk,
-  #
   owner /tmp/.tX[0-9]-lock rwk,
   owner /tmp/.X[0-9]-lock rwkl -> /tmp/.tX[0-9]-lock,
   owner /tmp/server-* rwk,
   owner /tmp/serverauth.* r,
 
-  # Graphic card modules
-  /dev/vga_arbiter rw,
-  @{sys}/module/i915/{,**} r,
-
-  # Input devices (keyboard, mouse, etc)
-  /dev/input/event[0-9]* rw,
-
-  /usr/share/libinput/ r,
-  /usr/share/libinput/[0-9][0-9]-*.quirks r,
-
-  # Screen backlight
-  @{sys}/devices/pci[0-9]*/**/backlight/*/{,max_}brightness r,
-  @{sys}/devices/pci[0-9]*/**/backlight/*/brightness rw,
-
-  # Display Xserver on a specific TTY
-  owner /dev/tty[0-9]* rw,
-
-  # Needed for SDDM display manager
-  @{run}/sddm/{,**} rw,
-
-  # Needed for LightDM display manager
-  @{run}/lightdm/{,**} rw,
-  /var/log/lightdm/x-*.log* rw,
-
   @{sys}/bus/ r,
   @{sys}/bus/pci/devices/ r,
   @{sys}/class/ r,
   @{sys}/class/{tty,input,drm}/ r,
+  @{sys}/class/power_supply/ r,
   @{sys}/devices/**/{uevent,name,id,config} r,
+  @{sys}/devices/**/hid r,
+  @{sys}/devices/**/power_supply/**/{type,online} r,
   @{sys}/devices/pci[0-9]*/**/ r,
+  @{sys}/devices/pci[0-9]*/**/backlight/*/{,max_}brightness r,
+  @{sys}/devices/pci[0-9]*/**/backlight/*/brightness rw,
   @{sys}/devices/pci[0-9]*/**/boot_vga r,
+  @{sys}/devices/platform/ r,
+  @{sys}/module/i915/{,**} r,
 
+  @{run}/udev/data/+i2c:* r,
   @{run}/udev/data/+input* r,          # for mouse, keyboard, touchpad
   @{run}/udev/data/+platform* r,       # for ?
   @{run}/udev/data/+drm:card[0-9]-* r, # for screen outputs
@@ -135,6 +108,7 @@ profile xorg @{exec_path} flags=(attach_disconnected) {
   @{run}/udev/data/+serio* r,          # for touchpad?
   @{run}/udev/data/c4:[0-9]*   r,      # for /dev/tty[0-9]*
   @{run}/udev/data/c5:[0-9]*   r,      # for /dev/tty, /dev/console, /dev/ptmx
+  @{run}/udev/data/c10:[0-9]* r,
   @{run}/udev/data/c13:[0-9]*  r,      # for /dev/input/*
   @{run}/udev/data/c189:[0-9]* r,      # for /dev/bus/usb/**
   @{run}/udev/data/c226:[0-9]* r,      # for /dev/dri/card*
@@ -143,9 +117,12 @@ profile xorg @{exec_path} flags=(attach_disconnected) {
   @{PROC}/cmdline r,
   @{PROC}/mtrr rw,
 
-  #
-  /dev/shm/shmfd-* rw,
+  /dev/input/event[0-9]* rw,
   /dev/shm/#[0-9]*[0-9] rw,
+  /dev/shm/shmfd-* rw,
+  /dev/tty rw,
+  /dev/tty[0-9]* rw,
+  /dev/vga_arbiter rw,  # Graphic card modules
 
   include if exists <local/xorg>
 }
