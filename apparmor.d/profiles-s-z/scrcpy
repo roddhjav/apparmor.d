@@ -1,0 +1,31 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/scrcpy
+profile scrcpy @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/dri-common>
+  include <abstractions/dri-enumerate>
+  include <abstractions/mesa>
+
+  network inet stream,
+  network inet6 stream,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/adb rix,
+
+  /usr/share/scrcpy/{,*} r,
+  /usr/share/icons/**/scrcpy.png r,
+
+  /var/lib/dbus/machine-id r,
+
+  owner @{user_config_dirs}/ibus/bus/{,[0-9a-f]*-unix-wayland-[0-9]} r,
+
+  include if exists <local/scrcpy>
+}
