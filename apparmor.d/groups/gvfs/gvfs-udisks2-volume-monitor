@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2021 Mikhail Morfikov
+# Copyright (C) 2021-2022 Mikhail Morfikov
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -10,10 +11,11 @@ include <tunables/global>
 @{exec_path} += @{libexec}/gvfs-udisks2-volume-monitor
 profile gvfs-udisks2-volume-monitor @{exec_path} {
   include <abstractions/base>
+  include <abstractions/dconf>
+  include <abstractions/devices-usb>
+  include <abstractions/disks-read>
   include <abstractions/freedesktop.org>
   include <abstractions/nameservice-strict>
-  include <abstractions/disks-read>
-  include <abstractions/devices-usb>
 
   network inet stream,
   network inet6 stream,
@@ -28,33 +30,31 @@ profile gvfs-udisks2-volume-monitor @{exec_path} {
   /{usr/,}bin/mount  rPx,
   /{usr/,}bin/umount rPx,
 
-  include <abstractions/dconf>
-  owner @{run}/user/@{uid}/dconf/ w,
-  owner @{run}/user/@{uid}/dconf/user rw,
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
 
-  @{run}/systemd/sessions/[0-9]* r,
-
+  / r,
   /etc/fstab r,
   /etc/machine-id r,
 
   # Mount points
-  @{MOUNTS}/*/ r,
-  @{MOUNTS}/*/**/ r,
-  @{HOME}/*/*/ r,
-  @{HOME}/*/*/**/ r,
-  @{HOME}/bluetooth/ r,
+  owner @{MOUNTS}/*/ r,
+  owner @{MOUNTS}/*/**/ r,
+  owner @{HOME}/*/*/ r,
+  owner @{HOME}/*/*/**/ r,
+  owner @{HOME}/bluetooth/ r,
 
-  / r,
-
-  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+  owner @{run}/user/@{uid}/dconf/ w,
+  owner @{run}/user/@{uid}/dconf/user rw,
 
   @{run}/mount/utab r,
+  @{run}/systemd/sessions/[0-9]* r,
 
-        @{PROC}/ r,
+  owner @{PROC}/@{pid}/cgroup r,
   owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/mountinfo r,
   owner @{PROC}/@{pid}/mounts r,
-  owner @{PROC}/@{pid}/cgroup r,
+  owner @{PROC}/@{pid}/stat r,
+        @{PROC}/ r,
         @{PROC}/1/cgroup r,
         @{PROC}/locks r,
 

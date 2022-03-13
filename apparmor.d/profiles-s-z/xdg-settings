@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2019-2021 Mikhail Morfikov
+# Copyright (C) 2019-2022 Mikhail Morfikov
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -15,51 +16,41 @@ profile xdg-settings @{exec_path} {
 
   /{usr/,}bin/{,ba,da}sh rix,
   /{usr/,}bin/{,e}grep   rix,
-  /{usr/,}bin/cut        rix,
-  /{usr/,}bin/mv         rix,
-  /{usr/,}bin/wc         rix,
-  /{usr/,}bin/mktemp     rix,
+  /{usr/,}bin/basename   rix,
   /{usr/,}bin/cat        rix,
+  /{usr/,}bin/cut        rix,
+  /{usr/,}bin/mktemp     rix,
+  /{usr/,}bin/mv         rix,
+  /{usr/,}bin/readlink   rix,
   /{usr/,}bin/sed        rix,
   /{usr/,}bin/sort       rix,
-  /{usr/,}bin/which{,.debianutils}      rix,
-  /{usr/,}bin/readlink   rix,
-  /{usr/,}bin/basename   rix,
   /{usr/,}bin/uname      rix,
+  /{usr/,}bin/wc         rix,
+  /{usr/,}bin/which{,.debianutils}      rix,
 
-  # When xdg-settings is run as root, it wants to exec dbus-launch, and hence it creates the two
-  # following root processes:
-  #  dbus-launch --autolaunch e0a30ad97cd6421c85247839ccef9db2 --binary-syntax --close-stderr
-  #  /usr/bin/dbus-daemon --syslog-only --fork --print-pid 5 --print-address 7 --session
-  #
-  # Should this be allowed? Xdg-settings works fine without this.
-  #/{usr/,}bin/dbus-launch        rCx -> dbus,
-  #/{usr/,}bin/dbus-send          rCx -> dbus,
-  deny /{usr/,}bin/dbus-launch rx,
-  deny /{usr/,}bin/dbus-send   rx,
-
-  /{usr/,}bin/xprop    rPx,
-  /{usr/,}bin/xdg-mime rPx,
-
-  owner @{PROC}/@{pid}/fd/ r,
-
-  /etc/xdg/xfce4/helpers.rc r,
-  owner @{user_config_dirs}/xfce4/helpers.rc{,.*} rw,
-  owner @{user_share_dirs}/applications/ r,
-  owner @{user_share_dirs}/applications/*.desktop r,
-
-  owner @{HOME}/.Xauthority r,
+  /{usr/,}bin/dbus-launch  rCx -> dbus,
+  /{usr/,}bin/dbus-send    rCx -> dbus,
+  /{usr/,}bin/xdg-mime     rPx,
+  /{usr/,}bin/xprop        rPx,
 
   /usr/share/terminfo/x/xterm-256color r,
   /usr/share/applications/ r,
-  /var/lib/dbus/machine-id r,
+
+  /etc/xdg/xfce4/helpers.rc r,
   /etc/machine-id r,
+  /var/lib/dbus/machine-id r,
 
-  # For shell pwd
   owner @{HOME}/ r,
+  owner @{HOME}/.Xauthority r,
 
-  @{run}/user/@{uid}/ r,
+  owner @{user_config_dirs}/xfce4/helpers.rc{,.*} rw,
 
+  owner @{user_share_dirs}/applications/ r,
+  owner @{user_share_dirs}/applications/*.desktop r,
+
+  owner @{run}/user/@{uid}/ r,
+
+  owner @{PROC}/@{pid}/fd/ r,
 
   profile dbus {
     include <abstractions/base>
