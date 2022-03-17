@@ -25,12 +25,13 @@ const LogFile = "/var/log/audit/audit.log"
 
 // Colors
 const (
-	Reset     = "\033[0m"
-	FgYellow  = "\033[33m"
-	FgBlue    = "\033[34m"
-	FgMagenta = "\033[35m"
-	BoldRed   = "\033[1;31m"
-	BoldGreen = "\033[1;32m"
+	Reset      = "\033[0m"
+	FgYellow   = "\033[33m"
+	FgBlue     = "\033[34m"
+	FgMagenta  = "\033[35m"
+	BoldRed    = "\033[1;31m"
+	BoldGreen  = "\033[1;32m"
+	BoldYellow = "\033[1;33m"
 )
 
 // AppArmorLog describes a apparmor log entry
@@ -70,7 +71,7 @@ func removeDuplicateLog(logs []string) []string {
 // NewApparmorLogs return a new ApparmorLogs list of map from a log file
 func NewApparmorLogs(file *os.File, profile string) AppArmorLogs {
 	log := ""
-	exp := "apparmor=(\"DENIED\"|\"ALLOWED\")"
+	exp := "apparmor=(\"DENIED\"|\"ALLOWED\"|\"AUDIT\")"
 	if profile != "" {
 		exp = fmt.Sprintf(exp+".* profile=\"%s.*\"", profile)
 	}
@@ -124,6 +125,7 @@ func (aaLogs AppArmorLogs) String() string {
 	state := map[string]string{
 		"DENIED":  BoldRed + "DENIED " + Reset,
 		"ALLOWED": BoldGreen + "ALLOWED" + Reset,
+		"AUDIT":   BoldYellow + "AUDIT  " + Reset,
 	}
 	// Order of impression
 	keys := []string{
