@@ -10,7 +10,19 @@ include <tunables/global>
 profile nm-dhcp-helper @{exec_path} {
   include <abstractions/base>
 
+  network inet dgram,
+  network inet6 dgram,
+
+  ptrace (readby) peer=NetworkManager,
+
+  signal (receive) peer=NetworkManager,
+  signal (send) peer=dhclient,
+
   @{exec_path} mr,
+
+  /var/lib/NetworkManager/*lease r,
+
+  @{run}/NetworkManager/private-dhcp rw,
 
   include if exists <local/nm-dhcp-helper>
 }
