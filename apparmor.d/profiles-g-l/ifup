@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2019-2021 Mikhail Morfikov
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -10,9 +11,7 @@ include <tunables/global>
 profile ifup @{exec_path} {
   include <abstractions/base>
 
-  # To be able to manage network interfaces.
   capability net_admin,
-
   # Needed?
   audit deny capability sys_module,
 
@@ -20,13 +19,15 @@ profile ifup @{exec_path} {
 
   @{exec_path} mr,
 
+  /{usr/,}{s,}bin/route  rix,
   /{usr/,}bin/{,ba,da}sh rix,
   /{usr/,}bin/ip         rix,
-  /{usr/,}bin/sleep      rix,
   /{usr/,}bin/seq        rix,
+  /{usr/,}bin/sleep      rix,
+  /{usr/,}bin/wc         rix,
 
   /{usr/,}{s,}bin/dhclient  rPx,
-  /{usr/,}bin/macchanger rPx,
+  /{usr/,}bin/macchanger    rPx,
 
   /{usr/,}lib/ifupdown/*.sh rix,
 
@@ -80,9 +81,10 @@ profile ifup @{exec_path} {
     /etc/network/if-pre-up.d/random-secret     rPUx,
 
     /etc/network/if-up.d/ r,
+    /etc/network/if-up.d/*resolvconf           rPUx,
+    /etc/network/if-up.d/chrony                rPUx,
     /etc/network/if-up.d/ethtool               rPUx,
     /etc/network/if-up.d/ifenslave             rPUx,
-    /etc/network/if-up.d/chrony                rPUx,
     /etc/network/if-up.d/openvpn               rPUx,
     /etc/network/if-up.d/wpasupplicant         rPUx,
 
@@ -107,7 +109,7 @@ profile ifup @{exec_path} {
     include <abstractions/base>
 
 #    capability mac_admin,
-#    capability sys_admin,
+   capability sys_admin,
 #    capability sys_resource,
 
     /{usr/,}sbin/sysctl mr,

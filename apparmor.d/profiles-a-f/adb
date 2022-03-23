@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2021 Mikhail Morfikov
+# Copyright (C) 2021-2022 Mikhail Morfikov
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -10,14 +11,14 @@ include <tunables/global>
 @{exec_path} += /{usr/,}lib/android-sdk/platform-tools/adb
 profile adb @{exec_path} {
   include <abstractions/base>
-  include <abstractions/nameservice-strict>
   include <abstractions/devices-usb>
+  include <abstractions/nameservice-strict>
   include <abstractions/user-download-strict>
 
-  # For adb kill-server:
-  #  cannot connect to daemon at tcp:5037: Permission denied
   network inet stream,
   network inet6 stream,
+
+  signal (receive) set=(kill) peer=scrcpy,
 
   @{exec_path} mrix,
 
