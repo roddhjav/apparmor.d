@@ -7,12 +7,13 @@ abi <abi/3.0>,
 include <tunables/global>
 
 @{exec_path} = /{usr/,}bin/virtlogd
-profile virtlogd @{exec_path} {
+profile virtlogd @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/openssl>
   include <abstractions/nameservice-strict>
 
   ptrace (read) peer=libvirtd,
+  ptrace (read) peer=virtqemud,
   ptrace (read) peer=unconfined,
 
   @{exec_path} mr,
@@ -21,8 +22,15 @@ profile virtlogd @{exec_path} {
 
   /var/log/libvirt/qemu/*.log rw,
 
-  @{run}/virtlogd.pid rwk,
+  owner @{user_cache_dirs}/libvirt/qemu/log/{,**} rw,
+
+  owner @{run}/user/@{uid}/common/system.token rw,
+  owner @{run}/user/@{uid}/libvirt/virtlogd.pid rwk,
+  owner @{run}/user/@{uid}/libvirt/virtlogd* w,
+
   @{run}/libvirt/common/system.token rwk,
+  @{run}/systemd/inhibit/[0-9]*.ref rw,
+  @{run}/virtlogd.pid rwk,
 
   @{sys}/devices/system/node/ r,
   @{sys}/devices/system/node/node[0-9]*/meminfo r,
@@ -31,6 +39,8 @@ profile virtlogd @{exec_path} {
         @{PROC}/1/environ r,
         @{PROC}/cmdline r,
         @{PROC}/sys/kernel/osrelease r,
+
+  /dev/dri/ r,
 
   include if exists <local/virtlogd>
 }
