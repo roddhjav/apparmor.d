@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2020-2021 Mikhail Morfikov
+# Copyright (C) 2020-2022 Mikhail Morfikov
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -10,23 +11,18 @@ include <tunables/global>
 @{exec_path} += @{libexec}/accounts-daemon
 profile accounts-daemon @{exec_path} {
   include <abstractions/base>
-  include <abstractions/wutmp>
   include <abstractions/nameservice-strict>
+  include <abstractions/wutmp>
 
-  # Needed?
   capability dac_read_search,
+  capability sys_nice,
   capability sys_ptrace,
-  deny capability sys_nice,
 
   ptrace (read) peer=unconfined,
 
   @{exec_path} mr,
 
-  owner /var/lib/AccountsService/ r,
-  owner /var/lib/AccountsService/** rw,
-
   /usr/share/accountsservice/{,**} r,
-
   /usr/share/dbus-1/interfaces/org.freedesktop.DisplayManager.AccountsService.xml r,
 
   /etc/gdm/custom.conf r,
@@ -34,9 +30,15 @@ profile accounts-daemon @{exec_path} {
   /etc/shadow r,
   /etc/shells r,
 
-  @{PROC}/sys/kernel/osrelease r,
-  @{PROC}/1/environ r,
-  @{PROC}/cmdline r,
+  /etc/gdm/custom.conf.* rw,
+
+  owner /var/lib/AccountsService/ r,
+  owner /var/lib/AccountsService/** rw,
+
+  owner @{PROC}/@{pid}/cmdline r,
+        @{PROC}/1/environ r,
+        @{PROC}/cmdline r,
+        @{PROC}/sys/kernel/osrelease r,
 
   include if exists <local/accounts-daemon>
 }

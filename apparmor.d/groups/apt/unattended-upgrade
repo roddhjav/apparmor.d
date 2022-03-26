@@ -9,19 +9,51 @@ include <tunables/global>
 @{exec_path} = /{usr/,}bin/unattended-upgrade
 profile unattended-upgrade @{exec_path} {
   include <abstractions/base>
+  include <abstractions/nameservice-strict>
   include <abstractions/python>
+
+  capability chown,
+  capability dac_override,
+  capability dac_read_search,
+  capability kill,
+  capability setgid,
+  capability setuid,
+  capability sys_nice,
 
   @{exec_path} mr,
 
-  /{usr/,}bin/python3.[0-9]*  rix,
-  /{usr/,}bin/uname           rix,
+  /{usr/,}bin/ r,
+
   /{usr/,}bin/dpkg            rPx,
   /{usr/,}bin/lsb_release     rPx -> lsb_release,
+  /{usr/,}bin/python3.[0-9]*  rix,
+  /{usr/,}bin/uname           rix,
+  /{usr/,}lib/apt/methods/http{,s} rPx,
+
+  /usr/share/dpkg/*table r,
+
+  /etc/apt/*.list r,
+  /etc/apt/apt.conf.d/{,**} r,
+  /etc/apt/preferences.d/{,**} r,
+  /etc/apt/sources.list.d/{,**} r,
+
+  /etc/machine-id r,
 
   /var/log/unattended-upgrades/*.log rw,
 
+  /var/lib/apt/extended_states r,
+  /var/lib/apt/lists/{,**} r,
+  /var/lib/dpkg/lock rwk,
+  /var/lib/dpkg/lock-frontend rwk,
+  /var/lib/dpkg/status r,
+
+  /var/cache/apt/archives/{,**} rw,
+  /var/cache/apt/pkgcache.bin r,
+
   owner @{run}/unattended-upgrades.pid rw,
   owner @{run}/unattended-upgrades.lock rwk,
+
+  owner /tmp/#[0-9]* rw,
 
   owner @{PROC}/@{pids}/fd/ r,
 

@@ -10,14 +10,13 @@ include <tunables/global>
 profile systemd-user-runtime-dir @{exec_path} {
   include <abstractions/base>
   include <abstractions/nameservice-strict>
+  include <abstractions/systemd-common>
 
   capability dac_override,
   capability dac_read_search,
   capability fowner,
   capability net_admin,
   capability sys_admin,
-
-  ptrace (read) peer=unconfined,
 
   mount fstype=tmpfs options=(rw,nosuid,nodev) -> @{run}/user/@{uid}/,
   umount @{run}/user/@{uid}/,
@@ -27,10 +26,6 @@ profile systemd-user-runtime-dir @{exec_path} {
   /etc/machine-id r,
 
   @{run}/user/@{uid}/{,**} rw,
-
-  @{PROC}/1/environ r,
-  @{PROC}/cmdline r,
-  @{PROC}/sys/kernel/osrelease r,
 
   include if exists <local/systemd-user-runtime-dir>
 }
