@@ -1,0 +1,37 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/login
+profile login @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/authentication>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+  include <abstractions/wutmp>
+
+  capability chown,
+  capability fsetid,
+  capability setgid,
+  capability setuid,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/{,z,ba,da}sh  rUx,
+
+  /etc/environment r,
+
+  /var/log/btmp{,.[0-9]*} r,
+
+  @{run}/faillock/root rwk,
+  @{run}/systemd/userdb/ r,
+
+  @{PROC}/@{pid}/loginuid rw,
+  @{PROC}/@{pid}/uid_map r,
+
+  include if exists <local/login>
+}
