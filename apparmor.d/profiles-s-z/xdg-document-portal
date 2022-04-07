@@ -10,14 +10,68 @@ include <tunables/global>
 profile xdg-document-portal @{exec_path} {
   include <abstractions/base>
 
+  ptrace (read) peer=xdg-desktop-portal,
+
   @{exec_path} mr,
 
-  /{usr/,}bin/fusermount rPx,
+  /{usr/,}bin/flatpak         rCx -> flatpak,
+  /{usr/,}bin/fusermount{,3}  rCx -> fusermount,
+
+  / r,
 
   owner @{user_share_dirs}/flatpak/db/documents r,
   owner @{run}/user/@{uid}/doc/ rw,
 
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/cgroup r,
+        @{PROC}/1/cgroup r,
+        @{PROC}/sys/fs/pipe-max-size r,
+
   /dev/fuse rw,
+
+  profile flatpak {
+    include <abstractions/base>
+
+    /{usr/,}bin/flatpak rm,
+
+    / r,
+    /etc/flatpak/remotes.d/{,*} r,
+
+    owner @{user_cache_dirs}/flatpak/{,**} r,
+    owner @{user_config_dirs}/user-dirs.dirs r,
+    owner @{user_share_dirs}/flatpak/{,**} r,
+
+    /var/lib/flatpak/{,**} rw,
+
+    @{PROC}/sys/kernel/random/boot_id r,
+
+    /dev/tty rw,
+  }
+
+  profile fusermount {
+    include <abstractions/base>
+    include <abstractions/nameservice-strict>
+
+    capability sys_admin,
+    capability dac_read_search,
+
+  #   network inet stream,
+  #   network inet6 stream,
+
+    /{usr/,}bin/fusermount{,3} mr,
+
+    /etc/fuse.conf r,
+
+    mount options=(rw, rprivate) -> /,
+    mount options=(rw, rbind) @{run}/user/@{uid}/ -> /,
+    mount fstype=fuse.portal -> @{run}/user/@{uid}/doc/,
+
+    umount @{run}/user/@{uid}/doc/,
+  
+    @{PROC}/@{pids}/mounts r,
+
+    /dev/fuse rw,
+  }
 
   include if exists <local/xdg-document-portal>
 }
