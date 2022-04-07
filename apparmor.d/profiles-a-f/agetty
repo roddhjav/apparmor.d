@@ -1,0 +1,31 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}sbin/agetty
+profile agetty @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+  include <abstractions/wutmp>
+
+  capability fsetid,
+  capability sys_admin,
+  capability sys_tty_config,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/login rPx,
+
+  /etc/issue r,
+
+  owner @{run}/agetty.reload rw,
+        @{run}/resolvconf/resolv.conf r,
+
+  /dev/tty[0-9]* rw,
+
+  include if exists <local/agetty>
+}
