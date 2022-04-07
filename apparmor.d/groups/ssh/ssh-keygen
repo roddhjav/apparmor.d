@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2022 Roman Beslik <me@beroal.in.ua>
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -10,11 +11,13 @@ include <tunables/global>
 
 profile ssh-keygen @{exec_path} {
   include <abstractions/base>
+  include <abstractions/consoles>
   include <abstractions/nameservice-strict>
   include <abstractions/openssl>
-  include <abstractions/consoles> # for entering a passphrase for a key
 
   @{exec_path} mr,
+
+  /etc/ssh/ssh_host_*_key* rw,
 
   owner @{HOME}/@{XDG_SSH_DIR}/ w,
   owner @{HOME}/@{XDG_SSH_DIR}/*_*{,.pub} rw,
