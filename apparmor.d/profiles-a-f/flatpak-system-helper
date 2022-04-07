@@ -1,0 +1,58 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}lib/flatpak-system-helper
+profile flatpak-system-helper @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+  include <abstractions/p11-kit>
+  include <abstractions/ssl_certs>
+
+  capability chown,
+  capability dac_override,
+  capability net_admin,
+  capability setgid,
+  capability setuid,
+  capability sys_nice,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/bwrap         rPUx,
+  /{usr/,}bin/gpg            rCx -> gpg,
+  /{usr/,}bin/gpgconf        rCx -> gpg,
+  /{usr/,}bin/gpgsm          rCx -> gpg,
+  /{usr/,}lib/revokefs-fuse  rix,
+
+  /etc/flatpak/{,**} r,
+
+  /usr/share/flatpak/triggers/ r,
+
+  /var/lib/flatpak/{,**} rwkl,
+  /var/tmp/flatpak-cache-*/{,**} rw,
+
+  owner /tmp/#[0-9]* rw, 
+  owner /tmp/ostree-gpg-*/ rw,
+  owner /tmp/ostree-gpg-*/** rwkl -> /tmp/ostree-gpg-*/**,
+
+  owner @{PROC}/@{uid}/fd/ r,
+
+  profile gpg {
+    include <abstractions/base>
+    include <abstractions/nameservice-strict>
+
+    /{usr/,}bin/gpg     mr,
+    /{usr/,}bin/gpgconf mr,
+    /{usr/,}bin/gpgsm   mr,
+
+    owner /tmp/ostree-gpg-*/ r,
+    owner /tmp/ostree-gpg-*/** rwkl -> /tmp/ostree-gpg-*/**,
+
+  }
+
+  include if exists <local/flatpak-system-helper>
+}
