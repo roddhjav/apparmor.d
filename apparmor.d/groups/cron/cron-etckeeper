@@ -1,0 +1,27 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /etc/cron.{hourly,daily,weekly,monthly}/etckeeper
+profile cron-etckeeper @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+
+  @{exec_path} r,
+  
+  /{usr/,}bin/{,ba,da}sh  rix,
+  /{usr/,}bin/rm          rix,
+  /{usr/,}bin/find        rix,
+  /{usr/,}bin/etckeeper   rPx,
+
+  /etc/etckeeper/daily    rix,
+  /etc/etckeeper/etckeeper.conf r,
+
+  /var/cache/etckeeper/packagelist.pre-install rw,
+
+  include if exists <local/cron-etckeeper>
+}
