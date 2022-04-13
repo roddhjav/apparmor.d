@@ -12,8 +12,8 @@ include <tunables/global>
 profile virt-manager @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/audio>
+  include <abstractions/dconf>
   include <abstractions/devices-usb>
-  include <abstractions/dri-enumerate>
   include <abstractions/fontconfig-cache-read>
   include <abstractions/fonts>
   include <abstractions/freedesktop.org>
@@ -21,22 +21,23 @@ profile virt-manager @{exec_path} flags=(attach_disconnected) {
   include <abstractions/gtk>
   include <abstractions/mesa>
   include <abstractions/nameservice-strict>
-  include <abstractions/openssl>
   include <abstractions/opencl>
+  include <abstractions/openssl>
   include <abstractions/python>
   include <abstractions/ssl_certs>
   include <abstractions/thumbnails-cache-read>
   include <abstractions/user-download-strict>
   include <abstractions/vulkan>
-  include <abstractions/X>
 
   network inet stream,
   network inet6 stream,
   network netlink raw,
 
   @{exec_path} rix,
+
   /{usr/,}bin/{,ba,da}sh rix,
   /{usr/,}bin/python3.[0-9]* r,
+  /{usr/,}lib/python3.[0-9]*/site-packages/__pycache__/guestfs.cpython-[0-9]*.pyc.[0-9]* w,
 
   /{usr/,}bin/ r,
   /{usr/,}bin/env       rix,
@@ -87,9 +88,11 @@ profile virt-manager @{exec_path} flags=(attach_disconnected) {
   owner @{HOME}/@{XDG_VM_DIR}/{,**} rw,
   owner @{MOUNTS}/*/@{XDG_VM_DIR}/{,**} rw,
 
+  owner @{run}/user/@{uid}/dconf/ rw,
+  owner @{run}/user/@{uid}/dconf/user rw,
+  owner @{run}/user/@{uid}/libvirt/libvirtd.lock rwk,
         @{run}/mount/utab r,
         @{run}/udev/data/c51[0-9]:[0-9]* r,
-  owner @{run}/user/@{uid}/libvirt/libvirtd.lock rwk,
 
   @{sys}/devices/pci[0-9]*/**/drm/ r,
   @{sys}/devices/virtual/drm/ttm/uevent r,
@@ -98,10 +101,6 @@ profile virt-manager @{exec_path} flags=(attach_disconnected) {
   owner @{PROC}/@{pid}/mounts r,
   owner @{PROC}/@{pid}/fd/ r,
         @{PROC}/@{pids}/net/route r,
-        
-  include <abstractions/dconf>
-  owner @{run}/user/@{uid}/dconf/ rw,
-  owner @{run}/user/@{uid}/dconf/user rw,
 
   /dev/video[0-9]* rw,
 
