@@ -33,10 +33,14 @@ profile android-studio @{exec_path} {
 
   signal (send) set=(term, kill) peer=android-studio//lsb-release,
 
+  ptrace (read) peer=android-studio//*,
+
   network inet dgram,
   network inet6 dgram,
   network inet stream,
   network inet6 stream,
+  network inet raw,
+  network inet6 raw,
   network netlink raw,
 
   @{exec_path} r,
@@ -129,6 +133,9 @@ profile android-studio @{exec_path} {
   owner "@{user_cache_dirs}/Android Open Source Project/" rw,
   owner "@{user_cache_dirs}/Android Open Source Project/**" rw,
 
+  owner @{user_cache_dirs}/main.kts.compiled.cache/ rw,
+  owner @{user_cache_dirs}/main.kts.compiled.cache/** rw,
+
   owner @{user_cache_dirs}/Google/ rw,
   owner @{user_cache_dirs}/Google/** rwk,
   # To remove the following error:
@@ -178,11 +185,12 @@ profile android-studio @{exec_path} {
   owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/cmdline r,
   owner @{PROC}/@{pid}/mounts r,
+  owner @{PROC}/@{pid}/coredump_filter rw,
   owner @{PROC}/@{pid}/mem r,
   owner @{PROC}/@{pid}/oom_{,score_}adj rw,
   owner @{PROC}/@{pids}/task/ r,
   owner @{PROC}/@{pids}/task/@{tid}/status r,
-  owner @{PROC}/@{pids}/stat r,
+        @{PROC}/@{pids}/stat r,
         @{PROC}/sys/net/core/somaxconn r,
         @{PROC}/sys/fs/inotify/max_user_watches r,
         @{PROC}/sys/kernel/yama/ptrace_scope r,
@@ -200,6 +208,8 @@ profile android-studio @{exec_path} {
   owner @{run}/user/@{uid}/avd/running/pid_@{pid}.ini rw,
 
   /usr/share/hwdata/pnp.ids r,
+
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
 
   /var/lib/dbus/machine-id r,
   /etc/machine-id r,
