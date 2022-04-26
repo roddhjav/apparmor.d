@@ -1,0 +1,37 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}lib/molly-guard/molly-guard
+profile molly-guard @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+
+  capability sys_ptrace,
+
+  ptrace (read),
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/{,ba,da}sh  rix,
+  /{usr/,}bin/hostname    rix,
+  /{usr/,}bin/pgrep       rix,
+  /{usr/,}bin/run-parts   rix,
+  /{usr/,}bin/systemctl   rPx -> child-systemctl,
+  /{usr/,}bin/tr          rix,
+  /{usr/,}bin/tty         rix,
+
+  /etc/molly-guard/{,**} r,
+  /etc/molly-guard/run.d/* rix,
+
+  @{PROC}/ r,
+  @{PROC}/@{pids}/cmdline r,
+  @{PROC}/sys/kernel/osrelease r,
+  @{PROC}/uptime r,
+
+  include if exists <local/molly-guard>
+}
