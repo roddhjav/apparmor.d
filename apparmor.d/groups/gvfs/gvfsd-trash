@@ -1,6 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2021 Mikhail Morfikov
-#               2021 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2021-2022 Mikhail Morfikov
+# Copyright (C) 2021-2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -11,8 +11,8 @@ include <tunables/global>
 @{exec_path} += @{libexec}/gvfsd-trash
 profile gvfsd-trash @{exec_path} {
   include <abstractions/base>
-  include <abstractions/nameservice-strict>
   include <abstractions/freedesktop.org>
+  include <abstractions/nameservice-strict>
   include <abstractions/trash>
 
   # When mounting a SMB share
@@ -21,17 +21,17 @@ profile gvfsd-trash @{exec_path} {
 
   @{exec_path} mr,
 
-  owner @{PROC}/@{pid}/mountinfo r,
-  owner @{PROC}/@{pid}/mounts r,
-
-  @{run}/mount/utab r,
+  # Can restore all user files
+  owner @{HOME}/{,**} rw,
+  owner @{MOUNTS}/*/{,**} rw,
 
   owner @{run}/user/@{uid}/gvfsd/ rw,
   owner @{run}/user/@{uid}/gvfsd/socket-* rw,
 
-  # Can restore all user files
-  owner @{HOME}/{,**} rw,
-  owner @{MOUNTS}/*/{,**} rw,
+  @{run}/mount/utab r,
+
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/mounts r,
 
   include if exists <local/gvfsd-trash>
 }
