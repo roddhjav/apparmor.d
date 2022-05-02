@@ -10,6 +10,7 @@ include <tunables/global>
 profile gsd-power @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/audio>
+  include <abstractions/dconf>
   include <abstractions/fonts>
   include <abstractions/gtk>
   include <abstractions/nameservice-strict>
@@ -20,6 +21,7 @@ profile gsd-power @{exec_path} flags=(attach_disconnected) {
 
   @{exec_path} mr,
 
+  /usr/share/dconf/profile/gdm r,
   /usr/share/gdm/greeter-dconf-defaults r,
   /usr/share/glib-2.0/schemas/gschemas.compiled r,
   /usr/share/icons/{,**} r,
@@ -28,13 +30,17 @@ profile gsd-power @{exec_path} flags=(attach_disconnected) {
   /etc/machine-id r,
   /var/lib/dbus/machine-id r,
   /var/lib/gdm/.cache/event-sound-cache.tdb.* rwk,
+  /var/lib/gdm/.config/dconf/user r,
   /var/lib/gdm/.config/pulse/client.conf r,
 
-  include <abstractions/dconf>
   owner @{run}/user/@{uid}/dconf/ rw,
   owner @{run}/user/@{uid}/dconf/user rw,
-  /usr/share/dconf/profile/gdm r,
-  /var/lib/gdm/.config/dconf/user r,
+  owner @{run}/user/@{uid}/gdm/Xauthority r,
+
+  @{run}/udev/data/+backlight:* r,
+  @{run}/udev/data/+leds:*backlight* r,
+
+  @{run}/systemd/inhibit/[0-9]*.ref rw,
 
   @{sys}/bus/ r,
   @{sys}/class/ r,
@@ -51,13 +57,6 @@ profile gsd-power @{exec_path} flags=(attach_disconnected) {
   @{sys}/devices/platform/**/leds/*backlight*/uevent r,
   @{sys}/devices/platform/**/leds/*backlight*/max_brightness r,
   @{sys}/devices/platform/**/leds/*backlight*/brightness rw,
-
-  @{run}/udev/data/+backlight:* r,
-  @{run}/udev/data/+leds:*backlight* r,
-
-  @{run}/systemd/inhibit/[0-9]*.ref rw,
-
-  owner @{run}/user/@{uid}/gdm/Xauthority r,
 
   @{PROC}/cmdline r,
   @{PROC}/sys/kernel/osrelease r,
