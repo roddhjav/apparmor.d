@@ -7,7 +7,7 @@ abi <abi/3.0>,
 
 include <tunables/global>
 
-@{exec_path} = /{usr/,}bin/apt
+@{exec_path} = /{usr/,}bin/apt /{usr/,}bin/apt-get
 profile apt @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/apt-common>
@@ -33,19 +33,21 @@ profile apt @{exec_path} flags=(attach_disconnected) {
   /{usr/,}bin/test       rix,
   /{usr/,}bin/{,e}grep   rix,
 
-  /{usr/,}bin/ps                 rPx,
-  /{usr/,}bin/dpkg               rPx,
-  /{usr/,}bin/apt-listbugs       rPx,
-  /{usr/,}bin/apt-listchanges    rPx,
-  /{usr/,}bin/apt-show-versions  rPx,
-  /{usr/,}sbin/dpkg-preconfigure rPx,
-  /{usr/,}bin/debtags            rPx,
-  /{usr/,}sbin/localepurge       rPx,
-  /{usr/,}bin/appstreamcli       rPx,
-  /{usr/,}bin/adequate           rPx,
-  /{usr/,}sbin/update-command-not-found      rPx,
-  /usr/share/command-not-found/cnf-update-db rPx,
-  /{usr/,}bin/dpkg-source        rcx -> dpkg-source,
+  /{usr/,}{s,}bin/dpkg-preconfigure           rPx,
+  /{usr/,}{s,}bin/localepurge                 rPx,
+  /{usr/,}{s,}bin/update-command-not-found    rPx,
+  /{usr/,}bin/adequate                        rPx,
+  /{usr/,}bin/appstreamcli                    rPx,
+  /{usr/,}bin/apt-listbugs                    rPx,
+  /{usr/,}bin/apt-listchanges                 rPx,
+  /{usr/,}bin/apt-show-versions               rPx,
+  /{usr/,}bin/debtags                         rPx,
+  /{usr/,}bin/dpkg                            rPx,
+  /{usr/,}bin/dpkg-source                     rcx -> dpkg-source,
+  /{usr/,}bin/etckeeper                       rPx,
+  /{usr/,}bin/ps                              rPx,
+  /{usr/,}lib/needrestart/apt-pinvoke         rPx,
+  /usr/share/command-not-found/cnf-update-db  rPx,
 
   # Methods to use to download packages from the net
   /{usr/,}lib/apt/methods/*      rPx,
@@ -57,10 +59,19 @@ profile apt @{exec_path} flags=(attach_disconnected) {
   /var/log/apt/eipp.log.xz w,
   /var/log/apt/{term,history}.log w,
 
+  # For building the source after the download process is finished (apt-get source --compile)
+  /{usr/,}bin/dpkg-buildpackage rPUx,
+
   # For editing the sources.list file
   /etc/apt/sources.list rwk,
   /{usr/,}bin/sensible-editor rCx -> editor,
   /{usr/,}bin/vim.*           rCx -> editor,
+
+  # For changelogs
+        /tmp/apt-changelog-*/ w,
+  owner /tmp/apt-changelog-*/.apt-acquire-privs-test.* rw,
+        /tmp/apt-changelog-*/*.changelog w,
+  /{usr/,}bin/sensible-pager    rCx -> pager,
 
   /var/lib/dpkg/** r,
   /var/lib/dpkg/lock{,-frontend} rwk,
@@ -105,6 +116,29 @@ profile apt @{exec_path} flags=(attach_disconnected) {
     owner @{HOME}/.fzf/plugin/fzf.vim r,
 
     /etc/apt/sources.list rw,
+
+  }
+
+  profile pager {
+    include <abstractions/base>
+    include <abstractions/consoles>
+
+    capability dac_read_search,
+
+    /{usr/,}bin/                r,
+    /{usr/,}bin/sensible-pager mr,
+    /{usr/,}bin/{,ba,da}sh    rix,
+
+    /{usr/,}bin/which{,.debianutils}         rix,
+    /{usr/,}bin/less          rix,
+
+    owner @{HOME}/.less* rw,
+
+    owner /tmp/apt-changelog-*/ r,
+    owner /tmp/apt-changelog-*/*.changelog r,
+
+    # For shell pwd
+    /root/ r,
 
   }
 
