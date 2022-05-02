@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2021 Mikhail Morfikov
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -10,6 +11,7 @@ include <tunables/global>
 @{exec_path} += @{libexec}/gvfsd-ftp
 profile gvfsd-ftp @{exec_path} {
   include <abstractions/base>
+  include <abstractions/dconf>
   include <abstractions/freedesktop.org>
   include <abstractions/nameservice-strict>
 
@@ -21,11 +23,10 @@ profile gvfsd-ftp @{exec_path} {
 
   @{exec_path} mr,
 
-  include <abstractions/dconf>
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+
   owner @{run}/user/@{uid}/dconf/ rw,
   owner @{run}/user/@{uid}/dconf/user rw,
-
-  /usr/share/glib-2.0/schemas/gschemas.compiled r,
 
   include if exists <local/gvfsd-ftp>
 }
