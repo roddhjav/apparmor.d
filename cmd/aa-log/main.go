@@ -6,8 +6,10 @@ package main
 
 import (
 	"bufio"
+	"encoding/hex"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -80,7 +82,7 @@ func removeDuplicateLog(logs []string) []string {
 }
 
 // NewApparmorLogs return a new ApparmorLogs list of map from a log file
-func NewApparmorLogs(file *os.File, profile string) AppArmorLogs {
+func NewApparmorLogs(file io.Reader, profile string) AppArmorLogs {
 	log := ""
 	exp := "apparmor=(\"DENIED\"|\"ALLOWED\"|\"AUDIT\")"
 	if profile != "" {
@@ -201,7 +203,7 @@ func aaLog(path string, profile string) error {
 func init() {
 	flag.BoolVar(&help, "h", false, "Show this help message and exit.")
 	flag.StringVar(&path, "f", LogFile,
-		"Set a log`file` or a prefix to the default log file.")
+		"Set a log`file` or a suffix to the default log file.")
 }
 
 func main() {
