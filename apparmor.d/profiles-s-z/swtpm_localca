@@ -1,0 +1,33 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/swtpm_localca
+profile swtpm_localca @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/certtool    rix,
+  /{usr/,}bin/swtpm_cert  rix,
+
+  /etc/swtpm-localca.conf r,
+  /etc/swtpm-localca.options r,
+
+  /var/log/swtpm/libvirt/qemu/*-swtpm.log  w,
+
+  /var/lib/swtpm-localca/*.pem r,
+  /var/lib/swtpm-localca/.lock.swtpm-localca rwk,
+  /var/lib/swtpm-localca/certserial rw,
+
+  /tmp/swtpm_setup.certs.*/*.cert rw,
+
+  @{run}/libvirt/qemu/swtpm/*.sock w,
+
+  include if exists <local/swtpm_localca>
+}
