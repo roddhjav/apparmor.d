@@ -40,7 +40,10 @@ type AppArmorLog map[string]string
 // AppArmorLogs describes all apparmor log entries
 type AppArmorLogs []AppArmorLog
 
-var quoted bool
+var (
+	quoted bool
+	isHexa = regexp.MustCompile("^[0-9A-Fa-f]+$")
+)
 
 func splitQuoted(r rune) bool {
 	if r == '"' {
@@ -52,6 +55,14 @@ func splitQuoted(r rune) bool {
 func toQuote(str string) string {
 	if strings.Contains(str, " ") {
 		return `"` + str + `"`
+	}
+	return str
+}
+
+func decodeHex(str string) string {
+	if isHexa.MatchString(str) {
+		bs, _ := hex.DecodeString(str)
+		return string(bs)
 	}
 	return str
 }
@@ -112,6 +123,10 @@ func NewApparmorLogs(file *os.File, profile string) AppArmorLogs {
 			if len(kv) >= 2 {
 				aa[kv[0]] = strings.Trim(kv[1], `"`)
 			}
+		}
+		aa["profile"] = decodeHex(aa["profile"])
+		if name, ok := aa["name"]; ok {
+			aa["name"] = decodeHex(name)
 		}
 		aaLogs = append(aaLogs, aa)
 	}
