@@ -3,6 +3,11 @@
 # Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
+set -eu
+
+DISTRIBUTION="$(lsb_release --id --short)"
+readonly DISTRIBUTION="${DISTRIBUTION,,}"
+
 _set_complain() {
 	local path="$1"
 	[[ -d "$path" ]] && return
@@ -25,12 +30,15 @@ _install_tunables() {
 	for path in apparmor.d/tunables/*; do
 		install -Dm0644 "$path" "/etc/apparmor.d/tunables/$(basename "$path")"
 	done
+	if [[ "$DISTRIBUTION" != "arch" ]]; then
+		sed -i -e '/Archlinux/d' /etc/apparmor.d/tunables/extend
+		sed -i -e '/etc/d' /etc/apparmor.d/tunables/global
+	fi
 }
 
 _reload_apparmor() {
 	systemctl restart apparmor || true
 	systemctl status apparmor
-	return $?
 }
 
 pick() {
@@ -41,7 +49,6 @@ pick() {
 			[[ "$COMPLAIN" == 1 ]] && _set_complain "/etc/apparmor.d/$profile"
 		fi
 	done
-	return $?
 }
 
 # Print help message
@@ -59,7 +66,7 @@ main() {
 	local opts err
 	small_arg="ch"
 	long_arg="complain,help"
-	opts="$(getopt -o $small_arg -l $long_arg -n "$PROGRAM" -- "$@")"
+	opts="$(getopt -o $small_arg -l $long_arg -n "pick" -- "$@")"
 	err=$?
 	eval set -- "$opts"
 	while true; do case $1 in
@@ -72,7 +79,6 @@ main() {
 	_install_abstractions
 	_install_tunables
 	pick "$@" && _reload_apparmor
-	return $?
 }
 
 COMPLAIN=0
