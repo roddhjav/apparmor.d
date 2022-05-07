@@ -1,17 +1,19 @@
 # apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2020 krathalan https://git.sr.ht/~krathalan/apparmor-profiles/
-#               2021 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2021-2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-3.0-only
 
 abi <abi/3.0>,
+
 include <tunables/global>
 
 @{exec_path} = /{usr/,}lib/systemd/systemd-resolved
-profile systemd-resolved @{exec_path} {
+profile systemd-resolved @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/dbus-strict>
   include <abstractions/nameservice-strict>
   include <abstractions/p11-kit>
   include <abstractions/ssl_certs>
+  include <abstractions/systemd-common>
 
   capability net_bind_service,
   capability net_raw,
@@ -28,20 +30,13 @@ profile systemd-resolved @{exec_path} {
 
   @{exec_path} mr,
 
-  # Runtime directories
-  /{,var/}run/systemd/netif/links/* r,
-  /{,var/}run/systemd/resolve/{,**} rw,
-
-  # Config
   /etc/systemd/resolved.conf r,
   /etc/systemd/resolved.conf.d/{,*} r,
 
-  # Proc
-  owner @{PROC}/*/stat r,
-  @{PROC}/cmdline r,
-  @{PROC}/sys/kernel/hostname r,
-  @{PROC}/sys/kernel/osrelease r,
+  owner @{run}/systemd/journal/socket w,
+  owner @{run}/systemd/notify rw,
+        @{run}/systemd/netif/links/* r,
+        @{run}/systemd/resolve/{,**} rw,
 
-  # System access
-  @{sys}/firmware/efi/efivars/SecureBoot-@{uuid} r,
+  include if exists <local/systemd-timesyncd>
 }
