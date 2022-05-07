@@ -1,6 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2019-2021 Mikhail Morfikov
-#               2021 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2019-2022 Mikhail Morfikov
+# Copyright (C) 2021-2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -8,13 +8,11 @@ abi <abi/3.0>,
 include <tunables/global>
 
 @{exec_path} = /{usr/,}lib/systemd/systemd-timesyncd
-profile systemd-timesyncd @{exec_path} {
+profile systemd-timesyncd @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/systemd-common>
   include <abstractions/nameservice-strict>
-
-  network inet dgram,
-  network inet6 dgram,
+  include <abstractions/systemd-common>
+  include <abstractions/dbus-strict>
 
   capability sys_time,
 
@@ -29,6 +27,8 @@ profile systemd-timesyncd @{exec_path} {
 
   owner /var/lib/systemd/timesync/clock rw,
 
+  owner @{run}/systemd/journal/socket w,
+  owner @{run}/systemd/notify rw,
   owner @{run}/systemd/timesync/synchronized rw,
         @{run}/systemd/netif/state r,
         @{run}/resolvconf/*.conf r,

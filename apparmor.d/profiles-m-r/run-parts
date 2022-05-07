@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2019-2021 Mikhail Morfikov
+# Copyright (C) 2019-2022 Mikhail Morfikov
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -67,51 +68,47 @@ profile run-parts @{exec_path} {
     /etc/kernel/{postinst,postrm,preinst,prerm}.d/* r,
 
     /{usr/,}bin/{,ba,da}sh rix,
-
     /{usr/,}bin/{,e}grep   rix,
-    /{usr/,}bin/rm         rix,
-    /{usr/,}bin/rmdir      rix,
-    /{usr/,}bin/dirname    rix,
-    /{usr/,}bin/sed        rix,
-    /{usr/,}bin/gawk       rix,
-    /{usr/,}bin/sort       rix,
-    /{usr/,}bin/cut        rix,
-    /{usr/,}bin/tr         rix,
-    /{usr/,}bin/mv         rix,
     /{usr/,}bin/cat        rix,
     /{usr/,}bin/chmod      rix,
+    /{usr/,}bin/cut        rix,
+    /{usr/,}bin/dirname    rix,
+    /{usr/,}bin/gawk       rix,
+    /{usr/,}bin/kmod       rix,
+    /{usr/,}bin/mv         rix,
+    /{usr/,}bin/rm         rix,
+    /{usr/,}bin/rmdir      rix,
+    /{usr/,}bin/sed        rix,
+    /{usr/,}bin/sort       rix,
+    /{usr/,}bin/touch      rix,
+    /{usr/,}bin/tr         rix,
     /{usr/,}bin/uname      rix,
     /{usr/,}bin/which{,.debianutils}      rix,
 
-    /{usr/,}bin/kmod       rix,
-
-    /{usr/,}bin/dpkg                     rPx -> child-dpkg,
-
-    /{usr/,}sbin/dkms                    rPx,
-    /{usr/,}sbin/update-initramfs        rPx,
-    /{usr/,}lib/dkms/dkms_autoinstaller  rPx,
-
     /{usr/,}bin/apt-config               rPx,
-
-    # (#FIXME#)
+    /{usr/,}bin/dpkg                     rPx -> child-dpkg,
+    /{usr/,}bin/systemd-detect-virt      rPx,
+    /{usr/,}lib/dkms/dkms_autoinstaller  rPx,
+    /{usr/,}sbin/dkms                    rPx,
     /{usr/,}sbin/update-grub             rPUx,
-    /{usr/,}bin/systemd-detect-virt      rPUx,
+    /{usr/,}sbin/update-initramfs        rPx,
+
+    /{usr/,}lib/modules/*/updates/ w,
+    /{usr/,}lib/modules/*/updates/dkms/ w,
 
     # For shell pwd
     / r,
     /boot/ r,
-
+  
     /etc/apt/apt.conf.d/ r,
     /etc/apt/apt.conf.d/01autoremove-kernels{,.dpkg-new} rw,
-
-    # For kmod
-    @{PROC}/cmdline r,
     /etc/modprobe.d/ r,
     /etc/modprobe.d/*.conf r,
-    /{usr/,}lib/modules/*/updates/ w,
-    /{usr/,}lib/modules/*/updates/dkms/ w,
+
+    @{run}/reboot-required.pkgs w,
 
     @{PROC}/devices r,
+    @{PROC}/cmdline r,
 
   }
 

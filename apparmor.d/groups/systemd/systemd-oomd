@@ -7,9 +7,10 @@ abi <abi/3.0>,
 include <tunables/global>
 
 @{exec_path} = /{usr/,}lib/systemd/systemd-oomd
-profile systemd-oomd @{exec_path} {
+profile systemd-oomd @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/systemd-common>
+  include <abstractions/dbus-strict>
 
   capability dac_override,
   capability kill,
@@ -18,7 +19,13 @@ profile systemd-oomd @{exec_path} {
 
   /etc/systemd/oomd.conf r,
 
+  owner @{run}/systemd/notify rw,
+  owner @{run}/systemd/journal/socket w,
+        @{run}/systemd/io.system.ManagedOOM rw,
+
   @{sys}/fs/cgroup/cgroup.controllers r,
+  @{sys}/fs/cgroup/memory.pressure r,
+  @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/memory.* r,
 
   @{PROC}/pressure/{cpu,io,memory} r,
 
