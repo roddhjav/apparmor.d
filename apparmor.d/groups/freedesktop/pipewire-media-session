@@ -29,27 +29,33 @@ profile pipewire-media-session @{exec_path} {
   /etc/pipewire/*.conf r,
   /etc/pipewire/media-session.d/*.conf r,
 
+  /var/lib/gdm/.local/state/pipewire/media-session.d/* rw,
+
   owner @{HOME}/.local/state/ rw,
   owner @{HOME}/.local/state/pipewire/{,**} rw,
   owner @{user_config_dirs}/pipewire/ rw,
   owner @{user_config_dirs}/pipewire/** rw,
   owner @{user_config_dirs}/pulse/ rw,
 
+  owner @{run}/user/@{uid}/bus rw,
+  owner @{run}/user/@{uid}/pipewire-[0-9]* rw,
+
   @{run}/udev/data/+sound:card[0-9]* r, # For sound
   @{run}/udev/data/c116:[0-9]* r,       # for ALSA
 
+  @{run}/systemd/users/@{uid} r,
+
   @{sys}/class/sound/ r,
   @{sys}/class/video4linux/ r,
-
   @{sys}/devices/**/sound/**/uevent r,
+  @{sys}/devices/pci[0-9]*/**/modalias r,
+  @{sys}/devices/pci[0-9]*/**/sound/**/pcm_class r,
   @{sys}/devices/pci[0-9]*/**/video4linux/video[0-9]*/uevent r,
   @{sys}/devices/system/node/ r,
   @{sys}/devices/system/node/node[0-9]*/meminfo r,
-  @{sys}/devices/pci[0-9]*/**/modalias r,
-
-  @{run}/systemd/users/@{uid} r,
 
   /dev/video[0-9]* rw,
+  /dev/snd/ r,
 
   include if exists <local/pipewire-media-session>
 }
