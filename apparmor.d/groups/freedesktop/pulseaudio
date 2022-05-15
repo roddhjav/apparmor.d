@@ -10,10 +10,12 @@ include <tunables/global>
 @{exec_path} = /{usr/,}bin/pulseaudio
 profile pulseaudio @{exec_path} {
   include <abstractions/base>
-  include <abstractions/consoles>
   include <abstractions/audio>
-  include <abstractions/dbus-strict>
+  include <abstractions/consoles>
   include <abstractions/dbus-session-strict>
+  include <abstractions/dbus-strict>
+  include <abstractions/dri-common>
+  include <abstractions/dri-enumerate>
   include <abstractions/nameservice-strict>
 
   ptrace (trace) peer=@{profile_name},
@@ -29,8 +31,9 @@ profile pulseaudio @{exec_path} {
 
   @{exec_path} mrix,
 
-  /{usr/,}lib/@{multiarch}/pulse/gconf-helper mrix,
   /{usr/,}lib{exec,}/pulse/gsettings-helper mrix,
+  /{usr/,}lib/@{multiarch}/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner mrix,
+  /{usr/,}lib/@{multiarch}/pulse/gconf-helper mrix,
 
   # PulseAudio files
   /usr/share/pulseaudio/{,**} r,
@@ -39,6 +42,8 @@ profile pulseaudio @{exec_path} {
   # PulseAudio home config files
   owner @{user_config_dirs}/pulse/{,**} rw,
   owner @{user_config_dirs}/dconf/user r,
+
+  owner @{user_cache_dirs}/gstreamer-1.0/registry.x86_64.bin r,
 
   # Needed when PulseAudio is started via the start-pulseaudio-x11 script
   owner @{HOME}/.Xauthority r,
@@ -80,6 +85,7 @@ profile pulseaudio @{exec_path} {
 
   owner @{PROC}/@{pids}/fd/ r,
   owner @{PROC}/@{pids}/stat r,
+  owner @{PROC}/@{pids}/cmdline r,
 
   # DBus
   dbus (send)

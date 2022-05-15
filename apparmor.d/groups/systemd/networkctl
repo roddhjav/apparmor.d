@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2020-2021 Mikhail Morfikov
+# Copyright (C) 2020-2022 Mikhail Morfikov
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -29,16 +30,12 @@ profile networkctl @{exec_path} flags=(complain) {
   /{usr/,}bin/less             rPx -> child-pager,
   /{usr/,}bin/more             rPx -> child-pager,
 
-  @{sys}/devices/**/net/**/uevent r,
+  /etc/udev/hwdb.bin r,
+  /var/lib/dbus/machine-id r,
+  /etc/machine-id r,
 
   @{run}/systemd/netif/links/[0-9]* r,
   @{run}/systemd/netif/state r,
-
-  owner @{PROC}/@{pid}/cgroup r,
-  owner @{PROC}/@{pid}/stat r,
-        @{PROC}/sys/kernel/random/boot_id r,
-
-  /etc/udev/hwdb.bin r,
 
   # To be able to read logs
   @{run}/log/ r,
@@ -48,8 +45,11 @@ profile networkctl @{exec_path} flags=(complain) {
   /{run,var}/log/journal/[0-9a-f]*/system.journal* r,
   /{run,var}/log/journal/[0-9a-f]*/system@[0-9a-f]*.journal* r,
 
-  /var/lib/dbus/machine-id r,
-  /etc/machine-id r,
+  @{sys}/devices/**/net/**/uevent r,
 
-  include if exists <local/networkctld>
+  owner @{PROC}/@{pid}/cgroup r,
+  owner @{PROC}/@{pid}/stat r,
+        @{PROC}/sys/kernel/random/boot_id r,
+
+  include if exists <local/networkctl>
 }
