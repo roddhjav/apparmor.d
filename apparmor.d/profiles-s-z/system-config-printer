@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2020-2021 Mikhail Morfikov
+# Copyright (C) 2020-2022 Mikhail Morfikov
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -10,13 +11,14 @@ include <tunables/global>
 @{exec_path} += /usr/share/system-config-printer/system-config-printer.py
 profile system-config-printer @{exec_path} flags=(complain) {
   include <abstractions/base>
-  include <abstractions/python>
-  include <abstractions/nameservice-strict>
-  include <abstractions/gtk>
-  include <abstractions/fonts>
+  include <abstractions/dconf>
   include <abstractions/fontconfig-cache-read>
+  include <abstractions/fonts>
   include <abstractions/freedesktop.org>
+  include <abstractions/gtk>
+  include <abstractions/nameservice-strict>
   include <abstractions/openssl>
+  include <abstractions/python>
 
   network inet stream,
   network inet6 stream,
@@ -25,30 +27,23 @@ profile system-config-printer @{exec_path} flags=(complain) {
 
   /{usr/,}bin/{,ba,da}sh     rix,
   /{usr/,}bin/python3.[0-9]* r,
-
-  /{usr/,}lib/cups/*/* rCx -> cups,
-
-  # For HP printers
-  /usr/share/hplip/query.py rPUx,
-
-  /usr/share/system-config-printer/{,**} r,
+  /{usr/,}lib/cups/*/*       rPUx,
+  /usr/share/hplip/query.py  rPUx,
 
   /usr/share/cups/data/testprint r,
-
   /usr/share/glib-2.0/schemas/gschemas.compiled r,
-
-  /etc/fstab r,
+  /usr/share/system-config-printer/{,**} r,
 
   /etc/cups/cupsd.conf r,
-
   /etc/cupshelpers/preferreddrivers.xml r,
-
+  /etc/fstab r,
   /etc/papersize r,
 
-  # To set the default printer
   owner @{HOME}/.cups/ rw,
   owner @{HOME}/.cups/lpoptions rw,
 
+  owner @{run}/user/@{uid}/dconf/ rw,
+  owner @{run}/user/@{uid}/dconf/user rw,
   owner /tmp/* rw,
 
   owner @{PROC}/@{pid}/fd/ r,
@@ -56,25 +51,7 @@ profile system-config-printer @{exec_path} flags=(complain) {
   owner @{PROC}/@{pid}/mounts r,
   owner @{PROC}/@{pid}/mountinfo r,
 
-  include <abstractions/dconf>
-  owner @{run}/user/@{uid}/dconf/ rw,
-  owner @{run}/user/@{uid}/dconf/user rw,
-
-  # file_inherit
   owner /dev/tty[0-9]* rw,
-
-
-  profile cups flags=(complain) {
-    include <abstractions/base>
-
-    network inet dgram,
-    network inet6 dgram,
-
-    /{usr/,}lib/cups/*/* mr,
-
-    /etc/cups/snmp.conf r,
-
-  }
 
   include if exists <local/system-config-printer>
 }
