@@ -7,14 +7,16 @@ abi <abi/3.0>,
 include <tunables/global>
 
 @{exec_path} = /{usr/,}lib/systemd/systemd-logind
-profile systemd-logind @{exec_path} flags=(complain) {
+profile systemd-logind @{exec_path} flags=(attach_disconnected,complain) {
   include <abstractions/base>
+  include <abstractions/dbus-strict>
   include <abstractions/disks-write>
   include <abstractions/devices-usb>
   include <abstractions/systemd-common>
 
   capability chown,
   capability dac_override,
+  capability dac_read_search,
   capability fowner,
   capability sys_admin,
   capability sys_tty_config,
@@ -42,6 +44,10 @@ profile systemd-logind @{exec_path} flags=(complain) {
   @{run}/udev/tags/uaccess/ r,
   @{run}/udev/static_node-tags/uaccess/ r,
 
+  @{run}/udev/data/+backlight:intel_backlight r,
+  @{run}/udev/data/+drm:card[0-9]-* r, # for screen outputs
+  @{run}/udev/data/+input* r,          # for mouse, keyboard, touchpad
+  @{run}/udev/data/+pci* r,
   @{run}/udev/data/c10:[0-9]* r,
   @{run}/udev/data/c116:[0-9]* r, # for ALSA
   @{run}/udev/data/c13:[0-9]* r,  # for /dev/input/*
@@ -52,46 +58,35 @@ profile systemd-logind @{exec_path} flags=(complain) {
   @{run}/udev/data/c50[0-9]:[0-9]* r,
   @{run}/udev/data/c51[0-9]:[0-9]* r,
 
-  @{run}/udev/data/+input* r,          # for mouse, keyboard, touchpad
-  @{run}/udev/data/+drm:card[0-9]-* r, # for screen outputs
-  @{run}/udev/data/+backlight:intel_backlight r,
-  @{run}/udev/data/+pci* r,
-
+  @{run}/systemd/inhibit/ rw,
+  @{run}/systemd/inhibit/.#* rw,
+  @{run}/systemd/inhibit/[0-9]*{,.ref} rw,
   @{run}/systemd/seats/ rw,
   @{run}/systemd/seats/.#seat* rw,
   @{run}/systemd/seats/seat[0-9]* rw,
-  @{run}/systemd/inhibit/ rw,
-  @{run}/systemd/inhibit/[0-9]*{,.ref} rw,
-  @{run}/systemd/inhibit/.#* rw,
   @{run}/systemd/sessions/ rw,
-  @{run}/systemd/sessions/[0-9]*{,.ref} rw,
   @{run}/systemd/sessions/.#* rw,
-  @{run}/systemd/users/ rw,
-  @{run}/systemd/users/@{uid} rw,
-  @{run}/systemd/users/.#* rw,
+  @{run}/systemd/sessions/[0-9]*{,.ref} rw,
   @{run}/systemd/userdb/ r,
+  @{run}/systemd/users/ rw,
+  @{run}/systemd/users/.#* rw,
+  @{run}/systemd/users/@{uid} rw,
 
-  /dev/input/event[0-9]* rw,  # Input devices (keyboard, mouse, etc)
-  /dev/dri/card[0-9]* rw,
-  /dev/tty[0-9]* rw,
-  /dev/nvme* r,
-  /dev/shm/{,**/} r,
-  /dev/mqueue/ r,
-
-  @{sys}/module/vt/parameters/default_utf8 r,
-  @{sys}/fs/cgroup/memory/memory.limit_in_bytes r,
-  @{sys}/fs/cgroup/memory.max r,
-  @{sys}/devices/virtual/tty/tty[0-9]*/active r,
-  @{sys}/devices/**/{uevent,enabled,status} r,
-  @{sys}/devices/**/brightness rw,
+  @{run}/systemd/journal/socket rw,
+  @{run}/systemd/notify rw,
 
   @{sys}/class/drm/ r,
-  @{sys}/power/{state,resume_offset,resume,disk} r,
-
-  @{sys}/firmware/efi/efivars/OsIndicationsSupported-@{uuid} r,
-  @{sys}/firmware/efi/efivars/OsIndications-@{uuid} r,
+  @{sys}/devices/**/{uevent,enabled,status} r,
+  @{sys}/devices/**/brightness rw,
+  @{sys}/devices/virtual/tty/tty[0-9]*/active r,
   @{sys}/firmware/efi/efivars/LoaderEntries-@{uuid} r,
   @{sys}/firmware/efi/efivars/LoaderFeatures-@{uuid} r,
+  @{sys}/firmware/efi/efivars/OsIndications-@{uuid} r,
+  @{sys}/firmware/efi/efivars/OsIndicationsSupported-@{uuid} r,
+  @{sys}/fs/cgroup/memory.max r,
+  @{sys}/fs/cgroup/memory/memory.limit_in_bytes r,
+  @{sys}/module/vt/parameters/default_utf8 r,
+  @{sys}/power/{state,resume_offset,resume,disk} r,
 
   @{PROC}/@{pid}/cgroup r,
   @{PROC}/@{pid}/comm r,
@@ -102,6 +97,13 @@ profile systemd-logind @{exec_path} flags=(complain) {
   @{PROC}/1/cmdline r,
   @{PROC}/swaps r,
   @{PROC}/sysvipc/{shm,sem,msg} r,
+
+  /dev/dri/card[0-9]* rw,
+  /dev/input/event[0-9]* rw,  # Input devices (keyboard, mouse, etc)
+  /dev/mqueue/ r,
+  /dev/nvme* r,
+  /dev/shm/{,**/} rw,
+  /dev/tty[0-9]* rw,
 
   include if exists <local/systemd-logind>
 }

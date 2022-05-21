@@ -26,15 +26,21 @@ profile gsd-xsettings @{exec_path} {
 
   @{exec_path} mr,
 
+  /{usr/,}bin/cat                   rix,
+  /{usr/,}bin/which{,.debianutils}  rix,
+
+  /{usr/,}bin/run-parts      rCx -> run-parts,
   /{usr/,}bin/busctl         rPx,
   /{usr/,}bin/pactl          rPx,
   /{usr/,}bin/xrdb           rPx,
   /{usr/,}lib/ibus/ibus-x11  rPx,
+  @{libexec}/ibus-x11        rPx,
 
   /usr/share/dconf/profile/gdm r,
   /usr/share/glib-2.0/schemas/gschemas.compiled r,
   /usr/share/gdm/greeter-dconf-defaults r,
 
+  /etc/X11/Xsession.options r,
   /etc/xdg/Xwayland-session.d/ r,
   /etc/xdg/Xwayland-session.d/* rix,
 
@@ -47,10 +53,22 @@ profile gsd-xsettings @{exec_path} {
   owner @{run}/user/@{uid}/gdm/Xauthority r,
   owner @{run}/user/@{uid}/.mutter-Xwaylandauth.[a-zA-z0-9]* r,
 
+  owner @{run}/systemd/users/@{uid}/ r,
+        @{run}/systemd/sessions/[0-9]* r,
+
   owner @{PROC}/@{pid}/fd/ r,
 
   /dev/tty rw,
   /dev/tty[0-9]* rw,
+
+  profile run-parts {
+    include <abstractions/base>
+
+    /{usr/,}bin/run-parts mr,
+
+    /etc/X11/Xresources/ r,
+
+  }
 
   include if exists <local/gsd-xsettings>
 }

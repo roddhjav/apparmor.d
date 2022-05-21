@@ -11,8 +11,8 @@ include <tunables/global>
 @{exec_path} += /{usr/,}lib/systemd/systemd-udevd
 profile systemd-udevd @{exec_path} flags=(attach_disconnected complain) {
   include <abstractions/base>
-  include <abstractions/nameservice-strict>
   include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
   include <abstractions/systemd-common>
 
   capability chown,
@@ -49,13 +49,13 @@ profile systemd-udevd @{exec_path} flags=(attach_disconnected complain) {
 
   /{usr/,}{s,}bin/*             rPUx,
 
-  /{usr/,}lib/udev/*             rPUx,
-  /{usr/,}lib/systemd/systemd-*    rPx,
-  /{usr/,}lib/crda/*              rPUx,
-  /{usr/,}lib/gdm-runtime-config   rPx,
-  /{usr,/}lib/pm-utils/power.d/*   PUx,
-
-  /usr/share/hplip/config_usb_printer.py rPUx,
+  /{usr,/}lib/pm-utils/power.d/*          rPUx,
+  /{usr,/}lib/snapd/snap-device-helper     rPx,  # TODO: but later
+  /{usr/,}lib/crda/*                      rPUx,
+  /{usr/,}lib/gdm-runtime-config           rPx,
+  /{usr/,}lib/systemd/systemd-*            rPx,
+  /{usr/,}lib/udev/*                      rPUx,
+  /usr/share/hplip/config_usb_printer.py  rPUx,
 
   /etc/console-setup/*.sh       rPUx,
 
@@ -83,11 +83,9 @@ profile systemd-udevd @{exec_path} flags=(attach_disconnected complain) {
   @{run}/udev/** rw,
 
   @{run}/systemd/seats/seat[0-9]* r,
+  @{run}/systemd/notify rw,
 
   @{sys}/** rw,
-
-  /dev/ rw,
-  /dev/** rwk,
 
   owner @{PROC}/@{pid}/loginuid r,
   owner @{PROC}/@{pid}/oom_score_adj rw,
@@ -95,8 +93,8 @@ profile systemd-udevd @{exec_path} flags=(attach_disconnected complain) {
         @{PROC}/@{pids}/cgroup r,
         @{PROC}/devices r,
 
-  # file_inherit
-  owner @{HOME}/.xsession-errors w,
+  /dev/ rw,
+  /dev/** rwk,
 
   deny /apparmor/.null rw,
 

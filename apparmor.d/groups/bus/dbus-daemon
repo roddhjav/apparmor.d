@@ -1,6 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2020-2021 Mikhail Morfikov
-#               2021 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2020-2022 Mikhail Morfikov
+# Copyright (C) 2021-2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -13,6 +13,7 @@ profile dbus-daemon @{exec_path} flags=(attach_disconnected) {
   include <abstractions/consoles>
   include <abstractions/nameservice-strict>
 
+  capability audit_write,
   capability setgid,
   capability setuid,
   capability sys_resource,
@@ -45,26 +46,6 @@ profile dbus-daemon @{exec_path} flags=(attach_disconnected) {
   /usr/share/dbus-1/{,**} r,
   /usr/share/defaults/**.conf r,
 
-  owner @{user_share_dirs}/dbus-1/{,**} r,
-        @{user_share_dirs}/icc/{,edid-*} r,
-
-  owner @{PROC}/@{pid}/fd/ r,
-  owner @{PROC}/@{pid}/mounts r,
-        @{PROC}/@{pid}/oom_score_adj rw,
-        @{PROC}/@{pids}/cmdline r,
-        @{PROC}/1/environ r,
-        @{PROC}/cmdline r,
-        @{PROC}/sys/kernel/osrelease r,
-
-  @{sys}/module/apparmor/parameters/enabled r,
-
-        @{run}/systemd/inhibit/[0-9]*.ref rw,
-        @{run}/systemd/sessions/[0-9]*.ref rw,
-        @{run}/systemd/users/@{uid} r,
-  owner @{run}/user/@{uid}/at-spi/bus{,_[0-9]*} rw,
-  owner @{run}/user/@{uid}/dbus-1/ rw,
-  owner @{run}/user/@{uid}/dbus-1/services/ rw,
-
   # Extra rules for GDM 
   /var/lib/gdm/.local/share/icc/ r,
   /var/lib/gdm/.local/share/icc/edid-*.icc r,
@@ -73,12 +54,39 @@ profile dbus-daemon @{exec_path} flags=(attach_disconnected) {
   /var/lib/flatpak/exports/share/dbus-1/{,**} r,
   /var/lib/flatpak/app/**/export/share/dbus-1/services/{,**} r,
 
-  /dev/dri/card[0-9]* rw,
-  /dev/input/event[0-9]* rw,
+  # Extra rules for Snap
+  /var/lib/snapd/dbus-1/services/ r,
+  /var/lib/snapd/dbus-1/system-services/ r,
+
+  owner @{user_share_dirs}/dbus-1/{,**} r,
+        @{user_share_dirs}/icc/{,edid-*} r,
 
   owner /tmp/dbus-[0-9a-zA-Z]* rw,
 
-  # file_inherit
+  owner @{run}/user/@{uid}/bus w,
+  owner @{run}/user/@{uid}/at-spi/bus{,_[0-9]*} rw,
+  owner @{run}/user/@{uid}/dbus-1/ rw,
+  owner @{run}/user/@{uid}/dbus-1/services/ rw,
+        @{run}/systemd/inhibit/[0-9]*.ref rw,
+        @{run}/systemd/sessions/[0-9]*.ref rw,
+        @{run}/systemd/userdb/io.systemd.DynamicUser w,
+        @{run}/systemd/users/@{uid} r,
+
+  @{sys}/kernel/security/apparmor/.access rw,
+  @{sys}/kernel/security/apparmor/features/dbus/mask r,
+  @{sys}/module/apparmor/parameters/enabled r,
+
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/mounts r,
+        @{PROC}/@{pids}/attr/apparmor/current r,
+        @{PROC}/@{pids}/oom_score_adj rw,
+        @{PROC}/@{pids}/cmdline r,
+        @{PROC}/1/environ r,
+        @{PROC}/cmdline r,
+        @{PROC}/sys/kernel/osrelease r,
+
+  /dev/dri/card[0-9]* rw,
+  /dev/input/event[0-9]* rw,
   /dev/tty[0-9]* rw,
 
   include if exists <local/dbus-daemon>
