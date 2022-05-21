@@ -64,25 +64,19 @@ configure() {
 			;;
 
 		debian|ubuntu)
+			if [[ "$DISTRIBUTION" == "debian" ]]; then
+				_msg "$DISTRIBUTION does not have etc tunable."
+				sed -i -e '/etc/d' "$ROOT/apparmor.d/tunables/global"
+
+				_msg "$DISTRIBUTION does not support abi 3.0 yet."
+				find "$ROOT/apparmor.d" -type f -exec sed -e '/abi /d' -i {} \;
+			fi
+
 			_msg "Configure libexec."
 			sed -i -e '/Archlinux/d' "$ROOT/apparmor.d/tunables/extend"
 
-			_msg "$DISTRIBUTION does not support abi 3.0 yet."
-			find "$ROOT/apparmor.d" -type f -exec sed -e '/abi /d' -i {} \;
-
-			_msg "$DISTRIBUTION does not have etc tunable."
-			sed -i -e '/etc/d' "$ROOT/apparmor.d/tunables/global"
-
 			_msg "Displace overwritten files."
 			_displace_files apparmor.d/tunables/global apparmor.d/tunables/xdg-user-dirs
-
-			if [[ "$DISTRIBUTION" == "ubuntu" ]]; then
-				_msg "Ubuntu LTS compatibility."
-				echo "@{run}=/run/ /var/run/" > "$ROOT/apparmor.d/tunables/run"
-				sed -i -e '/capability bpf/d' -e '/capability perfmon/d' \
-					"$ROOT/apparmor.d/libvirtd"
-				cp -a dists/ubuntu/abstractions/* $ROOT/apparmor.d/abstractions
-			fi
 
 			;;
 
