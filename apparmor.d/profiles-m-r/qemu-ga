@@ -1,0 +1,20 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/qemu-ga
+profile qemu-ga @{exec_path} {
+  include <abstractions/base>
+
+  @{exec_path} mr,
+
+  owner @{run}/qga.state* rw,
+
+  /dev/vport[0-9]*p[0-9]* rw,
+
+  include if exists <local/qemu-ga>
+}
