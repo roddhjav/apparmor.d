@@ -7,30 +7,43 @@ abi <abi/3.0>,
 include <tunables/global>
 
 @{exec_path} = /{usr/,}bin/unattended-upgrade
-profile unattended-upgrade @{exec_path} {
+profile unattended-upgrade @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/nameservice-strict>
+  include <abstractions/openssl>
   include <abstractions/python>
+  include <abstractions/consoles>
 
   capability chown,
   capability dac_override,
   capability dac_read_search,
+  capability fsetid,
   capability kill,
+  capability net_admin,
   capability setgid,
   capability setuid,
   capability sys_nice,
+
+  network netlink raw,
 
   @{exec_path} mr,
 
   /{usr/,}bin/ r,
 
-  /{usr/,}{s,}bin/on_ac_power       rPx,
-  /{usr/,}bin/dpkg                  rPx,
-  /{usr/,}bin/lsb_release           rPx -> lsb_release,
-  /{usr/,}bin/python3.[0-9]*        rix,
-  /{usr/,}bin/uname                 rix,
-  /{usr/,}lib/apt/methods/http{,s}  rPx,
+  /{usr/,}{s,}bin/dpkg-preconfigure    rPx,
+  /{usr/,}{s,}bin/on_ac_power          rPx,
+  /{usr/,}{s,}bin/sendmail             rPUx,
+  /{usr/,}bin/{,ba,da}sh               rix,
+  /{usr/,}bin/apt-listchanges          rPx,
+  /{usr/,}bin/dpkg                     rPx,
+  /{usr/,}bin/etckeeper                rPx,
+  /{usr/,}bin/lsb_release              rPx -> lsb_release,
+  /{usr/,}bin/python3.[0-9]*           rix,
+  /{usr/,}bin/uname                    rix,
+  /{usr/,}lib/apt/methods/http{,s}     rPx,
+  /{usr/,}lib/needrestart/apt-pinvoke  rPx,
 
+  /usr/share/distro-info/* r,
   /usr/share/dpkg/*table r,
 
   /etc/apt/*.list r,
@@ -50,11 +63,16 @@ profile unattended-upgrade @{exec_path} {
   /var/lib/dpkg/status r,
   /var/lib/dpkg/updates/ r,
 
-  /var/cache/apt/archives/{,**} rw,
-  /var/cache/apt/pkgcache.bin r,
+  /var/cache/apt/{,**} rwk,
+  /var/lib/apt/extended_states{,.*} rw,
+  /var/log/apt/{term,history}.log w,
+  /var/log/apt/eipp.log.xz w,
 
-  owner @{run}/unattended-upgrades.pid rw,
   owner @{run}/unattended-upgrades.lock rwk,
+  owner @{run}/unattended-upgrades.pid rw,
+  owner @{run}/unattended-upgrades.progress rw,
+        @{run}/systemd/inhibit/[0-9]*.ref rw,
+        @{run}/resolvconf/resolv.conf r,
 
   owner /tmp/#[0-9]* rw,
 
