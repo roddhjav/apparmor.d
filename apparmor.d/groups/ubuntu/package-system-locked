@@ -1,0 +1,31 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}lib/update-notifier/package-system-locked
+profile package-system-locked @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+
+  capability dac_read_search,
+  capability syslog,
+
+  ptrace (read),
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/{,ba,da}sh  rix,
+  /{usr/,}bin/fuser       rix,
+
+  owner @{PROC}/@{pid}/mounts r,
+  owner @{PROC}/@{pid}/net/unix r,
+        @{PROC}/ r,
+        @{PROC}/@{pids}/fd/ r,
+        @{PROC}/@{pids}/maps r,
+        @{PROC}/swaps r,
+
+  include if exists <local/package-system-locked>
+}
