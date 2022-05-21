@@ -1,0 +1,34 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}lib/systemd/systemd-vconsole-setup
+profile systemd-vconsole-setup @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/systemd-common>
+
+  capability sys_ptrace,
+  capability sys_resource,
+  capability sys_tty_config,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/loadkeys  rix,
+
+  / r,
+
+  /usr/share/kbd/keymaps/{,**} r,
+
+  /etc/vconsole.conf r,
+
+  @{sys}/module/vt/parameters/default_utf8 w,
+
+  /dev/tty[0-9]* rw,
+
+  include if exists <local/systemd-vconsole-setup>
+}
