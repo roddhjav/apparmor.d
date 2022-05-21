@@ -1,0 +1,47 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /usr/share/gnome-shell/extensions/ding@rastersoft.com/ding.js
+profile gnome-extension-ding @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/dconf>
+  include <abstractions/freedesktop.org>
+  include <abstractions/fonts>
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/env          rix,
+  /{usr/,}bin/gjs-console  rix,
+  /{usr/,}bin/nautilus     rPx,
+
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+  /usr/share/gnome-shell/extensions/ding@rastersoft.com/* r,
+  /usr/share/themes/{,**} r,
+  /usr/share/thumbnailers/*.thumbnailer r,
+  /usr/share/X11/{,**} r,
+
+  /var/lib/snapd/desktop/icons/{,**} r,
+
+  owner @{HOME}/@{XDG_TEMPLATES_DIR}/ r,
+  owner @{HOME}/@{XDG_DESKTOP_DIR}/ r,
+
+  owner @{user_share_dirs}/nautilus/scripts/ r,
+
+  owner @{user_share_dirs}/gvfs-metadata/home r,
+  owner @{user_share_dirs}/gvfs-metadata/home-*.log r,
+
+  owner @{run}/user/@{uid}/bus rw,
+  owner @{run}/user/@{uid}/dconf/ rw,
+  owner @{run}/user/@{uid}/dconf/user rw,
+
+  owner @{PROC}/@{pid}/mounts r,
+  owner @{PROC}/@{pid}/stat r,
+  owner @{PROC}/@{pid}/task/@{tid}/stat r,
+
+  include if exists <local/gnome-extension-ding>
+}
