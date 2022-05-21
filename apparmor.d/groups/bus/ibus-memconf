@@ -1,0 +1,22 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{libexec}/ibus-memconf
+profile ibus-memconf @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+
+  @{exec_path} mr,
+
+  /var/lib/gdm{3,}/.config/ibus/bus/ r,
+  /var/lib/gdm{3,}/.config/ibus/bus/[0-9a-f]*-unix-[0-9]* r,
+
+  owner @{user_config_dirs}/ibus/bus/{,[0-9a-f]*-unix-wayland-[0-9]} r,
+
+  include if exists <local/ibus-memconf>
+}
