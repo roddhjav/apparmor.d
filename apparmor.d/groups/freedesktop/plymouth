@@ -1,0 +1,20 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/plymouth
+profile plymouth @{exec_path} {
+  include <abstractions/base>
+
+  unix (send, receive, connect) type=stream peer=(addr="@/org/freedesktop/plymouthd"),
+
+  @{exec_path} mr,
+
+  @{PROC}/cmdline r,
+
+  include if exists <local/plymouth>
+}
