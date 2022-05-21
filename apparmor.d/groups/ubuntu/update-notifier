@@ -1,0 +1,63 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/update-notifier
+profile update-notifier @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/apt-common>
+  include <abstractions/dconf>
+  include <abstractions/fonts>
+  include <abstractions/nameservice-strict>
+  include <abstractions/openssl>
+  include <abstractions/python>
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/dpkg                                    rPx,
+  /{usr/,}bin/ionice                                  rix,
+  /{usr/,}bin/ischroot                                rix,
+  /{usr/,}bin/lsb_release                             rPx -> lsb_release,
+  /{usr/,}bin/nice                                    rix,
+  /{usr/,}bin/pkexec                                  rPx,
+  /{usr/,}bin/systemctl                               rPx -> child-systemctl,
+  /{usr/,}lib/update-notifier/apt_check.py            rix,
+  /{usr/,}lib/update-notifier/livepatch-notification  rPx,
+  /{usr/,}lib/update-notifier/package-system-locked   rPx,
+  /usr/share/apport/apport-checkreports               rPx,
+
+  /usr/share/applications/{,*.desktop} r,
+  /usr/share/dpkg/cputable r,
+  /usr/share/dpkg/tupletable r,
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+  /usr/share/icons/{,**} r,
+  /usr/share/themes/{,**} r,
+  /usr/share/ubuntu/applications/ r,
+  /usr/share/X11/{,**} r,
+
+  /etc/machine-id r,
+  /etc/gnome/defaults.list r,
+
+  /var/lib/update-notifier/user.d/ r,
+  /var/lib/snapd/desktop/applications/{,/mimeinfo.cache} r,
+
+  owner @{run}/user/@{uid}/dconf/ rw,
+  owner @{run}/user/@{uid}/dconf/user rw,
+  owner @{run}/user/@{uid}/update-notifier.pid rwk,
+  owner @{run}/user/@{uid}/wayland-[0-9]* rw,
+
+  owner /tmp/#[0-9]* rw,
+
+  @{run}/systemd/userdb/io.systemd.DynamicUser w,
+  @{run}/systemd/userdb/ r,
+
+  owner @{PROC}/@{pid}/fd/ r,
+        @{PROC}/@{pids}/mountinfo r,
+        @{PROC}/sys/kernel/random/boot_id r,
+
+  include if exists <local/update-notifier>
+}

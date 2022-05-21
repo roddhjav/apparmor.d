@@ -1,0 +1,26 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /usr/share/apport/apport-checkreports
+profile apport-checkreports @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/python>
+  include <abstractions/openssl>
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/python3.[0-9]* r,
+
+  /usr/share/dpkg/cputable r,
+  /usr/share/dpkg/tupletable r,
+  /usr/share/apport/ r,
+
+  /etc/apt/apt.conf.d/{,**} r,
+
+  include if exists <local/apport-checkreports>
+}
