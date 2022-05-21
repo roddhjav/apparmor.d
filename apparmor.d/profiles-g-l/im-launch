@@ -1,0 +1,31 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/im-launch
+profile im-launch @{exec_path} {
+  include <abstractions/base>
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/{,ba,da}sh  rix,
+  /{usr/,}bin/env         rix,
+  /{usr/,}bin/locale      rix,
+  /{usr/,}bin/gettext     rix,
+  /{usr/,}bin/true        rix,
+  /{usr/,}bin/dpkg-query  rpx,
+  /{usr/,}bin/sed         rix,
+  /{usr/,}bin/gettext.sh    r,
+
+  /usr/share/im-config/{,**} r,
+
+  /etc/default/im-config r,
+  /etc/X11/xinit/xinputrc r,
+  /etc/X11/Xsession.d/70im-config_launch r,
+
+  include if exists <local/im-launch>
+}
