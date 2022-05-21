@@ -1,0 +1,35 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}lib/needrestart/iucode-scan-versions
+profile needrestart-iucode-scan-versions @{exec_path} {
+  include <abstractions/base>
+
+  @{exec_path} mr,
+
+  /{usr/,}{s,}bin/iucode_tool  rix,
+  /{usr/,}bin/{,ba,da}sh       rix,
+  /{usr/,}bin/{,e}grep         rix,
+  /{usr/,}bin/bsdtar           rix,
+  /{usr/,}bin/cat              rix,
+
+  /usr/share/misc/ r,
+  /usr/share/misc/intel-microcode* r,
+
+  /etc/default/intel-microcode r,
+  /etc/needrestart/iucode.sh r,
+
+  /boot/intel-ucode.img r,
+  /boot/early_ucode.cpio r,
+ 
+  @{sys}/devices/system/cpu/cpu[0-9]*/microcode/processor_flags r,
+
+  /dev/tty rw,
+
+  include if exists <local/needrestart-iucode-scan-versions>
+}
