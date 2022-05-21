@@ -1,0 +1,30 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/spice-vdagent
+profile spice-vdagent @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/audio>
+  include <abstractions/gtk>
+
+  @{exec_path} mr,
+
+  /etc/machine-id r,
+  /etc/pipewire/client.conf r,
+
+  owner @{user_config_dirs}/user-dirs.dirs r,
+
+  owner @{run}/user/@{uid}/.mutter-Xwaylandauth.[a-zA-z0-9]* rw,
+  owner @{run}/spice-vdagentd/spice-vdagent-sock rw,
+
+  @{sys}/devices/pci[0-9]*/**/{device,vendor} r,
+
+  /dev/dri/card[0-9]* rw,
+
+  include if exists <local/spice-vdagent>
+}
