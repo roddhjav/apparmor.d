@@ -1,0 +1,41 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{libexec}/boltd
+profile boltd @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+
+  capability net_admin,
+
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  /var/lib/boltd/{,**} rw,
+
+  owner @{run}/boltd/{,**} rw,
+
+  @{run}/udev/data/+thunderbolt:* r,
+
+  @{sys}/bus/ r,
+  @{sys}/bus/thunderbolt/devices/ r,
+  @{sys}/bus/wmi/devices/ r,
+  @{sys}/class/ r,
+  @{sys}/devices/pci[0-9]*/**/device  r,
+  @{sys}/devices/pci[0-9]*/**/domain[0-9]*/{security,uevent} r,
+  @{sys}/devices/pci[0-9]*/**/domain[0-9]*/**/ r,
+  @{sys}/devices/pci[0-9]*/**/domain[0-9]*/**/{authorized,generation} r,
+  @{sys}/devices/pci[0-9]*/**/domain[0-9]*/**/{uevent,unique_id} r,
+  @{sys}/devices/pci[0-9]*/**/domain[0-9]*/iommu_dma_protection r,
+  @{sys}/devices/platform/**/uevent r,
+  @{sys}/devices/virtual/dmi/id/product_name r,
+  @{sys}/devices/virtual/dmi/id/sys_vendor r,
+
+  include if exists <local/boltd>
+}
