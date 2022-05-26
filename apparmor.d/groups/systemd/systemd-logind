@@ -7,16 +7,15 @@ abi <abi/3.0>,
 include <tunables/global>
 
 @{exec_path} = /{usr/,}lib/systemd/systemd-logind
-profile systemd-logind @{exec_path} flags=(attach_disconnected,complain) {
+profile systemd-logind @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/dbus-strict>
   include <abstractions/disks-write>
   include <abstractions/devices-usb>
   include <abstractions/systemd-common>
+  include <abstractions/dbus-strict>
 
   capability chown,
   capability dac_override,
-  capability dac_read_search,
   capability fowner,
   capability sys_admin,
   capability sys_tty_config,
@@ -44,66 +43,120 @@ profile systemd-logind @{exec_path} flags=(attach_disconnected,complain) {
   @{run}/udev/tags/uaccess/ r,
   @{run}/udev/static_node-tags/uaccess/ r,
 
-  @{run}/udev/data/+backlight:intel_backlight r,
-  @{run}/udev/data/+drm:card[0-9]-* r, # for screen outputs
-  @{run}/udev/data/+input* r,          # for mouse, keyboard, touchpad
-  @{run}/udev/data/+pci* r,
   @{run}/udev/data/c10:[0-9]* r,
   @{run}/udev/data/c116:[0-9]* r, # for ALSA
   @{run}/udev/data/c13:[0-9]* r,  # for /dev/input/*
   @{run}/udev/data/c226:[0-9]* r, # for /dev/dri/card*
+  @{run}/udev/data/c21:[0-9]* r,
   @{run}/udev/data/c23[0-9]:[0-9]* r,
   @{run}/udev/data/c24[0-9]:[0-9]* r,
   @{run}/udev/data/c29:[0-9]* r,
   @{run}/udev/data/c50[0-9]:[0-9]* r,
   @{run}/udev/data/c51[0-9]:[0-9]* r,
 
-  @{run}/systemd/inhibit/ rw,
-  @{run}/systemd/inhibit/.#* rw,
-  @{run}/systemd/inhibit/[0-9]*{,.ref} rw,
+  @{run}/udev/data/+input* r,          # for mouse, keyboard, touchpad
+  @{run}/udev/data/+drm:card[0-9]-* r, # for screen outputs
+  @{run}/udev/data/+backlight:intel_backlight r,
+  @{run}/udev/data/+pci* r,
+
   @{run}/systemd/seats/ rw,
   @{run}/systemd/seats/.#seat* rw,
   @{run}/systemd/seats/seat[0-9]* rw,
-  @{run}/systemd/sessions/ rw,
-  @{run}/systemd/sessions/.#* rw,
-  @{run}/systemd/sessions/[0-9]*{,.ref} rw,
-  @{run}/systemd/userdb/ r,
+  @{run}/systemd/inhibit/ rw,
+  @{run}/systemd/inhibit/[0-9]*{,.ref} rw,
+  @{run}/systemd/inhibit/.#* rw,
+  @{run}/systemd/sessions/      r,
+  @{run}/systemd/sessions/*     rw,
+  @{run}/systemd/sessions/*.ref rw,
   @{run}/systemd/users/ rw,
-  @{run}/systemd/users/.#* rw,
   @{run}/systemd/users/@{uid} rw,
+  @{run}/systemd/users/.#* rw,
+  @{run}/systemd/userdb/ r,
+  @{run}/systemd/userdb/io.systemd.DynamicUser rw,
+  @{run}/systemd/notify w,
 
-  @{run}/systemd/journal/socket rw,
-  @{run}/systemd/notify rw,
+  /dev/input/event[0-9]* rw,  # Input devices (keyboard, mouse, etc)
+  /dev/dri/card[0-9]* rw,
+  /dev/tty[0-9]* rw,
+  /dev/nvme* r,
+  /dev/shm/{,**/} r,
+  /dev/mqueue/ r,
 
-  @{sys}/class/drm/ r,
+  @{sys}/module/vt/parameters/default_utf8 r,
+  @{sys}/fs/cgroup/memory/memory.limit_in_bytes r,
+  @{sys}/fs/cgroup/memory.max r,
+  @{sys}/devices/virtual/tty/tty[0-9]*/active r,
   @{sys}/devices/**/{uevent,enabled,status} r,
   @{sys}/devices/**/brightness rw,
-  @{sys}/devices/virtual/tty/tty[0-9]*/active r,
-  @{sys}/firmware/efi/efivars/LoaderEntries-@{uuid} r,
-  @{sys}/firmware/efi/efivars/LoaderFeatures-@{uuid} r,
-  @{sys}/firmware/efi/efivars/OsIndications-@{uuid} r,
-  @{sys}/firmware/efi/efivars/OsIndicationsSupported-@{uuid} r,
-  @{sys}/fs/cgroup/memory.max r,
-  @{sys}/fs/cgroup/memory/memory.limit_in_bytes r,
-  @{sys}/module/vt/parameters/default_utf8 r,
+
+  @{sys}/class/drm/ r,
   @{sys}/power/{state,resume_offset,resume,disk} r,
 
-  @{PROC}/@{pid}/cgroup r,
-  @{PROC}/@{pid}/comm r,
-  @{PROC}/@{pid}/fd/ r,
-  @{PROC}/@{pid}/mountinfo r,
-  @{PROC}/@{pid}/sessionid r,
-  @{PROC}/@{pid}/stat r,
+  @{sys}/firmware/efi/efivars/OsIndicationsSupported-@{uuid} r,
+  @{sys}/firmware/efi/efivars/OsIndications-@{uuid} r,
+  @{sys}/firmware/efi/efivars/LoaderEntries-@{uuid} r,
+  @{sys}/firmware/efi/efivars/LoaderFeatures-@{uuid} r,
+
+  @{PROC}/@{pids}/cgroup r,
+  @{PROC}/@{pids}/comm r,
+  @{PROC}/@{pids}/fd/ r,
+  @{PROC}/@{pids}/mountinfo r,
+  @{PROC}/@{pids}/sessionid r,
+  @{PROC}/@{pids}/stat r,
   @{PROC}/1/cmdline r,
   @{PROC}/swaps r,
   @{PROC}/sysvipc/{shm,sem,msg} r,
 
-  /dev/dri/card[0-9]* rw,
-  /dev/input/event[0-9]* rw,  # Input devices (keyboard, mouse, etc)
-  /dev/mqueue/ r,
-  /dev/nvme* r,
-  /dev/shm/{,**/} rw,
-  /dev/tty[0-9]* rw,
+  # DBus
+  # all members for login related, specific for others
+  dbus send
+    bus="system" path="/org/freedesktop/DBus" interface="org.freedesktop.DBus" member="{GetConnectionUnixProcessID,GetConnectionUnixUser,GetConnectionCredentials,RequestName}" peer=(name="org.freedesktop.DBus"),
+
+  dbus (send, receive)
+    bus="system" path="/org/freedesktop/login1{,/**}" interface="org.freedesktop.DBus.Properties" peer=(name="{org.freedesktop.DBus,:*}"),
+
+  dbus (send, receive)
+    bus="system" path="/org/freedesktop/login1{,/**}" interface="org.freedesktop.login1.Manager" peer=(name="{org.freedesktop.DBus,:*}"),
+
+  dbus (send, receive)
+    bus="system" path="/org/freedesktop/login1/**" interface="org.freedesktop.login1.Session" peer=(name="{org.freedesktop.DBus,:*}"),
+
+  dbus receive
+    bus="system" path="/org/freedesktop/login1" interface="org.freedesktop.DBus.Introspectable" member="Introspect" peer=(name=":*"),
+
+  dbus (send, receive)
+    bus="system" path="/org/freedesktop/login1/*" interface="org.freedesktop.DBus.Properties" peer=(name="{org.freedesktop.DBus,:*}"),
+
+  dbus send
+    bus="system" path="/org/freedesktop/systemd1" interface="org.freedesktop.systemd1.Manager" member="{Subscribe,StartUnit,StartTransientUnit,StopUnit}" peer=(name="org.freedesktop.systemd1"),
+
+  dbus receive
+    bus="system" path="/org/freedesktop/systemd1" interface="org.freedesktop.systemd1.Manager" member="{UnitRemoved,UnitRemoved,JobRemoved,Reloading}" peer=(name=":*"),
+
+  dbus receive
+    bus="system" path="/org/freedesktop/systemd1" interface="org.freedesktop.DBus.Properties" member="PropertiesChanged" peer=(name=":*"),
+
+  dbus send
+    bus="system" path="/org/freedesktop/systemd1/unit/**" interface="org.freedesktop.DBus.Properties" member="Get" peer=(name="org.freedesktop.systemd1"),
+
+  dbus receive
+    bus="system" path="/org/freedesktop/systemd1/unit/**" interface="org.freedesktop.DBus.Properties" member="PropertiesChanged" peer=(name=":*"),
+
+  dbus send
+    bus="system" path="/org/freedesktop/systemd1/unit/**" interface="org.freedesktop.systemd1.Scope" member="Abandon" peer=(name="org.freedesktop.systemd1"),
+
+  dbus send
+    bus="system" path="/org/freedesktop/systemd1/job/**" interface="org.freedesktop.DBus.Properties" member="Get" peer=(name="org.freedesktop.systemd1"),
+
+  dbus receive
+    bus="system" path="/org/freedesktop/systemd1/job/**" interface="org.freedesktop.DBus.Properties" member="PropertiesChanged" peer=(name=":*"),
+
+  dbus send
+    bus="system" path="/org/freedesktop/PolicyKit1/Authority" interface="org.freedesktop.PolicyKit1.Authority" member="CheckAuthorization" peer=(name="org.freedesktop.PolicyKit1"),
+
+  dbus (bind)
+   bus="system"
+   name="org.freedesktop.login1",
 
   include if exists <local/systemd-logind>
 }
