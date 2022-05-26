@@ -45,6 +45,9 @@ profile sshd @{exec_path} flags=(attach_disconnected) {
 
   network inet  stream,
   network inet6 stream,
+  network inet  dgram,
+  network inet6 dgram,
+  network netlink raw,
 
   @{exec_path} mrix,
 
@@ -75,11 +78,11 @@ profile sshd @{exec_path} flags=(attach_disconnected) {
         @{run}/motd.dynamic rw,
         @{run}/motd.dynamic.new rw,
         @{run}/resolvconf/resolv.conf r,
-        @{run}/systemd/sessions/[0-9]*.ref rw,
+        @{run}/systemd/sessions/*.ref rw,
         @{run}/systemd/notify w,
 
   @{sys}/fs/cgroup/*/user/*/[0-9]*/ rw,
-  @{sys}/fs/cgroup/systemd/user.slice/user-@{uid}.slice/session-c[0-9]*.scope/ rw,
+  @{sys}/fs/cgroup/systemd/user.slice/user-@{uid}.slice/session-*.scope/ rw,
 
   owner @{PROC}/@{pid}/limits r,
   owner @{PROC}/@{pid}/loginuid rw,
@@ -94,6 +97,25 @@ profile sshd @{exec_path} flags=(attach_disconnected) {
         @{PROC}/sys/kernel/ngroups_max r,
 
   /dev/ptmx rw,
+
+  @{run}/systemd/userdb/io.systemd.DynamicUser w,
+
+  # DBus
+  @{run}/dbus/system_bus_socket rw,
+
+  dbus send
+    bus=system
+    path=/org/freedesktop/DBus
+    interface=org.freedesktop.DBus
+    member=Hello
+    peer=(name=org.freedesktop.DBus),
+
+  dbus send
+    bus=system
+    path=/org/freedesktop/login1
+    interface=org.freedesktop.login1.Manager
+    member={CreateSession,ReleaseSession}
+    peer=(name=org.freedesktop.login1),
 
   include if exists <local/sshd>
 }
