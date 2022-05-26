@@ -11,6 +11,10 @@ include <tunables/global>
 profile dbus-daemon @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/consoles>
+  include <abstractions/dbus>
+  include <abstractions/dbus-session>
+  include <abstractions/dbus-accessibility>
+#  include <abstractions/dbus-network-manager-strict>
   include <abstractions/nameservice-strict>
 
   capability audit_write,
@@ -41,7 +45,6 @@ profile dbus-daemon @{exec_path} flags=(attach_disconnected) {
   /{usr/,}lib/dbus-1.0/dbus-daemon-launch-helper rPx,
 
   /etc/dbus-1/{,**} r,
-  /etc/machine-id r,
 
   /usr/share/dbus-1/{,**} r,
   /usr/share/defaults/**.conf r,
@@ -63,12 +66,11 @@ profile dbus-daemon @{exec_path} flags=(attach_disconnected) {
 
   owner /tmp/dbus-[0-9a-zA-Z]* rw,
 
-  owner @{run}/user/@{uid}/bus w,
   owner @{run}/user/@{uid}/at-spi/bus{,_[0-9]*} rw,
   owner @{run}/user/@{uid}/dbus-1/ rw,
   owner @{run}/user/@{uid}/dbus-1/services/ rw,
         @{run}/systemd/inhibit/[0-9]*.ref rw,
-        @{run}/systemd/sessions/[0-9]*.ref rw,
+        @{run}/systemd/sessions/*.ref rw,
         @{run}/systemd/userdb/io.systemd.DynamicUser w,
         @{run}/systemd/users/@{uid} r,
 
@@ -77,7 +79,7 @@ profile dbus-daemon @{exec_path} flags=(attach_disconnected) {
   @{sys}/module/apparmor/parameters/enabled r,
 
   owner @{PROC}/@{pid}/fd/ r,
-  owner @{PROC}/@{pid}/mounts r,
+        @{PROC}/@{pid}/mounts r,
         @{PROC}/@{pids}/attr/apparmor/current r,
         @{PROC}/@{pids}/oom_score_adj rw,
         @{PROC}/@{pids}/cmdline r,
@@ -88,6 +90,8 @@ profile dbus-daemon @{exec_path} flags=(attach_disconnected) {
   /dev/dri/card[0-9]* rw,
   /dev/input/event[0-9]* rw,
   /dev/tty[0-9]* rw,
+
+  unix type=stream addr="@/tmp/dbus-*",
 
   include if exists <local/dbus-daemon>
 }

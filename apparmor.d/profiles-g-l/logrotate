@@ -23,6 +23,7 @@ profile logrotate @{exec_path} flags=(attach_disconnected, complain) {
   audit deny capability net_admin,
 
   signal (send) set=(hup),
+  signal (send) set=(term cont) peer=systemd-tty-ask-password-agent,
 
   @{exec_path} mr,
 
@@ -36,7 +37,8 @@ profile logrotate @{exec_path} flags=(attach_disconnected, complain) {
   /{usr/,}bin/zstd                   rix,
   /{usr/,}{s,}bin/invoke-rc.d        rix,
   /{usr/,}lib/rsyslog/rsyslog-rotate rix,
-  /{usr/,}bin/fail2ban-client        rPx,
+  /{usr/,}bin/fail2ban-client                rPx,
+  /{usr/,}bin/systemd-tty-ask-password-agent rPx,
 
   # no new privs
   #/{usr/,}bin/systemctl              rCx -> systemctl,
@@ -51,6 +53,8 @@ profile logrotate @{exec_path} flags=(attach_disconnected, complain) {
         @{PROC}/cmdline r,
         @{PROC}/sys/kernel/osrelease r,
 
+  owner @{run}/systemd/private rw,
+
   /etc/ r,
   /etc/logrotate.conf rk,
   /etc/logrotate.d/ r,
@@ -61,6 +65,7 @@ profile logrotate @{exec_path} flags=(attach_disconnected, complain) {
   /var/lib/logrotate.status rwk,
   /var/lib/logrotate.status.tmp rw,
 
+  /var/log/   r,
   /var/log/** rw,
 
   # Needed to remove the following error:
@@ -86,6 +91,7 @@ profile logrotate @{exec_path} flags=(attach_disconnected, complain) {
 
     /dev/kmsg rw,
 
+    include if exists <local/logrotate_systemctl>
   }
 
   include if exists <local/logrotate>
