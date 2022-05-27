@@ -65,12 +65,11 @@ profile systemd-logind @{exec_path} flags=(attach_disconnected,complain) {
   @{run}/systemd/seats/ rw,
   @{run}/systemd/seats/.#seat* rw,
   @{run}/systemd/seats/seat[0-9]* rw,
-  @{run}/systemd/sessions/      rw,
-  @{run}/systemd/sessions/*     r,
-  @{run}/systemd/sessions/.#*   rw,
+  @{run}/systemd/sessions/{,*}  rw,
   @{run}/systemd/sessions/*.ref rw,
   @{run}/systemd/userdb/ r,
   @{run}/systemd/userdb/io.systemd.DynamicUser rw,
+  @{run}/systemd/userdb/io.systemd.Machine     rw,
   @{run}/systemd/users/ rw,
   @{run}/systemd/users/.#* rw,
   @{run}/systemd/users/@{uid} rw,
@@ -111,31 +110,28 @@ profile systemd-logind @{exec_path} flags=(attach_disconnected,complain) {
   # DBus
   # all members for login-related, specific for others
   dbus send
-    bus="system" path="/org/freedesktop/DBus" interface="org.freedesktop.DBus" member="{GetConnectionUnixProcessID,GetConnectionUnixUser,GetConnectionCredentials,RequestName}" peer=(name="org.freedesktop.DBus"),
+    bus="system" path="/org/freedesktop/DBus"         interface="org.freedesktop.DBus" member="{GetConnectionUnixProcessID,GetConnectionUnixUser,GetConnectionCredentials,RequestName}" peer=(name="org.freedesktop.DBus"),
 
   dbus (send, receive)
     bus="system" path="/org/freedesktop/login1{,/**}" interface="org.freedesktop.DBus.Properties" peer=(name="{org.freedesktop.DBus,:*}"),
 
   dbus (send, receive)
-    bus="system" path="/org/freedesktop/login1{,/**}" interface="org.freedesktop.login1.Manager" peer=(name="{org.freedesktop.DBus,:*}"),
+    bus="system" path="/org/freedesktop/login1/**"    interface="org.freedesktop.DBus.Properties" peer=(name="{org.freedesktop.DBus,:*}"),
 
   dbus (send, receive)
-    bus="system" path="/org/freedesktop/login1/**" interface="org.freedesktop.login1.Session" peer=(name="{org.freedesktop.DBus,:*}"),
+    bus="system" path="/org/freedesktop/login1{,/**}" interface="org.freedesktop.login1.*"        peer=(name="{org.freedesktop.DBus,:*}"),
 
   dbus receive
-    bus="system" path="/org/freedesktop/login1" interface="org.freedesktop.DBus.Introspectable" member="Introspect" peer=(name=":*"),
+    bus="system" path="/org/freedesktop/login1"       interface="org.freedesktop.DBus.Introspectable" member="Introspect" peer=(name=":*"),
 
-  dbus (send, receive)
-    bus="system" path="/org/freedesktop/login1/*" interface="org.freedesktop.DBus.Properties" peer=(name="{org.freedesktop.DBus,:*}"),
+  dbus receive
+    bus="system" path="/org/freedesktop/systemd1"     interface="org.freedesktop.DBus.Properties"     member="PropertiesChanged" peer=(name=":*"),
 
   dbus send
-    bus="system" path="/org/freedesktop/systemd1" interface="org.freedesktop.systemd1.Manager" member="{Subscribe,StartUnit,StartTransientUnit,StopUnit}" peer=(name="org.freedesktop.systemd1"),
+    bus="system" path="/org/freedesktop/systemd1"     interface="org.freedesktop.systemd1.Manager"    member="{Subscribe,StartUnit,StartTransientUnit,StopUnit}" peer=(name="org.freedesktop.systemd1"),
 
   dbus receive
-    bus="system" path="/org/freedesktop/systemd1" interface="org.freedesktop.systemd1.Manager" member="{UnitRemoved,UnitRemoved,JobRemoved,Reloading}" peer=(name=":*"),
-
-  dbus receive
-    bus="system" path="/org/freedesktop/systemd1" interface="org.freedesktop.DBus.Properties" member="PropertiesChanged" peer=(name=":*"),
+    bus="system" path="/org/freedesktop/systemd1"     interface="org.freedesktop.systemd1.Manager"    member="{UnitRemoved,UnitRemoved,JobRemoved,Reloading}" peer=(name=":*"),
 
   dbus send
     bus="system" path="/org/freedesktop/systemd1/unit/**" interface="org.freedesktop.DBus.Properties" member="Get" peer=(name="org.freedesktop.systemd1"),
@@ -144,13 +140,13 @@ profile systemd-logind @{exec_path} flags=(attach_disconnected,complain) {
     bus="system" path="/org/freedesktop/systemd1/unit/**" interface="org.freedesktop.DBus.Properties" member="PropertiesChanged" peer=(name=":*"),
 
   dbus send
-    bus="system" path="/org/freedesktop/systemd1/unit/**" interface="org.freedesktop.systemd1.Scope" member="Abandon" peer=(name="org.freedesktop.systemd1"),
+    bus="system" path="/org/freedesktop/systemd1/unit/**" interface="org.freedesktop.systemd1.Scope"  member="Abandon" peer=(name="org.freedesktop.systemd1"),
 
   dbus send
-    bus="system" path="/org/freedesktop/systemd1/job/**" interface="org.freedesktop.DBus.Properties" member="Get" peer=(name="org.freedesktop.systemd1"),
+    bus="system" path="/org/freedesktop/systemd1/job/**"  interface="org.freedesktop.DBus.Properties" member="Get" peer=(name="org.freedesktop.systemd1"),
 
   dbus receive
-    bus="system" path="/org/freedesktop/systemd1/job/**" interface="org.freedesktop.DBus.Properties" member="PropertiesChanged" peer=(name=":*"),
+    bus="system" path="/org/freedesktop/systemd1/job/**"  interface="org.freedesktop.DBus.Properties" member="PropertiesChanged" peer=(name=":*"),
 
   dbus send
     bus="system" path="/org/freedesktop/PolicyKit1/Authority" interface="org.freedesktop.PolicyKit1.Authority" member="CheckAuthorization" peer=(name="org.freedesktop.PolicyKit1"),
