@@ -162,12 +162,14 @@ profile thunderbird @{exec_path} {
         /dev/shm/ r,
   owner /dev/shm/org.chromium.* rw,
   owner /dev/shm/org.mozilla.ipc.@{pid}.[0-9]* rw,
+  owner /dev/shm/wayland.mozilla.ipc.[0-9]* rw,
 
   /etc/fstab r,
-
   /etc/mailcap r,
+  /etc/timezone r,
 
   /usr/share/sounds/freedesktop/stereo/*.oga r,
+  /usr/share/ubuntu/applications/{,*} r,
 
   # Silencer
   deny /{usr/,}lib/thunderbird/** w,
@@ -197,24 +199,19 @@ profile thunderbird @{exec_path} {
 
   # DBus
   dbus send
-    bus=system
-    path=/org/freedesktop/RealtimeKit[0-9]
-    member={Get,MakeThreadHighPriority,MakeThreadRealtime}
-    peer=(name=org.freedesktop.RealtimeKit[0-9]),
+    bus="session" path="/org/freedesktop/DBus" interface="org.freedesktop.DBus" member="RequestName" peer=(name="org.freedesktop.DBus"),
 
   dbus send
-    bus=session
-    path=/ca/desrt/dconf/Writer/user
-    interface=ca.desrt.dconf.Writer
-    member={Change,Notify}
-    peer=(name=ca.desrt.dconf),
+    bus="system" path="/org/freedesktop/RealtimeKit[0-9]*" member="{Get,MakeThreadHighPriority,MakeThreadRealtime}" peer=(name="org.freedesktop.RealtimeKit[0-9]*"),
 
   dbus send
-    bus=system
-    path=/org/freedesktop/UPower
-    interface=org.freedesktop.UPower
-    member=EnumerateDevices
-    peer=(name=org.freedesktop.UPower),
+    bus="system" path="/org/freedesktop/UPower" interface="org.freedesktop.UPower" member="EnumerateDevices" peer=(name="org.freedesktop.UPower"),
+
+  dbus send
+    bus="session" path="/ca/desrt/dconf/Writer/user" interface="ca.desrt.dconf.Writer" member="{Change,Notify}" peer=(name="ca.desrt.dconf"),
+
+  dbus bind
+    bus="session" name="org.mozilla.thunderbird.*",
 
   # dconf write
   owner @{HOME}/.config/dconf/     rw,
