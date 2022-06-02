@@ -70,6 +70,13 @@ profile vlc @{exec_path} {
   include <abstractions/private-files-strict>
   include <abstractions/ssl_certs>
   include <abstractions/devices-usb>
+  include <abstractions/dbus-session-strict>
+  include <abstractions/dconf>
+  include <abstractions/ibus>
+  include if exists <abstractions/ubuntu-unity7-base>
+
+#  capability sys_ptrace,
+#  ptrace (read),
 
   signal (receive) set=(term, kill) peer=anyremote//*,
 
@@ -94,9 +101,6 @@ profile vlc @{exec_path} {
   owner @{run}/user/@{uid}/gvfs/smb-share:server=*,share=**/ r,
   owner @{run}/user/@{uid}/gvfs/smb-share:server=*,share=**.@{vlc_ext} r,
 
-  /var/lib/dbus/machine-id r,
-  /etc/machine-id r,
-
   # VLC files
   /usr/share/vlc/{,**} r,
 
@@ -104,7 +108,7 @@ profile vlc @{exec_path} {
   owner @{HOME}/ r,
   owner @{user_config_dirs}/vlc/ rw,
   owner @{user_config_dirs}/vlc/* rwkl -> @{user_config_dirs}/vlc/#[0-9]*[0-9],
-  owner @{user_share_dirs}/vlc/{,*} rw,
+  owner @{user_share_dirs}/vlc/{,**} rw,
 
   owner @{user_cache_dirs}/ rw,
   owner @{user_cache_dirs}/vlc/{,**} rw,
@@ -119,7 +123,9 @@ profile vlc @{exec_path} {
   deny owner @{PROC}/@{pid}/cmdline r,
        owner @{PROC}/@{pid}/mountinfo r,
        owner @{PROC}/@{pid}/mounts r,
-             @{PROC}/@{pid}/net/if_inet6 r,
+       owner @{PROC}/@{pid}/comm r,
+       owner @{PROC}/@{pid}/task/@{tid}/comm rw,
+             @{PROC}/@{pids}/net/if_inet6 r,
   deny       @{PROC}/sys/kernel/random/boot_id r,
 
   # Udev enumeration
@@ -147,6 +153,84 @@ profile vlc @{exec_path} {
   owner /dev/tty[0-9]* rw,
   owner @{HOME}/.anyRemote/anyremote.stdout w,
 
+  # DBus
+  dbus send
+    bus="session" path="/org/freedesktop/DBus"  interface="org.freedesktop.DBus" member="{RequestName,ReleaseName,GetConnectionUnixProcessID}" peer=(name="org.freedesktop.DBus"),
+
+  dbus receive
+    bus="session" path="/org/freedesktop/Notifications" interface="org.freedesktop.Notifications" member="NotificationClosed" peer=(name=":*"),
+
+  dbus send
+    bus="session" path="/org/a11y/bus"          interface="org.freedesktop.DBus.Properties" member="Get" peer=(name="org.a11y.Bus"),
+
+  dbus send
+    bus="session" path="/StatusNotifierWatcher" interface="org.freedesktop.DBus.Introspectable" member="Introspect" peer=(name="org.kde.StatusNotifierWatcher"),
+
+  dbus send
+    bus="session" path="/StatusNotifierWatcher" interface="org.freedesktop.DBus.Properties" member="{Get,RegisterStatusNotifierItem}" peer=(name="org.kde.StatusNotifierWatcher"),
+
+  dbus send
+    bus="session" path="/StatusNotifierWatcher" interface="org.kde.StatusNotifierWatcher" member="RegisterStatusNotifierItem" peer=(name="org.kde.StatusNotifierWatcher"),
+
+  dbus send
+    bus="session" path="/StatusNotifierItem"    interface="org.kde.StatusNotifierItem" member="{NewToolTip,NewStatus,NewAttentionIcon,NewTitle,NewStatus,NewIcon}" peer=(name="org.freedesktop.DBus"),
+
+  dbus receive
+    bus="session" path="/StatusNotifierItem"    interface="org.kde.StatusNotifierItem" member="Activate" peer=(name=":*"),
+
+  dbus receive
+    bus="session" path="/StatusNotifierItem"    interface="org.freedesktop.DBus.Properties" member="{Get,GetAll}" peer=(name=":*"),
+
+  dbus send
+    bus="session" path="/ScreenSaver"           interface="org.freedesktop.ScreenSaver" member="{Inhibit,UnInhibit}" peer=(name="org.freedesktop.ScreenSaver"),
+
+  dbus receive
+    bus="session" path="/MenuBar" interface="org.freedesktop.DBus.Properties" member="GetAll" peer=(name=":*"),
+
+  dbus send
+    bus="session" path="/MenuBar" interface="com.canonical.dbusmenu" member="{LayoutUpdated,ItemsPropertiesUpdated}" peer=(name="org.freedesktop.DBus"),
+
+  dbus receive
+    bus="session" path="/MenuBar" interface="com.canonical.dbusmenu" member="{GetLayout,GetGroupProperties,AboutToShow,AboutToShowGroup,EventGroup,Event}" peer=(name=":*"),
+
+  dbus (send receive)
+    bus="session" path="/org/mpris/MediaPlayer2" interface="org.freedesktop.DBus.Properties"  peer=(name="{org.freedesktop.DBus,:*}"),
+
+  dbus send
+    bus="session" path="/org/mpris/MediaPlayer2" interface="org.mpris.MediaPlayer2.Player"    peer=(name="org.freedesktop.DBus"),
+
+  dbus receive
+    bus="session" path="/org/mpris/MediaPlayer2" interface="org.mpris.MediaPlayer2.Playlists" peer=(name=":*"),
+
+#  dbus send
+#    bus="system" path="/" interface="org.freedesktop.DBus.Peer" member="Ping" peer=(name="org.freedesktop.Avahi"),
+
+  dbus send
+    bus="accessibility" path="/org/freedesktop/DBus"           interface="org.freedesktop.DBus" member="{Hello,AddMatch,RemoveMatch}" peer=(name="org.freedesktop.DBus"),
+
+  dbus send
+    bus="accessibility" path="/org/a11y/atspi/accessible/root" interface="org.a11y.atspi.Socket" member="Embed" peer=(name="org.a11y.atspi.Registry"),
+
+  dbus receive
+    bus="accessibility" path="/org/a11y/atspi/accessible/root" interface="org.freedesktop.DBus.Properties" member="Set" peer=(name=":*"),
+
+  dbus send
+    bus="accessibility" path="/org/a11y/atspi/registry"        interface="org.a11y.atspi.Registry" member="GetRegisteredEvents" peer=(name="org.a11y.atspi.Registry"),
+
+  dbus receive
+    bus="accessibility" path="/org/a11y/atspi/registry"        interface="org.a11y.atspi.Registry" member="EventListenerDeregistered" peer=(name=":*"),
+
+  dbus send
+    bus="accessibility" path="/org/a11y/atspi/registry/deviceeventcontroller" interface="org.a11y.atspi.DeviceEventController" member="{GetKeystrokeListeners,GetDeviceEventListeners}" peer=(name="org.a11y.atspi.Registry"),
+
+  dbus bind
+    bus="session" name="org.kde.StatusNotifierItem-*",
+
+  dbus bind
+    bus="session" name="org.mpris.MediaPlayer2.vlc{,.instance*}",
+
+  owner @{run}/user/@{uid}/at-spi/bus{,_[0-9]*} rw,
+  owner @{run}/user/*/dconf/user rw,
 
   profile xdg-screensaver {
     include <abstractions/base>
@@ -169,6 +253,8 @@ profile vlc @{exec_path} {
     /dev/dri/card[0-9]* rw,
     network inet stream,
     network inet6 stream,
+
+    include if exists <local/vlc_xdg-screensaver>
   }
 
   include if exists <local/vlc>
