@@ -16,25 +16,12 @@ profile rsyslogd @{exec_path} {
   include <abstractions/base>
   include <abstractions/nameservice>
 
-  # Needed to remove the following error:
-  # rsyslogd[]: imklog: cannot open kernel log (/proc/kmsg): Operation not permitted.
-  capability syslog,
-
-  # For remote logs
-  capability net_admin,
-
-  # for creating new log files and changing their owner/group
-  capability chown,
-
-  # downgrade privileges on Ubuntu
-  capability setgid,
+  capability chown,  # For creating new log files and changing their owner/group
+  capability net_admin,  # For remote logs
+  capability setgid,  # For downgrading privileges
   capability setuid,
-
-  # Needed?
-  deny capability sys_nice,
-#  capability sys_ptrace,
-#  ptrace (read),
-
+  capability syslog,
+  
   @{exec_path} mr,
 
   /{usr/,}lib/@{multiarch}/rsyslog/*.so mr,
@@ -47,6 +34,7 @@ profile rsyslogd @{exec_path} {
 
   owner @{run}/rsyslogd.pid{,.tmp} rwk,
   owner @{run}/systemd/journal/syslog w,
+        @{run}/systemd/notify rw,
 
   # log files and devices
   /var/log/** rw,
