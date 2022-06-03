@@ -1,0 +1,26 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/hwe-support-status
+profile hwe-support-status @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/apt-common>
+  include <abstractions/python>
+  include <abstractions/openssl>
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/dpkg         rPx,
+  /{usr/,}bin/lsb_release  rPx -> lsb_release,
+
+  /usr/share/distro-info/{,**} r,
+
+  owner @{PROC}/@{pid}/fd/ r,
+
+  include if exists <local/hwe-support-status>
+}
