@@ -1,0 +1,37 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}{,s}bin/ModemManager
+profile ModemManager @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/dbus-strict>
+
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  @{run}/udev/data/+pci:* r,
+  @{run}/udev/data/+platform* r,
+  @{run}/udev/data/c4:[0-9]* r,     # for /dev/tty[0-9]*
+  @{run}/udev/data/c5:[0-9]* r,     # for /dev/tty, /dev/console, /dev/ptmx
+  @{run}/udev/data/n[0-9]* r,
+
+  @{sys}/bus/ r,
+  @{sys}/class/ r,
+  @{sys}/class/net/ r,
+  @{sys}/class/tty/ r,
+  @{sys}/class/wwan/ r,
+
+  @{sys}/devices/**/uevent r,
+  @{sys}/devices/pci[0-9]*/**/{vendor,device,revision} r,
+  @{sys}/devices/virtual/net/lo/ r,
+  @{sys}/devices/virtual/tty/*/ r,
+
+  include if exists <local/ModemManager>
+}
