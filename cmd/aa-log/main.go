@@ -28,7 +28,6 @@ const LogFile = "/var/log/audit/audit.log"
 // Colors
 const (
 	Reset      = "\033[0m"
-	FgRed      = "\033[31m"
 	FgGreen    = "\033[32m"
 	FgYellow   = "\033[33m"
 	FgBlue     = "\033[34m"
