@@ -1,6 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2018-2021 Mikhail Morfikov
-#               2021 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2018-2022 Mikhail Morfikov
+# Copyright (C) 2021-2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -11,10 +11,17 @@ include <tunables/global>
 @{exec_path} += @{libexec}/colord
 profile colord @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/dbus-strict>
   include <abstractions/nameservice-strict>
   include <abstractions/devices-usb>
 
   network netlink raw,
+
+  dbus send
+       bus=system
+       path=/org/freedesktop/ColorManager/devices/xrandr_*
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll,
 
   @{exec_path} mr,
 
