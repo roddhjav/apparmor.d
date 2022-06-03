@@ -1,0 +1,60 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /usr/share/apport/apport-gtk
+profile apport-gtk @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/apt-common>
+  include <abstractions/nameservice-strict>
+
+  capability sys_ptrace,
+
+  @{exec_path} mr,
+
+  /{usr/,}{s,}bin/killall5  rix,
+  /{usr/,}bin/{,ba,da}sh    rix,
+  /{usr/,}bin/apt-cache     rPx,
+  /{usr/,}bin/cut           rix,
+  /{usr/,}bin/dpkg          rPx,
+  /{usr/,}bin/gdb           rCx -> gdb,
+  /{usr/,}bin/grep          rix,
+  /{usr/,}bin/gsettings     rPx,
+  /{usr/,}bin/journalctl    rPx,
+  /{usr/,}bin/kmod          rPx,
+  /{usr/,}bin/ldd           rix,
+  /{usr/,}bin/lsb_release   rPx -> lsb_release,
+  /{usr/,}bin/md5sum        rix,
+
+  /usr/share/apport/general-hooks/*.py r,
+
+  /etc/apport/blacklist.d/apport r,
+  /etc/apport/blacklist.d/README.blacklist r,
+  /etc/apport/crashdb.conf r,
+  /etc/bash_completion.d/apport_completion r,
+  /etc/cron.daily/apport r,
+  /etc/default/apport r,
+  /etc/init.d/apport r,
+  /etc/logrotate.d/apport r,
+
+  /var/lib/dpkg/info/*.md5sums r,
+  /var/log/installer/media-info r,
+
+  owner @{PROC}/@{pid}/cgroup r,
+        @{PROC}/ r,
+        @{PROC}/@{pids}/fd/  r,
+        @{PROC}/@{pids}/cmdline r,
+        @{PROC}/@{pids}/stat r,
+
+  profile gdb {
+    include <abstractions/base>
+    /{usr/,}bin/gdb mr,
+
+  }
+
+  include if exists <local/apport-gtk>
+}
