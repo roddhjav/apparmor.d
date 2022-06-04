@@ -151,7 +151,7 @@ func (aaLogs AppArmorLogs) String() string {
 	}
 	// Order of impression
 	keys := []string{
-		"profile", "peer_label", // Profile name
+		"profile", "label", // Profile name
 		"operation", "name",
 		"mask", "bus", "path", "interface", "member", // dbus
 		"info", "comm",
@@ -161,7 +161,7 @@ func (aaLogs AppArmorLogs) String() string {
 	// Optional colors template to use
 	colors := map[string]string{
 		"profile":        FgBlue,
-		"peer_label":     FgBlue,
+		"label":          FgBlue,
 		"operation":      FgYellow,
 		"name":           FgMagenta,
 		"mask":           BoldRed,
