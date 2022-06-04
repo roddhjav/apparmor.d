@@ -9,6 +9,7 @@ include <tunables/global>
 @{exec_path} = /{,usr/}{,local/}bin/spectre-meltdown-checker{,.sh}
 profile spectre-meltdown-checker @{exec_path} {
   include <abstractions/base>
+  include <abstractions/consoles>
 
   # Needed to read the /dev/cpu/[0-9]*/msr device
   capability sys_rawio,
@@ -56,11 +57,13 @@ profile spectre-meltdown-checker @{exec_path} {
   /{usr/,}bin/{,@{multiarch}-}strings rix,
   /{usr/,}bin/{,@{multiarch}-}objdump rix,
   /{usr/,}{s,}bin/iucode_tool         rix,
+  /{usr/,}{s,}bin/rdmsr               rix,
   /{usr/,}bin/dmesg                   rix,
   /{usr/,}bin/mount      rix,
   /{usr/,}bin/find       rix,
   /{usr/,}bin/xargs      rix,
   /{usr/,}bin/readlink   rix,
+  /{usr/,}bin/nproc      rix,
   
   /{usr/,}bin/pgrep      rCx -> pgrep,
   /{usr/,}bin/ccache     rCx -> ccache,
@@ -99,8 +102,8 @@ profile spectre-meltdown-checker @{exec_path} {
   @{PROC}/modules r,
 
   # find and denoise
-  @{PROC}/@{pid}/{status,exe} r,
-  @{PROC}/@{pid}/fd/ r,
+  @{PROC}/@{pids}/{status,exe} r,
+  @{PROC}/@{pids}/fd/ r,
   @{PROC}/*/ r,
 
   /var/lib/dbus/machine-id r,
@@ -124,10 +127,12 @@ profile spectre-meltdown-checker @{exec_path} {
 
     /etc/debian_version r,
 
+    include if exists <local/spectre-meltdown-checker_ccache>
   }
 
   profile pgrep {
     include <abstractions/base>
+    include <abstractions/consoles>
 
     /{usr/,}bin/pgrep mr,
 
@@ -137,6 +142,7 @@ profile spectre-meltdown-checker @{exec_path} {
          @{PROC}/sys/kernel/osrelease r,
          @{PROC}/uptime r,
 
+    include if exists <local/spectre-meltdown-checker_pgrep>
   }
 
   profile mcedb {
@@ -158,10 +164,12 @@ profile spectre-meltdown-checker @{exec_path} {
 
     /usr/share/publicsuffix/public_suffix_list.* r,
 
+    include if exists <local/spectre-meltdown-checker_mcedb>
   }
 
   profile kmod {
     include <abstractions/base>
+    include <abstractions/consoles>
 
     capability sys_module,
 
@@ -175,6 +183,7 @@ profile spectre-meltdown-checker @{exec_path} {
 
     @{PROC}/cmdline r,
 
+    include if exists <local/spectre-meltdown-checker_kmod>
   }
 
   include if exists <local/spectre-meltdown-checker>
