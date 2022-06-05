@@ -11,6 +11,7 @@ profile su @{exec_path} {
   include <abstractions/base>
   include <abstractions/authentication>
   include <abstractions/consoles>
+  include <abstractions/dbus-strict>
   include <abstractions/nameservice-strict>
   include <abstractions/wutmp>
 # include <pam/mappings>
@@ -54,28 +55,7 @@ profile su @{exec_path} {
   @{PROC}/cmdline r,
   @{sys}/devices/virtual/tty/console/active r,
 
-  # pseudo-terminal
-  capability chown,
-
   /dev/{,pts/}ptmx rw,
-
-  @{run}/dbus/system_bus_socket rw,
-
-  dbus (send)
-     bus=system
-     path=/org/freedesktop/DBus
-     interface=org.freedesktop.DBus
-     member=Hello
-     peer=(name=org.freedesktop.DBus),
-
-  dbus (send)
-    bus=system
-    path=/org/freedesktop/login[0-9]
-    interface=org.freedesktop.login[0-9].Manager
-    member={CreateSession,ReleaseSession},
-
-  unix (bind) type=dgram,
-
   /dev/tty[0-9]* rw,
 
   include if exists <local/su>

@@ -19,6 +19,7 @@ include <tunables/global>
 profile sshd @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/authentication>
+  include <abstractions/dbus-strict>
   include <abstractions/consoles>
   include <abstractions/hosts_access>
   include <abstractions/nameservice-strict>
@@ -97,25 +98,6 @@ profile sshd @{exec_path} flags=(attach_disconnected) {
         @{PROC}/sys/kernel/ngroups_max r,
 
   /dev/ptmx rw,
-
-  @{run}/systemd/userdb/io.systemd.DynamicUser w,
-
-  # DBus
-  @{run}/dbus/system_bus_socket rw,
-
-  dbus send
-    bus=system
-    path=/org/freedesktop/DBus
-    interface=org.freedesktop.DBus
-    member=Hello
-    peer=(name=org.freedesktop.DBus),
-
-  dbus send
-    bus=system
-    path=/org/freedesktop/login1
-    interface=org.freedesktop.login1.Manager
-    member={CreateSession,ReleaseSession}
-    peer=(name=org.freedesktop.login1),
 
   include if exists <local/sshd>
 }
