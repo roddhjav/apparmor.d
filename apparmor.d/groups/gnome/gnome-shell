@@ -43,6 +43,55 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected) {
   unix (connect, receive, send) type=stream peer=(addr="@/tmp/.X11-unix/X[0-9]*"),
   unix (send,receive) type=stream addr=none peer=(label=gnome-extension-ding),
 
+  dbus (send,receive) bus=system path=/org/freedesktop/login[0-9]/session/_[0-9]*
+       interface=org.freedesktop.login[0-9].Session
+       member={ReleaseDevice,TakeControl,TakeDevice,PauseDevice},
+
+  dbus (send,receive) bus=system path=/org/freedesktop/PolicyKit[0-9]/Authority
+       interface=org.freedesktop.PolicyKit[0-9].Authority
+       member={CheckAuthorization,RegisterAuthenticationAgent,Changed},
+
+  dbus send bus=system path=/org/gnome/DisplayManager/Manager
+       interface=org.gnome.DisplayManager.Manager
+       member=RegisterSession
+       peer=(name=org.gnome.DisplayManager),
+
+  dbus send bus=system path=/org/freedesktop
+       interface=org.freedesktop.DBus.ObjectManager
+       member=GetManagedObjects,
+
+  dbus send bus=system path=/org/freedesktop/login[0-9]
+       interface=org.freedesktop.login[0-9].Manager
+       member={CanSuspend,CanRebootToBootLoaderMenu,GetSession,Inhibit},
+
+  dbus send bus=system path=/net/hadess/SwitcherooControl
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll,
+
+  dbus send bus=system path=/net/hadess/PowerProfiles
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll,
+
+  dbus send bus=system path=/org/freedesktop/UPower/{,devices/DisplayDevice}
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll,
+
+  dbus send bus=system path=/net/reactivated/Fprint/Manager
+       interface=net.reactivated.Fprint.Manager
+       member=GetDefaultDevice,
+
+  dbus receive bus=system path=/org/freedesktop/NetworkManager
+       interface=org.freedesktop.NetworkManager
+       member=CheckPermissions,
+
+  dbus receive bus=system path=/org/freedesktop/NetworkManager
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged,
+
+  dbus receive bus=system path=/org/freedesktop/login[0-9]
+       interface=org.freedesktop.login[0-9].Manager
+       member=PropertiesChanged,
+
   @{exec_path} mr,
 
   /{usr/,}bin/Xwayland        rPx,

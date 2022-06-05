@@ -21,6 +21,33 @@ profile gsd-power @{exec_path} flags=(attach_disconnected) {
 
   signal (receive) set=(term, hup) peer=gdm*,
 
+  dbus (send,receive) bus=system path=/org/freedesktop/UPower{,/**}
+       interface=org.freedesktop.{DBus.Properties,UPower*},
+
+  dbus send bus=system path=/org/freedesktop/login[0-9]
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll,
+
+  dbus send bus=system path=/org/freedesktop/login[0-9]/session/auto
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll,
+
+  dbus send bus=system path=/org/freedesktop/login[0-9]/session/auto
+       interface=org.freedesktop.login[0-9].Session
+       member=SetBrightness,
+
+  dbus send bus=system path=/org/freedesktop/login[0-9]
+       interface=org.freedesktop.login[0-9].Manager
+       member=Inhibit,
+
+  dbus send bus=system path=/net/hadess/PowerProfiles
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll,
+
+  dbus receive bus=system path=/org/freedesktop/login[0-9]
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged,
+
   @{exec_path} mr,
 
   /usr/share/dconf/profile/gdm r,

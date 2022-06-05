@@ -19,6 +19,18 @@ profile gsd-print-notifications @{exec_path} flags=(attach_disconnected) {
   signal (receive) set=(term, hup) peer=gdm*,
   signal (send) set=(hup) peer=gsd-printer,
 
+  dbus (send,receive) bus=system path=/Client[0-9]*/ServiceBrowser[0-9]*
+       interface=org.freedesktop.Avahi.ServiceBrowser
+       member={CacheExhausted,AllForNow,CacheExhausted,AllForNow,Free},
+
+  dbus send bus=system path=/
+       interface=org.freedesktop.DBus.Peer
+       member=Ping,
+
+  dbus send bus=system path=/
+       interface=org.freedesktop.Avahi.Server
+       member={GetAPIVersion,GetState,ServiceBrowserNew},
+
   @{exec_path} mr,
   @{libexec}/gsd-printer rPx,
 

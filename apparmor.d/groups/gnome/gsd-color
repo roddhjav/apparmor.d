@@ -18,6 +18,18 @@ profile gsd-color @{exec_path} flags=(attach_disconnected) {
 
   signal (receive) set=(term, hup) peer=gdm*,
 
+  dbus send bus=system path=/org/freedesktop/ColorManager/devices/xrandr_*
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll,
+
+  dbus send bus=system path=/org/freedesktop/ColorManager
+       interface=org.freedesktop.ColorManager
+       member={FindDeviceByProperty,GetDevices,CreateDevice},
+
+  dbus receive bus=system path=/org/freedesktop/ColorManager
+       interface=org.freedesktop.ColorManager
+       member={DeviceAdded,ProfileAdded},
+
   @{exec_path} mr,
 
   /usr/share/dconf/profile/gdm r,

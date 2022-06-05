@@ -17,6 +17,25 @@ profile power-profiles-daemon @{exec_path} flags=(attach_disconnected) {
 
   network netlink raw,
 
+  dbus send bus=system path=/org/freedesktop/PolicyKit[0-9]/Authority
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll,
+
+  dbus send bus=system path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member=RequestName,
+
+  dbus receive bus=system path=/net/hadess/PowerProfiles
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll,
+
+  dbus receive bus=system path=/org/freedesktop/PolicyKit[0-9]/Authority
+       interface=org.freedesktop.PolicyKit[0-9].Authority
+       member=Changed,
+
+  dbus bind bus=system 
+       name=net.hadess.PowerProfiles,
+
   @{exec_path} mr,
 
   /var/lib/power-profiles-daemon/{,**} rw,
