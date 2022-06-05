@@ -11,7 +11,6 @@ profile pkexec @{exec_path} flags=(complain) {
   include <abstractions/base>
   include <abstractions/authentication>
   include <abstractions/consoles>
-  include <abstractions/dbus-strict>
   include <abstractions/nameservice-strict>
   include <abstractions/wutmp>
 
@@ -53,6 +52,18 @@ profile pkexec @{exec_path} flags=(complain) {
   # file_inherit
   owner /dev/tty[0-9]* rw,
   owner @{HOME}/.xsession-errors w,
+
+  # DBus stricter
+  @{run}/dbus/system_bus_socket rw,
+
+  dbus send
+    bus="system" path="/org/freedesktop/DBus"                 interface="org.freedesktop.DBus" member="{Hello,AddMatch,StartServiceByName,GetNameOwner}" peer=(name="org.freedesktop.DBus"),
+
+  dbus send
+    bus="system" path="/org/freedesktop/PolicyKit1/Authority" interface="org.freedesktop.DBus.Properties" member="{GetAll,CheckAuthorization}" peer=(name=":*"),
+
+  dbus send
+    bus="system" path="/org/freedesktop/PolicyKit1/Authority" interface="org.freedesktop.PolicyKit1.Authority" peer=(name=":*"),
 
   include if exists <local/pkexec>
 }
