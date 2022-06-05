@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2018-2021 Mikhail Morfikov
+# Copyright (C) 2018-2022 Mikhail Morfikov
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -17,29 +18,11 @@ profile upowerd @{exec_path} flags=(attach_disconnected) {
 
   @{exec_path} mr,
 
-  # UPower config file
   /etc/UPower/ r,
   /etc/UPower/UPower.conf r,
 
-  # The history data for the power device
   /var/lib/upower/ r,
   /var/lib/upower/history-*.dat{,.*} rw,
-
-  # Are all of these needed? (#FIXME#)
-  /dev/input/event* r,
-  @{sys}/bus/hid/devices/ r,
-  @{sys}/class/leds/ r,
-  @{sys}/class/power_supply/ r,
-  @{sys}/class/input/ r,
-  @{sys}/devices/ r,
-  @{sys}/devices/**/power_supply/**/* r,
-  @{sys}/devices/**/uevent r,
-  @{sys}/devices/**/capabilities/* r,
-  @{sys}/devices/virtual/dmi/id/product_name r,
-
-  @{sys}/devices/platform/**/leds/**/max_brightness r,
-  @{sys}/devices/platform/**/leds/**/brightness rw,
-  @{sys}/devices/platform/**/leds/**/brightness_hw_changed r,
 
   @{run}/udev/data/ r,
   @{run}/udev/data/+power_supply* r,
@@ -48,6 +31,21 @@ profile upowerd @{exec_path} flags=(attach_disconnected) {
   @{run}/udev/data/c13:[0-9]*  r, # for /dev/input/*
 
   @{run}/systemd/inhibit/[0-9]*.ref rw,
+
+  @{sys}/bus/hid/devices/ r,
+  @{sys}/class/input/ r,
+  @{sys}/class/leds/ r,
+  @{sys}/class/power_supply/ r,
+  @{sys}/devices/ r,
+  @{sys}/devices/**/capabilities/* r,
+  @{sys}/devices/**/power_supply/**/* r,
+  @{sys}/devices/**/uevent r,
+  @{sys}/devices/platform/**/leds/**/brightness rw,
+  @{sys}/devices/platform/**/leds/**/brightness_hw_changed r,
+  @{sys}/devices/platform/**/leds/**/max_brightness r,
+  @{sys}/devices/virtual/dmi/id/product_name r,
+
+  /dev/input/event* r,
 
   include if exists <local/upowerd>
 }

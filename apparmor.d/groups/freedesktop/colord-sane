@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2018-2021 Mikhail Morfikov
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -8,7 +9,7 @@ include <tunables/global>
 
 @{exec_path}  = /{usr/,}lib/colord/colord-sane
 @{exec_path} += @{libexec}/colord-sane
-profile colord-sane @{exec_path} flags=(complain) {
+profile colord-sane @{exec_path} flags=(attach_disconnected,complain) {
   include <abstractions/base>
   include <abstractions/devices-usb>
 
@@ -16,17 +17,18 @@ profile colord-sane @{exec_path} flags=(complain) {
 
   @{exec_path} mr,
 
-  /etc/sane.d/{,**} r,
+  /usr/share/snmp/mibs/{,*} r,
 
+  /etc/sane.d/{,**} r,
   /etc/snmp/snmp.conf r,
+
+  /var/lib/snmp/{mib,cert}_indexes/ rw,
   /var/lib/snmp/mibs/{iana,ietf}/ r,
   /var/lib/snmp/mibs/{iana,ietf}/[A-Z]* r,
 
-  /var/lib/snmp/{mib,cert}_indexes/ rw,
-  /usr/share/snmp/mibs/{,*} r,
+  @{run}/systemd/journal/socket rw,
 
   @{sys}/bus/scsi/devices/ r,
-
   @{sys}/devices/pci[0-9]*/**/{vendor,model,type} r,
 
   @{PROC}/sys/dev/parport/ r,
