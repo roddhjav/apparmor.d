@@ -8,7 +8,7 @@ abi <abi/3.0>,
 include <tunables/global>
 
 @{exec_path} = /{usr/,}{s,}bin/logrotate
-profile logrotate @{exec_path} flags=(attach_disconnected, complain) {
+profile logrotate @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/nameservice-strict>
 
@@ -71,16 +71,15 @@ profile logrotate @{exec_path} flags=(attach_disconnected, complain) {
   /var/lib/logrotate.status rwk,
   /var/lib/logrotate.status.tmp rw,
 
+  / r,
   /var/log{,.hdd}/   r,
   /var/log{,.hdd}/** rw,
 
-  # Needed to remove the following error:
-  #  logrotate[]: error: could not change directory to '.'
-  / r,
+  @{run}/systemd/private rw,
 
   @{sys}/firmware/efi/efivars/SecureBoot-@{uuid} r,
 
-  profile systemctl flags=(attach_disconnected, complain) {
+  profile systemctl flags=(attach_disconnected) {
     include <abstractions/base>
     include <abstractions/wutmp>
 

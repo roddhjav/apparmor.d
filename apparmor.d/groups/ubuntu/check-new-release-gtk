@@ -10,13 +10,18 @@ include <tunables/global>
 profile check-new-release-gtk @{exec_path} {
   include <abstractions/base>
   include <abstractions/apt-common>
+  include <abstractions/dbus-session-strict>
   include <abstractions/dconf>
   include <abstractions/nameservice-strict>
+  include <abstractions/openssl>
   include <abstractions/python>
   include <abstractions/ssl_certs>
 
   network inet dgram,
   network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
 
   @{exec_path} mr,
 
@@ -25,17 +30,22 @@ profile check-new-release-gtk @{exec_path} {
   /{usr/,}bin/lsb_release  rPx -> lsb_release,
 
   /usr/share/distro-info/{,**} r,
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
   /usr/share/icons/{,**} r,
   /usr/share/themes/{,**} r,
   /usr/share/ubuntu-release-upgrader/{,**} r,
   /usr/share/update-manager/{,**} r,
+  /usr/share/X11/xkb/{,**} r,
 
   /etc/update-manager/{,**} r,
 
   owner @{user_cache_dirs}/update-manager-core/{,**} rw,
 
+  owner @{run}/user/@{uid}/dconf/user rw,
+  owner @{run}/user/@{uid}/wayland-[0-9] rw,
+
   owner @{PROC}/@{pid}/fd/ r,
-  owner @{PROC}/@{pid}/mounts r,
+        @{PROC}/@{pids}/mounts r,
 
   include if exists <local/check-new-release-gtk>
 }
