@@ -35,6 +35,49 @@ profile NetworkManager @{exec_path} flags=(attach_disconnected) {
   network netlink raw,
   network packet dgram,
 
+  dbus (send,receive) bus=system path=/org/freedesktop/NetworkManager{,/**}
+       interface=org.freedesktop.{DBus.Properties,NetworkManager*},
+
+  dbus (send,receive) bus=system path=/org/freedesktop/PolicyKit[0-9]/Authority
+       interface=org.freedesktop.PolicyKit[0-9].Authority
+       member={Changed,CheckAuthorization},
+
+  dbus send bus=system path=/org/freedesktop
+       interface=org.freedesktop.DBus.ObjectManager
+       member=InterfacesAdded,
+
+  dbus send bus=system path=/org/freedesktop/nm_dispatcher
+       interface=org.freedesktop.nm_dispatcher
+       member=Action
+       peer=(name=org.freedesktop.nm_dispatcher),
+
+  dbus send bus=system path=/org/freedesktop/ModemManager[0-9]
+       interface=org.freedesktop.DBus.ObjectManager
+       member=GetManagedObjects,
+
+  dbus send bus=system path=/org/freedesktop/resolve[0-9]
+       interface=org.freedesktop.resolve[0-9].Manager
+       member=SetLink*,
+
+  dbus send bus=system path=/org/freedesktop/hostname[0-9]
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll,
+
+  dbus send bus=system path=/org/freedesktop/ModemManager[0-9]
+       interface=org.freedesktop.DBus.ObjectManager
+       member=GetManagedObjects,
+
+  dbus receive bus=system path=/org/freedesktop
+       interface=org.freedesktop.DBus.ObjectManager
+       member=GetManagedObjects,
+
+  dbus receive bus=system path=/org/freedesktop/login[0-9]
+       interface=org.freedesktop.login[0-9].Manager
+       member={SessionRemoved,UserNew,SessionNew,Inhibit},
+
+  dbus bind bus=system 
+       name=org.freedesktop.NetworkManager,
+
   @{exec_path} mr,
 
   /{usr/,}bin/{,ba,da}sh rix,

@@ -21,6 +21,25 @@ profile rtkit-daemon @{exec_path} {
   capability sys_nice,
   capability sys_ptrace,
 
+  dbus receive bus=system path=/org/freedesktop/RealtimeKit[0-9]
+       interface=org.freedesktop.DBus.Properties
+       member={Get,GetAll},
+
+  dbus receive bus=system path=/org/freedesktop/RealtimeKit[0-9]
+       interface=org.freedesktop.RealtimeKit[0-9]
+       member=MakeThreadRealtimeWithPID,
+
+  dbus send bus=system path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member=GetConnectionUnixUser,
+
+  dbus send bus=system path=/org/freedesktop/PolicyKit[0-9]/Authority
+       interface=org.freedesktop.PolicyKit[0-9].Authority
+       member=CheckAuthorization,
+
+  dbus bind bus=system 
+       name=org.freedesktop.RealtimeKit[0-9],
+
   @{exec_path} mr,
 
   # When applying policies to processes

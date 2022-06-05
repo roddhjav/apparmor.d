@@ -16,6 +16,20 @@ profile upowerd @{exec_path} flags=(attach_disconnected) {
 
   network netlink raw,
 
+  dbus (send,receive) bus=system path=/org/freedesktop/UPower{,/**}
+       interface=org.freedesktop.{DBus.Properties,UPower*},
+
+  dbus (send,receive) bus=system path=/org/freedesktop/login[0-9]
+       interface=org.freedesktop.DBus.Properties
+       member={PropertiesChanged,GetAll},
+
+  dbus send bus=system path=/org/freedesktop/login[0-9]
+       interface=org.freedesktop.login[0-9].Manager
+       member=Inhibit,
+
+  dbus bind bus=system 
+       name=org.freedesktop.UPower,
+
   @{exec_path} mr,
 
   /etc/UPower/ r,
