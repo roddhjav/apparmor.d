@@ -89,7 +89,7 @@ func NewApparmorLogs(file io.Reader, profile string) AppArmorLogs {
 	log := ""
 	exp := "apparmor=(\"DENIED\"|\"ALLOWED\"|\"AUDIT\")"
 	if profile != "" {
-		exp = fmt.Sprintf(exp+".* profile=\"%s.*\"", profile)
+		exp = fmt.Sprintf(exp+".* (profile=\"%s.*\"|label=\"%s.*\")", profile, profile)
 	}
 	isAppArmorLog := regexp.MustCompile(exp)
 
