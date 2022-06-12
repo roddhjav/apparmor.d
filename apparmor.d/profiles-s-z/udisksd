@@ -35,7 +35,7 @@ profile udisksd @{exec_path} flags=(attach_disconnected) {
 
   dbus send bus=system path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus
-       member={ReleaseName,GetConnectionUnixUser},
+       member={ReleaseName,GetConnectionUnixUser,RequestName},
 
   dbus send bus=system path=/org/freedesktop/login[0-9]
        interface=org.freedesktop.login[0-9].Manager
@@ -71,26 +71,26 @@ profile udisksd @{exec_path} flags=(attach_disconnected) {
   /{usr/,}bin/systemd-escape  rPx,
 
   # Allow mounting of removable devices
-  mount fstype={btrfs,ext*,vfat,iso9660,udf,ntfs3} /dev/{s,v}d[a-z]*       -> @{MOUNTS}/*/*/,
-  mount fstype={btrfs,ext*,vfat,iso9660,udf,ntfs3} /dev/{s,v}d[a-z]*[0-9]* -> @{MOUNTS}/*/*/,
-  mount fstype={btrfs,ext*,vfat,iso9660,udf,ntfs3} /dev/dm-[0-9]*     -> @{MOUNTS}/*/*/,
+  mount fstype={btrfs,ext*,vfat,iso9660,udf,ntfs3} /dev/{s,v}d[a-z]*       -> @{MOUNTS}/*/,
+  mount fstype={btrfs,ext*,vfat,iso9660,udf,ntfs3} /dev/{s,v}d[a-z]*[0-9]* -> @{MOUNTS}/*/,
+  mount fstype={btrfs,ext*,vfat,iso9660,udf,ntfs3} /dev/dm-[0-9]*     -> @{MOUNTS}/*/,
   # Allow mounting of loop devices (ISO files)
-  mount fstype={btrfs,ext*,vfat,iso9660,udf,ntfs3} /dev/loop[0-9]*        -> @{MOUNTS}/*/*/,
-  mount fstype={btrfs,ext*,vfat,iso9660,udf,ntfs3} /dev/loop[0-9]*p[0-9]* -> @{MOUNTS}/*/*/,
+  mount fstype={btrfs,ext*,vfat,iso9660,udf,ntfs3} /dev/loop[0-9]*        -> @{MOUNTS}/*/,
+  mount fstype={btrfs,ext*,vfat,iso9660,udf,ntfs3} /dev/loop[0-9]*p[0-9]* -> @{MOUNTS}/*/,
   # Allow mounting of cdrom
   mount fstype={btrfs,ext*,vfat,iso9660,udf,ntfs3} /dev/loop[0-9]* -> /media/cdrom[0-9]/,
   mount fstype={iso9660,udf,ntfs3}                 /dev/sr[0-9]*   -> /media/cdrom[0-9]/,
   # Allow mounting od sd cards
-  mount fstype={btrfs,ext*,vfat,iso9660,udf,ntfs3} /dev/mmcblk[0-9]         -> @{MOUNTS}/*/*/,
-  mount fstype={btrfs,ext*,vfat,iso9660,udf,ntfs3} /dev/mmcblk[0-9]*p[0-9]* -> @{MOUNTS}/*/*/,
+  mount fstype={btrfs,ext*,vfat,iso9660,udf,ntfs3} /dev/mmcblk[0-9]         -> @{MOUNTS}/*/,
+  mount fstype={btrfs,ext*,vfat,iso9660,udf,ntfs3} /dev/mmcblk[0-9]*p[0-9]* -> @{MOUNTS}/*/,
   # Allow unmounting
+  umount @{MOUNTS}/,
   umount @{MOUNTS}/*/,
-  umount @{MOUNTS}/*/*/,
   umount /media/cdrom[0-9]/,
 
   # Be able to create/delete dirs for removable media
+  @{MOUNTS}/ rw,
   @{MOUNTS}/*/ rw,
-  @{MOUNTS}/*/*/ rw,
   /media/cdrom[0-9]/ rw,
 
   # Udisks2 config files
