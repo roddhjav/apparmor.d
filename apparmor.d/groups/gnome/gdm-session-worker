@@ -41,21 +41,13 @@ profile gdm-session-worker @{exec_path} flags=(attach_disconnected) {
 
   network netlink raw,
 
-  dbus send bus=system path=/org/freedesktop/Accounts{,/User[0-9]*}
-       interface={org.freedesktop.DBus.Properties,org.freedesktop.Accounts}
+  dbus (send,receive) bus=system path=/org/freedesktop/Accounts{,/User[0-9]*}
+       interface=org.freedesktop.{DBus.Properties,Accounts*}
        member={GetAll,FindUserByName,SetLanguage,Changed,PropertiesChanged},
 
   dbus send bus=system path=/org/freedesktop/login[0-9]
        interface=org.freedesktop.login[0-9].Manager
        member=CreateSession,
-
-  dbus receive bus=system path=/org/freedesktop/Accounts/User[0-9]*
-       interface=org.freedesktop.DBus.Properties
-       member=PropertiesChanged,
-
-  dbus receive bus=system path=/org/freedesktop/Accounts/User[0-9]*
-       interface=org.freedesktop.Accounts.User
-       member=Changed,
 
   @{exec_path} mrix,
 

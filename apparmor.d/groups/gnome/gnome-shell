@@ -11,6 +11,7 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/app-launcher-user>
   include <abstractions/audio>
+  include <abstractions/dbus-network-manager-strict>
   include <abstractions/dbus-session-strict>
   include <abstractions/dbus-strict>
   include <abstractions/dconf-write>
@@ -18,6 +19,7 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected) {
   include <abstractions/dri-enumerate>
   include <abstractions/fontconfig-cache-write>
   include <abstractions/gnome>
+  include <abstractions/ibus>
   include <abstractions/mesa>
   include <abstractions/nameservice-strict>
   include <abstractions/opencl-nvidia>
@@ -43,36 +45,39 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected) {
  
   unix (send,receive) type=stream addr=none peer=(label=gnome-extension-ding),
 
-  dbus (send,receive) bus=system path=/org/freedesktop/login[0-9]/session/_[0-9]*
-       interface=org.freedesktop.login[0-9].Session
-       member={ReleaseDevice,TakeControl,TakeDevice,PauseDevice},
+  dbus (send,receive) bus=system path=/org/freedesktop/login[0-9]{,/**}
+       interface=org.freedesktop.{DBus.Properties,login[0-9].*},
 
   dbus (send,receive) bus=system path=/org/freedesktop/PolicyKit[0-9]/Authority
-       interface=org.freedesktop.PolicyKit[0-9].Authority
-       member={CheckAuthorization,RegisterAuthenticationAgent,Changed},
+       interface=org.freedesktop.{DBus.Properties,PolicyKit[0-9].Authority}
+       member={CheckAuthorization,RegisterAuthenticationAgent,Changed,GetAll},
 
-  dbus send bus=system path=/org/gnome/DisplayManager/Manager
-       interface=org.gnome.DisplayManager.Manager
-       member=RegisterSession
-       peer=(name=org.gnome.DisplayManager),
+  dbus (send,receive) bus=system path=/org/freedesktop/Accounts{,/User[0-9]*}
+       interface=org.freedesktop.{DBus.Properties,Accounts*}
+       member={GetAll,FindUserByName,Changed,PropertiesChanged},
+
+  dbus (send,receive) bus=system path=/org/freedesktop/UPower/{,devices/DisplayDevice}
+       interface=org.freedesktop.DBus.Properties
+       member={GetAll,PropertiesChanged},
+
+  dbus (send,receive) bus=system path=/org/freedesktop/GeoClue2/{Agent,Manager}
+       interface=org.freedesktop.{DBus.Properties,GeoClue2.Manager}
+       member={PropertiesChanged,AddAgent,GetAll},
 
   dbus send bus=system path=/org/freedesktop
        interface=org.freedesktop.DBus.ObjectManager
        member=GetManagedObjects,
 
-  dbus send bus=system path=/org/freedesktop/login[0-9]
-       interface=org.freedesktop.login[0-9].Manager
-       member={CanSuspend,CanRebootToBootLoaderMenu,GetSession,Inhibit},
+  dbus send bus=system path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member=GetConnectionUnixUser,
 
-  dbus send bus=system path=/net/hadess/SwitcherooControl
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll,
+  dbus send bus=system path=/org/gnome/DisplayManager/Manager
+       interface=org.gnome.{DBus.Properties,DisplayManager.Manager}
+       member={RegisterSession,Get,GetAll,OpenReauthenticationChannel}
+       peer=(name=org.gnome.DisplayManager),
 
-  dbus send bus=system path=/net/hadess/PowerProfiles
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll,
-
-  dbus send bus=system path=/org/freedesktop/UPower/{,devices/DisplayDevice}
+  dbus send bus=system path=/net/hadess/{PackageKit,PowerProfiles,SwitcherooControl}
        interface=org.freedesktop.DBus.Properties
        member=GetAll,
 
@@ -80,16 +85,20 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected) {
        interface=net.reactivated.Fprint.Manager
        member=GetDefaultDevice,
 
+  dbus send bus=system path=/org/freedesktop/NetworkManager{,/AgentManager}
+       interface=org.freedesktop.NetworkManager{,.AgentManager}
+       member={Unregister,RegisterWithCapabilities,GetPermissions},
+
   dbus receive bus=system path=/org/freedesktop/NetworkManager
        interface=org.freedesktop.NetworkManager
        member=CheckPermissions,
 
-  dbus receive bus=system path=/org/freedesktop/NetworkManager
+  dbus receive bus=system path=/org/freedesktop/NetworkManager/{Devices,DHCP{4,6}Config,IP{4,6}Config}/[0-9]*
        interface=org.freedesktop.DBus.Properties
        member=PropertiesChanged,
 
-  dbus receive bus=system path=/org/freedesktop/login[0-9]
-       interface=org.freedesktop.login[0-9].Manager
+  dbus receive bus=system path=/org/freedesktop/NetworkManager
+       interface=org.freedesktop.DBus.Properties
        member=PropertiesChanged,
 
   @{exec_path} mr,
@@ -150,9 +159,6 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected) {
   owner @{HOME}/@{XDG_WALLPAPERS_DIR}/{,**} r,
 
   owner @{user_config_dirs}/.goutputstream{,*} rw,
-  owner @{user_config_dirs}/ibus/ rw,
-  owner @{user_config_dirs}/ibus/bus/ rw,
-  owner @{user_config_dirs}/ibus/bus/[0-9a-f]*-unix-{,wayland-}[0-9] r,
   owner @{user_config_dirs}/monitors.xml{,~} rwl,
 
   owner @{user_share_dirs}/backgrounds/{,**} rw,

@@ -40,7 +40,15 @@ profile NetworkManager @{exec_path} flags=(attach_disconnected) {
 
   dbus (send,receive) bus=system path=/org/freedesktop/PolicyKit[0-9]/Authority
        interface=org.freedesktop.PolicyKit[0-9].Authority
-       member={Changed,CheckAuthorization},
+       member={Changed,CheckAuthorization,CancelCheckAuthorization},
+
+  dbus (send,receive) bus=system path=/org/freedesktop/login[0-9]
+       interface=org.freedesktop.login[0-9].Manager
+       member={SessionRemoved,UserNew,SessionNew,Inhibit,PrepareForShutdown},
+
+  dbus send bus=system path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={RequestName,GetConnectionUnixUser,GetConnectionUnixProcessID},
 
   dbus send bus=system path=/org/freedesktop
        interface=org.freedesktop.DBus.ObjectManager
@@ -57,7 +65,8 @@ profile NetworkManager @{exec_path} flags=(attach_disconnected) {
 
   dbus send bus=system path=/org/freedesktop/resolve[0-9]
        interface=org.freedesktop.resolve[0-9].Manager
-       member=SetLink*,
+       member={SetLink*,ResolveHostname},
+       # org.freedesktop.resolve1
 
   dbus send bus=system path=/org/freedesktop/hostname[0-9]
        interface=org.freedesktop.DBus.Properties
@@ -70,10 +79,6 @@ profile NetworkManager @{exec_path} flags=(attach_disconnected) {
   dbus receive bus=system path=/org/freedesktop
        interface=org.freedesktop.DBus.ObjectManager
        member=GetManagedObjects,
-
-  dbus receive bus=system path=/org/freedesktop/login[0-9]
-       interface=org.freedesktop.login[0-9].Manager
-       member={SessionRemoved,UserNew,SessionNew,Inhibit},
 
   dbus bind bus=system 
        name=org.freedesktop.NetworkManager,

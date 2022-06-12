@@ -15,10 +15,26 @@ profile gsd-sharing @{exec_path} flags=(attach_disconnected) {
   include <abstractions/dconf-write>
 
   signal (receive) set=(term, hup) peer=gdm*,
-  
-  dbus receive bus=system path=/org/freedesktop/NetworkManager
+
+  dbus send bus=system path=/org/freedesktop
+       interface=org.freedesktop.DBus.ObjectManager
+       member=GetManagedObjects,
+
+  dbus send bus=system path=/org/freedesktop/NetworkManager
+       interface=org.freedesktop.NetworkManager
+       member=GetPermissions,
+
+  dbus send bus=system path=/org/freedesktop/NetworkManager/Settings/[0-9]
+       interface=org.freedesktop.NetworkManager.Settings.Connection
+       member=GetSettings,
+
+  dbus receive bus=system path=/org/freedesktop/NetworkManager{,/{Devices,DHCP{4,6}Config,IP{4,6}Config}/[0-9]*}
        interface=org.freedesktop.DBus.Properties
        member=PropertiesChanged,
+
+  dbus receive bus=system path=/org/freedesktop/NetworkManager
+       interface=org.freedesktop.NetworkManager
+       member=CheckPermissions,
 
   @{exec_path} mr,
 

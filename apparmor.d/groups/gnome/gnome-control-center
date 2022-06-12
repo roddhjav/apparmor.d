@@ -10,6 +10,9 @@ include <tunables/global>
 profile gnome-control-center @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/audio>
+  include <abstractions/dbus-network-manager-strict>
+  include <abstractions/dbus-session-strict>
+  include <abstractions/dbus-strict>
   include <abstractions/dconf-write>
   include <abstractions/dri-common>
   include <abstractions/dri-enumerate>
@@ -31,6 +34,54 @@ profile gnome-control-center @{exec_path} flags=(attach_disconnected) {
 
   signal (send) set=(kill) peer=unconfined,
   signal (send) set=(kill) peer=passwd,
+
+  dbus send bus=system path=/org/freedesktop{,ModemManager[0-9],UDisks2}
+       interface=org.freedesktop.DBus.ObjectManager
+       member=GetManagedObjects,
+
+  dbus send bus=system path=/net/reactivated/Fprint/Manager
+       interface=net.reactivated.Fprint.Manager
+       member=GetDevices,
+
+  dbus send bus=system path=/net/reactivated/Fprint/Manager
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll,
+
+  dbus send bus=system path=/org/freedesktop/PolicyKit[0-9]/Authority
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll,
+
+  dbus send bus=system path=/org/freedesktop/PolicyKit[0-9]/Authority
+       interface=org.freedesktop.PolicyKit[0-9].Authority
+       member=CheckAuthorization,
+
+  dbus send bus=system path=/org/freedesktop/Accounts/User[0-9]*
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll,
+
+  dbus send bus=system path=/org/freedesktop/Accounts
+       interface=org.freedesktop.Accounts
+       member=ListCachedUsers,
+
+  dbus send bus=system path=/net/hadess/SwitcherooControl
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll,
+
+  dbus send bus=system path=/org/freedesktop/hostname[0-9]
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll,
+
+  dbus send bus=system path=/org/freedesktop/NetworkManager
+       interface=org.freedesktop.NetworkManager
+       member=GetPermissions,
+
+  dbus send bus=system path=/org/freedesktop/NetworkManager/Settings/[0-9]*
+       interface=org.freedesktop.NetworkManager.Settings.Connection
+       member=GetSettings,
+
+  dbus send bus=system path=/org/freedesktop/systemd[0-9]
+       interface=org.freedesktop.DBus.Properties
+       member={GetAll,Get},
 
   @{exec_path} mr,
 

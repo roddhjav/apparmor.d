@@ -22,34 +22,17 @@ profile polkitd @{exec_path} {
 
   ptrace (read),
 
+  dbus (send,receive) bus=system path=/org/freedesktop/PolicyKit[0-9]/*
+       interface=org.freedesktop.{DBus.Introspectable,DBus.Properties,PolicyKit[0-9].*},
+
   dbus send bus=system path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus
        member={GetConnectionUnixUser,GetConnectionUnixProcessID,RequestName},
-
-  dbus send bus=system path=/org/freedesktop/PolicyKit[0-9]/Authority
-       interface=org.freedesktop.PolicyKit[0-9].Authority
-       member={Changed,BeginAuthentication},
-
-  dbus receive bus=system path=/org/freedesktop/PolicyKit[0-9]/Authority
-       interface=org.freedesktop.PolicyKit[0-9].Authority
-       member={GetAll,CheckAuthorization,RegisterAuthenticationAgent,AuthenticationAgentResponse2,EnumerateActions,CancelCheckAuthorization},
-
-  dbus receive bus=system path=/org/freedesktop/PolicyKit[0-9]/Authority
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll,
 
   dbus bind bus=system 
        name=org.freedesktop.PolicyKit[0-9],
 
   @{exec_path} mr,
-
-  @{PROC}/@{pids}/stat r,
-  @{PROC}/@{pids}/cmdline r,
-  @{PROC}/@{pids}/task/@{tid}/stat r,
-  @{PROC}/@{pids}/cgroup r,
-  @{PROC}/sys/kernel/osrelease r,
-  @{PROC}/1/environ r,
-  @{PROC}/cmdline r,
 
   /etc/machine-id r,
 
@@ -73,6 +56,14 @@ profile polkitd @{exec_path} {
 
   @{run}/systemd/sessions/* r,
   @{run}/systemd/users/@{uid} r,
+
+  @{PROC}/@{pids}/cgroup r,
+  @{PROC}/@{pids}/cmdline r,
+  @{PROC}/@{pids}/stat r,
+  @{PROC}/@{pids}/task/@{tid}/stat r,
+  @{PROC}/1/environ r,
+  @{PROC}/cmdline r,
+  @{PROC}/sys/kernel/osrelease r,
 
   # Silencer
   deny /.cache/ rw,
