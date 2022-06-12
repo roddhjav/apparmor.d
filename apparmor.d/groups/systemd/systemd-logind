@@ -27,13 +27,13 @@ profile systemd-logind @{exec_path} flags=(attach_disconnected,complain) {
   dbus (send,receive) bus=system path=/org/freedesktop/login[0-9]{,/**}
        interface=org.freedesktop.{DBus.Properties,DBus.Introspectable,login[0-9].*},
 
-  dbus (send,receive) bus=system path=/org/freedesktop/systemd[0-9]/job/**
+  dbus (send,receive) bus=system path=/org/freedesktop/systemd[0-9]
+       interface=org.freedesktop.systemd[0-9].Manager
+       member={StartUnit,StartTransientUnit,Subscribe,JobRemoved,UnitRemoved,Reloading,Subscribe},
+
+  dbus (send,receive) bus=system path=/org/freedesktop/systemd[0-9]/{unit,job}/**
        interface=org.freedesktop.DBus.Properties
        member={Get,PropertiesChanged},
-
-  dbus (send,receive) bus=system path=/org/freedesktop/systemd[0-9]/unit/**
-       interface=org.freedesktop.DBus.Properties
-       member={PropertiesChanged,Get},
 
   dbus send bus=system path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus
@@ -46,10 +46,6 @@ profile systemd-logind @{exec_path} flags=(attach_disconnected,complain) {
   dbus send bus=system path=/org/freedesktop/systemd[0-9]/unit/**
        interface=org.freedesktop.systemd[0-9].Scope
        member=Abandon,
-
-  dbus receive bus=system path=/org/freedesktop/systemd[0-9]
-       interface=org.freedesktop.systemd[0-9].Manager
-       member={StartUnit,StartTransientUnit,Subscribe,JobRemoved,UnitRemoved,Reloading},
 
   dbus receive bus=system path=/org/freedesktop/systemd[0-9]
        interface=org.freedesktop.DBus.Properties
@@ -68,8 +64,9 @@ profile systemd-logind @{exec_path} flags=(attach_disconnected,complain) {
 
   /var/lib/systemd/linger/ r,
 
+  @{run}/.#nologin* rw,
   @{run}/host/container-manager r,
-
+  @{run}/nologin rw,
   @{run}/utmp rk,
 
   @{run}/udev/tags/master-of-seat/ r,
@@ -96,17 +93,18 @@ profile systemd-logind @{exec_path} flags=(attach_disconnected,complain) {
   @{run}/systemd/inhibit/ rw,
   @{run}/systemd/inhibit/.#* rw,
   @{run}/systemd/inhibit/[0-9]*{,.ref} rw,
+  @{run}/systemd/journal/socket rw,
+  @{run}/systemd/notify rw,
   @{run}/systemd/seats/ rw,
   @{run}/systemd/seats/.#seat* rw,
   @{run}/systemd/seats/seat[0-9]* rw,
   @{run}/systemd/sessions/{,*}  rw,
   @{run}/systemd/sessions/*.ref rw,
+  @{run}/systemd/shutdown/.#scheduled* rw,
+  @{run}/systemd/shutdown/scheduled rw,
   @{run}/systemd/users/ rw,
   @{run}/systemd/users/.#* rw,
   @{run}/systemd/users/@{uid} rw,
-
-  @{run}/systemd/journal/socket rw,
-  @{run}/systemd/notify rw,
 
   @{sys}/class/drm/ r,
   @{sys}/devices/**/{uevent,enabled,status} r,
