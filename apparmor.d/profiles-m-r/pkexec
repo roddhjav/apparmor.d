@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2019-2021 Mikhail Morfikov
+# Copyright (C) 2019-2022 Mikhail Morfikov
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -17,23 +18,33 @@ profile pkexec @{exec_path} flags=(complain) {
 
   signal (send) set=(term, kill) peer=polkit-agent-helper,
 
-  capability sys_ptrace,
   capability audit_write,
   capability dac_read_search,
-
-  # gdbus
-  capability setgid,
-  # gmain
-  capability setuid,
-
-  # Needed?
-  deny capability sys_nice,
+  capability setgid,  # gdbus
+  capability setuid,  # gmain
+  capability sys_ptrace,
+  audit deny capability sys_nice,
 
   ptrace (read),
 
   network netlink raw,
 
+  dbus send bus=system path=/org/freedesktop/PolicyKit[0-9]/Authority
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll,
+
+  dbus send bus=system path=/org/freedesktop/PolicyKit[0-9]/Authority
+       interface=org.freedesktop.PolicyKit[0-9].Authority
+       member={EnumerateActions,CheckAuthorization},
+
   @{exec_path} mr,
+
+  # Apps to be run via pkexec
+  /{usr/,}{s,}bin/*            rPUx,
+  /{usr/,}lib/gvfs/gvfsd-admin rPUx, #(#FIXME#)
+  /{usr/,}lib/polkit-[0-9]/polkit-agent-helper-[0-9] rPx,
+  /{usr/,}lib/update-notifier/package-system-locked  rPx,
+  /usr/share/apport/apport-gtk rPx,
 
   /etc/shells r,
   /etc/environment r,
@@ -42,13 +53,6 @@ profile pkexec @{exec_path} flags=(complain) {
 
         @{PROC}/@{pids}/stat r,
   owner @{PROC}/@{pid}/fd/ r,
-
-  # Apps to be run via pkexec
-  /{usr/,}{s,}bin/*            rPUx,
-  /{usr/,}bin/*                rPUx,
-  /{usr/,}lib/gvfs/gvfsd-admin rPUx, #(#FIXME#)
-  /{usr/,}lib/polkit-[0-9]/polkit-agent-helper-[0-9] rPx,
-  /{usr/,}lib/update-notifier/package-system-locked  rPx,
 
   # file_inherit
   owner /dev/tty[0-9]* rw,
