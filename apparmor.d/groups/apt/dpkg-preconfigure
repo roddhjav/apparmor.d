@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2019-2021 Mikhail Morfikov
+# Copyright (C) 2019-2022 Mikhail Morfikov
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -35,6 +36,7 @@ profile dpkg-preconfigure @{exec_path} {
   owner /tmp/*.config.* rwPUx,
 
   owner /var/cache/debconf/{config,passwords,templates}.dat{,-old,-new} rwk,
+  owner /var/log/unattended-upgrades/unattended-upgrades-dpkg.log rw,
 
   # The following is needed when dpkg-preconfigure uses debcconf GUI frontends.
   include <abstractions/gtk>
@@ -44,9 +46,7 @@ profile dpkg-preconfigure @{exec_path} {
   capability dac_read_search,
   /{usr/,}bin/lsb_release rPx -> lsb_release,
   /{usr/,}bin/hostname    rix,
-  owner @{PROC}/@{pid}/mounts r,
   @{HOME}/.Xauthority r,
-
   owner @{PROC}/@{pid}/mounts r,
 
   include if exists <local/dpkg-preconfigure>
