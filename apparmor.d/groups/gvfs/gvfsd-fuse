@@ -13,36 +13,38 @@ profile gvfsd-fuse @{exec_path} {
   include <abstractions/base>
   include <abstractions/dbus-session-strict>
 
+  unix (send,receive) type=stream addr=none peer=(label=gvfsd-fuse//fusermount),
+
+  mount fstype={fuse,fuse.*} -> @{run}/user/@{uid}/gvfs/,
+
   @{exec_path} mr,
 
   /{usr/,}bin/fusermount{,3} rCx -> fusermount,
 
-  mount fstype={fuse,fuse.*} -> @{run}/user/@{uid}/gvfs/,
+  @{PROC}/sys/fs/pipe-max-size r,
 
   /dev/fuse rw,
-
-  @{PROC}/sys/fs/pipe-max-size r,
 
   profile fusermount {
     include <abstractions/base>
     include <abstractions/nameservice-strict>
 
-    # To mount anything:
-    capability sys_admin,
-
     capability dac_read_search,
+    capability sys_admin,  # To mount anything
 
-    /{usr/,}bin/fusermount{,3} mr,
+    unix (send,receive) type=stream addr=none peer=(label=gvfsd-fuse),
 
     mount fstype={fuse,fuse.*} -> @{run}/user/@{uid}/gvfs/,
     umount @{run}/user/@{uid}/**/,
 
+    /{usr/,}bin/fusermount{,3} mr,
+
     /etc/fuse.conf r,
     /etc/machine-id r,
 
-    /dev/fuse rw,
-
     @{PROC}/@{pid}/mounts r,
+
+    /dev/fuse rw,
 
   }
 
