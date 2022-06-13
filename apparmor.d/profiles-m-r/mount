@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2019-2021 Mikhail Morfikov
+# Copyright (C) 2019-2022 Mikhail Morfikov
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -29,10 +30,14 @@ profile mount @{exec_path} flags=(complain) {
 
   @{exec_path} mr,
 
-  /{usr/,}bin/ntfs-3g        rPx,
   /{usr/,}{s,}bin/lowntfs-3g rPx,
-  /{usr/,}bin/sshfs          rPx,
   /{usr/,}{s,}bin/mount.*    rPx,
+  /{usr/,}bin/ntfs-3g        rPx,
+  /{usr/,}bin/sshfs          rPx,
+
+  /etc/fstab r,
+
+  /var/lib/snapd/snaps/*.snap r,
 
   # Mount points
   @{HOME}/ r,
@@ -49,19 +54,18 @@ profile mount @{exec_path} flags=(complain) {
   owner @{HOME}/**.{ISO,IMG,BIN,MDF,NRG} rwk,
   owner @{MOUNTS}/**.{ISO,IMG,BIN,MDF,NRG} rwk,
 
-  # The special /dev/loop-control file can be used to create and destroy loop devices or to find
-  # the first available loop device.
-  /dev/loop-control rw,
-
-  /etc/fstab r,
-
-  /tmp/sanity-squashfs-[0-9]* rw,
-
-  owner @{PROC}/@{pid}/mountinfo r,
-
   owner @{run}/mount/ rw,
   owner @{run}/mount/utab{,.*} rw,
   owner @{run}/mount/utab.lock wk,
+
+  /tmp/sanity-squashfs-[0-9]* rw,
+  /tmp/syscheck-squashfs-[0-9]* rw,
+
+  owner @{PROC}/@{pid}/mountinfo r,
+
+  # The special /dev/loop-control file can be used to create and destroy loop
+  # devices or to find the first available loop device.
+  /dev/loop-control rw,
 
   include if exists <local/mount>
 }
