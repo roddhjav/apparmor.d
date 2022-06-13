@@ -10,27 +10,45 @@ include <tunables/global>
 profile apport-gtk @{exec_path} {
   include <abstractions/base>
   include <abstractions/apt-common>
+  include <abstractions/dbus-session-strict>
+  include <abstractions/dconf-write>
+  include <abstractions/fonts>
+  include <abstractions/freedesktop.org>
   include <abstractions/nameservice-strict>
+  include <abstractions/openssl>
+  include <abstractions/python>
 
   capability sys_ptrace,
 
   @{exec_path} mr,
 
-  /{usr/,}{s,}bin/killall5  rix,
-  /{usr/,}bin/{,ba,da}sh    rix,
-  /{usr/,}bin/apt-cache     rPx,
-  /{usr/,}bin/cut           rix,
-  /{usr/,}bin/dpkg          rPx,
-  /{usr/,}bin/gdb           rCx -> gdb,
-  /{usr/,}bin/grep          rix,
-  /{usr/,}bin/gsettings     rPx,
-  /{usr/,}bin/journalctl    rPx,
-  /{usr/,}bin/kmod          rPx,
-  /{usr/,}bin/ldd           rix,
-  /{usr/,}bin/lsb_release   rPx -> lsb_release,
-  /{usr/,}bin/md5sum        rix,
+  /{usr/,}{s,}bin/killall5          rix,
+  /{usr/,}bin/{,ba,da}sh            rix,
+  /{usr/,}bin/{f,}grep              rix,
+  /{usr/,}bin/cut                   rix,
+  /{usr/,}bin/ischroot              rix,
+  /{usr/,}bin/ldd                   rix,
+  /{usr/,}bin/md5sum                rix,
+  /{usr/,}bin/which{,.debianutils}  rix,
+  /{usr/,}lib/@{multiarch}/ld*.so*  rix,
+  /{usr/,}bin/dpkg-query            rpx,
+  /{usr/,}bin/pkexec                rPx, # TODO: rCx or something
+  /{usr/,}bin/apt-cache             rPx,
+  /{usr/,}bin/dpkg                  rPx,
+  /{usr/,}bin/dpkg-divert           rPx,
+  /{usr/,}bin/gdb                   rCx -> gdb,
+  /{usr/,}bin/gsettings             rPx,
+  /{usr/,}bin/journalctl            rPx,
+  /{usr/,}bin/kmod                  rPx,
+  /{usr/,}bin/lsb_release           rPx -> lsb_release,
+  /{usr/,}bin/systemctl             rPx -> child-systemctl,
 
+  /usr/share/alsa/{,**} r,
+  /usr/share/apport/{,**} r,
   /usr/share/apport/general-hooks/*.py r,
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+  /usr/share/themes/{,**} r,
+  /usr/share/X11/xkb/{,**} r,
 
   /etc/apport/blacklist.d/apport r,
   /etc/apport/blacklist.d/README.blacklist r,
@@ -40,19 +58,45 @@ profile apport-gtk @{exec_path} {
   /etc/default/apport r,
   /etc/init.d/apport r,
   /etc/logrotate.d/apport r,
+  /etc/xdg/autostart/*.desktop r,
 
+  /var/crash/{,*.@{uid}.crash} r,
+  /var/lib/dpkg/info/ r,
   /var/lib/dpkg/info/*.md5sums r,
   /var/log/installer/media-info r,
 
+  owner @{run}/user/@{uid}/wayland-[0-9] rw,
+
+  /tmp/[a-z0-9]* rw,
+  /tmp/apport_core_* rw,
+  /tmp/launchpadlib.cache.[a-z0-9]*/ w,
+  /tmp/tmp[a-z0-9]*/{,**} rw,
+
   owner @{PROC}/@{pid}/cgroup r,
         @{PROC}/ r,
-        @{PROC}/@{pids}/fd/  r,
         @{PROC}/@{pids}/cmdline r,
+        @{PROC}/@{pids}/fd/  r,
         @{PROC}/@{pids}/stat r,
+        @{PROC}/modules r,
+        @{PROC}/version_signature r,
 
   profile gdb {
     include <abstractions/base>
+    include <abstractions/python>
+    include <abstractions/fonts>
+
     /{usr/,}bin/gdb mr,
+  
+    /{usr/,}bin/iconv rix,
+    /{usr/,}{s,}bin/* r,
+
+    /usr/share/gdb/{,**} r,
+
+    /etc/gdb/{,**} r,
+
+    /tmp/apport_core_* r,
+
+    @{PROC}/@{pids}/fd/ r,
 
   }
 

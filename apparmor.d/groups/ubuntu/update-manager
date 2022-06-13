@@ -7,14 +7,44 @@ abi <abi/3.0>,
 include <tunables/global>
 
 @{exec_path} = /{usr/,}bin/update-manager
-profile update-manager @{exec_path} {
+profile update-manager @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/apt-common>
+  include <abstractions/consoles>
+  include <abstractions/dbus-network-manager-strict>
+  include <abstractions/dbus-session-strict>
+  include <abstractions/dbus-strict>
+  include <abstractions/dconf-write>
   include <abstractions/fonts>
-  include <abstractions/ssl_certs>
   include <abstractions/nameservice-strict>
+  include <abstractions/openssl>
   include <abstractions/python>
-  include <abstractions/dconf>
+  include <abstractions/ssl_certs>
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+
+  dbus (send,receive) bus=system path=/org/debian/apt{,/transaction/*}
+       interface={org.debian{,.apt},org.freedesktop.DBus.{Introspectable,Properties}}
+       member={CommitPackages,Run,PropertyChanged,Introspect,Set,GetAll},
+
+  dbus send bus=system path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member=StartServiceByName,
+
+  dbus send bus=system path=/org/freedesktop/NetworkManager
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect,
+
+  dbus send bus=system path=/org/freedesktop/UPower
+       interface=org.freedesktop.DBus.Properties
+       member=Get,
+
+  dbus send bus=system path=/org/freedesktop/login[0-9]
+       interface=org.freedesktop.login[0-9].Manager
+       member=Inhibit,
 
   @{exec_path} mr,
 
@@ -28,7 +58,9 @@ profile update-manager @{exec_path} {
 
   /usr/share/applications/{,**} r,
   /usr/share/distro-info/{,**} r,
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
   /usr/share/icons/{,**} r,
+  /usr/share/pixmaps/{,*} r,
   /usr/share/ubuntu-release-upgrader/{,**} r,
   /usr/share/update-manager/{,**} r,
   /usr/share/X11/{,**} r,
@@ -36,12 +68,19 @@ profile update-manager @{exec_path} {
   /etc/machine-id r,
   /etc/update-manager/{,**} r,
 
+  /boot/ r,
+
+  /var/lib/dpkg/info/*.list r,
+  /var/lib/dpkg/updates/ r,
+  /var/lib/snapd/desktop/applications/{,mimeinfo.cache} r,
+  /var/lib/snapd/desktop/icons/{,*} r,
   /var/lib/update-manager/{,**} rw,
 
   owner @{user_cache_dirs}/update-manager-core/{,**} rw,
 
-  owner @{run}/user/@{uid}/dconf/ rw,
-  owner @{run}/user/@{uid}/dconf/user rw,
+  owner @{run}/user/@{uid}/wayland-[0-9]* rw,
+
+  @{run}/systemd/inhibit/*.ref w,
 
   owner @{PROC}/@{pid}/fd/ r,
 
