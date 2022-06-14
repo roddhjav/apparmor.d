@@ -1,0 +1,48 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{libexec}/fprintd
+profile fprintd @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/dbus-strict>
+  include <abstractions/devices-usb>
+
+  capability sys_nice,
+
+  network netlink raw,
+
+  dbus receive bus=system path=/net/reactivated/Fprint/Manager
+       interface=net.reactivated.Fprint.Manager
+       member={GetDefaultDevice,GetDevices},
+
+  dbus receive bus=system path=/net/reactivated/Fprint/Manager
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll,
+
+  dbus send bus=system path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={RequestName,ReleaseName}
+        peer=(name=org.freedesktop.DBus),
+
+  dbus send bus=system path=/org/freedesktop/login[0-9]
+       interface=org.freedesktop.login[0-9].Manager
+       member=Inhibit
+        peer=(name=org.freedesktop.login[0-9]),
+
+  dbus bind bus=system 
+       name=net.reactivated.Fprint,
+
+  @{exec_path} mr,
+
+  /etc/fprintd.conf r,
+
+  @{run}/systemd/journal/socket rw,
+  @{run}/systemd/inhibit/*.ref w,
+
+  include if exists <local/fprintd>
+}
