@@ -23,17 +23,12 @@ profile accounts-daemon @{exec_path} flags=(attach_disconnected) {
 
   ptrace (read) peer=unconfined,
 
+  dbus (send,receive) bus=system path=/org/freedesktop/Accounts{,/User[0-9]*}
+       interface=org.freedesktop.{DBus.{Properties,Introspectable},Accounts{,.User}},
+
   dbus (send,receive) bus=system path=/org/freedesktop/PolicyKit[0-9]/Authority
        interface=org.freedesktop.PolicyKit[0-9].Authority
        member={CheckAuthorization,Changed},
-
-  dbus (send,receive) bus=system path=/org/freedesktop/Accounts/User[0-9]*
-       interface=org.freedesktop.DBus.Properties
-       member={PropertiesChanged,GetAll},
-
-  dbus (send,receive) bus=system path=/org/freedesktop/Accounts/User[0-9]*
-       interface=org.freedesktop.Accounts.User
-       member={Changed,SetLanguage,SetInputSources},
 
   dbus send bus=system path=/org/freedesktop/PolicyKit[0-9]/Authority
        interface=org.freedesktop.DBus.Properties
@@ -43,14 +38,6 @@ profile accounts-daemon @{exec_path} flags=(attach_disconnected) {
        interface=org.freedesktop.DBus
        member={RequestName,GetConnectionUnixUser}
        peer=(name=org.freedesktop.DBus),
-
-  dbus receive bus=system path=/org/freedesktop/Accounts
-       interface=org.freedesktop.Accounts
-       member={FindUserByName,ListCachedUsers},
-
-  dbus receive bus=system path=/org/freedesktop/Accounts
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll,
 
   dbus bind bus=system 
        name=org.freedesktop.Accounts,

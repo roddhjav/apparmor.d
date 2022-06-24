@@ -11,6 +11,8 @@ include <tunables/global>
 @{exec_path} += /usr/share/system-config-printer/system-config-printer.py
 profile system-config-printer @{exec_path} flags=(complain) {
   include <abstractions/base>
+  include <abstractions/dbus-session-strict>
+  include <abstractions/dbus-strict>
   include <abstractions/dconf-write>
   include <abstractions/fontconfig-cache-read>
   include <abstractions/fonts>
@@ -22,6 +24,19 @@ profile system-config-printer @{exec_path} flags=(complain) {
 
   network inet stream,
   network inet6 stream,
+  network netlink raw,
+
+  dbus send bus=system path=/org/freedesktop/PolicyKit[0-9]/Authority
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll,
+
+  dbus send bus=system path=/org/freedesktop/PolicyKit[0-9]/Authority
+       interface=org.freedesktop.PolicyKit[0-9].Authority
+       member=CheckAuthorization,
+
+  dbus send bus=system path=/org/freedesktop/hostname[0-9]
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll,
 
   @{exec_path} mrix,
 
@@ -33,14 +48,20 @@ profile system-config-printer @{exec_path} flags=(complain) {
   /usr/share/cups/data/testprint r,
   /usr/share/glib-2.0/schemas/gschemas.compiled r,
   /usr/share/system-config-printer/{,**} r,
+  /usr/share/X11/xkb/{,**} r,
 
   /etc/cups/cupsd.conf r,
   /etc/cupshelpers/preferreddrivers.xml r,
   /etc/fstab r,
   /etc/papersize r,
 
+  /var/lib/snapd/desktop/icons/ r,
+
   owner @{HOME}/.cups/ rw,
   owner @{HOME}/.cups/lpoptions rw,
+
+  owner @{run}/@{uid}/gvfsd/socket-* rw,
+        @{run}/cups/cups.sock rw,
 
   owner /tmp/* rw,
 
