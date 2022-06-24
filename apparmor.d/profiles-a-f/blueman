@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2021 Mikhail Morfikov
+# Copyright (C) 2021-2022 Mikhail Morfikov
+# Copyright (C) 2021-2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -9,15 +10,15 @@ include <tunables/global>
 @{exec_path} = /{usr/,}bin/blueman-*
 profile blueman @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/audio>
   include <abstractions/dconf-write>
-  include <abstractions/python>
-  include <abstractions/fonts>
   include <abstractions/fontconfig-cache-read>
-  include <abstractions/gtk>
+  include <abstractions/fonts>
   include <abstractions/freedesktop.org>
+  include <abstractions/gtk>
+  include <abstractions/python>
   include <abstractions/thumbnails-cache-read>
   include <abstractions/user-download-strict>
-  include <abstractions/audio>
 
   network inet stream,
   network inet6 stream,
@@ -27,16 +28,24 @@ profile blueman @{exec_path} flags=(attach_disconnected) {
   ptrace (read) peer=gjs-console,
 
   @{exec_path} mrix,
-  /{usr/,}bin/python3.[0-9]* r,
-  /{usr/,}bin/blueman-tray rPx,
 
-  /{usr/,}bin/         r,
-  /{usr/,}bin/{b,d}ash rix,
+  /{usr/,}bin/{b,d}ash      rix,
 
-  /{usr/,}bin/xdg-open rCx -> open,
+  /{usr/,}bin/blueman-tray  rPx,
+  /{usr/,}bin/xdg-open      rCx -> open,
 
   /usr/share/blueman/{,**} r,
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
   /usr/share/X11/xkb/{,**} r,
+
+  /etc/machine-id r,
+  /var/lib/dbus/machine-id r,
+
+  /var/lib/blueman/network.state r,
+
+  owner @{HOME}/ r,
+  owner @{HOME}/bluetooth*/ r,
+  owner @{HOME}/bluetooth*/* rw,
 
   owner @{user_cache_dirs}/blueman-tray-[0-9]* rw,
   owner @{user_cache_dirs}/blueman-services-[0-9]* rw,
@@ -49,36 +58,16 @@ profile blueman @{exec_path} flags=(attach_disconnected) {
 
   owner @{user_share_dirs}/gvfs-metadata/{,*} r,
 
-  owner @{HOME}/ r,
-  owner @{HOME}/bluetooth*/ r,
-  owner @{HOME}/bluetooth*/* rw,
-
-  # For sending a note (disabled since the feature doesn't seem to work)
-  #owner /tmp/* rw,
-  #owner /var/tmp/* rw,
-  #owner /tmp/note*.vnt rw,
-
-  /var/lib/blueman/network.state r,
+  owner @{run}/user/@{uid}/gdm/Xauthority r,
 
   owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/mounts r,
         @{PROC}/@{pids}/cmdline r,
 
-  /usr/share/glib-2.0/schemas/gschemas.compiled r,
-
-  /dev/tty rw,
-
-  /dev/rfkill r,
-
-  /dev/shm/ r,
-
-  /var/lib/dbus/machine-id r,
-  /etc/machine-id r,
-
-  owner @{run}/user/@{uid}/gdm/Xauthority r,
-
-  # file_inherit
   /dev/dri/card[0-9]* rw,
+  /dev/rfkill r,
+  /dev/shm/ r,
+  /dev/tty rw,
 
   profile open {
     include <abstractions/base>
@@ -87,29 +76,28 @@ profile blueman @{exec_path} flags=(attach_disconnected) {
     /{usr/,}bin/xdg-open mr,
 
     /{usr/,}bin/{,ba,da}sh      rix,
-    /{usr/,}bin/gawk            rix,
-    /{usr/,}bin/readlink        rix,
     /{usr/,}bin/basename        rix,
+    /{usr/,}bin/dbus-send       rix,
+    /{usr/,}bin/file            rix,
+    /{usr/,}bin/gawk            rix,
+    /{usr/,}bin/mimetype        rix,
+    /{usr/,}bin/readlink        rix,
     /{usr/,}bin/uname           rix,
     /{usr/,}bin/xprop           rix,
-    /{usr/,}bin/file            rix,
-    /{usr/,}bin/dbus-send       rix,
-    /{usr/,}bin/mimetype        rix,
-
-    /usr/share/perl5/** r,
-    /etc/magic r,
-
-    owner @{HOME}/ r,
-    owner @{HOME}/bluetooth*/* r,
-
-    owner @{run}/user/@{uid}/ r,
 
     # Allowed apps to open
     /{usr/,}lib/firefox/firefox rPx,
     /{usr/,}bin/spacefm         rPx,
 
-    # file_inherit
+    /usr/share/perl5/** r,
+
+    /etc/magic r,
+
+    owner @{HOME}/ r,
+    owner @{HOME}/bluetooth*/* r,
     owner @{HOME}/.xsession-errors w,
+
+    owner @{run}/user/@{uid}/ r,
 
   }
 
