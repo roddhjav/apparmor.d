@@ -1,6 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2021 Mikhail Morfikov
-#               2021 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2021-2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -11,6 +11,16 @@ include <tunables/global>
 @{exec_path} += @{libexec}/gvfsd-dnssd
 profile gvfsd-dnssd @{exec_path} {
   include <abstractions/base>
+  include <abstractions/dbus-session-strict>
+  include <abstractions/dbus-strict>
+
+  dbus send bus=system path=/
+       interface=org.freedesktop.Avahi.Server
+       member={Ping,GetAPIVersion,GetState,ServiceBrowserNew},
+
+  dbus receive bus=system path=/Client[0-9]*/ServiceBrowser[0-9]
+       interface=org.freedesktop.Avahi.ServiceBrowser
+       member={CacheExhausted,AllForNow},
 
   @{exec_path} mr,
 

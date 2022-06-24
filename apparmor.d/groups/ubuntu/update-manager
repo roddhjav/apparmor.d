@@ -16,6 +16,7 @@ profile update-manager @{exec_path} flags=(attach_disconnected) {
   include <abstractions/dbus-strict>
   include <abstractions/dconf-write>
   include <abstractions/fonts>
+  include <abstractions/freedesktop.org>
   include <abstractions/nameservice-strict>
   include <abstractions/openssl>
   include <abstractions/python>
@@ -25,9 +26,10 @@ profile update-manager @{exec_path} flags=(attach_disconnected) {
   network inet6 dgram,
   network inet stream,
   network inet6 stream,
+  network netlink raw,
 
   dbus (send,receive) bus=system path=/org/debian/apt{,/transaction/*}
-       interface={org.debian{,.apt},org.freedesktop.DBus.{Introspectable,Properties}}
+       interface={org.debian{,.apt*},org.freedesktop.DBus.{Introspectable,Properties}}
        member={CommitPackages,Run,PropertyChanged,Introspect,Set,GetAll},
 
   dbus send bus=system path=/org/freedesktop/DBus
@@ -46,9 +48,13 @@ profile update-manager @{exec_path} flags=(attach_disconnected) {
        interface=org.freedesktop.login[0-9].Manager
        member=Inhibit,
 
+  dbus receive bus=system path=/org/freedesktop/NetworkManager
+       interface=org.freedesktop.NetworkManager
+       member=StateChanged,
+
   @{exec_path} mr,
 
-  /{usr/,}bin/dpkg                  rPx,
+  /{usr/,}bin/dpkg                  rPx -> child-dpkg,
   /{usr/,}bin/hwe-support-status    rPx,
   /{usr/,}bin/ischroot              rix,
   /{usr/,}bin/lsb_release           rPx -> lsb_release,
@@ -56,12 +62,11 @@ profile update-manager @{exec_path} flags=(attach_disconnected) {
   /{usr/,}bin/uname                 rix,
   /{usr/,}lib/apt/methods/http{,s}  rPx,
 
-  /usr/share/applications/{,**} r,
   /usr/share/distro-info/{,**} r,
   /usr/share/glib-2.0/schemas/gschemas.compiled r,
-  /usr/share/icons/{,**} r,
-  /usr/share/pixmaps/{,*} r,
+  /usr/share/themes/{,**} r,
   /usr/share/ubuntu-release-upgrader/{,**} r,
+  /usr/share/ubuntu/applications/{,**} r,
   /usr/share/update-manager/{,**} r,
   /usr/share/X11/{,**} r,
 
@@ -83,6 +88,10 @@ profile update-manager @{exec_path} flags=(attach_disconnected) {
   @{run}/systemd/inhibit/*.ref w,
 
   owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/mounts r,
+        @{PROC}/@{pids}/mountinfo r,
+
+  /dev/ptmx rw,
 
   include if exists <local/update-manager>
 }
