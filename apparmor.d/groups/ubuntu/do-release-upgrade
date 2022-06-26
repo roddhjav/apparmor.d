@@ -1,0 +1,34 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/do-release-upgrade
+profile do-release-upgrade @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/apt-common>
+  include <abstractions/nameservice-strict>
+  include <abstractions/openssl>
+  include <abstractions/python>
+  include <abstractions/ssl_certs>
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/dpkg         rPx -> child-dpkg,
+  /{usr/,}bin/lsb_release  rPx -> lsb_release,
+
+  /usr/share/distro-info/*.csv r,
+  /usr/share/ubuntu-release-upgrader/{,**} r,
+
+  /etc/machine-id r,
+  /etc/update-manager/{,**} r,
+
+  /var/lib/update-manager/meta-release-* rw,
+
+  owner @{PROC}/@{pid}/fd/ r,
+
+  include if exists <local/do-release-upgrade>
+}
