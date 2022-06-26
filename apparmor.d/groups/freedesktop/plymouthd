@@ -1,0 +1,43 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}{s,}bin/plymouthd
+profile plymouthd @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+
+  capability sys_admin,
+  capability sys_tty_config,
+
+  network netlink raw,
+
+  signal (send) peer=unconfined,
+
+  unix type=stream peer=(addr="@/org/freedesktop/plymouthd"),
+
+  @{exec_path} mr,
+
+  /usr/share/plymouth/{,**} r,
+
+  /etc/default/keyboard r,
+
+  @{run}/udev/data/+drm:* r,
+
+  @{sys}/bus/ r,
+  @{sys}/class/ r,
+  @{sys}/class/drm/ r,
+  @{sys}/devices/pci[0-9]*/**/drm/card[0-9]/card[0-9]-{HDMI,VGA,LVDS,DP,eDP,Virtual}-*/uevent r,
+  @{sys}/devices/virtual/tty/console/active r,
+  @{sys}/firmware/acpi/bgrt/{,*} r,
+
+  @{PROC}/cmdline r,
+
+  /dev/dri/card[0-9]* rw,
+
+  include if exists <local/plymouthd>
+}
