@@ -30,6 +30,17 @@ in this page all the useful information needed to contribute.
 you'll see a Compare & pull request button, fill and submit the pull request.
 
 
+## Projects rules
+ 
+A few rules:
+1. As these are mandatory access control policies only what it explicitly required
+   should be authorized. Meaning, you should not allow everything (or a large area)
+   and blacklist some sub area.
+2. A profile **should not break a normal usage of the confined software**. It can
+   be complex as simply running the program for your own use case is not alway
+   exhaustive of the program features and required permissions.
+
+
 ## Add a profile
 
 1. To add a new profile `foo`, add the file `foo` in `apparmor.d/profile-a-f`. 
@@ -64,36 +75,65 @@ profile foo @{exec_path} {
 
 ## Profile Guidelines
 
-In order to ensure a common structure across the profiles, all new profile should try to follow the guideline presented here.
+> This profile guideline is still evloving, feel free to propose improvment
 
-The rules in the profile should be sorted as follow: 
+In order to ensure a common structure across the profiles, all new profile should
+try to follow the guideline presented here.
+
+The rules in the profile should be sorted as follow:
 - include
 - capability
+- network
+- mount
+- remount
+- umount
 - ptrace
 - signal
-- network 
-- mount
+- unix
+- dbus (send, receive) send receice 
 - @{exec_path} mr,
 - The binaries and library required: `/{usr/,}bin/`, `/{usr/,}lib/`, `/opt/`...
 - The shared resources: `/usr/share`...
 - The system configuration: `/etc`...
+- The system data: `/var`...
 - The user data: `owner @{HOME}/`...
-- The user configuration (all dotfiles)
+- The user configuration, cache and in general all dotfiles
 - Temporary data: `/tmp/`, `@{run}/`...
 - Sys files: `@{sys}/`...
 - Proc files: `@{PROC}/`... 
 - Dev files: `/dev/`...
+- Deny rules: `deny`...
+- Local include
 
 
 **Other rules**
 * Do not use: `/usr/lib` or `/usr/bin` but `/{usr/,}bin/` or `/{usr/,}lib/`.
+* Do not use: `/usr/sbin` or `/sbin` but `/{usr/,}{s,}bin/`.
 * Always use the apparmor variables.
 * In a rule block, the rule shall be alphabetically sorted.
-* When some file access share similar purpose, they shall be sorted together. Eg:
-    ```
-    /etc/machine-id r,
-    /var/lib/dbus/machine-id r,
-    ```
+* Subprofile should comes at the end of a profile.
+* When some file access share similar purpose, they may be sorted together. Eg:
+  ```
+  /etc/machine-id r,
+  /var/lib/dbus/machine-id r,
+  ```
+
+The included tool `aa-log` can be useful to explore the apparmor log 
+
+## Abstraction
+
+This project and the apparmor profile official project provide a large selection
+of abstraction to be included in profiles. They should be used.
+
+For instance, instead of writting:
+```sh
+owner @{HOME}/@{XDG_DOWNLOAD_DIR}/{,**} rw,
+```
+to allow download directory access, you should write
+
+```sh
+include <abstractions/user-download-strict>
+```
 
 ## AppArmor variables
 
@@ -119,10 +159,11 @@ The rules in the profile should be sorted as follow:
 **Additional variables available with this project:**
 
 * Common mountpoints: `@{MOUNTS}=/media/ @{run}/media /mnt`
+* Universally unique identifier: `@{uuid}=[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*`
 * Extended XDG user directories: 
     - Projects: `@{XDG_PROJECTS_DIR}="Projects"`
     - Books: `@{XDG_BOOKS_DIR}="Books"`
-    - Wallpapers: `@{XDG_WALLPAPERS_DIR}="Pictures/Wallpapers"`
+    - Wallpapers: `@{XDG_WALLPAPERS_DIR}="@{XDG_PICTURES_DIR}/Wallpapers"`
     - Sync: `@{XDG_SYNC_DIR}="Sync"`
     - Vm: `@{XDG_VM_DIR}=".vm"`
     - SSH: `@{XDG_SSH_DIR}=".ssh"`
