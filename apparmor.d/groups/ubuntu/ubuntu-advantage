@@ -1,0 +1,24 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/ubuntu-advantage
+profile ubuntu-advantage @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/apt-common>
+  include <abstractions/nameservice-strict>
+  include <abstractions/python>
+  include <abstractions/ssl_certs> 
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/dpkg                     rPx -> child-dpkg,
+
+  owner @{PROC}/@{pid}/fd/ r,
+
+  include if exists <local/ubuntu-advantage>
+}
