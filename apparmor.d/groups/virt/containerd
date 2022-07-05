@@ -9,10 +9,13 @@ include <tunables/global>
 @{exec_path} = /{usr/,}bin/containerd
 profile containerd @{exec_path} {
   include <abstractions/base>
+  include <abstractions/disks-read>
+  include <abstractions/devices-usb>
 
   capability dac_read_search,
   capability net_admin,
   capability sys_admin,
+  capability chown,
 
   signal (receive) set=term peer=dockerd,
 
@@ -31,6 +34,7 @@ profile containerd @{exec_path} {
   @{run}/containerd/{,**} rwk,
   @{run}/docker/containerd/{,**} rwk,
   /opt/containerd/{,**} rw,
+  mount fstype=tmpfs options in (rw, nosuid, nodev, noexec) -> @{run}/containerd/io.containerd.grpc.v1.cri/sandboxes/[0-9a-f]*/shm/,
 
   @{run}/systemd/notify w,
 
@@ -39,6 +43,35 @@ profile containerd @{exec_path} {
   owner @{PROC}/@{pids}/uid_map r,
   owner @{PROC}/@{pids}/mountinfo r,
         @{PROC}/sys/net/core/somaxconn r,
+
+  # Extracting container images
+  /usr/{local/,}bin/unpigz PUx,
+  
+  # zfs snapshotter
+  /{usr/,}{local/,}{s,}bin/zfs Px,
+  mount fstype=zfs -> /var/lib/containerd/tmpmounts/containerd-mount[0-9]*/,
+  umount -> /var/lib/containerd/tmpmounts/containerd-mount[0-9]*/,
+  /var/lib/containerd/tmpmounts/containerd-mount[0-9]*/lib{64,}/** l,
+  deny /dev/bsg/ r,
+  deny /dev/bus/ r,
+  deny /dev/bus/usb/ r,
+  deny /dev/bus/usb/001/ r,
+  deny /dev/bus/usb/002/ r,
+  deny /dev/char/ r,
+  deny /dev/cpu/ r,
+  deny /dev/cpu/0/ r,
+  deny /dev/cpu/1/ r,
+  deny /dev/dma_heap/ r,
+  deny /dev/dri/ r,
+  deny /dev/dri/by-path/ r,
+  deny /dev/hugepages/ r,
+  deny /dev/input/ r,
+  deny /dev/input/by-id/ r,
+  deny /dev/input/by-path/ r,
+  deny /dev/net/ r,
+  deny /dev/snd/ r,
+  deny /dev/snd/by-path/ r,
+  deny /dev/vfio/ r,
 
   include if exists <local/containerd>
 }
