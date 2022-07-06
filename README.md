@@ -48,6 +48,8 @@ This is fundamentally different from how AppArmor is used on Linux server as it 
 * An `apparmor` based linux distribution.
 * Base profiles and abstractions shipped with AppArmor are supposed to be
   installed.
+* Go
+* rsync
 
 **Archlinux**
 
@@ -65,6 +67,8 @@ sudo pacman -U apparmor.d-*.pkg.tar.zst \
 
 Build using standard Debian package build tools:
 ```sh
+sudo apt install debhelper ubuntu-dev-tools config-package-dev golang-go apparmor-profiles rsync
+
 dpkg-buildpackage -b -d --no-sign
 sudo dpkg -i ../apparmor.d_*_all.deb
 ```
