@@ -9,12 +9,17 @@ include <tunables/global>
 @{exec_path} = /{usr/,}bin/containerd
 profile containerd @{exec_path} {
   include <abstractions/base>
+  include <abstractions/nameservice-strict>
 
   capability dac_read_search,
   capability net_admin,
   capability sys_admin,
 
   signal (receive) set=term peer=dockerd,
+
+  # Pulling container images
+  network inet,
+  network inet6,
 
   @{exec_path} mr,
 
@@ -25,6 +30,19 @@ profile containerd @{exec_path} {
   /etc/cni/{,**} r,
   /etc/cni/net.d/ rw,
   /etc/containerd/*.toml r,
+
+  /opt/cni/bin/loopback Px,
+  /opt/cni/bin/portmap Px,
+  /opt/cni/bin/bandwidth Px,
+  /opt/cni/bin/calico Px,
+
+  /var/log/pods/**/[0-9]*.log w,
+  @{run}/calico/ w,
+
+  @{run}/netns/ w,
+  @{run}/netns/cni-@{uuid} rw,
+  /var/lib/cni/results/cni-loopback-@{uuid}-lo l,
+  @{PROC}/@{pid}/task/[0-9]*/ns/net rw,
 
   /var/lib/containerd/{,**} rwk,
   /var/lib/docker/containerd/{,**} rwk,

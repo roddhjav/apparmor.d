@@ -1,0 +1,26 @@
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{opt/,}{cni/,}bin/calico
+profile calico @{exec_path} flags=(complain) {
+  include <abstractions/base>
+
+  @{exec_path} rix,
+  @{exec_path}-ipam rix,
+  
+  network inet,
+  
+  /sys/kernel/mm/transparent_hugepage/hpage_pmd_size r,
+  /var/lib/calico/ r,
+  /var/lib/calico/** r,
+  /etc/cni/net.d/ r,
+  /etc/cni/net.d/** r,
+    
+  /var/log/calico/cni/ r,
+  /var/log/calico/cni/cni.log wr,
+  
+  /run/calico/ipam.lock rwk,
+
+  include if exists <local/calico>
+}
