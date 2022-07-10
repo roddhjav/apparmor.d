@@ -1,0 +1,21 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Jeroen Rijken
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /opt/cni/bin/bandwidth
+profile bandwidth @{exec_path} {
+  include <abstractions/base>
+
+  @{exec_path} mr,
+  
+  network inet,
+  network netlink raw,
+  
+  @{sys}/kernel/mm/transparent_hugepage/hpage_pmd_size r,
+
+  include if exists <local/bandwidth>
+}

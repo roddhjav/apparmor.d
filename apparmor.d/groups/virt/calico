@@ -1,0 +1,30 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Jeroen Rijken
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /opt/cni/bin/calico
+profile calico @{exec_path} {
+  include <abstractions/base>
+
+  network inet,
+  network inet6,
+
+  @{exec_path} mr,
+  @{exec_path}-ipam rix,
+  
+  /etc/cni/net.d/{,**}  r,
+  
+  /var/lib/calico/{,**} r,
+  /var/log/calico/cni/ r,
+  /var/log/calico/cni/cni.log rw,
+  
+  @{run}/calico/ipam.lock rwk,
+
+  @{sys}/kernel/mm/transparent_hugepage/hpage_pmd_size r,
+
+  include if exists <local/calico>
+}
