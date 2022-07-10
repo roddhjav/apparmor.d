@@ -1,0 +1,29 @@
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}{local/,}{s,}bin/zpool
+profile zpool @{exec_path} flags=(complain) {
+  include <abstractions/base>
+  include <abstractions/disks-read>
+
+  capability sys_admin,
+
+  @{exec_path} rm,
+  /{usr/,}bin/{,ba,da}sh rix,
+  /{usr/,}{local/,}lib/zfs-linux/zpool.d/* rix,
+
+  /etc/hostid r,
+  @{PROC}/sys/kernel/spl/hostid r,
+
+  @{run}/blkid/blkid.tab rw,
+  @{run}/blkid/blkid.tab.old l,
+  @{run}/blkid/blkid.tab-* rwl,
+
+  @{PROC}/@{pids}/mounts r,
+
+  /dev/pts/[0-9]* rw,
+  /dev/zfs rw,
+
+  include if exists <local/zfs>
+}
