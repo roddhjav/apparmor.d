@@ -11,25 +11,35 @@ profile containerd @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/ssl_certs>
   include <abstractions/nameservice-strict>
+  include <abstractions/disks-read>
+  include <abstractions/devices-usb>
 
+  capability chown,
   capability dac_read_search,
   capability net_admin,
   capability sys_admin,
 
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+
+  mount fstype=tmpfs options in (rw, nosuid, nodev, noexec) -> @{run}/containerd/io.containerd.grpc.v1.cri/sandboxes/[0-9a-f]*/shm/,
+  mount fstype=zfs -> /var/lib/containerd/tmpmounts/containerd-mount[0-9]*/,
+
+  umount /var/lib/containerd/tmpmounts/containerd-mount[0-9]*/,
+
   signal (receive) set=term peer=dockerd,
 
-  # Pulling container images
-  network inet,
-  network inet6,
-
-  @{exec_path} mr,
-
+  @{exec_path}                        mr,
   /{usr/,}bin/containerd-shim-runc-v2 rPUx,
   /{usr/,}bin/kmod                    rPx,
+  /{usr/,}bin/unpigz                  rPUx,
+  /{usr/,}{local/,}{s,}bin/zfs        rPx,
 
-  /etc/cni/ rw,
-  /etc/cni/{,**} r,
-  /etc/cni/net.d/ rw,
+  /etc/cni/              rw,
+  /etc/cni/{,**}         r,
+  /etc/cni/net.d/        rw,
   /etc/containerd/*.toml r,
 
   /opt/cni/bin/loopback  rPx,
@@ -46,17 +56,18 @@ profile containerd @{exec_path} flags=(attach_disconnected) {
   @{PROC}/@{pid}/task/@{tid}/ns/net rw,
 
   /var/lib/containerd/{,**} rwk,
+  /var/lib/containerd/tmpmounts/containerd-mount[0-9]*/lib{64,}/** l,
   /var/lib/docker/containerd/{,**} rwk,
-  @{run}/containerd/{,**} rwk,
-  @{run}/docker/containerd/{,**} rwk,
   /opt/containerd/{,**} rw,
 
-  @{run}/systemd/notify w,
+  @{run}/systemd/notify          w,
+  @{run}/containerd/{,**}        rwk,
+  @{run}/docker/containerd/{,**} rwk,
 
   @{sys}/kernel/mm/transparent_hugepage/hpage_pmd_size r,
 
-  owner @{PROC}/@{pids}/uid_map r,
-  owner @{PROC}/@{pids}/mountinfo r,
+  owner @{PROC}/@{pids}/uid_map        r,
+  owner @{PROC}/@{pids}/mountinfo      r,
         @{PROC}/sys/net/core/somaxconn r,
   
   # AppArmor within containers
@@ -64,6 +75,25 @@ profile containerd @{exec_path} flags=(attach_disconnected) {
   @{sys}/module/apparmor/parameters/enabled r,
   /tmp/cri-containerd.apparmor.d[0-9]* rwl,
   /{usr/,}{s,}bin/apparmor_parser  rPx,
+
+  deny /dev/bsg/            r,
+  deny /dev/bus/            r,
+  deny /dev/bus/usb/        r,
+  deny /dev/bus/usb/[0-9]*/ r,
+  deny /dev/char/           r,
+  deny /dev/cpu/            r,
+  deny /dev/cpu/[0-9]*/     r,
+  deny /dev/dma_heap/       r,
+  deny /dev/dri/            r,
+  deny /dev/dri/by-path/    r,
+  deny /dev/hugepages/      r,
+  deny /dev/input/          r,
+  deny /dev/input/by-id/    r,
+  deny /dev/input/by-path/  r,
+  deny /dev/net/            r,
+  deny /dev/snd/            r,
+  deny /dev/snd/by-path/    r,
+  deny /dev/vfio/           r,
 
   include if exists <local/containerd>
 }
