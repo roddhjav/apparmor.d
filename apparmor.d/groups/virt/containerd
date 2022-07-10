@@ -12,10 +12,10 @@ profile containerd @{exec_path} {
   include <abstractions/disks-read>
   include <abstractions/devices-usb>
 
+  capability chown,
   capability dac_read_search,
   capability net_admin,
   capability sys_admin,
-  capability chown,
 
   mount fstype=tmpfs options in (rw, nosuid, nodev, noexec) -> @{run}/containerd/io.containerd.grpc.v1.cri/sandboxes/[0-9a-f]*/shm/,
   mount fstype=zfs -> /var/lib/containerd/tmpmounts/containerd-mount[0-9]*/,
@@ -24,11 +24,11 @@ profile containerd @{exec_path} {
 
   signal (receive) set=term peer=dockerd,
 
-  @{exec_path}                        rm,
-  /{usr/,}bin/unpigz                  rPUx,
-  /{usr/,}{local/,}{s,}bin/zfs        rPx,
+  @{exec_path}                        mr,
   /{usr/,}bin/containerd-shim-runc-v2 rPUx,
   /{usr/,}bin/kmod                    rPx,
+  /{usr/,}bin/unpigz                  rPUx,
+  /{usr/,}{local/,}{s,}bin/zfs        rPx,
 
   /etc/cni/              rw,
   /etc/cni/{,**}         r,
