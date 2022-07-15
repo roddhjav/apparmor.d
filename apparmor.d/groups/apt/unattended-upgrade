@@ -9,6 +9,7 @@ include <tunables/global>
 @{exec_path} = /{usr/,}bin/unattended-upgrade
 profile unattended-upgrade @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/apt-common>
   include <abstractions/consoles>
   include <abstractions/dbus-strict>
   include <abstractions/nameservice-strict>
@@ -27,9 +28,15 @@ profile unattended-upgrade @{exec_path} flags=(attach_disconnected) {
 
   network netlink raw,
 
+  signal (send) peer=apt-methods-http,
+
   dbus send bus=system path=/org/freedesktop/login[0-9]
        interface=org.freedesktop.login[0-9].Manager
        member=Inhibit,
+
+  dbus receive bus=system path=/org/freedesktop/NetworkManager
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll,
 
   dbus receive bus=system path=/org/freedesktop/NetworkManager
        interface=org.freedesktop.DBus.Properties
@@ -64,23 +71,17 @@ profile unattended-upgrade @{exec_path} flags=(attach_disconnected) {
   /{usr/,}lib/update-notifier/update-motd-updates-available rPx,
 
   /usr/share/distro-info/* r,
-  /usr/share/dpkg/*table r,
 
   /etc/apt/*.list r,
   /etc/apt/apt.conf.d/{,**} r,
-  /etc/apt/preferences.d/{,**} r,
-  /etc/apt/sources.list.d/{,**} r,
 
   /etc/machine-id r,
 
   /var/log/unattended-upgrades/*.log rw,
 
-  /var/lib/apt/extended_states r,
-  /var/lib/apt/lists/{,**} r,
   /var/lib/apt/periodic/unattended-upgrades-stamp w,
   /var/lib/dpkg/lock rwk,
   /var/lib/dpkg/lock-frontend rwk,
-  /var/lib/dpkg/status r,
   /var/lib/dpkg/updates/ r,
 
   /var/cache/apt/{,**} rwk,
@@ -94,7 +95,7 @@ profile unattended-upgrade @{exec_path} flags=(attach_disconnected) {
         @{run}/systemd/inhibit/[0-9]*.ref rw,
         @{run}/resolvconf/resolv.conf r,
 
-  owner /tmp/#[0-9]* rw,
+  owner /tmp/apt-dpkg-install-*/{,*} rw,
 
   owner @{PROC}/@{pids}/fd/ r,
         @{PROC}/@{pids}/mountinfo r,
