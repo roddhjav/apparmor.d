@@ -28,6 +28,8 @@ profile update-manager @{exec_path} flags=(attach_disconnected) {
   network inet6 stream,
   network netlink raw,
 
+  signal (send) peer=apt-methods-http,
+
   dbus (send,receive) bus=system path=/org/debian/apt{,/transaction/*}
        interface={org.debian{,.apt*},org.freedesktop.DBus.{Introspectable,Properties}}
        member={CommitPackages,Run,PropertyChanged,Introspect,Set,GetAll,UpdateCache},
@@ -36,13 +38,13 @@ profile update-manager @{exec_path} flags=(attach_disconnected) {
        interface=org.freedesktop.DBus
        member=StartServiceByName,
 
-  dbus send bus=system path=/org/freedesktop/NetworkManager
-       interface=org.freedesktop.DBus.Introspectable
-       member=Introspect,
+  dbus send bus=system path=/org/freedesktop/NetworkManager{,/ActiveConnection/[0-9]*,/Devices/[0-9]*}
+       interface=org.freedesktop.DBus.{Properties,Introspectable}
+       member={Introspect,Get},
 
   dbus send bus=system path=/org/freedesktop/UPower
-       interface=org.freedesktop.DBus.Properties
-       member=Get,
+       interface=org.freedesktop.DBus.{Properties,Introspectable}
+       member={Get,Introspect},
 
   dbus send bus=system path=/org/freedesktop/login[0-9]
        interface=org.freedesktop.login[0-9].Manager
