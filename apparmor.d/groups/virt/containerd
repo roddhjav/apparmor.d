@@ -16,6 +16,7 @@ profile containerd @{exec_path} flags=(attach_disconnected) {
 
   capability chown,
   capability dac_read_search,
+  capability dac_override,
   capability net_admin,
   capability sys_admin,
 
@@ -23,11 +24,13 @@ profile containerd @{exec_path} flags=(attach_disconnected) {
   network inet6 dgram,
   network inet stream,
   network inet6 stream,
+  network netlink raw,
 
   mount fstype=tmpfs options in (rw, nosuid, nodev, noexec) -> @{run}/containerd/io.containerd.grpc.v1.cri/sandboxes/[0-9a-f]*/shm/,
   mount fstype=zfs -> /var/lib/containerd/tmpmounts/containerd-mount[0-9]*/,
   mount options in (rw, bind, nosuid, nodev, noexec) -> @{run}/netns/cni-@{uuid},
 
+  umount @{run}/containerd/io.containerd.grpc.v1.cri/sandboxes/[0-9a-f]*/shm/,
   umount /var/lib/containerd/tmpmounts/containerd-mount[0-9]*/,
   umount @{run}/netns/cni-@{uuid},
 
@@ -72,28 +75,27 @@ profile containerd @{exec_path} flags=(attach_disconnected) {
   @{sys}/module/apparmor/parameters/enabled r,
 
         @{PROC}/@{pid}/task/@{tid}/ns/net rw,
+  owner @{PROC}/@{pids}/attr/current      r,
   owner @{PROC}/@{pids}/uid_map           r,
   owner @{PROC}/@{pids}/mountinfo         r,
         @{PROC}/sys/net/core/somaxconn    r,
 
-  deny /dev/bsg/            rwkl,
-  deny /dev/bus/            rwkl,
-  deny /dev/bus/usb/        rwkl,
-  deny /dev/bus/usb/[0-9]*/ rwkl,
-  deny /dev/char/           rwkl,
-  deny /dev/cpu/            rwkl,
-  deny /dev/cpu/[0-9]*/     rwkl,
-  deny /dev/dma_heap/       rwkl,
-  deny /dev/dri/            rwkl,
-  deny /dev/dri/by-path/    rwkl,
-  deny /dev/hugepages/      rwkl,
-  deny /dev/input/          rwkl,
-  deny /dev/input/by-id/    rwkl,
-  deny /dev/input/by-path/  rwkl,
-  deny /dev/net/            rwkl,
-  deny /dev/snd/            rwkl,
-  deny /dev/snd/by-path/    rwkl,
-  deny /dev/vfio/           rwkl,
+  /dev/bsg/            r,
+  /dev/bus/            r,
+  /dev/char/           r,
+  /dev/cpu/            r,
+  /dev/cpu/[0-9]*/     r,
+  /dev/dma_heap/       r,
+  /dev/dri/            r,
+  /dev/dri/by-path/    r,
+  /dev/hugepages/      r,
+  /dev/input/          r,
+  /dev/input/by-id/    r,
+  /dev/input/by-path/  r,
+  /dev/net/            r,
+  /dev/snd/            r,
+  /dev/snd/by-path/    r,
+  /dev/vfio/           r,
 
   include if exists <local/containerd>
 }
