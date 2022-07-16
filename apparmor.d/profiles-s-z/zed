@@ -1,0 +1,51 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Jeroen Rijken
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}{local/,}{s,}bin/zed
+profile zed @{exec_path} flags=(complain) {
+  include <abstractions/base>
+  include <abstractions/disks-read>
+  
+  capability sys_admin,
+
+  network netlink raw,
+  
+  @{exec_path} mr,
+  /{usr/,}bin/basename rix,
+  /{usr/,}bin/cat rix,
+  /{usr/,}bin/diff rix,
+  /{usr/,}bin/expr rix,
+  /{usr/,}bin/flock rix,
+  /{usr/,}bin/grep rix,
+  /{usr/,}bin/ls rix,
+  /{usr/,}bin/logger rix,
+  /{usr/,}bin/mawk rix,
+  /{usr/,}bin/rm rix,
+  /{usr/,}bin/realpath rix,
+  /{usr/,}bin/sort rix,
+  /{usr/,}{local/,}{s,}bin/zpool rPx,
+  /{usr/,}{local/,}{s,}bin/zfs rPx,
+  /{usr/,}{local/,}lib/zfs-linux/zed.d/*.sh rix,
+
+  /etc/zfs/zed.d/{,*} r,
+  /etc/zfs/zfs-list.cache/{,*} rwk,
+
+  @{run}/zed.pid rwkl,
+  @{run}/zed.state rwkl,
+  @{run}/zfs-list.cache@* rw,
+  
+  @{PROC}/@{pids}/mounts r,
+  owner @{PROC}/@{pids}/fd/ r,
+  @{PROC}/@{pid}/task/@{tid}/comm rw,
+
+  @{sys}/bus/pci/slots/ r,
+
+  /dev/zfs rw,
+
+  include if exists <local/zed>
+}
