@@ -1,0 +1,36 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Jeroen Rijken
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}sbin/xtables-nft-multi
+profile xtables-nft-multi @{exec_path} flags=(attach_disconnected,complain) {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+
+  capability net_admin,
+  capability net_raw,
+
+  network inet    dgram,
+  network inet6   dgram,
+  network inet    raw,
+  network inet6   raw,
+  network inet    stream,
+  network inet6   stream,
+  network netlink raw,
+
+  @{exec_path} mr,
+  
+  /etc/libnl/classid r,
+  /etc/iptables/{,**}  rw,
+  /etc/nftables.conf   rw,
+
+  @{PROC}/@{pids}/net/ip_tables_names r,
+
+  /dev/pts/[0-9]* rw,
+
+  include if exists <local/xtables-nft-multi>
+}
