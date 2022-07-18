@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2022 Jeroen Rijken
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -12,11 +13,31 @@ profile pkttyagent @{exec_path} {
   include <abstractions/dbus-strict>
 
   capability sys_nice,
+  capability audit_write,
 
   ptrace (read),
-  signal (receive),
+  signal (send,receive),
+
+  dbus send bus=system path=/org/freedesktop/PolicyKit[0-9]/Authority
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll,
+
+  dbus send bus=system path=/org/freedesktop/PolicyKit[0-9]/Authority
+       interface=org.freedesktop.PolicyKit[0-9].Authority
+       member=RegisterAuthenticationAgentWithOptions,
+  
+  dbus receive bus=system path=/org/freedesktop/PolicyKit[0-9]/AuthenticationAgent
+       interface=org.freedesktop.PolicyKit1.AuthenticationAgent
+       member=BeginAuthentication,
+  
+  dbus receive bus=system path=/org/freedesktop/PolicyKit[0-9]/Authority
+       interface=org.freedesktop.PolicyKit[0-9].Authority
+       member=Changed,
 
   @{exec_path} mr,
+
+  /etc/nsswitch.conf r,
+  /etc/passwd r,
 
   owner @{PROC}/@{pids}/stat r,
 
