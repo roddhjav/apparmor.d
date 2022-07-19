@@ -53,6 +53,28 @@ profile thunderbird @{exec_path} {
   owner @{PROC}/@{pid}/gid_map w,
   owner @{PROC}/@{pid}/uid_map w,
 
+  dbus send bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member=RequestName
+       peer=(name=org.freedesktop.DBus),
+
+  dbus send bus=system path=/org/freedesktop/RealtimeKit[0-9]*
+       member={Get,MakeThreadHighPriority,MakeThreadRealtime}
+       peer=(name=org.freedesktop.RealtimeKit[0-9]*),
+
+  dbus send bus=system path=/org/freedesktop/UPower
+       interface=org.freedesktop.UPower
+       member=EnumerateDevices
+       peer=(name=org.freedesktop.UPower),
+
+  dbus send bus=session path=/ca/desrt/dconf/Writer/user
+       interface=ca.desrt.dconf.Writer
+       member={Change,Notify}
+       peer=(name=ca.desrt.dconf),
+
+  dbus bind bus=session
+       name=org.mozilla.thunderbird.*,
+
   @{exec_path} mrix,
   @{MOZ_LIBDIR}/thunderbird-wrapper-helper.sh rix,
 
@@ -196,22 +218,6 @@ profile thunderbird @{exec_path} {
   # file_inherit
   owner /dev/tty[0-9]* rw,
   owner @{HOME}/.xsession-errors w,
-
-  # DBus
-  dbus send
-    bus="session" path="/org/freedesktop/DBus" interface="org.freedesktop.DBus" member="RequestName" peer=(name="org.freedesktop.DBus"),
-
-  dbus send
-    bus="system" path="/org/freedesktop/RealtimeKit[0-9]*" member="{Get,MakeThreadHighPriority,MakeThreadRealtime}" peer=(name="org.freedesktop.RealtimeKit[0-9]*"),
-
-  dbus send
-    bus="system" path="/org/freedesktop/UPower" interface="org.freedesktop.UPower" member="EnumerateDevices" peer=(name="org.freedesktop.UPower"),
-
-  dbus send
-    bus="session" path="/ca/desrt/dconf/Writer/user" interface="ca.desrt.dconf.Writer" member="{Change,Notify}" peer=(name="ca.desrt.dconf"),
-
-  dbus bind
-    bus="session" name="org.mozilla.thunderbird.*",
 
   # dconf write
   owner @{HOME}/.config/dconf/     rw,
