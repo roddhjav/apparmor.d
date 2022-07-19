@@ -48,8 +48,8 @@ This is fundamentally different from how AppArmor is used on Linux server as it 
 * An `apparmor` based linux distribution.
 * Base profiles and abstractions shipped with AppArmor are supposed to be
   installed.
-* Go
-* rsync
+* Go (build dependency only)
+* rsync (build dependency only)
 
 **Archlinux**
 
@@ -61,19 +61,18 @@ sudo pacman -U apparmor.d-*.pkg.tar.zst \
   --overwrite etc/apparmor.d/tunables/xdg-user-dirs
 ```
 
-> Note: for a first install, it is recommanded to install all profiles in complain mode. See [Complain mode](#troubleshooting)
+> **Warning**: for a first install, it is recommanded to install all profiles in complain mode. See [Complain mode](#troubleshooting)
 
 **Debian**
 
 Build using standard Debian package build tools:
 ```sh
-sudo apt install debhelper ubuntu-dev-tools config-package-dev golang-go apparmor-profiles rsync
-
+sudo apt install apparmor-profiles build-essential config-package-dev debhelper golang-go rsync
 dpkg-buildpackage -b -d --no-sign
 sudo dpkg -i ../apparmor.d_*_all.deb
 ```
 
-> Note: for a first install, it is recommanded to install all profiles in complain mode. See [Complain mode](#troubleshooting)
+> **Warning**: for a first install, it is recommanded to install all profiles in complain mode. See [Complain mode](#troubleshooting)
 
 **Partial install**
 
