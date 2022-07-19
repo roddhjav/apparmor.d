@@ -9,9 +9,9 @@ include <tunables/global>
 @{exec_path} = /{usr/,}{local/,}bin/k3s
 profile k3s @{exec_path} flags=(complain) {
   include <abstractions/base>
-  include <abstractions/ssl_certs>
-  include <abstractions/nameservice-strict>
   include <abstractions/disks-read>
+  include <abstractions/nameservice-strict>
+  include <abstractions/ssl_certs>
 
   capability chown,
   capability dac_override,
@@ -39,22 +39,7 @@ profile k3s @{exec_path} flags=(complain) {
   /{usr/,}bin/kmod rPx,
   /{usr/,}bin/mount rPx,
   /{usr/,}bin/systemd-run rix,
-
-  # These are all symbolic links to xtables-nft-multi on Ubuntu 22.04
-  /{usr/,}{s,}bin/iptables rPx -> xtables-nft-multi,
-  /etc/alternatives/iptables rPx -> xtables-nft-multi,
-  /{usr/,}{s,}bin/iptables-legacy rPx -> xtables-nft-multi,
-  /{usr/,}{s,}bin/xtables-nft-multi rPx,
-
-  /{usr/,}{s,}bin/iptables-save rPx -> xtables-nft-multi,
-  /etc/alternatives/iptables-save rPx -> xtables-nft-multi,
-  /{usr/,}{s,}bin/iptables-legacy-save rPx -> xtables-nft-multi,
-  /{usr/,}{s,}bin/xtables-nft-multi rPx,
-
-  /{usr/,}{s,}bin/iptables-restore rPx -> xtables-nft-multi,
-  /etc/alternatives/iptables-restore rPx -> xtables-nft-multi,
-  /{usr/,}{s,}bin/iptables-legacy-restore rPx -> xtables-nft-multi,
-  /{usr/,}{s,}bin/xtables-nft-multi rPx,
+  /{usr/,}{s,}bin/xtables-nft-multi rCx -> xtables-nft-multi,
 
   @{libexec}/kubernetes/kubelet-plugins/volume/exec/nodeagent~uds/uds rix,
   /var/lib/rancher/k3s/data/[0-9a-f]*/bin/* rix,
@@ -141,17 +126,17 @@ profile k3s @{exec_path} flags=(complain) {
   
   @{sys}/devices/pci[0-9]*/**/net/*/{address,mtu,speed} r,
   @{sys}/devices/system/edac/mc/ r,
+  @{sys}/devices/system/cpu/ r,
+  @{sys}/devices/system/cpu/cpu[0-9]*/cache/{,**} r,
+  @{sys}/devices/system/cpu/cpu[0-9]*/topology/{,**} r,
+  @{sys}/devices/system/cpu/present{,/} r,
+
+  @{sys}/devices/virtual/net/vxlan.calico/{address,mtu,speed} r,
   @{sys}/devices/system/node/ r,
   @{sys}/devices/system/node/node[0-9]*/ r,
-  @{sys}/devices/system/node/node[0-9]*/meminfo r,
-  @{sys}/devices/system/node/node[0-9]*/hugepages/ r,
-  @{sys}/devices/system/node/node[0-9]*/hugepages/hugepages-*/nr_hugepages r,
-  @{sys}/devices/system/cpu/cpu[0-9]*/topology/core_id r,
-  @{sys}/devices/system/cpu/cpu[0-9]*/topology/physical_package_id r,
-  @{sys}/devices/system/cpu/cpu[0-9]*/cache/ r,
-  @{sys}/devices/system/cpu/cpu[0-9]*/cache/index[0-9]*/{id,size,level,type,shared_cpu_map} r,
-  @{sys}/devices/virtual/net/vxlan.calico/{address,mtu,speed} r,
-  @{sys}/devices/virtual/dmi/id/product_uuid r,
+  @{sys}/devices/system/node/node[0-9]*/{cpumap,distance,meminfo} r,
+  @{sys}/devices/system/node/node[0-9]*/hugepages/{,**} r,
+  @{sys}/devices/virtual/dmi/id/* r,
 
   @{sys}/fs/cgroup/{,*,*/} r,
   @{sys}/fs/cgroup/cgroup.subtree_control rw,
@@ -171,6 +156,32 @@ profile k3s @{exec_path} flags=(complain) {
   @{sys}/module/apparmor/parameters/enabled r,
 
   /dev/kmsg r,
+
+  profile xtables-nft-multi flags=(complain) {
+    include <abstractions/base>
+    include <abstractions/nameservice-strict>
+
+    capability net_admin,
+    capability net_raw,
+
+    network inet dgram,
+    network inet6 dgram,
+    network inet raw,
+    network inet6 raw,
+    network inet stream,
+    network inet6 stream,
+    network netlink raw,
+
+    /{usr/,}{s,}bin/xtables-nft-multi mr,
+  
+    /etc/libnl/classid r,
+    /etc/iptables/{,**} rw,
+    /etc/nftables.conf rw,
+
+    @{PROC}/@{pids}/net/ip_tables_names r,
+
+    /dev/pts/[0-9]* rw,
+}
 
   include if exists <local/k3s>
 }
