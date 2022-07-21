@@ -38,11 +38,15 @@ profile k3s @{exec_path} flags=(complain) {
   signal (send, receive) set=term,
   signal (send) set=kill peer=unconfined,
 
+  unix (bind,listen) type=stream addr=@xtables,
+
   @{exec_path} mr,
   /{usr/,}bin/kmod rPx,
   /{usr/,}bin/mount rPx,
   /{usr/,}bin/systemd-run rix,
-  /{usr/,}{s,}bin/xtables-nft-multi rCx -> xtables-nft-multi,
+  /{usr/,}bin/{nano,emacs,ed} rPUx,
+  /{usr/,}bin/vim{,.basic} rPUx,
+  /{usr/,}{s,}bin/xtables-nft-multi rPx -> cni-xtables-nft,
 
   @{libexec}/kubernetes/kubelet-plugins/volume/exec/nodeagent~uds/uds rix,
   /var/lib/rancher/k3s/data/[0-9a-f]*/bin/* rix,
@@ -78,6 +82,7 @@ profile k3s @{exec_path} flags=(complain) {
   @{run}/xtables.lock rwk,
 
   owner /var/tmp/etilqs_[0-9a-f]* rw,
+  owner /tmp/kubectl-edit-[0-9]*.yaml rw,
 
   owner @{PROC}/@{pids}/cgroup r,
   owner @{PROC}/@{pids}/cpuset r,
@@ -149,32 +154,6 @@ profile k3s @{exec_path} flags=(complain) {
 
   /dev/kmsg r,
   /dev/pts/[0-9]* rw,
-
-  profile xtables-nft-multi flags=(complain) {
-    include <abstractions/base>
-    include <abstractions/nameservice-strict>
-
-    capability net_admin,
-    capability net_raw,
-
-    network inet dgram,
-    network inet6 dgram,
-    network inet raw,
-    network inet6 raw,
-    network inet stream,
-    network inet6 stream,
-    network netlink raw,
-
-    /{usr/,}{s,}bin/xtables-nft-multi mr,
-  
-    /etc/libnl/classid r,
-    /etc/iptables/{,**} rw,
-    /etc/nftables.conf rw,
-
-    @{PROC}/@{pids}/net/ip_tables_names r,
-
-    /dev/pts/[0-9]* rw,
-}
 
   include if exists <local/k3s>
 }
