@@ -1,4 +1,5 @@
 # apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
 # Copyright (C) 2022 Jeroen Rijken
 # SPDX-License-Identifier: GPL-2.0-only
 
@@ -9,9 +10,10 @@ include <tunables/global>
 @{exec_path} = /{usr/,}bin/containerd-shim-runc-v2
 profile containerd-shim-runc-v2 @{exec_path} flags=(complain,attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/consoles>
 
-  capability dac_read_search,
   capability dac_override,
+  capability dac_read_search,
   capability net_admin,
   capability sys_admin,
   capability sys_resource,
@@ -20,20 +22,28 @@ profile containerd-shim-runc-v2 @{exec_path} flags=(complain,attach_disconnected
   umount /run/containerd/io.containerd.runtime.v2.task/k8s.io/[0-9a-z]*/rootfs/,
 
   @{exec_path} mrix,
+
   /{usr/,}{s,}bin/runc rPUx,
 
   /tmp/runc-process[0-9]* rw,
+  /tmp/pty[0-9]*/ rw,
+  /tmp/pty[0-9]*/pty.sock rw,
 
+  @{run}/containerd/ rw,
   @{run}/containerd/containerd.sock.ttrpc rw,
   @{run}/containerd/io.containerd.grpc.v1.cri/containers/[0-9a-z]*/io/[0-9]*/[0-9a-z]*-stderr rw,
   @{run}/containerd/io.containerd.grpc.v1.cri/containers/[0-9a-z]*/io/[0-9]*/[0-9a-z]*-stdout rw,
   @{run}/containerd/io.containerd.runtime.v2.task/k8s.io/[0-9a-z]*/{,*} rw,
-  @{run}/containerd/s/[0-9a-z]* rw,
+  @{run}/containerd/s/{,[0-9a-z]*} rw,
+
+  @{run}/docker/containerd/[0-9a-f]*/[0-9a-f]*-{stdin,stdout,stderr} rw,
+  @{run}/docker/containerd/[0-9a-f]*/init-{stdin,stdout,stderr} rw,
+  @{run}/docker/containerd/daemon/io.containerd.*/{,**} rw,
   @{run}/secrets/kubernetes.io/serviceaccount/*/token w,
 
-  @{sys}/kernel/mm/transparent_hugepage/hpage_pmd_size r,
-  @{sys}/fs/cgroup/kubepods/{,**} rw,
   @{sys}/fs/cgroup/{,**} rw,
+  @{sys}/fs/cgroup/kubepods/{,**} rw,
+  @{sys}/kernel/mm/transparent_hugepage/hpage_pmd_size r,
 
   @{PROC}/@{pids}/cgroup r,
   @{PROC}/@{pids}/oom_score_adj rw,
