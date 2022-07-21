@@ -1,0 +1,140 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{snap/snapd/[0-9]*/,}{usr/,}lib/snapd/snapd
+profile snapd @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/authentication>
+  include <abstractions/dbus-strict>
+  include <abstractions/disks-write>
+  include <abstractions/fontconfig-cache-write>
+  include <abstractions/fonts>
+  include <abstractions/nameservice-strict>
+  include <abstractions/ssl_certs>
+
+  capability audit_write,
+  capability dac_override,
+  capability dac_read_search,
+  capability net_admin,
+  capability setgid,
+  capability setuid,
+  capability sys_admin,
+  capability sys_resource,
+
+  network inet stream,
+  network inet6 stream,
+  network inet dgram,
+  network inet6 dgram,
+  network netlink raw,
+
+  mount fstype=squashfs /dev/loop[0-9]* -> /tmp/syscheck-mountpoint-[0-9]*/,
+  umount /tmp/syscheck-mountpoint-[0-9]*/,
+  umount /snap/*/[0-9]*/,
+
+  ptrace (read) peer=unconfined,
+
+  dbus send bus=system path=/org/freedesktop/timedate1
+       interface=org.freedesktop.DBus.Properties
+       member=Get
+       peer=(name=org.freedesktop.timedate1),
+
+  dbus send bus=system path=/org/freedesktop/PolicyKit1/Authority 
+       interface=org.freedesktop.PolicyKit1.Authority
+       member=CheckAuthorization 
+       peer=(name=org.freedesktop.PolicyKit1),
+
+  @{exec_path} mr,
+
+  /{usr/,}{s,}bin/apparmor_parser      rPx,
+  /{usr/,}{s,}bin/runuser              rCx -> runuser,
+  /{usr/,}bin/{,ba,da}sh               rix,
+  /{usr/,}bin/cp                       rix,
+  /{usr/,}bin/gzip                     rix,
+  /{usr/,}bin/mount                    rix,
+  /{usr/,}bin/sync                     rix,
+  /{usr/,}bin/systemctl                rix,
+  /{usr/,}bin/systemd-detect-virt      rPx,
+  /{usr/,}bin/tar                      rix,
+  /{usr/,}bin/udevadm                  rPx,
+  /{usr/,}bin/umount                   rix,
+  /{usr/,}bin/unsquashfs               rix,
+  /{usr/,}bin/update-desktop-database  rPx,
+
+  /snap/snapd/[0-9]*/lib/@{multiarch}/**            mr,
+  /snap/snapd/[0-9]*/lib/@{multiarch}/ld-*.so       rix,
+  /snap/snapd/[0-9]*/usr/bin/snap                   rPx,
+  /snap/snapd/[0-9]*/usr/lib/snapd/snap-discard-ns  rPx,
+  /snap/snapd/[0-9]*/usr/lib/snapd/snap-seccomp     rPx,
+  /snap/snapd/[0-9]*/usr/lib/snapd/snap-update-ns   rPx,
+  /snap/snapd/[0-9]*/usr/lib/snapd/snapd            rix,
+  /snap/snapd/[0-9]*/usr/bin/xdelta3                rix, # TODO: rPx ?
+
+  /usr/share/dbus-1/{system,session}.d/{,snapd*} r,
+  /usr/share/dbus-1/services/*snap* r,
+  /usr/share/polkit-1/actions/{,**/} r,
+
+  /etc/dbus-1/system.d/{,**/} r,
+  /etc/fstab r,
+  /etc/modprobe.d/{,**/} r,
+  /etc/modules-load.d/{,**/} r,
+  /etc/systemd/system/{,**/} r,
+  /etc/systemd/system/snap* rw,
+  /etc/systemd/user/{,**/} r,
+  /etc/systemd/user/snap* rw,
+  /etc/udev/rules.d/{,*snap*} rw,
+
+  /snap/{,**} rw,
+  /var/cache/snapd/{,**} rwk,
+  /var/lib/snapd/{,**} rwk,
+  /var/snap/{,**} rw,
+
+  /var/cache/apparmor/{,*/} r,
+  /var/cache/apparmor/*/snap* rw,
+
+  /tmp/ r,
+  /tmp/syscheck-mountpoint-[0-9]*/{,**} rw,
+  /tmp/syscheck-squashfs-[0-9]* rw,
+  /tmp/read-file[0-9]*/{,**} rw,
+
+  owner @{HOME}/ r,
+  owner @{HOME}/snap/{,**} rw,
+
+  owner @{run}/mount/ rw,
+  owner @{run}/mount/utab{,.*} rw,
+  owner @{run}/mount/utab.lock wk,
+
+  owner @{run}/user/{,@{uid}/} r,
+  owner @{run}/user/snap.*/{,**} rw,
+
+  @{run}/snapd-snap.socket rw,
+  @{run}/snapd.socket rw,
+  @{run}/snapd/lock/core[0-9]*.lock rwk,
+  @{run}/systemd/notify rw,
+  @{run}/systemd/private rw,
+
+  @{sys}/fs/cgroup/{,*/} r,
+  @{sys}/fs/cgroup/system.slice/{,**/} r,
+  @{sys}/fs/cgroup/user.slice/ r,
+  @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/**/ r,
+  @{sys}/kernel/mm/transparent_hugepage/hpage_pmd_size r,
+  @{sys}/kernel/security/apparmor/features/ r,
+  @{sys}/kernel/security/apparmor/profiles r,
+
+  owner @{PROC}/@{pids}/mountinfo r,
+        @{PROC}/@{pids}/cgroup r,
+        @{PROC}/@{pids}/stat r,
+        @{PROC}/cgroups r,
+        @{PROC}/cmdline r,
+        @{PROC}/sys/kernel/random/boot_id r,
+        @{PROC}/sys/kernel/seccomp/actions_avail r,
+        @{PROC}/version r,
+
+  /dev/loop-control rw,
+
+  include if exists <local/snapd>
+}
