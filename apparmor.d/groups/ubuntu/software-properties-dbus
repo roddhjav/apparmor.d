@@ -10,9 +10,23 @@ include <tunables/global>
 profile software-properties-dbus @{exec_path} {
   include <abstractions/base>
   include <abstractions/apt-common>
-  include <abstractions/python>
-  include <abstractions/nameservice-strict>
   include <abstractions/dbus-strict>
+  include <abstractions/nameservice-strict>
+  include <abstractions/openssl>
+  include <abstractions/python>
+
+  dbus send bus=system path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member=RequestName
+       peer=(name=org.freedesktop.DBus),
+ 
+  dbus receive bus=system path=/
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect,
+
+  dbus receive bus=system path=/
+       interface=com.ubuntu.SoftwareProperties
+       member=Reload,
 
   dbus bind bus=system 
        name=com.ubuntu.SoftwareProperties,
@@ -31,6 +45,7 @@ profile software-properties-dbus @{exec_path} {
   owner /tmp/tmp*/{,apt.conf} rw,
 
   owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/mounts r,
 
   include if exists <local/software-properties-dbus>
 }

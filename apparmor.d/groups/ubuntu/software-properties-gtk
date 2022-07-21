@@ -16,7 +16,21 @@ profile software-properties-gtk @{exec_path} {
   include <abstractions/fonts>
   include <abstractions/openssl>
 
+  dbus send bus=system path=/{,com/canonical/UbuntuAdvantage/Manager}
+      interface=org.freedesktop.DBus.Introspectable
+      member=Introspect,
+
+  dbus send bus=system path=/
+      interface=com.ubuntu.SoftwareProperties
+      member=Reload,
+
+  dbus send bus=system path=/
+      interface=org.freedesktop.DBus.ObjectManager
+      member=GetManagedObjects,
+
   @{exec_path} mr,
+
+  /{usr/,}bin/ r,
 
   /{usr/,}bin/aplay                    rPx,
   /{usr/,}bin/apt-key                  rPx,
@@ -25,25 +39,36 @@ profile software-properties-gtk @{exec_path} {
   /{usr/,}bin/lsb_release              rPx -> lsb_release,
   /{usr/,}bin/ubuntu-advantage         rPx,
 
+  /usr/share/distro-info/*.csv r,
   /usr/share/glib-2.0/schemas/gschemas.compiled r,
   /usr/share/icons/{,**} r,
   /usr/share/mime/mime.cache r,
   /usr/share/pixmaps/ r,
   /usr/share/python-apt/{,**} r,
   /usr/share/software-properties/{,**} r,
+  /usr/share/themes/{,**} r,
   /usr/share/ubuntu-drivers-common/detect/{,**} r,
   /usr/share/X11/xkb/{,**} r,
   /usr/share/xml/iso-codes/{,**} r,
 
+  /etc/gtk-3.0/settings.ini r,
   /etc/machine-id r,
   /etc/update-manager/release-upgrades r,
+
+  /var/lib/snapd/desktop/icons/ r,
+
+  owner @{run}/user/@{uid}/wayland-[0-9]* rw,
+
+  owner /tmp/[a-z0-9]* rw,
+  owner /tmp/tmp*/{,apt.conf} rw,
 
   @{sys}/devices/ r,
   @{sys}/devices/**/ r,
   @{sys}/devices/**/modalias r,
 
+        @{PROC}/@{pids}/mountinfo r,
   owner @{PROC}/@{pid}/fd/ r,
-  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/mounts r,
 
   include if exists <local/software-properties-gtk>
 }
