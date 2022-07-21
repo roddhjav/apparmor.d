@@ -7,7 +7,7 @@ abi <abi/3.0>,
 
 include <tunables/global>
 
-@{exec_path} = /{usr/,}bin/apt /{usr/,}bin/apt-get
+@{exec_path} = /{usr/,}bin/apt /{usr/,}bin/apt-get /{usr/,}{s,}bin/aptd
 profile apt @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/apt-common>
@@ -15,6 +15,8 @@ profile apt @{exec_path} flags=(attach_disconnected) {
   include <abstractions/consoles>
   include <abstractions/nameservice-strict>
   include <abstractions/ssl_certs>
+  include <abstractions/openssl>
+  include <abstractions/python>
 
   capability chown,
   capability dac_override,
@@ -31,14 +33,12 @@ profile apt @{exec_path} flags=(attach_disconnected) {
 
   unix (receive, send) type=stream peer=(label=apt-esm-json-hook),
 
-  dbus send bus=system path=/org/freedesktop/PackageKit
-       interface=org.freedesktop.DBus.Introspectable
-       member=Introspect
-       peer=(name=org.freedesktop.PackageKit),
+  dbus (send, receive) bus=system path=/org/debian/apt{,/transaction/[0-9a-f]*}
+       interface=org.{debian.apt*,freedesktop.DBus.{Properties,Introspectable}},
 
   dbus send bus=system path=/org/freedesktop/PackageKit
-       interface=org.freedesktop.PackageKit
-       member=StateHasChanged
+       interface=org.freedesktop.{DBus.Introspectable,PackageKit}
+       member={StateHasChanged,Introspect}
        peer=(name=org.freedesktop.PackageKit),
 
   dbus send bus=system path=/org/freedesktop/login[0-9]
@@ -46,7 +46,21 @@ profile apt @{exec_path} flags=(attach_disconnected) {
        member=Inhibit
        peer=(name=org.freedesktop.login[0-9]),
 
+  dbus send bus=system path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus{,.Introspectable}
+       member={RequestName,GetConnectionUnixProcessID,Introspect}
+       peer=(name=org.freedesktop.DBus),
+
+  dbus send bus=system path=/org/freedesktop/PolicyKit1/Authority
+       interface=org.freedesktop.{DBus.Introspectable,PolicyKit1.Authority}
+       member={CheckAuthorization,Introspect},
+
+  dbus bind bus=system 
+       name= org.debian.apt,
+
   @{exec_path} mr,
+
+  /{usr/,}{s,}bin/ r,
 
   /{usr/,}bin/{,ba,da}sh rix,
   /{usr/,}bin/{,e}grep   rix,
@@ -94,6 +108,8 @@ profile apt @{exec_path} flags=(attach_disconnected) {
   # For changelogs
   /{usr/,}bin/sensible-pager  rCx -> pager,
 
+  /usr/share/xml/iso-codes/{,**} r,
+
   /etc/apt/sources.list rwk,
   /etc/machine-id r,
   /var/lib/dbus/machine-id r,
@@ -125,8 +141,10 @@ profile apt @{exec_path} flags=(attach_disconnected) {
   owner /tmp/apt.conf.* rw,
   owner /tmp/apt.data.* rw,
 
-  owner @{PROC}/@{pid}/fd/ r,
+        @{PROC}/@{pids}/cmdline r,
         @{PROC}/@{pids}/mountinfo r,
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/mounts r,
 
   /dev/ptmx rw,
 
