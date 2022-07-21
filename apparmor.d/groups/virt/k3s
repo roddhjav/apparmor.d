@@ -14,15 +14,18 @@ profile k3s @{exec_path} flags=(complain) {
   include <abstractions/ssl_certs>
 
   capability chown,
+  capability kill,
   capability dac_override,
   capability dac_read_search,
   capability net_admin,
   capability syslog,
   capability sys_admin,
+  capability sys_ptrace,
   capability sys_resource,
 
   ptrace peer=@{profile_name},
   ptrace (read) peer=unconfined,
+  ptrace (read) peer=cri-containerd.apparmor.d,
 
   network inet dgram,
   network inet6 dgram,
@@ -34,6 +37,7 @@ profile k3s @{exec_path} flags=(complain) {
   umount /var/lib/kubelet/pods/@{uuid}/volumes/kubernetes.io~*/{,**/},
 
   signal (send, receive) set=term,
+  signal (send) set=kill peer=unconfined,
 
   @{exec_path} mr,
   /{usr/,}bin/kmod rPx,
@@ -48,27 +52,11 @@ profile k3s @{exec_path} flags=(complain) {
   /usr/share/mime/globs2 r,
 
   /etc/machine-id r,
-  /etc/rancher/k3s/{,**} r,
-  /etc/rancher/k3s/k3s.yaml rw,
-  /etc/rancher/node/password r,
+  /etc/rancher/{,**} rw,
 
-  /var/lib/rancher/k3s/{,**} r,
-  /var/lib/rancher/k3s/agent/** rw,
-  /var/lib/rancher/k3s/server/** rw,
-  /var/lib/rancher/k3s/server/db/** rwk,
-
-  # k3s want's to basically manage all directories and create some specific files.
-  /var/lib/kubelet/{,**/} rw,
-  /var/lib/kubelet/{cpu_manager_state,memory_manager_state} r,
-  /var/lib/kubelet/device-plugins/{,DEPRECATION,kubelet.sock} rw,
-  /var/lib/kubelet/pod-resources/{kubelet.sock,[0-9]*} rw,
-  /var/lib/kubelet/pods/@{uuid}/containers/*/[0-9a-f]* rw,
-  /var/lib/kubelet/pods/@{uuid}/etc-hosts rw,
-  /var/lib/kubelet/pods/@{uuid}/plugins/kubernetes.io~*/{,**} rw,
-  /var/lib/kubelet/pods/@{uuid}/volumes/kubernetes.io~*/{,**} rw,
-  /var/lib/kubelet/pods/@{uuid}/**/ca.crt rw,
-  /var/lib/kubelet/pods/@{uuid}/**/namespace rw,
-  /var/lib/kubelet/pods/@{uuid}/**/token rw,
+  /var/lib/kubelet/{,**} rw,
+  /var/lib/rancher/k3s/data/.lock rwk,
+  /var/lib/rancher/k3s/server/db/{,**} rwk,
 
   /var/log/containers/ r,
   /var/log/containers/** rw,
@@ -93,6 +81,8 @@ profile k3s @{exec_path} flags=(complain) {
 
   owner @{PROC}/@{pids}/cgroup r,
   owner @{PROC}/@{pids}/cpuset r,
+        @{PROC}/@{pids}/fd/ r,
+        @{PROC}/@{pids}/limits r,
   owner @{PROC}/@{pids}/mounts r,
   owner @{PROC}/@{pids}/mountinfo r,
         @{PROC}/@{pids}/net/dev r,
@@ -104,6 +94,7 @@ profile k3s @{exec_path} flags=(complain) {
   owner @{PROC}/@{pids}/uid_map r,
   
         @{PROC}/diskstats r,
+        @{PROC}/loadavg r,
         @{PROC}/modules r,
         @{PROC}/sys/fs/pipe-max-size r,
         @{PROC}/sys/net/core/somaxconn r,
@@ -117,6 +108,7 @@ profile k3s @{exec_path} flags=(complain) {
         @{PROC}/sys/kernel/panic_on_oops rw,
         @{PROC}/sys/kernel/pid_max r,
         @{PROC}/sys/kernel/osrelease r,
+        @{PROC}/sys/kernel/threads-max r,
         @{PROC}/sys/vm/overcommit_memory rw,
         @{PROC}/sys/vm/panic_on_oom r,
 
