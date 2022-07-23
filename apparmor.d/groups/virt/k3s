@@ -26,8 +26,7 @@ profile k3s @{exec_path} flags=(complain) {
   capability sys_resource,
 
   ptrace peer=@{profile_name},
-  ptrace (read) peer={cri-containerd.apparmor.d,cni-xtables-nft,unconfined},
-  ptrace (read) peer=mount,
+  ptrace (read) peer={cri-containerd.apparmor.d,cni-xtables-nft,kubernetes-pause,mount,unconfined},
 
   # k3s requires ptrace to all AppArmor profiles loaded in Kubernetes
   # For simplification, let's assume for now all AppArmor profiles start with a predefined prefix.
@@ -42,8 +41,11 @@ profile k3s @{exec_path} flags=(complain) {
   network inet6 stream,
   network netlink raw,
 
-  mount /var/lib/kubelet/pods/@{uuid}/volumes/kubernetes.io~*/{,**/},
+  mount -> /var/lib/kubelet/pods/@{uuid}/volumes/kubernetes.io~*/{,**/},
+  mount -> /var/lib/kubelet/pods/@{uuid}/volume-subpaths/{,**},
+
   umount /var/lib/kubelet/pods/@{uuid}/volumes/kubernetes.io~*/{,**/},
+  umount /var/lib/kubelet/pods/@{uuid}/volume-subpaths/{,**},
 
   signal (send, receive) set=term,
   signal (send) set=kill peer=unconfined,
