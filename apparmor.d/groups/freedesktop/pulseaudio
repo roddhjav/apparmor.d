@@ -1,6 +1,7 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2017-2021 Mikhail Morfikov
 # Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2022 Jeroen Rijken
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -32,6 +33,20 @@ profile pulseaudio @{exec_path} {
 
   network bluetooth stream,
   network bluetooth seqpacket,
+
+  dbus (send)
+     bus=session
+     path=/Client0/EntryGroup[0-9]*
+     interface=org.freedesktop.Avahi.EntryGroup
+     member={GetState,AddService,AddServiceSubtype,Commit}
+     peer=(name=org.freedesktop.Avahi),
+
+  dbus (receive)
+     bus=session
+     path=/Client0/EntryGroup[0-9]*
+     interface=org.freedesktop.Avahi.EntryGroup
+     member={StateChanged}
+     peer=(name=org.freedesktop.Avahi),
 
   dbus (send)
      bus=session
@@ -83,6 +98,34 @@ profile pulseaudio @{exec_path} {
      interface=org.freedesktop.DBus.ObjectManager
      member=GetManagedObjects
      peer=(name=org.bluez),
+  
+  dbus (send)
+     bus=system
+     path=/
+     interface=org.freedesktop.DBus.Peer
+     member=Ping
+     peer=(name=org.freedesktop.Avahi),
+
+  dbus (send)
+     bus=system
+     path=/
+     interface=org.freedesktop.Avahi.Server
+     member={GetAPIVersion,GetState,EntryGroupNew}
+     peer=(name=org.freedesktop.Avahi),
+
+  dbus (receive)
+     bus=system
+     path=/
+     interface=org.freedesktop.Avahi.Server
+     member={StateChanged}
+     peer=(name=org.freedesktop.Avahi),
+
+  dbus (send)
+     bus=system
+     path=/
+     interface=org.freedesktop.hostname[0-9]*
+     member={Get}
+     peer=(name=/org/freedesktop/hostname1[0-9]*,
 
   @{exec_path} mrix,
 

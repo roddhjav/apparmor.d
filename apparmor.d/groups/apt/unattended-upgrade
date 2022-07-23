@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2022 Jeroen Rijken
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -29,6 +30,14 @@ profile unattended-upgrade @{exec_path} flags=(attach_disconnected) {
   network netlink raw,
 
   signal (send) peer=apt-methods-http,
+
+  dbus send bus=system path=/org/freedesktop/PackageKit
+       interface=org.freedesktop.PackageKit
+       member=StateHasChanged,
+
+  dbus send bus=system path=/org/freedesktop/PackageKit
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect,
 
   dbus send bus=system path=/org/freedesktop/login[0-9]
        interface=org.freedesktop.login[0-9].Manager
