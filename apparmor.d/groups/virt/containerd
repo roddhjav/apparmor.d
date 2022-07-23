@@ -31,6 +31,7 @@ profile containerd @{exec_path} flags=(attach_disconnected) {
 
   mount fstype=tmpfs options in (rw, nosuid, nodev, noexec) -> @{run}/containerd/io.containerd.grpc.v1.cri/sandboxes/[0-9a-f]*/shm/,
   mount -> /var/lib/containerd/tmpmounts/containerd-mount[0-9]*/,
+  mount -> /tmp/ctd-volume[0-9]*/,
   mount options in (rw, bind, nosuid, nodev, noexec) -> @{run}/netns/cni-@{uuid},
 
   umount @{run}/containerd/io.containerd.grpc.v1.cri/sandboxes/[0-9a-f]*/shm/,
@@ -68,7 +69,9 @@ profile containerd @{exec_path} flags=(attach_disconnected) {
   /var/lib/containerd/{,**} rwk,
   /var/lib/containerd/tmpmounts/containerd-mount[0-9]*/** l,
   /var/lib/docker/containerd/{,**} rwk,
-  /var/log/pods/**/[0-9]*.log w,
+  /var/lib/kubelet/seccomp/{,**} r,
+  /var/log/pods/**/[0-9]*.log{,*} w,
+  /var/lib/security-profiles-operator/{,**/*.json} r,
 
   @{run}/calico/ w,
   @{run}/containerd/{,**} rwk,
@@ -77,7 +80,10 @@ profile containerd @{exec_path} flags=(attach_disconnected) {
   @{run}/netns/cni-@{uuid} rw,
   @{run}/systemd/notify w,
 
-  /tmp/cri-containerd.apparmor.d[0-9]* rwl,
+  owner /var/tmp/** rwkl,
+  owner /tmp/** rwkl,
+        /tmp/cri-containerd.apparmor.d[0-9]* rwl,
+        /tmp/ctd-volume[0-9]*/ rw,
 
   @{sys}/kernel/mm/transparent_hugepage/hpage_pmd_size r,
   @{sys}/kernel/security/apparmor/profiles r,
