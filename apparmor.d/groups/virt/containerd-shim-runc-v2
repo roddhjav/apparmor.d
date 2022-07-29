@@ -16,10 +16,14 @@ profile containerd-shim-runc-v2 @{exec_path} flags=(attach_disconnected) {
   capability dac_read_search,
   capability net_admin,
   capability sys_admin,
+  capability sys_ptrace,
   capability sys_resource,
 
-  mount -> /run/containerd/io.containerd.runtime.v2.task/k8s.io/[0-9a-z]*/rootfs/,
-  umount /run/containerd/io.containerd.runtime.v2.task/k8s.io/[0-9a-z]*/rootfs/,
+  ptrace (read) peer=containerd,
+  ptrace (read) peer=unconfined,
+
+  mount -> /run/containerd/io.containerd.runtime.v2.task/k8s.io/[0-9a-f]*/rootfs/,
+  umount /run/containerd/io.containerd.runtime.v2.task/k8s.io/[0-9a-f]*/rootfs/,
 
   @{exec_path} mrix,
 
@@ -31,7 +35,7 @@ profile containerd-shim-runc-v2 @{exec_path} flags=(attach_disconnected) {
 
   @{run}/containerd/{,containerd.sock.ttrpc} rw,
   @{run}/containerd/io.containerd.grpc.v1.cri/containers/[0-9a-f]*/io/[0-9]*/[0-9a-f]*-{stdin,stdout,stderr} rw,
-  @{run}/containerd/io.containerd.runtime.v2.task/k8s.io/[0-9a-f]*/{,*} rw,
+  @{run}/containerd/io.containerd.runtime.v2.task/{moby,k8s.io}/[0-9a-f]*/{,*} rw,
   @{run}/containerd/s/{,[0-9a-f]*} rw,
 
   @{run}/docker/containerd/[0-9a-f]*/[0-9a-f]*-{stdin,stdout,stderr} rw,
