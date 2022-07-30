@@ -1,0 +1,40 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Jeroen Rijken
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}{s,}bin/zsysd /{usr/,}{s,}bin/zsysctl
+profile zsysctl @{exec_path} flags=(complain) {
+  include <abstractions/base>
+  include <abstractions/dbus-strict>
+
+  @{exec_path}          rm,
+  /{usr/,}bin/zsysctl   rix,
+  /{usr/,}bin/zsysd     rix,
+
+  /etc/hostid r,
+  /etc/passwd r,
+  /etc/nsswitch.conf r,
+  /etc/zsys.conf r,
+  
+  /var/log/unattended-upgrades/unattended-upgrades-dpkg.log rw,
+
+  @{run}/systemd/notify rw,
+  @{run}/unattended-upgrades.pid r,
+  @{run}/zsys-snapshot.unattended-upgrades rw,
+  @{run}/zsysd.sock rw,
+
+  @{PROC}/@{pids}/mounts r,
+  @{PROC}/filesystems r,
+  @{PROC}/sys/kernel/spl/hostid r,
+
+  @{sys}/kernel/mm/transparent_hugepage/hpage_pmd_size r,
+
+  /dev/pts/[0-9]* rw,
+  /dev/zfs rw,
+
+  include if exists <local/zsysctl>
+}
