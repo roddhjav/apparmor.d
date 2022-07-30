@@ -11,6 +11,13 @@ profile zsysctl @{exec_path} flags=(complain) {
   include <abstractions/base>
   include <abstractions/dbus-strict>
 
+  capability sys_ptrace,
+  capability sys_admin,
+
+  dbus send bus=system path=/org/freedesktop/PolicyKit1/Authority
+       interface=org.freedesktop.PolicyKit1.Authority
+       member=CheckAuthorization,
+
   @{exec_path}          rm,
   /{usr/,}bin/zsysctl   rix,
   /{usr/,}bin/zsysd     rix,
@@ -27,9 +34,11 @@ profile zsysctl @{exec_path} flags=(complain) {
   @{run}/zsys-snapshot.unattended-upgrades rw,
   @{run}/zsysd.sock rw,
 
-  @{PROC}/@{pids}/mounts r,
-  @{PROC}/filesystems r,
-  @{PROC}/sys/kernel/spl/hostid r,
+        @{PROC}/@{pids}/mounts r,
+        @{PROC}/cmdline r,
+  owner @{PROC}/@{pids}/stats r,
+        @{PROC}/filesystems r,
+        @{PROC}/sys/kernel/spl/hostid r,
 
   @{sys}/kernel/mm/transparent_hugepage/hpage_pmd_size r,
 
