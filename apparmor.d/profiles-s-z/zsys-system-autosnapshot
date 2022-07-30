@@ -1,0 +1,34 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Jeroen Rijken
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}{s,}bin/zsys-system-autosnapshot
+profile zsys-system-autosnapshot flags=(complain) @{exec_path} {
+  include <abstractions/base>
+
+  @{exec_path}           rm,
+  /{usr/,}bin/{,ba,da}sh rix,
+  /{usr/,}bin/cat        rix,
+  /{usr/,}bin/cp         rix,
+  /{usr/,}bin/rm         rix,
+  /{usr/,}bin/zsysctl    rix,
+  /{usr/,}bin/zsysd      rix,
+
+  /{usr/,}lib/locale/locale-archive r,
+  
+  /var/log/unattended-upgrades/unattended-upgrades-dpkg.log rw,
+
+  @{run}/zsys-bootmenu.unattended-upgrades rw,
+  @{run}/zsys-snapshot.unattended-upgrades rw,
+  @{run}/unattended-upgrades.pid r,
+
+  @{PROC}/filesystems r,
+
+  /dev/pts/[0-9]* rw,
+
+  include if exists <local/zsys-system-autosnapshot>
+}
