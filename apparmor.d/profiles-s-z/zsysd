@@ -1,0 +1,48 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Jeroen Rijken
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}{s,}bin/zsysd /{usr/,}{s,}bin/zsysctl
+profile zsysd @{exec_path} flags=(complain) {
+  include <abstractions/base>
+  include <abstractions/dbus-strict>
+  include <abstractions/nameservice-strict>
+
+  capability sys_ptrace,
+  capability sys_admin,
+
+  dbus send bus=system path=/org/freedesktop/PolicyKit1/Authority
+       interface=org.freedesktop.PolicyKit1.Authority
+       member=CheckAuthorization,
+
+  @{exec_path}                   rmix,
+  /{usr/,}{local/,}{s,}bin/zfs   rPx,
+  /{usr/,}{local/,}{s,}bin/zpool rPx,
+  /{usr/,}{s,}bin/update-grub    rPUx,
+
+  /etc/hostid r,
+  /etc/zsys.conf r,
+  
+  /var/log/unattended-upgrades/unattended-upgrades-dpkg.log rw,
+
+  @{run}/systemd/notify rw,
+  @{run}/unattended-upgrades.pid r,
+  @{run}/zsys-snapshot.unattended-upgrades rw,
+  @{run}/zsysd.sock rw,
+
+  owner @{PROC}/@{pids}/stat r,
+        @{PROC}/@{pids}/mounts r,
+        @{PROC}/cmdline r,
+        @{PROC}/sys/kernel/spl/hostid r,
+
+  @{sys}/kernel/mm/transparent_hugepage/hpage_pmd_size r,
+
+  /dev/pts/[0-9]* rw,
+  /dev/zfs rw,
+
+  include if exists <local/zsysd>
+}
