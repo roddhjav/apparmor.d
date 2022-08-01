@@ -18,6 +18,7 @@ profile thunderbird @{exec_path} {
   include <abstractions/base>
   include <abstractions/consoles>
   include <abstractions/opencl-intel>
+  include <abstractions/wayland>
   include <abstractions/nvidia>
   include <abstractions/vulkan>
   include <abstractions/mesa>
@@ -35,7 +36,7 @@ profile thunderbird @{exec_path} {
   include <abstractions/ibus>
   include <abstractions/dbus-strict>
   include <abstractions/dbus-session-strict>
-  include if exists <abstractions/ubuntu-unity7-base>
+  include <abstractions/dbus-gtk>
 
   ptrace peer=@{profile_name},
 
@@ -53,26 +54,26 @@ profile thunderbird @{exec_path} {
   owner @{PROC}/@{pid}/gid_map w,
   owner @{PROC}/@{pid}/uid_map w,
 
-  dbus send bus=session path=/org/freedesktop/DBus
+  dbus (send) bus=session path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus
        member=RequestName
        peer=(name=org.freedesktop.DBus),
 
-  dbus send bus=system path=/org/freedesktop/RealtimeKit[0-9]*
+  dbus (send) bus=system path=/org/freedesktop/RealtimeKit[0-9]*
        member={Get,MakeThreadHighPriority,MakeThreadRealtime}
        peer=(name=org.freedesktop.RealtimeKit[0-9]*),
 
-  dbus send bus=system path=/org/freedesktop/UPower
+  dbus (send) bus=system path=/org/freedesktop/UPower
        interface=org.freedesktop.UPower
        member=EnumerateDevices
        peer=(name=org.freedesktop.UPower),
 
-  dbus send bus=session path=/ca/desrt/dconf/Writer/user
+  dbus (send) bus=session path=/ca/desrt/dconf/Writer/user
        interface=ca.desrt.dconf.Writer
        member={Change,Notify}
        peer=(name=ca.desrt.dconf),
 
-  dbus bind bus=session
+  dbus (bind) bus=session
        name=org.mozilla.thunderbird.*,
 
   @{exec_path} mrix,
@@ -142,6 +143,7 @@ profile thunderbird @{exec_path} {
   # gnome-tiny
   /etc/gnome/defaults.list r,
   @{run}/mount/utab r,
+  /usr/share/gvfs/remote-volume-monitors/{,*} r,
 
   deny @{sys}/devices/system/cpu/present r,
   deny @{sys}/devices/system/cpu/cpufreq/policy[0-9]/cpuinfo_max_freq r,
