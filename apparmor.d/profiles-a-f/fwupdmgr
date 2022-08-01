@@ -17,13 +17,39 @@ profile fwupdmgr @{exec_path} flags=(attach_disconnected,complain) {
   include <abstractions/openssl>
   include <abstractions/ssl_certs>
 
+  capability sys_nice,
+
   signal (send),
+
+
+ALLOWED fwupdmgr dbus_method_call org.freedesktop.fwupd send bus=system path=/ interface=org.freedesktop.fwupd member=UpdateMetadata peer_label=unconfined
+
 
   network inet stream,
   network inet6 stream,
   network inet dgram,
   network inet6 dgram,
   network netlink raw,
+
+  dbus send bus=system path=/
+      interface=org.freedesktop.DBus.Properties
+      member=GetAll,
+  
+  dbus send bus=system path=/
+      interface=org.freedesktop.fwupd
+      member={GetDevices,GetPlugins,GetRemotes,SetFeatureFlags,SetHints,UpdateMetadata},
+  
+  dbus send bus=system path=/org/freedesktop/systemd[0-9]
+      interface=org.freedesktop.DBus.Properties
+      member=GetAll,
+  
+  dbus send bus=system path=/org/freedesktop/systemd[0-9]
+      interface=org.freedesktop.systemd[0-9].Manager
+      member={GetDefaultTarget,GetUnit},
+
+  dbus receive bus=system path=/
+      interface=org.freedesktop.fwupd
+      member=Changed,
 
   @{exec_path} mr,
 
@@ -38,6 +64,7 @@ profile fwupdmgr @{exec_path} flags=(attach_disconnected,complain) {
   owner /var/cache/private/fwupdmgr/fwupd/lvfs-metadata.xml.gz{,.asc} rw,
 
   owner @{user_cache_dirs}/ rw,
+        @{user_cache_dirs}/dconf/user rw,
   owner @{user_cache_dirs}/fwupd/ rw,
   owner @{user_cache_dirs}/fwupd/lvfs-metadata.xml.gz{,.*} rw,
 
