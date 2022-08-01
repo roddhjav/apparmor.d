@@ -1,0 +1,32 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Jeroen Rijken
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}{local/,}{s,}bin/syncoid
+profile syncoid @{exec_path} flags=(complain) {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/perl>
+
+  @{exec_path}                   rm,
+  /{usr/,}bin/grep               rix,
+  /{usr/,}bin/mbuffer            rix,
+  /{usr/,}bin/perl               rix,
+  /{usr/,}bin/ps                 rPx,
+  /{usr/,}bin/pv                 rix,
+  /{usr/,}bin/{,ba,da}sh         rix,
+  /{usr/,}{local/,}{s,}bin/zfs   rPx,
+  /{usr/,}{local/,}{s,}bin/zpool rPx,
+
+  /etc/mbuffer.rc r,
+
+  owner /tmp/** rw,
+
+  @{PROC}/@{pids}/maps r,
+
+  include if exists <local/syncoid>
+}

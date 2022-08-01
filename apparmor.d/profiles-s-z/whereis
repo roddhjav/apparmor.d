@@ -1,0 +1,43 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Jeroen Rijken
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/whereis
+profile whereis @{exec_path} flags=(complain) {
+  include <abstractions/base>
+  include <abstractions/consoles>
+
+  @{exec_path} mr,
+
+  /{usr/,}{local/,}{s,}bin/ r,
+  /{usr/,}lib/go-*/bin/ r,
+  /{usr/,}{local/,}games/ r,
+
+  /etc/ r,
+
+  /{usr/,}lib{,32,64}/ r,
+  /usr/local/{,etc/,lib/} r,
+  /usr/include/ r,
+  /usr/share/ r,
+  /usr/share/info/{**,} r,
+  /usr/share/man/{**,} r,
+  /usr/src/{**,} r,
+
+  @{libexec}/ r,
+
+  /opt/ r,
+  /opt/cni/bin/ r,
+  /opt/containerd/bin/ r,
+
+  /snap/bin/ r,
+
+  owner @{HOME}/{.local/,}/{.,}bin/ r,
+  owner @{HOME}/.krew/bin/ r,
+  owner @{HOME}/go/bin/ r,
+
+  include if exists <local/whereis>
+}
