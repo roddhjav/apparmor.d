@@ -1,0 +1,78 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Jeroen Rijken
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}{s,}bin/grub-mkconfig
+profile grub-mkconfig @{exec_path} flags=(complain) {
+  include <abstractions/base>
+  include <abstractions/consoles>
+
+  capability dac_read_search,
+
+  @{exec_path}                     rm,
+  /etc/grub.d/{**,}                rix,
+  /{usr/,}bin/{m,g,}awk            rix,
+  /{usr/,}bin/basename             rix,
+  /{usr/,}bin/cat                  rix,
+  /{usr/,}bin/chmod                rix,
+  /{usr/,}bin/cut                  rix,
+  /{usr/,}bin/date                 rix,
+  /{usr/,}bin/dirname              rix,
+  /{usr/,}bin/dpkg                 rPx,
+  /{usr/,}bin/find                 rix,
+  /{usr/,}bin/findmnt              rPx,
+  /{usr/,}bin/gettext              rix,
+  /{usr/,}bin/{e,f,}grep           rix,
+  /{usr/,}bin/lsb_release          rPx -> lsb_release,
+  /{usr/,}bin/grub-mkrelpath       rPx,
+  /{usr/,}bin/grub-script-check    rPx,
+  /{usr/,}bin/head                 rix,
+  /{usr/,}bin/id                   rPx,
+  /{usr/,}bin/ls                   rix,
+  /{usr/,}bin/mktemp               rix,
+  /{usr/,}bin/mount                rPx,
+  /{usr/,}bin/mountpoint           rix,
+  /{usr/,}bin/paste                rix,
+  /{usr/,}bin/readlink             rix,
+  /{usr/,}bin/rm                   rix,
+  /{usr/,}bin/rmdir                rix,
+  /{usr/,}bin/sed                  rix,
+  /{usr/,}bin/{,ba,da}sh           rix,
+  /{usr/,}bin/sort                 rix,
+  /{usr/,}bin/stat                 rix,
+  /{usr/,}bin/tail                 rix,
+  /{usr/,}bin/tr                   rix,
+  /{usr/,}bin/umount               rPx,
+  /{usr/,}bin/uname                rix,
+  /{usr/,}bin/which{.debianutils,} rix,
+  /{usr/,}{s,}bin/dmsetup          rPUx,
+  /{usr/,}{s,}bin/grub-probe       rPx,
+  /{usr/,}{local/,}{s,}bin/zfs     rPx,
+  /{usr/,}{local/,}{s,}bin/zpool   rPx,
+
+  /boot/{**,} r,
+  /boot/grub/{**,} rw,
+
+  /etc/default/grub r,
+  /etc/default/grub.d/{*,} r,
+
+  /usr/share/grub/{**,} r,
+
+  /.zfs/snapshot/*/etc/{machine-id,} r,
+  /.zfs/snapshot/*/{usr/,}lib/os-release r,
+
+  / r,
+
+  owner /tmp/** rw,
+
+  @{PROC}/@{pids}/mountinfo r,
+  @{PROC}/@{pids}/mounts r,
+
+  @{sys}/firmware/efi/efivars/OsIndicationsSupported-@{uuid} r,
+
+  include if exists <local/grub-mkconfig>
+}
