@@ -1,6 +1,5 @@
 # apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2015-2022 Mikhail Morfikov
-# Copyright (C) 2022 nobodysu
+# Copyright (C) 2015-2020 Mikhail Morfikov
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -15,7 +14,6 @@ profile qbittorrent @{exec_path} {
   include <abstractions/consoles>
   include <abstractions/X>
   include <abstractions/gtk>
-  include <abstractions/gnome>
   include <abstractions/fonts>
   include <abstractions/fontconfig-cache-read>
   include <abstractions/freedesktop.org>
@@ -29,14 +27,14 @@ profile qbittorrent @{exec_path} {
   include <abstractions/dbus-strict>
   include <abstractions/dbus-session-strict>
   include <abstractions/dbus-accessibility-strict>
+  include <abstractions/dbus-network-manager-strict>
+  include <abstractions/dbus-gtk>
   include <abstractions/wayland>
   include <abstractions/dri-enumerate>
   include <abstractions/mesa>
   include <abstractions/nameservice-strict>
   include <abstractions/openssl>
   include <abstractions/ssl_certs>
-  include if exists <abstractions/ubuntu-unity7-base>
-  include if exists <abstractions/dbus-network-manager-strict>
 
   signal (send) set=(term, kill) peer=qbittorrent//python3,
 
@@ -46,6 +44,71 @@ profile qbittorrent @{exec_path} {
   network inet6 stream,
   network netlink dgram,
   network netlink raw,
+
+  dbus (send) bus=session path=/StatusNotifierWatcher
+    interface=org.freedesktop.DBus.Introspectable
+    member=Introspect
+    peer=(name=org.kde.StatusNotifierWatcher),
+
+  dbus (send) bus=session path=/StatusNotifierWatcher
+    interface=org.freedesktop.DBus.Properties
+    member=Get
+    peer=(name=org.kde.StatusNotifierWatcher),
+
+  dbus (send) bus=session path=/StatusNotifierWatcher
+    interface=org.kde.StatusNotifierWatcher
+    member=RegisterStatusNotifierItem
+    peer=(name=org.kde.StatusNotifierWatcher),
+
+  dbus (send) bus=session path=/StatusNotifierItem
+    interface=org.kde.StatusNotifierItem
+    member={NewToolTip,NewIcon}
+    peer=(name=org.freedesktop.DBus),
+
+  dbus (receive) bus=session path=/StatusNotifierItem
+    interface=org.kde.StatusNotifierItem
+    member=Activate
+    peer=(name=:*),
+
+  dbus (receive) bus=session path=/StatusNotifierItem
+    interface=org.freedesktop.DBus.Properties
+    member=GetAll
+    peer=(name=:*),
+
+  dbus (receive) bus=session path=/MenuBar
+    interface=org.freedesktop.DBus.Properties
+    member=GetAll
+    peer=(name=:*),
+
+  dbus (send) bus=session path=/MenuBar
+    interface=com.canonical.dbusmenu
+    member=ItemsPropertiesUpdated
+    peer=(name=org.freedesktop.DBus),
+
+  dbus (receive) bus=session path=/MenuBar
+    interface=com.canonical.dbusmenu
+    member={GetLayout,GetGroupProperties,AboutToShow,AboutToShowGroup,EventGroup,Event}
+    peer=(name=:*),
+
+  dbus (send) bus=session path=/org/freedesktop/DBus
+    interface=org.freedesktop.DBus
+    member={RequestName,ReleaseName}
+    peer=(name=org.freedesktop.DBus),
+
+  dbus (send) bus=accessibility path=/org/a11y/atspi/accessible/root
+       interface=org.a11y.atspi.Socket
+       member=Embed
+       peer=(name=org.a11y.atspi.Registry),
+
+  dbus (receive) bus=accessibility path=/org/a11y/atspi/accessible/root
+       interface=org.freedesktop.DBus.Properties
+       member=Set
+       peer=(name=:*),
+
+  dbus (bind) bus=session
+    name=org.kde.StatusNotifierItem-*,
+
+  owner @{run}/user/@{uid}/at-spi/bus{,_[0-9]*} rw,
 
   @{exec_path} mr,
 
@@ -57,7 +120,7 @@ profile qbittorrent @{exec_path} {
   owner @{user_config_dirs}/qBittorrent/** rwkl -> @{user_config_dirs}/qBittorrent/#[0-9]*[0-9],
   owner @{user_share_dirs}/data/ rw,
   owner @{user_share_dirs}/{,data/}qBittorrent/ rw,
-  owner @{user_share_dirs}/{,data/}qBittorrent/** rwl -> @{user_share_dirs}/data/qBittorrent/**/#[0-9]*[0-9],
+  owner @{user_share_dirs}/{,data/}qBittorrent/** rwl -> @{user_share_dirs}/{,data/}qBittorrent/**/#[0-9]*[0-9],
   # Old dir, not recommended to use:
 #  deny owner @{user_share_dirs}/data/qBittorrent/ rw,
 
@@ -112,92 +175,9 @@ profile qbittorrent @{exec_path} {
   owner @{run}/user/@{uid}/dconf/user   rw,
   owner @{run}/user/@{uid}/ICEauthority r,
 
-  # DBus
-  deny dbus send
-    bus=session
-    path=/org/gtk/vfs/mounttracker
-    interface=org.gtk.vfs.MountTracker
-    member=ListMountableInfo,
-
-  dbus send
-    bus=session
-    path=/org/gtk/vfs/Daemon
-    interface=org.gtk.vfs.Daemon
-    member=ListMonitorImplementations,
-
-  dbus send
-    bus=session
-    path=/StatusNotifierWatcher
-    interface=org.freedesktop.DBus.Introspectable
-    member=Introspect
-    peer=(name=org.kde.StatusNotifierWatcher),
-
-  dbus send
-    bus=session
-    path=/StatusNotifierWatcher
-    interface=org.freedesktop.DBus.Properties
-    member=Get
-    peer=(name=org.kde.StatusNotifierWatcher),
-
-  dbus send
-    bus=session
-    path=/StatusNotifierWatcher
-    interface=org.kde.StatusNotifierWatcher
-    member=RegisterStatusNotifierItem
-    peer=(name=org.kde.StatusNotifierWatcher),
-
-  dbus send
-    bus=session
-    path=/StatusNotifierItem
-    interface=org.kde.StatusNotifierItem
-    member=NewToolTip
-    peer=(name=org.freedesktop.DBus),
-
-  dbus receive
-    bus=session
-    path=/StatusNotifierItem
-    interface=org.kde.StatusNotifierItem
-    member=Activate
-    peer=(name=:*),
-
-  dbus receive
-    bus=session
-    path=/MenuBar
-    interface=org.freedesktop.DBus.Properties
-    member=GetAll
-    peer=(name=:*),
-
-  dbus send
-    bus=session
-    path=/MenuBar
-    interface=com.canonical.dbusmenu
-    member=ItemsPropertiesUpdated
-    peer=(name=org.freedesktop.DBus),
-
-  dbus receive
-    bus=session
-    path=/MenuBar
-    interface=com.canonical.dbusmenu
-    member={GetLayout,GetGroupProperties,AboutToShow,AboutToShowGroup,EventGroup,Event}
-    peer=(name=:*),
-
-  dbus receive
-    bus=session
-    path=/StatusNotifierItem
-    interface=org.freedesktop.DBus.Properties
-    member=GetAll
-    peer=(name=:*),
-
-  dbus send
-    bus=session
-    path=/org/freedesktop/DBus
-    interface=org.freedesktop.DBus
-    member={RequestName,ReleaseName}
-    peer=(name=org.freedesktop.DBus),
-
-  dbus bind
-    bus=session
-    name=org.kde.StatusNotifierItem-*,
+  # gnome-tiny
+  /usr/share/gvfs/remote-volume-monitors/{,*} r,
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
 
   # Launch external apps
   /{usr/,}bin/xdg-{open,mime} rCx -> open,
@@ -217,7 +197,12 @@ profile qbittorrent @{exec_path} {
   profile open {
     include <abstractions/base>
     include <abstractions/xdg-open>
-    include if exists <abstractions/ubuntu-unity7-base>
+    include <abstractions/dbus-gtk>
+
+    dbus (send) bus=session path=/org/gnome/{Nautilus,Totem,gedit}
+      interface=org.freedesktop.Application
+      member=Open
+      peer=(name="org.gnome.{Nautilus,Totem,gedit}"),
 
     /{usr/,}bin/xdg-open mr,
 
@@ -231,6 +216,7 @@ profile qbittorrent @{exec_path} {
     /{usr/,}bin/qpdfview        rPx,
     /{usr/,}bin/ebook-viewer    rPx,
     /{usr/,}lib/firefox/firefox rPx,
+    /{usr/,}bin/engrampa        rPx,
 
     /{usr/,}bin/{ba,da,}sh        rix,
     /{usr/,}bin/{g,m,}awk         rix,
@@ -248,19 +234,6 @@ profile qbittorrent @{exec_path} {
     owner "@{MOUNTS}/*/torrent/**.!qB" rw,
 
     owner @{HOME}/.xsession-errors w,
-
-    dbus send
-      bus=session
-      path=/org/gtk/vfs/Daemon
-      interface=org.gtk.vfs.Daemon
-      member=ListMonitorImplementations,
-
-    dbus send
-      bus=session
-      path=/org/gnome/{Nautilus,Totem,gedit}
-      interface=org.freedesktop.Application
-      member=Open
-      peer=(name="org.gnome.{Nautilus,Totem,gedit}"),
 
     include if exists <local/qbittorrent_open>
   }
