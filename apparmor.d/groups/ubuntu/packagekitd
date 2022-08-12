@@ -10,15 +10,50 @@ include <tunables/global>
 profile packagekitd @{exec_path} {
   include <abstractions/base>
   include <abstractions/apt-common>
+  include <abstractions/dbus-strict>
   include <abstractions/nameservice-strict>
 
   capability sys_nice,
 
   network netlink raw,
 
+  dbus (send,receive) bus=system path=/org/freedesktop/PackageKit
+       interface=org.freedesktop.{DBus.*,PackageKit},
+
+  dbus send bus=system path=/org/freedesktop/NetworkManager
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll,
+
+  dbus send bus=system path=/org/freedesktop/PolicyKit[0-9]/Authority
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll,
+
+  dbus send bus=system path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member=RequestName,
+
+  dbus receive bus=system path=/org/freedesktop/PolicyKit[0-9]/Authority
+       interface=org.freedesktop.PolicyKit[0-9].Authority
+       member=Changed,
+
+  dbus receive bus=system path=/org/freedesktop/NetworkManager
+       interface=org.freedesktop.NetworkManager
+       member={CheckPermissions,DeviceAdded,DeviceRemoved,StateChanged},
+
+  dbus receive bus=system path=/org/freedesktop/NetworkManager
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged,
+
+  dbus receive bus=system path=/org/freedesktop/login[0-9]
+       interface=org.freedesktop.login[0-9].Manager
+       member={SessionNew,PrepareForShutdown,SessionRemoved,UserNew,UserRemoved},
+
+  dbus bind bus=system 
+       name=org.freedesktop.PackageKit,
+
   @{exec_path} mr,
 
-  /{usr/,}bin/dpkg  rPx,
+  /{usr/,}bin/dpkg  rPx -> child-dpkg,
 
   /usr/share/dpkg/tupletable r,
   /usr/share/dpkg/cputable r,

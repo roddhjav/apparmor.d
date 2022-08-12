@@ -11,6 +11,7 @@ include <tunables/global>
 profile pipewire-media-session @{exec_path} {
   include <abstractions/base>
   include <abstractions/audio>
+  include <abstractions/dbus-strict>
   include <abstractions/devices-usb>
   include <abstractions/nameservice-strict>
 
@@ -18,6 +19,16 @@ profile pipewire-media-session @{exec_path} {
   network bluetooth seqpacket,
   network bluetooth stream,
   network netlink raw,
+
+  dbus send bus=system path=/org/freedesktop/RealtimeKit[0-9]
+       interface=org.freedesktop.DBus.Properties
+       member=Get
+       peer=(name=org.freedesktop.RealtimeKit1),
+
+  dbus send bus=system path=/org/freedesktop/RealtimeKit[0-9]
+       interface=org.freedesktop.RealtimeKit1
+       member=MakeThreadRealtime
+       peer=(name=org.freedesktop.RealtimeKit1),
 
   @{exec_path} mr,
 

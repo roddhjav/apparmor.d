@@ -1,0 +1,45 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Jeroen Rijken
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /opt/cni/bin/calico
+profile cni-calico @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+
+  capability sys_admin,
+  capability net_admin,
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  signal (receive) set=kill peer=containerd,
+
+  @{exec_path} mr,
+  @{exec_path}-ipam rix,
+
+  / r,
+  
+  /etc/cni/net.d/{,**}  r,
+  
+  /var/lib/calico/{,**} r,
+  /var/log/calico/cni/ r,
+  /var/log/calico/cni/cni.log rw,
+  
+  @{run}/calico/ rw,
+  @{run}/calico/ipam.lock rwk,
+  @{run}/netns/cni-@{uuid} r,
+
+  @{PROC}/sys/net/ipv{4,6}/ip_forward rw,
+  @{PROC}/sys/net/ipv{4,6}/{conf,neigh}/cali[0-9a-z]*/* rw,
+
+  @{sys}/kernel/mm/transparent_hugepage/hpage_pmd_size r,
+
+  include if exists <local/cni-calico>
+}

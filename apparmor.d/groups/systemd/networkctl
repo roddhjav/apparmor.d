@@ -10,19 +10,24 @@ include <tunables/global>
 @{exec_path} = /{usr/,}bin/networkctl
 profile networkctl @{exec_path} flags=(complain) {
   include <abstractions/base>
+  include <abstractions/dbus-strict>
 
-  # To be able to manage network interfaces,
   capability net_admin,
 
   # Needed? (#FIXME#)
-  audit deny capability sys_resource,
-  audit deny capability sys_module,
+  audit capability sys_resource,
+  audit capability sys_module,
 
   signal send peer=child-pager,
 
   network inet dgram,
   network inet6 dgram,
   network netlink raw,
+
+  dbus send bus=system path=/org/freedesktop/network[0-9]
+       interface=org.freedesktop.DBus.Properties
+       member=Get
+       peer=(name=org.freedesktop.network[0-9]),
 
   @{exec_path} mr,
 
@@ -49,6 +54,7 @@ profile networkctl @{exec_path} flags=(complain) {
 
   owner @{PROC}/@{pid}/cgroup r,
   owner @{PROC}/@{pid}/stat r,
+        @{PROC}/filesystems r,
         @{PROC}/sys/kernel/random/boot_id r,
 
   include if exists <local/networkctl>

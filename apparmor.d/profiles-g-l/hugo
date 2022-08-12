@@ -10,21 +10,30 @@ include <tunables/global>
 @{exec_path} = /{usr/,}bin/hugo
 profile hugo @{exec_path} {
   include <abstractions/base>
+  include <abstractions/nameservice-strict>
+  include <abstractions/ssl_certs>
 
   network inet stream,
   network inet6 stream,
 
   @{exec_path} mr,
 
+  /{usr/,}bin/git                       rix,
+  /{usr/,}lib/go/bin/go                 rix,
+  /{usr/,}lib/git-core/git-remote-http  rix,
+
+  /usr/share/git-core/{,**} r,
   /usr/share/mime/{,**} r,
+  /usr/share/terminfo/x/xterm-256color r,
 
   /etc/mime.types r,
 
-  owner @{HOME}/@{XDG_PROJECTS_DIR}/{,**} rw,
-  owner @{HOME}/@{XDG_PROJECTS_DIR}/**/.hugo_build.lock rwk,
+  owner @{user_projects_dirs}/{,**} rw,
+  owner @{user_projects_dirs}/**/.hugo_build.lock rwk,
+  owner @{user_projects_dirs}/**/go.{mod,sum} rwk,
 
-  owner /tmp/hugo_cache/ rw,
-  owner /tmp/hugo_cache/**/ rw,
+  owner /tmp/hugo_cache/{,**} rwkl,
+  owner /tmp/go-codehost-[0-9]* rw,
 
   @{sys}/kernel/mm/transparent_hugepage/hpage_pmd_size r,
 

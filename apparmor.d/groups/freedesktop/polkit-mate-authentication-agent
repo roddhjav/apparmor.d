@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2020-2021 Mikhail Morfikov
+# Copyright (C) 2020-2022 Mikhail Morfikov
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -9,14 +10,15 @@ include <tunables/global>
 @{exec_path} = /{usr/,}lib/@{multiarch}/polkit-mate/polkit-mate-authentication-agent-[0-9]
 profile polkit-mate-authentication-agent @{exec_path} {
   include <abstractions/base>
-  include <abstractions/gtk>
-  include <abstractions/fonts>
-  include <abstractions/fontconfig-cache-read>
-  include <abstractions/freedesktop.org>
-  include <abstractions/nameservice-strict>
+  include <abstractions/dconf-write>
   include <abstractions/dri-common>
   include <abstractions/dri-enumerate>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/fonts>
+  include <abstractions/freedesktop.org>
+  include <abstractions/gtk>
   include <abstractions/mesa>
+  include <abstractions/nameservice-strict>
 
   signal (send) set=(term, kill) peer=polkit-agent-helper,
 
@@ -24,25 +26,19 @@ profile polkit-mate-authentication-agent @{exec_path} {
 
   /{usr/,}lib/polkit-[0-9]/polkit-agent-helper-[0-9] rPx,
 
-        @{PROC}/1/cgroup r,
-  owner @{PROC}/@{pid}/cgroup r,
-  owner @{PROC}/@{pid}/fd/ r,
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+  /usr/share/X11/xkb/** r,
 
   /var/lib/dbus/machine-id r,
   /etc/machine-id r,
 
   owner @{HOME}/.Xauthority r,
 
-  include <abstractions/dconf>
-  owner @{run}/user/@{uid}/dconf/ rw,
-  owner @{run}/user/@{uid}/dconf/user rw,
-
-  /usr/share/glib-2.0/schemas/gschemas.compiled r,
-
-  /usr/share/X11/xkb/** r,
-
-  # file_inherit
   owner /dev/tty[0-9]* rw,
+
+        @{PROC}/1/cgroup r,
+  owner @{PROC}/@{pid}/cgroup r,
+  owner @{PROC}/@{pid}/fd/ r,
 
   include if exists <local/polkit-mate-authentication-agent>
 }

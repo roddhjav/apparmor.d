@@ -1,6 +1,7 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2017-2021 Mikhail Morfikov
 # Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2022 Jeroen Rijken
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -14,9 +15,13 @@ profile pulseaudio @{exec_path} {
   include <abstractions/consoles>
   include <abstractions/dbus-session-strict>
   include <abstractions/dbus-strict>
+  include <abstractions/dconf-write>
   include <abstractions/dri-common>
   include <abstractions/dri-enumerate>
+  include <abstractions/gstreamer>
+  include <abstractions/hosts_access>
   include <abstractions/nameservice-strict>
+  include <abstractions/X-strict>
 
   ptrace (trace) peer=@{profile_name},
 
@@ -29,65 +34,20 @@ profile pulseaudio @{exec_path} {
   network bluetooth stream,
   network bluetooth seqpacket,
 
-  @{exec_path} mrix,
+  dbus (send)
+     bus=session
+     path=/Client0/EntryGroup[0-9]*
+     interface=org.freedesktop.Avahi.EntryGroup
+     member={GetState,AddService,AddServiceSubtype,Commit}
+     peer=(name=org.freedesktop.Avahi),
 
-  /{usr/,}lib{exec,}/pulse/gsettings-helper mrix,
-  /{usr/,}lib/@{multiarch}/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner mrix,
-  /{usr/,}lib/@{multiarch}/pulse/gconf-helper mrix,
+  dbus (receive)
+     bus=session
+     path=/Client0/EntryGroup[0-9]*
+     interface=org.freedesktop.Avahi.EntryGroup
+     member=StateChanged
+     peer=(name=org.freedesktop.Avahi),
 
-  # PulseAudio files
-  /usr/share/pulseaudio/{,**} r,
-  /{usr/,}lib/pulse-*/modules/*.so mr,
-
-  # PulseAudio home config files
-  owner @{user_config_dirs}/pulse/{,**} rw,
-  owner @{user_config_dirs}/dconf/user r,
-
-  owner @{user_cache_dirs}/gstreamer-1.0/registry.x86_64.bin r,
-
-  # Needed when PulseAudio is started via the start-pulseaudio-x11 script
-  owner @{HOME}/.Xauthority r,
-
-  # Needed when PulseAudio is started via gdm
-  owner @{run}/user/@{uid}/gdm{[1-9],}/Xauthority r,
-  owner @{run}/user/@{uid}/.mutter-Xwaylandauth.* r,
-  owner @{HOME}/.ICEauthority r,
-
-  # TCP wrap
-  /etc/hosts.{allow,deny} r,
-
-  owner @{run}/user/@{uid}/ rw,
-  owner @{run}/user/@{uid}/pulse/{,*}   rw,
-  owner @{run}/user/@{uid}/pulse/*.lock   k,
-
-  /usr/share/applications/{,**} r,
-  /usr/share/glib-2.0/schemas/gschemas.compiled r,
-
-  @{sys}/bus/ r,
-  @{sys}/class/ r,
-  @{sys}/class/sound/ r,
-  @{sys}/devices/**/sound/**/{uevent,pcm_class} r,
-  @{run}/udev/data/+sound* r,
-  @{run}/udev/data/c116:[0-9]* r, # For ALSA
-
-  @{sys}/devices/virtual/dmi/id/{bios_vendor,board_vendor,sys_vendor} r,
-  @{sys}/devices/system/node/ r,
-  @{sys}/devices/system/node/node[0-9]/meminfo r,
-
-  deny @{sys}/module/apparmor/parameters/enabled r,
-
-  @{run}/systemd/users/@{uid} r,
-
-  owner @{run}/user/@{uid}/dconf/       rw,
-  owner @{run}/user/@{uid}/dconf/user   rw,
-  owner @{run}/user/@{uid}/ICEauthority r,
-  owner @{run}/user/@{uid}/systemd/notify rw,
-
-  owner @{PROC}/@{pids}/fd/ r,
-  owner @{PROC}/@{pids}/stat r,
-  owner @{PROC}/@{pids}/cmdline r,
-
-  # DBus
   dbus (send)
      bus=session
      path=/org/freedesktop/DBus
@@ -138,15 +98,47 @@ profile pulseaudio @{exec_path} {
      interface=org.freedesktop.DBus.ObjectManager
      member=GetManagedObjects
      peer=(name=org.bluez),
+  
+  dbus (send)
+     bus=system
+     path=/
+     interface=org.freedesktop.DBus.Peer
+     member=Ping
+     peer=(name=org.freedesktop.Avahi),
 
-  unix (send receive connect) type=stream peer=(addr=@/tmp/.X11-unix/*),
-  unix (send receive connect) type=stream peer=(addr=@/tmp/.ICE-unix/*),
+  dbus (send)
+     bus=system
+     path=/
+     interface=org.freedesktop.Avahi.Server
+     member={GetAPIVersion,GetState,EntryGroupNew}
+     peer=(name=org.freedesktop.Avahi),
 
-  # The orcexec.* file is JIT compiled code for various GStreamer elements.
-  # If one is blocked the next is used instead.
-  owner @{run}/user/@{uid}/orcexec.* mrw,
-  #owner @{HOME}/orcexec.* mrw,
-  #owner /tmp/orcexec.* mrw,
+  dbus (receive)
+     bus=system
+     path=/
+     interface=org.freedesktop.Avahi.Server
+     member=StateChanged
+     peer=(name=org.freedesktop.Avahi),
+
+  dbus (send)
+     bus=system
+     path=/
+     interface=org.freedesktop.hostname[0-9]
+     member=Get
+     peer=(name=/org/freedesktop/hostname[0-9]),
+
+  @{exec_path} mrix,
+
+  /{usr/,}@{libexec}/pulse/gsettings-helper mrix,
+  /{usr/,}lib/@{multiarch}/pulse/gconf-helper mrix,
+  /{usr/,}lib/pulse-*/modules/*.so mr,
+
+  /usr/share/applications/{,**} r,
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+  /usr/share/pulseaudio/{,**} r,
+  /usr/share/ubuntu/applications/{,*} r,
+
+  /var/lib/snapd/desktop/applications/ r,
 
   # For GDM
   owner /var/lib/gdm{[1-9],}/.config/pulse/{,**}  rw,
@@ -164,13 +156,33 @@ profile pulseaudio @{exec_path} {
   owner /var/lib/lightdm/.config/pulse/{,**}  rw,
   owner /var/lib/lightdm/.config/pulse/cookie   k,
 
+  owner @{user_config_dirs}/pulse/{,**} rw,
+
+  owner @{user_cache_dirs}/gstreamer-1.0/registry.x86_64.bin r,
+
+  owner @{run}/user/@{uid}/ rw,
+  owner @{run}/user/@{uid}/pulse/{,*} rw,
+  owner @{run}/user/@{uid}/pulse/*.lock k,
+  owner @{run}/user/@{uid}/systemd/notify rw,
+
+  @{run}/systemd/users/@{uid} r,
+
+  @{run}/udev/data/+sound* r,
+  @{run}/udev/data/c116:[0-9]* r, # For ALSA
+
+  @{sys}/class/sound/ r,
+  @{sys}/devices/**/sound/**/{uevent,pcm_class} r,
+  @{sys}/devices/virtual/dmi/id/{bios_vendor,board_vendor,sys_vendor} r,
+
+  deny @{sys}/module/apparmor/parameters/enabled r,
+
+  owner @{PROC}/@{pids}/fd/ r,
+  owner @{PROC}/@{pids}/stat r,
+  owner @{PROC}/@{pids}/cmdline r,
+
   # file_inherit
   owner /dev/tty[0-9]* rw,
   owner @{HOME}/.xsession-errors w,
-
-  # Snap
-  /var/lib/snapd/desktop/applications/ r,
-  /usr/{local/,}share/ubuntu/applications/{,*} r,
 
   include if exists <local/pulseaudio>
 }

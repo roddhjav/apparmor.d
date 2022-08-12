@@ -10,7 +10,7 @@ include <tunables/global>
 profile gnome-terminal-server @{exec_path} {
   include <abstractions/base>
   include <abstractions/consoles>
-  include <abstractions/dconf>
+  include <abstractions/dconf-write>
   include <abstractions/fonts>
   include <abstractions/freedesktop.org>
   include <abstractions/gtk>
@@ -20,7 +20,11 @@ profile gnome-terminal-server @{exec_path} {
   @{exec_path} mr,
 
   # The shell is not confined on purpose.
-  /{usr/,}bin/{,z,ba,da}sh rUx,
+  /{usr/,}bin/{,b,d,rb}ash         rUx,
+  /{usr/,}bin/{c,k,tc,z}sh         rUx,
+
+  # Some CLI program can be launched directly from Gnome Shell
+  /{usr/,}bin/htop                 rPx,
 
   /usr/share/glib-2.0/schemas/gschemas.compiled r,
   /usr/share/X11/xkb/{,**} r,
@@ -32,8 +36,6 @@ profile gnome-terminal-server @{exec_path} {
 
   owner @{run}/user/@{uid}/at-spi/bus rw,
   owner @{run}/user/@{uid}/bus rw,
-  owner @{run}/user/@{uid}/dconf/ rw,
-  owner @{run}/user/@{uid}/dconf/user rw,
   owner @{run}/user/@{uid}/gdm/Xauthority r,
   owner @{run}/user/@{uid}/wayland-[0-9]* rw,
 

@@ -11,11 +11,15 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/app-launcher-user>
   include <abstractions/audio>
-  include <abstractions/dconf>
+  include <abstractions/dbus-network-manager-strict>
+  include <abstractions/dbus-session-strict>
+  include <abstractions/dbus-strict>
+  include <abstractions/dconf-write>
   include <abstractions/dri-common>
   include <abstractions/dri-enumerate>
   include <abstractions/fontconfig-cache-write>
   include <abstractions/gnome>
+  include <abstractions/ibus>
   include <abstractions/mesa>
   include <abstractions/nameservice-strict>
   include <abstractions/opencl-nvidia>
@@ -23,6 +27,7 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected) {
   include <abstractions/ssl_certs>
   include <abstractions/thumbnails-cache-read>
   include <abstractions/vulkan>
+  include <abstractions/X-strict>
 
   capability sys_nice,
   capability sys_ptrace,
@@ -37,7 +42,79 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected) {
 
   signal (receive) set=(term, hup) peer=gdm*,
   signal (send),
+ 
+  unix (send,receive) type=stream addr=none peer=(label=gnome-extension-ding),
+  unix (send,receive) type=stream addr=none peer=(label=xkbcomp),
+  unix (send,receive) type=stream addr=none peer=(label=xwayland),
 
+  dbus (send,receive) bus=system path=/org/freedesktop/login[0-9]{,/**}
+       interface=org.freedesktop.{DBus.Properties,login[0-9].*},
+
+  dbus (send,receive) bus=system path=/org/freedesktop/PolicyKit[0-9]/Authority
+       interface=org.freedesktop.{DBus.Properties,PolicyKit[0-9].Authority}
+       member={CheckAuthorization,RegisterAuthenticationAgent,Changed,GetAll},
+
+  dbus (send,receive) bus=system path=/org/freedesktop/Accounts{,/User[0-9]*}
+       interface=org.freedesktop.{DBus.Properties,Accounts*}
+       member={GetAll,FindUserByName,Changed,PropertiesChanged},
+
+  dbus (send,receive) bus=system path=/org/freedesktop/UPower{,/devices/DisplayDevice}
+       interface=org.freedesktop.DBus.Properties
+       member={GetAll,PropertiesChanged},
+
+  dbus (send,receive) bus=system path=/org/freedesktop/GeoClue2/{Agent,Manager}
+       interface=org.freedesktop.{DBus.Properties,GeoClue2.Manager}
+       member={PropertiesChanged,AddAgent,GetAll},
+
+  dbus send bus=system path=/org/freedesktop
+       interface=org.freedesktop.DBus.ObjectManager
+       member=GetManagedObjects,
+
+  dbus send bus=system path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member=GetConnectionUnixUser,
+
+  dbus send bus=system path=/org/freedesktop/PackageKit
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll,
+
+  dbus send bus=system path=/org/freedesktop/NetworkManager/Settings/[0-9]*
+       interface=org.freedesktop.NetworkManager.Settings.Connection
+       member=GetSettings,
+
+  dbus send bus=system path=/org/gnome/DisplayManager/Manager
+       interface=org.{freedesktop.DBus.Properties,gnome.DisplayManager.Manager}
+       member={RegisterSession,Get,GetAll,OpenReauthenticationChannel},
+
+  dbus send bus=system path=/net/hadess/{PackageKit,PowerProfiles,SwitcherooControl}
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll,
+
+  dbus send bus=system path=/net/reactivated/Fprint/Manager
+       interface=net.reactivated.Fprint.Manager
+       member=GetDefaultDevice,
+
+  dbus send bus=system path=/org/freedesktop/NetworkManager{,/AgentManager}
+       interface=org.freedesktop.NetworkManager{,.AgentManager}
+       member={Unregister,RegisterWithCapabilities,GetPermissions},
+
+  dbus receive bus=system path=/org/freedesktop/NetworkManager
+       interface=org.freedesktop.NetworkManager
+       member=CheckPermissions,
+
+  dbus receive bus=system path=/org/freedesktop/NetworkManager/{Devices,DHCP{4,6}Config,IP{4,6}Config}/[0-9]*
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged,
+
+  dbus receive bus=system path=/org/freedesktop/NetworkManager
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged,
+
+  dbus receive bus=system
+       path=/org/freedesktop/PolicyKit[0-9]/AuthenticationAgent
+       interface=org.freedesktop.PolicyKit[0-9].AuthenticationAgent
+       member=BeginAuthentication,
+ 
   @{exec_path} mr,
 
   /{usr/,}bin/Xwayland        rPx,
@@ -47,6 +124,7 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected) {
   /usr/share/gnome-shell/extensions/ding@rastersoft.com/ding.js rPx,
 
   /opt/*/**/*.png r,
+  /snap/*/@{uid}/**.png r,
   /usr/share/backgrounds/{,**} r,
   /usr/share/dconf/profile/gdm r,
   /usr/share/desktop-directories/{,*.directory} r,
@@ -64,13 +142,10 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected) {
   /usr/share/ubuntu/applications/{,*.desktop} r,
   /usr/share/wayland-sessions/{,*.desktop} r,
   /usr/share/xml/iso-codes/iso_[0-9]*-[0-9]*.xml r,
-  /usr/share/xsessions/{,*.desktop} r,
 
   /.flatpak-info r,
   /etc/fstab r,
-  /etc/machine-id r,
   /etc/xdg/menus/gnome-applications.menu r,
-  /var/lib/dbus/machine-id r,
 
   /var/lib/gdm{3,}/.cache/ w,
   /var/lib/gdm{3,}/.cache/mesa_shader_cache/ rw,
@@ -95,13 +170,12 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected) {
   /var/lib/snapd/desktop/icons/{,**} r,
 
   owner @{HOME}/.mozilla/firefox/firefox-mpris/{,*} r,
-  owner @{HOME}/@{XDG_MUSIC_DIR}/**/*.jpg r,
   owner @{HOME}/@{XDG_WALLPAPERS_DIR}/{,**} r,
+  owner @{HOME}/@{XDG_SCREENSHOTS_DIR}/{,**} rw,
+
+  owner @{user_music_dirs}/**/*.jpg r,
 
   owner @{user_config_dirs}/.goutputstream{,*} rw,
-  owner @{user_config_dirs}/ibus/ rw,
-  owner @{user_config_dirs}/ibus/bus/ rw,
-  owner @{user_config_dirs}/ibus/bus/[0-9a-f]*-unix-{,wayland-}[0-9] r,
   owner @{user_config_dirs}/monitors.xml{,~} rwl,
 
   owner @{user_share_dirs}/backgrounds/{,**} rw,
@@ -118,13 +192,11 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected) {
   owner @{user_cache_dirs}/media-art/{,**} r,
   owner @{user_cache_dirs}/vlc/**/*.jpg r,
 
-  owner @{run}/user/@{uid}/.mutter-Xwaylandauth.[0-9A-Z]* rw,
-  owner @{run}/user/@{uid}/dconf/ rw,
-  owner @{run}/user/@{uid}/dconf/user rw,
-  owner @{run}/user/@{uid}/gdm/Xauthority r,
   owner @{run}/user/@{uid}/gnome-shell-disable-extensions rw,
   owner @{run}/user/@{uid}/gnome-shell/{,**} rw,
   owner @{run}/user/@{uid}/gvfsd/socket-[0-9A-Za-z]* rw,
+  owner @{run}/user/@{uid}/snap.snapd-desktop-integration/wayland-cursor-shared-* rw,
+  owner @{run}/user/@{uid}/systemd/notify rw,
   owner @{run}/user/@{uid}/wayland-[0-9].lock rwk,
 
   owner /dev/shm/.org.chromium.Chromium.* rw,
@@ -133,12 +205,11 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected) {
   owner /tmp/.X[0-9]-lock rw,
   owner /tmp/[0-9A-Z]*.shell-extension.zip rw,
   owner /tmp/gdkpixbuf-xpm-tmp.[0-9A-Z]* rw,
-        /tmp/.X11-unix/X[0-9] rw,
 
   @{run}/systemd/users/@{uid} r,
   @{run}/systemd/seats/seat[0-9]* r,
-  @{run}/systemd/sessions/ r,
-  @{run}/systemd/sessions/[0-9]* r,
+  @{run}/systemd/sessions/  r,
+  @{run}/systemd/sessions/* r,
   @{run}/systemd/inhibit/[0-9]*.ref rw,
 
   @{run}/udev/tags/seat/ r,
@@ -169,7 +240,7 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected) {
   @{sys}/devices/**/hwmon[0-9]*/**/{,name,temp*,fan*} r,
   @{sys}/devices/**/hwmon/{,name,temp*,fan*} r,
   @{sys}/devices/**/hwmon/**/{,name,temp*,fan*} r,
-  @{sys}/devices/**/power_supply/**/{type,online} r,
+  @{sys}/devices/**/power_supply/{,**} r,
   @{sys}/devices/pci[0-9]*/**/boot_vga r,
   @{sys}/devices/pci[0-9]*/**/drm/ r,
   @{sys}/devices/pci[0-9]*/**/input[0-9]*/{properties,name} r,

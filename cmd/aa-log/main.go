@@ -28,9 +28,12 @@ const LogFile = "/var/log/audit/audit.log"
 // Colors
 const (
 	Reset      = "\033[0m"
+	FgGreen    = "\033[32m"
 	FgYellow   = "\033[33m"
 	FgBlue     = "\033[34m"
 	FgMagenta  = "\033[35m"
+	FgCian     = "\033[36m"
+	FgWhite    = "\033[37m"
 	BoldRed    = "\033[1;31m"
 	BoldGreen  = "\033[1;32m"
 	BoldYellow = "\033[1;33m"
@@ -86,7 +89,7 @@ func NewApparmorLogs(file io.Reader, profile string) AppArmorLogs {
 	log := ""
 	exp := "apparmor=(\"DENIED\"|\"ALLOWED\"|\"AUDIT\")"
 	if profile != "" {
-		exp = fmt.Sprintf(exp+".* profile=\"%s.*\"", profile)
+		exp = fmt.Sprintf(exp+".* (profile=\"%s.*\"|label=\"%s.*\")", profile, profile)
 	}
 	isAppArmorLog := regexp.MustCompile(exp)
 
@@ -100,10 +103,12 @@ func NewApparmorLogs(file io.Reader, profile string) AppArmorLogs {
 	}
 
 	// Clean logs
+	regex := regexp.MustCompile(`type=(USER_|)AVC msg=audit(.*): (pid=.*msg='|)apparmor`)
+	log = regex.ReplaceAllLiteralString(log, "apparmor")
 	regexAppArmorLogs := map[*regexp.Regexp]string{
-		regexp.MustCompile(`type=AVC msg=audit(.*): apparmor`): "apparmor",
-		regexp.MustCompile(` fsuid.*`):                         "",
-		regexp.MustCompile(`pid=.* comm`):                      "comm",
+		regexp.MustCompile(`(peer_|)pid=[0-9]* `): "",
+		regexp.MustCompile(` fsuid.*`):            "",
+		regexp.MustCompile(` exe=.*`):             "",
 	}
 	for regex, value := range regexAppArmorLogs {
 		log = regex.ReplaceAllLiteralString(log, value)
@@ -146,18 +151,28 @@ func (aaLogs AppArmorLogs) String() string {
 	}
 	// Order of impression
 	keys := []string{
-		"profile", "operation", "name", "info", "comm", "laddr",
-		"lport", "faddr", "fport", "family", "sock_type", "protocol",
+		"profile", "label", // Profile name
+		"operation", "name",
+		"mask", "bus", "path", "interface", "member", // dbus
+		"info", "comm",
+		"laddr", "lport", "faddr", "fport", "family", "sock_type", "protocol",
 		"requested_mask", "denied_mask", "signal", "peer", // "fsuid", "ouid", "FSUID", "OUID",
 	}
 	// Optional colors template to use
 	colors := map[string]string{
 		"profile":        FgBlue,
+		"label":          FgBlue,
 		"operation":      FgYellow,
 		"name":           FgMagenta,
+		"mask":           BoldRed,
+		"bus":            FgCian + "bus=",
+		"path":           "path=" + FgWhite,
 		"requested_mask": "requested_mask=" + BoldRed,
 		"denied_mask":    "denied_mask=" + BoldRed,
+		"interface":      "interface=" + FgWhite,
+		"member":         "member=" + FgGreen,
 	}
+
 	for _, log := range aaLogs {
 		seen := map[string]bool{"apparmor": true}
 		res += state[log["apparmor"]]
@@ -174,7 +189,7 @@ func (aaLogs AppArmorLogs) String() string {
 		}
 
 		for key, value := range log {
-			if !seen[key] {
+			if !seen[key] && value != "" {
 				res += " " + key + "=" + toQuote(value)
 			}
 		}

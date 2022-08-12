@@ -9,7 +9,10 @@ include <tunables/global>
 @{exec_path} = @{libexec}/xdg-desktop-portal
 profile xdg-desktop-portal @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/dconf>
+  include <abstractions/dbus-network-manager-strict>
+  include <abstractions/dbus-session-strict>
+  include <abstractions/dbus-strict>
+  include <abstractions/dconf-write>
   include <abstractions/freedesktop.org>
   include <abstractions/nameservice-strict>
 
@@ -18,6 +21,26 @@ profile xdg-desktop-portal @{exec_path} flags=(attach_disconnected) {
   network netlink raw,
 
   ptrace (read),
+
+  dbus send bus=system path=/org/freedesktop/NetworkManager
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll,
+
+  dbus send bus=system path=/org/freedesktop/RealtimeKit[0-9]
+       interface=org.freedesktop.DBus.Properties
+       member={GetAll,Get},
+
+  dbus send bus=system path=/net/hadess/PowerProfiles
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll,
+
+  dbus receive bus=system path=/org/freedesktop/NetworkManager
+       interface=org.freedesktop.NetworkManager
+       member={StateChanged,CheckPermissions},
+
+  dbus receive bus=system path=/org/freedesktop/NetworkManager
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged,
 
   @{exec_path} mr,
 
@@ -28,21 +51,18 @@ profile xdg-desktop-portal @{exec_path} flags=(attach_disconnected) {
 
   / r,
   /.flatpak-info r,
-  /{usr/,}lib/x r,
 
   /usr/share/glib-2.0/schemas/gschemas.compiled r,
   /usr/share/pipewire/client.conf r,
   /usr/share/xdg-desktop-portal/portals/{,*.portal} r,
 
-  /etc/machine-id r,
   /etc/pipewire/client.conf.d/ r,
 
   /var/lib/flatpak/exports/share/mime/mime.cache r,
   /var/lib/flatpak/exports/share/applications/{**,} r,
 
   owner @{run}/user/@{uid}/.flatpak/{,*/*} r,
-  owner @{run}/user/@{uid}/dconf/ rw,
-  owner @{run}/user/@{uid}/dconf/user rw,
+  owner @{run}/user/@{uid}/pipewire-[0-9]* rw,
 
   owner @{PROC}/@{pids}/cgroup r,
         @{PROC}/ r,

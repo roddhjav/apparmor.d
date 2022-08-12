@@ -1,0 +1,67 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}{,s}bin/ModemManager
+profile ModemManager @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/dbus-strict>
+
+  network netlink raw,
+
+  dbus send bus=system path=/org/freedesktop/PolicyKit[0-9]/Authority
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll,
+
+  dbus send bus=system path=/org/freedesktop/login[0-9]
+       interface=org.freedesktop.login[0-9].Manager
+       member=Inhibit,
+
+  dbus send bus=system path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={RequestName,ReleaseName}
+       peer=(name=org.freedesktop.DBus),
+
+  dbus receive bus=system path=/org/freedesktop/ModemManager[0-9]
+       interface=org.freedesktop.DBus.ObjectManager
+       member=GetManagedObjects,
+
+  dbus receive bus=system path=/org/freedesktop/PolicyKit[0-9]/Authority
+       interface=org.freedesktop.PolicyKit[0-9].Authority
+       member=Changed,
+
+  dbus receive bus=system path=/org/freedesktop/login[0-9]
+       interface=org.freedesktop.login[0-9].Manager
+       member={UserNew,SessionNew,PrepareForShutdown,SeatNew,UserRemoved,SessionRemoved},
+
+  dbus bind bus=system
+       name=org.freedesktop.ModemManager[0-9],
+
+  @{exec_path} mr,
+
+  @{run}/udev/data/+pci:* r,
+  @{run}/udev/data/+platform* r,
+  @{run}/udev/data/c4:[0-9]* r,     # for /dev/tty[0-9]*
+  @{run}/udev/data/c5:[0-9]* r,     # for /dev/tty, /dev/console, /dev/ptmx
+  @{run}/udev/data/n[0-9]* r,
+
+  @{run}/systemd/inhibit/*.ref rw,
+
+  @{sys}/bus/ r,
+  @{sys}/class/ r,
+  @{sys}/class/net/ r,
+  @{sys}/class/tty/ r,
+  @{sys}/class/wwan/ r,
+
+  @{sys}/devices/**/uevent r,
+  @{sys}/devices/pci[0-9]*/**/{vendor,device,revision} r,
+  @{sys}/devices/virtual/net/*/ r,
+  @{sys}/devices/virtual/tty/*/ r,
+
+  include if exists <local/ModemManager>
+}

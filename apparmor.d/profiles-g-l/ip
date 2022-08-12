@@ -7,17 +7,17 @@ abi <abi/3.0>,
 
 include <tunables/global>
 
-@{exec_path} = /{usr/,}bin/ip
+@{exec_path} = /{usr/,}{s,}bin/ip
 profile ip @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/consoles>
 
+  capability bpf,
   capability net_admin,
+  capability sys_admin,
   capability sys_module,
 
   network netlink raw,
-
-  @{exec_path} mrix,
 
   mount options=(rw, rshared)   -> /{var/,}run/netns/,
   mount options=(rw, rslave)    -> /,
@@ -28,12 +28,15 @@ profile ip @{exec_path} flags=(attach_disconnected) {
   umount @{run}/netns/*,
   umount /sys/,
 
-  /etc/iproute2/{,**} r,
+  @{exec_path} mrix,
 
   / r,
+
+  /etc/iproute2/{,**} r,
+  /etc/netns/*/ r,
+
   owner @{run}/netns/ rw,
         @{run}/netns/* rw,
-  /etc/netns/*/ r,
 
   owner @{PROC}/@{pid}/cgroup r,
   owner @{PROC}/@{pid}/net/dev_mcast r,

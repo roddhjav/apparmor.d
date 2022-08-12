@@ -9,7 +9,9 @@ include <tunables/global>
 @{exec_path} = @{libexec}/xdg-desktop-portal-gtk
 profile xdg-desktop-portal-gtk @{exec_path} {
   include <abstractions/base>
-  include <abstractions/dconf>
+  include <abstractions/dbus-session-strict>
+  include <abstractions/dbus-strict>
+  include <abstractions/dconf-write>
   include <abstractions/fontconfig-cache-write>
   include <abstractions/fonts>
   include <abstractions/freedesktop.org>
@@ -17,6 +19,26 @@ profile xdg-desktop-portal-gtk @{exec_path} {
   include <abstractions/thumbnails-cache-read>
   include <abstractions/user-download>
   include <abstractions/user-write>
+
+  dbus send bus=system path=/org/freedesktop/Accounts/User[0-9]*
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll,
+
+  dbus receive bus=system path=/org/freedesktop/Accounts/User[0-9]*
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged,
+
+  dbus receive bus=system path=/org/freedesktop/Accounts/User[0-9]*
+       interface=org.freedesktop.Accounts.User
+       member=Changed,
+
+  dbus receive bus=system path=/org/freedesktop/NetworkManager
+       interface=org.freedesktop.NetworkManager
+       member=CheckPermissions,
+
+  dbus receive bus=system path=/org/freedesktop/NetworkManager
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged,
 
   @{exec_path} mr,
 
@@ -30,7 +52,7 @@ profile xdg-desktop-portal-gtk @{exec_path} {
   owner @{HOME}/@{XDG_DATA_HOME}/ r,
 
   owner @{run}/user/@{uid}/.mutter-Xwaylandauth.[0-9A-Z]* rw,
-  owner @{run}/user/@{uid}/dconf/user rw,
+  owner @{run}/user/@{uid}/wayland-[0-9]* rw,
         @{run}/mount/utab r,
 
   owner @{PROC}/@{uid}/mountinfo r,

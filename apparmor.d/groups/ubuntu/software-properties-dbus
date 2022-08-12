@@ -1,0 +1,51 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}lib/software-properties/software-properties-dbus
+profile software-properties-dbus @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/apt-common>
+  include <abstractions/dbus-strict>
+  include <abstractions/nameservice-strict>
+  include <abstractions/openssl>
+  include <abstractions/python>
+
+  dbus send bus=system path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member=RequestName
+       peer=(name=org.freedesktop.DBus),
+ 
+  dbus receive bus=system path=/
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect,
+
+  dbus receive bus=system path=/
+       interface=com.ubuntu.SoftwareProperties
+       member=Reload,
+
+  dbus bind bus=system 
+       name=com.ubuntu.SoftwareProperties,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/python3.[0-9]*  rix,
+  /{usr/,}bin/env             rix,
+  /{usr/,}bin/lsb_release     rPx -> lsb_release,
+
+  /usr/share/python-apt/{,**} r,
+  /usr/share/distro-info/*.csv r,
+  /usr/share/xml/iso-codes/{,**} r,
+
+  owner /tmp/[a-z0-9]* rw,
+  owner /tmp/tmp*/{,apt.conf} rw,
+
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/mounts r,
+
+  include if exists <local/software-properties-dbus>
+}

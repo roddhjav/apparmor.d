@@ -1,0 +1,24 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/mdevctl
+profile mdevctl @{exec_path} {
+  include <abstractions/base>
+
+  @{exec_path} mr,
+
+  /etc/mdevctl.d/{,**} r,
+
+  @{PROC}/@{pids}/maps r,
+
+  @{sys}/bus/mdev/devices/ r,
+  @{sys}/class/mdev_bus/ r,
+  @{sys}/devices/pci[0-9]*/**/mdev_supported_types/{,**} r,
+
+  include if exists <local/mdevctl>
+}

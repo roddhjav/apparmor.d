@@ -7,28 +7,55 @@ abi <abi/3.0>,
 include <tunables/global>
 
 @{exec_path} = /{usr/,}{s,}bin/needrestart
-profile needrestart @{exec_path} {
+profile needrestart @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
   include <abstractions/perl>
+  include <abstractions/python>
   include <abstractions/wutmp>
 
+  capability checkpoint_restore,
+  capability dac_read_search,
   capability sys_ptrace,
 
   ptrace (read),
 
-  @{exec_path} mr,
+  @{exec_path} mrix,
 
-  /{usr/,}bin/systemd-detect-virt  rPx,
-  /{usr/,}bin/who                  rix,
-  /usr/share/debconf/frontend      rix,
+  /{usr/,}bin/{,ba,da}sh                        rix,
+  /{usr/,}bin/dpkg-query                        rpx,
+  /{usr/,}bin/fail2ban-server                   rPx,
+  /{usr/,}bin/locale                            rix,
+  /{usr/,}bin/python3.[0-9]*                    rix,
+  /{usr/,}bin/sed                               rix,
+  /{usr/,}bin/stty                              rix,
+  /{usr/,}bin/systemctl                         rPx,
+  /{usr/,}bin/systemd-detect-virt               rPx,
+  /{usr/,}bin/udevadm                           rPx,
+  /{usr/,}bin/whiptail                          rPx,
+  /{usr/,}bin/who                               rix,
+  /{usr/,}lib/needrestart/iucode-scan-versions  rPx,
+  /usr/share/debconf/frontend                   rix,
 
+  /{usr/,}bin/gettext.sh r,
+  /usr/share/needrestart/{,**} r,
+  /usr/share/unattended-upgrades/unattended-upgrade-shutdown r,
+
+  /etc/debconf.conf r,
   /etc/needrestart/{,**} r,
+  /etc/needrestart/*.d/* rix,
+  /etc/shadow r,
 
-  @{PROC}/ r,
-  @{PROC}/@{pids}/cmdline r,
-  @{PROC}/@{pids}/environ r,
-  @{PROC}/@{pids}/stat r,
+  owner /var/cache/debconf/{config,passwords,templates}.dat{,-new,-old} rwk,
+
+  owner @{PROC}/@{pid}/fd/ r,
+        @{PROC}/ r,
+        @{PROC}/@{pids}/cgroup r,
+        @{PROC}/@{pids}/cmdline r,
+        @{PROC}/@{pids}/environ r,
+        @{PROC}/@{pids}/maps r,
+        @{PROC}/@{pids}/stat r,
 
   /dev/ r,
   /dev/**/ r,

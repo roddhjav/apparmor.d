@@ -9,18 +9,38 @@ include <tunables/global>
 @{exec_path} = @{libexec}/gsd-sharing
 profile gsd-sharing @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/dconf>
+  include <abstractions/dbus-network-manager-strict>
+  include <abstractions/dbus-session-strict>
+  include <abstractions/dbus-strict>
+  include <abstractions/dconf-write>
 
   signal (receive) set=(term, hup) peer=gdm*,
+
+  dbus send bus=system path=/org/freedesktop
+       interface=org.freedesktop.DBus.ObjectManager
+       member=GetManagedObjects,
+
+  dbus send bus=system path=/org/freedesktop/NetworkManager
+       interface=org.freedesktop.NetworkManager
+       member=GetPermissions,
+
+  dbus send bus=system path=/org/freedesktop/NetworkManager/Settings/[0-9]
+       interface=org.freedesktop.NetworkManager.Settings.Connection
+       member=GetSettings,
+
+  dbus receive bus=system path=/org/freedesktop/NetworkManager{,/{Devices,DHCP{4,6}Config,IP{4,6}Config}/[0-9]*}
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged,
+
+  dbus receive bus=system path=/org/freedesktop/NetworkManager
+       interface=org.freedesktop.NetworkManager
+       member=CheckPermissions,
 
   @{exec_path} mr,
 
   /usr/share/dconf/profile/gdm r,
   /usr/share/gdm/greeter-dconf-defaults r,
   /usr/share/glib-2.0/schemas/gschemas.compiled r,
-
-  owner @{run}/user/@{uid}/dconf/ rw,
-  owner @{run}/user/@{uid}/dconf/user rw,
 
   /var/lib/gdm/.config/dconf/user r,
 

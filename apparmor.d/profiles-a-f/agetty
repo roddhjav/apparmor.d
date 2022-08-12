@@ -6,7 +6,7 @@ abi <abi/3.0>,
 
 include <tunables/global>
 
-@{exec_path} = /{usr/,}sbin/agetty
+@{exec_path} = /{usr/,}{s,}bin/agetty
 profile agetty @{exec_path} {
   include <abstractions/base>
   include <abstractions/nameservice-strict>
@@ -15,17 +15,24 @@ profile agetty @{exec_path} {
   capability fsetid,
   capability sys_admin,
   capability sys_tty_config,
+  capability chown,
 
   @{exec_path} mr,
 
   /{usr/,}bin/login rPx,
 
-  /etc/issue r,
+  /{etc,run,lib,usr/lib}/issue        r,
+  /{etc,run,lib,usr/lib}/issue.d/{,*} r,
+  /{,usr/}lib/os-release  r,
+  /etc/inittab            r,
+  /etc/os-release         r,
 
   owner @{run}/agetty.reload rw,
         @{run}/resolvconf/resolv.conf r,
 
-  /dev/tty[0-9]* rw,
+        /dev/tty[0-9]*   rw,
+  owner /dev/ttyGS[0-9]* rw,
+  owner /dev/ttyS[0-9]*  rw,
 
   include if exists <local/agetty>
 }

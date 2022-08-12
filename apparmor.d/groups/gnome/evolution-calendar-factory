@@ -9,7 +9,10 @@ include <tunables/global>
 @{exec_path} = @{libexec}/evolution-calendar-factory
 profile evolution-calendar-factory @{exec_path} {
   include <abstractions/base>
-  include <abstractions/dconf>
+  include <abstractions/dbus-network-manager-strict>
+  include <abstractions/dbus-session-strict>
+  include <abstractions/dbus-strict>
+  include <abstractions/dconf-write>
   include <abstractions/nameservice-strict>
   include <abstractions/ssl_certs>
   include <abstractions/p11-kit>
@@ -20,6 +23,14 @@ profile evolution-calendar-factory @{exec_path} {
   network inet6 dgram,
   network netlink raw,
 
+  dbus (send,receive) bus=system path=/org/freedesktop/NetworkManager
+       interface=org.freedesktop.DBus.Properties
+       member={PropertiesChanged,GetAll},
+
+  dbus receive bus=system path=/org/freedesktop/NetworkManager
+       interface=org.freedesktop.NetworkManager
+       member={CheckPermissions,StateChanged},
+
   @{exec_path} mr,
   @{exec_path}-subprocess rix,
 
@@ -29,9 +40,6 @@ profile evolution-calendar-factory @{exec_path} {
   owner @{user_share_dirs}/evolution/tasks/system/tasks.ics r,
   owner @{user_cache_dirs}/evolution/calendar/{,**} rwk,
   owner @{user_cache_dirs}/evolution/tasks/{,**} rwk,
-
-  owner @{run}/user/@{uid}/dconf/ rw,
-  owner @{run}/user/@{uid}/dconf/user rw,
 
   @{PROC}/sys/kernel/osrelease r,
   @{PROC}/cmdline r,

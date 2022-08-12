@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2022 Jeroen Rijken
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -10,8 +11,9 @@ include <tunables/global>
 profile systemd-logind @{exec_path} flags=(attach_disconnected,complain) {
   include <abstractions/base>
   include <abstractions/dbus-strict>
-  include <abstractions/disks-write>
   include <abstractions/devices-usb>
+  include <abstractions/disks-write>
+  include <abstractions/nameservice-strict>
   include <abstractions/systemd-common>
 
   capability chown,
@@ -23,20 +25,54 @@ profile systemd-logind @{exec_path} flags=(attach_disconnected,complain) {
 
   network netlink raw,
 
+  dbus (send,receive) bus=system path=/org/freedesktop/login[0-9]{,/**}
+       interface=org.freedesktop.{DBus.Properties,DBus.Introspectable,login[0-9].*},
+
+  dbus (send,receive) bus=system path=/org/freedesktop/systemd[0-9]
+       interface=org.freedesktop.systemd[0-9].Manager
+       member={StartUnit,StartTransientUnit,Subscribe,JobRemoved,UnitRemoved,Reloading,Subscribe,StopUnit},
+
+  dbus (send,receive) bus=system path=/org/freedesktop/systemd[0-9]/{unit,job}/**
+       interface=org.freedesktop.DBus.Properties
+       member={Get,PropertiesChanged},
+
+  dbus send bus=system path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={GetConnectionCredentials,GetConnectionUnixProcessID,GetConnectionUnixUser,RequestName},
+
+  dbus send bus=system path=/org/freedesktop/PolicyKit[0-9]/Authority
+       interface=org.freedesktop.PolicyKit[0-9].Authority
+       member=CheckAuthorization,
+
+  dbus send bus=system path=/org/freedesktop/systemd[0-9]/unit/**
+       interface=org.freedesktop.systemd[0-9].Scope
+       member=Abandon,
+
+  dbus receive bus=system path=/org/freedesktop/systemd[0-9]
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged,
+
+  dbus receive bus=system path=/
+       interface=org.freedesktop.DBus.Properties
+       member=Get,
+
+  dbus bind bus=system 
+       name=org.freedesktop.login[0-9],
+
   @{exec_path} mr,
 
   /etc/machine-id r,
-  /etc/nsswitch.conf r,
-  /etc/passwd r,
   /etc/systemd/logind.conf r,
   /etc/systemd/sleep.conf r,
 
+  /swapfile r,
   /boot/{,**} r,
 
   /var/lib/systemd/linger/ r,
 
+  @{run}/.#nologin* rw,
   @{run}/host/container-manager r,
-
+  @{run}/nologin rw,
   @{run}/utmp rk,
 
   @{run}/udev/tags/master-of-seat/ r,
@@ -51,7 +87,9 @@ profile systemd-logind @{exec_path} flags=(attach_disconnected,complain) {
   @{run}/udev/data/c10:[0-9]* r,
   @{run}/udev/data/c116:[0-9]* r, # for ALSA
   @{run}/udev/data/c13:[0-9]* r,  # for /dev/input/*
+  @{run}/udev/data/c21:[0-9]* r,
   @{run}/udev/data/c226:[0-9]* r, # for /dev/dri/card*
+  @{run}/udev/data/c21:[0-9]* r,
   @{run}/udev/data/c23[0-9]:[0-9]* r,
   @{run}/udev/data/c24[0-9]:[0-9]* r,
   @{run}/udev/data/c29:[0-9]* r,
@@ -61,19 +99,18 @@ profile systemd-logind @{exec_path} flags=(attach_disconnected,complain) {
   @{run}/systemd/inhibit/ rw,
   @{run}/systemd/inhibit/.#* rw,
   @{run}/systemd/inhibit/[0-9]*{,.ref} rw,
+  @{run}/systemd/journal/socket rw,
+  @{run}/systemd/notify rw,
   @{run}/systemd/seats/ rw,
   @{run}/systemd/seats/.#seat* rw,
   @{run}/systemd/seats/seat[0-9]* rw,
-  @{run}/systemd/sessions/ rw,
-  @{run}/systemd/sessions/.#* rw,
-  @{run}/systemd/sessions/[0-9]*{,.ref} rw,
-  @{run}/systemd/userdb/ r,
+  @{run}/systemd/sessions/{,*}  rw,
+  @{run}/systemd/sessions/*.ref rw,
+  @{run}/systemd/shutdown/.#scheduled* rw,
+  @{run}/systemd/shutdown/scheduled rw,
   @{run}/systemd/users/ rw,
   @{run}/systemd/users/.#* rw,
   @{run}/systemd/users/@{uid} rw,
-
-  @{run}/systemd/journal/socket rw,
-  @{run}/systemd/notify rw,
 
   @{sys}/class/drm/ r,
   @{sys}/devices/**/{uevent,enabled,status} r,
@@ -101,7 +138,6 @@ profile systemd-logind @{exec_path} flags=(attach_disconnected,complain) {
   /dev/dri/card[0-9]* rw,
   /dev/input/event[0-9]* rw,  # Input devices (keyboard, mouse, etc)
   /dev/mqueue/ r,
-  /dev/nvme* r,
   /dev/shm/{,**/} rw,
   /dev/tty[0-9]* rw,
 

@@ -11,6 +11,7 @@ include <tunables/global>
 @{exec_path} += @{libexec}/polkit-agent-helper-[0-9]
 profile polkit-agent-helper @{exec_path} {
   include <abstractions/base>
+  include <abstractions/dbus-strict>
   include <abstractions/authentication>
   include <abstractions/nameservice-strict>
   include <abstractions/consoles>
@@ -28,6 +29,14 @@ profile polkit-agent-helper @{exec_path} {
   signal (receive) set=(term, kill) peer=gnome-shell,
   signal (receive) set=(term, kill) peer=pkexec,
 
+  dbus send bus=system path=/org/freedesktop/PolicyKit[0-9]/Authority
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll,
+
+  dbus send bus=system path=/org/freedesktop/PolicyKit[0-9]/Authority
+       interface=org.freedesktop.PolicyKit[0-9].Authority
+       member=AuthenticationAgentResponse2,
+
   @{exec_path} mr,
 
   # file_inherit
@@ -35,7 +44,6 @@ profile polkit-agent-helper @{exec_path} {
   owner @{HOME}/.xsession-errors w,
 
   @{run}/faillock/[a-zA-z0-9]* rwk,
-  @{run}/systemd/userdb/io.systemd.DynamicUser w,
 
   include if exists <local/polkit-agent-helper>
 }
