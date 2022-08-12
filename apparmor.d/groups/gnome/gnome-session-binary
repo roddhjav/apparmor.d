@@ -9,12 +9,15 @@ include <tunables/global>
 @{exec_path} = @{libexec}/gnome-session-binary
 profile gnome-session-binary @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/dconf>
+  include <abstractions/dbus-session-strict>
+  include <abstractions/dbus-strict>
+  include <abstractions/dconf-write>
   include <abstractions/dri-common>
   include <abstractions/dri-enumerate>
   include <abstractions/gtk>
   include <abstractions/mesa>
   include <abstractions/nameservice-strict>
+  include <abstractions/X-strict>
 
   network inet stream,
   network inet6 stream,
@@ -22,8 +25,29 @@ profile gnome-session-binary @{exec_path} flags=(attach_disconnected) {
   network inet6 dgram,
   network netlink raw,
 
-  signal (send) set=(term) peer=gsd-*,
   signal (receive) set=(term, hup) peer=gdm*,
+  signal (send) set=(term) peer=at-spi-bus-launcher,
+  signal (send) set=(term) peer=gsd-*,
+
+  dbus send bus=system path=/org/freedesktop/login[0-9]
+       interface=org.freedesktop.login[0-9].Manager
+       member={CanPowerOff,GetSession,PowerOff,Inhibit},
+
+  dbus send bus=system path=/org/freedesktop/login[0-9]
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll,
+
+  dbus send bus=system path=/org/freedesktop/login[0-9]/session/_[0-9]*
+       interface=org.freedesktop.login[0-9].Session
+       member=SetIdleHint,
+
+  dbus receive bus=system path=/org/freedesktop/login[0-9]
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged,
+
+  dbus receive bus=system path=/org/freedesktop/login[0-9]
+       interface=org.freedesktop.login[0-9].Manager
+       member={SessionNew,PrepareForShutdown,SessionRemoved},
 
   @{exec_path} mr,
 
@@ -43,17 +67,18 @@ profile gnome-session-binary @{exec_path} flags=(attach_disconnected) {
 
   /{usr/,}bin/aa-notify                                    rPx,
   /{usr/,}bin/blueman-applet                               rPx,
-  /{usr/,}bin/xdg-user-dirs-update                         rPx,
   /{usr/,}bin/firewall-applet                             rPUx,
   /{usr/,}bin/gnome-keyring-daemon                         rPx,
   /{usr/,}bin/gnome-shell                                  rPx,
   /{usr/,}bin/im-launch                                    rPx,
   /{usr/,}bin/pkcs11-register                              rPx,
   /{usr/,}bin/snap                                        rPUx,
+  /{usr/,}bin/spice-vdagent                                rPx,
   /{usr/,}bin/start-pulseaudio-x11                         rPx,
   /{usr/,}bin/ubuntu-report                                rPx,
   /{usr/,}bin/update-notifier                              rPx,
   /{usr/,}bin/xbrlapi                                      rPx,
+  /{usr/,}bin/xdg-user-dirs-update                         rPx,
   /{usr/,}lib/update-notifier/ubuntu-advantage-notification rPx,
   @{libexec}/at-spi-bus-launcher                           rPx,
   @{libexec}/evolution-data-server/evolution-alarm-notify  rPx,
@@ -97,19 +122,16 @@ profile gnome-session-binary @{exec_path} flags=(attach_disconnected) {
   owner @{user_config_dirs}/user-dirs.locale r,
   owner @{user_share_dirs}/applications/ r,
   owner @{user_share_dirs}/applications/mimeinfo.cache r,
+  owner @{user_share_dirs}/session_migration-ubuntu r,
 
-  owner @{run}/user/@{uid}/dconf/ rw,
-  owner @{run}/user/@{uid}/dconf/user rw,
-  owner @{run}/user/@{uid}/.mutter-Xwaylandauth.[0-9A-Z]* r,
-  owner @{run}/user/@{uid}/gdm/Xauthority r,
   owner @{run}/user/@{uid}/gnome-session-leader-fifo rw,
   owner @{run}/user/@{uid}/ICEauthority{,-[a-z]} rwl,
+  owner @{run}/user/@{uid}/systemd/notify w,
+  owner @{run}/user/@{uid}/wayland-[0-9]* rw,
         @{run}/systemd/inhibit/[0-9]*.ref rw,
-        @{run}/systemd/sessions/[0-9]* r,
-        @{run}/systemd/sessions/[0-9]*.ref rw,
+        @{run}/systemd/sessions/* r,
+        @{run}/systemd/sessions/*.ref rw,
         @{run}/systemd/users/@{uid} r,
-
-  /tmp/.ICE-unix/[0-9]* rw,
 
   @{sys}/devices/**/{vendor,device} r,
 

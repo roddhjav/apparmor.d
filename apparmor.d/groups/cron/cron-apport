@@ -1,0 +1,24 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /etc/cron.{hourly,daily,weekly,monthly}/apport
+profile cron-apport @{exec_path} {
+  include <abstractions/base>
+
+  @{exec_path} r,
+
+  /{usr/,}bin/{,ba,da}sh            rix,
+  /{usr/,}bin/find                  rix,
+  /{usr/,}bin/rm                    rix,
+
+  / r,
+  /var/crash/ r,
+  /var/crash/*.crash w,
+
+  include if exists <local/cron-apport>
+}

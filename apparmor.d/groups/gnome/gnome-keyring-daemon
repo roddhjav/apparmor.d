@@ -10,12 +10,28 @@ include <tunables/global>
 @{exec_path} = /{usr/,}bin/gnome-keyring-daemon
 profile gnome-keyring-daemon @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/dbus-session-strict>
+  include <abstractions/dbus-strict>
   include <abstractions/openssl>
 
   capability ipc_lock,
 
   signal (receive) set=(term) peer=gdm,
   signal (send) set=(term) peer=ssh-agent,
+
+  dbus send bus=system path=/org/freedesktop/login[0-9]/session/*
+       interface=org.freedesktop.DBus.Properties
+       member=Get
+       peer=(name=org.freedesktop.login[0-9]),
+
+  dbus send bus=system path=/org/freedesktop/login[0-9]
+       interface=org.freedesktop.login[0-9].Manager
+       member=GetSession
+       peer=(name=org.freedesktop.login[0-9]),
+
+  dbus receive bus=system path=/org/freedesktop/login[0-9]/session/_[0-9]*
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged,
 
   @{exec_path} mr,
 
@@ -32,6 +48,7 @@ profile gnome-keyring-daemon @{exec_path} flags=(attach_disconnected) {
   owner @{run}/user/@{uid}/keyring/ rw,
   owner @{run}/user/@{uid}/keyring/* rw,
   owner @{run}/user/@{uid}/ssh-askpass.[0-9A-Z]*/{,*} rw,
+        @{run}/user/@{uid}/keyring/control r,
 
   owner @{PROC}/@{pid}/fd/ r,
 

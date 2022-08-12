@@ -1,0 +1,48 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/wg-quick
+profile wg-quick @{exec_path} {
+  include <abstractions/base>
+
+  capability net_admin,
+
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  /{usr/,}{s,}bin/nft            rix,
+  /{usr/,}{s,}bin/sysctl         rix,
+  /{usr/,}bin/{,ba,da}sh         rix,
+  /{usr/,}bin/cat                rix,
+  /{usr/,}bin/ip                 rPx,
+  /{usr/,}bin/readlink           rix,
+  /{usr/,}bin/resolvectl         rPx,
+  /{usr/,}bin/sort               rix,
+  /{usr/,}bin/stat               rix,
+  /{usr/,}bin/wg                 rPx,
+  /{usr/,}bin/xtables-nft-multi  rix,
+
+  /usr/share/terminfo/x/xterm-256color r,
+
+  /etc/iproute2/group  r,
+  /etc/iproute2/rt_realms r,
+  /etc/resolvconf/interface-order r,
+  /etc/wireguard/*.conf r,
+
+  @{sys}/module/wireguard r,
+
+  @{PROC}/sys/net/ipv4/conf/all/src_valid_mark w,
+
+  /dev/tty rw,
+
+  # Force the use as root
+  deny /{usr/,}bin/sudo x,
+
+  include if exists <local/wg-quick>
+}

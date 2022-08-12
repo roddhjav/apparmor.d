@@ -1,24 +1,30 @@
 # apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2019-2021 Mikhail Morfikov
+# Copyright (C) 2019-2022 Mikhail Morfikov
+# Copyright (C) 2021-2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
   abi <abi/3.0>,
 
-  /etc/hosts r,
-  /etc/host.conf r,
-  /etc/resolv.conf r,
+  @{etc_ro}/default/nss r,
+  @{etc_ro}/gai.conf r,
+  @{etc_ro}/group r,
+  @{etc_ro}/host.conf r,
+  @{etc_ro}/hosts r,
+  @{etc_ro}/nsswitch.conf r,
+  @{etc_ro}/passwd r,
+  @{etc_ro}/protocols r,
+  @{etc_ro}/resolv.conf r,
+  @{etc_ro}/services r,
+
   @{run}/systemd/resolve/stub-resolv.conf r,
-  /etc/nsswitch.conf r,
-  /etc/passwd r,
-  /etc/gai.conf r,
-  /etc/group r,
-  /etc/protocols r,
-  /etc/default/nss r,
-  /etc/services r,
 
   # NSS records from systemd-userdbd.service
   @{run}/systemd/userdb/ r,
-  @{run}/systemd/userdb/io.systemd.{NameServiceSwitch,Multiplexer,DynamicUser,Home} r,
+  @{run}/systemd/userdb/io.systemd.DynamicUser rw,        # systemd-exec users
+  @{run}/systemd/userdb/io.systemd.Home rw,               # systemd-home dirs
+  @{run}/systemd/userdb/io.systemd.Machine rw,            # systemd-machined
+  @{run}/systemd/userdb/io.systemd.Multiplexer rw,
+  @{run}/systemd/userdb/io.systemd.NameServiceSwitch rw,  # UNIX/glibc NSS
   @{PROC}/sys/kernel/random/boot_id r,
 
   include if exists <abstractions/nameservice-strict.d>

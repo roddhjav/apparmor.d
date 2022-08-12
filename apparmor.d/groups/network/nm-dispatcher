@@ -7,14 +7,32 @@ abi <abi/3.0>,
 include <tunables/global>
 
 @{exec_path} = /{usr/,}lib/nm-dispatcher
+@{exec_path} += /{usr/,}lib/NetworkManager/nm-dispatcher
 profile nm-dispatcher @{exec_path} {
   include <abstractions/base>
+  include <abstractions/dbus-strict>
 
   capability sys_nice,
 
+  dbus send bus=system path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={RequestName,ReleaseName},
+
+  dbus receive bus=system path=/org/freedesktop/nm_dispatcher
+       interface=org.freedesktop.nm_dispatcher,
+
+  dbus bind bus=system
+       name=org.freedesktop.nm_dispatcher,
+
   @{exec_path} mr,
 
-  /etc/NetworkManager/dispatcher.d/{,**} r,
+  /{usr/,}bin/{,ba,da}sh  rix,
+  /{usr/,}bin/run-parts   rPx,
+
+  /etc/NetworkManager/dispatcher.d/ r,
+  /etc/NetworkManager/dispatcher.d/** rix,
+
+  @{run}/systemd/notify rw,
 
   include if exists <local/nm-dispatcher>
 }

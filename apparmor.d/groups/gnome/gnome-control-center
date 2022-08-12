@@ -10,7 +10,9 @@ include <tunables/global>
 profile gnome-control-center @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/audio>
-  include <abstractions/dconf>
+  include <abstractions/dbus-session>
+  include <abstractions/dbus>
+  include <abstractions/dconf-write>
   include <abstractions/dri-common>
   include <abstractions/dri-enumerate>
   include <abstractions/gnome>
@@ -34,27 +36,37 @@ profile gnome-control-center @{exec_path} flags=(attach_disconnected) {
 
   @{exec_path} mr,
 
-  /{usr/,}bin/bash       rUx,
-  /{usr/,}bin/bwrap      rPUx,
-  /{usr/,}bin/gcm-viewer rix,
-  /{usr/,}bin/locale     rix,
-  /{usr/,}bin/openvpn    rPx,
-  /{usr/,}bin/passwd     rPx,
+  /{usr/,}bin/{,b,d,rb}ash  rUx,
+  /{usr/,}bin/{c,k,tc,z}sh  rUx,
+
+  /{usr/,}bin/gcm-viewer    rix,
+  /{usr/,}bin/grep          rix,
+  /{usr/,}bin/locale        rix,
+  /{usr/,}bin/sed           rix,
+
   @{libexec}/gnome-control-center-goa-helper          rPx,
   @{libexec}/gnome-control-center-print-renderer      rPx,
+  /{usr/,}bin/bwrap                                  rPUx,
+  /{usr/,}bin/openvpn                                 rPx,
+  /{usr/,}bin/passwd                                  rPx,
   /{usr/,}lib/webkit2gtk-{3,4}.0/WebKitNetworkProcess rix,
+  /usr/share/language-tools/language2locale           rix,
 
-  /usr/share/backgrounds/gnome/* r,
+  /snap/*/[0-9]*/**.png r,
+  /usr/share/backgrounds/{,**} r,
+  /usr/share/cups/data/testprint r,
   /usr/share/egl/{,**} r,
   /usr/share/glib-2.0/schemas/gschemas.compiled r,
   /usr/share/gnome-background-properties/{,**} r,
-  /usr/share/gnome-bluetooth/{,**} r,
+  /usr/share/gnome-bluetooth{-*,}/{,**} r,
   /usr/share/gnome-color-manager/{,**} r,
+  /usr/share/gnome-control-center/{,**} r,
   /usr/share/gnome-shell/search-providers/{,**} r,
   /usr/share/gnome/gnome-version.xml r,
   /usr/share/mime/{,**} r,
   /usr/share/pipewire/client.conf r,
   /usr/share/thumbnailers/{,*} r,
+  /usr/share/ubuntu/applications/{,*} r,
   /usr/share/xml/iso-codes/iso_[0-9]*-[0-9]*.xml r,
   /usr/share/zoneinfo/{,**} r,
 
@@ -65,26 +77,33 @@ profile gnome-control-center @{exec_path} flags=(attach_disconnected) {
   /etc/machine-id r,
   /var/lib/dbus/machine-id r,
 
+  /var/lib/snapd/desktop/icons/ r,
+
+  /var/cache/samba/ rw,
+
   owner @{HOME}/.cat_installer/ca.pem r,
   owner @{HOME}/@{XDG_WALLPAPERS_DIR}/{,**} r,
   owner @{user_cache_dirs}/gnome-control-center/{,**} rw,
   owner @{user_cache_dirs}/thumbnails/{,**} rw,
   owner @{user_config_dirs}/gnome-control-center/{,**} rw,
   owner @{user_config_dirs}/ibus/bus/{,[0-9a-f]*-unix-wayland-[0-9]} r,
+  owner @{user_config_dirs}/mimeapps.list.* rw,
   owner @{user_share_dirs}/backgrounds/{,**} rw,
   owner @{user_share_dirs}/gvfs-metadata/{,*} r,
   owner @{user_share_dirs}/icc/{,edid-*} r,
+  owner @{user_share_dirs}/sounds/__custom/{,*} rw,
   owner @{user_share_dirs}/webkitgtk/{,**} r,
   owner @{user_share_dirs}/webkitgtk/databases/indexeddb/* rw,
   owner @{user_share_dirs}/webkitgtk/localstorage/{,**} rwk,
 
-  owner @{run}/user/@{uid}/dconf/ rw,
-  owner @{run}/user/@{uid}/dconf/user rw,
   owner @{run}/user/@{uid}/gnome-shell-disable-extensions w,
+  owner @{run}/user/@{uid}/pipewire-[0-9]* rw,
   owner @{run}/user/@{uid}/webkitgtk/{,**} rw,
+        @{run}/cups/cups.sock rw,
+        @{run}/samba/ rw,
+        @{run}/systemd/sessions/  r,
+        @{run}/systemd/sessions/* r,
         @{run}/systemd/users/@{uid} r,
-        @{run}/systemd/sessions/ r,
-        @{run}/systemd/sessions/[0-9]* r,
 
   @{run}/udev/data/+dmi:* r,
   @{run}/udev/data/+input* r,       # for mouse, keyboard, touchpad
@@ -111,6 +130,7 @@ profile gnome-control-center @{exec_path} flags=(attach_disconnected) {
   owner @{PROC}/@{pid}/cmdline r,
   owner @{PROC}/@{pid}/comm r,
   owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/maps r,
   owner @{PROC}/@{pid}/mountinfo r,
   owner @{PROC}/@{pid}/stat r,
   owner @{PROC}/@{pid}/statm r,

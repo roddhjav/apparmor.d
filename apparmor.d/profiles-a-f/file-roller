@@ -1,0 +1,31 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/file-roller
+profile file-roller @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/dbus-session-strict>
+  include <abstractions/dconf-write>
+  include <abstractions/fonts>
+  include <abstractions/freedesktop.org>
+  include <abstractions/user-write>
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/unzip  rix,
+
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+  /usr/share/themes/{,**} r,
+  /usr/share/X11/xkb/{,**} r,
+
+  /etc/gtk-3.0/settings.ini r,
+
+  owner @{run}/user/@{uid}/wayland-[0-9]* rw,
+
+  include if exists <local/file-roller>
+}

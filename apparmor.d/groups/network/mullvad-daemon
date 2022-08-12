@@ -1,0 +1,54 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = "/opt/Mullvad VPN/resources/mullvad-daemon"
+profile mullvad-daemon @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+
+  capability dac_override,
+  capability net_admin,
+  capability net_raw,
+  capability sys_admin,
+
+  network inet stream,
+  network inet6 stream,
+  network inet dgram,
+  network inet6 dgram,
+  network inet raw,
+  network inet6 raw,
+  network netlink raw,
+  network netlink dgram,
+
+  mount fstype=cgroup -> /sys/fs/cgroup/net_cls/,
+
+  @{exec_path} mr,
+
+  "/opt/Mullvad VPN/resources/*" r,
+
+  /etc/mullvad-vpn/{,*} r,
+  /etc/mullvad-vpn/*.json rw,
+  /etc/resolv.conf rw,
+  /etc/resolv.conf.mullvadbackup rw,
+
+  /var/cache/mullvad-vpn/{,*} rw,
+  /var/log/mullvad-vpn/{,*} rw,
+
+  @{run}/mullvad-vpn rw,
+  @{run}/NetworkManager/resolv.conf r,
+
+  @{sys}/fs/cgroup/net_cls/ w,
+  @{sys}/fs/cgroup/net_cls/mullvad-exclusions/ w,
+  @{sys}/fs/cgroup/net_cls/mullvad-exclusions/net_cls.classid rw,
+  @{sys}/kernel/mm/transparent_hugepage/hpage_pmd_size r,
+
+  owner @{PROC}/@{pid}/mounts r,
+        @{PROC}/sys/net/ipv{4,6}/conf/all/src_valid_mark rw,
+
+  include if exists <local/mullvad-daemon>
+}

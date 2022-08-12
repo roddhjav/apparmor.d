@@ -9,12 +9,18 @@ include <tunables/global>
 @{exec_path} = @{libexec}/gsd-keyboard
 profile gsd-keyboard @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/dconf>
-  include <abstractions/fonts>
+  include <abstractions/dbus-session-strict>
+  include <abstractions/dbus-strict>
+  include <abstractions/dconf-write>
   include <abstractions/fontconfig-cache-read>
+  include <abstractions/fonts>
   include <abstractions/gtk>
 
   signal (receive) set=(term, hup) peer=gdm*,
+
+  dbus send bus=system path=/org/freedesktop/locale[0-9]
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll,
 
   @{exec_path} mr,
 
@@ -30,9 +36,8 @@ profile gsd-keyboard @{exec_path} flags=(attach_disconnected) {
   owner @{user_config_dirs}/.gsd-keyboard.settings-ported* rw,
   owner @{user_share_dirs}/gnome-settings-daemon/ rw,
 
-  owner @{run}/user/@{uid}/dconf/ rw,
-  owner @{run}/user/@{uid}/dconf/user rw,
   owner @{run}/user/@{uid}/gdm/Xauthority r,
+  owner @{run}/user/@{uid}/wayland-[0-9] rw,
 
   owner /dev/tty[0-9]* rw,
 

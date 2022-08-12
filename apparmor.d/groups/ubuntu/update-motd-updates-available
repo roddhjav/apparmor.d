@@ -9,28 +9,44 @@ include <tunables/global>
 @{exec_path} = /{usr/,}lib/update-notifier/update-motd-updates-available
 profile update-motd-updates-available @{exec_path} {
   include <abstractions/base>
+  include <abstractions/apt-common>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+  include <abstractions/openssl>
   include <abstractions/python>
+
+  capability dac_read_search,
 
   @{exec_path} mr,
 
   /{usr/,}bin/python3.[0-9]* r,
 
+  /{usr/,}bin/{,ba,da}sh                    rix,
   /{usr/,}bin/apt-config                    rPx,
+  /{usr/,}bin/chmod                         rix,
   /{usr/,}bin/dirname                       rix,
   /{usr/,}bin/dpkg                          rPx -> child-dpkg,
   /{usr/,}bin/find                          rix,
   /{usr/,}bin/ischroot                      rix,
+  /{usr/,}bin/lsb_release                   rPx -> lsb_release,
   /{usr/,}bin/mktemp                        rix,
   /{usr/,}bin/mv                            rix,
+  /{usr/,}bin/rm                            rix,
   /{usr/,}lib/update-notifier/apt_check.py  rix,
 
-  /etc/apt/apt.conf.d/{,*} r,
-  /etc/apt/sources.list r,
+  /usr/share/distro-info/{,**} r,
 
-  /var/lib/apt/lists/{,*} r,
+  /etc/machine-id r,
+
   /var/lib/update-notifier/{,*} rw,
 
+  /var/cache/apt/ r,
+  /var/cache/apt/** rwk,
+
+  /tmp/ r,
+
   owner @{PROC}/@{pid}/fd/ r,
+        @{PROC}/@{pids}/mountinfo r,
 
   include if exists <local/update-motd-updates-available>
 }

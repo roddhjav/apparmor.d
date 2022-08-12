@@ -1,0 +1,33 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /etc/network/if-up.d/ubuntu-fan
+profile cron-ubuntu-fan @{exec_path} {
+  include <abstractions/base>
+
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/{,da,ba}sh  rix,
+  /{usr/,}{s,}bin/fanctl  rix,
+  /{usr/,}bin/flock       rix,
+  /{usr/,}bin/grep        rix,
+  /{usr/,}bin/id          rix,
+  /{usr/,}bin/ip          rix,
+  /{usr/,}bin/mkdir       rix,
+  /{usr/,}bin/sed         rix,
+  /{usr/,}bin/touch       rix,
+
+  /etc/network/fan r,
+
+  @{run}/ubuntu-fan/ rw,
+  @{run}/ubuntu-fan/.lock rwk,
+
+  include if exists <local/cron-ubuntu-fan>
+}

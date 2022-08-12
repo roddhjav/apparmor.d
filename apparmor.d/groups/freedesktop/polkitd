@@ -1,6 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2018-2021 Mikhail Morfikov
-#               2021 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -11,24 +11,28 @@ include <tunables/global>
 @{exec_path} += @{libexec}/polkitd
 profile polkitd @{exec_path} {
   include <abstractions/base>
+  include <abstractions/dbus-strict>
   include <abstractions/nameservice-strict>
 
-  capability setuid,
   capability setgid,
+  capability setuid,
+  capability sys_nice,
   capability sys_ptrace,
-  audit deny capability net_admin,
+  audit capability net_admin,
 
   ptrace (read),
 
-  @{exec_path} mr,
+  dbus (send,receive) bus=system path=/org/freedesktop/PolicyKit[0-9]/*
+       interface=org.freedesktop.{DBus.Introspectable,DBus.Properties,PolicyKit[0-9].*},
 
-  @{PROC}/@{pids}/stat r,
-  @{PROC}/@{pids}/cmdline r,
-  @{PROC}/@{pids}/task/@{tid}/stat r,
-  @{PROC}/@{pids}/cgroup r,
-  @{PROC}/sys/kernel/osrelease r,
-  @{PROC}/1/environ r,
-  @{PROC}/cmdline r,
+  dbus send bus=system path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={GetConnectionUnixUser,GetConnectionUnixProcessID,RequestName},
+
+  dbus bind bus=system 
+       name=org.freedesktop.PolicyKit[0-9],
+
+  @{exec_path} mr,
 
   /etc/machine-id r,
 
@@ -52,7 +56,14 @@ profile polkitd @{exec_path} {
 
   @{run}/systemd/sessions/* r,
   @{run}/systemd/users/@{uid} r,
-  @{run}/systemd/userdb/io.systemd.DynamicUser w,
+
+  @{PROC}/@{pids}/cgroup r,
+  @{PROC}/@{pids}/cmdline r,
+  @{PROC}/@{pids}/stat r,
+  @{PROC}/@{pids}/task/@{tid}/stat r,
+  @{PROC}/1/environ r,
+  @{PROC}/cmdline r,
+  @{PROC}/sys/kernel/osrelease r,
 
   # Silencer
   deny /.cache/ rw,

@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2018-2021 Mikhail Morfikov
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -8,25 +9,41 @@ include <tunables/global>
 
 @{exec_path}  = /{usr/,}lib/colord/colord-sane
 @{exec_path} += @{libexec}/colord-sane
-profile colord-sane @{exec_path} flags=(complain) {
+profile colord-sane @{exec_path} flags=(attach_disconnected,complain) {
   include <abstractions/base>
+  include <abstractions/dbus-strict>
   include <abstractions/devices-usb>
 
+  network inet dgram,
+  network inet6 dgram,
   network netlink raw,
+
+  dbus (send,receive) bus=system path=/org/freedesktop/ColorManager
+       interface=org.freedesktop.{DBus.Properties,ColorManager},
+
+  dbus send bus=system path=/
+       interface=org.freedesktop.{DBus.Peer,Avahi.Server}
+       member={GetAPIVersion,GetState,ServiceBrowserNew,Ping}
+       peer=(name=org.freedesktop.Avahi),
+
+  dbus receive bus=system path=/Client[0-9]/ServiceBrowser[0-9]
+       interface=org.freedesktop.Avahi.ServiceBrowser
+       member={CacheExhausted,AllForNow},
 
   @{exec_path} mr,
 
-  /etc/sane.d/{,**} r,
+  /usr/share/snmp/mibs/{,*} r,
 
+  /etc/sane.d/{,**} r,
   /etc/snmp/snmp.conf r,
+
+  /var/lib/snmp/{mib,cert}_indexes/ rw,
   /var/lib/snmp/mibs/{iana,ietf}/ r,
   /var/lib/snmp/mibs/{iana,ietf}/[A-Z]* r,
 
-  /var/lib/snmp/{mib,cert}_indexes/ rw,
-  /usr/share/snmp/mibs/{,*} r,
+  @{run}/systemd/journal/socket rw,
 
   @{sys}/bus/scsi/devices/ r,
-
   @{sys}/devices/pci[0-9]*/**/{vendor,model,type} r,
 
   @{PROC}/sys/dev/parport/ r,

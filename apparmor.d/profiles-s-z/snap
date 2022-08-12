@@ -1,0 +1,48 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{snap/snapd/[0-9]*/,}{usr/,}bin/snap
+profile snap @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+  include <abstractions/dbus-session-strict>
+  include <abstractions/consoles>
+
+  @{exec_path} mrix,
+
+  /snap/{,**} rw,
+  /snap/snapd/[0-9]*/usr/lib/snapd/snap-confine  rPx,
+  /snap/snapd/[0-9]*/usr/lib/snapd/snap-seccomp  rPx,
+  /snap/snapd/[0-9]*/usr/lib/snapd/snapd r,
+
+  /etc/fstab r,
+
+  /var/lib/snapd/{,**} rwk,#
+
+  owner @{HOME}/snap/{,**} rw,
+
+  owner @{run}/user/@{uid}/.mutter-Xwaylandauth.[0-9A-Z]* r,
+
+  @{run}/snapd.socket rw,
+
+  @{sys}/kernel/mm/transparent_hugepage/hpage_pmd_size r,
+  @{sys}/kernel/security/apparmor/features/ r,
+
+  owner @{PROC}/@{pids}/mountinfo r,
+        @{PROC}/@{pids}/cgroup r,
+        @{PROC}/cgroups r,
+        @{PROC}/cmdline r,
+        @{PROC}/sys/kernel/random/boot_id r,
+        @{PROC}/sys/kernel/random/uuid r,
+        @{PROC}/sys/kernel/seccomp/actions_avail r,
+        @{PROC}/version r,
+
+  deny @{user_share_dirs}/gvfs-metadata/* r,
+
+  include if exists <local/snap>
+}

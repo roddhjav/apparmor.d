@@ -12,22 +12,12 @@ include <tunables/global>
 profile kmod @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/consoles>
+  include <abstractions/openssl>
 
-  # To load/unload kernel modules
-  #  modprobe: ERROR: could not insert '*': Operation not permitted
-  #
-  #  modprobe: ERROR: ../libkmod/libkmod-module.c:799 kmod_module_remove_module() could not remove
-  #  '*': Operation not permitted
-  capability sys_module,
-
-  # For error logs to go through the syslog mechanism (as LOG_DAEMON with level LOG_NOTICE) rather
-  # than to standard error.
-  capability syslog,
-
-  # Needed for static-nodes
   capability dac_override,
-
   capability mknod,
+  capability sys_module,
+  capability syslog,
 
   unix (receive) type=stream,
 
@@ -37,35 +27,35 @@ profile kmod @{exec_path} flags=(attach_disconnected) {
   /{usr/,}bin/sysctl      rPx,
 
   /{usr/,}lib/modprobe.d/{,*.conf} r,
-  /etc/modprobe.d/{,*.conf} r,
-  /etc/depmod.d/{,**} r,
-
   /{usr/,}lib/modules/*/modules.* rw,
+
+  /etc/depmod.d/{,**} r,
+  /etc/modprobe.d/{,*.conf} r,
 
   /tmp/**/*.ko{,.zst} r,
   /usr/src/*/*.ko r,
   /var/lib/dkms/**/module/*.ko r,
+  /var/lib/dpkg/triggers/* r,
   /var/tmp/dracut.*/{,**} rw,
-
-  @{sys}/module/{,**} r,
-
-  @{PROC}/cmdline r,
-  @{PROC}/modules r,
-
-  # Initframs
+  owner /boot/System.map-* r,
   owner /tmp/mkinitcpio.*/{,**} rw,
-
-  owner @{run}/tmpfiles.d/ w,
-  owner @{run}/tmpfiles.d/static-nodes.conf w,
 
   # For local kernel build
   owner /tmp/depmod.*/lib/modules/*/ r,
   owner /tmp/depmod.*/lib/modules/*/modules.* rw,
   owner @{user_build_dirs}/**/System.map r,
-  owner @{user_build_dirs}/**/debian/*/lib/modules/*/ r,
-  owner @{user_build_dirs}/**/debian/*/lib/modules/*/modules.* rw,
-  owner @{user_build_dirs}/**/debian/*/lib/modules/*/kernel/{,**/} r,
-  owner @{user_build_dirs}/**/debian/*/lib/modules/*/kernel/**/*.ko r,
+  owner @{user_build_dirs}/**/lib/modules/*/ r,
+  owner @{user_build_dirs}/**/lib/modules/*/modules.* rw,
+  owner @{user_build_dirs}/**/lib/modules/*/kernel/{,**/} r,
+  owner @{user_build_dirs}/**/lib/modules/*/kernel/**/*.ko r,
+
+  owner @{run}/tmpfiles.d/ w,
+  owner @{run}/tmpfiles.d/static-nodes.conf w,
+
+  @{sys}/module/{,**} r,
+
+  @{PROC}/cmdline r,
+  @{PROC}/modules r,
 
   deny /apparmor/.null rw,
   deny @{user_share_dirs}/gvfs-metadata/* r,

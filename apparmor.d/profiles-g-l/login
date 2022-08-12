@@ -18,20 +18,44 @@ profile login @{exec_path} {
   capability fsetid,
   capability setgid,
   capability setuid,
+  capability sys_resource,
+  capability audit_write,
+  capability dac_read_search,
+#  capability net_admin,
+
+#  network netlink raw,
 
   @{exec_path} mr,
 
   /{usr/,}bin/{,z,ba,da}sh  rUx,
 
   /etc/environment r,
+  /etc/motd r,
+  /etc/legal r,
+  /etc/default/locale r,
+  /etc/security/pam_env.conf r,
+  /etc/security/group.conf r,
+  /etc/security/limits.conf r,
+  /etc/security/limits.d/{,*} r,
 
   /var/log/btmp{,.[0-9]*} r,
 
   @{run}/faillock/root rwk,
-  @{run}/systemd/userdb/ r,
+  @{run}/dbus/system_bus_socket rw,
+  @{run}/motd.dynamic{,.new} rw,
+  @{run}/systemd/sessions/*.ref rw,
 
-  @{PROC}/@{pid}/loginuid rw,
-  @{PROC}/@{pid}/uid_map r,
+  owner @{PROC}/@{pid}/uid_map r,
+  owner @{PROC}/@{pid}/loginuid rw,
+        @{PROC}/1/limits r,
+
+  owner @{user_cache_dirs}/motd.legal-displayed rw,
+
+  dbus send
+    bus="system" path="/org/freedesktop/DBus"   interface="org.freedesktop.DBus" member="Hello" peer=(name="org.freedesktop.DBus"),
+
+  dbus send
+    bus="system" path="/org/freedesktop/login1" interface="org.freedesktop.login1.*" peer=(name="org.freedesktop.login1"),
 
   include if exists <local/login>
 }

@@ -9,7 +9,10 @@ include <tunables/global>
 @{exec_path} = @{libexec}/goa-daemon
 profile goa-daemon @{exec_path} {
   include <abstractions/base>
-  include <abstractions/dconf>
+  include <abstractions/dbus-network-manager-strict>
+  include <abstractions/dbus-session-strict>
+  include <abstractions/dbus-strict>
+  include <abstractions/dconf-write>
   include <abstractions/nameservice-strict>
   include <abstractions/opencl>
   include <abstractions/openssl>
@@ -22,14 +25,20 @@ profile goa-daemon @{exec_path} {
   network inet6 dgram,
   network netlink raw,
 
+  dbus (send,receive) bus=system path=/org/freedesktop/NetworkManager
+       interface=org.freedesktop.DBus.Properties
+       member={PropertiesChanged,GetAll},
+
+  dbus receive bus=system path=/org/freedesktop/NetworkManager
+       interface=org.freedesktop.NetworkManager
+       member={CheckPermissions,StateChanged},
+
   @{exec_path} mr,
 
   /usr/share/glib-2.0/schemas/gschemas.compiled r,
 
-  owner @{user_config_dirs}/goa-1.0/accounts.conf r,
-
-  owner @{run}/user/@{uid}/dconf/ rw,
-  owner @{run}/user/@{uid}/dconf/user rw,
+  owner @{user_config_dirs}/goa-1.0/ rw,
+  owner @{user_config_dirs}/goa-1.0/accounts.conf* rw,
 
   include if exists <local/goa-daemon>
 }

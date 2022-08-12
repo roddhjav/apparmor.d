@@ -9,31 +9,58 @@ include <tunables/global>
 
 @{exec_path} =  /{usr/,}lib/accountsservice/accounts-daemon
 @{exec_path} += @{libexec}/accounts-daemon
-profile accounts-daemon @{exec_path} {
+profile accounts-daemon @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/dbus-strict>
   include <abstractions/nameservice-strict>
   include <abstractions/wutmp>
 
   capability dac_read_search,
+  capability setgid,
+  capability setuid,
   capability sys_nice,
   capability sys_ptrace,
 
   ptrace (read) peer=unconfined,
 
+  dbus (send,receive) bus=system path=/org/freedesktop/Accounts{,/User[0-9]*}
+       interface=org.freedesktop.{DBus.{Properties,Introspectable},Accounts{,.User}},
+
+  dbus (send,receive) bus=system path=/org/freedesktop/PolicyKit[0-9]/Authority
+       interface=org.freedesktop.PolicyKit[0-9].Authority
+       member={CheckAuthorization,Changed},
+
+  dbus send bus=system path=/org/freedesktop/PolicyKit[0-9]/Authority
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll,
+
+  dbus send bus=system path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={RequestName,GetConnectionUnixUser}
+       peer=(name=org.freedesktop.DBus),
+
+  dbus bind bus=system 
+       name=org.freedesktop.Accounts,
+
   @{exec_path} mr,
+
+  /usr/share/language-tools/language-validate  rPx,
 
   /usr/share/accountsservice/{,**} r,
   /usr/share/dbus-1/interfaces/*.xml r,
 
-  /etc/gdm/ r,
-  /etc/gdm/custom.conf rw,
-  /etc/gdm/custom.conf.* rw,
+  /etc/default/locale r,
+  /etc/gdm{3,}/ r,
+  /etc/gdm{3,}/custom.conf rw,
+  /etc/gdm{3,}/custom.conf.* rw,
   /etc/machine-id r,
   /etc/shadow r,
   /etc/shells r,
 
   owner /var/lib/AccountsService/ r,
   owner /var/lib/AccountsService/** rw,
+
+  @{HOME}/ r,
 
   @{PROC}/@{pids}/cmdline r,
   @{PROC}/1/environ r,

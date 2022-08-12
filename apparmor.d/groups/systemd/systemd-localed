@@ -1,6 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2018-2021 Mikhail Morfikov
-#               2021 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2018-2022 Mikhail Morfikov
+# Copyright (C) 2021-2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -15,20 +15,33 @@ profile systemd-localed @{exec_path} flags=(attach_disconnected) {
   include <abstractions/systemd-common>
 
   # Needed?
-  audit deny capability net_admin,
+  audit capability net_admin,
+
+  dbus send bus=system path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={ReleaseName,RequestName}
+       peer=(name=org.freedesktop.DBus),
+
+  dbus receive bus=system path=/org/freedesktop/locale[0-9]
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll,
+
+  dbus bind bus=system 
+       name=org.freedesktop.locale[0-9],
 
   @{exec_path} mr,
-
-  /etc/default/keyboard r,
-
-  /etc/default/locale rw,
-  /etc/default/.#locale* rw,
-  /etc/locale.conf r,
-  /etc/vconsole.conf r,
 
   /usr/share/systemd/language-fallback-map r,
   /usr/share/X11/xkb/rules/evdev r,
 
+  /etc/default/.#locale* rw,
+  /etc/default/keyboard r,
+  /etc/default/locale rw,
+  /etc/locale.conf r,
+  /etc/vconsole.conf r,
   /etc/X11/xorg.conf.d/*.conf r,
 
+  @{run}/systemd/notify rw,
+
+  include if exists <local/systemd-localed>
 }

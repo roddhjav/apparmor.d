@@ -9,6 +9,8 @@ include <tunables/global>
 @{exec_path} = @{libexec}/gsd-print-notifications
 profile gsd-print-notifications @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/dbus-session-strict>
+  include <abstractions/dbus-strict>
   include <abstractions/nameservice-strict>
 
   network inet stream,
@@ -16,6 +18,25 @@ profile gsd-print-notifications @{exec_path} flags=(attach_disconnected) {
 
   signal (receive) set=(term, hup) peer=gdm*,
   signal (send) set=(hup) peer=gsd-printer,
+
+  dbus (send,receive) bus=system path=/Client[0-9]*/ServiceBrowser[0-9]*
+       interface=org.freedesktop.Avahi.ServiceBrowser
+       member={CacheExhausted,AllForNow,CacheExhausted,AllForNow,Free},
+
+  dbus send bus=system path=/
+       interface=org.freedesktop.DBus.Peer
+       member=Ping,
+
+  dbus send bus=system path=/
+       interface=org.freedesktop.Avahi.Server
+       member={GetAPIVersion,GetState,ServiceBrowserNew},
+
+  dbus receive bus=system path=/org/cups/cupsd/Notifier
+       interface=org.cups.cupsd.Notifier,
+
+  dbus receive bus=system path=/
+       interface=org.freedesktop.Avahi.Server
+       member=StateChanged,
 
   @{exec_path} mr,
   @{libexec}/gsd-printer rPx,
