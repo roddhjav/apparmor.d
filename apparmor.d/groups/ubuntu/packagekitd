@@ -13,12 +13,25 @@ profile packagekitd @{exec_path} {
   include <abstractions/dbus-strict>
   include <abstractions/nameservice-strict>
 
+  capability chown,
+  capability dac_override,
+  capability dac_read_search,
+  capability fowner,
+  capability kill,
+  capability setgid,
+  capability setuid,
   capability sys_nice,
 
   network netlink raw,
 
+  signal send set=int peer=apt-methods-*,
+
   dbus (send,receive) bus=system path=/org/freedesktop/PackageKit
        interface=org.freedesktop.{DBus.*,PackageKit},
+
+  dbus send bus=system path=/[0-9]*_@{hex}
+       interface=org.freedesktop.{DBus.Properties,PackageKit.Transaction}
+       peer=(name=org.freedesktop.DBus),
 
   dbus send bus=system path=/org/freedesktop/NetworkManager
        interface=org.freedesktop.DBus.Properties
@@ -28,9 +41,17 @@ profile packagekitd @{exec_path} {
        interface=org.freedesktop.DBus.Properties
        member=GetAll,
 
-  dbus send bus=system path=/org/freedesktop/DBus
+  dbus send bus=system path=/org/freedesktop/DBus{,/Bus}
        interface=org.freedesktop.DBus
-       member=RequestName,
+       member={RequestName,GetConnectionUnixUser},
+
+  dbus send bus=system path=/org/freedesktop/PolicyKit[0-9]/Authority
+       interface=org.freedesktop.PolicyKit[0-9].Authority
+       member=CheckAuthorization,
+
+  dbus receive bus=system path=/[0-9]*_@{hex}
+       interface=org.freedesktop.{DBus.Properties,PackageKit.Transaction},
+      #  peer=(name=org.freedesktop.DBus),
 
   dbus receive bus=system path=/org/freedesktop/PolicyKit[0-9]/Authority
        interface=org.freedesktop.PolicyKit[0-9].Authority
@@ -53,17 +74,42 @@ profile packagekitd @{exec_path} {
 
   @{exec_path} mr,
 
-  /{usr/,}bin/dpkg  rPx -> child-dpkg,
+  /{usr/,}bin/{,ba,da}sh     rix,
+  /{usr/,}bin/appstreamcli   rPx,
+  /{usr/,}bin/dpkg           rPx -> child-dpkg,
+  /{usr/,}bin/echo           rix,
+  /{usr/,}bin/gdbus          rix,
+  /{usr/,}bin/ischroot       rix,
+  /{usr/,}bin/test           rix,
+  /{usr/,}bin/touch          rix,
+  /{usr/,}lib/apt/methods/*  rPx,
+  /{usr/,}lib/cnf-update-db  rPx,
+  /{usr/,}lib/update-notifier/update-motd-updates-available  rPx,
 
   /usr/share/dpkg/tupletable r,
   /usr/share/dpkg/cputable r,
 
   /etc/PackageKit/PackageKit.conf r,
 
+  /etc/machine-id r,
+  /var/lib/dbus/machine-id r,
+
+  /var/cache/apt/ r,
+  /var/cache/apt/** rwk,
   /var/cache/PackageKit/downloads/ r,
+
+  /var/lib/apt/lists/** rw,
+  /var/lib/apt/lists/lock rwk,
+  /var/lib/apt/periodic/update-success-stamp rw,
+  /var/lib/dpkg/info/{,*} r,
+  /var/lib/PackageKit/{,*} rw,
   /var/lib/PackageKit/transactions.db rwk,
 
+  owner @{run}/systemd/users/@{uid} r,
+
   owner @{PROC}/@{pid}/fd/ r,
+        @{PROC}/@{pids}/cgroup r,
+        @{PROC}/@{pids}/mountinfo r,
 
   include if exists <local/packagekitd>
 }
