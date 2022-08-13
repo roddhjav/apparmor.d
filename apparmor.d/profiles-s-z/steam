@@ -1,0 +1,188 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{user_share_dirs}/Steam/steam.sh
+profile steam @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/audio>
+  include <abstractions/chromium-common>
+  include <abstractions/consoles>
+  include <abstractions/dconf-write>
+  include <abstractions/disks-read>
+  include <abstractions/dri-common>
+  include <abstractions/dri-enumerate>
+  include <abstractions/fonts>
+  include <abstractions/freedesktop.org>
+  include <abstractions/mesa>
+  include <abstractions/nameservice-strict>
+  include <abstractions/opencl-nvidia>
+  include <abstractions/ssl_certs>
+  include <abstractions/vulkan>
+
+  capability sys_ptrace,
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  ptrace (read) peer=steam-*,
+
+  signal (send) peer=steam-game,
+  signal (read),
+
+  @{exec_path} mrix,
+
+  /{usr/,}bin/{,ba,da}sh             rix,
+  /{usr/,}bin/basename               rix,
+  /{usr/,}bin/cat                    rix,
+  /{usr/,}bin/cmp                    rix,
+  /{usr/,}bin/cut                    rix,
+  /{usr/,}bin/dirname                rix,
+  /{usr/,}bin/gawk                   rix,
+  /{usr/,}bin/getopt                 rix,
+  /{usr/,}bin/grep                   rix,
+  /{usr/,}bin/head                   rix,
+  /{usr/,}bin/ldconfig               rix,
+  /{usr/,}bin/ldd                    rix,
+  /{usr/,}bin/ln                     rix,
+  /{usr/,}bin/lspci                  rPx,
+  /{usr/,}bin/readlink               rix,
+  /{usr/,}bin/realpath               rix,
+  /{usr/,}bin/rm                     rix,
+  /{usr/,}bin/sed                    rix,
+  /{usr/,}bin/steam-runtime-urlopen  rix,
+  /{usr/,}bin/tail                   rix,
+  /{usr/,}bin/tr                     rix,
+  /{usr/,}bin/uname                  rix,
+  /{usr/,}bin/which                  rix,
+  /{usr/,}bin/xdg-icon-resource      rPx,
+
+  /{usr/,}lib{32,64}/ld-linux.so* rix,
+
+  @{user_share_dirs}/Steam/config/widevine/linux-x64/libwidevinecdm.so mr,
+  @{user_share_dirs}/Steam/steamapps/common/SteamLinuxRuntime_soldier/*entry-point rpx,
+  @{user_share_dirs}/Steam/ubuntu[0-9]*_{32,64}/*.so*  mr,
+  @{user_share_dirs}/Steam/ubuntu[0-9]*_{32,64}/*driverquery rix,
+  @{user_share_dirs}/Steam/ubuntu[0-9]*_{32,64}/fossilize_replay rPx,
+  @{user_share_dirs}/Steam/ubuntu[0-9]*_{32,64}/gameoverlayui rpx,
+  @{user_share_dirs}/Steam/ubuntu[0-9]*_{32,64}/reaper rpx,
+  @{user_share_dirs}/Steam/ubuntu[0-9]*_{32,64}/steam rix,
+  @{user_share_dirs}/Steam/ubuntu[0-9]*_{32,64}/steam-runtime-heavy.sh rix,
+  @{user_share_dirs}/Steam/ubuntu[0-9]*_{32,64}/steam-runtime{,-heavy}/{setup,run}.sh  rix,
+  @{user_share_dirs}/Steam/ubuntu[0-9]*_{32,64}/steam-runtime/{amd64,i386}/usr/bin/* rix,
+  @{user_share_dirs}/Steam/ubuntu[0-9]*_{32,64}/steam-runtime/{usr/,}lib/**.so*  mr,
+  @{user_share_dirs}/Steam/ubuntu[0-9]*_{32,64}/steamwebhelper rix,
+  @{user_share_dirs}/Steam/ubuntu[0-9]*_{32,64}/steamwebhelper.sh rix,
+
+  /usr/share/fonts/**.{ttf,otf} rk,
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+  /usr/share/terminfo/x/xterm-256color r,
+  /usr/share/themes/{,**} r,
+  /usr/share/X11/{,**} r,
+
+  /etc/lsb-release r,
+  /etc/udev/udev.conf r,
+  /etc/machine-id r,
+  /var/lib/dbus/machine-id r,
+
+  / r,
+  /{usr/,}{local/,} r,
+  /{usr/,}{local/,}share/ r,
+  /{usr/,}lib{,32,64}/ r,
+  /etc/ r,
+  /home/ r,
+
+  owner @{HOME}/ r,
+  owner @{HOME}/.local/ r,
+  owner @{HOME}/.steam/{,**} rw,
+  owner @{HOME}/.steam/registry.vdf rwk,
+  owner @{HOME}/.steampath rw,
+  owner @{HOME}/.steampid rw,
+
+  owner @{user_config_dirs}/ r,
+  owner @{user_config_dirs}/autostart/ r,
+  owner @{user_config_dirs}/unity3d/{,**} rwk,
+
+  owner @{user_share_dirs}/ r,
+  owner @{user_share_dirs}/applications/*.desktop w,
+  owner @{user_share_dirs}/gvfs-metadata/{,*} r,
+  owner @{user_share_dirs}/icons/hicolor/**/apps/steam*.png rw,
+  owner @{user_share_dirs}/Steam/ rw,
+  owner @{user_share_dirs}/Steam/** rwkl -> @{user_share_dirs}/Steam/**,
+
+  owner @{run}/user/@{uid}/.mutter-Xwaylandauth.[0-9A-Z]* rw,
+
+  owner /dev/shm/#[0-9]* rw,
+  owner /dev/shm/fossilize-*-[0-9]*-[0-9]* rw,
+  owner /dev/shm/u@{uid}-Shm_[0-9a-f]* rw,
+  owner /dev/shm/u@{uid}-ValveIPCSharedObj-Steam rwk,
+  owner /dev/shm/ValveIPCSHM_@{uid} rw,
+
+  owner /tmp/dumps/{assert,crash}_[0-9]*_[0-9]*.dmp rw,
+  owner /tmp/sh-thd.* rw,
+  owner /tmp/steam_chrome_shmem_uid@{uid}_spid[0-9]* rw,
+  owner /tmp/miles_image_* mrw,
+
+  @{run}/udev/data/+input* r,      # for mouse, keyboard, touchpad
+  @{run}/udev/data/+sound* r,
+  @{run}/udev/data/+pci* r,
+
+  @{run}/udev/data/c13:[0-9]*  r,  # for /dev/input/*
+  @{run}/udev/data/c116:[0-9]* r,  # for ALSA
+  @{run}/udev/data/c241:[0-9]* r,
+  @{run}/udev/data/n[0-9]* r,
+
+  @{sys}/ r,
+  @{sys}/bus/ r,
+  @{sys}/bus/pci/devices/ r,
+  @{sys}/class/ r,
+  @{sys}/class/hidraw/ r,
+  @{sys}/class/input/ r,
+  @{sys}/class/net/ r,
+  @{sys}/class/sound/ r,
+  @{sys}/devices/**/input[0-9]*/ r,
+  @{sys}/devices/**/input[0-9]*/capabilities/* r,
+  @{sys}/devices/**/input/input[0-9]*/ r,
+  @{sys}/devices/**/uevent r,
+  @{sys}/devices/pci[0-9]*/**/class r,
+  @{sys}/devices/pci[0-9]*/**/sound/card[0-9]*/** r,
+  @{sys}/devices/pci[0-9]*/**/usb[0-9]*/{manufacturer,product,bcdDevice,bInterfaceNumber} r,
+  @{sys}/devices/system/cpu/** r,
+  @{sys}/devices/system/node/ r,
+  @{sys}/devices/virtual/net/*/ r,
+  @{sys}/devices/virtual/tty/tty[0-9]/active r,
+  @{sys}/kernel/ r,
+  @{sys}/power/suspend_stats/success rk,
+
+        @{PROC}/ r,
+        @{PROC}/@{pids}/net/route r,
+        @{PROC}/@{pids}/stat r,
+        @{PROC}/sys/fs/inotify/max_user_watches r,
+        @{PROC}/sys/kernel/sched_autogroup_enabled r,
+        @{PROC}/sys/kernel/unprivileged_userns_clone r,
+        @{PROC}/sys/kernel/yama/ptrace_scope r,
+        @{PROC}/sys/user/max_user_namespaces r,
+        @{PROC}/version r,
+  owner @{PROC}/@{pid}/comm rk,
+  owner @{PROC}/@{pid}/autogroup rw,
+  owner @{PROC}/@{pid}/cmdline rk,
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/mounts r,
+  owner @{PROC}/@{pid}/oom_score_adj w,
+  owner @{PROC}/@{pid}/statm r,
+  owner @{PROC}/@{pid}/task/ r,
+  owner @{PROC}/@{pid}/task/@{tid}/comm rw,
+  owner @{PROC}/@{pid}/task/@{tid}/status r,
+
+  /dev/input/ r,
+  /dev/tty rw,
+
+  include if exists <local/steam>
+}
