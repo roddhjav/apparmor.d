@@ -1,0 +1,49 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2002-2005 Novell/SUSE
+# Copyright (C) 2017 Christian Boltz
+# Copyright (C) 2018-2022 Mikhail Morfikov
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/netstat
+profile netstat @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/nameservice>
+
+  capability dac_read_search,
+  capability sys_ptrace,
+  capability syslog,
+
+  ptrace (trace,read),
+
+  @{exec_path} rmix,
+
+  /etc/networks r,
+
+        @{PROC} r,
+        @{PROC}/@{pids}/cmdline r,
+        @{PROC}/@{pids}/fd/ r,
+        @{PROC}/@{pids}/net/dev r,
+        @{PROC}/@{pids}/net/netstat r,
+        @{PROC}/@{pids}/net/raw r,
+        @{PROC}/@{pids}/net/raw6 r,
+        @{PROC}/@{pids}/net/snmp r,
+        @{PROC}/@{pids}/net/tcp r,
+        @{PROC}/@{pids}/net/tcp6 r,
+        @{PROC}/@{pids}/net/udp r,
+        @{PROC}/@{pids}/net/udp6 r,
+        @{PROC}/@{pids}/net/udplite r,
+        @{PROC}/@{pids}/net/udplite6 r,
+        @{PROC}/@{pids}/net/unix r,
+        @{PROC}/net r,
+        @{PROC}/net/* r,
+        @{PROC}/sys/net/ipv6/conf/all/disable_ipv6 r,
+  owner @{PROC}/@{pid}/attr/current r,
+
+  include if exists <local/netstat>
+}

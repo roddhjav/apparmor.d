@@ -21,7 +21,7 @@ profile acpid @{exec_path} flags=(attach_disconnected) {
   /{usr/,}bin/{ba,da,}sh        rix,
   /{usr/,}bin/logger            rix,
 
-  /etc/acpi/powerbtn-acpi-support.sh rPx -> powerbtn-acpi-support,
+  /etc/acpi/powerbtn-acpi-support.sh rPx -> acpi-powerbtn,
 
   /etc/acpi/{,**} r,
   /etc/acpi/handler.sh rix,
@@ -36,46 +36,4 @@ profile acpid @{exec_path} flags=(attach_disconnected) {
   /dev/tty rw,
 
   include if exists <local/acpid>
-}
-
-profile powerbtn-acpi-support flags=(attach_disconnected) {
-  include <abstractions/base>
-
-  /etc/acpi/powerbtn-acpi-support.sh r,
-
-  /{usr/,}{s,}bin/killall5 rix,
-  /{usr/,}{s,}bin/shutdown rix,
-  /{usr/,}bin/{ba,da,}sh   rix,
-  /{usr/,}bin/{e,}grep     rix,
-  /{usr/,}bin/dbus-send    rix,
-  /{usr/,}bin/pgrep        rix,
-  /{usr/,}bin/pinky        rix,
-  /{usr/,}bin/sed          rix,
-  /etc/acpi/powerbtn.sh    rix,
-
-  /{usr/,}bin/systemctl    rPx -> child-systemctl,
-  /{usr/,}bin/ps           rPx,
-
-  /{usr/,}bin/fgconsole rCx,
-
-  /usr/share/acpi-support/** r,
-
-  @{PROC} r,
-  @{PROC}/uptime r,
-  @{PROC}/@{pids}/cmdline r,
-
-  deny / r,
-
-  profile fgconsole {
-    include <abstractions/base>
-
-    capability sys_tty_config,
-
-    /{usr/,}bin/fgconsole r,
-
-          /dev/tty       rw,
-    owner /dev/tty[0-9]* rw,
-  }
-
-  include if exists <local/powerbtn-acpi-support>
 }

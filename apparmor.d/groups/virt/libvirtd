@@ -1,16 +1,26 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) Libvirt Team
-# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2021-2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
+
+# Based on Libvirt Apparmor profile, it is largelly restricted from th
+# As upstream profile mostly focus on confining the guests. Not libvirt itself.
+# It uses a lot of profiles provided by apparmor.d
+# Source: https://gitlab.com/libvirt/libvirt/-/blob/master/src/security/apparmor/usr.sbin.libvirtd.in
 
 abi <abi/3.0>,
 
 include <tunables/global>
 
-@{exec_path} = /{usr/,}sbin/libvirtd /{usr/,}bin/libvirtd
+@{exec_path} = /{usr/,}{s,}bin/libvirtd
 profile libvirtd @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/consoles>
   include <abstractions/dbus>
+  include <abstractions/devices-usb>
+  include <abstractions/disks-write>
+  include <abstractions/nameservice-strict>
+  include <abstractions/openssl>
 
   capability audit_write,
   capability bpf,
@@ -34,6 +44,7 @@ profile libvirtd @{exec_path} flags=(attach_disconnected) {
   capability sys_nice,
   capability sys_pacct,
   capability sys_ptrace,
+  capability sys_rawio,
   capability sys_resource,
 
   network inet stream,
@@ -44,18 +55,15 @@ profile libvirtd @{exec_path} flags=(attach_disconnected) {
   network packet dgram,
   network packet raw,
 
-  mount options=(rw,rslave)  -> /,
-  mount options=(rw, nosuid) -> /{var/,}run/libvirt/qemu/*.dev/,
-  umount /{var/,}run/libvirt/qemu/*.dev/,
+  mount options=(rw, rslave) -> /,
+  mount options=(rw, nosuid) -> @{run}/libvirt/qemu/*.dev/,
+  umount @{run}/libvirt/qemu/*.dev/,
 
-  # libvirt provides any mounts under /dev to qemu namespaces
-  mount options=(rw, move) /dev/ -> /{,var/}run/libvirt/qemu/*.dev/,
-  mount options=(rw, move) /dev/** -> /{,var/}run/libvirt/qemu/*{,/},
-  mount options=(rw, move) /{,var/}run/libvirt/qemu/*.dev/ -> /dev/,
-  mount options=(rw, move) /{,var/}run/libvirt/qemu/*{,/} -> /dev/**,
-
-  # for --p2p migrations
-  unix (send, receive) type=stream addr=none peer=(label=unconfined addr=none),
+  # Libvirt provides any mounts under /dev to qemu namespaces
+  mount options=(rw, move) /dev/ -> @{run}/libvirt/qemu/*.dev/,
+  mount options=(rw, move) /dev/** -> @{run}/libvirt/qemu/*{,/},
+  mount options=(rw, move) @{run}/libvirt/qemu/*.dev/ -> /dev/,
+  mount options=(rw, move) @{run}/libvirt/qemu/*{,/} -> /dev/**,
 
   ptrace (read,trace) peer=unconfined,
   ptrace (read,trace) peer=@{profile_name},
@@ -63,79 +71,199 @@ profile libvirtd @{exec_path} flags=(attach_disconnected) {
   ptrace (read,trace) peer=libvirt-*,
   ptrace (read,trace) peer=virt-manager,
 
+  signal (read,send) peer=libvirt-*,
+  signal (read,send) peer=unconfined,
   signal (send) peer=dnsmasq,
-  signal (read, send) peer=libvirt-*,
-  signal (send) set=(kill, term) peer=unconfined,
-
-  # For communication/control to qemu-bridge-helper
-  unix (send, receive) type=stream addr=none peer=(label=libvirtd//qemu_bridge_helper),
+  signal (send) set=(kill, term) peer=virtiofsd,
   signal (send) set=(term) peer=libvirtd//qemu_bridge_helper,
 
-  # allow connect with openGraphicsFD, direction reversed in newer versions
   unix (send, receive) type=stream addr=none peer=(label=libvirt-@{uuid}),
-  # unconfined also required if guests run without security module
+  unix (send, receive) type=stream addr=none peer=(label=libvirtd//qemu_bridge_helper),
+  unix (send, receive) type=stream addr=none peer=(label=unconfined addr=none),
   unix (send, receive) type=stream addr=none peer=(label=unconfined),
 
-  # required if guests run unconfined seclabel type='none' but libvirtd is confined
-  signal (read, send) peer=unconfined,
-
-  # Very lenient profile for libvirtd since we want to first focus on confining
-  # the guests. Guests will have a very restricted profile.
-  / r,
-  /** rwmkl,
-
-  /{usr/,}bin/* rPUx,
-  /{usr/,}sbin/* rPUx,
-  /{usr/,}{,s}bin/virtlogd rPx,
-  /{usr/,}lib/udev/scsi_id rPUx,
-  /usr/{lib,lib64}/xen-common/bin/xen-toolstack rPUx,
-  /usr/{lib,lib64}/xen/bin/* rUx,
-  @{libexec}/xen-*/bin/libxl-save-helper rPUx,
-  @{libexec}/xen-*/bin/pygrub rPUx,
-  /usr/{lib,lib64,lib/qemu,libexec}/vhost-user-gpu rPUx,
-  /usr/{lib,lib64,lib/qemu,libexec}/virtiofsd rPUx,
-
-  # Required by nwfilter_ebiptables_driver.c:ebiptablesWriteToTempFile() to
-  # read and run an ebtables script.
-  /var/lib/libvirt/virtd* rix,
-
-  # force the use of virt-aa-helper
-  audit deny /{usr/,}{s,}bin/apparmor_parser rwxl,
-  audit deny /etc/apparmor.d/libvirt/** wxl,
-  audit deny /sys/kernel/security/apparmor/features rwxl,
-  audit deny /sys/kernel/security/apparmor/matching rwxl,
-  audit deny /sys/kernel/security/apparmor/.* rwxl,
-  /sys/kernel/security/apparmor/profiles r,
-  /usr/lib/libvirt/* rPUx,
-  /usr/lib/libvirt/libvirt_parthelper ix,
-  /usr/lib/libvirt/libvirt_iohelper ix,
-  /etc/libvirt/hooks/** rmix,
-  /etc/xen/scripts/** rmix,
-
-  # allow changing to our UUID-based named profiles
+  # Allow changing to our UUID-based named profiles
   change_profile -> libvirt-@{uuid},
 
-  /usr/{lib,lib64,lib/qemu,libexec}/qemu-bridge-helper Cx -> qemu_bridge_helper,
-  # child profile for bridge helper process
+  @{exec_path} mr,
+
+  @{libexec}/libvirt/libvirt_iohelper                   rix,
+  @{libexec}/libvirt/libvirt_parthelper                 rix,
+
+  @{libexec}/xen-*/bin/libxl-save-helper               rPUx,
+  @{libexec}/xen-*/bin/pygrub                          rPUx,
+  /{usr/,}{lib,lib64,lib/qemu,libexec}/vhost-user-gpu  rPUx,
+  /{usr/,}{lib,lib64,lib/qemu,libexec}/virtiofsd        rux, # TODO: WIP
+  /{usr/,}lib{,64}/xen-common/bin/xen-toolstack        rPUx,
+  /{usr/,}lib{,64}/xen/bin/*                           rPUx,
+  /{usr/,}lib/udev/scsi_id                             rPUx,
+
+  /{usr/,}{lib,lib64,lib/qemu,libexec}/qemu-bridge-helper Cx -> qemu_bridge_helper,
+
+  /{usr/,}{s,}bin/dmidecode                            rPx,
+  /{usr/,}{s,}bin/dnsmasq                              rPx,
+  /{usr/,}{s,}bin/virtiofsd                            rux, # TODO: WIP
+  /{usr/,}{s,}bin/virtlogd                             rPX,
+  /{usr/,}bin/lvm                                      rUx,
+  /{usr/,}bin/mdevctl                                  rPx,
+  /{usr/,}bin/swtpm                                    rPx,
+  /{usr/,}bin/swtpm_ioctl                              rPx,
+  /{usr/,}bin/swtpm_setup                              rPx,
+  /{usr/,}bin/udevadm                                  rPx,
+
+  /{usr/,}{s,}bin/xtables-nft-multi  rix,
+  /{usr/,}bin/{,ba,da}sh             rix,
+  /{usr/,}bin/ip                     rix,
+  /{usr/,}bin/tc                     rix,
+  /{usr/,}bin/xmllint                rix,
+  /{usr/,}bin/qemu-system*           rUx, # TODO: Integration with virt-aa-helper
+  /{usr/,}bin/qemu-img               rUx, # TODO: Integration with virt-aa-helper
+  /{usr/,}lib/libvirt/virt-aa-helper rPx,
+
+  /etc/libvirt/hooks/**    rmix,
+  /etc/xen/scripts/**      rmix,
+  /var/lib/libvirt/virtd*  rix,
+
+  /usr/share/edk2-ovmf/{,**} r,
+  /usr/share/hwdata/* r,
+  /usr/share/libvirt/{,**} r,
+  /usr/share/mime/mime.cache r,
+  /usr/share/qemu/{,**} r,
+
+  /etc/libvirt/{,**} rw,
+  /etc/mdevctl.d/{,**} r,
+  /etc/xml/catalog r,
+
+  /var/cache/libvirt/{,**} rw,
+  /var/lib/libvirt/{,**} rwk,
+  /var/log/swtpm/libvirt/{,**} rw,
+
+  # User VM images and share
+  @{user_share_dirs}/ r,
+  @{user_share_dirs}/libvirt/{,**} rwk,
+  @{user_vm_dirs}/{,**} rwk,
+  @{user_publicshare_dirs}/{,**} rw,
+
+  @{run}/libvirt/ rw,
+  @{run}/libvirt/** rwk,
+  @{run}/libvirtd.pid wk,
+  @{run}/lock/LCK.._pts_[0-9]* rw,
+  @{run}/systemd/inhibit/[0-9]*.ref rw,
+  @{run}/utmp rk,
+
+  @{run}/udev/data/+backlight:* r,
+  @{run}/udev/data/+bluetooth:* r,
+  @{run}/udev/data/+dmi:id r,
+  @{run}/udev/data/+drm:* r,
+  @{run}/udev/data/+input* r,       # for mouse, keyboard, touchpad
+  @{run}/udev/data/+leds:* r,
+  @{run}/udev/data/+pci* r,
+  @{run}/udev/data/+platform* r,
+  @{run}/udev/data/+rfkill:* r,
+  @{run}/udev/data/+sound:card* r,  # for sound
+  @{run}/udev/data/+thunderbolt:* r,
+  @{run}/udev/data/c1:[0-9]* r,
+  @{run}/udev/data/c10:[0-9]* r,
+  @{run}/udev/data/c116:[0-9]* r,   # for ALSA
+  @{run}/udev/data/c13:[0-9]* r,    # for /dev/input/*
+  @{run}/udev/data/c2[0-9]*:[0-9]* r,
+  @{run}/udev/data/c23[0-9]:[0-9]* r,
+  @{run}/udev/data/c24[0-9]:[0-9]* r,
+  @{run}/udev/data/c50[0-9]:[0-9]* r,
+  @{run}/udev/data/c51[0-9]:[0-9]* r,
+  @{run}/udev/data/n[0-9]* r,
+
+  @{sys}/bus/[a-z]*/devices/ r,
+  @{sys}/class/[a-z]*/ r,
+  @{sys}/devices/**/uevent r,
+  @{sys}/devices/pci[0-9]*/**/{class,revision,subsystem_vendor,subsystem_device} r,
+  @{sys}/devices/pci[0-9]*/**/{config,numa_node,device,vendor} r,
+  @{sys}/devices/pci[0-9]*/**/mdev_supported_types/{,**} r,
+  @{sys}/devices/pci[0-9]*/**/mdev_supported_types/*/create w,
+  @{sys}/devices/pci[0-9]*/**/net/*/{,**} r,
+  @{sys}/devices/pci[0-9]*/**/remove w,
+  @{sys}/devices/pci[0-9]*/**/sriov_totalvfs r,
+
+  @{sys}/devices/system/cpu/ r,
+  @{sys}/devices/system/cpu/cpu[0-9]*/cache/{,**} r,
+  @{sys}/devices/system/cpu/cpu[0-9]*/topology/{,**} r,
+  @{sys}/devices/system/cpu/possible r,
+  @{sys}/devices/system/cpu/present r,
+  @{sys}/devices/system/cpu/present/ r,
+  @{sys}/devices/system/node/ r,
+  @{sys}/devices/system/node/node[0-9]*/ r,
+  @{sys}/devices/system/node/node[0-9]*/{cpumap,distance,meminfo} r,
+  @{sys}/devices/system/node/node[0-9]*/hugepages/{,**} r,
+  @{sys}/devices/virtual/dmi/id/* r,
+  @{sys}/devices/virtual/net/{,**} rw,
+
+  @{sys}/kernel/iommu_groups/ r,
+  @{sys}/kernel/iommu_groups/[0-9]*/devices/ r,
+  @{sys}/kernel/mm/hugepages/{,**} r,
+  @{sys}/kernel/security/apparmor/profiles r,
+
+  @{sys}/module/kvm_intel/parameters/nested r,
+
+  @{sys}/fs/cgroup/ r,
+  @{sys}/fs/cgroup/cgroup.controllers r,
+  @{sys}/fs/cgroup/machine.slice/* r,
+  @{sys}/fs/cgroup/machine.slice/machine-qemu*.scope/{,**} rw,
+  @{sys}/fs/cgroup/net_cls/machine.slice/ rw,
+  @{sys}/fs/cgroup/net_cls/machine.slice/machine-qemu*.scope/{,**} rw,
+
+  owner @{PROC}/@{pid}/mounts r,
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/net/ip_tables_names r,
+        @{PROC}/@{pid}/net/route r,
+        @{PROC}/@{pids}/cgroup r,
+        @{PROC}/@{pids}/net/dev r,
+        @{PROC}/@{pids}/net/psched r,
+        @{PROC}/@{pids}/stat r,
+        @{PROC}/@{pids}/task/@{tid}/sched r,
+        @{PROC}/@{pids}/task/@{tid}/schedstat r,
+        @{PROC}/@{pids}/task/@{tid}/stat r,
+        @{PROC}/devices r,
+        @{PROC}/mtrr w,
+        @{PROC}/sys/net/ipv{4,6}/** rw,
+
+  /dev/dri/ r,
+  /dev/hugepages/{,**} w,
+  /dev/kvm r,
+  /dev/mapper/ r,
+  /dev/mapper/control rw,
+  /dev/net/tun rw,
+  /dev/shm/libvirt/{,**} rw,
+  /dev/vfio/[0-9]* rwk,
+  /dev/vhost-net rw,
+
+  # Force the use of virt-aa-helper
+  audit deny /{usr/,}{s,}bin/apparmor_parser rwxl,
+  audit deny /etc/apparmor.d/libvirt/** wxl,
+  audit deny @{sys}/kernel/security/apparmor/features rwxl,
+  audit deny @{sys}/kernel/security/apparmor/matching rwxl,
+  audit deny @{sys}/kernel/security/apparmor/.* rwxl,
+
   profile qemu_bridge_helper {
     include <abstractions/base>
 
-    capability setuid,
+    capability net_admin,
     capability setgid,
     capability setpcap,
-    capability net_admin,
+    capability setuid,
 
     network inet stream,
 
     # For communication/control from libvirtd
     unix (send, receive) type=stream addr=none peer=(label=libvirtd),
-    signal (receive) set=("term") peer=libvirtd,
+    signal (receive) set=(term) peer=libvirtd,
+
+    /{usr/,}{lib,lib64,lib/qemu,libexec}/qemu-bridge-helper rmix,
+
+    /etc/qemu/{,**} r,
+
+    owner @{PROC}/@{pids}/status r,
 
     /dev/net/tun rw,
-    /etc/qemu/** r,
-    owner @{PROC}/*/status r,
-
-    /usr/{lib,lib64,lib/qemu,libexec}/qemu-bridge-helper rmix,
   }
 
   include if exists <local/libvirtd>

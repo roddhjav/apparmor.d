@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2018-2021 Mikhail Morfikov
+# Copyright (C) 2018-2022 Mikhail Morfikov
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -14,24 +15,39 @@ profile xdg-mime @{exec_path} flags=(attach_disconnected) {
   @{exec_path} r,
 
   /{usr/,}bin/{,ba,da}sh rix,
-  /{usr/,}bin/gawk       rix,
-  /{usr/,}bin/cut        rix,
-  /{usr/,}bin/basename   rix,
   /{usr/,}bin/{,e}grep   rix,
-  /{usr/,}bin/which{,.debianutils}      rix,
-  /{usr/,}bin/readlink   rix,
-  /{usr/,}bin/mv         rix,
-  /{usr/,}bin/head       rix,
-  /{usr/,}bin/sed        rix,
-  /{usr/,}bin/uname      rix,
+  /{usr/,}bin/{m,g,}awk  rix,
+  /{usr/,}bin/basename   rix,
+  /{usr/,}bin/cut        rix,
   /{usr/,}bin/file       rix,
+  /{usr/,}bin/head       rix,
+  /{usr/,}bin/mv         rix,
+  /{usr/,}bin/readlink   rix,
+  /{usr/,}bin/sed        rix,
   /{usr/,}bin/tr         rix,
+  /{usr/,}bin/uname      rix,
+  /{usr/,}bin/which{,.debianutils}      rix,
 
   /{usr/,}bin/gio        rPx,
   /{usr/,}bin/mimetype   rPx,
   /{usr/,}bin/xprop      rPx,
 
   /usr/share/terminfo/x/xterm-256color r,
+  /usr/share/ubuntu/applications/ r,
+
+  /etc/gnome/defaults.list r,
+
+  owner @{HOME}/.Xauthority r,
+  owner @{user_config_dirs}/mimeapps.list{,.new} rw,
+  owner @{user_share_dirs}/gvfs-metadata/{,*} r,
+
+  owner @{run}/user/@{uid}/ r,
+
+  @{sys}/devices/platform/**/hwmon/hwmon[0-9]*/temp* r,
+  @{sys}/devices/platform/**/hwmon/hwmon[0-9]*/fan* r,
+
+  /dev/dri/card[0-9]* rw,
+  /dev/tty rw,
 
   # When xdg-mime is run as root, it wants to exec dbus-launch, and hence it creates the two
   # following root processes:
@@ -44,26 +60,6 @@ profile xdg-mime @{exec_path} flags=(attach_disconnected) {
   deny /{usr/,}bin/dbus-launch rx,
   deny /{usr/,}bin/dbus-send   rx,
 
-  owner @{user_config_dirs}/mimeapps.list{,.new} rw,
-
-  owner @{user_share_dirs}/gvfs-metadata/{,*} r,
-
-  owner @{HOME}/.Xauthority r,
-
-  owner @{run}/user/@{uid}/ r,
-
-  # For shell pwd
-  owner @{HOME}/ r,
-
-  @{sys}/devices/platform/**/hwmon/hwmon[0-9]*/temp* r,
-  @{sys}/devices/platform/**/hwmon/hwmon[0-9]*/fan* r,
-
-  # file_inherit
-  @{MOUNTS}/** rw,
-  /dev/dri/card[0-9]* rw,
-
-  /dev/tty rw,
-
   profile dbus {
     include <abstractions/base>
     include <abstractions/nameservice-strict>
@@ -72,10 +68,9 @@ profile xdg-mime @{exec_path} flags=(attach_disconnected) {
     /{usr/,}bin/dbus-send     mr,
     /{usr/,}bin/dbus-daemon  rPx,
 
-    # for dbus-launch
+          @{HOME}/.Xauthority r,
     owner @{HOME}/.dbus/session-bus/[0-9a-f]*-[0-9] w,
 
-    @{HOME}/.Xauthority r,
   }
 
   include if exists <local/xdg-mime>

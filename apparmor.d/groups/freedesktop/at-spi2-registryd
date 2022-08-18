@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2018-2021 Mikhail Morfikov
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -10,21 +11,20 @@ include <tunables/global>
 @{exec_path} += @{libexec}/at-spi2-registryd
 profile at-spi2-registryd @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/dbus-session-strict>
   include <abstractions/nameservice-strict>
-
-  # Needed?
-  deny capability sys_nice,
 
   signal (receive) set=(term hup) peer=gdm*,
 
   @{exec_path} mr,
 
-  owner @{HOME}/.Xauthority r,
   /var/lib/lightdm/.Xauthority r,
+
+  owner @{HOME}/.Xauthority r,
+  owner @{HOME}/.xsession-errors w,
+
   owner @{run}/user/@{uid}/gdm/Xauthority r,
 
-  # file_inherit
-  owner @{HOME}/.xsession-errors w,
   owner /dev/tty[0-9]* rw,
 
   include if exists <local/at-spi2-registryd>

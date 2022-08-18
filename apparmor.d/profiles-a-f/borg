@@ -18,8 +18,11 @@ profile borg @{exec_path} {
 
   network inet dgram,
   network inet6 dgram,
+  network netlink raw,
 
   @{exec_path} r,
+
+  /{usr/,}bin/ r,
   /{usr/,}bin/python3.[0-9]* r,
 
   /{usr/,}bin/uname                  rix,
@@ -32,10 +35,10 @@ profile borg @{exec_path} {
   /{usr/,}bin/ccache                 rCx -> ccache,
   /{usr/,}bin/fusermount{,3}         rCx -> fusermount,
 
+  mount fstype=fuse -> @{MOUNTS}/,
   mount fstype=fuse -> @{MOUNTS}/*/,
-  mount fstype=fuse -> @{MOUNTS}/*/*/,
+  umount @{MOUNTS}/,
   umount @{MOUNTS}/*/,
-  umount @{MOUNTS}/*/*/,
 
   /dev/fuse rw,
 
@@ -66,15 +69,11 @@ profile borg @{exec_path} {
 
   # Dirs that can be backed up
   /            r,
-  /boot/{,**}  r,
-  /efi/{,**}   r,
   /etc/{,**}   r,
   /home/{,**}  r,
   @{MOUNTS}/{,**} r,
-  /opt/{,**}   r,
   /root/{,**}  r,
   /srv/{,**}   r,
-  /usr/{,**}   r,
   /var/{,**}   r,
 
   # The backup dirs
@@ -115,8 +114,8 @@ profile borg @{exec_path} {
 
     /etc/fuse.conf r,
 
+    umount @{MOUNTS}/,
     umount @{MOUNTS}/*/,
-    umount @{MOUNTS}/*/*/,
   
     @{PROC}/@{pids}/mounts r,
 

@@ -1,0 +1,26 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /usr/share/language-tools/language-validate
+profile language-validate @{exec_path} {
+  include <abstractions/base>
+
+  capability setgid,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/{,ba,da}sh                      rix,
+  /{usr/,}bin/grep                            rix,
+  /{usr/,}bin/locale                          rix,
+  /usr/share/language-tools/language-options  rix,
+
+  /usr/share/locale-langpack/{,*} r,
+  /usr/share/language-tools/{,*} r,
+
+  include if exists <local/language-validate>
+}

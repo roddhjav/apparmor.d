@@ -23,13 +23,14 @@ profile frontend @{exec_path} flags=(complain) {
   /{usr/,}bin/locale     rix,
 
   # debconf apps
+  /{usr/,}{s,}bin/aspell-autobuildhash     rPx,
+  /{usr/,}{s,}bin/pam-auth-update          rPx,
   /{usr/,}bin/adequate                     rPx,
   /{usr/,}bin/debconf-apt-progress         rPx,
-  /{usr/,}lib/tasksel/tasksel-debconf      rPx -> tasksel,
   /{usr/,}bin/linux-check-removal          rPx,
   /{usr/,}bin/ucf                          rPx,
-  /{usr/,}sbin/pam-auth-update             rPx,
-  /{usr/,}sbin/aspell-autobuildhash        rPx,
+  /{usr/,}bin/whiptail                     rPx,
+  /{usr/,}lib/tasksel/tasksel-debconf      rPx -> tasksel,
   /usr/share/debian-security-support/check-support-status.hook rPx,
 
   # Run the package maintainer's scripts
@@ -55,13 +56,16 @@ profile frontend @{exec_path} flags=(complain) {
   /{usr/,}lib/dkms/dkms-*                 rPUx,
   /{usr/,}lib/dkms/dkms_*                 rPUx,
 
-  /etc/debconf.conf r,
   /usr/share/debconf/{,**} r,
+
+  /etc/debconf.conf r,
+  /etc/inputrc r,
+  /etc/shadow r,
+
+  owner /tmp/file* w,
   owner /var/cache/debconf/* rwk,
 
-  /etc/inputrc r,
-
-  /etc/shadow r,
+  @{run}/user/@{uid}/pk-debconf-socket rw,
 
   # The following is needed when debconf uses GUI frontends.
   include <abstractions/gtk>
@@ -73,11 +77,6 @@ profile frontend @{exec_path} flags=(complain) {
   /{usr/,}bin/hostname    rix,
   owner @{PROC}/@{pid}/mounts r,
   @{HOME}/.Xauthority r,
-
-  # The following is needed when debconf uses dialog/whiptail frontend.
-  /{usr/,}bin/whiptail    rPx,
-  owner /tmp/file* w,
-
 
   profile scripts flags=(complain) {
     include <abstractions/base>

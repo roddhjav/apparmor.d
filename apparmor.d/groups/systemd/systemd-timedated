@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2018-2021 Mikhail Morfikov
+# Copyright (C) 2018-2022 Mikhail Morfikov
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -14,6 +15,21 @@ profile systemd-timedated @{exec_path} flags=(attach_disconnected) {
 
   capability sys_time,
 
+  dbus (send,receive) bus=system path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={AddMatch,ReleaseName,RequestName},
+
+  dbus send bus=system path=/org/freedesktop/systemd[0-9]/unit/*
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll,
+
+  dbus receive bus=system path=/org/freedesktop/timedate[0-1]
+       interface=org.freedesktop.DBus.Properties
+       member={Get,GetAll},
+
+  dbus bind bus=system 
+       name=org.freedesktop.timedate[0-9],
+
   @{exec_path} mr,
 
   /dev/rtc[0-9] r,
@@ -26,6 +42,8 @@ profile systemd-timedated @{exec_path} flags=(attach_disconnected) {
 
   /etc/.#timezone* rw,
   /etc/timezone rw,
+
+  @{run}/systemd/notify rw,
 
   include if exists <local/systemd-timedated>
 }

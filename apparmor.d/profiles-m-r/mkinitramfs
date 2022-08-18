@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2019-2021 Mikhail Morfikov
+# Copyright (C) 2019-2022 Mikhail Morfikov
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -19,37 +20,36 @@ profile mkinitramfs @{exec_path} {
   @{exec_path} r,
   /{usr/,}bin/{,ba,da}sh rix,
 
-  /{usr/,}sbin/          r,
-  /{usr/,}bin/           r,
+  /{usr/,}{s,}bin/       r,
   /{usr/,}lib/           r,
   /{usr/,}lib64/         r,
 
-  /{usr/,}bin/getopt     rix,
-  /{usr/,}bin/basename   rix,
   /{usr/,}bin/{,e}grep   rix,
-  /{usr/,}bin/touch      rix,
-  /{usr/,}bin/readlink   rix,
-  /{usr/,}bin/mktemp     rix,
-  /{usr/,}bin/chmod      rix,
-  /{usr/,}bin/ln         rix,
-  /{usr/,}bin/mkdir      rix,
-  /{usr/,}bin/cp         rix,
-  /{usr/,}bin/cat        rix,
-  /{usr/,}bin/dirname    rix,
-  /{usr/,}bin/sed        rix,
-  /{usr/,}bin/tsort      rix,
-  /{usr/,}bin/rm         rix,
-  /{usr/,}bin/id         rix,
-  /{usr/,}bin/sort       rix,
-  /{usr/,}bin/env        rix,
-  /{usr/,}bin/rmdir      rix,
-  /{usr/,}bin/tr         rix,
-
-  /{usr/,}bin/cpio       rix,
-  /{usr/,}bin/gzip       rix,
+  /{usr/,}bin/basename   rix,
   /{usr/,}bin/bzip2      rix,
+  /{usr/,}bin/cat        rix,
+  /{usr/,}bin/chmod      rix,
+  /{usr/,}bin/cp         rix,
+  /{usr/,}bin/cpio       rix,
+  /{usr/,}bin/dirname    rix,
+  /{usr/,}bin/env        rix,
+  /{usr/,}bin/getopt     rix,
+  /{usr/,}bin/gzip       rix,
+  /{usr/,}bin/id         rix,
+  /{usr/,}bin/ln         rix,
   /{usr/,}bin/lzma       rix,
   /{usr/,}bin/lzop       rix,
+  /{usr/,}bin/mkdir      rix,
+  /{usr/,}bin/mktemp     rix,
+  /{usr/,}bin/readlink   rix,
+  /{usr/,}bin/rm         rix,
+  /{usr/,}bin/rmdir      rix,
+  /{usr/,}bin/sed        rix,
+  /{usr/,}bin/sort       rix,
+  /{usr/,}bin/touch      rix,
+  /{usr/,}bin/tr         rix,
+  /{usr/,}bin/tsort      rix,
+  /{usr/,}bin/xargs      rix,
   /{usr/,}bin/xz         rix,
   /{usr/,}bin/zstd       rix,
 
@@ -87,20 +87,23 @@ profile mkinitramfs @{exec_path} {
         /var/tmp/mkinitramfs_*/usr/lib/modules/*/modules.{order,builtin} rw,
   owner /var/tmp/mkinitramfs-* rw,
 
-  @{PROC}/modules r,
-
+  owner @{PROC}/@{pid}/fd/ r,
+        @{PROC}/cmdline r,
+        @{PROC}/modules r,
 
   profile ldd {
     include <abstractions/base>
     include <abstractions/consoles>
+    include <abstractions/nameservice-strict>
 
     /{usr/,}bin/ldd mr,
 
-    /{usr/,}bin/kmod mr,
     /{usr/,}bin/{,ba,da}sh rix,
+    /{usr/,}bin/kmod mr,
+    /{usr/,}lib/initramfs-tools/bin/* mr,
 
-    /{usr/,}lib/@{multiarch}/ld-*.so rix,
-    /{usr/,}lib{,x}32/ld-*.so        rix,
+    /{usr/,}lib/@{multiarch}/ld-*.so*  rix,
+    /{usr/,}lib{,x}32/ld-*.so          rix,
 
   }
 
@@ -110,7 +113,10 @@ profile mkinitramfs @{exec_path} {
 
     capability sys_chroot,
 
-    /{usr/,}sbin/ldconfig mr,
+    /{usr/,}{s,}bin/ldconfig  mr,
+
+    /{usr/,}{s,}bin/ldconfig.real rix,
+    /{usr/,}bin/{,ba,da}sh        rix,
 
     owner /var/tmp/mkinitramfs_*/etc/ld.so.conf r,
     owner /var/tmp/mkinitramfs_*/etc/ld.so.conf.d/{,*.conf} r,
@@ -148,11 +154,14 @@ profile mkinitramfs @{exec_path} {
   profile kmod {
     include <abstractions/base>
     include <abstractions/consoles>
+    include <abstractions/openssl>
 
     /{usr/,}bin/kmod mr,
 
     @{PROC}/cmdline r,
 
+    /etc/depmod.d/ r,
+    /etc/depmod.d/*.conf r,
     /etc/modprobe.d/ r,
     /etc/modprobe.d/*.conf r,
 

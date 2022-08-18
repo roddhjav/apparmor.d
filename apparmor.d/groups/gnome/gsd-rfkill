@@ -9,10 +9,32 @@ include <tunables/global>
 @{exec_path} = @{libexec}/gsd-rfkill
 profile gsd-rfkill @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/dbus-session-strict>
+  include <abstractions/dbus-strict>
 
   signal (receive) set=(term, hup) peer=gdm*,
 
   network netlink raw,
+
+  dbus send bus=system path=/org/freedesktop/hostname[0-9]
+       interface=org.freedesktop.DBus.Properties
+       member=Get,
+
+  dbus send bus=system path=/org/freedesktop/NetworkManager
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll,
+
+  dbus send bus=system path=/org/freedesktop/ModemManager[0-9]
+       interface=org.freedesktop.DBus.ObjectManager
+       member=GetManagedObjects,
+
+  dbus receive bus=system path=/org/freedesktop/NetworkManager
+       interface=org.freedesktop.NetworkManager
+       member={CheckPermissions,StateChanged},
+
+  dbus receive bus=system path=/org/freedesktop/NetworkManager
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged,
 
   @{exec_path} mr,
 

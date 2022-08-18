@@ -1,0 +1,20 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/xdg-user-dirs-gtk-update
+profile xdg-user-dirs-gtk-update @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/gtk>
+
+  @{exec_path} mr,
+
+  owner @{user_config_dirs}/user-dirs.dirs r,
+  owner @{user_config_dirs}/user-dirs.locale r,
+
+  include if exists <local/xdg-user-dirs-gtk-update>
+}

@@ -7,9 +7,10 @@ abi <abi/3.0>,
 
 include <tunables/global>
 
-@{exec_path} = /{usr/,}bin/fwupd /{usr/,}lib/fwupd/fwupd
+@{exec_path} = /{usr/,}bin/fwupd @{libexec}/fwupd/fwupd
 profile fwupd @{exec_path} flags=(complain,attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/dbus-strict>
   include <abstractions/disks-read>
   include <abstractions/nameservice-strict>
   include <abstractions/openssl>
@@ -24,6 +25,41 @@ profile fwupd @{exec_path} flags=(complain,attach_disconnected) {
   capability syslog,
 
   network netlink raw,
+
+  dbus send bus=system path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={GetConnectionUnixUser,RemoveMatch,RequestName}
+       peer=(name=org.freedesktop.DBus),
+
+  dbus send bus=system path=/org/freedesktop/ModemManager1
+       interface=org.freedesktop.DBus.{Properties,ObjectManager}
+       member={GetAll,GetManagedObjects},
+
+  dbus send bus=system path=/org/freedesktop/PolicyKit1/Authority
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll,
+
+  dbus send bus=system path=/org/freedesktop/UDisks2/block_devices/*
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll,
+
+  dbus send bus=system path=/org/freedesktop/UDisks2/Manager
+       interface=org.freedesktop.{DBus.Properties,UDisks2.Manager}
+       member={GetAll,GetBlockDevices},
+
+  dbus send bus=system path=/org/freedesktop/UPower{,/devices/DisplayDevice}
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll,
+
+  dbus receive bus=system path=/
+       interface=org.freedesktop.fwupd,
+
+  dbus receive bus=system path=/
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll,
+
+  dbus bind bus=system
+       name=org.freedesktop.fwupd,
 
   @{exec_path} mr,
 
@@ -85,12 +121,16 @@ profile fwupd @{exec_path} flags=(complain,attach_disconnected) {
 
   /dev/bus/usb/ r,
   /dev/bus/usb/[0-9]*/[0-9]* rw,
+  /dev/cpu/[0-9]*/msr rw,
   /dev/drm_dp_aux[0-9]* rw,
+  /dev/gpiochip[0-9]* r,
   /dev/hidraw[0-9]* rw,
   /dev/mei[0-9]* rw,
   /dev/mem r,
+  /dev/mtd[0-9]* rw,
   /dev/sd[a-z]* r,
   /dev/tpm[0-9]* rw,
+  /dev/tpmrm[0-9]* rw,
   /dev/wmi/* r,
 
   profile gpg flags=(complain) {

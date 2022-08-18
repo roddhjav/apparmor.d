@@ -1,0 +1,75 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = "/opt/Mullvad VPN/mullvad-gui"
+profile mullvad-gui @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/chromium-common>
+  include <abstractions/dconf-write>
+  include <abstractions/dri-common>
+  include <abstractions/dri-enumerate>
+  include <abstractions/fonts>
+  include <abstractions/freedesktop.org>
+  include <abstractions/gtk>
+  include <abstractions/mesa>
+  include <abstractions/nameservice-strict>
+  include <abstractions/vulkan>
+
+  capability sys_chroot,
+  capability sys_ptrace,
+  capability sys_admin,
+
+  network inet stream,
+  network inet6 stream,
+  network inet dgram,
+  network inet6 dgram,
+  network netlink raw,
+
+  @{exec_path} mrix,
+
+  "/opt/Mullvad VPN/*.so*" rm,
+
+  /{usr/,}bin/{,ba,da}sh  rix,
+  /{usr/,}bin/gsettings   rix,
+  /{usr/,}bin/xdg-open    rPx,
+
+  "/opt/Mullvad VPN/{,**}" r,
+  /usr/share/themes/{,**} r,
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+
+  /etc/libva.conf r,
+  /var/lib/dbus/machine-id r,
+
+  owner "@{user_config_dirs}/Mullvad VPN/{,**}" rwk,
+
+  owner "/tmp/.org.chromium.Chromium.*/Mullvad VPN*.png" rw,
+  owner @{run}/user/@{uid}/.mutter-Xwaylandauth.[a-zA-z0-9]* r,
+
+  @{sys}/bus/pci/devices/ r,
+  @{sys}/devices/virtual/tty/tty[0-9]*/active r,
+  @{sys}/devices/pci[0-9]*/**/{vendor,device,class,config} r,
+
+        @{PROC}/ r,
+        @{PROC}/sys/fs/inotify/max_user_watches r,
+        @{PROC}/sys/kernel/yama/ptrace_scope r,
+  owner @{PROC}/@{pid}/cmdline r,
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/cgroup r,
+  owner @{PROC}/@{pid}/gid_map w,
+  owner @{PROC}/@{pid}/oom_score_adj w,
+  owner @{PROC}/@{pid}/setgroups w,
+  owner @{PROC}/@{pid}/stat r,
+  owner @{PROC}/@{pid}/statm r,
+  owner @{PROC}/@{pid}/task/ r,
+  owner @{PROC}/@{pid}/task/@{tid}/status r,
+  owner @{PROC}/@{pid}/uid_map w,
+
+  /dev/tty rw,
+
+  include if exists <local/mullvad-gui>
+}

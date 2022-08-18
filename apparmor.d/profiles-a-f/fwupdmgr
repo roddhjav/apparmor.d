@@ -1,6 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2020-2021 Mikhail Morfikov
-#               2021 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2020-2022 Mikhail Morfikov
+# Copyright (C) 2021-2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -8,11 +8,13 @@ abi <abi/3.0>,
 include <tunables/global>
 
 @{exec_path} = /{usr/,}bin/fwupdmgr
-profile fwupdmgr @{exec_path} flags=(complain) {
+profile fwupdmgr @{exec_path} flags=(attach_disconnected,complain) {
   include <abstractions/base>
+  include <abstractions/dbus-strict>
+  include <abstractions/dconf-write>
   include <abstractions/nameservice-strict>
-  include <abstractions/ssl_certs>
   include <abstractions/openssl>
+  include <abstractions/ssl_certs>
 
   signal (send),
 
@@ -27,25 +29,20 @@ profile fwupdmgr @{exec_path} flags=(complain) {
   /{usr/,}bin/dbus-launch  rCx -> dbus,
   /{usr/,}bin/pkttyagent   rPx,
 
-  owner @{user_cache_dirs}/ rw,
-  owner @{user_cache_dirs}/fwupd/ rw,
-  owner @{user_cache_dirs}/fwupd/lvfs-metadata.xml.gz{,.*} rw,
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+
+  /etc/machine-id r,
 
   owner /var/cache/private/fwupdmgr/fwupd/lvfs-metadata.xml.gz{,.asc}.* rw,
   owner /var/cache/private/fwupdmgr/fwupd/lvfs-metadata.xml.gz{,.asc} rw,
 
-  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+  owner @{user_cache_dirs}/ rw,
+  owner @{user_cache_dirs}/fwupd/ rw,
+  owner @{user_cache_dirs}/fwupd/lvfs-metadata.xml.gz{,.*} rw,
 
   owner @{PROC}/@{pid}/fd/ r,
 
-  /etc/machine-id r,
-  /var/lib/dbus/machine-id r,
-
   /dev/tty rw,
-
-  include <abstractions/dconf>
-  owner @{run}/user/@{uid}/dconf/ rw,
-  owner @{run}/user/@{uid}/dconf/user rw,
 
   profile dbus {
     include <abstractions/base>

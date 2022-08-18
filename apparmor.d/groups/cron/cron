@@ -7,17 +7,18 @@ abi <abi/3.0>,
 
 include <tunables/global>
 
-@{exec_path} = /{usr/,}sbin/cron
+@{exec_path} = /{usr/,}{s,}bin/cron
 profile cron @{exec_path} {
   include <abstractions/base>
-  include <abstractions/nameservice-strict>
+  include <abstractions/app-launcher-root>
   include <abstractions/authentication>
+  include <abstractions/nameservice-strict>
   include <abstractions/wutmp>
 
-  capability setuid,
-  capability setgid,
-  capability dac_read_search,
   capability audit_write,
+  capability dac_read_search,
+  capability setgid,
+  capability setuid,
   capability sys_resource,
 
   network netlink raw,
@@ -26,36 +27,21 @@ profile cron @{exec_path} {
 
   @{exec_path} mr,
 
-  /{usr/,}bin/{,ba,da}sh rix,
-  /{usr/,}bin/nice       rix,
-  /{usr/,}bin/ionice     rix,
+  /{usr/,}bin/{,ba,da}sh  rix,
+  /{usr/,}bin/nice        rix,
+  /{usr/,}bin/ionice      rix,
+  /{usr/,}bin/run-parts   rPx,
 
-  /etc/crontab r,
-
-  # All stuff that is executed via the /etc/cron.d/ dir
-  /etc/cron.d/{,*} r,
-  /{usr/,}sbin/cron-apt                 rPx,
-  /{usr/,}bin/debsecan                  rPx,
   /{usr/,}lib/@{multiarch}/e2fsprogs/e2scrub_all_cron rPUx,
-  /{usr/,}sbin/e2scrub_all             rPUx,
-  /etc/cron.daily/popularity-contest    rPx,
   /{usr/,}lib/sysstat/debian-sa1       rPUx,
-  /{usr/,}{s,}bin/sendmail             rPUx,
-
-  # All stuff that is executed via the user crontab files
-  /{usr/,}bin/apt-file                  rPx,
-  /{usr/,}bin/apt-key                   rPx,
-  /{usr/,}bin/rsync                    rPUx,
   /usr/share/rsync/scripts/rrsync      rPUx,
-  /{usr/,}bin/gpg                       rPx,
-  /{usr/,}sbin/update-pciids            rPx,
-  /{usr/,}bin/borg                      rPx,
+  /usr/local/lib/pki/pki-realm         rPUx,  # TODO: FIXME: NO COMMIT ZENFRA ONLY
 
-  # Cron scripts in the /etc/cron.*/ dir to execute
-  /{usr/,}bin/run-parts                 rCx -> run-parts,
-
-  # Send results using email
-  /{usr/,}sbin/exim4                    rPx,
+  /etc/cron.d/{,*} r,
+  /etc/crontab r,
+  /etc/default/locale r,
+  /etc/environment r,
+  /etc/security/limits.d/{,**} r,
 
   /var/spool/cron/crontabs/{,*} r,
 
@@ -66,56 +52,7 @@ profile cron @{exec_path} {
 
   owner @{PROC}/@{pid}/uid_map r,
   owner @{PROC}/@{pid}/loginuid rw,
-
-  /etc/environment r,
-
-  /etc/default/locale r,
-
-  @{PROC}/1/limits r,
-  /etc/security/limits.d/ r,
-
-  profile run-parts {
-    include <abstractions/base>
-
-    /{usr/,}bin/run-parts mr,
-
-    /etc/cron.{hourly,daily,weekly,monthly}/                     r,
-    /etc/cron.{hourly,daily,weekly,monthly}/apt-listbugs         rPx,
-    /etc/cron.{hourly,daily,weekly,monthly}/apt-show-versions    rPx,
-    /etc/cron.{hourly,daily,weekly,monthly}/bsdmainutils        rPUx,
-    /etc/cron.{hourly,daily,weekly,monthly}/checksecurity       rPUx,
-    /etc/cron.{hourly,daily,weekly,monthly}/debtags              rPx,
-    /etc/cron.{hourly,daily,weekly,monthly}/exim4-base           rPx,
-    /etc/cron.{hourly,daily,weekly,monthly}/logrotate            rPx,
-    /etc/cron.{hourly,daily,weekly,monthly}/mlocate              rPx,
-    /etc/cron.{hourly,daily,weekly,monthly}/dlocate              rPx,
-    /etc/cron.{hourly,daily,weekly,monthly}/plocate              rPx,
-    /etc/cron.{hourly,daily,weekly,monthly}/passwd              rPUx,
-    /etc/cron.{hourly,daily,weekly,monthly}/apt-compat           rPx,
-    /etc/cron.{hourly,daily,weekly,monthly}/aptitude             rPx,
-    /etc/cron.{hourly,daily,weekly,monthly}/debsums              rPx,
-    /etc/cron.{hourly,daily,weekly,monthly}/dpkg                rPUx,
-    /etc/cron.{hourly,daily,weekly,monthly}/man-db               rPx,
-    /etc/cron.{hourly,daily,weekly,monthly}/popularity-contest   rPx,
-    /etc/cron.{hourly,daily,weekly,monthly}/sysstat              rPx,
-    /etc/cron.{hourly,daily,weekly,monthly}/spamassassin        rPUx,
-    /etc/cron.{hourly,daily,weekly,monthly}/vrms                rPUx,
-    /etc/cron.{hourly,daily,weekly,monthly}/apt-xapian-index     rPx,
-    /etc/cron.{hourly,daily,weekly,monthly}/tor                 rPUx,
-    /etc/cron.{hourly,daily,weekly,monthly}/cracklib-runtime     rPx,
-    /etc/cron.{hourly,daily,weekly,monthly}/etckeeper            rPx,
-
-    #/etc/cron.{hourly,daily,weekly,monthly}/opera-browser                     rPUx,
-    #/etc/cron.{hourly,daily,weekly,monthly}/google-chrome{,-beta,-unstable}   rPUx,
-    #/opt/google/chrome{,-beta,-unstable}/cron/google-chrome{,-beta,-unstable} rPUx,
-    #/opt/brave.com/brave/cron/brave-browser{,-beta,-dev}                      rPUx,
-    #/opt/brave.com/brave{,-beta,-dev}/cron/brave-browser{,-beta,-dev}         rPUx,
-
-    # file_inherit
-    owner /tmp/#[0-9]*[0-9] rw,
-
-    include if exists <local/cron_run-parts>
-  }
+        @{PROC}/1/limits r,
 
   include if exists <local/cron>
 }

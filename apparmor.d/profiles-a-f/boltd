@@ -7,8 +7,9 @@ abi <abi/3.0>,
 include <tunables/global>
 
 @{exec_path} = @{libexec}/boltd
-profile boltd @{exec_path} {
+profile boltd @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/dbus-strict>
   include <abstractions/nameservice-strict>
 
   capability net_admin,
@@ -21,6 +22,7 @@ profile boltd @{exec_path} {
 
   owner @{run}/boltd/{,**} rw,
 
+  @{run}/systemd/journal/socket w,
   @{run}/udev/data/+thunderbolt:* r,
 
   @{sys}/bus/ r,
@@ -32,10 +34,10 @@ profile boltd @{exec_path} {
   @{sys}/devices/pci[0-9]*/**/domain[0-9]*/**/ r,
   @{sys}/devices/pci[0-9]*/**/domain[0-9]*/**/{authorized,generation} r,
   @{sys}/devices/pci[0-9]*/**/domain[0-9]*/**/{uevent,unique_id} r,
+  @{sys}/devices/pci[0-9]*/**/domain[0-9]*/**/{vendor,device}_name r,
   @{sys}/devices/pci[0-9]*/**/domain[0-9]*/iommu_dma_protection r,
   @{sys}/devices/platform/**/uevent r,
-  @{sys}/devices/virtual/dmi/id/product_name r,
-  @{sys}/devices/virtual/dmi/id/sys_vendor r,
+  @{sys}/devices/virtual/dmi/id/{sys_vendor,product_version,product_name} r,
 
   include if exists <local/boltd>
 }

@@ -1,0 +1,20 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Jeroen Rijken
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /pause
+profile kubernetes-pause @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+
+  signal (receive) set=kill,
+
+  ptrace (readby) peer={k3s,ps},
+
+  @{exec_path} mr,
+
+  include if exists <local/kubernetes-pause>
+}

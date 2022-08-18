@@ -1,0 +1,29 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/install-catalog
+profile install-catalog @{exec_path} {
+  include <abstractions/base>
+
+  capability dac_read_search,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/{,ba}sh   rix,
+  /{usr/,}bin/basename  rix,
+  /{usr/,}bin/grep      rix,
+  /{usr/,}bin/mv        rix,
+  /{usr/,}bin/rm        rix,
+  /{usr/,}bin/sed       rix,
+
+  /etc/sgml/catalog{,.new} rw,
+  /etc/sgml/sgml-docbook.cat{,.new} rw,
+  /etc/sgml/sgml-ent.cat{,.new} rw,
+
+  include if exists <local/install-catalog>
+}
