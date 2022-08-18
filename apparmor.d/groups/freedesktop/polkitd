@@ -1,6 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2018-2021 Mikhail Morfikov
-#               2021 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -11,25 +11,44 @@ include <tunables/global>
 @{exec_path} += @{libexec}/polkitd
 profile polkitd @{exec_path} {
   include <abstractions/base>
+  include <abstractions/dbus-strict>
   include <abstractions/nameservice-strict>
 
-  capability setuid,
   capability setgid,
-  capability sys_ptrace,
+  capability setuid,
   capability sys_nice,
+  capability sys_ptrace,
   audit deny capability net_admin,
 
   ptrace (read),
 
-  @{exec_path} mr,
+  dbus (send) bus=system path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={GetConnectionUnixProcessID,GetConnectionUnixUser,RequestName}
+       peer=(name=org.freedesktop.DBus),
 
-  @{PROC}/@{pids}/stat r,
-  @{PROC}/@{pids}/cmdline r,
-  @{PROC}/@{pids}/task/@{tid}/stat r,
-  @{PROC}/@{pids}/cgroup r,
-  @{PROC}/sys/kernel/osrelease r,
-  @{PROC}/1/environ r,
-  @{PROC}/cmdline r,
+  dbus (send) bus=system path=/org/freedesktop/PolicyKit[0-9]{,/**}
+       interface=org.freedesktop.PolicyKit[0-9]{,.**}
+       peer=(name="{org.freedesktop.DBus,:*}"), # all members
+
+  dbus (receive) bus=system path=/org/freedesktop/PolicyKit[0-9]/Authority
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=:*),
+
+  dbus (send) bus=system path=/org/gnome/PolicyKit[0-9]/AuthenticationAgent
+       interface=org.freedesktop.PolicyKit[0-9].AuthenticationAgent
+       peer=(name=:*), # all members
+
+  dbus (receive) bus=system path=/org/freedesktop/PolicyKit[0-9]/Authority
+       interface=org.freedesktop.PolicyKit[0-9].Authority
+       member={EnumerateActions,CheckAuthorization,CancelCheckAuthorization,RegisterAuthenticationAgent,UnregisterAuthenticationAgent,AuthenticationAgentResponse2}
+       peer=(name=:*),
+
+  dbus (bind) bus=system
+       name=org.freedesktop.PolicyKit[0-9],
+
+  @{exec_path} mr,
 
   /etc/machine-id r,
 
@@ -54,29 +73,16 @@ profile polkitd @{exec_path} {
   @{run}/systemd/sessions/* r,
   @{run}/systemd/users/@{uid} r,
 
+  @{PROC}/@{pids}/cgroup r,
+  @{PROC}/@{pids}/cmdline r,
+  @{PROC}/@{pids}/stat r,
+  @{PROC}/@{pids}/task/@{tid}/stat r,
+  @{PROC}/1/environ r,
+  @{PROC}/cmdline r,
+  @{PROC}/sys/kernel/osrelease r,
+
   # Silencer
   deny /.cache/ rw,
-
-  # DBus
-  dbus send
-    bus="system" path="/org/freedesktop/DBus" interface="org.freedesktop.DBus" member="{GetConnectionUnixProcessID,GetConnectionUnixUser,AddMatch,RemoveMatch,Hello,RequestName}" peer=(name="org.freedesktop.DBus"),
-
-  dbus receive
-    bus="system" path="/org/freedesktop/PolicyKit1/Authority" interface="org.freedesktop.DBus.Properties" member="GetAll" peer=(name=":*"),
-
-  dbus send
-    bus="system" path="/org/freedesktop/PolicyKit1{,/**}" interface="org.freedesktop.PolicyKit1{,.**}" peer=(name="{org.freedesktop.DBus,:*}"),
-
-  dbus send
-    bus="system" path="/org/gnome/PolicyKit1/AuthenticationAgent" interface="org.freedesktop.PolicyKit1.AuthenticationAgent" peer=(name=":*"),
-
-  dbus receive
-    bus="system" path="/org/freedesktop/PolicyKit1/Authority" interface="org.freedesktop.PolicyKit1.Authority" member="{EnumerateActions,CheckAuthorization,CancelCheckAuthorization,RegisterAuthenticationAgent,AuthenticationAgentResponse2}" peer=(name=":*"),
-
-  dbus bind
-    bus="system" name="org.freedesktop.PolicyKit1",
-
-  @{run}/dbus/system_bus_socket rw,
 
   include if exists <local/polkitd>
 }
