@@ -10,6 +10,7 @@ include <tunables/global>
 profile engrampa @{exec_path} {
   include <abstractions/base>
   include <abstractions/dconf-write>
+  include <abstractions/X-strict>
   include <abstractions/gtk>
   include <abstractions/fonts>
   include <abstractions/fontconfig-cache-read>
@@ -17,6 +18,47 @@ profile engrampa @{exec_path} {
   include <abstractions/nameservice-strict>
   include <abstractions/user-download-strict>
   include <abstractions/thumbnails-cache-read>
+  include <abstractions/dbus-session-strict>
+  include <abstractions/dbus-accessibility-strict>
+  include <abstractions/dbus-gtk>
+  include <abstractions/ibus>
+
+  unix (send receive connect) type=stream peer=(addr=@/tmp/.X11-unix/*),
+
+  dbus (send) bus=session path=/ca/desrt/dconf/Writer/user
+       interface=ca.desrt.dconf.Writer
+       member={Change,Notify}
+       peer=(name=ca.desrt.dconf),
+
+  dbus (send) bus=session path=/org/gtk/Private/RemoteVolumeMonitor
+       interface=org.gtk.Private.RemoteVolumeMonitor
+       member={IsSupported,List}
+       peer=(name=:*),
+ 
+  dbus (send) bus=accessibility path=/org/a11y/atspi/accessible/root
+       interface=org.a11y.atspi.Socket
+       member=Embed
+       peer=(name=org.a11y.atspi.Registry),
+
+  dbus (receive) bus=accessibility path=/org/a11y/atspi/accessible/root
+       interface=org.freedesktop.DBus.Properties
+       member=Set
+       peer=(name=:*),
+
+  dbus (send) bus=session path=/org/gtk/vfs/mounttracker
+       interface=org.gtk.vfs.MountTracker
+       member={ListMounts2,LookupMount}
+       peer=(name=:*),
+ 
+  dbus (receive) bus=session path=/org/gtk/vfs/mounttracker
+       interface=org.gtk.vfs.MountTracker
+       member=Mounted
+       peer=(name=:*),
+
+  dbus (send) bus=session path=/org/gtk/vfs/Daemon
+       interface=org.gtk.vfs.Daemon
+       member=GetConnection
+       peer=(name=:*),
 
   @{exec_path} mr,
 
@@ -69,9 +111,18 @@ profile engrampa @{exec_path} {
   /usr/share/**.desktop r,
   /usr/share/**/icons/**.png r,
 
+  /etc/magic r,
+
   /usr/share/glib-2.0/schemas/gschemas.compiled r,
 
-  /etc/magic r,
+  # gnome-tiny
+  @{run}/mount/utab r,
+
+  # Ubuntu
+  /etc/gnome/*.list r,
+  /etc/xfce4/*.list r,
+  /usr/share/xfce4/applications/{,*.list} r,
+  /usr/share/xubuntu/applications/{,*.list} r,
 
   owner @{PROC}/@{pid}/cgroup r,
   owner @{PROC}/@{pid}/fd/ r,
@@ -83,12 +134,12 @@ profile engrampa @{exec_path} {
   # Allowed apps to open
   /{usr/,}bin/engrampa  rPx,
   /{usr/,}bin/geany     rPx,
-  /{usr/,}bin/viewnior rPUx,
+  /{usr/,}bin/viewnior  rPUx,
   /{usr/,}bin/spacefm   rPx,
+  /{usr/,}bin/ristretto rPUx,
 
   # file_inherit
   owner /dev/tty[0-9]* rw,
-
 
   profile open {
     include <abstractions/base>
@@ -109,12 +160,13 @@ profile engrampa @{exec_path} {
     # Allowed apps to open
     /{usr/,}bin/engrampa  rPx,
     /{usr/,}bin/geany     rPx,
-    /{usr/,}bin/viewnior rPUx,
+    /{usr/,}bin/viewnior  rPUx,
     /{usr/,}bin/spacefm   rPx,
 
     # file_inherit
     owner @{HOME}/.xsession-errors w,
 
+    include if exists <local/engrampa_open>
   }
 
   include if exists <local/engrampa>
