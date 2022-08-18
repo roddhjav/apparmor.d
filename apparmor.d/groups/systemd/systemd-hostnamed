@@ -1,6 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2018-2021 Mikhail Morfikov
-#               2021 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2018-2022 Mikhail Morfikov
+# Copyright (C) 2021-2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -10,14 +10,29 @@ include <tunables/global>
 @{exec_path} = /{usr/,}lib/systemd/systemd-hostnamed
 profile systemd-hostnamed @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/dbus-strict>
   include <abstractions/systemd-common>
 
-  # To set a hostname
-  capability sys_admin,
+  capability sys_admin,  # To set a hostname
+
+  dbus send bus=system path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={RequestName,ReleaseName},
+
+  dbus receive bus=system path=/org/freedesktop/hostname[0-9]
+       interface=org.freedesktop.DBus.Properties
+       member={Get,GetAll},
+
+  dbus bind bus=system 
+       name=org.freedesktop.hostname[0-9],
 
   @{exec_path} mr,
 
+  @{run}/systemd/notify rw,
+  @{run}/udev/data/+dmi:id r,
+
   @{sys}/devices/virtual/dmi/id/bios_vendor r,
+  @{sys}/devices/virtual/dmi/id/bios_version r,
   @{sys}/devices/virtual/dmi/id/board_vendor r,
   @{sys}/devices/virtual/dmi/id/chassis_type r,
   @{sys}/devices/virtual/dmi/id/product_name r,
@@ -25,7 +40,6 @@ profile systemd-hostnamed @{exec_path} flags=(attach_disconnected) {
   @{sys}/devices/virtual/dmi/id/sys_vendor r,
   @{sys}/devices/virtual/dmi/id/uevent r,
 
-  @{run}/udev/data/+dmi:id r,
   @{sys}/firmware/dmi/entries/*/raw r,
 
   /etc/.#hostname* rw,
@@ -34,4 +48,5 @@ profile systemd-hostnamed @{exec_path} flags=(attach_disconnected) {
 
   @{run}/udev/data/+dmi:id r,
 
+  include if exists <local/systemd-hostnamed>
 }

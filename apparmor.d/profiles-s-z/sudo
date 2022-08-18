@@ -1,5 +1,5 @@
 # apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2019-2021 Mikhail Morfikov
+# Copyright (C) 2019-2022 Mikhail Morfikov
 # Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
@@ -7,13 +7,13 @@ abi <abi/3.0>,
 
 include <tunables/global>
 
-@{PATH} = /usr/local/sbin /usr/local/bin /usr/sbin /usr/bin /sbin /bin
-
 @{exec_path} = /{usr/,}bin/sudo
 profile sudo @{exec_path} {
   include <abstractions/base>
+  include <abstractions/app-launcher-root>
   include <abstractions/authentication>
   include <abstractions/consoles>
+  include <abstractions/dbus-strict>
   include <abstractions/nameservice-strict>
   include <abstractions/wutmp>
 # include <pam/mappings>
@@ -29,60 +29,61 @@ profile sudo @{exec_path} {
   capability sys_ptrace,
   capability sys_resource,
 
+  network inet dgram,
+  network inet6 dgram,
   network netlink raw,   # PAM
-  # DNS query?
-#  network inet dgram,
-#  network inet6 dgram,
 
   ptrace (read),
-  signal,
+
+  signal (send) peer=unconfined,
   signal (send) set=(cont,hup) peer=su,
+  signal (send) set=winch peer=apt,
+
+  dbus send bus=system path=/org/freedesktop/login[0-9]
+       interface=org.freedesktop.login[0-9].Manager
+       member=CreateSession
+       peer=(name=org.freedesktop.login[0-9]),
 
   @{exec_path} mr,
-  @{libexec}/sudo/** mr,
 
-  # Shells to use
-  /{usr/,}bin/{,b,d,rb}ash rpux,
-  /{usr/,}bin/{c,k,tc,z}sh rpux,
+  /run/ r,
 
-  @{PATH}/[a-z0-9]*                   rPUx,
-  /{usr/,}lib/cockpit/cockpit-askpass rPUx,
-  /{usr/,}lib/molly-guard/molly-guard rPx,
+  @{libexec}/sudo/**                   mr,
+  /{usr/,}bin/{,b,d,rb}ash             rUx,
+  /{usr/,}bin/{c,k,tc,z}sh             rUx,
+  /{usr/,}lib/cockpit/cockpit-askpass  rPx,
+  /{usr/,}lib/molly-guard/molly-guard  rPx,
 
+  /etc/default/locale r,
   /etc/environment r,
   /etc/machine-id r,
   /etc/security/limits.d/{,*} r,
   /etc/sudo.conf r,
   /etc/sudoers r,
   /etc/sudoers.d/{,*} r,
-  /etc/default/locale r,
 
-  /var/log/sudo.log wk,
+        /var/log/sudo.log wk,
+  owner /var/lib/sudo/lectured/* rw,
+
+  owner @{HOME}/.sudo_as_admin_successful rw,
+  owner @{HOME}/.xsession-errors w,
 
   # For timestampdir
   owner @{run}/sudo/ rw,
   owner @{run}/sudo/ts/ rw,
   owner @{run}/sudo/ts/* rwk,
         @{run}/faillock/{,*} rwk,
+        @{run}/resolvconf/resolv.conf r,
 
+  @{PROC}/@{pids}/cgroup r,
   @{PROC}/@{pids}/fd/ r,
   @{PROC}/@{pids}/stat r,
   @{PROC}/1/limits r,
+  @{PROC}/sys/kernel/seccomp/actions_avail r,
 
-  # File Inherit
   owner /dev/tty[0-9]* rw,
-  owner @{HOME}/.xsession-errors w,
-
-  owner /var/lib/sudo/lectured/* rw,
-
-  owner @{HOME}/.sudo_as_admin_successful rw,
-
-  @{run}/systemd/userdb/ r,
-  @{run}/systemd/userdb/io.systemd.DynamicUser rw,
-  @{run}/resolvconf/resolv.conf r,
-
-  /dev/ r,    # interactive login
-  /dev/ptmx rw,
+        /dev/ r,    # interactive login
+        /dev/ptmx rw,
 
   deny @{user_share_dirs}/gvfs-metadata/* r,
 

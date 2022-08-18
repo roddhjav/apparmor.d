@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2019-2021 Mikhail Morfikov
+# Copyright (C) 2019-2022 Mikhail Morfikov
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -9,76 +10,57 @@ include <tunables/global>
 @{exec_path} = /{usr/,}bin/su
 profile su @{exec_path} {
   include <abstractions/base>
+  include <abstractions/app-launcher-root>
   include <abstractions/authentication>
   include <abstractions/consoles>
+  include <abstractions/dbus-strict>
   include <abstractions/nameservice-strict>
   include <abstractions/wutmp>
 # include <pam/mappings>
 
   capability audit_write,
+  capability chown,  # pseudo-terminal
+  capability dac_read_search,
   capability setgid,
   capability setuid,
-  capability dac_read_search,
   capability sys_resource,
+
   # No clear purpose, deny until needed
-  deny capability net_admin,
-  #audit deny capability net_bind_service,
+  audit deny capability net_admin,
+  audit deny capability net_bind_service,
 
   signal (send)    set=(term,kill),
   signal (receive) set=(int,quit,term),
   signal (receive) set=(cont,hup)       peer=sudo,
 
-  # unknown, needs to be cleared up; TODO
+  unix (bind) type=dgram,
+
   network netlink raw,
+
+  dbus (send) bus=system path=/org/freedesktop/login[0-9]
+    interface=org.freedesktop.login[0-9].Manager
+    member={CreateSession,ReleaseSession},
 
   @{exec_path} mr,
 
-  # Shells to use
-  /{usr/,}bin/{,b,d,rb}ash rpux,
-  /{usr/,}bin/{c,k,tc,z}sh rpux,
-
-  # Fake shells to politely refuse a login
-  #/{usr/,}{s,}bin/nologin rpux,
+  /{usr/,}bin/{,b,d,rb}ash  rUx,
+  /{usr/,}bin/{c,k,tc,z}sh  rUx,
+  /{usr/,}{s,}bin/nologin   rPx,
 
   /etc/default/locale r,
   /etc/environment r,
   /etc/security/limits.d/ r,
   /etc/shells r,
 
-        @{PROC}/1/limits r,
   owner @{PROC}/@{pids}/loginuid r,
   owner @{PROC}/@{pids}/cgroup r,
   owner @{PROC}/@{pids}/mountinfo r,
-
-  # For pam_securetty
-  @{PROC}/cmdline r,
+        @{PROC}/1/limits r,
+        @{PROC}/cmdline r,
+  
   @{sys}/devices/virtual/tty/console/active r,
 
-  # pseudo-terminal
-  capability chown,
-
   /dev/{,pts/}ptmx rw,
-
-  @{run}/dbus/system_bus_socket rw,
-  @{run}/systemd/userdb/ r,
-  @{run}/systemd/userdb/io.systemd.Machine rw,
-  @{run}/systemd/userdb/io.systemd.DynamicUser rw,
-
-  dbus (send)
-     bus=system
-     path=/org/freedesktop/DBus
-     interface=org.freedesktop.DBus
-     member=Hello
-     peer=(name=org.freedesktop.DBus),
-
-  dbus (send)
-    bus=system
-    path=/org/freedesktop/login[0-9]
-    interface=org.freedesktop.login[0-9].Manager
-    member={CreateSession,ReleaseSession},
-
-  unix (bind) type=dgram,
-
   /dev/tty[0-9]* rw,
 
   include if exists <local/su>

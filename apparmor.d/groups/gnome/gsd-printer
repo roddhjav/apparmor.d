@@ -9,9 +9,21 @@ include <tunables/global>
 @{exec_path} = @{libexec}/gsd-printer
 profile gsd-printer @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/dbus-session-strict>
+  include <abstractions/dbus-strict>
 
   signal (receive) set=(term, hup) peer=gdm*,
   signal (receive) set=(hup) peer=gsd-print-notifications,
+
+  dbus send bus=system path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={ReleaseName,RequestName},
+
+  dbus bind bus=system
+       name=com.redhat.NewPrinterNotification,
+
+  dbus bind bus=system
+       name=com.redhat.PrinterDriversInstaller,
 
   @{exec_path} mr,
 

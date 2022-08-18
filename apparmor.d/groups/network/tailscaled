@@ -15,6 +15,7 @@ profile tailscaled @{exec_path} {
   capability dac_read_search,
   capability mknod,
   capability net_admin,
+  capability net_raw,
   capability sys_ptrace,
 
   network inet dgram,
@@ -30,13 +31,18 @@ profile tailscaled @{exec_path} {
   /{usr/,}bin/ip                     rix,
   /{usr/,}{s,}bin/xtables-nft-multi  rix,
 
-  /{usr/,}bin/systemctl  rPx -> child-systemctl,
+  /{usr/,}bin/systemctl  rCx -> systemctl,
 
   /etc/iproute2/rt_tables r,
+
+  /etc/resolv.*.conf rw,
+  /etc/resolv.conf rw,
+  /etc/resolv.conf.*.tmp rw,
 
   owner /var/lib/tailscale/{,**} rw,
   owner @{run}/tailscale/{,**} rw,
 
+  @{sys}/devices/virtual/dmi/id/{bios_vendor,product_name} r,
   @{sys}/kernel/mm/transparent_hugepage/hpage_pmd_size r,
 
   @{PROC}/ r,
@@ -53,6 +59,22 @@ profile tailscaled @{exec_path} {
   @{PROC}/sys/net/{,**} r,
 
   /dev/net/tun rw,
+
+  profile systemctl {
+    include <abstractions/base>
+
+    capability mknod,
+    capability net_admin,
+  
+    network netlink raw,
+
+    ptrace (read),
+
+    /{usr/,}bin/systemctl mr,
+
+    /dev/net/tun rw,
+
+  }
 
   include if exists <local/tailscaled>
 }

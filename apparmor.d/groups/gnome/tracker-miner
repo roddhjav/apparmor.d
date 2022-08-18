@@ -9,20 +9,25 @@ include <tunables/global>
 @{exec_path} = @{libexec}/tracker-miner-fs-{,control-}3
 profile tracker-miner @{exec_path} {
   include <abstractions/base>
-  include <abstractions/dbus-session-strict>  # TODO: FIXME: See if we keep them like this.
-  include <abstractions/dconf>
+  include <abstractions/dbus-session-strict>
+  include <abstractions/dbus-strict>
+  include <abstractions/dconf-write>
   include <abstractions/disks-read>
+  include <abstractions/freedesktop.org>
   include <abstractions/nameservice-strict>
   include <abstractions/private-files-strict>
   include <abstractions/private-files>
 
+  dbus send bus=system path=/org/freedesktop/UPower{,/devices/DisplayDevice}
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll,
+
   @{exec_path} mr,
 
-  /usr/share/applications/{,mimeinfo.cache,*.list} r,
   /usr/share/dconf/profile/gdm r,
   /usr/share/gdm/greeter/applications/{,mimeinfo.cache,*.list} r,
   /usr/share/glib-2.0/schemas/gschemas.compiled r,
-  /usr/share/mime/mime.cache r,
+  /usr/share/gvfs/remote-volume-monitors/{,*.monitor} r,
   /usr/share/tracker3-miners/{,**} r,
   /usr/share/tracker3/{,**} r,
   /usr/share/ubuntu/applications/ r,
@@ -40,11 +45,9 @@ profile tracker-miner @{exec_path} {
 
   # Allow to search user files
   owner @{HOME}/{,**} r,
-  owner @{MOUNTS}/*/{,**} r,
+  owner @{MOUNTS}/{,**} r,
   owner /tmp/*/{,**} r,
 
-  owner @{user_share_dirs}/{applications/,mime/mime.cache} r,
-  owner @{user_config_dirs}/user-dirs.dirs r,
   owner @{user_config_dirs}/tracker3/{,**} rwk,
   owner @{user_cache_dirs}/tracker3/files/{,**} rwk,
 
@@ -52,8 +55,6 @@ profile tracker-miner @{exec_path} {
   owner @{PROC}/@{pid}/mounts r,
         @{PROC}/sys/fs/inotify/max_user_watches r,
 
-  owner @{run}/user/@{uid}/dconf/ rw,
-  owner @{run}/user/@{uid}/dconf/user rw,
         @{run}/blkid/blkid.tab r,
 
   @{run}/mount/utab r,

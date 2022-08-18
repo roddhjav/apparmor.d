@@ -10,6 +10,8 @@ include <tunables/global>
 profile gdm-session-worker @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/authentication>
+  include <abstractions/dbus-session-strict>
+  include <abstractions/dbus-strict>
   include <abstractions/nameservice-strict>
 
   capability audit_write,
@@ -39,12 +41,24 @@ profile gdm-session-worker @{exec_path} flags=(attach_disconnected) {
 
   network netlink raw,
 
+  dbus (send,receive) bus=system path=/org/freedesktop/Accounts{,/User[0-9]*}
+       interface=org.freedesktop.{DBus.Properties,Accounts*}
+       member={GetAll,FindUserByName,SetLanguage,Changed,PropertiesChanged},
+
+  dbus send bus=system path=/org/freedesktop/login[0-9]
+       interface=org.freedesktop.login[0-9].Manager
+       member={CreateSession,ReleaseSession},
+
   @{exec_path} mrix,
 
   /{usr/,}bin/gnome-keyring-daemon        rPx,
   @{libexec}/gdm-wayland-session          rPx,
   @{libexec}/gdm-x-session                rPx,
   /etc/gdm{3,}/{Pre,Post}Session/Default  rix,
+  /etc/gdm{3,}/PrimeOff/Default           rix,
+
+  /usr/share/gdm/gdm.schemas r,
+  /usr/share/wayland-sessions/*.desktop r,
 
   /etc/default/locale r,
   /etc/environment r,
@@ -56,21 +70,20 @@ profile gdm-session-worker @{exec_path} flags=(attach_disconnected) {
   /etc/security/limits.d/{,*.conf} r,
   /etc/shells r,
 
-  /usr/share/gdm/gdm.schemas r,
-  /usr/share/wayland-sessions/*.desktop r,
+  owner @{run}/user/@{uid}/keyring/control rw,
 
   @{run}/faillock/[a-zA-z0-9]* rwk,
   @{run}/gdm/custom.conf r,
-  @{run}/systemd/sessions/[0-9]*.ref rw,
+  @{run}/systemd/sessions/* r,
+  @{run}/systemd/sessions/*.ref rw,
   @{run}/systemd/users/@{uid} r,
   @{run}/utmp rwk,
-
-  @{run}/systemd/userdb/io.systemd.DynamicUser w,
 
   owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/loginuid rw,
   owner @{PROC}/@{pid}/task/@{tid}/attr/exec rw,
   owner @{PROC}/@{pid}/uid_map r,
+        @{PROC}/@{pids}/cgroup r,
         @{PROC}/1/limits r,
         @{PROC}/keys r,
 

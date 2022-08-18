@@ -23,36 +23,35 @@ profile ntfs-3g @{exec_path} {
 
   @{exec_path} mr,
 
-        @{PROC}/@{pids}/task/@{tid}/status r,
-  owner @{PROC}/@{pid}/mounts r,
-        @{PROC}/@{pids}/mountinfo r,
-        @{PROC}/swaps r,
-
-  /dev/fuse rw,
+  /{usr/,}bin/kmod rPx,  # To load the fuse kernel module
 
   # Mount points
+  @{MOUNTDIRS}/ r,
+  @{MOUNTS}/ r,
   @{MOUNTS}/*/ r,
-  @{MOUNTS}/*/*/ r,
 
   # Allow to mount ntfs disks only under the /media/, /run/media, and /mnt/ dirs
+  mount fstype=fuseblk /dev/{s,v}d[a-z]*[0-9]* -> @{MOUNTDIRS},
+  mount fstype=fuseblk /dev/{s,v}d[a-z]*[0-9]* -> @{MOUNTS}/,
   mount fstype=fuseblk /dev/{s,v}d[a-z]*[0-9]* -> @{MOUNTS}/*/,
-  mount fstype=fuseblk /dev/{s,v}d[a-z]*[0-9]* -> @{MOUNTS}/*/*/,
-  mount fstype=fuseblk /dev/{s,v}d[a-z]*[0-9]* -> /mnt/,
-  mount fstype=fuseblk /dev/{s,v}d[a-z]*[0-9]* -> /mnt/*/,
+  mount fstype=fuseblk /dev/mmcblk[0-9]*p[0-9]* -> @{MOUNTS}/,
   mount fstype=fuseblk /dev/mmcblk[0-9]*p[0-9]* -> @{MOUNTS}/*/,
-  mount fstype=fuseblk /dev/mmcblk[0-9]*p[0-9]* -> @{MOUNTS}/*/*/,
 
   # Allow to mount encrypted partition
+  mount fstype=fuseblk /dev/dm-[0-9]* -> @{MOUNTDIRS}/,
+  mount fstype=fuseblk /dev/dm-[0-9]* -> @{MOUNTS}/,
   mount fstype=fuseblk /dev/dm-[0-9]* -> @{MOUNTS}/*/,
-  mount fstype=fuseblk /dev/dm-[0-9]* -> @{MOUNTS}/*/*/,
-  mount fstype=fuseblk /dev/dm-[0-9]* -> /mnt/,
-  mount fstype=fuseblk /dev/dm-[0-9]* -> /mnt/*/,
 
+  umount @{MOUNTDIRS}/,
+  umount @{MOUNTS}/,
   umount @{MOUNTS}/*/,
-  umount /mnt/*/,
 
-  # kmod is used to load the fuse kernel module
-  /{usr/,}bin/kmod rPx,
+        @{PROC}/@{pids}/mountinfo r,
+        @{PROC}/@{pids}/task/@{tid}/status r,
+        @{PROC}/swaps r,
+  owner @{PROC}/@{pid}/mounts r,
+
+  /dev/fuse rw,
 
   include if exists <local/ntfs-3g>
 }

@@ -11,7 +11,8 @@
 
 ## Description 
 
-A set of over 1000 AppArmor profiles which aims is to confine most of Linux base applications and processes.
+A set of over 1200 AppArmor profiles which aims is to confine most of Linux base
+applications and processes.
 
 **Goals & Purpose**
 - Support all distributions that support AppArmor:
@@ -47,6 +48,8 @@ This is fundamentally different from how AppArmor is used on Linux server as it 
 * An `apparmor` based linux distribution.
 * Base profiles and abstractions shipped with AppArmor are supposed to be
   installed.
+* Go (build dependency only)
+* rsync (build dependency only)
 
 **Archlinux**
 
@@ -58,17 +61,18 @@ sudo pacman -U apparmor.d-*.pkg.tar.zst \
   --overwrite etc/apparmor.d/tunables/xdg-user-dirs
 ```
 
-> Note: for a first install, it is recommanded to install all profiles in complain mode. See [Complain mode](#troubleshooting)
+> **Warning**: for a first install, it is recommanded to install all profiles in complain mode. See [Complain mode](#troubleshooting)
 
 **Debian**
 
 Build using standard Debian package build tools:
 ```sh
+sudo apt install apparmor-profiles build-essential config-package-dev debhelper golang-go rsync
 dpkg-buildpackage -b -d --no-sign
-sudo dpkg --install ../apparmor.d_*_all.deb
+sudo dpkg -i ../apparmor.d_*_all.deb
 ```
 
-> Note: for a first install, it is recommanded to install all profiles in complain mode. See [Complain mode](#troubleshooting)
+> **Warning**: for a first install, it is recommanded to install all profiles in complain mode. See [Complain mode](#troubleshooting)
 
 **Partial install**
 
@@ -131,7 +135,7 @@ DENIED  dnsmasq open /proc/cmdline comm=dnsmasq requested_mask=r denied_mask=r
 **AppArmor configuration**
 
 As they are a lot of rules, it is recommended to enable caching AppArmor profiles.
-In `/etc/apparmor/parser.conf`, uncomment `write-cache`.
+In `/etc/apparmor/parser.conf`, uncomment `write-cache` and `Optimize=compress-fast`.
 See [Speed up AppArmor Start] on the Arch Wiki for more information.
 
 
@@ -176,9 +180,9 @@ AppArmor log from `/var/log/audit/audit.log`. Then you can see the log with `aa-
 
 **System Recovery**
 
-Issue in some core profiles like the systemd tools, or the desktop environment
+Issue in some core profiles like the systemd suite, or the desktop environment
 can fully break your system. This should not happen a lot, but if it does here
-is the procces to recover your system on Archlinux:
+is the process to recover your system on Archlinux:
 1. Boot from a Archlinux live USB
 1. If you root partition is encryped, decrypt it: `cryptsetup open /dev/<your-disk-id> vg0`
 1. Mount your root partition: `mount /dev/<your-plain-disk-id> /mnt`
@@ -253,3 +257,4 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 [android_model]: https://arxiv.org/pdf/1904.05572
 [clipos]: https://clip-os.org/en/
 [Speed up AppArmor Start]: https://wiki.archlinux.org/title/AppArmor#Speed-up_AppArmor_start_by_caching_profiles
+[write xor execute]: https://en.wikipedia.org/wiki/W%5EX

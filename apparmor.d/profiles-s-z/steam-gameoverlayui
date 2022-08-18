@@ -1,0 +1,54 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{user_share_dirs}/Steam/ubuntu[0-9]*_{32,64}/gameoverlayui
+profile steam-gameoverlayui @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nvidia>
+  include <abstractions/fonts>
+
+  network inet stream,
+  network inet6 stream,
+
+  unix (receive) type=stream,
+
+  @{exec_path} mr,
+
+  @{user_share_dirs}/Steam/ubuntu[0-9]*_{32,64}/*.so*  mr,
+  @{user_share_dirs}/Steam/ubuntu[0-9]*_{32,64}/steam-runtime/{usr/,}lib/**.so*  mr,
+
+  /usr/share/fonts/{,**}  rk,  # ?
+
+  / r,
+  /home/ r,
+  /tmp/ r,
+
+  owner @{HOME}/ r,
+  owner @{HOME}/.steam/registry.vdf  rk,
+  owner @{HOME}/.steam/steam.pipe r,
+  owner @{user_share_dirs}/gvfs-metadata/{,*} r,
+  owner @{user_share_dirs}/Steam/{,**} r,
+  owner @{user_share_dirs}/Steam/config/DialogConfigOverlay*.vdf rw,
+  owner @{user_share_dirs}/Steam/public/url_list.txt rk,
+
+  owner @{run}/user/@{uid}/.mutter-Xwaylandauth.[0-9A-Z]* rw,
+
+  owner /dev/shm/u@{uid}-Shm_[0-9a-f]* rw,
+  owner /dev/shm/u@{uid}-ValveIPCSharedObj-* rwk,
+
+  owner /tmp/gameoverlayui.log* rw,
+  owner /tmp/steam_chrome_overlay_uid@{uid}_spid@{pids} rw,
+
+  @{sys}/ r,
+  @{sys}/devices/system/cpu/cpufreq/policy[0-9]*/cpuinfo_max_freq r,
+  @{sys}/kernel/ r,
+
+  @{PROC}/version r,
+
+  include if exists <local/steam-gameoverlayui>
+}

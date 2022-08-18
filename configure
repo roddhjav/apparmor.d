@@ -5,7 +5,7 @@
 
 set -eu
 
-DISTRIBUTION="$(lsb_release --id --short)"
+DISTRIBUTION="${DIST:-$(lsb_release --id --short)}"
 readonly DISTRIBUTION="${DISTRIBUTION,,}"
 readonly ROOT=.build
 
@@ -63,15 +63,13 @@ configure() {
 
 			;;
 
-		debian|ubuntu)
-			if [[ "$DISTRIBUTION" == "debian" ]]; then
-				_msg "$DISTRIBUTION does not have etc tunable."
-				sed -i -e '/etc/d' "$ROOT/apparmor.d/tunables/global"
-
+		debian|ubuntu|whonix)
+			if [[ "$DISTRIBUTION" != "ubuntu" ]]; then
 				_msg "$DISTRIBUTION does not support abi 3.0 yet."
 				find "$ROOT/apparmor.d" -type f -exec sed -e '/abi /d' -i {} \;
 
 				cp -a dists/debian/abstractions/* $ROOT/apparmor.d/abstractions
+				cp -a dists/debian/tunables/* $ROOT/apparmor.d/tunables
 			fi
 
 			_msg "Configure libexec."

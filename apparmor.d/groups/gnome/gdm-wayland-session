@@ -11,7 +11,8 @@ profile gdm-wayland-session @{exec_path} {
   include <abstractions/base>
   include <abstractions/bash>
   include <abstractions/consoles>
-  include <abstractions/dconf>
+  include <abstractions/dbus-strict>
+  include <abstractions/dconf-write>
   include <abstractions/nameservice-strict>
   include <abstractions/zsh>
 
@@ -20,20 +21,25 @@ profile gdm-wayland-session @{exec_path} {
   signal (send) set=(term) peer=dbus-daemon,
   signal (send) set=(term) peer=gnome-session-binary,
 
-  @{exec_path} mr,
+  dbus send bus=system path=/org/gnome/DisplayManager/Manager
+       interface=org.gnome.DisplayManager.Manager
+       member=RegisterDisplay,
 
-  # It can run hooks, how to handle them nicely? rCx? them mostly include if exist
+  @{exec_path} mr,
 
   /{usr/,}bin/{,ba,da}sh           rix,
   /{usr/,}bin/env                  rix,
+  /{usr/,}bin/gettext              rix,
   /{usr/,}bin/gnome-session        rix,
   /{usr/,}bin/grep                 rix,
   /{usr/,}bin/gsettings            rix,
+  /{usr/,}bin/head                 rix,
   /{usr/,}bin/locale               rix,
   /{usr/,}bin/locale-check         rix,
+  /{usr/,}bin/qmake                rix,
   /{usr/,}bin/sed                  rix,
+  /{usr/,}bin/sort                 rix,
   /{usr/,}bin/tty                  rix,
-  /{usr/,}bin/gettext              rix,
   /{usr/,}bin/zsh                  rix,
 
   /{usr/,}bin/dbus-daemon          rPx,
@@ -42,20 +48,20 @@ profile gdm-wayland-session @{exec_path} {
   /{usr/,}bin/flatpak             rPUx,
   @{libexec}/gnome-session-binary  rPx,
 
+  /{usr/,}bin/gettext.sh r,
   /usr/share/im-config/{,**} r,
 
   /etc/default/im-config r,
   /etc/gdm{3,}/custom.conf r,
   /etc/machine-id r,
   /etc/shells r,
+  /etc/X11/xinit/xinputrc r,
   /etc/X11/Xsession.d/*im-config_launch r,
 
   /usr/share/gdm/gdm.schemas r,
   /usr/share/glib-2.0/schemas/gschemas.compiled r,
 
   owner @{run}/user/@{uid}/bus rw,
-  owner @{run}/user/@{uid}/dconf/ rw,
-  owner @{run}/user/@{uid}/dconf/user rw,
         @{run}/gdm/custom.conf r,
 
   owner @{PROC}/@{pid}/fd/ r,

@@ -10,11 +10,16 @@ include <tunables/global>
 profile nautilus @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/app-launcher-user>
-  include <abstractions/dconf>
+  include <abstractions/dbus-strict>
+  include <abstractions/dconf-write>
   include <abstractions/gnome>
   include <abstractions/nameservice-strict>
   include <abstractions/openssl>
   include <abstractions/trash>
+
+  dbus send bus=system path=/org/freedesktop/hostname[0-9]
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll,
 
   @{exec_path} mr,
   /{usr/,}bin/{,ba,da}sh rix,
@@ -24,8 +29,9 @@ profile nautilus @{exec_path} flags=(attach_disconnected) {
   /usr/share/sounds/freedesktop/stereo/*.oga r,
   /usr/share/thumbnailers/{,**} r,
   /usr/share/tracker3/{,**} r,
+  /usr/share/ubuntu/applications/{,**} r,
 
-  owner @{user_share_dirs}/nautilus/{,**} rwk,
+  /var/lib/snapd/desktop/icons/{,**} r,
 
   # Full access to user's data
   / r,
@@ -42,11 +48,9 @@ profile nautilus @{exec_path} flags=(attach_disconnected) {
   deny /tmp/.* rw,
   deny /tmp/.*/{,**} rw,
 
-  owner @{run}/user/@{uid}/dconf/ rw,
-  owner @{run}/user/@{uid}/dconf/user rw,
+  owner @{user_share_dirs}/nautilus/{,**} rwk,
 
   @{run}/mount/utab r,
-  @{run}/systemd/userdb/ r,
 
   @{sys}/devices/**/hwmon/{,name,temp*,fan*} r,
   @{sys}/devices/**/hwmon/**/{,name,temp*,fan*} r,

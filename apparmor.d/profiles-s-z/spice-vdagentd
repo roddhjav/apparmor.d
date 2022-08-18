@@ -6,17 +6,24 @@ abi <abi/3.0>,
 
 include <tunables/global>
 
-@{exec_path} = /{usr/,}bin/spice-vdagentd
-profile spice-vdagentd @{exec_path} {
+@{exec_path} = /{usr/,}{s,}bin/spice-vdagentd
+profile spice-vdagentd @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/dbus-strict>
 
   capability sys_nice,
 
+  dbus receive bus=system path=/org/freedesktop/login[0-9]/session/_[0-9]*
+       interface=org.freedesktop.login[0-9].Session
+       member=Unlock,
+
   @{exec_path} mr,
 
+  owner @{run}/spice-vdagentd/spice-vdagent-sock r,
   owner @{run}/spice-vdagentd/spice-vdagentd.pid rw,
+        @{run}/systemd/journal/dev-log w,
         @{run}/systemd/seats/seat[0-9]* r,
-        @{run}/systemd/sessions/[0-9]* r,
+        @{run}/systemd/sessions/* r,
         @{run}/systemd/users/@{uid} r,
 
   @{PROC}/@{pids}/cgroup r,

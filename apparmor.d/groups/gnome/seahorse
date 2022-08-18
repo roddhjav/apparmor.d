@@ -9,10 +9,31 @@ include <tunables/global>
 @{exec_path} = /{usr/,}bin/seahorse
 profile seahorse @{exec_path} {
   include <abstractions/base>
-  include <abstractions/dconf>
+  include <abstractions/dbus-session-strict>
+  include <abstractions/dbus-strict>
+  include <abstractions/dconf-write>
   include <abstractions/gnome>
   include <abstractions/p11-kit>
   include <abstractions/ssl_certs>
+
+  dbus send bus=system path=/
+       interface=org.freedesktop.DBus.Peer
+       member=Ping
+       peer=(name=org.freedesktop.Avahi),
+
+  dbus send bus=system path=/
+       interface=org.freedesktop.Avahi.Server
+       member={GetAPIVersion,GetState,ServiceBrowserNew}
+       peer=(name=org.freedesktop.Avahi),
+
+  dbus send bus=system path=/Client[0-9]*/ServiceBrowser[0-9]*
+       interface=org.freedesktop.Avahi.ServiceBrowser
+       member=Free
+       peer=(name=org.freedesktop.Avahi),
+
+  dbus receive bus=system path=/Client[0-9]*/ServiceBrowser[0-9]*
+       interface=org.freedesktop.Avahi.ServiceBrowser
+       member={CacheExhausted,AllForNow},
 
   @{exec_path} mr,
 
@@ -21,12 +42,11 @@ profile seahorse @{exec_path} {
   /{usr/,}bin/gpgsm    rPx,
 
   /usr/share/glib-2.0/schemas/gschemas.compiled r,
-  
-  # Seahorse and SSH keys
-  owner @{HOME}/@{XDG_SSH_DIR}/{,**} r,
+  /usr/share/ubuntu/applications/ r,
 
-  owner @{run}/user/@{uid}/dconf/ rw,
-  owner @{run}/user/@{uid}/dconf/user rw,
+  /var/lib/snapd/desktop/icons/ r,
+
+  owner @{HOME}/@{XDG_SSH_DIR}/{,**} r,
 
   owner @{PROC}/@{pid}/fd/ r,
 

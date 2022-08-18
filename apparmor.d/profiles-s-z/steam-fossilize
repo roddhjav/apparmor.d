@@ -1,0 +1,44 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{user_share_dirs}/Steam/ubuntu[0-9]*_{32,64}/fossilize_replay
+profile steam-fossilize @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/dri-common>
+  include <abstractions/dri-enumerate>
+  include <abstractions/mesa>
+  include <abstractions/opencl-nvidia>
+  include <abstractions/vulkan>
+
+  @{exec_path} mr,
+
+  @{user_share_dirs}/Steam/ubuntu[0-9]*_{32,64}/*.so*  mr,
+
+  owner @{HOME}/.steam/steam.pipe r,
+
+  owner @{user_share_dirs}/Steam/steamapps/shadercache/[0-9]*/fozpipelinesv[0-9]*/{,*} rw,
+  owner @{user_share_dirs}/Steam/steamapps/shadercache/[0-9]*/mesa_shader_cache_sf/{,**} rwk,
+  owner @{user_share_dirs}/Steam/steamapps/shadercache/[0-9]*/nvidiav[0-9]*/GLCache/ rw,
+  owner @{user_share_dirs}/Steam/steamapps/shadercache/[0-9]*/nvidiav[0-9]*/GLCache/** rwk,
+
+  owner @{user_share_dirs}/gvfs-metadata/{,*} r,
+
+  owner @{run}/user/@{uid}/.mutter-Xwaylandauth.[0-9A-Z]* rw,
+
+  owner /dev/shm/fossilize-*-[0-9]*-[0-9]* rw,
+
+  @{sys}/devices/system/cpu/possible r,
+  @{sys}/devices/system/node/ r,
+  @{sys}/devices/system/node/node[0-9]*/cpumap r,
+
+        @{PROC}/@{pids}/statm r,
+        @{PROC}/pressure/io r,
+  owner @{PROC}/@{pid}/task/@{tid}/comm rw,
+
+  include if exists <local/steam-fossilize>
+}

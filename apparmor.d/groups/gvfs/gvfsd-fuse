@@ -1,6 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2021 Mikhail Morfikov
-#               2021 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2021-2022 Mikhail Morfikov
+# Copyright (C) 2021-2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -11,37 +11,40 @@ include <tunables/global>
 @{exec_path} += @{libexec}/gvfsd-fuse
 profile gvfsd-fuse @{exec_path} {
   include <abstractions/base>
+  include <abstractions/dbus-session-strict>
+
+  unix (send,receive) type=stream addr=none peer=(label=gvfsd-fuse//fusermount),
+
+  mount fstype={fuse,fuse.*} -> @{run}/user/@{uid}/gvfs/,
 
   @{exec_path} mr,
 
   /{usr/,}bin/fusermount{,3} rCx -> fusermount,
 
-  mount fstype={fuse,fuse.*} -> @{run}/user/@{uid}/gvfs/,
+  @{PROC}/sys/fs/pipe-max-size r,
 
   /dev/fuse rw,
-
-  @{PROC}/sys/fs/pipe-max-size r,
 
   profile fusermount {
     include <abstractions/base>
     include <abstractions/nameservice-strict>
 
-    # To mount anything:
-    capability sys_admin,
-
     capability dac_read_search,
+    capability sys_admin,  # To mount anything
 
-    /{usr/,}bin/fusermount{,3} mr,
+    unix (send,receive) type=stream addr=none peer=(label=gvfsd-fuse),
 
     mount fstype={fuse,fuse.*} -> @{run}/user/@{uid}/gvfs/,
     umount @{run}/user/@{uid}/**/,
 
+    /{usr/,}bin/fusermount{,3} mr,
+
     /etc/fuse.conf r,
     /etc/machine-id r,
 
-    /dev/fuse rw,
-
     @{PROC}/@{pid}/mounts r,
+
+    /dev/fuse rw,
 
   }
 

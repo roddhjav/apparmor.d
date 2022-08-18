@@ -9,7 +9,10 @@ include <tunables/global>
 @{exec_path} = @{libexec}/evolution-addressbook-factory
 profile evolution-addressbook-factory @{exec_path} {
   include <abstractions/base>
-  include <abstractions/dconf>
+  include <abstractions/dbus-network-manager-strict>
+  include <abstractions/dbus-session-strict>
+  include <abstractions/dbus-strict>
+  include <abstractions/dconf-write>
   include <abstractions/nameservice-strict>
   include <abstractions/ssl_certs>
   include <abstractions/p11-kit>
@@ -20,6 +23,22 @@ profile evolution-addressbook-factory @{exec_path} {
   network inet6 dgram,
   network netlink raw,
 
+  dbus send bus=system path=/org/freedesktop/NetworkManager
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll,
+
+  dbus send bus=system path=/org/freedesktop/locale[0-9]
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll,
+
+  dbus receive bus=system path=/org/freedesktop/NetworkManager
+       interface=org.freedesktop.NetworkManager
+       member={CheckPermissions,StateChanged},
+
+  dbus receive bus=system path=/org/freedesktop/NetworkManager
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged,
+
   @{exec_path} mr,
   @{exec_path}-subprocess rix,
 
@@ -27,9 +46,6 @@ profile evolution-addressbook-factory @{exec_path} {
 
   owner @{user_share_dirs}/evolution/{,**} rwk,
   owner @{user_cache_dirs}/evolution/addressbook/{,**} rwk,
-
-  owner @{run}/user/@{uid}/dconf/ rw,
-  owner @{run}/user/@{uid}/dconf/user rw,
 
   @{PROC}/sys/kernel/osrelease r,
   @{PROC}/cmdline r,

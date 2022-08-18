@@ -1,19 +1,22 @@
 # apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2019-2021 Mikhail Morfikov
-# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2019-2022 Mikhail Morfikov
+# Copyright (C) 2021-2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
 
 include <tunables/global>
 
-@{exec_path} = /{usr/,}bin/apt /{usr/,}bin/apt-get
+@{exec_path} = /{usr/,}bin/apt /{usr/,}bin/apt-get /{usr/,}{s,}bin/aptd
 profile apt @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/apt-common>
+  include <abstractions/dbus-strict>
   include <abstractions/consoles>
   include <abstractions/nameservice-strict>
   include <abstractions/ssl_certs>
+  include <abstractions/openssl>
+  include <abstractions/python>
 
   capability chown,
   capability dac_override,
@@ -24,15 +27,46 @@ profile apt @{exec_path} flags=(attach_disconnected) {
   capability net_admin,
   capability setgid,
   capability setuid,
+  capability sys_nice,
 
   signal (send) peer=apt-methods-*,
 
+  unix (receive, send) type=stream peer=(label=apt-esm-json-hook),
+
+  dbus (send, receive) bus=system path=/org/debian/apt{,/transaction/[0-9a-f]*}
+       interface=org.{debian.apt*,freedesktop.DBus.{Properties,Introspectable}},
+
+  dbus send bus=system path=/org/freedesktop/PackageKit
+       interface=org.freedesktop.{DBus.Introspectable,PackageKit}
+       member={StateHasChanged,Introspect}
+       peer=(name=org.freedesktop.PackageKit),
+
+  dbus send bus=system path=/org/freedesktop/login[0-9]
+       interface=org.freedesktop.login[0-9].Manager
+       member=Inhibit
+       peer=(name=org.freedesktop.login[0-9]),
+
+  dbus send bus=system path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus{,.Introspectable}
+       member={RequestName,GetConnectionUnixProcessID,Introspect}
+       peer=(name=org.freedesktop.DBus),
+
+  dbus send bus=system path=/org/freedesktop/PolicyKit1/Authority
+       interface=org.freedesktop.{DBus.Introspectable,PolicyKit1.Authority}
+       member={CheckAuthorization,Introspect},
+
+  dbus bind bus=system 
+       name= org.debian.apt,
+
   @{exec_path} mr,
+
+  /{usr/,}{s,}bin/ r,
 
   /{usr/,}bin/{,ba,da}sh rix,
   /{usr/,}bin/{,e}grep   rix,
   /{usr/,}bin/echo       rix,
   /{usr/,}bin/gdbus      rix,
+  /{usr/,}bin/ischroot   rix,
   /{usr/,}bin/test       rix,
   /{usr/,}bin/touch      rix,
 
@@ -45,59 +79,75 @@ profile apt @{exec_path} flags=(attach_disconnected) {
   /{usr/,}bin/apt-listchanges                 rPx,
   /{usr/,}bin/apt-show-versions               rPx,
   /{usr/,}bin/debtags                         rPx,
+  /{usr/,}bin/df                              rPx,
+  /{usr/,}bin/dmesg                           rPx,
   /{usr/,}bin/dpkg                            rPx,
   /{usr/,}bin/dpkg-source                     rcx -> dpkg-source,
   /{usr/,}bin/etckeeper                       rPx,
   /{usr/,}bin/ps                              rPx,
+  /{usr/,}bin/snap                           rPUx,
+  /{usr/,}lib/cnf-update-db                   rPx,
   /{usr/,}lib/needrestart/apt-pinvoke         rPx,
-  /{usr/,}lib/update-notifier/update-motd-updates-available rPx,
-  /usr/share/command-not-found/cnf-update-db  rPx,
-
-  # Methods to use to download packages from the net
-  /{usr/,}lib/apt/methods/*      rPx,
-
-  /var/lib/apt/lists/** rw,
-  /var/lib/apt/lists/lock rwk,
-  /var/lib/apt/extended_states{,.*} rw,
-
-  /var/log/apt/eipp.log.xz w,
-  /var/log/apt/{term,history}.log w,
+  @{libexec}/zsys-system-autosnapshot         rPx,
 
   # For building the source after the download process is finished (apt-get source --compile)
-  /{usr/,}bin/dpkg-buildpackage rPUx,
+  /{usr/,}bin/dpkg-buildpackage               rPUx,
+
+  # Methods to use to download packages from the net
+  /{usr/,}lib/apt/methods/*                   rPx,
+
+  # Ubuntu specificities
+  /{usr/,}lib/ubuntu-advantage/apt-esm-hook                  rPx,
+  /{usr/,}lib/ubuntu-advantage/apt-esm-json-hook             rPx,
+  /{usr/,}lib/update-notifier/update-motd-updates-available  rPx,
+  /usr/share/command-not-found/cnf-update-db                 rPx,
 
   # For editing the sources.list file
-  /etc/apt/sources.list rwk,
   /{usr/,}bin/sensible-editor rCx -> editor,
   /{usr/,}bin/vim.*           rCx -> editor,
 
   # For changelogs
-        /tmp/apt-changelog-*/ w,
-  owner /tmp/apt-changelog-*/.apt-acquire-privs-test.* rw,
-        /tmp/apt-changelog-*/*.changelog w,
-  /{usr/,}bin/sensible-pager    rCx -> pager,
+  /{usr/,}bin/sensible-pager  rCx -> pager,
 
-  /var/lib/dpkg/** r,
-  /var/lib/dpkg/lock{,-frontend} rwk,
+  /usr/share/xml/iso-codes/{,**} r,
 
-  owner @{PROC}/@{pid}/fd/ r,
-
-  /dev/ptmx rw,
-
-  /var/lib/dbus/machine-id r,
+  /etc/apt/sources.list rwk,
   /etc/machine-id r,
-
-        /tmp/ r,
-  owner /tmp/apt.conf.* rw,
-  owner /tmp/apt.data.* rw,
-  owner /tmp/apt-dpkg-install-*/ rw,
-  owner /tmp/apt-dpkg-install-*/[0-9]*-*.deb w,
+  /var/lib/dbus/machine-id r,
 
   /var/cache/apt/ r,
   /var/cache/apt/** rwk,
 
+  /var/crash/{,*.@{uid}.crash} rw,
+
+  /var/lib/apt/extended_states{,.*} rw,
+  /var/lib/apt/lists/** rw,
+  /var/lib/apt/lists/lock rwk,
+  /var/lib/apt/periodic/update-success-stamp rw,
+  /var/lib/dpkg/** r,
+  /var/lib/dpkg/lock{,-frontend} rwk,
+  /var/lib/update-notifier/dpkg-run-stamp rw,
+
+  /var/log/apt/{,**} rw,
+
   # For package building
   @{user_build_dirs}/** rwkl -> @{user_build_dirs}/**,
+
+        /tmp/ r,
+        /tmp/apt-changelog-*/ w,
+        /tmp/apt-changelog-*/*.changelog w,
+  owner /tmp/apt-changelog-*/.apt-acquire-privs-test.* rw,
+  owner /tmp/apt-dpkg-install-*/ rw,
+  owner /tmp/apt-dpkg-install-*/[0-9]*-*.deb w,
+  owner /tmp/apt.conf.* rw,
+  owner /tmp/apt.data.* rw,
+
+        @{PROC}/@{pids}/cmdline r,
+        @{PROC}/@{pids}/mountinfo r,
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/mounts r,
+
+  /dev/ptmx rw,
 
   @{run}/systemd/inhibit/[0-9]*.ref rw,
 
@@ -105,21 +155,20 @@ profile apt @{exec_path} flags=(attach_disconnected) {
     include <abstractions/base>
     include <abstractions/nameservice-strict>
 
-    /{usr/,}bin/sensible-editor mr,
-    /{usr/,}bin/vim.*           mrix,
-    /{usr/,}bin/{,ba,da}sh       rix,
-    /{usr/,}bin/which{,.debianutils}            rix,
-
-    owner @{HOME}/.selected_editor r,
+    /{usr/,}bin/{,ba,da}sh            rix,
+    /{usr/,}bin/sensible-editor      mr,
+    /{usr/,}bin/vim.*                mrix,
+    /{usr/,}bin/which{,.debianutils}  rix,
 
     /usr/share/vim/{,**} r,
-    /etc/vim/{,**} r,
-    owner @{HOME}/.viminfo{,.tmp} rw,
-
-    owner @{HOME}/.fzf/plugin/ r,
-    owner @{HOME}/.fzf/plugin/fzf.vim r,
 
     /etc/apt/sources.list rw,
+    /etc/vim/{,**} r,
+
+    owner @{HOME}/.viminfo{,.tmp} rw,
+    owner @{HOME}/.selected_editor r,
+    owner @{HOME}/.fzf/plugin/ r,
+    owner @{HOME}/.fzf/plugin/fzf.vim r,
 
   }
 
@@ -129,40 +178,37 @@ profile apt @{exec_path} flags=(attach_disconnected) {
 
     capability dac_read_search,
 
-    /{usr/,}bin/                r,
-    /{usr/,}bin/sensible-pager mr,
-    /{usr/,}bin/{,ba,da}sh    rix,
+    /{usr/,}bin/                      r,
+    /{usr/,}bin/{,ba,da}sh            rix,
+    /{usr/,}bin/less                  rix,
+    /{usr/,}bin/sensible-pager       mr,
+    /{usr/,}bin/which{,.debianutils}  rix,
 
-    /{usr/,}bin/which{,.debianutils}         rix,
-    /{usr/,}bin/less          rix,
+    /root/ r,  # For shell pwd
 
     owner @{HOME}/.less* rw,
 
     owner /tmp/apt-changelog-*/ r,
     owner /tmp/apt-changelog-*/*.changelog r,
 
-    # For shell pwd
-    /root/ r,
-
   }
 
   profile dpkg-source flags=(complain) {
     include <abstractions/base>
-    include <abstractions/perl>
     include <abstractions/nameservice-strict>
+    include <abstractions/perl>
 
     /{usr/,}bin/dpkg-source mr,
     /{usr/,}bin/perl r,
 
-    /{usr/,}bin/tar     rix,
     /{usr/,}bin/bunzip2 rix,
+    /{usr/,}bin/chmod   rix,
     /{usr/,}bin/gunzip  rix,
     /{usr/,}bin/gzip    rix,
-    /{usr/,}bin/xz      rix,
-    /{usr/,}bin/rm      rix,
-    /{usr/,}bin/chmod   rix,
-
     /{usr/,}bin/patch   rix,
+    /{usr/,}bin/rm      rix,
+    /{usr/,}bin/tar     rix,
+    /{usr/,}bin/xz      rix,
 
     /etc/dpkg/origins/debian r,
 

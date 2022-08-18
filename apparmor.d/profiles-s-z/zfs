@@ -1,0 +1,31 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Jeroen Rijken
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}{local/,}{s,}bin/zfs
+profile zfs @{exec_path} {
+  include <abstractions/base>
+  
+  capability sys_admin,
+  capability dac_read_search,
+
+  mount fstype=zfs,
+  umount fstype=zfs,
+  
+  @{exec_path} mr,
+
+  /etc/zfs/zfs-list.cache/{,*} rwk,
+
+  @{run}/zfs-list.cache@* rw,
+
+  @{PROC}/@{pids}/mounts r,
+  @{PROC}/sys/fs/pipe-max-size r,
+
+  /dev/zfs rw,
+
+  include if exists <local/zfs>
+}

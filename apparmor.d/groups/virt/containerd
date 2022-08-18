@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2022 Jeroen Rijken
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -7,34 +8,110 @@ abi <abi/3.0>,
 include <tunables/global>
 
 @{exec_path} = /{usr/,}bin/containerd
-profile containerd @{exec_path} {
+profile containerd @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/devices-usb>
+  include <abstractions/disks-read>
+  include <abstractions/nameservice-strict>
+  include <abstractions/ssl_certs>
 
+  capability chown,
   capability dac_read_search,
+  capability dac_override,
+  capability fsetid,
+  capability fowner,
   capability net_admin,
   capability sys_admin,
 
-  signal (receive) set=term peer=dockerd,
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  mount fstype=tmpfs options in (rw, nosuid, nodev, noexec) -> @{run}/containerd/io.containerd.grpc.v1.cri/sandboxes/[0-9a-f]*/shm/,
+  mount -> /var/lib/containerd/tmpmounts/containerd-mount[0-9]*/,
+  mount -> /tmp/ctd-volume[0-9]*/,
+  mount options in (rw, bind, nosuid, nodev, noexec) -> @{run}/netns/cni-@{uuid},
+
+  umount @{run}/containerd/io.containerd.grpc.v1.cri/sandboxes/[0-9a-f]*/shm/,
+  umount /var/lib/containerd/tmpmounts/containerd-mount[0-9]*/,
+  umount @{run}/netns/cni-@{uuid},
+
+  signal (receive) set=term peer={dockerd,k3s},
+  signal (send) set=kill peer=cni-calico,
 
   @{exec_path} mr,
-
+  /{usr/,}{s,}bin/apparmor_parser rPx,
   /{usr/,}bin/containerd-shim-runc-v2 rPUx,
-  /{usr/,}bin/kmod                    rPx,
+  /{usr/,}bin/kmod rPx,
+  /{usr/,}bin/unpigz rPUx,
+  /{usr/,}{local/,}{s,}bin/zfs rPx,
 
-  /etc/cni/{,**} r,
+  / r,
+
+  /opt/cni/bin/loopback rPx,
+  /opt/cni/bin/portmap rPx,
+  /opt/cni/bin/bandwidth rPx,
+  /opt/cni/bin/calico rPx,
+
+  /etc/cni/              rw,
+  /etc/cni/{,**}         r,
+  /etc/cni/net.d/        rw,
   /etc/containerd/*.toml r,
 
-  /var/lib/containerd/{,**} rwk,
-  /var/lib/docker/containerd/{,**} rwk,
-  @{run}/containerd/{,**} rwk,
-  @{run}/docker/containerd/{,**} rwk,
   /opt/containerd/{,**} rw,
 
-  @{sys}/kernel/mm/transparent_hugepage/hpage_pmd_size r,
+  /var/lib/cni/{,**/} w,
+  /var/lib/cni/results/cni-loopback-@{uuid}-lo wl,
+  /var/lib/cni/results/cni-loopback-[0-9a-z]*-lo wl,
+  /var/lib/cni/results/k8s-pod-network-[0-9a-z]*-eth0 wl,
+  /var/lib/containerd/{,**} rwk,
+  /var/lib/containerd/tmpmounts/containerd-mount[0-9]*/** l,
+  /var/lib/docker/containerd/{,**} rwk,
+  /var/lib/kubelet/seccomp/{,**} r,
+  /var/lib/security-profiles-operator/{,**} r,
 
+  /var/log/pods/**/[0-9]*.log{,*} w,
+
+  @{run}/calico/ w,
+  @{run}/containerd/{,**} rwk,
+  @{run}/docker/containerd/{,**} rwk,
+  @{run}/netns/ w,
+  @{run}/netns/cni-@{uuid} rw,
+  @{run}/systemd/notify w,
+
+  owner /var/tmp/** rwkl,
+  owner /tmp/** rwkl,
+        /tmp/cri-containerd.apparmor.d[0-9]* rwl,
+        /tmp/ctd-volume[0-9]*/ rw,
+
+  @{sys}/kernel/mm/transparent_hugepage/hpage_pmd_size r,
+  @{sys}/kernel/security/apparmor/profiles r,
+  @{sys}/module/apparmor/parameters/enabled r,
+
+        @{PROC}/@{pid}/task/@{tid}/ns/net rw,
+  owner @{PROC}/@{pids}/attr/current r,
   owner @{PROC}/@{pids}/uid_map r,
   owner @{PROC}/@{pids}/mountinfo r,
         @{PROC}/sys/net/core/somaxconn r,
+
+  /dev/bsg/ r,
+  /dev/bus/ r,
+  /dev/char/ r,
+  /dev/cpu/ r,
+  /dev/cpu/[0-9]*/ r,
+  /dev/dma_heap/ r,
+  /dev/dri/ r,
+  /dev/dri/by-path/ r,
+  /dev/hugepages/ r,
+  /dev/input/ r,
+  /dev/input/by-id/ r,
+  /dev/input/by-path/ r,
+  /dev/net/ r,
+  /dev/snd/ r,
+  /dev/snd/by-path/ r,
+  /dev/vfio/ r,
 
   include if exists <local/containerd>
 }

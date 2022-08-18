@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: GPL-2.0-only
 # Useful info:
 # http://kb.mozillazine.org/Files_and_folders_in_the_profile_-_Thunderbird
-#
 
 abi <abi/3.0>,
 
@@ -19,6 +18,10 @@ profile thunderbird @{exec_path} {
   include <abstractions/base>
   include <abstractions/consoles>
   include <abstractions/opencl-intel>
+  include <abstractions/wayland>
+  include <abstractions/nvidia>
+  include <abstractions/vulkan>
+  include <abstractions/mesa>
   include <abstractions/gtk>
   include <abstractions/fonts>
   include <abstractions/fontconfig-cache-read>
@@ -27,9 +30,13 @@ profile thunderbird @{exec_path} {
   include <abstractions/enchant>
   include <abstractions/user-download-strict>
   include <abstractions/thumbnails-cache-read>
-  include <abstractions/mesa>
   include <abstractions/nameservice-strict>
   include <abstractions/openssl>
+  include <abstractions/dconf-write>
+  include <abstractions/ibus>
+  include <abstractions/dbus-strict>
+  include <abstractions/dbus-session-strict>
+  include <abstractions/dbus-gtk>
 
   ptrace peer=@{profile_name},
 
@@ -46,6 +53,30 @@ profile thunderbird @{exec_path} {
   owner @{PROC}/@{pid}/setgroups w,
   owner @{PROC}/@{pid}/gid_map w,
   owner @{PROC}/@{pid}/uid_map w,
+
+  dbus (send) bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member=RequestName
+       peer=(name=org.freedesktop.DBus),
+
+  dbus (send) bus=system path=/org/freedesktop/RealtimeKit[0-9]*
+       member={Get,MakeThreadHighPriority,MakeThreadRealtime}
+       peer=(name=org.freedesktop.RealtimeKit[0-9]*),
+
+  dbus (send) bus=system path=/org/freedesktop/UPower
+       interface=org.freedesktop.UPower
+       member=EnumerateDevices
+       peer=(name=org.freedesktop.UPower),
+
+  dbus (send) bus=session path=/ca/desrt/dconf/Writer/user
+       interface=ca.desrt.dconf.Writer
+       member={Change,Notify}
+       peer=(name=ca.desrt.dconf),
+
+  dbus (bind) bus=session
+       name=org.mozilla.thunderbird.*,
+
+  owner /tmp/dbus-[0-9a-zA-Z]* rw,
 
   @{exec_path} mrix,
   @{MOZ_LIBDIR}/thunderbird-wrapper-helper.sh rix,
@@ -91,10 +122,6 @@ profile thunderbird @{exec_path} {
   owner @{HOME}/Mail/ rw,
   owner @{HOME}/Mail/** rwl -> @{HOME}/Mail/**,
 
-  include <abstractions/dconf>
-  owner @{run}/user/@{uid}/dconf/ rw,
-  owner @{run}/user/@{uid}/dconf/user rw,
-
   # Fix error in libglib while saving files as
   /usr/share/glib-2.0/schemas/gschemas.compiled r,
 
@@ -115,6 +142,11 @@ profile thunderbird @{exec_path} {
   owner @{user_config_dirs}/qt5ct/{,**} r,
   /usr/share/qt5ct/** r,
 
+  # gnome-tiny
+  /etc/gnome/defaults.list r,
+  /usr/share/gvfs/remote-volume-monitors/{,*} r,
+  @{run}/mount/utab r,
+
   deny @{sys}/devices/system/cpu/present r,
   deny @{sys}/devices/system/cpu/cpufreq/policy[0-9]/cpuinfo_max_freq r,
   deny @{sys}/devices/system/cpu/cpu[0-9]/cache/index[0-9]/size r,
@@ -124,8 +156,9 @@ profile thunderbird @{exec_path} {
        owner @{PROC}/@{pid}/stat r,
        owner @{PROC}/@{pid}/statm r,
        owner @{PROC}/@{pid}/smaps r,
-  deny owner @{PROC}/@{pids}/cmdline r,
-  deny owner @{PROC}/@{pids}/environ r,
+       owner @{PROC}/@{pid}/comm r,
+  deny owner @{PROC}/@{pid}/cmdline r,
+  deny owner @{PROC}/@{pid}/environ r,
        owner @{PROC}/@{pid}/task/ r,
        owner @{PROC}/@{pid}/task/@{tid}/stat r,
   # To remove the following error:
@@ -133,13 +166,10 @@ profile thunderbird @{exec_path} {
   #  (g-file-error-quark, 2)
        owner @{PROC}/@{pid}/mountinfo r,
        owner @{PROC}/@{pid}/mounts r,
-  deny       @{PROC}/@{pid}/net/arp r,
-  deny       @{PROC}/@{pid}/net/route r,
+  deny       @{PROC}/@{pids}/net/arp r,
+  deny       @{PROC}/@{pids}/net/route r,
   # for dig
        owner @{PROC}/@{pid}/task/@{tid}/comm rw,
-
-  /var/lib/dbus/machine-id r,
-  /etc/machine-id r,
 
   # TMP files
         /var/tmp/ r,
@@ -158,12 +188,14 @@ profile thunderbird @{exec_path} {
         /dev/shm/ r,
   owner /dev/shm/org.chromium.* rw,
   owner /dev/shm/org.mozilla.ipc.@{pid}.[0-9]* rw,
+  owner /dev/shm/wayland.mozilla.ipc.[0-9]* rw,
 
   /etc/fstab r,
-
   /etc/mailcap r,
+  /etc/timezone r,
 
   /usr/share/sounds/freedesktop/stereo/*.oga r,
+  /usr/share/ubuntu/applications/{,*} r,
 
   # Silencer
   deny /{usr/,}lib/thunderbird/** w,
@@ -181,15 +213,18 @@ profile thunderbird @{exec_path} {
   /{usr/,}bin/gpgsm             rCx -> gpg,
 
   # Allowed apps to open
-  /{usr/,}lib/firefox/firefox rPUx,
-  /{usr/,}bin/qpdfview        rPUx,
+  /{usr/,}lib/firefox/firefox rPx,
+  /{usr/,}bin/qpdfview        rPx,
   /{usr/,}bin/viewnior        rPUx,
-  /{usr/,}bin/engrampa        rPUx,
-  /{usr/,}bin/geany           rPUx,
+  /{usr/,}bin/engrampa        rPx,
+  /{usr/,}bin/geany           rPx,
 
   # file_inherit
   owner /dev/tty[0-9]* rw,
+  owner @{HOME}/.xsession-errors w,
 
+  @{sys}/cgroup/cpu,cpuacct/user.slice/cpu.cfs_quota_us r,
+  @{sys}/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us r,
 
   profile gpg {
     include <abstractions/base>
@@ -203,7 +238,7 @@ profile thunderbird @{exec_path} {
     /{usr/,}bin/gpg               mr,
     /{usr/,}bin/gpg-connect-agent mr,
     /{usr/,}bin/gpgsm             mr,
-    /{usr/,}bin/gpg-agent        rix,
+    /{usr/,}bin/gpg-agent          rix,
 
     owner @{HOME}/@{XDG_GPG_DIR}/ rw,
     owner @{HOME}/@{XDG_GPG_DIR}/** rwkl -> @{HOME}/@{XDG_GPG_DIR}/**,
@@ -225,7 +260,7 @@ profile thunderbird @{exec_path} {
     owner /tmp/data.sig r,
     owner /tmp/data-[0-9]*.sig r,
 
-    @{PROC}/@{pid}/fd/ r,
+    @{PROC}/@{pids}/fd/ r,
 
     # file_inherit
     owner /dev/tty[0-9]* rw,
@@ -238,6 +273,7 @@ profile thunderbird @{exec_path} {
     deny owner /dev/shm/org.mozilla.ipc.[0-9]*.[0-9]* rw,
          owner /tmp/ns* rw,
 
+    include if exists <local/thunderbird_gpg>
   }
 
   profile open {
@@ -249,7 +285,7 @@ profile thunderbird @{exec_path} {
     /{usr/,}lib/@{multiarch}/glib-[0-9]*/gio-launch-desktop mr,
 
     /{usr/,}bin/{,ba,da}sh      rix,
-    /{usr/,}bin/gawk            rix,
+    /{usr/,}bin/{,m,g}awk       rix,
     /{usr/,}bin/readlink        rix,
     /{usr/,}bin/basename        rix,
 
@@ -258,15 +294,16 @@ profile thunderbird @{exec_path} {
     owner @{run}/user/@{uid}/ r,
 
     # Allowed apps to open
-    /{usr/,}lib/firefox/firefox rPUx,
-    /{usr/,}bin/qpdfview        rPUx,
+    /{usr/,}lib/firefox/firefox rPx,
+    /{usr/,}bin/qpdfview        rPx,
     /{usr/,}bin/viewnior        rPUx,
-    /{usr/,}bin/engrampa        rPUx,
-    /{usr/,}bin/geany           rPUx,
+    /{usr/,}bin/engrampa        rPx,
+    /{usr/,}bin/geany           rPx,
 
     # file_inherit
     owner @{HOME}/.xsession-errors w,
 
+    include if exists <local/thunderbird_open>
   }
 
   include if exists <local/thunderbird>

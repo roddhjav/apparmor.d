@@ -1,0 +1,54 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}lib/ubuntu-release-upgrader/check-new-release-gtk
+profile check-new-release-gtk @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/apt-common>
+  include <abstractions/dbus-session-strict>
+  include <abstractions/dconf-write>
+  include <abstractions/gtk>
+  include <abstractions/nameservice-strict>
+  include <abstractions/openssl>
+  include <abstractions/python>
+  include <abstractions/ssl_certs>
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/dpkg         rPx,
+  /{usr/,}bin/ischroot     rix,
+  /{usr/,}bin/lsb_release  rPx -> lsb_release,
+
+  /usr/share/distro-info/{,**} r,
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+  /usr/share/icons/{,**} r,
+  /usr/share/themes/{,**} r,
+  /usr/share/ubuntu-release-upgrader/{,**} r,
+  /usr/share/update-manager/{,**} r,
+  /usr/share/X11/xkb/{,**} r,
+
+  /etc/update-manager/{,**} r,
+
+  /var/lib/update-manager/{,**} rw,
+
+  owner @{user_cache_dirs}/update-manager-core/{,**} rw,
+
+  owner @{run}/user/@{uid}/wayland-[0-9] rw,
+
+  owner @{PROC}/@{pid}/fd/ r,
+        @{PROC}/@{pids}/mountinfo r,
+        @{PROC}/@{pids}/mounts r,
+
+  include if exists <local/check-new-release-gtk>
+}
