@@ -37,12 +37,16 @@ profile steam @{exec_path} {
   signal (send) peer=steam-game,
   signal (read),
 
+  unix (receive) type=stream,
+
   @{exec_path} mrix,
 
   /{usr/,}bin/{,ba,da}sh             rix,
+  /{usr/,}bin/*sum                   rix,
   /{usr/,}bin/basename               rix,
   /{usr/,}bin/cat                    rix,
   /{usr/,}bin/cmp                    rix,
+  /{usr/,}bin/cp                     rix,
   /{usr/,}bin/cut                    rix,
   /{usr/,}bin/dirname                rix,
   /{usr/,}bin/gawk                   rix,
@@ -53,18 +57,23 @@ profile steam @{exec_path} {
   /{usr/,}bin/ldd                    rix,
   /{usr/,}bin/ln                     rix,
   /{usr/,}bin/lspci                  rPx,
+  /{usr/,}bin/mkdir                  rix,
+  /{usr/,}bin/mv                     rix,
   /{usr/,}bin/readlink               rix,
   /{usr/,}bin/realpath               rix,
   /{usr/,}bin/rm                     rix,
   /{usr/,}bin/sed                    rix,
   /{usr/,}bin/steam-runtime-urlopen  rix,
   /{usr/,}bin/tail                   rix,
+  /{usr/,}bin/tar                    rix,
+  /{usr/,}bin/touch                  rix,
   /{usr/,}bin/tr                     rix,
   /{usr/,}bin/uname                  rix,
   /{usr/,}bin/which                  rix,
   /{usr/,}bin/xdg-icon-resource      rPx,
-
-  /{usr/,}lib{32,64}/ld-linux.so* rix,
+  /{usr/,}bin/xz                     rix,
+  /{usr/,}bin/zenity                 rix,
+  /{usr/,}lib{32,64}/ld-linux.so*    rix,
 
   @{user_share_dirs}/Steam/config/widevine/linux-x64/libwidevinecdm.so mr,
   @{user_share_dirs}/Steam/steamapps/common/SteamLinuxRuntime_soldier/*entry-point rpx,
@@ -116,6 +125,7 @@ profile steam @{exec_path} {
   owner @{user_share_dirs}/icons/hicolor/**/apps/steam*.png rw,
   owner @{user_share_dirs}/Steam/ rw,
   owner @{user_share_dirs}/Steam/** rwkl -> @{user_share_dirs}/Steam/**,
+  owner @{user_share_dirs}/vulkan/implicit_layer.d/steam*.json rwk,
 
   owner @{run}/user/@{uid}/.mutter-Xwaylandauth.[0-9A-Z]* rw,
 
@@ -125,6 +135,7 @@ profile steam @{exec_path} {
   owner /dev/shm/u@{uid}-ValveIPCSharedObj-Steam rwk,
   owner /dev/shm/ValveIPCSHM_@{uid} rw,
 
+  owner /tmp/dumps/ rw,
   owner /tmp/dumps/{assert,crash}_[0-9]*_[0-9]*.dmp rw,
   owner /tmp/sh-thd.* rw,
   owner /tmp/steam_chrome_shmem_uid@{uid}_spid[0-9]* rw,
@@ -162,6 +173,7 @@ profile steam @{exec_path} {
   @{sys}/power/suspend_stats/success rk,
 
         @{PROC}/ r,
+        @{PROC}/@{pids}/comm rk,
         @{PROC}/@{pids}/net/route r,
         @{PROC}/@{pids}/stat r,
         @{PROC}/sys/fs/inotify/max_user_watches r,
@@ -170,7 +182,6 @@ profile steam @{exec_path} {
         @{PROC}/sys/kernel/yama/ptrace_scope r,
         @{PROC}/sys/user/max_user_namespaces r,
         @{PROC}/version r,
-  owner @{PROC}/@{pid}/comm rk,
   owner @{PROC}/@{pid}/autogroup rw,
   owner @{PROC}/@{pid}/cmdline rk,
   owner @{PROC}/@{pid}/fd/ r,
@@ -183,6 +194,8 @@ profile steam @{exec_path} {
 
   /dev/input/ r,
   /dev/tty rw,
+
+  audit deny /**.steam_exec_test.sh rw,
 
   include if exists <local/steam>
 }

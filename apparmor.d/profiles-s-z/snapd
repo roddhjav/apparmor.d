@@ -18,8 +18,11 @@ profile snapd @{exec_path} {
   include <abstractions/ssl_certs>
 
   capability audit_write,
+  capability chown,
   capability dac_override,
   capability dac_read_search,
+  capability fowner,
+  capability fsetid,
   capability net_admin,
   capability setgid,
   capability setuid,
@@ -56,6 +59,7 @@ profile snapd @{exec_path} {
   /{usr/,}bin/cp                       rix,
   /{usr/,}bin/gzip                     rix,
   /{usr/,}bin/mount                    rix,
+  /{usr/,}bin/snap                     rPx,
   /{usr/,}bin/sync                     rix,
   /{usr/,}bin/systemctl                rix,
   /{usr/,}bin/systemd-detect-virt      rPx,
@@ -65,15 +69,15 @@ profile snapd @{exec_path} {
   /{usr/,}bin/unsquashfs               rix,
   /{usr/,}bin/update-desktop-database  rPx,
 
-  /snap/snapd/[0-9]*/lib/@{multiarch}/**            mr,
-  /snap/snapd/[0-9]*/lib/@{multiarch}/ld-*.so       rix,
-  /snap/snapd/[0-9]*/usr/bin/snap                   rPx,
-  /snap/snapd/[0-9]*/usr/lib/snapd/snap-discard-ns  rPx,
-  /snap/snapd/[0-9]*/usr/lib/snapd/snap-seccomp     rPx,
-  /snap/snapd/[0-9]*/usr/lib/snapd/snap-update-ns   rPx,
-  /snap/snapd/[0-9]*/usr/lib/snapd/snapd            rix,
-  /snap/snapd/[0-9]*/usr/bin/fc-cache-*             rPx -> fc-cache,
-  /snap/snapd/[0-9]*/usr/bin/xdelta3                rix, # TODO: rPx ?
+  /{snap/snapd/[0-9]*/,}{usr/,}lib/@{multiarch}/**        mr,
+  /{snap/snapd/[0-9]*/,}{usr/,}lib/@{multiarch}/ld-*.so   rix,
+  /{snap/snapd/[0-9]*/,}{usr/,}bin/snap                   rPx,
+  /{snap/snapd/[0-9]*/,}{usr/,}lib/snapd/snap-discard-ns  rPx,
+  /{snap/snapd/[0-9]*/,}{usr/,}lib/snapd/snap-seccomp     rPx,
+  /{snap/snapd/[0-9]*/,}{usr/,}lib/snapd/snap-update-ns   rPx,
+  /{snap/snapd/[0-9]*/,}{usr/,}lib/snapd/snapd            rix,
+  /{snap/snapd/[0-9]*/,}{usr/,}bin/fc-cache-*             rPx -> fc-cache,
+  /{snap/snapd/[0-9]*/,}{usr/,}bin/xdelta3                rix, # TODO: rPx ?
 
   /usr/share/bash-completion/completions/{,**} r,
   /usr/share/dbus-1/{system,session}.d/{,snapd*} r,
@@ -104,6 +108,7 @@ profile snapd @{exec_path} {
   /tmp/syscheck-squashfs-[0-9]* rw,
   /tmp/read-file[0-9]*/{,**} rw,
 
+  /home/ r,
   @{HOME}/ r,
   @{HOME}/snap/{,**} rw,
 
@@ -114,8 +119,8 @@ profile snapd @{exec_path} {
   owner @{run}/user/{,@{uid}/} r,
   owner @{run}/user/snap.*/{,**} rw,
 
-  @{run}/snapd-snap.socket rw,
-  @{run}/snapd.socket rw,
+  @{run}/snapd*.socket rw,
+  @{run}/snapd/{,**} rw,
   @{run}/snapd/lock/*.lock rwk,
   @{run}/systemd/notify rw,
   @{run}/systemd/private rw,
