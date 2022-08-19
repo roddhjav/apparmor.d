@@ -28,6 +28,7 @@ profile apt @{exec_path} flags=(attach_disconnected) {
   capability setgid,
   capability setuid,
   capability sys_nice,
+  capability sys_ptrace,
 
   signal (send) peer=apt-methods-*,
 
@@ -46,7 +47,7 @@ profile apt @{exec_path} flags=(attach_disconnected) {
        member=Inhibit
        peer=(name=org.freedesktop.login[0-9]),
 
-  dbus send bus=system path=/org/freedesktop/DBus
+  dbus send bus=system path=/org/freedesktop/DBus{,/Bus}
        interface=org.freedesktop.DBus{,.Introspectable}
        member={RequestName,GetConnectionUnixProcessID,Introspect}
        peer=(name=org.freedesktop.DBus),
@@ -101,6 +102,7 @@ profile apt @{exec_path} flags=(attach_disconnected) {
   /{usr/,}lib/ubuntu-advantage/apt-esm-json-hook             rPx,
   /{usr/,}lib/update-notifier/update-motd-updates-available  rPx,
   /usr/share/command-not-found/cnf-update-db                 rPx,
+  /usr/share/language-tools/language-options                 rPx,
 
   # For editing the sources.list file
   /{usr/,}bin/sensible-editor rCx -> editor,
@@ -110,6 +112,7 @@ profile apt @{exec_path} flags=(attach_disconnected) {
   /{usr/,}bin/sensible-pager  rCx -> pager,
 
   /usr/share/xml/iso-codes/{,**} r,
+  /usr/share/language-selector/data/pkg_depends r,
 
   /etc/apt/sources.list rwk,
   /etc/machine-id r,

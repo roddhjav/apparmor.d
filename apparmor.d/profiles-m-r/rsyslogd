@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2018-2021 Mikhail Morfikov
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -20,35 +21,31 @@ profile rsyslogd @{exec_path} {
   capability net_admin,  # For remote logs
   capability setgid,  # For downgrading privileges
   capability setuid,
+  capability sys_nice,
   capability syslog,
-  
+
   @{exec_path} mr,
 
   /{usr/,}lib/@{multiarch}/rsyslog/*.so mr,
 
-  # rsyslog configuration
   /etc/rsyslog.conf r,
   /etc/rsyslog.d/{,**} r,
-  /var/spool/rsyslog/ r,
-  /var/spool/rsyslog/** rw,
 
-  owner @{run}/rsyslogd.pid{,.tmp} rwk,
-  owner @{run}/systemd/journal/syslog w,
-        @{run}/systemd/notify rw,
-
-  # log files and devices
-  /var/log/** rw,
-  @{PROC}/kmsg r,
-
-  # a cert for gtls module
   /etc/CA/*.crt r,
   /etc/CA/*.key r,
 
+  /var/log/** rw,
+  /var/spool/rsyslog/ r,
+  /var/spool/rsyslog/** rw,
+
+        @{run}/systemd/notify rw,
+  owner @{run}/rsyslogd.pid{,.tmp} rwk,
+  owner @{run}/systemd/journal/syslog w,
+
   @{PROC}/1/environ r,
   @{PROC}/cmdline r,
+  @{PROC}/kmsg r,
   @{PROC}/sys/kernel/osrelease r,
-
-  @{run}/systemd/notify w,
 
   include if exists <local/rsyslogd>
 }

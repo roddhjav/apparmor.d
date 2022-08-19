@@ -27,6 +27,28 @@ profile udisksd @{exec_path} flags=(attach_disconnected) {
 
   network netlink raw,
 
+  # Allow mounting of removable devices
+  mount fstype={btrfs,ext*,vfat,iso9660,udf,ntfs3} /dev/{s,v}d[a-z]*       -> @{MOUNTS}/*/,
+  mount fstype={btrfs,ext*,vfat,iso9660,udf,ntfs3} /dev/{s,v}d[a-z]*[0-9]* -> @{MOUNTS}/*/,
+  mount fstype={btrfs,ext*,vfat,iso9660,udf,ntfs3} /dev/dm-[0-9]*          -> @{MOUNTS}/*/,
+
+  # Allow mounting of loop devices (ISO files)
+  mount fstype={btrfs,ext*,vfat,iso9660,udf,ntfs3} /dev/loop[0-9]*        -> @{MOUNTS}/*/,
+  mount fstype={btrfs,ext*,vfat,iso9660,udf,ntfs3} /dev/loop[0-9]*p[0-9]* -> @{MOUNTS}/*/,
+
+  # Allow mounting of cdrom
+  mount fstype={btrfs,ext*,vfat,iso9660,udf,ntfs3} /dev/loop[0-9]* -> /media/cdrom[0-9]/,
+  mount fstype={iso9660,udf,ntfs3}                 /dev/sr[0-9]*   -> /media/cdrom[0-9]/,
+
+  # Allow mounting od sd cards
+  mount fstype={btrfs,ext*,vfat,iso9660,udf,ntfs3} /dev/mmcblk[0-9]         -> @{MOUNTS}/*/,
+  mount fstype={btrfs,ext*,vfat,iso9660,udf,ntfs3} /dev/mmcblk[0-9]*p[0-9]* -> @{MOUNTS}/*/,
+
+  # Allow unmounting
+  umount @{MOUNTS}/,
+  umount @{MOUNTS}/*/,
+  umount /media/cdrom[0-9]/,
+
   dbus (send,receive) bus=system path=/org/freedesktop/UDisks2{,/**}
        interface=org.freedesktop.{DBus*,UDisks2*},
 
@@ -71,85 +93,46 @@ profile udisksd @{exec_path} flags=(attach_disconnected) {
   /{usr/,}bin/systemctl       rPx -> child-systemctl,
   /{usr/,}bin/systemd-escape  rPx,
 
-  # Allow mounting of removable devices
-  mount fstype={btrfs,ext*,vfat,iso9660,udf,ntfs3} /dev/{s,v}d[a-z]*       -> @{MOUNTS}/*/,
-  mount fstype={btrfs,ext*,vfat,iso9660,udf,ntfs3} /dev/{s,v}d[a-z]*[0-9]* -> @{MOUNTS}/*/,
-  mount fstype={btrfs,ext*,vfat,iso9660,udf,ntfs3} /dev/dm-[0-9]*     -> @{MOUNTS}/*/,
-  # Allow mounting of loop devices (ISO files)
-  mount fstype={btrfs,ext*,vfat,iso9660,udf,ntfs3} /dev/loop[0-9]*        -> @{MOUNTS}/*/,
-  mount fstype={btrfs,ext*,vfat,iso9660,udf,ntfs3} /dev/loop[0-9]*p[0-9]* -> @{MOUNTS}/*/,
-  # Allow mounting of cdrom
-  mount fstype={btrfs,ext*,vfat,iso9660,udf,ntfs3} /dev/loop[0-9]* -> /media/cdrom[0-9]/,
-  mount fstype={iso9660,udf,ntfs3}                 /dev/sr[0-9]*   -> /media/cdrom[0-9]/,
-  # Allow mounting od sd cards
-  mount fstype={btrfs,ext*,vfat,iso9660,udf,ntfs3} /dev/mmcblk[0-9]         -> @{MOUNTS}/*/,
-  mount fstype={btrfs,ext*,vfat,iso9660,udf,ntfs3} /dev/mmcblk[0-9]*p[0-9]* -> @{MOUNTS}/*/,
-  # Allow unmounting
-  umount @{MOUNTS}/,
-  umount @{MOUNTS}/*/,
-  umount /media/cdrom[0-9]/,
+  /etc/udisks2/{,**} r,
+  /etc/libblockdev/{,**} r,
+  /etc/fstab r,
+  /etc/crypttab r,
+
+  /var/lib/udisks2/ r,
+  /var/lib/udisks2/mounted-fs{,*} rw,
 
   # Be able to create/delete dirs for removable media
   @{MOUNTS}/ rw,
   @{MOUNTS}/*/ rw,
-  /media/cdrom[0-9]/ rw,
 
-  # Udisks2 config files
-  /etc/udisks2/ r,
-  /etc/udisks2/udisks2.conf r,
-
-  /etc/libblockdev/conf.d/ r,
-  /etc/libblockdev/conf.d/[0-9][0-9]-default.cfg r,
-
-  owner @{PROC}/@{pid}/mountinfo r,
-  owner @{PROC}/@{pid}/mounts r,
-  owner @{PROC}/@{pid}/fd/ r,
-        @{PROC}/cmdline r,
-        @{PROC}/devices r,
-        @{PROC}/swaps r,
-
-  # To be able to initialize device-mapper disk devices
-  /dev/mapper/ r,
-  /dev/mapper/control rw,
-
-  # The special /dev/loop-control file can be used to create and destroy loop devices or to find
-  # the first available loop device.
-  /dev/loop-control rw,
-
-  # To check whether the x-udisks-auth option was used to specify that additional authorization is
-  # required to mount/unlock a device
-  /etc/fstab r,
-  /etc/crypttab r,
-
-  # To be able to operate on encryted devices
+  @{run}/ r,
+  @{run}/mount/utab{,.*} rw,
+  @{run}/mount/utab.lock rwk,
+  @{run}/udisks2/{,**} rw,
+  @{run}/systemd/seats/seat[0-9]* r,
+  @{run}/systemd/inhibit/[0-9]*.ref rw,
   @{run}/cryptsetup/ r,
   @{run}/cryptsetup/L* rwk,
 
-  @{sys}/fs/ r,
   @{sys}/bus/ r,
   @{sys}/class/ r,
-
+  @{sys}/devices/pci[0-9]*/**/{ata,usb,mmc}[0-9]/{,**/}remove rw,
   @{sys}/devices/pci[0-9]*/**/{ata,usb,mmc}[0-9]/{,**/}uevent w,
+  @{sys}/devices/virtual/bdi/**/read_ahead_kb r,
   @{sys}/devices/virtual/block/*/{,**} rw,
   @{sys}/devices/virtual/block/loop[0-9]*/uevent rw,
+  @{sys}/fs/ r,
 
-  # For powering off USB devices
-  @{sys}/devices/pci[0-9]*/**/{ata,usb,mmc}[0-9]/{,**/}remove rw,
+        @{PROC}/cmdline r,
+        @{PROC}/devices r,
+        @{PROC}/swaps r,
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/mounts r,
 
-  @{sys}/devices/virtual/bdi/**/read_ahead_kb r,
-
-  @{run}/ r,
-
-  # Info on mounted devices
-  @{run}/mount/utab{,.*} rw,
-  @{run}/mount/utab.lock rwk,
-  /var/lib/udisks2/ r,
-  /var/lib/udisks2/mounted-fs{,*} rw,
-
-  @{run}/udisks2/{,**} rw,
-
-  @{run}/systemd/seats/seat[0-9]* r,
-  @{run}/systemd/inhibit/[0-9]*.ref rw,
+  /dev/loop-control rw,
+  /dev/mapper/ r,
+  /dev/mapper/control rw,
 
   include if exists <local/udisksd>
 }
