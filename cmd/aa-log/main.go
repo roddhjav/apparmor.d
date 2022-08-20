@@ -12,6 +12,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -100,7 +101,7 @@ func getJournalctlDbusSessionLogs(file io.Reader, useFile bool) (io.Reader, erro
 	var value string
 
 	if useFile {
-		content, err := io.ReadAll(file)
+		content, err := ioutil.ReadAll(file)
 		if err != nil {
 			return nil, err
 		}
