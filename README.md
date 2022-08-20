@@ -6,8 +6,8 @@
 
 **Full set of AppArmor profiles**
 
-> Warning: This project is still in early development.
-
+> **Warning**: This project is still in early development. Help is very welcome
+> see [`CONTRIBUTING.md`](CONTRIBUTING.md) 
 
 ## Description 
 
