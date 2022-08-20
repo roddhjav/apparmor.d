@@ -1,8 +1,8 @@
 # Contributing
 
-You want to contribute to `apparmor.d`, **thank a lot for this.** You will find
-in this page all the useful information needed to contribute.
-
+You want to contribute to `apparmor.d`, **thank a lot for this.** Feedbacks, 
+contributors, pull requests are all very welcome. You will find in this page all
+the useful information needed to contribute.
 
 ## How to contribute?
 
@@ -31,7 +31,7 @@ you'll see a Compare & pull request button, fill and submit the pull request.
 
 
 ## Projects rules
- 
+
 A few rules:
 1. As these are mandatory access control policies only what it explicitly required
    should be authorized. Meaning, you should not allow everything (or a large area)
@@ -75,7 +75,26 @@ profile foo @{exec_path} {
 
 ## Profile Guidelines
 
-> This profile guideline is still evloving, feel free to propose improvment
+**A common structure**
+
+AppArmor profiles can be written without any specific guidelines. However, when 
+you work with over 1200 profiles, you need a common structure among all the profiles. 
+
+The logic behind it is that if a rule is present in a profile, it should only be
+in one place, making profile review easier. 
+
+For example, if a program needs to run executables binary. The rules allowing it
+can only be in a specific rule block (just after the `@{exec_path} mr,` rule). It
+is therefore easy to ensure some profile features such as: 
+* A profile has access to a given resource 
+* A profile enforces a strict [write xor execute] (W^X) policy. 
+
+It also improves compatibilities and makes personalization easier thanks to the use of more variables 
+ 
+**Guidelines**
+
+> **Note**: This profile guideline is still evolving, feel free to propose improvment
+> as long as it does not vary too much from the existing rules.
 
 In order to ensure a common structure across the profiles, all new profile should
 try to follow the guideline presented here.
@@ -87,18 +106,20 @@ The rules in the profile should be sorted as follow:
 - mount
 - remount
 - umount
+- pivot_root
 - ptrace
 - signal
 - unix
 - dbus (send, receive) send receice 
-- @{exec_path} mr,
+- @{exec_path} mr, the entry point of the profile
 - The binaries and library required: `/{usr/,}bin/`, `/{usr/,}lib/`, `/opt/`...
+  It is the only place where you can have `mr`, `rix`, `rPx`, `rUx`, `rPUX` rules.
 - The shared resources: `/usr/share`...
 - The system configuration: `/etc`...
 - The system data: `/var`...
 - The user data: `owner @{HOME}/`...
 - The user configuration, cache and in general all dotfiles
-- Temporary data: `/tmp/`, `@{run}/`...
+- Temporary and runtime data: `/tmp/`, `@{run}/`, `/dev/shm/`...
 - Sys files: `@{sys}/`...
 - Proc files: `@{PROC}/`... 
 - Dev files: `/dev/`...
@@ -120,10 +141,10 @@ The rules in the profile should be sorted as follow:
 
 The included tool `aa-log` can be useful to explore the apparmor log 
 
-## Abstraction
+## Abstractions
 
 This project and the apparmor profile official project provide a large selection
-of abstraction to be included in profiles. They should be used.
+of abstractions to be included in profiles. They should be used.
 
 For instance, instead of writting:
 ```sh
@@ -142,44 +163,61 @@ include <abstractions/user-download-strict>
 * `@{PROC}=/proc/`
 * `@{run}=/run/ /var/run/`
 * `@{sys}=/sys/`
-* The Home directory: `@{HOME}`
+* The home root: `@{HOMEDIRS}=/home/`
+* The home directories: `@{HOME}=@{HOMEDIRS}/*/ /root/`
 * Process id(s): `@{pid}`, `@{pids}`
 * User id: `@{uid}`
 * Thread id: `@{tid}`
 * Classic XDG user directories: 
-    - Desktop: `@{XDG_DESKTOP_DIR}="Desktop"`
-    - Download: `@{XDG_DOWNLOAD_DIR}="Downloads"`
-    - Templates: `@{XDG_TEMPLATES_DIR}="Templates"`
-    - Public: `@{XDG_PUBLICSHARE_DIR}="Public"`
-    - Documents: `@{XDG_DOCUMENTS_DIR}="Documents"`
-    - Music: `@{XDG_MUSIC_DIR}="Music"`
-    - Pictures: `@{XDG_PICTURES_DIR}="Pictures"`
-    - Videos: `@{XDG_VIDEOS_DIR}="Videos"`
+  - Desktop: `@{XDG_DESKTOP_DIR}="Desktop"`
+  - Download: `@{XDG_DOWNLOAD_DIR}="Downloads"`
+  - Templates: `@{XDG_TEMPLATES_DIR}="Templates"`
+  - Public: `@{XDG_PUBLICSHARE_DIR}="Public"`
+  - Documents: `@{XDG_DOCUMENTS_DIR}="Documents"`
+  - Music: `@{XDG_MUSIC_DIR}="Music"`
+  - Pictures: `@{XDG_PICTURES_DIR}="Pictures"`
+  - Videos: `@{XDG_VIDEOS_DIR}="Videos"`
 
 **Additional variables available with this project:**
 
-* Common mountpoints: `@{MOUNTS}=/media/ @{run}/media /mnt`
+* Mountpoints root: `@{MOUNTDIRS}=/media/ @{run}/media/ /mnt/`
+* Common mountpoints: `@{MOUNTS}=@{MOUNTDIRS}/*/`
 * Universally unique identifier: `@{uuid}=[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*`
+* Hexadecimal: `@{hex}=[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]`
 * Extended XDG user directories: 
-    - Projects: `@{XDG_PROJECTS_DIR}="Projects"`
-    - Books: `@{XDG_BOOKS_DIR}="Books"`
-    - Wallpapers: `@{XDG_WALLPAPERS_DIR}="@{XDG_PICTURES_DIR}/Wallpapers"`
-    - Sync: `@{XDG_SYNC_DIR}="Sync"`
-    - Vm: `@{XDG_VM_DIR}=".vm"`
-    - SSH: `@{XDG_SSH_DIR}=".ssh"`
-    - GPG: `@{XDG_GPG_DIR}=".gnupg"`
-    - Cache:` @{XDG_CACHE_HOME}=".cache"`
-    - Config: `@{XDG_CONFIG_HOME}=".config"`
-    - Data: `@{XDG_DATA_HOME}=".local/share"`
-    - Bin: `@{XDG_BIN_HOME}=".local/bin"`
-    - Lib: `@{XDG_LIB_HOME}=".local/lib"`
+  - Books: `@{XDG_BOOKS_DIR}="Books"`
+  - Projects: `@{XDG_PROJECTS_DIR}="Projects"`
+  - Screenshots: `@{XDG_SCREENSHOTS_DIR}="@{XDG_PICTURES_DIR}/Screenshots"`
+  - Sync: `@{XDG_SYNC_DIR}="Sync"`
+  - Torrents: `@{XDG_TORRENTS_DIR}="Torrents"`
+  - Vm: `@{XDG_VM_DIR}=".vm"`
+  - Wallpapers: `@{XDG_WALLPAPERS_DIR}="@{XDG_PICTURES_DIR}/Wallpapers"`
+* Extended XDG dotfiles:
+  - SSH: `@{XDG_SSH_DIR}=".ssh"`
+  - GPG: `@{XDG_GPG_DIR}=".gnupg"`
+  - Cache:` @{XDG_CACHE_HOME}=".cache"`
+  - Config: `@{XDG_CONFIG_HOME}=".config"`
+  - Data: `@{XDG_DATA_HOME}=".local/share"`
+  - Bin: `@{XDG_BIN_HOME}=".local/bin"`
+  - Lib: `@{XDG_LIB_HOME}=".local/lib"`
 * Full path of the user configuration directories
-    - Cache: `@{user_cache_dirs}=@{HOME}/@{XDG_CACHE_HOME}`
-    - Config: `@{user_config_dirs}=@{HOME}/@{XDG_CONFIG_HOME}`
-    - Bin: `@{user_bin_dirs}=@{HOME}/@{XDG_BIN_HOME}`
-    - Lib: `@{user_lib_dirs}=@{HOME}/@{XDG_LIB_HOME}`
-* Other full path user directories
-    - Sync: `@{user_sync_dirs}=@{HOME}/@{XDG_SYNC_DIR} @{MOUNTS}/*/@{XDG_SYNC_DIR}`
+  - Cache: `@{user_cache_dirs}=@{HOME}/@{XDG_CACHE_HOME}`
+  - Config: `@{user_config_dirs}=@{HOME}/@{XDG_CONFIG_HOME}`
+  - Bin: `@{user_bin_dirs}=@{HOME}/@{XDG_BIN_HOME}`
+  - Lib: `@{user_lib_dirs}=@{HOME}/@{XDG_LIB_HOME}`
+* Full path user directories
+  - Books: `@{user_books_dirs}=@{HOME}/@{XDG_BOOKS_DIR} @{MOUNTS}/@{XDG_BOOKS_DIR}`
+  - Documents: `@{user_documents_dirs}=@{HOME}/@{XDG_DOCUMENTS_DIR} @{MOUNTS}/@{XDG_DOCUMENTS_DIR}`
+  - Download: `@{user_download_dirs}=@{HOME}/@{XDG_DOWNLOAD_DIR} @{MOUNTS}/@{XDG_DOWNLOAD_DIR}`
+  - Music: `@{user_music_dirs}=@{HOME}/@{XDG_MUSIC_DIR} @{MOUNTS}/@{XDG_MUSIC_DIR}`
+  - Pictures: `@{user_pictures_dirs}=@{HOME}/@{XDG_PICTURES_DIR} @{MOUNTS}/@{XDG_PICTURES_DIR}`
+  - Projects: `@{user_projects_dirs}=@{HOME}/@{XDG_PROJECTS_DIR} @{MOUNTS}/@{XDG_PROJECTS_DIR}`
+  - Public: `@{user_publicshare_dirs}=@{HOME}/@{XDG_PUBLICSHARE_DIR} @{MOUNTS}/@{XDG_PUBLICSHARE_DIR}`
+  - Sync: `@{user_sync_dirs}=@{HOME}/@{XDG_SYNC_DIR} @{MOUNTS}/*/@{XDG_SYNC_DIR}`
+  - Templates: `@{user_templates_dirs}=@{HOME}/@{XDG_TEMPLATES_DIR} @{MOUNTS}/@{XDG_TEMPLATES_DIR}`
+  - Torrents: `@{user_torrents_dirs}=@{HOME}/@{XDG_TORRENTS_DIR} @{MOUNTS}/@{XDG_TORRENTS_DIR}`
+  - Videos: `@{user_videos_dirs}=@{HOME}/@{XDG_VIDEOS_DIR} @{MOUNTS}/@{XDG_VIDEOS_DIR}`
+  - Vm: `@{user_vm_dirs}=@{HOME}/@{XDG_VM_DIR} @{MOUNTS}/@{XDG_VM_DIR}`
 
 ## Additional documentation
 
@@ -187,3 +225,4 @@ include <abstractions/user-download-strict>
 * https://presentations.nordisch.org/apparmor/#/
 
 [git]: https://help.github.com/articles/set-up-git/
+[write xor execute]: https://en.wikipedia.org/wiki/W%5EX
