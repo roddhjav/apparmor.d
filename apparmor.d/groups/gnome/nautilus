@@ -10,6 +10,7 @@ include <tunables/global>
 profile nautilus @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/app-launcher-user>
+  include <abstractions/dbus-session-strict>
   include <abstractions/dbus-strict>
   include <abstractions/dconf-write>
   include <abstractions/gnome>
@@ -20,6 +21,20 @@ profile nautilus @{exec_path} flags=(attach_disconnected) {
   dbus send bus=system path=/org/freedesktop/hostname[0-9]
        interface=org.freedesktop.DBus.Properties
        member=GetAll,
+
+  dbus (send, receive) bus=session path=/org/gnome/Nautilus{,/*}
+       interface={org.freedesktop.DBus.{Properties,Introspectable},org.gtk.Actions},
+
+  dbus send bus=session path=/org/gtk/Private/RemoteVolumeMonitor
+       interface=org.gtk.Private.RemoteVolumeMonitor
+       member={IsSupported,List}
+       peer=(name=:*),
+
+  dbus bind bus=session
+       name=org.gnome.Nautilus,
+
+  dbus bind bus=session
+       name=org.freedesktop.FileManager1,
 
   @{exec_path} mr,
   /{usr/,}bin/{,ba,da}sh rix,

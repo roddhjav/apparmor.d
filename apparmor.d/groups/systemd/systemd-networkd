@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2020-2021 Mikhail Morfikov
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -7,40 +8,68 @@ abi <abi/3.0>,
 include <tunables/global>
 
 @{exec_path} = /{usr/,}lib/systemd/systemd-networkd
-profile systemd-networkd @{exec_path} flags=(complain) {
+profile systemd-networkd @{exec_path} flags=(attach_disconnected,complain) {
   include <abstractions/base>
+  include <abstractions/dbus-strict>
   include <abstractions/systemd-common>
 
   capability net_admin,
   capability net_raw,
   capability net_bind_service,
 
+  network inet dgram,
+  network inet6 dgram,
+  network inet raw,
+  network inet6 raw,
+  network netlink raw,
+  network packet dgram,
+  network packet raw,
+
+  dbus send bus=system path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member=RequestName
+       peer=(name=org.freedesktop.DBus),
+
+  dbus send bus=system path=/org/freedesktop/hostname[0-9]
+       interface=org.freedesktop.hostname1
+       member=SetHostname
+       peer=(name=org.freedesktop.hostname1),
+
+  dbus receive bus=system path=/org/freedesktop/network[0-9]
+       interface=org.freedesktop.DBus.Properties
+       member=Get,
+
+  dbus bind bus=system
+       name=org.freedesktop.network1,
+
   @{exec_path} mr,
+
+  /var/lib/dbus/machine-id r,
+  /etc/machine-id r,
 
   /etc/systemd/networkd.conf r,
   /etc/systemd/network/ r,
   /etc/systemd/network/[0-9][0-9]-*.{netdev,network,link} r,
 
+  /etc/networkd-dispatcher/carrier.d/{,*} r,
+
+        @{run}/systemd/network/ r,
+        @{run}/systemd/network/*.network r,
+  owner @{run}/systemd/netif/.#state rw,
+  owner @{run}/systemd/netif/.#state* rw,
+  owner @{run}/systemd/netif/leases/.#* rw,
+  owner @{run}/systemd/netif/leases/[0-9]* rw,
   owner @{run}/systemd/netif/links/.#* rw,
   owner @{run}/systemd/netif/links/[0-9]* rw,
-  owner @{run}/systemd/netif/leases/[0-9]* rw,
-  owner @{run}/systemd/netif/leases/.#* rw,
-  owner @{run}/systemd/netif/.#state* rw,
-  owner @{run}/systemd/netif/.#state rw,
   owner @{run}/systemd/netif/state rw,
-
-  # To be able to configure network interfaces
-        @{PROC}/sys/net/ipv{4,6}/** rw,
-
-  @{sys}/devices/virtual/dmi/id/product_name r,
-  @{sys}/devices/virtual/dmi/id/{sys,board,bios}_vendor r,
-
-  @{sys}/devices/**/net/** r,
 
   @{run}/udev/data/n[0-9]* r,
 
-  /var/lib/dbus/machine-id r,
-  /etc/machine-id r,
+  @{sys}/devices/**/net/** r,
+  @{sys}/devices/virtual/dmi/id/{sys,board,bios}_vendor r,
+  @{sys}/devices/virtual/dmi/id/product_name r,
+
+  @{PROC}/sys/net/ipv{4,6}/** rw,
 
   include if exists <local/systemd-networkd>
 }

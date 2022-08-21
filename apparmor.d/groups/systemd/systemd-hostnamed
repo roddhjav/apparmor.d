@@ -17,11 +17,17 @@ profile systemd-hostnamed @{exec_path} flags=(attach_disconnected) {
 
   dbus send bus=system path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus
-       member={RequestName,ReleaseName},
+       member={RequestName,ReleaseName,GetConnectionUnixUser}
+       peer=(name=org.freedesktop.DBus),
+
+  dbus send bus=system path=/org/freedesktop/PolicyKit1/Authority
+       interface=org.freedesktop.PolicyKit1.Authority
+       member=CheckAuthorization
+       peer=(name=org.freedesktop.PolicyKit1),
 
   dbus receive bus=system path=/org/freedesktop/hostname[0-9]
        interface=org.freedesktop.DBus.Properties
-       member={Get,GetAll},
+       member={Get,GetAll,SetHostname},
 
   dbus bind bus=system 
        name=org.freedesktop.hostname[0-9],
