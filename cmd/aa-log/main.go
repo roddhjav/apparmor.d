@@ -22,9 +22,9 @@ import (
 
 // Command line options
 var (
-	dbus  bool
-	help  bool
-	path  string
+	dbus bool
+	help bool
+	path string
 )
 
 // LogFile is the default path to the file to query
