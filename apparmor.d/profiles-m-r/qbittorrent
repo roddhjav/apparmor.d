@@ -6,11 +6,15 @@ abi <abi/3.0>,
 
 include <tunables/global>
 
+@{FIREFOX_BIN}  = /{usr/,}lib/firefox{,-esr}/firefox
+@{FIREFOX_BIN} += /opt/firefox{,-esr}/firefox
+
 @{exec_path} = /{usr/,}bin/qbittorrent
 profile qbittorrent @{exec_path} {
   include <abstractions/base>
   include <abstractions/consoles>
-  include <abstractions/X>
+  include <abstractions/nameservice-strict>
+  include <abstractions/X-strict>
   include <abstractions/gtk>
   include <abstractions/fonts>
   include <abstractions/fontconfig-cache-read>
@@ -20,21 +24,20 @@ profile qbittorrent @{exec_path} {
   include <abstractions/qt5>
   include <abstractions/qt5-compose-cache-write>
   include <abstractions/qt5-settings-write>
-  include <abstractions/dconf-write>
   include <abstractions/ibus>
+  include <abstractions/dconf-write>
   include <abstractions/dbus-strict>
   include <abstractions/dbus-session-strict>
   include <abstractions/dbus-accessibility-strict>
   include <abstractions/dbus-network-manager-strict>
   include <abstractions/dbus-gtk>
-  include <abstractions/wayland>
   include <abstractions/dri-enumerate>
+  include <abstractions/wayland>
   include <abstractions/mesa>
-  include <abstractions/nameservice-strict>
   include <abstractions/openssl>
   include <abstractions/ssl_certs>
 
-  signal (send) set=(term, kill) peer=qbittorrent//python3,
+  signal send set=(term, kill) peer=qbittorrent//python3,
 
   network inet dgram,
   network inet6 dgram,
@@ -43,67 +46,67 @@ profile qbittorrent @{exec_path} {
   network netlink dgram,
   network netlink raw,
 
-  dbus (send) bus=session path=/StatusNotifierWatcher
+  dbus send    bus=session path=/StatusNotifierWatcher
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
        peer=(name=org.kde.StatusNotifierWatcher),
    
-  dbus (send) bus=session path=/StatusNotifierWatcher
+  dbus send    bus=session path=/StatusNotifierWatcher
        interface=org.freedesktop.DBus.Properties
        member=Get
        peer=(name=org.kde.StatusNotifierWatcher),
    
-  dbus (send) bus=session path=/StatusNotifierWatcher
+  dbus send    bus=session path=/StatusNotifierWatcher
        interface=org.kde.StatusNotifierWatcher
        member=RegisterStatusNotifierItem
        peer=(name=org.kde.StatusNotifierWatcher),
    
-  dbus (send) bus=session path=/StatusNotifierItem
+  dbus send    bus=session path=/StatusNotifierItem
        interface=org.kde.StatusNotifierItem
        member={NewToolTip,NewIcon}
        peer=(name=org.freedesktop.DBus),
    
-  dbus (receive) bus=session path=/StatusNotifierItem
+  dbus receive bus=session path=/StatusNotifierItem
        interface=org.kde.StatusNotifierItem
        member=Activate
        peer=(name=:*),
    
-  dbus (receive) bus=session path=/StatusNotifierItem
+  dbus receive bus=session path=/StatusNotifierItem
        interface=org.freedesktop.DBus.Properties
        member=GetAll
        peer=(name=:*),
    
-  dbus (receive) bus=session path=/MenuBar
+  dbus receive bus=session path=/MenuBar
        interface=org.freedesktop.DBus.Properties
        member=GetAll
        peer=(name=:*),
    
-  dbus (send) bus=session path=/MenuBar
+  dbus send    bus=session path=/MenuBar
        interface=com.canonical.dbusmenu
        member=ItemsPropertiesUpdated
        peer=(name=org.freedesktop.DBus),
    
-  dbus (receive) bus=session path=/MenuBar
+  dbus receive bus=session path=/MenuBar
        interface=com.canonical.dbusmenu
        member={GetLayout,GetGroupProperties,AboutToShow,AboutToShowGroup,EventGroup,Event}
        peer=(name=:*),
    
-  dbus (send) bus=session path=/org/freedesktop/DBus
+  dbus send    bus=session path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus
        member={RequestName,ReleaseName}
        peer=(name=org.freedesktop.DBus),
 
-  dbus (send) bus=accessibility path=/org/a11y/atspi/accessible/root
+  dbus send    bus=accessibility path=/org/a11y/atspi/accessible/root
        interface=org.a11y.atspi.Socket
        member=Embed
        peer=(name=org.a11y.atspi.Registry),
 
-  dbus (receive) bus=accessibility path=/org/a11y/atspi/accessible/root
+  dbus receive bus=accessibility path=/org/a11y/atspi/accessible/root
        interface=org.freedesktop.DBus.Properties
        member=Set
        peer=(name=:*),
 
-  dbus (bind) bus=session
+  dbus bind    bus=session
     name=org.kde.StatusNotifierItem-*,
 
   owner /tmp/dbus-[0-9a-zA-Z]* rw,
@@ -167,9 +170,6 @@ profile qbittorrent @{exec_path} {
   # file_inherit
   owner /dev/tty[0-9]* rw,
 
-  # X-tiny
-  owner @{run}/user/@{uid}/ICEauthority r,
-
   # gnome-tiny
   /usr/share/gvfs/remote-volume-monitors/{,*} r,
   /usr/share/glib-2.0/schemas/gschemas.compiled r,
@@ -186,18 +186,28 @@ profile qbittorrent @{exec_path} {
   /{usr/,}bin/viewnior       rPUx,
   /{usr/,}bin/qpdfview        rPx,
   /{usr/,}bin/ebook-viewer    rPx,
-  /{usr/,}lib/firefox/firefox rPx,
   /{usr/,}bin/nautilus        rPx,
+  @{FIREFOX_BIN}              rPx,
 
   profile open {
     include <abstractions/base>
     include <abstractions/xdg-open>
     include <abstractions/dbus-gtk>
 
-    dbus (send) bus=session path=/org/gnome/{Nautilus,Totem,gedit}
-      interface=org.freedesktop.Application
-      member=Open
-      peer=(name="org.gnome.{Nautilus,Totem,gedit}"),
+    dbus send bus=session path=/org/gnome/{Nautilus,Totem,gedit}
+         interface=org.freedesktop.Application
+         member=Open
+         peer=(name="org.gnome.{Nautilus,Totem,gedit}"),
+
+    dbus send bus=accessibility path=/org/a11y/atspi/accessible/root
+         interface=org.a11y.atspi.Socket
+         member=Embed
+         peer=(name=org.a11y.atspi.Registry),
+
+    dbus receive bus=accessibility path=/org/a11y/atspi/accessible/root
+         interface=org.freedesktop.DBus.Properties
+         member=Set
+         peer=(name=:*),
 
     /{usr/,}bin/xdg-open mr,
 
@@ -210,8 +220,8 @@ profile qbittorrent @{exec_path} {
     /{usr/,}bin/viewnior       rPUx,
     /{usr/,}bin/qpdfview        rPx,
     /{usr/,}bin/ebook-viewer    rPx,
-    /{usr/,}lib/firefox/firefox rPx,
     /{usr/,}bin/engrampa        rPx,
+    @{FIREFOX_BIN}              rPx,
 
     /{usr/,}bin/{ba,da,}sh        rix,
     /{usr/,}bin/{g,m,}awk         rix,
@@ -240,7 +250,7 @@ profile qbittorrent @{exec_path} {
     include <abstractions/ssl_certs>
     include <abstractions/nameservice-strict>
 
-    signal (receive) set=(term, kill) peer=qbittorrent,
+    signal receive set=(term, kill) peer=qbittorrent,
 
     network inet dgram,
     network inet6 dgram,

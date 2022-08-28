@@ -23,41 +23,54 @@ profile engrampa @{exec_path} {
   include <abstractions/dbus-gtk>
   include <abstractions/ibus>
 
-  unix (send receive connect) type=stream peer=(addr=@/tmp/.X11-unix/*),
+  dbus send bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member=GetId
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
 
-  dbus (send) bus=session path=/ca/desrt/dconf/Writer/user
+  dbus send bus=session path=/ca/desrt/dconf/Writer/user
        interface=ca.desrt.dconf.Writer
        member={Change,Notify}
        peer=(name=ca.desrt.dconf),
 
-  dbus (send) bus=session path=/org/gtk/Private/RemoteVolumeMonitor
+  dbus send bus=session path=/org/gtk/Private/RemoteVolumeMonitor
        interface=org.gtk.Private.RemoteVolumeMonitor
        member={IsSupported,List}
        peer=(name=:*),
  
-  dbus (send) bus=accessibility path=/org/a11y/atspi/accessible/root
+  dbus send bus=accessibility path=/org/a11y/atspi/accessible/root
        interface=org.a11y.atspi.Socket
        member=Embed
        peer=(name=org.a11y.atspi.Registry),
 
-  dbus (receive) bus=accessibility path=/org/a11y/atspi/accessible/root
+  dbus receive bus=accessibility path=/org/a11y/atspi/accessible/root
        interface=org.freedesktop.DBus.Properties
        member=Set
        peer=(name=:*),
 
-  dbus (send) bus=session path=/org/gtk/vfs/mounttracker
+  dbus send bus=session path=/org/gtk/vfs/mounttracker
        interface=org.gtk.vfs.MountTracker
        member={ListMounts2,LookupMount}
        peer=(name=:*),
  
-  dbus (receive) bus=session path=/org/gtk/vfs/mounttracker
+  dbus receive bus=session path=/org/gtk/vfs/mounttracker
        interface=org.gtk.vfs.MountTracker
        member=Mounted
        peer=(name=:*),
 
-  dbus (send) bus=session path=/org/gtk/vfs/Daemon
+  dbus send bus=session path=/org/gtk/vfs/Daemon
        interface=org.gtk.vfs.Daemon
        member=GetConnection
+       peer=(name=:*),
+
+  dbus receive bus=session path=/org/gtk/Application/anonymous
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=:*),
+
+  dbus receive bus=session path=/org/gtk/Application/anonymous{,/window/[0-9]*}
+       interface=org.gtk.Actions
+       member=DescribeAll
        peer=(name=:*),
 
   @{exec_path} mr,
@@ -118,12 +131,6 @@ profile engrampa @{exec_path} {
   # gnome-tiny
   @{run}/mount/utab r,
 
-  # Ubuntu
-  /etc/gnome/*.list r,
-  /etc/xfce4/*.list r,
-  /usr/share/xfce4/applications/{,*.list} r,
-  /usr/share/xubuntu/applications/{,*.list} r,
-
   owner @{PROC}/@{pid}/cgroup r,
   owner @{PROC}/@{pid}/fd/ r,
         @{PROC}/@{pid}/mountinfo r,
@@ -132,10 +139,10 @@ profile engrampa @{exec_path} {
   /etc/fstab r,
 
   # Allowed apps to open
-  /{usr/,}bin/engrampa  rPx,
-  /{usr/,}bin/geany     rPx,
+  /{usr/,}bin/engrampa   rPx,
+  /{usr/,}bin/geany      rPx,
   /{usr/,}bin/viewnior  rPUx,
-  /{usr/,}bin/spacefm   rPx,
+  /{usr/,}bin/spacefm    rPx,
   /{usr/,}bin/ristretto rPUx,
 
   # file_inherit
@@ -160,7 +167,7 @@ profile engrampa @{exec_path} {
     # Allowed apps to open
     /{usr/,}bin/engrampa  rPx,
     /{usr/,}bin/geany     rPx,
-    /{usr/,}bin/viewnior  rPUx,
+    /{usr/,}bin/viewnior rPUx,
     /{usr/,}bin/spacefm   rPx,
 
     # file_inherit

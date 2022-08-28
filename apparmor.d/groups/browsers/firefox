@@ -18,8 +18,8 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
   include <abstractions/audio>
   include <abstractions/dconf-write>
   include <abstractions/enchant>
-  include <abstractions/fontconfig-cache-read>
   include <abstractions/fonts>
+  include <abstractions/fontconfig-cache-read>
   include <abstractions/freedesktop.org>
   include <abstractions/gtk>
   include <abstractions/mesa>
@@ -41,6 +41,8 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
 
   ptrace peer=@{profile_name},
 
+  unix (send, receive) type=stream addr=none peer=(label=xorg),
+
   signal (send) set=(term, kill) peer=keepassxc-proxy,
   signal (send) set=(term, kill) peer=firefox-*,
 
@@ -50,42 +52,42 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
   network inet6 stream,
   network netlink raw,
 
-  dbus (send) bus=session path=/org/freedesktop/DBus
+  dbus send    bus=session path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus
        member={RequestName,ReleaseName}
        peer=(name=org.freedesktop.DBus),
 
-  dbus (send) bus=session path=/ScreenSaver
+  dbus send    bus=session path=/ScreenSaver
        interface=org.freedesktop.ScreenSaver
        member={Inhibit,UnInhibit}
        peer=(name=org.freedesktop.ScreenSaver),
 
-  dbus (send) bus=session path=/org/freedesktop/portal/desktop
+  dbus send    bus=session path=/org/freedesktop/portal/desktop
        interface=org.freedesktop.portal.Settings
        member=Read
        peer=(name=:*),
 
-  dbus (receive) bus=session path=/org/freedesktop/portal/desktop
+  dbus receive bus=session path=/org/freedesktop/portal/desktop
        interface=org.freedesktop.portal.Settings
        member=SettingChanged
        peer=(name=:*),
 
-  dbus (send) bus=session path=/org/freedesktop/portal/desktop
+  dbus send    bus=session path=/org/freedesktop/portal/desktop
        interface=org.freedesktop.DBus.Properties
        member={GetAll,Read}
        peer=(name=:*),
 
-  dbus (send) bus=system path=/org/freedesktop/UPower
+  dbus send    bus=system path=/org/freedesktop/UPower
        interface=org.freedesktop.UPower
        member=EnumerateDevices
        peer=(name=org.freedesktop.UPower),
 
-  dbus (send) bus=session path=/org/freedesktop/PowerManagement/Inhibit
+  dbus send    bus=session path=/org/freedesktop/PowerManagement/Inhibit
        interface=org.freedesktop.PowerManagement.Inhibit
        member=Inhibit
        peer=(name=org.freedesktop.PowerManagement),
 
-  dbus (send) bus=system path=/org/freedesktop/RealtimeKit[0-9]*
+  dbus send    bus=system path=/org/freedesktop/RealtimeKit[0-9]*
        member={Get,MakeThreadHighPriority,MakeThreadRealtime,MakeThreadRealtimeWithPID}
        peer=(name=org.freedesktop.RealtimeKit[0-9]*),
 
@@ -94,31 +96,38 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
        member={GetAll,PropertiesChanged}
        peer=(name="{org.freedesktop.DBus,:*}"),
 
-  dbus (receive) bus=session path=/org/mpris/MediaPlayer2
+  dbus receive bus=session path=/org/mpris/MediaPlayer2
        interface=org.mpris.MediaPlayer2.Playlists
        member=GetPlaylists
        peer=(name=:*),
 
-  dbus (receive) bus=system path=/org/freedesktop/login[0-9]*
+  dbus receive bus=system path=/org/freedesktop/login[0-9]*
        interface=org.freedesktop.login[0-9]*.Manager
        member={SessionNew,SessionRemoved,UserNew,UserRemoved,PrepareForShutdown}
        peer=(name=:*),
 
-  dbus (send) bus=session path=/org/gtk/vfs/metadata
+  dbus send    bus=session path=/org/gtk/vfs/metadata
        interface=org.gtk.vfs.Metadata
        member=GetTreeFromDevice
        peer=(name=:*),
 
-  dbus (send) bus=session path=/org/gtk/Private/RemoteVolumeMonitor
-       interface=org.gtk.Private.RemoteVolumeMonitor
-       member={IsSupported,VolumeAdded,VolumeRemoved,VolumeChanged}
-       peer=(name=:*),
+  dbus send    bus=session path=/org/mozilla/firefox/Remote
+       interface=org.mozilla.firefox
+       member=OpenURL
+       peer=(name=org.mozilla.firefox.* label=firefox),
 
-  dbus (bind) bus=session
+  dbus receive bus=session path=/org/mozilla/firefox/Remote
+       interface=org.mozilla.firefox
+       member=OpenURL
+       peer=(name=:* label=firefox),
+
+  dbus bind    bus=session
        name=org.mpris.MediaPlayer2.firefox.*,
 
-  dbus (bind) bus=session
+  dbus bind    bus=session
        name=org.mozilla.firefox.*,
+
+  deny dbus send bus=system path=/org/freedesktop/hostname[0-9]*,
 
   @{exec_path} mrix,
 
@@ -178,11 +187,8 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
   /etc/opensc.conf r,
   /etc/xul-ext/kwallet5.js r,
 
-  # Ubuntu
-  /etc/gnome/*.list r,
-  /etc/xfce4/*.list r,
-  /usr/share/xfce4/applications/{,*.list} r,
-  /usr/share/*ubuntu/applications/{,*.list} r,
+  # gnome-tiny
+  @{run}/mount/utab r,
 
   owner @{HOME}/ r,
 
@@ -196,7 +202,7 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
   owner @{MOZ_HOMEDIR}/native-messaging-hosts/org.keepassxc.keepassxc_browser.json r,
 
   owner @{user_config_dirs}/ r,
-  owner @{user_config_dirs}/ibus/bus/{,[0-9a-f]*-unix-wayland-[0-9]*} r,
+  owner @{user_config_dirs}/ibus/bus/{,[0-9a-f]*-unix{,-wayland}-[0-9]*} r,
   owner @{user_config_dirs}/mimeapps.list{,.*} rw,
 
   owner @{user_cache_dirs}/ rw,
@@ -233,6 +239,7 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
        @{sys}/devices/pci[0-9]*/**/drm/renderD[0-9]*/ r,
        @{sys}/devices/pci[0-9]*/**/irq r,
        @{sys}/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us r,
+       @{sys}/devices/system/cpu/possible r,
   deny @{sys}/devices/system/cpu/cpu[0-9]/cache/index[0-9]/size r,
   deny @{sys}/devices/system/cpu/cpufreq/policy[0-9]/cpuinfo_max_freq r,
   deny @{sys}/devices/system/cpu/present r,
