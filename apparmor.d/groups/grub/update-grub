@@ -1,0 +1,19 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Jeroen Rijken
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}{s,}bin/update-grub{2,}
+profile update-grub @{exec_path} flags=(complain) {
+  include <abstractions/base>
+  include <abstractions/consoles>
+
+  @{exec_path} mr,
+  /{usr/,}bin/{,ba,da}sh rix,
+  /{usr/,}{s,}bin/grub-mkconfig rPx,
+
+  include if exists <local/update-grub>
+}

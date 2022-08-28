@@ -8,7 +8,7 @@ abi <abi/3.0>,
 include <tunables/global>
 
 @{exec_path} = /{usr/,}bin/networkctl
-profile networkctl @{exec_path} flags=(complain) {
+profile networkctl @{exec_path} flags=(attach_disconnected,complain) {
   include <abstractions/base>
   include <abstractions/dbus-strict>
 
@@ -39,9 +39,6 @@ profile networkctl @{exec_path} flags=(complain) {
   /var/lib/dbus/machine-id r,
   /etc/machine-id r,
 
-  @{run}/systemd/netif/links/[0-9]* r,
-  @{run}/systemd/netif/state r,
-
   # To be able to read logs
   @{run}/log/ r,
   /{run,var}/log/journal/ r,
@@ -50,12 +47,16 @@ profile networkctl @{exec_path} flags=(complain) {
   /{run,var}/log/journal/[0-9a-f]*/system.journal* r,
   /{run,var}/log/journal/[0-9a-f]*/system@[0-9a-f]*.journal* r,
 
+  @{run}/systemd/netif/links/[0-9]* r,
+  @{run}/systemd/netif/state r,
+  @{run}/systemd/notify w,
+
   @{sys}/devices/**/net/**/uevent r,
 
-  owner @{PROC}/@{pid}/cgroup r,
-  owner @{PROC}/@{pid}/stat r,
         @{PROC}/filesystems r,
         @{PROC}/sys/kernel/random/boot_id r,
+  owner @{PROC}/@{pid}/cgroup r,
+  owner @{PROC}/@{pid}/stat r,
 
   include if exists <local/networkctl>
 }

@@ -1,16 +1,20 @@
 // aa-log - Review AppArmor generated messages
-// Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+// Copyright (C) 2021-2022 Alexandre Pujol <alexandre@pujol.io>
 // SPDX-License-Identifier: GPL-2.0-only
 
 package main
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/hex"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -18,6 +22,7 @@ import (
 
 // Command line options
 var (
+	dbus bool
 	help bool
 	path string
 )
@@ -44,6 +49,11 @@ type AppArmorLog map[string]string
 
 // AppArmorLogs describes all apparmor log entries
 type AppArmorLogs []AppArmorLog
+
+// SystemdLog is a simplified systemd json log representation.
+type SystemdLog struct {
+	Message string `json:"MESSAGE"`
+}
 
 var (
 	quoted bool
@@ -82,6 +92,40 @@ func removeDuplicateLog(logs []string) []string {
 		}
 	}
 	return list
+}
+
+// getJournalctlDbusSessionLogs return a reader with the logs entries
+func getJournalctlDbusSessionLogs(file io.Reader, useFile bool) (io.Reader, error) {
+	var logs []SystemdLog
+	var stdout bytes.Buffer
+	var value string
+
+	if useFile {
+		content, err := ioutil.ReadAll(file)
+		if err != nil {
+			return nil, err
+		}
+		value = string(content)
+	} else {
+		cmd := exec.Command("journalctl", "--user", "-b", "-u", "dbus.service", "-o", "json")
+		cmd.Stdout = &stdout
+		if err := cmd.Run(); err != nil {
+			return nil, err
+		}
+		value = stdout.String()
+	}
+
+	value = strings.Replace(value, "\n", ",\n", -1)
+	value = strings.TrimSuffix(value, ",\n")
+	value = `[` + value + `]`
+	if err := json.Unmarshal([]byte(value), &logs); err != nil {
+		return nil, err
+	}
+	res := ""
+	for _, log := range logs {
+		res += log.Message + "\n"
+	}
+	return strings.NewReader(res), nil
 }
 
 // NewApparmorLogs return a new ApparmorLogs list of map from a log file
@@ -198,7 +242,7 @@ func (aaLogs AppArmorLogs) String() string {
 	return res
 }
 
-func aaLog(path string, profile string) error {
+func aaLog(path string, profile string, dbus bool) error {
 	file, err := os.Open(filepath.Clean(path))
 	if err != nil {
 		return err
@@ -210,21 +254,31 @@ func aaLog(path string, profile string) error {
 		}
 	}()
 
-	aaLogs := NewApparmorLogs(file, profile)
-	fmt.Print(aaLogs.String())
-	return err
+	if dbus {
+		file, err := getJournalctlDbusSessionLogs(file, path != LogFile)
+		if err != nil {
+			return err
+		}
+		aaLogs := NewApparmorLogs(file, profile)
+		fmt.Print(aaLogs.String())
+	} else {
+		aaLogs := NewApparmorLogs(file, profile)
+		fmt.Print(aaLogs.String())
+	}
+	return nil
 }
 
 func init() {
 	flag.BoolVar(&help, "h", false, "Show this help message and exit.")
 	flag.StringVar(&path, "f", LogFile,
 		"Set a log`file` or a suffix to the default log file.")
+	flag.BoolVar(&dbus, "d", false, "Show dbus session event.")
 }
 
 func main() {
 	flag.Parse()
 	if help {
-		fmt.Printf(`aa-log [-h] [-f file] [profile]
+		fmt.Printf(`aa-log [-h] [-d] [-f file] [profile]
 
   Review AppArmor generated messages in a colorful way.
   It can be given an optional profile name to filter the output with.
@@ -244,7 +298,7 @@ func main() {
 		logfile = path
 	}
 
-	err := aaLog(logfile, profile)
+	err := aaLog(logfile, profile, dbus)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)

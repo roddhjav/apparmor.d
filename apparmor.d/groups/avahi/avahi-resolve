@@ -1,0 +1,34 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Jeroen Rijken
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/avahi-resolve /{usr/,}bin/avahi-resolve-address /{usr/,}bin/avahi-resolve-host-name
+profile avahi-resolve @{exec_path} flags=(complain) {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/dbus-strict>
+
+  dbus send bus=system path=/
+      interface=org.freedesktop.DBus.Peer
+      member=Ping,
+
+  dbus send bus=system path=/
+      interface=org.freedesktop.Avahi.Server
+      member={GetAPIVersion,GetState,AddressResolverNew},
+
+  dbus send bus=system path=/Client[0-9]/AddressResolver[0-9]
+      interface=org.freedesktop.Avahi.AddressResolver
+      member={Free,HostNameResolverNew,},
+
+  dbus receive bus=system path=/Client[0-9]/AddressResolver[0-9]
+      interface=org.freedesktop.Avahi.AddressResolver
+      member={Failure,Found},
+
+  @{exec_path} mr,
+
+  include if exists <local/avahi-resolve>
+}

@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2022 Jeroen Rijken
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -9,8 +10,9 @@ include <tunables/global>
 @{exec_path} = /{snap/snapd/[0-9]*/,}{usr/,}bin/fc-cache{,-32,-v*}
 profile fc-cache @{exec_path} {
   include <abstractions/base>
-  include <abstractions/fonts>
+  include <abstractions/consoles>
   include <abstractions/fontconfig-cache-write>
+  include <abstractions/fonts>
 
   @{exec_path} mr,
 
@@ -18,6 +20,8 @@ profile fc-cache @{exec_path} {
   /var/cache/fontconfig/*.cache-[0-9]* rwk,
   /var/cache/fontconfig/*.cache-[0-9]*.LCK rwl,
   /var/cache/fontconfig/CACHEDIR.TAG.LCK rwl,
+
+  /var/tmp/mkinitramfs_*/{**,} rwl,
 
   # Silencer
   deny network inet6 stream,

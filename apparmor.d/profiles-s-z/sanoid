@@ -1,0 +1,33 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Jeroen Rijken
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}{local/,}{s,}bin/sanoid
+profile sanoid @{exec_path} flags=(complain) {
+  include <abstractions/base>
+  include <abstractions/perl>
+
+  @{exec_path}                 mr,
+  /{usr/,}bin/{,ba,da}sh       rix,
+  /{usr/,}bin/perl             rix,
+  /{usr/,}bin/ps               rPx,
+  /{usr/,}{local/,}{s,}bin/zfs rPx,
+
+  /etc/sanoid/{*,} r,
+
+  /var/cache/sanoid/snapshots.txt rw,
+
+  /usr/share/sanoid/{**,} r,
+
+  @{run}/sanoid/ rw,
+  @{run}/sanoid/sanoid_cacheupdate.lock rwk,
+  @{run}/sanoid/sanoid_pruning.lock rwk,
+
+  owner /tmp/** rw,
+
+  include if exists <local/sanoid>
+}

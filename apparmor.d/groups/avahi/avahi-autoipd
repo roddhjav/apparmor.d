@@ -1,0 +1,27 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Jeroen Rijken
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}{s,}bin/avahi-autoipd
+profile avahi-autoipd @{exec_path} flags=(complain) {
+  include <abstractions/base>
+  include <abstractions/consoles>
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  signal receive set=(kill,term),
+
+  @{exec_path} mr,
+  /etc/avahi/avahi-autoipd.action rix,
+
+  include if exists <local/avahi-autoipd>
+}
+

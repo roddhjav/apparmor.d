@@ -16,12 +16,32 @@ profile boltd @{exec_path} flags=(attach_disconnected) {
 
   network netlink raw,
 
+  dbus send bus=system path=/org/freedesktop/PolicyKit1/Authority
+      interface=org.freedesktop.DBus.Properties
+      member=GetAll,
+  
+  dbus send bus=system path=/org/freedesktop/DBus
+      interface=org.freedesktop.DBus
+      member=RequestName,
+  
+  dbus receive bus=system path=/org/freedesktop/bolt
+      interface=org.freedesktop.DBus.Properties
+      member=GetAll,
+  
+  dbus receive bus=system path=/org/freedesktop/bolt
+      interface=org.freedesktop.bolt1.Manager
+      member=ListDevices,
+  
+  dbus bind bus=system 
+      name=org.freedesktop.bolt,
+
   @{exec_path} mr,
 
   /var/lib/boltd/{,**} rw,
 
   owner @{run}/boltd/{,**} rw,
 
+  @{run}/systemd/notify rw,
   @{run}/systemd/journal/socket w,
   @{run}/udev/data/+thunderbolt:* r,
 
@@ -37,6 +57,7 @@ profile boltd @{exec_path} flags=(attach_disconnected) {
   @{sys}/devices/pci[0-9]*/**/domain[0-9]*/**/{vendor,device}_name r,
   @{sys}/devices/pci[0-9]*/**/domain[0-9]*/iommu_dma_protection r,
   @{sys}/devices/platform/**/uevent r,
+  @{sys}/devices/platform/*/wmi_bus/wmi_bus-*/@{uuid}/force_power rw,
   @{sys}/devices/virtual/dmi/id/{sys_vendor,product_version,product_name} r,
 
   include if exists <local/boltd>

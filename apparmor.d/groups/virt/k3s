@@ -26,7 +26,7 @@ profile k3s @{exec_path} {
   capability sys_resource,
 
   ptrace peer=@{profile_name},
-  ptrace (read) peer={cri-containerd.apparmor.d,cni-xtables-nft,kubernetes-pause,mount,unconfined},
+  ptrace (read) peer={cri-containerd.apparmor.d,cni-xtables-nft,ip,kubernetes-pause,mount,unconfined},
 
   # k3s requires ptrace to all AppArmor profiles loaded in Kubernetes
   # For simplification, let's assume for now all AppArmor profiles start with a predefined prefix.
@@ -109,16 +109,11 @@ profile k3s @{exec_path} {
   owner @{PROC}/@{pids}/oom_score_adj rw,
   owner @{PROC}/@{pids}/stat r,
   owner @{PROC}/@{pids}/uid_map r,
-  
+
         @{PROC}/diskstats r,
         @{PROC}/loadavg r,
         @{PROC}/modules r,
         @{PROC}/sys/fs/pipe-max-size r,
-        @{PROC}/sys/net/core/somaxconn r,
-        @{PROC}/sys/net/ipv{4,6}/conf/all/* rw,
-        @{PROC}/sys/net/ipv{4,6}/conf/default/* rw,
-        @{PROC}/sys/net/bridge/bridge-nf-call-iptables r,
-        @{PROC}/sys/net/netfilter/* rw,
         @{PROC}/sys/kernel/keys/* r,
         @{PROC}/sys/kernel/panic rw,
         @{PROC}/sys/kernel/panic_on_oom rw,
@@ -126,11 +121,16 @@ profile k3s @{exec_path} {
         @{PROC}/sys/kernel/pid_max r,
         @{PROC}/sys/kernel/osrelease r,
         @{PROC}/sys/kernel/threads-max r,
+        @{PROC}/sys/net/core/somaxconn r,
+        @{PROC}/sys/net/ipv{4,6}/conf/all/* rw,
+        @{PROC}/sys/net/ipv{4,6}/conf/default/* rw,
+        @{PROC}/sys/net/bridge/bridge-nf-call-iptables r,
+        @{PROC}/sys/net/netfilter/* rw,
         @{PROC}/sys/vm/overcommit_memory rw,
         @{PROC}/sys/vm/panic_on_oom r,
 
   @{sys}/class/net/ r,
-  
+
   @{sys}/devices/pci[0-9]*/**/net/*/{address,mtu,speed} r,
   @{sys}/devices/system/edac/mc/ r,
   @{sys}/devices/system/cpu/ r,
@@ -138,14 +138,15 @@ profile k3s @{exec_path} {
   @{sys}/devices/system/cpu/cpu[0-9]*/topology/{,**} r,
   @{sys}/devices/system/cpu/cpufreq/policy[0-9]*/cpuinfo_max_freq r,
   @{sys}/devices/system/cpu/present{,/} r,
-
-  @{sys}/devices/virtual/net/cali[0-9a-f]*/{address,mtu,speed} r,
-  @{sys}/devices/virtual/net/vxlan.calico/{address,mtu,speed} r,
   @{sys}/devices/system/node/ r,
   @{sys}/devices/system/node/node[0-9]*/ r,
   @{sys}/devices/system/node/node[0-9]*/{cpumap,distance,meminfo} r,
   @{sys}/devices/system/node/node[0-9]*/hugepages/{,**} r,
+
+  @{sys}/devices/virtual/block/*/** r,
   @{sys}/devices/virtual/dmi/id/* r,
+  @{sys}/devices/virtual/net/cali[0-9a-f]*/{address,mtu,speed} r,
+  @{sys}/devices/virtual/net/vxlan.calico/{address,mtu,speed} r,
 
   @{sys}/fs/cgroup/{,*,*/} r,
   @{sys}/fs/cgroup/cgroup.subtree_control rw,

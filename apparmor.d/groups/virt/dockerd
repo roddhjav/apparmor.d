@@ -1,0 +1,100 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/dockerd
+profile dockerd @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/dbus-strict>
+  include <abstractions/nameservice-strict>
+  include <abstractions/ssl_certs>
+
+  capability chown, 
+  capability dac_override,
+  capability dac_read_search,
+  capability fowner,
+  capability fsetid,
+  capability mknod,
+  capability net_admin,
+  capability sys_admin,
+  capability sys_chroot,
+  capability kill,
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  mount options=(rw, bind) -> /run/docker/netns/*,
+  mount options=(rw, rbind) -> /var/lib/docker/overlay*/**/,
+  mount options=(rw, rbind) -> /var/lib/docker/tmp/docker-builder[0-9]*/,
+  mount options=(rw, rprivate) -> /.pivot_root[0-9]*/,
+  mount options=(rw, rslave) -> /,
+  umount /.pivot_root[0-9]*/,
+  umount /run/docker/netns/*,
+  umount /var/lib/docker/overlay*/**/,
+
+  pivot_root oldroot=/var/lib/docker/overlay*/**/.pivot_root[0-9]*/ /var/lib/docker/overlay2/**/,
+  pivot_root oldroot=/var/lib/docker/tmp/**/.pivot_root[0-9]*/ /var/lib/docker/tmp/**/,
+
+  ptrace (read) peer=unconfined,
+
+  signal (send) set=kill peer=docker-*,
+  signal (send) set=term peer=containerd,
+
+  @{exec_path} mrix,
+
+  /{usr/,}{s,}bin/apparmor_parser     rPx,
+  /{usr/,}{s,}bin/runc                rUx,
+  /{usr/,}{s,}bin/xtables-nft-multi   rix,
+  /{usr/,}bin/containerd              rPx,
+  /{usr/,}bin/docker-init             rix,
+  /{usr/,}bin/kmod                    rPx,
+  /{usr/,}bin/ps                      rPx,
+  /{usr/,}bin/unpigz                  rix,
+
+  # Docker needs full access of its containers.
+  # TODO: should be in a sub profile started with pivot_root, not supported yet.
+  /{,**} rw,
+  deny /boot/{,**} rw,
+  deny /dev/{,**} rw,
+  deny /media/{,**} rw,
+  deny /mnt/{,**} rw,
+
+  owner /{usr/,}lib/docker/overlay2/*/work/{,**} rw,
+  owner /var/lib/docker/{,**} rwk,
+  owner /var/lib/docker/tmp/qemu-check[0-9]*/check rix,
+
+  @{sys}/fs/cgroup/cgroup.controllers r,
+  @{sys}/fs/cgroup/cpuset.cpus.effective r,
+  @{sys}/fs/cgroup/cpuset.mems.effective r,
+  @{sys}/kernel/mm/transparent_hugepage/hpage_pmd_size r,
+  @{sys}/kernel/security/apparmor/profiles r,
+  @{sys}/module/apparmor/parameters/enabled r,
+
+        @{PROC}/1/cgroup r,
+        @{PROC}/1/environ r,
+        @{PROC}/cmdline r,
+        @{PROC}/sys/kernel/keys/root_maxkeys r,
+        @{PROC}/sys/kernel/osrelease r,
+        @{PROC}/sys/kernel/threads-max r,
+        @{PROC}/sys/net/bridge/bridge-nf-call-ip*tables r,
+        @{PROC}/sys/net/core/somaxconn r,
+        @{PROC}/sys/net/ipv{4,6}/conf/all/disable_ipv{4,6} rw,
+        @{PROC}/sys/net/ipv{4,6}/conf/docker[0-9]*/accept_ra rw,
+        @{PROC}/sys/net/ipv{4,6}/ip_forward rw,
+        @{PROC}/sys/net/ipv{4,6}/ip_local_port_range r,
+  owner @{PROC}/@{pids}/attr/current r,
+  owner @{PROC}/@{pids}/cgroup r,
+  owner @{PROC}/@{pids}/fd/ r,
+  owner @{PROC}/@{pids}/mountinfo r,
+  owner @{PROC}/@{pids}/net/ip_tables_names r,
+  owner @{PROC}/@{pids}/uid_map r,
+
+  include if exists <local/dockerd>
+}

@@ -1,6 +1,7 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2019-2022 Mikhail Morfikov
 # Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2022 Jeroen Rijken
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -118,11 +119,13 @@ profile run-parts @{exec_path} {
     include <abstractions/base>
 
     /{usr/,}bin/{,ba,da}sh rix,
+    /{usr/,}bin/{e,}grep   rix,
     /{usr/,}bin/cat        rix,
     /{usr/,}bin/cut        rix,
     /{usr/,}bin/find       rix,
-    /{usr/,}bin/grep       rix,
+    /{usr/,}bin/head       rix,
     /{usr/,}bin/id         rix,
+    /{usr/,}bin/sort       rix,
     /{usr/,}bin/tr         rix,
     /{usr/,}bin/uname      rix,
 
@@ -132,16 +135,23 @@ profile run-parts @{exec_path} {
     /usr/share/unattended-upgrades/update-motd-unattended-upgrades rix,
 
     / r,
+    /etc/default/motd-news r,
     /etc/lsb-release r,
     /etc/update-motd.d/[0-9]*-[a-z]* r,
 
+    /var/cache/motd-news r,
     /var/lib/update-notifier/updates-available r,
+
+    @{run}/motd.d/{,*} r,
+
+    @{PROC}/@{pids}/mounts r,
 
   }
 
   profile kernel {
     include <abstractions/base>
     include <abstractions/consoles>
+    include <abstractions/nameservice-strict>
 
     capability sys_module,
 
@@ -151,7 +161,7 @@ profile run-parts @{exec_path} {
     /{usr/,}bin/chmod      rix,
     /{usr/,}bin/cut        rix,
     /{usr/,}bin/dirname    rix,
-    /{usr/,}bin/gawk       rix,
+    /{usr/,}bin/{,m,g}awk  rix,
     /{usr/,}bin/kmod       rix,
     /{usr/,}bin/mv         rix,
     /{usr/,}bin/rm         rix,

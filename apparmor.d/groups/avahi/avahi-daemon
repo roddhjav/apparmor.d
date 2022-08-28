@@ -1,0 +1,23 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Jeroen Rijken
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/avahi-daemon
+profile avahi-daemon @{exec_path} flags=(complain) {
+  include <abstractions/base>
+  include <abstractions/consoles>
+
+  network inet dgram,
+  network inet6 dgram,
+
+  @{exec_path} mr,
+
+  /etc/avahi/** r,
+
+  include if exists <local/avahi-daemon>
+}
+

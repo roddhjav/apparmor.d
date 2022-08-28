@@ -1,6 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2017-2021 Mikhail Morfikov
-#               2021 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2017-2022 Mikhail Morfikov
+# Copyright (C) 2021-2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -11,22 +11,25 @@ include <tunables/global>
 profile gpg @{exec_path} {
   include <abstractions/base>
   include <abstractions/consoles>
-  include <abstractions/user-download-strict>
   include <abstractions/nameservice-strict>
+  include <abstractions/user-download-strict>
+  include <abstractions/user-read>
+
+  capability dac_read_search,
 
   network netlink raw,
 
   @{exec_path} mrix,
 
-  /{usr/,}bin/gpgconf           rPx,
-  /{usr/,}bin/gpg-connect-agent rPx,
-  /{usr/,}bin/gpg-agent         rPx,
   /{usr/,}bin/dirmngr           rPx,
+  /{usr/,}bin/gpg-agent         rPx,
+  /{usr/,}bin/gpg-connect-agent rPx,
+  /{usr/,}bin/gpgconf           rPx,
   /{usr/,}bin/gpgsm             rPx,
   /{usr/,}lib/gnupg/scdaemon    rPx,
 
-  # GPG config files
-  owner @{HOME}/ r,
+  /etc/inputrc r,
+
   owner @{HOME}/@{XDG_GPG_DIR}/ rw,
   owner @{HOME}/@{XDG_GPG_DIR}/** rwkl -> @{HOME}/@{XDG_GPG_DIR}/**,
 
@@ -39,54 +42,9 @@ profile gpg @{exec_path} {
   owner /var/lib/*/.gnupg/ rw,
   owner /var/lib/*/.gnupg/** rwkl -> /var/lib/*/.gnupg/**,
 
-  # For flatpak
-  owner /tmp/ostree-gpg-*/ r,
-  owner /tmp/ostree-gpg-*/** rwkl -> /tmp/ostree-gpg-*/**,
-
-  # For ToR Browser
-  owner @{user_share_dirs}/torbrowser/gnupg_homedir/ r,
-  owner @{user_share_dirs}/torbrowser/gnupg_homedir/** rwkl -> @{user_share_dirs}/torbrowser/gnupg_homedir/**,
-
-  # For spamassassin
-  owner /var/lib/spamassassin/sa-update-keys/** rwkl -> /var/lib/spamassassin/sa-update-keys/**,
-
-  # For lintian
-  owner /tmp/temp-lintian-lab-*/**/debian/upstream/signing-key.asc r,
-  owner /tmp/lintian-pool-*/**/debian/upstream/signing-key.asc r,
-  owner /tmp/*/.#lk0x[0-9a-f]*.*.@{pid} rw,
-  owner /tmp/*/.#lk0x[0-9a-f]*.*.@{pid}x rwl -> /tmp/*/.#lk0x[0-9a-f]*.*.@{pid},
-  owner /tmp/*/trustdb.gpg rw,
-  owner /tmp/*/trustdb.gpg.lock rwl -> /tmp/*/.#lk0x[0-9a-f]*.*.@{pid},
-  owner /tmp/*/pubring.kbx rw,
-  owner /tmp/*/pubring.kbx.lock rwl -> /tmp/*/.#lk0x[0-9a-f]*.*.@{pid},
-  owner /tmp/*/gnupg_spawn_agent_sentinel.lock rwl -> /tmp/*/.#lk0x[0-9a-f]*.*.@{pid},
-  owner /tmp/*.gpg rw,
-  owner /tmp/*.gpg~ w,
-  owner /tmp/*.gpg.tmp rw,
-  owner /tmp/*.gpg.lock rwl -> /tmp/.#lk0x[0-9a-f]*.*.@{pid},
-  owner /tmp/.#lk0x[0-9a-f]*.*.@{pid} rw,
-  owner /tmp/.#lk0x[0-9a-f]*.*.@{pid}x rwl -> /tmp/.#lk0x[0-9a-f]*.*.@{pid},
-  owner @{run}/user/@{uid}/gnupg/d.*/ rw,
-
-  # APT upstream/user keyrings
-  /usr/share/keyrings/*.{gpg,asc} r,
-  /etc/apt/keyrings/*.{gpg,asc} r,
-
-  # APT repositories
-  /var/lib/apt/lists/*_InRelease r,
-
-  # Verify files
-  owner @{HOME}/** r,
-  owner @{MOUNTS}/** r,
-
-  owner @{PROC}/@{pid}/task/@{tid}/stat rw,
-  owner @{PROC}/@{pid}/task/@{tid}/comm rw,
   owner @{PROC}/@{pid}/fd/ r,
-
-  /etc/inputrc r,
-
-  # file_inherit
-  /tmp/#[0-9]*[0-9] rw,
+  owner @{PROC}/@{pid}/task/@{tid}/comm rw,
+  owner @{PROC}/@{pid}/task/@{tid}/stat rw,
 
   include if exists <local/gpg>
 }
