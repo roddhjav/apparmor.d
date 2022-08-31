@@ -9,7 +9,7 @@ arch=("x86_64")
 url="https://github.com/roddhjav/$pkgname"
 license=('GPL2')
 depends=('apparmor')
-makedepends=('go' 'git')
+makedepends=('go' 'git' 'rsync' 'lsb-release')
 
 pkgver() {
   cd "$srcdir/$pkgname"
