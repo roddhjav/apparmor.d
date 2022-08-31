@@ -49,6 +49,23 @@ profile gnome-session-binary @{exec_path} flags=(attach_disconnected) {
        interface=org.freedesktop.login[0-9].Manager
        member={SessionNew,PrepareForShutdown,SessionRemoved},
 
+  dbus (send,receive) bus=session path=/org/gnome/SessionManager{,/**}
+       interface={org.freedesktop.DBus.{Properties,Introspectable},org.gnome.SessionManager},
+
+  dbus send bus=session path=/org/freedesktop/systemd1
+       interface=org.freedesktop.systemd1.Manager
+       peer=(name=:org.freedesktop.systemd1),
+
+  dbus send bus=session path=/org/gnome/Mutter/IdleMonitor/Core
+       interface=org.gnome.Mutter.IdleMonitor
+       member=AddIdleWatch
+       peer=(name=:*),
+
+  dbus send bus=session path=/org/gnome/ScreenSaver
+       interface=org.gnome.ScreenSaver
+       member=GetActive 
+       peer=(name=:*),
+
   @{exec_path} mr,
 
   /{usr/,}bin/{,z,ba,da}sh                                 rix,
@@ -57,6 +74,7 @@ profile gnome-session-binary @{exec_path} flags=(attach_disconnected) {
   /{usr/,}bin/mkdir                                        rix,
   /{usr/,}bin/touch                                        rix,
   /{usr/,}bin/gsettings                                    rix,
+  /{usr/,}bin/gsettings-data-convert                       rix,
   /{usr/,}bin/session-migration                            rix,
   /{usr/,}bin/xdg-user-dirs-gtk-update                     rix,
   @{libexec}/gnome-session-check-accelerated               rix,
@@ -124,22 +142,23 @@ profile gnome-session-binary @{exec_path} flags=(attach_disconnected) {
   owner @{user_share_dirs}/applications/mimeinfo.cache r,
   owner @{user_share_dirs}/session_migration-ubuntu r,
 
-  owner @{run}/user/@{uid}/gnome-session-leader-fifo rw,
-  owner @{run}/user/@{uid}/ICEauthority{,-[a-z]} rwl,
-  owner @{run}/user/@{uid}/systemd/notify w,
-  owner @{run}/user/@{uid}/wayland-[0-9]* rw,
         @{run}/systemd/inhibit/[0-9]*.ref rw,
         @{run}/systemd/sessions/* r,
         @{run}/systemd/sessions/*.ref rw,
         @{run}/systemd/users/@{uid} r,
+  owner @{run}/user/@{uid}/gnome-session-leader-fifo rw,
+  owner @{run}/user/@{uid}/ICEauthority{,-[a-z]} rwl,
+  owner @{run}/user/@{uid}/systemd/notify w,
+  owner @{run}/user/@{uid}/wayland-[0-9]* rw,
 
   @{sys}/devices/**/{vendor,device} r,
 
-  owner @{PROC}/@{pid}/loginuid r,
-  owner @{PROC}/@{pid}/cmdline r,
-  owner @{PROC}/@{pid}/fd/ r,
         @{PROC}/@{pid}/cgroup r,
         @{PROC}/cmdline r,
+        @{PROC}/sys/net/ipv{4,6}/conf/all/disable_ipv{4,6} r,
+  owner @{PROC}/@{pid}/cmdline r,
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/loginuid r,
 
   /dev/tty rw,
   /dev/tty[0-9]* rw,

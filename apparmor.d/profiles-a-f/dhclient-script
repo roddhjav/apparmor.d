@@ -14,87 +14,59 @@ profile dhclient-script @{exec_path} {
   include <abstractions/openssl>
   include <abstractions/ssl_certs>
 
+  capability net_admin,
   capability sys_admin,
-
-  # Needed?
-  audit deny capability sys_module,
+  audit capability sys_module,
 
   @{exec_path} mr,
 
-  /{usr/,}bin/{,ba,da}sh mrix,
+  /{usr/,}{s,}bin/ddclient  rPx,
+  /{usr/,}{s,}bin/sysctl    rix,
+  /{usr/,}bin/{,ba,da}sh   mrix,
+  /{usr/,}bin/chmod         rix,
+  /{usr/,}bin/chown         rix,
+  /{usr/,}bin/chronyc       rPUx,
+  /{usr/,}bin/date          rix,
+  /{usr/,}bin/fold          rix,
+  /{usr/,}bin/head          rix,
+  /{usr/,}bin/hostname      rix,
+  /{usr/,}bin/ip            rix,
+  /{usr/,}bin/logger        rix,
+  /{usr/,}bin/mkdir         rix,
+  /{usr/,}bin/mv            rix,
+  /{usr/,}bin/paste         rix,
+  /{usr/,}bin/ping          rPx,
+  /{usr/,}bin/printenv      rix,
+  /{usr/,}bin/readlink      rix,
+  /{usr/,}bin/rm            rix,
+  /{usr/,}bin/run-parts     rCx -> run-parts,
+  /{usr/,}bin/sed           rix,
+  /{usr/,}bin/tr            rix,
+  /{usr/,}bin/xxd           rix,
+  /{usr/,}sbin/resolvconf   rPx,
 
-  /{usr/,}bin/mkdir       rix,
-  /{usr/,}bin/ping        rPx,
-  /{usr/,}bin/chronyc     rPUx,
-  /{usr/,}bin/run-parts   rCx -> run-parts,
-  /{usr/,}sbin/resolvconf rPx,
-
-  # To remove the following error:
-  #  /sbin/dhclient-script: 133: hostname: Permission denied
-  /{usr/,}bin/hostname    rix,
-
-  # To read scripts
-  /etc/dhcp/ r,
-  /etc/dhcp/dhclient-{enter,exit}-hooks.d/{,*} r,
-
-  # For debug script
-  /{usr/,}bin/date rix,
-  /etc/dhcp/debug r,
-  owner /tmp/dhclient-script.debug rw,
-
-  # For ddclient script
-  /{usr/,}{s,}bin/ddclient   rPx,
-  /etc/default/ddclient   r,
-  /{usr/,}bin/logger      rix,
-
-  # For samba script
-  /{usr/,}bin/mv rix,
-  /etc/samba/dhcp.conf{,.new} rw,
-  # For netbios name servers settings from a DHCP server
-  /var/lib/samba/dhcp.conf{,.new} rw,
-
-  # Many scripts may use the ip tool
-  capability net_admin,
-  /{usr/,}bin/ip        rix,
-
-  # For loadbalance
+  /etc/default/ddclient r,
+  /etc/dhcp/{,**} r,
+  /etc/fstab r,
   /etc/iproute2/rt_tables r,
   /etc/iproute2/rt_tables.d/{,*} r,
-  owner @{PROC}/@{pid}/loginuid r,
-
-  # For updating the /etc/resolv.conf file
-  /{usr/,}bin/readlink  rix,
-  /{usr/,}bin/rm rix,
-  /{usr/,}bin/chown     rix,
-  /{usr/,}bin/chmod     rix,
-  /{usr/,}bin/sed       rix,
-  /etc/fstab r,
-  /etc/resolv.conf.dhclient-new.@{pid} rw,
   /etc/resolv.conf rw,
+  /etc/resolv.conf.dhclient-new.@{pid} rw,
+  /etc/samba/dhcp.conf{,.new} rw,
 
-  # For stable-privacy addresses
-  /{usr/,}{s,}bin/sysctl   rix,
-  /{usr/,}bin/head      rix,
-  /{usr/,}bin/xxd       rix,
-  /{usr/,}bin/paste     rix,
-  /{usr/,}bin/fold      rix,
-  /{usr/,}bin/tr        rix,
-  @{PROC}/sys/net/ipv6/conf/*/stable_secret w,
+  /var/lib/dhcp/dhclient.leases r,
+  /var/lib/samba/dhcp.conf{,.new} rw,
 
-  # For printing env
-  /{usr/,}bin/printenv  rix,
+  owner /tmp/dhclient-script.debug rw,
   owner /tmp/variables.txt w,
 
-  # For ntpd/ntpsec
+  @{run}/chrony-dhcp/ rw,
   @{run}/systemd/netif/leases/ r,
 
-  # For chrony
-  @{run}/chrony-dhcp/ rw,
-
-  # file_inherit
-  /var/lib/dhcp/dhclient.leases r,
-
   @{sys}/devices/virtual/dmi/id/board_vendor r,
+
+  owner @{PROC}/@{pid}/loginuid r,
+        @{PROC}/sys/net/ipv6/conf/*/stable_secret w,
 
   profile run-parts {
     include <abstractions/base>
