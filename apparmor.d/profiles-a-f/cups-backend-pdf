@@ -1,0 +1,46 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}lib/cups/backend/cups-pdf
+profile cups-backend-pdf @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/fonts>
+  include <abstractions/nameservice-strict>
+  include <abstractions/user-download-strict>
+
+  capability chown,
+  capability setgid,
+  capability setuid,
+  capability dac_override,
+
+  unix peer=(label=cupsd),
+
+  @{exec_path} mr,
+ 
+  /{usr/,}bin/{,ba,da}sh      rix,
+  /{usr/,}bin/cp              rix,
+  /{usr/,}bin/gs              rix,
+  /{usr/,}bin/gsc             rix,
+  /{usr/,}lib/ghostscript/**  mr,
+
+  /usr/share/ghostscript/{,**} r,
+
+  /etc/papersize r,
+  /etc/cups/ r,
+  /etc/cups/cups-pdf.conf r,
+  /etc/cups/ppd/*.ppd r,
+
+  /var/log/cups/cups-pdf*_log w,
+  /var/spool/cups-pdf/{,**} rw,
+  /var/spool/cups/** r,
+  /var/tmp/gs_* rw,
+
+  /dev/tty rw,
+
+  include if exists <local/cups-backend-pdf>
+}

@@ -1,0 +1,35 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}lib/cups-pk-helper-mechanism
+@{exec_path} += /{usr/,}lib/cups-pk-helper/cups-pk-helper-mechanism
+@{exec_path} += /{usr/,}lib/@{multiarch}/cups-pk-helper-mechanism
+profile cups-pk-helper-mechanism @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/dbus-strict>
+  include <abstractions/nameservice-strict>
+
+  capability dac_read_search,
+  capability sys_nice,
+
+  dbus receive bus=system path=/
+       interface=org.opensuse.CupsPkHelper.Mechanism,
+
+  dbus bind bus=system 
+      name=org.opensuse.CupsPkHelper.Mechanism,
+
+  @{exec_path} mr,
+
+  /etc/cups/ppd/*.ppd r,
+
+  owner /tmp/[a-z0-9]* rw,
+
+  @{run}/cups/cups.sock rw,
+
+  include if exists <local/cups-pk-helper-mechanism>
+}
