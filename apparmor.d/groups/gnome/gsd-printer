@@ -11,6 +11,7 @@ profile gsd-printer @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/dbus-session-strict>
   include <abstractions/dbus-strict>
+  include <abstractions/nameservice-strict>
 
   signal (receive) set=(term, hup) peer=gdm*,
   signal (receive) set=(hup) peer=gsd-print-notifications,
@@ -25,7 +26,25 @@ profile gsd-printer @{exec_path} flags=(attach_disconnected) {
   dbus bind bus=system
        name=com.redhat.PrinterDriversInstaller,
 
+  dbus (send,receive) bus=session path=/org/gnome/SessionManager
+       interface=org.gnome.SessionManager
+       peer=(name=:*),
+
+  dbus send bus=session path=/org/gnome/SessionManager
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=:*),
+
+  dbus receive bus=session path=/
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect 
+       peer=(name=:*),
+
   @{exec_path} mr,
+
+  owner /tmp/[a-z0-9]* rw,
+
+  owner @{PROC}/@{pid}/cgroup r,
 
   owner /dev/tty[0-9]* rw,
 

@@ -10,6 +10,7 @@ include <tunables/global>
 @{exec_path} = /{usr/,}lib/systemd/systemd-timesyncd
 profile systemd-timesyncd @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/dbus-strict>
   include <abstractions/nameservice-strict>
   include <abstractions/systemd-common>
 
@@ -19,6 +20,9 @@ profile systemd-timesyncd @{exec_path} flags=(attach_disconnected) {
   network inet6 dgram,
   network inet stream,
   network inet6 stream,
+
+  dbus bind bus=system
+       name=org.freedesktop.timesync1,
 
   @{exec_path} mr,
 
@@ -33,20 +37,6 @@ profile systemd-timesyncd @{exec_path} flags=(attach_disconnected) {
         @{run}/resolvconf/*.conf r,
         @{run}/systemd/netif/state r,
         @{run}/systemd/notify rw,
-
-  # dbus-stricter
-  @{run}/dbus/system_bus_socket rw,
-
-  dbus send
-       bus=system
-       path=/org/freedesktop/DBus
-       interface=org.freedesktop.DBus
-       member={Hello,RequestName}
-       peer=(name=org.freedesktop.DBus),
-
-  dbus bind
-       bus=system
-       name=org.freedesktop.timesync1,
 
   include if exists <local/systemd-timesyncd>
 }
