@@ -64,13 +64,14 @@ sudo pacman -U apparmor.d-*.pkg.tar.zst \
 
 > **Warning**: for a first install, it is recommanded to install all profiles in complain mode. See [Complain mode](#troubleshooting)
 
-**Debian**
+**Debian / Ubuntu**
 
 Build using standard Debian package build tools:
 ```sh
-sudo apt install apparmor-profiles build-essential config-package-dev debhelper golang-go rsync
+sudo apt install apparmor-profiles build-essential config-package-dev debhelper golang-go rsync git
+git clone https://github.com/roddhjav/apparmor.d.git && cd apparmor.d
 dpkg-buildpackage -b -d --no-sign
-sudo dpkg -i ../apparmor.d_*_all.deb
+sudo dpkg --force overwrite -i ../apparmor.d_*_all.deb
 ```
 
 > **Warning**: for a first install, it is recommanded to install all profiles in complain mode. See [Complain mode](#troubleshooting)
