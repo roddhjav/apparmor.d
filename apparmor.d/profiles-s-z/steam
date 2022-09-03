@@ -86,7 +86,7 @@ profile steam @{exec_path} {
   @{user_share_dirs}/Steam/ubuntu[0-9]*_{32,64}/steam-runtime-heavy.sh rix,
   @{user_share_dirs}/Steam/ubuntu[0-9]*_{32,64}/steam-runtime{,-heavy}/{setup,run}.sh  rix,
   @{user_share_dirs}/Steam/ubuntu[0-9]*_{32,64}/steam-runtime/{amd64,i386}/usr/bin/* rix,
-  @{user_share_dirs}/Steam/ubuntu[0-9]*_{32,64}/steam-runtime/{usr/,}lib/**.so*  mr,
+  @{user_share_dirs}/Steam/ubuntu[0-9]*_{32,64}/steam-runtime/{usr/,}lib{exec,}/**.so*  mr,
   @{user_share_dirs}/Steam/ubuntu[0-9]*_{32,64}/steamwebhelper rix,
   @{user_share_dirs}/Steam/ubuntu[0-9]*_{32,64}/steamwebhelper.sh rix,
 
@@ -131,7 +131,7 @@ profile steam @{exec_path} {
 
   owner /dev/shm/#[0-9]* rw,
   owner /dev/shm/fossilize-*-[0-9]*-[0-9]* rw,
-  owner /dev/shm/u@{uid}-Shm_[0-9a-f]* rw,
+  owner /dev/shm/u@{uid}-Shm_@{hex} rw,
   owner /dev/shm/u@{uid}-ValveIPCSharedObj-Steam rwk,
   owner /dev/shm/ValveIPCSHM_@{uid} rw,
 
@@ -140,6 +140,7 @@ profile steam @{exec_path} {
   owner /tmp/sh-thd.* rw,
   owner /tmp/steam_chrome_shmem_uid@{uid}_spid[0-9]* rw,
   owner /tmp/miles_image_* mrw,
+  owner /tmp/runtime-info.txt.* rw,
 
   @{run}/udev/data/+input* r,      # for mouse, keyboard, touchpad
   @{run}/udev/data/+sound* r,
@@ -147,7 +148,7 @@ profile steam @{exec_path} {
 
   @{run}/udev/data/c13:[0-9]*  r,  # for /dev/input/*
   @{run}/udev/data/c116:[0-9]* r,  # for ALSA
-  @{run}/udev/data/c241:[0-9]* r,
+  @{run}/udev/data/c24[0-9]:[0-9]* r,
   @{run}/udev/data/n[0-9]* r,
 
   @{sys}/ r,
@@ -167,6 +168,9 @@ profile steam @{exec_path} {
   @{sys}/devices/pci[0-9]*/**/usb[0-9]*/{manufacturer,product,bcdDevice,bInterfaceNumber} r,
   @{sys}/devices/system/cpu/** r,
   @{sys}/devices/system/node/ r,
+  @{sys}/devices/virtual/dmi/id/board_{vendor,name,version} r,
+  @{sys}/devices/virtual/dmi/id/product_{name,version} r,
+  @{sys}/devices/virtual/dmi/id/sys_vendor r,
   @{sys}/devices/virtual/net/*/ r,
   @{sys}/devices/virtual/tty/tty[0-9]/active r,
   @{sys}/kernel/ r,
@@ -176,6 +180,7 @@ profile steam @{exec_path} {
         @{PROC}/@{pids}/comm rk,
         @{PROC}/@{pids}/net/route r,
         @{PROC}/@{pids}/stat r,
+        @{PROC}/1/cgroup r,
         @{PROC}/sys/fs/inotify/max_user_watches r,
         @{PROC}/sys/kernel/sched_autogroup_enabled r,
         @{PROC}/sys/kernel/unprivileged_userns_clone r,
@@ -193,7 +198,9 @@ profile steam @{exec_path} {
   owner @{PROC}/@{pid}/task/@{tid}/status r,
 
   /dev/input/ r,
+  /dev/input/event[0-9]* r,
   /dev/tty rw,
+  /dev/uinput w,
 
   audit deny /**.steam_exec_test.sh rw,
 

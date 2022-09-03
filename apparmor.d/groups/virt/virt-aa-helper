@@ -1,0 +1,68 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) Libvirt Team
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}lib/libvirt/virt-aa-helper
+profile virt-aa-helper @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/openssl>
+
+  capability dac_override,
+  capability dac_read_search,
+
+  network inet,
+  network inet6,
+
+  @{exec_path} mr,
+
+  /{usr/,}{s,}bin/apparmor_parser rPx,
+
+  /etc/apparmor.d/libvirt/* r,
+  /etc/apparmor.d/libvirt/libvirt-@{uuid} rw,
+
+  /etc/libnl{,-3}/classid r,   # Allow reading libnl's classid file
+  
+  # System VM images
+  /var/lib/libvirt/images/{,**} r,
+  /var/lib/nova/instances/_base/* r,
+
+  # User VM images
+  @{user_share_dirs}/ r,
+  @{user_share_dirs}/libvirt/{,**} r,
+  @{user_vm_dirs}/{,**} r,
+
+  # For virt-sandbox
+  @{run}/libvirt/**/[sv]d[a-z] r,
+
+  @{sys}/bus/usb/devices/ r,
+  @{sys}/devices/ r,
+  @{sys}/devices/** r,
+
+        @{PROC}/@{pid}/fd/ r,
+        @{PROC}/@{pid}/net/psched r,
+        @{PROC}/filesystems r,
+  deny  @{PROC}/@{pid}/mounts r,
+  owner @{PROC}/@{pid}/status r,
+
+  # For gl enabled graphics
+  /dev/dri/{,*} r,
+
+  # For hostdev
+  deny /dev/dasd* r,
+  deny /dev/dm-* r,
+  deny /dev/drbd[0-9]* r,
+  deny /dev/mapper/ r,
+  deny /dev/mapper/* r,
+  deny /dev/nvme* r,
+  deny /dev/sd* r,
+  deny /dev/vd* r,
+  deny /dev/zd[0-9]* r,
+
+  include if exists <usr/virt-aa-helper.d>
+  include if exists <local/virt-aa-helper>
+}

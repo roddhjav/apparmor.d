@@ -1,0 +1,90 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}{s,}bin/cupsd
+profile cupsd @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/authentication>
+  include <abstractions/dbus-strict>
+  include <abstractions/nameservice-strict>
+  include <abstractions/openssl>
+  include <abstractions/python>
+
+  capability audit_write,
+  capability chown,
+  capability dac_override,
+  capability dac_read_search,
+  capability fowner,
+  capability fsetid,
+  capability kill,
+  capability net_admin,
+  capability net_bind_service,
+  capability setgid,
+  capability setuid,
+  capability wake_alarm,
+
+  network inet stream,
+  network inet6 stream,
+
+  network appletalk dgram,
+  network ash dgram,
+  network ax25 dgram,
+  network bluetooth,
+  network econet dgram,
+  network ipx dgram,
+  network netrom seqpacket,
+  network rose dgram,
+  network x25 seqpacket,
+
+  dbus send bus=system path=/org/freedesktop/ColorManager{,/devices/cups_*}
+    interface=org.freedesktop.ColorManager{,.*}
+    member={CreateProfile,CreateDevice,FindDeviceById,AddProfile}
+    peer=(name=org.freedesktop.ColorManager),
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/{,ba,da}sh          rix,
+  /{usr/,}bin/gsc                 rix,
+  /{usr/,}bin/hostname            rix,
+  /{usr/,}bin/ippfind             rix,
+  /{usr/,}bin/python3.[0-9]*      rix,
+  /{usr/,}bin/smbspool            rPx,
+  /{usr/,}bin/xz                  rix,
+  /{usr/,}lib/cups/backend/*      rPx,
+  /{usr/,}lib/cups/cgi-bin/*.cgi  rix,
+  /{usr/,}lib/cups/daemon/*       rix,
+  /{usr/,}lib/cups/driver/*       rix,
+  /{usr/,}lib/cups/filter/*       rix,
+  /{usr/,}lib/cups/monitor/*      rix,
+  /{usr/,}lib/cups/notifier/*     rix,
+
+  /usr/share/cups/{,**} r,
+  /usr/share/ppd/{,**} r,
+  /usr/share/ghostscript/{,**} r,
+
+  /etc/cups/{,**} rw,
+  /etc/foomatic/* r,
+  /etc/papersize r,
+  /etc/pnm2ppa.conf r,
+  /etc/printcap rwl,
+
+  /var/cache/cups/ rw,
+  /var/cache/cups/** rwk,
+  /var/log/cups/{,*} rw,
+  /var/spool/cups/{,**} rw,
+
+  @{run}/cups/{,**} rw,
+  @{run}/systemd/notify w,
+
+  @{sys}/module/apparmor/parameters/enabled r,
+
+        @{PROC}/@{pids}/fd r,
+  owner @{PROC}/@{pid}/mounts r,
+
+  /dev/tty rw,
+
+  include if exists <local/cupsd>
+}
