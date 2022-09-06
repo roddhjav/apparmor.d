@@ -1,0 +1,39 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Jeroen Rijken
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}{s,}bin/lvm
+profile lvm @{exec_path} flags=(complain) {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/dbus-strict>
+  include <abstractions/disks-write>
+
+  capability sys_admin,
+  capability sys_nice,
+  capability net_admin,
+
+  @{exec_path} rm,
+
+  /etc/lvm/** r,
+
+  @{run}/lvm/** rwk,
+  @{run}/lock/lvm/* rwk,
+
+  @{sys}/bus/ r,
+  @{sys}/class/ r,
+  @{sys}/devices/virtual/bdi/**/read_ahead_kb r,
+
+        @{PROC}/devices r,
+  owner @{PROC}/@{pid}/cmdline r,
+        @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/mounts r,
+
+  /dev/mapper/control rw,
+
+  include if exists <local/lvm>
+}
