@@ -131,9 +131,9 @@ func getJournalctlDbusSessionLogs(file io.Reader, useFile bool) (io.Reader, erro
 // NewApparmorLogs return a new ApparmorLogs list of map from a log file
 func NewApparmorLogs(file io.Reader, profile string) AppArmorLogs {
 	log := ""
-	exp := "apparmor=(\"DENIED\"|\"ALLOWED\"|\"AUDIT\")"
+	exp := `apparmor=("DENIED"|"ALLOWED"|"AUDIT")`
 	if profile != "" {
-		exp = fmt.Sprintf(exp+".* (profile=\"%s.*\"|label=\"%s.*\")", profile, profile)
+		exp = fmt.Sprintf(exp+`.* (profile="%s.*"|label="%s.*")`, profile, profile)
 	}
 	isAppArmorLog := regexp.MustCompile(exp)
 
@@ -147,8 +147,8 @@ func NewApparmorLogs(file io.Reader, profile string) AppArmorLogs {
 	}
 
 	// Clean logs
-	regex := regexp.MustCompile(`type=(USER_|)AVC msg=audit(.*): (pid=.*msg='|)apparmor`)
-	log = regex.ReplaceAllLiteralString(log, "apparmor")
+	regex := regexp.MustCompile(`.*apparmor="`)
+	log = regex.ReplaceAllLiteralString(log, `apparmor="`)
 	regexAppArmorLogs := map[*regexp.Regexp]string{
 		regexp.MustCompile(`(peer_|)pid=[0-9]* `): "",
 		regexp.MustCompile(` fsuid.*`):            "",
