@@ -58,7 +58,8 @@ Build and install the package with:
 makepkg -s
 sudo pacman -U apparmor.d-*.pkg.tar.zst \
   --overwrite etc/apparmor.d/tunables/global \
-  --overwrite etc/apparmor.d/tunables/xdg-user-dirs
+  --overwrite etc/apparmor.d/tunables/xdg-user-dirs \
+  --overwrite etc/apparmor.d/abstractions/trash
 ```
 
 > **Warning**: for a first install, it is recommanded to install all profiles in complain mode. See [Complain mode](#troubleshooting)
