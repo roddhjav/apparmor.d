@@ -8,6 +8,9 @@ abi <abi/3.0>,
 
 include <tunables/global>
 
+@{FIREFOX_BIN}  = /{usr/,}lib/firefox{,-esr}/firefox
+@{FIREFOX_BIN} += /opt/firefox{,-esr}/firefox
+
 @{MOZ_LIBDIR} = /{usr/,}lib/thunderbird
 @{MOZ_HOMEDIR} = @{HOME}/.thunderbird
 @{MOZ_CACHEDIR} = @{user_cache_dirs}/thunderbird
@@ -17,12 +20,13 @@ include <tunables/global>
 profile thunderbird @{exec_path} {
   include <abstractions/base>
   include <abstractions/consoles>
-  include <abstractions/opencl-intel>
+  include <abstractions/nameservice-strict>
+  include <abstractions/gtk>
   include <abstractions/wayland>
+  include <abstractions/mesa>
+  include <abstractions/opencl-intel>
   include <abstractions/nvidia>
   include <abstractions/vulkan>
-  include <abstractions/mesa>
-  include <abstractions/gtk>
   include <abstractions/fonts>
   include <abstractions/fontconfig-cache-read>
   include <abstractions/freedesktop.org>
@@ -30,10 +34,9 @@ profile thunderbird @{exec_path} {
   include <abstractions/enchant>
   include <abstractions/user-download-strict>
   include <abstractions/thumbnails-cache-read>
-  include <abstractions/nameservice-strict>
   include <abstractions/openssl>
-  include <abstractions/dconf-write>
   include <abstractions/ibus>
+  include <abstractions/dconf-write>
   include <abstractions/dbus-strict>
   include <abstractions/dbus-session-strict>
   include <abstractions/dbus-gtk>
@@ -54,27 +57,29 @@ profile thunderbird @{exec_path} {
   owner @{PROC}/@{pid}/gid_map w,
   owner @{PROC}/@{pid}/uid_map w,
 
-  dbus (send) bus=session path=/org/freedesktop/DBus
+  dbus send bus=session path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus
        member=RequestName
        peer=(name=org.freedesktop.DBus),
 
-  dbus (send) bus=system path=/org/freedesktop/RealtimeKit[0-9]*
+  dbus send bus=system path=/org/freedesktop/RealtimeKit[0-9]*
        member={Get,MakeThreadHighPriority,MakeThreadRealtime}
        peer=(name=org.freedesktop.RealtimeKit[0-9]*),
 
-  dbus (send) bus=system path=/org/freedesktop/UPower
+  dbus send bus=system path=/org/freedesktop/UPower
        interface=org.freedesktop.UPower
        member=EnumerateDevices
        peer=(name=org.freedesktop.UPower),
 
-  dbus (send) bus=session path=/ca/desrt/dconf/Writer/user
+  dbus send bus=session path=/ca/desrt/dconf/Writer/user
        interface=ca.desrt.dconf.Writer
        member={Change,Notify}
        peer=(name=ca.desrt.dconf),
 
-  dbus (bind) bus=session
+  dbus bind bus=session
        name=org.mozilla.thunderbird.*,
+
+  deny dbus send bus=system path=/org/freedesktop/hostname[0-9]*,
 
   owner /tmp/dbus-[0-9a-zA-Z]* rw,
 
@@ -121,6 +126,7 @@ profile thunderbird @{exec_path} {
   owner @{HOME}/ r,
   owner @{HOME}/Mail/ rw,
   owner @{HOME}/Mail/** rwl -> @{HOME}/Mail/**,
+  owner @{user_share_dirs}/ r,
 
   # Fix error in libglib while saving files as
   /usr/share/glib-2.0/schemas/gschemas.compiled r,
@@ -143,7 +149,6 @@ profile thunderbird @{exec_path} {
   /usr/share/qt5ct/** r,
 
   # gnome-tiny
-  /etc/gnome/defaults.list r,
   /usr/share/gvfs/remote-volume-monitors/{,*} r,
   @{run}/mount/utab r,
 
@@ -195,13 +200,12 @@ profile thunderbird @{exec_path} {
   /etc/timezone r,
 
   /usr/share/sounds/freedesktop/stereo/*.oga r,
-  /usr/share/ubuntu/applications/{,*} r,
 
   # Silencer
   deny /{usr/,}lib/thunderbird/** w,
 
   /{usr/,}bin/lsb_release                                 rPx -> lsb_release,
-  /{usr/,}bin/xdg-open                                    rCx -> open,
+  /{usr/,}bin/xdg-{open,mime}                             rCx -> open,
   /{usr/,}bin/exo-open                                    rCx -> open,
   /{usr/,}lib/@{multiarch}/glib-[0-9]*/gio-launch-desktop rCx -> open,
 
@@ -213,11 +217,11 @@ profile thunderbird @{exec_path} {
   /{usr/,}bin/gpgsm             rCx -> gpg,
 
   # Allowed apps to open
-  /{usr/,}lib/firefox/firefox rPx,
   /{usr/,}bin/qpdfview        rPx,
   /{usr/,}bin/viewnior        rPUx,
   /{usr/,}bin/engrampa        rPx,
   /{usr/,}bin/geany           rPx,
+  @{FIREFOX_BIN}              rPx,
 
   # file_inherit
   owner /dev/tty[0-9]* rw,
@@ -284,21 +288,22 @@ profile thunderbird @{exec_path} {
     /{usr/,}bin/exo-open                                    mr,
     /{usr/,}lib/@{multiarch}/glib-[0-9]*/gio-launch-desktop mr,
 
-    /{usr/,}bin/{,ba,da}sh      rix,
-    /{usr/,}bin/{,m,g}awk       rix,
-    /{usr/,}bin/readlink        rix,
-    /{usr/,}bin/basename        rix,
+    /{usr/,}bin/{,ba,da}sh        rix,
+    /{usr/,}bin/{,m,g}awk         rix,
+    /{usr/,}bin/readlink          rix,
+    /{usr/,}bin/basename          rix,
+    /{usr/,}bin/xfce4-mime-helper rix,
 
     owner @{HOME}/ r,
 
     owner @{run}/user/@{uid}/ r,
 
     # Allowed apps to open
-    /{usr/,}lib/firefox/firefox rPx,
     /{usr/,}bin/qpdfview        rPx,
     /{usr/,}bin/viewnior        rPUx,
     /{usr/,}bin/engrampa        rPx,
     /{usr/,}bin/geany           rPx,
+    @{FIREFOX_BIN}              rPx,
 
     # file_inherit
     owner @{HOME}/.xsession-errors w,
