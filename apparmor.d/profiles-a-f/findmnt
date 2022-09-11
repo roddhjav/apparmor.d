@@ -7,9 +7,11 @@ abi <abi/3.0>,
 include <tunables/global>
 
 @{exec_path} = /{usr/,}bin/findmnt
-profile findmnt @{exec_path} flags=(complain) {
+profile findmnt @{exec_path} flags=(attach_disconnected,complain) {
   include <abstractions/base>
   include <abstractions/consoles>
+
+  capability dac_read_search,
 
   @{exec_path} mr,
 
@@ -17,6 +19,8 @@ profile findmnt @{exec_path} flags=(complain) {
   /etc/mtab r,
   
   @{PROC}/@{pids}/mountinfo r,
+
+  deny /apparmor/.null rw,
 
   include if exists <local/findmnt>
 }
