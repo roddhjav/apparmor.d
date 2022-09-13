@@ -20,7 +20,7 @@ prepare() {
   git clone "$startdir" "$srcdir/$pkgname"
   cd "$srcdir/$pkgname"
 
-  ./configure
+  ./configure --complain
 }
 
 build() {
