@@ -1,0 +1,26 @@
+# aa-log completion
+
+_aa-log() {
+	COMPREPLY=()
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+	local args=(-f -d -h)
+	local lastarg="${COMP_WORDS[$COMP_CWORD-1]}"
+	COMPREPLY+=($(compgen -W "${args[*]}" -- ${cur}))
+	if [[ $lastarg == "-f" ]]; then
+		COMPREPLY+=($(compgen -W "$(__aa_files)" -- ${cur}))
+		COMPREPLY+=($(compgen -o filenames -A file -- ${cur}))
+	else
+		COMPREPLY+=($(compgen -W "${args[*]}" -- ${cur}))
+		COMPREPLY+=($(compgen -W "$(__aa_profiles)" -- ${cur}))
+	fi
+}
+
+__aa_files() {
+	find /var/log/audit/ -type f -printf '%P\n' | cut -d '.' -f 3
+}
+
+__aa_profiles() {
+	find -L /etc/apparmor.d -maxdepth 1 -type f -printf '%P\n' | sort
+}
+
+complete -F _aa-log aa-log
