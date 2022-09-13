@@ -47,74 +47,10 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected) {
   unix (send,receive) type=stream addr=none peer=(label=xkbcomp),
   unix (send,receive) type=stream addr=none peer=(label=xwayland),
 
-  dbus (send,receive) bus=system path=/org/freedesktop/login[0-9]{,/**}
-       interface=org.freedesktop.{DBus.Properties,login[0-9].*},
+  dbus (send,receive) bus=system,
+  dbus (send,receive) bus=session,
+  dbus bind bus=session name=org.gnome.*,
 
-  dbus (send,receive) bus=system path=/org/freedesktop/PolicyKit[0-9]/Authority
-       interface=org.freedesktop.{DBus.Properties,PolicyKit[0-9].Authority}
-       member={CheckAuthorization,RegisterAuthenticationAgent,Changed,GetAll},
-
-  dbus (send,receive) bus=system path=/org/freedesktop/Accounts{,/User[0-9]*}
-       interface=org.freedesktop.{DBus.Properties,Accounts*}
-       member={GetAll,FindUserByName,Changed,PropertiesChanged},
-
-  dbus (send,receive) bus=system path=/org/freedesktop/UPower{,/devices/DisplayDevice}
-       interface=org.freedesktop.DBus.Properties
-       member={GetAll,PropertiesChanged},
-
-  dbus (send,receive) bus=system path=/org/freedesktop/GeoClue2/{Agent,Manager}
-       interface=org.freedesktop.{DBus.Properties,GeoClue2.Manager}
-       member={PropertiesChanged,AddAgent,GetAll},
-
-  dbus send bus=system path=/org/freedesktop
-       interface=org.freedesktop.DBus.ObjectManager
-       member=GetManagedObjects,
-
-  dbus send bus=system path=/org/freedesktop/DBus
-       interface=org.freedesktop.DBus
-       member=GetConnectionUnixUser,
-
-  dbus send bus=system path=/org/freedesktop/PackageKit
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll,
-
-  dbus send bus=system path=/org/freedesktop/NetworkManager/Settings/[0-9]*
-       interface=org.freedesktop.NetworkManager.Settings.Connection
-       member=GetSettings,
-
-  dbus send bus=system path=/org/gnome/DisplayManager/Manager
-       interface=org.{freedesktop.DBus.Properties,gnome.DisplayManager.Manager}
-       member={RegisterSession,Get,GetAll,OpenReauthenticationChannel},
-
-  dbus send bus=system path=/net/hadess/{PackageKit,PowerProfiles,SwitcherooControl}
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll,
-
-  dbus send bus=system path=/net/reactivated/Fprint/Manager
-       interface=net.reactivated.Fprint.Manager
-       member=GetDefaultDevice,
-
-  dbus send bus=system path=/org/freedesktop/NetworkManager{,/AgentManager}
-       interface=org.freedesktop.NetworkManager{,.AgentManager}
-       member={Unregister,RegisterWithCapabilities,GetPermissions},
-
-  dbus receive bus=system path=/org/freedesktop/NetworkManager
-       interface=org.freedesktop.NetworkManager
-       member=CheckPermissions,
-
-  dbus receive bus=system path=/org/freedesktop/NetworkManager/{Devices,DHCP{4,6}Config,IP{4,6}Config}/[0-9]*
-       interface=org.freedesktop.DBus.Properties
-       member=PropertiesChanged,
-
-  dbus receive bus=system path=/org/freedesktop/NetworkManager
-       interface=org.freedesktop.DBus.Properties
-       member=PropertiesChanged,
-
-  dbus receive bus=system
-       path=/org/freedesktop/PolicyKit[0-9]/AuthenticationAgent
-       interface=org.freedesktop.PolicyKit[0-9].AuthenticationAgent
-       member=BeginAuthentication,
- 
   @{exec_path} mr,
 
   /{usr/,}bin/Xwayland        rPx,
