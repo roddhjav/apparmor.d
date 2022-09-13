@@ -44,7 +44,7 @@ This is fundamentally different from how AppArmor is used on Linux server as it 
 
 ## Installation
 
-> **Warning**: In order to not break your system, the default package configuration install all profiles in complain mode. They can be enforced later. See [Enforce Mode](#enfore_mode)
+> **Warning**: In order to not break your system, the default package configuration install all profiles in complain mode. They can be enforced later. See [Enforce Mode](#enfore-mode)
 
 **Requirements**
 * An `apparmor` based linux distribution.
@@ -55,8 +55,10 @@ This is fundamentally different from how AppArmor is used on Linux server as it 
 
 **Archlinux**
 
-Build and install the package with:
+`apparmor.d-git` is available in the [Arch User Repository][aur]:
 ```sh
+git clone https://aur.archlinux.org/apparmor.d-git.git
+cd apparmor.d-git
 makepkg -s
 sudo pacman -U apparmor.d-*.pkg.tar.zst \
   --overwrite etc/apparmor.d/tunables/global \
@@ -64,13 +66,17 @@ sudo pacman -U apparmor.d-*.pkg.tar.zst \
   --overwrite etc/apparmor.d/abstractions/trash
 ```
 
+> **Note**: The overwrite options are only required on the first install. You can use `yay` or your preferred AUR install method to update it.
+
+The `PKGBUILD` included in this repository is intended for development only.
 
 **Debian / Ubuntu**
 
 Build using standard Debian package build tools:
 ```sh
 sudo apt install apparmor-profiles build-essential config-package-dev debhelper golang-go rsync git
-git clone https://github.com/roddhjav/apparmor.d.git && cd apparmor.d
+git clone https://github.com/roddhjav/apparmor.d.git
+cd apparmor.d
 dpkg-buildpackage -b -d --no-sign
 sudo dpkg -i ../apparmor.d_*_all.deb
 ```
@@ -164,7 +170,7 @@ Then, reload the apparmor rules with `sudo systemctl restart apparmor`.
 ## Enfore Mode
 
 The default package configuration installs all profile in *complain* mode.
-You can easily swicth to *enforce* mode. To do this, edit `PKGBUILD` on Archlinux or `debian/rules` on Debian and remove the `--complain` option to the configure script. Then build the package as usual:
+You can easily switch to *enforce* mode. To do this, edit `PKGBUILD` on Archlinux or `debian/rules` on Debian and remove the `--complain` option to the configure script. Then build the package as usual:
 ```diff
 -  ./configure --complain
 +  ./configure
@@ -254,6 +260,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 [quality]: https://img.shields.io/badge/go%20report-A+-brightgreen.svg?style=flat-square
 [goreportcard]: https://goreportcard.com/report/github.com/roddhjav/apparmor.d
 
+[aur]: https://aur.archlinux.org/packages/apparmor.d-git
 [android_model]: https://arxiv.org/pdf/1904.05572
 [clipos]: https://clip-os.org/en/
 [Speed up AppArmor Start]: https://wiki.archlinux.org/title/AppArmor#Speed-up_AppArmor_start_by_caching_profiles
