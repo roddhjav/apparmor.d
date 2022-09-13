@@ -30,10 +30,13 @@ _install_tunables() {
 	for path in apparmor.d/tunables/*; do
 		install -Dm0644 "$path" "/etc/apparmor.d/tunables/$(basename "$path")"
 	done
-	if [[ "$DISTRIBUTION" != "arch" ]]; then
-		sed -i -e '/Archlinux/d' /etc/apparmor.d/tunables/extend
-		sed -i -e '/etc/d' /etc/apparmor.d/tunables/global
-	fi
+	case "$DISTRIBUTION" in
+		arch)
+			sed -i -e '/Debian/d' /etc/apparmor.d/tunables/extend ;;
+		debian|ubuntu|whonix)
+			sed -i -e '/Archlinux/d' /etc/apparmor.d/tunables/extend ;;
+		*) _die "$DISTRIBUTION is not a supported distribution." ;;
+	esac
 }
 
 _reload_apparmor() {
@@ -46,7 +49,12 @@ pick() {
 		path="$(find apparmor.d -iname "$profile" -type f -not -path './apparmor.d/tunables/*' -not -path './apparmor.d/abstractions/*')"
 		if [[ -f "$path" ]]; then
 			install -Dm0644 "$path" "/etc/apparmor.d/$profile"
-			[[ "$COMPLAIN" == 1 ]] && _set_complain "/etc/apparmor.d/$profile"
+			if [[ "$COMPLAIN" == 1 ]]; then
+				_set_complain "/etc/apparmor.d/$profile"
+			fi
+			if [[ "$DISTRIBUTION" == debian ]]; then
+				sed -i -e '/abi /d' "/etc/apparmor.d/$profile"
+			fi
 		fi
 	done
 }
