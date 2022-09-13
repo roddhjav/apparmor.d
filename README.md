@@ -44,6 +44,8 @@ This is fundamentally different from how AppArmor is used on Linux server as it 
 
 ## Installation
 
+> **Warning**: In order to not break your system, the default package configuration install all profiles in complain mode. They can be enforced later. See [Enforce Mode](#enfore_mode)
+
 **Requirements**
 * An `apparmor` based linux distribution.
 * Base profiles and abstractions shipped with AppArmor are supposed to be
@@ -62,7 +64,6 @@ sudo pacman -U apparmor.d-*.pkg.tar.zst \
   --overwrite etc/apparmor.d/abstractions/trash
 ```
 
-> **Warning**: for a first install, it is recommanded to install all profiles in complain mode. See [Complain mode](#troubleshooting)
 
 **Debian / Ubuntu**
 
@@ -73,8 +74,6 @@ git clone https://github.com/roddhjav/apparmor.d.git && cd apparmor.d
 dpkg-buildpackage -b -d --no-sign
 sudo dpkg -i ../apparmor.d_*_all.deb
 ```
-
-> **Warning**: for a first install, it is recommanded to install all profiles in complain mode. See [Complain mode](#troubleshooting)
 
 **Partial install**
 
@@ -162,17 +161,16 @@ profile, create a file `/etc/apparmor.d/local/gnome-shell` and add your rules.
 Then, reload the apparmor rules with `sudo systemctl restart apparmor`.
 
 
-## Troubleshooting
+## Enfore Mode
 
-**Complain mode**
-
-On first install and for test purposes, it is recommended to pass all profiles
-in *complain* mode. To do this, edit `PKGBUILD` on Archlinux or `debian/rules`
-on Debian and add the `--complain` option to the configure script. Then build
-the package as usual:
-```sh
-./configure --complain 
+The default package configuration installs all profile in *complain* mode.
+You can easily swicth to *enforce* mode. To do this, edit `PKGBUILD` on Archlinux or `debian/rules` on Debian and remove the `--complain` option to the configure script. Then build the package as usual:
+```diff
+-  ./configure --complain
++  ./configure
 ```
+
+## Troubleshooting
 
 **AppArmor messages**
 
