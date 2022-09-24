@@ -7,7 +7,7 @@ abi <abi/3.0>,
 include <tunables/global>
 
 @{exec_path} = "/opt/Mullvad VPN/resources/mullvad-daemon"
-profile mullvad-daemon @{exec_path} {
+profile mullvad-daemon @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/nameservice-strict>
 
@@ -29,6 +29,9 @@ profile mullvad-daemon @{exec_path} {
 
   @{exec_path} mr,
 
+  /{usr/,}bin/ip  rix,
+
+  "/opt/Mullvad VPN/resources/openvpn" rix,
   "/opt/Mullvad VPN/resources/*" r,
 
   /etc/mullvad-vpn/{,*} r,
@@ -47,8 +50,13 @@ profile mullvad-daemon @{exec_path} {
   @{sys}/fs/cgroup/net_cls/mullvad-exclusions/net_cls.classid rw,
   @{sys}/kernel/mm/transparent_hugepage/hpage_pmd_size r,
 
+  owner /tmp/@{uuid} rw,
+  owner /tmp/talpid-openvpn-@{uuid} rw,
+
   owner @{PROC}/@{pid}/mounts r,
         @{PROC}/sys/net/ipv{4,6}/conf/all/src_valid_mark rw,
+
+  /dev/net/tun rw,
 
   include if exists <local/mullvad-daemon>
 }
