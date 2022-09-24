@@ -1,0 +1,39 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/archlinux-keyring-wkd-sync
+profile archlinux-keyring-wkd-sync @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+  include <abstractions/p11-kit>
+  include <abstractions/ssl_certs>
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/{m,g,}awk    rix,
+  /{usr/,}bin/bash         rix,
+  /{usr/,}bin/gpg          rix,
+  /{usr/,}bin/pacman-conf  rix,
+  /{usr/,}bin/dirmngr rix,
+
+  /etc/pacman.conf r,
+  /etc/pacman.d/*-mirrorlist r,
+  /etc/pacman.d/gnupg/ rw,
+  /etc/pacman.d/gnupg/** rwk -> /etc/pacman.d/gnupg/**,
+  /etc/pacman.d/mirrorlist r,
+
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/task/@{tid}/comm rw,
+
+  include if exists <local/archlinux-keyring-wkd-sync>
+}
