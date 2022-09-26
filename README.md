@@ -11,7 +11,7 @@
 
 ## Description 
 
-A set of over 1200 AppArmor profiles which aims is to confine most of Linux base
+A set of over 1400 AppArmor profiles which aims is to confine most of Linux base
 applications and processes.
 
 **Goals & Purpose**
@@ -212,7 +212,7 @@ is the process to recover your system on Archlinux:
 
 A full test suite to ensure compatibility across distributions and softwares is still a work in progress.
 
-Here an overview of the current CI jobs:
+Here is an overview of the current CI jobs:
 
 **On Gitlab CI**
 - Package build for all supported distribution
