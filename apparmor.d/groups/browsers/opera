@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2018-2021 Mikhail Morfikov
+# Copyright (C) 2021-2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -13,20 +14,20 @@ include <tunables/global>
 @{exec_path} = @{OPERA_INSTALLDIR}/opera{,-beta,-developer}
 profile opera @{exec_path} {
   include <abstractions/base>
-  include <abstractions/dconf-write>
-  include <abstractions/opencl-intel>
-  include <abstractions/gtk>
-  include <abstractions/freedesktop.org>
-  include <abstractions/fonts>
-  include <abstractions/fontconfig-cache-read>
-  include <abstractions/mesa>
   include <abstractions/audio>
-  include <abstractions/user-download-strict>
-  include <abstractions/thumbnails-cache-read>
+  include <abstractions/chromium-common>
+  include <abstractions/dconf-write>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/fonts>
+  include <abstractions/freedesktop.org>
+  include <abstractions/gtk>
+  include <abstractions/mesa>
   include <abstractions/nameservice-strict>
+  include <abstractions/opencl-intel>
   include <abstractions/openssl>
   include <abstractions/ssl_certs>
-  include <abstractions/chromium-common>
+  include <abstractions/thumbnails-cache-read>
+  include <abstractions/user-download-strict>
 
   ptrace (trace) peer=@{profile_name},
 
@@ -41,25 +42,32 @@ profile opera @{exec_path} {
 
   @{exec_path} mrix,
 
-  /{usr/,}bin/which{,.debianutils}                        rix,
+  /{usr/,}bin/which{,.debianutils}         rix,
 
   @{OPERA_INSTALLDIR}/opera_sandbox        rPx,
   @{OPERA_INSTALLDIR}/opera_crashreporter  rPx,
   @{OPERA_INSTALLDIR}/opera_autoupdate    krix,
 
+  /opt/google/chrome{,-beta,-unstable}/libwidevinecdm.so mr,
+  /opt/google/chrome{,-beta,-unstable}/libwidevinecdmadapter.so mr,
+
   /{usr/,}bin/lsb_release        rPx -> lsb_release,
   /{usr/,}bin/xdg-mime           rPx,
-  /{usr/,}bin/xdg-open           rCx -> open,
+  /{usr/,}bin/xdg-open           rPx -> child-open,
   /{usr/,}bin/xdg-settings       rPx,
   /{usr/,}bin/xdg-desktop-menu   rPx,
   /{usr/,}bin/xdg-icon-resource  rPx,
 
-  # Opera home files
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+
+  /etc/fstab r,
+  /var/lib/dbus/machine-id r,
+  /etc/machine-id r,
+
   owner @{HOME}/ r,
   owner @{OPERA_HOMEDIR}/ rw,
   owner @{OPERA_HOMEDIR}/** rwk,
 
-  # Cache files
   owner @{user_cache_dirs}/ rw,
   owner @{OPERA_CACHEDIR}/{,**/} rw,
   owner @{OPERA_CACHEDIR}/**/{*-,}index rw,
@@ -67,38 +75,31 @@ profile opera @{exec_path} {
   owner @{OPERA_CACHEDIR}/**/todelete_* rw,
 
   # For importing data (bookmarks, cookies, etc) from Firefox
-  owner @{HOME}/.mozilla/firefox/profiles.ini r,
-  owner @{HOME}/.mozilla/firefox/*/ r,
-  owner @{HOME}/.mozilla/firefox/*/compatibility.ini r,
-  owner @{HOME}/.mozilla/firefox/*/search{,-metadata}.json r,
-  owner @{HOME}/.mozilla/firefox/*/.parentlock rwk,
-  owner @{HOME}/.mozilla/firefox/*/{places,cookies,favicons,formhistory,}.sqlite{,-wal,-shm,-journal} rwk,
-  owner @{HOME}/.mozilla/firefox/*/{cert9,key4}.db rwk,
-  owner @{HOME}/.mozilla/firefox/*/logins.json r,
-  # For importing data from Chromium
-  owner "@{user_config_dirs}/chromium/Local State" r,
-  owner @{user_config_dirs}/chromium/Singleton{Lock,Socket,Cookie} w,
-  owner "@{user_config_dirs}/chromium/*/Login Data{,-journal}" rwk,
-  owner @{user_config_dirs}/chromium/*/ r,
-  owner @{user_config_dirs}/chromium/*/{History,Cookies,Favicons,Bookmarks} rwk,
+  # owner @{HOME}/.mozilla/firefox/profiles.ini r,
+  # owner @{HOME}/.mozilla/firefox/*/ r,
+  # owner @{HOME}/.mozilla/firefox/*/compatibility.ini r,
+  # owner @{HOME}/.mozilla/firefox/*/search{,-metadata}.json r,
+  # owner @{HOME}/.mozilla/firefox/*/.parentlock rwk,
+  # owner @{HOME}/.mozilla/firefox/*/{places,cookies,favicons,formhistory,}.sqlite{,-wal,-shm,-journal} rwk,
+  # owner @{HOME}/.mozilla/firefox/*/{cert9,key4}.db rwk,
+  # owner @{HOME}/.mozilla/firefox/*/logins.json r,
 
-  /etc/fstab r,
+  # For importing data (bookmarks, cookies, etc) from Chromium
+  # owner "@{user_config_dirs}/chromium/Local State" r,
+  # owner @{user_config_dirs}/chromium/Singleton{Lock,Socket,Cookie} w,
+  # owner "@{user_config_dirs}/chromium/*/Login Data{,-journal}" rwk,
+  # owner @{user_config_dirs}/chromium/*/ r,
+  # owner @{user_config_dirs}/chromium/*/{History,Cookies,Favicons,Bookmarks} rwk,
 
-  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+  owner /tmp/opera-crashlog-[0-9]*-[0-9]*.txt rw,
 
-  # Needed or opera crashes with the following error:
-  #  illegal hardware instruction
              @{PROC}/ r,
-  #
   deny       @{PROC}/vmstat r,
              @{PROC}/sys/kernel/yama/ptrace_scope r,
              @{PROC}/@{pid}/fd/ r,
   deny       @{PROC}/@{pids}/stat r,
   deny       @{PROC}/@{pids}/statm r,
-  # To remove the following error:
-  #  Failed to adjust OOM score of renderer with pid : Permission denied
-  deny owner @{PROC}/@{pid}/oom_{,score_}adj rw,
-  #
+       owner @{PROC}/@{pid}/oom_{,score_}adj rw,
   deny owner @{PROC}/@{pids}/cmdline r,
   deny owner @{PROC}/@{pids}/environ r,
        owner @{PROC}/@{pid}/task/ r,
@@ -110,60 +111,22 @@ profile opera @{exec_path} {
        owner @{PROC}/@{pid}/mounts r,
              @{PROC}/sys/fs/inotify/max_user_watches r,
 
-  # To play DRM media (protected content)
-  /opt/google/chrome{,-beta,-unstable}/libwidevinecdm.so mr,
-  /opt/google/chrome{,-beta,-unstable}/libwidevinecdmadapter.so mr,
+  @{run}/udev/data/* r,
 
-  /var/lib/dbus/machine-id r,
-  /etc/machine-id r,
-
-  # Udev enumeration
   @{sys}/bus/ r,
   @{sys}/bus/**/devices/ r,
-  @{sys}/devices/**/uevent r,
   @{sys}/class/ r,
   @{sys}/class/**/ r,
-  @{run}/udev/data/* r,
-  @{sys}/devices/pci[0-9]*/**/usb[0-9]/{,**/}{descriptors,manufacturer,product,serial,bConfigurationValue} r,
-  @{sys}/devices/pci[0-9]*/**/usb[0-9]/{,**/}{busnum,devnum} r,
-
-  deny @{sys}/devices/virtual/tty/tty[0-9]/active r,
-
-  # To remove the following error:
-  #  pcilib: Cannot open /sys/bus/pci/devices/0000:03:00.0/irq: Permission denied
-  # The irq file is needed to render pages.
+  @{sys}/devices/**/uevent r,
   @{sys}/devices/pci[0-9]*/**/irq r,
-
-  # For crashreporter
-  owner /tmp/opera-crashlog-[0-9]*-[0-9]*.txt rw,
+  @{sys}/devices/pci[0-9]*/**/usb[0-9]/{,**/}{busnum,devnum} r,
+  @{sys}/devices/pci[0-9]*/**/usb[0-9]/{,**/}{descriptors,manufacturer,product,serial,bConfigurationValue} r,
+  @{sys}/devices/virtual/tty/tty[0-9]/active r,
 
   /dev/ r,
 
   # Silencer
   deny @{OPERA_INSTALLDIR}/** w,
-
-
-  profile open {
-    include <abstractions/base>
-    include <abstractions/xdg-open>
-
-    /{usr/,}bin/xdg-open mr,
-
-    /{usr/,}bin/{,ba,da}sh      rix,
-    /{usr/,}bin/{m,g,}awk       rix,
-    /{usr/,}bin/readlink        rix,
-    /{usr/,}bin/basename        rix,
-
-    owner @{HOME}/ r,
-
-    owner @{run}/user/@{uid}/ r,
-
-    # Allowed apps to open
-
-    # file_inherit
-    owner @{HOME}/.xsession-errors w,
-
-  }
 
   include if exists <local/opera>
 }
