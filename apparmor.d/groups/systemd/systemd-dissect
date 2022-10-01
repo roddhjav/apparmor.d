@@ -1,0 +1,44 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/systemd-dissect
+profile systemd-dissect @{exec_path} {
+  include <abstractions/base>
+
+  capability dac_read_search,
+  capability sys_admin,
+  capability sys_resource,
+
+  mount options=(rw, rslave) -> /,
+  mount options=(rw, nodev) -> /mnt/*/,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/fsck  rPx,
+  /{usr/,}bin/less  rPx -> child-pager,
+  /{usr/,}bin/more  rPx -> child-pager,
+  /{usr/,}bin/pager rPx -> child-pager,
+
+  # Location of file system OS images
+  @{user_build_dirs}/{,**} r,
+  @{user_pkg_dirs}/{,**} r,
+  @{user_projects_dirs}/{,**} r,
+  @{user_vm_dirs}/{,**} r,
+
+  owner /tmp/dissect-*/{,**} rw,
+
+  @{sys}/devices/virtual/block/loop[0-9]*/{,**} r,
+  @{sys}/kernel/uevent_seqnum r,
+
+  @{PROC}/@{pids}/cgroup r,
+
+  /dev/loop-control rwk,
+  /dev/loop*  rwk,
+
+  include if exists <local/systemd-dissect>
+}
