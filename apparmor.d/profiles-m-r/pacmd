@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2019-2021 Mikhail Morfikov
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -13,12 +14,15 @@ profile pacmd @{exec_path} {
   include <abstractions/audio>
 
   #capability sys_ptrace,
+
   ptrace peer=pulseaudio,
   ptrace (read) peer=pipewire,
 
   signal (send) peer=pulseaudio,
 
-  /{usr/,}bin/pacmd mr,
+  @{exec_path} mr,
+
+  /app/lib/libzypak*.so* mr,
 
   owner @{PROC}/@{pids}/stat r,
 
