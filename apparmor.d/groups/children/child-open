@@ -1,0 +1,75 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Note: This profile does not specify an attachment path because it is
+# intended to be used only via "Px -> child-open-X" exec transitions
+# from other profiles. 
+
+# Instead of allowing the run of all software in /{usr/,}bin/, the purpose of
+# this profile is to list all GUI program that can open resources.
+
+# Ultimatelly, only sandbox manager program like bwrap, snap, flatpak, firejail
+# should be present here. Until this day, this profile will be a controlled mess.
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+# App allowed to open
+profile child-open {
+  include <abstractions/base>
+  include <abstractions/xdg-open>
+
+  /{usr/,}bin/exo-open                                     mr,
+  /{usr/,}bin/xdg-open                                     mr,
+  /{usr/,}lib/@{multiarch}/glib-[0-9]*/gio-launch-desktop  mr,
+  /{usr/,}lib/gio-launch-desktop                           mr,
+
+  /{usr/,}bin/{,ba,da}sh        rix,
+  /{usr/,}bin/{,m,g}awk         rix,
+  /{usr/,}bin/basename          rix,
+  /{usr/,}bin/readlink          rix,
+
+  # Sandbox managers
+  /{usr/,}bin/firejail         rPUx,
+  /{usr/,}bin/flatpak          rPUx,
+  /{usr/,}bin/snap             rPUx,
+
+  # Browsers
+  /{usr/,}bin/chromium                                                        rPx,
+  /{usr/,}bin/firefox                                                         rPx,
+  /{usr/,}lib/@{multiarch}/opera{,-beta,-developer}/opera{,-beta,-developer}  rPx,
+  /{usr/,}lib/chromium/chromium                                               rPx,
+  /opt/brave.com/brave{,-beta,-dev}/brave{,-beta,-dev}                        rPx,
+  /opt/google/chrome{,-beta,-unstable}/chrome{,-beta,-unstable}               rPx,
+
+  # Text editors
+  /{usr/,}bin/code              rPx,
+  /{usr/,}bin/gedit            rPUx,
+  /usr/share/code/{bin/,}code   rPx,
+
+  # Others
+  /{usr/,}bin/discord{,-ptb}    rPx,
+  /{usr/,}bin/draw.io          rPUx,
+  /{usr/,}bin/dropbox           rPx,
+  /{usr/,}bin/engrampa          rPx,
+  /{usr/,}bin/evince            rPx,
+  /{usr/,}bin/filezilla         rPx,
+  /{usr/,}bin/flameshot         rPx,
+  /{usr/,}bin/geany             rPx,
+  /{usr/,}bin/okular            rPx,
+  /{usr/,}bin/qbittorrent       rPx,
+  /{usr/,}bin/qpdfview          rPx,
+  /{usr/,}bin/smplayer          rPx,
+  /{usr/,}bin/spacefm           rPx,
+  /{usr/,}bin/telegram-desktop  rPx,
+  /{usr/,}bin/thunderbird       rPx,
+  /{usr/,}bin/transmission-gtk  rPx,
+  /{usr/,}bin/viewnior         rPUx,
+  /{usr/,}bin/vlc               rPx,
+  /{usr/,}bin/xarchiver         rPx,
+
+  include if exists <usr/child-open.d>
+  include if exists <local/child-open>
+}
