@@ -1,0 +1,36 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# DO NOT USE IT WITHOUT EXPLICIT AUTHORISATION FROM THE PROJECT MAINTAINER
+
+# Per the first rule of this project:
+# As these are mandatory access control policies only what it explicitly required
+# should be authorized. Meaning, you should not allow everything (or a large area)
+# and blacklist some sub area.
+
+# Use in this project: file browser and search engine
+
+  deny @{HOME}/.*_history            rwlk,
+  deny @{HOME}/.*age*{,/{,**}}       rwlk,
+  deny @{HOME}/.*cert*{,/{,**}}      rwlk,
+  deny @{HOME}/.*key*{,/{,**}}       rwlk,
+  deny @{HOME}/.*pass*{,/{,**}}      rwlk,
+  deny @{HOME}/.*pki*{,/{,**}}       rwlk,
+  deny @{HOME}/.*private*{,/{,**}}   rwlk,
+  deny @{HOME}/.*secret*{,/{,**}}    rwlk,
+  deny @{HOME}/.*yubi*{,/{,**}}      rwlk,
+  deny @{HOME}/.lesshst*             rwlk,
+  deny @{HOME}/.wget-hsts            rwlk,
+  deny @{HOME}/@{XDG_GPG_DIR}/{,**}  rwlk,
+  deny @{HOME}/@{XDG_SSH_DIR}/{,**}  rwlk,
+
+  # Deny executable mapping in writable space as allowed in abstractions/fonts
+  deny @{HOME}/.{,cache/}fontconfig/ rw,
+  deny @{HOME}/.{,cache/}fontconfig/** mrwl,
+
+  # Deny executable mapping in writable space as allowed in abstractions/base for ecryptfs
+  deny @{HOME}/.Private/** mrxwlk,
+  deny @{HOMEDIRS}/.ecryptfs/*/.Private/** mrxwlk,
+
+  include if exists <abstractions/deny-sensitive-home.d>
