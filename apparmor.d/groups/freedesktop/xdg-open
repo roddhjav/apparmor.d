@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2018-2021 Mikhail Morfikov
+# Copyright (C) 2021-2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -9,8 +10,8 @@ include <tunables/global>
 @{exec_path} = /{usr/,}bin/xdg-open
 profile xdg-open @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/consoles>
   include <abstractions/app-launcher-user>
+  include <abstractions/consoles>
 
   @{exec_path} r,
 
@@ -29,27 +30,16 @@ profile xdg-open @{exec_path} flags=(attach_disconnected) {
   /{usr/,}bin/gio          rPx,
   #/{usr/,}bin/kde-open5  rPUx,
 
-  # When xdg-open is run as root, it wants to exec dbus-launch, and hence it creates the two
-  # following root processes:
-  #  dbus-launch --autolaunch e0a30ad97cd6421c85247839ccef9db2 --binary-syntax --close-stderr
-  #  /usr/bin/dbus-daemon --syslog-only --fork --print-pid 5 --print-address 7 --session
-  #
-  # Should this be allowed? Xdg-open works fine without this.
-  #/{usr/,}bin/dbus-launch        rCx -> dbus,
-  #/{usr/,}bin/dbus-send          rCx -> dbus,
-  deny /{usr/,}bin/dbus-launch rx,
-  deny /{usr/,}bin/dbus-send   rx,
+  /{usr/,}bin/dbus-launch  rCx -> dbus,
+  /{usr/,}bin/dbus-send    rCx -> dbus,
 
   /usr/share/applications/*.desktop r,
-  owner @{user_share_dirs}/applications/ r,
-
-  owner @{HOME}/.Xauthority r,
 
         /** r,
   owner /** rw,
 
-  # file_inherit
-  /dev/dri/card[0-9]* rw,
+  owner @{user_share_dirs}/applications/ r,
+
   /dev/tty rw,
 
   profile dbus {
