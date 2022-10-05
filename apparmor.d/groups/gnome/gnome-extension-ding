@@ -9,8 +9,10 @@ include <tunables/global>
 @{exec_path} = /usr/share/gnome-shell/extensions/ding@rastersoft.com/ding.js
 profile gnome-extension-ding @{exec_path} {
   include <abstractions/base>
-  include <abstractions/dbus-session-strict>
+  include <abstractions/nameservice-strict>
   include <abstractions/dbus-strict>
+  include <abstractions/dbus-session-strict>
+  include <abstractions/dbus-accessibility-strict>
   include <abstractions/dconf-write>
   include <abstractions/fonts>
   include <abstractions/freedesktop.org>
@@ -18,21 +20,122 @@ profile gnome-extension-ding @{exec_path} {
 
   unix (send,receive) type=stream addr=none peer=(label=gnome-shell),
 
-  dbus send bus=system path=/org/freedesktop/DBus
+  dbus send bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={RequestName,ReleaseName}
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
+
+  dbus send bus=system  path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus
        member={ListNames,ListActivatableNames},
 
-  dbus send bus=system path=/org/freedesktop/DBus
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll,
+  dbus send bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={RequestName,ReleaseName,ListNames,ListActivatableNames}
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
 
-  dbus send bus=system path=/org/freedesktop/DBus
+  dbus send bus=system  path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
+
+  dbus send bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
+
+  dbus send bus=system  path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect,
 
   dbus send bus=system path=/net/hadess/SwitcherooControl
        interface=org.freedesktop.DBus.Properties
        member=GetAll,
+
+  dbus send bus=session path=/org/freedesktop/Notifications
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=:*, label=gjs-console),
+
+  dbus send bus=session path=/org/gtk/vfs/metadata
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=:*, label=gvfsd-metadata),
+
+  dbus send bus=session path=/org/gtk/vfs/Daemon
+       interface=org.gtk.vfs.Daemon
+       member=ListMonitorImplementations
+       peer=(name=:*, label=gvfsd),
+
+  dbus receive bus=session path=/org/gnome/SessionManager
+       interface=org.gnome.SessionManager
+       member=ClientRemoved
+       peer=(name=:*, label=gnome-session-binary),
+
+  dbus send bus=session path=/org/gtk/Private/RemoteVolumeMonitor
+       interface=org.gtk.Private.RemoteVolumeMonitor
+       member={IsSupported,List}
+       peer=(name=:*, label=gvfs-*-monitor),
+
+  dbus send    bus=session path=/org/gtk/vfs/mounttracker
+       interface=org.gtk.vfs.MountTracker
+       member={ListMounts2,ListMountableInfo}
+       peer=(name=:*, label=gvfsd),
+
+  dbus receive bus=session path=/org/gtk/vfs/mounttracker
+       interface=org.gtk.vfs.MountTracker
+       member=Mounted
+       peer=(name=:*, label=gvfsd),
+
+  dbus send bus=session path=/org/gtk/Settings
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=:*, label=gsd-xsettings),
+
+  dbus send    bus=accessibility path=/org/a11y/atspi/registry
+       interface=org.a11y.atspi.Registry
+       member=GetRegisteredEvents
+       peer=(name=org.a11y.atspi.Registry), # all peer's labels
+
+  dbus receive bus=accessibility path=/org/a11y/atspi/registry
+       interface=org.a11y.atspi.Registry
+       member=EventListenerDeregistered
+       peer=(name=:*, label=at-spi2-registryd),
+
+  dbus send    bus=accessibility path=/org/a11y/atspi/registry/deviceeventcontroller
+       interface=org.a11y.atspi.DeviceEventController
+       member={GetKeystrokeListeners,GetDeviceEventListeners}
+       peer=(name=org.a11y.atspi.Registry), # all peer's labels
+
+  dbus send bus=accessibility path=/org/a11y/atspi/accessible/root
+       interface=org.a11y.atspi.Socket
+       member=Embed
+       peer=(name=org.a11y.atspi.Registry), # all peer's labels
+
+  dbus send bus=session path=/org/a11y/bus
+       interface=org.a11y.Bus
+       member=GetAddress
+       peer=(name=org.a11y.Bus, label=at-spi-bus-launcher),
+
+  dbus receive bus=accessibility path=/org/a11y/atspi/accessible/root
+       interface=org.freedesktop.DBus.Properties
+       member=Set
+       peer=(name=:*, label=at-spi2-registryd),
+
+  dbus send    bus=session path=/com/rastersoft/dingextension/control
+       interface=org.gtk.Actions
+       member=DescribeAll
+       peer=(name=com.rastersoft.dingextension, label=gnome-shell),
+
+  dbus receive bus=session path=/com/rastersoft/ding
+       interface=org.gtk.Actions
+       member=DescribeAll
+       peer=(name=:*, label=gnome-shell),
+
+  dbus receive bus=session path=/com/rastersoft/ding
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=:*, label=gnome-shell),
 
   dbus bind bus=session
        name=com.rastersoft.ding,
@@ -63,6 +166,7 @@ profile gnome-extension-ding @{exec_path} {
   owner @{user_share_dirs}/gvfs-metadata/home r,
   owner @{user_share_dirs}/gvfs-metadata/home-*.log r,
 
+  owner @{PROC}/@{pid}/mountinfo r,
   owner @{PROC}/@{pid}/mounts r,
   owner @{PROC}/@{pid}/stat r,
   owner @{PROC}/@{pid}/task/@{tid}/stat r,

@@ -32,7 +32,8 @@ profile apt @{exec_path} flags=(attach_disconnected) {
 
   signal (send) peer=apt-methods-*,
 
-  unix (receive, send) type=stream peer=(label=apt-esm-json-hook),
+  unix (send, receive) type=stream peer=(label=apt-esm-json-hook),
+  unix (send, receive) type=stream peer=(label=snapd),
 
   dbus (send, receive) bus=system path=/org/debian/apt{,/transaction/@{hex}}
        interface=org.{debian.apt*,freedesktop.DBus.{Properties,Introspectable}},
@@ -154,7 +155,7 @@ profile apt @{exec_path} flags=(attach_disconnected) {
 
   @{run}/systemd/inhibit/[0-9]*.ref rw,
 
-  profile editor flags=(complain) {
+  profile editor {
     include <abstractions/base>
     include <abstractions/nameservice-strict>
 
@@ -196,7 +197,7 @@ profile apt @{exec_path} flags=(attach_disconnected) {
 
   }
 
-  profile dpkg-source flags=(complain) {
+  profile dpkg-source {
     include <abstractions/base>
     include <abstractions/nameservice-strict>
     include <abstractions/perl>

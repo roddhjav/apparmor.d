@@ -26,6 +26,55 @@ profile gjs-console @{exec_path} flags=(attach_disconnected) {
 
   signal (receive) set=(term hup) peer=gdm*,
 
+  dbus send bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={RequestName,ReleaseName}
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
+
+  dbus send    bus=session path=/org/freedesktop/Notifications
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=:*, label=gnome-shell),
+
+  dbus receive bus=session path=/org/freedesktop/Notifications
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=:*, label=gnome-extension-ding),
+
+  dbus send    bus=session path=/org/gnome/ScreenSaver
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=:*, label=gnome-shell),
+
+  dbus receive bus=session path=/org/gnome/ScreenSaver
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=:*, label=xdg-desktop-portal-*),
+
+  dbus send    bus=session path=/org/gnome/ScreenSaver
+       interface=org.gnome.ScreenSaver
+       member=ActiveChanged
+       peer=(name=org.freedesktop.DBus, label="{gnome-session-binary,gsd-power,xdg-desktop-portal-gtk}"),
+
+  dbus receive bus=session path=/org/gnome/ScreenSaver
+       interface=org.gnome.ScreenSaver
+       member={ActiveChanged,WakeUpScreen,GetActive}
+       peer=(name=:*, label="{gnome-shell,gnome-session-binary,xdg-desktop-portal-*}"),
+
+  dbus receive bus=session path={/,/org}
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name=:*, label=gnome-shell),
+
+  dbus bind bus=session
+       name=org.gnome.ScreenSaver,
+
+  dbus bind bus=session
+       name=org.freedesktop.Notifications,
+
+  dbus bind bus=session
+       name=org.gnome.Shell.Notifications,
+
   @{exec_path} mr,
   /{usr/,}bin/          r,
   /{usr/,}bin/[a-z0-9]* rPUx,
@@ -38,6 +87,7 @@ profile gjs-console @{exec_path} flags=(attach_disconnected) {
   /usr/share/gnome-shell/{,**} r,
   /usr/share/X11/xkb/** r,
 
+  /var/lib/gdm{3,}/greeter-dconf-defaults r,
   /var/lib/gdm{3,}/.config/dconf/user r,
   /var/lib/gdm{3,}/.cache/gstreamer-1.0/ rw,
   /var/lib/gdm{3,}/.cache/gstreamer-1.0/registry.*.bin{,.tmp*} rw,

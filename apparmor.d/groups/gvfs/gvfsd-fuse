@@ -17,6 +17,20 @@ profile gvfsd-fuse @{exec_path} {
 
   mount fstype={fuse,fuse.*} -> @{run}/user/@{uid}/gvfs/,
 
+  dbus send    bus=session path=/org/gtk/vfs/mounttracker
+       interface=org.gtk.vfs.MountTracker
+       peer=(name=:*, label=gvfsd), # all members
+
+  dbus receive bus=session path=/org/gtk/vfs/mounttracker
+       interface=org.gtk.vfs.MountTracker
+       member=Mounted
+       peer=(name=:*, label=gvfsd),
+
+  dbus receive bus=session path=/
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name=:*, label=gnome-shell),
+
   @{exec_path} mr,
 
   /{usr/,}bin/fusermount{,3} rCx -> fusermount,

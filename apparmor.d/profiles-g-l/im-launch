@@ -16,16 +16,36 @@ profile im-launch @{exec_path} {
   /{usr/,}bin/env         rix,
   /{usr/,}bin/locale      rix,
   /{usr/,}bin/gettext     rix,
+  /{usr/,}bin/gettext.sh  r,
   /{usr/,}bin/true        rix,
-  /{usr/,}bin/dpkg-query  rpx,
   /{usr/,}bin/sed         rix,
-  /{usr/,}bin/gettext.sh    r,
+  /{usr/,}bin/dpkg-query  rpx,
+
+  /{usr/,}bin/gnome-session rCx,
 
   /usr/share/im-config/{,**} r,
 
   /etc/default/im-config r,
   /etc/X11/xinit/xinputrc r,
   /etc/X11/Xsession.d/70im-config_launch r,
+
+  # file inherit
+  owner /dev/tty[0-9]* rw,
+
+  profile gnome-session /{usr/,}bin/gnome-session flags=(complain) {
+    include <abstractions/base>
+
+    /{usr/,}bin/gnome-session r,
+
+    /{usr/,}bin/{,ba,da}sh  rix,
+
+    @{libexec}/gnome-session-binary rPx,
+
+    # file inherit
+    owner /dev/tty[0-9]* rw,
+
+    include if exists <local/im-launch_gnome-session>
+  }
 
   include if exists <local/im-launch>
 }

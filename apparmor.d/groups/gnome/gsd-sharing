@@ -16,25 +16,88 @@ profile gsd-sharing @{exec_path} flags=(attach_disconnected) {
 
   signal (receive) set=(term, hup) peer=gdm*,
 
-  dbus send bus=system path=/org/freedesktop
+  dbus send bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={RequestName,ReleaseName}
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
+
+  dbus send    bus=system path=/org/freedesktop
        interface=org.freedesktop.DBus.ObjectManager
-       member=GetManagedObjects,
+       member=GetManagedObjects
+       peer=(name=:*, label=NetworkManager),
 
-  dbus send bus=system path=/org/freedesktop/NetworkManager
-       interface=org.freedesktop.NetworkManager
-       member=GetPermissions,
+  dbus receive bus=system path=/org/freedesktop
+       interface=org.freedesktop.DBus.ObjectManager
+       member={InterfacesAdded,InterfacesRemoved}
+       peer=(name=:*, label=NetworkManager),
 
-  dbus send bus=system path=/org/freedesktop/NetworkManager/Settings/[0-9]
+  dbus receive bus=system path=/org/freedesktop/NetworkManager/ActiveConnection/[0-9]*
+       interface=org.freedesktop.NetworkManager.Connection.Active
+       member=StateChanged
+       peer=(name=:*, label=NetworkManager),
+
+  dbus send    bus=system path=/org/freedesktop/NetworkManager/Settings/[0-9]*
        interface=org.freedesktop.NetworkManager.Settings.Connection
-       member=GetSettings,
+       member=GetSettings
+       peer=(name=:*, label=NetworkManager),
 
-  dbus receive bus=system path=/org/freedesktop/NetworkManager{,/{Devices,DHCP{4,6}Config,IP{4,6}Config}/[0-9]*}
+  dbus receive bus=system path=/org/freedesktop/NetworkManager/Settings/[0-9]*
+       interface=org.freedesktop.NetworkManager.Settings.Connection
+       member=Updated
+       peer=(name=:*, label=NetworkManager),
+
+  dbus receive bus=system path=/org/freedesktop/NetworkManager{,/**}
        interface=org.freedesktop.DBus.Properties
-       member=PropertiesChanged,
+       member=PropertiesChanged
+       peer=(name=:*, label=NetworkManager),
+
+  dbus send    bus=system path=/org/freedesktop/NetworkManager
+       interface=org.freedesktop.NetworkManager
+       member=GetPermissions
+       peer=(name=:*, label=NetworkManager),
 
   dbus receive bus=system path=/org/freedesktop/NetworkManager
        interface=org.freedesktop.NetworkManager
-       member=CheckPermissions,
+       member=CheckPermissions
+       peer=(name=:*, label=NetworkManager),
+
+  dbus send    bus=session path=/org/gnome/SessionManager
+       interface=org.gnome.SessionManager
+       member=RegisterClient
+       peer=(name=:*, label=gnome-session-binary),
+
+  dbus receive bus=session path=/org/gnome/SessionManager
+       interface=org.gnome.SessionManager
+       member={ClientAdded,SessionRunning,ClientRemoved,InhibitorRemoved,InhibitorAdded}
+       peer=(name=:*, label=gnome-session-binary),
+
+  dbus (send, receive) bus=session path=/org/gnome/SessionManager{,/**}
+       interface=org.freedesktop.DBus.Properties
+       member={GetAll,PropertiesChanged}
+       peer=(name=:*, label=gnome-session-binary),
+
+  dbus send    bus=session path=/org/gnome/SessionManager/Client[0-9]*
+       interface=org.gnome.SessionManager.ClientPrivate 
+       member=EndSessionResponse
+       peer=(name=:*, label=gnome-session-binary),
+
+  dbus receive bus=session path=/org/gnome/SessionManager/Client[0-9]*
+       interface=org.gnome.SessionManager.ClientPrivate
+       member={CancelEndSession,QueryEndSession,EndSession,Stop}
+       peer=(name=:*, label=gnome-session-binary),
+
+  dbus send bus=session path=/org/freedesktop/systemd[0-9]*
+       interface=org.freedesktop.systemd[0-9]*.Manager
+       member=StopUnit
+       peer=(name=org.freedesktop.systemd[0-9]*), # all peer's labels
+
+  dbus receive bus=session path={/,/org}
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name=:*, label=gnome-shell),
+
+  dbus bind bus=session
+       name=org.gnome.SettingsDaemon.Sharing,
 
   @{exec_path} mr,
 
@@ -43,6 +106,7 @@ profile gsd-sharing @{exec_path} flags=(attach_disconnected) {
   /usr/share/glib-2.0/schemas/gschemas.compiled r,
 
   /var/lib/gdm{3,}/.config/dconf/user r,
+  /var/lib/gdm{3,}/greeter-dconf-defaults r,
 
   owner /dev/tty[0-9]* rw,
 

@@ -21,12 +21,17 @@ profile systemd-timesyncd @{exec_path} flags=(attach_disconnected) {
   network inet stream,
   network inet6 stream,
 
+  dbus send bus=system path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={RequestName,ReleaseName}
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
+
   dbus bind bus=system
        name=org.freedesktop.timesync1,
 
   @{exec_path} mr,
 
-  /etc/adjtime r,
+  @{etc_rw}/adjtime r,
   /etc/systemd/timesyncd.conf r,
   /etc/systemd/timesyncd.conf.d/{,**} r,
 

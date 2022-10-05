@@ -16,6 +16,29 @@ profile gvfsd-metadata @{exec_path} {
 
   network netlink raw,
 
+  dbus bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={RequestName,ReleaseName}
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
+
+  dbus receive bus=session path=/org/gtk/vfs/metadata
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=:*, label=gnome-extension-ding),
+
+  dbus send    bus=session path=/org/gtk/vfs/metadata
+       interface=org.gtk.vfs.Metadata
+       member=AttributeChanged
+       peer=(name=org.freedesktop.DBus, label=gnome-extension-ding),
+
+  dbus receive bus=session path=/org/gtk/vfs/metadata
+       interface=org.gtk.vfs.Metadata
+       member={GetTreeFromDevice,Remove}
+       peer=(name=:*, label=gnome-shell),
+
+  dbus bind bus=session
+       name=org.gtk.vfs.Metadata,
+
   @{exec_path} mr,
 
   owner @{user_share_dirs}/gvfs-metadata/{,*} rw,

@@ -34,6 +34,38 @@ profile gnome-control-center @{exec_path} flags=(attach_disconnected) {
   signal (send) set=(kill) peer=unconfined,
   signal (send) set=(kill) peer=passwd,
 
+  unix (send, receive, connect) type=stream peer=(addr="@/home/*/.cache/ibus/dbus-*", label=ibus-daemon),
+
+  dbus send bus=accessibility path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={Hello,AddMatch}
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
+
+  dbus send bus=accessibility path=/org/a11y/atspi/accessible/root
+       interface=org.a11y.atspi.Socket
+       member=Embed
+       peer=(name=org.a11y.atspi.Registry, label=at-spi2-registryd),
+
+  dbus receive bus=accessibility path=/org/a11y/atspi/accessible/root
+       interface=org.freedesktop.DBus.Properties
+       member=Set
+       peer=(name=:*, label=at-spi2-registryd),
+
+  dbus send    bus=accessibility path=/org/a11y/atspi/registry
+       interface=org.a11y.atspi.Registry
+       member=GetRegisteredEvents
+       peer=(name=org.a11y.atspi.Registry, label=at-spi2-registryd),
+
+  dbus receive bus=accessibility path=/org/a11y/atspi/registry
+       interface=org.a11y.atspi.Registry
+       member=EventListenerDeregistered
+       peer=(name=:*, label=at-spi2-registryd),
+
+  dbus send bus=accessibility path=/org/a11y/atspi/registry/deviceeventcontroller
+       interface=org.a11y.atspi.DeviceEventController
+       member={GetKeystrokeListeners,GetDeviceEventListeners}
+       peer=(name=org.a11y.atspi.Registry, label=at-spi2-registryd),
+
   @{exec_path} mr,
 
   /{usr/,}bin/{,b,d,rb}ash  rUx,
@@ -76,6 +108,7 @@ profile gnome-control-center @{exec_path} flags=(attach_disconnected) {
   /etc/security/pwquality.conf r,
   /etc/security/pwquality.conf.d/{,**} r,
 
+  /etc/fstab r,
   /etc/machine-id r,
   /var/lib/dbus/machine-id r,
 
@@ -88,7 +121,7 @@ profile gnome-control-center @{exec_path} flags=(attach_disconnected) {
   owner @{user_cache_dirs}/gnome-control-center/{,**} rw,
   owner @{user_cache_dirs}/thumbnails/{,**} rw,
   owner @{user_config_dirs}/gnome-control-center/{,**} rw,
-  owner @{user_config_dirs}/ibus/bus/{,[0-9a-f]*-unix-wayland-[0-9]} r,
+  owner @{user_config_dirs}/ibus/bus/{,[0-9a-f]*-unix{,-wayland}-[0-9]} r,
   owner @{user_config_dirs}/mimeapps.list.* rw,
   owner @{user_share_dirs}/backgrounds/{,**} rw,
   owner @{user_share_dirs}/gvfs-metadata/{,*} r,
@@ -103,6 +136,7 @@ profile gnome-control-center @{exec_path} flags=(attach_disconnected) {
   owner @{run}/user/@{uid}/webkitgtk-wayland-compositor-@{uuid} rwk,
   owner @{run}/user/@{uid}/webkitgtk-wayland-compositor-@{uuid}.lock rwk,
   owner @{run}/user/@{uid}/webkitgtk/{,**} rw,
+  owner @{run}/user/@{uid}/gvfsd/socket-[0-9A-Za-z]* rw,
         @{run}/cups/cups.sock rw,
         @{run}/samba/ rw,
         @{run}/systemd/sessions/  r,

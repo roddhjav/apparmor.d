@@ -9,6 +9,7 @@ include <tunables/global>
 @{exec_path} = @{libexec}/xdg-desktop-portal-gtk
 profile xdg-desktop-portal-gtk @{exec_path} {
   include <abstractions/base>
+  include <abstractions/nameservice-strict>
   include <abstractions/dbus-session-strict>
   include <abstractions/dbus-strict>
   include <abstractions/dconf-write>
@@ -19,6 +20,18 @@ profile xdg-desktop-portal-gtk @{exec_path} {
   include <abstractions/thumbnails-cache-read>
   include <abstractions/user-download>
   include <abstractions/user-write>
+
+  unix (send, receive, connect) type=stream peer=(addr="@/tmp/.X11-unix/*", label=gnome-shell),
+
+  dbus send bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={RequestName,ReleaseName}
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
+
+  dbus send bus=accessibility path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={Hello,AddMatch,RemoveMatch}
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
 
   dbus send bus=system path=/org/freedesktop/Accounts/User[0-9]*
        interface=org.freedesktop.DBus.Properties
@@ -39,6 +52,104 @@ profile xdg-desktop-portal-gtk @{exec_path} {
   dbus receive bus=system path=/org/freedesktop/NetworkManager
        interface=org.freedesktop.DBus.Properties
        member=PropertiesChanged,
+
+  dbus send    bus=session path=/org/gtk/Settings
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=:*, label=gsd-xsettings),
+
+  dbus send    bus=session path=/org/gnome/SessionManager
+       interface=org.gnome.SessionManager
+       member=RegisterClient
+       peer=(name=:*, label=gnome-session-binary),
+
+  dbus receive bus=session path=/org/gnome/SessionManager
+       interface=org.gnome.SessionManager
+       member={ClientAdded,ClientRemoved,SessionRunning}
+       peer=(name=:*, label=gnome-session-binary),
+
+  dbus send    bus=session path=/org/gnome/SessionManager{,/Client[0-9]*}
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=:*, label=gnome-session-binary),
+
+  dbus send    bus=session path=/org/gnome/SessionManager/Client[0-9]*
+       interface=org.gnome.SessionManager.ClientPrivate
+       member=EndSessionResponse
+       peer=(name=:*, label=gnome-session-binary),
+
+  dbus receive bus=session path=/org/gnome/SessionManager/Client[0-9]*
+       interface=org.gnome.SessionManager.ClientPrivate
+       member={EndSession,QueryEndSession,CancelEndSession,Stop}
+       peer=(name=:*, label=gnome-session-binary),
+
+  dbus receive bus=session path=/org/gnome/Shell/Introspect
+       interface=org.gnome.Shell.Introspect
+       member={RunningApplicationsChanged,WindowsChanged}
+       peer=(name=:*, label=gnome-shell),
+
+  dbus send    bus=accessibility path=/org/a11y/atspi/registry/deviceeventcontroller
+       interface=org.a11y.atspi.DeviceEventController
+       member={GetKeystrokeListeners,GetDeviceEventListeners}
+       peer=(name=org.a11y.atspi.Registry), # all peer's labels
+
+  dbus send    bus=accessibility path=/org/a11y/atspi/registry
+       interface=org.a11y.atspi.Registry
+       member=GetRegisteredEvents
+       peer=(name=org.a11y.atspi.Registry), # all peer's labels
+
+  dbus receive bus=accessibility path=/org/a11y/atspi/registry
+       interface=org.a11y.atspi.Registry
+       member=EventListenerDeregistered
+       peer=(name=:*, label=at-spi2-registryd),
+
+  dbus send bus=accessibility path=/org/a11y/atspi/accessible/root
+       interface=org.a11y.atspi.Socket
+       member=Embed
+       peer=(name=org.a11y.atspi.Registry), # all peer's labels
+
+  dbus send bus=session path=/org/a11y/bus
+       interface=org.a11y.Bus
+       member=GetAddress
+       peer=(name=org.a11y.Bus, label=at-spi-bus-launcher),
+
+  dbus send bus=session path=/org/gtk/vfs/mounttracker
+       interface=org.gtk.vfs.MountTracker
+       member=ListMountableInfo
+       peer=(name=:*, label=gvfsd),
+
+  dbus send bus=session path=/org/gnome/ScreenSaver
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=:*, label=gjs-console),
+
+  dbus send bus=session path=/org/gnome/Shell/Introspect
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=:*, label=gnome-shell),
+
+  dbus receive bus=session path=/org/gnome/ScreenSaver
+       interface=org.gnome.ScreenSaver
+       member=ActiveChanged
+       peer=(name=:*, label=gjs-console),
+
+  dbus send bus=session path=/org/freedesktop/portal/desktop
+       interface=org.freedesktop.impl.portal.Settings
+       member=SettingChanged
+       peer=(name=org.freedesktop.DBus, label=xdg-desktop-portal),
+
+  dbus receive bus=session path=/org/freedesktop/portal/desktop
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=:*, label=xdg-desktop-portal),
+
+  dbus send bus=session path=/org/gtk/Notifications
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=:*, label=gnome-shell),
+
+  dbus bind bus=session
+       name=org.freedesktop.impl.portal.desktop.gtk,
 
   @{exec_path} mr,
 

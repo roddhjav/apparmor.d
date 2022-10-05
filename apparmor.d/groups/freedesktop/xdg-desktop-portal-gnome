@@ -19,6 +19,11 @@ profile xdg-desktop-portal-gnome @{exec_path} {
   include <abstractions/user-download>
   include <abstractions/user-read>
 
+  dbus send bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={RequestName,ReleaseName}
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
+
   dbus send bus=system path=/org/freedesktop/Accounts/User[0-9]*
        interface=org.freedesktop.DBus.Properties
        member=GetAll,
@@ -30,6 +35,79 @@ profile xdg-desktop-portal-gnome @{exec_path} {
   dbus receive bus=system path=/org/freedesktop/Accounts/User[0-9]*
        interface=org.freedesktop.Accounts.User
        member=Changed,
+
+  dbus send    bus=session path=/org/gnome/Shell/Screenshot
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=:*, label=gnome-shell),
+
+  dbus send    bus=session path=/org/gnome/Shell/Introspect
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=:*, label=gnome-shell),
+
+  dbus send    bus=session path=/org/gnome/Shell/Introspect
+       interface=org.gnome.Shell.Introspect
+       member=GetRunningApplications
+       peer=(name=:*, label=gnome-shell),
+
+  dbus receive bus=session path=/org/gnome/Shell/Introspect
+       interface=org.gnome.Shell.Introspect
+       member={RunningApplicationsChanged,WindowsChanged}
+       peer=(name=:*, label=gnome-shell),
+
+  dbus send    bus=session path=/org/freedesktop/portal/desktop
+       interface=org.freedesktop.impl.portal.Background
+       member=RunningApplicationsChanged
+       peer=(name=org.freedesktop.DBus, label=xdg-desktop-portal),
+
+  dbus receive bus=session path=/org/freedesktop/portal/desktop
+       interface=org.freedesktop.impl.portal.Background
+       member=GetAppState
+       peer=(name=:*, label=xdg-desktop-portal),
+
+  dbus send    bus=session path=/org/freedesktop/portal/desktop
+       interface=org.freedesktop.impl.portal.Settings
+       member=SettingChanged
+       peer=(name=org.freedesktop.DBus, label=xdg-desktop-portal),
+
+  dbus receive bus=session path=/org/freedesktop/portal/desktop
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=:*, label=xdg-desktop-portal),
+
+  dbus send    bus=session path=/org/gnome/Mutter/DisplayConfig
+       interface=org.gnome.Mutter.DisplayConfig
+       member=GetCurrentState
+       peer=(name=:*, label=gnome-shell),
+
+  dbus receive bus=session path=/org/gnome/Mutter/DisplayConfig
+       interface=org.gnome.Mutter.DisplayConfig
+       member=GetCurrentState
+       peer=(name=:*, label=gsd-xsettings),
+
+  dbus send    bus=session path=/org/gnome/Mutter/DisplayConfig
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=:*, label=gnome-shell),
+
+  dbus send bus=session path=/org/gnome/Mutter/ScreenCast
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=:*, label=gnome-shell),
+
+  dbus send bus=session path=/org/gnome/Mutter/RemoteDesktop
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=:*, label=gnome-shell),
+
+  dbus receive bus=session path=/
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name=:*, label=gnome-shell),
+
+  dbus bind bus=session
+       name=org.freedesktop.impl.portal.desktop.gnome,
 
   @{exec_path} mr,
 

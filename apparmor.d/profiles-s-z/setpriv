@@ -7,14 +7,28 @@ abi <abi/3.0>,
 include <tunables/global>
 
 @{exec_path} = /{usr/,}bin/setpriv
-profile setpriv @{exec_path} {
+profile setpriv @{exec_path} flags=(complain) {
   include <abstractions/base>
   include <abstractions/nameservice-strict>
+
+  capability setuid,
+  capability setgid,
 
   @{exec_path} mr,
 
   /{usr/,}bin/[a-z0-9]* rPUx,
   /{usr/,}{s,}bin/[a-z0-9]* rPUx,
+
+  /etc/gdm{3,}/greeter.dconf-defaults r,
+
+  /usr/share/gdm/dconf/{,**} r,
+
+  /var/lib/gdm{3,}/ r,
+  /var/lib/gdm{3,}/greeter-dconf-defaults{,.??????} rw,
+
+  @{PROC}/uptime r,
+  @{PROC}/sys/kernel/osrelease r,
+  @{PROC}/@{pids}/cmdline r,
 
   include if exists <local/setpriv>
 }

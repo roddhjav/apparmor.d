@@ -16,6 +16,11 @@ profile upowerd @{exec_path} flags=(attach_disconnected) {
 
   network netlink raw,
 
+  dbus send bus=system path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={RequestName,ReleaseName}
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
+
   dbus (send,receive) bus=system path=/org/freedesktop/UPower{,/**}
        interface=org.freedesktop.{DBus.Properties,DBus.Introspectable,UPower*},
 
@@ -27,14 +32,10 @@ profile upowerd @{exec_path} flags=(attach_disconnected) {
        interface=org.freedesktop.login[0-9].Manager
        member=Inhibit,
 
-  dbus send bus=system path=/org/freedesktop/DBus
-       interface=org.freedesktop.DBus
-       member=RequestName
-       peer=(name=org.freedesktop.DBus),
-
   dbus receive bus=system path=/org/freedesktop/login[0-9]
        interface=org.freedesktop.login[0-9].Manager
-       member={SessionNew,SessionRemoved,PrepareForShutdown},
+       member={UserNew,UserRemoved,SessionNew,SessionRemoved,PrepareForShutdown,PrepareForSleep}
+       peer=(name=:*, label=systemd-logind),
 
   dbus bind bus=system 
        name=org.freedesktop.UPower,

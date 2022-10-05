@@ -17,6 +17,11 @@ profile pipewire @{exec_path} {
 
   ptrace (read),
 
+  dbus send bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member=GetConnectionUnixProcessID
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
+
   dbus send bus=system path=/org/freedesktop/RealtimeKit[0-9]
        interface=org.freedesktop.RealtimeKit[0-9]
        member=MakeThread*
@@ -26,6 +31,11 @@ profile pipewire @{exec_path} {
        interface=org.freedesktop.DBus.Properties
        member=Get
        peer=(name=org.freedesktop.RealtimeKit[0-9]),
+
+  dbus receive bus=session path=/
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name=:*, label=gnome-shell),
 
   @{exec_path} mr,
 
