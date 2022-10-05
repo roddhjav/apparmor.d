@@ -11,7 +11,7 @@ include <tunables/global>
 @{exec_path} += /{usr/,}bin/Xorg
 @{exec_path} += /{usr/,}lib/Xorg{,.wrap}
 @{exec_path} += /{usr/,}lib/xorg/Xorg{,.wrap}
-profile xorg @{exec_path}  flags=(attach_disconnected complain) {
+profile xorg @{exec_path}  flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/dbus-strict>
   include <abstractions/fontconfig-cache-read>
@@ -32,17 +32,17 @@ profile xorg @{exec_path}  flags=(attach_disconnected complain) {
   # deny capability sys_nice,
   #capability sys_tty_config,
 
-#  signal (send) set=(usr1),
+  signal (send) set=(usr1),
 
-#  signal (receive) peer=lightdm,
-#  signal (receive) peer=sddm,
-#  signal (receive) peer=xinit,
-#  signal (receive) set=term peer=gdm{,-x-session},
+  signal (receive) peer=lightdm,
+  signal (receive) peer=sddm,
+  signal (receive) peer=xinit,
+  signal (receive) set=term peer=gdm{,-x-session},
 
-#  unix (bind, listen)          type=stream addr=@/tmp/.X11-unix/*,
-#  unix (send, receive, accept) type=stream addr=@/tmp/.X11-unix/*, # all peers
+  unix (bind, listen)          type=stream addr=@/tmp/.X11-unix/*,
+  unix (send, receive, accept) type=stream addr=@/tmp/.X11-unix/*, # all peers
 
-#  network netlink raw,
+  network netlink raw,
 
   dbus send    bus=system path=/org/freedesktop/login[0-9]{,/session/*}
        interface=org.freedesktop.{DBus.Properties,login[0-9].Session,login[0-9]*.Manager}
