@@ -147,22 +147,10 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
   /opt/net.downloadhelper.coapp/bin/net.downloadhelper.coapp*  rPx,
 
   # Allowed apps to open
-  /{usr/,}bin/xdg-open                                    rCx -> open,
-  /{usr/,}bin/exo-open                                    rCx -> open,
-  /{usr/,}lib/@{multiarch}/glib-[0-9]*/gio-launch-desktop rCx -> open,
-  /{usr/,}bin/engrampa         rPx,
-  /{usr/,}bin/geany            rPx,
-  /{usr/,}bin/okular           rPx,
-  /{usr/,}bin/qbittorrent      rPx,
-  /{usr/,}bin/qpdfview         rPx,
-  /{usr/,}bin/smplayer         rPx,
-  /{usr/,}bin/spacefm          rPx,
-  /{usr/,}bin/telegram-desktop rPx,
-  /{usr/,}bin/thunderbird      rPx,
-  /{usr/,}bin/viewnior        rPUx,
-  /{usr/,}bin/vlc              rPx,
-  /{usr/,}bin/xarchiver        rPx,
-  /{usr/,}bin/evince           rPx,
+  /{usr/,}bin/exo-open                                    rPx -> child-open,
+  /{usr/,}bin/xdg-open                                    rPx -> child-open,
+  /{usr/,}lib/@{multiarch}/glib-[0-9]*/gio-launch-desktop rPx -> child-open,
+  /{usr/,}lib/gio-launch-desktop                          rPx -> child-open,
 
   /{usr/,}lib/@{multiarch}/qt5/plugins/kf5/org.kde.kwindowsystem.platforms/KF5WindowSystemX11Plugin.so mr,
   /{usr/,}lib/mozilla/plugins/ r,
@@ -251,10 +239,11 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
        owner @{PROC}/@{pid}/gid_map w, # If kernel.unprivileged_userns_clone = 1
        owner @{PROC}/@{pid}/mountinfo r,
        owner @{PROC}/@{pid}/mounts r,
+       owner @{PROC}/@{pid}/oom_score_adj w,
        owner @{PROC}/@{pid}/setgroups w, # If kernel.unprivileged_userns_clone = 1
        owner @{PROC}/@{pid}/task/ r,
-       owner @{PROC}/@{pid}/uid_map w, # If kernel.unprivileged_userns_clone = 1
        owner @{PROC}/@{pid}/task/@{tid}/comm rw,
+       owner @{PROC}/@{pid}/uid_map w, # If kernel.unprivileged_userns_clone = 1
   deny owner @{PROC}/@{pid}/smaps r,
   deny owner @{PROC}/@{pid}/stat r,
   deny owner @{PROC}/@{pid}/statm r,
@@ -278,46 +267,6 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
   deny owner @{user_share_dirs}/gvfs-metadata/{,*} r,
   deny owner @{HOME}/.* r,
   deny /tmp/MozillaUpdateLock-* w,
-
-  profile open {
-    include <abstractions/base>
-    include <abstractions/xdg-open>
-
-    /{usr/,}bin/xdg-open                                    mr,
-    /{usr/,}bin/exo-open                                    mr,
-    /{usr/,}lib/@{multiarch}/glib-[0-9]*/gio-launch-desktop mr,
-
-    /{usr/,}bin/{,ba,da}sh      rix,
-    /{usr/,}bin/{,m,g}awk       rix,
-    /{usr/,}bin/readlink        rix,
-    /{usr/,}bin/basename        rix,
-
-    # Allowed apps to open
-    /{usr/,}bin/engrampa                   rPx,
-    /{usr/,}bin/evince                     rPx,
-    /{usr/,}bin/geany                      rPx,
-    /{usr/,}bin/okular                     rPx,
-    /{usr/,}bin/qbittorrent                rPx,
-    /{usr/,}bin/qpdfview                   rPx,
-    /{usr/,}bin/smplayer                   rPx,
-    /{usr/,}bin/spacefm                    rPx,
-    /{usr/,}bin/telegram-desktop           rPx,
-    /{usr/,}bin/thunderbird                rPx,
-    /{usr/,}bin/viewnior                  rPUx,
-    /{usr/,}bin/vlc                        rPx,
-    /{usr/,}bin/xarchiver                  rPx,
-    /{usr/,}bin/evince                     rPx,
-    /usr/share/xfce4/exo/exo-compose-mail  rPx,
-
-    owner @{HOME}/ r,
-
-    owner @{run}/user/@{uid}/ r,
-
-    # file_inherit
-    owner @{HOME}/.xsession-errors w,
-
-    include if exists <local/firefox_open>
-  }
 
   include if exists <local/firefox>
 }

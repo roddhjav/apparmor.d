@@ -25,7 +25,6 @@ profile steam-game @{exec_path} flags=(attach_disconnected) {
   include <abstractions/audio>
   include <abstractions/devices-usb>
   include <abstractions/dri-common>
-  include <abstractions/dri-common>
   include <abstractions/dri-enumerate>
   include <abstractions/fontconfig-cache-write>
   include <abstractions/fonts>
@@ -105,6 +104,11 @@ profile steam-game @{exec_path} flags=(attach_disconnected) {
   @{user_share_dirs}/Steam/steamapps/compatdata/[0-9]*/pfx/**.dll rm,
   @{user_share_dirs}/Steam/ubuntu[0-9]*_{32,64}/{,**} r,
   @{user_share_dirs}/Steam/ubuntu[0-9]*_{32,64}/**.so*  mr,
+  @{user_share_dirs}/Steam/ubuntu[0-9]*_{32,64}/steam-launch-wrapper rm,
+  @{user_share_dirs}/Steam/ubuntu[0-9]*_{32,64}/steam-runtime/{usr/,}lib{exec,}/** mrix,
+
+  @{user_games_dirs}/*/* mr,
+  @{user_games_dirs}/*/**.dll mr,
 
   @{run}/host/usr/bin/ldconfig rix,
   @{run}/host/usr/lib{,32,64}/**.so* rm,
@@ -134,6 +138,9 @@ profile steam-game @{exec_path} flags=(attach_disconnected) {
   owner @{HOME}/.steam/steam.pid r,
   owner @{HOME}/.steam/steam.pipe r,
 
+  owner @{user_games_dirs}/{,*/} r,
+  owner @{user_games_dirs}/*/{,**} rwkl,
+
   owner @{user_config_dirs}/ r,
   owner @{user_config_dirs}/unity3d/{,**} rwk,
 
@@ -141,17 +148,17 @@ profile steam-game @{exec_path} flags=(attach_disconnected) {
   owner @{user_share_dirs}/Steam/ r,
   owner @{user_share_dirs}/Steam/* r,
   owner @{user_share_dirs}/Steam/*log* rw,
+  owner @{user_share_dirs}/Steam/config/config.vdf* rw,
+  owner @{user_share_dirs}/Steam/logs/{,*} rw,
   owner @{user_share_dirs}/Steam/shader_cache_temp*/fozpipelinesv*/{,**} rw,
   owner @{user_share_dirs}/Steam/steamapps/ r,
   owner @{user_share_dirs}/Steam/steamapps/common/ r,
   owner @{user_share_dirs}/Steam/steamapps/common/*/ r,
   owner @{user_share_dirs}/Steam/steamapps/common/*/** rwkl,
   owner @{user_share_dirs}/Steam/steamapps/common/Proton*/files/share/{,**} r,
-  owner @{user_share_dirs}/Steam/steamapps/compatdata/[0-9]*/{,**} rwk,
+  owner @{user_share_dirs}/Steam/steamapps/compatdata/{,**} rwk,
   owner @{user_share_dirs}/Steam/steamapps/shadercache/{,**} rwk,
   owner @{user_share_dirs}/Steam/userdata/**/remotecache.vdf rw,
-
-  owner @{user_share_dirs}/gvfs-metadata/{,*} r,
 
         @{run}/host/fonts/{,**} r,
         @{run}/host/share/{,**} r,
@@ -159,6 +166,7 @@ profile steam-game @{exec_path} flags=(attach_disconnected) {
   owner @{run}/pressure-vessel/{,**} rw,
   owner @{run}/user/@{uid}/ r,
   owner @{run}/user/@{uid}/.mutter-Xwaylandauth.[0-9A-Z]* rw,
+  owner @{run}/user/@{uid}/orcexec.* mrw,  # gstreamer
 
   owner /dev/shm/#[0-9]* rw,
   owner /dev/shm/mono.* rw,
@@ -204,12 +212,13 @@ profile steam-game @{exec_path} flags=(attach_disconnected) {
         @{PROC}/sys/kernel/overflowuid r,
         @{PROC}/uptime r,
         @{PROC}/version r,
-  owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/cmdline r,
+  owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/gid_map rw,
   owner @{PROC}/@{pid}/mountinfo r,
   owner @{PROC}/@{pid}/mounts r,
   owner @{PROC}/@{pid}/setgroups rw,
+  owner @{PROC}/@{pid}/stat r,
   owner @{PROC}/@{pid}/task/ r,
   owner @{PROC}/@{pid}/task/@{tid}/comm rw,
   owner @{PROC}/@{pid}/task/@{tid}/stat r,
@@ -218,6 +227,8 @@ profile steam-game @{exec_path} flags=(attach_disconnected) {
   /dev/hidraw[0-9]* rw,
   /dev/input/ r,
   /dev/tty rw,
+
+  deny owner @{user_share_dirs}/gvfs-metadata/{,*} r,
 
   include if exists <local/steam-game>
 }

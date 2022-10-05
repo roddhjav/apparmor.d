@@ -23,6 +23,8 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected) {
   include <abstractions/ibus>
   include <abstractions/mesa>
   include <abstractions/nameservice-strict>
+  include <abstractions/opencl-intel>
+  include <abstractions/opencl-mesa>
   include <abstractions/opencl-nvidia>
   include <abstractions/p11-kit>
   include <abstractions/ssl_certs>
@@ -43,11 +45,16 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected) {
 
   signal (receive) set=(term, hup) peer=gdm*,
   signal (send),
- 
+
   unix (send,receive) type=stream addr=none peer=(label=gnome-extension-ding),
   unix (send,receive) type=stream addr=none peer=(label=xkbcomp),
   unix (send,receive) type=stream addr=none peer=(label=xwayland),
   unix (send, receive, connect) type=stream peer=(addr="@/var/lib/gdm{3,}/.cache/ibus/dbus-*", label=ibus-daemon),
+
+  dbus send bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={RequestName,ReleaseName,ListNames}
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
 
   dbus send bus=session path=/ interface=org.freedesktop.DBus
        member=ListNames
@@ -61,14 +68,6 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected) {
   dbus send bus=system  path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus
        member=GetConnectionUnixUser,
-
-  dbus send bus=session path=/org/freedesktop/DBus
-       interface=org.freedesktop.DBus
-       member={RequestName,ReleaseName,ListNames}
-       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
-
-  dbus (send,receive) bus=system path=/org/freedesktop/login[0-9]{,/**}
-       interface=org.freedesktop.{DBus.Properties,login[0-9].*},
 
   dbus (send,receive) bus=system path=/org/freedesktop/PolicyKit[0-9]/Authority
        interface=org.freedesktop.{DBus.Properties,PolicyKit[0-9].Authority}
@@ -228,7 +227,7 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected) {
        interface=org.freedesktop.DBus.Properties
        member=GetAll
        peer=(name=:* label=xdg-desktop-portal-*),
-       
+
   dbus receive bus=session path=/org/gnome/Shell/Introspect
        interface=org.freedesktop.DBus.Properties
        member=Get
@@ -459,29 +458,17 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected) {
        member={List,IsSupported}
        peer=(name=:*, label=gvfs-*-volume-monitor),
 
-  dbus bind bus=session
-       name=org.gnome.Shell{,*},
+  dbus bind bus=session name=com.rastersoft.dingextension,
 
-  dbus bind bus=session
-       name=com.rastersoft.dingextension,
+  dbus bind bus=session name=com.canonical.Unity,
 
-  dbus bind bus=session
-       name=org.gnome.Mutter.{DisplayConfig,IdleMonitor,ScreenCast,RemoteDesktop},
+  dbus bind bus=session name=org.kde.StatusNotifierWatcher,
 
-  dbus bind bus=session
-       name=org.gtk.MountOperationHandler,
+  dbus bind bus=session name=org.gtk.MountOperationHandler,
 
-  dbus bind bus=session
-       name=org.gtk.Notifications,
+  dbus bind bus=session name=org.gtk.Notifications,
 
-  dbus bind bus=session
-       name=org.gnome.keyring.SystemPrompter,
-
-  dbus bind bus=session
-       name=com.canonical.Unity,
-
-  dbus bind bus=session
-       name=org.kde.StatusNotifierWatcher,
+  dbus bind bus=session name=org.gnome.*,
 
   @{exec_path} mr,
 
@@ -554,7 +541,6 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected) {
   owner @{user_share_dirs}/desktop-directories/{,**} r,
   owner @{user_share_dirs}/gnome-shell/{,**} rw,
   owner @{user_share_dirs}/gnome-shell/extensions/{,**} r,
-  owner @{user_share_dirs}/gvfs-metadata/{,*} r,
 
   owner @{user_cache_dirs}/evolution/addressbook/*/PHOTO-*.JPEG r,
   owner @{user_cache_dirs}/gnome-boxes/*.png r,
@@ -601,13 +587,13 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected) {
   @{run}/udev/data/c226:[0-9]* r,   # for /dev/dri/card* 
   @{run}/udev/data/n[0-9]* r,
 
+  @{sys}/**/uevent r,
   @{sys}/bus/ r,
   @{sys}/class/ r,
   @{sys}/class/hwmon/ r,
   @{sys}/class/input/ r,
   @{sys}/class/net/ r,
   @{sys}/class/power_supply/ r,
-  @{sys}/**/uevent r,
   @{sys}/devices/**/hwmon[0-9]*/{,name,temp*,fan*} r,
   @{sys}/devices/**/hwmon[0-9]*/**/{,name,temp*,fan*} r,
   @{sys}/devices/**/hwmon/{,name,temp*,fan*} r,
@@ -617,6 +603,7 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected) {
   @{sys}/devices/pci[0-9]*/**/drm/ r,
   @{sys}/devices/pci[0-9]*/**/input[0-9]*/{properties,name} r,
   @{sys}/devices/pci[0-9]*/**/net/*/statistics/{rx_bytes,tx_bytes} r,
+  @{sys}/devices/system/cpu/cpufreq/policy[0-9]*/scaling_cur_freq r,
   @{sys}/devices/system/cpu/possible r,
   @{sys}/devices/virtual/net/*/statistics/{rx_bytes,tx_bytes} r,
 
@@ -638,6 +625,8 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected) {
 
   /dev/input/event[0-9]* rw,
   /dev/tty[0-9]* rw,
+
+  deny owner @{user_share_dirs}/gvfs-metadata/{,*} r,
 
   include if exists <local/gnome-shell>
 }

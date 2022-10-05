@@ -3,10 +3,12 @@
 # Copyright (C) 2021-2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-# Based on Libvirt Apparmor profile, it is largelly restricted from th
+# Based on Libvirt Apparmor profile, it is largelly restricted from it.
 # As upstream profile mostly focus on confining the guests. Not libvirt itself.
 # It uses a lot of profiles provided by apparmor.d
 # Source: https://gitlab.com/libvirt/libvirt/-/blob/master/src/security/apparmor/usr.sbin.libvirtd.in
+
+# Warning: Such a profile is limited as it gives access to a lot of resources.
 
 abi <abi/3.0>,
 
@@ -130,6 +132,7 @@ profile libvirtd @{exec_path} flags=(attach_disconnected) {
   /usr/share/mime/mime.cache r,
   /usr/share/qemu/{,**} r,
 
+  /etc/apparmor.d/libvirt/libvirt-@{uuid} r,
   /etc/libvirt/{,**} rw,
   /etc/mdevctl.d/{,**} r,
   /etc/xml/catalog r,
@@ -212,9 +215,7 @@ profile libvirtd @{exec_path} flags=(attach_disconnected) {
   @{sys}/fs/cgroup/net_cls/machine.slice/ rw,
   @{sys}/fs/cgroup/net_cls/machine.slice/machine-qemu*.scope/{,**} rw,
 
-  owner @{PROC}/@{pid}/mounts r,
-  owner @{PROC}/@{pid}/fd/ r,
-  owner @{PROC}/@{pid}/net/ip_tables_names r,
+        @{PROC}/@{pid}/cmdline r,
         @{PROC}/@{pid}/net/route r,
         @{PROC}/@{pids}/cgroup r,
         @{PROC}/@{pids}/net/dev r,
@@ -226,10 +227,13 @@ profile libvirtd @{exec_path} flags=(attach_disconnected) {
         @{PROC}/devices r,
         @{PROC}/mtrr w,
         @{PROC}/sys/net/ipv{4,6}/** rw,
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/mounts r,
+  owner @{PROC}/@{pid}/net/ip_tables_names r,
 
   /dev/dri/ r,
   /dev/hugepages/{,**} w,
-  /dev/kvm r,
+  /dev/kvm rw,
   /dev/mapper/ r,
   /dev/mapper/control rw,
   /dev/net/tun rw,
@@ -267,5 +271,6 @@ profile libvirtd @{exec_path} flags=(attach_disconnected) {
     /dev/net/tun rw,
   }
 
+  include if exists <usr/libvirtd>
   include if exists <local/libvirtd>
 }

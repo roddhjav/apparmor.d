@@ -7,7 +7,7 @@ abi <abi/3.0>,
 include <tunables/global>
 
 @{exec_path} = /{usr/,}{,s}bin/tailscaled
-profile tailscaled @{exec_path} {
+profile tailscaled @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/nameservice-strict>
   include <abstractions/ssl_certs>
@@ -22,6 +22,8 @@ profile tailscaled @{exec_path} {
   network inet6 dgram,
   network inet stream,
   network inet6 stream,
+  network inet raw,
+  network inet6 raw,
   network netlink raw,
 
   ptrace (read),
@@ -39,8 +41,9 @@ profile tailscaled @{exec_path} {
   /etc/resolv.conf rw,
   /etc/resolv.conf.*.tmp rw,
 
-  owner /var/lib/tailscale/{,**} rw,
   owner @{run}/tailscale/{,**} rw,
+  owner /var/cache/{,**} rw,
+  owner /var/lib/tailscale/{,**} rw,
 
   @{sys}/devices/virtual/dmi/id/{bios_vendor,product_name} r,
   @{sys}/kernel/mm/transparent_hugepage/hpage_pmd_size r,

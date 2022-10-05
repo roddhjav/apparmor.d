@@ -49,7 +49,7 @@ profile steam @{exec_path} {
   /{usr/,}bin/cp                     rix,
   /{usr/,}bin/cut                    rix,
   /{usr/,}bin/dirname                rix,
-  /{usr/,}bin/gawk                   rix,
+  /{usr/,}bin/{m,g,}awk              rix,
   /{usr/,}bin/getopt                 rix,
   /{usr/,}bin/grep                   rix,
   /{usr/,}bin/head                   rix,
@@ -81,6 +81,7 @@ profile steam @{exec_path} {
   @{user_share_dirs}/Steam/ubuntu[0-9]*_{32,64}/*driverquery rix,
   @{user_share_dirs}/Steam/ubuntu[0-9]*_{32,64}/fossilize_replay rPx,
   @{user_share_dirs}/Steam/ubuntu[0-9]*_{32,64}/gameoverlayui rpx,
+  @{user_share_dirs}/Steam/ubuntu[0-9]*_{32,64}/panorama/** rm,
   @{user_share_dirs}/Steam/ubuntu[0-9]*_{32,64}/reaper rpx,
   @{user_share_dirs}/Steam/ubuntu[0-9]*_{32,64}/steam rix,
   @{user_share_dirs}/Steam/ubuntu[0-9]*_{32,64}/steam-runtime-heavy.sh rix,
@@ -107,6 +108,9 @@ profile steam @{exec_path} {
   /{usr/,}lib{,32,64}/ r,
   /etc/ r,
   /home/ r,
+  /run/ r,
+  /usr/bin/ r,
+  /var/ r,
 
   owner @{HOME}/ r,
   owner @{HOME}/.local/ r,
@@ -115,13 +119,14 @@ profile steam @{exec_path} {
   owner @{HOME}/.steampath rw,
   owner @{HOME}/.steampid rw,
 
+  owner @{user_games_dirs}/{,**} rwkl,
+
   owner @{user_config_dirs}/ r,
   owner @{user_config_dirs}/autostart/ r,
   owner @{user_config_dirs}/unity3d/{,**} rwk,
 
   owner @{user_share_dirs}/ r,
   owner @{user_share_dirs}/applications/*.desktop w,
-  owner @{user_share_dirs}/gvfs-metadata/{,*} r,
   owner @{user_share_dirs}/icons/hicolor/**/apps/steam*.png rw,
   owner @{user_share_dirs}/Steam/ rw,
   owner @{user_share_dirs}/Steam/** rwkl -> @{user_share_dirs}/Steam/**,
@@ -137,10 +142,11 @@ profile steam @{exec_path} {
 
   owner /tmp/dumps/ rw,
   owner /tmp/dumps/{assert,crash}_[0-9]*_[0-9]*.dmp rw,
-  owner /tmp/sh-thd.* rw,
-  owner /tmp/steam_chrome_shmem_uid@{uid}_spid[0-9]* rw,
+  owner /tmp/gdkpixbuf-xpm-tmp.[0-9A-Z]* rw,
   owner /tmp/miles_image_* mrw,
   owner /tmp/runtime-info.txt.* rw,
+  owner /tmp/sh-thd.* rw,
+  owner /tmp/steam_chrome_shmem_uid@{uid}_spid[0-9]* rw,
 
   @{run}/udev/data/+input* r,      # for mouse, keyboard, touchpad
   @{run}/udev/data/+sound* r,
@@ -203,6 +209,7 @@ profile steam @{exec_path} {
   /dev/uinput w,
 
   audit deny /**.steam_exec_test.sh rw,
+  deny owner @{user_share_dirs}/gvfs-metadata/{,*} r,
 
   include if exists <local/steam>
 }
