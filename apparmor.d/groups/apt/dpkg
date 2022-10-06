@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2019-2021 Mikhail Morfikov
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -28,24 +29,22 @@ profile dpkg @{exec_path} {
   @{exec_path} mr,
 
   /{usr/,}bin/{,ba,da}sh  rix,
+  /{usr/,}bin/cat         rix,
   /{usr/,}bin/rm          rix,
 
-  # Do not strip env to avoid errors like the following:
-  #  ERROR: ld.so: object 'libfakeroot-sysv.so' from LD_PRELOAD cannot be preloaded (cannot open
-  #  shared object file): ignored.
-  /{usr/,}bin/dpkg-query  rpx,
   /{usr/,}bin/dpkg-deb    rpx,
-  #
+  /{usr/,}bin/dpkg-query  rpx,
   /{usr/,}bin/dpkg-split  rPx,
-
   /{usr/,}lib/needrestart/dpkg-status rPx,
-
   /usr/share/debian-security-support/check-support-status.hook rPx,
 
   /{usr/,}bin/pager       rCx -> diff,
   /{usr/,}bin/less        rCx -> diff,
   /{usr/,}bin/more        rCx -> diff,
   /{usr/,}bin/diff        rCx -> diff,
+
+  /etc/dpkg/dpkg.cfg.d/{,*} r,
+  /etc/dpkg/dpkg.cfg r,
 
   # Run the package maintainer's scripts
   # What to do with it? Maintainer scripts can use lots of tools. (#FIXME#)
@@ -67,18 +66,8 @@ profile dpkg @{exec_path} {
   #/var/lib/dpkg/tmp.ci/{preinst,postinst} rCx -> scripts,
   #/var/lib/dpkg/tmp.ci/{prerm,postrm}     rCx -> scripts,
 
-  /etc/dpkg/dpkg.cfg.d/{,*} r,
-  /etc/dpkg/dpkg.cfg r,
-
-  owner @{PROC}/@{pid}/fd/ r,
-        @{PROC}/sys/kernel/random/boot_id r,
-
-  owner /tmp/apt-dpkg-install-*/ r,
-
   /var/log/dpkg.log w,
   /var/log/unattended-upgrades/unattended-upgrades-dpkg.log rw,
-
-  @{run}/systemd/userdb/ r,
 
   # For shell pwd
   /root/ r,
@@ -120,9 +109,14 @@ profile dpkg @{exec_path} {
   /var/*.dpkg-new/ rw,
   /var/*/ rw,
 
-  # file_inherit
-  owner /dev/tty[0-9]* rw,
+  owner /tmp/apt-dpkg-install-*/ r,
 
+  @{run}/systemd/userdb/ r,
+
+  owner @{PROC}/@{pid}/fd/ r,
+        @{PROC}/sys/kernel/random/boot_id r,
+
+  owner /dev/tty[0-9]* rw,
 
   profile diff {
     include <abstractions/base>
@@ -134,18 +128,18 @@ profile dpkg @{exec_path} {
     /{usr/,}bin/more  mr,
     /{usr/,}bin/diff  mr,
 
+    /etc/** r,  # Diff changed config files
+    /root/ r,   # For shell pwd
+
     owner @{HOME}/.lesshs* rw,
-
-    # Diff changed config files
-    /etc/** r,
-
-    # For shell pwd
-    /root/ r,
 
   }
 
   profile scripts {
     include <abstractions/base>
+
+    /{usr/,}{s,}bin/    r,
+    /{usr/,}{s,}bin/*   rPUx,
 
     /var/lib/dpkg/info/*.config             r,
     /var/lib/dpkg/info/*.{preinst,postinst} r,
@@ -153,11 +147,6 @@ profile dpkg @{exec_path} {
     /var/lib/dpkg/tmp.ci/config             r,
     /var/lib/dpkg/tmp.ci/{preinst,postinst} r,
     /var/lib/dpkg/tmp.ci/{prerm,postrm}     r,
-
-    /{usr/,}bin/    r,
-    /{usr/,}bin/*   rPUx,
-    /{usr/,}sbin/   r,
-    /{usr/,}sbin/*  rPUx,
 
   }
 
