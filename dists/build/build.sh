@@ -8,6 +8,7 @@
 set -eu
 
 readonly BASEIMAGE="${BASEIMAGE:-}"
+readonly IMAGEPREFIX="builder-"
 readonly PKGNAME=apparmor.d
 readonly VOLUME=/tmp/build
 readonly BUILDIR=/home/build/tmp
@@ -17,13 +18,13 @@ PACKAGER="$(git config user.name) <$(git config user.email)>"
 readonly VERSION PACKAGER
 
 _start() {
-    local name="$1"
-    docker start "$name"
+    local img="$1"
+    docker start "$img"
 }
 
 _is_running() {
-    local name="$1"
-    res="$(docker inspect -f '{{ .State.Running }}' "$name")" &>/dev/null
+    local img="$1"
+    res="$(docker inspect -f '{{ .State.Running }}' "$img")" &>/dev/null
     exist=$?
     if [[ $exist -ne 0 ]]; then
         return $exist
@@ -35,8 +36,8 @@ _is_running() {
 }
 
 _exist() {
-    local name="$1"
-    docker inspect -f '{{ .State.Running }}' "$name" &>/dev/null
+    local img="$1"
+    docker inspect -f '{{ .State.Running }}' "$img" &>/dev/null
 }
 
 sync() {
@@ -45,42 +46,44 @@ sync() {
 }
 
 build_in_docker_makepkg() {
-    local name="$1"
+    local dist="$1"
+    local img="$IMAGEPREFIX$dist"
 
-    if _exist "$name"; then
-        if ! _is_running "$name"; then
-            _start "$name"
+    if _exist "$img"; then
+        if ! _is_running "$img"; then
+            _start "$img"
         fi
     else
-        docker build -t "$BASEIMAGE$name" "dists/build/$name"
-        docker run -tid --name "$name" --volume "$VOLUME:$BUILDIR" \
+        docker build -t "$BASEIMAGE$img" "dists/build/$dist"
+        docker run -tid --name "$img" --volume "$PWD:$BUILDIR" \
             --env MAKEFLAGS="-j$(nproc)" --env PACKAGER="$PACKAGER" \
-            --env PKGDEST="$BUILDIR" --env DIST="$name" \
-            "$BASEIMAGE$name"
+            --env PKGDEST="$BUILDIR" --env DIST="$dist" \
+            "$BASEIMAGE$img"
     fi
 
-    docker exec -i --workdir="$BUILDIR/$PKGNAME" "$name" \
+    docker exec -i "$img" \
         makepkg -sfC --noconfirm --noprogressbar
     mv "$VOLUME/$PKGNAME"-*.pkg.* .
 }
 
 build_in_docker_dpkg() {
-    local name="$1"
+    local dist="$1"
+    local img="$IMAGEPREFIX$dist"
 
-    if _exist "$name"; then
-        if ! _is_running "$name"; then
-            _start "$name"
+    if _exist "$img"; then
+        if ! _is_running "$img"; then
+            _start "$img"
         fi
     else
-        docker build -t "$BASEIMAGE$name" "dists/build/$name"
-        docker run -tid --name "$name" --volume "$VOLUME:$BUILDIR" \
-            --env DEBIAN_FRONTEND=noninteractive --env DIST="$name" \
-            "$BASEIMAGE$name"
+        docker build -t "$BASEIMAGE$img" "dists/build/$dist"
+        docker run -tid --name "$img" --volume "$VOLUME:$BUILDIR" \
+            --env DEBIAN_FRONTEND=noninteractive --env DIST="$dist" \
+            "$BASEIMAGE$img"
     fi
 
-    docker exec --workdir="$BUILDIR/$PKGNAME" "$name" \
+    docker exec --workdir="$BUILDIR/$PKGNAME" "$img" \
         dch --newversion="$VERSION" --urgency=medium --distribution=stable --controlmaint "Release $VERSION"
-    docker exec --workdir="$BUILDIR/$PKGNAME" "$name" \
+    docker exec --workdir="$BUILDIR/$PKGNAME" "$img" \
         dpkg-buildpackage -b -d --no-sign
     mv "$VOLUME/${PKGNAME}_${VERSION}"_*.* .
 }
@@ -88,7 +91,6 @@ build_in_docker_dpkg() {
 main() {
     case "$COMMAND" in
     archlinux)
-        sync
         build_in_docker_makepkg "$COMMAND"
         ;;
 
