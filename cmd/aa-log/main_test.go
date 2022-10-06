@@ -217,15 +217,17 @@ func TestNewApparmorLogs(t *testing.T) {
 	}
 }
 
-func Test_getJournalctlDbusSessionLogs(t *testing.T) {
+func Test_getJournalctlLogs(t *testing.T) {
 	tests := []struct {
 		name    string
 		path    string
+		user    bool
 		useFile bool
 		want    AppArmorLogs
 	}{
 		{
 			name:    "gsd-xsettings",
+			user:    true,
 			useFile: true,
 			path:    "../../tests/systemd.log",
 			want: AppArmorLogs{
@@ -253,8 +255,7 @@ func Test_getJournalctlDbusSessionLogs(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			file, _ := os.Open(tt.path)
-			reader, _ := getJournalctlDbusSessionLogs(file, tt.useFile)
+			reader, _ := getJournalctlLogs(tt.path, tt.user, tt.useFile)
 			if got := NewApparmorLogs(reader, tt.name); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("NewApparmorLogs() = %v, want %v", got, tt.want)
 			}
@@ -310,36 +311,43 @@ func TestAppArmorLogs_String(t *testing.T) {
 func Test_app(t *testing.T) {
 	tests := []struct {
 		name    string
+		logger  string
 		path    string
 		profile string
-		dbus    bool
 		wantErr bool
 	}{
 		{
 			name:    "Test audit.log",
+			logger:  "auditd",
 			path:    "../../tests/audit.log",
 			profile: "",
-			dbus:    false,
 			wantErr: false,
 		},
 		{
 			name:    "Test Dbus Session",
+			logger:  "systemd",
 			path:    "../../tests/systemd.log",
 			profile: "",
-			dbus:    true,
 			wantErr: false,
 		},
 		{
 			name:    "No logfile",
+			logger:  "auditd",
 			path:    "../../tests/log",
 			profile: "",
-			dbus:    false,
+			wantErr: true,
+		},
+		{
+			name:    "Logger not supported",
+			logger:  "raw",
+			path:    "../../tests/audit.log",
+			profile: "",
 			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := aaLog(tt.path, tt.profile, tt.dbus); (err != nil) != tt.wantErr {
+			if err := aaLog(tt.logger, tt.path, tt.profile); (err != nil) != tt.wantErr {
 				t.Errorf("aaLog() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
