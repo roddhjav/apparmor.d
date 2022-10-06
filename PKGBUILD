@@ -1,6 +1,9 @@
 # Maintainer: Alexandre Pujol <alexandre@pujol.io>
 # shellcheck disable=SC2034,SC2154,SC2164
 
+# Warning: for development only, use https://aur.archlinux.org/packages/apparmor.d-git
+# for production use.
+
 pkgname=apparmor.d
 pkgver=0.001
 pkgrel=1
@@ -10,6 +13,7 @@ url="https://github.com/roddhjav/$pkgname"
 license=('GPL2')
 depends=('apparmor')
 makedepends=('go' 'git' 'rsync' 'lsb-release')
+conflicts=("$pkgname-git")
 
 pkgver() {
   cd "$srcdir/$pkgname"
@@ -17,7 +21,7 @@ pkgver() {
 }
 
 prepare() {
-  git clone "$startdir" "$srcdir/$pkgname"
+  rsync -a --delete "$startdir" "$srcdir"
   cd "$srcdir/$pkgname"
 
   ./configure --complain
