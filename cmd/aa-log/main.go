@@ -9,6 +9,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -22,9 +23,9 @@ import (
 
 // Command line options
 var (
-	dbus bool
-	help bool
-	path string
+	help    bool
+	path    string
+	systemd bool
 )
 
 // LogFile is the default path to the file to query
@@ -94,20 +95,33 @@ func removeDuplicateLog(logs []string) []string {
 	return list
 }
 
-// getJournalctlDbusSessionLogs return a reader with the logs entries
-func getJournalctlDbusSessionLogs(file io.Reader, useFile bool) (io.Reader, error) {
+// getAuditLogs return a reader with the logs entries from Auditd
+func getAuditLogs(path string) (io.Reader, error) {
+	file, err := os.Open(filepath.Clean(path))
+	if err != nil {
+		return nil, err
+	}
+	return file, err
+}
+
+// getJournalctlLogs return a reader with the logs entries from Systemd
+func getJournalctlLogs(path string, user bool, useFile bool) (io.Reader, error) {
 	var logs []SystemdLog
 	var stdout bytes.Buffer
 	var value string
 
 	if useFile {
-		content, err := ioutil.ReadAll(file)
+		content, err := ioutil.ReadFile(filepath.Clean(path))
 		if err != nil {
 			return nil, err
 		}
 		value = string(content)
 	} else {
-		cmd := exec.Command("journalctl", "--user", "-b", "-u", "dbus.service", "-o", "json")
+		mode := "--system"
+		if user {
+			mode = "--user"
+		}
+		cmd := exec.Command("journalctl", mode, "--boot", "--unit=dbus.service", "--output=json")
 		cmd.Stdout = &stdout
 		if err := cmd.Run(); err != nil {
 			return nil, err
@@ -242,29 +256,23 @@ func (aaLogs AppArmorLogs) String() string {
 	return res
 }
 
-func aaLog(path string, profile string, dbus bool) error {
-	file, err := os.Open(filepath.Clean(path))
+func aaLog(logger string, path string, profile string) error {
+	var err error
+	var file io.Reader
+
+	switch logger {
+	case "auditd":
+		file, err = getAuditLogs(path)
+	case "systemd":
+		file, err = getJournalctlLogs(path, true, path != LogFile)
+	default:
+		err = errors.New("Logger not supported: " + logger)
+	}
 	if err != nil {
 		return err
 	}
-	/* #nosec G307 */
-	defer func() {
-		if err := file.Close(); err != nil {
-			fmt.Println(err)
-		}
-	}()
-
-	if dbus {
-		file, err := getJournalctlDbusSessionLogs(file, path != LogFile)
-		if err != nil {
-			return err
-		}
-		aaLogs := NewApparmorLogs(file, profile)
-		fmt.Print(aaLogs.String())
-	} else {
-		aaLogs := NewApparmorLogs(file, profile)
-		fmt.Print(aaLogs.String())
-	}
+	aaLogs := NewApparmorLogs(file, profile)
+	fmt.Print(aaLogs.String())
 	return nil
 }
 
@@ -272,7 +280,7 @@ func init() {
 	flag.BoolVar(&help, "h", false, "Show this help message and exit.")
 	flag.StringVar(&path, "f", LogFile,
 		"Set a log`file` or a suffix to the default log file.")
-	flag.BoolVar(&dbus, "d", false, "Show dbus session event.")
+	flag.BoolVar(&systemd, "s", false, "Parse systemd dbus logs.")
 }
 
 func main() {
@@ -293,12 +301,17 @@ func main() {
 		profile = flag.Args()[0]
 	}
 
+	logger := "auditd"
+	if systemd {
+		logger = "systemd"
+	}
+
 	logfile := filepath.Clean(LogFile + "." + path)
 	if _, err := os.Stat(logfile); err != nil {
 		logfile = path
 	}
 
-	err := aaLog(logfile, profile, dbus)
+	err := aaLog(logger, logfile, profile)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
