@@ -8,9 +8,10 @@ include <tunables/global>
 
 @{exec_path} = /{usr/,}lib/ibus/ibus-extension-gtk3 
 @{exec_path} += @{libexec}/ibus-extension-gtk3
-profile ibus-extension-gtk3 @{exec_path} {
+profile ibus-extension-gtk3 @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/dbus-session-strict>
+  include <abstractions/dbus-accessibility-strict>
   include <abstractions/dconf-write>
   include <abstractions/fontconfig-cache-write>
   include <abstractions/fonts>
@@ -26,6 +27,43 @@ profile ibus-extension-gtk3 @{exec_path} {
   network inet6 stream,
   network netlink raw,
 
+  dbus send bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={RequestName,ReleaseName}
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
+
+  dbus send    bus=session path=/org/gtk/Settings
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=:*, label=gsd-xsettings),
+
+  dbus send bus=session path=/org/a11y/bus
+       interface=org.a11y.Bus
+       member=GetAddress
+       peer=(name=org.a11y.Bus, label=at-spi-bus-launcher),
+
+  dbus send    bus=accessibility path=/org/a11y/atspi/registry
+       interface=org.a11y.atspi.Registry
+       member=GetRegisteredEvents
+       peer=(name=org.a11y.atspi.Registry), # all peer's labels
+
+  dbus send    bus=accessibility path=/org/a11y/atspi/registry/deviceeventcontroller
+       interface=org.a11y.atspi.DeviceEventController
+       member={GetKeystrokeListeners,GetDeviceEventListeners}
+       peer=(name=org.a11y.atspi.Registry), # all peer's labels
+
+  dbus send bus=accessibility path=/org/a11y/atspi/accessible/root
+       interface=org.a11y.atspi.Socket
+       member=Embed
+       peer=(name=org.a11y.atspi.Registry), # all peer's labels
+
+  dbus receive bus=session path=/
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name=:*, label=gnome-shell),
+
+  dbus bind bus=session name=org.freedesktop.IBus.Panel.Extension.Gtk3,
+
   @{exec_path} mr,
 
   /usr/share/dconf/profile/gdm r,
@@ -38,7 +76,12 @@ profile ibus-extension-gtk3 @{exec_path} {
   owner @{run}/user/@{uid}/gdm/Xauthority r,
   owner @{run}/user/@{uid}/wayland-[0-9] rw,
 
+  /var/lib/gdm{3,}/.config/ibus/bus/*-unix{,-wayland}-[0-9]* r,
   /var/lib/gdm{3,}/.config/dconf/user r,
+  /var/lib/gdm{3,}/greeter-dconf-defaults r,
+
+  # file inherit
+  /dev/tty[0-9]* rw,
 
   include if exists <local/ibus-extension-gtk3>
 }

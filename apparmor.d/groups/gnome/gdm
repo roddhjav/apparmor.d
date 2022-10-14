@@ -30,9 +30,19 @@ profile gdm @{exec_path} flags=(attach_disconnected) {
        interface=org.freedesktop.{DBus.Properties,Accounts.User}
        member={Changed,GetAll,PropertiesChanged},
 
-  dbus send bus=system path=/org/freedesktop/Accounts
+  dbus send    bus=system path=/org/freedesktop/Accounts
        interface=org.freedesktop.{DBus.Properties,Accounts}
        member={GetAll,ListCachedUsers,FindUserByName},
+
+  dbus receive bus=system path=/org/freedesktop/Accounts
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged
+       peer=(name=:*, label=accounts-daemon),
+
+  dbus receive bus=system path=/org/freedesktop/Accounts
+       interface=org.freedesktop.Accounts
+       member=UserAdded
+       peer=(name=:*, label=accounts-daemon),
 
   dbus send bus=system path=/org/freedesktop/login[0-9]
        interface=org.freedesktop.login1.Manager
@@ -48,14 +58,14 @@ profile gdm @{exec_path} flags=(attach_disconnected) {
 
   dbus receive bus=system path=/org/gnome/DisplayManager/Manager
        interface={org.freedesktop.DBus.Properties,org.gnome.DisplayManager.Manager}
-       member={RegisterDisplay,Get,RegisterSession,GetAll,OpenReauthenticationChannel},
+       member={RegisterDisplay,Get,RegisterSession,GetAll,OpenReauthenticationChannel,OpenSession},
 
   dbus bind bus=system 
        name=org.gnome.DisplayManager,
 
   @{exec_path} mr,
 
-  /{usr/,}{s,}prime-switch       rPx,
+  /{usr/,}{s,}bin/prime-switch   rPUx,
   /{usr/,}bin/{,ba,da}sh         rix,
   /{usr/,}bin/plymouth           rPx,
   /etc/gdm{3,}/PrimeOff/Default  rix,
@@ -67,6 +77,7 @@ profile gdm @{exec_path} flags=(attach_disconnected) {
 
   /etc/default/locale r,
   /etc/gdm{3,}/custom.conf r,
+  /etc/gdm{3,}/daemon.conf r,
   /etc/locale.conf r,
 
   /var/{lib,log}/gdm{3,}/ rw,

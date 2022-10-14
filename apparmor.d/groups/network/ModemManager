@@ -14,18 +14,23 @@ profile ModemManager @{exec_path} flags=(attach_disconnected) {
 
   network netlink raw,
 
+  dbus send bus=system path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={RequestName,ReleaseName}
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
+
   dbus send bus=system path=/org/freedesktop/PolicyKit[0-9]/Authority
        interface=org.freedesktop.DBus.Properties
        member=GetAll,
 
-  dbus send bus=system path=/org/freedesktop/login[0-9]
+  dbus send    bus=system path=/org/freedesktop/login[0-9]
        interface=org.freedesktop.login[0-9].Manager
        member=Inhibit,
 
-  dbus send bus=system path=/org/freedesktop/DBus
-       interface=org.freedesktop.DBus
-       member={RequestName,ReleaseName}
-       peer=(name=org.freedesktop.DBus),
+  dbus receive bus=system path=/org/freedesktop/login[0-9]
+       interface=org.freedesktop.login[0-9].Manager
+       member={UserNew,SessionNew,PrepareForShutdown,SeatNew,UserRemoved,SessionRemoved,PrepareForSleep}
+       peer=(name=:*, label=systemd-logind),
 
   dbus receive bus=system path=/org/freedesktop/ModemManager[0-9]
        interface=org.freedesktop.DBus.ObjectManager
@@ -39,10 +44,6 @@ profile ModemManager @{exec_path} flags=(attach_disconnected) {
        interface=org.freedesktop.PolicyKit[0-9].Authority
        member=Changed,
 
-  dbus receive bus=system path=/org/freedesktop/login[0-9]
-       interface=org.freedesktop.login[0-9].Manager
-       member={UserNew,SessionNew,PrepareForShutdown,SeatNew,UserRemoved,SessionRemoved},
-
   dbus bind bus=system
        name=org.freedesktop.ModemManager[0-9],
 
@@ -50,6 +51,8 @@ profile ModemManager @{exec_path} flags=(attach_disconnected) {
 
   @{run}/udev/data/+pci:* r,
   @{run}/udev/data/+platform* r,
+  @{run}/udev/data/+usb:* r,
+  @{run}/udev/data/c189:[0-9]* r,
   @{run}/udev/data/c4:[0-9]* r,     # for /dev/tty[0-9]*
   @{run}/udev/data/c5:[0-9]* r,     # for /dev/tty, /dev/console, /dev/ptmx
   @{run}/udev/data/n[0-9]* r,
@@ -57,6 +60,7 @@ profile ModemManager @{exec_path} flags=(attach_disconnected) {
   @{run}/systemd/inhibit/*.ref rw,
 
   @{sys}/bus/ r,
+  @{sys}/bus/usb/devices/ r,
   @{sys}/class/ r,
   @{sys}/class/net/ r,
   @{sys}/class/tty/ r,

@@ -14,6 +14,13 @@ profile snap @{exec_path} {
   include <abstractions/dbus-strict>
   include <abstractions/nameservice-strict>
 
+  unix (send, receive) type=stream peer=(label=apt),
+
+  dbus send bus=session path=/org/freedesktop/portal/documents
+       interface=org.freedesktop.portal.Documents
+       member=GetMountPoint
+       peer=(name=org.freedesktop.portal.Documents),
+
   @{exec_path} mrix,
 
   /snap/{,**} rw,
@@ -23,11 +30,14 @@ profile snap @{exec_path} {
 
   /etc/fstab r,
 
-  /var/lib/snapd/{,**} rwk,#
+  /var/lib/snapd/{,**} rwk,
+  /var/cache/snapd/commands.db rwk,
 
   owner @{HOME}/snap/{,**} rw,
 
   owner @{run}/user/@{uid}/.mutter-Xwaylandauth.[0-9A-Z]* r,
+  owner @{run}/user/@{uid}/gdm/Xauthority r,
+  owner @{run}/user/@{uid}/systemd/notify rw,
 
   @{run}/snapd.socket rw,
 

@@ -21,6 +21,46 @@ profile tracker-extract @{exec_path} {
 
   network netlink raw,
 
+  signal (receive) set=(term) peer=gdm,
+
+  dbus send bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={RequestName,ReleaseName}
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
+
+  dbus send bus=session path=/org/freedesktop/Tracker3/Endpoint
+       interface=org.freedesktop.DBus.Peer
+       member=Ping
+       peer=(name=org.freedesktop.Tracker3.Miner.Files),
+
+  dbus send    bus=session path=/org/freedesktop/Tracker3/Endpoint
+       interface=org.freedesktop.Tracker3.Endpoint
+       member=Query
+       peer=(name=org.freedesktop.Tracker3.Miner.Files, label=tracker-miner),
+
+  dbus receive bus=session path=/org/freedesktop/Tracker3/Endpoint
+       interface=org.freedesktop.Tracker3.Endpoint
+       member=GraphUpdated
+       peer=(name=:*, label=tracker-miner),
+
+  dbus send bus=session path=/org/gtk/vfs/mounttracker
+       interface=org.gtk.vfs.MountTracker
+       member=ListMountableInfo
+       peer=(name=:*, label=gvfsd),
+
+  dbus send bus=session path=/org/gtk/Private/RemoteVolumeMonitor
+       interface=org.gtk.Private.RemoteVolumeMonitor
+       member={List,IsSupported}
+       peer=(name=:*, label=gvfs-*-volume-monitor),
+
+  dbus receive bus=session path=/
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name=:*, label=gnome-shell),
+
+  dbus bind bus=session
+       name=org.freedesktop.Tracker3.Miner.Extract,
+
   @{exec_path} mr,
 
   /usr/share/applications/*.desktop r,
@@ -34,11 +74,15 @@ profile tracker-extract @{exec_path} {
   /usr/share/poppler/{,**} r,
   /usr/share/tracker3-miners/{,**} r,
   /usr/share/tracker3/{,**} r,
+  /usr/share/gvfs/remote-volume-monitors/{,*} r,
 
+  /etc/fstab r,
   /etc/libva.conf r,
 
   /var/lib/gdm{3,}/.cache/ rw,
   /var/lib/gdm{3,}/.cache/tracker3/{,**} rw,
+  /var/lib/gdm{3,}/.cache/gstreamer-1.0/ rw,
+  /var/lib/gdm{3,}/.cache/gstreamer-1.0/registry.*.bin{,.tmp*} rw,
   /var/lib/gdm{3,}/greeter-dconf-defaults r,
 
   /var/lib/flatpak/exports/share/applications/mimeinfo.cache r,
@@ -72,6 +116,9 @@ profile tracker-extract @{exec_path} {
   /dev/video[0-9]* rw,
 
   deny owner @{user_share_dirs}/gvfs-metadata/** r,
+  
+  # file_inherit
+  owner /dev/tty[0-9]* rw,
 
   include if exists <local/tracker-extract>
 }

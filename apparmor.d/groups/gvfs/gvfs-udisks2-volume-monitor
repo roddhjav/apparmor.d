@@ -31,6 +31,29 @@ profile gvfs-udisks2-volume-monitor @{exec_path} {
        interface=org.freedesktop.{DBus.*,UDisks2.*}
        peer=(label=udisksd),
 
+  dbus send bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={RequestName,ReleaseName}
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
+
+  dbus send bus=session path=/org/gtk/vfs/mounttracker
+       interface=org.gtk.vfs.MountTracker
+       member=ListMountableInfo
+       peer=(name=:*, label=gvfsd),
+
+  dbus receive bus=session path=/org/gtk/Private/RemoteVolumeMonitor
+       interface=org.gtk.Private.RemoteVolumeMonitor
+       member={List,IsSupported}
+       peer=(name=:*, label="{gnome-shell,gnome-control-center,gnome-extension-ding,tracker-*,unconfined}"),
+
+  dbus receive bus=session path={/,/org}
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name=:*, label=gnome-shell),
+
+  dbus bind bus=session
+       name=org.gtk.vfs.UDisks2VolumeMonitor,
+
   @{exec_path} mr,
 
   /{usr/,}bin/lsof   rix,
@@ -39,6 +62,8 @@ profile gvfs-udisks2-volume-monitor @{exec_path} {
   /{usr/,}bin/umount rPx,
 
   /usr/share/glib-2.0/schemas/gschemas.compiled r,
+
+  /var/lib/gdm{3,}/.config/dconf/user r,
 
   / r,
   /etc/fstab r,

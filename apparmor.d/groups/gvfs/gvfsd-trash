@@ -21,6 +21,29 @@ profile gvfsd-trash @{exec_path} {
   network inet stream,
   network inet6 stream,
 
+  dbus send bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={RequestName,ReleaseName}
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
+
+  dbus receive bus=session path=/org/gtk/vfs/Daemon
+       interface=org.gtk.vfs.Daemon
+       member=GetConnection
+       peer=(name=:*, label=gnome-control-center),
+
+  dbus send bus=session path=/org/gtk/gvfs/exec_spaw/[0-9]*
+       interface=org.gtk.vfs.Spawner
+       member=Spawned
+       peer=(name=:*, label=gvfsd),
+
+  dbus receive bus=session path=/
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name=:*, label=gnome-shell),
+
+  dbus bind bus=session
+       name=org.gtk.vfs.mountpoint_[0-9]*,
+
   @{exec_path} mr,
 
   # Can restore all user files

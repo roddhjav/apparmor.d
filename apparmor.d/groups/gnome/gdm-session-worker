@@ -37,6 +37,8 @@ profile gdm-session-worker @{exec_path} flags=(attach_disconnected) {
   signal (send) set=hup peer=ibus-*,
   signal (send) set=hup peer=xorg,
   signal (send) set=hup peer=xwayland,
+  signal (send) set=hup peer=xdg-permission-store,
+  signal (send) set=hup peer=tracker-miner,
   signal (send) set=term peer=gdm-*-session,
 
   network netlink raw,
@@ -44,6 +46,11 @@ profile gdm-session-worker @{exec_path} flags=(attach_disconnected) {
   dbus (send,receive) bus=system path=/org/freedesktop/Accounts{,/User[0-9]*}
        interface=org.freedesktop.{DBus.Properties,Accounts*}
        member={GetAll,FindUserByName,SetLanguage,Changed,PropertiesChanged},
+
+  dbus receive bus=system path=/org/freedesktop/Accounts
+       interface=org.freedesktop.Accounts
+       member=UserAdded
+       peer=(name=:*, label=accounts-daemon),
 
   dbus send bus=system path=/org/freedesktop/login[0-9]
        interface=org.freedesktop.login[0-9].Manager
@@ -63,6 +70,7 @@ profile gdm-session-worker @{exec_path} flags=(attach_disconnected) {
   /etc/default/locale r,
   /etc/environment r,
   /etc/gdm{3,}/custom.conf r,
+  /etc/gdm{3,}/daemon.conf r,
   /etc/locale.conf r,
   /etc/machine-id r,
   /etc/motd r,

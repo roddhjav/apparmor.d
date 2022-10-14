@@ -12,6 +12,29 @@ profile gvfs-goa-volume-monitor @{exec_path} {
   include <abstractions/base>
   include <abstractions/dbus-session-strict>
 
+  dbus send bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={RequestName,ReleaseName}
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
+
+  dbus receive bus=session path=/org/gtk/Private/RemoteVolumeMonitor
+       interface=org.gtk.Private.RemoteVolumeMonitor
+       member={List,IsSupported}
+       peer=(name=:*, label="{gnome-shell,gnome-control-center,gnome-extension-ding,tracker-*,unconfined}"),
+
+  dbus receive bus=session path={/,/org/gtk/Private/RemoteVolumeMonitor}
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name=:*, label=gnome-shell),
+
+  dbus send bus=session path=/org/gnome/OnlineAccounts
+       interface=org.freedesktop.DBus.ObjectManager
+       member=GetManagedObjects
+       peer=(name=:*, label=goa-daemon),
+
+  dbus bind bus=session
+       name=org.gtk.vfs.GoaVolumeMonitor,
+
   @{exec_path} mr,
 
   include if exists <local/gvfs-goa-volume-monitor>
