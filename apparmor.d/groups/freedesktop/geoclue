@@ -9,6 +9,8 @@ include <tunables/global>
 @{exec_path} = @{libexec}/geoclue
 profile geoclue @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/nameservice-strict>
+  include <abstractions/ssl_certs>
   include <abstractions/dbus-strict>
 
   network netlink raw,
@@ -45,9 +47,10 @@ profile geoclue @{exec_path} flags=(attach_disconnected) {
        interface=org.freedesktop.Avahi.Server
        member=StateChanged,
 
-  dbus receive bus=system path=/Client[0-9]/ServiceBrowser[0-9]
+  dbus receive bus=system path=/Client[0-9]*/ServiceBrowser[0-9]*
        interface=org.freedesktop.Avahi.ServiceBrowser
-       member={AllForNow,CacheExhausted},
+       member={AllForNow,CacheExhausted}
+       peer=(name=:*, label=avahi-daemon),
 
   dbus receive bus=system path=/org/freedesktop/NetworkManager
        interface=org.freedesktop.NetworkManager

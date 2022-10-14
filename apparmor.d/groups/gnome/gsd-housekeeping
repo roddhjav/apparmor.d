@@ -17,6 +17,49 @@ profile gsd-housekeeping @{exec_path} flags=(attach_disconnected) {
   signal (receive) set=(term, hup) peer=gdm*,
   signal (receive) set=(term, hup) peer=gnome*,
 
+  dbus send bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={RequestName,ReleaseName}
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
+
+  dbus send    bus=session path=/org/gnome/SessionManager
+       interface=org.gnome.SessionManager
+       member=RegisterClient
+       peer=(name=:*, label=gnome-session-binary),
+
+  dbus receive bus=session path=/org/gnome/SessionManager
+       interface=org.gnome.SessionManager
+       member={ClientAdded,SessionRunning,ClientRemoved,InhibitorRemoved,InhibitorAdded}
+       peer=(name=:*, label=gnome-session-binary),
+
+  dbus (send, receive) bus=session path=/org/gnome/SessionManager{,/Client[0-9]*}
+       interface=org.freedesktop.DBus.Properties
+       member={GetAll,PropertiesChanged}
+       peer=(name=:*, label=gnome-session-binary),
+
+  dbus send    bus=session path=/org/gnome/SessionManager/Client[0-9]*
+       interface=org.gnome.SessionManager.ClientPrivate
+       member=EndSessionResponse
+       peer=(name=:*, label=gnome-session-binary),
+
+  dbus receive bus=session path=/org/gnome/SessionManager/Client[0-9]*
+       interface=org.gnome.SessionManager.ClientPrivate
+       member={CancelEndSession,QueryEndSession,EndSession,Stop}
+       peer=(name=:*, label=gnome-session-binary),
+
+  dbus receive bus=session path={/,/org}
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name=:*, label=gnome-shell),
+
+  dbus send bus=session path=/org/gtk/vfs/mounttracker
+       interface=org.gtk.vfs.MountTracker
+       member=ListMountableInfo
+       peer=(name=:*, label=gvfsd),
+
+  dbus bind bus=session
+       name=org.gnome.SettingsDaemon.Housekeeping,
+
   @{exec_path} mr,
 
   /etc/fstab r,
@@ -29,6 +72,7 @@ profile gsd-housekeeping @{exec_path} flags=(attach_disconnected) {
   owner @{user_share_dirs}/applications/ rw,
 
   /var/lib/gdm{3,}/.config/dconf/user r,
+  /var/lib/gdm{3,}/greeter-dconf-defaults r,
 
   owner @{PROC}/@{pids}/mountinfo r,
 

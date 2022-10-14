@@ -14,6 +14,44 @@ profile gsd-a11y-settings @{exec_path} flags=(attach_disconnected) {
 
   signal (receive) set=(term, hup) peer=gdm*,
 
+  dbus send bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={RequestName,ReleaseName}
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
+
+  dbus send    bus=session path=/org/gnome/SessionManager
+       interface=org.gnome.SessionManager
+       member=RegisterClient
+       peer=(name=:*, label=gnome-session-binary),
+
+  dbus receive bus=session path=/org/gnome/SessionManager
+       interface=org.gnome.SessionManager
+       member={ClientAdded,ClientRemoved,SessionRunning,InhibitorRemoved,InhibitorAdded}
+       peer=(name=:*, label=gnome-session-binary),
+
+  dbus (send, receive) bus=session path=/org/gnome/SessionManager{,/Client[0-9]*}
+       interface=org.freedesktop.DBus.Properties
+       member={GetAll,PropertiesChanged}
+       peer=(name=:*, label=gnome-session-binary),
+
+  dbus send    bus=session path=/org/gnome/SessionManager/Client[0-9]*
+       interface=org.gnome.SessionManager.ClientPrivate
+       member=EndSessionResponse
+       peer=(name=:*, label=gnome-session-binary),
+
+  dbus receive bus=session path=/org/gnome/SessionManager/Client[0-9]*
+       interface=org.gnome.SessionManager.ClientPrivate
+       member={CancelEndSession,QueryEndSession,EndSession,Stop}
+       peer=(name=:*, label=gnome-session-binary),
+
+  dbus receive bus=session path=/
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name=:*, label=gnome-shell),
+
+  dbus bind bus=session
+       name=org.gnome.SettingsDaemon.A11ySettings,
+
   @{exec_path} mr,
 
   /usr/share/dconf/profile/gdm r,
@@ -21,6 +59,7 @@ profile gsd-a11y-settings @{exec_path} flags=(attach_disconnected) {
   /usr/share/glib-2.0/schemas/gschemas.compiled r,
 
   /var/lib/gdm{3,}/.config/dconf/user r,
+  /var/lib/gdm{3,}/greeter-dconf-defaults r,
 
   owner /dev/tty[0-9]* rw,
 

@@ -7,13 +7,47 @@ abi <abi/3.0>,
 include <tunables/global>
 
 @{exec_path} = @{libexec}/xdg-document-portal
-profile xdg-document-portal @{exec_path} {
+profile xdg-document-portal @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/dbus-session-strict>
 
+  capability sys_nice,
+  capability sys_resource,
+#  capability sys_admin,
+
   ptrace (read) peer=xdg-desktop-portal,
 
+  signal (receive) set=(term) peer=gdm,
+
   unix (send receive) type=stream peer=(label=xdg-document-portal//fusermount),
+
+  dbus send    bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus 
+       member={RequestName,ReleaseName}
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
+
+  dbus send    bus=session path=/org/freedesktop/impl/portal/PermissionStore
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=:*, label=xdg-permission-store),
+
+  dbus receive bus=session path=/org/freedesktop/portal/documents
+       interface=org.freedesktop.portal.Documents
+       member=GetMountPoint
+       peer=(name=:*, label="{snap,xdg-desktop-portal}"),
+
+  dbus receive bus=session path={/,/org}
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name=:*, label=gnome-shell),
+
+  dbus receive bus=session path=/org/freedesktop/portal/documents
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=:*, label=xdg-desktop-portal),
+
+  dbus bind    bus=session
+       name=org.freedesktop.portal.Documents,
 
   @{exec_path} mr,
 
@@ -33,6 +67,9 @@ profile xdg-document-portal @{exec_path} {
 
   /dev/fuse rw,
 
+  # file inherit
+  owner /dev/tty[0-9]* rw,
+
   profile flatpak {
     include <abstractions/base>
 
@@ -50,6 +87,8 @@ profile xdg-document-portal @{exec_path} {
     @{PROC}/sys/kernel/random/boot_id r,
 
     /dev/tty rw,
+
+    include if exists <local/xdg-document-portal_flatpak>
   }
 
   profile fusermount {
@@ -76,7 +115,11 @@ profile xdg-document-portal @{exec_path} {
   
     @{PROC}/@{pids}/mounts r,
 
+    owner @{run}/user/@{uid}/doc/ rw,
+
     /dev/fuse rw,
+
+    include if exists <local/xdg-document-portal_fusermount>
   }
 
   include if exists <local/xdg-document-portal>

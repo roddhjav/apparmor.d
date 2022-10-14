@@ -44,7 +44,8 @@ profile NetworkManager @{exec_path} flags=(attach_disconnected) {
 
   dbus (send,receive) bus=system path=/org/freedesktop/login[0-9]
        interface=org.freedesktop.login[0-9].Manager
-       member={SessionRemoved,UserNew,SessionNew,Inhibit,PrepareForShutdown,UserRemoved},
+       member={SessionRemoved,UserNew,SessionNew,Inhibit,PrepareForShutdown,UserRemoved,PrepareForSleep}
+       peer=(name=:*, label=systemd-logind),
 
   dbus send bus=system path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus
@@ -52,7 +53,8 @@ profile NetworkManager @{exec_path} flags=(attach_disconnected) {
 
   dbus send bus=system path=/org/freedesktop
        interface=org.freedesktop.DBus.ObjectManager
-       member=InterfacesAdded,
+       member={InterfacesAdded,InterfacesRemoved}
+       peer=(name=org.freedesktop.DBus), # label="{gnome-shell,...}"
 
   dbus send bus=system path=/org/freedesktop/nm_dispatcher
        interface=org.freedesktop.nm_dispatcher
@@ -105,6 +107,8 @@ profile NetworkManager @{exec_path} flags=(attach_disconnected) {
   /etc/machine-id r,
   /etc/resolv.conf rw,
   /etc/resolv.conf.[0-9A-Z]* rw,
+  /etc/network/interfaces r,
+  /etc/network/interfaces.d/{,*} r,
 
   /etc/NetworkManager/{,**} r,
   /etc/NetworkManager/system-connections/{,**} w,
@@ -118,6 +122,7 @@ profile NetworkManager @{exec_path} flags=(attach_disconnected) {
   @{sys}/class/net/ r,
   @{sys}/class/net/rfkill/ r,
 
+  @{run}/network/ifstate r,
   @{run}/NetworkManager/{,**} rw,
   @{run}/systemd/inhibit/[0-9]*.ref rw,
   @{run}/systemd/users/@{uid} r,

@@ -18,6 +18,21 @@ profile gdm-x-session @{exec_path} flags=(attach_disconnected) {
   signal (send) set=term peer=xorg,
   signal (send) set=term peer=gnome-session-binary,
 
+  dbus bus=session path=/org/freedesktop/systemd[0-9]*
+       interface=org.freedesktop.DBus.Properties
+       member=Get
+       peer=(name=org.freedesktop.systemd[0-9]*),
+
+  dbus send bus=system path=/org/gnome/DisplayManager/Manager
+       interface=org.gnome.DisplayManager.Manager
+       member=RegisterDisplay
+       peer=(name=:*, label=gdm),
+
+  dbus send bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member=UpdateActivationEnvironment
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
+
   @{exec_path} mr,
 
   /{usr/,}bin/Xorg              rPx,
@@ -26,6 +41,7 @@ profile gdm-x-session @{exec_path} flags=(attach_disconnected) {
   /etc/gdm{3,}/Prime/Default    rix,
 
   /etc/gdm{3,}/custom.conf r,
+  /etc/gdm{3,}/daemon.conf r,
   /usr/share/gdm/gdm.schemas r,
 
   /var/lib/gdm{3,}/.cache/gdm/Xauthority rw,

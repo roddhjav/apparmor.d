@@ -138,6 +138,13 @@ The rules in the profile should be sorted as follow:
   /etc/machine-id r,
   /var/lib/dbus/machine-id r,
   ```
+* For DBus, try to determine peer's label when possible. If there's no predictable label - it can be omited. E.g.:
+  ```
+  dbus send bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={RequestName,ReleaseName}
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
+  ```
 
 The included tool `aa-log` can be useful to explore the apparmor log 
 

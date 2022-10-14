@@ -11,6 +11,7 @@ profile gnome-control-center @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/audio>
   include <abstractions/dbus-session>
+  include <abstractions/dbus-accessibility-strict>
   include <abstractions/dbus>
   include <abstractions/dconf-write>
   include <abstractions/dri-common>
@@ -34,6 +35,33 @@ profile gnome-control-center @{exec_path} flags=(attach_disconnected) {
   signal (send) set=(kill) peer=unconfined,
   signal (send) set=(kill) peer=passwd,
 
+  unix (send, receive, connect) type=stream peer=(addr="@/home/*/.cache/ibus/dbus-*", label=ibus-daemon),
+
+  dbus send bus=accessibility path=/org/a11y/atspi/accessible/root
+       interface=org.a11y.atspi.Socket
+       member=Embed
+       peer=(name=org.a11y.atspi.Registry, label=at-spi2-registryd),
+
+  dbus receive bus=accessibility path=/org/a11y/atspi/accessible/root
+       interface=org.freedesktop.DBus.Properties
+       member=Set
+       peer=(name=:*, label=at-spi2-registryd),
+
+  dbus send    bus=accessibility path=/org/a11y/atspi/registry
+       interface=org.a11y.atspi.Registry
+       member=GetRegisteredEvents
+       peer=(name=org.a11y.atspi.Registry, label=at-spi2-registryd),
+
+  dbus receive bus=accessibility path=/org/a11y/atspi/registry
+       interface=org.a11y.atspi.Registry
+       member=EventListenerDeregistered
+       peer=(name=:*, label=at-spi2-registryd),
+
+  dbus send bus=accessibility path=/org/a11y/atspi/registry/deviceeventcontroller
+       interface=org.a11y.atspi.DeviceEventController
+       member={GetKeystrokeListeners,GetDeviceEventListeners}
+       peer=(name=org.a11y.atspi.Registry, label=at-spi2-registryd),
+
   @{exec_path} mr,
 
   /{usr/,}bin/{,b,d,rb}ash  rUx,
@@ -46,16 +74,21 @@ profile gnome-control-center @{exec_path} flags=(attach_disconnected) {
 
   @{libexec}/gnome-control-center-goa-helper          rPx,
   @{libexec}/gnome-control-center-print-renderer      rPx,
+  /{usr/,}bin/gnome-software                         rPUx,
+  /{usr/,}bin/gkbd-keyboard-display                  rPUx,
   /{usr/,}bin/bwrap                                  rPUx,
   /{usr/,}bin/openvpn                                 rPx,
   /{usr/,}bin/passwd                                  rPx,
   /{usr/,}bin/software-properties-gtk                 rPx,
+  /{usr/,}bin/pkexec                                  rPx,
+  /{usr/,}{s,}bin/usermod                             rPx,
   /{usr/,}lib/@{multiarch}/webkit2gtk-{3,4}.0/WebKitNetworkProcess rix,
   /{usr/,}lib/webkit2gtk-{3,4}.0/WebKitNetworkProcess rix,
   /usr/share/language-tools/language2locale           rix,
 
   /snap/*/[0-9]*/**.png r,
   /usr/share/backgrounds/{,**} r,
+  /usr/share/desktop-base/**.{xml,png,svg} r,
   /usr/share/cups/data/testprint r,
   /usr/share/egl/{,**} r,
   /usr/share/glib-2.0/schemas/gschemas.compiled r,
@@ -65,10 +98,11 @@ profile gnome-control-center @{exec_path} flags=(attach_disconnected) {
   /usr/share/gnome-control-center/{,**} r,
   /usr/share/gnome-shell/search-providers/{,**} r,
   /usr/share/gnome/gnome-version.xml r,
+  /usr/share/firefox{,-esr}/browser/chrome/icons/{,**} r,
   /usr/share/mime/{,**} r,
   /usr/share/pipewire/client.conf r,
   /usr/share/thumbnailers/{,*} r,
-  /usr/share/ubuntu/applications/{,*} r,
+  /usr/share/*ubuntu/applications/{,*} r,
   /usr/share/xml/iso-codes/iso_[0-9]*-[0-9]*.xml r,
   /usr/share/zoneinfo/{,**} r,
 
@@ -76,21 +110,26 @@ profile gnome-control-center @{exec_path} flags=(attach_disconnected) {
   /etc/pipewire/client.conf.d/ r,
   /etc/security/pwquality.conf r,
   /etc/security/pwquality.conf.d/{,**} r,
+  /etc/rygel.conf r,
 
+  /etc/fstab r,
   /etc/machine-id r,
   /var/lib/dbus/machine-id r,
 
   /var/lib/snapd/desktop/icons/ r,
 
   /var/cache/samba/ rw,
+  /var/lib/AccountsService/icons/* r,
+  /var/cache/cracklib/cracklib_dict.* r,
 
   owner @{HOME}/.cat_installer/ca.pem r,
   owner @{HOME}/@{XDG_WALLPAPERS_DIR}/{,**} r,
   owner @{user_cache_dirs}/gnome-control-center/{,**} rw,
   owner @{user_cache_dirs}/thumbnails/{,**} rw,
   owner @{user_config_dirs}/gnome-control-center/{,**} rw,
-  owner @{user_config_dirs}/ibus/bus/{,@{hex}-unix-wayland-[0-9]} r,
-  owner @{user_config_dirs}/mimeapps.list.* rw,
+  owner @{user_config_dirs}/ibus/bus/{,@{hex}-unix{,-wayland}-[0-9]} r,
+  owner @{user_config_dirs}/mimeapps.list* rw,
+  owner @{user_config_dirs}/rygel.conf{,.??????} rw,
   owner @{user_share_dirs}/backgrounds/{,**} rw,
   owner @{user_share_dirs}/icc/{,edid-*} r,
   owner @{user_share_dirs}/sounds/__custom/{,*} rw,
@@ -103,6 +142,7 @@ profile gnome-control-center @{exec_path} flags=(attach_disconnected) {
   owner @{run}/user/@{uid}/webkitgtk-wayland-compositor-@{uuid} rwk,
   owner @{run}/user/@{uid}/webkitgtk-wayland-compositor-@{uuid}.lock rwk,
   owner @{run}/user/@{uid}/webkitgtk/{,**} rw,
+  owner @{run}/user/@{uid}/gvfsd/socket-[0-9A-Za-z]* rw,
         @{run}/cups/cups.sock rw,
         @{run}/samba/ rw,
         @{run}/systemd/sessions/  r,

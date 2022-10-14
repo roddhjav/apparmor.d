@@ -39,12 +39,15 @@ profile xorg @{exec_path} flags=(attach_disconnected) {
   signal (receive) peer=xinit,
   signal (receive) set=term peer=gdm{,-x-session},
 
+  unix (bind, listen)          type=stream addr=@/tmp/.X11-unix/*,
+  unix (send, receive, accept) type=stream addr=@/tmp/.X11-unix/*, # all peers
+
   network netlink raw,
 
-  dbus send bus=system path=/org/freedesktop/login[0-9]{,/session/*}
-       interface=org.freedesktop.{DBus.Properties,login1.Session}
+  dbus send    bus=system path=/org/freedesktop/login[0-9]{,/session/*}
+       interface=org.freedesktop.{DBus.Properties,login[0-9].Session,login[0-9]*.Manager}
        member={ReleaseControl,TakeControl,TakeDevice,ReleaseDevice,GetSessionByPID}
-       peer=(name=org.freedesktop.login[0-9]),
+       peer=(name=org.freedesktop.login[0-9], label=systemd-logind),
 
   dbus receive bus=system path=/org/freedesktop/login[0-9]/session/*
        interface=org.freedesktop.login1.Session
@@ -79,8 +82,10 @@ profile xorg @{exec_path} flags=(attach_disconnected) {
   owner /var/log/Xorg.[0-9].log{,.old} rw,
   owner /var/log/Xorg.pid-@{pid}.log{,.old} rw,
 
+  /var/lib/gdm{3,}/.local/share/xorg/ rw,
   /var/lib/gdm{3,}/.local/share/xorg/Xorg.[0-9].log{,.old} rw,
   /var/lib/gdm{3,}/.local/share/xorg/Xorg.pid-@{pid}.log{,.old} rw,
+  /var/lib/gdm{3,}/.cache/mesa_shader_cache/index rw,
 
   @{run}/nvidia-xdriver-* rw,
   @{run}/sddm/{,**} rw,

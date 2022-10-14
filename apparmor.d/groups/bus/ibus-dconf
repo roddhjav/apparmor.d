@@ -11,9 +11,19 @@ include <tunables/global>
 profile ibus-dconf @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/dconf-write>
+  include <abstractions/dbus-strict>
+  include <abstractions/dbus-session-strict>
   include <abstractions/nameservice-strict>
 
   signal (receive) set=term peer=ibus-daemon,
+
+  unix (send, receive, connect) type=stream peer=(addr="@/home/*/.cache/ibus/dbus-*",          label=ibus-daemon),
+  unix (send, receive, connect) type=stream peer=(addr="@/var/lib/gdm{3,}/.cache/ibus/dbus-*", label=ibus-daemon),
+
+  dbus receive bus=session path=/
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name=:*, label=gnome-shell),
 
   @{exec_path} mr,
 
@@ -22,16 +32,16 @@ profile ibus-dconf @{exec_path} flags=(attach_disconnected) {
 
   /etc/dconf/profile/ibus r,
   /etc/dconf/db/ibus r,
-  /var/lib/dbus/machine-id r,
 
   owner @{user_config_dirs}/ibus/bus/{,@{hex}-unix-wayland-[0-9]*} r,
   owner @{user_config_dirs}/ibus/bus/@{hex}-unix-[0-9]* r,
+
   /var/lib/gdm{3,}/.config/ibus/bus/{,@{hex}-unix-wayland-[0-9]*} r,
   /var/lib/gdm{3,}/.config/ibus/bus/@{hex}-unix-[0-9]* r,
-
   /var/lib/gdm{3,}/.cache/dconf/ w,
   /var/lib/gdm{3,}/.cache/dconf/user rw,
   /var/lib/gdm{3,}/.config/dconf/user rw,
+  /var/lib/gdm{3,}/greeter-dconf-defaults r,
 
   owner /dev/tty[0-9]* rw,
 

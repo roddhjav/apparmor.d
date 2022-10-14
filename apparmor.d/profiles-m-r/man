@@ -9,6 +9,7 @@ include <tunables/global>
 @{exec_path} = /{usr/,}bin/man
 profile man @{exec_path} {
   include <abstractions/base>
+  include <abstractions/consoles>
 
   signal peer=man//man_groff,
   signal peer=man//man_filter,
@@ -41,11 +42,12 @@ profile man @{exec_path} {
   /{usr/,}bin/less       rPx -> child-pager,
   /{usr/,}bin/more       rPx -> child-pager,
 
-  /usr/**/man/** r,
-  /var/**/man/** r,
+  /usr/**/man/{,**} r,
+  /var/**/man/{,**} r,
   /var/cache/man/index.db rk,
 
   /etc/man_db.conf r,
+  /etc/manpath.config r,
 
   /dev/tty r,
 
@@ -75,6 +77,8 @@ profile man_groff {
 
   /tmp/groff* rw,
   owner /tmp/* rw,
+
+  include if exists <local/man_groff>
 }
 
 profile man_filter {
@@ -102,4 +106,6 @@ profile man_filter {
   owner @{MOUNTS}/*/@{XDG_DATA_HOME}/** r,
 
   /var/cache/man/** w,
+
+  include if exists <local/man_filter>
 }

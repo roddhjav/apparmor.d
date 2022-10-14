@@ -14,6 +14,43 @@ profile gvfsd @{exec_path} {
   include <abstractions/dbus-gtk>
   include <abstractions/dbus-session-strict>
 
+  dbus send bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={RequestName,ReleaseName}
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
+
+  dbus send    bus=session path=/org/gtk/vfs/mounttracker
+       interface=org.gtk.vfs.MountTracker
+       member=Mounted
+       peer=(name=org.freedesktop.DBus, label="{gvfsd-*,gnome-*,tracker-miner}"),
+
+  dbus receive bus=session path=/org/gtk/vfs/mounttracker
+       interface=org.gtk.vfs.MountTracker
+       peer=(name=:*), # all members
+
+  dbus receive bus=session path=/org/gtk/vfs/Daemon
+       interface=org.gtk.vfs.Daemon
+       member=ListMonitorImplementations
+       peer=(name=:*), # all peer's labels
+
+  dbus send bus=session path=/org/gtk/vfs/mountable
+       interface=org.gtk.vfs.Mountable
+       member=Mount
+       peer=(name=:*, label=gvfsd-*),
+
+  dbus receive bus=session path=/org/gtk/gvfs/exec_spaw/[0-9]*
+       interface=org.gtk.vfs.Spawner
+       member=Spawned
+       peer=(name=:*, label=gvfsd-*),
+
+  dbus receive bus=session path={/,/org}
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name=:*, label=gnome-shell),
+
+  dbus bind bus=session
+       name=org.gtk.vfs.Daemon,
+
   @{exec_path} mr,
 
   /{usr/,}bin/{,ba,da}sh    rix,

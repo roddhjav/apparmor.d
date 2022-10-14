@@ -9,10 +9,22 @@ include <tunables/global>
 @{exec_path} = @{libexec}/gnome-session-ctl
 profile gnome-session-ctl @{exec_path} {
   include <abstractions/base>
+  include <abstractions/dbus-session-strict>
+
+  dbus send bus=session path=/org/freedesktop/systemd[0-9]*
+       interface=org.freedesktop.systemd[0-9]*.Manager
+       member={StartUnit,StopUnit}
+       peer=(name=org.freedesktop.systemd[0-9]*),
+
+  dbus send bus=session path=/org/gnome/SessionManager
+       interface=org.gnome.SessionManager
+       member=Initialized
+       peer=(name=org.gnome.SessionManager, label=gnome-session-binary),
+
+  unix (send, receive, connect) type=stream peer=(addr=@/tmp/dbus-*, label=dbus-daemon),
 
   @{exec_path} mr,
 
-  owner @{run}/user/@{uid}/bus rw,
   owner @{run}/user/@{uid}/gnome-session-leader-fifo r,
         @{run}/user/@{uid}/systemd/notify  rw,
 

@@ -25,6 +25,11 @@ profile goa-daemon @{exec_path} {
   network inet6 dgram,
   network netlink raw,
 
+  dbus send bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={RequestName,ReleaseName}
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
+
   dbus (send,receive) bus=system path=/org/freedesktop/NetworkManager
        interface=org.freedesktop.DBus.Properties
        member={PropertiesChanged,GetAll},
@@ -33,9 +38,34 @@ profile goa-daemon @{exec_path} {
        interface=org.freedesktop.NetworkManager
        member={CheckPermissions,StateChanged},
 
+  dbus send bus=session path=/org/gnome/Identity
+       interface=org.freedesktop.DBus.ObjectManager
+       member=GetManagedObjects
+       peer=(name=:*, label=goa-identity-service),
+
+  dbus receive bus=session path=/org/gnome/OnlineAccounts
+       interface=org.freedesktop.DBus.ObjectManager
+       member=GetManagedObjects
+       peer=(name=:*, label="{gvfs-goa-volume-monitor,goa-daemon,goa-identity-service,unconfined}"),
+
+  dbus receive bus=session path={/,/org}
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name=:*, label=gnome-shell),
+
+  dbus send bus=session path=/org/gnome/Identity/Manager
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=:*, label=goa-identity-service),
+
+  dbus bind bus=session
+       name=org.gnome.OnlineAccounts,
+
   @{exec_path} mr,
 
   /usr/share/glib-2.0/schemas/gschemas.compiled r,
+
+  /var/lib/gdm{3,}/.config/dconf/user r,
 
   owner @{user_config_dirs}/goa-1.0/ rw,
   owner @{user_config_dirs}/goa-1.0/accounts.conf* rw,

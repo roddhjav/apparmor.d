@@ -9,8 +9,9 @@ include <tunables/global>
 @{exec_path} = @{libexec}/gsd-xsettings
 profile gsd-xsettings @{exec_path} {
   include <abstractions/base>
-  include <abstractions/dbus-session-strict>
   include <abstractions/dbus-strict>
+  include <abstractions/dbus-session-strict>
+  include <abstractions/dbus-accessibility-strict>
   include <abstractions/dconf-write>
   include <abstractions/dri-common>
   include <abstractions/dri-enumerate>
@@ -26,6 +27,11 @@ profile gsd-xsettings @{exec_path} {
   network inet6 dgram,
   network netlink raw,
 
+  dbus send bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={RequestName,ReleaseName,GetId}
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
+
   dbus (send,receive) bus=system path=/org/freedesktop/Accounts/User[0-9]*
        interface=org.freedesktop.Accounts.User
        member={SetInputSources,Changed,GetAll},
@@ -34,9 +40,80 @@ profile gsd-xsettings @{exec_path} {
        interface=org.freedesktop.DBus.Properties
        member={GetAll,PropertiesChanged},
 
-  dbus send bus=system path=/org/freedesktop/Accounts
+  dbus send    bus=system path=/org/freedesktop/Accounts
        interface=org.freedesktop.Accounts
        member=FindUserByName,
+
+  dbus receive bus=system path=/org/freedesktop/Accounts
+       interface=org.freedesktop.Accounts
+       member={UserAdded,UserRemoved}
+       peer=(name=:*, label=accounts-daemon),
+
+  dbus receive bus=session path=/org/gnome/SessionManager
+       interface=org.gnome.SessionManager
+       member={ClientAdded,ClientRemoved,SessionRunning}
+       peer=(name=:*, label=gnome-session-binary),
+
+  dbus send    bus=session path=/org/gnome/SessionManager/Client[0-9]*
+       interface=org.gnome.SessionManager.ClientPrivate
+       member=EndSessionResponse
+       peer=(name=:*, label=gnome-session-binary),
+
+  dbus receive bus=session path=/org/gnome/SessionManager/Client[0-9]*
+       interface=org.gnome.SessionManager.ClientPrivate
+       member={EndSession,QueryEndSession,CancelEndSession,Stop}
+       peer=(name=:*, label=gnome-session-binary),
+
+  dbus send bus=session path=/org/gnome/SessionManager
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=:*, label=gnome-session-binary),
+
+  dbus receive bus=session path=/org/gtk/Settings
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=:*), # many peer's labels
+
+  dbus send bus=session path=/org/a11y/bus
+       interface=org.a11y.Bus
+       member=GetAddress
+       peer=(name=org.a11y.Bus, label=at-spi-bus-launcher),
+
+  dbus receive bus=accessibility path=/org/a11y/atspi/registry
+       interface=org.a11y.atspi.Registry
+       member=EventListenerDeregistered
+       peer=(name=:*, label=at-spi2-registryd),
+
+  dbus send    bus=accessibility path=/org/a11y/atspi/registry
+       interface=org.a11y.atspi.Registry
+       member=GetRegisteredEvents
+       peer=(name=org.a11y.atspi.Registry), # all peer's labels
+
+  dbus send    bus=accessibility path=/org/a11y/atspi/registry/deviceeventcontroller
+       interface=org.a11y.atspi.DeviceEventController
+       member={GetKeystrokeListeners,GetDeviceEventListeners}
+       peer=(name=org.a11y.atspi.Registry), # all peer's labels
+
+  dbus send bus=accessibility path=/org/a11y/atspi/accessible/root
+       interface=org.a11y.atspi.Socket
+       member=Embed
+       peer=(name=org.a11y.atspi.Registry), # all peer's labels
+
+  dbus send bus=session path=/org/gnome/Mutter/DisplayConfig
+       interface=org.gnome.Mutter.DisplayConfig
+       member=GetCurrentState
+       peer=(name=org.gnome.Mutter.DisplayConfig, label=gnome-shell),
+
+  dbus send bus=session path=/org/gnome/Shell/Introspect
+       interface=org.freedesktop.DBus.Properties
+       member=Get
+       peer=(name=org.gnome.Shell.Introspect, label=gnome-shell),
+
+  dbus bind bus=session
+       name=org.gtk.Settings,
+
+  dbus bind bus=session
+       name=org.gnome.SettingsDaemon.XSettings,
 
   @{exec_path} mr,
 

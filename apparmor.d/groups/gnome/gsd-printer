@@ -30,10 +30,20 @@ profile gsd-printer @{exec_path} flags=(attach_disconnected) {
        interface=org.gnome.SessionManager
        peer=(name=:*),
 
-  dbus send bus=session path=/org/gnome/SessionManager
+  dbus send bus=session path=/org/gnome/SessionManager{,/Client[0-9]*}
        interface=org.freedesktop.DBus.Properties
        member=GetAll
-       peer=(name=:*),
+       peer=(name=:*, label=gnome-session-binary),
+
+  dbus send    bus=session path=/org/gnome/SessionManager/Client[0-9]*
+       interface=org.gnome.SessionManager.ClientPrivate
+       member=EndSessionResponse
+       peer=(name=:*, label=gnome-session-binary),
+
+  dbus receive bus=session path=/org/gnome/SessionManager/Client[0-9]*
+       interface=org.gnome.SessionManager.ClientPrivate
+       member={EndSession,QueryEndSession,CancelEndSession,Stop}
+       peer=(name=:*, label=gnome-session-binary),
 
   dbus receive bus=session path=/
        interface=org.freedesktop.DBus.Introspectable

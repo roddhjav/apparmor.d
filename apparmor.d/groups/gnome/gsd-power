@@ -12,6 +12,7 @@ profile gsd-power @{exec_path} flags=(attach_disconnected) {
   include <abstractions/audio>
   include <abstractions/dbus-session-strict>
   include <abstractions/dbus-strict>
+  include <abstractions/dbus-accessibility-strict>
   include <abstractions/dconf-write>
   include <abstractions/fonts>
   include <abstractions/gtk>
@@ -20,6 +21,11 @@ profile gsd-power @{exec_path} flags=(attach_disconnected) {
   network netlink raw,
 
   signal (receive) set=(term, hup) peer=gdm*,
+
+  dbus send bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={RequestName,ReleaseName}
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
 
   dbus (send,receive) bus=system path=/org/freedesktop/UPower{,/**}
        interface=org.freedesktop.{DBus.Properties,UPower*},
@@ -44,17 +50,121 @@ profile gsd-power @{exec_path} flags=(attach_disconnected) {
        interface=org.freedesktop.login[0-9].Manager
        member=Inhibit,
 
-  dbus send bus=system path=/net/hadess/PowerProfiles
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll,
+  dbus receive bus=system path=/org/freedesktop/login[0-9]
+       interface=org.freedesktop.login[0-9].Manager
+       member={SessionNew,SessionRemoved,PrepareForShutdown,UserNew,UserRemoved,PrepareForSleep}
+       peer=(name=:*, label=systemd-logind),
 
   dbus receive bus=system path=/org/freedesktop/login[0-9]
        interface=org.freedesktop.DBus.Properties
        member=PropertiesChanged,
 
-  dbus receive bus=system path=/org/freedesktop/login[0-9]
-       interface=org.freedesktop.login[0-9].Manager
-       member={SessionNew,SessionRemoved,PrepareForShutdown},
+  dbus send bus=system path=/net/hadess/PowerProfiles
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll,
+
+  dbus (send, receive) bus=session path=/org/gnome/SessionManager{,/Client[0-9]*}
+       interface=org.freedesktop.DBus.Properties
+       member={GetAll,PropertiesChanged}
+       peer=(name=:*, label=gnome-session-binary),
+
+  dbus send    bus=session path=/org/gnome/SessionManager/Client[0-9]*
+       interface=org.gnome.SessionManager.ClientPrivate
+       member=EndSessionResponse
+       peer=(name=:*, label=gnome-session-binary),
+
+  dbus receive bus=session path=/org/gnome/SessionManager/Client[0-9]*
+       interface=org.gnome.SessionManager.ClientPrivate
+       member={CancelEndSession,QueryEndSession,EndSession,Stop}
+       peer=(name=:*, label=gnome-session-binary),
+
+  dbus send    bus=session path=/org/gnome/SessionManager
+       interface=org.gnome.SessionManager
+       member=RegisterClient
+       peer=(name=:*, label=gnome-session-binary),
+
+  dbus receive bus=session path=/org/gnome/SessionManager
+       interface=org.gnome.SessionManager
+       member={ClientAdded,SessionRunning,ClientRemoved,InhibitorAdded,InhibitorRemoved}
+       peer=(name=:*, label=gnome-session-binary),
+
+  dbus send bus=session path=/org/gnome/Mutter/DisplayConfig
+       interface=org.freedesktop.DBus.Properties
+       member={GetAll,GetResources,Set}
+       peer=(name=:*, label=gnome-shell),
+
+  dbus send bus=session path=/org/gnome/Mutter/DisplayConfig
+       interface=org.freedesktop.DBus.Properties
+       member=Set
+       peer=(name=:*, label=gsd-power),
+
+  dbus send bus=session path=/org/gnome/Mutter/DisplayConfig
+       interface=org.gnome.Mutter.DisplayConfig
+       member=GetResources
+       peer=(name=:*, label=gnome-shell),
+
+  dbus send bus=session path=/org/a11y/bus
+       interface=org.a11y.Bus
+       member=GetAddress
+       peer=(name=org.a11y.Bus), # all peer's labels
+
+  dbus send    bus=accessibility path=/org/a11y/atspi/registry
+       interface=org.a11y.atspi.Registry
+       member=GetRegisteredEvents
+       peer=(name=org.a11y.atspi.Registry), # all peer's labels
+
+  dbus send    bus=accessibility path=/org/a11y/atspi/registry/deviceeventcontroller
+       interface=org.a11y.atspi.DeviceEventController
+       member={GetKeystrokeListeners,GetDeviceEventListeners}
+       peer=(name=org.a11y.atspi.Registry), # all peer's labels
+
+  dbus send bus=accessibility path=/org/a11y/atspi/accessible/root
+       interface=org.a11y.atspi.Socket
+       member=Embed
+       peer=(name=org.a11y.atspi.Registry), # all peer's labels
+
+  dbus (send, receive) bus=session path=/org/gnome/SettingsDaemon/Power
+       interface=org.freedesktop.DBus.Properties
+       member={GetAll,PropertiesChanged,Set}
+       peer=(name="{org.freedesktop.DBus,:*}", label="{gsd-media-keys,gnome-shell}"),
+
+  dbus send    bus=session path=/org/gtk/Settings
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=:*, label=gsd-xsettings),
+
+  dbus send bus=session path=/org/gnome/Mutter/IdleMonitor
+       interface=org.freedesktop.DBus.ObjectManager
+       member=GetManagedObjects
+       peer=(name=:*, label=gnome-shell),
+
+  dbus send    bus=session path=/org/gnome/Mutter/IdleMonitor/Core
+       interface=org.gnome.Mutter.IdleMonitor
+       member={AddIdleWatch,AddUserActiveWatch,RemoveWatch}
+       peer=(name=:*, label=gnome-shell),
+
+  dbus receive bus=session path=/org/gnome/Mutter/IdleMonitor/Core
+       interface=org.gnome.Mutter.IdleMonitor
+       member=WatchFired
+       peer=(name=:*, label=gnome-shell),
+
+  dbus send bus=session path=/org/gtk/vfs/mounttracker
+       interface=org.gtk.vfs.MountTracker
+       member=ListMountableInfo
+       peer=(name=:*, label=gvfsd),
+
+  dbus receive bus=session path=/org/gnome/ScreenSaver
+       interface=org.gnome.ScreenSaver
+       member=ActiveChanged
+       peer=(name=:*, label=gjs-console),
+
+  dbus receive bus=session path=/
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name=:*, label=gnome-shell),
+
+  dbus bind bus=session
+       name=org.gnome.SettingsDaemon.Power,
 
   @{exec_path} mr,
 
@@ -64,9 +174,12 @@ profile gsd-power @{exec_path} flags=(attach_disconnected) {
   /usr/share/icons/{,**} r,
   /usr/share/X11/xkb/** r,
 
+  /var/lib/gdm{3,}/.config/pulse/ rw,
+  /var/lib/gdm{3,}/.config/pulse/cookie rwk,
   /var/lib/gdm{3,}/.cache/event-sound-cache.tdb.* rwk,
   /var/lib/gdm{3,}/.config/dconf/user r,
   /var/lib/gdm{3,}/.config/pulse/client.conf r,
+  /var/lib/gdm{3,}/greeter-dconf-defaults r,
 
   owner @{run}/user/@{uid}/gdm/Xauthority r,
   owner @{run}/user/@{uid}/wayland-[0-9] rw,

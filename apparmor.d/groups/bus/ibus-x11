@@ -11,6 +11,7 @@ include <tunables/global>
 profile ibus-x11 @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/dbus-session-strict>
+  include <abstractions/dbus-accessibility-strict>
   include <abstractions/dri-common>
   include <abstractions/dri-enumerate>
   include <abstractions/fonts>
@@ -21,12 +22,34 @@ profile ibus-x11 @{exec_path} flags=(attach_disconnected) {
 
   unix (connect, receive, send) type=stream peer=(label=ibus-daemon),
 
+  dbus send bus=session path=/org/a11y/bus
+       interface=org.a11y.Bus
+       member=GetAddress
+       peer=(name=org.a11y.Bus), # all peer's labels
+
+  dbus send    bus=accessibility path=/org/a11y/atspi/registry
+       interface=org.a11y.atspi.Registry
+       member=GetRegisteredEvents
+       peer=(name=org.a11y.atspi.Registry), # all peer's labels
+
+  dbus send    bus=accessibility path=/org/a11y/atspi/registry/deviceeventcontroller
+       interface=org.a11y.atspi.DeviceEventController
+       member={GetKeystrokeListeners,GetDeviceEventListeners}
+       peer=(name=org.a11y.atspi.Registry), # all peer's labels
+
+  dbus send bus=accessibility path=/org/a11y/atspi/accessible/root
+       interface=org.a11y.atspi.Socket
+       member=Embed
+       peer=(name=org.a11y.atspi.Registry), # all peer's labels
+
   @{exec_path} mr,
 
-  /var/lib/gdm{3,}/.config/ibus/bus/{,@{hex}-unix-wayland-[0-9]} r,
+  /var/lib/gdm{3,}/.config/ibus/bus/ r,
+  /var/lib/gdm{3,}/.config/ibus/bus/@{hex}-unix{,-wayland}-[0-9] r,
+  /var/lib/gdm{3,}/.cache/mesa_shader_cache/index rw,
 
-  owner @{user_config_dirs}/ibus/bus/{,@{hex}-unix-wayland-[0-9]} r,
-  owner @{user_config_dirs}/ibus/bus/@{hex}-unix-[0-9] r,
+  owner @{user_config_dirs}/ibus/bus/ r,
+  owner @{user_config_dirs}/ibus/bus/@{hex}-unix{,-wayland}-[0-9] r,
 
   owner @{run}/user/@{uid}/.mutter-Xwaylandauth.[0-9A-Z]* r,
   owner @{run}/user/@{uid}/gdm/Xauthority r,

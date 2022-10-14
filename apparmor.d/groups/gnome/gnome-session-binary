@@ -11,11 +11,13 @@ profile gnome-session-binary @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/dbus-session-strict>
   include <abstractions/dbus-strict>
+  include <abstractions/dbus-accessibility-strict>
   include <abstractions/dconf-write>
   include <abstractions/dri-common>
   include <abstractions/dri-enumerate>
   include <abstractions/gtk>
   include <abstractions/mesa>
+  include <abstractions/vulkan>
   include <abstractions/nameservice-strict>
   include <abstractions/X-strict>
 
@@ -29,42 +31,105 @@ profile gnome-session-binary @{exec_path} flags=(attach_disconnected) {
   signal (send) set=(term) peer=at-spi-bus-launcher,
   signal (send) set=(term) peer=gsd-*,
 
-  dbus send bus=system path=/org/freedesktop/login[0-9]
+  dbus send bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={RequestName,ReleaseName,UpdateActivationEnvironment,GetConnectionUnixUser,GetConnectionUnixProcessID}
+       peer=(name=org.freedesktop.DBus label=dbus-daemon),
+
+  dbus send    bus=system path=/org/freedesktop/login[0-9]
        interface=org.freedesktop.login[0-9].Manager
-       member={CanPowerOff,GetSession,PowerOff,Inhibit},
+       member={CanPowerOff,GetSession,PowerOff,Inhibit,Reboot}
+       peer=(name=:*, label=systemd-logind),
 
-  dbus send bus=system path=/org/freedesktop/login[0-9]
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll,
+  dbus receive bus=system path=/org/freedesktop/login[0-9]
+       interface=org.freedesktop.login[0-9].Manager
+       member={SessionNew,PrepareForShutdown,SessionRemoved,UserNew,UserRemoved,PrepareForSleep}
+       peer=(name=:*, label=systemd-logind),
 
-  dbus send bus=system path=/org/freedesktop/login[0-9]/session/_[0-9]*
+  dbus send bus=system path=/org/freedesktop/login[0-9]/session/*
        interface=org.freedesktop.login[0-9].Session
-       member=SetIdleHint,
-
-  dbus receive bus=system path=/org/freedesktop/login[0-9]
-       interface=org.freedesktop.DBus.Properties
-       member=PropertiesChanged,
-
-  dbus receive bus=system path=/org/freedesktop/login[0-9]
-       interface=org.freedesktop.login[0-9].Manager
-       member={SessionNew,PrepareForShutdown,SessionRemoved},
+       member=SetIdleHint
+       peer=(name=org.freedesktop.login[0-9], label=systemd-logind),
 
   dbus (send,receive) bus=session path=/org/gnome/SessionManager{,/**}
-       interface={org.freedesktop.DBus.{Properties,Introspectable},org.gnome.SessionManager},
+       interface={org.freedesktop.DBus.Introspectable,org.gnome.SessionManager**},
 
-  dbus send bus=session path=/org/freedesktop/systemd1
-       interface=org.freedesktop.systemd1.Manager
-       peer=(name=:org.freedesktop.systemd1),
+  dbus receive bus=session path=/org/gnome/SessionManager
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=:*, label=at-spi2-registryd),
 
-  dbus send bus=session path=/org/gnome/Mutter/IdleMonitor/Core
+  dbus send bus=session path=/org/gnome/SessionManager/Client[0-9]*
+       interface=org.gnome.SessionManager.ClientPrivate
+       member=CancelEndSession
+       peer=(name=org.freedesktop.DBus, label=gsd-*),
+
+  dbus send bus=session path=/org/gnome/SessionManager/Presence
+       interface=org.gnome.SessionManager.Presence
+       member=StatusChanged
+       peer=(name=org.freedesktop.DBus, label=gnome-shell),
+
+  dbus send bus=session path=/org/gnome/SessionManager/EndSessionDialog
+       interface=org.gnome.SessionManager.EndSessionDialog
+       member=Open
+       peer=(name=:*, label=gnome-shell),
+
+  dbus send bus=session path=/org/gnome/SessionManager/EndSessionDialog
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=:*, label=gnome-shell),
+
+  dbus (send, receive) bus=system path=/org/freedesktop/login[0-9]*
+       interface=org.freedesktop.DBus.Properties
+       member={GetAll,PropertiesChanged}
+       peer=(name=:*, label=systemd-logind),
+
+  dbus (send, receive) bus=session path=/org/gnome/SessionManager{,/**}
+       interface=org.freedesktop.DBus.Properties
+       member={GetAll,PropertiesChanged}
+       peer=(name="{org.freedesktop.DBus,:*}", label="{gsd-*,gnome-*,xdg-desktop-portal-*}"),
+
+  dbus send bus=session path=/org/freedesktop/systemd[0-9]*
+       interface=org.freedesktop.systemd[0-9]*.Manager
+       peer=(name=org.freedesktop.systemd[0-9]*, label=unconfined), # all members
+
+  dbus send    bus=session path=/org/gnome/Mutter/IdleMonitor
+       interface=org.freedesktop.DBus.ObjectManager
+       member=GetManagedObjects
+       peer=(name=:*, label=gnome-shell),
+
+  dbus send    bus=session path=/org/gnome/Mutter/IdleMonitor/Core
        interface=org.gnome.Mutter.IdleMonitor
-       member=AddIdleWatch
-       peer=(name=:*),
+       member={AddIdleWatch,AddUserActiveWatch,RemoveWatch}
+       peer=(name=:*, label=gnome-shell),
+
+  dbus receive bus=session path=/org/gnome/Mutter/IdleMonitor/Core
+       interface=org.gnome.Mutter.IdleMonitor
+       member=WatchFired
+       peer=(name=:*, label=gnome-shell),
 
   dbus send bus=session path=/org/gnome/ScreenSaver
        interface=org.gnome.ScreenSaver
        member=GetActive 
        peer=(name=:*),
+
+  dbus receive bus=session path=/org/gnome/ScreenSaver
+       interface=org.gnome.ScreenSaver
+       member=ActiveChanged
+       peer=(name=:*, label=gjs-console),
+
+  dbus send bus=session path=/org/a11y/bus
+       interface=org.a11y.Bus
+       member=GetAddress
+       peer=(name=org.a11y.Bus), # all peer's labels
+
+  dbus receive bus=session path={/,/org}
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name=:*, label=gnome-shell),
+
+  dbus bind bus=session
+       name=org.gnome.SessionManager,
 
   @{exec_path} mr,
 
@@ -77,6 +142,7 @@ profile gnome-session-binary @{exec_path} flags=(attach_disconnected) {
   /{usr/,}bin/gsettings-data-convert                       rix,
   /{usr/,}bin/session-migration                            rix,
   /{usr/,}bin/xdg-user-dirs-gtk-update                     rix,
+  /{usr/,}bin/gnome-session                                rix,
   @{libexec}/gnome-session-check-accelerated               rix,
   @{libexec}/gnome-session-check-accelerated-gl-helper     rix,
   @{libexec}/gnome-session-check-accelerated-gles-helper   rix,
@@ -97,7 +163,15 @@ profile gnome-session-binary @{exec_path} flags=(attach_disconnected) {
   /{usr/,}bin/update-notifier                              rPx,
   /{usr/,}bin/xbrlapi                                      rPx,
   /{usr/,}bin/xdg-user-dirs-update                         rPx,
+  /{usr/,}bin/parcellite                                   rPUx,
+  /{usr/,}bin/baloo_file                                   rPUx,
+  /{usr/,}bin/gnome-software                               rPUx,
+  /{usr/,}share/libpam-kwallet-common/pam_kwallet_init     rPUx,
   /{usr/,}lib/update-notifier/ubuntu-advantage-notification rPx,
+  /{usr/,}lib/@{multiarch}/libexec/kdeconnectd             rPUx,
+  /{usr/,}lib/@{multiarch}/xapps/sn-watcher/xapp-sn-watcher rPUx,
+  /{usr/,}lib/caribou/caribou                              rPUx,
+  @{libexec}/deja-dup/deja-dup-monitor                     rPUx,
   @{libexec}/at-spi-bus-launcher                           rPx,
   @{libexec}/evolution-data-server/evolution-alarm-notify  rPx,
   @{libexec}/gsd-*                                         rPx,
@@ -114,8 +188,10 @@ profile gnome-session-binary @{exec_path} flags=(attach_disconnected) {
   /usr/share/gnome/autostart/{,*.desktop} r,
   /usr/share/icons/{,**} r,
   /usr/share/mime/mime.cache r,
-  /usr/share/ubuntu/applications/{,*.desktop} r,
+  /usr/share/*ubuntu/applications/{,*.desktop} r,
+  /usr/share/*ubuntu/applications/mimeinfo.cache r,
   /usr/share/X11/xkb/{,**} r,
+  /usr/share/session-migration/scripts/{,*} r,
 
   /etc/gnome/defaults.list r,
   /etc/xdg/autostart/{,*.desktop} r,
@@ -125,10 +201,13 @@ profile gnome-session-binary @{exec_path} flags=(attach_disconnected) {
   /var/lib/gdm{3,}/.config/gnome-session/ rw,
   /var/lib/gdm{3,}/.config/gnome-session/saved-session/ rw,
   /var/lib/gdm{3,}/.local/share/applications/{,**} r,
+  /var/lib/gdm{3,}/.local/share/session_migration-* r,
   /var/lib/gdm{3,}/greeter-dconf-defaults r,
 
   /var/lib/snapd/desktop/applications/{,mimeinfo.cache} r,
   /var/lib/flatpak/exports/share/applications/{,**} r,
+
+  owner /tmp/dirs-?????? rw,
 
   owner @{user_config_dirs}/autostart/{,*.desktop} r,
   owner @{user_config_dirs}/gnome-session/ rw,
@@ -141,6 +220,7 @@ profile gnome-session-binary @{exec_path} flags=(attach_disconnected) {
   owner @{user_share_dirs}/applications/ r,
   owner @{user_share_dirs}/applications/mimeinfo.cache r,
   owner @{user_share_dirs}/session_migration-ubuntu r,
+  owner @{user_share_dirs}/gnome-shell/gnome-overrides-migrated rw,
 
         @{run}/systemd/inhibit/[0-9]*.ref rw,
         @{run}/systemd/sessions/* r,

@@ -16,6 +16,33 @@ profile ibus-daemon @{exec_path} flags=(attach_disconnected) {
   signal (receive) set=(usr1) peer=gnome-shell,
   signal (send) set=(term) peer=ibus*,
 
+  unix (bind, listen)          type=stream addr=@/var/lib/gdm{3,}/.cache/ibus/dbus-*,
+  unix (send, receive, accept) type=stream addr=@/var/lib/gdm{3,}/.cache/ibus/dbus-* peer=(label=ibus-*),
+  unix (send, receive, accept) type=stream addr=@/var/lib/gdm{3,}/.cache/ibus/dbus-* peer=(label=gnome-shell),
+
+  dbus send bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={Hello,RequestName,ReleaseName}
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
+
+  dbus send bus=session path=/org/freedesktop/IBus
+       interface=org.freedesktop.DBus.Peer
+       peer=(name=org.freedesktop.portal.IBus), # all members, all peer's labels
+
+  dbus send bus=session path=/org/gtk/vfs/mounttracker
+       interface=org.gtk.vfs.MountTracker
+       member=ListMountableInfo
+       peer=(name=:*, label=gvfsd),
+
+  dbus receive bus=session path=/
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name=:*, label=gnome-shell),
+
+  dbus bind bus=session name=org.freedesktop.portal.IBus,
+
+  dbus bind bus=session name=org.freedesktop.IBus,
+
   @{exec_path} mr,
   
   /{usr/,}lib/ibus/ibus-*  rPx,
@@ -28,6 +55,7 @@ profile ibus-daemon @{exec_path} flags=(attach_disconnected) {
   /var/lib/dbus/machine-id r,
 
   owner @{user_cache_dirs}/ibus/{,**} rw,
+
   /var/lib/gdm{3,}/.config/ibus/{,**} rw,
   /var/lib/gdm{3,}/.cache/ibus/{,**} rw,
   /var/lib/gdm{3,}/.config/ibus/bus/ r,

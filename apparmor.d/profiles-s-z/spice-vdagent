@@ -11,18 +11,40 @@ profile spice-vdagent @{exec_path} {
   include <abstractions/base>
   include <abstractions/audio>
   include <abstractions/dbus-session-strict>
+  include <abstractions/dbus-accessibility-strict>
   include <abstractions/fonts>
   include <abstractions/gtk>
   include <abstractions/X-strict>
 
+  dbus send bus=session path=/org/gnome/Mutter/DisplayConfig
+       interface=org.gnome.Mutter.DisplayConfig
+       member=GetCurrentState
+       peer=(name=:*, label=gnome-shell),
+
   dbus send bus=session path=/org/a11y/bus
        interface=org.a11y.Bus
        member=GetAddress
-       peer=(name=org.a11y.Bus),
+       peer=(name=org.a11y.Bus, label=at-spi-bus-launcher),
 
-  dbus send bus=session path=/org/gnome/Mutter/DisplayConfig
-       interface=org.gnome.Mutter.DisplayConfig
-       member=GetCurrentState,
+  dbus receive bus=accessibility path=/org/a11y/atspi/registry
+       interface=org.a11y.atspi.Registry
+       member=EventListenerDeregistered
+       peer=(name=:*, label=at-spi2-registryd),
+
+  dbus send    bus=accessibility path=/org/a11y/atspi/registry
+       interface=org.a11y.atspi.Registry
+       member=GetRegisteredEvents
+       peer=(name=org.a11y.atspi.Registry), # all peer's labels
+
+  dbus send    bus=accessibility path=/org/a11y/atspi/registry/deviceeventcontroller
+       interface=org.a11y.atspi.DeviceEventController
+       member={GetKeystrokeListeners,GetDeviceEventListeners}
+       peer=(name=org.a11y.atspi.Registry), # all peer's labels
+
+  dbus send bus=accessibility path=/org/a11y/atspi/accessible/root
+       interface=org.a11y.atspi.Socket
+       member=Embed
+       peer=(name=org.a11y.atspi.Registry), # all peer's labels
 
   @{exec_path} mr,
 

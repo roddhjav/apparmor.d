@@ -15,6 +15,24 @@ profile gvfs-mtp-volume-monitor @{exec_path} {
 
   network netlink raw,
 
+  dbus send bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={RequestName,ReleaseName}
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
+
+  dbus receive bus=session path=/org/gtk/Private/RemoteVolumeMonitor
+       interface=org.gtk.Private.RemoteVolumeMonitor
+       member={List,IsSupported}
+       peer=(name=:*, label="{gnome-shell,gnome-control-center,gnome-extension-ding,tracker-*,unconfined}"),
+
+  dbus receive bus=session path={/,/org,/org/gtk/Private/RemoteVolumeMonitor}
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name=:*, label=gnome-shell),
+
+  dbus bind bus=session
+       name=org.gtk.vfs.MTPVolumeMonitor,
+
   @{exec_path} mr,
 
   include if exists <local/gvfs-mtp-volume-monitor>

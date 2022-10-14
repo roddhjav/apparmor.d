@@ -11,8 +11,38 @@ profile xdg-permission-store @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/dbus-session-strict>
 
+  capability sys_nice,
+
   signal (receive) set=(term hup kill) peer=dbus-daemon,
   signal (receive) set=(term hup kill) peer=gdm*,
+
+  dbus send    bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={RequestName,ReleaseName}
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
+
+  dbus receive bus=session path=/org/freedesktop/impl/portal/PermissionStore
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=:*, label="{gnome-shell,xdg-document-portal}"),
+
+  dbus receive bus=session path=/org/freedesktop/impl/portal/PermissionStore
+       interface=org.freedesktop.impl.portal.PermissionStore
+       member=Lookup
+       peer=(name=:*, label="{gnome-shell,xdg-desktop-portal}"),
+
+  dbus receive bus=session path={/,/org}
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name=:*, label=gnome-shell),
+
+  dbus receive bus=session path=/org/freedesktop/impl/portal/PermissionStore
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=:*, label=xdg-desktop-portal),
+
+  dbus bind    bus=session
+       name=org.freedesktop.impl.portal.PermissionStore,
 
   @{exec_path} mr,
 
@@ -21,6 +51,7 @@ profile xdg-permission-store @{exec_path} flags=(attach_disconnected) {
   owner @{user_share_dirs}/flatpak/db/ rw,
   owner @{user_share_dirs}/flatpak/db/.goutputstream-* rw,
   owner @{user_share_dirs}/flatpak/db/background rw,
+  owner @{user_share_dirs}/flatpak/db/notifications rw,
 
   /dev/tty[0-9]* rw,
 
