@@ -1,0 +1,65 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}lib/packagekitd
+profile packagekitd @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/ssl_certs>
+  include <abstractions/nameservice-strict>
+  include <abstractions/openssl>
+
+  network inet stream,
+  network inet6 stream,
+  network inet dgram,
+  network inet6 dgram,
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/gpg      rCx -> gpg,
+  /{usr/,}bin/gpgconf  rCx -> gpg,
+  /{usr/,}bin/gpgsm    rCx -> gpg,
+
+  /etc/pacman.conf r,
+  /etc/pacman.d//{,**} r,
+  /etc/PackageKit/{,**} r,
+
+  /var/cache/PackageKit/{,**} rw,
+  /var/cache/pacman/pkg/{,**} rw,
+  /var/lib/PackageKit/{,**} rwk,
+  /var/lib/pacman/{,**} rwk,
+  /var/log/*PackageKit.log rw,
+  /var/log/pacman.log rw,
+
+  owner /tmp/packagekit* rw,
+
+        @{run}/systemd/inhibit/*.ref rw,
+  owner @{run}/systemd/users/@{uid} r,
+
+        @{PROC}/@{pids}/cgroup r,
+  owner @{PROC}/@{pid}/mounts r,
+
+  profile gpg {
+    include <abstractions/base>
+    include <abstractions/nameservice-strict>
+
+    capability dac_read_search,
+
+    /{usr/,}bin/gpg     mr,
+    /{usr/,}bin/gpgconf mr,
+    /{usr/,}bin/gpgsm   mr,
+
+    @{HOME}/@{XDG_GPG_DIR}/*.conf r,
+
+    owner /etc/pacman.d/gnupg/ r,
+    owner /etc/pacman.d/gnupg/** rwkl -> /tmp/ostree-gpg-*/**,
+
+  }
+
+  include if exists <local/packagekitd>
+}
