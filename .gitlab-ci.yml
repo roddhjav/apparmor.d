@@ -71,7 +71,7 @@ debian:
   stage: build
   image: registry.gitlab.com/archlex/packages/builders/debian
   script:
-    - VERSION="$(date +%y.%m%d)-1"
+    - VERSION="0.$(git rev-list --count HEAD)-1"
     - mkdir -p "$PKGDEST"
     - sudo apt-get update -q && sudo apt-get install -y  golang-go lsb-release rsync
     - dch --newversion=$VERSION --urgency=medium --distribution=stable --controlmaint "Release $VERSION"
@@ -81,6 +81,11 @@ debian:
     expire_in: 1 day
     paths:
       - $PKGDEST/*.deb
+
+ubuntu:
+  extends: debian
+  variables:
+    DIST: ubuntu
 
 
 # Profile Preprocessing
@@ -105,6 +110,17 @@ preprocess-debian:
   image: debian
   dependencies:
     - debian
+  script:
+    - apt-get update -q
+    - apt-get install -y apparmor apparmor-profiles
+    - dpkg --install $PKGDEST/*
+    - apparmor_parser --preprocess /etc/apparmor.d 1> /dev/null
+
+preprocess-ubuntu:
+  stage: preprocess
+  image: ubuntu
+  dependencies:
+    - ubuntu
   script:
     - apt-get update -q
     - apt-get install -y apparmor apparmor-profiles
