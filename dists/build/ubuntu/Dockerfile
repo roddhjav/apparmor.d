@@ -6,7 +6,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
 # hadolint ignore=DL3008
 RUN apt-get update -y && apt-get -qq -y --no-install-recommends upgrade && \
     apt-get -qq -y --no-install-recommends install \
-        build-essential devscripts debhelper fakeroot config-package-dev \
+        build-essential devscripts debhelper fakeroot \
 		git lsb-release rsync golang-go && \
     apt-get -qy autoremove && \
     apt-get -qq --purge remove -y .\*-doc$ && \
