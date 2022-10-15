@@ -6,12 +6,16 @@ abi <abi/3.0>,
 
 include <tunables/global>
 
-@{exec_path} = /{usr/,}lib/packagekitd
+@{exec_path} = @{libexec}/packagekitd
 profile packagekitd @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/ssl_certs>
+  include <abstractions/dbus-strict>
   include <abstractions/nameservice-strict>
   include <abstractions/openssl>
+  include <abstractions/ssl_certs>
+  include if exists <abstractions/apt-common>
+
+  capability sys_nice,
 
   network inet stream,
   network inet6 stream,
@@ -19,7 +23,41 @@ profile packagekitd @{exec_path} flags=(attach_disconnected) {
   network inet6 dgram,
   network netlink raw,
 
+  dbus receive bus=system path=/org/freedesktop/PackageKit
+       interface=org.freedesktop.DBus.Properties 
+       peer=(name=:*, label=gnome-shell),
+
+  dbus send bus=system path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member=RequestName
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
+
+  dbus send bus=system path=/org/freedesktop/NetworkManager
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=:*, label=NetworkManager),
+
+  dbus receive bus=system path=/org/freedesktop/NetworkManager
+       interface=org.freedesktop.NetworkManager
+       member=CheckPermissions
+       peer=(name=:*, label=NetworkManager),
+
+
+  dbus send bus=system path=/org/freedesktop/PolicyKit[0-9]/Authority
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=:*, label=polkitd),
+
+  dbus receive bus=system path=/org/freedesktop/PolicyKit[0-9]/Authority
+       interface=org.freedesktop.PolicyKit[0-9].Authority
+       member=Changed
+       peer=(name=:*, label=polkitd),
+
+  dbus bind bus=system name= org.freedesktop.PackageKit,
+  
   @{exec_path} mr,
+
+  /{usr/,}bin/dpkg     rPx -> child-dpkg,
 
   /{usr/,}bin/gpg      rCx -> gpg,
   /{usr/,}bin/gpgconf  rCx -> gpg,
@@ -42,6 +80,7 @@ profile packagekitd @{exec_path} flags=(attach_disconnected) {
   owner @{run}/systemd/users/@{uid} r,
 
         @{PROC}/@{pids}/cgroup r,
+  owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/mounts r,
 
   profile gpg {
