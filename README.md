@@ -74,7 +74,7 @@ The `PKGBUILD` included in this repository is intended for development only.
 
 Build using standard Debian package build tools:
 ```sh
-sudo apt install apparmor-profiles build-essential debhelper golang-go rsync git
+sudo apt install apparmor-profiles build-essential config-package-dev debhelper golang-go rsync git
 git clone https://github.com/roddhjav/apparmor.d.git
 cd apparmor.d
 dpkg-buildpackage -b -d --no-sign
