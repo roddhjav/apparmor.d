@@ -7,7 +7,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
 RUN echo 'deb http://deb.debian.org/debian bullseye-backports main contrib non-free' >> /etc/apt/sources.list && \
     apt-get update -y && apt-get -qq -y --no-install-recommends upgrade && \
     apt-get -qq -y --no-install-recommends install \
-        build-essential devscripts debhelper fakeroot \
+        build-essential devscripts debhelper fakeroot config-package-dev \
 		git lsb-release rsync && \
     apt-get -qq -y --no-install-recommends install \
         golang-1.19-go -t bullseye-backports && \
