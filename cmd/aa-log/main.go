@@ -9,7 +9,6 @@ import (
 	"bytes"
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -266,7 +265,7 @@ func aaLog(logger string, path string, profile string) error {
 	case "systemd":
 		file, err = getJournalctlLogs(path, true, path != LogFile)
 	default:
-		err = errors.New("Logger not supported: " + logger)
+		err = fmt.Errorf("Logger %s not supported.", logger)
 	}
 	if err != nil {
 		return err
