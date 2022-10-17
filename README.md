@@ -83,10 +83,18 @@ sudo dpkg -i ../apparmor.d_*_all.deb
 
 **Partial install**
 
+> **Note**: Manual installation is discouraged because files undergo post-processing dependent on the OS and desired configuration
+
 For test purpose, you can install a specific profile with the following commands. The tool will also install required abstractions and tunables:
 ```
 sudo ./pick <profiles-name>
 ```
+However, `pick` does not fully automate single profile installation yet (the PR is welcome [#77](https://github.com/roddhjav/apparmor.d/issues/77)). For convenient usage you should:
+- Ensure all related abstractions are installed (automated)
+- Ensure all related tunables are installed (automated)
+- Remove `abi` statement if needed (not automated)
+- Set distribution-related flags from `dists/flags` (not automated)
+- Either switch desired `rPx` rules to `rPUx` (fallback to unconfined) or install these related profiles (not automated)
 
 
 ## Usage
