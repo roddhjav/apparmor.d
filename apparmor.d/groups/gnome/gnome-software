@@ -1,0 +1,132 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/gnome-software
+profile gnome-software @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/dconf-write>
+  include <abstractions/dri-common>
+  include <abstractions/dri-enumerate>
+  include <abstractions/fonts>
+  include <abstractions/freedesktop.org>
+  include <abstractions/gtk>
+  include <abstractions/mesa>
+  include <abstractions/nameservice-strict>
+  include <abstractions/opencl>
+  include <abstractions/openssl>
+  include <abstractions/p11-kit>
+  include <abstractions/ssl_certs>
+  include <abstractions/vulkan>
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  mount fstype=fuse.revokefs-fuse options=(rw, nosuid, nodev) -> /var/tmp/flatpak-cache-*/*/,
+  umount /var/tmp/flatpak-cache-*/*/,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/bwrap              rPUx,
+  /{usr/,}bin/fusermount{,3}      rCx -> fusermount,
+  /{usr/,}bin/gpg                 rCx -> gpg,
+  /{usr/,}bin/gpgconf             rCx -> gpg,
+  /{usr/,}bin/gpgsm               rCx -> gpg,
+  /{usr/,}lib/gio-launch-desktop  rPx -> child-open,
+  /{usr/,}lib/revokefs-fuse       rix,
+
+  /usr/share/app-info/{,**} r,
+  /usr/share/appdata/{,**} r,
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+  /usr/share/metainfo/{,**} r,
+  /usr/share/swcatalog/xml/{,**} r,
+  /usr/share/X11/xkb/{,**} r,
+  /usr/share/xml/iso-codes/{,**} r,
+
+  /etc/appstream.conf r,
+  /etc/flatpak/remotes.d/{,**} r,
+  /etc/PackageKit/Vendor.conf r,
+  /etc/pulse/client.conf r,
+
+  /var/lib/dbus/machine-id r,
+  /etc/machine-id r,
+
+  /var/lib/flatpak/app/{,**} r,
+  /var/lib/flatpak/appstream/{,**} r,
+  /var/lib/flatpak/repo/{,**} r,
+  /var/lib/flatpak/runtime/{,**} r,
+  
+  /var/lib/PackageKit/offline-update-competed r,
+  /var/lib/PackageKit/prepared-update r,
+
+  owner @{HOME}/.var/app/{,**/} r,
+  owner @{user_cache_dirs}/gnome-software/{,**} rw,
+  owner @{user_cache_dirs}/flatpak/system-cache/{,**} rw,
+  owner @{user_share_dirs}/flatpak/repo/{,**} rw,
+
+  /var/tmp/flatpak-cache-*/ rw,
+  /var/tmp/flatpak-cache-*/** rwkl,
+  /var/tmp/#[0-9]* rw,
+
+  owner /tmp/ostree-gpg-*/ rw,
+  owner /tmp/ostree-gpg-*/** rwkl -> /tmp/ostree-gpg-*/**,
+  owner /tmp/#[0-9]* rw,
+
+        @{run}/systemd/inhibit/*.ref rw,
+  owner @{run}/user/@{uid}/.dbus-proxy/a11y-bus-proxy-[0-9A-Z]* rw,
+  owner @{run}/user/@{uid}/.dbus-proxy/session-bus-proxy-[0-9A-Z]* rw,
+  owner @{run}/user/@{uid}/.flatpak-cache rw,
+  owner @{run}/user/@{uid}/.flatpak/{,**} rw,
+  owner @{run}/user/@{uid}/.flatpak/**/*.ref rwk,
+
+  @{sys}/devices/system/cpu/possible r,
+  @{sys}/module/nvidia/version r,
+
+        @{PROC}/@{pids}/mounts r,
+        @{PROC}/sys/kernel/random/boot_id r,
+  owner @{PROC}/@{pid}/stat r,
+
+  /dev/fuse rw,
+ 
+  profile gpg {
+    include <abstractions/base>
+
+    /{usr/,}bin/gpg      mr,
+    /{usr/,}bin/gpgconf  mr,
+    /{usr/,}bin/gpgsm    mr,
+
+    @{HOME}/@{XDG_GPG_DIR}/*.conf r,
+
+    owner /tmp/ostree-gpg-*/ r,
+    owner /tmp/ostree-gpg-*/** rwkl -> /tmp/ostree-gpg-*/**,
+
+  }
+
+  profile fusermount {
+    include <abstractions/base>
+    include <abstractions/nameservice-strict>
+
+    capability sys_admin,
+
+    mount fstype=fuse.revokefs-fuse options=(rw, nosuid, nodev) -> /var/tmp/flatpak-cache-*/*/,
+    umount /var/tmp/flatpak-cache-*/*/,
+
+    /{usr/,}bin/fusermount{,3} mr,
+
+    /etc/fuse.conf r,
+
+    @{PROC}/@{pids}/mounts r,
+
+    /dev/fuse rw,
+
+  }
+
+  include if exists <local/gnome-software>
+}
