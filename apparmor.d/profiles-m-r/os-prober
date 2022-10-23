@@ -1,0 +1,34 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/os-prober
+profile os-prober @{exec_path} {
+  include <abstractions/base>
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/{,ba,da}sh        rix,
+  /{usr/,}bin/{e,f,}grep        rix,
+  /{usr/,}bin/cut               rix,
+  /{usr/,}bin/head              rix,
+  /{usr/,}bin/logger            rix,
+  /{usr/,}bin/lsblk             rPx,
+  /{usr/,}bin/mktemp            rix,
+  /{usr/,}bin/readlink          rix,
+  /{usr/,}bin/rm                rix,
+  /{usr/,}bin/sed               rix,
+  /{usr/,}bin/uname             rix,
+  /{usr/,}lib/os-prober/*       rix,
+  /{usr/,}lib/os-probes/{,**}   rix,
+
+  /usr/share/os-prober/common.sh r,
+
+  owner /tmp/os-prober.*/{,**} rw,
+
+  include if exists <local/os-prober>
+}
