@@ -14,10 +14,13 @@ profile pipewire @{exec_path} flags=(attach_disconnected) {
   include <abstractions/dbus-session-strict>
   include <abstractions/dbus-strict>
   include <abstractions/nameservice-strict>
+  include <abstractions/video>
 
   capability sys_ptrace,
 
   ptrace (read),
+
+  network netlink raw,
 
   dbus send bus=session path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus
@@ -41,7 +44,7 @@ profile pipewire @{exec_path} flags=(attach_disconnected) {
 
   @{exec_path} mr,
 
-  /{usr/,}bin/pactl                   rPx,
+  /{usr/,}bin/pactl                   rix,
   /{usr/,}bin/pipewire-media-session  rPx,
 
   /usr/share/pipewire/pipewire*.conf r,
@@ -51,16 +54,23 @@ profile pipewire @{exec_path} flags=(attach_disconnected) {
   /etc/pipewire/pipewire.conf r,
   /etc/pipewire/pipewire.conf.d/{,*} r,
 
+  /var/lib/gdm/.config/pulse/cookie rk,
+
   / r,
+  /.flatpak-info r,
 
   owner @{run}/user/@{uid}/pipewire-[0-9]*.lock rwk,
 
-  @{sys}/devices/virtual/dmi/id/product_name r,
-  @{sys}/devices/virtual/dmi/id/sys_vendor r,
-  @{sys}/devices/virtual/dmi/id/board_vendor r,
+  @{run}/udev/data/c50[0-9]:[0-9]* r,
+  @{run}/udev/data/c81:[0-9]*  r,       # For video4linux
+
+  @{sys}/bus/ r,
+  @{sys}/bus/media/devices/ r,
+  @{sys}/devices/**/device:*/**/path r,
+  @{sys}/devices/pci[0-9]*/**/usb[0-9]/**/{idVendor,idProduct,removable,uevent} r,
   @{sys}/devices/virtual/dmi/id/bios_vendor r,
 
-  /dev/video[0-9]* rw,
+  /dev/media[0-9]* rw,
 
   include if exists <local/pipewire>
 }

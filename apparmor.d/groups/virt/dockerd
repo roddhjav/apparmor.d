@@ -18,11 +18,12 @@ profile dockerd @{exec_path} flags=(attach_disconnected) {
   capability dac_read_search,
   capability fowner,
   capability fsetid,
+  capability kill,
   capability mknod,
   capability net_admin,
   capability sys_admin,
   capability sys_chroot,
-  capability kill,
+  capability sys_ptrace,
 
   network inet dgram,
   network inet6 dgram,
@@ -42,6 +43,7 @@ profile dockerd @{exec_path} flags=(attach_disconnected) {
   pivot_root oldroot=/var/lib/docker/overlay*/**/.pivot_root[0-9]*/ /var/lib/docker/overlay2/**/,
   pivot_root oldroot=/var/lib/docker/tmp/**/.pivot_root[0-9]*/ /var/lib/docker/tmp/**/,
 
+  ptrace (read) peer=docker-*,
   ptrace (read) peer=unconfined,
 
   signal (send) set=kill peer=docker-*,
@@ -62,7 +64,6 @@ profile dockerd @{exec_path} flags=(attach_disconnected) {
   # TODO: should be in a sub profile started with pivot_root, not supported yet.
   /{,**} rw,
   deny /boot/{,**} rw,
-  deny /dev/{,**} rw,
   deny /media/{,**} rw,
   deny /mnt/{,**} rw,
 

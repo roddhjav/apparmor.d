@@ -7,15 +7,20 @@ abi <abi/3.0>,
 include <tunables/global>
 
 @{exec_path} = /{usr/,}bin/os-prober
-profile os-prober @{exec_path} {
+profile os-prober @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/consoles>
 
-  @{exec_path} mr,
+  capability sys_admin,
 
+  @{exec_path} mrix,
+
+  /{usr/,}{s,}bin/blkid         rPx,
   /{usr/,}bin/{,ba,da}sh        rix,
   /{usr/,}bin/{e,f,}grep        rix,
   /{usr/,}bin/cut               rix,
   /{usr/,}bin/head              rix,
+  /{usr/,}bin/kmod              rPx,
   /{usr/,}bin/logger            rix,
   /{usr/,}bin/lsblk             rPx,
   /{usr/,}bin/mktemp            rix,
@@ -29,6 +34,9 @@ profile os-prober @{exec_path} {
   /usr/share/os-prober/common.sh r,
 
   owner /tmp/os-prober.*/{,**} rw,
+
+  @{sys}/block/ r,
+  @{sys}/devices/pci[0-9]*/**/block/*/ r,
 
   include if exists <local/os-prober>
 }
