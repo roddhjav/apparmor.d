@@ -1,0 +1,24 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /usr/share/grub/grub-check-signatures
+profile grub-check-signatures @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/{,ba,da}sh   rix,
+  /{usr/,}bin/{m,g,}awk    rix,
+  /{usr/,}bin//mktemp      rix,
+  /{usr/,}bin//od          rix,
+
+  owner /tmp/tmp.*/ rw,
+
+  include if exists <local/grub-check-signatures>
+}

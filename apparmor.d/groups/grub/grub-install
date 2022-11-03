@@ -1,4 +1,5 @@
 # apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
 # Copyright (C) 2022 Jeroen Rijken
 # SPDX-License-Identifier: GPL-2.0-only
 
@@ -10,8 +11,29 @@ include <tunables/global>
 profile grub-install @{exec_path} flags=(complain) {
   include <abstractions/base>
   include <abstractions/consoles>
+  include <abstractions/disks-read>
 
   @{exec_path} mr,
+
+  /{usr/,}bin/kmod              rPx,
+  /{usr/,}bin/{,ba,da}sh        rix,
+  /{usr/,}bin/lsb_release       rPx -> lsb_release,
+  /{usr/,}bin/udevadm           rPx,
+
+  /etc/default/grub.d/{,**} r,
+
+  /boot/efi/EFI/BOOT/{,**} rw,
+  /boot/grub/{,**} rw,
+
+  @{sys}/firmware/efi/efivars/ r,
+  @{sys}/firmware/efi/efivars/Boot@{hex}-@{uuid} r,
+  @{sys}/firmware/efi/efivars/BootOrder-@{uuid} r,
+  @{sys}/firmware/efi/w_platform_size r,
+
+        @{PROC}/devices r,
+  owner @{PROC}/@{pid}/mountinfo r,
+
+  /dev/mapper/control rw,
 
   include if exists <local/grub-install>
 }
