@@ -1,0 +1,36 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}lib/grub/grub-multi-install
+profile grub-multi-install @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+
+  @{exec_path} mr,
+
+  /{usr/,}{s,}bin/grub-install   rPx,
+  /{usr/,}bin/{,ba,da}sh         rix,
+  /{usr/,}bin/{,e}grep           rix,
+  /{usr/,}bin/cat                rix,
+  /{usr/,}bin/dpkg-query         rpx,
+  /{usr/,}bin/readlink           rix,
+  /{usr/,}bin/sed                rix,
+  /{usr/,}bin/sort               rix,
+  /{usr/,}bin/udevadm            rPx,
+  /{usr/,}bin/touch              rix,
+
+  /usr/lib/terminfo/x/xterm-256color r,
+
+  /boot/grub/grub.cfg rw,
+
+        @{PROC}/filesystems r,
+  owner @{PROC}/@{pid}/maps r,
+  owner @{PROC}/@{pid}/mounts r,
+
+  include if exists <local/grub-multi-install>
+}
