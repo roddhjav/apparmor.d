@@ -99,19 +99,31 @@ It also improves compatibilities and makes personalization easier thanks to the 
 In order to ensure a common structure across the profiles, all new profile should
 try to follow the guideline presented here.
 
-The rules in the profile should be sorted as follow:
+The rules in the profile should be sorted in rule *block* as follow:
 - include
+- set rlimit
 - capability
 - network
 - mount
 - remount
 - umount
 - pivot_root
-- ptrace
+- change_profile
 - signal
+- ptrace
 - unix
-- dbus (send, receive) send receice 
-- @{exec_path} mr, the entry point of the profile
+- dbus
+- file
+- Local include
+
+This rule order is taken from AppArmor with minor changes as we tend to:
+- Divide the file block in multiple sub categories
+- Put the block with the longer rules (files, dbus) after the other blocks
+
+**The file block**
+
+Try to sort the file rules as follow:
+- `@{exec_path} mr`, the entry point of the profile
 - The binaries and library required: `/{usr/,}bin/`, `/{usr/,}lib/`, `/opt/`...
   It is the only place where you can have `mr`, `rix`, `rPx`, `rUx`, `rPUX` rules.
 - The shared resources: `/usr/share`...
@@ -124,8 +136,21 @@ The rules in the profile should be sorted as follow:
 - Proc files: `@{PROC}/`... 
 - Dev files: `/dev/`...
 - Deny rules: `deny`...
-- Local include
 
+**The dbus block**
+
+Try to sort the dbus rules as follow:
+- The system bus should be sorted *before* the session bus
+- The bind rules should be sorred *after* the send & receive rules
+
+For DBus, try to determine peer's label when possible. E.g.:
+```
+dbus send bus=session path=/org/freedesktop/DBus
+     interface=org.freedesktop.DBus
+     member={RequestName,ReleaseName}
+     peer=(name=org.freedesktop.DBus, label=dbus-daemon),
+```
+If there is no predictable label it can be omited.
 
 **Other rules**
 * Do not use: `/usr/lib` or `/usr/bin` but `/{usr/,}bin/` or `/{usr/,}lib/`.
@@ -137,13 +162,6 @@ The rules in the profile should be sorted as follow:
   ```
   /etc/machine-id r,
   /var/lib/dbus/machine-id r,
-  ```
-* For DBus, try to determine peer's label when possible. If there's no predictable label - it can be omited. E.g.:
-  ```
-  dbus send bus=session path=/org/freedesktop/DBus
-       interface=org.freedesktop.DBus
-       member={RequestName,ReleaseName}
-       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
   ```
 
 The included tool `aa-log` can be useful to explore the apparmor log 
@@ -187,10 +205,13 @@ include <abstractions/user-download-strict>
 
 **Additional variables available with this project:**
 
+* Libexec:
+  - On Archlinux: `@{libexec}=/{usr/,}lib`
+  - On Debian/Ubuntu: `@{libexec}=/{usr/,}libexec`
 * Mountpoints root: `@{MOUNTDIRS}=/media/ @{run}/media/ /mnt/`
 * Common mountpoints: `@{MOUNTS}=@{MOUNTDIRS}/*/`
-* Universally unique identifier: `@{uuid}=[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*`
-* Hexadecimal: `@{hex}=[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]`
+* Universally unique identifier: `@{uuid}=[0-9a-fA-F]*-[0-9a-fA-F]*-[0-9a-fA-F]*-[0-9a-fA-F]*-[0-9a-fA-F]*`
+* Hexadecimal: `@{hex}=[0-9a-fA-F]*`
 * Extended XDG user directories: 
   - Books: `@{XDG_BOOKS_DIR}="Books"`
   - Projects: `@{XDG_PROJECTS_DIR}="Projects"`
@@ -229,6 +250,7 @@ include <abstractions/user-download-strict>
 ## Additional documentation
 
 * https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference
+* https://man.archlinux.org/man/apparmor.d.5
 * https://presentations.nordisch.org/apparmor/#/
 
 [git]: https://help.github.com/articles/set-up-git/
