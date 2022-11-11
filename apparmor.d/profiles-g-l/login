@@ -7,12 +7,13 @@ abi <abi/3.0>,
 include <tunables/global>
 
 @{exec_path} = /{usr/,}bin/login
-profile login @{exec_path} {
+profile login @{exec_path} flags=(complain) {
   include <abstractions/base>
   include <abstractions/authentication>
   include <abstractions/consoles>
   include <abstractions/nameservice-strict>
   include <abstractions/wutmp>
+  include <abstractions/dbus-strict>
 
   capability chown,
   capability fsetid,
@@ -24,6 +25,10 @@ profile login @{exec_path} {
 #  capability net_admin,
 
 #  network netlink raw,
+
+  dbus send bus=system path=/org/freedesktop/login1
+       interface=org.freedesktop.login1.*
+       peer=(name=org.freedesktop.login1),
 
   @{exec_path} mr,
 
@@ -51,11 +56,7 @@ profile login @{exec_path} {
 
   owner @{user_cache_dirs}/motd.legal-displayed rw,
 
-  dbus send
-    bus="system" path="/org/freedesktop/DBus"   interface="org.freedesktop.DBus" member="Hello" peer=(name="org.freedesktop.DBus"),
-
-  dbus send
-    bus="system" path="/org/freedesktop/login1" interface="org.freedesktop.login1.*" peer=(name="org.freedesktop.login1"),
+  /dev/tty[0-9]* rw,
 
   include if exists <local/login>
 }

@@ -22,7 +22,7 @@ profile google-chrome-chrome @{exec_path} {
   include <abstractions/gtk>
   include <abstractions/mesa>
   include <abstractions/nameservice-strict>
-  include <abstractions/opencl-intel>
+  include <abstractions/opencl>
   include <abstractions/ssl_certs>
   include <abstractions/thumbnails-cache-read>
   include <abstractions/user-download-strict>
@@ -99,23 +99,25 @@ profile google-chrome-chrome @{exec_path} {
   # owner @{user_config_dirs}/chromium/*/ r,
   # owner @{user_config_dirs}/chromium/*/{History,Cookies,Favicons,Bookmarks} rwk,
 
-             @{PROC}/ r,
-  deny       @{PROC}/vmstat r,
-             @{PROC}/sys/kernel/yama/ptrace_scope r,
-             @{PROC}/@{pid}/fd/ r,
-  deny       @{PROC}/@{pids}/stat r,
-  deny       @{PROC}/@{pids}/statm r,
-       owner @{PROC}/@{pid}/oom_{,score_}adj rw,
-  deny       @{PROC}/@{pids}/cmdline r,
-  deny owner @{PROC}/@{pids}/environ r,
-       owner @{PROC}/@{pid}/task/ r,
-  deny       @{PROC}/@{pids}/task/@{tid}/stat r,
-             @{PROC}/@{pids}/task/@{tid}/status r,
-  deny owner @{PROC}/@{pid}/limits r,
-  deny owner @{PROC}/@{pid}/mem r,
-       owner @{PROC}/@{pid}/mountinfo r,
-       owner @{PROC}/@{pid}/mounts r,
-  deny       @{PROC}/diskstats r,
+        @{PROC}/ r,
+        @{PROC}/@{pid}/fd/ r,
+        @{PROC}/@{pids}/stat r,
+        @{PROC}/@{pids}/statm r,
+        @{PROC}/@{pids}/task/@{tid}/stat r,
+        @{PROC}/@{pids}/task/@{tid}/status r,
+        @{PROC}/sys/fs/inotify/max_user_watches r,
+        @{PROC}/sys/kernel/yama/ptrace_scope r,
+        @{PROC}/vmstat r,
+  owner @{PROC}/@{pid}/limits r,
+  owner @{PROC}/@{pid}/mem r,
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/mounts r,
+  owner @{PROC}/@{pid}/oom_{,score_}adj rw,
+  owner @{PROC}/@{pid}/task/@{tid}/comm rw,
+  owner @{PROC}/@{pids}/clear_refs w,
+  owner @{PROC}/@{pids}/cmdline r,
+  owner @{PROC}/@{pids}/environ r,
+  owner @{PROC}/@{pids}/task/ r,
 
   @{run}/udev/data/* r,
 
@@ -124,14 +126,21 @@ profile google-chrome-chrome @{exec_path} {
   @{sys}/class/ r,
   @{sys}/class/**/ r,
   @{sys}/devices/**/uevent r,
+  @{sys}/devices/pci[0-9]*/**/boot_vga r,
   @{sys}/devices/pci[0-9]*/**/irq r,
+  @{sys}/devices/pci[0-9]*/**/report_descriptor r,
   @{sys}/devices/pci[0-9]*/**/usb[0-9]/{,**/}{busnum,devnum} r,
   @{sys}/devices/pci[0-9]*/**/usb[0-9]/{,**/}{descriptors,manufacturer,product,serial,bConfigurationValue} r,
-  @{sys}/devices/system/cpu/cpufreq/policy[0-9]/cpuinfo_max_freq r,
+  @{sys}/devices/pci[0-9]*/**/usb[0-9]/**/{idProduct,idVendor,interface} r,
+  @{sys}/devices/system/cpu/cpufreq/policy[0-9]*/cpuinfo_max_freq r,
+  @{sys}/devices/virtual/**/report_descriptor r,
+  @{sys}/devices/virtual/dmi/id/product_name r,
+  @{sys}/devices/virtual/dmi/id/sys_vendor r,
   @{sys}/devices/virtual/tty/tty[0-9]/active r,
 
   # Silencer
   deny @{CHROME_INSTALLDIR}/** w,
+  deny @{user_share_dirs}/gvfs-metadata/* r,
 
   include if exists <local/google-chrome-chrome>
 }

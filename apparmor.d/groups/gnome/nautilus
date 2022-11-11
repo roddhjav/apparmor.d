@@ -12,8 +12,11 @@ profile nautilus @{exec_path} flags=(attach_disconnected) {
   include <abstractions/dbus-session-strict>
   include <abstractions/dbus-strict>
   include <abstractions/dconf-write>
+  include <abstractions/deny-sensitive-home>
+  include <abstractions/dri-enumerate>
   include <abstractions/gnome>
   include <abstractions/nameservice-strict>
+  include <abstractions/opencl-nvidia>
   include <abstractions/openssl>
   include <abstractions/trash>
   include <abstractions/vulkan>
@@ -42,20 +45,22 @@ profile nautilus @{exec_path} flags=(attach_disconnected) {
   /{usr/,}bin/firejail           rPUx,
   /{usr/,}lib/gio-launch-desktop  rPx -> child-open,
 
+  /usr/share/*ubuntu/applications/{,**} r,
   /usr/share/nautilus/{,**} r,
   /usr/share/poppler/{,**} r,
   /usr/share/sounds/freedesktop/stereo/*.oga r,
+  /usr/share/terminfo/ r,
   /usr/share/thumbnailers/{,**} r,
-  /usr/share/tracker3/{,**} r,
-  /usr/share/*ubuntu/applications/{,**} r,
   /usr/share/tracker/domain-ontologies/*.rule r,
+  /usr/share/tracker3/{,**} r,
 
   /var/lib/snapd/desktop/icons/{,**} r,
 
   # Full access to user's data
-  include <abstractions/deny-sensitive-home>
   / r,
-  /home/ r,
+  /*/ r,
+  /{usr/,}bin/ r,
+  @{libexec}/ r,
   @{MOUNTDIRS}/ r,
   @{MOUNTS}/ r,
   owner @{HOME}/{,**} rw,
@@ -74,10 +79,11 @@ profile nautilus @{exec_path} flags=(attach_disconnected) {
 
   @{run}/mount/utab r,
 
-  @{sys}/devices/**/hwmon/{,name,temp*,fan*} r,
-  @{sys}/devices/**/hwmon/**/{,name,temp*,fan*} r,
   @{sys}/devices/**/hwmon[0-9]*/{,name,temp*,fan*} r,
   @{sys}/devices/**/hwmon[0-9]*/**/{,name,temp*,fan*} r,
+  @{sys}/devices/**/hwmon/{,name,temp*,fan*} r,
+  @{sys}/devices/**/hwmon/**/{,name,temp*,fan*} r,
+  @{sys}/devices/system/cpu/possible r,
 
   owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/mountinfo r,
