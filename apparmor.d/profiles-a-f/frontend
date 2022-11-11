@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2019-2021 Mikhail Morfikov
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -10,17 +11,23 @@ include <tunables/global>
 profile frontend @{exec_path} flags=(complain) {
   include <abstractions/base>
   include <abstractions/consoles>
-  include <abstractions/perl>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/fonts>
+  include <abstractions/freedesktop.org>
+  include <abstractions/gtk>
   include <abstractions/nameservice-strict>
+  include <abstractions/perl>
 
-  #capability sys_tty_config,
+  capability dac_read_search,
 
   @{exec_path} r,
   /{usr/,}bin/perl r,
 
-  /{usr/,}bin/{,ba,da}sh rix,
-  /{usr/,}bin/stty       rix,
-  /{usr/,}bin/locale     rix,
+  /{usr/,}bin/{,ba,da}sh  rix,
+  /{usr/,}bin/hostname    rix,
+  /{usr/,}bin/locale      rix,
+  /{usr/,}bin/lsb_release rPx -> lsb_release,
+  /{usr/,}bin/stty        rix,
 
   # debconf apps
   /{usr/,}{s,}bin/aspell-autobuildhash     rPx,
@@ -69,24 +76,16 @@ profile frontend @{exec_path} flags=(complain) {
   owner /tmp/file* w,
   owner /var/cache/debconf/* rwk,
 
+  @{HOME}/.Xauthority r,
+
   @{run}/user/@{uid}/pk-debconf-socket rw,
 
-  # The following is needed when debconf uses GUI frontends.
-  include <abstractions/gtk>
-  include <abstractions/fonts>
-  include <abstractions/fontconfig-cache-read>
-  include <abstractions/freedesktop.org>
-  capability dac_read_search,
-  /{usr/,}bin/lsb_release rPx -> lsb_release,
-  /{usr/,}bin/hostname    rix,
   owner @{PROC}/@{pid}/mounts r,
-  @{HOME}/.Xauthority r,
 
   profile scripts flags=(complain) {
     include <abstractions/base>
     include <abstractions/consoles>
 
-    # What's this for? (#FIXME#)
     capability dac_read_search,
 
     /var/lib/dpkg/info/*.config             r,
