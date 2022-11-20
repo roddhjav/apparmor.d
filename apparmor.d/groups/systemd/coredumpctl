@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2021 Mikhail Morfikov
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -21,10 +22,8 @@ profile coredumpctl @{exec_path} flags=(complain) {
   /{usr/,}bin/more  rPx -> child-pager,
   /{usr/,}bin/pager rPx -> child-pager,
 
-  owner /tmp/*.coredump w,
-  owner /tmp/core.* w,
-
-  owner /var/tmp/coredump-* rw,
+  /var/lib/dbus/machine-id r,
+  /etc/machine-id r,
 
   /var/lib/systemd/coredump/core.*.[0-9]*.@{hex}.[0-9]*.[0-9]*.zst r,
 
@@ -34,38 +33,37 @@ profile coredumpctl @{exec_path} flags=(complain) {
   /{run,var}/log/journal/@{hex}/system.journal* r,
   /{run,var}/log/journal/@{hex}/system@@{hex}.journal* r,
 
-  owner @{PROC}/@{pid}/cgroup r,
+  owner /tmp/*.coredump w,
+  owner /tmp/core.* w,
+  owner /var/tmp/coredump-* rw,
+
         @{PROC}/1/cgroup r,
-
-  /var/lib/dbus/machine-id r,
-  /etc/machine-id r,
-
+  owner @{PROC}/@{pid}/cgroup r,
 
   profile gdb {
     include <abstractions/base>
-    include <abstractions/python>
     include <abstractions/openssl>
+    include <abstractions/python>
 
     ptrace (trace),
 
-    /{usr/,}bin/gdb mr,
+    /{usr/,}bin/gdb    mr,
+    /{usr/,}bin/iconv  rix,
 
-    /{usr/,}bin/iconv rix,
-    /{usr/,}bin/* r,
-    /{usr/,}sbin/* r,
+    /{usr/,}{s,}bin/* r,
 
-    @{PROC}/@{pids}/fd/  r,
-
-    /etc/inputrc r,
-
-    /etc/gdb/** r,
-    /usr/share/gdb/{,**} r,
-    /usr/share/glib-2.0/gdb/{,**} r,
     /usr/share/gcc-[0-9]*/python/{,**} r,
     /usr/share/gcc/** r,
+    /usr/share/gdb/{,**} r,
+    /usr/share/glib-2.0/gdb/{,**} r,
     /usr/share/terminfo/x/xterm-256color r,
-  
+
+    /etc/inputrc r,
+    /etc/gdb/** r,
+    
     owner /var/tmp/coredump-* rw,
+
+    @{PROC}/@{pids}/fd/  r,
 
     # Silencer
     deny /usr/share/** w,
