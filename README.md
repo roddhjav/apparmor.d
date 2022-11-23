@@ -16,7 +16,7 @@ applications and processes.
 
 **Goals & Purpose**
 - Support all distributions that support AppArmor:
-  * *Currenlty*: Archlinux, Debian 11 and the last Ubuntu LTS.
+  * *Currently*: Archlinux, Debian 11 and the last Ubuntu LTS.
   * Not (yet) tested on openSUSE
 - Target both desktop and server,
 - Confine all root processes. Eg: all systemd tools, bluetooth, dbus, polkit,
