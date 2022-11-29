@@ -12,6 +12,7 @@ profile xdg-desktop-portal-gnome @{exec_path} {
   include <abstractions/dbus-session-strict>
   include <abstractions/dbus-strict>
   include <abstractions/dconf-write>
+  include <abstractions/deny-sensitive-home>
   include <abstractions/dri-common>
   include <abstractions/dri-enumerate>
   include <abstractions/fontconfig-cache-write>
@@ -20,7 +21,6 @@ profile xdg-desktop-portal-gnome @{exec_path} {
   include <abstractions/gtk>
   include <abstractions/mesa>
   include <abstractions/user-download>
-  include <abstractions/user-read>
   include <abstractions/vulkan>
 
   dbus send bus=session path=/org/freedesktop/DBus
@@ -123,6 +123,8 @@ profile xdg-desktop-portal-gnome @{exec_path} {
 
   /var/lib/snapd/desktop/icons/{,**} r,
 
+  owner @{HOME}/*/{,**} rw,
+
   owner @{user_share_dirs}/ r,
 
   owner @{run}/user/@{uid}/wayland-[0-9]* rw,
@@ -130,7 +132,10 @@ profile xdg-desktop-portal-gnome @{exec_path} {
 
   @{run}/mount/utab r,
 
+  owner @{PROC}/@{pid}/ r,
   owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/task/@{tid}/ r,
+  owner @{PROC}/@{pid}/task/@{tid}/status r,
 
   include if exists <local/xdg-desktop-portal-gnome>
 }

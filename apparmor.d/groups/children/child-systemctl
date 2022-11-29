@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2019-2021 Mikhail Morfikov
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 # Note: This profile does not specify an attachment path because it is
@@ -19,6 +20,7 @@ profile child-systemctl flags=(attach_disconnected) {
   include <abstractions/dbus-strict>
   include <abstractions/wutmp>
 
+  capability mknod,
   capability net_admin,
   capability sys_ptrace,
 
@@ -33,17 +35,25 @@ profile child-systemctl flags=(attach_disconnected) {
 
   /{usr/,}bin/systemctl mr,
 
+  /etc/machine-id r,
   /etc/systemd/user/{,**} rwl,
+
+  /{run,var}/log/journal/ r,
+  /{run,var}/log/journal/@{hex}/ r,
+  /{run,var}/log/journal/@{hex}/user-@{hex}.journal* r,
+  /{run,var}/log/journal/@{hex}/system.journal* r,
+  /{run,var}/log/journal/@{hex}/system@@{hex}.journal* r,
 
   @{run}/systemd/private rw,
 
-  owner @{PROC}/@{pid}/stat r,
-        @{PROC}/sys/kernel/osrelease r,
+  @{sys}/firmware/efi/efivars/SecureBoot-@{uuid} r,
+
         @{PROC}/1/environ r,
         @{PROC}/1/sched r,
         @{PROC}/cmdline r,
-
-  @{sys}/firmware/efi/efivars/SecureBoot-@{uuid} r,
+        @{PROC}/sys/kernel/osrelease r,
+        @{PROC}/sys/kernel/random/boot_id r,
+  owner @{PROC}/@{pid}/stat r,
 
   /dev/kmsg w,
 
