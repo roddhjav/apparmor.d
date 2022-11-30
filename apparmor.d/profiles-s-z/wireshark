@@ -26,6 +26,9 @@ profile wireshark @{exec_path} {
   include <abstractions/mesa>
   include <abstractions/qt5-compose-cache-write>
   include <abstractions/qt5-settings-write>
+  include <abstractions/dbus-accessibility-strict>
+  include <abstractions/dbus-session-strict>
+  include <abstractions/nvidia>
 
   signal (send) peer=dumpcap,
 
@@ -51,16 +54,18 @@ profile wireshark @{exec_path} {
   /etc/wireshark/init.lua r,
 
   # Wireshark home files
-  owner @{HOME}/.wireshark/{,*} rw,
-  owner @{user_config_dirs}/wireshark/{,*} rw,
+  owner @{HOME}/.wireshark/{,**} rw,
+  owner @{user_config_dirs}/wireshark/{,**} rw,
 
   # To configure Qt5 settings (theme, font, icons, etc.) under DE/WM without Qt integration
   owner @{user_config_dirs}/qt5ct/{,**} r,
   /usr/share/qt5ct/** r,
+  /usr/share/qt5/translations/*.qm r,
 
   deny       @{PROC}/sys/kernel/random/boot_id r,
   deny owner @{PROC}/@{pid}/cmdline r,
        owner @{PROC}/@{pid}/fd/ r,
+       owner @{PROC}/@{pid}/comm r,
              @{PROC}/@{pid}/net/dev r,
              @{PROC}/@{pid}/mountinfo r,
              @{PROC}/@{pid}/mounts r,
@@ -74,9 +79,6 @@ profile wireshark @{exec_path} {
   /usr/share/GeoIP/{,**} r,
 
   /dev/shm/#[0-9]*[0-9] rw,
-
-  /var/lib/dbus/machine-id r,
-  /etc/machine-id r,
 
   owner /tmp/wireshark_extcap_ciscodump_[0-9]*_* rw,
 
@@ -108,6 +110,7 @@ profile wireshark @{exec_path} {
     # file_inherit
     owner @{HOME}/.xsession-errors w,
 
+    include if exists <local/wireshark_open>
   }
 
   include if exists <local/wireshark>
