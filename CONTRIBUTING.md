@@ -114,6 +114,7 @@ The rules in the profile should be sorted in rule *block* as follow:
 - unix
 - dbus
 - file
+- file_inherit
 - Local include
 
 This rule order is taken from AppArmor with minor changes as we tend to:
@@ -163,6 +164,7 @@ If there is no predictable label it can be omited.
   /etc/machine-id r,
   /var/lib/dbus/machine-id r,
   ```
+* Keeping profiles up to the current guideline is encouraged but not mandatory.
 
 The included tool `aa-log` can be useful to explore the apparmor log 
 
