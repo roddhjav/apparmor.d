@@ -1,0 +1,34 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2018-2022 Mikhail Morfikov
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /opt/google/chrome/chrome_crashpad_handler
+profile google-chrome-crashpad-handler @{exec_path} flags=(complain) {
+  include <abstractions/base>
+
+  capability sys_ptrace,
+
+  ptrace peer=chromium-chromium,
+  signal (send) peer=chromium-chromium,
+
+  @{exec_path} mrix,
+
+  owner "@{HOME}/.config/google-chrome/Crash Reports/**" rwk,
+
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pids}/mem r,
+  owner @{PROC}/@{pids}/stat r,
+  owner @{PROC}/@{pids}/task/ r,
+        @{PROC}/sys/kernel/yama/ptrace_scope r,
+
+  @{sys}/devices/system/cpu/cpufreq/policy[0-9]*/scaling_cur_freq r,
+  @{sys}/devices/system/cpu/cpufreq/policy[0-9]*/scaling_max_freq r,
+
+  include if exists <local/google-chrome-crashpad-handler>
+}
