@@ -7,15 +7,18 @@ abi <abi/3.0>,
 
 include <tunables/global>
 
-@{CHROME_INSTALLDIR} = /opt/google/chrome{,-beta,-unstable}
-@{CHROME_HOMEDIR} = @{user_config_dirs}/google-chrome{,-beta,-unstable}
-@{CHROME_CACHEDIR} = @{user_cache_dirs}/google-chrome{,-beta,-unstable}
+@{chromiun_domain} = "com.google.Chrome"
+@{chromiun_install_dirs} = /opt/google/chrome{,-beta,-unstable}
+@{chromiun_config_dirs} = @{user_config_dirs}/google-chrome{,-beta,-unstable}
+@{chromiun_cache_dirs} = @{user_cache_dirs}/google-chrome{,-beta,-unstable}
 
-@{exec_path} = @{CHROME_INSTALLDIR}/chrome{,-beta,-unstable}
+@{exec_path} = @{chromiun_install_dirs}/chrome{,-beta,-unstable}
 profile google-chrome-chrome @{exec_path} {
   include <abstractions/base>
   include <abstractions/audio>
   include <abstractions/chromium-common>
+  include <abstractions/dconf-write>
+  include <abstractions/devices-usb>
   include <abstractions/fontconfig-cache-read>
   include <abstractions/fonts>
   include <abstractions/freedesktop.org>
@@ -26,7 +29,17 @@ profile google-chrome-chrome @{exec_path} {
   include <abstractions/ssl_certs>
   include <abstractions/thumbnails-cache-read>
   include <abstractions/user-download-strict>
+  include <abstractions/user-read>
+  include <abstractions/vulkan>
 
+  capability sys_ptrace,
+
+  ptrace (read) peer=browserpass,
+  ptrace (read) peer=chrome-gnome-shell,
+  ptrace (read) peer=gnome-browser-connector-host,
+  ptrace (read) peer=keepassxc-proxy,
+  ptrace (read) peer=lsb_release,
+  ptrace (read) peer=xdg-settings,
   ptrace (trace) peer=@{profile_name},
 
   signal (send) set=(term, kill) peer=keepassxc-proxy,
@@ -39,14 +52,17 @@ profile google-chrome-chrome @{exec_path} {
 
   @{exec_path} mrix,
 
-  @{CHROME_INSTALLDIR}/{,**} r,
-  @{CHROME_INSTALLDIR}/chrome-sandbox rPx,
-  @{CHROME_INSTALLDIR}/google-chrome{,-beta,-unstable} rPx,
-  @{CHROME_INSTALLDIR}/nacl_helper    rix,
-  @{CHROME_INSTALLDIR}/xdg-mime       rix,
-  @{CHROME_INSTALLDIR}/xdg-settings   rix,
-  @{CHROME_INSTALLDIR}/libwidevinecdm.so mr,
-  @{CHROME_INSTALLDIR}/libwidevinecdmadapter.so mr,
+  @{chromiun_install_dirs}/{,**} r,
+  @{chromiun_install_dirs}/*.so* mr,
+  @{chromiun_install_dirs}/chrome_crashpad_handler  rPx,
+  @{chromiun_install_dirs}/chrome-sandbox rPx,
+  @{chromiun_install_dirs}/google-chrome{,-beta,-unstable} rPx,
+  @{chromiun_install_dirs}/libwidevinecdm.so mr,
+  @{chromiun_install_dirs}/libwidevinecdmadapter.so mr,
+  @{chromiun_install_dirs}/nacl_helper    rix,
+  @{chromiun_install_dirs}/WidevineCdm/_platform_specific/linux_*/libwidevinecdm.so mr,
+  @{chromiun_install_dirs}/xdg-mime       rix,
+  @{chromiun_install_dirs}/xdg-settings   rix,
 
   # For "google-chrome --help"
   /{usr/,}bin/man               rPUx,
@@ -56,6 +72,7 @@ profile google-chrome-chrome @{exec_path} {
   /{usr/,}bin/browserpass       rPx,
 
   /{usr/,}bin/lsb_release       rPx -> lsb_release,
+  /{usr/,}bin/xdg-desktop-menu  rPx,
   /{usr/,}bin/xdg-mime          rPx,
   /{usr/,}bin/xdg-open          rPx -> child-open,
   /{usr/,}bin/xdg-settings      rPx,
@@ -63,24 +80,25 @@ profile google-chrome-chrome @{exec_path} {
   /usr/share/glib-2.0/schemas/gschemas.compiled r,
 
   /etc/fstab r,
+  /etc/libva.conf r,
 
   /var/lib/dbus/machine-id r,
   /etc/machine-id r,
 
   # Google Chrome home files
   owner @{HOME}/ r,
-  owner @{CHROME_HOMEDIR}/ rw,
-  owner @{CHROME_HOMEDIR}/** rwk,
+  owner @{chromiun_config_dirs}/ rw,
+  owner @{chromiun_config_dirs}/** rwk,
 
-  owner @{user_share_dirs}/.com.google.Chrome.* rw,
+  owner @{user_share_dirs}/.@{chromiun_domain}.* rw,
 
   owner @{user_cache_dirs}/ rw,
-  owner @{CHROME_CACHEDIR}/{,**/} rw,
-  owner @{CHROME_CACHEDIR}/*/**/{*-,}index rw,
-  owner @{CHROME_CACHEDIR}/*/**/[a-f0-9]*_? rw,
-  owner @{CHROME_CACHEDIR}/*/**/todelete_* rw,
-  owner @{CHROME_CACHEDIR}/PnaclTranslationCache/index rw,
-  owner @{CHROME_CACHEDIR}/PnaclTranslationCache/data_[0-9]*[0-9] rw,
+  owner @{chromiun_cache_dirs}/{,**/} rw,
+  owner @{chromiun_cache_dirs}/*/**/{*-,}index rw,
+  owner @{chromiun_cache_dirs}/*/**/[a-f0-9]*_? rw,
+  owner @{chromiun_cache_dirs}/*/**/todelete_* rw,
+  owner @{chromiun_cache_dirs}/PnaclTranslationCache/index rw,
+  owner @{chromiun_cache_dirs}/PnaclTranslationCache/data_[0-9]*[0-9] rw,
 
   # For importing data (bookmarks, cookies, etc) from Firefox
   # owner @{HOME}/.mozilla/firefox/profiles.ini r,
@@ -98,6 +116,14 @@ profile google-chrome-chrome @{exec_path} {
   # owner "@{user_config_dirs}/chromium/*/Login Data{,-journal}" rwk,
   # owner @{user_config_dirs}/chromium/*/ r,
   # owner @{user_config_dirs}/chromium/*/{History,Cookies,Favicons,Bookmarks} rwk,
+
+  owner /dev/shm/.@{chromiun_domain}* rw,
+  owner /tmp/.@{chromiun_domain}.* rw,
+  owner /tmp/.@{chromiun_domain}*/{,**} rw,
+  owner /tmp/scoped_dir*/{,**} rw,
+  owner /tmp/tmp.* rw,
+  owner /tmp/tmp.*/ rw,
+  owner /tmp/tmp.*/** rwk,
 
         @{PROC}/ r,
         @{PROC}/@{pid}/fd/ r,
@@ -133,13 +159,20 @@ profile google-chrome-chrome @{exec_path} {
   @{sys}/devices/pci[0-9]*/**/usb[0-9]/{,**/}{descriptors,manufacturer,product,serial,bConfigurationValue} r,
   @{sys}/devices/pci[0-9]*/**/usb[0-9]/**/{idProduct,idVendor,interface} r,
   @{sys}/devices/system/cpu/cpufreq/policy[0-9]*/cpuinfo_max_freq r,
+  @{sys}/devices/system/cpu/kernel_max r,
+  @{sys}/devices/system/cpu/present r,
   @{sys}/devices/virtual/**/report_descriptor r,
   @{sys}/devices/virtual/dmi/id/product_name r,
   @{sys}/devices/virtual/dmi/id/sys_vendor r,
   @{sys}/devices/virtual/tty/tty[0-9]/active r,
 
+  /dev/ r,
+  /dev/hidraw[0-9]* rw,
+  /dev/tty rw,
+  /dev/video[0-9]* rw,
+
   # Silencer
-  deny @{CHROME_INSTALLDIR}/** w,
+  deny @{chromiun_install_dirs}/** w,
   deny @{user_share_dirs}/gvfs-metadata/* r,
 
   include if exists <local/google-chrome-chrome>
