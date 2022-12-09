@@ -10,18 +10,26 @@ include <tunables/global>
 profile snap-update-ns @{exec_path} {
   include <abstractions/base>
 
+  capability dac_override,
   capability sys_admin,
   capability sys_chroot,
+
+  mount -> /snap/**/,
+  mount -> /usr/**/,
+  mount /snap/**/ ->  /tmp/.snap/**,
+  umount /snap/**/,
 
   @{exec_path} mr,
 
   /var/lib/snapd/mount/{,*} r,
 
+  /tmp/.snap/{,**} rwk,
+
   @{run}/snapd/lock/*.lock rwk,
   @{run}/snapd/ns/{,**} rw,
 
   @{sys}/fs/cgroup/{,**/} r,
-  @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/snap*.service/cgroup.freeze r,
+  @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/snap*.service/cgroup.freeze rw,
   @{sys}/kernel/mm/transparent_hugepage/hpage_pmd_size r,
 
   @{PROC}/@{pids}/cgroup r,

@@ -94,12 +94,13 @@ profile snapd @{exec_path} {
   /etc/systemd/system/{,**/} r,
   /etc/systemd/system/snap* rw,
   /etc/systemd/user/{,**/} r,
-  /etc/systemd/user/snap* rw,
+  /etc/systemd/user/**/*snap* rw,
+  /etc/systemd/user/*snap* rw,
   /etc/udev/rules.d/{,*snap*} rw,
 
   /snap/{,**} rw,
-  /var/cache/snapd/{,**} rwk,
-  /var/lib/snapd/{,**} rwk,
+  /var/cache/snapd/{,**} rwlk,
+  /var/lib/snapd/{,**} rwlk,
   /var/snap/{,**} rw,
 
   /var/cache/apparmor/{,*/} r,
@@ -119,7 +120,8 @@ profile snapd @{exec_path} {
   owner @{run}/mount/utab{,.*} rw,
   owner @{run}/mount/utab.lock wk,
 
-  owner @{run}/user/{,@{uid}/} r,
+  owner @{run}/user/@{uid}/ r,
+  owner @{run}/user/@{uid}/snapd-session-agent.socket rw,
   owner @{run}/user/snap.*/{,**} rw,
 
   @{run}/snapd*.socket rw,
@@ -135,6 +137,8 @@ profile snapd @{exec_path} {
   @{sys}/kernel/mm/transparent_hugepage/hpage_pmd_size r,
   @{sys}/kernel/security/apparmor/features/ r,
   @{sys}/kernel/security/apparmor/profiles r,
+
+  @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/snap*.service/cgroup.procs r,
 
         @{PROC}/@{pids}/cgroup r,
         @{PROC}/@{pids}/stat r,
