@@ -7,139 +7,38 @@ abi <abi/3.0>,
 
 include <tunables/global>
 
-@{BRAVE_INSTALLDIR} = /opt/brave.com/brave{,-beta,-dev}
-@{BRAVE_HOMEDIR} = @{user_config_dirs}/BraveSoftware/Brave-Browser{,-Beta,-Dev}
-@{BRAVE_CACHEDIR} = @{user_cache_dirs}/BraveSoftware/Brave-Browser{,-Beta,-Dev}
+@{chromium_name} = brave{,-beta,-dev}
+@{chromium_domain} = com.brave.Brave
+@{chromium_install_dirs} = /opt/brave.com/@{chromium_name}
+@{chromium_config_dirs} = @{user_config_dirs}/BraveSoftware/Brave-Browser{,-Beta,-Dev}
+@{chromium_cache_dirs} = @{user_cache_dirs}/BraveSoftware/Brave-Browser{,-Beta,-Dev}
 
-@{exec_path} = @{BRAVE_INSTALLDIR}/brave{,-beta,-dev}
+@{exec_path} = @{chromium_install_dirs}/@{chromium_name}
 profile brave @{exec_path} {
   include <abstractions/base>
-  include <abstractions/audio>
-  include <abstractions/chromium-common>
-  include <abstractions/consoles>
-  include <abstractions/dconf-write>
-  include <abstractions/fontconfig-cache-read>
-  include <abstractions/fonts>
-  include <abstractions/freedesktop.org>
-  include <abstractions/gtk>
-  include <abstractions/mesa>
-  include <abstractions/nameservice-strict>
-  include <abstractions/opencl-intel>
-  include <abstractions/thumbnails-cache-read>
-  include <abstractions/user-download-strict>
-
-  capability sys_ptrace,
-
-  ptrace (read),
+  include <abstractions/chromium>
 
   @{exec_path} mrix,
 
-  @{BRAVE_INSTALLDIR}/{,**} r,
-  @{BRAVE_INSTALLDIR}/{brave,chrome}-sandbox rPx,
-  @{BRAVE_INSTALLDIR}/brave-browser{,-beta,-dev} rPx,
-  @{BRAVE_INSTALLDIR}/swiftshader/libGLESv2.so mr,
-  @{BRAVE_INSTALLDIR}/swiftshader/libEGL.so mr,
+  /{usr/,}bin/man  rPUx, #  For "brave --help"
 
-  # When installing/removing extensions
-  /{usr/,}bin/{,e}grep rix,
-  /{usr/,}bin/basename rix,
-  /{usr/,}bin/cat      rix,
-  /{usr/,}bin/cut      rix,
-  /{usr/,}bin/mkdir    rix,
-  /{usr/,}bin/mktemp   rix,
-  /{usr/,}bin/rm       rix,
-  /{usr/,}bin/sed      rix,
-  /{usr/,}bin/touch    rix,
-
-  # For storing passwords externally
-  /{usr/,}bin/keepassxc-proxy   rPUx,
-  /{usr/,}bin/browserpass       rPx,
-
-  /{usr/,}bin/man               rPUx,
-  /{usr/,}bin/lsb_release       rPx -> lsb_release,
-  /{usr/,}bin/xdg-open          rPx -> child-open,
-  /{usr/,}bin/xdg-settings      rPx,
-  /{usr/,}bin/xdg-mime          rPx,
+  @{chromium_install_dirs}/swiftshader/libGLESv2.so mr,
+  @{chromium_install_dirs}/swiftshader/libEGL.so mr,
 
   /usr/share/chromium/extensions/ r,
-  /usr/share/glib-2.0/schemas/gschemas.compiled r,
 
-  /etc/fstab r,
   /etc/opt/chrome/ r,
 
-  /var/lib/dbus/machine-id r,
-  /etc/machine-id r,
-
-  owner @{HOME}/ r,
   owner @{user_config_dirs}/BraveSoftware/ w,
-  owner @{BRAVE_HOMEDIR}/ rw,
-  owner @{BRAVE_HOMEDIR}/** rwk,
-  owner @{BRAVE_HOMEDIR}/WidevineCdm/libwidevinecdm.so mrw,
-
-  owner @{user_cache_dirs}/ rw,
-  owner @{user_cache_dirs}/BraveSoftware/ rw,
-  owner @{BRAVE_CACHEDIR}/{,**/} rw,
-  owner @{BRAVE_CACHEDIR}/*/**/{*-,}index rw,
-  owner @{BRAVE_CACHEDIR}/*/**/[a-f0-9]*_? rw,
-  owner @{BRAVE_CACHEDIR}/*/**/todelete_* rw,
-
   owner @{user_config_dirs}/menus/applications-merged/ r,
   owner @{user_config_dirs}/menus/applications-merged/xdg-desktop-menu-dummy.menu r,
 
-  # For importing data (bookmarks, cookies, etc) from Firefox
-  # owner @{HOME}/.mozilla/firefox/profiles.ini r,
-  # owner @{HOME}/.mozilla/firefox/*/ r,
-  # owner @{HOME}/.mozilla/firefox/*/compatibility.ini r,
-  # owner @{HOME}/.mozilla/firefox/*/search{,-metadata}.json r,
-  # owner @{HOME}/.mozilla/firefox/*/.parentlock rwk,
-  # owner @{HOME}/.mozilla/firefox/*/{places,cookies,favicons,formhistory,}.sqlite{,-wal,-shm,-journal} rwk,
-  # owner @{HOME}/.mozilla/firefox/*/{cert9,key4}.db rwk,
-  # owner @{HOME}/.mozilla/firefox/*/logins.json r,
-
-  # For importing data (bookmarks, cookies, etc) from Chromium
-  # owner "@{user_config_dirs}/chromium/Local State" r,
-  # owner @{user_config_dirs}/chromium/Singleton{Lock,Socket,Cookie} w,
-  # owner "@{user_config_dirs}/chromium/*/Login Data{,-journal}" rwk,
-  # owner @{user_config_dirs}/chromium/*/ r,
-  # owner @{user_config_dirs}/chromium/*/{History,Cookies,Favicons,Bookmarks} rwk,
+  owner @{chromium_config_dirs}/WidevineCdm/libwidevinecdm.so mrw,
+  owner @{chromium_cache_dirs}/BraveSoftware/ rw,
 
   owner /tmp/net-export/ rw,  # For brave://net-export/
 
-             @{PROC}/ r,
-  deny       @{PROC}/vmstat r,
-  deny       @{PROC}/stat r,
-             @{PROC}/sys/kernel/yama/ptrace_scope r,
-             @{PROC}/@{pid}/fd/ r,
-  deny       @{PROC}/@{pids}/stat r,
-  deny       @{PROC}/@{pids}/statm r,
-       owner @{PROC}/@{pid}/oom_{,score_}adj rw,
-  deny       @{PROC}/@{pids}/cmdline r,
-       owner @{PROC}/@{pids}/task/ r,
-             @{PROC}/@{pids}/task/@{tid}/status r,
-  deny owner @{PROC}/@{pid}/limits r,
-       owner @{PROC}/@{pid}/mountinfo r,
-       owner @{PROC}/@{pid}/mounts r,
-       owner @{PROC}/@{pid}/clear_refs w,
-             @{PROC}/sys/fs/inotify/max_user_watches r,
-  deny       @{PROC}/filesystems r,
-
-  @{run}/udev/data/* r,
-
-  @{sys}/bus/ r,
-  @{sys}/bus/**/devices/ r,
-  @{sys}/class/ r,
-  @{sys}/class/**/ r,
-  @{sys}/devices/**/uevent r,
-  @{sys}/devices/pci[0-9]*/**/irq r,
-  @{sys}/devices/pci[0-9]*/**/usb[0-9]/{,**/}{busnum,devnum} r,
-  @{sys}/devices/pci[0-9]*/**/usb[0-9]/{,**/}{descriptors,manufacturer,product,serial,bConfigurationValue} r,
-  @{sys}/devices/system/cpu/cpufreq/policy[0-9]/cpuinfo_max_freq r,
-  @{sys}/devices/virtual/tty/tty[0-9]/active r,
-
-  /dev/bus/usb/[0-9]*/[0-9]* rw,
-
   # Silencer
-  deny @{BRAVE_INSTALLDIR}/** w,
   deny /etc/opt/chrome/ w,
 
   include if exists <local/brave>

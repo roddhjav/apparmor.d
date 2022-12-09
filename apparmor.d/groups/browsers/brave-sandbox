@@ -1,31 +1,32 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2019-2021 Mikhail Morfikov
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
-
-@{BRAVE_INSTALLDIR} = /opt/brave.com/brave{,-beta,-dev}
-@{BRAVE_HOMEDIR} = @{user_config_dirs}/BraveSoftware/Brave-Browser{,-Beta,-Dev}
-@{BRAVE_CACHEDIR} = @{user_cache_dirs}/BraveSoftware/Brave-Browser{,-Beta,-Dev}
 
 abi <abi/3.0>,
 
 include <tunables/global>
 
-@{exec_path} = @{BRAVE_INSTALLDIR}/{brave,chrome}-sandbox
+@{chromium_install_dirs} = /opt/brave.com/brave{,-beta,-dev}
+
+@{exec_path} = @{chromium_install_dirs}/{brave,chrome}-sandbox
 profile brave-sandbox @{exec_path} {
   include <abstractions/base>
 
-  # For kernel unprivileged user namespaces
+  capability setgid,
+  capability setuid,
   capability sys_admin,
   capability sys_chroot,
-  capability setuid,
-  capability setgid,
+  capability sys_resource,
 
   @{exec_path} mr,
 
-  @{BRAVE_INSTALLDIR}/brave rPx,
+  @{chromium_install_dirs}/brave      rPx,
 
+        @{PROC} r,
         @{PROC}/@{pids}/ r,
-  deny owner @{PROC}/@{pid}/oom_{,score_}adj rw,
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/oom_{,score_}adj rw,
 
   include if exists <local/brave-sandbox>
 }

@@ -1,22 +1,20 @@
 # apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2018-2021 Mikhail Morfikov
 # Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+# For chromium based browser. If your application require chromium ro run
+# (like electron) use abstractions/chromium-common instead.
 
-include <tunables/global>
+# This abstraction requires the following variables definied in the profile header:
+# @{chromium_name} = chromium
+# @{chromium_domain} = org.chromium.Chromium
+# @{chromium_install_dirs} = /{usr/,}lib/chromium
+# @{chromium_config_dirs} = @{user_config_dirs}/chromium
+# @{chromium_cache_dirs} = @{user_cache_dirs}/chromium
 
-@{chromiun_domain} = "com.google.Chrome"
-@{chromiun_install_dirs} = /opt/google/chrome{,-beta,-unstable}
-@{chromiun_config_dirs} = @{user_config_dirs}/google-chrome{,-beta,-unstable}
-@{chromiun_cache_dirs} = @{user_cache_dirs}/google-chrome{,-beta,-unstable}
+  abi <abi/3.0>,
 
-@{exec_path} = @{chromiun_install_dirs}/chrome{,-beta,-unstable}
-profile google-chrome-chrome @{exec_path} {
-  include <abstractions/base>
   include <abstractions/audio>
-  include <abstractions/chromium-common>
   include <abstractions/dconf-write>
   include <abstractions/devices-usb>
   include <abstractions/fontconfig-cache-read>
@@ -32,6 +30,10 @@ profile google-chrome-chrome @{exec_path} {
   include <abstractions/user-read>
   include <abstractions/vulkan>
 
+  capability setgid,
+  capability setuid,
+  capability sys_admin,
+  capability sys_chroot,
   capability sys_ptrace,
 
   ptrace (read) peer=browserpass,
@@ -42,6 +44,8 @@ profile google-chrome-chrome @{exec_path} {
   ptrace (read) peer=xdg-settings,
   ptrace (trace) peer=@{profile_name},
 
+  signal (receive) peer=@{profile_name}-crashpad-handler,
+  signal (send) set=(term, kill) peer=@{profile_name}-sandbox,
   signal (send) set=(term, kill) peer=keepassxc-proxy,
 
   network inet dgram,
@@ -50,55 +54,78 @@ profile google-chrome-chrome @{exec_path} {
   network inet6 stream,
   network netlink raw,
 
-  @{exec_path} mrix,
+  @{chromium_install_dirs}/{,**} r,
+  @{chromium_install_dirs}/chrome_crashpad_handler  rPx,
+  @{chromium_install_dirs}/chrome-sandbox           rPx,
 
-  @{chromiun_install_dirs}/{,**} r,
-  @{chromiun_install_dirs}/*.so* mr,
-  @{chromiun_install_dirs}/chrome_crashpad_handler  rPx,
-  @{chromiun_install_dirs}/chrome-sandbox rPx,
-  @{chromiun_install_dirs}/google-chrome{,-beta,-unstable} rPx,
-  @{chromiun_install_dirs}/libwidevinecdm.so mr,
-  @{chromiun_install_dirs}/libwidevinecdmadapter.so mr,
-  @{chromiun_install_dirs}/nacl_helper    rix,
-  @{chromiun_install_dirs}/WidevineCdm/_platform_specific/linux_*/libwidevinecdm.so mr,
-  @{chromiun_install_dirs}/xdg-mime       rix,
-  @{chromiun_install_dirs}/xdg-settings   rix,
+  # Desktop integration
+  /{usr/,}bin/lsb_release        rPx -> lsb_release,
+  /{usr/,}bin/xdg-desktop-menu   rPx,
+  /{usr/,}bin/xdg-email          rPx,
+  /{usr/,}bin/xdg-icon-resource  rPx,
+  /{usr/,}bin/xdg-mime           rPx,
+  /{usr/,}bin/xdg-open           rPx -> child-open,
+  /{usr/,}bin/xdg-settings       rPx,
 
-  # For "google-chrome --help"
-  /{usr/,}bin/man               rPUx,
+  # Installing/removing extensions & applications
+  /{usr/,}bin/{,e}grep rix,
+  /{usr/,}bin/basename rix,
+  /{usr/,}bin/cat      rix,
+  /{usr/,}bin/cut      rix,
+  /{usr/,}bin/mkdir    rix,
+  /{usr/,}bin/mktemp   rix,
+  /{usr/,}bin/rm       rix,
+  /{usr/,}bin/sed      rix,
+  /{usr/,}bin/touch    rix,
 
   # For storing passwords externally
   /{usr/,}bin/keepassxc-proxy   rPUx,
-  /{usr/,}bin/browserpass       rPx,
+  /{usr/,}bin/browserpass        rPx,
 
-  /{usr/,}bin/lsb_release       rPx -> lsb_release,
-  /{usr/,}bin/xdg-desktop-menu  rPx,
-  /{usr/,}bin/xdg-mime          rPx,
-  /{usr/,}bin/xdg-open          rPx -> child-open,
-  /{usr/,}bin/xdg-settings      rPx,
+  # Gnome shell integration
+  /{usr/,}bin/chrome-gnome-shell            rPx,
+  /{usr/,}bin/gnome-browser-connector-host  rPx,
 
+  /usr/share/@{chromium_name}/{,**} r,
+  /usr/share/chromium/extensions/{,**} r,
+  /usr/share/egl/{,**} r,
   /usr/share/glib-2.0/schemas/gschemas.compiled r,
+  /usr/share/mozilla/extensions/{,**} r,
+  /usr/share/webext/{,**} r,
 
+  /etc/@{chromium_name}/{,**} r,
   /etc/fstab r,
   /etc/libva.conf r,
+  /etc/opensc.conf r,
+  /etc/igfx_user_feature{,_next}.txt w,
 
   /var/lib/dbus/machine-id r,
   /etc/machine-id r,
 
-  # Google Chrome home files
   owner @{HOME}/ r,
-  owner @{chromiun_config_dirs}/ rw,
-  owner @{chromiun_config_dirs}/** rwk,
 
-  owner @{user_share_dirs}/.@{chromiun_domain}.* rw,
+  owner @{HOME}/.pki/ rw,
+  owner @{HOME}/.pki/nssdb/ rw,
+  owner @{HOME}/.pki/nssdb/pkcs11.txt rw,
+  owner @{HOME}/.pki/nssdb/{cert9,key4}.db rwk,
+  owner @{HOME}/.pki/nssdb/{cert9,key4}.db-journal rw,
 
   owner @{user_cache_dirs}/ rw,
-  owner @{chromiun_cache_dirs}/{,**/} rw,
-  owner @{chromiun_cache_dirs}/*/**/{*-,}index rw,
-  owner @{chromiun_cache_dirs}/*/**/[a-f0-9]*_? rw,
-  owner @{chromiun_cache_dirs}/*/**/todelete_* rw,
-  owner @{chromiun_cache_dirs}/PnaclTranslationCache/index rw,
-  owner @{chromiun_cache_dirs}/PnaclTranslationCache/data_[0-9]*[0-9] rw,
+  owner @{user_config_dirs}/ r,
+  owner @{user_config_dirs}/gtk-3.0/servers r,
+  owner @{user_share_dirs}/ r,
+  owner @{user_share_dirs}/.@{chromium_domain}.* rw,
+
+  owner @{chromium_config_dirs}/ rw,
+  owner @{chromium_config_dirs}/** rwk,
+  owner @{chromium_config_dirs}/WidevineCdm/*/_platform_specific/linux_*/libwidevinecdm.so mrw,
+
+  owner @{chromium_cache_dirs}/{,**/} rw,
+  owner @{chromium_cache_dirs}/*/**/{*-,}index rw,
+  owner @{chromium_cache_dirs}/*/**/@{hex}_? rw,
+  owner @{chromium_cache_dirs}/*/**/todelete_* rw,
+  owner @{chromium_cache_dirs}/PnaclTranslationCache/index rw,
+  owner @{chromium_cache_dirs}/PnaclTranslationCache/data_[0-9]*[0-9] rw,
 
   # For importing data (bookmarks, cookies, etc) from Firefox
   # owner @{HOME}/.mozilla/firefox/profiles.ini r,
@@ -110,20 +137,20 @@ profile google-chrome-chrome @{exec_path} {
   # owner @{HOME}/.mozilla/firefox/*/{cert9,key4}.db rwk,
   # owner @{HOME}/.mozilla/firefox/*/logins.json r,
 
-  # For importing data (bookmarks, cookies, etc) from Chromium
-  # owner "@{user_config_dirs}/chromium/Local State" r,
-  # owner @{user_config_dirs}/chromium/Singleton{Lock,Socket,Cookie} w,
-  # owner "@{user_config_dirs}/chromium/*/Login Data{,-journal}" rwk,
-  # owner @{user_config_dirs}/chromium/*/ r,
-  # owner @{user_config_dirs}/chromium/*/{History,Cookies,Favicons,Bookmarks} rwk,
+  owner @{run}/user/@{uid}/wayland-cursor-shared-* rw,
 
-  owner /dev/shm/.@{chromiun_domain}* rw,
-  owner /tmp/.@{chromiun_domain}.* rw,
-  owner /tmp/.@{chromiun_domain}*/{,**} rw,
+        /tmp/ r,
+        /var/tmp/ r,
+  owner /tmp/.@{chromium_domain}.* rw,
+  owner /tmp/.@{chromium_domain}*/{,**} rw,
+  owner /tmp/@{chromium_name}-crashlog-[0-9]*-[0-9]*.txt rw,
   owner /tmp/scoped_dir*/{,**} rw,
   owner /tmp/tmp.* rw,
   owner /tmp/tmp.*/ rw,
   owner /tmp/tmp.*/** rwk,
+
+        /dev/shm/ r,
+  owner /dev/shm/.@{chromium_domain}* rw,
 
         @{PROC}/ r,
         @{PROC}/@{pid}/fd/ r,
@@ -134,12 +161,15 @@ profile google-chrome-chrome @{exec_path} {
         @{PROC}/sys/fs/inotify/max_user_watches r,
         @{PROC}/sys/kernel/yama/ptrace_scope r,
         @{PROC}/vmstat r,
+  owner @{PROC}/@{pid}/gid_map w,
   owner @{PROC}/@{pid}/limits r,
   owner @{PROC}/@{pid}/mem r,
   owner @{PROC}/@{pid}/mountinfo r,
   owner @{PROC}/@{pid}/mounts r,
   owner @{PROC}/@{pid}/oom_{,score_}adj rw,
+  owner @{PROC}/@{pid}/setgroups w,
   owner @{PROC}/@{pid}/task/@{tid}/comm rw,
+  owner @{PROC}/@{pid}/uid_map w,
   owner @{PROC}/@{pids}/clear_refs w,
   owner @{PROC}/@{pids}/cmdline r,
   owner @{PROC}/@{pids}/environ r,
@@ -152,12 +182,10 @@ profile google-chrome-chrome @{exec_path} {
   @{sys}/class/ r,
   @{sys}/class/**/ r,
   @{sys}/devices/**/uevent r,
+  @{sys}/devices/pci[0-9]*/**/{in_intensity_sampling_frequency,in_intensity_scale,in_illuminance_raw} r,
   @{sys}/devices/pci[0-9]*/**/boot_vga r,
   @{sys}/devices/pci[0-9]*/**/irq r,
   @{sys}/devices/pci[0-9]*/**/report_descriptor r,
-  @{sys}/devices/pci[0-9]*/**/usb[0-9]/{,**/}{busnum,devnum} r,
-  @{sys}/devices/pci[0-9]*/**/usb[0-9]/{,**/}{descriptors,manufacturer,product,serial,bConfigurationValue} r,
-  @{sys}/devices/pci[0-9]*/**/usb[0-9]/**/{idProduct,idVendor,interface} r,
   @{sys}/devices/system/cpu/cpufreq/policy[0-9]*/cpuinfo_max_freq r,
   @{sys}/devices/system/cpu/kernel_max r,
   @{sys}/devices/system/cpu/present r,
@@ -171,9 +199,11 @@ profile google-chrome-chrome @{exec_path} {
   /dev/tty rw,
   /dev/video[0-9]* rw,
 
+  # File Inherit
+  owner /dev/tty[0-9]* rw,
+
   # Silencer
-  deny @{chromiun_install_dirs}/** w,
+  deny @{chromium_install_dirs}/** w,
   deny @{user_share_dirs}/gvfs-metadata/* r,
 
-  include if exists <local/google-chrome-chrome>
-}
+  include if exists <abstractions/chromium.d>

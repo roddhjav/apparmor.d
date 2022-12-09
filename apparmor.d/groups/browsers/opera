@@ -7,126 +7,25 @@ abi <abi/3.0>,
 
 include <tunables/global>
 
-@{OPERA_INSTALLDIR} = /{usr/,}lib/@{multiarch}/opera{,-beta,-developer}
-@{OPERA_HOMEDIR} = @{user_config_dirs}/opera{,-beta,-developer}
-@{OPERA_CACHEDIR} = @{user_cache_dirs}/opera{,-beta,-developer}
+@{chromium_name} = opera{,-beta,-developer}
+@{chromium_domain} = com.opera.Opera
+@{chromium_install_dirs} = /{usr/,}lib/@{multiarch}/@{chromium_name}
+@{chromium_config_dirs} = @{user_config_dirs}/@{chromium_name}
+@{chromium_cache_dirs} = @{user_cache_dirs}/@{chromium_name}
 
-@{exec_path} = @{OPERA_INSTALLDIR}/opera{,-beta,-developer}
+@{exec_path} = @{chromium_install_dirs}/@{chromium_name}
 profile opera @{exec_path} {
   include <abstractions/base>
-  include <abstractions/audio>
-  include <abstractions/chromium-common>
-  include <abstractions/dconf-write>
-  include <abstractions/fontconfig-cache-read>
-  include <abstractions/fonts>
-  include <abstractions/freedesktop.org>
-  include <abstractions/gtk>
-  include <abstractions/mesa>
-  include <abstractions/nameservice-strict>
-  include <abstractions/opencl-intel>
-  include <abstractions/openssl>
-  include <abstractions/ssl_certs>
-  include <abstractions/thumbnails-cache-read>
-  include <abstractions/user-download-strict>
-
-  ptrace (trace) peer=@{profile_name},
-
-  signal (send) set=(term, kill) peer=opera-sandbox,
-  signal (send) set=(term, kill) peer=keepassxc-proxy,
-
-  network inet dgram,
-  network inet6 dgram,
-  network inet stream,
-  network inet6 stream,
-  network netlink raw,
+  include <abstractions/chromium>
 
   @{exec_path} mrix,
 
-  /{usr/,}bin/which{,.debianutils}         rix,
-
-  @{OPERA_INSTALLDIR}/opera_sandbox        rPx,
-  @{OPERA_INSTALLDIR}/opera_crashreporter  rPx,
-  @{OPERA_INSTALLDIR}/opera_autoupdate    krix,
+  @{chromium_install_dirs}/opera_autoupdate    krix,
+  @{chromium_install_dirs}/opera_crashreporter  rPx,
+  @{chromium_install_dirs}/opera-sandbox        rPx,
 
   /opt/google/chrome{,-beta,-unstable}/libwidevinecdm.so mr,
   /opt/google/chrome{,-beta,-unstable}/libwidevinecdmadapter.so mr,
-
-  /{usr/,}bin/lsb_release        rPx -> lsb_release,
-  /{usr/,}bin/xdg-mime           rPx,
-  /{usr/,}bin/xdg-open           rPx -> child-open,
-  /{usr/,}bin/xdg-settings       rPx,
-  /{usr/,}bin/xdg-desktop-menu   rPx,
-  /{usr/,}bin/xdg-icon-resource  rPx,
-
-  /usr/share/glib-2.0/schemas/gschemas.compiled r,
-
-  /etc/fstab r,
-  /var/lib/dbus/machine-id r,
-  /etc/machine-id r,
-
-  owner @{HOME}/ r,
-  owner @{OPERA_HOMEDIR}/ rw,
-  owner @{OPERA_HOMEDIR}/** rwk,
-
-  owner @{user_cache_dirs}/ rw,
-  owner @{OPERA_CACHEDIR}/{,**/} rw,
-  owner @{OPERA_CACHEDIR}/**/{*-,}index rw,
-  owner @{OPERA_CACHEDIR}/**/[a-f0-9]*_? rw,
-  owner @{OPERA_CACHEDIR}/**/todelete_* rw,
-
-  # For importing data (bookmarks, cookies, etc) from Firefox
-  # owner @{HOME}/.mozilla/firefox/profiles.ini r,
-  # owner @{HOME}/.mozilla/firefox/*/ r,
-  # owner @{HOME}/.mozilla/firefox/*/compatibility.ini r,
-  # owner @{HOME}/.mozilla/firefox/*/search{,-metadata}.json r,
-  # owner @{HOME}/.mozilla/firefox/*/.parentlock rwk,
-  # owner @{HOME}/.mozilla/firefox/*/{places,cookies,favicons,formhistory,}.sqlite{,-wal,-shm,-journal} rwk,
-  # owner @{HOME}/.mozilla/firefox/*/{cert9,key4}.db rwk,
-  # owner @{HOME}/.mozilla/firefox/*/logins.json r,
-
-  # For importing data (bookmarks, cookies, etc) from Chromium
-  # owner "@{user_config_dirs}/chromium/Local State" r,
-  # owner @{user_config_dirs}/chromium/Singleton{Lock,Socket,Cookie} w,
-  # owner "@{user_config_dirs}/chromium/*/Login Data{,-journal}" rwk,
-  # owner @{user_config_dirs}/chromium/*/ r,
-  # owner @{user_config_dirs}/chromium/*/{History,Cookies,Favicons,Bookmarks} rwk,
-
-  owner /tmp/opera-crashlog-[0-9]*-[0-9]*.txt rw,
-
-             @{PROC}/ r,
-  deny       @{PROC}/vmstat r,
-             @{PROC}/sys/kernel/yama/ptrace_scope r,
-             @{PROC}/@{pid}/fd/ r,
-  deny       @{PROC}/@{pids}/stat r,
-  deny       @{PROC}/@{pids}/statm r,
-       owner @{PROC}/@{pid}/oom_{,score_}adj rw,
-  deny owner @{PROC}/@{pids}/cmdline r,
-  deny owner @{PROC}/@{pids}/environ r,
-       owner @{PROC}/@{pid}/task/ r,
-  deny       @{PROC}/@{pids}/task/@{tid}/stat r,
-             @{PROC}/@{pids}/task/@{tid}/status r,
-  deny owner @{PROC}/@{pid}/limits r,
-  deny owner @{PROC}/@{pid}/mem r,
-       owner @{PROC}/@{pid}/mountinfo r,
-       owner @{PROC}/@{pid}/mounts r,
-             @{PROC}/sys/fs/inotify/max_user_watches r,
-
-  @{run}/udev/data/* r,
-
-  @{sys}/bus/ r,
-  @{sys}/bus/**/devices/ r,
-  @{sys}/class/ r,
-  @{sys}/class/**/ r,
-  @{sys}/devices/**/uevent r,
-  @{sys}/devices/pci[0-9]*/**/irq r,
-  @{sys}/devices/pci[0-9]*/**/usb[0-9]/{,**/}{busnum,devnum} r,
-  @{sys}/devices/pci[0-9]*/**/usb[0-9]/{,**/}{descriptors,manufacturer,product,serial,bConfigurationValue} r,
-  @{sys}/devices/virtual/tty/tty[0-9]/active r,
-
-  /dev/ r,
-
-  # Silencer
-  deny @{OPERA_INSTALLDIR}/** w,
 
   include if exists <local/opera>
 }

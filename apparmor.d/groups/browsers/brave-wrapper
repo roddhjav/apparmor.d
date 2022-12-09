@@ -1,0 +1,35 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2019-2021 Mikhail Morfikov
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{chromium_install_dirs} = /opt/brave.com/brave{,-beta,-dev}
+
+@{exec_path} = @{chromium_install_dirs}/brave-browser{,-beta,-dev}
+profile brave-wrapper @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+
+  @{exec_path} r,
+
+  /{usr/,}bin/{,ba,da}sh            rix,
+  /{usr/,}bin/cat                   rix,
+  /{usr/,}bin/dirname               rix,
+  /{usr/,}bin/mkdir                 rix,
+  /{usr/,}bin/readlink              rix,
+  /{usr/,}bin/touch                 rix,
+  /{usr/,}bin/which{,.debianutils}  rix,
+
+  @{chromium_install_dirs}/brave rPx,
+
+  owner @{PROC}/@{pid}/fd/ w,
+
+  # Silencer
+  deny @{user_share_dirs}/gvfs-metadata/* r,
+
+  include if exists <local/brave-wrapper>
+}

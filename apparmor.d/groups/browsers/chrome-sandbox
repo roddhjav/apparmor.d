@@ -1,19 +1,17 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2018-2021 Mikhail Morfikov
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
 
 include <tunables/global>
 
-@{chromium_name} = opera{,-beta,-developer}
-@{chromium_install_dirs} = /{usr/,}lib/@{multiarch}/@{chromium_name}
+@{chromium_install_dirs} = /opt/google/chrome{,-stable,-beta,-unstable}
 
-@{exec_path} = @{chromium_install_dirs}/opera_sandbox
-profile opera-sandbox @{exec_path} {
+@{exec_path} = @{chromium_install_dirs}/chrome-sandbox
+profile chrome-sandbox @{exec_path} {
   include <abstractions/base>
-  include <abstractions/fontconfig-cache-read>
-  include <abstractions/fonts>
 
   capability setgid,
   capability setuid,
@@ -21,16 +19,15 @@ profile opera-sandbox @{exec_path} {
   capability sys_chroot,
   capability sys_resource,
 
-  signal (receive) set=(term, kill) peer=opera,
-
   @{exec_path} mr,
 
-  @{chromium_install_dirs}/opera{,-beta,-developer} rPx,
+  @{chromium_install_dirs}/chrome      rPx,
+  @{chromium_install_dirs}/nacl_helper rix,
 
         @{PROC} r,
         @{PROC}/@{pids}/ r,
   owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/oom_{,score_}adj rw,
 
-  include if exists <local/opera-sandbox>
+  include if exists <local/chrome-sandbox>
 }
