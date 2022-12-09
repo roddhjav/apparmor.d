@@ -7,27 +7,29 @@ abi <abi/3.0>,
 
 include <tunables/global>
 
+@{chromium_config_dirs} = @{user_config_dirs}/chromium
+
 @{exec_path} = /{usr/,}lib/chromium/chrome_crashpad_handler
-profile chromium-chrome-crashpad-handler @{exec_path} flags=(complain) {
+profile chromium-crashpad-handler @{exec_path} {
   include <abstractions/base>
 
   capability sys_ptrace,
 
-  ptrace peer=chromium-chromium,
-  signal (send) peer=chromium-chromium,
+  ptrace peer=chromium,
+  signal (send) peer=chromium,
 
   @{exec_path} mrix,
 
-  owner "@{HOME}/.config/chromium/Crash Reports/**" rwk,
+  owner "@{chromium_config_dirs}/Crash Reports/**" rwk,
 
+        @{PROC}/sys/kernel/yama/ptrace_scope r,
   owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pids}/mem r,
   owner @{PROC}/@{pids}/stat r,
   owner @{PROC}/@{pids}/task/ r,
-        @{PROC}/sys/kernel/yama/ptrace_scope r,
 
   @{sys}/devices/system/cpu/cpufreq/policy[0-9]*/scaling_cur_freq r,
   @{sys}/devices/system/cpu/cpufreq/policy[0-9]*/scaling_max_freq r,
 
-  include if exists <local/chromium-chrome-crashpad-handler>
+  include if exists <local/chromium-crashpad-handler>
 }

@@ -1,0 +1,37 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2018-2021 Mikhail Morfikov
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{chromium_name} = chrome{,-beta,-unstable}
+@{chromium_domain} = com.google.Chrome
+@{chromium_install_dirs} = /opt/google/@{chromium_name}
+@{chromium_config_dirs} = @{user_config_dirs}/google-@{chromium_name}
+@{chromium_cache_dirs} = @{user_cache_dirs}/google-@{chromium_name}
+
+@{exec_path} = @{chromium_install_dirs}/@{chromium_name}
+profile chrome @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/chromium>
+
+  @{exec_path} mrix,
+
+  /{usr/,}bin/man  rPUx, #  For "chrome --help"
+
+  @{chromium_install_dirs}/google-chrome{,-beta,-unstable}  rPx,
+
+  @{chromium_install_dirs}/nacl_helper    rix,
+  @{chromium_install_dirs}/xdg-mime       rix, #-> xdg-mime,
+  @{chromium_install_dirs}/xdg-settings   rix, #-> xdg-settings,
+
+  @{chromium_install_dirs}/*.so* mr,
+  @{chromium_install_dirs}/libwidevinecdm.so mr,
+  @{chromium_install_dirs}/libwidevinecdmadapter.so mr,
+  @{chromium_install_dirs}/WidevineCdm/_platform_specific/linux_*/libwidevinecdm.so mr,
+
+  include if exists <local/chrome>
+}

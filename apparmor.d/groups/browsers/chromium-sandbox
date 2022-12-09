@@ -8,21 +8,22 @@ abi <abi/3.0>,
 include <tunables/global>
 
 @{exec_path} = /{usr/,}lib/chromium/chrome-sandbox
-profile chromium-chrome-sandbox @{exec_path} {
+profile chromium-sandbox @{exec_path} {
   include <abstractions/base>
 
+  capability dac_override,
+  capability setgid,
+  capability setuid,
   capability sys_admin,
   capability sys_chroot,
-  capability setuid,
-  capability setgid,
-  capability dac_override,
   capability sys_resource,
 
   @{exec_path} mr,
+
   /{usr/,}lib/chromium/chromium rPx,
 
-             @{PROC}/@{pids}/ r,
-  deny owner @{PROC}/@{pid}/oom_{,score_}adj rw,
+        @{PROC}/@{pids}/ r,
+  owner @{PROC}/@{pid}/oom_{,score_}adj rw,
 
-  include if exists <local/chromium-chrome-sandbox>
+  include if exists <local/chromium-sandbox>
 }

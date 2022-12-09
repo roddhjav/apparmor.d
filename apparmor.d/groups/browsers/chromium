@@ -7,45 +7,18 @@ abi <abi/3.0>,
 
 include <tunables/global>
 
-@{exec_path} = /{usr/,}bin/chromium
-profile chromium @{exec_path} flags=(attach_disconnected) {
+@{chromium_name} = chromium
+@{chromium_domain} = org.chromium.Chromium
+@{chromium_install_dirs} = /{usr/,}lib/@{chromium_name}
+@{chromium_config_dirs} = @{user_config_dirs}/@{chromium_name}
+@{chromium_cache_dirs} = @{user_cache_dirs}/@{chromium_name}
+
+@{exec_path} = @{chromium_install_dirs}/@{chromium_name}
+profile chromium @{exec_path} {
   include <abstractions/base>
-  include <abstractions/freedesktop.org>
+  include <abstractions/chromium>
 
-  @{exec_path} r,
-
-  /{usr/,}lib/chromium/chromium rPx,
-
-  /{usr/,}bin/{,ba,da}sh rix,
-  /{usr/,}bin/{,e}grep   rix,
-  /{usr/,}bin/cat        rix,
-  /{usr/,}bin/cut        rix,
-  /{usr/,}bin/expr       rix,
-  /{usr/,}bin/ls         rix,
-  /{usr/,}bin/mktemp     rix,
-  /{usr/,}bin/rm         rix,
-  /{usr/,}bin/sed        rix,
-  /{usr/,}bin/tr         rix,
-  /{usr/,}bin/uname      rix,
-
-  /{usr/,}bin/gdb   rPUx,
-  /{usr/,}bin/man   rPUx,
-
-  /usr/share/chromium/extensions/ r,
-
-  /etc/chromium.d/{,*} r,
-  /etc/debian_version r,
-
-  owner @{HOME}/.xsession-errors w,
-
-  owner /tmp/chromiumargs.?????? rw,
-  owner /tmp/tmp.*/ rw,
-  owner /tmp/tmp.*/** rwk,
-
-  owner /dev/tty[0-9]* rw,
-        /dev/dri/card[0-9] rw,
-
-  deny @{user_share_dirs}/gvfs-metadata/* r,
+  @{exec_path} mrix,
 
   include if exists <local/chromium>
 }
