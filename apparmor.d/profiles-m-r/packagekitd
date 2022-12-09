@@ -15,7 +15,14 @@ profile packagekitd @{exec_path} flags=(attach_disconnected) {
   include <abstractions/ssl_certs>
   include if exists <abstractions/apt-common>
 
+  capability chown,
+  capability dac_override,
+  capability dac_read_search,
+  capability fowner,
+  capability kill,
   capability net_admin,
+  capability setgid,
+  capability setuid,
   capability sys_nice,
 
   network inet stream,
@@ -24,13 +31,23 @@ profile packagekitd @{exec_path} flags=(attach_disconnected) {
   network inet6 dgram,
   network netlink raw,
 
+  signal send set=int peer=apt-methods-*,
+
   dbus receive bus=system path=/org/freedesktop/PackageKit
        interface=org.freedesktop.DBus.Properties 
        peer=(name=:*, label=gnome-shell),
 
+  dbus receive bus=system path=/org/freedesktop/PackageKit
+       interface=org.freedesktop.{DBus.Introspectable,PackageKit}
+       member={Introspect,StateHasChanged}
+       peer=(name=:*, label=apt),
+
+  dbus (send,receive) bus=system path=/[0-9]*_@{hex}
+       interface=org.freedesktop.{DBus.Properties,PackageKit.Transaction},
+
   dbus send bus=system path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus
-       member=RequestName
+       member={RequestName,GetConnectionUnixUser}
        peer=(name=org.freedesktop.DBus, label=dbus-daemon),
 
   dbus send bus=system path=/org/freedesktop/NetworkManager
@@ -40,9 +57,8 @@ profile packagekitd @{exec_path} flags=(attach_disconnected) {
 
   dbus receive bus=system path=/org/freedesktop/NetworkManager
        interface=org.freedesktop.NetworkManager
-       member=CheckPermissions
+       member={CheckPermissions,DeviceAdded,DeviceRemoved,StateChanged}
        peer=(name=:*, label=NetworkManager),
-
 
   dbus send bus=system path=/org/freedesktop/PolicyKit[0-9]/Authority
        interface=org.freedesktop.DBus.Properties
@@ -54,26 +70,46 @@ profile packagekitd @{exec_path} flags=(attach_disconnected) {
        member=Changed
        peer=(name=:*, label=polkitd),
 
-  dbus bind bus=system name= org.freedesktop.PackageKit,
+  dbus receive bus=system path=/org/freedesktop/login[0-9]
+       interface=org.freedesktop.login[0-9].Manager
+       member={SessionNew,PrepareForShutdown,SessionRemoved,UserNew,UserRemoved,PrepareForSleep}
+       peer=(name=:*, label=systemd-logind),
+
+  dbus bind bus=system 
+       name=org.freedesktop.PackageKit,
   
   @{exec_path} mr,
-
-  /{usr/,}bin/dpkg     rPx -> child-dpkg,
 
   /{usr/,}bin/gpg      rCx -> gpg,
   /{usr/,}bin/gpgconf  rCx -> gpg,
   /{usr/,}bin/gpgsm    rCx -> gpg,
 
-  /etc/pacman.conf r,
-  /etc/pacman.d//{,**} r,
-  /etc/PackageKit/{,**} r,
+  /{usr/,}{s,}bin/ldconfig   rix,
+  /{usr/,}bin/{,ba,da}sh     rix,
+  /{usr/,}bin/echo           rix,
+  /{usr/,}bin/gdbus          rix,
+  /{usr/,}bin/ischroot       rix,
+  /{usr/,}bin/test           rix,
+  /{usr/,}bin/touch          rix,
 
-  /var/cache/PackageKit/{,**} rw,
-  /var/cache/pacman/pkg/{,**} rw,
-  /var/lib/PackageKit/{,**} rwk,
-  /var/lib/pacman/{,**} rwk,
-  /var/log/*PackageKit.log rw,
-  /var/log/pacman.log rw,
+  /{usr/,}bin/appstreamcli                rPx,
+  /{usr/,}bin/dpkg                        rPx -> child-dpkg,
+  /{usr/,}bin/glib-compile-schemas        rPx,
+  /{usr/,}bin/update-desktop-database     rPx,
+  /{usr/,}lib/apt/methods/*               rPx,
+  /{usr/,}lib/cnf-update-db               rPx,
+  /{usr/,}lib/update-notifier/update-motd-updates-available  rPx,
+  /usr/share/libalpm/scripts/*            rPx,
+
+  # Install/update packages
+  / r,
+  /*{,/} rw,
+  /boot/** rwl -> /boot/**,
+  /etc/** rwl -> /etc/**,
+  /opt/** rwl -> /opt/**,
+  /srv/** rwl -> /srv/**,
+  /usr/** rwlk -> /usr/**,
+  /var/** rwlk -> /var/**,
 
   owner /tmp/packagekit* rw,
 
@@ -81,6 +117,7 @@ profile packagekitd @{exec_path} flags=(attach_disconnected) {
   owner @{run}/systemd/users/@{uid} r,
 
         @{PROC}/@{pids}/cgroup r,
+        @{PROC}/@{pids}/mountinfo r,
   owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/mounts r,
 
