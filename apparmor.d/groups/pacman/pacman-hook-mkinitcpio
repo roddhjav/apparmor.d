@@ -6,22 +6,24 @@ abi <abi/3.0>,
 
 include <tunables/global>
 
-@{exec_path} = /usr/share/libalpm/scripts/mkinitcpio-install
-profile pacman-hook-mkinitcpio-install @{exec_path} flags=(attach_disconnected) {
+@{exec_path} = /usr/share/libalpm/scripts/mkinitcpio
+profile pacman-hook-mkinitcpio @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
 
   capability dac_read_search,
   capability mknod,
 
-  unix (receive) type=stream,
+  # unix (receive) type=stream,
 
   @{exec_path} mr,
 
   /{usr/,}bin/bash       rix,
+  /{usr/,}bin/cmp        rix,
   /{usr/,}bin/compgen    rix,
   /{usr/,}bin/install    rix,
   /{usr/,}bin/mkinitcpio rPx,
   /{usr/,}bin/mv         rix,
+  /{usr/,}bin/rm         rix,
   /{usr/,}bin/sed        rix,
 
   /usr/share/mkinitcpio/*.preset r,
@@ -30,14 +32,16 @@ profile pacman-hook-mkinitcpio-install @{exec_path} flags=(attach_disconnected) 
   /etc/mkinitcpio.d/*.preset rw,
 
   / r,
-  owner /boot/vmlinuz-* rw,
+  /boot/vmlinuz-* rw,
+  /boot/initramfs-*.img rw,
+  /boot/initramfs-*-fallback.img rw,
 
-  /dev/tty rw,
+  # /dev/tty rw,
 
-  # Inherit Silencer
+  # # Inherit Silencer
   deny network inet6 stream,
   deny network inet stream,
-  deny /apparmor/.null rw,
+  # deny /apparmor/.null rw,
 
-  include if exists <local/pacman-hook-mkinitcpio-install>
+  include if exists <local/pacman-hook-mkinitcpio>
 }
