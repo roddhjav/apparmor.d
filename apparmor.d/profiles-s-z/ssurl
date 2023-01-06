@@ -1,0 +1,26 @@
+# apparmor.d - Full set of apparmor profiles
+# SPDX-License-Identifier: GPL-2.0-only
+
+# shadowsocks-rust only:
+# https://github.com/shadowsocks/shadowsocks-rust
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{,usr/}{,local/}bin/ssurl
+profile ssurl @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+
+       capability dac_read_search,
+  deny capability dac_override,
+
+  @{exec_path} mr,
+
+  /etc/shadowsocks-rust/{server,local}/*/ss.json{,5} r,
+
+  owner @{user_config_dirs}/shadowsocks-rust/{server,local}/*/ss.json{,5} r,
+
+  include if exists <local/ssurl>
+}

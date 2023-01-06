@@ -1,0 +1,31 @@
+# apparmor.d - Full set of apparmor profiles
+# SPDX-License-Identifier: GPL-2.0-only
+
+# shadowsocks-rust only:
+# https://github.com/shadowsocks/shadowsocks-rust
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{,usr/}{,local/}bin/sslocal
+profile sslocal @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+  include <abstractions/consoles>
+
+  @{exec_path} mr,
+
+  network inet stream,
+  network inet6 stream,
+  network inet dgram,
+  network inet6 dgram,
+
+  /etc/shadowsocks-rust/local/*/ss.json{,5} r,
+
+  owner @{user_config_dirs}/shadowsocks-rust/local/*/ss.json{,5} r,
+
+  owner @{PROC}/@{pid}/cgroup r,
+
+  include if exists <local/sslocal>
+}

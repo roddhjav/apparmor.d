@@ -1,0 +1,27 @@
+# apparmor.d - Full set of apparmor profiles
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{,usr/}{,s}bin/hostapd
+profile hostapd @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+
+  capability net_admin,
+  capability net_raw,
+
+  @{exec_path} mr,
+
+  /dev/rfkill r,
+
+  /etc/hostapd.conf r,
+  /etc/hostapd/{,*} r,
+
+  @{run}/hostapd/{,**} rw,
+  @{run}/hostapd.pid rw,
+
+  include if exists <local/hostapd>
+}
