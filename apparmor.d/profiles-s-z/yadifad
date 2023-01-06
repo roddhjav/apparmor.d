@@ -1,0 +1,38 @@
+# apparmor.d - Full set of apparmor profiles
+# SPDX-License-Identifier: GPL-2.0-only
+
+include <tunables/global>
+
+@{exec_path} = /{,usr/}{,s}bin/yadifad
+profile yadifad @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+  include <abstractions/openssl>
+  include <abstractions/nis>
+
+  capability dac_override,
+  capability chown,
+  capability setgid,
+  capability setuid,
+
+  network inet dgram,
+  network inet6 dgram,
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  /etc/yadifa/yadifad.conf               r,
+
+        /var/lib/yadifa/**               r,
+  owner /var/lib/yadifa/ydf.??????       rw,
+  owner /var/lib/yadifa/keys/ydf.??????  rw,
+  owner /var/lib/yadifa/xfr/ydf.??????   rw,
+
+  /var/log/yadifa/*.log                  rw,
+  /var/log/yadifa/ydf.??????             rw,
+
+  owner @{run}/yadifa/yadifad.pid   rwk,
+  owner @{run}/yadifa/ydf.??????    rw,
+
+  include if exists <local/yadifad>
+}
