@@ -1,0 +1,30 @@
+# apparmor.d - Full set of apparmor profiles
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{,usr/}{,local/}bin/hbbs
+profile hbbs @{exec_path} {
+  include <abstractions/base>
+
+  network inet stream,
+  network inet6 stream,
+  network inet dgram,
+  network inet6 dgram,
+
+  @{exec_path} r,
+
+  owner /var/lib/rustdesk-server/ rw,
+  owner /var/lib/rustdesk-server/id_ed25519 rw,
+  owner /var/lib/rustdesk-server/id_ed25519.pub rw,
+  owner /var/lib/rustdesk-server/db_v2.sqlite3 rwk,
+  owner /var/lib/rustdesk-server/db_v2.sqlite3-journal rw,
+  owner /var/lib/rustdesk-server/db_v2.sqlite3-wal rw,
+  owner /var/lib/rustdesk-server/db_v2.sqlite3-shm rwk,
+
+  owner @{PROC}/@{pid}/cgroup r,
+
+  include if exists <local/hbbs>
+}

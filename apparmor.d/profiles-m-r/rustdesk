@@ -1,0 +1,143 @@
+# apparmor.d - Full set of apparmor profiles
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{,usr/}{,local/}bin/rustdesk
+profile rustdesk @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+  include <abstractions/openssl>
+  include <abstractions/X-strict>
+  include <abstractions/fonts>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/freedesktop.org>
+  include <abstractions/dbus-session-strict>
+  include <abstractions/dbus-accessibility-strict>
+  include <abstractions/dbus-gtk>
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,  # discovery
+
+  @{exec_path} mrix,
+
+  /{,usr/}bin/ps       rPx,
+  /{,usr/}bin/whoami   rPx,
+  /{,usr/}bin/loginctl rPx,
+  /{,usr/}bin/curl     rix,
+
+  /{,usr/}bin/python3.[0-9]* rCx -> python,
+
+  dbus (send) bus=accessibility path=/org/a11y/atspi/accessible/root
+       interface=org.a11y.atspi.Socket
+       member=Embed
+       peer=(name=org.a11y.atspi.Registry),
+
+  dbus (send) bus=accessibility path=/org/a11y/atspi/registry
+       interface=org.a11y.atspi.Registry
+       member=GetRegisteredEvents
+       peer=(name=org.a11y.atspi.Registry),
+
+  dbus (send) bus=accessibility path=/org/a11y/atspi/registry/deviceeventcontroller
+       interface=org.a11y.atspi.DeviceEventController
+       member={GetKeystrokeListeners,GetDeviceEventListeners}
+       peer=(name=org.a11y.atspi.Registry),
+
+  dbus (receive) bus=accessibility path=/org/a11y/atspi/accessible/root
+       interface=org.freedesktop.DBus.Properties
+       member=Set
+       peer=(name=:*),
+
+  owner /tmp/[rR]ust[dD]esk/{,**} rw,
+
+  owner @{user_share_dirs}/logs/[rR]ust[dD]esk/{,**} rw,
+  owner @{user_config_dirs}/[rR]ust[dD]esk/{,**} rw,
+
+  owner @{run}/user/@{uid}/at-spi/bus{,_[0-9]*} rw,
+
+  @{sys}/devices/system/cpu/cpufreq/policy[0-9]*/scaling_{cur,min,max}_freq r,
+
+        @{PROC}/uptime r,
+  owner @{PROC}/@{pid}/cgroup r,
+  owner @{PROC}/@{pid}/cmdline r,
+
+  # pulse
+  /dev/shm/ r,
+  /etc/pulse/client.conf r,
+  /etc/pulse/client.conf.d/{,*} r,
+  owner @{run}/user/@{uid}/pulse/ r,
+  owner @{run}/user/@{uid}/pulse/native rw,
+  owner @{user_config_dirs}/pulse/ rw,
+  owner @{user_config_dirs}/pulse/cookie rwk,
+
+  # gtk-tiny
+  /etc/gtk-3.0/settings.ini r,
+  /usr/share/themes/*/gtk-3.0/gtk.css r,
+
+  # file transfer
+  owner @{HOME}/ r,  # fails otherwise
+  owner @{HOME}/[rR]ust[dD]esk/{,**} rw,
+
+  # file_inherit, X-strict
+  owner @{HOME}/.xsession-errors w,
+
+  # excessive?
+  deny @{PROC} r,
+#  @{PROC} r,
+#  capability sys_ptrace,
+#  ptrace (read),
+#  owner @{PROC}/@{pid}/stat r,
+#  owner @{PROC}/@{pid}/environ r,
+#  owner @{PROC}/@{pid}/io r,
+#  owner @{PROC}/@{pid}/task/ r,
+#  owner @{PROC}/@{pid}/task/@{tid}/stat r,
+#  owner @{PROC}/@{pid}/task/@{tid}/io r,
+#  owner @{PROC}/@{pid}/task/@{tid}/status r,
+
+  profile python {
+    include <abstractions/base>
+    include <abstractions/python>
+    include <abstractions/openssl>
+
+    /{,usr/}bin/python3.[0-9]* r,
+
+    /{,usr/}bin/{,ba,da}sh rix,
+    /{,usr/}bin/chmod rix,
+    /{,usr/}bin/uname rPx,
+    /usr/share/rustdesk/files/pynput_service.py rPx,
+
+    owner @{PROC}/@{pid}/fd/ r,
+
+    /usr/share/rustdesk/files/{,**} r,
+    owner /tmp/[rR]ust[dD]esk/ w,
+    owner /tmp/[rR]ust[dD]esk/pynput_service rw,
+
+    # X-tiny
+    /tmp/.X11-unix/* rw,
+    owner @{HOME}/.xsession-errors w,
+    owner @{HOME}/.Xauthority r,
+
+    # python.d?
+    /usr/share/dpkg/cputable r,
+
+    # Silencer
+    deny /etc/apt/{,**} r,
+
+    include if exists <local/rustdesk_python>
+  }
+
+  include if exists <local/rustdesk>
+}
+
+profile rustdesk_pynput_service /usr/share/rustdesk/files/pynput_service.py {
+  include <abstractions/base>
+
+  @{exec_path} r,
+
+  include if exists <local/rustdesk_pynput_service>
+}
