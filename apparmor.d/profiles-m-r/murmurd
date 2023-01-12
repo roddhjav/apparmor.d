@@ -22,14 +22,16 @@ profile murmurd @{exec_path} {
   network inet dgram,
   network inet6 dgram,
 
-  @{exec_path} mr,
-
-  /{,usr/}bin/lsb_release Px -> lsb_release,
+  unix (send, receive) type=stream addr=none peer=(label=lsb_release),
 
   dbus send bus=system path=/
        interface=org.freedesktop.DBus.Peer
        member=Ping
        peer=(name=org.freedesktop.Avahi, label=avahi-daemon),
+
+  @{exec_path} mr,
+
+  /{,usr/}bin/lsb_release Px -> lsb_release,
 
   /etc/mumble-server.ini r,
 
@@ -42,12 +44,6 @@ profile murmurd @{exec_path} {
 
   # Silencer
   deny / r,
-  deny /usr/{,local/}lib/ r,
-  deny /usr/lib32/ r,
-  deny /usr/lib64/ r,
-
-  # file_inherit
-  unix (send, receive) type=stream addr=none peer=(label=lsb_release),
 
   include if exists <local/murmurd>
 }

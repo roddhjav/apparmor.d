@@ -8,6 +8,7 @@ include <tunables/global>
 @{exec_path} = /{,usr/}{,local/}bin/btop
 profile btop @{exec_path} {
   include <abstractions/base>
+  include <abstractions/nameservice-strict>
   include <abstractions/consoles>
 
   capability sys_ptrace,
@@ -19,9 +20,6 @@ profile btop @{exec_path} {
 
   @{exec_path} mr,
 
-  /etc/fstab r,
-  /etc/passwd r,
-
   owner @{user_config_dirs}/btop/{,**} rw,
 
   @{sys}/class/power_supply/ r,
@@ -30,19 +28,19 @@ profile btop @{exec_path} {
   @{sys}/devices/virtual/thermal/thermal_zone[0-9]*/ r,
   @{sys}/devices/virtual/thermal/thermal_zone[0-9]*/hwmon[0-9]*/{,*} r,
   @{sys}/devices/platform/coretemp.[0-9]*/hwmon/hwmon[0-9]*/{,*} r,
-  @{sys}/devices/pci*/*/*/host[0-9]*/*/*/block/*/*/stat r,
   @{sys}/devices/virtual/block/dm-[0-9]*/stat r,
-  @{sys}/devices/{pci*,virtual}/{,**/}net/*/statistics/{rx,tx}_bytes r,
-  @{sys}/devices/{pci*,virtual}/{,*/*/}net/*/address r,
-  @{sys}/devices/pci*/*/*/usb3/*/*/*/*/power_supply/hidpp_battery_[0-9]*/{,hwmon[0-9]*/} r,
+  @{sys}/devices/pci[0-9]*/**/host[0-9]*/*/*/block/*/*/stat r,
+  @{sys}/devices/{pci[0-9]*,virtual}/{,**/}net/*/statistics/{rx,tx}_bytes r,
+  @{sys}/devices/{pci[0-9]*,virtual}/{,**/}net/*/address r,
+  @{sys}/devices/pci[0-9]*/*/*/usb[0-9]*/**/power_supply/hidpp_battery_[0-9]*/{,hwmon[0-9]*/} r,
 
         @{PROC} r,
         @{PROC}/loadavg r,
         @{PROC}/uptime r,
-        @{PROC}/@{pid}/comm r,
-        @{PROC}/@{pid}/cmdline r,
-        @{PROC}/@{pid}/stat r,
-        @{PROC}/@{pid}/io r,
+        @{PROC}/@{pids}/comm r,
+        @{PROC}/@{pids}/cmdline r,
+        @{PROC}/@{pids}/stat r,
+        @{PROC}/@{pids}/io r,
   owner @{PROC}/@{pid}/mounts r,
 
   include if exists <local/btop>

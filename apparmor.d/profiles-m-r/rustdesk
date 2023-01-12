@@ -24,15 +24,6 @@ profile rustdesk @{exec_path} {
   network inet6 stream,
   network netlink raw,  # discovery
 
-  @{exec_path} mrix,
-
-  /{,usr/}bin/ps       rPx,
-  /{,usr/}bin/whoami   rPx,
-  /{,usr/}bin/loginctl rPx,
-  /{,usr/}bin/curl     rix,
-
-  /{,usr/}bin/python3.[0-9]* rCx -> python,
-
   dbus (send) bus=accessibility path=/org/a11y/atspi/accessible/root
        interface=org.a11y.atspi.Socket
        member=Embed
@@ -53,12 +44,19 @@ profile rustdesk @{exec_path} {
        member=Set
        peer=(name=:*),
 
+  @{exec_path} mrix,
+
+  /{,usr/}bin/ps       rPx,
+  /{,usr/}bin/whoami   rPx,
+  /{,usr/}bin/loginctl rPx,
+  /{,usr/}bin/curl     rix,
+
+  /{,usr/}bin/python3.[0-9]* rCx -> python,
+
   owner /tmp/[rR]ust[dD]esk/{,**} rw,
 
   owner @{user_share_dirs}/logs/[rR]ust[dD]esk/{,**} rw,
   owner @{user_config_dirs}/[rR]ust[dD]esk/{,**} rw,
-
-  owner @{run}/user/@{uid}/at-spi/bus{,_[0-9]*} rw,
 
   @{sys}/devices/system/cpu/cpufreq/policy[0-9]*/scaling_{cur,min,max}_freq r,
 
@@ -113,7 +111,7 @@ profile rustdesk @{exec_path} {
 
     owner @{PROC}/@{pid}/fd/ r,
 
-    /usr/share/rustdesk/files/{,**} r,
+    /usr/share/[rR]ust[dD]esk/files/{,**} r,
     owner /tmp/[rR]ust[dD]esk/ w,
     owner /tmp/[rR]ust[dD]esk/pynput_service rw,
 
@@ -122,11 +120,9 @@ profile rustdesk @{exec_path} {
     owner @{HOME}/.xsession-errors w,
     owner @{HOME}/.Xauthority r,
 
-    # python.d?
-    /usr/share/dpkg/cputable r,
-
-    # Silencer
+    # Unknown yet
     deny /etc/apt/{,**} r,
+    /usr/share/dpkg/cputable r,
 
     include if exists <local/rustdesk_python>
   }
