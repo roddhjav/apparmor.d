@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2022 Jeroen Rijken
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -10,9 +11,16 @@ include <tunables/global>
 profile grub-mount @{exec_path} {
   include <abstractions/base>
   include <abstractions/consoles>
+  include <abstractions/disks-read>
+
+  capability sys_admin,
 
   @{exec_path} mr,
 
+  / r,
+  /var/lib/os-prober/mount/ r,
+
+  /dev/fuse rw,
+
   include if exists <local/grub-mount>
 }
-
