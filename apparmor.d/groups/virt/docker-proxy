@@ -1,0 +1,22 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/docker-proxy
+profile docker-proxy @{exec_path} {
+  include <abstractions/base>
+
+  capability net_admin,
+
+  @{exec_path} mr,
+
+  @{sys}/kernel/mm/transparent_hugepage/hpage_pmd_size r,
+  
+  @{PROC}/sys/net/core/somaxconn r,
+
+  include if exists <local/docker-proxy>
+}

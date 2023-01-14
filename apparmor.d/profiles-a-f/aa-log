@@ -13,30 +13,22 @@ profile aa-log @{exec_path} {
 
   @{exec_path} mr,
 
-  /{usr/,}bin/journalctl rCx -> journalctl,
+  /{usr/,}bin/journalctl rix,
+
+  /etc/machine-id r,
+  /var/lib/dbus/machine-id r,
 
   /var/log/audit/* r,
 
+  /{run,var}/log/journal/ r,
+  /{run,var}/log/journal/@{hex}/ r,
+  /{run,var}/log/journal/@{hex}/user-@{uid}*.journal* r,
+  /{run,var}/log/journal/@{hex}/user-@{uid}.journal r,
+
   @{sys}/kernel/mm/transparent_hugepage/hpage_pmd_size r,
 
-  profile journalctl {
-    include <abstractions/base>
-    include <abstractions/consoles>
-
-    /{usr/,}bin/journalctl mr,
-
-    /var/lib/dbus/machine-id r,
-    /etc/machine-id r,
-
-    /{run,var}/log/journal/ r,
-    /{run,var}/log/journal/@{hex}/ r,
-    /{run,var}/log/journal/@{hex}/user-@{uid}*.journal* r,
-    /{run,var}/log/journal/@{hex}/user-@{uid}.journal r,
-
-    @{PROC}/sys/kernel/random/boot_id r,
-    @{PROC}/sys/kernel/cap_last_cap r,
-
-  }
+  @{PROC}/sys/kernel/random/boot_id r,
+  @{PROC}/sys/kernel/cap_last_cap r,
 
   include if exists <local/aa-log>
 }

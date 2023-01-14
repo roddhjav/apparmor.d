@@ -19,6 +19,8 @@ profile udisksd @{exec_path} flags=(attach_disconnected) {
   capability chown,
   capability dac_override,
   capability dac_read_search,
+  capability fowner,
+  capability fsetid,
   capability setgid,
   capability setuid,
   capability sys_admin,
@@ -44,9 +46,13 @@ profile udisksd @{exec_path} flags=(attach_disconnected) {
   mount fstype={btrfs,ext*,vfat,iso9660,udf,ntfs3} /dev/mmcblk[0-9]         -> @{MOUNTS}/*/,
   mount fstype={btrfs,ext*,vfat,iso9660,udf,ntfs3} /dev/mmcblk[0-9]*p[0-9]* -> @{MOUNTS}/*/,
 
+  # Allow mounting on temporary mount point
+  mount -> @{run}/udisks2/temp-mount-*/,
+
   # Allow unmounting
   umount @{MOUNTS}/,
   umount @{MOUNTS}/*/,
+  umount @{run}/udisks2/temp-mount-*/,
   umount /media/cdrom[0-9]/,
 
   dbus (send,receive) bus=system path=/org/freedesktop/UDisks2{,/**}
@@ -85,18 +91,20 @@ profile udisksd @{exec_path} flags=(attach_disconnected) {
   /{usr/,}bin/{,ba,da}sh      rix,
   /{usr/,}bin/umount          rix,
 
-  /{usr/,}{s,}bin/dmidecode   rPx,
-  /{usr/,}{s,}bin/dumpe2fs    rPx,
-  /{usr/,}{s,}bin/fsck.fat    rPx,
-  /{usr/,}{s,}bin/lvm         rPUx,
-  /{usr/,}{s,}bin/mke2fs      rPx,
-  /{usr/,}{s,}bin/mkfs.btrfs  rPx,
-  /{usr/,}{s,}bin/mkfs.fat    rPx,
-  /{usr/,}bin/eject           rPx,
-  /{usr/,}bin/ntfs-3g         rPx,
-  /{usr/,}bin/ntfsfix         rPx,
-  /{usr/,}bin/systemctl       rPx -> child-systemctl,
-  /{usr/,}bin/systemd-escape  rPx,
+  /{usr/,}{s,}bin/dmidecode        rPx,
+  /{usr/,}{s,}bin/dumpe2fs         rPx,
+  /{usr/,}{s,}bin/fsck.fat         rPx,
+  /{usr/,}{s,}bin/lvm              rPUx,
+  /{usr/,}{s,}bin/mke2fs           rPx,
+  /{usr/,}{s,}bin/mkfs.btrfs       rPx,
+  /{usr/,}{s,}bin/mkfs.ext{2,3,4}  rPx,
+  /{usr/,}{s,}bin/mkfs.fat         rPx,
+  /{usr/,}bin/eject                rPx,
+  /{usr/,}bin/ntfs-3g              rPx,
+  /{usr/,}{s,}bin/sfdisk           rPx,
+  /{usr/,}bin/ntfsfix              rPx,
+  /{usr/,}bin/systemctl            rPx -> child-systemctl,
+  /{usr/,}bin/systemd-escape       rPx,
 
   /etc/udisks2/{,**} r,
   /etc/libblockdev/{,**} r,
