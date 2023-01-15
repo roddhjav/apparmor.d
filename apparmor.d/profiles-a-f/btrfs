@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2019-2021 Mikhail Morfikov
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -18,21 +19,12 @@ profile btrfs @{exec_path} {
 
   @{exec_path} mr,
 
-  @{run}/blkid/blkid.tab{,-*} rw,
-  @{run}/blkid/blkid.tab.old rwl -> @{run}/blkid/blkid.tab,
-
-  owner @{PROC}/@{pid}/mounts r,
-        @{PROC}/partitions r,
-
-  # For fsck of the btrfs filesystem directly from gparted
-  owner /tmp/gparted-*/ rw,
-
-  # For scrub
   /var/lib/btrfs/ rw,
   /var/lib/btrfs/scrub.progress.@{uuid} rw,
   /var/lib/btrfs/scrub.status.@{uuid}{,_tmp} rwk,
 
-  # Saved metadata
+  / r,
+  /boot/ r,
   @{MOUNTS}/ r,
   @{MOUNTS}/ext2_saved/ rw,
   @{MOUNTS}/ext2_saved/image rw,
@@ -45,6 +37,15 @@ profile btrfs @{exec_path} {
   owner @{MOUNTS}/**.{iso,img,bin,mdf,nrg} rwk,
   owner @{HOME}/**.{ISO,IMG,BIN,MDF,NRG} rwk,
   owner @{MOUNTS}/**.{ISO,IMG,BIN,MDF,NRG} rwk,
+
+  # For fsck of the btrfs filesystem directly from gparted
+  owner /tmp/gparted-*/ rw,
+
+  @{run}/blkid/blkid.tab{,-*} rw,
+  @{run}/blkid/blkid.tab.old rwl -> @{run}/blkid/blkid.tab,
+
+        @{PROC}/partitions r,
+  owner @{PROC}/@{pid}/mounts r,
 
   /dev/btrfs-control rw,
 
