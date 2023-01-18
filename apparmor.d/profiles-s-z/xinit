@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2017-2021 Mikhail Morfikov
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -18,36 +19,38 @@ profile xinit @{exec_path} {
   signal (send) set=(term, kill) peer=xorg,
   signal (send) set=(hup),
 
+  /{usr/,}bin/               r,
+  /{usr/,}bin/{,ba,da}sh   rix,
+  /{usr/,}bin/{,e}grep     rix,
+  /{usr/,}bin/{m,g,}awk    rix,
+  /{usr/,}bin/cat          rix,
+  /{usr/,}bin/chmod        rix,
+  /{usr/,}bin/date         rix,
+  /{usr/,}bin/head         rix,
+  /{usr/,}bin/id           rix,
+  /{usr/,}bin/mktemp       rix,
+  /{usr/,}bin/rm           rix,
+  /{usr/,}bin/sed          rix,
+  /{usr/,}bin/tail         rix,
+  /{usr/,}bin/tempfile     rix,
+  /{usr/,}bin/touch        rix,
+  /{usr/,}bin/which{,.debianutils}    rix,
   /etc/X11/xinit/xinitrc   rix,
   /etc/X11/xinit/xserverrc rix,
 
-  /{usr/,}bin/         r,
-  /{usr/,}bin/rm       rix,
-  /{usr/,}bin/touch    rix,
-  /{usr/,}bin/{,e}grep rix,
-  /{usr/,}bin/sed      rix,
-  /{usr/,}bin/which{,.debianutils}    rix,
-  /{usr/,}bin/cat      rix,
-  /{usr/,}bin/tempfile rix,
-  /{usr/,}bin/mktemp   rix,
-  /{usr/,}bin/date     rix,
-  /{usr/,}bin/chmod    rix,
-  /{usr/,}bin/head     rix,
-  /{usr/,}bin/{m,g,}awk rix,
-  /{usr/,}bin/id       rix,
-  /{usr/,}bin/tail     rix,
-
   /{usr/,}bin/dbus-update-activation-environment rix,
 
-  /{usr/,}bin/gpgconf     rCx -> gpg,
+  /{usr/,}bin/gpgconf     rPx,
   /{usr/,}bin/run-parts   rCx -> run-parts,
   /{usr/,}bin/udevadm     rCx -> udevadm,
 
-  /{usr/,}bin/xrdb        rPx,
-  /{usr/,}bin/numlockx    rPx,
-  /{usr/,}bin/xhost       rPx,
-  /{usr/,}bin/glxinfo     rPx,
   /{usr/,}bin/flatpak    rPUx,
+  /{usr/,}bin/glxinfo     rPx,
+  /{usr/,}bin/numlockx    rPx,
+  /{usr/,}bin/X           rPx,
+  /{usr/,}bin/xhost       rPx,
+  /{usr/,}bin/Xorg        rPx,
+  /{usr/,}bin/xrdb        rPx,
 
   # Allowed GUI sessions to start
   /{usr/,}bin/openbox-session      rPx,
@@ -55,22 +58,18 @@ profile xinit @{exec_path} {
   /{usr/,}bin/sway                rPUx,
   /{usr/,}bin/ssh-agent            rPx,
 
+  /etc/X11/{,**} r,
+  /etc/default/{,*} r,
+
+  owner @{HOME}/ r,
+  owner @{HOME}/.Xauthority r,
+  owner @{HOME}/.xserverrc r,
+  owner @{HOME}/.xsession-errors w,
+
   owner /tmp/file* rw,
   owner /tmp/tmp.* rw,
 
-  /{usr/,}bin/X           rPx,
-  /{usr/,}bin/Xorg        rPx,
-
-  /etc/X11/{,**} r,
-
-  /etc/default/{,*} r,
-
-  # Xsession logs
-  owner @{HOME}/ r,
-  owner @{HOME}/.xsession-errors w,
-
-  owner @{HOME}/.Xauthority r,
-
+  /dev/tty rw,
 
   profile run-parts {
     include <abstractions/base>
@@ -79,24 +78,6 @@ profile xinit @{exec_path} {
 
     /etc/X11/Xsession.d/ r,
     /etc/X11/Xresources/ r,
-
-    # file_inherit
-    owner /dev/tty[0-9]* rw,
-    owner @{HOME}/.xsession-errors w,
-
-  }
-
-  profile gpg {
-    include <abstractions/base>
-
-    /{usr/,}bin/gpgconf mr,
-
-    /{usr/,}bin/gpg-agent rix,
-
-    owner @{HOME}/@{XDG_GPG_DIR}/ rw,
-    owner @{HOME}/@{XDG_GPG_DIR}/** rwkl -> @{HOME}/@{XDG_GPG_DIR}/**,
-
-    @{PROC}/@{pid}/fd/ r,
 
     # file_inherit
     owner /dev/tty[0-9]* rw,
