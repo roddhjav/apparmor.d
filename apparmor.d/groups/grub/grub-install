@@ -13,21 +13,31 @@ profile grub-install @{exec_path} flags=(complain) {
   include <abstractions/consoles>
   include <abstractions/disks-read>
 
+  capability dac_read_search,
+  capability sys_admin,
+
   @{exec_path} mr,
 
-  /{usr/,}bin/kmod              rPx,
   /{usr/,}bin/{,ba,da}sh        rix,
+  /{usr/,}bin/efibootmgr        rix,
+  /{usr/,}bin/kmod              rPx,
   /{usr/,}bin/lsb_release       rPx -> lsb_release,
   /{usr/,}bin/udevadm           rPx,
 
+  /usr/share/grub/{,**} r,
+
   /etc/default/grub.d/{,**} r,
+  /etc/default/grub r,
 
   /boot/efi/EFI/BOOT/{,**} rw,
+  /boot/EFI/*/grubx*.efi rw,
   /boot/grub/{,**} rw,
 
   @{sys}/firmware/efi/efivars/ r,
-  @{sys}/firmware/efi/efivars/Boot@{hex}-@{uuid} r,
+  @{sys}/firmware/efi/efivars/Boot@{hex}-@{uuid} rw,
+  @{sys}/firmware/efi/efivars/BootCurrent-@{uuid} r,
   @{sys}/firmware/efi/efivars/BootOrder-@{uuid} r,
+  @{sys}/firmware/efi/efivars/Timeout-@{uuid} r,
   @{sys}/firmware/efi/w_platform_size r,
 
         @{PROC}/devices r,
