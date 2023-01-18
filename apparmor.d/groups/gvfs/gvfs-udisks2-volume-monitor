@@ -9,7 +9,7 @@ include <tunables/global>
 
 @{exec_path}  = /{usr/,}lib/gvfs/gvfs-udisks2-volume-monitor
 @{exec_path} += @{libexec}/gvfs-udisks2-volume-monitor
-profile gvfs-udisks2-volume-monitor @{exec_path} {
+profile gvfs-udisks2-volume-monitor @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/dbus-session-strict>
   include <abstractions/dbus-strict>
@@ -18,6 +18,8 @@ profile gvfs-udisks2-volume-monitor @{exec_path} {
   include <abstractions/disks-read>
   include <abstractions/freedesktop.org>
   include <abstractions/nameservice-strict>
+
+  capability sys_ptrace,
 
   network inet stream,
   network inet6 stream,
@@ -74,18 +76,22 @@ profile gvfs-udisks2-volume-monitor @{exec_path} {
   owner @{HOME}/**/ r,
 
   @{run}/mount/utab r,
+  @{run}/systemd/inhibit/*.ref r,
   @{run}/systemd/sessions/* r,
 
+        @{PROC}/ r,
+        @{PROC}/@{pids}/net/* r,
+        @{PROC}/@{pids}/stat r,
+        @{PROC}/1/cgroup r,
+        @{PROC}/locks r,
   owner @{PROC}/@{pid}/cgroup r,
   owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/fdinfo/[0-9]* r,
   owner @{PROC}/@{pid}/mountinfo r,
   owner @{PROC}/@{pid}/mounts r,
-        @{PROC}/@{pids}/net/* r,
-        @{PROC}/ r,
-        @{PROC}/@{pids}/stat r,
-        @{PROC}/1/cgroup r,
-        @{PROC}/locks r,
+
+  /dev/dri/card[0-9]* r,
+  /dev/input/event[0-9]* r,
 
   include if exists <local/gvfs-udisks2-volume-monitor>
 }
