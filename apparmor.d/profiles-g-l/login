@@ -15,16 +15,18 @@ profile login @{exec_path} flags=(complain) {
   include <abstractions/wutmp>
   include <abstractions/dbus-strict>
 
+  capability audit_write,
   capability chown,
+  capability dac_read_search,
+  capability fowner,
   capability fsetid,
+  capability net_admin,
   capability setgid,
   capability setuid,
   capability sys_resource,
-  capability audit_write,
-  capability dac_read_search,
-#  capability net_admin,
+  capability sys_tty_config,
 
-#  network netlink raw,
+  network netlink raw,
 
   dbus send bus=system path=/org/freedesktop/login1
        interface=org.freedesktop.login1.*
@@ -34,19 +36,20 @@ profile login @{exec_path} flags=(complain) {
 
   /{usr/,}bin/{,z,ba,da}sh  rUx,
 
-  /etc/environment r,
-  /etc/motd r,
-  /etc/legal r,
   /etc/default/locale r,
-  /etc/security/pam_env.conf r,
+  /etc/environment r,
+  /etc/legal r,
+  /etc/motd r,
   /etc/security/group.conf r,
   /etc/security/limits.conf r,
   /etc/security/limits.d/{,*} r,
+  /etc/security/pam_env.conf r,
+  /etc/shells r,
 
   /var/log/btmp{,.[0-9]*} r,
 
-  @{run}/faillock/root rwk,
   @{run}/dbus/system_bus_socket rw,
+  @{run}/faillock/* rwk,
   @{run}/motd.dynamic{,.new} rw,
   @{run}/systemd/sessions/*.ref rw,
 
