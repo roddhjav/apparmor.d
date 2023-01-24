@@ -22,6 +22,24 @@ _displace_files() {
 	done
 }
 
+# Process management function to run a function over all the profile files
+# $1 The function to run.
+_process() {
+	local len nprof nproc fct="$1"
+  	mapfile -t files < <(find "${ROOT:?}/apparmor.d" -type f)
+	len="${#files[@]}"
+	nproc=$(nproc)
+	(( nprof = len/nproc + 1 ))
+	start=0
+	end=$nprof
+	for ((ii = 0 ; ii < nproc ; ii++)); do
+		$fct $start $end "${files[@]}" &
+		(( start = end + 1 ))
+		(( end = end + nprof ))
+	done
+	wait
+}
+
 # Initialize a new clean apparmor.d build directory
 initialize() {
 	rm -rf "${ROOT:?}"
@@ -122,30 +140,19 @@ _complain() {
 		path="${files[$ii]}"
 		(( ii = ii + 1 ))
 		[[ -f "$path" ]] || continue
-		flags="$(grep -o -m 1 'flags=(.*)' "$path" | cut -d '(' -f2 | cut -d ')' -f1)"
-		[[ "$flags" =~ complain ]] && continue
+		mapfile -t flags < <(grep -o -m 1 'flags=(.*)' "$path" | cut -d '(' -f2 | cut -d ')' -f1)
+		[[ "${flags[*]}" =~ complain ]] && continue
+		flags+=(complain)
 		sed -e "s/flags=(.*)//" \
-			-e "s/ {$/ flags=(complain $flags) {/" \
+			-e "s/ {$/ flags=(${flags[*]}) {/" \
 			-i "$path"
 	done
 }
 
-# Set complain flag on all profile (Dev only)
+# Set complain flag on all profile
 complain() {
-	local len nprof nproc
 	_msg "Set complain flag on all profiles"
-  	mapfile -t files < <(find "${ROOT:?}/apparmor.d" -type f)
-	len="${#files[@]}"
-	nproc=$(nproc)
-	(( nprof = len/nproc + 1 ))
-	start=0
-	end=$nprof
-	for ((ii = 0 ; ii < nproc ; ii++)); do
-		_complain $start $end "${files[@]}" &
-		(( start = end + 1 ))
-		(( end = end + nprof ))
-	done
-	wait
+	_process _complain
 }
 
 # Set AppArmor for full system policy
@@ -187,7 +194,7 @@ main() {
 	initialize || _die "initializing build directory"
 	ignore || _die "removing ignored profiles"
 	synchronise || _die "merging profiles"
-	configure || _die "configuring distributaion"
+	configure || _die "configuring distribution"
 	flags || _die "settings flags"
 	[[ "$COMPLAIN" == 1 ]] && complain
 	[[ "$FULL" == 1 ]] && full
