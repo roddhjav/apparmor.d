@@ -158,7 +158,19 @@ complain() {
 # Set AppArmor for full system policy
 # See https://gitlab.com/apparmor/apparmor/-/wikis/FullSystemPolicy
 full() {
-	cp -a apparmor.d/groups/_full/* "$ROOT/apparmor.d/"
+	cp -a apparmor.d/groups/_full/init "$ROOT/apparmor.d/"
+	cp -a apparmor.d/groups/_full/systemd "$ROOT/apparmor.d/"
+	case "$DISTRIBUTION" in
+		arch|endeavouros|cachyos|manjarolinux)
+			cp -r root/usr/lib/initcpio root/usr/lib/systemd/ "$ROOT/root/"
+			;;
+
+		debian|ubuntu|whonix)
+			cp -r root/etc/initramfs-tools "$ROOT/root/"
+			;;
+
+		*) _die "$DISTRIBUTION is not a supported distribution." ;;
+	esac
 }
 
 # Print help message
