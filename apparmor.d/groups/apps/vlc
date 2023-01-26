@@ -1,79 +1,30 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2017-2021 Mikhail Morfikov
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
 
 include <tunables/global>
 
-# Video/audio extensions:
-# a52, aac, ac3, mka, flac, mp1, mp2, mp3, mpc, oga, oma, wav, wv, wm, wma, 3g2, 3gp, 3gp2, 3gpp,
-# asf, avi, divx, m1v, m2v, m4v, mkv, mov, mp4, mpa, mpe, mpg, mpeg, mpeg1, mpeg2, mpeg4, ogg, ogm,
-# ogx, ogv, rm, rmvb, webm, wmv, wtv, mp2t
-@{vlc_ext}  = [aA]{52,[aA][cC],[cC]3}
-@{vlc_ext} += [mM][kK][aA]
-@{vlc_ext} += [fF][lL][aA][cC]
-@{vlc_ext} += [mM][pP][123cC]
-@{vlc_ext} += [oO][gGmM][aA]
-@{vlc_ext} += [wW]{,[aA]}[vV]
-@{vlc_ext} += [wW][mM]{,[aA]}
-@{vlc_ext} += 3[gG]{[2pP],[pP][2pP]}
-@{vlc_ext} += [aA][sS][fF]
-@{vlc_ext} += [aA][vV][iI]
-@{vlc_ext} += [dD][iI][vV][xX]
-@{vlc_ext} += [mM][124][vV]
-@{vlc_ext} += [mM][kKoO][vV]
-@{vlc_ext} += [mM][pP][4aAeEgG]
-@{vlc_ext} += [mM][pP][eE][gG]{,[124]}
-@{vlc_ext} += [oO][gG][gGmMxXvV]
-@{vlc_ext} += [rR][mM]{,[vV][bB]}
-@{vlc_ext} += [wW][eE][bB][mM]
-@{vlc_ext} += [wW][mMtT][vV]
-@{vlc_ext} += [mM][pP]2[tT]
-
-# Image extensions
-# bmp, jpg, jpeg, png, gif
-@{vlc_ext} += [bB][mM][pP]
-@{vlc_ext} += [jJ][pP]{,[eE]}[gG]
-@{vlc_ext} += [pP][nN][gG]
-@{vlc_ext} += [gG][iI][fF]
-
-# Subtitle extensions:
-# srt, txt, sub
-@{vlc_ext} += [sS][rR][tT]
-@{vlc_ext} += [tT][xX][tT]
-@{vlc_ext} += [sS][uU][bB]
-
-# Playlist extensions:
-# m3u, m3u8, pls
-@{vlc_ext} += [mM]3[uU]{,8}
-@{vlc_ext} += [pP][lL][sS]
-
 @{exec_path} = /{usr/,}bin/{c,}vlc
 profile vlc @{exec_path} {
   include <abstractions/base>
-  include <abstractions/consoles>
-  include <abstractions/nameservice-strict>
-  include <abstractions/gtk>
-  include <abstractions/fonts>
-  include <abstractions/fontconfig-cache-read>
-  include <abstractions/freedesktop.org>
-  include <abstractions/opencl-intel>
-  include <abstractions/mesa>
-  include <abstractions/vulkan>
-  include <abstractions/nvidia>
   include <abstractions/audio>
-  include <abstractions/qt5-settings-write>
-  include <abstractions/qt5-compose-cache-write>
-  include <abstractions/user-download-strict>
-  include <abstractions/private-files-strict>
-  include <abstractions/ssl_certs>
-  include <abstractions/ibus>
-  include <abstractions/dbus-session-strict>
   include <abstractions/dbus-gtk>
+  include <abstractions/dbus-session-strict>
   include <abstractions/dconf-write>
   include <abstractions/devices-usb>
-  include <abstractions/vlc-art-cache-write>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/fonts>
+  include <abstractions/freedesktop.org>
+  include <abstractions/gtk>
+  include <abstractions/ibus>
+  include <abstractions/nameservice-strict>
+  include <abstractions/opencl>
+  include <abstractions/ssl_certs>
+  include <abstractions/user-download-strict>
+  include <abstractions/vulkan>
 
   signal (receive) set=(term, kill) peer=anyremote//*,
 
@@ -194,72 +145,60 @@ profile vlc @{exec_path} {
 
   @{exec_path} mrix,
 
-  # Which media files VLC should be able to open
-        / r,
-        /home/ r,
-  owner @{HOME}/ r,
-  owner @{HOME}/**/ r,
-        @{MOUNTS}/ r,
-  owner @{MOUNTS}/**/ r,
-  owner /{home,media}/**.@{vlc_ext} rw,
+  /{usr/,}bin/xdg-screensaver rCx -> xdg-screensaver,
 
-  # For SMB shares
-  owner @{run}/user/@{uid}/gvfs/smb-share:server=*,share=**/ r,
-  owner @{run}/user/@{uid}/gvfs/smb-share:server=*,share=**.@{vlc_ext} r,
-
-  # VLC files
-  /usr/share/vlc/{,**} r,
-
-  # VLC config files
-  owner @{HOME}/ r,
-  owner @{user_config_dirs}/vlc/ rw,
-  owner @{user_config_dirs}/vlc/* rwkl -> @{user_config_dirs}/vlc/#[0-9]*[0-9],
-  owner @{user_share_dirs}/vlc/{,**} rw,
-
-  owner @{user_cache_dirs}/ rw,
-  owner @{user_cache_dirs}/vlc/{,**} rw,
-  owner @{user_cache_dirs}/#[0-9]*[0-9] rw,
-
-  # To configure Qt5 settings (theme, font, icons, etc.) under DE/WM without Qt integration
-  owner @{user_config_dirs}/qt5ct/{,**} r,
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+  /usr/share/hwdata/pnp.ids r,
   /usr/share/qt5ct/** r,
-
-  /dev/snd/ r,
-  /dev/shm/#[0-9]*[0-9] rw,
-
-  deny owner @{PROC}/@{pid}/cmdline r,
-       owner @{PROC}/@{pid}/mountinfo r,
-       owner @{PROC}/@{pid}/mounts r,
-       owner @{PROC}/@{pid}/comm r,
-       owner @{PROC}/@{pid}/task/@{tid}/comm rw,
-             @{PROC}/@{pids}/net/if_inet6 r,
-  deny       @{PROC}/sys/kernel/random/boot_id r,
-
-  # Udev enumeration
-  @{sys}/bus/ r,
-  @{sys}/bus/**/devices/ r,
-  @{sys}/devices/**/uevent r,
-  @{sys}/class/ r,
-  @{sys}/class/**/ r,
-  @{run}/udev/data/b254:[0-9]* r, # for /dev/zram*
-  @{run}/udev/data/b253:[0-9]* r, # for /dev/dm*
-  @{run}/udev/data/b8:[0-9]* r,   # for /dev/sd*
-  @{run}/udev/data/b7:[0-9]* r,   # for /dev/loop*
+  /usr/share/vlc/{,**} r,
 
   /etc/fstab r,
 
-  /usr/share/hwdata/pnp.ids r,
-  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+  owner @{HOME}/ r,
+  owner @{user_music_dirs}/{,**} rw,
+  owner @{user_pictures_dirs}/{,**} rw,
+  owner @{user_torrents_dirs}/{,**} rw,
+  owner @{user_videos_dirs}/{,**} rw,
 
-  # Be able to turn off the screensaver while playing movies
-  /{usr/,}bin/xdg-screensaver rCx -> xdg-screensaver,
+  owner @{user_cache_dirs}/ rw,
+  owner @{user_cache_dirs}/ rw,
+  owner @{user_cache_dirs}/#[0-9]*[0-9] rw,
+  owner @{user_cache_dirs}/vlc/ rw,
+  owner @{user_cache_dirs}/vlc/{,**} rw,
+
+  owner @{user_config_dirs}/qt5ct/{,**} r,
+  owner @{user_config_dirs}/vlc/ rw,
+  owner @{user_config_dirs}/vlc/* rwkl -> @{user_config_dirs}/vlc/#[0-9]*[0-9],
+
+  owner @{user_share_dirs}/vlc/{,**} rw,
+
+  owner @{run}/user/@{uid}/gvfs/smb-share:server=*,share=**/ r,
+  owner @{run}/user/@{uid}/gvfs/smb-share:server=*,share=** r,
+
+  @{run}/udev/data/b7:[0-9]* r,   # for /dev/loop*
+  @{run}/udev/data/b8:[0-9]* r,   # for /dev/sd*
+  @{run}/udev/data/b254:[0-9]* r, # for /dev/zram*
+  @{run}/udev/data/b253:[0-9]* r, # for /dev/dm*
+
+  @{sys}/bus/ r,
+  @{sys}/bus/**/devices/ r,
+  @{sys}/class/ r,
+  @{sys}/class/**/ r,
+  @{sys}/devices/**/uevent r,
+
+             @{PROC}/@{pids}/net/if_inet6 r,
+       owner @{PROC}/@{pid}/comm r,
+       owner @{PROC}/@{pid}/mountinfo r,
+       owner @{PROC}/@{pid}/mounts r,
+       owner @{PROC}/@{pid}/task/@{tid}/comm rw,
+  audit       @{PROC}/sys/kernel/random/boot_id r,
+  audit owner @{PROC}/@{pid}/cmdline r,
+
+        /dev/shm/#[0-9]*[0-9] rw,
+  owner /dev/tty[0-9]* rw,
 
   # Silencer
   deny /{usr/,}lib/@{multiarch}/vlc/{,**} w,
-
-  # file_inherit
-  owner /dev/tty[0-9]* rw,
-  owner @{HOME}/.anyRemote/anyremote.stdout w,
 
   profile xdg-screensaver {
     include <abstractions/base>
