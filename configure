@@ -50,6 +50,7 @@ initialize() {
 # Ignore profiles and files as defined in dists/ignore/
 ignore() {
 	for name in main.ignore "$DISTRIBUTION.ignore"; do
+		[[ -f "dists/ignore/$name" ]] || continue
 		_msg "Ignore profiles/files in dists/ignore/$name"
 		while read -r profile; do
 			[[ "$profile" =~ ^\# ]] && continue
@@ -77,6 +78,7 @@ configure() {
 	case "$DISTRIBUTION" in
 		arch|endeavouros|cachyos|manjarolinux)
 			_msg "Configure libexec."
+			LIBEXEC="/{usr/,}lib"
 			sed -i -e '/Debian/d' "$ROOT/apparmor.d/tunables/extend"
 
 			;;
@@ -91,6 +93,7 @@ configure() {
 			fi
 
 			_msg "Configure libexec."
+			LIBEXEC="/{usr/,}libexec"
 			sed -i -e '/Archlinux/d' "$ROOT/apparmor.d/tunables/extend"
 
 			_msg "Displace overwritten files."
@@ -129,6 +132,70 @@ flags() {
 
 		done <"dists/flags/$name"
 	done
+}
+
+# Resolve the variables in the profile attachments
+_resolve_attachments() {
+	local path="$1"
+	declare -A variables
+
+	# Parse the variables in the profile hearder
+	variables=(
+		[libexec]="$LIBEXEC" [multiarch]="*-linux-gnu*"
+		[user_share_dirs]="/home/*/.local/share"
+	)
+	mapfile -t lines < <(grep '^@{.*}[ ]*[+=][ ]*.*$' "$path")
+	for line in "${lines[@]}"; do
+		value="${line##*=}"
+		key="${line#^@{}"
+		key="${key%%\}*}"
+		key="${key/@{/}"
+		variables[$key]+="${value}"
+	done
+	[ -z ${variables[exec_path]+x} ] && return
+
+	# Resolve variable in profile attachments
+	entrypoint="${variables[exec_path]}"
+	while [[ "$entrypoint" =~ "@{".*"}" ]]; do
+		name=${entrypoint#*@\{}
+		name="${name%%\}*}"
+		value="${variables[$name]# }"
+		entrypoint="${entrypoint//@{${name}\}/${value}}"
+	done
+	entrypoint="${entrypoint# }"
+
+	# If needed nest the attachments
+	IFS=" " read -r -a attachments <<< "$entrypoint"
+	if [[ "${#attachments[@]}" -ge 2 ]]; then
+		res="/{"
+		for aare in "${attachments[@]}"; do
+			res+="${aare#/},"
+		done
+		entrypoint="${res%,}}"
+	fi
+	echo "$entrypoint"
+}
+
+# Internal userspace process
+_userspace() {
+	files=("$@")
+	ii="$start"
+	while [[ $ii -le $end && $ii -lt $len ]]; do
+		path="${files[$ii]}"
+		(( ii = ii + 1 ))
+		[[ -f "$path" ]] || continue
+		entrypoint="$(_resolve_attachments "$path")"
+		[[ -z "$entrypoint" ]] && continue
+		name="$(basename "$path")"
+		sed -e "s;profile $name @{exec_path};profile $name ${entrypoint[*]};g" \
+			-i "$path"
+	done
+}
+
+# Remove variables in profile attachment to bypass userspace tools restriction
+userspace() {
+	_msg "Bypass userspace tools restriction"
+	_process _userspace
 }
 
 # Internal complain process
@@ -207,6 +274,7 @@ main() {
 	ignore || _die "removing ignored profiles"
 	synchronise || _die "merging profiles"
 	configure || _die "configuring distribution"
+	userspace || _die "bypassing userspace"
 	flags || _die "settings flags"
 	[[ "$COMPLAIN" == 1 ]] && complain
 	[[ "$FULL" == 1 ]] && full
