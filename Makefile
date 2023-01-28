@@ -6,8 +6,9 @@
 DESTDIR ?= /
 BUILD := .build
 PKGNAME := apparmor.d
+P = $(notdir $(wildcard ${BUILD}/apparmor.d/*))
 
-.PHONY: all install lint archlinux debian ubuntu whonix clean
+.PHONY: all install $(P) lint archlinux debian ubuntu whonix clean
 
 all:
 	@go build -o ${BUILD}/ ./cmd/aa-log
@@ -31,6 +32,21 @@ install:
 		install -Dm0644 "$${file}" "${DESTDIR}/usr/lib/systemd/user/$${service}.d/apparmor.conf"; \
 	done
 
+ABSTRACTIONS = $(shell find ${BUILD}/apparmor.d/abstractions/ -type f -printf "%P\n")
+TUNABLES = $(shell find ${BUILD}/apparmor.d/tunables/ -type f -printf "%P\n")
+$(P):
+	@[[ -f ${BUILD}/aa-log ]] || exit 0; install -Dm755 ${BUILD}/aa-log ${DESTDIR}/usr/bin/aa-log
+	@for file in ${ABSTRACTIONS}; do \
+		install -Dm0644 "${BUILD}/apparmor.d/abstractions/$${file}" "${DESTDIR}/etc/apparmor.d/abstractions/$${file}"; \
+	done;
+	@for file in ${TUNABLES}; do \
+		install -Dm0644 "${BUILD}/apparmor.d/tunables/$${file}" "${DESTDIR}/etc/apparmor.d/tunables/$${file}"; \
+	done;
+	@for file in ${@}; do \
+		install -Dvm0644 "${BUILD}/apparmor.d/$${file}" "${DESTDIR}/etc/apparmor.d/$${file}"; \
+	done;
+	@systemctl restart apparmor || systemctl status apparmor
+
 lint:
 	@shellcheck --shell=bash \
 		PKGBUILD configure pick dists/build/build.sh \
@@ -50,6 +66,6 @@ whonix:
 
 clean:
 	@rm -rf \
-		debian/.debhelper debian/debhelper* debian/*.debhelper \
+		debian/.debhelper debian/debhelper* debian/*.debhelper debian/${PKGNAME} \
 		${PKGNAME}-*.pkg.tar.zst.sig ${PKGNAME}-*.pkg.tar.zst \
 		${PKGNAME}_*.* ${BUILD}
