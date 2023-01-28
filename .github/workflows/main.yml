@@ -19,7 +19,10 @@ jobs:
           sudo rm /etc/apparmor.d/usr.lib.snapd.snap-confine.real
 
       - name: Build the apparmor.d package
-        run: dpkg-buildpackage -b -d --no-sign
+        run: |
+          VERSION="0.$(git rev-list --count HEAD)-1"
+          dch --newversion="$VERSION" --urgency=medium --distribution=stable --controlmaint "Release $VERSION"
+          dpkg-buildpackage -b -d --no-sign
 
       - name: Install apparmor.d
         run: sudo dpkg --install ../apparmor.d_*_all.deb
