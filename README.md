@@ -78,8 +78,9 @@ Please see [apparmor.pujol.io/usage](https://apparmor.pujol.io/usage)
 
 ## Contribution
 
-Feedbacks, contributors, pull requests are all very welcome. Please read the
-https://apparmor.pujol.io/development for more details on the contribution process.
+Feedbacks, contributors, pull requests are all very welcome. Please read
+[apparmor.pujol.io/development](https://apparmor.pujol.io/development) 
+for more details on the contribution process.
 
 
 ## License
@@ -90,8 +91,8 @@ and thus has the same license (GPL2).
 [upstream]: https://gitlab.com/morfikov/apparmemall
 [project]: https://gitlab.com/roddhjav/apparmor.d
 [build]: https://gitlab.com/roddhjav/apparmor.d/badges/main/pipeline.svg?style=flat-square
-[workflow]: https://img.shields.io/endpoint.svg?url=https%3A%2F%2Factions-badge.atrox.dev%2Froddhjav%2Fapparmor.d%2Fbadge&style=flat-square
-[action]: https://actions-badge.atrox.dev/roddhjav/apparmor.d/goto
+[workflow]: https://img.shields.io/endpoint.svg?url=https%3A%2F%2Factions-badge.atrox.dev%2Froddhjav%2Fapparmor.d%2Fbadge%3Fref%3Dmain&style=flat-square
+[action]: https://actions-badge.atrox.dev/roddhjav/apparmor.d/goto?ref=main
 [quality]: https://img.shields.io/badge/go%20report-A+-brightgreen.svg?style=flat-square
 [goreportcard]: https://goreportcard.com/report/github.com/roddhjav/apparmor.d
 
