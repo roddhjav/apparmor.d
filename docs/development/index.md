@@ -4,14 +4,14 @@ title: Development
 
 # Development
 
-You want to contribute to `apparmor.d`, **thank a lot for this.** Feedbacks, 
+You want to contribute to `apparmor.d`, **thanks a lot for this.** Feedbacks, 
 contributors, pull requests are all very welcome. You will find in this page all
 the useful information needed to contribute.
 
 ??? info "How to contribute"
 
     1. If you don't have git on your machine, [install it][git].
-    2. Fork this repo by clicking on the fork button on the top of this page.
+    2. Fork this repo by clicking on the fork button on the top of the [project Github][project] page.
     3. Clone the repository and go to the directory:
     ```sh
     git clone https://github.com/this-is-you/apparmor.d.git
@@ -38,7 +38,7 @@ the useful information needed to contribute.
 
 `Rule 1: Mandatory Access Control`
 
-:   As these are mandatory access control policies only what it explicitly required
+:   As these are mandatory access control policies only what is explicitly required
     should be authorized. Meaning, you should **not** allow everything (or a large area)
     and blacklist some sub areas.
 
@@ -93,6 +93,7 @@ profile foo @{exec_path} {
 
 
 [git]: https://help.github.com/articles/set-up-git/
+[project]: https://github.com/roddhjav/apparmor.d
 
 [flags]: https://github.com/roddhjav/apparmor.d/blob/master/dists/flags/main.flags
 [profiles-a-f]: https://github.com/roddhjav/apparmor.d/blob/master/apparmor.d/profiles-a-f

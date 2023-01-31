@@ -12,15 +12,15 @@ possible to write an AppArmor profile for all of them. Therefore, a question ari
 **What to confine and why?**
 
 We take inspiration from the [Android/ChromeOS Security Model][android_model] and
-we apply it to the Linux world. Modern [Linux security distribution][clipos] usually
-consider an immutable core base image with a carefully set of selected applications.
+we apply it to the Linux world. Modern [Linux security distributions][clipos] usually
+consider an immutable core base image with a carefully selected set of applications.
 Everything else should be sandboxed. Therefore, this project tries to confine all
 the *core* applications you will usually find in a Linux system: all systemd services,
 xwayland, network, bluetooth, your desktop environment... Non-core user applications
 are out of scope as they should be sandboxed using a dedicated tool (minijail,
 bubblewrap, toolbox...).
 
-This is fundamentally different from how AppArmor is usually used on Linux server
+This is fundamentally different from how AppArmor is usually used on Linux servers
 as it is common to only confine the applications that face the internet and/or the users.
 
 

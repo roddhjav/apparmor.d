@@ -10,8 +10,8 @@ Here is an overview of the current CI jobs:
 
 **On Gitlab CI**
 
-- Packages build for all supported distribution
-- Profiles preprocessing verification for all supported distribution
+- Packages build for all supported distributions
+- Profiles preprocessing verification for all supported distributions
 - Go based command linting, coverage, and unit tests
 
 **On Github Action**
