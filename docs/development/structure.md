@@ -5,10 +5,10 @@ title: Structure
 Description of common structure found across various AppArmor profiles
 
 
-## Program to not confine
+## Programs to not confine
 
 Some programs should not be confined by themselves. For example, tools such as
-`ls`, `rm`, `diff` or `cat` do not have profile in this project. Let's see why.
+`ls`, `rm`, `diff` or `cat` do not have profiles in this project. Let's see why.
 
 These are general tools that in a general context can legitimately access any
 file in the system. Therefore, the confinement of such tools by a global
@@ -45,7 +45,7 @@ our profile:
     profile diff { 
     ```
 
-* In `pass`, as it is a dependency of pass. Here `diff` inherit pass profile 
+* In `pass`, as it is a dependency of pass. Here `diff` inherits pass' profile 
   and has the same access than the pass profile, so it will be allowed to diff
   password files because more than a generic `diff` it is a `diff` for the pass
   password manager:
@@ -66,8 +66,8 @@ sandbox managed with [Toolbox]
 
 !!! example "To sum up"
 
-    1. Do not create profile for programs such as: `rm`, `ls`, `diff`, `cd`, `cat`
-    2. Do not create profile for the shell: `bash`, `sh`, `dash`, `zsh`
+    1. Do not a create profile for programs such as: `rm`, `ls`, `diff`, `cd`, `cat`
+    2. Do not a create profile for the shell: `bash`, `sh`, `dash`, `zsh`
     3. Use [Toolbox].
 
 [project-rules]: /development/#project-rules
@@ -106,9 +106,9 @@ the following note:
 
 Here is an overview of the current children profile:
 
-1. **`child-open`**: To opens resources. Instead of allowing the run of all
+1. **`child-open`**: To open resources. Instead of allowing the run of all
    software in `/{usr/,}bin/`, the purpose of this profile is to list all GUI
-   program that can open resources. Ultimately, only sandbox manager programs
+   programs that can open resources. Ultimately, only sandbox manager programs
    such as `bwrap`, `snap`, `flatpak`, `firejail` should be present here. Until
    this day, this profile will be a controlled mess.
 
@@ -124,7 +124,7 @@ Here is an overview of the current children profile:
 
 See the **[kernel docs][kernel]** to check the major block and char numbers used in `/run/udev/data/`.
 
-Special care must be given as some as sometime udev numbers are allocated
+Special care must be given as sometimes udev numbers are allocated
 dynamically by the kernel. Therefore, the full range must be allowed:
 
 !!! note ""

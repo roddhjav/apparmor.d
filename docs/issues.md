@@ -25,9 +25,9 @@ home directory.
 
 According the Archlinux guideline, on Archlinux, packages cannot install files
 under `/home/`. Therefore the [`pacman`][pacman] profile purposely does not
-allow access of your home directory. This is 
+allow access of your home directory.
 
-This provides a basic protection against some package (on the AUR) that may have
+This provides a basic protection against some packages (on the AUR) that may have
 rogue install script.
 
 [pacman]: https://github.com/roddhjav/apparmor.d/blob/master/apparmor.d/groups/pacman/pacman
@@ -36,7 +36,7 @@ rogue install script.
 ### Gnome can be very slow to start.
 
 [Gnome](https://github.com/roddhjav/apparmor.d/issues/80) can be slow to start.
-This is a Known bugs help is very welcome.
+This is a known bug, help is very welcome.
 
 The complexity is that:
 

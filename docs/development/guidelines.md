@@ -25,13 +25,13 @@ use of more variables.
 
 !!! note
 
-    This profile guideline is still evolving, feel free to propose improvement
-    as long as it does not vary too much from the existing rules.
+    This profile guideline is still evolving, feel free to propose improvements
+    as long as they do not vary too much from the existing rules.
 
 In order to ensure a common structure across the profiles, all new profile **must**
 follow the guidelines presented here.
 
-The rules in the profile should be sorted in rule ***block*** as follow:
+The rules in the profile should be sorted in the rule ***block*** as follows:
 
 - `include`
 - `set rlimit`
@@ -54,7 +54,7 @@ This rule order is taken from AppArmor with minor changes as we tend to:
 - Divide the file block in multiple subcategories
 - Put the block with the longer rules (`files`, `dbus`) after the other blocks
 
-### The file blocks
+### The file block
 
 The file block should be sorted as follow:
 
@@ -90,7 +90,7 @@ dbus send bus=session path=/org/freedesktop/DBus
 ```
 If there is no predictable label it can be omitted.
 
-### Profiles rules
+### Profile rules
 
 `bin, sbin & lib`
 
@@ -103,7 +103,7 @@ If there is no predictable label it can be omitted.
 
 `Sort`
 
-:   In a rule block, the rule shall be alphabetically sorted.
+:   In a rule block, the rules must be alphabetically sorted.
 
 `Sub profile`
 
@@ -111,7 +111,7 @@ If there is no predictable label it can be omitted.
 
 `Similar purpose`
 
-:   When some file access share similar purpose, they may be sorted together. Eg:
+:   When some rules share similar purpose, they may be sorted together. Eg:
     ```
     /etc/machine-id r,
     /var/lib/dbus/machine-id r,

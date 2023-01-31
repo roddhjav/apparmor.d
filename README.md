@@ -7,28 +7,27 @@
 **Full set of AppArmor profiles**
 
 > **Warning**: This project is still in its early development. Help is very 
-> welcome see the [documentation website](https://apparmor.pujol.io/) including
+> welcome; see the [documentation website](https://apparmor.pujol.io/) including
 > its [development](https://apparmor.pujol.io/development) section.
 
 
 ## Description 
 
-**AppArmor.d** is a set of over 1400 AppArmor profiles which aims is to confine
-most of Linux base applications and processes.
+**AppArmor.d** is a set of over 1400 AppArmor profiles whose aim is to confine
+most Linux based applications and processes.
 
 **Purpose**
 
 - Confine all root processes such as all `systemd` tools, `bluetooth`, `dbus`,
-  `polkit`, `NetworkManager`, `OpenVPN`, `GDM`, `rtkit`, `colord`.
+  `polkit`, `NetworkManager`, `OpenVPN`, `GDM`, `rtkit`, `colord`
 - Confine all Desktop environments
 - Confine all user services such as `Pipewire`, `Gvfsd`, `dbus`, `xdg`, `xwayland`
 - Confine some *"special"* user applications: web browser, file browser...
 - Should not break a normal usage of the confined software
-- Fully tested (Work in progress)
 
 **Goals**
 
-- Target both desktop and server
+- Target both desktops and servers
 - Support all distributions that support AppArmor:
     * Currently:
         - Archlinux
@@ -37,6 +36,7 @@ most of Linux base applications and processes.
     * Not (yet) tested on openSUSE
 - Support all major desktop environments:
     * Currently only Gnome
+- Fully tested (Work in progress)
 
 
 > This project is originaly based on the work from [Morfikov][upstream] and aims
@@ -52,15 +52,15 @@ possible to write an AppArmor profile for all of them. Therefore, a question ari
 **What to confine and why?**
 
 We take inspiration from the [Android/ChromeOS Security Model][android_model] and
-we apply it to the Linux world. Modern [Linux security distribution][clipos] usually
-consider an immutable core base image with a carefully set of selected applications.
+we apply it to the Linux world. Modern [Linux security distributions][clipos] usually
+consider an immutable core base image with a carefully selected set of applications.
 Everything else should be sandboxed. Therefore, this project tries to confine all
 the *core* applications you will usually find in a Linux system: all systemd services,
 xwayland, network, bluetooth, your desktop environment... Non-core user applications
 are out of scope as they should be sandboxed using a dedicated tool (minijail,
 bubblewrap, toolbox...).
 
-This is fundamentally different from how AppArmor is usually used on Linux server
+This is fundamentally different from how AppArmor is usually used on Linux servers
 as it is common to only confine the applications that face the internet and/or the users.
 
 

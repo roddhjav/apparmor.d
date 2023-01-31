@@ -4,7 +4,7 @@ title: Installation
 
 !!! danger
 
-    In order to not break your system, the default package configuration install
+    In order to not break your system, the default package configuration installs
     all profiles in complain mode. They can be enforced later.
     See the [Enforce Mode](/enforce) page.
 

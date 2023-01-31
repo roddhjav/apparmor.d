@@ -21,7 +21,7 @@ echo 'Optimize=compress-fast' | sudo tee /etc/apparmor/parser.conf
 ## Personal directories
 
 This project is designed in such a way that it is easy to personalize the
-directory your program can access by defining a few variables.
+directories your programs have access by defining a few variables.
 
 The profiles heavily use the (largely extended) XDG directory variables defined
 in the **[Variables Reference](/variables)** page.
@@ -48,7 +48,7 @@ in the **[Variables Reference](/variables)** page.
     | Vm | `@{XDG_VM_DIR}` | `.vm`
     | Wallpapers | `@{XDG_WALLPAPERS_DIR}` | `@{XDG_PICTURES_DIR}/Wallpapers` |
 
-You can personalize these values with by creating a file such as:
+You can personalize these values by creating a file such as:
 `/etc/apparmor.d/tunables/xdg-user-dirs.d/local` where you define your own
 personal directories. Example:
 ```sh
@@ -90,13 +90,16 @@ your rules in it.
 
 - `child-open`, a profile that allows other program to open resources (URL, 
   picture, books...) with some predefined GUI application. To allow it to open
-  URL with Firefox, create the file `/etc/apparmor.d/local/child-open` with:
+  URLs with Firefox, create the file `/etc/apparmor.d/local/child-open` with:
   ```sh
     /{usr/,}bin/firefox rPx,
   ```
-  **NB:** This is an example, no need to add Firefox into `child-open`, it is already there.
 
 !!! note
+
+    This is an example, no need to add Firefox into `child-open`, it is already there.
+
+!!! info
 
     `rPx` allows transition to the Firefox profile. Use `rPUx` to allow
     transition to an unconfined state if you do not have the profile for a
