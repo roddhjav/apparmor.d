@@ -1,5 +1,4 @@
 # apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2018-2021 Mikhail Morfikov
 # Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
@@ -7,11 +6,15 @@ abi <abi/3.0>,
 
 include <tunables/global>
 
-@{exec_path} = @{libexec}/{,colord/}colord-session
-profile colord-session @{exec_path} flags=(complain) {
+@{exec_path} = @{libexec}/nm-daemon-helper
+profile nm-daemon-helper @{exec_path} {
   include <abstractions/base>
+  include <abstractions/nameservice-strict>
+
+  network inet dgram,
+  network inet6 dgram,
 
   @{exec_path} mr,
 
-  include if exists <local/colord-session>
+  include if exists <local/nm-daemon-helper>
 }
