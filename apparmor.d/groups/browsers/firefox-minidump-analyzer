@@ -9,7 +9,12 @@ include <tunables/global>
 
 @{MOZ_HOMEDIR} = @{HOME}/.mozilla
 
-@{exec_path} = /{usr/,}lib/firefox/minidump-analyzer
+@{firefox_name} = firefox{,-esr}
+@{firefox_lib_dirs} = /{usr/,}lib{,32,64}/@{firefox_name}/ /opt/@{firefox_name}/
+@{firefox_config_dirs} = @{HOME}/.mozilla/
+@{firefox_cache_dirs} = @{user_cache_dirs}/mozilla/
+
+@{exec_path} = @{firefox_lib_dirs}/minidump-analyzer
 profile firefox-minidump-analyzer @{exec_path} {
   include <abstractions/base>
 
@@ -17,17 +22,16 @@ profile firefox-minidump-analyzer @{exec_path} {
 
   @{exec_path} mr,
 
-  owner @{HOME}/.mozilla/firefox/*.*/extensions/*.xpi r,
   owner @{HOME}/.xsession-errors w,
 
-  owner "@{MOZ_HOMEDIR}/firefox/Crash Reports/" rw,
-  owner "@{MOZ_HOMEDIR}/firefox/Crash Reports/pending/" rw,
-  owner "@{MOZ_HOMEDIR}/firefox/Crash Reports/pending/@{hex}.{dmp,extra}" rw,
+  owner "@{firefox_config_dirs}/firefox/Crash Reports/" rw,
+  owner "@{firefox_config_dirs}/firefox/Crash Reports/pending/" rw,
+  owner "@{firefox_config_dirs}/firefox/Crash Reports/pending/@{hex}.{dmp,extra}" rw,
+  owner @{firefox_config_dirs}/*.*/extensions/*.xpi r,
+  owner @{firefox_config_dirs}/*.*/minidumps/ rw,
+  owner @{firefox_config_dirs}/*.*/minidumps/@{uuid}.{dmp,extra} rw,
 
-  owner @{MOZ_HOMEDIR}/firefox/*.*/minidumps/ rw,
-  owner @{MOZ_HOMEDIR}/firefox/*.*/minidumps/@{uuid}.{dmp,extra} rw,
-
-  owner @{user_cache_dirs}/mozilla/firefox/*.*/startupCache/*Cache* r,
+  owner @{firefox_cache_dirs}/firefox/*.*/startupCache/*Cache* r,
 
   owner /tmp/@{hex}.{dmp,extra} rw,
   owner /tmp/firefox/.parentlock w,
