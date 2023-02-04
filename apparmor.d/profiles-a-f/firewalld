@@ -1,0 +1,45 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}{s,}bin/firewalld
+profile firewalld @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+
+  capability net_admin,
+  capability net_raw,
+
+  network inet raw,
+  network inet6 raw,
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  /{usr/,}{s,}bin/ r,
+  /{usr/,}{s,}bin/kmod                  rPx,
+  /{usr/,}{s,}bin/xtables-legacy-multi  rix,
+  /{usr/,}bin/alts                      rix,
+
+  /usr/share/libalternatives/ r,
+  /usr/share/libalternatives/ip{,4,6}tables*/{,*} r,
+
+  /etc/firewalld/{,**} r,
+  /etc/iproute2/group r,
+  /etc/iproute2/rt_realms r,
+
+  /var/log/firewalld rw,
+
+  @{run}/firewalld/{,*} rw,
+  @{run}/xtables.lock rwk,
+
+        @{PROC}/sys/kernel/modprobe r,
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/mounts r,
+
+  include if exists <local/firewalld>
+}
