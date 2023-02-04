@@ -20,12 +20,15 @@ profile plymouthd @{exec_path} {
 
   signal (send) peer=unconfined,
 
+  ptrace (read) peer=plymouth,
+
   unix type=stream addr="@/org/freedesktop/plymouthd",
   unix type=stream peer=(addr="@/org/freedesktop/plymouthd"),
 
   @{exec_path} mr,
 
   /usr/share/plymouth/{,**} r,
+  /usr/share/pixmaps/distribution-logos/* r,
 
   /etc/default/keyboard r,
   /etc/plymouth/plymouthd.conf r,
@@ -43,13 +46,17 @@ profile plymouthd @{exec_path} {
   @{sys}/class/ r,
   @{sys}/class/drm/ r,
   @{sys}/class/graphics/ r,
+  @{sys}/devices/pci[0-9]*/**/{,uevent,vendor.device} r,
   @{sys}/devices/pci[0-9]*/**/{,uevent} r,
   @{sys}/devices/virtual/graphics/fbcon/uevent r,
   @{sys}/devices/virtual/tty/console/active r,
   @{sys}/firmware/acpi/bgrt/{,*} r,
   @{sys}/firmware/efi/efivars/SecureBoot-@{uuid} r,
 
-  @{PROC}/cmdline r,
+        @{PROC}/cmdline r,
+        @{PROC}/1/cmdline r,
+  owner @{PROC}/@{pid}/cmdline r,
+  owner @{PROC}/@{pid}/stat r,
 
   /dev/ptmx rw,
   /dev/tty[0-9]* rw,
