@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2019-2021 Mikhail Morfikov
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -9,17 +10,17 @@ include <tunables/global>
 @{exec_path} = /{usr/,}bin/reportbug
 profile reportbug @{exec_path} {
   include <abstractions/base>
-  include <abstractions/dconf-write>
-  include <abstractions/wayland>
+  include <abstractions/apt-common>
   include <abstractions/consoles>
-  include <abstractions/fonts>
+  include <abstractions/dconf-write>
+  include <abstractions/enchant>
   include <abstractions/fontconfig-cache-read>
+  include <abstractions/fonts>
   include <abstractions/freedesktop.org>
   include <abstractions/gtk>
   include <abstractions/nameservice-strict>
-  include <abstractions/enchant>
   include <abstractions/python>
-  include <abstractions/apt-common>
+  include <abstractions/wayland>
 
   network inet dgram,
   network inet6 dgram,
@@ -28,80 +29,66 @@ profile reportbug @{exec_path} {
   network netlink raw,
 
   @{exec_path} r,
-  /{usr/,}bin/python3.[0-9]* r,
-
-  /usr/share/reportbug/handle_bugscript rix,
 
   /{usr/,}bin/ r,
-  /{usr/,}{s,}bin/ldconfig        rix,
-  /{usr/,}bin/{,ba,da}sh       rix,
-  /{usr/,}bin/stty             rix,
-  /{usr/,}bin/readlink         rix,
-  /{usr/,}bin/locale           rix,
-  /{usr/,}bin/aa-enabled       rix,
-  /{usr/,}{s,}bin/selinuxenabled  rix,
-  /{usr/,}bin/md5sum           rix,
+  /{usr/,}bin/python3.[0-9]* r,
 
+  /{usr/,}{s,}bin/ldconfig     rix,
+  /{usr/,}{s,}bin/selinuxenabled  rix,
+  /{usr/,}bin/{,ba,da}sh       rix,
+  /{usr/,}bin/aa-enabled       rix,
+  /{usr/,}bin/locale           rix,
+  /{usr/,}bin/md5sum           rix,
+  /{usr/,}bin/readlink         rix,
+  /{usr/,}bin/stty             rix,
+  /usr/share/reportbug/handle_bugscript rix,
+
+  /{usr/,}{s,}bin/exim4        rPx,
+  /{usr/,}bin/apt-cache        rPx,
   /{usr/,}bin/debconf-show     rPx,
   /{usr/,}bin/debsums          rPx,
   /{usr/,}bin/dlocate          rPx,
-  /{usr/,}bin/apt-cache        rPx,
-  # Do not strip env to avoid errors like the following:
-  #  ERROR: ld.so: object 'libfakeroot-sysv.so' from LD_PRELOAD cannot be preloaded (cannot open
-  #  shared object file): ignored.
-  /{usr/,}bin/dpkg-query       rpx,
-  #
-  /{usr/,}{s,}bin/exim4           rPx,
-
-  /{usr/,}bin/lsb_release      rPx -> lsb_release,
   /{usr/,}bin/dpkg             rPx -> child-dpkg,
-  /{usr/,}bin/systemctl        rPx -> child-systemctl,
-  /{usr/,}bin/pager            rPx -> child-pager,
+  /{usr/,}bin/dpkg-query       rpx,
   /{usr/,}bin/less             rPx -> child-pager,
+  /{usr/,}bin/lsb_release      rPx -> lsb_release,
   /{usr/,}bin/more             rPx -> child-pager,
+  /{usr/,}bin/pager            rPx -> child-pager,
+  /{usr/,}bin/systemctl        rPx -> child-systemctl,
+  /{usr/,}lib/firefox/firefox rPUx,  # App allowed to open
+  /usr/share/bug/*            rPUx,
 
-  /{usr/,}bin/xdg-open         rCx -> open,
-  /{usr/,}bin/run-parts        rCx -> run-parts,
   /{usr/,}bin/gpg{,2}          rCx -> gpg,
-
-  # For sending additional information
-  /etc/** r,
-
-  /etc/reportbug.conf r,
-  owner @{HOME}/.reportbugrc{,~} rw,
-
-  # For shell pwd
-  owner @{HOME}/ r,
-
-  # Think what to do with it (#FIXME#)
-  /usr/share/bug/*/{control,presubj} r,
-  /usr/share/bug/* rPUx,
-
-  /usr/share/glib-2.0/schemas/gschemas.compiled r,
-  /usr/share/X11/xkb/** r,
+  /{usr/,}bin/run-parts        rCx -> run-parts,
+  /{usr/,}bin/xdg-open         rCx -> open,
 
   /{usr/,}lib/python3/dist-packages/pylocales/locales.db rk,
 
+  /usr/share/bug/*/{control,presubj} r,
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+  /usr/share/X11/xkb/** r,
+
+  /etc/** r,
+  /etc/reportbug.conf r,
+
+  owner @{HOME}/ r,  # For shell pwd
+  owner @{HOME}/.reportbugrc{,~} rw,
+  owner @{HOME}/draftbugreports/ r,
+  owner @{HOME}/draftbugreports/reportbug-* rw,
+
         @{PROC}/1/cgroup r,
-  owner @{PROC}/@{pid}/cgroup r,
-  owner @{PROC}/@{pid}/mounts r,
-  owner @{PROC}/@{pid}/fd/ r,
         @{PROC}/sys/kernel/tainted r,
+  owner @{PROC}/@{pid}/cgroup r,
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/mounts r,
+
+  owner /tmp/* rw,
+  owner /tmp/reportbug-*-[0-9]*-@{pid}-* rw,
+  owner /var/tmp/*.bug{,~} rw,
 
   @{sys}/module/apparmor/parameters/enabled r,
 
   /dev/ptmx rw,
-
-  owner     /tmp/reportbug-*-[0-9]*-@{pid}-* rw,
-  owner     /tmp/* rw,
-  owner /var/tmp/*.bug{,~} rw,
-
-  owner @{HOME}/draftbugreports/ r,
-  owner @{HOME}/draftbugreports/reportbug-* rw,
-
-  # Allowed apps to open
-  /{usr/,}lib/firefox/firefox rPUx,
-
 
   profile run-parts {
     include <abstractions/base>

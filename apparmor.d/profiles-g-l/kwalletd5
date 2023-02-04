@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2018-2021 Mikhail Morfikov
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -9,56 +10,52 @@ include <tunables/global>
 @{exec_path} = /{usr/,}bin/kwalletd5
 profile kwalletd5 @{exec_path} {
   include <abstractions/base>
+  include <abstractions/audio>
   include <abstractions/consoles>
-  include <abstractions/X>
-  include <abstractions/gtk>
-  include <abstractions/fonts>
+  include <abstractions/dri-enumerate>
   include <abstractions/fontconfig-cache-read>
+  include <abstractions/fonts>
   include <abstractions/freedesktop.org>
+  include <abstractions/gtk>
   include <abstractions/mesa>
+  include <abstractions/nameservice-strict>
   include <abstractions/qt5-compose-cache-write>
   include <abstractions/wayland>
-  include <abstractions/dri-enumerate>
-  include <abstractions/nameservice-strict>
-  include <abstractions/audio>
+  include <abstractions/X>
 
   @{exec_path} mr,
 
+  /{usr/,}bin/gpgconf rCx -> gpg,
+  /{usr/,}bin/gpg{,2} rCx -> gpg,
+  /{usr/,}bin/gpgsm   rCx -> gpg,
+
   /{usr/,}lib/@{multiarch}/qt5/plugins/kf5/org.kde.kwindowsystem.platforms/KF5WindowSystemX11Plugin.so mr,
 
-  owner @{user_config_dirs}/kwalletrc r,
-
-  owner @{user_config_dirs}/kdeglobals r,
-  owner @{user_cache_dirs}/icon-cache.kcache rw,
-
-  owner @{user_share_dirs}/kwalletd/ rw,
-  owner @{user_share_dirs}/kwalletd/#[0-9]*[0-9] rw,
-  owner @{user_share_dirs}/kwalletd/*.salt rw,
-  owner @{user_share_dirs}/kwalletd/*.kwl rw,
-  owner @{user_share_dirs}/kwalletd/*.kwl.* rwl -> @{user_share_dirs}/kwalletd/#[0-9]*[0-9],
-
-  # To configure Qt5 settings (theme, font, icons, etc.) under DE/WM without Qt integration
-  owner @{user_config_dirs}/qt5ct/{,**} r,
+  /usr/share/hwdata/pnp.ids r,
   /usr/share/qt5ct/** r,
 
   /var/lib/dbus/machine-id r,
   /etc/machine-id r,
 
-  /dev/shm/#[0-9]*[0-9] rw,
+  owner @{user_cache_dirs}/icon-cache.kcache rw,
 
-  owner @{PROC}/@{pid}/cmdline r,
-  owner @{PROC}/@{pid}/fd/ r,
-        @{PROC}/sys/kernel/core_pattern r,
+  owner @{user_config_dirs}/kdeglobals r,
+  owner @{user_config_dirs}/kwalletrc r,
+  owner @{user_config_dirs}/qt5ct/{,**} r,
+
+  owner @{user_share_dirs}/kwalletd/ rw,
+  owner @{user_share_dirs}/kwalletd/*.kwl rw,
+  owner @{user_share_dirs}/kwalletd/*.kwl.* rwl -> @{user_share_dirs}/kwalletd/#[0-9]*[0-9],
+  owner @{user_share_dirs}/kwalletd/*.salt rw,
+  owner @{user_share_dirs}/kwalletd/#[0-9]*[0-9] rw,
 
   owner /tmp/kwalletd5.* rw,
 
-  /usr/share/hwdata/pnp.ids r,
+        @{PROC}/sys/kernel/core_pattern r,
+  owner @{PROC}/@{pid}/cmdline r,
+  owner @{PROC}/@{pid}/fd/ r,
 
-  # For GPG encrypted wallets
-  /{usr/,}bin/gpgconf rCx -> gpg,
-  /{usr/,}bin/gpg{,2} rCx -> gpg,
-  /{usr/,}bin/gpgsm   rCx -> gpg,
-
+  /dev/shm/#[0-9]*[0-9] rw,
 
   profile gpg {
     include <abstractions/base>

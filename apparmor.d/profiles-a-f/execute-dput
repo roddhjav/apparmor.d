@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2019-2021 Mikhail Morfikov
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -13,29 +14,27 @@ profile execute-dput @{exec_path} flags=(complain) {
   include <abstractions/nameservice-strict>
 
   @{exec_path} r,
+
   /{usr/,}bin/python3.[0-9]* r,
 
   /{usr/,}bin/{,ba,da}sh rix,
-
   /{usr/,}bin/dpkg       rPx -> child-dpkg,
-
-  /{usr/,}bin/gpgconf    rCx -> gpg,
   /{usr/,}bin/gpg{,2}    rCx -> gpg,
+  /{usr/,}bin/gpgconf    rCx -> gpg,
   /{usr/,}bin/gpgsm      rCx -> gpg,
 
   /usr/share/dput/{,**} r,
 
   /etc/dput.cf r,
+
   owner @{HOME}/.dput.cf r,
 
-  owner @{PROC}/@{pid}/fd/ r,
-
-  # sources dir
   owner @{user_build_dirs}/**.changes r,
   owner @{user_build_dirs}/**.dsc r,
   owner @{user_build_dirs}/**.buildinfo r,
   owner @{user_build_dirs}/**.tar.xz r,
 
+  owner @{PROC}/@{pid}/fd/ r,
 
   profile gpg {
     include <abstractions/base>
