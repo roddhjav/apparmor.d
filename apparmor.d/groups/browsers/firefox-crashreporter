@@ -7,9 +7,12 @@ abi <abi/3.0>,
 
 include <tunables/global>
 
-@{MOZ_HOMEDIR} = @{HOME}/.mozilla
+@{firefox_name} = firefox{,-esr}
+@{firefox_lib_dirs} = /{usr/,}lib{,32,64}/@{firefox_name}/ /opt/@{firefox_name}/
+@{firefox_config_dirs} = @{HOME}/.mozilla/
+@{firefox_cache_dirs} = @{user_cache_dirs}/mozilla/
 
-@{exec_path} = /{usr/,}lib/firefox/crashreporter
+@{exec_path} = @{firefox_lib_dirs}/crashreporter
 profile firefox-crashreporter @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/dconf-write>
@@ -30,26 +33,19 @@ profile firefox-crashreporter @{exec_path} flags=(attach_disconnected) {
 
   @{exec_path} mr,
 
-  /{usr/,}lib/firefox/minidump-analyzer rPx,
+  @{firefox_lib_dirs}/minidump-analyzer rPx,
 
   /{usr/,}bin/mv rix,
 
   /usr/share/glib-2.0/schemas/gschemas.compiled r,
   /usr/share/X11/xkb/** r,
 
-  owner "@{MOZ_HOMEDIR}/firefox/Crash Reports/{,**}" rw,
-  owner "@{MOZ_HOMEDIR}/firefox/Crash Reports/crashreporter.ini" rw,
-  owner "@{MOZ_HOMEDIR}/firefox/Crash Reports/events/@{hex}" rw,
-  owner "@{MOZ_HOMEDIR}/firefox/Crash Reports/pending/@{hex}.{dmp,extra}" rw,
-  owner "@{MOZ_HOMEDIR}/firefox/Crash Reports/submit.log" rw,
+  owner "@{firefox_config_dirs}/firefox/Crash Reports/{,**}" rw,
+  owner @{firefox_config_dirs}/*.*/crashes/{,**} rw,
+  owner @{firefox_config_dirs}/*.*/extensions/*.xpi r,
+  owner @{firefox_config_dirs}/*.*/minidumps/{,**} rw,
 
-  owner @{MOZ_HOMEDIR}/firefox/*.*/crashes/{,**} rw,
-  owner @{MOZ_HOMEDIR}/firefox/*.*/crashes/events/@{uuid} rw,
-  owner @{MOZ_HOMEDIR}/firefox/*.*/extensions/*.xpi r,
-  owner @{MOZ_HOMEDIR}/firefox/*.*/minidumps/{,**} rw,
-  owner @{MOZ_HOMEDIR}/firefox/*.*/minidumps/@{uuid}.{dmp,extra} rw,
-
-  owner @{user_cache_dirs}/mozilla/firefox/*.*/** r,
+  owner @{firefox_cache_dirs}/firefox/*.*/** r,
 
         /tmp/ r,
     /var/tmp/ r,
