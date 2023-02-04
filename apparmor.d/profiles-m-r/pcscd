@@ -6,19 +6,26 @@ abi <abi/3.0>,
 
 include <tunables/global>
 
-@{exec_path} = /{usr/,}bin/pcscd
+@{exec_path} = /{usr/,}{s,}bin/pcscd
 profile pcscd @{exec_path} {
   include <abstractions/base>
   include <abstractions/devices-usb>
 
   network netlink raw,
 
+  ptrace (read) peer=rngd,
+  ptrace (read) peer=pkcs11-register,
+
   @{exec_path} mr,
 
   /etc/libccid_Info.plist r,
-  /etc/reader.conf.d/{,libccidtwin} r,
+  /etc/reader.conf.d/ r,
+  /etc/reader.conf.d/libccidtwin r,
+  /etc/reader.conf.d/reader.conf r,
 
   owner @{run}/pcscd/{,pcscd.pid} rw,
+
+  owner @{PROC}/@{pid}/stat r,
 
   include if exists <local/pcscd>
 }

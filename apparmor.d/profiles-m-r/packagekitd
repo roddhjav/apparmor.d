@@ -88,17 +88,22 @@ profile packagekitd @{exec_path} flags=(attach_disconnected) {
   /{usr/,}bin/{,ba,da}sh     rix,
   /{usr/,}bin/echo           rix,
   /{usr/,}bin/gdbus          rix,
+  /{usr/,}bin/gzip           rix,
   /{usr/,}bin/ischroot       rix,
+  /{usr/,}bin/repo2solv      rix,
+  /{usr/,}bin/tar            rix,
   /{usr/,}bin/test           rix,
   /{usr/,}bin/touch          rix,
 
   /{usr/,}bin/appstreamcli                rPx,
   /{usr/,}bin/dpkg                        rPx -> child-dpkg,
   /{usr/,}bin/glib-compile-schemas        rPx,
+  /{usr/,}bin/systemd-inhibit             rPx,
   /{usr/,}bin/update-desktop-database     rPx,
   /{usr/,}lib/apt/methods/*               rPx,
   /{usr/,}lib/cnf-update-db               rPx,
   /{usr/,}lib/update-notifier/update-motd-updates-available  rPx,
+  /{usr/,}lib/zypp/plugins/appdata/InstallAppdata rPUx, # TODO: write the profile
   /usr/share/libalpm/scripts/*            rPx,
 
   # Install/update packages
@@ -113,11 +118,16 @@ profile packagekitd @{exec_path} flags=(attach_disconnected) {
 
   owner /tmp/packagekit* rw,
 
+        @{run}/zypp.pid rwk, # only: opensuse
         @{run}/systemd/inhibit/*.ref rw,
   owner @{run}/systemd/users/@{uid} r,
 
+  @{sys}/**/ r,
+  @{sys}/devices/**/modalias r,
+
         @{PROC}/@{pids}/cgroup r,
         @{PROC}/@{pids}/mountinfo r,
+        @{PROC}/sys/kernel/random/uuid r,
   owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/mounts r,
 
@@ -131,11 +141,21 @@ profile packagekitd @{exec_path} flags=(attach_disconnected) {
     /{usr/,}bin/gpgconf  mr,
     /{usr/,}bin/gpgsm    mr,
 
+    /{usr/,}bin/gpg-agent rix,
+    /{usr/,}bin/scdaemon  rix,
+
+    /etc/gcrypt/hwf.deny r,
 
     @{HOME}/@{XDG_GPG_DIR}/*.conf r,
 
-    owner /etc/pacman.d/gnupg/ r,
-    owner /etc/pacman.d/gnupg/** rwkl -> /tmp/ostree-gpg-*/**,
+    owner /etc/pacman.d/gnupg/ r, # only: arch
+    owner /etc/pacman.d/gnupg/** rwkl -> /tmp/pacman.d/gnupg/**,
+
+    owner /var/tmp/zypp.*/zypp-trusted-*/ r, # only: opensuse
+    owner /var/tmp/zypp.*/zypp-trusted-*/** rwkl -> /var/tmp/zypp.*/zypp-trusted-*/**,
+
+    owner @{PROC}/@{pid}/fd/ r,
+    owner @{PROC}/@{pid}/task/@{tid}/comm rw,
 
   }
 
