@@ -29,11 +29,10 @@ most Linux based applications and processes.
 
 - Target both desktops and servers
 - Support all distributions that support AppArmor:
-    * Currently:
-        - Archlinux
-        - Ubuntu 22.04
-        - Debian 11
-    * Not (yet) tested on openSUSE
+    * Archlinux
+    * Ubuntu 22.04
+    * Debian 11
+    * OpenSUSE Tumbleweed
 - Support all major desktop environments:
     * Currently only Gnome
 - Fully tested (Work in progress)

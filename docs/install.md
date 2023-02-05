@@ -26,6 +26,7 @@ Also, please note wayland has better support than xorg.
 **Build dependencies**
 
 * Go
+* lsb-release
 * Rsync
 
 ## :material-arch: Archlinux
@@ -64,6 +65,21 @@ cd apparmor.d
 dpkg-buildpackage -b -d --no-sign
 sudo dpkg -i ../apparmor.d_*_all.deb
 ```
+
+
+## :simple-suse: OpenSUSE
+
+Build and install from source:
+```sh
+./configure --complain
+make
+sudo make install
+sudo systemctl restart apparmor
+```
+
+!!! note
+
+    RPM package is still a work in progress. Help is welcome.
 
 
 ## Partial install
