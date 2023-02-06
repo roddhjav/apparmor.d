@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Configure the apparmor.d package
-# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2021-2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 set -eu
@@ -23,9 +23,11 @@ _displace_files() {
 }
 
 # Process management function to run a function over all the profile files
-# $1 The function to run.
-_process() {
-	local len nprof nproc fct="$1"
+# $1 The function to run
+# $2 Usage message to print
+process() {
+	local len nprof nproc fct="$1" msg="$2"
+	_msg "$msg"
   	mapfile -t files < <(find "${ROOT:?}/apparmor.d" -type f)
 	len="${#files[@]}"
 	nproc=$(nproc)
@@ -181,7 +183,7 @@ _resolve_attachments() {
 	echo "$entrypoint"
 }
 
-# Internal userspace process
+# Remove variables in profile attachment to bypass userspace tools restriction
 _userspace() {
 	local start="$1" end="$2"; shift 2
 	files=("$@")
@@ -198,13 +200,7 @@ _userspace() {
 	done
 }
 
-# Remove variables in profile attachment to bypass userspace tools restriction
-userspace() {
-	_msg "Bypass userspace tools restriction"
-	_process _userspace
-}
-
-# Internal complain process
+# Set complain flag on all profiles
 _complain() {
 	local start="$1" end="$2"; shift 2
 	files=("$@")
@@ -222,24 +218,19 @@ _complain() {
 	done
 }
 
-# Set complain flag on all profile
-complain() {
-	_msg "Set complain flag on all profiles"
-	_process _complain
-}
-
 # Set AppArmor for full system policy
 # See https://gitlab.com/apparmor/apparmor/-/wikis/FullSystemPolicy
 full() {
+	_msg "Configure AppArmor for full system policy"
 	cp -a apparmor.d/groups/_full/init "$ROOT/apparmor.d/"
 	cp -a apparmor.d/groups/_full/systemd "$ROOT/apparmor.d/"
 	case "$DISTRIBUTION" in
 		arch|endeavouros|cachyos|manjarolinux)
-			cp -r root/usr/lib/initcpio root/usr/lib/systemd/ "$ROOT/root/"
+			cp -r root/usr/lib/initcpio root/usr/lib/systemd/ "$ROOT/root/usr/lib/"
 			;;
 
 		debian|ubuntu|whonix)
-			cp -r root/etc/initramfs-tools "$ROOT/root/"
+			cp -r root/usr/share/initramfs-tools "$ROOT/root/usr/share/"
 			;;
 
 		*) _die "$DISTRIBUTION is not a supported distribution." ;;
@@ -280,9 +271,9 @@ main() {
 	ignore || _die "removing ignored profiles"
 	synchronise || _die "merging profiles"
 	configure || _die "configuring distribution"
-	userspace || _die "bypassing userspace"
+	process _userspace 'Bypass userspace tools restriction' || _die "bypassing userspace"
 	flags || _die "settings flags"
-	[[ "$COMPLAIN" == 1 ]] && complain
+	[[ "$COMPLAIN" == 1 ]] && process _complain 'Set complain flag on all profiles'
 	[[ "$FULL" == 1 ]] && full
 	return 0
 }
