@@ -1,0 +1,26 @@
+abi <abi/3.0>,
+
+include <tunables/global>
+
+# vim:syntax=apparmor
+# AppArmor policy for ipfs
+# Copyright (C) 2023 Andy Ramos
+# SPDX-License-Identifier: GPL-3.0-only
+
+profile ipfs /usr/local/bin/ipfs {
+  include <abstractions/base>
+  include <abstractions/nameservice>
+  include <abstractions/ssl_certs>
+
+  /dev/tty r,
+  /etc/mime.types r,
+  @{PROC}/sys/kernel/hostname r,
+  @{PROC}/sys/net/core/somaxconn r,
+  @{run}/systemd/resolve/stub-resolv.conf r,
+  @{sys}/kernel/mm/transparent_hugepage/hpage_pmd_size r,
+  owner /usr/local/bin/ipfs mr,
+  owner @{HOME}/.ipfs/{,**} rwk,
+  /srv/repos/{,**} r,
+  /srv/torrent/{,**} r,
+  /usr/share/mime/globs2 r,
+}
