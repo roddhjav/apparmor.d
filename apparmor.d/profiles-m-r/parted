@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2019-2021 Mikhail Morfikov
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -33,21 +34,17 @@ profile parted @{exec_path} {
 
   /{usr/,}{s,}bin/dmidecode rPx,
 
-  owner @{PROC}/@{pid}/mounts r,
-        @{PROC}/swaps r,
-        @{PROC}/devices r,
-
-  /dev/mapper/ r,
-  /dev/mapper/control rw,
-
   /etc/inputrc r,
 
   # Image files
-  owner @{HOME}/**.{iso,img,bin,mdf,nrg} rwk,
-  owner @{MOUNTS}/*/**.{iso,img,bin,mdf,nrg} rwk,
-  owner @{HOME}/**.{ISO,IMG,BIN,MDF,NRG} rwk,
-  owner @{MOUNTS}/*/**.{ISO,IMG,BIN,MDF,NRG} rwk,
+  owner @{user_img_dirs}/{,**} rwk,
 
+        @{PROC}/devices r,
+        @{PROC}/swaps r,
+  owner @{PROC}/@{pid}/mounts r,
+
+  /dev/mapper/ r,
+  /dev/mapper/control rw,
 
   profile udevadm {
     include <abstractions/base>
@@ -58,21 +55,18 @@ profile parted @{exec_path} {
 
     /etc/udev/udev.conf r,
 
-    owner @{PROC}/@{pid}/stat r,
-    owner @{PROC}/@{pid}/cgroup r,
-          @{PROC}/cmdline r,
-          @{PROC}/1/sched r,
-          @{PROC}/1/environ r,
           @{PROC}/1/cgroup r,
+          @{PROC}/1/environ r,
+          @{PROC}/1/sched r,
+          @{PROC}/cmdline r,
           @{PROC}/sys/kernel/osrelease r,
           @{PROC}/sys/kernel/random/boot_id r,
+    owner @{PROC}/@{pid}/cgroup r,
+    owner @{PROC}/@{pid}/stat r,
 
     # file_inherit
     include <abstractions/disks-write>  # lots of files in this abstraction get inherited
-    owner @{HOME}/**.{iso,img,bin,mdf,nrg} rwk,
-    owner @{MOUNTS}/**.{iso,img,bin,mdf,nrg} rwk,
-    owner @{HOME}/**.{ISO,IMG,BIN,MDF,NRG} rwk,
-    owner @{MOUNTS}/**.{ISO,IMG,BIN,MDF,NRG} rwk,
+    owner @{user_img_dirs}/{,**} rwk,
 
   }
 
