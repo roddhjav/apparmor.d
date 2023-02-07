@@ -11,10 +11,10 @@ include <tunables/global>
 @{exec_path} += @{libexec}/polkit-agent-helper-[0-9]
 profile polkit-agent-helper @{exec_path} {
   include <abstractions/base>
-  include <abstractions/dbus-strict>
   include <abstractions/authentication>
-  include <abstractions/nameservice-strict>
   include <abstractions/consoles>
+  include <abstractions/dbus-strict>
+  include <abstractions/nameservice-strict>
 
   capability audit_write,
   capability dac_override,
@@ -41,11 +41,14 @@ profile polkit-agent-helper @{exec_path} {
 
   @{exec_path} mr,
 
-  # file_inherit
-  owner /dev/tty[0-9]* rw,
   owner @{HOME}/.xsession-errors w,
 
   @{run}/faillock/[a-zA-z0-9]* rwk,
+
+        @{PROC}/1/cgroup r,
+  owner @{PROC}/@{pid}/cgroup r,
+
+  owner /dev/tty[0-9]* rw,
 
   include if exists <local/polkit-agent-helper>
 }
