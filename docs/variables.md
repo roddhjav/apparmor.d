@@ -23,6 +23,7 @@ title: Variables References
 | Torrents | `@{XDG_TORRENTS_DIR}` | `Torrents` |
 | Vm | `@{XDG_VM_DIR}` | `.vm`
 | Wallpapers | `@{XDG_WALLPAPERS_DIR}` | `@{XDG_PICTURES_DIR}/Wallpapers` |
+| Disk images | `@{XDG_IMG_DIR}` | `images` |
 
 ### Dotfiles
 
@@ -67,6 +68,7 @@ title: Variables References
 | Videos | `@{user_videos_dirs}` | `@{HOME}/@{XDG_VIDEOS_DIR} @{MOUNTS}/@{XDG_VIDEOS_DIR}` |
 | Vm | `@{user_vm_dirs}` | `@{HOME}/@{XDG_VM_DIR} @{MOUNTS}/@{XDG_VM_DIR}`
 | Password | `@{user_password_store_dirs}` | `@{HOME}/@{XDG_PASSWORD_STORE_DIR} @{MOUNTS}/@{XDG_PASSWORD_STORE_DIR}` |
+| Disk images | `@{user_img_dirs}` | `@{HOME}/@{XDG_IMG_DIR} @{MOUNTS}/@{XDG_IMG_DIR}` |
 
 
 ## System variables

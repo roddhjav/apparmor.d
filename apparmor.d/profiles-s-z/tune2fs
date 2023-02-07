@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2019-2021 Mikhail Morfikov
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -11,27 +12,24 @@ profile tune2fs @{exec_path} {
   include <abstractions/base>
   include <abstractions/disks-write>
   include <abstractions/nameservice-strict>
-  include <abstractions/user-download-strict>
   include <abstractions/private-files-strict>
+  include <abstractions/user-download-strict>
 
   network inet stream,
   network inet6 stream,
 
   @{exec_path} mr,
 
-  owner @{PROC}/@{pid}/mounts r,
-        @{PROC}/swaps r,
-
   /.ismount-test-file rw,
+
+  # Image files
+  owner @{user_img_dirs}/{,**} rw,
 
   owner @{run}/blkid/blkid.tab{,-*} rw,
   owner @{run}/blkid/blkid.tab.old rwl -> @{run}/blkid/blkid.tab,
 
-  # Image files
-  @{HOME}/**.{iso,img,bin,mdf,nrg} rw,
-  @{MOUNTS}/**.{iso,img,bin,mdf,nrg} rw,
-  @{HOME}/**.{ISO,IMG,BIN,MDF,NRG} rw,
-  @{MOUNTS}/**.{ISO,IMG,BIN,MDF,NRG} rw,
+        @{PROC}/swaps r,
+  owner @{PROC}/@{pid}/mounts r,
 
   include if exists <local/tune2fs>
 }

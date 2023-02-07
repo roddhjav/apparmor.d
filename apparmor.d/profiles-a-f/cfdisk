@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2019-2021 Mikhail Morfikov
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -15,23 +16,20 @@ profile cfdisk @{exec_path} {
 
   @{exec_path} mr,
 
-  owner @{PROC}/@{pid}/mountinfo r,
-        @{PROC}/partitions r,
-
   /etc/fstab r,
-
-  owner @{run}/blkid/blkid.tab{,-*} rw,
-  owner @{run}/blkid/blkid.tab.old rwl -> @{run}/blkid/blkid.tab,
-
-  # A place for file images
-  owner @{HOME}/**.{iso,img,bin,mdf,nrg} rwk,
-  owner @{MOUNTS}/**.{iso,img,bin,mdf,nrg} rwk,
-  owner @{HOME}/**.{ISO,IMG,BIN,MDF,NRG} rwk,
-  owner @{MOUNTS}/**.{ISO,IMG,BIN,MDF,NRG} rwk,
 
   # A place for backups
   owner @{HOME}/**.{bak,back} rwk,
   owner @{MOUNTS}/**.{bak,back} rwk,
+
+  # A place for file images
+  owner @{user_img_dirs}/{,**} rwk,
+
+  owner @{run}/blkid/blkid.tab{,-*} rw,
+  owner @{run}/blkid/blkid.tab.old rwl -> @{run}/blkid/blkid.tab,
+
+        @{PROC}/partitions r,
+  owner @{PROC}/@{pid}/mountinfo r,
 
   include if exists <local/cfdisk>
 }

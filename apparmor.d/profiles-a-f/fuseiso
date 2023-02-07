@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2017-2021 Mikhail Morfikov
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -11,6 +12,11 @@ profile fuseiso @{exec_path} {
   include <abstractions/base>
   include <abstractions/nameservice-strict>
 
+  # Be able to mount ISO images
+  mount fstype=fuse.fuseiso -> @{HOME}/*/,
+  mount fstype=fuse.fuseiso -> @{HOME}/*/*/,
+  mount fstype=fuse.fuseiso -> @{HOME}/.cache/**/,
+
   @{exec_path} mr,
 
   /{usr/,}bin/fusermount{,3} rCx -> fusermount,
@@ -20,22 +26,13 @@ profile fuseiso @{exec_path} {
   owner @{HOME}/*/*/ rw,
   owner @{HOME}/.cache/**/ r,
 
-  # Be able to mount ISO images
-  mount fstype=fuse.fuseiso -> @{HOME}/*/,
-  mount fstype=fuse.fuseiso -> @{HOME}/*/*/,
-  mount fstype=fuse.fuseiso -> @{HOME}/.cache/**/,
-
-  # Image files to be mounted
-  owner @{HOME}/**.{iso,img,bin,mdf,nrg} rwk,
-  owner @{MOUNTS}/**.{iso,img,bin,mdf,nrg} rwk,
-  owner @{HOME}/**.{ISO,IMG,BIN,MDF,NRG} rwk,
-  owner @{MOUNTS}/**.{ISO,IMG,BIN,MDF,NRG} rwk,
-
   owner @{HOME}/.mtab.fuseiso rwk,
   owner @{HOME}/.mtab.fuseiso.new rw,
 
-  /dev/fuse rw,
+  # Image files to be mounted
+  owner @{user_img_dirs}/{,**} rwk,
 
+  /dev/fuse rw,
 
   profile fusermount {
     include <abstractions/base>
@@ -46,23 +43,20 @@ profile fuseiso @{exec_path} {
 
     capability dac_read_search,
 
-    /{usr/,}bin/fusermount{,3} mr,
-
     mount fstype={fuse,fuse.fuseiso} -> @{HOME}/*/,
     mount fstype={fuse,fuse.fuseiso} -> @{HOME}/*/*/,
     mount fstype={fuse,fuse.fuseiso} -> @{HOME}/.cache/**/,
 
-    /dev/fuse rw,
+    /{usr/,}bin/fusermount{,3} mr,
 
     /etc/fuse.conf r,
 
+    # Image files to be mounted
+    owner @{user_img_dirs}/{,**} r,
+
     @{PROC}/@{pid}/mounts r,
 
-    # Image files to be mounted
-    owner @{HOME}/**.{iso,img,bin,mdf,nrg} r,
-    owner @{MOUNTS}/**.{iso,img,bin,mdf,nrg} r,
-    owner @{HOME}/**.{ISO,IMG,BIN,MDF,NRG} r,
-    owner @{MOUNTS}/**.{ISO,IMG,BIN,MDF,NRG} r,
+    /dev/fuse rw,
 
   }
 
