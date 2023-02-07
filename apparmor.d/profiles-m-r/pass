@@ -83,15 +83,17 @@ profile pass @{exec_path} {
     owner @{HOME}/.fzf/plugin/fzf.vim r,
     owner @{HOME}/.viminfo{,.tmp} rw,
 
-    owner @{user_password_store_dirs}/ r,
-    owner @{user_projects_dirs}/**/*-store/ r,
-    owner @{user_config_dirs}/*-store/ r,
+    owner @{user_password_store_dirs}/{,**/} r,
+    owner @{user_projects_dirs}/**/*-store/{,**/} r,
+    owner @{user_config_dirs}/*-store/{,**/} r,
 
     owner @{user_cache_dirs}/vim/{,**} rw,
     owner @{user_config_dirs}/vim/{,**} rw,
     /dev/shm/pass.*/{,*} rw,
 
     deny owner @{HOME}/ r,
+
+    include if exists <local/pass_editor>
   }
 
   profile git {
@@ -109,6 +111,10 @@ profile pass @{exec_path} {
     /{usr/,}bin/git*          mrix,
     @{libexec}/git-core/git*  mrix,
 
+    /{usr/,}bin/pager         rPx -> child-pager,
+    /{usr/,}bin/less          rPx -> child-pager,
+    /{usr/,}bin/more          rPx -> child-pager,
+
     /{usr/,}bin/gpg{2,}  rUx,
 
     /usr/share/git-core/{,**} r,
@@ -123,6 +129,9 @@ profile pass @{exec_path} {
     owner @{user_config_dirs}/*-store/   rw,
     owner @{user_config_dirs}/*-store/** rwkl -> @{user_config_dirs}/*-store/**,
 
+    owner /tmp/.git_vtag_tmp* rw,              # For git log --show-signature
+
+    include if exists <local/pass_git>
   }
 
   include if exists <usr/pass.d>
