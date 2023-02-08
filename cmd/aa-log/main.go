@@ -189,9 +189,13 @@ func NewApparmorLogs(file io.Reader, profile string) AppArmorLogs {
 			}
 		}
 		aa["profile"] = decodeHex(aa["profile"])
-		if name, ok := aa["name"]; ok {
-			aa["name"] = decodeHex(name)
+		toDecode := []string{"profile", "name", "comm"}
+		for _, name := range toDecode {
+			if value, ok := aa[name]; ok {
+				aa[name] = decodeHex(value)
+			}
 		}
+
 		aaLogs = append(aaLogs, aa)
 	}
 
@@ -285,7 +289,7 @@ func init() {
 func main() {
 	flag.Parse()
 	if help {
-		fmt.Printf(`aa-log [-h] [-d] [-f file] [profile]
+		fmt.Printf(`aa-log [-h] [-s] [-f file] [profile]
 
   Review AppArmor generated messages in a colorful way.
   It can be given an optional profile name to filter the output with.
