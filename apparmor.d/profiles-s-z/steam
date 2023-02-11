@@ -60,7 +60,7 @@ profile steam @{exec_path} {
   /{usr/,}bin/ldd                    rix,
   /{usr/,}bin/ln                     rix,
   /{usr/,}bin/lsb_release            rPx -> lsb_release,
-  /{usr/,}bin/lspci                  rPx,
+  /{usr/,}bin/lspci                  rCx -> lspci,
   /{usr/,}bin/mkdir                  rix,
   /{usr/,}bin/mv                     rix,
   /{usr/,}bin/readlink               rix,
@@ -226,6 +226,25 @@ profile steam @{exec_path} {
 
   audit deny /**.steam_exec_test.sh rw,
   deny owner @{user_share_dirs}/gvfs-metadata/{,*} r,
+
+  profile lspci {
+    include <abstractions/base>
+    include <abstractions/consoles>
+    include <abstractions/nameservice-strict>
+
+    /{usr/,}bin/lspci mr,
+
+    owner @{HOME}/.steam/steam.pipe r,
+
+    @{sys}/bus/pci/devices/ r,
+    @{sys}/bus/pci/slots/ r,
+    @{sys}/bus/pci/slots/[0-9]*/address r,
+    @{sys}/devices/pci[0-9]*/** r,
+  
+    owner /dev/shm/ValveIPCSHM_@{uid} rw,
+
+    include if exists <local/steam_lspci>
+  }
 
   include if exists <local/steam>
 }
