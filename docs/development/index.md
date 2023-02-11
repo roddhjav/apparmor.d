@@ -95,6 +95,6 @@ profile foo @{exec_path} {
 [git]: https://help.github.com/articles/set-up-git/
 [project]: https://github.com/roddhjav/apparmor.d
 
-[flags]: https://github.com/roddhjav/apparmor.d/blob/master/dists/flags/main.flags
-[profiles-a-f]: https://github.com/roddhjav/apparmor.d/blob/master/apparmor.d/profiles-a-f
-[groups]: https://github.com/roddhjav/apparmor.d/blob/master/apparmor.d/groups
+[flags]: https://github.com/roddhjav/apparmor.d/blob/main/dists/flags/main.flags
+[profiles-a-f]: https://github.com/roddhjav/apparmor.d/blob/main/apparmor.d/profiles-a-f
+[groups]: https://github.com/roddhjav/apparmor.d/blob/main/apparmor.d/groups

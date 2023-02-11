@@ -33,21 +33,21 @@ follow the guidelines presented here.
 
 The rules in the profile should be sorted in the rule ***block*** as follows:
 
-- `include`
-- `set rlimit`
-- `capability`
-- `network`
-- `mount`
-- `remount`
-- `umount`
-- `pivot_root`
-- `change_profile`
-- `signal`
-- `ptrace`
-- `unix`
-- `dbus`
-- `file`
-- local include
+1. `include`
+1. `set rlimit`
+1. `capability`
+1. `network`
+1. `mount`
+1. `remount`
+1. `umount`
+1. `pivot_root`
+1. `change_profile`
+1. `signal`
+1. `ptrace`
+1. `unix`
+1. `dbus`
+1. `file`
+1. local include
 
 This rule order is taken from AppArmor with minor changes as we tend to:
 
@@ -58,20 +58,20 @@ This rule order is taken from AppArmor with minor changes as we tend to:
 
 The file block should be sorted as follow:
 
-- `@{exec_path} mr`, the entry point of the profile
-- The binaries and library required:
+1. `@{exec_path} mr`, the entry point of the profile
+1. The binaries and library required:
     - `/{usr/,}bin/`, `/{usr/,}lib/`, `/opt/`...
     - It is the only place where you can have `mr`, `rix`, `rPx`, `rUx`, `rPUX` rules.
-- The shared resources: `/usr/share`...
-- The system configuration: `/etc`...
-- The system data: `/var`...
-- The user data: `owner @{HOME}/`...
-- The user configuration, cache and in general all dotfiles
-- Temporary and runtime data: `/tmp/`, `@{run}/`, `/dev/shm/`...
-- Sys files: `@{sys}/`...
-- Proc files: `@{PROC}/`... 
-- Dev files: `/dev/`...
-- Deny rules: `deny`...
+1. The shared resources: `/usr/share`...
+1. The system configuration: `/etc`...
+1. The system data: `/var`...
+1. The user data: `owner @{HOME}/`...
+1. The user configuration, cache and in general all dotfiles
+1. Temporary and runtime data: `/tmp/`, `@{run}/`, `/dev/shm/`...
+1. Sys files: `@{sys}/`...
+1. Proc files: `@{PROC}/`... 
+1. Dev files: `/dev/`...
+1. Deny rules: `deny`...
 
 ### The dbus block
 

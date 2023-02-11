@@ -30,7 +30,7 @@ allow access of your home directory.
 This provides a basic protection against some packages (on the AUR) that may have
 rogue install script.
 
-[pacman]: https://github.com/roddhjav/apparmor.d/blob/master/apparmor.d/groups/pacman/pacman
+[pacman]: https://github.com/roddhjav/apparmor.d/blob/main/apparmor.d/groups/pacman/pacman
 
 
 ### Gnome can be very slow to start.
