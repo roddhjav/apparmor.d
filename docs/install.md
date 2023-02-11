@@ -84,14 +84,7 @@ sudo systemctl restart apparmor
 
 ## Partial install
 
-!!! warning
-
-    Partial installation is discouraged because profile dependencies are
-    not fetched. You may need to either switch desired `rPx` rules to `rPUx`
-    (fallback to unconfined) or install these related profiles.
-    (PR is welcome see [#77](https://github.com/roddhjav/apparmor.d/issues/77))
-
-For test purposes, you can install a specific profile with the following commands.
+For test purposes, you can install specific profiles with the following commands.
 Abstractions, tunables, and most of the OS dependent post-processing is managed.
 
 ```sh
@@ -99,6 +92,23 @@ Abstractions, tunables, and most of the OS dependent post-processing is managed.
 make
 sudo make profile-names...
 ```
+
+!!! warning
+
+    Partial installation is discouraged because profile dependencies are not fetched. To prevent some apparmor issues, the dependencies are automatically switched to unconfined (`rPx` -> `rPUx`). The installation process warns on the missing profiles so that you can easily install them if desired. (PR is welcome see [#77](https://github.com/roddhjav/apparmor.d/issues/77))
+
+    For instance, `sudo make pass` gives:
+    ```sh
+    Warning: profile dependencies fallback to unconfined.
+    /{usr/,}bin/wl-{copy,paste} rPx,
+    /{usr/,}bin/xclip           rPx,
+    /{usr/,}bin/python3.[0-9]* rPx -> pass-import,  # pass-import
+        /{usr/,}bin/pager         rPx -> child-pager,
+        /{usr/,}bin/less          rPx -> child-pager,
+        /{usr/,}bin/more          rPx -> child-pager,
+    '.build/apparmor.d/pass' -> '/etc/apparmor.d/pass'
+    ```
+    So, you can install the additional profiles `wl-copy`, `xclip`, `pass-import`, and `child-pager` if desired.
 
 [aur]: https://aur.archlinux.org/packages/apparmor.d-git
 [repo]: https://repo.pujol.io/
