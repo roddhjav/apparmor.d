@@ -91,8 +91,7 @@ To read the AppArmor log from `/var/log/audit/audit.log`:
 aa-log
 ```
 
-To optionally filter a given profile name: `aa-log <profile-name>` (zsh will
-autocomplete the profile name):
+To optionally filter a given profile name: `aa-log <profile-name>` (your shell will autocomplete the profile name):
 ```
 aa-log dnsmasq
 DENIED  dnsmasq open /proc/sys/kernel/osrelease comm=dnsmasq requested_mask=r denied_mask=r

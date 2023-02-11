@@ -14,4 +14,4 @@ the `--complain` option to the configure script. Then build the package as usual
 ```
 
 Do not worry, the profiles that are not considered stable are kept in complain mode.
-They can be tracked in the [`dists/flags`](https://github.com/roddhjav/apparmor.d/tree/master/dists/flags) directory.
+They can be tracked in the [`dists/flags`](https://github.com/roddhjav/apparmor.d/tree/main/dists/flags) directory.

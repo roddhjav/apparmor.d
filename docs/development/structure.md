@@ -42,7 +42,25 @@ our profile:
 
     [apparmor.d/apparmor.d/groups/apt/dpkg](https://github.com/roddhjav/apparmor.d/blob/accf5538bdfc1598f1cc1588a7118252884df50c/apparmor.d/groups/apt/dpkg#L123)
     ``` aa linenums="123"
-    profile diff { 
+    profile diff {
+      include <abstractions/base>
+      include <abstractions/consoles>
+
+      /{usr/,}bin/       r,
+      /{usr/,}bin/pager mr,
+      /{usr/,}bin/less  mr,
+      /{usr/,}bin/more  mr,
+      /{usr/,}bin/diff  mr,
+
+      owner @{HOME}/.lesshs* rw,
+
+      # Diff changed config files
+      /etc/** r,
+
+      # For shell pwd
+      /root/ r,
+
+    }
     ```
 
 * In `pass`, as it is a dependency of pass. Here `diff` inherits pass' profile 
@@ -102,7 +120,7 @@ the following note:
     intended to be used only via `"Px -> child-open"` exec transitions
     from other profiles. 
 
-[children]: https://github.com/roddhjav/apparmor.d/blob/master/apparmor.d/groups/children
+[children]: https://github.com/roddhjav/apparmor.d/blob/main/apparmor.d/groups/children
 
 Here is an overview of the current children profile:
 
@@ -170,4 +188,4 @@ or root) need to be present in these profiles.
 
 
 [apparmor-wiki]: https://gitlab.com/apparmor/apparmor/-/wikis/FullSystemPolicy
-[_full]: https://github.com/roddhjav/apparmor.d/blob/master/apparmor.d/groups/_full
+[_full]: https://github.com/roddhjav/apparmor.d/blob/main/apparmor.d/groups/_full
