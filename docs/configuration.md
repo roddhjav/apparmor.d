@@ -8,8 +8,8 @@ As there are a lot of rules, it is recommended to enable caching AppArmor profil
 In `/etc/apparmor/parser.conf`, add `write-cache` and `Optimize=compress-fast`.
 
 ```sh
-echo 'write-cache' | sudo tee /etc/apparmor/parser.conf
-echo 'Optimize=compress-fast' | sudo tee /etc/apparmor/parser.conf
+echo 'write-cache' | sudo tee -a /etc/apparmor/parser.conf
+echo 'Optimize=compress-fast' | sudo tee -a /etc/apparmor/parser.conf
 ```
 
 !!! info
