@@ -138,6 +138,26 @@ Here is an overview of the current children profile:
    of the time you will need more privilege than what this profile is giving you.
 
 
+## Browsers
+
+Chromium based browsers share a similar structure. Therefore, they share the same
+abstraction: [`abstractions/chromium`][chromium] that includes most of the profile content.
+
+This abstraction requires the following variables definied in the profile header:
+```sh
+@{chromium_name} = chromium
+@{chromium_domain} = org.chromium.Chromium
+@{chromium_lib_dirs} = /{usr/,}lib/chromium
+@{chromium_config_dirs} = @{user_config_dirs}/chromium
+@{chromium_cache_dirs} = @{user_cache_dirs}/chromium
+```
+
+If your application requires chromium to run (like electron) use
+[`abstractions/chromium-common`][chromium-common] instead.
+
+[chromium]: https://github.com/roddhjav/apparmor.d/blob/main/apparmor.d/abstractions/chromium
+[chromium-common]: https://github.com/roddhjav/apparmor.d/blob/main/apparmor.d/abstractions/chromium-common
+
 ## Udev rules
 
 See the **[kernel docs][kernel]** to check the major block and char numbers used in `/run/udev/data/`.
