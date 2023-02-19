@@ -1,0 +1,34 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}lib/systemd/systemd-userdbd
+profile systemd-userdbd @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+  include <abstractions/systemd-common>
+
+  capability dac_read_search,
+  capability sys_resource,
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet raw,
+  network inet6 raw,
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  /{usr/,}lib/systemd/systemd-userwork rPx,
+
+  /etc/shadow r,
+  /etc/machine-id r,
+
+  @{run}/systemd/userdb/{,**} rw,
+
+  include if exists <local/systemd-userdbd>
+}
