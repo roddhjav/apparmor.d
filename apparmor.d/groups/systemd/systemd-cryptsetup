@@ -1,0 +1,36 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}lib/systemd/systemd-cryptsetup
+profile systemd-cryptsetup @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/systemd-common>
+  include <abstractions/disks-write>
+  include <abstractions/openssl>
+
+  capability ipc_lock,
+  capability net_admin,
+  capability sys_admin,
+
+  @{exec_path} mr,
+
+  /etc/fstab r,
+
+  @{run}/ r,
+  @{run}/cryptsetup/ r,
+  @{run}/cryptsetup/* rwk,
+  @{run}/systemd/ask-password/* rw,
+  
+  @{sys}/devices/virtual/bdi/*/read_ahead_kb r,
+  @{sys}/fs/ r,
+
+        @{PROC}/devices r,
+  owner @{PROC}/@{pid}/mountinfo r,
+
+  include if exists <local/systemd-cryptsetup>
+}
