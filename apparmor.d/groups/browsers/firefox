@@ -12,7 +12,7 @@ include <tunables/global>
 @{firefox_config_dirs} = @{HOME}/.mozilla/
 @{firefox_cache_dirs} = @{user_cache_dirs}/mozilla/
 
-@{exec_path} = /{usr/,}bin/@{firefox_name} @{firefox_lib_dirs}/@{firefox_name}
+@{exec_path} = /{usr/,}bin/@{firefox_name} @{firefox_lib_dirs}/@{firefox_name}{-bin,}
 profile firefox @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/audio>
@@ -51,7 +51,7 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
   dbus send    bus=session path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus
        member={RequestName,ReleaseName}
-       peer=(name=org.freedesktop.DBus),
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
 
   dbus send    bus=session path=/ScreenSaver
        interface=org.freedesktop.ScreenSaver
@@ -110,17 +110,17 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
   dbus send    bus=session path=/org/mozilla/firefox/Remote
        interface=org.mozilla.firefox
        member=OpenURL
-       peer=(name=org.mozilla.firefox.* label=firefox),
+       peer=(name=org.mozilla.firefox.* label=@{profile_name}),
 
   dbus receive bus=session path=/org/mozilla/firefox/Remote
        interface=org.mozilla.firefox
        member=OpenURL
-       peer=(name=:* label=firefox),
+       peer=(name=:* label=@{profile_name}),
 
-  dbus bind    bus=session
+  dbus bind bus=session
        name=org.mpris.MediaPlayer2.firefox.*,
 
-  dbus bind    bus=session
+  dbus bind bus=session
        name=org.mozilla.firefox.*,
 
   deny dbus send bus=system path=/org/freedesktop/hostname[0-9]*,
@@ -173,6 +173,8 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
   /etc/xul-ext/kwallet5.js r,
 
   owner @{HOME}/ r,
+  owner @{HOME}/@{XDG_DESKTOP_DIR}/ w,
+  owner @{HOME}/@{XDG_DOWNLOAD_DIR}/ w,
 
   owner @{user_cache_dirs}/ rw,
   owner @{user_cache_dirs}/gstreamer-[0-9]*/ rw,
@@ -258,6 +260,9 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
   owner /dev/shm/org.mozilla.ipc.@{pid}.[0-9]* rw,
   owner /dev/shm/wayland.mozilla.ipc.[0-9]* rw,
   owner /dev/tty[0-9]* rw, # File Inherit
+
+  # X-tiny
+  /tmp/.X0-lock r,
 
   # Silencer
   deny @{firefox_lib_dirs}/** w,
