@@ -94,7 +94,7 @@ func TestAppArmorEvents(t *testing.T) {
 			},
 		},
 		{
-			name:  "dbus system",
+			name:  "dbus_system",
 			event: `type=USER_AVC msg=audit(1111111111.111:1111): pid=1780 uid=102 auid=4294967295 ses=4294967295 subj=? msg='apparmor="ALLOWED" operation="dbus_method_call" bus="system" path="/org/freedesktop/PolicyKit1/Authority" interface="org.freedesktop.PolicyKit1.Authority" member="CheckAuthorization" mask="send" name="org.freedesktop.PolicyKit1" pid=1794 label="snapd" peer_pid=1790 peer_label="polkitd"  exe="/usr/bin/dbus-daemon" sauid=102 hostname=? addr=? terminal=?'UID="messagebus" AUID="unset" SAUID="messagebus"`,
 			want: AppArmorLogs{
 				{
@@ -113,7 +113,7 @@ func TestAppArmorEvents(t *testing.T) {
 			},
 		},
 		{
-			name:  "dbus session",
+			name:  "dbus_session",
 			event: `apparmor="ALLOWED" operation="dbus_bind"  bus="session" name="org.freedesktop.portal.Documents" mask="bind" pid=2174 label="xdg-document-portal"`,
 			want: AppArmorLogs{
 				{
@@ -221,13 +221,11 @@ func Test_getJournalctlLogs(t *testing.T) {
 	tests := []struct {
 		name    string
 		path    string
-		user    bool
 		useFile bool
 		want    AppArmorLogs
 	}{
 		{
 			name:    "gsd-xsettings",
-			user:    true,
 			useFile: true,
 			path:    "../../tests/systemd.log",
 			want: AppArmorLogs{
@@ -255,7 +253,7 @@ func Test_getJournalctlLogs(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			reader, _ := getJournalctlLogs(tt.path, tt.user, tt.useFile)
+			reader, _ := getJournalctlLogs(tt.path, tt.useFile)
 			if got := NewApparmorLogs(reader, tt.name); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("NewApparmorLogs() = %v, want %v", got, tt.want)
 			}

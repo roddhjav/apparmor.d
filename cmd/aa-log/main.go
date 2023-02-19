@@ -1,5 +1,5 @@
 // aa-log - Review AppArmor generated messages
-// Copyright (C) 2021-2022 Alexandre Pujol <alexandre@pujol.io>
+// Copyright (C) 2021-2023 Alexandre Pujol <alexandre@pujol.io>
 // SPDX-License-Identifier: GPL-2.0-only
 
 package main
@@ -19,6 +19,23 @@ import (
 	"regexp"
 	"strings"
 )
+
+const usage = `aa-log [-h] [--systemd] [--dbus] [--file file] [profile]
+
+    Review AppArmor generated messages in a colorful way. Supports logs from
+    auditd, systemd, syslog as well as dbus session events.
+
+    It can be given an optional profile name to filter the output with.
+
+    Default logs are read from '/var/log/audit/audit.log'. Other files in 
+    '/var/log/audit/' can easily be checked: 'aa-log -f 1' parses 'audit.log.1' 
+
+Options:
+    -h, --help         Show this help message and exit.
+    -f, --file FILE    Set a logfile or a suffix to the default log file.
+    -s, --systemd      Parse systemd logs from journalctl.
+
+`
 
 // Command line options
 var (
@@ -104,23 +121,21 @@ func getAuditLogs(path string) (io.Reader, error) {
 }
 
 // getJournalctlLogs return a reader with the logs entries from Systemd
-func getJournalctlLogs(path string, user bool, useFile bool) (io.Reader, error) {
+func getJournalctlLogs(path string, useFile bool) (io.Reader, error) {
 	var logs []SystemdLog
 	var stdout bytes.Buffer
 	var value string
 
 	if useFile {
+		// content, err := os.ReadFile(filepath.Clean(path))
 		content, err := ioutil.ReadFile(filepath.Clean(path))
 		if err != nil {
 			return nil, err
 		}
 		value = string(content)
 	} else {
-		mode := "--system"
-		if user {
-			mode = "--user"
-		}
-		cmd := exec.Command("journalctl", mode, "--boot", "--unit=dbus.service", "--output=json")
+		// journalctl -b -o json > systemd.log
+		cmd := exec.Command("journalctl", "--boot", "--output=json")
 		cmd.Stdout = &stdout
 		if err := cmd.Run(); err != nil {
 			return nil, err
@@ -131,6 +146,7 @@ func getJournalctlLogs(path string, user bool, useFile bool) (io.Reader, error) 
 	value = strings.Replace(value, "\n", ",\n", -1)
 	value = strings.TrimSuffix(value, ",\n")
 	value = `[` + value + `]`
+	// fmt.Printf("value: %v\n", value)
 	if err := json.Unmarshal([]byte(value), &logs); err != nil {
 		return nil, err
 	}
@@ -189,7 +205,7 @@ func NewApparmorLogs(file io.Reader, profile string) AppArmorLogs {
 			}
 		}
 		aa["profile"] = decodeHex(aa["profile"])
-		toDecode := []string{"profile", "name", "comm"}
+		toDecode := []string{"name", "comm"}
 		for _, name := range toDecode {
 			if value, ok := aa[name]; ok {
 				aa[name] = decodeHex(value)
@@ -267,7 +283,7 @@ func aaLog(logger string, path string, profile string) error {
 	case "auditd":
 		file, err = getAuditLogs(path)
 	case "systemd":
-		file, err = getJournalctlLogs(path, true, path != LogFile)
+		file, err = getJournalctlLogs(path, path != LogFile)
 	default:
 		err = fmt.Errorf("Logger %s not supported.", logger)
 	}
@@ -281,21 +297,18 @@ func aaLog(logger string, path string, profile string) error {
 
 func init() {
 	flag.BoolVar(&help, "h", false, "Show this help message and exit.")
-	flag.StringVar(&path, "f", LogFile,
-		"Set a log`file` or a suffix to the default log file.")
-	flag.BoolVar(&systemd, "s", false, "Parse systemd dbus logs.")
+	flag.BoolVar(&help, "help", false, "Show this help message and exit.")
+	flag.StringVar(&path, "f", LogFile, "Set a logfile or a suffix to the default log file.")
+	flag.StringVar(&path, "file", LogFile, "Set a logfile or a suffix to the default log file.")
+	flag.BoolVar(&systemd, "s", false, "Parse systemd logs from journalctl.")
+	flag.BoolVar(&systemd, "systemd", false, "Parse systemd logs from journalctl.")
 }
 
 func main() {
+	flag.Usage = func() { fmt.Print(usage) }
 	flag.Parse()
 	if help {
-		fmt.Printf(`aa-log [-h] [-s] [-f file] [profile]
-
-  Review AppArmor generated messages in a colorful way.
-  It can be given an optional profile name to filter the output with.
-
-`)
-		flag.PrintDefaults()
+		flag.Usage()
 		os.Exit(0)
 	}
 
