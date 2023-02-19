@@ -1,0 +1,145 @@
+# apparmor.d - Full set of apparmor profiles
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{,usr/}bin/remmina
+profile remmina @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+  include <abstractions/ibus>
+  include <abstractions/dconf-write>
+  include <abstractions/fonts>
+  include <abstractions/ssl_certs>
+  include <abstractions/openssl>
+  include <abstractions/freedesktop.org>
+  include <abstractions/dbus-strict>
+  include <abstractions/dbus-session-strict>
+  include <abstractions/dbus-accessibility-strict>
+  include <abstractions/dbus-gtk>
+
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  dbus send bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={RequestName,ReleaseName}
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
+
+  dbus send bus=session path=/org/freedesktop/secrets{,/collection/login{,/[0-9]*}}
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=:*, label=gnome-keyring-daemon),
+
+  dbus send bus=session path=/StatusNotifierWatcher
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name=org.kde.StatusNotifierWatcher),
+
+  dbus send bus=session path=/org/freedesktop/secrets
+       interface=org.freedesktop.Secret.Service
+       member={OpenSession,GetSecrets,SearchItems,ReadAlias}
+       peer=(name=:*, label=gnome-keyring-daemon),
+
+  dbus (send, receive) bus=session path=/org/ayatana/NotificationItem/remmina_icon{,/**}
+       peer=(name="{:*,org.freedesktop.DBus}"),  # all interfaces and members
+
+  dbus send bus=accessibility path=/org/a11y/atspi/accessible/root
+       interface=org.a11y.atspi.Socket
+       member=Embed
+       peer=(name=org.a11y.atspi.Registry),
+
+  dbus send bus=accessibility path=/org/a11y/atspi/registry
+       interface=org.a11y.atspi.Registry
+       member=GetRegisteredEvents
+       peer=(name=org.a11y.atspi.Registry),
+
+  dbus receive bus=accessibility path=/org/a11y/atspi/registry
+       interface=org.a11y.atspi.Registry
+       member=EventListenerDeregistered
+       peer=(name=:*),
+
+  dbus receive bus=accessibility path=/org/a11y/atspi/accessible/root
+       interface=org.freedesktop.DBus.Properties
+       member=Set
+       peer=(name=:*),
+
+  dbus send bus=session path=/org/freedesktop/secrets/collection/session
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=:*, label=gnome-keyring-daemon),
+
+  dbus send bus=system path=/org/freedesktop/hostname[0-9]*
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=:*),
+
+  dbus send bus=session path=/StatusNotifierWatcher
+       interface=org.kde.StatusNotifierWatcher
+       member=RegisterStatusNotifierItem
+       peer=(name=:*),
+
+  dbus send bus=accessibility path=/org/a11y/atspi/registry/deviceeventcontroller
+       interface=org.a11y.atspi.DeviceEventController
+       member={GetKeystrokeListeners,GetDeviceEventListeners}
+       peer=(name=org.a11y.atspi.Registry),
+
+  dbus send bus=session path=/org/gtk/Private/RemoteVolumeMonitor
+       interface=org.gtk.Private.RemoteVolumeMonitor
+       member={IsSupported,List}
+       peer=(name=:*),
+
+  dbus send bus=session path=/org/freedesktop/secrets/aliases/default
+       interface=org.freedesktop.Secret.Collection
+       member=CreateItem
+       peer=(name=org.freedesktop.secrets, label=gnome-keyring-daemon),
+
+  dbus receive bus=session path=/org/freedesktop/secrets/collection/login
+       interface=org.freedesktop.Secret.Collection
+       member=ItemCreated
+       peer=(name=:*, label=gnome-keyring-daemon),
+
+  dbus receive bus=session path=/org/freedesktop/secrets/collection/login
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged
+       peer=(name=:*, label=gnome-keyring-daemon),
+
+  dbus bind bus=session
+       name=org.remmina.Remmina,
+
+  @{exec_path} r,
+
+  /etc/timezone r,
+  /etc/ssh/ssh_config r,
+  /etc/ssh/ssh_config.d/{,*} r,
+  /usr/share/remmina/{,**} r,
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+
+  owner @{user_config_dirs}/autostart/remmina-applet.desktop r,
+  owner @{user_config_dirs}/gtk-3.0/bookmarks r,
+  owner @{user_config_dirs}/freerdp/known_hosts2 rwk,
+  owner @{user_config_dirs}/remmina/{,**} rw,
+  owner @{user_share_dirs}/remmina/{,**} rw,
+  owner @{user_cache_dirs}/remmina/{,**} rw,
+  owner @{HOME}/@{XDG_SSH_DIR}/{,*} r,
+
+  owner @{PROC}/@{pid}/task/@{tid}/comm rw,
+  owner @{PROC}/@{pid}/mountinfo r,
+
+  owner @{run}/user/@{uid}/keyring/ssh rw,
+
+  # gtk-tiny
+  /etc/gtk-3.0/settings.ini r,
+  /usr/share/themes/{,**} r,
+
+  # X-strict
+  owner @{HOME}/.Xauthority r,
+  owner @{HOME}/.xsession-errors w,
+  unix (send, receive, connect) type=stream peer=(addr="@/tmp/.X11-unix/X[0-9]*", label="{xorg,xkbcomp}"),
+  /etc/X11/{,**} r,
+
+  include if exists <local/remmina>
+}

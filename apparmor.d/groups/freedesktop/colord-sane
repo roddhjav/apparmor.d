@@ -8,7 +8,7 @@ abi <abi/3.0>,
 include <tunables/global>
 
 @{exec_path} = @{libexec}/{,colord/}colord-sane
-profile colord-sane @{exec_path} flags=(attach_disconnected,complain) {
+profile colord-sane @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/dbus-strict>
   include <abstractions/devices-usb>
@@ -26,7 +26,7 @@ profile colord-sane @{exec_path} flags=(attach_disconnected,complain) {
        member={GetAPIVersion,GetState,ServiceBrowserNew,Ping}
        peer=(name=org.freedesktop.Avahi),
 
-  dbus receive bus=system path=/Client[0-9]/ServiceBrowser[0-9]
+  dbus receive bus=system path=/Client[0-9]/ServiceBrowser[0-9]*
        interface=org.freedesktop.Avahi.ServiceBrowser
        member={CacheExhausted,AllForNow},
 
@@ -46,7 +46,11 @@ profile colord-sane @{exec_path} flags=(attach_disconnected,complain) {
   @{sys}/bus/scsi/devices/ r,
   @{sys}/devices/pci[0-9]*/**/{vendor,model,type} r,
 
+  @{PROC}/sys/dev/parport/parport[0-9]*/base-addr r,
+  @{PROC}/sys/dev/parport/parport[0-9]*/irq r,
   @{PROC}/sys/dev/parport/ r,
+
+  /dev/parport[0-9]* r,
 
   include if exists <local/colord-sane>
 }

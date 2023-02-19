@@ -58,12 +58,14 @@ profile tracker-miner @{exec_path} flags=(attach_disconnected) {
 
   dbus send    bus=session path=/org/freedesktop/Tracker3/Endpoint
        interface=org.freedesktop.Tracker3.Endpoint
-       member=GraphUpdated
-       peer=(name=org.freedesktop.DBus, label=tracker-extract),
+       peer=(name=org.freedesktop.DBus, label=tracker-extract), # all members
 
   dbus receive bus=session path=/org/freedesktop/Tracker3/Endpoint
        interface=org.freedesktop.Tracker3.Endpoint
-       member=Query
+       peer=(name=:*, label=tracker-extract), # all members
+
+  dbus receive bus=session path=/org/freedesktop/Tracker3/Miner/**
+       interface=org.freedesktop.Tracker3.Miner
        peer=(name=:*, label=tracker-extract),
 
   dbus receive bus=session path=/{,org}
@@ -82,7 +84,6 @@ profile tracker-miner @{exec_path} flags=(attach_disconnected) {
   /usr/share/gvfs/remote-volume-monitors/{,*.monitor} r,
   /usr/share/tracker3-miners/{,**} r,
   /usr/share/tracker3/{,**} r,
-  /usr/share/ubuntu/applications/ r,
 
   /etc/fstab r,
 
@@ -93,6 +94,10 @@ profile tracker-miner @{exec_path} flags=(attach_disconnected) {
   /var/lib/gdm{3,}/.cache/tracker3/{,tracker3/}files/{,**} rwk,
   /var/lib/gdm{3,}/.local/share/applications/ r,
   /var/lib/gdm{3,}/greeter-dconf-defaults r,
+
+  /var/lib/lightdm/.config/dconf/user r,
+  /var/lib/lightdm/.cache/tracker3/files/meta.db{,-wal} rwk,
+  /var/lib/lightdm/.cache/tracker3/files/no-need-mtime-check.txt{,.??????} rw,
 
   owner /var/tmp/etilqs_@{hex} rw,
 

@@ -18,7 +18,7 @@ profile colord @{exec_path} flags=(attach_disconnected) {
 
   dbus send bus=system path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus
-       member={GetConnectionUnixProcessID,GetConnectionUnixUser,RequestName},
+       member={GetConnectionUnixProcessID,GetConnectionUnixUser,RequestName,ReleaseName},
 
   dbus (send,receive) bus=system path=/org/freedesktop/ColorManager{,/**}
        interface=org.freedesktop.ColorManager*,
@@ -30,8 +30,7 @@ profile colord @{exec_path} flags=(attach_disconnected) {
 
   dbus receive bus=system path=/org/freedesktop/PolicyKit[0-9]/Authority
        interface=org.freedesktop.PolicyKit[0-9].Authority
-       member=Changed
-       peer=(name=:*, label=polkitd),
+       peer=(name=:*, label=polkitd), # all members
 
   dbus send    bus=system path=/org/freedesktop/PolicyKit[0-9]/Authority
        interface=org.freedesktop.DBus.Properties
@@ -43,10 +42,15 @@ profile colord @{exec_path} flags=(attach_disconnected) {
        member=GetAll
        peer=(name=:*, label="{gsd-color,colord-sane,gnome-control-center}"),
 
-  dbus (send, receive) bus=system path=/org/freedesktop/ColorManager
+  dbus send    bus=system path=/org/freedesktop/ColorManager
        interface=org.freedesktop.DBus.Properties
        member=GetAll
-       peer=(name=:*, label=colord),
+       peer=(name=:*, label=@{profile_name}),
+
+  dbus receive bus=system path=/org/freedesktop/ColorManager/**
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=:*, label=@{profile_name}),
 
   dbus bind bus=system 
        name=org.freedesktop.ColorManager,
@@ -67,8 +71,9 @@ profile colord @{exec_path} flags=(attach_disconnected) {
   owner /var/lib/colord/.cache/** rw,
   owner /var/lib/colord/{mapping,storage}.db{,-journal} rwk,
 
-  @{system_share_dirs}/mime/mime.cache r,
   /var/lib/gdm{3,}/.local/share/icc/edid-*.icc r,
+  /var/lib/flatpak/exports/share/mime/mime.cache r,
+  @{system_share_dirs}/mime/mime.cache r,
 
   @{user_share_dirs}/icc/edid-*.icc r,
 
