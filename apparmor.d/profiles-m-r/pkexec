@@ -8,7 +8,7 @@ abi <abi/3.0>,
 include <tunables/global>
 
 @{exec_path} = /{usr/,}bin/pkexec
-profile pkexec @{exec_path} flags=(complain) {
+profile pkexec @{exec_path} {
   include <abstractions/base>
   include <abstractions/authentication>
   include <abstractions/consoles>
@@ -23,7 +23,8 @@ profile pkexec @{exec_path} flags=(complain) {
   capability setgid,  # gdbus
   capability setuid,  # gmain
   capability sys_ptrace,
-  audit deny capability sys_nice,
+  capability sys_nice,
+  capability sys_resource,
 
   ptrace (read),
 
@@ -54,6 +55,7 @@ profile pkexec @{exec_path} flags=(complain) {
   # Apps to be run via pkexec
   /{usr/,}{s,}bin/*            rPUx,
   /{usr/,}lib/gvfs/gvfsd-admin rPUx, #(#FIXME#)
+  @{libexec}/polkit-agent-helper-[0-9] rPx,
   /{usr/,}lib/polkit-agent-helper-[0-9]              rPx,
   /{usr/,}lib/polkit-[0-9]/polkit-agent-helper-[0-9] rPx,
   /{usr/,}lib/update-notifier/package-system-locked  rPx,

@@ -9,6 +9,7 @@ include <tunables/global>
 @{exec_path} = /{usr/,}lib/systemd/systemd-machined
 profile systemd-machined @{exec_path} {
   include <abstractions/base>
+  include <abstractions/dbus-strict>
   include <abstractions/systemd-common>
 
   capability chown,
@@ -23,6 +24,44 @@ profile systemd-machined @{exec_path} {
   capability sys_chroot,
   capability sys_ptrace,
 
+  dbus send bus=system path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member=GetConnectionUnixUser
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
+
+  dbus send    bus=system path=/org/freedesktop/systemd1/{,{unit,job}/*}
+       interface=org.freedesktop.DBus.Properties
+       member=Get
+       peer=(name=org.freedesktop.systemd1),
+
+  dbus receive bus=system path=/org/freedesktop/systemd1{,/{unit,job}/*}
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged
+       peer=(name=:*),
+
+  dbus send    bus=system path=/org/freedesktop/systemd1
+       interface=org.freedesktop.systemd1.Manager
+       member={StopUnit,UnrefUnit,StartTransientUnit,Subscribe}
+       peer=(name=org.freedesktop.systemd1),
+
+  dbus receive bus=system path=/org/freedesktop/systemd1
+       interface=org.freedesktop.systemd1.Manager
+       member={JobRemoved,UnitRemoved,Reloading}
+       peer=(name=:*),
+
+  dbus receive bus=system path=/org/freedesktop/machine1
+       interface=org.freedesktop.machine1.Manager
+       member={TerminateMachine,GetMachineByPID,CreateMachineWithNetwork}
+       peer=(name=:*, label=libvirtd),
+
+  dbus receive bus=system path=/org/freedesktop/machine1/machine/*
+       interface=org.freedesktop.DBus.Properties
+       member=Get
+       peer=(name=:*, label=libvirtd),
+
+  dbus bind bus=system
+       name=org.freedesktop.machine1,
+
   @{exec_path} mr,
 
   /var/lib/machines/{,**} rw,
@@ -30,6 +69,7 @@ profile systemd-machined @{exec_path} {
 
   @{run}/systemd/machines/{,**} rw,
   @{run}/systemd/userdb/io.systemd.Machine rw,
+  @{run}/systemd/notify w,
 
   include if exists <local/systemd-machined>
 }

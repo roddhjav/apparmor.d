@@ -21,13 +21,17 @@ profile polkitd @{exec_path} {
 
   ptrace (read),
 
+  dbus (send) bus=system path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={GetConnectionUnixProcessID,GetConnectionUnixUser,RequestName,ReleaseName}
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
+
   dbus (send,receive) bus=system path=/org/freedesktop/PolicyKit1/*
        interface=org.freedesktop.{DBus.Introspectable,DBus.Properties,PolicyKit1.*}, # all members
 
-  dbus (send) bus=system path=/org/freedesktop/DBus
-       interface=org.freedesktop.DBus
-       member={GetConnectionUnixProcessID,GetConnectionUnixUser,RequestName}
-       peer=(name=org.freedesktop.DBus),
+  dbus send bus=system path=/org/gnome/PolicyKit1/*
+       interface=org.freedesktop.PolicyKit1.AuthenticationAgent
+       peer=(name=:*), # all members
 
   dbus (bind) bus=system
        name=org.freedesktop.PolicyKit1,

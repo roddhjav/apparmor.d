@@ -17,6 +17,8 @@ profile at-spi2-registryd @{exec_path} flags=(attach_disconnected) {
   signal (receive) set=(term hup)      peer=gdm*,
   signal (receive) set=(term hup kill) peer=dbus-daemon,
 
+  unix (send, receive, connect) type=stream peer=(addr="@/tmp/.X11-unix/X[0-9]*", label="{xorg,xkbcomp}"),
+
   dbus send bus=session path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus
        member={RequestName,ReleaseName}
@@ -45,12 +47,12 @@ profile at-spi2-registryd @{exec_path} flags=(attach_disconnected) {
   dbus send    bus=accessibility path=/org/a11y/atspi/accessible/root
        interface=org.freedesktop.DBus.Properties
        member=Set
-       peer=(name=:*, label="{gnome-extension-ding,gnome-control-center}"),
+       peer=(name=:*), # all peer's labels
 
   dbus receive bus=accessibility path=/org/a11y/atspi/accessible/root
        interface=org.a11y.atspi.Socket
        member=Embed
-       peer=(name=:*, label="{gnome-extension-ding,gnome-control-center,spice-vdagent}"),
+       peer=(name=:*), # all peer's labels
 
   dbus send    bus=accessibility path=/org/a11y/atspi/registry
        interface=org.a11y.atspi.Registry
@@ -60,17 +62,17 @@ profile at-spi2-registryd @{exec_path} flags=(attach_disconnected) {
   dbus receive bus=accessibility path=/org/a11y/atspi/registry
        interface=org.a11y.atspi.Registry
        member=GetRegisteredEvents
-       peer=(name=:*, label=gnome-control-center),
+       peer=(name=:*), # all peer's labels
 
   dbus receive bus=accessibility path=/org/a11y/atspi/registry/deviceeventcontroller
        interface=org.a11y.atspi.DeviceEventController
        member={GetKeystrokeListeners,GetDeviceEventListeners}
-       peer=(name=:*, label="{gnome-control-center,xdg-desktop-portal-*}"),
+       peer=(name=:*), # all peer's labels
 
   dbus send bus=session path=/org/a11y/bus
        interface=org.a11y.Bus
        member=GetAddress
-       peer=(name=org.a11y.Bus, label=at-spi-bus-launcher),
+       peer=(name=org.a11y.Bus, label="{at-spi-bus-launcher,unconfined}"),
 
   dbus receive bus=session path=/
        interface=org.freedesktop.DBus.Introspectable

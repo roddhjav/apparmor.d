@@ -43,6 +43,8 @@ profile thunderbird @{exec_path} {
 
   ptrace peer=@{profile_name},
 
+  unix (send, receive) type=stream peer=(addr=none, label=xorg),
+
   network inet dgram,
   network inet6 dgram,
   network inet stream,
@@ -75,6 +77,21 @@ profile thunderbird @{exec_path} {
        interface=ca.desrt.dconf.Writer
        member={Change,Notify}
        peer=(name=ca.desrt.dconf),
+
+  dbus send bus=session path=/org/freedesktop/portal/desktop
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=:*),
+
+  dbus send bus=session path=/org/freedesktop/portal/desktops
+       interface=org.freedesktop.portal.Settings
+       member=Read
+       peer=(name=:*),
+
+  dbus receive bus=system path=/org/freedesktop/login[0-9]*
+       interface=org.freedesktop.login[0-9]*.Manager
+       member={UserAdded,UserRemoved}
+       peer=(name=:*, label=systemd-logind),
 
   dbus bind bus=session
        name=org.mozilla.thunderbird.*,
