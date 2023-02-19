@@ -1,0 +1,117 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /usr/share/subiquity/console-conf-wrapper
+profile subiquity-console-conf @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/disks-read>
+  include <abstractions/nameservice-strict>
+  include <abstractions/python>
+  include <abstractions/openssl>
+
+  capability chown,
+  capability fsetid,
+
+  network inet  stream,
+  network inet6 stream,
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/{,da,ba}sh  rix,
+  /{usr/,}bin/cat         rix,
+  /{usr/,}bin/grep        rix,
+  /{usr/,}bin/mkdir       rix,
+  /{usr/,}bin/mv          rix,
+  /{usr/,}bin/sleep       rix,
+  /{usr/,}bin/stty        rix,
+  /{usr/,}bin/tr          rix,
+  /{usr/,}bin/tty         rix,
+
+  /{snap/snapd/[0-9]*/,}{usr/,}bin/snap  rPx, # TODO: rCx,
+  /{usr/,}{,s}bin/sshd                   rPx, 
+  /{usr/,}bin/journalctl                 rCx -> journalctl,
+  /{usr/,}bin/ssh-keygen                 rPx, 
+  /usr/lib/snapd/snap-recovery-chooser  rPUx,
+  /usr/share/netplan/netplan.script     rPUx, # TODO: rPx,
+
+  /usr/share/subiquity/{,**} r,
+  /usr/share/subiquity/console-conf-tui rix,
+  /usr/share/subiquity/console-conf-write-login-details rix,
+
+  /var/lib/extrausers/shadow r,
+
+  /var/lib/console-conf/{,**} rw,
+  /var/log/console-conf/{,**} rw,
+
+  @{run}/console-conf/{,**} rw,
+  @{run}/snapd-recovery-chooser-triggered r,
+  @{run}/snapd.socket rw,
+
+  @{run}/udev/data/+acpi:* r,
+  @{run}/udev/data/+dmi* r,
+  @{run}/udev/data/+drm* r,
+  @{run}/udev/data/+input* r,         # For mouse, keyboard, touchpad
+  @{run}/udev/data/+leds:* r,
+  @{run}/udev/data/+pci* r,
+  @{run}/udev/data/+platform* r,
+  @{run}/udev/data/+sound:card* r,    # For sound
+
+  @{run}/udev/data/c1:[0-9]* r,       # For RAM disk
+  @{run}/udev/data/c4:[0-9]* r,       # For TTY devices
+  @{run}/udev/data/c5:[0-9]* r,       # For /dev/tty, /dev/console, /dev/ptmx
+  @{run}/udev/data/c7:[0-9]* r,       # For Virtual console capture devices
+  @{run}/udev/data/c10:[0-9]* r,      # For non-serial mice, misc features
+  @{run}/udev/data/c13:[0-9]* r,      # For /dev/input/*
+  @{run}/udev/data/c29:[0-9]* r,      # For /dev/fb[0-9]*
+  @{run}/udev/data/c89:[0-9]* r,      # For I2C bus interface
+  @{run}/udev/data/c108:[0-9]* r,     # For /dev/ppp
+  @{run}/udev/data/c116:[0-9]* r,     # For ALSA
+  @{run}/udev/data/c226:[0-9]* r,     # For /dev/dri/card*
+  @{run}/udev/data/c23[4-9]:[0-9]* r, # For dynamic assignment range 234 to 254
+  @{run}/udev/data/c24[0-9]:[0-9]* r,
+  @{run}/udev/data/c25[0-4]:[0-9]* r,
+  @{run}/udev/data/n[0-9]* r,
+
+  @{sys}/**/devices/ r,
+  @{sys}/*/*/ r,
+  @{sys}/bus/ r,
+  @{sys}/class/ r,
+  @{sys}/devices/**/uevent r,
+  @{sys}/devices/pci[0-9]*/**/net/*/{,**} r,
+  @{sys}/devices/pci[0-9]*/**/usb[0-9]/**/net/{,**} r,
+  @{sys}/devices/virtual/net/{,**} r,
+
+        @{PROC}/cmdline r,
+  owner @{PROC}/@{pid}/fd/ r,
+
+  /dev/tty rw,
+  /dev/tty[0-9]* rw,
+  /dev/ttyS[0-9]* rw,
+
+  profile journalctl {
+    include <abstractions/base>
+
+    /{usr/,}bin/journalctl mr,
+
+    @{run}/log/ rw,
+    /{run,var}/log/journal/ rw,
+    /{run,var}/log/journal/@{hex}/ rw,
+    /{run,var}/log/journal/@{hex}/system.journal* rw,
+    /{run,var}/log/journal/@{hex}/system@@{hex}.journal* rw,
+    /{run,var}/log/journal/@{hex}/user-@{hex}.journal* rw,
+
+    owner @{PROC}/@{pid}/stat r,
+
+    /var/lib/dbus/machine-id r,
+    /etc/machine-id r,
+
+  }
+
+  include if exists <local/subiquity-console-conf>
+}

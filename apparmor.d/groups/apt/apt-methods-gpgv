@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2019-2021 Mikhail Morfikov
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -27,69 +28,63 @@ profile apt-methods-gpgv @{exec_path} {
   @{exec_path} mr,
 
   # The following get "no new privs" so "rix" them
-  /{usr/,}bin/apt-key           rix,
   /{usr/,}bin/apt-config        rix,
+  /{usr/,}bin/apt-key           rix,
   /{usr/,}bin/dpkg              rix,
+  /{usr/,}bin/find              rix,
   /{usr/,}bin/gpg-connect-agent rix,
   /{usr/,}bin/gpgconf           rix,
-  /{usr/,}bin/find              rix,
   /{usr/,}bin/gpgv              rix,
 
-  /{usr/,}bin/head      rix,
+  /{usr/,}bin/{m,g,}awk rix,
+  /{usr/,}bin/base64    rix,
   /{usr/,}bin/cat       rix,
   /{usr/,}bin/chmod     rix,
   /{usr/,}bin/cmp       rix,
   /{usr/,}bin/cp        rix,
+  /{usr/,}bin/head      rix,
   /{usr/,}bin/mktemp    rix,
   /{usr/,}bin/readlink  rix,
   /{usr/,}bin/rm        rix,
   /{usr/,}bin/sed       rix,
   /{usr/,}bin/sort      rix,
   /{usr/,}bin/touch     rix,
-  /{usr/,}bin/{m,g,}awk rix,
-  /{usr/,}bin/base64    rix,
+
+  /usr/share/dpkg/cputable r,
+  /usr/share/dpkg/tupletable r,
+  /usr/share/keyrings/ r,
+  /usr/share/keyrings/*.{gpg,asc} r,
+
+  /etc/apt/apt.conf r,
+  /etc/apt/apt.conf.d/{,*} r,
+  /etc/apt/keyrings/ r,
+  /etc/apt/keyrings/*.{gpg,asc} r,
+  /etc/apt/trusted.gpg r,
+  /etc/apt/trusted.gpg.d/{,*.gpg} r,
+  /etc/dpkg/dpkg.cfg r,
+  /etc/dpkg/dpkg.cfg.d/{,*} r,
 
   # For shell pwd
   / r,
   /etc/ r,
   /root/ r,
 
-  /etc/dpkg/dpkg.cfg.d/{,*} r,
-  /etc/dpkg/dpkg.cfg r,
+        /var/lib/apt/lists/{,**} r,
+        /var/lib/dpkg/arch r,
+        /var/lib/extrepo/keys/*.{gpg,asc} r,
+        /var/lib/ubuntu-advantage/apt-esm/{,**} r,
+  owner /var/lib/apt/lists/* rw,
+  owner /var/lib/apt/lists/partial/* rw,
 
-  /etc/apt/apt.conf.d/{,*} r,
-  /etc/apt/apt.conf r,
-
-  /etc/apt/trusted.gpg.d/{,*.gpg} r,
-  /etc/apt/trusted.gpg r,
+  # For package building
+  @{user_build_dirs}/** rwkl -> @{user_build_dirs}/**,
 
         /tmp/ r,
   owner /tmp/apt-key-gpghome.*/ rw,
   owner /tmp/apt-key-gpghome.*/** rwkl -> /tmp/apt-key-gpghome.*/**,
   owner /tmp/apt.{conf,sig,data}.* rw,
 
-        /var/lib/apt/lists/{,**} r,
-  owner /var/lib/apt/lists/* rw,
-  owner /var/lib/apt/lists/partial/* rw,
-
-  /usr/share/dpkg/cputable r,
-  /usr/share/dpkg/tupletable r,
-
-  /var/lib/dpkg/arch r,
-
   @{PROC}/@{pid}/fd/ r,
-
-  # Local keyring storage
-  /etc/apt/keyrings/ r,
-  /etc/apt/keyrings/*.{gpg,asc} r,
-  /usr/share/keyrings/ r,
-  /usr/share/keyrings/*.{gpg,asc} r,
-
-  # Extrepo keyring storage
-  /var/lib/extrepo/keys/*.{gpg,asc} r,
-
-  # For package building
-  @{user_build_dirs}/** rwkl -> @{user_build_dirs}/**,
 
   # file_inherit
   owner /dev/tty[0-9]* rw,

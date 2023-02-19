@@ -44,15 +44,19 @@ profile sudo @{exec_path} {
        member=CreateSession
        peer=(name=org.freedesktop.login[0-9]),
 
+  dbus (send receive) bus=session path=/org/freedesktop/systemd1
+         interface=org.freedesktop.systemd.Manager
+         member={JobRemoved,StartTransientUnit},
+
   @{exec_path} mr,
 
-  /run/ r,
+  @{libexec}/sudo/** mr,
 
-  @{libexec}/sudo/**                   mr,
-  /{usr/,}bin/{,b,d,rb}ash             rUx,
-  /{usr/,}bin/{c,k,tc,z}sh             rUx,
-  /{usr/,}lib/cockpit/cockpit-askpass  rPx,
-  /{usr/,}lib/molly-guard/molly-guard  rPx,
+  /snap/snapd/[0-9]*/usr/bin/snap        rPx,
+  /{usr/,}bin/{,b,d,rb}ash               rUx,
+  /{usr/,}bin/{c,k,tc,z}sh               rUx,
+  /{usr/,}lib/cockpit/cockpit-askpass    rPx,
+  /{usr/,}lib/molly-guard/molly-guard    rPx,
 
   @{etc_ro}/environment r,
   @{etc_ro}/security/limits.d/{,*} r,
@@ -63,6 +67,7 @@ profile sudo @{exec_path} {
   /etc/sudoers.d/{,*} r,
 
         /var/db/sudo/lectured/ r,
+        /var/lib/extrausers/shadow r,
         /var/lib/sudo/lectured/ r,
         /var/lib/sudo/ts/ rw,
         /var/lib/sudo/ts/* rwk,
@@ -72,6 +77,7 @@ profile sudo @{exec_path} {
   owner @{HOME}/.sudo_as_admin_successful rw,
   owner @{HOME}/.xsession-errors w,
 
+        @{run}/ r,
         @{run}/faillock/{,*} rwk,
         @{run}/resolvconf/resolv.conf r,
   owner @{run}/sudo/ rw,
