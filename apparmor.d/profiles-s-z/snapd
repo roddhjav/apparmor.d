@@ -38,7 +38,7 @@ profile snapd @{exec_path} {
 
   mount fstype=squashfs /dev/loop[0-9]* -> /tmp/syscheck-mountpoint-[0-9]*/,
   umount /tmp/syscheck-mountpoint-[0-9]*/,
-  umount /snap/*/[0-9]*/,
+  umount /snap/*/*/,
 
   ptrace (read) peer=snap,
   ptrace (read) peer=unconfined,
@@ -54,6 +54,13 @@ profile snapd @{exec_path} {
        peer=(name=org.freedesktop.PolicyKit1),
 
   @{exec_path} mr,
+
+  /{usr/,}{s,}bin/adduser              rPX,
+  /{usr/,}{s,}bin/groupadd             rPX,
+  /{usr/,}{s,}bin/useradd              rPX,
+  /{usr/,}bin/cloud-init              rPUx, # TODO: rPx ? limited to ubtuntu core, otherwise out of scope
+  /{usr/,}bin/hostnamectl              rPx,
+  /{usr/,}bin/ssh-keygen               rPx,
 
   /{usr/,}{s,}bin/apparmor_parser      rPx,
   /{usr/,}{s,}bin/runuser              rCx -> runuser,
@@ -82,13 +89,14 @@ profile snapd @{exec_path} {
   /{snap/snapd/[0-9]*/,}{usr/,}lib/snapd/snap-update-ns   rPx,
   /{snap/snapd/[0-9]*/,}{usr/,}lib/snapd/snapd            rix,
 
-  /usr/share/bash-completion/completions/{,**} r,
+  /usr/share/bash-completion/{,**} r,
   /usr/share/dbus-1/{system,session}.d/{,snapd*} r,
   /usr/share/dbus-1/services/*snap* r,
   /usr/share/polkit-1/actions/{,**/} r,
 
   /etc/apparmor.d/*snapd.snap* r,
   /etc/dbus-1/system.d/{,**/} r,
+  /etc/environment r,
   /etc/fstab r,
   /etc/mime.types r,
   /etc/modprobe.d/{,**/} r,
@@ -113,19 +121,26 @@ profile snapd @{exec_path} {
   /tmp/syscheck-squashfs-[0-9]* rw,
   /tmp/read-file[0-9]*/{,**} rw,
 
+
+  /boot/ r,
+  /boot/grub/grubenv r, 
+
   / r,
   /home/ r,
   @{HOME}/ r,
   @{HOME}/snap/{,**} rw,
+  @{HOME}/.snap*/{,**} rw,
 
   owner @{run}/mount/ rw,
   owner @{run}/mount/utab{,.*} rw,
   owner @{run}/mount/utab.lock wk,
 
+  @{run}/user/ r,
   @{run}/user/@{uid}/ r,
   @{run}/user/@{uid}/snapd-session-agent.socket rw,
   @{run}/user/snap.*/{,**} rw,
 
+  @{run}/mnt/ubuntu-seed/EFI/ubuntu/grubenv r,  # only:core
   @{run}/snapd*.socket rw,
   @{run}/snapd/{,**} rw,
   @{run}/snapd/lock/*.lock rwk,
@@ -140,6 +155,7 @@ profile snapd @{exec_path} {
   @{sys}/kernel/security/apparmor/features/ r,
   @{sys}/kernel/security/apparmor/profiles r,
 
+  @{sys}/fs/cgroup/system.slice/snap*.service/cgroup.procs r,
   @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/snap*.service/cgroup.procs r,
 
         @{PROC}/@{pids}/cgroup r,

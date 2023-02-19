@@ -66,23 +66,27 @@ profile sshd @{exec_path} flags=(attach_disconnected) {
   /{usr/,}bin/passwd               rPx,
   /{usr/,}lib/openssh/sftp-server  rPx,
 
+  /etc/legal r,
   /etc/shells r,
   /etc/default/locale r,
   @{etc_ro}/environment r,
   /etc/gss/mech.d/{,*} r,
   /etc/issue.net r,
-  /etc/motd r,
+  @{etc_rw}/motd r,
   @{etc_ro}/security/limits.d/{,*.conf} r,
 
   @{etc_ro}/ssh/sshd_config r,
   @{etc_ro}/ssh/sshd_config.d/{,*} r,
   /etc/ssh/ssh_host_* r,
 
+  /var/lib/extrausers/shadow r,
+
   # For scp
   owner @{user_download_dirs}/{,**} rwl,
   owner @{user_sync_dirs}/{,**} rwl,
 
   owner @{HOME}/@{XDG_SSH_DIR}/authorized_keys{,.*} r,
+  owner @{user_cache_dirs}/{,motd*} rw,
 
         @{run}/faillock/[a-zA-z0-9]* rwk,
         @{run}/motd.d/{,*} r,
@@ -108,6 +112,8 @@ profile sshd @{exec_path} flags=(attach_disconnected) {
   owner @{PROC}/@{pid}/uid_map r,
 
   /dev/ptmx rw,
+  /dev/tty[0-9]* rw,
+  /dev/ttyS[0-9]* rw,
 
   include if exists <local/sshd>
 }

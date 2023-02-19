@@ -9,13 +9,20 @@ include <tunables/global>
 @{exec_path} = /{usr/,}lib/ubuntu-advantage/apt-esm-json-hook
 profile apt-esm-json-hook @{exec_path} {
   include <abstractions/base>
+  include <abstractions/apt-common>
   include <abstractions/consoles>
 
   unix (receive, send) type=stream peer=(label=apt),
 
   @{exec_path} mr,
 
+  /{usr/,}bin/dpkg         rPx,
+
+  /var/lib/ubuntu-advantage/{,**} r,
+
   @{sys}/kernel/mm/transparent_hugepage/hpage_pmd_size r,
+
+  owner @{PROC}/@{pid}/fd/ r,
 
   include if exists <local/apt-esm-json-hook>
 }
