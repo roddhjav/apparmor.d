@@ -1,0 +1,84 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}lib/systemd/systemd-homed
+profile systemd-homed @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/dbus-strict>
+  include <abstractions/disks-write>
+  include <abstractions/nameservice-strict>
+  include <abstractions/openssl>
+  include <abstractions/systemd-common>
+
+  capability chown,
+  capability dac_override,
+  capability dac_read_search,
+  capability fowner,
+  capability fsetid,
+  capability setfcap,
+  capability setgid,
+  capability setpcap,
+  capability setuid,
+  capability sys_admin,
+  capability sys_resource,
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet raw,
+  network inet6 raw,
+  network netlink raw,
+
+  mount options=(rw, rslave) -> @{run}/,
+  mount /dev/dm-[0-9]* -> @{run}/systemd/user-home-mount/,
+
+  dbus bind bus=system name=org.freedesktop.home1,
+
+  @{exec_path} mr,
+
+  /{usr/,}lib/systemd/systemd-homework rPx,
+  /{usr/,}{s,}bin/mkfs.btrfs rPx,
+  /{usr/,}{s,}bin/mkfs.fat   rPx,
+  /{usr/,}{s,}bin/mke2fs     rPx,
+
+  /etc/machine-id r,
+  /etc/systemd/homed.conf r,
+  /etc/skel/{,**} r,
+
+  /var/lib/systemd/home/{,**} rw,
+
+  / r,
+  @{HOMEDIRS}/ r,
+  @{HOMEDIRS}/* rw,
+  @{HOMEDIRS}/*.homedir/ rw,
+
+  @{run}/ r,
+  @{run}/cryptsetup/{,*} rwk,
+  @{run}/systemd/home/{,**} rw,
+  @{run}/systemd/userdb/io.systemd.home r,
+  @{run}/systemd/user-home-mount/{,**} rw,
+
+  @{sys}/bus/ r,
+  @{sys}/fs/ r,
+  @{sys}/class/ r,
+  @{sys}/kernel/uevent_seqnum r,
+  @{sys}/devices/**/read_ahead_kb r,
+
+        @{PROC}/devices r,
+        @{PROC}/sysvipc/{shm,sem,msg} r,
+  owner @{PROC}/@{pid}/gid_map w,
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/uid_map w,
+
+  /dev/loop-control rwk,
+  /dev/loop[0-9]* rw,
+  /dev/mapper/control rw,
+  /dev/mqueue/ r,
+  /dev/shm/ r,
+
+  include if exists <local/systemd-homed>
+}
