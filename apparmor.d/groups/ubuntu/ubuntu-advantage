@@ -10,10 +10,15 @@ include <tunables/global>
 profile ubuntu-advantage @{exec_path} {
   include <abstractions/base>
   include <abstractions/apt-common>
+  include <abstractions/consoles>
   include <abstractions/nameservice-strict>
+  include <abstractions/openssl>
   include <abstractions/python>
   include <abstractions/ssl_certs> 
-  include <abstractions/openssl>
+
+  capability dac_read_search,
+  capability setgid,
+  capability setuid,
 
   network inet stream,
   network inet6 stream,
@@ -21,30 +26,69 @@ profile ubuntu-advantage @{exec_path} {
   network inet6 dgram,
   network netlink raw,
 
+  signal (send) set=int peer=apt-methods-http,
+
   @{exec_path} mr,
 
-  /{usr/,}bin/ischroot                                rix,
+  /{usr/,}bin/ischroot                       rix,
 
+  /{usr/,}bin/apt                            rPx,
   /{usr/,}bin/apt-cache                      rPx,
+  /{usr/,}bin/apt-config                     rPx,
   /{usr/,}bin/apt-get                        rPx,
   /{usr/,}bin/dpkg                           rPx -> child-dpkg,
   /{usr/,}bin/ps                             rPx,
   /{usr/,}bin/snap                           rPx,
-  /{usr/,}bin/systemctl                      rPx -> child-systemctl,
+  /{usr/,}bin/systemctl                      rCx ->  systemctl,
+  /{usr/,}bin/systemd-detect-virt            rPx,
+  /{usr/,}bin/ubuntu-distro-info             rPx,
   /{usr/,}lib/apt/apt-helper                 rix,
   /{usr/,}lib/apt/methods/http{,s}           rPx,
   /{usr/,}lib/ubuntu-advantage/apt-esm-hook  rPx,
-  /{usr/,}bin/systemd-detect-virt            rPx,
 
+  /etc/apt/auth.conf.d/{,**} rw,
+  /etc/apt/trusted.gpg.d/{,**} rw,
+  /etc/apt/sources.list.d/{,**} rw,
   /etc/ubuntu-advantage/{,**} r,
-  /var/lib/ubuntu-advantage/{,**} r,
+  /var/lib/ubuntu-advantage/{,**} rw,
+
+  /etc/machine-id r,
 
   owner /tmp/tmp[0-9a-z]*/apt.conf r,
-  
+  owner /tmp/[0-9a-z]*{,/} rw,
+  owner /tmp/[0-9a-z]*/apt-helper-output rw,
+
   @{run}/ubuntu-advantage/{,**} rw,
 
         @{PROC}/version_signature r,
+        @{PROC}/@{pids}/mountinfo r,
+        @{PROC}/@{pids}/mounts r,
   owner @{PROC}/@{pid}/fd/ r,
+
+  profile systemctl {
+    include <abstractions/base>
+
+    capability sys_resource,
+
+    ptrace (read),
+
+    /{usr/,}bin/systemctl mr,
+
+    /{usr/,}bin/systemd-tty-ask-password-agent rix,
+
+    owner @{run}/systemd/ask-password/ rw,
+    owner @{run}/systemd/ask-password-block/* rw,
+
+          @{PROC}/1/environ r,
+          @{PROC}/1/sched r,
+          @{PROC}/cmdline r,
+          @{PROC}/sys/kernel/osrelease r,
+    owner @{PROC}/@{pid}/fd/ r,
+    owner @{PROC}/@{pid}/stat r,
+
+    /dev/kmsg w,
+
+  }
 
   include if exists <local/ubuntu-advantage>
 }
