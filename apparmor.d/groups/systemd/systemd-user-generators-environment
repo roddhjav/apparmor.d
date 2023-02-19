@@ -1,0 +1,21 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /usr/lib/systemd/user-environment-generators/30-systemd-environment-d-generator
+profile systemd-user-generators-environment @{exec_path} {
+  include <abstractions/base>
+
+  @{exec_path} mr,
+
+  /etc/environment.d/{,**} r,
+
+  @{PROC}/cmdline r,
+  @{PROC}/sys/kernel/osrelease r,
+
+  include if exists <local/systemd-user-generators-environment>
+}
