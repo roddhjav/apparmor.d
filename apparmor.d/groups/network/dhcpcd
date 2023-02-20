@@ -1,0 +1,64 @@
+# Last Modified: Sun Feb 19 16:26:38 2023
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/dhcpcd
+profile dhcpcd /{usr/,}bin/dhcpcd flags=(attach_disconnected, mediate_deleted) {
+  include <abstractions/base>
+
+  @{exec_path} mr,
+  
+  capability dac_override,
+  capability dac_read_search,
+  capability kill,
+  capability net_admin,
+  capability net_bind_service,
+  capability net_raw,
+  capability setgid,
+  capability setuid,
+  capability sys_chroot,
+
+  network inet dgram,
+  network inet raw,
+  network inet6 dgram,
+  network inet6 raw,
+  network netlink raw,
+  network packet raw,
+
+  /{usr/,}bin/bash ix,
+  /{usr/,}bin/cat mrix,
+  /{usr/,}bin/chmod mrix,
+  /{usr/,}bin/cmp mrix,
+  /{usr/,}bin/mkdir mrix,
+  /{usr/,}bin/rm mrix,
+  /{usr/,}bin/sed mrix,
+  /{usr/,}lib/dhcpcd/dhcpcd-run-hooks mrix,
+  owner /dev/tty rw,
+  owner /var/lib/dhcpcd/*.lease rw,
+  owner /var/lib/dhcpcd/secret rw,
+  owner @{PROC}/*/net/if_inet6 r,
+  owner @{PROC}/*/stat r,
+  owner @{PROC}/sys/kernel/hostname r,
+  owner @{PROC}/sys/net/ipv{4,6}/conf/** r,
+  owner @{PROC}/sys/net/ipv{4,6}/conf/@{hex}/accept_ra rw,
+  owner @{etc_ro}/dhcpcd.conf r,
+  owner @{etc_ro}/ld.so.cache r,
+  owner @{etc_ro}/ld.so.preload r,
+  owner @{etc_ro}/nsswitch.conf r,
+  owner @{etc_ro}/passwd r,
+  owner @{etc_rw}/resolv.conf rw,
+  owner @{run}/dhcpcd/@{hex}.pid wk,
+  owner @{run}/dhcpcd/@{hex}.sock w,
+  owner @{run}/dhcpcd/hook-state/ rw,
+  owner @{run}/dhcpcd/hook-state/resolv.conf.*.{dhcp,link} rw,
+  owner @{run}/dhcpcd/hook-state/resolv.conf/ rw,
+  owner @{run}/dhcpcd/{.pid,pid} rwk,
+  owner @{run}/dhcpcd/{.sock,sock} w,
+  owner @{run}/dhcpcd/unpriv.sock w,
+  owner @{run}/udev/data/n[0-9]* r,
+  owner @{sys}/devices/pci[0-9]*/**/uevent r,
+  owner @{sys}/devices/virtual/dmi/id/product_uuid r,
+  owner @{sys}/devices/virtual/net/**/{tun_flags,uevent} r,
+
+}
