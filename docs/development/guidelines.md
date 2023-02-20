@@ -33,20 +33,20 @@ follow the guidelines presented here.
 
 The rules in the profile should be sorted in the rule ***block*** as follows:
 
-1. `include`
-1. `set rlimit`
-1. `capability`
-1. `network`
-1. `mount`
-1. `remount`
-1. `umount`
-1. `pivot_root`
-1. `change_profile`
-1. `signal`
+1. [`include`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#include-statements)
+1. [`set rlimit`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#rlimit-rules)
+1. [`capability`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#capability-rules)
+1. [`network`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#network-rules)
+1. [`mount`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#mount-rules-apparmor-28-and-later)
+1. [`remount`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#remount)
+1. [`umount`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#umount)
+1. [`pivot_root`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#pivot_root)
+1. [`change_profile`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#change_profile)
+1. [`signal`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#signals)
 1. `ptrace`
 1. `unix`
-1. `dbus`
-1. `file`
+1. [`dbus`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#dbus-rules)
+1. [`file`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#file-access-rules)
 1. local include
 
 This rule order is taken from AppArmor with minor changes as we tend to:

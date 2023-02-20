@@ -58,7 +58,7 @@ profile apt @{exec_path} flags=(attach_disconnected) {
        member={CheckAuthorization,Introspect},
 
   dbus bind bus=system 
-       name= org.debian.apt,
+       name=org.debian.apt,
 
   @{exec_path} mr,
 
@@ -68,6 +68,7 @@ profile apt @{exec_path} flags=(attach_disconnected) {
   /{usr/,}bin/{,e}grep   rix,
   /{usr/,}bin/echo       rix,
   /{usr/,}bin/gdbus      rix,
+  /{usr/,}bin/id         rix,
   /{usr/,}bin/ischroot   rix,
   /{usr/,}bin/test       rix,
   /{usr/,}bin/touch      rix,
@@ -88,6 +89,7 @@ profile apt @{exec_path} flags=(attach_disconnected) {
   /{usr/,}bin/etckeeper                       rPx,
   /{usr/,}bin/ps                              rPx,
   /{usr/,}bin/snap                           rPUx,
+  /{usr/,}bin/systemctl                       rCx ->  systemctl,
   /{usr/,}lib/cnf-update-db                   rPx,
   /{usr/,}lib/needrestart/apt-pinvoke         rPx,
   @{libexec}/zsys-system-autosnapshot         rPx,
@@ -221,6 +223,31 @@ profile apt @{exec_path} flags=(attach_disconnected) {
     audit deny owner @{HOME}/.*     mrwkl,
     audit deny owner @{HOME}/.*/     rw,
     audit deny owner @{HOME}/.*/**  mrwkl,
+
+  }
+
+  profile systemctl {
+    include <abstractions/base>
+
+    capability sys_resource,
+
+    ptrace (read),
+
+    /{usr/,}bin/systemctl mr,
+
+    /{usr/,}bin/systemd-tty-ask-password-agent rix,
+
+    owner @{run}/systemd/ask-password/ rw,
+    owner @{run}/systemd/ask-password-block/* rw,
+
+          @{PROC}/1/environ r,
+          @{PROC}/1/sched r,
+          @{PROC}/cmdline r,
+          @{PROC}/sys/kernel/osrelease r,
+    owner @{PROC}/@{pid}/fd/ r,
+    owner @{PROC}/@{pid}/stat r,
+
+    /dev/kmsg w,
 
   }
 

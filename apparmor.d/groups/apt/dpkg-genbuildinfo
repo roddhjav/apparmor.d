@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2020-2021 Mikhail Morfikov
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -17,17 +18,9 @@ profile dpkg-genbuildinfo @{exec_path} flags=(complain) {
   @{exec_path} r,
   /{usr/,}bin/perl r,
 
-  /etc/dpkg/origins/debian r,
-
-  # For package building
-  owner @{user_build_dirs}/** rwkl -> @{user_build_dirs}/**,
-
-  /var/lib/dpkg/status r,
-
+  /usr/share/lto-disabled-list/lto-disabled-list r,
   /usr/share/dpkg/cputable r,
   /usr/share/dpkg/tupletable r,
-
-  owner @{user_config_dirs}/dpkg/buildflags.conf r,
 
   /usr/local/bin/ r,
   /usr/local/sbin/ r,
@@ -35,6 +28,15 @@ profile dpkg-genbuildinfo @{exec_path} flags=(complain) {
   /usr/local/lib/**/ r,
   /usr/local/include/ r,
   /usr/local/etc/ r,
+
+  /etc/dpkg/origins/* r,
+
+  /var/lib/dpkg/status r,
+
+  owner @{user_config_dirs}/dpkg/buildflags.conf r,
+
+  # For package building
+  owner @{user_build_dirs}/** rwkl -> @{user_build_dirs}/**,
 
   include if exists <local/dpkg-genbuildinfo>
 }

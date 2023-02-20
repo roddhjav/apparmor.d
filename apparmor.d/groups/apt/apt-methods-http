@@ -17,18 +17,19 @@ profile apt-methods-http @{exec_path} {
   capability setgid,
   capability setuid,
 
-  signal (receive) peer=apt-get,
-  signal (receive) peer=apt,
-  signal (receive) peer=aptitude,
-  signal (receive) peer=synaptic,
-  signal (receive) peer=unattended-upgrade,
-  signal (receive) peer=update-manager,
-
   network inet dgram,
   network inet6 dgram,
   network inet stream,
   network inet6 stream,
   network netlink raw,
+
+  signal (receive) peer=apt-get,
+  signal (receive) peer=apt,
+  signal (receive) peer=aptitude,
+  signal (receive) peer=synaptic,
+  signal (receive) peer=ubuntu-advantage,
+  signal (receive) peer=unattended-upgrade,
+  signal (receive) peer=update-manager,
 
   @{exec_path} mr,
 
@@ -47,17 +48,20 @@ profile apt-methods-http @{exec_path} {
   /usr/share/dpkg/cputable r,
   /usr/share/dpkg/tupletable r,
 
+  /var/cache/apt/ r,
+  /var/cache/apt/** rwk,
+
+  /var/log/cron-apt/temp w,
+
         /var/lib/apt/lists/{,**} r,
   owner /var/lib/apt/lists/* rw,
   owner /var/lib/apt/lists/partial/* rw,
 
-  /var/cache/apt/ r,
-  /var/cache/apt/** rwk,
+  # For package building
+  @{user_build_dirs}/** rwkl -> @{user_build_dirs}/**,
 
-  # For the aptitude interactive mode
         /tmp/ r,
   owner /tmp/aptitude-root.*/aptitude-download-* rw,
-
   owner /tmp/apt-changelog-*/*.changelog rw,
 
   @{run}/resolvconf/resolv.conf r,
@@ -65,12 +69,7 @@ profile apt-methods-http @{exec_path} {
   @{PROC}/1/cgroup r,
   @{PROC}/@{pid}/cgroup r,
 
-  # For package building
-  @{user_build_dirs}/** rwkl -> @{user_build_dirs}/**,
-
-  # file_inherit
   owner /dev/tty[0-9]* rw,
-  /var/log/cron-apt/temp w,
 
   include if exists <local/apt-methods-http>
 }

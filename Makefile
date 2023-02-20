@@ -34,6 +34,16 @@ install:
 		install -Dm0644 "$${file}" "${DESTDIR}/usr/lib/systemd/user/$${service}.d/apparmor.conf"; \
 	done
 
+auto:
+	@[ ${DISTRIBUTION} = Arch ] || exit 0; \
+		makepkg --syncdeps --install --cleanbuild --force
+	@[ ${DISTRIBUTION} = Ubuntu ] || exit 0; \
+		dch --newversion="${VERSION}" --urgency=medium --distribution=stable --controlmaint "Release ${VERSION}";  \
+		dpkg-buildpackage -b -d --no-sign;  \
+        sudo dpkg -i "../apparmor.d_${VERSION}_all.deb"; \
+		make clean
+	@[ ${DISTRIBUTION} = openSUSE ] || exit 0; \
+		make local
 
 local:
 	@./configure --complain
