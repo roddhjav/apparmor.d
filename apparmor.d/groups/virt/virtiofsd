@@ -5,9 +5,6 @@ abi <abi/3.0>,
 
 include <tunables/global>
 
-@{LOCAL_SHARED_DIRS} = /var/lib/libvirt/shared
-include if exists <local/tunables/virtiofsd>
-
 @{exec_path} = /{,usr/}lib/qemu/virtiofsd
 profile virtiofsd @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
@@ -39,9 +36,9 @@ profile virtiofsd @{exec_path} flags=(attach_disconnected) {
   /var/lib/libvirt/qemu/*/fs[0-9]*-fs.sock rw,
 
   # shared folders
-  mount options=(rw, rbind) -> @{LOCAL_SHARED_DIRS}/,
-  pivot_root @{LOCAL_SHARED_DIRS}/,
-  @{LOCAL_SHARED_DIRS}/ r,
+  mount options=(rw, rbind) -> @{user_vm_shares}/,
+  pivot_root @{user_vm_shares}/,
+  @{user_vm_shares}/ r,
 
   include if exists <local/virtiofsd>
 }
