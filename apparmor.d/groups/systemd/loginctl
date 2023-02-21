@@ -1,4 +1,5 @@
 # apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -9,11 +10,16 @@ include <tunables/global>
 profile loginctl @{exec_path} {
   include <abstractions/base>
   include <abstractions/dbus-strict>
+  include <abstractions/systemd-common>
 
   capability sys_resource,
   capability net_admin,
 
   @{exec_path} mr,
+
+  /{usr/,}bin/less  rPx -> child-pager,
+  /{usr/,}bin/more  rPx -> child-pager,
+  /{usr/,}bin/pager rPx -> child-pager,
 
   dbus (send) bus=system path=/org/freedesktop/login[0-9]*
        interface=org.freedesktop.login[0-9]*.Manager
