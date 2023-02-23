@@ -9,6 +9,7 @@ include <tunables/global>
 profile rustdesk @{exec_path} {
   include <abstractions/base>
   include <abstractions/nameservice-strict>
+  include <abstractions/audio>
   include <abstractions/openssl>
   include <abstractions/X-strict>
   include <abstractions/fonts>
@@ -17,6 +18,9 @@ profile rustdesk @{exec_path} {
   include <abstractions/dbus-session-strict>
   include <abstractions/dbus-accessibility-strict>
   include <abstractions/dbus-gtk>
+
+  capability dac_read_search,
+  capability dac_override,
 
   network inet dgram,
   network inet6 dgram,
@@ -46,15 +50,22 @@ profile rustdesk @{exec_path} {
 
   @{exec_path} mrix,
 
+  /{,usr/}bin/w        rPx,
   /{,usr/}bin/ps       rPx,
   /{,usr/}bin/whoami   rPx,
   /{,usr/}bin/loginctl rPx,
   /{,usr/}bin/curl     rix,
+  /{,usr/}bin/ls       rix,
 
-  /{,usr/}bin/python3.[0-9]* rCx -> python,
+  /{,usr/}bin/python3.[0-9]* rPx -> rustdesk_python,
+  /{,usr/}bin/{,ba,da}sh     rPx -> rustdesk_shell,
 
-  owner /tmp/[rR]ust[dD]esk/{,**} rw,
+  /etc/gdm{,3}/custom.conf r,
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
 
+  owner @{HOME}/.local/ w,
+  owner @{user_share_dirs}/ w,
+  owner @{user_share_dirs}/logs/ w,
   owner @{user_share_dirs}/logs/[rR]ust[dD]esk/{,**} rw,
   owner @{user_config_dirs}/[rR]ust[dD]esk/{,**} rw,
 
@@ -64,6 +75,27 @@ profile rustdesk @{exec_path} {
   owner @{PROC}/@{pid}/cgroup r,
   owner @{PROC}/@{pid}/cmdline r,
 
+  # grep ps
+  @{PROC} r,
+  capability sys_ptrace,
+  ptrace (read),
+  @{PROC}/@{pid}/stat r,
+  @{PROC}/@{pid}/cmdline r,
+  @{PROC}/@{pid}/environ r,
+  @{PROC}/@{pid}/io r,
+  @{PROC}/@{pid}/task/ r,
+  @{PROC}/@{pid}/task/@{tid}/stat r,
+  @{PROC}/@{pid}/task/@{tid}/io r,
+  @{PROC}/@{pid}/task/@{tid}/status r,
+
+  # service and GUI intercommunication
+  @{HOME}/.Xauthority r,
+  @{run}/user/@{uid}/.mutter-Xwaylandauth.?????? r,
+  @{run}/user/@{uid}/gdm{,3}/Xauthority r,
+  /tmp/[rR]ust[dD]esk/{,**} rw,
+  /tmp/.X11-unix/ r,
+  /var/lib/lightdm/.Xauthority r,
+
   # pulse
   /dev/shm/ r,
   /etc/pulse/client.conf r,
@@ -72,8 +104,11 @@ profile rustdesk @{exec_path} {
   owner @{run}/user/@{uid}/pulse/native rw,
   owner @{user_config_dirs}/pulse/ rw,
   owner @{user_config_dirs}/pulse/cookie rwk,
+  owner @{user_config_dirs}/pulse/*-runtime{,.tmp} rw,
+  owner /tmp/pulse-*/ rw,
 
   # gtk-tiny
+  /usr/share/themes/{,**} r,
   /etc/gtk-3.0/settings.ini r,
   /usr/share/themes/*/gtk-3.0/gtk.css r,
 
@@ -84,43 +119,52 @@ profile rustdesk @{exec_path} {
   # file_inherit, X-tiny
   owner @{HOME}/.xsession-errors w,
 
-  # excessive?
-  deny @{PROC} r,
-#  @{PROC} r,
-#  capability sys_ptrace,
-#  ptrace (read),
-#  owner @{PROC}/@{pid}/stat r,
-#  owner @{PROC}/@{pid}/environ r,
-#  owner @{PROC}/@{pid}/io r,
-#  owner @{PROC}/@{pid}/task/ r,
-#  owner @{PROC}/@{pid}/task/@{tid}/stat r,
-#  owner @{PROC}/@{pid}/task/@{tid}/io r,
-#  owner @{PROC}/@{pid}/task/@{tid}/status r,
+  # Do not reveal username (pop-up only)
+#  deny /etc/passwd r,
 
-  profile python {
+  # It's possible to disable root-based service ('systemctl disable rustdesk.service') and use RD only on-demand (or as client-only). After that, sudo isn't necessary.
+#  deny /{,usr/}bin/sudo   x,
+  /{,usr/}bin/sudo rCx -> sudo,
+  profile sudo {
     include <abstractions/base>
+    include <abstractions/nameservice-strict>
+    include <abstractions/consoles>
     include <abstractions/python>
-    include <abstractions/openssl>
+    include <abstractions/wutmp>
 
-    /{,usr/}bin/python3.[0-9]* r,
+    capability sys_resource,
+    capability setuid,
+    capability setgid,
+    capability audit_write,
 
-    /{,usr/}bin/{,ba,da}sh rix,
-    /{,usr/}bin/chmod rix,
-    /{,usr/}bin/uname rPx,
-    /usr/share/rustdesk/files/pynput_service.py rPx,
+    network netlink raw,
 
+    /{,usr/}bin/sudo r,
+
+    /etc/sudo.conf r,
+    /etc/sudoers r,
+    /etc/pam.d/* r,
+    /etc/login.defs r,
+    /etc/shadow r,
+    /etc/security/capability.conf r,
+    /etc/security/limits.conf r,
+    /etc/security/limits.d/{,*} r,
+    /etc/security/pam_env.conf r,
+    /etc/sudoers.d/{,*} r,
+    /etc/environment r,
+    /etc/default/locale r,
+
+    /usr/libexec/sudo/libsudo_util.so* mr,
+    /usr/libexec/sudo/sudoers.so mr,
+
+          @{PROC}/1/limits r,
+    owner @{PROC}/@{pid}/stat r,
     owner @{PROC}/@{pid}/fd/ r,
 
-    /usr/share/[rR]ust[dD]esk/files/{,**} r,
-    owner /tmp/[rR]ust[dD]esk/ w,
-    owner /tmp/[rR]ust[dD]esk/pynput_service rw,
+    /{,usr/}{,local/}bin/rustdesk rPx,
+    /{,usr/}bin/python3.[0-9]*    rPx -> rustdesk_python,
 
-    # X-tiny
-    /tmp/.X11-unix/* rw,
-    owner @{HOME}/.xsession-errors w,
-    owner @{HOME}/.Xauthority r,
-
-    include if exists <local/rustdesk_python>
+    include if exists <local/rustdesk_sudo>
   }
 
   include if exists <local/rustdesk>
@@ -132,4 +176,62 @@ profile rustdesk_pynput_service /usr/share/rustdesk/files/pynput_service.py {
   @{exec_path} r,
 
   include if exists <local/rustdesk_pynput_service>
+}
+
+profile rustdesk_python {
+  include <abstractions/base>
+  include <abstractions/python>
+  include <abstractions/openssl>
+
+  capability dac_read_search,
+  capability dac_override,
+
+  /{,usr/}bin/python3.[0-9]* r,
+
+  /{,usr/}bin/{,ba,da}sh rix,
+  /{,usr/}bin/chmod rix,
+  /{,usr/}bin/uname rPx,
+  /usr/share/rustdesk/files/pynput_service.py rPx,
+
+  /usr/local/lib/python3.[0-9]*/dist-packages/pynput/{,**} r,
+  /usr/share/[rR]ust[dD]esk/files/{,**} r,
+  /tmp/[rR]ust[dD]esk/ w,
+  /tmp/[rR]ust[dD]esk/pynput_service rw,
+
+  @{run}/user/@{uid}/gdm{,3}/Xauthority r,
+
+  owner @{PROC}/@{pid}/fd/ r,
+
+  # X-tiny
+  /tmp/.X11-unix/* rw,
+  owner @{HOME}/.xsession-errors w,
+  owner @{HOME}/.Xauthority r,
+
+  include if exists <local/rustdesk_python>
+}
+
+profile rustdesk_shell {
+  include <abstractions/base>
+
+       capability sys_ptrace,
+       capability dac_read_search,
+  deny capability dac_override,
+
+  ptrace (read),
+
+  /{,usr/}bin/{,ba,da}sh r,
+
+  /{,usr/}bin/tr       rix,
+  /{,usr/}bin/{,e}grep rix,
+  /{,usr/}bin/tail     rix,
+  /{,usr/}bin/xargs    rix,
+  /{,usr/}bin/sed      rix,
+  /{,usr/}bin/cat      rix,
+
+  /{,usr/}bin/ps rPx,
+
+  owner @{PROC}/@{pid}/fd/ r,
+        @{PROC}/@{pid}/environ r,
+
+  include if exists <local/rustdesk_shell>
 }

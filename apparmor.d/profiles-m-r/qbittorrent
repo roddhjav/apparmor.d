@@ -31,11 +31,13 @@ profile qbittorrent @{exec_path} {
   include <abstractions/dbus-accessibility-strict>
   include <abstractions/dbus-network-manager-strict>
   include <abstractions/dbus-gtk>
+  include <abstractions/dri-common>
   include <abstractions/dri-enumerate>
   include <abstractions/wayland>
   include <abstractions/mesa>
   include <abstractions/openssl>
   include <abstractions/ssl_certs>
+  include <abstractions/nvidia>
 
   signal send set=(term, kill) peer=qbittorrent//python3,
 
@@ -45,15 +47,15 @@ profile qbittorrent @{exec_path} {
   network inet6 stream,
   network netlink dgram,
   network netlink raw,
+   
+  dbus send    bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={RequestName,ReleaseName}
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
 
   dbus send    bus=session path=/StatusNotifierWatcher
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
-       peer=(name=org.kde.StatusNotifierWatcher),
-   
-  dbus send    bus=session path=/StatusNotifierWatcher
-       interface=org.freedesktop.DBus.Properties
-       member=Get
        peer=(name=org.kde.StatusNotifierWatcher),
    
   dbus send    bus=session path=/StatusNotifierWatcher
@@ -71,12 +73,12 @@ profile qbittorrent @{exec_path} {
        member=Activate
        peer=(name=:*),
    
-  dbus receive bus=session path=/StatusNotifierItem
+  dbus send    bus=session path=/StatusNotifierWatcher
        interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=:*),
+       member=Get
+       peer=(name=org.kde.StatusNotifierWatcher),
    
-  dbus receive bus=session path=/MenuBar
+  dbus receive bus=session path=/{StatusNotifierItem,MenuBar}
        interface=org.freedesktop.DBus.Properties
        member=GetAll
        peer=(name=:*),
@@ -90,11 +92,6 @@ profile qbittorrent @{exec_path} {
        interface=com.canonical.dbusmenu
        member={GetLayout,GetGroupProperties,AboutToShow,AboutToShowGroup,EventGroup,Event}
        peer=(name=:*),
-   
-  dbus send    bus=session path=/org/freedesktop/DBus
-       interface=org.freedesktop.DBus
-       member={RequestName,ReleaseName}
-       peer=(name=org.freedesktop.DBus),
 
   dbus send    bus=accessibility path=/org/a11y/atspi/accessible/root
        interface=org.a11y.atspi.Socket
@@ -223,11 +220,12 @@ profile qbittorrent @{exec_path} {
     /{usr/,}bin/engrampa        rPx,
     @{FIREFOX_BIN}              rPx,
 
-    /{usr/,}bin/{ba,da,}sh        rix,
-    /{usr/,}bin/{g,m,}awk         rix,
-    /{usr/,}bin/readlink          rix,
-    /{usr/,}bin/basename          rix,
-    /{usr/,}bin/xfce4-mime-helper rix,
+    /{usr/,}bin/{ba,da,}sh           rix,
+    /{usr/,}bin/{g,m,}awk            rix,
+    /{usr/,}bin/readlink             rix,
+    /{usr/,}bin/basename             rix,
+    /{usr/,}bin/which{,.debianutils} rix,
+    /{usr/,}bin/xfce4-mime-helper    rix,
 
     owner @{HOME}/ r,
 

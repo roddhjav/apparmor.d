@@ -13,13 +13,19 @@ profile thermald @{exec_path} {
   include <abstractions/dbus-strict>
 
   capability sys_boot,
+  
+  dbus send bus=system path=/org/freedesktop/DBus
+     interface=org.freedesktop.DBus
+     member={RequestName,ReleaseName}
+     peer=(name=org.freedesktop.DBus, label=dbus-daemon),
+
+  dbus send bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={RequestName,ReleaseName}
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
 
   dbus (bind) bus=system
      name=org.freedesktop.thermald,
-  
-  dbus (send) bus=system path=/org/freedesktop/DBus
-     interface=org.freedesktop.DBus
-     member=RequestName,
 
   @{exec_path} mr,
 
@@ -52,6 +58,7 @@ profile thermald @{exec_path} {
   @{sys}/devices/virtual/thermal/thermal_zone[0-9]*/ r,
   @{sys}/devices/virtual/thermal/thermal_zone[0-9]*/trip_point_[0-9]*_temp rw,
   @{sys}/devices/virtual/thermal/thermal_zone[0-9]*/trip_point_[0-9]*_type r,
+  @{sys}/devices/virtual/thermal/thermal_zone[0-9]*/cdev[0-9]*_trip_point r,
 
   @{sys}/devices/virtual/thermal/cooling_device[0-9]*/ r,
   @{sys}/devices/virtual/thermal/cooling_device[0-9]*/cur_state rw,

@@ -1,0 +1,44 @@
+# apparmor.d - Full set of apparmor profiles
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{,usr/}lib/qemu/virtiofsd
+profile virtiofsd @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+
+  capability setgid,
+  capability setuid,
+  capability fowner,
+  capability fsetid,
+  capability sys_resource,
+  capability sys_admin,
+  capability setpcap,
+  capability dac_read_search,
+  capability dac_override,
+  capability chown,
+
+  unix (send, receive) type=stream peer=(addr=none, label=libvirt-@{uuid}),
+
+  mount options=(rw, rslave) -> /,
+  umount /,
+  mount options=(rw, nosuid, nodev, noexec, relatime) -> @{PROC},
+  mount options=(rw, bind) @{PROC}/1/fd/ -> @{PROC},
+
+  @{exec_path} r,
+
+  @{PROC}/sys/fs/file-max r,
+
+  owner @{run}/libvirt/qemu/*.pid rw,
+
+  /var/lib/libvirt/qemu/*/fs[0-9]*-fs.sock rw,
+
+  # shared folders
+  mount options=(rw, rbind) -> @{user_vm_shares}/,
+  pivot_root @{user_vm_shares}/,
+  @{user_vm_shares}/ r,
+
+  include if exists <local/virtiofsd>
+}

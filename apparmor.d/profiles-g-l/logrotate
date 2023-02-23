@@ -46,6 +46,10 @@ profile logrotate @{exec_path} flags=(attach_disconnected) {
   /{usr/,}bin/mysqladmin                        rPUx,
   /{usr/,}bin/systemd-tty-ask-password-agent    rPx,
   /{usr/,}lib/php/php[7-8].[3-4]-fpm-reopenlogs rPUx,
+  /etc/init.d/nginx                             rPUx,
+  /{usr/,}{s,}bin/squid                         rPUx,
+
+  /{usr/,}bin/pgrep rCx -> pgrep,
 
   # no new privs
   #/{usr/,}bin/systemctl              rCx -> systemctl,
@@ -96,6 +100,19 @@ profile logrotate @{exec_path} flags=(attach_disconnected) {
     /dev/kmsg rw,
 
     include if exists <local/logrotate_systemctl>
+  }
+
+  profile pgrep {
+    include <abstractions/base>
+
+    /{usr/,}bin/pgrep mr,
+
+    # The /proc/ dir and the cmdline file have to be radable to avoid pgrep segfault.
+         @{PROC}/ r,
+         @{PROC}/@{pids}/cmdline r,
+         @{PROC}/sys/kernel/osrelease r,
+
+    include if exists <local/logrotate_pgrep>
   }
 
   include if exists <local/logrotate>
