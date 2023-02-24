@@ -82,17 +82,20 @@ configure() {
 			_msg "Configure libexec."
 			LIBEXEC="/{usr/,}lib"
 			sed -i -e '/Debian/d' "$ROOT/apparmor.d/tunables/extend"
-
 			;;
 
-		debian|ubuntu|whonix)
-			if [[ "$DISTRIBUTION" != "ubuntu" ]]; then
-				_msg "$DISTRIBUTION does not support abi 3.0 yet."
-				find "$ROOT/apparmor.d" -type f -exec sed -e '/abi /d' -i {} \;
-
-				cp -a dists/debian/abstractions/* $ROOT/apparmor.d/abstractions
-				cp -a dists/debian/tunables/* $ROOT/apparmor.d/tunables
-			fi
+		debian|ubuntu|whonix|core)
+			case "$DISTRIBUTION" in
+				core)
+					mkdir -p $ROOT/root/usr/lib/systemd/system/systemd-udevd.service.d/
+					cp -a dists/core/systemd-udevd.service $ROOT/root/usr/lib/systemd/system/systemd-udevd.service.d/apparmor.conf
+					cp -a apparmor.d/groups/_full/systemd $ROOT/apparmor.d/systemd ;;
+				debian|whonix)
+					_msg "$DISTRIBUTION does not support abi 3.0 yet."
+					find "$ROOT/apparmor.d" -type f -exec sed -e '/abi /d' -i {} \;
+					cp -a dists/debian/abstractions/* $ROOT/apparmor.d/abstractions
+					cp -a dists/debian/tunables/* $ROOT/apparmor.d/tunables ;;
+			esac
 
 			_msg "Configure libexec."
 			LIBEXEC="/{usr/,}libexec"
@@ -101,7 +104,6 @@ configure() {
 			_msg "Displace overwritten files."
 			_displace_files apparmor.d/tunables/global \
 				apparmor.d/tunables/xdg-user-dirs apparmor.d/abstractions/trash
-
 			;;
 
 		opensuse)
@@ -229,7 +231,7 @@ full() {
 			cp -r root/usr/lib/initcpio root/usr/lib/systemd/ "$ROOT/root/usr/lib/"
 			;;
 
-		debian|ubuntu|whonix)
+		debian|ubuntu|whonix|core)
 			cp -r root/usr/share/initramfs-tools "$ROOT/root/usr/share/"
 			;;
 
