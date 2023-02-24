@@ -1,0 +1,136 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# This is not /sbin/init (PID 1) but systemd --user
+
+# Only use this profile with a fully configured system. Otherwise it **WILL**
+# break your computer.
+# See https://apparmor.pujol.io/development/structure/#full-system-policy
+# for more information.
+
+# Distributions and other programs can add rules in the usr/systemd.d directory
+
+abi <abi/3.0>,
+ 
+include <tunables/global>
+ 
+@{exec_path} = /{usr/,}lib/systemd/systemd
+profile systemd /{usr/,}lib/systemd/systemd flags=(complain) {
+  include <abstractions/base>
+  include <abstractions/dbus-session-strict>
+  include <abstractions/dbus-strict>
+  include <abstractions/nameservice-strict>
+
+  network netlink raw,
+
+  ptrace (read),
+
+  signal (send) set=(term, cont, kill),
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/{,ba,da}sh  rix,
+  /{usr/,}bin/systemctl   rCx -> systemctl,
+
+  /{usr/,}lib/systemd/user-environment-generators/*  rPx,
+  /{usr/,}lib/systemd/user-environment-generators/*  rPx,
+  /{usr/,}lib/systemd/user-generators/*              rPx,
+
+  # Server
+  /{usr/,}lib/openssh/agent-launch rPx,
+
+  # Dbus
+  @{libexec}/{,at-spi2{,-core}/}at-spi-bus-launcher rPx,
+  /{usr/,}bin/dbus-daemon                           rPx,
+
+  # Desktop
+  @{libexec}/xdg-desktop-portal*   rPx,
+  @{libexec}/xdg-document-portal   rPx,
+  @{libexec}/xdg-permission-store  rPx,
+  /{usr/,}bin/xdg-user-dirs-update rPx,
+
+  # Audio
+  /{usr/,}bin/pipewire        rux, # FIXME: no new privs
+  /{usr/,}bin/wireplumber     rux, # FIXME: no new privs
+  /{usr/,}bin/pipewire-pulse  rux, # FIXME: no new privs
+
+  # Gnome
+  @{libexec}/{,dconf/}dconf-service         rPx,
+  @{libexec}/evolution-addressbook-factory  rPx,
+  @{libexec}/evolution-calendar-factory     rPx,
+  @{libexec}/evolution-source-registry      rPx,
+  @{libexec}/gnome-session-binary           rPx,
+  @{libexec}/gnome-session-ctl              rPx,
+  @{libexec}/gnome-terminal-server          rPx,
+  @{libexec}/goa-*                          rPx,
+  @{libexec}/gsd-*                          rPx,
+  @{libexec}/gvfs-*                         rPx,
+  @{libexec}/gvfsd*                         rPx,
+  @{libexec}/tracker-extract-*              rPx,
+  @{libexec}/tracker-miner-*                rPx,
+  /{usr/,}bin/gjs                           rPx,
+  /{usr/,}bin/gnome-keyring-daemon          rPx,
+  /{usr/,}bin/gnome-shell                   rPx,
+  /{usr/,}lib/dconf/dconf-service           rPx,
+  /{usr/,}lib/gvfs/gvfs-*                   rPx,
+  /{usr/,}lib/gvfs/gvfsd*                   rPx,
+
+  # Ubuntu
+  /{usr/,}bin/snap                          rPx,
+
+  /etc/systemd/user.conf r,
+  /etc/systemd/user.conf.d/{,**} r,
+  /etc/systemd/user/{,**} r,
+
+  /usr/ r,
+
+  owner @{user_config_dirs}/systemd/user/{,**} r,
+
+  owner @{run}/user/@{uid}/{,*/,*} rw,
+  owner @{run}/user/@{uid}/*/* rw,
+  owner @{run}/user/@{uid}/systemd/{,**} rw,
+
+  @{run}/mount/utab r,
+  @{run}/systemd/notify w,
+  @{run}/udev/data/* r,
+  @{run}/udev/tags/systemd/ r,
+
+        @{sys}/devices/**/uevent r,
+        @{sys}/devices/virtual/dmi/id/product_name r,
+        @{sys}/devices/virtual/dmi/id/sys_vendor r,
+        @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/{,**} r,
+        @{sys}/module/apparmor/parameters/enabled r,
+  owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/{,**} rw,
+
+        @{PROC}/@{pids}/cgroup r,
+        @{PROC}/@{pids}/comm r,
+        @{PROC}/@{pids}/stat r,
+        @{PROC}/1/cgroup r,
+        @{PROC}/cmdline r,
+        @{PROC}/swaps r,
+        @{PROC}/sys/fs/nr_open r,
+        @{PROC}/sys/kernel/osrelease r,
+        @{PROC}/sys/kernel/pid_max r,
+        @{PROC}/sys/kernel/threads-max r,
+  owner @{PROC}/@{pids}/attr/apparmor/exec w,
+  owner @{PROC}/@{pids}/fd/ r,
+  owner @{PROC}/@{pids}/mountinfo r,
+  owner @{PROC}/@{pids}/oom_score_adj rw,
+
+  profile systemctl {
+    include <abstractions/base>
+
+    /{usr/,}bin/systemctl mr,
+
+          @{PROC}/cmdline r,
+          @{PROC}/sys/kernel/osrelease r,
+    owner @{PROC}/@{pids}/status r,
+
+    include if exists <usr/systemd_systemctl.d>
+    include if exists <local/systemd_systemctl>
+  }
+
+  include if exists <usr/systemd.d>
+  include if exists <local/systemd>
+}
