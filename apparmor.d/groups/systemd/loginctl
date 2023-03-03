@@ -12,14 +12,8 @@ profile loginctl @{exec_path} {
   include <abstractions/dbus-strict>
   include <abstractions/systemd-common>
 
-  capability sys_resource,
   capability net_admin,
-
-  @{exec_path} mr,
-
-  /{usr/,}bin/less  rPx -> child-pager,
-  /{usr/,}bin/more  rPx -> child-pager,
-  /{usr/,}bin/pager rPx -> child-pager,
+  capability sys_resource,
 
   dbus (send) bus=system path=/org/freedesktop/login[0-9]*
        interface=org.freedesktop.login[0-9]*.Manager
@@ -30,6 +24,12 @@ profile loginctl @{exec_path} {
        interface=org.freedesktop.DBus.Properties
        member={Get,GetAll}
        peer=(name=org.freedesktop.login[0-9]*, label=systemd-logind),
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/less  rPx -> child-pager,
+  /{usr/,}bin/more  rPx -> child-pager,
+  /{usr/,}bin/pager rPx -> child-pager,
 
   include if exists <local/loginctl>
 }
