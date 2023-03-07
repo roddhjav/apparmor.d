@@ -26,6 +26,10 @@ profile snap @{exec_path} {
          member={StartTransientUnit,JobRemoved}
          peer=(name=:*, label=unconfined),
 
+  dbus (send, receive) bus=system path=/org/freedesktop/
+         interface=org.freedesktop.systemd1.Manager
+         member={StartTransientUnit,JobRemoved},
+
   dbus send bus=session path=/org/freedesktop/portal/documents
        interface=org.freedesktop.portal.Documents
        member=GetMountPoint
@@ -35,6 +39,7 @@ profile snap @{exec_path} {
 
   /{usr/,}bin/mount rix,
 
+  /{usr/,}bin/gpg{,2}          rCx -> gpg,
   /{usr/,}bin/systemctl        rPx -> child-systemctl,
 
   /snap/{,**} rw,
@@ -76,6 +81,20 @@ profile snap @{exec_path} {
   /dev/ttyS[0-9]* rw,
 
   deny @{user_share_dirs}/gvfs-metadata/* r,
+
+  profile gpg {
+    include <abstractions/base>
+
+    /{usr/,}bin/gpg{,2} mr,
+
+    /{usr/,}bin/dirmngr           rix,
+    /{usr/,}bin/gpg-agent         rix,
+    /{usr/,}bin/gpg-connect-agent rix,
+
+    owner @{HOME}/.snap/gnupg/ rw,
+    owner @{HOME}/.snap/gnupg/** rwkl,
+
+  }
 
   include if exists <local/snap>
 }

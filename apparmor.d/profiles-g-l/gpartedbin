@@ -13,148 +13,92 @@ include <tunables/global>
 profile gpartedbin @{exec_path} {
   include <abstractions/base>
   include <abstractions/dconf-write>
-  include <abstractions/gtk>
-  include <abstractions/fonts>
-  include <abstractions/fontconfig-cache-read>
-  include <abstractions/freedesktop.org>
   include <abstractions/disks-write>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/fonts>
+  include <abstractions/freedesktop.org>
+  include <abstractions/gtk>
 
-  # Needed to inform the system of newly created/removed partitions.
-  #  ioctl(3, BLKRRPART)              = -1 EACCES (Permission denied)
-  #
-  #  Error: Partition(s) * on /dev/sd* have been written, but we have been unable to inform the
-  #  kernel of the change, probably because it/they are in use.  As a result, the old partition(s)
-  #  will remain in use.  You should reboot now before making further changes.
-  capability sys_admin,
-
-  #
   capability dac_read_search,
-
-  # Needed? (##FIXME##)
+  capability sys_admin,
   capability sys_rawio,
 
   # Needed?
-  deny capability sys_nice,
+  # deny capability sys_nice,
 
-  # Needed?
   ptrace (read),
 
   @{exec_path} mr,
 
   /{usr/,}bin/{,ba,da}sh  rix,
 
+  /{usr/,}{s,}bin/blkid      rPx,
   /{usr/,}{s,}bin/dmidecode  rPx,
   /{usr/,}{s,}bin/hdparm     rPx,
-  /{usr/,}{s,}bin/blkid      rPx,
+  /{usr/,}bin/kmod           rPx,
 
-  /{usr/,}bin/udevadm     rCx -> udevadm,
-  /{usr/,}bin/mount       rCx -> mount,
-  /{usr/,}bin/umount      rCx -> umount,
+  /{usr/,}bin/mount          rCx -> mount,
+  /{usr/,}bin/udevadm        rCx -> udevadm,
+  /{usr/,}bin/umount         rCx -> umount,
 
-  # RAID
   /{usr/,}{s,}bin/dmraid     rPUx,
-
-  # Device mapper
   /{usr/,}{s,}bin/dmsetup    rPUx,
-
-  # LVM
+  /{usr/,}{s,}bin/dumpe2fs   rPx,
+  /{usr/,}{s,}bin/e2fsck     rPx,
+  /{usr/,}{s,}bin/e2image    rPx,
+  /{usr/,}{s,}bin/fsck.btrfs rPx,
+  /{usr/,}{s,}bin/fsck.fat   rPx,
   /{usr/,}{s,}bin/lvm        rPUx,
-
-  # NTFS
-  # The following tools link to mkntfs:
-  #  mkfs.ntfs
+  /{usr/,}{s,}bin/mke2fs     rPx,
   /{usr/,}{s,}bin/mkntfs     rPx,
+  /{usr/,}{s,}bin/mkswap     rPx,
   /{usr/,}{s,}bin/ntfslabel  rPx,
   /{usr/,}{s,}bin/ntfsresize rPx,
-  /{usr/,}bin/ntfsinfo    rPx,
-
-  # FAT16/32
-  # The following tools link to mtools:
-  #  mattrib, mbadblocks, mcat, mcd, mclasserase, mcopy, mdel,
-  #  mdeltree, mdir, mdu, mformat, minfo, mlabel, mmd, mmount,
-  #  mmove, mpartition, mrd, mren, mshortname, mshowfat,
-  #  mtoolstest, mtype, mzip
-  /{usr/,}bin/mtools      rPx,
-  # The following tools link to mkfs.fat:
-  #  mkdosfs, mkfs.msdos, mkfs.vfat
-  /{usr/,}{s,}bin/mkfs.fat   rPx,
-  # The following tools link to fsck.fat:
-  #  dosfsck, fsck.msdos, fsck.vfat
-  /{usr/,}{s,}bin/fsck.fat   rPx,
-
-  # EXT2/3/4
-  # The following tools link to mke2fs:
-  #  mkfs.ext2, mkfs.ext3, mkfs.ext4
-  /{usr/,}{s,}bin/mke2fs     rPx,
-  # The following tools link to e2fsck:
-  # fsck.ext2, fsck.ext3, fsck.ext4
-  /{usr/,}{s,}bin/e2fsck     rPx,
   /{usr/,}{s,}bin/resize2fs  rPx,
-  # The following tools link to dumpe2fs:
-  #  e2mmpstatus
-  /{usr/,}{s,}bin/dumpe2fs   rPx,
-  # The following tools link to tune2fs:
-  #  e2label
-  /{usr/,}{s,}bin/tune2fs    rPx,
-  /{usr/,}{s,}bin/e2image    rPx,
-
-  # BTRFS
-  /{usr/,}{s,}bin/mkfs.btrfs rPx,
-  # The following tools link to btrfs:
-  #  btrfsck
-  /{usr/,}bin/btrfs       rPx,
-  /{usr/,}bin/btrfstune   rPx,
-  /{usr/,}{s,}bin/fsck.btrfs rPx,
-  /{usr/,}{s,}bin/mkfs.btrfs rPx,
-
-  # SWAP
-  /{usr/,}{s,}bin/mkswap     rPx,
   /{usr/,}{s,}bin/swaplabel  rPx,
-  /{usr/,}{s,}bin/swapon     rPx,
   /{usr/,}{s,}bin/swapoff    rPx,
+  /{usr/,}{s,}bin/swapon     rPx,
+  /{usr/,}{s,}bin/tune2fs    rPx,
+  /{usr/,}bin/btrfs          rPx,
+  /{usr/,}bin/btrfstune      rPx,
+  /{usr/,}bin/mdadm          rPUx,
+  /{usr/,}bin/mkfs.*         rPx,
+  /{usr/,}bin/mtools         rPx,
+  /{usr/,}bin/ntfsinfo       rPx,
+  /{usr/,}bin/xfs_io         rPUx,
 
-  /{usr/,}bin/xdg-open                                    rCx -> open,
-  /{usr/,}lib/@{multiarch}/glib-[0-9]*/gio-launch-desktop rCx -> open,
+  /{usr/,}bin/xdg-open                                    rCx -> child-open,
+  /{usr/,}lib/@{multiarch}/glib-[0-9]*/gio-launch-desktop rCx -> child-open,
 
-        @{PROC}/version r,
-        @{PROC}/swaps r,
-        @{PROC}/partitions r,
-        @{PROC}/devices r,
-  owner @{PROC}/@{pid}/fd/ r,
-  owner @{PROC}/@{pid}/mounts r,
-  owner @{PROC}/@{pid}/mountinfo r,
-
-  /dev/mapper/control rw,
-
-  /etc/fstab r,
-
-  /var/lib/dbus/machine-id r,
-  /etc/machine-id r,
-
-  @{run}/mount/utab r,
-
-  # For fsck of the btrfs filesystem
-  owner /tmp/gparted-*/ rw,
-
-  # Started as root so without "owner".
-  @{HOME}/.Xauthority r,
-
-  # For saving reports
+        @{HOME}/.Xauthority r,
   owner @{HOME}/*.htm w,
 
+  owner /tmp/gparted-*/ rw,
+
+  @{run}/mount/utab r,
+  
+        @{PROC}/devices r,
+        @{PROC}/partitions r,
+        @{PROC}/swaps r,
+        @{PROC}/version r,
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/mounts r,
+
+  /dev/mapper/control rw,
 
   profile mount {
     include <abstractions/base>
 
     capability sys_admin,
 
-    /{usr/,}bin/mount mr,
-
     mount /dev/{s,v}d[a-z]*[0-9]* -> /tmp/gparted-*/,
 
     mount /dev/{s,v}d[a-z]*[0-9]* -> /boot/,
     mount /dev/{s,v}d[a-z]*[0-9]* -> @{MOUNTS}/,
     mount /dev/{s,v}d[a-z]*[0-9]* -> @{MOUNTS}/*/,
+
+    /{usr/,}bin/mount mr,
 
     @{sys}/devices/pci[0-9]*/**/block/{s,v}d[a-z]/ r,
     @{sys}/devices/pci[0-9]*/**/block/{s,v}d[a-z]/dev r,
@@ -171,24 +115,25 @@ profile gpartedbin @{exec_path} {
 
     capability sys_admin,
 
-    /{usr/,}bin/umount mr,
-
     umount /tmp/gparted-*/,
 
     umount /boot/,
     umount @{MOUNTS}/,
     umount @{MOUNTS}/*/,
 
-    owner @{PROC}/@{pid}/mountinfo r,
+    /{usr/,}bin/umount mr,
 
     owner @{run}/mount/ rw,
     owner @{run}/mount/utab{,.*} rw,
     owner @{run}/mount/utab.lock wk,
 
+    owner @{PROC}/@{pid}/mountinfo r,
+
   }
 
   profile udevadm {
     include <abstractions/base>
+    include <abstractions/disks-write>
 
     ptrace (read),
 
@@ -196,40 +141,15 @@ profile gpartedbin @{exec_path} {
 
     /etc/udev/udev.conf r,
 
-    owner @{PROC}/@{pid}/stat r,
-    owner @{PROC}/@{pid}/cgroup r,
-          @{PROC}/cmdline r,
-          @{PROC}/1/sched r,
           @{PROC}/1/environ r,
+          @{PROC}/1/sched r,
+          @{PROC}/cmdline r,
           @{PROC}/sys/kernel/osrelease r,
           @{PROC}/sys/kernel/random/boot_id r,
+    owner @{PROC}/@{pid}/cgroup r,
+    owner @{PROC}/@{pid}/stat r,
 
-    # file_inherit
-    include <abstractions/disks-write>  # lots of files in this abstraction get inherited
     /dev/mapper/control rw,
-
-  }
-
-  profile open {
-    include <abstractions/base>
-    include <abstractions/xdg-open>
-
-    /{usr/,}bin/xdg-open                                    mr,
-    /{usr/,}lib/@{multiarch}/glib-[0-9]*/gio-launch-desktop mr,
-
-    /{usr/,}bin/{,ba,da}sh      rix,
-    /{usr/,}bin/{m,g,}awk       rix,
-    /{usr/,}bin/readlink        rix,
-    /{usr/,}bin/basename        rix,
-
-    owner @{HOME}/ r,
-
-    owner @{run}/user/@{uid}/ r,
-
-    # Allowed apps to open
-
-    # file_inherit
-    owner @{HOME}/.xsession-errors w,
 
   }
 

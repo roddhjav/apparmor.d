@@ -9,14 +9,25 @@ include <tunables/global>
 @{exec_path} = /{usr/,}lib/systemd/systemd-remount-fs
 profile systemd-remount-fs @{exec_path} {
   include <abstractions/base>
+  include <abstractions/nameservice-strict>
   include <abstractions/systemd-common>
 
+  capability net_admin,
+  capability sys_admin,
+  capability sys_resource,
+
+  mount options=(rw, remount) -> /,
+  mount options=(rw, remount) -> /proc/,
+
   @{exec_path} mr,
+
+  /{usr/,}bin/mount rix,
 
   /etc/fstab r,
 
   @{run}/host/container-manager r,
 
+  @{PROC}/ r,
   @{PROC}/1/cmdline r,
 
   include if exists <local/systemd-remount-fs>
