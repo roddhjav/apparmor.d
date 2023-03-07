@@ -108,13 +108,18 @@ DENIED  dnsmasq open /proc/cmdline comm=dnsmasq requested_mask=r denied_mask=r
 ### Help
 
 ```
-aa-log [-h] [-s] [-f file] [profile]
+aa-log [-h] [--systemd] [--file file] [profile]
 
-  Review AppArmor generated messages in a colorful way.
-  It can be given an optional profile name to filter the output with.
+    Review AppArmor generated messages in a colorful way. Supports logs from
+    auditd, systemd, syslog as well as dbus session events.
 
-  -f file
-    	Set a logfile or a suffix to the default log file. (default "/var/log/audit/audit.log")
-  -h	Show this help message and exit.
-  -s	Parse systemd dbus logs.
+    It can be given an optional profile name to filter the output with.
+
+    Default logs are read from '/var/log/audit/audit.log'. Other files in 
+    '/var/log/audit/' can easily be checked: 'aa-log -f 1' parses 'audit.log.1' 
+
+Options:
+    -h, --help         Show this help message and exit.
+    -f, --file FILE    Set a logfile or a suffix to the default log file.
+    -s, --systemd      Parse systemd logs from journalctl.
 ```
