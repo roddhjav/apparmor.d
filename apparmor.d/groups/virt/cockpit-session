@@ -9,8 +9,10 @@ include <tunables/global>
 @{exec_path} = /{usr/,}lib/cockpit/cockpit-session
 profile cockpit-session @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/nameservice-strict>
   include <abstractions/authentication>
+  include <abstractions/bash>
+  include <abstractions/nameservice-strict>
+  include <abstractions/zsh>
 
   capability audit_write,
   capability dac_read_search,
@@ -24,16 +26,20 @@ profile cockpit-session @{exec_path} flags=(attach_disconnected) {
 
   /{usr/,}bin/{,z,ba,da}sh    rix,
   /{usr/,}bin/cockpit-bridge  rPx,
+  /{usr/,}lib/cockpit/cockpit-pcp  rPx,
 
   @{etc_ro}/environment r,
   /etc/group r,
   /etc/motd r,
+  /etc/motd.d/ r,
   @{etc_ro}/security/limits.d/{,*.conf} r,
   /etc/shells r,
 
   @{run}/faillock/[a-zA-z0-9]* rwk,
   @{run}/systemd/sessions/*.ref rw,
   @{run}/utmp rwk,
+  @{run}/motd.d/{,*} r,
+  @{run}/cockpit/active.motd r,
 
   /var/log/btmp rw,
   /var/log/lastlog rw,
@@ -42,6 +48,8 @@ profile cockpit-session @{exec_path} flags=(attach_disconnected) {
   owner @{PROC}/@{pid}/loginuid rw,
   owner @{PROC}/@{pid}/uid_map r,
         @{PROC}/@{pids}/fd/ r,
+
+  /dev/tty rw,
 
   include if exists <local/cockpit-session>
 }
