@@ -1,0 +1,33 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}lib/cockpit/cockpit-pcp
+profile cockpit-pcp @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+  include <abstractions/disks-read>
+
+  network inet6 dgram,
+  network inet6 stream,
+
+  signal (receive) peer=cockpit-bridge,
+
+  @{exec_path} mr,
+
+  /etc/pcp.conf r,
+  /etc/pcp/{,**} r,
+
+  /var/lib/pcp/{,**} rw,
+
+        @{PROC}/diskstats r,
+        @{PROC}/swaps r,
+  owner @{PROC}/@{pid}/mounts r,
+        @{PROC}/@{pid}/net/dev r,
+
+  include if exists <local/cockpit-pcp>
+}
