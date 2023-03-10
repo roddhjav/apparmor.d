@@ -6,8 +6,9 @@ abi <abi/3.0>,
 
 include <tunables/global>
 
+@{steam_lib_dirs} = @{user_share_dirs}/Steam/ubuntu[0-9]*_{32,64}
 @{exec_path} = @{user_share_dirs}/Steam/steam.sh
-profile steam @{exec_path} {
+profile steam @{exec_path} flags=(attach_disconnected,mediate_deleted,complain) {
   include <abstractions/base>
   include <abstractions/audio>
   include <abstractions/chromium-common>
@@ -82,22 +83,24 @@ profile steam @{exec_path} {
   /{usr/,}bin/zenity                 rix,
   /{usr/,}lib{32,64}/ld-linux.so*    rix,
 
+  @{steam_lib_dirs}/*.so*  mr,
+  @{steam_lib_dirs}/*driverquery rix,
+  @{steam_lib_dirs}/fossilize_replay rpx,
+  @{steam_lib_dirs}/gameoverlayui rpx,
+  @{steam_lib_dirs}/panorama/** rm,
+  @{steam_lib_dirs}/reaper rpx,
+  @{steam_lib_dirs}/steam rix,
+  @{steam_lib_dirs}/steam-runtime-heavy.sh rix,
+  @{steam_lib_dirs}/steam-runtime{,-heavy}/{amd64,i386}/usr/bin/* rix,
+  @{steam_lib_dirs}/steam-runtime{,-heavy}/{setup,run}.sh  rix,
+  @{steam_lib_dirs}/steam-runtime/{usr/,}lib{exec,}/**  mrix,
+  @{steam_lib_dirs}/steamwebhelper rix,
+  @{steam_lib_dirs}/steamwebhelper.sh rix,
+  @{steam_lib_dirs}/swiftshader/* rm,
   @{user_share_dirs}/Steam/config/widevine/linux-x64/libwidevinecdm.so mr,
   @{user_share_dirs}/Steam/steamapps/common/SteamLinuxRuntime_soldier/*entry-point rpx,
-  @{user_share_dirs}/Steam/ubuntu[0-9]*_{32,64}/*.so*  mr,
-  @{user_share_dirs}/Steam/ubuntu[0-9]*_{32,64}/*driverquery rix,
-  @{user_share_dirs}/Steam/ubuntu[0-9]*_{32,64}/fossilize_replay rPx,
-  @{user_share_dirs}/Steam/ubuntu[0-9]*_{32,64}/gameoverlayui rpx,
-  @{user_share_dirs}/Steam/ubuntu[0-9]*_{32,64}/panorama/** rm,
-  @{user_share_dirs}/Steam/ubuntu[0-9]*_{32,64}/reaper rpx,
-  @{user_share_dirs}/Steam/ubuntu[0-9]*_{32,64}/steam rix,
-  @{user_share_dirs}/Steam/ubuntu[0-9]*_{32,64}/steam-runtime-heavy.sh rix,
-  @{user_share_dirs}/Steam/ubuntu[0-9]*_{32,64}/steam-runtime{,-heavy}/{amd64,i386}/usr/bin/* rix,
-  @{user_share_dirs}/Steam/ubuntu[0-9]*_{32,64}/steam-runtime{,-heavy}/{setup,run}.sh  rix,
-  @{user_share_dirs}/Steam/ubuntu[0-9]*_{32,64}/steam-runtime/{usr/,}lib{exec,}/**  mr,
-  @{user_share_dirs}/Steam/ubuntu[0-9]*_{32,64}/steamwebhelper rix,
-  @{user_share_dirs}/Steam/ubuntu[0-9]*_{32,64}/steamwebhelper.sh rix,
 
+  /usr/lib/os-release rk,
   /usr/share/fonts/**.{ttf,otf} rk,
   /usr/share/terminfo/x/xterm-256color r,
   /usr/share/themes/{,**} r,
@@ -186,6 +189,7 @@ profile steam @{exec_path} {
   @{sys}/devices/pci[0-9]*/**/usb[0-9]*/{manufacturer,product,bcdDevice,bInterfaceNumber} r,
   @{sys}/devices/system/cpu/** r,
   @{sys}/devices/system/node/ r,
+  @{sys}/devices/virtual/dmi/id/bios_version rk,
   @{sys}/devices/virtual/dmi/id/board_{vendor,name,version} rk,
   @{sys}/devices/virtual/dmi/id/product_{name,version} r,
   @{sys}/devices/virtual/dmi/id/sys_vendor r,
@@ -202,6 +206,7 @@ profile steam @{exec_path} {
         @{PROC}/sys/fs/inotify/max_user_watches r,
         @{PROC}/sys/kernel/sched_autogroup_enabled r,
         @{PROC}/sys/kernel/unprivileged_userns_clone r,
+        @{PROC}/sys/net/ipv{4,6}/conf/all/disable_ipv{4,6} r,
         @{PROC}/sys/kernel/yama/ptrace_scope r,
         @{PROC}/sys/user/max_user_namespaces r,
         @{PROC}/version r,
