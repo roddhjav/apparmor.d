@@ -1,35 +1,30 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2021 Mikhail Morfikov
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
 
 include <tunables/global>
 
-# Playlist extensions:
-# m3u, m3u8, pls
-@{hypnotix_ext}  = [mM]3[uU]{,8}
-@{hypnotix_ext} += [pP][lL][sS]
-
 @{exec_path}  = /{usr/,}bin/hypnotix
 @{exec_path} += /{usr/,}lib/hypnotix/hypnotix.py
 profile hypnotix @{exec_path} {
   include <abstractions/base>
-  include <abstractions/dconf-write>
-  include <abstractions/opencl-intel>
-  include <abstractions/vulkan>
   include <abstractions/audio>
-  include <abstractions/gtk>
-  include <abstractions/fonts>
+  include <abstractions/dconf-write>
   include <abstractions/fontconfig-cache-read>
+  include <abstractions/fonts>
   include <abstractions/freedesktop.org>
+  include <abstractions/gtk>
   include <abstractions/mesa>
   include <abstractions/nameservice-strict>
-  include <abstractions/user-download-strict>
-  include <abstractions/private-files-strict>
+  include <abstractions/opencl-intel>
   include <abstractions/openssl>
-  include <abstractions/ssl_certs>
   include <abstractions/python>
+  include <abstractions/ssl_certs>
+  include <abstractions/user-download-strict>
+  include <abstractions/vulkan>
 
   signal (send) set=(term, kill) peer=youtube-dl,
   signal (send) set=(term, kill) peer=yt-dlp,
@@ -43,9 +38,8 @@ profile hypnotix @{exec_path} {
   @{exec_path} rix,
   /{usr/,}bin/python3.[0-9]*  r,
 
-  /{usr/,}bin/{,ba,da}sh      rix,
-
   /{usr/,}{s,}bin/ldconfig    rix,
+  /{usr/,}bin/{,ba,da}sh      rix,
   /{usr/,}bin/mkdir           rix,
 
   /{usr/,}bin/xdg-screensaver rCx -> xdg-screensaver,
@@ -54,36 +48,28 @@ profile hypnotix @{exec_path} {
   /{usr/,}bin/yt-dlp         rPUx,
   /{usr/,}lib/firefox/firefox rPx,
 
-  # Which files hypnotix should be able to open
-        / r,
-        /home/ r,
-  owner @{HOME}/ r,
-  owner @{HOME}/**/ r,
-        @{MOUNTS}/ r,
-  owner @{MOUNTS}/**/ r,
-  owner /{home,media}/**.@{hypnotix_ext} r,
-
   /usr/share/hypnotix/{,**} r,
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+
+  /etc/machine-id r,
+  /etc/vdpau_wrapper.cfg r,
+  /var/lib/dbus/machine-id r,
 
   owner @{HOME}/.hypnotix/ rw,
   owner @{HOME}/.hypnotix/** rw,
 
-       owner @{PROC}/@{pid}/fd/ r,
-       owner @{PROC}/@{pid}/mounts r,
-  deny owner @{PROC}/@{pid}/cmdline r,
+  owner @{user_music_dirs}/** r,
 
   @{sys}/devices/pci[0-9]*/**/drm/ r,
 
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/mounts r,
+  owner @{PROC}/@{pid}/cmdline r,
+
   /dev/ r,
-
-  /etc/vdpau_wrapper.cfg r,
-
-  /var/lib/dbus/machine-id r,
-  /etc/machine-id r,
 
   # Silencer
   deny /{usr/,}lib/hypnotix/** w,
-
 
   profile xdg-screensaver {
     include <abstractions/base>
