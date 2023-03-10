@@ -1,0 +1,47 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/landscape-sysinfo
+profile landscape-sysinfo @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+  include <abstractions/openssl>
+  include <abstractions/python>
+
+  capability dac_override,
+  capability kill,
+  capability sys_ptrace,
+
+  network inet dgram,
+  network inet6 dgram,
+  network netlink raw,
+
+  ptrace (read),
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/who rix,
+
+  /var/log/landscape/{,**} rw,
+
+  @{run}/utmp rwk,
+
+  @{sys}/class/thermal/ r,
+
+        @{PROC}/ r,
+        @{PROC}/@{pids}/cmdline r,
+        @{PROC}/@{pids}/stat r,
+        @{PROC}/@{pids}/status r,
+        @{PROC}/uptime r,
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/mounts r,
+
+  /dev/tty[0-9]* rw,
+
+  include if exists <local/landscape-sysinfo>
+}
