@@ -1,60 +1,28 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2019-2021 Mikhail Morfikov
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
 
 include <tunables/global>
 
-# Video/audio extensions:
-# a52, aac, ac3, mka, flac, mp1, mp2, mp3, mpc, oga, oma, wav, wv, wm, wma, 3g2, 3gp, 3gp2, 3gpp,
-# asf, avi, divx, m1v, m2v, m4v, mkv, mov, mp4, mpa, mpe, mpg, mpeg, mpeg1, mpeg2, mpeg4, ogg, ogm,
-# ogx, ogv, rm, rmvb, webm, wmv, wtv, mp2t
-@{mkvtoolnix_ext}  = [aA]{52,[aA][cC],[cC]3}
-@{mkvtoolnix_ext} += [mM][kK][aA]
-@{mkvtoolnix_ext} += [fF][lL][aA][cC]
-@{mkvtoolnix_ext} += [mM][pP][123cC]
-@{mkvtoolnix_ext} += [oO][gGmM][aA]
-@{mkvtoolnix_ext} += [wW]{,[aA]}[vV]
-@{mkvtoolnix_ext} += [wW][mM]{,[aA]}
-@{mkvtoolnix_ext} += 3[gG]{[2pP],[pP][2pP]}
-@{mkvtoolnix_ext} += [aA][sS][fF]
-@{mkvtoolnix_ext} += [aA][vV][iI]
-@{mkvtoolnix_ext} += [dD][iI][vV][xX]
-@{mkvtoolnix_ext} += [mM][124][vV]
-@{mkvtoolnix_ext} += [mM][kKoO][vV]
-@{mkvtoolnix_ext} += [mM][pP][4aAeEgG]
-@{mkvtoolnix_ext} += [mM][pP][eE][gG]{,[124]}
-@{mkvtoolnix_ext} += [oO][gG][gGmMxXvV]
-@{mkvtoolnix_ext} += [rR][mM]{,[vV][bB]}
-@{mkvtoolnix_ext} += [wW][eE][bB][mM]
-@{mkvtoolnix_ext} += [wW][mMtT][vV]
-@{mkvtoolnix_ext} += [mM][pP]2[tT]
-
-# Subtitle extensions:
-# srt, txt, sub
-@{mkvtoolnix_ext} += [sS][rR][tT]
-@{mkvtoolnix_ext} += [tT][xX][tT]
-@{mkvtoolnix_ext} += [sS][uU][bB]
-@{mkvtoolnix_ext} += [mM][kK][sS]
-
 @{exec_path} = /{usr/,}bin/mkvtoolnix-gui
 profile mkvtoolnix-gui @{exec_path} {
   include <abstractions/base>
-  include <abstractions/X>
-  include <abstractions/freedesktop.org>
-  include <abstractions/fonts>
-  include <abstractions/fontconfig-cache-read>
-  include <abstractions/gtk>
   include <abstractions/dri-enumerate>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/fonts>
+  include <abstractions/freedesktop.org>
+  include <abstractions/gtk>
   include <abstractions/mesa>
   include <abstractions/nameservice-strict>
-  include <abstractions/qt5-settings-write>
-  include <abstractions/qt5-compose-cache-write>
   include <abstractions/openssl>
+  include <abstractions/qt5-compose-cache-write>
+  include <abstractions/qt5-settings-write>
   include <abstractions/ssl_certs>
   include <abstractions/user-download-strict>
-  include <abstractions/private-files-strict>
+  include <abstractions/X>
 
   signal (send) set=(term, kill) peer=mkvmerge,
 
@@ -63,14 +31,15 @@ profile mkvtoolnix-gui @{exec_path} {
   /{usr/,}bin/mkvmerge      rPx,
   /{usr/,}bin/mediainfo-gui rPx,
 
-  # Which files mkvtoolnix should be able to open
-        / r,
-        /home/ r,
-  owner @{HOME}/ r,
-  owner @{HOME}/**/ r,
-        @{MOUNTS}/ r,
-  owner @{MOUNTS}/**/ r,
-  owner /{home,media}/**.@{mkvtoolnix_ext} rw,
+  /usr/share/qt5ct/** r,
+  /usr/share/hwdata/pnp.ids r,
+
+  /etc/fstab r,
+  /etc/machine-id r,
+  /var/lib/dbus/machine-id r,
+
+  owner @{user_music_dirs}/** rw,
+  owner @{user_videos_dirs}/** rw,
 
   owner @{user_config_dirs}/bunkus.org/ rw,
   owner @{user_config_dirs}/bunkus.org/mkvtoolnix-gui/ rw,
@@ -83,29 +52,19 @@ profile mkvtoolnix-gui @{exec_path} {
   owner @{user_cache_dirs}/bunkus.org/mkvtoolnix-gui/**/@{hex} rw,
 
   owner @{user_config_dirs}/qt5ct/{,**} r,
-  /usr/share/qt5ct/** r,
 
   owner /tmp/#[0-9]*[0-9] rw,
   owner /tmp/MKVToolNix-GUI-MuxConfig-* rwl -> /tmp/#[0-9]*[0-9],
   owner /tmp/MKVToolNix-process-*.json rwl -> /tmp/#[0-9]*[0-9],
   owner /tmp/MKVToolNix-GUI-MuxJob-*.json rwl -> /tmp/#[0-9]*[0-9],
   owner /tmp/MKVToolNix-GUI-Instance-Communicator-* rw,
+  owner /dev/shm/#[0-9]*[0-9] rw,
 
   deny owner @{PROC}/@{pid}/cmdline r,
   deny       @{PROC}/sys/kernel/random/boot_id r,
              @{PROC}/@{pid}/mountinfo r,
              @{PROC}/@{pid}/mounts r,
 
-  /etc/fstab r,
-
-  /dev/shm/#[0-9]*[0-9] rw,
-
-  /usr/share/hwdata/pnp.ids r,
-
-  /var/lib/dbus/machine-id r,
-  /etc/machine-id r,
-
-  # file_inherit
   owner /dev/tty[0-9]* rw,
 
   include if exists <local/mkvtoolnix-gui>

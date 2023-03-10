@@ -1,61 +1,23 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2019-2021 Mikhail Morfikov
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
 
 include <tunables/global>
 
-# Video/audio extensions:
-# a52, aac, ac3, mka, flac, mp1, mp2, mp3, mpc, oga, oma, wav, wv, wm, wma, 3g2, 3gp, 3gp2, 3gpp,
-# asf, avi, divx, m1v, m2v, m4v, mkv, mov, mp4, mpa, mpe, mpg, mpeg, mpeg1, mpeg2, mpeg4, ogg, ogm,
-# ogx, ogv, rm, rmvb, webm, wmv, wtv, mp2t
-@{mkvmerge_ext}  = [aA]{52,[aA][cC],[cC]3}
-@{mkvmerge_ext} += [mM][kK][aA]
-@{mkvmerge_ext} += [fF][lL][aA][cC]
-@{mkvmerge_ext} += [mM][pP][123cC]
-@{mkvmerge_ext} += [oO][gGmM][aA]
-@{mkvmerge_ext} += [wW]{,[aA]}[vV]
-@{mkvmerge_ext} += [wW][mM]{,[aA]}
-@{mkvmerge_ext} += 3[gG]{[2pP],[pP][2pP]}
-@{mkvmerge_ext} += [aA][sS][fF]
-@{mkvmerge_ext} += [aA][vV][iI]
-@{mkvmerge_ext} += [dD][iI][vV][xX]
-@{mkvmerge_ext} += [mM][124][vV]
-@{mkvmerge_ext} += [mM][kKoO][vV]
-@{mkvmerge_ext} += [mM][pP][4aAeEgG]
-@{mkvmerge_ext} += [mM][pP][eE][gG]{,[124]}
-@{mkvmerge_ext} += [oO][gG][gGmMxXvV]
-@{mkvmerge_ext} += [rR][mM]{,[vV][bB]}
-@{mkvmerge_ext} += [wW][eE][bB][mM]
-@{mkvmerge_ext} += [wW][mMtT][vV]
-@{mkvmerge_ext} += [mM][pP]2[tT]
-
-# Subtitle extensions:
-# srt, txt, sub
-@{mkvmerge_ext} += [sS][rR][tT]
-@{mkvmerge_ext} += [tT][xX][tT]
-@{mkvmerge_ext} += [sS][uU][bB]
-@{mkvmerge_ext} += [mM][kK][sS]
-
 @{exec_path} = /{usr/,}bin/mkvmerge
 profile mkvmerge @{exec_path} {
   include <abstractions/base>
   include <abstractions/user-download-strict>
-  include <abstractions/private-files-strict>
 
   signal (receive) set=(term, kill) peer=mkvtoolnix-gui,
 
   @{exec_path} mr,
 
-  # Which files mkvmerge should be able to open
-        / r,
-        /home/ r,
-  owner @{HOME}/ r,
-  owner @{HOME}/**/ r,
-        @{MOUNTS}/ r,
-  owner @{MOUNTS}/**/ r,
-  owner /{home,media}/**.@{mkvmerge_ext} rw,
+  owner @{user_music_dirs}/** rw,
+  owner @{user_videos_dirs}/** rw,
 
   owner /tmp/MKVToolNix-process-*.json r,
   owner /tmp/MKVToolNix-GUI-MuxJob-*.json r,

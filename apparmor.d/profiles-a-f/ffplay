@@ -1,51 +1,20 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2017-2021 Mikhail Morfikov
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
 
 include <tunables/global>
 
-# Video/audio extensions:
-# a52, aac, ac3, mka, flac, mp1, mp2, mp3, mpc, oga, oma, wav, wv, wm, wma, 3g2, 3gp, 3gp2, 3gpp,
-# asf, avi, divx, m1v, m2v, m4v, mkv, mov, mp4, mpa, mpe, mpg, mpeg, mpeg1, mpeg2, mpeg4, ogg, ogm,
-# ogx, ogv, rm, rmvb, webm, wmv, wtv, mp2t
-@{ffplay_ext}  = [aA]{52,[aA][cC],[cC]3}
-@{ffplay_ext} += [mM][kK][aA]
-@{ffplay_ext} += [fF][lL][aA][cC]
-@{ffplay_ext} += [mM][pP][123cC]
-@{ffplay_ext} += [oO][gGmM][aA]
-@{ffplay_ext} += [wW]{,[aA]}[vV]
-@{ffplay_ext} += [wW][mM]{,[aA]}
-@{ffplay_ext} += 3[gG]{[2pP],[pP][2pP]}
-@{ffplay_ext} += [aA][sS][fF]
-@{ffplay_ext} += [aA][vV][iI]
-@{ffplay_ext} += [dD][iI][vV][xX]
-@{ffplay_ext} += [mM][124][vV]
-@{ffplay_ext} += [mM][kKoO][vV]
-@{ffplay_ext} += [mM][pP][4aAeEgG]
-@{ffplay_ext} += [mM][pP][eE][gG]{,[124]}
-@{ffplay_ext} += [oO][gG][gGmMxXvV]
-@{ffplay_ext} += [rR][mM]{,[vV][bB]}
-@{ffplay_ext} += [wW][eE][bB][mM]
-@{ffplay_ext} += [wW][mMtT][vV]
-@{ffplay_ext} += [mM][pP]2[tT]
-
-# Subtitle extensions:
-# srt, txt, sub
-@{ffplay_ext} += [sS][rR][tT]
-@{ffplay_ext} += [tT][xX][tT]
-@{ffplay_ext} += [sS][uU][bB]
-
 @{exec_path} = /{usr/,}bin/ffplay
 profile ffplay @{exec_path} {
   include <abstractions/base>
-  include <abstractions/X>
-  include <abstractions/freedesktop.org>
   include <abstractions/audio>
+  include <abstractions/freedesktop.org>
   include <abstractions/nameservice-strict>
   include <abstractions/user-download-strict>
-  include <abstractions/private-files-strict>
+  include <abstractions/X>
 
   network inet stream,
   network inet6 stream,
@@ -54,17 +23,11 @@ profile ffplay @{exec_path} {
 
   @{exec_path} mr,
 
-  # Which media files ffplay should be able to open
-        / r,
-        /home/ r,
-  owner @{HOME}/ r,
-  owner @{HOME}/**/ r,
-        @{MOUNTS}/ r,
-  owner @{MOUNTS}/**/ r,
-  owner /{home,media}/**.@{ffplay_ext} rw,
-
   /etc/machine-id r,
   /var/lib/dbus/machine-id r,
+
+  owner @{user_music_dirs}/** rw,
+  owner @{user_videos_dirs}/** rw,
 
   @{sys}/devices/system/node/ r,
   @{sys}/devices/system/node/node[0-9]/meminfo r,
