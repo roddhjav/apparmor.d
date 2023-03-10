@@ -20,7 +20,7 @@ import (
 	"strings"
 )
 
-const usage = `aa-log [-h] [--systemd] [--dbus] [--file file] [profile]
+const usage = `aa-log [-h] [--systemd] [--file file] [profile]
 
     Review AppArmor generated messages in a colorful way. Supports logs from
     auditd, systemd, syslog as well as dbus session events.
