@@ -1,0 +1,26 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/onefetch
+profile onefetch @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/openssl>
+  include <abstractions/ssl_certs>
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/git  rPx,
+
+  owner @{user_config_dirs}/git/{,**} r,
+  owner @{user_projects_dirs}/{,**} r,
+
+  owner @{PROC}/@{pid}/cgroup r,
+  owner @{PROC}/@{pid}/stat r,
+
+  include if exists <local/onefetch>
+}
