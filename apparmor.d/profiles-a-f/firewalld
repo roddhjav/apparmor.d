@@ -10,9 +10,12 @@ include <tunables/global>
 profile firewalld @{exec_path} {
   include <abstractions/base>
   include <abstractions/nameservice-strict>
+  include <abstractions/openssl>
 
+  capability mknod,
   capability net_admin,
   capability net_raw,
+  capability setpcap,
 
   network inet raw,
   network inet6 raw,
@@ -24,12 +27,14 @@ profile firewalld @{exec_path} {
   /{usr/,}{s,}bin/kmod                  rPx,
   /{usr/,}{s,}bin/xtables-legacy-multi  rix,
   /{usr/,}{s,}bin/xtables-nft-multi     rix,
+  /{usr/,}bin/false                     rix,
   /{usr/,}bin/alts                      rix,
 
   /usr/share/libalternatives/ r,
   /usr/share/libalternatives/ip{,4,6}tables*/{,*} r,
 
   /etc/firewalld/{,**} r,
+  /etc/firewalld/zones/{,**} rw,
   /etc/iproute2/group r,
   /etc/iproute2/rt_realms r,
 
@@ -41,6 +46,7 @@ profile firewalld @{exec_path} {
         @{PROC}/sys/kernel/modprobe r,
   owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/mounts r,
+  owner @{PROC}/@{pids}/net/ip_tables_names r,
 
   include if exists <local/firewalld>
 }
