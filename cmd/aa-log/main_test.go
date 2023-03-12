@@ -306,6 +306,37 @@ func TestAppArmorLogs_String(t *testing.T) {
 	}
 }
 
+func Test_getLogFile(t *testing.T) {
+	tests := []struct {
+		name string
+		path string
+		want string
+	}{
+		{
+			name: "Get audit.log",
+			path: "../../tests/audit.log",
+			want: "../../tests/audit.log",
+		},
+		{
+			name: "Get /var/log/audit/audit.log.1",
+			path: "1",
+			want: "/var/log/audit/audit.log.1",
+		},
+		{
+			name: "Get default log file",
+			path: "",
+			want: "/var/log/audit/audit.log",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := getLogFile(tt.path); got != tt.want {
+				t.Errorf("getLogFile() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func Test_app(t *testing.T) {
 	tests := []struct {
 		name    string
