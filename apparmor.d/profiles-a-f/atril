@@ -1,31 +1,22 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2022 Mikhail Morfikov
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
 
 include <tunables/global>
 
-# Ebooks extensions
-# pdf, epub, djvu
-@{atril_ext}   = [pP][dD][fF]
-@{atril_ext}  += [eE][pP][uU][bB]
-@{atril_ext}  += [dD][jJ][vV][uU]
-
-# PNG preview
-@{atril_ext}  += [pP][nN][gG]
-
 @{exec_path} = /{usr/,}bin/atril{,-*}
 profile atril @{exec_path} {
   include <abstractions/base>
   include <abstractions/dconf-write>
-  include <abstractions/gtk>
-  include <abstractions/fonts>
   include <abstractions/fontconfig-cache-read>
+  include <abstractions/fonts>
   include <abstractions/freedesktop.org>
-  include <abstractions/user-download-strict>
-  include <abstractions/private-files-strict>
+  include <abstractions/gtk>
   include <abstractions/nameservice-strict>
+  include <abstractions/user-download-strict>
 
   network netlink raw,
 
@@ -38,34 +29,16 @@ profile atril @{exec_path} {
   /{usr/,}lib/@{multiarch}/webkit2gtk-4.0/WebKitNetworkProcess rix,
   /{usr/,}lib/@{multiarch}/webkit2gtk-4.0/WebKitWebProcess     rix,
 
-  # Which media files atril should be able to open
-        / r,
-        /home/ r,
-  owner @{HOME}/ r,
-  owner @{HOME}/**/ r,
-        @{MOUNTS}/ r,
-  owner @{MOUNTS}/**/ r,
-        /tmp/ r,
-        /tmp/mozilla_*/ r,
-  owner /{home,media,tmp}/**.@{atril_ext} rw,
-
   /usr/share/atril/{,**} r,
-
-       owner @{PROC}/@{pid}/fd/ r,
-       owner @{PROC}/@{pid}/mountinfo r,
-       owner @{PROC}/@{pid}/mounts r,
-       owner @{PROC}/@{pid}/statm r,
-  deny owner @{PROC}/@{pid}/cmdline r,
-       owner @{PROC}/@{pid}/cgroup r,
-             @{PROC}/zoneinfo r,
-
-  @{sys}/firmware/acpi/pm_profile r,
-  @{sys}/devices/virtual/dmi/id/chassis_type r,
-  @{sys}/fs/cgroup/** r,
+  /usr/share/poppler/{,**} r,
 
   /etc/fstab r,
 
-  /usr/share/poppler/{,**} r,
+  owner @{HOME}/ r,
+  owner @{user_documents_dirs}/{,**} rw,
+  owner @{user_books_dirs}/{,**} rw,
+  owner @{user_torrents_dirs}/{,**} rw,
+  owner @{user_work_dirs}/{,**} rw,
 
   owner @{user_config_dirs}/atril/{,*} rw,
 
@@ -74,21 +47,19 @@ profile atril @{exec_path} {
   owner /tmp/gtkprint_* rw,
   owner /tmp/settings*.ini rw,
   owner /tmp/settings*.ini.* rw,
+  owner /tmp/atril-@{pid}/{,**} rw,
 
-  owner /tmp/atril-@{pid}/ rw,
-  owner /tmp/atril-@{pid}/*/ rw,
-  owner /tmp/atril-@{pid}/*/mimetype rw,
-  owner /tmp/atril-@{pid}/*/META-INF/ rw,
-  owner /tmp/atril-@{pid}/*/META-INF/container.xml rw,
-  owner /tmp/atril-@{pid}/*/index_split_[0-9]*.html rw,
-  owner /tmp/atril-@{pid}/*/page_styles.css rw,
-  owner /tmp/atril-@{pid}/*/titlepage.xhtml rw,
-  owner /tmp/atril-@{pid}/*/stylesheet.css rw,
-  owner /tmp/atril-@{pid}/*/images/ rw,
-  owner /tmp/atril-@{pid}/*/images/*.jpg rw,
-  owner /tmp/atril-@{pid}/*/toc.ncx rw,
-  owner /tmp/atril-@{pid}/*/content.opf rw,
-  owner /tmp/atril-@{pid}/*/META-INF/calibre_bookmarks.txt rw,
+  @{sys}/firmware/acpi/pm_profile r,
+  @{sys}/devices/virtual/dmi/id/chassis_type r,
+  @{sys}/fs/cgroup/** r,
+
+             @{PROC}/zoneinfo r,
+       owner @{PROC}/@{pid}/cgroup r,
+       owner @{PROC}/@{pid}/fd/ r,
+       owner @{PROC}/@{pid}/mountinfo r,
+       owner @{PROC}/@{pid}/mounts r,
+       owner @{PROC}/@{pid}/statm r,
+  deny owner @{PROC}/@{pid}/cmdline r,
 
   deny owner @{user_share_dirs}/gvfs-metadata/{,*} r,
 
