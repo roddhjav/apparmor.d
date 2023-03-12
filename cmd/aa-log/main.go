@@ -17,6 +17,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 )
 
@@ -44,8 +45,11 @@ var (
 	systemd bool
 )
 
-// LogFile is the default path to the file to query
-const LogFile = "/var/log/audit/audit.log"
+// LogFiles is the list of default path to query
+var LogFiles = []string{
+	"/var/log/audit/audit.log",
+	"/var/log/syslog",
+}
 
 // Colors
 const (
@@ -76,6 +80,12 @@ var (
 	quoted bool
 	isHexa = regexp.MustCompile("^[0-9A-Fa-f]+$")
 )
+
+func inSlice(item string, slice []string) bool {
+	sort.Strings(slice)
+	i := sort.SearchStrings(slice, item)
+	return i < len(slice) && slice[i] == item
+}
 
 func splitQuoted(r rune) bool {
 	if r == '"' {
@@ -146,7 +156,6 @@ func getJournalctlLogs(path string, useFile bool) (io.Reader, error) {
 	value = strings.Replace(value, "\n", ",\n", -1)
 	value = strings.TrimSuffix(value, ",\n")
 	value = `[` + value + `]`
-	// fmt.Printf("value: %v\n", value)
 	if err := json.Unmarshal([]byte(value), &logs); err != nil {
 		return nil, err
 	}
@@ -275,6 +284,24 @@ func (aaLogs AppArmorLogs) String() string {
 	return res
 }
 
+func getLogFile(path string) string {
+	info, err := os.Stat(filepath.Clean(path))
+	if err == nil && !info.IsDir() {
+		return path
+	}
+	for _, logfile := range LogFiles {
+		if _, err := os.Stat(logfile); err == nil {
+			oldLogfile := filepath.Clean(logfile + "." + path)
+			if _, err := os.Stat(oldLogfile); err == nil {
+				return oldLogfile
+			} else {
+				return logfile
+			}
+		}
+	}
+	return ""
+}
+
 func aaLog(logger string, path string, profile string) error {
 	var err error
 	var file io.Reader
@@ -283,7 +310,7 @@ func aaLog(logger string, path string, profile string) error {
 	case "auditd":
 		file, err = getAuditLogs(path)
 	case "systemd":
-		file, err = getJournalctlLogs(path, path != LogFile)
+		file, err = getJournalctlLogs(path, !inSlice(path, LogFiles))
 	default:
 		err = fmt.Errorf("Logger %s not supported.", logger)
 	}
@@ -298,8 +325,8 @@ func aaLog(logger string, path string, profile string) error {
 func init() {
 	flag.BoolVar(&help, "h", false, "Show this help message and exit.")
 	flag.BoolVar(&help, "help", false, "Show this help message and exit.")
-	flag.StringVar(&path, "f", LogFile, "Set a logfile or a suffix to the default log file.")
-	flag.StringVar(&path, "file", LogFile, "Set a logfile or a suffix to the default log file.")
+	flag.StringVar(&path, "f", "", "Set a logfile or a suffix to the default log file.")
+	flag.StringVar(&path, "file", "", "Set a logfile or a suffix to the default log file.")
 	flag.BoolVar(&systemd, "s", false, "Parse systemd logs from journalctl.")
 	flag.BoolVar(&systemd, "systemd", false, "Parse systemd logs from journalctl.")
 }
@@ -322,11 +349,7 @@ func main() {
 		logger = "systemd"
 	}
 
-	logfile := filepath.Clean(LogFile + "." + path)
-	if _, err := os.Stat(logfile); err != nil {
-		logfile = path
-	}
-
+	logfile := getLogFile(path)
 	err := aaLog(logger, logfile, profile)
 	if err != nil {
 		fmt.Println(err)
