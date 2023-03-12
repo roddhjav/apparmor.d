@@ -1,20 +1,11 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2020-2021 Mikhail Morfikov
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
 
 include <tunables/global>
-
-# PDF extensions
-# pdf, epub, txt, html, mhtml, ps, mobi, djvu
-@{calibre_ext}  = [pP][dF][fF]
-@{calibre_ext} += [eE][pP][uU][bB]
-@{calibre_ext} += [tT][xX][tT]
-@{calibre_ext} += {[mM],}[hH][tT][mM][lL]
-@{calibre_ext} += [pP][sS]
-@{calibre_ext} += [mM][oO][bB][iI]
-@{calibre_ext} += [dD][jJ][vV][uU]
 
 @{exec_path}  = /{usr/,}bin/calibre{,-parallel,-debug,-server,-smtp,-complete,-customize}
 @{exec_path} += /{usr/,}bin/calibredb
@@ -50,33 +41,37 @@ profile calibre @{exec_path} {
   @{exec_path} mrix,
   /{usr/,}bin/python3.[0-9]* r,
 
-  #/{usr/,}bin/ r,
-
-  /{usr/,}bin/{,ba,da}sh       rix,
   /{usr/,}{s,}bin/ldconfig     rix,
-  /{usr/,}bin/uname            rix,
+  /{usr/,}bin/{,ba,da}sh       rix,
   /{usr/,}bin/file             rix,
+  /{usr/,}bin/uname            rix,
+  /{usr/,}lib/@{multiarch}/qt5/libexec/QtWebEngineProcess rix,
 
   /{usr/,}bin/pdftoppm        rPUx, # (#FIXME#)
   /{usr/,}bin/pdfinfo         rPUx,
   /{usr/,}bin/pdftohtml       rPUx,
 
-  /{usr/,}bin/xdg-open         rCx -> open,
+  /{usr/,}bin/xdg-open         rPx -> child-open,
   /{usr/,}bin/xdg-mime         rPx,
 
-  # Which files calibre should be able to open
-        / r,
-        /home/ r,
-  owner @{HOME}/ r,
-  owner @{HOME}/**/ r,
-        @{MOUNTS}/ r,
-  owner @{MOUNTS}/**/ r,
-  owner /{home,media}/**.@{calibre_ext} rw,
-
   /usr/share/calibre/{,**} r,
+  /usr/share/hwdata/pnp.ids r,
+  /usr/share/qt5/**.pak r,
+  /usr/share/qt5ct/** r,
 
-  owner @{user_books_dirs} rw,
-  owner @{user_books_dirs}/** rwkl -> @{user_books_dirs}/**,
+  /etc/fstab r,
+  /etc/inputrc r,
+  /etc/magic r,
+  /etc/mime.types r,
+
+  /etc/machine-id r,
+  /var/lib/dbus/machine-id r,
+
+  owner @{HOME}/ r,
+  owner @{user_documents_dirs}/{,**} rwl,
+  owner @{user_books_dirs}/{,**} rwl,
+  owner @{user_torrents_dirs}/{,**} rwl,
+  owner @{user_work_dirs}/{,**} rwl,
 
   owner @{user_config_dirs}/calibre/ rw,
   owner @{user_config_dirs}/calibre/** rwk,
@@ -89,14 +84,16 @@ profile calibre @{exec_path} {
   owner @{user_cache_dirs}/calibre/ rw,
   owner @{user_cache_dirs}/calibre/** rwkl -> @{user_cache_dirs}/calibre/**,
 
-  owner @{user_cache_dirs}/qtshadercache/ rw,
-  owner @{user_cache_dirs}/qtshadercache/#[0-9]*[0-9] rw,
-  owner @{user_cache_dirs}/qtshadercache/@{hex} rwl -> @{user_cache_dirs}/qtshadercache/#[0-9]*[0-9],
-  owner @{user_cache_dirs}/qtshadercache-*-little_endian-*/#[0-9]*[0-9] rw,
   owner @{user_cache_dirs}/qtshadercache-*-little_endian-*/@{hex} rwl -> @{user_cache_dirs}/qtshadercache-*-little_endian-*/#[0-9]*[0-9],
+  owner @{user_cache_dirs}/qtshadercache-*-little_endian-*/#[0-9]*[0-9] rw,
+  owner @{user_cache_dirs}/qtshadercache/ rw,
+  owner @{user_cache_dirs}/qtshadercache/@{hex} rwl -> @{user_cache_dirs}/qtshadercache/#[0-9]*[0-9],
+  owner @{user_cache_dirs}/qtshadercache/#[0-9]*[0-9] rw,
 
   owner @{user_cache_dirs}/gstreamer-[0-9]*/ rw,
   owner @{user_cache_dirs}/gstreamer-[0-9]*/registry.*.bin{,.tmp*} rw,
+
+  owner @{user_config_dirs}/qt5ct/{,**} r,
 
   owner /tmp/calibre_*_tmp_*/{,**} rw,
   owner /tmp/calibre-*/{,**} rw,
@@ -104,77 +101,26 @@ profile calibre @{exec_path} {
   owner /tmp/[0-9]*-*/** rwl -> /tmp/[0-9]*-*/**,
   owner /tmp/* rw,
 
-             @{PROC}/ r,
-       owner @{PROC}/@{pid}/fd/ r,
-       owner @{PROC}/@{pids}/task/ r,
-       owner @{PROC}/@{pids}/task/@{tid}/status r,
-       owner @{PROC}/@{pids}/stat r,
-       owner @{PROC}/@{pid}/mountinfo r,
-       owner @{PROC}/@{pid}/mounts r,
-  deny owner @{PROC}/@{pid}/oom_{,score_}adj rw,
-  deny owner @{PROC}/@{pid}/cmdline r,
-             @{PROC}/@{pid}/net/route r,
-  deny       @{PROC}/sys/kernel/random/boot_id r,
-             @{PROC}/sys/kernel/yama/ptrace_scope r,
-             @{PROC}/sys/fs/inotify/max_user_watches r,
-             @{PROC}/vmstat r,
-
-  /etc/fstab r,
-
-  owner @{user_config_dirs}/qt5ct/{,**} r,
-  /usr/share/qt5ct/** r,
-
-  # no new privs
-  /{usr/,}lib/@{multiarch}/qt5/libexec/QtWebEngineProcess rix,
-  /usr/share/qt5/**.pak r,
+  owner /dev/shm/#[0-9]*[0-9] rw,
 
   @{sys}/devices/pci[0-9]*/**/irq r,
 
-  /dev/shm/#[0-9]*[0-9] rw,
+             @{PROC}/ r,
+             @{PROC}/@{pid}/net/route r,
+             @{PROC}/sys/fs/inotify/max_user_watches r,
+             @{PROC}/sys/kernel/yama/ptrace_scope r,
+             @{PROC}/vmstat r,
+       owner @{PROC}/@{pid}/fd/ r,
+       owner @{PROC}/@{pid}/mountinfo r,
+       owner @{PROC}/@{pid}/mounts r,
+       owner @{PROC}/@{pids}/stat r,
+       owner @{PROC}/@{pids}/task/ r,
+       owner @{PROC}/@{pids}/task/@{tid}/status r,
+  deny       @{PROC}/sys/kernel/random/boot_id r,
+  deny owner @{PROC}/@{pid}/cmdline r,
+  deny owner @{PROC}/@{pid}/oom_{,score_}adj rw,
 
-  /var/lib/dbus/machine-id r,
-  /etc/machine-id r,
-
-  /usr/share/hwdata/pnp.ids r,
-
-  /etc/mime.types r,
-  /etc/inputrc r,
-  /etc/magic r,
-
-  # file_inherit
   owner /dev/tty[0-9]* rw,
-
-
-  profile open {
-    include <abstractions/base>
-    include <abstractions/xdg-open>
-
-    /{usr/,}bin/xdg-open mr,
-
-    /{usr/,}bin/{,ba,da}sh      rix,
-    /{usr/,}bin/{m,g,}awk       rix,
-    /{usr/,}bin/readlink        rix,
-    /{usr/,}bin/basename        rix,
-
-    owner @{HOME}/ r,
-
-    owner @{run}/user/@{uid}/ r,
-
-    # Allowed apps to open
-    /{usr/,}lib/firefox/firefox  rPx,
-    /{usr/,}bin/qpdfview         rPx,
-    /{usr/,}bin/viewnior        rPUx,
-    /{usr/,}bin/spacefm          rPx,
-    /{usr/,}bin/chromium         rPx,
-    /{usr/,}bin/ebook-viewer     rPx,
-    /{usr/,}bin/ebook-edit       rPx,
-
-    owner /{home,media}/**.@{calibre_ext} rw,
-
-    # file_inherit
-    owner @{HOME}/.xsession-errors w,
-
-  }
 
   include if exists <local/calibre>
 }

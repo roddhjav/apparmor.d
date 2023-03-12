@@ -1,59 +1,28 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2018-2021 Mikhail Morfikov
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
 
 include <tunables/global>
 
-# Video/audio extensions:
-# a52, aac, ac3, mka, flac, mp1, mp2, mp3, mpc, oga, oma, wav, wv, wm, wma, 3g2, 3gp, 3gp2, 3gpp,
-# asf, avi, divx, m1v, m2v, m4v, mkv, mov, mp4, mpa, mpe, mpg, mpeg, mpeg1, mpeg2, mpeg4, ogg, ogm,
-# ogx, ogv, rm, rmvb, webm, wmv, wtv, mp2t, m4a
-@{ytdl_ext}  = [aA]{52,[aA][cC],[cC]3}
-@{ytdl_ext} += [mM][kK][aA]
-@{ytdl_ext} += [fF][lL][aA][cC]
-@{ytdl_ext} += [mM][pP][123cC]
-@{ytdl_ext} += [oO][gGmM][aA]
-@{ytdl_ext} += [wW]{,[aA]}[vV]
-@{ytdl_ext} += [wW][mM]{,[aA]}
-@{ytdl_ext} += 3[gG]{[2pP],[pP][2pP]}
-@{ytdl_ext} += [aA][sS][fF]
-@{ytdl_ext} += [aA][vV][iI]
-@{ytdl_ext} += [dD][iI][vV][xX]
-@{ytdl_ext} += [mM][124][vV]
-@{ytdl_ext} += [mM][kKoO][vV]
-@{ytdl_ext} += [mM][pP][4aAeEgG]
-@{ytdl_ext} += [mM][pP][eE][gG]{,[124]}
-@{ytdl_ext} += [oO][gG][gGmMxXvV]
-@{ytdl_ext} += [rR][mM]{,[vV][bB]}
-@{ytdl_ext} += [wW][eE][bB][mM]
-@{ytdl_ext} += [wW][mMtT][vV]
-@{ytdl_ext} += [mM][pP]2[tT]
-@{ytdl_ext} += [mM]4[aA]
-
-# The ytdl specific file extensions
-# ytdl, part, tmp, temp
-@{ytdl_ext} += [yY][tT][dD][lL]
-@{ytdl_ext} += part{,-*}
-@{ytdl_ext} += [tT]{,[eE]}[mM][pP]
-
 @{exec_path} = /{usr/,}bin/ytdl
 profile ytdl @{exec_path} {
   include <abstractions/base>
-  include <abstractions/python>
   include <abstractions/nameservice-strict>
   include <abstractions/openssl>
+  include <abstractions/python>
   include <abstractions/ssl_certs>
   include <abstractions/user-download-strict>
-
-  signal (receive) set=(term, kill),
 
   network inet dgram,
   network inet6 dgram,
   network inet stream,
   network inet6 stream,
   network netlink raw,
+
+  signal (receive) set=(term, kill),
 
   @{exec_path} r,
   /{usr/,}bin/python3.[0-9]* r,
@@ -62,19 +31,16 @@ profile ytdl @{exec_path} {
   /{usr/,}{s,}bin/ldconfig rix,
   /{usr/,}bin/uname     rix,
 
-  # Which files youtube-dl should be able to open
+  /etc/mime.types r,
+
   owner @{HOME}/ r,
-  owner @{HOME}/**/ r,
-  owner @{MOUNTS}/**/ r,
-  owner /{home,media}/**.@{ytdl_ext} rw,
+  owner @{user_music_dirs}/{,**} rw,
+  owner @{user_videos_dirs}/{,**} rw,
+
+  owner @{user_cache_dirs}/youtube-dl/youtube-sigfuncs/js*.json r,
 
   owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/mounts r,
-
-  /etc/mime.types r,
-
-  # Needed when displaying info on available formats
-  owner @{user_cache_dirs}/youtube-dl/youtube-sigfuncs/js*.json r,
 
   include if exists <local/ytdl>
 }
