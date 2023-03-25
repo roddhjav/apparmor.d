@@ -42,7 +42,7 @@ profile pass @{exec_path} {
   /{usr/,}bin/which     rix,
 
   /{usr/,}bin/git             rCx -> git,
-  /{usr/,}bin/gpg{2,}         rUx,
+  /{usr/,}bin/gpg{2,}         rCx -> gpg,
   /{usr/,}bin/qdbus           rCx -> qdbus,
   /{usr/,}bin/vim{,.*}        rCx -> editor,
   /{usr/,}bin/wl-{copy,paste} rPx,
@@ -116,7 +116,7 @@ profile pass @{exec_path} {
     /{usr/,}bin/less          rPx -> child-pager,
     /{usr/,}bin/more          rPx -> child-pager,
 
-    /{usr/,}bin/gpg{2,}  rUx,
+    /{usr/,}bin/gpg{2,}  rPx -> pass//gpg,
 
     /usr/share/git-core/{,**} r,
 
@@ -135,7 +135,28 @@ profile pass @{exec_path} {
     include if exists <local/pass_git>
   }
 
-    profile qdbus {
+  profile gpg flags=(complain) {
+    include <abstractions/base>
+    include <abstractions/nameservice-strict>
+
+    capability dac_read_search,
+
+    /{usr/,}bin/gpg{,2}    mr,
+
+    owner @{HOME}/@{XDG_GPG_DIR}/ rw,
+    owner @{HOME}/@{XDG_GPG_DIR}/** rwkl -> @{HOME}/@{XDG_GPG_DIR}/**,
+
+    owner @{user_password_store_dirs}/   rw,
+    owner @{user_password_store_dirs}/** rwkl -> @{HOME}/.password-store/**,
+    owner @{user_projects_dirs}/**/*-store/   rw,
+    owner @{user_projects_dirs}/**/*-store/** rwkl -> @{user_projects_dirs}/**/*-store/**,
+    owner @{user_config_dirs}/*-store/   rw,
+    owner @{user_config_dirs}/*-store/** rwkl -> @{user_config_dirs}/*-store/**,
+
+    include if exists <local/pass_gpg>
+  }
+
+  profile qdbus {
     include <abstractions/base>
 
     /{usr/,}bin/qdbus mr,
