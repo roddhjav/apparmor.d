@@ -1,0 +1,80 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/virtnodedevd
+profile virtnodedevd @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/devices-usb>
+  include <abstractions/disks-read>
+  include <abstractions/freedesktop.org>
+  include <abstractions/nameservice-strict>
+  include <abstractions/openssl>
+
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/mdevctl rPx,
+
+  /usr/share/hwdata/pnp.ids r,
+
+  /etc/mdevctl.d/{,**} r,
+
+        @{run}/systemd/inhibit/*.ref rw,
+  owner @{run}/user/@{uid}/libvirt/common/system.token rwk,
+  owner @{run}/user/@{uid}/libvirt/nodedev/{,**} rwk,
+  owner @{run}/user/@{uid}/libvirt/virtnodedevd* rwk,
+
+  @{run}/utmp rk,
+
+  @{run}/udev/data/+backlight:* r,
+  @{run}/udev/data/+bluetooth:* r,
+  @{run}/udev/data/+dmi:id r,
+  @{run}/udev/data/+drm:*      r,       # For screen outputs
+  @{run}/udev/data/+input* r,           # for mouse, keyboard, touchpad
+  @{run}/udev/data/+leds:* r,
+  @{run}/udev/data/+pci* r,
+  @{run}/udev/data/+platform* r,
+  @{run}/udev/data/+sound:* r,
+  @{run}/udev/data/+thunderbolt:* r,
+  @{run}/udev/data/+rfkill:* r,
+
+  @{run}/udev/data/c1:[0-9]* r,         # For RAM disk
+  @{run}/udev/data/c10:[0-9]* r,        # For non-serial mice, misc features
+  @{run}/udev/data/c13:[0-9]* r,        # for /dev/input/*
+  @{run}/udev/data/c90:[0-9]* r,        # For RAM, ROM, Flash
+  @{run}/udev/data/c116:[0-9]* r,       # For ALSA
+  @{run}/udev/data/c226:[0-9]* r,       # For /dev/dri/card[0-9]*
+  @{run}/udev/data/c23[4-9]:[0-9]* r,   # For dynamic assignment range 234 to 254
+  @{run}/udev/data/c24[0-9]:[0-9]* r,
+  @{run}/udev/data/c25[0-4]:[0-9]* r,
+  @{run}/udev/data/c3[0-9]*:[0-9]* r,   # For dynamic assignment range 384 to 511
+  @{run}/udev/data/c4[0-9]*:[0-9]* r,
+  @{run}/udev/data/c5[0-9]*:[0-9]* r,
+  @{run}/udev/data/n[0-9]* r,
+
+  @{sys}/**/ r,
+  @{sys}/devices/**/{class,revision,subsystem_vendor,subsystem_device} r,
+  @{sys}/devices/**/{config,device,vendor} r,
+  @{sys}/devices/**/uevent r,
+  @{sys}/devices/pci[0-9]*/**/net/{,**} r,
+  @{sys}/devices/pci[0-9]*/**/net/*/{duplex,address,speed,operstate} r,
+  @{sys}/devices/pci[0-9]*/**/numa_node r,
+  @{sys}/devices/pci[0-9]*/**/sriov_totalvfs r,
+  @{sys}/devices/system/node/ r,
+  @{sys}/devices/system/node/node[0-9]*/meminfo r,
+  @{sys}/devices/virtual/dmi/id/{product_name,sys_vendor,board_vendor,bios_vendor,bios_date} r,
+  @{sys}/devices/virtual/net/{,**} r,
+  @{sys}/kernel/iommu_groups/ r,
+  @{sys}/kernel/iommu_groups/[0-9]*/devices/ r,
+
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/stat r,
+
+  include if exists <local/virtnodedevd>
+}

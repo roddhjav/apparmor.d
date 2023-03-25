@@ -1,0 +1,47 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# TODO: Similar with virtqemud. Could be merged?
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/virtstoraged
+profile virtstoraged @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+  include <abstractions/openssl>
+
+  network netlink raw,
+
+  ptrace (read) peer=virtqemud,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/qemu-system*  rUx, # TODO: Integration with virt-aa-helper
+  /{usr/,}bin/qemu-img      rUx, # TODO: Integration with virt-aa-helper
+
+  owner @{user_config_dirs}/libvirt/storage/{,**} rw,
+
+  owner @{user_share_dirs}/gnome-boxes/images/{,*} rw,
+  owner @{user_share_dirs}/images/{,*} rw,
+
+  owner @{run}/user/@{uid}/libvirt/common/ rw,
+  owner @{run}/user/@{uid}/libvirt/common/system.token rwk,
+  owner @{run}/user/@{uid}/libvirt/virtstoraged* w,
+  owner @{run}/user/@{uid}/libvirt/virtstoraged.pid rwk,
+  owner @{run}/user/@{uid}/libvirt/storage/{,**} rwk,
+
+  @{run}/systemd/inhibit/[0-9]*.ref rw,
+  @{run}/utmp rwk,
+
+  @{sys}/devices/system/node/ r,
+  @{sys}/devices/system/node/node[0-9]*/meminfo r,
+
+  owner @{PROC}/@{pids}/stat r,
+  owner @{PROC}/@{pids}/fd/ r,
+
+  include if exists <local/virtstoraged>
+}
