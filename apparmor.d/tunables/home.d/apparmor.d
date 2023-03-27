@@ -1,6 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Extended user XDG directories definition
-# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2021-2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 # To allow extended personalisation by the user without breaking everything.
@@ -9,29 +9,20 @@
 # XDG_*_DIR variables are relative pathnames from the user home directory. 
 # user_*_dirs variables are absolute path.
 
-# Define the common set of XDG user directories (usually defined in
-# /etc/xdg/user-dirs.defaults)
-@{XDG_DESKTOP_DIR}="Desktop"
-@{XDG_DOWNLOAD_DIR}="Downloads"
-@{XDG_TEMPLATES_DIR}="Templates"
-@{XDG_PUBLICSHARE_DIR}="Public"
-@{XDG_DOCUMENTS_DIR}="Documents"
-@{XDG_MUSIC_DIR}="Music"
-@{XDG_PICTURES_DIR}="Pictures"
-@{XDG_VIDEOS_DIR}="Videos"
+# First part, second part in /etc/apparmor.d/tunables/xdg-user-dirs.d/apparmor.d
 
 # Extra user personal directories
 @{XDG_BOOKS_DIR}="Books"
 @{XDG_PROJECTS_DIR}="Projects"
 @{XDG_WORK_DIR}="Work"
-@{XDG_SCREENSHOTS_DIR}="@{XDG_PICTURES_DIR}/Screenshots"
 @{XDG_SYNC_DIR}="Sync"
 @{XDG_TORRENTS_DIR}="Torrents"
 @{XDG_GAMES_DIR}=".games"
 @{XDG_VM_DIR}=".vm"
 @{XDG_VM_SHARES_DIR}="VM_Shares"
-@{XDG_WALLPAPERS_DIR}="@{XDG_PICTURES_DIR}/Wallpapers"
 @{XDG_IMG_DIR}="images"
+@{XDG_SCREENSHOTS_DIR}="Pictures/Screenshots"
+@{XDG_WALLPAPERS_DIR}="Pictures/Wallpapers"
 
 # User personal keyrings
 @{XDG_SSH_DIR}=".ssh"
@@ -61,22 +52,10 @@
 
 # Other user directories
 @{user_books_dirs}=@{HOME}/@{XDG_BOOKS_DIR} @{MOUNTS}/@{XDG_BOOKS_DIR}
-@{user_documents_dirs}=@{HOME}/@{XDG_DOCUMENTS_DIR} @{MOUNTS}/@{XDG_DOCUMENTS_DIR}
-@{user_download_dirs}=@{HOME}/@{XDG_DOWNLOAD_DIR} @{MOUNTS}/@{XDG_DOWNLOAD_DIR}
 @{user_games_dirs}=@{HOME}/@{XDG_GAMES_DIR} @{MOUNTS}/@{XDG_GAMES_DIR}
-@{user_music_dirs}=@{HOME}/@{XDG_MUSIC_DIR} @{MOUNTS}/@{XDG_MUSIC_DIR}
-@{user_pictures_dirs}=@{HOME}/@{XDG_PICTURES_DIR} @{MOUNTS}/@{XDG_PICTURES_DIR}
 @{user_projects_dirs}=@{HOME}/@{XDG_PROJECTS_DIR} @{MOUNTS}/@{XDG_PROJECTS_DIR}
-@{user_publicshare_dirs}=@{HOME}/@{XDG_PUBLICSHARE_DIR} @{MOUNTS}/@{XDG_PUBLICSHARE_DIR}
 @{user_sync_dirs}=@{HOME}/@{XDG_SYNC_DIR} @{MOUNTS}/*/@{XDG_SYNC_DIR}
-@{user_templates_dirs}=@{HOME}/@{XDG_TEMPLATES_DIR} @{MOUNTS}/@{XDG_TEMPLATES_DIR}
 @{user_torrents_dirs}=@{HOME}/@{XDG_TORRENTS_DIR} @{MOUNTS}/@{XDG_TORRENTS_DIR}
-@{user_videos_dirs}=@{HOME}/@{XDG_VIDEOS_DIR} @{MOUNTS}/@{XDG_VIDEOS_DIR}
 @{user_vm_dirs}=@{HOME}/@{XDG_VM_DIR} @{MOUNTS}/@{XDG_VM_DIR}
-@{user_vm_shares}=@{HOME}/@{XDG_VM_SHARES_DIR} @{MOUNTS}/@{XDG_VM_SHARES_DIR}
 @{user_work_dirs}=@{HOME}/@{XDG_WORK_DIR} @{MOUNTS}/@{XDG_WORK_DIR}
 @{user_password_store_dirs}=@{HOME}/@{XDG_PASSWORD_STORE_DIR} @{MOUNTS}/@{XDG_PASSWORD_STORE_DIR}
-
-# Also, include files in tunables/xdg-user-dirs.d for site-specific adjustments
-# to the various XDG directories
-include <tunables/xdg-user-dirs.d>
