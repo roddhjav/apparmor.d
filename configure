@@ -14,14 +14,6 @@ _warning() { printf '   Warning: %s\n' "$*" >&2; }
 _title() { printf '%s\n' "$*" >&2; }
 _msg() { printf ' - %s\n' "$*" >&2; }
 
-# Displace files in the package sources
-# $@ List of files to displace
-_displace_files() {
-	for path in "$@"; do
-		mv "${ROOT:?}/$path" "${ROOT:?}/$path.apparmor.d"
-	done
-}
-
 # Process management function to run a function over all the profile files
 # $1 The function to run
 # $2 Usage message to print
@@ -81,7 +73,7 @@ configure() {
 		arch|endeavouros|cachyos|manjarolinux)
 			_msg "Configure libexec."
 			LIBEXEC="/{usr/,}lib"
-			sed -i -e '/Debian/d' "$ROOT/apparmor.d/tunables/extend"
+			sed -i -e '/Debian/d' "$ROOT/apparmor.d/tunables/etc.d/apparmor.d" 
 			;;
 
 		debian|ubuntu|whonix|core)
@@ -99,16 +91,12 @@ configure() {
 
 			_msg "Configure libexec."
 			LIBEXEC="/{usr/,}libexec"
-			sed -i -e '/Archlinux/d' "$ROOT/apparmor.d/tunables/extend"
-
-			_msg "Displace overwritten files."
-			_displace_files apparmor.d/tunables/global \
-				apparmor.d/tunables/xdg-user-dirs apparmor.d/abstractions/trash
+			sed -i -e '/Archlinux/d' "$ROOT/apparmor.d/tunables/etc.d/apparmor.d"
 			;;
 
 		opensuse)
 			LIBEXEC="/{usr/,}libexec"
-			sed -i -e '/Archlinux/d' "$ROOT/apparmor.d/tunables/extend"
+			sed -i -e '/Archlinux/d' "$ROOT/apparmor.d/tunables/etc.d/apparmor.d"
 			;;
 
 		*) _die "$DISTRIBUTION is not a supported distribution." ;;
