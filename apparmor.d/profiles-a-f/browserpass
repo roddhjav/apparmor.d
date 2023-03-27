@@ -15,7 +15,7 @@ profile browserpass @{exec_path} flags=(attach_disconnected) {
 
   @{exec_path} mr,
 
-  /{usr/,}bin/gpg{,2} rPx,
+  /{usr/,}bin/gpg{2,} rCx -> gpg,
 
   owner @{HOME}/.password-store/{,**} r,
   owner @{HOME}/.mozilla/firefox/[0-9a-z]*.*/.parentlock rw,
@@ -38,6 +38,27 @@ profile browserpass @{exec_path} flags=(attach_disconnected) {
   deny owner @{run}/user/@{uid}/gnome-shell-disable-extensions w,
   deny owner @{user_share_dirs}/gvfs-metadata/{,**} r,
   deny /dev/dri/* rw,
+
+  profile gpg flags=(complain) {
+    include <abstractions/base>
+    include <abstractions/nameservice-strict>
+
+    capability dac_read_search,
+
+    /{usr/,}bin/gpg{,2}    mr,
+
+    owner @{HOME}/@{XDG_GPG_DIR}/ rw,
+    owner @{HOME}/@{XDG_GPG_DIR}/** rwkl -> @{HOME}/@{XDG_GPG_DIR}/**,
+
+    owner @{user_password_store_dirs}/   rw,
+    owner @{user_password_store_dirs}/** rwkl -> @{HOME}/.password-store/**,
+    owner @{user_projects_dirs}/**/*-store/   rw,
+    owner @{user_projects_dirs}/**/*-store/** rwkl -> @{user_projects_dirs}/**/*-store/**,
+    owner @{user_config_dirs}/*-store/   rw,
+    owner @{user_config_dirs}/*-store/** rwkl -> @{user_config_dirs}/*-store/**,
+
+    include if exists <local/browserpass_gpg>
+  }
 
   include if exists <local/browserpass>
 }
