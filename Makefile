@@ -36,7 +36,7 @@ install:
 
 auto:
 	@[ ${DISTRIBUTION} = Arch ] || exit 0; \
-		makepkg --syncdeps --install --cleanbuild --force
+		makepkg --syncdeps --install --cleanbuild --force --noconfirm
 	@[ ${DISTRIBUTION} = Ubuntu ] || exit 0; \
 		dch --newversion="${VERSION}" --urgency=medium --distribution=stable --controlmaint "Release ${VERSION}";  \
 		dpkg-buildpackage -b -d --no-sign;  \
@@ -71,23 +71,23 @@ $(P):
 
 lint:
 	@shellcheck --shell=bash \
-		PKGBUILD configure pick dists/build/build.sh \
+		PKGBUILD configure dists/build.sh \
 		debian/${PKGNAME}.postinst debian/${PKGNAME}.postrm
 
 archlinux:
-	@bash dists/build/build.sh archlinux
+	@bash dists/build.sh archlinux
 
 debian:
-	@bash dists/build/build.sh debian
+	@bash dists/build.sh debian
 
 ubuntu:
-	@bash dists/build/build.sh ubuntu
+	@bash dists/build.sh ubuntu
 
 whonix:
-	@bash dists/build/build.sh whonix
+	@bash dists/build.sh whonix
 
 clean:
 	@rm -rf \
 		debian/.debhelper debian/debhelper* debian/*.debhelper debian/${PKGNAME} \
-		${PKGNAME}-*.pkg.tar.zst.sig ${PKGNAME}-*.pkg.tar.zst \
+		${PKGNAME}-*.pkg.tar.zst.sig ${PKGNAME}-*.pkg.tar.zst coverage.out \
 		${PKGNAME}_*.* ${BUILD}
