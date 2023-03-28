@@ -36,14 +36,7 @@ Also, please note wayland has better support than xorg.
 git clone https://aur.archlinux.org/apparmor.d-git.git
 cd apparmor.d-git
 makepkg -s
-sudo pacman -U apparmor.d-*.pkg.tar.zst \
-  --overwrite etc/apparmor.d/tunables/global \
-  --overwrite etc/apparmor.d/tunables/xdg-user-dirs \
-  --overwrite etc/apparmor.d/abstractions/trash
 ```
-
-The overwrite options are only required on the first install. You can use `yay`
-or your preferred AUR install method to update it.
 
 !!! note
 
