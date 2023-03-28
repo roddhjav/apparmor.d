@@ -20,16 +20,16 @@ _msg() { printf ' - %s\n' "$*" >&2; }
 process() {
 	local len nprof nproc fct="$1" msg="$2"
 	_msg "$msg"
-  	mapfile -t files < <(find "${ROOT:?}/apparmor.d" -type f)
+	mapfile -t files < <(find "${ROOT:?}/apparmor.d" -type f)
 	len="${#files[@]}"
 	nproc=$(nproc)
-	(( nprof = len/nproc + 1 ))
+	((nprof = len / nproc + 1))
 	start=0
 	end=$nprof
-	for ((ii = 0 ; ii < nproc ; ii++)); do
+	for ((ii = 0; ii < nproc; ii++)); do
 		$fct $start $end "${files[@]}" &
-		(( start = end + 1 ))
-		(( end = end + nprof ))
+		((start = end + 1))
+		((end = end + nprof))
 	done
 	wait
 }
@@ -70,37 +70,37 @@ synchronise() {
 # Set the distribution specificities
 configure() {
 	case "$DISTRIBUTION" in
-		arch|endeavouros|cachyos|manjarolinux)
-			_msg "Configure libexec."
-			LIBEXEC="/{usr/,}lib"
-			sed -i -e '/Debian/d' "$ROOT/apparmor.d/tunables/etc.d/apparmor.d" 
-			;;
+	arch | endeavouros | cachyos | manjarolinux)
+		_msg "Configure libexec."
+		LIBEXEC="/{usr/,}lib"
+		sed -i -e '/Debian/d' "$ROOT/apparmor.d/tunables/etc.d/apparmor.d"
+		;;
 
-		debian|ubuntu|whonix|core)
-			mv "$ROOT/apparmor.d/abstractions/trash.d/complete" "$ROOT/apparmor.d/abstractions/trash" 
-			case "$DISTRIBUTION" in
-				core)
-					mkdir -p $ROOT/root/usr/lib/systemd/system/systemd-udevd.service.d/
-					cp -a dists/core/systemd-udevd.service $ROOT/root/usr/lib/systemd/system/systemd-udevd.service.d/apparmor.conf
-					cp -a apparmor.d/groups/_full/systemd $ROOT/apparmor.d/systemd ;;
-				debian|whonix)
-					_msg "$DISTRIBUTION does not support abi 3.0 yet."
-					find "$ROOT/apparmor.d" -type f -exec sed -e '/abi /d' -i {} \;
-					cp -a dists/debian/abstractions/* $ROOT/apparmor.d/abstractions
-					cp -a dists/debian/tunables/* $ROOT/apparmor.d/tunables ;;
-			esac
+	debian | ubuntu | whonix | core)
+		mv "$ROOT/apparmor.d/abstractions/trash.d/complete" "$ROOT/apparmor.d/abstractions/trash"
+		case "$DISTRIBUTION" in
+		core)
+			mkdir -p $ROOT/root/usr/lib/systemd/system/systemd-udevd.service.d/
+			cp -a dists/core/systemd-udevd.service $ROOT/root/usr/lib/systemd/system/systemd-udevd.service.d/apparmor.conf
+			cp -a apparmor.d/groups/_full/systemd $ROOT/apparmor.d/systemd ;;
+		debian | whonix)
+			_msg "$DISTRIBUTION does not support abi 3.0 yet."
+			find "$ROOT/apparmor.d" -type f -exec sed -e '/abi /d' -i {} \;
+			cp -a dists/debian/abstractions/* $ROOT/apparmor.d/abstractions
+			cp -a dists/debian/tunables/* $ROOT/apparmor.d/tunables ;;
+		esac
 
-			_msg "Configure libexec."
-			LIBEXEC="/{usr/,}libexec"
-			sed -i -e '/Archlinux/d' "$ROOT/apparmor.d/tunables/etc.d/apparmor.d"
-			;;
+		_msg "Configure libexec."
+		LIBEXEC="/{usr/,}libexec"
+		sed -i -e '/Archlinux/d' "$ROOT/apparmor.d/tunables/etc.d/apparmor.d"
+		;;
 
-		opensuse)
-			LIBEXEC="/{usr/,}libexec"
-			sed -i -e '/Archlinux/d' "$ROOT/apparmor.d/tunables/etc.d/apparmor.d"
-			;;
+	opensuse)
+		LIBEXEC="/{usr/,}libexec"
+		sed -i -e '/Archlinux/d' "$ROOT/apparmor.d/tunables/etc.d/apparmor.d"
+		;;
 
-		*) _die "$DISTRIBUTION is not a supported distribution." ;;
+	*) _die "$DISTRIBUTION is not a supported distribution." ;;
 	esac
 }
 
@@ -163,7 +163,7 @@ _resolve_attachments() {
 	entrypoint="${entrypoint# }"
 
 	# If needed nest the attachments
-	IFS=" " read -r -a attachments <<< "$entrypoint"
+	IFS=" " read -r -a attachments <<<"$entrypoint"
 	if [[ "${#attachments[@]}" -ge 2 ]]; then
 		res="/{"
 		for aare in "${attachments[@]}"; do
@@ -181,7 +181,7 @@ _userspace() {
 	ii="$start"
 	while [[ $ii -le $end && $ii -lt $len ]]; do
 		path="${files[$ii]}"
-		(( ii = ii + 1 ))
+		((ii = ii + 1))
 		[[ -f "$path" ]] || continue
 		entrypoint="$(_resolve_attachments "$path")"
 		[[ -z "$entrypoint" ]] && continue
@@ -198,7 +198,7 @@ _complain() {
 	ii="$start"
 	while [[ $ii -le $end && $ii -lt $len ]]; do
 		path="${files[$ii]}"
-		(( ii = ii + 1 ))
+		((ii = ii + 1))
 		[[ -f "$path" ]] || continue
 		mapfile -t flags < <(grep -o -m 1 'flags=(.*)' "$path" | cut -d '(' -f2 | cut -d ')' -f1)
 		[[ "${flags[*]}" =~ complain ]] && continue
@@ -216,27 +216,27 @@ full() {
 	cp -a apparmor.d/groups/_full/init "$ROOT/apparmor.d/"
 	cp -a apparmor.d/groups/_full/systemd "$ROOT/apparmor.d/"
 	case "$DISTRIBUTION" in
-		arch|endeavouros|cachyos|manjarolinux)
-			cp -r root/usr/lib/initcpio root/usr/lib/systemd/ "$ROOT/root/usr/lib/"
-			;;
+	arch | endeavouros | cachyos | manjarolinux)
+		cp -r root/usr/lib/initcpio root/usr/lib/systemd/ "$ROOT/root/usr/lib/"
+		;;
 
-		debian|ubuntu|whonix|core)
-			cp -r root/usr/share/initramfs-tools "$ROOT/root/usr/share/"
-			;;
+	debian | ubuntu | whonix | core)
+		cp -r root/usr/share/initramfs-tools "$ROOT/root/usr/share/"
+		;;
 
-		*) _die "$DISTRIBUTION is not a supported distribution." ;;
+	*) _die "$DISTRIBUTION is not a supported distribution." ;;
 	esac
 }
 
 # Print help message
 cmd_help() {
 	cat <<-_EOF
-	./configure [options] - Configure the apparmor.d package
+		./configure [options] - Configure the apparmor.d package
 
-	Options:
-	    -f, --full      Set AppArmor for full system policy
-	    -c, --complain  Set complain flag on all profiles
-	    -h, --help      Print this help message and exit
+		Options:
+		    -f, --full      Set AppArmor for full system policy
+		    -c, --complain  Set complain flag on all profiles
+		    -h, --help      Print this help message and exit
 	_EOF
 }
 
