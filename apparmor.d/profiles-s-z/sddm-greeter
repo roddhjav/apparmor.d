@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2018-2021 Mikhail Morfikov
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -9,95 +10,60 @@ include <tunables/global>
 @{exec_path} = /{usr/,}bin/sddm-greeter
 profile sddm-greeter @{exec_path} {
   include <abstractions/base>
-  include <abstractions/opencl-intel>
-  include <abstractions/freedesktop.org>
-  include <abstractions/fonts>
   include <abstractions/fontconfig-cache-read>
+  include <abstractions/fonts>
+  include <abstractions/freedesktop.org>
   include <abstractions/mesa>
-  include <abstractions/qt5-shader-cache>
   include <abstractions/nameservice-strict>
+  include <abstractions/opencl>
+  include <abstractions/qt5-shader-cache>
+  include <abstractions/qt5>
+  include <abstractions/qt5-compose-cache-write>
 
   @{exec_path} mr,
+
+  /usr/share/sddm/{,**} r,
+  /usr/share/desktop-base/softwaves-theme/login/*.svg r,
+  /usr/share/plasma/desktoptheme/** r,
+  /usr/share/qt5ct/** r,
+  /usr/share/wayland-sessions/{,*.desktop} r,
+  /usr/share/xsessions/{,*.desktop} r,
+  /usr/share/hwdata/pnp.ids r,
+
+  /etc/sddm.conf.d/{,*} r,
+  /etc/sddm.conf r,
+  /etc/fstab r,
+  /etc/machine-id r,
+  /var/lib/AccountsService/icons/*.icon r,
+  /var/lib/dbus/machine-id r,
 
   owner /var/lib/sddm/** rw,
   owner /var/lib/sddm/#[0-9]*[0-9] mrw,
   owner /var/lib/sddm/.cache/** mrwkl -> /var/lib/sddm/.cache/**,
         /var/lib/sddm/state.conf r,
 
-  /usr/share/sddm/{,**} r,
-
-  /etc/sddm.conf.d/{,*} r,
-  /etc/sddm.conf r,
-
-  # QT
-  /{usr/,}lib/@{multiarch}/qt5/plugins/kf5/org.kde.kwindowsystem.platforms/*.so mr,
-  /{usr/,}lib/@{multiarch}/qt5/plugins/plasma/dataengine/*.so mr,
-  /{usr/,}lib/@{multiarch}/qt5/qml/QtQuick/Controls/**.qmlc mr,
-  /{usr/,}lib/@{multiarch}/qt5/qml/QtQuick/Controls/Private/*.jsc mr,
-  /{usr/,}lib/@{multiarch}/qt5/qml/QtGraphicalEffects/private/DropShadowBase.qmlc mr,
-
-  # List of graphical sessions
-  /usr/share/xsessions/{,*.desktop} r,
-  /usr/share/wayland-sessions/{,*.desktop} r,
-
-  # Themes
-  /usr/share/plasma/desktoptheme/** r,
-  /usr/share/desktop-base/softwaves-theme/login/*.svg r,
-
-  # User avatars
-  /var/lib/AccountsService/icons/*.icon r,
-
-  # All the following is for the test mode
-  #------------------------------------------------------------------
   owner @{user_cache_dirs}/ rw,
-  owner @{user_cache_dirs}/sddm-greeter/ rw,
-  owner @{user_cache_dirs}/sddm-greeter/qmlcache/ rw,
-  owner @{user_cache_dirs}/sddm-greeter/qmlcache/#[0-9]*[0-9] rw,
-  owner @{user_cache_dirs}/sddm-greeter/qmlcache/[a-f0-9]*.jsc* rwl -> @{user_cache_dirs}/sddm-greeter/qmlcache/#[0-9]*[0-9],
-  owner @{user_cache_dirs}/sddm-greeter/qmlcache/[a-f0-9]*.qmlc* rwl -> @{user_cache_dirs}/sddm-greeter/qmlcache/#[0-9]*[0-9],
+  owner @{user_cache_dirs}/icon-cache.kcache rw,
+  owner @{user_cache_dirs}/plasma_theme_*.kcache rw,
+  owner @{user_cache_dirs}/plasma-svgelements-* rw,
+  owner @{user_cache_dirs}/qtshadercache/{,**} rwl,
+  owner @{user_cache_dirs}/sddm-greeter/{,**} rwl,
 
-  owner @{user_cache_dirs}/qtshadercache/ rw,
-  owner @{user_cache_dirs}/qtshadercache/#[0-9]*[0-9] rw,
-  owner @{user_cache_dirs}/qtshadercache/@{hex} rwl -> @{user_cache_dirs}/qtshadercache/#[0-9]*[0-9],
-  owner @{user_cache_dirs}/qtshadercache-*-little_endian-*/#[0-9]*[0-9] rw,
-  owner @{user_cache_dirs}/qtshadercache-*-little_endian-*/@{hex} rwl -> @{user_cache_dirs}/qtshadercache-*-little_endian-*/#[0-9]*[0-9],
-
+  owner @{user_config_dirs}/kdeglobals r,
+  owner @{user_config_dirs}/plasmarc r,
   owner @{user_config_dirs}/qt5ct/{,**} r,
-  /usr/share/qt5ct/** r,
 
   # If one is blocked, the others are probed.
   deny owner @{HOME}/#[0-9]*[0-9] mrw,
        owner @{HOME}/.glvnd* mrw,
-  #    owner /tmp/#[0-9]*[0-9] mrw,
-  #    owner /tmp/.glvnd* mrw,
 
-  owner @{user_config_dirs}/kdeglobals r,
-  owner @{user_config_dirs}/plasmarc r,
-  owner @{user_cache_dirs}/icon-cache.kcache rw,
-  owner @{user_cache_dirs}/plasma_theme_*.kcache rw,
-  owner @{user_cache_dirs}/plasma-svgelements-* rw,
-
-  include <abstractions/qt5-compose-cache-write>
-
-  owner @{PROC}/@{pid}/cmdline r,
-  #------------------------------------------------------------------
-
-  /etc/fstab r,
-
-  /usr/share/hwdata/pnp.ids r,
+  owner /tmp/runtime-sddm/ rw,
 
   owner @{run}/sddm/{,*} rw,
 
-  /{usr/,}lib/@{multiarch}/ld-*.so mr,
-
+  owner @{PROC}/@{pid}/cmdline r,
   owner @{PROC}/@{pid}/mounts r,
         @{PROC}/sys/kernel/core_pattern r,
-
-  /var/lib/dbus/machine-id r,
-  /etc/machine-id r,
-
-  # file_inherit
-  #/dev/tty[0-9]* rw,
 
   include if exists <local/sddm-greeter>
 }
