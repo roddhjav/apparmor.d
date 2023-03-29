@@ -35,7 +35,7 @@ Also, please note wayland has better support than xorg.
 ```sh
 git clone https://aur.archlinux.org/apparmor.d-git.git
 cd apparmor.d-git
-makepkg -s
+makepkg -si
 ```
 
 !!! note
