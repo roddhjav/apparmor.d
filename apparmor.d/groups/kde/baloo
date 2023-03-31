@@ -1,0 +1,50 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+ 
+@{exec_path} = /{usr/,}lib/baloo_file
+profile baloo @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/freedesktop.org>
+  include <abstractions/fonts>
+  include <abstractions/deny-sensitive-home>
+  include <abstractions/private-files-strict>
+  include <abstractions/private-files>
+  include <abstractions/fontconfig-cache-write> 
+  include <abstractions/disks-read>
+
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  /{usr/,}lib/baloo_file_extractor rix,
+
+  /usr/share/qt/translations/*.qm r,
+  /usr/share/hwdata/pnp.ids r,
+
+  /etc/fstab r,
+  /etc/machine-id r,
+
+  # Allow to search user files
+  owner @{HOME}/{,**} r,
+  owner @{MOUNTS}/{,**} r,
+  owner /tmp/*/{,**} r,
+
+  owner @{user_config_dirs}/#[0-9]* rw,
+  owner @{user_config_dirs}/baloofilerc rwl,
+  owner @{user_config_dirs}/baloofilerc.lock rwkl,
+
+  owner @{user_share_dirs}/baloo/{,**} rwk,
+
+        @{PROC}/sys/kernel/core_pattern r,
+        @{PROC}/sys/kernel/random/boot_id r,
+  owner @{PROC}/@{pid}/mounts r,
+
+  /dev/tty r,
+
+  include if exists <local/baloo>
+}
