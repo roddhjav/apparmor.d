@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2019-2021 Mikhail Morfikov
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -12,64 +13,54 @@ profile sddm-xsession @{exec_path} {
   include <abstractions/consoles>
   include <abstractions/nameservice-strict>
   include <abstractions/bash>
+  include <abstractions/zsh>
 
   @{exec_path} r,
+
+  /{usr/,}{local,}bin/ r,
   /{usr/,}bin/{,ba,da}sh rix,
-
-  /{usr/,}bin/rm         rix,
-  /{usr/,}bin/touch      rix,
   /{usr/,}bin/{,e}grep   rix,
-  /{usr/,}bin/cat        rix,
-  /{usr/,}bin/which{,.debianutils}      rix,
-  /{usr/,}bin/id         rix,
-  /{usr/,}bin/chmod      rix,
-  /{usr/,}bin/date       rix,
   /{usr/,}bin/{m,g,}awk  rix,
-  /{usr/,}bin/tempfile   rix,
-  /{usr/,}bin/mktemp     rix,
-
-  /{usr/,}bin/ r,
-  /{usr/,}bin/zsh        rix,
-  /{usr/,}bin/tcsh       rix,
+  /{usr/,}bin/cat        rix,
+  /{usr/,}bin/chmod      rix,
   /{usr/,}bin/csh        rix,
+  /{usr/,}bin/date       rix,
   /{usr/,}bin/fish       rix,
+  /{usr/,}bin/id         rix,
+  /{usr/,}bin/mktemp     rix,
+  /{usr/,}bin/rm         rix,
+  /{usr/,}bin/tcsh       rix,
+  /{usr/,}bin/tempfile   rix,
+  /{usr/,}bin/touch      rix,
+  /{usr/,}bin/which{,.*} rix,
+  /{usr/,}bin/zsh        rix,
 
-  /usr/local/bin/ r,
+  /{usr/,}bin/dbus-update-activation-environment  rCx -> dbus,
+  /{usr/,}bin/flatpak                             rPUx,
+  /{usr/,}bin/numlockx                            rPx,
+  /{usr/,}bin/xhost                               rPx,
+  /{usr/,}bin/xrdb                                rPx,
+  /etc/X11/Xsession                               rPx,
+  /{usr/,}bin/ssh-agent                           rPx,
+  /{usr/,}bin/udevadm                             rPx,
 
-  /etc/X11/Xsession             rPx,
-
-  /{usr/,}bin/dbus-update-activation-environment rCx -> dbus,
-
-  /{usr/,}bin/gpgconf           rCx -> gpg,
   /{usr/,}bin/run-parts         rCx -> run-parts,
-  /{usr/,}bin/udevadm           rCx -> udevadm,
-
-  /{usr/,}bin/flatpak          rPUx,
-  /{usr/,}bin/xrdb              rPx,
-  /{usr/,}bin/numlockx          rPx,
-  /{usr/,}bin/xhost             rPx,
-
 
   # Allowed GUI sessions to start
   #/{usr/,}bin/openbox-session  rPx,
   #/{usr/,}bin/openbox          rPx,
-  /{usr/,}bin/ssh-agent         rPx,
+
+  /etc/default/{,*} r,
+  /etc/X11/{,**} r,
+
+  owner @{HOME}/.xsession-errors w,
+
+  owner @{user_share_dirs}/sddm/xorg-session.log w,
 
   owner /tmp/xsess-env-* rw,
   owner /tmp/file* rw,
 
-  /etc/default/{,*} r,
-
-  /etc/X11/{,**} r,
-
   owner @{PROC}/@{pid}/loginuid r,
-
-  # Xsession logs
-  owner @{user_share_dirs}/sddm/xorg-session.log w,
-  owner @{HOME}/.xsession-errors w,
-
-  /etc/zsh/* r,
-
 
   profile run-parts {
     include <abstractions/base>
@@ -79,9 +70,9 @@ profile sddm-xsession @{exec_path} {
     /etc/X11/Xsession.d/ r,
     /etc/X11/Xresources/ r,
 
-    # file_inherit
     owner @{HOME}/.xsession-errors w,
 
+    include if exists <local/sddm-xsession_run-parts>
   }
 
   profile dbus {
@@ -89,47 +80,9 @@ profile sddm-xsession @{exec_path} {
 
     /{usr/,}bin/dbus-update-activation-environment mr,
 
-    # file_inherit
     owner @{HOME}/.xsession-errors w,
 
-  }
-
-  profile gpg {
-    include <abstractions/base>
-
-    /{usr/,}bin/gpgconf mr,
-
-    /{usr/,}bin/gpg-agent rix,
-
-    owner @{HOME}/@{XDG_GPG_DIR}/ rw,
-    owner @{HOME}/@{XDG_GPG_DIR}/** rwkl -> @{HOME}/@{XDG_GPG_DIR}/**,
-
-    @{PROC}/@{pid}/fd/ r,
-
-  }
-
-  profile udevadm {
-    include <abstractions/base>
-
-    /{usr/,}bin/udevadm mr,
-
-    /etc/udev/udev.conf r,
-
-    owner @{PROC}/@{pid}/stat r,
-          @{PROC}/cmdline r,
-          @{PROC}/1/sched r,
-          @{PROC}/1/environ r,
-          @{PROC}/sys/kernel/osrelease r,
-
-    @{sys}/firmware/efi/efivars/SecureBoot-@{hex}-@{hex}-@{hex}@{hex} r,
-
-    @{sys}/bus/ r,
-    @{sys}/bus/*/devices/ r,
-    @{sys}/class/ r,
-    @{sys}/class/*/ r,
-    @{sys}/devices/**/uevent r,
-    @{run}/udev/data/* r,
-
+    include if exists <local/sddm-xsession_dbus>
   }
 
   include if exists <local/sddm-xsession>

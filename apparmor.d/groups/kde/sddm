@@ -18,16 +18,17 @@ profile sddm @{exec_path} flags=(attach_disconnected) {
   include <abstractions/nameservice-strict>
   include <abstractions/qt5>
   include <abstractions/wutmp>
+  include <abstractions/bash>
 
+  capability audit_write,
   capability chown,
-  capability setgid,
+  capability dac_override,
+  capability dac_read_search,
   capability fowner,
+  capability net_admin,
+  capability setgid,
   capability setuid,
   capability sys_resource,
-  capability audit_write,
-  capability dac_read_search,
-  capability net_admin,
-  capability dac_override,
 
   network netlink raw,
 
@@ -37,10 +38,13 @@ profile sddm @{exec_path} flags=(attach_disconnected) {
 
   @{exec_path} mr,
 
-  /{usr/,}lib{,exec}/sddm/sddm-helper rix,
-  /{usr/,}lib/@{multiarch}/sddm/sddm-helper rix,
+  /{usr/,}lib{,exec}/sddm/sddm-helper        rix,
+  /{usr/,}lib/@{multiarch}/sddm/sddm-helper  rix,
 
   /{usr/,}bin/{,ba,da}sh   rix,
+  /{usr/,}bin/tr           rix,
+  /{usr/,}bin/cat          rix,
+  /{usr/,}bin/tty          rix,
 
   /{usr/,}bin/sddm-greeter rPx,
   /etc/sddm/Xsession       rPx,
@@ -49,22 +53,19 @@ profile sddm @{exec_path} flags=(attach_disconnected) {
   /{usr/,}bin/xauth        rCx -> xauth,
   /{usr/,}bin/xsetroot     rPx,
   /{usr/,}bin/sway        rPUx,
+  /{usr/,}bin/flatpak     rPUx,
 
-  # System keyrings
+  /{usr/,}bin/systemctl    rPx -> child-systemctl,
+  /{usr/,}bin/dbus-update-activation-environment rCx -> dbus,
   /{usr/,}bin/gnome-keyring-daemon rPx,
   /{usr/,}bin/kwalletd5            rPx,
+  /{usr/,}bin/startplasma-x11      rPx,
 
-  # SDDM scripts
-  # What to do with it? (#FIXME#)
-  /usr/etc/X11/xdm/Xsetup                 rPUx,
-  /usr/share/sddm/scripts/Xsetup          rPUx,
-  /usr/share/sddm/scripts/Xstop           rPUx,
-  /usr/share/sddm/scripts/wayland-session rPUx,
-  /usr/share/sddm/scripts/Xsession        rPUx,
-  #/usr/share/sddm/scripts/Xsetup          rCx -> scripts,
-  #/usr/share/sddm/scripts/Xstop           rCx -> scripts,
-  #/usr/share/sddm/scripts/wayland-session rCx -> scripts,
-  #/usr/share/sddm/scripts/Xsession        rCx -> scripts,
+  /usr/etc/X11/xdm/Xsetup                 rix,
+  /usr/share/sddm/scripts/Xsetup          rix,
+  /usr/share/sddm/scripts/Xstop           rix,
+  /usr/share/sddm/scripts/wayland-session rix,
+  /usr/share/sddm/scripts/Xsession        rix,
 
   /usr/share/desktop-base/softwaves-theme/login/*.svg r,
   /usr/share/plasma/desktoptheme/** r,
@@ -74,13 +75,17 @@ profile sddm @{exec_path} flags=(attach_disconnected) {
   /usr/share/xsessions/{,*.desktop} r,
   /var/lib/AccountsService/icons/*.icon r,
 
+  /etc/X11/xinit/xinitrc.d/{,*} r,
+
   @{etc_ro}/environment r,
   @{etc_ro}/security/limits.d/ r,
+  /etc/debuginfod/{,*} r,
   /etc/default/locale r,
   /etc/locale.conf r,
   /etc/machine-id r,
   /etc/sddm.conf r,
   /etc/sddm.conf.d/{,*} r,
+  /etc/shells r,
 
   / r,
 
@@ -91,12 +96,14 @@ profile sddm @{exec_path} flags=(attach_disconnected) {
 
   owner @{HOME}/.local/ w,
   owner @{HOME}/.Xauthority rw,
+
   owner @{user_share_dirs}/ w,
   owner @{user_share_dirs}/kwalletd/ rw,
   owner @{user_share_dirs}/kwalletd/kdewallet.salt r,
   owner @{user_share_dirs}/kwalletd/kdewallet.salt rw,
   owner @{user_share_dirs}/sddm/ w,
-        
+  owner @{user_share_dirs}/sddm/xorg-session.log w,
+
         /tmp/sddm-* rw,
   owner /tmp/*/{,s} rw,
   owner /tmp/sddm-auth* rw,
@@ -114,31 +121,7 @@ profile sddm @{exec_path} flags=(attach_disconnected) {
   owner @{PROC}/1/limits r,
 
   /dev/tty[0-9]* rw,
-
-  profile scripts {
-    include <abstractions/base>
-    include <abstractions/consoles>
-    include <abstractions/bash>
-
-    /{usr/,}bin/{,ba,da}sh rix,
-
-    /{usr/,}bin/{,ba,da}sh rix,
-    /{usr/,}bin/zsh        rix,
-
-    /{usr/,}bin/id         rix,
-    /{usr/,}bin/flatpak   rPUx,
-    /{usr/,}bin/sway      rPUx,
-
-    /{usr/,}bin/dbus-run-session  rix,
-    /{usr/,}bin/dbus-daemon      rPUx,
-
-    /usr/share/sddm/scripts/Xsetup r,
-    /usr/share/sddm/scripts/Xstop r,
-    /usr/share/sddm/scripts/wayland-session r,
-    /usr/share/sddm/scripts/Xsession r,
-
-  include if exists <local/sddm_scripts>
-  }
+  /dev/tty rw,
 
   profile xauth {
     include <abstractions/base>
@@ -150,11 +133,24 @@ profile sddm @{exec_path} flags=(attach_disconnected) {
     owner @{HOME}/.Xauthority-n rw,
     owner @{HOME}/.Xauthority   rwl -> @{HOME}/.Xauthority-n,
 
+    owner @{user_share_dirs}/sddm/xorg-session.log w,
+
     owner @{run}/sddm/\{@{uuid}\}-c  w,
     owner @{run}/sddm/\{@{uuid}\}-l  wl -> @{run}/sddm/\{@{uuid}\}-c,
     owner @{run}/sddm/\{@{uuid}\}-n rw,
     owner @{run}/sddm/\{@{uuid}\}   rwl -> @{run}/sddm/\{@{uuid}\}-n,
 
+    include if exists <local/sddm_xauth>
+  }
+
+  profile dbus {
+    include <abstractions/base>
+
+    /{usr/,}bin/dbus-update-activation-environment mr,
+
+    owner @{user_share_dirs}/sddm/xorg-session.log w,
+
+    include if exists <local/sddm_dbus>
   }
 
   include if exists <local/sddm>
