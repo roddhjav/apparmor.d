@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2018-2021 Mikhail Morfikov
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -12,15 +13,10 @@ profile dnscrypt-proxy @{exec_path} {
   include <abstractions/nameservice-strict>
   include <abstractions/ssl_certs>
 
-  # To bind to the 53 tcp/udp port (when systemd's sockets aren't used).
+  capability net_admin,
   capability net_bind_service,
-
-  # Needed for privilege drop (to run as _dnscrypt-proxy:nogroup).
   capability setgid,
   capability setuid,
-
-  # Needed?
-  capability net_admin,
 
   network inet dgram,
   network inet6 dgram,
@@ -30,47 +26,39 @@ profile dnscrypt-proxy @{exec_path} {
 
   @{exec_path} mrix,
 
-  # dnscrypt-proxy config files
   /etc/dnscrypt-proxy/ r,
-  /etc/dnscrypt-proxy/dnscrypt-proxy.toml r,
-  /etc/dnscrypt-proxy/whitelist.txt r,
   /etc/dnscrypt-proxy/blacklist.txt r,
   /etc/dnscrypt-proxy/cloaking-rules.txt r,
+  /etc/dnscrypt-proxy/dnscrypt-proxy.toml r,
   /etc/dnscrypt-proxy/forwarding-rules.txt r,
+  /etc/dnscrypt-proxy/localhost.pem r,
+  /etc/dnscrypt-proxy/whitelist.txt r,
 
-  # This is for the built-in DoH server / Firefox ESNI (Encrypted ClientHello)
-  # See: https://github.com/DNSCrypt/dnscrypt-proxy/wiki/Local-DoH
-  owner /etc/dnscrypt-proxy/localhost.pem r,
-
-  # For downloading the relays.md and public-resolvers.md files (for offline use, which can fix
-  # connectivity issues).
-  owner /etc/dnscrypt-proxy/sf-*.tmp rw,
-  owner /etc/dnscrypt-proxy/relays.md rw,
-  owner /etc/dnscrypt-proxy/relays.md.minisig rw,
   owner /etc/dnscrypt-proxy/public-resolvers.md rw,
   owner /etc/dnscrypt-proxy/public-resolvers.md.minisig rw,
-  owner /var/cache/dnscrypt-proxy/sf-*.tmp rw,
-  owner /var/cache/dnscrypt-proxy/relays.md rw,
-  owner /var/cache/dnscrypt-proxy/relays.md.minisig rw,
-  owner /var/cache/dnscrypt-proxy/public-resolvers.md rw,
-  owner /var/cache/dnscrypt-proxy/public-resolvers.md.minisig rw,
-
-  @{PROC}/sys/net/core/somaxconn r,
-  @{PROC}/sys/kernel/hostname r,
-
-  @{sys}/kernel/mm/transparent_hugepage/hpage_pmd_size r,
-
-  # Logs
+  owner /etc/dnscrypt-proxy/relays.md rw,
+  owner /etc/dnscrypt-proxy/relays.md.minisig rw,
+  owner /etc/dnscrypt-proxy/sf-*.tmp rw,
+  
+  /var/cache/private/dnscrypt-proxy/{,**} r,
+  /var/cache/private/dnscrypt-proxy/public-resolvers.md{,.minisig} rw,
+  /var/cache/private/dnscrypt-proxy/sf-*.tmp rw,
+  
   /var/log/dnscrypt-proxy/ r,
   /var/log/dnscrypt-proxy/*.log w,
   /var/log/private/dnscrypt-proxy/ rw,
   /var/log/private/dnscrypt-proxy/*.log w,
 
-  /var/cache/private/dnscrypt-proxy/sf-*.tmp rw,
-  /var/cache/private/dnscrypt-proxy/public-resolvers.md{,.minisig} rw,
+  owner /var/cache/dnscrypt-proxy/public-resolvers.md rw,
+  owner /var/cache/dnscrypt-proxy/public-resolvers.md.minisig rw,
+  owner /var/cache/dnscrypt-proxy/relays.md rw,
+  owner /var/cache/dnscrypt-proxy/relays.md.minisig rw,
+  owner /var/cache/dnscrypt-proxy/sf-*.tmp rw,
 
-  # Needed?
-  deny /etc/ssl/certs/java/ r,
+  @{PROC}/sys/kernel/hostname r,
+  @{PROC}/sys/net/core/somaxconn r,
+
+  @{sys}/kernel/mm/transparent_hugepage/hpage_pmd_size r,
 
   include if exists <local/dnscrypt-proxy>
 }
