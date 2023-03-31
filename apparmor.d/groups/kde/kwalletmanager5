@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2018-2021 Mikhail Morfikov
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -9,46 +10,48 @@ include <tunables/global>
 @{exec_path} = /{usr/,}bin/kwalletmanager5
 profile kwalletmanager5 @{exec_path} {
   include <abstractions/base>
-  include <abstractions/consoles>
-  include <abstractions/X>
-  include <abstractions/gtk>
-  include <abstractions/fonts>
-  include <abstractions/fontconfig-cache-read>
-  include <abstractions/freedesktop.org>
   include <abstractions/audio>
-  include <abstractions/user-download-strict>
+  include <abstractions/consoles>
+  include <abstractions/dri-enumerate>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/fonts>
+  include <abstractions/freedesktop.org>
+  include <abstractions/gtk>
+  include <abstractions/mesa>
+  include <abstractions/nameservice-strict>
   include <abstractions/qt5-compose-cache-write>
   include <abstractions/qt5-settings-write>
-  include <abstractions/mesa>
-  include <abstractions/dri-enumerate>
-  include <abstractions/nameservice-strict>
+  include <abstractions/qt5>
+  include <abstractions/user-download-strict>
+  include <abstractions/X>
 
   @{exec_path} mr,
 
-  /{usr/,}lib/@{multiarch}/qt5/plugins/kf5/org.kde.kwindowsystem.platforms/KF5WindowSystemX11Plugin.so mr,
-  /{usr/,}lib/@{multiarch}/qt5/plugins/kf5/FrameworkIntegrationPlugin.so mr,
-  /{usr/,}lib/@{multiarch}/qt5/plugins/phonon_platform/kde.so mr,
-  /{usr/,}lib/@{multiarch}/qt5/plugins/phonon4qt5_backend/phonon_vlc.so mr,
-
   /usr/share/kxmlgui5/kwalletmanager5/kwalletmanager.rc r,
+  /usr/share/qt5ct/** r,
+  /usr/share/hwdata/pnp.ids r,
 
+  /etc/fstab r,
+  /etc/machine-id r,
+  /etc/xdg/ui/ui_standards.rc r,
+  /var/lib/dbus/machine-id r,
+
+  owner @{user_cache_dirs}/icon-cache.kcache rw,
+  owner @{user_config_dirs}/qt5ct/{,**} r,
   owner @{user_config_dirs}/#[0-9]*[0-9] rw,
-  owner @{user_config_dirs}/kwalletrc rw,
-  owner @{user_config_dirs}/kwalletrc.lock rwk,
-  owner @{user_config_dirs}/kwalletrc.* rwl -> @{user_config_dirs}/#[0-9]*[0-9],
   owner @{user_config_dirs}/kwalletmanager5rc rw,
-  owner @{user_config_dirs}/kwalletmanager5rc.lock rwk,
   owner @{user_config_dirs}/kwalletmanager5rc.* rwl -> @{user_config_dirs}/#[0-9]*[0-9],
+  owner @{user_config_dirs}/kwalletmanager5rc.lock rwk,
+  owner @{user_config_dirs}/kwalletrc rw,
+  owner @{user_config_dirs}/kwalletrc.* rwl -> @{user_config_dirs}/#[0-9]*[0-9],
+  owner @{user_config_dirs}/kwalletrc.lock rwk,
   owner @{user_config_dirs}/session/#[0-9]*[0-9] rw,
   owner @{user_config_dirs}/session/kwalletmanager5_* rwl -> @{user_config_dirs}/session/#[0-9]*[0-9],
   owner @{user_config_dirs}/session/kwalletmanager5_*.lock rwk,
 
   owner @{user_config_dirs}/kdeglobals r,
-  owner @{user_cache_dirs}/icon-cache.kcache rw,
 
-  # To configure Qt5 settings (theme, font, icons, etc.) under DE/WM without Qt integration
-  owner @{user_config_dirs}/qt5ct/{,**} r,
-  /usr/share/qt5ct/** r,
+  owner /tmp/xauth-[0-9]*-_[0-9] r,
 
   deny owner @{PROC}/@{pid}/cmdline r,
              @{PROC}/sys/kernel/core_pattern r,
@@ -56,19 +59,8 @@ profile kwalletmanager5 @{exec_path} {
              @{PROC}/@{pid}/mountinfo r,
              @{PROC}/@{pid}/mounts r,
 
-  /etc/fstab r,
-
-  /etc/xdg/ui/ui_standards.rc r,
-
-  /var/lib/dbus/machine-id r,
-  /etc/machine-id r,
-
-  /usr/share/hwdata/pnp.ids r,
-
   /dev/shm/ r,
   /dev/shm/#[0-9]*[0-9] rw,
-
-  owner /tmp/xauth-[0-9]*-_[0-9] r,
 
   include if exists <local/kwalletmanager5>
 }
