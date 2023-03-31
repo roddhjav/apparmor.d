@@ -1,0 +1,56 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/kwin_x11
+profile kwin_x11 @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/dri-common>
+  include <abstractions/fonts>
+  include <abstractions/freedesktop.org>
+  include <abstractions/mesa>
+  include <abstractions/nameservice-strict>
+
+  @{exec_path} mr,
+
+  /{usr/,}lib/kwin_killer_helper rix,
+
+  /usr/share/hwdata/pnp.ids r,
+  /usr/share/kwin/{,**} r,
+  /usr/share/X11/xkb/{,**} r,
+  /usr/share/plasma/desktoptheme/{,**} r,
+  /usr/share/qt/translations/*.qm r,
+
+  /etc/machine-id r,
+
+  owner @{HOME}/.Xauthority r,
+
+  owner @{user_cache_dirs}/ r,
+  owner @{user_cache_dirs}/#[0-9]* rw,
+  owner @{user_cache_dirs}/icon-cache.kcache rw,
+  owner @{user_cache_dirs}/kwin/{,**} rwl,
+  owner @{user_cache_dirs}/plasma_theme_default_*.kcache rw,
+  owner @{user_cache_dirs}/plasma-svgelements.lock rwk,
+  owner @{user_cache_dirs}/plasma-svgelements{,.??????} rwl,
+  owner @{user_cache_dirs}/qtshadercache-*/@{hex} r,
+
+  owner @{user_config_dirs}/#[0-9]* rw,
+  owner @{user_config_dirs}/kcminputrc r,
+  owner @{user_config_dirs}/kdedefaults/* r,
+  owner @{user_config_dirs}/kdeglobals r,
+  owner @{user_config_dirs}/kwinrc.lock rwk,
+  owner @{user_config_dirs}/kwinrc{,.??????} rwl,
+  owner @{user_config_dirs}/kwinrulesrc r,
+  owner @{user_config_dirs}/kxkbrc r,
+
+  @{PROC}/sys/kernel/core_pattern r,
+
+  /dev/tty r,
+
+  include if exists <local/kwin_x11>
+}
+
