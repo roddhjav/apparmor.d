@@ -15,9 +15,69 @@ profile evince @{exec_path} {
   include <abstractions/user-download-strict>
   include <abstractions/user-read>
   include <abstractions/user-write>
+  include <abstractions/dbus-session-strict>
+  include <abstractions/dbus-accessibility-strict>
+  include <abstractions/ibus>
 
+  # also denies network mounts
   deny network inet,
   deny network inet6,
+
+  dbus send    bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={RequestName,ReleaseName}
+       peer=(name=org.freedesktop.DBus),
+
+  dbus send    bus=session path=/org/gtk/vfs/metadata
+       interface=org.gtk.vfs.Metadata
+       member={Set,GetTreeFromDevice}
+       peer=(name=:*),
+
+  dbus send bus=session path=/org/freedesktop/portal/desktop
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=:*),
+
+  dbus send bus=session path=/org/freedesktop/portal/desktop
+       interface=org.freedesktop.portal.Settings
+       member=Read
+       peer=(name=:*),
+
+  dbus send bus=session path=/org/gnome/evince/Daemon
+       interface=org.gnome.evince.Daemon
+       member=RegisterDocument
+       peer=(name=org.gnome.evince.Daemon), # no peer's labels
+
+  dbus (send, receive) bus=session path=/org/gnome/evince/{,**}
+       peer=(name="{org.gnome.evince.Daemon,org.freedesktop.DBus,:*}", label=@{profile_name}), # all interfaces and members
+
+  dbus send    bus=accessibility path=/org/a11y/atspi/registry/deviceeventcontroller
+       interface=org.a11y.atspi.DeviceEventController
+       member={GetKeystrokeListeners,GetDeviceEventListeners}
+       peer=(name=org.a11y.atspi.Registry, label=at-spi2-registryd),
+
+  dbus send    bus=accessibility path=/org/a11y/atspi/accessible/root
+       interface=org.a11y.atspi.Socket
+       member=Embed
+       peer=(name=org.a11y.atspi.Registry, label=at-spi2-registryd),
+
+  dbus receive bus=accessibility path=/org/a11y/atspi/accessible/root
+       interface=org.freedesktop.DBus.Properties
+       member=Set
+       peer=(name=:*, label=at-spi2-registryd),
+
+  dbus send    bus=accessibility path=/org/a11y/atspi/registry
+       interface=org.a11y.atspi.Registry
+       member=GetRegisteredEvents
+       peer=(name=org.a11y.atspi.Registry, label=at-spi2-registryd),
+
+  dbus receive bus=accessibility path=/org/a11y/atspi/registry
+       interface=org.a11y.atspi.Registry
+       member=EventListenerDeregistered
+       peer=(name=:*, label=at-spi2-registryd),
+
+  dbus bind bus=session
+       name=org.gnome.evince.Daemon,
 
   @{exec_path} rix,
 
@@ -50,4 +110,27 @@ profile evince @{exec_path} {
   deny /{usr/,}lib/ r, # asks when viewing PostScript files
 
   include if exists <local/evince>
+}
+
+profile evince-previewer /{,usr/}bin/evince-previewer {
+  include <abstractions/base>
+  include <abstractions/dbus-accessibility-strict>
+  include <abstractions/dbus-session-strict>
+
+  unix (send, receive, connect) type=stream peer=(addr="@/tmp/.X11-unix/X[0-9]*", label=xorg),
+
+  /{,usr/}bin/evince-previewer mr,
+
+  # X-tiny
+  owner @{HOME}/.Xauthority r,
+
+  include if exists <local/evince-previewer>
+}
+
+profile evince-thumbnailer /{,usr/}bin/evince-thumbnailer {
+  include <abstractions/base>
+
+  /{,usr/}bin/evince-thumbnailer mr,
+
+  include if exists <local/evince-thumbnailer>
 }
