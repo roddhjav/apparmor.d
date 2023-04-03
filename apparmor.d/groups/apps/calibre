@@ -33,15 +33,60 @@ profile calibre @{exec_path} {
   include <abstractions/ssl_certs>
   include <abstractions/devices-usb>
   include <abstractions/chromium-common>
+  include <abstractions/dbus-session-strict>
+  include <abstractions/dbus-accessibility-strict>
+  include <abstractions/nvidia>
 
   capability sys_ptrace,
 
   network netlink raw,
+  # also denies network mounts
+  deny network inet,
+  deny network inet6,
+
+  unix (send, receive) type=stream peer=(addr=none, label=xorg),
+  unix (bind, listen)  type=stream addr="@*-calibre-gui.socket",
+  unix (bind)          type=stream addr="@calibre-*",
+
+  dbus send    bus=accessibility path=/org/a11y/atspi/accessible/root
+       interface=org.a11y.atspi.Socket
+       member=Embed
+       peer=(name=org.a11y.atspi.Registry, label=at-spi2-registryd),
+
+  dbus receive bus=accessibility path=/org/a11y/atspi/accessible/root
+       interface=org.freedesktop.DBus.Properties
+       member=Set
+       peer=(name=:*),
+
+  dbus send    bus=accessibility path=/org/a11y/atspi/registry
+       interface=org.a11y.atspi.Registry
+       member=GetRegisteredEvents
+       peer=(name=org.a11y.atspi.Registry, label=at-spi2-registryd),
+
+  dbus receive bus=accessibility path=/org/a11y/atspi/registry
+       interface=org.a11y.atspi.Registry
+       member=EventListenerDeregistered
+       peer=(name=:*, label=at-spi2-registryd),
+
+  dbus send    bus=accessibility path=/org/a11y/atspi/registry/deviceeventcontroller
+       interface=org.a11y.atspi.DeviceEventController
+       member={GetKeystrokeListeners,GetDeviceEventListeners}
+       peer=(name=org.a11y.atspi.Registry, label=at-spi2-registryd),
+
+  dbus send bus=session path=/org/a11y/bus
+       interface=org.freedesktop.DBus.Properties
+       member=Get
+       peer=(name=org.a11y.Bus),
+
+  dbus send bus=session path=/org/gtk/vfs/mounttracker
+       interface=org.gtk.vfs.MountTracker
+       member=ListMountableInfo
+       peer=(name=:*),
 
   @{exec_path} mrix,
   /{usr/,}bin/python3.[0-9]* r,
 
-  /{usr/,}{s,}bin/ldconfig     rix,
+  /{usr/,}{s,}bin/ldconfig{,.real} rix,
   /{usr/,}bin/{,ba,da}sh       rix,
   /{usr/,}bin/file             rix,
   /{usr/,}bin/uname            rix,
@@ -58,16 +103,16 @@ profile calibre @{exec_path} {
   /usr/share/hwdata/pnp.ids r,
   /usr/share/qt5/**.pak r,
   /usr/share/qt5ct/** r,
+  /usr/share/zoneinfo-icu/**.res r,
 
   /etc/fstab r,
   /etc/inputrc r,
   /etc/magic r,
   /etc/mime.types r,
 
-  /etc/machine-id r,
-  /var/lib/dbus/machine-id r,
-
   owner @{HOME}/ r,
+  owner "@{HOME}/Calibre Library/{,**}" rw,
+  owner "@{HOME}/Calibre Library/metadata.db" rwk,
   owner @{user_documents_dirs}/{,**} rwl,
   owner @{user_books_dirs}/{,**} rwl,
   owner @{user_torrents_dirs}/{,**} rwl,
@@ -98,7 +143,8 @@ profile calibre @{exec_path} {
   owner /tmp/calibre_*_tmp_*/{,**} rw,
   owner /tmp/calibre-*/{,**} rw,
   owner /tmp/[0-9]*-*/ rw,
-  owner /tmp/[0-9]*-*/** rwl -> /tmp/[0-9]*-*/**,
+  owner /tmp/[0-9]*-*/** rwl,
+#  owner /tmp/[0-9]*-*/** rwl -> /tmp/[0-9]*-*/**,  # newer AA version
   owner /tmp/* rw,
 
   owner /dev/shm/#[0-9]*[0-9] rw,
@@ -106,19 +152,21 @@ profile calibre @{exec_path} {
   @{sys}/devices/pci[0-9]*/**/irq r,
 
              @{PROC}/ r,
-             @{PROC}/@{pid}/net/route r,
+             @{PROC}/@{pids}/net/route r,
              @{PROC}/sys/fs/inotify/max_user_watches r,
              @{PROC}/sys/kernel/yama/ptrace_scope r,
              @{PROC}/vmstat r,
        owner @{PROC}/@{pid}/fd/ r,
        owner @{PROC}/@{pid}/mountinfo r,
        owner @{PROC}/@{pid}/mounts r,
-       owner @{PROC}/@{pids}/stat r,
-       owner @{PROC}/@{pids}/task/ r,
-       owner @{PROC}/@{pids}/task/@{tid}/status r,
-  deny       @{PROC}/sys/kernel/random/boot_id r,
+       owner @{PROC}/@{pid}/stat{,m} r,
+       owner @{PROC}/@{pid}/comm r,
+       owner @{PROC}/@{pid}/task/ r,
+       owner @{PROC}/@{pid}/task/@{tid}/status r,
+       owner @{PROC}/@{pid}/task/@{tid}/comm rw,
   deny owner @{PROC}/@{pid}/cmdline r,
   deny owner @{PROC}/@{pid}/oom_{,score_}adj rw,
+  deny       @{PROC}/sys/kernel/random/boot_id r,
 
   owner /dev/tty[0-9]* rw,
 
