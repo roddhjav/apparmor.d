@@ -17,8 +17,50 @@ profile atril @{exec_path} {
   include <abstractions/gtk>
   include <abstractions/nameservice-strict>
   include <abstractions/user-download-strict>
+  include <abstractions/X-strict>
+  include <abstractions/ibus>
+  include <abstractions/dbus-session-strict>
+  include <abstractions/dbus-accessibility-strict>
 
   network netlink raw,
+
+  dbus send    bus=accessibility path=/org/a11y/atspi/registry/deviceeventcontroller
+       interface=org.a11y.atspi.DeviceEventController
+       member={GetKeystrokeListeners,GetDeviceEventListeners}
+       peer=(name=org.a11y.atspi.Registry, label=at-spi2-registryd),
+
+  dbus send    bus=accessibility path=/org/a11y/atspi/accessible/root
+       interface=org.a11y.atspi.Socket
+       member=Embed
+       peer=(name=org.a11y.atspi.Registry, label=at-spi2-registryd),
+
+  dbus receive bus=accessibility path=/org/a11y/atspi/accessible/root
+       interface=org.freedesktop.DBus.Properties
+       member=Set
+       peer=(name=:*, label=at-spi2-registryd),
+
+  dbus send    bus=accessibility path=/org/a11y/atspi/registry
+       interface=org.a11y.atspi.Registry
+       member=GetRegisteredEvents
+       peer=(name=org.a11y.atspi.Registry, label=at-spi2-registryd),
+
+  dbus receive bus=accessibility path=/org/a11y/atspi/registry
+       interface=org.a11y.atspi.Registry
+       member=EventListenerDeregistered
+       peer=(name=:*, label=at-spi2-registryd),
+
+  dbus send bus=session path=/org/gtk/vfs/mounttracker
+       interface=org.gtk.vfs.MountTracker
+       member=ListMountableInfo
+       peer=(name=:*),
+
+  dbus send bus=session path=/org/mate/atril/{,**}
+       peer=(name=org.freedesktop.DBus, label=atrild),  # all interfaces and members
+
+  dbus send bus=session path=/org/mate/atril/Daemon
+       interface=org.mate.atril.Daemon
+       member={RegisterDocument,UnregisterDocument}
+       peer=(name=org.mate.atril.Daemon),  # no peer's labels
 
   @{exec_path} mr,
 
@@ -44,6 +86,8 @@ profile atril @{exec_path} {
 
   owner @{user_cache_dirs}/atril/{,**} rw,
 
+  owner @{user_share_dirs}/ r,
+
   owner /tmp/gtkprint_* rw,
   owner /tmp/settings*.ini rw,
   owner /tmp/settings*.ini.* rw,
@@ -64,4 +108,10 @@ profile atril @{exec_path} {
   deny owner @{user_share_dirs}/gvfs-metadata/{,*} r,
 
   include if exists <local/atril>
+}
+
+profile /{usr/,}bin/atril-previewer {
+  include <abstractions/base>
+
+  include if exists <local/atril-previewer>
 }
