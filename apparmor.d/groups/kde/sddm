@@ -46,6 +46,8 @@ profile sddm @{exec_path} flags=(attach_disconnected) {
   /{usr/,}bin/tr           rix,
   /{usr/,}bin/cat          rix,
   /{usr/,}bin/tty          rix,
+  /{usr/,}bin/xmodmap      rix,
+  /{usr/,}{s,}bin/checkproc rix,
 
   /{usr/,}bin/sddm-greeter rPx,
   /etc/sddm/Xsession       rPx,
@@ -56,11 +58,14 @@ profile sddm @{exec_path} flags=(attach_disconnected) {
   /{usr/,}bin/sway        rPUx,
   /{usr/,}bin/flatpak     rPUx,
 
-  /{usr/,}bin/systemctl    rPx -> child-systemctl,
+  @{etc_ro}/X11/xdm/Xsession       rPx,
   /{usr/,}bin/dbus-update-activation-environment rCx -> dbus,
   /{usr/,}bin/gnome-keyring-daemon rPx,
   /{usr/,}bin/kwalletd5            rPx,
   /{usr/,}bin/startplasma-x11      rPx,
+  /{usr/,}bin/systemctl            rPx -> child-systemctl,
+  /{usr/,}bin/xrdb                 rPx,
+  /{usr/,}bin/xset                 rPx,
 
   /usr/etc/X11/xdm/Xsetup                 rix,
   /usr/share/sddm/scripts/Xsetup          rix,
@@ -75,11 +80,13 @@ profile sddm @{exec_path} flags=(attach_disconnected) {
   /usr/share/wayland-sessions/{,*.desktop} r,
   /usr/share/xsessions/{,*.desktop} r,
   /var/lib/AccountsService/icons/*.icon r,
+  /usr/share/qt5/qtlogging.ini r,
 
   /etc/X11/xinit/xinitrc.d/{,*} r,
 
   @{etc_ro}/environment r,
   @{etc_ro}/security/limits.d/ r,
+  @{etc_ro}/X11/Xmodmap r,
   /etc/debuginfod/{,*} r,
   /etc/default/locale r,
   /etc/locale.conf r,
@@ -87,6 +94,7 @@ profile sddm @{exec_path} flags=(attach_disconnected) {
   /etc/sddm.conf r,
   /etc/sddm.conf.d/{,*} r,
   /etc/shells r,
+  /etc/sysconfig/displaymanager r,
 
   / r,
 
@@ -110,6 +118,7 @@ profile sddm @{exec_path} flags=(attach_disconnected) {
   owner /tmp/sddm-auth* rw,
 
         @{run}/faillock/[a-zA-z0-9]* rwk,
+        @{run}/sddm.pid rw,
         @{run}/sddm/* w,
         @{run}/systemd/sessions/*.ref rw,
   owner @{run}/sddm/ rw,
