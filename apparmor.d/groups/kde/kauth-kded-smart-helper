@@ -1,0 +1,19 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{libexec}/kauth/kded-smart-helper
+profile kauth-kded-smart-helper @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+
+  @{exec_path} mr,
+
+  /{usr/,}{s,}bin/smartctl rPx,
+
+  include if exists <local/kauth-kded-smart-helper>
+}
