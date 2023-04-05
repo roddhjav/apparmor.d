@@ -88,6 +88,7 @@ profile packagekitd @{exec_path} flags=(attach_disconnected) {
 
   /{usr/,}{s,}bin/ldconfig   rix,
   /{usr/,}bin/{,ba,da}sh     rix,
+  /{usr/,}bin/cp             rix,
   /{usr/,}bin/echo           rix,
   /{usr/,}bin/gdbus          rix,
   /{usr/,}bin/gzip           rix,
@@ -125,6 +126,8 @@ profile packagekitd @{exec_path} flags=(attach_disconnected) {
         @{run}/systemd/inhibit/*.ref rw,
   owner @{run}/systemd/users/@{uid} r,
 
+  owner /dev/shm/AP_0x??????/{,**} rw,
+
   @{sys}/**/ r,
   @{sys}/devices/**/modalias r,
 
@@ -160,9 +163,13 @@ profile packagekitd @{exec_path} flags=(attach_disconnected) {
     owner /var/tmp/zypp.*/zypp-*/ r, # only: opensuse
     owner /var/tmp/zypp.*/zypp-*/** rwkl -> /var/tmp/zypp.*/zypp-trusted-*/**,
 
+    owner @{run}/user/@{uid}/gnupg/ r,
+    owner @{run}/user/@{uid}/gnupg/ rwkl -> @{run}/user/@{uid}/gnupg/**,
+
     owner @{PROC}/@{pid}/fd/ r,
     owner @{PROC}/@{pid}/task/@{tid}/comm rw,
 
+    include if exists <local/packagekitd_gpg>
   }
 
   include if exists <local/packagekitd>
