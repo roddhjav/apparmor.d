@@ -4,10 +4,16 @@ title: Known issues
 
 # Known issues
 
+Known bugs are tracked on the meta issue **[#75](https://github.com/roddhjav/apparmor.d/issues/74)**.
+
 !!! info 
 
-    Known bugs are tracked on the meta issue **[#75](https://github.com/roddhjav/apparmor.d/issues/74)**.
+    Usually, a profile in complain mode cannot break the program it confines.
+    However, there are some **major exceptions**:
 
+    * `deny` rules are enforced even in complain mode,
+    * `attach_disconnected` (and `the mediate_deleted`) will break the program if they are required and missing in the profile,
+    * If apparmor does not find the profile to transition `rPx`.
 
 ### Pacman "could not get current working directory"
 
