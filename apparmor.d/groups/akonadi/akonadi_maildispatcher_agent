@@ -1,0 +1,45 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/akonadi_maildispatcher_agent
+profile akonadi_maildispatcher_agent @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/dri-common>
+  include <abstractions/mesa>
+  include <abstractions/nameservice-strict>
+  include <abstractions/X-strict>
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink dgram,
+
+  @{exec_path} mr,
+
+  /usr/share/hwdata/*.ids r,
+  /usr/share/icons/{,**} r,
+  /usr/share/mime/{,**} r,
+  /usr/share/qt/translations/*.qm r,
+
+  owner @{user_cache_dirs}/icon-cache.kcache rw,
+
+  owner @{user_config_dirs}/akonadi/agent_config_akonadi_maildispatcher_agent_changes.dat r,
+  owner @{user_config_dirs}/akonadi/akonadiconnectionrc r,
+  owner @{user_config_dirs}/kdedefaults/kdeglobals r,
+  owner @{user_config_dirs}/kdedefaults/kwinrc r,
+  owner @{user_config_dirs}/kdeglobals r,
+  owner @{user_config_dirs}/kwinrc r,
+  owner @{user_config_dirs}/specialmailcollectionsrc r,
+
+  @{PROC}/sys/kernel/core_pattern r,
+
+  /dev/tty r,
+
+  include if exists <local/akonadi_maildispatcher_agent>
+}
