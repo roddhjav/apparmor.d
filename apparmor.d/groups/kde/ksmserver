@@ -7,7 +7,7 @@ abi <abi/3.0>,
 include <tunables/global>
 
 @{exec_path} = /{usr/,}bin/ksmserver
-profile ksmserver @{exec_path} flags=(attach_disconnected) {
+profile ksmserver @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/base>
   include <abstractions/dri-common>
   include <abstractions/nameservice-strict>
@@ -26,6 +26,8 @@ profile ksmserver @{exec_path} flags=(attach_disconnected) {
   /usr/share/qt/translations/*.qm r,
   /usr/share/knotifications5/*.notifyrc r,
 
+  /etc/machine-id r,
+
   owner @{HOME}/?????? rw,
   owner @{HOME}/.Xauthority rw,
 
@@ -34,7 +36,10 @@ profile ksmserver @{exec_path} flags=(attach_disconnected) {
   owner @{user_config_dirs}/kdedefaults/* r,
   owner @{user_config_dirs}/kdeglobals r,
   owner @{user_config_dirs}/kscreenlockerrc r,
+  owner @{user_config_dirs}/ksmserverrc.?????? rwl,
   owner @{user_config_dirs}/ksmserverrc r,
+  owner @{user_config_dirs}/#[0-9]* rw,
+  owner @{user_config_dirs}/ksmserverrc.lock rwk,
   owner @{user_config_dirs}/kwinrc r,
   owner @{user_config_dirs}/session/*_[0-9]*_[0-9]*_[0-9]* rw,
 
@@ -43,8 +48,9 @@ profile ksmserver @{exec_path} flags=(attach_disconnected) {
 
         @{run}/systemd/inhibit/[0-9]*.ref rw,
   owner @{run}/user/@{uid}/KSMserver__[0-9] rw,
-  owner @{run}/user/@{uid}/xauth_* r,
-  
+  # owner @{run}/user/@{uid}/xauth_* r,
+        @{run}/user/@{uid}/xauth_* rl,
+
   @{sys}/devices/pci[0-9]*/**/{device,subsystem_device,subsystem_vendor,uevent,vendor} r,
 
   @{PROC}/sys/kernel/core_pattern r,

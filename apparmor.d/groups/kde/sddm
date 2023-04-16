@@ -8,9 +8,10 @@ abi <abi/3.0>,
 include <tunables/global>
 
 @{exec_path} = /{usr/,}bin/sddm
-profile sddm @{exec_path} flags=(attach_disconnected) {
+profile sddm @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/base>
   include <abstractions/authentication>
+  include <abstractions/bash>
   include <abstractions/dri-common>
   include <abstractions/fontconfig-cache-read>
   include <abstractions/fonts>
@@ -18,7 +19,7 @@ profile sddm @{exec_path} flags=(attach_disconnected) {
   include <abstractions/nameservice-strict>
   include <abstractions/qt5>
   include <abstractions/wutmp>
-  include <abstractions/bash>
+  include <abstractions/X-strict>
 
   capability audit_write,
   capability chown,
@@ -77,6 +78,7 @@ profile sddm @{exec_path} flags=(attach_disconnected) {
   /usr/share/plasma/desktoptheme/** r,
   /usr/share/sddm/faces/.*.icon r,
   /usr/share/sddm/themes/** r,
+  /usr/share/icu/[0-9]*.[0-9]*/*.dat r,
   /usr/share/wayland-sessions/{,*.desktop} r,
   /usr/share/xsessions/{,*.desktop} r,
   /var/lib/AccountsService/icons/*.icon r,
@@ -119,10 +121,13 @@ profile sddm @{exec_path} flags=(attach_disconnected) {
 
         @{run}/faillock/[a-zA-z0-9]* rwk,
         @{run}/sddm.pid rw,
-        @{run}/sddm/* w,
+        @{run}/sddm/\{@{uuid}\} rw,
+      #   @{run}/sddm/* w,
         @{run}/systemd/sessions/*.ref rw,
   owner @{run}/sddm/ rw,
   owner @{run}/user/@{uid}/kwallet5.socket rw,
+        @{run}/user/@{uid}/xauth_* rl,
+  owner @{run}/user/@{uid}/#[0-9]* rw,
 
         @{PROC}/sys/kernel/core_pattern r,
   owner @{PROC}/@{pid}/loginuid rw,
