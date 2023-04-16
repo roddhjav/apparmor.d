@@ -33,21 +33,24 @@ follow the guidelines presented here.
 
 The rules in the profile should be sorted in the rule ***block*** as follows:
 
-1. [`include`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#include-statements)
-1. [`set rlimit`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#rlimit-rules)
-1. [`capability`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#capability-rules)
-1. [`network`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#network-rules)
-1. [`mount`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#mount-rules-apparmor-28-and-later)
-1. [`remount`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#remount)
-1. [`umount`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#umount)
-1. [`pivot_root`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#pivot_root)
-1. [`change_profile`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#change_profile)
-1. [`signal`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#signals)
-1. `ptrace`
-1. `unix`
-1. [`dbus`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#dbus-rules)
-1. [`file`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#file-access-rules)
-1. local include
+| Order | Name | Example |
+|:-----:|:----:|:-------:|
+| **1** | [`include`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#include-statements) | [:octicons-link-external-24:](https://github.com/search?q=repo%3Aroddhjav%2Fapparmor.d+NOT+path%3A*.md+include+%3Cabstractions%2F&type=code) |
+| **2** | [`set rlimit`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#rlimit-rules) | [:octicons-link-external-24:](https://github.com/search?q=repo%3Aroddhjav%2Fapparmor.d+NOT+path%3A*.md+set+rlimit&type=code) |
+| **3** | [`capability`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#capability-rules) | [:octicons-link-external-24:](https://github.com/search?q=repo%3Aroddhjav%2Fapparmor.d+NOT+path%3A*.md+capability&type=code) |
+| **4** | [`network`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#network-rules) | [:octicons-link-external-24:](https://github.com/search?q=repo%3Aroddhjav%2Fapparmor.d+NOT+path%3A*.md+%22network+%22&type=code) |
+| **5** | [`mount`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#mount-rules-apparmor-28-and-later) | [:octicons-link-external-24:](https://github.com/search?q=repo%3Aroddhjav%2Fapparmor.d+NOT+path%3A*.md+%22++mount+%22&type=code) |
+| **6** | [`remount`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#remount) | [:octicons-link-external-24:](https://github.com/search?q=repo%3Aroddhjav%2Fapparmor.d+NOT+path%3A*.md+remount&type=code) |
+| **7** | [`umount`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#umount)| [:octicons-link-external-24:](https://github.com/search?q=repo%3Aroddhjav%2Fapparmor.d+NOT+path%3A*.md+%22umount+%22&type=code) |
+| **8** | [`pivot_root`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#pivot_root)| [:octicons-link-external-24:](https://github.com/search?q=repo%3Aroddhjav%2Fapparmor.d+NOT+path%3A*.md+pivot_root&type=code) |
+| **9** | [`change_profile`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#change_profile)| [:octicons-link-external-24:](https://github.com/search?q=repo%3Aroddhjav%2Fapparmor.d+NOT+path%3A*.md+change_profile+&type=code) |
+| **10** | [`signal`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#signals)| [:octicons-link-external-24:](https://github.com/search?q=repo%3Aroddhjav%2Fapparmor.d+NOT+path%3A*.md+%22signal+%22&type=code) |
+| **11** | `ptrace`| [:octicons-link-external-24:](https://github.com/search?q=repo%3Aroddhjav%2Fapparmor.d+NOT+path%3A*.md+%22ptrace+%22&type=code) |
+| **12** | `unix`| [:octicons-link-external-24:](https://github.com/search?q=repo%3Aroddhjav%2Fapparmor.d+NOT+path%3A*.md+%22unix+%22&type=code) |
+| **13** | [`dbus`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#dbus-rules) | [:octicons-link-external-24:](https://github.com/search?q=repo%3Aroddhjav%2Fapparmor.d+NOT+path%3A*.md+dbus&type=code) |
+| **14** | [`file`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#file-access-rules) | [:octicons-link-external-24:]() |
+| **15** | local include | [:octicons-link-external-24:](https://github.com/search?q=repo%3Aroddhjav%2Fapparmor.d+NOT+path%3A*.md+include+if+exists+%3Clocal&type=code) |
+
 
 This rule order is taken from AppArmor with minor changes as we tend to:
 
@@ -58,20 +61,20 @@ This rule order is taken from AppArmor with minor changes as we tend to:
 
 The file block should be sorted as follow:
 
-1. `@{exec_path} mr`, the entry point of the profile
-1. The binaries and library required:
-    - `/{usr/,}bin/`, `/{usr/,}lib/`, `/opt/`...
-    - It is the only place where you can have `mr`, `rix`, `rPx`, `rUx`, `rPUX` rules.
-1. The shared resources: `/usr/share`...
-1. The system configuration: `/etc`...
-1. The system data: `/var`...
-1. The user data: `owner @{HOME}/`...
-1. The user configuration, cache and in general all dotfiles
-1. Temporary and runtime data: `/tmp/`, `@{run}/`, `/dev/shm/`...
-1. Sys files: `@{sys}/`...
-1. Proc files: `@{PROC}/`... 
-1. Dev files: `/dev/`...
-1. Deny rules: `deny`...
+| Order | Description | Example |
+|:-----:|:-----------:|:-------:|
+| **1** | The entry point of the profile | `@{exec_path} mr,` |
+| **2** | The binaries and library required | `/{usr/,}bin/`, `/{usr/,}lib/`, `/opt/`. It is the only place where you can have `mr`, `rix`, `rPx`, `rUx`, `rPUX` rules. |
+| **3** | The shared resources | `/usr/share` |
+| **4** | The system configuration | `/etc` |
+| **5** | The system data | `/`, `/var`, `/boot` |
+| **6** | The user data | `owner @{HOME}/` |
+| **7** | The user configuration, cache and dotfiles | `@{user_cache_dirs}`, `@{user_config_dirs}`,  `@{user_share_dirs}` |
+| **8** | Temporary and runtime data | `/tmp/`, `@{run}/`, `/dev/shm/` |
+| **9** | Sys files | `@{sys}/` |
+| **10** | Proc files | `@{PROC}/` |
+| **11** | Dev files | `/dev/` |
+| **12** | Deny rules | `deny` |
 
 ### The dbus block
 
