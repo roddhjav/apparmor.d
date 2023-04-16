@@ -1,3 +1,3 @@
 module github.com/roddhjav/apparmor.d
 
-go 1.17
+go 1.20
