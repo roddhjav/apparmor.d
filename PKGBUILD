@@ -27,7 +27,7 @@ prepare() {
 }
 
 build() {
-  cd "$srcdir/$pkgname/"
+  cd "$srcdir/$pkgname"
   export CGO_CPPFLAGS="${CPPFLAGS}"
   export CGO_CFLAGS="${CFLAGS}"
   export CGO_CXXFLAGS="${CXXFLAGS}"
