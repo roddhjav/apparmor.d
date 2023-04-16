@@ -1,0 +1,78 @@
+#cloud-config
+
+hostname: ${hostname}
+
+ssh_pwauth: true
+users:
+  - name: ${username}
+    plain_text_passwd: ${password}
+    shell: /bin/bash
+    ssh_authorized_keys:
+      - ${ssh_key}
+    lock_passwd: false
+    sudo: ALL=(ALL) NOPASSWD:ALL
+
+package_update: true
+package_upgrade: true
+package_reboot_if_required: false
+packages:
+  # Install core packages
+  - apparmor
+  - base-devel
+  - firewalld
+  - qemu-guest-agent
+  - rng-tools
+  - spice-vdagent
+
+  # Install usefull core packages
+  - bash-completion
+  - git
+  - htop
+  - lsb-release
+  - man
+  - pass
+  - python-notify2
+  - vim
+  - wget
+
+  # Install basic services
+  - networkmanager
+
+  # Install Graphical Interface
+  - gnome
+  - gnome-extra 
+  - seahorse
+  - alacarte
+
+  # Install Applications
+  - firefox
+  - terminator
+
+runcmd:
+
+  # Regenerate grub.cfg
+  - [ grub-mkconfig, -o, /boot/grub/grub.cfg ]
+
+  # Enable firewall
+
+  # Enable core services
+  - [ systemctl, enable, apparmor ]
+  - [ systemctl, enable, auditd ]
+  - [ systemctl, enable, gdm ]
+  - [ systemctl, enable, NetworkManager ]
+  - [ systemctl, enable, rngd ]
+  - [ systemctl, enable, systemd-timesyncd.service ]
+
+write_files:
+
+  # Enable AppArmor in kernel parameters
+  - path: /etc/default/grub
+    append: true
+    content: |
+      GRUB_CMDLINE_LINUX_DEFAULT="$GRUB_CMDLINE_LINUX_DEFAULT lsm=landlock,lockdown,yama,integrity,apparmor,bpf"
+
+  # Set some bash aliases
+  - path: /etc/skel/.bashrc
+    append: true
+    content: |
+      [[ -f ~/.bash_aliases ]] && source ~/.bash_aliases
