@@ -1,0 +1,113 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/kded5
+profile kded5 @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/audio>
+  include <abstractions/consoles>
+  include <abstractions/dconf-write>
+  include <abstractions/dri-common>
+  include <abstractions/fonts>
+  include <abstractions/freedesktop.org>
+  include <abstractions/gtk>
+  include <abstractions/mesa>
+  include <abstractions/nameservice-strict>
+  include <abstractions/wutmp>
+  include <abstractions/X-strict>
+
+  network inet dgram,
+  network inet6 dgram,
+  network netlink raw,
+  network netlink dgram,
+
+  ptrace (read),
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/pgrep              rCx -> pgrep,
+  /{usr/,}bin/setxkbmap          rix,
+  /{usr/,}lib/kf5/kconf_update   rix,
+  /{usr/,}lib/utempter/utempter  rix,
+
+  /usr/share/hwdata/*.ids r,
+  /usr/share/kconf_update/{,**} r,
+  /usr/share/khotkeys/{,**} r,
+  /usr/share/knotifications5/{,**} r,
+  /usr/share/kservices5/{,**} r,
+  /usr/share/kservicetypes5/{,**} r,
+  /usr/share/mime/ r,
+  /usr/share/qt/translations/*.qm r,
+
+  /etc/fstab r,
+  /etc/machine-id r,
+  /etc/xdg/kde* r,
+  /etc/xdg/menus/ r,
+
+  owner @{HOME}/.gtkrc-2.0 rw,
+
+  owner @{user_cache_dirs}/icon-cache.kcache rw,
+  owner @{user_cache_dirs}/ksycoca5_* r,
+
+  owner @{user_config_dirs}/#[0-9]* rw,
+  owner @{user_config_dirs}/bluedevilglobalrc r,
+  owner @{user_config_dirs}/bluedevilglobalrc* rwkl,
+  owner @{user_config_dirs}/gtk-{3,4}.0/{,**} rwl,
+  owner @{user_config_dirs}/kcminputrc r,
+  owner @{user_config_dirs}/kconf_updaterc r,
+  owner @{user_config_dirs}/kded5rc r,
+  owner @{user_config_dirs}/kdedefaults/kcminputrc r,
+  owner @{user_config_dirs}/kdedefaults/kdeglobals r,
+  owner @{user_config_dirs}/kdedefaults/kwinrc r,
+  owner @{user_config_dirs}/kdeglobals r,
+  owner @{user_config_dirs}/khotkeysrc.lock rwk,
+  owner @{user_config_dirs}/khotkeysrc* rwl,
+  owner @{user_config_dirs}/ktimezonedrc r,
+  owner @{user_config_dirs}/kwinrc r,
+  owner @{user_config_dirs}/kxkbrc r,
+  owner @{user_config_dirs}/libaccounts-glib/accounts.db{,-shm,-wal} rwk,
+  owner @{user_config_dirs}/xsettingsd/{,**} rw,
+
+  owner @{user_share_dirs}/icc/{,edid-*} r,
+  owner @{user_share_dirs}/kded5/{,**} r,
+  owner @{user_share_dirs}/kscreen/{,**} rw,
+  owner @{user_share_dirs}/ktp/cache.db rwk,
+
+  owner @{run}/user/@{uid}/#[0-9]* rw,
+  owner @{run}/user/@{uid}/kded5*kioworker.socket rwl,
+
+  owner /tmp/plasma-csd-generator.??????/{,**} rw,
+
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/mounts r,
+
+  @{PROC}/sys/kernel/random/boot_id r,
+  @{PROC}/sys/kernel/core_pattern r,
+
+  /dev/ptmx rw,
+  /dev/rfkill r,
+
+  profile pgrep {
+    include <abstractions/base>
+    include <abstractions/consoles>
+
+    ptrace (read),
+
+    /{usr/,}bin/pgrep mr,
+
+    @{PROC}/ r,
+    @{PROC}/@{pids}/cmdline r,
+    @{PROC}/@{pids}/stat r,
+    @{PROC}/sys/kernel/osrelease r,
+    @{PROC}/uptime r,
+
+    include if exists <local/kded5_pgrep>
+  }
+
+  include if exists <local/kded5>
+}
