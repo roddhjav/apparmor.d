@@ -62,8 +62,7 @@ build_in_docker_makepkg() {
 			"$BASEIMAGE/$dist"
 	fi
 
-	docker exec --workdir="$BUILDIR/" "$img" \
-		makepkg -sfC --noconfirm --noprogressbar
+	docker exec --workdir="$BUILDIR/" "$img" makepkg -sfC --noconfirm --noprogressbar
 	mv "$VOLUME/$PKGNAME"-*.pkg.* .
 }
 
@@ -95,12 +94,17 @@ build_in_docker_dpkg() {
 main() {
 	case "$COMMAND" in
 	archlinux)
-		build_in_docker_makepkg "$COMMAND"
+		# build_in_docker_makepkg "$COMMAND"
+		PKGDEST=. makepkg -Cf
 		;;
 
 	debian | ubuntu | whonix)
 		sync
 		build_in_docker_dpkg "$COMMAND"
+		;;
+
+	opensuse)
+		echo "Work in progress"
 		;;
 
 	*) ;;

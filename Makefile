@@ -6,14 +6,21 @@
 DESTDIR ?= /
 BUILD := .build
 PKGNAME := apparmor.d
-DISTRIBUTION := $(shell lsb_release --id --short)
 VERSION := 0.$(shell git rev-list --count HEAD)-1
 P = $(notdir $(wildcard ${BUILD}/apparmor.d/*))
 
-.PHONY: all install auto local $(P) lint archlinux debian ubuntu whonix clean
+.PHONY: all build enforce full install local $(P) pkg dpkg rpm lint clean
 
-all:
+all: build
+
+build:
 	@go build -o ${BUILD}/ ./cmd/aa-log
+
+enforce: build
+	@./${BUILD}/prebuild
+
+full: build
+	@./${BUILD}/prebuild --complain --full
 
 ROOT = $(shell find "${BUILD}/root" -type f -printf "%P\n")
 PROFILES = $(shell find "${BUILD}/apparmor.d" -type f -printf "%P\n")
@@ -33,17 +40,6 @@ install:
 		service="$$(basename "$$file")"; \
 		install -Dm0644 "$${file}" "${DESTDIR}/usr/lib/systemd/user/$${service}.d/apparmor.conf"; \
 	done
-
-auto:
-	@[ ${DISTRIBUTION} = Arch ] || exit 0; \
-		makepkg --syncdeps --install --cleanbuild --force --noconfirm
-	@[ ${DISTRIBUTION} = Ubuntu ] || exit 0; \
-		dch --newversion="${VERSION}" --urgency=medium --distribution=stable --controlmaint "Release ${VERSION}";  \
-		dpkg-buildpackage -b -d --no-sign;  \
-        sudo dpkg -i "../apparmor.d_${VERSION}_all.deb"; \
-		make clean
-	@[ ${DISTRIBUTION} = openSUSE ] || exit 0; \
-		make local
 
 local:
 	@./configure --complain
@@ -69,22 +65,26 @@ $(P):
 	done;
 	@systemctl restart apparmor || systemctl status apparmor
 
+dist ?= archlinux
+package:
+	@bash dists/build.sh ${dist}
+
+pkg:
+	@makepkg --syncdeps --install --cleanbuild --force --noconfirm
+
+dpkg:
+	@dch --newversion="${VERSION}" --urgency=medium --distribution=stable --controlmaint "Release ${VERSION}"
+	@dpkg-buildpackage -b -d --no-sign
+	@sudo dpkg -i "../apparmor.d_${VERSION}_all.deb"
+	@make clean
+
+rpm:
+	@make local
+
 lint:
 	@shellcheck --shell=bash \
 		PKGBUILD configure dists/build.sh \
 		debian/${PKGNAME}.postinst debian/${PKGNAME}.postrm
-
-archlinux:
-	@bash dists/build.sh archlinux
-
-debian:
-	@bash dists/build.sh debian
-
-ubuntu:
-	@bash dists/build.sh ubuntu
-
-whonix:
-	@bash dists/build.sh whonix
 
 clean:
 	@rm -rf \
