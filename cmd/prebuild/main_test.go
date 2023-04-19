@@ -56,7 +56,7 @@ func Test_aaPrebuild(t *testing.T) {
 			wantErr:  false,
 			full:     true,
 			complain: true,
-			dist:     "opensuse-tumbleweed",
+			dist:     "opensuse",
 		},
 		{
 			name:     "Build for Fedora",
