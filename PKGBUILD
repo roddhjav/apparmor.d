@@ -22,8 +22,6 @@ pkgver() {
 
 prepare() {
   rsync -a --delete "$startdir" "$srcdir"
-  cd "$srcdir/$pkgname"
-  ./configure --complain
 }
 
 build() {

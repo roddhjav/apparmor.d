@@ -12,9 +12,11 @@ P = $(notdir $(wildcard ${BUILD}/apparmor.d/*))
 .PHONY: all build enforce full install local $(P) pkg dpkg rpm lint clean
 
 all: build
+	@./${BUILD}/prebuild --complain	
 
 build:
 	@go build -o ${BUILD}/ ./cmd/aa-log
+	@go build -o ${BUILD}/ ./cmd/prebuild
 
 enforce: build
 	@./${BUILD}/prebuild
@@ -42,7 +44,6 @@ install:
 	done
 
 local:
-	@./configure --complain
 	@make
 	@sudo make install
 	@sudo systemctl restart apparmor || sudo systemctl status apparmor
