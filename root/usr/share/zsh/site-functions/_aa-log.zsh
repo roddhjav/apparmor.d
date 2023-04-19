@@ -4,9 +4,9 @@
 _aa-log() {
 	local IFS=$'\n'
 	_arguments : \
-		-f'[set a logfile or a prefix to the default log file]:FILE:__aa_files' \
-		-s'[parse systemd dbus logs]' \
-		-h'[display help information]'
+		{-f,--file}'[set a logfile or a suffix to the default log file]:FILE:__aa_files' \
+		{-s,--systemd}'[parse systemd logs from journalctl]' \
+		{-h,--help}'[display help information]'
 
 	_values -C 'profile names' ${$(__aa_profiles):-""}
 }
