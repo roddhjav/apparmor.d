@@ -7,7 +7,7 @@ DESTDIR ?= /
 BUILD := .build
 PKGNAME := apparmor.d
 VERSION := 0.$(shell git rev-list --count HEAD)-1
-P = $(notdir $(wildcard ${BUILD}/apparmor.d/*))
+P = $(filter-out dpkg,$(notdir $(wildcard ${BUILD}/apparmor.d/*)))
 
 .PHONY: all build enforce full install local $(P) pkg dpkg rpm lint clean
 
@@ -85,6 +85,7 @@ rpm:
 lint:
 	@shellcheck --shell=bash \
 		PKGBUILD configure dists/build.sh \
+		tests/packer/src/init.sh tests/packer/src/aa-update tests/packer/init/clean.sh \
 		debian/${PKGNAME}.postinst debian/${PKGNAME}.postrm
 
 clean:

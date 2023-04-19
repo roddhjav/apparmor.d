@@ -1,8 +1,7 @@
 # Maintainer: Alexandre Pujol <alexandre@pujol.io>
 # shellcheck disable=SC2034,SC2154,SC2164
 
-# Warning: for development only, use https://aur.archlinux.org/packages/apparmor.d-git
-# for production use.
+# Warning: for development only, use https://aur.archlinux.org/packages/apparmor.d-git for production use.
 
 pkgname=apparmor.d
 pkgver=0.001
