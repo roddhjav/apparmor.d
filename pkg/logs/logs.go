@@ -40,35 +40,6 @@ var (
 		{regexp.MustCompile(` fsuid.*`), ""},
 		{regexp.MustCompile(` exe=.*`), ""},
 	}
-	// Apparmor log states
-	state = map[string]string{
-		"DENIED":  BoldRed + "DENIED " + Reset,
-		"ALLOWED": BoldGreen + "ALLOWED" + Reset,
-		"AUDIT":   BoldYellow + "AUDIT  " + Reset,
-	}
-	// Print order of impression
-	keys = []string{
-		"profile", "label", // Profile name
-		"operation", "name",
-		"mask", "bus", "path", "interface", "member", // dbus
-		"info", "comm",
-		"laddr", "lport", "faddr", "fport", "family", "sock_type", "protocol",
-		"requested_mask", "denied_mask", "signal", "peer", // "fsuid", "ouid", "FSUID", "OUID",
-	}
-	// Color template to use
-	colors = map[string]string{
-		"profile":        FgBlue,
-		"label":          FgBlue,
-		"operation":      FgYellow,
-		"name":           FgMagenta,
-		"mask":           BoldRed,
-		"bus":            FgCian + "bus=",
-		"path":           "path=" + FgWhite,
-		"requested_mask": "requested_mask=" + BoldRed,
-		"denied_mask":    "denied_mask=" + BoldRed,
-		"interface":      "interface=" + FgWhite,
-		"member":         "member=" + FgGreen,
-	}
 )
 
 type AppArmorLog map[string]string
@@ -152,6 +123,35 @@ func NewApparmorLogs(file io.Reader, profile string) AppArmorLogs {
 
 // String returns a formatted AppArmor logs string
 func (aaLogs AppArmorLogs) String() string {
+	// Apparmor log states
+	state := map[string]string{
+		"DENIED":  BoldRed + "DENIED " + Reset,
+		"ALLOWED": BoldGreen + "ALLOWED" + Reset,
+		"AUDIT":   BoldYellow + "AUDIT  " + Reset,
+	}
+	// Print order of impression
+	keys := []string{
+		"profile", "label", // Profile name
+		"operation", "name",
+		"mask", "bus", "path", "interface", "member", // dbus
+		"info", "comm",
+		"laddr", "lport", "faddr", "fport", "family", "sock_type", "protocol",
+		"requested_mask", "denied_mask", "signal", "peer", // "fsuid", "ouid", "FSUID", "OUID",
+	}
+	// Color template to use
+	colors := map[string]string{
+		"profile":        FgBlue,
+		"label":          FgBlue,
+		"operation":      FgYellow,
+		"name":           FgMagenta,
+		"mask":           BoldRed,
+		"bus":            FgCian + "bus=",
+		"path":           "path=" + FgWhite,
+		"requested_mask": "requested_mask=" + BoldRed,
+		"denied_mask":    "denied_mask=" + BoldRed,
+		"interface":      "interface=" + FgWhite,
+		"member":         "member=" + FgGreen,
+	}
 	res := ""
 	for _, log := range aaLogs {
 		seen := map[string]bool{"apparmor": true}
