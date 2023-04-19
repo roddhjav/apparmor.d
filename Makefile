@@ -9,7 +9,7 @@ PKGNAME := apparmor.d
 VERSION := 0.$(shell git rev-list --count HEAD)-1
 P = $(filter-out dpkg,$(notdir $(wildcard ${BUILD}/apparmor.d/*)))
 
-.PHONY: all build enforce full install local $(P) pkg dpkg rpm lint clean
+.PHONY: all build enforce full install local $(P) pkg dpkg rpm tests lint clean
 
 all: build
 	@./${BUILD}/prebuild --complain	
@@ -81,6 +81,10 @@ dpkg:
 
 rpm:
 	@make local
+
+tests:
+	@go test ./cmd/... ./pkg/... -v -cover -coverprofile=coverage.out
+	@go tool cover -func=coverage.out
 
 lint:
 	@shellcheck --shell=bash \
