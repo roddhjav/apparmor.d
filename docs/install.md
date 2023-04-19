@@ -39,11 +39,11 @@ makepkg -si
 
 !!! note
 
-    The following Archlinux based distributions are supported:
+    If your Archlinux based distribution is not recognized, force it with:
+    ```sh
+    DISTRIBUTION=arch makepkg -si
+    ```
 
-    - [x] CachyOS
-    - [x] EndeavourOS
-    - [x] :material-manjaro: Manjaro Linux
 
 
 ## :material-ubuntu: Ubuntu & :material-debian: Debian
@@ -63,7 +63,6 @@ sudo dpkg -i ../apparmor.d_*_all.deb
 
 Build and install from source:
 ```sh
-./configure --complain
 make
 sudo make install
 sudo systemctl restart apparmor
@@ -80,7 +79,6 @@ For test purposes, you can install specific profiles with the following commands
 Abstractions, tunables, and most of the OS dependent post-processing is managed.
 
 ```sh
-./configure --complain
 make
 sudo make profile-names...
 ```
