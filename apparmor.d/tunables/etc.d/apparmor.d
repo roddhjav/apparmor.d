@@ -24,9 +24,7 @@
 # @{MOUNTS} is a space-separated list of all user mounted directories.
 @{MOUNTS}=@{MOUNTDIRS}/*/
 
-# Libexec path. Different in some distribution
-@{libexec}=/{usr/,}lib      # Archlinux
-@{libexec}=/{usr/,}libexec  # Debian/Ubuntu
-
 # Integration with Ubuntu Core
 @{etc_rw}+=/etc/writable/
+
+# Libexec path. Different in some distribution
