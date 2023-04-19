@@ -21,7 +21,7 @@ main() {
 	chown -R "$SUDO_USER:$SUDO_USER" "/home/$SUDO_USER/.config/"
 	case "$DISTRIBUTION" in
 	debian | ubuntu)	dpkg -i $SRC/apparmor.d_*_all.deb ;;
-	opensuse*)			zypper install -y bash-completion git go htop lsb-release make rsync vim ;;
+	opensuse*)			zypper install -y bash-completion git go htop make rsync vim ;;
 	arch)				pacman --noconfirm -U $SRC/apparmor.d-*-x86_64.pkg.tar.zst ;;
 	esac
 }
