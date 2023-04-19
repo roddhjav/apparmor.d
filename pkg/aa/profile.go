@@ -100,7 +100,11 @@ func (p *AppArmorProfile) NestAttachments() string {
 	} else {
 		res := []string{}
 		for _, attachment := range p.Attachments {
-			res = append(res, attachment[1:])
+			if strings.HasPrefix(attachment, "/") {
+				res = append(res, attachment[1:])
+			} else {
+				res = append(res, attachment)
+			}
 		}
 		return "/{" + strings.Join(res, ",") + "}"
 	}

@@ -185,6 +185,21 @@ func TestAppArmorProfile_NestAttachments(t *testing.T) {
 			},
 			want: "/{{usr/,}libexec/geoclue,{usr/,}libexec/geoclue-2.0/demos/agent}",
 		},
+		{
+			name:        "null",
+			Attachments: []string{},
+			want:        "",
+		},
+		{
+			name:        "empty",
+			Attachments: []string{""},
+			want:        "",
+		},
+		{
+			name:        "not valid aare",
+			Attachments: []string{"/file", "relative"},
+			want:        "/{file,relative}",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
