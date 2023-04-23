@@ -119,21 +119,19 @@ func Configure() error {
 			return err
 		}
 
-	case "ubuntu":
-		aa.Tunables["libexec"] = []string{"/{usr/,}libexec"}
-		if err := setLibexec(); err != nil {
-			return err
-		}
-		if err := paths.New("dists/ubuntu/trash").CopyTo(RootApparmord.Join("abstractions", "trash")); err != nil {
-			return err
-		}
-
-	case "debian", "whonix":
+	case "debian", "ubuntu", "whonix":
 		aa.Tunables["libexec"] = []string{"/{usr/,}libexec"}
 		if err := setLibexec(); err != nil {
 			return err
 		}
 
+		if err := paths.New("dists/ubuntu/abstractions/trash").CopyTo(RootApparmord.Join("abstractions", "trash")); err != nil {
+			return err
+		}
+
+		if Distribution == "ubuntu" {
+			break
+		}
 		for _, dirname := range []string{"abstractions", "tunables"} {
 			files, err := filepath.Glob("dists/debian/" + dirname + "/*")
 			if err != nil {
