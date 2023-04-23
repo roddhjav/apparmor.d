@@ -146,7 +146,17 @@ func Configure() error {
 				}
 			}
 		}
-
+		files, _ := RootApparmord.Join("abstractions").ReadDir(paths.FilterOutDirectories())
+		for _, file := range files {
+			if !file.Exist() {
+				continue
+			}
+			content, _ := file.ReadFile()
+			profile := BuildABI(string(content))
+			if err := file.WriteFile([]byte(profile)); err != nil {
+				return err
+			}
+		}
 	default:
 		return fmt.Errorf("%s is not a supported distribution", Distribution)
 
