@@ -113,9 +113,18 @@ func Configure() error {
 			return err
 		}
 
-	case "ubuntu", "opensuse":
+	case "opensuse":
 		aa.Tunables["libexec"] = []string{"/{usr/,}libexec"}
 		if err := setLibexec(); err != nil {
+			return err
+		}
+
+	case "ubuntu":
+		aa.Tunables["libexec"] = []string{"/{usr/,}libexec"}
+		if err := setLibexec(); err != nil {
+			return err
+		}
+		if err := paths.New("dists/ubuntu/trash").CopyTo(RootApparmord.Join("abstractions", "trash")); err != nil {
 			return err
 		}
 
