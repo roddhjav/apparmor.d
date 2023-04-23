@@ -24,7 +24,4 @@
 # @{MOUNTS} is a space-separated list of all user mounted directories.
 @{MOUNTS}=@{MOUNTDIRS}/*/
 
-# Integration with Ubuntu Core
-@{etc_rw}+=/etc/writable/
-
 # Libexec path. Different in some distribution
