@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	regABI           = regexp.MustCompile(`abi.*,\n`)
+	regABI           = regexp.MustCompile(`abi <abi/[0-9.]*>,\n\n`)
 	regAttachments   = regexp.MustCompile(`(profile .* @{exec_path})`)
 	regFlag          = regexp.MustCompile(`flags=\(([^)]+)\)`)
 	regProfileHeader = regexp.MustCompile(` {`)
