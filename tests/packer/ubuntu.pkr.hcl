@@ -4,9 +4,9 @@
 
 source "qemu" "ubuntu-server" {
   disk_image         = true
-  iso_url            = "https://cloud-images.ubuntu.com/${var.release.ubuntu}/current/${var.release.ubuntu}-server-cloudimg-amd64.img"
-  iso_checksum       = "file:https://cloud-images.ubuntu.com/${var.release.ubuntu}/current/SHA256SUMS"
-  iso_target_path    = "${var.iso_dir}/${source.name}-cloudimg-amd64.img"
+  iso_url            = "https://cloud-images.ubuntu.com/${var.release.ubuntu.codename}/current/${var.release.ubuntu.codename}-server-cloudimg-amd64.img"
+  iso_checksum       = "file:https://cloud-images.ubuntu.com/${var.release.ubuntu.codename}/current/SHA256SUMS"
+  iso_target_path    = "${var.iso_dir}/ubuntu-cloudimg-amd64.img"
   cpus               = 4
   memory             = 2048
   disk_size          = "${var.disk_size}"
@@ -20,7 +20,7 @@ source "qemu" "ubuntu-server" {
   disk_detect_zeroes = "unmap"
   disk_discard       = "unmap"
   output_directory   = "${var.output}/"
-  vm_name            = "${var.prefix}-${source.name}.qcow2"
+  vm_name            = "${var.prefix}${source.name}.qcow2"
   boot_wait          = "10s"
   firmware           = "/usr/share/edk2-ovmf/x64/OVMF_CODE.fd"
   shutdown_command   = "echo ${var.password} | sudo -S /sbin/shutdown -hP now"
@@ -32,7 +32,7 @@ source "qemu" "ubuntu-server" {
         username = "${var.username}"
         password = "${var.password}"
         ssh_key  = file("${var.ssh_publickey}")
-        hostname = "${var.prefix}-${source.name}"
+        hostname = "${var.prefix}${source.name}"
       }
     )
   }

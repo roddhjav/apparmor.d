@@ -32,8 +32,12 @@ build {
     inline = [
       "while [ ! -f /var/lib/cloud/instance/boot-finished ]; do echo 'Waiting for Cloud-Init...'; sleep 20; done",
       "cloud-init clean", # Remove logs and artifacts so cloud-init can re-run
-      "sh /tmp/src/init.sh"
     ]
+  }
+
+  provisioner "shell" {
+    script          = "${path.cwd}/packer/init/init.sh"
+    execute_command = "echo '${var.password}' | sudo -S sh -c '{{ .Vars }} {{ .Path }}'"
   }
 
   provisioner "shell" {
@@ -42,12 +46,12 @@ build {
   }
 
   post-processor "vagrant" {
-    output = "${var.iso_dir}/packer_${var.prefix}-${source.name}.box"
+    output = "${var.base_dir}/packer_${var.prefix}${source.name}.box"
   }
 
   post-processor "shell-local" {
     inline = [
-      "vagrant box add --force --name ${var.prefix}-${source.name} ${var.iso_dir}/packer_${var.prefix}-${source.name}.box"
+      "vagrant box add --force --name ${var.prefix}${source.name} ${var.base_dir}/packer_${var.prefix}${source.name}.box"
     ]
   }
 
