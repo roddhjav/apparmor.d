@@ -89,7 +89,7 @@ tests:
 lint:
 	@shellcheck --shell=bash \
 		PKGBUILD configure dists/build.sh \
-		tests/packer/src/init.sh tests/packer/src/aa-update tests/packer/init/clean.sh \
+		tests/packer/init/init.sh tests/packer/src/aa-update tests/packer/init/clean.sh \
 		debian/${PKGNAME}.postinst debian/${PKGNAME}.postrm
 
 clean:
