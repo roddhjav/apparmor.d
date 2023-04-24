@@ -9,29 +9,40 @@ include <tunables/global>
 @{exec_path} = /{usr/,}bin/ksmserver
 profile ksmserver @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/base>
+  include <abstractions/app-launcher-user>
   include <abstractions/dri-common>
-  include <abstractions/nameservice-strict>
+  include <abstractions/freedesktop.org>
   include <abstractions/mesa>
+  include <abstractions/nameservice-strict>
+  include <abstractions/qt5>
+  include <abstractions/vulkan>
 
   @{exec_path} mr,
 
   /{usr/,}bin/rm rix,
 
   @{libexec}/kscreenlocker_greet rPx,
+  @{libexec}/DiscoverNotifier rPUx, # TODO: rPx,
 
   /usr/share/color-schemes/{,**} r,
   /usr/share/hwdata/pnp.ids r,
   /usr/share/icons/{,**} r,
-  /usr/share/mime/{,**} r,
-  /usr/share/qt/translations/*.qm r,
+  /usr/share/icu/[0-9]*.[0-9]*/*.dat r,
   /usr/share/knotifications5/*.notifyrc r,
+  /usr/share/kservices5/{,**} r,
+  /usr/share/mime/{,**} r,
 
   /etc/machine-id r,
+  /etc/xdg/kdeglobals r,
+  /etc/xdg/kscreenlockerrc r,
+  /etc/xdg/kwinrc r,
+  /etc/xdg/menus/ r,
 
   owner @{HOME}/?????? rw,
   owner @{HOME}/.Xauthority rw,
 
   owner @{user_cache_dirs}/icon-cache.kcache rw,
+  owner @{user_cache_dirs}/ksycoca5_* r,
 
   owner @{user_config_dirs}/kdedefaults/* r,
   owner @{user_config_dirs}/kdeglobals r,
@@ -48,8 +59,7 @@ profile ksmserver @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
         @{run}/systemd/inhibit/[0-9]*.ref rw,
   owner @{run}/user/@{uid}/KSMserver__[0-9] rw,
-  # owner @{run}/user/@{uid}/xauth_* r,
-        @{run}/user/@{uid}/xauth_* rl,
+  owner @{run}/user/@{uid}/xauth_* rl,
 
   @{sys}/devices/pci[0-9]*/**/{device,subsystem_device,subsystem_vendor,uevent,vendor} r,
 
