@@ -19,18 +19,20 @@ profile slirp4netns @{exec_path} flags=(attach_disconnected) {
   network inet dgram,
   network inet6 dgram,
 
-  mount options=(rw, make-slave) -> **,
-  mount options=(rw, make-rslave) -> **,
-  mount options=(ro, nosuid, nodev, noexec, remount, bind) -> **,
+  # TODO: Restrict this a bit
+  mount,
   umount,
+
+  pivot_root oldroot=/tmp/old/ -> /tmp/,
 
   @{exec_path} mr,
 
   /tmp/{,**} rw,
   /old/ rw,
 
-  owner @{run}/user/@{uid}/libpod/tmp/slirp4netns-*.log r,
+        @{run}/user/@{uid}/netns-@{uid} r,
         @{run}/user/@{uid}/netns/cni-* r,
+  owner @{run}/user/@{uid}/libpod/tmp/slirp4netns-*.log r,
 
   pivot_root /tmp/**,
   pivot_root /tmp/old/,
