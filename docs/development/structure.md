@@ -191,15 +191,18 @@ dynamically by the kernel. Therefore, the full range must be allowed:
 
     *Source: [AppArmor Wiki][apparmor-wiki]*
 
-This feature is only enabled when the `--full` option is passed to
-the `configure` script. The profiles for full system policies are maintained in
-the **[`_full`][_full]** group. It consists of two extra main profiles:
+This feature is only enabled when the profiles are built with `make full`. The profiles for full system policies are maintained in the **[`_full`][_full]** group. It consists of two extra main profiles:
 
 1. **`init`**: For systemd as PID 1
 2. **`systemd`**: For systemd as user
 
 All core required applications that need to be started by systemd (both as user
 or root) need to be present in these profiles.
+
+Early policy load should also be enabled. In `/etc/apparmor/parser.conf`
+```
+cache-loc /etc/apparmor/earlypolicy/
+```
 
 !!! danger
 
