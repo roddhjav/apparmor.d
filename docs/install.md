@@ -20,6 +20,7 @@ abstractions shipped with AppArmor must be installed.
 The following desktop environments are supported:
 
   - [x] :material-gnome: Gnome
+  - [ ] :simple-kde: KDE *(work in progress)*
 
 Also, please note wayland has better support than xorg.
 
@@ -31,6 +32,11 @@ Also, please note wayland has better support than xorg.
 ## :material-arch: Archlinux
 
 `apparmor.d-git` is available in the [Arch User Repository][aur]:
+```
+yay -S apparmor.d-git  # or your preferred AUR install method
+```
+
+Or without a AUR helper:
 ```sh
 git clone https://aur.archlinux.org/apparmor.d-git.git
 cd apparmor.d-git
