@@ -1,12 +1,14 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2018-2021 Mikhail Morfikov
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
 
 include <tunables/global>
 
-@{exec_path} = /{usr/,}lib/@{multiarch}/xfce[0-9]/xfconf/xfconfd
+@{exec_path}  = @{libexec}/xfce[0-9]/xfconf/xfconfd
+@{exec_path} += /{usr/,}lib/@{multiarch}/xfce[0-9]/xfconf/xfconfd
 profile xfconfd @{exec_path} {
   include <abstractions/base>
 
@@ -14,7 +16,13 @@ profile xfconfd @{exec_path} {
 
   /etc/xdg/xfce4/xfconf/*/*.xml r,
 
-  owner @{HOME}/.config/xfce4/xfconf/*/*.xml{,.new} rw,
+  owner @{HOME}/ r,
+
+  owner @{user_cache_dirs}/ r,
+  owner @{user_config_dirs}/ r,
+  owner @{user_config_dirs}/xfce4/ r,
+  owner @{user_config_dirs}/xfce4/xfconf/*/*.xml{,.new} rw,
+  owner @{user_share_dirs}/ r,
 
   # file_inherit
   owner /dev/tty[0-9]* rw,
