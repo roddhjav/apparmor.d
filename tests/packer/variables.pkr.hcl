@@ -40,6 +40,12 @@ variable "iso_dir" {
   default     = "/var/lib/libvirt/images"
 }
 
+variable "base_dir" {
+  description = "Final packer image output directory"
+  type        = string
+  default     = "/var/lib/libvirt/images"
+}
+
 variable "output" {
   description = "Output build directory"
   type        = string
@@ -49,7 +55,7 @@ variable "output" {
 variable "prefix" {
   description = "Image name prefix"
   type        = string
-  default     = "aa"
+  default     = "aa-"
 }
 
 variable "version" {
@@ -58,18 +64,30 @@ variable "version" {
   default     = "0.001"
 }
 
-variable "release" {
-  description = "Distribution release to use"
-  type        = map(string)
-  default = {
-    "ubuntu" : "jammy",    # 22.04 LTS
-    "debian" : "bullseye", # 11
-    "opensuse" : "9",
-  }
-}
-
 variable "flavor" {
-  description = "Distribution flavor to use (-desktop, -gnome, -kde...)"
+  description = "Distribution flavor to use (server, desktop, gnome, kde...)"
   type        = string
   default     = ""
+}
+
+variable "release" {
+  description = "Distribution metadata to use"
+  type = map(object({
+    codename = string
+    version  = string
+  }))
+  default = {
+    "ubuntu" : {
+      codename = "jammy",
+      version  = "22.04.2",
+    },
+    "debian" : {
+      codename = "bullseye",
+      version  = "11",
+    }
+    "opensuse" : {
+      codename = "tumbleweed",
+      version  = "",
+    }
+  }
 }

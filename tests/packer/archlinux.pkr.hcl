@@ -20,9 +20,9 @@ source "qemu" "archlinux-gnome" {
   disk_detect_zeroes = "unmap"
   disk_discard       = "unmap"
   output_directory   = "${var.output}"
-  vm_name            = "${var.prefix}-${source.name}.qcow2"
+  vm_name            = "${var.prefix}${source.name}.qcow2"
   boot_wait          = "10s"
-  shutdown_command   = "echo ${var.password} | sudo shutdown -hP now"
+  shutdown_command   = "echo ${var.password} | sudo -S shutdown -hP now"
   cd_label           = "cidata"
   cd_content = {
     "meta-data" = ""
@@ -31,7 +31,7 @@ source "qemu" "archlinux-gnome" {
         username = "${var.username}"
         password = "${var.password}"
         ssh_key  = file("${var.ssh_publickey}")
-        hostname = "${var.prefix}-${source.name}"
+        hostname = "${var.prefix}${source.name}"
       }
     )
   }
@@ -55,9 +55,9 @@ source "qemu" "archlinux-kde" {
   disk_detect_zeroes = "unmap"
   disk_discard       = "unmap"
   output_directory   = "${var.output}"
-  vm_name            = "${var.prefix}-${source.name}.qcow2"
+  vm_name            = "${var.prefix}${source.name}.qcow2"
   boot_wait          = "10s"
-  shutdown_command   = "echo ${var.password} | sudo shutdown -hP now"
+  shutdown_command   = "echo ${var.password} | sudo -S shutdown -hP now"
   cd_label           = "cidata"
   cd_content = {
     "meta-data" = ""
@@ -66,7 +66,7 @@ source "qemu" "archlinux-kde" {
         username = "${var.username}"
         password = "${var.password}"
         ssh_key  = file("${var.ssh_publickey}")
-        hostname = "${var.prefix}-${source.name}"
+        hostname = "${var.prefix}${source.name}"
       }
     )
   }
