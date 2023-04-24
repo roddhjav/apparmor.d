@@ -67,13 +67,8 @@ func (p *AppArmorProfile) resolve(str string) []string {
 		if len(match) > 1 {
 			variable := match[0]
 			varname := match[1]
-			if len(p.Variables[varname]) > 1 {
-				for _, value := range p.Variables[varname] {
-					newVar := strings.ReplaceAll(str, variable, value)
-					vars = append(vars, p.resolve(newVar)...)
-				}
-			} else {
-				newVar := strings.ReplaceAll(str, variable, p.Variables[varname][0])
+			for _, value := range p.Variables[varname] {
+				newVar := strings.ReplaceAll(str, variable, value)
 				vars = append(vars, p.resolve(newVar)...)
 			}
 		} else {

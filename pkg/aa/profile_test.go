@@ -93,6 +93,34 @@ func TestAppArmorProfile_ParseVariables(t *testing.T) {
 	}
 }
 
+func TestAppArmorProfile_resolve(t *testing.T) {
+	tests := []struct {
+		name      string
+		variables map[string][]string
+		input     string
+		want      []string
+	}{
+		{
+			name:      "empty",
+			variables: Tunables,
+			input:     "@{}",
+			want:      []string{"@{}"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p := &AppArmorProfile{
+				Content:     "",
+				Variables:   tt.variables,
+				Attachments: []string{},
+			}
+			if got := p.resolve(tt.input); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("AppArmorProfile.resolve() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestAppArmorProfile_ResolveAttachments(t *testing.T) {
 	tests := []struct {
 		name      string
