@@ -8,7 +8,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -37,8 +36,7 @@ func GetJournalctlLogs(path string, useFile bool) (io.Reader, error) {
 	var value string
 
 	if useFile {
-		// content, err := os.ReadFile(filepath.Clean(path))
-		content, err := ioutil.ReadFile(filepath.Clean(path))
+		content, err := os.ReadFile(filepath.Clean(path))
 		if err != nil {
 			return nil, err
 		}
