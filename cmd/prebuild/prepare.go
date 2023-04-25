@@ -122,25 +122,20 @@ func Configure() error {
 			return err
 		}
 
-		if err := paths.New("dists/ubuntu/abstractions/trash").CopyTo(RootApparmord.Join("abstractions", "trash")); err != nil {
+		// Copy Ubuntu specific profiles
+		if err := copyTo(DistDir.Join("ubuntu"), RootApparmord); err != nil {
 			return err
 		}
-
 		if Distribution == "ubuntu" {
 			break
 		}
-		for _, dirname := range []string{"abstractions", "tunables"} {
-			files, err := filepath.Glob("dists/debian/" + dirname + "/*")
-			if err != nil {
-				return err
-			}
-			for _, file := range files {
-				path := paths.New(file)
-				if err := path.CopyTo(RootApparmord.Join(dirname, path.Base())); err != nil {
-					return err
-				}
-			}
+
+		// Copy debian specific profiles
+		if err := copyTo(DistDir.Join("debian"), RootApparmord); err != nil {
+			return err
 		}
+
+		// Remove ABI on abstractions files
 		files, _ := RootApparmord.Join("abstractions").ReadDir(paths.FilterOutDirectories())
 		for _, file := range files {
 			if !file.Exist() {
@@ -170,6 +165,22 @@ func setLibexec(libexec string) error {
 	return err
 }
 
+func copyTo(src *paths.Path, dst *paths.Path) error {
+	files, err := src.ReadDirRecursiveFiltered(nil, paths.FilterOutDirectories())
+	if err != nil {
+		return err
+	}
+	for _, file := range files {
+		destination, err := file.RelFrom(src)
+		if err != nil {
+			return err
+		}
+		destination = dst.JoinPath(destination)
+		if err := file.CopyTo(destination); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // Set flags on some profiles according to manifest defined in `dists/flags/`
