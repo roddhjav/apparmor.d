@@ -163,7 +163,7 @@ func Configure() error {
 }
 
 func setLibexec() error {
-	file, err := RootApparmord.Join("tunables", "etc.d", "apparmor.d").Append()
+	file, err := RootApparmord.Join("tunables", "multiarch.d", "apparmor.d").Append()
 	if err != nil {
 		return err
 	}
