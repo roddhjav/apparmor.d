@@ -30,6 +30,7 @@ var (
 	Full          bool
 	Complain      bool
 	Distribution  string
+	DistDir       *paths.Path
 	Root          *paths.Path
 	RootApparmord *paths.Path
 
@@ -44,6 +45,7 @@ type prepareFunc func() error
 type buildFunc func(string) string
 
 func init() {
+	DistDir = paths.New("dists")
 	Root = paths.New(".build")
 	RootApparmord = Root.Join("apparmor.d")
 	Distribution, _ = util.GetSupportedDistribution()

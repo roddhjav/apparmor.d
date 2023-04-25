@@ -37,7 +37,7 @@ func Synchronise() error {
 // Ignore profiles and files as defined in dists/ignore/
 func Ignore() error {
 	for _, name := range []string{"main.ignore", Distribution + ".ignore"} {
-		path := paths.New("dists/ignore/" + name)
+		path := DistDir.Join("ignore", name)
 		if !path.Exist() {
 			continue
 		}
@@ -186,7 +186,7 @@ func copyTo(src *paths.Path, dst *paths.Path) error {
 // Set flags on some profiles according to manifest defined in `dists/flags/`
 func SetFlags() error {
 	for _, name := range []string{"main.flags", Distribution + ".flags"} {
-		path := paths.New("dists/flags/" + name)
+		path := DistDir.Join("flags", name)
 		if !path.Exist() {
 			continue
 		}
