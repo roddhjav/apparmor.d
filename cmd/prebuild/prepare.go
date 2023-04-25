@@ -108,20 +108,17 @@ func Merge() error {
 func Configure() error {
 	switch Distribution {
 	case "arch":
-		aa.Tunables["libexec"] = []string{"/{usr/,}lib"}
-		if err := setLibexec(); err != nil {
+		if err := setLibexec("/{usr/,}lib"); err != nil {
 			return err
 		}
 
 	case "opensuse":
-		aa.Tunables["libexec"] = []string{"/{usr/,}libexec"}
-		if err := setLibexec(); err != nil {
+		if err := setLibexec("/{usr/,}libexec"); err != nil {
 			return err
 		}
 
 	case "debian", "ubuntu", "whonix":
-		aa.Tunables["libexec"] = []string{"/{usr/,}libexec"}
-		if err := setLibexec(); err != nil {
+		if err := setLibexec("/{usr/,}libexec"); err != nil {
 			return err
 		}
 
@@ -162,14 +159,17 @@ func Configure() error {
 	return nil
 }
 
-func setLibexec() error {
+func setLibexec(libexec string) error {
+	aa.Tunables["libexec"] = []string{libexec}
 	file, err := RootApparmord.Join("tunables", "multiarch.d", "apparmor.d").Append()
 	if err != nil {
 		return err
 	}
 	defer file.Close()
-	_, err = file.WriteString(`@{libexec}=` + aa.Tunables["libexec"][0])
+	_, err = file.WriteString(`@{libexec}=` + libexec)
 	return err
+}
+
 }
 
 // Set flags on some profiles according to manifest defined in `dists/flags/`
