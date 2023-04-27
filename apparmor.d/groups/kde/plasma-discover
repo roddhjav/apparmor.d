@@ -1,0 +1,30 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/plasma-discover
+profile plasma-discover @{exec_path} {
+  include <abstractions/base>
+
+  @{exec_path} mr,
+
+  /{usr/,}lib/kf5/kioslave5               rPUx, # TODO: rPx,
+  /{usr/,}lib/kf5/kio_http_cache_cleaner  rPUx, # TODO: rPx,
+
+  /etc/machine-id r,
+
+  /var/tmp/flatpak-cache-*/ rw,
+  /var/tmp/flatpak-cache-*/** rwkl,
+  /var/tmp/#[0-9]* rw,
+
+  owner @{user_config_dirs}/kde.org/{,**} rwlk,
+  owner @{user_config_dirs}/discoverrc rwl,
+  owner @{user_config_dirs}/#[0-9]* rwl,
+  owner @{user_config_dirs}/discoverrc.lock rwk,
+
+  include if exists <local/plasma-discover>
+}

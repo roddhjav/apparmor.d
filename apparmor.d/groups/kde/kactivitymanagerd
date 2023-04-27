@@ -1,0 +1,30 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}lib/kactivitymanagerd
+profile kactivitymanagerd @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/X-strict>
+
+  @{exec_path} mr,
+
+  /usr/share/hwdata/*.ids r,
+  /usr/share/qt/translations/*.qm r,
+
+  owner @{user_config_dirs}/kdedefaults/kdeglobals r,
+  owner @{user_config_dirs}/kdeglobals r,
+  owner @{user_config_dirs}/kactivitymanagerdrc r,
+
+  owner @{user_share_dirs}/kactivitymanagerd/{,**} rwl,
+
+  @{PROC}/sys/kernel/core_pattern r,
+
+  /dev/tty r,
+
+  include if exists <local/kactivitymanagerd>
+}
