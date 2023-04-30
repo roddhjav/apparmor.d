@@ -1,0 +1,47 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/kalendarac
+profile kalendarac @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/dri-common>
+  include <abstractions/freedesktop.org>
+  include <abstractions/nameservice-strict>
+  include <abstractions/qt5>
+  include <abstractions/mesa>
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/akonadi_control rPx,
+
+  /usr/share/akonadi/firstrun/{,*} r,
+  /usr/share/hwdata/*.ids r,
+  /usr/share/icu/[0-9]*.[0-9]*/*.dat r,
+
+  /etc/machine-id r,
+  /etc/xdg/kdeglobals r,
+
+  owner @{user_cache_dirs}/icon-cache.kcache rw,
+
+  owner @{user_config_dirs}/#[0-9]* rw,
+  owner @{user_config_dirs}/akonadi-firstrunrc r,
+  owner @{user_config_dirs}/akonadi/akonadiconnectionrc r,
+  owner @{user_config_dirs}/kalendaracrc rw,
+  owner @{user_config_dirs}/kalendaracrc.?????? rwl,
+  owner @{user_config_dirs}/kalendaracrc.lock rwk,
+  owner @{user_config_dirs}/kdedefaults/kdeglobals r,
+  owner @{user_config_dirs}/kdeglobals r,
+
+  @{run}/user/@{uid}/xauth_* rl,
+
+  @{PROC}/sys/kernel/core_pattern r,
+
+  /dev/tty r,
+
+  include if exists <local/kalendarac>
+}

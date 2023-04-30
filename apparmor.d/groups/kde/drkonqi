@@ -1,0 +1,28 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{libexec}/drkonqi
+profile drkonqi @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/qt5>
+  include <abstractions/freedesktop.org>
+
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  /usr/share/icu/[0-9]*.[0-9]*/*.dat r,
+
+  @{run}/user/@{uid}/xauth_* rl,
+
+  /dev/tty r,
+
+  include if exists <local/drkonqi>
+}
