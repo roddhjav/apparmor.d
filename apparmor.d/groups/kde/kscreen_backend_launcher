@@ -1,0 +1,23 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{libexec}/kf5/kscreen_backend_launcher
+profile kscreen_backend_launcher @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/qt5>
+  include <abstractions/X-strict>
+
+  @{exec_path} mr,
+
+  /usr/share/hwdata/*.ids r,
+  /usr/share/icu/[0-9]*.[0-9]*/*.dat r,
+
+  /dev/tty r,
+
+  include if exists <local/kscreen_backend_launcher>
+}

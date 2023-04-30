@@ -1,0 +1,49 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/kcminit
+profile kcminit @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/fonts>
+  include <abstractions/gtk>
+  include <abstractions/qt5>
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/xrdb rPx,
+
+  /usr/share/icu/[0-9]*.[0-9]*/*.dat r,
+  /usr/share/hwdata/pnp.ids r,
+
+  /etc/machine-id r,
+  /etc/xdg/kcmdisplayrc r,
+  /etc/xdg/kcminputrc r,
+  /etc/xdg/kdeglobals r,
+
+  owner @{user_config_dirs}/#[0-9]* rw,
+  owner @{user_config_dirs}/gtkrc-2.0{,.??????} rwl,
+  owner @{user_config_dirs}/gtkrc{,.??????} rwl,
+  owner @{user_config_dirs}/kcminputrc r,
+  owner @{user_config_dirs}/kdedefaults/kcminputrc r,
+  owner @{user_config_dirs}/kdedefaults/kdeglobals r,
+  owner @{user_config_dirs}/kdeglobals r,
+  owner @{user_config_dirs}/kgammarc r,
+  owner @{user_config_dirs}/Trolltech.conf.lock rwk,
+  owner @{user_config_dirs}/Trolltech.conf{,.??????} rwl,
+
+  owner /tmp/kcminit.?????? rwl,
+  owner /tmp/#[0-9]* rw,
+
+  @{run}/user/@{uid}/xauth_* rl,
+
+  @{PROC}/sys/kernel/random/boot_id r,
+
+  /dev/tty r,
+
+  include if exists <local/kcminit>
+}
