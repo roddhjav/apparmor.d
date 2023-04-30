@@ -9,22 +9,46 @@ include <tunables/global>
 @{exec_path} = /{usr/,}bin/plasma-discover
 profile plasma-discover @{exec_path} {
   include <abstractions/base>
+  include <abstractions/mesa>
+  include <abstractions/nameservice-strict>
+  include <abstractions/ssl_certs>
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  # network netlink raw,
 
   @{exec_path} mr,
 
-  /{usr/,}lib/kf5/kioslave5               rPUx, # TODO: rPx,
-  /{usr/,}lib/kf5/kio_http_cache_cleaner  rPUx, # TODO: rPx,
+  @{libexec}/kf5/kioslave5               rPx,
+  @{libexec}/kf5/kio_http_cache_cleaner  rPx,
 
+  /etc/appstream.conf r,
   /etc/machine-id r,
+  /etc/flatpak/remotes.d/{,**} r,
 
   /var/tmp/flatpak-cache-*/ rw,
   /var/tmp/flatpak-cache-*/** rwkl,
   /var/tmp/#[0-9]* rw,
 
+  /var/cache/swcatalog/ rw,
+
+  /var/lib/flatpak/repo/{,**} r,
+  /var/lib/flatpak/appstream/{,**} r,
+
+  owner @{user_cache_dirs}/discover/{,**} rw,
+  owner @{user_cache_dirs}/appstream/*.xb r,
+  owner @{user_cache_dirs}/appstream/ r,
+
   owner @{user_config_dirs}/kde.org/{,**} rwlk,
   owner @{user_config_dirs}/discoverrc rwl,
   owner @{user_config_dirs}/#[0-9]* rwl,
   owner @{user_config_dirs}/discoverrc.lock rwk,
+
+  owner @{user_share_dirs}/flatpak/repo/{,**} rw,
+
+        @{PROC}/sys/kernel/random/boot_id r,
 
   include if exists <local/plasma-discover>
 }
