@@ -6,7 +6,6 @@
 DESTDIR ?= /
 BUILD := .build
 PKGNAME := apparmor.d
-VERSION := 0.$(shell git rev-list --count HEAD)-1
 P = $(filter-out dpkg,$(notdir $(wildcard ${BUILD}/apparmor.d/*)))
 
 .PHONY: all build enforce full install local $(P) pkg dpkg rpm tests lint clean
@@ -74,10 +73,11 @@ pkg:
 	@makepkg --syncdeps --install --cleanbuild --force --noconfirm
 
 dpkg:
-	@dch --newversion="${VERSION}" --urgency=medium --distribution=stable --controlmaint "Release ${VERSION}"
+	@dch --newversion="0.$(shell git rev-list --count HEAD)-1" --urgency=medium \
+		--distribution=stable --controlmaint "Release 0.$(shell git rev-list --count HEAD)-1"
 	@dpkg-buildpackage -b -d --no-sign
-	@sudo dpkg -i "../apparmor.d_${VERSION}_all.deb"
-	@make clean
+	@sudo dpkg -i "../apparmor.d_0.$(shell git rev-list --count HEAD)-1_all.deb"
+	@sudo make clean
 
 rpm:
 	@make local
