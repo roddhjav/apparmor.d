@@ -131,6 +131,7 @@ profile libvirtd @{exec_path} flags=(attach_disconnected) {
   /usr/share/hwdata/* r,
   /usr/share/libvirt/{,**} r,
   /usr/share/mime/mime.cache r,
+  /usr/share/misc/pci.ids r,
   /usr/share/qemu/{,**} r,
 
   @{etc_rw}/apparmor.d/libvirt/libvirt-@{uuid} r,
@@ -154,6 +155,7 @@ profile libvirtd @{exec_path} flags=(attach_disconnected) {
   @{run}/libvirtd.pid wk,
   @{run}/lock/LCK.._pts_[0-9]* rw,
   @{run}/systemd/inhibit/[0-9]*.ref rw,
+  @{run}/systemd/notify w,
   @{run}/utmp rk,
 
   @{run}/udev/data/+backlight:* r,
@@ -169,10 +171,14 @@ profile libvirtd @{exec_path} flags=(attach_disconnected) {
   @{run}/udev/data/+sound:card* r,    # For sound
   @{run}/udev/data/+thunderbolt:* r,
   @{run}/udev/data/c1:[0-9]* r,       # For RAM disk
+  @{run}/udev/data/c6:[0-9]* r,       # For parallel printer devices /dev/lp*
   @{run}/udev/data/c10:[0-9]* r,      # For non-serial mice, misc features
   @{run}/udev/data/c13:[0-9]* r,      # For /dev/input/*
+  @{run}/udev/data/c21:[0-9]* r,      # Generic SCSI access
   @{run}/udev/data/c29:* r,           # For /dev/fb[0-9]*
   @{run}/udev/data/c90:[0-9]* r,      # For RAM, ROM, Flash
+  @{run}/udev/data/c99:[0-9]* r,      # For raw parallel ports /dev/parport*
+  @{run}/udev/data/c108:[0-9]* r,     # For /dev/ppp
   @{run}/udev/data/c116:[0-9]* r,     # For ALSA
   @{run}/udev/data/c202:[0-9]* r,     # CPU model-specific registers
   @{run}/udev/data/c203:[0-9]* r,     # CPU CPUID information
@@ -207,6 +213,7 @@ profile libvirtd @{exec_path} flags=(attach_disconnected) {
   @{sys}/devices/virtual/dmi/id/* r,
   @{sys}/devices/virtual/net/{,**} rw,
 
+  @{sys}/kernel/debug/kvm/{,**} r,
   @{sys}/kernel/iommu_groups/ r,
   @{sys}/kernel/iommu_groups/[0-9]*/devices/ r,
   @{sys}/kernel/mm/hugepages/{,**} r,
@@ -226,6 +233,7 @@ profile libvirtd @{exec_path} flags=(attach_disconnected) {
         @{PROC}/@{pid}/net/route r,
         @{PROC}/@{pids}/cgroup r,
         @{PROC}/@{pids}/net/dev r,
+        @{PROC}/@{pids}/net/ip_tables_names r,
         @{PROC}/@{pids}/net/psched r,
         @{PROC}/@{pids}/stat r,
         @{PROC}/@{pids}/task/@{tid}/sched r,
@@ -236,7 +244,6 @@ profile libvirtd @{exec_path} flags=(attach_disconnected) {
         @{PROC}/sys/net/ipv{4,6}/** rw,
   owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/mounts r,
-  owner @{PROC}/@{pid}/net/ip_tables_names r,
   owner @{PROC}/@{pid}/task/@{tid}/comm rw,
 
   /dev/dri/ r,
