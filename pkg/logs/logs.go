@@ -16,16 +16,16 @@ import (
 
 // Colors
 const (
-	Reset      = "\033[0m"
-	FgGreen    = "\033[32m"
-	FgYellow   = "\033[33m"
-	FgBlue     = "\033[34m"
-	FgMagenta  = "\033[35m"
-	FgCian     = "\033[36m"
-	FgWhite    = "\033[37m"
-	BoldRed    = "\033[1;31m"
-	BoldGreen  = "\033[1;32m"
-	BoldYellow = "\033[1;33m"
+	reset      = "\033[0m"
+	fgGreen    = "\033[32m"
+	fgYellow   = "\033[33m"
+	fgBlue     = "\033[34m"
+	fgMagenta  = "\033[35m"
+	fgCian     = "\033[36m"
+	fgWhite    = "\033[37m"
+	boldRed    = "\033[1;31m"
+	boldGreen  = "\033[1;32m"
+	boldYellow = "\033[1;33m"
 )
 
 var (
@@ -46,11 +46,6 @@ type AppArmorLog map[string]string
 
 // AppArmorLogs describes all apparmor log entries
 type AppArmorLogs []AppArmorLog
-
-// SystemdLog is a simplified systemd json log representation.
-type SystemdLog struct {
-	Message string `json:"MESSAGE"`
-}
 
 func splitQuoted(r rune) bool {
 	if r == '"' {
@@ -125,9 +120,9 @@ func NewApparmorLogs(file io.Reader, profile string) AppArmorLogs {
 func (aaLogs AppArmorLogs) String() string {
 	// Apparmor log states
 	state := map[string]string{
-		"DENIED":  BoldRed + "DENIED " + Reset,
-		"ALLOWED": BoldGreen + "ALLOWED" + Reset,
-		"AUDIT":   BoldYellow + "AUDIT  " + Reset,
+		"DENIED":  boldRed + "DENIED " + reset,
+		"ALLOWED": boldGreen + "ALLOWED" + reset,
+		"AUDIT":   boldYellow + "AUDIT  " + reset,
 	}
 	// Print order of impression
 	keys := []string{
@@ -140,17 +135,17 @@ func (aaLogs AppArmorLogs) String() string {
 	}
 	// Color template to use
 	colors := map[string]string{
-		"profile":        FgBlue,
-		"label":          FgBlue,
-		"operation":      FgYellow,
-		"name":           FgMagenta,
-		"mask":           BoldRed,
-		"bus":            FgCian + "bus=",
-		"path":           "path=" + FgWhite,
-		"requested_mask": "requested_mask=" + BoldRed,
-		"denied_mask":    "denied_mask=" + BoldRed,
-		"interface":      "interface=" + FgWhite,
-		"member":         "member=" + FgGreen,
+		"profile":        fgBlue,
+		"label":          fgBlue,
+		"operation":      fgYellow,
+		"name":           fgMagenta,
+		"mask":           boldRed,
+		"bus":            fgCian + "bus=",
+		"path":           "path=" + fgWhite,
+		"requested_mask": "requested_mask=" + boldRed,
+		"denied_mask":    "denied_mask=" + boldRed,
+		"interface":      "interface=" + fgWhite,
+		"member":         "member=" + fgGreen,
 	}
 	res := ""
 	for _, log := range aaLogs {
@@ -160,7 +155,7 @@ func (aaLogs AppArmorLogs) String() string {
 		for _, key := range keys {
 			if log[key] != "" {
 				if colors[key] != "" {
-					res += " " + colors[key] + toQuote(log[key]) + Reset
+					res += " " + colors[key] + toQuote(log[key]) + reset
 				} else {
 					res += " " + key + "=" + toQuote(log[key])
 				}
