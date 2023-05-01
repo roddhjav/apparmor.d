@@ -20,6 +20,11 @@ var LogFiles = []string{
 	"/var/log/syslog",
 }
 
+// SystemdLog is a simplified systemd json log representation.
+type systemdLog struct {
+	Message string `json:"MESSAGE"`
+}
+
 // GetAuditLogs return a reader with the logs entries from Auditd
 func GetAuditLogs(path string) (io.Reader, error) {
 	file, err := os.Open(filepath.Clean(path))
@@ -31,7 +36,7 @@ func GetAuditLogs(path string) (io.Reader, error) {
 
 // GetJournalctlLogs return a reader with the logs entries from Systemd
 func GetJournalctlLogs(path string, useFile bool) (io.Reader, error) {
-	var logs []SystemdLog
+	var logs []systemdLog
 	var stdout bytes.Buffer
 	var value string
 
