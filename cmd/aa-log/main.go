@@ -11,7 +11,7 @@ import (
 	"os"
 
 	"github.com/roddhjav/apparmor.d/pkg/logs"
-	"github.com/roddhjav/apparmor.d/pkg/util"
+	"golang.org/x/exp/slices"
 )
 
 const usage = `aa-log [-h] [--systemd] [--file file] [profile]
@@ -28,17 +28,19 @@ Options:
     -h, --help         Show this help message and exit.
     -f, --file FILE    Set a logfile or a suffix to the default log file.
     -s, --systemd      Parse systemd logs from journalctl.
+    -a, --anonymize    Anonymize the logs.
 
 `
 
 // Command line options
 var (
-	help    bool
-	path    string
-	systemd bool
+	help      bool
+	anonymize bool
+	path      string
+	systemd   bool
 )
 
-func aaLog(logger string, path string, profile string) error {
+func aaLog(logger string, path string, profile string, anonymize bool) error {
 	var err error
 	var file io.Reader
 
@@ -54,6 +56,9 @@ func aaLog(logger string, path string, profile string) error {
 		return err
 	}
 	aaLogs := logs.NewApparmorLogs(file, profile)
+	if anonymize {
+		aaLogs.Anonymize()
+	}
 	fmt.Print(aaLogs.String())
 	return nil
 }
@@ -65,6 +70,8 @@ func init() {
 	flag.StringVar(&path, "file", "", "Set a logfile or a suffix to the default log file.")
 	flag.BoolVar(&systemd, "s", false, "Parse systemd logs from journalctl.")
 	flag.BoolVar(&systemd, "systemd", false, "Parse systemd logs from journalctl.")
+	flag.BoolVar(&anonymize, "a", false, "Anonymize the logs.")
+	flag.BoolVar(&anonymize, "anonymize", false, "Anonymize the logs.")
 }
 
 func main() {
@@ -86,7 +93,7 @@ func main() {
 	}
 
 	logfile := logs.GetLogFile(path)
-	err := aaLog(logger, logfile, profile)
+	err := aaLog(logger, logfile, profile, anonymize)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)

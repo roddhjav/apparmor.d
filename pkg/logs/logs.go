@@ -8,6 +8,7 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"os/user"
 	"regexp"
 	"strings"
 
@@ -27,6 +28,9 @@ const (
 	boldGreen  = "\033[1;32m"
 	boldYellow = "\033[1;33m"
 )
+
+// Anonymized username
+const Username = "AAD"
 
 var (
 	quoted                bool
@@ -114,6 +118,29 @@ func NewApparmorLogs(file io.Reader, profile string) AppArmorLogs {
 	}
 
 	return aaLogs
+}
+
+// Anonymize the logs before reporting
+func (aaLogs AppArmorLogs) Anonymize() {
+	user, _ := user.Current()
+	keys := []string{"name", "comm"}
+	regAnonymizeLogs := []struct {
+		regex *regexp.Regexp
+		repl  string
+	}{
+		{regexp.MustCompile(user.Username), Username},
+		{regexp.MustCompile(`/home/[^/]+`), `/home/` + Username},
+		{regexp.MustCompile(`[0-9a-fA-F]*-[0-9a-fA-F]*-[0-9a-fA-F]*-[0-9a-fA-F]*-[0-9a-fA-F]*`), `b08dfa60-83e7-567a-1921-a715000001fb`},
+	}
+	for _, log := range aaLogs {
+		for _, key := range keys {
+			if _, ok := log[key]; ok {
+				for _, aa := range regAnonymizeLogs {
+					log[key] = aa.regex.ReplaceAllLiteralString(log[key], aa.repl)
+				}
+			}
+		}
+	}
 }
 
 // String returns a formatted AppArmor logs string
