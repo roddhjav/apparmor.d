@@ -21,7 +21,8 @@ const (
 // Logging messages prefix
 const (
 	bulletText  = bold + " ⋅ " + reset
-	errorText   = boldRed + " ✗ Error: " + reset
+	fatalText   = boldRed + " ✗ Error: " + reset
+	errorText   = boldRed + " ✗ " + reset
 	successText = boldGreen + " ✓ " + reset
 	warningText = boldYellow + " ‼ " + reset
 )
@@ -79,8 +80,13 @@ func Warning(msg string, a ...interface{}) int {
 }
 
 // Fatalf returns a formatted error message
+func Error(msg string, a ...interface{}) int {
+	return Print(fmt.Sprintf("%s%s\n", errorText, fmt.Sprintf(msg, a...)))
+}
+
+// Fatalf returns a formatted error message
 func Fatalf(msg string, a ...interface{}) string {
-	return fmt.Sprintf("%s%s\n", errorText, fmt.Sprintf(msg, a...))
+	return fmt.Sprintf("%s%s\n", fatalText, fmt.Sprintf(msg, a...))
 }
 
 // Fatal is equivalent to Print() followed by a call to os.Exit(1).
