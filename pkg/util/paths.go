@@ -44,7 +44,7 @@ func ExtratTo(src *paths.Path, dst *paths.Path, subfolders []string) error {
 	}
 
 	tarIn := tar.NewReader(in)
-	for true {
+	for {
 		header, err := tarIn.Next()
 		if err == io.EOF {
 			break
