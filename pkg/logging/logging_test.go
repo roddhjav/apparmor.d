@@ -93,6 +93,15 @@ func TestWarning(t *testing.T) {
 	}
 }
 
+func TestError(t *testing.T) {
+	msg := "Error message"
+	wantN := 30
+	gotN := Error(msg)
+	if gotN != wantN {
+		t.Errorf("Error() = %v, want %v", gotN, wantN)
+	}
+}
+
 func TestFatalf(t *testing.T) {
 	msg := "Error message"
 	want := "\033[1;31m ✗ Error: \033[0mError message\n"
