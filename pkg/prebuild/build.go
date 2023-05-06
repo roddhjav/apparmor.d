@@ -2,15 +2,20 @@
 // Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
 // SPDX-License-Identifier: GPL-2.0-only
 
-package main
+package prebuild
 
 import (
 	"regexp"
 	"strings"
 
 	"github.com/roddhjav/apparmor.d/pkg/aa"
-	"github.com/roddhjav/apparmor.d/pkg/util"
+	"golang.org/x/exp/slices"
 )
+
+// Build the profiles with the following build tasks
+var Builds = []BuildFunc{
+	BuildUserspace,
+}
 
 var (
 	regABI           = regexp.MustCompile(`abi <abi/[0-9.]*>,\n`)
@@ -19,17 +24,16 @@ var (
 	regProfileHeader = regexp.MustCompile(` {`)
 )
 
+type BuildFunc func(string) string
+
 // Set complain flag on all profiles
 func BuildComplain(profile string) string {
-	if !Complain {
-		return profile
-	}
 
 	flags := []string{}
 	matches := regFlag.FindStringSubmatch(profile)
 	if len(matches) != 0 {
 		flags = strings.Split(matches[1], ",")
-		if util.InSlice("complain", flags) {
+		if slices.Contains(flags, "complain") {
 			return profile
 		}
 	}
@@ -55,12 +59,7 @@ func BuildUserspace(profile string) string {
 	return profile
 }
 
-// Remove abi header for distributions that don't support it
+// Remove abi header for distributions that do not support it
 func BuildABI(profile string) string {
-	switch Distribution {
-	case "debian", "whonix":
-		return regABI.ReplaceAllLiteralString(profile, "")
-	default:
-		return profile
-	}
+	return regABI.ReplaceAllLiteralString(profile, "")
 }

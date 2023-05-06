@@ -2,7 +2,7 @@
 // Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
 // SPDX-License-Identifier: GPL-2.0-only
 
-package main
+package prebuild
 
 import (
 	"fmt"
@@ -12,9 +12,19 @@ import (
 	"strings"
 
 	"github.com/arduino/go-paths-helper"
-	"github.com/roddhjav/apparmor.d/pkg/aa"
 	"github.com/roddhjav/apparmor.d/pkg/logging"
 )
+
+// Prepare the build directory with the following tasks
+var Prepares = []PrepareFunc{
+	Synchronise,
+	Ignore,
+	Merge,
+	Configure,
+	SetFlags,
+}
+
+type PrepareFunc func() error
 
 // Initialize a new clean apparmor.d build directory
 func Synchronise() error {
@@ -105,17 +115,13 @@ func Merge() error {
 }
 
 // Set the distribution specificities
-func Configure() error {
+func Configure() (err error) {
 	switch Distribution {
 	case "arch":
-		if err := setLibexec("/{usr/,}lib"); err != nil {
-			return err
-		}
+		err = setLibexec("/{usr/,}lib")
 
 	case "opensuse":
-		if err := setLibexec("/{usr/,}libexec"); err != nil {
-			return err
-		}
+		err = setLibexec("/{usr/,}libexec")
 
 	case "debian", "ubuntu", "whonix":
 		if err := setLibexec("/{usr/,}libexec"); err != nil {
@@ -135,52 +141,11 @@ func Configure() error {
 			return err
 		}
 
-		// Remove ABI on abstractions files
-		files, _ := RootApparmord.Join("abstractions").ReadDir(paths.FilterOutDirectories())
-		for _, file := range files {
-			if !file.Exist() {
-				continue
-			}
-			content, _ := file.ReadFile()
-			profile := BuildABI(string(content))
-			if err := file.WriteFile([]byte(profile)); err != nil {
-				return err
-			}
-		}
 	default:
 		return fmt.Errorf("%s is not a supported distribution", Distribution)
 
 	}
-	return nil
-}
-
-func setLibexec(libexec string) error {
-	aa.Tunables["libexec"] = []string{libexec}
-	file, err := RootApparmord.Join("tunables", "multiarch.d", "apparmor.d").Append()
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-	_, err = file.WriteString(`@{libexec}=` + libexec)
 	return err
-}
-
-func copyTo(src *paths.Path, dst *paths.Path) error {
-	files, err := src.ReadDirRecursiveFiltered(nil, paths.FilterOutDirectories())
-	if err != nil {
-		return err
-	}
-	for _, file := range files {
-		destination, err := file.RelFrom(src)
-		if err != nil {
-			return err
-		}
-		destination = dst.JoinPath(destination)
-		if err := file.CopyTo(destination); err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 // Set flags on some profiles according to manifest defined in `dists/flags/`
@@ -228,10 +193,6 @@ func SetFlags() error {
 // See https://gitlab.com/apparmor/apparmor/-/wikis/FullSystemPolicy
 // https://gitlab.com/apparmor/apparmor/-/wikis/AppArmorInSystemd#early-policy-loads
 func SetFullSystemPolicy() error {
-	if !Full {
-		return nil
-	}
-
 	for _, name := range []string{"init", "systemd"} {
 		err := paths.New("apparmor.d/groups/_full/" + name).CopyTo(RootApparmord.Join(name))
 		if err != nil {
