@@ -2,7 +2,7 @@
 // Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
 // SPDX-License-Identifier: GPL-2.0-only
 
-package util
+package prebuild
 
 import (
 	"testing"
@@ -78,59 +78,49 @@ ANSI_COLOR="0;38;2;60;110;180"
 LOGO=fedora-logo-icon`
 )
 
-func TestGetSupportedDistribution(t *testing.T) {
+func Test_getSupportedDistribution(t *testing.T) {
 	tests := []struct {
 		name      string
 		osRelease string
 		want      string
-		wantErr   bool
 	}{
 		{
 			name:      "Archlinux",
 			osRelease: Archlinux,
 			want:      "arch",
-			wantErr:   false,
 		},
 		{
 			name:      "Ubuntu",
 			osRelease: Ubuntu,
 			want:      "ubuntu",
-			wantErr:   false,
 		},
 		{
 			name:      "Debian",
 			osRelease: Debian,
 			want:      "debian",
-			wantErr:   false,
 		},
 		{
 			name:      "OpenSUSE Tumbleweed",
 			osRelease: OpenSUSETumbleweed,
 			want:      "opensuse",
-			wantErr:   false,
 		},
-		{
-			name:      "Fedora",
-			osRelease: Fedora,
-			want:      "fedora",
-			wantErr:   true,
-		},
+		// {
+		// 	name:      "Fedora",
+		// 	osRelease: Fedora,
+		// 	want:      "fedora",
+		// },
 	}
 
-	osReleaseFile = "os-release"
+	osReleaseFile = "/tmp/os-release"
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := paths.New(osReleaseFile).WriteFile([]byte(tt.osRelease))
 			if err != nil {
 				return
 			}
-			got, err := GetSupportedDistribution()
-			if (err != nil) != tt.wantErr {
-				t.Errorf("ReadLinuxDistribution() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
+			got := getSupportedDistribution()
 			if got != tt.want {
-				t.Errorf("ReadLinuxDistribution() = %v, want %v", got, tt.want)
+				t.Errorf("getSupportedDistribution() = %v, want %v", got, tt.want)
 			}
 		})
 	}

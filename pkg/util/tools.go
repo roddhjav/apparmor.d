@@ -7,7 +7,6 @@ package util
 import (
 	"encoding/hex"
 	"regexp"
-	"sort"
 )
 
 var isHexa = regexp.MustCompile("^[0-9A-Fa-f]+$")
@@ -35,10 +34,3 @@ func RemoveDuplicate[T comparable](inlist []T) []T {
 	}
 	return list
 }
-
-func InSlice(item string, slice []string) bool {
-	sort.Strings(slice)
-	i := sort.SearchStrings(slice, item)
-	return i < len(slice) && slice[i] == item
-}
-

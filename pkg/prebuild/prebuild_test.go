@@ -2,14 +2,12 @@
 // Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
 // SPDX-License-Identifier: GPL-2.0-only
 
-package main
+package prebuild
 
 import (
 	"os"
 	"os/exec"
 	"testing"
-
-	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 )
 
 func chdirGitRoot() {
@@ -24,7 +22,7 @@ func chdirGitRoot() {
 	}
 }
 
-func Test_AAPrebuild(t *testing.T) {
+func Test_PreBuild(t *testing.T) {
 	tests := []struct {
 		name     string
 		wantErr  bool
@@ -71,15 +69,18 @@ func Test_AAPrebuild(t *testing.T) {
 	chdirGitRoot()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			prebuild.Distribution = tt.dist
+			Distribution = tt.dist
 			if tt.full {
-				prebuild.Prepares = append(prebuild.Prepares, prebuild.SetFullSystemPolicy)
+				Prepares = append(Prepares, SetFullSystemPolicy)
 			}
 			if tt.complain {
-				prebuild.Builds = append(prebuild.Builds, prebuild.BuildComplain)
+				Builds = append(Builds, BuildComplain)
 			}
-			if err := aaPrebuild(); (err != nil) != tt.wantErr {
-				t.Errorf("aaPrebuild() error = %v, wantErr %v", err, tt.wantErr)
+			if err := Prepare(); (err != nil) != tt.wantErr {
+				t.Errorf("Prepare() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if err := Build(); (err != nil) != tt.wantErr {
+				t.Errorf("Build() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}

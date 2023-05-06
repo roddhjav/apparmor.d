@@ -48,7 +48,7 @@ func aaLog(logger string, path string, profile string, anonymize bool) error {
 	case "auditd":
 		file, err = logs.GetAuditLogs(path)
 	case "systemd":
-		file, err = logs.GetJournalctlLogs(path, !util.InSlice(path, logs.LogFiles))
+		file, err = logs.GetJournalctlLogs(path, !slices.Contains(logs.LogFiles, path))
 	default:
 		err = fmt.Errorf("Logger %s not supported.", logger)
 	}
