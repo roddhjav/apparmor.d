@@ -261,3 +261,74 @@ func TestAppArmorLogs_String(t *testing.T) {
 		})
 	}
 }
+
+func TestAppArmorLogs_Anonymize(t *testing.T) {
+	tests := []struct {
+		name   string
+		aaLogs AppArmorLogs
+		want   AppArmorLogs
+	}{
+		{
+			name: "Anonymize Username",
+			aaLogs: AppArmorLogs{
+				{
+					"apparmor":       "ALLOWED",
+					"profile":        "foo",
+					"operation":      "file_perm",
+					"name":           "/home/foo/.bash_history",
+					"comm":           "bash",
+					"requested_mask": "rw",
+					"denied_mask":    "rw",
+					"parent":         "16001",
+				},
+			},
+			want: AppArmorLogs{
+				{
+					"apparmor":       "ALLOWED",
+					"profile":        "foo",
+					"operation":      "file_perm",
+					"name":           "/home/AAD/.bash_history",
+					"comm":           "bash",
+					"requested_mask": "rw",
+					"denied_mask":    "rw",
+					"parent":         "16001",
+				},
+			},
+		},
+		{
+			name: "Anonymize UUID",
+			aaLogs: AppArmorLogs{
+				{
+					"apparmor":       "ALLOWED",
+					"profile":        "drkonqi",
+					"operation":      "file_perm",
+					"name":           "/sys/devices/pci0000:00/0000:00:02.0/drm/card1/metrics/399d3001-97d6-4240-b065-4fb843138e17/id",
+					"comm":           "bash",
+					"requested_mask": "r",
+					"denied_mask":    "r",
+					"parent":         "16001",
+				},
+			},
+			want: AppArmorLogs{
+				{
+					"apparmor":       "ALLOWED",
+					"profile":        "drkonqi",
+					"operation":      "file_perm",
+					"name":           "/sys/devices/pci0000:00/0000:00:02.0/drm/card1/metrics/b08dfa60-83e7-567a-1921-a715000001fb/id",
+					"comm":           "bash",
+					"requested_mask": "r",
+					"denied_mask":    "r",
+					"parent":         "16001",
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.aaLogs.Anonymize()
+			if !reflect.DeepEqual(tt.aaLogs, tt.want) {
+				t.Errorf("Anonymize() = %v, want %v", tt.aaLogs, tt.want)
+			}
+		})
+	}
+}
