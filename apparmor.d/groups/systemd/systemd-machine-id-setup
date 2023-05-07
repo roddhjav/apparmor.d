@@ -7,16 +7,24 @@ abi <abi/3.0>,
 include <tunables/global>
 
 @{exec_path} = /{usr/,}bin/systemd-machine-id-setup
-profile systemd-machine-id-setup @{exec_path} {
+profile systemd-machine-id-setup @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/consoles>
 
   capability dac_override,
+  capability setgid,
+  capability setuid,
+  capability sys_admin,
+  capability sys_chroot,
 
   ptrace (read),
 
+  mount /,
+  umount /etc/machine-id,
+
   @{exec_path} mr,
 
+  / r,
   /etc/machine-id rw,
   /etc/ r,
   /var/ r,
@@ -25,6 +33,7 @@ profile systemd-machine-id-setup @{exec_path} {
         @{PROC}/cmdline r,
         @{PROC}/sys/kernel/osrelease r,
   owner @{PROC}/@{pid}/stat r,
+  owner @{PROC}/@{pid}/setgroups r,
 
   include if exists <local/systemd-machine-id-setup>
 }
