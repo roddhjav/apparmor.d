@@ -38,7 +38,7 @@ The rules in the profile should be sorted in the rule ***block*** as follows:
 | **1** | [`include`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#include-statements) | [:octicons-link-external-24:](https://github.com/search?q=repo%3Aroddhjav%2Fapparmor.d+NOT+path%3A*.md+include+%3Cabstractions%2F&type=code) |
 | **2** | [`set rlimit`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#rlimit-rules) | [:octicons-link-external-24:](https://github.com/search?q=repo%3Aroddhjav%2Fapparmor.d+NOT+path%3A*.md+set+rlimit&type=code) |
 | **3** | [`capability`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#capability-rules) | [:octicons-link-external-24:](https://github.com/search?q=repo%3Aroddhjav%2Fapparmor.d+NOT+path%3A*.md+capability&type=code) |
-| **4** | [`network`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#network-rules) | [:octicons-link-external-24:](https://github.com/search?q=repo%3Aroddhjav%2Fapparmor.d+NOT+path%3A*.md+%22network+%22&type=code) |
+| **4** | [`network`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#network-rules) | [:octicons-link-external-24:](https://github.com/search?q=repo%3Aroddhjav%2Fapparmor.d+NOT+path%3A*.md+%22+network+%22&type=code) |
 | **5** | [`mount`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#mount-rules-apparmor-28-and-later) | [:octicons-link-external-24:](https://github.com/search?q=repo%3Aroddhjav%2Fapparmor.d+NOT+path%3A*.md+%22++mount+%22&type=code) |
 | **6** | [`remount`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#remount) | [:octicons-link-external-24:](https://github.com/search?q=repo%3Aroddhjav%2Fapparmor.d+NOT+path%3A*.md+remount&type=code) |
 | **7** | [`umount`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#umount)| [:octicons-link-external-24:](https://github.com/search?q=repo%3Aroddhjav%2Fapparmor.d+NOT+path%3A*.md+%22umount+%22&type=code) |
@@ -47,8 +47,8 @@ The rules in the profile should be sorted in the rule ***block*** as follows:
 | **10** | [`signal`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#signals)| [:octicons-link-external-24:](https://github.com/search?q=repo%3Aroddhjav%2Fapparmor.d+NOT+path%3A*.md+%22signal+%22&type=code) |
 | **11** | `ptrace`| [:octicons-link-external-24:](https://github.com/search?q=repo%3Aroddhjav%2Fapparmor.d+NOT+path%3A*.md+%22ptrace+%22&type=code) |
 | **12** | `unix`| [:octicons-link-external-24:](https://github.com/search?q=repo%3Aroddhjav%2Fapparmor.d+NOT+path%3A*.md+%22unix+%22&type=code) |
-| **13** | [`dbus`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#dbus-rules) | [:octicons-link-external-24:](https://github.com/search?q=repo%3Aroddhjav%2Fapparmor.d+NOT+path%3A*.md+dbus&type=code) |
-| **14** | [`file`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#file-access-rules) | [:octicons-link-external-24:]() |
+| **13** | [`dbus`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#dbus-rules) | [:octicons-link-external-24:](https://github.com/search?q=repo%3Aroddhjav%2Fapparmor.d+NOT+path%3A*.md++NOT+path%3A*.go+%22+dbus+%22&type=code) |
+| **14** | [`file`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#file-access-rules) | [:octicons-link-external-24:](https://github.com/roddhjav/apparmor.d/blob/2e4788c51ef73798c0ac94993af3cd769723e8e4/apparmor.d/groups/gnome/gnome-shell#L481-L663) |
 | **15** | local include | [:octicons-link-external-24:](https://github.com/search?q=repo%3Aroddhjav%2Fapparmor.d+NOT+path%3A*.md+include+if+exists+%3Clocal&type=code) |
 
 
@@ -61,20 +61,20 @@ This rule order is taken from AppArmor with minor changes as we tend to:
 
 The file block should be sorted as follow:
 
-| Order | Description | Example |
-|:-----:|:-----------:|:-------:|
-| **1** | The entry point of the profile | `@{exec_path} mr,` |
-| **2** | The binaries and library required | `/{usr/,}bin/`, `/{usr/,}lib/`, `/opt/`. It is the only place where you can have `mr`, `rix`, `rPx`, `rUx`, `rPUX` rules. |
-| **3** | The shared resources | `/usr/share` |
-| **4** | The system configuration | `/etc` |
-| **5** | The system data | `/`, `/var`, `/boot` |
-| **6** | The user data | `owner @{HOME}/` |
-| **7** | The user configuration, cache and dotfiles | `@{user_cache_dirs}`, `@{user_config_dirs}`,  `@{user_share_dirs}` |
-| **8** | Temporary and runtime data | `/tmp/`, `@{run}/`, `/dev/shm/` |
-| **9** | Sys files | `@{sys}/` |
-| **10** | Proc files | `@{PROC}/` |
-| **11** | Dev files | `/dev/` |
-| **12** | Deny rules | `deny` |
+| Order | Description | Example | Link |
+|:-----:|:-----------:|:-------:|:------:|
+| **1** | The entry point of the profile | `@{exec_path} mr,` | [:octicons-link-external-24:](https://github.com/roddhjav/apparmor.d/blob/2e4788c51ef73798c0ac94993af3cd769723e8e4/apparmor.d/groups/gnome/gdm#L67) |
+| **2** | The binaries and library required | `/{usr/,}bin/`, `/{usr/,}lib/`, `/opt/`. It is the only place where you can have `mr`, `rix`, `rPx`, `rUx`, `rPUX` rules. | [:octicons-link-external-24:](https://github.com/roddhjav/apparmor.d/blob/2e4788c51ef73798c0ac94993af3cd769723e8e4/apparmor.d/groups/gnome/gdm#L69-L76) | 
+| **3** | The shared resources | `/usr/share` | [:octicons-link-external-24:](https://github.com/roddhjav/apparmor.d/blob/2e4788c51ef73798c0ac94993af3cd769723e8e4/apparmor.d/groups/network/NetworkManager#L111-L120) | 
+| **4** | The system configuration | `/etc` | [:octicons-link-external-24:](https://github.com/roddhjav/apparmor.d/blob/2e4788c51ef73798c0ac94993af3cd769723e8e4/apparmor.d/groups/network/NetworkManager#L111-L120) | 
+| **5** | The system data | `/`, `/var`, `/boot` | [:octicons-link-external-24:](https://github.com/roddhjav/apparmor.d/blob/2e4788c51ef73798c0ac94993af3cd769723e8e4/apparmor.d/groups/gnome/tracker-extract#L83-L93) | 
+| **6** | The user data | `owner @{HOME}/` | [:octicons-link-external-24:](https://github.com/roddhjav/apparmor.d/blob/2e4788c51ef73798c0ac94993af3cd769723e8e4/apparmor.d/groups/gnome/tracker-extract#L96-L98) | 
+| **7** | The user configuration, cache and dotfiles | `@{user_cache_dirs}`, `@{user_config_dirs}`,  `@{user_share_dirs}` | [:octicons-link-external-24:](https://github.com/roddhjav/apparmor.d/blob/2e4788c51ef73798c0ac94993af3cd769723e8e4/apparmor.d/groups/browsers/firefox#L179-L202) | 
+| **8** | Temporary and runtime data | `/tmp/`, `@{run}/`, `/dev/shm/` | [:octicons-link-external-24:]() | 
+| **9** | Sys files | `@{sys}/` | [:octicons-link-external-24:]() | 
+| **10** | Proc files | `@{PROC}/` | [:octicons-link-external-24:]() | 
+| **11** | Dev files | `/dev/` | [:octicons-link-external-24:]() | 
+| **12** | Deny rules | `deny` | [:octicons-link-external-24:]() | 
 
 ### The dbus block
 
