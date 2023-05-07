@@ -52,6 +52,11 @@ the useful information needed to contribute.
 
 :   Some programs should not be confined by a MAC policy.
 
+`Rule 4: Distribution and devices agnostic`
+
+:   A profile should be compatible with all distributions, software and devices
+    in the Linux world. You cannot deny access to resources you do not use on
+    your devices or for your use case.
 
 
 ## Add a profile
