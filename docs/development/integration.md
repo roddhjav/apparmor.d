@@ -18,7 +18,7 @@ The purpose of integration testing in apparmor.d is to ensure the profiles are n
 
 ## Test Virtual Machines
 
-The test VMs are build using [`cloud-init`][cloud-init], [`packer`][packer], and [`vagrant`][vagrant] on Qemu/KVM using Libvirt. No other hypervisor will be targeted for these tests. The files that generate these images can be found in the **[tests/packer](https://github.com/roddhjav/apparmor.d/tree/main/tests/packer)** directory.
+The test VMs are built using [`cloud-init`][cloud-init] (when available), [`packer`][packer], and [`vagrant`][vagrant] on Qemu/KVM using Libvirt. No other hypervisor will be targeted for these tests. The files that generate these images can be found in the **[tests/packer](https://github.com/roddhjav/apparmor.d/tree/main/tests/packer)** directory.
 
 [cloud-init]: https://cloud-init.io/
 [packer]: https://www.packer.io/
@@ -42,6 +42,8 @@ To build a VM image for development purpose, run the following from the `tests` 
 |:------------:|:------:|:-------------:|:-------:|
 | Archlinux | Gnome | `make archlinux flavor=gnome` | `arch-gnome` |
 | Archlinux | KDE | `make archlinux flavor=kde` | `arch-kde` |
+| Debian | Server | `make debian flavor=server` | `debian-server` |
+| OpenSUSE | KDE | `make opensuse falvor=kde` | `opensuse-kde` |
 | Ubuntu | Server | `make ubuntu flavor=server` | `ubuntu-server` |
 | Ubuntu | Desktop | `make ubuntu falvor=desktop` | `ubuntu-desktop` |
 
@@ -69,3 +71,63 @@ All the images come pre-configured with the lastest version of `apparmor.d` inst
 **Usage**
 
 On all images, `aa-update` can be used to rebuild and install latest version of the profiles. `p`, `pf`, and `pu` are two preconfigured aliases of `ps` that show the security status of processes. `htop` is also configured to show this status.
+
+
+## Tests
+
+!!! warning
+
+    The following are expected to be run in a [VM](#test-virtual-machines)
+
+### Getting started
+
+Build the test suite
+```sh
+go build ./cmd/aa-test
+```
+
+Initialise the tests with:
+```sh
+./aa-test --bootstrap
+```
+
+List the tests scenario to be run
+```sh
+./aa-test --list
+```
+
+Start the tests and collect the results
+```sh
+./aa-test --run
+```
+
+### Create test scenario
+
+A basic set of test is generated on initialisation. More tests can be manually written in yaml file. They must have the following structure:
+
+```yaml
+- name: acpi
+  profiled: true
+  root: false
+  require: []
+  arguments: {}
+  tests:
+    - dsc: Show battery information
+      cmd: acpi
+      stdin: []
+    - dsc: Show thermal information
+      cmd: acpi -t
+      stdin: []
+    - dsc: Show cooling device information
+      cmd: acpi -c
+      stdin: []
+    - dsc: Show thermal information in Fahrenheit
+      cmd: acpi -tf
+      stdin: []
+    - dsc: Show all information
+      cmd: acpi -V
+      stdin: []
+    - dsc: Extract information from `/proc` instead of `/sys`
+      cmd: acpi -p
+      stdin: []
+```
