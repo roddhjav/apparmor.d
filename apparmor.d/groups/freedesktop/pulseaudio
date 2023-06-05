@@ -37,14 +37,29 @@ profile pulseaudio @{exec_path} {
   network bluetooth stream,
   network bluetooth seqpacket,
 
-  dbus send bus=session path=/Client0/EntryGroup[0-9]*
+  dbus send bus=session path=/Client[0-9]*/EntryGroup[0-9]*
        interface=org.freedesktop.Avahi.EntryGroup
        member={GetState,AddService,AddServiceSubtype,Commit}
        peer=(name=org.freedesktop.Avahi),
 
-  dbus receive bus=system path=/Client0/EntryGroup[0-9]*
+  dbus receive bus=system path=/Client[0-9]*/EntryGroup[0-9]*
        interface=org.freedesktop.Avahi.EntryGroup
        member={AddService,AddServiceSubtype,Commit,GetState,StateChanged}
+       peer=(name=org.freedesktop.Avahi),
+
+  dbus receive bus=system path=/Client[0-9]*/ServiceBrowser[0-9]*
+       interface=org.freedesktop.Avahi.ServiceBrowser
+       member={ItemNew,ItemRemove}
+       peer=(name=org.freedesktop.Avahi), # no peer's label
+
+  dbus receive bus=system path=/Client[0-9]*/ServiceResolver[0-9]*
+       interface=org.freedesktop.Avahi.ServiceResolver
+       member=Found
+       peer=(name=org.freedesktop.Avahi),
+
+  dbus send bus=system path=/Client[0-9]*/ServiceResolver[0-9]*
+       interface=org.freedesktop.Avahi.ServiceResolver
+       member=Free
        peer=(name=org.freedesktop.Avahi),
 
   dbus send bus=session path=/org/freedesktop/DBus
