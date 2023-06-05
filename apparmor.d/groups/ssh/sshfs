@@ -12,6 +12,8 @@ profile sshfs @{exec_path} flags=(complain) {
 
   @{exec_path} mr,
 
+  unix (connect, send, receive) type=stream peer=(label="sshfs//fusermount",addr=none),
+
   /{usr/,}bin/ssh            rPx,
   /{usr/,}bin/fusermount{,3} rCx -> fusermount,
 
@@ -23,12 +25,14 @@ profile sshfs @{exec_path} flags=(complain) {
   @{PROC}/sys/fs/pipe-max-size r,
 
 
-  profile fusermount {
+  profile fusermount flags=(complain) {
     include <abstractions/base>
     include <abstractions/nameservice-strict>
 
     # To mount anything:
     capability sys_admin,
+
+    unix (connect, send, receive) type=stream peer=(label="sshfs",addr=none),
 
     /{usr/,}bin/fusermount{,3} mr,
 
