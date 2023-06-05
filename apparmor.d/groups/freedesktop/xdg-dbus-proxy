@@ -9,9 +9,40 @@ include <tunables/global>
 @{exec_path} = /{usr/,}bin/xdg-dbus-proxy
 profile xdg-dbus-proxy @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/dbus-strict>
   include <abstractions/dbus-session-strict>
 
   @{exec_path} mr,
+
+  dbus (send,receive) bus=system path=/
+       interface=org.freedesktop.DBus
+       member={AddMatch,GetNameOwner}
+       peer=(label=dbus-daemon),
+
+  dbus (send,receive) bus=system path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={AddMatch,RemoveMatch,NameHasOwner,GetNameOwner}
+       peer=(label=dbus-daemon),
+  
+  dbus (send,receive) bus=system path=/org/freedesktop/NetworkManager
+       interface=org.freedesktop.NetworkManager
+       member=GetDevices
+       peer=(label=NetworkManager),
+  
+  dbus (send,receive) bus=system path=/org/freedesktop/NetworkManager{/Devices/[0-9]*,/ActiveConnection/[0-9]*}
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(label=NetworkManager),
+  
+  dbus (send,receive) bus=system path=/org/freedesktop/NetworkManager/Settings
+       interface=org.freedesktop.NetworkManager.Settings
+       member=ListConnections
+       peer=(label=NetworkManager),
+  
+  dbus (send,receive) bus=system path=/org/freedesktop/NetworkManager/Settings/[0-9]*
+       interface=org.freedesktop.NetworkManager.Settings.Connection
+       member=GetSettings
+       peer=(label=NetworkManager),
 
   owner @{run}/firejail/dbus/[0-9]*/[0-9]*-{system,user} rw,
   owner @{run}/user/@{uid}/.dbus-proxy/{system,session,a11y}-bus-proxy-[0-9A-Z]* rw,

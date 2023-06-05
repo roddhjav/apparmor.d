@@ -13,6 +13,7 @@ profile fwupd @{exec_path} flags=(complain,attach_disconnected) {
   include <abstractions/consoles>
   include <abstractions/dbus-strict>
   include <abstractions/disks-read>
+  include <abstractions/fonts>
   include <abstractions/nameservice-strict>
   include <abstractions/openssl>
 
@@ -38,7 +39,8 @@ profile fwupd @{exec_path} flags=(complain,attach_disconnected) {
 
   dbus send bus=system path=/org/freedesktop/PolicyKit1/Authority
        interface=org.freedesktop.DBus.Properties
-       member={Changed,GetAll},
+       member={Changed,GetAll}
+       peer=(label=polkitd),
 
   dbus send bus=system path=/org/freedesktop/UDisks2/block_devices/*
        interface=org.freedesktop.DBus.Properties
@@ -52,8 +54,23 @@ profile fwupd @{exec_path} flags=(complain,attach_disconnected) {
        interface=org.freedesktop.DBus.Properties
        member=GetAll,
 
+  dbus send bus=system path=/
+       interface=org.freedesktop.fwupd
+       member=Changed
+       peer=(label=fwupdmgr),
+
+  dbus send bus=system path=/
+       interface=org.freedesktop.DBus
+       member=Changed
+       peer=(label=fwupdmgr),
+
   dbus receive bus=system path=/
        interface=org.freedesktop.fwupd,
+
+  dbus receive bus=system path=/org/freedesktop/PolicyKit1/Authority
+       interface=org.freedesktop.DBus.Properties
+       member={Changed,GetAll}
+       peer=(label=polkitd),
 
   dbus receive bus=system path=/
        interface=org.freedesktop.DBus.Properties

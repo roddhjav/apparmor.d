@@ -40,10 +40,17 @@ profile ssh @{exec_path} {
   owner @{user_projects_dirs}/**/ssh/{,*} r,
   owner @{user_projects_dirs}/**/config r,
 
+  /etc/ssh/ssh_config r,
+  /etc/ssh/ssh_config.d/{,*} r,
+  # Needed to work for systemd-homed users
+  /etc/machine-id r,
+  @{run}/systemd/userdb/ r,
+  
   owner @{run}/user/@{uid}/keyring/ssh rw,
-
   owner @{PROC}/@{pid}/loginuid r,
   owner @{PROC}/@{pid}/fd/ r,
+
+  owner /tmp/ssh-*/{,agent.[0-9]*} rwkl,
 
   include if exists <local/ssh>
 }

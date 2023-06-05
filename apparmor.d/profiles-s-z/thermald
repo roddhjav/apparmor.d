@@ -8,7 +8,7 @@ abi <abi/3.0>,
 include <tunables/global>
 
 @{exec_path} = /{usr/,}sbin/thermald
-profile thermald @{exec_path} {
+profile thermald @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/dbus-strict>
 
@@ -39,16 +39,25 @@ profile thermald @{exec_path} {
 
   @{sys}/class/hwmon/ r,
   @{sys}/class/thermal/ r,
-  @{sys}/devices/platform/ r,
+  @{sys}/devices/platform/{,*} r,
+  @{sys}/devices/platform/**/path r,
+  @{sys}/devices/platform/**/available_uuids r,
+  @{sys}/devices/platform/**/current_uuid rw,
 
   @{sys}/devices/system/cpu/present r,
-  @{sys}/devices/system/cpu/intel_pstate/max_perf_pct r,
+  @{sys}/devices/system/cpu/intel_pstate/max_perf_pct rw,
+  @{sys}/devices/system/cpu/intel_pstate/no_turbo rw,
   @{sys}/devices/system/cpu/intel_pstate/status r,
 
   @{sys}/devices/pci[0-9]*/**/drm/**/intel_backlight/max_brightness r,
+  @{sys}/devices/pci[0-9]*/**/power_limits/power_limit_[0-9]*_max_uw r,
+  @{sys}/devices/pci[0-9]*/**/power_limits/power_limit_[0-9]*_min_uw r,
+  @{sys}/devices/pci[0-9]*/**/power_limits/power_limit_[0-9]*_tmax_us r,
+  @{sys}/devices/pci[0-9]*/**/power_limits/power_limit_[0-9]*_tmin_us r,
 
   @{sys}/devices/**/hwmon[0-9]*/name r,
   @{sys}/devices/**/hwmon[0-9]*/temp[0-9]*_{max,crit} r,
+  @{sys}/devices/**/path r,
 
   @{sys}/devices/virtual/dmi/id/product_name r,
   @{sys}/devices/virtual/dmi/id/product_uuid r,
@@ -56,8 +65,11 @@ profile thermald @{exec_path} {
   @{sys}/devices/virtual/thermal/**/{type,temp} r,
 
   @{sys}/devices/virtual/thermal/thermal_zone[0-9]*/ r,
+  @{sys}/devices/virtual/thermal/thermal_zone[0-9]*/mode rw,
+  @{sys}/devices/virtual/thermal/thermal_zone[0-9]*/policy rw,
   @{sys}/devices/virtual/thermal/thermal_zone[0-9]*/trip_point_[0-9]*_temp rw,
   @{sys}/devices/virtual/thermal/thermal_zone[0-9]*/trip_point_[0-9]*_type r,
+  @{sys}/devices/virtual/thermal/thermal_zone[0-9]*/trip_point_[0-9]*_hyst r,
   @{sys}/devices/virtual/thermal/thermal_zone[0-9]*/cdev[0-9]*_trip_point r,
 
   @{sys}/devices/virtual/thermal/cooling_device[0-9]*/ r,
@@ -66,11 +78,16 @@ profile thermald @{exec_path} {
 
   @{sys}/devices/virtual/powercap/intel-rapl/ r,
   @{sys}/devices/virtual/powercap/intel-rapl/**/name r,
-  @{sys}/devices/virtual/powercap/intel-rapl/intel-rapl:[0-9]*/{,*} r,
-  @{sys}/devices/virtual/powercap/intel-rapl/intel-rapl:[0-9]*/constraint_*_time_window_us w,
-  @{sys}/devices/virtual/powercap/intel-rapl/intel-rapl:[0-9]*/constraint_*_power_limit_uw w,
-  @{sys}/devices/virtual/powercap/intel-rapl/intel-rapl:[0-9]*/enabled w,
-  @{sys}/devices/virtual/powercap/intel-rapl/intel-rapl:[0-9]*/intel-rapl:[0-9]*:[0-9]*/{,*} r,
+  @{sys}/devices/virtual/powercap/intel-rapl/intel-rapl{,-mmio}:[0-9]*/ r,
+  @{sys}/devices/virtual/powercap/intel-rapl/intel-rapl{,-mmio}:[0-9]*/* r,
+  @{sys}/devices/virtual/powercap/intel-rapl/intel-rapl{,-mmio}:[0-9]*/constraint_*_time_window_us w,
+  @{sys}/devices/virtual/powercap/intel-rapl/intel-rapl{,-mmio}:[0-9]*/constraint_*_power_limit_uw w,
+  @{sys}/devices/virtual/powercap/intel-rapl/intel-rapl{,-mmio}:[0-9]*/enabled w,
+  @{sys}/devices/virtual/powercap/intel-rapl/intel-rapl{,-mmio}:[0-9]*/intel-rapl:[0-9]*:[0-9]*/{,*} r,
+
+  /dev/acpi_thermal_rel rw,
+  /dev/input/ r,
+  /dev/input/event[0-9]* r,
 
   include if exists <local/thermald>
 }
