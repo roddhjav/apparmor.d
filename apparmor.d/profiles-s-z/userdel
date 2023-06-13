@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2019-2021 Mikhail Morfikov
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -12,21 +13,13 @@ profile userdel @{exec_path} flags=(attach_disconnected) {
   include <abstractions/consoles>
   include <abstractions/nameservice-strict>
 
-  # The userdel command is issued as root and its task is to delete regular user accounts. It
-  # optionally can remove user files (via --remove). Because of that, the userdel command needs the
-  # following CAPs to be able to do so.
-  capability dac_read_search,
-  capability dac_override,
-
-  # To write records to the kernel auditing log.
   capability audit_write,
-
-  # To set the right permission to the files in the /etc/ dir).
   capability chown,
+  capability dac_override,
+  capability dac_read_search,
   capability fsetid,
-
-  # To prevent removing a user when it's used by some process.
   capability sys_ptrace,
+
   ptrace (read),
 
   network netlink raw,
@@ -34,9 +27,6 @@ profile userdel @{exec_path} flags=(attach_disconnected) {
   @{exec_path} mr,
 
   /etc/login.defs r,
-
-  @{PROC}/ r,
-  @{PROC}/@{pids}/task/ r,
 
   /etc/{passwd,shadow,gshadow,group,subuid,subgid} rw,
   /etc/{passwd,shadow,gshadow,group,subuid,subgid}.@{pid} w,
@@ -59,6 +49,9 @@ profile userdel @{exec_path} flags=(attach_disconnected) {
   /var/            r,
   /var/lib/        r,
   /var/lib/*/{,**} rw,
+
+  @{PROC}/ r,
+  @{PROC}/@{pids}/task/ r,
 
   include if exists <local/userdel>
 }
