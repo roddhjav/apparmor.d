@@ -1,0 +1,24 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /usr/share/code-features/patch.sh
+profile pacman-hook-code @{exec_path} {
+  include <abstractions/base>
+
+  capability dac_read_search,
+
+  @{exec_path} mr,
+
+  /{usr/,}bin/{,ba}sh     rix,
+  /{usr/,}bin/sed         rix,
+  /{usr/,}bin/grep        rix,
+
+  /{usr/,}lib/code/sed?????? rw,
+
+  include if exists <local/pacman-hook-code>
+}
