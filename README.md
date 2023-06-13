@@ -62,6 +62,9 @@ bubblewrap, toolbox...).
 This is fundamentally different from how AppArmor is usually used on Linux servers
 as it is common to only confine the applications that face the internet and/or the users.
 
+**Presentation**
+
+- [Building the largest working set of AppArmor profiles](https://www.youtube.com/watch?v=OzyalrOzxE8) *[Linux Security Summit North America (LSS-NA 2023)](https://events.linuxfoundation.org/linux-security-summit-north-america/)* ([Slide](https://lssna2023.sched.com/event/1K7bI/building-the-largest-working-set-of-apparmor-profiles-alexandre-pujol-the-collaboratory-tudublin))
 
 ## Installation
 
