@@ -16,6 +16,7 @@ include <tunables/global>
 profile child-dpkg {
   include <abstractions/base>
   include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
 
   capability dac_read_search,
   capability setgid,
@@ -26,11 +27,22 @@ profile child-dpkg {
   #  ERROR: ld.so: object 'libfakeroot-sysv.so' from LD_PRELOAD cannot be preloaded (cannot open
   #  shared object file): ignored.
   /{usr/,}bin/dpkg-query rpx,
+  /{usr/,}bin/dpkg-deb rPx,
+  /{usr/,}bin/dpkg-split rPx,
 
   /etc/dpkg/dpkg.cfg.d/{,*} r,
   /etc/dpkg/dpkg.cfg r,
 
+  /usr/share/doc/perl-modules-*/{,**/}*.dpkg-{new,tmp} rwl,
+  /usr/share/perl/*/{,**/}*.dpkg-{new,tmp} rwl,
+
   /var/lib/dpkg/** r,
+  /var/lib/dpkg/lock rw,
+  /var/lib/dpkg/tmp.ci/control rw,
+  /var/lib/dpkg/tmp.ci/md5sums rw,
+  /var/lib/dpkg/triggers/Lock rw,
+  /var/lib/dpkg/updates/* rw,
+  /var/log/dpkg.log ra,
 
   # file_inherit
   /tmp/#[0-9]*[0-9] rw,

@@ -1,0 +1,33 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2019-2021 Mikhail Morfikov
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/apt-overlay
+profile apt-overlay @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+
+  @{exec_path} mr,
+  /{usr/,}bin/apt-get rPx,
+  /{usr/,}bin/ruby* mrix,
+
+  /{usr/,}sbin/apt-overlay r,
+
+  /{usr/,}lib/ruby/{,**} r,
+  /{usr/,}lib/locale/locale-archive r,
+  /{usr/,}lib/ruby/gems/3.0.0/specifications/default/*.gemspec rwk,
+
+  /usr/share/rubygems-integration/{,**} r,
+
+  / r,
+  /root/ r,
+
+  owner @{PROC}/@{pids}/loginuid r,
+  owner @{PROC}/@{pids}/maps r,
+
+  include if exists <local/apt-overlay>
+}

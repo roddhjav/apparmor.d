@@ -12,6 +12,7 @@ profile plasmashell @{exec_path} {
   include <abstractions/app-launcher-user>
   include <abstractions/audio>
   include <abstractions/consoles>
+  include <abstractions/dbus-session-strict>
   include <abstractions/disks-read>
   include <abstractions/dri-common>
   include <abstractions/dri-enumerate>
@@ -31,6 +32,11 @@ profile plasmashell @{exec_path} {
   network netlink raw,
 
   signal (send),
+
+  dbus (send,receive) bus=system path=/org/freedesktop/UPower/devices/{,DisplayDevice,battery_BAT[0-9]*,mouse_hidpp_battery_[0-9]*}
+       interface=org.freedesktop.DBus.Properties
+       member={GetAll,PropertiesChanged}
+       peer=(label=upowerd),
 
   @{exec_path} mr,
 
