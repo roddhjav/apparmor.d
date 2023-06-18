@@ -83,7 +83,8 @@ rpm:
 	@make local
 
 tests:
-	@go test ./cmd/... ./pkg/... -v -cover -coverprofile=coverage.out
+	@go test ./cmd/... -v -cover -coverprofile=coverage.out
+	@go test ./pkg/... -v -cover -coverprofile=coverage.out
 	@go tool cover -func=coverage.out
 
 lint:
