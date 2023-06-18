@@ -31,7 +31,7 @@ See the [Concepts](concepts) page for more detail on the architecture.
 - Support all distributions that support AppArmor:
     * [:material-arch: Archlinux](/install/#archlinux)
     * [:material-ubuntu: Ubuntu 22.04](/install/#ubuntu-debian)
-    * [:material-debian: Debian 11](/install/#ubuntu-debian)
+    * [:material-debian: Debian 12](/install/#ubuntu-debian)
     * [:simple-suse: OpenSUSE Tumbleweed](/install/#opensuse)
 - Support all major desktop environments:
     * Currently only :material-gnome: Gnome

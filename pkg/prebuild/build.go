@@ -28,7 +28,6 @@ type BuildFunc func(string) string
 
 // Set complain flag on all profiles
 func BuildComplain(profile string) string {
-
 	flags := []string{}
 	matches := regFlag.FindStringSubmatch(profile)
 	if len(matches) != 0 {
@@ -57,9 +56,4 @@ func BuildUserspace(profile string) string {
 		return regAttachments.ReplaceAllLiteralString(profile, strheader)
 	}
 	return profile
-}
-
-// Remove abi header for distributions that do not support it
-func BuildABI(profile string) string {
-	return regABI.ReplaceAllLiteralString(profile, "")
 }

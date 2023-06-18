@@ -11,7 +11,6 @@ import (
 
 	"github.com/roddhjav/apparmor.d/pkg/logging"
 	"github.com/roddhjav/apparmor.d/pkg/prebuild"
-	"golang.org/x/exp/slices"
 )
 
 const usage = `prebuild [-h] [--full] [--complain]
@@ -48,9 +47,6 @@ func aaPrebuild() error {
 	if complain {
 		prebuild.Builds = append(prebuild.Builds, prebuild.BuildComplain)
 	}
-	if slices.Contains([]string{"debian", "whonix"}, prebuild.Distribution) {
-		prebuild.Builds = append(prebuild.Builds, prebuild.BuildABI)
-	}
 
 	if err := prebuild.Prepare(); err != nil {
 		return err
@@ -64,9 +60,6 @@ func aaPrebuild() error {
 	logging.Bullet("Bypass userspace tools restriction")
 	if complain {
 		logging.Bullet("Set complain flag on all profiles")
-	}
-	if slices.Contains([]string{"debian", "whonix"}, prebuild.Distribution) {
-		logging.Bullet("%s does not support abi 3.0 yet", prebuild.Distribution)
 	}
 	return nil
 }

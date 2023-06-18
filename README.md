@@ -31,7 +31,7 @@ most Linux based applications and processes.
 - Support all distributions that support AppArmor:
     * Archlinux
     * Ubuntu 22.04
-    * Debian 11
+    * Debian 12
     * OpenSUSE Tumbleweed
 - Support all major desktop environments:
     * Currently only Gnome
