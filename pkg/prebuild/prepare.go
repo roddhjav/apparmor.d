@@ -132,14 +132,6 @@ func Configure() (err error) {
 		if err := copyTo(DistDir.Join("ubuntu"), RootApparmord); err != nil {
 			return err
 		}
-		if Distribution == "ubuntu" {
-			break
-		}
-
-		// Copy debian specific profiles
-		if err := copyTo(DistDir.Join("debian"), RootApparmord); err != nil {
-			return err
-		}
 
 	default:
 		return fmt.Errorf("%s is not a supported distribution", Distribution)
