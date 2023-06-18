@@ -18,7 +18,6 @@ var Builds = []BuildFunc{
 }
 
 var (
-	regABI           = regexp.MustCompile(`abi <abi/[0-9.]*>,\n`)
 	regAttachments   = regexp.MustCompile(`(profile .* @{exec_path})`)
 	regFlag          = regexp.MustCompile(`flags=\(([^)]+)\)`)
 	regProfileHeader = regexp.MustCompile(` {`)
