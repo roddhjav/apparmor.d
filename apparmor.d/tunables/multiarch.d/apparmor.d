@@ -24,4 +24,8 @@
 # @{MOUNTS} is a space-separated list of all user mounted directories.
 @{MOUNTS}=@{MOUNTDIRS}/*/
 
+# Common places for binaries and libraries across distributions
+@{bin}=/{usr/,}{s,}bin
+@{lib}=/{usr/,}lib{,exec,32,64}
+
 # Libexec path. Different in some distribution
