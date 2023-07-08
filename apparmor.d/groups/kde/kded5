@@ -13,12 +13,14 @@ profile kded5 @{exec_path} {
   include <abstractions/consoles>
   include <abstractions/dconf-write>
   include <abstractions/dri-common>
+  include <abstractions/dri-enumerate>
   include <abstractions/fonts>
   include <abstractions/freedesktop.org>
   include <abstractions/gtk>
   include <abstractions/mesa>
   include <abstractions/nameservice-strict>
   include <abstractions/qt5>
+  include <abstractions/vulkan>
   include <abstractions/wutmp>
   include <abstractions/X-strict>
 
@@ -34,10 +36,12 @@ profile kded5 @{exec_path} {
   @{exec_path} mr,
 
   @{libexec}/kf5/kconf_update    rPx,
+  @{libexec}/kconf_update_bin/*  rix,
   @{libexec}/utempter/utempter   rPx,
   /{usr/,}bin/kcminit            rPx,
   /{usr/,}bin/pgrep              rCx -> pgrep,
   /{usr/,}bin/setxkbmap          rix,
+  /{usr/,}bin/xrdb               rPx,
   /{usr/,}bin/xsettingsd         rPx,
 
   /usr/share/hwdata/*.ids r,
@@ -60,15 +64,17 @@ profile kded5 @{exec_path} {
 
   owner @{HOME}/.gtkrc-2.0 rw,
 
+  owner @{user_cache_dirs}/#[0-9]* rwk,
   owner @{user_cache_dirs}/icon-cache.kcache rw,
-  owner @{user_cache_dirs}/ksycoca5_* r,
+  owner @{user_cache_dirs}/ksycoca5_* rwkl,
 
   owner @{user_config_dirs}/#[0-9]* rw,
   owner @{user_config_dirs}/bluedevilglobalrc rk,
   owner @{user_config_dirs}/bluedevilglobalrc* rwkl,
   owner @{user_config_dirs}/gtk-{3,4}.0/{,**} rwl,
   owner @{user_config_dirs}/kcminputrc r,
-  owner @{user_config_dirs}/kconf_updaterc r,
+  owner @{user_config_dirs}/kconf_updaterc rw,
+  owner @{user_config_dirs}/kconf_updaterc.* rwkl,
   owner @{user_config_dirs}/kded5rc r,
   owner @{user_config_dirs}/kdedefaults/{,**} r,
   owner @{user_config_dirs}/kdeglobals r,
@@ -78,16 +84,21 @@ profile kded5 @{exec_path} {
   owner @{user_config_dirs}/kwinrc r,
   owner @{user_config_dirs}/kxkbrc r,
   owner @{user_config_dirs}/libaccounts-glib/accounts.db{,-shm,-wal} rwk,
+  owner @{user_config_dirs}/menus/{,**} r,
+  owner @{user_config_dirs}/plasma-nm r,
   owner @{user_config_dirs}/xsettingsd/{,**} rw,
 
   owner @{user_share_dirs}/icc/{,edid-*} r,
   owner @{user_share_dirs}/kded5/{,**} r,
+  owner @{user_share_dirs}/kded5/keyboard/session/layout_memory.xml w,
   owner @{user_share_dirs}/kscreen/{,**} rw,
   owner @{user_share_dirs}/ktp/cache.db rwk,
   owner @{user_share_dirs}/kcookiejar/#@{hex}* rw,
+  owner @{user_share_dirs}/kcookiejar/cookies r,
   owner @{user_share_dirs}/kcookiejar/cookies.* rwkl,
 
   owner @{run}/user/@{uid}/#[0-9]* rw,
+  owner @{run}/user/@{uid}/gvfs/ r,
   owner @{run}/user/@{uid}/kded5*kioworker.socket rwl,
 
   owner /tmp/plasma-csd-generator.??????/{,**} rw,
@@ -101,6 +112,7 @@ profile kded5 @{exec_path} {
   owner @{PROC}/@{pid}/mountinfo r,
   owner @{PROC}/@{pid}/mounts r,
 
+  /dev/disk/by-label/ r,
   /dev/ptmx rw,
   /dev/rfkill r,
 
@@ -112,10 +124,15 @@ profile kded5 @{exec_path} {
 
     /{usr/,}bin/pgrep mr,
 
+    @{sys}/devices/system/node/ r,
+    @{sys}/devices/system/node/node[0-9]*/meminfo r,
+
     @{PROC}/ r,
     @{PROC}/@{pids}/cmdline r,
+    @{PROC}/@{pids}/cgroup r,
     @{PROC}/@{pids}/stat r,
     @{PROC}/sys/kernel/osrelease r,
+    @{PROC}/tty/drivers r,
     @{PROC}/uptime r,
 
     include if exists <local/kded5_pgrep>
