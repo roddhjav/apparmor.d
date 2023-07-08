@@ -122,7 +122,7 @@ impersonalize() {
 		# Remove itself
 		"$(readlink -f "$SELF")"
 	)
-	rm -rvf "${remove[@]}"
+	rm -rf "${remove[@]}"
 }
 
 

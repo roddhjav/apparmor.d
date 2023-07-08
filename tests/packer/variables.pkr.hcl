@@ -29,7 +29,7 @@ variable "ssh_privatekey" {
 }
 
 variable "disk_size" {
-  description = "Disk size of the App VM to build"
+  description = "Disk size of the VM to build"
   type        = string
   default     = "10G"
 }
@@ -44,6 +44,12 @@ variable "base_dir" {
   description = "Final packer image output directory"
   type        = string
   default     = "/var/lib/libvirt/images"
+}
+
+variable "firmware" {
+  description = "Path to the UEFI firmware"
+  type        = string
+  default     = "/usr/share/edk2-ovmf/x64/OVMF_CODE.fd"
 }
 
 variable "output" {
@@ -82,8 +88,8 @@ variable "release" {
       version  = "22.04.2",
     },
     "debian" : {
-      codename = "bullseye",
-      version  = "11",
+      codename = "bookworm",
+      version  = "12",
     }
     "opensuse" : {
       codename = "tumbleweed",

@@ -21,6 +21,7 @@ main() {
 	install -Dm0644 $SRC/parser.conf /etc/apparmor/parser.conf
 	install -Dm0644 $SRC/site.local /etc/apparmor.d/tunables/multiarch.d/site.local
 	install -Dm0755 $SRC/aa-update /usr/bin/aa-update
+	install -Dm0755 $SRC/aa-log-clean /usr/bin/aa-log-clean
 	chown -R "$SUDO_USER:$SUDO_USER" "/home/$SUDO_USER/.config/"
 	case "$DISTRIBUTION" in
 	arch) pacman --noconfirm -U $SRC/apparmor.d-*-x86_64.pkg.tar.zst ;;
