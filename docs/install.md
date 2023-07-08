@@ -43,17 +43,8 @@ cd apparmor.d-git
 makepkg -si
 ```
 
-!!! note
-
-    If your Archlinux based distribution is not recognized, force it with:
-    ```sh
-    DISTRIBUTION=arch makepkg -si
-    ```
-
-
 
 ## :material-ubuntu: Ubuntu & :material-debian: Debian
-
 
 Build the package from sources:
 ```sh
