@@ -36,6 +36,7 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
 
   capability sys_admin, # If kernel.unprivileged_userns_clone = 1
   capability sys_chroot, # If kernel.unprivileged_userns_clone = 1
+  capability sys_ptrace,
 
   ptrace peer=@{profile_name},
 
@@ -128,13 +129,16 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
   @{exec_path} mrix,
 
   /{usr/,}bin/{,ba,da}sh          rix,
+  /{usr/,}bin/basename            rix,
 
   @{firefox_lib_dirs}/{,**}             r,
   @{firefox_lib_dirs}/*.so              mr,
   @{firefox_lib_dirs}/crashreporter     rPx,
+  @{firefox_lib_dirs}/glxtest          rPUx,
   @{firefox_lib_dirs}/minidump-analyzer rPx,
   @{firefox_lib_dirs}/pingsender        rPx,
   @{firefox_lib_dirs}/plugin-container  rPx,
+  @{firefox_lib_dirs}/vaapitest        rPUx,
   /{usr/,}lib/mozilla/kmozillahelper   rPUx,
 
   /{usr/,}lib/@{multiarch}/qt5/plugins/kf5/org.kde.kwindowsystem.platforms/KF5WindowSystemX11Plugin.so mr,
@@ -145,6 +149,7 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
   @{libexec}/gvfsd-metadata                               rPx,
   /{usr/,}bin/exo-open                                    rPx -> child-open,
   /{usr/,}bin/gnome-software                              rPx,
+  /{usr/,}bin/kreadconfig5                                rix,
   /{usr/,}bin/lsb_release                                 rPx -> lsb_release,
   /{usr/,}bin/update-mime-database                        rPx,
   /{usr/,}bin/xdg-open                                    rPx -> child-open,
@@ -173,6 +178,8 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
   /etc/mime.types r,
   /etc/opensc.conf r,
   /etc/xul-ext/kwallet5.js r,
+
+  /var/lib/nscd/services r,
 
   owner @{HOME}/ r,
 
@@ -214,7 +221,9 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
   owner /tmp/Temp-*/ rw,
 
   @{run}/mount/utab r,
-  @{run}/udev/data/* r,
+
+  @{run}/udev/data/+input* r,          # for mouse, keyboard, touchpad
+  @{run}/udev/data/c13:[0-9]*  r,      # for /dev/input/*
 
   @{sys}/bus/ r,
   @{sys}/cgroup/cpu,cpuacct/user.slice/cpu.cfs_quota_us r,
@@ -269,7 +278,6 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
   deny @{firefox_lib_dirs}/** w,
   deny @{run}/user/@{uid}/gnome-shell-disable-extensions w,
   deny /tmp/MozillaUpdateLock-* w,
-  deny capability sys_ptrace,
   deny owner @{HOME}/.* r,
   deny owner @{user_share_dirs}/gvfs-metadata/{,*} r,
 
