@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/arduino/go-paths-helper"
-	"github.com/roddhjav/apparmor.d/pkg/aa"
 	"golang.org/x/exp/slices"
 )
 
@@ -46,17 +45,6 @@ func getSupportedDistribution() string {
 		return id_like
 	}
 	return id
-}
-
-func setLibexec(libexec string) error {
-	aa.Tunables["libexec"] = []string{libexec}
-	file, err := RootApparmord.Join("tunables", "multiarch.d", "apparmor.d").Append()
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-	_, err = file.WriteString(`@{libexec}=` + libexec)
-	return err
 }
 
 func copyTo(src *paths.Path, dst *paths.Path) error {

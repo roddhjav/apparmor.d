@@ -20,7 +20,8 @@ var (
 
 	// Tunables
 	Tunables = map[string][]string{
-		"libexec":         {},
+		"bin":             {"/{usr/,}{s,}bin"},
+		"lib":             {"/{usr/,}lib{,exec,32,64}"},
 		"multiarch":       {"*-linux-gnu*"},
 		"user_share_dirs": {"/home/*/.local/share"},
 		"etc_ro":          {"/{usr/,}etc/"},

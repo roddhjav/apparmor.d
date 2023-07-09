@@ -117,17 +117,9 @@ func Merge() error {
 // Set the distribution specificities
 func Configure() (err error) {
 	switch Distribution {
-	case "arch":
-		err = setLibexec("/{usr/,}lib")
-
-	case "opensuse":
-		err = setLibexec("/{usr/,}libexec")
+	case "arch", "opensuse":
 
 	case "debian", "ubuntu", "whonix":
-		if err := setLibexec("/{usr/,}libexec"); err != nil {
-			return err
-		}
-
 		// Copy Ubuntu specific profiles
 		if err := copyTo(DistDir.Join("ubuntu"), RootApparmord); err != nil {
 			return err
