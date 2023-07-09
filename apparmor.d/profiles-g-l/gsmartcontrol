@@ -6,7 +6,7 @@ abi <abi/3.0>,
 
 include <tunables/global>
 
-@{exec_path} = /{usr/,}{s,}bin/gsmartcontrol
+@{exec_path} = @{bin}/gsmartcontrol
 profile gsmartcontrol @{exec_path} {
   include <abstractions/base>
   include <abstractions/gtk>
@@ -22,8 +22,8 @@ profile gsmartcontrol @{exec_path} {
 
   @{exec_path} mr,
 
-  /{usr/,}{s,}bin/smartctl rPx,
-  /{usr/,}bin/xterm     rCx -> terminal,
+  @{bin}/smartctl rPx,
+  @{bin}/xterm     rCx -> terminal,
 
   # When gsmartcontrol is run as root, it wants to exec dbus-launch, and hence it creates the two
   # following root processes:
@@ -31,10 +31,10 @@ profile gsmartcontrol @{exec_path} {
   #  /usr/bin/dbus-daemon --syslog-only --fork --print-pid 5 --print-address 7 --session
   #
   # Should this be allowed? Gsmartcontrol works fine without this.
-  #/{usr/,}bin/dbus-launch        rCx -> dbus,
-  #/{usr/,}bin/dbus-send          rCx -> dbus,
-  deny /{usr/,}bin/dbus-launch rx,
-  deny /{usr/,}bin/dbus-send   rx,
+  #@{bin}/dbus-launch        rCx -> dbus,
+  #@{bin}/dbus-send          rCx -> dbus,
+  deny @{bin}/dbus-launch rx,
+  deny @{bin}/dbus-send   rx,
 
   owner @{user_config_dirs}/gsmartcontrol/ rw,
   owner @{user_config_dirs}/gsmartcontrol/gsmartcontrol.conf rw,
@@ -62,16 +62,16 @@ profile gsmartcontrol @{exec_path} {
   # The Help menu (and links in it) requires access to a web browser. Since gsmartcontrol is run as
   # root (even when used sudo or gsmartcontrol-root), the web browser will also be run as root and
   # hence this behavior should be blocked.
-  deny /{usr/,}lib/@{multiarch}/glib-[0-9]*/gio-launch-desktop rx,
+  deny @{lib}/@{multiarch}/glib-[0-9]*/gio-launch-desktop rx,
 
 
   profile dbus {
     include <abstractions/base>
     include <abstractions/nameservice-strict>
 
-    /{usr/,}bin/dbus-launch   mr,
-    /{usr/,}bin/dbus-send     mr,
-    /{usr/,}bin/dbus-daemon rPUx,
+    @{bin}/dbus-launch   mr,
+    @{bin}/dbus-send     mr,
+    @{bin}/dbus-daemon rPUx,
 
     # for dbus-launch
     owner @{HOME}/.dbus/session-bus/@{hex}-[0-9] w,
@@ -89,7 +89,7 @@ profile gsmartcontrol @{exec_path} {
     capability setgid,
     capability fsetid,
 
-    /{usr/,}bin/xterm mr,
+    @{bin}/xterm mr,
 
     /usr/sbin/update-smart-drivedb rPx,
 
