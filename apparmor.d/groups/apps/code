@@ -1,118 +1,69 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2019-2021 Mikhail Morfikov
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
 
 include <tunables/global>
 
-@{exec_path} = /usr/share/code/{bin/,}code /{usr/,}bin/code
+@{exec_path} = /{usr/,}bin/code /usr/share/code/{bin/,}code
 profile code @{exec_path} {
   include <abstractions/base>
-  include <abstractions/dconf-write>
-  include <abstractions/opencl-intel>
-  include <abstractions/gtk>
-  include <abstractions/freedesktop.org>
-  include <abstractions/fonts>
-  include <abstractions/fontconfig-cache-read>
-  include <abstractions/nameservice-strict>
-  include <abstractions/ssl_certs>
   include <abstractions/chromium-common>
-  # The following doesn't seem to be needed
-  ##include <abstractions/mesa>
-  ##include <abstractions/consoles>
-  ##include <abstractions/audio>
-  ##include <abstractions/user-download-strict>
-  include <abstractions/thumbnails-cache-read>
+  include <abstractions/dconf-write>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/fonts>
+  include <abstractions/freedesktop.org>
+  include <abstractions/gtk>
+  include <abstractions/nameservice-strict>
+  include <abstractions/opencl>
+  include <abstractions/ssl_certs>
 
-  ptrace (read) peer=lsb_release,
+  # ptrace (read) peer=lsb_release,
 
   @{exec_path} mrix,
 
-  /usr/share/code/** r,
-  /usr/share/code/libffmpeg.so mr,
-  /usr/share/code/resources/**/bin/* rix,
-  /usr/share/code/resources/**.node mr,
+  /{usr/,}lib/code/extensions/git/dist/askpass.sh rPx,
+  /{usr/,}lib/code/extensions/git/dist/git-editor.sh rPx,
 
-  # The bash shell is needed only when you want to start code via bin/code. Also the shells are
-  # needed if you plan to operate on the built in terminal. If you don't need the built in terminal
-  # and want to use the linux one, the following three lines can be commented out.
-  #/{usr/,}bin/{,ba,da}sh  rix,
-  # /{usr/,}bin/zsh        rix,
+  # The shell is not confined on purpose.
+  /{usr/,}bin/{,b,d,rb}ash         rUx,
+  /{usr/,}bin/{c,k,tc,z}sh         rUx,
 
-  #/{usr/,}bin/dirname     rix,
-  #/{usr/,}bin/{,e}grep    rix,
-  #/{usr/,}bin/id          rix,
-  #/{usr/,}bin/readlink    rix,
-  #/{usr/,}bin/which{,.debianutils}       rix,
-  #/{usr/,}sbin/ifconfig   rix,
+  /{usr/,}bin/git                  rPx,
+  /{usr/,}bin/gpg{,2}             rPUx,
+  /{usr/,}bin/lsb_release          rPx -> lsb_release,
 
-  /{usr/,}bin/lsb_release rPx -> lsb_release,
+  # /usr/share/code/** r,
+  # /usr/share/code/libffmpeg.so mr,
+  # /usr/share/code/resources/**/bin/* rix,
+  # /usr/share/code/resources/**.node mr,
 
-  /{usr/,}bin/git        rPUx,
+  /var/lib/dbus/machine-id r,
+  /etc/machine-id r,
 
-  # Needed to sign commits
-  /{usr/,}bin/gpg{,2}    rPUx,
-
-  #      /home/ r,
-  # Reading of the user home dir is required or the following error will be printed:
-  #  Unexpected end of JSON input:
-  #owner @{HOME}/ r,
   owner @{user_config_dirs}/Code/ rw,
   owner @{user_config_dirs}/Code/** rwkl -> {HOME}/.config/Code/**,
   owner @{HOME}/.vscode/ rw,
   owner @{HOME}/.vscode/** rwlk -> @{HOME}/.vscode/**,
 
-  # Git dirs
   owner @{user_projects_dirs}/ r,
   owner @{user_projects_dirs}/** rwkl -> @{user_projects_dirs}/**,
 
-  /etc/fstab r,
-
-  # Needed or code gets crash with the following error:
-  #  FATAL:proc_util.cc(36)] : Permission denied (13)
-             @{PROC}/ r,
-  #
-  deny       @{PROC}/version r,
-  #
-  deny       @{PROC}/vmstat r,
-             @{PROC}/@{pid}/fd/ r,
-  # Needed to remove the following error:
-  #  Failed to activate the metrics package
-  #  EACCES: permission denied, uv_resident_set_memory
-  deny       @{PROC}/@{pids}/stat r,
-  deny       @{PROC}/@{pids}/statm r,
-  # To remove the following error:
-  #  Failed to adjust OOM score of renderer with pid : Permission denied
-  deny owner @{PROC}/@{pid}/oom_{,score_}adj rw,
-       owner @{PROC}/@{pids}/task/ r,
-       owner @{PROC}/@{pids}/task/@{tid}/status r,
-       owner @{PROC}/@{pid}/mountinfo r,
-       owner @{PROC}/@{pid}/mounts r,
-  deny owner @{PROC}/@{pid}/net/dev r,
-  deny owner @{PROC}/@{pid}/net/if_inet6 r,
-  deny owner @{PROC}/@{pids}/cmdline r,
-
-  /var/lib/dbus/machine-id r,
-  /etc/machine-id r,
-
-  deny @{sys}/devices/virtual/tty/tty[0-9]/active r,
-  deny @{sys}/devices/system/cpu/cpufreq/policy[0-9]/cpuinfo_max_freq r,
-
-  # To remove the following error:
-  #  pcilib: Cannot open /sys/bus/pci/devices/0000:03:00.0/irq: Permission denied
-  # The irq file is needed to render pages.
-  deny @{sys}/devices/pci[0-9]*/**/irq r,
-
-  owner "/tmp/VSCode Crashes/" rw,
-  owner /tmp/vscode-typescript[0-9]*/ rw,
+  owner /tmp/@{uuid} rw,
+  owner /tmp/vscode-*/{,**} rw,
+  owner /tmp/vscode-ipc-@{uuid}.sock rw,
 
   owner @{run}/user/@{uid}/vscode-@{hex}-*-{shared,main}.sock rw,
   owner @{run}/user/@{uid}/vscode-git-askpass-@{hex}.sock rw,
 
-  owner /tmp/vscode-ipc-@{uuid}.sock rw,
-  # For installing extensions
-  owner /tmp/@{uuid} rw,
+        @{PROC}/ r,
+        @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pids}/task/ r,
+  owner @{PROC}/@{pids}/task/@{tid}/status r,
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/mounts r,
 
   include if exists <local/code>
 }
