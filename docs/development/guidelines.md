@@ -64,7 +64,7 @@ The file block should be sorted as follow:
 | Order | Description | Example | Link |
 |:-----:|:-----------:|:-------:|:------:|
 | **1** | The entry point of the profile | `@{exec_path} mr,` | [:octicons-link-external-24:](https://github.com/roddhjav/apparmor.d/blob/2e4788c51ef73798c0ac94993af3cd769723e8e4/apparmor.d/groups/gnome/gdm#L67) |
-| **2** | The binaries and library required | `/{usr/,}bin/`, `/{usr/,}lib/`, `/opt/`. It is the only place where you can have `mr`, `rix`, `rPx`, `rUx`, `rPUX` rules. | [:octicons-link-external-24:](https://github.com/roddhjav/apparmor.d/blob/2e4788c51ef73798c0ac94993af3cd769723e8e4/apparmor.d/groups/gnome/gdm#L69-L76) | 
+| **2** | The binaries and library required | `@{bin}/`, `@{lib}/`, `/opt/`. It is the only place where you can have `mr`, `rix`, `rPx`, `rUx`, `rPUX` rules. | [:octicons-link-external-24:](https://github.com/roddhjav/apparmor.d/blob/2e4788c51ef73798c0ac94993af3cd769723e8e4/apparmor.d/groups/gnome/gdm#L69-L76) | 
 | **3** | The shared resources | `/usr/share` | [:octicons-link-external-24:](https://github.com/roddhjav/apparmor.d/blob/2e4788c51ef73798c0ac94993af3cd769723e8e4/apparmor.d/groups/network/NetworkManager#L111-L120) | 
 | **4** | The system configuration | `/etc` | [:octicons-link-external-24:](https://github.com/roddhjav/apparmor.d/blob/2e4788c51ef73798c0ac94993af3cd769723e8e4/apparmor.d/groups/network/NetworkManager#L111-L120) | 
 | **5** | The system data | `/`, `/var`, `/boot` | [:octicons-link-external-24:](https://github.com/roddhjav/apparmor.d/blob/2e4788c51ef73798c0ac94993af3cd769723e8e4/apparmor.d/groups/gnome/tracker-extract#L83-L93) | 
@@ -97,8 +97,8 @@ If there is no predictable label it can be omitted.
 
 `bin, sbin & lib`
 
-:   - Do not use: `/usr/lib` or `/usr/bin` but `/{usr/,}bin/` or `/{usr/,}lib/`
-    - Do not use: `/usr/sbin` or `/sbin` but `/{usr/,}{s,}bin/`.
+:   - Do not use: `/usr/lib` or `/usr/bin` but `@{bin}/` or `@{lib}/`
+    - Do not use: `/usr/sbin` or `/sbin` but `@{bin}/`.
 
 `Variables`
 
