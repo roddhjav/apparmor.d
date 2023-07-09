@@ -21,10 +21,11 @@ func TestNewAppArmorProfile(t *testing.T) {
 			want: &AppArmorProfile{
 				Content: "",
 				Variables: map[string][]string{
-					"libexec":         {},
-					"etc_ro":          {"/{usr/,}etc/"},
+					"bin":             {"/{usr/,}{s,}bin"},
+					"lib":             {"/{usr/,}lib{,exec,32,64}"},
 					"multiarch":       {"*-linux-gnu*"},
 					"user_share_dirs": {"/home/*/.local/share"},
+					"etc_ro":          {"/{usr/,}etc/"},
 				},
 				Attachments: []string{},
 			},
