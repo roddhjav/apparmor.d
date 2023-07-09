@@ -27,5 +27,3 @@
 # Common places for binaries and libraries across distributions
 @{bin}=/{usr/,}{s,}bin
 @{lib}=/{usr/,}lib{,exec,32,64}
-
-# Libexec path. Different in some distribution
