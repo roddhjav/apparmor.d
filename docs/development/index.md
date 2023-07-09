@@ -81,7 +81,7 @@ abi <abi/3.0>,
 
 include <tunables/global>
 
-@{exec_path} = /{usr/,}bin/foo
+@{exec_path} = @{bin}/foo
 profile foo @{exec_path} {
   include <abstractions/base>
 

@@ -87,12 +87,12 @@ sudo make profile-names...
     For instance, `sudo make pass` gives:
     ```sh
     Warning: profile dependencies fallback to unconfined.
-    /{usr/,}bin/wl-{copy,paste} rPx,
-    /{usr/,}bin/xclip           rPx,
-    /{usr/,}bin/python3.[0-9]* rPx -> pass-import,  # pass-import
-        /{usr/,}bin/pager         rPx -> child-pager,
-        /{usr/,}bin/less          rPx -> child-pager,
-        /{usr/,}bin/more          rPx -> child-pager,
+    @{bin}/wl-{copy,paste} rPx,
+    @{bin}/xclip           rPx,
+    @{bin}/python3.[0-9]* rPx -> pass-import,  # pass-import
+        @{bin}/pager         rPx -> child-pager,
+        @{bin}/less          rPx -> child-pager,
+        @{bin}/more          rPx -> child-pager,
     '.build/apparmor.d/pass' -> '/etc/apparmor.d/pass'
     ```
     So, you can install the additional profiles `wl-copy`, `xclip`, `pass-import`, and `child-pager` if desired.

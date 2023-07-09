@@ -92,7 +92,7 @@ your rules in it.
   picture, books...) with some predefined GUI application. To allow it to open
   URLs with Firefox, create the file `/etc/apparmor.d/local/child-open` with:
   ```sh
-    /{usr/,}bin/firefox rPx,
+    @{bin}/firefox rPx,
   ```
 
 !!! note

@@ -89,8 +89,8 @@ title: Variables References
 | Mountpoints directories | `@{MOUNTS}` | `@{MOUNTDIRS}/*/` |
 | Universally unique identifier | `@{uuid}` | `[0-9a-fA-F]*-[0-9a-fA-F]*-[0-9a-fA-F]*-[0-9a-fA-F]*-[0-9a-fA-F]*` |
 | Hexadecimal | `@{hex}` | `[0-9a-fA-F]*` |
-| Libexec *(Archlinux)* | `@{libexec}` | `/{usr/,}lib` |
-| Libexec *(Debian/Ubuntu)* | `@{libexec}` | `/{usr/,}libexec` |
+| Bin | `@{bin}` |  `/{usr/,}{s,}bin` |
+| Lib | `@{lib}` |  `/{usr/,}lib{,exec,32,64}` |
 | multi-arch library | `@{multiarch}` | `*-linux-gnu*` |
 | Proc | `@{PROC}` | `/proc/` |
 | Run | `@{run}` | `/run/ /var/run/` |

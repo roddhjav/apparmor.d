@@ -46,11 +46,11 @@ our profile:
       include <abstractions/base>
       include <abstractions/consoles>
 
-      /{usr/,}bin/       r,
-      /{usr/,}bin/pager mr,
-      /{usr/,}bin/less  mr,
-      /{usr/,}bin/more  mr,
-      /{usr/,}bin/diff  mr,
+      @{bin}/       r,
+      @{bin}/pager mr,
+      @{bin}/less  mr,
+      @{bin}/more  mr,
+      @{bin}/diff  mr,
 
       owner @{HOME}/.lesshs* rw,
 
@@ -73,7 +73,7 @@ our profile:
     [apparmor.d/apparmor.d/profiles-m-r/pass](https://github.com/roddhjav/apparmor.d/blob/accf5538bdfc1598f1cc1588a7118252884df50c/apparmor.d/profiles-m-r/pass#L20
     )
     ``` aa linenums="20"
-      /{usr/,}bin/diff      rix,
+      @{bin}/diff      rix,
     ```
 
 **What if I still want to protect these programs?**
@@ -125,7 +125,7 @@ the following note:
 Here is an overview of the current children profile:
 
 1. **`child-open`**: To open resources. Instead of allowing the run of all
-   software in `/{usr/,}bin/`, the purpose of this profile is to list all GUI
+   software in `@{bin}/`, the purpose of this profile is to list all GUI
    programs that can open resources. Ultimately, only sandbox manager programs
    such as `bwrap`, `snap`, `flatpak`, `firejail` should be present here. Until
    this day, this profile will be a controlled mess.
@@ -147,7 +147,7 @@ This abstraction requires the following variables definied in the profile header
 ```sh
 @{chromium_name} = chromium
 @{chromium_domain} = org.chromium.Chromium
-@{chromium_lib_dirs} = /{usr/,}lib/chromium
+@{chromium_lib_dirs} = @{lib}/chromium
 @{chromium_config_dirs} = @{user_config_dirs}/chromium
 @{chromium_cache_dirs} = @{user_cache_dirs}/chromium
 ```
