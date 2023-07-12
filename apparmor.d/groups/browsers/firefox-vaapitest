@@ -1,0 +1,33 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{firefox_name} = firefox{,.sh,-esr,-bin}
+@{firefox_lib_dirs} = @{lib}/@{firefox_name} /opt/@{firefox_name}
+
+@{exec_path} = @{firefox_lib_dirs}/vaapitest
+profile firefox-vaapitest @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/dri-enumerate>
+  include <abstractions/dri-common>
+  include <abstractions/nvidia>
+  include <abstractions/vulkan>
+
+  @{exec_path} mr,
+
+  /etc/igfx_user_feature{,_next}.txt w,
+  /etc/libva.conf r,
+
+  owner @{firefox_config_dirs}/firefox/*/.parentlock rw,
+  owner @{firefox_config_dirs}/firefox/*/startupCache/*Cache* r,
+
+  owner /tmp/firefox/.parentlock rw,
+
+  @{sys}/devices/pci[0-9]*/**/{irq,revision,resource} r,
+
+  include if exists <local/firefox-vaapitest>
+}

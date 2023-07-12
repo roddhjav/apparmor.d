@@ -1,0 +1,33 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{firefox_name} = firefox{,.sh,-esr,-bin}
+@{firefox_lib_dirs} = @{lib}/@{firefox_name} /opt/@{firefox_name}
+@{firefox_config_dirs} = @{HOME}/.mozilla/
+
+@{exec_path} = @{firefox_lib_dirs}/glxtest
+profile firefox-glxtest @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/dri-common>
+  include <abstractions/dri-enumerate>
+  include <abstractions/mesa>
+  include <abstractions/nameservice-strict>
+  include <abstractions/opencl-nvidia>
+  include <abstractions/vulkan>
+
+  @{exec_path} mr,
+
+  owner @{firefox_config_dirs}/firefox/*/.parentlock rw,
+
+  owner /tmp/firefox/.parentlock rw,
+
+  @{sys}/bus/pci/devices/ r,
+  @{sys}/devices/pci[0-9]*/**/class r,
+
+  include if exists <local/firefox-glxtest>
+}
