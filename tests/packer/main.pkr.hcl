@@ -8,6 +8,7 @@ build {
     "source.qemu.archlinux-kde",
     "source.qemu.debian-server",
     "source.qemu.opensuse-kde",
+    "source.qemu.ubuntu-desktop",
     "source.qemu.ubuntu-server",
   ]
 
