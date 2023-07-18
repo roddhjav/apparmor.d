@@ -17,6 +17,7 @@ readonly DISTRIBUTION
 main() {
 	install -dm0750 -o "$SUDO_USER" -g "$SUDO_USER" "/home/$SUDO_USER/Projects/" "/home/$SUDO_USER/.config/"
 	install -Dm0644 -o "$SUDO_USER" -g "$SUDO_USER" $SRC/.bash_aliases "/home/$SUDO_USER/.bash_aliases"
+	install -Dm0644 -o "$SUDO_USER" -g "$SUDO_USER" $SRC/monitors.xml "/home/$SUDO_USER/.config/monitors.xml"
 	install -Dm0644 -o "$SUDO_USER" -g "$SUDO_USER" $SRC/htoprc "/home/$SUDO_USER/.config/htop/htoprc"
 	install -Dm0644 $SRC/parser.conf /etc/apparmor/parser.conf
 	install -Dm0644 $SRC/site.local /etc/apparmor.d/tunables/multiarch.d/site.local
@@ -28,7 +29,7 @@ main() {
 	debian | ubuntu)
 		apt-get update -y
 		apt-get install -y apparmor-profiles build-essential config-package-dev \
-			debhelper devscripts htop qemu-guest-agent rsync vim
+			debhelper devscripts htop rsync vim
 		dpkg -i $SRC/apparmor.d_*_all.deb
 		;;
 

@@ -22,7 +22,7 @@ source "qemu" "ubuntu-server" {
   output_directory   = "${var.output}/"
   vm_name            = "${var.prefix}${source.name}.qcow2"
   boot_wait          = "10s"
-  firmware           = "/usr/share/edk2-ovmf/x64/OVMF_CODE.fd"
+  firmware           = "${var.firmware}"
   shutdown_command   = "echo ${var.password} | sudo -S /sbin/shutdown -hP now"
   cd_label           = "cidata"
   cd_content = {
