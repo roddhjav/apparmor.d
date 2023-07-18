@@ -61,7 +61,9 @@ clean_arch() {
 	_msg "Pacman clean configuration"
 
 	pacman -Syu --noconfirm
-	pacman -Rsccn --noconfirm "$(pacman -Qdtq)"
+	pacman -Qdtq | while IFS='' read -r pkg; do
+		pacman -Rsccn --noconfirm "$pkg"
+	done
 	pacman -Scc --noconfirm
 }
 
