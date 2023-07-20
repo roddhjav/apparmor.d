@@ -42,12 +42,17 @@ profile gvfs-udisks2-volume-monitor @{exec_path} flags=(attach_disconnected) {
        member=ListMountableInfo
        peer=(name=:*, label=gvfsd),
 
+  dbus send bus=session path=/org/gtk/Private/RemoteVolumeMonitor
+       interface=org.gtk.Private.RemoteVolumeMonitor
+       member=MountAdded
+       peer=(name=org.freedesktop.DBus, label=tracker-*),
+
   dbus receive bus=session path=/org/gtk/Private/RemoteVolumeMonitor
        interface=org.gtk.Private.RemoteVolumeMonitor
        member={List,IsSupported}
        peer=(name=:*, label="{gnome-shell,gnome-control-center,gnome-extension-ding,tracker-*,unconfined}"),
 
-  dbus receive bus=session path=/{,org}
+  dbus receive bus=session path=/{,org,org/gtk,org/gtk/Private,org/gtk/Private/RemoteVolumeMonitor}
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
        peer=(name=:*, label=gnome-shell),
