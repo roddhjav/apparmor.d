@@ -9,17 +9,23 @@ include <tunables/global>
 @{exec_path} = @{bin}/plasma-discover
 profile plasma-discover @{exec_path} {
   include <abstractions/base>
+  include <abstractions/dconf-write>
+  include <abstractions/dri-common>
+  include <abstractions/dri-enumerate>
   include <abstractions/fonts>
+  include <abstractions/freedesktop.org>
   include <abstractions/mesa>
   include <abstractions/nameservice-strict>
   include <abstractions/openssl>
+  include <abstractions/qt5-shader-cache>
   include <abstractions/ssl_certs>
+  include <abstractions/vulkan>
 
   network inet dgram,
   network inet6 dgram,
   network inet stream,
   network inet6 stream,
-  # network netlink raw,
+  network netlink raw,
 
   @{exec_path} mr,
 
@@ -30,6 +36,7 @@ profile plasma-discover @{exec_path} {
   @{lib}/kf5/kio_http_cache_cleaner  rPx,
 
   /usr/share/kservices5/{,*} r,
+  /usr/share/knsrcfiles/{,*} r,
 
   /etc/appstream.conf r,
   /etc/machine-id r,
@@ -48,14 +55,25 @@ profile plasma-discover @{exec_path} {
   owner @{user_cache_dirs}/appstream/*.xb r,
   owner @{user_cache_dirs}/appstream/ r,
 
-  owner @{user_config_dirs}/kde.org/{,**} rwlk,
-  owner @{user_config_dirs}/discoverrc rwl,
+  owner @{user_config_dirs}/ r,
   owner @{user_config_dirs}/#[0-9]* rwl,
+  owner @{user_config_dirs}/discoverrc rwl,
   owner @{user_config_dirs}/discoverrc.lock rwk,
+  owner @{user_config_dirs}/kde.org/{,**} rwlk,
+  owner @{user_config_dirs}/kdedefaults/ r,
+  owner @{user_config_dirs}/kdedefaults/kdeglobals r,
+  owner @{user_config_dirs}/kdedefaults/kwinrc r,
+  owner @{user_config_dirs}/kdeglobals r,
+  owner @{user_config_dirs}/kwinrc r,
+  owner @{user_config_dirs}/libaccounts-glib/ rw,
+  owner @{user_config_dirs}/libaccounts-glib/accounts.db{,-shm,-wal,-journal} rwk,
+
+  owner @{user_share_dirs}/knewstuff3/ r,
 
   owner @{user_share_dirs}/flatpak/repo/{,**} rw,
 
         @{PROC}/sys/kernel/random/boot_id r,
+  owner @{PROC}/@{pid}/mountinfo r,
 
   include if exists <local/plasma-discover>
 }

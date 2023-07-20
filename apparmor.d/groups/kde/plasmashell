@@ -7,13 +7,14 @@ abi <abi/3.0>,
 include <tunables/global>
 
 @{exec_path} = @{bin}/plasmashell
-profile plasmashell @{exec_path} {
+profile plasmashell @{exec_path} flags=(mediate_deleted) {
   include <abstractions/base>
   include <abstractions/app-launcher-user>
   include <abstractions/audio>
   include <abstractions/consoles>
   include <abstractions/dbus-session-strict>
   include <abstractions/dbus-strict>
+  include <abstractions/devices-usb>
   include <abstractions/disks-read>
   include <abstractions/dri-common>
   include <abstractions/dri-enumerate>
@@ -24,7 +25,7 @@ profile plasmashell @{exec_path} {
   include <abstractions/nameservice-strict>
   include <abstractions/qt5-shader-cache>
   include <abstractions/qt5>
-  # include <abstractions/user-tmp>
+  include <abstractions/thumbnails-cache-read>
   include <abstractions/vulkan>
   include <abstractions/X-strict>
 
@@ -93,7 +94,7 @@ profile plasmashell @{exec_path} {
   owner @{user_cache_dirs}/#[0-9]* rwk,
   owner @{user_cache_dirs}/event-sound-cache.tdb.*.x86_64-pc-linux-gnu rwk,
   owner @{user_cache_dirs}/icon-cache.kcache rw,
-  owner @{user_cache_dirs}/ksycoca5_* r,
+  owner @{user_cache_dirs}/ksycoca5_* rl,
   owner @{user_cache_dirs}/org.kde.dirmodel-qml.kcache rw,
   owner @{user_cache_dirs}/plasma_theme_*.kcache rw,
   owner @{user_cache_dirs}/plasma-svgelements.?????? rwlk,
@@ -107,6 +108,7 @@ profile plasmashell @{exec_path} {
   owner @{user_config_dirs}/akonadi/akonadiconnectionrc r,
   owner @{user_config_dirs}/baloofilerc r,
   owner @{user_config_dirs}/dolphinrc r,
+  owner @{user_config_dirs}/eventviewsrc r,
   owner @{user_config_dirs}/kactivitymanagerd-statsrc r,
   owner @{user_config_dirs}/kde.org/{,**} rwlk,
   owner @{user_config_dirs}/KDE/{,**} r,
@@ -114,19 +116,15 @@ profile plasmashell @{exec_path} {
   owner @{user_config_dirs}/kdedefaults/kwinrc r,
   owner @{user_config_dirs}/kdedefaults/plasmarc r,
   owner @{user_config_dirs}/kdeglobals r,
+  owner @{user_config_dirs}/kioslaverc r,
   owner @{user_config_dirs}/klipperrc r,
+  owner @{user_config_dirs}/kmail2.notifyrc r,
+  owner @{user_config_dirs}/korganizerrc r,
   owner @{user_config_dirs}/krunnerrc r,
   owner @{user_config_dirs}/ksmserverrc r,
   owner @{user_config_dirs}/kwinrc r,
   owner @{user_config_dirs}/menus/{,**} r,
-  owner @{user_config_dirs}/plasma-org.kde.plasma.desktop-appletsrc.?????? rk,
-  owner @{user_config_dirs}/plasma-pk-updates r,
-  owner @{user_config_dirs}/plasma*desktop* rwlk,
-  owner @{user_config_dirs}/plasmanotifyrc rw,
-  owner @{user_config_dirs}/plasmanotifyrc.* rwl,
-  owner @{user_config_dirs}/plasmanotifyrc.lock rwk,
-  owner @{user_config_dirs}/plasmaparc r,
-  owner @{user_config_dirs}/plasmashellrc r,
+  owner @{user_config_dirs}/plasma* rwlk,
   owner @{user_config_dirs}/pulse/cookie rwk,
   owner @{user_config_dirs}/trashrc r,
 
@@ -157,6 +155,10 @@ profile plasmashell @{exec_path} {
   @{sys}/bus/usb/devices/ r,
   @{sys}/class/ r,
 
+  @{sys}/devices/system/node/ r,
+  @{sys}/devices/system/node/node[0-9]*/meminfo r,
+
+        @{PROC}/ r,
         @{PROC}/sys/kernel/core_pattern r,
         @{PROC}/sys/kernel/random/boot_id r,
   owner @{PROC}/@{pid}/{cgroup,cmdline,stat,statm} r,
