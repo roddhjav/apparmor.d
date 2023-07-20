@@ -1,49 +1,42 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2015-2021 Mikhail Morfikov
+# Copyright (C) 2021-2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
-# Useful info:
-# http://kb.mozillazine.org/Files_and_folders_in_the_profile_-_Thunderbird
 
 abi <abi/3.0>,
 
 include <tunables/global>
 
-@{FIREFOX_BIN}  = @{lib}/firefox{,-esr}/firefox
-@{FIREFOX_BIN} += /opt/firefox{,-esr}/firefox
+@{thunderbird_name} = thunderbird{,-bin}
+@{thunderbird_lib_dirs} = @{lib}/@{thunderbird_name}
+@{thunderbird_config_dirs} = @{HOME}/.@{thunderbird_name}/
+@{thunderbird_cache_dirs} = @{user_cache_dirs}/@{thunderbird_name}/
 
-@{MOZ_LIBDIR} = @{lib}/thunderbird
-@{MOZ_HOMEDIR} = @{HOME}/.thunderbird
-@{MOZ_CACHEDIR} = @{user_cache_dirs}/thunderbird
-
-@{exec_path}  = @{MOZ_LIBDIR}/thunderbird{,-bin}
-@{exec_path} += @{bin}/thunderbird
+@{exec_path} = @{bin}/@{thunderbird_name} @{thunderbird_lib_dirs}/@{thunderbird_name}
 profile thunderbird @{exec_path} {
   include <abstractions/base>
-  include <abstractions/consoles>
-  include <abstractions/nameservice-strict>
-  include <abstractions/gtk>
-  include <abstractions/wayland>
-  include <abstractions/mesa>
-  include <abstractions/opencl-intel>
-  include <abstractions/nvidia>
-  include <abstractions/vulkan>
-  include <abstractions/fonts>
-  include <abstractions/fontconfig-cache-read>
-  include <abstractions/freedesktop.org>
   include <abstractions/audio>
-  include <abstractions/enchant>
-  include <abstractions/user-download-strict>
-  include <abstractions/thumbnails-cache-read>
-  include <abstractions/openssl>
-  include <abstractions/ibus>
-  include <abstractions/dconf-write>
-  include <abstractions/dbus-strict>
-  include <abstractions/dbus-session-strict>
   include <abstractions/dbus-gtk>
+  include <abstractions/dbus-session-strict>
+  include <abstractions/dbus-strict>
+  include <abstractions/dconf-write>
+  include <abstractions/enchant>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/fonts>
+  include <abstractions/freedesktop.org>
+  include <abstractions/gtk>
+  include <abstractions/mesa>
+  include <abstractions/nameservice-strict>
+  include <abstractions/opencl>
+  include <abstractions/openssl>
+  include <abstractions/ssl_certs>
+  include <abstractions/thumbnails-cache-read>
+  include <abstractions/user-download-strict>
+  include <abstractions/vulkan>
+  include <abstractions/wayland>
 
-  ptrace peer=@{profile_name},
-
-  unix (send, receive) type=stream peer=(addr=none, label=xorg),
+  capability sys_admin, # If kernel.unprivileged_userns_clone = 1
+  capability sys_chroot, # If kernel.unprivileged_userns_clone = 1
 
   network inet dgram,
   network inet6 dgram,
@@ -51,13 +44,7 @@ profile thunderbird @{exec_path} {
   network inet6 stream,
   network netlink raw,
 
-  # The following rules are needed only when the kernel.unprivileged_userns_clone option is set
-  # to "1".
-  capability sys_admin,
-  capability sys_chroot,
-  owner @{PROC}/@{pid}/setgroups w,
-  owner @{PROC}/@{pid}/gid_map w,
-  owner @{PROC}/@{pid}/uid_map w,
+  ptrace peer=@{profile_name},
 
   dbus send bus=session path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus
@@ -72,11 +59,6 @@ profile thunderbird @{exec_path} {
        interface=org.freedesktop.UPower
        member=EnumerateDevices
        peer=(name=org.freedesktop.UPower),
-
-  dbus send bus=session path=/ca/desrt/dconf/Writer/user
-       interface=ca.desrt.dconf.Writer
-       member={Change,Notify}
-       peer=(name=ca.desrt.dconf),
 
   dbus send bus=session path=/org/freedesktop/portal/desktop
        interface=org.freedesktop.DBus.Properties
@@ -93,237 +75,136 @@ profile thunderbird @{exec_path} {
        member={UserAdded,UserRemoved}
        peer=(name=:*, label=systemd-logind),
 
+  dbus receive bus=system path=/{,org{,/mozilla{,/thunderbird{,/Remote}}}}
+       interface==org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name=:*, label=gnome-shell),
+
   dbus bind bus=session
        name=org.mozilla.thunderbird.*,
 
-  deny dbus send bus=system path=/org/freedesktop/hostname[0-9]*,
-
-  owner /tmp/dbus-[0-9a-zA-Z]* rw,
-
   @{exec_path} mrix,
-  @{MOZ_LIBDIR}/thunderbird-wrapper-helper.sh rix,
 
-  @{bin}/{,ba,da}sh rix,
-  @{bin}/sed        rix,
-  @{bin}/date       rix,
-  @{bin}/tr         rix,
-  @{bin}/which{,.debianutils}      rix,
+  @{bin}/{,ba,da}sh  rix,
 
-  @{bin}/ps         rPx,
-  @{bin}/dig        rix,
+  @{thunderbird_lib_dirs}/{,**}                            r,
+  @{thunderbird_lib_dirs}/*.so                            mr,
+  @{thunderbird_lib_dirs}/glxtest                       rPUx,
+  @{thunderbird_lib_dirs}/thunderbird-wrapper-helper.sh  rix,
+  @{thunderbird_lib_dirs}/vaapitest                     rPUx,
 
-  # Thunderbird files
-  /usr/share/thunderbird/{,**} r,
-  /etc/thunderbird/{,**} r,
+  @{lib}/@{multiarch}/qt5/plugins/kf5/org.kde.kwindowsystem.platforms/KF5WindowSystemX11Plugin.so mr,
 
-  # Extensions
-  @{MOZ_LIBDIR}/extensions/{,**} r,
-  /usr/share/mozilla/extensions/{,**} r,
+  # Desktop integration
+  @{bin}/exo-open                                    rPx -> child-open,
+  @{bin}/lsb_release                                 rPx -> lsb_release,
+  @{bin}/xdg-open                                    rPx -> child-open,
+  @{lib}/@{multiarch}/glib-[0-9]*/gio-launch-desktop rPx -> child-open,
+  @{lib}/gio-launch-desktop                          rPx -> child-open,
+
+  # Allowed apps to open
+  @{bin}/engrampa                                         rPx,
+  @{bin}/firefox{,.sh,-esr,-bin}                          rPx,
+  @{bin}/geany                                            rPx,
+  @{bin}/qpdfview                                         rPx,
+  @{bin}/viewnior                                        rPUx,
+  @{lib}/firefox{,.sh,-esr,-bin}/firefox{,.sh,-esr,-bin}  rPx,
+  /opt/firefox{,.sh,-esr,-bin}/firefox{,.sh,-esr,-bin}    rPx,
+
+  /usr/share/gvfs/remote-volume-monitors/{,*} r,
   /usr/share/lightning/{,**} r,
+  /usr/share/mozilla/extensions/{,**} r,
+  /usr/share/qt5ct/** r,
+  /usr/share/sounds/freedesktop/stereo/*.oga r,
+  /usr/share/thunderbird/{,**} r,
+  /usr/share/xul-ext/kwallet5/* r,
 
-  # Thunderbird home files
-  owner @{MOZ_HOMEDIR}/ rw,
-  owner "@{MOZ_HOMEDIR}/{Crash Reports,Pending Pings}/" rw,
-  owner "@{MOZ_HOMEDIR}/Crash Reports/**" rw,
-  owner @{MOZ_HOMEDIR}/*.*/ rw,
-  owner @{MOZ_HOMEDIR}/*.*/** rwk,
-  deny @{MOZ_HOMEDIR}/*.*/pepmda/ rw,
-  deny @{MOZ_HOMEDIR}/*.*/pepmda/** rwklmx,
-  owner @{MOZ_HOMEDIR}/profiles.ini rw,
-  owner @{MOZ_HOMEDIR}/installs.ini rw,
-  deny @{HOME}/.mozilla/** mrwkl,
+  /etc/fstab r,
+  /etc/mailcap r,
+  /etc/mime.types r,
+  /etc/thunderbird/{,**} r,
+  /etc/timezone r,
+  /etc/xul-ext/kwallet5.js r,
 
-  # Cache
-  owner @{user_cache_dirs}/ rw,
-  owner @{MOZ_CACHEDIR}/{,**} rw,
-
-  # Needed for system mails
   owner /var/mail/* rwk,
 
   owner @{HOME}/ r,
-  owner @{HOME}/Mail/ rw,
-  owner @{HOME}/Mail/** rwl -> @{HOME}/Mail/**,
+
+  owner @{user_cache_dirs}/ rw,
+
+  owner @{user_config_dirs}/kwalletrc r,
+  owner @{user_config_dirs}/mimeapps.list.* rw,
+  owner @{user_config_dirs}/qt5ct/{,**} r,
+
   owner @{user_share_dirs}/ r,
 
-  # Spellcheck
-  @{bin}/locale rix,
+  owner @{user_mail_dirs}/ rw,
+  owner @{user_mail_dirs}/** rwl -> @{user_mail_dirs}/**,
 
-  # System integration
-  /etc/mime.types r,
-  owner @{user_config_dirs}/mimeapps.list.* rw,
+  owner @{thunderbird_config_dirs}/*/ rw,
+  owner @{thunderbird_config_dirs}/*/** rwk,
+  owner @{thunderbird_config_dirs}/installs.ini rw,
+  owner @{thunderbird_config_dirs}/profiles.ini rw,
 
-  # KDE system keyring
-  @{lib}/@{multiarch}/qt5/plugins/kf5/org.kde.kwindowsystem.platforms/KF5WindowSystemX11Plugin.so mr,
-  /usr/share/xul-ext/kwallet5/* r,
-  /etc/xul-ext/kwallet5.js r,
-  owner @{user_config_dirs}/kwalletrc r,
+  owner @{thunderbird_cache_dirs}/{,**} rw,
 
-  # QT5
-  owner @{user_config_dirs}/qt5ct/{,**} r,
-  /usr/share/qt5ct/** r,
-
-  # gnome-tiny
-  /usr/share/gvfs/remote-volume-monitors/{,*} r,
-  @{run}/mount/utab r,
-
-  deny @{sys}/devices/system/cpu/present r,
-  deny @{sys}/devices/system/cpu/cpufreq/policy[0-9]/cpuinfo_max_freq r,
-  deny @{sys}/devices/system/cpu/cpu[0-9]/cache/index[0-9]/size r,
-
-       owner @{PROC}/@{pid}/fd/ r,
-       owner @{PROC}/@{pid}/cgroup r,
-       owner @{PROC}/@{pid}/stat r,
-       owner @{PROC}/@{pid}/statm r,
-       owner @{PROC}/@{pid}/smaps r,
-       owner @{PROC}/@{pid}/comm r,
-  deny owner @{PROC}/@{pid}/cmdline r,
-  deny owner @{PROC}/@{pid}/environ r,
-       owner @{PROC}/@{pid}/task/ r,
-       owner @{PROC}/@{pid}/task/@{tid}/stat r,
-  # To remove the following error:
-  #  GLib-GIO-WARNING **: Error creating IO channel for /proc/self/mountinfo: Permission denied
-  #  (g-file-error-quark, 2)
-       owner @{PROC}/@{pid}/mountinfo r,
-       owner @{PROC}/@{pid}/mounts r,
-  deny       @{PROC}/@{pids}/net/arp r,
-  deny       @{PROC}/@{pids}/net/route r,
-  # for dig
-       owner @{PROC}/@{pid}/task/@{tid}/comm rw,
-
-  # TMP files
-        /var/tmp/ r,
         /tmp/ r,
+    /var/tmp/ r,
+  owner /tmp/@{thunderbird_name}{,_*}/ rw,
+  owner /tmp/@{thunderbird_name}{,_*}/* rwk,
   owner /tmp/* rw,
-  owner /tmp/thunderbird{,_*}/ rw,
-  owner /tmp/thunderbird{,_*}/* rwk,
   owner /tmp/mozilla_*/ rw,
   owner /tmp/mozilla_*/* rw,
   owner /tmp/MozillaMailnews/ rw,
   owner /tmp/MozillaMailnews/*.msf rw,
   owner /tmp/Temp-@{uuid}/ rw,
 
-   deny /dev/ r,
-        /dev/urandom w,
+  @{run}/mount/utab r,
+
+  @{sys}/cgroup/cpu,cpuacct/user.slice/cpu.cfs_quota_us r,
+  @{sys}/devices/system/cpu/cpu[0-9]/cache/index[0-9]/size r,
+  @{sys}/devices/system/cpu/cpufreq/policy[0-9]/cpuinfo_max_freq r,
+  @{sys}/devices/system/cpu/present r,
+  @{sys}/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us r,
+
+        @{PROC}/@{pids}/net/arp r,
+        @{PROC}/@{pids}/net/route r,
+  owner @{PROC}/@{pid}/cgroup r,
+  owner @{PROC}/@{pid}/cmdline r,
+  owner @{PROC}/@{pid}/comm r,
+  owner @{PROC}/@{pid}/environ r,
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/gid_map w, # If kernel.unprivileged_userns_clone = 1
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/mounts r,
+  owner @{PROC}/@{pid}/setgroups w, # If kernel.unprivileged_userns_clone = 1
+  owner @{PROC}/@{pid}/smaps r,
+  owner @{PROC}/@{pid}/stat r,
+  owner @{PROC}/@{pid}/statm r,
+  owner @{PROC}/@{pid}/task/ r,
+  owner @{PROC}/@{pid}/task/@{tid}/comm rw,
+  owner @{PROC}/@{pid}/task/@{tid}/stat r,
+  owner @{PROC}/@{pid}/uid_map w, # If kernel.unprivileged_userns_clone = 1
+
         /dev/shm/ r,
   owner /dev/shm/org.chromium.* rw,
   owner /dev/shm/org.mozilla.ipc.@{pid}.[0-9]* rw,
   owner /dev/shm/wayland.mozilla.ipc.[0-9]* rw,
 
-  /etc/fstab r,
-  /etc/mailcap r,
-  /etc/timezone r,
-
-  /usr/share/sounds/freedesktop/stereo/*.oga r,
-
-  # Silencer
-  deny @{lib}/thunderbird/** w,
-
-  @{bin}/lsb_release                                 rPx -> lsb_release,
-  @{bin}/xdg-{open,mime}                             rCx -> open,
-  @{bin}/exo-open                                    rCx -> open,
-  @{lib}/@{multiarch}/glib-[0-9]*/gio-launch-desktop rCx -> open,
-
-  # Needed for enigmail
-  /usr/share/xul-ext/enigmail/{,**} r,
-  @{bin}/gpgconf           rCx -> gpg,
-  @{bin}/gpg-connect-agent rCx -> gpg,
-  @{bin}/gpg{,2}           rCx -> gpg,
-  @{bin}/gpgsm             rCx -> gpg,
-
-  # Allowed apps to open
-  @{bin}/qpdfview        rPx,
-  @{bin}/viewnior        rPUx,
-  @{bin}/engrampa        rPx,
-  @{bin}/geany           rPx,
-  @{FIREFOX_BIN}              rPx,
+  /dev/tty rw,
 
   # file_inherit
   owner /dev/tty[0-9]* rw,
   owner @{HOME}/.xsession-errors w,
 
-  @{sys}/cgroup/cpu,cpuacct/user.slice/cpu.cfs_quota_us r,
-  @{sys}/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us r,
-
-  profile gpg {
-    include <abstractions/base>
-    include <abstractions/consoles>
-
-    network inet stream,
-    network inet6 stream,
-    network netlink raw,
-
-    @{bin}/gpgconf           mr,
-    @{bin}/gpg{,2}           mr,
-    @{bin}/gpg-connect-agent mr,
-    @{bin}/gpgsm             mr,
-    @{bin}/gpg-agent          rix,
-
-    owner @{HOME}/@{XDG_GPG_DIR}/ rw,
-    owner @{HOME}/@{XDG_GPG_DIR}/** rwkl -> @{HOME}/@{XDG_GPG_DIR}/**,
-
-    owner /tmp/nscopy.tmp w,
-
-    # For encryption + signature
-    owner /tmp/gpgOutput.* rw,
-
-    # for inline pgp
-    owner /tmp/encfile rw,
-    owner /tmp/encfile-[0-9]* rw,
-
-    # for signature generation
-    owner /tmp/nsemail.eml w,
-    owner /tmp/nsemail-[0-9]*.eml w,
-
-    # for signature verifications
-    owner /tmp/data.sig r,
-    owner /tmp/data-[0-9]*.sig r,
-
-    @{PROC}/@{pids}/fd/ r,
-
-    # file_inherit
-    owner /dev/tty[0-9]* rw,
-    deny owner @{MOZ_HOMEDIR}/*.*/** rw,
-    deny owner @{MOZ_CACHEDIR}/** rw,
-    deny /usr/share/thunderbird/** r,
-    deny /usr/share/sounds/freedesktop/stereo/*.oga r,
-    deny owner /tmp/thunderbird{,_*}/* rwk,
-    deny /dev/shm/org.chromium.* r,
-    deny owner /dev/shm/org.mozilla.ipc.[0-9]*.[0-9]* rw,
-         owner /tmp/ns* rw,
-
-    include if exists <local/thunderbird_gpg>
-  }
-
-  profile open {
-    include <abstractions/base>
-    include <abstractions/xdg-open>
-
-    @{bin}/xdg-open                                    mr,
-    @{bin}/exo-open                                    mr,
-    @{lib}/@{multiarch}/glib-[0-9]*/gio-launch-desktop mr,
-
-    @{bin}/{,ba,da}sh        rix,
-    @{bin}/{,m,g}awk         rix,
-    @{bin}/readlink          rix,
-    @{bin}/basename          rix,
-    @{bin}/xfce4-mime-helper rix,
-
-    owner @{HOME}/ r,
-
-    owner @{run}/user/@{uid}/ r,
-
-    # Allowed apps to open
-    @{bin}/qpdfview        rPx,
-    @{bin}/viewnior        rPUx,
-    @{bin}/engrampa        rPx,
-    @{bin}/geany           rPx,
-    @{FIREFOX_BIN}              rPx,
-
-    # file_inherit
-    owner @{HOME}/.xsession-errors w,
-
-    include if exists <local/thunderbird_open>
-  }
+  # Silencer
+  deny @{HOME}/.mozilla/** mrwkl,
+  deny @{thunderbird_config_dirs}/*.*/pepmda/ rw,
+  deny @{thunderbird_config_dirs}/*.*/pepmda/** rwklmx,
+  deny @{thunderbird_lib_dirs}/** w,
+  deny /dev/ r,
+  deny owner @{user_share_dirs}/gvfs-metadata/{,*} r,
+  deny /dev/urandom w,
 
   include if exists <local/thunderbird>
 }
