@@ -1,32 +1,40 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2019-2021 Mikhail Morfikov
+# Copyright (C) 2021-2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-  abi <abi/3.0>,
+  @{lib}/frei0r-[0-9]/*.so mr,
+  @{lib}/gstreamer-[0-9]*.[0-9]*/gst-plugin-scanner{,x86_64} mrix,
+  @{lib}/@{multiarch}/gstreamer[0-9]*.[0-9]*/gstreamer-[0-9]*.[0-9]*/gst-plugin-scanner{,x86_64} mrix,
+  @{lib}/@{multiarch}/libproxy/*/modules/*.so mr,
+  @{lib}/@{multiarch}/libproxy/*/pxgsettings ixr,
+  @{lib}/@{multiarch}/libvisual-[0-9].[0-9]/*/*.so mr,
 
   /etc/openni2/OpenNI.ini r,
 
-      /tmp/ r,
+  owner @{HOME}/{.cache/,.}gstreamer-[0-9]*/ rw,
+  owner @{HOME}/{.cache/,.}gstreamer-[0-9]*/registry.*.bin{,.tmp*} rw,
+
+  /tmp/ r,
   /var/tmp/ r,
 
-  /dev/ r,
-  /dev/bus/usb/ r,
-  /dev/dri/ r,
+  # The orcexec.* file is JIT compiled code for various GStreamer elements.
+  # If one is blocked the next is used instead.
+  # The orcexec file is placed under /home/user/ also when the /tmp/ dir is mounted with the noexec flag.
+  owner @{run}/user/@{uid}/orcexec.* mrw,
+  #owner /tmp/orcexec.* mrw,
+  #owner @{HOME}/orcexec.* mrw,
 
-  # /dev/shm is a symlink to /run/shm on ubuntu
-  #owner /{dev,run}/shm/shmfd-* rw,
+  @{run}/udev/data/+drm:*      r,     # For screen outputs
+  @{run}/udev/data/+usb:*      r,     # For /dev/bus/usb/**
 
-  #
   @{run}/udev/data/c81:[0-9]*  r,     # For video4linux
   @{run}/udev/data/c189:[0-9]* r,     # For USB serial converters 
   @{run}/udev/data/c226:[0-9]* r,     # For /dev/dri/card[0-9]*
-  @{run}/udev/data/+drm:*      r,     # For screen outputs
-  #@{run}/udev/data/+pci:*     r,
-  @{run}/udev/data/+usb:*      r,     # For /dev/bus/usb/**
 
   @{sys}/bus/ r,
-  @{sys}/bus/usb/devices/ r,
   @{sys}/bus/media/devices/ r,
+  @{sys}/bus/usb/devices/ r,
   @{sys}/class/ r,
   @{sys}/class/drm/ r,
   @{sys}/class/video4linux/ r,
@@ -34,22 +42,8 @@
   @{sys}/devices/system/node/ r,
   @{sys}/devices/system/node/node[0-9]*/meminfo r,
 
-  # The orcexec.* file is JIT compiled code for various GStreamer elements.
-  # If one is blocked the next is used instead.
-  # The orcexec file is placed under /home/user/ also when the /tmp/ dir is mounted with the noexec
-  # flag.
-  owner @{run}/user/@{uid}/orcexec.* mrw,
-  #owner /tmp/orcexec.* mrw,
-  #owner @{HOME}/orcexec.* mrw,
-
-  @{lib}/frei0r-[0-9]/*.so mr,
-  @{lib}/gstreamer-[0-9]*.[0-9]*/gst-plugin-scanner mrix,
-  @{lib}/@{multiarch}/gstreamer[0-9]*.[0-9]*/gstreamer-[0-9]*.[0-9]*/gst-plugin-scanner mrix,
-  @{lib}/@{multiarch}/libproxy/*/modules/*.so mr,
-  @{lib}/@{multiarch}/libproxy/*/pxgsettings ixr,
-  @{lib}/@{multiarch}/libvisual-[0-9].[0-9]/*/*.so mr,
-
-  owner @{HOME}/{.cache/,.}gstreamer-[0-9]*/ rw,
-  owner @{HOME}/{.cache/,.}gstreamer-[0-9]*/registry.*.bin{,.tmp*} rw,
+  /dev/ r,
+  /dev/bus/usb/ r,
+  /dev/dri/ r,
 
   include if exists <abstractions/gstreamer.d>
