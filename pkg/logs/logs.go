@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/roddhjav/apparmor.d/pkg/util"
+	"golang.org/x/exp/slices"
 )
 
 // Colors
@@ -40,9 +41,8 @@ var (
 		repl  string
 	}{
 		{regexp.MustCompile(`.*apparmor="`), `apparmor="`},
-		{regexp.MustCompile(`(peer_|)pid=[0-9]* `), ""},
-		{regexp.MustCompile(` fsuid.*`), ""},
-		{regexp.MustCompile(` exe=.*`), ""},
+		{regexp.MustCompile(`(peer_|)pid=[0-9]*\s`), " "},
+		{regexp.MustCompile(`\x1d`), " "},
 	}
 )
 
@@ -154,11 +154,16 @@ func (aaLogs AppArmorLogs) String() string {
 	// Print order of impression
 	keys := []string{
 		"profile", "label", // Profile name
-		"operation", "name",
+		"operation", "name", "target",
 		"mask", "bus", "path", "interface", "member", // dbus
 		"info", "comm",
 		"laddr", "lport", "faddr", "fport", "family", "sock_type", "protocol",
 		"requested_mask", "denied_mask", "signal", "peer", // "fsuid", "ouid", "FSUID", "OUID",
+	}
+	// Key to not print
+	ignore := []string{
+		"fsuid", "ouid", "FSUID", "OUID", "exe", "SAUID", "sauid", "terminal",
+		"UID", "AUID", "hostname", "addr",
 	}
 	// Color template to use
 	colors := map[string]string{
@@ -166,6 +171,7 @@ func (aaLogs AppArmorLogs) String() string {
 		"label":          fgBlue,
 		"operation":      fgYellow,
 		"name":           fgMagenta,
+		"target":         "-> " + fgMagenta,
 		"mask":           boldRed,
 		"bus":            fgCian + "bus=",
 		"path":           "path=" + fgWhite,
@@ -178,9 +184,14 @@ func (aaLogs AppArmorLogs) String() string {
 	for _, log := range aaLogs {
 		seen := map[string]bool{"apparmor": true}
 		res += state[log["apparmor"]]
+		fsuid := log["fsuid"]
+		ouid := log["ouid"]
 
 		for _, key := range keys {
 			if log[key] != "" {
+				if key == "name" && fsuid == ouid && !strings.Contains(log["operation"], "dbus") {
+					res += colors[key] + " owner" + reset
+				}
 				if colors[key] != "" {
 					res += " " + colors[key] + toQuote(log[key]) + reset
 				} else {
@@ -191,6 +202,9 @@ func (aaLogs AppArmorLogs) String() string {
 		}
 
 		for key, value := range log {
+			if slices.Contains(ignore, key) {
+				continue
+			}
 			if !seen[key] && value != "" {
 				res += " " + key + "=" + toQuote(value)
 			}

@@ -11,32 +11,61 @@ import (
 	"testing"
 )
 
-var refKmod = AppArmorLogs{
-	{
-		"apparmor":       "ALLOWED",
-		"profile":        "kmod",
-		"operation":      "file_inherit",
-		"comm":           "modprobe",
-		"family":         "unix",
-		"sock_type":      "stream",
-		"protocol":       "0",
-		"requested_mask": "send receive",
-	},
-}
-
-var refMan = AppArmorLogs{
-	{
-		"apparmor":       "ALLOWED",
-		"profile":        "man",
-		"operation":      "exec",
-		"name":           "/usr/bin/preconv",
-		"info":           "no new privs",
-		"comm":           "man",
-		"requested_mask": "x",
-		"denied_mask":    "x",
-		"error":          "-1",
-	},
-}
+var (
+	refKmod = AppArmorLogs{
+		{
+			"apparmor":       "ALLOWED",
+			"profile":        "kmod",
+			"operation":      "file_inherit",
+			"comm":           "modprobe",
+			"family":         "unix",
+			"sock_type":      "stream",
+			"protocol":       "0",
+			"requested_mask": "send receive",
+		},
+	}
+	refMan = AppArmorLogs{
+		{
+			"apparmor":       "ALLOWED",
+			"profile":        "man",
+			"operation":      "exec",
+			"name":           "/usr/bin/preconv",
+			"target":         "man_groff",
+			"info":           "no new privs",
+			"comm":           "man",
+			"requested_mask": "x",
+			"denied_mask":    "x",
+			"error":          "-1",
+			"fsuid":          "1000",
+			"ouid":           "0",
+			"FSUID":          "user",
+			"OUID":           "root",
+		},
+	}
+	refPowerProfiles = AppArmorLogs{
+		{
+			"apparmor":   "ALLOWED",
+			"profile":    "",
+			"label":      "power-profiles-daemon",
+			"operation":  "dbus_method_call",
+			"name":       "org.freedesktop.DBus",
+			"mask":       "send",
+			"bus":        "system",
+			"path":       "/org/freedesktop/DBus",
+			"interface":  "org.freedesktop.DBus",
+			"member":     "AddMatch",
+			"peer_label": "dbus-daemon",
+			"exe":        "/usr/bin/dbus-daemon",
+			"sauid":      "102",
+			"hostname":   "?",
+			"addr":       "?",
+			"terminal":   "?",
+			"UID":        "messagebus",
+			"AUID":       "unset",
+			"SAUID":      "messagebus",
+		},
+	}
+)
 
 func TestAppArmorEvents(t *testing.T) {
 	tests := []struct {
@@ -57,6 +86,8 @@ func TestAppArmorEvents(t *testing.T) {
 					"requested_mask": "wc",
 					"denied_mask":    "wc",
 					"parent":         "6974",
+					"fsuid":          "30",
+					"ouid":           "30",
 				},
 			},
 		},
@@ -73,6 +104,8 @@ func TestAppArmorEvents(t *testing.T) {
 					"requested_mask": "rw",
 					"denied_mask":    "rw",
 					"parent":         "16001",
+					"fsuid":          "0",
+					"ouid":           "1000",
 				},
 			},
 		},
@@ -90,12 +123,14 @@ func TestAppArmorEvents(t *testing.T) {
 					"requested_mask": "r",
 					"denied_mask":    "r",
 					"error":          "-13",
+					"fsuid":          "1002",
+					"ouid":           "0",
 				},
 			},
 		},
 		{
 			name:  "dbus_system",
-			event: `type=USER_AVC msg=audit(1111111111.111:1111): pid=1780 uid=102 auid=4294967295 ses=4294967295 subj=? msg='apparmor="ALLOWED" operation="dbus_method_call" bus="system" path="/org/freedesktop/PolicyKit1/Authority" interface="org.freedesktop.PolicyKit1.Authority" member="CheckAuthorization" mask="send" name="org.freedesktop.PolicyKit1" pid=1794 label="snapd" peer_pid=1790 peer_label="polkitd"  exe="/usr/bin/dbus-daemon" sauid=102 hostname=? addr=? terminal=?'UID="messagebus" AUID="unset" SAUID="messagebus"`,
+			event: `type=USER_AVC msg=audit(1111111111.111:1111): pid=1780 uid=102 auid=4294967295 ses=4294967295 subj=? msg='apparmor="ALLOWED" operation="dbus_method_call" bus="system" path="/org/freedesktop/PolicyKit1/Authority" interface="org.freedesktop.PolicyKit1.Authority" member="CheckAuthorization" mask="send" name="org.freedesktop.PolicyKit1" pid=1794 label="snapd" peer_pid=1790 peer_label="polkitd"  exe="/usr/bin/dbus-daemon" sauid=102 hostname=? addr=? terminal=? UID="messagebus" AUID="unset" SAUID="messagebus"`,
 			want: AppArmorLogs{
 				{
 					"apparmor":   "ALLOWED",
@@ -109,6 +144,14 @@ func TestAppArmorEvents(t *testing.T) {
 					"interface":  "org.freedesktop.PolicyKit1.Authority",
 					"member":     "CheckAuthorization",
 					"peer_label": "polkitd",
+					"exe":        "/usr/bin/dbus-daemon",
+					"sauid":      "102",
+					"hostname":   "?",
+					"addr":       "?",
+					"terminal":   "?",
+					"UID":        "messagebus",
+					"AUID":       "unset",
+					"SAUID":      "messagebus",
 				},
 			},
 		},
@@ -156,6 +199,10 @@ func TestNewApparmorLogs(t *testing.T) {
 					"comm":           "dnsmasq",
 					"requested_mask": "r",
 					"denied_mask":    "r",
+					"fsuid":          "0",
+					"ouid":           "0",
+					"FSUID":          "root",
+					"OUID":           "root",
 				},
 				{
 					"apparmor":       "DENIED",
@@ -165,6 +212,10 @@ func TestNewApparmorLogs(t *testing.T) {
 					"comm":           "dnsmasq",
 					"requested_mask": "r",
 					"denied_mask":    "r",
+					"fsuid":          "0",
+					"ouid":           "0",
+					"FSUID":          "root",
+					"OUID":           "root",
 				},
 				{
 					"apparmor":       "DENIED",
@@ -174,6 +225,10 @@ func TestNewApparmorLogs(t *testing.T) {
 					"comm":           "dnsmasq",
 					"requested_mask": "r",
 					"denied_mask":    "r",
+					"fsuid":          "0",
+					"ouid":           "0",
+					"FSUID":          "root",
+					"OUID":           "root",
 				},
 			},
 		},
@@ -190,21 +245,7 @@ func TestNewApparmorLogs(t *testing.T) {
 		{
 			name: "power-profiles-daemon",
 			path: "../../tests/audit.log",
-			want: AppArmorLogs{
-				{
-					"apparmor":   "ALLOWED",
-					"profile":    "",
-					"label":      "power-profiles-daemon",
-					"operation":  "dbus_method_call",
-					"name":       "org.freedesktop.DBus",
-					"mask":       "send",
-					"bus":        "system",
-					"path":       "/org/freedesktop/DBus",
-					"interface":  "org.freedesktop.DBus",
-					"member":     "AddMatch",
-					"peer_label": "dbus-daemon",
-				},
-			},
+			want: refPowerProfiles,
 		},
 	}
 	for _, tt := range tests {
@@ -231,26 +272,12 @@ func TestAppArmorLogs_String(t *testing.T) {
 		{
 			name:   "man",
 			aaLogs: refMan,
-			want:   "\033[1;32mALLOWED\033[0m \033[34mman\033[0m \033[33mexec\033[0m \033[35m/usr/bin/preconv\033[0m info=\"no new privs\" comm=man requested_mask=\033[1;31mx\033[0m denied_mask=\033[1;31mx\033[0m error=-1\n",
+			want:   "\033[1;32mALLOWED\033[0m \033[34mman\033[0m \033[33mexec\033[0m \033[35m/usr/bin/preconv\033[0m -> \033[35mman_groff\033[0m info=\"no new privs\" comm=man requested_mask=\033[1;31mx\033[0m denied_mask=\033[1;31mx\033[0m error=-1\n",
 		},
 		{
-			name: "power-profiles-daemon",
-			aaLogs: AppArmorLogs{
-				{
-					"apparmor":   "ALLOWED",
-					"profile":    "",
-					"label":      "power-profiles-daemon",
-					"operation":  "dbus_method_call",
-					"name":       "org.freedesktop.DBus",
-					"mask":       "send",
-					"bus":        "system",
-					"path":       "/org/freedesktop/DBus",
-					"interface":  "org.freedesktop.DBus",
-					"member":     "AddMatch",
-					"peer_label": "dbus-daemon",
-				},
-			},
-			want: "\033[1;32mALLOWED\033[0m \033[34mpower-profiles-daemon\033[0m \033[33mdbus_method_call\033[0m \033[35morg.freedesktop.DBus\033[0m \033[1;31msend\033[0m \033[36mbus=system\033[0m path=\033[37m/org/freedesktop/DBus\033[0m interface=\033[37morg.freedesktop.DBus\033[0m member=\033[32mAddMatch\033[0m peer_label=dbus-daemon\n",
+			name:   "power-profiles-daemon",
+			aaLogs: refPowerProfiles,
+			want:   "\033[1;32mALLOWED\033[0m \033[34mpower-profiles-daemon\033[0m \033[33mdbus_method_call\033[0m \033[35morg.freedesktop.DBus\033[0m \033[1;31msend\033[0m \033[36mbus=system\033[0m path=\033[37m/org/freedesktop/DBus\033[0m interface=\033[37morg.freedesktop.DBus\033[0m member=\033[32mAddMatch\033[0m peer_label=dbus-daemon\n",
 		},
 	}
 	for _, tt := range tests {
