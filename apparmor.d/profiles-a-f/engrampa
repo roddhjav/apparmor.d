@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2019-2021 Mikhail Morfikov
+# Copyright (C) 2021-2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -91,43 +92,8 @@ profile engrampa @{exec_path} {
   # For deb packages
   @{bin}/dpkg-deb      rix,
 
-  @{lib}/@{multiarch}/glib-[0-9]*/gio-launch-desktop rCx -> open,
-  @{bin}/xdg-open                                    rCx -> open,
-
-  owner @{user_config_dirs}/engrampa/ rw,
-
-        / r,
-        /home/ r,
-  #owner @{HOME}/ r,
-  #owner @{HOME}/** rw,
-        @{MOUNTS}/ r,
-        @{MOUNTS}/** rw,
-        /tmp/ r,
-  owner /tmp/** rw,
-
-  owner @{user_cache_dirs}/ rw,
-  owner @{user_cache_dirs}/.fr-*/{,**} rw,
-
-  owner @{user_config_dirs}/ r,
-  owner @{user_config_dirs}/mimeapps.list{,.*} rw,
-
-  owner @{user_share_dirs}/ r,
-
-  /usr/share/engrampa/{,**} r,
-
-  /usr/share/**.desktop r,
-
-  /etc/magic r,
-
-  # gnome-tiny
-  @{run}/mount/utab r,
-
-  owner @{PROC}/@{pid}/cgroup r,
-  owner @{PROC}/@{pid}/fd/ r,
-        @{PROC}/@{pid}/mountinfo r,
-        @{PROC}/@{pid}/mounts r,
-
-  /etc/fstab r,
+  @{lib}/@{multiarch}/glib-[0-9]*/gio-launch-desktop rPx -> child-open,
+  @{bin}/xdg-open                                    rPx -> child-open,
 
   # Allowed apps to open
   @{bin}/engrampa   rPx,
@@ -136,38 +102,40 @@ profile engrampa @{exec_path} {
   @{bin}/spacefm    rPx,
   @{bin}/ristretto rPUx,
 
+  /usr/share/engrampa/{,**} r,
+  /usr/share/**.desktop r,
+
+  /etc/magic r,
+  /etc/fstab r,
+
+  / r,
+  /home/ r,
+  @{MOUNTS}/ r,
+  @{MOUNTS}/** rw,
+
+  owner @{user_cache_dirs}/ rw,
+  owner @{user_cache_dirs}/.fr-*/{,**} rw,
+
+  owner @{user_config_dirs}/ r,
+  owner @{user_config_dirs}/engrampa/ rw,
+  owner @{user_config_dirs}/mimeapps.list{,.*} rw,
+
+  owner @{user_share_dirs}/ r,
+
+        /tmp/ r,
+  owner /tmp/** rw,
+
+  @{run}/mount/utab r,
+
+        @{PROC}/@{pid}/mountinfo r,
+        @{PROC}/@{pid}/mounts r,
+  owner @{PROC}/@{pid}/cgroup r,
+  owner @{PROC}/@{pid}/fd/ r,
+
   # file_inherit
   owner /dev/tty[0-9]* rw,
 
   deny owner @{user_share_dirs}/gvfs-metadata/{,*} r,
-
-  profile open {
-    include <abstractions/base>
-    include <abstractions/xdg-open>
-
-    @{lib}/@{multiarch}/glib-[0-9]*/gio-launch-desktop mr,
-    @{bin}/xdg-open mr,
-
-    @{bin}/{,ba,da}sh      rix,
-    @{bin}/{m,g,}awk       rix,
-    @{bin}/readlink        rix,
-    @{bin}/basename        rix,
-
-    owner @{HOME}/ r,
-
-    owner @{run}/user/@{uid}/ r,
-
-    # Allowed apps to open
-    @{bin}/engrampa  rPx,
-    @{bin}/geany     rPx,
-    @{bin}/viewnior rPUx,
-    @{bin}/spacefm   rPx,
-
-    # file_inherit
-    owner @{HOME}/.xsession-errors w,
-
-    include if exists <local/engrampa_open>
-  }
 
   include if exists <local/engrampa>
 }
