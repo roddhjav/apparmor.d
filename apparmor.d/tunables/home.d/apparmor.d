@@ -21,6 +21,7 @@
 @{XDG_VM_DIR}=".vm"
 @{XDG_VM_SHARES_DIR}="VM_Shares"
 @{XDG_IMG_DIR}="images"
+@{XDG_MAIL_DIR}="Mail"
 @{XDG_SCREENSHOTS_DIR}="Pictures/Screenshots"
 @{XDG_WALLPAPERS_DIR}="Pictures/Wallpapers"
 
@@ -53,6 +54,7 @@
 # Other user directories
 @{user_books_dirs}=@{HOME}/@{XDG_BOOKS_DIR} @{MOUNTS}/@{XDG_BOOKS_DIR}
 @{user_games_dirs}=@{HOME}/@{XDG_GAMES_DIR} @{MOUNTS}/@{XDG_GAMES_DIR}
+@{user_mail_dirs}=@{HOME}/@{XDG_MAIL_DIR} @{MOUNTS}/@{XDG_MAIL_DIR}
 @{user_projects_dirs}=@{HOME}/@{XDG_PROJECTS_DIR} @{MOUNTS}/@{XDG_PROJECTS_DIR}
 @{user_sync_dirs}=@{HOME}/@{XDG_SYNC_DIR} @{MOUNTS}/*/@{XDG_SYNC_DIR}
 @{user_torrents_dirs}=@{HOME}/@{XDG_TORRENTS_DIR} @{MOUNTS}/@{XDG_TORRENTS_DIR}
