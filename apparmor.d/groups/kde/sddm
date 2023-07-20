@@ -30,6 +30,7 @@ profile sddm @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   capability setgid,
   capability setuid,
   capability sys_resource,
+  capability sys_tty_config,
 
   network netlink raw,
 
@@ -46,6 +47,7 @@ profile sddm @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   @{bin}/{,ba,da}sh   rix,
   @{bin}/cat          rix,
   @{bin}/checkproc    rix,
+  @{bin}/pidof        rix,
   @{bin}/tr           rix,
   @{bin}/tty          rix,
   @{bin}/xdm            r,
@@ -121,17 +123,23 @@ profile sddm @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
         /tmp/sddm-* rw,
   owner /tmp/*/{,s} rw,
+  owner /tmp/#[0-9]* rw,
   owner /tmp/sddm-auth* rw,
+  owner /tmp/xauth_?????? rw,
 
         @{run}/faillock/[a-zA-z0-9]* rwk,
         @{run}/sddm.pid rw,
         @{run}/sddm/\{@{uuid}\} rw,
+        @{run}/sddm/xauth_?????? rwl,
         @{run}/systemd/sessions/*.ref rw,
-        @{run}/user/@{uid}/xauth_* rwl,
+        @{run}/user/@{uid}/xauth_?????? rwl,
   owner @{run}/sddm/ rw,
   owner @{run}/user/@{uid}/#[0-9]* rw,
   owner @{run}/user/@{uid}/kwallet5.socket rw,
 
+        @{PROC}/ r,
+        @{PROC}/@{pids}/cmdline r,
+        @{PROC}/@{pids}/stat r,
         @{PROC}/sys/kernel/core_pattern r,
   owner @{PROC}/@{pid}/loginuid rw,
   owner @{PROC}/@{pid}/mounts r,
