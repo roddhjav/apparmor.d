@@ -1,0 +1,33 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/iio-sensor-proxy
+profile iio-sensor-proxy @{exec_path} {
+  include <abstractions/base>
+
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  @{run}/udev/data/+platform* r,
+  @{run}/udev/data/+input* r,
+  @{run}/udev/data/c13:[0-9]*  r,       # For /dev/input/*
+  @{run}/udev/data/c3[0-9]*:[0-9]* r,   # For dynamic assignment range 384 to 511
+  @{run}/udev/data/c4[0-9]*:[0-9]* r,
+  @{run}/udev/data/c5[0-9]*:[0-9]* r,
+
+  @{sys}/bus/ r,
+  @{sys}/bus/iio/devices/ r,
+  @{sys}/class/ r,
+  @{sys}/devices/**/uevent r,
+  @{sys}/devices/pci[0-9]*/**/iio:*/** rw,
+
+  /dev/iio:* r,
+
+  include if exists <local/iio-sensor-proxy>
+}
