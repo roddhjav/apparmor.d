@@ -36,14 +36,11 @@ const Username = "AAD"
 var (
 	quoted                bool
 	isAppArmorLogTemplate = regexp.MustCompile(`apparmor=("DENIED"|"ALLOWED"|"AUDIT")`)
-	regAALogs             = []struct {
-		regex *regexp.Regexp
-		repl  string
-	}{
-		{regexp.MustCompile(`.*apparmor="`), `apparmor="`},
-		{regexp.MustCompile(`(peer_|)pid=[0-9]*\s`), " "},
-		{regexp.MustCompile(`\x1d`), " "},
-	}
+	regAALogs             = util.ToRegexRepl([]string{
+		`.*apparmor="`, `apparmor="`,
+		`(peer_|)pid=[0-9]*\s`, " ",
+		`\x1d`, " ",
+	})
 )
 
 type AppArmorLog map[string]string
@@ -86,7 +83,7 @@ func NewApparmorLogs(file io.Reader, profile string) AppArmorLogs {
 
 	// Clean logs
 	for _, aa := range regAALogs {
-		log = aa.regex.ReplaceAllLiteralString(log, aa.repl)
+		log = aa.Regex.ReplaceAllLiteralString(log, aa.Repl)
 	}
 
 	// Remove doublon in logs
@@ -124,19 +121,16 @@ func NewApparmorLogs(file io.Reader, profile string) AppArmorLogs {
 func (aaLogs AppArmorLogs) Anonymize() {
 	user, _ := user.Current()
 	keys := []string{"name", "comm"}
-	regAnonymizeLogs := []struct {
-		regex *regexp.Regexp
-		repl  string
-	}{
-		{regexp.MustCompile(user.Username), Username},
-		{regexp.MustCompile(`/home/[^/]+`), `/home/` + Username},
-		{regexp.MustCompile(`[0-9a-fA-F]*-[0-9a-fA-F]*-[0-9a-fA-F]*-[0-9a-fA-F]*-[0-9a-fA-F]*`), `b08dfa60-83e7-567a-1921-a715000001fb`},
-	}
+	regAnonymizeLogs := util.ToRegexRepl([]string{
+		user.Username, Username,
+		`/home/[^/]+`, `/home/` + Username,
+		`[0-9a-fA-F]*-[0-9a-fA-F]*-[0-9a-fA-F]*-[0-9a-fA-F]*-[0-9a-fA-F]*`, `b08dfa60-83e7-567a-1921-a715000001fb`,
+	})
 	for _, log := range aaLogs {
 		for _, key := range keys {
 			if _, ok := log[key]; ok {
 				for _, aa := range regAnonymizeLogs {
-					log[key] = aa.regex.ReplaceAllLiteralString(log[key], aa.repl)
+					log[key] = aa.Regex.ReplaceAllLiteralString(log[key], aa.Repl)
 				}
 			}
 		}
@@ -158,12 +152,12 @@ func (aaLogs AppArmorLogs) String() string {
 		"mask", "bus", "path", "interface", "member", // dbus
 		"info", "comm",
 		"laddr", "lport", "faddr", "fport", "family", "sock_type", "protocol",
-		"requested_mask", "denied_mask", "signal", "peer", // "fsuid", "ouid", "FSUID", "OUID",
+		"requested_mask", "denied_mask", "signal", "peer",
 	}
 	// Key to not print
 	ignore := []string{
 		"fsuid", "ouid", "FSUID", "OUID", "exe", "SAUID", "sauid", "terminal",
-		"UID", "AUID", "hostname", "addr",
+		"UID", "AUID", "hostname", "addr", "class",
 	}
 	// Color template to use
 	colors := map[string]string{
