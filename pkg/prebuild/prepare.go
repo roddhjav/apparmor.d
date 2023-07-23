@@ -135,7 +135,7 @@ func Configure() (err error) {
 // Set flags on some profiles according to manifest defined in `dists/flags/`
 func SetFlags() error {
 	for _, name := range []string{"main.flags", Distribution + ".flags"} {
-		path := DistDir.Join("flags", name)
+		path := FlagDir.Join(name)
 		if !path.Exist() {
 			continue
 		}

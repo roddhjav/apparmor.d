@@ -13,11 +13,13 @@ var (
 	DistDir       *paths.Path
 	Root          *paths.Path
 	RootApparmord *paths.Path
+	FlagDir       *paths.Path
 )
 
 func init() {
 	DistDir = paths.New("dists")
 	Root = paths.New(".build")
+	FlagDir = DistDir.Join("flags")
 	RootApparmord = Root.Join("apparmor.d")
 	Distribution = getSupportedDistribution()
 }
