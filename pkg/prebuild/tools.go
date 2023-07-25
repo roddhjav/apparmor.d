@@ -15,6 +15,13 @@ import (
 var (
 	osReleaseFile   = "/etc/os-release"
 	firstPartyDists = []string{"arch", "debian", "ubuntu", "opensuse", "whonix"}
+	supportedDists  = map[string][]string{
+		"arch":     {},
+		"debian":   {},
+		"ubuntu":   {},
+		"opensuse": {"suse"},
+		"whonix":   {},
+	}
 )
 
 func getSupportedDistribution() string {
@@ -39,10 +46,14 @@ func getSupportedDistribution() string {
 		}
 	}
 
-	if slices.Contains(firstPartyDists, id) {
-		return id
-	} else if slices.Contains(firstPartyDists, id_like) {
-		return id_like
+	for main, based := range supportedDists {
+		if main == id || main == id_like {
+			return main
+		} else if slices.Contains(based, id) {
+			return main
+		} else if slices.Contains(based, id_like) {
+			return main
+		}
 	}
 	return id
 }
