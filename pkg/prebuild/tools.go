@@ -45,6 +45,9 @@ func getSupportedDistribution() string {
 		}
 	}
 
+	if id == "ubuntu" {
+		return id
+	}
 	for main, based := range supportedDists {
 		if main == id || main == id_like {
 			return main
