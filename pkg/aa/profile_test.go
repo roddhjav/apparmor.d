@@ -11,15 +11,12 @@ import (
 
 func TestNewAppArmorProfile(t *testing.T) {
 	tests := []struct {
-		name    string
-		content string
-		want    *AppArmorProfile
+		name string
+		want *AppArmorProfile
 	}{
 		{
-			name:    "aa",
-			content: "",
+			name: "aa",
 			want: &AppArmorProfile{
-				Content: "",
 				Variables: map[string][]string{
 					"bin":             {"/{usr/,}{s,}bin"},
 					"lib":             {"/{usr/,}lib{,exec,32,64}"},
@@ -33,7 +30,7 @@ func TestNewAppArmorProfile(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := NewAppArmorProfile(tt.content); !reflect.DeepEqual(got, tt.want) {
+			if got := NewAppArmorProfile(); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("NewAppArmorProfile() = %v, want %v", got, tt.want)
 			}
 		})
@@ -81,12 +78,11 @@ func TestAppArmorProfile_ParseVariables(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			p := &AppArmorProfile{
-				Content:     tt.content,
 				Variables:   map[string][]string{},
 				Attachments: []string{},
 			}
 
-			p.ParseVariables()
+			p.ParseVariables(tt.content)
 			if !reflect.DeepEqual(p.Variables, tt.want) {
 				t.Errorf("AppArmorProfile.ParseVariables() = %v, want %v", p.Variables, tt.want)
 			}
@@ -111,7 +107,6 @@ func TestAppArmorProfile_resolve(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			p := &AppArmorProfile{
-				Content:     "",
 				Variables:   tt.variables,
 				Attachments: []string{},
 			}
@@ -179,7 +174,6 @@ func TestAppArmorProfile_ResolveAttachments(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			p := &AppArmorProfile{
-				Content:     "",
 				Variables:   tt.variables,
 				Attachments: []string{},
 			}
@@ -233,7 +227,6 @@ func TestAppArmorProfile_NestAttachments(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			p := &AppArmorProfile{
-				Content:     "",
 				Variables:   map[string][]string{},
 				Attachments: tt.Attachments,
 			}
