@@ -13,9 +13,8 @@ import (
 )
 
 var (
-	osReleaseFile   = "/etc/os-release"
-	firstPartyDists = []string{"arch", "debian", "ubuntu", "opensuse", "whonix"}
-	supportedDists  = map[string][]string{
+	osReleaseFile  = "/etc/os-release"
+	supportedDists = map[string][]string{
 		"arch":     {},
 		"debian":   {},
 		"ubuntu":   {},
