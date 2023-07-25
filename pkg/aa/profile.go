@@ -29,24 +29,22 @@ var (
 )
 
 type AppArmorProfile struct {
-	Content     string
 	Variables   map[string][]string
 	Attachments []string
 }
 
-func NewAppArmorProfile(content string) *AppArmorProfile {
+func NewAppArmorProfile() *AppArmorProfile {
 	variables := make(map[string][]string)
 	maps.Copy(variables, Tunables)
 	return &AppArmorProfile{
-		Content:     content,
 		Variables:   variables,
 		Attachments: []string{},
 	}
 }
 
 // ParseVariables extract all variables from the profile
-func (p *AppArmorProfile) ParseVariables() {
-	matches := regVariablesDef.FindAllStringSubmatch(p.Content, -1)
+func (p *AppArmorProfile) ParseVariables(content string) {
+	matches := regVariablesDef.FindAllStringSubmatch(content, -1)
 	for _, match := range matches {
 		if len(match) > 2 {
 			key := match[1]

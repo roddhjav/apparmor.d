@@ -45,8 +45,8 @@ func BuildComplain(profile string) string {
 
 // Bypass userspace tools restriction
 func BuildUserspace(profile string) string {
-	p := aa.NewAppArmorProfile(profile)
-	p.ParseVariables()
+	p := aa.NewAppArmorProfile()
+	p.ParseVariables(profile)
 	p.ResolveAttachments()
 	att := p.NestAttachments()
 	matches := regAttachments.FindAllString(profile, -1)
