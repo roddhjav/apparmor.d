@@ -35,6 +35,7 @@ title: Variables References
 | Cache | ` @{XDG_CACHE_HOME}` | `.cache` |
 | Config | `@{XDG_CONFIG_HOME}` | `.config` |
 | Data | `@{XDG_DATA_HOME}` | `.local/share` |
+| State | `@{XDG_STATE_HOME}` | `.local/state` |
 | Bin | `@{XDG_BIN_HOME}` | `.local/bin` |
 | Lib | `@{XDG_LIB_HOME}` | `.local/lib` |
 
@@ -44,7 +45,8 @@ title: Variables References
 |-------------|:----:|---------|
 | Cache | `@{user_cache_dirs}` | `@{HOME}/@{XDG_CACHE_HOME}` |
 | Config | `@{user_config_dirs}` | `@{HOME}/@{XDG_CONFIG_HOME}` |
-| Share | `@{user_share_dirs}` | ` @{HOME}/.local/share/` |
+| Share | `@{user_share_dirs}` | ` @{HOME}/@{XDG_DATA_HOME}` |
+| State | `@{user_state_dirs}` | ` @{HOME}/@{XDG_STATE_HOME}` |
 | Bin | `@{user_bin_dirs}` | `@{HOME}/@{XDG_BIN_HOME}` |
 | Lib | `@{user_lib_dirs}` | `@{HOME}/@{XDG_LIB_HOME}` |
 | Build | `@{user_build_dirs}` | `/tmp/` |
