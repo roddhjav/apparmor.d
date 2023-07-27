@@ -41,7 +41,6 @@
 # Full path of the user configuration directories
 @{user_cache_dirs}=@{HOME}/@{XDG_CACHE_HOME}
 @{user_config_dirs}=@{HOME}/@{XDG_CONFIG_HOME}
-@{user_share_dirs}=@{HOME}/@{XDG_DATA_HOME}
 @{user_state_dirs}=@{HOME}/@{XDG_STATE_HOME}
 @{user_bin_dirs}=@{HOME}/@{XDG_BIN_HOME}
 @{user_lib_dirs}=@{HOME}/@{XDG_LIB_HOME}
