@@ -10,14 +10,18 @@ include <tunables/global>
 profile systemd-user-generators-autostart @{exec_path} {
   include <abstractions/base>
 
+  ptrace (read) peer=unconfined,
+
   @{exec_path} mr,
 
-  /etc/xdg/autostart/*.desktop r,
+  /etc/xdg/autostart/{,*.desktop} r,
 
   owner @{run}/user/@{uid}/systemd/generator.late/{,**} rw,
 
   @{PROC}/cmdline r,
   @{PROC}/sys/kernel/osrelease r,
+  @{PROC}/1/environ r,
+  @{PROC}/@{pids}/cgroup r,
 
   include if exists <local/systemd-user-generators-autostart>
 }
