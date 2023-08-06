@@ -31,8 +31,8 @@
 @{hex}=@{h}*@{h}
 
 # Date and time
-@{date}=[0-9][0-9][0-9][0-9]-[1-12]-[1-31]
-@{time}=[1-24]-[0-60]-[0-60]
+@{date}=[0-9][0-9][0-9][0-9]-[1-9]{,[0-2]}-[1-9]{,[0-9]}
+@{time}=[1-9]{,[0-9]}-[0-9]{,[0-9]}-[0-9]{,[0-9]}
 
 # @{MOUNTDIRS} is a space-separated list of where user mount directories
 # are stored, for programs that must enumerate all mount directories on a
