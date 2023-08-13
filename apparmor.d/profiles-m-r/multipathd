@@ -1,0 +1,43 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/multipathd
+profile multipathd @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/disks-read>
+
+  capability ipc_lock,
+  capability net_admin,
+  capability sys_admin,
+  capability sys_nice,
+  capability sys_resource,
+
+  network netlink raw,
+
+  unix (send, receive, connect) type=stream peer=(addr="@/org/kernel/linux/storage/multipathd"),
+
+  @{exec_path} mr,
+
+  /etc/multipath.conf r,
+  /etc/multipath/bindings rwk,
+  /etc/systemd/system/ r,
+
+  @{run}/multipathd.pid rwk,
+  @{run}/systemd/notify w,
+
+  @{sys}/bus/ r,
+  @{sys}/class/ r,
+
+        @{PROC}/devices r,
+        @{PROC}/sys/fs/nr_open r,
+  owner @{PROC}/@{pid}/oom_score_adj w,
+
+  /dev/mapper/control rw,
+
+  include if exists <local/multipathd>
+}
