@@ -35,7 +35,7 @@ profile gnome-control-center @{exec_path} flags=(attach_disconnected) {
   signal (send) set=(kill) peer=unconfined,
   signal (send) set=(kill) peer=passwd,
 
-  unix (send, receive, connect) type=stream peer=(addr="@/home/*/.cache/ibus/dbus-*", label=ibus-daemon),
+  unix (send, receive, connect) type=stream peer=(addr="@/home/*/.cache/ibus/dbus-????????", label=ibus-daemon),
 
   dbus send bus=accessibility path=/org/a11y/atspi/accessible/root
        interface=org.a11y.atspi.Socket
@@ -86,6 +86,7 @@ profile gnome-control-center @{exec_path} flags=(attach_disconnected) {
   @{lib}/gnome-control-center-print-renderer     rPx,
   @{lib}/webkit2gtk-{3,4}.0/WebKitNetworkProcess rix,
   /usr/share/language-tools/language2locale      rix,
+  /usr/share/language-tools/language-options    rPUx,
 
   /snap/*/[0-9]*/**.png r,
   /usr/share/backgrounds/{,**} r,
@@ -100,13 +101,14 @@ profile gnome-control-center @{exec_path} flags=(attach_disconnected) {
   /usr/share/gnome-shell/search-providers/{,**} r,
   /usr/share/gnome/gnome-version.xml r,
   /usr/share/libdrm/*.ids r,
+  /usr/share/language-tools/main-countries r,
   /usr/share/mime/{,**} r,
   /usr/share/pipewire/client.conf r,
   /usr/share/thumbnailers/{,*} r,
   /usr/share/wallpapers/{,**} r,
   /usr/share/xml/iso-codes/iso_[0-9]*-[0-9]*.xml r,
   /usr/share/zoneinfo/{,**} r,
-
+ 
   # freedesktop.org-strict
   /usr/share/*ubuntu/applications/{,**} r,
   /usr/share/glib-2.0/schemas/gschemas.compiled r,
@@ -134,22 +136,27 @@ profile gnome-control-center @{exec_path} flags=(attach_disconnected) {
   owner @{user_cache_dirs}/gnome-control-center/{,**} rw,
   owner @{user_cache_dirs}/thumbnails/{,**} rw,
   owner @{user_config_dirs}/gnome-control-center/{,**} rw,
-  owner @{user_config_dirs}/ibus/bus/{,@{hex}-unix{,-wayland}-[0-9]} r,
-  owner @{user_config_dirs}/mimeapps.list* rw,
-  owner @{user_config_dirs}/rygel.conf{,.??????} rw,
+  owner @{user_config_dirs}/ibus/bus/ r,
+  owner @{user_config_dirs}/ibus/bus/@{md5}-unix-{,wayland-}@{int} r,
+  owner @{user_config_dirs}/mimeapps.list{,.@{rand6}} rw,
+  owner @{user_config_dirs}/rygel.conf{,.@{rand6}} rw,
   owner @{user_share_dirs}/backgrounds/{,**} rw,
   owner @{user_share_dirs}/icc/{,edid-*} r,
   owner @{user_share_dirs}/sounds/__custom/{,*} rw,
   owner @{user_share_dirs}/webkitgtk/{,**} r,
   owner @{user_share_dirs}/webkitgtk/databases/indexeddb/* rw,
   owner @{user_share_dirs}/webkitgtk/localstorage/{,**} rwk,
+  owner @{user_share_dirs}/gnome-remote-desktop/ w,
+  owner @{user_share_dirs}/gnome-remote-desktop/rdp-tls.{crt,key}{,.@{rand6}} rw,
 
   owner @{run}/user/@{uid}/gnome-shell-disable-extensions w,
+  owner @{run}/user/@{uid}/gnome-control-center-region-needs-restart w,
   owner @{run}/user/@{uid}/pipewire-[0-9]* rw,
   owner @{run}/user/@{uid}/webkitgtk-wayland-compositor-@{uuid} rwk,
   owner @{run}/user/@{uid}/webkitgtk-wayland-compositor-@{uuid}.lock rwk,
   owner @{run}/user/@{uid}/webkitgtk/{,**} rw,
-  owner @{run}/user/@{uid}/gvfsd/socket-[0-9A-Za-z]* rw,
+  owner @{run}/user/@{uid}/gvfsd/socket-@{rand8} rw,
+  owner @{run}/user/@{uid}/wayland-@{int} rw,
         @{run}/cups/cups.sock rw,
         @{run}/samba/ rw,
         @{run}/systemd/sessions/  r,
@@ -190,6 +197,7 @@ profile gnome-control-center @{exec_path} flags=(attach_disconnected) {
   owner @{PROC}/@{pid}/stat r,
   owner @{PROC}/@{pid}/statm r,
   owner @{PROC}/@{pid}/task/*/comm rw,
+  owner @{PROC}/@{pid}/loginuid r,
         @{PROC}/cmdline r,
         @{PROC}/zoneinfo r,
 
