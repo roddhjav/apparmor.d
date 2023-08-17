@@ -6,15 +6,33 @@
 # To allow extended personalisation without breaking everything.
 # All apparmor profiles should always use the variables defined here.
 
+# Single hexadecimal character
+@{h}=[0-9a-fA-F]
+
+# Single alphanumeric character
+@{c}=[0-9a-zA-Z]
+
+# Up to 10 digits (0-9999999999)
+@{int}=[0-9]{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}
+
+# Any six characters
+@{rand6}=@{c}@{c}@{c}@{c}@{c}@{c}
+
+# Any eight characters
+@{rand8}=@{c}@{c}@{c}@{c}@{c}@{c}@{c}@{c}
+
+# MD5 hash
+@{md5}=@{h}@{h}@{h}@{h}@{h}@{h}@{h}@{h}@{h}@{h}@{h}@{h}@{h}@{h}@{h}@{h}@{h}@{h}@{h}@{h}@{h}@{h}@{h}@{h}@{h}@{h}@{h}@{h}@{h}@{h}@{h}@{h}
+
 # Universally unique identifier
-@{uuid}=[0-9a-fA-F]*-[0-9a-fA-F]*-[0-9a-fA-F]*-[0-9a-fA-F]*-[0-9a-fA-F]*
+@{uuid}=@{h}@{h}@{h}@{h}@{h}@{h}@{h}@{h}[-_]@{h}@{h}@{h}@{h}[-_]@{h}@{h}@{h}@{h}[-_]@{h}@{h}@{h}@{h}[-_]@{h}@{h}@{h}@{h}@{h}@{h}@{h}@{h}@{h}@{h}@{h}@{h}
 
 # Hexadecimal
-@{hex}=[0-9a-fA-F]*
+@{hex}=@{h}*@{h}
 
 # Date and time
-@{date}=[0-9][0-9][0-9][0-9]-[1-12]-[1-31]
-@{time}=[1-24]-[0-60]-[0-60]
+@{date}=[0-2][0-9][0-9][0-9]-[01][0-9]-[0-3][0-9]
+@{time}={[0-2],}[0-9]-[0-5][0-9]-[0-6][0-9]
 
 # @{MOUNTDIRS} is a space-separated list of where user mount directories
 # are stored, for programs that must enumerate all mount directories on a
