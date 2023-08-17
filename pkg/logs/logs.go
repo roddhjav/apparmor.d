@@ -8,7 +8,6 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	"os/user"
 	"regexp"
 	"strings"
 
@@ -30,16 +29,51 @@ const (
 	boldYellow = "\033[1;33m"
 )
 
-// Anonymized username
-const Username = "AAD"
-
 var (
 	quoted                bool
 	isAppArmorLogTemplate = regexp.MustCompile(`apparmor=("DENIED"|"ALLOWED"|"AUDIT")`)
-	regAALogs             = util.ToRegexRepl([]string{
+	regCleanLogs          = util.ToRegexRepl([]string{
+		// Clean apparmor log file
 		`.*apparmor="`, `apparmor="`,
 		`(peer_|)pid=[0-9]*\s`, " ",
 		`\x1d`, " ",
+
+		// Resolve classic user variables
+		`/home/[^/]+/.cache`, `@{user_cache_dirs}`,
+		`/home/[^/]+/.config`, `@{user_config_dirs}`,
+		`/home/[^/]+/.local/share`, `@{user_share_dirs}`,
+		`/home/[^/]+/.local/state`, `@{user_state_dirs}`,
+		`/home/[^/]+/.local/bin`, `@{user_bin_dirs}`,
+		`/home/[^/]+/.local/lib`, `@{user_lib_dirs}`,
+		`/home/[^/]+/.ssh`, `@{HOME}/@{XDG_SSH_DIR}`,
+		`/home/[^/]+/.gnupg`, `@{HOME}/@{XDG_GPG_DIR}`,
+		`/home/[^/]+`, `@{HOME}`,
+
+		// Resolve classic system variables
+		`/usr/lib(|32|64|exec)`, `@{lib}`,
+		`/usr/(|s)bin`, `@{bin}`,
+		`/run/`, `@{run}/`,
+		`user/[0-9]*/`, `user/@{uid}/`,
+		`/proc/`, `@{PROC}/`,
+		`@{PROC}/[0-9]*/`, `@{PROC}/@{pid}/`,
+		`@{PROC}/@{pid}/task/[0-9]*/`, `@{PROC}/@{pid}/task/@{tid}/`,
+		`/sys/`, `@{sys}/`,
+		`@{PROC}@{sys}/`, `@{PROC}/sys/`,
+
+		// Some system glob
+		`pci[/0-9:.]+`, `pci[0-9]*/**/`, // PCI structure
+		`:1.[0-9]*`, `:*`, // dbus peer name
+		`@{bin}/(|ba|da)sh`, `@{bin}/{,ba,da}sh`, // collect all shell
+		`@{lib}/modules/[^/]+\/`, `@{lib}/modules/*/`, // strip kernel version numbers from kernel module accesses
+
+		// Remove basic rules from abstractions/base
+		`(?m)^.*/etc/[^/]+so.*$`, ``,
+		`(?m)^.*@{lib}/[^/]+so.*$`, ``,
+		`(?m)^.*@{lib}/locale/.*$`, ``,
+		`(?m)^.*/usr/share/(locale|zoneinfo)/.*$`, ``,
+		`(?m)^.*/usr/share/zoneinfo/.*$`, ``,
+		`(?m)^.*/dev/(null|zero|full).*$`, ``,
+		`(?m)^.*/dev/(u|)random.*$`, ``,
 	})
 )
 
@@ -81,12 +115,10 @@ func NewApparmorLogs(file io.Reader, profile string) AppArmorLogs {
 		}
 	}
 
-	// Clean logs
-	for _, aa := range regAALogs {
+	// Clean & remove doublon in logs
+	for _, aa := range regCleanLogs {
 		log = aa.Regex.ReplaceAllLiteralString(log, aa.Repl)
 	}
-
-	// Remove doublon in logs
 	logs := strings.Split(log, "\n")
 	logs = util.RemoveDuplicate(logs)
 
@@ -115,26 +147,6 @@ func NewApparmorLogs(file io.Reader, profile string) AppArmorLogs {
 	}
 
 	return aaLogs
-}
-
-// Anonymize the logs before reporting
-func (aaLogs AppArmorLogs) Anonymize() {
-	user, _ := user.Current()
-	keys := []string{"name", "comm"}
-	regAnonymizeLogs := util.ToRegexRepl([]string{
-		user.Username, Username,
-		`/home/[^/]+`, `/home/` + Username,
-		`[0-9a-fA-F]*-[0-9a-fA-F]*-[0-9a-fA-F]*-[0-9a-fA-F]*-[0-9a-fA-F]*`, `b08dfa60-83e7-567a-1921-a715000001fb`,
-	})
-	for _, log := range aaLogs {
-		for _, key := range keys {
-			if _, ok := log[key]; ok {
-				for _, aa := range regAnonymizeLogs {
-					log[key] = aa.Regex.ReplaceAllLiteralString(log[key], aa.Repl)
-				}
-			}
-		}
-	}
 }
 
 // String returns a formatted AppArmor logs string

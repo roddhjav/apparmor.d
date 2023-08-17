@@ -29,7 +29,7 @@ var (
 			"apparmor":       "ALLOWED",
 			"profile":        "man",
 			"operation":      "exec",
-			"name":           "/usr/bin/preconv",
+			"name":           "@{bin}/preconv",
 			"target":         "man_groff",
 			"info":           "no new privs",
 			"comm":           "man",
@@ -55,7 +55,7 @@ var (
 			"interface":  "org.freedesktop.DBus",
 			"member":     "AddMatch",
 			"peer_label": "dbus-daemon",
-			"exe":        "/usr/bin/dbus-daemon",
+			"exe":        "@{bin}/dbus-daemon",
 			"sauid":      "102",
 			"hostname":   "?",
 			"addr":       "?",
@@ -79,7 +79,7 @@ func TestAppArmorEvents(t *testing.T) {
 			want: AppArmorLogs{
 				{
 					"apparmor":       "ALLOWED",
-					"profile":        "/usr/sbin/httpd2-prefork//vhost_foo",
+					"profile":        "@{bin}/httpd2-prefork//vhost_foo",
 					"operation":      "rename_dest",
 					"name":           "/home/www/foo.bar.in/httpdocs/apparmor/images/test/image 1.jpg",
 					"comm":           "httpd2-prefork",
@@ -99,7 +99,7 @@ func TestAppArmorEvents(t *testing.T) {
 					"apparmor":       "ALLOWED",
 					"profile":        "foo bar",
 					"operation":      "file_perm",
-					"name":           "/home/foo/.bash_history",
+					"name":           "@{HOME}/.bash_history",
 					"comm":           "bash",
 					"requested_mask": "rw",
 					"denied_mask":    "rw",
@@ -117,7 +117,7 @@ func TestAppArmorEvents(t *testing.T) {
 					"apparmor":       "ALLOWED",
 					"profile":        "/sbin/klogd",
 					"operation":      "file_mmap",
-					"name":           "var/run/nscd/passwd",
+					"name":           "var@{run}/nscd/passwd",
 					"comm":           "id",
 					"info":           "Failed name lookup - disconnected path",
 					"requested_mask": "r",
@@ -144,7 +144,7 @@ func TestAppArmorEvents(t *testing.T) {
 					"interface":  "org.freedesktop.PolicyKit1.Authority",
 					"member":     "CheckAuthorization",
 					"peer_label": "polkitd",
-					"exe":        "/usr/bin/dbus-daemon",
+					"exe":        "@{bin}/dbus-daemon",
 					"sauid":      "102",
 					"hostname":   "?",
 					"addr":       "?",
@@ -195,7 +195,7 @@ func TestNewApparmorLogs(t *testing.T) {
 					"apparmor":       "DENIED",
 					"profile":        "dnsmasq",
 					"operation":      "open",
-					"name":           "/proc/sys/kernel/osrelease",
+					"name":           "@{PROC}/sys/kernel/osrelease",
 					"comm":           "dnsmasq",
 					"requested_mask": "r",
 					"denied_mask":    "r",
@@ -208,7 +208,7 @@ func TestNewApparmorLogs(t *testing.T) {
 					"apparmor":       "DENIED",
 					"profile":        "dnsmasq",
 					"operation":      "open",
-					"name":           "/proc/1/environ",
+					"name":           "@{PROC}/@{pid}/environ",
 					"comm":           "dnsmasq",
 					"requested_mask": "r",
 					"denied_mask":    "r",
@@ -221,7 +221,7 @@ func TestNewApparmorLogs(t *testing.T) {
 					"apparmor":       "DENIED",
 					"profile":        "dnsmasq",
 					"operation":      "open",
-					"name":           "/proc/cmdline",
+					"name":           "@{PROC}/cmdline",
 					"comm":           "dnsmasq",
 					"requested_mask": "r",
 					"denied_mask":    "r",
@@ -272,7 +272,7 @@ func TestAppArmorLogs_String(t *testing.T) {
 		{
 			name:   "man",
 			aaLogs: refMan,
-			want:   "\033[1;32mALLOWED\033[0m \033[34mman\033[0m \033[33mexec\033[0m \033[35m/usr/bin/preconv\033[0m -> \033[35mman_groff\033[0m info=\"no new privs\" comm=man requested_mask=\033[1;31mx\033[0m denied_mask=\033[1;31mx\033[0m error=-1\n",
+			want:   "\033[1;32mALLOWED\033[0m \033[34mman\033[0m \033[33mexec\033[0m \033[35m@{bin}/preconv\033[0m -> \033[35mman_groff\033[0m info=\"no new privs\" comm=man requested_mask=\033[1;31mx\033[0m denied_mask=\033[1;31mx\033[0m error=-1\n",
 		},
 		{
 			name:   "power-profiles-daemon",
@@ -284,77 +284,6 @@ func TestAppArmorLogs_String(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := tt.aaLogs.String(); got != tt.want {
 				t.Errorf("AppArmorLogs.String() = %v, want %v len: %d - %d", got, tt.want, len(got), len(tt.want))
-			}
-		})
-	}
-}
-
-func TestAppArmorLogs_Anonymize(t *testing.T) {
-	tests := []struct {
-		name   string
-		aaLogs AppArmorLogs
-		want   AppArmorLogs
-	}{
-		{
-			name: "Anonymize Username",
-			aaLogs: AppArmorLogs{
-				{
-					"apparmor":       "ALLOWED",
-					"profile":        "foo",
-					"operation":      "file_perm",
-					"name":           "/home/foo/.bash_history",
-					"comm":           "bash",
-					"requested_mask": "rw",
-					"denied_mask":    "rw",
-					"parent":         "16001",
-				},
-			},
-			want: AppArmorLogs{
-				{
-					"apparmor":       "ALLOWED",
-					"profile":        "foo",
-					"operation":      "file_perm",
-					"name":           "/home/AAD/.bash_history",
-					"comm":           "bash",
-					"requested_mask": "rw",
-					"denied_mask":    "rw",
-					"parent":         "16001",
-				},
-			},
-		},
-		{
-			name: "Anonymize UUID",
-			aaLogs: AppArmorLogs{
-				{
-					"apparmor":       "ALLOWED",
-					"profile":        "drkonqi",
-					"operation":      "file_perm",
-					"name":           "/sys/devices/pci0000:00/0000:00:02.0/drm/card1/metrics/399d3001-97d6-4240-b065-4fb843138e17/id",
-					"comm":           "bash",
-					"requested_mask": "r",
-					"denied_mask":    "r",
-					"parent":         "16001",
-				},
-			},
-			want: AppArmorLogs{
-				{
-					"apparmor":       "ALLOWED",
-					"profile":        "drkonqi",
-					"operation":      "file_perm",
-					"name":           "/sys/devices/pci0000:00/0000:00:02.0/drm/card1/metrics/b08dfa60-83e7-567a-1921-a715000001fb/id",
-					"comm":           "bash",
-					"requested_mask": "r",
-					"denied_mask":    "r",
-					"parent":         "16001",
-				},
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			tt.aaLogs.Anonymize()
-			if !reflect.DeepEqual(tt.aaLogs, tt.want) {
-				t.Errorf("Anonymize() = %v, want %v", tt.aaLogs, tt.want)
 			}
 		})
 	}
