@@ -6,7 +6,6 @@ package aa
 
 import (
 	_ "embed"
-	"strings"
 	"text/template"
 )
 
