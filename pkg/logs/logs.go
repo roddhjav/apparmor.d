@@ -11,6 +11,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/roddhjav/apparmor.d/pkg/aa"
 	"github.com/roddhjav/apparmor.d/pkg/util"
 	"golang.org/x/exp/slices"
 )
@@ -218,4 +219,27 @@ func (aaLogs AppArmorLogs) String() string {
 		res += "\n"
 	}
 	return res
+}
+
+// ParseToProfiles convert the log data into a new AppArmorProfiles
+func (aaLogs AppArmorLogs) ParseToProfiles() aa.AppArmorProfiles {
+	profiles := make(aa.AppArmorProfiles, 0)
+	for _, log := range aaLogs {
+		name := ""
+		if strings.Contains(log["operation"], "dbus") {
+			name = log["label"]
+		} else {
+			name = log["profile"]
+		}
+
+		if _, ok := profiles[name]; !ok {
+			profile := &aa.AppArmorProfile{}
+			profile.Name = name
+			profile.AddRule(log)
+			profiles[name] = profile
+		} else {
+			profiles[name].AddRule(log)
+		}
+	}
+	return profiles
 }
