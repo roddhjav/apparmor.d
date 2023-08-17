@@ -26,7 +26,7 @@ func TestGetJournalctlLogs(t *testing.T) {
 					"profile":    "",
 					"label":      "gsd-xsettings",
 					"operation":  "dbus_method_call",
-					"name":       ":1.88",
+					"name":       ":*",
 					"mask":       "receive",
 					"bus":        "session",
 					"path":       "/org/gtk/Settings",
