@@ -4,10 +4,6 @@
 
 package aa
 
-import (
-	"golang.org/x/exp/slices"
-)
-
 // Preamble section of a profile
 type Preamble struct {
 	Abi              []Abi
