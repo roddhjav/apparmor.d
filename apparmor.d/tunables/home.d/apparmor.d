@@ -31,19 +31,19 @@
 @{XDG_PASSWORD_STORE_DIR}=".password-store"
 
 # Definition of local user configuration directories
-@{XDG_CACHE_HOME}=".cache"
-@{XDG_CONFIG_HOME}=".config"
-@{XDG_DATA_HOME}=".local/share"
-@{XDG_STATE_HOME}=".local/state"
-@{XDG_BIN_HOME}=".local/bin"
-@{XDG_LIB_HOME}=".local/lib"
+@{XDG_CACHE_DIR}=".cache"
+@{XDG_CONFIG_DIR}=".config"
+@{XDG_DATA_DIR}=".local/share"
+@{XDG_STATE_DIR}=".local/state"
+@{XDG_BIN_DIR}=".local/bin"
+@{XDG_LIB_DIR}=".local/lib"
 
 # Full path of the user configuration directories
-@{user_cache_dirs}=@{HOME}/@{XDG_CACHE_HOME}
-@{user_config_dirs}=@{HOME}/@{XDG_CONFIG_HOME}
-@{user_state_dirs}=@{HOME}/@{XDG_STATE_HOME}
-@{user_bin_dirs}=@{HOME}/@{XDG_BIN_HOME}
-@{user_lib_dirs}=@{HOME}/@{XDG_LIB_HOME}
+@{user_cache_dirs}=@{HOME}/@{XDG_CACHE_DIR}
+@{user_config_dirs}=@{HOME}/@{XDG_CONFIG_DIR}
+@{user_state_dirs}=@{HOME}/@{XDG_STATE_DIR}
+@{user_bin_dirs}=@{HOME}/@{XDG_BIN_DIR}
+@{user_lib_dirs}=@{HOME}/@{XDG_LIB_DIR}
 
 # User build directories and output
 @{user_build_dirs}="/tmp/"
