@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-func TestNewAppArmorProfile(t *testing.T) {
+func TestDefaultTunables(t *testing.T) {
 	tests := []struct {
 		name string
 		want *AppArmorProfile
@@ -17,20 +17,21 @@ func TestNewAppArmorProfile(t *testing.T) {
 		{
 			name: "aa",
 			want: &AppArmorProfile{
-				Variables: map[string][]string{
-					"bin":             {"/{usr/,}{s,}bin"},
-					"lib":             {"/{usr/,}lib{,exec,32,64}"},
-					"multiarch":       {"*-linux-gnu*"},
-					"user_share_dirs": {"/home/*/.local/share"},
-					"etc_ro":          {"/{usr/,}etc/"},
+				Preamble: Preamble{
+					Variables: []Variable{
+						{"bin", []string{"/{usr/,}{s,}bin"}},
+						{"lib", []string{"/{usr/,}lib{,exec,32,64}"}},
+						{"multiarch", []string{"*-linux-gnu*"}},
+						{"user_share_dirs", []string{"/home/*/.local/share"}},
+						{"etc_ro", []string{"/{usr/,}etc/"}},
+					},
 				},
-				Attachments: []string{},
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := NewAppArmorProfile(); !reflect.DeepEqual(got, tt.want) {
+			if got := DefaultTunables(); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("NewAppArmorProfile() = %v, want %v", got, tt.want)
 			}
 		})
@@ -41,7 +42,7 @@ func TestAppArmorProfile_ParseVariables(t *testing.T) {
 	tests := []struct {
 		name    string
 		content string
-		want    map[string][]string
+		want    []Variable
 	}{
 		{
 			name: "firefox",
@@ -51,12 +52,12 @@ func TestAppArmorProfile_ParseVariables(t *testing.T) {
 			@{firefox_cache_dirs} = @{user_cache_dirs}/mozilla/
 			@{exec_path} = /{usr/,}bin/@{firefox_name} @{firefox_lib_dirs}/@{firefox_name}
 			`,
-			want: map[string][]string{
-				"firefox_name":        {"firefox{,-esr,-bin}"},
-				"firefox_config_dirs": {"@{HOME}/.mozilla/"},
-				"firefox_lib_dirs":    {"/{usr/,}lib{,32,64}/@{firefox_name}", "/opt/@{firefox_name}"},
-				"firefox_cache_dirs":  {"@{user_cache_dirs}/mozilla/"},
-				"exec_path":           {"/{usr/,}bin/@{firefox_name}", "@{firefox_lib_dirs}/@{firefox_name}"},
+			want: []Variable{
+				{"firefox_name", []string{"firefox{,-esr,-bin}"}},
+				{"firefox_lib_dirs", []string{"/{usr/,}lib{,32,64}/@{firefox_name}", "/opt/@{firefox_name}"}},
+				{"firefox_config_dirs", []string{"@{HOME}/.mozilla/"}},
+				{"firefox_cache_dirs", []string{"@{user_cache_dirs}/mozilla/"}},
+				{"exec_path", []string{"/{usr/,}bin/@{firefox_name}", "@{firefox_lib_dirs}/@{firefox_name}"}},
 			},
 		},
 		{
@@ -65,23 +66,19 @@ func TestAppArmorProfile_ParseVariables(t *testing.T) {
 			@{exec_path} += /{usr/,}bin/Xorg{,.bin}
 			@{exec_path} += /{usr/,}lib/Xorg{,.wrap}
 			@{exec_path} += /{usr/,}lib/xorg/Xorg{,.wrap}`,
-			want: map[string][]string{
-				"exec_path": {
+			want: []Variable{
+				{"exec_path", []string{
 					"/{usr/,}bin/X",
 					"/{usr/,}bin/Xorg{,.bin}",
 					"/{usr/,}lib/Xorg{,.wrap}",
-					"/{usr/,}lib/xorg/Xorg{,.wrap}",
+					"/{usr/,}lib/xorg/Xorg{,.wrap}"},
 				},
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			p := &AppArmorProfile{
-				Variables:   map[string][]string{},
-				Attachments: []string{},
-			}
-
+			p := NewAppArmorProfile()
 			p.ParseVariables(tt.content)
 			if !reflect.DeepEqual(p.Variables, tt.want) {
 				t.Errorf("AppArmorProfile.ParseVariables() = %v, want %v", p.Variables, tt.want)
@@ -92,24 +89,19 @@ func TestAppArmorProfile_ParseVariables(t *testing.T) {
 
 func TestAppArmorProfile_resolve(t *testing.T) {
 	tests := []struct {
-		name      string
-		variables map[string][]string
-		input     string
-		want      []string
+		name  string
+		input string
+		want  []string
 	}{
 		{
-			name:      "empty",
-			variables: Tunables,
-			input:     "@{}",
-			want:      []string{"@{}"},
+			name:  "empty",
+			input: "@{}",
+			want:  []string{"@{}"},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			p := &AppArmorProfile{
-				Variables:   tt.variables,
-				Attachments: []string{},
-			}
+			p := DefaultTunables()
 			if got := p.resolve(tt.input); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("AppArmorProfile.resolve() = %v, want %v", got, tt.want)
 			}
@@ -120,15 +112,15 @@ func TestAppArmorProfile_resolve(t *testing.T) {
 func TestAppArmorProfile_ResolveAttachments(t *testing.T) {
 	tests := []struct {
 		name      string
-		variables map[string][]string
+		variables []Variable
 		want      []string
 	}{
 		{
 			name: "firefox",
-			variables: map[string][]string{
-				"firefox_name":     {"firefox{,-esr,-bin}"},
-				"firefox_lib_dirs": {"/{usr/,}/lib{,32,64}/@{firefox_name}", "/opt/@{firefox_name}"},
-				"exec_path":        {"/{usr/,}bin/@{firefox_name}", "@{firefox_lib_dirs}/@{firefox_name}"},
+			variables: []Variable{
+				{"firefox_name", []string{"firefox{,-esr,-bin}"}},
+				{"firefox_lib_dirs", []string{"/{usr/,}/lib{,32,64}/@{firefox_name}", "/opt/@{firefox_name}"}},
+				{"exec_path", []string{"/{usr/,}bin/@{firefox_name}", "@{firefox_lib_dirs}/@{firefox_name}"}},
 			},
 			want: []string{
 				"/{usr/,}bin/firefox{,-esr,-bin}",
@@ -138,10 +130,10 @@ func TestAppArmorProfile_ResolveAttachments(t *testing.T) {
 		},
 		{
 			name: "chromium",
-			variables: map[string][]string{
-				"chromium_name":     {"chromium"},
-				"chromium_lib_dirs": {"/{usr/,}lib/@{chromium_name}"},
-				"exec_path":         {"@{chromium_lib_dirs}/@{chromium_name}"},
+			variables: []Variable{
+				{"chromium_name", []string{"chromium"}},
+				{"chromium_lib_dirs", []string{"/{usr/,}lib/@{chromium_name}"}},
+				{"exec_path", []string{"@{chromium_lib_dirs}/@{chromium_name}"}},
 			},
 			want: []string{
 				"/{usr/,}lib/chromium/chromium",
@@ -149,9 +141,9 @@ func TestAppArmorProfile_ResolveAttachments(t *testing.T) {
 		},
 		{
 			name: "geoclue",
-			variables: map[string][]string{
-				"libexec":   {"/{usr/,}libexec"},
-				"exec_path": {"@{libexec}/geoclue", "@{libexec}/geoclue-2.0/demos/agent"},
+			variables: []Variable{
+				{"libexec", []string{"/{usr/,}libexec"}},
+				{"exec_path", []string{"@{libexec}/geoclue", "@{libexec}/geoclue-2.0/demos/agent"}},
 			},
 			want: []string{
 				"/{usr/,}libexec/geoclue",
@@ -160,11 +152,11 @@ func TestAppArmorProfile_ResolveAttachments(t *testing.T) {
 		},
 		{
 			name: "opera",
-			variables: map[string][]string{
-				"multiarch":         {"*-linux-gnu*"},
-				"chromium_name":     {"opera{,-beta,-developer}"},
-				"chromium_lib_dirs": {"/{usr/,}lib/@{multiarch}/@{chromium_name}"},
-				"exec_path":         {"@{chromium_lib_dirs}/@{chromium_name}"},
+			variables: []Variable{
+				{"multiarch", []string{"*-linux-gnu*"}},
+				{"chromium_name", []string{"opera{,-beta,-developer}"}},
+				{"chromium_lib_dirs", []string{"/{usr/,}lib/@{multiarch}/@{chromium_name}"}},
+				{"exec_path", []string{"@{chromium_lib_dirs}/@{chromium_name}"}},
 			},
 			want: []string{
 				"/{usr/,}lib/*-linux-gnu*/opera{,-beta,-developer}/opera{,-beta,-developer}",
@@ -173,10 +165,8 @@ func TestAppArmorProfile_ResolveAttachments(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			p := &AppArmorProfile{
-				Variables:   tt.variables,
-				Attachments: []string{},
-			}
+			p := NewAppArmorProfile()
+			p.Variables = tt.variables
 			p.ResolveAttachments()
 			if !reflect.DeepEqual(p.Attachments, tt.want) {
 				t.Errorf("AppArmorProfile.ResolveAttachments() = %v, want %v", p.Attachments, tt.want)
@@ -226,13 +216,12 @@ func TestAppArmorProfile_NestAttachments(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			p := &AppArmorProfile{
-				Variables:   map[string][]string{},
-				Attachments: tt.Attachments,
-			}
+			p := NewAppArmorProfile()
+			p.Attachments = tt.Attachments
 			if got := p.NestAttachments(); got != tt.want {
 				t.Errorf("AppArmorProfile.NestAttachments() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
+
