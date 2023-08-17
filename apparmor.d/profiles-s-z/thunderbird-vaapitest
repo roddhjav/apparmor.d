@@ -1,0 +1,34 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{thunderbird_name} = thunderbird{,-bin}
+@{thunderbird_lib_dirs} = @{lib}/@{thunderbird_name}
+@{thunderbird_config_dirs} = @{HOME}/.@{thunderbird_name}/
+
+@{exec_path} = @{thunderbird_lib_dirs}/vaapitest
+profile thunderbird-vaapitest @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/dri-enumerate>
+  include <abstractions/dri-common>
+  include <abstractions/nvidia>
+  include <abstractions/vulkan>
+
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  /etc/igfx_user_feature{,_next}.txt w,
+  /etc/libva.conf r,
+
+  owner @{thunderbird_config_dirs}/*/.parentlock rw,
+  owner @{thunderbird_config_dirs}/*/startupCache/*Cache* r,
+
+  owner /tmp/thunderbird/.parentlock rw,
+
+  include if exists <local/thunderbird-vaapitest>
+}

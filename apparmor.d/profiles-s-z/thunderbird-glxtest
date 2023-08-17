@@ -1,0 +1,36 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{thunderbird_name} = thunderbird{,-bin}
+@{thunderbird_lib_dirs} = @{lib}/@{thunderbird_name}
+@{thunderbird_config_dirs} = @{HOME}/.@{thunderbird_name}/
+
+@{exec_path} = @{thunderbird_lib_dirs}/glxtest
+profile thunderbird-glxtest @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/dri-common>
+  include <abstractions/dri-enumerate>
+  include <abstractions/mesa>
+  include <abstractions/nameservice-strict>
+  include <abstractions/opencl-nvidia>
+  include <abstractions/vulkan>
+
+  @{exec_path} mr,
+
+  owner @{thunderbird_config_dirs}/*/.parentlock rw,
+
+  owner /tmp/thunderbird/.parentlock rw,
+
+  owner @{run}/user/@{uid}/xauth_?????? r,
+
+  @{sys}/bus/pci/devices/ r,
+  @{sys}/devices/pci[0-9]*/**/class r,
+
+
+  include if exists <local/thunderbird-glxtest>
+}
