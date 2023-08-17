@@ -32,23 +32,23 @@ title: Variables References
 | SSH | `@{XDG_SSH_DIR}` | `.ssh` |
 | GPG | `@{XDG_GPG_DIR}` | `.gnupg` |
 | Passwords | `@{XDG_PASSWORD_STORE_DIR}` | `.password-store` |
-| Cache | ` @{XDG_CACHE_HOME}` | `.cache` |
-| Config | `@{XDG_CONFIG_HOME}` | `.config` |
-| Data | `@{XDG_DATA_HOME}` | `.local/share` |
-| State | `@{XDG_STATE_HOME}` | `.local/state` |
-| Bin | `@{XDG_BIN_HOME}` | `.local/bin` |
-| Lib | `@{XDG_LIB_HOME}` | `.local/lib` |
+| Cache | ` @{XDG_CACHE_DIR}` | `.cache` |
+| Config | `@{XDG_CONFIG_DIR}` | `.config` |
+| Data | `@{XDG_DATA_DIR}` | `.local/share` |
+| State | `@{XDG_STATE_DIR}` | `.local/state` |
+| Bin | `@{XDG_BIN_DIR}` | `.local/bin` |
+| Lib | `@{XDG_LIB_DIR}` | `.local/lib` |
 
 ### Full configuration path
 
 | Description | Name | Value |
 |-------------|:----:|---------|
-| Cache | `@{user_cache_dirs}` | `@{HOME}/@{XDG_CACHE_HOME}` |
-| Config | `@{user_config_dirs}` | `@{HOME}/@{XDG_CONFIG_HOME}` |
-| Share | `@{user_share_dirs}` | ` @{HOME}/@{XDG_DATA_HOME}` |
-| State | `@{user_state_dirs}` | ` @{HOME}/@{XDG_STATE_HOME}` |
-| Bin | `@{user_bin_dirs}` | `@{HOME}/@{XDG_BIN_HOME}` |
-| Lib | `@{user_lib_dirs}` | `@{HOME}/@{XDG_LIB_HOME}` |
+| Cache | `@{user_cache_dirs}` | `@{HOME}/@{XDG_CACHE_DIR}` |
+| Config | `@{user_config_dirs}` | `@{HOME}/@{XDG_CONFIG_DIR}` |
+| Share | `@{user_share_dirs}` | ` @{HOME}/@{XDG_DATA_DIR}` |
+| State | `@{user_state_dirs}` | ` @{HOME}/@{XDG_STATE_DIR}` |
+| Bin | `@{user_bin_dirs}` | `@{HOME}/@{XDG_BIN_DIR}` |
+| Lib | `@{user_lib_dirs}` | `@{HOME}/@{XDG_LIB_DIR}` |
 | Build | `@{user_build_dirs}` | `/tmp/` |
 | Tmp | `@{user_tmp_dirs}` | `@{run}/user/@{uid} /tmp/` |
 | Packages | `@{user_pkg_dirs}` | `/tmp/pkg/` |
