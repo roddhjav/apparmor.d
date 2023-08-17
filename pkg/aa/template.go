@@ -7,7 +7,29 @@ package aa
 import (
 	_ "embed"
 	"strings"
+	"text/template"
 )
+
+const indentation = "  "
+
+//go:embed template.j2
+var tmplFileAppArmorProfile string
+
+var tmplFunctionMap = template.FuncMap{
+	"indent":     indent,
+	"overindent": indentDbus,
+}
+
+var tmplAppArmorProfile = template.Must(template.New("profile").
+	Funcs(tmplFunctionMap).Parse(tmplFileAppArmorProfile))
+
+func indent(s string) string {
+	return indentation + s
+}
+
+func indentDbus(s string) string {
+	return indentation + "     " + s
+}
 
 // TODO: Should be a map of slice, not exhausive yet
 var maskToAccess = map[string]string{
