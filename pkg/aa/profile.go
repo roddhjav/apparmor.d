@@ -18,3 +18,14 @@ type AppArmorProfile struct {
 func NewAppArmorProfile() *AppArmorProfile {
 	return &AppArmorProfile{}
 }
+
+// String returns the formatted representation of a profile as a string
+func (p *AppArmorProfile) String() string {
+	var res bytes.Buffer
+	err := tmplAppArmorProfile.Execute(&res, p)
+	if err != nil {
+		return err.Error()
+	}
+	return res.String()
+}
+

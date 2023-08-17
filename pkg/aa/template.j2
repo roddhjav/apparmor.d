@@ -1,0 +1,308 @@
+{{- /* apparmor.d - Full set of apparmor profiles */ -}}
+{{- /* Copyright (C) 2021-2023 Alexandre Pujol <alexandre@pujol.io> */ -}}
+{{- /* SPDX-License-Identifier: GPL-2.0-only */ -}}
+
+{{- if .Abi -}}
+    {{- range .Abi -}}
+        {{- if .AbsPath -}}
+            abi "{{ .AbsPath }}",{{ "\n" }}
+        {{- else -}}
+            abi <{{ .MagicPath }}>,{{ "\n" }}
+        {{- end -}}
+    {{- end -}}
+    {{ "\n" }}
+{{- end -}}
+
+{{- if .Aliases -}}
+    {{- range .Aliases -}}
+        alias {{ .Path }} -> {{ .RewrittenPath }},{{ "\n" }}
+    {{- end -}}
+    {{ "\n" }}
+{{- end -}}
+
+{{- if .PreambleIncludes -}}
+    {{- range .PreambleIncludes -}}
+        {{- "include " -}}
+        {{- if .IfExists -}}
+            {{- "if exists " -}} 
+        {{- end -}}
+        {{- if .AbsPath -}}
+            "{{ . }}"{{ "\n" }}
+        {{- else -}}
+            <{{ .MagicPath }}>{{ "\n" }}
+        {{- end -}}
+    {{- end -}}
+    {{ "\n" }} 
+{{- end -}}
+
+{{- if .Preamble.Variables -}}
+    {{- range .Preamble.Variables -}}
+        {{ "@{" }}{{ .Name }}{{ "} = " }}
+        {{- range .Values -}}
+            {{ . }}{{ " " }}
+        {{- end -}}
+        {{ "\n" }} 
+    {{- end -}}
+{{- end -}}
+
+profile {{ .Name }}{{ " " }}
+{{- range .Attachments -}}
+    {{ . }}{{ " " }}
+{{- end -}}
+{{- if .Attributes -}}
+    {{- "xattrs=(" -}}
+    {{- range .Attributes -}}
+        {{ . }}{{ " " }}
+    {{- end -}}
+    {{ ") " }}
+{{- end -}}
+{{- if .Flags -}}
+    {{- "flags=(" -}}
+    {{- range .Flags -}}
+        {{ . }}{{ " " }}
+    {{- end -}}
+    {{ ") " }}
+{{- end -}}
+{{ "{\n" }}
+
+{{- if .Includes -}}
+    {{- range .Includes -}}
+        {{- if not .IfExists -}}
+            {{- "include " | indent -}}
+            {{- if .AbsPath -}}
+                "{{ . }}"{{ "\n" }}
+            {{- else -}}
+                <{{ .MagicPath }}>{{ "\n" }}
+            {{- end -}}
+        {{- end -}}
+    {{- end -}}
+    {{ "\n" }} 
+{{- end -}}
+
+{{- if .Rlimit -}}
+    {{- range .Rlimit -}}
+        {{ "set rlimit" | indent }} {{ .Key }} {{ .Op }} {{ .Value }},{{ "\n" }}
+    {{- end -}}
+    {{ "\n" }} 
+{{- end -}}
+
+{{- if .Capability -}}
+    {{- range .Capability -}}
+        {{ "capability" | indent }} {{ .Name }},{{ "\n" }}
+    {{- end -}}
+    {{ "\n" }}
+{{- end -}}
+
+{{- if .Network -}}
+    {{- range .Network -}}
+        {{- if eq .AccessType "deny" -}}
+            {{ "deny network " | indent }}
+        {{- else -}}
+            {{ "network " | indent }}
+        {{- end -}}
+        {{- if .Domain -}}
+            {{ .Domain }}{{ " " }}
+        {{- end -}}  
+        {{- if .Type -}}
+            {{ .Type }}{{ " " }}
+        {{- else -}}
+            {{ if .Protocol -}}
+                {{ .Protocol }}{{ " " }}
+            {{- end -}}
+        {{- end -}}
+        {{- if .Destination -}}
+            {{ "dst=" }}{{ .Destination }}
+        {{- end -}}
+        ,{{ "\n" }}
+    {{- end -}}
+    {{ "\n" }}
+{{- end -}}
+
+{{- if .Mount -}}
+    {{- range .Mount -}}
+        {{- "mount " | indent -}}
+        {{- if .FsType -}}
+            fstype={{ .FsType }}{{ " " }}
+        {{- end -}}
+        {{- if .Options -}}
+            {{- "options=(" -}}
+            {{- range .Options -}}
+                {{ . }}{{ " " }}
+            {{- end -}}
+            {{ ")" }}
+        {{- end -}}
+        {{- if .Source -}}
+            {{ " " }}{{ .Source }}
+        {{- end -}}
+        {{- if .MountPoint -}}
+            {{ "-> " }}{{ .MountPoint }}
+        {{- end -}}
+        ,{{ "\n" }}
+    {{- end -}}
+    {{ "\n" }}
+{{- end -}}
+
+{{- if .Umount -}}
+    {{- range .Umount -}}
+        {{- "umount " | indent -}}
+        {{- if .FsType -}}
+            fstype={{ .FsType }}{{ " " }}
+        {{- end -}}
+        {{- if .Options -}}
+            {{- "options=(" -}}
+            {{- range .Options -}}
+                {{ . }}{{ " " }}
+            {{- end -}}
+            {{ ")" }}
+        {{- end -}}
+        {{- if .MountPoint -}}
+            {{ .MountPoint }}
+        {{- end -}}
+        ,{{ "\n" }}
+    {{- end -}}
+    {{ "\n" }}
+{{- end -}}
+
+{{- if .Remount -}}
+    {{- range .Remount -}}
+        {{- "remount " | indent -}}
+        {{- if .FsType -}}
+            fstype={{ .FsType }}{{ " " }}
+        {{- end -}}
+        {{- if .Options -}}
+            {{- "options=(" -}}
+            {{- range .Options -}}
+                {{ . }}{{ " " }}
+            {{- end -}}
+            {{ ")" }}
+        {{- end -}}
+        {{- if .Remount -}}
+            {{ .Remount }}
+        {{- end -}}
+        ,{{ "\n" }}
+    {{- end -}}
+    {{ "\n" }}
+{{- end -}}
+
+{{- if .Unix -}}
+    {{- range .Unix -}}
+        {{- "unix " | indent -}}
+        {{- if .Access -}}
+            ({{ .Access }}){{ " " }}
+        {{- end -}}
+        {{- if .Type -}}
+            type={{ .Type }}{{ " " }}
+        {{- end -}}
+        {{- if .Address -}}
+            addr={{ .Address }}{{ " " }}
+        {{- end -}}
+        {{- if .Peer -}}
+            {{ "peer=(label=" }}{{ .Peer }}
+            {{- if .PeerAddr -}}
+                , addr={{ .PeerAddr }}
+            {{- end -}}
+            {{- ")" -}}
+        {{- end -}}
+        ,{{ "\n" }}
+    {{- end -}}
+    {{ "\n" }}
+{{- end -}}
+
+{{- if .Ptrace -}}
+    {{- range .Ptrace -}}
+        {{- "ptrace " | indent -}}
+        {{- if .Access -}}
+            ({{ .Access }}){{ " " }}
+        {{- end -}}
+        {{- if .Peer -}}
+            peer={{ .Peer }}
+        {{- end -}}
+        ,{{ "\n" }}
+    {{- end -}}
+    {{ "\n" }}
+{{- end -}}
+
+{{- if .Signal -}}
+    {{- range .Signal -}}
+        {{- "signal " | indent -}}
+        {{- if .Access -}}
+            ({{ .Access }}){{ " " }}
+        {{- end -}}
+        {{- if .Set -}}
+            set=({{ .Set }}){{ " " }}
+        {{- end -}}
+        {{- if .Peer -}}
+            peer={{ .Peer }}
+        {{- end -}}
+        ,{{ "\n" }}
+    {{- end -}}
+    {{ "\n" }}
+{{- end -}}
+
+{{- if .Dbus -}}
+    {{- range .Dbus -}}
+        {{- "dbus " | indent -}}
+        {{- if eq .Access "bind" -}}
+            bind bus={{ .Bus }} name={{ .Name }}
+        {{- else -}}
+            {{ .Access }} bus={{ .Bus }} path={{ .Path }}{{ "\n" }}
+            {{- if .Interface -}}
+                {{ "interface=" | overindent }}{{ .Interface }}{{ "\n" }}
+            {{- end -}}
+            {{- if .Member -}}
+                {{ "member=" | overindent }}{{ .Member }}{{ " " }}{{ "\n" }}
+            {{- end -}}
+            {{- if and .Name .Label -}}
+                {{- "peer=" | overindent -}}
+                (name={{ .Name }}, label={{ .Label }})
+            {{- else -}}
+                {{- if .Name }}
+                    {{- "peer=" | overindent -}}
+                    (name={{ .Name }})
+                {{- end -}}
+                {{- if .Label -}}
+                    {{- "peer=" | overindent -}}
+                    (label={{ .Label }})
+                {{- end -}}
+            {{- end -}}
+        {{- end -}}
+        ,{{ "\n\n" }}
+    {{- end -}}
+{{- end -}}
+
+{{- if .File -}}
+    {{- range .File -}}
+        {{- indent "" -}}
+        {{- if .Owner -}}
+            {{- "owner " -}}
+        {{- end -}}
+        {{ .Path }} {{ .Access }}
+        {{- if .Target -}}
+            -> {{ .Target }}
+        {{- end -}}
+        ,
+        {{- if .FileInherit -}}
+            {{- " # file_inherit" -}}
+        {{- end -}}
+        {{- if .NoNewPrivs -}}
+            {{- " # no new privs" -}}
+        {{- end -}}
+        {{ "\n" }}
+    {{- end -}}
+    {{ "\n" }}
+{{- end -}}
+
+{{- if .Includes -}}
+    {{- range .Includes -}}
+        {{- if .IfExists -}}
+            {{ "include if exists " | indent }}
+            {{- if .AbsPath -}}
+                "{{ . }}"{{ "\n" }}
+            {{- else -}}
+                <{{ .MagicPath }}>{{ "\n" }}
+            {{- end -}}
+        {{- end -}}
+    {{- end -}}
+{{- end -}}
+
+{{- "}\n" -}}
