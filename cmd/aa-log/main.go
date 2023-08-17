@@ -14,7 +14,7 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-const usage = `aa-log [-h] [--systemd] [--file file] [profile]
+const usage = `aa-log [-h] [--systemd] [--file file] [--rules] [profile]
 
     Review AppArmor generated messages in a colorful way. Supports logs from
     auditd, systemd, syslog as well as dbus session events.
@@ -28,17 +28,19 @@ Options:
     -h, --help         Show this help message and exit.
     -f, --file FILE    Set a logfile or a suffix to the default log file.
     -s, --systemd      Parse systemd logs from journalctl.
+    -r, --rules        Convert the log into AppArmor rules.
 
 `
 
 // Command line options
 var (
 	help    bool
+	rules   bool
 	path    string
 	systemd bool
 )
 
-func aaLog(logger string, path string, profile string) error {
+func aaLog(logger string, path string, profile string, rules bool) error {
 	var err error
 	var file io.Reader
 
@@ -53,8 +55,16 @@ func aaLog(logger string, path string, profile string) error {
 	if err != nil {
 		return err
 	}
+
 	aaLogs := logs.NewApparmorLogs(file, profile)
-	fmt.Print(aaLogs.String())
+	if rules {
+		profiles := aaLogs.ParseToProfiles()
+		for _, profile := range profiles {
+			fmt.Print(profile.String() + "\n")
+		}
+	} else {
+		fmt.Print(aaLogs.String())
+	}
 	return nil
 }
 
@@ -65,6 +75,8 @@ func init() {
 	flag.StringVar(&path, "file", "", "Set a logfile or a suffix to the default log file.")
 	flag.BoolVar(&systemd, "s", false, "Parse systemd logs from journalctl.")
 	flag.BoolVar(&systemd, "systemd", false, "Parse systemd logs from journalctl.")
+	flag.BoolVar(&rules, "r", false, "Convert the log into AppArmor rules.")
+	flag.BoolVar(&rules, "rules", false, "Convert the log into AppArmor rules.")
 }
 
 func main() {
@@ -86,7 +98,7 @@ func main() {
 	}
 
 	logfile := logs.GetLogFile(path)
-	err := aaLog(logger, logfile, profile)
+	err := aaLog(logger, logfile, profile, rules)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
