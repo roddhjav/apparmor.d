@@ -14,7 +14,7 @@ func Test_app(t *testing.T) {
 		logger  string
 		path    string
 		profile string
-		anon    bool
+		rules   bool
 		wantErr bool
 	}{
 		{
@@ -22,7 +22,7 @@ func Test_app(t *testing.T) {
 			logger:  "auditd",
 			path:    "../../tests/audit.log",
 			profile: "",
-			anon:    true,
+			rules:   false,
 			wantErr: false,
 		},
 		{
@@ -30,7 +30,7 @@ func Test_app(t *testing.T) {
 			logger:  "systemd",
 			path:    "../../tests/systemd.log",
 			profile: "",
-			anon:    false,
+			rules:   false,
 			wantErr: false,
 		},
 		{
@@ -38,7 +38,7 @@ func Test_app(t *testing.T) {
 			logger:  "auditd",
 			path:    "../../tests/log",
 			profile: "",
-			anon:    false,
+			rules:   false,
 			wantErr: true,
 		},
 		{
@@ -46,13 +46,13 @@ func Test_app(t *testing.T) {
 			logger:  "raw",
 			path:    "../../tests/audit.log",
 			profile: "",
-			anon:    false,
+			rules:   false,
 			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := aaLog(tt.logger, tt.path, tt.profile, tt.anon); (err != nil) != tt.wantErr {
+			if err := aaLog(tt.logger, tt.path, tt.profile); (err != nil) != tt.wantErr {
 				t.Errorf("aaLog() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
