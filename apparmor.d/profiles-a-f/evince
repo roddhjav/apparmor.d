@@ -9,15 +9,16 @@ include <tunables/global>
 @{exec_path} = @{bin}/evince @{lib}/evinced
 profile evince @{exec_path} {
   include <abstractions/base>
+  include <abstractions/dbus-accessibility-strict>
+  include <abstractions/dbus-session-strict>
   include <abstractions/dconf-write>
   include <abstractions/gnome>
+  include <abstractions/ibus>
+  include <abstractions/nameservice-strict>
   include <abstractions/openssl>
   include <abstractions/user-download-strict>
   include <abstractions/user-read>
   include <abstractions/user-write>
-  include <abstractions/dbus-session-strict>
-  include <abstractions/dbus-accessibility-strict>
-  include <abstractions/ibus>
 
   # also denies network mounts
   deny network inet,
@@ -110,27 +111,4 @@ profile evince @{exec_path} {
   deny @{lib}/ r, # asks when viewing PostScript files
 
   include if exists <local/evince>
-}
-
-profile evince-previewer /{,usr/}bin/evince-previewer {
-  include <abstractions/base>
-  include <abstractions/dbus-accessibility-strict>
-  include <abstractions/dbus-session-strict>
-
-  unix (send, receive, connect) type=stream peer=(addr="@/tmp/.X11-unix/X[0-9]*", label=xorg),
-
-  /{,usr/}bin/evince-previewer mr,
-
-  # X-tiny
-  owner @{HOME}/.Xauthority r,
-
-  include if exists <local/evince-previewer>
-}
-
-profile evince-thumbnailer /{,usr/}bin/evince-thumbnailer {
-  include <abstractions/base>
-
-  /{,usr/}bin/evince-thumbnailer mr,
-
-  include if exists <local/evince-thumbnailer>
 }
