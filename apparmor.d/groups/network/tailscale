@@ -11,7 +11,7 @@ profile tailscale @{exec_path} {
   include <abstractions/base>
   include <abstractions/nameservice-strict>
 
-  ptrace (read),
+  capability sys_ptrace,
 
   network inet dgram,
   network inet6 dgram,
@@ -19,15 +19,20 @@ profile tailscale @{exec_path} {
   network inet6 stream,
   network netlink raw,
 
+  ptrace (read),
+
   @{exec_path} mr,
 
   @{bin}/ip rPx,
 
+  owner @{run}/tailscale/tailscaled.sock rw,
+
   @{sys}/kernel/mm/transparent_hugepage/hpage_pmd_size r,
 
-  @{PROC}/ r,
-  @{PROC}/@{pids}/stat r,
-  @{PROC}/sys/net/core/somaxconn r,
+        @{PROC}/ r,
+        @{PROC}/@{pids}/stat r,
+        @{PROC}/sys/net/core/somaxconn r,
+  owner @{PROC}/@{pids}/environ r,
 
   include if exists <local/tailscale>
 }

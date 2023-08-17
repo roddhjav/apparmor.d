@@ -9,6 +9,7 @@ include <tunables/global>
 @{exec_path} = @{bin}/tailscaled
 profile tailscaled @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/dbus-strict>
   include <abstractions/nameservice-strict>
   include <abstractions/ssl_certs>
 
@@ -17,6 +18,7 @@ profile tailscaled @{exec_path} flags=(attach_disconnected) {
   capability net_admin,
   capability net_raw,
   capability sys_ptrace,
+  capability syslog,
 
   network inet dgram,
   network inet6 dgram,
@@ -27,6 +29,21 @@ profile tailscaled @{exec_path} flags=(attach_disconnected) {
   network netlink raw,
 
   ptrace (read),
+
+  dbus send bus=system path=/org/freedesktop/resolve1
+       interface=org.freedesktop.DBus.Peer
+       member=Ping
+       peer=(name=org.freedesktop.resolve1, label=systemd-resolved),
+
+  dbus send bus=system path=/org/freedesktop/resolve1
+       interface=org.freedesktop.DBus.Properties
+       member=Get
+       peer=(name=org.freedesktop.resolve1, label=systemd-resolved),
+
+  dbus send bus=system path=/org/freedesktop/resolve1
+       interface=org.freedesktop.resolve1.Manager
+       member={FlushCaches,SetLink*}
+       peer=(name=org.freedesktop.resolve1, label=systemd-resolved),
 
   @{exec_path} mr,
 
@@ -42,9 +59,13 @@ profile tailscaled @{exec_path} flags=(attach_disconnected) {
   @{etc_rw}/resolv.conf rw,
   @{etc_rw}/resolv.conf.*.tmp rw,
 
-  owner @{run}/tailscale/{,**} rw,
   owner /var/cache/{,**} rw,
   owner /var/lib/tailscale/{,**} rw,
+
+  owner @{user_share_dirs}/tailscale/{,**} rw,
+
+  owner @{run}/systemd/notify w,
+  owner @{run}/tailscale/{,**} rw,
 
   @{sys}/devices/virtual/dmi/id/{bios_vendor,product_name} r,
   @{sys}/kernel/mm/transparent_hugepage/hpage_pmd_size r,
@@ -81,6 +102,7 @@ profile tailscaled @{exec_path} flags=(attach_disconnected) {
 
     /dev/net/tun rw,
 
+    include if exists <local/tailscaled_systemctl>
   }
 
   include if exists <local/tailscaled>

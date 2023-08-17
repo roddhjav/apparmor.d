@@ -7,7 +7,7 @@ abi <abi/3.0>,
 include <tunables/global>
 
 @{exec_path} = @{lib}/org_kde_powerdevil
-profile kde-powerdevil @{exec_path} flags=(attach_disconnected) {
+profile kde-powerdevil @{exec_path} flags=(attach_disconnected mediate_deleted) {
   include <abstractions/base>
   include <abstractions/qt5>
   include <abstractions/X-strict>
@@ -32,16 +32,20 @@ profile kde-powerdevil @{exec_path} flags=(attach_disconnected) {
   owner @{user_config_dirs}/#[0-9]* rw,
   owner @{user_config_dirs}/kdedefaults/kdeglobals r,
   owner @{user_config_dirs}/kdeglobals r,
+  owner @{user_config_dirs}/powerdevilrc rwl -> @{user_config_dirs}/#[0-9]*,
   owner @{user_config_dirs}/powerdevilrc rwl,
+  owner @{user_config_dirs}/powerdevilrc.lock rwk,
   owner @{user_config_dirs}/powermanagementprofilesrc r,
+  owner @{user_config_dirs}/powermanagementprofilesrc rwl -> @{user_config_dirs}/#[0-9]*,
   owner @{user_config_dirs}/powermanagementprofilesrc.lock rwk,
 
         @{run}/systemd/inhibit/*.ref rw,
   owner @{run}/user/@{uid}kcrash_[0-9]* rw,
 
-  @{PROC}/sys/kernel/core_pattern r,
   @{PROC}/@{pid}/mounts r,
-  
+  @{PROC}/sys/kernel/core_pattern r,
+  @{PROC}/sys/kernel/random/boot_id r,
+
   @{sys}/class/ r,
   @{sys}/class/drm/ r,
   @{sys}/bus/ r,
