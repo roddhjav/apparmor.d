@@ -12,18 +12,11 @@ profile dpkg @{exec_path} {
   include <abstractions/base>
   include <abstractions/consoles>
 
-  # To set proper ownership/permissions of installed files.
   capability chown,
+  capability dac_override,
+  capability dac_read_search,
   capability fowner,
   capability fsetid,
-
-  # These are needed because dpkg wants to read/write files from/to directories owned by different
-  # users than root, for instance files in the /usr/share/polkit-1/ dir , which is owned by the
-  # "polkitd" user with the "drwx------" permissions.
-  capability dac_read_search,
-  capability dac_override,
-
-  # Needed? (##FIXME##)
   capability setgid,
 
   @{exec_path} mr,
@@ -35,6 +28,7 @@ profile dpkg @{exec_path} {
   @{bin}/dpkg-deb    rpx,
   @{bin}/dpkg-query  rpx,
   @{bin}/dpkg-split  rPx,
+  @{bin}/deb-systemd-helper rix,
   @{lib}/needrestart/dpkg-status rPx,
   /usr/share/debian-security-support/check-support-status.hook rPx,
 
