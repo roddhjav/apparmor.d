@@ -13,7 +13,9 @@ profile xdg-document-portal @{exec_path} flags=(attach_disconnected) {
 
   capability sys_nice,
   capability sys_resource,
-#  capability sys_admin,
+  capability sys_admin,
+
+  mount fstype=fuse.portal -> @{run}/user/@{uid}/doc/,
 
   ptrace (read) peer=xdg-desktop-portal,
 
@@ -78,11 +80,11 @@ profile xdg-document-portal @{exec_path} flags=(attach_disconnected) {
     / r,
     /etc/flatpak/remotes.d/{,*} r,
 
+    /var/lib/flatpak/{,**} rw,
+
     owner @{user_cache_dirs}/flatpak/{,**} r,
     owner @{user_config_dirs}/user-dirs.dirs r,
     owner @{user_share_dirs}/flatpak/{,**} r,
-
-    /var/lib/flatpak/{,**} rw,
 
     @{PROC}/sys/kernel/random/boot_id r,
 
@@ -98,24 +100,21 @@ profile xdg-document-portal @{exec_path} flags=(attach_disconnected) {
     capability sys_admin,
     capability dac_read_search,
 
-    unix (send receive) type=stream peer=(label=xdg-document-portal),
-
-  #   network inet stream,
-  #   network inet6 stream,
-
-    @{bin}/fusermount{,3} mr,
-
-    /etc/fuse{,3}.conf r,
-
     mount options=(rw, rprivate) -> /,
     mount options=(rw, rbind) @{run}/user/@{uid}/ -> /,
     mount fstype=fuse.portal -> @{run}/user/@{uid}/doc/,
 
     umount @{run}/user/@{uid}/doc/,
-  
-    @{PROC}/@{pids}/mounts r,
+
+    unix (send receive) type=stream peer=(label=xdg-document-portal),
+
+    @{bin}/fusermount{,3} mr,
+
+    /etc/fuse{,3}.conf r,
 
     owner @{run}/user/@{uid}/doc/ rw,
+
+    @{PROC}/@{pids}/mounts r,
 
     /dev/fuse rw,
 
