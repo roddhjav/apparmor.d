@@ -6,8 +6,8 @@ title: Variables References
 
 ### User directories
 
-| Description | Name | Value |
-|-------------|:----:|---------|
+| Description | Name | Default Value |
+|-------------|:----:|---------------|
 | Desktop | `@{XDG_DESKTOP_DIR}` | `Desktop` |
 | Download | `@{XDG_DOWNLOAD_DIR}` | `Downloads` |
 | Templates | `@{XDG_TEMPLATES_DIR}` | `Templates` |
@@ -27,8 +27,8 @@ title: Variables References
 
 ### Dotfiles
 
-| Description | Name | Value |
-|-------------|:----:|---------|
+| Description | Name | Default Value |
+|-------------|:----:|---------------|
 | SSH | `@{XDG_SSH_DIR}` | `.ssh` |
 | GPG | `@{XDG_GPG_DIR}` | `.gnupg` |
 | Passwords | `@{XDG_PASSWORD_STORE_DIR}` | `.password-store` |
@@ -41,8 +41,8 @@ title: Variables References
 
 ### Full configuration path
 
-| Description | Name | Value |
-|-------------|:----:|---------|
+| Description | Name | Default Value |
+|-------------|:----:|---------------|
 | Cache | `@{user_cache_dirs}` | `@{HOME}/@{XDG_CACHE_DIR}` |
 | Config | `@{user_config_dirs}` | `@{HOME}/@{XDG_CONFIG_DIR}` |
 | Share | `@{user_share_dirs}` | ` @{HOME}/@{XDG_DATA_DIR}` |
@@ -55,8 +55,8 @@ title: Variables References
 
 ### Full user path
 
-| Description | Name | Value |
-|-------------|:----:|---------|
+| Description | Name | Default Value |
+|-------------|:----:|---------------|
 | Books | `@{user_books_dirs}` | `@{HOME}/@{XDG_BOOKS_DIR} @{MOUNTS}/@{XDG_BOOKS_DIR}` |
 | Documents | `@{user_documents_dirs}` | `@{HOME}/@{XDG_DOCUMENTS_DIR} @{MOUNTS}/@{XDG_DOCUMENTS_DIR}` |
 | Download | `@{user_download_dirs}` | `@{HOME}/@{XDG_DOWNLOAD_DIR} @{MOUNTS}/@{XDG_DOWNLOAD_DIR}` |
@@ -79,18 +79,30 @@ title: Variables References
 
     Do not modify these variables unless you know what you are doing
 
-| Description | Name | Value |
-|-------------|:----:|---------|
-| Root Home | `@{HOMEDIRS}` | `/home/` |
-| Home directories | `@{HOME}` | `@{HOMEDIRS}/*/ /root/` |
+**Helper variables**
+
+| Description | Name | Default Value |
+|-------------|:----:|---------------|
+| Integer (up to 10 digits) | `@{int}` | `[0-9]{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}` |
+| Any 6, 8 or 10 characters | `@{rand6}`, `@{rand8}`, `@{rand10}` | |
+| Hexadecimal | `@{h}*@{h}` |  |
+| MD5 hash | `@{md5}` |  |
+| Universally unique identifier | `@{uuid}` |  |
 | Current Process id | `@{pid}` | `[0-9]*` |
 | Processes ids | `@{pids}` | `[0-9]*` |
 | User id | `@{uid}` | `[0-9]*` |
 | Thread id | `@{tid}` | `[0-9]*` |
+| Single hexadecimal character | `@{h}` | `[0-9a-fA-F]` |
+| Single alphanumeric character | `@{c}` | `[0-9a-zA-Z]` |
+
+**System Paths**
+
+| Description | Name | Default Value |
+|-------------|:----:|---------------|
+| Root Home | `@{HOMEDIRS}` | `/home/` |
+| Home directories | `@{HOME}` | `@{HOMEDIRS}/*/ /root/` |
 | Root Mountpoints | `@{MOUNTDIRS}` | `/media/ @{run}/media/ /mnt/` |
 | Mountpoints directories | `@{MOUNTS}` | `@{MOUNTDIRS}/*/` |
-| Universally unique identifier | `@{uuid}` | `[0-9a-fA-F]*-[0-9a-fA-F]*-[0-9a-fA-F]*-[0-9a-fA-F]*-[0-9a-fA-F]*` |
-| Hexadecimal | `@{hex}` | `[0-9a-fA-F]*` |
 | Bin | `@{bin}` |  `/{usr/,}{s,}bin` |
 | Lib | `@{lib}` |  `/{usr/,}lib{,exec,32,64}` |
 | multi-arch library | `@{multiarch}` | `*-linux-gnu*` |

@@ -24,15 +24,21 @@ The test VMs are built using [`cloud-init`][cloud-init] (when available), [`pack
 [packer]: https://www.packer.io/
 [vagrant]: https://www.vagrantup.com/
 
+### Requirements
 
-### Build
+* docker
+* [packer]
+* [vagrant]
+* vagrant plugin install vagrant-libvirt
 
 !!! note
 
     You may need to edit some settings to fit your setup:
-     
+
     - The libvirt configuration in `tests/Vagrantfile` 
     - The default ssh key and ISO directory in `tests/packer/variables.pkr.hcl`
+
+### Build
 
 **Build an image**
 
