@@ -20,7 +20,7 @@ is therefore easy to ensure some profile features such as:
 
 It also improves compatibilities and makes personalization easier thanks to the
 use of more variables.
- 
+
 ## Guidelines
 
 !!! note

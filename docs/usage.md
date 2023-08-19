@@ -108,7 +108,7 @@ DENIED  dnsmasq open /proc/cmdline comm=dnsmasq requested_mask=r denied_mask=r
 ### Help
 
 ```
-aa-log [-h] [--systemd] [--file file] [profile]
+aa-log [-h] [--systemd] [--file file] [--rules] [profile]
 
     Review AppArmor generated messages in a colorful way. Supports logs from
     auditd, systemd, syslog as well as dbus session events.
@@ -122,4 +122,5 @@ Options:
     -h, --help         Show this help message and exit.
     -f, --file FILE    Set a logfile or a suffix to the default log file.
     -s, --systemd      Parse systemd logs from journalctl.
+    -r, --rules        Convert the log into AppArmor rules.
 ```

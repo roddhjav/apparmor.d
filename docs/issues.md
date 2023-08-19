@@ -12,7 +12,7 @@ Known bugs are tracked on the meta issue **[#75](https://github.com/roddhjav/app
     However, there are some **major exceptions**:
 
     * `deny` rules are enforced even in complain mode,
-    * `attach_disconnected` (and `the mediate_deleted`) will break the program if they are required and missing in the profile,
+    * `attach_disconnected` (and `mediate_deleted`) will break the program if they are required and missing in the profile,
     * If apparmor does not find the profile to transition `rPx`.
 
 ### Pacman "could not get current working directory"

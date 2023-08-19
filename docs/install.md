@@ -55,6 +55,14 @@ dpkg-buildpackage -b -d --no-sign
 sudo dpkg -i ../apparmor.d_*_all.deb
 ```
 
+!!! tip
+
+    If you have `devscripts` installed, you can use the one liner:
+    ```sh
+    make dpkg
+    ```
+
+
 
 ## :simple-suse: OpenSUSE
 
@@ -96,6 +104,13 @@ sudo make profile-names...
     '.build/apparmor.d/pass' -> '/etc/apparmor.d/pass'
     ```
     So, you can install the additional profiles `wl-copy`, `xclip`, `pass-import`, and `child-pager` if desired.
+
+
+## Uninstall
+
+- :material-arch: Archlinux `sudo pacman -R apparmor.d`
+- :material-ubuntu: Ubuntu & :material-debian: Debian `sudo apt purge apparmor.d`
+
 
 [aur]: https://aur.archlinux.org/packages/apparmor.d-git
 [repo]: https://repo.pujol.io/
