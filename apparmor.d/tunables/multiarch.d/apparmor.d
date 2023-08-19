@@ -21,6 +21,9 @@
 # Any eight characters
 @{rand8}=@{c}@{c}@{c}@{c}@{c}@{c}@{c}@{c}
 
+# Any ten characters
+@{rand10}=@{c}@{c}@{c}@{c}@{c}@{c}@{c}@{c}@{c}@{c}
+
 # MD5 hash
 @{md5}=@{h}@{h}@{h}@{h}@{h}@{h}@{h}@{h}@{h}@{h}@{h}@{h}@{h}@{h}@{h}@{h}@{h}@{h}@{h}@{h}@{h}@{h}@{h}@{h}@{h}@{h}@{h}@{h}@{h}@{h}@{h}@{h}
 
