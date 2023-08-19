@@ -88,8 +88,9 @@ tests:
 	@go tool cover -func=coverage.out
 
 lint:
+	@golangci-lint run
 	@shellcheck --shell=bash \
-		PKGBUILD configure dists/build.sh \
+		PKGBUILD dists/build.sh \
 		tests/packer/init/init.sh tests/packer/src/aa-update tests/packer/init/clean.sh \
 		debian/${PKGNAME}.postinst debian/${PKGNAME}.postrm
 
