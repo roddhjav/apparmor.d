@@ -16,20 +16,29 @@ profile firefox-kmozillahelper @{exec_path} {
   include <abstractions/mesa>
   include <abstractions/nameservice-strict>
   include <abstractions/qt5>
+  include <abstractions/thumbnails-cache-read>
 
   ptrace (read) peer=firefox,
 
   @{exec_path} mr,
 
+  @{lib}/libheif/            r,
+  @{lib}/libheif/*.so*      rm,
+
   /usr/share/hwdata/*.ids r,
   /usr/share/icu/@{int}.@{int}/*.dat r,
+  /usr/share/knotifications5/*.notifyrc r,
   /usr/share/kservices5/{,**} r,
   /usr/share/mime/ r,
+  /usr/share/sounds/{,**} r,
 
   /etc/xdg/kdeglobals r,
   /etc/xdg/kwinrc r,
   /etc/xdg/menus/ r,
   /etc/xdg/menus/applications-merged/ r,
+
+  owner @{HOME}/@{XDG_DESKTOP_DIR}/ r,
+  owner @{HOME}/@{XDG_DESKTOP_DIR}/*.desktop r,
 
   owner @{user_cache_dirs}/icon-cache.kcache rw,
   owner @{user_cache_dirs}/ksycoca5_* r,
@@ -38,11 +47,18 @@ profile firefox-kmozillahelper @{exec_path} {
   owner @{user_config_dirs}/kdedefaults/kwinrc r,
   owner @{user_config_dirs}/kdeglobals r,
   owner @{user_config_dirs}/kmozillahelperrc r,
+  owner @{user_config_dirs}/kmozillahelperrc.@{rand6} rwl,
   owner @{user_config_dirs}/kwinrc r,
 
+  owner @{user_share_dirs}/RecentDocuments/ r,
+  owner @{user_share_dirs}/RecentDocuments/*.desktop w,
+  owner @{user_share_dirs}/recently-used.xbel.@{rand6} l,
+
+  owner @{run}/user/@{uid}/kmozillahelper@{rand6}.@{int}.kioworker.socket wl,
   owner @{run}/user/@{uid}/xauth_@{rand6} rl,
 
-  @{PROC}/sys/kernel/core_pattern r,
+        @{PROC}/sys/kernel/core_pattern r,
+  owner @{PROC}/@{pid}/mountinfo r,
 
   /dev/tty r,
 
