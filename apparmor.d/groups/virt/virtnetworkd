@@ -15,16 +15,25 @@ profile virtnetworkd @{exec_path} flags=(attach_disconnected) {
   network netlink raw,
 
   ptrace (read) peer=virtqemud,
+  ptrace (read) peer=unconfined,
 
   @{exec_path} mr,
 
   @{bin}/dnsmasq rPx,
 
-        @{run}/utmp rk,
+  /etc/libvirt/libvirt.conf r,
+
+  owner /var/lib/libvirt/dnsmasq/*.macs* rw,
+
+        @{run}/libvirt/network/default.pid r,
         @{run}/systemd/inhibit/*.ref rw,
+        @{run}/utmp rk,
+  owner @{run}/libvirt/common/system.token rwk,
+  owner @{run}/libvirt/network/{,**} rwk,
   owner @{run}/user/@{uid}/libvirt/common/system.token rwk,
   owner @{run}/user/@{uid}/libvirt/network/{,**} rwk,
   owner @{run}/user/@{uid}/libvirt/virtnetworkd* rwk,
+  owner @{run}/virtnetworkd.pid w,
 
   @{sys}/devices/system/node/ r,
   @{sys}/devices/system/node/node@{int}/meminfo r,
