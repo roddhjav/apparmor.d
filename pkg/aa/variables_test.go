@@ -19,11 +19,11 @@ func TestDefaultTunables(t *testing.T) {
 			want: &AppArmorProfile{
 				Preamble: Preamble{
 					Variables: []Variable{
-						{"bin", []string{"/{usr/,}{s,}bin"}},
-						{"lib", []string{"/{usr/,}lib{,exec,32,64}"}},
+						{"bin", []string{"/{,usr/}{,s}bin"}},
+						{"lib", []string{"/{,usr/}lib{,exec,32,64}"}},
 						{"multiarch", []string{"*-linux-gnu*"}},
 						{"user_share_dirs", []string{"/home/*/.local/share"}},
-						{"etc_ro", []string{"/{usr/,}etc/"}},
+						{"etc_ro", []string{"/{,usr/}etc/"}},
 					},
 				},
 			},
