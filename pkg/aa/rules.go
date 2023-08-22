@@ -52,8 +52,8 @@ type Qualifier struct {
 // Preamble rules
 
 type Abi struct {
-	AbsPath   string
-	MagicPath string
+	Path    string
+	IsMagic bool
 }
 
 type Alias struct {
@@ -62,9 +62,9 @@ type Alias struct {
 }
 
 type Include struct {
-	IfExists  bool
-	AbsPath   string
-	MagicPath string
+	IfExists bool
+	Path     string
+	IsMagic  bool
 }
 
 type Variable struct {
