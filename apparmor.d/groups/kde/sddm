@@ -26,6 +26,7 @@ profile sddm @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   capability dac_override,
   capability dac_read_search,
   capability fowner,
+  capability kill,
   capability net_admin,
   capability setgid,
   capability setuid,
@@ -35,7 +36,10 @@ profile sddm @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   network netlink raw,
 
   ptrace (trace) peer=@{profile_name},
+  ptrace (read) peer=unconfined,
+  ptrace (read) peer=kwalletd5,
 
+  signal (send) set=(kill, term) peer=startplasma,
   signal (send) set=(kill, term) peer=xorg,
 
   @{exec_path} mr,
@@ -116,9 +120,9 @@ profile sddm @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
   owner @{user_share_dirs}/ w,
   owner @{user_share_dirs}/kwalletd/ rw,
-  owner @{user_share_dirs}/kwalletd/kdewallet.salt r,
   owner @{user_share_dirs}/kwalletd/kdewallet.salt rw,
   owner @{user_share_dirs}/sddm/ w,
+  owner @{user_share_dirs}/sddm/wayland-session.log w,
   owner @{user_share_dirs}/sddm/xorg-session.log w,
 
         /tmp/sddm-* rw,
@@ -130,6 +134,7 @@ profile sddm @{exec_path} flags=(attach_disconnected,mediate_deleted) {
         @{run}/faillock/[a-zA-z0-9]* rwk,
         @{run}/sddm.pid rw,
         @{run}/sddm/\{@{uuid}\} rw,
+        @{run}/sddm/#@{int} rw,
         @{run}/sddm/xauth_@{rand6} rwl -> @{run}/sddm/#@{int},
         @{run}/systemd/sessions/*.ref rw,
         @{run}/user/@{uid}/xauth_@{rand6} rwl,
@@ -137,7 +142,11 @@ profile sddm @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{run}/user/@{uid}/#@{int} rw,
   owner @{run}/user/@{uid}/kwallet5.socket rw,
 
+  @{sys}/devices/system/node/ r,
+  @{sys}/devices/system/node/node@{int}/meminfo r,
+
         @{PROC}/ r,
+        @{PROC}/uptime r,
         @{PROC}/@{pids}/cmdline r,
         @{PROC}/@{pids}/stat r,
         @{PROC}/sys/kernel/core_pattern r,

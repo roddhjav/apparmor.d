@@ -9,7 +9,9 @@ include <tunables/global>
 @{exec_path} = @{lib}/kf5/kioslave5
 profile kioslave5 @{exec_path} {
   include <abstractions/base>
+  include <abstractions/deny-sensitive-home>
   include <abstractions/dri-common>
+  include <abstractions/dri-enumerate>
   include <abstractions/fonts>
   include <abstractions/freedesktop.org>
   include <abstractions/mesa>
@@ -18,6 +20,7 @@ profile kioslave5 @{exec_path} {
   include <abstractions/qt5>
   include <abstractions/ssl_certs>
   include <abstractions/trash>
+  include <abstractions/vulkan>
 
   network inet dgram,
   network inet6 dgram,
@@ -26,6 +29,7 @@ profile kioslave5 @{exec_path} {
   network netlink raw,
   network netlink dgram,
 
+  signal (receive) set=term peer=dolphin,
   signal (receive) set=term peer=firefox-kmozillahelper,
   signal (receive) set=term peer=plasmashell,
 
@@ -39,6 +43,7 @@ profile kioslave5 @{exec_path} {
   /usr/share/icu/@{int}.@{int}/*.dat r,
   /usr/share/kservices5/{,**} r,
   /usr/share/kservicetypes5/*.desktop r,
+  /usr/share/mime/ r,
 
   /etc/fstab r,
   /etc/xdg/kdeglobals r,
@@ -46,11 +51,24 @@ profile kioslave5 @{exec_path} {
   /etc/xdg/kwinrc r,
   /etc/xdg/menus/{,**} r,
 
-  owner @{MOUNTDIRS}/** r,
+  # Full access to user's data
+  / r,
+  /*/ r,
+  @{bin}/ r,
+  @{lib}/ r,
+  @{MOUNTDIRS}/ r,
+  @{MOUNTS}/ r,
+  @{MOUNTS}/** rw,
+  owner @{HOME}/{,**} rw,
+  owner @{run}/user/@{uid}/{,**} rw,
+  owner /tmp/{,**} rw,
 
-  owner @{HOME}/@{XDG_DESKTOP_DIR}/ r,
-  owner @{HOME}/@{XDG_DESKTOP_DIR}/.directory r,
-  owner @{HOME}/@{XDG_DESKTOP_DIR}/*.desktop r,
+  # Silence non user's data
+  deny /boot/{,**} r,
+  deny /opt/{,**} r,
+  deny /root/{,**} r,
+  deny /tmp/.* rw,
+  deny /tmp/.*/{,**} rw,
 
   owner @{user_cache_dirs}/ksycoca5_* r,
   owner @{user_cache_dirs}/thumbnails/*/ r,
@@ -61,8 +79,11 @@ profile kioslave5 @{exec_path} {
   owner @{user_config_dirs}/kdeglobals r,
   owner @{user_config_dirs}/kwinrc r,
 
-  owner @{user_share_dirs}/baloo/index-lock rwk,
   owner @{user_share_dirs}/baloo/index rw,
+  owner @{user_share_dirs}/baloo/index-lock rwk,
+  owner @{user_share_dirs}/kactivitymanagerd/resources/database rk,
+  owner @{user_share_dirs}/kactivitymanagerd/resources/database-shm rwk,
+  owner @{user_share_dirs}/kactivitymanagerd/resources/database-wal rw,
 
         @{run}/mount/utab r,
   owner @{run}/user/@{uid}/#@{int} rw,

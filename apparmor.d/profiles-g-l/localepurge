@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2019-2021 Mikhail Morfikov
+# Copyright (C) 2021-2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -12,48 +13,47 @@ profile localepurge @{exec_path} {
   include <abstractions/consoles>
 
   @{exec_path} r,
-  @{bin}/{,ba,da}sh rix,
 
-  @{bin}/fgrep      rix,
-  @{bin}/chmod      rix,
-  @{bin}/mkdir      rix,
-  @{bin}/touch      rix,
-  @{bin}/ls         rix,
+  @{bin}/{,ba,da}sh rix,
   @{bin}/{,e}grep   rix,
-  @{bin}/sort       rix,
+  @{bin}/basename   rix,
+  @{bin}/chmod      rix,
+  @{bin}/du         rix,
+  @{bin}/fgrep      rix,
+  @{bin}/find       rix,
+  @{bin}/ls         rix,
+  @{bin}/mkdir      rix,
   @{bin}/mv         rix,
   @{bin}/rm         rix,
+  @{bin}/sort       rix,
+  @{bin}/touch      rix,
   @{bin}/tr         rix,
-  @{bin}/du         rix,
   @{bin}/xargs      rix,
-  @{bin}/basename   rix,
-  @{bin}/find       rix,
 
   @{bin}/df         rPx,
 
-  owner @{PROC}/@{pid}/fd/ r,
+  # Dirs cleaned from locales
+  /usr/share/{gnome/,}help/{,**/} r,
+  /usr/share/{gnome/,}help/**/** w,
+  /usr/share/{locale,man,omf,calendar}/{,**/} r,
+  /usr/share/{locale,man,omf,calendar}/**/** w,
+  /usr/share/aptitude/{,*} r,
+  /usr/share/aptitude/* w,
+  /usr/share/cups/{templates,locale,doc-root}/{,**/} r,
+  /usr/share/cups/{templates,locale,doc-root}/**/** w,
+  /usr/share/vim/ r,
+  /usr/share/vim/vim[0-9]*/lang/{,**/} r,
+  /usr/share/vim/vim[0-9]*/lang/**/** w,
+  /usr/share/X11/locale/**/** w,
 
   /etc/locale.nopurge r,
 
   owner /var/cache/localepurge/localelist r,
   owner /var/cache/localepurge/localelist-new{,.temp} rw,
 
-  # Dirs cleaned from locales
-  /usr/share/{locale,man,omf,calendar}/{,**/} r,
-  /usr/share/{locale,man,omf,calendar}/**/** w,
-  /usr/share/{gnome/,}help/{,**/} r,
-  /usr/share/{gnome/,}help/**/** w,
-  /usr/share/cups/{templates,locale,doc-root}/{,**/} r,
-  /usr/share/cups/{templates,locale,doc-root}/**/** w,
-  /usr/share/vim/ r,
-  /usr/share/vim/vim[0-9]*/lang/{,**/} r,
-  /usr/share/vim/vim[0-9]*/lang/**/** w,
-  /usr/share/X11/locale/{,**/} r,
-  /usr/share/X11/locale/**/** w,
-  /usr/share/aptitude/{,*} r,
-  /usr/share/aptitude/* w,
-
   /tmp/ r,
+
+  owner @{PROC}/@{pid}/fd/ r,
 
   include if exists <local/localepurge>
 }
