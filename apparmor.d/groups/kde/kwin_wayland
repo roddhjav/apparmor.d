@@ -1,0 +1,87 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/kwin_wayland
+profile kwin_wayland @{exec_path} flags=(attach_disconnected mediate_deleted) {
+  include <abstractions/base>
+  include <abstractions/dri-common>
+  include <abstractions/dri-enumerate>
+  include <abstractions/freedesktop.org>
+  include <abstractions/mesa>
+  include <abstractions/fonts>
+  include <abstractions/nameservice-strict>
+  include <abstractions/freedesktop.org>
+  include <abstractions/vulkan>
+
+  capability sys_nice,
+
+  ptrace (read),
+
+  signal (receive) set=(kill, term) peer=kwin_wayland_wrapper,
+  signal (send) set=(kill, term) peer=xwayland,
+
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  @{bin}/plasmashell          r,
+  @{bin}/Xwayland             rPx,
+  @{lib}/kscreenlocker_greet  rPx,
+
+  /usr/share/hwdata/pnp.ids r,
+  /usr/share/kglobalaccel/{,**} r,
+  /usr/share/knotifications5/ksmserver.notifyrc r,
+  /usr/share/kservices5/{,**} r,
+  /usr/share/kwin/{,**} r,
+  /usr/share/libinput/{,**} r,
+  /usr/share/mime/ r,
+  /usr/share/qt/translations/*.qm r,
+  /usr/share/X11/xkb/{,**} r,
+
+  /etc/machine-id r,
+  /etc/xdg/menus/ r,
+
+  owner @{user_cache_dirs}/icon-cache.kcache rw,
+  owner @{user_cache_dirs}/ksycoca5_* r,
+
+  owner @{user_config_dirs}/#@{int} rwl,
+  owner @{user_config_dirs}/kcminputrc r,
+  owner @{user_config_dirs}/kdedefaults/* r,
+  owner @{user_config_dirs}/kdeglobals r,
+  owner @{user_config_dirs}/kglobalshortcutsrc{,.@{rand6}} rwl -> @{user_config_dirs}/#@{int},
+  owner @{user_config_dirs}/kglobalshortcutsrc.lock rwk,
+  owner @{user_config_dirs}/kscreenlockerrc r,
+  owner @{user_config_dirs}/kwinrc rw,
+  owner @{user_config_dirs}/kwinrc.@{rand6} rwl -> @{user_config_dirs}/#@{int},
+  owner @{user_config_dirs}/kwinrc.lock rwk,
+  owner @{user_config_dirs}/kwinrulesrc r,
+  owner @{user_config_dirs}/kxkbrc r,
+
+  @{run}/systemd/inhibit/*.ref rw,
+
+  @{sys}/bus/ r,
+  @{sys}/class/ r,
+  @{sys}/class/drm/ r,
+  @{sys}/class/input/ r,
+  @{sys}/devices/**/uevent r,
+
+  @{run}/udev/data/+acpi:* r,             # for ACPI
+  @{run}/udev/data/+dmi* r,               # for ?
+  @{run}/udev/data/+input:input@{int} r,  # for mouse, keyboard, touchpad
+  @{run}/udev/data/+platform:* r,         # for ?
+
+  @{run}/udev/data/c13:@{int}  r,         # for /dev/input/*
+  @{run}/udev/data/c226:@{int} r,         # for /dev/dri/card*
+
+  @{PROC}/sys/kernel/random/boot_id r,
+
+  /dev/input/event@{int} rw,
+  /dev/tty r,
+
+  include if exists <local/kwin_wayland>
+}

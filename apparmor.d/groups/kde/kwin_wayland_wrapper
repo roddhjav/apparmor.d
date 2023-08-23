@@ -1,0 +1,27 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/kwin_wayland_wrapper
+profile kwin_wayland_wrapper @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/wayland>
+  include <abstractions/X-strict>
+
+  signal (send) set=(term, kill) peer=kwin_wayland,
+
+  @{exec_path} mr,
+
+  @{bin}/kwin_wayland rPx,
+
+  owner @{run}/user/@{uid}/#@{int} rw,
+  owner @{run}/user/@{uid}/wayland-*.lock rk,
+
+  owner /tmp/.X1-lock rw,
+
+  include if exists <local/kwin_wayland_wrapper>
+}
