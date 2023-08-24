@@ -29,6 +29,10 @@
   @{sys}/devices/pci[0-9]*/**/block/mmcblk@{int}/** r,
   @{sys}/devices/pci[0-9]*/**/mmc@{int}/mmc*/ r,
   @{sys}/devices/pci[0-9]*/**/mmc@{int}/mmc*/** r,
+  @{sys}/devices/platform/**/block/mmcblk@{int}/ r,
+  @{sys}/devices/platform/**/block/mmcblk@{int}/** r,
+  @{sys}/devices/platform/**/mmc@{int}/ r,
+  @{sys}/devices/platform/**/mmc@{int}/** r,
 
   # Loop devices
   /dev/loop[0-9]* rk,
@@ -44,8 +48,8 @@
 
   # ZFS devices
   /dev/zd@{int} rk,
-  /dev/zvol/{,*/} r,
   /dev/*pool/ r,
+  /dev/zvol/{,*/} r,
   @{sys}/devices/virtual/block/zd@{int}/ r,
   @{sys}/devices/virtual/block/zd@{int}/** r,
 
@@ -61,63 +65,32 @@
 
   # Floppy disks
   /dev/fd@{int} rk,
-  @{sys}/devices/platform/floppy.@{int}/block/fd[0-9]/ r,
-  @{sys}/devices/platform/floppy.@{int}/block/fd[0-9]/** r,
-
-  # Armbian / DietPi
-  @{sys}/devices/platform/{soc,*.mmc}/**/block/mmcblk@{int}/{,mmcblk*/}          r,
-  @{sys}/devices/platform/{soc,*.mmc}/**/block/mmcblk@{int}/{,mmcblk*/}hidden    r,
-  @{sys}/devices/platform/{soc,*.mmc}/**/block/mmcblk@{int}/{,mmcblk*/}dev       r,
-  @{sys}/devices/platform/{soc,*.mmc}/**/block/mmcblk@{int}/{,mmcblk*/}size      r,
-  @{sys}/devices/platform/{soc,*.mmc}/**/block/mmcblk@{int}/{,mmcblk*/}ro        r,
-  @{sys}/devices/platform/{soc,*.mmc}/**/block/mmcblk@{int}/{,mmcblk*/}removable r,
-  @{sys}/devices/platform/{soc,*.mmc}/**/block/mmcblk@{int}/{,mmcblk*/}start     r,
-  @{sys}/devices/platform/{soc,*.mmc}/**/block/mmcblk@{int}/{,mmcblk*/}uevent    r,
-  @{sys}/devices/platform/{soc,*.mmc}/**/block/mmcblk@{int}/{,mmcblk*/}holders/  r,
-  @{sys}/devices/platform/{soc,*.mmc}/**/block/mmcblk@{int}/{,mmcblk*/}slaves/   r,
-  @{sys}/devices/platform/{soc,*.mmc}/**/mmc@{int}/mmc*/      r,
-  @{sys}/devices/platform/{soc,*.mmc}/**/mmc@{int}/mmc*/type  r,
-  @{sys}/devices/virtual/block/ram@{int}/          r,
-  @{sys}/devices/virtual/block/ram@{int}/hidden    r,
-  @{sys}/devices/virtual/block/ram@{int}/dev       r,
-  @{sys}/devices/virtual/block/ram@{int}/size      r,
-  @{sys}/devices/virtual/block/ram@{int}/ro        r,
-  @{sys}/devices/virtual/block/ram@{int}/removable r,
-  @{sys}/devices/virtual/block/ram@{int}/holders/  r,
-  @{sys}/devices/virtual/block/ram@{int}/slaves/   r,
-# investigate
-#  /dev/ram@{int} r,
-
-  # ??
-  @{sys}/devices/pci[0-9]*/*/virtio@{int}/host@{int}/target*/*/type r,
+  @{sys}/devices/platform/floppy.@{int}/block/fd@{int}/ r,
+  @{sys}/devices/platform/floppy.@{int}/block/fd@{int}/** r,
 
   # CD-ROM
   /dev/sr@{int} rk,
 
-  @{sys}/class/block/ r,
+  # Lookup block device by major:minor numbers
+  # See: https://apparmor.pujol.io/development/structure/#udev-rules
+
   @{sys}/block/ r,
-  # To be able to look up each block device by major:minor numbers
+  @{sys}/class/block/ r,
   @{sys}/dev/block/ r,
 
-  # According to the kernel docs[1], the major block numbers from 240 to 254 are allocated
-  # dynamically by the kernel for devices which don't have official numbers assigned. It looks like
-  # that "dm" (device mapper) and "zram" are such devices. To avoid issues when kernel config
-  # changes, it's better to allow the whole range (240-254) instead of the single major numbers
-  # visible in the /proc/devices file.
-  # [1]: https://raw.githubusercontent.com/torvalds/linux/master/Documentation/admin-guide/devices.txt
-  @{run}/udev/data/b24[0-9]:@{int} r,
+  @{run}/udev/data/b2:@{int}   r,     # for /dev/fd*
+  @{run}/udev/data/b7:@{int}   r,     # for /dev/loop*
+  @{run}/udev/data/b8:@{int}   r,     # for /dev/sd*
+  @{run}/udev/data/b11:@{int}  r,     # for /dev/sr*
+  @{run}/udev/data/b43:@{int}  r,     # for /dev/nbd*
+  @{run}/udev/data/b179:@{int} r,     # for /dev/mmcblk*
+  @{run}/udev/data/b230:@{int} r,     # for /dev/zvol*
+  @{run}/udev/data/b24[0-9]:@{int} r, # for dynamic assignment range 240 to 254
   @{run}/udev/data/b25[0-4]:@{int} r,
   @{run}/udev/data/b259:@{int} r,
 
-  @{run}/udev/data/b11:@{int}  r, # for /dev/sr*
-  @{run}/udev/data/b179:@{int} r, # for /dev/mmcblk*
-  @{run}/udev/data/b230:@{int} r, # for /dev/zvol*
-  @{run}/udev/data/b43:@{int}  r, # for /dev/nbd*
-  @{run}/udev/data/b7:@{int}   r, # for /dev/loop*
-  @{run}/udev/data/b8:@{int}   r, # for /dev/sd*
+  @{run}/udev/data/c189:@{int} r,     # for /dev/bus/usb/**
 
-  @{run}/udev/data/c189:@{int} r, # for /dev/bus/usb/**
-
-  @{run}/udev/data/+usb:*      r, # for ?
+  @{run}/udev/data/+usb:*      r,     # for disk over usb hub
 
   include if exists <abstractions/disks-read.d>
