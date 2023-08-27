@@ -25,6 +25,28 @@ profile evolution-source-registry @{exec_path} {
          interface=org.freedesktop.DBus.Introspectable
          peer=(name=:*, label=gnome-shell),
 
+  dbus receive bus=session
+       interface=org.freedesktop.DBus.Introspectable
+       peer=(name=:*, label=gnome-shell),
+
+  dbus receive bus=session path=/org/gnome/evolution/dataserver/SourceManager
+       interface=org.freedesktop.DBus.ObjectManager
+       peer=(name=:*, label=evolution-*),
+
+  dbus receive bus=session path=/org/gnome/evolution/dataserver/SourceManager{,/*}
+       interface=org.freedesktop.DBus.Properties
+       peer=(name=:*, label=evolution-*-factory),
+
+  dbus send bus=session path=/org/gnome/OnlineAccounts
+       interface=org.freedesktop.DBus.ObjectManager
+       member=GetManagedObjects 
+       peer=(name=:*, label=goa-daemon),
+
+  dbus send bus=session path=/org/gtk/vfs/mounttracker
+       interface=org.gtk.vfs.MountTracker
+       member=ListMountableInfo 
+       peer=(name=:*, label=gvfsd),
+
   dbus bind bus=session name=org.gnome.evolution.dataserver.Sources[0-9],
 
   @{exec_path} mr,
