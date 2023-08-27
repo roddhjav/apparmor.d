@@ -1,11 +1,12 @@
 # apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
 
 include <tunables/global>
 
-@{exec_path} = /{,usr/}bin/pstree
+@{exec_path} = @{bin}/pstree
 profile pstree @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/consoles>
@@ -18,11 +19,11 @@ profile pstree @{exec_path} flags=(attach_disconnected) {
   @{exec_path} mr,
 
         @{PROC} r,
-        @{PROC}/uptime r,
+        @{PROC}/@{pids}/attr/current r,
         @{PROC}/@{pids}/stat r,
         @{PROC}/@{pids}/task/ r,
-        @{PROC}/@{pids}/attr/current r,
         @{PROC}/@{pids}/task/@{tid}/stat r,
+        @{PROC}/uptime r,
   owner @{PROC}/@{pid}/cmdline r,
 
   include if exists <local/pstree>
