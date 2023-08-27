@@ -25,18 +25,17 @@ profile thermald @{exec_path} flags=(attach_disconnected) {
        member={RequestName,ReleaseName}
        peer=(name=org.freedesktop.DBus, label=dbus-daemon),
 
-  dbus (bind) bus=system
-     name=org.freedesktop.thermald,
+  dbus (bind) bus=system name=org.freedesktop.thermald,
 
   @{exec_path} mr,
+
+  /etc/thermald/thermal-conf.xml r,
+  /etc/thermald/thermal-cpu-cdev-order.xml r,
 
   owner @{run}/thermald/ rw,
   owner @{run}/thermald/thd_preference.conf rw,
   owner @{run}/thermald/thd_preference.conf.save w,
   owner @{run}/thermald/thermald.pid rwk,
-
-  /etc/thermald/thermal-conf.xml r,
-  /etc/thermald/thermal-cpu-cdev-order.xml r,
 
   @{sys}/class/hwmon/ r,
   @{sys}/class/thermal/ r,
@@ -51,10 +50,10 @@ profile thermald @{exec_path} flags=(attach_disconnected) {
   @{sys}/devices/system/cpu/intel_pstate/status r,
 
   @{sys}/devices/pci[0-9]*/**/drm/**/intel_backlight/max_brightness r,
-  @{sys}/devices/pci[0-9]*/**/power_limits/power_limit_[0-9]*_max_uw r,
-  @{sys}/devices/pci[0-9]*/**/power_limits/power_limit_[0-9]*_min_uw r,
-  @{sys}/devices/pci[0-9]*/**/power_limits/power_limit_[0-9]*_tmax_us r,
-  @{sys}/devices/pci[0-9]*/**/power_limits/power_limit_[0-9]*_tmin_us r,
+  @{sys}/devices/pci[0-9]*/**/power_limits/power_limit_@{int}_max_uw r,
+  @{sys}/devices/pci[0-9]*/**/power_limits/power_limit_@{int}_min_uw r,
+  @{sys}/devices/pci[0-9]*/**/power_limits/power_limit_@{int}_tmax_us r,
+  @{sys}/devices/pci[0-9]*/**/power_limits/power_limit_@{int}_tmin_us r,
 
   @{sys}/devices/**/hwmon@{int}/name r,
   @{sys}/devices/**/hwmon@{int}/temp[0-9]*_{max,crit} r,
@@ -65,26 +64,25 @@ profile thermald @{exec_path} flags=(attach_disconnected) {
 
   @{sys}/devices/virtual/thermal/**/{type,temp} r,
 
-  @{sys}/devices/virtual/thermal/thermal_zone[0-9]*/ r,
-  @{sys}/devices/virtual/thermal/thermal_zone[0-9]*/mode rw,
-  @{sys}/devices/virtual/thermal/thermal_zone[0-9]*/policy rw,
-  @{sys}/devices/virtual/thermal/thermal_zone[0-9]*/trip_point_[0-9]*_temp rw,
-  @{sys}/devices/virtual/thermal/thermal_zone[0-9]*/trip_point_[0-9]*_type r,
-  @{sys}/devices/virtual/thermal/thermal_zone[0-9]*/trip_point_[0-9]*_hyst r,
-  @{sys}/devices/virtual/thermal/thermal_zone[0-9]*/cdev[0-9]*_trip_point r,
+  @{sys}/devices/virtual/thermal/thermal_zone@{int}/ r,
+  @{sys}/devices/virtual/thermal/thermal_zone@{int}/mode rw,
+  @{sys}/devices/virtual/thermal/thermal_zone@{int}/policy rw,
+  @{sys}/devices/virtual/thermal/thermal_zone@{int}/trip_point_[0-9]*_temp rw,
+  @{sys}/devices/virtual/thermal/thermal_zone@{int}/trip_point_[0-9]*_type r,
+  @{sys}/devices/virtual/thermal/thermal_zone@{int}/trip_point_[0-9]*_hyst r,
+  @{sys}/devices/virtual/thermal/thermal_zone@{int}/cdev[0-9]*_trip_point r,
 
-  @{sys}/devices/virtual/thermal/cooling_device[0-9]*/ r,
-  @{sys}/devices/virtual/thermal/cooling_device[0-9]*/cur_state rw,
-  @{sys}/devices/virtual/thermal/cooling_device[0-9]*/max_state r,
+  @{sys}/devices/virtual/thermal/cooling_device[@{int}/ r,
+  @{sys}/devices/virtual/thermal/cooling_device@{int}/cur_state rw,
+  @{sys}/devices/virtual/thermal/cooling_device@{int}/max_state r,
 
   @{sys}/devices/virtual/powercap/intel-rapl/ r,
   @{sys}/devices/virtual/powercap/intel-rapl/**/name r,
-  @{sys}/devices/virtual/powercap/intel-rapl/intel-rapl{,-mmio}:[0-9]*/ r,
-  @{sys}/devices/virtual/powercap/intel-rapl/intel-rapl{,-mmio}:[0-9]*/* r,
-  @{sys}/devices/virtual/powercap/intel-rapl/intel-rapl{,-mmio}:[0-9]*/constraint_*_time_window_us w,
-  @{sys}/devices/virtual/powercap/intel-rapl/intel-rapl{,-mmio}:[0-9]*/constraint_*_power_limit_uw w,
-  @{sys}/devices/virtual/powercap/intel-rapl/intel-rapl{,-mmio}:[0-9]*/enabled w,
-  @{sys}/devices/virtual/powercap/intel-rapl/intel-rapl{,-mmio}:[0-9]*/intel-rapl:[0-9]*:[0-9]*/{,*} r,
+  @{sys}/devices/virtual/powercap/intel-rapl/intel-rapl{,-mmio}:@{int}/ r,
+  @{sys}/devices/virtual/powercap/intel-rapl/intel-rapl{,-mmio}:@{int}/* r,
+  @{sys}/devices/virtual/powercap/intel-rapl/intel-rapl{,-mmio}:@{int}/constraint_* w,
+  @{sys}/devices/virtual/powercap/intel-rapl/intel-rapl{,-mmio}:@{int}/enabled w,
+  @{sys}/devices/virtual/powercap/intel-rapl/intel-rapl{,-mmio}:@{int}/intel-rapl:[0-9]*:[0-9]*/{,*} r,
 
   /dev/acpi_thermal_rel rw,
   /dev/input/ r,

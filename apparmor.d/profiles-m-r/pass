@@ -50,7 +50,7 @@ profile pass @{exec_path} {
 
   # Pass extensions
   @{bin}/oathtool       rix,   # pass-otp
-  @{bin}/python3.[0-9]* rPx -> pass-import,  # pass-import
+  @{bin}/python3.@{int} rPx -> pass-import,  # pass-import
   @{bin}/qrencode       rPUx,  # pass-otp
   @{bin}/tomb           rPUx,  # pass-tomb
 
@@ -59,8 +59,8 @@ profile pass @{exec_path} {
   owner @{user_password_store_dirs}/{,**} rw,
   owner /dev/shm/pass.*/{,*} rw,
 
-  @{PROC}/@{pids}/cmdline r,
   @{PROC}/ r,
+  @{PROC}/@{pids}/cmdline r,
   @{PROC}/sys/kernel/osrelease r,
   @{PROC}/uptime r,
 
@@ -122,7 +122,7 @@ profile pass @{exec_path} {
     owner @{user_password_store_dirs}/   rw,
     owner @{user_password_store_dirs}/** rwkl -> @{HOME}/.password-store/**,
 
-    owner /tmp/.git_vtag_tmp* rw,              # For git log --show-signature
+    owner /tmp/.git_vtag_tmp@{rand6} rw,  # For git log --show-signature
 
     include if exists <local/pass_git>
   }
@@ -141,6 +141,9 @@ profile pass @{exec_path} {
     owner @{user_password_store_dirs}/   rw,
     owner @{user_password_store_dirs}/** rwkl -> @{HOME}/.password-store/**,
     owner /dev/shm/pass.*/{,*} rw,
+    owner /tmp/.git_vtag_tmp@{rand6} rw,  # For git log --show-signature
+
+    owner /dev/pts/@{int} rw,
 
     include if exists <local/pass_gpg>
   }
