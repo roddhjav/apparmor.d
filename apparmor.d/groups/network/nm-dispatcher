@@ -39,7 +39,7 @@ profile nm-dispatcher @{exec_path} flags=(attach_disconnected) {
   @{bin}/nmcli              rix,
   @{bin}/readlink           rix,
   @{bin}/rm                 rix,
-  @{bin}/run-parts          rPx,
+  @{bin}/run-parts          rCx -> run-parts,
   @{bin}/sed                rix,
   @{bin}/systemctl          rPx -> child-systemctl,
   @{bin}/systemd-cat        rPx,
@@ -65,6 +65,14 @@ profile nm-dispatcher @{exec_path} flags=(attach_disconnected) {
   owner @{PROC}/@{pid}/fd/ r,
 
   /dev/tty rw,
+
+  profile run-parts {
+    include <abstractions/base>
+
+    /{usr/,}bin/run-parts mr,
+
+   include if exists <local/anacron_run_parts>
+  }
 
   include if exists <local/nm-dispatcher>
 }
