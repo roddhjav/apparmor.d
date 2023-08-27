@@ -16,6 +16,7 @@ profile sddm @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/fontconfig-cache-read>
   include <abstractions/fonts>
   include <abstractions/freedesktop.org>
+  include <abstractions/mesa>
   include <abstractions/nameservice-strict>
   include <abstractions/qt5>
   include <abstractions/wutmp>
@@ -40,6 +41,8 @@ profile sddm @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   ptrace (read) peer=kwalletd5,
 
   signal (send) set=(kill, term) peer=startplasma,
+  signal (send) set=term peer=startplasma-wayland,
+  signal (send) set=term peer=sddm-greeter,
   signal (send) set=(kill, term) peer=xorg,
 
   @{exec_path} mr,
@@ -48,6 +51,8 @@ profile sddm @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   @{lib}/plasma-dbus-run-session-if-needed  rix,
   @{lib}/sddm/sddm-helper                   rix,
   @{lib}/sddm/sddm-helper-start-wayland     rix,
+  @{lib}/sddm/sddm-helper-start-x11user     rix,
+
 
   @{bin}/{,ba,da}sh    rix,
   @{bin}/cat           rix,
@@ -120,6 +125,10 @@ profile sddm @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
   owner @{HOME}/.local/ w,
   owner @{HOME}/.Xauthority rw,
+
+  owner @{user_config_dirs}/kdeglobals r,
+  owner @{user_config_dirs}/kdedefaults/kdeglobals r,
+  owner @{user_config_dirs}/startkderc r,
 
   owner @{user_share_dirs}/ w,
   owner @{user_share_dirs}/kwalletd/ rw,

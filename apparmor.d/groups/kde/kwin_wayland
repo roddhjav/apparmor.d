@@ -17,6 +17,7 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected mediate_deleted) {
   include <abstractions/nameservice-strict>
   include <abstractions/freedesktop.org>
   include <abstractions/vulkan>
+  include <abstractions/wayland>
 
   capability sys_nice,
 
@@ -40,14 +41,30 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected mediate_deleted) {
   /usr/share/kwin/{,**} r,
   /usr/share/libinput/{,**} r,
   /usr/share/mime/ r,
+  /usr/share/plasma/desktoptheme/default/{metadata.json,plasmarc} r,
   /usr/share/qt/translations/*.qm r,
   /usr/share/X11/xkb/{,**} r,
 
   /etc/machine-id r,
   /etc/xdg/menus/ r,
+  /etc/pipewire/client.conf.d/ r,
+  /usr/share/pipewire/client.conf r,
+
+  owner /var/lib/sddm/.cache/mesa_shader_cache/** r,
+  owner /var/lib/sddm/.cache/mesa_shader_cache/index rw,
+  owner /var/lib/sddm/.cache/ksycoca5_* r,
+  
+  owner /var/lib/sddm/.config/kdeglobals r,
+  owner /var/lib/sddm/.config/kglobalshortcutsrc r,
+  owner /var/lib/sddm/.config/kglobalshortcutsrc.lock rw,
+  owner /var/lib/sddm/.config/kwinrc r,
+  owner /var/lib/sddm/.config/kwinrc.lock rw,
+  owner /var/lib/sddm/.config/kwinrc.@{rand6} rwl -> /var/lib/sddm/.config/#@{int},
 
   owner @{user_cache_dirs}/icon-cache.kcache rw,
+  owner @{user_share_dirs}/kscreen/* r,
   owner @{user_cache_dirs}/ksycoca5_* r,
+  owner @{user_cache_dirs}/plasma_theme_default_v*.kcache rw,
 
   owner @{user_config_dirs}/#@{int} rwl,
   owner @{user_config_dirs}/kcminputrc r,
@@ -61,6 +78,7 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected mediate_deleted) {
   owner @{user_config_dirs}/kwinrc.lock rwk,
   owner @{user_config_dirs}/kwinrulesrc r,
   owner @{user_config_dirs}/kxkbrc r,
+  owner @{user_config_dirs}/menus/{,applications-merged/} r,
 
   @{run}/systemd/inhibit/*.ref rw,
 
@@ -78,10 +96,16 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected mediate_deleted) {
   @{run}/udev/data/c13:@{int}  r,         # for /dev/input/*
   @{run}/udev/data/c226:@{int} r,         # for /dev/dri/card*
 
+  @{run}/udev/data/+pci:* r,
+  @{run}/udev/data/+sound:card@{int} r,
+  @{run}/udev/data/+usb:* r,
+  @{run}/udev/data/c189:@{int} r,         # for /dev/bus/usb/**
+
   @{PROC}/sys/kernel/random/boot_id r,
 
   /dev/input/event@{int} rw,
   /dev/tty r,
+  /dev/tty@{int} rw,
 
   include if exists <local/kwin_wayland>
 }
