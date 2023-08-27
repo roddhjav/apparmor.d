@@ -25,34 +25,27 @@ profile dpkg @{exec_path} {
   @{bin}/cat         rix,
   @{bin}/rm          rix,
 
+  @{bin}/deb-systemd-helper rix,
   @{bin}/dpkg-deb    rpx,
   @{bin}/dpkg-query  rpx,
   @{bin}/dpkg-split  rPx,
-  @{bin}/deb-systemd-helper rix,
+  @{bin}/systemctl   rPx -> child-systemctl,
   @{lib}/needrestart/dpkg-status rPx,
   /usr/share/debian-security-support/check-support-status.hook rPx,
 
-  @{bin}/pager       rCx -> diff,
-  @{bin}/less        rCx -> diff,
-  @{bin}/more        rCx -> diff,
-  @{bin}/diff        rCx -> diff,
+  @{bin}/pager       rPx -> child-pager,
+  @{bin}/less        rPx -> child-pager,
+  @{bin}/more        rPx -> child-pager,
+  @{bin}/diff        rPx -> child-pager,
 
-  /etc/dpkg/dpkg.cfg.d/{,*} r,
-  /etc/dpkg/dpkg.cfg r,
-
-  # Run the package maintainer's scripts
-  # What to do with it? Maintainer scripts can use lots of tools. (#FIXME#)
+  # Package maintainer's scripts
   # Move it to a child profile once more transitions will be available
-  /var/lib/dpkg/ r,
-  /var/lib/dpkg/** rwkl -> /var/lib/dpkg/**,
   /var/lib/dpkg/info/*.{config,templates} rPUx,
   /var/lib/dpkg/info/*.{preinst,postinst} rPUx,
   /var/lib/dpkg/info/*.{prerm,postrm}     rPUx,
-  /var/lib/dpkg/info/*.control            r,
   /var/lib/dpkg/tmp.ci/{config,templates} rPUx,
   /var/lib/dpkg/tmp.ci/{preinst,postinst} rPUx,
   /var/lib/dpkg/tmp.ci/{prerm,postrm}     rPUx,
-  /var/lib/dpkg/tmp.ci/control            r,
   #/var/lib/dpkg/info/*.{config,templates} rCx -> scripts,
   #/var/lib/dpkg/info/*.{preinst,postinst} rCx -> scripts,
   #/var/lib/dpkg/info/*.{prerm,postrm}     rCx -> scripts,
@@ -60,89 +53,27 @@ profile dpkg @{exec_path} {
   #/var/lib/dpkg/tmp.ci/{preinst,postinst} rCx -> scripts,
   #/var/lib/dpkg/tmp.ci/{prerm,postrm}     rCx -> scripts,
 
-  /var/log/dpkg.log w,
-  /var/log/unattended-upgrades/unattended-upgrades-dpkg.log rw,
-
   # For shell pwd
   /root/ r,
 
-  # Basically, dpkg needs R/W permissions to the following files since it installs them.
-  # It also needs the L permission when a package is reinstalled.
-  /        r,
-  /usr/    r,
-  /usr/**  rwl -> /usr/**,
-  /lib/    r,
-  /lib/**  rwl -> /lib/** ,
-  # Fixme when more transitions will be available (#FIXME#)
-  /lib{,32,64,x64}/ r,
-  /lib{,32,64,x64}/** rwl,
-  /bin/    r,
-  /bin/*   rwl -> /bin/*,
-  /sbin/   r,
-  /sbin/*  rwl -> /sbin/*,
-  /etc/    r,
-  /etc/**  rwl -> /etc/**,
-  /boot/   r,
+  # Install/update packages
+  / r,
+  /*{,/} rw,
   /boot/** rwl -> /boot/**,
-  /opt/    r,
-  /opt/**  rwl -> /opt/**,
-  # Without backups/, cache/, log/, mail/, opt/, tmp/ .
-  /var/lib/      r,
-  /var/lib/**    rwl -> /var/lib/**,
-  /var/local/    r,
-  /var/local/**  rwl -> /var/local/**,
-  /var/spool/    r,
-  /var/spool/**  rwl -> /var/spool/**,
-  # Fixme when more transitions will be available (#FIXME#)
-  /var/www/      r,
-  /var/www/**    rwl,
-  # To create log and cache dirs
-  /var/log/**/   rw,
-  /var/cache/**/ rw,
-  # To create dirs under var
-  /var/*.dpkg-new/ rw,
-  /var/*/ rw,
+  /etc/** rwl -> /etc/**,
+  /opt/** rwl -> /opt/**,
+  /srv/** rwl -> /srv/**,
+  /usr/** rwlk -> /usr/**,
+  /var/** rwlk -> /var/**,
 
   owner /tmp/apt-dpkg-install-*/ r,
 
   @{run}/systemd/userdb/ r,
 
-  owner @{PROC}/@{pid}/fd/ r,
         @{PROC}/sys/kernel/random/boot_id r,
+  owner @{PROC}/@{pid}/fd/ r,
 
   owner /dev/tty@{int} rw,
-
-  profile diff {
-    include <abstractions/base>
-    include <abstractions/consoles>
-
-    @{bin}/       r,
-    @{bin}/pager mr,
-    @{bin}/less  mr,
-    @{bin}/more  mr,
-    @{bin}/diff  mr,
-
-    /etc/** r,  # Diff changed config files
-    /root/ r,   # For shell pwd
-
-    owner @{HOME}/.lesshs* rw,
-
-  }
-
-  profile scripts {
-    include <abstractions/base>
-
-    @{bin}/    r,
-    @{bin}/*   rPUx,
-
-    /var/lib/dpkg/info/*.config             r,
-    /var/lib/dpkg/info/*.{preinst,postinst} r,
-    /var/lib/dpkg/info/*.{prerm,postrm}     r,
-    /var/lib/dpkg/tmp.ci/config             r,
-    /var/lib/dpkg/tmp.ci/{preinst,postinst} r,
-    /var/lib/dpkg/tmp.ci/{prerm,postrm}     r,
-
-  }
 
   include if exists <local/dpkg>
 }
