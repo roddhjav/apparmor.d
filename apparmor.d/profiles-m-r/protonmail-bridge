@@ -1,0 +1,69 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/protonmail-bridge
+profile protonmail-bridge @{exec_path}  {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  @{bin}/pass rCx -> pass,
+
+  /etc/lsb-release r,
+  /etc/machine-id r,
+
+  owner @{user_password_store_dirs}/protonmail-credentials/{,**} r,
+
+  owner @{user_cache_dirs}/protonmail/{,**} rwk,
+  owner @{user_config_dirs}/protonmail/{,**} rwk,
+  owner @{user_share_dirs}/protonmail/{,**} rwk,
+
+  @{PROC}/sys/net/core/somaxconn r,
+  @{PROC}/@{pid}/cgroup r,
+
+  profile pass {
+    include <abstractions/base>
+    include <abstractions/nameservice-strict>
+
+    @{bin}/pass         mr,
+
+    @{bin}/{,ba,da}sh  rix,
+    @{bin}/base64      rix,
+    @{bin}/dirname     rix,
+    @{bin}/env         rix,
+    @{bin}/env         rix,
+    @{bin}/getopt      rix,
+    @{bin}/git         rPx -> pass//git,
+    @{bin}/gpg{,2}     rPx -> pass//gpg,
+    @{bin}/mkdir       rix,
+    @{bin}/rm          rix,
+    @{bin}/rmdir       rix,
+    @{bin}/sed         rix,
+    @{bin}/tail        rix,
+    @{bin}/tree        rix,
+    @{bin}/tty         rix,
+    @{bin}/which       rix,
+
+         owner @{user_password_store_dirs}/.gpg-id r,
+         owner @{user_password_store_dirs}/protonmail-credentials/{,**} rw,
+    deny owner @{user_password_store_dirs}/**/ r,
+
+    /dev/tty rw,
+
+    include if exists <local/protonmail-bridge_pass>
+  }
+
+  include if exists <local/protonmail-bridge>
+}
