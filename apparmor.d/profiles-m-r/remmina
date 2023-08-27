@@ -1,24 +1,26 @@
 # apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
 
 include <tunables/global>
 
-@{exec_path} = /{,usr/}bin/remmina
+@{exec_path} = @{bin}/remmina
 profile remmina @{exec_path} {
   include <abstractions/base>
-  include <abstractions/nameservice-strict>
-  include <abstractions/ibus>
-  include <abstractions/dconf-write>
-  include <abstractions/fonts>
-  include <abstractions/ssl_certs>
-  include <abstractions/openssl>
-  include <abstractions/freedesktop.org>
-  include <abstractions/dbus-strict>
-  include <abstractions/dbus-session-strict>
   include <abstractions/dbus-accessibility-strict>
   include <abstractions/dbus-gtk>
+  include <abstractions/dbus-session-strict>
+  include <abstractions/dbus-strict>
+  include <abstractions/dconf-write>
+  include <abstractions/fonts>
+  include <abstractions/freedesktop.org>
+  include <abstractions/ibus>
+  include <abstractions/nameservice-strict>
+  include <abstractions/openssl>
+  include <abstractions/ssl_certs>
+  include <abstractions/X-strict>
 
   network inet stream,
   network inet6 stream,
@@ -112,33 +114,27 @@ profile remmina @{exec_path} {
 
   @{exec_path} r,
 
+  /usr/share/remmina/{,**} r,
+  /usr/share/themes/{,**} r,
+
   /etc/timezone r,
   /etc/ssh/ssh_config r,
   /etc/ssh/ssh_config.d/{,*} r,
-  /usr/share/remmina/{,**} r,
+  /etc/gtk-3.0/settings.ini r,
 
+  owner @{HOME}/@{XDG_SSH_DIR}/{,*} r,
+
+  owner @{user_cache_dirs}/remmina/{,**} rw,
   owner @{user_config_dirs}/autostart/remmina-applet.desktop r,
-  owner @{user_config_dirs}/gtk-3.0/bookmarks r,
   owner @{user_config_dirs}/freerdp/known_hosts2 rwk,
+  owner @{user_config_dirs}/gtk-3.0/bookmarks r,
   owner @{user_config_dirs}/remmina/{,**} rw,
   owner @{user_share_dirs}/remmina/{,**} rw,
-  owner @{user_cache_dirs}/remmina/{,**} rw,
-  owner @{HOME}/@{XDG_SSH_DIR}/{,*} r,
 
   owner @{PROC}/@{pid}/task/@{tid}/comm rw,
   owner @{PROC}/@{pid}/mountinfo r,
 
   owner @{run}/user/@{uid}/keyring/ssh rw,
-
-  # gtk-tiny
-  /etc/gtk-3.0/settings.ini r,
-  /usr/share/themes/{,**} r,
-
-  # X-tiny
-  owner @{HOME}/.Xauthority r,
-  owner @{HOME}/.xsession-errors w,
-  unix (send, receive, connect) type=stream peer=(addr="@/tmp/.X11-unix/X[0-9]*", label="{xorg,xkbcomp}"),
-  /etc/X11/{,**} r,
 
   include if exists <local/remmina>
 }
