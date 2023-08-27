@@ -1,76 +1,87 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2020-2021 Mikhail Morfikov
+# Copyright (C) 2021-2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
 
 include <tunables/global>
 
-@{exec_path} = @{bin}/spotify /usr/share/spotify/spotify
+@{name} = spotify
+@{lib_dirs} = /opt/spotify/
+@{config_dirs} = @{user_config_dirs}/@{name}
+@{cache_dirs} = @{user_cache_dirs}/@{name}
+
+@{exec_path} = @{bin}/@{name} @{lib_dirs}/@{name}
 profile spotify @{exec_path} {
   include <abstractions/base>
-  include <abstractions/opencl-intel>
-  include <abstractions/audio>
-  include <abstractions/gtk>
+  include <abstractions/chromium-common>
+  include <abstractions/dconf-write>
   include <abstractions/fonts>
-  include <abstractions/fontconfig-cache-read>
   include <abstractions/freedesktop.org>
-  include <abstractions/nameservice-strict>
+  include <abstractions/gtk>
   include <abstractions/mesa>
-  include <abstractions/user-download-strict>
-  include <abstractions/thumbnails-cache-read>
+  include <abstractions/nameservice-strict>
+  include <abstractions/opencl>
   include <abstractions/openssl>
   include <abstractions/ssl_certs>
-  include <abstractions/chromium-common>
+  include <abstractions/vulkan>
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
 
   @{exec_path} mrix,
 
-  /usr/share/spotify/{,**} r,
-  /usr/share/spotify/libcef.so mr,
-  /usr/share/spotify/swiftshader/libGLESv2.so mr,
-  /usr/share/spotify/swiftshader/libEGL.so mr,
+  @{lib_dirs}/{,**} r,
+  @{lib_dirs}/*.so* mr,
 
-  owner @{user_config_dirs}/spotify/ rw,
-  owner @{user_config_dirs}/spotify/** rw,
+  @{bin}/xdg-open                                    rPx -> child-open,
+  @{lib}/@{multiarch}/glib-[0-9]*/gio-launch-desktop rPx -> child-open,
+  @{lib}/gio-launch-desktop                          rPx -> child-open,
 
-  owner @{user_cache_dirs}/ rw,
-  owner @{user_cache_dirs}/spotify/ rw,
-  owner @{user_cache_dirs}/spotify/** rwk,
+  /etc/libva.conf r,
+  /etc/machine-id r,
+  /etc/spotify-adblock/* r,
+  /var/lib/dbus/machine-id r,
 
-  owner @{HOME}/.Xauthority r,
+  owner @{user_music_dirs}/{,**} r,
 
-  # The /proc/ dir is needed to avoid the following errors:
-  #  [:FATAL:proc_util.cc(36)] : Permission denied (13)
-  #  [:FATAL:sandbox_linux.cc(484)] : Permission denied (13)
-             @{PROC}/ r,
-       owner @{PROC}/@{pid}/fd/ r,
-  deny owner @{PROC}/@{pids}/task/ r,
-  deny owner @{PROC}/@{pids}/task/@{tid}/stat r,
-       owner @{PROC}/@{pids}/task/@{tid}/status r,
-  deny       @{PROC}/@{pids}/stat r,
-  deny owner @{PROC}/@{pid}/cmdline r,
-  deny owner @{PROC}/@{pids}/oom_score_adj w,
-  deny       @{PROC}/vmstat r,
-             @{PROC}sys/kernel/yama/ptrace_scope r,
-       owner @{PROC}/@{pid}/mountinfo r,
-       owner @{PROC}/@{pid}/mounts r,
+  owner @{user_config_dirs}/pulse/client.conf r,
+  owner @{user_config_dirs}/pulse/cookie rk,
+  owner @{user_config_dirs}/spotify-adblock/* r,
 
-  /etc/fstab r,
+  owner @{config_dirs}/ rw,
+  owner @{config_dirs}/** rwl -> @{config_dirs}/**,
+  owner @{config_dirs}/*/WidevineCdm/**/libwidevinecdm.so rm,
 
-  deny @{sys}/devices/virtual/tty/tty[0-9]*/active r,
-  # To remove the following error:
-  #  pcilib: Cannot open /sys/bus/pci/devices/0000:03:00.0/irq: Permission denied
-  deny @{sys}/devices/pci[0-9]*/**/irq r,
+  owner @{cache_dirs}/ rw,
+  owner @{cache_dirs}/** rwk -> @{cache_dirs}/**,
 
-  deny /var/lib/dbus/machine-id r,
-  deny /etc/machine-id r,
+  owner @{run}/user/@{uid}/pulse/ r,
 
-  /usr/share/X11/XErrorDB r,
+  @{sys}/devices/@{pci}/irq r,
+  @{sys}/devices/system/cpu/cpu@{int}/cache/{,**} r,
+  @{sys}/devices/system/cpu/cpu@{int}/topology/{,**} r,
+  @{sys}/devices/system/cpu/kernel_max r,
+  @{sys}/devices/system/cpu/present r,
+  @{sys}/devices/virtual/tty/tty@{int}/active r,
 
-  owner /tmp/@{hex}-@{hex}-@{hex}-@{hex} rw,
+        @{PROC}/ r,
+        @{PROC}/@{pid}/stat r,
+        @{PROC}/sys/fs/inotify/max_user_watches r,
+  owner @{PROC}/@{pid}/cmdline r,
+  owner @{PROC}/@{pid}/comm r,
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/oom_score_adj w,
+  owner @{PROC}/@{pid}/statm r,
+  owner @{PROC}/@{pid}/task/ r,
+  owner @{PROC}/@{pid}/task/@{tid}/stat r,
+  owner @{PROC}/@{pid}/task/@{tid}/status r,
 
-  # What's this for?
-  #owner /tmp/@{int}.@{int}.@{int}.[0-9]*-linux-*.zip rw,
+  deny @{user_share_dirs}/gvfs-metadata/* r,
 
   include if exists <local/spotify>
 }
