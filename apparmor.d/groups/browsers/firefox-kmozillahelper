@@ -15,7 +15,9 @@ profile firefox-kmozillahelper @{exec_path} {
   include <abstractions/freedesktop.org>
   include <abstractions/mesa>
   include <abstractions/nameservice-strict>
+  include <abstractions/qt5-settings-write>
   include <abstractions/qt5>
+  include <abstractions/recent-documents-write>
   include <abstractions/thumbnails-cache-read>
 
   ptrace (read) peer=firefox,
@@ -32,6 +34,8 @@ profile firefox-kmozillahelper @{exec_path} {
   /usr/share/mime/ r,
   /usr/share/sounds/{,**} r,
 
+  /etc/pulse/client.conf r,
+  /etc/pulse/client.conf.d/{,*} r,
   /etc/xdg/kdeglobals r,
   /etc/xdg/kwinrc r,
   /etc/xdg/menus/ r,
@@ -46,16 +50,19 @@ profile firefox-kmozillahelper @{exec_path} {
   owner @{user_config_dirs}/kdedefaults/kdeglobals r,
   owner @{user_config_dirs}/kdedefaults/kwinrc r,
   owner @{user_config_dirs}/kdeglobals r,
+  owner @{user_config_dirs}/kdeglobals.@{rand6} rwl,
   owner @{user_config_dirs}/kmozillahelperrc r,
   owner @{user_config_dirs}/kmozillahelperrc.@{rand6} rwl,
   owner @{user_config_dirs}/kwinrc r,
-
-  owner @{user_share_dirs}/RecentDocuments/ r,
-  owner @{user_share_dirs}/RecentDocuments/*.desktop w,
-  owner @{user_share_dirs}/recently-used.xbel.@{rand6} l,
+  owner @{user_config_dirs}/pulse/cookie rk,
 
   owner @{run}/user/@{uid}/kmozillahelper@{rand6}.@{int}.kioworker.socket wl,
+  owner @{run}/user/@{uid}/pulse/ r,
   owner @{run}/user/@{uid}/xauth_@{rand6} rl,
+
+  @{run}/udev/data/+usb:* r,              # For /dev/bus/usb/**
+
+  @{run}/udev/data/c189:@{int} r,     # for /dev/bus/usb/**
 
         @{PROC}/sys/kernel/core_pattern r,
   owner @{PROC}/@{pid}/mountinfo r,
