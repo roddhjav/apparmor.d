@@ -1,0 +1,77 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{share_dirs}  = /usr/share/gnome-shell/extensions/gsconnect@andyholmes.github.io/
+@{share_dirs} += @{user_share_dirs}/gnome-shell/extensions/gsconnect@andyholmes.github.io/
+
+@{exec_path} = @{share_dirs}/service/daemon.js
+profile gnome-extension-gsconnect @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/dbus-accessibility-strict>
+  include <abstractions/dbus-session-strict>
+  include <abstractions/dbus-strict>
+  include <abstractions/dconf-write>
+  include <abstractions/fonts>
+  include <abstractions/freedesktop.org>
+  include <abstractions/gtk>
+  include <abstractions/nameservice-strict>
+  include <abstractions/openssl>
+  include <abstractions/p11-kit>
+  include <abstractions/ssl_certs>
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  @{bin}/env          rix,
+  @{bin}/gjs-console  rix,
+  @{bin}/openssl      rix,
+  @{bin}/{,ba,da}sh   rix,
+  @{bin}/ssh-add      rix,
+
+  @{bin}/ssh-keygen rPx,
+  @{bin}/xdg-screensaver rPx,
+
+  @{lib}/gio/modules/*.so* rm,
+  @{lib}/girepository-1.0/* r,
+
+  @{share_dirs}/{,**} r,
+  @{share_dirs}/gsconnect-preferences rix,
+
+  /usr/share/X11/{,**} r,
+
+  /etc/machine-id r,
+
+  owner @{user_cache_dirs}/gsconnect/{,**} rw,
+
+  owner @{user_config_dirs}/ r,
+
+  owner @{user_config_dirs}/gsconnect/{,**} rw,
+  owner @{user_config_dirs}/mimeapps.list w,
+  owner @{user_config_dirs}/mimeapps.list.@{rand6} rw,
+  owner @{user_config_dirs}/pulse/client.conf r,
+  owner @{user_config_dirs}/pulse/cookie rk,
+
+  owner @{run}/user/@{uid}/gsconnect/ w,
+  owner @{run}/user/@{uid}/pulse/ r,
+
+  @{sys}/devices/virtual/dmi/id/chassis_type r,
+
+  owner @{PROC}/@{pid}/mounts r,
+  owner @{PROC}/@{pid}/stat r,
+  owner @{PROC}/@{pid}/status r,
+  owner @{PROC}/@{pid}/task/@{tid}/stat r,
+
+  /dev/shm/ r,
+
+  include if exists <local/gnome-extension-gsconnect>
+}
