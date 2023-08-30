@@ -23,6 +23,7 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected mediate_deleted) {
 
   ptrace (read),
 
+  signal (receive) set=term peer=sddm,
   signal (receive) set=(kill, term) peer=kwin_wayland_wrapper,
   signal (send) set=(kill, term) peer=xwayland,
 
@@ -38,6 +39,7 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected mediate_deleted) {
   /usr/share/kglobalaccel/{,**} r,
   /usr/share/knotifications5/ksmserver.notifyrc r,
   /usr/share/kservices5/{,**} r,
+  /usr/share/kservicetypes5/{,*.desktop} r,
   /usr/share/kwin/{,**} r,
   /usr/share/libinput/{,**} r,
   /usr/share/mime/ r,
@@ -46,21 +48,27 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected mediate_deleted) {
   /usr/share/X11/xkb/{,**} r,
 
   /etc/machine-id r,
-  /etc/xdg/menus/ r,
+  /etc/xdg/menus/{,applications.menu} r,
   /etc/pipewire/client.conf.d/ r,
   /usr/share/pipewire/client.conf r,
+  
 
+  owner /var/lib/sddm/.cache/#@{int} rw,
+  owner /var/lib/sddm/.cache/fontconfig/* r,
   owner /var/lib/sddm/.cache/mesa_shader_cache/** r,
   owner /var/lib/sddm/.cache/mesa_shader_cache/index rw,
-  owner /var/lib/sddm/.cache/ksycoca5_* r,
-  
+  owner /var/lib/sddm/.cache/ksycoca5_* rwkl  -> /var/lib/sddm/.cache/#@{int},
+
+  owner /var/lib/sddm/.config/#@{int} rw,
   owner /var/lib/sddm/.config/kdeglobals r,
-  owner /var/lib/sddm/.config/kglobalshortcutsrc r,
-  owner /var/lib/sddm/.config/kglobalshortcutsrc.lock rw,
-  owner /var/lib/sddm/.config/kwinrc r,
-  owner /var/lib/sddm/.config/kwinrc.lock rw,
+  owner /var/lib/sddm/.config/kglobalshortcutsrc rw,
+  owner /var/lib/sddm/.config/kglobalshortcutsrc.lock rwk,
+  owner /var/lib/sddm/.config/kglobalshortcutsrc.@{rand6} rwl -> /var/lib/sddm/.config/#@{int},
+  owner /var/lib/sddm/.config/kwinrc rw,
+  owner /var/lib/sddm/.config/kwinrc.lock rwk,
   owner /var/lib/sddm/.config/kwinrc.@{rand6} rwl -> /var/lib/sddm/.config/#@{int},
 
+  owner @{user_cache_dirs}/{,plasma-svgelements} r,
   owner @{user_cache_dirs}/icon-cache.kcache rw,
   owner @{user_share_dirs}/kscreen/* r,
   owner @{user_cache_dirs}/ksycoca5_* r,
@@ -96,6 +104,7 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected mediate_deleted) {
   @{run}/udev/data/c13:@{int}  r,         # for /dev/input/*
   @{run}/udev/data/c226:@{int} r,         # for /dev/dri/card*
 
+  @{run}/udev/data/+hid:* r,              # for HID subsystem
   @{run}/udev/data/+pci:* r,
   @{run}/udev/data/+sound:card@{int} r,
   @{run}/udev/data/+usb:* r,
