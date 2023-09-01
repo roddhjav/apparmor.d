@@ -161,7 +161,7 @@ func SetFlags() error {
 				}
 
 				// Remove all flags definition, then set manifest' flags
-				res := regFlag.ReplaceAllLiteralString(string(content), "")
+				res := regFlagComplain.ReplaceAllLiteralString(string(content), "")
 				res = regProfileHeader.ReplaceAllLiteralString(res, flags)
 				if err := file.WriteFile([]byte(res)); err != nil {
 					return err

@@ -69,7 +69,8 @@ func GetJournalctlLogs(path string, useFile bool) (io.Reader, error) {
 	return strings.NewReader(res), nil
 }
 
-func GetLogFile(path string) string {
+// SelectLogFile return the path of the available log file to parse (audit, syslog, .1, .2)
+func SelectLogFile(path string) string {
 	info, err := os.Stat(filepath.Clean(path))
 	if err == nil && !info.IsDir() {
 		return path
