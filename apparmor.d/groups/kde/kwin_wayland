@@ -11,11 +11,12 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected mediate_deleted) {
   include <abstractions/base>
   include <abstractions/dri-common>
   include <abstractions/dri-enumerate>
+  include <abstractions/fontconfig-cache-write>
+  include <abstractions/fonts>
+  include <abstractions/freedesktop.org>
   include <abstractions/freedesktop.org>
   include <abstractions/mesa>
-  include <abstractions/fonts>
   include <abstractions/nameservice-strict>
-  include <abstractions/freedesktop.org>
   include <abstractions/vulkan>
   include <abstractions/wayland>
 
@@ -61,12 +62,10 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected mediate_deleted) {
 
   owner /var/lib/sddm/.config/#@{int} rw,
   owner /var/lib/sddm/.config/kdeglobals r,
-  owner /var/lib/sddm/.config/kglobalshortcutsrc rw,
   owner /var/lib/sddm/.config/kglobalshortcutsrc.lock rwk,
-  owner /var/lib/sddm/.config/kglobalshortcutsrc.@{rand6} rwl -> /var/lib/sddm/.config/#@{int},
-  owner /var/lib/sddm/.config/kwinrc rw,
+  owner /var/lib/sddm/.config/kglobalshortcutsrc{,.@{rand6}} rwl -> /var/lib/sddm/.config/#@{int},
   owner /var/lib/sddm/.config/kwinrc.lock rwk,
-  owner /var/lib/sddm/.config/kwinrc.@{rand6} rwl -> /var/lib/sddm/.config/#@{int},
+  owner /var/lib/sddm/.config/kwinrc{,.@{rand6}} rwl -> /var/lib/sddm/.config/#@{int},
 
   owner @{user_cache_dirs}/{,plasma-svgelements} r,
   owner @{user_cache_dirs}/icon-cache.kcache rw,
@@ -81,8 +80,7 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected mediate_deleted) {
   owner @{user_config_dirs}/kglobalshortcutsrc{,.@{rand6}} rwl -> @{user_config_dirs}/#@{int},
   owner @{user_config_dirs}/kglobalshortcutsrc.lock rwk,
   owner @{user_config_dirs}/kscreenlockerrc r,
-  owner @{user_config_dirs}/kwinrc rw,
-  owner @{user_config_dirs}/kwinrc.@{rand6} rwl -> @{user_config_dirs}/#@{int},
+  owner @{user_config_dirs}/kwinrc{,.@{rand6}} rwl -> @{user_config_dirs}/#@{int},
   owner @{user_config_dirs}/kwinrc.lock rwk,
   owner @{user_config_dirs}/kwinrulesrc r,
   owner @{user_config_dirs}/kxkbrc r,
@@ -98,17 +96,16 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected mediate_deleted) {
 
   @{run}/udev/data/+acpi:* r,             # for ACPI
   @{run}/udev/data/+dmi* r,               # for ?
-  @{run}/udev/data/+input:input@{int} r,  # for mouse, keyboard, touchpad
-  @{run}/udev/data/+platform:* r,         # for ?
-
-  @{run}/udev/data/c13:@{int}  r,         # for /dev/input/*
-  @{run}/udev/data/c226:@{int} r,         # for /dev/dri/card*
-
   @{run}/udev/data/+hid:* r,              # for HID subsystem
+  @{run}/udev/data/+input:input@{int} r,  # for mouse, keyboard, touchpad
   @{run}/udev/data/+pci:* r,
+  @{run}/udev/data/+platform:* r,         # for ?
   @{run}/udev/data/+sound:card@{int} r,
   @{run}/udev/data/+usb:* r,
+
+  @{run}/udev/data/c13:@{int}  r,         # for /dev/input/*
   @{run}/udev/data/c189:@{int} r,         # for /dev/bus/usb/**
+  @{run}/udev/data/c226:@{int} r,         # for /dev/dri/card*
 
   @{PROC}/sys/kernel/random/boot_id r,
 
