@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2017-2021 Mikhail Morfikov
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -10,23 +11,24 @@ include <tunables/global>
 profile x11-xsession @{exec_path} {
   include <abstractions/base>
   include <abstractions/nameservice-strict>
+  include <abstractions/X-strict>
 
   @{exec_path} r,
-  @{bin}/{,ba,da}sh rix,
 
-  @{bin}/rm         rix,
-  @{bin}/touch      rix,
+  @{bin}/{,ba,da}sh rix,
   @{bin}/{,e}grep   rix,
+  @{bin}/{m,g,}awk  rix,
   @{bin}/cat        rix,
-  @{bin}/which{,.debianutils}      rix,
-  @{bin}/id         rix,
   @{bin}/chmod      rix,
   @{bin}/date       rix,
-  @{bin}/{m,g,}awk  rix,
-  @{bin}/tempfile   rix,
-  @{bin}/sed        rix,
-  @{bin}/head       rix,
   @{bin}/fold       rix,
+  @{bin}/head       rix,
+  @{bin}/id         rix,
+  @{bin}/rm         rix,
+  @{bin}/sed        rix,
+  @{bin}/tempfile   rix,
+  @{bin}/touch      rix,
+  @{bin}/which{,.debianutils}      rix,
 
   @{bin}/dbus-update-activation-environment rCx -> dbus,
 
@@ -41,36 +43,29 @@ profile x11-xsession @{exec_path} {
   @{bin}/glxinfo           rPx,
 
   # Allowed GUI sessions to start
-  @{bin}/openbox-session   rPx,
-  @{bin}/enlightenment_start rPUx,
-  @{bin}/sway             rPUx,
-  @{bin}/ssh-agent         rPx,
-
-  owner /tmp/file* rw,
+  @{bin}/openbox-session      rPx,
+  @{bin}/enlightenment_start  rPUx,
+  @{bin}/sway                 rPUx,
+  @{bin}/ssh-agent            rPx,
 
   /etc/default/{,*} r,
 
-  /etc/X11/{,**} r,
-
-  owner @{HOME}/.Xauthority r,
-
-  # Xsession logs
-  owner @{HOME}/.xsession-errors w,
-
+  owner /tmp/file* rw,
 
   profile run-parts {
     include <abstractions/base>
 
     @{bin}/run-parts mr,
 
-    /etc/X11/Xsession.d/ r,
-    /etc/X11/Xresources/ r,
+    /etc/X11/Xsession.d/{,*} r,
+    /etc/X11/Xresources/{,*} r,
 
     /etc/default/kexec.d/ r,
 
     # file_inherit
     owner @{HOME}/.xsession-errors w,
 
+    include if exists <local/x11-xsession_run-parts>
   }
 
   profile dbus {
@@ -81,6 +76,7 @@ profile x11-xsession @{exec_path} {
     # file_inherit
     owner @{HOME}/.xsession-errors w,
 
+    include if exists <local/x11-xsession_dbus>
   }
 
   profile gpg {
@@ -95,22 +91,16 @@ profile x11-xsession @{exec_path} {
 
     @{PROC}/@{pid}/fd/ r,
 
+    include if exists <local/x11-xsession_gpg>
   }
 
   profile udevadm {
     include <abstractions/base>
+    include <abstractions/systemd-common>
 
     @{bin}/udevadm mr,
 
     /etc/udev/udev.conf r,
-
-    owner @{PROC}/@{pid}/stat r,
-          @{PROC}/cmdline r,
-          @{PROC}/1/sched r,
-          @{PROC}/1/environ r,
-          @{PROC}/sys/kernel/osrelease r,
-
-    @{sys}/firmware/efi/efivars/SecureBoot-@{uuid} r,
 
     @{sys}/bus/ r,
     @{sys}/bus/*/devices/ r,
@@ -119,6 +109,7 @@ profile x11-xsession @{exec_path} {
     @{sys}/devices/**/uevent r,
     @{run}/udev/data/* r,
 
+    include if exists <local/x11-xsession_udevadm>
   }
 
   include if exists <local/x11-xsession>

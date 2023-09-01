@@ -1,6 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2019-2021 Mikhail Morfikov
-# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2021-2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -33,7 +33,7 @@ profile systemd-udevd @{exec_path} flags=(attach_disconnected,complain) {
   network inet6 dgram,
   network netlink raw,
 
-  @{exec_path} mr,
+  @{exec_path} mrix,
 
   @{bin}/{,ba,da}sh        rix,
   @{bin}/{,e}grep          rix,
@@ -50,21 +50,21 @@ profile systemd-udevd @{exec_path} flags=(attach_disconnected,complain) {
   @{bin}/setfacl           rix,
   @{bin}/snap              rPx,
   @{bin}/unshare           rix,
+  @{bin}/lvm               rPx,
+  @{bin}/touch             rix,
 
-  @{bin}/*             rpux,
-  audit @{bin}/lvm      rux,
-
-  @{lib}/pm-utils/power.d/*          rPUx,
-  @{lib}/snapd/snap-device-helper     rPx,
-  @{lib}/crda/*                      rPUx,
-  @{lib}/gdm-runtime-config           rPx,
-  @{lib}/systemd/systemd-*            rPx,
-  @{lib}/nfsrahead                    rPUx,
-  @{lib}/udev/*                      rPUx,
+  @{bin}/systemctl rCx -> systemctl,
+  @{lib}/crda/*                           rPUx,
+  @{lib}/gdm-runtime-config               rPx,
+  @{lib}/nfsrahead                        rPUx,
   @{lib}/open-iscsi/net-interface-handler rPUx,
+  @{lib}/pm-utils/power.d/*               rPUx,
+  @{lib}/snapd/snap-device-helper         rPx,
+  @{lib}/systemd/systemd-*                rPx,
+  @{lib}/udev/*                           rPUx,
   /usr/share/hplip/config_usb_printer.py  rPUx,
 
-  /etc/console-setup/*.sh       rPUx,
+  /etc/console-setup/*.sh            rPUx,
   /etc/network/cloud-ifupdown-helper rPUx,
 
   /etc/machine-id r,
@@ -109,6 +109,22 @@ profile systemd-udevd @{exec_path} flags=(attach_disconnected,complain) {
   /dev/** rwk,
 
   deny /apparmor/.null rw,
+
+  profile systemctl {
+    include <abstractions/base>
+    include <abstractions/systemd-common>
+
+    capability net_admin,
+    capability sys_ptrace,
+
+    @{bin}/systemctl mr,
+  
+    / r,
+
+    @{PROC}/sys/kernel/cap_last_cap r,
+
+    include if exists <local/systemd-udevd_systemctl>
+  }
 
   include if exists <local/systemd-udevd>
 }
