@@ -53,6 +53,7 @@ var (
 		// Resolve classic system variables
 		`/usr/lib(|32|64|exec)`, `@{lib}`,
 		`/usr/(|s)bin`, `@{bin}`,
+		`[^/]+-linux-gnu[^/]?`, `@{multiarch}`,
 		`/run/`, `@{run}/`,
 		`user/[0-9]*/`, `user/@{uid}/`,
 		`/proc/`, `@{PROC}/`,
@@ -60,9 +61,10 @@ var (
 		`@{PROC}/@{pid}/task/[0-9]*/`, `@{PROC}/@{pid}/task/@{tid}/`,
 		`/sys/`, `@{sys}/`,
 		`@{PROC}@{sys}/`, `@{PROC}/sys/`,
+		`pci[0-9][0-9][0-9][0-9]:[0-9][0-9]`, `@{pci_bus}`,
+		`@{pci_bus}/([0-9][0-9][0-9][0-9]:[0-9][0-9]:[0-9a-f][0-9a-f]\.[0-9]/)+`, `@{pci}/`,
 
 		// Some system glob
-		`pci[/0-9:.]+`, `pci[0-9]*/**/`, // PCI structure
 		`:1.[0-9]*`, `:*`, // dbus peer name
 		`@{bin}/(|ba|da)sh`, `@{bin}/{,ba,da}sh`, // collect all shell
 		`@{lib}/modules/[^/]+\/`, `@{lib}/modules/*/`, // strip kernel version numbers from kernel module accesses
@@ -71,9 +73,9 @@ var (
 		`(?m)^.*/etc/[^/]+so.*$`, ``,
 		`(?m)^.*@{lib}/[^/]+so.*$`, ``,
 		`(?m)^.*@{lib}/locale/.*$`, ``,
-		`(?m)^.*/usr/share/(locale|zoneinfo)/.*$`, ``,
-		`(?m)^.*/usr/share/zoneinfo/.*$`, ``,
-		`(?m)^.*/dev/(null|zero|full).*$`, ``,
+		`(?m)^.*/usr/share/locale[^/]?/.*$`, ``,
+		`(?m)^.*/usr/share/zoneinfo[^/]?/.*$`, ``,
+		`(?m)^.*/dev/(null|zero|full|log).*$`, ``,
 		`(?m)^.*/dev/(u|)random.*$`, ``,
 	})
 )
