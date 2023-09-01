@@ -30,7 +30,7 @@ prevent access to these sensitive files. Problems:
    what is required. Here we allow everything and blacklist some paths.
 
 It creates even more issues when we want to use this profile in other profiles.
-Let's take the example of `diff`. Using this rule: `/{,usr/}bin/diff rPx,` will
+Let's take the example of `diff`. Using this rule: `@{bin}/diff rPx,` will
 restrict access to the very generic and not very confined `diff` profile.
 Whereas most of the time, we want to restrict `diff` to some specific file in
 our profile:
@@ -169,12 +169,12 @@ dynamically by the kernel. Therefore, the full range must be allowed:
 
     [apparmor.d/groups/virt/libvirtd](https://github.com/roddhjav/apparmor.d/blob/15e33a1fe6654f67a187cd5157c9968061b9511e/apparmor.d/groups/virt/libvirtd#L179-L184)
     ``` aa linenums="179"
-      @{run}/udev/data/c23[4-9]:[0-9]* r, # For dynamic assignment range 234 to 254
-      @{run}/udev/data/c24[0-9]:[0-9]* r,
-      @{run}/udev/data/c25[0-4]:[0-9]* r,
-      @{run}/udev/data/c3[0-9]*:[0-9]* r, # For dynamic assignment range 384 to 511
-      @{run}/udev/data/c4[0-9]*:[0-9]* r,
-      @{run}/udev/data/c5[0-9]*:[0-9]* r,
+      @{run}/udev/data/c23[4-9]:@{int} r, # For dynamic assignment range 234 to 254
+      @{run}/udev/data/c24[0-9]:@{int} r,
+      @{run}/udev/data/c25[0-4]:@{int} r,
+      @{run}/udev/data/c3[0-9]*:@{int} r, # For dynamic assignment range 384 to 511
+      @{run}/udev/data/c4[0-9]*:@{int} r,
+      @{run}/udev/data/c5[0-9]*:@{int} r,
     ```
 
 [kernel]: https://raw.githubusercontent.com/torvalds/linux/master/Documentation/admin-guide/devices.txt

@@ -40,7 +40,7 @@ var (
 	systemd bool
 )
 
-func aaLog(logger string, path string, profile string, rules bool) error {
+func aaLog(logger string, path string, profile string) error {
 	var err error
 	var file io.Reader
 
@@ -97,8 +97,8 @@ func main() {
 		logger = "systemd"
 	}
 
-	logfile := logs.GetLogFile(path)
-	err := aaLog(logger, logfile, profile, rules)
+	path = logs.SelectLogFile(path)
+	err := aaLog(logger, path, profile)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)

@@ -53,7 +53,7 @@ func TestGetJournalctlLogs(t *testing.T) {
 	}
 }
 
-func TestGetLogFile(t *testing.T) {
+func TestSelectLogFile(t *testing.T) {
 	tests := []struct {
 		name string
 		path string
@@ -77,7 +77,7 @@ func TestGetLogFile(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := GetLogFile(tt.path); got != tt.want {
+			if got := SelectLogFile(tt.path); got != tt.want {
 				t.Errorf("getLogFile() = %v, want %v", got, tt.want)
 			}
 		})

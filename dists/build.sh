@@ -3,7 +3,7 @@
 # Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-# Usage: make <distribution>
+# Usage: make package dist=<distribution>
 
 set -eu
 

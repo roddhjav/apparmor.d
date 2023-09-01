@@ -19,7 +19,7 @@ var Builds = []BuildFunc{
 
 var (
 	regAttachments   = regexp.MustCompile(`(profile .* @{exec_path})`)
-	regFlag          = regexp.MustCompile(`flags=\(([^)]+)\)`)
+	regFlagComplain  = regexp.MustCompile(`flags=\(([^)]+)\)`)
 	regProfileHeader = regexp.MustCompile(` {`)
 )
 
@@ -28,7 +28,7 @@ type BuildFunc func(string) string
 // Set complain flag on all profiles
 func BuildComplain(profile string) string {
 	flags := []string{}
-	matches := regFlag.FindStringSubmatch(profile)
+	matches := regFlagComplain.FindStringSubmatch(profile)
 	if len(matches) != 0 {
 		flags = strings.Split(matches[1], ",")
 		if slices.Contains(flags, "complain") {
@@ -39,7 +39,7 @@ func BuildComplain(profile string) string {
 	strFlags := " flags=(" + strings.Join(flags, ",") + ") {"
 
 	// Remove all flags definition, then set manifest' flags
-	profile = regFlag.ReplaceAllLiteralString(profile, "")
+	profile = regFlagComplain.ReplaceAllLiteralString(profile, "")
 	return regProfileHeader.ReplaceAllLiteralString(profile, strFlags)
 }
 

@@ -17,7 +17,7 @@ type AppArmorProfiles map[string]*AppArmorProfile
 // ApparmorProfile represents a full apparmor profile.
 // Warning: close to the BNF grammar of apparmor profile but not exactly the same (yet):
 //   - Some rules are not supported yet (subprofile, hat...)
-//   - The structure is simplified as it only aims at writting profile, not parsing it.
+//   - The structure is simplified as it only aims at writing profile, not parsing it.
 type AppArmorProfile struct {
 	Preamble
 	Profile
