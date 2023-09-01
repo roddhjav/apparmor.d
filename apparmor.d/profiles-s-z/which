@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2022 Jeroen Rijken
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -15,18 +16,22 @@ profile which @{exec_path} {
 
   @{bin}/{,ba,da}sh  rix,
 
-  /{usr/,}{local/,}{s,}bin/ r,
+  @{bin}/{,*/} r,
+  @{lib}/ r,
   @{lib}/go-*/bin/ r,
-  /{usr/,}{local/,}games/ r,
+  /usr/{local/,}games/ r,
+  /usr/include/ r,
+  /usr/local/{,etc/,lib/} r,
+  /usr/local/{s,}bin/{,*/} r,
 
   /opt/cni/bin/ r,
   /opt/containerd/bin/ r,
 
   /snap/bin/ r,
+  /var/lib/flatpak/exports/bin/ r,
 
-  owner @{HOME}/{.local/,}/{.,}bin/ r,
-  owner @{HOME}/.krew/bin/ r,
-  owner @{HOME}/go/bin/ r,
+  owner @{HOME}/{.,}go/bin/ r,
+  owner @{user_bin_dirs}/ r,
 
   deny @{user_share_dirs}/gvfs-metadata/* r,
 
