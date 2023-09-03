@@ -1,0 +1,54 @@
+abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = @{bin}/mariadb{,-*} @{bin}/mariadbd @{bin}/mysql @{bin}/mysqld{,*}
+profile mariadbd_akonadi @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/bash>
+  include <abstractions/consoles>
+  include <abstractions/nameservice>
+  include <abstractions/openssl>
+  
+  capability setgid,
+  capability setuid,
+
+  signal (receive) set=(kill, term) peer=akonadiserver,
+    
+  @{exec_path} mrix,
+  
+  @{bin}/{b,d}ash rix,
+  @{bin}/cat rix,
+  @{bin}/chmod rix,
+  @{bin}/dirname rix,
+  @{bin}/hostname rix,
+  @{bin}/mkdir rix,
+  @{bin}/sed rix,
+  @{bin}/my_print_defaults rix,
+    
+  /usr/share/mysql/** r,
+  
+  /etc/mysql/{,**} r,
+  /etc/my.cnf{,.d/**} r,
+  
+  owner @{user_share_dirs}/akonadi/** rwk,
+  
+        /tmp/ r,
+  owner /tmp/#@{int} rw,
+  owner /tmp/mysql_upgrade-@{rand6} rw,
+  owner /tmp/sql* rw,
+  owner /tmp/#sql-temptable-*.{MAD,MAI} rw,
+  
+  owner @{run}/user/@{uid}/akonadi** rwk,
+  
+  @{sys}/block/ r,
+  @{sys}/devices/system/cpu/ r,
+  @{sys}/devices/pci[0-9]*/**/{dev,rotational} r,
+  @{sys}/devices/virtual/block/zram@{int}/queue/rotational r,
+  @{sys}/devices/virtual/block/zram@{int}/dev r,
+
+  owner @{PROC}/@{pid}/loginuid r,
+  
+  include if exists <local/mariadbd_akonadi>  
+  
+}
