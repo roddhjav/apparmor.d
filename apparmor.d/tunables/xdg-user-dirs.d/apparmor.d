@@ -21,4 +21,4 @@
 @{user_videos_dirs}=@{HOME}/@{XDG_VIDEOS_DIR} @{MOUNTS}/@{XDG_VIDEOS_DIR}
 @{user_vm_shares}=@{HOME}/@{XDG_VM_SHARES_DIR} @{MOUNTS}/@{XDG_VM_SHARES_DIR}
 
-include if exists <tunnables/xdg-user-dirs.d/apparmor.d.d>
+include if exists <tunables/xdg-user-dirs.d/apparmor.d.d>
