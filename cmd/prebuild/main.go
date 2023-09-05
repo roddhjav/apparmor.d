@@ -13,20 +13,22 @@ import (
 	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 )
 
-const usage = `prebuild [-h] [--full] [--complain]
+const usage = `prebuild [-h] [--full] [--complain | --enforce]
 
-    Internal tool to prebuild apparmor.d profiles for a given distribution.
+    Prebuild apparmor.d profiles for a given distribution.
 
 Options:
     -h, --help      Show this help message and exit.
     -f, --full      Set AppArmor for full system policy.
     -c, --complain  Set complain flag on all profiles.
+    -e, --enforce   Set enforce flag on all profiles.
 `
 
 var (
 	help     bool
 	full     bool
 	complain bool
+	enforce  bool
 )
 
 func init() {
@@ -36,6 +38,8 @@ func init() {
 	flag.BoolVar(&full, "full", false, "Set AppArmor for full system policy.")
 	flag.BoolVar(&complain, "c", false, "Set complain flag on all profiles.")
 	flag.BoolVar(&complain, "complain", false, "Set complain flag on all profiles.")
+	flag.BoolVar(&enforce, "e", false, "Set enforce flag on all profiles.")
+	flag.BoolVar(&enforce, "enforce", false, "Set enforce flag on all profiles.")
 }
 
 func aaPrebuild() error {
@@ -46,6 +50,8 @@ func aaPrebuild() error {
 	}
 	if complain {
 		prebuild.Builds = append(prebuild.Builds, prebuild.BuildComplain)
+	} else if enforce {
+		prebuild.Builds = append(prebuild.Builds, prebuild.BuildEnforce)
 	}
 
 	if err := prebuild.Prepare(); err != nil {
@@ -60,6 +66,8 @@ func aaPrebuild() error {
 	logging.Bullet("Bypass userspace tools restriction")
 	if complain {
 		logging.Bullet("Set complain flag on all profiles")
+	} else if enforce {
+		logging.Bullet("All profiles have been enforced")
 	}
 	return nil
 }
