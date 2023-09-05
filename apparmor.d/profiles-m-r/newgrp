@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2020-2021 Mikhail Morfikov
+# Copyright (C) 2021-2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -9,26 +10,19 @@ include <tunables/global>
 @{exec_path} = @{bin}/newgrp
 profile newgrp @{exec_path} {
   include <abstractions/base>
+  include <abstractions/consoles>
   include <abstractions/nameservice-strict>
 
-  # To write records to the kernel auditing log.
   capability audit_write,
-
-  # To remove the following errors:
-  #  setgroups: Operation not permitted
-  #  setgid: Operation not permitted
   capability setgid,
-
-  # newgrp is a SETUID binary
   capability setuid,
 
   network netlink raw,
 
   @{exec_path} mr,
 
-  # Shells to use
-  @{bin}/{,b,d,rb}ash rPUx,
-  @{bin}/{c,k,tc,z}sh rPUx,
+  @{bin}/{,b,d,rb}ash rUx,
+  @{bin}/{c,k,tc,z}sh rUx,
 
   /etc/{passwd,group,shadow,gshadow} r,
 
