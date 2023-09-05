@@ -34,8 +34,8 @@
 @{hex}=@{h}*@{h}
 
 # Shortcut for PCI device
-@{pci_id}=[0-9][0-9][0-9][0-9]:[0-9][0-9]:[0-9a-f][0-9a-f].[0-9]
-@{pci_bus}=pci[0-9][0-9][0-9][0-9]:[0-9][0-9]
+@{pci_id}=@{h}@{h}@{h}@{h}:@{h}@{h}:@{h}@{h}.@{h}
+@{pci_bus}=pci@{h}@{h}@{h}@{h}:@{h}@{h}
 @{pci}=@{pci_bus}/@{pci_id}{,/@{pci_id}}{,/@{pci_bus}/@{pci_id}{,/@{pci_id}}}
 
 # Date and time
