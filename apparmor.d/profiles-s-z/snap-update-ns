@@ -6,7 +6,7 @@ abi <abi/3.0>,
 
 include <tunables/global>
 
-@{lib_dirs} = @{lib}/ /snap/snapd/@{int}@{lib}/
+@{lib_dirs} = @{lib}/ /snap/snapd/@{int}@{lib}
 
 @{exec_path} = @{lib_dirs}/snapd/snap-update-ns
 profile snap-update-ns @{exec_path} {
@@ -31,14 +31,21 @@ profile snap-update-ns @{exec_path} {
   /var/lib/snapd/mount/{,*} r,
 
   / r,
-  /snap/{,**} rw,
   /tmp/ r,
-  /tmp/.snap/{,**} rwk,
+
+  owner /snap/{,**} rw,
+
+  owner /var/ rw,
+  owner /var/snap/ rw,
+  owner /var/snap/**/ rw,
+
+  owner /tmp/.snap/{,**} rwk,
 
   @{run}/snapd/lock/*.lock rwk,
   @{run}/snapd/ns/{,**} rw,
 
   @{sys}/fs/cgroup/{,**/} r,
+  @{sys}/fs/cgroup/system.slice/snap.*.service/cgroup.freeze rw,
   @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/snap*.service/cgroup.freeze rw,
   @{sys}/kernel/mm/transparent_hugepage/hpage_pmd_size r,
 

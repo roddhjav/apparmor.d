@@ -6,8 +6,8 @@ abi <abi/3.0>,
 
 include <tunables/global>
 
-@{bin_dirs} = @{bin}/ /snap/snapd/@{int}@{bin}/
-@{lib_dirs} = @{lib}/ /snap/snapd/@{int}@{lib}/
+@{bin_dirs} = @{bin}/ /snap/snapd/@{int}@{bin}
+@{lib_dirs} = @{lib}/ /snap/snapd/@{int}@{lib}
 
 @{exec_path} = @{lib_dirs}/snapd/snapd
 profile snapd @{exec_path} {
@@ -74,6 +74,7 @@ profile snapd @{exec_path} {
   @{bin}/cp                       rix,
   @{bin}/gzip                     rix,
   @{bin}/journalctl               rPx,
+  @{bin}/kmod                     rPx,
   @{bin}/mount                    rix,
   @{bin}/runuser                  rCx -> runuser,
   @{bin}/snap                     rPx,
@@ -87,7 +88,7 @@ profile snapd @{exec_path} {
   @{bin}/update-desktop-database  rPx,
 
   @{bin_dirs}/fc-cache-*              mr,
-  @{bin_dirs}/snap                   rPx,
+  @{bin_dirs}/snap                   rPx -> snap,
   @{bin_dirs}/xdelta3                rix,
   @{lib_dirs}/@{multiarch}/**         mr,
   @{lib_dirs}/@{multiarch}/ld-*.so   rix,
@@ -108,6 +109,7 @@ profile snapd @{exec_path} {
   /etc/mime.types r,
   /etc/modprobe.d/{,**/} r,
   /etc/modules-load.d/{,**/} r,
+  /etc/modules-load.d/*snap* rw,
   /etc/systemd/system/{,**/} r,
   /etc/systemd/system/snap* rw,
   /etc/systemd/user/{,**/} r,
@@ -176,6 +178,14 @@ profile snapd @{exec_path} {
   owner @{PROC}/@{pids}/mountinfo r,
 
   /dev/loop-control rw,
+
+  profile runuser {
+    include <abstractions/base>
+
+    @{bin}/runuser mr,
+
+    include if exists <local/snapd_runuser>
+  }
 
   include if exists <local/snapd>
 }
