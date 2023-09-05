@@ -28,6 +28,7 @@ func Test_PreBuild(t *testing.T) {
 		wantErr  bool
 		full     bool
 		complain bool
+		enforce  bool
 		dist     string
 	}{
 		{
@@ -35,6 +36,7 @@ func Test_PreBuild(t *testing.T) {
 			wantErr:  false,
 			full:     false,
 			complain: true,
+			enforce:  false,
 			dist:     "arch",
 		},
 		{
@@ -42,6 +44,7 @@ func Test_PreBuild(t *testing.T) {
 			wantErr:  false,
 			full:     true,
 			complain: false,
+			enforce:  true,
 			dist:     "ubuntu",
 		},
 		{
@@ -49,6 +52,7 @@ func Test_PreBuild(t *testing.T) {
 			wantErr:  false,
 			full:     true,
 			complain: false,
+			enforce:  false,
 			dist:     "debian",
 		},
 		{
@@ -56,6 +60,7 @@ func Test_PreBuild(t *testing.T) {
 			wantErr:  false,
 			full:     true,
 			complain: true,
+			enforce:  false,
 			dist:     "opensuse",
 		},
 		// {
@@ -75,6 +80,9 @@ func Test_PreBuild(t *testing.T) {
 			}
 			if tt.complain {
 				Builds = append(Builds, BuildComplain)
+			}
+			if tt.enforce {
+				Builds = append(Builds, BuildEnforce)
 			}
 			if err := Prepare(); (err != nil) != tt.wantErr {
 				t.Errorf("Prepare() error = %v, wantErr %v", err, tt.wantErr)

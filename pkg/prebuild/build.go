@@ -19,7 +19,7 @@ var Builds = []BuildFunc{
 
 var (
 	regAttachments   = regexp.MustCompile(`(profile .* @{exec_path})`)
-	regFlagComplain  = regexp.MustCompile(`flags=\(([^)]+)\)`)
+	regFlags         = regexp.MustCompile(`flags=\(([^)]+)\)`)
 	regProfileHeader = regexp.MustCompile(` {`)
 )
 
@@ -28,7 +28,7 @@ type BuildFunc func(string) string
 // Set complain flag on all profiles
 func BuildComplain(profile string) string {
 	flags := []string{}
-	matches := regFlagComplain.FindStringSubmatch(profile)
+	matches := regFlags.FindStringSubmatch(profile)
 	if len(matches) != 0 {
 		flags = strings.Split(matches[1], ",")
 		if slices.Contains(flags, "complain") {
@@ -39,7 +39,30 @@ func BuildComplain(profile string) string {
 	strFlags := " flags=(" + strings.Join(flags, ",") + ") {"
 
 	// Remove all flags definition, then set manifest' flags
-	profile = regFlagComplain.ReplaceAllLiteralString(profile, "")
+	profile = regFlags.ReplaceAllLiteralString(profile, "")
+	return regProfileHeader.ReplaceAllLiteralString(profile, strFlags)
+}
+
+// Set all profiles in enforce mode
+func BuildEnforce(profile string) string {
+	matches := regFlags.FindStringSubmatch(profile)
+	if len(matches) == 0 {
+		return profile
+	}
+
+	flags := strings.Split(matches[1], ",")
+	idx := slices.Index(flags, "complain")
+	if idx == -1 {
+		return profile
+	}
+	flags = slices.Delete(flags, idx, idx+1)
+	strFlags := "{"
+	if len(flags) >= 1 {
+		strFlags = " flags=(" + strings.Join(flags, ",") + ") {"
+	}
+
+	// Remove all flags definition, then set new flags
+	profile = regFlags.ReplaceAllLiteralString(profile, "")
 	return regProfileHeader.ReplaceAllLiteralString(profile, strFlags)
 }
 
