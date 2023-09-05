@@ -6,8 +6,8 @@ abi <abi/3.0>,
 
 include <tunables/global>
 
-@{bin_dirs} = @{bin}/ /snap/snapd/@{int}@{bin}/
-@{lib_dirs} = @{lib}/ /snap/snapd/@{int}@{lib}/
+@{bin_dirs} = @{bin}/ /snap/snapd/@{int}@{bin}
+@{lib_dirs} = @{lib}/ /snap/snapd/@{int}@{lib}
 
 @{exec_path} = @{bin_dirs}/snap
 profile snap @{exec_path} {
@@ -23,7 +23,7 @@ profile snap @{exec_path} {
 
   unix (send, receive) type=stream peer=(label=apt),
 
-  mount options=(ro, silent) -> /tmp/snapd-auto-import-mount-[0-9]*/,
+  mount options=(ro, silent) -> /tmp/snapd-auto-import-mount-@{int}/,
 
   dbus (send, receive) bus=session path=/org/freedesktop/
          interface=org.freedesktop.systemd1.Manager
@@ -33,6 +33,9 @@ profile snap @{exec_path} {
   dbus (send, receive) bus=system path=/org/freedesktop/
          interface=org.freedesktop.systemd1.Manager
          member={StartTransientUnit,JobRemoved},
+
+  dbus (send, receive) bus=system path=/org/freedesktop/systemd1
+       interface=org.freedesktop.systemd1.Manager,
 
   dbus send bus=session path=/org/freedesktop/portal/documents
        interface=org.freedesktop.portal.Documents
@@ -59,8 +62,9 @@ profile snap @{exec_path} {
 
   @{HOME}/snap/{,**} rw,
 
-  owner /tmp/snapd-auto-import-mount-[0-9]*/ rw,
+  owner /tmp/snapd-auto-import-mount-@{int}/ rw,
 
+        @{run}/user/@{uid}/bus rw,
   owner @{run}/user/@{uid}/.mutter-Xwaylandauth.[0-9A-Z]* r,
   owner @{run}/user/@{uid}/gdm/Xauthority r,
   owner @{run}/user/@{uid}/snapd-session-agent.socket rw,
