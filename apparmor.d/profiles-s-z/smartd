@@ -1,6 +1,7 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2018-2021 Mikhail Morfikov
 # Copyright (C) 2022 Jeroen Rijken
+# Copyright (C) 2021-2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -13,46 +14,42 @@ profile smartd @{exec_path} {
   include <abstractions/disks-read>
   include <abstractions/nameservice-strict>
 
-  # To remove the following errors:
-  #  Device: /dev/disk/by-id/ata-*, IE (SMART) not enabled, skip device
-  #  Try 'smartctl -s on /dev/disk/by-id/ata-*' to turn on SMART features
-  #  Unable to register SCSI device /dev/disk/by-id/ata-* at line * of file /etc/smartd.conf
-  #  Device: /dev/disk/by-id/ata-*, not available
   capability sys_rawio,
   capability sys_admin,
 
   # Needed?
-  deny capability net_admin,
+  audit capability net_admin,
 
   @{exec_path} mr,
+
   @{bin}/{,ba,da}sh rix,
   @{bin}/cat        rix,
   @{bin}/hostname   rix,
   @{bin}/mail       rix,
   @{bin}/mktemp     rix,
   @{bin}/run-parts  rix,
-  /usr/share/smartmontools/{smartd-runner,smartd_warning.sh} rix,
-  /etc/smartmontools/run.d/* rix,
 
+  /etc/smartmontools/run.d/* rix,
+  /usr/share/smartmontools/{smartd-runner,smartd_warning.sh} rix,
+
+  /etc/smart_drivedb.h r,
   /etc/smartd.conf r,
+  /etc/smartmontools/smartd_warning.d/{,*} r,
+  /usr/share/smartmontools/drivedb.h r,
+  /var/lib/smartmontools/drivedb/drivedb.h r,
 
   /var/lib/smartmontools/smartd.*.state{,~} rw,
   /var/lib/smartmontools/attrlog.*.csv rw,
 
-  # Plugin directory for smartd warning script
-  /etc/smartmontools/smartd_warning.d/ r,
+  /tmp/tmp.* rw,
 
-  # Drive database location
-  /usr/share/smartmontools/drivedb.h r,
-  /var/lib/smartmontools/drivedb/drivedb.h r,
-  /etc/smart_drivedb.h r,
+  @{run}/systemd/notify rw,
 
-  # Needed when smartd-runner scans for drives
-  /dev/ r,
+  @{sys}/class/scsi_host/ r,
+
   @{PROC}/devices r,
 
-  /run/systemd/notify rw,
-  /tmp/tmp.* rw,
+  /dev/ r,
 
   include if exists <local/smartd>
 }
