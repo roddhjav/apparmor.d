@@ -2,6 +2,8 @@
 # Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
+# TODO: rethink how the scripts should be managed
+
 abi <abi/3.0>,
 
 include <tunables/global>
@@ -12,7 +14,9 @@ profile nm-dispatcher @{exec_path} flags=(attach_disconnected) {
   include <abstractions/dbus-strict>
   include <abstractions/nameservice-strict>
 
+  capability net_admin,
   capability sys_nice,
+  capability sys_ptrace,
 
   dbus send bus=system path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus
@@ -41,13 +45,13 @@ profile nm-dispatcher @{exec_path} flags=(attach_disconnected) {
   @{bin}/rm                 rix,
   @{bin}/run-parts          rCx -> run-parts,
   @{bin}/sed                rix,
-  @{bin}/systemctl          rPx -> child-systemctl,
+  @{bin}/systemctl          rix,
   @{bin}/systemd-cat        rPx,
   @{bin}/tr                 rix,
   /usr/share/tlp/tlp-readconfs  rPUx,
 
   @{lib}/NetworkManager/dispatcher.d/ r,
-  @{lib}/NetworkManager/dispatcher.d/* rix,
+  @{lib}/NetworkManager/dispatcher.d/** rix,
   /etc/NetworkManager/dispatcher.d/ r,
   /etc/NetworkManager/dispatcher.d/** rix,
 
@@ -71,7 +75,10 @@ profile nm-dispatcher @{exec_path} flags=(attach_disconnected) {
 
     /{usr/,}bin/run-parts mr,
 
-   include if exists <local/anacron_run_parts>
+    /etc/network/if-*.d/ r,
+    /etc/network/if-*.d/* rPUx,
+
+    include if exists <local/anacron_run_parts>
   }
 
   include if exists <local/nm-dispatcher>
