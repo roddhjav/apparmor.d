@@ -7,17 +7,20 @@ abi <abi/3.0>,
 include <tunables/global>
 
 @{exec_path} = @{bin}/multipath
-profile multipath @{exec_path} {
+profile multipath @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/disks-write>
 
   capability sys_admin,
   capability sys_resource,
 
+  unix (send, receive, connect) type=stream peer=(addr="@/org/kernel/linux/storage/multipathd"),
+
   @{exec_path} mr,
 
   /etc/multipath.conf r,
-  /etc/multipath/bindings rwk,
+  /etc/multipath/ r,
+  /etc/multipath/* rwk,
   /etc/systemd/system/ r,
 
   @{run}/systemd/system/ r,
