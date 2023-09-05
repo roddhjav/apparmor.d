@@ -1,14 +1,16 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2019-2021 Mikhail Morfikov
-# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2021-2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
 
 include <tunables/global>
 
-@{exec_path} = @{bin}/code /usr/share/code/{bin/,}code
-profile code @{exec_path} {
+@{code_config_dirs} = @{user_config_dirs}/Code* @{HOME}/.vscode{,-oss}
+
+@{exec_path} = @{lib}/electron@{int}/electron
+profile code flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/chromium-common>
   include <abstractions/dconf-write>
@@ -17,36 +19,58 @@ profile code @{exec_path} {
   include <abstractions/freedesktop.org>
   include <abstractions/gtk>
   include <abstractions/nameservice-strict>
-  include <abstractions/opencl>
+  include <abstractions/opencl-intel>
+  include <abstractions/opencl-mesa>
+  include <abstractions/opencl-nvidia>
   include <abstractions/ssl_certs>
+  include <abstractions/vulkan>
 
-  # ptrace (read) peer=lsb_release,
+  capability sys_ptrace,
+
+  network inet stream,
+  network inet6 stream,
+  network inet dgram,
+  network inet6 dgram,
+  network netlink raw,
+
+  signal (send),
 
   @{exec_path} mrix,
 
-  @{lib}/code/extensions/git/dist/askpass.sh rPx,
-  @{lib}/code/extensions/git/dist/git-editor.sh rPx,
+  @{lib}/code/node_modules.asar.unpacked/**.node rm,
+
+  # Core tools
+  @{bin}/git                    rPx,
+  @{bin}/rg                     rix,
+  @{bin}/gpg{,2}                rPx,
+  @{bin}/lsb_release            rPx -> lsb_release,
+  @{bin}/gio                    rPx -> child-open,
+  @{lib}/gio-launch-desktop     rPx -> child-open,
+  @{bin}/xdg-open               rPx -> child-open,
 
   # The shell is not confined on purpose.
   @{bin}/{,b,d,rb}ash         rUx,
   @{bin}/{c,k,tc,z}sh         rUx,
 
-  @{bin}/git                  rPx,
-  @{bin}/gpg{,2}             rPUx,
-  @{bin}/lsb_release          rPx -> lsb_release,
+  # Confine some common tools
+  @{lib}/code/extensions/git/dist/askpass.sh     rPx,
+  @{lib}/code/extensions/git/dist/git-editor.sh  rPx,
 
-  # /usr/share/code/** r,
-  # /usr/share/code/libffmpeg.so mr,
-  # /usr/share/code/resources/**/bin/* rix,
-  # /usr/share/code/resources/**.node mr,
+  # Do NOT confine most of the extensions
+  @{bin}/[a-z0-9]*                   rPUx,
+  @{code_config_dirs}/extensions/**  rPUx,
+  @{HOME}/.go/bin/*                  rPUx,
+  @{lib}/go/bin/*                    rPUx,
+  @{bin}/python[0-9]* rUx
 
-  /var/lib/dbus/machine-id r,
-  /etc/machine-id r,
+  /etc/libva.conf r,
+  /etc/shells r,
+  /etc/lsb-release r,
 
-  owner @{user_config_dirs}/Code/ rw,
-  owner @{user_config_dirs}/Code/** rwkl -> {HOME}/.config/Code/**,
-  owner @{HOME}/.vscode/ rw,
-  owner @{HOME}/.vscode/** rwlk -> @{HOME}/.vscode/**,
+  owner @{HOME}/@{XDG_SSH_DIR}/config r,
+
+  owner @{code_config_dirs}/ rw,
+  owner @{code_config_dirs}/** rwkl -> @{code_config_dirs}/**,
 
   owner @{user_projects_dirs}/ r,
   owner @{user_projects_dirs}/** rwkl -> @{user_projects_dirs}/**,
@@ -56,14 +80,35 @@ profile code @{exec_path} {
   owner /tmp/vscode-ipc-@{uuid}.sock rw,
 
   owner @{run}/user/@{uid}/vscode-@{hex}-*-{shared,main}.sock rw,
-  owner @{run}/user/@{uid}/vscode-git-askpass-@{hex}.sock rw,
+  owner @{run}/user/@{uid}/vscode-git-@{hex}.sock rw,
+  owner @{run}/user/@{uid}/git-graph-askpass-[a-zA-Z0-9]*.sock rw,
+
+  @{run}/systemd/inhibit/*.ref rw,
+
+  @{sys}/devices/system/cpu/present r,
+  @{sys}/devices/system/cpu/kernel_max r,
+  @{sys}/devices/virtual/tty/tty[0-9]*/active r,
+  @{sys}/devices/pci[0-9]*/**/irq r,
 
         @{PROC}/ r,
         @{PROC}/@{pid}/fd/ r,
-  owner @{PROC}/@{pids}/task/ r,
-  owner @{PROC}/@{pids}/task/@{tid}/status r,
+        @{PROC}/@{pid}/stat r,
+        @{PROC}/loadavg r,
+        @{PROC}/sys/fs/inotify/max_user_watches r,
+        @{PROC}/sys/kernel/yama/ptrace_scope r,
+        @{PROC}/version r,
+  owner @{PROC}/@{pid}/cgroup r,
+  owner @{PROC}/@{pid}/cmdline r,
+  owner @{PROC}/@{pid}/comm w,
   owner @{PROC}/@{pid}/mountinfo r,
   owner @{PROC}/@{pid}/mounts r,
+  owner @{PROC}/@{pid}/oom_score_adj rw,
+  owner @{PROC}/@{pid}/statm r,
+  owner @{PROC}/@{pids}/clear_refs w,
+  owner @{PROC}/@{pids}/task/ r,
+  owner @{PROC}/@{pids}/task/@{tid}/status r,
+
+  deny owner @{user_share_dirs}/gvfs-metadata/{,*} r,
 
   include if exists <local/code>
 }
