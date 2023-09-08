@@ -8,7 +8,7 @@ abi <abi/3.0>,
 include <tunables/global>
 
 @{exec_path} = @{lib}/systemd/systemd-shutdown
-profile systemd-shutdown @{exec_path} flags=(complain) {
+profile systemd-shutdown @{exec_path} {
   include <abstractions/base>
   include <abstractions/systemd-common>
 
@@ -17,7 +17,8 @@ profile systemd-shutdown @{exec_path} flags=(complain) {
   capability sys_ptrace,
   capability sys_resource,
 
-  signal (send) set=(stop, cont, term, kill),
+  signal (send)    set=(stop, cont, term, kill),
+  signal (receive) set=(rtmin+23) peer=plymouthd,
 
   @{exec_path} mr,
 
@@ -28,6 +29,8 @@ profile systemd-shutdown @{exec_path} flags=(complain) {
   owner @{PROC}/@{pid}/comm r,
   owner @{PROC}/sys/kernel/core_pattern w,
   owner @{PROC}/sys/kernel/printk rw,
+
+  /dev/watchdog@{int} w,
 
   include if exists <local/systemd-shutdown>
 }

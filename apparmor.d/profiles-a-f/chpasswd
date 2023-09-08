@@ -1,0 +1,34 @@
+# apparmor.d - Full set of apparmor profiles
+# SPDX-License-Identifier: GPL-2.0-only
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/chpasswd
+profile chpasswd @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+
+  capability chown,
+  capability fsetid,
+  capability setuid,
+
+  signal (receive) set=(term, kill) peer=gnome-control-center,
+
+  @{exec_path} mr,
+
+  /etc/.pwd.lock wk,
+  /etc/login.defs r,
+  /etc/shadow rw,
+  /etc/shadow.@{int} w,
+  /etc/shadow.lock w,  # change to 'd'
+  /etc/shadow.lock l -> /etc/shadow.@{int},
+  /etc/shadow- w,
+  /etc/shadow+ rw,
+  /etc/passwd rw,
+  /etc/passwd.@{int} w,
+  /etc/passwd.lock w,  # change to 'd'
+  /etc/passwd.lock l -> /etc/passwd.@{int},
+
+  include if exists <local/chpasswd>
+}
