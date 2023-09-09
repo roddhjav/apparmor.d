@@ -1,0 +1,49 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2017-2021 Mikhail Morfikov
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2023 Jose Maldonado <josemald89@gmail.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/mpd
+profile mpd @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/audio>
+  include <abstractions/nameservice-strict>
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  signal (receive) set=(term, kill),
+
+  @{exec_path} mr,
+
+  @{bin}/pulseuadio rPx,
+
+  /etc/mpd/* r,
+
+  /etc/machine-id r,
+  /var/lib/dbus/machine-id r,
+
+  owner @{HOME}/ r,
+  owner @{user_music_dirs}/{,**} rw,
+
+  owner @{user_config_dirs}/mpd/ rw,
+  owner @{user_config_dirs}/mpd/* rwkl,
+  owner @{user_config_dirs}/mpd/playlists/ rw,
+  owner @{user_config_dirs}/mpd/playlists/* rw,
+
+  owner @{run}/mpd/ rw,
+  owner @{run}/mpd/* rw,
+
+  owner @{PROC}/@{pid}/cmdline r,
+  owner @{PROC}/@{pid}/task/ r,
+
+  include if exists <local/mpd>
+}
