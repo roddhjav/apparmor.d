@@ -21,84 +21,84 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-// Scenario represents of a list of tests for a given program
-type (
-	Scenario struct {
-		Name         string            `yaml:"name"`
-		Profiled     bool              `yaml:"profiled"`  // The program is profiled in apparmor.d
-		Root         bool              `yaml:"root"`      // Run the test as user or as root
-		Dependencies []string          `yaml:"require"`   // Packages required for the tests to run "$(pacman -Qqo Scenario.Name)"
-		Arguments    map[string]string `yaml:"arguments"` // Arguments to pass to the program. Sepicific to this scenario
-		Tests        []Test            `yaml:"tests"`
-	}
-	Test struct {
-		Description string   `yaml:"dsc"`
-		Command     string   `yaml:"cmd"`
-		Stdin       []string `yaml:"stdin"`
-	}
-)
+// Test represents of a list of tests for a given program
+type Test struct {
+	Name         string            `yaml:"name"`
+	Profiled     bool              `yaml:"profiled"`  // The program is profiled in apparmor.d
+	Root         bool              `yaml:"root"`      // Run the test as user or as root
+	Dependencies []string          `yaml:"require"`   // Packages required for the tests to run "$(pacman -Qqo Scenario.Name)"
+	Arguments    map[string]string `yaml:"arguments"` // Arguments to pass to the program, specific to this scenario
+	Commands     []Command         `yaml:"tests"`
+}
 
-func NewScenario() *Scenario {
-	return &Scenario{
+// Command is a command line to run as part of a test
+type Command struct {
+	Description string   `yaml:"dsc"`
+	Cmd         string   `yaml:"cmd"`
+	Stdin       []string `yaml:"stdin"`
+}
+
+func NewTest() *Test {
+	return &Test{
 		Name:         "",
 		Profiled:     false,
 		Root:         false,
 		Dependencies: []string{},
 		Arguments:    map[string]string{},
-		Tests:        []Test{},
+		Commands:     []Command{},
 	}
 }
 
 // HasProfile returns true if the program in the scenario is profiled in apparmor.d
-func (s *Scenario) hasProfile(profiles paths.PathList) bool {
+func (t *Test) hasProfile(profiles paths.PathList) bool {
 	for _, path := range profiles {
-		if s.Name == path.Base() {
+		if t.Name == path.Base() {
 			return true
 		}
 	}
 	return false
 }
 
-func (s *Scenario) installed() bool {
-	if _, err := exec.LookPath(s.Name); err != nil {
+func (t *Test) installed() bool {
+	if _, err := exec.LookPath(t.Name); err != nil {
 		return false
 	}
 	return true
 }
 
-func (s *Scenario) resolve(in string) string {
+func (t *Test) resolve(in string) string {
 	res := in
-	for key, value := range s.Arguments {
-		res = strings.ReplaceAll(res, "{{"+key+"}}", value)
+	for key, value := range t.Arguments {
+		res = strings.ReplaceAll(res, "{{ "+key+" }}", value)
 	}
 	return res
 }
 
 // mergeArguments merge the arguments of the scenario with the global arguments
-// Scenarios arguments have priority over global arguments
-func (s *Scenario) mergeArguments(args map[string]string) {
+// Test arguments have priority over global arguments
+func (t *Test) mergeArguments(args map[string]string) {
 	for key, value := range args {
-		s.Arguments[key] = value
+		t.Arguments[key] = value
 	}
 }
 
 // Run the scenarios tests
-func (s *Scenario) Run(dryRun bool) (ran int, nb int, err error) {
+func (t *Test) Run(dryRun bool) (ran int, nb int, err error) {
 	nb = 0
-	if s.Profiled && s.installed() {
-		if slices.Contains(Ignore, s.Name) {
+	if t.Profiled && t.installed() {
+		if slices.Contains(Ignore, t.Name) {
 			return 0, nb, err
 		}
-		logging.Step("%s", s.Name)
-		s.mergeArguments(Arguments)
-		for _, test := range s.Tests {
-			cmd := s.resolve(test.Command)
+		logging.Step("%s", t.Name)
+		t.mergeArguments(Arguments)
+		for _, test := range t.Commands {
+			cmd := t.resolve(test.Cmd)
 			if !strings.Contains(cmd, "{{") {
 				nb++
 				if dryRun {
 					logging.Bullet(cmd)
 				} else {
-					cmdErr := s.run(cmd, strings.Join(test.Stdin, "\n"))
+					cmdErr := t.run(cmd, strings.Join(test.Stdin, "\n"))
 					if cmdErr != nil {
 						// TODO: log the error
 						logging.Error("%v", cmdErr)
@@ -113,12 +113,12 @@ func (s *Scenario) Run(dryRun bool) (ran int, nb int, err error) {
 	return 0, nb, err
 }
 
-func (s *Scenario) run(cmdline string, in string) error {
+func (t *Test) run(cmdline string, in string) error {
 	// Running the command in a shell ensure it does not run confined under the sudo profile.
 	// The shell is run unconfined and therefore the cmdline can be confined without no-new-privs issue.
 	sufix := " &" // TODO: we need a goroutine here
 	cmd := exec.Command("sh", "-c", cmdline+sufix)
-	if s.Root {
+	if t.Root {
 		cmd = exec.Command("sudo", "sh", "-c", cmdline+sufix)
 	}
 	cmd.Stdin = strings.NewReader(in)

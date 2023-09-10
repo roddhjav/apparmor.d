@@ -54,10 +54,7 @@ func (t Tldr) Download() error {
 	}
 
 	pages := []string{"tldr-main/pages/linux", "tldr-main/pages/common"}
-	if err := util.ExtratTo(gzPath, t.Dir, pages); err != nil {
-		return err
-	}
-	return nil
+	return util.ExtratTo(gzPath, t.Dir, pages)
 }
 
 // Parse the tldr pages and return a list of scenarios
@@ -70,31 +67,31 @@ func (t Tldr) Parse(profiles paths.PathList) (*TestSuite, error) {
 			return nil, err
 		}
 		raw := string(content)
-		scenario := &Scenario{
+		t := &Test{
 			Name:      strings.TrimSuffix(path.Base(), ".md"),
 			Profiled:  false,
 			Root:      false,
 			Arguments: map[string]string{},
-			Tests:     []Test{},
+			Commands:  []Command{},
 		}
-		scenario.Profiled = scenario.hasProfile(profiles)
+		t.Profiled = t.hasProfile(profiles)
 		if strings.Contains(raw, "sudo") {
-			scenario.Root = true
+			t.Root = true
 		}
 		rawTests := strings.Split(raw, "\n-")[1:]
 		for _, test := range rawTests {
 			res := strings.Split(test, "\n")
 			dsc := strings.ReplaceAll(strings.Trim(res[0], " "), ":", "")
 			cmd := strings.Trim(strings.Trim(res[2], "`"), " ")
-			if scenario.Root {
+			if t.Root {
 				cmd = strings.ReplaceAll(cmd, "sudo ", "")
 			}
-			scenario.Tests = append(scenario.Tests, Test{
+			t.Commands = append(t.Commands, Command{
 				Description: dsc,
-				Command:     cmd,
+				Cmd:         cmd,
 			})
 		}
-		testSuite.Scenarios = append(testSuite.Scenarios, *scenario)
+		testSuite.Tests = append(testSuite.Tests, *t)
 	}
 	return testSuite, nil
 }
