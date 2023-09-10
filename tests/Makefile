@@ -13,11 +13,11 @@ flavor ?=
 disk ?= 10G
 
 VERSION := 0.$(shell git rev-list --count HEAD)-1
-PACKERS = $(notdir $(patsubst %.pkr.hcl,%,$(wildcard packer/*.pkr.hcl)))
+BASE = archlinux debian ubuntu opensuse
 
-.PHONY: ${PACKERS} lint
+.PHONY: ${BASE} lint
 
-$(PACKERS):
+$(BASE):
 	make --directory=../ package dist=${@}
 	packer build -force -var version=${VERSION} \
 		-var disk_size=${disk} -var flavor="${flavor}" \
