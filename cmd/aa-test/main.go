@@ -29,8 +29,6 @@ Options:
 
 `
 
-const defaultScenariosFile = "scenarios.yml"
-
 var (
 	help      bool
 	bootstrap bool
