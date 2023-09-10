@@ -8,11 +8,11 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/arduino/go-paths-helper"
-	intg "github.com/roddhjav/apparmor.d/pkg/integration"
+	"github.com/roddhjav/apparmor.d/pkg/aa"
+	"github.com/roddhjav/apparmor.d/pkg/integration"
 	"github.com/roddhjav/apparmor.d/pkg/logging"
 )
 
@@ -22,10 +22,10 @@ const usage = `aa-test [-h] [--bootstrap | --run | --list]
 
 Options:
     -h, --help         Show this help message and exit.
-    -b, --bootstrap    Bootstrap test scenarios using tldr pages.
+    -b, --bootstrap    Bootstrap tests using tldr pages.
     -r, --run          Run a predefined list of tests.
     -l, --list         List the configured tests.
-    -f, --file FILE    Set a scenario test file. Default: tests/scenarios.yml
+    -f, --file FILE    Set a tests file. Default: tests/tests.yml
 
 `
 
@@ -36,121 +36,117 @@ var (
 	bootstrap bool
 	run       bool
 	list      bool
-	path      string
-	Cfg       Config
+	cfg       Config
 )
 
 type Config struct {
-	TldrDir       *paths.Path // Default: tests/tldr
-	ScenariosDir  *paths.Path // Default: tests
-	ScenariosFile *paths.Path // Default: tests/tldr.yml
-	ProfilesDir   *paths.Path // Default: /etc/apparmor.d
-	Profiles      paths.PathList
+	TldrDir      *paths.Path // Default: tests/tldr
+	ScenariosDir *paths.Path // Default: tests
+	TldrFile     *paths.Path // Default: tests/tldr.yml
+	TestsFile    *paths.Path // Default: tests/tests.yml
+	Profiles     paths.PathList
 }
 
 func NewConfig() Config {
 	cfg := Config{
 		TldrDir:      paths.New("tests/tldr"),
 		ScenariosDir: paths.New("tests/"),
-		ProfilesDir:  paths.New("/etc/apparmor.d"),
 		Profiles:     paths.PathList{},
 	}
-	cfg.ScenariosFile = cfg.ScenariosDir.Join("tldr.yml")
+	cfg.TldrFile = cfg.ScenariosDir.Join("tldr.yml")
+	cfg.TestsFile = cfg.ScenariosDir.Join("tests.yml")
 	return cfg
 }
 
 func init() {
-	Cfg = NewConfig()
-	files, _ := Cfg.ProfilesDir.ReadDir(paths.FilterOutDirectories())
+	cfg = NewConfig()
+	files, _ := aa.MagicRoot.ReadDir(paths.FilterOutDirectories())
 	for _, path := range files {
-		Cfg.Profiles.Add(path)
+		cfg.Profiles.Add(path)
 	}
 
 	flag.BoolVar(&help, "h", false, "Show this help message and exit.")
 	flag.BoolVar(&help, "help", false, "Show this help message and exit.")
-	flag.BoolVar(&bootstrap, "b", false, "Bootstrap test scenarios using tldr pages.")
-	flag.BoolVar(&bootstrap, "bootstrap", false, "Bootstrap test scenarios using tldr pages.")
+	flag.BoolVar(&bootstrap, "b", false, "Bootstrap tests using tldr pages.")
+	flag.BoolVar(&bootstrap, "bootstrap", false, "Bootstrap tests using tldr pages.")
 	flag.BoolVar(&run, "r", false, "Run a predefined list of tests.")
 	flag.BoolVar(&run, "run", false, "Run a predefined list of tests.")
-	flag.BoolVar(&list, "l", false, "List the test to run.")
-	flag.BoolVar(&list, "list", false, "List the test to run.")
-	flag.StringVar(&path, "f", defaultScenariosFile, "Set a scenario test file.")
-	flag.StringVar(&path, "file", defaultScenariosFile, "Set a scenario test file.")
+	flag.BoolVar(&list, "l", false, "List the tests to run.")
+	flag.BoolVar(&list, "list", false, "List the tests to run.")
 }
 
-func apparmorTestBootstrap() error {
-	tldr := intg.NewTldr(Cfg.TldrDir)
+func testDownload() error {
+	tldr := integration.NewTldr(cfg.TldrDir)
 	if err := tldr.Download(); err != nil {
 		return err
 	}
 
-	tSuite, err := tldr.Parse(Cfg.Profiles)
+	tSuite, err := tldr.Parse(cfg.Profiles)
 	if err != nil {
 		return err
 	}
 
 	// Default bootstraped scenarios file
-	if err := tSuite.Write(Cfg.ScenariosFile); err != nil {
+	if err := tSuite.Write(cfg.TldrFile); err != nil {
 		return err
 	}
-	logging.Bullet("Default scenarios saved: %s", Cfg.ScenariosFile)
+	logging.Bullet("Default scenarios saved: %s", cfg.TldrFile)
 
 	// Scenarios file with only profiled programs
-	tSuiteWithProfile := intg.NewTestSuite()
-	for _, s := range tSuite.Scenarios {
-		if s.Profiled {
-			tSuiteWithProfile.Scenarios = append(tSuiteWithProfile.Scenarios, s)
+	tSuiteWithProfile := integration.NewTestSuite()
+	for _, t := range tSuite.Tests {
+		if t.Profiled {
+			tSuiteWithProfile.Tests = append(tSuiteWithProfile.Tests, t)
 		}
 	}
-	scnPath := Cfg.ScenariosDir.Join(strings.TrimSuffix(path, filepath.Ext(path)) + ".new.yml")
-	if err := tSuiteWithProfile.Write(scnPath); err != nil {
+
+	testWithProfilePath := cfg.TldrFile.Parent().Join(
+		strings.TrimSuffix(cfg.TldrFile.Base(), cfg.TldrFile.Ext()) + ".new.yml")
+	if err := tSuiteWithProfile.Write(testWithProfilePath); err != nil {
 		return err
 	}
-	logging.Bullet("Scenarios with profile saved: %s", scnPath)
+	logging.Bullet("Tests with profile saved: %s", testWithProfilePath)
 
-	logging.Bullet("Number of scenarios found %d", len(tSuite.Scenarios))
-	logging.Bullet("Number of scenarios with profiles in apparmor.d %d", len(tSuiteWithProfile.Scenarios))
+	logging.Bullet("Number of tests found %d", len(tSuite.Tests))
+	logging.Bullet("Number of tests with profiles in apparmor.d %d", len(tSuiteWithProfile.Tests))
 	return nil
 }
 
-func apparmorTestRun(dryRun bool) error {
-	// FIXME: Safety settings. For default scenario set with sudo enabled the apparmor.d folder gets removed.
-	dryRun = true
+func testRun(dryRun bool) error {
+	// Warning: There is no guarantee that the tests are not destructive
 	if dryRun {
 		logging.Step("List tests")
 	} else {
 		logging.Step("Run tests")
 	}
 
-	tSuite := intg.NewTestSuite()
-	scnPath := Cfg.ScenariosDir.Join(path)
-	if err := tSuite.ReadScenarios(scnPath); err != nil {
+	tSuite := integration.NewTestSuite()
+	if err := tSuite.ReadScenarios(cfg.TestsFile); err != nil {
 		return err
 	}
-	cfgPath := Cfg.ScenariosDir.Join("integration.yml")
+	cfgPath := cfg.ScenariosDir.Join("integration.yml")
 	if err := tSuite.ReadSettings(cfgPath); err != nil {
 		return err
 	}
-	intg.Arguments = tSuite.Arguments
-	intg.Ignore = tSuite.Ignore
-
+	integration.Arguments = tSuite.Arguments
+	integration.Ignore = tSuite.Ignore
+	nbCmd := 0
 	nbTest := 0
-	nbScn := 0
-	for _, scn := range tSuite.Scenarios {
-		ran, nb, err := scn.Run(dryRun)
-		nbScn += ran
-		nbTest += nb
+	for _, test := range tSuite.Tests {
+		ran, nb, err := test.Run(dryRun)
+		nbTest += ran
+		nbCmd += nb
 		if err != nil {
 			return err
 		}
 	}
 
 	if dryRun {
-		logging.Bullet("Number of scenarios to run %d", nbScn)
 		logging.Bullet("Number of tests to run %d", nbTest)
+		logging.Bullet("Number of test commands to run %d", nbCmd)
 	} else {
-		logging.Success("Number of scenarios ran %d", nbScn)
-		logging.Success("Number of tests to ran %d", nbTest)
+		logging.Success("Number of tests ran %d", nbTest)
+		logging.Success("Number of test command to ran %d", nbCmd)
 	}
 	return nil
 }
@@ -166,9 +162,9 @@ func main() {
 	var err error
 	if bootstrap {
 		logging.Step("Bootstraping tests")
-		err = apparmorTestBootstrap()
+		err = testDownload()
 	} else if run || list {
-		err = apparmorTestRun(list)
+		err = testRun(list)
 	} else {
 		flag.Usage()
 		os.Exit(1)

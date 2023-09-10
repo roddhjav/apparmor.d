@@ -5,24 +5,23 @@
 package integration
 
 import (
-	"strings"
-
 	"github.com/arduino/go-paths-helper"
 	"github.com/roddhjav/apparmor.d/pkg/logs"
+	"github.com/roddhjav/apparmor.d/pkg/util"
 	"gopkg.in/yaml.v2"
 )
 
 // TestSuite is the apparmod.d integration tests to run
 type TestSuite struct {
-	Scenarios []Scenario        // List of scenarios to run
-	Ignore    []string          // Do not run some scenarios
-	Arguments map[string]string // Common arguments used across all scenarios
+	Tests     []Test            // List of tests to run
+	Ignore    []string          // Do not run some tests
+	Arguments map[string]string // Common arguments used across all tests
 }
 
 // NewScenarios returns a new list of scenarios
 func NewTestSuite() *TestSuite {
 	return &TestSuite{
-		Scenarios: []Scenario{},
+		Tests:     []Test{},
 		Ignore:    []string{},
 		Arguments: map[string]string{},
 	}
@@ -30,7 +29,7 @@ func NewTestSuite() *TestSuite {
 
 // Write export the list of scenarios to a file
 func (t *TestSuite) Write(path *paths.Path) error {
-	jsonString, err := yaml.Marshal(&t.Scenarios)
+	jsonString, err := yaml.Marshal(&t.Tests)
 	if err != nil {
 		return err
 	}
@@ -44,7 +43,15 @@ func (t *TestSuite) Write(path *paths.Path) error {
 
 	// Cleanup a bit
 	res := string(jsonString)
-	res = strings.Replace(res, "- name:", "\n- name:", -1)
+	regClean := util.ToRegexRepl([]string{
+		"- name:", "\n- name:",
+		`(?m)^.*stdin: \[\].*$`, ``,
+		`{{`, `{{ `,
+		`}}`, ` }}`,
+	})
+	for _, aa := range regClean {
+		res = aa.Regex.ReplaceAllLiteralString(res, aa.Repl)
+	}
 	_, err = file.WriteString("---\n" + res)
 	return err
 }
@@ -52,7 +59,7 @@ func (t *TestSuite) Write(path *paths.Path) error {
 // ReadScenarios import the scenarios from a file
 func (t *TestSuite) ReadScenarios(path *paths.Path) error {
 	content, _ := path.ReadFile()
-	return yaml.Unmarshal(content, &t.Scenarios)
+	return yaml.Unmarshal(content, &t.Tests)
 }
 
 // ReadSettings import the common argument and ignore list from a file
