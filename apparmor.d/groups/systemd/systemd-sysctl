@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2020-2021 Mikhail Morfikov
+# Copyright (C) 2021-2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -17,16 +18,16 @@ profile systemd-sysctl @{exec_path} flags=(attach_disconnected) {
   capability sys_admin,
   capability sys_ptrace,
   capability sys_rawio,
-  # capability sys_resource,
 
   @{exec_path} mr,
 
-  @{PROC}/sys/** rw,
-
-  /etc/sysctl.d/ r,
-  /etc/sysctl.d/*.conf r,
-
+  # Config file locations
+  @{run}/sysctl.d/{,*.conf} r,
   /etc/sysctl.conf r,
+  /etc/sysctl.d/{,*.conf} r,
+  /usr/lib/sysctl.d/{,*.conf} r,
+
+  @{PROC}/sys/** rw,
 
   # Inherit Silencer
   deny /apparmor/.null rw,
