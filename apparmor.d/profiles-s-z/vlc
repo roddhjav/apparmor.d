@@ -11,6 +11,7 @@ include <tunables/global>
 profile vlc @{exec_path} {
   include <abstractions/base>
   include <abstractions/audio>
+  include <abstractions/dbus-accessibility-strict>
   include <abstractions/dbus-gtk>
   include <abstractions/dbus-session-strict>
   include <abstractions/dconf-write>
@@ -32,34 +33,32 @@ profile vlc @{exec_path} {
   network inet6 stream,
   network netlink raw,
 
-  signal (receive) set=(term, kill) peer=anyremote//*,
-
-  dbus send    bus=session path=/org/freedesktop/DBus 
+  dbus send bus=session path=/org/freedesktop/DBus 
        interface=org.freedesktop.DBus
        member={RequestName,ReleaseName,GetConnectionUnixProcessID}
        peer=(name=org.freedesktop.DBus),
 
-  dbus send    bus=session path=/org/a11y/bus
+  dbus send bus=session path=/org/a11y/bus
        interface=org.freedesktop.DBus.Properties
        member=Get
        peer=(name=org.a11y.Bus),
 
-  dbus send    bus=session path=/StatusNotifierWatcher
+  dbus send bus=session path=/StatusNotifierWatcher
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
        peer=(name=org.kde.StatusNotifierWatcher),
 
-  dbus send    bus=session path=/StatusNotifierWatcher
+  dbus send bus=session path=/StatusNotifierWatcher
        interface=org.freedesktop.DBus.Properties
        member={Get,RegisterStatusNotifierItem}
        peer=(name=org.kde.StatusNotifierWatcher),
 
-  dbus send    bus=session path=/StatusNotifierWatcher
+  dbus send bus=session path=/StatusNotifierWatcher
        interface=org.kde.StatusNotifierWatcher
        member=RegisterStatusNotifierItem
        peer=(name=org.kde.StatusNotifierWatcher),
 
-  dbus send    bus=session path=/StatusNotifierItem 
+  dbus send bus=session path=/StatusNotifierItem 
        interface=org.kde.StatusNotifierItem
        member={NewToolTip,NewStatus,NewAttentionIcon,NewTitle,NewStatus,NewIcon}
        peer=(name=org.freedesktop.DBus),
@@ -74,24 +73,18 @@ profile vlc @{exec_path} {
        member={Get,GetAll}
        peer=(name=:*),
 
-  dbus send    bus=session path=/ScreenSaver
+  dbus send bus=session path=/ScreenSaver
        interface=org.freedesktop.ScreenSaver
        member={Inhibit,UnInhibit}
        peer=(name=org.freedesktop.ScreenSaver),
 
-  dbus receive bus=session path=/MenuBar
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=:*),
-
-  dbus send    bus=session path=/MenuBar
+  dbus send bus=session path=/MenuBar
        interface=com.canonical.dbusmenu
        member={LayoutUpdated,ItemsPropertiesUpdated}
        peer=(name=org.freedesktop.DBus),
 
-  dbus receive bus=session path=/MenuBar
+  dbus (send receive) bus=session path=/MenuBar
        interface=com.canonical.dbusmenu
-       member={GetLayout,GetGroupProperties,AboutToShow,AboutToShowGroup,EventGroup,Event}
        peer=(name=:*),
 
   dbus (send, receive) bus=session path=/org/mpris/MediaPlayer2
@@ -102,19 +95,8 @@ profile vlc @{exec_path} {
        interface=org.mpris.MediaPlayer2.*
        peer=(name="{org.mpris.MediaPlayer2.vlc,org.freedesktop.DBus,:*}"), # all members
 
-#  dbus send bus=system path=/
-#       interface=org.freedesktop.DBus.Peer
-#       member=Ping,
-#       peer=(name="org.freedesktop.Avahi"),
-
-  dbus send    bus=accessibility path=/org/freedesktop/DBus
-       interface=org.freedesktop.DBus
-       member={Hello,AddMatch,RemoveMatch}
-       peer=(name=org.freedesktop.DBus),
-
-  dbus send    bus=accessibility path=/org/a11y/atspi/accessible/root
+  dbus send bus=accessibility
        interface=org.a11y.atspi.Socket
-       member=Embed
        peer=(name=org.a11y.atspi.Registry),
 
   dbus receive bus=accessibility path=/org/a11y/atspi/accessible/root
@@ -122,20 +104,10 @@ profile vlc @{exec_path} {
        member=Set
        peer=(name=:*),
 
-  dbus send    bus=accessibility path=/org/a11y/atspi/registry
-       interface=org.a11y.atspi.Registry
-       member=GetRegisteredEvents
-       peer=(name=org.a11y.atspi.Registry),
-
   dbus receive bus=accessibility path=/org/a11y/atspi/registry
        interface=org.a11y.atspi.Registry
        member=EventListenerDeregistered
        peer=(name=:*),
-
-  dbus send    bus=accessibility path=/org/a11y/atspi/registry/deviceeventcontroller
-       interface=org.a11y.atspi.DeviceEventController
-       member={GetKeystrokeListeners,GetDeviceEventListeners}
-       peer=(name=org.a11y.atspi.Registry),
 
   dbus bind bus=session
        name=org.kde.StatusNotifierItem-*,

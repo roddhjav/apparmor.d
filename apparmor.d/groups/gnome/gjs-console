@@ -36,9 +36,19 @@ profile gjs-console @{exec_path} flags=(attach_disconnected) {
        member={RequestName,ReleaseName}
        peer=(name=org.freedesktop.DBus, label=dbus-daemon),
 
-  dbus send    bus=session path=/org/freedesktop/Notifications
+  dbus send bus=session path=/org/freedesktop/Notifications
        interface=org.freedesktop.DBus.Properties
        member=GetAll
+       peer=(name=:*, label=gnome-shell),
+
+  dbus receive bus=session path=/org/freedesktop/Notifications
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect 
+       peer=(name=:*, label=gnome-shell),
+
+  dbus receive bus=session path=/org/freedesktop
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect 
        peer=(name=:*, label=gnome-shell),
 
   dbus receive bus=session path=/org/freedesktop/Notifications
@@ -46,25 +56,17 @@ profile gjs-console @{exec_path} flags=(attach_disconnected) {
        member=GetAll
        peer=(name=:*, label=gnome-extension-ding),
 
-  dbus send    bus=session path=/org/gnome/ScreenSaver
+  dbus receive bus=session path=/org/gnome/Shell/Screencast
        interface=org.freedesktop.DBus.Properties
-       member=GetAll
+       member=GetAll 
        peer=(name=:*, label=gnome-shell),
 
-  dbus receive bus=session path=/org/gnome/ScreenSaver
+  dbus (send,receive) bus=session path=/org/gnome/ScreenSaver
+       interface=org.gnome.ScreenSaver
+
+  dbus receive bus=session path=/org/gnome/Shell/Introspect
        interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=:*, label=xdg-desktop-portal-*),
-
-  dbus send    bus=session path=/org/gnome/ScreenSaver
-       interface=org.gnome.ScreenSaver
-       member=ActiveChanged
-       peer=(name=org.freedesktop.DBus, label="{gnome-session-binary,gsd-power,xdg-desktop-portal-gtk}"),
-
-  dbus receive bus=session path=/org/gnome/ScreenSaver
-       interface=org.gnome.ScreenSaver
-       member={ActiveChanged,WakeUpScreen,GetActive}
-       peer=(name=:*, label="{gnome-shell,gnome-session-binary,xdg-desktop-portal-*}"),
+       peer=(name=:*, label=gnome-shell),
 
   dbus receive bus=session path=/{,org}
        interface=org.freedesktop.DBus.Introspectable
@@ -76,6 +78,8 @@ profile gjs-console @{exec_path} flags=(attach_disconnected) {
   dbus bind bus=session name=org.freedesktop.Notifications,
 
   dbus bind bus=session name=org.gnome.Shell.Notifications,
+
+  dbus bind bus=session name=org.gnome.Shell.Screencast,
 
   @{exec_path} mr,
   @{bin}/          r,
