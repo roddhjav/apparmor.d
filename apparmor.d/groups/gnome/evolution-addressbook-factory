@@ -23,6 +23,8 @@ profile evolution-addressbook-factory @{exec_path} {
   network inet6 dgram,
   network netlink raw,
 
+  dbus bind bus=session name=org.gnome.evolution.dataserver.AddressBook@{int},
+
   dbus send bus=system path=/org/freedesktop/NetworkManager
        interface=org.freedesktop.DBus.Properties
        member=GetAll,
@@ -35,6 +37,11 @@ profile evolution-addressbook-factory @{exec_path} {
        interface=org.freedesktop.NetworkManager
        member={CheckPermissions,StateChanged,DeviceAdded,DeviceRemoved}
        peer=(name=:*, label=NetworkManager),
+
+  dbus receive bus=session
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect 
+       peer=(name=:*, label=gnome-shell),
 
   @{exec_path} mr,
   @{exec_path}-subprocess rix,

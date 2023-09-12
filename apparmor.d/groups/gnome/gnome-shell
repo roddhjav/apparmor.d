@@ -81,9 +81,13 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected) {
        interface=org.freedesktop.{DBus.Properties,Accounts*}
        member={GetAll,FindUserByName,Changed,PropertiesChanged,FindUserById,ListCachedUsers,UserAdded},
 
-  dbus (send,receive) bus=system path=/org/freedesktop/UPower{,/devices/DisplayDevice}
+  dbus (send,receive) bus=system path=/org/freedesktop/UPower{,**}
        interface=org.freedesktop.DBus.Properties
        member={GetAll,PropertiesChanged},
+
+  dbus (send,receive) bus=system path=/org/freedesktop/UPower{,**}
+       interface=org.freedesktop.UPower
+       peer=(name=:*, label=upowerd),
 
   dbus (send,receive) bus=system path=/org/freedesktop/GeoClue2/{Agent,Manager}
        interface=org.freedesktop.{DBus.Properties,GeoClue2.Manager}
@@ -256,25 +260,9 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected) {
        member=GetAll
        peer=(name=:*, label=gsd-media-keys),
 
-  dbus send    bus=session path=/org/gnome/Shell
+  dbus (send,receive) bus=session path=/org/gnome/Shell{,/**}
        interface=org.gnome.Shell
-       member=AcceleratorActivated
-       peer=(name=:*, label=gsd-media-keys),
-
-  dbus receive bus=session path=/org/gnome/Shell
-       interface=org.gnome.Shell
-       member={GrabAccelerators,UngrabAccelerators}
-       peer=(name=:*, label=gsd-media-keys),
-
-  dbus send    bus=session path=/org/gnome/Shell/Introspect
-       interface=org.gnome.Shell.Introspect
-       member={RunningApplicationsChanged,WindowsChanged}
-       peer=(name=org.freedesktop.DBus, label=xdg-desktop-portal-*),
-
-  dbus receive bus=session path=/org/gnome/Shell/Introspect
-       interface=org.gnome.Shell.Introspect
-       member=GetRunningApplications
-       peer=(name=:*, label=xdg-desktop-portal-*),
+       peer=(name=:*),
 
   dbus receive bus=session path=/org/freedesktop/portal/desktop
        interface=org.freedesktop.DBus.Properties
@@ -331,7 +319,7 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected) {
        member=GetAppId
        peer=(name=:*, label=gnome-session-binary),
 
-  dbus send    bus=session
+  dbus (send, receive) bus=session
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
        peer=(name=:*), # all paths and peer's labels
@@ -385,6 +373,10 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected) {
        interface=org.gtk.Actions
        member=DescribeAll
        peer=(name=:*, label=gnome-extension-ding),
+
+  dbus receive bus=system path=/org/freedesktop/ColorManager{,/**}
+       interface=org.freedesktop.ColorManager
+       peer=(name=:*, label=colord),
 
   dbus send    bus=session path=/com/rastersoft/ding
        interface=org.gtk.Actions

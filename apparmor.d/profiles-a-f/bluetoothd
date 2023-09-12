@@ -10,6 +10,7 @@ include <tunables/global>
 @{exec_path} = @{lib}/bluetooth/bluetoothd
 profile bluetoothd @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/dbus-strict>
 
   # Needed for configuring HCI interfaces
   capability net_admin,
@@ -20,6 +21,20 @@ profile bluetoothd @{exec_path} flags=(attach_disconnected) {
   network bluetooth stream,
   network alg seqpacket,
   network netlink raw,
+
+  dbus send bus=system path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
+
+  dbus send bus=system path=/org/bluez/hci0
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged 
+       peer=(name=org.freedesktop.DBus),
+
+  dbus receive bus=system path=/org/bluez{,**}
+       interface=org.bluez.Media1
+       member=RegisterApplication 
+       peer=(name=:*),
 
   @{exec_path} mr,
 

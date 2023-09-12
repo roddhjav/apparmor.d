@@ -31,6 +31,16 @@ profile upowerd @{exec_path} flags=(attach_disconnected) {
        interface=org.freedesktop.login[0-9].Manager
        member=Inhibit,
 
+  dbus send bus=system path=/
+       interface=org.freedesktop.DBus.ObjectManager
+       member=GetManagedObjects 
+       peer=(name=:*, label=bluetoothd),
+
+  dbus receive bus=system path=/org/bluez/hci0
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged 
+       peer=(name=:*, label=bluetoothd),
+
   dbus receive bus=system path=/org/freedesktop/login[0-9]
        interface=org.freedesktop.login[0-9].Manager
        member={UserNew,UserRemoved,SessionNew,SessionRemoved,PrepareForShutdown,PrepareForSleep}
@@ -41,8 +51,7 @@ profile upowerd @{exec_path} flags=(attach_disconnected) {
        member=PropertiesChanged
        peer=(name=:*),
 
-  dbus bind bus=system 
-       name=org.freedesktop.UPower,
+  dbus bind bus=system name=org.freedesktop.UPower,
 
   @{exec_path} mr,
 
