@@ -9,11 +9,11 @@ source "qemu" "ubuntu-server" {
   iso_target_path    = "${var.iso_dir}/ubuntu-cloudimg-amd64.img"
   cpus               = 4
   memory             = 2048
-  disk_size          = "${var.disk_size}"
+  disk_size          = var.disk_size
   accelerator        = "kvm"
   headless           = true
-  ssh_username       = "${var.username}"
-  ssh_password       = "${var.password}"
+  ssh_username       = var.username
+  ssh_password       = var.password
   ssh_port           = 22
   ssh_wait_timeout   = "1000s"
   disk_compression   = true
@@ -22,7 +22,7 @@ source "qemu" "ubuntu-server" {
   output_directory   = "${var.output}/"
   vm_name            = "${var.prefix}${source.name}.qcow2"
   boot_wait          = "10s"
-  firmware           = "${var.firmware}"
+  firmware           = var.firmware
   shutdown_command   = "echo ${var.password} | sudo -S /sbin/shutdown -hP now"
   cd_label           = "cidata"
   cd_content = {
@@ -48,8 +48,8 @@ source "qemu" "ubuntu-desktop" {
   disk_size          = "40G"
   accelerator        = "kvm"
   headless           = true
-  ssh_username       = "${var.username}"
-  ssh_password       = "${var.password}"
+  ssh_username       = var.username
+  ssh_password       = var.password
   ssh_port           = 22
   ssh_wait_timeout   = "10000s"
   disk_compression   = true
@@ -58,7 +58,7 @@ source "qemu" "ubuntu-desktop" {
   output_directory   = "${var.output}/"
   vm_name            = "${var.prefix}${source.name}.qcow2"
   boot_wait          = "10s"
-  firmware           = "${var.firmware}"
+  firmware           = var.firmware
   shutdown_command   = "echo ${var.password} | sudo -S /sbin/shutdown -hP now"
   cd_label           = "cidata"
   cd_content = {
