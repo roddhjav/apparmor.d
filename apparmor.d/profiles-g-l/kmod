@@ -1,14 +1,13 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2019-2021 Mikhail Morfikov
-# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2021-2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
 
 include <tunables/global>
 
-@{exec_path}  = @{bin}/{kmod,lsmod}
-@{exec_path} += @{bin}/{depmod,insmod,lsmod,rmmod,modinfo,modprobe}
+@{exec_path} = @{bin}/{kmod,lsmod,depmod,insmod,rmmod,modinfo,modprobe}
 profile kmod @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/consoles>
@@ -23,8 +22,6 @@ profile kmod @{exec_path} flags=(attach_disconnected) {
   capability syslog,
 
   network inet raw,
-
-  unix (receive) type=stream,
 
   @{exec_path} mrix,
 
@@ -73,8 +70,9 @@ profile kmod @{exec_path} flags=(attach_disconnected) {
 
   /dev/tty@{int} rw,
 
-  deny /apparmor/.null rw,
   deny @{user_share_dirs}/gvfs-metadata/* r,
+  deny /apparmor/.null rw,
+  deny unix (receive) type=stream,
 
   include if exists <local/kmod>
 }
