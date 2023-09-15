@@ -1,6 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2017-2021 Mikhail Morfikov
-# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2021-2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -109,21 +109,20 @@ profile vlc @{exec_path} {
        member=EventListenerDeregistered
        peer=(name=:*),
 
-  dbus bind bus=session
-       name=org.kde.StatusNotifierItem-*,
+  dbus bind bus=session name=org.kde.StatusNotifierItem-*,
 
-  dbus bind bus=session
-       name=org.mpris.MediaPlayer2.vlc{,.instance*},
+  dbus bind bus=session name=org.mpris.MediaPlayer2.vlc*,
 
   @{exec_path} mrix,
 
-  @{bin}/xdg-screensaver rCx -> xdg-screensaver,
+  @{bin}/xdg-screensaver rPx,
 
   /usr/share/hwdata/pnp.ids r,
   /usr/share/qt5ct/** r,
   /usr/share/vlc/{,**} r,
 
   /etc/fstab r,
+  /etc/libva.conf r,
 
   owner @{HOME}/ r,
   owner @{user_music_dirs}/{,**} rw,
@@ -139,63 +138,30 @@ profile vlc @{exec_path} {
 
   owner @{user_config_dirs}/qt5ct/{,**} r,
   owner @{user_config_dirs}/vlc/ rw,
-  owner @{user_config_dirs}/vlc/* rwkl -> @{user_config_dirs}/vlc/#@{int},
+  owner @{user_config_dirs}/vlc/** rwkl -> @{user_config_dirs}/vlc/#@{int},
 
   owner @{user_share_dirs}/vlc/{,**} rw,
 
   owner @{run}/user/@{uid}/gvfs/smb-share:server=*,share=**/ r,
   owner @{run}/user/@{uid}/gvfs/smb-share:server=*,share=** r,
 
-  @{run}/udev/data/b7:[0-9]* r,   # for /dev/loop*
-  @{run}/udev/data/b8:[0-9]* r,   # for /dev/sd*
-  @{run}/udev/data/b254:[0-9]* r, # for /dev/zram*
-  @{run}/udev/data/b253:[0-9]* r, # for /dev/dm*
+  @{sys}/devices/@{pci}/irq r,
 
-  @{sys}/bus/ r,
-  @{sys}/bus/**/devices/ r,
-  @{sys}/class/ r,
-  @{sys}/class/**/ r,
-  @{sys}/devices/**/uevent r,
-
-             @{PROC}/@{pids}/net/if_inet6 r,
-       owner @{PROC}/@{pid}/comm r,
-       owner @{PROC}/@{pid}/mountinfo r,
-       owner @{PROC}/@{pid}/mounts r,
-       owner @{PROC}/@{pid}/task/@{tid}/comm rw,
-  audit       @{PROC}/sys/kernel/random/boot_id r,
-  audit owner @{PROC}/@{pid}/cmdline r,
+        @{PROC}/@{pids}/net/if_inet6 r,
+        @{PROC}/sys/kernel/random/boot_id r,
+  owner @{PROC}/@{pid}/cmdline r,
+  owner @{PROC}/@{pid}/comm r,
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/mounts r,
+  owner @{PROC}/@{pid}/task/@{tid}/comm rw,
 
         /dev/shm/#@{int} rw,
+        /dev/tty r,
   owner /dev/tty@{int} rw,
 
   # Silencer
   deny @{lib}/@{multiarch}/vlc/{,**} w,
   deny @{user_share_dirs}/gvfs-metadata/{*,} r,
-
-  profile xdg-screensaver {
-    include <abstractions/base>
-    include <abstractions/consoles>
-
-    @{bin}/xdg-screensaver mr,
-
-    @{bin}/{,ba,da}sh   rix,
-    @{bin}/mv           rix,
-    @{bin}/{,e}grep     rix,
-    @{bin}/sed          rix,
-    @{bin}/which{,.debianutils}        rix,
-    @{bin}/xset         rix,
-    @{bin}/xautolock    rix,
-    @{bin}/dbus-send    rix,
-
-    owner @{HOME}/.Xauthority r,
-
-    # file_inherit
-    /dev/dri/card@{int} rw,
-    network inet stream,
-    network inet6 stream,
-
-    include if exists <local/vlc_xdg-screensaver>
-  }
 
   include if exists <local/vlc>
 }
