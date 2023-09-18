@@ -67,7 +67,7 @@ $(P):
 
 dist ?= archlinux
 package:
-	@bash dists/build.sh ${dist}
+	@bash dists/docker.sh ${dist}
 
 pkg:
 	@makepkg --syncdeps --install --cleanbuild --force --noconfirm
