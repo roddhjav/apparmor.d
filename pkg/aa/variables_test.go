@@ -24,6 +24,7 @@ func TestDefaultTunables(t *testing.T) {
 						{"multiarch", []string{"*-linux-gnu*"}},
 						{"user_share_dirs", []string{"/home/*/.local/share"}},
 						{"etc_ro", []string{"/{,usr/}etc/"}},
+						{"int", []string{"[0-9]{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}"}},
 					},
 				},
 			},
