@@ -18,11 +18,11 @@ BASE = archlinux debian ubuntu opensuse
 .PHONY: ${BASE} lint
 
 $(BASE):
-	make --directory=../ package dist=${@}
-	packer build -force -var version=${VERSION} \
+	@make --directory=../ package dist=${@}
+	@packer build -force -var version=${VERSION} \
 		-var disk_size=${disk} -var flavor="${flavor}" \
 		-only=qemu.${@}-${flavor} packer/
 
 lint:
-	@packer fmt packer/
-	@packer validate packer/
+	@packer fmt --check packer/
+	@packer validate --syntax-only packer/
