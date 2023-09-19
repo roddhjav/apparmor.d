@@ -85,21 +85,28 @@ debian:
   script:
     - sudo chown -R build:build /builds/
     - git config --global --add safe.directory $CI_PROJECT_DIR
-    - VERSION="0.$(git rev-list --count HEAD)-1"
     - mkdir -p "$PKGDEST"
     - sudo apt-get update -q && sudo apt-get install -y config-package-dev rsync
     - sudo apt-get install -y -t bullseye-backports golang-go
-    - dpkg-buildpackage -b -d --no-sign
-    - mv ../*.deb $PKGDEST/
+    - bash dists/build.sh dpkg
   artifacts:
     expire_in: 1 day
     paths:
       - $PKGDEST/*.deb
 
 ubuntu:
-  extends: debian
-  variables:
-    DISTRIBUTION: ubuntu
+  stage: build
+  image: registry.gitlab.com/roddhjav/builders/ubuntu
+  script:
+    - sudo chown -R build:build /builds/
+    - git config --global --add safe.directory $CI_PROJECT_DIR
+    - mkdir -p "$PKGDEST"
+    - sudo apt-get update -q && sudo apt-get install -y config-package-dev rsync golang-go
+    - bash dists/build.sh dpkg
+  artifacts:
+    expire_in: 1 day
+    paths:
+      - $PKGDEST/*.deb
 
 opensuse:
   stage: build
