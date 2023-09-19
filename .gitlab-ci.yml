@@ -23,7 +23,7 @@ bash:
   image: koalaman/shellcheck-alpine
   script:
     - shellcheck --shell=bash
-        PKGBUILD dists/build.sh
+        PKGBUILD dists/build.sh dists/docker.sh
         tests/packer/init/init.sh tests/packer/src/aa-update tests/packer/init/clean.sh
         debian/apparmor.d.postinst debian/apparmor.d.postrm
 
@@ -32,6 +32,16 @@ golangci-lint:
   image: golangci/golangci-lint
   script:
     - golangci-lint run
+
+packer:
+  stage: lint
+  image:
+    name: hashicorp/packer:latest
+    entrypoint: [""]
+  script:
+    - cd tests &&
+      packer fmt --check packer/ &&
+      packer validate --syntax-only packer/
 
 sast:
   stage: lint
