@@ -13,6 +13,7 @@ Summary:        Set of over 1500 AppArmor profiles
 License:        GPL-2.0-only
 URL:            https://github.com/roddhjav/apparmor.d
 Source0:        %{name}-%{version}.tar.gz
+Requires:       apparmor-profiles
 BuildRequires:  distribution-release
 BuildRequires:  golang-packaging
 BuildRequires:  rsync
