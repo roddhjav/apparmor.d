@@ -63,19 +63,13 @@ sudo dpkg -i ../apparmor.d_*_all.deb
     ```
 
 
-
 ## :simple-suse: OpenSUSE
 
-Build and install from source:
 ```sh
-make
-sudo make install
-sudo systemctl restart apparmor
+zypper addrepo https://download.opensuse.org/repositories/home:cboltz/openSUSE_Factory/home:cboltz.repo
+zypper refresh
+zypper install apparmor.d
 ```
-
-!!! note
-
-    RPM package is still a work in progress. Help is welcome.
 
 
 ## Partial install
