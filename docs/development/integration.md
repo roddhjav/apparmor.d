@@ -83,14 +83,25 @@ On all images, `aa-update` can be used to rebuild and install latest version of 
 
 !!! warning
 
-    The following are expected to be run in a [VM](#test-virtual-machines)
+    The test suite is expected to be run in a [VM](#test-virtual-machines)
 
 ### Getting started
 
-Build the test suite
+Prepare the test environment:
 ```sh
-go build ./cmd/aa-test
+cd tests
+make <dist> falvor=<flavor>
+AA_INTEGRATION=true vagrant up <name>
 ```
+
+Run the integration tests on the test VM:
+```sh
+make integration box=<dist> IP=<ip>
+```
+
+### Create integration tests
+
+**Test suite usage**
 
 Initialise the tests with:
 ```sh
@@ -107,7 +118,7 @@ Start the tests and collect the results
 ./aa-test --run
 ```
 
-### Create test scenario
+**Tests manifest**
 
 A basic set of test is generated on initialisation. More tests can be manually written in yaml file. They must have the following structure:
 
