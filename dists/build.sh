@@ -8,6 +8,7 @@
 set -eu -o pipefail
 
 readonly COMMAND="$1"
+readonly OUTPUT="${PKGDEST:-$PWD}"
 readonly PKGNAME=apparmor.d
 VERSION="0.$(git rev-list --count HEAD)"
 readonly VERSION
@@ -21,14 +22,13 @@ main() {
     dpkg)
         dch --newversion="$VERSION-1" --urgency=medium --distribution=stable --controlmaint "Release $VERSION-1"
         dpkg-buildpackage -b -d --no-sign
-        mv ../"${PKGNAME}_${VERSION}-1"_*.deb .
+        mv ../"${PKGNAME}_${VERSION}-1"_*.deb "$OUTPUT"
         ;;
 
     rpm)
         RPMBUILD_ROOT=$(mktemp -d)
-        OUTPUT_DIR=$(pwd)
         ARCH=$(uname -m)
-        readonly RPMBUILD_ROOT ARCH OUTPUT_DIR
+        readonly RPMBUILD_ROOT ARCH
 
         mkdir -p "$RPMBUILD_ROOT"/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS/tmp}
         cp -p "dists/$PKGNAME.spec" "$RPMBUILD_ROOT/SPECS"
@@ -38,7 +38,7 @@ main() {
         sed -i "s/^Version:.*/Version:        $VERSION/" "SPECS/$PKGNAME.spec"
         rpmbuild -bb --define "_topdir $RPMBUILD_ROOT" "SPECS/$PKGNAME.spec"
 
-        cp "$RPMBUILD_ROOT/RPMS/$ARCH/"*.rpm "$OUTPUT_DIR"
+        cp "$RPMBUILD_ROOT/RPMS/$ARCH/"*.rpm "$OUTPUT"
         rm -rf "$RPMBUILD_ROOT"
         ;;
 

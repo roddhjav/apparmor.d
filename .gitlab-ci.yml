@@ -101,6 +101,18 @@ ubuntu:
   variables:
     DISTRIBUTION: ubuntu
 
+opensuse:
+  stage: build
+  image: registry.gitlab.com/roddhjav/builders/opensuse
+  script:
+    - mkdir -p "$PKGDEST"
+    - sudo zypper install -y distribution-release golang-packaging rsync
+    - bash dists/build.sh rpm
+  artifacts:
+    expire_in: 1 day
+    paths:
+      - $PKGDEST/*.rpm
+
 
 # Profile Preprocessing
 # ---------------------
@@ -140,10 +152,11 @@ preprocess-ubuntu:
 preprocess-opensuse:
   stage: preprocess
   image: opensuse/tumbleweed
+  dependencies:
+    - opensuse
   script:
-    - zypper install -y apparmor-profiles go git rsync util-linux findutils make
-    - make
-    - make install
+    - zypper install -y apparmor-profiles
+    - rpm -i $PKGDEST/*
     - apparmor_parser --preprocess /etc/apparmor.d 1> /dev/null
 
 
