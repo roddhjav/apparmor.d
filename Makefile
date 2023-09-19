@@ -73,14 +73,12 @@ pkg:
 	@makepkg --syncdeps --install --cleanbuild --force --noconfirm
 
 dpkg:
-	@dch --newversion="0.$(shell git rev-list --count HEAD)-1" --urgency=medium \
-		--distribution=stable --controlmaint "Release 0.$(shell git rev-list --count HEAD)-1"
-	@dpkg-buildpackage -b -d --no-sign
-	@sudo dpkg -i "../apparmor.d_0.$(shell git rev-list --count HEAD)-1_all.deb"
-	@sudo make clean
+	@bash dists/build.sh dpkg
+	@sudo dpkg -i ${PKGNAME}_*.deb
 
 rpm:
-	@make local
+	@bash dists/build.sh rpm
+	@sudo rpm -i ${PKGNAME}-*.rpm
 
 tests:
 	@go test ./cmd/... -v -cover -coverprofile=coverage.out
@@ -99,4 +97,4 @@ clean:
 	@rm -rf \
 		debian/.debhelper debian/debhelper* debian/*.debhelper debian/${PKGNAME} \
 		${PKGNAME}-*.pkg.tar.zst.sig ${PKGNAME}-*.pkg.tar.zst coverage.out \
-		${PKGNAME}_*.* ${BUILD}
+		${PKGNAME}_*.* ${PKGNAME}-*.rpm ${BUILD}
