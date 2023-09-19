@@ -4,16 +4,13 @@ title: Installation
 
 !!! danger
 
-    In order to not break your system, the default package configuration installs
-    all profiles in complain mode. They can be enforced later.
-    See the [Enforce Mode](/enforce) page.
+    In order to not break your system, the default package configuration installs all profiles in complain mode. They can be enforced later. See the [Enforce Mode](/enforce) page.
 
 ## Requirements
 
 **AppArmor**
 
-An `apparmor` based Linux distribution is required. The basic profiles and
-abstractions shipped with AppArmor must be installed.
+An `apparmor` based Linux distribution is required. The basic profiles and abstractions shipped with AppArmor must be installed.
 
 **Desktop environment**
 
@@ -74,8 +71,7 @@ zypper install apparmor.d
 
 ## Partial install
 
-For test purposes, you can install specific profiles with the following commands.
-Abstractions, tunables, and most of the OS dependent post-processing is managed.
+For test purposes, you can install specific profiles with the following commands. Abstractions, tunables, and most of the OS dependent post-processing is managed.
 
 ```sh
 make

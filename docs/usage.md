@@ -4,8 +4,7 @@ title: Usage
 
 ## Enabled profiles
 
-Once installed and with the rules enabled, you can ensure the rules are loaded
-with:
+Once installed and with the rules enabled, you can ensure the rules are loaded with:
 ```sh
 sudo aa-status
 ```
@@ -75,13 +74,10 @@ ps (complain)                   user        ps auxZ
 
 ## AppArmor Log
 
-Ensure that `auditd` is installed and running on your system in order to read
-AppArmor log from `/var/log/audit/audit.log`. Then you can see the log with the
-provided command `aa-log` allowing you to review AppArmor generated messages in
+Ensure that `auditd` is installed and running on your system in order to read AppArmor log from `/var/log/audit/audit.log`. Then you can see the log with the provided command `aa-log` allowing you to review AppArmor generated messages in
 a colorful way.
 
-Other AppArmor userspace tools such as `aa-enforce`, `aa-complain`, and `aa-logprof`
-should work as expected.
+Other AppArmor userspace tools such as `aa-enforce`, `aa-complain`, and `aa-logprof` should work as expected.
 
 
 ### Basic use
