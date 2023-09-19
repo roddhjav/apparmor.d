@@ -7,21 +7,16 @@ Description of common structure found across various AppArmor profiles
 
 ## Programs to not confine
 
-Some programs should not be confined by themselves. For example, tools such as
-`ls`, `rm`, `diff` or `cat` do not have profiles in this project. Let's see why.
+Some programs should not be confined by themselves. For example, tools such as `ls`, `rm`, `diff` or `cat` do not have profiles in this project. Let's see why.
 
-These are general tools that in a general context can legitimately access any
-file in the system. Therefore, the confinement of such tools by a global
-profile would at best be minimal at worst be a security theater.
+These are general tools that in a general context can legitimately access any file in the system. Therefore, the confinement of such tools by a global profile would at best be minimal at worst be a security theater.
 
-It gets even worse. Let's say, we write a profile for `cat`. Such a profile
-would need access to `/etc/`. We will add the following rule:
+It gets even worse. Let's say, we write a profile for `cat`. Such a profile would need access to `/etc/`. We will add the following rule:
 ```sh
   /etc/{,**} rw,
 ```
 
-However, as `/etc` can contain sensitive files, we now want to explicitly
-prevent access to these sensitive files. Problems:
+However, as `/etc` can contain sensitive files, we now want to explicitly prevent access to these sensitive files. Problems:
 
 1. How do we know the exhaustive list of *sensitive files* in `/etc`?
 2. How do we ensure access to these sensitive files are not required?
@@ -29,11 +24,7 @@ prevent access to these sensitive files. Problems:
    See the [first rule of this project][project-rules] that is to only allow
    what is required. Here we allow everything and blacklist some paths.
 
-It creates even more issues when we want to use this profile in other profiles.
-Let's take the example of `diff`. Using this rule: `@{bin}/diff rPx,` will
-restrict access to the very generic and not very confined `diff` profile.
-Whereas most of the time, we want to restrict `diff` to some specific file in
-our profile:
+It creates even more issues when we want to use this profile in other profiles. Let's take the example of `diff`. Using this rule: `@{bin}/diff rPx,` will restrict access to the very generic and not very confined `diff` profile. Whereas most of the time, we want to restrict `diff` to some specific file in our profile:
 
 * In `dpkg`, an internal child profile (`rCx -> diff`), allows `diff` to only
   access etc config files:
@@ -95,8 +86,7 @@ sandbox managed with [Toolbox]
 
 ## Abstractions
 
-This project and the apparmor profile official project provide a large selection
-of abstractions to be included in profiles. They should be used.
+This project and the apparmor profile official project provide a large selection of abstractions to be included in profiles. They should be used.
 
 For instance, to allow download directory access, instead of writing:
 ```sh
@@ -111,8 +101,7 @@ include <abstractions/user-download-strict>
 
 ## Children profiles
 
-Usually, a child profile is in the [`children`][children] group. They have 
-the following note:
+Usually, a child profile is in the [`children`][children] group. They have  the following note:
 
 !!! quote
 
@@ -140,20 +129,18 @@ Here is an overview of the current children profile:
 
 ## Browsers
 
-Chromium based browsers share a similar structure. Therefore, they share the same
-abstraction: [`abstractions/chromium`][chromium] that includes most of the profile content.
+Chromium based browsers share a similar structure. Therefore, they share the same abstraction: [`abstractions/chromium`][chromium] that includes most of the profile content.
 
 This abstraction requires the following variables definied in the profile header:
 ```sh
-@{chromium_name} = chromium
-@{chromium_domain} = org.chromium.Chromium
-@{chromium_lib_dirs} = @{lib}/chromium
-@{chromium_config_dirs} = @{user_config_dirs}/chromium
-@{chromium_cache_dirs} = @{user_cache_dirs}/chromium
+@{name} = chromium
+@{domain} = org.chromium.Chromium
+@{lib_dirs} = @{lib}/chromium
+@{config_dirs} = @{user_config_dirs}/chromium
+@{cache_dirs} = @{user_cache_dirs}/chromium
 ```
 
-If your application requires chromium to run (like electron) use
-[`abstractions/chromium-common`][chromium-common] instead.
+If your application requires chromium to run (like electron) use [`abstractions/chromium-common`][chromium-common] instead.
 
 [chromium]: https://github.com/roddhjav/apparmor.d/blob/main/apparmor.d/abstractions/chromium
 [chromium-common]: https://github.com/roddhjav/apparmor.d/blob/main/apparmor.d/abstractions/chromium-common
@@ -162,8 +149,7 @@ If your application requires chromium to run (like electron) use
 
 See the **[kernel docs][kernel]** to check the major block and char numbers used in `/run/udev/data/`.
 
-Special care must be given as sometimes udev numbers are allocated
-dynamically by the kernel. Therefore, the full range must be allowed:
+Special care must be given as sometimes udev numbers are allocated dynamically by the kernel. Therefore, the full range must be allowed:
 
 !!! note ""
 
@@ -191,13 +177,12 @@ dynamically by the kernel. Therefore, the full range must be allowed:
 
     *Source: [AppArmor Wiki][apparmor-wiki]*
 
-This feature is only enabled when the profiles are built with `make full`. The profiles for full system policies are maintained in the **[`_full`][_full]** group. It consists of two extra main profiles:
+This feature is only enabled when the profiles are built with `make full`. The profiles for full system policies are maintained in the **[`_full`][full]** group. It consists of two extra main profiles:
 
 1. **`init`**: For systemd as PID 1
 2. **`systemd`**: For systemd as user
 
-All core required applications that need to be started by systemd (both as user
-or root) need to be present in these profiles.
+All core required applications that need to be started by systemd (both as user or root) need to be present in these profiles.
 
 Early policy load should also be enabled. In `/etc/apparmor/parser.conf`
 ```
@@ -206,9 +191,8 @@ cache-loc /etc/apparmor/earlypolicy/
 
 !!! danger
 
-    Full system policy is still under early development, do not run it outside a
-    development VM! **You have been warned!!!**
+    Full system policy is still under early development, do not run it outside a development VM! **You have been warned!!!**
 
 
 [apparmor-wiki]: https://gitlab.com/apparmor/apparmor/-/wikis/FullSystemPolicy
-[_full]: https://github.com/roddhjav/apparmor.d/blob/main/apparmor.d/groups/_full
+[full]: https://github.com/roddhjav/apparmor.d/blob/main/apparmor.d/groups/_full

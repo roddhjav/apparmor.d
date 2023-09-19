@@ -4,22 +4,17 @@ title: Guidelines
 
 ## Common structure
 
-AppArmor profiles can be written without any specific guidelines. However,
-when you work with over 1400 profiles, you need a common structure among all the
-profiles. 
+AppArmor profiles can be written without any specific guidelines. However, when you work with over 1400 profiles, you need a common structure among all the profiles. 
 
 The logic behind it is that if a rule is present in a profile, it should only be
 in one place, making profile review easier. 
 
-For example, if a program needs to run executables binary. The rules allowing it
-can only be in a specific rule block (just after the `@{exec_path} mr,` rule). It
-is therefore easy to ensure some profile features such as:
+For example, if a program needs to run executables binary. The rules allowing it can only be in a specific rule block (just after the `@{exec_path} mr,` rule). It is therefore easy to ensure some profile features such as:
 
 * A profile has access to a given resource 
 * A profile enforces a strict [write xor execute] (W^X) policy. 
 
-It also improves compatibilities and makes personalization easier thanks to the
-use of more variables.
+It also improves compatibilities and makes personalization easier thanks to the use of more variables.
 
 ## Guidelines
 
@@ -28,8 +23,7 @@ use of more variables.
     This profile guideline is still evolving, feel free to propose improvements
     as long as they do not vary too much from the existing rules.
 
-In order to ensure a common structure across the profiles, all new profile **must**
-follow the guidelines presented here.
+In order to ensure a common structure across the profiles, all new profile **must** follow the guidelines presented here.
 
 The rules in the profile should be sorted in the rule ***block*** as follows:
 

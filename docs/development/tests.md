@@ -4,9 +4,7 @@ title: Tests suite
 
 # Tests suite
 
-A full test suite to ensure compatibility across distributions and software is
-still a work in progress.
-Here is an overview of the current CI jobs:
+A full test suite to ensure compatibility across distributions and software is still a work in progress. Here is an overview of the current CI jobs:
 
 **On Gitlab CI**
 

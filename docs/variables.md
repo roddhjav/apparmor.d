@@ -94,6 +94,9 @@ title: Variables References
 | Thread id | `@{tid}` | `[0-9]*` |
 | Single hexadecimal character | `@{h}` | `[0-9a-fA-F]` |
 | Single alphanumeric character | `@{c}` | `[0-9a-zA-Z]` |
+| PCI Devices | `@{pci}` | `@{pci_bus}/**/` |
+| PCI Bus | `@{pci_bus}` | `pci@{h}@{h}@{h}@{h}:@{h}@{h}` |
+| PCI Id | `@{pci_id}` | `@{h}@{h}@{h}@{h}:@{h}@{h}:@{h}@{h}.@{h}` |
 
 **System Paths**
 
