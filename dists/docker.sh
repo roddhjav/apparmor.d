@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Build the package in a clean Archlinux/Debian/Ubuntu container
+# Build the package in a clean Archlinux/openSUSE/Debian/Ubuntu container
 # Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 # Usage: make package dist=<distribution>
 
-set -eu
+set -eu -o pipefail
 
 readonly BASEIMAGE="${BASEIMAGE:-registry.gitlab.com/roddhjav/builders}"
 readonly PREFIX="builder-"
@@ -13,7 +13,7 @@ readonly PKGNAME=apparmor.d
 readonly VOLUME=/tmp/build
 readonly BUILDIR=/home/build/tmp
 readonly COMMAND="$1"
-VERSION="0.$(git rev-list --count HEAD)-1"
+VERSION="0.$(git rev-list --count HEAD)"
 PACKAGER="$(git config user.name) <$(git config user.email)>"
 readonly VERSION PACKAGER
 
@@ -55,14 +55,14 @@ build_in_docker_makepkg() {
 		fi
 	else
 		docker pull "$BASEIMAGE/$dist"
-		docker run -tid --name "$img" --volume "$PWD:$BUILDIR" \
+		docker run -tid --name "$img" --volume "$VOLUME:$BUILDIR" \
 			--env MAKEFLAGS="-j$(nproc)" --env PACKAGER="$PACKAGER" \
 			--env BUILDDIR=/tmp/build --env PKGDEST="$BUILDIR" \
 			--env DIST="$dist" \
 			"$BASEIMAGE/$dist"
 	fi
 
-	docker exec --workdir="$BUILDIR/" "$img" makepkg -sfC --noconfirm --noprogressbar
+	docker exec --workdir="$BUILDIR/$PKGNAME" "$img" bash dists/build.sh pkg
 	mv "$VOLUME/$PKGNAME"-*.pkg.* .
 }
 
@@ -85,12 +85,27 @@ build_in_docker_dpkg() {
 		docker exec "$img" sudo apt-get install -y "${aptopt[@]}" golang-go
 	fi
 
-	docker exec --workdir="$BUILDIR/$PKGNAME" "$img" \
-		dch --newversion="$VERSION" --urgency=medium --distribution=stable --controlmaint "Release $VERSION"
-	docker exec --workdir="$BUILDIR/$PKGNAME" "$img" \
-		dpkg-buildpackage -b -d --no-sign
-	cp "$VOLUME/${PKGNAME}_${VERSION}_all.deb" "/tmp/${PKGNAME}_all.deb"
-	mv "$VOLUME/${PKGNAME}_${VERSION}"_*.* .
+	docker exec --workdir="$BUILDIR/$PKGNAME" "$img" bash dists/build.sh dpkg
+	mv "$VOLUME/$PKGNAME/${PKGNAME}_${VERSION}-1"_*.* .
+}
+
+build_in_docker_rpm() {
+	local dist="$1"
+	local img="$PREFIX$dist"
+
+	if _exist "$img"; then
+		if ! _is_running "$img"; then
+			_start "$img"
+		fi
+	else
+		docker pull "$BASEIMAGE/$dist"
+		docker run -tid --name "$img" --volume "$VOLUME:$BUILDIR" \
+			"$BASEIMAGE/$dist"
+		docker exec "$img" sudo zypper install -y distribution-release golang-packaging rsync
+	fi
+
+	docker exec --workdir="$BUILDIR/$PKGNAME" "$img" bash dists/build.sh rpm
+	mv "$VOLUME/$PKGNAME/$PKGNAME-$VERSION-"*.rpm .
 }
 
 main() {
@@ -106,7 +121,8 @@ main() {
 		;;
 
 	opensuse)
-		echo "Work in progress"
+		sync
+		build_in_docker_rpm "$COMMAND"
 		;;
 
 	*) ;;
