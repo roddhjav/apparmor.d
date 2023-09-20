@@ -6,7 +6,8 @@
 
 **Full set of AppArmor profiles**
 
-> **Warning**: This project is still in its early development. Help is very 
+> [!WARNING]
+> This project is still in its early development. Help is very 
 > welcome; see the [documentation website](https://apparmor.pujol.io/) including
 > its [development](https://apparmor.pujol.io/development) section.
 
