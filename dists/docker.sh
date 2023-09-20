@@ -81,7 +81,7 @@ build_in_docker_dpkg() {
 			"$BASEIMAGE/$dist"
 		docker exec "$img" sudo apt-get update -q
         docker exec "$img" sudo apt-get install -y config-package-dev rsync
-		[[ "$COMMAND" == debian ]] && aptopt=(-t bullseye-backports)
+		[[ "$COMMAND" == debian ]] && aptopt=(-t bookworm-backports)
 		docker exec "$img" sudo apt-get install -y "${aptopt[@]}" golang-go
 	fi
 
