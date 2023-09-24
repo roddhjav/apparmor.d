@@ -17,10 +17,12 @@ import (
 var (
 	regVariablesDef = regexp.MustCompile(`@{(.*)}\s*[+=]+\s*(.*)`)
 	regVariablesRef = regexp.MustCompile(`@{([^{}]+)}`)
-)
 
-// Default Apparmor magic directory: /etc/apparmor.d/.
-var MagicRoot = paths.New("/etc/apparmor.d")
+type Variable struct {
+	Name   string
+	Values []string
+}
+
 
 // DefaultTunables return a minimal working profile to build the profile
 // It should not be used when loading file from /etc/apparmor.d

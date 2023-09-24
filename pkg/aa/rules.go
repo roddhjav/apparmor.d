@@ -4,42 +4,6 @@
 
 package aa
 
-// Preamble section of a profile
-type Preamble struct {
-	Abi              []Abi
-	PreambleIncludes []Include
-	Aliases          []Alias
-	Variables        []Variable
-}
-
-// Profile section of a profile
-type Profile struct {
-	Name        string
-	Attachments []string
-	Attributes  []string
-	Flags       []string
-	Rules
-}
-
-type Rules struct {
-	Includes      []Include
-	Rlimit        []Rlimit
-	Userns        Userns
-	Capability    []Capability
-	Network       []Network
-	Mount         []Mount
-	Umount        []Umount
-	Remount       []Remount
-	PivotRoot     []PivotRoot
-	ChangeProfile []ChangeProfile
-	Unix          []Unix
-	Ptrace        []Ptrace
-	Signal        []Signal
-	Dbus          []Dbus
-	File          []File
-}
-
-
 // Qualifier to apply extra settings to a rule
 type Qualifier struct {
 	Audit       bool
@@ -48,159 +12,6 @@ type Qualifier struct {
 	NoNewPrivs  bool
 	FileInherit bool
 }
-
-// Preamble rules
-
-type Abi struct {
-	Path    string
-	IsMagic bool
-}
-
-type Alias struct {
-	Path          string
-	RewrittenPath string
-}
-
-type Include struct {
-	IfExists bool
-	Path     string
-	IsMagic  bool
-}
-
-type Variable struct {
-	Name   string
-	Values []string
-}
-
-// Profile rules
-
-type Rlimit struct {
-	Key   string
-	Op    string
-	Value string
-}
-
-type Userns struct {
-	Qualifier
-	Create bool
-}
-
-type Capability struct {
-	Qualifier
-	Name string
-}
-
-type AddressExpr struct {
-	Source      string
-	Destination string
-	Port        string
-}
-
-type Network struct {
-	Qualifier
-	Domain   string
-	Type     string
-	Protocol string
-	AddressExpr
-}
-
-type MountConditions struct {
-	Fs      string
-	Op      string
-	FsType  string
-	Options []string
-}
-
-type Mount struct {
-	Qualifier
-	MountConditions
-	Source     string
-	MountPoint string
-}
-
-type Umount struct {
-	Qualifier
-	MountConditions
-	MountPoint string
-}
-
-type Remount struct {
-	Qualifier
-	MountConditions
-	MountPoint string
-}
-
-type PivotRoot struct {
-	Qualifier
-	OldRoot       string
-	NewRoot       string
-	TargetProfile string
-}
-
-type ChangeProfile struct {
-	ExecMode    string
-	Exec        string
-	ProfileName string
-}
-
-type IOUring struct {
-	Qualifier
-	Access string
-	Label  string
-}
-
-type Signal struct {
-	Qualifier
-	Access string
-	Set    string
-	Peer   string
-}
-
-type Ptrace struct {
-	Qualifier
-	Access string
-	Peer   string
-}
-
-type Unix struct {
-	Qualifier
-	Access   string
-	Type     string
-	Protocol string
-	Address  string
-	Label    string
-	Attr     string
-	Opt      string
-	Peer     string
-	PeerAddr string
-}
-
-type Mqueue struct {
-	Qualifier
-	Access string
-	Type   string
-	Label  string
-}
-
-type Dbus struct {
-	Qualifier
-	Access    string
-	Bus       string
-	Name      string
-	Path      string
-	Interface string
-	Member    string
-	Label     string
-}
-
-type File struct {
-	Qualifier
-	Path   string
-	Access string
-	Target string
-}
-
-// Rules constructors from logs
 
 func NewQualifier(owner, noNewPrivs, fileInherit bool) Qualifier {
 	return Qualifier{
@@ -303,4 +114,36 @@ func NewDbus(log map[string]string, noNewPrivs, fileInherit bool) Dbus {
 		Member:    log["member"],
 		Label:     log["peer_label"],
 	}
+// Preamble specific rules
+
+type Abi struct {
+	Path    string
+	IsMagic bool
+}
+
+func (r Abi) Less(other Abi) bool {
+	if r.Path == other.Path {
+		return r.IsMagic == other.IsMagic
+	}
+	return r.Path < other.Path
+}
+
+func (r Abi) Equals(other Abi) bool {
+	return r.Path == other.Path && r.IsMagic == other.IsMagic
+}
+
+type Alias struct {
+	Path          string
+	RewrittenPath string
+}
+
+func (r Alias) Less(other Alias) bool {
+	if r.Path == other.Path {
+		return r.RewrittenPath < other.RewrittenPath
+	}
+	return r.Path < other.Path
+}
+
+func (r Alias) Equals(other Alias) bool {
+	return r.Path == other.Path && r.RewrittenPath == other.RewrittenPath
 }

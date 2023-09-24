@@ -23,6 +23,31 @@ type AppArmorProfile struct {
 	Profile
 }
 
+// Preamble section of a profile
+type Preamble struct {
+	Abi       []Abi
+	Includes  []Include
+	Aliases   []Alias
+	Variables []Variable
+}
+
+// Profile section of a profile
+type Profile struct {
+	Name        string
+	Attachments []string
+	Attributes  map[string]string
+	Flags       []string
+	Rules       Rules
+}
+
+// ApparmorRule generic interface
+type ApparmorRule interface {
+	Less(other any) bool
+	Equals(other any) bool
+}
+
+type Rules []ApparmorRule
+
 func NewAppArmorProfile() *AppArmorProfile {
 	return &AppArmorProfile{}
 }
