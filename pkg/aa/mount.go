@@ -13,6 +13,24 @@ type MountConditions struct {
 	Options []string
 }
 
+func (m MountConditions) Less(other MountConditions) bool {
+	if m.Fs == other.Fs {
+		if m.Op == other.Op {
+			if m.FsType == other.FsType {
+				return len(m.Options) < len(other.Options)
+			}
+			return m.FsType < other.FsType
+		}
+		return m.Op < other.Op
+	}
+	return m.Fs < other.Fs
+}
+
+func (m MountConditions) Equals(other MountConditions) bool {
+	return m.Fs == other.Fs && m.Op == other.Op && m.FsType == other.FsType &&
+		slices.Equal(m.Options, other.Options)
+}
+
 type Mount struct {
 	Qualifier
 	MountConditions
@@ -33,6 +51,28 @@ func MountFromLog(log map[string]string, noNewPrivs, fileInherit bool) ApparmorR
 		MountPoint: log["name"],
 	}
 }
+
+func (r *Mount) Less(other any) bool {
+	o, _ := other.(*Mount)
+	if r.Qualifier.Equals(o.Qualifier) {
+		if r.Source == o.Source {
+			if r.MountPoint == o.MountPoint {
+				return r.MountConditions.Less(o.MountConditions)
+			}
+			return r.MountPoint < o.MountPoint
+		}
+		return r.Source < o.Source
+	}
+	return r.Qualifier.Less(o.Qualifier)
+}
+
+func (r *Mount) Equals(other any) bool {
+	o, _ := other.(*Mount)
+	return r.Source == o.Source && r.MountPoint == o.MountPoint &&
+		r.MountConditions.Equals(o.MountConditions) &&
+		r.Qualifier.Equals(o.Qualifier)
+}
+
 type Umount struct {
 	Qualifier
 	MountConditions
@@ -52,6 +92,24 @@ func UmountFromLog(log map[string]string, noNewPrivs, fileInherit bool) Apparmor
 	}
 }
 
+func (r *Umount) Less(other any) bool {
+	o, _ := other.(*Umount)
+	if r.Qualifier.Equals(o.Qualifier) {
+		if r.MountPoint == o.MountPoint {
+			return r.MountConditions.Less(o.MountConditions)
+		}
+		return r.MountPoint < o.MountPoint
+	}
+	return r.Qualifier.Less(o.Qualifier)
+}
+
+func (r *Umount) Equals(other any) bool {
+	o, _ := other.(*Umount)
+	return r.MountPoint == o.MountPoint &&
+		r.MountConditions.Equals(o.MountConditions) &&
+		r.Qualifier.Equals(o.Qualifier)
+}
+
 type Remount struct {
 	Qualifier
 	MountConditions
@@ -69,4 +127,22 @@ func RemountFromLog(log map[string]string, noNewPrivs, fileInherit bool) Apparmo
 		},
 		MountPoint: log["name"],
 	}
+}
+
+func (r *Remount) Less(other any) bool {
+	o, _ := other.(*Remount)
+	if r.Qualifier.Equals(o.Qualifier) {
+		if r.MountPoint == o.MountPoint {
+			return r.MountConditions.Less(o.MountConditions)
+		}
+		return r.MountPoint < o.MountPoint
+	}
+	return r.Qualifier.Less(o.Qualifier)
+}
+
+func (r *Remount) Equals(other any) bool {
+	o, _ := other.(*Remount)
+	return r.MountPoint == o.MountPoint &&
+		r.MountConditions.Equals(o.MountConditions) &&
+		r.Qualifier.Equals(o.Qualifier)
 }

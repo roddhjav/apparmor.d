@@ -19,3 +19,24 @@ func PivotRootFromLog(log map[string]string, noNewPrivs, fileInherit bool) Appar
 		TargetProfile: log["name"],
 	}
 }
+
+func (r *PivotRoot) Less(other any) bool {
+	o, _ := other.(*PivotRoot)
+	if r.Qualifier.Equals(o.Qualifier) {
+		if r.OldRoot == o.OldRoot {
+			if r.NewRoot == o.NewRoot {
+				return r.TargetProfile < o.TargetProfile
+			}
+			return r.NewRoot < o.NewRoot
+		}
+		return r.OldRoot < o.OldRoot
+	}
+	return r.Qualifier.Less(o.Qualifier)
+}
+
+func (r *PivotRoot) Equals(other any) bool {
+	o, _ := other.(*PivotRoot)
+	return r.OldRoot == o.OldRoot && r.NewRoot == o.NewRoot &&
+		r.TargetProfile == o.TargetProfile &&
+		r.Qualifier.Equals(o.Qualifier)
+}

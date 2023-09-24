@@ -16,3 +16,15 @@ func UsernsFromLog(log map[string]string, noNewPrivs, fileInherit bool) Apparmor
 	}
 }
 
+func (r *Userns) Less(other any) bool {
+	o, _ := other.(*Userns)
+	if r.Qualifier.Equals(o.Qualifier) {
+		return r.Create
+	}
+	return r.Qualifier.Less(o.Qualifier)
+}
+
+func (r *Userns) Equals(other any) bool {
+	o, _ := other.(*Userns)
+	return r.Create == o.Create && r.Qualifier.Equals(o.Qualifier)
+}

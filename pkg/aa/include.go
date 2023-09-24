@@ -10,3 +10,19 @@ type Include struct {
 	IsMagic  bool
 }
 
+func (r *Include) Less(other any) bool {
+	o, _ := other.(*Include)
+	if r.Path == o.Path {
+		if r.IsMagic == o.IsMagic {
+			return r.IfExists
+		}
+		return r.IsMagic
+	}
+	return r.Path < o.Path
+}
+
+func (r *Include) Equals(other any) bool {
+	o, _ := other.(*Include)
+	return r.Path == o.Path && r.IsMagic == o.IsMagic &&
+		r.IfExists == o.IfExists
+}
