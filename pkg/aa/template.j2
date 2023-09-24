@@ -2,307 +2,234 @@
 {{- /* Copyright (C) 2021-2023 Alexandre Pujol <alexandre@pujol.io> */ -}}
 {{- /* SPDX-License-Identifier: GPL-2.0-only */ -}}
 
-{{- if .Abi -}}
-    {{- range .Abi -}}
-        {{- if .IsMagic -}}
-            abi <{{ .Path }}>,{{ "\n" }}
-        {{- else -}}
-            abi "{{ .Path }}",{{ "\n" }}
-        {{- end -}}
-    {{- end -}}
-    {{ "\n" }}
-{{- end -}}
+{{- range .Abi -}}
+    {{- if .IsMagic -}}
+        {{ "abi <" }}{{ .Path }}{{ ">,\n" }}
+    {{- else -}}
+        {{ "abi \"" }}{{ .Path }}{{ "\",\n" }}
+    {{- end }}
+{{ end -}}
 
-{{- if .Aliases -}}
-    {{- range .Aliases -}}
-        alias {{ .Path }} -> {{ .RewrittenPath }},{{ "\n" }}
-    {{- end -}}
-    {{ "\n" }}
-{{- end -}}
+{{- range .Aliases -}}
+    {{ "alias " }}{{ .Path }}{{ " -> " }}{{ .RewrittenPath }}{{ ",\n" }}
+{{ end -}}
 
-{{- if .PreambleIncludes -}}
-    {{- range .PreambleIncludes -}}
-        {{- "include " -}}
-        {{- if .IfExists -}}
-            {{- "if exists " -}} 
-        {{- end -}}
-        {{- if .IsMagic -}}
-            <{{ .Path }}>{{ "\n" }}
-        {{- else -}}
-            "{{ .Path }}"{{ "\n" }}
-        {{- end -}}
+{{- range .Includes -}}
+    {{- "include " -}}
+    {{- if .IfExists -}}
+        {{- "if exists " -}} 
     {{- end -}}
-    {{ "\n" }} 
-{{- end -}}
+    {{- if .IsMagic -}}
+        {{ "<" }}{{ .Path }}{{ ">,\n" }}
+    {{- else -}}
+         {{ "\"" }}{{ .Path }}{{ "\",\n" }}
+    {{- end }}
+{{ end -}}
 
-{{- if .Preamble.Variables -}}
-    {{- range .Preamble.Variables -}}
-        {{ "@{" }}{{ .Name }}{{ "} = " }}
-        {{- range .Values -}}
-            {{ . }}{{ " " }}
-        {{- end -}}
-        {{ "\n" }} 
-    {{- end -}}
-{{- end -}}
+{{- range .Variables -}}
+    {{ "@{" }}{{ .Name }}{{ "} = " }}
+    {{- range .Values -}}
+        {{ . }}{{ " " }}
+    {{- end }}
+{{ end -}}
 
-profile {{ .Name }}{{ " " }}
-{{- range .Attachments -}}
+{{- "profile " -}}
+{{- with .Name -}}
     {{ . }}{{ " " }}
 {{- end -}}
-{{- if .Attributes -}}
-    {{- "xattrs=(" -}}
-    {{- range .Attributes -}}
-        {{ . }}{{ " " }}
-    {{- end -}}
-    {{ ") " }}
+{{- with .Attachments -}}
+    {{ join . }}{{ " " }}
 {{- end -}}
-{{- if .Flags -}}
-    {{- "flags=(" -}}
-    {{- range .Flags -}}
-        {{ . }}{{ " " }}
-    {{- end -}}
-    {{ ") " }}
+{{- with .Attributes -}}
+    {{ "xattrs=(" }}{{ join . }}{{ ") " }}
+{{- end -}}
+{{- with .Flags -}}
+    {{ "flags=(" }}{{ join . }}{{ ") " }}
 {{- end -}}
 {{ "{\n" }}
 
-{{- if .Includes -}}
-    {{- range .Includes -}}
-        {{- if not .IfExists -}}
-            {{- "include " | indent -}}
-            {{- if .AbsPath -}}
-                "{{ . }}"{{ "\n" }}
-            {{- else -}}
-                <{{ .MagicPath }}>{{ "\n" }}
-            {{- end -}}
+{{- $oldtype := "" -}}
+{{- range .Rules -}}
+    {{- $type := typeof . -}}
+    {{- if and (ne $type $oldtype) (ne $oldtype "") -}}
+        {{- "\n" -}}
+    {{- end -}}
+    {{- indent "" -}}
+
+    {{- if eq $type "Include" -}}
+        {{- "include " -}}
+        {{- if .IfExists -}}
+            {{ "if exists " }}
+        {{- end -}}
+        {{- if .IsMagic -}}
+            {{ "<" }}{{ .Path }}{{ ">" }}
+        {{- else -}}
+            {{ "\"" }}{{ .Path }}{{ "\"" }}
         {{- end -}}
     {{- end -}}
-    {{ "\n" }} 
-{{- end -}}
 
-{{- if .Rlimit -}}
-    {{- range .Rlimit -}}
-        {{ "set rlimit" | indent }} {{ .Key }} {{ .Op }} {{ .Value }},{{ "\n" }}
+    {{- if eq $type "Rlimit" -}}
+        {{ "set rlimit " }}{{ .Key }} {{ .Op }} {{ .Value }}{{ "," }}
     {{- end -}}
-    {{ "\n" }} 
-{{- end -}}
 
-{{- if .Capability -}}
-    {{- range .Capability -}}
-        {{ "capability" | indent }} {{ .Name }},{{ "\n" }}
+    {{- if eq $type "Capability" -}}
+        {{ "capability "  }}{{ .Name }}{{ "," }}
     {{- end -}}
-    {{ "\n" }}
-{{- end -}}
 
-{{- if .Network -}}
-    {{- range .Network -}}
+    {{- if eq $type "Network" -}}
         {{- if eq .AccessType "deny" -}}
-            {{ "deny network " | indent }}
+            {{ "deny " }}
+        {{- end -}}
+        {{ "network " }}
+        {{- with .Domain -}}
+            {{ . }}{{ " " }}
+        {{- end -}}
+        {{- with .Type -}}
+            {{ . }}
         {{- else -}}
-            {{ "network " | indent }}
-        {{- end -}}
-        {{- if .Domain -}}
-            {{ .Domain }}{{ " " }}
-        {{- end -}}  
-        {{- if .Type -}}
-            {{ .Type }}{{ " " }}
-        {{- else -}}
-            {{ if .Protocol -}}
-                {{ .Protocol }}{{ " " }}
+            {{- with .Protocol -}}
+                {{ . }}
             {{- end -}}
         {{- end -}}
-        {{- if .Destination -}}
-            {{ "dst=" }}{{ .Destination }}
-        {{- end -}}
-        ,{{ "\n" }}
+        {{- "," -}}
     {{- end -}}
-    {{ "\n" }}
-{{- end -}}
 
-{{- if .Mount -}}
-    {{- range .Mount -}}
-        {{- "mount " | indent -}}
-        {{- if .FsType -}}
-            fstype={{ .FsType }}{{ " " }}
+    {{- if eq $type "Mount" -}}
+        {{- "mount " -}}
+        {{- with .FsType -}}
+            {{ "fstype=" }}{{ . }}{{ " " }}
         {{- end -}}
-        {{- if .Options -}}
-            {{- "options=(" -}}
-            {{- range .Options -}}
-                {{ . }}{{ " " }}
-            {{- end -}}
-            {{ ") " }}
+        {{- with .Options -}}
+            {{ "options=(" }}{{ join . }}{{ ") " }}
         {{- end -}}
-        {{- if .Source -}}
-            {{ .Source }}{{ " " }}
+        {{- with .Source -}}
+            {{ . }}{{ " " }}
         {{- end -}}
-        {{- if .MountPoint -}}
-            {{ "-> " }}{{ .MountPoint }}
+        {{- with .MountPoint -}}
+            {{ "-> " }}{{ . }}
         {{- end -}}
-        ,{{ "\n" }}
+        {{- "," -}}
     {{- end -}}
-    {{ "\n" }}
-{{- end -}}
 
-{{- if .Umount -}}
-    {{- range .Umount -}}
-        {{- "umount " | indent -}}
-        {{- if .FsType -}}
-            fstype={{ .FsType }}{{ " " }}
+    {{- if eq $type "Umount" -}}
+        {{- "umount " -}}
+        {{- with .FsType -}}
+            {{ "fstype=" }}{{ . }}{{ " " }}
         {{- end -}}
-        {{- if .Options -}}
-            {{- "options=(" -}}
-            {{- range .Options -}}
-                {{ . }}{{ " " }}
-            {{- end -}}
-            {{ ") " }}
+        {{- with .Options -}}
+            {{ "options=(" }}{{ join . }}{{ ") " }}
         {{- end -}}
-        {{- if .MountPoint -}}
-            {{ .MountPoint }}
+        {{- with .MountPoint -}}
+            {{ . }}
         {{- end -}}
-        ,{{ "\n" }}
+        {{- "," -}}
     {{- end -}}
-    {{ "\n" }}
-{{- end -}}
 
-{{- if .Remount -}}
-    {{- range .Remount -}}
-        {{- "remount " | indent -}}
-        {{- if .FsType -}}
-            fstype={{ .FsType }}{{ " " }}
+    {{- if eq $type "Remount" -}}
+        {{- "remount " -}}
+        {{- with .FsType -}}
+            {{ "fstype=" }}{{ . }}{{ " " }}
         {{- end -}}
-        {{- if .Options -}}
-            {{- "options=(" -}}
-            {{- range .Options -}}
-                {{ . }}{{ " " }}
-            {{- end -}}
-            {{ ") " }}
+        {{- with .Options -}}
+            {{ "options=(" }}{{ join . }}{{ ") " }}
         {{- end -}}
-        {{- if .Remount -}}
-            {{ .Remount }}
+        {{- with .Remount -}}
+            {{ . }}
         {{- end -}}
-        ,{{ "\n" }}
+        {{- "," -}}
     {{- end -}}
-    {{ "\n" }}
-{{- end -}}
 
-{{- if .Unix -}}
-    {{- range .Unix -}}
-        {{- "unix " | indent -}}
-        {{- if .Access -}}
-            ({{ .Access }}){{ " " }}
+    {{- if eq $type "Unix" -}}
+        {{- "unix " -}}
+        {{- with .Access -}}
+            {{ "(" }}{{ . }}{{ ") " }}
         {{- end -}}
-        {{- if .Type -}}
-            type={{ .Type }}{{ " " }}
+        {{- with .Type -}}
+            {{ "type=" }}{{ . }}{{ " " }}
         {{- end -}}
-        {{- if .Address -}}
-            addr={{ .Address }}{{ " " }}
+        {{- with .Address -}}
+            {{ "addr=" }}{{ . }}{{ " " }}
         {{- end -}}
         {{- if .Peer -}}
             {{ "peer=(label=" }}{{ .Peer }}
-            {{- if .PeerAddr -}}
-                , addr={{ .PeerAddr }}
+            {{- with .PeerAddr -}}
+                {{ ", addr="}}{{ . }}
             {{- end -}}
             {{- ")" -}}
         {{- end -}}
-        ,{{ "\n" }}
+        {{- "," -}}
     {{- end -}}
-    {{ "\n" }}
-{{- end -}}
 
-{{- if .Ptrace -}}
-    {{- range .Ptrace -}}
-        {{- "ptrace " | indent -}}
-        {{- if .Access -}}
-            ({{ .Access }}){{ " " }}
+    {{- if eq $type "Ptrace" -}}
+        {{- "ptrace " -}}
+        {{- with .Access -}}
+            {{ "(" }}{{ . }}{{ ") " }}
         {{- end -}}
-        {{- if .Peer -}}
-            peer={{ .Peer }}
+        {{- with .Peer -}}
+            {{ "peer=" }}{{ . }}
         {{- end -}}
-        ,{{ "\n" }}
+        {{- "," -}}
     {{- end -}}
-    {{ "\n" }}
-{{- end -}}
 
-{{- if .Signal -}}
-    {{- range .Signal -}}
-        {{- "signal " | indent -}}
-        {{- if .Access -}}
-            ({{ .Access }}){{ " " }}
+    {{- if eq $type "Signal" -}}
+        {{- "signal " -}}
+        {{- with .Access -}}
+            {{ "(" }}{{ . }}{{ ") " }}
         {{- end -}}
-        {{- if .Set -}}
-            set=({{ .Set }}){{ " " }}
+        {{- with .Set -}}
+            {{ "set=(" }}{{ . }}{{ ") " }}
         {{- end -}}
-        {{- if .Peer -}}
-            peer={{ .Peer }}
+        {{- with .Peer -}}
+            {{ "peer=" }}{{ . }}
         {{- end -}}
-        ,{{ "\n" }}
+        {{- "," -}}
     {{- end -}}
-    {{ "\n" }}
-{{- end -}}
 
-{{- if .Dbus -}}
-    {{- range .Dbus -}}
-        {{- "dbus " | indent -}}
+    {{- if eq $type "Dbus" -}}
+        {{- "dbus " -}}
         {{- if eq .Access "bind" -}}
             bind bus={{ .Bus }} name={{ .Name }}
         {{- else -}}
             {{ .Access }} bus={{ .Bus }} path={{ .Path }}{{ "\n" }}
-            {{- if .Interface -}}
-                {{ "interface=" | overindent }}{{ .Interface }}{{ "\n" }}
+            {{- with .Interface -}}
+                {{ overindent "interface=" }}{{ . }}{{ "\n" }}
             {{- end -}}
-            {{- if .Member -}}
-                {{ "member=" | overindent }}{{ .Member }}{{ " " }}{{ "\n" }}
+            {{- with .Member -}}
+                {{ overindent "member=" }}{{ . }}{{ " " }}{{ "\n" }}
             {{- end -}}
             {{- if and .Name .Label -}}
-                {{- "peer=" | overindent -}}
-                (name={{ .Name }}, label={{ .Label }})
+                {{ overindent "peer=(name=" }}{{ .Name }}{{ ", label="}}{{ .Label }}{{ ")" }}
             {{- else -}}
-                {{- if .Name }}
-                    {{- "peer=" | overindent -}}
-                    (name={{ .Name }})
+                {{- with .Name -}}
+                    {{ overindent "peer=(name=" }}{{ . }}{{ ")" }}
                 {{- end -}}
-                {{- if .Label -}}
-                    {{- "peer=" | overindent -}}
-                    (label={{ .Label }})
+                {{- with .Label -}}
+                    {{ overindent "peer=(label=" }}{{ . }}{{ ")" }}
                 {{- end -}}
             {{- end -}}
         {{- end -}}
-        ,{{ "\n\n" }}
+        {{- "," -}}
     {{- end -}}
-{{- end -}}
 
-{{- if .File -}}
-    {{- range .File -}}
-        {{- indent "" -}}
+    {{- if eq $type "File" -}}
         {{- if .Owner -}}
             {{- "owner " -}}
         {{- end -}}
-        {{ .Path }} {{ .Access }}
-        {{- if .Target -}}
-            {{ " ->" }} {{ .Target }}
+        {{ .Path }}{{ " " }}{{ .Access }}
+        {{- with .Target -}}
+            {{ " -> " }}{{ . }}
         {{- end -}}
-        ,
+        {{- "," -}}
         {{- if .FileInherit -}}
             {{- " # file_inherit" -}}
         {{- end -}}
         {{- if .NoNewPrivs -}}
             {{- " # no new privs" -}}
         {{- end -}}
-        {{ "\n" }}
     {{- end -}}
-    {{ "\n" }}
-{{- end -}}
 
-{{- if .Includes -}}
-    {{- range .Includes -}}
-        {{- if .IfExists -}}
-            {{ "include if exists " | indent }}
-            {{- if .IsMagic -}}
-                <{{ .Path }}>{{ "\n" }}
-            {{- else -}}
-                "{{ .Path }}"{{ "\n" }}
-            {{- end -}}
-        {{- end -}}
-    {{- end -}}
+    {{- "\n" -}}
+    {{- $oldtype = $type -}}
 {{- end -}}
 
 {{- "}\n" -}}
