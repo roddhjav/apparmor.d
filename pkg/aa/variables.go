@@ -12,17 +12,32 @@ import (
 	"strings"
 
 	"github.com/arduino/go-paths-helper"
+	"golang.org/x/exp/slices"
 )
 
 var (
 	regVariablesDef = regexp.MustCompile(`@{(.*)}\s*[+=]+\s*(.*)`)
 	regVariablesRef = regexp.MustCompile(`@{([^{}]+)}`)
 
+	// Default Apparmor magic directory: /etc/apparmor.d/.
+	MagicRoot = paths.New("/etc/apparmor.d")
+)
+
 type Variable struct {
 	Name   string
 	Values []string
 }
 
+func (r Variable) Less(other Variable) bool {
+	if r.Name == other.Name {
+		return len(r.Values) < len(other.Values)
+	}
+	return r.Name < other.Name
+}
+
+func (r Variable) Equals(other Variable) bool {
+	return r.Name == other.Name && slices.Equal(r.Values, other.Values)
+}
 
 // DefaultTunables return a minimal working profile to build the profile
 // It should not be used when loading file from /etc/apparmor.d

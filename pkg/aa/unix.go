@@ -31,3 +31,43 @@ func UnixFromLog(log map[string]string, noNewPrivs, fileInherit bool) ApparmorRu
 		PeerAddr:  log["peer_addr"],
 	}
 }
+
+func (r *Unix) Less(other any) bool {
+	o, _ := other.(*Unix)
+	if r.Qualifier.Equals(o.Qualifier) {
+		if r.Access == o.Access {
+			if r.Type == o.Type {
+				if r.Protocol == o.Protocol {
+					if r.Address == o.Address {
+						if r.Label == o.Label {
+							if r.Attr == o.Attr {
+								if r.Opt == o.Opt {
+									if r.Peer == o.Peer {
+										return r.PeerAddr < o.PeerAddr
+									}
+									return r.Peer < o.Peer
+								}
+								return r.Opt < o.Opt
+							}
+							return r.Attr < o.Attr
+						}
+						return r.Label < o.Label
+					}
+					return r.Address < o.Address
+				}
+				return r.Protocol < o.Protocol
+			}
+			return r.Type < o.Type
+		}
+		return r.Access < o.Access
+	}
+	return r.Qualifier.Less(o.Qualifier)
+}
+
+func (r *Unix) Equals(other any) bool {
+	o, _ := other.(*Unix)
+	return r.Access == o.Access && r.Type == o.Type &&
+		r.Protocol == o.Protocol && r.Address == o.Address &&
+		r.Label == o.Label && r.Attr == o.Attr && r.Opt == o.Opt &&
+		r.Peer == o.Peer && r.PeerAddr == o.PeerAddr && r.Qualifier.Equals(o.Qualifier)
+}

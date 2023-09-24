@@ -23,97 +23,22 @@ func NewQualifier(owner, noNewPrivs, fileInherit bool) Qualifier {
 	}
 }
 
-func NewCapability(log map[string]string, noNewPrivs, fileInherit bool) Capability {
-	return Capability{
-		Qualifier: NewQualifier(false, noNewPrivs, fileInherit),
-		Name:      log["capname"],
+func (r Qualifier) Less(other Qualifier) bool {
+	if r.Audit == other.Audit {
+		if r.AccessType == other.AccessType {
+			return r.Owner
+		}
+		return r.AccessType < other.AccessType
 	}
+	return r.Audit
 }
 
-func NewNetwork(log map[string]string, noNewPrivs, fileInherit bool) Network {
-	return Network{
-		Qualifier: NewQualifier(false, noNewPrivs, fileInherit),
-		AddressExpr: AddressExpr{
-			Source:      log["laddr"],
-			Destination: log["faddr"],
-			Port:        log["lport"],
-		},
-		Domain:   log["family"],
-		Type:     log["sock_type"],
-		Protocol: log["protocol"],
-	}
+func (r Qualifier) Equals(other Qualifier) bool {
+	return r.Audit == other.Audit && r.AccessType == other.AccessType &&
+		r.Owner == other.Owner && r.NoNewPrivs == other.NoNewPrivs &&
+		r.FileInherit == other.FileInherit
 }
 
-func NewFile(log map[string]string, noNewPrivs, fileInherit bool) File {
-	owner := false
-	if log["fsuid"] == log["ouid"] && log["OUID"] != "root" {
-		owner = true
-	}
-	return File{
-		Qualifier: NewQualifier(owner, noNewPrivs, fileInherit),
-		Path:      log["name"],
-		Access:    maskToAccess[log["requested_mask"]],
-		Target:    log["target"],
-	}
-}
-
-func NewSignal(log map[string]string, noNewPrivs, fileInherit bool) Signal {
-	return Signal{
-		Qualifier: NewQualifier(false, noNewPrivs, fileInherit),
-		Access:    maskToAccess[log["requested_mask"]],
-		Set:       log["signal"],
-		Peer:      log["peer"],
-	}
-}
-
-func NewPtrace(log map[string]string, noNewPrivs, fileInherit bool) Ptrace {
-	return Ptrace{
-		Qualifier: NewQualifier(false, noNewPrivs, fileInherit),
-		Access:    maskToAccess[log["requested_mask"]],
-		Peer:      log["peer"],
-	}
-}
-
-func NewUnix(log map[string]string, noNewPrivs, fileInherit bool) Unix {
-	return Unix{
-		Qualifier: NewQualifier(false, noNewPrivs, fileInherit),
-		Access:    maskToAccess[log["requested_mask"]],
-		Type:      log["sock_type"],
-		Protocol:  log["protocol"],
-		Address:   log["addr"],
-		Label:     log["peer_label"],
-		Attr:      log["attr"],
-		Opt:       log["opt"],
-		Peer:      log["peer"],
-		PeerAddr:  log["peer_addr"],
-	}
-}
-
-func NewMount(log map[string]string, noNewPrivs, fileInherit bool) Mount {
-	return Mount{
-		Qualifier: NewQualifier(false, noNewPrivs, fileInherit),
-		MountConditions: MountConditions{
-			Fs:      "",
-			Op:      "",
-			FsType:  log["fstype"],
-			Options: []string{},
-		},
-		Source:     log["srcname"],
-		MountPoint: log["name"],
-	}
-}
-
-func NewDbus(log map[string]string, noNewPrivs, fileInherit bool) Dbus {
-	return Dbus{
-		Qualifier: NewQualifier(false, noNewPrivs, fileInherit),
-		Access:    log["mask"],
-		Bus:       log["bus"],
-		Name:      log["name"],
-		Path:      log["path"],
-		Interface: log["interface"],
-		Member:    log["member"],
-		Label:     log["peer_label"],
-	}
 // Preamble specific rules
 
 type Abi struct {

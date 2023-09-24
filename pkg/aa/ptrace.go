@@ -18,3 +18,19 @@ func PtraceFromLog(log map[string]string, noNewPrivs, fileInherit bool) Apparmor
 	}
 }
 
+func (r *Ptrace) Less(other any) bool {
+	o, _ := other.(*Ptrace)
+	if r.Qualifier.Equals(o.Qualifier) {
+		if r.Access == o.Access {
+			return r.Peer == o.Peer
+		}
+		return r.Access < o.Access
+	}
+	return r.Qualifier.Less(o.Qualifier)
+}
+
+func (r *Ptrace) Equals(other any) bool {
+	o, _ := other.(*Ptrace)
+	return r.Access == o.Access && r.Peer == o.Peer &&
+		r.Qualifier.Equals(o.Qualifier)
+}

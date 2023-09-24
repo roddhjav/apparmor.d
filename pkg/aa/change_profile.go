@@ -17,3 +17,19 @@ func ChangeProfileFromLog(log map[string]string, noNewPrivs, fileInherit bool) A
 		ProfileName: log["name"],
 	}
 }
+
+func (r *ChangeProfile) Less(other any) bool {
+	o, _ := other.(*ChangeProfile)
+	if r.ExecMode == o.ExecMode {
+		if r.Exec == o.Exec {
+			return r.ProfileName < o.ProfileName
+		}
+		return r.Exec < o.Exec
+	}
+	return r.ExecMode < o.ExecMode
+}
+
+func (r *ChangeProfile) Equals(other any) bool {
+	o, _ := other.(*ChangeProfile)
+	return r.ExecMode == o.ExecMode && r.Exec == o.Exec && r.ProfileName == o.ProfileName
+}
