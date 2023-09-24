@@ -1,25 +1,172 @@
 // apparmor.d - Full set of apparmor profiles
-// Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+// Copyright (C) 2021-2023 Alexandre Pujol <alexandre@pujol.io>
 // SPDX-License-Identifier: GPL-2.0-only
 
 package aa
 
 import (
+	"reflect"
+	"strings"
 	"testing"
+
+	"github.com/arduino/go-paths-helper"
 )
+
+func readprofile(path string) string {
+	file := paths.New("../../").Join(path)
+	lines, err := file.ReadFileAsLines()
+	if err != nil {
+		panic(err)
+	}
+	res := ""
+	for _, line := range lines {
+		if strings.HasPrefix(line, "#") {
+			continue
+		}
+		res += line + "\n"
+	}
+	return res[:len(res)-1]
+}
 
 func TestAppArmorProfile_String(t *testing.T) {
 	tests := []struct {
 		name string
-		p    AppArmorProfile
+		p    *AppArmorProfile
 		want string
 	}{
 		{
 			name: "empty",
-			p:    AppArmorProfile{},
-			want: `profile  {
+			p:    &AppArmorProfile{},
+			want: `profile {
 }
 `,
+		},
+		{
+			name: "foo",
+			p: &AppArmorProfile{
+				Preamble: Preamble{
+					Abi: []Abi{
+						{
+							IsMagic: true,
+							Path:    "abi/4.0",
+						},
+					},
+					Includes: []Include{
+						{
+							IfExists: false,
+							IsMagic:  true,
+							Path:     "tunables/global",
+						},
+					},
+					Aliases: []Alias{
+						{
+							Path:          "/mnt/usr",
+							RewrittenPath: "/usr",
+						},
+					},
+					Variables: []Variable{
+						{
+							Name:   "exec_path",
+							Values: []string{"@{bin}/foo", "@{lib}/foo"},
+						},
+					},
+				},
+				Profile: Profile{
+					Name:        "foo",
+					Attachments: []string{"@{exec_path}"},
+					Attributes:  map[string]string{"security.tagged": "allowed"},
+					Flags:       []string{"complain", "attach_disconnected"},
+					Rules: []ApparmorRule{
+						&Include{
+							IfExists: false,
+							IsMagic:  true,
+							Path:     "abstractions/base",
+						},
+						&Include{
+							IfExists: false,
+							IsMagic:  true,
+							Path:     "abstractions/nameservice-strict",
+						},
+						&Rlimit{
+							Key:   "nproc",
+							Op:    "<=",
+							Value: "200",
+						},
+						&Capability{Name: "dac_read_search"},
+						&Capability{Name: "dac_override"},
+						&Network{
+							Domain: "inet",
+							Type:   "stream",
+						},
+						&Network{
+							Domain: "inet6",
+							Type:   "stream",
+						},
+						&Mount{
+							MountConditions: MountConditions{
+								FsType:  "fuse.portal",
+								Options: []string{"rw", "rbind"},
+							},
+							Source:     "@{run}/user/@{uid}/ ",
+							MountPoint: "/",
+						},
+						&Umount{
+							MountConditions: MountConditions{},
+							MountPoint:      "@{run}/user/@{uid}/",
+						},
+						&Signal{
+							Access: "receive",
+							Set:    "term",
+							Peer:   "at-spi-bus-launcher",
+						},
+
+						&Ptrace{
+							Access: "read",
+							Peer:   "nautilus",
+						},
+						&Unix{
+							Access:   "send receive",
+							Type:     "stream",
+							Address:  "@/tmp/.ICE-unix/1995",
+							Peer:     "gnome-shell",
+							PeerAddr: "none",
+						},
+						&Dbus{
+							Access: "bind",
+							Bus:    "session",
+							Name:   "org.gnome.*",
+						},
+						&Dbus{
+							Access:    "receive",
+							Bus:       "system",
+							Name:      ":1.3",
+							Path:      "/org/freedesktop/DBus",
+							Interface: "org.freedesktop.DBus",
+							Member:    "AddMatch",
+							Label:     "power-profiles-daemon",
+						},
+						&File{
+							Path:   "/opt/intel/oneapi/compiler/*/linux/lib/*.so./*",
+							Access: "rm",
+						},
+
+						&File{
+							Path:   "@{PROC}/@{pid}/task/@{tid}/comm",
+							Access: "rw",
+						},
+						&File{
+							Path:   "@{sys}/devices/pci[0-9]*/**/class",
+							Access: "r",
+						},
+						&Include{
+							IfExists: true,
+							IsMagic:  true,
+							Path:     "local/foo",
+						},
+					},
+				},
+			},
+			want: readprofile("tests/string.aa"),
 		},
 	}
 	for _, tt := range tests {
