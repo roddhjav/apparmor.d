@@ -60,8 +60,64 @@ var (
 		"x":            "rix",
 	}
 
+	// The order the apparmor rules should be sorted
+	ruleAlphabet = []string{
+		"include",
+		"rlimit",
+		"capability",
+		"network",
+		"mount",
+		"remount",
+		"umount",
+		"pivotroot",
+		"changeprofile",
+		"mqueue",
+		"signal",
+		"ptrace",
+		"unix",
+		"userns",
+		"iouring",
+		"dbus",
+		"file",
+		"include_local",
+	}
+	ruleWeights = map[string]int{}
+
+	// The order the apparmor file rules should be sorted
+	fileAlphabet = []string{
+		"@{exec_path}",        // 1. entry point
+		"@{bin}",              // 2.1 binaries
+		"@{lib}",              // 2.2 libraries
+		"/opt",                // 2.3 opt binaries & libraries
+		"/usr/share",          // 3. shared data
+		"/etc",                // 4. system configuration
+		"/",                   // 5.1 system data
+		"/var",                // 5.2 system data read/write data
+		"/boot",               // 5.3 boot files
+		"/home",               // 6.1 user data
+		"@{HOME}",             // 6.2 home files
+		"@{user_cache_dirs}",  // 7.1 user caches
+		"@{user_config_dirs}", // 7.2 user config
+		"@{user_share_dirs}",  // 7.3 user shared
+		"/tmp",                // 8.1 Temporary data
+		"@{run}",              // 8.2 Runtime data
+		"/dev/shm",            // 8.3 Shared memory
+		"@{sys}",              // 9. Sys files
+		"@{PROC}",             // 10. Proc files
+		"/dev",                // 11. Dev files
+		"deny",                // 12. Deny rules
+	}
+	fileWeights = map[string]int{}
 )
 
+func init() {
+	for i, r := range fileAlphabet {
+		fileWeights[r] = i
+	}
+	for i, r := range ruleAlphabet {
+		ruleWeights[r] = i
+	}
+}
 
 func join(i any) string {
 	switch reflect.TypeOf(i).Kind() {
