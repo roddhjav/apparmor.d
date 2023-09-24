@@ -78,6 +78,8 @@ func (p *AppArmorProfile) AddRule(log map[string]string) {
 			p.Flags = append(p.Flags, "mediate_deleted")
 		}
 	case "-13":
+		// FIXME: -13 can be a lot of things, not only attach_disconnected
+		// Eg: info="User namespace creation restricted"
 		if !slices.Contains(p.Flags, "attach_disconnected") {
 			p.Flags = append(p.Flags, "attach_disconnected")
 		}
@@ -86,28 +88,40 @@ func (p *AppArmorProfile) AddRule(log map[string]string) {
 
 	switch log["class"] {
 	case "cap":
-		p.Capability = append(p.Capability, NewCapability(log, noNewPrivs, fileInherit))
-	case "file":
-		p.File = append(p.File, NewFile(log, noNewPrivs, fileInherit))
+		p.Rules = append(p.Rules, CapabilityFromLog(log, noNewPrivs, fileInherit))
 	case "net":
 		if log["family"] == "unix" {
-			p.Unix = append(p.Unix, NewUnix(log, noNewPrivs, fileInherit))
+			p.Rules = append(p.Rules, UnixFromLog(log, noNewPrivs, fileInherit))
 		} else {
-			p.Network = append(p.Network, NewNetwork(log, noNewPrivs, fileInherit))
+			p.Rules = append(p.Rules, NetworkFromLog(log, noNewPrivs, fileInherit))
 		}
-	case "signal":
-		p.Signal = append(p.Signal, NewSignal(log, noNewPrivs, fileInherit))
-	case "ptrace":
-		p.Ptrace = append(p.Ptrace, NewPtrace(log, noNewPrivs, fileInherit))
-	case "unix":
-		p.Unix = append(p.Unix, NewUnix(log, noNewPrivs, fileInherit))
 	case "mount":
-		p.Mount = append(p.Mount, NewMount(log, noNewPrivs, fileInherit))
+		p.Rules = append(p.Rules, MountFromLog(log, noNewPrivs, fileInherit))
+	case "remount":
+		p.Rules = append(p.Rules, RemountFromLog(log, noNewPrivs, fileInherit))
+	case "umount":
+		p.Rules = append(p.Rules, UmountFromLog(log, noNewPrivs, fileInherit))
+	case "pivot_root":
+		p.Rules = append(p.Rules, PivotRootFromLog(log, noNewPrivs, fileInherit))
+	case "change_profile":
+		p.Rules = append(p.Rules, RemountFromLog(log, noNewPrivs, fileInherit))
+	case "mqueue":
+		p.Rules = append(p.Rules, MqueueFromLog(log, noNewPrivs, fileInherit))
+	case "signal":
+		p.Rules = append(p.Rules, SignalFromLog(log, noNewPrivs, fileInherit))
+	case "ptrace":
+		p.Rules = append(p.Rules, PtraceFromLog(log, noNewPrivs, fileInherit))
+	case "namespace":
+		p.Rules = append(p.Rules, UsernsFromLog(log, noNewPrivs, fileInherit))
+	case "unix":
+		p.Rules = append(p.Rules, UnixFromLog(log, noNewPrivs, fileInherit))
+	case "file":
+		p.Rules = append(p.Rules, FileFromLog(log, noNewPrivs, fileInherit))
 	default:
 		if strings.Contains(log["operation"], "dbus") {
-			p.Dbus = append(p.Dbus, NewDbus(log, noNewPrivs, fileInherit))
+			p.Rules = append(p.Rules, DbusFromLog(log, noNewPrivs, fileInherit))
 		} else if log["family"] == "unix" {
-			p.Unix = append(p.Unix, NewUnix(log, noNewPrivs, fileInherit))
+			p.Rules = append(p.Rules, UnixFromLog(log, noNewPrivs, fileInherit))
 		}
 	}
 }
