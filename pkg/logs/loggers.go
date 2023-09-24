@@ -5,13 +5,18 @@
 package logs
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
+
+	"github.com/roddhjav/apparmor.d/pkg/util"
 )
 
 // LogFiles is the list of default path to query
@@ -29,7 +34,7 @@ type systemdLog struct {
 func GetAuditLogs(path string) (io.Reader, error) {
 	file, err := os.Open(filepath.Clean(path))
 	if err != nil {
-		return nil, err
+		return file, err
 	}
 	return file, err
 }
@@ -86,4 +91,32 @@ func SelectLogFile(path string) string {
 		}
 	}
 	return ""
+}
+
+func Raw(file io.Reader, profile string) string {
+	res := ""
+	isAppArmorLog := isAppArmorLogTemplate.Copy()
+	if profile != "" {
+		exp := `apparmor=("DENIED"|"ALLOWED"|"AUDIT")`
+		exp = fmt.Sprintf(exp+`.* (profile="%s.*"|label="%s.*")`, profile, profile)
+		isAppArmorLog = regexp.MustCompile(exp)
+	}
+
+	// Select Apparmor logs
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if isAppArmorLog.MatchString(line) {
+			res += line + "\n"
+		}
+	}
+
+	// Clean & remove doublon in logs
+	for _, aa := range regCleanLogs {
+		res = aa.Regex.ReplaceAllLiteralString(res, aa.Repl)
+	}
+	logs := strings.Split(res, "\n")
+	logs = util.RemoveDuplicate(logs)
+
+	return strings.Join(logs, "\n")
 }

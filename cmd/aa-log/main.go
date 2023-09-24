@@ -29,6 +29,7 @@ Options:
     -f, --file FILE    Set a logfile or a suffix to the default log file.
     -s, --systemd      Parse systemd logs from journalctl.
     -r, --rules        Convert the log into AppArmor rules.
+    -R, --raw          Print the raw log without any formatting.
 
 `
 
@@ -38,6 +39,7 @@ var (
 	rules   bool
 	path    string
 	systemd bool
+	raw     bool
 )
 
 func aaLog(logger string, path string, profile string) error {
@@ -54,6 +56,11 @@ func aaLog(logger string, path string, profile string) error {
 	}
 	if err != nil {
 		return err
+	}
+
+	if raw {
+		fmt.Print(logs.Raw(file, profile))
+		return nil
 	}
 
 	aaLogs := logs.NewApparmorLogs(file, profile)
@@ -77,6 +84,8 @@ func init() {
 	flag.BoolVar(&systemd, "systemd", false, "Parse systemd logs from journalctl.")
 	flag.BoolVar(&rules, "r", false, "Convert the log into AppArmor rules.")
 	flag.BoolVar(&rules, "rules", false, "Convert the log into AppArmor rules.")
+	flag.BoolVar(&raw, "R", false, "Print the raw log without any formatting.")
+	flag.BoolVar(&raw, "raw", false, "Print the raw log without any formatting.")
 }
 
 func main() {

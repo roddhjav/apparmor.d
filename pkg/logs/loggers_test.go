@@ -78,7 +78,7 @@ func TestSelectLogFile(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := SelectLogFile(tt.path); got != tt.want {
-				t.Errorf("getLogFile() = %v, want %v", got, tt.want)
+				t.Errorf("SelectLogFile() = %v, want %v", got, tt.want)
 			}
 		})
 	}
