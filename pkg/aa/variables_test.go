@@ -76,6 +76,15 @@ func TestAppArmorProfile_ParseVariables(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "snapd",
+			content: `@{lib_dirs} = @{lib}/ /snap/snapd/@{int}@{lib}
+			@{exec_path} = @{lib_dirs}/snapd/snapd`,
+			want: []Variable{
+				{"lib_dirs", []string{"@{lib}/", "/snap/snapd/@{int}@{lib}"}},
+				{"exec_path", []string{"@{lib_dirs}/snapd/snapd"}},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -132,9 +141,9 @@ func TestAppArmorProfile_ResolveAttachments(t *testing.T) {
 		{
 			name: "chromium",
 			variables: []Variable{
-				{"chromium_name", []string{"chromium"}},
-				{"chromium_lib_dirs", []string{"/{usr/,}lib/@{chromium_name}"}},
-				{"exec_path", []string{"@{chromium_lib_dirs}/@{chromium_name}"}},
+				{"name", []string{"chromium"}},
+				{"lib_dirs", []string{"/{usr/,}lib/@{name}"}},
+				{"exec_path", []string{"@{lib_dirs}/@{name}"}},
 			},
 			want: []string{
 				"/{usr/,}lib/chromium/chromium",
@@ -155,9 +164,9 @@ func TestAppArmorProfile_ResolveAttachments(t *testing.T) {
 			name: "opera",
 			variables: []Variable{
 				{"multiarch", []string{"*-linux-gnu*"}},
-				{"chromium_name", []string{"opera{,-beta,-developer}"}},
-				{"chromium_lib_dirs", []string{"/{usr/,}lib/@{multiarch}/@{chromium_name}"}},
-				{"exec_path", []string{"@{chromium_lib_dirs}/@{chromium_name}"}},
+				{"name", []string{"opera{,-beta,-developer}"}},
+				{"lib_dirs", []string{"/{usr/,}lib/@{multiarch}/@{name}"}},
+				{"exec_path", []string{"@{lib_dirs}/@{name}"}},
 			},
 			want: []string{
 				"/{usr/,}lib/*-linux-gnu*/opera{,-beta,-developer}/opera{,-beta,-developer}",
