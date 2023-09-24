@@ -1,11 +1,13 @@
 // apparmor.d - Full set of apparmor profiles
-// Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+// Copyright (C) 2021-2023 Alexandre Pujol <alexandre@pujol.io>
 // SPDX-License-Identifier: GPL-2.0-only
 
 package aa
 
 import (
 	"bytes"
+	"reflect"
+	"sort"
 	"strings"
 
 	"golang.org/x/exp/slices"
@@ -126,3 +128,44 @@ func (p *AppArmorProfile) AddRule(log map[string]string) {
 	}
 }
 
+func typeToValue(i reflect.Type) string {
+	return strings.ToLower(strings.TrimPrefix(i.String(), "*aa."))
+}
+
+// Sort the rules in the profile
+func (p *AppArmorProfile) Sort() {
+	sort.Slice(p.Rules, func(i, j int) bool {
+		typeOfI := reflect.TypeOf(p.Rules[i])
+		typeOfJ := reflect.TypeOf(p.Rules[j])
+		if typeOfI != typeOfJ {
+			valueOfI := typeToValue(typeOfI)
+			valueOfJ := typeToValue(typeOfJ)
+			return ruleWeights[valueOfI] < ruleWeights[valueOfJ]
+		}
+		return p.Rules[i].Less(p.Rules[j])
+	})
+}
+
+// MergeRules merge similar rules together
+// Steps:
+//   - Remove identical rules
+//   - Merge rule access. Eg: for same path, 'r' and 'w' becomes 'rw'
+//
+// Note: logs.regCleanLogs helps a lot to do a first cleaning
+func (p *AppArmorProfile) MergeRules() {
+	for i := 0; i < len(p.Rules); i++ {
+		for j := i + 1; j < len(p.Rules); j++ {
+			typeOfI := reflect.TypeOf(p.Rules[i])
+			typeOfJ := reflect.TypeOf(p.Rules[j])
+			if typeOfI != typeOfJ {
+				continue
+			}
+
+			// If rules are identical, merge them
+			if p.Rules[i].Equals(p.Rules[j]) {
+				p.Rules = append(p.Rules[:j], p.Rules[j+1:]...)
+				j--
+			}
+		}
+	}
+}
