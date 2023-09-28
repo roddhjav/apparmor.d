@@ -15,7 +15,7 @@ import (
 const indentation = "  "
 
 var (
-	//go:embed template.j2
+	//go:embed templates/profile.j2
 	tmplFileAppArmorProfile string
 
 	// tmplFunctionMap is the list of function available in the template
