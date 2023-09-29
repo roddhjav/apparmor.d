@@ -18,6 +18,7 @@ profile cockpit-bridge @{exec_path} {
   capability dac_read_search,
   capability net_admin,
   capability sys_nice,
+  capability sys_ptrace,
 
   network inet dgram,
   network inet stream,
@@ -55,9 +56,12 @@ profile cockpit-bridge @{exec_path} {
   @{run}/user/@{uid}/ssh-agent.[0-9A-Z]* rw,
   @{run}/utmp r,
 
+  @{sys}/class/hwmon/ r,
   @{sys}/devices/**/hwmon@{int}/ r,
   @{sys}/devices/**/hwmon@{int}/{name,temp*} r,
-  @{sys}/fs/cgroup/*.slice/**/memory* r,
+  @{sys}/fs/cgroup/**/ r,
+  @{sys}/fs/cgroup/**/cpu.{stat,weight} r,
+  @{sys}/fs/cgroup/**/memory* r,
 
         @{PROC}/ r,
         @{PROC}/@{pids}/cgroup r,
@@ -68,6 +72,7 @@ profile cockpit-bridge @{exec_path} {
         @{PROC}/diskstats r,
         @{PROC}/loadavg r,
         @{PROC}/uptime r,
+  owner @{PROC}/@{pid}/cmdline r,
   owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/mounts r,
 
