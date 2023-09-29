@@ -15,14 +15,8 @@ var (
 		"profile":    "pkexec",
 		"comm":       "pkexec",
 	}
-	capability1 = &Capability{
-		Qualifier: Qualifier{},
-		Name:      "net_admin",
-	}
-	capability2 = &Capability{
-		Qualifier: Qualifier{},
-		Name:      "sys_ptrace",
-	}
+	capability1 = &Capability{Name: "net_admin"}
+	capability2 = &Capability{Name: "sys_ptrace"}
 
 	// Network
 	network1Log = map[string]string{
@@ -38,18 +32,13 @@ var (
 		"comm":           "sddm-greeter",
 	}
 	network1 = &Network{
-		Qualifier:   Qualifier{},
-		Domain:      "netlink",
-		Type:        "raw",
-		Protocol:    "15",
-		AddressExpr: AddressExpr{},
+		Domain:   "netlink",
+		Type:     "raw",
+		Protocol: "15",
 	}
 	network2 = &Network{
-		Qualifier:   Qualifier{},
-		Domain:      "inet",
-		Type:        "dgram",
-		Protocol:    "",
-		AddressExpr: AddressExpr{},
+		Domain: "inet",
+		Type:   "dgram",
 	}
 
 	// Mount
@@ -69,7 +58,7 @@ var (
 		"apparmor":  "ALLOWED",
 		"class":     "mount",
 		"operation": "mount",
-		"info":      "failed perms check",
+		"info":      "failed perms check", // TODO: not attach_disconnected
 		"error":     "-13",
 		"profile":   "dockerd",
 		"name":      "/var/lib/docker/overlay2/metacopy-check906831159/merged/",
@@ -78,26 +67,14 @@ var (
 		"srcname":   "overlay",
 	}
 	mount1 = &Mount{
-		Qualifier: Qualifier{},
-		MountConditions: MountConditions{
-			Fs:      "",
-			Op:      "",
-			FsType:  "overlay",
-			Options: []string{},
-		},
-		Source:     "overlay",
-		MountPoint: "/var/lib/docker/overlay2/opaque-bug-check1209538631/merged/",
+		MountConditions: MountConditions{FsType: "overlay", Options: []string{}},
+		Source:          "overlay",
+		MountPoint:      "/var/lib/docker/overlay2/opaque-bug-check1209538631/merged/",
 	}
 	mount2 = &Mount{
-		Qualifier: Qualifier{},
-		MountConditions: MountConditions{
-			Fs:      "",
-			Op:      "",
-			FsType:  "overlay",
-			Options: []string{},
-		},
-		Source:     "overlay",
-		MountPoint: "/var/lib/docker/overlay2/metacopy-check906831159/merged/",
+		MountConditions: MountConditions{FsType: "overlay", Options: []string{}},
+		Source:          "overlay",
+		MountPoint:      "/var/lib/docker/overlay2/metacopy-check906831159/merged/",
 	}
 
 	// Signal
@@ -113,16 +90,14 @@ var (
 		"peer":           "firefox//&firejail-default",
 	}
 	signal1 = &Signal{
-		Qualifier: Qualifier{},
-		Access:    "receive",
-		Set:       "kill",
-		Peer:      "firefox//&firejail-default",
+		Access: "receive",
+		Set:    "kill",
+		Peer:   "firefox//&firejail-default",
 	}
 	signal2 = &Signal{
-		Qualifier: Qualifier{},
-		Access:    "receive",
-		Set:       "up",
-		Peer:      "firefox//&firejail-default",
+		Access: "receive",
+		Set:    "up",
+		Peer:   "firefox//&firejail-default",
 	}
 
 	// Ptrace
