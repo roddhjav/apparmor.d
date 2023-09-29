@@ -11,9 +11,9 @@ type PivotRoot struct {
 	TargetProfile string
 }
 
-func PivotRootFromLog(log map[string]string, noNewPrivs, fileInherit bool) ApparmorRule {
+func PivotRootFromLog(log map[string]string) ApparmorRule {
 	return &PivotRoot{
-		Qualifier:     NewQualifier(false, noNewPrivs, fileInherit),
+		Qualifier:     NewQualifierFromLog(log),
 		OldRoot:       log["oldroot"],
 		NewRoot:       log["root"],
 		TargetProfile: log["name"],

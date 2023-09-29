@@ -10,7 +10,7 @@ type ChangeProfile struct {
 	ProfileName string
 }
 
-func ChangeProfileFromLog(log map[string]string, noNewPrivs, fileInherit bool) ApparmorRule {
+func ChangeProfileFromLog(log map[string]string) ApparmorRule {
 	return &ChangeProfile{
 		ExecMode:    log["mode"],
 		Exec:        log["exec"],

@@ -11,9 +11,9 @@ type Signal struct {
 	Peer   string
 }
 
-func SignalFromLog(log map[string]string, noNewPrivs, fileInherit bool) ApparmorRule {
+func SignalFromLog(log map[string]string) ApparmorRule {
 	return &Signal{
-		Qualifier: NewQualifier(false, noNewPrivs, fileInherit),
+		Qualifier: NewQualifierFromLog(log),
 		Access:    maskToAccess[log["requested_mask"]],
 		Set:       log["signal"],
 		Peer:      log["peer"],

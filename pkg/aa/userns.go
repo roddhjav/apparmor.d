@@ -9,9 +9,9 @@ type Userns struct {
 	Create bool
 }
 
-func UsernsFromLog(log map[string]string, noNewPrivs, fileInherit bool) ApparmorRule {
+func UsernsFromLog(log map[string]string) ApparmorRule {
 	return &Userns{
-		Qualifier: NewQualifier(false, noNewPrivs, fileInherit),
+		Qualifier: NewQualifierFromLog(log),
 		Create:    true,
 	}
 }

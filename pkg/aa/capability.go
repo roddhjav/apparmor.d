@@ -9,9 +9,9 @@ type Capability struct {
 	Name string
 }
 
-func CapabilityFromLog(log map[string]string, noNewPrivs, fileInherit bool) ApparmorRule {
+func CapabilityFromLog(log map[string]string) ApparmorRule {
 	return &Capability{
-		Qualifier: NewQualifier(false, noNewPrivs, fileInherit),
+		Qualifier: NewQualifierFromLog(log),
 		Name:      log["capname"],
 	}
 }

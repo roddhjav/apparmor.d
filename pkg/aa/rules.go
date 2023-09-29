@@ -13,7 +13,24 @@ type Qualifier struct {
 	FileInherit bool
 }
 
-func NewQualifier(owner, noNewPrivs, fileInherit bool) Qualifier {
+func NewQualifierFromLog(log map[string]string) Qualifier {
+	owner := false
+	fsuid, hasFsUID := log["fsuid"]
+	ouid, hasOuUID := log["ouid"]
+	OUID, hasOUID := log["OUID"]
+	isDbus := strings.Contains(log["operation"], "dbus")
+	if hasFsUID && hasOuUID && hasOUID && fsuid == ouid && OUID != "root" && !isDbus {
+		owner = true
+	}
+
+	fileInherit := false
+	if log["operation"] == "file_inherit" {
+		fileInherit = true
+	}
+	noNewPrivs := false
+	if log["error"] == "-1" {
+		noNewPrivs = true
+	}
 	return Qualifier{
 		Audit:       false,
 		AccessType:  "",

@@ -12,7 +12,7 @@ import (
 func TestRule_FromLog(t *testing.T) {
 	tests := []struct {
 		name    string
-		fromLog func(map[string]string, bool, bool) ApparmorRule
+		fromLog func(map[string]string) ApparmorRule
 		log     map[string]string
 		want    ApparmorRule
 	}{
@@ -73,7 +73,7 @@ func TestRule_FromLog(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.fromLog(tt.log, false, false); !reflect.DeepEqual(got, tt.want) {
+			if got := tt.fromLog(tt.log); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("RuleFromLog() = %v, want %v", got, tt.want)
 			}
 		})

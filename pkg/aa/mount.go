@@ -38,9 +38,9 @@ type Mount struct {
 	MountPoint string
 }
 
-func MountFromLog(log map[string]string, noNewPrivs, fileInherit bool) ApparmorRule {
+func MountFromLog(log map[string]string) ApparmorRule {
 	return &Mount{
-		Qualifier: NewQualifier(false, noNewPrivs, fileInherit),
+		Qualifier: NewQualifierFromLog(log),
 		MountConditions: MountConditions{
 			Fs:      "",
 			Op:      "",
@@ -79,9 +79,9 @@ type Umount struct {
 	MountPoint string
 }
 
-func UmountFromLog(log map[string]string, noNewPrivs, fileInherit bool) ApparmorRule {
+func UmountFromLog(log map[string]string) ApparmorRule {
 	return &Umount{
-		Qualifier: NewQualifier(false, noNewPrivs, fileInherit),
+		Qualifier: NewQualifierFromLog(log),
 		MountConditions: MountConditions{
 			Fs:      "",
 			Op:      "",
@@ -116,9 +116,9 @@ type Remount struct {
 	MountPoint string
 }
 
-func RemountFromLog(log map[string]string, noNewPrivs, fileInherit bool) ApparmorRule {
+func RemountFromLog(log map[string]string) ApparmorRule {
 	return &Remount{
-		Qualifier: NewQualifier(false, noNewPrivs, fileInherit),
+		Qualifier: NewQualifierFromLog(log),
 		MountConditions: MountConditions{
 			Fs:      "",
 			Op:      "",
