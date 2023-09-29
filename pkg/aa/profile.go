@@ -92,11 +92,7 @@ func (p *AppArmorProfile) AddRule(log map[string]string) {
 	case "cap":
 		p.Rules = append(p.Rules, CapabilityFromLog(log, noNewPrivs, fileInherit))
 	case "net":
-		if log["family"] == "unix" {
-			p.Rules = append(p.Rules, UnixFromLog(log, noNewPrivs, fileInherit))
-		} else {
-			p.Rules = append(p.Rules, NetworkFromLog(log, noNewPrivs, fileInherit))
-		}
+		p.Rules = append(p.Rules, NetworkFromLog(log, noNewPrivs, fileInherit))
 	case "mount":
 		p.Rules = append(p.Rules, MountFromLog(log, noNewPrivs, fileInherit))
 	case "remount":
