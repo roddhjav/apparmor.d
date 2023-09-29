@@ -6,30 +6,38 @@ abi <abi/3.0>,
 
 include <tunables/global>
 
-@{exec_path} = @{lib}/baloorunner
-profile baloorunner @{exec_path} {
+@{exec_path} = @{bin}/plasma-browser-integration-host
+profile plasma-browser-integration-host @{exec_path} {
   include <abstractions/base>
   include <abstractions/dri-common>
   include <abstractions/dri-enumerate>
   include <abstractions/freedesktop.org>
   include <abstractions/mesa>
-  include <abstractions/nameservice-strict>
   include <abstractions/qt5>
   include <abstractions/vulkan>
+  include <abstractions/nameservice-strict>
+
+  capability sys_ptrace,
+
+  ptrace (read) peer={chromium,brave,chrome,opera},
 
   @{exec_path} mr,
 
+  /usr/share/kservices5/{,**} r,
+
+  owner @{user_cache_dirs}/ksycoca5_* r,
   owner @{user_cache_dirs}/icon-cache.kcache rw,
 
-  owner @{user_config_dirs}/baloofilerc r,
+  owner @{user_config_dirs}/ r,
+  owner @{user_config_dirs}/kdedefaults/ r,
   owner @{user_config_dirs}/kdedefaults/kdeglobals r,
   owner @{user_config_dirs}/kdedefaults/kwinrc r,
   owner @{user_config_dirs}/kdeglobals r,
   owner @{user_config_dirs}/kwinrc r,
 
-  owner @{user_share_dirs}/baloo/{,**} rwk,
+        @{PROC}/sys/kernel/core_pattern r,
+  owner @{PROC}/@{pid}/cmdline r,
+  owner @{PROC}/@{pid}/stat r,
 
-  @{PROC}/sys/kernel/core_pattern r,
-
-  include if exists <local/baloorunner>
+  include if exists <local/plasma-browser-integration-host>
 }
