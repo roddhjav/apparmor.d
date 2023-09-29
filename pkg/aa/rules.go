@@ -4,6 +4,8 @@
 
 package aa
 
+import "strings"
+
 // Qualifier to apply extra settings to a rule
 type Qualifier struct {
 	Audit       bool
