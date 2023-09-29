@@ -15,15 +15,7 @@
 {{ end -}}
 
 {{- range .Includes -}}
-    {{- "include " -}}
-    {{- if .IfExists -}}
-        {{- "if exists " -}} 
-    {{- end -}}
-    {{- if .IsMagic -}}
-        {{ "<" }}{{ .Path }}{{ ">,\n" }}
-    {{- else -}}
-         {{ "\"" }}{{ .Path }}{{ "\",\n" }}
-    {{- end }}
+    {{ template "include" . }}{{ "\n" }}
 {{ end -}}
 
 {{- range .Variables -}}
@@ -57,15 +49,7 @@
     {{- indent "" -}}
 
     {{- if eq $type "Include" -}}
-        {{- "include " -}}
-        {{- if .IfExists -}}
-            {{ "if exists " }}
-        {{- end -}}
-        {{- if .IsMagic -}}
-            {{ "<" }}{{ .Path }}{{ ">" }}
-        {{- else -}}
-            {{ "\"" }}{{ .Path }}{{ "\"" }}
-        {{- end -}}
+        {{ template "include" . }}
     {{- end -}}
 
     {{- if eq $type "Rlimit" -}}
@@ -73,10 +57,11 @@
     {{- end -}}
 
     {{- if eq $type "Capability" -}}
-        {{ "capability "  }}{{ .Name }}{{ "," }}
+        {{ template "qualifier" . }}{{ "capability " }}{{ .Name }}{{ "," }}{{ template "comments" . }}
     {{- end -}}
 
     {{- if eq $type "Network" -}}
+        {{- template "qualifier" . -}}
         {{ "network" }}
         {{- with .Domain -}}
             {{ " " }}{{ . }}
@@ -89,9 +74,11 @@
             {{- end -}}
         {{- end -}}
         {{- "," -}}
+        {{- template "comments" . -}}
     {{- end -}}
 
     {{- if eq $type "Mount" -}}
+        {{- template "qualifier" . -}}
         {{- "mount" -}}
         {{- with .FsType -}}
             {{ " fstype=" }}{{ . }}
@@ -106,9 +93,11 @@
             {{ " -> " }}{{ . }}
         {{- end -}}
         {{- "," -}}
+        {{- template "comments" . -}}
     {{- end -}}
 
     {{- if eq $type "Umount" -}}
+        {{- template "qualifier" . -}}
         {{- "umount" -}}
         {{- with .FsType -}}
             {{ " fstype=" }}{{ . }}
@@ -120,9 +109,11 @@
             {{ " " }}{{ . }}
         {{- end -}}
         {{- "," -}}
+        {{- template "comments" . -}}
     {{- end -}}
 
     {{- if eq $type "Remount" -}}
+        {{- template "qualifier" . -}}
         {{- "remount" -}}
         {{- with .FsType -}}
             {{ " fstype=" }}{{ . }}
@@ -134,9 +125,11 @@
             {{ " " }}{{ . }}
         {{- end -}}
         {{- "," -}}
+        {{- template "comments" . -}}
     {{- end -}}
 
     {{- if eq $type "Unix" -}}
+        {{- template "qualifier" . -}}
         {{- "unix" -}}
         {{- with .Access -}}
             {{ " (" }}{{ . }}{{ ")" }}
@@ -155,9 +148,11 @@
             {{- ")" -}}
         {{- end -}}
         {{- "," -}}
+        {{- template "comments" . -}}
     {{- end -}}
 
     {{- if eq $type "Ptrace" -}}
+        {{- template "qualifier" . -}}
         {{- "ptrace" -}}
         {{- with .Access -}}
             {{ " (" }}{{ . }}{{ ")" }}
@@ -166,9 +161,11 @@
             {{ " peer=" }}{{ . }}
         {{- end -}}
         {{- "," -}}
+        {{- template "comments" . -}}
     {{- end -}}
 
     {{- if eq $type "Signal" -}}
+        {{- template "qualifier" . -}}
         {{- "signal" -}}
         {{- with .Access -}}
             {{ " (" }}{{ . }}{{ ")" }}
@@ -180,9 +177,11 @@
             {{ " peer=" }}{{ . }}
         {{- end -}}
         {{- "," -}}
+        {{- template "comments" . -}}
     {{- end -}}
 
     {{- if eq $type "Dbus" -}}
+        {{- template "qualifier" . -}}
         {{- "dbus" -}}
         {{- if eq .Access "bind" -}}
             {{ " bind bus=" }}{{ .Bus }}{{ " name=" }}{{ .Name }}
@@ -213,23 +212,17 @@
             {{- end -}}
         {{- end -}}
         {{- "," -}}
+        {{- template "comments" . -}}
     {{- end -}}
 
     {{- if eq $type "File" -}}
-        {{- if .Owner -}}
-            {{- "owner " -}}
-        {{- end -}}
+        {{- template "qualifier" . -}}
         {{ .Path }}{{ " " }}{{ .Access }}
         {{- with .Target -}}
             {{ " -> " }}{{ . }}
         {{- end -}}
         {{- "," -}}
-        {{- if .FileInherit -}}
-            {{- " # file_inherit" -}}
-        {{- end -}}
-        {{- if .NoNewPrivs -}}
-            {{- " # no new privs" -}}
-        {{- end -}}
+        {{- template "comments" . -}}
     {{- end -}}
 
     {{- "\n" -}}
