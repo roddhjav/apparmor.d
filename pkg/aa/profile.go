@@ -128,6 +128,12 @@ func (p *AppArmorProfile) Sort() {
 		if typeOfI != typeOfJ {
 			valueOfI := typeToValue(typeOfI)
 			valueOfJ := typeToValue(typeOfJ)
+			if typeOfI == reflect.TypeOf((*Include)(nil)) && p.Rules[i].(*Include).IfExists {
+				valueOfI = "include_if_exists"
+			}
+			if typeOfJ == reflect.TypeOf((*Include)(nil)) && p.Rules[j].(*Include).IfExists {
+				valueOfJ = "include_if_exists"
+			}
 			return ruleWeights[valueOfI] < ruleWeights[valueOfJ]
 		}
 		return p.Rules[i].Less(p.Rules[j])
