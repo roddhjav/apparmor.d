@@ -5,7 +5,7 @@
 package aa
 
 import (
-	_ "embed"
+	"embed"
 	"reflect"
 	"strings"
 	"text/template"
@@ -15,10 +15,10 @@ import (
 const indentation = "  "
 
 var (
-	//go:embed templates/profile.j2
-	tmplFileAppArmorProfile string
+	//go:embed templates/*.j2
+	tmplFiles embed.FS
 
-	// tmplFunctionMap is the list of function available in the template
+	// The functions available in the template
 	tmplFunctionMap = template.FuncMap{
 		"typeof":     typeOf,
 		"join":       join,
@@ -27,8 +27,7 @@ var (
 	}
 
 	// The apparmor profile template
-	tmplAppArmorProfile = template.Must(template.New("profile").
-				Funcs(tmplFunctionMap).Parse(tmplFileAppArmorProfile))
+	tmplAppArmorProfile = generateTemplate()
 
 	// convert apparmor requested mask to apparmor access mode
 	// TODO: Should be a map of slice, not exhausive yet
@@ -109,6 +108,12 @@ var (
 	}
 	fileWeights = map[string]int{}
 )
+
+func generateTemplate() *template.Template {
+	res := template.New("profile.j2").Funcs(tmplFunctionMap)
+	res = template.Must(res.ParseFS(tmplFiles, "templates/*.j2"))
+	return res
+}
 
 func init() {
 	for i, r := range fileAlphabet {
