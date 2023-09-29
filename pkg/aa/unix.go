@@ -17,9 +17,9 @@ type Unix struct {
 	PeerAddr string
 }
 
-func UnixFromLog(log map[string]string, noNewPrivs, fileInherit bool) ApparmorRule {
+func UnixFromLog(log map[string]string) ApparmorRule {
 	return &Unix{
-		Qualifier: NewQualifier(false, noNewPrivs, fileInherit),
+		Qualifier: NewQualifierFromLog(log),
 		Access:    maskToAccess[log["requested_mask"]],
 		Type:      log["sock_type"],
 		Protocol:  log["protocol"],

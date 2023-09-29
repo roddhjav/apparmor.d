@@ -33,9 +33,9 @@ type Network struct {
 	AddressExpr
 }
 
-func NetworkFromLog(log map[string]string, noNewPrivs, fileInherit bool) ApparmorRule {
+func NetworkFromLog(log map[string]string) ApparmorRule {
 	return &Network{
-		Qualifier: NewQualifier(false, noNewPrivs, fileInherit),
+		Qualifier: NewQualifierFromLog(log),
 		AddressExpr: AddressExpr{
 			Source:      log["laddr"],
 			Destination: log["faddr"],

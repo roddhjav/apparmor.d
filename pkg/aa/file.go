@@ -11,13 +11,9 @@ type File struct {
 	Target string
 }
 
-func FileFromLog(log map[string]string, noNewPrivs, fileInherit bool) ApparmorRule {
-	owner := false
-	if log["fsuid"] == log["ouid"] && log["OUID"] != "root" {
-		owner = true
-	}
+func FileFromLog(log map[string]string) ApparmorRule {
 	return &File{
-		Qualifier: NewQualifier(owner, noNewPrivs, fileInherit),
+		Qualifier: NewQualifierFromLog(log),
 		Path:      log["name"],
 		Access:    maskToAccess[log["requested_mask"]],
 		Target:    log["target"],

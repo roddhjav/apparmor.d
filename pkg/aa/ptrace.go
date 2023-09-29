@@ -10,9 +10,9 @@ type Ptrace struct {
 	Peer   string
 }
 
-func PtraceFromLog(log map[string]string, noNewPrivs, fileInherit bool) ApparmorRule {
+func PtraceFromLog(log map[string]string) ApparmorRule {
 	return &Ptrace{
-		Qualifier: NewQualifier(false, noNewPrivs, fileInherit),
+		Qualifier: NewQualifierFromLog(log),
 		Access:    maskToAccess[log["requested_mask"]],
 		Peer:      log["peer"],
 	}

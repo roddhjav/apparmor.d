@@ -11,9 +11,9 @@ type Mqueue struct {
 	Label  string
 }
 
-func MqueueFromLog(log map[string]string, noNewPrivs, fileInherit bool) ApparmorRule {
+func MqueueFromLog(log map[string]string) ApparmorRule {
 	return &Mqueue{
-		Qualifier: NewQualifier(false, noNewPrivs, fileInherit),
+		Qualifier: NewQualifierFromLog(log),
 		Access:    maskToAccess[log["requested_mask"]],
 		Type:      log["type"],
 		Label:     log["label"],

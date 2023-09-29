@@ -15,9 +15,9 @@ type Dbus struct {
 	Label     string
 }
 
-func DbusFromLog(log map[string]string, noNewPrivs, fileInherit bool) ApparmorRule {
+func DbusFromLog(log map[string]string) ApparmorRule {
 	return &Dbus{
-		Qualifier: NewQualifier(false, noNewPrivs, fileInherit),
+		Qualifier: NewQualifierFromLog(log),
 		Access:    log["mask"],
 		Bus:       log["bus"],
 		Name:      log["name"],
