@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/roddhjav/apparmor.d/pkg/aa"
+	"github.com/roddhjav/apparmor.d/pkg/util"
 	"golang.org/x/exp/slices"
 )
 
@@ -21,6 +22,12 @@ var (
 	regAttachments   = regexp.MustCompile(`(profile .* @{exec_path})`)
 	regFlags         = regexp.MustCompile(`flags=\(([^)]+)\)`)
 	regProfileHeader = regexp.MustCompile(` {`)
+	regAbi4To3       = util.ToRegexRepl([]string{
+		`abi/4.0`, `abi/3.0`,
+		`(?m)^.*mqueue.*$`, ``,
+		`(?m)^.*userns.*$`, ``,
+		`(?m)^.*io_uring.*$`, ``,
+	})
 )
 
 type BuildFunc func(string) string
@@ -76,6 +83,13 @@ func BuildUserspace(profile string) string {
 	if len(matches) > 0 {
 		strheader := strings.Replace(matches[0], "@{exec_path}", att, -1)
 		return regAttachments.ReplaceAllLiteralString(profile, strheader)
+	}
+	return profile
+}
+
+func BuildABI3(profile string) string {
+	for _, abi4t3 := range regAbi4To3 {
+		profile = abi4t3.Regex.ReplaceAllLiteralString(profile, abi4t3.Repl)
 	}
 	return profile
 }
