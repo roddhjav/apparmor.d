@@ -159,7 +159,7 @@ var (
 	// Unix
 	unix1Log = map[string]string{
 		"apparmor":       "ALLOWED",
-		"class":          "net",
+		"class":          "unix",
 		"family":         "unix",
 		"operation":      "file_perm",
 		"profile":        "gsettings",
