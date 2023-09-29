@@ -53,9 +53,8 @@ func TestAppArmorProfile_String(t *testing.T) {
 					},
 					Includes: []Include{
 						{
-							IfExists: false,
-							IsMagic:  true,
-							Path:     "tunables/global",
+							IsMagic: true,
+							Path:    "tunables/global",
 						},
 					},
 					Aliases: []Alias{
@@ -78,14 +77,12 @@ func TestAppArmorProfile_String(t *testing.T) {
 					Flags:       []string{"complain", "attach_disconnected"},
 					Rules: []ApparmorRule{
 						&Include{
-							IfExists: false,
-							IsMagic:  true,
-							Path:     "abstractions/base",
+							IsMagic: true,
+							Path:    "abstractions/base",
 						},
 						&Include{
-							IfExists: false,
-							IsMagic:  true,
-							Path:     "abstractions/nameservice-strict",
+							IsMagic: true,
+							Path:    "abstractions/nameservice-strict",
 						},
 						&Rlimit{
 							Key:   "nproc",
