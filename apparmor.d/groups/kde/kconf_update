@@ -9,15 +9,19 @@ include <tunables/global>
 @{exec_path} = @{lib}/kf5/kconf_update
 profile kconf_update @{exec_path} {
   include <abstractions/base>
+  include <abstractions/dconf-write>
   include <abstractions/dri-common>
   include <abstractions/dri-enumerate>
   include <abstractions/fonts>
   include <abstractions/freedesktop.org>
+  include <abstractions/gtk>
   include <abstractions/mesa>
   include <abstractions/perl>
   include <abstractions/python>
   include <abstractions/qt5>
   include <abstractions/vulkan>
+
+  ptrace (read),
 
   @{exec_path} mr,
 
@@ -38,7 +42,9 @@ profile kconf_update @{exec_path} {
   /etc/machine-id r,
   /etc/xdg/kdeglobals r,
   /etc/xdg/konsolerc r,
-  
+  /etc/xdg/ui/ui_standards.rc r,
+
+
   owner @{user_cache_dirs}/icon-cache.kcache rw,
 
   owner @{user_config_dirs}/#@{int} rw,
@@ -78,6 +84,10 @@ profile kconf_update @{exec_path} {
   owner @{user_config_dirs}/kxkbrc.lock rwk,
   owner @{user_config_dirs}/kxkbrc{,.@{rand6}} rwl -> @{user_config_dirs}/#@{int},
   owner @{user_config_dirs}/plasmashellrc r,
+  owner @{user_config_dirs}/kactivitymanagerd-statsrc rw,
+  owner @{user_config_dirs}/plasma-org.kde.plasma.desktop-appletsrc rw,
+  owner @{user_config_dirs}/sed@{rand6} rw,
+  owner @{user_config_dirs}/xsettingsd/xsettingsd.conf rw,
 
   owner @{user_share_dirs}/#@{int} rw,
   owner @{user_share_dirs}/krunnerstaterc.lock rwk,
@@ -87,7 +97,18 @@ profile kconf_update @{exec_path} {
   owner /tmp/kconf_update.@{rand6}.lock rwk,
   owner /tmp/kconf_update.@{rand6}{,.@{rand6}} rwl -> /tmp/#@{int},
 
-  @{PROC}/@{sys}/kernel/random/boot_id r,
+  @{sys}/devices/system/node/ r,
+  @{sys}/devices/system/node/node@{int}/meminfo r,
+
+        @{PROC}/ r,
+        @{PROC}/@{sys}/kernel/random/boot_id r,
+        @{PROC}/tty/drivers r,
+        @{PROC}/uptime r,
+  owner @{PROC}/@{pid}/cgroup r,
+  owner @{PROC}/@{pid}/cmdline r,
+  owner @{PROC}/@{pid}/stat r,
+
+  /dev/tty rw,
 
   include if exists <local/kconf_update>
 }
