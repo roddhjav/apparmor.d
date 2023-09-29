@@ -78,7 +78,7 @@ var (
 		"iouring",
 		"dbus",
 		"file",
-		"include_local",
+		"include_if_exists",
 	}
 	ruleWeights = map[string]int{}
 
