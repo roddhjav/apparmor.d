@@ -6,6 +6,7 @@ package util
 
 import (
 	"reflect"
+	"regexp"
 	"testing"
 )
 
@@ -51,6 +52,33 @@ func TestRemoveDuplicate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := RemoveDuplicate(tt.inlist); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("RemoveDuplicate() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestToRegexRepl(t *testing.T) {
+	tests := []struct {
+		name string
+		in   []string
+		want []RegexRepl
+	}{
+		{
+			name: "",
+			in: []string{
+				"^/foo/bar", "/foo/bar",
+				"^/foo/bar", "/foo/bar",
+			},
+			want: []RegexRepl{
+				{Regex: regexp.MustCompile("^/foo/bar"), Repl: "/foo/bar"},
+				{Regex: regexp.MustCompile("^/foo/bar"), Repl: "/foo/bar"},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := ToRegexRepl(tt.in); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("ToRegexRepl() = %v, want %v", got, tt.want)
 			}
 		})
 	}

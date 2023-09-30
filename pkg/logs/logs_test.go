@@ -9,6 +9,8 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/roddhjav/apparmor.d/pkg/aa"
 )
 
 var (
@@ -37,9 +39,9 @@ var (
 			"denied_mask":    "x",
 			"error":          "-1",
 			"fsuid":          "1000",
-			"ouid":           "0",
+			"ouid":           "1000",
 			"FSUID":          "user",
-			"OUID":           "root",
+			"OUID":           "user",
 		},
 	}
 	refPowerProfiles = AppArmorLogs{
@@ -272,7 +274,7 @@ func TestAppArmorLogs_String(t *testing.T) {
 		{
 			name:   "man",
 			aaLogs: refMan,
-			want:   "\033[1;32mALLOWED\033[0m \033[34mman\033[0m \033[33mexec\033[0m \033[35m@{bin}/preconv\033[0m -> \033[35mman_groff\033[0m info=\"no new privs\" comm=man requested_mask=\033[1;31mx\033[0m denied_mask=\033[1;31mx\033[0m error=-1\n",
+			want:   "\033[1;32mALLOWED\033[0m \033[34mman\033[0m \033[33mexec\033[0m\033[35m owner\033[0m \033[35m@{bin}/preconv\033[0m -> \033[35mman_groff\033[0m info=\"no new privs\" comm=man requested_mask=\033[1;31mx\033[0m denied_mask=\033[1;31mx\033[0m error=-1\n",
 		},
 		{
 			name:   "power-profiles-daemon",
@@ -284,6 +286,63 @@ func TestAppArmorLogs_String(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := tt.aaLogs.String(); got != tt.want {
 				t.Errorf("AppArmorLogs.String() = %v, want %v len: %d - %d", got, tt.want, len(got), len(tt.want))
+			}
+		})
+	}
+}
+
+func TestAppArmorLogs_ParseToProfiles(t *testing.T) {
+	tests := []struct {
+		name   string
+		aaLogs AppArmorLogs
+		want   aa.AppArmorProfiles
+	}{
+		{
+			name:   "",
+			aaLogs: append(append(refKmod, refPowerProfiles...), refKmod...),
+			want: aa.AppArmorProfiles{
+				"kmod": &aa.AppArmorProfile{
+					Profile: aa.Profile{
+						Name: "kmod",
+						Rules: aa.Rules{
+							&aa.Unix{
+								Qualifier: aa.Qualifier{FileInherit: true},
+								Access:    "send receive",
+								Type:      "stream",
+								Protocol:  "0",
+							},
+							&aa.Unix{
+								Qualifier: aa.Qualifier{FileInherit: true},
+								Access:    "send receive",
+								Type:      "stream",
+								Protocol:  "0",
+							},
+						},
+					},
+				},
+				"power-profiles-daemon": &aa.AppArmorProfile{
+					Profile: aa.Profile{
+						Name: "power-profiles-daemon",
+						Rules: aa.Rules{
+							&aa.Dbus{
+								Access:    "send",
+								Bus:       "system",
+								Name:      "org.freedesktop.DBus",
+								Path:      "/org/freedesktop/DBus",
+								Interface: "org.freedesktop.DBus",
+								Member:    "AddMatch",
+								Label:     "dbus-daemon",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.aaLogs.ParseToProfiles(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("AppArmorLogs.ParseToProfiles() = %v, want %v", got, tt.want)
 			}
 		})
 	}
