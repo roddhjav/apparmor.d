@@ -25,6 +25,10 @@ func NewQualifierFromLog(log map[string]string) Qualifier {
 		owner = true
 	}
 
+	audit := false
+	if log["apparmor"] == "AUDIT" {
+		audit = true
+	}
 	fileInherit := false
 	if log["operation"] == "file_inherit" {
 		fileInherit = true
@@ -34,7 +38,7 @@ func NewQualifierFromLog(log map[string]string) Qualifier {
 		noNewPrivs = true
 	}
 	return Qualifier{
-		Audit:       false,
+		Audit:       audit,
 		AccessType:  "",
 		Owner:       owner,
 		NoNewPrivs:  noNewPrivs,
