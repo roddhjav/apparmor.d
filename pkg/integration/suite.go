@@ -106,3 +106,11 @@ func (t *TestSuite) Results() string {
 	aaLogs := logs.NewApparmorLogs(file, "")
 	return aaLogs.String()
 }
+
+func (t *TestSuite) GetDependencies() []string {
+	res := []string{}
+	for _, test := range t.Tests {
+		res = append(res, test.Dependencies...)
+	}
+	return res
+}
