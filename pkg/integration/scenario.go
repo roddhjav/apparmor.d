@@ -139,4 +139,3 @@ func (t *Test) run(cmdline string, in string) error {
 	}
 	return err
 }
-}
