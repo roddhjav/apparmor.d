@@ -5,6 +5,13 @@
 package aa
 
 var (
+	// Include
+	includeLocal1 = &Include{
+		IfExists: true,
+		IsMagic:  true,
+		Path:     "local/foo",
+	}
+
 	// Capability
 	capability1Log = map[string]string{
 		"apparmor":   "ALLOWED",
