@@ -5,10 +5,23 @@
 package integration
 
 import (
+	"os"
+
 	"github.com/arduino/go-paths-helper"
 	"github.com/roddhjav/apparmor.d/pkg/logs"
 	"github.com/roddhjav/apparmor.d/pkg/util"
 	"gopkg.in/yaml.v2"
+)
+
+var (
+	// Integration tests standard output
+	Stdout *os.File
+
+	// Integration tests standard error output
+	Stderr *os.File
+
+	stdoutPath = paths.New("tests/out.log")
+	stderrPath = paths.New("tests/err.log")
 )
 
 // TestSuite is the apparmod.d integration tests to run
@@ -20,6 +33,15 @@ type TestSuite struct {
 
 // NewScenarios returns a new list of scenarios
 func NewTestSuite() *TestSuite {
+	var err error
+	Stdout, err = stdoutPath.Create()
+	if err != nil {
+		panic(err)
+	}
+	Stderr, err = stderrPath.Create()
+	if err != nil {
+		panic(err)
+	}
 	return &TestSuite{
 		Tests:     []Test{},
 		Ignore:    []string{},
@@ -56,8 +78,8 @@ func (t *TestSuite) Write(path *paths.Path) error {
 	return err
 }
 
-// ReadScenarios import the scenarios from a file
-func (t *TestSuite) ReadScenarios(path *paths.Path) error {
+// ReadTests import the tests from a file
+func (t *TestSuite) ReadTests(path *paths.Path) error {
 	content, _ := path.ReadFile()
 	return yaml.Unmarshal(content, &t.Tests)
 }
@@ -65,7 +87,7 @@ func (t *TestSuite) ReadScenarios(path *paths.Path) error {
 // ReadSettings import the common argument and ignore list from a file
 func (t *TestSuite) ReadSettings(path *paths.Path) error {
 	type temp struct {
-		Arguments map[string]string `yaml:"args"`
+		Arguments map[string]string `yaml:"arguments"`
 		Ignore    []string          `yaml:"ignore"`
 	}
 	tmp := temp{}

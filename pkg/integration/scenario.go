@@ -12,19 +12,25 @@
 package integration
 
 import (
-	"os"
+	"bytes"
+	"fmt"
+	"io"
 	"os/exec"
 	"strings"
 
 	"github.com/arduino/go-paths-helper"
 	"github.com/roddhjav/apparmor.d/pkg/logging"
-	"golang.org/x/exp/slices"
+)
+
+var (
+	Ignore    []string          // Do not run some scenarios
+	Arguments map[string]string // Common arguments used across all scenarios
+	Profiles  paths.PathList    // List of profiles in apparmor.d
 )
 
 // Test represents of a list of tests for a given program
 type Test struct {
 	Name         string            `yaml:"name"`
-	Profiled     bool              `yaml:"profiled"`  // The program is profiled in apparmor.d
 	Root         bool              `yaml:"root"`      // Run the test as user or as root
 	Dependencies []string          `yaml:"require"`   // Packages required for the tests to run "$(pacman -Qqo Scenario.Name)"
 	Arguments    map[string]string `yaml:"arguments"` // Arguments to pass to the program, specific to this scenario
@@ -41,7 +47,6 @@ type Command struct {
 func NewTest() *Test {
 	return &Test{
 		Name:         "",
-		Profiled:     false,
 		Root:         false,
 		Dependencies: []string{},
 		Arguments:    map[string]string{},
@@ -50,8 +55,8 @@ func NewTest() *Test {
 }
 
 // HasProfile returns true if the program in the scenario is profiled in apparmor.d
-func (t *Test) hasProfile(profiles paths.PathList) bool {
-	for _, path := range profiles {
+func (t *Test) HasProfile() bool {
+	for _, path := range Profiles {
 		if t.Name == path.Base() {
 			return true
 		}
@@ -59,7 +64,8 @@ func (t *Test) hasProfile(profiles paths.PathList) bool {
 	return false
 }
 
-func (t *Test) installed() bool {
+// IsInstalled returns true if the program in the scenario is installed on the system
+func (t *Test) IsInstalled() bool {
 	if _, err := exec.LookPath(t.Name); err != nil {
 		return false
 	}
@@ -77,6 +83,9 @@ func (t *Test) resolve(in string) string {
 // mergeArguments merge the arguments of the scenario with the global arguments
 // Test arguments have priority over global arguments
 func (t *Test) mergeArguments(args map[string]string) {
+	if len(t.Arguments) == 0 {
+		t.Arguments = map[string]string{}
+	}
 	for key, value := range args {
 		t.Arguments[key] = value
 	}
@@ -85,10 +94,7 @@ func (t *Test) mergeArguments(args map[string]string) {
 // Run the scenarios tests
 func (t *Test) Run(dryRun bool) (ran int, nb int, err error) {
 	nb = 0
-	if t.Profiled && t.installed() {
-		if slices.Contains(Ignore, t.Name) {
-			return 0, nb, err
-		}
+	if t.HasProfile() && t.IsInstalled() {
 		logging.Step("%s", t.Name)
 		t.mergeArguments(Arguments)
 		for _, test := range t.Commands {
@@ -100,7 +106,6 @@ func (t *Test) Run(dryRun bool) (ran int, nb int, err error) {
 				} else {
 					cmdErr := t.run(cmd, strings.Join(test.Stdin, "\n"))
 					if cmdErr != nil {
-						// TODO: log the error
 						logging.Error("%v", cmdErr)
 					} else {
 						logging.Success(cmd)
@@ -114,6 +119,8 @@ func (t *Test) Run(dryRun bool) (ran int, nb int, err error) {
 }
 
 func (t *Test) run(cmdline string, in string) error {
+	var testErr bytes.Buffer
+
 	// Running the command in a shell ensure it does not run confined under the sudo profile.
 	// The shell is run unconfined and therefore the cmdline can be confined without no-new-privs issue.
 	sufix := " &" // TODO: we need a goroutine here
@@ -121,8 +128,15 @@ func (t *Test) run(cmdline string, in string) error {
 	if t.Root {
 		cmd = exec.Command("sudo", "sh", "-c", cmdline+sufix)
 	}
+
+	stderr := io.MultiWriter(Stderr, &testErr)
 	cmd.Stdin = strings.NewReader(in)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	return cmd.Run()
+	cmd.Stdout = Stdout
+	cmd.Stderr = stderr
+	err := cmd.Run()
+	if testErr.Len() > 0 {
+		return fmt.Errorf("%s", testErr.String())
+	}
+	return err
+}
 }

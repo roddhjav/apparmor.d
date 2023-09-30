@@ -14,11 +14,6 @@ import (
 	"github.com/roddhjav/apparmor.d/pkg/util"
 )
 
-var (
-	Ignore    []string          // Do not run some scenarios
-	Arguments map[string]string // Common arguments used across all scenarios
-)
-
 type Tldr struct {
 	Url    string      // Tldr download url
 	Dir    *paths.Path // Tldr cache directory
@@ -58,7 +53,7 @@ func (t Tldr) Download() error {
 }
 
 // Parse the tldr pages and return a list of scenarios
-func (t Tldr) Parse(profiles paths.PathList) (*TestSuite, error) {
+func (t Tldr) Parse() (*TestSuite, error) {
 	testSuite := NewTestSuite()
 	files, _ := t.Dir.ReadDirRecursiveFiltered(nil, paths.FilterOutDirectories())
 	for _, path := range files {
@@ -69,12 +64,10 @@ func (t Tldr) Parse(profiles paths.PathList) (*TestSuite, error) {
 		raw := string(content)
 		t := &Test{
 			Name:      strings.TrimSuffix(path.Base(), ".md"),
-			Profiled:  false,
 			Root:      false,
 			Arguments: map[string]string{},
 			Commands:  []Command{},
 		}
-		t.Profiled = t.hasProfile(profiles)
 		if strings.Contains(raw, "sudo") {
 			t.Root = true
 		}
