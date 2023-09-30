@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/roddhjav/apparmor.d/pkg/logs"
 	"golang.org/x/exp/slices"
@@ -59,7 +60,7 @@ func aaLog(logger string, path string, profile string) error {
 	}
 
 	if raw {
-		fmt.Print(logs.Raw(file, profile))
+		fmt.Print(strings.Join(logs.GetApparmorLogs(file, profile), "\n"))
 		return nil
 	}
 

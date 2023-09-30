@@ -5,8 +5,6 @@
 package logs
 
 import (
-	"bufio"
-	"fmt"
 	"io"
 	"regexp"
 	"strings"
@@ -101,29 +99,7 @@ func toQuote(str string) string {
 
 // NewApparmorLogs return a new ApparmorLogs list of map from a log file
 func NewApparmorLogs(file io.Reader, profile string) AppArmorLogs {
-	log := ""
-	isAppArmorLog := isAppArmorLogTemplate.Copy()
-	if profile != "" {
-		exp := `apparmor=("DENIED"|"ALLOWED"|"AUDIT")`
-		exp = fmt.Sprintf(exp+`.* (profile="%s.*"|label="%s.*")`, profile, profile)
-		isAppArmorLog = regexp.MustCompile(exp)
-	}
-
-	// Select Apparmor logs
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		line := scanner.Text()
-		if isAppArmorLog.MatchString(line) {
-			log += line + "\n"
-		}
-	}
-
-	// Clean & remove doublon in logs
-	for _, aa := range regCleanLogs {
-		log = aa.Regex.ReplaceAllLiteralString(log, aa.Repl)
-	}
-	logs := strings.Split(log, "\n")
-	logs = util.RemoveDuplicate(logs)
+	logs := GetApparmorLogs(file, profile)
 
 	// Parse log into ApparmorLog struct
 	aaLogs := make(AppArmorLogs, 0)
