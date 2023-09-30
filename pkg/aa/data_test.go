@@ -219,7 +219,7 @@ var (
 		"operation":      "open",
 		"class":          "file",
 		"profile":        "gsd-print-notifications",
-		"name":           "/proc/4163/cgroup",
+		"name":           "@{PROC}/4163/cgroup",
 		"comm":           "gsd-print-notif",
 		"requested_mask": "r",
 		"denied_mask":    "r",
@@ -236,7 +236,7 @@ var (
 	}
 	file2 = &File{
 		Qualifier: Qualifier{Owner: true, NoNewPrivs: true},
-		Path:      "/proc/4163/cgroup",
+		Path:      "@{PROC}/4163/cgroup",
 		Access:    "r",
 		Target:    "",
 	}

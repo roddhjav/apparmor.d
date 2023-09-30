@@ -90,9 +90,8 @@ var (
 		"/opt",                // 2.3 opt binaries & libraries
 		"/usr/share",          // 3. shared data
 		"/etc",                // 4. system configuration
-		"/",                   // 5.1 system data
-		"/var",                // 5.2 system data read/write data
-		"/boot",               // 5.3 boot files
+		"/var",                // 5.1 system read/write data
+		"/boot",               // 5.2 boot files
 		"/home",               // 6.1 user data
 		"@{HOME}",             // 6.2 home files
 		"@{user_cache_dirs}",  // 7.1 user caches

@@ -139,7 +139,37 @@ func TestRule_Less(t *testing.T) {
 			name:  "file",
 			rule:  file1,
 			other: file2,
+			want:  true,
+		},
+		{
+			name:  "file/empty",
+			rule:  &File{},
+			other: &File{},
 			want:  false,
+		},
+		{
+			name:  "file/equal",
+			rule:  &File{Path: "/usr/share/poppler/cMap/Identity-H"},
+			other: &File{Path: "/usr/share/poppler/cMap/Identity-H"},
+			want:  false,
+		},
+		{
+			name:  "file/owner",
+			rule:  &File{Path: "/usr/share/poppler/cMap/Identity-H", Qualifier: Qualifier{Owner: true}},
+			other: &File{Path: "/usr/share/poppler/cMap/Identity-H"},
+			want:  true,
+		},
+		{
+			name:  "file/access",
+			rule:  &File{Path: "/usr/share/poppler/cMap/Identity-H", Access: "r"},
+			other: &File{Path: "/usr/share/poppler/cMap/Identity-H", Access: "w"},
+			want:  true,
+		},
+		{
+			name:  "file/close",
+			rule:  &File{Path: "/usr/share/poppler/cMap/"},
+			other: &File{Path: "/usr/share/poppler/cMap/Identity-H"},
+			want:  true,
 		},
 	}
 	for _, tt := range tests {
