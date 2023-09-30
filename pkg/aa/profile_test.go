@@ -155,11 +155,7 @@ func TestAppArmorProfile_String(t *testing.T) {
 							Path:   "@{sys}/devices/pci[0-9]*/**/class",
 							Access: "r",
 						},
-						&Include{
-							IfExists: true,
-							IsMagic:  true,
-							Path:     "local/foo",
-						},
+						includeLocal1,
 					},
 				},
 			},
@@ -276,12 +272,18 @@ func TestAppArmorProfile_Sort(t *testing.T) {
 			name: "all",
 			origin: &AppArmorProfile{
 				Profile: Profile{
-					Rules: []ApparmorRule{file2, network1, dbus2, signal1, ptrace1, capability2, file1, dbus1, unix2, signal2, mount2},
+					Rules: []ApparmorRule{
+						file2, network1, includeLocal1, dbus2, signal1, ptrace1,
+						capability2, file1, dbus1, unix2, signal2, mount2,
+					},
 				},
 			},
 			want: &AppArmorProfile{
 				Profile: Profile{
-					Rules: []ApparmorRule{capability2, network1, mount2, signal1, signal2, ptrace1, unix2, dbus2, dbus1, file2, file1},
+					Rules: []ApparmorRule{
+						capability2, network1, mount2, signal1, signal2, ptrace1,
+						unix2, dbus2, dbus1, file1, file2, includeLocal1,
+					},
 				},
 			},
 		},
