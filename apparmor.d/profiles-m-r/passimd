@@ -1,0 +1,31 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/passimd
+profile passimd @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/dbus-strict>
+  include <abstractions/nameservice-strict>
+
+  capability dac_read_search,
+
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  dbus bind bus=system name=org.freedesktop.Passim,
+
+  @{exec_path} mr,
+
+  /usr/share/dbus-1/interfaces/org.freedesktop.Passim.xml r,
+
+  /var/lib/passim/{,**} r,
+  /var/lib/passim/data/{,**} rw,
+
+  include if exists <local/passimd>
+}
