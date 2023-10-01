@@ -116,11 +116,8 @@ func (p *AppArmorProfile) AddRule(log map[string]string) {
 	}
 }
 
-func typeToValue(i reflect.Type) string {
-	return strings.ToLower(strings.TrimPrefix(i.String(), "*aa."))
-}
-
 // Sort the rules in the profile
+// Follow: https://apparmor.pujol.io/development/guidelines/#guidelines
 func (p *AppArmorProfile) Sort() {
 	sort.Slice(p.Rules, func(i, j int) bool {
 		typeOfI := reflect.TypeOf(p.Rules[i])
@@ -159,6 +156,36 @@ func (p *AppArmorProfile) MergeRules() {
 			if p.Rules[i].Equals(p.Rules[j]) {
 				p.Rules = append(p.Rules[:j], p.Rules[j+1:]...)
 				j--
+			}
+		}
+	}
+}
+
+// Format the profile for better readability before printing it
+// Follow: https://apparmor.pujol.io/development/guidelines/#the-file-block
+func (p *AppArmorProfile) Format() {
+	hasOwnedRule := false
+	for i := len(p.Rules) - 1; i > 0; i-- {
+		j := i - 1
+		typeOfI := reflect.TypeOf(p.Rules[i])
+		typeOfJ := reflect.TypeOf(p.Rules[j])
+
+		// File rule
+		if typeOfI == reflect.TypeOf((*File)(nil)) && typeOfJ == reflect.TypeOf((*File)(nil)) {
+			letterI := getLetterIn(fileAlphabet, p.Rules[i].(*File).Path)
+			letterJ := getLetterIn(fileAlphabet, p.Rules[j].(*File).Path)
+
+			// Add prefix before rule path to align with other rule
+			if p.Rules[i].(*File).Owner {
+				hasOwnedRule = true
+			} else if hasOwnedRule {
+				p.Rules[i].(*File).Prefix = "      "
+			}
+
+			if letterI != letterJ {
+				// Add a new empty line between Files rule of different type
+				hasOwnedRule = false
+				p.Rules = append(p.Rules[:i], append([]ApparmorRule{&Rule{}}, p.Rules[i:]...)...)
 			}
 		}
 	}

@@ -19,10 +19,7 @@
 {{ end -}}
 
 {{- range .Variables -}}
-    {{ "@{" }}{{ .Name }}{{ "} = " }}
-    {{- range .Values -}}
-        {{ . }}{{ " " }}
-    {{- end }}
+    {{ "@{" }}{{ .Name }}{{ "} = " }}{{ join .Values }}
 {{ end -}}
 
 {{- "profile" -}}
@@ -43,6 +40,10 @@
 {{- $oldtype := "" -}}
 {{- range .Rules -}}
     {{- $type := typeof . -}}
+    {{- if eq $type "Rule" -}}
+        {{- "\n" -}}
+        {{- continue -}}
+    {{- end -}}
     {{- if and (ne $type $oldtype) (ne $oldtype "") -}}
         {{- "\n" -}}
     {{- end -}}
@@ -217,7 +218,12 @@
 
     {{- if eq $type "File" -}}
         {{- template "qualifier" . -}}
-        {{ .Path }}{{ " " }}{{ .Access }}
+        {{- .Path -}}
+        {{- " " -}}
+        {{- with .Padding -}}
+            {{ . }}
+        {{- end -}}
+        {{- .Access -}}
         {{- with .Target -}}
             {{ " -> " }}{{ . }}
         {{- end -}}

@@ -13,6 +13,8 @@ type Qualifier struct {
 	Owner       bool
 	NoNewPrivs  bool
 	FileInherit bool
+	Prefix      string
+	Padding     string
 }
 
 func NewQualifierFromLog(log map[string]string) Qualifier {
@@ -47,13 +49,13 @@ func NewQualifierFromLog(log map[string]string) Qualifier {
 }
 
 func (r Qualifier) Less(other Qualifier) bool {
-	if r.Audit == other.Audit {
-		if r.AccessType == other.AccessType {
-			return r.Owner
+	if r.Owner == other.Owner {
+		if r.Audit == other.Audit {
+			return r.AccessType < other.AccessType
 		}
-		return r.AccessType < other.AccessType
+		return r.Audit
 	}
-	return r.Audit
+	return other.Owner
 }
 
 func (r Qualifier) Equals(other Qualifier) bool {
