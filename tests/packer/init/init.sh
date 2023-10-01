@@ -22,21 +22,20 @@ main() {
 	install -Dm0644 $SRC/site.local /etc/apparmor.d/tunables/multiarch.d/site.local
 	install -Dm0755 $SRC/aa-update /usr/bin/aa-update
 	install -Dm0755 $SRC/aa-log-clean /usr/bin/aa-log-clean
-	install -Dm0755 $SRC/aa-test /usr/bin/aa-test
 	cat $SRC/parser.conf >> /etc/apparmor/parser.conf
 	chown -R "$SUDO_USER:$SUDO_USER" "/home/$SUDO_USER/.config/"
 	case "$DISTRIBUTION" in
-	arch) pacman --noconfirm -U $SRC/apparmor.d-*-x86_64.pkg.tar.zst ;;
+	arch) pacman --noconfirm -U $SRC/*.pkg.tar.zst ;;
 	debian | ubuntu)
 		apt-get update -y
 		apt-get install -y apparmor-profiles build-essential config-package-dev \
 			debhelper devscripts htop rsync vim
-		dpkg -i $SRC/apparmor.d_*_all.deb
+		dpkg -i $SRC/*.deb
 		;;
 
 	opensuse*)
 		zypper install -y bash-completion git go htop make rsync vim
-		sed -i -e '/cache-loc/d' /etc/apparmor/parser.conf
+		sudo rpm -i $SRC/*.rpm
 		;;
 
 	esac

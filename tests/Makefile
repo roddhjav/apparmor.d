@@ -12,8 +12,8 @@
 flavor ?= 
 disk ?= 10G
 
-VERSION := 0.$(shell git rev-list --count HEAD)-1
-BASE = archlinux debian ubuntu opensuse
+VERSION := 0.$(shell git rev-list --count HEAD)
+BASE = archlinux debian ubuntu opensuse fedora
 
 .PHONY: ${BASE} lint
 

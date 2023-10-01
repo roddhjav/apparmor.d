@@ -21,7 +21,7 @@ build {
   provisioner "file" {
     only        = ["qemu.archlinux-gnome", "qemu.archlinux-kde"]
     destination = "/tmp/src/"
-    sources     = ["${path.cwd}/../apparmor.d-${var.version}-x86_64.pkg.tar.zst"]
+    sources     = ["${path.cwd}/../apparmor.d-${var.version}-1-x86_64.pkg.tar.zst"]
   }
 
   provisioner "file" {
@@ -33,7 +33,7 @@ build {
   provisioner "file" {
     only        = ["qemu.debian-server", "qemu.ubuntu-server", "qemu.ubuntu-desktop"]
     destination = "/tmp/src/"
-    sources     = ["${path.cwd}/../apparmor.d_${var.version}_amd64.deb"]
+    sources     = ["${path.cwd}/../apparmor.d_${var.version}-1_amd64.deb"]
   }
 
   # Wait for cloud-init to finish
