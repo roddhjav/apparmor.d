@@ -321,7 +321,7 @@ func TestAppArmorProfile_Integration(t *testing.T) {
 					},
 				},
 			},
-			want: readprofile("apparmor.d/profiles-a-f/aa-status") + "\n",
+			want: readprofile("apparmor.d/profiles-a-f/aa-status"),
 		},
 	}
 	for _, tt := range tests {
