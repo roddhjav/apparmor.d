@@ -329,3 +329,56 @@ func TestAppArmorProfile_MergeRules(t *testing.T) {
 		})
 	}
 }
+
+func TestAppArmorProfile_Integration(t *testing.T) {
+	tests := []struct {
+		name string
+		p    *AppArmorProfile
+		want string
+	}{
+		{
+			name: "aa-status",
+			p: &AppArmorProfile{
+				Preamble: Preamble{
+					Abi:      []Abi{{IsMagic: true, Path: "abi/3.0"}},
+					Includes: []Include{{IsMagic: true, Path: "tunables/global"}},
+					Variables: []Variable{{
+						Name:   "exec_path",
+						Values: []string{"@{bin}/aa-status", "@{bin}/apparmor_status"},
+					}},
+				},
+				Profile: Profile{
+					Name:        "aa-status",
+					Attachments: []string{"@{exec_path}"},
+					Rules: Rules{
+						&Include{IfExists: true, IsMagic: true, Path: "local/aa-status"},
+						&Capability{Name: "dac_read_search"},
+						&File{Path: "@{exec_path}", Access: "mr"},
+						&File{Path: "@{PROC}/@{pids}/attr/apparmor/current", Access: "r"},
+						&File{Path: "@{PROC}/", Access: "r"},
+						&File{Path: "@{sys}/module/apparmor/parameters/enabled", Access: "r"},
+						&File{Path: "@{sys}/kernel/security/apparmor/profiles", Access: "r"},
+						&File{Path: "@{PROC}/@{pids}/attr/current", Access: "r"},
+						&Include{IsMagic: true, Path: "abstractions/consoles"},
+						&File{Qualifier: Qualifier{Owner: true}, Path: "@{PROC}/@{pid}/mounts", Access: "r"},
+						&Include{IsMagic: true, Path: "abstractions/base"},
+						&File{Path: "/dev/tty@{int}", Access: "rw"},
+						&Capability{Name: "sys_ptrace"},
+						&Ptrace{Access: "read"},
+					},
+				},
+			},
+			want: readprofile("apparmor.d/profiles-a-f/aa-status") + "\n",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.p.Sort()
+			tt.p.MergeRules()
+			tt.p.Format()
+			if got := tt.p.String(); "\n"+got != tt.want {
+				t.Errorf("AppArmorProfile = |%v|, want |%v|", "\n"+got, tt.want)
+			}
+		})
+	}
+}
