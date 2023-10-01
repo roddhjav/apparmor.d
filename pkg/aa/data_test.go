@@ -6,11 +6,15 @@ package aa
 
 var (
 	// Include
-	includeLocal1 = &Include{
-		IfExists: true,
-		IsMagic:  true,
-		Path:     "local/foo",
-	}
+	include1      = &Include{IsMagic: true, Path: "abstraction/base"}
+	include2      = &Include{IsMagic: false, Path: "abstraction/base"}
+	include3      = &Include{IfExists: true, IsMagic: true, Path: "abstraction/base"}
+	includeLocal1 = &Include{IfExists: true, IsMagic: true, Path: "local/foo"}
+
+	// Rlimit
+	rlimit1 = &Rlimit{Key: "nproc", Op: "<=", Value: "200"}
+	rlimit2 = &Rlimit{Key: "cpu", Op: "<=", Value: "2"}
+	rlimit3 = &Rlimit{Key: "nproc", Op: "<", Value: "2"}
 
 	// Capability
 	capability1Log = map[string]string{
@@ -38,15 +42,8 @@ var (
 		"denied_mask":    "create",
 		"comm":           "sddm-greeter",
 	}
-	network1 = &Network{
-		Domain:   "netlink",
-		Type:     "raw",
-		Protocol: "15",
-	}
-	network2 = &Network{
-		Domain: "inet",
-		Type:   "dgram",
-	}
+	network1 = &Network{Domain: "netlink", Type: "raw", Protocol: "15"}
+	network2 = &Network{Domain: "inet", Type: "dgram"}
 
 	// Mount
 	mount1Log = map[string]string{
@@ -83,6 +80,11 @@ var (
 		Source:          "overlay",
 		MountPoint:      "/var/lib/docker/overlay2/metacopy-check906831159/merged/",
 	}
+
+	// Change Profile
+	changeprofile1 = &ChangeProfile{ExecMode: "Px", Exec: "/bin/bash", ProfileName: "brwap//default"}
+	changeprofile2 = &ChangeProfile{ExecMode: "Px", Exec: "/bin/bash", ProfileName: "brwap"}
+	changeprofile3 = &ChangeProfile{ExecMode: "safe", Exec: "/bin/foo", ProfileName: "brwap//default"}
 
 	// Signal
 	signal1Log = map[string]string{
@@ -127,16 +129,8 @@ var (
 		"denied_mask":    "readby",
 		"peer":           "systemd-journald",
 	}
-	ptrace1 = &Ptrace{
-		Qualifier: Qualifier{},
-		Access:    "read",
-		Peer:      "nautilus",
-	}
-	ptrace2 = &Ptrace{
-		Qualifier: Qualifier{},
-		Access:    "readby",
-		Peer:      "systemd-journald",
-	}
+	ptrace1 = &Ptrace{Access: "read", Peer: "nautilus"}
+	ptrace2 = &Ptrace{Access: "readby", Peer: "systemd-journald"}
 
 	// Unix
 	unix1Log = map[string]string{
@@ -205,6 +199,11 @@ var (
 		Bus:    "session",
 		Name:   "org.gnome.evolution.dataserver.Sources5",
 	}
+	dbus3 = &Dbus{
+		Access: "bind",
+		Bus:    "session",
+		Name:   "org.gnome.evolution.dataserver",
+	}
 
 	// File
 	file1Log = map[string]string{
@@ -236,15 +235,10 @@ var (
 		"OUID":           "user",
 		"error":          "-1",
 	}
-	file1 = &File{
-		Path:   "/usr/share/poppler/cMap/Identity-H",
-		Access: "r",
-		Target: "",
-	}
+	file1 = &File{Path: "/usr/share/poppler/cMap/Identity-H", Access: "r"}
 	file2 = &File{
 		Qualifier: Qualifier{Owner: true, NoNewPrivs: true},
 		Path:      "@{PROC}/4163/cgroup",
 		Access:    "r",
-		Target:    "",
 	}
 )

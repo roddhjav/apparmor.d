@@ -45,30 +45,13 @@ func TestAppArmorProfile_String(t *testing.T) {
 			name: "foo",
 			p: &AppArmorProfile{
 				Preamble: Preamble{
-					Abi: []Abi{
-						{
-							IsMagic: true,
-							Path:    "abi/4.0",
-						},
-					},
-					Includes: []Include{
-						{
-							IsMagic: true,
-							Path:    "tunables/global",
-						},
-					},
-					Aliases: []Alias{
-						{
-							Path:          "/mnt/usr",
-							RewrittenPath: "/usr",
-						},
-					},
-					Variables: []Variable{
-						{
-							Name:   "exec_path",
-							Values: []string{"@{bin}/foo", "@{lib}/foo"},
-						},
-					},
+					Abi:      []Abi{{IsMagic: true, Path: "abi/4.0"}},
+					Includes: []Include{{IsMagic: true, Path: "tunables/global"}},
+					Aliases:  []Alias{{Path: "/mnt/usr", RewrittenPath: "/usr"}},
+					Variables: []Variable{{
+						Name:   "exec_path",
+						Values: []string{"@{bin}/foo", "@{lib}/foo"},
+					}},
 				},
 				Profile: Profile{
 					Name:        "foo",
@@ -76,29 +59,13 @@ func TestAppArmorProfile_String(t *testing.T) {
 					Attributes:  map[string]string{"security.tagged": "allowed"},
 					Flags:       []string{"complain", "attach_disconnected"},
 					Rules: []ApparmorRule{
-						&Include{
-							IsMagic: true,
-							Path:    "abstractions/base",
-						},
-						&Include{
-							IsMagic: true,
-							Path:    "abstractions/nameservice-strict",
-						},
-						&Rlimit{
-							Key:   "nproc",
-							Op:    "<=",
-							Value: "200",
-						},
+						&Include{IsMagic: true, Path: "abstractions/base"},
+						&Include{IsMagic: true, Path: "abstractions/nameservice-strict"},
+						rlimit1,
 						&Capability{Name: "dac_read_search"},
 						&Capability{Name: "dac_override"},
-						&Network{
-							Domain: "inet",
-							Type:   "stream",
-						},
-						&Network{
-							Domain: "inet6",
-							Type:   "stream",
-						},
+						&Network{Domain: "inet", Type: "stream"},
+						&Network{Domain: "inet6", Type: "stream"},
 						&Mount{
 							MountConditions: MountConditions{
 								FsType:  "fuse.portal",
@@ -116,11 +83,7 @@ func TestAppArmorProfile_String(t *testing.T) {
 							Set:    "term",
 							Peer:   "at-spi-bus-launcher",
 						},
-
-						&Ptrace{
-							Access: "read",
-							Peer:   "nautilus",
-						},
+						&Ptrace{Access: "read", Peer: "nautilus"},
 						&Unix{
 							Access:   "send receive",
 							Type:     "stream",
@@ -142,19 +105,9 @@ func TestAppArmorProfile_String(t *testing.T) {
 							Member:    "AddMatch",
 							Label:     "power-profiles-daemon",
 						},
-						&File{
-							Path:   "/opt/intel/oneapi/compiler/*/linux/lib/*.so./*",
-							Access: "rm",
-						},
-
-						&File{
-							Path:   "@{PROC}/@{pid}/task/@{tid}/comm",
-							Access: "rw",
-						},
-						&File{
-							Path:   "@{sys}/devices/pci[0-9]*/**/class",
-							Access: "r",
-						},
+						&File{Path: "/opt/intel/oneapi/compiler/*/linux/lib/*.so./*", Access: "rm"},
+						&File{Path: "@{PROC}/@{pid}/task/@{tid}/comm", Access: "rw"},
+						&File{Path: "@{sys}/devices/pci[0-9]*/**/class", Access: "r"},
 						includeLocal1,
 					},
 				},
