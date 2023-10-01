@@ -88,6 +88,42 @@ func TestRule_Less(t *testing.T) {
 		want  bool
 	}{
 		{
+			name:  "include1",
+			rule:  include1,
+			other: includeLocal1,
+			want:  true,
+		},
+		{
+			name:  "include2",
+			rule:  include1,
+			other: include2,
+			want:  true,
+		},
+		{
+			name:  "include3",
+			rule:  include1,
+			other: include3,
+			want:  false,
+		},
+		{
+			name:  "rlimit",
+			rule:  rlimit1,
+			other: rlimit2,
+			want:  false,
+		},
+		{
+			name:  "rlimit2",
+			rule:  rlimit2,
+			other: rlimit2,
+			want:  false,
+		},
+		{
+			name:  "rlimit3",
+			rule:  rlimit1,
+			other: rlimit3,
+			want:  false,
+		},
+		{
 			name:  "capability",
 			rule:  capability1,
 			other: capability2,
@@ -104,6 +140,18 @@ func TestRule_Less(t *testing.T) {
 			rule:  mount1,
 			other: mount2,
 			want:  false,
+		},
+		{
+			name:  "change_profile1",
+			rule:  changeprofile1,
+			other: changeprofile2,
+			want:  false,
+		},
+		{
+			name:  "change_profile2",
+			rule:  changeprofile1,
+			other: changeprofile3,
+			want:  true,
 		},
 		{
 			name:  "signal",
@@ -136,6 +184,12 @@ func TestRule_Less(t *testing.T) {
 			want:  false,
 		},
 		{
+			name:  "dbus2",
+			rule:  dbus2,
+			other: dbus3,
+			want:  false,
+		},
+		{
 			name:  "file",
 			rule:  file1,
 			other: file2,
@@ -157,7 +211,7 @@ func TestRule_Less(t *testing.T) {
 			name:  "file/owner",
 			rule:  &File{Path: "/usr/share/poppler/cMap/Identity-H", Qualifier: Qualifier{Owner: true}},
 			other: &File{Path: "/usr/share/poppler/cMap/Identity-H"},
-			want:  true,
+			want:  false,
 		},
 		{
 			name:  "file/access",
@@ -190,6 +244,18 @@ func TestRule_Equals(t *testing.T) {
 		want  bool
 	}{
 		{
+			name:  "include1",
+			rule:  include1,
+			other: includeLocal1,
+			want:  false,
+		},
+		{
+			name:  "rlimit",
+			rule:  rlimit1,
+			other: rlimit1,
+			want:  true,
+		},
+		{
 			name:  "capability/equal",
 			rule:  capability1,
 			other: capability1,
@@ -206,6 +272,12 @@ func TestRule_Equals(t *testing.T) {
 			rule:  mount1,
 			other: mount1,
 			want:  true,
+		},
+		{
+			name:  "change_profile",
+			rule:  changeprofile1,
+			other: changeprofile2,
+			want:  false,
 		},
 		{
 			name:  "signal1/equal",
