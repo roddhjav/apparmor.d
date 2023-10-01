@@ -6,6 +6,21 @@ package aa
 
 import "strings"
 
+type Rule struct {
+	Comment     string
+	NoNewPrivs  bool
+	FileInherit bool
+}
+
+
+func (r *Rule) Less(other any) bool {
+	return false
+}
+
+func (r *Rule) Equals(other any) bool {
+	return false
+}
+
 // Qualifier to apply extra settings to a rule
 type Qualifier struct {
 	Audit       bool
