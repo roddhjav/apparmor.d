@@ -4,10 +4,6 @@
 
 package aa
 
-import (
-	"strings"
-)
-
 type File struct {
 	Qualifier
 	Path   string
@@ -26,28 +22,19 @@ func FileFromLog(log map[string]string) ApparmorRule {
 
 func (r *File) Less(other any) bool {
 	o, _ := other.(*File)
-	letterR := ""
-	letterO := ""
-	for _, letter := range fileAlphabet {
-		if strings.HasPrefix(r.Path, letter) {
-			letterR = letter
-		}
-		if strings.HasPrefix(o.Path, letter) {
-			letterO = letter
-		}
-	}
-
+	letterR := getLetterIn(fileAlphabet, r.Path)
+	letterO := getLetterIn(fileAlphabet, o.Path)
 	if fileWeights[letterR] == fileWeights[letterO] || letterR == "" || letterO == "" {
-		if r.Path == o.Path {
-			if r.Qualifier.Equals(o.Qualifier) {
+		if r.Qualifier.Equals(o.Qualifier) {
+			if r.Path == o.Path {
 				if r.Access == o.Access {
 					return r.Target < o.Target
 				}
 				return r.Access < o.Access
 			}
-			return r.Qualifier.Less(o.Qualifier)
+			return r.Path < o.Path
 		}
-		return r.Path < o.Path
+		return r.Qualifier.Less(o.Qualifier)
 	}
 	return fileWeights[letterR] < fileWeights[letterO]
 }

@@ -142,10 +142,23 @@ func typeOf(i any) string {
 	return strings.TrimPrefix(reflect.TypeOf(i).String(), "*aa.")
 }
 
+func typeToValue(i reflect.Type) string {
+	return strings.ToLower(strings.TrimPrefix(i.String(), "*aa."))
+}
+
 func indent(s string) string {
 	return indentation + s
 }
 
 func indentDbus(s string) string {
 	return indentation + "     " + s
+}
+
+func getLetterIn(alphabet []string, in string) string {
+	for _, letter := range alphabet {
+		if strings.HasPrefix(in, letter) {
+			return letter
+		}
+	}
+	return ""
 }
