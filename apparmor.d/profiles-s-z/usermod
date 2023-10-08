@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2019-2021 Mikhail Morfikov
+# Copyright (C) 2021-2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -12,31 +13,23 @@ profile usermod @{exec_path} flags=(attach_disconnected) {
   include <abstractions/consoles>
   include <abstractions/nameservice-strict>
 
-  # To write records to the kernel auditing log.
   capability audit_write,
-
-  # To set the right permission to the files in the /etc/ dir.
   capability chown,
-  capability fsetid,
-
-  # To read user home files and change their user/group.
-  #  usermod: Failed to change ownership of the home directory
   capability dac_read_search,
-
-  # To move user home files to a new location.
   capability fowner,
-
-  # To prevent removing a user when it's used by some process.
+  capability fsetid,
   capability sys_ptrace,
-  ptrace (read),
 
   network netlink raw,
+
+  ptrace (read),
 
   @{exec_path} mr,
 
   @{bin}/nscd rix,
 
   /etc/login.defs r,
+  /etc/subuid r,
 
   /etc/{passwd,shadow,gshadow,group} rw,
   /etc/{passwd,shadow,gshadow,group}.@{pid} w,
@@ -52,16 +45,14 @@ profile usermod @{exec_path} flags=(attach_disconnected) {
   # modify the /etc/passwd or /etc/shadow password database.
   /etc/.pwd.lock rwk,
 
-  /etc/subuid r,
-
-  @{PROC}/ r,
-  @{PROC}/@{pids}/task/ r,
-
   # To create and move user dirs
   @{HOME}/{,**}    rw,
   /var/            r,
   /var/lib/        r,
   /var/lib/*/{,**} rw,
+
+  @{PROC}/ r,
+  @{PROC}/@{pids}/task/ r,
 
   include if exists <local/usermod>
 }
