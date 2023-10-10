@@ -10,7 +10,7 @@ import (
 	"testing"
 )
 
-func TestDecodeHex(t *testing.T) {
+func TestDecodeHexInString(t *testing.T) {
 	tests := []struct {
 		name string
 		str  string
@@ -18,19 +18,19 @@ func TestDecodeHex(t *testing.T) {
 	}{
 		{
 			name: "Hexa",
-			str:  "666F6F20626172",
-			want: "foo bar",
+			str:  `apparmor="ALLOWED" operation="rename_dest" parent=6974 profile="/usr/sbin/httpd2-prefork//vhost_foo" name=2F686F6D652F7777772F666F6F2E6261722E696E2F68747470646F63732F61707061726D6F722F696D616765732F746573742F696D61676520312E6A7067 pid=20143 comm="httpd2-prefork" requested_mask="wc"`,
+			want: `apparmor="ALLOWED" operation="rename_dest" parent=6974 profile="/usr/sbin/httpd2-prefork//vhost_foo" name="/home/www/foo.bar.in/httpdocs/apparmor/images/test/image 1.jpg" pid=20143 comm="httpd2-prefork" requested_mask="wc"`,
 		},
 		{
 			name: "Not Hexa",
-			str:  "ALLOWED",
-			want: "ALLOWED",
+			str:  `type=AVC msg=audit(1424425690.883:716630): apparmor="ALLOWED" operation="file_mmap" info="Failed name lookup - disconnected path" error=-13 profile="/sbin/klogd" name="var/run/nscd/passwd" pid=25333 comm="id" requested_mask="r" denied_mask="r" fsuid=1002 ouid=0`,
+			want: `type=AVC msg=audit(1424425690.883:716630): apparmor="ALLOWED" operation="file_mmap" info="Failed name lookup - disconnected path" error=-13 profile="/sbin/klogd" name="var/run/nscd/passwd" pid=25333 comm="id" requested_mask="r" denied_mask="r" fsuid=1002 ouid=0`,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := DecodeHex(tt.str); got != tt.want {
-				t.Errorf("DecodeHex() = %v, want %v", got, tt.want)
+			if got := DecodeHexInString(tt.str); got != tt.want {
+				t.Errorf("DecodeHexInString() = %v, want %v", got, tt.want)
 			}
 		})
 	}
