@@ -6,6 +6,8 @@ _aa-log() {
 	_arguments : \
 		{-f,--file}'[set a logfile or a suffix to the default log file]:FILE:__aa_files' \
 		{-s,--systemd}'[parse systemd logs from journalctl]' \
+		{-r,--rules}'[convert the log into AppArmor rules]' \
+		{-R,--raw}'[print the raw log without any formatting]' \
 		{-h,--help}'[display help information]'
 
 	_values -C 'profile names' ${$(__aa_profiles):-""}
