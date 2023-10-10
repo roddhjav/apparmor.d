@@ -59,13 +59,14 @@ var (
 		`@{PROC}/@{pid}/task/[0-9]*/`, `@{PROC}/@{pid}/task/@{tid}/`,
 		`/sys/`, `@{sys}/`,
 		`@{PROC}@{sys}/`, `@{PROC}/sys/`,
-		`pci[0-9][0-9][0-9][0-9]:[0-9][0-9]`, `@{pci_bus}`,
-		`@{pci_bus}/([0-9][0-9][0-9][0-9]:[0-9][0-9]:[0-9a-f][0-9a-f]\.[0-9]/)+`, `@{pci}/`,
+		`pci[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]:[0-9a-fA-F][0-9a-fA-F]`, `@{pci_bus}`,
 
 		// Some system glob
 		`:1.[0-9]*`, `:*`, // dbus peer name
 		`@{bin}/(|ba|da)sh`, `@{bin}/{,ba,da}sh`, // collect all shell
 		`@{lib}/modules/[^/]+\/`, `@{lib}/modules/*/`, // strip kernel version numbers from kernel module accesses
+		`[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][-_][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][-_][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][-_][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][-_][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]`, `@{uuid}`,
+		`[0-9][0-9][0-9][0-9][0-9][0-9]+`, `@{int}`,
 
 		// Remove basic rules from abstractions/base
 		`(?m)^.*/etc/[^/]+so.*$`, ``,
@@ -114,14 +115,6 @@ func NewApparmorLogs(file io.Reader, profile string) AppArmorLogs {
 				aa[kv[0]] = strings.Trim(kv[1], `"`)
 			}
 		}
-		aa["profile"] = util.DecodeHex(aa["profile"])
-		toDecode := []string{"name", "comm"}
-		for _, name := range toDecode {
-			if value, ok := aa[name]; ok {
-				aa[name] = util.DecodeHex(value)
-			}
-		}
-
 		aaLogs = append(aaLogs, aa)
 	}
 

@@ -23,7 +23,6 @@ func TestGetJournalctlLogs(t *testing.T) {
 			want: AppArmorLogs{
 				{
 					"apparmor":   "ALLOWED",
-					"profile":    "",
 					"label":      "gsd-xsettings",
 					"operation":  "dbus_method_call",
 					"name":       ":*",

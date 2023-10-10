@@ -9,23 +9,27 @@ import (
 	"regexp"
 )
 
-var isHexa = regexp.MustCompile("^[0-9A-Fa-f]+$")
-
 type RegexRepl struct {
 	Regex *regexp.Regexp
 	Repl  string
 }
 
-// DecodeHex decode a string if it is hexa.
-func DecodeHex(str string) string {
-	if isHexa.MatchString(str) {
-		bs, _ := hex.DecodeString(str)
-		return string(bs)
+// DecodeHexInString decode and replace all hex value in a given string constitued of "key=value".
+func DecodeHexInString(str string) string {
+	toDecode := []string{"name", "comm", "profile"}
+	for _, name := range toDecode {
+		exp := name + `=[0-9A-F]+`
+		re := regexp.MustCompile(exp)
+		str = re.ReplaceAllStringFunc(str, func(s string) string {
+			hexa := s[len(name)+1:]
+			bs, _ := hex.DecodeString(hexa)
+			return name + "=\"" + string(bs) + "\""
+		})
 	}
 	return str
 }
 
-// RemoveDuplicate filter out all duplicates from a slice. Also filter out empty string
+// RemoveDuplicate filter out all duplicates from a slice. Also filter out empty element.
 func RemoveDuplicate[T comparable](inlist []T) []T {
 	var empty T
 	list := []T{}

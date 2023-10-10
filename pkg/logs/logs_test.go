@@ -47,7 +47,6 @@ var (
 	refPowerProfiles = AppArmorLogs{
 		{
 			"apparmor":   "ALLOWED",
-			"profile":    "",
 			"label":      "power-profiles-daemon",
 			"operation":  "dbus_method_call",
 			"name":       "org.freedesktop.DBus",
@@ -83,7 +82,7 @@ func TestAppArmorEvents(t *testing.T) {
 					"apparmor":       "ALLOWED",
 					"profile":        "@{bin}/httpd2-prefork//vhost_foo",
 					"operation":      "rename_dest",
-					"name":           "/home/www/foo.bar.in/httpdocs/apparmor/images/test/image 1.jpg",
+					"name":           "@{HOME}/foo.bar.in/httpdocs/apparmor/images/test/image 1.jpg",
 					"comm":           "httpd2-prefork",
 					"requested_mask": "wc",
 					"denied_mask":    "wc",
@@ -136,7 +135,6 @@ func TestAppArmorEvents(t *testing.T) {
 			want: AppArmorLogs{
 				{
 					"apparmor":   "ALLOWED",
-					"profile":    "",
 					"label":      "snapd",
 					"operation":  "dbus_method_call",
 					"name":       "org.freedesktop.PolicyKit1",
@@ -163,7 +161,6 @@ func TestAppArmorEvents(t *testing.T) {
 			want: AppArmorLogs{
 				{
 					"apparmor":  "ALLOWED",
-					"profile":   "",
 					"label":     "xdg-document-portal",
 					"operation": "dbus_bind",
 					"name":      "org.freedesktop.portal.Documents",
