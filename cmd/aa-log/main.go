@@ -15,7 +15,7 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-const usage = `aa-log [-h] [--systemd] [--file file] [--rules] [profile]
+const usage = `aa-log [-h] [--systemd] [--file file] [--rules | --raw] [profile]
 
     Review AppArmor generated messages in a colorful way. Supports logs from
     auditd, systemd, syslog as well as dbus session events.
