@@ -9,11 +9,11 @@ include <tunables/global>
 
 @{name} = brave{,-beta,-dev,-bin}
 @{domain} = com.brave.Brave
-@{lib_dirs} = /opt/brave{-bin,.com}/@{name}
+@{lib_dirs} = /opt/brave{-bin,.com}{,/@{name}}
 @{config_dirs} = @{user_config_dirs}/BraveSoftware/Brave-Browser{,-Beta,-Dev}
 @{cache_dirs} = @{user_cache_dirs}/BraveSoftware/Brave-Browser{,-Beta,-Dev}
 
-@{exec_path} = @{lib_dirs}{,/@{name}}
+@{exec_path} = @{lib_dirs}/@{name}
 profile brave @{exec_path} {
   include <abstractions/base>
   include <abstractions/chromium>
@@ -22,14 +22,11 @@ profile brave @{exec_path} {
 
   @{bin}/man  rPUx, #  For "brave --help"
 
-  @{lib_dirs}/swiftshader/libGLESv2.so mr,
-  @{lib_dirs}/swiftshader/libEGL.so mr,
-
   /usr/share/chromium/extensions/ r,
 
   /etc/opt/chrome/ r,
 
-  owner @{user_config_dirs}/BraveSoftware/ w,
+  owner @{user_config_dirs}/BraveSoftware/ rw,
   owner @{user_config_dirs}/menus/applications-merged/ r,
   owner @{user_config_dirs}/menus/applications-merged/xdg-desktop-menu-dummy.menu r,
 
@@ -37,6 +34,11 @@ profile brave @{exec_path} {
   owner @{cache_dirs}/BraveSoftware/ rw,
 
   owner /tmp/net-export/ rw,  # For brave://net-export/
+
+  owner /tmp/.org.chromium.Chromium.* rwk,
+  owner /tmp/.org.chromium.Chromium*/{,**} rw,
+
+  owner /dev/shm/.org.chromium.Chromium.* rw,
 
   # Silencer
   deny /etc/opt/chrome/ w,
