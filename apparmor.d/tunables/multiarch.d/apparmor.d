@@ -45,7 +45,7 @@
 # @{MOUNTDIRS} is a space-separated list of where user mount directories
 # are stored, for programs that must enumerate all mount directories on a
 # system.
-@{MOUNTDIRS}=/media/* @{run}/media/* /mnt/
+@{MOUNTDIRS}=/media/ @{run}/media/*/ /mnt/
 
 # @{MOUNTS} is a space-separated list of all user mounted directories.
 @{MOUNTS}=@{MOUNTDIRS}/*/
