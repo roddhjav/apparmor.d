@@ -4,14 +4,15 @@
 
 package aa
 
-import "strings"
+import (
+	"strings"
+)
 
 type Rule struct {
 	Comment     string
 	NoNewPrivs  bool
 	FileInherit bool
 }
-
 
 func (r *Rule) Less(other any) bool {
 	return false
@@ -28,6 +29,8 @@ type Qualifier struct {
 	Owner       bool
 	NoNewPrivs  bool
 	FileInherit bool
+	Optional    bool
+	Comment     string
 	Prefix      string
 	Padding     string
 }
@@ -46,20 +49,41 @@ func NewQualifierFromLog(log map[string]string) Qualifier {
 	if log["apparmor"] == "AUDIT" {
 		audit = true
 	}
+
 	fileInherit := false
 	if log["operation"] == "file_inherit" {
 		fileInherit = true
 	}
+
 	noNewPrivs := false
-	if log["error"] == "-1" {
-		noNewPrivs = true
+	optional := false
+	msg := ""
+	switch log["error"] {
+	case "-1":
+		if strings.Contains(log["info"], "optional:") {
+			optional = true
+			msg = strings.Replace(log["info"], "optional: ", "", 1)
+		} else {
+			noNewPrivs = true
+		}
+	case "-13":
+		ignoreProfileInfo := []string{"namespace", "disconnected path"}
+		for _, info := range ignoreProfileInfo {
+			if strings.Contains(log["info"], info) {
+				break
+			}
+		}
+		msg = log["info"]
+	default:
 	}
+
 	return Qualifier{
 		Audit:       audit,
-		AccessType:  "",
 		Owner:       owner,
 		NoNewPrivs:  noNewPrivs,
 		FileInherit: fileInherit,
+		Optional:    optional,
+		Comment:     msg,
 	}
 }
 
