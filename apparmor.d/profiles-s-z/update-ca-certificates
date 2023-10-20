@@ -14,29 +14,33 @@ profile update-ca-certificates @{exec_path} {
   include <abstractions/openssl>
   include <abstractions/ssl_certs>
 
-  @{exec_path} r,
-  @{bin}/{,ba,da}sh rix,
+  @{exec_path} rmix,
 
+  @{bin}/{,ba,da}sh rix,
   @{bin}/basename   rix,
   @{bin}/cat        rix,
   @{bin}/chmod      rix,
   @{bin}/find       rix,
   @{bin}/flock      rix,
+  @{bin}/install    rix,
   @{bin}/ln         rix,
   @{bin}/mktemp     rix,
   @{bin}/mv         rix,
+  @{bin}/openssl    rix,
   @{bin}/readlink   rix,
   @{bin}/rm         rix,
   @{bin}/sed        rix,
   @{bin}/sort       rix,
   @{bin}/test       rix,
+  @{bin}/trust      rix,
   @{bin}/wc         rix,
 
-  @{bin}/openssl    rix,
+  @{lib}/ca-certificates/update.d/ r,
+  @{lib}/ca-certificates/update.d/* rix, 
+  /etc/ca-certificates/update.d/ r,
+  /etc/ca-certificates/update.d/* rix, 
 
-  /etc/ca-certificates/update.d/             r,
-  /etc/ca-certificates/update.d/jks-keystore rCx -> jks-keystore,
-  @{bin}/run-parts                      rCx -> run-parts,
+  /usr/share/p11-kit/modules/{,*} r,
 
   /etc/ r,
   /etc/ca-certificates.conf r,
@@ -44,71 +48,17 @@ profile update-ca-certificates @{exec_path} {
   /etc/ssl/certs/*.pem rw,
   /etc/ssl/certs/@{hex}.[0-9] rw,
 
-  @{lib}/locale/locale-archive r,
+  /var/lib/ca-certificates/ rwk,
+  /var/lib/ca-certificates/** rw,
+
+  / r,
 
         /tmp/ r,
   owner /tmp/ca-certificates{,.crt}.tmp.* rw,
 
-  # For shell pwd
-  /root/ r,
+  @{PROC}/filesystems r,
 
-  /usr/local/share/ r,
-
-  profile run-parts {
-    include <abstractions/base>
-
-    @{bin}/run-parts mr,
-
-    /etc/ca-certificates/update.d/ r,
-
-    # file_inherit
-    owner /dev/pts/@{int} rw,
-
-  }
-
-  profile jks-keystore {
-    include <abstractions/base>
-    include <abstractions/consoles>
-    include <abstractions/nameservice-strict>
-    include <abstractions/ssl_certs>
-
-    /etc/ca-certificates/update.d/jks-keystore mr,
-
-    @{lib}/ r,
-    @{lib}/jvm/java-[0-9]*-openjdk-*/jre/bin/java rix,
-    @{lib}/jvm/java-[0-9]*-openjdk-*/bin/java     rix,
-    @{lib}/jvm/java-[0-9]*-openjdk-*/lib/server/classes.jsa mr,
-
-    @{bin}/{,ba,da}sh rix,
-    @{bin}/sed        rix,
-    @{bin}/head       rix,
-    @{bin}/mountpoint rix,
-    # Do not strip env to avoid errors like the following:
-    #  ERROR: ld.so: object 'libfakeroot-sysv.so' from LD_PRELOAD cannot be preloaded (cannot open
-    #  shared object file): ignored.
-    @{bin}/dpkg-query rpx,
-    #
-    @{bin}/dpkg       rPx -> child-dpkg,
-
-    /usr/share/ca-certificates-java/ca-certificates-java.jar r,
-    /usr/share/java/java-atk-wrapper.jar r,
-
-    /etc/default/cacerts r,
-    /etc/ssl/certs/java/cacerts rw,
-
-    /etc/java-[0-9]*-openjdk/{,**} r,
-
-    owner @{PROC}/@{pid}/coredump_filter rw,
-    owner @{PROC}/@{pid}/coredump rw,
-    owner @{PROC}/@{pid}/cgroup r,
-    owner @{PROC}/@{pid}/mountinfo r,
-
-    @{sys}/fs/cgroup/** r,
-
-    owner /tmp/hsperfdata_*/ rw,
-    owner /tmp/hsperfdata_*/@{pid} rw,
-
-  }
+  /dev/tty rw,
 
   include if exists <local/update-ca-certificates>
 }
