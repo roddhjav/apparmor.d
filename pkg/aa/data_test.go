@@ -62,7 +62,7 @@ var (
 		"apparmor":  "ALLOWED",
 		"class":     "mount",
 		"operation": "mount",
-		"info":      "failed perms check", // TODO: not attach_disconnected
+		"info":      "failed perms check",
 		"error":     "-13",
 		"profile":   "dockerd",
 		"name":      "/var/lib/docker/overlay2/metacopy-check906831159/merged/",
@@ -71,11 +71,13 @@ var (
 		"srcname":   "overlay",
 	}
 	mount1 = &Mount{
+		Qualifier:       Qualifier{Comment: "failed perms check"},
 		MountConditions: MountConditions{FsType: "overlay", Options: []string{}},
 		Source:          "overlay",
 		MountPoint:      "/var/lib/docker/overlay2/opaque-bug-check1209538631/merged/",
 	}
 	mount2 = &Mount{
+		Qualifier:       Qualifier{Comment: "failed perms check"},
 		MountConditions: MountConditions{FsType: "overlay", Options: []string{}},
 		Source:          "overlay",
 		MountPoint:      "/var/lib/docker/overlay2/metacopy-check906831159/merged/",

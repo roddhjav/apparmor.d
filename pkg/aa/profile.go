@@ -66,15 +66,16 @@ func (p *AppArmorProfile) String() string {
 
 // AddRule adds a new rule to the profile from a log map
 func (p *AppArmorProfile) AddRule(log map[string]string) {
+	// Generate profile flags and extra rules
 	switch log["error"] {
 	case "-2":
 		if !slices.Contains(p.Flags, "mediate_deleted") {
 			p.Flags = append(p.Flags, "mediate_deleted")
 		}
 	case "-13":
-		// FIXME: -13 can be a lot of things, not only attach_disconnected
-		// Eg: info="User namespace creation restricted"
-		if !slices.Contains(p.Flags, "attach_disconnected") {
+		if strings.Contains(log["info"], "namespace creation restricted") {
+			p.Rules = append(p.Rules, UsernsFromLog(log))
+		} else if strings.Contains(log["info"], "disconnected path") && !slices.Contains(p.Flags, "attach_disconnected") {
 			p.Flags = append(p.Flags, "attach_disconnected")
 		}
 	default:

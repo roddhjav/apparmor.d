@@ -153,7 +153,6 @@ func TestAppArmorProfile_AddRule(t *testing.T) {
 			log:  mount2Log,
 			want: &AppArmorProfile{
 				Profile: Profile{
-					Flags: []string{"attach_disconnected"},
 					Rules: []ApparmorRule{mount2},
 				},
 			},

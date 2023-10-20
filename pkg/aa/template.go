@@ -30,12 +30,12 @@ var (
 	tmplAppArmorProfile = generateTemplate()
 
 	// convert apparmor requested mask to apparmor access mode
-	// TODO: Should be a map of slice, not exhausive yet
+	// TODO: Should be a map of slice, not exhaustive yet
 	maskToAccess = map[string]string{
 		"a":            "w",
 		"c":            "w",
 		"d":            "w",
-		"k":            "rk",
+		"k":            "k",
 		"l":            "l",
 		"m":            "rm",
 		"r":            "r",
