@@ -23,7 +23,7 @@ most Linux based applications and processes.
 - Confine some *"special"* user applications: web browser, file browser...
 - Should not break a normal usage of the confined software
 
-See the [Concepts](concepts) page for more detail on the architecture.
+See the [Concepts](concepts)' page for more detail on the architecture.
 
 **Goals**
 

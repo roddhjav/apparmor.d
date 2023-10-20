@@ -4,7 +4,7 @@ title: Enforce Mode
 
 # Enforce Mode
 
-The default package configuration installs all profiles in *complain* mode. This is a safety measure to ensure you are not going to break your system on initial install. Once you have tested it and it works fine, you can easily switch to *enforce* mode. The profiles that are not considered stable are kept in complain mode, they can be tracked in the [`dists/flags`](https://github.com/roddhjav/apparmor.d/tree/main/dists/flags) directory.
+The default package configuration installs all profiles in *complain* mode. This is a safety measure to ensure you are not going to break your system on initial installation. Once you have tested it, and it works fine, you can easily switch to *enforce* mode. The profiles that are not considered stable are kept in complain mode, they can be tracked in the [`dists/flags`](https://github.com/roddhjav/apparmor.d/tree/main/dists/flags) directory.
 
 !!! warning
 
@@ -35,7 +35,7 @@ Use the `make enforce` command to build instead of `make`
 
 ## Track profiles in complain mode
 
-The [`dists/flags`](https://github.com/roddhjav/apparmor.d/tree/main/dists/flags) directory tracks the profile that have been forced in complain mode. It is used for profile that are not considered stable. Files in this directory should respect the following format: `<profile> <flags>`, flags should be coma separated.
+The [`dists/flags`](https://github.com/roddhjav/apparmor.d/tree/main/dists/flags) directory tracks the profile that have been forced in complain mode. It is used for profile that are not considered stable. Files in this directory should respect the following format: `<profile> <flags>`, flags should be comma separated.
 
 For instance, to move `adb` in complain mode, edit **[`dists/flags/main.flags`](https://github.com/roddhjav/apparmor.d/blob/main/dists/flags/main.flags)** and add the following line:
 ```sh
