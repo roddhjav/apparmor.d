@@ -12,15 +12,17 @@ sudo aa-status
 It should give something like:
 ```
 apparmor module is loaded.
-1441 profiles are loaded.
-112 profiles are in enforce mode.
+1613 profiles are loaded.
+1050 profiles are in enforce mode.
+   ...
+563 profiles are in complain mode.
    ...
 0 profiles are in kill mode.
 0 profiles are in unconfined mode.
-155 processes have profiles defined.
-14 processes are in enforce mode.
+170 processes have profiles defined.
+140 processes are in enforce mode.
    ...
-141 processes are in complain mode.
+30 processes are in complain mode.
    ...
 0 processes are unconfined but have a profile defined.
 0 processes are in mixed mode.
@@ -104,7 +106,7 @@ DENIED  dnsmasq open /proc/cmdline comm=dnsmasq requested_mask=r denied_mask=r
 ### Help
 
 ```
-aa-log [-h] [--systemd] [--file file] [--rules] [profile]
+aa-log [-h] [--systemd] [--file file] [--rules | --raw] [profile]
 
     Review AppArmor generated messages in a colorful way. Supports logs from
     auditd, systemd, syslog as well as dbus session events.
@@ -119,4 +121,5 @@ Options:
     -f, --file FILE    Set a logfile or a suffix to the default log file.
     -s, --systemd      Parse systemd logs from journalctl.
     -r, --rules        Convert the log into AppArmor rules.
+    -R, --raw          Print the raw log without any formatting.
 ```

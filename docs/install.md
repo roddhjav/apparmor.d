@@ -19,7 +19,7 @@ The following desktop environments are supported:
   - [x] :material-gnome: Gnome
   - [ ] :simple-kde: KDE *(work in progress)*
 
-Also, please note wayland has better support than xorg.
+Also, please note Wayland has better support than Xorg.
 
 **Build dependencies**
 
@@ -33,7 +33,7 @@ Also, please note wayland has better support than xorg.
 yay -S apparmor.d-git  # or your preferred AUR install method
 ```
 
-Or without a AUR helper:
+Or without an AUR helper:
 ```sh
 git clone https://aur.archlinux.org/apparmor.d-git.git
 cd apparmor.d-git
@@ -49,7 +49,7 @@ sudo apt install apparmor-profiles build-essential config-package-dev debhelper 
 git clone https://github.com/roddhjav/apparmor.d.git
 cd apparmor.d
 dpkg-buildpackage -b -d --no-sign
-sudo dpkg -i ../apparmor.d_*_all.deb
+sudo dpkg -i ../apparmor.d_*.deb
 ```
 
 !!! tip
@@ -59,9 +59,18 @@ sudo dpkg -i ../apparmor.d_*_all.deb
     make dpkg
     ```
 
+!!! note
+
+    Debian user may need golang from the backports repository to build:
+    ```sh
+    echo 'deb http://deb.debian.org/debian bookworm-backports main contrib non-free' | sudo tee -a /etc/apt/sources.list
+    sudo apt update
+    sudo apt install -t bookworm-backports golang-go
+    ```
 
 ## :simple-suse: OpenSUSE
 
+OpenSUSE users need to add [cboltz](https://en.opensuse.org/User:Cboltz) repo on OBS
 ```sh
 zypper addrepo https://download.opensuse.org/repositories/home:cboltz/openSUSE_Factory/home:cboltz.repo
 zypper refresh

@@ -27,7 +27,7 @@ error: could not get current working directory
 
 This is **a feature, not a bug!** It can safely be ignored. Pacman tries to get your current directory. You will only get this error when you run pacman in your home directory.
 
-According the Archlinux guideline, on Archlinux, packages cannot install files under `/home/`. Therefore the [`pacman`][pacman] profile purposely does not allow access of your home directory.
+According to the Archlinux guideline, on Archlinux, packages cannot install files under `/home/`. Therefore, the [`pacman`][pacman] profile purposely does not allow access of your home directory.
 
 This provides a basic protection against some packages (on the AUR) that may have rogue install script.
 
