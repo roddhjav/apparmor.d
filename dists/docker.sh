@@ -56,9 +56,8 @@ build_in_docker_makepkg() {
 	else
 		docker pull "$BASEIMAGE/$dist"
 		docker run -tid --name "$img" --volume "$VOLUME:$BUILDIR" \
-			--env MAKEFLAGS="-j$(nproc)" --env PACKAGER="$PACKAGER" \
-			--env BUILDDIR=/tmp/build --env PKGDEST="$BUILDIR" \
-			--env DIST="$dist" \
+			--env PKGDEST="$BUILDIR" --env PACKAGER="$PACKAGER" \
+			--env BUILDDIR=/tmp/build \
 			"$BASEIMAGE/$dist"
 	fi
 
@@ -77,7 +76,7 @@ build_in_docker_dpkg() {
 	else
 		docker pull "$BASEIMAGE/$dist"
 		docker run -tid --name "$img" --volume "$VOLUME:$BUILDIR" \
-			--env DEBIAN_FRONTEND=noninteractive --env DIST="$dist" \
+			--env DEBIAN_FRONTEND=noninteractive --env DISTRIBUTION="$dist" \
 			"$BASEIMAGE/$dist"
 		docker exec "$img" sudo apt-get update -q
         docker exec "$img" sudo apt-get install -y config-package-dev rsync
