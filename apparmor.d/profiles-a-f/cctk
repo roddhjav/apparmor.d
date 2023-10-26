@@ -1,0 +1,30 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/cctk /opt/dell/dcc/cctk
+profile cctk @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+
+  capability mknod,
+  capability sys_rawio,
+
+  @{exec_path} mr,
+
+  @{lib}/ r,
+  /opt/dell/dcc/*.so* mr,
+  /opt/dell/srvadmin/{,**} r,
+
+  @{sys}/firmware/dmi/tables/DMI r,
+  @{sys}/firmware/dmi/tables/smbios_entry_point r,
+  @{sys}/firmware/efi/systab r,
+
+  /dev/wmi/dell-smbios r,
+
+  include if exists <local/cctk>
+}
