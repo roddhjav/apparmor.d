@@ -1,27 +1,35 @@
 BUILD=.build
 DESTDIR=/
+        
 for profile in "$@"
 do
-  cp $BUILD/apparmor.d/$profile $DESTDIR/etc/apparmor.d/$profile
-  grep "rPx," "$BUILD/apparmor.d/$profile" | while read l1
+  echo "Installing profile $profile"
+  cp $BUILD/apparmor.d/$profile $DESTDIR/etc/apparmor.d/
+  grep "rPx," "${BUILD}/apparmor.d/${profile}" | while read line
   do
     dep=$(echo "$l1" | awk '{print $1}')
-      dep=$(echo $dep | awk -F"/" '{print $NF}')
-    find . -type f  -name $dep | while read l2
-        do
-      if [ ! -f "$DESTDIR/etc/apparmor.d/$dep" ]; then
-        install_seperate_with_depends $dep
+    dep=$(echo $dep | awk -F"/" '{print $NF}')
+    dep=$(eval "ls ${BUILD}/apparmor.d/${dep} 2>/dev/null")
+  	for i in $dep
+  	do
+  	  i=$(echo $i | awk -F"/" '{print $NF}')
+  	  if [ ! -f "$DESTDIR/etc/apparmor.d/$i" ]; then
+        bash "$0" "$i"
       fi
-        done
+	  done
   done
-  grep "rPx -> " $BUILD/apparmor.d/$profile | while read l1
+  grep "rPx -> " "${BUILD}/apparmor.d/${profile}" | while read line
   do
-    dep=$(echo $l1 | awk '{print $NF}' | awk '{if (NR!=1) {print substr($2, 1, length($2)-1)}}')
-    find . -type f  -name $dep | while read l2
-    do
-        if [ ! -f "$DESTDIR/etc/apparmor.d/$dep" ]; then
-      install_seperate_with_depends $dep
-        fi
+    dep=${line%%#*}
+    dep=$(echo $dep | awk '{print $NF}')
+    dep=${dep::-1}
+    dep=$(eval "ls ${BUILD}/apparmor.d/${dep} 2>/dev/null")
+	  for i in $dep
+	  do
+	    i=$(echo $i | awk -F"/" '{print $NF}')
+	    if [ ! -f "$DESTDIR/etc/apparmor.d/$i" ]; then
+			  bash "$0" "$i"
+      fi
     done
   done
 done
