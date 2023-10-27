@@ -21,7 +21,7 @@ However, as `/etc` can contain sensitive files, we now want to explicitly preven
 1. How do we know the exhaustive list of *sensitive files* in `/etc`?
 2. How do we ensure access to these sensitive files are not required?
 3. This breaks the principle of mandatory access control.
-   See the [first rule of this project][project-rules] that is to only allow
+   See the [first rule of this project](index.md#project-rules) that is to only allow
    what is required. Here we allow everything and blacklist some paths.
 
 It creates even more issues when we want to use this profile in other profiles. Let's take the example of `diff`. Using this rule: `@{bin}/diff rPx,` will restrict access to the very generic and not very confined `diff` profile. Whereas most of the time, we want to restrict `diff` to some specific file in our profile:
@@ -79,7 +79,6 @@ sandbox managed with [Toolbox]
     2. Do not a create profile for the shell: `bash`, `sh`, `dash`, `zsh`
     3. Use [Toolbox].
 
-[project-rules]: /development/#project-rules
 [Toolbox]: https://containertoolbx.org/
 
 

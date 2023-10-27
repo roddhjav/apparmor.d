@@ -9,7 +9,7 @@ title: AppArmor.d
 !!! danger "Help Wanted"
 
     This project is still in its early development. Help is very welcome; 
-    see [Development](development/)
+    see [Development](development/index.md)
 
 **AppArmor.d** is a set of over 1400 AppArmor profiles whose aim is to confine
 most Linux based applications and processes.
@@ -23,16 +23,16 @@ most Linux based applications and processes.
 - Confine some *"special"* user applications: web browser, file browser...
 - Should not break a normal usage of the confined software
 
-See the [Concepts](concepts)' page for more detail on the architecture.
+See the [Concepts](concepts.md)' page for more detail on the architecture.
 
 **Goals**
 
 - Target both desktops and servers
 - Support all distributions that support AppArmor:
-    * [:material-arch: Archlinux](/install/#archlinux)
-    * [:material-ubuntu: Ubuntu 22.04](/install/#ubuntu-debian)
-    * [:material-debian: Debian 12](/install/#ubuntu-debian)
-    * [:simple-suse: OpenSUSE Tumbleweed](/install/#opensuse)
+    * [:material-arch: Archlinux](install.md#archlinux)
+    * [:material-ubuntu: Ubuntu 22.04](install.md#ubuntu-debian)
+    * [:material-debian: Debian 12](install.md#ubuntu-debian)
+    * [:simple-suse: OpenSUSE Tumbleweed](install.md#opensuse)
 - Support all major desktop environments:
     * Currently only :material-gnome: Gnome
 - Fully tested (Work in progress)

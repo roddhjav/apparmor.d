@@ -8,7 +8,7 @@ You want to contribute to `apparmor.d`, **thanks a lot for this.** Feedbacks, co
 
 ??? info "How to contribute"
 
-    1. If you don't have git on your machine, [install it][git].
+    1. If you don't have git on your machine, [install it](https://help.github.com/articles/set-up-git/).
     2. Fork this repo by clicking on the fork button on the top of the [project Github][project] page.
     3. Clone the repository and go to the directory:
     ```sh
@@ -61,14 +61,14 @@ You want to contribute to `apparmor.d`, **thanks a lot for this.** Feedbacks, co
 
 !!! danger "Warning"
 
-    Following the [profile guidelines](guidelines) is **mandatory** for all new profiles.
+    Following the [profile guidelines](guidelines.md) is **mandatory** for all new profiles.
 
 
 1. To add a new profile `foo`, add the file `foo` in [`apparmor.d/profile-a-f`][profiles-a-f]. 
    If your profile is part of a large group of profiles, it can also go in
    [`apparmor.d/groups`][groups].
 
-2. Write the profile content, the rules depend of the confined program,
+2. Write the profile content, the rules depend on the confined program,
    Here is the bare minimum for the program `foo`:
 ``` sh
 # apparmor.d - Full set of apparmor profiles
@@ -95,7 +95,6 @@ profile foo @{exec_path} {
 4. Build & install for your distribution.
 
 
-[git]: https://help.github.com/articles/set-up-git/
 [project]: https://github.com/roddhjav/apparmor.d
 
 [flags]: https://github.com/roddhjav/apparmor.d/blob/main/dists/flags/main.flags

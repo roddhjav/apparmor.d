@@ -24,11 +24,11 @@ This project is designed in such a way that it is easy to personalize the
 directories your programs have access by defining a few variables.
 
 The profiles heavily use the (largely extended) XDG directory variables defined
-in the **[Variables Reference](/variables)** page.
+in the **[Variables Reference](variables.md)** page.
 
 ??? note "XDG variables overview"
 
-    See **[Variables Reference](/variables)** page for more.
+    See **[Variables Reference](variables.md)** page for more.
 
     | Description | Name | Value |
     |-------------|:----:|---------|

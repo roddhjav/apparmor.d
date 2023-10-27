@@ -4,7 +4,7 @@ title: Installation
 
 !!! danger
 
-    In order to not break your system, the default package configuration installs all profiles in complain mode. They can be enforced later. See the [Enforce Mode](/enforce) page.
+    In order to not break your system, the default package configuration installs all profiles in complain mode. They can be enforced later. See the [Enforce Mode](enforce.md) page.
 
 ## Requirements
 
@@ -19,7 +19,7 @@ The following desktop environments are supported:
   - [x] :material-gnome: Gnome
   - [ ] :simple-kde: KDE *(work in progress)*
 
-Also, please note Wayland has better support than Xorg.
+Please note that Wayland has a better support than Xorg.
 
 **Build dependencies**
 
