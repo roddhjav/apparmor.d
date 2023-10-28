@@ -7,10 +7,10 @@ do
 	cp $BUILD/apparmor.d/$profile $DESTDIR/etc/apparmor.d/
   	grep "rPx," "${BUILD}/apparmor.d/${profile}" | while read line
   	do
-  		if [[ -z "$dep" ]]; then
+  		if [[ -z "$line" ]]; then
  			continue
 		fi
-	    	dep=$(echo "$l1" | awk '{print $1}')
+	    	dep=$(echo "$line" | awk '{print $1}')
 	    	dep=$(echo $dep | awk -F"/" '{print $NF}')
 		dep=$(eval "ls ${BUILD}/apparmor.d/${dep} 2>/dev/null")
 	  	for i in $dep
@@ -23,7 +23,7 @@ do
 	done
 	grep "rPx -> " "${BUILD}/apparmor.d/${profile}" | while read line
 	do
-   		if [[ -z "$dep" ]]; then
+   		if [[ -z "$line" ]]; then
  			continue
 		fi
 		dep=${line%%#*}
