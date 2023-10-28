@@ -3,6 +3,9 @@ DESTDIR=/
         
 for profile in "$@"
 do
+	if [ ! -f "${BUILD}/apparmor.d/${profile}" ]; then
+		continue
+	fi
 	echo "Installing profile $profile"
 	cp $BUILD/apparmor.d/$profile $DESTDIR/etc/apparmor.d/
   	grep "rPx," "${BUILD}/apparmor.d/${profile}" | while read line
