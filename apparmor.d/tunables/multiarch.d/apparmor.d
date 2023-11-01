@@ -53,3 +53,37 @@
 # Common places for binaries and libraries across distributions
 @{bin}=/{,usr/}{,s}bin
 @{lib}=/{,usr/}lib{,exec,32,64}
+
+# accommodate different shells
+@{unix_shell}={ba,da,fi,k,z}sh
+
+# Image extensions
+# bmp, jpg, jpeg, png, gif
+@{ext_pictures}={[bB][mM][pP],[jJ][pP]{,[eE]}[gG],[pP][nN][gG],[gG][iI][fF],[wW][eE][bB][pP]}
+
+# Audio/video extensions:
+# a52, aac, ac3, mka, flac, mp1, mp2, mp3, mpc, oga, oma, wav, wv, wm, wma, 3g2, 3gp, 3gp2, 3gpp,
+# asf, avi, divx, m1v, m2v, m4v, mkv, mov, mp4, mpa, mpe, mpg, mpeg, mpeg1, mpeg2, mpeg4, ogg, ogm,
+# ogx, ogv, rm, rmvb, webm, wmv, wtv, mp2t, flv, m4a
+@{ext_audiovideo}  = [aA]{52,[aA][cC],[cC]3}
+@{ext_audiovideo} += [mM][kK][aA]
+@{ext_audiovideo} += [fF][lL][aA][cC]
+@{ext_audiovideo} += [mM][pP][123cC]
+@{ext_audiovideo} += [oO][gGmM][aA]
+@{ext_audiovideo} += [wW]{,[aA]}[vV]
+@{ext_audiovideo} += [wW][mM]{,[aA]}
+@{ext_audiovideo} +=  3[gG]{[2pP],[pP][2pP]}
+@{ext_audiovideo} += [aA][sS][fF]
+@{ext_audiovideo} += [aA][vV][iI]
+@{ext_audiovideo} += [dD][iI][vV][xX]
+@{ext_audiovideo} += [mM][124][vV]
+@{ext_audiovideo} += [mM][kKoO][vV]
+@{ext_audiovideo} += [mM][pP][4aAeEgG]
+@{ext_audiovideo} += [mM][pP][eE][gG]{,[124]}
+@{ext_audiovideo} += [oO][gG][gGmMxXvV]
+@{ext_audiovideo} += [rR][mM]{,[vV][bB]}
+@{ext_audiovideo} += [wW][eE][bB][mM]
+@{ext_audiovideo} += [wW][mMtT][vV]
+@{ext_audiovideo} += [mM][pP]2[tT]
+@{ext_audiovideo} += [fF][lL][vV]
+@{ext_audiovideo} += [mM]4[aA]
