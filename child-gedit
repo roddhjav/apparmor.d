@@ -1,0 +1,31 @@
+#vim:syntax=apparmor
+#AppArmor policy abstraction for child profiles of gedit
+#Copyright (C) 2023 Andy Ramos
+#SPDX-License-Identifier: GPL-2.0-only
+
+    include <abstractions/base>
+    include <abstractions/dconf-write>
+    include <abstractions/gnome>
+    include <abstractions/nameservice-strict>
+    include <abstractions/gtk>
+    include <abstractions/enchant>
+
+    @{bin}/gedit mrix,
+
+    /usr/share/terminfo/x/xterm-256color r,
+
+    owner @{user_config_dirs}/ibus/bus/{,**}     r,
+    owner @{user_config_dirs}/gedit/{,**}        r,
+    owner @{user_config_dirs}/gedit/accels       rw,
+
+    owner @{PROC}/@{pid}/mountinfo       r,
+
+    # needed?
+    deny network inet stream,
+
+    deny unix (send, receive, connect)
+       type=stream
+       peer=(addr="@@{user_cache_dirs}/ibus/dbus-*"),
+
+    deny /etc/{fstab,group,machine-id,passwd} r,
+    deny /run/user/@{uid}/bus                 rw,
