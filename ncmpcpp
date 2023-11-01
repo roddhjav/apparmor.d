@@ -1,0 +1,90 @@
+# apparmor policy for ncmpcpp
+# Copyright (C) 2023 Andy Ramos <public@gracelesslady.art>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/ncmpcpp
+profile ncmpcpp @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+  include <abstractions/ssl_certs>
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  @{bin}/gedit  rCx -> gedit,
+  @{bin}/nano   rCx -> nano,
+
+  @{bin}/nvim 		              rCx -> vim,
+  @{bin}/vi		                  rCx -> vim,
+  @{bin}/vim{,.{basic,tiny}}    rCx -> vim,
+
+  @{bin}/@{unix_shell} rix,
+  @{bin}/pgrep rix,
+
+  /etc/inputrc r,
+
+  /usr/share/zoneinfo-icu/           r,
+  /usr/share/zoneinfo-icu/**         r,
+
+  owner @{user_config_dirs}/ncmpcpp/{,**} r,
+  owner @{user_config_dirs}/ncmpcpp/error.log rw,
+  owner @{user_share_dirs}/lyrics/{,**} rw,
+
+  owner @{user_music_dirs}/ r,
+  # w is for tag editor
+  owner @{user_music_dirs}/** rw,
+
+  /tmp/mpd.fifo r,
+
+  /proc/ r,
+  /proc/uptime r,
+  /proc/sys/kernel/osrelease r,
+
+  deny /proc/*/cmdline r,
+
+
+    profile gedit {
+
+    include <abstractions/child-gedit>
+
+    owner @{user_share_dirs}/lyrics/{,**} 	rw,
+
+    include if exists <local/ncmpcpp_gedit>
+
+  }
+
+  profile nano {
+
+    include <abstractions/child-nano>
+    
+    owner @{user_share_dirs}/lyrics/{,**} 	rw,
+
+    include if exists <local/ncmpcpp_nano>
+
+  }
+
+  profile vim {
+
+    include <abstractions/child-vim>
+
+    owner @{user_share_dirs}/nvim/swap/%home%*%.local%share%lyrics%*.swp rwk,
+    owner @{user_config_dirs}/ncmpcpp/error.log a,
+    owner @{user_share_dirs}/lyrics/{,**} 	rw,
+
+    /tmp/mpd.fifo 			r,
+    
+    include if exists <local/ncmpcpp_vim>
+
+  }
+
+  include if exists <local/ncmpcpp>
+}
