@@ -1,0 +1,251 @@
+# full-apparmor-policy
+# Full System MAC Policy using AppArmor
+#
+# Copyright (c) 2023 monsieuremre <https://github.com/monsieuremre>
+#  
+# This file is part of full-apparmor-policy. You can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+
+abi <abi/3.0>,
+include <tunables/global>
+
+profile full-policy @{lib}/systemd/** flags=(attach_disconnected) {
+
+  ## Section 1 - Non-file related permissions
+  
+  capability audit_read, # can be phased out?
+  capability audit_write,
+  capability chown,
+  capability dac_override,
+  capability dac_read_search,
+  capability fowner,
+  capability fsetid, # requires profiles for administrative utilities like passwd, useradd etc. to be phased out
+  capability kill, # can be phased out with some profiles, would force us to gnome only
+  capability net_admin, # pretty much requires restricting all systemd and network utils to be phased out
+  capability setgid,
+  capability setuid,
+  capability sys_admin,
+  capability sys_chroot, # can be done. needs profiles for browsers
+  capability sys_nice, # can do with 3 profiles, but will only work for gnome
+  capability sys_rawio, # would need a profile for mount and all the similar utils
+  capability sys_resource, # can be done, would break chromium sandbox
+  
+  network netlink,
+  network inet,
+  network inet6,
+  network packet,
+  # network unix, # same as just allowing unix?
+  # network local, # a thing?
+  
+  unix (accept),
+  unix (connect),
+  unix (send),
+  unix (receive),
+  
+  ptrace (read),
+  
+  dbus (send),
+  dbus (receive),
+  dbus (bind),
+    
+  signal (send),
+  signal (receive),
+  
+  mount,
+  remount,
+  umount,
+  
+  ## Restrictions
+  
+  ## These are already not allowed and will be denied. There is no need for explicit denial.
+  ## The only reason we have them here is to provide easy debugging for the users.
+  ## Everything that is not allowed is commented with what it might break.
+  ## If the user needs one of the applications that might break, he can look here
+  ## to find what causes the issue, and add a profile for the application
+  
+  ## might break some random, mostly unimportant and small stuff without profiles
+  deny capability mknod,
+    
+  ## will break cni, iwd, iwd, nmap and third party vpn-daemons like mullvad without profile
+  ## will break firewalls with no profile, use firewalld as profile provided
+  deny capability net_raw,
+    
+  ## will break gnome-keyring-daemon without profile
+  deny capability ipc_lock,
+    
+  ## will break steam without profile
+  deny capability setpcap,
+  
+  ## might break needrestart without profile
+  deny capability checkpoint_restore,
+  
+  ## will break auditd, use journald as profile provided.
+  deny capability audit_control,
+
+  ## won't break with the current set of profiles
+  deny capability net_bind_service,
+  deny capability block_suspend,
+  deny capability bpf,
+  deny capability ipc_owner,
+  deny capability sys_tty_config,
+  deny capability mac_admin, # intentional to protect policy
+  deny capability mac_override, # intentional to protect policy
+  deny capability sys_module,
+  deny capability linux_immutable,
+  deny capability lease,
+  deny capability net_broadcast,
+  deny capability perfmon,
+  deny capability sys_boot,
+  deny capability sys_pacct,
+  deny capability sys_time,
+  deny capability wake_alarm,
+  deny capability setfcap,
+  
+  ## will break steam without profile
+  deny pivot_root, 
+
+  ## will break k3s without profile
+  deny unix (listen),
+  
+  ## won't break with the current set of profiles
+  deny unix (create),
+  deny unix (getattr),
+  deny unix (setattr),
+  deny unix (setopt),
+  deny unix (getopt),
+  
+  ## won't break with the current set of profiles
+  deny ptrace (trace),
+  deny ptrace (tracedby),
+  deny ptrace (readby),
+  
+  ## won't break with the current set of profiles
+  deny network bluetooth,
+  deny network alg,
+  deny network ash,
+  deny network rose,
+  deny network x25,
+  deny network ax25,
+  deny network ipx,
+  deny network netrom,
+  deny network appletalk,
+  deny network econet,
+  deny network qipcrtr,
+  deny network bridge,
+  deny network atmpvc,
+  deny network netbeui,
+  deny network security,
+  deny network key,
+  deny network atmsvc,
+  deny network rds,
+  deny network irda,
+  deny network pppox,
+  deny network wanpipe,
+  deny network ib,
+  deny network mpls,
+  deny network can,
+  deny network tipc,
+  deny network rxrpc,
+  deny network isdn,
+  deny network phonet,
+  deny network ieee802154,
+  deny network caif,
+  deny network vsock,
+  deny network kcm,
+  deny network smc,
+  deny network xdp,
+  
+  # -----
+  
+  ## Section 2 - File permissions
+  
+  ## This is quite restrictive for a "general" profile.
+  ## Can of course be further restricted. Probably by a lot.
+  
+  ## The owner can read pretty much everything
+  ## He can also write to the directories
+  ## directly under root.
+  / r,
+  owner / rwlk,
+  owner /** rw,
+
+  ## Everyone can see the home directories
+  ## Only the owners allowed inside
+  /home r,
+  owner /home/** rwlkPix,
+
+  ## Reserved for the owner 'root' only
+  owner /boot/** rwlk,
+  owner /root/** rwlk,
+
+  ## Running stuff is fine here
+  ## Modifying requires ownership
+  @{lib}/** rPix,
+  owner @{lib}/** rwmlkPix,
+  # Here too
+  @{bin}/** rPix,
+  owner @{bin}/** rwmlkPix,
+  # And here
+  /opt/** rPix,
+  owner /opt/** rwmlkPix,
+  
+  ## Owner can modify only
+  /usr/** r,
+  owner /usr/** rwlk,
+
+  ## Don't you dare read others' temp files
+  owner /{,var/}tmp/** rw,
+ 
+  ## Reading etc is cool
+  ## No modification allowed if not the owner
+  /{,usr/local/}etc/** r,
+  owner /{,usr/local/}etc/** rwmlk,
+
+  ## Can be restricted? Maybe
+  /dev/** rw,
+
+  ## Owner can access his media
+  owner /media/** rw,
+  
+  ## Or what is mounted
+  owner /mnt/** rw,
+
+  ## Restricting this a little harder
+  ## at least we preven executing the temp and logs
+  /var/** rwmlkPix,
+  deny /var/log/** x,
+  deny /var/tmp/** x,
+
+  ## Can be restricted
+  @{run}/** rw,
+  owner @{run}/** rwlk,
+
+  ## Reading can be more restricted for subdirs
+  @{PROC}/** r,
+  owner @{PROC}/** rw,
+  
+  ## Can definetely be restricted further
+  @{sys}/** rw,
+
+  ## Deny changing the profile files
+  deny /**/apparmor.d/** w,
+  
+  ## No access to memory and por
+  deny /dev/mem rw,
+  deny /dev/kmem rw,
+  
+  ## No access to I/O ports
+  deny /dev/port rw,
+  
+  ## This blocks what Kicksecure security-misc package blocks.
+  deny /**System.map* rw,
+  
+  ## No accessing the disk in other ways to circumvent the policy
+  deny /dev/sd* rw,
+  deny /dev/vd* rw,
+  deny /dev/nvme* rw,
+  deny /dev/disk/** rw,
+  deny /dev/block/** rw,
+}
