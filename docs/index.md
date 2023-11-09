@@ -37,6 +37,10 @@ See the [Concepts](concepts.md)' page for more detail on the architecture.
     * Currently only :material-gnome: Gnome
 - Fully tested (Work in progress)
 
-**Presentation**
+**Presentations**
 
-- [Building the largest working set of AppArmor profiles](https://www.youtube.com/watch?v=OzyalrOzxE8) *[Linux Security Summit North America (LSS-NA 2023)](https://events.linuxfoundation.org/linux-security-summit-north-america/)* ([Slide](https://lssna2023.sched.com/event/1K7bI/building-the-largest-working-set-of-apparmor-profiles-alexandre-pujol-the-collaboratory-tudublin))
+Building large set of AppArmor profiles:
+
+- [Linux Security Summit North America (LSS-NA 2023)](https://events.linuxfoundation.org/linux-security-summit-north-america/) *([Slide](https://lssna2023.sched.com/event/1K7bI/building-the-largest-working-set-of-apparmor-profiles-alexandre-pujol-the-collaboratory-tudublin), [Video](https://www.youtube.com/watch?v=OzyalrOzxE8))*
+- [Ubuntu Summit 2023](https://events.canonical.com/event/31/) *([Slide](https://events.canonical.com/event/31/contributions/209/))*
+

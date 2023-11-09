@@ -34,13 +34,13 @@ most Linux based applications and processes.
     * Ubuntu 22.04
     * Debian 12
     * OpenSUSE Tumbleweed
-- Support all major desktop environments:
+- Support major desktop environments:
     * Currently only Gnome
 - Fully tested (Work in progress)
 
 
-> This project is originaly based on the work from [Morfikov][upstream] and aims
-> to extend it to more Linux distributions and desktop environements.
+> This project is originally based on the work from [Morfikov][upstream] and aims
+> to extend it to more Linux distributions and desktop environments.
 
 ## Concepts
 
@@ -63,9 +63,12 @@ bubblewrap, toolbox...).
 This is fundamentally different from how AppArmor is usually used on Linux servers
 as it is common to only confine the applications that face the internet and/or the users.
 
-**Presentation**
+**Presentations**
 
-- [Building the largest working set of AppArmor profiles](https://www.youtube.com/watch?v=OzyalrOzxE8) *[Linux Security Summit North America (LSS-NA 2023)](https://events.linuxfoundation.org/linux-security-summit-north-america/)* ([Slide](https://lssna2023.sched.com/event/1K7bI/building-the-largest-working-set-of-apparmor-profiles-alexandre-pujol-the-collaboratory-tudublin))
+Building large set of AppArmor profiles:
+
+- [Linux Security Summit North America (LSS-NA 2023)](https://events.linuxfoundation.org/linux-security-summit-north-america/) *([Slide](https://lssna2023.sched.com/event/1K7bI/building-the-largest-working-set-of-apparmor-profiles-alexandre-pujol-the-collaboratory-tudublin), [Video](https://www.youtube.com/watch?v=OzyalrOzxE8))*
+- [Ubuntu Summit 2023](https://events.canonical.com/event/31/) *([Slide](https://events.canonical.com/event/31/contributions/209/))*
 
 ## Installation
 
