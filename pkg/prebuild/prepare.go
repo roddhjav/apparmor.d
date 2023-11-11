@@ -173,11 +173,10 @@ func SetFlags() error {
 	return nil
 }
 
-// Set AppArmor for full system policy
-// See https://gitlab.com/apparmor/apparmor/-/wikis/FullSystemPolicy
-// https://gitlab.com/apparmor/apparmor/-/wikis/AppArmorInSystemd#early-policy-loads
+// Set AppArmor for (experimental) full system policy.
+// See https://apparmor.pujol.io/development/structure/#full-system-policy
 func SetFullSystemPolicy() error {
-	for _, name := range []string{"init", "systemd"} {
+	for _, name := range []string{"systemd", "systemd-user"} {
 		err := paths.New("apparmor.d/groups/_full/" + name).CopyTo(RootApparmord.Join(name))
 		if err != nil {
 			return err
