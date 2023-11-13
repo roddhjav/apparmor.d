@@ -10,14 +10,18 @@ include <tunables/global>
 @{exec_path} = @{lib}/{,at-spi2{,-core}/}at-spi2-registryd
 profile at-spi2-registryd @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/dbus-session-strict>
-  include <abstractions/dbus-accessibility-strict>
+  include <abstractions/dbus-session>
+  include <abstractions/dbus-accessibility>
   include <abstractions/nameservice-strict>
+  include <abstractions/X-strict>
 
   signal (receive) set=(term hup)      peer=gdm*,
   signal (receive) set=(term hup kill) peer=dbus-daemon,
 
-  unix (send, receive, connect) type=stream peer=(addr="@/tmp/.X11-unix/X[0-9]*", label="{xorg,xkbcomp}"),
+  dbus bind bus=accessibility name=org.a11y.atspi.Registry,
+
+  dbus (send, receive) bus=accessibility path=/org/a11y/atspi/registry
+       interface=org.a11y.atspi.Registry,
 
   dbus send bus=session path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus
@@ -53,16 +57,6 @@ profile at-spi2-registryd @{exec_path} flags=(attach_disconnected) {
        member=Embed
        peer=(name=:*), # all peer's labels
 
-  dbus send    bus=accessibility path=/org/a11y/atspi/registry
-       interface=org.a11y.atspi.Registry
-       member=EventListenerDeregistered
-       peer=(name=org.freedesktop.DBus), # all peer's labels
-
-  dbus receive bus=accessibility path=/org/a11y/atspi/registry
-       interface=org.a11y.atspi.Registry
-       member=GetRegisteredEvents
-       peer=(name=:*), # all peer's labels
-
   dbus receive bus=accessibility path=/org/a11y/atspi/registry/deviceeventcontroller
        interface=org.a11y.atspi.DeviceEventController
        member={GetKeystrokeListeners,GetDeviceEventListeners}
@@ -78,21 +72,7 @@ profile at-spi2-registryd @{exec_path} flags=(attach_disconnected) {
        member=Introspect
        peer=(name=:*, label=gnome-shell),
 
-  dbus bind bus=accessibility
-       name=org.a11y.atspi.Registry,
-
   @{exec_path} mr,
-
-  /var/lib/lightdm/.Xauthority r,
-
-  owner @{HOME}/.Xauthority r,
-  owner @{HOME}/.xsession-errors w,
-
-  owner /tmp/runtime-*/xauth_@{rand6} r,
-  owner /tmp/xauth_@{rand6} r,
-
-  owner @{run}/user/@{uid}/gdm/Xauthority r,
-  owner @{run}/user/@{uid}/xauth_@{rand6} r,
 
   owner /dev/tty@{int} rw,
 
