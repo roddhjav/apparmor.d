@@ -9,6 +9,7 @@
 # (at your option) any later version.
 
 abi <abi/3.0>,
+
 include <tunables/global>
 
 profile full-policy @{lib}/systemd/** flags=(attach_disconnected) {
@@ -21,16 +22,13 @@ profile full-policy @{lib}/systemd/** flags=(attach_disconnected) {
   capability dac_override,
   capability dac_read_search,
   capability fowner,
-  capability fsetid, # requires profiles for administrative utilities like passwd, useradd etc. to be phased out
-  capability kill, # can be phased out with some profiles, would force us to gnome only
-  capability net_admin, # pretty much requires restricting all systemd and network utils to be phased out
-  capability setgid,
-  capability setuid,
   capability sys_admin,
-  capability sys_chroot, # can be done. needs profiles for browsers
-  capability sys_nice, # can do with 3 profiles, but will only work for gnome
-  capability sys_rawio, # would need a profile for mount and all the similar utils
-  capability sys_resource, # can be done, would break chromium sandbox
+
+  # The following is needed by desktop environments
+  # If on gnome, these can be phased out because the DE components are already covered
+  # with profiles. For other desktops, these have to be allowed
+  capability sys_nice,
+  capability kill,
   
   network netlink,
   network inet,
@@ -58,105 +56,104 @@ profile full-policy @{lib}/systemd/** flags=(attach_disconnected) {
   umount,
   
   ## Restrictions
-  
-  ## These are already not allowed and will be denied. There is no need for explicit denial.
-  ## The only reason we have them here is to provide easy debugging for the users.
-  ## Everything that is not allowed is commented with what it might break.
-  ## If the user needs one of the applications that might break, he can look here
-  ## to find what causes the issue, and add a profile for the application
-  
-  ## might break some random, mostly unimportant and small stuff without profiles
-  deny capability mknod,
-    
-  ## will break cni, iwd, iwd, nmap and third party vpn-daemons like mullvad without profile
+  #
+  ## The following are implicitly denied with this profile. There are comments on
+  ## what they might break without dedicated profilesand how to address these breakages.
+  #
+  ## mostly won't break anything with the current set of profiles
+  # deny capability mknod,   
+  # deny capability setpcap,
+  # deny capability checkpoint_restore,
+  # deny capability audit_control,
+  # deny capability net_bind_service,
+  # deny capability block_suspend,
+  # deny capability bpf,
+  # deny capability ipc_owner,
+  # deny capability sys_tty_config,
+  # deny capability mac_admin, # intentional to protect policy
+  # deny capability mac_override, # intentional to protect policy
+  # deny capability sys_module,
+  # deny capability linux_immutable,
+  # deny capability lease,
+  # deny capability net_broadcast,
+  # deny capability perfmon,
+  # deny capability sys_boot,
+  # deny capability sys_pacct,
+  # deny capability sys_time,
+  # deny capability wake_alarm,
+  # deny capability setfcap,
+  #
+  # deny pivot_root, 
+  #
+  # deny unix (listen),
+  # deny unix (create),
+  # deny unix (getattr),
+  # deny unix (setattr),
+  # deny unix (setopt),
+  # deny unix (getopt),
+  #
+  # deny ptrace (trace),
+  # deny ptrace (tracedby),
+  # deny ptrace (readby),
+  #
+  # deny network bluetooth,
+  # deny network alg,
+  # deny network ash,
+  # deny network rose,
+  # deny network x25,
+  # deny network ax25,
+  # deny network ipx,
+  # deny network netrom,
+  # deny network appletalk,
+  # deny network econet,
+  # deny network qipcrtr,
+  # deny network bridge,
+  # deny network atmpvc,
+  # deny network netbeui,
+  # deny network security,
+  # deny network key,
+  # deny network atmsvc,
+  # deny network rds,
+  # deny network irda,
+  # deny network pppox,
+  # deny network wanpipe,
+  # deny network ib,
+  # deny network mpls,
+  # deny network can,
+  # deny network tipc,
+  # deny network rxrpc,
+  # deny network isdn,
+  # deny network phonet,
+  # deny network ieee802154,
+  # deny network caif,
+  # deny network vsock,
+  # deny network kcm,
+  # deny network smc,
+  # deny network xdp,
+  #
   ## will break firewalls with no profile, use firewalld as profile provided
-  deny capability net_raw,
-    
-  ## will break gnome-keyring-daemon without profile
-  deny capability ipc_lock,
-    
-  ## will break steam without profile
-  deny capability setpcap,
-  
-  ## might break needrestart without profile
-  deny capability checkpoint_restore,
-  
-  ## will break auditd, use journald as profile provided.
-  deny capability audit_control,
+  #  deny capability net_raw,
+  #  deny capability net_admin,
+  #
+  ## might break some desktop components without profile, won't brake on gnome or kde
+  # deny capability ipc_lock,
+  #
+  ## might break if you use utilities that don't have profiles (unlikely)
+  # deny capability sys_rawio,
+  # deny capability fsetid,
+  #
+  ## will break electron apps without profiles, which the most common ones have here
+  ## might also break sandboxing utils if they don't have profiles, which the most common ones have here
+  # deny capability sys_resource,
+  # deny capability sys_chroot,
+  #
+  ## most anything is covered with profiles, but some niche custom utils
+  ## or replacements or rewrites or very specific things can (probably won't) break
+  ## in that case it is worth making a profile request.
+  # deny capability setgid,
+  # deny capability setuid,
 
-  ## won't break with the current set of profiles
-  deny capability net_bind_service,
-  deny capability block_suspend,
-  deny capability bpf,
-  deny capability ipc_owner,
-  deny capability sys_tty_config,
-  deny capability mac_admin, # intentional to protect policy
-  deny capability mac_override, # intentional to protect policy
-  deny capability sys_module,
-  deny capability linux_immutable,
-  deny capability lease,
-  deny capability net_broadcast,
-  deny capability perfmon,
-  deny capability sys_boot,
-  deny capability sys_pacct,
-  deny capability sys_time,
-  deny capability wake_alarm,
-  deny capability setfcap,
-  
-  ## will break steam without profile
-  deny pivot_root, 
 
-  ## will break k3s without profile
-  deny unix (listen),
-  
-  ## won't break with the current set of profiles
-  deny unix (create),
-  deny unix (getattr),
-  deny unix (setattr),
-  deny unix (setopt),
-  deny unix (getopt),
-  
-  ## won't break with the current set of profiles
-  deny ptrace (trace),
-  deny ptrace (tracedby),
-  deny ptrace (readby),
-  
-  ## won't break with the current set of profiles
-  deny network bluetooth,
-  deny network alg,
-  deny network ash,
-  deny network rose,
-  deny network x25,
-  deny network ax25,
-  deny network ipx,
-  deny network netrom,
-  deny network appletalk,
-  deny network econet,
-  deny network qipcrtr,
-  deny network bridge,
-  deny network atmpvc,
-  deny network netbeui,
-  deny network security,
-  deny network key,
-  deny network atmsvc,
-  deny network rds,
-  deny network irda,
-  deny network pppox,
-  deny network wanpipe,
-  deny network ib,
-  deny network mpls,
-  deny network can,
-  deny network tipc,
-  deny network rxrpc,
-  deny network isdn,
-  deny network phonet,
-  deny network ieee802154,
-  deny network caif,
-  deny network vsock,
-  deny network kcm,
-  deny network smc,
-  deny network xdp,
-  
   # -----
   
   ## Section 2 - File permissions
@@ -169,7 +166,6 @@ profile full-policy @{lib}/systemd/** flags=(attach_disconnected) {
   ## directly under root.
   / r,
   owner / rwlk,
-  owner /** rw,
 
   ## Everyone can see the home directories
   ## Only the owners allowed inside
@@ -180,40 +176,35 @@ profile full-policy @{lib}/systemd/** flags=(attach_disconnected) {
   owner /boot/** rwlk,
   owner /root/** rwlk,
 
-  ## Running stuff is fine here
-  ## Modifying requires ownership
+  ## Running binaries is allowed in these places
+  ## Modifying them requires ownership
   @{lib}/** rPix,
   owner @{lib}/** rwmlkPix,
-  # Here too
+
   @{bin}/** rPix,
   owner @{bin}/** rwmlkPix,
-  # And here
+
   /opt/** rPix,
   owner /opt/** rwmlkPix,
   
-  ## Owner can modify only
+  ## Reading /usr allowed, writing requires ownership
   /usr/** r,
   owner /usr/** rwlk,
 
-  ## Don't you dare read others' temp files
+  ## Reading files in temp requires ownership
   owner /{,var/}tmp/** rw,
  
-  ## Reading etc is cool
-  ## No modification allowed if not the owner
+  ## Reading /etc allowed, writing requires ownership
   /{,usr/local/}etc/** r,
   owner /{,usr/local/}etc/** rwmlk,
 
   ## Can be restricted? Maybe
   /dev/** rw,
 
-  ## Owner can access his media
-  owner /media/** rw,
-  
-  ## Or what is mounted
-  owner /mnt/** rw,
+  ## Owner can access his media and mount
+  owner @{MOUNTDIR}/** rw,
 
-  ## Restricting this a little harder
-  ## at least we preven executing the temp and logs
+  ## Many stuff run in /var. We deny executing tmp and log files.
   /var/** rwmlkPix,
   deny /var/log/** x,
   deny /var/tmp/** x,
@@ -228,24 +219,17 @@ profile full-policy @{lib}/systemd/** flags=(attach_disconnected) {
   
   ## Can definetely be restricted further
   @{sys}/** rw,
-
-  ## Deny changing the profile files
-  deny /**/apparmor.d/** w,
   
-  ## No access to memory and por
+  ## Explicitly deny access to memory, I/O ports and the disk in other ways to circumvent the policy
   deny /dev/mem rw,
   deny /dev/kmem rw,
-  
-  ## No access to I/O ports
   deny /dev/port rw,
-  
-  ## This blocks what Kicksecure security-misc package blocks.
-  deny /**System.map* rw,
-  
-  ## No accessing the disk in other ways to circumvent the policy
   deny /dev/sd* rw,
   deny /dev/vd* rw,
   deny /dev/nvme* rw,
   deny /dev/disk/** rw,
   deny /dev/block/** rw,
+
+  include if exists <usr/full-policy.d>
+  include if exists <local/full-policy>
 }
