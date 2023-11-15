@@ -108,6 +108,11 @@ ubuntu:
     paths:
       - $PKGDEST/*.deb
 
+whonix:
+  extends: debian
+  variables:
+    DISTRIBUTION: whonix
+
 opensuse:
   stage: build
   image: registry.gitlab.com/roddhjav/builders/opensuse
@@ -146,15 +151,15 @@ preprocess-debian:
     - apparmor_parser --preprocess /etc/apparmor.d 1> /dev/null
 
 preprocess-ubuntu:
-  stage: preprocess
+  extends: preprocess-debian
   image: ubuntu
   dependencies:
     - ubuntu
-  script:
-    - apt-get update -q
-    - apt-get install -y apparmor apparmor-profiles
-    - dpkg --install $PKGDEST/*
-    - apparmor_parser --preprocess /etc/apparmor.d 1> /dev/null
+
+preprocess-whonix:
+  extends: preprocess-debian
+  dependencies:
+    - whonix
 
 preprocess-opensuse:
   stage: preprocess

@@ -9,10 +9,9 @@ include <tunables/global>
 @{exec_path} = @{lib}/systemd/systemd-binfmt
 profile systemd-binfmt @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/systemd-common>
 
   capability net_admin,
-
-  ptrace (read) peer=unconfined,
 
   @{exec_path} mr,
 
@@ -23,12 +22,8 @@ profile systemd-binfmt @{exec_path} flags=(attach_disconnected) {
   @{run}/binfmt.d/{,*.conf} r,
   /usr/lib/binfmt.d/{,*.conf} r,
 
-        @{PROC}/1/environ r,
-        @{PROC}/cmdline r,
-        @{PROC}/sys/fs/binfmt_misc/register w,
-        @{PROC}/sys/fs/binfmt_misc/status w,
-        @{PROC}/sys/kernel/osrelease r,
-  owner @{PROC}/@{pid}/stat r,
+  @{PROC}/sys/fs/binfmt_misc/register w,
+  @{PROC}/sys/fs/binfmt_misc/status w,
 
   /dev/tty@{int} rw,
   /dev/pts/@{int} rw,
