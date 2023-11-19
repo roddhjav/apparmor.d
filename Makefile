@@ -33,11 +33,11 @@ install:
 	@for file in ${PROFILES}; do \
 		install -Dm0644 "${BUILD}/apparmor.d/$${file}" "${DESTDIR}/etc/apparmor.d/$${file}"; \
 	done;
-	@for file in systemd/system/*; do \
+	@for file in ${BUILD}/systemd/system/*; do \
 		service="$$(basename "$$file")"; \
 		install -Dm0644 "$${file}" "${DESTDIR}/usr/lib/systemd/system/$${service}.d/apparmor.conf"; \
 	done;
-	@for file in systemd/user/*; do \
+	@for file in ${BUILD}/systemd/user/*; do \
 		service="$$(basename "$$file")"; \
 		install -Dm0644 "$${file}" "${DESTDIR}/usr/lib/systemd/user/$${service}.d/apparmor.conf"; \
 	done
