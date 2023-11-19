@@ -57,8 +57,7 @@ profile colord @{exec_path} flags=(attach_disconnected) {
 
   @{exec_path} mr,
 
-  @{lib}/colord/colord-sane  rPx,
-  @{lib}/colord-sane          rPx,
+  @{lib}/{,colord/}colord-sane  rPx,
 
   /etc/machine-id r,
   /etc/udev/hwdb.bin r,
@@ -79,16 +78,18 @@ profile colord @{exec_path} flags=(attach_disconnected) {
 
   @{run}/systemd/sessions/* r,
 
+  @{run}/udev/data/+pci:* r,
   @{run}/udev/data/c81:@{int}  r,         # For video4linux
 
   @{sys}/class/drm/ r,
   @{sys}/class/video4linux/ r,
-  @{sys}/devices/pci[0-9]*/**/drm/card[0-9]/card[0-9]-{HDMI,VGA,LVDS,DP,eDP,Virtual}-*/{enabled,edid} r,
+  @{sys}/devices/@{pci}/drm/card@{int}/card[0-9]-{HDMI,VGA,LVDS,DP,eDP,Virtual}-*/{enabled,edid} r,
+  @{sys}/devices/@{pci}/uevent r,
   @{sys}/devices/virtual/dmi/id/{sys_vendor,product_version,product_name} r,
 
-  owner @{PROC}/@{pid}/fd/ r,
         @{PROC}/@{pids}/cgroup r,
         @{PROC}/@{pids}/cmdline r,
+  owner @{PROC}/@{pid}/fd/ r,
 
   include if exists <local/colord>
 }
