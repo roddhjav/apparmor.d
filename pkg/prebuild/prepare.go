@@ -7,7 +7,6 @@ package prebuild
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -28,15 +27,14 @@ type PrepareFunc func() error
 
 // Initialize a new clean apparmor.d build directory
 func Synchronise() error {
-	dirs := paths.PathList{RootApparmord, Root.Join("root")}
+	dirs := paths.PathList{RootApparmord, Root.Join("root"), Root.Join("systemd")}
 	for _, dir := range dirs {
 		if err := dir.RemoveAll(); err != nil {
 			return err
 		}
 	}
-	for _, path := range []string{"./apparmor.d", "./root"} {
-		cmd := exec.Command("rsync", "-a", path, Root.String())
-		if err := cmd.Run(); err != nil {
+	for _, name := range []string{"apparmor.d", "root"} {
+		if err := copyTo(paths.New(name), Root.Join(name)); err != nil {
 			return err
 		}
 	}
@@ -173,15 +171,38 @@ func SetFlags() error {
 	return nil
 }
 
+// Set systemd unit drop in files to ensure some service start after apparmor
+func SetDefaultSystemd() error {
+	return copyTo(paths.New("systemd/default/"), Root.Join("systemd"))
+}
+
 // Set AppArmor for (experimental) full system policy.
 // See https://apparmor.pujol.io/development/structure/#full-system-policy
 func SetFullSystemPolicy() error {
+	// Install full system policy profiles
 	for _, name := range []string{"systemd", "systemd-user"} {
 		err := paths.New("apparmor.d/groups/_full/" + name).CopyTo(RootApparmord.Join(name))
 		if err != nil {
 			return err
 		}
 	}
+
+	// Set systemd profile name
+	path := paths.New("apparmor.d/tunables/multiarch.d/apparmor.d")
+	content, err := path.ReadFile()
+	if err != nil {
+		return err
+	}
+	res := strings.Replace(string(content), "@{systemd}=unconfined", "@{systemd}=systemd", -1)
+	if err := path.WriteFile([]byte(res)); err != nil {
+		return err
+	}
+
+	// Set systemd unit drop-in files
+	if err := copyTo(paths.New("systemd/full/"), Root.Join("systemd")); err != nil {
+		return err
+	}
+
 	logging.Success("Configure AppArmor for full system policy")
 	return nil
 }

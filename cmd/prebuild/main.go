@@ -47,6 +47,8 @@ func aaPrebuild() error {
 
 	if full {
 		prebuild.Prepares = append(prebuild.Prepares, prebuild.SetFullSystemPolicy)
+	} else {
+		prebuild.Prepares = append(prebuild.Prepares, prebuild.SetDefaultSystemd)
 	}
 	if complain {
 		prebuild.Builds = append(prebuild.Builds, prebuild.BuildComplain)

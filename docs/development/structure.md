@@ -69,9 +69,9 @@ It creates even more issues when we want to use this profile in other profiles. 
 
 **What if I still want to protect these programs?**
 
-You do not protect this program. *Protect the usage you have of these tools*.
+You do not protect these programs. *Protect the usage you have of these programs*.
 In practice, it means that you should put your development's terminal in a
-sandbox managed with [Toolbox]
+sandbox managed with [Toolbox].
 
 !!! example "To sum up"
 
@@ -100,7 +100,7 @@ include <abstractions/user-download-strict>
 
 ## Children profiles
 
-Usually, a child profile is in the [`children`][children] group. They have  the following note:
+Usually, a child profile is in the [`children`][children] group. They have the following note:
 
 !!! quote
 
@@ -165,6 +165,17 @@ Special care must be given as sometimes udev numbers are allocated dynamically b
 [kernel]: https://raw.githubusercontent.com/torvalds/linux/master/Documentation/admin-guide/devices.txt
 
 
+## No New Privileges
+
+[**No New Privileges**](https://www.kernel.org/doc/html/latest/userspace-api/no_new_privs.html) is a flag preventing a newly-started program to get more privileges that its parent. So it is a **good thing** for security. And it is commonly used in systemd unit files (when possible). This flag also prevents transition to other profile because it could be less restrictive than the parent profile (no `Px` or `Ux` allowed).
+
+The possible solutions are:
+
+* The easiest (and unfortunately less secure) workaround is to ensure the programs do not run with no new privileges flag by disabling `NoNewPrivileges` in the systemd unit (or any other [options implying it](https://man.archlinux.org/man/core/systemd/systemd.exec.5.en#SECURITY)).
+* Inherit the current confinement (`ix`)
+* [Stacking](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmorStacking)
+
+
 ## Full system policy
 
 !!! quote
@@ -176,22 +187,60 @@ Special care must be given as sometimes udev numbers are allocated dynamically b
 
     *Source: [AppArmor Wiki][apparmor-wiki]*
 
-This feature is only enabled when the profiles are built with `make full`. The profiles for full system policies are maintained in the **[`_full`][full]** group. It consists of two extra main profiles:
-
-1. **`init`**: For systemd as PID 1
-2. **`systemd`**: For systemd as user
-
-All core required applications that need to be started by systemd (both as user or root) need to be present in these profiles.
-
-Early policy load should also be enabled. In `/etc/apparmor/parser.conf`
-```
-cache-loc /etc/apparmor/earlypolicy/
-```
+### Enable
 
 !!! danger
 
     Full system policy is still under early development, do not run it outside a development VM! **You have been warned!!!**
 
+This feature is only enabled when the project is built with `make full`. [Early policy](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmorInSystemd#early-policy-loads) load must be enabled, in `/etc/apparmor/parser.conf` ensure you have:
+```
+write-cache
+cache-loc /etc/apparmor/earlypolicy/
+```
+
+### Structure
+
+The profiles for full system policies are maintained in the **[`_full`][full]** group.
+
+**systemd**
+
+In addition to systemd services (`systemd-*`) that have their own profiles, systemd itself, is confined using:
+
+- [x] **`systemd`**: For systemd as PID 1, designed such as:
+     - It allows internal systemd access,
+     - It allows starting all common root services.
+- [ ] **`systemd-user`**: For `systemd --user`, designed such as:
+     - It allows internal systemd user access,
+     - It allows starting all common user services.
+
+These profiles are only intended to confine themselves. Any services started by systemd must have their corresponding profile. It means that for a given distribution, the following services must have profiles:
+
+- [ ] For `systemd`:
+```sh
+/usr/lib/systemd/system-generators/*
+/usr/lib/systemd/system-environment-generators/*
+/usr/lib/systemd/system/*.service
+```
+
+- [ ] For `systemd-user`
+```sh
+/usr/lib/systemd/user-environment-generators/*
+/usr/lib/systemd/user-generators/*
+/usr/lib/systemd/user/*.service
+```
+
+To be allowed to run, additional root or user services may need to add extra rules inside the `usr/systemd.d` or `usr/systemd-user.d` directory. For example, when installing a new privileged service `foo` with [stacking](#no-new-privileges) you may need to add the following to `/etc/apparmor.d/usr/systemd.d/foo`:
+```
+  @{lib}/foo rPx -> systemd//&foo,
+  ...
+```
+
+**Fallback**
+
+!!! warning "Work in Progress"
+
+In addition to systemd profiles, a full system policy needs to ensure that no program run in an unconfined state at any time. When full policy mode is enabled, special fallback profiles `default` and `default-user` are used to ensure this. PAM rule can be used to configure it further.
 
 [apparmor-wiki]: https://gitlab.com/apparmor/apparmor/-/wikis/FullSystemPolicy
 [full]: https://github.com/roddhjav/apparmor.d/blob/main/apparmor.d/groups/_full

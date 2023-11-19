@@ -16,7 +16,6 @@ Source0:        %{name}-%{version}.tar.gz
 Requires:       apparmor-profiles
 BuildRequires:  distribution-release
 BuildRequires:  golang-packaging
-BuildRequires:  rsync
 
 %description
 AppArmor.d is a set of over 1500 AppArmor profiles whose aim is to confine most Linux based applications and processes.
@@ -48,6 +47,7 @@ systemctl is-active -q apparmor && systemctl reload apparmor ||:
 %dir /usr/lib/systemd/system/systemd-journald.service.d
 %dir /usr/lib/systemd/system/systemd-networkd.service.d
 %dir /usr/lib/systemd/system/systemd-timesyncd.service.d
+%dir /usr/lib/systemd/system/systemd-userdbd.service.d
 %dir /usr/lib/systemd/user/org.freedesktop.IBus.session.GNOME.service.d
 %dir /usr/share/zsh
 %dir /usr/share/zsh/site-functions
@@ -58,6 +58,7 @@ systemctl is-active -q apparmor && systemctl reload apparmor ||:
 /usr/lib/systemd/system/systemd-journald.service.d/apparmor.conf
 /usr/lib/systemd/system/systemd-networkd.service.d/apparmor.conf
 /usr/lib/systemd/system/systemd-timesyncd.service.d/apparmor.conf
+/usr/lib/systemd/system/systemd-userdbd.service.d/apparmor.conf
 /usr/lib/systemd/user/org.freedesktop.IBus.session.GNOME.service.d/apparmor.conf
 /usr/share/bash-completion/completions/aa-log
 /usr/share/zsh/site-functions/_aa-log.zsh

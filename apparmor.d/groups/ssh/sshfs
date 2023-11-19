@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2021 Mikhail Morfikov
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -10,41 +11,40 @@ include <tunables/global>
 profile sshfs @{exec_path} flags=(complain) {
   include <abstractions/base>
 
-  @{exec_path} mr,
+  mount fstype=fuse.sshfs -> @{HOME}/*/,
+  mount fstype=fuse.sshfs -> @{HOME}/*/*/,
 
   unix (connect, send, receive) type=stream peer=(label="sshfs//fusermount",addr=none),
+
+  @{exec_path} mr,
 
   @{bin}/ssh            rPx,
   @{bin}/fusermount{,3} rCx -> fusermount,
 
-  /dev/fuse rw,
-
-  mount fstype=fuse.sshfs -> @{HOME}/*/,
-  mount fstype=fuse.sshfs -> @{HOME}/*/*/,
-
   @{PROC}/sys/fs/pipe-max-size r,
 
+  /dev/fuse rw,
 
   profile fusermount flags=(complain) {
     include <abstractions/base>
     include <abstractions/nameservice-strict>
 
-    # To mount anything:
     capability sys_admin,
+
+    mount fstype={fuse,fuse.sshfs} -> @{HOME}/*/,
+    mount fstype={fuse,fuse.sshfs} -> @{HOME}/*/*/,
 
     unix (connect, send, receive) type=stream peer=(label="sshfs",addr=none),
 
     @{bin}/fusermount{,3} mr,
 
-    mount fstype={fuse,fuse.sshfs} -> @{HOME}/*/,
-    mount fstype={fuse,fuse.sshfs} -> @{HOME}/*/*/,
-
     /etc/fuse.conf r,
-
-    /dev/fuse rw,
 
     @{PROC}/@{pid}/mounts r,
 
+    /dev/fuse rw,
+
+    include if exists <local/sshfs_fusermount>
   }
 
   include if exists <local/sshfs>

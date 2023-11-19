@@ -22,11 +22,9 @@ var (
 	regAttachments   = regexp.MustCompile(`(profile .* @{exec_path})`)
 	regFlags         = regexp.MustCompile(`flags=\(([^)]+)\)`)
 	regProfileHeader = regexp.MustCompile(` {`)
-	regAbi4To3       = util.ToRegexRepl([]string{
-		`abi/4.0`, `abi/3.0`,
-		`(?m)^.*mqueue.*$`, ``,
-		`(?m)^.*userns.*$`, ``,
-		`(?m)^.*io_uring.*$`, ``,
+	regAbi4To3       = util.ToRegexRepl([]string{ // Currently Abi3 -> Abi4
+		`abi/3.0`, `abi/4.0`,
+		`# userns,`, `userns,`,
 	})
 )
 
