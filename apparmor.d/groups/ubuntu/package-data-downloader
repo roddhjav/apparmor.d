@@ -1,0 +1,23 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/update-notifier/package-data-downloader
+profile package-data-downloader @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/apt-common>
+  include <abstractions/nameservice-strict>
+  include <abstractions/python>
+
+  @{exec_path} mr,
+
+  /var/lib/update-notifier/package-data-downloads/{,**} rw,
+
+  /usr/share/package-data-downloads/ r,
+
+  include if exists <local/package-data-downloader>
+}
