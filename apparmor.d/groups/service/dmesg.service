@@ -1,0 +1,33 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Profile for a systemd service, it does not specify an attachment path because
+# it is intended to be used only via "Px -> *.service" exec transitions from systemd
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+profile dmesg.service {
+  include <abstractions/base>
+
+  @{bin}/savelog     mr,
+
+  @{bin}/basename   rix,
+  @{bin}/chmod      rix,
+  @{bin}/date       rix,
+  @{bin}/dirname    rix,
+  @{bin}/gzip       rix,
+  @{bin}/ln         rix,
+  @{bin}/mv         rix,
+  @{bin}/rm         rix,
+  @{bin}/touch      rix,
+
+  /var/log/ r,
+  /var/log/dmesg rw,
+  /var/log/dmesg.* rwl -> /var/log/dmesg,
+
+  include if exists <usr/dmesg.service.d>
+  include if exists <local/dmesg.service>
+}
