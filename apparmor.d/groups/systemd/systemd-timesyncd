@@ -21,12 +21,12 @@ profile systemd-timesyncd @{exec_path} flags=(attach_disconnected) {
   network inet stream,
   network inet6 stream,
 
+  dbus bind bus=system name=org.freedesktop.timesync1,
+
   dbus send bus=system path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus
        member={RequestName,ReleaseName}
        peer=(name=org.freedesktop.DBus, label=dbus-daemon),
-
-  dbus bind bus=system name=org.freedesktop.timesync1,
 
   @{exec_path} mr,
 
@@ -36,11 +36,14 @@ profile systemd-timesyncd @{exec_path} flags=(attach_disconnected) {
 
   owner /var/lib/systemd/timesync/clock rw,
 
-  owner @{run}/systemd/journal/socket w,
-  owner @{run}/systemd/timesync/synchronized rw,
         @{run}/resolvconf/*.conf r,
         @{run}/systemd/netif/state r,
         @{run}/systemd/notify rw,
+  owner @{run}/systemd/journal/socket w,
+  owner @{run}/systemd/timesync/synchronized rw,
+
+  @{PROC}/@{pid}/cgroup r,
+  @{PROC}/pressure/* r,
 
   include if exists <local/systemd-timesyncd>
 }

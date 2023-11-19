@@ -15,6 +15,13 @@ profile systemd-hostnamed @{exec_path}  flags=(attach_disconnected) {
 
   capability sys_admin,  # To set a hostname
 
+  dbus bind bus=system name=org.freedesktop.hostname1,
+
+  dbus receive bus=system path=/org/freedesktop/hostname1
+       interface=org.freedesktop.hostname1
+       member=SetHostname 
+       peer=(name=:*, label=systemd//&systemd-networkd),
+
   dbus send bus=system path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus
        member={RequestName,ReleaseName,GetConnectionUnixUser}
@@ -34,9 +41,6 @@ profile systemd-hostnamed @{exec_path}  flags=(attach_disconnected) {
        interface=org.freedesktop.hostname1
        member=Set*Hostname
        peer=(name=:*, label=hostnamectl),
-
-  dbus bind bus=system
-       name=org.freedesktop.hostname[0-9],
 
   @{exec_path} mr,
 
