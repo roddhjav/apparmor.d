@@ -53,3 +53,6 @@
 # Common places for binaries and libraries across distributions
 @{bin}=/{,usr/}{,s}bin
 @{lib}=/{,usr/}lib{,exec,32,64}
+
+# Name of the systemd profile: unconfined || systemd
+@{systemd}=unconfined
