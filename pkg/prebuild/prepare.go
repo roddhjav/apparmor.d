@@ -7,7 +7,6 @@ package prebuild
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -28,15 +27,14 @@ type PrepareFunc func() error
 
 // Initialize a new clean apparmor.d build directory
 func Synchronise() error {
-	dirs := paths.PathList{RootApparmord, Root.Join("root")}
+	dirs := paths.PathList{RootApparmord, Root.Join("root"), Root.Join("systemd")}
 	for _, dir := range dirs {
 		if err := dir.RemoveAll(); err != nil {
 			return err
 		}
 	}
-	for _, path := range []string{"./apparmor.d", "./root"} {
-		cmd := exec.Command("rsync", "-a", path, Root.String())
-		if err := cmd.Run(); err != nil {
+	for _, name := range []string{"apparmor.d", "root"} {
+		if err := copyTo(paths.New(name), Root.Join(name)); err != nil {
 			return err
 		}
 	}

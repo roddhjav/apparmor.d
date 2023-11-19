@@ -24,7 +24,6 @@ Please note that Wayland has a better support than Xorg.
 **Build dependencies**
 
 * Go >= 1.18
-* Rsync
 
 ## :material-arch: Archlinux
 
