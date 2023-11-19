@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2019-2021 Mikhail Morfikov
+# Copyright (C) 2021-2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -19,37 +20,37 @@ profile apt-methods-file @{exec_path} {
   capability setgid,
   capability setuid,
 
-  signal (receive) peer=apt,
   signal (receive) peer=apt-get,
+  signal (receive) peer=apt,
   signal (receive) peer=aptitude,
+  signal (receive) peer=packagekitd,
   signal (receive) peer=synaptic,
 
   @{exec_path} mr,
 
-  # apt-helper gets "no new privs" so "rix" it
   @{lib}/apt/apt-helper rix,
+
+  /etc/apt/apt.conf.d/{,*} r,
+  /etc/apt/apt.conf r,
+  /etc/apt/mirrors/* r,
+
+  /usr/share/dpkg/cputable r,
+  /usr/share/dpkg/tupletable r,
 
   # For shell pwd
   / r,
   /etc/ r,
   /root/ r,
 
-  /etc/apt/apt.conf.d/{,*} r,
-  /etc/apt/apt.conf r,
-
-  /usr/share/dpkg/cputable r,
-  /usr/share/dpkg/tupletable r,
-
-        /var/lib/apt/lists/{,**} r,
-  owner /var/lib/apt/lists/* rw,
+        /var/lib/apt/lists/{,**} rw,
   owner /var/lib/apt/lists/partial/* rw,
+
+  /var/log/cron-apt/temp w,
 
   # For package building
   @{user_build_dirs}/** rwkl -> @{user_build_dirs}/**,
 
-  # file_inherit
   owner /dev/tty@{int} rw,
-  /var/log/cron-apt/temp w,
 
   include if exists <local/apt-methods-file>
 }
