@@ -6,11 +6,13 @@ build {
   sources = [
     "source.qemu.archlinux-gnome",
     "source.qemu.archlinux-kde",
+    "source.qemu.archlinux-server",
     "source.qemu.debian-server",
     "source.qemu.debian-gnome",
     "source.qemu.opensuse-kde",
     "source.qemu.ubuntu-desktop",
     "source.qemu.ubuntu-server",
+    "source.qemu.ubuntu-server24",
   ]
 
   # Upload local files
@@ -20,7 +22,7 @@ build {
   }
 
   provisioner "file" {
-    only        = ["qemu.archlinux-gnome", "qemu.archlinux-kde"]
+    only        = ["qemu.archlinux-gnome", "qemu.archlinux-kde", "qemu.archlinux-server"]
     destination = "/tmp/src/"
     sources     = ["${path.cwd}/../apparmor.d-${var.version}-1-x86_64.pkg.tar.zst"]
   }
@@ -32,7 +34,7 @@ build {
   }
 
   provisioner "file" {
-    only        = ["qemu.debian-server", "qemu.debian-gnome", "qemu.ubuntu-server", "qemu.ubuntu-desktop"]
+    only        = ["qemu.debian-server", "qemu.debian-gnome", "qemu.ubuntu-server", "qemu.ubuntu-server24", "qemu.ubuntu-desktop"]
     destination = "/tmp/src/"
     sources     = ["${path.cwd}/../apparmor.d_${var.version}-1_amd64.deb"]
   }
