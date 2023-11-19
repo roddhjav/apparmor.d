@@ -1,0 +1,32 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /usr/share/apport/apport 
+profile apport @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/apt-common>
+  include <abstractions/nameservice-strict>
+  include <abstractions/openssl>
+  include <abstractions/python>
+
+  capability fsetid,
+
+  @{exec_path} mr,
+
+  /usr/share/apport/ r,
+
+        /var/crash/ rw,
+  owner /var/log/apport.log rw,
+
+  @{PROC}/sys/fs/suid_dumpable w,
+  @{PROC}/sys/kernel/core_pattern r,
+  @{PROC}/sys/kernel/core_pattern w,
+  @{PROC}/sys/kernel/core_pipe_limit w,
+
+  include if exists <local/apport>
+}
