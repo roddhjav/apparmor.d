@@ -1,235 +1,227 @@
-# full-apparmor-policy
-# Full System MAC Policy using AppArmor
-#
-# Copyright (c) 2023 monsieuremre <https://github.com/monsieuremre>
-#  
-# This file is part of full-apparmor-policy. You can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
-# (at your option) any later version.
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2023 monsieuremre <https://github.com/monsieuremre>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Profile for systemd (PID 1), it does not specify an attachment path because
+# it is directly loaded by systemd.
+
+# Only use this profile with a fully configured system. Otherwise it **WILL**
+# break your computer. See https://apparmor.pujol.io/development/structure/#full-system-policy.
+
+# Distributions and other programs can add rules in the usr/systemd.d directory
+
+# Note: A non negligible part of the rules are due to stacked profile and unified systemd/systemd-user
 
 abi <abi/3.0>,
 
 include <tunables/global>
 
-profile systemd @{lib}/systemd/** flags=(attach_disconnected) {
+profile systemd flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/audio>
+  include <abstractions/authentication>
+  include <abstractions/dbus-session>
+  include <abstractions/dbus-strict>
+  include <abstractions/dconf-write>
+  include <abstractions/dri-common>
+  include <abstractions/dri-enumerate>
+  include <abstractions/fonts>
+  include <abstractions/mesa>
+  include <abstractions/nameservice-strict>
+  include <abstractions/openssl>
+  include <abstractions/ssl_certs>
+  include <abstractions/video>
+  include <abstractions/wutmp>
 
-  ## Section 1 - Non-file related permissions
-  
-  capability audit_read, # can be phased out?
+  # Needed by systemd
+  capability audit_read,
   capability audit_write,
+  capability bpf,
   capability chown,
   capability dac_override,
   capability dac_read_search,
   capability fowner,
-  capability sys_admin,
-
-  # The following is needed by desktop environments
-  # If on gnome, these can be phased out because the DE components are already covered
-  # with profiles. For other desktops, these have to be allowed
-  capability sys_nice,
   capability kill,
-  
-  network netlink,
-  network inet,
-  network inet6,
-  network packet,
-  # network unix, # same as just allowing unix?
-  # network local, # a thing?
-  
-  unix (accept),
-  unix (connect),
-  unix (send),
-  unix (receive),
-  
-  ptrace (read),
-  
-  dbus (send),
-  dbus (receive),
-  dbus (bind),
-    
-  signal (send),
-  signal (receive),
-  
+  capability mknod,
+  capability perfmon,
+  capability sys_admin,
+  capability sys_tty_config,
+  capability sys_resource,
+  capability sys_chroot,
+
+  # Required by stacked profiles
+  capability net_admin,
+  capability net_bind_service,
+  capability net_raw,
+  capability setfcap,
+  capability setgid,
+  capability setpcap,
+  capability setuid,
+  capability sys_nice,
+  capability sys_ptrace,
+  capability sys_time,
+
+  network inet dgram,
+  network inet raw,
+  network inet stream,
+  network inet6 dgram,
+  network inet6 raw,
+  network inet6 stream,
+  network netlink raw,
+  network packet dgram,
+  network packet raw,
+
+  # TODO: WIP
   mount,
-  remount,
   umount,
-  
-  ## Restrictions
-  #
-  ## The following are implicitly denied with this profile. There are comments on
-  ## what they might break without dedicated profilesand how to address these breakages.
-  #
-  ## mostly won't break anything with the current set of profiles
-  # deny capability mknod,   
-  # deny capability setpcap,
-  # deny capability checkpoint_restore,
-  # deny capability audit_control,
-  # deny capability net_bind_service,
-  # deny capability block_suspend,
-  # deny capability bpf,
-  # deny capability ipc_owner,
-  # deny capability sys_tty_config,
-  # deny capability mac_admin, # intentional to protect policy
-  # deny capability mac_override, # intentional to protect policy
-  # deny capability sys_module,
-  # deny capability linux_immutable,
-  # deny capability lease,
-  # deny capability net_broadcast,
-  # deny capability perfmon,
-  # deny capability sys_boot,
-  # deny capability sys_pacct,
-  # deny capability sys_time,
-  # deny capability wake_alarm,
-  # deny capability setfcap,
-  #
-  # deny pivot_root, 
-  #
-  # deny unix (listen),
-  # deny unix (create),
-  # deny unix (getattr),
-  # deny unix (setattr),
-  # deny unix (setopt),
-  # deny unix (getopt),
-  #
-  # deny ptrace (trace),
-  # deny ptrace (tracedby),
-  # deny ptrace (readby),
-  #
-  # deny network bluetooth,
-  # deny network alg,
-  # deny network ash,
-  # deny network rose,
-  # deny network x25,
-  # deny network ax25,
-  # deny network ipx,
-  # deny network netrom,
-  # deny network appletalk,
-  # deny network econet,
-  # deny network qipcrtr,
-  # deny network bridge,
-  # deny network atmpvc,
-  # deny network netbeui,
-  # deny network security,
-  # deny network key,
-  # deny network atmsvc,
-  # deny network rds,
-  # deny network irda,
-  # deny network pppox,
-  # deny network wanpipe,
-  # deny network ib,
-  # deny network mpls,
-  # deny network can,
-  # deny network tipc,
-  # deny network rxrpc,
-  # deny network isdn,
-  # deny network phonet,
-  # deny network ieee802154,
-  # deny network caif,
-  # deny network vsock,
-  # deny network kcm,
-  # deny network smc,
-  # deny network xdp,
-  #
-  ## will break firewalls with no profile, use firewalld as profile provided
-  #  deny capability net_raw,
-  #  deny capability net_admin,
-  #
-  ## might break some desktop components without profile, won't brake on gnome or kde
-  # deny capability ipc_lock,
-  #
-  ## might break if you use utilities that don't have profiles (unlikely)
-  # deny capability sys_rawio,
-  # deny capability fsetid,
-  #
-  ## will break electron apps without profiles, which the most common ones have here
-  ## might also break sandboxing utils if they don't have profiles, which the most common ones have here
-  # deny capability sys_resource,
-  # deny capability sys_chroot,
-  #
-  ## most anything is covered with profiles, but some niche custom utils
-  ## or replacements or rewrites or very specific things can (probably won't) break
-  ## in that case it is worth making a profile request.
-  # deny capability setgid,
-  # deny capability setuid,
 
+  pivot_root @{run}/systemd/mount-rootfs/ -> @{run}/systemd/mount-rootfs/,
 
-  # -----
-  
-  ## Section 2 - File permissions
-  
-  ## This is quite restrictive for a "general" profile.
-  ## Can of course be further restricted. Probably by a lot.
-  
-  ## The owner can read pretty much everything
-  ## He can also write to the directories
-  ## directly under root.
-  / r,
-  owner / rwlk,
+  change_profile,
 
-  ## Everyone can see the home directories
-  ## Only the owners allowed inside
-  /home r,
-  owner /home/** rwlkPix,
+  signal (receive) set=(term, hup, cont),
+  signal (send),
 
-  ## Reserved for the owner 'root' only
-  owner /boot/** rwlk,
-  owner /root/** rwlk,
+  ptrace (read, readby),
 
-  ## Running binaries is allowed in these places
-  ## Modifying them requires ownership
-  @{lib}/** rPix,
-  owner @{lib}/** rwmlkPix,
-
-  @{bin}/** rPix,
-  owner @{bin}/** rwmlkPix,
-
-  /opt/** rPix,
-  owner /opt/** rwmlkPix,
-  
-  ## Reading /usr allowed, writing requires ownership
-  /usr/** r,
-  owner /usr/** rwlk,
-
-  ## Reading files in temp requires ownership
-  owner /{,var/}tmp/** rw,
+  unix (send) type=dgram,
  
-  ## Reading /etc allowed, writing requires ownership
-  /{,usr/local/}etc/** r,
-  owner /{,usr/local/}etc/** rwmlk,
+  dbus, # TODO: WIP
+  dbus bind bus=system name=org.freedesktop.systemd1,
 
-  ## Can be restricted? Maybe
-  /dev/** rw,
+  @{bin}/{,u}mount                  rix,
+  @{bin}/ldconfig                   rPx -> ldconfig.service,
+  @{bin}/chgrp                      rPx -> dmesg.service,
+  @{bin}/chmod                      rPx -> dmesg.service,
+  @{bin}/savelog                    rPx -> dmesg.service,
 
-  ## Owner can access his media and mount
-  owner @{MOUNTDIR}/** rw,
+  audit @{lib}/** Pix,
+  audit @{bin}/** Pix,
+  audit /etc/init.d/* PUx,
 
-  ## Many stuff run in /var. We deny executing tmp and log files.
-  /var/** rwmlkPix,
-  deny /var/log/** x,
-  deny /var/tmp/** x,
+  @{bin}/pipewire                   rPx -> systemd//&pipewire,
+  @{bin}/pipewire-media-session     rPx -> systemd//&pipewire-media-session,
+  @{bin}/pipewire-pulse             rPx -> systemd//&pipewire-pulse,
+  @{bin}/pulseaudio                 rPx -> systemd//&pulseaudio,
+  @{bin}/wireplumber                rPx -> systemd//&wireplumber,
 
-  ## Can be restricted
-  @{run}/** rw,
-  owner @{run}/** rwlk,
+  @{lib}/{,polkit-1/}polkitd        rPx -> systemd//&polkitd,
+  @{lib}/snapd/snapd-apparmor       rPx,
+  # @{lib}/systemd/systemd            rPx -> systemd-user, # FIXME: only works on server
+  @{lib}/systemd/systemd-networkd   rPx -> systemd//&systemd-networkd,
+  @{lib}/systemd/systemd-resolved   rPx -> systemd//&systemd-resolved,
+  @{lib}/systemd/systemd-timesyncd  rPx -> systemd//&systemd-timesyncd,
 
-  ## Reading can be more restricted for subdirs
-  @{PROC}/** r,
-  owner @{PROC}/** rw,
-  
-  ## Can definetely be restricted further
-  @{sys}/** rw,
-  
-  ## Explicitly deny access to memory, I/O ports and the disk in other ways to circumvent the policy
-  deny /dev/mem rw,
-  deny /dev/kmem rw,
-  deny /dev/port rw,
-  deny /dev/sd* rw,
-  deny /dev/vd* rw,
-  deny /dev/nvme* rw,
-  deny /dev/disk/** rw,
-  deny /dev/block/** rw,
+  /usr/share/apport/apport                                    rPx,
+  /usr/share/gdm/generate-config                              rPx,
+  /usr/share/unattended-upgrades/unattended-upgrade-shutdown  rPx,
 
-  include if exists <usr/full-policy.d>
-  include if exists <local/full-policy>
+  / r,
+  /boot/ r,
+  /boot/efi/ r,
+  /efi/ r,
+  /tmp/ r,
+  /usr/ r,
+  /var/lib/*/ r,
+  /var/tmp/ r,
+  @{lib}/ r,
+
+  /usr/share/** r,
+
+  /etc/binfmt.d/{,**} r,
+  /etc/conf.d/{,**} r,
+  /etc/credstore.encrypted/{,**} r,
+  /etc/credstore/{,**} r,
+  /etc/default/** r,
+  /etc/environment r,
+  /etc/environment.d/{,**} r,
+  /etc/machine-id r,
+  /etc/modules-load.d/ r,
+  /etc/networkd-dispatcher/{,**} r,
+  /etc/pipewire/** r,
+  /etc/polkit*/** r,
+  /etc/systemd/{,**} r,
+  /etc/udev/hwdb.d/{,*} r,
+
+  /var/lib/gdm{3,}/.config/pulse/{,**} rw,
+  /var/lib/gdm{3,}/.config/pulse/cookie k,
+  /var/lib/gdm{3,}/.config/dconf/user r,
+
+        /var/lib/systemd/{,**} rw,
+  owner /var/tmp/systemd-private-*/{,**} rw,
+
+  @{user_config_dirs}/pulse/{,**} rw,
+
+  /tmp/namespace-dev-@{rand6}/{,**} rw,
+  /tmp/systemd-private-*/{,**} rw,
+
+        @{run}/ r,
+        @{run}/credentials/{,**} rw,
+        @{run}/dbus/system_bus_socket rw,
+        @{run}/spice-vdagentd/spice-vdagent-sock rw,
+        @{run}/systemd/{,**} rw,
+        @{run}/udev/control rw,
+        @{run}/udev/data/* r,
+        @{run}/udev/tags/systemd/ r,
+        @{run}/user/@{uid}/{,**} rwlk,
+  owner @{run}/* rw,
+  owner @{run}/*/ rw,
+  owner @{run}/*/* rw,
+
+  @{sys}/bus/ r,
+  @{sys}/class/ r,
+  @{sys}/class/sound/ r,
+  @{sys}/devices/@{pci}/** r,
+  @{sys}/devices/**/net/** r,
+  @{sys}/devices/**/uevent r,
+  @{sys}/devices/virtual/dmi/id/{sys,board,bios}_vendor r,
+  @{sys}/devices/virtual/dmi/id/product_name r,
+  @{sys}/devices/virtual/dmi/id/product_version r,
+  @{sys}/devices/virtual/tty/console/active r,
+  @{sys}/fs/**/ r,
+  @{sys}/fs/cgroup/{,**} rw,
+  @{sys}/kernel/**/ r,
+  @{sys}/module/apparmor/parameters/enabled r,
+
+        @{PROC}/@{pid}/{uid_map,gid_map} r,
+        @{PROC}/@{pid}/attr/apparmor/exec w,
+        @{PROC}/@{pid}/cgroup r,
+        @{PROC}/@{pid}/cmdline r,
+        @{PROC}/@{pid}/comm r,
+        @{PROC}/@{pid}/coredump_filter r,
+        @{PROC}/@{pid}/environ r,
+        @{PROC}/@{pid}/fd/ r,
+        @{PROC}/@{pid}/gid_map w,
+        @{PROC}/@{pid}/loginuid rw,
+        @{PROC}/@{pid}/mountinfo r,
+        @{PROC}/@{pid}/setgroups rw,
+        @{PROC}/@{pid}/stat r,
+        @{PROC}/@{pid}/task/@{tid}/comm rw,
+        @{PROC}/@{pid}/uid_map w,
+        @{PROC}/cmdline r,
+        @{PROC}/devices r,
+        @{PROC}/pressure/* r,
+        @{PROC}/swaps r,
+        @{PROC}/sys/fs/binfmt_misc/ r,
+        @{PROC}/sys/fs/nr_open r,
+        @{PROC}/sys/kernel/* r,
+        @{PROC}/sys/kernel/random/* rw,
+        @{PROC}/sys/net/ipv{4,6}/** rw,
+  owner @{PROC}/@{pid}/oom_score_adj rw,
+
+        /dev/ r,
+        /dev/bus/usb/ r,
+        /dev/hwrng r,
+        /dev/rfkill rw,
+        /dev/shm/ rw,
+        /dev/tty rw,
+        /dev/tty@{int} rwk,
+  owner /dev/console rwk,
+  owner /dev/hugepages/ rw,
+  owner /dev/mqueue/ rw,
+  owner /dev/ttyS@{int} rwk,
+
+  include if exists <usr/systemd.d>
+  include if exists <local/systemd>
 }
