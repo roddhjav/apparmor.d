@@ -33,6 +33,7 @@ var (
 	// TODO: Should be a map of slice, not exhaustive yet
 	maskToAccess = map[string]string{
 		"a":            "w",
+		"ac":           "w",
 		"c":            "w",
 		"d":            "w",
 		"k":            "k",

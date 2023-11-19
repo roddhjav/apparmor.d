@@ -87,15 +87,16 @@ func (p *AppArmorProfile) AddRule(log map[string]string) {
 	case "net":
 		p.Rules = append(p.Rules, NetworkFromLog(log))
 	case "mount":
-		p.Rules = append(p.Rules, MountFromLog(log))
-	case "remount":
-		p.Rules = append(p.Rules, RemountFromLog(log))
-	case "umount":
-		p.Rules = append(p.Rules, UmountFromLog(log))
-	case "pivot_root":
-		p.Rules = append(p.Rules, PivotRootFromLog(log))
-	case "change_profile":
-		p.Rules = append(p.Rules, RemountFromLog(log))
+		switch log["operation"] {
+		case "mount":
+			p.Rules = append(p.Rules, MountFromLog(log))
+		case "umount":
+			p.Rules = append(p.Rules, UmountFromLog(log))
+		case "remount":
+			p.Rules = append(p.Rules, RemountFromLog(log))
+		case "pivotroot":
+			p.Rules = append(p.Rules, PivotRootFromLog(log))
+		}
 	case "mqueue":
 		p.Rules = append(p.Rules, MqueueFromLog(log))
 	case "signal":
@@ -107,7 +108,11 @@ func (p *AppArmorProfile) AddRule(log map[string]string) {
 	case "unix":
 		p.Rules = append(p.Rules, UnixFromLog(log))
 	case "file":
-		p.Rules = append(p.Rules, FileFromLog(log))
+		if log["operation"] == "change_onexec" {
+			p.Rules = append(p.Rules, ChangeProfileFromLog(log))
+		} else {
+			p.Rules = append(p.Rules, FileFromLog(log))
+		}
 	default:
 		if strings.Contains(log["operation"], "dbus") {
 			p.Rules = append(p.Rules, DbusFromLog(log))
