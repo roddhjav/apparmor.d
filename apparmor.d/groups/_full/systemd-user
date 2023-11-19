@@ -2,9 +2,9 @@
 # Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-# Profile for 'systemd --user' (not PID 1), it does not specify an attachment 
-# path because it is intended to be used only via "Px -> systemd-user" exec 
-# transitions from the systemd profile.
+# Profile for 'systemd --user', not PID 1 but the user manager for any UID.
+# It does not specify an attachment path because it is intended to be used only
+# via "Px -> systemd-user" exec transitions from the systemd profile.
 
 # Only use this profile with a fully configured system. Otherwise it **WILL**
 # break your computer. See https://apparmor.pujol.io/development/structure/#full-system-policy.
@@ -12,11 +12,11 @@
 # Distributions and other programs can add rules in the usr/systemd-user.d directory
 
 abi <abi/3.0>,
- 
+
 include <tunables/global>
 
 @{exec_path} = @{lib}/systemd/systemd
-profile systemd-user flags=(complain) {
+profile systemd-user flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/dbus-session-strict>
   include <abstractions/dbus-strict>
@@ -30,68 +30,28 @@ profile systemd-user flags=(complain) {
 
   @{exec_path} mr,
 
-  @{bin}/{,ba,da}sh  rix,
-  @{bin}/systemctl   rCx -> systemctl,
+  @{bin}/systemctl                  rCx -> systemctl,
 
-  @{lib}/systemd/user-environment-generators/*  rPx,
-  @{lib}/systemd/user-environment-generators/*  rPx,
-  @{lib}/systemd/user-generators/*              rPx,
+  audit @{lib}/** Pix,
+  audit @{bin}/** Pix,
 
-  # Server
-  @{lib}/openssh/agent-launch rPx,
+  @{bin}/pipewire                   rPx -> systemd-user//&pipewire,
+  @{bin}/pipewire-media-session     rPx -> systemd-user//&pipewire-media-session,
+  @{bin}/pipewire-pulse             rPx -> systemd-user//&pipewire-pulse,
+  @{bin}/pulseaudio                 rPx -> systemd-user//&pulseaudio,
+  @{bin}/wireplumber                rPx -> systemd-user//&wireplumber,
 
-  # Dbus
-  @{bin}/dbus-daemon                           rPx,
-  @{lib}/{,at-spi2{,-core}/}at-spi-bus-launcher rPx,
-
-  # Desktop
-  @{bin}/xdg-user-dirs-update rPx,
-  @{lib}/xdg-desktop-portal*   rPx,
-  @{lib}/xdg-document-portal   rPx,
-  @{lib}/xdg-permission-store  rPx,
-
-  # Audio
-  @{bin}/pipewire        rux, # FIXME: no new privs
-  @{bin}/pipewire-pulse  rux, # FIXME: no new privs
-  @{bin}/pulseaudio      rux, # FIXME: no new privs
-  @{bin}/wireplumber     rux, # FIXME: no new privs
-
-  # Gnome
-  @{bin}/gjs                            rPx,
-  @{bin}/gnome-keyring-daemon           rPx,
-  @{bin}/gnome-shell                    rPx,
-  @{bin}/gsettings                      rPx,
-  @{lib}/{,dconf/}dconf-service         rPx,
-  @{lib}/dconf/dconf-service            rPx,
-  @{lib}/evolution-addressbook-factory  rPx,
-  @{lib}/evolution-calendar-factory     rPx,
-  @{lib}/evolution-source-registry      rPx,
-  @{lib}/gnome-session-binary           rPx,
-  @{lib}/gnome-session-ctl              rPx,
-  @{lib}/gnome-terminal-server          rPx,
-  @{lib}/goa-*                          rPx,
-  @{lib}/gsd-*                          rPx,
-  @{lib}/gvfs-*                         rPx,
-  @{lib}/gvfs/gvfs-*                    rPx,
-  @{lib}/gvfs/gvfsd*                    rPx,
-  @{lib}/gvfsd*                         rPx,
-  @{lib}/tracker-extract-*              rPx,
-  @{lib}/tracker-miner-*                rPx,
-
-  # Ubuntu
-  @{bin}/snap                          rPx,
+  /usr/ r,
 
   /etc/systemd/user.conf r,
   /etc/systemd/user.conf.d/{,**} r,
   /etc/systemd/user/{,**} r,
 
-  /usr/ r,
-
   owner @{user_config_dirs}/systemd/user/{,**} r,
 
   owner @{run}/user/@{uid}/{,*/,*} rw,
   owner @{run}/user/@{uid}/*/* rw,
-  owner @{run}/user/@{uid}/systemd/{,**} rw,
+  owner @{run}/user/@{uid}/systemd/{,**} rwl,
 
   @{run}/mount/utab r,
   @{run}/systemd/notify w,
@@ -110,6 +70,7 @@ profile systemd-user flags=(complain) {
         @{PROC}/@{pids}/stat r,
         @{PROC}/1/cgroup r,
         @{PROC}/cmdline r,
+        @{PROC}/pressure/* r,
         @{PROC}/swaps r,
         @{PROC}/sys/fs/nr_open r,
         @{PROC}/sys/kernel/osrelease r,
