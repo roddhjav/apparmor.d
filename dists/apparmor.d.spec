@@ -16,7 +16,6 @@ Source0:        %{name}-%{version}.tar.gz
 Requires:       apparmor-profiles
 BuildRequires:  distribution-release
 BuildRequires:  golang-packaging
-BuildRequires:  rsync
 
 %description
 AppArmor.d is a set of over 1500 AppArmor profiles whose aim is to confine most Linux based applications and processes.

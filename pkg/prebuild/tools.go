@@ -61,7 +61,7 @@ func getSupportedDistribution() string {
 }
 
 func copyTo(src *paths.Path, dst *paths.Path) error {
-	files, err := src.ReadDirRecursiveFiltered(nil, paths.FilterOutDirectories())
+	files, err := src.ReadDirRecursiveFiltered(nil, paths.FilterOutDirectories(), paths.FilterOutNames("README.md"))
 	if err != nil {
 		return err
 	}
