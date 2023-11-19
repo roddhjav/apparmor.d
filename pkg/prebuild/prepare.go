@@ -200,6 +200,11 @@ func SetFullSystemPolicy() error {
 		return err
 	}
 
+	// Set systemd unit drop-in files
+	if err := copyTo(paths.New("systemd/full/"), Root.Join("systemd")); err != nil {
+		return err
+	}
+
 	logging.Success("Configure AppArmor for full system policy")
 	return nil
 }
