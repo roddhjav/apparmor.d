@@ -20,26 +20,29 @@ profile apt-methods-mirror @{exec_path} {
   capability setgid,
   capability setuid,
 
-  signal (receive) peer=apt,
   signal (receive) peer=apt-get,
+  signal (receive) peer=apt,
   signal (receive) peer=aptitude,
+  signal (receive) peer=packagekitd,
   signal (receive) peer=synaptic,
 
   @{exec_path} mr,
 
-        /var/lib/apt/lists/{,**} r,
-  owner /var/lib/apt/lists/* rw,
-  owner /var/lib/apt/lists/partial/* rw,
+  /etc/apt/mirrors/* r,
 
   # For shell pwd
   / r,
   /etc/ r,
   /root/ r,
 
+        /var/lib/apt/lists/{,**} r,
+  owner /var/lib/apt/lists/* rw,
+  owner /var/lib/apt/lists/partial/* rw,
+
+
   # For package building
   @{user_build_dirs}/** rwkl -> @{user_build_dirs}/**,
 
-  # file_inherit
   owner /dev/tty@{int} rw,
 
   include if exists <local/apt-methods-mirror>
