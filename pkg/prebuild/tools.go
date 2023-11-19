@@ -71,6 +71,9 @@ func copyTo(src *paths.Path, dst *paths.Path) error {
 			return err
 		}
 		destination = dst.JoinPath(destination)
+		if err := destination.Parent().MkdirAll(); err != nil {
+			return err
+		}
 		if err := file.CopyTo(destination); err != nil {
 			return err
 		}

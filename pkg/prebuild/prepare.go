@@ -173,6 +173,11 @@ func SetFlags() error {
 	return nil
 }
 
+// Set systemd unit drop in files to ensure some service start after apparmor
+func SetDefaultSystemd() error {
+	return copyTo(paths.New("systemd/default/"), Root.Join("systemd"))
+}
+
 // Set AppArmor for (experimental) full system policy.
 // See https://apparmor.pujol.io/development/structure/#full-system-policy
 func SetFullSystemPolicy() error {
