@@ -69,9 +69,9 @@ It creates even more issues when we want to use this profile in other profiles. 
 
 **What if I still want to protect these programs?**
 
-You do not protect this program. *Protect the usage you have of these tools*.
+You do not protect these programs. *Protect the usage you have of these programs*.
 In practice, it means that you should put your development's terminal in a
-sandbox managed with [Toolbox]
+sandbox managed with [Toolbox].
 
 !!! example "To sum up"
 
@@ -100,7 +100,7 @@ include <abstractions/user-download-strict>
 
 ## Children profiles
 
-Usually, a child profile is in the [`children`][children] group. They have  the following note:
+Usually, a child profile is in the [`children`][children] group. They have the following note:
 
 !!! quote
 
@@ -163,6 +163,17 @@ Special care must be given as sometimes udev numbers are allocated dynamically b
     ```
 
 [kernel]: https://raw.githubusercontent.com/torvalds/linux/master/Documentation/admin-guide/devices.txt
+
+
+## No New Privileges
+
+[**No New Privileges**](https://www.kernel.org/doc/html/latest/userspace-api/no_new_privs.html) is a flag preventing a newly-started program to get more privileges that its parent. So it is a **good thing** for security. And it is commonly used in systemd unit files (when possible). This flag also prevents transition to other profile because it could be less restrictive than the parent profile (no `Px` or `Ux` allowed).
+
+The possible solutions are:
+
+* The easiest (and unfortunately less secure) workaround is to ensure the programs do not run with no new privileges flag by disabling `NoNewPrivileges` in the systemd unit (or any other [options implying it](https://man.archlinux.org/man/core/systemd/systemd.exec.5.en#SECURITY)).
+* Inherit the current confinement (`ix`)
+* [Stacking](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmorStacking)
 
 
 ## Full system policy
