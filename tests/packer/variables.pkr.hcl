@@ -87,6 +87,10 @@ variable "release" {
       codename = "jammy",
       version  = "22.04.2",
     },
+    "ubuntu24" : {
+      codename = "noble",
+      version  = "24.04",
+    },
     "debian" : {
       codename = "bookworm",
       version  = "12",
