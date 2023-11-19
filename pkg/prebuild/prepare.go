@@ -176,12 +176,25 @@ func SetFlags() error {
 // Set AppArmor for (experimental) full system policy.
 // See https://apparmor.pujol.io/development/structure/#full-system-policy
 func SetFullSystemPolicy() error {
+	// Install full system policy profiles
 	for _, name := range []string{"systemd", "systemd-user"} {
 		err := paths.New("apparmor.d/groups/_full/" + name).CopyTo(RootApparmord.Join(name))
 		if err != nil {
 			return err
 		}
 	}
+
+	// Set systemd profile name
+	path := paths.New("apparmor.d/tunables/multiarch.d/apparmor.d")
+	content, err := path.ReadFile()
+	if err != nil {
+		return err
+	}
+	res := strings.Replace(string(content), "@{systemd}=unconfined", "@{systemd}=systemd", -1)
+	if err := path.WriteFile([]byte(res)); err != nil {
+		return err
+	}
+
 	logging.Success("Configure AppArmor for full system policy")
 	return nil
 }
