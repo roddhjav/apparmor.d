@@ -1,12 +1,14 @@
 # apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2021-2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
 
 include <tunables/global>
 
-@{exec_path} = @{bin}/apparmor_parser
+@{lib_dirs} = @{lib}/ /snap/snapd/@{int}@{lib}
+
+@{exec_path} = @{bin}/apparmor_parser @{lib_dirs}/snapd/apparmor_parser
 profile apparmor_parser @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/consoles>
@@ -14,6 +16,8 @@ profile apparmor_parser @{exec_path} flags=(attach_disconnected) {
   capability mac_admin,
 
   @{exec_path} mr,
+
+  @{lib_dirs}/snapd/apparmor.d/{,**} r,
 
   /etc/apparmor/{,**} r,
   /etc/apparmor.d/{,**} r,
