@@ -16,12 +16,14 @@ profile colord @{exec_path} flags=(attach_disconnected) {
 
   network netlink raw,
 
-  dbus send bus=system path=/org/freedesktop/DBus
-       interface=org.freedesktop.DBus
-       member={GetConnectionUnixProcessID,GetConnectionUnixUser,RequestName,ReleaseName},
+  dbus bind bus=system name=org.freedesktop.ColorManager,
 
   dbus (send,receive) bus=system path=/org/freedesktop/ColorManager{,/**}
        interface=org.freedesktop.ColorManager*,
+
+  dbus send bus=system path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={GetConnectionUnixProcessID,GetConnectionUnixUser,RequestName,ReleaseName},
 
   dbus send    bus=system path=/org/freedesktop/PolicyKit[0-9]/Authority
        interface=org.freedesktop.PolicyKit[0-9].Authority
@@ -51,9 +53,6 @@ profile colord @{exec_path} flags=(attach_disconnected) {
        interface=org.freedesktop.DBus.Properties
        member=GetAll
        peer=(name=:*, label="{@{profile_name},gsd-color}"),
-
-  dbus bind bus=system 
-       name=org.freedesktop.ColorManager,
 
   @{exec_path} mr,
 
