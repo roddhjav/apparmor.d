@@ -1,0 +1,124 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Default profile for unconfined programs
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /**
+profile default @{exec_path} flags=(attach_disconnected,mediate_deleted) {
+  include <abstractions/base>
+  include <abstractions/audio>
+  include <abstractions/bash>
+  include <abstractions/consoles>
+  include <abstractions/dbus-session>
+  include <abstractions/dconf-write>
+  include <abstractions/deny-sensitive-home>
+  include <abstractions/dri-common>
+  include <abstractions/dri-enumerate>
+  include <abstractions/fonts>
+  include <abstractions/freedesktop.org>
+  include <abstractions/gnome>
+  include <abstractions/mesa>
+  include <abstractions/nameservice-strict>
+  include <abstractions/openssl>
+  include <abstractions/video>
+  include <abstractions/vulkan>
+  include <abstractions/zsh>
+
+  capability dac_override,
+  capability dac_read_search,
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink dgram,
+  network netlink raw,
+
+  signal (receive) set=(hup),
+
+  @{bin}/{,**} r,
+  @{bin}/bwrap           rPx -> default-bwrap,
+  @{bin}/pipewire-pulse  rPx -> systemd//&pipewire-pulse,
+  @{bin}/pulseaudio      rPx -> systemd//&pulseaudio,
+  @{bin}/su              rPx -> default-sudo,
+  @{bin}/sudo            rPx -> default-sudo,
+  @{bin}/systemctl       rix,
+
+  @{bin}/less            rPx -> child-pager,
+  @{bin}/more            rPx -> child-pager,
+  @{bin}/pager           rPx -> child-pager,
+
+  @{bin}/exo-open        rPx -> child-open,
+  @{bin}/xdg-open        rPx -> child-open,
+
+  audit @{bin}/**        Pix,
+  audit @{lib}/**        Pix,
+  audit /opt/*/**        Pix,
+  audit /usr/share/*/*   Pix,
+
+  /usr/share/** r,
+
+  /etc/xdg/** r,
+
+  # Full access to user's data
+  / r,
+  /*/ r,
+  @{MOUNTDIRS}/ r,
+  @{MOUNTS}/ r,
+  @{MOUNTS}/** rwl,
+  owner @{HOME}/{,**} rwl,
+  owner @{run}/user/@{uid}/{,**} rw,
+  owner @{user_config_dirs}/** rwkl -> @{user_config_dirs}/**,
+  owner @{user_share_dirs}/** rwkl -> @{user_share_dirs}/**,
+  owner /tmp/{,**} rwk,
+
+  owner @{run}/user/@{uid}/{,**} rw,
+
+  @{run}/systemd/userdb/ r,
+  @{run}/motd.dynamic.new rw,
+
+  @{run}/udev/data/+input:input@{int} r,  # for mouse, keyboard, touchpad
+
+  @{run}/udev/data/c13:@{int}  r,         # for /dev/input/*
+
+  @{sys}/bus/ r,
+  @{sys}/class/ r,
+  @{sys}/class/input/ r,
+  @{sys}/devices/virtual/dmi/id/chassis_type r,
+  @{sys}/firmware/acpi/pm_profile r,
+
+  @{sys}/devices/**/uevent r,
+  @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/session.slice/dbus.service/memory.* r,
+
+        @{PROC}/@{pid}/loginuid r,
+        @{PROC}/cmdline r,
+        @{PROC}/sys/kernel/core_pattern r,
+        @{PROC}/sys/kernel/random/boot_id r,
+        @{PROC}/sys/kernel/seccomp/actions_avail r,
+        @{PROC}/zoneinfo r,
+  owner @{PROC}/@{pid}/cgroup r,
+  owner @{PROC}/@{pid}/gid_map w,
+  owner @{PROC}/@{pid}/limits r,
+  owner @{PROC}/@{pid}/mem r,
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/mounts r,
+  owner @{PROC}/@{pid}/oom_{,score_}adj rw,
+  owner @{PROC}/@{pid}/stat r,
+  owner @{PROC}/@{pid}/task/@{tid}/comm rw,
+  owner @{PROC}/@{pids}/cmdline r,
+  owner @{PROC}/@{pids}/environ r,
+  owner @{PROC}/@{pids}/task/ r,
+
+        /dev/ r,
+        /dev/ptmx rwk,
+        /dev/tty rwk,
+  owner /dev/tty@{int} rw,
+
+  include if exists <usr/default.d>
+  include if exists <local/default>
+}

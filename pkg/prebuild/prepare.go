@@ -180,7 +180,11 @@ func SetDefaultSystemd() error {
 // See https://apparmor.pujol.io/development/structure/#full-system-policy
 func SetFullSystemPolicy() error {
 	// Install full system policy profiles
-	for _, name := range []string{"systemd", "systemd-user"} {
+	profiles := []string{
+		"systemd", "systemd-user",
+		"default", "default-bwrap", "default-sudo", "default-app",
+	}
+	for _, name := range profiles {
 		err := paths.New("apparmor.d/groups/_full/" + name).CopyTo(RootApparmord.Join(name))
 		if err != nil {
 			return err
