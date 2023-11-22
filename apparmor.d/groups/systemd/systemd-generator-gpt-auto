@@ -1,0 +1,30 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/systemd/system-generators/systemd-gpt-auto-generator
+profile systemd-generator-gpt-auto @{exec_path} flags=(attach_disconnected)  {
+  include <abstractions/base>
+  include <abstractions/disks-read>
+  include <abstractions/systemd-common>
+
+  capability sys_admin,
+
+  @{exec_path} mr,
+
+  / r,
+  /boot/ r,
+  /efi/ r,
+  /etc/fstab r,
+
+  @{run}/systemd/generator.late/**.{,auto}mount w,
+  @{run}/systemd/generator.late/local-fs.target.wants/ w,
+
+  @{PROC}/@{pid}/cgroup r,
+
+  include if exists <local/systemd-generator-gpt-auto>
+}
