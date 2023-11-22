@@ -1,0 +1,53 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Profile for a systemd service, it does not specify an attachment path because
+# it is intended to be used only via "Px -> *.service" exec transitions from systemd
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+profile systemd.service @{exec_path} flags=(attach_disconnected)  {
+  include <abstractions/base>
+  include <abstractions/consoles>
+
+  capability sys_admin,
+
+  @{bin}/{,ba,da}sh     rm,
+
+  @{bin}/grep          rix,
+  @{bin}/grub-editenv  rPx,
+  @{bin}/ibus-daemon   rPx,
+  @{bin}/mkdir         rix,
+  @{bin}/mount         rix,
+  @{bin}/rm            rix,
+  @{bin}/systemctl     rix,
+
+  @{bin}/chgrp         rPx -> dmesg.service,
+  @{bin}/chmod         rPx -> dmesg.service,
+  @{bin}/savelog       rPx -> dmesg.service,
+
+  @{bin}/ldconfig      rPx -> ldconfig.service,
+
+  @{bin}/find          rPx -> man-db.service,
+  @{bin}/mandb         rPx -> man-db.service,
+  @{bin}/install       rPx -> man-db.service,
+
+  @{bin}/cp            rPx -> snapd.system-shutdown.service,
+  @{bin}/mkdir         rPx -> snapd.system-shutdown.service,
+
+  @{lib}/ r,
+
+  /var/cache/ldconfig/aux-cache* rw,
+
+  # grub-common.service
+  /boot/grub/grubenv rw,
+  /boot/grub/ w,
+
+  @{PROC}/cmdline r,
+  @{PROC}/sys/kernel/osrelease r,
+
+  include if exists <local/systemd.service>
+}
