@@ -17,7 +17,7 @@ abi <abi/3.0>,
 
 include <tunables/global>
 
-profile systemd flags=(attach_disconnected) {
+profile systemd flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/base>
   include <abstractions/audio>
   include <abstractions/authentication>
@@ -35,6 +35,7 @@ profile systemd flags=(attach_disconnected) {
   include <abstractions/wutmp>
 
   # Needed by systemd
+  capability audit_control,
   capability audit_read,
   capability audit_write,
   capability bpf,
@@ -46,9 +47,9 @@ profile systemd flags=(attach_disconnected) {
   capability mknod,
   capability perfmon,
   capability sys_admin,
-  capability sys_tty_config,
-  capability sys_resource,
   capability sys_chroot,
+  capability sys_resource,
+  capability sys_tty_config,
 
   # Required by stacked profiles
   capability net_admin,
@@ -90,15 +91,27 @@ profile systemd flags=(attach_disconnected) {
   dbus, # TODO: WIP
   dbus bind bus=system name=org.freedesktop.systemd1,
 
-  @{bin}/{,u}mount                  rix,
-  @{bin}/ldconfig                   rPx -> ldconfig.service,
-  @{bin}/chgrp                      rPx -> dmesg.service,
-  @{bin}/chmod                      rPx -> dmesg.service,
-  @{bin}/savelog                    rPx -> dmesg.service,
+  @{bin}/systemctl                  rix,
+  @{bin}/true                       rix,
+  @{lib}/systemd/systemd            rix, # FIXME: AppArmorProfile=systemd-user, does not work with DE
 
-  audit @{lib}/** Pix,
-  audit @{bin}/** Pix,
-  audit /etc/init.d/* PUx,
+  @{bin}/{,ba,da}sh                 rPx -> systemd.service,
+  @{bin}/chgrp                      rPx -> systemd.service,
+  @{bin}/chmod                      rPx -> systemd.service,
+  @{bin}/cp                         rPx -> systemd.service,
+  @{bin}/find                       rPx -> systemd.service,
+  @{bin}/install                    rPx -> systemd.service,
+  @{bin}/ldconfig                   rPx -> systemd.service,
+  @{bin}/mandb                      rPx -> systemd.service,
+  @{bin}/mkdir                      rPx -> systemd.service,
+  @{bin}/mount                      rPx -> systemd.service,
+  @{bin}/savelog                    rPx -> systemd.service,
+
+  audit @{bin}/**                   Pix,
+  audit @{lib}/**                   Pix,
+  audit /etc/cron.*/*               PUx,
+  audit /etc/init.d/*               PUx,
+  audit /usr/share/*/*              Pix,
 
   @{bin}/pipewire                   rPx -> systemd//&pipewire,
   @{bin}/pipewire-media-session     rPx -> systemd//&pipewire-media-session,
@@ -107,15 +120,10 @@ profile systemd flags=(attach_disconnected) {
   @{bin}/wireplumber                rPx -> systemd//&wireplumber,
 
   @{lib}/{,polkit-1/}polkitd        rPx -> systemd//&polkitd,
-  @{lib}/snapd/snapd-apparmor       rPx,
-  # @{lib}/systemd/systemd            rPx -> systemd-user, # FIXME: only works on server
+  @{lib}/pulse/gsettings-helper     rPx -> systemd//&pulseaudio,
   @{lib}/systemd/systemd-networkd   rPx -> systemd//&systemd-networkd,
   @{lib}/systemd/systemd-resolved   rPx -> systemd//&systemd-resolved,
   @{lib}/systemd/systemd-timesyncd  rPx -> systemd//&systemd-timesyncd,
-
-  /usr/share/apport/apport                                    rPx,
-  /usr/share/gdm/generate-config                              rPx,
-  /usr/share/unattended-upgrades/unattended-upgrade-shutdown  rPx,
 
   / r,
   /boot/ r,
@@ -136,6 +144,7 @@ profile systemd flags=(attach_disconnected) {
   /etc/default/** r,
   /etc/environment r,
   /etc/environment.d/{,**} r,
+  /etc/locale.conf r,
   /etc/machine-id r,
   /etc/modules-load.d/ r,
   /etc/networkd-dispatcher/{,**} r,
@@ -171,6 +180,7 @@ profile systemd flags=(attach_disconnected) {
 
   @{sys}/bus/ r,
   @{sys}/class/ r,
+  @{sys}/class/power_supply r,
   @{sys}/class/sound/ r,
   @{sys}/devices/@{pci}/** r,
   @{sys}/devices/**/net/** r,
@@ -219,6 +229,8 @@ profile systemd flags=(attach_disconnected) {
         /dev/tty@{int} rwk,
   owner /dev/console rwk,
   owner /dev/hugepages/ rw,
+  owner /dev/initctl rw,
+  owner /dev/input/event@{int} rw,
   owner /dev/mqueue/ rw,
   owner /dev/ttyS@{int} rwk,
 
