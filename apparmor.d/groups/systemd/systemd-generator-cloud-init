@@ -1,0 +1,27 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/systemd/system-generators/cloud-init-generator
+profile systemd-generator-cloud-init @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+
+  @{exec_path} mr,
+
+  @{bin}/{,ba,da}sh              rix,
+  @{bin}/systemd-detect-virt     rPx,
+  @{lib}/cloud-init/ds-identify rPUx,
+
+  @{run}/cloud-init/cloud-init-generator.log rw,
+  @{run}/cloud-init/disabled w,
+
+  @{PROC}/cmdline r,
+
+  include if exists <local/systemd-generator-cloud-init>
+}
