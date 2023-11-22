@@ -10,6 +10,7 @@ include <tunables/global>
 @{exec_path} = @{bin}/borg
 profile borg @{exec_path} {
   include <abstractions/base>
+  include <abstractions/nameservice-strict>
   include <abstractions/python>
 
   capability dac_read_search,
@@ -19,6 +20,11 @@ profile borg @{exec_path} {
   network inet dgram,
   network inet6 dgram,
   network netlink raw,
+
+  mount fstype=fuse -> @{MOUNTS}/,
+  mount fstype=fuse -> @{MOUNTS}/*/,
+  umount @{MOUNTS}/,
+  umount @{MOUNTS}/*/,
 
   @{exec_path} r,
 
@@ -30,42 +36,10 @@ profile borg @{exec_path} {
   @{bin}/ldconfig               rix,
   @{bin}/uname                  rix,
 
-  @{bin}/pass                   rPUx,
-  @{bin}/ssh                    rPx,
   @{bin}/ccache                 rCx -> ccache,
   @{bin}/fusermount{,3}         rCx -> fusermount,
-
-  mount fstype=fuse -> @{MOUNTS}/,
-  mount fstype=fuse -> @{MOUNTS}/*/,
-  umount @{MOUNTS}/,
-  umount @{MOUNTS}/*/,
-
-  /dev/fuse rw,
-
-  owner @{PROC}/@{pid}/fd/ r,
-        @{PROC}/sys/kernel/random/boot_id r,
-
-  @{run}/systemd/userdb/ r,
-  @{run}/resolvconf/resolv.conf r,
-
-  owner @{user_cache_dirs}/ rw,
-  owner @{user_cache_dirs}/borg/ rw,
-  owner @{user_cache_dirs}/borg/** rw,
-
-  owner @{user_config_dirs}/borg/ rw,
-  owner @{user_config_dirs}/borg/** rw,
-
-  # If /tmp/ isn't accessible, then /var/tmp/ is used.
-  owner /tmp/* rw,
-  owner /tmp/tmp*/ rw,
-  owner /tmp/tmp*/idx rw,
-  owner /tmp/tmp*/file rw,
-  owner /tmp/borg-cache-*/ rw,
-  owner /tmp/borg-cache-*/* rw,
-  owner /var/tmp/* rw,
-  owner /var/tmp/tmp*/ rw,
-  owner /var/tmp/tmp*/idx rw,
-  owner /var/tmp/tmp*/file rw,
+  @{bin}/pass                   rPx,
+  @{bin}/ssh                    rPx,
 
   # Dirs that can be backed up
   /            r,
@@ -80,13 +54,28 @@ profile borg @{exec_path} {
   owner @{MOUNTS}/ r,
   owner @{MOUNTS}/** rwkl -> @{MOUNTS}/**,
 
-  # borg serve on server's side
-  owner /home/borg/*/ rw,
-  owner /home/borg/*/{,**} rw,
+  owner @{user_cache_dirs}/ rw,
+  owner @{user_cache_dirs}/borg/ rw,
+  owner @{user_cache_dirs}/borg/** rw,
 
-  # For exporting the key
-  owner /**/key w,
+  owner @{user_config_dirs}/borg/ rw,
+  owner @{user_config_dirs}/borg/** rw,
 
+  # If /tmp/ isn't accessible, then /var/tmp/ is used.
+  owner /tmp/* rw,
+  owner /tmp/borg-cache-*/ rw,
+  owner /tmp/borg-cache-*/* rw,
+  owner /tmp/tmp*/ rw,
+  owner /tmp/tmp*/file rw,
+  owner /tmp/tmp*/idx rw,
+  owner /var/tmp/* rw,
+  owner /var/tmp/tmp*/ rw,
+  owner /var/tmp/tmp*/file rw,
+  owner /var/tmp/tmp*/idx rw,
+
+  owner @{PROC}/@{pid}/fd/ r,
+
+  /dev/fuse rw,
 
   profile ccache {
     include <abstractions/base>
@@ -97,29 +86,31 @@ profile borg @{exec_path} {
     @{bin}/{,@{multiarch}-}gcc-[0-9]* rix,
     @{bin}/{,@{multiarch}-}g++-[0-9]* rix,
 
-    /media/ccache/*/** rw,
-
     /etc/debian_version r,
 
+    @{MOUNTS}/** rw,
+
+    include if exists <local/borg_ccache>
   }
 
   profile fusermount {
     include <abstractions/base>
     include <abstractions/nameservice-strict>
 
-    # To mount anything:
     capability sys_admin,
+
+    umount @{MOUNTS}/,
+    umount @{MOUNTS}/*/,
 
     @{bin}/fusermount{,3} mr,
 
     /etc/fuse.conf r,
 
-    umount @{MOUNTS}/,
-    umount @{MOUNTS}/*/,
-  
     @{PROC}/@{pids}/mounts r,
 
     /dev/fuse rw,
+
+    include if exists <local/borg_fusermount>
   }
 
   include if exists <usr/borg.d>
