@@ -1,0 +1,27 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/e2scrub_all
+profile e2scrub_all @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/disks-read>
+
+  capability sys_admin,
+  capability sys_rawio,
+
+  @{exec_path} mr,
+
+  @{bin}/{,ba,da}sh  r,
+  @{bin}/readlink  rix,
+
+  /etc/e2scrub.conf r,
+
+  /dev/tty rw,
+
+  include if exists <local/e2scrub_all>
+}
