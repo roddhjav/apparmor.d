@@ -19,10 +19,13 @@ var Builds = []BuildFunc{
 }
 
 var (
-	regAttachments   = regexp.MustCompile(`(profile .* @{exec_path})`)
-	regFlags         = regexp.MustCompile(`flags=\(([^)]+)\)`)
-	regProfileHeader = regexp.MustCompile(` {`)
-	regAbi4To3       = util.ToRegexRepl([]string{ // Currently Abi3 -> Abi4
+	regAttachments      = regexp.MustCompile(`(profile .* @{exec_path})`)
+	regFlags            = regexp.MustCompile(`flags=\(([^)]+)\)`)
+	regProfileHeader    = regexp.MustCompile(` {`)
+	regFullSystemPolicy = util.ToRegexRepl([]string{
+		`r(PU|U)x,`, `rPx,`,
+	})
+	regAbi4To3 = util.ToRegexRepl([]string{ // Currently Abi3 -> Abi4
 		`abi/3.0`, `abi/4.0`,
 		`# userns,`, `userns,`,
 	})
@@ -88,6 +91,13 @@ func BuildUserspace(profile string) string {
 func BuildABI3(profile string) string {
 	for _, abi4t3 := range regAbi4To3 {
 		profile = abi4t3.Regex.ReplaceAllLiteralString(profile, abi4t3.Repl)
+	}
+	return profile
+}
+
+func BuildFullSystemPolicy(profile string) string {
+	for _, full := range regFullSystemPolicy {
+		profile = full.Regex.ReplaceAllString(profile, full.Repl)
 	}
 	return profile
 }
