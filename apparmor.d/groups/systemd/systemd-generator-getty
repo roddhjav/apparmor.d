@@ -1,0 +1,25 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/systemd/system-generators/systemd-getty-generator
+profile systemd-generator-getty @{exec_path} flags=(attach_disconnected)  {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/systemd-common>
+
+  @{exec_path} mr,
+
+  @{run}/systemd/generator/getty.target.wants/ w,
+  @{run}/systemd/generator/getty.target.wants/serial-getty@ttyS@{int}.service w,
+
+  @{sys}/devices/virtual/tty/console/active r,
+
+  @{PROC}/@{pid}/cgroup r,
+
+  include if exists <local/systemd-generator-getty>
+}
