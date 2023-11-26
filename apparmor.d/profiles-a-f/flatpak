@@ -1,0 +1,97 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/flatpak
+profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted,complain) {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/dconf-write>
+  include <abstractions/freedesktop.org>
+  include <abstractions/nameservice-strict>
+  include <abstractions/openssl>
+  include <abstractions/ssl_certs>
+  include <abstractions/X-strict>
+
+  capability dac_override,
+  capability dac_read_search,
+  capability net_admin,
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  @{bin}/bwrap    rPx -> flatpak-bwrap, 
+  @{bin}/gpg      rCx -> gpg,
+  @{bin}/gpgconf  rCx -> gpg,
+  @{bin}/gpgsm    rCx -> gpg,
+
+  /usr/share/gvfs/remote-volume-monitors/*.monitor r,
+  /usr/share/flatpak/{,**} r,
+
+  /etc/flatpak/{,**} r,
+  /etc/pulse/client.conf r,
+
+  /var/lib/flatpak/{,**} rwlk,
+  /var/tmp/#@{int} rw,
+
+  / r,
+
+  owner @{HOME}/.var/ w,
+  owner @{HOME}/.var/app/{,**} rw,
+
+  owner @{user_cache_dirs}/flatpak/{,**} rw,
+  owner @{user_config_dirs}/pulse/client.conf r,
+  owner @{user_config_dirs}/user-dirs.dirs r,
+
+        @{user_share_dirs}/flatpak/{,**} r,
+  owner @{user_share_dirs}/flatpak/{,**} rw,
+
+        /tmp/#@{int} rw,
+  owner /dev/shm/flatpak*/{,**} rw,
+  owner /tmp/ostree-gpg-*/{,**} rw,
+
+        @{run}/user/@{uid}/.dbus-proxy/ w,
+        @{run}/user/@{uid}/dconf/user rw,
+  owner @{run}/user/@{uid}/.dbus-proxy/* rw,
+  owner @{run}/user/@{uid}/.flatpak/ rw,
+  owner @{run}/user/@{uid}/.flatpak/** rwlk -> @{run}/user/@{uid}/.flatpak/**,
+  owner @{run}/user/@{uid}/app/ w,
+  owner @{run}/user/@{uid}/app/*/ w,
+
+  @{sys}/module/nvidia/version r,
+
+  owner @{PROC}/@{pid}/stat r,
+
+  deny @{user_share_dirs}/gvfs-metadata/* r,
+
+  /dev/tty rw,
+  /dev/tty@{int} rw,
+
+  profile gpg {
+    include <abstractions/base>
+
+    capability dac_read_search,
+
+    @{bin}/gpg{,2}  mr,
+    @{bin}/gpgconf  mr,
+    @{bin}/gpgsm    mr,
+
+    @{HOME}/@{XDG_GPG_DIR}/*.conf r,
+
+    owner /tmp/ostree-gpg-*/ rw,
+    owner /tmp/ostree-gpg-*/** rwkl -> /tmp/ostree-gpg-*/**,
+
+    include if exists <local/flatpak_gpg>
+  }
+
+  include if exists <local/flatpak>
+}
