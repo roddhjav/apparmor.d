@@ -1,0 +1,39 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/kf5/kiod5
+profile kiod5 @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/dri-common>
+  include <abstractions/dri-enumerate>
+  include <abstractions/nameservice-strict>
+  include <abstractions/openssl>
+  include <abstractions/vulkan>
+
+  @{exec_path} mr,
+
+  /usr/share/icons/breeze/index.theme r,
+  /usr/share/mime/{,**} r,
+  /usr/share/mime/generic-icons r,
+  /usr/share/qt/translations/*.qm r,
+
+  owner @{user_cache_dirs}/icon-cache.kcache rw,
+  owner @{user_cache_dirs}/mesa_shader_cache/index rw,
+
+  owner @{user_config_dirs}/#@{int} rw,
+  owner @{user_config_dirs}/kdedefaults/kdeglobals r,
+  owner @{user_config_dirs}/kdedefaults/kwinrc r,
+  owner @{user_config_dirs}/kdeglobals r,
+  owner @{user_config_dirs}/ksslcertificatemanager rwl -> @{user_config_dirs}/#@{int},
+  owner @{user_config_dirs}/ksslcertificatemanager.lock rwk,
+  owner @{user_config_dirs}/kwinrc r,
+
+  /dev/tty r,
+
+  include if exists <local/kiod5>
+}

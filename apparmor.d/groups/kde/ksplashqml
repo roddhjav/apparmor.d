@@ -1,0 +1,29 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/ksplashqml
+profile ksplashqml @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/dri-common>
+  include <abstractions/dri-enumerate>
+  include <abstractions/fonts>
+  include <abstractions/freedesktop.org>
+  include <abstractions/mesa>
+  include <abstractions/nameservice-strict>
+  include <abstractions/vulkan>
+  include <abstractions/qt5-shader-cache>
+
+  @{exec_path} mr,
+
+  /usr/share/plasma/** r,
+
+  owner @{user_config_dirs}/kdedefaults/* r,
+  owner @{user_config_dirs}/kdeglobals r,
+
+  include if exists <local/ksplashqml>
+}
