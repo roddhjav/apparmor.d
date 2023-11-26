@@ -1,0 +1,35 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Default profile for user sandboxed application
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+profile bwrap-app flags=(attach_disconnected,mediate_deleted) {
+  include <abstractions/base>
+  include <abstractions/bwrap-app>
+  include <abstractions/fontconfig-cache-write>
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  ptrace peer=bwrap//&bwrap-app,
+
+  signal peer=bwrap//&bwrap-app,
+
+  @{bin}/**                       rmix,
+  @{lib}/**                       rmix,
+  /opt/*/**                       rmix,
+  /usr/share/*/*                  rmix,
+
+  owner /var/cache/ w,
+
+  include if exists <usr/bwrap-app.d>
+  include if exists <local/bwrap-app>
+}
