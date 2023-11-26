@@ -11,6 +11,10 @@ profile gnome-session-ctl @{exec_path} {
   include <abstractions/base>
   include <abstractions/dbus-session-strict>
 
+  signal (receive) set=(kill) peer=@{systemd},
+
+  unix (send, receive, connect) type=stream peer=(addr=@/tmp/dbus-????????, label=dbus-daemon),
+
   dbus send bus=session path=/org/freedesktop/systemd[0-9]*
        interface=org.freedesktop.systemd[0-9]*.Manager
        member={StartUnit,StopUnit}
@@ -21,12 +25,10 @@ profile gnome-session-ctl @{exec_path} {
        member=Initialized
        peer=(name=org.gnome.SessionManager, label=gnome-session-binary),
 
-  unix (send, receive, connect) type=stream peer=(addr=@/tmp/dbus-????????, label=dbus-daemon),
-
   @{exec_path} mr,
 
-  owner @{run}/user/@{uid}/gnome-session-leader-fifo r,
         @{run}/user/@{uid}/systemd/notify  rw,
+  owner @{run}/user/@{uid}/gnome-session-leader-fifo r,
 
   include if exists <local/gnome-session-ctl>
 }
