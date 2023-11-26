@@ -19,8 +19,6 @@ The following desktop environments are supported:
   - [x] :material-gnome: Gnome
   - [ ] :simple-kde: KDE *(work in progress)*
 
-Please note that Wayland has a better support than Xorg.
-
 **Build dependencies**
 
 * Go >= 1.18
