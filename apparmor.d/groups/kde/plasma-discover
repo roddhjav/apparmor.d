@@ -34,15 +34,21 @@ profile plasma-discover @{exec_path} {
   @{bin}/{,ba,da}sh                 rix,
   @{bin}/kreadconfig5               rPx,
 
-  @{lib}/kf5/kioslave5               rPx,
-  @{lib}/kf5/kio_http_cache_cleaner  rPx,
+  @{bin}/gpg                        rCx -> gpg,
+  @{bin}/gpgconf                    rCx -> gpg,
+  @{bin}/gpgsm                      rCx -> gpg,
+  @{lib}/kf5/kioslave5              rPx,
+  @{lib}/kf5/kio_http_cache_cleaner rPx,
 
-  /usr/share/kservices5/{,*} r,
+  /usr/share/knotifications5/plasma_workspace.notifyrc r,
   /usr/share/knsrcfiles/{,*} r,
+  /usr/share/kservices5/{,*} r,
+  /usr/share/libdiscover/** r,
   /usr/share/qt/translations/*.qm r,
 
   /etc/appstream.conf r,
   /etc/flatpak/remotes.d/{,**} r,
+  /etc/gnutls/config r,
   /etc/machine-id r,
   /etc/xdg/ r,
   /etc/xdg/accept-languages.codes r,
@@ -56,9 +62,10 @@ profile plasma-discover @{exec_path} {
   /var/lib/flatpak/repo/{,**} r,
   /var/lib/flatpak/appstream/{,**} r,
 
-  owner @{user_cache_dirs}/discover/{,**} rwl,
-  owner @{user_cache_dirs}/appstream/*.xb r,
   owner @{user_cache_dirs}/appstream/ r,
+  owner @{user_cache_dirs}/appstream/*.xb rw,
+  owner @{user_cache_dirs}/discover/{,**} rwl,
+  owner @{user_cache_dirs}/flatpak/system-cache/{,**} rw,
   owner @{user_cache_dirs}/icon-cache.kcache rw,
   owner @{user_cache_dirs}/kio_http/ w,
 
@@ -80,6 +87,13 @@ profile plasma-discover @{exec_path} {
   owner @{user_share_dirs}/knewstuff3/ r,
   owner @{user_share_dirs}/knewstuff3/ w,
 
+  owner /tmp/ostree-gpg-*/ rw,
+  owner /tmp/ostree-gpg-*/** rwkl -> /tmp/ostree-gpg-*/**,
+  owner /tmp/#@{int} rw,
+
+  owner @{run}/user/@{uid}/.flatpak-cache rw,
+  owner @{run}/user/@{uid}/.flatpak/{,**} rw,
+  owner @{run}/user/@{uid}/.flatpak/**/*.ref rwk,
   owner @{run}/user/@{uid}/#@{int} rw,
   owner @{run}/user/@{uid}/discover@{rand6}.* rwl ->  @{run}/user/@{uid}/#@{int},
 
@@ -88,6 +102,21 @@ profile plasma-discover @{exec_path} {
   owner @{PROC}/@{pid}/mountinfo r,
 
   /dev/tty r,
+
+  profile gpg {
+    include <abstractions/base>
+
+    @{bin}/gpg{,2} mr,
+    @{bin}/gpgconf mr,
+    @{bin}/gpgsm   mr,
+
+    @{HOME}/@{XDG_GPG_DIR}/*.conf r,
+
+    owner /tmp/ostree-gpg-*/ r,
+    owner /tmp/ostree-gpg-*/** rwkl -> /tmp/ostree-gpg-*/**,
+
+    include if exists <local/plasma-discover_gpg>
+  }
 
   include if exists <local/plasma-discover>
 }
