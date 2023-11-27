@@ -1,0 +1,49 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/epiphany-search-provider
+profile epiphany-search-provider @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/dconf-write>
+  include <abstractions/dri-common>
+  include <abstractions/dri-enumerate>
+  include <abstractions/fonts>
+  include <abstractions/gnome>
+  include <abstractions/mesa>
+  include <abstractions/nameservice-strict>
+  include <abstractions/nvidia>
+  include <abstractions/p11-kit>
+  include <abstractions/ssl_certs>
+  include <abstractions/vulkan>
+  include <abstractions/X-strict>
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  @{lib}/webkitgtk-*/WebKitNetworkProcess rix,
+
+  owner @{user_cache_dirs}/epiphany/{,**} rwk,
+  owner @{user_share_dirs}/epiphany/{,**} rwk,
+
+  @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/session.slice/dbus.service/memory.* r,
+
+        @{PROC}/driver/nvidia/params r,
+        @{PROC}/modules r,
+        @{PROC}/sys/dev/i915/perf_stream_paranoid r,
+        @{PROC}/zoneinfo r,
+  owner @{PROC}/@{pid}/cgroup r,
+  owner @{PROC}/@{pid}/cmdline r,
+  owner @{PROC}/@{pid}/comm r,
+
+  include if exists <local/epiphany-search-provider>
+}
