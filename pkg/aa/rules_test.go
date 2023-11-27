@@ -35,6 +35,18 @@ func TestRule_FromLog(t *testing.T) {
 			want:    mount1,
 		},
 		{
+			name:    "pivotroot",
+			fromLog: PivotRootFromLog,
+			log:     pivotroot1Log,
+			want:    pivotroot1,
+		},
+		{
+			name:    "changeprofile",
+			fromLog: ChangeProfileFromLog,
+			log:     changeprofile1Log,
+			want:    changeprofile1,
+		},
+		{
 			name:    "signal",
 			fromLog: SignalFromLog,
 			log:     signal1Log,
@@ -139,6 +151,18 @@ func TestRule_Less(t *testing.T) {
 			name:  "mount",
 			rule:  mount1,
 			other: mount2,
+			want:  false,
+		},
+		{
+			name:  "pivot_root1",
+			rule:  pivotroot2,
+			other: pivotroot1,
+			want:  true,
+		},
+		{
+			name:  "pivot_root2",
+			rule:  pivotroot1,
+			other: pivotroot3,
 			want:  false,
 		},
 		{
@@ -272,6 +296,12 @@ func TestRule_Equals(t *testing.T) {
 			rule:  mount1,
 			other: mount1,
 			want:  true,
+		},
+		{
+			name:  "pivot_root",
+			rule:  pivotroot1,
+			other: pivotroot2,
+			want:  false,
 		},
 		{
 			name:  "change_profile",

@@ -14,9 +14,9 @@ type PivotRoot struct {
 func PivotRootFromLog(log map[string]string) ApparmorRule {
 	return &PivotRoot{
 		Qualifier:     NewQualifierFromLog(log),
-		OldRoot:       log["oldroot"],
-		NewRoot:       log["root"],
-		TargetProfile: log["name"],
+		OldRoot:       log["srcname"],
+		NewRoot:       log["name"],
+		TargetProfile: "",
 	}
 }
 
