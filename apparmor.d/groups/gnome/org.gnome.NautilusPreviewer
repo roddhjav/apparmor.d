@@ -1,0 +1,59 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/org.gnome.NautilusPreviewer
+profile org.gnome.NautilusPreviewer @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/dconf-write>
+  include <abstractions/deny-sensitive-home>
+  include <abstractions/dri-enumerate>
+  include <abstractions/gnome>
+  include <abstractions/gstreamer>
+  include <abstractions/mesa>
+  include <abstractions/nameservice-strict>
+  include <abstractions/opencl-nvidia>
+  include <abstractions/private-files-strict>
+  include <abstractions/private-files>
+  include <abstractions/video>
+  include <abstractions/vulkan>
+
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  @{bin}/gjs-console r,
+
+  @{bin}/xdg-open                                    rPx -> child-open,
+  @{lib}/@{multiarch}/glib-[0-9]*/gio-launch-desktop rPx -> child-open,
+  @{lib}/gio-launch-desktop                          rPx -> child-open,
+
+  /usr/share/sushi/org.gnome.NautilusPreviewer.*.gresource r,
+
+  /etc/machine-id r,
+
+  # Full read access to user's data
+  owner @{MOUNTS}/{,**} r,
+  owner @{HOME}/{,**} r,
+
+  owner @{user_config_dirs}/pulse/cookie rk,
+
+  @{run}/udev/data/c3[0-9]*:@{int} r,     # For dynamic assignment range 384 to 511
+  @{run}/udev/data/c4[0-9]*:@{int} r,
+  @{run}/udev/data/c5[0-9]*:@{int} r,
+
+  @{sys}/devices/@{pci}/revision r,
+  @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/session.slice/dbus.service/memory.* r,
+
+        @{PROC}/@{pid}/cgroup r,
+        @{PROC}/zoneinfo r,
+  owner @{PROC}/@{pid}/cmdline r,
+  owner @{PROC}/@{pid}/stat r,
+  owner @{PROC}/@{pid}/task/@{tid}/stat r,
+
+  include if exists <local/org.gnome.NautilusPreviewer>
+}
