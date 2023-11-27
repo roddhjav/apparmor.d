@@ -29,21 +29,20 @@ profile systemd-resolved @{exec_path} flags=(attach_disconnected) {
   network inet6 stream,
   network netlink raw,
 
+  dbus bind bus=system name=org.freedesktop.resolve1,
+
+  dbus receive bus=system path=/org/freedesktop/resolve1
+       interface=org.freedesktop.{resolve1.Manager,DBus.Peer,DBus.Properties},
+
   dbus send bus=system path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus
        member={RequestName,GetConnectionUnixUser}
        peer=(name=org.freedesktop.DBus),
 
-  dbus receive bus=system path=/org/freedesktop/resolve[0-9]
-       interface=org.freedesktop.{resolve[0-9].Manager,DBus.Peer,DBus.Properties},
-
-  dbus receive bus=system path=/org/freedesktop/login[0-9]*
-       interface=org.freedesktop.login[0-9]*.Manager
+  dbus receive bus=system path=/org/freedesktop/login1
+       interface=org.freedesktop.login1.Manager
        member={PrepareForSleep,PrepareForShutdown}
        peer=(name=:*, label=systemd-logind),
-
-  dbus bind bus=system 
-       name=org.freedesktop.resolve[0-9],
 
   @{exec_path} mr,
 
