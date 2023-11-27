@@ -1,0 +1,32 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/gnome-initial-setup
+profile gnome-initial-setup @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/dbus-session-strict>
+  include <abstractions/dconf-write>
+  include <abstractions/gnome>
+  include <abstractions/mesa>
+
+  network netlink raw,
+
+  dbus bind bus=session name=org.gnome.InitialSetup,
+
+  @{exec_path} mr,
+
+  @{bin}/df      rPx,
+  @{bin}/dpkg    rPx -> child-dpkg,
+  @{bin}/lscpu   rPx,
+  @{bin}/lspci   rPx,
+  @{bin}/xrandr  rPx,
+
+  @{lib}/gnome-initial-setup-goa-helper rix,
+
+  include if exists <local/gnome-initial-setup>
+}
