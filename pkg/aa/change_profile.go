@@ -5,6 +5,7 @@
 package aa
 
 type ChangeProfile struct {
+	Qualifier
 	ExecMode    string
 	Exec        string
 	ProfileName string
@@ -12,9 +13,10 @@ type ChangeProfile struct {
 
 func ChangeProfileFromLog(log map[string]string) ApparmorRule {
 	return &ChangeProfile{
+		Qualifier:   NewQualifierFromLog(log),
 		ExecMode:    log["mode"],
 		Exec:        log["exec"],
-		ProfileName: log["name"],
+		ProfileName: log["target"],
 	}
 }
 

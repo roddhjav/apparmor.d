@@ -83,10 +83,44 @@ var (
 		MountPoint:      "/var/lib/docker/overlay2/metacopy-check906831159/merged/",
 	}
 
+	// PivotRoot
+	pivotroot1LogStr = `apparmor="ALLOWED" operation="pivotroot" class="mount" profile="systemd" name="@{run}/systemd/mount-rootfs/"  comm="(ostnamed)" srcname="@{run}/systemd/mount-rootfs/"`
+	pivotroot1Log    = map[string]string{
+		"apparmor":  "ALLOWED",
+		"class":     "mount",
+		"profile":   "systemd",
+		"operation": "pivotroot",
+		"comm":      "(ostnamed)",
+		"name":      "@{run}/systemd/mount-rootfs/",
+		"srcname":   "@{run}/systemd/mount-rootfs/",
+	}
+	pivotroot1 = &PivotRoot{
+		OldRoot: "@{run}/systemd/mount-rootfs/",
+		NewRoot: "@{run}/systemd/mount-rootfs/",
+	}
+	pivotroot2 = &PivotRoot{
+		OldRoot:       "@{run}/systemd/mount-rootfs/",
+		NewRoot:       "/newroot",
+		TargetProfile: "brwap",
+	}
+	pivotroot3 = &PivotRoot{
+		NewRoot: "/newroot",
+	}
+
 	// Change Profile
-	changeprofile1 = &ChangeProfile{ExecMode: "Px", Exec: "/bin/bash", ProfileName: "brwap//default"}
-	changeprofile2 = &ChangeProfile{ExecMode: "Px", Exec: "/bin/bash", ProfileName: "brwap"}
-	changeprofile3 = &ChangeProfile{ExecMode: "safe", Exec: "/bin/foo", ProfileName: "brwap//default"}
+	changeprofile1LogStr = `apparmor="ALLOWED" operation="change_onexec" class="file" profile="systemd" name="systemd-user"  comm="(systemd)" target="systemd-user"`
+	changeprofile1Log    = map[string]string{
+		"apparmor":  "ALLOWED",
+		"class":     "file",
+		"profile":   "systemd",
+		"operation": "change_onexec",
+		"comm":      "(systemd)",
+		"name":      "systemd-user",
+		"target":    "systemd-user",
+	}
+	changeprofile1 = &ChangeProfile{ProfileName: "systemd-user"}
+	changeprofile2 = &ChangeProfile{ProfileName: "brwap"}
+	changeprofile3 = &ChangeProfile{ExecMode: "safe", Exec: "/bin/bash", ProfileName: "brwap//default"}
 
 	// Signal
 	signal1Log = map[string]string{
