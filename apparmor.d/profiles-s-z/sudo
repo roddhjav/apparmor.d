@@ -1,6 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2019-2022 Mikhail Morfikov
-# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2021-2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -8,6 +8,7 @@ abi <abi/3.0>,
 include <tunables/global>
 
 @{exec_path} = @{bin}/sudo
+#@{bin}/su
 profile sudo @{exec_path} {
   include <abstractions/base>
   include <abstractions/app-launcher-root>
@@ -40,10 +41,10 @@ profile sudo @{exec_path} {
   signal (send) set=(cont,hup) peer=su,
   signal (send) set=(winch),
 
-  dbus send bus=system path=/org/freedesktop/login[0-9]
-       interface=org.freedesktop.login[0-9].Manager
+  dbus send bus=system path=/org/freedesktop/login1
+       interface=org.freedesktop.logi1.Manager
        member=CreateSession
-       peer=(name=org.freedesktop.login[0-9]),
+       peer=(name=org.freedesktop.login1),
 
   dbus (send receive) bus=session path=/org/freedesktop/systemd1
          interface=org.freedesktop.systemd.Manager
