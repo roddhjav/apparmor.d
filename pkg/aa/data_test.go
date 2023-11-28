@@ -84,8 +84,8 @@ var (
 	}
 
 	// PivotRoot
-	pivotroot1LogStr = `apparmor="ALLOWED" operation="pivotroot" class="mount" profile="systemd" name="@{run}/systemd/mount-rootfs/"  comm="(ostnamed)" srcname="@{run}/systemd/mount-rootfs/"`
-	pivotroot1Log    = map[string]string{
+	// pivotroot1LogStr = `apparmor="ALLOWED" operation="pivotroot" class="mount" profile="systemd" name="@{run}/systemd/mount-rootfs/"  comm="(ostnamed)" srcname="@{run}/systemd/mount-rootfs/"`
+	pivotroot1Log = map[string]string{
 		"apparmor":  "ALLOWED",
 		"class":     "mount",
 		"profile":   "systemd",
