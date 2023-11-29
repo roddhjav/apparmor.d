@@ -1,0 +1,25 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Jeroen Rijken
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{usr/,}bin/kstart
+profile kstart @{exec_path} flags=(complain,attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/fonts>
+
+  unix (connect, send, receive) type=stream peer=(addr="@/tmp/.ICE-unix/4979"),
+
+  @{exec_path} mr,
+  /{usr/,}bin/** rPUx,
+  /{usr/,}bin/konsole rUx,
+
+  @{HOME}.Xauthority r,
+
+  include if exists <local/kstart>
+}
