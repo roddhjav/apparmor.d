@@ -1,32 +1,33 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2023 Jeroen Rijken
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
 
 include <tunables/global>
 
-@{exec_path} = /{usr/,}bin/plank
-profile plank @{exec_path} flags=(complain) {
+@{exec_path} = @{bin}/plank
+profile plank @{exec_path} {
   include <abstractions/base>
   include <abstractions/app-launcher-user>
   include <abstractions/dbus-session-strict>
   include <abstractions/dconf>
-  include <abstractions/freedesktop.org>
   include <abstractions/fontconfig-cache-read>
   include <abstractions/fonts>
+  include <abstractions/freedesktop.org>
   include <abstractions/gtk>
+  include <abstractions/X-strict>
 
   @{exec_path} rm,
 
-  unix (send, receive, connect) type=stream peer=(addr="@/tmp/.X11-unix/X[0-9]*", label="{xorg,xkbcomp}"),
-
-  @{user_config_dirs}/plank/{,**} rw,
   /usr/{,local/}share/plank/{,**} r,
-
   /usr/{,local/}share/mime/mime.cache r,
+
   /var/lib/flatpak/exports/share/icons/{,**} r,
   /var/lib/flatpak/exports/share/mime/mime.cache r,
+
+  owner @{user_config_dirs}/plank/{,**} rw,
 
   include if exists <local/plank>
 }
