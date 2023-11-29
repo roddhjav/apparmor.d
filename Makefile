@@ -57,12 +57,7 @@ $(P):
 	@for file in ${TUNABLES}; do \
 		install -Dm0644 "${BUILD}/apparmor.d/tunables/$${file}" "${DESTDIR}/etc/apparmor.d/tunables/$${file}"; \
 	done;
-	@echo "Warning: profile dependencies fallback to unconfined."
-	@for file in ${@}; do \
-		grep 'rPx' "${BUILD}/apparmor.d/$${file}"; \
-		sed -i -e "s/rPx/rPUx/g" "${BUILD}/apparmor.d/$${file}"; \
-		install -Dvm0644 "${BUILD}/apparmor.d/$${file}" "${DESTDIR}/etc/apparmor.d/$${file}"; \
-	done;
+	@bash dists/partial.sh ${@}
 	@systemctl restart apparmor || systemctl status apparmor
 
 dist ?= archlinux
