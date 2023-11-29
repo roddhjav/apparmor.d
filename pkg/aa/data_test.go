@@ -108,8 +108,8 @@ var (
 	}
 
 	// Change Profile
-	changeprofile1LogStr = `apparmor="ALLOWED" operation="change_onexec" class="file" profile="systemd" name="systemd-user"  comm="(systemd)" target="systemd-user"`
-	changeprofile1Log    = map[string]string{
+	// changeprofile1LogStr = `apparmor="ALLOWED" operation="change_onexec" class="file" profile="systemd" name="systemd-user"  comm="(systemd)" target="systemd-user"`
+	changeprofile1Log = map[string]string{
 		"apparmor":  "ALLOWED",
 		"class":     "file",
 		"profile":   "systemd",
