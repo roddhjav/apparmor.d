@@ -50,17 +50,16 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
   signal (send) set=(term, kill) peer=keepassxc-proxy,
   signal (send) set=(term, kill) peer=firefox-*,
 
-  dbus send    bus=session path=/org/freedesktop/DBus
-       interface=org.freedesktop.DBus
-       member={RequestName,ReleaseName}
-       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
+       dbus bind bus=session name=org.mozilla.firefox.*,
+       dbus bind bus=session name=org.mpris.MediaPlayer2.firefox.*,
+       dbus bind bus=session name=org.mozilla.firefox_beta.*,
+  deny dbus send bus=system path=/org/freedesktop/hostname[0-9]*,
 
-  dbus send    bus=session path=/ScreenSaver
+  dbus send bus=session path=/ScreenSaver
        interface=org.freedesktop.ScreenSaver
-       member={Inhibit,UnInhibit}
        peer=(name=org.freedesktop.ScreenSaver),
 
-  dbus send    bus=session path=/org/freedesktop/portal/desktop
+  dbus send bus=session path=/org/freedesktop/portal/desktop
        interface=org.freedesktop.portal.Settings
        member=Read
        peer=(name=:*),
@@ -70,24 +69,24 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
        member=SettingChanged
        peer=(name=:*),
 
-  dbus send    bus=session path=/org/freedesktop/portal/desktop
+  dbus send bus=session path=/org/freedesktop/portal/desktop
        interface=org.freedesktop.DBus.Properties
        member={GetAll,Read}
        peer=(name=:*),
 
-  dbus send    bus=system path=/org/freedesktop/UPower
+  dbus send bus=system path=/org/freedesktop/UPower
        interface=org.freedesktop.UPower
        member=EnumerateDevices
        peer=(name=org.freedesktop.UPower),
 
-  dbus send    bus=session path=/org/freedesktop/PowerManagement/Inhibit
+  dbus send bus=session path=/org/freedesktop/PowerManagement/Inhibit
        interface=org.freedesktop.PowerManagement.Inhibit
        member=Inhibit
        peer=(name=org.freedesktop.PowerManagement),
 
-  dbus send    bus=system path=/org/freedesktop/RealtimeKit[0-9]*
+  dbus send bus=system path=/org/freedesktop/RealtimeKit1
        member={Get,MakeThreadHighPriority,MakeThreadRealtime,MakeThreadRealtimeWithPID}
-       peer=(name=org.freedesktop.RealtimeKit[0-9]*),
+       peer=(name=org.freedesktop.RealtimeKit1*),
 
   dbus (send, receive) bus=session path=/org/mpris/MediaPlayer2
        interface=org.freedesktop.DBus.Properties
@@ -99,33 +98,23 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
        member=GetPlaylists
        peer=(name=:*),
 
-  dbus receive bus=system path=/org/freedesktop/login[0-9]*
-       interface=org.freedesktop.login[0-9]*.Manager
+  dbus receive bus=system path=/org/freedesktop/login1*
+       interface=org.freedesktop.login1*.Manager
        member={SessionNew,SessionRemoved,UserNew,UserRemoved,PrepareForShutdown}
        peer=(name=:*),
 
-  dbus send    bus=session path=/org/gtk/vfs/metadata
+  dbus send bus=session path=/org/gtk/vfs/metadata
        interface=org.gtk.vfs.Metadata
        member=GetTreeFromDevice
        peer=(name=:*),
 
-  dbus send    bus=session path=/org/mozilla/firefox/Remote
+  dbus send bus=session path=/org/mozilla/firefox/Remote
        interface=org.mozilla.firefox
-       member=OpenURL
        peer=(name=org.mozilla.firefox.*, label=@{profile_name}),
 
   dbus receive bus=session path=/org/mozilla/firefox/Remote
        interface=org.mozilla.firefox
-       member=OpenURL
        peer=(name=:*, label=@{profile_name}),
-
-  dbus bind bus=session
-       name=org.mpris.MediaPlayer2.firefox.*,
-
-  dbus bind bus=session
-       name=org.mozilla.firefox.*,
-
-  deny dbus send bus=system path=/org/freedesktop/hostname[0-9]*,
 
   @{exec_path} mrix,
 
