@@ -1,6 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2021-2022 Mikhail Morfikov
-# Copyright (C) 2021-2022 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2021-2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -10,7 +10,6 @@ include <tunables/global>
 @{exec_path} = @{lib}/{,gvfs/}gvfsd-trash
 profile gvfsd-trash @{exec_path} {
   include <abstractions/base>
-  include <abstractions/dbus-gtk>
   include <abstractions/dbus-session-strict>
   include <abstractions/freedesktop.org>
   include <abstractions/nameservice-strict>
@@ -20,28 +19,37 @@ profile gvfsd-trash @{exec_path} {
   network inet stream,
   network inet6 stream,
 
-  dbus send bus=session path=/org/freedesktop/DBus
-       interface=org.freedesktop.DBus
-       member={RequestName,ReleaseName}
-       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
+  dbus bind bus=session name=org.gtk.vfs.mountpoint_@{int},
 
   dbus receive bus=session path=/org/gtk/vfs/Daemon
        interface=org.gtk.vfs.Daemon
        member=GetConnection
-       peer=(name=:*, label=gnome-control-center),
+       peer=(name=:*, label=gnome-shell),
 
-  dbus send bus=session path=/org/gtk/gvfs/exec_spaw/[0-9]*
+  dbus receive bus=session path=/org/gtk/vfs/mountable
+       interface=org.gtk.vfs.Mountable
+       member=Mount
+       peer=(name=:*, label=gvfsd),
+
+  dbus send bus=session path=/org/gtk/gvfs/exec_spaw/@{int}
        interface=org.gtk.vfs.Spawner
        member=Spawned
        peer=(name=:*, label=gvfsd),
+
+  dbus send bus=session path=/org/gtk/vfs/mounttracker
+       interface=org.gtk.vfs.MountTracker
+       member=RegisterMount
+       peer=(name=:*, label=gvfsd),
+
+  dbus send bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member=RequestName
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
 
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
        peer=(name=:*, label=gnome-shell),
-
-  dbus bind bus=session
-       name=org.gtk.vfs.mountpoint_[0-9]*,
 
   @{exec_path} mr,
 
