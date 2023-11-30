@@ -25,11 +25,6 @@ profile gsd-power @{exec_path} flags=(attach_disconnected) {
 
   signal (receive) set=(term, hup) peer=gdm*,
 
-  dbus send bus=session path=/org/freedesktop/DBus
-       interface=org.freedesktop.DBus
-       member={RequestName,ReleaseName}
-       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
-
   dbus (send,receive) bus=system path=/org/freedesktop/UPower{,/**}
        interface=org.freedesktop.{DBus.Properties,UPower*},
 
@@ -37,28 +32,28 @@ profile gsd-power @{exec_path} flags=(attach_disconnected) {
        interface=org.freedesktop.DBus.Properties
        member=Get,
 
-  dbus send bus=system path=/org/freedesktop/login[0-9]
+  dbus send bus=system path=/org/freedesktop/login1
        interface=org.freedesktop.DBus.Properties
        member=GetAll,
 
-  dbus send bus=system path=/org/freedesktop/login[0-9]/session/auto
+  dbus send bus=system path=/org/freedesktop/login1/session/auto
        interface=org.freedesktop.DBus.Properties
        member=GetAll,
 
-  dbus send bus=system path=/org/freedesktop/login[0-9]/session/auto
-       interface=org.freedesktop.login[0-9].Session
+  dbus send bus=system path=/org/freedesktop/login1/session/auto
+       interface=org.freedesktop.login1.Session
        member=SetBrightness,
 
-  dbus send bus=system path=/org/freedesktop/login[0-9]
-       interface=org.freedesktop.login[0-9].Manager
+  dbus send bus=system path=/org/freedesktop/login1
+       interface=org.freedesktop.login1.Manager
        member=Inhibit,
 
-  dbus receive bus=system path=/org/freedesktop/login[0-9]
-       interface=org.freedesktop.login[0-9].Manager
+  dbus receive bus=system path=/org/freedesktop/login1
+       interface=org.freedesktop.login1.Manager
        member={SessionNew,SessionRemoved,PrepareForShutdown,UserNew,UserRemoved,PrepareForSleep}
        peer=(name=:*, label=systemd-logind),
 
-  dbus receive bus=system path=/org/freedesktop/login[0-9]
+  dbus receive bus=system path=/org/freedesktop/login1
        interface=org.freedesktop.DBus.Properties
        member=PropertiesChanged,
 
