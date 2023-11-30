@@ -19,25 +19,20 @@ profile gnome-keyring-daemon @{exec_path} flags=(attach_disconnected) {
   signal (receive) set=(term) peer=gdm,
   signal (send) set=(term) peer=ssh-agent,
 
-  dbus send bus=session path=/org/freedesktop/DBus
-       interface=org.freedesktop.DBus
-       member={RequestName,ReleaseName}
-       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
-
-  dbus send    bus=system path=/org/freedesktop/login[0-9]/session/*
+  dbus send bus=system path=/org/freedesktop/login1/session/*
        interface=org.freedesktop.DBus.Properties
        member=Get
-       peer=(name=org.freedesktop.login[0-9]),
+       peer=(name=org.freedesktop.login1),
 
-  dbus receive bus=system path=/org/freedesktop/login[0-9]/session/*
+  dbus receive bus=system path=/org/freedesktop/login1/session/*
        interface=org.freedesktop.DBus.Properties
        member=PropertiesChanged
        peer=(name=:*, label=systemd-logind),
 
-  dbus send    bus=system path=/org/freedesktop/login[0-9]
-       interface=org.freedesktop.login[0-9].Manager
+  dbus send    bus=system path=/org/freedesktop/login1
+       interface=org.freedesktop.login1.Manager
        member=GetSession
-       peer=(name=org.freedesktop.login[0-9]),
+       peer=(name=org.freedesktop.login1),
 
   dbus send bus=session path=/org/gnome/SessionManager
        interface=org.gnome.SessionManager

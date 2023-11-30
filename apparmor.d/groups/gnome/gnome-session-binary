@@ -39,20 +39,20 @@ profile gnome-session-binary @{exec_path} flags=(attach_disconnected) {
        member={RequestName,ReleaseName,UpdateActivationEnvironment,GetConnectionUnixUser,GetConnectionUnixProcessID}
        peer=(name=org.freedesktop.DBus label=dbus-daemon),
 
-  dbus send    bus=system path=/org/freedesktop/login[0-9]
-       interface=org.freedesktop.login[0-9].Manager
+  dbus send    bus=system path=/org/freedesktop/login1
+       interface=org.freedesktop.login1.Manager
        member={CanPowerOff,GetSession,PowerOff,Inhibit,Reboot}
        peer=(name=:*, label=systemd-logind),
 
-  dbus receive bus=system path=/org/freedesktop/login[0-9]
-       interface=org.freedesktop.login[0-9].Manager
+  dbus receive bus=system path=/org/freedesktop/login1
+       interface=org.freedesktop.login1.Manager
        member={SessionNew,PrepareForShutdown,SessionRemoved,UserNew,UserRemoved,PrepareForSleep}
        peer=(name=:*, label=systemd-logind),
 
-  dbus send bus=system path=/org/freedesktop/login[0-9]/session/*
-       interface=org.freedesktop.login[0-9].Session
+  dbus send bus=system path=/org/freedesktop/login1/session/*
+       interface=org.freedesktop.login1.Session
        member=SetIdleHint
-       peer=(name=org.freedesktop.login[0-9], label=systemd-logind),
+       peer=(name=org.freedesktop.login1, label=systemd-logind),
 
   dbus (send,receive) bus=session path=/org/gnome/SessionManager{,/**}
        interface={org.freedesktop.DBus.Introspectable,org.gnome.SessionManager**},
@@ -62,7 +62,7 @@ profile gnome-session-binary @{exec_path} flags=(attach_disconnected) {
        member=GetAll
        peer=(name=:*, label=at-spi2-registryd),
 
-  dbus send bus=session path=/org/gnome/SessionManager/Client[0-9]*
+  dbus send bus=session path=/org/gnome/SessionManager/Client@{int}
        interface=org.gnome.SessionManager.ClientPrivate
        member=CancelEndSession
        peer=(name=org.freedesktop.DBus, label=gsd-*),
@@ -82,7 +82,7 @@ profile gnome-session-binary @{exec_path} flags=(attach_disconnected) {
        member=GetAll
        peer=(name=:*, label=gnome-shell),
 
-  dbus (send, receive) bus=system path=/org/freedesktop/login[0-9]*
+  dbus (send, receive) bus=system path=/org/freedesktop/login1*
        interface=org.freedesktop.DBus.Properties
        member={GetAll,PropertiesChanged}
        peer=(name=:*, label=systemd-logind),

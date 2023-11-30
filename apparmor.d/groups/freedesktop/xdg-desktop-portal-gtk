@@ -9,6 +9,7 @@ include <tunables/global>
 @{exec_path} = @{lib}/xdg-desktop-portal-gtk
 profile xdg-desktop-portal-gtk @{exec_path} {
   include <abstractions/base>
+  include <abstractions/bus/atspi>
   include <abstractions/dbus-accessibility-strict>
   include <abstractions/dbus-session-strict>
   include <abstractions/dbus-strict>
@@ -27,11 +28,6 @@ profile xdg-desktop-portal-gtk @{exec_path} {
   include <abstractions/wayland>
 
   unix (send, receive, connect) type=stream peer=(addr="@/tmp/.X11-unix/*", label=gnome-shell),
-
-  dbus send bus=session path=/org/freedesktop/DBus
-       interface=org.freedesktop.DBus
-       member={RequestName,ReleaseName}
-       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
 
   dbus send bus=system path=/org/freedesktop/Accounts/User[0-9]*
        interface=org.freedesktop.DBus.Properties
@@ -87,31 +83,6 @@ profile xdg-desktop-portal-gtk @{exec_path} {
        interface=org.gnome.Shell.Introspect
        member={RunningApplicationsChanged,WindowsChanged}
        peer=(name=:*, label=gnome-shell),
-
-  dbus send    bus=accessibility path=/org/a11y/atspi/registry/deviceeventcontroller
-       interface=org.a11y.atspi.DeviceEventController
-       member={GetKeystrokeListeners,GetDeviceEventListeners}
-       peer=(name=org.a11y.atspi.Registry), # all peer's labels
-
-  dbus send    bus=accessibility path=/org/a11y/atspi/registry
-       interface=org.a11y.atspi.Registry
-       member=GetRegisteredEvents
-       peer=(name=org.a11y.atspi.Registry), # all peer's labels
-
-  dbus receive bus=accessibility path=/org/a11y/atspi/registry
-       interface=org.a11y.atspi.Registry
-       member=EventListenerDeregistered
-       peer=(name=:*, label=at-spi2-registryd),
-
-  dbus send bus=accessibility path=/org/a11y/atspi/accessible/root
-       interface=org.a11y.atspi.Socket
-       member=Embed
-       peer=(name=org.a11y.atspi.Registry), # all peer's labels
-
-  dbus send bus=session path=/org/a11y/bus
-       interface=org.a11y.Bus
-       member=GetAddress
-       peer=(name=org.a11y.Bus, label=at-spi-bus-launcher),
 
   dbus send bus=session path=/org/gtk/vfs/mounttracker
        interface=org.gtk.vfs.MountTracker
