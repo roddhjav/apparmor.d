@@ -9,7 +9,6 @@ include <tunables/global>
 @{exec_path} = @{lib}/xdg-desktop-portal
 profile xdg-desktop-portal @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/dbus-network-manager-strict>
   include <abstractions/dbus-session-strict>
   include <abstractions/dbus-strict>
   include <abstractions/dconf-write>
@@ -22,88 +21,46 @@ profile xdg-desktop-portal @{exec_path} flags=(attach_disconnected) {
 
   ptrace (read),
 
+  dbus bind bus=session name=org.freedesktop.portal.Desktop,
+
+  dbus bind bus=session name=org.freedesktop.background.Monitor,
+
+  dbus receive bus=session path=/org/freedesktop/background/monitor
+       interface=org.freedesktop.DBus.Properties
+       peer=(name=:*, label=gnome-shell),
+
+  dbus send bus=session path=/org/freedesktop/impl/portal/PermissionStore
+       interface=org.freedesktop.DBus.Properties
+       peer=(name=:*, label=xdg-permission-store),
+
+  dbus send bus=session path=/org/freedesktop/portal/desktop
+       interface=org.freedesktop.DBus.Properties
+       peer=(name=:*, label=gnome-keyring-daemon),
+  dbus send bus=session path=/org/freedesktop/portal/desktop
+       interface=org.freedesktop.impl.portal.Settings
+       peer=(name=:*, label=xdg-desktop-portal-gnome),
+
+  dbus receive bus=session path=/org/freedesktop/portal/desktop
+       interface=org.freedesktop.portal.Settings
+       member=Read
+       peer=(name=:*, label=nautilus),
+  
+  dbus send bus=session path=/org/freedesktop/portal/documents
+       interface=org.freedesktop.DBus.Properties
+       peer=(name=:*, label=xdg-document-portal),
+  dbus send bus=session path=/org/freedesktop/portal/documents
+       interface=org.freedesktop.portal.Documents
+       peer=(name=:*, label=xdg-document-portal),
+
   dbus send bus=session path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus
-       member={RequestName,ReleaseName,GetConnectionUnixProcessID}
+       member=GetConnectionUnixProcessID
        peer=(name=org.freedesktop.DBus, label=dbus-daemon),
-
-  dbus send bus=system path=/org/freedesktop/NetworkManager
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll,
-
-  dbus send bus=system path=/org/freedesktop/RealtimeKit[0-9]
-       interface=org.freedesktop.DBus.Properties
-       member={GetAll,Get},
-
-  dbus send bus=system path=/net/hadess/PowerProfiles
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll,
-
-  dbus receive bus=system path=/org/freedesktop/NetworkManager
-       interface=org.freedesktop.NetworkManager
-       member={StateChanged,CheckPermissions},
-
-  dbus receive bus=system path=/org/freedesktop/NetworkManager
-       interface=org.freedesktop.DBus.Properties
-       member=PropertiesChanged,
-
-  dbus send    bus=session path=/org/freedesktop/portal/desktop
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=:*, label="{gnome-shell,xdg-desktop-portal-*,gnome-keyring-daemon}"),
-
-  dbus send    bus=session path=/org/freedesktop/portal/desktop
-       interface=org.freedesktop.impl.portal.Background
-       member=GetAppState
-       peer=(name=:*, label=xdg-desktop-portal-*),
-
-  dbus receive bus=session path=/org/freedesktop/portal/desktop
-       interface=org.freedesktop.impl.portal.Background
-       member=RunningApplicationsChanged
-       peer=(name=:*, label=xdg-desktop-portal-*),
-
-  dbus send    bus=session path=/org/freedesktop/portal/desktop
-       interface=org.freedesktop.portal.Settings
-       member=SettingChanged
-       peer=(name=org.freedesktop.DBus), # all peer's labels
-
-  dbus receive bus=session path=/org/freedesktop/portal/desktop
-       interface=org.freedesktop.{DBus.Properties,portal.Settings}
-       member={ReadAll,GetAll}
-       peer=(name=:*, label=snap.snapd-desktop-integration.snapd-desktop-integration),
-
-  dbus receive bus=session path=/org/freedesktop/portal/desktop
-       interface=org.freedesktop.impl.portal.Settings
-       member=SettingChanged
-       peer=(name=:*, label=xdg-desktop-portal-*),
-
-  dbus send    bus=session path=/org/freedesktop/portal/documents
-       interface=org.freedesktop.portal.Documents
-       member=GetMountPoint
-       peer=(name=:*, label=xdg-document-portal),
-
-  dbus (send, receive) bus=session path=/org/freedesktop/portal/documents
-       interface=org.freedesktop.DBus.Properties
-       member={GetAll,PropertiesChanged}
-       peer=(name=:*, label=xdg-document-portal),
-
-  dbus send bus=session path=/org/freedesktop/impl/portal/PermissionStore
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=:*, label=xdg-permission-store),
-
-  dbus send bus=session path=/org/freedesktop/impl/portal/PermissionStore
-       interface=org.freedesktop.impl.portal.PermissionStore
-       member=Lookup
-       peer=(name=:*, label=xdg-permission-store),
 
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
        peer=(name=:*, label=gnome-shell),
-
-  dbus bind bus=session
-       name=org.freedesktop.portal.Desktop,
 
   @{exec_path} mr,
 
