@@ -9,6 +9,7 @@ include <tunables/global>
 @{exec_path} = @{bin}/remmina
 profile remmina @{exec_path} {
   include <abstractions/base>
+  include <abstractions/bus/atspi>
   include <abstractions/dbus-accessibility-strict>
   include <abstractions/dbus-gtk>
   include <abstractions/dbus-session-strict>
@@ -49,26 +50,6 @@ profile remmina @{exec_path} {
   dbus (send, receive) bus=session path=/org/ayatana/NotificationItem/remmina_icon{,/**}
        peer=(name="{:*,org.freedesktop.DBus}"),  # all interfaces and members
 
-  dbus send bus=accessibility path=/org/a11y/atspi/accessible/root
-       interface=org.a11y.atspi.Socket
-       member=Embed
-       peer=(name=org.a11y.atspi.Registry),
-
-  dbus send bus=accessibility path=/org/a11y/atspi/registry
-       interface=org.a11y.atspi.Registry
-       member=GetRegisteredEvents
-       peer=(name=org.a11y.atspi.Registry),
-
-  dbus receive bus=accessibility path=/org/a11y/atspi/registry
-       interface=org.a11y.atspi.Registry
-       member=EventListenerDeregistered
-       peer=(name=:*),
-
-  dbus receive bus=accessibility path=/org/a11y/atspi/accessible/root
-       interface=org.freedesktop.DBus.Properties
-       member=Set
-       peer=(name=:*),
-
   dbus send bus=session path=/org/freedesktop/secrets/collection/session
        interface=org.freedesktop.DBus.Properties
        member=GetAll
@@ -83,11 +64,6 @@ profile remmina @{exec_path} {
        interface=org.kde.StatusNotifierWatcher
        member=RegisterStatusNotifierItem
        peer=(name=:*),
-
-  dbus send bus=accessibility path=/org/a11y/atspi/registry/deviceeventcontroller
-       interface=org.a11y.atspi.DeviceEventController
-       member={GetKeystrokeListeners,GetDeviceEventListeners}
-       peer=(name=org.a11y.atspi.Registry),
 
   dbus send bus=session path=/org/gtk/Private/RemoteVolumeMonitor
        interface=org.gtk.Private.RemoteVolumeMonitor

@@ -10,6 +10,7 @@ include <tunables/global>
 profile gsd-power @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/audio>
+  include <abstractions/bus/atspi>
   include <abstractions/dbus-accessibility-strict>
   include <abstractions/dbus-session-strict>
   include <abstractions/dbus-strict>
@@ -104,26 +105,6 @@ profile gsd-power @{exec_path} flags=(attach_disconnected) {
        interface=org.gnome.Mutter.DisplayConfig
        member=GetResources
        peer=(name=:*, label=gnome-shell),
-
-  dbus send bus=session path=/org/a11y/bus
-       interface=org.a11y.Bus
-       member=GetAddress
-       peer=(name=org.a11y.Bus), # all peer's labels
-
-  dbus send    bus=accessibility path=/org/a11y/atspi/registry
-       interface=org.a11y.atspi.Registry
-       member=GetRegisteredEvents
-       peer=(name=org.a11y.atspi.Registry), # all peer's labels
-
-  dbus send    bus=accessibility path=/org/a11y/atspi/registry/deviceeventcontroller
-       interface=org.a11y.atspi.DeviceEventController
-       member={GetKeystrokeListeners,GetDeviceEventListeners}
-       peer=(name=org.a11y.atspi.Registry), # all peer's labels
-
-  dbus send bus=accessibility path=/org/a11y/atspi/accessible/root
-       interface=org.a11y.atspi.Socket
-       member=Embed
-       peer=(name=org.a11y.atspi.Registry), # all peer's labels
 
   dbus (send, receive) bus=session path=/org/gnome/SettingsDaemon/Power
        interface=org.freedesktop.DBus.Properties

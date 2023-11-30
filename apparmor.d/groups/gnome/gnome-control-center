@@ -10,6 +10,7 @@ include <tunables/global>
 profile gnome-control-center @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/audio>
+  include <abstractions/bus/atspi>
   include <abstractions/dbus-session>
   include <abstractions/dbus-accessibility-strict>
   include <abstractions/dbus>
@@ -36,31 +37,6 @@ profile gnome-control-center @{exec_path} flags=(attach_disconnected) {
   signal (send) set=(kill) peer=passwd,
 
   unix (send, receive, connect) type=stream peer=(addr="@/home/*/.cache/ibus/dbus-????????", label=ibus-daemon),
-
-  dbus send bus=accessibility path=/org/a11y/atspi/accessible/root
-       interface=org.a11y.atspi.Socket
-       member=Embed
-       peer=(name=org.a11y.atspi.Registry, label=at-spi2-registryd),
-
-  dbus receive bus=accessibility path=/org/a11y/atspi/accessible/root
-       interface=org.freedesktop.DBus.Properties
-       member=Set
-       peer=(name=:*, label=at-spi2-registryd),
-
-  dbus send    bus=accessibility path=/org/a11y/atspi/registry
-       interface=org.a11y.atspi.Registry
-       member=GetRegisteredEvents
-       peer=(name=org.a11y.atspi.Registry, label=at-spi2-registryd),
-
-  dbus receive bus=accessibility path=/org/a11y/atspi/registry
-       interface=org.a11y.atspi.Registry
-       member=EventListenerDeregistered
-       peer=(name=:*, label=at-spi2-registryd),
-
-  dbus send bus=accessibility path=/org/a11y/atspi/registry/deviceeventcontroller
-       interface=org.a11y.atspi.DeviceEventController
-       member={GetKeystrokeListeners,GetDeviceEventListeners}
-       peer=(name=org.a11y.atspi.Registry, label=at-spi2-registryd),
 
   @{exec_path} mr,
 

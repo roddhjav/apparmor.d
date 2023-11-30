@@ -8,16 +8,16 @@ include <tunables/global>
 @{exec_path} = /{,usr/}{,local/}bin/rustdesk
 profile rustdesk @{exec_path} {
   include <abstractions/base>
-  include <abstractions/nameservice-strict>
   include <abstractions/audio>
+  include <abstractions/bus/atspi>
+  include <abstractions/dbus-accessibility-strict>
+  include <abstractions/dbus-session-strict>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/fonts>
+  include <abstractions/freedesktop.org>
+  include <abstractions/nameservice-strict>
   include <abstractions/openssl>
   include <abstractions/X-strict>
-  include <abstractions/fonts>
-  include <abstractions/fontconfig-cache-read>
-  include <abstractions/freedesktop.org>
-  include <abstractions/dbus-session-strict>
-  include <abstractions/dbus-accessibility-strict>
-  include <abstractions/dbus-gtk>
 
   capability dac_read_search,
   capability dac_override,
@@ -27,26 +27,6 @@ profile rustdesk @{exec_path} {
   network inet stream,
   network inet6 stream,
   network netlink raw,  # discovery
-
-  dbus (send) bus=accessibility path=/org/a11y/atspi/accessible/root
-       interface=org.a11y.atspi.Socket
-       member=Embed
-       peer=(name=org.a11y.atspi.Registry),
-
-  dbus (send) bus=accessibility path=/org/a11y/atspi/registry
-       interface=org.a11y.atspi.Registry
-       member=GetRegisteredEvents
-       peer=(name=org.a11y.atspi.Registry),
-
-  dbus (send) bus=accessibility path=/org/a11y/atspi/registry/deviceeventcontroller
-       interface=org.a11y.atspi.DeviceEventController
-       member={GetKeystrokeListeners,GetDeviceEventListeners}
-       peer=(name=org.a11y.atspi.Registry),
-
-  dbus (receive) bus=accessibility path=/org/a11y/atspi/accessible/root
-       interface=org.freedesktop.DBus.Properties
-       member=Set
-       peer=(name=:*),
 
   @{exec_path} mrix,
 
