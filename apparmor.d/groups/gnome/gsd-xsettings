@@ -29,22 +29,14 @@ profile gsd-xsettings @{exec_path} {
   network inet6 dgram,
   network netlink raw,
 
-  dbus send bus=session path=/org/freedesktop/DBus
-       interface=org.freedesktop.DBus
-       member={RequestName,ReleaseName,GetId}
-       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
+  dbus bind bus=session name=org.gtk.Settings,
 
-  dbus (send,receive) bus=system path=/org/freedesktop/Accounts/User[0-9]*
-       interface=org.freedesktop.Accounts.User
-       member={SetInputSources,Changed,GetAll},
+  dbus bind bus=session name=org.gnome.SettingsDaemon.XSettings,
 
-  dbus (send,receive) bus=system path=/org/freedesktop/Accounts{,/User[0-9]*}
+  dbus receive bus=session path=/org/gtk/Settings
        interface=org.freedesktop.DBus.Properties
-       member={GetAll,PropertiesChanged},
-
-  dbus send    bus=system path=/org/freedesktop/Accounts
-       interface=org.freedesktop.Accounts
-       member=FindUserByName,
+       member=GetAll
+       peer=(name=:*), # many peer's labels
 
   dbus receive bus=system path=/org/freedesktop/Accounts
        interface=org.freedesktop.Accounts
@@ -56,12 +48,12 @@ profile gsd-xsettings @{exec_path} {
        member={ClientAdded,ClientRemoved,SessionRunning}
        peer=(name=:*, label=gnome-session-binary),
 
-  dbus send    bus=session path=/org/gnome/SessionManager/Client[0-9]*
+  dbus send bus=session path=/org/gnome/SessionManager/Client@{int}
        interface=org.gnome.SessionManager.ClientPrivate
        member=EndSessionResponse
        peer=(name=:*, label=gnome-session-binary),
 
-  dbus receive bus=session path=/org/gnome/SessionManager/Client[0-9]*
+  dbus receive bus=session path=/org/gnome/SessionManager/Client@{int}
        interface=org.gnome.SessionManager.ClientPrivate
        member={EndSession,QueryEndSession,CancelEndSession,Stop}
        peer=(name=:*, label=gnome-session-binary),
@@ -70,11 +62,6 @@ profile gsd-xsettings @{exec_path} {
        interface=org.freedesktop.DBus.Properties
        member=GetAll
        peer=(name=:*, label=gnome-session-binary),
-
-  dbus receive bus=session path=/org/gtk/Settings
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=:*), # many peer's labels
 
   dbus send bus=session path=/org/gnome/Mutter/DisplayConfig
        interface=org.gnome.Mutter.DisplayConfig
@@ -86,11 +73,15 @@ profile gsd-xsettings @{exec_path} {
        member=Get
        peer=(name=org.gnome.Shell.Introspect, label=gnome-shell),
 
-  dbus bind bus=session
-       name=org.gtk.Settings,
+  dbus send bus=session path=/org/gtk/vfs/mounttracker
+       interface=org.gtk.vfs.MountTracker
+       member=ListMountableInfo
+       peer=(name=:*, label=gvfsd),
 
-  dbus bind bus=session
-       name=org.gnome.SettingsDaemon.XSettings,
+  dbus receive bus=session
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name=:*, label=gnome-shell),
 
   @{exec_path} mr,
 

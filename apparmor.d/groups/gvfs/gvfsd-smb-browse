@@ -10,6 +10,7 @@ include <tunables/global>
 @{exec_path} = @{lib}/{,gvfs/}gvfsd-smb-browse
 profile gvfsd-smb-browse @{exec_path} {
   include <abstractions/base>
+  include <abstractions/bus/vfs>
   include <abstractions/dbus-session-strict>
   include <abstractions/dconf-write>
   include <abstractions/nameservice-strict>
@@ -20,15 +21,7 @@ profile gvfsd-smb-browse @{exec_path} {
   network inet dgram,
   network inet6 dgram,
 
-  dbus send bus=session path=/org/freedesktop/DBus
-       interface=org.freedesktop.DBus
-       member={RequestName,ReleaseName}
-       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
-
-  dbus send bus=session path=/org/gtk/vfs/mounttracker
-       interface=org.gtk.vfs.MountTracker
-       member=ListMounts2
-       peer=(name=:*, label=gvfsd),
+  dbus bind bus=session name=org.gtk.vfs.mountpoint_smb_browse,
 
   dbus receive bus=session path=/org/gtk/vfs/mounttracker
        interface=org.gtk.vfs.MountTracker
@@ -44,9 +37,6 @@ profile gvfsd-smb-browse @{exec_path} {
        interface=org.gtk.vfs.Spawner
        member=Spawned
        peer=(name=:*, label=gvfsd),
-
-  dbus bind bus=session
-       name=org.gtk.vfs.mountpoint_smb_browse,
 
   @{exec_path} mr,
 

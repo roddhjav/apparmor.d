@@ -38,6 +38,12 @@ profile pulseaudio @{exec_path} {
   network bluetooth stream,
   network bluetooth seqpacket,
 
+  dbus bind bus=session name=org.freedesktop.ReserveDevice[0-9].Audio[0-9],
+
+  dbus bind bus=session name=org.PulseAudio[0-9],
+
+  dbus bind bus=session name=org.pulseaudio*,
+
   dbus send bus=session path=/Client[0-9]*/EntryGroup[0-9]*
        interface=org.freedesktop.Avahi.EntryGroup
        member={GetState,AddService,AddServiceSubtype,Commit}
@@ -63,11 +69,6 @@ profile pulseaudio @{exec_path} {
        member=Free
        peer=(name=org.freedesktop.Avahi),
 
-  dbus send bus=session path=/org/freedesktop/DBus
-       interface=org.freedesktop.DBus
-       member={RequestName,ReleaseName}
-       peer=(name=org.freedesktop.DBus),
-
   dbus receive bus=session path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus
        member={Hello,RequestName,ReleaseName}
@@ -77,21 +78,6 @@ profile pulseaudio @{exec_path} {
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
        peer=(name=:*, label=gnome-shell),
-
-  dbus bind bus=session
-       name=org.freedesktop.ReserveDevice[0-9].Audio[0-9],
-
-  dbus bind bus=session
-       name=org.PulseAudio[0-9],
-
-  dbus bind bus=session
-       name=org.pulseaudio*,
-
-  dbus send bus=system
-       path=/org/freedesktop/DBus
-       interface=org.freedesktop.DBus
-       member={Hello,AddMatch,RemoveMatch}
-       peer=(name=org.freedesktop.DBus),
 
   dbus send bus=system path=/org/freedesktop/RealtimeKit1
        member={Get,MakeThreadHighPriority,MakeThreadRealtime}
@@ -118,19 +104,19 @@ profile pulseaudio @{exec_path} {
        peer=(name=org.freedesktop.Avahi),
 
   dbus send bus=system path=/
-       interface=org.freedesktop.hostname[0-9]
+       interface=org.freedesktop.hostname1
        member=Get
-       peer=(name=/org/freedesktop/hostname[0-9]),
+       peer=(name=/org/freedesktop/hostname1),
 
-  dbus send bus=system path=/org/freedesktop/hostname[0-9]
+  dbus send bus=system path=/org/freedesktop/hostname1
        interface=org.freedesktop.DBus.Properties
        member=Get
-       peer=(name=/org/freedesktop/hostname[0-9]),
+       peer=(name=/org/freedesktop/hostname1),
 
-  dbus send bus=system path=/org/freedesktop/hostname[0-9]
+  dbus send bus=system path=/org/freedesktop/hostname1
        interface=org.freedesktop.DBus.Properties
        member=Get
-       peer=(name=org.freedesktop.hostname[0-9]),
+       peer=(name=org.freedesktop.hostname1),
 
   dbus receive bus=system path=/org/bluez/hci*/**
        interface=org.freedesktop.DBus.Properties

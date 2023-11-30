@@ -12,23 +12,15 @@ profile gvfs-afc-volume-monitor @{exec_path} {
   include <abstractions/base>
   include <abstractions/dbus-session-strict>
 
-  dbus send bus=session path=/org/freedesktop/DBus
-       interface=org.freedesktop.DBus
-       member={RequestName,ReleaseName}
-       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
-
+  dbus bind bus=session name=org.gtk.vfs.AfcVolumeMonitor,
   dbus receive bus=session path=/org/gtk/Private/RemoteVolumeMonitor
        interface=org.gtk.Private.RemoteVolumeMonitor
-       member={List,IsSupported}
-       peer=(name=:*, label="{gnome-shell,gnome-control-center,gnome-extension-ding,nautilus,tracker-*,unconfined}"),
+       peer=(name=:*),
 
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect 
        peer=(name=:*, label=gnome-shell),
-
-  dbus bind bus=session
-       name=org.gtk.vfs.AfcVolumeMonitor,
 
   @{exec_path} mr,
 
