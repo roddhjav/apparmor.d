@@ -19,20 +19,17 @@ profile gsd-print-notifications @{exec_path} flags=(attach_disconnected) {
   signal (receive) set=(term, hup) peer=gdm*,
   signal (send) set=(hup) peer=gsd-printer,
 
-  dbus send bus=session path=/org/freedesktop/DBus
-       interface=org.freedesktop.DBus
-       member={RequestName,ReleaseName}
-       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
+  dbus bind bus=session name=org.gnome.SettingsDaemon.PrintNotifications,
 
   dbus (send,receive) bus=system path=/Client[0-9]*/ServiceBrowser[0-9]*
        interface=org.freedesktop.Avahi.ServiceBrowser
        member={CacheExhausted,AllForNow,CacheExhausted,AllForNow,Free},
 
-  dbus send    bus=system path=/
+  dbus send bus=system path=/
        interface=org.freedesktop.DBus.Peer
        member=Ping,
 
-  dbus send    bus=system path=/
+  dbus send bus=system path=/
        interface=org.freedesktop.Avahi.Server
        member={GetAPIVersion,GetState,ServiceBrowserNew},
 
@@ -48,7 +45,7 @@ profile gsd-print-notifications @{exec_path} flags=(attach_disconnected) {
        member={GetAll,PropertiesChanged}
        peer=(name=:*, label=gnome-session-binary),
 
-  dbus send    bus=session path=/org/gnome/SessionManager/Client[0-9]*
+  dbus send bus=session path=/org/gnome/SessionManager/Client[0-9]*
        interface=org.gnome.SessionManager.ClientPrivate
        member=EndSessionResponse
        peer=(name=:*, label=gnome-session-binary),
@@ -63,7 +60,7 @@ profile gsd-print-notifications @{exec_path} flags=(attach_disconnected) {
        member={ClientAdded,SessionRunning,ClientRemoved,InhibitorRemoved,InhibitorAdded}
        peer=(name=:*, label=gnome-session-binary),
 
-  dbus send    bus=session path=/org/gnome/SessionManager
+  dbus send bus=session path=/org/gnome/SessionManager
        interface=org.gnome.SessionManager
        member=RegisterClient
        peer=(name=:*, label=gnome-session-binary),
@@ -72,9 +69,6 @@ profile gsd-print-notifications @{exec_path} flags=(attach_disconnected) {
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
        peer=(name=:*, label=gnome-shell),
-
-  dbus bind bus=session
-       name=org.gnome.SettingsDaemon.PrintNotifications,
 
   @{exec_path} mr,
   @{lib}/gsd-printer rPx,

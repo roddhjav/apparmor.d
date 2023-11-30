@@ -10,6 +10,7 @@ include <tunables/global>
 profile gsd-housekeeping @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/app-launcher-user>
+  include <abstractions/bus/vfs>
   include <abstractions/dbus-session-strict>
   include <abstractions/dconf-write>
   include <abstractions/thumbnails-cache-read>
@@ -17,10 +18,7 @@ profile gsd-housekeeping @{exec_path} flags=(attach_disconnected) {
   signal (receive) set=(term, hup) peer=gdm*,
   signal (receive) set=(term, hup) peer=gnome*,
 
-  dbus send bus=session path=/org/freedesktop/DBus
-       interface=org.freedesktop.DBus
-       member={RequestName,ReleaseName}
-       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
+  dbus bind bus=session name=org.gnome.SettingsDaemon.Housekeeping,
 
   dbus send bus=session path=/org/gnome/SessionManager
        interface=org.gnome.SessionManager
@@ -37,7 +35,7 @@ profile gsd-housekeeping @{exec_path} flags=(attach_disconnected) {
        member={GetAll,PropertiesChanged}
        peer=(name=:*, label=gnome-session-binary),
 
-  dbus send    bus=session path=/org/gnome/SessionManager/Client[0-9]*
+  dbus send bus=session path=/org/gnome/SessionManager/Client[0-9]*
        interface=org.gnome.SessionManager.ClientPrivate
        member=EndSessionResponse
        peer=(name=:*, label=gnome-session-binary),
@@ -51,14 +49,6 @@ profile gsd-housekeeping @{exec_path} flags=(attach_disconnected) {
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
        peer=(name=:*, label=gnome-shell),
-
-  dbus send bus=session path=/org/gtk/vfs/mounttracker
-       interface=org.gtk.vfs.MountTracker
-       member=ListMountableInfo
-       peer=(name=:*, label=gvfsd),
-
-  dbus bind bus=session
-       name=org.gnome.SettingsDaemon.Housekeeping,
 
   @{exec_path} mr,
 

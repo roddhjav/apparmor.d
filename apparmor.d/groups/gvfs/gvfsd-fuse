@@ -10,16 +10,12 @@ include <tunables/global>
 @{exec_path} = @{lib}/{,gvfs/}gvfsd-fuse
 profile gvfsd-fuse @{exec_path} {
   include <abstractions/base>
-  include <abstractions/dbus-gtk>
+  include <abstractions/bus/vfs>
   include <abstractions/dbus-session-strict>
 
   unix (send,receive) type=stream addr=none peer=(label=gvfsd-fuse//fusermount),
 
   mount fstype={fuse,fuse.*} -> @{run}/user/@{uid}/gvfs/,
-
-  dbus send bus=session path=/org/gtk/vfs/mounttracker
-       interface=org.gtk.vfs.MountTracker
-       peer=(name=:*, label=gvfsd), # all members
 
   dbus receive bus=session path=/org/gtk/vfs/mounttracker
        interface=org.gtk.vfs.MountTracker

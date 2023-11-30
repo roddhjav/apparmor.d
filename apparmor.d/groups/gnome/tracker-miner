@@ -9,7 +9,7 @@ include <tunables/global>
 @{exec_path} = @{lib}/tracker-miner-fs-{,control-}3
 profile tracker-miner @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/dbus-gtk>
+  include <abstractions/bus/vfs>
   include <abstractions/dbus-session-strict>
   include <abstractions/dbus-strict>
   include <abstractions/dconf-write>
@@ -23,10 +23,15 @@ profile tracker-miner @{exec_path} flags=(attach_disconnected) {
   signal (receive) set=(term, kill) peer=gdm,
   signal (receive) set=(hup)        peer=gdm-session-worker,
 
-  dbus send bus=session path=/org/freedesktop/DBus
-       interface=org.freedesktop.DBus
-       member={RequestName,ReleaseName}
-       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
+  dbus bind bus=session name=org.freedesktop.Tracker3.Miner.Files{,.Control},
+
+  dbus (send, receive) bus=session path=/org/freedesktop/Tracker3/**
+       interface=org.freedesktop.Tracker3.*
+       peer=(name=:*), # all members
+
+  dbus receive bus=session path=/org/freedesktop/Tracker3/**
+       interface=org.freedesktop.DBus.{Peer,Properties}
+       peer=(name=:*, label=tracker-extract),
 
   dbus send bus=system path=/org/freedesktop/UPower{,/devices/DisplayDevice}
        interface=org.freedesktop.DBus.Properties
@@ -42,28 +47,10 @@ profile tracker-miner @{exec_path} flags=(attach_disconnected) {
        member={List,IsSupported}
        peer=(name=:*, label=gvfs-*-volume-monitor),
 
-  dbus receive bus=session path=/org/freedesktop/Tracker3/Endpoint
-       interface=org.freedesktop.DBus.Peer
-       peer=(name=:*),
-
-  dbus send    bus=session path=/org/freedesktop/Tracker3/Endpoint
-       interface=org.freedesktop.Tracker3.Endpoint
-       peer=(name=org.freedesktop.DBus), # all members
-
-  dbus receive bus=session path=/org/freedesktop/Tracker3/Endpoint
-       interface=org.freedesktop.Tracker3.Endpoint
-       peer=(name=:*), # all members
-
-  dbus receive bus=session path=/org/freedesktop/Tracker3/Miner/**
-       interface=org.freedesktop.Tracker3.Miner
-       peer=(name=:*), # all members
-
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
        peer=(name=:*, label=gnome-shell),
-
-  dbus bind bus=session name=org.freedesktop.Tracker3.Miner.*,
 
   @{exec_path} mr,
 

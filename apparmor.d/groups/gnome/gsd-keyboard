@@ -10,6 +10,7 @@ include <tunables/global>
 profile gsd-keyboard @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus/atspi>
+  include <abstractions/bus/vfs>
   include <abstractions/dbus-accessibility-strict>
   include <abstractions/dbus-session-strict>
   include <abstractions/dbus-strict>
@@ -22,26 +23,14 @@ profile gsd-keyboard @{exec_path} flags=(attach_disconnected) {
 
   signal (receive) set=(term, hup) peer=gdm*,
 
-  dbus send bus=session path=/org/freedesktop/DBus
-       interface=org.freedesktop.DBus
-       member={RequestName,ReleaseName}
-       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
-
-  dbus send bus=system path=/org/freedesktop/locale[0-9]
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll,
-
-  dbus send    bus=session path=/org/gtk/Settings
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=:*, label=gsd-xsettings),
+  dbus bind bus=session name=org.gnome.SettingsDaemon.Keyboard,
 
   dbus (send, receive) bus=session path=/org/gnome/SessionManager{,/Client[0-9]*}
        interface=org.freedesktop.DBus.Properties
        member={GetAll,PropertiesChanged}
        peer=(name=:*, label=gnome-session-binary),
 
-  dbus send    bus=session path=/org/gnome/SessionManager/Client[0-9]*
+  dbus send bus=session path=/org/gnome/SessionManager/Client[0-9]*
        interface=org.gnome.SessionManager.ClientPrivate
        member=EndSessionResponse
        peer=(name=:*, label=gnome-session-binary),
@@ -51,7 +40,7 @@ profile gsd-keyboard @{exec_path} flags=(attach_disconnected) {
        member={CancelEndSession,QueryEndSession,EndSession,Stop}
        peer=(name=:*, label=gnome-session-binary),
 
-  dbus send    bus=session path=/org/gnome/SessionManager
+  dbus send bus=session path=/org/gnome/SessionManager
        interface=org.gnome.SessionManager
        member=RegisterClient
        peer=(name=:*, label=gnome-session-binary),
@@ -61,18 +50,15 @@ profile gsd-keyboard @{exec_path} flags=(attach_disconnected) {
        member={ClientAdded,SessionRunning,ClientRemoved,InhibitorRemoved,InhibitorAdded}
        peer=(name=:*, label=gnome-session-binary),
 
-  dbus send bus=session path=/org/gtk/vfs/mounttracker
-       interface=org.gtk.vfs.MountTracker
-       member=ListMountableInfo
-       peer=(name=:*, label=gvfsd),
+  dbus send bus=system path=/org/freedesktop/locale1
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=:*, label=systemd-localed),
 
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
        peer=(name=:*, label=gnome-shell),
-
-  dbus bind bus=session
-       name=org.gnome.SettingsDaemon.Keyboard,
 
   @{exec_path} mr,
 

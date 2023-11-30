@@ -22,10 +22,7 @@ profile gsd-color @{exec_path} flags=(attach_disconnected) {
 
   signal (receive) set=(term, hup) peer=gdm*,
 
-  dbus send bus=session path=/org/freedesktop/DBus
-       interface=org.freedesktop.DBus
-       member={RequestName,ReleaseName}
-       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
+  dbus bind bus=session name=org.gnome.SettingsDaemon.Color,
 
   dbus (send, receive) bus=system path=/org/freedesktop/ColorManager{,/devices/*}
        interface=org.freedesktop.ColorManager*,
@@ -39,17 +36,12 @@ profile gsd-color @{exec_path} flags=(attach_disconnected) {
        member=GetAll
        peer=(name=:*, label=gnome-shell),
 
-  dbus send    bus=session path=/org/gtk/Settings
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=:*, label=gsd-xsettings),
-
   dbus (send, receive) bus=session path=/org/gnome/SessionManager{,/Client[0-9]*}
        interface=org.freedesktop.DBus.Properties
        member={GetAll,PropertiesChanged}
        peer=(name=:*, label=gnome-session-binary),
 
-  dbus send    bus=session path=/org/gnome/SessionManager/Client[0-9]*
+  dbus send bus=session path=/org/gnome/SessionManager/Client[0-9]*
        interface=org.gnome.SessionManager.ClientPrivate
        member=EndSessionResponse
        peer=(name=:*, label=gnome-session-binary),
@@ -59,7 +51,7 @@ profile gsd-color @{exec_path} flags=(attach_disconnected) {
        member={CancelEndSession,QueryEndSession,EndSession,Stop}
        peer=(name=:*, label=gnome-session-binary),
 
-  dbus send    bus=session path=/org/gnome/SessionManager
+  dbus send bus=session path=/org/gnome/SessionManager
        interface=org.gnome.SessionManager
        member=RegisterClient
        peer=(name=:*, label=gnome-session-binary),
@@ -88,9 +80,6 @@ profile gsd-color @{exec_path} flags=(attach_disconnected) {
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
        peer=(name=:*, label=gnome-shell),
-
-  dbus bind bus=session
-       name=org.gnome.SettingsDaemon.Color,
 
   @{exec_path} mr,
 

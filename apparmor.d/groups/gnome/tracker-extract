@@ -26,32 +26,16 @@ profile tracker-extract @{exec_path} flags=(attach_disconnected) {
 
   signal (receive) set=(term) peer=gdm,
 
-  dbus send bus=session path=/org/freedesktop/DBus
-       interface=org.freedesktop.DBus
-       member={RequestName,ReleaseName}
-       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
-
-  dbus send bus=session path=/org/freedesktop/Tracker3/Endpoint
-       interface=org.freedesktop.DBus.Peer
-       member=Ping
-       peer=(name=org.freedesktop.Tracker3.Miner.Files),
-
-  dbus send bus=session path=/org/freedesktop/Tracker3/Endpoint
-       interface=org.freedesktop.Tracker3.Endpoint
-       peer=(name=org.freedesktop.Tracker3.Miner.Files, label=tracker-miner), # all members
-
-  dbus receive bus=session path=/org/freedesktop/Tracker3/Endpoint
-       interface=org.freedesktop.Tracker3.Endpoint
-       peer=(name=:*, label=tracker-miner), # all members
-
-  dbus send    bus=session path=/org/freedesktop/Tracker3/Miner/**
+  dbus bind bus=session name=org.freedesktop.Tracker3.Miner.Extract,
+  dbus send bus=session path=/org/freedesktop/Tracker3/Miner/**
        interface=org.freedesktop.Tracker3.Miner
-       peer=(name=org.freedesktop.DBus, label=tracker-miner), # all members
-
-  dbus send bus=session path=/org/gtk/vfs/mounttracker
-       interface=org.gtk.vfs.MountTracker
-       member=ListMountable*
-       peer=(name=:*, label=gvfsd),
+       peer=(name=org.freedesktop.DBus, label=tracker-miner),
+  dbus send bus=session path=/org/freedesktop/Tracker3/**
+       interface=org.freedesktop.DBus.Properties
+       peer=(name=org.freedesktop.Tracker3.*), # all members
+  dbus receive bus=session path=/org/freedesktop/Tracker3/**
+       interface=org.freedesktop.Tracker3.*
+       peer=(name=:*), # all members
 
   dbus send bus=session path=/org/gtk/Private/RemoteVolumeMonitor
        interface=org.gtk.Private.RemoteVolumeMonitor
@@ -63,6 +47,10 @@ profile tracker-extract @{exec_path} flags=(attach_disconnected) {
        member=Introspect
        peer=(name=:*, label=gnome-shell),
 
+  dbus send bus=session path=/org/gtk/vfs/mounttracker
+       interface=org.gtk.vfs.MountTracker
+       member=ListMount*
+       peer=(name=:*, label=gvfsd),
   dbus receive bus=session path=/org/gtk/vfs/mounttracker
        interface=org.gtk.vfs.MountTracker
        member={Mounted,ListMounts2}
@@ -77,8 +65,6 @@ profile tracker-extract @{exec_path} flags=(attach_disconnected) {
        interface=org.gtk.vfs.Metadata
        member={GetTreeFromDevice,Remove}
        peer=(name=:*, label=gvfsd-metadata),
-
-  dbus bind bus=session name=org.freedesktop.Tracker3.Miner.Extract,
 
   @{exec_path} mr,
 

@@ -10,18 +10,13 @@ include <tunables/global>
 @{exec_path} = @{lib}/{,gvfs/}gvfsd
 profile gvfsd @{exec_path} {
   include <abstractions/base>
-  include <abstractions/dbus-gtk>
   include <abstractions/dbus-session-strict>
 
-  dbus send bus=session path=/org/freedesktop/DBus
-       interface=org.freedesktop.DBus
-       member={RequestName,ReleaseName}
-       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
+  dbus bind bus=session name=org.gtk.vfs.Daemon,
 
   dbus send bus=session path=/org/gtk/vfs/mounttracker
        interface=org.gtk.vfs.MountTracker
-       member=Mounted
-       peer=(name=org.freedesktop.DBus, label="{gvfsd-*,gnome-*,tracker-miner}"),
+       peer=(name=org.freedesktop.DBus),
 
   dbus receive bus=session path=/org/gtk/vfs/mounttracker
        interface=org.gtk.vfs.MountTracker
@@ -46,9 +41,6 @@ profile gvfsd @{exec_path} {
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
        peer=(name=:*, label=gnome-shell),
-
-  dbus bind bus=session
-       name=org.gtk.vfs.Daemon,
 
   @{exec_path} mr,
 
