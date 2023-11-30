@@ -15,27 +15,28 @@ include <tunables/global>
 @{exec_path} += @{bin}/web2disk
 profile calibre @{exec_path} {
   include <abstractions/base>
-  include <abstractions/opencl-intel>
-  include <abstractions/gtk>
-  include <abstractions/fonts>
+  include <abstractions/bus/atspi>
+  include <abstractions/chromium-common>
+  include <abstractions/dbus-accessibility-strict>
+  include <abstractions/dbus-session-strict>
+  include <abstractions/devices-usb>
   include <abstractions/fontconfig-cache-read>
+  include <abstractions/fonts>
   include <abstractions/freedesktop.org>
+  include <abstractions/gtk>
   include <abstractions/mesa>
+  include <abstractions/nameservice-strict>
+  include <abstractions/nvidia>
+  include <abstractions/opencl-intel>
+  include <abstractions/openssl>
+  include <abstractions/python>
   include <abstractions/qt5-compose-cache-write>
   include <abstractions/qt5-settings-write>
   include <abstractions/qt5-shader-cache>
-  include <abstractions/thumbnails-cache-read>
-  include <abstractions/user-download-strict>
-  include <abstractions/nameservice-strict>
-  include <abstractions/trash>
-  include <abstractions/python>
-  include <abstractions/openssl>
   include <abstractions/ssl_certs>
-  include <abstractions/devices-usb>
-  include <abstractions/chromium-common>
-  include <abstractions/dbus-session-strict>
-  include <abstractions/dbus-accessibility-strict>
-  include <abstractions/nvidia>
+  include <abstractions/thumbnails-cache-read>
+  include <abstractions/trash>
+  include <abstractions/user-download-strict>
 
   capability sys_ptrace,
 
@@ -46,36 +47,6 @@ profile calibre @{exec_path} {
   unix (send, receive) type=stream peer=(addr=none, label=xorg),
   unix (bind, listen)  type=stream addr="@*-calibre-gui.socket",
   unix (bind)          type=stream addr="@calibre-*",
-
-  dbus send    bus=accessibility path=/org/a11y/atspi/accessible/root
-       interface=org.a11y.atspi.Socket
-       member=Embed
-       peer=(name=org.a11y.atspi.Registry, label=at-spi2-registryd),
-
-  dbus receive bus=accessibility path=/org/a11y/atspi/accessible/root
-       interface=org.freedesktop.DBus.Properties
-       member=Set
-       peer=(name=:*),
-
-  dbus send    bus=accessibility path=/org/a11y/atspi/registry
-       interface=org.a11y.atspi.Registry
-       member=GetRegisteredEvents
-       peer=(name=org.a11y.atspi.Registry, label=at-spi2-registryd),
-
-  dbus receive bus=accessibility path=/org/a11y/atspi/registry
-       interface=org.a11y.atspi.Registry
-       member=EventListenerDeregistered
-       peer=(name=:*, label=at-spi2-registryd),
-
-  dbus send    bus=accessibility path=/org/a11y/atspi/registry/deviceeventcontroller
-       interface=org.a11y.atspi.DeviceEventController
-       member={GetKeystrokeListeners,GetDeviceEventListeners}
-       peer=(name=org.a11y.atspi.Registry, label=at-spi2-registryd),
-
-  dbus send bus=session path=/org/a11y/bus
-       interface=org.freedesktop.DBus.Properties
-       member=Get
-       peer=(name=org.a11y.Bus),
 
   dbus send bus=session path=/org/gtk/vfs/mounttracker
        interface=org.gtk.vfs.MountTracker
