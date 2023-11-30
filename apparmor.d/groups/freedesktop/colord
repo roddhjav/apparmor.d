@@ -11,48 +11,41 @@ include <tunables/global>
 profile colord @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/dbus-strict>
-  include <abstractions/nameservice-strict>
   include <abstractions/devices-usb>
+  include <abstractions/nameservice-strict>
 
   network netlink raw,
 
   dbus bind bus=system name=org.freedesktop.ColorManager,
 
-  dbus (send,receive) bus=system path=/org/freedesktop/ColorManager{,/**}
-       interface=org.freedesktop.ColorManager*,
+  dbus receive bus=system path=/org/freedesktop/ColorManager{,/**}
+       interface=org.freedesktop.DBus.Properties
+       peer=(name=:*),
+
+  dbus receive bus=system path=/org/freedesktop/ColorManager{,/**}
+       interface=org.freedesktop.ColorManager
+       peer=(name=:*, label=gnome-shell),
+
+  dbus send bus=system path=/org/freedesktop/ColorManager{,/**}
+       interface=org.freedesktop.DBus.Properties
+       peer=(name=org.freedesktop.DBus),
+
+  dbus send bus=system path=/org/freedesktop/ColorManager
+       interface=org.freedesktop.ColorManager
+       peer=(name=org.freedesktop.DBus),
+
+  dbus send bus=system path=/org/freedesktop/PolicyKit1/Authority
+       interface=org.freedesktop.DBus.Properties
+       peer=(name=:*, label=polkitd),
+
+  dbus send bus=system path=/org/freedesktop/PolicyKit1/Authority
+       interface=org.freedesktop.PolicyKit1.Authority
+       peer=(name=:*, label=polkitd),
 
   dbus send bus=system path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus
-       member={GetConnectionUnixProcessID,GetConnectionUnixUser,RequestName,ReleaseName},
-
-  dbus send    bus=system path=/org/freedesktop/PolicyKit[0-9]/Authority
-       interface=org.freedesktop.PolicyKit[0-9].Authority
-       member=CheckAuthorization
-       peer=(name=:*, label=polkitd),
-
-  dbus receive bus=system path=/org/freedesktop/PolicyKit[0-9]/Authority
-       interface=org.freedesktop.PolicyKit[0-9].Authority
-       peer=(name=:*, label=polkitd), # all members
-
-  dbus send    bus=system path=/org/freedesktop/PolicyKit[0-9]/Authority
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=:*, label="{gsd-color,polkitd}"),
-
-  dbus receive bus=system path=/org/freedesktop/ColorManager{,/devices/*}
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=:*, label="{gsd-color,colord-sane,gnome-control-center}"),
-
-  dbus send    bus=system path=/org/freedesktop/ColorManager
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=:*, label=@{profile_name}),
-
-  dbus receive bus=system path=/org/freedesktop/ColorManager/**
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=:*, label="{@{profile_name},gsd-color}"),
+       member={GetConnectionUnixUser,GetConnectionUnixProcessID}
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
 
   @{exec_path} mr,
 
