@@ -12,7 +12,9 @@ profile coredumpctl @{exec_path} flags=(complain) {
   include <abstractions/base>
   include <abstractions/nameservice-strict>
 
+  capability dac_read_search,
   capability net_admin,
+  capability sys_resource,
 
   signal (send) peer=child-pager,
 
@@ -40,6 +42,7 @@ profile coredumpctl @{exec_path} flags=(complain) {
   owner /var/tmp/coredump-* rw,
 
         @{PROC}/1/cgroup r,
+        @{PROC}/sys/fs/nr_open r,
   owner @{PROC}/@{pid}/cgroup r,
 
   profile gdb {
@@ -67,7 +70,7 @@ profile coredumpctl @{exec_path} flags=(complain) {
 
     @{PROC}/@{pids}/fd/  r,
 
-
+  include if exists <local/coredumpctl_gdb>
   }
 
   include if exists <local/coredumpctl>
