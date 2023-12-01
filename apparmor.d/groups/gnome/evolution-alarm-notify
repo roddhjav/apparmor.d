@@ -9,7 +9,9 @@ include <tunables/global>
 @{exec_path} = @{lib}/evolution-data-server/{,evolution-data-server/}evolution-alarm-notify
 profile evolution-alarm-notify @{exec_path} {
   include <abstractions/base>
-  include <abstractions/dbus-session>
+  include <abstractions/bus/atspi>
+  include <abstractions/dbus-accessibility-strict>
+  include <abstractions/dbus-session-strict>
   include <abstractions/dconf-write>
   include <abstractions/fontconfig-cache-read>
   include <abstractions/gnome>
@@ -18,6 +20,21 @@ profile evolution-alarm-notify @{exec_path} {
   include <abstractions/openssl>
 
   network netlink raw,
+
+  dbus bind bus=session name=org.gnome.Evolution-alarm-notify,
+
+  dbus (send, receive) bus=session path=/org/gnome/evolution/dataserver/**
+       interface=org.gnome.evolution.dataserver.Calendar*
+       peer=(name=:*, label=evolution-*),
+
+  dbus (send, receive) bus=session path=/org/gnome/evolution/dataserver/**
+       interface=org.freedesktop.DBus.{ObjectManager,Properties}
+       peer=(name=:*, label=evolution-*),
+
+  dbus receive bus=session
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect 
+       peer=(name=:*, label=gnome-shell),
 
   @{exec_path} mr,
 

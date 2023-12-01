@@ -9,13 +9,14 @@ include <tunables/global>
 @{exec_path} = @{lib}/{,evolution-data-server/}evolution-addressbook-factory
 profile evolution-addressbook-factory @{exec_path} {
   include <abstractions/base>
-  include <abstractions/dbus-network-manager-strict>
+  include <abstractions/bus/network-manager>
+  include <abstractions/bus/vfs>
   include <abstractions/dbus-session-strict>
   include <abstractions/dbus-strict>
   include <abstractions/dconf-write>
   include <abstractions/nameservice-strict>
-  include <abstractions/ssl_certs>
   include <abstractions/p11-kit>
+  include <abstractions/ssl_certs>
 
   network inet stream,
   network inet6 stream,
@@ -25,18 +26,31 @@ profile evolution-addressbook-factory @{exec_path} {
 
   dbus bind bus=session name=org.gnome.evolution.dataserver.AddressBook@{int},
 
-  dbus send bus=system path=/org/freedesktop/NetworkManager
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll,
+  dbus (send, receive) bus=session path=/org/gnome/evolution/dataserver/**
+       interface=org.gnome.evolution.dataserver.*
+       peer=(name=:*),
 
-  dbus send bus=system path=/org/freedesktop/locale[0-9]
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll,
+  dbus send bus=session path=/org/gnome/evolution/dataserver/**
+       interface=org.gnome.evolution.dataserver.*
+       peer=(name=org.freedesktop.DBus, label=evolution-*),
 
-  dbus receive bus=system path=/org/freedesktop/NetworkManager
-       interface=org.freedesktop.NetworkManager
-       member={CheckPermissions,StateChanged,DeviceAdded,DeviceRemoved}
-       peer=(name=:*, label=NetworkManager),
+  dbus (send, receive) bus=session path=/org/gnome/evolution/dataserver/**
+       interface=org.freedesktop.DBus.Properties
+       peer=(name=:*, label=evolution-*),
+
+  dbus send bus=session path=/org/gnome/evolution/dataserver/SourceManager
+       interface=org.freedesktop.DBus.ObjectManager
+       member=GetManagedObjects
+       peer=(name=:*, label=evolution-source-registry),
+
+  dbus send bus=session path=/org/gnome/evolution/dataserver/**
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged
+       peer=(name=org.freedesktop.DBus, label=evolution-calendar-factory),
+
+  dbus send bus=system path=/org/freedesktop/locale1
+       interface=org.freedesktop.DBus.Properties
+       peer=(name=:*, label=systemd-localed),
 
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable
