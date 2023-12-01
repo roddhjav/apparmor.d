@@ -14,24 +14,35 @@ profile gnome-shell-calendar-server @{exec_path} {
   include <abstractions/nameservice-strict>
 
   dbus bind bus=session name=org.gnome.Shell.CalendarServer,
+  dbus receive bus=session path=/org/gnome/Shell/CalendarServer
+       interface=org.gnome.Shell.CalendarServer
+       peer=(name=:*, label=gnome-shell),
+
+  dbus (send receive) bus=session path=/org/gnome/evolution/dataserver/{,**}
+       interface=org.freedesktop.DBus.Properties
+       peer=(name=:*, label=evolution-*),
+
+  dbus (send receive) bus=session path=/org/gnome/evolution/dataserver/{,**}
+       interface=org.gnome.evolution.dataserver.Calendar*
+       peer=(name=:*, label=evolution-*),
+
+  dbus (send receive) bus=session path=/org/gnome/Shell/CalendarServer
+       interface=org.freedesktop.DBus.Properties
+       peer=(name=:*, label=gnome-shell),
+
+  dbus send bus=session path=/org/gnome/evolution/dataserver/SourceManager
+       interface=org.freedesktop.DBus.ObjectManager
+       member=GetManagedObjects
+       peer=(name=:*, label=evolution-source-registry),
+
+  dbus send bus=session path=/org/gnome/Shell/CalendarServer
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged
+       peer=(name=org.freedesktop.DBus, label=gnome-shell),
 
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect 
-       peer=(name=:*, label=gnome-shell),
-
-  dbus (send receive) bus=session path=/org/gnome/evolution/dataserver/{,**}
-       interface=org.gnome.evolution.dataserver.CalendarView
-       peer=(name=:*, label=evolution-calendar-factory),
-
-  dbus receive bus=session path=/org/gnome/Shell/CalendarServer
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll 
-       peer=(name=:*, label=gnome-shell),
-
-  dbus receive bus=session path=/org/gnome/Shell/CalendarServer
-       interface=org.gnome.Shell.CalendarServer
-       member=SetTimeRange 
        peer=(name=:*, label=gnome-shell),
 
   @{exec_path} mr,

@@ -9,13 +9,12 @@ include <tunables/global>
 @{exec_path} = @{lib}/{,evolution-data-server/}evolution-calendar-factory
 profile evolution-calendar-factory @{exec_path} {
   include <abstractions/base>
-  include <abstractions/dbus-network-manager-strict>
   include <abstractions/dbus-session-strict>
   include <abstractions/dbus-strict>
   include <abstractions/dconf-write>
   include <abstractions/nameservice-strict>
-  include <abstractions/ssl_certs>
   include <abstractions/p11-kit>
+  include <abstractions/ssl_certs>
 
   network inet stream,
   network inet6 stream,
@@ -23,24 +22,42 @@ profile evolution-calendar-factory @{exec_path} {
   network inet6 dgram,
   network netlink raw,
 
-  dbus (send,receive) bus=system path=/org/freedesktop/NetworkManager
-       interface=org.freedesktop.DBus.Properties
-       member={PropertiesChanged,GetAll},
+  dbus bind bus=session name=org.gnome.evolution.dataserver.Calendar@{int},
 
-  dbus receive bus=system path=/org/freedesktop/NetworkManager
-       interface=org.freedesktop.NetworkManager
-       member={CheckPermissions,StateChanged,DeviceAdded,DeviceRemoved}
-       peer=(name=:*, label=NetworkManager),
+  dbus (send, receive) bus=session path=/org/gnome/evolution/dataserver/**
+       interface=org.gnome.evolution.dataserver.*
+       peer=(name=:*),
+
+  dbus send bus=session path=/org/gnome/evolution/dataserver/**
+       interface=org.gnome.evolution.dataserver.*
+       peer=(name=org.freedesktop.DBus, label="{evolution-*,gnome-shell-*-server}"),
+
+  dbus (send, receive) bus=session path=/org/gnome/evolution/dataserver/**
+       interface=org.freedesktop.DBus.Properties
+       peer=(name=:*),
+
+  dbus send bus=session path=/org/gnome/evolution/dataserver/**
+       interface=org.freedesktop.DBus.Properties
+       peer=(name=org.freedesktop.DBus, label=evolution-*),
+
+  dbus send bus=session path=/org/gnome/evolution/dataserver/SourceManager
+       interface=org.freedesktop.DBus.ObjectManager
+       member=GetManagedObjects
+       peer=(name=:*, label=evolution-source-registry),
+
+  dbus send bus=session path=/org/gnome/evolution/dataserver/**
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged
+       peer=(name=org.freedesktop.DBus, label=gnome-shell-calendar-server),
 
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable
-       member=Introspect 
+       member=Introspect
        peer=(name=:*, label=gnome-shell),
 
-  dbus (send,receive) bus=session path=/org/gnome/evolution/dataserver{,/**}
-       interface={org.freedesktop.DBus.{ObjectManager,Properties},org.gnome.evolution.dataserver.*},
-
-  dbus bind bus=session name=org.gnome.evolution.dataserver.Calendar[0-9]*,
+  dbus send bus=session path=/org/gtk/vfs/mounttracker
+       interface=org.gtk.vfs.MountTracker
+       peer=(name=:*, label=gvfsd),
 
   @{exec_path} mr,
   @{exec_path}-subprocess rix,
