@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2015-2022 Mikhail Morfikov
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -47,22 +48,17 @@ profile qbittorrent @{exec_path} {
   network netlink dgram,
   network netlink raw,
    
-  dbus send    bus=session path=/org/freedesktop/DBus
-       interface=org.freedesktop.DBus
-       member={RequestName,ReleaseName}
-       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
-
-  dbus send    bus=session path=/StatusNotifierWatcher
+  dbus send bus=session path=/StatusNotifierWatcher
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
        peer=(name=org.kde.StatusNotifierWatcher),
    
-  dbus send    bus=session path=/StatusNotifierWatcher
+  dbus send bus=session path=/StatusNotifierWatcher
        interface=org.kde.StatusNotifierWatcher
        member=RegisterStatusNotifierItem
        peer=(name=org.kde.StatusNotifierWatcher),
    
-  dbus send    bus=session path=/StatusNotifierItem
+  dbus send bus=session path=/StatusNotifierItem
        interface=org.kde.StatusNotifierItem
        member={NewToolTip,NewIcon}
        peer=(name=org.freedesktop.DBus),
@@ -72,7 +68,7 @@ profile qbittorrent @{exec_path} {
        member=Activate
        peer=(name=:*),
    
-  dbus send    bus=session path=/StatusNotifierWatcher
+  dbus send bus=session path=/StatusNotifierWatcher
        interface=org.freedesktop.DBus.Properties
        member=Get
        peer=(name=org.kde.StatusNotifierWatcher),
@@ -82,7 +78,7 @@ profile qbittorrent @{exec_path} {
        member=GetAll
        peer=(name=:*),
    
-  dbus send    bus=session path=/MenuBar
+  dbus send bus=session path=/MenuBar
        interface=com.canonical.dbusmenu
        member=ItemsPropertiesUpdated
        peer=(name=org.freedesktop.DBus),
@@ -96,68 +92,8 @@ profile qbittorrent @{exec_path} {
 
   @{exec_path} mr,
 
-  # For "search engine"
-  @{bin}/python3.[0-9]* rCx -> python3,
-
-  # Qbittorrent home dirs
-  owner @{user_config_dirs}/qBittorrent/ rw,
-  owner @{user_config_dirs}/qBittorrent/** rwkl -> @{user_config_dirs}/qBittorrent/#@{int},
-  owner @{user_share_dirs}/data/ rw,
-  owner @{user_share_dirs}/{,data/}qBittorrent/ rw,
-  owner @{user_share_dirs}/{,data/}qBittorrent/** rwl -> @{user_share_dirs}/{,data/}qBittorrent/**/#@{int},
-  # Old dir, not recommended to use:
-#  deny owner @{user_share_dirs}/data/qBittorrent/ rw,
-
-  # Cache dir
-  owner @{user_cache_dirs}/ rw,
-  owner @{user_cache_dirs}/#@{int} rw,
-  owner @{user_cache_dirs}/qBittorrent/{,**} rw,
-
-  # To configure Qt5 settings (theme, font, icons, etc.) under DE/WM without Qt integration
-  owner @{user_config_dirs}/qt5ct/{,**} r,
-  /usr/share/qt5ct/** r,
-
-  # Torrent files
-  owner @{user_torrents_dirs}/ r,
-  owner @{user_torrents_dirs}/** rw,
-
-  # GeoIP settings
-  /usr/share/GeoIP/GeoIP.dat r,
-
-  /dev/disk/by-label/ r,
-
-  /dev/shm/#@{int} rw,
-
-       owner @{PROC}/@{pids}/fd/ r,
-  deny owner @{PROC}/@{pids}/cmdline r,
-       owner @{PROC}/@{pids}/mountinfo r,
-       owner @{PROC}/@{pids}/mounts r,
-       owner @{PROC}/@{pids}/comm r,
-  deny       @{PROC}/sys/kernel/random/boot_id r,
-
-  /usr/share/hwdata/pnp.ids r,
-
-  # TMP
-  owner /tmp/qtsingleapp-qBitto-* rw,
-  owner /tmp/qtsingleapp-qBitto-*-lockfile rwk,
-  owner /tmp/.qBittorrent/ rw,
-  owner /tmp/.qBittorrent/* rwl -> /tmp/.qBittorrent/*,
-  owner /tmp/mozilla_*/*.torrent rw,
-  owner /tmp/*.torrent rw,
-  # To load/add torrents from the search engine
-  owner /tmp/tmp* rw,
-  owner /tmp/.*/{,s} rw,
-
-  owner /tmp/xauth-[0-9]*-_[0-9] rw,
-
-  # file_inherit
-  owner /dev/tty@{int} rw,
-
-  # gnome-tiny
-  /usr/share/gvfs/remote-volume-monitors/{,*} r,
-
-  # Launch external apps
-  @{bin}/xdg-{open,mime} rCx -> open,
+  @{bin}/xdg-{open,mime} rPx -> child-open,
+  @{bin}/python3.[0-9]*  rCx -> python, # For "search engine"
 
   # Allowed apps to open
   @{bin}/spacefm         rPx,
@@ -169,69 +105,53 @@ profile qbittorrent @{exec_path} {
   @{bin}/qpdfview        rPx,
   @{bin}/ebook-viewer    rPx,
   @{bin}/nautilus        rPx,
-  @{FIREFOX_BIN}              rPx,
+  @{FIREFOX_BIN}         rPx,
 
-  profile open {
+  /usr/share/GeoIP/GeoIP.dat r,
+  /usr/share/gvfs/remote-volume-monitors/{,*} r,
+  /usr/share/hwdata/*.ids r,
+  /usr/share/qt5ct/** r,
+
+  owner @{user_cache_dirs}/ rw,
+  owner @{user_cache_dirs}/#@{int} rw,
+  owner @{user_cache_dirs}/qBittorrent/{,**} rw,
+
+  owner @{user_config_dirs}/qBittorrent/ rw,
+  owner @{user_config_dirs}/qBittorrent/** rwkl -> @{user_config_dirs}/qBittorrent/#@{int},
+  owner @{user_config_dirs}/qt5ct/{,**} r,
+
+  owner @{user_share_dirs}/{,data/}qBittorrent/ rw,
+  owner @{user_share_dirs}/{,data/}qBittorrent/** rwl -> @{user_share_dirs}/{,data/}qBittorrent/**/#@{int},
+  owner @{user_share_dirs}/data/ rw,
+
+  owner @{user_torrents_dirs}/ r,
+  owner @{user_torrents_dirs}/** rw,
+
+  owner /dev/shm/#@{int} rw,
+  owner /tmp/.*/{,s} rw,
+  owner /tmp/.qBittorrent/ rw,
+  owner /tmp/.qBittorrent/* rwl -> /tmp/.qBittorrent/*,
+  owner /tmp/*.torrent rw,
+  owner /tmp/mozilla_*/*.torrent rw,
+  owner /tmp/qtsingleapp-qBitto-* rw,
+  owner /tmp/qtsingleapp-qBitto-*-lockfile rwk,
+  owner /tmp/tmp* rw,
+
+        @{PROC}/sys/kernel/random/boot_id r,
+  owner @{PROC}/@{pids}/cmdline r,
+  owner @{PROC}/@{pids}/comm r,
+  owner @{PROC}/@{pids}/fd/ r,
+  owner @{PROC}/@{pids}/mountinfo r,
+  owner @{PROC}/@{pids}/mounts r,
+
+  owner /dev/tty@{int} rw,
+
+  profile python {
     include <abstractions/base>
-    include <abstractions/xdg-open>
-    include <abstractions/dbus-gtk>
-
-    dbus send bus=session path=/org/gnome/{Nautilus,Totem,gedit}
-         interface=org.freedesktop.Application
-         member=Open
-         peer=(name="org.gnome.{Nautilus,Totem,gedit}"),
-
-    dbus send bus=accessibility path=/org/a11y/atspi/accessible/root
-         interface=org.a11y.atspi.Socket
-         member=Embed
-         peer=(name=org.a11y.atspi.Registry),
-
-    dbus receive bus=accessibility path=/org/a11y/atspi/accessible/root
-         interface=org.freedesktop.DBus.Properties
-         member=Set
-         peer=(name=:*),
-
-    @{bin}/xdg-open mr,
-
-    # Allowed apps to open
-    @{bin}/spacefm         rPx,
-    @{bin}/smplayer        rPx,
-    @{bin}/vlc             rPx,
-    @{bin}/mpv             rPx,
-    @{bin}/geany           rPx,
-    @{bin}/viewnior       rPUx,
-    @{bin}/qpdfview        rPx,
-    @{bin}/ebook-viewer    rPx,
-    @{bin}/engrampa        rPx,
-    @{FIREFOX_BIN}              rPx,
-
-    @{bin}/{ba,da,}sh           rix,
-    @{bin}/{g,m,}awk            rix,
-    @{bin}/readlink             rix,
-    @{bin}/basename             rix,
-    @{bin}/which{,.debianutils} rix,
-    @{bin}/xfce4-mime-helper    rix,
-
-    owner @{HOME}/ r,
-
-    owner @{run}/user/@{uid}/ r,
-
-    # file_inherit
-    owner @{MOUNTS}/torrent/** r,
-    owner @{MOUNTS}/torrent/**.@{hex}.parts rw,
-    owner "@{MOUNTS}/torrent/**.!qB" rw,
-
-    owner @{HOME}/.xsession-errors w,
-
-    include if exists <local/qbittorrent_open>
-  }
-
-  profile python3 {
-    include <abstractions/base>
-    include <abstractions/python>
-    include <abstractions/openssl>
-    include <abstractions/ssl_certs>
     include <abstractions/nameservice-strict>
+    include <abstractions/openssl>
+    include <abstractions/python>
+    include <abstractions/ssl_certs>
 
     signal (receive) set=(term, kill) peer=qbittorrent,
 
@@ -245,19 +165,17 @@ profile qbittorrent @{exec_path} {
 
     owner @{user_share_dirs}/{,data/}qBittorrent/nova[0-9]/{,**} rw,
 
-    # Used while searching for torrents
+    owner @{user_torrents_dirs}/** r,
+
     owner /dev/shm/sem.mp-* rwl -> /dev/shm/@{int},
     owner /dev/shm/* rw,
 
-    # To load/add torrents from the search engine
     owner /tmp/@{int} rw,
     owner /tmp/tmp* rw,
 
-    # file_inherit
-    owner @{MOUNTS}/torrent/** r,
     deny /dev/dri/card@{int} rw,
 
-    include if exists <local/qbittorrent_python3>
+    include if exists <local/qbittorrent_python>
   }
 
   include if exists <local/qbittorrent>

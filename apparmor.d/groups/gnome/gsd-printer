@@ -16,15 +16,9 @@ profile gsd-printer @{exec_path} flags=(attach_disconnected) {
   signal (receive) set=(term, hup) peer=gdm*,
   signal (receive) set=(hup) peer=gsd-print-notifications,
 
-  dbus send bus=system path=/org/freedesktop/DBus
-       interface=org.freedesktop.DBus
-       member={ReleaseName,RequestName},
+  dbus bind bus=system name=com.redhat.NewPrinterNotification,
 
-  dbus bind bus=system
-       name=com.redhat.NewPrinterNotification,
-
-  dbus bind bus=system
-       name=com.redhat.PrinterDriversInstaller,
+  dbus bind bus=system name=com.redhat.PrinterDriversInstaller,
 
   dbus (send,receive) bus=session path=/org/gnome/SessionManager
        interface=org.gnome.SessionManager
@@ -51,10 +45,6 @@ profile gsd-printer @{exec_path} flags=(attach_disconnected) {
        peer=(name=:*, label=gnome-shell),
 
   @{exec_path} mr,
-
-  /etc/gnutls/config r,
-
-  owner /tmp/[a-z0-9]* rw,
 
   owner @{PROC}/@{pid}/cgroup r,
 
