@@ -1,5 +1,5 @@
 # apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2021-2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -24,21 +24,94 @@ profile nautilus @{exec_path} flags=(attach_disconnected) {
   include <abstractions/trash>
   include <abstractions/vulkan>
 
-  dbus send bus=system path=/org/freedesktop/hostname1
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll,
-
-  dbus (send, receive) bus=session path=/org/gnome/Nautilus{,/*}
-       interface={org.freedesktop.DBus.{Properties,Introspectable},org.gtk.Actions},
-
-  dbus send bus=session path=/org/gtk/Private/RemoteVolumeMonitor
-       interface=org.gtk.Private.RemoteVolumeMonitor
-       member={IsSupported,List}
-       peer=(name=:*),
-
   dbus bind bus=session name=org.gnome.Nautilus,
+  dbus send bus=session path=/org/gnome/Nautilus
+       interface=org.gtk.{Actions,Application},
+  dbus send bus=session path=/org/gnome/Nautilus{,/**}
+       interface=org.freedesktop.DBus.Properties
+       peer=(name=:*),
+  dbus send bus=session path=/org/gnome/Nautilus
+       interface=org.gtk.Application
+       peer=(name=org.gnome.Nautilus, label="{nautilus,gnome-shell}"),
 
   dbus bind bus=session name=org.freedesktop.FileManager1,
+  dbus receive bus=session path=/org/freedesktop/FileManager1
+       interface=org.freedesktop.DBus.Properties
+       peer=(name=:*),
+  dbus send bus=session path=/org/freedesktop/FileManager1
+       interface=org.freedesktop.DBus.Properties
+       peer=(name=org.freedesktop.DBus),
+
+  dbus receive bus=session path=/org/gnome/Nautilus/*
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name=:*, label=gnome-extension-ding),
+
+  dbus send bus=session path=/org/freedesktop/Tracker3/Endpoint
+       interface=org.freedesktop.DBus.Peer
+       peer=(name=org.freedesktop.Tracker3.Miner.Files, label=tracker-miner),
+  dbus send bus=session path=/org/freedesktop/Tracker3/Endpoint
+       interface=org.freedesktop.Tracker3.Endpoint
+       peer=(name=org.freedesktop.Tracker3.Miner.Files, label=tracker-miner),
+
+  dbus (send, receive) bus=session path=/org/gtk/Private/RemoteVolumeMonitor
+       interface=org.gtk.Private.RemoteVolumeMonitor
+       peer=(name=:*, label=gvfs-*-monitor),
+
+  dbus (send, receive) bus=session path=/org/freedesktop/portal/desktop
+       interface=org.freedesktop.portal.Settings
+       member=Read
+       peer=(name=:*, label=xdg-desktop-portal),
+
+  dbus send bus=session path=/org/freedesktop/portal/desktop
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=:*, label=xdg-desktop-portal),
+
+  dbus send bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus.Properties
+       member={GetAll,ListActivatableNames}
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
+
+  # talk: org.gtk.vfs.*
+  dbus send bus=session path=/org/gtk/vfs/**
+       interface=org.gtk.vfs.*
+       peer=(name=:*, label=gvfsd),
+
+  # talk: org.gtk.MountOperationHandler
+  dbus send bus=session path=/org/gtk/MountOperationHandler
+       interface=org.freedesktop.DBus.Properties
+       peer=(name=:*, label=gnome-shell),
+
+  dbus send bus=session path=/org/gtk/Notifications
+       interface=org.gtk.Notifications
+       member=AddNotification
+       peer=(name=org.gtk.Notifications, label=gnome-shell),
+
+  dbus (send, receive) bus=session path=/org/gtk/Application/CommandLine
+       interface=org.gtk.private.CommandLine
+       member=Print
+       peer=(name=:*, label=nautilus),
+
+  dbus send bus=system path=/org/freedesktop/hostname1
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=:*, label=systemd-hostnamed),
+
+  dbus send bus=session path=/com/canonical/unity/launcherentry/@{int}
+       interface=com.canonical.Unity.LauncherEntry
+       member=Update
+       peer=(name=org.freedesktop.DBus, label=gnome-shell),
+
+  dbus send bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member=ListActivatableNames
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
+
+  dbus send bus=session path=/org/freedesktop/dbus
+       interface=org.freedesktop.DBus
+       member=NameHasOwner
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
 
   @{exec_path} mr,
 
