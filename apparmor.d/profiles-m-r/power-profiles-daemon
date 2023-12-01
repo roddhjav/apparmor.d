@@ -13,37 +13,30 @@ profile power-profiles-daemon @{exec_path} flags=(attach_disconnected) {
   include <abstractions/dbus-strict>
   include <abstractions/nameservice-strict>
 
-  capability sys_nice,
   capability dac_read_search,
+  capability net_admin,
+  capability sys_nice,
 
   network netlink raw,
 
-  dbus send bus=system path=/org/freedesktop/PolicyKit[0-9]/Authority
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll,
-
-  dbus send bus=system path=/org/freedesktop/DBus
-       interface=org.freedesktop.DBus
-       member=RequestName,
-
-  dbus send bus=system path=/net/hadess/PowerProfiles
-       interface=org.freedesktop.DBus.Properties
-       member=PropertiesChanged,
+  dbus bind bus=system name=net.hadess.PowerProfiles,
 
   dbus receive bus=system path=/net/hadess/PowerProfiles
        interface=org.freedesktop.DBus.Properties
-       member={GetAll,Set},
+       peer=(name=:*),
 
-  dbus receive bus=system path=/org/freedesktop/login1
-       interface={org.freedesktop.login1.Manager,org.freedesktop.DBus.Properties} 
+  dbus send bus=system path=/net/hadess/PowerProfiles
+       interface=org.freedesktop.DBus.Properties
+       peer=(name=org.freedesktop.DBus),
+
+  dbus send bus=system path=/org/freedesktop/login1
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
        peer=(name=:*, label=systemd-logind),
 
-  dbus receive bus=system path=/org/freedesktop/PolicyKit[0-9]/Authority
-       interface=org.freedesktop.PolicyKit[0-9].Authority
-       member=Changed,
-
-  dbus bind bus=system 
-       name=net.hadess.PowerProfiles,
+  dbus receive bus=system path=/org/freedesktop/login1
+       interface=org.freedesktop.login1.Manager
+       peer=(name=:*, label=systemd-logind),
 
   @{exec_path} mr,
 

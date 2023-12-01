@@ -13,7 +13,6 @@ profile vlc @{exec_path} {
   include <abstractions/audio>
   include <abstractions/bus/atspi>
   include <abstractions/dbus-accessibility-strict>
-  include <abstractions/dbus-gtk>
   include <abstractions/dbus-session-strict>
   include <abstractions/dconf-write>
   include <abstractions/devices-usb>
@@ -36,10 +35,15 @@ profile vlc @{exec_path} {
   network inet6 stream,
   network netlink raw,
 
-  dbus send bus=session path=/org/freedesktop/DBus 
-       interface=org.freedesktop.DBus
-       member={RequestName,ReleaseName,GetConnectionUnixProcessID}
-       peer=(name=org.freedesktop.DBus),
+  dbus bind bus=session name=org.kde.StatusNotifierItem-*,
+
+  dbus bind bus=session name=org.mpris.MediaPlayer2.vlc*,
+  dbus (send, receive) bus=session path=/org/mpris/MediaPlayer2
+       interface=org.freedesktop.DBus.Properties
+       peer=(name="{org.freedesktop.DBus,:*}"), # all members
+  dbus (send, receive) bus=session path=/org/mpris/MediaPlayer2
+       interface=org.mpris.MediaPlayer2.*
+       peer=(name="{org.mpris.MediaPlayer2.vlc,org.freedesktop.DBus,:*}"), # all members
 
   dbus send bus=session path=/StatusNotifierWatcher
        interface=org.freedesktop.DBus.Introspectable
@@ -84,18 +88,6 @@ profile vlc @{exec_path} {
   dbus (send receive) bus=session path=/MenuBar
        interface=com.canonical.dbusmenu
        peer=(name=:*),
-
-  dbus (send, receive) bus=session path=/org/mpris/MediaPlayer2
-       interface=org.freedesktop.DBus.Properties
-       peer=(name="{org.freedesktop.DBus,:*}"), # all members
-
-  dbus (send, receive) bus=session path=/org/mpris/MediaPlayer2
-       interface=org.mpris.MediaPlayer2.*
-       peer=(name="{org.mpris.MediaPlayer2.vlc,org.freedesktop.DBus,:*}"), # all members
-
-  dbus bind bus=session name=org.kde.StatusNotifierItem-*,
-
-  dbus bind bus=session name=org.mpris.MediaPlayer2.vlc*,
 
   @{exec_path} mrix,
 

@@ -27,42 +27,28 @@ profile gdm @{exec_path} flags=(attach_disconnected) {
 
   signal (send) set=(term),
 
-  dbus (send,receive) bus=system path=/org/freedesktop/Accounts/User@{uid}
-       interface=org.freedesktop.{DBus.Properties,Accounts.User}
-       member={Changed,GetAll,PropertiesChanged},
-
-  dbus send    bus=system path=/org/freedesktop/Accounts
-       interface=org.freedesktop.{DBus.Properties,Accounts}
-       member={GetAll,ListCachedUsers,FindUserByName},
-
-  dbus receive bus=system path=/org/freedesktop/Accounts
+  dbus bind bus=system name=org.gnome.DisplayManager,
+  dbus receive bus=system path=/org/gnome/DisplayManager/Manager
+       interface=org.gnome.DisplayManager.Manager
+       peer=(name=:*, label="{gnome-shell,gdm-*-session}"),
+  dbus receive bus=system path=/org/gnome/DisplayManager/Manager
        interface=org.freedesktop.DBus.Properties
-       member=PropertiesChanged
-       peer=(name=:*, label=accounts-daemon),
+       peer=(name=:*, label=gnome-shell),
 
-  dbus receive bus=system path=/org/freedesktop/Accounts
-       interface=org.freedesktop.Accounts
-       member=UserAdded
-       peer=(name=:*, label=accounts-daemon),
+  dbus send bus=system path=/org/freedesktop/login1/seat/seat@{int}
+       interface=org.freedesktop.DBus.Properties
+       member=Get
+       peer=(name=:*, label=systemd-logind),
 
-  dbus send bus=system path=/org/freedesktop/login[0-9]
-       interface=org.freedesktop.login1.Manager
-       member={ListSeats,ActivateSessionOnSeat,UnlockSession},
+  dbus receive bus=system path=/org/freedesktop/login1/seat/seat@{int}
+       interface=org.freedesktop.DBus.Properties
+       member={Get,PropertiesChanged}
+       peer=(name=:*, label=systemd-logind),
 
   dbus send bus=system path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus
-       member={GetConnectionUnixProcessID,GetConnectionUnixUser,RequestName},
-
-  dbus receive bus=system path=/org/freedesktop/login[0-9]/seat/seat[0-9]
-       interface=org.freedesktop.DBus.Properties
-       member=PropertiesChanged,
-
-  dbus receive bus=system path=/org/gnome/DisplayManager/Manager
-       interface={org.freedesktop.DBus.Properties,org.gnome.DisplayManager.Manager}
-       member={RegisterDisplay,Get,RegisterSession,GetAll,OpenReauthenticationChannel,OpenSession},
-
-  dbus bind bus=system 
-       name=org.gnome.DisplayManager,
+       member={GetConnectionUnixProcessID,GetConnectionUnixUser}
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
 
   @{exec_path} mr,
 

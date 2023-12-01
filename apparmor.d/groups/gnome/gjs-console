@@ -14,6 +14,7 @@ include <tunables/global>
 profile gjs-console @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/dbus-session-strict>
+  include <abstractions/dbus-strict>
   include <abstractions/dconf-write>
   include <abstractions/dri-common>
   include <abstractions/dri-enumerate>
@@ -31,14 +32,36 @@ profile gjs-console @{exec_path} flags=(attach_disconnected) {
 
   signal (receive) set=(term hup) peer=gdm*,
 
-  dbus send bus=session path=/org/freedesktop/DBus
-       interface=org.freedesktop.DBus
-       member={RequestName,ReleaseName}
-       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
+  dbus bind bus=session name=org.gnome.Shell.Notifications,
 
+  dbus bind bus=session name=org.gnome.ScreenSaver,
+  dbus receive bus=session path=/org/gnome/ScreenSaver
+       interface=org.gnome.ScreenSaver
+       peer=(name=:*), # all members
+  dbus receive bus=session path=/org/gnome/ScreenSaver
+       interface=org.freedesktop.DBus.Properties
+       peer=(name=:*), # all members
+  dbus send bus=session path=/org/gnome/ScreenSaver
+       interface=org.gnome.ScreenSaver
+       peer=(name=:*), # all members
+  dbus send bus=session path=/org/gnome/ScreenSaver
+       interface=org.freedesktop.DBus.Properties
+       peer=(name=:*), # all members
+
+  dbus bind bus=session name=org.freedesktop.Notifications,
+  dbus receive bus=session path=/org/freedesktop/Notifications
+       interface=org.freedesktop.DBus.Properties
+       peer=(name=:*), # all members
   dbus send bus=session path=/org/freedesktop/Notifications
        interface=org.freedesktop.DBus.Properties
-       member=GetAll
+       peer=(name=:*), # all members
+
+  dbus bind bus=session name=org.gnome.Shell.Screencast,
+  dbus receive bus=session path=/org/gnome/Shell/Screencast
+       interface=org.freedesktop.DBus.Properties
+       peer=(name=:*), # all members
+  dbus send bus=session path=/org/gnome/Mutter/ScreenCast
+       interface=org.freedesktop.DBus.Properties
        peer=(name=:*, label=gnome-shell),
 
   dbus receive bus=session
@@ -46,30 +69,12 @@ profile gjs-console @{exec_path} flags=(attach_disconnected) {
        member=Introspect
        peer=(name=:*, label=gnome-shell),
 
-  dbus receive bus=session path=/org/freedesktop/Notifications
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=:*, label=gnome-extension-ding),
-
-  dbus receive bus=session path=/org/gnome/Shell/Screencast
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll 
+  dbus (send, receive) bus=session path=/org/gnome/Shell/Introspect
+       interface=org.gnome.Shell.Introspect
        peer=(name=:*, label=gnome-shell),
-
-  dbus (send,receive) bus=session path=/org/gnome/ScreenSaver
-       interface=org.gnome.ScreenSaver,
-
-  dbus receive bus=session path=/org/gnome/Shell/Introspect
+  dbus (send, receive) bus=session path=/org/gnome/Shell/Introspect
        interface=org.freedesktop.DBus.Properties
        peer=(name=:*, label=gnome-shell),
-
-  dbus bind bus=session name=org.gnome.ScreenSaver,
-
-  dbus bind bus=session name=org.freedesktop.Notifications,
-
-  dbus bind bus=session name=org.gnome.Shell.Notifications,
-
-  dbus bind bus=session name=org.gnome.Shell.Screencast,
 
   @{exec_path} mr,
   @{bin}/          r,
