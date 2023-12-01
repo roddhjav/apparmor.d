@@ -1,12 +1,11 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2018-2022 Mikhail Morfikov
-# Copyright (C) 2021-2022 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2021-2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
 
 include <tunables/global>
-
 
 @{exec_path} = @{lib}/{,rtkit/}rtkit-daemon
 profile rtkit-daemon @{exec_path} flags=(attach_disconnected) {
@@ -21,24 +20,18 @@ profile rtkit-daemon @{exec_path} flags=(attach_disconnected) {
   capability sys_nice,
   capability sys_ptrace,
 
-  dbus (send,receive) bus=system path=/org/freedesktop/RealtimeKit[0-9]
-       interface=org.freedesktop.RealtimeKit[0-9],
-
-  dbus receive bus=system path=/org/freedesktop/RealtimeKit[0-9]
+  dbus bind bus=system name=org.freedesktop.RealtimeKit1,
+  dbus receive bus=system path=/org/freedesktop/RealtimeKit1
+       interface=org.freedesktop.RealtimeKit1
+       peer=(name=:*),
+  dbus receive bus=system path=/org/freedesktop/RealtimeKit1
        interface=org.freedesktop.DBus.Properties
-       member={Get,GetAll},
+       peer=(name=:*),
 
   dbus send bus=system path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus
-       member={RequestName,GetConnectionUnixUser,GetConnectionUnixProcessID}
-       peer=(name=org.freedesktop.DBus),
-
-  dbus send bus=system path=/org/freedesktop/PolicyKit[0-9]/Authority
-       interface=org.freedesktop.PolicyKit[0-9].Authority
-       member=CheckAuthorization,
-
-  dbus bind bus=system 
-       name=org.freedesktop.RealtimeKit[0-9],
+       member={GetConnectionUnixUser,GetConnectionUnixProcessID}
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
 
   @{exec_path} mr,
 

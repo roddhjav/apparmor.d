@@ -23,24 +23,24 @@ profile accounts-daemon @{exec_path} flags=(attach_disconnected) {
 
   ptrace (read) peer=unconfined,
 
-  dbus (send,receive) bus=system path=/org/freedesktop/Accounts{,/User[0-9]*}
-       interface=org.freedesktop.{DBus.{Properties,Introspectable},Accounts{,.User}},
-
-  dbus (send,receive) bus=system path=/org/freedesktop/PolicyKit1/Authority
-       interface=org.freedesktop.PolicyKit1.Authority
-       member={CheckAuthorization,Changed},
-
-  dbus send bus=system path=/org/freedesktop/PolicyKit1/Authority
+  dbus bind bus=system name=org.freedesktop.Accounts,
+  dbus receive bus=system path=/org/freedesktop/Accounts{,/User@{uid}}
+       interface=org.freedesktop.Accounts*
+       peer=(name=:*),
+  dbus receive bus=system path=/org/freedesktop/Accounts{,/User@{uid}}
        interface=org.freedesktop.DBus.Properties
-       member=GetAll,
+       peer=(name=:*),
+  dbus send bus=system path=/org/freedesktop/Accounts/User@{uid}
+       interface=org.freedesktop.Accounts.User
+       peer=(name=org.freedesktop.DBus),
+  dbus send bus=system path=/org/freedesktop/Accounts/User@{uid}
+       interface=org.freedesktop.DBus.Properties
+       peer=(name=org.freedesktop.DBus),
 
   dbus send bus=system path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus
-       member={RequestName,ReleaseName,GetConnectionUnixUser}
-       peer=(name=org.freedesktop.DBus),
-
-  dbus bind bus=system 
-       name=org.freedesktop.Accounts,
+       member={GetConnectionUnixUser,GetConnectionUnixProcessID}
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
 
   @{exec_path} mr,
 

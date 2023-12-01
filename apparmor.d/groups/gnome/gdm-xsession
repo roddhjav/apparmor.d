@@ -65,20 +65,16 @@ profile gdm-xsession @{exec_path} {
 
   profile dbus {
     include <abstractions/base>
+    include <abstractions/dbus-session-strict>
+
+    dbus send bus=session path=/org/freedesktop/systemd1
+         interface=org.freedesktop.systemd1.Manager
+         member=SetEnvironment
+         peer=(name=org.freedesktop.systemd1),
 
     @{bin}/dbus-update-activation-environment mr,
-
-    owner @{run}/user/@{uid}/bus rw,
-
-    dbus send bus=session path=/org/freedesktop/DBus
-         interface=org.freedesktop.DBus
-         member={Hello,UpdateActivationEnvironment}
-         peer=(name=org.freedesktop.DBus, label=dbus-daemon),
-
-    dbus send bus=session path=/org/freedesktop/systemd[0-9]*
-         interface=org.freedesktop.systemd[0-9]*.Manager
-         member=SetEnvironment
-         peer=(name=org.freedesktop.systemd[0-9]*),
+  
+    owner @{HOME}/.xsession-errors w,
 
     /dev/tty rw,
     /dev/tty@{int} rw,

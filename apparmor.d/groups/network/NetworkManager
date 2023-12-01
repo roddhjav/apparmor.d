@@ -9,7 +9,7 @@ include <tunables/global>
 @{exec_path} = @{bin}/NetworkManager
 profile NetworkManager @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/dbus-network-manager-strict>
+  include <abstractions/bus/network-manager>
   include <abstractions/dbus-strict>
   include <abstractions/nameservice-strict>
   include <abstractions/openssl>
@@ -43,10 +43,6 @@ profile NetworkManager @{exec_path} flags=(attach_disconnected) {
        interface=org.freedesktop.{DBus.Properties,DBus.Introspectable,NetworkManager*}
        peer=(name=:*),
 
-  dbus (send,receive) bus=system path=/org/freedesktop/PolicyKit1/Authority
-       interface=org.freedesktop.PolicyKit1.Authority
-       member={Changed,CheckAuthorization,CancelCheckAuthorization},
-
   dbus (send,receive) bus=system path=/org/freedesktop/login1
        interface=org.freedesktop.login1.Manager
        member={SessionRemoved,UserNew,SessionNew,Inhibit,PrepareForShutdown,UserRemoved,PrepareForSleep}
@@ -54,7 +50,8 @@ profile NetworkManager @{exec_path} flags=(attach_disconnected) {
 
   dbus send bus=system path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus
-       member={RequestName,GetConnectionUnixUser,GetConnectionUnixProcessID},
+       member={GetConnectionUnixUser,GetConnectionUnixProcessID}
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
 
   dbus send bus=system path=/org/freedesktop
        interface=org.freedesktop.DBus.ObjectManager
