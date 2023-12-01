@@ -26,39 +26,38 @@ profile systemd-logind @{exec_path} flags=(attach_disconnected,complain) {
 
   network netlink raw,
 
-  dbus (send,receive) bus=system path=/org/freedesktop/login1{,/**}
-       interface=org.freedesktop.{DBus.Properties,DBus.Introspectable,login[0-9].*},
-
-  dbus (send,receive) bus=system path=/org/freedesktop/systemd1
-       interface=org.freedesktop.systemd[0-9].Manager
-       member={StartUnit,StartTransientUnit,Subscribe,JobRemoved,UnitRemoved,Reloading,Subscribe,StopUnit},
-
-  dbus (send,receive) bus=system path=/org/freedesktop/systemd1/{unit,job}/**
+  dbus bind bus=system name=org.freedesktop.login1,
+  dbus receive bus=system path=/org/freedesktop/login1{,/**}
+       interface=org.freedesktop.login1.Manager
+       peer=(name=:*),
+  dbus receive bus=system path=/org/freedesktop/login1{,/**}
        interface=org.freedesktop.DBus.Properties
-       member={Get,PropertiesChanged},
+       peer=(name=:*),
+  dbus send bus=system path=/org/freedesktop/login1{,/**}
+       interface=org.freedesktop.DBus.Properties
+       peer=(name=org.freedesktop.DBus),
+  dbus send bus=system path=/org/freedesktop/login1
+       interface=org.freedesktop.login1.Manager
+       peer=(name=org.freedesktop.DBus),
+
+  dbus receive bus=system path=/org/freedesktop/systemd1/{unit,job}/**
+       interface=org.freedesktop.DBus.Properties
+       peer=(name=:*, label="@{systemd}"),
+  dbus send bus=system path=/org/freedesktop/systemd1/{unit,job}/**
+       interface=org.freedesktop.DBus.Properties
+       peer=(name=org.freedesktop.systemd1, label="@{systemd}"),
+  
+  dbus send bus=system path=/org/freedesktop/systemd1
+       interface=org.freedesktop.systemd1.Manager
+       peer=(name=org.freedesktop.systemd1),
+  dbus receive bus=system path=/org/freedesktop/systemd1
+       interface=org.freedesktop.systemd1.Manager
+       peer=(name=:*, label="@{systemd}"),
 
   dbus send bus=system path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus
-       member={GetConnectionCredentials,GetConnectionUnixProcessID,GetConnectionUnixUser}
+       member={GetConnectionUnixUser,GetConnectionUnixProcessID}
        peer=(name=org.freedesktop.DBus, label=dbus-daemon),
-
-  dbus send bus=system path=/org/freedesktop/PolicyKit1/Authority
-       interface=org.freedesktop.PolicyKit1.Authority
-       member=CheckAuthorization,
-
-  dbus send bus=system path=/org/freedesktop/systemd1/unit/**
-       interface=org.freedesktop.systemd[0-9].Scope
-       member=Abandon,
-
-  dbus receive bus=system path=/org/freedesktop/systemd1
-       interface=org.freedesktop.DBus.Properties
-       member=PropertiesChanged,
-
-  dbus receive bus=system path=/
-       interface=org.freedesktop.DBus.Properties
-       member=Get,
-
-  dbus bind bus=system name=org.freedesktop.login1,
 
   @{exec_path} mr,
 
