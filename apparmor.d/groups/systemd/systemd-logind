@@ -27,17 +27,17 @@ profile systemd-logind @{exec_path} flags=(attach_disconnected,complain) {
   network netlink raw,
 
   dbus bind bus=system name=org.freedesktop.login1,
-  dbus receive bus=system path=/org/freedesktop/login1{,/**}
-       interface=org.freedesktop.login1.Manager
+  dbus (send, receive) bus=system path=/org/freedesktop/login1{,/**}
+       interface=org.freedesktop.login1.*
        peer=(name=:*),
   dbus receive bus=system path=/org/freedesktop/login1{,/**}
        interface=org.freedesktop.DBus.Properties
        peer=(name=:*),
+  dbus (send, receive) bus=system path=/org/freedesktop/login1{,/**}
+       interface=org.freedesktop.login1.*
+       peer=(name=org.freedesktop.DBus),
   dbus send bus=system path=/org/freedesktop/login1{,/**}
        interface=org.freedesktop.DBus.Properties
-       peer=(name=org.freedesktop.DBus),
-  dbus send bus=system path=/org/freedesktop/login1
-       interface=org.freedesktop.login1.Manager
        peer=(name=org.freedesktop.DBus),
 
   dbus receive bus=system path=/org/freedesktop/systemd1/{unit,job}/**
@@ -56,7 +56,7 @@ profile systemd-logind @{exec_path} flags=(attach_disconnected,complain) {
 
   dbus send bus=system path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus
-       member={GetConnectionUnixUser,GetConnectionUnixProcessID}
+       member={GetConnectionUnixUser,GetConnectionUnixProcessID,GetConnectionCredentials}
        peer=(name=org.freedesktop.DBus, label=dbus-daemon),
 
   @{exec_path} mr,

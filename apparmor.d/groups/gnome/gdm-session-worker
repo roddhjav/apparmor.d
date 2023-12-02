@@ -10,6 +10,7 @@ include <tunables/global>
 profile gdm-session-worker @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/authentication>
+  include <abstractions/bus/account-daemon>
   include <abstractions/dbus-session-strict>
   include <abstractions/dbus-strict>
   include <abstractions/nameservice-strict>
@@ -46,18 +47,15 @@ profile gdm-session-worker @{exec_path} flags=(attach_disconnected) {
 
   network netlink raw,
 
-  dbus (send,receive) bus=system path=/org/freedesktop/Accounts{,/User[0-9]*}
-       interface=org.freedesktop.{DBus.Properties,Accounts*}
-       member={GetAll,FindUserByName,SetLanguage,Changed,PropertiesChanged},
-
-  dbus receive bus=system path=/org/freedesktop/Accounts
-       interface=org.freedesktop.Accounts
-       member=UserAdded
-       peer=(name=:*, label=accounts-daemon),
-
   dbus send bus=system path=/org/freedesktop/login1
        interface=org.freedesktop.login1.Manager
-       member={CreateSession,ReleaseSession},
+       member=*Session
+       peer=(name=org.freedesktop.login1, label=systemd-logind),
+
+  dbus send bus=system path=/org/freedesktop/Accounts/User@{uid}
+       interface=org.freedesktop.Accounts.User
+       member=SetLanguage
+       peer=(name=:*, label=accounts-daemon),
 
   @{exec_path} mrix,
 

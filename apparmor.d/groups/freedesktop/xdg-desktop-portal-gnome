@@ -9,6 +9,7 @@ include <tunables/global>
 @{exec_path} = @{lib}/xdg-desktop-portal-gnome
 profile xdg-desktop-portal-gnome @{exec_path} {
   include <abstractions/base>
+  include <abstractions/bus/account-daemon>
   include <abstractions/dbus-session-strict>
   include <abstractions/dbus-strict>
   include <abstractions/dconf-write>
@@ -27,18 +28,6 @@ profile xdg-desktop-portal-gnome @{exec_path} {
   include <abstractions/wayland>
 
   dbus bind bus=session name=org.freedesktop.impl.portal.desktop.gnome,
-
-  dbus send bus=system path=/org/freedesktop/Accounts/User[0-9]*
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll,
-
-  dbus receive bus=system path=/org/freedesktop/Accounts/User[0-9]*
-       interface=org.freedesktop.DBus.Properties
-       member=PropertiesChanged,
-
-  dbus receive bus=system path=/org/freedesktop/Accounts/User[0-9]*
-       interface=org.freedesktop.Accounts.User
-       member=Changed,
 
   dbus send bus=session path=/org/gnome/Shell/Screenshot
        interface=org.freedesktop.DBus.Properties
@@ -85,15 +74,12 @@ profile xdg-desktop-portal-gnome @{exec_path} {
        member=Read
        peer=(name=:*, label=xdg-desktop-portal),
 
-  dbus receive bus=session path=/org/gnome/Mutter/DisplayConfig
-       interface=org.gnome.Mutter.DisplayConfig
-       member=GetCurrentState
+  dbus (send, receive) bus=session path=/org/gnome/Mutter/*
+       interface=org.gnome.Mutter.*
        peer=(name=:*, label="{gnome-shell,gsd-xsettings}"),
-
   dbus send bus=session path=/org/gnome/Mutter/*
        interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=:*, label=gnome-shell),
+       peer=(name=:*, label="{gnome-shell,gsd-xsettings}"),
 
   dbus send bus=session path=/org/gtk/vfs/mounttracker
        interface=org.gtk.vfs.MountTracker

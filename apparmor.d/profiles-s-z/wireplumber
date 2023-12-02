@@ -1,5 +1,5 @@
 # apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2021-2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -10,6 +10,8 @@ include <tunables/global>
 profile wireplumber @{exec_path} {
   include <abstractions/base>
   include <abstractions/audio>
+  include <abstractions/bus/rtkit>
+  include <abstractions/bus/upower>
   include <abstractions/dbus-session-strict>
   include <abstractions/dbus-strict>
   include <abstractions/devices-usb>
@@ -22,19 +24,6 @@ profile wireplumber @{exec_path} {
   network netlink raw,
 
   dbus bind bus=session name=org.freedesktop.ReserveDevice1.Audio0,
-
-  dbus send bus=system path=/org/freedesktop/RealtimeKit1
-       interface=org.freedesktop.RealtimeKit1
-       peer=(name=org.freedesktop.RealtimeKit1, label=rtkit-daemon),
-
-  dbus send bus=system path=/org/freedesktop/UPower/devices/DisplayDevice
-       interface=org.freedesktop.DBus.Properties
-       peer=(name=org.freedesktop.UPower, label=upowerd),
-
-  dbus send bus=system path=/org/freedesktop/RealtimeKit1
-       interface=org.freedesktop.DBus.Properties
-       member=Get
-       peer=(name=org.freedesktop.RealtimeKit1, label=rtkit-daemon),
 
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable
