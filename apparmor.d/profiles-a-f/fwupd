@@ -11,6 +11,7 @@ include <tunables/global>
 profile fwupd @{exec_path} flags=(complain,attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus/polkit>
+  include <abstractions/bus/upower>
   include <abstractions/consoles>
   include <abstractions/dbus-strict>
   include <abstractions/disks-read>
@@ -34,6 +35,14 @@ profile fwupd @{exec_path} flags=(complain,attach_disconnected) {
   dbus receive bus=system path=/
        interface=org.freedesktop.fwupd
        peer=(name=:*, label=fwupdmgr),
+  dbus receive bus=system path=/
+       interface=org.freedesktop.DBus.Properties
+       member={GetAll,SetHints,GetPlugins,GetRemotes}
+       peer=(name=:*, label=fwupdmgr),
+  dbus send bus=system path=/
+       interface=org.freedesktop.DBus
+       member=Changed
+       peer=(name=:*, label=fwupdmgr),
 
   dbus send bus=system path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus
@@ -51,20 +60,6 @@ profile fwupd @{exec_path} flags=(complain,attach_disconnected) {
   dbus send bus=system path=/org/freedesktop/UDisks2/Manager
        interface=org.freedesktop.{DBus.Properties,UDisks2.Manager}
        member={GetAll,GetBlockDevices},
-
-  dbus send bus=system path=/org/freedesktop/UPower{,/devices/DisplayDevice}
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll,
-
-  dbus send bus=system path=/
-       interface=org.freedesktop.DBus
-       member=Changed
-       peer=(label=fwupdmgr),
-
-  dbus receive bus=system path=/
-       interface=org.freedesktop.DBus.Properties
-       member={GetAll,SetHints,GetPlugins,GetRemotes}
-       peer=(name=:*, label=fwupdmgr),
 
   @{exec_path} mr,
 

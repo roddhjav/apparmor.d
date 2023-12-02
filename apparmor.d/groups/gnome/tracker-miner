@@ -9,6 +9,7 @@ include <tunables/global>
 @{exec_path} = @{lib}/tracker-miner-fs-{,control-}3
 profile tracker-miner @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/bus/upower>
   include <abstractions/bus/vfs>
   include <abstractions/dbus-session-strict>
   include <abstractions/dbus-strict>
@@ -27,14 +28,10 @@ profile tracker-miner @{exec_path} flags=(attach_disconnected) {
 
   dbus (send, receive) bus=session path=/org/freedesktop/Tracker3/**
        interface=org.freedesktop.Tracker3.*
-       peer=(name=:*), # all members
+       peer=(name="{:*,org.freedesktop.DBus}"), # all members
   dbus receive bus=session path=/org/freedesktop/Tracker3/**
        interface=org.freedesktop.DBus.{Peer,Properties}
        peer=(name=:*),
-
-  dbus send bus=system path=/org/freedesktop/UPower{,/devices/DisplayDevice}
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll,
 
   dbus send bus=session path=/org/gtk/vfs/Daemon
        interface=org.gtk.vfs.Daemon

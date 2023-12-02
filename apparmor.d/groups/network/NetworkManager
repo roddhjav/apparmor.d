@@ -39,43 +39,36 @@ profile NetworkManager @{exec_path} flags=(attach_disconnected) {
   signal (send) set=(term) peer=dnsmasq,
 
   dbus bind bus=system name=org.freedesktop.NetworkManager,
-
-  dbus (send,receive) bus=system path=/org/freedesktop/NetworkManager{,/**}
-       interface=org.freedesktop.{DBus.Properties,DBus.Introspectable,NetworkManager*}
+  dbus receive bus=system path=/org/freedesktop/NetworkManager{,/**}
+       interface=org.freedesktop.NetworkManager{,.*}
        peer=(name=:*),
+  dbus receive bus=system path=/org/freedesktop/NetworkManager{,/**}
+       interface=org.freedesktop.DBus.Properties
+       peer=(name=:*),
+  dbus send bus=system path=/org/freedesktop/NetworkManager{,/**}
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged
+       peer=(name=org.freedesktop.DBus),
 
-  dbus (send,receive) bus=system path=/org/freedesktop/login1
-       interface=org.freedesktop.login1.Manager
-       member={SessionRemoved,UserNew,SessionNew,Inhibit,PrepareForShutdown,UserRemoved,PrepareForSleep}
-       peer=(name=:*, label=systemd-logind),
-
-  dbus send bus=system path=/org/freedesktop/DBus
-       interface=org.freedesktop.DBus
-       member={GetConnectionUnixUser,GetConnectionUnixProcessID}
-       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
-
-  dbus send bus=system path=/org/freedesktop
+  dbus receive bus=system path=/org/freedesktop
        interface=org.freedesktop.DBus.ObjectManager
-       member={InterfacesAdded,InterfacesRemoved}
-       peer=(name=org.freedesktop.DBus), # label="{gnome-shell,...}"
+       member=GetManagedObjects
+       peer=(name=:*),
 
   dbus send bus=system path=/org/freedesktop/nm_dispatcher
        interface=org.freedesktop.nm_dispatcher
        member=Action
        peer=(name=org.freedesktop.nm_dispatcher),
 
-  dbus send bus=system path=/org/freedesktop/ModemManager1
-       interface=org.freedesktop.DBus.ObjectManager
-       member=GetManagedObjects,
-
   dbus send bus=system path=/org/freedesktop/resolve1
        interface=org.freedesktop.resolve1.Manager
-       member={SetLink*,ResolveHostname},
-       # org.freedesktop.resolve1
+       member={SetLink*,ResolveHostname}
+       peer=(name=org.freedesktop.resolve1, label=systemd-resolved),
 
   dbus send bus=system path=/org/freedesktop/hostname1
        interface=org.freedesktop.DBus.Properties
-       member=GetAll,
+       member=GetAll
+       peer=(name=:*, label=systemd-hostnamed),
 
   dbus send bus=system path=/org/freedesktop/ModemManager1
        interface=org.freedesktop.DBus.ObjectManager
@@ -86,13 +79,19 @@ profile NetworkManager @{exec_path} flags=(attach_disconnected) {
        member=PropertiesChanged 
        peer=(name=:*, label=wpa-supplicant),
 
-  dbus receive bus=system path=/org/freedesktop
-       interface=org.freedesktop.DBus.ObjectManager
-       member=GetManagedObjects,
+  dbus receive bus=system path=/org/freedesktop/login1
+       interface=org.freedesktop.login1.Manager
+       peer=(name=:*, label=systemd-logind),
 
-  dbus receive bus=system path=/org/bluez/hci*/**
+  dbus receive bus=system path=/org/bluez/hci@{int}{,/**}
        interface=org.freedesktop.DBus.Properties
-       peer=(name=:*),
+       member=PropertiesChanged
+       peer=(name=:*, label=bluetoothd),
+
+  dbus send bus=system path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={GetConnectionUnixUser,GetConnectionUnixProcessID}
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
 
   @{exec_path} mr,
 

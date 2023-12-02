@@ -9,7 +9,7 @@ include <tunables/global>
 @{exec_path} = @{lib}/goa-daemon
 profile goa-daemon @{exec_path} {
   include <abstractions/base>
-  include <abstractions/dbus-network-manager-strict>
+  include <abstractions/bus/network-manager>
   include <abstractions/dbus-session-strict>
   include <abstractions/dbus-strict>
   include <abstractions/dconf-write>
@@ -25,10 +25,10 @@ profile goa-daemon @{exec_path} {
   network inet6 dgram,
   network netlink raw,
 
-  dbus send bus=session path=/org/freedesktop/DBus
-       interface=org.freedesktop.DBus
-       member={RequestName,ReleaseName}
-       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
+  dbus bind bus=session name=org.gnome.OnlineAccounts,
+  dbus receive bus=session path=/org/gnome/OnlineAccounts
+       interface=org.freedesktop.DBus.ObjectManager
+       peer=(name=:*),
 
   dbus (send,receive) bus=system path=/org/freedesktop/NetworkManager
        interface=org.freedesktop.DBus.Properties
@@ -51,14 +51,6 @@ profile goa-daemon @{exec_path} {
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
        peer=(name=:*, label=gnome-shell),
-
-  dbus send bus=session path=/org/gnome/Identity/Manager
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=:*, label=goa-identity-service),
-
-  dbus bind bus=session
-       name=org.gnome.OnlineAccounts,
 
   @{exec_path} mr,
 
