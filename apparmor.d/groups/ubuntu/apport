@@ -16,6 +16,8 @@ profile apport @{exec_path} {
 
   capability fsetid,
 
+  ptrace (read) peer=snap.cups.cupsd,
+
   @{exec_path} mr,
 
   /usr/share/apport/ r,
@@ -23,10 +25,13 @@ profile apport @{exec_path} {
         /var/crash/ rw,
   owner /var/log/apport.log rw,
 
-  @{PROC}/sys/fs/suid_dumpable w,
-  @{PROC}/sys/kernel/core_pattern r,
-  @{PROC}/sys/kernel/core_pattern w,
-  @{PROC}/sys/kernel/core_pipe_limit w,
+  @{run}/apport.lock rwk,
+
+        @{PROC}/sys/fs/suid_dumpable w,
+        @{PROC}/sys/kernel/core_pattern r,
+        @{PROC}/sys/kernel/core_pattern w,
+        @{PROC}/sys/kernel/core_pipe_limit w,
+  owner @{PROC}/@{pid}/stat r,
 
   include if exists <local/apport>
 }
