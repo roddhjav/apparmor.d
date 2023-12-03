@@ -10,6 +10,7 @@ include <tunables/global>
 @{exec_path} = @{lib}/{,udisks2/}udisksd
 profile udisksd @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/bus/login>
   include <abstractions/bus/polkit>
   include <abstractions/dbus-strict>
   include <abstractions/disks-write>
@@ -58,6 +59,14 @@ profile udisksd @{exec_path} flags=(attach_disconnected) {
 
   signal (receive) set=(int) peer=@{systemd},
 
+  dbus bind bus=system name=org.freedesktop.UDisks2,
+  dbus receive bus=system path=/org/freedesktop/UDisks2{,/**}
+       interface=org.freedesktop.UDisks2.*
+       peer=(name="{:*,org.freedesktop.DBus}"),
+  dbus receive bus=system path=/org/freedesktop/UDisks2{,/**}
+       interface=org.freedesktop.DBus.{Properties,ObjectManager}
+       peer=(name=:*),
+  
   dbus (send,receive) bus=system path=/
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect,
@@ -66,36 +75,15 @@ profile udisksd @{exec_path} flags=(attach_disconnected) {
        interface=org.freedesktop.DBus.Properties
        member=Get,
 
-  dbus (send,receive) bus=system path=/org/freedesktop/UDisks2{,/**}
-       interface=org.freedesktop.{DBus*,UDisks2*},
-
-  dbus receive bus=system path=/org/freedesktop/PolicyKit1/Authority
-       interface=org.freedesktop.PolicyKit1.Authority
-       member=Changed 
-       peer=(name=:*, label=polkitd),
-
   dbus send bus=system path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus
-       member={ReleaseName,GetConnectionUnixUser,RequestName},
-
-  dbus send bus=system path=/org/freedesktop/login1
-       interface=org.freedesktop.login1.Manager
-       member=Inhibit,
+       member={GetConnectionUnixUser,GetConnectionUnixProcessID}
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
 
   dbus receive bus=system path=/org/freedesktop/login1*
-       interface=org.freedesktop.login1*.Manager
+       interface=org.freedesktop.login1.Manager
        member={PrepareForSleep,PrepareForShutdown}
        peer=(name=:*, label=systemd-logind),
-
-  dbus send bus=system path=/org/freedesktop/PolicyKit1/Authority
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll,
-
-  dbus send bus=system path=/org/freedesktop/PolicyKit1/Authority
-       interface=org.freedesktop.PolicyKit1.Authority
-       member=CheckAuthorization,
-
-  dbus bind bus=system name=org.freedesktop.UDisks2,
 
   @{exec_path} mr,
 

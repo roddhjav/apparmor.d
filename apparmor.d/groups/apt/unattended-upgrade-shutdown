@@ -9,26 +9,16 @@ include <tunables/global>
 @{exec_path} = /usr/share/unattended-upgrades/unattended-upgrade-shutdown
 profile unattended-upgrade-shutdown @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/dbus-network-manager-strict>
+  include <abstractions/bus/login>
+  include <abstractions/bus/network-manager>
   include <abstractions/dbus-strict>
   include <abstractions/nameservice-strict>
   include <abstractions/python>
 
-  dbus send bus=system path=/org/freedesktop/login1
-       interface=org.freedesktop.login1.Manager
-       member=Inhibit,
-
-  dbus send bus=system path=/org/freedesktop/login1
-       interface=org.freedesktop.DBus.{Introspectable,Properties}
-       member={Introspect,Get},
-
-  dbus send bus=system path=/org/freedesktop/NetworkManager
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll,
-
   dbus receive bus=system path=/org/freedesktop/login1
        interface=org.freedesktop.login1.Manager
-       member=PrepareForShutdown,
+       member=PrepareForShutdown
+       peer=(name=:*, label=systemd-logind),
 
   @{exec_path} mr,
 

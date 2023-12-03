@@ -9,6 +9,7 @@ include <tunables/global>
 @{exec_path} = @{lib}/packagekitd
 profile packagekitd @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/bus/polkit>
   include <abstractions/dbus-strict>
   include <abstractions/nameservice-strict>
   include <abstractions/openssl>
@@ -35,6 +36,7 @@ profile packagekitd @{exec_path} flags=(attach_disconnected) {
 
   signal send set=int peer=apt-methods-*,
 
+  dbus bind bus=system name=org.freedesktop.PackageKit,
   dbus receive bus=system path=/org/freedesktop/PackageKit
        interface=org.freedesktop.DBus.Properties 
        peer=(name=:*, label=gnome-shell),
@@ -49,7 +51,7 @@ profile packagekitd @{exec_path} flags=(attach_disconnected) {
 
   dbus send bus=system path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus
-       member={RequestName,GetConnectionUnixUser}
+       member={GetConnectionUnixUser,GetConnectionUnixProcessID}
        peer=(name=org.freedesktop.DBus, label=dbus-daemon),
 
   dbus send bus=system path=/org/freedesktop/NetworkManager
@@ -62,24 +64,11 @@ profile packagekitd @{exec_path} flags=(attach_disconnected) {
        member={CheckPermissions,DeviceAdded,DeviceRemoved,StateChanged}
        peer=(name=:*, label=NetworkManager),
 
-  dbus send bus=system path=/org/freedesktop/PolicyKit1/Authority
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=:*, label=polkitd),
-
-  dbus receive bus=system path=/org/freedesktop/PolicyKit1/Authority
-       interface=org.freedesktop.PolicyKit1.Authority
-       member=Changed
-       peer=(name=:*, label=polkitd),
-
   dbus receive bus=system path=/org/freedesktop/login1
        interface=org.freedesktop.login1.Manager
        member={SessionNew,PrepareForShutdown,SessionRemoved,UserNew,UserRemoved,PrepareForSleep}
        peer=(name=:*, label=systemd-logind),
 
-  dbus bind bus=system 
-       name=org.freedesktop.PackageKit,
-  
   @{exec_path} mr,
 
   @{bin}/gpg{,2}  rCx -> gpg,
