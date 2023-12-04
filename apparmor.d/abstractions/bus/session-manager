@@ -1,0 +1,41 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+  dbus send bus=session path=/org/gnome/SessionManager
+       interface=org.gnome.SessionManager
+       member={RegisterClient,IsSessionRunning}
+       peer=(name=:*, label=gnome-session-binary),
+
+  dbus receive bus=session path=/org/gnome/SessionManager
+       interface=org.gnome.SessionManager
+       member={ClientAdded,ClientRemoved,SessionRunning,InhibitorRemoved,InhibitorAdded}
+       peer=(name=:*, label=gnome-session-binary),
+
+  dbus send bus=session path=/org/gnome/SessionManager
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=:*, label=gnome-session-binary),
+
+
+  dbus send bus=session path=/org/gnome/SessionManager/Client@{int}
+       interface=org.gnome.SessionManager.ClientPrivate
+       member=EndSessionResponse
+       peer=(name=:*, label=gnome-session-binary),
+
+  dbus receive bus=session path=/org/gnome/SessionManager/Client@{int}
+       interface=org.gnome.SessionManager.ClientPrivate
+       member={CancelEndSession,QueryEndSession,EndSession,Stop}
+       peer=(name=:*, label=gnome-session-binary),
+
+  dbus send bus=session path=/org/gnome/SessionManager/Client@{int}
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=:*, label=gnome-session-binary),
+
+  dbus receive bus=session path=/org/gnome/SessionManager/Client@{int}
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged
+       peer=(name=:*, label=gnome-session-binary),
+
+  include if exists <abstractions/bus/session-manager.d>

@@ -1,0 +1,20 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+  dbus send bus=session path=/org/freedesktop/portal/desktop
+       interface=org.freedesktop.DBus.Properties
+       member={GetAll,Read}
+       peer=(name="{:*,org.freedesktop.portal.Desktop}", label=xdg-desktop-portal),
+
+  dbus send bus=session path=/org/freedesktop/portal/desktop
+       interface=org.freedesktop.portal.Settings
+       member=Read
+       peer=(name=:*, label=xdg-desktop-portal),
+
+  dbus receive bus=session path=/org/freedesktop/portal/desktop
+       interface=org.freedesktop.portal.Settings
+       member=SettingChanged
+       peer=(name=:*, label=xdg-desktop-portal),
+
+  include if exists <abstractions/bus/desktop.d>
