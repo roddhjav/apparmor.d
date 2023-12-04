@@ -2,7 +2,7 @@
 
 # apparmor.d
 
-[![][workflow]][action] [![][build]][project] [![][quality]][goreportcard]
+[![][workflow]][action] [![][build]][project] [![][quality]][goreportcard] [![][matrix]][matrix-link] 
 
 **Full set of AppArmor profiles**
 
@@ -14,7 +14,7 @@
 
 ## Description 
 
-**AppArmor.d** is a set of over 1400 AppArmor profiles whose aim is to confine
+**AppArmor.d** is a set of over 1500 AppArmor profiles whose aim is to confine
 most Linux based applications and processes.
 
 **Purpose**
@@ -88,6 +88,7 @@ Feedbacks, contributors, pull requests are all very welcome. Please read
 [apparmor.pujol.io/development](https://apparmor.pujol.io/development) 
 for more details on the contribution process.
 
+Development chat available on https://matrix.to/#/#apparmor.d:matrix.org
 
 ## License
 
@@ -101,6 +102,8 @@ and thus has the same license (GPL2).
 [action]: https://actions-badge.atrox.dev/roddhjav/apparmor.d/goto?ref=main
 [quality]: https://img.shields.io/badge/go%20report-A+-brightgreen.svg?style=flat-square
 [goreportcard]: https://goreportcard.com/report/github.com/roddhjav/apparmor.d
+[matrix]: https://img.shields.io/badge/Matrix-%23apparmor.d-blue?style=flat-square&logo=matrix
+[matrix-link]: https://matrix.to/#/#apparmor.d:matrix.org
 
 [android_model]: https://arxiv.org/pdf/1904.05572
 [clipos]: https://clip-os.org/en/
