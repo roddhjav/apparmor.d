@@ -3,8 +3,23 @@
 # SPDX-License-Identifier: GPL-2.0-only
 
   dbus send bus=system path=/org/freedesktop/login1
+       interface=org.freedesktop.DBus.Properties
+       member={Get,GetAll}
+       peer=(name="{:*,org.freedesktop.login1}", label=systemd-logind),
+
+  dbus receive bus=system path=/org/freedesktop/login1
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged
+       peer=(name=:*, label=systemd-logind),
+
+  dbus send bus=system path=/org/freedesktop/login1
        interface=org.freedesktop.login1.Manager
        member=Inhibit
-       peer=(name=org.freedesktop.login1, label=systemd-logind),
+       peer=(name="{:*,org.freedesktop.login1}", label=systemd-logind),
+
+  dbus receive bus=system path=/org/freedesktop/login1
+       interface=org.freedesktop.login1.Manager
+       member={SessionNew,SessionRemoved,UserNew,UserRemoved,PrepareFor*}
+       peer=(name=:*, label=systemd-logind),
 
   include if exists <abstractions/bus/login.d>
