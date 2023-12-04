@@ -11,8 +11,9 @@ profile gsd-power @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/audio>
   include <abstractions/bus/atspi>
+  include <abstractions/bus/login>
   include <abstractions/bus/upower>
-  include <abstractions/bus/vfs>
+  include <abstractions/bus/vfs/mount>
   include <abstractions/dbus-accessibility-strict>
   include <abstractions/dbus-session-strict>
   include <abstractions/dbus-strict>
@@ -27,16 +28,42 @@ profile gsd-power @{exec_path} flags=(attach_disconnected) {
 
   signal (receive) set=(term, hup) peer=gdm*,
 
-  dbus (send,receive) bus=system path=/org/freedesktop/UPower{,/**}
-       interface=org.freedesktop.{DBus.Properties,UPower*},
+  dbus bind bus=session name=org.gnome.SettingsDaemon.Power,
+  dbus (send, receive) bus=session path=/org/gnome/SettingsDaemon/Power
+       interface=org.freedesktop.DBus.Properties
+       peer=(name="{org.freedesktop.DBus,:*}", label="{gsd-media-keys,gnome-shell}"),
+
+  dbus send bus=session path=/org/gnome/SessionManager{,/**}
+       interface=org.freedesktop.DBus.Properties
+       peer=(name=:*),
+  dbus send bus=session path=/org/gnome/SessionManager{,/**}
+       interface=org.gnome.SessionManager
+       peer=(name=:*),
+  dbus receive bus=session path=/org/gnome/SessionManager{,/**}
+       interface=org.gnome.SessionManager{,.*}
+       peer=(name=:*, label=gnome-session-binary),
+  dbus receive bus=session path=/org/gnome/SessionManager{,/**}
+       interface=org.freedesktop.DBus.Properties
+       peer=(name=:*, label=gnome-session-binary),
+
+  dbus send bus=session path=/org/gnome/Mutter/**
+       interface=org.freedesktop.DBus.{Properties,ObjectManager}
+       peer=(name=:*, label=gnome-shell),
+  dbus send bus=session path=/org/gnome/Mutter/**
+       interface=org.gnome.Mutter.DisplayConfig
+       peer=(name=:*, label=gnome-shell),
+  dbus send bus=session path=/org/gnome/Mutter/**
+       interface=org.gnome.Mutter.IdleMonitor
+       peer=(name=:*, label=gnome-shell),
+
+  dbus send bus=system path=/org/freedesktop/UPower/KbdBacklight
+       interface=org.freedesktop.UPower.KbdBacklight
+       member=GetBrightness
+       peer=(name=:*, label=upowerd),
 
   dbus send bus=system path=/org/freedesktop/systemd[0-9]
        interface=org.freedesktop.DBus.Properties
        member=Get,
-
-  dbus send bus=system path=/org/freedesktop/login1
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll,
 
   dbus send bus=system path=/org/freedesktop/login1/session/auto
        interface=org.freedesktop.DBus.Properties
@@ -46,95 +73,30 @@ profile gsd-power @{exec_path} flags=(attach_disconnected) {
        interface=org.freedesktop.login1.Session
        member=SetBrightness,
 
-  dbus send bus=system path=/org/freedesktop/login1
-       interface=org.freedesktop.login1.Manager
-       member=Inhibit,
-
-  dbus receive bus=system path=/org/freedesktop/login1
-       interface=org.freedesktop.login1.Manager
-       member={SessionNew,SessionRemoved,PrepareForShutdown,UserNew,UserRemoved,PrepareForSleep}
-       peer=(name=:*, label=systemd-logind),
-
-  dbus receive bus=system path=/org/freedesktop/login1
-       interface=org.freedesktop.DBus.Properties
-       member=PropertiesChanged,
-
   dbus send bus=system path=/net/hadess/PowerProfiles
        interface=org.freedesktop.DBus.Properties
-       member=GetAll,
+       member=GetAll
+       peer=(name=:*, label=power-profiles-daemon),
 
   dbus (send, receive) bus=session path=/org/gnome/SessionManager{,/Client[0-9]*}
        interface=org.freedesktop.DBus.Properties
        member={GetAll,PropertiesChanged}
        peer=(name=:*, label=gnome-session-binary),
 
-  dbus send bus=session path=/org/gnome/SessionManager/Client[0-9]*
-       interface=org.gnome.SessionManager.ClientPrivate
-       member=EndSessionResponse
-       peer=(name=:*, label=gnome-session-binary),
-
-  dbus receive bus=session path=/org/gnome/SessionManager/Client[0-9]*
-       interface=org.gnome.SessionManager.ClientPrivate
-       member={CancelEndSession,QueryEndSession,EndSession,Stop}
-       peer=(name=:*, label=gnome-session-binary),
-
-  dbus send bus=session path=/org/gnome/SessionManager
-       interface=org.gnome.SessionManager
-       member=RegisterClient
-       peer=(name=:*, label=gnome-session-binary),
-
-  dbus receive bus=session path=/org/gnome/SessionManager
-       interface=org.gnome.SessionManager
-       member={ClientAdded,SessionRunning,ClientRemoved,InhibitorAdded,InhibitorRemoved}
-       peer=(name=:*, label=gnome-session-binary),
-
-  dbus send bus=session path=/org/gnome/Mutter/DisplayConfig
-       interface=org.freedesktop.DBus.Properties
-       member={GetAll,GetResources,Set}
-       peer=(name=:*, label=gnome-shell),
-
-  dbus send bus=session path=/org/gnome/Mutter/DisplayConfig
-       interface=org.freedesktop.DBus.Properties
-       member=Set
-       peer=(name=:*, label=gsd-power),
-
-  dbus send bus=session path=/org/gnome/Mutter/DisplayConfig
-       interface=org.gnome.Mutter.DisplayConfig
-       member=GetResources
-       peer=(name=:*, label=gnome-shell),
-
-  dbus (send, receive) bus=session path=/org/gnome/SettingsDaemon/Power
-       interface=org.freedesktop.DBus.Properties
-       member={GetAll,PropertiesChanged,Set}
-       peer=(name="{org.freedesktop.DBus,:*}", label="{gsd-media-keys,gnome-shell}"),
-
-  dbus send bus=session path=/org/gnome/Mutter/IdleMonitor
-       interface=org.freedesktop.DBus.ObjectManager
-       member=GetManagedObjects
-       peer=(name=:*, label=gnome-shell),
-
-  dbus send bus=session path=/org/gnome/Mutter/IdleMonitor/Core
-       interface=org.gnome.Mutter.IdleMonitor
-       member={AddIdleWatch,AddUserActiveWatch,RemoveWatch}
-       peer=(name=:*, label=gnome-shell),
-
-  dbus receive bus=session path=/org/gnome/Mutter/IdleMonitor/Core
-       interface=org.gnome.Mutter.IdleMonitor
-       member=WatchFired
-       peer=(name=:*, label=gnome-shell),
 
   dbus receive bus=session path=/org/gnome/ScreenSaver
        interface=org.gnome.ScreenSaver
        member=ActiveChanged
        peer=(name=:*, label=gjs-console),
 
+  dbus send bus=system path=/org/freedesktop/systemd1
+       interface=org.freedesktop.DBus.Properties
+       peer=(name=org.freedesktop.systemd1, label="@{systemd}"),
+ 
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
        peer=(name=:*, label=gnome-shell),
-
-  dbus bind bus=session
-       name=org.gnome.SettingsDaemon.Power,
 
   @{exec_path} mr,
 
