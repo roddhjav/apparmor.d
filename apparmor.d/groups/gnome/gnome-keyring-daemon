@@ -10,6 +10,8 @@ include <tunables/global>
 @{exec_path} = @{bin}/gnome-keyring-daemon
 profile gnome-keyring-daemon @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/bus/desktop>
+  include <abstractions/bus/session-manager>
   include <abstractions/dbus-session-strict>
   include <abstractions/dbus-strict>
   include <abstractions/openssl>
@@ -36,6 +38,7 @@ profile gnome-keyring-daemon @{exec_path} flags=(attach_disconnected) {
 
   dbus send bus=session path=/org/gnome/SessionManager
        interface=org.gnome.SessionManager
+       member=Setenv
        peer=(name=org.gnome.SessionManager, label=gnome-session-binary),
 
   dbus (send, receive) bus=session path=/org/gnome/keyring/daemon
@@ -86,11 +89,6 @@ profile gnome-keyring-daemon @{exec_path} flags=(attach_disconnected) {
        interface=org.freedesktop.DBus.Properties
        member=GetAll
        peer=(name=:*),
-
-  dbus receive bus=session path=/org/freedesktop/portal/desktop
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=:*, label=xdg-desktop-portal),
 
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable
