@@ -12,6 +12,7 @@ include <tunables/global>
 profile pulseaudio @{exec_path} {
   include <abstractions/base>
   include <abstractions/audio>
+  include <abstractions/bus/hostname>
   include <abstractions/bus/rtkit>
   include <abstractions/consoles>
   include <abstractions/dbus-session-strict>
@@ -82,7 +83,7 @@ profile pulseaudio @{exec_path} {
   dbus send bus=system path=/
        interface=org.freedesktop.DBus.Peer
        member=Ping
-       peer=(name=org.freedesktop.Avahi),
+       peer=(name=org.freedesktop.Avahi, label=avahi-daemon),
 
   dbus send bus=system path=/
        interface=org.freedesktop.Avahi.Server
@@ -93,21 +94,6 @@ profile pulseaudio @{exec_path} {
        interface=org.freedesktop.Avahi.Server
        member=StateChanged
        peer=(name=org.freedesktop.Avahi),
-
-  dbus send bus=system path=/
-       interface=org.freedesktop.hostname1
-       member=Get
-       peer=(name=/org/freedesktop/hostname1),
-
-  dbus send bus=system path=/org/freedesktop/hostname1
-       interface=org.freedesktop.DBus.Properties
-       member=Get
-       peer=(name=/org/freedesktop/hostname1),
-
-  dbus send bus=system path=/org/freedesktop/hostname1
-       interface=org.freedesktop.DBus.Properties
-       member=Get
-       peer=(name=org.freedesktop.hostname1),
 
   dbus receive bus=system path=/org/bluez/hci*/**
        interface=org.freedesktop.DBus.Properties

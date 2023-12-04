@@ -10,6 +10,7 @@ include <tunables/global>
 profile gdm-wayland-session @{exec_path} {
   include <abstractions/base>
   include <abstractions/bash>
+  include <abstractions/bus/systemd-session>
   include <abstractions/consoles>
   include <abstractions/dbus-session-strict>
   include <abstractions/dbus-strict>
@@ -25,12 +26,8 @@ profile gdm-wayland-session @{exec_path} {
 
   dbus send bus=system path=/org/gnome/DisplayManager/Manager
        interface=org.gnome.DisplayManager.Manager
-       member=RegisterDisplay,
-
-  dbus send bus=session path=/org/freedesktop/systemd1
-       interface=org.freedesktop.DBus.Properties
-       member=Get
-       peer=(name=org.freedesktop.systemd1, label=@{systemd}),
+       member=RegisterDisplay
+       peer=(name=:*, label=gdm),
 
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable

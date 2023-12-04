@@ -10,6 +10,7 @@ include <tunables/global>
 profile gnome-terminal-server @{exec_path} {
   include <abstractions/base>
   include <abstractions/bus/atspi>
+  include <abstractions/bus/desktop>
   include <abstractions/bus/vfs/mount>
   include <abstractions/consoles>
   include <abstractions/dbus-accessibility-strict>
@@ -30,10 +31,23 @@ profile gnome-terminal-server @{exec_path} {
        peer=(name=:*),
   dbus receive bus=session path=/org/gnome/Terminal{,/**}
        interface=org.freedesktop.DBus.Properties
-       peer=(name=:*, label=unconfined),
+       peer=(name=:*),
   dbus receive bus=session path=/org/gnome/Terminal{,/**}
        interface=org.gtk.Actions
        peer=(name=:*),
+  dbus send bus=session path=/org/gnome/Terminal{,/**}
+       interface=org.gtk.Actions
+       peer=(name=org.freedesktop.DBus),
+
+  dbus send bus=session path=/org/freedesktop/systemd1
+       interface=org.freedesktop.systemd1.Manager
+       member=StartTransientUnit
+       peer=(name=org.freedesktop.systemd1, label="@{systemd}"),
+
+  dbus receive bus=session
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name=:*, label=gnome-shell),
 
   @{exec_path} mr,
 

@@ -11,6 +11,8 @@ profile gsd-media-keys @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/audio>
   include <abstractions/bus/atspi>
+  include <abstractions/bus/hostname>
+  include <abstractions/bus/login>
   include <abstractions/dbus-accessibility-strict>
   include <abstractions/dbus-session-strict>
   include <abstractions/dbus-strict>
@@ -29,33 +31,9 @@ profile gsd-media-keys @{exec_path} flags=(attach_disconnected) {
   dbus bind bus=session name=org.gnome.SettingsDaemon.MediaKeys,
 
   dbus send bus=system path=/org/freedesktop/login1
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=:*, label=systemd-logind),
-
-  dbus send bus=system path=/org/freedesktop/login1
-       interface=org.freedesktop.login1.Manager
-       member=Inhibit
-       peer=(name=:*, label=systemd-logind),
-
-  dbus send bus=system path=/org/freedesktop/login1
        interface=org.freedesktop.login1.Manager
        member=PowerOff
        peer=(name=:*, label=systemd-logind),
-
-  dbus receive bus=system path=/org/freedesktop/login1
-       interface=org.freedesktop.login1.Manager
-       peer=(name=:*, label=systemd-logind),
-
-  dbus receive bus=system path=/org/freedesktop/login1
-       interface=org.freedesktop.DBus.Properties
-       member=PropertiesChanged
-       peer=(name=:*, label=systemd-logind),
-
-  dbus send bus=system path=/org/freedesktop/hostname1
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=:*, label=systemd-hostnamed),
 
   dbus send bus=system path=/org/freedesktop/UPower{,/devices/DisplayDevice}
       interface=org.freedesktop.DBus.Properties
@@ -94,7 +72,7 @@ profile gsd-media-keys @{exec_path} flags=(attach_disconnected) {
 
   dbus receive bus=session path=/org/gnome/Shell
        interface=org.freedesktop.DBus.Properties
-       member=GetAll
+       member={GetAll,PropertiesChanged}
        peer=(name=:*, label=gnome-shell),
 
   dbus send bus=session path=/org/gnome/Shell

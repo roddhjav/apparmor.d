@@ -10,6 +10,9 @@ include <tunables/global>
 profile gnome-session-binary @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus/atspi>
+  include <abstractions/bus/gnome-screensaver>
+  include <abstractions/bus/login>
+  include <abstractions/bus/systemd-session>
   include <abstractions/dbus-accessibility-strict>
   include <abstractions/dbus-session-strict>
   include <abstractions/dbus-strict>
@@ -46,11 +49,6 @@ profile gnome-session-binary @{exec_path} flags=(attach_disconnected) {
        member={CanPowerOff,GetSession,PowerOff,Inhibit,Reboot}
        peer=(name=:*, label=systemd-logind),
 
-  dbus receive bus=system path=/org/freedesktop/login1
-       interface=org.freedesktop.login1.Manager
-       member={SessionNew,PrepareForShutdown,SessionRemoved,UserNew,UserRemoved,PrepareForSleep}
-       peer=(name=:*, label=systemd-logind),
-
   dbus send bus=system path=/org/freedesktop/login1/session/*
        interface=org.freedesktop.login1.Session
        member=SetIdleHint
@@ -84,11 +82,6 @@ profile gnome-session-binary @{exec_path} flags=(attach_disconnected) {
        member=GetAll
        peer=(name=:*, label=gnome-shell),
 
-  dbus (send, receive) bus=system path=/org/freedesktop/login1*
-       interface=org.freedesktop.DBus.Properties
-       member={GetAll,PropertiesChanged}
-       peer=(name=:*, label=systemd-logind),
-
   dbus (send, receive) bus=session path=/org/gnome/SessionManager{,/**}
        interface=org.freedesktop.DBus.Properties
        member={GetAll,PropertiesChanged}
@@ -96,15 +89,7 @@ profile gnome-session-binary @{exec_path} flags=(attach_disconnected) {
 
   dbus send bus=session path=/org/freedesktop/systemd1
        interface=org.freedesktop.systemd1.Manager
-       peer=(name=org.freedesktop.systemd1, label=@{systemd}), # all members
-
-  dbus send bus=session path=/org/freedesktop/systemd1
-       interface=org.freedesktop.systemd1.Manager
-       peer=(name=:*, label=@{systemd}),
-
-  dbus send bus=session path=/org/freedesktop/systemd1
-       interface=org.freedesktop.DBus.Properties
-       peer=(name=:*, label=@{systemd}),
+       peer=(name=org.freedesktop.systemd1, label=@{systemd}),
 
   dbus send bus=session path=/org/gnome/Mutter/IdleMonitor
        interface=org.freedesktop.DBus.ObjectManager
@@ -120,16 +105,6 @@ profile gnome-session-binary @{exec_path} flags=(attach_disconnected) {
        interface=org.gnome.Mutter.IdleMonitor
        member=WatchFired
        peer=(name=:*, label=gnome-shell),
-
-  dbus send bus=session path=/org/gnome/ScreenSaver
-       interface=org.gnome.ScreenSaver
-       member=GetActive 
-       peer=(name=:*),
-
-  dbus receive bus=session path=/org/gnome/ScreenSaver
-       interface=org.gnome.ScreenSaver
-       member={ActiveChanged,WakeUpScreen}
-       peer=(name=:*, label=gjs-console),
 
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable
