@@ -1,0 +1,34 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+  abi <abi/3.0>,
+
+  include <abstractions/fonts>
+  include <abstractions/freedesktop.org>
+  include <abstractions/gtk>
+  include <abstractions/wayland>
+  include <abstractions/X-strict>
+
+  dbus receive bus=session
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect 
+       peer=(name=:*, label=gnome-shell),
+
+  @{lib}/{,/@{multiarch}/}gtk*/** mr,
+
+  /usr/{local/,}share/ r,
+  /usr/{local/,}share/glib-@{int}.@{int}/schemas/** r,
+  /usr/{local/,}share/gvfs/remote-volume-monitors/{,*}  r,
+
+  /etc/gnome/* r,
+  /etc/xdg/{,*-}mimeapps.list r,
+
+  /var/cache/gio-@{int}.@{int}/gnome-mimeapps.list r,
+
+  owner @{HOME}/.local/ rw,
+  owner @{user_cache_dirs}/ rw,
+  owner @{user_config_dirs}/ rw,
+  owner @{user_share_dirs}/ rw,
+
+  include if exists <abstractions/gnome-strict.d>
