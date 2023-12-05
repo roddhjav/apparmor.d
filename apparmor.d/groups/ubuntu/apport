@@ -7,7 +7,7 @@ abi <abi/3.0>,
 include <tunables/global>
 
 @{exec_path} = /usr/share/apport/apport 
-profile apport @{exec_path} {
+profile apport @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/apt-common>
   include <abstractions/nameservice-strict>
@@ -15,7 +15,11 @@ profile apport @{exec_path} {
   include <abstractions/python>
 
   capability fsetid,
+  capability setgid,
+  capability setuid,
+  capability sys_ptrace,
 
+  ptrace (read) peer=gnome-shell,
   ptrace (read) peer=snap.cups.cupsd,
 
   @{exec_path} mr,
@@ -27,11 +31,11 @@ profile apport @{exec_path} {
 
   @{run}/apport.lock rwk,
 
-        @{PROC}/sys/fs/suid_dumpable w,
-        @{PROC}/sys/kernel/core_pattern r,
-        @{PROC}/sys/kernel/core_pattern w,
-        @{PROC}/sys/kernel/core_pipe_limit w,
-  owner @{PROC}/@{pid}/stat r,
+  @{PROC}/@{pid}/stat r,
+  @{PROC}/sys/fs/suid_dumpable w,
+  @{PROC}/sys/kernel/core_pattern r,
+  @{PROC}/sys/kernel/core_pattern w,
+  @{PROC}/sys/kernel/core_pipe_limit w,
 
   include if exists <local/apport>
 }
