@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2021 Mikhail Morfikov
+# Copyright (C) 2021-2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -10,12 +11,12 @@ include <tunables/global>
 profile jami-gnome @{exec_path} {
   include <abstractions/base>
   include <abstractions/dconf-write>
-  include <abstractions/gtk>
-  include <abstractions/fonts>
-  include <abstractions/fontconfig-cache-read>
-  include <abstractions/freedesktop.org>
   include <abstractions/dri-common>
   include <abstractions/dri-enumerate>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/fonts>
+  include <abstractions/freedesktop.org>
+  include <abstractions/gtk>
   include <abstractions/mesa>
   include <abstractions/nameservice-strict>
   include <abstractions/user-download-strict>
@@ -23,6 +24,12 @@ profile jami-gnome @{exec_path} {
   network netlink raw,
 
   @{exec_path} mr,
+
+  @{lib}/{,@{multiarch}/}webkit2gtk-*/WebKitNetworkProcess rix,
+  @{lib}/{,@{multiarch}/}webkit2gtk-*/WebKitWebProcess rix,
+
+  /usr/share/ring/{,**} r,
+  /usr/share/sounds/jami-gnome/{,**} r,
 
   owner @{user_cache_dirs}/ rw,
   owner @{user_cache_dirs}/jami-gnome/ rw,
@@ -38,21 +45,15 @@ profile jami-gnome @{exec_path} {
   owner @{user_share_dirs}/webkitgtk/databases/indexeddb/v0 w,
   owner @{user_share_dirs}/webkitgtk/databases/indexeddb/v1/ w,
 
-  @{lib}/@{multiarch}/webkit2gtk-4.0/WebKitNetworkProcess rix,
-  @{lib}/@{multiarch}/webkit2gtk-4.0/WebKitWebProcess rix,
-
-  /usr/share/ring/{,**} r,
-  /usr/share/sounds/jami-gnome/{,**} r,
+  @{sys}/firmware/acpi/pm_profile r,
+  @{sys}/devices/virtual/dmi/id/chassis_type r,
+  @{sys}/fs/cgroup/** r,
 
        owner @{PROC}/@{pid}/statm r,
        owner @{PROC}/@{pid}/smaps r,
   deny owner @{PROC}/@{pid}/cmdline r,
        owner @{PROC}/@{pid}/cgroup r,
              @{PROC}/zoneinfo r,
-
-  @{sys}/firmware/acpi/pm_profile r,
-  @{sys}/devices/virtual/dmi/id/chassis_type r,
-  @{sys}/fs/cgroup/** r,
 
   include if exists <local/jami-gnome>
 }

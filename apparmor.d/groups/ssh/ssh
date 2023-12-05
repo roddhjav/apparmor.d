@@ -1,6 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2021 Mikhail Morfikov
-# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2021-2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -30,7 +30,10 @@ profile ssh @{exec_path} {
   @{etc_ro}/ssh/ssh_config r,
   @{etc_ro}/ssh/sshd_config r,
   @{etc_ro}/ssh/sshd_config.d/{,*} r,
-
+  /etc/machine-id r,
+  /etc/ssh/ssh_config r,
+  /etc/ssh/ssh_config.d/{,*} r,
+  
   owner @{HOME}/@{XDG_SSH_DIR}/ r,
   owner @{HOME}/@{XDG_SSH_DIR}/*_*{,.pub} r,
   owner @{HOME}/@{XDG_SSH_DIR}/config r,
@@ -40,17 +43,12 @@ profile ssh @{exec_path} {
   owner @{user_projects_dirs}/**/ssh/{,*} r,
   owner @{user_projects_dirs}/**/config r,
 
-  /etc/ssh/ssh_config r,
-  /etc/ssh/ssh_config.d/{,*} r,
-  # Needed to work for systemd-homed users
-  /etc/machine-id r,
-  @{run}/systemd/userdb/ r,
-  
+  owner /tmp/ssh-*/{,agent.[0-9]*} rwkl,
+
   owner @{run}/user/@{uid}/keyring/ssh rw,
+
   owner @{PROC}/@{pid}/loginuid r,
   owner @{PROC}/@{pid}/fd/ r,
-
-  owner /tmp/ssh-*/{,agent.[0-9]*} rwkl,
 
   include if exists <local/ssh>
 }

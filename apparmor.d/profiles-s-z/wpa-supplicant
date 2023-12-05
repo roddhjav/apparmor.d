@@ -1,6 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2018-2022 Mikhail Morfikov
-# Copyright (C) 2021-2022 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2021-2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -23,6 +23,8 @@ profile wpa-supplicant @{exec_path} flags=(attach_disconnected) {
   capability net_raw,
   capability sys_module,
 
+  network inet dgram,
+  network inet6 dgram,
   network netlink raw,
   network packet dgram,
   network packet raw,
@@ -30,7 +32,8 @@ profile wpa-supplicant @{exec_path} flags=(attach_disconnected) {
   dbus bind bus=system name=fi.w1.wpa_supplicant1,
   dbus receive bus=system path=/fi/w1/wpa_supplicant1
        interface=org.freedesktop.DBus.Properties
-       member=GetAll,
+       member=GetAll
+       peer=(name=:*),
 
   @{exec_path} mr,
 
