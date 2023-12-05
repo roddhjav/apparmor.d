@@ -2,34 +2,34 @@
 # Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
+  dbus send bus=system path=/org/freedesktop
+       interface=org.freedesktop.DBus.ObjectManager
+       member=GetManagedObjects
+       peer=(name=:*, label=NetworkManager),
+
   dbus send bus=system path=/org/freedesktop/NetworkManager
        interface=org.freedesktop.DBus.Properties
        member=GetAll
-       peer=(name=org.freedesktop.NetworkManager, label=NetworkManager),
+       peer=(name=:*, label=NetworkManager),
 
   dbus send bus=system path=/org/freedesktop/NetworkManager
        interface=org.freedesktop.NetworkManager
-       member=GetDevices
-       peer=(name=org.freedesktop.NetworkManager, label=NetworkManager),
-
-  dbus send bus=system path=/org/freedesktop/NetworkManager/ActiveConnection/@{int}
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=org.freedesktop.NetworkManager, label=NetworkManager),
-
-  dbus send bus=system path=/org/freedesktop/NetworkManager/Devices/@{int}
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=org.freedesktop.NetworkManager, label=NetworkManager),
-
-  dbus send bus=system path=/org/freedesktop/NetworkManager/Settings
-       interface=org.freedesktop.NetworkManager.Settings
-       member={GetDevices,ListConnections}
-       peer=(name=org.freedesktop.NetworkManager, label=NetworkManager),
+       member=GetPermissions
+       peer=(name=:*, label=NetworkManager),
 
   dbus send bus=system path=/org/freedesktop/NetworkManager/Settings/@{int}
        interface=org.freedesktop.NetworkManager.Settings.Connection
        member=GetSettings
-       peer=(name=org.freedesktop.NetworkManager, label=NetworkManager),
+       peer=(name=:*, label=NetworkManager),
+
+  dbus receive bus=system path=/org/freedesktop/NetworkManager{,/**}
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged
+       peer=(name=:*, label=NetworkManager),
+
+  dbus receive bus=system path=/org/freedesktop/NetworkManager
+       interface=org.freedesktop.DBus.Properties
+       member=CheckPermissions
+       peer=(name=:*, label=NetworkManager),
 
   include if exists <abstractions/bus/network-manager.d>
