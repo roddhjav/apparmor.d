@@ -11,6 +11,7 @@ include <tunables/global>
 profile gvfs-udisks2-volume-monitor @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus/udisk>
+  include <abstractions/bus/vfs/mount>
   include <abstractions/dbus-session-strict>
   include <abstractions/dbus-strict>
   include <abstractions/dconf-write>
@@ -45,11 +46,10 @@ profile gvfs-udisks2-volume-monitor @{exec_path} flags=(attach_disconnected) {
        interface=org.freedesktop.DBus.ObjectManager
        member=InterfacesRemoved
        peer=(name=:*, label=udisksd),
-
-  dbus send bus=session path=/org/gtk/vfs/mounttracker
-       interface=org.gtk.vfs.MountTracker
-       member=ListMountableInfo
-       peer=(name=:*, label=gvfsd),
+  dbus receive bus=system path=/org/freedesktop/UDisks2/**
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged
+       peer=(name=:*, label=udisksd),
 
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable

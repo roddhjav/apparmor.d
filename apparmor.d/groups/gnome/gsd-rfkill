@@ -9,12 +9,15 @@ include <tunables/global>
 @{exec_path} = @{lib}/gsd-rfkill
 profile gsd-rfkill @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/bus/session-manager>
   include <abstractions/dbus-session-strict>
   include <abstractions/dbus-strict>
 
   signal (receive) set=(term, hup) peer=gdm*,
 
   network netlink raw,
+
+  dbus bind bus=session name=org.gnome.SettingsDaemon.Rfkill,
 
   dbus send bus=system path=/org/freedesktop/hostname[0-9]
        interface=org.freedesktop.DBus.Properties
@@ -41,31 +44,6 @@ profile gsd-rfkill @{exec_path} flags=(attach_disconnected) {
        interface=org.freedesktop.DBus.Properties
        member=PropertiesChanged,
 
-  dbus (send, receive) bus=session path=/org/gnome/SessionManager{,/Client[0-9]*}
-       interface=org.freedesktop.DBus.Properties
-       member={GetAll,PropertiesChanged}
-       peer=(name=:*, label=gnome-session-binary),
-
-  dbus send bus=session path=/org/gnome/SessionManager/Client[0-9]*
-       interface=org.gnome.SessionManager.ClientPrivate
-       member=EndSessionResponse
-       peer=(name=:*, label=gnome-session-binary),
-
-  dbus receive bus=session path=/org/gnome/SessionManager/Client[0-9]*
-       interface=org.gnome.SessionManager.ClientPrivate
-       member={CancelEndSession,QueryEndSession,EndSession,Stop}
-       peer=(name=:*, label=gnome-session-binary),
-
-  dbus send bus=session path=/org/gnome/SessionManager
-       interface=org.gnome.SessionManager
-       member=RegisterClient
-       peer=(name=:*, label=gnome-session-binary),
-
-  dbus receive bus=session path=/org/gnome/SessionManager
-       interface=org.gnome.SessionManager
-       member={ClientAdded,SessionRunning,ClientRemoved,InhibitorRemoved,InhibitorAdded}
-       peer=(name=:*, label=gnome-session-binary),
-
   dbus receive bus=session path=/org/gnome/SettingsDaemon/Rfkill
        interface=org.freedesktop.DBus.Properties
        member=GetAll
@@ -80,9 +58,6 @@ profile gsd-rfkill @{exec_path} flags=(attach_disconnected) {
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
        peer=(name=:*, label=gnome-shell),
-
-  dbus bind bus=session
-       name=org.gnome.SettingsDaemon.Rfkill,
 
   @{exec_path} mr,
 

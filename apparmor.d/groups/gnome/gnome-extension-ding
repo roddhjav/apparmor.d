@@ -10,6 +10,7 @@ include <tunables/global>
 profile gnome-extension-ding @{exec_path} {
   include <abstractions/base>
   include <abstractions/bus/atspi>
+  include <abstractions/bus/notification>
   include <abstractions/bus/vfs/daemon>
   include <abstractions/bus/vfs/metadata>
   include <abstractions/bus/vfs/mount>
@@ -44,10 +45,10 @@ profile gnome-extension-ding @{exec_path} {
        member=GetAll
        peer=(name=:*, label=nautilus),
 
-  dbus send bus=session path=/org/freedesktop/Notifications
+  dbus send bus=system path=/net/hadess/SwitcherooControl
        interface=org.freedesktop.DBus.Properties
        member=GetAll
-       peer=(name=:*, label=gjs-console),
+       peer=(name=:*, label=switcheroo-control),
 
   dbus send bus=session path=/org/gnome/Nautilus/FileOperations*
        interface=org.freedesktop.DBus.Properties
@@ -63,8 +64,11 @@ profile gnome-extension-ding @{exec_path} {
        member=Introspect
        peer=(name=:*, label=nautilus),
 
-  dbus send bus={systemd,session} path=/org/freedesktop/DBus
-       interface=org.freedesktop.DBus{,.Properties}
+  dbus send bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus*
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
+  dbus send bus=system path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus*
        peer=(name=org.freedesktop.DBus, label=dbus-daemon),
 
   @{exec_path} mr,
