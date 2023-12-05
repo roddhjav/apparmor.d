@@ -97,7 +97,7 @@ func (p *AppArmorProfile) AddRule(log map[string]string) {
 		case "pivotroot":
 			p.Rules = append(p.Rules, PivotRootFromLog(log))
 		}
-	case "mqueue":
+	case "posix_mqueue", "sysv_mqueue":
 		p.Rules = append(p.Rules, MqueueFromLog(log))
 	case "signal":
 		p.Rules = append(p.Rules, SignalFromLog(log))
