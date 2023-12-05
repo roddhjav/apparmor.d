@@ -1,5 +1,5 @@
 # apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2021-2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -9,23 +9,16 @@ include <tunables/global>
 @{exec_path} = @{lib}/gsd-disk-utility-notify
 profile gsd-disk-utility-notify @{exec_path} {
   include <abstractions/base>
+  include <abstractions/bus/udisk>
   include <abstractions/dbus-session-strict>
   include <abstractions/dbus-strict>
 
-  dbus receive bus=system path=/org/freedesktop/UDisks2{,/**}
-       interface=org.freedesktop.DBus.{Properties,ObjectManager},
-
-  dbus send bus=system path=/org/freedesktop/UDisks2
-       interface=org.freedesktop.DBus.ObjectManager
-       member=GetManagedObjects,
+  dbus bind bus=session name=org.gnome.Disks.NotificationMonitor,
 
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect 
        peer=(name=:*, label=gnome-shell),
-
-  dbus bind bus=session
-       name=org.gnome.Disks.NotificationMonitor,
 
   @{exec_path} mr,
 

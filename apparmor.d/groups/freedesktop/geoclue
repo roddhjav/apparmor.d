@@ -20,13 +20,21 @@ profile geoclue @{exec_path} flags=(attach_disconnected) {
   network inet6 stream,
   network netlink raw,
 
-  dbus (send,receive) bus=system path=/org/freedesktop/GeoClue2/{Agent,Manager}
-       interface=org.freedesktop.{DBus.Properties,GeoClue2*},
+  dbus bind bus=system name=org.freedesktop.GeoClue2,
+  dbus send bus=system path=/org/freedesktop/GeoClue2/*
+       interface=org.freedesktop.DBus.Properties
+       peer=(name="{:*,org.freedesktop.DBus}"),
+  dbus receive bus=system path=/org/freedesktop/GeoClue2/*
+       interface=org.freedesktop.DBus.Properties
+       peer=(name=:*),
+  dbus receive bus=system path=/org/freedesktop/GeoClue2/*
+       interface=org.freedesktop.GeoClue2.Manager
+       peer=(name=:*),
 
   dbus send bus=system path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus
-       member={GetConnectionUnixProcessID,GetConnectionUnixUser,ReleaseName,RequestName}
-       peer=(name=org.freedesktop.DBus),
+       member={GetConnectionUnixUser,GetConnectionUnixProcessID}
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
 
   dbus send bus=system path=/
        interface=org.freedesktop.Avahi.Server
@@ -36,9 +44,10 @@ profile geoclue @{exec_path} flags=(attach_disconnected) {
        interface=org.freedesktop.DBus.Peer
        member=Ping,
 
-  dbus send bus=system path=/fi/w[0-9]/wpa_supplicant[0-9]
+  dbus send bus=system path=/fi/w1/wpa_supplicant1
        interface=org.freedesktop.DBus.Properties
-       member=GetAll,
+       member=PropertiesChanged 
+       peer=(name=:*, label=wpa-supplicant),
 
   dbus send bus=system path=/org/freedesktop/ModemManager[0-9]
        interface=org.freedesktop.DBus.ObjectManager
@@ -64,9 +73,6 @@ profile geoclue @{exec_path} flags=(attach_disconnected) {
   dbus receive bus=system path=/org/freedesktop/NetworkManager
        interface=org.freedesktop.DBus.Properties
        member=PropertiesChanged,
-
-  dbus bind bus=system 
-       name=org.freedesktop.GeoClue2,
 
   @{exec_path} mr,
 

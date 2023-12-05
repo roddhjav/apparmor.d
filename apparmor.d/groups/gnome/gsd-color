@@ -10,6 +10,8 @@ include <tunables/global>
 profile gsd-color @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus/atspi>
+  include <abstractions/bus/session-manager>
+  include <abstractions/bus/vfs/mount>
   include <abstractions/dbus-accessibility-strict>
   include <abstractions/dbus-session-strict>
   include <abstractions/dbus-strict>
@@ -23,6 +25,10 @@ profile gsd-color @{exec_path} flags=(attach_disconnected) {
   signal (receive) set=(term, hup) peer=gdm*,
 
   dbus bind bus=session name=org.gnome.SettingsDaemon.Color,
+  dbus receive bus=session path=/org/gnome/SettingsDaemon/Color
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=:*, label=gnome-shell),
 
   dbus (send, receive) bus=system path=/org/freedesktop/ColorManager{,/devices/*}
        interface=org.freedesktop.ColorManager*,
@@ -30,36 +36,6 @@ profile gsd-color @{exec_path} flags=(attach_disconnected) {
   dbus send bus=system path=/org/freedesktop/ColorManager{,/devices/*,/profiles/*}
        interface=org.freedesktop.DBus.Properties
        member=GetAll,
-
-  dbus receive bus=session path=/org/gnome/SettingsDaemon/Color
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=:*, label=gnome-shell),
-
-  dbus (send, receive) bus=session path=/org/gnome/SessionManager{,/Client[0-9]*}
-       interface=org.freedesktop.DBus.Properties
-       member={GetAll,PropertiesChanged}
-       peer=(name=:*, label=gnome-session-binary),
-
-  dbus send bus=session path=/org/gnome/SessionManager/Client[0-9]*
-       interface=org.gnome.SessionManager.ClientPrivate
-       member=EndSessionResponse
-       peer=(name=:*, label=gnome-session-binary),
-
-  dbus receive bus=session path=/org/gnome/SessionManager/Client[0-9]*
-       interface=org.gnome.SessionManager.ClientPrivate
-       member={CancelEndSession,QueryEndSession,EndSession,Stop}
-       peer=(name=:*, label=gnome-session-binary),
-
-  dbus send bus=session path=/org/gnome/SessionManager
-       interface=org.gnome.SessionManager
-       member=RegisterClient
-       peer=(name=:*, label=gnome-session-binary),
-
-  dbus receive bus=session path=/org/gnome/SessionManager
-       interface=org.gnome.SessionManager
-       member={ClientAdded,SessionRunning,ClientRemoved,InhibitorRemoved,InhibitorAdded}
-       peer=(name=:*, label=gnome-session-binary),
 
   dbus send bus=session path=/org/gnome/Mutter/DisplayConfig
        interface=org.gnome.Mutter.DisplayConfig
@@ -70,11 +46,6 @@ profile gsd-color @{exec_path} flags=(attach_disconnected) {
        interface=org.freedesktop.DBus.Properties
        member=GetAll
        peer=(name=:*, label=gnome-shell),
-
-  dbus send bus=session path=/org/gtk/vfs/mounttracker
-       interface=org.gtk.vfs.MountTracker
-       member=ListMountableInfo
-       peer=(name=:*, label=gvfsd),
 
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable
