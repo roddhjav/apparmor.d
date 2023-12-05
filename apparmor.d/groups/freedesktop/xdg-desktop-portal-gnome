@@ -11,6 +11,7 @@ profile xdg-desktop-portal-gnome @{exec_path} {
   include <abstractions/base>
   include <abstractions/bus/account-daemon>
   include <abstractions/bus/desktop>
+  include <abstractions/bus/vfs/mount>
   include <abstractions/dbus-session-strict>
   include <abstractions/dbus-strict>
   include <abstractions/dconf-write>
@@ -18,15 +19,14 @@ profile xdg-desktop-portal-gnome @{exec_path} {
   include <abstractions/dri-common>
   include <abstractions/dri-enumerate>
   include <abstractions/fontconfig-cache-write>
-  include <abstractions/fonts>
-  include <abstractions/freedesktop.org>
-  include <abstractions/gtk>
+  include <abstractions/gnome-strict>
   include <abstractions/mesa>
   include <abstractions/nameservice-strict>
   include <abstractions/nvidia>
   include <abstractions/user-download>
   include <abstractions/vulkan>
-  include <abstractions/wayland>
+
+  network unix stream,
 
   dbus bind bus=session name=org.freedesktop.impl.portal.desktop.gnome,
 
@@ -72,14 +72,9 @@ profile xdg-desktop-portal-gnome @{exec_path} {
        interface=org.freedesktop.DBus.Properties
        peer=(name=:*, label="{gnome-shell,gsd-xsettings}"),
 
-  dbus send bus=session path=/org/gtk/vfs/mounttracker
-       interface=org.gtk.vfs.MountTracker
-       member=ListMountableInfo
-       peer=(name=:*, label=gvfsd),
-
-  dbus receive bus=session
-       interface=org.freedesktop.DBus.Introspectable
-       member=Introspect
+  dbus receive bus=session path=/org/gnome/Mutter/DisplayConfig
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged
        peer=(name=:*, label=gnome-shell),
 
   @{exec_path} mr,
@@ -88,16 +83,9 @@ profile xdg-desktop-portal-gnome @{exec_path} {
   @{bin}/ r,
   @{bin}/* r,
 
-  /usr/share/X11/xkb/{,**} r,
-
-  /var/cache/gio-@{int}.@{int}/gnome-mimeapps.list r,
   /var/lib/snapd/desktop/icons/{,**} r,
 
   owner @{HOME}/*/{,**} rw,
-
-  owner @{user_share_dirs}/ r,
-
-  owner @{run}/user/@{uid}/gdm/Xauthority r,
 
   @{run}/mount/utab r,
 

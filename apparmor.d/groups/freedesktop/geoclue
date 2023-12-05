@@ -9,6 +9,10 @@ include <tunables/global>
 @{exec_path} = @{lib}/geoclue @{lib}/geoclue-2.0/demos/agent
 profile geoclue @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/bus/avahi>
+  include <abstractions/bus/modem-manager>
+  include <abstractions/bus/network-manager>
+  include <abstractions/bus/wpa-supplicant>
   include <abstractions/dbus-strict>
   include <abstractions/nameservice-strict>
   include <abstractions/p11-kit>
@@ -35,44 +39,6 @@ profile geoclue @{exec_path} flags=(attach_disconnected) {
        interface=org.freedesktop.DBus
        member={GetConnectionUnixUser,GetConnectionUnixProcessID}
        peer=(name=org.freedesktop.DBus, label=dbus-daemon),
-
-  dbus send bus=system path=/
-       interface=org.freedesktop.Avahi.Server
-       member={GetAPIVersion,GetState,ServiceBrowserNew},
-
-  dbus send bus=system path=/
-       interface=org.freedesktop.DBus.Peer
-       member=Ping,
-
-  dbus send bus=system path=/fi/w1/wpa_supplicant1
-       interface=org.freedesktop.DBus.Properties
-       member=PropertiesChanged 
-       peer=(name=:*, label=wpa-supplicant),
-
-  dbus send bus=system path=/org/freedesktop/ModemManager[0-9]
-       interface=org.freedesktop.DBus.ObjectManager
-       member=GetManagedObjects,
-
-  dbus send bus=system path=/org/freedesktop/NetworkManager
-       interface=org.freedesktop.DBus.Properties
-       member={GetAll,PropertiesChanged},
-
-  dbus receive bus=system path=/
-       interface=org.freedesktop.Avahi.Server
-       member=StateChanged,
-
-  dbus receive bus=system path=/Client[0-9]*/ServiceBrowser[0-9]*
-       interface=org.freedesktop.Avahi.ServiceBrowser
-       member={AllForNow,CacheExhausted}
-       peer=(name=:*, label=avahi-daemon),
-
-  dbus receive bus=system path=/org/freedesktop/NetworkManager
-       interface=org.freedesktop.NetworkManager
-       member={CheckPermissions,StateChanged,PropertiesChanged},
-
-  dbus receive bus=system path=/org/freedesktop/NetworkManager
-       interface=org.freedesktop.DBus.Properties
-       member=PropertiesChanged,
 
   @{exec_path} mr,
 

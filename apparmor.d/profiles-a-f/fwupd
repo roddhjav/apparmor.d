@@ -10,6 +10,7 @@ include <tunables/global>
 @{exec_path} = @{lib}/{,fwupd/}fwupd
 profile fwupd @{exec_path} flags=(complain,attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/bus/modem-manager>
   include <abstractions/bus/polkit>
   include <abstractions/bus/udisk>
   include <abstractions/bus/upower>
@@ -38,11 +39,9 @@ profile fwupd @{exec_path} flags=(complain,attach_disconnected) {
        peer=(name=:*, label=fwupdmgr),
   dbus receive bus=system path=/
        interface=org.freedesktop.DBus.Properties
-       member={GetAll,SetHints,GetPlugins,GetRemotes}
        peer=(name=:*, label=fwupdmgr),
   dbus send bus=system path=/
        interface=org.freedesktop.DBus
-       member=Changed
        peer=(name=:*, label=fwupdmgr),
 
   dbus send bus=system path=/org/freedesktop/DBus
@@ -50,17 +49,10 @@ profile fwupd @{exec_path} flags=(complain,attach_disconnected) {
        member={GetConnectionUnixUser,GetConnectionUnixProcessID}
        peer=(name=org.freedesktop.DBus, label=dbus-daemon),
 
-  dbus send bus=system path=/org/freedesktop/ModemManager1
-       interface=org.freedesktop.DBus.{Properties,ObjectManager}
-       member={GetAll,GetManagedObjects},
-
-  dbus send bus=system path=/org/freedesktop/UDisks2/block_devices/*
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll,
-
   dbus send bus=system path=/org/freedesktop/UDisks2/Manager
-       interface=org.freedesktop.{DBus.Properties,UDisks2.Manager}
-       member={GetAll,GetBlockDevices},
+       interface=org.freedesktop.UDisks2.Manager
+       member=GetBlockDevices
+       peer=(name=:*, label=udisksd),
 
   @{exec_path} mr,
 

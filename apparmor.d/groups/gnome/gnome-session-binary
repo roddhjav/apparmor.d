@@ -11,6 +11,7 @@ profile gnome-session-binary @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus/atspi>
   include <abstractions/bus/gnome-screensaver>
+  include <abstractions/bus/login-session>
   include <abstractions/bus/login>
   include <abstractions/bus/systemd-session>
   include <abstractions/dbus-accessibility-strict>
@@ -38,6 +39,29 @@ profile gnome-session-binary @{exec_path} flags=(attach_disconnected) {
   signal (send) set=(term) peer=gsd-*,
 
   dbus bind bus=session name=org.gnome.SessionManager,
+  dbus receive bus=session path=/org/gnome/SessionManager{,/**}
+       interface=org.freedesktop.DBus.Properties
+       peer=(name=:*),
+  dbus receive bus=session path=/org/gnome/SessionManager{,/**}
+       interface=org.gnome.SessionManager
+       peer=(name=:*),
+  dbus send bus=session path=/org/gnome/SessionManager{,/**}
+       interface=org.freedesktop.DBus.Properties
+       peer=(name=org.freedesktop.DBus),
+  dbus send bus=session path=/org/gnome/SessionManager{,/**}
+       interface=org.gnome.SessionManager
+       peer=(name=org.freedesktop.DBus,),
+
+  dbus send bus=session path=/org/gnome/SessionManager/Presence
+       interface=org.gnome.SessionManager.Presence
+       member=StatusChanged
+       peer=(name=org.freedesktop.DBus),
+
+  dbus receive bus=session path=/org/gnome/Mutter/IdleMonitor/Core
+       interface=org.gnome.Mutter.IdleMonitor
+       member=WatchFired
+       peer=(name=:*, label=gnome-shell),
+
 
   dbus send bus=session path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus
@@ -53,39 +77,6 @@ profile gnome-session-binary @{exec_path} flags=(attach_disconnected) {
        interface=org.freedesktop.login1.Session
        member=SetIdleHint
        peer=(name=org.freedesktop.login1, label=systemd-logind),
-
-  dbus (send,receive) bus=session path=/org/gnome/SessionManager{,/**}
-       interface={org.freedesktop.DBus.Introspectable,org.gnome.SessionManager**},
-
-  dbus receive bus=session path=/org/gnome/SessionManager
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=:*, label=at-spi2-registryd),
-
-  dbus send bus=session path=/org/gnome/SessionManager/Client@{int}
-       interface=org.gnome.SessionManager.ClientPrivate
-       member=CancelEndSession
-       peer=(name=org.freedesktop.DBus, label=gsd-*),
-
-  dbus send bus=session path=/org/gnome/SessionManager/Presence
-       interface=org.gnome.SessionManager.Presence
-       member=StatusChanged
-       peer=(name=org.freedesktop.DBus, label=gnome-shell),
-
-  dbus send bus=session path=/org/gnome/SessionManager/EndSessionDialog
-       interface=org.gnome.SessionManager.EndSessionDialog
-       member=Open
-       peer=(name=:*, label=gnome-shell),
-
-  dbus send bus=session path=/org/gnome/SessionManager/EndSessionDialog
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=:*, label=gnome-shell),
-
-  dbus (send, receive) bus=session path=/org/gnome/SessionManager{,/**}
-       interface=org.freedesktop.DBus.Properties
-       member={GetAll,PropertiesChanged}
-       peer=(name="{org.freedesktop.DBus,:*}", label="{gsd-*,gnome-*,xdg-desktop-portal-*}"),
 
   dbus send bus=session path=/org/freedesktop/systemd1
        interface=org.freedesktop.systemd1.Manager
@@ -104,11 +95,6 @@ profile gnome-session-binary @{exec_path} flags=(attach_disconnected) {
   dbus receive bus=session path=/org/gnome/Mutter/IdleMonitor/Core
        interface=org.gnome.Mutter.IdleMonitor
        member=WatchFired
-       peer=(name=:*, label=gnome-shell),
-
-  dbus receive bus=session
-       interface=org.freedesktop.DBus.Introspectable
-       member=Introspect 
        peer=(name=:*, label=gnome-shell),
 
   @{exec_path} mr,
