@@ -28,6 +28,7 @@ var (
 	regAbi4To3 = util.ToRegexRepl([]string{ // Currently Abi3 -> Abi4
 		`abi/3.0`, `abi/4.0`,
 		`# userns,`, `userns,`,
+		`# mqueue`, `mqueue`,
 	})
 )
 

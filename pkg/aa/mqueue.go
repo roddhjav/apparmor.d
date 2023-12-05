@@ -4,19 +4,29 @@
 
 package aa
 
+import "strings"
+
 type Mqueue struct {
 	Qualifier
 	Access string
 	Type   string
 	Label  string
+	Name   string
 }
 
 func MqueueFromLog(log map[string]string) ApparmorRule {
+	mqueueType := "posix"
+	if strings.Contains(log["class"], "posix") {
+		mqueueType = "posix"
+	} else if strings.Contains(log["class"], "sysv") {
+		mqueueType = "sysv"
+	}
 	return &Mqueue{
 		Qualifier: NewQualifierFromLog(log),
-		Access:    maskToAccess[log["requested_mask"]],
-		Type:      log["type"],
+		Access:    maskToAccess[log["requested"]],
+		Type:      mqueueType,
 		Label:     log["label"],
+		Name:      log["name"],
 	}
 }
 
