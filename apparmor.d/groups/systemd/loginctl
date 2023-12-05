@@ -9,21 +9,13 @@ include <tunables/global>
 @{exec_path} = @{bin}/loginctl
 profile loginctl @{exec_path} {
   include <abstractions/base>
+  include <abstractions/bus/login-session>
+  include <abstractions/bus/login>
   include <abstractions/dbus-strict>
   include <abstractions/systemd-common>
 
   capability net_admin,
   capability sys_resource,
-
-  dbus (send) bus=system path=/org/freedesktop/login1*
-       interface=org.freedesktop.login1*.Manager
-       member={ListSessions,GetSession}
-       peer=(name=org.freedesktop.login1*, label=systemd-logind),
-
-  dbus (send) bus=system path=/org/freedesktop/login1*/session/**
-       interface=org.freedesktop.DBus.Properties
-       member={Get,GetAll}
-       peer=(name=org.freedesktop.login1*, label=systemd-logind),
 
   @{exec_path} mr,
 

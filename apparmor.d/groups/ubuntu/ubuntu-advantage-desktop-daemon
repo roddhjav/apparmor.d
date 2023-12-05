@@ -14,22 +14,17 @@ profile ubuntu-advantage-desktop-daemon @{exec_path} flags=(attach_disconnected)
 
   capability sys_nice,
 
-  dbus send bus=system path=/org/freedesktop/DBus
-       interface=org.freedesktop.DBus
-       member=RequestName
-       peer=(name=org.freedesktop.DBus),
-
-  dbus receive bus=session
-       interface=org.freedesktop.DBus.Introspectable
-       member=Introspect
-       peer=(name=:*, label=gnome-shell),
+  dbus bind bus=system name=com.canonical.UbuntuAdvantage,
 
   dbus receive bus=system path=/
        interface=org.freedesktop.DBus.ObjectManager
-       member=GetManagedObjects,
+       member=GetManagedObjects
+       peer=(name=:*, label=software-properties-gtk),
 
-  dbus bind bus=system
-       name=com.canonical.UbuntuAdvantage,
+  dbus receive bus=system
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name=:*, label=software-properties-gtk),
 
   @{exec_path} mr,
 
