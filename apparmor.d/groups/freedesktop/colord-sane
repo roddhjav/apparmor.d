@@ -10,6 +10,7 @@ include <tunables/global>
 @{exec_path} = @{lib}/{,colord/}colord-sane
 profile colord-sane @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/bus/avahi>
   include <abstractions/dbus-strict>
   include <abstractions/devices-usb>
   include <abstractions/openssl>
@@ -17,18 +18,6 @@ profile colord-sane @{exec_path} flags=(attach_disconnected) {
   network inet dgram,
   network inet6 dgram,
   network netlink raw,
-
-  dbus (send,receive) bus=system path=/org/freedesktop/ColorManager
-       interface=org.freedesktop.{DBus.Properties,ColorManager},
-
-  dbus send bus=system path=/
-       interface=org.freedesktop.{DBus.Peer,Avahi.Server}
-       member={GetAPIVersion,GetState,ServiceBrowserNew,Ping}
-       peer=(name=org.freedesktop.Avahi),
-
-  dbus receive bus=system path=/Client[0-9]/ServiceBrowser[0-9]*
-       interface=org.freedesktop.Avahi.ServiceBrowser
-       member={CacheExhausted,AllForNow},
 
   @{exec_path} mr,
 

@@ -9,6 +9,9 @@ include <tunables/global>
 @{exec_path} = @{lib}/gsd-rfkill
 profile gsd-rfkill @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/bus/hostname>
+  include <abstractions/bus/modem-manager>
+  include <abstractions/bus/network-manager>
   include <abstractions/bus/session-manager>
   include <abstractions/dbus-session-strict>
   include <abstractions/dbus-strict>
@@ -18,41 +21,12 @@ profile gsd-rfkill @{exec_path} flags=(attach_disconnected) {
   network netlink raw,
 
   dbus bind bus=session name=org.gnome.SettingsDaemon.Rfkill,
-
-  dbus send bus=system path=/org/freedesktop/hostname[0-9]
-       interface=org.freedesktop.DBus.Properties
-       member=Get,
-
-  dbus send bus=system path=/org/freedesktop/NetworkManager
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll,
-
-  dbus send bus=system path=/org/freedesktop/ModemManager[0-9]
-       interface=org.freedesktop.DBus.ObjectManager
-       member=GetManagedObjects,
-
-  dbus send bus=session path=/org/gnome/SettingsDaemon/Rfkill
-       interface=org.freedesktop.DBus.Properties
-       member=PropertiesChanged 
-       peer=(name=org.freedesktop.DBus, label=gsd-media-keys),
-
-  dbus receive bus=system path=/org/freedesktop/NetworkManager
-       interface=org.freedesktop.NetworkManager
-       member={CheckPermissions,StateChanged},
-
-  dbus receive bus=system path=/org/freedesktop/NetworkManager
-       interface=org.freedesktop.DBus.Properties
-       member=PropertiesChanged,
-
   dbus receive bus=session path=/org/gnome/SettingsDaemon/Rfkill
        interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=:*, label="{gsd-media-keys,gnome-shell}"),
-
+       peer=(name=:*),    
   dbus send bus=session path=/org/gnome/SettingsDaemon/Rfkill
        interface=org.freedesktop.DBus.Properties
-       member=PropertiesChanged
-       peer=(name=org.freedesktop.DBus, label=gnome-shell),
+       peer=(name=org.freedesktop.DBus),
 
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable

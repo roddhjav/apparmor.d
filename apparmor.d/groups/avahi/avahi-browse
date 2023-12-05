@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2022 Jeroen Rijken
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -9,20 +10,14 @@ include <tunables/global>
 @{exec_path} = @{bin}/avahi-browse @{bin}/avahi-browse-domains
 profile avahi-browse @{exec_path} {
   include <abstractions/base>
+  include <abstractions/bus/avahi>
   include <abstractions/consoles>
   include <abstractions/dbus-strict>
 
-  dbus send bus=system path=/
-      interface=org.freedesktop.DBus.Peer
-      member=Ping,
-
-  dbus send bus=system path=/
-      interface=org.freedesktop.Avahi.Server
-      member={GetAPIVersion,GetState,ServiceTypeBrowserNew,ServiceBrowserNew},
-
-  dbus receive bus=system path=/Client[0-9]/ServiceTypeBrowser[0-9]
+  dbus receive bus=system path=/Client@{int}/ServiceTypeBrowser@{int}
       interface=org.freedesktop.Avahi.ServiceTypeBrowser
-      member={ItemNew,CacheExhausted,AllForNow},
+       member={ItemNew,AllForNow,CacheExhausted}
+       peer=(name=:*, label=avahi-daemon),
 
   @{exec_path} mr,
 

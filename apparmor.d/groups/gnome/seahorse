@@ -9,6 +9,8 @@ include <tunables/global>
 @{exec_path} = @{bin}/seahorse
 profile seahorse @{exec_path} {
   include <abstractions/base>
+  include <abstractions/bus/avahi>
+  include <abstractions/bus/desktop>
   include <abstractions/dbus-session-strict>
   include <abstractions/dbus-strict>
   include <abstractions/dconf-write>
@@ -17,24 +19,15 @@ profile seahorse @{exec_path} {
   include <abstractions/p11-kit>
   include <abstractions/ssl_certs>
 
-  dbus send bus=system path=/
-       interface=org.freedesktop.DBus.Peer
-       member=Ping
-       peer=(name=org.freedesktop.Avahi),
+  dbus bind bus=session name=org.gnome.seahorse.Application,
+  dbus receive bus=session path=/org/gnome/seahorse/Application
+       interface=org.gnome.Shell.SearchProvider2
+       peer=(name=:*),
 
-  dbus send bus=system path=/
-       interface=org.freedesktop.Avahi.Server
-       member={GetAPIVersion,GetState,ServiceBrowserNew}
-       peer=(name=org.freedesktop.Avahi),
-
-  dbus send bus=system path=/Client[0-9]*/ServiceBrowser[0-9]*
-       interface=org.freedesktop.Avahi.ServiceBrowser
-       member=Free
-       peer=(name=org.freedesktop.Avahi),
-
-  dbus receive bus=system path=/Client[0-9]*/ServiceBrowser[0-9]*
-       interface=org.freedesktop.Avahi.ServiceBrowser
-       member={CacheExhausted,AllForNow},
+  dbus send bus=session path=/org/freedesktop/secrets
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=:*, label=gnome-keyring-daemon),
 
   @{exec_path} mr,
 

@@ -1,5 +1,5 @@
 # apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2021-2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -9,8 +9,14 @@ include <tunables/global>
 @{exec_path} = @{bin}/gnome-calendar
 profile gnome-calendar @{exec_path} {
   include <abstractions/base>
+  include <abstractions/bus/desktop>
+  include <abstractions/bus/login>
+  include <abstractions/bus/network-manager>
+  include <abstractions/bus/timedate>
+  include <abstractions/dbus-session-strict>
+  include <abstractions/dbus-strict>
   include <abstractions/dconf-write>
-  include <abstractions/gnome>
+  include <abstractions/gnome-strict>
   include <abstractions/mesa>
   include <abstractions/nameservice-strict>
   include <abstractions/opencl>
@@ -21,14 +27,27 @@ profile gnome-calendar @{exec_path} {
 
   network netlink raw,
 
+  dbus bind bus=session name=org.gnome.Calendar,
+  dbus receive bus=session path=/org/gnome/Calendar/SearchProvider
+       interface=org.gnome.Shell.SearchProvider2
+       peer=(name=:*, label=gnome-shell),
+
+  dbus send bus=session path=/org/gnome/evolution/dataserver/**
+       interface=org.freedesktop.DBus.Properties
+       peer=(name=:*, label=evolution-*),
+  dbus send bus=session path=/org/gnome/evolution/dataserver/**
+       interface=org.gnome.evolution.dataserver.*
+       peer=(name=:*, label=evolution-*),
+  dbus send bus=session path=/org/gnome/evolution/dataserver/**
+       interface=org.freedesktop.DBus.ObjectManager
+       member=GetManagedObjects
+       peer=(name=:*, label=evolution-*),
+
   @{exec_path} mr,
 
   /usr/share/egl/{,**} r,
   /usr/share/evolution-data-server/{,**} r,
-  /usr/share/glib-2.0/schemas/gschemas.compiled r,
   /usr/share/libgweather/Locations.xml r,
-
-  owner @{run}/user/@{uid}/gdm/Xauthority r,
 
   owner @{PROC}/@{pid}/cmdline r,
 

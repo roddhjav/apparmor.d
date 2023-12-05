@@ -12,10 +12,13 @@ profile goa-identity-service @{exec_path} {
   include <abstractions/authentication>
   include <abstractions/dbus-session-strict>
 
+  dbus bind bus=session name=org.gnome.Identity,
   dbus receive bus=session path=/org/gnome/Identity
        interface=org.freedesktop.DBus.ObjectManager
-       member=GetManagedObjects
-       peer=(name=:*, label=goa-daemon),
+       peer=(name=:*),
+  dbus receive bus=session path=/org/gnome/Identity/Manager
+       interface=org.freedesktop.DBus.Properties
+       peer=(name=:*),
 
   dbus send bus=session path=/org/gnome/OnlineAccounts
        interface=org.freedesktop.DBus.ObjectManager
@@ -26,13 +29,6 @@ profile goa-identity-service @{exec_path} {
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
        peer=(name=:*, label=gnome-shell),
-
-  dbus receive bus=session path=/org/gnome/Identity/Manager
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=:*, label=goa-daemon),
-
-  dbus bind bus=session name=org.gnome.Identity,
 
   @{exec_path} mr,
 
