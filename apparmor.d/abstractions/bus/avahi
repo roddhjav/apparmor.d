@@ -1,0 +1,25 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+  dbus send bus=system path=/
+       interface=org.freedesktop.DBus.Peer
+       member=Ping
+       peer=(name=org.freedesktop.Avahi, label=avahi-daemon),
+
+  dbus send bus=system path=/
+       interface=org.freedesktop.Avahi.Server
+       member={GetAPIVersion,GetState,Service*New}
+       peer=(name=org.freedesktop.Avahi, label=avahi-daemon),
+
+  dbus send bus=system path=/Client@{int}/ServiceBrowser@{int}
+       interface=org.freedesktop.Avahi.ServiceBrowser
+       member=Free
+       peer=(name=org.freedesktop.Avahi, label=avahi-daemon),
+
+  dbus receive bus=system path=/Client@{int}/ServiceBrowser@{int}
+       interface=org.freedesktop.Avahi.ServiceBrowser
+       member={ItemNew,AllForNow,CacheExhausted}
+       peer=(name=:*, label=avahi-daemon),
+
+  include if exists <abstractions/bus/avahi.d>
