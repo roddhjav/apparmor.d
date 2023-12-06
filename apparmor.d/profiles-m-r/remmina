@@ -28,28 +28,15 @@ profile remmina @{exec_path} {
   network inet6 stream,
   network netlink raw,
 
-  dbus send bus=session path=/org/freedesktop/secrets{,/collection/login{,/[0-9]*}}
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=:*, label=gnome-keyring-daemon),
+  dbus bind bus=session name=org.remmina.Remmina,
 
   dbus send bus=session path=/StatusNotifierWatcher
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
        peer=(name=org.kde.StatusNotifierWatcher),
 
-  dbus send bus=session path=/org/freedesktop/secrets
-       interface=org.freedesktop.Secret.Service
-       member={OpenSession,GetSecrets,SearchItems,ReadAlias}
-       peer=(name=:*, label=gnome-keyring-daemon),
-
   dbus (send, receive) bus=session path=/org/ayatana/NotificationItem/remmina_icon{,/**}
        peer=(name="{:*,org.freedesktop.DBus}"),  # all interfaces and members
-
-  dbus send bus=session path=/org/freedesktop/secrets/collection/session
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=:*, label=gnome-keyring-daemon),
 
   dbus send bus=session path=/StatusNotifierWatcher
        interface=org.kde.StatusNotifierWatcher
@@ -60,24 +47,6 @@ profile remmina @{exec_path} {
        interface=org.gtk.Private.RemoteVolumeMonitor
        member={IsSupported,List}
        peer=(name=:*),
-
-  dbus send bus=session path=/org/freedesktop/secrets/aliases/default
-       interface=org.freedesktop.Secret.Collection
-       member=CreateItem
-       peer=(name=org.freedesktop.secrets, label=gnome-keyring-daemon),
-
-  dbus receive bus=session path=/org/freedesktop/secrets/collection/login
-       interface=org.freedesktop.Secret.Collection
-       member=ItemCreated
-       peer=(name=:*, label=gnome-keyring-daemon),
-
-  dbus receive bus=session path=/org/freedesktop/secrets/collection/login
-       interface=org.freedesktop.DBus.Properties
-       member=PropertiesChanged
-       peer=(name=:*, label=gnome-keyring-daemon),
-
-  dbus bind bus=session
-       name=org.remmina.Remmina,
 
   @{exec_path} r,
 

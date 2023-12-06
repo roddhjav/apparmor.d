@@ -22,90 +22,29 @@ profile gnome-keyring-daemon @{exec_path} flags=(attach_disconnected) {
   signal (receive) set=(term) peer=gdm,
   signal (send) set=(term) peer=ssh-agent,
 
-  dbus send bus=system path=/org/freedesktop/login1/session/*
-       interface=org.freedesktop.DBus.Properties
-       member=Get
-       peer=(name=org.freedesktop.login1),
-
-  dbus receive bus=system path=/org/freedesktop/login1/session/*
-       interface=org.freedesktop.DBus.Properties
-       member=PropertiesChanged
-       peer=(name=:*, label=systemd-logind),
-
-  dbus send bus=system path=/org/freedesktop/login1
-       interface=org.freedesktop.login1.Manager
-       member=GetSession
-       peer=(name=org.freedesktop.login1),
-
-  dbus send bus=session path=/org/gnome/SessionManager
-       interface=org.gnome.SessionManager
-       member=Setenv
-       peer=(name=org.gnome.SessionManager, label=gnome-session-binary),
-
+  dbus bind bus=session name=org.gnome.keyring,
   dbus (send, receive) bus=session path=/org/gnome/keyring/daemon
        interface=org.gnome.keyring.Daemon
-       peer=(name="{org.gnome.keyring,:*}", label=@{profile_name}), # all members
+       peer=(name="{org.gnome.keyring,:*}", label=@{profile_name}),
 
-  dbus receive bus=session path=/org/freedesktop/secrets
+  dbus bind bus=session name=org.freedesktop.secrets,
+  dbus receive bus=session path=/org/freedesktop/secrets{,/**}
        interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=:*, label=gnome-shell),
-
-  dbus receive bus=session path=/org/freedesktop/secrets
-       interface=org.freedesktop.Secret.Service
-       member=SearchItems
-       peer=(name=:*, label=gnome-shell),
-
-  dbus receive bus=session path=/org/freedesktop/secrets/aliases/default
+       peer=(name=:*),
+  dbus receive bus=session path=/org/freedesktop/secrets{,/**}
+       interface=org.freedesktop.Secret.*
+       peer=(name=:*),
+  dbus send bus=session path=/org/freedesktop/secrets{,/**}
        interface=org.freedesktop.Secret.Collection
-       member=CreateItem
-       peer=(name=:*),
-
-  dbus receive bus=session path=/org/freedesktop/secrets/aliases/default
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=:*),
-
-  dbus send bus=session path=/org/freedesktop/secrets/collection/login
-       interface=org.freedesktop.Secret.Collection
-       member=ItemCreated
        peer=(name=org.freedesktop.DBus),
-
-  dbus send bus=session path=/org/freedesktop/secrets/collection/login
+  dbus send bus=session path=/org/freedesktop/secrets{,/**}
        interface=org.freedesktop.DBus.Properties
-       member=PropertiesChanged
        peer=(name=org.freedesktop.DBus),
-
-  dbus receive bus=session path=/org/freedesktop/secrets
-       interface=org.freedesktop.Secret.Service
-       member={ReadAlias,OpenSession}
-       peer=(name=:*),
-
-  dbus receive bus=session path=/org/freedesktop/secrets/collection/login/[0-9]*
-       interface=org.freedesktop.Secret.Item
-       member=GetSecret
-       peer=(name=:*),
-
-  dbus receive bus=session path=/org/freedesktop/secrets{,/collection/**}
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=:*),
 
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
        peer=(name=:*, label=gnome-shell),
-
-  dbus receive bus=session path=/org/freedesktop/secrets
-       interface=org.freedesktop.Secret.Service
-       member={GetSecrets,SearchItems}
-       peer=(name=:*), # label="{unconfined,remmina}"),
-
-  dbus bind bus=session
-       name=org.gnome.keyring,
-
-  dbus bind bus=session
-       name=org.freedesktop.secrets,
 
   @{exec_path} mr,
 

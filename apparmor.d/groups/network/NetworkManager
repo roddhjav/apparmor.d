@@ -50,8 +50,10 @@ profile NetworkManager @{exec_path} flags=(attach_disconnected) {
        interface=org.freedesktop.DBus.Properties
        peer=(name=:*),
   dbus send bus=system path=/org/freedesktop/NetworkManager{,/**}
+       interface=org.freedesktop.NetworkManager
+       peer=(name=org.freedesktop.DBus),
+  dbus send bus=system path=/org/freedesktop/NetworkManager{,/**}
        interface=org.freedesktop.DBus.Properties
-       member=PropertiesChanged
        peer=(name=org.freedesktop.DBus),
 
   dbus receive bus=system path=/org/freedesktop
@@ -68,24 +70,6 @@ profile NetworkManager @{exec_path} flags=(attach_disconnected) {
        interface=org.freedesktop.resolve1.Manager
        member={SetLink*,ResolveHostname}
        peer=(name=org.freedesktop.resolve1, label=systemd-resolved),
-
-  dbus send bus=system path=/org/freedesktop/ModemManager1
-       interface=org.freedesktop.DBus.ObjectManager
-       member=GetManagedObjects,
-
-  dbus (send receive) bus=system path=/fi/w1/wpa_supplicant1{,/**}
-       interface={fi.w1.wpa_supplicant1.Interface,org.freedesktop.DBus.Properties}
-       member=PropertiesChanged 
-       peer=(name=:*, label=wpa-supplicant),
-
-  dbus receive bus=system path=/org/freedesktop/login1
-       interface=org.freedesktop.login1.Manager
-       peer=(name=:*, label=systemd-logind),
-
-  dbus receive bus=system path=/org/bluez/hci@{int}{,/**}
-       interface=org.freedesktop.DBus.Properties
-       member=PropertiesChanged
-       peer=(name=:*, label=bluetoothd),
 
   dbus send bus=system path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus
