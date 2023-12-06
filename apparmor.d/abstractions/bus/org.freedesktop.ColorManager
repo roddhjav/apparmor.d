@@ -1,0 +1,20 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+  dbus send bus=system path=/org/freedesktop/ColorManager
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=:*, label=colord),
+
+  dbus send bus=system path=/org/freedesktop/ColorManager
+       interface=org.freedesktop.ColorManager
+       member=CreateDevice
+       peer=(name=:*, label=colord),
+
+  dbus receive bus=system path=/org/freedesktop/ColorManager
+       interface=org.freedesktop.ColorManager
+       member={DeviceAdded,DeviceRemoved}
+       peer=(name=:*, label=colord),
+
+  include if exists <abstractions/bus/org.freedesktop.ColorManager.d>
