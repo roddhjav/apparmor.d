@@ -1,5 +1,5 @@
 # apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2021-2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -78,410 +78,144 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected) {
   unix (send,receive) type=stream addr=none peer=(label=xwayland),
   unix (send,receive, connect) type=stream peer=(addr="@/var/lib/gdm{3,}/.cache/ibus/dbus-????????", label=ibus-daemon),
 
-  dbus send bus=session path=/org/freedesktop/DBus
-       interface=org.freedesktop.DBus
-       member={RequestName,ReleaseName,ListNames}
-       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
+  # Owned by gnome-shell
 
-  dbus send bus=session path=/ interface=org.freedesktop.DBus
-       member=ListNames
-       peer=(name=org.freedesktop.DBus label=dbus-daemon),
+  dbus bind bus=session name=org.gnome.*,
+  dbus (send, receive) bus=session path=/org/gnome/**
+       interface=org.gnome.*
+       peer=(name=org.gnome.*),
+  dbus (send, receive) bus=session path=/org/gnome/**
+       interface=org.gnome.*
+       peer=(name=:*),
+  dbus (send, receive) bus=session path=/org/gnome/**
+       interface=org.freedesktop.DBus.Properties
+       peer=(name=:*),
+  dbus (send, receive) bus=session path=/org/gnome/**
+       interface=org.freedesktop.DBus.Properties
+       peer=(name=org.freedesktop.DBus),
+  dbus (send, receive) bus=session path=/org/gnome/**
+       interface=org.freedesktop.DBus.ObjectManager
+       peer=(name=:*),
+  dbus (send, receive) bus=session path=/org/gnome/**
+       interface=org.gtk.Actions
+       peer=(name=:*),
+  dbus send bus=session path=/org/gnome/**
+       interface=org.gnome.Shell.Introspect
+       peer=(name=org.freedesktop.DBus),
+  dbus send bus=session path=/org/gnome/**
+       interface=org.freedesktop.Application
+       peer=(name=org.gnome.*),
 
-  dbus send bus=session path=/org/freedesktop/DBus
+  dbus bind bus=session name=org.gtk.MountOperationHandler,
+
+  dbus bind bus=session name=com.canonical.Unity,
+  dbus receive bus=session path=/com/canonical/unity/**
+       interface=com.canonical.Unity{,.*}
+       peer=(name=:*),
+
+  dbus bind bus=session name=org.kde.StatusNotifierWatcher,
+  dbus receive bus=session path=/StatusNotifierWatcher
+       interface=org.kde.StatusNotifierWatcher
+       peer=(name=:*),
+
+  dbus bind bus=session name=org.gtk.Notifications,
+  dbus receive bus=session path=/org/gtk/Notifications
        interface=org.freedesktop.DBus.Properties
        member=GetAll
-       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
-
-  dbus send bus=system  path=/org/freedesktop/DBus
-       interface=org.freedesktop.DBus
-       member=GetConnectionUnixUser,
-
-  dbus (send,receive) bus=system path=/org/freedesktop/PolicyKit[0-9]/Authority
-       interface=org.freedesktop.{DBus.Properties,PolicyKit[0-9].Authority}
-       member={CheckAuthorization,RegisterAuthenticationAgent,Changed,GetAll},
-
-  dbus (send,receive) bus=system path=/org/freedesktop/Accounts{,/User[0-9]*}
-       interface=org.freedesktop.{DBus.Properties,Accounts*}
-       member={GetAll,FindUserByName,Changed,PropertiesChanged,FindUserById,ListCachedUsers,UserAdded},
-
-  dbus (send,receive) bus=system path=/org/freedesktop/UPower{,**}
-       interface=org.freedesktop.DBus.Properties
-       member={GetAll,PropertiesChanged},
-
-  dbus (send,receive) bus=system path=/org/freedesktop/UPower{,**}
-       interface=org.freedesktop.UPower
-       peer=(name=:*, label=upowerd),
-
-  dbus (send,receive) bus=system path=/org/freedesktop/GeoClue2/{Agent,Manager}
-       interface=org.freedesktop.{DBus.Properties,GeoClue2.Manager}
-       member={PropertiesChanged,AddAgent,GetAll},
-
-  dbus send    bus=system path=/org/freedesktop
-       interface=org.freedesktop.DBus.ObjectManager
-       member=GetManagedObjects
-       peer=(name=:*, label=NetworkManager),
-
-  dbus receive bus=system path=/org/freedesktop
-       interface=org.freedesktop.DBus.ObjectManager
-       member={InterfacesAdded,InterfacesRemoved}
-       peer=(name=:*, label=NetworkManager),
-
-  dbus send bus=system path=/org/gnome/DisplayManager/Manager
-       interface=org.{freedesktop.DBus.Properties,gnome.DisplayManager.Manager}
-       member={RegisterSession,Get,GetAll,OpenReauthenticationChannel,OpenSession},
-
-  dbus send bus=system path=/org/freedesktop/PackageKit
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll,
-
+       peer=(name=:*),
   dbus receive bus=session path=/org/freedesktop/Notifications
        interface=org.freedesktop.DBus.Properties
        member=GetAll
-       peer=(name=:*, label=gjs-console),
-
-  dbus send bus=session path=/org/freedesktop/secrets
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=:*, label=gnome-keyring-daemon),
-
-  dbus send bus=session path=/org/freedesktop/secrets
-       interface=org.freedesktop.Secret.Service
-       member=SearchItems
-       peer=(name=:*, label=gnome-keyring-daemon),
-
-  dbus send bus=system path=/net/hadess/{PackageKit,PowerProfiles,SwitcherooControl}
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll,
-
-  dbus send bus=system path=/org/freedesktop/locale[0-9]*
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=org.freedesktop.locale[0-9]*), # all peer's labels
-
-  dbus send    bus=session path=/org/gnome/SettingsDaemon/Power
-       interface=org.freedesktop.DBus.Properties
-       member={GetAll,Set}
-       peer=(name=:*, label=gsd-power),
-
-  dbus receive bus=session path=/org/gnome/SettingsDaemon/Power
-       interface=org.freedesktop.DBus.Properties
-       member=PropertiesChanged
-       peer=(name=:*, label=gsd-power),
-
-  dbus send bus=system path=/net/reactivated/Fprint/Manager
-       interface=net.reactivated.Fprint.Manager
-       member=GetDefaultDevice,
-
-  dbus send    bus=system path=/org/freedesktop/NetworkManager/Devices/[0-9]*
-       interface=org.freedesktop.NetworkManager.Device
-       member=Disconnect
-       peer=(name=:*, label=NetworkManager),
-
-  dbus receive bus=system path=/org/freedesktop/NetworkManager/ActiveConnection/[0-9]*
-       interface=org.freedesktop.NetworkManager.Connection.Active
-       member=StateChanged
-       peer=(name=:*, label=NetworkManager),
-
-  dbus send    bus=system path=/org/freedesktop/NetworkManager/Settings/[0-9]*
-       interface=org.freedesktop.NetworkManager.Settings.Connection
-       member=GetSettings
-       peer=(name=:*, label=NetworkManager),
-
-  dbus receive bus=system path=/org/freedesktop/NetworkManager/Settings/[0-9]*
-       interface=org.freedesktop.NetworkManager.Settings.Connection
-       member=Updated
-       peer=(name=:*, label=NetworkManager),
-
-  dbus receive bus=system path=/org/freedesktop/NetworkManager/SecretAgent
-       interface=org.freedesktop.NetworkManager.SecretAgent
-       member={SaveSecrets,DeleteSecrets}
-       peer=(name=:*, label=NetworkManager),
-
-  dbus send    bus=system path=/org/freedesktop/NetworkManager{,/AgentManager}
-       interface=org.freedesktop.NetworkManager{,.AgentManager}
-       member={Unregister,RegisterWithCapabilities,GetPermissions},
-
-  dbus send    bus=system path=/org/freedesktop/NetworkManager
-       interface=org.freedesktop.NetworkManager
-       member=ActivateConnection
-       peer=(name=:*, label=NetworkManager),
-
-  dbus receive bus=system path=/org/freedesktop/NetworkManager
-       interface=org.freedesktop.NetworkManager
-       member=CheckPermissions,
-
-  dbus receive bus=system path=/org/freedesktop/NetworkManager{,/**}
-       interface=org.freedesktop.DBus.Properties
-       member=PropertiesChanged
-       peer=(name=:*, label=NetworkManager),
-
-  dbus receive bus=system path=/org/freedesktop/PolicyKit[0-9]/AuthenticationAgent
-       interface=org.freedesktop.PolicyKit[0-9].AuthenticationAgent
-       member=BeginAuthentication,
-
-  dbus send    bus=session path=/org/freedesktop/systemd[0-9]*
-       interface=org.freedesktop.systemd[0-9]*.Manager
-       member={GetUnit,StartUnit,StartTransientUnit}
-       peer=(name=org.freedesktop.systemd[0-9]*), # all peer's labels
-
-  dbus receive bus=session path=/org/freedesktop/systemd[0-9]*
-       interface=org.freedesktop.systemd[0-9]*.Manager
-       member=JobRemoved
        peer=(name=:*),
 
-  dbus (send, receive) bus=system path=/org/freedesktop/login[0-9]{,/**}
-       interface=org.freedesktop.{DBus.Properties,login[0-9].{Manager,Session}}
-       peer=(name=:*, label=systemd-logind),
-
-  dbus send    bus=session path=/org/gnome/Mutter/DisplayConfig
-       interface=org.gnome.Mutter.DisplayConfig
-       member={GetResources,GetCrtcGamma}
-       peer=(name=:*, label=gnome-shell),
-
-  dbus receive bus=session path=/org/gnome/Mutter/DisplayConfig
-       interface=org.gnome.Mutter.DisplayConfig
-       member={GetResources,GetCrtcGamma}
-       peer=(name=:*, label="{gsd-power,gsd-color}"),
-
-  dbus receive bus=session path=/org/gnome/Mutter/DisplayConfig
-       interface=org.gnome.Mutter.DisplayConfig
-       member=GetCurrentState
-       peer=(name=:*, label=xdg-desktop-portal-*),
-
-  dbus receive bus=session path=/org/gnome/Mutter/DisplayConfig
-       interface=org.gnome.Mutter.DisplayConfig
-       member=GetCurrentState
-       peer=(name=:*, label="{spice-vdagent,gsd-xsettings}"),
-
-  dbus receive bus=session path=/org/gnome/Mutter/DisplayConfig
+  dbus bind bus=session name=com.rastersoft.dingextension,
+  dbus (send, receive) bus=session path=/com/rastersoft/ding
        interface=org.freedesktop.DBus.Properties
-       member={GetAll,GetResources,Set}
-       peer=(name=:*, label="{gsd-power,gsd-color,xdg-desktop-portal-*}"),
+       peer=(name=:*, label=gnome-extension-ding),
+  dbus (send, receive) bus=session path=/com/rastersoft/ding{,extension/control}
+       interface=org.gtk.Actions
+       peer=(name=:*, label=gnome-extension-ding),
 
-  dbus receive bus=session path=/org/{gnome/Shell/Screenshot,gnome/Shell/Introspect,gtk/Notifications,gnome/Mutter/RemoteDesktop,gnome/Mutter/ScreenCast}
+  # Talk with gnome-shell
+
+  dbus (send, receive) bus=system path=/org/gnome/**
+       interface=org.gnome.*
+       peer=(name=org.gnome.*),
+  dbus (send, receive) bus=system path=/org/gnome/**
        interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=:* label=xdg-desktop-portal-*),
-
-  dbus receive bus=session path=/org/gnome/Shell/Introspect
-       interface=org.freedesktop.DBus.Properties
-       member=Get
-       peer=(name=:*, label=gsd-xsettings),
-
-  dbus receive bus=session path=/org/gnome/ScreenSaver
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=:*, label=gjs-console),
-
-  dbus send    bus=session path=/org/gnome/ScreenSaver
-       interface=org.gnome.ScreenSaver
-       member={ActiveChanged,WakeUpScreen}
-       peer=(name=org.freedesktop.DBus, label=gjs-console),
-
-  dbus receive bus=session path=/org/gnome/Shell
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=:*, label=gsd-media-keys),
-
-  dbus (send,receive) bus=session path=/org/gnome/Shell{,/**}
-       interface=org.gnome.Shell
        peer=(name=:*),
 
-  dbus receive bus=session path=/org/freedesktop/portal/desktop
+  dbus send bus=session path=/org/gtk/Private/RemoteVolumeMonitor
+       interface=org.gtk.Private.RemoteVolumeMonitor
+       member={IsSupported,List,VolumeMount}
+       peer=(name=:*, label=gvfs-*-monitor),
+  dbus receive bus=session path=/org/gtk/Private/RemoteVolumeMonitor
+       interface=org.gtk.Private.RemoteVolumeMonitor
+       member={MountAdded,VolumeChanged}
+       peer=(name=:*, label=gvfs-*-monitor),
+
+  dbus send bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={GetConnectionUnixUser,GetConnectionUnixProcessID,GetNameOwner,ListNames}
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
+  dbus send bus=systemd path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=:*, label=xdg-desktop-portal),
-
-  dbus send    bus=session path=/org/freedesktop/impl/portal/PermissionStore
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=:*, label=xdg-permission-store),
-
-  dbus send    bus=session path=/org/freedesktop/impl/portal/PermissionStore
-       interface=org.freedesktop.impl.portal.PermissionStore
-       member=Lookup
-       peer=(name=:*, label=xdg-permission-store),
-
-  dbus (send, receive) bus=session path=/org/gnome/SessionManager{,/**}
-       interface=org.freedesktop.DBus.Properties
-       member={GetAll,PropertiesChanged}
-       peer=(name=:*, label=gnome-session-binary),
-
-  dbus receive bus=session path=/org/gnome/SessionManager/Presence
-       interface=org.gnome.SessionManager.Presence
-       member=StatusChanged
-       peer=(name=:*, label=gnome-session-binary),
-
-  dbus send    bus=session path=/org/gnome/SessionManager/EndSessionDialog
-       interface=org.gnome.SessionManager.EndSessionDialog
-       member={Canceled,Closed,ConfirmedLogout,ConfirmedReboot,ConfirmedShutdown}
-       peer=(name=org.freedesktop.DBus, label=gnome-session-binary),
-
-  dbus receive bus=session path=/org/gnome/SessionManager/EndSessionDialog
-       interface=org.gnome.SessionManager.EndSessionDialog
-       member={Open,Close}
-       peer=(name=:*, label=gnome-session-binary),
-
-  dbus send    bus=session path=/org/gnome/SessionManager
-       interface=org.gnome.SessionManager
-       member=Setenv
-       peer=(name=org.gnome.SessionManager, label=gnome-session-binary),
-
-  dbus send    bus=session path=/org/gnome/SessionManager
-       interface=org.gnome.SessionManager
-       member={CanShutdown,Shutdown,Reboot,Logout}
-       peer=(name=:*, label=gnome-session-binary),
-
-  dbus receive bus=session path=/org/gnome/SessionManager
-       interface=org.gnome.SessionManager
-       member={ClientAdded,SessionRunning,ClientRemoved,InhibitorRemoved,InhibitorAdded}
-       peer=(name=:*, label=gnome-session-binary),
-
-  dbus send    bus=session path=/org/gnome/SessionManager/Inhibitor[0-9]*
-       interface=org.gnome.SessionManager.Inhibitor
-       member=GetAppId
-       peer=(name=:*, label=gnome-session-binary),
-
-  dbus (send, receive) bus=session
-       interface=org.freedesktop.DBus.Introspectable
-       member=Introspect
-       peer=(name=:*), # all paths and peer's labels
-
-  dbus receive bus=session
-       interface=org.freedesktop.DBus.Introspectable
-       member=Introspect
-       peer=(name=:*, label=gnome-shell),
-
-  dbus (send, receive) bus=session path=/org/gnome/SettingsDaemon/Rfkill
-       interface=org.freedesktop.DBus.Properties
-       member={GetAll,PropertiesChanged}
-       peer=(name=:*, label=gsd-rfkill),
-
-  dbus send bus=session path=/org/gnome/SettingsDaemon/Color
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=:*, label=gsd-color),
-
-  dbus send bus=session path=/org/gnome/SettingsDaemon/Wacom
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=:*, label=gsd-wacom),
-
-  dbus send bus=session path=/org/gnome/SettingsDaemon/Smartcard
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=:*, label=gsd-smartcard),
-
-  dbus send bus=session path=/org/gnome/SettingsDaemon/Smartcard
-       interface=org.freedesktop.DBus.ObjectManager
-       member=GetManagedObjects
-       peer=(name=:*, label=gsd-smartcard),
-
-  dbus receive bus=session path=/org/gnome/Mutter/IdleMonitor 
-       interface=org.freedesktop.DBus.ObjectManager
-       member=GetManagedObjects
-       peer=(name=:*, label="{gnome-session-binary,gsd-power}"),
-
-  dbus send    bus=session path=/org/gnome/Mutter/IdleMonitor/Core
-       interface=org.gnome.Mutter.IdleMonitor
-       member=WatchFired
-       peer=(name=:*, label="{gnome-session-binary,gsd-power}"),
-
-  dbus receive bus=session path=/org/gnome/Mutter/IdleMonitor/Core
-       interface=org.gnome.Mutter.IdleMonitor
-       member={AddIdleWatch,AddUserActiveWatch,RemoveWatch}
-       peer=(name=:*, label="{gnome-session-binary,gsd-power}"),
-
-  dbus receive bus=session path=/com/rastersoft/dingextension/control
-       interface=org.gtk.Actions
-       member=DescribeAll
-       peer=(name=:*, label=gnome-extension-ding),
-
-  dbus receive bus=system path=/org/freedesktop/ColorManager{,/**}
-       interface=org.freedesktop.ColorManager
-       peer=(name=:*, label=colord),
-
-  dbus send    bus=session path=/com/rastersoft/ding
-       interface=org.gtk.Actions
-       member=DescribeAll
-       peer=(name=:*, label=gnome-extension-ding),
-
-  dbus send    bus=session path=/com/rastersoft/ding
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=:*, label=gnome-extension-ding),
-
-  dbus send    bus=session path=/org/gnome/ControlCenter
-       interface=org.gtk.Actions
-       member=DescribeAll
-       peer=(name=:*, label=gnome-control-center),
-
-  dbus send    bus=session path=/org/gnome/ControlCenter
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=:*, label=gnome-control-center),
-
-  dbus receive bus=session path=/org/gnome/ControlCenter
-       interface=org.gtk.Actions
-       member=Changed
-       peer=(name=:*, label=gnome-control-center),
-
-  dbus send    bus=session path=/org/gnome/ControlCenter/window/[0-9]*
-       interface=org.gtk.Actions
-       member=DescribeAll
-       peer=(name=:*, label=gnome-control-center),
-
-  dbus send bus=session path=/org/gtk/vfs/metadata
-       interface=org.gtk.vfs.Metadata
-       member={Remove,GetTreeFromDevice}
-       peer=(name=:*, label=gvfsd-metadata),
-
-  dbus receive bus=session path=/org/gtk/vfs/mounttracker
-       interface=org.gtk.vfs.MountTracker
-       member=Mounted
-       peer=(name=:*, label=gvfsd),
-
-  dbus send bus=session path=/org/a11y/bus
-       interface=org.a11y.Bus
-       member=GetAddress
-       peer=(name=org.a11y.Bus), # all peer's labels
-
-  dbus send    bus=accessibility path=/org/a11y/atspi/registry
-       interface=org.a11y.atspi.Registry
-       member=GetRegisteredEvents
-       peer=(name=org.a11y.atspi.Registry), # all peer's labels
-
-  dbus receive bus=accessibility path=/org/a11y/atspi/registry
-       interface=org.a11y.atspi.Registry
-       member=EventListenerDeregistered
-       peer=(name=:*, label=at-spi2-registryd),
-
-  dbus send    bus=accessibility path=/org/a11y/atspi/registry/deviceeventcontroller
-       interface=org.a11y.atspi.DeviceEventController
-       member={GetKeystrokeListeners,GetDeviceEventListeners}
-       peer=(name=org.a11y.atspi.Registry), # all peer's labels
+       member={GetConnectionUnixUser,GetConnectionUnixProcessID,GetNameOwner,ListNames}
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
+  dbus send bus=session path=/
+       interface=org.freedesktop.DBus
+       member={GetConnectionUnixProcessID,GetNameOwner,ListNames}
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
 
   dbus send bus=accessibility path=/org/a11y/atspi/accessible/root
        interface=org.a11y.atspi.Socket
        member=Embed
-       peer=(name=org.a11y.atspi.Registry), # all peer's labels
+       peer=(name=org.a11y.atspi.Registry),
 
-  dbus send bus=session path=/org/gtk/Private/RemoteVolumeMonitor
-       interface=org.gtk.Private.RemoteVolumeMonitor
-       member={List,IsSupported}
-       peer=(name=:*, label=gvfs-*-volume-monitor),
+  dbus send bus=session path=/org/gtk/vfs/**
+       interface=org.gtk.vfs.*
+       peer=(name=:*, label=gvfsd*),
 
-  dbus bind bus=session name=com.rastersoft.dingextension,
+  dbus send bus=session path=/org/freedesktop/background/monitor
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=:*, label=xdg-desktop-portal),
 
-  dbus bind bus=session name=com.canonical.Unity,
+  dbus send bus=session path=/org/ayatana/NotificationItem/*
+       interface=org.freedesktop.DBus.Properties
+       member={Get,GetAll}
+       peer=(name=:*, label=update-notifier),
 
-  dbus bind bus=session name=org.kde.StatusNotifierWatcher,
+  dbus receive bus=session path=/org/freedesktop/systemd1
+       interface=org.freedesktop.systemd1.Manager
+       member=JobRemoved
+       peer=(name=:*, label="@{systemd}"),
 
-  dbus bind bus=session name=org.gtk.MountOperationHandler,
+  dbus receive bus=system path=/org/freedesktop/login1/seat/seat@{int}
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged
+       peer=(name=:*, label=systemd-logind),
+  dbus send bus=system path=/org/freedesktop/login1/seat/seat@{int}
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=:*, label=systemd-logind),
+  dbus send bus=system path=/org/freedesktop/login1
+       interface=org.freedesktop.login1.Manager
+       member=Can*
+       peer=(name=:*, label=systemd-logind),
+  dbus send bus=system path=/org/freedesktop/login1/user/*
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=:*, label=systemd-logind),
 
-  dbus bind bus=session name=org.gtk.Notifications,
-
-  dbus bind bus=session name=org.gnome.*,
+  dbus send bus=session
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name=:*),
+  dbus send bus=session
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
 
   @{exec_path} mr,
 
