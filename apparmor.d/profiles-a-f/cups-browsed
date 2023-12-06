@@ -25,36 +25,6 @@ profile cups-browsed @{exec_path} {
   network inet6 stream,
   network netlink raw,
 
-  dbus send bus=system path=/
-       interface=org.freedesktop.Avahi.Server
-       member={GetAPIVersion,GetState,ServiceBrowserNew},
-
-  dbus send bus=system path=/
-       interface=org.freedesktop.DBus.Peer
-       member=Ping
-       peer=(name=org.freedesktop.Avahi),
-
-  dbus send bus=system path=/org/freedesktop/NetworkManager
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll,
-
-  dbus send bus=system path=/Client[0-9]*/ServiceBrowser[0-9]*
-       interface=org.freedesktop.Avahi.ServiceBrowser
-       member=Free
-       peer=(name=org.freedesktop.Avahi),
-
-  dbus receive bus=system path=/Client[0-9]*/ServiceBrowser[0-9]*
-       interface=org.freedesktop.Avahi.ServiceBrowser
-       member={AllForNow,CacheExhausted},
-
-  dbus receive bus=system path=/org/freedesktop/NetworkManager
-       interface=org.freedesktop.{DBus.Properties,NetworkManager}
-       member={CheckPermissions,PropertiesChanged,StateChanged,DeviceAdded},
-
-  dbus receive bus=system path=/
-       interface=org.freedesktop.Avahi.Server
-       member=StateChanged,
-
   @{exec_path} mr,
 
   /usr/share/cups/locale/{,**} r,
