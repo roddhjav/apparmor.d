@@ -1,0 +1,27 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+  unix (bind, listen) type=stream addr="@/tmp/dbus-*",
+  unix (connect, send, receive, accept) type=stream addr="@/tmp/dbus-*",
+  unix (connect, send, receive, accept) type=stream peer=(addr="@/tmp/dbus-*"),
+
+  dbus send bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={Hello,AddMatch,RemoveMatch,GetNameOwner,NameHasOwner,StartServiceByName}
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
+
+  dbus send bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={RequestName,ReleaseName}
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
+
+  /etc/machine-id r,
+  /var/lib/dbus/machine-id r,
+
+  owner /tmp/dbus-@{rand8} rw,
+  owner /tmp/dbus-@{rand10} rw,
+
+  owner @{run}/user/@{uid}/bus rw,
+
+  include if exists <abstractions/bus/session.d>
