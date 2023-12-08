@@ -1,50 +1,25 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2020-2022 Mikhail Morfikov
-# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2022-2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
   abi <abi/3.0>,
 
-  # User app location
-  /                            r,
-  /{usr/,}bin/                 r,
-  /{usr/,}bin/[a-zA-Z0-9]*     rPUx,
-  /usr/                        r,
-  /usr/local/bin/              r,
-  /usr/local/bin/[a-zA-Z0-9]*  rPUx,
+  @{bin}/*                      rPUx,
+  /opt/*/**                     rPUx,
+  /usr/share/*/*                rPUx,
+  /usr/local/bin/*              rPUx,
 
-  # All apps in opt
-  /opt/*/                 r,
-  /opt/*/[a-zA-Z0-9]*    rPUx,
+  # Browsers
+  @{brave_path}                 rPx,
+  @{chrome_path}                rPx,
+  @{chromium_path}              rPx,
+  @{firefox_path}               rPx,
+  @{opera_path}                 rPx,
 
-  # Codium
-  /usr/share/codium/codium rPUx,
-
-  # Firefox
-  @{bin}/firefox{,.sh,-esr,-bin}                                                 rPx,
-  @{lib}/firefox{,.sh,-esr,-bin}/firefox{,.sh,-esr,-bin}                         rPx,
-  /opt/firefox{,.sh,-esr,-bin}/firefox{,.sh,-esr,-bin}                           rPx,
-
-  # Thunderbird
-  @{bin}/thunderbird{,.sh,-esr,-bin}                                             rPx,
-  @{lib}/thunderbird{,.sh,-esr,-bin}/thunderbird{,.sh,-esr,-bin}                 rPx,
-  /opt/thunderbird{,.sh,-esr,-bin}/thunderbird{,.sh,-esr,-bin}                   rPx,
-
-  # Brave
-  /opt/brave{-bin,.com}/brave{,-beta,-dev,-bin}/brave{,-beta,-dev,-bin,-browser} rPx,
-
-  # Chromium
-  @{lib}/chromium/chromium                                                       rPx,
-
-  # Chrome
-  /opt/google/chrome{,-beta,-stable,-unstable}/chrome{,-beta,-stable,-unstable}  rPx,
-
-  # Opera
-  @{lib}/@{multiarch}/opera{,-beta,-developer}/opera{,-beta,-developer}          rPx,
-
-  # Discord
-  /usr/share/                r,
-  /usr/share/discord/        r,
-  /usr/share/discord/Discord rPx,
+  @{bin}/                       r,
+  /                             r,
+  /usr/                         r,
+  /usr/local/bin/               r,
 
   include if exists <abstractions/app-launcher-user.d>
