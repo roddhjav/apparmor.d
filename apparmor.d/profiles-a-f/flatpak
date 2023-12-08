@@ -27,12 +27,16 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted,complain
   network inet6 stream,
   network netlink raw,
 
+  mount fstype=fuse.revokefs-fuse options=(rw, nosuid, nodev) -> /var/tmp/flatpak-cache-*/*/,
+
   @{exec_path} mr,
 
-  @{bin}/bwrap    rPx -> flatpak-bwrap, 
-  @{bin}/gpg      rCx -> gpg,
-  @{bin}/gpgconf  rCx -> gpg,
-  @{bin}/gpgsm    rCx -> gpg,
+  @{bin}/bwrap               rPx -> flatpak-bwrap, 
+  @{bin}/fusermount{,3}      rCx -> fusermount,
+  @{bin}/gpg                 rCx -> gpg,
+  @{bin}/gpgconf             rCx -> gpg,
+  @{bin}/gpgsm               rCx -> gpg,
+  @{lib}/revokefs-fuse       rix,
 
   /usr/share/gvfs/remote-volume-monitors/*.monitor r,
   /usr/share/flatpak/{,**} r,
@@ -40,10 +44,13 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted,complain
   /etc/flatpak/{,**} r,
   /etc/pulse/client.conf r,
 
-  /var/lib/flatpak/{,**} rwlk,
-  /var/tmp/#@{int} rw,
-
   / r,
+
+  /var/lib/flatpak/{,**} rwlk,
+
+        /var/tmp/#@{int} rw,
+        /var/tmp/flatpak-cache-@{rand6}/{,**/} r,
+  owner /var/tmp/flatpak-cache-@{rand6}/{,**} rwk,
 
   owner @{HOME}/.var/ w,
   owner @{HOME}/.var/app/{,**} rw,
@@ -69,15 +76,18 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted,complain
 
   @{sys}/module/nvidia/version r,
 
+        @{PROC}/sys/fs/pipe-max-size r,
   owner @{PROC}/@{pid}/stat r,
 
-  deny @{user_share_dirs}/gvfs-metadata/* r,
-
+  /dev/fuse rw,
   /dev/tty rw,
   /dev/tty@{int} rw,
 
+  deny @{user_share_dirs}/gvfs-metadata/* r,
+
   profile gpg {
     include <abstractions/base>
+    include <abstractions/consoles>
 
     capability dac_read_search,
 
@@ -91,6 +101,27 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted,complain
     owner /tmp/ostree-gpg-*/** rwkl -> /tmp/ostree-gpg-*/**,
 
     include if exists <local/flatpak_gpg>
+  }
+
+  profile fusermount {
+    include <abstractions/base>
+    include <abstractions/consoles>
+    include <abstractions/nameservice-strict>
+
+    capability sys_admin,
+
+    mount fstype=fuse.revokefs-fuse options=(rw, nosuid, nodev) -> /var/tmp/flatpak-cache-*/*/,
+    umount /var/tmp/flatpak-cache-*/*/,
+
+    @{bin}/fusermount{,3} mr,
+
+    /etc/fuse.conf r,
+
+    @{PROC}/@{pids}/mounts r,
+
+    /dev/fuse rw,
+
+    include if exists <local/flatpak_fusermount>
   }
 
   include if exists <local/flatpak>
