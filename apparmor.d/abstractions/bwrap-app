@@ -4,20 +4,25 @@
 
 # Common rules for applications sandboxed using bwrap.
 
+# This abstraction is wide on purpose. It is meant to be used by sandbox
+# applications (bwrap) that have no way to restrict access depending of the
+# application beeing confined.
+
   include <abstractions/audio>
   include <abstractions/consoles>
   include <abstractions/dbus-session>
   include <abstractions/deny-sensitive-home>
   include <abstractions/devices-usb>
+  include <abstractions/disks-read>
   include <abstractions/dri-common>
   include <abstractions/dri-enumerate>
   include <abstractions/gnome>
   include <abstractions/mesa>
   include <abstractions/nameservice-strict>
-  include <abstractions/openssl>
   include <abstractions/opencl-intel>
   include <abstractions/opencl-mesa>
   include <abstractions/opencl-nvidia>
+  include <abstractions/openssl>
   include <abstractions/p11-kit>
   include <abstractions/ssl_certs>
   include <abstractions/video>
@@ -59,37 +64,28 @@
   owner @{run}/user/@{uid}/orcexec.@{rand6} rwm,
 
   @{sys}/ r,
+  @{sys}/block/ r,
   @{sys}/bus/ r,
-  @{sys}/bus/pci/devices/ r,
-  @{sys}/class/ r,
-  @{sys}/class/drm/ r,
-  @{sys}/class/hidraw/ r,
-  @{sys}/class/input/ r,
-  @{sys}/class/power_supply/ r,
-  @{sys}/devices/@{pci}/{class,numa_node,local_cpus,irq,carrier} r,
-  @{sys}/devices/@{pci}/boot_vga r,
-  @{sys}/devices/@{pci}/class r,
-  @{sys}/devices/@{pci}/config r,
-  @{sys}/devices/@{pci}/net/{,**} r,
-  @{sys}/devices/**/input@{int}/ r,
-  @{sys}/devices/**/input@{int}/capabilities/* r,
-  @{sys}/devices/**/input/input@{int}/ r,
-  @{sys}/devices/**/power_supply/** r,
-  @{sys}/devices/**/uevent r,
-  @{sys}/devices/system/** r,
-  @{sys}/devices/system/cpu/** r,
-  @{sys}/devices/virtual/dmi/id/{,**} r,
-  @{sys}/devices/virtual/net/{,**} r,
-  @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/**/memory.* r,
+  @{sys}/bus/*/devices/ r,
+  @{sys}/class/*/ r,
+  @{sys}/devices/** r,
+
+        @{sys}/fs/cgroup/user.slice/* r,
+        @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/* r,
+        @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/* r,
+  owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/* r,
 
         @{PROC}/ r,
         @{PROC}/@{pid}/cgroup r,
         @{PROC}/@{pid}/cmdline r,
+        @{PROC}/@{pid}/comm r,
         @{PROC}/@{pid}/mountinfo r,
         @{PROC}/@{pid}/net/** r,
         @{PROC}/@{pid}/smaps r,
         @{PROC}/@{pid}/stat r,
+        @{PROC}/@{pid}/statm r,
         @{PROC}/@{pid}/task/@{tid}/stat r,
+        @{PROC}/bus/pci/devices r,
         @{PROC}/driver/** r,
         @{PROC}/sys/fs/inotify/max_user_watches r,
         @{PROC}/sys/kernel/osrelease r,
@@ -100,6 +96,7 @@
   owner @{PROC}/@{pid}/comm rw,
   owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/fd/@{int} rw,
+  owner @{PROC}/@{pid}/io r,
   owner @{PROC}/@{pid}/net/if_inet6 r,
   owner @{PROC}/@{pid}/oom_score_adj rw,
   owner @{PROC}/@{pid}/statm r,
