@@ -19,6 +19,7 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected) {
   include <abstractions/bus/net.reactivated.Fprint>
   include <abstractions/bus/org.a11y>
   include <abstractions/bus/org.freedesktop.Accounts>
+  include <abstractions/bus/org.freedesktop.background.Monitor>
   include <abstractions/bus/org.freedesktop.ColorManager>
   include <abstractions/bus/org.freedesktop.FileManager1>
   include <abstractions/bus/org.freedesktop.GeoClue2>
@@ -82,31 +83,13 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected) {
 
   dbus bind bus=session name=org.gnome.*,
   dbus (send, receive) bus=session path=/org/gnome/**
-       interface=org.gnome.*
-       peer=(name=org.gnome.*),
-  dbus (send, receive) bus=session path=/org/gnome/**
-       interface=org.gnome.*
-       peer=(name=:*),
-  dbus (send, receive) bus=session path=/org/gnome/**
-       interface=org.freedesktop.DBus.Properties
-       peer=(name=:*),
-  dbus (send, receive) bus=session path=/org/gnome/**
-       interface=org.freedesktop.DBus.Properties
-       peer=(name=org.freedesktop.DBus),
-  dbus (send, receive) bus=session path=/org/gnome/**
-       interface=org.freedesktop.DBus.ObjectManager
-       peer=(name=:*),
-  dbus (send, receive) bus=session path=/org/gnome/**
-       interface=org.gtk.Actions
-       peer=(name=:*),
-  dbus send bus=session path=/org/gnome/**
-       interface=org.gnome.Shell.Introspect
-       peer=(name=org.freedesktop.DBus),
-  dbus send bus=session path=/org/gnome/**
-       interface=org.freedesktop.Application
-       peer=(name=org.gnome.*),
+       interface={org.gnome.*,org.freedesktop.{Application,DBus.Properties,DBus.ObjectManager},org.gtk.{Actions,Application}}
+       peer=(name="{:*,org.gnome.*,org.freedesktop.DBus}"),
 
   dbus bind bus=session name=org.gtk.MountOperationHandler,
+  dbus receive bus=session path=/org/gtk/MountOperationHandler
+       interface=org.freedesktop.DBus.Properties
+       peer=(name=:*),
 
   dbus bind bus=session name=com.canonical.Unity,
   dbus receive bus=session path=/com/canonical/unity/**
@@ -138,58 +121,33 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected) {
 
   # Talk with gnome-shell
 
+  ## System bus
+
   dbus (send, receive) bus=system path=/org/gnome/**
        interface=org.gnome.*
-       peer=(name=org.gnome.*),
+       peer=(name="{:*,org.gnome.*}"),
   dbus (send, receive) bus=system path=/org/gnome/**
        interface=org.freedesktop.DBus.Properties
-       peer=(name=:*),
+       peer=(name="{:*,org.gnome.*}"),
 
-  dbus send bus=session path=/org/gtk/Private/RemoteVolumeMonitor
-       interface=org.gtk.Private.RemoteVolumeMonitor
-       member={IsSupported,List,VolumeMount}
-       peer=(name=:*, label=gvfs-*-monitor),
-  dbus receive bus=session path=/org/gtk/Private/RemoteVolumeMonitor
-       interface=org.gtk.Private.RemoteVolumeMonitor
-       member={MountAdded,VolumeChanged}
-       peer=(name=:*, label=gvfs-*-monitor),
+  dbus send bus=system path=/org/freedesktop/PolicyKit1/Authority
+       interface=org.freedesktop.PolicyKit1.Authority
+       member=RegisterAuthenticationAgent
+       peer=(name=:*, label=polkitd),
+  dbus receive bus=system path=/org/freedesktop/PolicyKit1/AuthenticationAgent
+       interface=org.freedesktop.PolicyKit1.AuthenticationAgent
+       member=BeginAuthentication
+       peer=(name=:*, label=polkitd),
 
-  dbus send bus=session path=/org/freedesktop/DBus
-       interface=org.freedesktop.DBus
-       member={GetConnectionUnixUser,GetConnectionUnixProcessID,GetNameOwner,ListNames}
-       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
-  dbus send bus=systemd path=/org/freedesktop/DBus
-       interface=org.freedesktop.DBus.Properties
-       member={GetConnectionUnixUser,GetConnectionUnixProcessID,GetNameOwner,ListNames}
-       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
-  dbus send bus=session path=/
-       interface=org.freedesktop.DBus
-       member={GetConnectionUnixProcessID,GetNameOwner,ListNames}
-       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
+  dbus send bus=system path=/org/freedesktop/NetworkManager/AgentManager
+       interface=org.freedesktop.NetworkManager.AgentManager
+       member={RegisterWithCapabilities,Unregister}
+       peer=(name=:*, label=NetworkManager),
 
-  dbus send bus=accessibility path=/org/a11y/atspi/accessible/root
-       interface=org.a11y.atspi.Socket
-       member=Embed
-       peer=(name=org.a11y.atspi.Registry),
-
-  dbus send bus=session path=/org/gtk/vfs/**
-       interface=org.gtk.vfs.*
-       peer=(name=:*, label=gvfsd*),
-
-  dbus send bus=session path=/org/freedesktop/background/monitor
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=:*, label=xdg-desktop-portal),
-
-  dbus send bus=session path=/org/ayatana/NotificationItem/*
-       interface=org.freedesktop.DBus.Properties
-       member={Get,GetAll}
-       peer=(name=:*, label=update-notifier),
-
-  dbus receive bus=session path=/org/freedesktop/systemd1
-       interface=org.freedesktop.systemd1.Manager
-       member=JobRemoved
-       peer=(name=:*, label="@{systemd}"),
+  dbus send bus=system path=/org/freedesktop/ColorManager
+       interface=org.freedesktop.ColorManager
+       member=DeleteDevice
+       peer=(name=:*, label=colord),
 
   dbus receive bus=system path=/org/freedesktop/login1/seat/seat@{int}
        interface=org.freedesktop.DBus.Properties
@@ -207,6 +165,54 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected) {
        interface=org.freedesktop.DBus.Properties
        member=GetAll
        peer=(name=:*, label=systemd-logind),
+
+  dbus send bus=system path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={GetConnectionUnixUser,GetConnectionUnixProcessID,GetNameOwner,ListNames}
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
+
+  ## Session bus
+
+  dbus send bus=session path=/org/gtk/Private/RemoteVolumeMonitor
+       interface=org.gtk.Private.RemoteVolumeMonitor
+       member={IsSupported,List,VolumeMount}
+       peer=(name=:*, label=gvfs-*-monitor),
+  dbus receive bus=session path=/org/gtk/Private/RemoteVolumeMonitor
+       interface=org.gtk.Private.RemoteVolumeMonitor
+       member={MountAdded,VolumeChanged}
+       peer=(name=:*, label=gvfs-*-monitor),
+
+  dbus send bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={GetConnectionUnixUser,GetConnectionUnixProcessID,GetNameOwner,ListNames}
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
+  dbus send bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
+  dbus send bus=session path=/
+       interface=org.freedesktop.DBus
+       member={GetConnectionUnixProcessID,GetNameOwner,ListNames}
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
+
+  dbus send bus=accessibility path=/org/a11y/atspi/accessible/root
+       interface=org.a11y.atspi.Socket
+       member=Embed
+       peer=(name=org.a11y.atspi.Registry),
+
+  dbus send bus=session path=/org/gtk/vfs/**
+       interface=org.gtk.vfs.*
+       peer=(name=:*, label=gvfsd*),
+
+  dbus send bus=session path=/org/ayatana/NotificationItem/*
+       interface=org.freedesktop.DBus.Properties
+       member={Get,GetAll}
+       peer=(name=:*, label=update-notifier),
+
+  dbus receive bus=session path=/org/freedesktop/systemd1
+       interface=org.freedesktop.systemd1.Manager
+       member=JobRemoved
+       peer=(name=:*, label="@{systemd}"),
 
   dbus send bus=session
        interface=org.freedesktop.DBus.Introspectable
@@ -290,8 +296,6 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected) {
   /var/lib/flatpak/app/**/gnome-shell/{,**} r,
   /var/lib/flatpak/appstream/**/icons/** r,
   /var/lib/flatpak/exports/share/gnome-shell/{,**} r,
-
-  /var/lib/snapd/desktop/icons/{,**} r,
 
   owner @{HOME}/.face r,
   owner @{HOME}/.mozilla/firefox/firefox-mpris/{,*} r,
