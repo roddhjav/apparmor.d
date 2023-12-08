@@ -17,8 +17,10 @@ profile gsd-power @{exec_path} flags=(attach_disconnected) {
   include <abstractions/bus/org.a11y>
   include <abstractions/bus/org.freedesktop.login1.Session>
   include <abstractions/bus/org.freedesktop.login1>
+  include <abstractions/bus/org.freedesktop.systemd1>
   include <abstractions/bus/org.freedesktop.UPower>
   include <abstractions/bus/org.gnome.Mutter.DisplayConfig>
+  include <abstractions/bus/org.gnome.Mutter.IdleMonitor>
   include <abstractions/bus/org.gnome.ScreenSaver>
   include <abstractions/bus/org.gnome.SessionManager>
   include <abstractions/bus/org.gtk.vfs.MountTracker>
@@ -36,60 +38,15 @@ profile gsd-power @{exec_path} flags=(attach_disconnected) {
        interface=org.freedesktop.DBus.Properties
        peer=(name="{org.freedesktop.DBus,:*}", label="{gsd-media-keys,gnome-shell}"),
 
-  dbus send bus=session path=/org/gnome/Mutter/**
-       interface=org.freedesktop.DBus.{Properties,ObjectManager}
-       peer=(name=:*, label=gnome-shell),
-  dbus send bus=session path=/org/gnome/Mutter/**
-       interface=org.gnome.Mutter.DisplayConfig
-       peer=(name=:*, label=gnome-shell),
-  dbus send bus=session path=/org/gnome/Mutter/**
-       interface=org.gnome.Mutter.IdleMonitor
-       peer=(name=:*, label=gnome-shell),
-  dbus receive bus=session path=/org/gnome/Mutter/DisplayConfig
-       interface=org.gnome.Mutter.DisplayConfig
-       member=MonitorsChanged
-       peer=(name=:*, label=gnome-shell),
-  dbus receive bus=session path=/org/gnome/Mutter/IdleMonitor/Core
-       interface=org.gnome.Mutter.IdleMonitor
+  dbus send bus=session path=/org/gnome/Mutter/DisplayConfig
+       interface=org.freedesktop.DBus.Properties
+       member=Set
        peer=(name=:*, label=gnome-shell),
 
   dbus send bus=system path=/org/freedesktop/UPower/KbdBacklight
        interface=org.freedesktop.UPower.KbdBacklight
        member=GetBrightness
        peer=(name=:*, label=upowerd),
-
-  dbus send bus=system path=/org/freedesktop/systemd1
-       interface=org.freedesktop.DBus.Properties
-       member=Get,
-
-  dbus send bus=system path=/org/freedesktop/login1/session/auto
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=:*, label=systemd-logind),
-
-  dbus send bus=system path=/org/freedesktop/login1/session/auto
-       interface=org.freedesktop.login1.Session
-       member=SetBrightness
-       peer=(name=:*, label=systemd-logind),
-
-  dbus send bus=system path=/net/hadess/PowerProfiles
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=:*, label=power-profiles-daemon),
-
-  dbus send bus=system path=/org/freedesktop/login1/session/auto
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=:*, label=systemd-logind),
-  dbus send bus=system path=/org/freedesktop/login1/session/auto
-       interface=org.freedesktop.login1.Session
-       member=SetBrightness
-       peer=(name=:*, label=systemd-logind),
- 
-  dbus receive bus=session
-       interface=org.freedesktop.DBus.Introspectable
-       member=Introspect
-       peer=(name=:*, label=gnome-shell),
 
   @{exec_path} mr,
 
