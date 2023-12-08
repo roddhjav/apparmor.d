@@ -7,14 +7,20 @@ abi <abi/3.0>,
 include <tunables/global>
 
 @{exec_path} = /usr/share/netplan/netplan.script
-profile netplan.script @{exec_path} {
+profile netplan.script @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
 
   @{exec_path} mr,
 
-  @{lib}exec/netplan/generate rix,
+  @{lib}/netplan/generate rix,
 
   /usr/share/netplan/{,**} r,
+
+  /etc/netplan/{,*} r,
+
+  @{run}/systemd/system/ r,
+  @{run}/systemd/system/systemd-networkd.service.wants/ r,
+  @{run}/udev/rules.d/ r,
 
   include if exists <local/netplan.script>
 }
