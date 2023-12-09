@@ -1,0 +1,65 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{lib_dirs} = @{HOME}/.tb/tor-browser/Browser/
+
+@{exec_path} = @{bin}/torbrowser
+profile torbrowser-wrapper @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+
+  @{exec_path} rm,
+
+  @{bin}/{,ba,da}sh              rix,
+  @{bin}/basename                rix,
+  @{bin}/dirname                 rix,
+  @{bin}/grep                    rix,
+  @{bin}/id                      rix,
+  @{bin}/mktemp                  rix,
+  @{bin}/mount                   rix,
+  @{bin}/str_replace             rix,
+  @{bin}/systemctl               rCx -> systemctl,
+  @{bin}/tty                     rix,
+  @{bin}/whoami                  rix,
+
+  @{lib_dirs}/start-tor-browser  rPx -> torbrowser-start,
+  @{lib}/msgcollector/msgcollector rPx,
+  @{lib}/open-link-confirmation/open-link-confirmation rPx,
+
+  @{lib}/helper-scripts/* r,
+
+  /etc/torbrowser.d/{,*} r,
+
+  owner @{lib_dirs}/TorBrowser/Data/Browser/profile.default/prefs.js r,
+
+  owner /tmp/tmp.@{rand10} rw,
+
+  owner @{run}/mount/utab r,
+  
+  owner @{PROC}/@{pid}/mountinfo r,
+
+  profile systemctl {
+    include <abstractions/base>
+    include <abstractions/systemd-common>
+
+    @{bin}/systemctl mr,
+  
+    /etc/machine-id r,
+
+    /{run,var}/log/journal/ r,
+    /{run,var}/log/journal/@{md5}/ r,
+    /{run,var}/log/journal/@{md5}/user-@{hex}.journal* r,
+    /{run,var}/log/journal/@{md5}/system.journal* r,
+    /{run,var}/log/journal/@{md5}/system@@{hex}.journal* r,
+    
+    include if exists <local/torbrowser-wrapper_systemctl>
+  }
+
+  include if exists <local/torbrowser-wrapper>
+}
