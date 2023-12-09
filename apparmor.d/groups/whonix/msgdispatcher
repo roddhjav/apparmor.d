@@ -1,0 +1,34 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/msgcollector/msgdispatcher
+profile msgdispatcher @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+
+  @{exec_path} mr,
+
+  @{bin}/{,ba,da}sh           rix,
+  @{bin}/basename             rix,
+  @{bin}/flock                rix,
+  @{bin}/inotifywait          rix,
+  @{bin}/mkdir                rix,
+  @{bin}/mkfifo               rix,
+  @{bin}/rm                   rix,
+  @{bin}/sleep                rix,
+  @{bin}/touch                rix,
+  @{bin}/whoami               rix,
+
+  @{lib}/msgcollector/* r,
+
+        @{run}/msgcollector/ r,
+  owner @{run}/msgcollector/user/{,**} rwk,
+
+  include if exists <local/msgdispatcher>
+}
