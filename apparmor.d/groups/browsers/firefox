@@ -59,42 +59,28 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
        dbus bind bus=session name=org.mozilla.firefox_beta.*,
   deny dbus send bus=system path=/org/freedesktop/hostname1,
 
-  dbus send bus=session path=/ScreenSaver
-       interface=org.freedesktop.ScreenSaver
-       peer=(name=org.freedesktop.ScreenSaver),
+  dbus bind bus=session name=org.mozilla.firefox.*,
+  dbus receive bus=session path=/org/mozilla/firefox/*
+       interface=org.mozilla.firefox
+       peer=(name=:*, label=@{profile_name}),
+  dbus send bus=session path=/org/mozilla/firefox/*
+       interface=org.mozilla.firefox
+       peer=(name=org.mozilla.firefox.*, label=@{profile_name}),
 
-  dbus send bus=system path=/org/freedesktop/UPower
-       interface=org.freedesktop.UPower
-       member=EnumerateDevices
-       peer=(name=org.freedesktop.UPower),
-
-  dbus send bus=session path=/org/freedesktop/PowerManagement/Inhibit
-       interface=org.freedesktop.PowerManagement.Inhibit
-       member=Inhibit
-       peer=(name=org.freedesktop.PowerManagement),
-
+  dbus bind bus=session name=org.mpris.MediaPlayer2.firefox.*,
   dbus (send, receive) bus=session path=/org/mpris/MediaPlayer2
        interface=org.freedesktop.DBus.Properties
        member={GetAll,PropertiesChanged}
        peer=(name="{org.freedesktop.DBus,:*}"),
-
   dbus receive bus=session path=/org/mpris/MediaPlayer2
        interface=org.mpris.MediaPlayer2.Playlists
        member=GetPlaylists
        peer=(name=:*),
 
-  dbus send bus=session path=/org/gtk/vfs/metadata
-       interface=org.gtk.vfs.Metadata
-       member=GetTreeFromDevice
-       peer=(name=:*, label=gvfsd-metadata),
-
-  dbus send bus=session path=/org/mozilla/firefox/Remote
-       interface=org.mozilla.firefox
-       peer=(name=org.mozilla.firefox.*, label=@{profile_name}),
-
-  dbus receive bus=session path=/org/mozilla/firefox/Remote
-       interface=org.mozilla.firefox
-       peer=(name=:*, label=@{profile_name}),
+  dbus send bus=session path=/org/freedesktop/PowerManagement/Inhibit
+       interface=org.freedesktop.PowerManagement.Inhibit
+       member=Inhibit
+       peer=(name=org.freedesktop.PowerManagement),
 
   @{exec_path} mrix,
 
@@ -110,7 +96,7 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
   @{lib_dirs}/pingsender        rPx,
   @{lib_dirs}/plugin-container  rPx,
   @{lib_dirs}/vaapitest         rPx,
-  @{lib}/mozilla/kmozillahelper        rPUx,
+  @{lib}/mozilla/kmozillahelper rPUx,
 
   @{lib}/@{multiarch}/qt5/plugins/kf5/org.kde.kwindowsystem.platforms/KF5WindowSystemX11Plugin.so mr,
   @{lib}/mozilla/plugins/ r,
@@ -192,8 +178,8 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
         /var/tmp/ r,
   owner /tmp/user/@{uid}/ rw,
   owner /tmp/user/@{uid}/* rwk,
-  owner /tmp/user/@{uid}/Temp-*/ rw,
-  owner /tmp/user/@{uid}/Temp-*/* rwk,
+  owner /tmp/user/@{uid}/Temp-@{uuid}/ rw,
+  owner /tmp/user/@{uid}/Temp-@{uuid}/* rwk,
   owner /tmp/user/@{uid}/@{name}/ rw,
   owner /tmp/user/@{uid}/@{name}/* rwk,
   owner /tmp/@{name}/ rw,
@@ -206,7 +192,7 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
   owner /tmp/MozillaBackgroundTask-*-removeDirectory/ rw,
   owner /tmp/MozillaBackgroundTask-*-removeDirectory/** rwk,
   owner /tmp/Mozillato-be-removed-cachePurge-* k,
-  owner /tmp/Temp-*/ rw,
+  owner /tmp/Temp-@{uuid}/ rw,
 
   @{run}/mount/utab r,
 
