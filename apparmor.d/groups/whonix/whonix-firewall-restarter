@@ -1,0 +1,47 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/whonix-firewall/firewall-restarter
+profile whonix-firewall-restarter @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/systemd-common>
+  include <abstractions/nameservice-strict>
+
+  capability chown,
+  capability net_admin,
+
+  ptrace read, # peer=,
+
+  @{exec_path} mr,
+
+  @{bin}/{,ba,da}sh         rix,
+  @{bin}/chown              rix,
+  @{bin}/inotifywait        rix,
+  @{bin}/mkdir              rix,
+  @{bin}/mkfifo             rix,
+  @{bin}/mktemp             rix,
+  @{bin}/rm                 rix,
+  @{bin}/systemctl          rix,
+
+  /etc/machine-id r,
+
+  /{run,var}/log/journal/ r,
+  /{run,var}/log/journal/@{md5}/ r,
+  /{run,var}/log/journal/@{md5}/user-@{hex}.journal* r,
+  /{run,var}/log/journal/@{md5}/system.journal* r,
+  /{run,var}/log/journal/@{md5}/system@@{hex}.journal* r,
+
+ owner /tmp/tmp.@{rand10} rw,
+
+       @{run}/sdwdate/{,*} rw,
+ owner @{run}/updatesproxycheck/{,*} rw,
+
+  include if exists <local/whonix-firewall-restarter>
+}
+

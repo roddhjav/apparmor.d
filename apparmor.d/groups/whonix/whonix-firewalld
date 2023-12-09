@@ -1,0 +1,49 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/whonix_firewall @{lib}/whonix-firewall/reloadfirewall
+profile whonix-firewall @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+
+  capability net_admin,
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  @{bin}/{,ba,da}sh         rix,
+  @{bin}/date               rix,
+  @{bin}/id                 rix,
+  @{bin}/mkdir              rix,
+  @{bin}/rm                 rix,
+  @{bin}/touch              rix,
+  @{bin}/whonix-*-firewall  rix,
+  @{bin}/xtables-nft-multi  rix,
+
+  @{bin}/qubesdb-read      rPUx,
+  @{bin}/qubesdb-cmd       rPUx,
+
+  /etc/whonix_firewall.d/{,**} r,
+  /usr/local/etc/whonix_firewall.d/{,**} r,
+
+  /var/lib/whonix-firewall/{,**} rw,
+
+        @{run}/updatesproxycheck/ r,
+  owner @{run}/anon-firewall/{,**} rw,
+  owner @{run}/qubes-service/{,**} rw,
+  owner @{run}/updatesproxycheck/{,**} rw,
+  owner @{run}/whonix_firewall/{,**} rw,
+
+  include if exists <local/whonix-firewall>
+}
