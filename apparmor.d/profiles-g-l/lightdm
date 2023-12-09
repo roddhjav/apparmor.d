@@ -8,115 +8,79 @@ abi <abi/3.0>,
 include <tunables/global>
 
 @{exec_path} = @{bin}/lightdm
-profile lightdm @{exec_path} {
+profile lightdm @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/X>
-  include <abstractions/fonts>
+  include <abstractions/authentication>
   include <abstractions/fontconfig-cache-read>
+  include <abstractions/fonts>
   include <abstractions/freedesktop.org>
   include <abstractions/nameservice-strict>
-  include <abstractions/authentication>
   include <abstractions/wutmp>
+  include <abstractions/X>
 
-  # To remove the following errors:
-  #  lightdm[]: Could not chown user data directory /var/lib/lightdm/data/lightdm: Error setting
-  #  owner: Operation not permitted
+  audit capability sys_nice,
+  capability audit_write,
   capability chown,
+  capability dac_read_search,
   capability fowner,
   capability fsetid,
-
-  # To remove the following errors:
-  #  write(2, "Failed to initialize supplementary groups for lightdm:
-  #  Operation not permitted\n", 79) = 79
+  capability kill,
+  capability net_admin,
   capability setgid,
-
-  # To remove the following errors:
-  #  write(1, "Bail out! ERROR:privileges.c:30:privileges_drop: assertion failed:
-  #  (setresuid (uid, uid, -1) == 0)\n", 99) = 99
   capability setuid,
-
-  # To remove the following errors:
-  #  lightdm[]: Could not enumerate user data directory /var/lib/lightdm/data: Error opening
-  #  directory '/var/lib/lightdm/data': Permission denied
-  capability dac_read_search,
-
-  # To remove the following errors:
-  #  Error using VT_ACTIVATE 7 on /dev/tty0: Operation not permitted
+  capability sys_resource,
   capability sys_tty_config,
 
-  # To be able to kill the X-server
-  capability kill,
-
-  # To remove the following errors:
-  #  pam_limits(su-l:session): Could not set limit for 'nofile' to soft=1024, hard=1048576:
-  #   Operation not permitted; uid=1000,euid=0
-  #  pam_limits(su-l:session): Could not set limit for 'memlock' to soft=1017930240,
-  #   hard=1017930240: Operation not permitted; uid=1000,euid=0
-  capability sys_resource,
-
-  # Needed?
-  capability audit_write,
-  deny capability sys_nice,
-  deny capability net_admin,
+  network netlink raw,
 
   signal (send) set=(term, kill, usr1),
   signal (receive) set=(usr1) peer=xorg,
 
   @{exec_path} mrix,
 
-  @{bin}/plymouth             mrix,
+  @{bin}/rm rix,
 
   @{bin}/lightdm-gtk-greeter   rPx,
   @{bin}/startx                rPx,
   @{bin}/Xorg                  rPx,
+  @{bin}/plymouth              rPx,
+  @{bin}/gnome-keyring-daemon  rPx,
 
-  /etc/X11/Xsession                rPUx,
-  @{bin}/gnome-keyring-daemon  rPUx,
+  @{lib}/security-misc/* rPUx, # only: whonix
+  @{lib}/{,at-spi2{,-core}/}at-spi-bus-launcher rPx,
 
-  @{bin}/rm rix,
+  /etc/X11/Xsession            rPUx,
 
-  # LightDM files
   /usr/share/lightdm/{,**} r,
-  /usr/share/xgreeters/{,**} r,
-  /var/lib/lightdm/{,**} rw,
-
-  # List of graphical sessions
-  # The X sessions are covered by abstractions/X
   /usr/share/wayland-sessions/{,*.desktop} r,
+  /usr/share/xgreeters/{,**} r,
 
-  /tmp/.X[0-9]*-lock r,
-
-  # LightDM config files
+  /etc/default/locale r,
+  /etc/environment r,
   /etc/lightdm/{,**} r,
+  /etc/security/limits.d/{,*} r,
 
-  # LightDM logs
+  /var/cache/lightdm/dmrc/*.dmrc* rw,
+  /var/lib/lightdm/{,**} rw,
   /var/log/lightdm/{,**} rw,
 
-  @{run}/lightdm/{,**} rw,
-  @{run}/lightdm.pid rw,
-
-  @{PROC}/1/limits r,
-  @{etc_ro}/security/limits.d/ r,
-
-  owner @{PROC}/@{pid}/uid_map r,
-  owner @{PROC}/@{pid}/loginuid rw,
-  owner @{PROC}/@{pid}/fd/ r,
-        @{PROC}/cmdline r,
-
-  @{etc_ro}/environment r,
-  /etc/default/locale r,
-
-  /dev/tty@{int} r,
-
-  # Xsession logs
+  owner @{HOME}/.dmrc r,
+  owner @{HOME}/.Xauthority rw,
   owner @{HOME}/.xsession-errors{,.old} rw,
 
-  owner @{HOME}/.Xauthority rw,
+        @{run}/faillock/ rw,
+        @{run}/faillock/user rwk,
+        @{run}/lightdm.pid rw,
+        @{run}/lightdm/{,**} rw,
+  owner @{run}/systemd/sessions/@{int}.ref rw,
 
-  owner @{HOME}/.dmrc* rw,
-  /var/cache/lightdm/dmrc/*.dmrc* rw,
+        @{PROC}/1/limits r,
+        @{PROC}/cmdline r,
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/loginuid rw,
+  owner @{PROC}/@{pid}/uid_map r,
 
-  @{lib}/{,at-spi2{,-core}/}at-spi-bus-launcher rPx,
+  /dev/tty@{int} r,
 
   include if exists <local/lightdm>
 }

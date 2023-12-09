@@ -10,12 +10,12 @@ include <tunables/global>
 @{exec_path} = @{bin}/lightdm-gtk-greeter
 profile lightdm-gtk-greeter @{exec_path} {
   include <abstractions/base>
-  include <abstractions/X>
-  include <abstractions/fonts>
-  include <abstractions/fontconfig-cache-read>
-  include <abstractions/freedesktop.org>
   include <abstractions/dri-enumerate>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/fonts>
+  include <abstractions/freedesktop.org>
   include <abstractions/nameservice-strict>
+  include <abstractions/X>
 
   signal (receive) set=(term, kill) peer=lightdm,
 
@@ -24,53 +24,32 @@ profile lightdm-gtk-greeter @{exec_path} {
   @{bin}/locale rix,
 
   @{lib}/systemd/systemd rCx -> systemd,
+  @{lib}/{,at-spi2{,-core}/}at-spi-bus-launcher rPx,
 
-  # LightDM files
+  /usr/share/desktop-base/{,**} r,
   /usr/share/lightdm/{,**} r,
-  /var/lib/lightdm/{,**} rw,
-
-  # List of graphical sessions
-  # The X sessions are covered by abstractions/X
   /usr/share/wayland-sessions/{,*.desktop} r,
 
-  # Greeter theme
-  /var/lib/AccountsService/{,**} r,
-  /usr/share/desktop-base/{,**} r,
-
-  # LightDM config files
   /etc/lightdm/{,**} r,
 
-  # LightDM logs
+  /var/lib/AccountsService/{,**} r,
+  /var/lib/lightdm/{,**} rw,
   /var/log/lightdm/{,**} rw,
-
-  owner @{HOME}/.face r,
 
   owner @{PROC}/@{pid}/fd/ r,
 
-  # For account icons
-  @{HOME}/.dmrc r,
-  @{HOME}/.face r,
-
-  @{lib}/{,at-spi2{,-core}/}at-spi-bus-launcher rPx,
-
   profile systemd {
     include <abstractions/base>
+    include <abstractions/systemd-common>
+    include <abstractions/nameservice-strict>
 
     @{lib}/systemd/systemd mr,
 
     /etc/systemd/user.conf r,
 
-    owner @{PROC}/@{pid}/stat r,
-          @{PROC}/1/environ r,
-          @{PROC}/1/sched r,
-          @{PROC}/cmdline r,
-          @{PROC}/sys/kernel/osrelease r,
+    owner @{PROC}/@{pid}/oom_score_adj r,
 
-    @{sys}/firmware/efi/efivars/SecureBoot-@{uuid} r,
-
-    # file_inherit
-    /var/log/lightdm/seat[0-9]*-greeter.log w,
-
+    include if exists <local/lightdm-gtk-greeter_systemd>
   }
 
   include if exists <local/lightdm-gtk-greeter>
