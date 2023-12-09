@@ -1,6 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2017-2021 Mikhail Morfikov
-# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2021-2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -11,21 +11,27 @@ include <tunables/global>
 profile x11-xsession @{exec_path} {
   include <abstractions/base>
   include <abstractions/nameservice-strict>
-  include <abstractions/X-strict>
+  include <abstractions/X>
 
   @{exec_path} r,
 
   @{bin}/{,ba,da}sh rix,
   @{bin}/{,e}grep   rix,
   @{bin}/{m,g,}awk  rix,
+  @{bin}/basename   rix,
   @{bin}/cat        rix,
   @{bin}/chmod      rix,
+  @{bin}/cut        rix,
   @{bin}/date       rix,
   @{bin}/fold       rix,
   @{bin}/head       rix,
   @{bin}/id         rix,
+  @{bin}/mktemp     rix,
+  @{bin}/readlink   rix,
   @{bin}/rm         rix,
   @{bin}/sed        rix,
+  @{bin}/sleep      rix,
+  @{bin}/tail       rix,
   @{bin}/tempfile   rix,
   @{bin}/touch      rix,
   @{bin}/which{,.debianutils}      rix,
@@ -36,11 +42,13 @@ profile x11-xsession @{exec_path} {
   @{bin}/run-parts         rCx -> run-parts,
   @{bin}/udevadm           rCx -> udevadm,
 
-  @{bin}/flatpak           rPx,
-  @{bin}/xrdb              rPx,
-  @{bin}/numlockx          rPx,
-  @{bin}/xhost             rPx,
-  @{bin}/glxinfo           rPx,
+  @{bin}/flatpak              rPx,
+  @{bin}/glxinfo              rPx,
+  @{bin}/numlockx             rPx,
+  @{bin}/systemd-detect-virt  rPx,
+  @{bin}/xhost                rPx,
+  @{bin}/xrdb                 rPx,
+  @{bin}/xset                 rPx,
 
   # Allowed GUI sessions to start
   @{bin}/openbox-session      rPx,
@@ -48,9 +56,17 @@ profile x11-xsession @{exec_path} {
   @{bin}/sway                 rPUx,
   @{bin}/ssh-agent            rPx,
 
+  @{bin}/sudo rPx, # only: whonix
+  @{lib}/*/*.sh r,
+
   /etc/default/{,*} r,
+  /etc/profile.d/*.sh r,
+  /etc/X11/{,**} r,
+
+  owner @{HOME}/.xsession-errors w,
 
   owner /tmp/file* rw,
+  owner /tmp/tmp.@{rand10} rw,
 
   profile run-parts {
     include <abstractions/base>
@@ -62,7 +78,6 @@ profile x11-xsession @{exec_path} {
 
     /etc/default/kexec.d/ r,
 
-    # file_inherit
     owner @{HOME}/.xsession-errors w,
 
     include if exists <local/x11-xsession_run-parts>
@@ -73,8 +88,11 @@ profile x11-xsession @{exec_path} {
 
     @{bin}/dbus-update-activation-environment mr,
 
-    # file_inherit
-    owner @{HOME}/.xsession-errors w,
+    /var/lib/dbus/machine-id r,
+
+    owner @{HOME}/.xsession-errors rw,
+
+    owner @{PROC}/@{pid}/fd/ r,
 
     include if exists <local/x11-xsession_dbus>
   }
