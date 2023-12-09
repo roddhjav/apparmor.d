@@ -1,0 +1,145 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{name} = torbrowser "tor browser"
+@{lib_dirs} = @{HOME}/.tb/tor-browser/Browser/
+@{data_dirs} = @{lib_dirs}/TorBrowser/Data/
+@{config_dirs} = @{data_dirs}/Browser/*.default/
+@{cache_dirs} = @{data_dirs}/Browser/Caches
+
+@{exec_path} = @{lib_dirs}/firefox.*
+profile torbrowser @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/audio>
+  include <abstractions/bus-session>
+  include <abstractions/bus-system>
+  include <abstractions/bus/org.a11y>
+  include <abstractions/bus/org.freedesktop.FileManager1>
+  include <abstractions/bus/org.freedesktop.login1>
+  include <abstractions/bus/org.freedesktop.portal.Desktop>
+  include <abstractions/bus/org.freedesktop.RealtimeKit1>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/fonts>
+  include <abstractions/freedesktop.org>
+  include <abstractions/gstreamer>
+  include <abstractions/gtk>
+  include <abstractions/mesa>
+  include <abstractions/nameservice-strict>
+  include <abstractions/opencl>
+  include <abstractions/ssl_certs>
+  include <abstractions/thumbnails-cache-read>
+  include <abstractions/user-download-strict>
+  include <abstractions/vulkan>
+
+  capability sys_admin, # If kernel.unprivileged_userns_clone = 1
+  capability sys_chroot, # If kernel.unprivileged_userns_clone = 1
+
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  @{exec_path} mrix,
+
+  @{lib_dirs}/{,**}             r,
+  @{lib_dirs}/*.so              mr,
+  @{lib_dirs}/glxtest           rPx -> torbrowser-glxtest,
+  @{lib_dirs}/plugin-container  rPx -> torbrowser-plugin-container,
+  @{lib_dirs}/vaapitest         rPx -> torbrowser-vaapitest,
+
+  # Desktop integration
+  @{bin}/exo-open                                    rPx -> child-open,
+  @{bin}/lsb_release                                 rPx -> lsb_release,
+  @{bin}/xdg-open                                    rPx -> child-open,
+  @{lib}/@{multiarch}/glib-[0-9]*/gio-launch-desktop rPx -> child-open,
+  @{lib}/gio-launch-desktop                          rPx -> child-open,
+
+  /usr/share/@{name}/{,**} r,
+  /usr/share/doc/{,**} r,
+  /usr/share/egl/{,**} r,
+  /usr/share/icu/@{int}.@{int}/*.dat r,
+  /usr/share/libdrm/*.ids r,
+  /usr/share/xul-ext/kwallet5/* r,
+
+  /etc/@{name}.d/{,**} r,
+  /etc/igfx_user_feature{,_next}.txt w,
+  /etc/libva.conf r,
+  /etc/mailcap r,
+  /etc/mime.types r,
+  /etc/opensc.conf r,
+  /etc/sysconfig/proxy r,
+  /etc/xdg/* r,
+  /etc/xul-ext/kwallet5.js r,
+
+  /var/lib/nscd/services r,
+
+  owner @{lib_dirs}/.cache/{,**} rw,
+  owner @{lib_dirs}/Downloads/{,**} rw,
+  owner @{lib_dirs}/fonts/** r,
+
+  owner @{config_dirs}/ rw,
+  owner @{config_dirs}/** rwk,
+
+  owner @{cache_dirs}/ rw,
+  owner @{cache_dirs}/** rwk,
+
+        /tmp/ r,
+        /var/tmp/ r,
+  owner /tmp/user/@{uid}/ rw,
+  owner /tmp/user/@{uid}/* rwk,
+  owner /tmp/user/@{uid}/Temp-@{uuid}/ rw,
+  owner /tmp/user/@{uid}/Temp-@{uuid}/* rwk,
+  owner /tmp/user/@{uid}/@{name}/ rw,
+  owner /tmp/user/@{uid}/@{name}/* rwk,
+  owner /tmp/@{name}/ rw,
+  owner /tmp/@{name}/* rwk,
+  owner /tmp/Temp-@{uuid}/ rw,
+  owner "/tmp/Tor Project*/" rw,
+  owner "/tmp/Tor Project*/**" rwk, 
+  owner "/tmp/Tor Project*" rwk,
+
+  @{run}/mount/utab r,
+
+  @{run}/udev/data/+input:input@{int} r,  # for mouse, keyboard, touchpad
+  @{run}/udev/data/c13:@{int}  r,         # for /dev/input/*
+
+  @{sys}/bus/ r,
+  @{sys}/cgroup/cpu,cpuacct/user.slice/cpu.cfs_quota_us r,
+  @{sys}/class/ r,
+  @{sys}/class/**/ r,
+  @{sys}/devices/**/uevent r,
+  @{sys}/devices/@{pci}/ r,
+  @{sys}/devices/@{pci}/drm/card@{int}/ r,
+  @{sys}/devices/@{pci}/drm/renderD[0-9]*/ r,
+  @{sys}/devices/@{pci}/irq r,
+  @{sys}/devices/system/cpu/cpu@{int}/cache/index[0-9]/size r,
+  @{sys}/devices/system/cpu/cpufreq/policy[0-9]/cpuinfo_max_freq r,
+  @{sys}/devices/system/cpu/present r,
+  @{sys}/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us r,
+  @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/session-1.scope/cpu.max r,
+  @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/**/cpu.max r,
+
+  owner @{PROC}/@{pid}/cgroup r,
+  owner @{PROC}/@{pid}/comm r,
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/gid_map w, # If kernel.unprivileged_userns_clone = 1
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/mounts r,
+  owner @{PROC}/@{pid}/oom_score_adj w,
+  owner @{PROC}/@{pid}/setgroups w, # If kernel.unprivileged_userns_clone = 1
+  owner @{PROC}/@{pid}/smaps r,
+  owner @{PROC}/@{pid}/stat r,
+  owner @{PROC}/@{pid}/statm r,
+  owner @{PROC}/@{pid}/task/ r,
+  owner @{PROC}/@{pid}/task/@{tid}/comm rw,
+  owner @{PROC}/@{pid}/task/@{tid}/stat r,
+  owner @{PROC}/@{pid}/uid_map w, # If kernel.unprivileged_userns_clone = 1
+  owner @{PROC}/@{pids}/cmdline r,
+  owner @{PROC}/@{pids}/environ r,
+
+  include if exists <local/torbrowser>
+}
