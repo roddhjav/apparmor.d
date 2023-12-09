@@ -1,0 +1,22 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/apt/apt-helper
+profile apt-helper @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/apt-common>
+
+  @{exec_path} mr,
+
+  @{bin}/nm-online rPx,
+  @{bin}/systemctl rPx -> child-systemctl,
+
+  owner @{PROC}/@{pid}/fd/ r,
+
+  include if exists <local/apt-helper>
+}
