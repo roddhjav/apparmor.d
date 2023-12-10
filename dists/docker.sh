@@ -66,9 +66,10 @@ build_in_docker_makepkg() {
 }
 
 build_in_docker_dpkg() {
-	local dist="$1"
+	local dist="$1" target="$1"
 	local img="$PREFIX$dist"
 
+	[[ "$dist" == whonix ]] && dist=debian
 	if _exist "$img"; then
 		if ! _is_running "$img"; then
 			_start "$img"
@@ -76,7 +77,7 @@ build_in_docker_dpkg() {
 	else
 		docker pull "$BASEIMAGE/$dist"
 		docker run -tid --name "$img" --volume "$VOLUME:$BUILDIR" \
-			--env DEBIAN_FRONTEND=noninteractive --env DISTRIBUTION="$dist" \
+			--env DEBIAN_FRONTEND=noninteractive --env DISTRIBUTION="$target" \
 			"$BASEIMAGE/$dist"
 		docker exec "$img" sudo apt-get update -q
 		docker exec "$img" sudo apt-get install -y config-package-dev rsync
