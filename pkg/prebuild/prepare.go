@@ -185,7 +185,7 @@ func SetFullSystemPolicy() error {
 	}
 
 	// Set systemd profile name
-	path := RootApparmord.Join("tunables/multiarch.d/apparmor.d")
+	path := RootApparmord.Join("tunables/multiarch.d/system")
 	content, err := path.ReadFile()
 	if err != nil {
 		return err
