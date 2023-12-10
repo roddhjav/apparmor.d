@@ -12,12 +12,13 @@ profile tracker-miner @{exec_path} flags=(attach_disconnected) {
   include <abstractions/bus-session>
   include <abstractions/bus-system>
   include <abstractions/bus/org.freedesktop.UPower>
+  include <abstractions/bus/org.gtk.Private.RemoteVolumeMonitor>
   include <abstractions/bus/org.gtk.vfs.Daemon>
   include <abstractions/bus/org.gtk.vfs.MountTracker>
   include <abstractions/dconf-write>
   include <abstractions/deny-sensitive-home>
   include <abstractions/disks-read>
-  include <abstractions/freedesktop.org>
+  include <abstractions/gnome-strict>
   include <abstractions/gstreamer>
   include <abstractions/nameservice-strict>
   include <abstractions/private-files-strict>
@@ -27,24 +28,15 @@ profile tracker-miner @{exec_path} flags=(attach_disconnected) {
   signal (receive) set=(term, kill) peer=gdm,
   signal (receive) set=(hup)        peer=gdm-session-worker,
 
-  dbus bind bus=session name=org.freedesktop.Tracker3.Miner.Files{,.Control},
-
-  dbus (send, receive) bus=session path=/org/freedesktop/Tracker3/**
-       interface=org.freedesktop.Tracker3.*
-       peer=(name="{:*,org.freedesktop.DBus}"), # all members
-  dbus receive bus=session path=/org/freedesktop/Tracker3/**
-       interface=org.freedesktop.DBus.{Peer,Properties}
+  dbus bind bus=session name=org.freedesktop.Tracker3.Miner.Files{,.*},
+  dbus (send, receive) bus=session path=/org/freedesktop/Tracker3/Endpoint
+       interface={org.freedesktop.Tracker3.Endpoint,org.freedesktop.DBus.Peer}
        peer=(name=:*),
 
-  dbus send bus=session path=/org/gtk/Private/RemoteVolumeMonitor
-       interface=org.gtk.Private.RemoteVolumeMonitor
-       member={List,IsSupported,VolumeChanged,MountAdded}
-       peer=(name=:*, label=gvfs-*-volume-monitor),
-
-  dbus receive bus=session
-       interface=org.freedesktop.DBus.Introspectable
-       member=Introspect
-       peer=(name=:*, label=gnome-shell),
+  # Talk from tracker-extract
+  dbus receive bus=session path=/org/freedesktop/Tracker3/{Files,Endpoint,Miner/Extract}
+       interface={org.freedesktop.Tracker3.{Miner,Endpoint,Files},org.freedesktop.DBus.{Peer,Properties}}
+       peer=(name=:*, label=tracker-extract),
 
   @{exec_path} mr,
 

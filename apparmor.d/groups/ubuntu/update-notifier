@@ -16,13 +16,10 @@ profile update-notifier @{exec_path} {
   include <abstractions/bus-system>
   include <abstractions/bus/org.a11y>
   include <abstractions/dconf-write>
-  include <abstractions/fonts>
-  include <abstractions/freedesktop.org>
-  include <abstractions/gtk>
+  include <abstractions/gnome-strict>
   include <abstractions/nameservice-strict>
   include <abstractions/openssl>
   include <abstractions/python>
-  include <abstractions/wayland>
 
   dbus receive bus=session path=/org/ayatana/NotificationItem{,/**}
        interface={com.canonical.dbusmenu,org.freedesktop.DBus.Properties}
@@ -31,11 +28,6 @@ profile update-notifier @{exec_path} {
   dbus send bus=session path=/StatusNotifierWatcher
        interface=org.kde.StatusNotifierWatcher
        member=RegisterStatusNotifierItem
-       peer=(name=:*, label=gnome-shell),
-
-  dbus receive bus=session
-       interface=org.freedesktop.DBus.Introspectable
-       member=Introspect
        peer=(name=:*, label=gnome-shell),
 
   @{exec_path} mr,
@@ -70,20 +62,17 @@ profile update-notifier @{exec_path} {
   /etc/machine-id r,
 
   /var/lib/snapd/desktop/applications/{,**} r,
-  /var/lib/snapd/desktop/icons/ r,
   /var/lib/update-notifier/user.d/ r,
 
   owner @{user_config_dirs}/update-notifier/ w,
   owner @{user_share_dirs}/applications/ r,
 
-  owner @{run}/user/@{uid}/at-spi/bus rw,
-  owner @{run}/user/@{uid}/bus rw,
   owner @{run}/user/@{uid}/update-notifier.pid rwk,
 
   owner /tmp/#@{int} rw,
 
-  owner @{PROC}/@{pid}/fd/ r,
         @{PROC}/@{pids}/mountinfo r,
+  owner @{PROC}/@{pid}/fd/ r,
 
   include if exists <local/update-notifier>
 }

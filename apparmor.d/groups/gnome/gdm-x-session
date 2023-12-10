@@ -12,17 +12,13 @@ profile gdm-x-session @{exec_path} flags=(attach_disconnected) {
   include <abstractions/bus-session>
   include <abstractions/bus-system>
   include <abstractions/bus/org.freedesktop.systemd1-session>
+  include <abstractions/bus/org.gnome.DisplayManager>
 
   signal (receive) set=term peer=gdm{,-session-worker},
   # signal (send) set=term peer=unconfined,
   signal (send) set=term peer=dbus-run-session,
   signal (send) set=term peer=xorg,
   signal (send) set=term peer=gnome-session-binary,
-
-  dbus send bus=system path=/org/gnome/DisplayManager/Manager
-       interface=org.gnome.DisplayManager.Manager
-       member=RegisterDisplay
-       peer=(name=:*, label=gdm),
 
   dbus send bus=session path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus
@@ -42,13 +38,13 @@ profile gdm-x-session @{exec_path} flags=(attach_disconnected) {
   /etc/gdm{3,}/custom.conf r,
   /etc/gdm{3,}/daemon.conf r,
   /etc/sysconfig/displaymanager r,
-
-  /var/lib/gdm{3,}/.cache/gdm/Xauthority rw,
-  /var/lib/gdm{3,}/.cache/gdm/ rw,
   
+  /var/lib/gdm{3,}/.cache/gdm/ rw,
+  /var/lib/gdm{3,}/.cache/gdm/Xauthority rw,
+
+        @{run}/gdm{3,}/custom.conf r,
   owner @{run}/user/@{uid}/gdm/ w,
   owner @{run}/user/@{uid}/gdm/Xauthority rw,
-        @{run}/gdm{3,}/custom.conf r,
 
   owner @{PROC}/@{pid}/fd/ r,
 
