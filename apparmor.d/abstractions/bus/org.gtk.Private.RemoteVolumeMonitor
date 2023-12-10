@@ -1,0 +1,15 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+  dbus send bus=session path=/org/gtk/Private/RemoteVolumeMonitor
+       interface=org.gtk.Private.RemoteVolumeMonitor
+       member={List,IsSupported,VolumeChanged,VolumeMount,MountAdded}
+       peer=(name=:*, label=gvfs-*-monitor),
+
+  dbus receive bus=session path=/org/gtk/Private/RemoteVolumeMonitor
+       interface=org.gtk.Private.RemoteVolumeMonitor
+       member={MountAdded,VolumeChanged}
+       peer=(name=:*, label=gvfs-*-volume-monitor),
+
+  include if exists <abstractions/bus/org.gtk.Private.RemoteVolumeMonitor.d>
