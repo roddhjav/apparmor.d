@@ -1,10 +1,10 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2019-2021 Mikhail Morfikov
+# Copyright (C) 2021-2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
-#
+
 # See more at: https://gitlab.com/apparmor/apparmor/wikis/Pam_apparmor_example
 
-#
 # This file contains the mappings from users to roles for the binaries
 # confined with AppArmor and configured for use with libpam-apparmor. Users
 # without a mapping will not be able to login.
@@ -15,14 +15,18 @@
 ^DEFAULT {
   include <abstractions/authentication>
   include <abstractions/nameservice>
+
   capability dac_override,
   capability setgid,
   capability setuid,
+
   /etc/default/su r,
   @{etc_ro}/environment r,
-  @{HOMEDIRS}/.xauth@{rand6} w,
-  @{bin}/{,b,d,rb}ash Px -> default_user,
-  @{bin}/{c,k,tc,z}sh Px -> default_user,
+
+  @{bin}/{,b,d,rb}ash rPx -> default_user,
+  @{bin}/{c,k,tc,z}sh rPx -> default_user,
+
+  include if exists <local/pam_default>
 }
 
 # USER is a confined user. The hat contains only the permissions necessary
@@ -37,13 +41,13 @@
   capability setgid,
   capability setuid,
 
-  @{bin}/{,b,d,rb}ash Px -> confined_user,
-  @{bin}/{c,k,tc,z}sh Px -> confined_user,
+  @{bin}/{,b,d,rb}ash rPx -> confined_user,
+  @{bin}/{c,k,tc,z}sh rPx -> confined_user,
 
   /etc/default/su r,
   @{etc_ro}/environment r,
-  @{HOMEDIRS}/.xauth@{rand6} w,
 
+  include if exists <local/pam_user>
 }
 
 # Don't confine members whose primary group is 'admin' who are not specifically
@@ -59,11 +63,11 @@
   capability setgid,
   capability setuid,
 
-  @{bin}/{,b,d,rb}ash Ux,
-  @{bin}/{c,k,tc,z}sh Ux,
+  @{bin}/{,b,d,rb}ash rUx,
+  @{bin}/{c,k,tc,z}sh rUx,
 
   /etc/default/su r,
   @{etc_ro}/environment r,
-  @{HOMEDIRS}/.xauth@{rand6} w,
 
+  include if exists <local/pam_root>
 }
