@@ -15,6 +15,9 @@ profile nautilus @{exec_path} flags=(attach_disconnected) {
   include <abstractions/bus/org.a11y>
   include <abstractions/bus/org.freedesktop.hostname1>
   include <abstractions/bus/org.freedesktop.portal.Desktop>
+  include <abstractions/bus/org.freedesktop.Tracker3.Miner.Files>
+  include <abstractions/bus/org.gnome.SessionManager>
+  include <abstractions/bus/org.gtk.Private.RemoteVolumeMonitor>
   include <abstractions/dconf-write>
   include <abstractions/deny-sensitive-home>
   include <abstractions/dri-enumerate>
@@ -28,37 +31,22 @@ profile nautilus @{exec_path} flags=(attach_disconnected) {
 
   dbus bind bus=session name=org.gnome.Nautilus,
   dbus (send, receive) bus=session path=/org/gnome/Nautilus{,/**}
-       interface=org.gtk.{Actions,Application},
-  dbus (send, receive) bus=session path=/org/gnome/Nautilus{,/**}
-       interface=org.freedesktop.DBus.Properties
-       peer=(name=:*),
-  dbus receive bus=session path=/org/gnome/Nautilus
-       interface=org.freedesktop.Application
-       peer=(name=:*),
+       interface={org.gnome.Nautilus,org.freedesktop.{Application,DBus.Properties},org.gtk.{Actions,Application}}
+       peer=(name="{:*,org.gnome.Nautilus,org.freedesktop.DBus}"),
 
   dbus bind bus=session name=org.freedesktop.FileManager1,
-  dbus receive bus=session path=/org/freedesktop/FileManager1
+  dbus (send, receive) bus=session path=/org/freedesktop/FileManager1
        interface=org.freedesktop.DBus.Properties
-       peer=(name=:*),
-  dbus send bus=session path=/org/freedesktop/FileManager1
-       interface=org.freedesktop.DBus.Properties
-       peer=(name=org.freedesktop.DBus),
+       peer=(name="{:*,org.freedesktop.DBus}"),
+
+  dbus receive bus=session path=/org/gnome/Nautilus/SearchProvider
+       interface=org.gnome.Shell.SearchProvider2
+       peer=(name=:*, label=gnome-shell),
 
   dbus receive bus=session path=/org/gnome/Nautilus/*
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
        peer=(name=:*, label=gnome-extension-ding),
-
-  dbus send bus=session path=/org/freedesktop/Tracker3/Endpoint
-       interface=org.freedesktop.DBus.Peer
-       peer=(name=org.freedesktop.Tracker3.Miner.Files, label=tracker-miner),
-  dbus send bus=session path=/org/freedesktop/Tracker3/Endpoint
-       interface=org.freedesktop.Tracker3.Endpoint
-       peer=(name=org.freedesktop.Tracker3.Miner.Files, label=tracker-miner),
-
-  dbus (send, receive) bus=session path=/org/gtk/Private/RemoteVolumeMonitor
-       interface=org.gtk.Private.RemoteVolumeMonitor
-       peer=(name=:*, label=gvfs-*-monitor),
 
   dbus send bus=session path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus.Properties

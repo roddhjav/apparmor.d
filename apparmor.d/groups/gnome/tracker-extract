@@ -10,67 +10,43 @@ include <tunables/global>
 profile tracker-extract @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus-session>
+  include <abstractions/bus/org.gtk.Private.RemoteVolumeMonitor>
   include <abstractions/bus/org.gtk.vfs.Daemon>
   include <abstractions/bus/org.gtk.vfs.MountTracker>
   include <abstractions/dconf-write>
   include <abstractions/deny-sensitive-home>
   include <abstractions/disks-read>
+  include <abstractions/dri-common>
   include <abstractions/dri-enumerate>
-  include <abstractions/fonts>
-  include <abstractions/freedesktop.org>
+  include <abstractions/gnome-strict>
   include <abstractions/gstreamer>
   include <abstractions/nameservice-strict>
   include <abstractions/opencl-nvidia>
   include <abstractions/openssl>
-  include <abstractions/X-strict>
 
   network netlink raw,
 
   signal (receive) set=(term) peer=gdm,
 
   dbus bind bus=session name=org.freedesktop.Tracker3.Miner.Extract,
-  dbus receive bus=session path=/org/freedesktop/Tracker3/**
-       interface=org.freedesktop.Tracker3.*
-       peer=(name=:*), # all members
 
-  dbus send bus=session path=/org/freedesktop/Tracker3/**
-       interface=org.freedesktop.DBus.{Peer,Properties}
-       peer=(label=tracker-miner),
-  dbus send bus=session path=/org/freedesktop/Tracker3/**
-       interface=org.freedesktop.Tracker3.*
-       peer=(label=tracker-miner),
-  dbus send bus=session path=/org/freedesktop/Tracker3/**
-       interface=org.freedesktop.DBus.Peer
-       peer=(name=org.freedesktop.Tracker3.Miner.Files),
-
-  dbus send bus=session path=/org/gtk/Private/RemoteVolumeMonitor
-       interface=org.gtk.Private.RemoteVolumeMonitor
-       member={List,IsSupported,MountAdded}
-       peer=(name=:*, label=gvfs-*-volume-monitor),
-  dbus receive bus=session path=/org/gtk/Private/RemoteVolumeMonitor
-       interface=org.gtk.Private.RemoteVolumeMonitor
-       member={MountAdded,VolumeChanged}
-       peer=(name=:*, label=gvfs-*-volume-monitor),
+  # Talk to tracker-miner
+  dbus send bus=session path=/org/freedesktop/Tracker3/{Files,Endpoint,Miner/Extract}
+       interface={org.freedesktop.Tracker3.{Miner,Endpoint,Files},org.freedesktop.DBus.{Peer,Properties}}
+       peer=(name="{:*,org.freedesktop.Tracker3.Miner.Files,org.freedesktop.DBus}", label=tracker-miner),
 
   dbus send bus=session path=/org/gtk/vfs/metadata
        interface=org.gtk.vfs.Metadata
        member={GetTreeFromDevice,Remove}
        peer=(name=:*, label=gvfsd-metadata),
 
-  dbus receive bus=session
-       interface=org.freedesktop.DBus.Introspectable
-       member=Introspect
-       peer=(name=:*, label=gnome-shell),
-
   @{exec_path} mr,
 
   /usr/share/dconf/profile/gdm r,
-  /usr/share/drirc.d/{,*.conf} r,
   /usr/share/gdm/greeter/applications/*.desktop r,
   /usr/share/gvfs/remote-volume-monitors/{,*} r,
   /usr/share/hwdata/*.ids r,
   /usr/share/ladspa/rdf/{,**} r,
-  /usr/share/mime/mime.cache r,
   /usr/share/osinfo/{,**} r,
   /usr/share/poppler/{,**} r,
   /usr/share/tracker3-miners/{,**} r,
@@ -91,7 +67,6 @@ profile tracker-extract @{exec_path} flags=(attach_disconnected) {
 
   /var/lib/flatpak/exports/share/applications/mimeinfo.cache r,
   /var/lib/flatpak/exports/share/mime/mime.cache r,
-  /var/lib/snapd/desktop/applications/*.desktop r,
 
   # Allow to search user files
   owner @{HOME}/{,**} r,

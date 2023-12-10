@@ -16,27 +16,24 @@ profile gvfs-gphoto2-volume-monitor @{exec_path} {
 
   network netlink raw,
 
-  dbus receive bus=session path=/org/gtk/Private/RemoteVolumeMonitor
+  dbus bind bus=session name=org.gtk.vfs.GPhoto2VolumeMonitor,
+  dbus (send, receive) bus=session path=/org/gtk/Private/RemoteVolumeMonitor
        interface=org.gtk.Private.RemoteVolumeMonitor
-       member={List,IsSupported}
-       peer=(name=:*, label="{gnome-shell,gnome-control-center,gnome-extension-ding,nautilus,tracker-*,unconfined}"),
+       peer=(name="{:*,org.freedesktop.DBus}"),
 
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect 
        peer=(name=:*, label=gnome-shell),
 
-  dbus bind bus=session
-       name=org.gtk.vfs.GPhoto2VolumeMonitor,
-
   @{exec_path} mr,
 
-  owner @{PROC}/@{pid}/mountinfo r,
-  owner @{PROC}/@{pid}/mounts r,
+  /etc/fstab r,
 
   @{sys}/class/scsi_generic/ r,
 
-  /etc/fstab r,
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/mounts r,
 
   include if exists <local/gvfs-gphoto2-volume-monitor>
 }
