@@ -9,8 +9,11 @@ include <tunables/global>
 @{exec_path} = @{bin}/gnome-calendar
 profile gnome-calendar @{exec_path} {
   include <abstractions/base>
+  include <abstractions/bus-accessibility>
   include <abstractions/bus-session>
   include <abstractions/bus-system>
+  include <abstractions/bus/org.freedesktop.GeoClue2>
+  include <abstractions/bus/org.a11y>
   include <abstractions/bus/org.freedesktop.login1>
   include <abstractions/bus/org.freedesktop.NetworkManager>
   include <abstractions/bus/org.freedesktop.portal.Desktop>
@@ -28,6 +31,10 @@ profile gnome-calendar @{exec_path} {
   network netlink raw,
 
   dbus bind bus=session name=org.gnome.Calendar,
+  dbus (send, receive) bus=session path=/org/gnome/Calendar
+       interface=org.freedesktop.{Actions,Application}
+       peer=(name="{:*,org.freedesktop.DBus}"),
+
   dbus receive bus=session path=/org/gnome/Calendar/SearchProvider
        interface=org.gnome.Shell.SearchProvider2
        peer=(name=:*, label=gnome-shell),

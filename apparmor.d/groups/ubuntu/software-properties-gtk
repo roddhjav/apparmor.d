@@ -10,32 +10,36 @@ include <tunables/global>
 profile software-properties-gtk @{exec_path} {
   include <abstractions/base>
   include <abstractions/apt-common>
+  include <abstractions/bus-accessibility>
   include <abstractions/bus-session>
   include <abstractions/bus-system>
   include <abstractions/bus/org.a11y>
   include <abstractions/bus/org.freedesktop.portal.Desktop>
   include <abstractions/dconf-write>
-  include <abstractions/fonts>
-  include <abstractions/freedesktop.org>
+  include <abstractions/gnome-strict>
   include <abstractions/nameservice-strict>
   include <abstractions/openssl>
   include <abstractions/python>
-  include <abstractions/wayland>
 
   dbus bind bus=session name=com.ubuntu.SoftwareProperties,
-  dbus send bus=system path=/
-      interface=com.ubuntu.SoftwareProperties
-       peer=(name=:*),
-
-  dbus receive bus=session
-       interface=org.freedesktop.DBus.Introspectable
-       member=Introspect
-       peer=(name=:*, label=gnome-shell),
+  dbus (send, receive) bus=system path=/com/ubuntu/SoftwareProperties
+       interface={com.ubuntu.SoftwareProperties,org.gtk.{Application,Actions}}
+       peer=(name="{:*,com.ubuntu.SoftwareProperties}", label=software-properties-gtk),
 
   dbus send bus=system path=/
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
        peer=(name=:*),
+
+  dbus send bus=system path=/
+       interface=org.freedesktop.DBus.ObjectManager
+       member=GetManagedObjects
+       peer=(name=:*, label=ubuntu-advantage-desktop-daemon),
+
+  dbus send bus=system path=/com/canonical/UbuntuAdvantage/Manager
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name=:*, label=ubuntu-advantage-desktop-daemon),
 
   @{exec_path} mr,
 
@@ -51,8 +55,6 @@ profile software-properties-gtk @{exec_path} {
   @{bin}/ubuntu-advantage         rPx,
 
   /usr/share/distro-info/*.csv r,
-  /usr/share/icons/{,**} r,
-  /usr/share/mime/mime.cache r,
   /usr/share/pixmaps/ r,
   /usr/share/python-apt/{,**} r,
   /usr/share/software-properties/{,**} r,
@@ -64,8 +66,6 @@ profile software-properties-gtk @{exec_path} {
 
   /etc/apport/blacklist.d/{,*} r,
   /etc/default/apport r,
-  /etc/gtk-3.0/settings.ini r,
-  /etc/machine-id r,
   /etc/update-manager/release-upgrades r,
 
   /var/crash/*software-properties-gtk.@{uid}.crash rw,
