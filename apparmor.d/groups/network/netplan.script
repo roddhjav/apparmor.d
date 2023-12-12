@@ -9,18 +9,41 @@ include <tunables/global>
 @{exec_path} = /usr/share/netplan/netplan.script
 profile netplan.script @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/nameservice-strict>
+  include <abstractions/python>
 
   @{exec_path} mr,
 
-  @{lib}/netplan/generate rix,
+  @{lib}/netplan/generate  rix,
+  @{bin}/udevadm           rCx -> udevadm,
 
   /usr/share/netplan/{,**} r,
 
   /etc/netplan/{,*} r,
 
+  @{run}/NetworkManager/conf.d/10-globally-managed-devices.conf w,
+  @{run}/NetworkManager/system-connections/ r,
+  @{run}/NetworkManager/system-connections/netplan-*.nmconnection w,
   @{run}/systemd/system/ r,
+  @{run}/systemd/system/netplan-* rw,
   @{run}/systemd/system/systemd-networkd.service.wants/ r,
+  @{run}/systemd/system/systemd-networkd.service.wants/netplan-*.service rw,
+
   @{run}/udev/rules.d/ r,
+
+  profile udevadm {
+    include <abstractions/base>
+    include <abstractions/systemd-common>
+
+    @{bin}/udevadm mr,
+
+    /etc/udev/udev.conf r,
+
+    @{run}/udev/rules.d/90-netplan.rules rw,
+    @{run}/udev/rules.d/90-netplan.rules.@{rand6} rw,
+
+    include if exists <local/netplan.script_udevadm>
+  }
 
   include if exists <local/netplan.script>
 }
