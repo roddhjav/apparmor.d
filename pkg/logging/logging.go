@@ -27,6 +27,8 @@ const (
 	warningText = boldYellow + " ‼ " + reset
 )
 
+var Indent = ""
+
 // Print prints a formatted message. Arguments are handled in the manner of fmt.Print.
 func Print(msg string, a ...interface{}) int {
 	n, _ := fmt.Fprintf(os.Stdout, msg, a...)
@@ -41,7 +43,7 @@ func Println(msg string) int {
 
 // Bulletf returns a formatted bullet point string
 func Bulletf(msg string, a ...interface{}) string {
-	return fmt.Sprintf("%s%s\n", bulletText, fmt.Sprintf(msg, a...))
+	return fmt.Sprintf("%s%s%s\n", Indent, bulletText, fmt.Sprintf(msg, a...))
 }
 
 // Bullet prints a formatted bullet point string
@@ -51,7 +53,7 @@ func Bullet(msg string, a ...interface{}) int {
 
 // Stepf returns a formatted step string
 func Stepf(msg string, a ...interface{}) string {
-	return fmt.Sprintf("%s%s\033[0m\n", boldGreen, fmt.Sprintf(msg, a...))
+	return fmt.Sprintf("%s%s%s\033[0m\n", Indent, boldGreen, fmt.Sprintf(msg, a...))
 }
 
 // Step prints a step title
@@ -61,7 +63,7 @@ func Step(msg string, a ...interface{}) int {
 
 // Successf returns a formatted success string
 func Successf(msg string, a ...interface{}) string {
-	return fmt.Sprintf("%s%s\n", successText, fmt.Sprintf(msg, a...))
+	return fmt.Sprintf("%s%s%s\n", Indent, successText, fmt.Sprintf(msg, a...))
 }
 
 // Success prints a formatted success message to stdout
@@ -71,7 +73,7 @@ func Success(msg string, a ...interface{}) int {
 
 // Warningf returns a formatted warning string
 func Warningf(msg string, a ...interface{}) string {
-	return fmt.Sprintf("%s%s\n", warningText, fmt.Sprintf(msg, a...))
+	return fmt.Sprintf("%s%s%s\n", Indent, warningText, fmt.Sprintf(msg, a...))
 }
 
 // Warning prints a formatted warning message to stdout
@@ -81,12 +83,12 @@ func Warning(msg string, a ...interface{}) int {
 
 // Fatalf returns a formatted error message
 func Error(msg string, a ...interface{}) int {
-	return Print(fmt.Sprintf("%s%s\n", errorText, fmt.Sprintf(msg, a...)))
+	return Print(fmt.Sprintf("%s%s%s\n", Indent, errorText, fmt.Sprintf(msg, a...)))
 }
 
 // Fatalf returns a formatted error message
 func Fatalf(msg string, a ...interface{}) string {
-	return fmt.Sprintf("%s%s\n", fatalText, fmt.Sprintf(msg, a...))
+	return fmt.Sprintf("%s%s%s\n", Indent, fatalText, fmt.Sprintf(msg, a...))
 }
 
 // Fatal is equivalent to Print() followed by a call to os.Exit(1).
