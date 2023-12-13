@@ -1,32 +1,31 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2009-2012 Steve Kostecke <steve@debian.org>;
-#               2011-2014 Jérémy Bobbio <lunar@debian.org>;
-#               2020 krathalan https://git.sr.ht/~krathalan/apparmor-profiles/
+# Copyright (C) 2011-2014 Jérémy Bobbio <lunar@debian.org>;
+# Copyright (C) 2020 krathalan https://git.sr.ht/~krathalan/apparmor-profiles/
+# Copyright (C) 2021-2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-3.0-only
 
-# Version of program profiled: 1.9.14
-
 abi <abi/3.0>,
+
 include <tunables/global>
 
 @{exec_path} = @{bin}/haveged
 profile haveged @{exec_path} {
   include <abstractions/base>
 
-  # Required for ioctl RNDADDENTROPY
   capability sys_admin,
-
-  owner @{PROC}/@{pid}/status r,
 
   @{exec_path} mr,
 
-  @{PROC}/sys/kernel/osrelease r,
-  @{PROC}/sys/kernel/random/poolsize r,
-  @{PROC}/sys/kernel/random/write_wakeup_threshold w,
-  /dev/random w,
-
   @{sys}/devices/system/cpu/cpu@{int}/cache/ r,
   @{sys}/devices/system/cpu/cpu@{int}/cache/index*/{type,size,level} r,
+
+        @{PROC}/sys/kernel/osrelease r,
+        @{PROC}/sys/kernel/random/poolsize r,
+        @{PROC}/sys/kernel/random/write_wakeup_threshold w,
+  owner @{PROC}/@{pid}/status r,
+
+  /dev/random w,
 
   include if exists <local/haveged>
 }

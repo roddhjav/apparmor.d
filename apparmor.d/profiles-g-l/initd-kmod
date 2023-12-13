@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2019-2021 Mikhail Morfikov
+# Copyright (C) 2021-2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -27,7 +28,6 @@ profile initd-kmod @{exec_path} {
   /etc/modules-load.d/*.conf r,
   /etc/modules r,
 
-
   profile run-parts {
     include <abstractions/base>
 
@@ -35,6 +35,7 @@ profile initd-kmod @{exec_path} {
 
     /etc/modules-load.d/ r,
 
+    include if exists <local/initd-kmod_run-parts>
   }
 
   profile systemctl {
@@ -54,6 +55,7 @@ profile initd-kmod @{exec_path} {
     owner @{run}/systemd/ask-password/ rw,
     owner @{run}/systemd/ask-password-block/* rw,
 
+    include if exists <local/initd-kmod_systemctl>
   }
 
   include if exists <local/initd-kmod>
