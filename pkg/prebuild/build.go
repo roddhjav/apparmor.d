@@ -14,9 +14,18 @@ import (
 )
 
 // Build the profiles with the following build tasks
-var Builds = []BuildFunc{
-	BuildUserspace,
-}
+var (
+	Builds = []BuildFunc{
+		BuildUserspace,
+	}
+	BuildMsg = map[string]string{
+		"BuildComplain":         "Set complain flag on all profiles",
+		"BuildEnforce":          "All profiles have been enforced",
+		"BuildUserspace":        "Bypass userspace tools restriction",
+		"BuildABI3":             "Build all profiles for abi 3.0 compatibility",
+		"BuildFullSystemPolicy": "Build all profiles for full system policy mode",
+	}
+)
 
 var (
 	regAttachments      = regexp.MustCompile(`(profile .* @{exec_path})`)
