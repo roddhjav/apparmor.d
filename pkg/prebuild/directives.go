@@ -7,7 +7,6 @@ package prebuild
 import (
 	"fmt"
 	"regexp"
-	"slices"
 	"strings"
 
 	"github.com/arduino/go-paths-helper"
