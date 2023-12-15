@@ -60,19 +60,7 @@ func aaPrebuild() error {
 	if err := prebuild.Prepare(); err != nil {
 		return err
 	}
-
-	if err := prebuild.Build(); err != nil {
-		return err
-	}
-
-	logging.Success("Builded profiles with: ")
-	logging.Bullet("Bypass userspace tools restriction")
-	if complain {
-		logging.Bullet("Set complain flag on all profiles")
-	} else if enforce {
-		logging.Bullet("All profiles have been enforced")
-	}
-	return nil
+	return prebuild.Build()
 }
 
 func main() {
