@@ -22,6 +22,7 @@ Options:
     -f, --full      Set AppArmor for full system policy.
     -c, --complain  Set complain flag on all profiles.
     -e, --enforce   Set enforce flag on all profiles.
+        --abi4      Convert the profiles to Apparmor abi/4.0.
 `
 
 var (
@@ -29,6 +30,7 @@ var (
 	full     bool
 	complain bool
 	enforce  bool
+	abi4     bool
 )
 
 func init() {
@@ -40,6 +42,7 @@ func init() {
 	flag.BoolVar(&complain, "complain", false, "Set complain flag on all profiles.")
 	flag.BoolVar(&enforce, "e", false, "Set enforce flag on all profiles.")
 	flag.BoolVar(&enforce, "enforce", false, "Set enforce flag on all profiles.")
+	flag.BoolVar(&abi4, "abi4", false, "Convert the profiles to Apparmor abi/4.0.")
 }
 
 func aaPrebuild() error {
@@ -55,6 +58,9 @@ func aaPrebuild() error {
 		prebuild.Builds = append(prebuild.Builds, prebuild.BuildComplain)
 	} else if enforce {
 		prebuild.Builds = append(prebuild.Builds, prebuild.BuildEnforce)
+	}
+	if abi4 {
+		prebuild.Builds = append(prebuild.Builds, prebuild.BuildABI3)
 	}
 
 	if err := prebuild.Prepare(); err != nil {
