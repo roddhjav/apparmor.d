@@ -5,7 +5,12 @@
 package prebuild
 
 import (
+	"reflect"
+	"runtime"
+	"strings"
+
 	"github.com/arduino/go-paths-helper"
+	"github.com/roddhjav/apparmor.d/pkg/logging"
 )
 
 var (
@@ -24,11 +29,35 @@ func init() {
 	Distribution = getSupportedDistribution()
 }
 
+func getFctName(i any) string {
+	tmp := runtime.FuncForPC(reflect.ValueOf(i).Pointer()).Name()
+	res := strings.Split(tmp, ".")
+	return res[len(res)-1]
+}
+
+func printPrepareMessage(name string, msg []string) {
+	logging.Success("%v", PrepareMsg[name])
+	logging.Indent = "   "
+	for _, line := range msg {
+		logging.Bullet("%s", line)
+	}
+	logging.Indent = ""
+}
+
+func printBuildMessage() {
+	for _, fct := range Builds {
+		name := getFctName(fct)
+		logging.Success("%v", BuildMsg[name])
+	}
+}
+
 func Prepare() error {
 	for _, fct := range Prepares {
-		if err := fct(); err != nil {
+		msg, err := fct()
+		if err != nil {
 			return err
 		}
+		printPrepareMessage(getFctName(fct), msg)
 	}
 	return nil
 }
@@ -48,5 +77,6 @@ func Build() error {
 			panic(err)
 		}
 	}
+	printBuildMessage()
 	return nil
 }
