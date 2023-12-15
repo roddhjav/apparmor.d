@@ -27,36 +27,13 @@ profile systemd-logind @{exec_path} flags=(attach_disconnected,complain) {
 
   network netlink raw,
 
-  dbus bind bus=system name=org.freedesktop.login1,
-  dbus (send, receive) bus=system path=/org/freedesktop/login1{,/**}
-       interface=org.freedesktop.login1.*
-       peer=(name=:*),
-  dbus receive bus=system path=/org/freedesktop/login1{,/**}
-       interface=org.freedesktop.DBus.Properties
-       peer=(name=:*),
-  dbus (send, receive) bus=system path=/org/freedesktop/login1{,/**}
-       interface=org.freedesktop.login1.*
-       peer=(name=org.freedesktop.DBus),
-  dbus send bus=system path=/org/freedesktop/login1{,/**}
-       interface=org.freedesktop.DBus.Properties
-       peer=(name=org.freedesktop.DBus),
+  # dbus: own bus=system name=org.freedesktop.login1
 
-  dbus receive bus=system path=/org/freedesktop/systemd1{,/{unit,job}/**}
-       interface=org.freedesktop.DBus.Properties
-       peer=(name=:*, label="@{systemd}"),
-  dbus send bus=system path=/org/freedesktop/systemd1/{unit,job}/**
-       interface=org.freedesktop.DBus.Properties
-       peer=(name=org.freedesktop.systemd1, label="@{systemd}"),
-  dbus send bus=system path=/org/freedesktop/systemd1/{unit,job}/**
-       interface=org.freedesktop.systemd1.Scope
-       peer=(name=org.freedesktop.systemd1, label="@{systemd}"),
+  # dbus: talk bus=system name=org.freedesktop.systemd1 label="@{systemd}"
 
   dbus send bus=system path=/org/freedesktop/systemd1
        interface=org.freedesktop.systemd1.Manager
        peer=(name=org.freedesktop.systemd1),
-  dbus receive bus=system path=/org/freedesktop/systemd1
-       interface=org.freedesktop.systemd1.Manager
-       peer=(name=:*, label="@{systemd}"),
 
   dbus send bus=system path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus
