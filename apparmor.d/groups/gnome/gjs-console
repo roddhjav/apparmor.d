@@ -32,43 +32,20 @@ profile gjs-console @{exec_path} flags=(attach_disconnected) {
 
   signal (receive) set=(term hup) peer=gdm*,
 
-  dbus bind bus=session name=org.gnome.Shell.Notifications,
+  # dbus: own bus=session name=org.freedesktop.Notifications
+  # dbus: own bus=session name=org.gnome.ScreenSaver
+  # dbus: own bus=session name=org.gnome.Shell.Extensions
+  # dbus: own bus=session name=org.gnome.Shell.Notifications
+  # dbus: own bus=session name=org.gnome.Shell.Screencast
 
-  dbus bind bus=session name=org.gnome.ScreenSaver,
-  dbus receive bus=session path=/org/gnome/ScreenSaver
-       interface=org.gnome.ScreenSaver
-       peer=(name=:*), # all members
-  dbus receive bus=session path=/org/gnome/ScreenSaver
-       interface=org.freedesktop.DBus.Properties
-       peer=(name=:*), # all members
-  dbus send bus=session path=/org/gnome/ScreenSaver
-       interface=org.gnome.ScreenSaver
-       peer=(name=:*), # all members
-  dbus send bus=session path=/org/gnome/ScreenSaver
-       interface=org.gnome.ScreenSaver
-       peer=(name=org.freedesktop.DBus),
-  dbus send bus=session path=/org/gnome/ScreenSaver
-       interface=org.gnome.ScreenSaver
-       peer=(name=org.gnome.Shell.ScreenShield),
-  dbus send bus=session path=/org/gnome/ScreenSaver
-       interface=org.freedesktop.DBus.Properties
-       peer=(name=:*), # all members
-
-  dbus bind bus=session name=org.freedesktop.Notifications,
-  dbus receive bus=session path=/org/freedesktop/Notifications
-       interface=org.freedesktop.DBus.Properties
-       peer=(name=:*), # all members
-  dbus send bus=session path=/org/freedesktop/Notifications
-       interface=org.freedesktop.DBus.Properties
-       peer=(name=:*), # all members
-
-  dbus bind bus=session name=org.gnome.Shell.Screencast,
-  dbus receive bus=session path=/org/gnome/Shell/Screencast
-       interface=org.freedesktop.DBus.Properties
-       peer=(name=:*), # all members
   dbus send bus=session path=/org/gnome/Mutter/ScreenCast
        interface=org.freedesktop.DBus.Properties
        peer=(name=:*, label=gnome-shell),
+
+  dbus send bus=session path=/org/gnome/ScreenSaver
+       interface=org.gnome.ScreenSaver
+       member=GetActive
+       peer=(name=org.gnome.Shell.ScreenShield, label=gnome-shell),
 
   @{exec_path} mr,
 

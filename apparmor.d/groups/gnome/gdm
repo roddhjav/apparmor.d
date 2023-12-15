@@ -27,26 +27,9 @@ profile gdm @{exec_path} flags=(attach_disconnected) {
 
   signal (send) set=(term),
 
-  dbus bind bus=system name=org.gnome.DisplayManager,
-  dbus receive bus=system path=/org/gnome/DisplayManager/Manager
-       interface=org.gnome.DisplayManager.Manager
-       peer=(name=:*, label="{gnome-shell,gdm-*-session}"),
-  dbus receive bus=system path=/org/gnome/DisplayManager/Manager
-       interface=org.freedesktop.DBus.Properties
-       peer=(name=:*, label=gnome-shell),
+  # dbus: own bus=system name=org.gnome.DisplayManager.Manager
 
-  dbus receive bus=system path=/org/freedesktop/login1/seat/seat@{int}
-       interface=org.freedesktop.DBus.Properties
-       member={Get,PropertiesChanged}
-       peer=(name=:*, label=systemd-logind),
-  dbus send bus=system path=/org/freedesktop/login1/seat/seat@{int}
-       interface=org.freedesktop.DBus.Properties
-       member=Get
-       peer=(name=:*, label=systemd-logind),
-  dbus send bus=system path=/org/freedesktop/login1
-       interface=org.freedesktop.login1.Manager
-       member={UnlockSession,ActivateSessionOnSeat}
-       peer=(name=org.freedesktop.login1, label=systemd-logind),
+  # dbus: talk bus=system name=org.freedesktop.login1 label=systemd-logind
 
   dbus send bus=system path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus

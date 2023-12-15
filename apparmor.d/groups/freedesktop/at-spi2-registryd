@@ -21,42 +21,21 @@ profile at-spi2-registryd @{exec_path} flags=(attach_disconnected) {
   signal (receive) set=(term hup kill) peer=dbus-daemon,
   signal (receive) set=(term hup kill) peer=gdm*,
 
-  dbus bind bus=accessibility name=org.a11y.atspi.Registry,
-
-  dbus send bus=session path=/org/a11y/bus
-       interface=org.a11y.Bus
-       member=GetAddress
-       peer=(name=org.a11y.Bus, label=dbus-daemon),
+  # dbus: own bus=accessibility name=org.a11y.atspi.{R,r}egistry
 
   dbus send bus=accessibility path=/org/a11y/atspi/accessible/root
        interface=org.freedesktop.DBus.Properties
        member=Set
-       peer=(name=:*), # all peer's labels
-
+       peer=(name=:*),
   dbus receive bus=accessibility path=/org/a11y/atspi/accessible/root
        interface=org.a11y.atspi.Socket
        member=Embed
-       peer=(name=:*), # all peer's labels
-
-  dbus receive bus=accessibility path=/org/a11y/atspi/registry
-       interface=org.a11y.atspi.Registry
-       member={GetRegisteredEvents,EventListenerDeregistered}
-       peer=(name=:*), # all peer's labels
-
-  dbus send bus=accessibility path=/org/a11y/atspi/registry
-       interface=org.a11y.atspi.Registry
-       member={GetRegisteredEvents,EventListenerDeregistered}
-       peer=(name=org.freedesktop.DBus), # all peer's labels
+       peer=(name=:*),
 
   dbus receive bus=accessibility path=/org/a11y/atspi/registry/deviceeventcontroller
        interface=org.a11y.atspi.DeviceEventController
        member={GetKeystrokeListeners,GetDeviceEventListeners}
-       peer=(name=:*), # all peer's labels
-
-  dbus send bus=accessibility path=/org/freedesktop/DBus
-       interface=org.freedesktop.DBus
-       member={RequestName,ReleaseName}
-       peer=(name=org.freedesktop.DBus, label=at-spi-bus-launcher),
+       peer=(name=:*),
 
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable
