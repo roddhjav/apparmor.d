@@ -12,7 +12,6 @@ profile gnome-calendar @{exec_path} {
   include <abstractions/bus-accessibility>
   include <abstractions/bus-session>
   include <abstractions/bus-system>
-  include <abstractions/bus/org.freedesktop.GeoClue2>
   include <abstractions/bus/org.a11y>
   include <abstractions/bus/org.freedesktop.login1>
   include <abstractions/bus/org.freedesktop.NetworkManager>
@@ -30,25 +29,16 @@ profile gnome-calendar @{exec_path} {
 
   network netlink raw,
 
-  dbus bind bus=session name=org.gnome.Calendar,
-  dbus (send, receive) bus=session path=/org/gnome/Calendar
-       interface=org.freedesktop.{Actions,Application}
-       peer=(name="{:*,org.freedesktop.DBus}"),
+  # dbus: own bus=session name=org.gnome.Calendar interface={org.freedesktop.Application,org.gtk.Actions}
 
-  dbus receive bus=session path=/org/gnome/Calendar/SearchProvider
-       interface=org.gnome.Shell.SearchProvider2
-       peer=(name=:*, label=gnome-shell),
+  # dbus: talk bus=session name=org.gnome.evolution.dataserver.CalendarView label=evolution-calendar-factory
+  # dbus: talk bus=session name=org.gnome.evolution.dataserver.Source label=evolution-source-registry
+  # dbus: talk bus=system name=org.freedesktop.GeoClue2 label=geoclue
 
-  dbus send bus=session path=/org/gnome/evolution/dataserver/**
-       interface=org.freedesktop.DBus.Properties
-       peer=(name=:*, label=evolution-*),
-  dbus send bus=session path=/org/gnome/evolution/dataserver/**
-       interface=org.gnome.evolution.dataserver.*
-       peer=(name=:*, label=evolution-*),
-  dbus send bus=session path=/org/gnome/evolution/dataserver/**
+  dbus send bus=session path=/org/gnome/evolution/dataserver/SourceManager{,/**}
        interface=org.freedesktop.DBus.ObjectManager
        member=GetManagedObjects
-       peer=(name=:*, label=evolution-*),
+       peer=(name=:*, label=evolution-source-registry),
 
   @{exec_path} mr,
 
