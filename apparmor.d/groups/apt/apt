@@ -38,10 +38,17 @@ profile apt @{exec_path} flags=(attach_disconnected) {
   unix (send, receive) type=stream peer=(label=apt-esm-json-hook),
   unix (send, receive) type=stream peer=(label=snapd),
 
-  dbus bind bus=system name=org.debian.apt,
+  # dbus: own bus=system name=org.debian.apt
 
-  dbus (send, receive) bus=system path=/org/debian/apt{,/transaction/@{hex}}
-       interface=org.{debian.apt*,freedesktop.DBus.{Properties,Introspectable}},
+  dbus send bus=system path=/org/freedesktop/DBus/Bus
+       interface=org.freedesktop.DBus
+       member={GetConnectionUnixProcessID,GetConnectionUnixUser}
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
+
+  dbus send bus=system path=/org/freedesktop/DBus/Bus
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
 
   @{exec_path} mr,
 
