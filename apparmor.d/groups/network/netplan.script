@@ -16,20 +16,21 @@ profile netplan.script @{exec_path} flags=(attach_disconnected) {
 
   @{lib}/netplan/generate  rix,
   @{bin}/udevadm           rCx -> udevadm,
+  @{bin}/systemctl         rCx -> systemctl, 
 
   /usr/share/netplan/{,**} r,
 
   /etc/netplan/{,*} r,
 
-  @{run}/NetworkManager/conf.d/10-globally-managed-devices.conf w,
+  @{run}/NetworkManager/conf.d/10-globally-managed-devices.conf{,.@{rand6}} w,
   @{run}/NetworkManager/system-connections/ r,
-  @{run}/NetworkManager/system-connections/netplan-*.nmconnection w,
+  @{run}/NetworkManager/system-connections/netplan-*.nmconnection{,.@{rand6}} w,
   @{run}/systemd/system/ r,
   @{run}/systemd/system/netplan-* rw,
   @{run}/systemd/system/systemd-networkd.service.wants/ r,
   @{run}/systemd/system/systemd-networkd.service.wants/netplan-*.service rw,
-
   @{run}/udev/rules.d/ r,
+  @{run}/udev/rules.d/90-netplan.rules{,.@{rand6}} rw,
 
   profile udevadm {
     include <abstractions/base>
@@ -39,10 +40,20 @@ profile netplan.script @{exec_path} flags=(attach_disconnected) {
 
     /etc/udev/udev.conf r,
 
+    @{run}/udev/control rw,
     @{run}/udev/rules.d/90-netplan.rules rw,
     @{run}/udev/rules.d/90-netplan.rules.@{rand6} rw,
 
     include if exists <local/netplan.script_udevadm>
+  }
+
+  profile systemctl {
+    include <abstractions/base>
+    include <abstractions/systemd-common>
+
+    @{bin}/systemctl mr,
+
+    include if exists <local/netplan.script_systemctl>
   }
 
   include if exists <local/netplan.script>
