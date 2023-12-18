@@ -3,36 +3,28 @@
 # SPDX-License-Identifier: GPL-2.0-only
 
   # The unix socket to use to connect to the display
-  unix (connect, receive, send)
-       type=stream
-       peer=(addr="@/tmp/.X11-unix/X[0-9]*"),
-  unix (connect, receive, send)
-       type=stream
-       peer=(addr="@/tmp/.ICE-unix/[0-9]*"),
+  unix (connect, receive, send) type=stream peer=(addr="@/tmp/.X11-unix/X[0-9]*"),
+  unix (connect, receive, send) type=stream peer=(addr="@/tmp/.ICE-unix/[0-9]*"),
   unix type=stream addr="@/tmp/.ICE-unix/[0-9]*",
   unix type=stream addr="@/tmp/.X11-unix/X[0-9]*",
-  /tmp/.X11-unix/* rw,
-  /tmp/.ICE-unix/* rw,
-  /tmp/.X{0,1}-lock rw,
 
-  # Available Xsessions
-  /usr/share/xsessions/{,*.desktop} r,
-
-  # ICEauthority files required for X authentication, per user
-  owner @{HOME}/.ICEauthority r,
-  owner @{run}/user/@{uid}/ICEauthority r,
-
-  # Xauthority files required for X connections, per user
-  owner @{HOME}/.Xauthority r,
-  owner /tmp/xauth_@{rand6} rl -> /tmp/#@{int},
-  owner @{run}/user/@{uid}/gdm{[1-9],}/Xauthority r,
-  owner @{run}/user/@{uid}/X11/Xauthority r,
-  owner @{run}/user/@{uid}/xauth_@{rand6} rl -> @{run}/user/@{uid}/#@{int},
-
-  # Xwayland
-  owner @{run}/user/@{uid}/.mutter-Xwaylandauth.@{rand6} rw,
+  /usr/share/X11/{,**} r,
+  /usr/share/xsessions/{,*.desktop} r,  # Available Xsessions
 
   /etc/X11/cursors/{,**} r,
-  /usr/share/X11/{,**} r,
+  
+  owner @{HOME}/.ICEauthority r,  # ICEauthority files required for X authentication, per user
+  owner @{HOME}/.Xauthority r,  # Xauthority files required for X connections, per user
+ 
+        /tmp/.ICE-unix/* rw,
+        /tmp/.X{0,1}-lock rw,
+        /tmp/.X11-unix/* rw,
+  owner /tmp/xauth_@{rand6} rl -> /tmp/#@{int},
+
+  owner @{run}/user/@{uid}/.mutter-Xwaylandauth.@{rand6} rw,  # Xwayland
+  owner @{run}/user/@{uid}/gdm{[1-9],}/Xauthority r,
+  owner @{run}/user/@{uid}/ICEauthority r,
+  owner @{run}/user/@{uid}/X11/Xauthority r,
+  owner @{run}/user/@{uid}/xauth_@{rand6} rl -> @{run}/user/@{uid}/#@{int},
 
   include if exists <abstractions/X-strict.d>
