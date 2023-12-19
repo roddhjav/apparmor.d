@@ -1,0 +1,34 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+  abi <abi/3.0>,
+
+
+  /usr/share/nvidia/nvidia-application-profiles-* r,
+
+  /etc/nvidia/nvidia-application-profiles-* r,
+  /etc/vdpau_wrapper.cfg r,
+
+  owner @{HOME}/.cache/nvidia/ w,
+  owner @{HOME}/.cache/nvidia/GLCache/ rw,
+  owner @{HOME}/.cache/nvidia/GLCache/** rwk,
+  owner @{HOME}/.nv/ComputeCache/ w,
+  owner @{HOME}/.nv/ComputeCache/** rw,
+  owner @{HOME}/.nv/ComputeCache/index rwk,
+  owner @{HOME}/.nv/nvidia-application-profiles-* r,
+
+  @{sys}/devices/system/memory/block_size_bytes r,
+
+        @{PROC}/driver/nvidia/params r,
+        @{PROC}/sys/vm/max_map_count r,
+        @{PROC}/sys/vm/mmap_min_addr r,
+        @{PROC}/modules r,
+  owner @{PROC}/@{pid}/comm r,
+
+  /dev/char/195:@{int} w,  # Nvidia graphics devices
+  /dev/nvidia-modeset rw,
+  /dev/nvidia@{int} rw,
+  /dev/nvidiactl rw,
+
+  include if exists <abstractions/nvidia-strict.d>
