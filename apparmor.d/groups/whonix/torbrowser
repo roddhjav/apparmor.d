@@ -23,18 +23,16 @@ profile torbrowser @{exec_path} flags=(attach_disconnected) {
   include <abstractions/bus/org.freedesktop.login1>
   include <abstractions/bus/org.freedesktop.portal.Desktop>
   include <abstractions/bus/org.freedesktop.RealtimeKit1>
+  include <abstractions/bus/org.gtk.Private.RemoteVolumeMonitor>
+  include <abstractions/desktop>
+  include <abstractions/enchant>
   include <abstractions/fontconfig-cache-read>
-  include <abstractions/fonts>
-  include <abstractions/freedesktop.org>
+  include <abstractions/graphics-full>
   include <abstractions/gstreamer>
-  include <abstractions/gtk>
-  include <abstractions/mesa>
   include <abstractions/nameservice-strict>
-  include <abstractions/opencl>
   include <abstractions/ssl_certs>
   include <abstractions/thumbnails-cache-read>
   include <abstractions/user-download-strict>
-  include <abstractions/vulkan>
 
   # userns,
 
@@ -59,14 +57,10 @@ profile torbrowser @{exec_path} flags=(attach_disconnected) {
 
   /usr/share/@{name}/{,**} r,
   /usr/share/doc/{,**} r,
-  /usr/share/egl/{,**} r,
-  /usr/share/icu/@{int}.@{int}/*.dat r,
-  /usr/share/libdrm/*.ids r,
   /usr/share/xul-ext/kwallet5/* r,
 
   /etc/@{name}.d/{,**} r,
   /etc/igfx_user_feature{,_next}.txt w,
-  /etc/libva.conf r,
   /etc/mailcap r,
   /etc/mime.types r,
   /etc/opensc.conf r,
@@ -110,20 +104,16 @@ profile torbrowser @{exec_path} flags=(attach_disconnected) {
   @{sys}/cgroup/cpu,cpuacct/user.slice/cpu.cfs_quota_us r,
   @{sys}/class/ r,
   @{sys}/class/**/ r,
-  @{sys}/devices/**/uevent r,
   @{sys}/devices/@{pci}/ r,
   @{sys}/devices/@{pci}/drm/card@{int}/ r,
-  @{sys}/devices/@{pci}/drm/renderD[0-9]*/ r,
-  @{sys}/devices/@{pci}/irq r,
-  @{sys}/devices/system/cpu/cpu@{int}/cache/index[0-9]/size r,
-  @{sys}/devices/system/cpu/cpufreq/policy[0-9]/cpuinfo_max_freq r,
-  @{sys}/devices/system/cpu/present r,
+  @{sys}/devices/@{pci}/drm/renderD128/ r,
+  @{sys}/devices/@{pci}/drm/renderD129/ r,
+  @{sys}/devices/**/uevent r,
   @{sys}/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us r,
   @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/session-1.scope/cpu.max r,
   @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/**/cpu.max r,
 
   owner @{PROC}/@{pid}/cgroup r,
-  owner @{PROC}/@{pid}/comm r,
   owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/gid_map w, # If kernel.unprivileged_userns_clone = 1
   owner @{PROC}/@{pid}/mountinfo r,
@@ -139,6 +129,10 @@ profile torbrowser @{exec_path} flags=(attach_disconnected) {
   owner @{PROC}/@{pid}/uid_map w, # If kernel.unprivileged_userns_clone = 1
   owner @{PROC}/@{pids}/cmdline r,
   owner @{PROC}/@{pids}/environ r,
+
+  # Silencer
+  deny @{lib_dirs}/** w,
+  deny owner @{user_share_dirs}/gvfs-metadata/{,*} r,
 
   include if exists <local/torbrowser>
 }
