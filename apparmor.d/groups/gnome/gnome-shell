@@ -126,6 +126,10 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected) {
        interface=org.freedesktop.ColorManager
        member=DeleteDevice
        peer=(name=:*, label=colord),
+  dbus receive bus=system path=/org/freedesktop/ColorManager
+       interface=org.freedesktop.ColorManager
+       member=ProfileAdded
+       peer=(name=:*, label=colord),
 
   dbus receive bus=system path=/org/freedesktop/login1/seat/seat@{int}
        interface=org.freedesktop.DBus.Properties
@@ -182,6 +186,21 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected) {
        interface=org.freedesktop.systemd1.Manager
        member=JobRemoved
        peer=(name=:*, label="@{systemd}"),
+
+  dbus send bus=session path=/MenuBar
+       interface=com.canonical.dbusmenu
+       member={AboutToShow,GetLayout,GetGroupProperties}
+       peer=(name=:*),
+
+  dbus send bus=session path=/StatusNotifierItem
+       interface=org.freedesktop.DBus.Properties
+       member={Get,GetAll}
+       peer=(name=:*),
+
+  dbus send bus=session path=/org/mpris/MediaPlayer2
+       interface=org.freedesktop.DBus.Properties
+       member={Get,GetAll}
+       peer=(name=:*),
 
   dbus send bus=session
        interface=org.freedesktop.DBus.Introspectable
