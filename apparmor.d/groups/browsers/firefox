@@ -25,20 +25,16 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
   include <abstractions/bus/org.freedesktop.RealtimeKit1>
   include <abstractions/bus/org.gtk.Private.RemoteVolumeMonitor>
   include <abstractions/dconf-write>
+  include <abstractions/desktop>
   include <abstractions/enchant>
   include <abstractions/fontconfig-cache-read>
-  include <abstractions/fonts>
-  include <abstractions/freedesktop.org>
+  include <abstractions/graphics-full>
   include <abstractions/gstreamer>
-  include <abstractions/gtk>
-  include <abstractions/mesa>
   include <abstractions/nameservice-strict>
-  include <abstractions/opencl>
   include <abstractions/ssl_certs>
   include <abstractions/thumbnails-cache-read>
   include <abstractions/user-download-strict>
   include <abstractions/user-read>
-  include <abstractions/vulkan>
 
   # userns,
 
@@ -121,9 +117,6 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
 
   /usr/share/@{name}/{,**} r,
   /usr/share/doc/{,**} r,
-  /usr/share/egl/{,**} r,
-  /usr/share/icu/@{int}.@{int}/*.dat r,
-  /usr/share/libdrm/*.ids r,
   /usr/share/mozilla/extensions/{,**} r,
   /usr/share/webext/{,**} r,
   /usr/share/xul-ext/kwallet5/* r,
@@ -132,7 +125,6 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
   /etc/cups/client.conf r,
   /etc/fstab r,
   /etc/igfx_user_feature{,_next}.txt w,
-  /etc/libva.conf r,
   /etc/mailcap r,
   /etc/mime.types r,
   /etc/opensc.conf r,
@@ -145,9 +137,6 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
   owner @{HOME}/ r,
   owner @{HOME}/.cups/lpoptions r,
 
-  owner @{user_cache_dirs}/ rw,
-
-  owner @{user_config_dirs}/ r,
   owner @{user_config_dirs}/gtk-{3,4}.0/assets/*.svg r,
   owner @{user_config_dirs}/ibus/bus/ r,
   owner @{user_config_dirs}/ibus/bus/@{md5}-unix-{,wayland-}@{int} r,
@@ -156,7 +145,6 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
   owner @{user_config_dirs}/kioslaverc r,
   owner @{user_config_dirs}/mimeapps.list{,.@{rand6}} rw,
 
-  owner @{user_share_dirs}/ r,
   owner @{user_share_dirs}/applications/userapp-Firefox-@{rand6}.desktop{,.@{rand6}} rw,
   owner @{user_share_dirs}/mime/packages/user-extension-{htm,html,xht,xhtml,shtml}.xml rw,
   owner @{user_share_dirs}/mime/packages/user-extension-{htm,html,xht,xhtml,shtml}.xml.* rw,
@@ -206,10 +194,8 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
   @{sys}/devices/**/uevent r,
   @{sys}/devices/@{pci}/ r,
   @{sys}/devices/@{pci}/drm/card@{int}/ r,
-  @{sys}/devices/@{pci}/drm/renderD[0-9]*/ r,
-  @{sys}/devices/@{pci}/irq r,
-  @{sys}/devices/system/cpu/cpu@{int}/cache/index[0-9]/size r,
-  @{sys}/devices/system/cpu/cpufreq/policy[0-9]/cpuinfo_max_freq r,
+  @{sys}/devices/@{pci}/drm/renderD128/ r,
+  @{sys}/devices/@{pci}/drm/renderD129/ r,
   @{sys}/devices/system/cpu/present r,
   @{sys}/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us r,
 
@@ -219,7 +205,6 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
         @{PROC}/@{pid}/net/if_inet6 r,
         @{PROC}/@{pid}/net/route r,
   owner @{PROC}/@{pid}/cgroup r,
-  owner @{PROC}/@{pid}/comm r,
   owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/gid_map w, # If kernel.unprivileged_userns_clone = 1
   owner @{PROC}/@{pid}/mountinfo r,
@@ -241,14 +226,10 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
         /dev/shm/ r,
         /dev/tty rw,
         /dev/video@{int} rw,
-  owner /dev/dri/card@{int} rw, # File Inherit
   owner /dev/shm/org.chromium.* rw,
   owner /dev/shm/org.mozilla.ipc.@{pid}.@{int} rw,
   owner /dev/shm/wayland.mozilla.ipc.@{int} rw,
   owner /dev/tty@{int} rw, # File Inherit
-
-  # X-tiny
-  /tmp/.X0-lock r,
 
   # Silencer
   deny @{lib_dirs}/** w,
