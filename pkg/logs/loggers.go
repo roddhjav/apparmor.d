@@ -71,24 +71,30 @@ func GetAuditLogs(path string) (io.Reader, error) {
 func GetJournalctlLogs(path string, useFile bool) (io.Reader, error) {
 	var logs []systemdLog
 	var stdout bytes.Buffer
-	var value string
+	var unfilteredValue string
 
 	if useFile {
 		content, err := os.ReadFile(filepath.Clean(path))
 		if err != nil {
 			return nil, err
 		}
-		value = string(content)
+		unfilteredValue = string(content)
 	} else {
-		// journalctl -b -o json > systemd.log
-		cmd := exec.Command("journalctl", "--boot", "--output=json")
+		// journalctl -b -o json --output-fields=MESSAGE > systemd.log
+		cmd := exec.Command("journalctl", "--boot", "--output=json", "--output-fields=MESSAGE")
 		cmd.Stdout = &stdout
 		if err := cmd.Run(); err != nil {
 			return nil, err
 		}
-		value = stdout.String()
+		unfilteredValue = stdout.String()
 	}
 
+	value := ""
+	for _, v := range strings.Split(unfilteredValue, "\n") {
+		if strings.Contains(v, "apparmor") {
+			value += v + "\n"
+		}
+	}
 	value = strings.Replace(value, "\n", ",\n", -1)
 	value = strings.TrimSuffix(value, ",\n")
 	value = `[` + value + `]`
