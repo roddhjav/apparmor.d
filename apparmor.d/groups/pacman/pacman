@@ -167,8 +167,16 @@ profile pacman @{exec_path} {
 
   profile gpg {
     include <abstractions/base>
+    include <abstractions/nameservice-strict>
+    include <abstractions/openssl>
+    include <abstractions/ssl_certs>
 
     capability dac_read_search,
+
+    network inet stream,
+    network inet6 stream,
+    network inet dgram,
+    network inet6 dgram,
 
     @{bin}/gpg{,2} mr,
     @{bin}/gpgconf mr,
@@ -183,13 +191,13 @@ profile pacman @{exec_path} {
 
     @{HOME}/@{XDG_GPG_DIR}/*.conf r,
 
-    deny @{user_share_dirs}/sddm/* rw,
-    
+    @{PROC}/@{pid}/fd/ r,
+    @{PROC}/@{pid}/task/@{tid}/comm rw,
+
           /dev/tty@{int} rw,
     owner /dev/pts/@{int} rw,
 
-    deny network inet stream,
-    deny network inet6 stream,
+    deny @{user_share_dirs}/sddm/* rw,
 
     include if exists <local/pacman_gpg>
   }
