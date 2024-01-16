@@ -1,0 +1,37 @@
+# apparmor.d - Full set of apparmor profiles
+# SPDX-License-Identifier: GPL-2.0-only
+
+# https://github.com/SagerNet/sing-box
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /{,usr/}{,local/}bin/sing-box
+profile sing-box @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice>
+  include <abstractions/nis>
+  include <abstractions/ssl_certs>
+  include <abstractions/ssl_keys>
+  include <abstractions/tor>
+  include <abstractions/user-tmp>
+
+  capability net_bind_service,
+
+  network inet stream,
+  network inet6 stream,
+  network inet dgram,
+  network inet6 dgram,
+
+  /proc/meminfo r,
+  /sys/kernel/mm/transparent_hugepage/hpage_pmd_size r,
+
+  /usr/bin/tor mrix,
+  /usr/{,local/}bin/sing-box mr,
+  /usr/{,local/}share/sing-box/geoip.db r,
+  /usr/{,local/}share/sing-box/geosite.db r,
+
+  owner /{,usr/local/}etc/sing-box/config.json r,
+  owner @{home_dirs}/.local/share/certmagic/** rw,
+}
