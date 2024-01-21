@@ -10,10 +10,10 @@ include <tunables/global>
 @{exec_path} = @{bin}/dbus-daemon
 profile dbus-daemon @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/bus-accessibility>
+  include <abstractions/bus-session>
+  include <abstractions/bus-system>
   include <abstractions/consoles>
-  include <abstractions/dbus-accessibility>
-  include <abstractions/dbus-session>
-  include <abstractions/dbus>
   include <abstractions/dconf-write>
   include <abstractions/nameservice-strict>
 
@@ -37,11 +37,16 @@ profile dbus-daemon @{exec_path} flags=(attach_disconnected) {
 
   ptrace (read),
 
+  dbus bus=accessibility,
+  dbus bus=session,
+  dbus bus=system,
+
   @{exec_path} mr,
 
   @{bin}/ r,
 
   @{bin}/*                                                               rPUx,
+  @{bin}/dbus-launch                                                      rix,
   @{lib}/{,at-spi2{,-core}/}at-spi-bus-launcher                           rix, # See #74, #80 & #235
   @{lib}/@{multiarch}/tumbler-1/tumblerd                                 rPUx,
   @{lib}/@{multiarch}/xfce[0-9]/xfconf/xfconfd                            rPx,
