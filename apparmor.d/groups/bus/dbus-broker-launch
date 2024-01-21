@@ -1,0 +1,32 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/dbus-broker-launch
+profile dbus-broker-launch @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+
+  capability net_admin,
+  capability setgid,
+  capability setuid,
+
+  @{exec_path} mr,
+
+  @{bin}/dbus-broker rPUx,
+
+  @{system_share_dirs}/dbus-1/{,**} r,
+  @{system_share_dirs}/dbus-1/services/{,**} r,
+  /usr/share/dbus-1/{,**} r,
+  /usr/share/defaults/**.conf r,
+
+  /etc/machine-id r,
+
+  @{PROC}/sys/kernel/random/boot_id r,
+
+  include if exists <local/dbus-broker-launch>
+}
