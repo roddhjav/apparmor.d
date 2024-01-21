@@ -1,6 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2020-2022 Mikhail Morfikov
-# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2021-2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -14,49 +14,42 @@ profile sensors-detect @{exec_path} {
 
   capability syslog,
 
-  @{exec_path} r,
-  @{bin}/perl r,
-
-  /usr/bin/uname   rix,
-
-  /usr/bin/udevadm rCx -> udevadm,
-  /usr/bin/kmod    rCx -> kmod,
+  @{exec_path} rm,
+ 
+  @{bin}/kmod       rCx -> kmod,
+  @{bin}/perl         r,
+  @{bin}/systemctl  rPx -> child-systemctl,
+  @{bin}/udevadm    rCx -> udevadm,
+  @{bin}/uname      rix,
 
   /etc/udev/udev.conf r,
 
   @{sys}/bus/pci/devices/ r,
   @{sys}/class/i2c-adapter/ r,
-
   @{sys}/devices/@{pci}/{class,vendor,device} r,
-  @{sys}/devices/@{pci}/i2c-[0-9]*/name r,
+  @{sys}/devices/@{pci}/i2c-@{int}/name r,
   @{sys}/devices/@{pci}/modalias r,
   @{sys}/devices/virtual/dmi/id/board_{version,vendor,name} r,
-  @{sys}/devices/virtual/dmi/id/product_{version,name} r,
   @{sys}/devices/virtual/dmi/id/chassis_type r,
+  @{sys}/devices/virtual/dmi/id/product_{version,name} r,
   @{sys}/devices/virtual/dmi/id/sys_vendor r,
 
-  /dev/i2c-[0-9]* r,
-
+        @{PROC}/modules r,
   owner @{PROC}/@{pid}/mounts r,
-  @{PROC}/modules r,
 
+  /dev/i2c-@{int} r,
 
   profile udevadm {
     include <abstractions/base>
+    include <abstractions/systemd-common>
 
     capability sys_ptrace,
-
-    ptrace (read),
 
     @{bin}/udevadm mr,
 
     /etc/udev/udev.conf r,
 
-    owner @{PROC}/@{pid}/stat r,
-    owner @{PROC}/@{pid}/cgroup r,
-          @{PROC}/1/cgroup r,
-          @{PROC}/sys/kernel/random/boot_id r,
-
+    include if exists <local/sensors-detect_udevadm>
   }
 
   profile kmod {
@@ -64,13 +57,12 @@ profile sensors-detect @{exec_path} {
 
     @{bin}/kmod mr,
 
+    @{lib}/modprobe.d/{,*.conf} r,
+    /etc/modprobe.d/{,*.conf} r,
+
     @{PROC}/cmdline r,
 
-    @{lib}/modprobe.d/ r,
-    @{lib}/modprobe.d/*.conf r,
-    /etc/modprobe.d/ r,
-    /etc/modprobe.d/*.conf r,
-
+    include if exists <local/sensors-detect_udevadm>
   }
 
   include if exists <local/sensors-detect>

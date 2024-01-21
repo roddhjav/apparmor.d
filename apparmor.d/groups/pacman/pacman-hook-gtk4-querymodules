@@ -1,0 +1,28 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /usr/share/libalpm/scripts/gtk4-querymodules
+profile pacman-hook-gtk4-querymodules @{exec_path} {
+  include <abstractions/base>
+
+  capability dac_read_search,
+
+  @{exec_path} mr,
+
+  @{bin}/{,ba,da}sh r,
+  @{bin}/rmdir rix,
+  @{bin}/gio-querymodules rPx,
+
+  @{lib}/gtk-4.0/*/*/ w,
+
+  # Inherit Silencer
+  deny network inet6 stream,
+  deny network inet stream,
+
+  include if exists <local/pacman-hook-gtk4-querymodules>
+}

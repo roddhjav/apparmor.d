@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2019-2021 Mikhail Morfikov
+# Copyright (C) 2021-2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -9,9 +10,9 @@ include <tunables/global>
 @{exec_path} = @{bin}/unix_chkpwd
 profile unix-chkpwd @{exec_path} {
   include <abstractions/base>
+  include <abstractions/consoles>
   include <abstractions/nameservice-strict>
 
-  # To write records to the kernel auditing log.
   capability audit_write,
 
   network netlink raw,
@@ -19,9 +20,6 @@ profile unix-chkpwd @{exec_path} {
   @{exec_path} mr,
 
   /etc/shadow r,
-
-  # file_inherit
-  owner /dev/tty@{int} rw,
 
   include if exists <local/unix-chkpwd>
 }
