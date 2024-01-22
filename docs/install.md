@@ -47,7 +47,7 @@ git clone https://github.com/roddhjav/apparmor.d.git
 cd apparmor.d
 dpkg-buildpackage -b -d --no-sign
 sudo dpkg -i ../apparmor.d_*.deb
-sudo systemctl restart apparmor
+systemctl restart apparmor
 ```
 
 !!! tip
