@@ -5,6 +5,11 @@ on: [push, pull_request, workflow_dispatch]
 jobs:
   build:
     runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        mode:
+          - default
+          - full-system-policy
     steps:
 
       - name: Check out repository code
@@ -20,6 +25,9 @@ jobs:
 
       - name: Build the apparmor.d package
         run: |
+          if [[ ${{ matrix.mode }} == full-system-policy ]]; then
+            echo -e "\noverride_dh_auto_build:\n\tmake full" >> debian/rules
+          fi
           VERSION="0.$(git rev-list --count HEAD)-1"
           dch --newversion="$VERSION" --urgency=medium --distribution=stable --controlmaint "Release $VERSION"
           dpkg-buildpackage -b -d --no-sign
