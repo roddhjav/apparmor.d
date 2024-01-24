@@ -1,4 +1,5 @@
 # apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -17,13 +18,16 @@ profile secure-time-sync @{exec_path} flags=(attach_disconnected) {
   network inet dgram,
   network inet6 dgram,
 
+  @{exec_path} mr,
+
+  @{bin}/{,ba,da}sh  rix,
+  @{bin}/curl        rix,
+  @{bin}/date        rix,
+  @{bin}/grep        rix,
+  @{bin}/id          rPx,
+  @{bin}/sed         rix,
+
   owner /dev/tty rw,
 
-  /usr/bin/bash ix,
-  /usr/bin/curl mrix,
-  /usr/bin/date mrix,
-  /usr/bin/grep mrix,
-  /usr/bin/id mrix,
-  /usr/bin/sed mrix,
-  @{exec_path} r,
+  include if exists <local/secure-time-sync>
 }
