@@ -1,4 +1,5 @@
 # apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 # https://github.com/SagerNet/sing-box
@@ -20,14 +21,17 @@ profile sing-box @{exec_path} {
   network inet dgram,
   network inet6 dgram,
 
-  /proc/meminfo r,
-  /sys/kernel/mm/transparent_hugepage/hpage_pmd_size r,
+  @{exec_path} mr,
 
   @{bin}/tor mrix,
-  @{bin}/sing-box mr,
-  /usr/{,local/}share/sing-box/geoip.db r,
-  /usr/{,local/}share/sing-box/geosite.db r,
 
-  owner /{,usr/local/}etc/sing-box/config.json r,
+  /usr/share/sing-box/* r,
+
+  @{etc_ro}/sing-box/config.json r,
+
   owner @{user_share_dirs}/certmagic/** rw,
+
+  @{sys}/kernel/mm/transparent_hugepage/hpage_pmd_size r,
+  
+  include if exists <local/sing-box>
 }
