@@ -1,0 +1,29 @@
+# apparmor.d - Full set of apparmor profiles
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/secure-time-sync
+profile secure-time-sync @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+  include <abstractions/ssl_certs>
+
+  capability sys_time,
+
+  network raw,
+  network inet dgram,
+  network inet6 dgram,
+
+  owner /dev/tty rw,
+
+  /usr/bin/bash ix,
+  /usr/bin/curl mrix,
+  /usr/bin/date mrix,
+  /usr/bin/grep mrix,
+  /usr/bin/id mrix,
+  /usr/bin/sed mrix,
+  @{exec_path} r,
+}
