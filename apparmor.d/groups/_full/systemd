@@ -93,20 +93,18 @@ profile systemd flags=(attach_disconnected,mediate_deleted) {
   # dbus: own bus=system name=org.freedesktop.systemd1
 
   @{bin}/systemctl                  rix,
-  @{bin}/true                       rix,
-  @{lib}/systemd/systemd            rix, # FIXME: AppArmorProfile=systemd-user, does not work with DE
 
-  @{bin}/{,ba,da}sh                 rPx -> systemd.service,
-  @{bin}/chgrp                      rPx -> systemd.service,
-  @{bin}/chmod                      rPx -> systemd.service,
-  @{bin}/cp                         rPx -> systemd.service,
-  @{bin}/find                       rPx -> systemd.service,
-  @{bin}/install                    rPx -> systemd.service,
+  @{lib}/systemd/systemd-executor   rix,
+  @{lib}/systemd/systemd            rix, # FIXME: AppArmorProfile=systemd-user, does not work with DE
+                                         # Maybe: rPx -> systemd-user-gdm (in user@120.service.d)?
+
   @{bin}/ldconfig                   rPx -> systemd.service,
   @{bin}/mandb                      rPx -> systemd.service,
-  @{bin}/mkdir                      rPx -> systemd.service,
   @{bin}/mount                      rPx -> systemd.service,
   @{bin}/savelog                    rPx -> systemd.service,
+  @{coreutils_path}                 rPx -> systemd.service,
+  @{shells_path}                    rPx -> systemd.service,
+
 
   audit @{bin}/**                   Pix,
   audit @{lib}/**                   Pix,
@@ -193,6 +191,7 @@ profile systemd flags=(attach_disconnected,mediate_deleted) {
   @{sys}/fs/**/ r,
   @{sys}/fs/cgroup/{,**} rw,
   @{sys}/kernel/**/ r,
+  @{sys}/module/**/uevent r,
   @{sys}/module/apparmor/parameters/enabled r,
 
         @{PROC}/@{pid}/{uid_map,gid_map} r,
@@ -203,6 +202,7 @@ profile systemd flags=(attach_disconnected,mediate_deleted) {
         @{PROC}/@{pid}/coredump_filter r,
         @{PROC}/@{pid}/environ r,
         @{PROC}/@{pid}/fd/ r,
+        @{PROC}/@{pid}/fdinfo/@{int} r,
         @{PROC}/@{pid}/gid_map w,
         @{PROC}/@{pid}/loginuid rw,
         @{PROC}/@{pid}/mountinfo r,
@@ -219,6 +219,7 @@ profile systemd flags=(attach_disconnected,mediate_deleted) {
         @{PROC}/sys/kernel/* r,
         @{PROC}/sys/kernel/random/* rw,
         @{PROC}/sys/net/ipv{4,6}/** rw,
+        @{PROC}/sysvipc/{shm,sem,msg} r,
   owner @{PROC}/@{pid}/oom_score_adj rw,
 
         /dev/ r,
