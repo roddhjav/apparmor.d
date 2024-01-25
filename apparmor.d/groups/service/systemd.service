@@ -15,24 +15,20 @@ profile systemd.service @{exec_path} flags=(attach_disconnected)  {
 
   capability sys_admin,
 
-  @{bin}/{,ba,da}sh     rm,
+  # TODO:
+  mount -> @{sys}/fs/fuse/connections/, 
+  mount -> @{sys}/kernel/*/,
+  mount -> /dev/*/,
+  mount -> /efi/, 
+  mount -> /tmp/, 
 
-  @{bin}/cp            rix,
-  @{bin}/find          rix,
-  @{bin}/grep          rix,
-  @{bin}/install       rix,
-  @{bin}/mkdir         rix,
-  @{bin}/mount         rix,
-  @{bin}/rm            rix,
+  @{bin}/mount         rix, # TODO: maybe, keep it in systemed
   @{bin}/systemctl     rix,
+  @{coreutils_path}    rix,
+  @{shells_path}      rmix,
 
   @{bin}/grub-editenv  rPx,
   @{bin}/ibus-daemon   rPx,
-
-  @{bin}/chgrp         rPx -> dmesg.service,
-  @{bin}/chmod         rPx -> dmesg.service,
-  @{bin}/savelog       rPx -> dmesg.service,
-
   @{bin}/ldconfig      rPx -> ldconfig.service,
 
   @{lib}/ r,
@@ -43,6 +39,10 @@ profile systemd.service @{exec_path} flags=(attach_disconnected)  {
   /boot/grub/grubenv rw,
   /boot/grub/ w,
 
+  /var/log/ r,
+  /var/log/dmesg rw,
+  /var/log/dmesg.* rwl -> /var/log/dmesg,
+
   # snapd.system-shutdown.service
   @{run}/initramfs/shutdown rw,
   @{run}/initramfs/ rw,
@@ -50,5 +50,6 @@ profile systemd.service @{exec_path} flags=(attach_disconnected)  {
   @{PROC}/cmdline r,
   @{PROC}/sys/kernel/osrelease r,
 
+  include if exists <usr/systemd.service.d>
   include if exists <local/systemd.service>
 }

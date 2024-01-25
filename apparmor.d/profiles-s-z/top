@@ -1,13 +1,12 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2019-2021 Mikhail Morfikov
+# Copyright (C) 2021-2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
 
 include <tunables/global>
 
-# When any of the "ns*" fields is displayed, the following error will be printed:
-#  "Failed name lookup - disconnected path" error=-13 profile="top" name="".
 @{exec_path} = @{bin}/top
 profile top @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
@@ -15,62 +14,57 @@ profile top @{exec_path} flags=(attach_disconnected) {
   include <abstractions/wutmp>
   include <abstractions/nameservice-strict>
 
-  # To be able to read the /proc/ files of all processes in the system.
   capability dac_read_search,
-
-  # To manage priorities.
-  capability sys_nice,
-
-  # To terminate other users' processes when top is started as root.
   capability kill,
-
+  capability sys_nice,
   capability sys_ptrace,
 
   signal (send),
+
   ptrace (read),
 
   @{exec_path} mr,
 
   /usr/share/terminfo/** r,
 
-  @{PROC}/ r,
-  @{PROC}/loadavg r,
-  @{PROC}/uptime r,
-  @{PROC}/tty/drivers r,
-  @{PROC}/sys/kernel/osrelease r,
-  @{PROC}/sys/kernel/pid_max r,
-
-  @{PROC}/@{pids}/cmdline r,
-  @{PROC}/@{pids}/stat r,
-  @{PROC}/@{pids}/statm r,
-  @{PROC}/@{pids}/environ r,
-  @{PROC}/@{pids}/oom_{,score_}adj r,
-  @{PROC}/@{pids}/oom_score r,
-  @{PROC}/@{pids}/cgroup r,
-  @{PROC}/@{pids}/wchan r,
-
-  @{PROC}/@{pids}/task/ r,
-  @{PROC}/@{pids}/task/@{tid}/cmdline r,
-  @{PROC}/@{pids}/task/@{tid}/stat r,
-  @{PROC}/@{pids}/task/@{tid}/statm r,
-  @{PROC}/@{pids}/task/@{tid}/environ r,
-  @{PROC}/@{pids}/task/@{tid}/oom_{,score_}adj r,
-  @{PROC}/@{pids}/task/@{tid}/oom_score r,
-  @{PROC}/@{pids}/oom_{,score_}adj r,
-  @{PROC}/@{pids}/oom_score r,
-  @{PROC}/@{pids}/task/@{tid}/cgroup r,
-  @{PROC}/@{pids}/task/@{tid}/wchan r,
-  @{PROC}/@{pids}/task/@{tid}/status r,
-
   /etc/topdefaultrc r,
   /etc/toprc r,
+
+  owner @{user_config_dirs}/procps/ rw,
+  owner @{user_config_dirs}/procps/toprc rw,
+
+  @{run}/systemd/sessions/ r,
 
   @{sys}/devices/system/node/ r,
   @{sys}/devices/system/node/node@{int}/meminfo r,
   @{sys}/devices/system/node/node@{int}/cpumap r,
 
-  owner @{user_config_dirs}/procps/ rw,
-  owner @{user_config_dirs}/procps/toprc rw,
+  @{PROC}/ r,
+  @{PROC}/@{pids}/cgroup r,
+  @{PROC}/@{pids}/cmdline r,
+  @{PROC}/@{pids}/environ r,
+  @{PROC}/@{pids}/oom_{,score_}adj r,
+  @{PROC}/@{pids}/oom_{,score_}adj r,
+  @{PROC}/@{pids}/oom_score r,
+  @{PROC}/@{pids}/oom_score r,
+  @{PROC}/@{pids}/stat r,
+  @{PROC}/@{pids}/statm r,
+  @{PROC}/@{pids}/task/ r,
+  @{PROC}/@{pids}/task/@{tid}/cgroup r,
+  @{PROC}/@{pids}/task/@{tid}/cmdline r,
+  @{PROC}/@{pids}/task/@{tid}/environ r,
+  @{PROC}/@{pids}/task/@{tid}/oom_{,score_}adj r,
+  @{PROC}/@{pids}/task/@{tid}/oom_score r,
+  @{PROC}/@{pids}/task/@{tid}/stat r,
+  @{PROC}/@{pids}/task/@{tid}/statm r,
+  @{PROC}/@{pids}/task/@{tid}/status r,
+  @{PROC}/@{pids}/task/@{tid}/wchan r,
+  @{PROC}/@{pids}/wchan r,
+  @{PROC}/loadavg r,
+  @{PROC}/sys/kernel/osrelease r,
+  @{PROC}/sys/kernel/pid_max r,
+  @{PROC}/tty/drivers r,
+  @{PROC}/uptime r,
 
   include if exists <local/top>
 }

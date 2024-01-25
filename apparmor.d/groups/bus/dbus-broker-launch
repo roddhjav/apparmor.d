@@ -1,5 +1,5 @@
 # apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -7,7 +7,7 @@ abi <abi/3.0>,
 include <tunables/global>
 
 @{exec_path} = @{bin}/dbus-broker-launch
-profile dbus-broker-launch @{exec_path} {
+profile dbus-broker-launch @{exec_path} flags=(attach_disconnected)  {
   include <abstractions/base>
   include <abstractions/nameservice-strict>
 
@@ -19,12 +19,15 @@ profile dbus-broker-launch @{exec_path} {
 
   @{bin}/dbus-broker rPUx,
 
-  @{system_share_dirs}/dbus-1/{,**} r,
-  @{system_share_dirs}/dbus-1/services/{,**} r,
   /usr/share/dbus-1/{,**} r,
   /usr/share/defaults/**.conf r,
 
+  # Extra rules for Flatpak
+  @{system_share_dirs}/dbus-1/{,**} r,
+
   /etc/machine-id r,
+
+  @{run}/user/@{uid}/dbus-1/{,**} r,
 
   @{PROC}/sys/kernel/random/boot_id r,
 
