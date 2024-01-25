@@ -27,10 +27,13 @@ profile systemd-user flags=(attach_disconnected,mediate_deleted) {
   ptrace (read),
 
   signal (send) set=(term, cont, kill),
+  signal (receive) set=(hup) peer=@{systemd},
+
 
   @{exec_path} mr,
 
   @{bin}/systemctl                  rCx -> systemctl,
+  @{lib}/systemd/systemd-executor   rix,
 
   audit @{lib}/** Pix,
   audit @{bin}/** Pix,
@@ -76,6 +79,7 @@ profile systemd-user flags=(attach_disconnected,mediate_deleted) {
         @{PROC}/sys/kernel/osrelease r,
         @{PROC}/sys/kernel/pid_max r,
         @{PROC}/sys/kernel/threads-max r,
+  owner @{PROC}/@{pid}/fdinfo/@{int} r,
   owner @{PROC}/@{pids}/attr/apparmor/exec w,
   owner @{PROC}/@{pids}/fd/ r,
   owner @{PROC}/@{pids}/mountinfo r,
