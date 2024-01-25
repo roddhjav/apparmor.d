@@ -93,7 +93,7 @@ sudo make profile-names...
     Warning: profile dependencies fallback to unconfined.
     @{bin}/wl-{copy,paste} rPx,
     @{bin}/xclip           rPx,
-    @{bin}/python3.[0-9]* rPx -> pass-import,  # pass-import
+    @{bin}/python3.@{int} rPx -> pass-import,  # pass-import
         @{bin}/pager         rPx -> child-pager,
         @{bin}/less          rPx -> child-pager,
         @{bin}/more          rPx -> child-pager,
