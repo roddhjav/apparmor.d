@@ -114,3 +114,14 @@ title: Variables References
 | Sys | `@{sys}` | `/sys/` |
 | Flatpack export | `@{flatpak_exports_root}` | `{flatpak/exports,flatpak/{app,runtime}/*/*/*/*/export}` |
 | System wide share | `@{system_share_dirs}` | `/{usr,usr/local,var/lib/@{flatpak_exports_root}}/share` |
+
+**Program paths**
+
+| Description | Name | Default Value |
+|-------------|:----:|---------------|
+| All the shells | `@{shells}` | `sh zsh bash dash fish rbash ksh tcsh csh` |
+| Shells path | `@{shells_path}` | `@{bin}/@{shells}` |
+| Coreutils programs that should not have dedicated profile | `@{coreutils}` | See [tunables/multiarch.d/paths](https://github.com/roddhjav/apparmor.d/blob/c2d88c9bffc626fcf7d9b15b42b50706afb29562/apparmor.d/tunables/multiarch.d/paths#L46) |
+| Coreutils paths | `@{coreutils_path}` | `@{bin}/@{coreutils}` |
+| Launcher paths | `@{open_path}` | `@{bin}/exo-open @{bin}/xdg-open @{lib}/@{multiarch}/glib-[0-9]*/gio-launch-desktop @{lib}/gio-launch-desktop`
+| All browser paths | `@{*_path}` | See [tunables/multiarch.d/paths](https://github.com/roddhjav/apparmor.d/blob/c2d88c9bffc626fcf7d9b15b42b50706afb29562/apparmor.d/tunables/multiarch.d/paths#L11)

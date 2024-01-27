@@ -4,8 +4,7 @@ title: Configuration
 
 ## AppArmor
 
-As there are a lot of rules, it is recommended to enable caching AppArmor profiles.
-In `/etc/apparmor/parser.conf`, add `write-cache` and `Optimize=compress-fast`.
+As there are a lot of rules, it is recommended to enable caching AppArmor profiles. In `/etc/apparmor/parser.conf`, add `write-cache` and `Optimize=compress-fast`.
 
 ```sh
 echo 'write-cache' | sudo tee -a /etc/apparmor/parser.conf
@@ -20,11 +19,13 @@ echo 'Optimize=compress-fast' | sudo tee -a /etc/apparmor/parser.conf
 
 ## Personal directories
 
-This project is designed in such a way that it is easy to personalize the
-directories your programs have access by defining a few variables.
+!!! danger
 
-The profiles heavily use the (largely extended) XDG directory variables defined
-in the **[Variables Reference](variables.md)** page.
+    You need to ensure that all personal directories you are using are well-defined XDG directory. You may need to edit these variables to your own settings.
+
+This project is designed in such a way that it is easy to personalize the directories your programs have access by defining a few variables.
+
+The profiles heavily use the (largely extended) XDG directory variables defined in the **[Variables Reference](variables.md)** page.
 
 ??? note "XDG variables overview"
 
@@ -48,9 +49,7 @@ in the **[Variables Reference](variables.md)** page.
     | Vm | `@{XDG_VM_DIR}` | `.vm`
     | Wallpapers | `@{XDG_WALLPAPERS_DIR}` | `@{XDG_PICTURES_DIR}/Wallpapers` |
 
-You can personalize these values by creating a file such as:
-`/etc/apparmor.d/tunables/xdg-user-dirs.d/local` where you define your own
-personal directories. Example:
+You can personalize these values by creating a file such as: `/etc/apparmor.d/tunables/xdg-user-dirs.d/local` where you define your own personal directories. Example:
 ```sh
 @{XDG_VIDEOS_DIR}+="Films"
 @{XDG_MUSIC_DIR}+="Musique"
@@ -81,16 +80,11 @@ sudo systemctl restart apparmor.service
 
 ## Local profile extensions
 
-You can extend any profile with your own rules by creating a file in the 
-`/etc/apparmor.d/local/` directory with the name of your profile. For example,
-to extend the `foo` profile, create a file `/etc/apparmor.d/local/foo` and add
-your rules in it.
+You can extend any profile with your own rules by creating a file in the `/etc/apparmor.d/local/` directory with the name of your profile. For example, to extend the `foo` profile, create a file `/etc/apparmor.d/local/foo` and add your rules in it.
 
 **Example**
 
-- `child-open`, a profile that allows other program to open resources (URL, 
-  picture, books...) with some predefined GUI application. To allow it to open
-  URLs with Firefox, create the file `/etc/apparmor.d/local/child-open` with:
+- `child-open`, a profile that allows other program to open resources (URL, picture, books...) with some predefined GUI application. To allow it to open URLs with Firefox, create the file `/etc/apparmor.d/local/child-open` with:
   ```sh
     @{bin}/firefox rPx,
   ```
@@ -101,9 +95,7 @@ your rules in it.
 
 !!! info
 
-    `rPx` allows transition to the Firefox profile. Use `rPUx` to allow
-    transition to an unconfined state if you do not have the profile for a
-    given program.
+    `rPx` allows transition to the Firefox profile. Use `rPUx` to allow transition to an unconfined state if you do not have the profile for a given program.
 
 
 Then, reload the apparmor rules with `sudo systemctl restart apparmor`.

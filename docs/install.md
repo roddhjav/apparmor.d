@@ -19,7 +19,7 @@ The following desktop environments are supported:
   - [x] :material-gnome: Gnome
   - [ ] :simple-kde: KDE *(work in progress)*
 
-**Build dependencies**
+**Build dependency**
 
 * Go >= 1.18
 
