@@ -13,7 +13,7 @@ packer {
       version = "~> 1"
     }
     vagrant = {
-      source = "github.com/hashicorp/vagrant"
+      source  = "github.com/hashicorp/vagrant"
       version = "~> 1"
     }
   }
