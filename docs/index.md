@@ -34,7 +34,8 @@ See the [Concepts](concepts.md)' page for more detail on the architecture.
     * [:material-debian: Debian 12](install.md#ubuntu-debian)
     * [:simple-suse: OpenSUSE Tumbleweed](install.md#opensuse)
 - Support all major desktop environments:
-    * Currently only :material-gnome: Gnome
+    - [x] :material-gnome: Gnome
+    - [ ] :simple-kde: KDE *(work in progress)*
 - Fully tested (Work in progress)
 
 **Presentations**
@@ -42,7 +43,7 @@ See the [Concepts](concepts.md)' page for more detail on the architecture.
 Building large set of AppArmor profiles:
 
 - [Linux Security Summit North America (LSS-NA 2023)](https://events.linuxfoundation.org/linux-security-summit-north-america/) *([Slide](https://lssna2023.sched.com/event/1K7bI/building-the-largest-working-set-of-apparmor-profiles-alexandre-pujol-the-collaboratory-tudublin), [Video](https://www.youtube.com/watch?v=OzyalrOzxE8))*
-- [Ubuntu Summit 2023](https://events.canonical.com/event/31/) *([Slide](https://events.canonical.com/event/31/contributions/209/))*
+- [Ubuntu Summit 2023](https://events.canonical.com/event/31/) *([Slide](https://events.canonical.com/event/31/contributions/209/), [Video](https://www.youtube.com/watch?v=GK1J0TlxnFI))*
 
 **Chat**
 
