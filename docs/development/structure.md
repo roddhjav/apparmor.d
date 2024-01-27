@@ -122,7 +122,7 @@ Here is an overview of the current children profile:
    This profile supposes the pager is reading its data from stdin, not from a
    file on disk.
 
-3. **`child-systemctl`**: Common systemctl action. Do not use it too much as most
+3. **`child-systemctl`**: Common `systemctl` action. Do not use it too much as most
    of the time you will need more privilege than what this profile is giving you.
 
 
@@ -130,7 +130,7 @@ Here is an overview of the current children profile:
 
 Chromium based browsers share a similar structure. Therefore, they share the same abstraction: [`abstractions/chromium`][chromium] that includes most of the profile content.
 
-This abstraction requires the following variables definied in the profile header:
+This abstraction requires the following variables defined in the profile header:
 ```sh
 @{name} = chromium
 @{domain} = org.chromium.Chromium
