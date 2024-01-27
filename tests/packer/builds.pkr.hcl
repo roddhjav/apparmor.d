@@ -7,10 +7,13 @@ build {
     "source.qemu.archlinux-gnome",
     "source.qemu.archlinux-kde",
     "source.qemu.archlinux-server",
-    "source.qemu.debian-server",
     "source.qemu.debian-gnome",
+    "source.qemu.debian-kde",
+    "source.qemu.debian-server",
+    "source.qemu.opensuse-gnome",
     "source.qemu.opensuse-kde",
     "source.qemu.ubuntu-desktop",
+    "source.qemu.ubuntu-desktop24",
     "source.qemu.ubuntu-server",
     "source.qemu.ubuntu-server24",
   ]
@@ -34,7 +37,7 @@ build {
   }
 
   provisioner "file" {
-    only        = ["qemu.debian-server", "qemu.debian-gnome", "qemu.ubuntu-server", "qemu.ubuntu-server24", "qemu.ubuntu-desktop"]
+    only        = ["qemu.debian-server", "qemu.debian-gnome", "qemu.debian-kde", "qemu.ubuntu-server", "qemu.ubuntu-server24", "qemu.ubuntu-desktop", "qemu.ubuntu-desktop24"]
     destination = "/tmp/src/"
     sources     = ["${path.cwd}/../apparmor.d_${var.version}-1_amd64.deb"]
   }
