@@ -11,7 +11,7 @@ title: AppArmor.d
     This project is still in its early development. Help is very welcome; 
     see [Development](development/index.md)
 
-**AppArmor.d** is a set of over 1400 AppArmor profiles whose aim is to confine
+**AppArmor.d** is a set of over 1500 AppArmor profiles whose aim is to confine
 most Linux based applications and processes.
 
 **Purpose**

@@ -30,18 +30,18 @@ The rules in the profile should be sorted in the rule ***block*** as follows:
 |:-----:|:----:|:-------:|
 | **1** | [`include`](https://man.archlinux.org/man/apparmor.d.5##include_mechanism) | [:octicons-link-external-24:](https://github.com/search?q=repo%3Aroddhjav%2Fapparmor.d+NOT+path%3A*.md+include+%3Cabstractions%2F&type=code) |
 | **2** | [`set rlimit`](https://man.archlinux.org/man/apparmor.d.5#rlimit_rules) | [:octicons-link-external-24:](https://github.com/search?q=repo%3Aroddhjav%2Fapparmor.d+NOT+path%3A*.md+set+rlimit&type=code) |
-| **3** | [`capability`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#capability-rules) | [:octicons-link-external-24:](https://github.com/search?q=repo%3Aroddhjav%2Fapparmor.d+NOT+path%3A*.md+capability&type=code) |
-| **4** | [`network`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#network-rules) | [:octicons-link-external-24:](https://github.com/search?q=repo%3Aroddhjav%2Fapparmor.d+NOT+path%3A*.md+%22+network+%22&type=code) |
-| **5** | [`mount`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#mount-rules-apparmor-28-and-later) | [:octicons-link-external-24:](https://github.com/search?q=repo%3Aroddhjav%2Fapparmor.d+NOT+path%3A*.md+%22++mount+%22&type=code) |
-| **6** | [`remount`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#remount) | [:octicons-link-external-24:](https://github.com/search?q=repo%3Aroddhjav%2Fapparmor.d+NOT+path%3A*.md+remount&type=code) |
-| **7** | [`umount`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#umount)| [:octicons-link-external-24:](https://github.com/search?q=repo%3Aroddhjav%2Fapparmor.d+NOT+path%3A*.md+%22umount+%22&type=code) |
-| **8** | [`pivot_root`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#pivot_root)| [:octicons-link-external-24:](https://github.com/search?q=repo%3Aroddhjav%2Fapparmor.d+NOT+path%3A*.md+pivot_root&type=code) |
-| **9** | [`change_profile`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#change_profile)| [:octicons-link-external-24:](https://github.com/search?q=repo%3Aroddhjav%2Fapparmor.d+NOT+path%3A*.md+change_profile+&type=code) |
-| **10** | `mqueue` | [:octicons-link-external-24:]() |
-| **11** | [`signal`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#signals)| [:octicons-link-external-24:](https://github.com/search?q=repo%3Aroddhjav%2Fapparmor.d+NOT+path%3A*.md+%22signal+%22&type=code) |
-| **12** | [`ptrace`](https://man.archlinux.org/man/apparmor.d.5#PTrace_rules) | [:octicons-link-external-24:](https://github.com/search?q=repo%3Aroddhjav%2Fapparmor.d+NOT+path%3A*.md+%22ptrace+%22&type=code) |
-| **13** | [`unix`](https://man.archlinux.org/man/apparmor.d.5#Unix_socket_rules) | [:octicons-link-external-24:](https://github.com/search?q=repo%3Aroddhjav%2Fapparmor.d+NOT+path%3A*.md+%22unix+%22&type=code) |
-| **14** | `userns` | [:octicons-link-external-24:]() |
+| **3** | [`userns`](https://gitlab.com/apparmor/apparmor/-/wikis/unprivileged_userns_restriction) | [:octicons-link-external-24:](https://github.com/search?q=repo%3Aroddhjav%2Fapparmor.d+NOT+path%3A*.md+userns&type=code) |
+| **4** | [`capability`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#capability-rules) | [:octicons-link-external-24:](https://github.com/search?q=repo%3Aroddhjav%2Fapparmor.d+NOT+path%3A*.md+capability&type=code) |
+| **5** | [`network`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#network-rules) | [:octicons-link-external-24:](https://github.com/search?q=repo%3Aroddhjav%2Fapparmor.d+NOT+path%3A*.md+%22+network+%22&type=code) |
+| **6** | [`mount`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#mount-rules-apparmor-28-and-later) | [:octicons-link-external-24:](https://github.com/search?q=repo%3Aroddhjav%2Fapparmor.d+NOT+path%3A*.md+%22++mount+%22&type=code) |
+| **7** | [`remount`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#remount) | [:octicons-link-external-24:](https://github.com/search?q=repo%3Aroddhjav%2Fapparmor.d+NOT+path%3A*.md+remount&type=code) |
+| **8** | [`umount`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#umount)| [:octicons-link-external-24:](https://github.com/search?q=repo%3Aroddhjav%2Fapparmor.d+NOT+path%3A*.md+%22umount+%22&type=code) |
+| **9** | [`pivot_root`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#pivot_root)| [:octicons-link-external-24:](https://github.com/search?q=repo%3Aroddhjav%2Fapparmor.d+NOT+path%3A*.md+pivot_root&type=code) |
+| **10** | [`change_profile`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#change_profile)| [:octicons-link-external-24:](https://github.com/search?q=repo%3Aroddhjav%2Fapparmor.d+NOT+path%3A*.md+change_profile+&type=code) |
+| **11** | `mqueue` | [:octicons-link-external-24:]() |
+| **12** | [`signal`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#signals)| [:octicons-link-external-24:](https://github.com/search?q=repo%3Aroddhjav%2Fapparmor.d+NOT+path%3A*.md+%22signal+%22&type=code) |
+| **13** | [`ptrace`](https://man.archlinux.org/man/apparmor.d.5#PTrace_rules) | [:octicons-link-external-24:](https://github.com/search?q=repo%3Aroddhjav%2Fapparmor.d+NOT+path%3A*.md+%22ptrace+%22&type=code) |
+| **14** | [`unix`](https://man.archlinux.org/man/apparmor.d.5#Unix_socket_rules) | [:octicons-link-external-24:](https://github.com/search?q=repo%3Aroddhjav%2Fapparmor.d+NOT+path%3A*.md+%22unix+%22&type=code) |
 | **15** | `io_uring` | [:octicons-link-external-24:]() |
 | **16** | [`dbus`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#dbus-rules) | [:octicons-link-external-24:](https://github.com/search?q=repo%3Aroddhjav%2Fapparmor.d+NOT+path%3A*.md++NOT+path%3A*.go+%22+dbus+%22&type=code) |
 | **17** | [`file`](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference#file-access-rules) | [:octicons-link-external-24:](https://github.com/roddhjav/apparmor.d/blob/2e4788c51ef73798c0ac94993af3cd769723e8e4/apparmor.d/groups/gnome/gnome-shell#L481-L663) |
@@ -120,6 +120,7 @@ If there is no predictable label it can be omitted.
 ## Additional recommended documentation
 
 * [The AppArmor Core Policy Reference](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference)
+* [The OpenSUSE Documentation](https://doc.opensuse.org/documentation/leap/security/html/book-security/part-apparmor.html)
 * [The AppArmor.d man page](https://man.archlinux.org/man/apparmor.d.5)
 * [F**k AppArmor](https://presentations.nordisch.org/apparmor/#/)
 * [A Brief Tour of Linux Security Modules](https://www.starlab.io/blog/a-brief-tour-of-linux-security-modules)
