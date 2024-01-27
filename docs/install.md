@@ -106,7 +106,7 @@ sudo make profile-names...
 
 - :material-arch: Archlinux `sudo pacman -R apparmor.d`
 - :material-ubuntu: Ubuntu & :material-debian: Debian `sudo apt purge apparmor.d`
-
+- :simple-suse: OpenSUSE `sudo zypper remove apparmor.d`
 
 [aur]: https://aur.archlinux.org/packages/apparmor.d-git
 [repo]: https://repo.pujol.io/
