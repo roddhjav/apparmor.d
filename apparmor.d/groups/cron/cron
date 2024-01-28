@@ -31,7 +31,9 @@ profile cron @{exec_path} flags=(attach_disconnected) {
   @{bin}/{,ba,da}sh  rix,
   @{bin}/nice        rix,
   @{bin}/ionice      rix,
-  @{bin}/run-parts   rPx,
+  @{bin}/exim4       rPx,
+  @{bin}/run-parts   rCx -> run-parts, # could even be rix, as long as we are not
+                                       # using the  run-parts profile we are good
 
   @{lib}/@{multiarch}/e2fsprogs/e2scrub_all_cron rPUx,
   @{lib}/sysstat/debian-sa1       rPUx,
@@ -60,6 +62,19 @@ profile cron @{exec_path} flags=(attach_disconnected) {
         @{PROC}/1/limits r,
 
   /dev/tty rw,
+
+  profile run-parts {
+    include <abstractions/base>
+
+    @{bin}/run-parts mr,
+
+    /etc/cron.*/     r,
+    /etc/cron.*/* rPUx,
+
+    owner /tmp/#@{int} rw,
+
+   include if exists <local/cron_run_parts>
+  }
 
   include if exists <local/cron>
 }
