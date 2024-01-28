@@ -14,7 +14,7 @@ profile anacron @{exec_path} {
   @{exec_path} mr,
 
   @{bin}/{,ba,da}sh  rix,
-  @{bin}/run-parts   rPx,
+  @{bin}/run-parts   rCx -> run-parts,
 
   / r,
   /etc/anacrontab r,
@@ -24,6 +24,20 @@ profile anacron @{exec_path} {
   @{HOME}/ r,
 
   /tmp/file* rw,
+
+  profile run-parts {
+    include <abstractions/base>
+
+    @{bin}/run-parts mr,
+
+    /etc/cron.*/     r,
+    /etc/cron.*/* rPUx,
+
+    owner /tmp/#@{int} rw,
+    owner /tmp/file@{rand6} rw,
+
+   include if exists <local/anacron_run_parts>
+  }
 
   include if exists <local/anacron>
 }
