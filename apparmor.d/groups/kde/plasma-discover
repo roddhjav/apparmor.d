@@ -10,9 +10,8 @@ include <tunables/global>
 profile plasma-discover @{exec_path} {
   include <abstractions/base>
   include <abstractions/dconf-write>
-  include <abstractions/fonts>
-  include <abstractions/freedesktop.org>
   include <abstractions/graphics>
+  include <abstractions/kde-strict>
   include <abstractions/nameservice-strict>
   include <abstractions/openssl>
   include <abstractions/qt5-shader-cache>
@@ -22,6 +21,7 @@ profile plasma-discover @{exec_path} {
   network inet6 dgram,
   network inet stream,
   network inet6 stream,
+  network netlink dgram,
   network netlink raw,
 
   signal (send) set=(term) peer=kioslave5,
@@ -40,6 +40,7 @@ profile plasma-discover @{exec_path} {
   /usr/share/knotifications5/plasma_workspace.notifyrc r,
   /usr/share/knsrcfiles/{,*} r,
   /usr/share/kservices5/{,*} r,
+  /usr/share/kservicetypes5/{,*} r,
   /usr/share/libdiscover/** r,
   /usr/share/qt/translations/*.qm r,
 
@@ -70,22 +71,21 @@ profile plasma-discover @{exec_path} {
   owner @{user_config_dirs}/discoverrc rwl,
   owner @{user_config_dirs}/discoverrc.lock rwk,
   owner @{user_config_dirs}/kde.org/{,**} rwlk,
-  owner @{user_config_dirs}/kdedefaults/ r,
+  owner @{user_config_dirs}/KDE/* r,
   owner @{user_config_dirs}/kdedefaults/plasmarc r,
-  owner @{user_config_dirs}/kdedefaults/kdeglobals r,
-  owner @{user_config_dirs}/kdedefaults/kwinrc r,
-  owner @{user_config_dirs}/kdeglobals r,
-  owner @{user_config_dirs}/kwinrc r,
   owner @{user_config_dirs}/libaccounts-glib/ rw,
   owner @{user_config_dirs}/libaccounts-glib/accounts.db{,-shm,-wal,-journal} rwk,
 
   owner @{user_share_dirs}/flatpak/repo/{,**} rw,
-  owner @{user_share_dirs}/knewstuff3/ r,
-  owner @{user_share_dirs}/knewstuff3/ w,
+  owner @{user_share_dirs}/knewstuff3/{,*} rw,
+  owner @{user_share_dirs}/kwin/ rw,
+  owner @{user_share_dirs}/kwin/** rwlk -> @{user_share_dirs}/kwin/**,
 
+  owner /tmp/*.kwinscript rwl -> /tmp/#@{int},
+  owner /tmp/#@{int} rw,
+  owner /tmp/discover-@{rand6}/{,**} rw,
   owner /tmp/ostree-gpg-*/ rw,
   owner /tmp/ostree-gpg-*/** rwkl -> /tmp/ostree-gpg-*/**,
-  owner /tmp/#@{int} rw,
 
   owner @{run}/user/@{uid}/.flatpak-cache rw,
   owner @{run}/user/@{uid}/.flatpak/{,**} rw,
