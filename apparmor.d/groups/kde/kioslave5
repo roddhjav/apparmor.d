@@ -10,14 +10,12 @@ include <tunables/global>
 profile kioslave5 @{exec_path} {
   include <abstractions/base>
   include <abstractions/deny-sensitive-home>
-  include <abstractions/fonts>
-  include <abstractions/freedesktop.org>
   include <abstractions/graphics>
+  include <abstractions/kde-strict>
   include <abstractions/nameservice-strict>
   include <abstractions/openssl>
-  include <abstractions/qt5>
   include <abstractions/ssl_certs>
-  include <abstractions/thumbnails-cache-read>
+  include <abstractions/thumbnails-cache-write>
   include <abstractions/trash>
 
   network inet dgram,
@@ -38,23 +36,20 @@ profile kioslave5 @{exec_path} {
   @{lib}/libheif/*.so* rm,
   @{lib}/kf5/kio_http_cache_cleaner rPx,
 
-  /usr/share/hwdata/*.ids r,
-  /usr/share/icu/@{int}.@{int}/*.dat r,
   /usr/share/kio_desktop/directory.desktop r,
   /usr/share/kservices5/{,**} r,
   /usr/share/kservicetypes5/*.desktop r,
   /usr/share/remoteview/* r,
 
   /etc/fstab r,
-  /etc/xdg/kdeglobals r,
   /etc/xdg/kioslaverc r,
-  /etc/xdg/kwinrc r,
   /etc/xdg/menus/{,**} r,
 
   # Full access to user's data
   / r,
   /*/ r,
   @{bin}/ r,
+  @{bin}/* r,
   @{lib}/ r,
   @{MOUNTDIRS}/ r,
   @{MOUNTS}/ r,
@@ -74,13 +69,8 @@ profile kioslave5 @{exec_path} {
   owner @{user_cache_dirs}/icon-cache.kcache rw,
   owner @{user_cache_dirs}/kio_http/* rwl,
   owner @{user_cache_dirs}/ksycoca5_* r,
-  owner @{user_cache_dirs}/thumbnails/*/ r,
 
-  owner @{user_config_dirs}/kdedefaults/kdeglobals r,
-  owner @{user_config_dirs}/kdedefaults/kwinrc r,
-  owner @{user_config_dirs}/kdeglobals r,
   owner @{user_config_dirs}/kio_httprc r,
-  owner @{user_config_dirs}/kwinrc r,
   owner @{user_config_dirs}/menus/{,**} r,
 
   owner @{user_share_dirs}/baloo/index rw,
@@ -91,12 +81,10 @@ profile kioslave5 @{exec_path} {
   owner @{user_share_dirs}/kservices5/{,**} r,
 
   owner /tmp/#@{int} rw,
-  owner /tmp/xauth_@{int} r,
 
         @{run}/mount/utab r,
   owner @{run}/user/@{uid}/#@{int} rw,
-  owner @{run}/user/@{uid}/kio_desktop*kioworker.socket rwl,
-  owner @{run}/user/@{uid}/xauth_@{rand6} rl,
+  owner @{run}/user/@{uid}/kio_*.socket rwl -> @{run}/user/@{uid}/#@{int},
 
         @{PROC}/sys/kernel/core_pattern r,
   owner @{PROC}/@{pid}/mountinfo r,
