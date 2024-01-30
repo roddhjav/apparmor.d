@@ -191,7 +191,7 @@ func SetDefaultSystemd() ([]string, error) {
 }
 
 // Set AppArmor for (experimental) full system policy.
-// See https://apparmor.pujol.io/development/structure/#full-system-policy
+// See https://apparmor.pujol.io/full-system-policy/
 func SetFullSystemPolicy() ([]string, error) {
 	res := []string{}
 	// Install full system policy profiles
