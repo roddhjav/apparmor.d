@@ -2,8 +2,6 @@
 title: Known issues
 ---
 
-# Known issues
-
 Known bugs are tracked on the meta issue **[#75](https://github.com/roddhjav/apparmor.d/issues/74)**.
 
 !!! info 

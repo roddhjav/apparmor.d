@@ -2,8 +2,6 @@
 title: Report AppArmor logs
 ---
 
-# Report AppArmor logs
-
 The **[aa-log](usage.md#apparmor-log)** tool reports all AppArmor `DENIED` and `ALLOWED`. It should be used to fix AppArmor related issues.
 
 While testing, if something get wrong, you need to put the profile in complain mode, so that you can investigate, and it does not block your program.
