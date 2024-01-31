@@ -2,8 +2,6 @@
 title: Integration Tests
 ---
 
-# Integration Tests
-
 !!! danger "Work in Progress"
 
 The purpose of integration testing in apparmor.d is to ensure the profiles are not going to break a program when used in the Linux distribution and desktop environment we support.

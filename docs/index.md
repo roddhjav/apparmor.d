@@ -2,7 +2,6 @@
 title: AppArmor.d
 ---
 
-# AppArmor.d
 
 **Full set of AppArmor profiles**
 

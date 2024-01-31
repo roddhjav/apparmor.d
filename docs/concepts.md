@@ -2,8 +2,6 @@
 title: Concepts
 ---
 
-# Concepts
-
 *One profile a day keeps the hacker away*
 
 There are over 50000 Linux packages and even more applications. It is simply not possible to write an AppArmor profile for all of them. Therefore, a question arises:

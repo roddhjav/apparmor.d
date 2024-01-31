@@ -2,8 +2,6 @@
 title: Development
 ---
 
-# Development
-
 You want to contribute to `apparmor.d`, **thanks a lot for this.** Feedbacks, contributors, pull requests are all very welcome. You will find in this page all the useful information needed to contribute.
 
 ??? info "How to contribute"
