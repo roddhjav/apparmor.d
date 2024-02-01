@@ -2,40 +2,32 @@
 # Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-# Profile for a systemd service, it does not specify an attachment path because
-# it is intended to be used only via "Px -> *.service" exec transitions from systemd
+# Profile for generic systemd unit services. Only used by service without profile.
+# It does not specify an attachment path because it is intended to be used only
+# via "Px -> systemd-service" exec transitions from the systemd profile.
 
 abi <abi/3.0>,
 
 include <tunables/global>
 
-profile systemd.service @{exec_path} flags=(attach_disconnected)  {
+profile systemd-service @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/consoles>
 
   capability sys_admin,
 
-  # TODO:
-  mount -> @{sys}/fs/fuse/connections/, 
-  mount -> @{sys}/kernel/*/,
-  mount -> /dev/*/,
-  mount -> /efi/, 
-  mount -> /tmp/, 
-
-  @{bin}/mount         rix, # TODO: maybe, keep it in systemed
   @{bin}/systemctl     rix,
   @{coreutils_path}    rix,
   @{shells_path}      rmix,
+  @{bin}/ldconfig      rix,
 
   @{bin}/grub-editenv  rPx,
   @{bin}/ibus-daemon   rPx,
-  @{bin}/ldconfig      rPx -> ldconfig.service,
 
   @{lib}/ r,
 
-  /var/cache/ldconfig/aux-cache* rw,
+  /var/cache/ldconfig/{,**} rw,
 
-  # grub-common.service
   /boot/grub/grubenv rw,
   /boot/grub/ w,
 
@@ -50,6 +42,6 @@ profile systemd.service @{exec_path} flags=(attach_disconnected)  {
   @{PROC}/cmdline r,
   @{PROC}/sys/kernel/osrelease r,
 
-  include if exists <usr/systemd.service.d>
-  include if exists <local/systemd.service>
+  include if exists <usr/systemd-service.d>
+  include if exists <local/systemd-service>
 }
