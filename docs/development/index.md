@@ -32,23 +32,23 @@ You want to contribute to `apparmor.d`, **thanks a lot for this.** Feedbacks, co
 
 ## Project rules
 
-`Rule 1: Mandatory Access Control`
+#### Rule :material-numeric-1-circle: - Mandatory Access Control
 
 :   As these are mandatory access control policies only what is explicitly required
     should be authorized. Meaning, you should **not** allow everything (or a large area)
     and blacklist some sub areas.
 
-`Rule 2: Do not break a program`
+#### Rule :material-numeric-2-circle: - Do not break a program
 
 :   A profile **should not break a normal usage of the confined software**. It can
     be complex as simply running the program for your own use case is not always
     exhaustive of the program features and required permissions.
 
-`Rule 3: Do not confine everything`
+#### Rule :material-numeric-3-circle: - Do not confine everything
 
 :   Some programs should not be confined by a MAC policy.
 
-`Rule 4: Distribution and devices agnostic`
+#### Rule :material-numeric-4-circle: - Distribution and devices agnostic
 
 :   A profile should be compatible with all distributions, software and devices
     in the Linux world. You cannot deny access to resources you do not use on
