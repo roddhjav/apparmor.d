@@ -31,7 +31,7 @@ override_dh_auto_build:
 In `dists/apparmor.d.spec`, replace `%make_build` by `make enforce`
 ```diff
 -  %make_build
-+  make enforce
++  %make_build enforce
 ```
 
 #### Partial install
