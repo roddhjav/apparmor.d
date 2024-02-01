@@ -52,7 +52,7 @@ override_dh_auto_build:
 In `dists/apparmor.d.spec`, replace `%make_build` by `make full`
 ```diff
 -  %make_build
-+  make full
++  %make_build full
 ```
 
 **Partial install**
