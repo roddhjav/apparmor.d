@@ -13,9 +13,11 @@ profile gvfsd-fuse @{exec_path} {
   include <abstractions/bus-session>
   include <abstractions/bus/org.gtk.vfs.MountTracker>
 
-  unix (send,receive) type=stream addr=none peer=(label=gvfsd-fuse//fusermount),
-
   mount fstype={fuse,fuse.*} -> @{run}/user/@{uid}/gvfs/,
+
+  signal (receive) set=(cont, term) peer=systemd-user,
+
+  unix (send,receive) type=stream addr=none peer=(label=gvfsd-fuse//fusermount),
 
   dbus send bus=session path=/org/gtk/vfs/mounttracker
        interface=org.gtk.vfs.MountTracker
@@ -42,10 +44,12 @@ profile gvfsd-fuse @{exec_path} {
     capability dac_read_search,
     capability sys_admin,  # To mount anything
 
-    unix (send,receive) type=stream addr=none peer=(label=gvfsd-fuse),
-
     mount fstype={fuse,fuse.*} -> @{run}/user/@{uid}/gvfs/,
     umount @{run}/user/@{uid}/**/,
+
+    signal (receive) set=(cont, term) peer=systemd-user,
+
+    unix (send,receive) type=stream addr=none peer=(label=gvfsd-fuse),
 
     @{bin}/fusermount{,3} mr,
 

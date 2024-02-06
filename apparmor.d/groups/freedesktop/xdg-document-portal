@@ -18,9 +18,10 @@ profile xdg-document-portal @{exec_path} flags=(attach_disconnected) {
 
   mount fstype=fuse.portal -> @{run}/user/@{uid}/doc/,
 
-  ptrace (read) peer=xdg-desktop-portal,
-
+  signal (receive) set=(cont, term) peer=systemd-user,
   signal (receive) set=(term) peer=gdm,
+
+  ptrace (read) peer=xdg-desktop-portal,
 
   unix (send receive) type=stream peer=(label=xdg-document-portal//fusermount),
 
@@ -62,6 +63,8 @@ profile xdg-document-portal @{exec_path} flags=(attach_disconnected) {
     mount fstype=fuse.portal -> @{run}/user/@{uid}/doc/,
 
     umount @{run}/user/@{uid}/doc/,
+
+    signal (receive) set=(cont, term) peer=systemd-user,
 
     unix (send receive) type=stream peer=(label=xdg-document-portal),
 
