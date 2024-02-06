@@ -1,6 +1,6 @@
 #!/usr/bin/make -f
 # apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 # Usage:

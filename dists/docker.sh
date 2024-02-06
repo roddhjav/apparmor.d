@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Build the package in a clean Archlinux/openSUSE/Debian/Ubuntu container
-# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2022-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 # Usage: make package dist=<distribution>

@@ -1,7 +1,7 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (c) 2023 SUSE LLC
 # Copyright (c) 2023 Christian Boltz
-# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 # Warning: for development only, use https://build.opensuse.org/package/show/home:cboltz/apparmor.d for production use.
