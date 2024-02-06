@@ -1,0 +1,35 @@
+# apparmor.d - Full set of apparmor profiles
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/zathura 
+profile zathura @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/freedesktop.org>
+  include <abstractions/fonts>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/nameservice-strict>
+  include <abstractions/dconf-write>
+
+  @{exec_path} mr,
+
+  /usr/share/{,**} r,
+  /etc/xdg/{,**} r,
+  /etc/zathurarc r,
+
+  owner @{user_config_dirs}/zathura/** r,
+  owner @{user_share_dirs}/zathura/** rwk,
+
+  owner @{HOME}/ r,
+  owner @{HOME}/[^.]**  r,
+
+  owner /mnt/** r,
+  owner /media/** r,
+
+  owner /tmp/gtkprint* rw,
+
+  include if exists <local/zathura>
+}
