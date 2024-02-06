@@ -1,5 +1,5 @@
 // aa-log - Review AppArmor generated messages
-// Copyright (C) 2021-2023 Alexandre Pujol <alexandre@pujol.io>
+// Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
 // SPDX-License-Identifier: GPL-2.0-only
 
 package main

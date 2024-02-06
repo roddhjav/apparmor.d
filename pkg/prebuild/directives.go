@@ -1,5 +1,5 @@
 // apparmor.d - Full set of apparmor profiles
-// Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+// Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
 // SPDX-License-Identifier: GPL-2.0-only
 
 package prebuild
@@ -19,12 +19,12 @@ var (
 		DirectiveDbus,
 	}
 	DirectiveMsg = map[string]string{
-		"DirectiveDbus":   "DBus directive applied",
+		"DirectiveDbus": "DBus directive applied",
 	}
 )
 
 var (
-	regDbus   = regexp.MustCompile(`(?m)# dbus: (.*)$`)
+	regDbus = regexp.MustCompile(`(?m)# dbus: (.*)$`)
 )
 
 type DirectiveFunc func(*paths.Path, string) string
@@ -143,4 +143,3 @@ func dbusTalk(rules map[string]string) *aa.AppArmorProfile {
 	}
 	return p
 }
-

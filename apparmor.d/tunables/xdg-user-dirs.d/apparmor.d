@@ -1,6 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Extended user XDG directories definition
-# Copyright (C) 2021-2023 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 # To allow extended personalisation by the user without breaking everything.
