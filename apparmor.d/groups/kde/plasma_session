@@ -1,0 +1,50 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/plasma_session
+profile plasma_session @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/kde-strict>
+
+  @{exec_path} mr,
+
+  @{bin}/firewall-applet                                 rPx,
+  @{bin}/gmenudbusmenuproxy                              rPx,
+  @{bin}/kaccess                                         rPx,
+  @{bin}/kcminit                                         rPx,
+  @{bin}/kded5                                           rPx,
+  @{bin}/ksmserver                                       rPx,
+  @{bin}/ksplashqml                                      rPx,
+  @{bin}/kwin_wayland_wrapper                            rPx,
+  @{bin}/plasmashell                                     rPx,
+  @{bin}/spice-vdagent                                   rPx,
+  @{bin}/xembedsniproxy                                  rPx,
+  @{lib}/baloo_file                                      rPx,
+  @{lib}/DiscoverNotifier                                rPx,
+  @{lib}/geoclue-2.0/demos/agent                         rPx,
+  @{lib}/org_kde_powerdevil                              rPx,
+  @{lib}/pam_kwallet_init                                rPx,
+  @{lib}/polkit-kde-authentication-agent-@{int}          rPx,
+
+  /usr/share/kservices5/{,**} r,
+  /usr/share/knotifications5/{,**} r,
+
+  /etc/xdg/autostart/ r,
+  /etc/xdg/autostart/*.desktop r,
+  /etc/xdg/menus/ r,
+
+  @{user_cache_dirs}/ksycoca5_* r,
+
+  owner @{user_config_dirs}/baloofilerc r,
+  owner @{user_config_dirs}/kdedefaults/ksplashrc r,
+  owner @{user_config_dirs}/plasma-welcomerc r,
+
+  @{PROC}/sys/kernel/core_pattern r,
+
+  include if exists <local/plasma_session>
+}
