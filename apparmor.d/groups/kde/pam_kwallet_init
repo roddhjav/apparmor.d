@@ -1,0 +1,22 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/pam_kwallet_init
+profile pam_kwallet_init @{exec_path} {
+  include <abstractions/base>
+
+  @{exec_path} mr,
+
+  @{bin}/{,ba,da}sh  rix,
+  @{bin}/env         rix,
+  @{bin}/socat       rix,
+
+  /dev/tty rw,
+
+  include if exists <local/pam_kwallet_init>
+}
