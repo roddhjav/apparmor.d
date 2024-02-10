@@ -11,30 +11,16 @@
 
 # Distributions and other programs can add rules in the usr/systemd.d directory
 
-# Note: A non negligible part of the rules are due to stacked profile and unified systemd/systemd-user
-
 abi <abi/3.0>,
 
 include <tunables/global>
 
 profile systemd flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/base>
-  include <abstractions/audio>
   include <abstractions/authentication>
-  include <abstractions/bus-session>
-  include <abstractions/bus-system>
-  include <abstractions/dconf-write>
-  include <abstractions/dri-common>
-  include <abstractions/dri-enumerate>
-  include <abstractions/fonts>
-  include <abstractions/mesa>
   include <abstractions/nameservice-strict>
-  include <abstractions/openssl>
-  include <abstractions/ssl_certs>
-  include <abstractions/video>
   include <abstractions/wutmp>
 
-  # Needed by systemd
   capability audit_control,
   capability audit_read,
   capability audit_write,
@@ -46,23 +32,18 @@ profile systemd flags=(attach_disconnected,mediate_deleted) {
   capability fsetid,
   capability kill,
   capability mknod,
-  capability perfmon,
-  capability sys_admin,
-  capability sys_chroot,
-  capability sys_resource,
-  capability sys_tty_config,
-
-  # Required by stacked profiles
   capability net_admin,
-  capability net_bind_service,
-  capability net_raw,
+  capability perfmon,
   capability setfcap,
   capability setgid,
   capability setpcap,
   capability setuid,
-  capability sys_nice,
+  capability sys_admin,
+  capability sys_chroot,
   capability sys_ptrace,
+  capability sys_resource,
   capability sys_time,
+  capability sys_tty_config,
 
   network inet dgram,
   network inet raw,
@@ -105,23 +86,13 @@ profile systemd flags=(attach_disconnected,mediate_deleted) {
   @{coreutils_path}                 rPx -> systemd-service,
   @{shells_path}                    rPx -> systemd-service,
 
-
-  audit @{bin}/**                   Pix,
-  audit @{lib}/**                   Pix,
+  @{bin}/**                         PUx,
+  @{lib}/**                         PUx,
   audit /etc/cron.*/*               PUx,
   audit /etc/init.d/*               PUx,
-  audit /usr/share/*/*              Pix,
+  audit /usr/share/*/*              PUx,
 
-  @{bin}/pipewire                   rPx -> systemd//&pipewire,
-  @{bin}/pipewire-media-session     rPx -> systemd//&pipewire-media-session,
-  @{bin}/pipewire-pulse             rPx -> systemd//&pipewire-pulse,
-  @{bin}/pulseaudio                 rPx -> systemd//&pulseaudio,
-  @{bin}/wireplumber                rPx -> systemd//&wireplumber,
-
-  @{lib}/{,polkit-1/}polkitd        rPx -> systemd//&polkitd,
-  @{lib}/pulse/gsettings-helper     rPx -> systemd//&pulseaudio,
-  @{lib}/systemd/systemd-networkd   rPx -> systemd//&systemd-networkd,
-  @{lib}/systemd/systemd-resolved   rPx -> systemd//&systemd-resolved,
+  @{lib}/systemd/systemd-oomd       rPx -> systemd//&systemd-oomd,
   @{lib}/systemd/systemd-timesyncd  rPx -> systemd//&systemd-timesyncd,
 
   / r,
