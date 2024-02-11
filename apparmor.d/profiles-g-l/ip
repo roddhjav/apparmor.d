@@ -11,6 +11,7 @@ include <tunables/global>
 profile ip @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
 
   capability bpf,
   capability net_admin,
@@ -19,7 +20,7 @@ profile ip @{exec_path} flags=(attach_disconnected) {
 
   network netlink raw,
 
-  mount options=(rw, rshared)   -> /{var/,}run/netns/,
+  mount options=(rw, bind, rshared)   -> /{var/,}run/netns/,
   mount options=(rw, rslave)    -> /,
   mount options=(rw, bind)    / -> /{var/,}run/netns/*,
   mount options=(rw, bind)    /etc/netns/firefox/resolv.conf -> /etc/resolv.conf,
@@ -36,6 +37,7 @@ profile ip @{exec_path} flags=(attach_disconnected) {
   /etc/iproute2/{,**} r,
   /etc/netns/*/ r,
 
+  owner @{run}/netns/ rwk,
         @{run}/netns/* rw,
   owner @{run}/netns/ rw,
 

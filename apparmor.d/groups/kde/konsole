@@ -1,0 +1,67 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Jeroen Rijken
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/konsole
+profile konsole @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/audio>
+  include <abstractions/bus-accessibility>
+  include <abstractions/bus-session>
+  include <abstractions/consoles>
+  include <abstractions/dri>
+  include <abstractions/kde-strict>
+  include <abstractions/nameservice-strict>
+  include <abstractions/ubuntu-xterm>
+
+  ptrace (read),
+
+  signal (send) set=(hup),
+
+  @{exec_path} mr,
+  @{bin}/@{shells} rUx,
+  @{lib}/@{multiarch}/utempter/utempter rPUx,
+
+  /usr/share/color-schemes/{,**} r,
+  /usr/share/konsole/{,**} r,
+
+  /etc/xdg/konsolerc r,
+  /etc/xdg/ui/ui_standards.rc r,
+
+  owner @{HOME}/@{XDG_SSH_DIR}/config r,
+
+  owner @{user_config_dirs}/#@{int} rwl,
+  owner @{user_config_dirs}/konsolerc{,**} rw,
+  owner @{user_config_dirs}/konsolerc.@{rand6} rwl,
+  owner @{user_config_dirs}/konsolerc.lock rwlk,
+  owner @{user_config_dirs}/konsolesshconfig rw,
+  owner @{user_config_dirs}/konsolesshconfig.@{rand6} rwl,
+  owner @{user_config_dirs}/konsolesshconfig.lock rwk,
+  owner @{user_config_dirs}/konsolerc.@{rand6} rwl,
+
+  owner @{user_cache_dirs}/icon-cache.kcache rw,
+  owner @{user_cache_dirs}/mesa_shader_cache/index rw,
+
+  owner @{user_share_dirs}/konsole/{,**} rw,
+
+  # Required including abstractions/audio for sending notifications
+  /usr/share/knotifications5/plasma_workspace.notifyrc r,
+  /usr/share/sounds/** r,
+
+  owner /tmp/#@{int} rw,
+  owner /tmp/konsole.@{rand6} rw,
+
+  @{sys}/devices/system/node/ r,
+  @{sys}/devices/system/node/node@{int}/meminfo r,
+
+  owner @{PROC}/@{pid}/cmdline r,
+  owner @{PROC}/@{pid}/stat r,
+  @{PROC}/sys/dev/i915/perf_stream_paranoid r,
+  @{PROC}/sys/kernel/core_pattern r,
+
+  include if exists <local/konsole>
+}
