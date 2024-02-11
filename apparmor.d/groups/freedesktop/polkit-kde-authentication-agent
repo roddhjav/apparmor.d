@@ -9,21 +9,20 @@ include <tunables/global>
 
 @{exec_path} = @{lib}/@{multiarch}/polkit-kde-authentication-agent-[0-9]
 @{exec_path} += @{lib}/polkit-kde-authentication-agent-[0-9]
-profile polkit-kde-authentication-agent @{exec_path} {
+profile polkit-kde-authentication-agent @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/consoles>
-  include <abstractions/dri-enumerate>
   include <abstractions/fontconfig-cache-read>
-  include <abstractions/fonts>
-  include <abstractions/freedesktop.org>
-  include <abstractions/gtk>
-  include <abstractions/mesa>
+  include <abstractions/graphics>
+  include <abstractions/kde-strict>
   include <abstractions/nameservice-strict>
   include <abstractions/qt5-compose-cache-write>
-  include <abstractions/qt5>
-  include <abstractions/vulkan>
-  include <abstractions/wayland>
-  include <abstractions/X>
+
+  network inet dgram,
+  network inet stream,
+  network inet6 dgram,
+  network inet6 stream,
+  network netlink raw,
 
   signal (send) set=(term, kill) peer=polkit-agent-helper,
 
@@ -31,38 +30,25 @@ profile polkit-kde-authentication-agent @{exec_path} {
 
   @{lib}/polkit-[0-9]/polkit-agent-helper-[0-9] rPx,
 
-  /usr/share/hwdata/pnp.ids r,
-  /usr/share/icu/@{int}.@{int}/*.dat r,
   /usr/share/qt5ct/** r,
 
   /etc/machine-id r,
-  /etc/xdg/kdeglobals r,
-  /etc/xdg/kwinrc r,
-
   /var/lib/dbus/machine-id r,
 
-  owner @{user_cache_dirs}/icon-cache.kcache rw,
-
-  owner @{user_config_dirs}/kdedefaults/* r,
-  owner @{user_config_dirs}/kdeglobals r,
-  owner @{user_config_dirs}/kwinrc r,
   owner @{user_config_dirs}/qt5ct/{,**} r,
 
   owner /tmp/#@{int} rw,
   owner /tmp/polkit-kde-authentication-agent-[0-9].* rwl -> /tmp/#@{int},
-  owner /tmp/xauth_@{rand6} r,
+  # owner /tmp/xauth_@{rand6} r,
+
+  /dev/shm/#@{int} rw,
 
   @{run}/systemd/users/@{uid} r,
-
-  @{sys}/devices/system/node/ r,
-  @{sys}/devices/system/node/node@{int}/meminfo r,
 
   @{PROC}/@{pid}/cgroup r,
   @{PROC}/@{pid}/cmdline r,
   @{PROC}/@{pid}/fd/ r,
   @{PROC}/sys/kernel/core_pattern r,
-
-  /dev/shm/#@{int} rw,
 
   include if exists <local/polkit-kde-authentication-agent>
 }
