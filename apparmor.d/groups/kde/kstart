@@ -8,17 +8,27 @@ abi <abi/3.0>,
 include <tunables/global>
 
 @{exec_path} = @{bin}/kstart
-profile kstart @{exec_path} flags=(complain,attach_disconnected) {
+profile kstart @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/bus-accessibility>
+  include <abstractions/dri>
   include <abstractions/fontconfig-cache-read>
   include <abstractions/kde-strict>
+  include <abstractions/kde-open5>
   include <abstractions/nameservice-strict>
 
   @{exec_path} mr,
 
   @{bin}/** rPUx,
+  @{bin}/konsole rPx,
 
-  @{bin}/konsole rPUx,
+  /var/lib/flatpak/exports/share/mime/ r,
+
+  owner @{user_cache_dirs}/mesa_shader_cache/index rw,
+  owner @{user_share_dirs}/kservices5/ r,
+  owner @{user_share_dirs}/kservices5/ServiceMenus/ r,
+
+  @{PROC}/sys/dev/i915/perf_stream_paranoid r,
 
   include if exists <local/kstart>
 }
