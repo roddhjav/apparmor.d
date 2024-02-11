@@ -14,6 +14,9 @@ profile kded5 @{exec_path} {
   include <abstractions/bus/org.bluez>
   include <abstractions/consoles>
   include <abstractions/dconf-write>
+  include <abstractions/bus/org.bluez>
+  include <abstractions/bus/org.freedesktop.NetworkManager>
+  include <abstractions/bus/org.freedesktop.PolicyKit1>
   include <abstractions/graphics>
   include <abstractions/gtk>
   include <abstractions/kde-strict>
@@ -29,16 +32,42 @@ profile kded5 @{exec_path} {
 
   signal (send) set=hup peer=xsettingsd,
 
+  dbus receive bus=system path=/org/freedesktop/NetworkManager/SecretAgent
+       interface=org.freedesktop.NetworkManager.SecretAgent
+       member=CancelGetSecrets
+       peer=(label=NetworkManager),
+
+  dbus receive bus=system path=/org/freedesktop/NetworkManager/SecretAgent
+       interface=org.freedesktop.NetworkManager.SecretAgent
+       member=CancelGetSecrets
+       peer=(label=NetworkManager),
+
+  dbus receive bus=system path=/org/freedesktop/NetworkManager/AccessPoint/@{int}
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged
+       peer=(label=NetworkManager),
+
+  dbus receive bus=system path=/org/freedesktop/NetworkManager/Devices/@{int}
+       interface=org.freedesktop.DBus.Properties
+       member={PropertiesChanged,AccessPointAdded,AccessPointRemoved}
+       peer=(label=NetworkManager),
+
+  dbus send bus=system path=/org/freedesktop/NetworkManager/AgentManager
+       interface=org.freedesktop.NetworkManager.AgentManager
+       peer=(label=NetworkManager),
+
   @{exec_path} mrix,
 
   @{bin}/kcminit            rPx,
   @{bin}/pgrep              rCx -> pgrep,
+  @{bin}/python3.@{int}     rix,
   @{bin}/setxkbmap          rix,
   @{bin}/xrdb               rPx,
   @{bin}/xsettingsd         rPx,
   @{lib}/drkonqi            rPx,
   @{lib}/kf5/kconf_update   rPx,
-  @{lib}/utempter/utempter  rPx,
+  @{lib}/{,@{multiarch}/}libexec/kf5/kconf_update rPx,
+  @{lib}/{,@{multiarch}/}utempter/utempter  rPx,
 
   /usr/share/kconf_update/ r,
   /usr/share/kded5/{,**} r,
@@ -113,6 +142,7 @@ profile kded5 @{exec_path} {
 
   owner /tmp/plasma-csd-generator.@{rand6}/{,**} rw,
 
+        @{PROC}/ r,
         @{PROC}/@{pids}/cmdline/ r,
         @{PROC}/@{pids}/fd/ r,
         @{PROC}/@{pids}/fd/info/@{int} r,

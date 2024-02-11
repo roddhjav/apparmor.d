@@ -1,0 +1,21 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Jeroen Rijken <jeroen.rijken@xs4all.nl>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /etc/cron.{hourly,daily,weekly,monthly}/ntp
+profile cron-ntp @{exec_path} {
+  include <abstractions/base>
+
+  @{exec_path} r,
+
+  @{shells_path} rix,
+  @{bin}/cat     rix,
+  @{bin}/grep    rix,
+  @{bin}/sed     rix,
+
+  include if exists <local/cron-ntp>
+}
