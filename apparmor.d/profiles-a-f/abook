@@ -1,0 +1,32 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Zane Zakraisek <zz@eng.utah.edu>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/abook
+profile abook @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+  include <abstractions/user-download-strict>
+
+  @{exec_path} mr,
+
+  # Used for printing
+  @{bin}/{,ba,da}sh rix,
+  @{bin}/lp{,r}     rPUx,
+  # Abook has built in support to launch mutt
+  @{bin}/mutt       rPUx,
+
+  /etc/inputrc r,
+
+  /usr/share/terminfo/** r,
+
+  owner @{HOME}/.abook/abookrc       r,
+  owner @{HOME}/.abook/addressbook* rw,
+
+  include if exists <local/abook>
+}
