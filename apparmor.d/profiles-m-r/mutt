@@ -1,0 +1,189 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Zane Zakraisek <zz@eng.utah.edu>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/mutt
+profile mutt @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+  include <abstractions/openssl>
+  include <abstractions/ssl_certs>
+  include <abstractions/user-download-strict>
+  include <abstractions/user-read>
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  # Used to exec programs defined in the mailcap.
+  # There are countless programs that can be executed from the mailcap.
+  # This profile includes only the most basic.
+  @{bin}/{,ba,da}sh               rix,
+ 
+  @{bin}/sendmail                rPUx,
+  @{lib}/sendmail/sendmail rPUx,
+  @{bin}/ispell                  rPUx, 
+  @{bin}/abook                   rPUx,
+  @{bin}/mutt_dotlock             rix,
+  # Misc mutt scripts
+  @{lib}/mutt/*                   rix,
+ 
+  @{bin}/w3m             rCx -> html-renderer,
+  @{bin}/lynx            rCx -> html-renderer,
+  @{bin}/vim             rCx -> editor,
+  @{bin}/vim.*           rCx -> editor,
+  @{bin}/sensible-editor rCx -> editor,
+  @{bin}/more            rCx -> pager,
+  @{bin}/less            rCx -> pager,
+  @{bin}/pager           rCx -> pager,
+  @{bin}/gpg{2,}         rCx -> gpg,
+  @{bin}/gpgconf         rCx -> gpg,
+  @{bin}/gpgsm           rCx -> gpg,
+  @{bin}/pgpewrap        rCx -> gpg,
+
+  /usr/share/terminfo/** r,
+
+  # Mutt MIME types search path
+  /etc/mime.types           r,
+  owner @{HOME}/.mime.types r,
+
+  # Mutt mailcap search path
+  /etc/{mutt/,}mailcap   r,
+  /usr/etc/mailcap       r,
+  owner @{HOME}/.mailcap r,
+
+  # Mutt config files
+  /usr/share/mutt/**         r,
+  /etc/{mutt/,}Muttrc        r,
+  /etc/{mutt/,}Muttrc.d/{*,} r,
+  owner @{HOME}/.mutt/**     r,
+  owner @{HOME}/.muttrc*     r,
+
+  # Needed for the edit operation.
+  owner @{HOME}/ r,
+
+  # User mbox
+  # Could be a file or dir depending on mbox_type variable
+  owner /var/{spool/,}mail/*             rwlk,
+  owner @{HOME}/{mbox,postponed,sent}*   rwlk,
+  owner @{HOME}/{mbox,postponed,sent}/   rw,
+  owner @{HOME}/{mbox,postponed,sent}/** rwlk,
+  # User maildir
+  owner @{user_mail_dirs}/ rw,
+  owner @{user_mail_dirs}/** rwlk -> @{user_mail_dirs}/**,
+
+  # Trusted certificate store
+  owner @{HOME}/.mutt_certificates rwk,
+  
+  # Mutt history file
+  owner @{HOME}/.mutthistory rwk,
+  
+  # Mutt signature file
+  owner @{HOME}/.signature r,
+
+  # Common location for mail aliases
+  owner @{HOME}/.mail_aliases r,
+
+  owner @{HOME}/.cache/mutt rwk,
+
+  # Needed to compose a message
+  owner /{var/,}tmp/.mutt*/  rw,
+  owner /{var/,}tmp/.mutt*/* lrwk,
+  owner /{var/,}tmp/mutt*    lrwk,
+
+  # Used When viewing attachments
+  owner /{var/,}tmp/* lrw,
+  
+  profile html-renderer {
+    include <abstractions/base>
+
+    @{bin}/w3m     mrix,
+    @{bin}/lynx    mrix,
+    
+    owner @{HOME}/.w3m/* rw,
+
+    owner /{var/,}tmp/mutt* rw,
+
+    include if exists <local/mutt_html-renderer>
+  }
+
+  profile editor {
+    include <abstractions/base>
+    include <abstractions/nameservice-strict>
+
+    @{bin}/sensible-editor        mr,
+    @{bin}/vim                  mrix,
+    @{bin}/vim.*                mrix,
+    @{bin}/{,ba,da}sh            rix,
+    @{bin}/which{,.debianutils}  rix,
+
+    /usr/share/vim/{,**} r,
+    /usr/share/terminfo/** r,
+
+    /etc/vimrc r,
+    /etc/vim/{,**} r,
+
+    owner @{HOME}/.selected_editor r,
+    owner @{HOME}/.viminfo{,.tmp} rw,
+    owner @{HOME}/.vimrc r,
+  
+    # Vim swap file 
+    owner @{HOME}/ r,
+    owner @{HOME}/.cache/ r,
+    owner @{HOME}/.cache/vim/** wr,
+   
+    # This is the file that holds the message
+    owner /{var/,}tmp/{.,}mutt* rw,
+
+    include if exists <local/mutt_editor>
+  }
+  
+  profile pager {
+    include <abstractions/base>
+    include <abstractions/consoles>
+
+    /usr/share/terminfo/** r,
+    /usr/share/file/misc/magic.mgc r,
+
+    @{bin}/less  mr,
+    @{bin}/more  mr,
+    @{bin}/pager mr,
+    
+    owner @{HOME}/.lesshs* r,
+    owner @{HOME}/.local/state/ r,
+    owner @{HOME}/.local/state/less* rw,
+  
+    # This is the file that holds the message
+    owner /{var/,}tmp/mutt* rw,
+
+    include if exists <local/mutt_pager>
+  }
+
+  profile gpg {
+    include <abstractions/base>
+    include <abstractions/nameservice-strict>
+
+    @{bin}/gpg{,2}  mrix,
+    @{bin}/gpgconf  mr,
+    @{bin}/gpgsm    mr,
+    @{bin}/pgpewrap mr,
+
+    owner @{HOME}/@{XDG_GPG_DIR}/ rw,
+    owner @{HOME}/@{XDG_GPG_DIR}/** rwkl -> @{HOME}/@{XDG_GPG_DIR}/**,
+  
+    owner /{var/,}tmp/mutt* lrw,
+    
+    include if exists <local/mutt_gpg>
+  }
+
+  include if exists <local/mutt>
+}
