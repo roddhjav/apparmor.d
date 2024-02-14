@@ -70,12 +70,11 @@ func DirectiveDbus(file *paths.Path, profile string) string {
 func sanitizeDbusRule(file *paths.Path, action string, rules map[string]string) map[string]string {
 	// Sanity check
 	if _, present := rules["name"]; !present {
-		panic(fmt.Sprintf("Missing name for 'dbus: own' in %s", file))
+		panic(fmt.Sprintf("Missing name for 'dbus: %s' in %s", action, file))
 	}
 	if _, present := rules["bus"]; !present {
 		panic(fmt.Sprintf("Missing bus for '%s' in %s", rules["name"], file))
 	}
-
 	if _, present := rules["label"]; !present && action == "talk" {
 		panic(fmt.Sprintf("Missing label for '%s' in %s", rules["name"], file))
 	}
@@ -115,6 +114,14 @@ func dbusOwn(rules map[string]string) *aa.AppArmorProfile {
 			Name:      `"{:1.@{int},org.freedesktop.DBus}"`,
 		})
 	}
+	p.Rules = append(p.Rules, &aa.Dbus{
+		Access:    "receive",
+		Bus:       rules["bus"],
+		Path:      rules["path"],
+		Interface: "org.freedesktop.DBus.Introspectable",
+		Member:    "Introspect",
+		Name:      `":1.@{int}"`,
+	})
 	return p
 }
 
@@ -125,9 +132,9 @@ func dbusTalk(rules map[string]string) *aa.AppArmorProfile {
 		p.Rules = append(p.Rules, &aa.Dbus{
 			Access:    "send",
 			Bus:       rules["bus"],
-			Name:      `"{:1.@{int},` + rules["name"] + `}"`,
 			Path:      rules["path"],
 			Interface: iface,
+			Name:      `"{:1.@{int},` + rules["name"] + `}"`,
 			Label:     rules["label"],
 		})
 	}
@@ -135,9 +142,9 @@ func dbusTalk(rules map[string]string) *aa.AppArmorProfile {
 		p.Rules = append(p.Rules, &aa.Dbus{
 			Access:    "receive",
 			Bus:       rules["bus"],
-			Name:      `"{:1.@{int},` + rules["name"] + `}"`,
 			Path:      rules["path"],
 			Interface: iface,
+			Name:      `"{:1.@{int},` + rules["name"] + `}"`,
 			Label:     rules["label"],
 		})
 	}
