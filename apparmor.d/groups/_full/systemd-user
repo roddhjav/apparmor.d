@@ -19,6 +19,8 @@ include <tunables/global>
 profile systemd-user flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/base>
   include <abstractions/audio>
+  include <abstractions/bus-session>
+  include <abstractions/bus-system>
   include <abstractions/nameservice-strict>
   include <abstractions/video>
 
@@ -28,6 +30,13 @@ profile systemd-user flags=(attach_disconnected,mediate_deleted) {
   signal (receive) set=(hup) peer=@{systemd},
 
   ptrace (read),
+
+  # dbus: own bus=session name=org.freedesktop.systemd1
+
+  dbus receive bus=session
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect 
+       peer=(name=:*, label=gnome-shell),
 
   @{exec_path} mr,
 
@@ -62,10 +71,12 @@ profile systemd-user flags=(attach_disconnected,mediate_deleted) {
 
   / r,
 
+  /var/lib/gdm{3,}/.config/pulse/{,**} rw,
   /var/lib/gdm{3,}/.local/state/wireplumber/{,**} rw,
 
   owner @{HOME}/.local/ w,
 
+  owner @{user_config_dirs}/pulse/{,**} rw,
   owner @{user_config_dirs}/systemd/user/{,**} r,
 
   owner @{user_state_dirs}/ w,
