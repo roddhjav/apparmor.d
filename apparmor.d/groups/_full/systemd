@@ -18,6 +18,7 @@ include <tunables/global>
 profile systemd flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/base>
   include <abstractions/authentication>
+  include <abstractions/bus-system>
   include <abstractions/nameservice-strict>
   include <abstractions/wutmp>
 
@@ -46,15 +47,14 @@ profile systemd flags=(attach_disconnected,mediate_deleted) {
   capability sys_tty_config,
 
   network inet dgram,
-  network inet raw,
   network inet stream,
   network inet6 dgram,
-  network inet6 raw,
   network inet6 stream,
   network netlink raw,
 
   mount -> @{run}/systemd/incoming/,
   mount -> @{run}/systemd/mount-rootfs/{,**},
+  mount -> @{run}/systemd/unit-root/{,**},
   mount -> @{sys}/fs/fuse/connections/,
   mount -> @{sys}/kernel/config/,
   mount -> @{sys}/kernel/debug/,
@@ -75,6 +75,7 @@ profile systemd flags=(attach_disconnected,mediate_deleted) {
   mount fstype=sysfs sysfs -> @{run}/systemd/namespace-@{rand6}/,
   mount fstype=tmpfs tmpfs -> @{run}/systemd/namespace-@{rand6}/dev/,
   mount fstype=tmpfs tmpfs -> /dev/shm/,
+  mount fstype=ramfs ramfs -> /dev/shm/,
 
   umount /,
   umount /dev/shm/,
@@ -93,8 +94,7 @@ profile systemd flags=(attach_disconnected,mediate_deleted) {
   ptrace (read, readby),
 
   unix (send) type=dgram,
- 
-  dbus, # TODO: WIP
+
   # dbus: own bus=system name=org.freedesktop.systemd1
 
   @{bin}/systemctl                  rix,
@@ -134,15 +134,11 @@ profile systemd flags=(attach_disconnected,mediate_deleted) {
   /etc/conf.d/{,**} r,
   /etc/credstore.encrypted/{,**} r,
   /etc/credstore/{,**} r,
-  /etc/default/** r,
   /etc/environment r,
   /etc/environment.d/{,**} r,
-  /etc/locale.conf r,
   /etc/machine-id r,
-  /etc/modules-load.d/ r,
-  /etc/networkd-dispatcher/{,**} r,
+  /etc/modules-load.d/{,**} r,
   /etc/systemd/{,**} r,
-  /etc/udev/hwdb.d/{,*} r,
 
         /var/lib/systemd/{,**} rw,
   owner /var/tmp/systemd-private-*/{,**} rw,
