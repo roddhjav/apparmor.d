@@ -1,0 +1,28 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Zane Zakraisek <zz@eng.utah.edu>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/whatis
+profile whatis @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+
+  @{exec_path} mr,
+  @{bin}/grep  rix,
+
+  /usr/{,**/}man/{,**/}{,whatis} r,
+
+  /usr/share/man/{,**/}index.{bt,db,dir,pag} rk,
+  /var/cache/man/{,**/}index.{bt,db,dir,pag} rk,
+
+  /etc/man_db.conf    r,
+  /etc/manpath.config r,
+
+  owner @{HOME}/.manpath r,
+
+  include if exists <local/whatis>
+}
