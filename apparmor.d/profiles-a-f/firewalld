@@ -9,6 +9,10 @@ include <tunables/global>
 @{exec_path} = @{bin}/firewalld
 profile firewalld @{exec_path} {
   include <abstractions/base>
+  include <abstractions/bus-session>
+  include <abstractions/bus-system>
+  include <abstractions/bus/org.freedesktop.PolicyKit1>
+  include <abstractions/bus/org.freedesktop.NetworkManager>
   include <abstractions/nameservice-strict>
   include <abstractions/openssl>
 
@@ -21,6 +25,21 @@ profile firewalld @{exec_path} {
   network inet6 raw,
   network netlink raw,
 
+  dbus receive bus=system path=/org/fedoraproject/FirewallD1
+       interface=org.fedoraproject.FirewallD1.direct
+       member=passthrough
+       peer=(name=:*, label=libvirtd),
+
+  dbus receive bus=system path=/org/fedoraproject/FirewallD1
+       interface=org.fedoraproject.FirewallD1.zone
+       member={changeZoneOfInterface,getZones}
+       peer=(name=:*, label=libvirtd),
+
+  dbus receive bus=system path=/org/fedoraproject/FirewallD1
+       interface=org.fedoraproject.FirewallD1.zone
+       member={changeZoneOfInterface,removeInterface}
+       peer=(name=:*, label=libvirtd),
+
   @{exec_path} mr,
 
   @{bin}/ r,
@@ -32,6 +51,8 @@ profile firewalld @{exec_path} {
   @{bin}/kmod                     rPx,
   @{bin}/xtables-legacy-multi     rix,
   @{bin}/xtables-nft-multi        rix,
+
+  /usr/local/lib/python3.10/dist-packages/ r,
 
   /usr/share/libalternatives/ r,
   /usr/share/libalternatives/ebtables*/{,*} r,

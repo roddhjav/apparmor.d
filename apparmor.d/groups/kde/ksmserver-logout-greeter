@@ -1,0 +1,66 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Jeroen Rijken
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/@{multiarch}/libexec/ksmserver-logout-greeter
+profile ksmserver-logout-greeter @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/dri>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/kde-icon-cache-write>
+  include <abstractions/kde-strict>
+  include <abstractions/mesa>
+  include <abstractions/nameservice-strict>
+  include <abstractions/qt5-shader-cache>
+  include <abstractions/qt5>
+
+  @{exec_path} mr,
+
+  owner @{HOME}/ r,
+
+  / r,
+  /etc/machine-id r,
+  /etc/timezone r,
+
+  /usr/share/plasma/desktoptheme/** r,
+  /usr/share/plasma/look-and-feel/** r,
+  /var/lib/AccountsService/icons/ r,
+  /var/lib/flatpak/exports/share/icons/{,**} r,
+  /var/lib/flatpak/exports/share/mime/generic-icons r,
+
+  @{lib}/os-release r,
+
+  owner @{user_cache_dirs}/ r,
+  owner @{user_cache_dirs}/#@{int} rwlk,
+  owner @{user_cache_dirs}/kcrash-metadata/ r,
+  owner @{user_cache_dirs}/ksmserver-logout-greeter/qmlcache/{,*} r,
+  owner @{user_cache_dirs}/plasma_theme_breeze-dark_v5.114.0.kcache rw,
+  owner @{user_cache_dirs}/plasma-svgelements r,
+  owner @{user_cache_dirs}/plasma-svgelements.@{rand6} l -> @{user_cache_dirs}/#@{int},
+  owner @{user_cache_dirs}/plasma-svgelements.lock rwk,
+
+  owner @{user_config_dirs}/ r,
+  owner @{user_config_dirs}/kdedefaults/kscreenlockerrc r,
+  owner @{user_config_dirs}/kdedefaults/plasmarc r,
+  owner @{user_config_dirs}/kscreenlockerrc r,
+  owner @{user_config_dirs}/ksmserverrc r,
+  owner @{user_config_dirs}/plasmarc r,
+
+  owner @{user_share_dirs}/icons/{**,} r,
+  owner @{user_share_dirs}/mime/generic-icons r,
+
+  owner @{PROC}/@{pid}/exe r,
+  owner @{PROC}/@{pid}/status r,
+  owner @{run}/user/@{uid}/ r,
+
+  @{PROC}/sys/dev/i915/perf_stream_paranoid r,
+  @{PROC}/sys/kernel/core_pattern r,
+  @{PROC}/sys/kernel/random/boot_id r,
+
+  include if exists <local/ksmserver-logout-greeter>
+}

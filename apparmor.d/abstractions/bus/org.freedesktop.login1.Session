@@ -7,14 +7,24 @@
        member=GetSession
        peer=(name=:*, label=systemd-logind),
 
+  dbus send bus=system path=/org/freedesktop/login1{,session/*,seat/*}
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name="{:*,org.freedesktop.login1}", label=systemd-logind),
+
   dbus send bus=system path=/org/freedesktop/login1/session/*
        interface=org.freedesktop.DBus.Properties
-       member=GetAll
+       member={Get,GetAll}
        peer=(name=:*, label=systemd-logind),
 
   dbus send bus=system path=/org/freedesktop/login1/session/*
        interface=org.freedesktop.login1.Session
        member={ReleaseDevice,TakeControl,TakeDevice,SetBrightness,SetLockedHint,SetIdleHint}
+       peer=(name="{:*,org.freedesktop.login1}", label=systemd-logind),
+
+  dbus send bus=system path=/org/freedesktop/login1/seat/*
+       interface=org.freedesktop.DBus.Properties
+       member={Get,GetAll}
        peer=(name="{:*,org.freedesktop.login1}", label=systemd-logind),
 
   dbus receive bus=system path=/org/freedesktop/login1/session/*

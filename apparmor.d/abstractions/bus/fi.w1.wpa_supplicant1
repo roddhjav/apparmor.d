@@ -7,4 +7,35 @@
        member={GetAll,PropertiesChanged}
        peer=(name=:*, label=wpa-supplicant),
 
+  dbus send bus=system path=/fi/w1/wpa_supplicant1/Interfaces/@{int}
+       interface=fi.w1.wpa_supplicant1.Interface
+       member={Disconnect,RemoveNetwork,Scan}
+       peer=(name=:*, label=wpa-supplicant),
+
+  dbus send bus=system path=/fi/w1/wpa_supplicant1/Interfaces/@{int}
+       interface=fi.w1.wpa_supplicant1.Interface.P2PDevice
+       member=Cancel
+       peer=(name=:*, label=wpa-supplicant),
+
+  # Unconfined for now, don't know the label yet.
+  # dbus send bus=system path=/org/freedesktop
+  #      interface=org.freedesktop.DBus.ObjectManager
+  #      member=InterfacesRemoved
+  #      peer=(name=:*, label=unconfined),
+
+  dbus receive bus=system path=/fi/w1/wpa_supplicant1/Interfaces/@{int}
+       interface=fi.w1.wpa_supplicant1.Interface
+       member={BSSAdded,BSSRemoved,NetworkRemoved,ScanDone,PropertiesChanged}
+       peer=(name=:*, label=wpa-supplicant),
+
+  dbus receive bus=system path=/fi/w1/wpa_supplicant1/Interfaces/@{int}
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged
+       peer=(name=:*, label=wpa-supplicant),
+
+  dbus receive bus=system path=/fi/w1/wpa_supplicant1/Interfaces/@{int}/BSSs/@{int}
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged
+       peer=(name=:*, label=wpa-supplicant),
+
   include if exists <abstractions/bus/fi.w1.wpa_supplicant1.d>
