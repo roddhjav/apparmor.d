@@ -13,11 +13,15 @@
 # @{cache_dirs} = @{user_cache_dirs}/chromium
 
   include <abstractions/audio>
+  include <abstractions/bus-session>
+  include <abstractions/bus-system>
+  include <abstractions/bus/org.freedesktop.UPower>
   include <abstractions/dconf-write>
   include <abstractions/desktop>
   include <abstractions/devices-usb>
   include <abstractions/fontconfig-cache-read>
   include <abstractions/graphics-full>
+  include <abstractions/kde-strict>
   include <abstractions/nameservice-strict>
   include <abstractions/ssl_certs>
   include <abstractions/thumbnails-cache-read>
@@ -50,6 +54,11 @@
   network inet stream,
   network inet6 stream,
   network netlink raw,
+
+  dbus send bus=system path=/
+       interface=org.freedesktop.DBus.ObjectManager
+       member=GetManagedObjects
+       peer=(name=org.bluez, label=bluetoothd),
 
   @{lib_dirs}/{,**} r,
   @{lib_dirs}/*.so* mr,
@@ -93,15 +102,18 @@
   /usr/share/hwdata/pnp.ids r,
   /usr/share/mozilla/extensions/{,**} r,
   /usr/share/qt{5,}/translations/*.qm r,
+  /usr/share/uim/* r,
   /usr/share/webext/{,**} r,
 
   /etc/@{name}/{,**} r,
   /etc/fstab r,
-  /etc/igfx_user_feature{,_next}.txt w,
+  /etc/igfx_user_feature{,_next}.txt rw,
   /etc/opensc.conf r,
 
   /var/lib/dbus/machine-id r,
   /etc/machine-id r,
+
+  /var/lib/uim/* r,
 
   owner @{HOME}/ r,
 
@@ -110,9 +122,13 @@
   owner @{HOME}/.pki/nssdb/pkcs11.txt rw,
   owner @{HOME}/.pki/nssdb/{cert9,key4}.db rwk,
   owner @{HOME}/.pki/nssdb/{cert9,key4}.db-journal rw,
+  owner @{HOME}/.uim.d/customs/* r,
+  owner @{HOME}/.XCompose r,
 
   owner @{user_config_dirs}/gtk-3.0/servers r,
   owner @{user_share_dirs}/.@{domain}.* rw,
+  owner @{user_cache_dirs}/gtk-3.0/**/*.cache r,
+  owner @{user_cache_dirs}/icon-cache.kcache rw,
 
   owner @{config_dirs}/ rw,
   owner @{config_dirs}/** rwk,
@@ -145,6 +161,10 @@
 
   audit @{run}/udev/data/* r,
 
+  owner @{run}/user/@{uid}/app/org.keepassxc.KeePassXC/org.keepassxc.KeePassXC.BrowserServer rw,
+  owner @{run}/user/@{uid}/org.keepassxc.KeePassXC.BrowserServer rw,
+  owner @{run}/user/@{uid}/uim/socket/uim-helper rw,
+
   @{sys}/bus/ r,
   @{sys}/bus/**/devices/ r,
   @{sys}/class/**/ r,
@@ -154,6 +174,7 @@
   @{sys}/devices/**/uevent r,
   @{sys}/devices/system/cpu/kernel_max r,
   @{sys}/devices/virtual/**/report_descriptor r,
+  @{sys}/devices/virtual/dmi/id/{sys_vendor,product_name} r,
   @{sys}/devices/virtual/tty/tty@{int}/active r,
 
         @{PROC}/ r,

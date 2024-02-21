@@ -50,10 +50,36 @@ profile pulseaudio @{exec_path} {
        member=Introspect
        peer=(name=:*, label=gnome-shell),
 
+  dbus receive bus=system path=/Client@{int}/ServiceResolver@{int}
+       interface=org.freedesktop.Avahi.ServiceResolver
+       member=Found
+       peer=(name=:*, label=avahi-daemon),
+
+  dbus receive bus=system path=/Client@{int}/ServiceBrowser@{int}
+       interface=org.freedesktop.Avahi.ServiceBrowser
+       member=ItemRemove
+       peer=(name=:*, label=avahi-daemon),
+
   dbus send bus=system path=/
        interface=org.freedesktop.DBus.ObjectManager
        member=GetManagedObjects
        peer=(name=org.bluez),
+
+  dbus send bus=system path=/
+       interface=org.freedesktop.DBus.Peer
+       member=Ping
+       peer=(name=org.freedesktop.Avahi, label=avahi-daemon),
+
+  dbus send bus=system path=/Client@{int}/ServiceResolver@{int}
+       interface=org.freedesktop.Avahi.ServiceResolver
+       member={Found,Free}
+       peer=(name=org.freedesktop.Avahi, label=avahi-daemon),
+
+  # No label in rule
+  dbus send bus=system path=/org/freedesktop/RealtimeKit@{int}
+       interface=org.freedesktop.RealtimeKit@{int}
+       member=MakeThreadHighPriority
+       peer=(name=org.freedesktop.RealtimeKit@{int}),
 
   @{exec_path} mrix,
 
@@ -104,6 +130,7 @@ profile pulseaudio @{exec_path} {
 
   @{sys}/devices/**/sound/**/{uevent,pcm_class} r,
   @{sys}/devices/virtual/dmi/id/{bios_vendor,board_vendor,sys_vendor} r,
+  @{sys}/devices/virtual/video4linux/video@{int}/uevent r,
 
   deny @{sys}/module/apparmor/parameters/enabled r,
 

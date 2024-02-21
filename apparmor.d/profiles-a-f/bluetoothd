@@ -11,6 +11,7 @@ include <tunables/global>
 profile bluetoothd @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus-system>
+  include <abstractions/bus/org.freedesktop.hostname1>
 
   # Needed for configuring HCI interfaces
   capability net_admin,
@@ -24,6 +25,31 @@ profile bluetoothd @{exec_path} flags=(attach_disconnected) {
 
   # dbus: own bus=system name=org.bluez
 
+  dbus receive bus=system path=/
+       interface=org.freedesktop.DBus.ObjectManager
+       member=GetManagedObjects
+       peer=(name=:*, label={brave,NetworkManager,pulseaudio,upowerd}),
+
+  dbus send bus=system path=/MediaEndpoint
+       interface=org.freedesktop.DBus.ObjectManager
+       member=GetManagedObjects
+       peer=(name=:*, label=pulseaudio),
+
+  dbus send bus=system path=/MediaEndpoint/{A2DPSink,A2DPSource}/*
+       interface=org.bluez.MediaEndpoint1
+       member=Release
+       peer=(name=:*, label=pulseaudio),
+
+  dbus send bus=system path=/Profile/{HFPAGProfile,HSPHSProfile}
+       interface=org.bluez.MediaEndpoint1
+       member=Release
+       peer=(name=:*, label=pulseaudio),
+
+  dbus send bus=system path=/
+       interface=org.freedesktop.DBus.ObjectManager
+       member=InterfacesRemoved
+       peer=(name=org.freedesktop.DBus, label={fwupd,NetworkManager,pulseaudio,upowerd),
+
   @{exec_path} mr,
 
   @{lib}/@{multiarch}/bluetooth/plugins/*.so mr,
@@ -32,11 +58,12 @@ profile bluetoothd @{exec_path} flags=(attach_disconnected) {
 
   /var/lib/bluetooth/{,**} rw,
 
-  @{run}/sdp rw,
-  @{run}/udev/data/+hid:* r,              # for HID-Compliant Keyboard
+        @{run}/sdp rw,
+  owner @{run}/systemd/notify w,
+        @{run}/udev/data/+hid:* r,              # for HID-Compliant Keyboard
 
   @{sys}/devices/@{pci}/rfkill@{int}/name r,
-  @{sys}/devices/@{pci}/bluetooth/**/{uevent,name} r,
+  @{sys}/devices/@{pci}/**/{uevent,name} r,
   @{sys}/devices/platform/**/rfkill/**/name r,
   @{sys}/devices/virtual/dmi/id/chassis_type r,
 

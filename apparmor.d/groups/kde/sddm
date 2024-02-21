@@ -12,6 +12,10 @@ profile sddm @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/base>
   include <abstractions/authentication>
   include <abstractions/bash>
+  include <abstractions/bus-session>
+  include <abstractions/bus-system>
+  include <abstractions/bus/org.freedesktop.login1>
+  include <abstractions/bus/org.freedesktop.UPower>
   include <abstractions/fontconfig-cache-read>
   include <abstractions/graphics>
   include <abstractions/kde-strict>
@@ -41,6 +45,21 @@ profile sddm @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   signal (send) set=(term) peer=startplasma-wayland,
   signal (send) set=(term) peer=sddm-greeter,
   signal (send) set=(kill, term) peer=xorg,
+
+  dbus receive bus=system path=/org/freedesktop/DisplayManager/Seat@{int}
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name=:*, label=kscreenlocker-greet),
+
+  dbus receive bus=system path=/org/freedesktop/DisplayManager/Seat@{int}
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged
+       peer=(name=:*, label=systemd-logind),
+
+  dbus send bus=system path=/org/freedesktop/DisplayManager/Seat@{int}
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name=org.freedesktop.DBus, label=kscreenlocker-greet),
 
   @{exec_path} mr,
 
