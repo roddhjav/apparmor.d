@@ -9,13 +9,16 @@ include <tunables/global>
 @{exec_path} = @{bin}/ksmserver
 profile ksmserver @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/base>
+  include <abstractions/bus/org.freedesktop.login1.Session>
   include <abstractions/app-launcher-user>
   include <abstractions/graphics>
   include <abstractions/kde-strict>
   include <abstractions/nameservice-strict>
 
   signal (send) set=(usr1,term) peer=kscreenlocker-greet,
-  
+
+  unix (send, receive) type=stream peer=(label="kscreenlocker-greet",addr=none),
+
   @{exec_path} mr,
 
   @{bin}/rm rix,
@@ -32,11 +35,14 @@ profile ksmserver @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   /usr/share/color-schemes/{,**} r,
   /usr/share/knotifications5/*.notifyrc r,
   /usr/share/kservices5/{,**} r,
+  /usr/share/kservicetypes5/{,**} r,
 
   /etc/xdg/menus/applications-merged/ r,
   /etc/machine-id r,
   /etc/xdg/kscreenlockerrc r,
   /etc/xdg/menus/ r,
+
+  /var/lib/flatpak/exports/share/mime/ r,
 
   owner @{HOME}/@{rand6} rw,
   owner @{HOME}/.Xauthority rw,
@@ -44,14 +50,17 @@ profile ksmserver @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{user_cache_dirs}/#@{int} rw,
   owner @{user_cache_dirs}/fontconfig/*-le64.cache-* r,
   owner @{user_cache_dirs}/icon-cache.kcache rw,
-  owner @{user_cache_dirs}/ksycoca5_* rl,
+  owner @{user_cache_dirs}/ksycoca5_* rwlk,
 
   owner @{user_config_dirs}/#@{int} rw,
   owner @{user_config_dirs}/kscreenlockerrc r,
-  owner @{user_config_dirs}/ksmserverrc r,
+  owner @{user_config_dirs}/ksmserverrc rw,
   owner @{user_config_dirs}/ksmserverrc.@{rand6} rwl,
   owner @{user_config_dirs}/ksmserverrc.lock rwk,
   owner @{user_config_dirs}/menus/ r,
+
+  owner @{user_share_dirs}/kservices5/ r,
+  owner @{user_share_dirs}/kservices5/ServiceMenus/ r,
 
   owner /tmp/@{rand6} rw,
 

@@ -50,6 +50,26 @@ profile NetworkManager @{exec_path} flags=(attach_disconnected) {
        member=GetManagedObjects
        peer=(name=:*),
 
+  dbus receive bus=system path=/
+       interface=org.freedesktop.DBus.ObjectManager
+       member=InterfacesRemoved
+       peer=(name=:*, label=bluetoothd),
+
+  dbus send bus=system path=/
+       interface=org.freedesktop.DBus.ObjectManager
+       member=GetManagedObjects
+       peer=(name=:*, label=bluetoothd),
+
+  dbus send bus=system path=/org/fedoraproject/FirewallD1
+       interface=org.fedoraproject.FirewallD1.zone
+       member={changeZoneOfInterface,removeInterface}
+       peer=(name=org.freedesktop.DBus, label=firewalld),
+
+  dbus send bus=system path=/org/freedesktop
+       interface=org.freedesktop.DBus.ObjectManager
+       member=InterfacesAdded
+       peer=(name=org.freedesktop.DBus, label=nm-online),
+
   dbus send bus=system path=/org/freedesktop/nm_dispatcher
        interface=org.freedesktop.nm_dispatcher
        member=Action

@@ -11,6 +11,10 @@ include <tunables/global>
 @{exec_path} += @{lib}/@{multiarch}/libexec/kscreenlocker_greet
 profile kscreenlocker-greet @{exec_path} {
   include <abstractions/base>
+  include <abstractions/bus-session>
+  include <abstractions/bus-system>
+  include <abstractions/bus/org.freedesktop.login1>
+  include <abstractions/bus/org.freedesktop.login1.Session>
   include <abstractions/bus/org.freedesktop.UPower>
   include <abstractions/fontconfig-cache-read>
   include <abstractions/graphics>
@@ -24,6 +28,13 @@ profile kscreenlocker-greet @{exec_path} {
   signal (send) peer=kcheckpass,
   signal (receive) set=(usr1, term) peer=ksmserver,
   signal (receive) set=(term) peer=kwin_wayland,
+
+  unix (send,receive) type=stream peer=(label="ksmserver",addr=none),
+
+  dbus send bus=system path=/org/freedesktop/DisplayManager/Seat@{int}
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name=:*, label=sddm),
 
   @{exec_path} mr,
 
@@ -57,6 +68,7 @@ profile kscreenlocker-greet @{exec_path} {
 
   owner @{HOME}/.face.icon r,
   owner @{HOME}/.xsession-errors w,
+  owner @{user_pictures_dirs}/{,**} r,
 
   owner @{user_cache_dirs}/ rw,
   owner @{user_cache_dirs}/icon-cache.kcache rw,
@@ -85,6 +97,7 @@ profile kscreenlocker-greet @{exec_path} {
   @{sys}/devices/system/node/node@{int}/meminfo r,
 
         @{PROC}/@{pid}/cmdline r,
+        @{PROC}/@{pid}/fd/ r,
         @{PROC}/@{pid}/loginuid r,
         @{PROC}/@{pid}/mounts r,
         @{PROC}/sys/kernel/core_pattern r,
