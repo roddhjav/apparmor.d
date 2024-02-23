@@ -11,9 +11,11 @@ include <tunables/global>
 profile colord @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus-system>
+  include <abstractions/bus/org.freedesktop.Avahi>
   include <abstractions/bus/org.freedesktop.PolicyKit1>
   include <abstractions/devices-usb>
   include <abstractions/nameservice-strict>
+  include <abstractions/openssl>
 
   network netlink raw,
 
@@ -26,10 +28,11 @@ profile colord @{exec_path} flags=(attach_disconnected) {
 
   @{exec_path} mr,
 
-  @{lib}/{,colord/}colord-sane  rPx,
+  @{lib}/{,colord/}colord-sane  rPx -> colord//&colord-sane,
 
   /etc/machine-id r,
   /etc/udev/hwdb.bin r,
+  /etc/sane.d/{,**} r,
 
   /usr/share/mime/mime.cache r,
   /usr/share/color/icc/{,**} r,
@@ -50,8 +53,10 @@ profile colord @{exec_path} flags=(attach_disconnected) {
   @{run}/udev/data/+pci:* r,
   @{run}/udev/data/c81:@{int}  r,         # For video4linux
 
+  @{sys}/bus/scsi/devices/ r,
   @{sys}/class/drm/ r,
   @{sys}/class/video4linux/ r,
+  @{sys}/devices/@{pci}/{vendor,model,type} r,
   @{sys}/devices/@{pci}/drm/card@{int}/card[0-9]-{HDMI,VGA,LVDS,DP,eDP,Virtual}-*/{enabled,edid} r,
   @{sys}/devices/@{pci}/uevent r,
   @{sys}/devices/virtual/dmi/id/{sys_vendor,product_version,product_name} r,
