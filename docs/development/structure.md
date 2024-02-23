@@ -152,14 +152,9 @@ Special care must be given as sometimes udev numbers are allocated dynamically b
 
 !!! note ""
 
-    [apparmor.d/groups/virt/libvirtd](https://github.com/roddhjav/apparmor.d/blob/15e33a1fe6654f67a187cd5157c9968061b9511e/apparmor.d/groups/virt/libvirtd#L179-L184)
+    [apparmor.d/groups/virt/libvirtd](https://github.com/roddhjav/apparmor.d/blob/b2af7a631a2b8aca7d6bdc8f7ff4fdd5ec94220e/apparmor.d/groups/virt/libvirtd#L188)
     ``` aa linenums="179"
-      @{run}/udev/data/c23[4-9]:@{int} r, # For dynamic assignment range 234 to 254
-      @{run}/udev/data/c24[0-9]:@{int} r,
-      @{run}/udev/data/c25[0-4]:@{int} r,
-      @{run}/udev/data/c3[0-9]*:@{int} r, # For dynamic assignment range 384 to 511
-      @{run}/udev/data/c4[0-9]*:@{int} r,
-      @{run}/udev/data/c5[0-9]*:@{int} r,
+      @{run}/udev/data/c@{dynamic}:@{int} r,  # For dynamic assignment range 234 to 254, 384 to 511
     ```
 
 [kernel]: https://raw.githubusercontent.com/torvalds/linux/master/Documentation/admin-guide/devices.txt

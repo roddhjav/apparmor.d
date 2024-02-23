@@ -2,6 +2,13 @@
 title: AppArmor.d
 ---
 
+<!-- https://youtu.be/9dqHOrM4KHo?t=146
+
+Business Benefits of an LSM
+
+- Increased IT productivity -> ????
+- Regulatory Compliance
+- Peace of mind: Protect against unknown threats and "zero-days" attacks -->
 
 **Full set of AppArmor profiles**
 
@@ -10,13 +17,11 @@ title: AppArmor.d
     This project is still in its early development. Help is very welcome; 
     see [Development](development/index.md)
 
-**AppArmor.d** is a set of over 1500 AppArmor profiles whose aim is to confine
-most Linux based applications and processes.
+**AppArmor.d** is a set of over 1500 AppArmor profiles whose aim is to confine most Linux based applications and processes.
 
 **Purpose**
 
-- Confine all root processes such as all `systemd` tools, `bluetooth`, `dbus`,
-  `polkit`, `NetworkManager`, `OpenVPN`, `GDM`, `rtkit`, `colord`
+- Confine all root processes such as all `systemd` tools, `bluetooth`, `dbus`, `polkit`, `NetworkManager`, `OpenVPN`, `GDM`, `rtkit`, `colord`
 - Confine all Desktop environments
 - Confine all user services such as `Pipewire`, `Gvfsd`, `dbus`, `xdg`, `xwayland`
 - Confine some *"special"* user applications: web browser, file browser...
