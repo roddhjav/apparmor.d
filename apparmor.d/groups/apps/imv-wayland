@@ -1,0 +1,29 @@
+# apparmor.d - Full set of apparmor profiles
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/imv-wayland
+profile imv @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/freedesktop.org>
+  include <abstractions/fonts>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/graphics>
+  include <abstractions/nameservice-strict>
+  include <abstractions/user-read>
+
+  @{exec_path} mr,
+
+  /etc/imv_config r,
+  /usr/share/X11/xkb/** r,
+  /tmp/ r,
+
+  owner @{user_config_dirs}/imv/config r,
+
+  owner @{run}/user/@{uid}/imv-*.sock w,
+
+  include if exists <local/imv-wayland>
+}
