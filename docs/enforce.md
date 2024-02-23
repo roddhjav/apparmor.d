@@ -6,7 +6,8 @@ The default package configuration installs all profiles in *complain* mode. This
 
 !!! warning
 
-    When reporting issue. Please ensure the profiles are in complain mode
+    - You need to test it in complain mode first and ensure your system boot!
+    - When reporting issue. Please ensure the profiles are in complain mode
 
 
 #### :material-arch: Archlinux
