@@ -22,20 +22,22 @@
     {{ "@{" }}{{ .Name }}{{ "} = " }}{{ join .Values }}
 {{ end -}}
 
-{{- "profile" -}}
-{{- with .Name -}}
-    {{ " " }}{{ . }}
+{{- if or .Name .Attachments .Attributes .Flags -}}
+    {{- "profile" -}}
+    {{- with .Name -}}
+        {{ " " }}{{ . }}
+    {{- end -}}
+    {{- with .Attachments -}}
+        {{ " " }}{{ join . }}
+    {{- end -}}
+    {{- with .Attributes -}}
+        {{ " xattrs=(" }}{{ join . }}{{ ")" }}
+    {{- end -}}
+    {{- with .Flags -}}
+        {{ " flags=(" }}{{ join . }}{{ ")" }}
+    {{- end -}}
+    {{ " {\n" }}
 {{- end -}}
-{{- with .Attachments -}}
-    {{ " " }}{{ join . }}
-{{- end -}}
-{{- with .Attributes -}}
-    {{ " xattrs=(" }}{{ join . }}{{ ")" }}
-{{- end -}}
-{{- with .Flags -}}
-    {{ " flags=(" }}{{ join . }}{{ ")" }}
-{{- end -}}
-{{ " {\n" }}
 
 {{- $oldtype := "" -}}
 {{- range .Rules -}}
@@ -288,4 +290,6 @@
     {{- $oldtype = $type -}}
 {{- end -}}
 
-{{- "}\n" -}}
+{{- if or .Name .Attachments .Attributes .Flags -}}
+    {{- "}\n" -}}
+{{- end -}}
