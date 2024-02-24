@@ -35,8 +35,6 @@ type DirectiveFunc func(*paths.Path, string) string
 // # dbus: own bus=session name=org.freedesktop.FileManager1
 // # dbus: talk name=org.freedesktop.login1 label=systemd-logind
 func DirectiveDbus(file *paths.Path, profile string) string {
-	const lenHeader = 12 // len("profile {\n  ")
-
 	var p *aa.AppArmorProfile
 	for _, match := range regDbus.FindAllStringSubmatch(profile, -1) {
 		origin := match[0]
@@ -61,7 +59,7 @@ func DirectiveDbus(file *paths.Path, profile string) string {
 
 		generatedDbus := p.String()
 		lenDbus := len(generatedDbus)
-		generatedDbus = generatedDbus[lenHeader : lenDbus-3]
+		generatedDbus = generatedDbus[:lenDbus-1]
 		profile = strings.Replace(profile, origin, generatedDbus, -1)
 	}
 	return profile
