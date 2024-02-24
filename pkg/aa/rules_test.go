@@ -35,6 +35,12 @@ func TestRule_FromLog(t *testing.T) {
 			want:    mount1,
 		},
 		{
+			name:    "umount",
+			fromLog: UmountFromLog,
+			log:     umount1Log,
+			want:    umount1,
+		},
+		{
 			name:    "pivotroot",
 			fromLog: PivotRootFromLog,
 			log:     pivotroot1Log,
@@ -152,6 +158,12 @@ func TestRule_Less(t *testing.T) {
 			rule:  mount1,
 			other: mount2,
 			want:  false,
+		},
+		{
+			name:  "umount",
+			rule:  umount1,
+			other: umount2,
+			want:  true,
 		},
 		{
 			name:  "pivot_root1",

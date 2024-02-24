@@ -64,24 +64,36 @@ var (
 		"operation": "mount",
 		"info":      "failed perms check",
 		"error":     "-13",
-		"profile":   "dockerd",
-		"name":      "/var/lib/docker/overlay2/metacopy-check906831159/merged/",
-		"comm":      "dockerd",
-		"fstype":    "overlay",
-		"srcname":   "overlay",
+		"profile":   "loupe",
+		"name":      "/newroot/dev/tty",
+		"comm":      "bwrap",
+		"srcname":   "/oldroot/dev/tty",
+		"flags":     "rw, rbind",
 	}
 	mount1 = &Mount{
 		Qualifier:       Qualifier{Comment: "failed perms check"},
-		MountConditions: MountConditions{FsType: "overlay", Options: []string{}},
+		MountConditions: MountConditions{FsType: "overlay"},
 		Source:          "overlay",
 		MountPoint:      "/var/lib/docker/overlay2/opaque-bug-check1209538631/merged/",
 	}
 	mount2 = &Mount{
 		Qualifier:       Qualifier{Comment: "failed perms check"},
-		MountConditions: MountConditions{FsType: "overlay", Options: []string{}},
-		Source:          "overlay",
-		MountPoint:      "/var/lib/docker/overlay2/metacopy-check906831159/merged/",
+		MountConditions: MountConditions{Options: []string{"rw", "rbind"}},
+		Source:          "/oldroot/dev/tty",
+		MountPoint:      "/newroot/dev/tty",
 	}
+
+	// Umount
+	umount1Log    = map[string]string{
+		"apparmor":  "ALLOWED",
+		"class":     "mount",
+		"operation": "umount",
+		"profile":   "systemd",
+		"name":      "/",
+		"comm":      "(ostnamed)",
+	}
+	umount1 = &Umount{MountPoint: "/"}
+	umount2 = &Umount{MountPoint: "/oldroot/"}
 
 	// PivotRoot
 	// pivotroot1LogStr = `apparmor="ALLOWED" operation="pivotroot" class="mount" profile="systemd" name="@{run}/systemd/mount-rootfs/"  comm="(ostnamed)" srcname="@{run}/systemd/mount-rootfs/"`
