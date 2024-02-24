@@ -37,9 +37,7 @@ func TestAppArmorProfile_String(t *testing.T) {
 		{
 			name: "empty",
 			p:    &AppArmorProfile{},
-			want: `profile {
-}
-`,
+			want: ``,
 		},
 		{
 			name: "foo",
