@@ -6,7 +6,10 @@
 set -u
 
 # shellcheck source=/dev/null
-_lsb_release() { . /etc/os-release || exit 1; echo "$ID"; }
+_lsb_release() {
+	. /etc/os-release || exit 1
+	echo "$ID"
+}
 DISTRIBUTION="$(_lsb_release)"
 readonly SELF="$0"
 readonly DISTRIBUTION
@@ -127,12 +130,9 @@ impersonalize() {
 	rm -rf "${remove[@]}"
 }
 
-
 # Free all unused storage block.
 trim() {
-	local swapuuid swappart max size
-	max=11811160064 # Maximum size to reduce filesystem in RAM (11G)
-	size=$(_disksize)
+	local swapuuid swappart
 
 	if swapuuid=$(blkid -o value -l -s UUID -t TYPE=swap); then
 		swappart=$(readlink -f /dev/disk/by-uuid/"$swapuuid")
@@ -140,16 +140,14 @@ trim() {
 		swapoff "$swappart"
 		dd if=/dev/zero of="$swappart" bs=1M || true
 		mkswap -U "$swapuuid" "$swappart"
-	elif [[ -f /swap/swapfile ]];then
+	elif [[ -f /swap/swapfile ]]; then
 		swapoff /swap/swapfile
 		truncate --size=0 /swap/swapfile
 	fi
 
-	if [[ "$size" -lt "$max" ]]; then
-		_msg "Fill root filesystem with 0 to reduce box size"
-		dd if=/dev/zero of=/EMPTY bs=1M || true
-		rm -f /EMPTY
-	fi
+	_msg "Fill root filesystem with 0 to reduce box size"
+	dd if=/dev/zero of=/EMPTY bs=1M || true
+	rm -f /EMPTY
 
 	# Block until the empty file has been removed, otherwise, Packer will
 	# try to kill the box while the disk is still full and that is bad.
@@ -160,7 +158,7 @@ main() {
 	local begin end
 	begin=$(_diskused)
 	case "$DISTRIBUTION" in
-	debian | ubuntu )
+	debian | ubuntu)
 		clean_debian
 		_sshdgenkeys
 		;;
