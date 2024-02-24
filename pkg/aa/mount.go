@@ -4,31 +4,36 @@
 
 package aa
 
-import "golang.org/x/exp/slices"
+import (
+	"strings"
+
+	"golang.org/x/exp/slices"
+)
 
 type MountConditions struct {
-	Fs      string
-	Op      string
 	FsType  string
 	Options []string
 }
 
-func (m MountConditions) Less(other MountConditions) bool {
-	if m.Fs == other.Fs {
-		if m.Op == other.Op {
-			if m.FsType == other.FsType {
-				return len(m.Options) < len(other.Options)
-			}
-			return m.FsType < other.FsType
+func MountConditionsFromLog(log map[string]string) MountConditions {
+	if _, present := log["flags"]; present {
+		return MountConditions{
+			FsType:  log["fstype"],
+			Options: strings.Split(log["flags"], ", "),
 		}
-		return m.Op < other.Op
 	}
-	return m.Fs < other.Fs
+	return MountConditions{FsType: log["fstype"]}
+}
+
+func (m MountConditions) Less(other MountConditions) bool {
+	if m.FsType == other.FsType {
+		return len(m.Options) < len(other.Options)
+	}
+	return m.FsType < other.FsType
 }
 
 func (m MountConditions) Equals(other MountConditions) bool {
-	return m.Fs == other.Fs && m.Op == other.Op && m.FsType == other.FsType &&
-		slices.Equal(m.Options, other.Options)
+	return m.FsType == other.FsType && slices.Equal(m.Options, other.Options)
 }
 
 type Mount struct {
@@ -40,15 +45,10 @@ type Mount struct {
 
 func MountFromLog(log map[string]string) ApparmorRule {
 	return &Mount{
-		Qualifier: NewQualifierFromLog(log),
-		MountConditions: MountConditions{
-			Fs:      "",
-			Op:      "",
-			FsType:  log["fstype"],
-			Options: []string{},
-		},
-		Source:     log["srcname"],
-		MountPoint: log["name"],
+		Qualifier:       NewQualifierFromLog(log),
+		MountConditions: MountConditionsFromLog(log),
+		Source:          log["srcname"],
+		MountPoint:      log["name"],
 	}
 }
 
@@ -81,14 +81,9 @@ type Umount struct {
 
 func UmountFromLog(log map[string]string) ApparmorRule {
 	return &Umount{
-		Qualifier: NewQualifierFromLog(log),
-		MountConditions: MountConditions{
-			Fs:      "",
-			Op:      "",
-			FsType:  log["fstype"],
-			Options: []string{},
-		},
-		MountPoint: log["name"],
+		Qualifier:       NewQualifierFromLog(log),
+		MountConditions: MountConditionsFromLog(log),
+		MountPoint:      log["name"],
 	}
 }
 
@@ -118,14 +113,9 @@ type Remount struct {
 
 func RemountFromLog(log map[string]string) ApparmorRule {
 	return &Remount{
-		Qualifier: NewQualifierFromLog(log),
-		MountConditions: MountConditions{
-			Fs:      "",
-			Op:      "",
-			FsType:  log["fstype"],
-			Options: []string{},
-		},
-		MountPoint: log["name"],
+		Qualifier:       NewQualifierFromLog(log),
+		MountConditions: MountConditionsFromLog(log),
+		MountPoint:      log["name"],
 	}
 }
 
