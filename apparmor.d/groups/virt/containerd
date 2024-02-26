@@ -32,13 +32,13 @@ profile containerd @{exec_path} flags=(attach_disconnected) {
   network netlink raw,
 
   mount fstype=tmpfs options in (rw, nosuid, nodev, noexec) -> @{run}/containerd/io.containerd.grpc.v1.cri/sandboxes/@{hex}/shm/,
-  mount -> /var/lib/containerd/tmpmounts/containerd-mount[0-9]*/,
-  mount -> /tmp/ctd-volume[0-9]*/,
+  mount -> /var/lib/containerd/tmpmounts/containerd-mount@{int}/,
+  mount -> /tmp/ctd-volume@{int}/,
   mount options in (rw, bind, nosuid, nodev, noexec) -> @{run}/netns/cni-@{uuid},
 
   umount @{run}/containerd/io.containerd.grpc.v1.cri/sandboxes/@{hex}/shm/,
-  umount /var/lib/containerd/tmpmounts/containerd-mount[0-9]*/,
-  umount /tmp/ctd-volume[0-9]*/,
+  umount /var/lib/containerd/tmpmounts/containerd-mount@{int}/,
+  umount /tmp/ctd-volume@{int}/,
   umount @{run}/netns/cni-@{uuid},
 
   signal (receive) set=term peer={dockerd,k3s},
@@ -72,7 +72,7 @@ profile containerd @{exec_path} flags=(attach_disconnected) {
   /var/lib/cni/results/cni-loopback-[0-9a-z]*-lo wl,
   /var/lib/cni/results/k8s-pod-network-[0-9a-z]*-eth0 wl,
   /var/lib/containerd/{,**} rwk,
-  /var/lib/containerd/tmpmounts/containerd-mount[0-9]*/** l,
+  /var/lib/containerd/tmpmounts/containerd-mount@{int}/** l,
   /var/lib/docker/containerd/{,**} rwk,
   /var/lib/kubelet/seccomp/{,**} r,
   /var/lib/security-profiles-operator/{,**} r,
@@ -86,10 +86,10 @@ profile containerd @{exec_path} flags=(attach_disconnected) {
   @{run}/netns/cni-@{uuid} rw,
   @{run}/systemd/notify w,
 
-  owner /var/tmp/** rwkl,
+        /tmp/cri-containerd.apparmor.d@{int} rwl,
+        /tmp/ctd-volume@{int}/{,**} rw,
   owner /tmp/** rwkl,
-        /tmp/cri-containerd.apparmor.d[0-9]* rwl,
-        /tmp/ctd-volume[0-9]*/{,**} rw,
+  owner /var/tmp/** rwkl,
 
   @{sys}/fs/cgroup/kubepods/** r,
   @{sys}/kernel/mm/transparent_hugepage/hpage_pmd_size r,
@@ -97,11 +97,11 @@ profile containerd @{exec_path} flags=(attach_disconnected) {
   @{sys}/module/apparmor/parameters/enabled r,
 
         @{PROC}/@{pid}/task/@{tid}/ns/net rw,
+        @{PROC}/sys/net/core/somaxconn r,
   owner @{PROC}/@{pids}/attr/current r,
   owner @{PROC}/@{pids}/cgroup r,
-  owner @{PROC}/@{pids}/uid_map r,
   owner @{PROC}/@{pids}/mountinfo r,
-        @{PROC}/sys/net/core/somaxconn r,
+  owner @{PROC}/@{pids}/uid_map r,
 
   /dev/bsg/ r,
   /dev/bus/ r,
