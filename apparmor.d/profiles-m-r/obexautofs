@@ -10,11 +10,15 @@ include <tunables/global>
 @{exec_path} = @{bin}/obexautofs
 profile obexautofs @{exec_path} {
   include <abstractions/base>
+  include <abstractions/devices-usb>
 
   network bluetooth seqpacket,
   network bluetooth stream,
   network bluetooth raw,
   network netlink raw,
+
+  mount fstype=fuse.obexautofs -> @{HOME}/*/,
+  mount fstype=fuse.obexautofs -> @{HOME}/*/*/,
 
   @{exec_path} mr,
 
@@ -23,42 +27,31 @@ profile obexautofs @{exec_path} {
   owner @{HOME}/*/ r,
   owner @{HOME}/*/*/ r,
 
-  mount fstype=fuse.obexautofs -> @{HOME}/*/,
-  mount fstype=fuse.obexautofs -> @{HOME}/*/*/,
-
-  @{sys}/bus/ r,
-  @{sys}/class/ r,
-  @{sys}/bus/usb/devices/ r,
   @{sys}/devices/@{pci}/usb@{int}/bConfigurationValue r,
   @{sys}/devices/@{pci}/usb@{int}/**/bConfigurationValue r,
   @{sys}/devices/@{pci}/usb@{int}/{uevent,busnum,devnum,speed,descriptors} r,
   @{sys}/devices/@{pci}/usb@{int}/**/{uevent,busnum,devnum,speed,descriptors} r,
 
-  @{run}/udev/data/+usb:* r,
-  @{run}/udev/data/c18[0,8,9]:[0-9]* r,   # USB devices & USB serial converters
-
-  /dev/bus/usb/ r,
   /dev/fuse rw,
-
 
   profile fusermount {
     include <abstractions/base>
     include <abstractions/nameservice-strict>
 
-    # To mount anything:
     capability sys_admin,
+
+    mount fstype={fuse,fuse.obexautofs} -> @{HOME}/*/,
+    mount fstype={fuse,fuse.obexautofs} -> @{HOME}/*/*/,
 
     @{bin}/fusermount{,3} mr,
 
     /etc/fuse.conf r,
 
-    /dev/fuse rw,
-
-    mount fstype={fuse,fuse.obexautofs} -> @{HOME}/*/,
-    mount fstype={fuse,fuse.obexautofs} -> @{HOME}/*/*/,
-
     @{PROC}/@{pid}/mounts r,
 
+    /dev/fuse rw,
+
+    include if exists <local/obexautofs_fusermount>
   }
 
   include if exists <local/obexautofs>

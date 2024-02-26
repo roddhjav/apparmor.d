@@ -34,16 +34,16 @@ profile dockerd @{exec_path} flags=(attach_disconnected) {
 
   mount /var/lib/docker/overlay2/**/,
   mount options=(rw, bind) -> /run/docker/netns/*,
-  mount options=(rw, rbind) -> /var/lib/docker/tmp/docker-builder[0-9]*/,
-  mount options=(rw, rprivate) -> /.pivot_root[0-9]*/,
+  mount options=(rw, rbind) -> /var/lib/docker/tmp/docker-builder@{int}/,
+  mount options=(rw, rprivate) -> /.pivot_root@{int}/,
   mount options=(rw, rslave) -> /,
 
-  umount /.pivot_root[0-9]*/,
+  umount /.pivot_root@{int}/,
   umount /run/docker/netns/*,
   umount /var/lib/docker/overlay*/**/,
 
-  pivot_root oldroot=/var/lib/docker/overlay*/**/.pivot_root[0-9]*/ /var/lib/docker/overlay2/**/,
-  pivot_root oldroot=/var/lib/docker/tmp/**/.pivot_root[0-9]*/ /var/lib/docker/tmp/**/,
+  pivot_root oldroot=/var/lib/docker/overlay*/**/.pivot_root@{int}/ /var/lib/docker/overlay2/**/,
+  pivot_root oldroot=/var/lib/docker/tmp/**/.pivot_root@{int}/ /var/lib/docker/tmp/**/,
 
   ptrace (read) peer=docker-*,
   ptrace (read) peer=unconfined,
@@ -70,7 +70,7 @@ profile dockerd @{exec_path} flags=(attach_disconnected) {
 
   owner @{lib}/docker/overlay2/*/work/{,**} rw,
   owner /var/lib/docker/{,**} rwk,
-  owner /var/lib/docker/tmp/qemu-check[0-9]*/check rix,
+  owner /var/lib/docker/tmp/qemu-check@{int}/check rix,
 
   @{sys}/fs/cgroup/cgroup.controllers r,
   @{sys}/fs/cgroup/cpuset.cpus.effective r,
@@ -88,7 +88,7 @@ profile dockerd @{exec_path} flags=(attach_disconnected) {
         @{PROC}/sys/net/bridge/bridge-nf-call-ip*tables r,
         @{PROC}/sys/net/core/somaxconn r,
         @{PROC}/sys/net/ipv{4,6}/conf/all/disable_ipv{4,6} rw,
-        @{PROC}/sys/net/ipv{4,6}/conf/docker[0-9]*/accept_ra rw,
+        @{PROC}/sys/net/ipv{4,6}/conf/docker@{int}/accept_ra rw,
         @{PROC}/sys/net/ipv{4,6}/ip_forward rw,
         @{PROC}/sys/net/ipv{4,6}/ip_local_port_range r,
   owner @{PROC}/@{pids}/attr/current r,
