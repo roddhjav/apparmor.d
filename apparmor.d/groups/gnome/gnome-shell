@@ -63,6 +63,7 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected) {
   network unix stream,
 
   ptrace (read),
+  ptrace (readby) peer=pipewire,
 
   signal (receive) set=(cont, term) peer=systemd-user,
   signal (receive) set=(term, hup) peer=gdm*,
@@ -178,7 +179,7 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected) {
   dbus receive bus=session path=/org/freedesktop/systemd1
        interface=org.freedesktop.systemd1.Manager
        member=JobRemoved
-       peer=(name=:*, label="@{systemd}"),
+       peer=(name=:*, label="@{systemd_user}"),
 
   dbus send bus=session path=/MenuBar
        interface=com.canonical.dbusmenu
@@ -213,19 +214,18 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected) {
 
   /usr/share/gnome-shell/extensions/ding@rastersoft.com/{,*/}ding.js rPx,
 
+  /opt/**/share/icons/{,**} r,
   /opt/*/**/*.png r,
   /snap/*/@{uid}/**.png r,
   /usr/share/{,zoneinfo-}icu/{,**} r,
   /usr/share/**.{png,jpg,svg} r,
-  /usr/share/app-info/icons/{,**} r,
+  /usr/share/**/icons/{,**} r,
   /usr/share/backgrounds/{,**} r,
   /usr/share/byobu/desktop/byobu* r,
   /usr/share/dconf/profile/gdm r,
   /usr/share/desktop-base/** r,
   /usr/share/desktop-directories/{,*.directory} r,
   /usr/share/egl/{,**} r,
-  /usr/share/evolution-data-server/icons/{,**} r,
-  /usr/share/firefox{,-esr}/browser/chrome/icons/{,**} r,
   /usr/share/gdm/BuiltInSessions/{,*.desktop} r,
   /usr/share/gdm/greeter-dconf-defaults r,
   /usr/share/gdm/greeter/applications/{,**} r,
@@ -238,7 +238,7 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected) {
   /usr/share/pipewire/client.conf r,
   /usr/share/wallpapers/** r,
   /usr/share/wayland-sessions/{,*.desktop} r,
-  /usr/share/xml/iso-codes/iso_[0-9]*-[0-9]*.xml r,
+  /usr/share/xml/iso-codes/{,**} r,
 
   /.flatpak-info r,
   /etc/fstab r,
@@ -340,7 +340,7 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected) {
   @{run}/udev/data/+sound:card@{int} r,   # for sound
   @{run}/udev/data/+usb* r,               # for USB mouse and keyboard
   @{run}/udev/data/+i2c:* r,
-  @{run}/udev/data/+hid:* r     ,         # for HID-Compliant Keyboard
+  @{run}/udev/data/+hid:* r,              # for HID-Compliant Keyboard
   @{run}/udev/data/c10:@{int} r,          # for non-serial mice, misc features
   @{run}/udev/data/c13:@{int} r,          # for /dev/input/*
   @{run}/udev/data/c189:@{int}  r,        # for /dev/bus/usb/**
