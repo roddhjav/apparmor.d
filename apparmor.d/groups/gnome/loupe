@@ -1,0 +1,33 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/loupe
+profile loupe @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/bwrap>
+  include <abstractions/dconf-write>
+  include <abstractions/gnome-strict>
+  include <abstractions/graphics>
+  include <abstractions/nameservice-strict>
+
+  @{exec_path} mr,
+
+  @{bin}/bwrap rix,
+  @{lib}/glycin-loaders/*/glycin-image-rs rix,
+
+  /usr/share/glycin-loaders/{,**} r,
+
+  owner @{HOME}/@{XDG_DESKTOP_DIR}/{,**} r,
+  owner @{user_books_dirs}/{,**} r,
+  owner @{user_download_dirs}/{,**} r,
+  owner @{user_pictures_dirs}/{,**} r,
+  owner @{user_torrents_dirs}/{,**} r,
+  owner @{user_work_dirs}/{,**} r,
+
+  include if exists <local/loupe>
+}
