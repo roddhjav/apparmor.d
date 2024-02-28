@@ -18,7 +18,7 @@ var (
 		"arch":     {},
 		"debian":   {},
 		"ubuntu":   {},
-		"opensuse": {"suse"},
+		"opensuse": {"suse", "opensuse-tumbleweed"},
 		"whonix":   {},
 	}
 
