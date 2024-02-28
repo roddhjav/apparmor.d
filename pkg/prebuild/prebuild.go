@@ -14,6 +14,7 @@ import (
 )
 
 var (
+	needDisplace  bool = false
 	Distribution  string
 	DistDir       *paths.Path
 	Root          *paths.Path
@@ -27,6 +28,13 @@ func init() {
 	FlagDir = DistDir.Join("flags")
 	RootApparmord = Root.Join("apparmor.d")
 	Distribution = getSupportedDistribution()
+	if Distribution == "ubuntu" {
+		os := NewOSRelease()
+		if os["VERSION_CODENAME"] == "noble" {
+			Builds = append(Builds, BuildABI3)
+			needDisplace = true
+		}
+	}
 }
 
 func getFctName(i any) string {
