@@ -11,33 +11,19 @@ include <tunables/global>
 @{exec_path} = @{bin}/bwrap
 profile bwrap @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/base>
+  include <abstractions/bwrap>
   include <abstractions/bwrap-app>
   include <abstractions/dbus>
   include <abstractions/fontconfig-cache-write>
 
   capability dac_override,
   capability dac_read_search,
-  capability net_admin,
-  capability setpcap,
-  capability sys_admin,
-  capability sys_ptrace,
   capability sys_resource,
 
   network inet dgram,
   network inet6 dgram,
   network inet stream,
   network inet6 stream,
-  network netlink raw,
-
-  mount options=(rw, silent, rslave) -> /,
-  mount fstype=tmpfs -> /tmp/,
-  mount -> /newroot/{,**},
-  mount -> /oldroot/,
-  mount -> /tmp/newroot/,
-  umount /{,oldroot/},
-
-  pivot_root oldroot=/newroot/ -> /newroot/,
-  pivot_root oldroot=/tmp/oldroot/ -> /tmp/,
 
   ptrace peer=bwrap//&bwrap-app,
 
@@ -65,13 +51,6 @@ profile bwrap @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner /var/cache/ w,
 
   owner @{run}/ld-so-cache-dir/* rw,
-
-        @{PROC}/sys/kernel/overflowgid r,
-        @{PROC}/sys/kernel/overflowuid r,
-        @{PROC}/sys/user/max_user_namespaces w,
-  owner @{PROC}/@{pid}/gid_map rw,
-  owner @{PROC}/@{pid}/setgroups rw,
-  owner @{PROC}/@{pid}/uid_map rw,
 
   include if exists <usr/bwrap.d>
   include if exists <local/bwrap>

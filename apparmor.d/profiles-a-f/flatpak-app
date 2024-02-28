@@ -22,18 +22,15 @@ include <tunables/global>
 
 profile flatpak-app flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/base>
-  include <abstractions/bwrap-app>
   include <abstractions/bus-system>
   include <abstractions/bus/org.freedesktop.NetworkManager>
+  include <abstractions/bwrap-app>
+  include <abstractions/bwrap>
 
   capability dac_override,
   capability dac_read_search,
-  capability net_admin,
   # When bwrap is setup with setuid privileges, it needs the setuid capability.
   capability setuid,
-  capability setpcap,
-  capability sys_admin,
-  capability sys_ptrace,
   capability sys_resource,
 
   network inet dgram,
@@ -42,16 +39,6 @@ profile flatpak-app flags=(attach_disconnected,mediate_deleted) {
   network inet6 stream,
   network netlink dgram,
   network netlink raw,
-
-  mount options=(rw, silent, rslave) -> /,
-  mount fstype=tmpfs -> /tmp/,
-  mount -> /newroot/{,**},
-  mount -> /oldroot/,
-  mount -> /tmp/newroot/,
-  umount /{,oldroot/},
-
-  pivot_root oldroot=/newroot/ -> /newroot/,
-  pivot_root oldroot=/tmp/oldroot/ -> /tmp/,
 
   ptrace (read),
 
@@ -94,16 +81,6 @@ profile flatpak-app flags=(attach_disconnected,mediate_deleted) {
   owner @{run}/flatpak/{,**} rk,
   owner @{run}/flatpak/app/*/*ipc* rw,
   owner @{run}/ld-so-cache-dir/* rw,
-
-        @{PROC}/@{pid}/fd/ r,
-        @{PROC}/sys/kernel/overflowgid r,
-        @{PROC}/sys/kernel/overflowuid r,
-        @{PROC}/sys/user/max_user_namespaces w,
-  owner @{PROC}/@{pid}/gid_map rw,
-  owner @{PROC}/@{pid}/setgroups rw,
-  owner @{PROC}/@{pid}/uid_map rw,
-
-  deny /apparmor/.null rw,
 
   include if exists <usr/flatpak-app.d>
   include if exists <local/flatpak-app>
