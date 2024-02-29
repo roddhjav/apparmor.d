@@ -20,7 +20,7 @@ type Unix struct {
 func UnixFromLog(log map[string]string) ApparmorRule {
 	return &Unix{
 		Qualifier: NewQualifierFromLog(log),
-		Access:    maskToAccess[log["requested_mask"]],
+		Access:    toAccess(log["requested_mask"]),
 		Type:      log["sock_type"],
 		Protocol:  log["protocol"],
 		Address:   log["addr"],

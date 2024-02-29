@@ -23,7 +23,7 @@ func MqueueFromLog(log map[string]string) ApparmorRule {
 	}
 	return &Mqueue{
 		Qualifier: NewQualifierFromLog(log),
-		Access:    maskToAccess[log["requested"]],
+		Access:    toAccess(log["requested"]),
 		Type:      mqueueType,
 		Label:     log["label"],
 		Name:      log["name"],

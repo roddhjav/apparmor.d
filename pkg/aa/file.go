@@ -15,7 +15,7 @@ func FileFromLog(log map[string]string) ApparmorRule {
 	return &File{
 		Qualifier: NewQualifierFromLog(log),
 		Path:      log["name"],
-		Access:    maskToAccess[log["requested_mask"]],
+		Access:    toAccess(log["requested_mask"]),
 		Target:    log["target"],
 	}
 }

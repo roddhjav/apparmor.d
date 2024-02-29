@@ -30,39 +30,19 @@ var (
 	tmplAppArmorProfile = generateTemplate()
 
 	// convert apparmor requested mask to apparmor access mode
-	// TODO: Should be a map of slice, not exhaustive yet
-	maskToAccess = map[string]string{
-		"a":            "w",
-		"ac":           "w",
-		"c":            "w",
-		"create":       "create",
-		"d":            "w",
-		"delete":       "delete",
-		"getattr":      "getattr",
-		"k":            "k",
-		"l":            "l",
-		"m":            "rm",
-		"open":         "open",
-		"r":            "r",
-		"ra":           "rw",
-		"read write":   "read write",
-		"read":         "read",
-		"readby":       "readby",
-		"receive":      "receive",
-		"rm":           "rm",
-		"rw":           "rw",
-		"send receive": "send receive",
-		"send":         "send",
-		"setattr":      "setattr",
-		"w":            "w",
-		"wc":           "w",
-		"wd":           "w",
-		"wk":           "wk",
-		"wr":           "rw",
-		"wrc":          "rw",
-		"wrd":          "rw",
-		"write":        "write",
-		"x":            "rix",
+	requestedMaskToAccess = map[string]string{
+		"a":   "w",
+		"ac":  "w",
+		"c":   "w",
+		"d":   "w",
+		"m":   "rm",
+		"ra":  "rw",
+		"wc":  "w",
+		"wd":  "w",
+		"wr":  "rw",
+		"wrc": "rw",
+		"wrd": "rw",
+		"x":   "rix",
 	}
 
 	// The order the apparmor rules should be sorted
@@ -167,4 +147,11 @@ func getLetterIn(alphabet []string, in string) string {
 		}
 	}
 	return ""
+}
+
+func toAccess(mask string) string {
+	if requestedMaskToAccess[mask] != "" {
+		return requestedMaskToAccess[mask]
+	}
+	return mask
 }
