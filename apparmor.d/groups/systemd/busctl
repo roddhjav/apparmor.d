@@ -9,6 +9,9 @@ include <tunables/global>
 @{exec_path} = @{bin}/busctl
 profile busctl @{exec_path} {
   include <abstractions/base>
+  include <abstractions/bus-session>
+  include <abstractions/bus-session>
+  include <abstractions/consoles>
   include <abstractions/nameservice-strict>
   include <abstractions/systemd-common>
 
@@ -19,15 +22,25 @@ profile busctl @{exec_path} {
 
   unix (bind) type=stream addr=@@{hex}/bus/busctl/busctl,
 
+  dbus eavesdrop bus=session,
+
+  dbus send bus=system path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus.Monitoring
+       member=BecomeMonitor
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
+
   @{exec_path} mr,
 
   @{bin}/less  rPx -> child-pager,
   @{bin}/more  rPx -> child-pager,
   @{bin}/pager rPx -> child-pager,
 
-  @{PROC}/@{pids}/cgroup r,
-  @{PROC}/@{pids}/comm r,
-  @{PROC}/@{pids}/stat r,
+  owner @{PROC}/@{pid}/cgroup r,
+  owner @{PROC}/@{pid}/cmdline r,
+  owner @{PROC}/@{pid}/comm r,
+  owner @{PROC}/@{pid}/loginuid r,
+  owner @{PROC}/@{pid}/sessionid r,
+  owner @{PROC}/@{pid}/stat r,
 
   include if exists <local/busctl>
 }

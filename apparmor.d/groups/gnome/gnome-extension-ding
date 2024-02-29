@@ -16,6 +16,7 @@ profile gnome-extension-ding @{exec_path} {
   include <abstractions/bus/org.a11y>
   include <abstractions/bus/org.freedesktop.FileManager1>
   include <abstractions/bus/org.freedesktop.Notifications>
+  include <abstractions/bus/org.gnome.ArchiveManager1>
   include <abstractions/bus/org.gnome.Nautilus.FileOperations2>
   include <abstractions/bus/org.gtk.Private.RemoteVolumeMonitor>
   include <abstractions/bus/org.gtk.vfs.Daemon>
@@ -29,17 +30,13 @@ profile gnome-extension-ding @{exec_path} {
 
   unix (send,receive) type=stream addr=none peer=(label=gnome-shell),
 
-  # dbus: own bus=session name=com.rastersoft.ding
+  # dbus: own bus=session name=com.rastersoft.ding interface={org.freedesktop.DBus.Properties,org.gtk.Actions}
   # dbus: talk bus=session name=com.rastersoft.dingextension label=gnome-shell
 
   dbus send bus=session path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect 
        peer=(name=org.freedesktop.DBus, label=dbus-daemon),
-  dbus send bus=session path=/org/gnome/Nautilus/FileOperations2
-       interface=org.freedesktop.DBus.Introspectable
-       member=Introspect
-       peer=(name=:*, label=nautilus),
 
   dbus send bus=session path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus*
@@ -47,6 +44,11 @@ profile gnome-extension-ding @{exec_path} {
   dbus send bus=system path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus*
        peer=(name=org.freedesktop.DBus, label=dbus-daemon),
+
+  dbus send bus=session path=/org/gtk/vfs/metadata
+       interface=org.gtk.vfs.Metadata
+       member=Set
+       peer=(name=:*, label=gvfsd-metadata),
 
   @{exec_path} mr,
 

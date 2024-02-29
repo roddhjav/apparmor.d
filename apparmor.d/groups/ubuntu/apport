@@ -10,10 +10,13 @@ include <tunables/global>
 profile apport @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/apt-common>
+  include <abstractions/bus-session>
+  include <abstractions/bus/org.gnome.SessionManager>
   include <abstractions/nameservice-strict>
   include <abstractions/openssl>
   include <abstractions/python>
 
+  capability dac_read_search,
   capability fsetid,
   capability setgid,
   capability setuid,
@@ -21,21 +24,32 @@ profile apport @{exec_path} flags=(attach_disconnected) {
 
   ptrace (read) peer=gnome-shell,
   ptrace (read) peer=snap.cups.cupsd,
+  ptrace (read) peer=tracker-extract,
 
   @{exec_path} mr,
 
-  /usr/share/apport/ r,
+  @{bin}/dpkg rPx,
+  @{bin}/gdbus rix,
+
+  /usr/share/apport/{,**} r,
+
+  /etc/apport/report-ignore/{,**} r,
 
         /var/crash/ rw,
+        /var/crash/*.@{uid}.crash rw,
   owner /var/log/apport.log rw,
 
   @{run}/apport.lock rwk,
 
-  @{PROC}/@{pid}/stat r,
-  @{PROC}/sys/fs/suid_dumpable w,
-  @{PROC}/sys/kernel/core_pattern r,
-  @{PROC}/sys/kernel/core_pattern w,
-  @{PROC}/sys/kernel/core_pipe_limit w,
+        @{PROC}/@{pid}/environ r,
+        @{PROC}/@{pid}/stat r,
+        @{PROC}/sys/fs/suid_dumpable w,
+        @{PROC}/sys/kernel/core_pattern r,
+        @{PROC}/sys/kernel/core_pattern w,
+        @{PROC}/sys/kernel/core_pipe_limit w,
+  owner @{PROC}/@{pid}/attr/current r,
+  owner @{PROC}/@{pid}/cmdline r,
+  owner @{PROC}/@{pid}/fd/ r,
 
   include if exists <local/apport>
 }

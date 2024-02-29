@@ -9,15 +9,20 @@ include <tunables/global>
 @{exec_path} = @{lib}/gnome-initial-setup
 profile gnome-initial-setup @{exec_path} {
   include <abstractions/base>
+  include <abstractions/bus-system>
+  include <abstractions/bus-accessibility>
   include <abstractions/bus-session>
+  include <abstractions/bus/org.a11y>
   include <abstractions/dconf-write>
   include <abstractions/gnome-strict>
   include <abstractions/graphics>
   include <abstractions/nameservice-strict>
 
+  network inet stream,
+  network inet6 stream,
   network netlink raw,
 
-  # dbus: own bus=session name=org.gnome.InitialSetup
+  # dbus: own bus=session name=org.gnome.InitialSetup interface={org.freedesktop.DBus.Properties,org.gtk.Actions}
 
   @{exec_path} mr,
 
@@ -34,6 +39,9 @@ profile gnome-initial-setup @{exec_path} {
   /usr/share/xml/iso-codes/{,**} r,
 
   /var/lib/gdm{,3}/greeter-dconf-defaults r,
+
+        @{run}/systemd/sessions/@{int} r,
+  owner @{run}/systemd/users/@{uid} r,
 
   owner @{user_config_dirs}/ibus/bus/ r,
   owner @{user_config_dirs}/ibus/bus/@{md5}-unix-{,wayland-}@{int} r,
