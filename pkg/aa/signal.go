@@ -14,7 +14,7 @@ type Signal struct {
 func SignalFromLog(log map[string]string) ApparmorRule {
 	return &Signal{
 		Qualifier: NewQualifierFromLog(log),
-		Access:    maskToAccess[log["requested_mask"]],
+		Access:    toAccess(log["requested_mask"]),
 		Set:       log["signal"],
 		Peer:      log["peer"],
 	}

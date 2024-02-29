@@ -13,7 +13,7 @@ type Ptrace struct {
 func PtraceFromLog(log map[string]string) ApparmorRule {
 	return &Ptrace{
 		Qualifier: NewQualifierFromLog(log),
-		Access:    maskToAccess[log["requested_mask"]],
+		Access:    toAccess(log["requested_mask"]),
 		Peer:      log["peer"],
 	}
 }
