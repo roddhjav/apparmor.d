@@ -136,7 +136,7 @@ func (aaLogs AppArmorLogs) String() string {
 		"mask", "bus", "path", "interface", "member", // dbus
 		"info", "comm",
 		"laddr", "lport", "faddr", "fport", "family", "sock_type", "protocol",
-		"requested_mask", "denied_mask", "signal", "peer",
+		"requested_mask", "denied_mask", "signal", "peer", "peer_label",
 	}
 	// Key to not print
 	ignore := []string{
