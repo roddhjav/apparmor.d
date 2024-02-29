@@ -22,15 +22,22 @@ profile update-notifier @{exec_path} {
   include <abstractions/openssl>
   include <abstractions/python>
 
-  # dbus: talk bus=system name=org.debian.apt label=apt
+  unix (bind) type=stream addr=@@{hex}/bus/systemd/bus-api-user,
 
-#   dbus receive bus=session path=/org/ayatana/NotificationItem{,/**}
-#        interface={com.canonical.dbusmenu,org.freedesktop.DBus.Properties}
-#        peer=(name=:*, label=gnome-shell),
+  # dbus: talk bus=system name=org.debian.apt label=apt
 
   dbus receive bus=session path=/org/ayatana/NotificationItem/software_update_available
        interface=org.freedesktop.DBus.Properties
        member={Get,GetAll}
+       peer=(name=:*, label=gnome-shell),
+
+  dbus receive bus=session path=/org/ayatana/NotificationItem/livepatch{,/Menu}
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=:*, label=gnome-shell),
+  dbus receive bus=session path=/org/ayatana/NotificationItem/livepatch/Menu
+       interface=com.canonical.dbusmenu
+       member={AboutToShow,GetGroupProperties,GetLayout}
        peer=(name=:*, label=gnome-shell),
 
   @{exec_path} mr,

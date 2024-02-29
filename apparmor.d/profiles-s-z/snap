@@ -19,6 +19,7 @@ profile snap @{exec_path} {
   include <abstractions/nameservice-strict>
 
   capability dac_read_search,
+  capability setuid,
   capability sys_admin,
 
   unix (send, receive) type=stream peer=(label=apt),
@@ -28,12 +29,12 @@ profile snap @{exec_path} {
   dbus send bus=session path=/org/freedesktop/systemd1
        interface=org.freedesktop.systemd1.Manager
        member=StartTransientUnit
-       peer=(name=org.freedesktop.systemd1, label="@{systemd}"),
+       peer=(name=org.freedesktop.systemd1, label="@{systemd_user}"),
 
   dbus receive bus=session path=/org/freedesktop/systemd1
        interface=org.freedesktop.systemd1.Manager
        member=JobRemoved
-       peer=(name=:*, label="@{systemd}"),
+       peer=(name=:*, label="@{systemd_user}"),
 
   dbus send bus=session path=/org/freedesktop/portal/documents
        interface=org.freedesktop.portal.Documents
@@ -47,9 +48,6 @@ profile snap @{exec_path} {
   @{bin}/gpg{,2}          rCx -> gpg,
   @{bin}/systemctl        rPx -> child-systemctl,
 
-  /snap/{,**} rw,
-  @{lib}/snapd/snap-confine rPx -> /usr/lib/snapd/snap-confine,
-
   @{lib_dirs}/snapd/snap-confine     rPx,
   @{lib_dirs}/snapd/snap-seccomp     rPx,
   @{lib_dirs}/snapd/snapd            rPx,
@@ -60,6 +58,7 @@ profile snap @{exec_path} {
   /var/cache/snapd/commands.db rwk,
   /var/cache/snapd/names r,
 
+  /snap/{,**} rw,
   @{HOME}/snap/{,**} rw,
 
   owner /tmp/snapd-auto-import-mount-@{int}/ rw,
