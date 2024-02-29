@@ -63,7 +63,7 @@ var (
 
 		// Some system glob
 		`:1.[0-9]*`, `:*`, // dbus peer name
-		`@{bin}/(|ba|da)sh`, `@{bin}/{,ba,da}sh`, // collect all shell
+		`@{bin}/(|ba|da)sh`, `@{sh_path}`, // collect all shell
 		`@{lib}/modules/[^/]+\/`, `@{lib}/modules/*/`, // strip kernel version numbers from kernel module accesses
 		`[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][-_][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][-_][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][-_][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][-_][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]`, `@{uuid}`,
 		`[0-9][0-9][0-9][0-9][0-9][0-9]+`, `@{int}`,

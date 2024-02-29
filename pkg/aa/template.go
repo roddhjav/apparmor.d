@@ -71,6 +71,7 @@ var (
 	// The order the apparmor file rules should be sorted
 	fileAlphabet = []string{
 		"@{exec_path}",        // 1. entry point
+		"@{sh_path}",          // 2.1 shells
 		"@{bin}",              // 2.1 binaries
 		"@{lib}",              // 2.2 libraries
 		"/opt",                // 2.3 opt binaries & libraries
