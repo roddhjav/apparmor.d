@@ -131,10 +131,8 @@ func Configure() ([]string, error) {
 	case "arch", "opensuse":
 
 	case "ubuntu":
+		debianDisplaceClean()
 		if needDisplace {
-			if _, err := paths.New("debian/apparmor.d.displace").Create(); err != nil {
-				return res, err
-			}
 			filesToDisplace := overwriteProfile(DistDir.Join("displace"))
 			if err := displaceFiles(filesToDisplace); err != nil {
 				return res, err
@@ -145,6 +143,8 @@ func Configure() ([]string, error) {
 			}
 		}
 	case "debian", "whonix":
+		debianDisplaceClean()
+
 		// Copy Debian specific abstractions
 		if err := copyTo(DistDir.Join("ubuntu"), RootApparmord); err != nil {
 			return res, err

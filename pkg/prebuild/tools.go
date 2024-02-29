@@ -110,6 +110,13 @@ func displaceFiles(files []string) error {
 	return nil
 }
 
+// Clean the debian/displace file
+func debianDisplaceClean() {
+	if _, err := paths.New("debian/apparmor.d.displace").Create(); err != nil {
+		panic(err)
+	}
+}
+
 func overwriteProfile(path *paths.Path) []string {
 	res := []string{}
 	lines, err := path.ReadFileAsLines()
