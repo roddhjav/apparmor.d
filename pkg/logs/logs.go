@@ -141,7 +141,7 @@ func (aaLogs AppArmorLogs) String() string {
 	// Key to not print
 	ignore := []string{
 		"fsuid", "ouid", "FSUID", "OUID", "exe", "SAUID", "sauid", "terminal",
-		"UID", "AUID", "hostname", "addr", "class",
+		"UID", "AUID", "hostname", "class",
 	}
 	// Color template to use
 	colors := map[string]string{
