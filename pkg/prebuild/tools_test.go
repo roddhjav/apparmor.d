@@ -129,7 +129,6 @@ func TestNewOSRelease(t *testing.T) {
 				return
 			}
 			if got := NewOSRelease(); !reflect.DeepEqual(got, tt.want) {
-				pp.Print(got)
 				t.Errorf("NewOSRelease() = %v, want %v", got, tt.want)
 			}
 		})

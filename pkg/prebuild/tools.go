@@ -21,6 +21,7 @@ var (
 		"opensuse": {"suse", "opensuse-tumbleweed"},
 		"whonix":   {},
 	}
+)
 
 func NewOSRelease() map[string]string {
 	var lines []string
