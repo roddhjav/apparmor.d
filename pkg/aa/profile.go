@@ -85,7 +85,11 @@ func (p *AppArmorProfile) AddRule(log map[string]string) {
 	case "cap":
 		p.Rules = append(p.Rules, CapabilityFromLog(log))
 	case "net":
-		p.Rules = append(p.Rules, NetworkFromLog(log))
+		if log["family"] == "unix" {
+			p.Rules = append(p.Rules, UnixFromLog(log))
+		} else {
+			p.Rules = append(p.Rules, NetworkFromLog(log))
+		}
 	case "mount":
 		switch log["operation"] {
 		case "mount":
