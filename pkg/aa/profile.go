@@ -91,15 +91,19 @@ func (p *AppArmorProfile) AddRule(log map[string]string) {
 			p.Rules = append(p.Rules, NetworkFromLog(log))
 		}
 	case "mount":
-		switch log["operation"] {
-		case "mount":
-			p.Rules = append(p.Rules, MountFromLog(log))
-		case "umount":
-			p.Rules = append(p.Rules, UmountFromLog(log))
-		case "remount":
+		if strings.Contains(log["flags"], "remount") {
 			p.Rules = append(p.Rules, RemountFromLog(log))
-		case "pivotroot":
-			p.Rules = append(p.Rules, PivotRootFromLog(log))
+		} else {
+			switch log["operation"] {
+			case "mount":
+				p.Rules = append(p.Rules, MountFromLog(log))
+			case "umount":
+				p.Rules = append(p.Rules, UmountFromLog(log))
+			case "remount":
+				p.Rules = append(p.Rules, RemountFromLog(log))
+			case "pivotroot":
+				p.Rules = append(p.Rules, PivotRootFromLog(log))
+			}
 		}
 	case "posix_mqueue", "sysv_mqueue":
 		p.Rules = append(p.Rules, MqueueFromLog(log))
