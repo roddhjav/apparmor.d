@@ -13,14 +13,16 @@
 
   network netlink raw,
 
-  mount               options=(rw rbind)            /oldroot/{,**/} -> /newroot/{,**/},
-  mount               options=(rw silent rprivate)                  -> /oldroot/,
-  mount               options=(rw silent rslave)                    -> /,
-  mount fstype=devpts options=(rw nosuid noexec)             devpts -> /newroot/dev/pts/,
-  mount fstype=tmpfs  options=(rw nosuid nodev)               tmpfs -> /newroot/dev/,
-  mount fstype=tmpfs  options=(rw nosuid nodev)               tmpfs -> /tmp/,
+  mount               options=(rw rbind)                 /tmp/newroot/ -> /tmp/newroot/,
+  mount               options=(rw rbind)                /oldroot/{,**} -> /newroot/{,**},
+  mount               options=(rw silent rprivate)                     -> /oldroot/,
+  mount               options=(rw silent rslave)                       -> /,
+  mount fstype=devpts options=(rw nosuid noexec)                devpts -> /newroot/dev/pts/,
+  mount fstype=proc   options=(rw nosuid nodev noexec)            proc -> /newroot/@{PROC}/,
+  mount fstype=tmpfs  options=(rw nosuid nodev)                  tmpfs -> /newroot/dev/,
+  mount fstype=tmpfs  options=(rw nosuid nodev)                  tmpfs -> /tmp/,
 
-  remount /newroot/{,**/},
+  remount /newroot/{,**},
 
   umount /,
   umount /oldroot/,
@@ -29,8 +31,7 @@
   pivot_root oldroot=/tmp/oldroot/ /tmp/,
 
   owner / r,
-  owner /newroot/**/ w,
-  owner /newroot/dev/* w,
+  owner /newroot/{,**} w,
 
   owner /tmp/newroot/ w,
   owner /tmp/oldroot/ w,
