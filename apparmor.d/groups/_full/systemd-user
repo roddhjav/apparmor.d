@@ -58,9 +58,13 @@ profile systemd-user flags=(attach_disconnected,mediate_deleted) {
   @{bin}/dbus-broker-launch         rix,  # To avoid issue as in #74, #80 & #235
   @{bin}/systemctl                  rCx -> systemctl,
   @{lib}/systemd/systemd-executor   rix,
+  @{sh_path}                        rix, # Should be handled by default profile?
+  @{bin}/grep                       rix,
 
-  @{bin}/** Pix,
-  @{lib}/** Pix,
+  @{bin}/**                          Px,
+  @{lib}/**                          Px,
+  /opt/*/**                          Px,
+  /usr/share/*/**                    Px,
 
   @{bin}/pipewire                   rPx -> systemd-user//&pipewire,
   @{bin}/pipewire-media-session     rPx -> systemd-user//&pipewire-media-session,
@@ -107,6 +111,7 @@ profile systemd-user flags=(attach_disconnected,mediate_deleted) {
   @{run}/udev/data/+module:fuse r,
   @{run}/udev/data/b254:@{int} r,         # for /dev/zram*
   @{run}/udev/data/c4:@{int} r,           # For TTY devices
+  @{run}/udev/data/c5:@{int}   r,         # for /dev/tty, /dev/console, /dev/ptmx
   @{run}/udev/data/c10:@{int}   r,        # For non-serial mice, misc features
   @{run}/udev/data/c116:@{int} r,         # For ALSA
   @{run}/udev/data/c@{dynamic}:@{int} r,  # For dynamic assignment range 234 to 254, 384 to 511
@@ -117,8 +122,6 @@ profile systemd-user flags=(attach_disconnected,mediate_deleted) {
   @{sys}/devices/**/sound/**/pcm_class r,
 
         @{sys}/devices/**/uevent r,
-        @{sys}/devices/virtual/dmi/id/product_name r,
-        @{sys}/devices/virtual/dmi/id/sys_vendor r,
         @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/{,**} r,
         @{sys}/module/apparmor/parameters/enabled r,
   owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/{,**} rw,
@@ -126,7 +129,6 @@ profile systemd-user flags=(attach_disconnected,mediate_deleted) {
         @{PROC}/@{pids}/cgroup r,
         @{PROC}/@{pids}/comm r,
         @{PROC}/@{pids}/stat r,
-        @{PROC}/1/cgroup r,
         @{PROC}/cmdline r,
         @{PROC}/pressure/* r,
         @{PROC}/swaps r,
@@ -138,14 +140,14 @@ profile systemd-user flags=(attach_disconnected,mediate_deleted) {
         @{PROC}/sys/kernel/threads-max r,
   owner @{PROC}/@{pid}/fdinfo/@{int} r,
   owner @{PROC}/@{pid}/gid_map r,
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/oom_score_adj rw,
+  owner @{PROC}/@{pid}/stat r,
   owner @{PROC}/@{pid}/task/@{tid}/comm rw,
   owner @{PROC}/@{pid}/uid_map r,
-  owner @{PROC}/@{pids}/attr/apparmor/exec w,
   owner @{PROC}/@{pids}/fd/ r,
-  owner @{PROC}/@{pids}/mountinfo r,
   owner @{PROC}/@{pids}/oom_score_adj rw,
 
-  /dev/media@{int} rw,
   /dev/snd/ r,
   /dev/tty rw,
 

@@ -80,6 +80,8 @@ profile systemd flags=(attach_disconnected,mediate_deleted) {
   mount options=(rw slave)                                                  -> @{run}/systemd/incoming/,
 
   remount                                        @{HOME}/{,**},
+  remount                                        @{HOMEDIRS}/,
+  remount                                        @{MOUNTDIRS}/,
   remount                                        @{MOUNTS}/{,**},
   remount                                        @{run}/systemd/mount-rootfs/{,**},
   remount                                        /,
@@ -110,6 +112,9 @@ profile systemd flags=(attach_disconnected,mediate_deleted) {
 
   unix (send) type=dgram,
 
+  unix (receive) type=dgram addr=none peer=(label=systemd-timesyncd, addr=none),
+  unix (send, receive, connect) type=stream addr=none peer=(label=plymouthd, addr=@/org/freedesktop/plymouthd),
+
   # dbus: own bus=system name=org.freedesktop.systemd1
 
   # For stacked profiles
@@ -132,11 +137,11 @@ profile systemd flags=(attach_disconnected,mediate_deleted) {
   @{coreutils_path}                 rPx -> systemd-service,
   @{sh_path}                        rPx -> systemd-service,
 
-  @{bin}/**                         PUx,
-  @{lib}/**                         PUx,
-  audit /etc/cron.*/*               PUx,
-  audit /etc/init.d/*               PUx,
-  audit /usr/share/*/*              PUx,
+  @{bin}/**                          Px,
+  @{lib}/**                          Px,
+  /etc/cron.*/*                      Px,
+  /etc/init.d/*                      Px,
+  /usr/share/*/**                    Px,
 
   @{lib}/systemd/systemd-oomd       rPx -> systemd//&systemd-oomd,
   @{lib}/systemd/systemd-timesyncd  rPx -> systemd//&systemd-timesyncd,
@@ -199,15 +204,13 @@ profile systemd flags=(attach_disconnected,mediate_deleted) {
   @{sys}/devices/virtual/dmi/id/product_name r,
   @{sys}/devices/virtual/dmi/id/product_version r,
   @{sys}/devices/virtual/tty/console/active r,
+  @{sys}/fs/cgroup/{,**} rw,
   @{sys}/fs/fuse/connections/ r,
   @{sys}/fs/pstore/ r,
-  @{sys}/fs/cgroup/{,**} rw,
   @{sys}/kernel/**/ r,
   @{sys}/module/**/uevent r,
   @{sys}/module/apparmor/parameters/enabled r,
 
-        @{PROC}/@{pid}/{uid_map,gid_map} r,
-        @{PROC}/@{pid}/attr/apparmor/exec w,
         @{PROC}/@{pid}/cgroup r,
         @{PROC}/@{pid}/cmdline r,
         @{PROC}/@{pid}/comm r,
@@ -220,8 +223,7 @@ profile systemd flags=(attach_disconnected,mediate_deleted) {
         @{PROC}/@{pid}/mountinfo r,
         @{PROC}/@{pid}/setgroups rw,
         @{PROC}/@{pid}/stat r,
-        @{PROC}/@{pid}/task/@{tid}/comm rw,
-        @{PROC}/@{pid}/uid_map w,
+        @{PROC}/@{pid}/uid_map rw,
         @{PROC}/cmdline r,
         @{PROC}/devices r,
         @{PROC}/pressure/* r,
@@ -229,26 +231,21 @@ profile systemd flags=(attach_disconnected,mediate_deleted) {
         @{PROC}/sys/fs/binfmt_misc/ r,
         @{PROC}/sys/fs/nr_open r,
         @{PROC}/sys/kernel/* r,
-        @{PROC}/sys/kernel/random/* rw,
-        @{PROC}/sys/net/ipv{4,6}/** rw,
         @{PROC}/sysvipc/{shm,sem,msg} r,
+  owner @{PROC}/@{pid}/limits r,
   owner @{PROC}/@{pid}/oom_score_adj rw,
 
-        /dev/ r,
-        /dev/bus/usb/ r,
-        /dev/hwrng r,
+        /dev/autofs r,
         /dev/kmsg w,
-        /dev/rfkill rw,
-        /dev/shm/ rw,
-        /dev/tty rw,
-        /dev/tty@{int} rwk,
+        /dev/shm/ r,
   owner /dev/console rwk,
+  owner /dev/dri/card@{int} rw,
   owner /dev/hugepages/ rw,
   owner /dev/initctl rw,
   owner /dev/input/event@{int} rw,
   owner /dev/mqueue/ rw,
+  owner /dev/rfkill rw,
   owner /dev/ttyS@{int} rwk,
-  owner /dev/dri/card@{int} rw,
 
   include if exists <usr/systemd.d>
   include if exists <local/systemd>
