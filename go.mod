@@ -1,6 +1,6 @@
 module github.com/roddhjav/apparmor.d
 
-go 1.22
+go 1.21
 
 require (
 	github.com/arduino/go-paths-helper v1.12.0
