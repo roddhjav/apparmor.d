@@ -17,22 +17,20 @@ profile hw-probe @{exec_path} {
   network inet dgram,
   network inet6 dgram,
 
-  @{exec_path} r,
+  @{exec_path} rm,
   @{bin}/perl r,
 
-  @{bin}/pwd         rix,
-  @{bin}/{,e}grep    rix,
   @{sh_path}         rix,
+  @{bin}/{,e}grep    rix,
   @{bin}/{m,g,}awk   rix,
-  @{bin}/sleep       rix,
-  @{bin}/md5sum      rix,
-  @{bin}/uname       rix,
-
   @{bin}/dd          rix,
-  @{bin}/tar         rix,
-
-  @{bin}/efivar      rix,
   @{bin}/efibootmgr  rix,
+  @{bin}/efivar      rix,
+  @{bin}/md5sum      rix,
+  @{bin}/pwd         rix,
+  @{bin}/sleep       rix,
+  @{bin}/tar         rix,
+  @{bin}/uname       rix,
 
   @{bin}/lsb_release rPx -> lsb_release,
   @{bin}/dpkg        rPx -> child-dpkg,
@@ -82,19 +80,20 @@ profile hw-probe @{exec_path} {
   @{bin}/journalctl      rCx -> journalctl,
   @{bin}/killall         rCx -> killall,
   @{bin}/kmod            rCx -> kmod,
-  @{bin}/systemd-analyze rCx -> systemd-analyze,
+  @{bin}/systemd-analyze rPx,
   @{bin}/udevadm         rCx -> udevadm,
+
+  /usr/share/X11/xorg.conf.d/{,*.conf} r,
+
+  /etc/modprobe.d/{,*.conf} r,
+  /etc/X11/xorg.conf.d/{,*.conf} r,
+
+  /var/log/Xorg.[0-9].log{,.old} r,
 
   owner /root/HW_PROBE/{,**} rw,
 
   owner /tmp/*/ rw,
   owner /tmp/*/cpu_perf rw,
-
-  /var/log/Xorg.[0-9].log{,.old} r,
-  /etc/X11/xorg.conf.d/{,*.conf} r,
-  /usr/share/X11/xorg.conf.d/{,*.conf} r,
-
-  /etc/modprobe.d/{,*.conf} r,
 
   @{sys}/class/drm/ r,
   @{sys}/class/power_supply/ r,
@@ -106,11 +105,10 @@ profile hw-probe @{exec_path} {
   @{sys}/firmware/efi/efivars/ r,
   @{sys}/firmware/efi/efivars/* r,
 
-  @{PROC}/scsi/scsi r,
-  @{PROC}/ioports r,
-  @{PROC}/interrupts r,
   @{PROC}/bus/input/devices r,
-
+  @{PROC}/interrupts r,
+  @{PROC}/ioports r,
+  @{PROC}/scsi/scsi r,
 
   profile find {
     include <abstractions/base>
@@ -120,16 +118,20 @@ profile hw-probe @{exec_path} {
 
     @{bin}/find mr,
 
-    /dev/{,**} r,
-
     /root/ r,
 
+    /dev/{,**} r,
+
+    include if exists <local/hw-probe_find>
   }
 
   profile journalctl {
     include <abstractions/base>
 
     @{bin}/journalctl mr,
+
+    /var/lib/dbus/machine-id r,
+    /etc/machine-id r,
 
     @{run}/log/ rw,
     /{run,var}/log/journal/ rw,
@@ -140,18 +142,7 @@ profile hw-probe @{exec_path} {
 
     owner @{PROC}/@{pid}/stat r,
 
-    /var/lib/dbus/machine-id r,
-    /etc/machine-id r,
-
-  }
-
-  profile systemd-analyze {
-    include <abstractions/base>
-
-    @{bin}/systemd-analyze mr,
-
-    owner @{PROC}/@{pid}/stat r,
-
+    include if exists <local/hw-probe_journalctl>
   }
 
   profile killall {
@@ -159,17 +150,18 @@ profile hw-probe @{exec_path} {
 
     capability sys_ptrace,
 
-    signal (send) set=(int, term, kill),
-
     ptrace (read),
+
+    signal (send) set=(int, term, kill),
 
     @{bin}/killall mr,
 
     # The /proc/ dir is needed to avoid the following error:
     #  /proc: Permission denied
-         @{PROC}/ r,
-         @{PROC}/@{pids}/stat r,
+    @{PROC}/ r,
+    @{PROC}/@{pids}/stat r,
 
+    include if exists <local/hw-probe_killall>
   }
 
   profile udevadm {
@@ -179,18 +171,19 @@ profile hw-probe @{exec_path} {
 
     /etc/udev/udev.conf r,
 
-    owner @{PROC}/@{pid}/stat r,
-          @{PROC}/cmdline r,
-          @{PROC}/1/sched r,
-          @{PROC}/1/environ r,
-          @{PROC}/sys/kernel/osrelease r,
-
+    @{run}/udev/data/* r,
+  
     @{sys}/bus/ r,
     @{sys}/bus/*/devices/ r,
     @{sys}/class/ r,
     @{sys}/class/*/ r,
     @{sys}/devices/**/uevent r,
-    @{run}/udev/data/* r,
+
+          @{PROC}/1/environ r,
+          @{PROC}/1/sched r,
+          @{PROC}/cmdline r,
+          @{PROC}/sys/kernel/osrelease r,
+    owner @{PROC}/@{pid}/stat r,
 
     include if exists <local/hw-probe_udevadm>
   }
@@ -200,12 +193,12 @@ profile hw-probe @{exec_path} {
 
     @{bin}/kmod mr,
 
-    @{PROC}/cmdline r,
-    @{PROC}/modules r,
-
     @{sys}/module/*/ r,
     @{sys}/module/*/{coresize,refcnt} r,
     @{sys}/module/*/holders/ r,
+
+    @{PROC}/cmdline r,
+    @{PROC}/modules r,
 
     include if exists <local/hw-probe_kmod>
   }

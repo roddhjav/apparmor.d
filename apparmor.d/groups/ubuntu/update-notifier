@@ -52,7 +52,7 @@ profile update-notifier @{exec_path} {
   @{bin}/pkexec                                  rPx, # TODO: rCx or rix to run /usr/lib/update-notifier/package-system-locked
   @{bin}/snap                                   rPUx,
   @{bin}/software-properties-gtk                 rPx,
-  @{bin}/systemctl                               rPx -> child-systemctl,
+  @{bin}/systemctl                               rCx -> systemctl,
   @{bin}/update-manager                          rPx,
   @{lib}/ubuntu-release-upgrader/check-new-release-gtk rPx,
   @{lib}/update-notifier/apt_check.py            rix,
@@ -83,6 +83,19 @@ profile update-notifier @{exec_path} {
 
         @{PROC}/@{pids}/mountinfo r,
   owner @{PROC}/@{pid}/fd/ r,
+
+  profile systemctl {
+    include <abstractions/base>
+    include <abstractions/systemctl>
+    include <abstractions/bus-system>
+
+    dbus send bus=system path=/org/freedesktop/systemd1
+         interface=org.freedesktop.systemd1.Manager
+         member=GetUnitFileState
+         peer=(name=org.freedesktop.systemd1, label="@{systemd}"),
+
+    include if exists <local/update-notifier_systemctl>
+  }
 
   include if exists <local/update-notifier>
 }
