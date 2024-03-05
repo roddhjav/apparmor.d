@@ -42,6 +42,7 @@ profile systemd flags=(attach_disconnected,mediate_deleted) {
   capability setuid,
   capability sys_admin,
   capability sys_chroot,
+  capability sys_nice,
   capability sys_ptrace,
   capability sys_resource,
   capability sys_time,
@@ -101,6 +102,7 @@ profile systemd flags=(attach_disconnected,mediate_deleted) {
 
   change_profile,
 
+  signal (receive) set=(rtmin+23) peer=plymouthd,
   signal (receive) set=(term, hup, cont),
   signal (send),
 
@@ -109,6 +111,14 @@ profile systemd flags=(attach_disconnected,mediate_deleted) {
   unix (send) type=dgram,
 
   # dbus: own bus=system name=org.freedesktop.systemd1
+
+  # For stacked profiles
+  # dbus: own bus=system name=org.freedesktop.oom1
+  # dbus: own bus=system name=org.freedesktop.timesync1
+  dbus send bus=system path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member=GetConnectionUnixUser
+       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
 
   @{bin}/systemctl                  rix,
   @{bin}/mount                      rix,
@@ -131,15 +141,18 @@ profile systemd flags=(attach_disconnected,mediate_deleted) {
   @{lib}/systemd/systemd-oomd       rPx -> systemd//&systemd-oomd,
   @{lib}/systemd/systemd-timesyncd  rPx -> systemd//&systemd-timesyncd,
 
+  @{lib}/ r,
   / r,
   /boot/ r,
   /boot/efi/ r,
   /efi/ r,
+  /snap/ r,
+  /snap/*/@{int}/ r,
   /tmp/ r,
   /usr/ r,
+  /var/cache/*/ r,
   /var/lib/*/ r,
   /var/tmp/ r,
-  @{lib}/ r,
 
   /etc/binfmt.d/{,**} r,
   /etc/conf.d/{,**} r,
@@ -159,14 +172,12 @@ profile systemd flags=(attach_disconnected,mediate_deleted) {
   /tmp/systemd-private-*/{,**} rw,
 
   @{run}/ rw,
+  @{run}/*/ rw,
+  @{run}/*/* rw,
   @{run}/auditd.pid r,
   @{run}/credentials/{,**} rw,
   @{run}/initctl rw,
-  @{run}/spice-vdagentd/* rw,
   @{run}/systemd/{,**} rw,
-  @{run}/udev/control rw,
-  @{run}/mount/ rw,
-  @{run}/mount/utab r,
 
   @{run}/udev/data/+module:configfs r,
   @{run}/udev/data/+module:fuse r,
@@ -204,7 +215,7 @@ profile systemd flags=(attach_disconnected,mediate_deleted) {
         @{PROC}/@{pid}/environ r,
         @{PROC}/@{pid}/fd/ r,
         @{PROC}/@{pid}/fdinfo/@{int} r,
-        @{PROC}/@{pid}/gid_map w,
+        @{PROC}/@{pid}/gid_map rw,
         @{PROC}/@{pid}/loginuid rw,
         @{PROC}/@{pid}/mountinfo r,
         @{PROC}/@{pid}/setgroups rw,
@@ -237,6 +248,7 @@ profile systemd flags=(attach_disconnected,mediate_deleted) {
   owner /dev/input/event@{int} rw,
   owner /dev/mqueue/ rw,
   owner /dev/ttyS@{int} rwk,
+  owner /dev/dri/card@{int} rw,
 
   include if exists <usr/systemd.d>
   include if exists <local/systemd>
