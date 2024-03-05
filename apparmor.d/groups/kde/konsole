@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2024 Jeroen Rijken
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -13,9 +14,8 @@ profile konsole @{exec_path} flags=(attach_disconnected) {
   include <abstractions/bus-accessibility>
   include <abstractions/bus-session>
   include <abstractions/consoles>
-  include <abstractions/dri>
+  include <abstractions/graphics>
   include <abstractions/kde-strict>
-  include <abstractions/mesa>
   include <abstractions/nameservice-strict>
 
   ptrace (read),
@@ -25,10 +25,13 @@ profile konsole @{exec_path} flags=(attach_disconnected) {
   @{exec_path}                          mr,
   @{bin}/@{shells}                      rUx,
   @{browsers_path}                      rPx,
-  @{lib}/@{multiarch}/utempter/utempter rPUx,
+
+  @{lib}/{,@{multiarch}/}utempter/utempter  rPx,
 
   /usr/share/color-schemes/{,**} r,
+  /usr/share/knotifications5/plasma_workspace.notifyrc r,
   /usr/share/konsole/{,**} r,
+  /usr/share/sounds/** r,
 
   /etc/xdg/konsolerc r,
   /etc/xdg/ui/ui_standards.rc r,
@@ -36,31 +39,25 @@ profile konsole @{exec_path} flags=(attach_disconnected) {
   owner @{HOME}/@{XDG_SSH_DIR}/config r,
 
   owner @{user_config_dirs}/#@{int} rwl,
-  owner @{user_config_dirs}/konsolerc{,**} rw,
+  owner @{user_config_dirs}/konsolerc rwl -> @{user_config_dirs}/#@{int},
   owner @{user_config_dirs}/konsolerc.@{rand6} rwl -> @{user_config_dirs}/#@{int},
-  owner @{user_config_dirs}/konsolerc.lock rwlk,
-  owner @{user_config_dirs}/konsolesshconfig rw,
+  owner @{user_config_dirs}/konsolerc.lock rwk,
+  owner @{user_config_dirs}/konsolesshconfig rwl -> @{user_config_dirs}/#@{int},
   owner @{user_config_dirs}/konsolesshconfig.@{rand6} rwl -> @{user_config_dirs}/#@{int},
   owner @{user_config_dirs}/konsolesshconfig.lock rwk,
-  owner @{user_config_dirs}/konsolerc.@{rand6} rwl -> @{user_config_dirs}/#@{int},
 
   owner @{user_cache_dirs}/icon-cache.kcache rw,
 
   owner @{user_share_dirs}/konsole/{,**} rw,
 
-  # Required including abstractions/audio for sending notifications
-  /usr/share/knotifications5/plasma_workspace.notifyrc r,
-  /usr/share/sounds/** r,
-
   owner /tmp/#@{int} rw,
   owner /tmp/konsole.@{rand6} rw,
 
-  @{sys}/devices/system/node/ r,
-  @{sys}/devices/system/node/node@{int}/meminfo r,
-
+        @{PROC}/sys/kernel/core_pattern r,
   owner @{PROC}/@{pid}/cmdline r,
   owner @{PROC}/@{pid}/stat r,
-  @{PROC}/sys/kernel/core_pattern r,
+
+  /dev/ptmx rw,
 
   include if exists <local/konsole>
 }

@@ -1,0 +1,39 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /usr/share/cockpit/motd/update-motd
+profile cockpit-update-motd @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+
+  @{exec_path} mr,
+
+  @{sh_path}        rix,
+  @{bin}/hostname   rix,
+  @{bin}/ip         rPx,
+  @{bin}/sed        rix,
+  @{bin}/systemctl  rCx -> systemctl,
+
+  @{run}/cockpit/active.motd rw,
+
+  owner /dev/tty rw,
+
+  profile systemctl {
+    include <abstractions/base>
+    include <abstractions/systemctl>
+  
+    capability net_admin,
+    capability sys_ptrace,
+
+    @{PROC}/sys/kernel/cap_last_cap r,
+
+    include if exists <local/cockpit-update-motd_systemctl>
+  }
+
+  include if exists <local/cockpit-update-motd>
+}

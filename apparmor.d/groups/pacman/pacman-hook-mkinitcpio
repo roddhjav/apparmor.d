@@ -28,6 +28,7 @@ profile pacman-hook-mkinitcpio @{exec_path} flags=(attach_disconnected) {
   @{bin}/sed        rix,
   @{bin}/sort       rix,
   @{bin}/stat       rix,
+  @{bin}/pacman     rCx -> pacman,
 
   /usr/share/mkinitcpio/*.preset r,
 
@@ -46,6 +47,27 @@ profile pacman-hook-mkinitcpio @{exec_path} flags=(attach_disconnected) {
   # # Inherit Silencer
   deny network inet6 stream,
   deny network inet stream,
+
+  profile pacman {
+    include <abstractions/base>
+    include <abstractions/openssl>
+
+    capability dac_read_search,
+
+    @{bin}/pacman mr,
+  
+    @{bin}/gpg rix,
+    @{bin}/gpgconf rix,
+    @{bin}/gpgsm rix,
+  
+    /etc/pacman.conf r,
+    /etc/pacman.d/{,**} r,
+    /etc/pacman.d/gnupg/** rwkl,
+
+    /var/lib/pacman/local/{,**} r,
+
+    include if exists <local/pacman-hook-mkinitcpio_pacman>
+  }
 
   include if exists <local/pacman-hook-mkinitcpio>
 }

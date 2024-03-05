@@ -5,19 +5,17 @@ abi <abi/3.0>,
 
 include <tunables/global>
 
-@{exec_path} = /{,usr/}{,local/}bin/rustdesk
+@{exec_path} = @{bin}/rustdesk
 profile rustdesk @{exec_path} {
   include <abstractions/base>
   include <abstractions/audio>
   include <abstractions/bus-accessibility>
   include <abstractions/bus-session>
   include <abstractions/bus/org.a11y>
+  include <abstractions/desktop>
   include <abstractions/fontconfig-cache-read>
-  include <abstractions/fonts>
-  include <abstractions/freedesktop.org>
   include <abstractions/nameservice-strict>
   include <abstractions/openssl>
-  include <abstractions/X-strict>
 
   capability dac_read_search,
   capability dac_override,
@@ -37,10 +35,14 @@ profile rustdesk @{exec_path} {
   @{bin}/curl     rix,
   @{bin}/ls       rix,
 
+  @{bin}/sudo rCx           -> sudo,
   @{bin}/python3.@{int} rPx -> rustdesk_python,
   @{sh_path}            rPx -> rustdesk_shell,
 
   /etc/gdm{,3}/custom.conf r,
+
+  owner @{HOME}/ r,  # fails otherwise
+  owner @{HOME}/[rR]ust[dD]esk/{,**} rw,
 
   owner @{HOME}/.local/ w,
   owner @{user_share_dirs}/ w,
@@ -48,32 +50,13 @@ profile rustdesk @{exec_path} {
   owner @{user_share_dirs}/logs/[rR]ust[dD]esk/{,**} rw,
   owner @{user_config_dirs}/[rR]ust[dD]esk/{,**} rw,
 
+  /tmp/[rR]ust[dD]esk/{,**} rw,
+
   @{sys}/devices/system/cpu/cpufreq/policy@{int}/scaling_{cur,min,max}_freq r,
 
         @{PROC}/uptime r,
   owner @{PROC}/@{pid}/cgroup r,
   owner @{PROC}/@{pid}/cmdline r,
-
-  # grep ps
-  @{PROC} r,
-  capability sys_ptrace,
-  ptrace (read),
-  @{PROC}/@{pid}/stat r,
-  @{PROC}/@{pid}/cmdline r,
-  @{PROC}/@{pid}/environ r,
-  @{PROC}/@{pid}/io r,
-  @{PROC}/@{pid}/task/ r,
-  @{PROC}/@{pid}/task/@{tid}/stat r,
-  @{PROC}/@{pid}/task/@{tid}/io r,
-  @{PROC}/@{pid}/task/@{tid}/status r,
-
-  # service and GUI intercommunication
-  @{HOME}/.Xauthority r,
-  @{run}/user/@{uid}/.mutter-Xwaylandauth.@{rand6} r,
-  @{run}/user/@{uid}/gdm{,3}/Xauthority r,
-  /tmp/[rR]ust[dD]esk/{,**} rw,
-  /tmp/.X11-unix/ r,
-  /var/lib/lightdm/.Xauthority r,
 
   # pulse
   /dev/shm/ r,
@@ -86,24 +69,6 @@ profile rustdesk @{exec_path} {
   owner @{user_config_dirs}/pulse/@{md5}-runtime{,.tmp} rw,
   owner /tmp/pulse-*/ rw,
 
-  # gtk-tiny
-  /usr/share/themes/{,**} r,
-  /etc/gtk-3.0/settings.ini r,
-  /usr/share/themes/*/gtk-3.0/gtk.css r,
-
-  # file transfer
-  owner @{HOME}/ r,  # fails otherwise
-  owner @{HOME}/[rR]ust[dD]esk/{,**} rw,
-
-  # file_inherit, X-tiny
-  owner @{HOME}/.xsession-errors w,
-
-  # Do not reveal username (pop-up only)
-#  deny /etc/passwd r,
-
-  # It's possible to disable root-based service ('systemctl disable rustdesk.service') and use RD only on-demand (or as client-only). After that, sudo isn't necessary.
-#  deny @{bin}/sudo   x,
-  @{bin}/sudo rCx -> sudo,
   profile sudo {
     include <abstractions/base>
     include <abstractions/nameservice-strict>
@@ -118,7 +83,9 @@ profile rustdesk @{exec_path} {
 
     network netlink raw,
 
-    @{bin}/sudo r,
+    @{bin}/sudo rm,
+    @{bin}/rustdesk rPx,
+    @{bin}/python3.@{int}    rPx -> rustdesk_python,
 
     /etc/sudo.conf r,
     /etc/sudoers r,
@@ -133,15 +100,9 @@ profile rustdesk @{exec_path} {
     /etc/environment r,
     /etc/default/locale r,
 
-    @{lib}/sudo/libsudo_util.so* mr,
-    @{lib}/sudo/sudoers.so mr,
-
           @{PROC}/1/limits r,
     owner @{PROC}/@{pid}/stat r,
     owner @{PROC}/@{pid}/fd/ r,
-
-    /{,usr/}{,local/}bin/rustdesk rPx,
-    @{bin}/python3.@{int}    rPx -> rustdesk_python,
 
     include if exists <local/rustdesk_sudo>
   }
@@ -172,7 +133,6 @@ profile rustdesk_python {
   @{bin}/uname rPx,
   /usr/share/rustdesk/files/pynput_service.py rPx,
 
-  /usr/local/lib/python3.@{int}/dist-packages/pynput/{,**} r,
   /usr/share/[rR]ust[dD]esk/files/{,**} r,
   /tmp/[rR]ust[dD]esk/ w,
   /tmp/[rR]ust[dD]esk/pynput_service rw,
