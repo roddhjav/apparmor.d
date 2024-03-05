@@ -31,7 +31,7 @@ profile needrestart @{exec_path} flags=(attach_disconnected) {
   @{bin}/python3.@{int}                    rix,
   @{bin}/sed                               rix,
   @{bin}/stty                              rix,
-  @{bin}/systemctl                         rPx -> child-systemctl,
+  @{bin}/systemctl                         rCx -> systemctl,
   @{bin}/systemd-detect-virt               rPx,
   @{bin}/udevadm                           rPx,
   @{bin}/unix_chkpwd                       rPx,
@@ -71,6 +71,15 @@ profile needrestart @{exec_path} flags=(attach_disconnected) {
 
   /dev/ r,
   /dev/**/ r,
+
+  profile systemctl {
+    include <abstractions/base>
+    include <abstractions/systemctl>
+
+    capability net_admin,
+
+    include if exists <local/needrestart_systemctl>
+  }
 
   include if exists <local/needrestart>
 }
