@@ -30,7 +30,7 @@ profile dpkg @{exec_path} {
   @{bin}/dpkg-deb    rpx,
   @{bin}/dpkg-query  rpx,
   @{bin}/dpkg-split  rPx,
-  @{bin}/systemctl   rPx -> child-systemctl,
+  @{bin}/systemctl   rCx -> systemctl,
   @{lib}/needrestart/dpkg-status rPx,
   /usr/share/debian-security-support/check-support-status.hook rPx,
 
@@ -75,6 +75,13 @@ profile dpkg @{exec_path} {
   owner @{PROC}/@{pid}/fd/ r,
 
   owner /dev/tty@{int} rw,
+
+  profile systemctl {
+    include <abstractions/base>
+    include <abstractions/systemctl>
+
+    include if exists <local/dpkg_systemctl>
+  }
 
   include if exists <local/dpkg>
 }

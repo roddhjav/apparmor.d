@@ -94,7 +94,7 @@ profile NetworkManager @{exec_path} flags=(attach_disconnected) {
   @{bin}/kmod                                                rPx,
   @{bin}/netconfig                                          rPUx,
   @{bin}/resolvconf                                          rPx,
-  @{bin}/systemctl                                           rPx -> child-systemctl,
+  @{bin}/systemctl                                           rCx -> systemctl,
   @{lib}/{,NetworkManager/}nm-daemon-helper                  rPx,
   @{lib}/{,NetworkManager/}nm-dhcp-helper                    rPx,
   @{lib}/{,NetworkManager/}nm-dispatcher                     rPx,
@@ -152,6 +152,13 @@ profile NetworkManager @{exec_path} flags=(attach_disconnected) {
         @{PROC}/sys/net/** rw,
 
   /dev/rfkill rw,
+
+  profile systemctl {
+    include <abstractions/base>
+    include <abstractions/systemctl>
+
+    include if exists <local/NetworkManager_systemctl>
+  }
 
   include if exists <local/NetworkManager>
 }

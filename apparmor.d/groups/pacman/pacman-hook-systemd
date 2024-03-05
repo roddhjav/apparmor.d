@@ -19,7 +19,7 @@ profile pacman-hook-systemd @{exec_path} {
   @{bin}/touch rix,
 
   @{bin}/journalctl             rPx,
-  @{bin}/systemctl              rPx -> child-systemctl,
+  @{bin}/systemctl              rCx -> systemctl,
   @{bin}/systemd-detect-virt    rPx,
   @{bin}/systemd-hwdb           rPx,
   @{bin}/systemd-sysusers       rPx,
@@ -37,6 +37,15 @@ profile pacman-hook-systemd @{exec_path} {
   # Inherit silencer
   deny network inet6 stream,
   deny network inet stream,
+
+  profile systemctl flags=(attach_disconnected) {
+    include <abstractions/base>
+    include <abstractions/systemctl>
+
+    capability net_admin,
+
+    include if exists <local/pacman-hook-systemd_systemctl>
+  }
 
   include if exists <local/pacman-hook-systemd>
 }
