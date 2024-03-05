@@ -2,12 +2,50 @@
 # Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
+# Unified minimal abstaction for all UI application regardless of the desktop environment.
+
+# When supported in apparmor, condition will be used in this abstraction to filter
+# resources specific for supported DE.
+
   include <abstractions/fonts>
   include <abstractions/freedesktop.org>
   include <abstractions/gtk>
   include <abstractions/qt5>
   include <abstractions/wayland>
   include <abstractions/X-strict>
+
+  # if @{DE} == gnome
+
+    dbus receive bus=session
+        interface=org.freedesktop.DBus.Introspectable
+        member=Introspect 
+        peer=(name=:*, label=gnome-shell),
+
+    /usr/{local/,}share/ r,
+    /usr/{local/,}share/glib-@{int}.@{int}/schemas/** r,
+    /usr/{local/,}share/gvfs/remote-volume-monitors/{,*}  r,
+
+    /etc/gnome/* r,
+    /etc/xdg/{,*-}mimeapps.list r,
+
+    /var/cache/gio-@{int}.@{int}/gnome-mimeapps.list r,
+
+  # else if @{DE} == kde
+
+    @{lib}/kde{,3,4}/*.so mr,
+    @{lib}/kde{,3,4}/plugins/*/ r,
+    @{lib}/kde{,3,4}/plugins/*/*.so mr,
+
+    /etc/xdg/kdeglobals r,
+    /etc/xdg/kwinrc r,
+
+    owner @{user_config_dirs}/kdedefaults/ r,
+    owner @{user_config_dirs}/kdedefaults/kdeglobals r,
+    owner @{user_config_dirs}/kdedefaults/kwinrc r,
+    owner @{user_config_dirs}/kdeglobals r,
+    owner @{user_config_dirs}/kwinrc r,
+
+  # end
 
   /usr/share/hwdata/*.ids r,
   /usr/share/icu/@{int}.@{int}/*.dat r,
