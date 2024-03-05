@@ -60,7 +60,7 @@ func aaLog(logger string, path string, profile string) error {
 	}
 
 	if raw {
-		fmt.Print(strings.Join(logs.GetApparmorLogs(file, profile), "\n"))
+		fmt.Print(strings.Join(logs.GetApparmorLogs(file, profile), "\n") + "\n")
 		return nil
 	}
 

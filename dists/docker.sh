@@ -77,8 +77,7 @@ build_in_docker_dpkg() {
 	else
 		docker pull "$BASEIMAGE/$dist"
 		docker run -tid --name "$img" --volume "$VOLUME:$BUILDIR" \
-			--env DEBIAN_FRONTEND=noninteractive --env DISTRIBUTION="$target" \
-			"$BASEIMAGE/$dist"
+			--env DISTRIBUTION="$target" "$BASEIMAGE/$dist"
 		docker exec "$img" sudo apt-get update -q
 		docker exec "$img" sudo apt-get install -y config-package-dev rsync
 		[[ "$COMMAND" == debian ]] && aptopt=(-t bookworm-backports)
