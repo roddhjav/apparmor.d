@@ -27,13 +27,16 @@ profile gdm @{exec_path} flags=(attach_disconnected) {
 
   signal (send) set=(term),
 
+  unix (bind, listen) type=stream addr="@/tmp/dbus-@{rand8}",
+  unix (send receive accept) type=stream addr="@/tmp/dbus-@{rand8}" peer=(label=gdm-session-worker, addr=none),
+
   # dbus: own bus=system name=org.gnome.DisplayManager
 
   # dbus: talk bus=system name=org.freedesktop.login1 label=systemd-logind
 
   dbus send bus=system path=/org/freedesktop/Accounts
        interface=org.freedesktop.Accounts
-       member=ListCachedUsers
+       member={ListCachedUsers,UserAdded}
        peer=(name=:*, label=accounts-daemon),
   dbus send bus=system path=/org/freedesktop/Accounts
        interface=org.freedesktop.DBus.Properties
