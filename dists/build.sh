@@ -22,6 +22,7 @@ main() {
     dpkg)
         dch --newversion="$VERSION-1" --urgency=medium --distribution=stable --controlmaint "Release $VERSION-1"
         dpkg-buildpackage -b -d --no-sign
+        lintian || true
         mv ../"${PKGNAME}_${VERSION}-1"_*.deb "$OUTPUT"
         ;;
 
