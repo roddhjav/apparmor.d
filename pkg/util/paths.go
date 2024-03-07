@@ -7,12 +7,12 @@ package util
 import (
 	"archive/tar"
 	"compress/gzip"
+	"fmt"
 	"io"
 	"path/filepath"
 	"strings"
 
 	"github.com/arduino/go-paths-helper"
-	"github.com/pkg/errors"
 )
 
 // Either or not to extract the file
@@ -29,18 +29,18 @@ func toExtrat(name string, subfolders []string) bool {
 func ExtratTo(src *paths.Path, dst *paths.Path, subfolders []string) error {
 	gzIn, err := src.Open()
 	if err != nil {
-		return errors.Wrapf(err, "opening %s", src)
+		return fmt.Errorf("opening %s: %w", src, err)
 	}
 	defer gzIn.Close()
 
 	in, err := gzip.NewReader(gzIn)
 	if err != nil {
-		return errors.Wrapf(err, "decoding %s", src)
+		return fmt.Errorf("decoding %s: %w", src, err)
 	}
 	defer in.Close()
 
 	if err := dst.MkdirAll(); err != nil {
-		return errors.Wrapf(err, "creating %s", src)
+		return fmt.Errorf("creating %s: %w", src, err)
 	}
 
 	tarIn := tar.NewReader(in)
@@ -60,10 +60,10 @@ func ExtratTo(src *paths.Path, dst *paths.Path, subfolders []string) error {
 			path := dst.Join(filepath.Base(header.Name))
 			file, err := path.Create()
 			if err != nil {
-				return errors.Wrapf(err, "creating %s", file.Name())
+				return fmt.Errorf("creating %s: %w", file.Name(), err)
 			}
 			if _, err := io.Copy(file, tarIn); err != nil {
-				return errors.Wrapf(err, "extracting %s", file.Name())
+				return fmt.Errorf("extracting %s: %w", file.Name(), err)
 			}
 			file.Close()
 		}

@@ -5,12 +5,12 @@
 package integration
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
 
 	"github.com/arduino/go-paths-helper"
-	"github.com/pkg/errors"
 	"github.com/roddhjav/apparmor.d/pkg/util"
 )
 
@@ -33,7 +33,7 @@ func (t Tldr) Download() error {
 	if !gzPath.Exist() {
 		resp, err := http.Get(t.Url)
 		if err != nil {
-			return errors.Wrapf(err, "downloading %s", t.Url)
+			return fmt.Errorf("downloading %s: %w", t.Url, err)
 		}
 		defer resp.Body.Close()
 
