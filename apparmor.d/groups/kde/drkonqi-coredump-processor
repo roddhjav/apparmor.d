@@ -1,0 +1,21 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/drkonqi-coredump-processor
+profile drkonqi-coredump-processor @{exec_path} {
+  include <abstractions/base>
+
+  @{exec_path} mr,
+
+  /{run,var}/log/journal/ r,
+  /{run,var}/log/journal/@{md5}/ r,
+  /{run,var}/log/journal/@{md5}/user-@{uid}.journal r,
+  /{run,var}/log/journal/@{md5}/user-@{uid}@@{uuid}.journal r,
+
+  include if exists <local/drkonqi-coredump-processor>
+}
