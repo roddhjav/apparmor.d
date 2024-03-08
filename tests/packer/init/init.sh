@@ -15,7 +15,7 @@ readonly SRC=/tmp/src
 readonly DISTRIBUTION
 
 main() {
-	install -dm0750 -o "$SUDO_USER" -g "$SUDO_USER" "/home/$SUDO_USER/Projects/" "/home/$SUDO_USER/.config/"
+	install -dm0750 -o "$SUDO_USER" -g "$SUDO_USER" "/home/$SUDO_USER/Projects/" "/home/$SUDO_USER/Projects/apparmor.d" "/home/$SUDO_USER/.config/"
 	install -Dm0644 -o "$SUDO_USER" -g "$SUDO_USER" $SRC/.bash_aliases "/home/$SUDO_USER/.bash_aliases"
 	install -Dm0644 -o "$SUDO_USER" -g "$SUDO_USER" $SRC/monitors.xml "/home/$SUDO_USER/.config/monitors.xml"
 	install -Dm0644 -o "$SUDO_USER" -g "$SUDO_USER" $SRC/htoprc "/home/$SUDO_USER/.config/htop/htoprc"
