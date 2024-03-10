@@ -12,6 +12,7 @@ import (
 
 	"github.com/arduino/go-paths-helper"
 	"github.com/roddhjav/apparmor.d/pkg/logging"
+	"github.com/roddhjav/apparmor.d/pkg/util"
 )
 
 // Prepare the build directory with the following tasks
@@ -219,6 +220,19 @@ func SetFullSystemPolicy() ([]string, error) {
 	}
 	out := strings.Replace(string(content), "@{systemd}=unconfined", "@{systemd}=systemd", -1)
 	out = strings.Replace(out, "@{systemd_user}=unconfined", "@{systemd_user}=systemd-user", -1)
+	if err := path.WriteFile([]byte(out)); err != nil {
+		return res, err
+	}
+
+	// Fix conflicting x modifiers in abstractions - FIXME: Temporary solution
+	path = RootApparmord.Join("abstractions/gstreamer")
+	content, err = path.ReadFile()
+	if err != nil {
+		return res, err
+	}
+	out = string(content)
+	regFixConflictX := util.ToRegexRepl([]string{`.*gst-plugin-scanner.*`, ``})
+	out = regFixConflictX.Replace(out)
 	if err := path.WriteFile([]byte(out)); err != nil {
 		return res, err
 	}
