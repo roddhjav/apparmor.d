@@ -46,7 +46,7 @@ profile snap @{exec_path} {
   @{bin}/mount rix,
 
   @{bin}/gpg{,2}          rCx -> gpg,
-  @{bin}/systemctl        rPx -> child-systemctl,
+  @{bin}/systemctl        rCx -> systemctl,
 
   @{lib_dirs}/snapd/snap-confine     rPx,
   @{lib_dirs}/snapd/snap-seccomp     rPx,
@@ -58,8 +58,9 @@ profile snap @{exec_path} {
   /var/cache/snapd/commands.db rwk,
   /var/cache/snapd/names r,
 
-  /snap/{,**} rw,
   @{HOME}/snap/{,**} rw,
+  /snap/{,**} rw,
+  /var/lib/gdm{,3}/snap/{,**} rw,
 
   owner /tmp/snapd-auto-import-mount-@{int}/ rw,
 
@@ -102,6 +103,13 @@ profile snap @{exec_path} {
     owner @{HOME}/.snap/gnupg/** rwkl,
 
     include if exists <local/snap_gpg>
+  }
+
+  profile systemctl {
+    include <abstractions/base>
+    include <abstractions/systemctl>
+  
+    include if exists <local/snap_systemctl>
   }
 
   include if exists <local/snap>

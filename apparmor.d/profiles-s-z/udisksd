@@ -84,7 +84,7 @@ profile udisksd @{exec_path} flags=(attach_disconnected) {
   @{bin}/ntfsfix              rPx,
   @{bin}/sfdisk               rPx,
   @{bin}/sgdisk               rPx,
-  @{bin}/systemctl            rPx -> child-systemctl,
+  @{bin}/systemctl            rCx -> systemctl,
   @{bin}/systemd-escape       rPx,
 
   /etc/udisks2/{,**} r,
@@ -137,6 +137,13 @@ profile udisksd @{exec_path} flags=(attach_disconnected) {
 
   /dev/loop-control rw,
   /dev/null.@{int} rw,
+
+  profile systemctl {
+    include <abstractions/base>
+    include <abstractions/systemctl>
+
+    include if exists <local/udisksd_systemctl>
+  }
 
   include if exists <local/udisksd>
 }

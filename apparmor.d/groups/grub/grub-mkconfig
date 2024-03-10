@@ -15,12 +15,8 @@ profile grub-mkconfig @{exec_path} flags=(attach_disconnected) {
   capability dac_override,
   capability dac_read_search,
 
-  @{exec_path}                     mr,
+  @{exec_path}                 mr,
 
-  /{usr/,}{local/,}{s,}bin/zfs     rPx,
-  /{usr/,}{local/,}{s,}bin/zpool   rPx,
-  @{bin}/dmsetup             rPUx,
-  @{bin}/grub-probe           rPx,
   @{sh_path}                  rix,
   @{bin}/{e,f,}grep           rix,
   @{bin}/{m,g,}awk            rix,
@@ -31,11 +27,13 @@ profile grub-mkconfig @{exec_path} flags=(attach_disconnected) {
   @{bin}/cut                  rix,
   @{bin}/date                 rix,
   @{bin}/dirname              rix,
+  @{bin}/dmsetup             rPUx,
   @{bin}/dpkg                 rPx,
   @{bin}/find                 rix,
   @{bin}/findmnt              rPx,
   @{bin}/gettext              rix,
   @{bin}/grub-mkrelpath       rPx,
+  @{bin}/grub-probe           rPx,
   @{bin}/grub-script-check    rPx,
   @{bin}/head                 rix,
   @{bin}/id                   rPx,
@@ -58,35 +56,37 @@ profile grub-mkconfig @{exec_path} flags=(attach_disconnected) {
   @{bin}/umount               rPx,
   @{bin}/uname                rix,
   @{bin}/which{.debianutils,} rix,
-  /etc/grub.d/{**,}           rix,
+  @{bin}/zfs                  rPx,
+  @{bin}/zpool                rPx,
+  /etc/grub.d/{,**}           rix,
 
-  @{lib}/gconv/gconv-modules r,
-  @{lib}/gconv/gconv-modules.d/{,gconv-modules-extra.conf} r,
+  @{lib}/grub/grub-sort-version rPx,
   @{lib}/libostree/grub[0-9]-@{int}_ostree rix,
 
-  /boot/{**,} r,
-  /boot/grub/{**,} rw,
+  /usr/share/grub/{,**} r,
+  /usr/share/terminfo/** r,
 
   /etc/default/grub r,
   /etc/default/grub-btrfs/config r,
-  /etc/default/grub.d/{*,} r,
-
-  /usr/share/grub/{**,} r,
-  /usr/share/terminfo/** r,
-
-  /.zfs/snapshot/*/boot/ r,
-  /.zfs/snapshot/*/etc/{machine-id,} r,
-  /.zfs/snapshot/*/etc/fstab r,
-  /.zfs/snapshot/*/{usr/,}lib/os-release r,
+  /etc/default/grub.d/{,*} r,
 
   / r,
 
-  owner /tmp/** rw,
+  /.zfs/snapshot/*/@{lib}/os-release r,
+  /.zfs/snapshot/*/boot/ r,
+  /.zfs/snapshot/*/etc/ r,
+  /.zfs/snapshot/*/etc/fstab r,
+  /.zfs/snapshot/*/etc/machine-id r,
+
+  /boot/{,**} r,
+  /boot/grub/{,**} rw,
+
+  # owner /tmp/** rw,
+
+  @{sys}/firmware/efi/efivars/OsIndicationsSupported-@{uuid} r,
 
   @{PROC}/@{pids}/mountinfo r,
   @{PROC}/@{pids}/mounts r,
-
-  @{sys}/firmware/efi/efivars/OsIndicationsSupported-@{uuid} r,
 
   /dev/tty@{int} rw,
 

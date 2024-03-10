@@ -7,8 +7,10 @@ abi <abi/3.0>,
 include <tunables/global>
 
 @{exec_path} = @{bin}/systemd-dissect
-profile systemd-dissect @{exec_path} {
+profile systemd-dissect @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/disks-read>
 
   capability dac_read_search,
   capability sys_admin,
@@ -16,6 +18,9 @@ profile systemd-dissect @{exec_path} {
 
   mount options=(rw, rslave) -> /,
   mount options=(rw, nodev) -> /mnt/*/,
+  mount -> /tmp/dissect-@{rand6}/,
+
+  signal (send) set=(cont) peer=child-pager,
 
   @{exec_path} mr,
 
@@ -30,13 +35,14 @@ profile systemd-dissect @{exec_path} {
   @{user_projects_dirs}/{,**} r,
   @{user_vm_dirs}/{,**} r,
 
-  owner /tmp/dissect-*/{,**} rw,
+  owner /tmp/dissect-@{rand6}/{,**} rw,
 
   @{sys}/devices/virtual/block/loop@{int}/{,**} r,
   @{sys}/kernel/uevent_seqnum r,
 
   @{PROC}/@{pids}/cgroup r,
 
+  /dev/btrfs-control rw,
   /dev/loop-control rwk,
   /dev/loop*  rwk,
 
