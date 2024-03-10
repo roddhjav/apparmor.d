@@ -11,7 +11,6 @@ import (
 	"strings"
 
 	"github.com/arduino/go-paths-helper"
-	"github.com/roddhjav/apparmor.d/pkg/util"
 )
 
 type Tldr struct {
@@ -49,7 +48,7 @@ func (t Tldr) Download() error {
 	}
 
 	pages := []string{"tldr-main/pages/linux", "tldr-main/pages/common"}
-	return util.ExtratTo(gzPath, t.Dir, pages)
+	return extratTo(gzPath, t.Dir, pages)
 }
 
 // Parse the tldr pages and return a list of scenarios

@@ -61,7 +61,7 @@ func TestToRegexRepl(t *testing.T) {
 	tests := []struct {
 		name string
 		in   []string
-		want []RegexRepl
+		want RegexReplList
 	}{
 		{
 			name: "",
@@ -79,6 +79,31 @@ func TestToRegexRepl(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := ToRegexRepl(tt.in); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("ToRegexRepl() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestRegexReplList_Replace(t *testing.T) {
+	tests := []struct {
+		name string
+		rr   RegexReplList
+		str  string
+		want string
+	}{
+		{
+			name: "default",
+			rr: []RegexRepl{
+				{Regex: regexp.MustCompile(`^/foo`), Repl: "/bar"},
+			},
+			str:  "/foo",
+			want: "/bar",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.rr.Replace(tt.str); got != tt.want {
+				t.Errorf("RegexReplList.Replace() = %v, want %v", got, tt.want)
 			}
 		})
 	}
