@@ -32,7 +32,6 @@ profile systemd flags=(attach_disconnected,mediate_deleted) {
   capability dac_read_search,
   capability fowner,
   capability fsetid,
-  capability kill,
   capability mknod,
   capability net_admin,
   capability perfmon,
@@ -45,7 +44,6 @@ profile systemd flags=(attach_disconnected,mediate_deleted) {
   capability sys_nice,
   capability sys_ptrace,
   capability sys_resource,
-  capability sys_time,
   capability sys_tty_config,
 
   network inet dgram,
@@ -85,6 +83,8 @@ profile systemd flags=(attach_disconnected,mediate_deleted) {
   remount                                        @{MOUNTS}/{,**},
   remount                                        @{run}/systemd/mount-rootfs/{,**},
   remount                                        /,
+  remount                                        /snap/{,**},
+  remount options=(ro noexec noatime bind)       /var/snap/{,**},
   remount options=(ro nosuid bind)               /dev/,
   remount options=(ro nosuid nodev bind)         /dev/hugepages/,
   remount options=(ro nosuid nodev bind)         /var/,
@@ -117,9 +117,6 @@ profile systemd flags=(attach_disconnected,mediate_deleted) {
 
   # dbus: own bus=system name=org.freedesktop.systemd1
 
-  # For stacked profiles
-  # dbus: own bus=system name=org.freedesktop.oom1
-  # dbus: own bus=system name=org.freedesktop.timesync1
   dbus send bus=system path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus
        member=GetConnectionUnixUser
@@ -143,6 +140,7 @@ profile systemd flags=(attach_disconnected,mediate_deleted) {
   /etc/init.d/*                      Px,
   /usr/share/*/**                    Px,
 
+  # stack: systemd-oomd systemd-timesyncd
   @{lib}/systemd/systemd-oomd       rPx -> systemd//&systemd-oomd,
   @{lib}/systemd/systemd-timesyncd  rPx -> systemd//&systemd-timesyncd,
 
