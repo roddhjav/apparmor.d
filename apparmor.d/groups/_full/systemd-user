@@ -18,16 +18,10 @@ include <tunables/global>
 @{exec_path} = @{lib}/systemd/systemd
 profile systemd-user flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/base>
-  include <abstractions/audio>
   include <abstractions/bus-session>
   include <abstractions/bus-system>
-  include <abstractions/bus/org.bluez>
-  include <abstractions/bus/org.freedesktop.Avahi>
-  include <abstractions/bus/org.freedesktop.hostname1>
-  include <abstractions/bus/org.freedesktop.RealtimeKit1>
   include <abstractions/disks-read>
   include <abstractions/nameservice-strict>
-  include <abstractions/video>
 
   network netlink raw,
 
@@ -36,22 +30,7 @@ profile systemd-user flags=(attach_disconnected,mediate_deleted) {
 
   ptrace (read),
 
-  unix (bind) type=stream addr=@@{hex}/bus/systemd/bus-system,
-
   # dbus: own bus=session name=org.freedesktop.systemd1
-  # dbus: own bus=session name=org.freedesktop.ReserveDevice1.Audio@{int}
-  # dbus: own bus=session name=org.PulseAudio1
-  # dbus: own bus=session name=org.pulseaudio*
-
-  dbus send bus=session path=/org/freedesktop/DBus
-       interface=org.freedesktop.DBus
-       member=GetConnectionUnixUser
-       peer=(name=org.freedesktop.DBus, label=dbus-daemon),
-
-  dbus receive bus=session
-       interface=org.freedesktop.DBus.Introspectable
-       member=Introspect 
-       peer=(name=:*, label=gnome-shell),
 
   @{exec_path} mr,
 
@@ -66,6 +45,7 @@ profile systemd-user flags=(attach_disconnected,mediate_deleted) {
   /opt/*/**                          Px,
   /usr/share/*/**                    Px,
 
+  # stack: pipewire pipewire-media-session pipewire-pulse pulseaudio wireplumber
   @{bin}/pipewire                   rPx -> systemd-user//&pipewire,
   @{bin}/pipewire-media-session     rPx -> systemd-user//&pipewire-media-session,
   @{bin}/pipewire-pulse             rPx -> systemd-user//&pipewire-pulse,
@@ -73,15 +53,9 @@ profile systemd-user flags=(attach_disconnected,mediate_deleted) {
   @{bin}/wireplumber                rPx -> systemd-user//&wireplumber,
 
   /usr/ r,
-  /usr/share/alsa-card-profile/{,**} r,
   /usr/share/dbus-1/{,**} r,
   /usr/share/defaults/**.conf r,
-  /usr/share/pipewire/{,**} r,
-  /usr/share/pulseaudio/{,**} r,
-  /usr/share/spa-*/bluez@{int}/{,*} r,
-  /usr/share/wireplumber/{,**} r,
 
-  /etc/pipewire/{,**} r,
   /etc/machine-id r,
 
   /etc/systemd/user.conf r,
@@ -90,16 +64,9 @@ profile systemd-user flags=(attach_disconnected,mediate_deleted) {
 
   / r,
 
-  /var/lib/gdm{3,}/.config/pulse/{,**} rw,
-  /var/lib/gdm{3,}/.local/state/wireplumber/{,**} rw,
-
   owner @{HOME}/.local/ w,
 
-  owner @{user_config_dirs}/pulse/{,**} rw,
-  owner @{user_config_dirs}/systemd/user/{,**} r,
-
-  owner @{user_state_dirs}/ w,
-  owner @{user_state_dirs}/wireplumber/{,**} rw,
+  owner @{user_config_dirs}/systemd/user/{,**} rw,
 
         @{run}/systemd/users/@{uid} r,
   owner @{run}/user/@{uid}/ rw,
@@ -107,25 +74,27 @@ profile systemd-user flags=(attach_disconnected,mediate_deleted) {
 
   @{run}/mount/utab r,
   @{run}/systemd/notify w,
+
+  @{run}/udev/data/+backlight:* r,
+  @{run}/udev/data/+leds:*backlight* r,
   @{run}/udev/data/+module:configfs r,
   @{run}/udev/data/+module:fuse r,
   @{run}/udev/data/b254:@{int} r,         # for /dev/zram*
   @{run}/udev/data/c4:@{int} r,           # For TTY devices
   @{run}/udev/data/c5:@{int}   r,         # for /dev/tty, /dev/console, /dev/ptmx
   @{run}/udev/data/c10:@{int}   r,        # For non-serial mice, misc features
-  @{run}/udev/data/c116:@{int} r,         # For ALSA
   @{run}/udev/data/c@{dynamic}:@{int} r,  # For dynamic assignment range 234 to 254, 384 to 511
   @{run}/udev/data/n@{int} r,
   @{run}/udev/tags/systemd/ r,
 
-  @{sys}/bus/ r,
-  @{sys}/devices/**/sound/**/pcm_class r,
+  @{sys}/devices/virtual/dmi/id/bios_vendor r,
 
         @{sys}/devices/**/uevent r,
         @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/{,**} r,
         @{sys}/module/apparmor/parameters/enabled r,
   owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/{,**} rw,
 
+        @{PROC}/@{pid}/cmdline r,
         @{PROC}/@{pids}/cgroup r,
         @{PROC}/@{pids}/comm r,
         @{PROC}/@{pids}/stat r,
@@ -138,6 +107,7 @@ profile systemd-user flags=(attach_disconnected,mediate_deleted) {
         @{PROC}/sys/kernel/overflowuid r,
         @{PROC}/sys/kernel/pid_max r,
         @{PROC}/sys/kernel/threads-max r,
+  owner @{PROC}/@{pid}/coredump_filter r,
   owner @{PROC}/@{pid}/fdinfo/@{int} r,
   owner @{PROC}/@{pid}/gid_map r,
   owner @{PROC}/@{pid}/mountinfo r,
@@ -148,7 +118,6 @@ profile systemd-user flags=(attach_disconnected,mediate_deleted) {
   owner @{PROC}/@{pids}/fd/ r,
   owner @{PROC}/@{pids}/oom_score_adj rw,
 
-  /dev/snd/ r,
   /dev/tty rw,
 
   profile systemctl {
