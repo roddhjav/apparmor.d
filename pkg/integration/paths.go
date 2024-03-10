@@ -2,7 +2,7 @@
 // Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
 // SPDX-License-Identifier: GPL-2.0-only
 
-package util
+package integration
 
 import (
 	"archive/tar"
@@ -26,7 +26,7 @@ func toExtrat(name string, subfolders []string) bool {
 }
 
 // Extract part of an archive to a destination directory
-func ExtratTo(src *paths.Path, dst *paths.Path, subfolders []string) error {
+func extratTo(src *paths.Path, dst *paths.Path, subfolders []string) error {
 	gzIn, err := src.Open()
 	if err != nil {
 		return fmt.Errorf("opening %s: %w", src, err)
