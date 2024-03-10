@@ -47,7 +47,7 @@ func RemoveDuplicate[T comparable](inlist []T) []T {
 }
 
 // ToRegexRepl convert slice of regex into a slice of RegexRepl
-func ToRegexRepl(in []string) []RegexRepl {
+func ToRegexRepl(in []string) RegexReplList {
 	out := make([]RegexRepl, 0)
 	idx := 0
 	for idx < len(in)-1 {
