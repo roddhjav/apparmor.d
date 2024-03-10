@@ -51,9 +51,7 @@ func GetApparmorLogs(file io.Reader, profile string) []string {
 
 	// Clean & remove doublon in logs
 	res = util.DecodeHexInString(res)
-	for _, aa := range regCleanLogs {
-		res = aa.Regex.ReplaceAllLiteralString(res, aa.Repl)
-	}
+	res = regCleanLogs.Replace(res)
 	logs := strings.Split(res, "\n")
 	return util.RemoveDuplicate(logs)
 }

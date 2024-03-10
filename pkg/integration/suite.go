@@ -71,9 +71,7 @@ func (t *TestSuite) Write(path *paths.Path) error {
 		`{{`, `{{ `,
 		`}}`, ` }}`,
 	})
-	for _, aa := range regClean {
-		res = aa.Regex.ReplaceAllLiteralString(res, aa.Repl)
-	}
+	res = regClean.Replace(res)
 	_, err = file.WriteString("---\n" + res)
 	return err
 }

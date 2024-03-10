@@ -9,6 +9,8 @@ import (
 	"regexp"
 )
 
+type RegexReplList []RegexRepl
+
 type RegexRepl struct {
 	Regex *regexp.Regexp
 	Repl  string
@@ -57,4 +59,11 @@ func ToRegexRepl(in []string) []RegexRepl {
 		idx = idx + 2
 	}
 	return out
+}
+
+func (rr RegexReplList) Replace(str string) string {
+	for _, aa := range rr {
+		str = aa.Regex.ReplaceAllLiteralString(str, aa.Repl)
+	}
+	return str
 }
