@@ -43,8 +43,7 @@ profile mount-nfs @{exec_path} flags=(complain) {
   @{sh_path}              rix,
   @{bin}/flock            rix,
   @{bin}/start-statd      rix,
-
-  /usr/bin/systemctl           rPx -> child-systemctl,
+  @{bin}/systemctl        rCx -> systemctl,
 
   /etc/fstab r,
   /etc/netconfig r,
@@ -61,6 +60,13 @@ profile mount-nfs @{exec_path} flags=(complain) {
   owner @{run}/rpc.statd.lock wk,
 
   owner @{PROC}/@{pid}/mountinfo r,
+
+  profile systemctl {
+    include <abstractions/base>
+    include <abstractions/systemctl>
+  
+    include if exists <local/mount-nfs_systemctl>
+  }
 
   include if exists <local/mount-nfs>
 }
