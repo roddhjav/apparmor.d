@@ -131,19 +131,17 @@ func Configure() ([]string, error) {
 	case "arch", "opensuse":
 
 	case "ubuntu":
-		debianDisplaceClean()
-		if needDisplace {
-			filesToDisplace := overwriteProfile(DistDir.Join("displace"))
-			if err := displaceFiles(filesToDisplace); err != nil {
-				return res, err
-			}
+		debianOverwriteClean()
+		if overwrite {
+			profiles := getOverwriteProfiles()
+			debianOverwrite(profiles)
 		} else {
 			if err := copyTo(DistDir.Join("ubuntu"), RootApparmord); err != nil {
 				return res, err
 			}
 		}
 	case "debian", "whonix":
-		debianDisplaceClean()
+		debianOverwriteClean()
 
 		// Copy Debian specific abstractions
 		if err := copyTo(DistDir.Join("ubuntu"), RootApparmord); err != nil {
