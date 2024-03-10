@@ -11,20 +11,32 @@ import (
 
 	"github.com/arduino/go-paths-helper"
 	"github.com/roddhjav/apparmor.d/pkg/aa"
+	"github.com/roddhjav/apparmor.d/pkg/util"
 )
 
 // Build the profiles with the following directive applied
 var (
 	Directives = []DirectiveFunc{
 		DirectiveDbus,
+		DirectiveStack,
 	}
 	DirectiveMsg = map[string]string{
-		"DirectiveDbus": "DBus directive applied",
+		"DirectiveDbus":  "DBus directive applied",
+		"DirectiveStack": "Stack directive applied",
 	}
 )
 
 var (
-	regDbus = regexp.MustCompile(`(?m)# dbus: (.*)$`)
+	regDbus             = regexp.MustCompile(`(?m)  # dbus: (.*)$`)
+	regStack            = regexp.MustCompile(`(?m)  # stack: (.*)$`)
+	regRules            = regexp.MustCompile(`(?m)^profile.*{$((.|\n)*)}`)
+	regEndOfRules       = regexp.MustCompile(`(?m)([\t ]*include if exists <.*>\n)+}`)
+	regCleanStakedRules = util.ToRegexRepl([]string{
+		`(?m)^.*include <abstractions/base>.*$`, ``,
+		`(?m)^.*@{exec_path}.*$`, ``,
+		`(?m)^.*(|P|p)(|U|u)(|i)x,.*$`, ``,
+		`(?m)^(?:[\t ]*(?:\r?\n))+`, ``,
+	})
 )
 
 type DirectiveFunc func(*paths.Path, string) string
@@ -147,4 +159,44 @@ func dbusTalk(rules map[string]string) *aa.AppArmorProfile {
 		})
 	}
 	return p
+}
+
+// Apply stack directive
+//
+// The stacked profiles are appended at the end of the current profile.
+// Arguments: list of profiles to stack on the current profile
+// Example of supported dbus directive:
+// # stack: pipewire pipewire-media-session
+func DirectiveStack(file *paths.Path, profile string) string {
+	for _, match := range regStack.FindAllStringSubmatch(profile, -1) {
+		res := ""
+		origin := match[0]
+		profilesToStack := strings.Fields(match[1])
+		for _, name := range profilesToStack {
+			tmp, err := RootApparmord.Join(name).ReadFile()
+			if err != nil {
+				panic(err)
+			}
+			stackedProfile := string(tmp)
+
+			m := regRules.FindStringSubmatch(stackedProfile)
+			if len(m) < 2 {
+				panic(fmt.Sprintf("No profile found in %s", name))
+			}
+			stackedRules := m[1]
+			for _, aa := range regCleanStakedRules {
+				stackedRules = aa.Regex.ReplaceAllLiteralString(stackedRules, aa.Repl)
+			}
+			res += "  # Stacked profile: " + name + "\n" + stackedRules + "\n"
+		}
+
+		// Insert the stacked profile at the end of the current profile, remove the stack directive
+		m := regEndOfRules.FindStringSubmatch(profile)
+		if len(m) <= 1 {
+			panic(fmt.Sprintf("No end of rules found in %s", file))
+		}
+		profile = strings.Replace(profile, m[0], res+m[0], -1)
+		profile = strings.Replace(profile, origin, "", -1)
+	}
+	return profile
 }
