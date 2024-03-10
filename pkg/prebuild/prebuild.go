@@ -80,7 +80,10 @@ func Build() error {
 		if !file.Exist() {
 			continue
 		}
-		content, _ := file.ReadFile()
+		content, err := file.ReadFile()
+		if err != nil {
+			return err
+		}
 		profile := string(content)
 		for _, fct := range Builds {
 			profile = fct(profile)
@@ -89,7 +92,7 @@ func Build() error {
 			profile = fct(file, profile)
 		}
 		if err := file.WriteFile([]byte(profile)); err != nil {
-			panic(err)
+			return err
 		}
 	}
 	printBuildMessage()
