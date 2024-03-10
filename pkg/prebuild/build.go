@@ -98,6 +98,7 @@ func BuildUserspace(profile string) string {
 	return profile
 }
 
+// Convert all profiles to abi 3.0 compatibility
 func BuildABI3(profile string) string {
 	for _, abi4t3 := range regAbi4To3 {
 		profile = abi4t3.Regex.ReplaceAllLiteralString(profile, abi4t3.Repl)
@@ -105,6 +106,7 @@ func BuildABI3(profile string) string {
 	return profile
 }
 
+// Prevent unconfined transitions in profile rules
 func BuildFullSystemPolicy(profile string) string {
 	for _, full := range regFullSystemPolicy {
 		profile = full.Regex.ReplaceAllString(profile, full.Repl)
