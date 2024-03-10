@@ -9,25 +9,38 @@ include <tunables/global>
 @{exec_path} = @{bin}/loupe
 profile loupe @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/bwrap>
   include <abstractions/dconf-write>
   include <abstractions/gnome-strict>
   include <abstractions/graphics>
   include <abstractions/nameservice-strict>
+  include <abstractions/user-read>
+
+  signal (send) set=(kill) peer=loupe//bwrap,
 
   @{exec_path} mr,
 
-  @{bin}/bwrap rix,
-  @{lib}/glycin-loaders/*/glycin-image-rs rix,
+  @{bin}/bwrap rCx -> bwrap,
 
   /usr/share/glycin-loaders/{,**} r,
 
-  owner @{HOME}/@{XDG_DESKTOP_DIR}/{,**} r,
-  owner @{user_books_dirs}/{,**} r,
-  owner @{user_download_dirs}/{,**} r,
-  owner @{user_pictures_dirs}/{,**} r,
-  owner @{user_torrents_dirs}/{,**} r,
-  owner @{user_work_dirs}/{,**} r,
+  @{sys}/fs/cgroup/user.slice/cpu.max r,
+  @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/cpu.max r,
+  @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/cpu.max r,
+  @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/cpu.max r,
+
+  owner @{PROC}/@{pid}/cgroup r,
+
+  profile bwrap flags=(attach_disconnected) {
+    include <abstractions/base>
+    include <abstractions/bwrap>
+
+    signal (receive) set=(kill) peer=loupe,
+
+    @{bin}/bwrap mr,
+    @{lib}/glycin-loaders/*/glycin-image-rs rix,
+
+    include if exists <local/loupe_bwrap>
+  }
 
   include if exists <local/loupe>
 }
