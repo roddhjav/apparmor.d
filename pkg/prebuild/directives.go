@@ -184,9 +184,7 @@ func DirectiveStack(file *paths.Path, profile string) string {
 				panic(fmt.Sprintf("No profile found in %s", name))
 			}
 			stackedRules := m[1]
-			for _, aa := range regCleanStakedRules {
-				stackedRules = aa.Regex.ReplaceAllLiteralString(stackedRules, aa.Repl)
-			}
+			stackedRules = regCleanStakedRules.Replace(stackedRules)
 			res += "  # Stacked profile: " + name + "\n" + stackedRules + "\n"
 		}
 
