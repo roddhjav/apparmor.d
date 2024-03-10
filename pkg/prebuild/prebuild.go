@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	needDisplace  bool = false
+	overwrite     bool = false
 	Distribution  string
 	DistDir       *paths.Path
 	Root          *paths.Path
@@ -32,7 +32,7 @@ func init() {
 		os := NewOSRelease()
 		if os["VERSION_CODENAME"] == "noble" {
 			Builds = append(Builds, BuildABI3)
-			needDisplace = true
+			overwrite = true
 		}
 	}
 }
