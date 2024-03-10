@@ -77,6 +77,7 @@ func Test_PreBuild(t *testing.T) {
 			Distribution = tt.dist
 			if tt.full {
 				Prepares = append(Prepares, SetFullSystemPolicy)
+				Builds = append(Builds, BuildFullSystemPolicy)
 			}
 			if tt.complain {
 				Builds = append(Builds, BuildComplain)
