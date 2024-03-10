@@ -7,7 +7,7 @@ abi <abi/3.0>,
 
 include <tunables/global>
 
-@{exec_path} = @{lib}/{,colord/}colord
+@{exec_path} = @{lib}/{,colord/}colord{,-sane}
 profile colord @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus-system>
@@ -28,21 +28,25 @@ profile colord @{exec_path} flags=(attach_disconnected) {
        member={GetConnectionUnixUser,GetConnectionUnixProcessID}
        peer=(name=org.freedesktop.DBus, label=dbus-daemon),
 
-  @{exec_path} mr,
-
-  @{lib}/{,colord/}colord-sane  rPx -> colord//&colord-sane,
+  @{exec_path} mrix,
 
   /etc/machine-id r,
-  /etc/udev/hwdb.bin r,
   /etc/sane.d/{,**} r,
+  /etc/snmp/snmp.conf r,
+  /etc/udev/hwdb.bin r,
 
-  /usr/share/mime/mime.cache r,
   /usr/share/color/icc/{,**} r,
+  /usr/share/mime/mime.cache r,
+  /usr/share/snmp/mibs/{,*} r,
 
-  owner /var/lib/colord/** r,
   owner /var/lib/colord/.cache/ rw,
   owner /var/lib/colord/.cache/** rw,
   owner /var/lib/colord/{mapping,storage}.db{,-journal} rwk,
+  owner /var/lib/colord/** r,
+
+  owner /var/lib/snmp/{mib,cert}_indexes/ rw,
+  owner /var/lib/snmp/mibs/{iana,ietf}/ r,
+  owner /var/lib/snmp/mibs/{iana,ietf}/[A-Z]* r,
 
   /var/lib/gdm{3,}/.local/share/icc/edid-*.icc r,
   /var/lib/flatpak/exports/share/mime/mime.cache r,
@@ -50,6 +54,7 @@ profile colord @{exec_path} flags=(attach_disconnected) {
 
   @{user_share_dirs}/icc/edid-*.icc r,
 
+  @{run}/systemd/journal/socket rw,
   @{run}/systemd/sessions/* r,
 
   @{run}/udev/data/+pci:* r,
@@ -69,6 +74,8 @@ profile colord @{exec_path} flags=(attach_disconnected) {
         @{PROC}/@{pids}/cgroup r,
         @{PROC}/@{pids}/cmdline r,
   owner @{PROC}/@{pid}/fd/ r,
+
+  /dev/parport@{int} r,
 
   include if exists <local/colord>
 }
