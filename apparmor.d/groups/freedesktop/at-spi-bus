@@ -8,13 +8,12 @@ abi <abi/3.0>,
 include <tunables/global>
 
 @{exec_path} = @{lib}/{,at-spi2{,-core}/}at-spi-bus-launcher
-profile at-spi-bus-launcher @{exec_path} flags=(attach_disconnected) {
+profile at-spi-bus @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/dbus-accessibility>
-  include <abstractions/dbus-session>
+  include <abstractions/bus-accessibility>
+  include <abstractions/bus-session>
   include <abstractions/dconf-write>
   include <abstractions/nameservice-strict>
-  include <abstractions/X-strict>
 
   network inet stream, # TODO: local only
   network inet6 stream,
@@ -23,15 +22,16 @@ profile at-spi-bus-launcher @{exec_path} flags=(attach_disconnected) {
   network netlink raw,
 
   signal (receive) set=(term hup kill) peer=dbus-daemon,
-  signal (receive) set=(term hup kill) peer=gdm*,
-  signal (receive) set=(term hup kill) peer=gnome-session-binary,
+
+  dbus bus=accessibility,
+  dbus bus=session,
 
   @{exec_path} mr,
 
-  @{bin}/dbus-broker-launch  rix,
-  @{bin}/dbus-daemon         rix,
-  @{bin}/dbus-broker         rix,
-  @{lib}/at-spi2-registryd   rPx,
+  @{bin}/dbus-broker-launch                    rix,
+  @{bin}/dbus-daemon                           rix,
+  @{bin}/dbus-broker                           rix,
+  @{lib}/{,at-spi2{,-core}/}at-spi2-registryd  rix,
 
   /usr/share/dbus-1/accessibility-services/ r,
   /usr/share/dbus-1/accessibility-services/org.a11y.atspi.Registry.service r,
@@ -45,10 +45,7 @@ profile at-spi-bus-launcher @{exec_path} flags=(attach_disconnected) {
   /var/lib/lightdm/.Xauthority r,
   /var/log/lightdm/seat@{int}-greeter.log w,
 
-        @{run}/systemd/users/@{uid} r,
-  owner @{run}/user/@{uid}/at-spi/ rw,
-  owner @{run}/user/@{uid}/at-spi/bus rw,
-  owner @{run}/user/@{uid}/at-spi/bus_@{int} rw,
+  @{run}/systemd/users/@{uid} r,
 
   @{sys}/kernel/security/apparmor/.access rw,
   @{sys}/kernel/security/apparmor/features/dbus/mask r,
@@ -64,5 +61,5 @@ profile at-spi-bus-launcher @{exec_path} flags=(attach_disconnected) {
 
   owner /dev/tty@{int} rw,
 
-  include if exists <local/at-spi-bus-launcher>
+  include if exists <local/at-spi-bus>
 }
