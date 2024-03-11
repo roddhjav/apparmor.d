@@ -1,0 +1,67 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2019-2021 Mikhail Morfikov
+# Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/okular
+profile okular @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/bus-session>
+  include <abstractions/graphics>
+  include <abstractions/kde-strict>
+  include <abstractions/nameservice-strict>
+  include <abstractions/user-download-strict>
+  include <abstractions/user-read>
+  include <abstractions/user-write>
+
+  @{exec_path} mr,
+
+  @{bin}/ps2pdf   rPUx,
+
+  @{bin}/gpg{,2}  rCx -> gpg,
+  @{bin}/gpgcon   rCx -> gpg,
+  @{bin}/gpgsm    rCx -> gpg,
+
+  @{open_path}    rPx -> child-open,
+
+  /usr/share/color-schemes/{,**} r,
+  /usr/share/okular/{,**} r,
+  /usr/share/poppler/{,**} r,
+
+  owner @{user_config_dirs}/#@{int} rw,
+  owner @{user_config_dirs}/okularpartrc rw,
+  owner @{user_config_dirs}/okularpartrc.@{rand6} rwl -> @{user_config_dirs}/#@{int},
+  owner @{user_config_dirs}/okularpartrc.lock rwk,
+  owner @{user_config_dirs}/okularrc rw,
+  owner @{user_config_dirs}/okularrc.@{rand6} rwl -> @{user_config_dirs}/#@{int},
+  owner @{user_config_dirs}/okularrc.lock rwk,
+
+  owner @{user_share_dirs}/okular/ rw,
+  owner @{user_share_dirs}/okular/** rwlk -> @{user_share_dirs}/okular/**,
+
+  owner @{user_cache_dirs}/okular/{,**} rw,
+
+  owner /tmp/#@{int} rw,
+  owner /tmp/okular_@{rand6}.ps rwl -> /tmp/#@{int},
+
+  @{PROC}/sys/kernel/core_pattern r,
+
+  profile gpg {
+    include <abstractions/base>
+
+    @{bin}/gpg{,2}  mr,
+    @{bin}/gpgcon   mr,
+    @{bin}/gpgsm    mr,
+
+    owner @{run}/user/@{uid}/ r,
+    owner @{run}/user/@{uid}/gnupg/ r,
+
+    include if exists <local/okular_gpg>
+  }
+
+  include if exists <local/okular>
+}
