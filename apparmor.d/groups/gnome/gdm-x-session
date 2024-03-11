@@ -14,11 +14,11 @@ profile gdm-x-session @{exec_path} flags=(attach_disconnected) {
   include <abstractions/bus/org.freedesktop.systemd1-session>
   include <abstractions/bus/org.gnome.DisplayManager>
 
-  signal (receive) set=term peer=gdm{,-session-worker},
-  # signal (send) set=term peer=unconfined,
+  signal (receive) set=(hup term) peer=gdm-session-worker,
+  signal (receive) set=(term) peer=gdm,
   signal (send) set=term peer=dbus-run-session,
-  signal (send) set=term peer=xorg,
   signal (send) set=term peer=gnome-session-binary,
+  signal (send) set=term peer=xorg,
 
   dbus send bus=session path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus
@@ -27,11 +27,21 @@ profile gdm-x-session @{exec_path} flags=(attach_disconnected) {
 
   @{exec_path} mr,
 
-  @{bin}/dbus-daemon       rPx,
-  @{bin}/dbus-run-session  rPx,
-  @{bin}/Xorg              rPx,
-  /etc/gdm{3,}/Prime/Default    rix,
-  /etc/gdm{3,}/Xsession         rPx,
+  @{bin}/{true,false}                            rix,
+  @{bin}/dbus-daemon                             rix,
+  @{bin}/dbus-run-session                        rix,
+  @{bin}/gjs-console                             rPx,
+  @{bin}/gnome-session                           rix,
+  @{bin}/gsettings                               rPx,
+  @{bin}/Xorg                                    rPx,
+  @{lib}/{,at-spi2{,-core}/}at-spi-bus-launcher  rix,
+  @{lib}/at-spi2-registryd                       rix,
+  @{lib}/dconf-service                           rPx,
+  @{lib}/gnome-session-binary                    rPx,
+  @{lib}/xdg-permission-store                    rPx,
+
+  /etc/gdm{3,}/Prime/Default                     rix,
+  /etc/gdm{3,}/Xsession                          rPx,
 
   /usr/share/gdm/gdm.schemas r,
 
