@@ -1,0 +1,46 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Minimal set of rules for sudo. Interactive sudo need more rules.
+
+  include <abstractions/authentication>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+  include <abstractions/wutmp>
+
+  capability audit_write,
+  capability net_admin,
+  capability setgid,
+  capability setuid,
+  capability sys_resource,
+
+  network netlink raw,   # PAM
+
+  @{lib}/sudo/** mr,
+
+  @{bin}/unix_chkpwd rPx,
+
+  @{etc_ro}/environment r,
+  @{etc_ro}/security/limits.d/{,*} r,
+  /etc/sudo.conf r,
+  /etc/sudoers r,
+  /etc/sudoers.d/{,*} r,
+
+  / r,
+
+  @{PROC}/@{pid}/loginuid r,
+  @{PROC}/@{pid}/stat r,
+  @{PROC}/sys/kernel/cap_last_cap r,
+  @{PROC}/sys/kernel/ngroups_max r,
+  @{PROC}/sys/kernel/random/boot_id r,
+  @{PROC}/sys/kernel/seccomp/actions_avail r,
+
+        /dev/ r,    # interactive login
+        /dev/ptmx rwk,
+        /dev/tty rwk,
+  owner /dev/tty@{int} rw,
+
+  deny @{user_share_dirs}/gvfs-metadata/* r,
+
+  include if exists <abstractions/sudo.d>
