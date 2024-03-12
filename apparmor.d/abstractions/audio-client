@@ -1,0 +1,48 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Most programs do not need access to audio devices, audio-client only includes
+# configuration files to be used by client applications.
+
+  /usr/share/alsa/** r,
+  /usr/share/openal/hrtf/{,**} r,
+  /usr/share/pipewire/client-rt.conf r,
+  /usr/share/pipewire/client.conf r,
+  /usr/share/sounds/{,**} r,
+
+  /etc/alsa/conf.d/{,**} r,
+  /etc/asound.conf r,
+  /etc/esound/esd.conf r,
+  /etc/libao.conf r,
+  /etc/openal/alsoft.conf r,
+  /etc/pipewire/client.conf r,
+  /etc/pipewire/client.conf.d/{,**} r,
+  /etc/pulse/client.conf r,
+  /etc/pulse/client.conf.d/{,**} r,
+  /etc/wildmidi/wildmidi.cfg r,
+
+  owner @{HOME}/.alsoftrc r,
+  owner @{HOME}/.asoundrc r,
+  owner @{HOME}/.libao r,
+  owner @{HOME}/.esd_auth r,
+
+  owner @{user_cache_dirs}/event-sound-cache.@{md5}.@{multiarch} rwk,  # libcanberra
+
+  owner @{user_config_dirs}/pulse/ rw,
+  owner @{user_config_dirs}/pulse/client.conf r,
+  owner @{user_config_dirs}/pulse/client.conf.d/{,*.conf} r,
+  owner @{user_config_dirs}/pulse/cookie rk,
+
+  owner @{user_share_dirs}/openal/hrtf/{,**} r,
+  owner @{user_share_dirs}/sounds/__custom/index.theme r,
+
+  owner @{run}/user/@{uid}/pipewire-@{int} rw,
+
+  owner @{run}/user/@{uid}/pulse/ rw,
+  owner @{run}/user/@{uid}/pulse/native rw,
+
+        /dev/shm/ r,
+  owner /dev/shm/pulse-shm-@{int} rw,
+
+  include if exists <abstractions/audio-client.d>
