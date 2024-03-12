@@ -10,14 +10,12 @@ include <tunables/global>
 @{exec_path} = @{bin}/kodi @{lib}/@{multiarch}/kodi/kodi.bin
 profile kodi @{exec_path} {
   include <abstractions/base>
-  include <abstractions/X>
-  include <abstractions/vulkan>
-  include <abstractions/audio>
-  include <abstractions/dri-enumerate>
+  include <abstractions/audio-client>
+  include <abstractions/graphics>
   include <abstractions/nameservice-strict>
-  include <abstractions/mesa>
   include <abstractions/python>
   include <abstractions/ssl_certs>
+  include <abstractions/X-strict>
 
   @{exec_path} mr,
 
@@ -29,6 +27,7 @@ profile kodi @{exec_path} {
   @{bin}/cat         rix,
   @{bin}/cut         rix,
   @{bin}/date        rix,
+  @{bin}/df          rix,
   @{bin}/dirname     rix,
   @{bin}/find        rix,
   @{bin}/ldconfig    rix,
@@ -36,9 +35,14 @@ profile kodi @{exec_path} {
   @{bin}/uname       rix,
 
   @{bin}/lsb_release rPx -> lsb_release,
-  @{bin}/df          rCx -> df,
 
   /usr/share/kodi/{,**} r,
+  /usr/share/publicsuffix/* r,
+
+  /etc/fstab r,
+  /etc/machine-id r,
+  /etc/timezone r,
+  /var/lib/dbus/machine-id r,
 
   owner @{HOME}/.kodi/ rw,
   owner @{HOME}/.kodi/** rwk,
@@ -46,49 +50,20 @@ profile kodi @{exec_path} {
   owner @{HOME}/core w,
   owner @{HOME}/kodi_crashlog-@{int}_@{int}.log w,
 
-  owner @{HOME}/.icons/default/index.theme r,
-
-  /usr/share/publicsuffix/* r,
-
-  /usr/share/icons/*/index.theme r,
-  /etc/mime.types r,
-
-  /etc/timezone r,
-  /etc/fstab r,
-
-  owner @{PROC}/@{pid}/mounts r,
-        @{PROC}/@{pid}/net/dev r,
-        @{PROC}/sys/kernel/core_pattern r,
-        @{PROC}/@{pid}/net/route r,
+  @{run}/udev/data/* r,
 
   @{sys}/**/ r,
-  @{sys}/devices/**/uevent r,
   @{sys}/devices/@{pci}/usb@{int}/{bDeviceClass,idProduct,idVendor} r,
   @{sys}/devices/@{pci}/usb@{int}/**/{bDeviceClass,idProduct,idVendor} r,
-  @{sys}/devices/system/node/ r,
-  @{sys}/devices/system/node/node@{int}/meminfo r,
+  @{sys}/devices/**/uevent r,
   @{sys}/devices/system/cpu/cpufreq/policy@{int}/scaling_cur_freq r,
   @{sys}/devices/virtual/thermal/thermal_zone@{int}/temp r,
 
-  @{run}/udev/data/* r,
-
-  /var/lib/dbus/machine-id r,
-  /etc/machine-id r,
-
-  profile df {
-    include <abstractions/base>
-
-    @{bin}/df mr,
-
-    owner @{PROC}/@{pid}/mountinfo r,
-
-    # file_inherit
-    /usr/share/kodi/** r,
-    /sys/devices/virtual/thermal/thermal_zone@{int}/temp r,
-    /sys/devices/system/cpu/cpufreq/policy@{int}/scaling_cur_freq r,
-    /home/morfik/.kodi/temp/kodi.log w,
-
-  }
+        @{PROC}/@{pid}/net/dev r,
+        @{PROC}/@{pid}/net/route r,
+        @{PROC}/sys/kernel/core_pattern r,
+  owner @{PROC}/@{pid}/mounts r,
+  owner @{PROC}/@{pid}/mountinfo r,
 
   include if exists <local/kodi>
 }
