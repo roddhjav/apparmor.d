@@ -2,6 +2,13 @@
 # Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
+# When we have issues:
+
+#   owner @{user_config_dirs}/#@{int} rw,
+#   owner @{user_config_dirs}/QtProject.conf rwl -> @{user_config_dirs}/#@{int},
+#   owner @{user_config_dirs}/QtProject.conf.@{rand6} rwl -> @{user_config_dirs}/#@{int},
+#   owner @{user_config_dirs}/QtProject.conf.lock rwk,
+
 abi <abi/3.0>,
 
 include <tunables/global>
@@ -10,7 +17,7 @@ include <tunables/global>
 profile plasmashell @{exec_path} flags=(mediate_deleted) {
   include <abstractions/base>
   include <abstractions/app-launcher-user>
-  include <abstractions/audio>
+  include <abstractions/audio-client>
   include <abstractions/bus-session>
   include <abstractions/bus-system>
   include <abstractions/bus/org.freedesktop.NetworkManager>
@@ -81,9 +88,6 @@ profile plasmashell @{exec_path} flags=(mediate_deleted) {
   /etc/fstab r,
   /etc/ksysguarddrc r,
   /etc/machine-id r,
-  /etc/pipewire/client.conf.d/ r,
-  /etc/pulse/client.conf r,
-  /etc/pulse/client.conf.d/ r,
   /etc/sensors3.conf r,
   /etc/sensors.d/ r,
   /etc/xdg/** r,
@@ -100,7 +104,6 @@ profile plasmashell @{exec_path} flags=(mediate_deleted) {
   owner @{user_cache_dirs}/appstream/*.xb rw,
   owner @{user_cache_dirs}/bookmarksrunner/ rw,
   owner @{user_cache_dirs}/bookmarksrunner/** rwkl -> @{user_cache_dirs}/bookmarksrunner/#@{int},
-  owner @{user_cache_dirs}/event-sound-cache.tdb.@{md5}.x86_64-pc-linux-gnu rwk,
   owner @{user_cache_dirs}/icon-cache.kcache rw,
   owner @{user_cache_dirs}/kcrash-metadata/plasmashell.*.ini w,
   owner @{user_cache_dirs}/ksvg-elements* rwlk -> @{user_cache_dirs}/#@{int},
@@ -136,8 +139,6 @@ profile plasmashell @{exec_path} flags=(mediate_deleted) {
   owner @{user_config_dirs}/menus/{,**} r,
   owner @{user_config_dirs}/networkmanagement.notifyrc r,
   owner @{user_config_dirs}/plasma* rwlk,
-  owner @{user_config_dirs}/pulse/ rw,
-  owner @{user_config_dirs}/pulse/cookie rwk,
   owner @{user_config_dirs}/trashrc r,
 
   owner @{user_share_dirs}/#@{int} rw,
@@ -160,15 +161,14 @@ profile plasmashell @{exec_path} flags=(mediate_deleted) {
   owner @{user_share_dirs}/plasmashell/** rwkl -> @{user_share_dirs}/plasmashell/**,
   owner @{user_share_dirs}/user-places.xbel{,*} rwl,
 
-  owner /tmp/#@{int} rw,
         /tmp/.mount_nextcl@{rand6}/{,*} r,
+  owner /tmp/#@{int} rw,
 
         @{run}/mount/utab r,
         @{run}/user/@{uid}/gvfs/ r,
   owner @{run}/user/@{uid}/#@{int} rw,
   owner @{run}/user/@{uid}/kdesud_:@{int} w,
   owner @{run}/user/@{uid}/plasmashell@{rand6}.@{int}.kioworker.socket rwl -> @{run}/user/@{uid}/#@{int},
-  owner @{run}/user/@{uid}/pulse/ rw,
 
   @{sys}/bus/ r,
   @{sys}/bus/usb/devices/ r,
@@ -197,7 +197,6 @@ profile plasmashell @{exec_path} flags=(mediate_deleted) {
 
   /dev/ptmx rw,
   /dev/rfkill r,
-  /dev/shm/ r,
 
   include if exists <local/plasmashell>
 }

@@ -10,7 +10,7 @@ include <tunables/global>
 @{exec_path} = @{bin}/pipewire-pulse
 profile pipewire-pulse @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/audio>
+  include <abstractions/audio-client>
   include <abstractions/nameservice-strict>
 
   capability sys_ptrace,
@@ -21,14 +21,15 @@ profile pipewire-pulse @{exec_path} flags=(attach_disconnected) {
 
   @{bin}/pactl rix,
 
+  /usr/share/pipewire/{,**} r,
+
+  /etc/pipewire/{,**} r,
+
   /var/lib/dbus/machine-id r,
   /etc/machine-id r,
 
-  /etc/pipewire/client.conf r,
-  /etc/pipewire/pipewire-pulse.conf r,
-  /etc/pipewire/pipewire-pulse.conf.d/{,*} r,
-  /usr/share/pipewire/client.conf r,
-  /usr/share/pipewire/pipewire-pulse.conf r,
+  / r,
+  /.flatpak-info r,
 
   /var/lib/gdm{3,}/.config/pulse/cookie rwk,
 
@@ -39,9 +40,6 @@ profile pipewire-pulse @{exec_path} flags=(attach_disconnected) {
   @{sys}/devices/virtual/dmi/id/sys_vendor r,
   @{sys}/devices/virtual/dmi/id/board_vendor r,
   @{sys}/devices/virtual/dmi/id/bios_vendor r,
-
-  / r,
-  /.flatpak-info r,
 
   include if exists <local/pipewire-pulse>
 }
