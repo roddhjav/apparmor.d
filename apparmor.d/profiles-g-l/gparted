@@ -42,7 +42,7 @@ profile gparted @{exec_path} {
   @{bin}/ps          rPx,
   @{bin}/xhost       rPx,
   @{bin}/pkexec      rPx,
-  @{bin}/systemctl   rPx -> child-systemctl,
+  @{bin}/systemctl   rCx -> systemctl,
 
   # For shell pwd
   / r,
@@ -60,25 +60,18 @@ profile gparted @{exec_path} {
 
   profile udevadm {
     include <abstractions/base>
-
-    ptrace (read),
+    include <abstractions/systemd-common>
 
     @{bin}/udevadm mr,
 
     /etc/udev/udev.conf r,
-
-    owner @{PROC}/@{pid}/stat r,
-          @{PROC}/cmdline r,
-          @{PROC}/1/sched r,
-          @{PROC}/1/environ r,
-          @{PROC}/sys/kernel/osrelease r,
-          @{PROC}/sys/kernel/random/boot_id r,
 
     @{sys}/** r,
     @{sys}/devices/virtual/block/**/uevent rw,
     @{sys}/devices/@{pci}/block/**/uevent rw,
     @{run}/udev/data/* r,
 
+    include if exists <local/gparted_udevadm>
   }
 
   profile killall flags=(attach_disconnected) {
@@ -99,6 +92,14 @@ profile gparted @{exec_path} {
          @{PROC}/@{pids}/stat r,
          @{PROC}/@{pids}/cmdline r,
 
+    include if exists <local/gparted_killall>
+  }
+
+  profile systemctl {
+    include <abstractions/base>
+    include <abstractions/systemctl>
+  
+    include if exists <local/gparted_systemctl>
   }
 
   include if exists <local/gparted>

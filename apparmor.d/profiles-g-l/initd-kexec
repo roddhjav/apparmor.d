@@ -40,27 +40,16 @@ profile initd-kexec @{exec_path} {
 
   profile systemctl {
     include <abstractions/base>
-
+    include <abstractions/systemctl>
+  
     capability sys_resource,
 
-    ptrace (read),
-
-    @{bin}/systemctl mr,
-
     @{bin}/systemd-tty-ask-password-agent rix,
-
-    owner @{PROC}/@{pid}/stat r,
-    owner @{PROC}/@{pid}/fd/ r,
-          @{PROC}/sys/kernel/osrelease r,
-          @{PROC}/1/sched r,
-          @{PROC}/1/environ r,
-          @{PROC}/cmdline r,
-
-    /dev/kmsg w,
 
     owner @{run}/systemd/ask-password/ rw,
     owner @{run}/systemd/ask-password-block/* rw,
 
+    include if exists <local/initd-kexec_systemctl>
   }
 
   include if exists <local/initd-kexec>
