@@ -3,6 +3,9 @@
 # Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
+# Many programs wish to perform nameservice-like operations, such as looking up
+# users by name or id, groups by name or id, hosts by name or IP, etc.
+
   @{etc_ro}/default/nss r,
   @{etc_ro}/gai.conf r,
   @{etc_ro}/group r,
@@ -14,11 +17,14 @@
   @{etc_ro}/resolv.conf r,
   @{etc_ro}/services r,
 
-  /var/lib/nscd/group r,
-  /var/lib/nscd/passwd r,
+  # On systems with authselect installed, /etc/nsswitch.conf is a symlink to /etc/authselect/nsswitch.conf
+  @{etc_ro}/authselect/nsswitch.conf r,
 
+  # Alternative location for group & passwd files
   /var/lib/extrausers/group  r,
   /var/lib/extrausers/passwd r,
+  /var/lib/nscd/group r,
+  /var/lib/nscd/passwd r,
 
   @{run}/nscd/db* r,
   @{run}/resolvconf/resolv.conf r,
@@ -26,6 +32,14 @@
   @{run}/systemd/resolve/stub-resolv.conf r,
 
   # NSS records from systemd-userdbd.service
+  #
+  # Allow User/Group lookups via common VarLink socket APIs. Applications need
+  # to either consult all of them or the io.systemd.Multiplexer frontend.
+  #
+  #   https://systemd.io/USER_GROUP_API/
+  #   https://systemd.io/USER_RECORD/
+  #   https://www.freedesktop.org/software/systemd/man/nss-systemd.html
+  #
   @{run}/systemd/userdb/ r,
   @{run}/systemd/userdb/io.systemd.DynamicUser rw,        # systemd-exec users
   @{run}/systemd/userdb/io.systemd.Home rw,               # systemd-home dirs
