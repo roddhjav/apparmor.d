@@ -6,10 +6,11 @@ abi <abi/3.0>,
 
 include <tunables/global>
 
-@{exec_path} = @{lib}/{,gdm/}gdm-wayland-session
-profile gdm-wayland-session @{exec_path} {
+@{exec_path} = @{lib}/{,gdm/}gdm-{x,wayland}-session
+profile gdm-session @{exec_path} {
   include <abstractions/base>
   include <abstractions/bash>
+  include <abstractions/bus-accessibility>
   include <abstractions/bus-session>
   include <abstractions/bus-system>
   include <abstractions/bus/org.freedesktop.systemd1-session>
@@ -26,6 +27,7 @@ profile gdm-wayland-session @{exec_path} {
   signal (send) set=(term) peer=dbus-daemon,
   signal (send) set=(term) peer=dbus-run-session,  
   signal (send) set=(term) peer=gnome-session-binary,
+  signal (send) set=term peer=xorg,
 
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable
@@ -65,6 +67,11 @@ profile gdm-wayland-session @{exec_path} {
   @{lib}/gnome-session-binary                    rPx,
   @{lib}/xdg-permission-store                    rPx,
 
+  # only: xorg
+  @{bin}/Xorg                                    rPx,
+  /etc/gdm{3,}/Prime/Default                     rix,
+  /etc/gdm{3,}/Xsession                          rPx,
+
   /usr/share/dbus-1/{,**} r,
   /usr/share/dconf/profile/gdm r,
   /usr/share/defaults/at-spi2/accessibility.conf r,
@@ -75,6 +82,7 @@ profile gdm-wayland-session @{exec_path} {
   /usr/share/libdebuginfod-common/debuginfod.sh r,
 
   @{etc_ro}/profile.d/{,*} r,
+  /etc/dbus-1/{,**} r,
   /etc/debuginfod/{,*} r,
   /etc/default/im-config r,
   /etc/gdm{3,}/custom.conf r,
@@ -89,20 +97,24 @@ profile gdm-wayland-session @{exec_path} {
   /etc/sysconfig/proxy r,
   /etc/sysconfig/windowmanager r,
 
+  /var/lib/gdm{3,}/.cache/gdm/ rw,
+  /var/lib/gdm{3,}/.cache/gdm/Xauthority rw,
   /var/lib/gdm{3,}/.config/dconf/user r,
+  /var/lib/gdm{3,}/greeter-dconf-defaults r,
 
   owner @{HOME}/.alias r,
   owner @{HOME}/.i18n r,
 
-        @{run}/gdm{3,}/custom.conf r,
+  @{run}/gdm{3,}/custom.conf r,
+
         @{run}/systemd/userdb/ r,
         @{run}/systemd/users/@{uid} r,
-        @{run}/user/@{uid}/at-spi/ w,
-        @{run}/user/@{uid}/at-spi/bus w,
   owner @{run}/user/@{uid}/dbus-1/ rw,
   owner @{run}/user/@{uid}/dbus-1/services/ rw,
+  owner @{run}/user/@{uid}/gdm/ w,
+  owner @{run}/user/@{uid}/gdm/Xauthority rw,  # only: xorg
 
-  owner /tmp/dbus-@{rand10} w,
+  @{sys}/module/apparmor/parameters/enabled r,
 
         @{PROC}/@{pid}/cgroup r,
         @{PROC}/@{pids}/oom_score_adj rw,
@@ -113,5 +125,5 @@ profile gdm-wayland-session @{exec_path} {
 
   /dev/tty@{int} rw,
 
-  include if exists <local/gdm-wayland-session>
+  include if exists <local/gdm-session>
 }
