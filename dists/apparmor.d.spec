@@ -49,6 +49,7 @@ systemctl is-active -q apparmor && systemctl reload apparmor ||:
 %dir /usr/lib/systemd/system/systemd-networkd.service.d
 %dir /usr/lib/systemd/system/systemd-timesyncd.service.d
 %dir /usr/lib/systemd/system/systemd-userdbd.service.d
+%dir /usr/lib/systemd/user/at-spi-dbus-bus.service.d
 %dir /usr/lib/systemd/user/org.freedesktop.IBus.session.GNOME.service.d
 %dir /usr/share/zsh
 %dir /usr/share/zsh/site-functions
@@ -60,6 +61,7 @@ systemctl is-active -q apparmor && systemctl reload apparmor ||:
 /usr/lib/systemd/system/systemd-networkd.service.d/apparmor.conf
 /usr/lib/systemd/system/systemd-timesyncd.service.d/apparmor.conf
 /usr/lib/systemd/system/systemd-userdbd.service.d/apparmor.conf
+/usr/lib/systemd/user/at-spi-dbus-bus.service.d/apparmor.conf
 /usr/lib/systemd/user/org.freedesktop.IBus.session.GNOME.service.d/apparmor.conf
 /usr/share/bash-completion/completions/aa-log
 /usr/share/zsh/site-functions/_aa-log.zsh
