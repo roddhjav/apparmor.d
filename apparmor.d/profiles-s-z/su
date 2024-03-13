@@ -11,23 +11,10 @@ include <tunables/global>
 profile su @{exec_path} {
   include <abstractions/base>
   include <abstractions/app-launcher-root>
-  include <abstractions/authentication>
-  include <abstractions/bus-system>
-  include <abstractions/consoles>
-  include <abstractions/nameservice-strict>
-  include <abstractions/wutmp>
-# include <pam/mappings>
+  include <abstractions/sudo>
 
-  capability audit_write,
   capability chown,  # pseudo-terminal
   capability dac_read_search,
-  capability setgid,
-  capability setuid,
-  capability sys_resource,
-
-  # No clear purpose, deny until needed
-  audit deny capability net_admin,
-  audit deny capability net_bind_service,
 
   signal (send)    set=(term,kill),
   signal (receive) set=(int,quit,term),
@@ -35,37 +22,10 @@ profile su @{exec_path} {
 
   unix (bind) type=dgram,
 
-  network netlink raw,
-
-  dbus send bus=system path=/org/freedesktop/login1
-       interface=org.freedesktop.logi1.Manager
-       member={CreateSession,ReleaseSession}
-       peer=(name=org.freedesktop.login1, label=systemd-logind),
-
   @{exec_path} mr,
 
   @{bin}/@{shells}     rUx,
-
   @{bin}/nologin       rPx,
-
-  @{etc_ro}/default/su r,
-  @{etc_ro}/environment r,
-  @{etc_ro}/security/limits.d/{,*.conf} r,
-  /etc/default/locale r,
-  /etc/shells r,
-
-  owner @{HOME}/.xauth@{rand6} rw,
-
-  owner @{PROC}/@{pids}/loginuid r,
-  owner @{PROC}/@{pids}/cgroup r,
-  owner @{PROC}/@{pids}/mountinfo r,
-        @{PROC}/1/limits r,
-        @{PROC}/cmdline r,
-  
-  @{sys}/devices/virtual/tty/console/active r,
-
-  /dev/{,pts/}ptmx rw,
-  /dev/tty@{int} rw,
 
   include if exists <local/su>
 }
