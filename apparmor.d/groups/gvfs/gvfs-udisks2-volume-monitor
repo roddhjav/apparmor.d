@@ -30,22 +30,9 @@ profile gvfs-udisks2-volume-monitor @{exec_path} flags=(attach_disconnected) {
 
   ptrace (read),
 
-  dbus bind bus=session name=org.gtk.vfs.UDisks2VolumeMonitor,
-  dbus (send, receive) bus=session path=/org/gtk/Private/RemoteVolumeMonitor
-       interface=org.gtk.Private.RemoteVolumeMonitor
-       peer=(name="{:*,org.freedesktop.DBus}"),
+  # dbus: own bus=session name=org.gtk.vfs.UDisks2VolumeMonitor
 
-  dbus send bus=system path=/org/freedesktop/UDisks2/**
-       interface=org.freedesktop.UDisks2.Filesystem
-       peer=(name=:*, label=udisksd),
-  dbus receive bus=system path=/org/freedesktop/UDisks2
-       interface=org.freedesktop.DBus.ObjectManager
-       member=InterfacesRemoved
-       peer=(name=:*, label=udisksd),
-  dbus receive bus=system path=/org/freedesktop/UDisks2/**
-       interface=org.freedesktop.DBus.Properties
-       member=PropertiesChanged
-       peer=(name=:*, label=udisksd),
+  # dbus: talk bus=system name=org.freedesktop.UDisks2 label=udisksd
 
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable
