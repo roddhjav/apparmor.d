@@ -7,9 +7,10 @@ source "qemu" "archlinux-server" {
   iso_url            = "https://geo.mirror.pkgbuild.com/images/latest/Arch-Linux-x86_64-cloudimg.qcow2"
   iso_checksum       = "file:https://geo.mirror.pkgbuild.com/images/latest/Arch-Linux-x86_64-cloudimg.qcow2.SHA256"
   iso_target_path    = "${var.iso_dir}/archlinux-cloudimg-amd64.img"
+  cpu_model          = "host"
   cpus               = 6
   memory             = 4096
-  disk_size          = var.disk_size
+  disk_size          = "10G"
   accelerator        = "kvm"
   headless           = true
   ssh_username       = var.username
@@ -42,6 +43,7 @@ source "qemu" "archlinux-gnome" {
   iso_url            = "https://geo.mirror.pkgbuild.com/images/latest/Arch-Linux-x86_64-cloudimg.qcow2"
   iso_checksum       = "file:https://geo.mirror.pkgbuild.com/images/latest/Arch-Linux-x86_64-cloudimg.qcow2.SHA256"
   iso_target_path    = "${var.iso_dir}/archlinux-cloudimg-amd64.img"
+  cpu_model          = "host"
   cpus               = 6
   memory             = 4096
   disk_size          = var.disk_size
@@ -77,6 +79,7 @@ source "qemu" "archlinux-kde" {
   iso_url            = "https://geo.mirror.pkgbuild.com/images/latest/Arch-Linux-x86_64-cloudimg.qcow2"
   iso_checksum       = "file:https://geo.mirror.pkgbuild.com/images/latest/Arch-Linux-x86_64-cloudimg.qcow2.SHA256"
   iso_target_path    = "${var.iso_dir}/archlinux-cloudimg-amd64.img"
+  cpu_model          = "host"
   cpus               = 6
   memory             = 4096
   disk_size          = var.disk_size

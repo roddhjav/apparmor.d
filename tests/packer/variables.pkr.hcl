@@ -31,7 +31,7 @@ variable "ssh_privatekey" {
 variable "disk_size" {
   description = "Disk size of the VM to build"
   type        = string
-  default     = "10G"
+  default     = "40G"
 }
 
 variable "iso_dir" {
