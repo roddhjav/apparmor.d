@@ -23,6 +23,7 @@ var (
 		Merge,
 		Configure,
 		SetFlags,
+		SetProfileSystemd,
 	}
 	PrepareMsg = map[string]string{
 		"Synchronise":         "Initialize a new clean apparmor.d build directory",
@@ -30,7 +31,8 @@ var (
 		"Merge":               "Merge all profiles",
 		"Configure":           "Set distribution specificities",
 		"SetFlags":            "Set flags on some profiles",
-		"SetDefaultSystemd":   "Set systemd unit drop in files to ensure some service start after apparmor",
+		"SetProfileSystemd":   "Use the systemd unit file to set a profile for a given unit",
+		"SetEarlySystemd":     "Set systemd unit drop in files to ensure some service start after apparmor",
 		"SetFullSystemPolicy": "Configure AppArmor for full system policy",
 	}
 )
@@ -198,9 +200,14 @@ func SetFlags() ([]string, error) {
 	return res, nil
 }
 
-// Set systemd unit drop in files to ensure some service start after apparmor
-func SetDefaultSystemd() ([]string, error) {
+// Use the systemd unit file to set a profile for a given unit
+func SetProfileSystemd() ([]string, error) {
 	return []string{}, copyTo(paths.New("systemd/default/"), Root.Join("systemd"))
+}
+
+// Set systemd unit drop in files to ensure some service start after apparmor
+func SetEarlySystemd() ([]string, error) {
+	return []string{}, copyTo(paths.New("systemd/early/"), Root.Join("systemd"))
 }
 
 // Set AppArmor for (experimental) full system policy.
