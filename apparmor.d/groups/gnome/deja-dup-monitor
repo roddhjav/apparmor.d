@@ -1,0 +1,37 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/deja-dup/deja-dup-monitor 
+profile deja-dup-monitor @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/bus-session>
+  include <abstractions/bus-system>
+  include <abstractions/bus/net.hadess.PowerProfiles>
+  include <abstractions/bus/org.gtk.Private.RemoteVolumeMonitor>
+  include <abstractions/bus/org.gtk.vfs.Daemon>
+  include <abstractions/dconf-write>
+
+  network netlink raw,
+
+  # dbus: own bus=session name=org.gnome.DejaDup.Monitor
+  # dbus: talk bus=session name=org.gnome.DejaDup label=xdg-desktop-portal
+
+  dbus send bus=system path=/org/freedesktop/NetworkManager
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=:*, label=NetworkManager),
+
+  @{exec_path} mr,
+
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+
+  /var/tmp/ r,
+  /tmp/ r,
+
+  include if exists <local/deja-dup-monitor>
+}
