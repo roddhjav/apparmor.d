@@ -52,13 +52,15 @@ func aaPrebuild() error {
 		prebuild.Prepares = append(prebuild.Prepares, prebuild.SetFullSystemPolicy)
 		prebuild.Builds = append(prebuild.Builds, prebuild.BuildFullSystemPolicy)
 	} else {
-		prebuild.Prepares = append(prebuild.Prepares, prebuild.SetDefaultSystemd)
+		prebuild.Prepares = append(prebuild.Prepares, prebuild.SetEarlySystemd)
 	}
+
 	if complain {
 		prebuild.Builds = append(prebuild.Builds, prebuild.BuildComplain)
 	} else if enforce {
 		prebuild.Builds = append(prebuild.Builds, prebuild.BuildEnforce)
 	}
+
 	if abi4 {
 		prebuild.Builds = append(prebuild.Builds, prebuild.BuildABI3)
 	}
