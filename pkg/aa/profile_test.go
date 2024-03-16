@@ -105,7 +105,7 @@ func TestAppArmorProfile_String(t *testing.T) {
 						},
 						&File{Path: "/opt/intel/oneapi/compiler/*/linux/lib/*.so./*", Access: "rm"},
 						&File{Path: "@{PROC}/@{pid}/task/@{tid}/comm", Access: "rw"},
-						&File{Path: "@{sys}/devices/pci[0-9]*/**/class", Access: "r"},
+						&File{Path: "@{sys}/devices/@{pci}/class", Access: "r"},
 						includeLocal1,
 					},
 				},
