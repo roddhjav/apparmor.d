@@ -55,7 +55,7 @@ This rule order is taken from AppArmor with minor changes as we tend to:
 
 ### The file block
 
-The file block should be sorted as follow:
+The file block should be sorted as follows:
 
 | Order | Description | Example | Link |
 |:-----:|:-----------:|:-------:|:------:|
@@ -75,7 +75,7 @@ The file block should be sorted as follow:
 ### The dbus block
 
 
-The dbus block should be sorted as follow:
+The dbus block should be sorted as follows:
 
 - The system bus should be sorted *before* the session bus
 - The bind rules should be sorted *after* the send & receive rules
@@ -85,7 +85,7 @@ For DBus, try to determine peer's label when possible. E.g.:
 dbus send bus=session path=/org/freedesktop/DBus
      interface=org.freedesktop.DBus
      member={RequestName,ReleaseName}
-     peer=(name=org.freedesktop.DBus, label=dbus-daemon),
+     peer=(name=org.freedesktop.DBus, label=dbus-session),
 ```
 If there is no predictable label it can be omitted.
 
@@ -106,7 +106,7 @@ If there is no predictable label it can be omitted.
 
 `Sub profile`
 
-:   Sub profile should comes at the end of a profile.
+:   Sub profile should come at the end of a profile.
 
 `Similar purpose`
 
@@ -121,6 +121,7 @@ If there is no predictable label it can be omitted.
 
 * [The AppArmor Core Policy Reference](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference)
 * [The OpenSUSE Documentation](https://doc.opensuse.org/documentation/leap/security/html/book-security/part-apparmor.html)
+* https://documentation.suse.com/sles/12-SP5/html/SLES-all/cha-apparmor-intro.html
 * [The AppArmor.d man page](https://man.archlinux.org/man/apparmor.d.5)
 * [F**k AppArmor](https://presentations.nordisch.org/apparmor/#/)
 * [A Brief Tour of Linux Security Modules](https://www.starlab.io/blog/a-brief-tour-of-linux-security-modules)
