@@ -12,17 +12,9 @@ profile at-spi2-registryd @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus-accessibility>
   include <abstractions/bus-session>
-  include <abstractions/bus/org.a11y>
   include <abstractions/bus/org.gnome.SessionManager>
-  include <abstractions/nameservice-strict>
-  include <abstractions/X-strict>
-
-  signal (receive) set=(term hup kill) peer=@{systemd},
-  signal (receive) set=(term hup kill) peer=dbus-daemon,
-  signal (receive) set=(term hup kill) peer=gdm*,
 
   # dbus: own bus=accessibility name=org.a11y.atspi.{R,r}egistry
-
   dbus send bus=accessibility path=/org/a11y/atspi/accessible/root
        interface=org.freedesktop.DBus.Properties
        member=Set
@@ -31,11 +23,15 @@ profile at-spi2-registryd @{exec_path} flags=(attach_disconnected) {
        interface=org.a11y.atspi.Socket
        member=Embed
        peer=(name=:*),
-
   dbus receive bus=accessibility path=/org/a11y/atspi/registry/deviceeventcontroller
        interface=org.a11y.atspi.DeviceEventController
        member={GetKeystrokeListeners,GetDeviceEventListeners}
        peer=(name=:*),
+
+  dbus send bus=session path=/org/a11y/bus
+       interface=org.a11y.Bus
+       member=GetAddress
+       peer=(name=org.a11y.Bus, label=dbus-accessibility),
 
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable
@@ -43,8 +39,6 @@ profile at-spi2-registryd @{exec_path} flags=(attach_disconnected) {
        peer=(name=:*, label=gnome-shell),
 
   @{exec_path} mr,
-
-  owner /dev/tty@{int} rw,
 
   include if exists <local/at-spi2-registryd>
 }

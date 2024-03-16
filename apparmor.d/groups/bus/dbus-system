@@ -1,0 +1,65 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Profile for system dbus, regardless of the dbus implementation used.
+# It does not specify an attachment path as it would be the same than
+# "dbus-session". It is intended to be used only via "Px ->" or via 
+# systemd drop-in AppArmorProfile= setting.
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path}  = @{bin}/dbus-broker @{bin}/dbus-broker-launch
+@{exec_path} += @{bin}/dbus-daemon @{lib}/dbus-1.0/dbus-daemon-launch-helper
+profile dbus-system flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/bus-system>
+  include <abstractions/nameservice-strict>
+
+  capability audit_write,
+  capability net_admin,
+  capability setgid,
+  capability setuid,
+
+  network netlink raw,
+  network bluetooth stream,
+  network bluetooth seqpacket,
+
+  dbus bus=system,
+
+  @{exec_path} mrix,
+
+  @{bin}/**                         PUx,
+  @{lib}/**                         PUx,
+  /usr/share/*/**                   PUx,
+
+  /etc/machine-id r,
+  /etc/dbus-1/{,**} r,
+  /usr/share/dbus-1/{,**} r,
+  /var/lib/snapd/dbus-1/{,**} r,
+  @{system_share_dirs}/dbus-1/{,**} r,
+
+  @{user_share_dirs}/icc/ r,
+  @{user_share_dirs}/icc/edid-@{md5}.icc r,
+  /var/lib/gdm{,3}/.local/share/icc/ r,
+  /var/lib/gdm{,3}/.local/share/icc/edid-@{md5}.icc r,
+
+  @{run}/systemd/users/@{int} r,
+  @{run}/systemd/sessions/*.ref rw,
+  @{run}/systemd/inhibit/*.ref rw,
+
+  @{sys}/kernel/security/apparmor/.access rw,
+  @{sys}/kernel/security/apparmor/features/dbus/mask r,
+  @{sys}/module/apparmor/parameters/enabled r,
+
+        @{PROC}/@{pid}/cmdline r,
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/mounts r,
+
+  /dev/dri/card@{int} rw,
+  /dev/input/event@{int} rw,
+
+  include if exists <local/dbus-system>
+}
