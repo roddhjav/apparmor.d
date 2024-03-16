@@ -1,0 +1,67 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Profile for session dbus, regardless of the dbus implementation used.
+# It does not specify an attachment path as it would be the same than
+# "dbus-system". It is intended to be used only via "Px ->" or via 
+# systemd drop-in AppArmorProfile= setting.
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path}  = @{bin}/dbus-run-session
+@{exec_path} += @{bin}/dbus-broker @{bin}/dbus-broker-launch
+@{exec_path} += @{bin}/dbus-daemon @{lib}/dbus-1.0/dbus-daemon-launch-helper
+profile dbus-session flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/bus-session>
+  include <abstractions/nameservice-strict>
+
+  unix (send receive) type=stream addr=none peer=(label=gnome-shell, addr=none),
+
+  signal (receive) set=(term hup)      peer=gdm-session-worker,
+  signal (receive) set=(term hup)      peer=gdm-session,
+  signal (receive) set=(term hup)      peer=gdm,
+  signal (send)    set=(term hup kill) peer=dbus-accessibility,
+  signal (send)    set=(term hup kill) peer=xdg-permission-store,
+  signal (send)    set=(hup)           peer=dconf-service,
+
+  dbus bus=session,
+
+  @{exec_path} mrix,
+
+  @{bin}/{true,false}                            rix,
+  @{lib}/{,at-spi2{,-core}/}at-spi-bus-launcher  rPx -> dbus-accessibility,
+
+  @{bin}/**                   PUx,
+  @{lib}/**                   PUx,
+  /usr/share/**               PUx,
+
+  /etc/dbus-1/{,**} r,
+  /usr/share/dbus-1/{,**} r,
+  /var/lib/snapd/dbus-1/{,**} r,
+  @{system_share_dirs}/dbus-1/{,**} r,
+
+        @{run}/systemd/userd/b/ r,
+        @{run}/systemd/users/@{uid} r,
+  owner @{run}/user/@{uid}/dbus-1/ rw,
+  owner @{run}/user/@{uid}/dbus-1/services/ rw,
+  owner @{run}/user/@{uid}/systemd/notify w,
+
+  @{sys}/kernel/security/apparmor/.access rw,
+  @{sys}/kernel/security/apparmor/features/dbus/mask r,
+  @{sys}/module/apparmor/parameters/enabled r,
+
+        @{PROC}/sys/kernel/random/boot_id r,
+  owner @{PROC}/@{pid}/attr/apparmor/current r,
+  owner @{PROC}/@{pid}/cmdline r,
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/oom_score_adj r,
+  owner @{PROC}/@{pid}/mounts r,
+
+  /dev/tty@{int} rw,
+  
+  include if exists <local/dbus-session>
+}
