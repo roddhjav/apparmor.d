@@ -9,14 +9,18 @@ include <tunables/global>
 @{exec_path} = @{lib}/gnome-initial-setup
 profile gnome-initial-setup @{exec_path} {
   include <abstractions/base>
-  include <abstractions/bus-system>
   include <abstractions/bus-accessibility>
   include <abstractions/bus-session>
+  include <abstractions/bus-system>
   include <abstractions/bus/org.a11y>
+  include <abstractions/bus/org.freedesktop.Accounts>
+  include <abstractions/bus/org.gtk.vfs.MountTracker>
   include <abstractions/dconf-write>
+  include <abstractions/disks-read>
   include <abstractions/gnome-strict>
   include <abstractions/graphics>
   include <abstractions/nameservice-strict>
+  include <abstractions/ssl_certs>
 
   network inet dgram,
   network inet6 dgram,
@@ -38,15 +42,27 @@ profile gnome-initial-setup @{exec_path} {
   @{lib}/gnome-initial-setup-goa-helper rix,
 
   /usr/share/dconf/profile/gdm r,
+  /usr/share/gnome-initial-setup/{,**} r,
   /usr/share/xml/iso-codes/{,**} r,
 
+  /etc/timezone r,
+
   /var/lib/gdm{,3}/greeter-dconf-defaults r,
+
+  owner @{user_config_dirs}/gnome-initial-setup-done w,
+  owner @{user_config_dirs}/gnome-initial-setup-done.@{rand6}BQK2 rw,
+
+  owner @{user_config_dirs}/ibus/bus/ r,
+  owner @{user_config_dirs}/ibus/bus/@{md5}-unix-{,wayland-}@{int} r,
 
   @{run}/systemd/sessions/@{int} r,
   @{run}/systemd/users/@{uid} r,
 
-  owner @{user_config_dirs}/ibus/bus/ r,
-  owner @{user_config_dirs}/ibus/bus/@{md5}-unix-{,wayland-}@{int} r,
+  @{sys}/devices/virtual/dmi/id/bios_vendor r,
+  @{sys}/devices/virtual/dmi/id/bios_version r,
+  @{sys}/devices/virtual/dmi/id/product_family r,
+  @{sys}/devices/virtual/dmi/id/product_name r,
+  @{sys}/devices/virtual/dmi/id/sys_vendor r,
 
   include if exists <local/gnome-initial-setup>
 }

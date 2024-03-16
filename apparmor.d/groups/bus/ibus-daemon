@@ -24,6 +24,15 @@ profile ibus-daemon @{exec_path} flags=(attach_disconnected) {
   # dbus: own bus=session name=org.freedesktop.portal.IBus
   # dbus: own bus=session name=org.freedesktop.IBus
 
+  dbus send bus=session path=/org/freedesktop/IBus
+       interface=org.freedesktop.DBus.Peer
+       member=Ping
+       peer=(name=org.freedesktop.portal.IBus),
+  dbus send bus=session path=/org/freedesktop/IBus
+       interface=org.freedesktop.DBus.Peer
+       member=Ping
+       peer=(name=org.freedesktop.portal.IBus, label=ibus-portal),
+
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
@@ -35,16 +44,13 @@ profile ibus-daemon @{exec_path} flags=(attach_disconnected) {
   @{lib}/{,ibus/}ibus-*  rPUx,
 
   /usr/share/ibus/{,**} r,
-  /usr/share/ibus-table/tables/ r,
+  /usr/share/ibus-table/{,**} r,
 
-  /etc/machine-id r,
-  /var/lib/dbus/machine-id r,
+  owner /var/lib/gdm{3,}/.cache/ibus/{,**} rw,
+  owner /var/lib/gdm{3,}/.config/ibus/{,**} rw,
 
   owner @{user_cache_dirs}/ibus/{,**} rw,
-
-  /var/lib/gdm{3,}/.config/ibus/{,**} rw,
-  /var/lib/gdm{3,}/.cache/ibus/{,**} rw,
-  /var/lib/gdm{3,}/.config/ibus/bus/ r,
+  owner @{user_config_dirs}/ibus/ibus/{,**} rw,
 
   owner @{PROC}/@{pids}/fd/ r,
 
