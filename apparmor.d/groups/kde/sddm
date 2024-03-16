@@ -20,7 +20,6 @@ profile sddm @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/graphics>
   include <abstractions/kde-strict>
   include <abstractions/nameservice-strict>
-  include <abstractions/qt5>
   include <abstractions/wutmp>
 
   capability audit_write,
@@ -77,30 +76,25 @@ profile sddm @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   @{bin}/pidof         rix,
   @{bin}/tr            rix,
   @{bin}/tty           rix,
-  @{bin}/xdm            r,
+  @{bin}/xdm           r,
   @{bin}/xmodmap       rix,
-  @{bin}/unix_chkpwd   rPx,
 
-  @{bin}/dbus-run-session rix,
-  @{bin}/kwin_wayland rPx,
-  @{bin}/sddm-greeter{,-qt6} rPx,
-  @{bin}/Xorg         rPx,
-  /etc/sddm/Xsession  rPx,
-
-  @{bin}/flatpak      rPx,
-  @{bin}/sway        rPUx,
-  @{bin}/xauth        rCx -> xauth,
-  @{bin}/xsetroot     rPx,
-
-  @{bin}/dbus-update-activation-environment rCx -> dbus,
+  @{bin}/dbus-run-session     rPx -> dbus-session,
+  @{bin}/flatpak              rPx,
   @{bin}/gnome-keyring-daemon rPx,
   @{bin}/kwalletd{5,6}        rPx,
+  @{bin}/kwin_wayland         rPx,
+  @{bin}/sddm-greeter{,-qt6}  rPx,
   @{bin}/startplasma-wayland  rPx,
   @{bin}/startplasma-x11      rPx,
+  @{bin}/sway                rPUx,
   @{bin}/systemctl            rCx -> systemctl,
-  @{bin}/unix_chkpwd          rPx,
+  @{bin}/xauth                rCx -> xauth,
+  @{bin}/Xorg                 rPx,
   @{bin}/xrdb                 rPx,
   @{bin}/xset                 rPx,
+  @{bin}/xsetroot             rPx,
+  @{etc_ro}/sddm/Xsession     rPx,
   @{etc_ro}/X11/xdm/Xsession  rPx,
 
   /usr/etc/X11/xdm/Xsetup                 rix,
@@ -110,7 +104,6 @@ profile sddm @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   /usr/share/sddm/scripts/Xstop           rix,
 
   /usr/share/desktop-base/softwaves-theme/login/*.svg r,
-  /usr/share/icu/@{int}.@{int}/*.dat r,
   /usr/share/plasma/desktoptheme/** r,
   /usr/share/sddm/faces/.*.icon r,
   /usr/share/sddm/themes/** r,
@@ -148,7 +141,6 @@ profile sddm @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{user_config_dirs}/menus/{,**} r,
   owner @{user_config_dirs}/startkderc r,
 
-  owner @{user_share_dirs}/ w,
   owner @{user_share_dirs}/kwalletd/ rw,
   owner @{user_share_dirs}/kwalletd/kdewallet.salt rw,
   owner @{user_share_dirs}/sddm/ w,
@@ -172,9 +164,6 @@ profile sddm @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{run}/user/@{uid}/ r,
   owner @{run}/user/@{uid}/#@{int} rw,
   owner @{run}/user/@{uid}/kwallet5.socket rw,
-
-  @{sys}/devices/system/node/ r,
-  @{sys}/devices/system/node/node@{int}/meminfo r,
 
         @{PROC}/ r,
         @{PROC}/uptime r,
@@ -214,16 +203,6 @@ profile sddm @{exec_path} flags=(attach_disconnected,mediate_deleted) {
     owner @{run}/sddm/\{@{uuid}\}   rwl -> @{run}/sddm/\{@{uuid}\}-n,
 
     include if exists <local/sddm_xauth>
-  }
-
-  profile dbus {
-    include <abstractions/base>
-
-    @{bin}/dbus-update-activation-environment mr,
-
-    owner @{user_share_dirs}/sddm/xorg-session.log w,
-
-    include if exists <local/sddm_dbus>
   }
 
   include if exists <local/sddm>
