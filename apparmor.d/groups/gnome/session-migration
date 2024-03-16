@@ -1,0 +1,22 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/session-migration
+profile session-migration @{exec_path} {
+  include <abstractions/base>
+
+  @{exec_path} mr,
+
+  /usr/share/session-migration/{,**} r,
+
+  /var/lib/gdm{3,}/.local/share/session_migration-* r,
+
+  owner @{user_share_dirs}/session_migration-ubuntu rw,
+
+  include if exists <local/session-migration>
+}
