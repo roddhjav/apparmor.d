@@ -9,25 +9,15 @@ include <tunables/global>
 @{exec_path} = @{lib}/{,gdm/}gdm-{x,wayland}-session
 profile gdm-session @{exec_path} {
   include <abstractions/base>
-  include <abstractions/bash>
-  include <abstractions/bus-accessibility>
   include <abstractions/bus-session>
   include <abstractions/bus-system>
   include <abstractions/bus/org.freedesktop.systemd1-session>
   include <abstractions/bus/org.gnome.DisplayManager>
-  include <abstractions/consoles>
-  include <abstractions/dconf-write>
-  include <abstractions/nameservice-strict>
-  include <abstractions/zsh>
 
   signal (receive) set=(hup term) peer=gdm-session-worker,
-  signal (receive) set=(hup) peer=@{systemd},
   signal (receive) set=(term) peer=gdm,
-  signal (send) set=(kill) peer=xdg-permission-store,
-  signal (send) set=(term) peer=dbus-daemon,
-  signal (send) set=(term) peer=dbus-run-session,  
-  signal (send) set=(term) peer=gnome-session-binary,
-  signal (send) set=term peer=xorg,
+  signal (send)    set=(term) peer=dbus-session,
+  signal (send)    set=(term) peer=xorg,
 
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable
@@ -36,60 +26,22 @@ profile gdm-session @{exec_path} {
 
   @{exec_path} mr,
 
-  @{sh_path}                  rix,
-  @{bin}/cat                  rix,
-  @{bin}/env                  rix,
-  @{bin}/grep                 rix,
-  @{bin}/head                 rix,
-  @{bin}/id                   rix,
-  @{bin}/locale               rix,
-  @{bin}/locale-check         rix,
-  @{bin}/manpath              rix,
-  @{bin}/qmake                rix,
-  @{bin}/readlink             rix,
-  @{bin}/sed                  rix,
-  @{bin}/sort                 rix,
-  @{bin}/tr                   rix,
-  @{bin}/tty                  rix,
-  @{bin}/uname                rix,
-
-  @{bin}/{true,false}                            rix,
-  @{bin}/dbus-daemon                             rix,
-  @{bin}/dbus-run-session                        rix,
-  @{bin}/dpkg-query                              rpx,
-  @{bin}/flatpak                                rPUx,
-  @{bin}/gjs-console                             rPx,
-  @{bin}/gnome-session                           rix,
-  @{bin}/gsettings                               rPx,
-  @{lib}/{,at-spi2{,-core}/}at-spi-bus-launcher  rix,
-  @{lib}/at-spi2-registryd                       rix,
-  @{lib}/dconf-service                           rPx,
-  @{lib}/gnome-session-binary                    rPx,
-  @{lib}/xdg-permission-store                    rPx,
+  @{bin}/env                        rix,
+  @{bin}/gnome-session              rPx,
+  @{bin}/dbus-run-session           rPx -> dbus-session,
+  @{bin}/dbus-daemon                rPx -> dbus-session,
 
   # only: xorg
-  @{bin}/Xorg                                    rPx,
-  /etc/gdm{3,}/Prime/Default                     rix,
-  /etc/gdm{3,}/Xsession                          rPx,
+  @{bin}/Xorg                       rPx,
+  /etc/gdm{3,}/Prime/Default        rix,
+  /etc/gdm{3,}/Xsession             rPx,
 
-  /usr/share/dbus-1/{,**} r,
-  /usr/share/dconf/profile/gdm r,
-  /usr/share/defaults/at-spi2/accessibility.conf r,
   /usr/share/gdm{3,}/gdm.schemas r,
-  /usr/share/gdm{3,}/greeter-dconf-defaults r,
-  /usr/share/glib-2.0/schemas/gschemas.compiled r,
-  /usr/share/im-config/{,**} r,
-  /usr/share/libdebuginfod-common/debuginfod.sh r,
 
-  @{etc_ro}/profile.d/{,*} r,
-  /etc/dbus-1/{,**} r,
-  /etc/debuginfod/{,*} r,
-  /etc/default/im-config r,
+  /etc/default/locale r,
   /etc/gdm{3,}/custom.conf r,
   /etc/gdm{3,}/daemon.conf r,
   /etc/locale.conf r,
-  /etc/manpath.config r,
-  /etc/shells r,
   /etc/sysconfig/console r,
   /etc/sysconfig/displaymanager r,
   /etc/sysconfig/language r,
@@ -97,31 +49,15 @@ profile gdm-session @{exec_path} {
   /etc/sysconfig/proxy r,
   /etc/sysconfig/windowmanager r,
 
-  /var/lib/gdm{3,}/.cache/gdm/ rw,
-  /var/lib/gdm{3,}/.cache/gdm/Xauthority rw,
-  /var/lib/gdm{3,}/.config/dconf/user r,
-  /var/lib/gdm{3,}/greeter-dconf-defaults r,
+  owner /var/lib/gdm{3,}/.cache/gdm/ rw,
+  owner /var/lib/gdm{3,}/.cache/gdm/Xauthority rw,
+  owner /var/lib/gdm{3,}/.config/dconf/user r,
+  owner /var/lib/gdm{3,}/greeter-dconf-defaults r,
 
-  owner @{HOME}/.alias r,
-  owner @{HOME}/.i18n r,
+  owner @{run}/gdm{3,}/custom.conf r,
 
-  @{run}/gdm{3,}/custom.conf r,
-
-        @{run}/systemd/userdb/ r,
-        @{run}/systemd/users/@{uid} r,
-  owner @{run}/user/@{uid}/dbus-1/ rw,
-  owner @{run}/user/@{uid}/dbus-1/services/ rw,
   owner @{run}/user/@{uid}/gdm/ w,
   owner @{run}/user/@{uid}/gdm/Xauthority rw,  # only: xorg
-
-  @{sys}/module/apparmor/parameters/enabled r,
-
-        @{PROC}/@{pid}/cgroup r,
-        @{PROC}/@{pids}/oom_score_adj rw,
-  owner @{PROC}/@{pid}/cgroup r,
-  owner @{PROC}/@{pid}/cmdline r,
-  owner @{PROC}/@{pid}/fd/ r,
-  owner @{PROC}/@{pid}/loginuid r,
 
   /dev/tty@{int} rw,
 

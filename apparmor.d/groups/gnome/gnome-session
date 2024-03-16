@@ -1,0 +1,55 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/gnome-session
+profile gnome-session @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/bash>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+  include <abstractions/zsh>
+
+  @{exec_path} mrix,
+
+  @{sh_path}                   rix,
+  @{bin}/cat                   rix,
+  @{bin}/gettext.sh              r,
+  @{bin}/grep                  rix,
+  @{bin}/locale                rix,
+  @{bin}/locale-check          rix,
+  @{bin}/sed                   rix,
+  @{bin}/tr                    rix,
+  @{bin}/tty                   rix,
+
+  @{bin}/flatpak               rCx -> flatpak,
+  @{bin}/gsettings             rPx,
+  @{lib}/gnome-session-binary  rPx,
+
+  /usr/share/im-config/{,**} r,
+  /usr/share/libdebuginfod-common/debuginfod.sh r,
+
+  @{etc_ro}/profile.d/{,*} r,
+  /etc/debuginfod/{,*} r,
+  /etc/default/im-config r,
+  /etc/shells r,
+  /etc/X11/Xsession.d/*im-config_launch r,
+
+  /dev/tty@{int} rw,
+
+  profile flatpak {
+    include <abstractions/base>
+  
+    @{bin}/flatpak mr,
+  
+    /dev/tty@{int} rw,
+
+    include if exists <local/gnome-session_flatpak>
+  }
+
+  include if exists <local/gnome-session>
+}
