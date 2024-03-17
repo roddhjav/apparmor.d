@@ -8,8 +8,7 @@
 set -eu -o pipefail
 
 readonly COMMAND="$1"
-readonly OUTPUT="$PWD"
-readonly PKGDEST="${PKGDEST:-$PWD}"
+readonly OUTPUT="${PKGDEST:-$PWD}"
 readonly PKGNAME=apparmor.d
 VERSION="0.$(git rev-list --count HEAD)"
 readonly VERSION
