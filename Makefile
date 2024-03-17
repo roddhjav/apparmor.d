@@ -5,6 +5,7 @@
 
 DESTDIR ?= /
 BUILD := .build
+PKGDEST := /tmp/pkg
 PKGNAME := apparmor.d
 P = $(filter-out dpkg,$(notdir $(wildcard ${BUILD}/apparmor.d/*)))
 
@@ -74,11 +75,11 @@ pkg:
 
 dpkg:
 	@bash dists/build.sh dpkg
-	@sudo dpkg -i ${PKGNAME}_*.deb
+	@sudo dpkg -i ${PKGDEST}/${PKGNAME}_*.deb
 
 rpm:
 	@bash dists/build.sh rpm
-	@sudo rpm -ivh --force  ${PKGNAME}-*.rpm
+	@sudo rpm -ivh --force  ${PKGDEST}/${PKGNAME}-*.rpm
 
 tests:
 	@go test ./cmd/... -v -cover -coverprofile=coverage.out
