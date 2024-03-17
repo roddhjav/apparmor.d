@@ -26,7 +26,7 @@ full: build
 ROOT = $(shell find "${BUILD}/root" -type f -printf "%P\n")
 PROFILES = $(shell find "${BUILD}/apparmor.d" -type f -printf "%P\n")
 install:
-	@install -Dm755 ${BUILD}/aa-log ${DESTDIR}/usr/bin/aa-log
+	@install -Dm0755 ${BUILD}/aa-log ${DESTDIR}/usr/bin/aa-log
 	@for file in ${ROOT}; do \
 		install -Dm0644 "${BUILD}/root/$${file}" "${DESTDIR}/$${file}"; \
 	done;
@@ -78,7 +78,7 @@ dpkg:
 
 rpm:
 	@bash dists/build.sh rpm
-	@sudo rpm -i ${PKGNAME}-*.rpm
+	@sudo rpm -ivh --force  ${PKGNAME}-*.rpm
 
 tests:
 	@go test ./cmd/... -v -cover -coverprofile=coverage.out

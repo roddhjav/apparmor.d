@@ -8,7 +8,8 @@
 set -eu -o pipefail
 
 readonly COMMAND="$1"
-readonly OUTPUT="${PKGDEST:-$PWD}"
+readonly OUTPUT="$PWD"
+readonly PKGDEST="${PKGDEST:-$PWD}"
 readonly PKGNAME=apparmor.d
 VERSION="0.$(git rev-list --count HEAD)"
 readonly VERSION
@@ -27,7 +28,7 @@ main() {
         ;;
 
     rpm)
-        RPMBUILD_ROOT=$(mktemp -d)
+        RPMBUILD_ROOT=$(mktemp -d /tmp/$PKGNAME.XXXXXX)
         ARCH=$(uname -m)
         readonly RPMBUILD_ROOT ARCH
 
@@ -39,7 +40,7 @@ main() {
         sed -i "s/^Version:.*/Version:        $VERSION/" "SPECS/$PKGNAME.spec"
         rpmbuild -bb --define "_topdir $RPMBUILD_ROOT" "SPECS/$PKGNAME.spec"
 
-        cp "$RPMBUILD_ROOT/RPMS/$ARCH/"*.rpm "$OUTPUT"
+        mv "$RPMBUILD_ROOT/RPMS/$ARCH/"*.rpm "$OUTPUT"
         rm -rf "$RPMBUILD_ROOT"
         ;;
 
