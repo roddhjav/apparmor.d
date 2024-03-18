@@ -11,6 +11,7 @@ include <tunables/global>
 profile blueman @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/audio-client>
+  include <abstractions/bus-session>
   include <abstractions/dconf-write>
   include <abstractions/desktop>
   include <abstractions/fontconfig-cache-read>
@@ -26,17 +27,15 @@ profile blueman @{exec_path} flags=(attach_disconnected) {
 
   ptrace (read) peer=gjs-console,
 
+  # dbus: own bus=session name=org.blueman.Applet
+  # dbus: own bus=session name=org.blueman.Manager
+
   @{exec_path} mrix,
 
   @{sh_path}           rix,
-
-  @{bin}/blueman-tray  rPx,
-  @{open_path}         rPx -> child-open,
+  @{open_path}         rix,
 
   /usr/share/blueman/{,**} r,
-
-  /etc/machine-id r,
-  /var/lib/dbus/machine-id r,
 
   /var/lib/blueman/network.state r,
 
@@ -53,9 +52,9 @@ profile blueman @{exec_path} flags=(attach_disconnected) {
   owner @{user_cache_dirs}/obexd/ rw,
   owner @{user_cache_dirs}/obexd/* rw,
 
+        @{PROC}/@{pids}/cmdline r,
   owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/mounts r,
-        @{PROC}/@{pids}/cmdline r,
 
   /dev/dri/card@{int} rw,
   /dev/rfkill r,
