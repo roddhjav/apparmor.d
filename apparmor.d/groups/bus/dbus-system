@@ -12,9 +12,10 @@ abi <abi/3.0>,
 include <tunables/global>
 
 @{exec_path}  = @{bin}/dbus-broker @{bin}/dbus-broker-launch
-@{exec_path} += @{bin}/dbus-daemon @{lib}/dbus-1.0/dbus-daemon-launch-helper
+@{exec_path} += @{bin}/dbus-daemon @{lib}/dbus-1{,.0}/dbus-daemon-launch-helper
 profile dbus-system flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/consoles>
   include <abstractions/bus-system>
   include <abstractions/nameservice-strict>
 
@@ -22,6 +23,7 @@ profile dbus-system flags=(attach_disconnected) {
   capability net_admin,
   capability setgid,
   capability setuid,
+  capability sys_resource,
 
   network netlink raw,
   network bluetooth stream,
@@ -59,6 +61,7 @@ profile dbus-system flags=(attach_disconnected) {
         @{PROC}/@{pid}/cmdline r,
   owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/mounts r,
+  owner @{PROC}/@{pid}/oom_score_adj rw,
 
   /dev/dri/card@{int} rw,
   /dev/input/event@{int} rw,
