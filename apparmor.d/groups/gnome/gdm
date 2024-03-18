@@ -15,6 +15,7 @@ profile gdm @{exec_path} flags=(attach_disconnected) {
   include <abstractions/wutmp>
 
   capability chown,
+  capability dac_override,
   capability dac_read_search,
   capability fsetid,
   capability kill,
@@ -25,7 +26,14 @@ profile gdm @{exec_path} flags=(attach_disconnected) {
 
   ptrace (read) peer=unconfined,
 
-  signal (send) set=(term),
+  signal (send) set=(term) peer=dbus-accessibility,
+  signal (send) set=(term) peer=dbus-session,
+  signal (send) set=(term) peer=dconf-service,
+  signal (send) set=(term) peer=gdm-session-worker,
+  signal (send) set=(term) peer=gdm-session,
+  signal (send) set=(term) peer=gnome-session-binary,
+  signal (send) set=(term) peer=xdg-permission-store,
+  signal (send) set=(term) peer=xorg,
 
   unix (bind, listen) type=stream addr="@/tmp/dbus-@{rand8}",
   unix (send receive accept) type=stream addr="@/tmp/dbus-@{rand8}" peer=(label=gdm-session-worker, addr=none),
@@ -62,6 +70,8 @@ profile gdm @{exec_path} flags=(attach_disconnected) {
   /etc/sysconfig/windowmanager r,
 
   /var/{lib,log}/gdm{3,}/ rw,
+
+  owner @{GDM_HOME}/block-initial-setup rw,
 
         @{run}/gdm{3,}/greeter/ rw,
         @{run}/systemd/seats/seat@{int} r,
