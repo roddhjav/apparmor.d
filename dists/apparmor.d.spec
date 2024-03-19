@@ -39,7 +39,7 @@ systemctl is-active -q apparmor && systemctl reload apparmor ||:
 %exclude /etc/apparmor.d/libvirtd
 %exclude /etc/apparmor.d/unix-chkpwd
 %exclude /etc/apparmor.d/virt-aa-helper
-%config(noreplace) /etc/apparmor.d/
+%config /etc/apparmor.d/
 /usr/bin/aa-log
 
 %dir /usr/lib/systemd/system/dbus-broker.service.d/
