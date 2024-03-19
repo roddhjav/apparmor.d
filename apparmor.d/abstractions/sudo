@@ -5,6 +5,7 @@
 # Minimal set of rules for sudo. Interactive sudo need more rules.
 
   include <abstractions/authentication>
+  include <abstractions/bus-system>
   include <abstractions/consoles>
   include <abstractions/nameservice-strict>
   include <abstractions/wutmp>
@@ -16,6 +17,15 @@
   capability sys_resource,
 
   network netlink raw,   # PAM
+
+  dbus send bus=system path=/org/freedesktop/login1
+       interface=org.freedesktop.logi1.Manager
+       member=CreateSession
+       peer=(name=org.freedesktop.login1, label=systemd-logind),
+
+  dbus (send receive) bus=session path=/org/freedesktop/systemd1
+         interface=org.freedesktop.systemd.Manager
+         member={JobRemoved,StartTransientUnit},
 
   @{lib}/sudo/** mr,
 

@@ -21,7 +21,6 @@ profile sudo @{exec_path} flags=(attach_disconnected) {
 
   network inet dgram,
   network inet6 dgram,
-  network netlink raw,   # PAM
 
   ptrace (read),
 
@@ -30,20 +29,11 @@ profile sudo @{exec_path} flags=(attach_disconnected) {
   signal (send) set=(cont,hup) peer=su,
   signal (send) set=(winch),
 
-  dbus send bus=system path=/org/freedesktop/login1
-       interface=org.freedesktop.logi1.Manager
-       member={CreateSession,ReleaseSession}
-       peer=(name=org.freedesktop.login1, label=systemd-logind),
-
-  dbus (send receive) bus=session path=/org/freedesktop/systemd1
-         interface=org.freedesktop.systemd.Manager
-         member={JobRemoved,StartTransientUnit},
-
   @{exec_path} mr,
 
   @{bin}/@{shells}                 rUx,
-  @{lib}/**                        rPUx,
-  /opt/*/**                        rPUx,
+  @{lib}/**                         PUx,
+  /opt/*/**                         PUx,
   /snap/snapd/@{int}@{bin}/snap    rPUx,
 
         /var/db/sudo/lectured/ r,
