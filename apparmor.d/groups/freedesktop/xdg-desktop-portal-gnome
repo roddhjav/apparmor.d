@@ -7,7 +7,7 @@ abi <abi/3.0>,
 include <tunables/global>
 
 @{exec_path} = @{lib}/xdg-desktop-portal-gnome
-profile xdg-desktop-portal-gnome @{exec_path} {
+profile xdg-desktop-portal-gnome @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus-session>
   include <abstractions/bus-system>
@@ -27,6 +27,7 @@ profile xdg-desktop-portal-gnome @{exec_path} {
   network unix stream,
 
   signal (receive) set=term peer=gdm,
+  signal (receive) set=(hup term) peer=gdm-session-worker,
 
   # dbus: own bus=session name=org.freedesktop.impl.portal.desktop.gnome
 
@@ -81,6 +82,8 @@ profile xdg-desktop-portal-gnome @{exec_path} {
   owner @{PROC}/@{pid}/mountinfo r,
   owner @{PROC}/@{pid}/task/@{tid}/ r,
   owner @{PROC}/@{pid}/task/@{tid}/status r,
+
+  owner /dev/tty@{int} rw,
 
   include if exists <local/xdg-desktop-portal-gnome>
 }
