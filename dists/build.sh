@@ -47,4 +47,5 @@ main() {
     esac
 }
 
+mkdir -p "$OUTPUT"
 main "$@"
