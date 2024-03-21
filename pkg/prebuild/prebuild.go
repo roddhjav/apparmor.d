@@ -12,6 +12,7 @@ import (
 	"github.com/arduino/go-paths-helper"
 	"github.com/roddhjav/apparmor.d/pkg/logging"
 	oss "github.com/roddhjav/apparmor.d/pkg/os"
+	"github.com/roddhjav/apparmor.d/pkg/prebuild/directive"
 )
 
 var (
