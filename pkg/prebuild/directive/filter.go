@@ -6,11 +6,11 @@ package directive
 
 import (
 	"regexp"
-	"slices"
 	"strings"
 
 	oss "github.com/roddhjav/apparmor.d/pkg/os"
 	"golang.org/x/exp/maps"
+	"golang.org/x/exp/slices"
 )
 
 type FilterOnly struct {
