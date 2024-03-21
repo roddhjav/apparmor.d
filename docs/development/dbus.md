@@ -22,7 +22,7 @@ We use a special directive to generate (when running `make`) more advanced dbus 
 
 **Directive format**
 ```
-# dbus: ( own | talk ) bus=( system | session ) name=AARE [label=AARE] [interface=AARE] [path=AARE]
+#aa:dbus: ( own | talk ) bus=( system | session ) name=AARE [label=AARE] [interface=AARE] [path=AARE]
 ```
 
 The directive format is on purpose very similar to apparmor dbus rules. However, there are some restrictions:
@@ -41,7 +41,7 @@ Allow owning a dbus interface:
 
     [apparmor.d/groups/network/NetworkManager](https://github.com/roddhjav/apparmor.d/blob/a3b15973640042af7da0ed540db690c711fbf6ec/apparmor.d/groups/network/NetworkManager#L46)
     ``` aa linenums="46"
-    # dbus: own bus=system name=org.freedesktop.NetworkManager
+    #aa:dbus: own bus=system name=org.freedesktop.NetworkManager
     ```
 
 Allow talking to a dbus interface on a given profile
@@ -50,6 +50,6 @@ Allow talking to a dbus interface on a given profile
 
     [apparmor.d/groups/gnome/gdm](https://github.com/roddhjav/apparmor.d/blob/a3b15973640042af7da0ed540db690c711fbf6ec/apparmor.d/groups/gnome/gdm#L32)
     ``` aa linenums="32"
-    # dbus: talk bus=system name=org.freedesktop.login1 label=systemd-logind
+    #aa:dbus: talk bus=system name=org.freedesktop.login1 label=systemd-logind
     ```
 
