@@ -61,3 +61,32 @@ func TestNewOption(t *testing.T) {
 		})
 	}
 }
+
+func TestRun(t *testing.T) {
+	tests := []struct {
+		name    string
+		file    *paths.Path
+		profile string
+		want    string
+	}{
+		{
+			name:    "none",
+			file:    nil,
+			profile: `  `,
+			want:    `  `,
+		},
+		{
+			name:    "present",
+			file:    nil,
+			profile: `  #aa:dbus own bus=system name=org.freedesktop.systemd1`,
+			want:    dbusOwnSystemd1,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := Run(tt.file, tt.profile); got != tt.want {
+				t.Errorf("Run() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
