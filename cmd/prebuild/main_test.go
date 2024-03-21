@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"testing"
 
+	oss "github.com/roddhjav/apparmor.d/pkg/os"
 	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 )
 
@@ -71,7 +72,7 @@ func Test_AAPrebuild(t *testing.T) {
 	chdirGitRoot()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			prebuild.Distribution = tt.dist
+			oss.Distribution = tt.dist
 			if tt.full {
 				prebuild.Prepares = append(prebuild.Prepares, prebuild.SetFullSystemPolicy)
 			}

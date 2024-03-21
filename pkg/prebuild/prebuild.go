@@ -11,11 +11,11 @@ import (
 
 	"github.com/arduino/go-paths-helper"
 	"github.com/roddhjav/apparmor.d/pkg/logging"
+	oss "github.com/roddhjav/apparmor.d/pkg/os"
 )
 
 var (
 	overwrite     bool = false
-	Distribution  string
 	DistDir       *paths.Path
 	Root          *paths.Path
 	RootApparmord *paths.Path
@@ -27,10 +27,8 @@ func init() {
 	Root = paths.New(".build")
 	FlagDir = DistDir.Join("flags")
 	RootApparmord = Root.Join("apparmor.d")
-	Distribution = getSupportedDistribution()
-	if Distribution == "ubuntu" {
-		os := NewOSRelease()
-		if os["VERSION_CODENAME"] == "noble" {
+	if oss.Distribution == "ubuntu" {
+		if oss.Release["VERSION_CODENAME"] == "noble" {
 			Builds = append(Builds, BuildABI3)
 			overwrite = true
 		}

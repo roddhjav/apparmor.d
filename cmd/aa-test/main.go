@@ -15,7 +15,7 @@ import (
 	"github.com/roddhjav/apparmor.d/pkg/aa"
 	"github.com/roddhjav/apparmor.d/pkg/integration"
 	"github.com/roddhjav/apparmor.d/pkg/logging"
-	"github.com/roddhjav/apparmor.d/pkg/prebuild"
+	oss "github.com/roddhjav/apparmor.d/pkg/os"
 )
 
 const usage = `aa-test [-h] [--bootstrap | --run | --list]
@@ -123,7 +123,7 @@ func testDeps(dryRun bool) error {
 	}
 
 	deps := tSuite.GetDependencies()
-	switch prebuild.Distribution {
+	switch oss.Distribution {
 	case "arch":
 		arg := []string{"pacman", "-Sy", "--noconfirm"}
 		arg = append(arg, deps...)

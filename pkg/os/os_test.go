@@ -2,7 +2,7 @@
 // Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
 // SPDX-License-Identifier: GPL-2.0-only
 
-package prebuild
+package util
 
 import (
 	"reflect"
@@ -79,7 +79,7 @@ ANSI_COLOR="0;38;2;60;110;180"
 LOGO=fedora-logo-icon`
 )
 
-func TestNewOSRelease(t *testing.T) {
+func Test_getOSRelease(t *testing.T) {
 	tests := []struct {
 		name      string
 		osRelease string
@@ -128,14 +128,14 @@ func TestNewOSRelease(t *testing.T) {
 			if err != nil {
 				return
 			}
-			if got := NewOSRelease(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("NewOSRelease() = %v, want %v", got, tt.want)
+			if got := getOSRelease(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("getOSRelease() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func Test_getSupportedDistribution(t *testing.T) {
+func Test_getDistribution(t *testing.T) {
 	tests := []struct {
 		name      string
 		osRelease string
@@ -161,11 +161,11 @@ func Test_getSupportedDistribution(t *testing.T) {
 			osRelease: OpenSUSETumbleweed,
 			want:      "opensuse",
 		},
-		// {
-		// 	name:      "Fedora",
-		// 	osRelease: Fedora,
-		// 	want:      "fedora",
-		// },
+		{
+			name:      "Fedora",
+			osRelease: Fedora,
+			want:      "fedora",
+		},
 	}
 
 	osReleaseFile = "/tmp/os-release"
@@ -175,9 +175,48 @@ func Test_getSupportedDistribution(t *testing.T) {
 			if err != nil {
 				return
 			}
-			got := getSupportedDistribution()
+			Release = getOSRelease()
+			got := getDistribution()
 			if got != tt.want {
-				t.Errorf("getSupportedDistribution() = %v, want %v", got, tt.want)
+				t.Errorf("getDistribution() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_getFamily(t *testing.T) {
+	tests := []struct {
+		name string
+		dist string
+		want string
+	}{
+		{
+			name: "Archlinux",
+			dist: "arch",
+			want: "pacman",
+		},
+		{
+			name: "Ubuntu",
+			dist: "ubuntu",
+			want: "apt",
+		},
+		{
+			name: "Debian",
+			dist: "debian",
+			want: "apt",
+		},
+		{
+			name: "OpenSUSE Tumbleweed",
+			dist: "opensuse",
+			want: "zypper",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			Distribution = tt.dist
+			if got := getFamily(); got != tt.want {
+				t.Errorf("getFamily() = %v, want %v", got, tt.want)
 			}
 		})
 	}

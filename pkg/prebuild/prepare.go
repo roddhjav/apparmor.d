@@ -12,6 +12,7 @@ import (
 
 	"github.com/arduino/go-paths-helper"
 	"github.com/roddhjav/apparmor.d/pkg/logging"
+	oss "github.com/roddhjav/apparmor.d/pkg/os"
 	"github.com/roddhjav/apparmor.d/pkg/util"
 )
 
@@ -59,7 +60,7 @@ func Synchronise() ([]string, error) {
 // Ignore profiles and files as defined in dists/ignore/
 func Ignore() ([]string, error) {
 	res := []string{}
-	for _, name := range []string{"main.ignore", Distribution + ".ignore"} {
+	for _, name := range []string{"main.ignore", oss.Distribution + ".ignore"} {
 		path := DistDir.Join("ignore", name)
 		if !path.Exist() {
 			continue
@@ -130,7 +131,7 @@ func Merge() ([]string, error) {
 // Set the distribution specificities
 func Configure() ([]string, error) {
 	res := []string{}
-	switch Distribution {
+	switch oss.Distribution {
 	case "arch", "opensuse":
 
 	case "ubuntu":
@@ -152,7 +153,7 @@ func Configure() ([]string, error) {
 		}
 
 	default:
-		return []string{}, fmt.Errorf("%s is not a supported distribution", Distribution)
+		return []string{}, fmt.Errorf("%s is not a supported distribution", oss.Distribution)
 
 	}
 	return res, nil
@@ -161,7 +162,7 @@ func Configure() ([]string, error) {
 // Set flags on some profiles according to manifest defined in `dists/flags/`
 func SetFlags() ([]string, error) {
 	res := []string{}
-	for _, name := range []string{"main.flags", Distribution + ".flags"} {
+	for _, name := range []string{"main.flags", oss.Distribution + ".flags"} {
 		path := FlagDir.Join(name)
 		if !path.Exist() {
 			continue
