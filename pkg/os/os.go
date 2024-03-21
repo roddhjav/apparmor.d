@@ -6,10 +6,10 @@ package util
 
 import (
 	"os"
-	"slices"
 	"strings"
 
 	"github.com/arduino/go-paths-helper"
+	"golang.org/x/exp/slices"
 )
 
 var (
