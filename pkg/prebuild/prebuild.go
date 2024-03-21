@@ -89,6 +89,7 @@ func Build() error {
 		for _, fct := range Directives {
 			profile = fct(file, profile)
 		}
+		profile = directive.Run(file, profile)
 		if err := file.WriteFile([]byte(profile)); err != nil {
 			return err
 		}
