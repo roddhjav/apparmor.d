@@ -63,15 +63,15 @@ profile packagekitd @{exec_path} flags=(attach_disconnected) {
   @{bin}/touch          rix,
 
   @{bin}/appstreamcli                rPx,
-  @{bin}/arch-audit                  rPx, # only: arch
-  @{bin}/dpkg                        rPx -> child-dpkg, # only: dpkg
+  @{bin}/arch-audit                  rPx, #aa:only arch
+  @{bin}/dpkg                        rPx -> child-dpkg, #aa:only apt
   @{bin}/fc-cache                    rPx,
   @{bin}/glib-compile-schemas        rPx,
   @{bin}/install-info                rPx,
-  @{bin}/rpmdb2solv                 rPUx, # only: opensuse
+  @{bin}/rpmdb2solv                 rPUx, #aa:only opensuse
   @{bin}/systemd-inhibit             rPx,
   @{bin}/update-desktop-database     rPx,
-  @{lib}/apt/methods/*               rPx, # only: dpkg
+  @{lib}/apt/methods/*               rPx, #aa:only apt
   @{lib}/cnf-update-db               rPx,
   @{lib}/update-notifier/update-motd-updates-available  rPx,
   @{lib}/zypp/plugins/appdata/InstallAppdata rPUx, # TODO: write the profile
@@ -94,10 +94,12 @@ profile packagekitd @{exec_path} flags=(attach_disconnected) {
   owner /tmp/packagekit* rw,
 
         @{run}/systemd/inhibit/*.ref rw,
-        @{run}/zypp.pid rwk, # only: opensuse
   owner @{run}/systemd/users/@{uid} r,
-  owner @{run}/zypp-rpm.pid rwk, # only: opensuse
-  owner @{run}/zypp/packages/ r, # only: opensuse
+
+  #aa:only opensuse
+        @{run}/zypp.pid rwk,
+  owner @{run}/zypp-rpm.pid rwk,
+  owner @{run}/zypp/packages/ r,
 
   owner /dev/shm/AP_0x@{rand6}/{,**} rw,
   owner /dev/shm/ r,
@@ -132,10 +134,12 @@ profile packagekitd @{exec_path} flags=(attach_disconnected) {
 
     @{HOME}/@{XDG_GPG_DIR}/*.conf r,
 
-    owner /etc/pacman.d/gnupg/ r, # only: arch
+    #aa:only arch
+    owner /etc/pacman.d/gnupg/ r,
     owner /etc/pacman.d/gnupg/** rwkl -> /tmp/pacman.d/gnupg/**,
 
-    owner /var/tmp/zypp.*/*/ r, # only: opensuse
+    #aa:only opensuse
+    owner /var/tmp/zypp.*/*/ r,
     owner /var/tmp/zypp.*/*/** rwkl -> /var/tmp/zypp.*/zypp-trusted-*/**,
 
     owner @{run}/user/@{uid}/gnupg/ r,
