@@ -8,6 +8,8 @@ import (
 	"os"
 	"os/exec"
 	"testing"
+
+	oss "github.com/roddhjav/apparmor.d/pkg/os"
 )
 
 func chdirGitRoot() {
@@ -74,7 +76,7 @@ func Test_PreBuild(t *testing.T) {
 	chdirGitRoot()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			Distribution = tt.dist
+			oss.Distribution = tt.dist
 			if tt.full {
 				Prepares = append(Prepares, SetFullSystemPolicy)
 				Builds = append(Builds, BuildFullSystemPolicy)

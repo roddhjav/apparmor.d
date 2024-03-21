@@ -10,6 +10,7 @@ import (
 	"os"
 
 	"github.com/roddhjav/apparmor.d/pkg/logging"
+	oss "github.com/roddhjav/apparmor.d/pkg/os"
 	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 )
 
@@ -46,7 +47,7 @@ func init() {
 }
 
 func aaPrebuild() error {
-	logging.Step("Building apparmor.d profiles for %s.", prebuild.Distribution)
+	logging.Step("Building apparmor.d profiles for %s.", oss.Distribution)
 
 	if full {
 		prebuild.Prepares = append(prebuild.Prepares, prebuild.SetFullSystemPolicy)
