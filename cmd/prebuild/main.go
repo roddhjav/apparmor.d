@@ -12,11 +12,13 @@ import (
 	"github.com/roddhjav/apparmor.d/pkg/logging"
 	oss "github.com/roddhjav/apparmor.d/pkg/os"
 	"github.com/roddhjav/apparmor.d/pkg/prebuild"
+	"github.com/roddhjav/apparmor.d/pkg/prebuild/directive"
 )
 
-const usage = `prebuild [-h] [--full] [--complain | --enforce]
+const usage = `prebuild [-h] [--full] [--complain | --enforce] [profiles...]
 
-    Prebuild apparmor.d profiles for a given distribution.
+    Prebuild apparmor.d profiles for a given distribution and apply
+    internal built-in directives.
 
 Options:
     -h, --help      Show this help message and exit.
@@ -24,6 +26,8 @@ Options:
     -c, --complain  Set complain flag on all profiles.
     -e, --enforce   Set enforce flag on all profiles.
         --abi4      Convert the profiles to Apparmor abi/4.0.
+
+Directives:
 `
 
 var (
@@ -73,7 +77,13 @@ func aaPrebuild() error {
 }
 
 func main() {
-	flag.Usage = func() { fmt.Print(usage) }
+	flag.Usage = func() {
+		res := usage
+		for _, d := range directive.Directives {
+			res += `    ` + d.Usage() + "\n"
+		}
+		fmt.Print(res)
+	}
 	flag.Parse()
 	if help {
 		flag.Usage()
