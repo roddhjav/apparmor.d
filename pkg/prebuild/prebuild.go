@@ -56,9 +56,8 @@ func printBuildMessage() {
 		name := getFctName(fct)
 		logging.Success("%v", BuildMsg[name])
 	}
-	for _, fct := range Directives {
-		name := getFctName(fct)
-		logging.Success("%v", DirectiveMsg[name])
+	for _, dir := range directive.Directives {
+		logging.Success("%v", dir.Message())
 	}
 }
 
@@ -86,9 +85,6 @@ func Build() error {
 		profile := string(content)
 		for _, fct := range Builds {
 			profile = fct(profile)
-		}
-		for _, fct := range Directives {
-			profile = fct(file, profile)
 		}
 		profile = directive.Run(file, profile)
 		if err := file.WriteFile([]byte(profile)); err != nil {
