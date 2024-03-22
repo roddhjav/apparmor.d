@@ -32,6 +32,20 @@ func TestExec_Apply(t *testing.T) {
   @{lib}/@{multiarch}/{,libexec/}DiscoverNotifier Px,
 `,
 		},
+		{
+			name:          "exec-unconfined",
+			rootApparmord: paths.New("../../../apparmor.d/groups/freedesktop/"),
+			opt: &Option{
+				Name: "exec",
+				Args: map[string]string{"U": "", "polkit-agent-helper": ""},
+				File: nil,
+				Raw:  "  #aa:exec U polkit-agent-helper",
+			},
+			profile: `  #aa:exec U polkit-agent-helper`,
+			want: `  @{lib}/polkit-[0-9]/polkit-agent-helper-[0-9] Ux,
+  @{lib}/polkit-agent-helper-[0-9] Ux,
+`,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

@@ -18,7 +18,7 @@ func init() {
 	Directives["exec"] = &Exec{
 		DirectiveBase: DirectiveBase{
 			message: "Exec directive applied",
-			usage:   `#aa:exec [P|U|p|u|i|] profiles_name...`,
+			usage:   `#aa:exec [P|U|p|u|PU|pu|] profiles_name...`,
 		},
 	}
 }
@@ -26,23 +26,37 @@ func init() {
 func (d Exec) Apply(opt *Option, profile string) string {
 	res := ""
 	transition := "Px"
+	transitions := []string{"P", "U", "p", "u", "PU", "pu"}
+	for _, t := range transitions {
+		if _, present := opt.Args[t]; present {
+			transition = t + "x"
+			delete(opt.Args, t)
+			break
+		}
+	}
+
 	for name := range opt.Args {
-		tmp, err := rootApparmord.Join(name).ReadFile()
+		content, err := rootApparmord.Join(name).ReadFile()
 		if err != nil {
 			panic(err)
 		}
-		profiletoTransition := string(tmp)
+		profiletoTransition := string(content)
 
-		p := aa.DefaultTunables()
-		p.ParseVariables(profiletoTransition)
-		for _, variable := range p.Variables {
+		p := &aa.AppArmorProfile{}
+		dstProfile := aa.DefaultTunables()
+		dstProfile.ParseVariables(profiletoTransition)
+		for _, variable := range dstProfile.Variables {
 			if variable.Name == "exec_path" {
-				for _, value := range variable.Values {
-					res += "  " + value + " " + transition + ",\n"
+				for _, v := range variable.Values {
+					p.Rules = append(p.Rules, &aa.File{
+						Path:   v,
+						Access: transition,
+					})
 				}
+				break
 			}
 		}
-		profile = strings.Replace(profile, opt.Raw, res, -1)
+		res += p.String()
 	}
-	return profile
+	return strings.Replace(profile, opt.Raw, res, -1)
 }
