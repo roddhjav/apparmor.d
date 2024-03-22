@@ -11,6 +11,7 @@ include <tunables/global>
 profile fwupdmgr @{exec_path} flags=(attach_disconnected,complain) {
   include <abstractions/base>
   include <abstractions/bus-system>
+  include <abstractions/bus/org.freedesktop.NetworkManager>
   include <abstractions/dconf-write>
   include <abstractions/nameservice-strict>
   include <abstractions/ssl_certs>
@@ -25,26 +26,8 @@ profile fwupdmgr @{exec_path} flags=(attach_disconnected,complain) {
   network inet6 dgram,
   network netlink raw,
 
-  dbus send bus=system path=/
-      interface=org.freedesktop.DBus.Properties
-      member=GetAll,
+  #aa:dbus talk bus=system name=org.freedesktop.fwupd label=fwupd path=/
   
-  dbus send bus=system path=/
-      interface=org.freedesktop.fwupd
-      member={GetDevices,GetPlugins,GetRemotes,SetFeatureFlags,SetHints,UpdateMetadata},
-  
-  dbus send bus=system path=/org/freedesktop/systemd[0-9]
-      interface=org.freedesktop.DBus.Properties
-      member=GetAll,
-  
-  dbus send bus=system path=/org/freedesktop/systemd[0-9]
-      interface=org.freedesktop.systemd[0-9].Manager
-      member={GetDefaultTarget,GetUnit},
-
-  dbus receive bus=system path=/
-      interface=org.freedesktop.fwupd
-      member=Changed,
-
   @{exec_path} mr,
 
   @{bin}/dbus-launch  rCx -> dbus,

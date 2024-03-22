@@ -75,10 +75,9 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
   # Owned by gnome-shell
 
-  dbus bind bus=session name=org.gnome.*,
-  dbus (send, receive) bus=session path=/org/gnome/**
-       interface={org.gnome.*,org.freedesktop.{Application,DBus.Properties,DBus.ObjectManager},org.gtk.{Actions,Application}}
-       peer=(name="{:*,org.gnome.*,org.freedesktop.DBus}"),
+  #aa:dbus own bus=session name=org.gnome.keyring.SystemPrompter
+  #aa:dbus own bus=session name=org.gnome.Mutter
+  #aa:dbus own bus=session name=org.gnome.Shell
 
   #aa:dbus own bus=session name=com.canonical.Unity path=/com/canonical/{U,u}nity
   #aa:dbus own bus=session name=com.rastersoft.dingextension interface=org.gtk.Actions
@@ -88,17 +87,13 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
   # Talk with gnome-shell
 
-  #aa:dbus talk bus=session name=com.rastersoft.ding label=gnome-extension-ding
   #aa:dbus talk bus=system name=org.gnome.DisplayManager label=gdm
 
-  ## System bus
+  #aa:dbus talk bus=session name=com.rastersoft.ding label=gnome-extension-ding
+  #aa:dbus talk bus=session name=org.gnome.SessionManager label=gnome-session-binary
+  #aa:dbus talk bus=session name=org.gnome.SettingsDaemon.* label=gsd-*
 
-  dbus (send, receive) bus=system path=/org/gnome/**
-       interface=org.gnome.*
-       peer=(name="{:*,org.gnome.*}"),
-  dbus (send, receive) bus=system path=/org/gnome/**
-       interface=org.freedesktop.DBus.Properties
-       peer=(name="{:*,org.gnome.*}"),
+  # System bus
 
   dbus send bus=system path=/org/freedesktop/PolicyKit1/Authority
        interface=org.freedesktop.PolicyKit1.Authority
@@ -145,7 +140,7 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
        member={GetConnectionUnixUser,GetConnectionUnixProcessID,GetNameOwner,ListNames}
        peer=(name=org.freedesktop.DBus, label=dbus-system),
 
-  ## Session bus
+  # Session bus
 
   dbus send bus=session path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus
