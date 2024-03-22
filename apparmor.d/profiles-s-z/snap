@@ -22,6 +22,8 @@ profile snap @{exec_path} {
   capability setuid,
   capability sys_admin,
 
+  network netlink raw,
+
   unix (send, receive) type=stream peer=(label=apt),
 
   mount options=(ro, silent) -> /tmp/snapd-auto-import-mount-@{int}/,
@@ -31,6 +33,10 @@ profile snap @{exec_path} {
        member=StartTransientUnit
        peer=(name=org.freedesktop.systemd1, label="@{systemd_user}"),
 
+  dbus receive bus=system path=/org/freedesktop/systemd1
+       interface=org.freedesktop.systemd1.Manager
+       member=JobRemoved
+       peer=(name=:*, label="@{systemd}"),
   dbus receive bus=session path=/org/freedesktop/systemd1
        interface=org.freedesktop.systemd1.Manager
        member=JobRemoved
