@@ -7,27 +7,22 @@ abi <abi/3.0>,
 
 include <tunables/global>
 
-@{FT_LIBDIR} =  @{lib}/freetube
-@{FT_LIBDIR} += @{lib}/freetube-vue
-@{FT_LIBDIR} += /opt/FreeTube
-@{FT_LIBDIR} += /opt/FreeTube-Vue
+@{lib_dirs}  = @{lib}/freetube @{lib}/freetube-vue
+@{lib_dirs} += /opt/FreeTube /opt/FreeTube-Vue
 
-@{exec_path} = @{FT_LIBDIR}/freetube{,-vue}
+@{exec_path} = @{lib_dirs}/freetube{,-vue}
 profile freetube @{exec_path} {
   include <abstractions/base>
+  include <abstractions/audio-client>
+  include <abstractions/chromium-common>
   include <abstractions/consoles>
   include <abstractions/dconf-write>
-  include <abstractions/opencl-intel>
-  include <abstractions/freedesktop.org>
-  include <abstractions/fonts>
+  include <abstractions/desktop>
   include <abstractions/fontconfig-cache-read>
-  include <abstractions/gtk>
-  include <abstractions/mesa>
-  include <abstractions/audio-client>
+  include <abstractions/graphics>
   include <abstractions/nameservice-strict>
-  include <abstractions/user-download-strict>
   include <abstractions/thumbnails-cache-read>
-  include <abstractions/chromium-common>
+  include <abstractions/user-download-strict>
 
   network inet dgram,
   network inet6 dgram,
@@ -37,23 +32,30 @@ profile freetube @{exec_path} {
 
   @{exec_path} mrix,
 
-  @{FT_LIBDIR}/ r,
-  @{FT_LIBDIR}/** r,
-  @{FT_LIBDIR}/libffmpeg.so mr,
-  @{FT_LIBDIR}/{swiftshader/,}libGLESv2.so mr,
-  @{FT_LIBDIR}/{swiftshader/,}libEGL.so mr,
-  @{FT_LIBDIR}/chrome-sandbox rPx,
+  @{lib_dirs}/ r,
+  @{lib_dirs}/** r,
+  @{lib_dirs}/libffmpeg.so mr,
+  @{lib_dirs}/{swiftshader/,}libGLESv2.so mr,
+  @{lib_dirs}/{swiftshader/,}libEGL.so mr,
+  @{lib_dirs}/chrome-sandbox rPx,
+
+  @{open_path}            rPx -> child-open,
+
+  /etc/fstab r,
+  /etc/machine-id r,
+  /var/lib/dbus/machine-id r,
 
   owner @{HOME}/ r,
   owner @{user_config_dirs}/FreeTube/ rw,
   owner @{user_config_dirs}/FreeTube/** rwk,
+
+  owner @{run}/user/@{uid}/ r,
 
   # The /proc/ dir is needed to avoid the following error:
   #   traps: freetube[] trap int3 ip:56499eca9d26 sp:7ffcab073060 error:0 in
   #          freetube[56499b8a8000+531e000]
              @{PROC}/ r,
        owner @{PROC}/@{pid}/fd/ r,
-  #          @{PROC}/@{pid}/fd/ r,
              @{PROC}/@{pids}/task/ r,
              @{PROC}/@{pids}/task/@{tid}/status r,
   deny       @{PROC}/@{pids}/stat r,
@@ -67,60 +69,7 @@ profile freetube @{exec_path} {
   deny       @{PROC}/vmstat r,
              @{PROC}/sys/fs/inotify/max_user_watches r,
 
-  /etc/fstab r,
-
-  owner @{user_share_dirs} r,
-
-  deny @{sys}/devices/virtual/tty/tty@{int}/active r,
-  deny @{sys}/devices/system/cpu/cpufreq/policy[0-9]/cpuinfo_max_freq r,
-  # To remove the following error:
-  #  pcilib: Cannot open /sys/bus/pci/devices/0000:03:00.0/irq: Permission denied
-  # The irq file is needed to render pages.
-  deny @{sys}/devices/@{pci}/irq r,
-
-  /var/lib/dbus/machine-id r,
-  /etc/machine-id r,
-
-  owner @{run}/user/@{uid}/ r,
-
-  # no new privs
-  @{bin}/xdg-settings    rPx,
-
-  @{bin}/xdg-open        rCx -> open,
-
-  # Allowed apps to open
-  @{lib}/firefox/firefox rPx,
-  @{bin}/mpv             rPx,
-  @{bin}/vlc             rPx,
-
-  # file_inherit
   owner /dev/tty@{int} rw,
-
-
-  profile open {
-    include <abstractions/base>
-    include <abstractions/xdg-open>
-
-    @{bin}/xdg-open mr,
-
-    @{sh_path}             rix,
-    @{bin}/{m,g,}awk       rix,
-    @{bin}/readlink        rix,
-    @{bin}/basename        rix,
-
-    owner @{HOME}/ r,
-
-    owner @{run}/user/@{uid}/ r,
-
-    # Allowed apps to open
-    @{lib}/firefox/firefox rPx,
-    @{bin}/mpv             rPx,
-    @{bin}/vlc             rPx,
-
-    # file_inherit
-    owner @{HOME}/.xsession-errors w,
-
-  }
 
   include if exists <local/freetube>
 }
