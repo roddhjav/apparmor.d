@@ -24,7 +24,6 @@ func init() {
 }
 
 func (d Exec) Apply(opt *Option, profile string) string {
-	res := ""
 	transition := "Px"
 	transitions := []string{"P", "U", "p", "u", "PU", "pu"}
 	for _, t := range transitions {
@@ -35,6 +34,7 @@ func (d Exec) Apply(opt *Option, profile string) string {
 		}
 	}
 
+	p := &aa.AppArmorProfile{}
 	for name := range opt.Args {
 		content, err := rootApparmord.Join(name).ReadFile()
 		if err != nil {
@@ -42,7 +42,6 @@ func (d Exec) Apply(opt *Option, profile string) string {
 		}
 		profiletoTransition := string(content)
 
-		p := &aa.AppArmorProfile{}
 		dstProfile := aa.DefaultTunables()
 		dstProfile.ParseVariables(profiletoTransition)
 		for _, variable := range dstProfile.Variables {
@@ -56,7 +55,10 @@ func (d Exec) Apply(opt *Option, profile string) string {
 				break
 			}
 		}
-		res += p.String()
 	}
-	return strings.Replace(profile, opt.Raw, res, -1)
+	p.Sort()
+	rules := p.String()
+	lenRules := len(rules)
+	rules = rules[:lenRules-1]
+	return strings.Replace(profile, opt.Raw, rules, -1)
 }
