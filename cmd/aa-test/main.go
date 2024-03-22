@@ -13,9 +13,9 @@ import (
 
 	"github.com/arduino/go-paths-helper"
 	"github.com/roddhjav/apparmor.d/pkg/aa"
-	"github.com/roddhjav/apparmor.d/pkg/integration"
 	"github.com/roddhjav/apparmor.d/pkg/logging"
 	oss "github.com/roddhjav/apparmor.d/pkg/os"
+	"github.com/roddhjav/apparmor.d/tests/integration"
 )
 
 const usage = `aa-test [-h] [--bootstrap | --run | --list]
