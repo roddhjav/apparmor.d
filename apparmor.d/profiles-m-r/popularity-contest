@@ -13,14 +13,12 @@ profile popularity-contest @{exec_path} {
   include <abstractions/perl>
   include <abstractions/nameservice-strict>
 
-  # For popularity-contest --su-nobody
-  capability setuid,
-  capability setgid,
-
-  capability sys_ptrace,
-  ptrace (read),
-
   capability dac_read_search,
+  capability setgid,
+  capability setuid, # For popularity-contest --su-nobody
+  capability sys_ptrace,
+
+  ptrace (read),
 
   @{exec_path} r,
   @{bin}/perl r,
@@ -32,31 +30,24 @@ profile popularity-contest @{exec_path} {
   #  ERROR: ld.so: object 'libfakeroot-sysv.so' from LD_PRELOAD cannot be preloaded (cannot open
   #  shared object file): ignored.
   @{bin}/dpkg-query  rpx,
-  #
   @{bin}/dpkg        rPx -> child-dpkg,
   @{bin}/dpkg-divert rPx -> child-dpkg-divert,
 
-  # For shell pwd
-  /root/ r,
-
   /etc/popularity-contest.conf r,
-
   /etc/dpkg/origins/debian r,
-
   /etc/shadow r,
 
-  /var/lib/dpkg/info/{,*.list} r,
-
-  @{PROC}/ r,
-
-  /var/log/ r,
-  /var/log/popularity-contest.new w,
+  /root/ r, # For shell pwd
 
   /var/lib/ r,
-
-  # file_inherit
-  /tmp/#@{int} rw,
+  /var/lib/dpkg/info/{,*.list} r,
+  /var/log/ r,
   /var/log/popularity-contest.[0-9]* w,
+  /var/log/popularity-contest.new w,
+
+  owner /tmp/#@{int} rw,
+  
+  @{PROC}/ r,
 
   include if exists <local/popularity-contest>
 }
