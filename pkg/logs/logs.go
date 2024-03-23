@@ -145,7 +145,7 @@ func (aaLogs AppArmorLogs) String() string {
 		"UID", "AUID", "hostname", "class",
 	}
 	// Color template to use
-	colors := map[string]string{
+	template := map[string]string{
 		"profile":        fgBlue,
 		"label":          fgBlue,
 		"operation":      fgYellow,
@@ -159,22 +159,23 @@ func (aaLogs AppArmorLogs) String() string {
 		"interface":      "interface=" + fgWhite,
 		"member":         "member=" + fgGreen,
 	}
-	res := ""
+	var res strings.Builder
+
 	for _, log := range aaLogs {
 		seen := map[string]bool{"apparmor": true}
-		res += state[log["apparmor"]]
+		res.WriteString(state[log["apparmor"]])
 		fsuid := log["fsuid"]
 		ouid := log["ouid"]
 
 		for _, key := range keys {
-			if log[key] != "" {
+			if item, present := log[key]; present {
 				if key == "name" && fsuid == ouid && !strings.Contains(log["operation"], "dbus") {
-					res += colors[key] + " owner" + reset
+					res.WriteString(template[key] + " owner" + reset)
 				}
-				if colors[key] != "" {
-					res += " " + colors[key] + toQuote(log[key]) + reset
+				if temp, present := template[key]; present {
+					res.WriteString(" " + temp + toQuote(item) + reset)
 				} else {
-					res += " " + key + "=" + toQuote(log[key])
+					res.WriteString(" " + key + "=" + toQuote(item))
 				}
 				seen[key] = true
 			}
@@ -184,13 +185,13 @@ func (aaLogs AppArmorLogs) String() string {
 			if slices.Contains(ignore, key) {
 				continue
 			}
-			if !seen[key] && value != "" {
-				res += " " + key + "=" + toQuote(value)
+			if _, present := seen[key]; !present && value != "" {
+				res.WriteString(" " + key + "=" + toQuote(value))
 			}
 		}
-		res += "\n"
+		res.WriteString("\n")
 	}
-	return res
+	return res.String()
 }
 
 // ParseToProfiles convert the log data into a new AppArmorProfiles
