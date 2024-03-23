@@ -18,38 +18,118 @@ For more access, simply use the [`dbus: talk`](#dbus-directive) directive.
 
 ## Dbus Directive
 
-We use a special directive to generate (when running `make`) more advanced dbus access.
+We use a special [directive](directives.md) to generate more advanced dbus access. The directive format is on purpose very similar to apparmor dbus rule.
 
-**Directive format**
+**Format**
+
+```sh
+#aa:dbus <access> bus=<bus> name=<name> [label=AARE] [interface=AARE] [path=AARE]
 ```
-#aa:dbus: ( own | talk ) bus=( system | session ) name=AARE [label=AARE] [interface=AARE] [path=AARE]
-```
 
-The directive format is on purpose very similar to apparmor dbus rules. However, there are some restrictions:
+**`<access>`**
 
-- `bus` and `name` are mandatory and will break the build if ignored.
-- For the *talk* sub directive, profile name under a `label` is also mandatory
-- `interface` can optionally be given when it is different to the dbus path.
-- `path` can optionally be given when it is different to the dbus name.
-- It is still a comment: the rule must not end with a comma, multiline directive is not supported.
+:    Access type. Can be `own` or `talk`:
 
-**Example:**
+     - `own` means the profile own this dbus interface. It is allowed to send and receive from anyone on this interface.
+     - `talk` means the profile can talk on a given interface to the profile owning it (that must be given under the `label` option).
+
+**`<bus>`**
+
+:    Dbus bus, can be `system`, `session` or `accessibility`.
+
+**`<name>`**
+
+:    Dbus interface name.
+
+**`[label=AARE]`**
+
+:    Name of the profile 
+
+**`[interface=AARE]`**
+
+:    Can optionally be given when it is different to the dbus path.
+
+**`[path=AARE]`**
+
+:    Can optionally be given when it is different to the dbus name.
+
+
+Note: `<access>`, `<bus>` and `<name>` are mandatory and will break the build if ignored.
+
+
+**Example**
 
 Allow owning a dbus interface:
 
 !!! note ""
 
-    [apparmor.d/groups/network/NetworkManager](https://github.com/roddhjav/apparmor.d/blob/a3b15973640042af7da0ed540db690c711fbf6ec/apparmor.d/groups/network/NetworkManager#L46)
-    ``` aa linenums="46"
-    #aa:dbus: own bus=system name=org.freedesktop.NetworkManager
+    [apparmor.d/groups/network/NetworkManager](https://github.com/roddhjav/apparmor.d/blob/f81ceb91855f194dc53c10c17cbe1d7b50434a1e/apparmor.d/groups/network/NetworkManager#L45)
+    ``` sh linenums="45"
+    #aa:dbus own bus=system name=org.freedesktop.NetworkManager
     ```
 
 Allow talking to a dbus interface on a given profile
 
 !!! note ""
 
-    [apparmor.d/groups/gnome/gdm](https://github.com/roddhjav/apparmor.d/blob/a3b15973640042af7da0ed540db690c711fbf6ec/apparmor.d/groups/gnome/gdm#L32)
-    ``` aa linenums="32"
-    #aa:dbus: talk bus=system name=org.freedesktop.login1 label=systemd-logind
+    [apparmor.d/groups/gnome/gdm](https://github.com/roddhjav/apparmor.d/blob/f81ceb91855f194dc53c10c17cbe1d7b50434a1e/apparmor.d/groups/gnome/gdm#L44)
+    ``` sh linenums="34"
+    #aa:dbus talk bus=system name=org.freedesktop.login1 label=systemd-logind
     ```
 
+**Generate**
+
+`#aa:dbus own bus=system name=org.freedesktop.NetworkManager`
+
+:    
+     ```sh
+     dbus bind bus=system name=org.freedesktop.NetworkManager{,.*},
+     dbus receive bus=system path=/org/freedesktop/NetworkManager{,/**}
+          interface=org.freedesktop.NetworkManager{,.*}
+          peer=(name=":1.@{int}"),
+     dbus receive bus=system path=/org/freedesktop/NetworkManager{,/**}
+          interface=org.freedesktop.DBus.Properties
+          peer=(name=":1.@{int}"),
+     dbus receive bus=system path=/org/freedesktop/NetworkManager{,/**}
+          interface=org.freedesktop.DBus.ObjectManager
+          peer=(name=":1.@{int}"),
+     dbus send bus=system path=/org/freedesktop/NetworkManager{,/**}
+          interface=org.freedesktop.NetworkManager{,.*}
+          peer=(name="{:1.@{int},org.freedesktop.DBus}"),
+     dbus send bus=system path=/org/freedesktop/NetworkManager{,/**}
+          interface=org.freedesktop.DBus.Properties
+          peer=(name="{:1.@{int},org.freedesktop.DBus}"),
+     dbus send bus=system path=/org/freedesktop/NetworkManager{,/**}
+          interface=org.freedesktop.DBus.ObjectManager
+          peer=(name="{:1.@{int},org.freedesktop.DBus}"),
+     dbus receive bus=system path=/org/freedesktop/NetworkManager{,/**}
+          interface=org.freedesktop.DBus.Introspectable
+          member=Introspect
+          peer=(name=":1.@{int}"),
+     ```
+
+`#aa:dbus talk bus=system name=org.freedesktop.login1 label=systemd-logind`
+
+:    
+     ```sh
+     dbus send bus=system path=/org/freedesktop/login1{,/**}
+          interface=org.freedesktop.login1{,.*}
+          peer=(name="{:1.@{int},org.freedesktop.login1{,.*}}", label=systemd-logind),
+     dbus send bus=system path=/org/freedesktop/login1{,/**}
+          interface=org.freedesktop.DBus.Properties
+          peer=(name="{:1.@{int},org.freedesktop.login1{,.*}}", label=systemd-logind),
+     dbus send bus=system path=/org/freedesktop/login1{,/**}
+          interface=org.freedesktop.DBus.ObjectManager
+          peer=(name="{:1.@{int},org.freedesktop.login1{,.*}}", label=systemd-logind),
+     dbus receive bus=system path=/org/freedesktop/login1{,/**}
+          interface=org.freedesktop.login1{,.*}
+          peer=(name="{:1.@{int},org.freedesktop.login1{,.*}}", label=systemd-logind),
+     dbus receive bus=system path=/org/freedesktop/login1{,/**}
+          interface=org.freedesktop.DBus.Properties
+          peer=(name="{:1.@{int},org.freedesktop.login1{,.*}}", label=systemd-logind),
+     dbus receive bus=system path=/org/freedesktop/login1{,/**}
+          interface=org.freedesktop.DBus.ObjectManager
+          peer=(name="{:1.@{int},org.freedesktop.login1{,.*}}", label=systemd-logind),
+     dbus send bus=system path=/org/freedesktop/Accounts{,/**}
+          interface=org.freedesktop.Accounts{,.*}
+     ```
