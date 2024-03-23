@@ -42,30 +42,33 @@ func (d *DirectiveBase) Message() string {
 
 // Directive options
 type Option struct {
-	Name string
-	Args map[string]string
-	File *paths.Path
-	Raw  string
+	Name    string
+	ArgMap  map[string]string
+	ArgList []string
+	File    *paths.Path
+	Raw     string
 }
 
 func NewOption(file *paths.Path, match []string) *Option {
 	if len(match) != 3 {
 		panic(fmt.Sprintf("Invalid directive: %v", match))
 	}
-	args := map[string]string{}
-	for _, t := range strings.Fields(match[2]) {
+	argList := strings.Fields(match[2])
+	argMap := map[string]string{}
+	for _, t := range argList {
 		tmp := strings.Split(t, "=")
 		if len(tmp) < 2 {
-			args[tmp[0]] = ""
+			argMap[tmp[0]] = ""
 		} else {
-			args[tmp[0]] = tmp[1]
+			argMap[tmp[0]] = tmp[1]
 		}
 	}
 	return &Option{
-		Name: match[1],
-		Args: args,
-		File: file,
-		Raw:  match[0],
+		Name:    match[1],
+		ArgMap:  argMap,
+		ArgList: argList,
+		File:    file,
+		Raw:     match[0],
 	}
 }
 

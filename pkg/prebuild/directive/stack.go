@@ -41,7 +41,7 @@ func init() {
 
 func (s Stack) Apply(opt *Option, profile string) string {
 	res := ""
-	for name := range opt.Args {
+	for name := range opt.ArgMap {
 		tmp, err := rootApparmord.Join(name).ReadFile()
 		if err != nil {
 			panic(err)

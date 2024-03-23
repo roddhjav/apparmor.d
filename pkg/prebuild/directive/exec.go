@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/roddhjav/apparmor.d/pkg/aa"
+	"golang.org/x/exp/slices"
 )
 
 type Exec struct {
@@ -26,16 +27,14 @@ func init() {
 func (d Exec) Apply(opt *Option, profile string) string {
 	transition := "Px"
 	transitions := []string{"P", "U", "p", "u", "PU", "pu"}
-	for _, t := range transitions {
-		if _, present := opt.Args[t]; present {
-			transition = t + "x"
-			delete(opt.Args, t)
-			break
-		}
+	t := opt.ArgList[0]
+	if slices.Contains(transitions, t) {
+		transition = t + "x"
+		delete(opt.ArgMap, t)
 	}
 
 	p := &aa.AppArmorProfile{}
-	for name := range opt.Args {
+	for name := range opt.ArgMap {
 		content, err := rootApparmord.Join(name).ReadFile()
 		if err != nil {
 			panic(err)

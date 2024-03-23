@@ -50,21 +50,13 @@ func setInterfaces(rules map[string]string) []string {
 
 func (d Dbus) Apply(opt *Option, profile string) string {
 	var p *aa.AppArmorProfile
-	var action string
-	if _, ok := opt.Args["own"]; ok {
-		action = "own"
-	} else if _, ok := opt.Args["talk"]; ok {
-		action = "talk"
-	} else {
-		panic(fmt.Sprintf("Unknown dbus action: %s in %s", opt.Name, opt.File))
-	}
 
-	d.sanityCheck(action, opt)
+	action := d.sanityCheck(opt)
 	switch action {
 	case "own":
-		p = d.own(opt.Args)
+		p = d.own(opt.ArgMap)
 	case "talk":
-		p = d.talk(opt.Args)
+		p = d.talk(opt.ArgMap)
 	}
 
 	generatedDbus := p.String()
@@ -74,22 +66,31 @@ func (d Dbus) Apply(opt *Option, profile string) string {
 	return profile
 }
 
-func (d Dbus) sanityCheck(action string, opt *Option) {
-	if _, present := opt.Args["name"]; !present {
+func (d Dbus) sanityCheck(opt *Option) string {
+	if len(opt.ArgList) < 1 {
+		panic(fmt.Sprintf("Unknown dbus action: %s in %s", opt.Name, opt.File))
+	}
+	action := opt.ArgList[0]
+	if action != "own" && action != "talk" {
+		panic(fmt.Sprintf("Unknown dbus action: %s in %s", opt.Name, opt.File))
+	}
+
+	if _, present := opt.ArgMap["name"]; !present {
 		panic(fmt.Sprintf("Missing name for 'dbus: %s' in %s", action, opt.File))
 	}
-	if _, present := opt.Args["bus"]; !present {
-		panic(fmt.Sprintf("Missing bus for '%s' in %s", opt.Args["name"], opt.File))
+	if _, present := opt.ArgMap["bus"]; !present {
+		panic(fmt.Sprintf("Missing bus for '%s' in %s", opt.ArgMap["name"], opt.File))
 	}
-	if _, present := opt.Args["label"]; !present && action == "talk" {
-		panic(fmt.Sprintf("Missing label for '%s' in %s", opt.Args["name"], opt.File))
+	if _, present := opt.ArgMap["label"]; !present && action == "talk" {
+		panic(fmt.Sprintf("Missing label for '%s' in %s", opt.ArgMap["name"], opt.File))
 	}
 
 	// Set default values
-	if _, present := opt.Args["path"]; !present {
-		opt.Args["path"] = "/" + strings.Replace(opt.Args["name"], ".", "/", -1) + "{,/**}"
+	if _, present := opt.ArgMap["path"]; !present {
+		opt.ArgMap["path"] = "/" + strings.Replace(opt.ArgMap["name"], ".", "/", -1) + "{,/**}"
 	}
-	opt.Args["name"] += "{,.*}"
+	opt.ArgMap["name"] += "{,.*}"
+	return action
 }
 
 func (d Dbus) own(rules map[string]string) *aa.AppArmorProfile {

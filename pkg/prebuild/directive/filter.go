@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	oss "github.com/roddhjav/apparmor.d/pkg/os"
-	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
 )
 
@@ -37,7 +36,7 @@ func init() {
 }
 
 func filterRuleForUs(opt *Option) bool {
-	return slices.Contains(maps.Keys(opt.Args), oss.Distribution) || slices.Contains(maps.Keys(opt.Args), oss.Family)
+	return slices.Contains(opt.ArgList, oss.Distribution) || slices.Contains(opt.ArgList, oss.Family)
 }
 
 func filter(only bool, opt *Option, profile string) string {

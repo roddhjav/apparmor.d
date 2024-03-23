@@ -22,10 +22,11 @@ func TestStack_Apply(t *testing.T) {
 			name:          "stack",
 			rootApparmord: paths.New("../../../apparmor.d/groups/freedesktop/"),
 			opt: &Option{
-				Name: "stack",
-				Args: map[string]string{"plymouth": ""},
-				File: nil,
-				Raw:  "  #aa:stack plymouth",
+				Name:    "stack",
+				ArgMap:  map[string]string{"plymouth": ""},
+				ArgList: []string{"plymouth"},
+				File:    nil,
+				Raw:     "  #aa:stack plymouth",
 			},
 			profile: `
 profile parent @{exec_path} {
