@@ -11,6 +11,32 @@ import (
 	"github.com/arduino/go-paths-helper"
 )
 
+func TestDirective_Usage(t *testing.T) {
+	tests := []struct {
+		name        string
+		d           Directive
+		wantMessage string
+		wantUsage   string
+	}{
+		{
+			name:        "empty",
+			d:           Directives["stack"],
+			wantMessage: "Stack directive applied",
+			wantUsage:   `#aa:stack profiles_name...`,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.d.Usage(); got != tt.wantUsage {
+				t.Errorf("Directive.Usage() = %v, want %v", got, tt.wantUsage)
+			}
+			if got := tt.d.Message(); got != tt.wantMessage {
+				t.Errorf("Directive.Usage() = %v, want %v", got, tt.wantMessage)
+			}
+		})
+	}
+}
+
 func TestNewOption(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -28,13 +54,14 @@ func TestNewOption(t *testing.T) {
 			},
 			want: &Option{
 				Name: "dbus",
-				Args: map[string]string{
+				ArgMap: map[string]string{
 					"bus":  "system",
 					"name": "org.gnome.DisplayManager",
 					"own":  "",
 				},
-				File: paths.New(""),
-				Raw:  "  #aa:dbus own bus=system name=org.gnome.DisplayManager",
+				ArgList: []string{"own", "bus=system", "name=org.gnome.DisplayManager"},
+				File:    nil,
+				Raw:     "  #aa:dbus own bus=system name=org.gnome.DisplayManager",
 			},
 		},
 		{
@@ -46,10 +73,11 @@ func TestNewOption(t *testing.T) {
 				"opensuse",
 			},
 			want: &Option{
-				Name: "only",
-				Args: map[string]string{"opensuse": ""},
-				File: paths.New(""),
-				Raw:  "    #aa:only opensuse",
+				Name:    "only",
+				ArgMap:  map[string]string{"opensuse": ""},
+				ArgList: []string{"opensuse"},
+				File:    nil,
+				Raw:     "    #aa:only opensuse",
 			},
 		},
 	}

@@ -43,13 +43,14 @@ func TestDbus_Apply(t *testing.T) {
 			name: "own",
 			opt: &Option{
 				Name: "dbus",
-				Args: map[string]string{
+				ArgMap: map[string]string{
 					"bus":  "system",
 					"name": "org.freedesktop.systemd1",
 					"own":  "",
 				},
-				File: nil,
-				Raw:  "  #aa:dbus own bus=system name=org.freedesktop.systemd1",
+				ArgList: []string{"own", "bus=system", "name=org.freedesktop.systemd1"},
+				File:    nil,
+				Raw:     "  #aa:dbus own bus=system name=org.freedesktop.systemd1",
 			},
 			profile: "  #aa:dbus own bus=system name=org.freedesktop.systemd1",
 			want:    dbusOwnSystemd1,
@@ -58,14 +59,15 @@ func TestDbus_Apply(t *testing.T) {
 			name: "own-interface",
 			opt: &Option{
 				Name: "dbus",
-				Args: map[string]string{
+				ArgMap: map[string]string{
 					"bus":       "session",
 					"name":      "com.rastersoft.dingextension",
 					"interface": "org.gtk.Actions",
 					"own":       "",
 				},
-				File: nil,
-				Raw:  "  #aa:dbus own bus=session name=com.rastersoft.dingextension interface=org.gtk.Actions",
+				ArgList: []string{"own", "bus=session", "name=com.rastersoft.dingextension", "interface=org.gtk.Actions"},
+				File:    nil,
+				Raw:     "  #aa:dbus own bus=session name=com.rastersoft.dingextension interface=org.gtk.Actions",
 			},
 			profile: "  #aa:dbus own bus=session name=com.rastersoft.dingextension interface=org.gtk.Actions",
 			want: `  dbus bind bus=session name=com.rastersoft.dingextension{,.*},
@@ -102,14 +104,15 @@ func TestDbus_Apply(t *testing.T) {
 			name: "talk",
 			opt: &Option{
 				Name: "dbus",
-				Args: map[string]string{
+				ArgMap: map[string]string{
 					"bus":   "system",
 					"name":  "org.freedesktop.Accounts",
 					"label": "accounts-daemon",
 					"talk":  "",
 				},
-				File: nil,
-				Raw:  "  #aa:dbus talk bus=system name=org.freedesktop.Accounts label=accounts-daemon",
+				ArgList: []string{"talk", "bus=system", "name=org.freedesktop.Accounts", "label=accounts-daemon"},
+				File:    nil,
+				Raw:     "  #aa:dbus talk bus=system name=org.freedesktop.Accounts label=accounts-daemon",
 			},
 			profile: "  #aa:dbus talk bus=system name=org.freedesktop.Accounts label=accounts-daemon",
 			want: `  dbus send bus=system path=/org/freedesktop/Accounts{,/**}
