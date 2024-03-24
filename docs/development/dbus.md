@@ -4,17 +4,21 @@ title: Dbus
 
 All dbus rules are labelled under the name of the given profiles that provide dbus data. If the profiles were going to change (a renaming, an architectural change), the dbus rules need to be updated accordingly.
 
+## Abstractions
+
+### Base
+
 Default **system**, **session** and **accessibility** bus access are provided with the abstraction:
 
 - `abstractions/bus-system`
 - `abstractions/bus-session`
 - `abstractions/bus-accessibility`
 
-## Dbus Abstractions
+### Interfaces
 
 Access to common dbus interface is done using the abstractions under **[`abstractions/bus/`](https://github.com/roddhjav/apparmor.d/tree/main/apparmor.d/abstractions/bus)**. They are kept minimal on purpose. The goal is not to give full talk access an interface but to provide a *read-only* like view of it. It may be required to have a look at the dbus interface documentation to check what method can be safely allowed.
 
-For more access, simply use the [`dbus: talk`](#dbus-directive) directive.
+For more access, simply use the [`aa:dbus talk`](#dbus-directive) directive.
 
 ## Dbus Directive
 
