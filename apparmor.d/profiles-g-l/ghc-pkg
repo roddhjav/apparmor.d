@@ -1,0 +1,30 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/ghc-pkg{,-*}
+profile ghc-pkg @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+
+  capability dac_read_search,
+
+  @{exec_path} mr,
+
+  @{sh_path} rix,
+
+  @{lib}/ghc{,-*}/bin/ghc-pkg{,-*} rix,
+
+  @{lib}/ghc{,-*}/lib/package.conf.d/* rw,
+  @{lib}/ghc{,-*}/lib/package.conf.d/package.cache.lock k,
+
+  /var/log/haskell-register.log rw,
+
+  @{sys}/devices/system/node/ r,
+
+  include if exists <local/ghc-pkg>
+}
