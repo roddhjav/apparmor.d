@@ -18,7 +18,7 @@ For more access, simply use the [`dbus: talk`](#dbus-directive) directive.
 
 ## Dbus Directive
 
-We use a special [directive](directives.md) to generate more advanced dbus access. The directive format is on purpose very similar to apparmor dbus rule.
+We use a special [directive](directives.md) to generate more advanced dbus access. The directive format is on purpose very similar to the apparmor dbus rule.
 
 **Format**
 
@@ -30,7 +30,7 @@ We use a special [directive](directives.md) to generate more advanced dbus acces
 
 :    Access type. Can be `own` or `talk`:
 
-     - `own` means the profile own this dbus interface. It is allowed to send and receive from anyone on this interface.
+     - `own` means the profile own the dbus interface. It is allowed to send and receive from anyone on this interface.
      - `talk` means the profile can talk on a given interface to the profile owning it (that must be given under the `label` option).
 
 **`<bus>`**
@@ -43,7 +43,7 @@ We use a special [directive](directives.md) to generate more advanced dbus acces
 
 **`[label=AARE]`**
 
-:    Name of the profile 
+:    Name of the profile. Mandatory for `talk` access.
 
 **`[interface=AARE]`**
 

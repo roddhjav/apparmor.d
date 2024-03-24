@@ -67,43 +67,47 @@ The profiles dedicated for full system policies are maintained in the **[`_full`
 
 ### Systemd
 
-In addition to systemd services (`systemd-*`) that have their own profiles, systemd itself, is confined using:
+**`systemd`**
 
-- [x] **`systemd`**: For systemd as PID 1, designed such as:
-     - It allows internal systemd access,
-     - It allows starting all common root services.
+This profile aims to confine PID 1. Systemd is (kind of obviously) a highly privileged program. The purpose of this profile is to transition to other less privileged program as soon as possible. On high security environments, it can also be used to strictly limit the list of allowed privileged program.
 
-- [ ] **`systemd-user`**: For `systemd --user`, designed such as:
-     - It allows internal systemd user access,
-     - It allows starting all common user services.
+- It allows internal systemd access,
+- It allows starting all common root services.
 
-Both `systemd` and `systemd-user` should not fallback at all. I am working on some new profiles to ensure that 99% of program started by system have a profile.
-
-These profiles are only intended to confine themselves. Any services started by systemd must have their corresponding profile. It means that for a given distribution, the following services must have profiles:
-
-- [x] For `systemd`:
+To work as intended, all privileged services started by systemd **must** have a profile. For a given distribution, the list of these services can be found under:
 ```sh
 /usr/lib/systemd/system-generators/*
 /usr/lib/systemd/system-environment-generators/*
 /usr/lib/systemd/system/*.service
 ```
 
-- [ ] For `systemd-user`
+The main [fallback](#fallback) profile (`default`) is not intended to be used by privileged program or service. Such programs must have they dedicated profile and will fail otherwise. This is a **feature**, not a bug.
+
+**`systemd-user`**
+
+This profile is for `systemd --user`, it aims to confine userland systemd. It does not require a lot of access and is only intended to handle user services.
+
+- It allows internal systemd user access,
+- It allows starting all common user services.
+
+To work as intended, userland services started by `systemd --user` **should** have a profile. For a given distribution, the list of these services can be found under:
+
 ```sh
 /usr/lib/systemd/user-environment-generators/*
 /usr/lib/systemd/user-generators/*
 /usr/lib/systemd/user/*.service
 ```
 
-To be allowed to run, additional root or user services may need to add extra rules inside the `usr/systemd.d` or `usr/systemd-user.d` directory. For example, when installing a new privileged service `foo` with [stacking](#no-new-privileges) you may need to add the following to `/etc/apparmor.d/usr/systemd.d/foo`:
-```
-  @{lib}/foo rPx -> systemd//&foo,
-  ...
-```
+!!! info
+
+    To be allowed to run, additional root or user services may need to add extra rules inside the `usr/systemd.d` or `usr/systemd-user.d` directory. For example, when installing a new privileged service `foo` with [stacking](#no-new-privileges) you may need to add the following to `/etc/apparmor.d/usr/systemd.d/foo`:
+    ```
+    @{lib}/foo rPx -> systemd//&foo,
+    ```
 
 ### Fallback
 
-In addition to the `systemd` profiles, a full system policy needs to ensure that no program run in an unconfined state at any time. The fallbacks profiles consist of a set generic specialized profiles:
+In addition to the `systemd` profiles, a full system policy needs to ensure that no program run in an unconfined state at any time. The fallback profiles consist of a set generic specialized profiles:
 
 - **`default`** is used for any *classic* user application with a GUI. It has full access to user home directories.
 - **`bwrap`, `bwrap-app`** are used for *classic* user application that are sandboxed with **bwrap**.
