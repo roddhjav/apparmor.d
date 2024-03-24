@@ -2,7 +2,7 @@
 title: Directives
 ---
 
-`apparmor.d` supports build directives, they are processed at build time of the project, when running `make`. They are valid apparmor comment, `apparmor_parser` can be used on a profile even if the directives have not been processed. They should not end with a comma. Multiline directive is not supported.
+`apparmor.d` supports build directives, they are processed at build time of the project, when running `make`. They are valid apparmor comment, therefore, `apparmor_parser` can be used on a profile even if the directives have not been processed. They should not end with a comma. Multiline directive is not supported.
 
 The directives follow the format:
 ```sh
@@ -25,7 +25,7 @@ See the [dbus page](dbus.md#dbus-directive).
     
 ## Only, Exclude
 
-The `only` and `exclude` directive can be used to filter individual rule or rule paragraph depending on the target distribution of distribution family.
+The `only` and `exclude` directives can be used to filter individual rule or rule paragraph depending on the target distribution of distribution family.
 
 **Format**
 
@@ -63,7 +63,7 @@ The `only` and `exclude` directive can be used to filter individual rule or rule
 
 ## Exec
 
-The `exec` directive is useful to allow executing transition to a profile without having to manage the possible long list of profile attachment (that varies depending on the distribution). The directive parse and resolve the attachment variable (`@{exec_path}`) of the target profile and include it in the current profile.
+The `exec` directive is useful to allow executing transition to a profile without having to manage the possible long list of profile attachment (it varies depending on the distribution). The directive parse and resolve the attachment variable (`@{exec_path}`) of the target profile and include it in the current profile.
 
 **Format**
 
@@ -103,7 +103,7 @@ The `exec` directive is useful to allow executing transition to a profile withou
 
 ## Stack
 
-[Stacked](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmorStacking) profiles can be hard to maintain. The *parents* profile need to manage its own rules as well as always include stacked profile rules. This directive automatically include the stacked profile rules into the parent profile.
+[Stacked](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmorStacking) profiles can be hard to maintain. The *parent* profile needs to manage its own rules as well as always include the stacked profile rules. This directive automatically include the stacked profile rules into the parent profile.
 
 **Format**
 
