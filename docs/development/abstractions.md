@@ -128,7 +128,7 @@ Deny access to some sensitive directories under `/home/`. It is intended to be u
 
     **Do not use this abstraction for other profile without explicit authorisation from the project maintainer**
 
-    Per the **[Rule :material-numeric-1-circle:](index.html#rule-mandatory-access-control)** of this project:
+    Per the **[Rule :material-numeric-1-circle:](index.md#rule-mandatory-access-control)** of this project:
 
     > Only what is explicitly required should be authorized. Meaning, you should **not** allow everything (or a large area) and deny some sub areas.
 
