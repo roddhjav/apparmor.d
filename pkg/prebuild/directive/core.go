@@ -10,34 +10,23 @@ import (
 	"strings"
 
 	"github.com/arduino/go-paths-helper"
+	"github.com/roddhjav/apparmor.d/pkg/prebuild/cfg"
 )
 
 // Define the directive keyword globally
 const Keyword = "#aa:"
 
-// Build the profiles with the following directive applied
-var Directives = map[string]Directive{}
+var (
+	// Build the profiles with the following directive applied
+	Directives = map[string]Directive{}
 
-var regDirective = regexp.MustCompile(`(?m).*` + Keyword + `([a-z]*) (.*)`)
+	regDirective = regexp.MustCompile(`(?m).*` + Keyword + `([a-z]*) (.*)`)
+)
 
 // Main directive interface
 type Directive interface {
-	Usage() string
-	Message() string
+	cfg.BaseInterface
 	Apply(opt *Option, profile string) string
-}
-
-type DirectiveBase struct {
-	message string
-	usage   string
-}
-
-func (d *DirectiveBase) Usage() string {
-	return d.usage
-}
-
-func (d *DirectiveBase) Message() string {
-	return d.message
 }
 
 // Directive options
@@ -70,6 +59,10 @@ func NewOption(file *paths.Path, match []string) *Option {
 		File:    file,
 		Raw:     match[0],
 	}
+}
+
+func RegisterDirective(d Directive) {
+	Directives[d.Name()] = d
 }
 
 func Run(file *paths.Path, profile string) string {

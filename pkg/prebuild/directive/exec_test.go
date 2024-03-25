@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/arduino/go-paths-helper"
+	"github.com/roddhjav/apparmor.d/pkg/prebuild/cfg"
 )
 
 func TestExec_Apply(t *testing.T) {
@@ -49,7 +50,7 @@ func TestExec_Apply(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			rootApparmord = tt.rootApparmord
+			cfg.RootApparmord = tt.rootApparmord
 			if got := Directives["exec"].Apply(tt.opt, tt.profile); got != tt.want {
 				t.Errorf("Exec.Apply() = %v, want %v", got, tt.want)
 			}
