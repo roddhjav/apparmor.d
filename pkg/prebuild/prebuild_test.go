@@ -9,7 +9,9 @@ import (
 	"os/exec"
 	"testing"
 
-	oss "github.com/roddhjav/apparmor.d/pkg/os"
+	"github.com/roddhjav/apparmor.d/pkg/prebuild/builder"
+	"github.com/roddhjav/apparmor.d/pkg/prebuild/cfg"
+	"github.com/roddhjav/apparmor.d/pkg/prebuild/prepare"
 )
 
 func chdirGitRoot() {
@@ -65,27 +67,20 @@ func Test_PreBuild(t *testing.T) {
 			enforce:  false,
 			dist:     "opensuse",
 		},
-		// {
-		// 	name:     "Build for Fedora",
-		// 	wantErr:  true,
-		// 	full:     false,
-		// 	complain: false,
-		// 	dist:     "fedora",
-		// },
 	}
 	chdirGitRoot()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			oss.Distribution = tt.dist
+			cfg.Distribution = tt.dist
 			if tt.full {
-				Prepares = append(Prepares, SetFullSystemPolicy)
-				Builds = append(Builds, BuildFullSystemPolicy)
+				prepare.Register("fsp")
+				builder.Register("fsp")
 			}
 			if tt.complain {
-				Builds = append(Builds, BuildComplain)
+				builder.Register("complain")
 			}
 			if tt.enforce {
-				Builds = append(Builds, BuildEnforce)
+				builder.Register("enforce")
 			}
 			if err := Prepare(); (err != nil) != tt.wantErr {
 				t.Errorf("Prepare() error = %v, wantErr %v", err, tt.wantErr)

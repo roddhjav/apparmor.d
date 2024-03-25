@@ -5,75 +5,61 @@
 package prebuild
 
 import (
-	"reflect"
-	"runtime"
 	"strings"
 
 	"github.com/arduino/go-paths-helper"
 	"github.com/roddhjav/apparmor.d/pkg/logging"
-	oss "github.com/roddhjav/apparmor.d/pkg/os"
+	"github.com/roddhjav/apparmor.d/pkg/prebuild/builder"
+	"github.com/roddhjav/apparmor.d/pkg/prebuild/cfg"
 	"github.com/roddhjav/apparmor.d/pkg/prebuild/directive"
-)
-
-var (
-	overwrite     bool = false
-	DistDir       *paths.Path
-	Root          *paths.Path
-	RootApparmord *paths.Path
-	FlagDir       *paths.Path
+	"github.com/roddhjav/apparmor.d/pkg/prebuild/prepare"
 )
 
 func init() {
-	DistDir = paths.New("dists")
-	Root = paths.New(".build")
-	FlagDir = DistDir.Join("flags")
-	RootApparmord = Root.Join("apparmor.d")
-	if oss.Distribution == "ubuntu" {
-		if oss.Release["VERSION_CODENAME"] == "noble" {
-			Builds = append(Builds, BuildABI3)
-			overwrite = true
+	// Define the tasks applied by default
+	prepare.Register(
+		"synchronise",
+		"ignore",
+		"merge",
+		"configure",
+		"setflags",
+		"systemd-default",
+	)
+
+	// Build tasks applied by default
+	builder.Register("userspace")
+
+	switch cfg.Distribution {
+	case "ubuntu":
+		if cfg.Release["VERSION_CODENAME"] == "noble" {
+			builder.Register("abi3")
+			cfg.Overwrite = true
 		}
-	}
-}
-
-func getFctName(i any) string {
-	tmp := runtime.FuncForPC(reflect.ValueOf(i).Pointer()).Name()
-	res := strings.Split(tmp, ".")
-	return res[len(res)-1]
-}
-
-func printPrepareMessage(name string, msg []string) {
-	logging.Success("%v", PrepareMsg[name])
-	logging.Indent = "   "
-	for _, line := range msg {
-		logging.Bullet("%s", line)
-	}
-	logging.Indent = ""
-}
-
-func printBuildMessage() {
-	for _, fct := range Builds {
-		name := getFctName(fct)
-		logging.Success("%v", BuildMsg[name])
-	}
-	for _, dir := range directive.Directives {
-		logging.Success("%v", dir.Message())
 	}
 }
 
 func Prepare() error {
-	for _, fct := range Prepares {
-		msg, err := fct()
+	for _, task := range prepare.Prepares {
+		msg, err := task.Apply()
 		if err != nil {
 			return err
 		}
-		printPrepareMessage(getFctName(fct), msg)
+		logging.Success("%s", task.Message())
+		logging.Indent = "   "
+		for _, line := range msg {
+			if strings.Contains(line, "not found") {
+				logging.Warning("%s", line)
+			} else {
+				logging.Bullet("%s", line)
+			}
+		}
+		logging.Indent = ""
 	}
 	return nil
 }
 
 func Build() error {
-	files, _ := RootApparmord.ReadDirRecursiveFiltered(nil, paths.FilterOutDirectories())
+	files, _ := cfg.RootApparmord.ReadDirRecursiveFiltered(nil, paths.FilterOutDirectories())
 	for _, file := range files {
 		if !file.Exist() {
 			continue
@@ -83,14 +69,26 @@ func Build() error {
 			return err
 		}
 		profile := string(content)
-		for _, fct := range Builds {
-			profile = fct(profile)
+		for _, b := range builder.Builds {
+			profile = b.Apply(profile)
 		}
 		profile = directive.Run(file, profile)
 		if err := file.WriteFile([]byte(profile)); err != nil {
 			return err
 		}
 	}
-	printBuildMessage()
+
+	logging.Success("Build tasks:")
+	logging.Indent = "   "
+	for _, task := range builder.Builds {
+		logging.Bullet("%s", task.Message())
+	}
+	logging.Indent = ""
+	logging.Success("Directives processed:")
+	logging.Indent = "   "
+	for _, dir := range directive.Directives {
+		logging.Bullet("%s", dir.Name())
+	}
+	logging.Indent = ""
 	return nil
 }
