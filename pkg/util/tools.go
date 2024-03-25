@@ -7,6 +7,8 @@ package util
 import (
 	"encoding/hex"
 	"regexp"
+
+	"github.com/arduino/go-paths-helper"
 )
 
 type RegexReplList []RegexRepl
@@ -67,3 +69,29 @@ func RemoveDuplicate[T comparable](inlist []T) []T {
 	}
 	return list
 }
+
+// CopyTo recursivelly copy all files from a source path to a destination path.
+func CopyTo(src *paths.Path, dst *paths.Path) error {
+	files, err := src.ReadDirRecursiveFiltered(nil,
+		paths.FilterOutDirectories(),
+		paths.FilterOutNames("README.md"),
+	)
+	if err != nil {
+		return err
+	}
+	for _, file := range files {
+		destination, err := file.RelFrom(src)
+		if err != nil {
+			return err
+		}
+		destination = dst.JoinPath(destination)
+		if err := destination.Parent().MkdirAll(); err != nil {
+			return err
+		}
+		if err := file.CopyTo(destination); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+

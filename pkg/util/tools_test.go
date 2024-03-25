@@ -8,6 +8,8 @@ import (
 	"reflect"
 	"regexp"
 	"testing"
+
+	"github.com/arduino/go-paths-helper"
 )
 
 func TestDecodeHexInString(t *testing.T) {
@@ -104,6 +106,47 @@ func TestRegexReplList_Replace(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := tt.rr.Replace(tt.str); got != tt.want {
 				t.Errorf("RegexReplList.Replace() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestCopyTo(t *testing.T) {
+	tests := []struct {
+		name    string
+		src     *paths.Path
+		dst     *paths.Path
+		wantErr bool
+	}{
+		{
+			name:    "default",
+			src:     paths.New("../../apparmor.d/groups/_full/"),
+			dst:     paths.New("../../.build/apparmor.d/groups/_full/"),
+			wantErr: false,
+		},
+		{
+			name:    "issue-source",
+			src:     paths.New("../../apparmor.d/groups/nope/"),
+			dst:     paths.New("../../.build/apparmor.d/groups/_full/"),
+			wantErr: true,
+		},
+		{
+			name:    "issue-dest-1",
+			src:     paths.New("../../apparmor.d/groups/_full/"),
+			dst:     paths.New("/"),
+			wantErr: true,
+		},
+		{
+			name:    "issue-dest-2",
+			src:     paths.New("../../apparmor.d/groups/_full/"),
+			dst:     paths.New("/_full/"),
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := CopyTo(tt.src, tt.dst); (err != nil) != tt.wantErr {
+				t.Errorf("CopyTo() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
