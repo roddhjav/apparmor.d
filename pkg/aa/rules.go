@@ -39,9 +39,8 @@ func NewQualifierFromLog(log map[string]string) Qualifier {
 	owner := false
 	fsuid, hasFsUID := log["fsuid"]
 	ouid, hasOuUID := log["ouid"]
-	OUID, hasOUID := log["OUID"]
 	isDbus := strings.Contains(log["operation"], "dbus")
-	if hasFsUID && hasOuUID && hasOUID && fsuid == ouid && OUID != "root" && !isDbus {
+	if hasFsUID && hasOuUID && fsuid == ouid && ouid != "0" && !isDbus {
 		owner = true
 	}
 
