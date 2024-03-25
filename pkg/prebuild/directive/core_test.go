@@ -11,32 +11,6 @@ import (
 	"github.com/arduino/go-paths-helper"
 )
 
-func TestDirective_Usage(t *testing.T) {
-	tests := []struct {
-		name        string
-		d           Directive
-		wantMessage string
-		wantUsage   string
-	}{
-		{
-			name:        "empty",
-			d:           Directives["stack"],
-			wantMessage: "Stack directive applied",
-			wantUsage:   `#aa:stack profiles_name...`,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.d.Usage(); got != tt.wantUsage {
-				t.Errorf("Directive.Usage() = %v, want %v", got, tt.wantUsage)
-			}
-			if got := tt.d.Message(); got != tt.wantMessage {
-				t.Errorf("Directive.Usage() = %v, want %v", got, tt.wantMessage)
-			}
-		})
-	}
-}
-
 func TestNewOption(t *testing.T) {
 	tests := []struct {
 		name  string

@@ -7,7 +7,7 @@ package directive
 import (
 	"testing"
 
-	oss "github.com/roddhjav/apparmor.d/pkg/os"
+	"github.com/roddhjav/apparmor.d/pkg/prebuild/cfg"
 )
 
 func TestFilterOnly_Apply(t *testing.T) {
@@ -77,8 +77,8 @@ func TestFilterOnly_Apply(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			oss.Distribution = tt.dist
-			oss.Family = tt.family
+			cfg.Distribution = tt.dist
+			cfg.Family = tt.family
 			if got := Directives["only"].Apply(tt.opt, tt.profile); got != tt.want {
 				t.Errorf("FilterOnly.Apply() = %v, want %v", got, tt.want)
 			}
@@ -126,8 +126,8 @@ func TestFilterExclude_Apply(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			oss.Distribution = tt.dist
-			oss.Family = tt.family
+			cfg.Distribution = tt.dist
+			cfg.Family = tt.family
 			if got := Directives["exclude"].Apply(tt.opt, tt.profile); got != tt.want {
 				t.Errorf("FilterExclude.Apply() = %v, want %v", got, tt.want)
 			}

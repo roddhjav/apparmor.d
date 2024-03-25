@@ -8,35 +8,37 @@ import (
 	"regexp"
 	"strings"
 
-	oss "github.com/roddhjav/apparmor.d/pkg/os"
+	"github.com/roddhjav/apparmor.d/pkg/prebuild/cfg"
 	"golang.org/x/exp/slices"
 )
 
 type FilterOnly struct {
-	DirectiveBase
+	cfg.Base
 }
 
 type FilterExclude struct {
-	DirectiveBase
+	cfg.Base
 }
 
 func init() {
-	Directives["only"] = &FilterOnly{
-		DirectiveBase: DirectiveBase{
-			message: "Only directive applied",
-			usage:   `#aa:only <dist or familly>`,
+	RegisterDirective(&FilterOnly{
+		Base: cfg.Base{
+			Keyword: "only",
+			Msg:     "Only directive applied",
+			Help:    `#aa:only filters...`,
 		},
-	}
-	Directives["exclude"] = &FilterExclude{
-		DirectiveBase: DirectiveBase{
-			message: "Exclude directive applied",
-			usage:   `#aa:exclude <dist or familly>`,
+	})
+	RegisterDirective(&FilterExclude{
+		Base: cfg.Base{
+			Keyword: "exclude",
+			Msg:     "Exclude directive applied",
+			Help:    `#aa:exclude filters...`,
 		},
-	}
+	})
 }
 
 func filterRuleForUs(opt *Option) bool {
-	return slices.Contains(opt.ArgList, oss.Distribution) || slices.Contains(opt.ArgList, oss.Family)
+	return slices.Contains(opt.ArgList, cfg.Distribution) || slices.Contains(opt.ArgList, cfg.Family)
 }
 
 func filter(only bool, opt *Option, profile string) string {

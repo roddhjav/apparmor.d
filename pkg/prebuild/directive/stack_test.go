@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/arduino/go-paths-helper"
+	"github.com/roddhjav/apparmor.d/pkg/prebuild/cfg"
 )
 
 func TestStack_Apply(t *testing.T) {
@@ -66,7 +67,7 @@ profile parent @{exec_path} {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			rootApparmord = tt.rootApparmord
+			cfg.RootApparmord = tt.rootApparmord
 			if got := Directives["stack"].Apply(tt.opt, tt.profile); got != tt.want {
 				t.Errorf("Stack.Apply() = %v, want %v", got, tt.want)
 			}

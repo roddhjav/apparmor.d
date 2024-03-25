@@ -8,20 +8,22 @@ import (
 	"strings"
 
 	"github.com/roddhjav/apparmor.d/pkg/aa"
+	"github.com/roddhjav/apparmor.d/pkg/prebuild/cfg"
 	"golang.org/x/exp/slices"
 )
 
 type Exec struct {
-	DirectiveBase
+	cfg.Base
 }
 
 func init() {
-	Directives["exec"] = &Exec{
-		DirectiveBase: DirectiveBase{
-			message: "Exec directive applied",
-			usage:   `#aa:exec [P|U|p|u|PU|pu|] profiles_name...`,
+	RegisterDirective(&Exec{
+		Base: cfg.Base{
+			Keyword: "exec",
+			Msg:     "Exec directive applied",
+			Help:    `#aa:exec [P|U|p|u|PU|pu|] profiles...`,
 		},
-	}
+	})
 }
 
 func (d Exec) Apply(opt *Option, profile string) string {
@@ -35,7 +37,7 @@ func (d Exec) Apply(opt *Option, profile string) string {
 
 	p := &aa.AppArmorProfile{}
 	for name := range opt.ArgMap {
-		content, err := rootApparmord.Join(name).ReadFile()
+		content, err := cfg.RootApparmord.Join(name).ReadFile()
 		if err != nil {
 			panic(err)
 		}

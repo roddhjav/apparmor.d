@@ -9,11 +9,9 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/arduino/go-paths-helper"
+	"github.com/roddhjav/apparmor.d/pkg/prebuild/cfg"
 	"github.com/roddhjav/apparmor.d/pkg/util"
 )
-
-var rootApparmord = paths.New(".build/apparmor.d")
 
 var (
 	regRules            = regexp.MustCompile(`(?m)^profile.*{$((.|\n)*)}`)
@@ -27,22 +25,23 @@ var (
 )
 
 type Stack struct {
-	DirectiveBase
+	cfg.Base
 }
 
 func init() {
-	Directives["stack"] = &Stack{
-		DirectiveBase: DirectiveBase{
-			message: "Stack directive applied",
-			usage:   `#aa:stack profiles_name...`,
+	RegisterDirective(&Stack{
+		Base: cfg.Base{
+			Keyword: "stack",
+			Msg:     "Stack directive applied",
+			Help:    `#aa:stack profiles...`,
 		},
-	}
+	})
 }
 
 func (s Stack) Apply(opt *Option, profile string) string {
 	res := ""
 	for name := range opt.ArgMap {
-		tmp, err := rootApparmord.Join(name).ReadFile()
+		tmp, err := cfg.RootApparmord.Join(name).ReadFile()
 		if err != nil {
 			panic(err)
 		}
