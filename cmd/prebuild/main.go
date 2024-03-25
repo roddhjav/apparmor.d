@@ -10,12 +10,14 @@ import (
 	"os"
 
 	"github.com/roddhjav/apparmor.d/pkg/logging"
-	oss "github.com/roddhjav/apparmor.d/pkg/os"
 	"github.com/roddhjav/apparmor.d/pkg/prebuild"
+	"github.com/roddhjav/apparmor.d/pkg/prebuild/builder"
+	"github.com/roddhjav/apparmor.d/pkg/prebuild/cfg"
 	"github.com/roddhjav/apparmor.d/pkg/prebuild/directive"
+	"github.com/roddhjav/apparmor.d/pkg/prebuild/prepare"
 )
 
-const usage = `prebuild [-h] [--full] [--complain | --enforce] [profiles...]
+const usage = `prebuild [-h] [--full] [--complain | --enforce]
 
     Prebuild apparmor.d profiles for a given distribution and apply
     internal built-in directives.
@@ -27,7 +29,6 @@ Options:
     -e, --enforce   Set enforce flag on all profiles.
         --abi4      Convert the profiles to Apparmor abi/4.0.
 
-Directives:
 `
 
 var (
@@ -51,23 +52,23 @@ func init() {
 }
 
 func aaPrebuild() error {
-	logging.Step("Building apparmor.d profiles for %s.", oss.Distribution)
+	logging.Step("Building apparmor.d profiles for %s.", cfg.Distribution)
 
 	if full {
-		prebuild.Prepares = append(prebuild.Prepares, prebuild.SetFullSystemPolicy)
-		prebuild.Builds = append(prebuild.Builds, prebuild.BuildFullSystemPolicy)
+		prepare.Register("fsp")
+		builder.Register("fsp")
 	} else {
-		prebuild.Prepares = append(prebuild.Prepares, prebuild.SetEarlySystemd)
+		prepare.Register("systemd-early")
 	}
 
 	if complain {
-		prebuild.Builds = append(prebuild.Builds, prebuild.BuildComplain)
+		builder.Register("complain")
 	} else if enforce {
-		prebuild.Builds = append(prebuild.Builds, prebuild.BuildEnforce)
+		builder.Register("enforce")
 	}
 
 	if abi4 {
-		prebuild.Builds = append(prebuild.Builds, prebuild.BuildABI3)
+		builder.Register("abi3")
 	}
 
 	if err := prebuild.Prepare(); err != nil {
@@ -78,11 +79,11 @@ func aaPrebuild() error {
 
 func main() {
 	flag.Usage = func() {
-		res := usage
-		for _, d := range directive.Directives {
-			res += `    ` + d.Usage() + "\n"
-		}
-		fmt.Print(res)
+		fmt.Printf("%s%s\n%s\n%s", usage,
+			cfg.Help("Prepare", prepare.Tasks),
+			cfg.Help("Build", builder.Builders),
+			cfg.Usage("Directives", directive.Directives),
+		)
 	}
 	flag.Parse()
 	if help {

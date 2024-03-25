@@ -9,8 +9,9 @@ import (
 	"os/exec"
 	"testing"
 
-	oss "github.com/roddhjav/apparmor.d/pkg/os"
-	"github.com/roddhjav/apparmor.d/pkg/prebuild"
+	"github.com/roddhjav/apparmor.d/pkg/prebuild/builder"
+	"github.com/roddhjav/apparmor.d/pkg/prebuild/cfg"
+	"github.com/roddhjav/apparmor.d/pkg/prebuild/prepare"
 )
 
 func chdirGitRoot() {
@@ -72,12 +73,13 @@ func Test_AAPrebuild(t *testing.T) {
 	chdirGitRoot()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			oss.Distribution = tt.dist
+			cfg.Distribution = tt.dist
 			if tt.full {
-				prebuild.Prepares = append(prebuild.Prepares, prebuild.SetFullSystemPolicy)
+				prepare.Register("fsp")
+				builder.Register("fsp")
 			}
 			if tt.complain {
-				prebuild.Builds = append(prebuild.Builds, prebuild.BuildComplain)
+				builder.Register("complain")
 			}
 			if err := aaPrebuild(); (err != nil) != tt.wantErr {
 				t.Errorf("aaPrebuild() error = %v, wantErr %v", err, tt.wantErr)
