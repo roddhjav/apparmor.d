@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	Archlinux = `NAME="Arch Linux"
+	osReleaseArchlinux = `NAME="Arch Linux"
 PRETTY_NAME="Arch Linux"
 ID=arch
 BUILD_ID=rolling
@@ -24,7 +24,7 @@ BUG_REPORT_URL="https://bugs.archlinux.org/"
 PRIVACY_POLICY_URL="https://terms.archlinux.org/docs/privacy-policy/"
 LOGO=archlinux-logo`
 
-	Ubuntu = `PRETTY_NAME="Ubuntu 22.04.2 LTS"
+	osReleaseUbuntu = `PRETTY_NAME="Ubuntu 22.04.2 LTS"
 NAME="Ubuntu"
 VERSION_ID="22.04"
 VERSION="22.04.2 LTS (Jammy Jellyfish)"
@@ -37,7 +37,7 @@ BUG_REPORT_URL="https://bugs.launchpad.net/ubuntu/"
 PRIVACY_POLICY_URL="https://www.ubuntu.com/legal/terms-and-policies/privacy-policy"
 UBUNTU_CODENAME=jammy`
 
-	Debian = `PRETTY_NAME="Debian GNU/Linux 11 (bullseye)"
+	osReleaseDebian = `PRETTY_NAME="Debian GNU/Linux 11 (bullseye)"
 NAME="Debian GNU/Linux"
 VERSION_ID="11"
 VERSION="11 (bullseye)"
@@ -47,7 +47,7 @@ HOME_URL="https://www.debian.org/"
 SUPPORT_URL="https://www.debian.org/support"
 BUG_REPORT_URL="https://bugs.debian.org/"`
 
-	OpenSUSETumbleweed = `ID="opensuse-tumbleweed"
+	osReleaseOpenSUSETumbleweed = `ID="opensuse-tumbleweed"
 ID_LIKE="opensuse suse"
 VERSION_ID="20230404"
 PRETTY_NAME="openSUSE Tumbleweed"
@@ -58,7 +58,7 @@ HOME_URL="https://www.opensuse.org/"
 DOCUMENTATION_URL="https://en.opensuse.org/Portal:Tumbleweed"
 LOGO="distributor-logo-Tumbleweed"`
 
-	ArcoLinux = `NAME=ArcoLinux
+	osReleaseArcoLinux = `NAME=ArcoLinux
 ID=arcolinux
 ID_LIKE=arch
 BUILD_ID=rolling
@@ -68,7 +68,7 @@ SUPPORT_URL="https://arcolinuxforum.com/"
 BUG_REPORT_URL="https://github.com/arcolinux"
 LOGO=arcolinux-hello`
 
-	Fedora = `NAME="Fedora Linux"
+	osReleaseFedora = `NAME="Fedora Linux"
 VERSION="37 (Workstation Edition)"
 ID=fedora
 VERSION_ID=37
@@ -87,7 +87,7 @@ func Test_getOSRelease(t *testing.T) {
 	}{
 		{
 			name:      "Archlinux",
-			osRelease: Archlinux,
+			osRelease: osReleaseArchlinux,
 			want: map[string]string{
 				"NAME":               "Arch Linux",
 				"PRETTY_NAME":        "Arch Linux",
@@ -104,7 +104,7 @@ func Test_getOSRelease(t *testing.T) {
 		},
 		{
 			name:      "Ubuntu",
-			osRelease: Ubuntu,
+			osRelease: osReleaseUbuntu,
 			want: map[string]string{
 				"PRETTY_NAME":        "Ubuntu 22.04.2 LTS",
 				"NAME":               "Ubuntu",
@@ -143,27 +143,27 @@ func Test_getDistribution(t *testing.T) {
 	}{
 		{
 			name:      "Archlinux",
-			osRelease: Archlinux,
+			osRelease: osReleaseArchlinux,
 			want:      "arch",
 		},
 		{
 			name:      "Ubuntu",
-			osRelease: Ubuntu,
+			osRelease: osReleaseUbuntu,
 			want:      "ubuntu",
 		},
 		{
 			name:      "Debian",
-			osRelease: Debian,
+			osRelease: osReleaseDebian,
 			want:      "debian",
 		},
 		{
 			name:      "OpenSUSE Tumbleweed",
-			osRelease: OpenSUSETumbleweed,
+			osRelease: osReleaseOpenSUSETumbleweed,
 			want:      "opensuse",
 		},
 		{
 			name:      "Fedora",
-			osRelease: Fedora,
+			osRelease: osReleaseFedora,
 			want:      "fedora",
 		},
 	}
