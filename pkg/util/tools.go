@@ -94,4 +94,3 @@ func CopyTo(src *paths.Path, dst *paths.Path) error {
 	}
 	return nil
 }
-

@@ -33,7 +33,7 @@ func init() {
 	case "ubuntu":
 		if cfg.Release["VERSION_CODENAME"] == "noble" {
 			builder.Register("abi3")
-			cfg.Overwrite = true
+			cfg.Overwrite.Enabled = true
 		}
 	}
 }
