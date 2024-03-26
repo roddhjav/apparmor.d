@@ -14,7 +14,7 @@ import (
 	"github.com/arduino/go-paths-helper"
 	"github.com/roddhjav/apparmor.d/pkg/aa"
 	"github.com/roddhjav/apparmor.d/pkg/logging"
-	oss "github.com/roddhjav/apparmor.d/pkg/os"
+	bcfg "github.com/roddhjav/apparmor.d/pkg/prebuild/cfg"
 	"github.com/roddhjav/apparmor.d/tests/integration"
 )
 
@@ -123,7 +123,7 @@ func testDeps(dryRun bool) error {
 	}
 
 	deps := tSuite.GetDependencies()
-	switch oss.Distribution {
+	switch bcfg.Distribution {
 	case "arch":
 		arg := []string{"pacman", "-Sy", "--noconfirm"}
 		arg = append(arg, deps...)
