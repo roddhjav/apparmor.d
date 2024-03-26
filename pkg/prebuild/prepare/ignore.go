@@ -5,8 +5,6 @@
 package prepare
 
 import (
-	"strings"
-
 	"github.com/arduino/go-paths-helper"
 	"github.com/roddhjav/apparmor.d/pkg/prebuild/cfg"
 )
@@ -26,19 +24,11 @@ func init() {
 
 func (p Ignore) Apply() ([]string, error) {
 	res := []string{}
-	for _, name := range []string{"main.ignore", cfg.Distribution + ".ignore"} {
-		path := cfg.DistDir.Join("ignore", name)
-		if !path.Exist() {
-			continue
-		}
-		lines, _ := path.ReadFileAsLines()
-		for _, line := range lines {
-			if strings.HasPrefix(line, "#") || line == "" {
-				continue
-			}
-			profile := cfg.Root.Join(line)
+	for _, name := range []string{"main", cfg.Distribution} {
+		for _, ignore := range cfg.Ignore.Read(name) {
+			profile := cfg.Root.Join(ignore)
 			if profile.NotExist() {
-				files, err := cfg.RootApparmord.ReadDirRecursiveFiltered(nil, paths.FilterNames(line))
+				files, err := cfg.RootApparmord.ReadDirRecursiveFiltered(nil, paths.FilterNames(ignore))
 				if err != nil {
 					return res, err
 				}
@@ -53,7 +43,7 @@ func (p Ignore) Apply() ([]string, error) {
 				}
 			}
 		}
-		res = append(res, path.String())
+		res = append(res, cfg.IgnoreDir.Join(name+".ignore").String())
 	}
 	return res, nil
 }
