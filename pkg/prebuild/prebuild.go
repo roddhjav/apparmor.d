@@ -87,7 +87,7 @@ func Build() error {
 	logging.Success("Directives processed:")
 	logging.Indent = "   "
 	for _, dir := range directive.Directives {
-		logging.Bullet("%s", dir.Name())
+		logging.Bullet("%s%s", directive.Keyword, dir.Name())
 	}
 	logging.Indent = ""
 	return nil
