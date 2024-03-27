@@ -87,6 +87,7 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
   # Talk with gnome-shell
 
+  #aa:dbus talk bus=system name=org.freedesktop.ColorManager label=colord
   #aa:dbus talk bus=system name=org.gnome.DisplayManager label=gdm
 
   #aa:dbus talk bus=session name=com.rastersoft.ding label=gnome-extension-ding
@@ -108,15 +109,6 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
        interface=org.freedesktop.NetworkManager.AgentManager
        member={RegisterWithCapabilities,Unregister}
        peer=(name=:*, label=NetworkManager),
-
-  dbus send bus=system path=/org/freedesktop/ColorManager
-       interface=org.freedesktop.ColorManager
-       member=DeleteDevice
-       peer=(name=:*, label=colord),
-  dbus receive bus=system path=/org/freedesktop/ColorManager
-       interface=org.freedesktop.ColorManager
-       member=ProfileAdded
-       peer=(name=:*, label=colord),
 
   dbus receive bus=system path=/org/freedesktop/login1/seat/seat@{int}
        interface=org.freedesktop.DBus.Properties
@@ -252,11 +244,6 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{gdm_cache_dirs}/gstreamer-@{int}/registry.*.bin{,.tmp@{rand6}} rw,
   owner @{gdm_cache_dirs}/ibus/dbus-@{rand8} rw,
   owner @{gdm_cache_dirs}/libgweather/ r,
-  owner @{gdm_cache_dirs}/mesa_shader_cache/ rw,
-  owner @{gdm_cache_dirs}/mesa_shader_cache/@{h}@{h}/ rw,
-  owner @{gdm_cache_dirs}/mesa_shader_cache/@{h}@{h}/@{hex} rw,
-  owner @{gdm_cache_dirs}/mesa_shader_cache/@{h}@{h}/@{hex}.tmp rwk,
-  owner @{gdm_cache_dirs}/mesa_shader_cache/index rw,
   owner @{gdm_config_dirs}/dconf/user r,
   owner @{gdm_config_dirs}/ibus/ rw,
   owner @{gdm_config_dirs}/ibus/bus/ rw,
@@ -314,7 +301,7 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
         /tmp/.X@{int}-lock rw,
         /tmp/dbus-@{rand8} rw,
-  owner /tmp/[0-9A-Z]*.shell-extension.zip rw,
+  owner /tmp/@{rand6}.shell-extension.zip rw,
   owner /tmp/gdkpixbuf-xpm-tmp.@{rand6} rw,
 
   @{run}/systemd/users/@{uid} r,
