@@ -11,11 +11,9 @@ include <tunables/global>
 profile sudo @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/app-launcher-root>
-  include <abstractions/sudo>
+  include <abstractions/app/sudo>
 
   capability chown,
-  capability dac_override,
-  capability dac_read_search,
   capability mknod,
   capability sys_ptrace,
 
@@ -27,32 +25,26 @@ profile sudo @{exec_path} flags=(attach_disconnected) {
   signal (send,receive) peer=cockpit-bridge,
   signal (send) peer=@{systemd},
   signal (send) set=(cont,hup) peer=su,
-  signal (send) set=(winch),
+  # signal (send) set=(winch),
+  signal (send) set=(winch) peer=child-pager,
+  signal (send) set=(winch) peer=journalctl,
 
-  @{exec_path} mr,
-
-  @{bin}/@{shells}                 rUx,
+  @{bin}/@{shells}                  rUx,
   @{lib}/**                         PUx,
   /opt/*/**                         PUx,
   /snap/snapd/@{int}@{bin}/snap    rPUx,
 
         /var/db/sudo/lectured/ r,
-        /var/lib/extrausers/shadow r,
-        /var/lib/sudo/lectured/ r,
-        /var/lib/sudo/ts/ rw,
-        /var/lib/sudo/ts/* rwk,
-        /var/log/sudo.log wk,
   owner /var/db/sudo/lectured/@{uid} rw,
-  owner /var/lib/sudo/lectured/* rw,
+  owner /var/lib/extrausers/shadow r,
+
+        /var/lib/sudo/lectured/ r,
+  owner /var/lib/sudo/lectured/@{uid} rw,
 
   owner @{HOME}/.sudo_as_admin_successful rw,
 
-        @{run}/ r,
-        @{run}/faillock/{,*} rwk,
-        @{run}/systemd/sessions/* r,
-  owner @{run}/sudo/ rw,
-  owner @{run}/sudo/ts/ rw,
-  owner @{run}/sudo/ts/* rwk,
+  @{run}/ r,
+  @{run}/systemd/sessions/* r,
 
   include if exists <local/sudo>
 }
