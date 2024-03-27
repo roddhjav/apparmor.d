@@ -58,16 +58,6 @@ HOME_URL="https://www.opensuse.org/"
 DOCUMENTATION_URL="https://en.opensuse.org/Portal:Tumbleweed"
 LOGO="distributor-logo-Tumbleweed"`
 
-	osReleaseArcoLinux = `NAME=ArcoLinux
-ID=arcolinux
-ID_LIKE=arch
-BUILD_ID=rolling
-ANSI_COLOR="0;36"
-HOME_URL="https://arcolinux.info/"
-SUPPORT_URL="https://arcolinuxforum.com/"
-BUG_REPORT_URL="https://github.com/arcolinux"
-LOGO=arcolinux-hello`
-
 	osReleaseFedora = `NAME="Fedora Linux"
 VERSION="37 (Workstation Edition)"
 ID=fedora

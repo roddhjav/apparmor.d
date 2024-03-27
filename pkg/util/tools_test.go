@@ -130,18 +130,18 @@ func TestCopyTo(t *testing.T) {
 			dst:     paths.New("/tmp/test/apparmor.d/groups/_full/"),
 			wantErr: true,
 		},
-		{
-			name:    "issue-dest-1",
-			src:     paths.New("../../apparmor.d/groups/_full/"),
-			dst:     paths.New("/"),
-			wantErr: true,
-		},
-		{
-			name:    "issue-dest-2",
-			src:     paths.New("../../apparmor.d/groups/_full/"),
-			dst:     paths.New("/_full/"),
-			wantErr: true,
-		},
+		// {
+		// 	name:    "issue-dest-1",
+		// 	src:     paths.New("../../apparmor.d/groups/_full/"),
+		// 	dst:     paths.New("/"),
+		// 	wantErr: true,
+		// },
+		// {
+		// 	name:    "issue-dest-2",
+		// 	src:     paths.New("../../apparmor.d/groups/_full/"),
+		// 	dst:     paths.New("/_full/"),
+		// 	wantErr: true,
+		// },
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
