@@ -7,11 +7,11 @@ package prepare
 import (
 	"os"
 	"os/exec"
-	"slices"
 	"testing"
 
 	"github.com/arduino/go-paths-helper"
 	"github.com/roddhjav/apparmor.d/pkg/prebuild/cfg"
+	"golang.org/x/exp/slices"
 )
 
 func chdirGitRoot() {
@@ -84,6 +84,7 @@ func TestTask_Apply(t *testing.T) {
 		},
 	}
 	chdirGitRoot()
+	cfg.Root.RemoveAll()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := tt.task.Apply()

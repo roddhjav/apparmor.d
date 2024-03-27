@@ -6,10 +6,10 @@ package builder
 
 import (
 	"regexp"
-	"slices"
 	"strings"
 
 	"github.com/roddhjav/apparmor.d/pkg/prebuild/cfg"
+	"golang.org/x/exp/slices"
 )
 
 var (

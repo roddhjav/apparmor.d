@@ -5,8 +5,9 @@
 package builder
 
 import (
-	"slices"
 	"testing"
+
+	"golang.org/x/exp/slices"
 )
 
 func TestBuilder_Apply(t *testing.T) {
