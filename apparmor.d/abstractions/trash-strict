@@ -1,0 +1,82 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2018-2022 Mikhail Morfikov
+# Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Already upstreamed. Different because recent change does not play well
+# with upstream's version.
+
+# There is no 'owner' rule on expunged folders because some internally sandboxed
+# app (using bwrap) run on a different private user.
+
+  owner @{user_config_dirs}/#@{int} rwk,
+  owner @{user_config_dirs}/trashrc rw,
+  owner @{user_config_dirs}/trashrc.* rwl,
+  owner @{user_config_dirs}/trashrc.lock rwk,
+
+  owner @{run}/user/@{uid}/#@{int} rw,
+  owner @{run}/user/@{uid}/trash.so*.@{int}.slave-socket rwl,
+
+  # Home trash location
+  owner @{user_share_dirs}/Trash/ rw,
+  owner @{user_share_dirs}/Trash/#@{int} rw,
+  owner @{user_share_dirs}/Trash/directorysizes{,.*} rwl -> @{user_share_dirs}/Trash/#@{int},
+  owner @{user_share_dirs}/Trash/files/{,**} rw,
+  owner @{user_share_dirs}/Trash/info/ rw,
+  owner @{user_share_dirs}/Trash/info/*.trashinfo{,.*} rw,
+        @{user_share_dirs}/Trash/expunged/ rw,
+        @{user_share_dirs}/Trash/expunged/@{int} rw,
+        @{user_share_dirs}/Trash/expunged/@{int}/ rw,
+        @{user_share_dirs}/Trash/expunged/@{int}/** rw,
+
+  # Partitions' trash location when the admin creates the .Trash/ folder in the top lvl dir
+  owner @{MOUNTS}/.Trash/ rw,
+  owner @{MOUNTS}/.Trash/@{uid}/ rw,
+  owner @{MOUNTS}/.Trash/@{uid}/#@{int} rw,
+  owner @{MOUNTS}/.Trash/@{uid}/directorysizes{,.*} rwl -> @{MOUNTS}/.Trash/@{uid}/#@{int},
+  owner @{MOUNTS}/.Trash/@{uid}/files/{,**} rw,
+  owner @{MOUNTS}/.Trash/@{uid}/info/ rw,
+  owner @{MOUNTS}/.Trash/@{uid}/info/*.trashinfo{,.*} rw,
+        @{MOUNTS}/.Trash/@{uid}/expunged/ rw,
+        @{MOUNTS}/.Trash/@{uid}/expunged/@{int} rw,
+        @{MOUNTS}/.Trash/@{uid}/expunged/@{int}/ rw,
+        @{MOUNTS}/.Trash/@{uid}/expunged/@{int}/** rw,
+
+  # Partitions' trash location when the admin doesn't create the .Trash/ folder in the top lvl dir
+  owner @{MOUNTS}/.Trash-@{uid}/ rw,
+  owner @{MOUNTS}/.Trash-@{uid}/#@{int} rw,
+  owner @{MOUNTS}/.Trash-@{uid}/directorysizes{,.*} rwl -> @{MOUNTS}/.Trash-@{uid}/#@{int},
+  owner @{MOUNTS}/.Trash-@{uid}/files/{,**} rw,
+  owner @{MOUNTS}/.Trash-@{uid}/info/ rw,
+  owner @{MOUNTS}/.Trash-@{uid}/info/*.trashinfo{,.*} rw,
+        @{MOUNTS}/.Trash-@{uid}/expunged/ rw,
+        @{MOUNTS}/.Trash-@{uid}/expunged/@{int} rw,
+        @{MOUNTS}/.Trash-@{uid}/expunged/@{int}/ rw,
+        @{MOUNTS}/.Trash-@{uid}/expunged/@{int}/** rw,
+
+  # Removable media's trash location when the admin creates the .Trash/ folder in the top lvl dir
+  owner @{MOUNTS}/*/.Trash/ rw,
+  owner @{MOUNTS}/*/.Trash/@{uid}/ rw,
+  owner @{MOUNTS}/*/.Trash/@{uid}/#@{int} rw,
+  owner @{MOUNTS}/*/.Trash/@{uid}/directorysizes{,.*} rwl -> @{MOUNTS}/*/.Trash/@{uid}/#@{int},
+  owner @{MOUNTS}/*/.Trash/@{uid}/files/{,**} rw,
+  owner @{MOUNTS}/*/.Trash/@{uid}/info/ rw,
+  owner @{MOUNTS}/*/.Trash/@{uid}/info/*.trashinfo{,.*} rw,
+        @{MOUNTS}/*/.Trash/@{uid}/expunged/ rw,
+        @{MOUNTS}/*/.Trash/@{uid}/expunged/@{int} rw,
+        @{MOUNTS}/*/.Trash/@{uid}/expunged/@{int}/ rw,
+        @{MOUNTS}/*/.Trash/@{uid}/expunged/@{int}/** rw,
+
+  # Removable media's trash location when the admin doesn't create the .Trash/ folder in the top lvl dir
+  owner @{MOUNTS}/*/.Trash-@{uid}/ rw,
+  owner @{MOUNTS}/*/.Trash-@{uid}/#@{int} rw,
+  owner @{MOUNTS}/*/.Trash-@{uid}/directorysizes{,.*} rwl -> @{MOUNTS}/*/.Trash-@{uid}/#@{int},
+  owner @{MOUNTS}/*/.Trash-@{uid}/files/{,**} rw,
+  owner @{MOUNTS}/*/.Trash-@{uid}/info/ rw,
+  owner @{MOUNTS}/*/.Trash-@{uid}/info/*.trashinfo{,.*} rw,
+        @{MOUNTS}/*/.Trash-@{uid}/expunged/ rw,
+        @{MOUNTS}/*/.Trash-@{uid}/expunged/@{int} rw,
+        @{MOUNTS}/*/.Trash-@{uid}/expunged/@{int}/ rw,
+        @{MOUNTS}/*/.Trash-@{uid}/expunged/@{int}/** rw,
+
+  include if exists <abstractions/trash-strict.d>
