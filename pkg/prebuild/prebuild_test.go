@@ -9,10 +9,17 @@ import (
 	"os/exec"
 	"testing"
 
+	"github.com/arduino/go-paths-helper"
 	"github.com/roddhjav/apparmor.d/pkg/prebuild/builder"
 	"github.com/roddhjav/apparmor.d/pkg/prebuild/cfg"
 	"github.com/roddhjav/apparmor.d/pkg/prebuild/prepare"
 )
+
+func setTestBuildDirectories(name string) {
+	testRoot := paths.New("/tmp/tests")
+	cfg.Root = testRoot.Join(name)
+	cfg.RootApparmord = cfg.Root.Join("apparmor.d")
+}
 
 func chdirGitRoot() {
 	cmd := exec.Command("git", "rev-parse", "--show-toplevel")
@@ -71,6 +78,7 @@ func Test_PreBuild(t *testing.T) {
 	chdirGitRoot()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			setTestBuildDirectories(tt.name)
 			cfg.Distribution = tt.dist
 			if tt.full {
 				prepare.Register("fsp")

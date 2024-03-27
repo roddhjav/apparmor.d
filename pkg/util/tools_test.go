@@ -121,13 +121,13 @@ func TestCopyTo(t *testing.T) {
 		{
 			name:    "default",
 			src:     paths.New("../../apparmor.d/groups/_full/"),
-			dst:     paths.New("../../.build/apparmor.d/groups/_full/"),
+			dst:     paths.New("/tmp/test/apparmor.d/groups/_full/"),
 			wantErr: false,
 		},
 		{
 			name:    "issue-source",
 			src:     paths.New("../../apparmor.d/groups/nope/"),
-			dst:     paths.New("../../.build/apparmor.d/groups/_full/"),
+			dst:     paths.New("/tmp/test/apparmor.d/groups/_full/"),
 			wantErr: true,
 		},
 		{

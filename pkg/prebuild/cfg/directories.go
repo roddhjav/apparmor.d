@@ -26,7 +26,7 @@ var (
 	SystemdDir *paths.Path = paths.New("systemd")
 
 	// DebianDir is the directory where the debian specific files are stored
-	DebianDir *paths.Path = DistDir.Join("debian")
+	DebianDir *paths.Path = paths.New("debian")
 
 	// Either or not overwrite some upstreamed profile
 	Overwrite = Overwriter{Enabled: false}
