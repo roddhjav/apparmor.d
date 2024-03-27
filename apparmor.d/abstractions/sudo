@@ -11,6 +11,8 @@
   include <abstractions/wutmp>
 
   capability audit_write,
+  capability dac_override,
+  capability dac_read_search,
   capability net_admin,
   capability setgid,
   capability setuid,
@@ -27,7 +29,8 @@
          interface=org.freedesktop.systemd.Manager
          member={JobRemoved,StartTransientUnit},
 
-  @{lib}/sudo/** mr,
+  @{bin}/sudo     mr,
+  @{lib}/sudo/**  mr,
 
   @{etc_ro}/environment r,
   @{etc_ro}/security/limits.d/{,*} r,
@@ -44,7 +47,17 @@
   @{PROC}/sys/kernel/ngroups_max r,
   @{PROC}/sys/kernel/seccomp/actions_avail r,
 
-        /dev/ r,    # interactive login
+  owner /var/lib/sudo/ts/ rw,   
+  owner /var/lib/sudo/ts/@{uid} rwk,
+  owner /var/log/sudo.log wk,
+
+        @{run}/faillock/{,*} rwk,
+
+  owner @{run}/sudo/ rw,
+  owner @{run}/sudo/ts/ rw,
+  owner @{run}/sudo/ts/@{uid} rwk,
+
+        /dev/ r,
         /dev/ptmx rwk,
         /dev/tty rwk,
   owner /dev/tty@{int} rw,
