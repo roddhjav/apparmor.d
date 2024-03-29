@@ -10,10 +10,27 @@ include <tunables/global>
 @{exec_path} = @{lib}/{,gvfs/}gvfsd-recent
 profile gvfsd-recent @{exec_path} {
   include <abstractions/base>
+  include <abstractions/bus-session>
   include <abstractions/nameservice-strict>
   include <abstractions/thumbnails-cache-read>
 
+  #aa:dbus own bus=session name=org.gtk.vfs.mountpoint_@{int}
+
+  dbus receive bus=session path=/org/gtk/vfs/mountable
+       interface=org.gtk.vfs.Mountable
+       member=Mount
+       peer=(name=:*, label=gvfsd),
+  dbus send bus=session path=/org/gtk/gvfs/exec_spaw/@{int}
+       interface=org.gtk.vfs.Spawner
+       member=Spawned
+       peer=(name=:*, label=gvfsd),
+  dbus send bus=session path=/org/gtk/vfs/mounttracker
+       interface=org.gtk.vfs.MountTracker
+       member=RegisterMount
+       peer=(name=:*, label=gvfsd),
+
   @{exec_path} mr,
+
   /usr/share/mime/mime.cache r,
 
   # Full access to user's data
@@ -27,10 +44,10 @@ profile gvfsd-recent @{exec_path} {
 
   owner @{run}/user/@{uid}/gvfsd/ rw,
   owner @{run}/user/@{uid}/gvfsd/socket-@{rand8} rw,
-  
-  owner @{PROC}/@{pid}/mountinfo r,
 
   @{run}/mount/utab r,
+  
+  owner @{PROC}/@{pid}/mountinfo r,
 
   include if exists <local/gvfsd-recent>
 }
