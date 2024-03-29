@@ -1,9 +1,10 @@
 # apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 include <tunables/global>
 
-@{exec_path} = /{,usr/}{,s}bin/yadifad
+@{exec_path} = @{bin}/yadifad
 profile yadifad @{exec_path} {
   include <abstractions/base>
   include <abstractions/nameservice-strict>
@@ -22,16 +23,12 @@ profile yadifad @{exec_path} {
 
   /etc/yadifa/yadifad.conf               r,
 
-        /var/lib/yadifa/**               r,
-  owner /var/lib/yadifa/ydf.@{rand6}       rw,
-  owner /var/lib/yadifa/keys/ydf.@{rand6}  rw,
-  owner /var/lib/yadifa/xfr/ydf.@{rand6}   rw,
+  /var/log/yadifa/{,**} rw,
 
-  /var/log/yadifa/*.log                  rw,
-  /var/log/yadifa/ydf.@{rand6}             rw,
+  owner /var/lib/yadifa/{,**}       rw,
 
+  owner @{run}/yadifa/{,*}    rw,
   owner @{run}/yadifa/yadifad.pid   rwk,
-  owner @{run}/yadifa/ydf.@{rand6}    rw,
 
   include if exists <local/yadifad>
 }

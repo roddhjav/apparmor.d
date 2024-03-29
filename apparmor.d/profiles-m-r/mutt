@@ -26,10 +26,9 @@ profile mutt @{exec_path} {
   # Used to exec programs defined in the mailcap.
   # There are countless programs that can be executed from the mailcap.
   # This profile includes only the most basic.
-  @{bin}/{,ba,da}sh               rix,
+  @{sh_path}                      rix,
  
-  @{bin}/sendmail                rPUx,
-  @{lib}/sendmail/sendmail rPUx,
+  @{lib}/{,sendmail/}sendmail    rPUx,
   @{bin}/ispell                  rPUx, 
   @{bin}/abook                   rPUx,
   @{bin}/mutt_dotlock             rix,
@@ -41,34 +40,33 @@ profile mutt @{exec_path} {
   @{bin}/vim             rCx -> editor,
   @{bin}/vim.*           rCx -> editor,
   @{bin}/sensible-editor rCx -> editor,
-  @{bin}/more            rCx -> pager,
-  @{bin}/less            rCx -> pager,
-  @{bin}/pager           rCx -> pager,
+
+  @{bin}/less            rPx -> child-pager,
+  @{bin}/more            rPx -> child-pager,
+  @{bin}/pager           rPx -> child-pager,
+
   @{bin}/gpg{2,}         rCx -> gpg,
   @{bin}/gpgconf         rCx -> gpg,
   @{bin}/gpgsm           rCx -> gpg,
   @{bin}/pgpewrap        rCx -> gpg,
 
   /usr/share/terminfo/** r,
+  /usr/share/mutt/** r,
 
-  # Mutt MIME types search path
-  /etc/mime.types           r,
-  owner @{HOME}/.mime.types r,
+  @{etc_ro}/mailcap r,
+  /etc/mime.types r,
+  /etc/mutt{,**} r,
+  /etc/Muttrc r,
+  /etc/Muttrc.d/{*,} r,
 
-  # Mutt mailcap search path
-  /etc/{mutt/,}mailcap   r,
-  /usr/etc/mailcap       r,
+  owner @{HOME}/.mail_aliases r, # Common location for mail aliases
   owner @{HOME}/.mailcap r,
-
-  # Mutt config files
-  /usr/share/mutt/**         r,
-  /etc/{mutt/,}Muttrc        r,
-  /etc/{mutt/,}Muttrc.d/{*,} r,
-  owner @{HOME}/.mutt/**     r,
-  owner @{HOME}/.muttrc*     r,
-
-  # Needed for the edit operation.
-  owner @{HOME}/ r,
+  owner @{HOME}/.mime.types r,
+  owner @{HOME}/.mutt_certificates rwk,
+  owner @{HOME}/.mutt/{,**} r,
+  owner @{HOME}/.mutthistory rwk,
+  owner @{HOME}/.muttrc* r,
+  owner @{HOME}/.signature r,  # Mutt signature file
 
   # User mbox
   # Could be a file or dir depending on mbox_type variable
@@ -76,23 +74,13 @@ profile mutt @{exec_path} {
   owner @{HOME}/{mbox,postponed,sent}*   rwlk,
   owner @{HOME}/{mbox,postponed,sent}/   rw,
   owner @{HOME}/{mbox,postponed,sent}/** rwlk,
+
+  owner @{user_config_dirs}/mutt/{,**} r,
+  owner @{user_cache_dirs}/mutt rwk,
+
   # User maildir
   owner @{user_mail_dirs}/ rw,
   owner @{user_mail_dirs}/** rwlk -> @{user_mail_dirs}/**,
-
-  # Trusted certificate store
-  owner @{HOME}/.mutt_certificates rwk,
-  
-  # Mutt history file
-  owner @{HOME}/.mutthistory rwk,
-  
-  # Mutt signature file
-  owner @{HOME}/.signature r,
-
-  # Common location for mail aliases
-  owner @{HOME}/.mail_aliases r,
-
-  owner @{HOME}/.cache/mutt rwk,
 
   # Needed to compose a message
   owner /{var/,}tmp/.mutt*/  rw,
@@ -137,34 +125,13 @@ profile mutt @{exec_path} {
   
     # Vim swap file 
     owner @{HOME}/ r,
-    owner @{HOME}/.cache/ r,
-    owner @{HOME}/.cache/vim/** wr,
+    owner @{user_cache_dirs}/ r,
+    owner @{user_cache_dirs}/vim/** wr,
    
     # This is the file that holds the message
     owner /{var/,}tmp/{.,}mutt* rw,
 
     include if exists <local/mutt_editor>
-  }
-  
-  profile pager {
-    include <abstractions/base>
-    include <abstractions/consoles>
-
-    /usr/share/terminfo/** r,
-    /usr/share/file/misc/magic.mgc r,
-
-    @{bin}/less  mr,
-    @{bin}/more  mr,
-    @{bin}/pager mr,
-    
-    owner @{HOME}/.lesshs* r,
-    owner @{HOME}/.local/state/ r,
-    owner @{HOME}/.local/state/less* rw,
-  
-    # This is the file that holds the message
-    owner /{var/,}tmp/mutt* rw,
-
-    include if exists <local/mutt_pager>
   }
 
   profile gpg {

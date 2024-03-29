@@ -29,10 +29,11 @@ profile gnome-system-monitor @{exec_path} flags=(attach_disconnected) {
 
   @{exec_path} mr,
 
-  @{bin}/lsblk  rPx,
-  @{bin}/pkexec rPx,
-  @{bin}/sed    rix,
   @{sh_path}    rix,
+  @{bin}/lsblk  rPx,
+  @{bin}/pkexec rCx -> pkexec,
+  @{bin}/sed    rix,
+  @{bin}/tr     rix,
 
   /usr/share/gnome-system-monitor/{,**} r,
   /usr/share/firefox-esr/browser/chrome/icons/default/*.png r,
@@ -74,6 +75,16 @@ profile gnome-system-monitor @{exec_path} flags=(attach_disconnected) {
   @{PROC}/vmstat r,
 
   deny owner @{user_share_dirs}/gvfs-metadata/{,*} r,
+
+  /dev/tty rw,
+
+  profile pkexec {
+    include <abstractions/base>
+
+    @{bin}/pkexec mr,
+
+    include if exists <local/gnome-system-monitor_pkexec>
+  }
 
   include if exists <local/gnome-system-monitor>
 }

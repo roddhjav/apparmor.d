@@ -45,12 +45,12 @@ profile gnome-control-center @{exec_path} flags=(attach_disconnected) {
   @{bin}/locale        rix,
   @{bin}/sed           rix,
 
-  @{bin}/bwrap                                  rPUx,
-  @{bin}/gkbd-keyboard-display                  rPUx,
-  @{bin}/gnome-software                         rPUx,
+  @{bin}/bwrap                                   rCx -> bwrap,
+  @{bin}/gkbd-keyboard-display                   rPx,
+  @{bin}/gnome-software                          rPx,
   @{bin}/openvpn                                 rPx,
   @{bin}/passwd                                  rPx,
-  @{bin}/pkexec                                  rPx,
+  @{bin}/pkexec                                  rCx -> pkexec,
   @{bin}/software-properties-gtk                 rPx,
   @{bin}/usermod                                 rPx,
   @{lib}/{,@{multiarch}/}webkit{,2}gtk-*/WebKitNetworkProcess rPx,
@@ -164,6 +164,23 @@ profile gnome-control-center @{exec_path} flags=(attach_disconnected) {
   /dev/video@{int} rw,
 
   deny owner @{user_share_dirs}/gvfs-metadata/{,*} r,
+
+  profile bwrap {
+    include <abstractions/base>
+    include <abstractions/common/bwrap>
+
+    @{bin}/bwrap mr,
+  
+    include if exists <local/gnome-control-center_bwrap>
+  }
+
+  profile pkexec {
+    include <abstractions/base>
+  
+    @{bin}/pkexec mr,
+  
+    include if exists <local/gnome-control-center_pkexec>
+  }
 
   include if exists <local/gnome-control-center>
 }
