@@ -1,0 +1,86 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Minimal set of rules for all electron based UI application. It works as a 
+# *function* and requires some variables to be provided as *arguments* and set 
+# in the header of the calling profile. Example:
+#
+# @{name} = spotify
+# @{lib_dirs} = /opt/@{name}
+# @{config_dirs} = @{user_config_dirs}/@{name}
+# @{cache_dirs} = @{user_cache_dirs}/@{name}
+#
+
+  include <abstractions/dconf-write>
+  include <abstractions/desktop>
+  include <abstractions/graphics>
+  include <abstractions/nameservice-strict>
+  include <abstractions/ssl_certs>
+
+  # userns,
+
+  capability setgid, # If kernel.unprivileged_userns_clone = 1
+  capability setuid, # If kernel.unprivileged_userns_clone = 1
+  capability sys_admin,
+  capability sys_chroot,
+  capability sys_ptrace,
+
+  @{bin}/electron@{int} rix,
+  @{lib}/electron@{int}/{,**} r,
+  @{lib}/electron@{int}/electron  rix,
+
+  @{lib_dirs}/{,**} r,
+  @{lib_dirs}/*.so* mr,
+  @{lib_dirs}/{,resources/}app.asar.unpacked/node_modules/**.node mr,
+  @{lib_dirs}/{,resources/}app.asar.unpacked/node_modules/**.so mr,
+  @{lib_dirs}/{,resources/}app.asar.unpacked/node_modules/**.so.@{int} mr,
+
+  /etc/@{name}/{,**} r,
+
+  owner @{config_dirs}/ rw,
+  owner @{config_dirs}/** rwlk -> @{config_dirs}/**,
+
+  owner @{cache_dirs}/ rw,
+  owner @{cache_dirs}/** rwlk -> @{cache_dirs}/**,
+
+  owner @{HOME}/.pki/ rw,
+  owner @{HOME}/.pki/nssdb/ rw,
+  owner @{HOME}/.pki/nssdb/pkcs11.txt rw,
+  owner @{HOME}/.pki/nssdb/{cert9,key4}.db rwk,
+  owner @{HOME}/.pki/nssdb/{cert9,key4}.db-journal rw,
+
+  owner /tmp/.org.chromium.Chromium.@{rand6} rw,
+  owner /tmp/.org.chromium.Chromium.@{rand6}/ rw,
+  owner /tmp/.org.chromium.Chromium.@{rand6}/SingletonCookie w,
+  owner /tmp/.org.chromium.Chromium.@{rand6}/SingletonSocket w,
+  owner /tmp/scoped_dir@{rand6}/ rw,
+  owner /tmp/scoped_dir@{rand6}/SingletonCookie w,
+  owner /tmp/scoped_dir@{rand6}/SingletonSocket w,
+  owner /tmp/scoped_dir@{rand6}/SS w,
+
+  owner /dev/shm/.org.chromium.Chromium.@{rand6} rw,
+
+  @{sys}/devices/system/cpu/kernel_max r,
+  @{sys}/devices/virtual/dmi/id/product_name r,
+  @{sys}/devices/virtual/dmi/id/sys_vendor r,
+  @{sys}/devices/virtual/tty/tty@{int}/active r,
+
+        @{PROC}/ r,
+        @{PROC}/@{pid}/stat r,
+        @{PROC}/sys/fs/inotify/max_user_watches r,
+        @{PROC}/sys/kernel/yama/ptrace_scope r,
+  owner @{PROC}/@{pid}/cgroup r,
+  owner @{PROC}/@{pid}/cmdline r,
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/gid_map w, # If kernel.unprivileged_userns_clone = 1
+  owner @{PROC}/@{pid}/oom_score_adj rw,
+  owner @{PROC}/@{pid}/setgroups w, # If kernel.unprivileged_userns_clone = 1
+  owner @{PROC}/@{pid}/stat r,
+  owner @{PROC}/@{pid}/statm r,
+  owner @{PROC}/@{pid}/task/ r,
+  owner @{PROC}/@{pid}/task/@{tid}/stat r,
+  owner @{PROC}/@{pid}/task/@{tid}/status r,
+  owner @{PROC}/@{pid}/uid_map w, # If kernel.unprivileged_userns_clone = 1
+
+  include if exists <abstractions/common/electron.d>
