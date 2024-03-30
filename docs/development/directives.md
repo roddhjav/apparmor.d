@@ -133,7 +133,7 @@ The `exec` directive is useful to allow executing transition to a profile withou
     ```sh
     # Stacked profile: systemd-oomd
     include <abstractions/bus-system>
-    include <abstractions/systemd-common>
+    include <abstractions/common/systemd>
     capability dac_override,
     capability kill,
     unix (bind) type=stream addr=@@{hex}/bus/systemd-oomd/bus-api-oom,
