@@ -6,25 +6,15 @@ abi <abi/3.0>,
 
 include <tunables/global>
 
-@{exec_path} = /opt/Mullvad*/mullvad-gui
+@{name} = Mullvad*VPN
+@{lib_dirs} = /opt/@{name} 
+@{config_dirs} = @{user_config_dirs}/@{name}
+@{cache_dirs} = @{user_cache_dirs}/@{name}
+
+@{exec_path} = @{lib_dirs}/mullvad-gui
 profile mullvad-gui @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/common/chromium>
-  include <abstractions/dconf-write>
-  include <abstractions/dri-common>
-  include <abstractions/dri-enumerate>
-  include <abstractions/fonts>
-  include <abstractions/freedesktop.org>
-  include <abstractions/gtk>
-  include <abstractions/mesa>
-  include <abstractions/nameservice-strict>
-  include <abstractions/nvidia>
-  include <abstractions/vulkan>
-  include <abstractions/X-strict>
-
-  capability sys_chroot,
-  capability sys_ptrace,
-  capability sys_admin,
+  include <abstractions/common/electron>
 
   network inet stream,
   network inet6 stream,
@@ -33,52 +23,25 @@ profile mullvad-gui @{exec_path} flags=(attach_disconnected) {
   network netlink raw,
 
   @{exec_path} mrix,
+  @{sh_path}    rix,
 
-  "/opt/Mullvad VPN/*.so*" mr,
-
-  @{sh_path}         rix,
-  @{bin}/gsettings   rix,
-  @{bin}/xdg-open    rPx,
-
-  "/opt/Mullvad VPN/{,**}" r,
-  /usr/share/themes/{,**} r,
+  @{bin}/gsettings     rix,
+  @{open_path}         rPx -> child-open-browsers,
 
   /etc/libva.conf r,
   /etc/igfx_user_feature{,_next}.txt w,
-  /etc/machine-id r,
-  /var/lib/dbus/machine-id r,
 
-  owner "@{user_config_dirs}/Mullvad VPN/{,**}" rwk,
   owner @{user_cache_dirs}/dconf/user rw,
 
-  owner "/tmp/.org.chromium.Chromium.*/Mullvad VPN*.png" rw,
-  owner @{run}/user/@{uid}/.mutter-Xwaylandauth.@{rand6} r,
+  owner /tmp/.org.chromium.Chromium.@{rand6}/@{name}*.png rw,
 
   @{run}/systemd/inhibit/*.ref rw,
 
-  @{sys}/bus/pci/devices/ r,
-  @{sys}/devices/@{pci}/{vendor,device,class,config,resource,irq} r,
-  @{sys}/devices/system/cpu/** r,
-  @{sys}/devices/virtual/tty/tty@{int}/active r,
-
-        @{PROC}/ r,
-        @{PROC}/sys/fs/inotify/max_user_watches r,
-        @{PROC}/sys/kernel/yama/ptrace_scope r,
-  owner @{PROC}/@{pid}/cmdline r,
-  owner @{PROC}/@{pid}/fd/ r,
-  owner @{PROC}/@{pid}/cgroup r,
-  owner @{PROC}/@{pid}/gid_map w,
-  owner @{PROC}/@{pid}/oom_score_adj w,
-  owner @{PROC}/@{pid}/setgroups w,
-  owner @{PROC}/@{pid}/stat r,
-  owner @{PROC}/@{pid}/statm r,
-  owner @{PROC}/@{pid}/task/ r,
-  owner @{PROC}/@{pid}/task/@{tid}/status r,
-  owner @{PROC}/@{pid}/uid_map w,
-
   /dev/tty rw,
 
-  deny owner @{user_share_dirs}/gvfs-metadata/* r,
+  deny @{user_share_dirs}/gvfs-metadata/* r,
+  deny /etc/machine-id r,
+  deny /var/lib/dbus/machine-id r,
 
   include if exists <local/mullvad-gui>
 }
