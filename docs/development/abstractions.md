@@ -19,28 +19,13 @@ This project and the apparmor profile official project provide a large selection
 
 All of these abstractions can be extended by a system admin by adding rules in a file under `/etc/apparmor.d/<name>.d` where `<name>` is the name of one of these abstractions.
 
-
 ## Application helper
 
-### **`bwrap`**
+Abstraction that aim at including a complete set of rule for a given program. The calling profile only need to add rules dependant of its use case/program.
 
-Minimal set of rules for sandboxed program using `bwrap`. A profile using this abstraction still needs to set:
+It is mostly useful for program often used in sub profile or for forks based on the same upstream.
 
-- The flag: `attach_disconnected`
-- Bwrap execution: `@{bin}/bwrap rix,`
-
-### **`bwrap-app`**
-
-Common rules for unknown userland UI applications sandboxed using `bwrap`.
-
-!!! warning
-
-    This abstraction is wide on purpose. It is meant to be used by sandboxed applications that have no way to restrict access depending on the application being confined.
-
-    **Do not use it for classic profile.**
-
-
-### **`chromium`**
+### **`app/chromium`**
 
 Full set of rules for all chromium based browsers. It works as a *function* and requires some variables to be provided as *arguments* and set in the header of the calling profile:
 
@@ -55,13 +40,14 @@ Full set of rules for all chromium based browsers. It works as a *function* and 
     @{cache_dirs} = @{user_cache_dirs}/@{name}
     ```
 
-If your application requires chromium to run (like electron) use [`chromium-common`](#chromium-common) instead.
+If your application requires chromium to run use [`common/chromium`](#commonchromium) or [`common/electron`](#commonelectron)
+instead.
 
-### **`chromium-common`**
 
-Minimal set of rules for chromium based application such as electron. Handle access for internal sandbox.
+### **`app/pgrep`**
 
-### **`sudo`**
+
+### **`app/sudo`**
 
 Minimal set of rules for profile including internal `sudo`. Interactive sudo need more rules. It is intended to be used in profile or sub profile that need to elevate their privileges using `sudo` or `su` for a very specific action:
 ```sh
@@ -69,15 +55,13 @@ Minimal set of rules for profile including internal `sudo`. Interactive sudo nee
 
   profile root {
     include <abstractions/base>
-    include <abstractions/sudo>
+    include <abstractions/app/sudo>
 
-    @{bin}/sudo rm,
-  
     include if exists <local/<profile_name>_root>
   }
 ```
 
-### **`systemctl`**
+### **`app/systemctl`**
 
 Alternative solution for [child-systemctl](structure.md#children-profiles), when the child profile provide too much/not enough access. This abstraction should be used by a sub profile as follows:
 ```sh
@@ -85,11 +69,66 @@ Alternative solution for [child-systemctl](structure.md#children-profiles), when
 
   profile systemctl {
     include <abstractions/base>
-    include <abstractions/systemctl>
+    include <abstractions/app/systemctl>
 
     include if exists <local/<profile_name>_systemctl>
   }
 ```
+
+
+## Common Dependencies
+
+On the contrary of [`abstractions/app/`](#application-helper), abstractions in this directory are expected to provide a minimal set of rules to make a program using a dependency work. 
+
+### **`common/app`**
+
+Common rules for unknown userland UI applications sandboxed using `bwrap`.
+
+!!! warning
+
+    This abstraction is wide on purpose. It is meant to be used by sandboxed applications that have no way to restrict access depending on the application being confined.
+
+    **Do not use it for classic profile.**
+
+
+### **`common/apt`**
+
+Minimal access to apt sources, preferences and configuration.
+
+### **`common/bwrap`**
+
+Minimal set of rules for sandboxed program using `bwrap`. A profile using this abstraction still needs to set:
+
+- The flag: `attach_disconnected`
+- Bwrap execution: `@{bin}/bwrap rix,`
+
+
+### **`common/chromium`**
+
+Minimal set of rules for chromium based application. Handle access for internal sandbox.
+
+
+### **`common/electron`**
+
+Minimal set of rules for all electron based UI application. It works as a *function* and requires some variables to be provided as *arguments* and set in the header of the calling profile:
+
+!!! note ""
+
+    [apparmor.d/profile-s-z/spotify](https://github.com/roddhjav/apparmor.d/blob/e979fe05b06f525e5a65c767b4eabe5600147355/apparmor.d/profile-s-z/spotify#L10-L13)
+    ``` sh linenums="10"
+    @{name} = spotify
+    @{lib_dirs} = /opt/@{name}
+    @{config_dirs} = @{user_config_dirs}/@{name}
+    @{cache_dirs} = @{user_cache_dirs}/@{name}
+    ```
+
+### **`common/systemd`**
+
+Common set of rules for internal systemd suite.
+
+!!! warning
+
+    It should **only** be used by the systemd suite.
 
 
 ## Audio
@@ -142,7 +181,14 @@ Permissions for querying dconf settings with write access.
 
 !!! warning
 
-    This abstractions are only required when an interactive shell is started. Classic shell scripts do not need them.
+    These abstractions are only required when an interactive shell is started. Classic shell scripts do not need them.
+
+
+Only use [`shells`](#shells), other abstractions are software dependant and should not usually be used directly.
+
+### **`shells`**
+
+Common rules for interactive shells.
 
 ### **`bash-strict`**
 
@@ -162,15 +208,6 @@ Common rules for interactive shell using zsh.
 Many programs wish to perform nameservice like operations, such as looking up users by name or Id, groups by name or Id, hosts by name or IP, etc.
 
 Use this abstraction instead of upstream `abstractions/nameservice` as upstream abstraction also provide full network access which is not needed for a lot of programs.
-
-### **`systemd-common`**
-
-Common set of rules for internal systemd suite.
-
-!!! warning
-
-    It should **only** be used by the systemd suite.
-
 
 ### **`app-open`**
 
