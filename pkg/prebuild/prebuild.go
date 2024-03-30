@@ -28,6 +28,7 @@ func init() {
 
 	// Build tasks applied by default
 	builder.Register("userspace")
+	builder.Register("dev")
 
 	switch cfg.Distribution {
 	case "ubuntu":
