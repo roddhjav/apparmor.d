@@ -6,20 +6,18 @@ abi <abi/3.0>,
 
 include <tunables/global>
 
+@{name} = {E,e}lement
+@{lib_dirs} = @{lib}/@{name} 
+@{config_dirs} = @{user_config_dirs}/@{name}
+@{cache_dirs} = @{user_cache_dirs}/@{name}
+
 @{exec_path} = @{bin}/element-desktop
 profile element-desktop @{exec_path} {
   include <abstractions/base>
   include <abstractions/audio-client>
-  include <abstractions/common/chromium>
-  include <abstractions/dconf-write>
-  include <abstractions/desktop>
-  include <abstractions/graphics>
-  include <abstractions/nameservice-strict>
+  include <abstractions/common/electron>
   include <abstractions/p11-kit>
-  include <abstractions/ssl_certs>
   include <abstractions/video>
-
-  capability sys_ptrace,
 
   network inet dgram,
   network inet6 dgram,
@@ -29,43 +27,11 @@ profile element-desktop @{exec_path} {
 
   @{exec_path} mr,
 
-  @{sh_path}        r,
-  @{bin}/electron@{int} rix,
-  @{lib}/electron@{int}/{,**} r,
-  @{lib}/electron@{int}/electron  rix,
-  @{lib}/element/{,**} r,
-  @{lib}/element/app.asar.unpacked/node_modules/**.node mr,
-
-  @{open_path}         rPx -> child-open,
-
-  /opt/intel/oneapi/{compiler,lib,mkl}/**/ r,
-  /opt/intel/oneapi/{compiler,lib,mkl}/**.so* mr,
+  @{open_path}     rPx -> child-open-strict,
 
   /usr/share/webapps/element/{,**} r,
 
-  /etc/element/{,**} r,
   /etc/webapps/element/{,**} r,
-
-  owner @{user_config_dirs}/Element/ rw,
-  owner @{user_config_dirs}/Element/** rwkl -> @{user_config_dirs}/Element/**,
-
-  @{sys}/devices/system/cpu/kernel_max r,
-  @{sys}/devices/virtual/tty/tty@{int}/active r,
-
-        @{PROC}/ r,
-        @{PROC}/sys/fs/inotify/max_user_watches r,
-        @{PROC}/sys/kernel/yama/ptrace_scope r,
-  owner @{PROC}/@{pid}/cgroup r,
-  owner @{PROC}/@{pid}/cmdline r,
-  owner @{PROC}/@{pid}/comm r,
-  owner @{PROC}/@{pid}/fd/ r,
-  owner @{PROC}/@{pid}/mountinfo r,
-  owner @{PROC}/@{pid}/oom_score_adj w,
-  owner @{PROC}/@{pid}/stat r,
-  owner @{PROC}/@{pid}/statm r,
-  owner @{PROC}/@{pid}/status r,
-  owner @{PROC}/@{pid}/task/ r,
-  owner @{PROC}/@{pid}/task/@{tid}/status r,
 
   /dev/tty rw,
 
@@ -73,6 +39,7 @@ profile element-desktop @{exec_path} {
   deny @{HOME}/ r,
   deny @{user_share_dirs}/gvfs-metadata/* r,
   deny /etc/machine-id r,
+  deny /var/lib/dbus/machine-id r,
 
   include if exists <local/element-desktop>
 }

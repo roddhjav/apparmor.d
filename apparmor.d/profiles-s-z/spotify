@@ -16,12 +16,7 @@ include <tunables/global>
 profile spotify @{exec_path} {
   include <abstractions/base>
   include <abstractions/audio-client>
-  include <abstractions/common/chromium>
-  include <abstractions/dconf-write>
-  include <abstractions/desktop>
-  include <abstractions/graphics>
-  include <abstractions/nameservice-strict>
-  include <abstractions/ssl_certs>
+  include <abstractions/common/electron>
 
   network inet dgram,
   network inet6 dgram,
@@ -33,10 +28,7 @@ profile spotify @{exec_path} {
 
   @{bin}/grep rix,
 
-  @{lib_dirs}/{,**} r,
-  @{lib_dirs}/*.so* mr,
-
-  @{open_path}     rPx -> child-open,
+  @{open_path}     rPx -> child-open-strict,
 
   /etc/machine-id r,
   /etc/spotify-adblock/* r,
@@ -46,31 +38,8 @@ profile spotify @{exec_path} {
 
   owner @{user_config_dirs}/spotify-adblock/* r,
 
-  owner @{config_dirs}/ rw,
-  owner @{config_dirs}/** rwl -> @{config_dirs}/**,
-  owner @{config_dirs}/*/WidevineCdm/**/libwidevinecdm.so rm,
-
-  owner @{cache_dirs}/ rw,
-  owner @{cache_dirs}/** rwk -> @{cache_dirs}/**,
   owner @{cache_dirs}/WidevineCdm/**/libwidevinecdm.so rm,
-
-  @{sys}/devices/system/cpu/kernel_max r,
-  @{sys}/devices/virtual/dmi/id/board_{vendor,name,version} r,
-  @{sys}/devices/virtual/dmi/id/product_{name,version} r,
-  @{sys}/devices/virtual/dmi/id/sys_vendor r,
-  @{sys}/devices/virtual/tty/tty@{int}/active r,
-
-        @{PROC}/ r,
-        @{PROC}/@{pid}/stat r,
-        @{PROC}/sys/fs/inotify/max_user_watches r,
-  owner @{PROC}/@{pid}/cgroup r,
-  owner @{PROC}/@{pid}/cmdline r,
-  owner @{PROC}/@{pid}/fd/ r,
-  owner @{PROC}/@{pid}/oom_score_adj w,
-  owner @{PROC}/@{pid}/statm r,
-  owner @{PROC}/@{pid}/task/ r,
-  owner @{PROC}/@{pid}/task/@{tid}/stat r,
-  owner @{PROC}/@{pid}/task/@{tid}/status r,
+  owner @{config_dirs}/*/WidevineCdm/**/libwidevinecdm.so rm,
 
   /dev/tty rw,
 

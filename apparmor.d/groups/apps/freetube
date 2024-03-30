@@ -7,20 +7,17 @@ abi <abi/3.0>,
 
 include <tunables/global>
 
-@{lib_dirs}  = @{lib}/freetube @{lib}/freetube-vue
-@{lib_dirs} += /opt/FreeTube /opt/FreeTube-Vue
+@{name} = {F,f}reetube{,-vue}
+@{lib_dirs} = @{lib}/@{name} /opt/@{name} 
+@{config_dirs} = @{user_config_dirs}/@{name}
+@{cache_dirs} = @{user_cache_dirs}/@{name}
 
-@{exec_path} = @{lib_dirs}/freetube{,-vue}
+@{exec_path} = @{lib_dirs}/@{name}
 profile freetube @{exec_path} {
   include <abstractions/base>
   include <abstractions/audio-client>
-  include <abstractions/common/chromium>
+  include <abstractions/common/electron>
   include <abstractions/consoles>
-  include <abstractions/dconf-write>
-  include <abstractions/desktop>
-  include <abstractions/fontconfig-cache-read>
-  include <abstractions/graphics>
-  include <abstractions/nameservice-strict>
   include <abstractions/thumbnails-cache-read>
   include <abstractions/user-download-strict>
 
@@ -32,42 +29,13 @@ profile freetube @{exec_path} {
 
   @{exec_path} mrix,
 
-  @{lib_dirs}/ r,
-  @{lib_dirs}/** r,
-  @{lib_dirs}/libffmpeg.so mr,
-  @{lib_dirs}/{swiftshader/,}libGLESv2.so mr,
-  @{lib_dirs}/{swiftshader/,}libEGL.so mr,
-  @{lib_dirs}/chrome-sandbox rPx,
-
-  @{open_path}            rPx -> child-open,
+  @{open_path}         rPx -> child-open-strict,
 
   /etc/fstab r,
   /etc/machine-id r,
   /var/lib/dbus/machine-id r,
 
-  owner @{HOME}/ r,
-  owner @{user_config_dirs}/FreeTube/ rw,
-  owner @{user_config_dirs}/FreeTube/** rwk,
-
   owner @{run}/user/@{uid}/ r,
-
-  # The /proc/ dir is needed to avoid the following error:
-  #   traps: freetube[] trap int3 ip:56499eca9d26 sp:7ffcab073060 error:0 in
-  #          freetube[56499b8a8000+531e000]
-             @{PROC}/ r,
-       owner @{PROC}/@{pid}/fd/ r,
-             @{PROC}/@{pids}/task/ r,
-             @{PROC}/@{pids}/task/@{tid}/status r,
-  deny       @{PROC}/@{pids}/stat r,
-  deny owner @{PROC}/@{pids}/statm r,
-  deny owner @{PROC}/@{pid}/cmdline r,
-       owner @{PROC}/@{pids}/oom_{,score_}adj r,
-  deny owner @{PROC}/@{pids}/oom_{,score_}adj w,
-       owner @{PROC}/@{pid}/mountinfo r,
-       owner @{PROC}/@{pid}/mounts r,
-             @{PROC}/sys/kernel/yama/ptrace_scope r,
-  deny       @{PROC}/vmstat r,
-             @{PROC}/sys/fs/inotify/max_user_watches r,
 
   owner /dev/tty@{int} rw,
 
