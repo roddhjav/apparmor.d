@@ -1,0 +1,79 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Personalised version of the upstream `nvidia_modprobe` profile as it had lead
+# to some issues. All validated changes will be pushed upstream.
+
+# nvidia-modprobe is a setuid executable that is used to create various device
+# and load the the nvidia kernel module.
+
+# Note: This profile does not specify an attachment path because it is
+# intended to be used only via "Px -> child-modprobe-nvidia" exec transitions 
+# from other profiles.
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/nvidia-modprobe
+profile child-modprobe-nvidia {
+  include <abstractions/base>
+  include <abstractions/consoles>
+
+  capability chown,
+  capability fsetid,
+  capability mknod,
+  capability sys_admin,
+
+  @{exec_path} mr,
+
+  @{bin}/kmod Cx -> kmod,
+
+  # /dev/nvidia-uvm w,
+  # /dev/nvidia-uvm-tools w,
+  @{sys}/bus/pci/devices/ r,
+  @{sys}/devices/@{pci}/config r,
+
+  @{PROC}/sys/kernel/modprobe r,
+
+  @{PROC}/devices r,
+  @{PROC}/driver/nvidia/capabilities/mig/config r,
+  @{PROC}/driver/nvidia/capabilities/mig/monitor r,
+  @{PROC}/driver/nvidia/params r,
+  @{PROC}/modules r,
+
+  owner /dev/char/@{dynamic}:@{int} w,  # For dynamic assignment range 234 to 254, 384 to 511
+  owner /dev/char/195:@{int} w,         # Nvidia graphics devices
+
+        /dev/nvidia-modeset w,
+        /dev/nvidia@{int} rw,
+        /dev/nvidiactl rw,
+  owner /dev/nvidia-caps/ w,
+  owner /dev/nvidia-caps/nvidia-cap@{int} w,
+
+  profile kmod {
+    include <abstractions/base>
+    include <abstractions/consoles>
+
+    capability mknod,
+    # capability sys_module,
+
+    @{bin}/kmod mr,
+
+    # @{bin}/{,ba,da}sh ix,
+    /etc/modprobe.d/{,*.conf} r,
+    # /etc/nvidia/{current,legacy*,tesla*}/*.conf r,
+
+    # @{sys}/module/ipmi_devintf/initstate r,
+    # @{sys}/module/ipmi_msghandler/initstate r,
+    # @{sys}/module/{drm,nvidia}/initstate r,
+    @{sys}/module/compression r,
+
+    @{PROC}/cmdline r,
+
+    include if exists <local/child-modprobe-nvidia_kmod>
+  }
+
+  include if exists <local/child-modprobe-nvidia>
+}
