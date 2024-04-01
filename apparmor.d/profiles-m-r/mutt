@@ -41,9 +41,9 @@ profile mutt @{exec_path} {
   @{bin}/vim.*           rCx -> editor,
   @{bin}/sensible-editor rCx -> editor,
 
-  @{bin}/less            rPx -> child-pager,
-  @{bin}/more            rPx -> child-pager,
-  @{bin}/pager           rPx -> child-pager,
+  @{bin}/less            rCx -> pager,
+  @{bin}/more            rCx -> pager,
+  @{bin}/pager           rCx -> pager,
 
   @{bin}/gpg{2,}         rCx -> gpg,
   @{bin}/gpgconf         rCx -> gpg,
@@ -132,6 +132,30 @@ profile mutt @{exec_path} {
     owner /{var/,}tmp/{.,}mutt* rw,
 
     include if exists <local/mutt_editor>
+  }
+
+  profile pager {
+    include <abstractions/base>
+    include <abstractions/consoles>
+
+    @{bin}/less  mr,
+    @{bin}/more  mr,
+    @{bin}/pager mr,
+
+    /usr/share/terminfo/** r,
+    /usr/share/file/misc/magic.mgc r,
+
+    owner @{HOME}/ r,
+    owner @{HOME}/.lesshs* rw,
+    owner @{HOME}/.terminfo/@{int}/* r,
+    owner @{user_cache_dirs}/lesshs* rw,
+    owner @{user_state_dirs}/ r,
+    owner @{user_state_dirs}/lesshs* rw,
+
+    # This is the file that holds the message
+    owner /{var/,}tmp/mutt* rw,
+
+    include if exists <local/mutt_pager>
   }
 
   profile gpg {
