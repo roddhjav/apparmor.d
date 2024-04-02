@@ -6,22 +6,9 @@ package cfg
 
 import (
 	"strings"
-)
 
-// Filter out comments from a text configuration file
-func filterComment(line string) (string, bool) {
-	if strings.HasPrefix(line, "#") || line == "" {
-		return "", true
-	}
-	if strings.Contains(line, "#") {
-		line = strings.Split(line, "#")[0]
-		line = strings.TrimSpace(line)
-		if line == "" {
-			return "", true
-		}
-	}
-	return line, false
-}
+	"github.com/roddhjav/apparmor.d/pkg/util"
+)
 
 type Flagger struct{}
 
@@ -32,12 +19,8 @@ func (f Flagger) Read(name string) map[string][]string {
 		return res
 	}
 
-	lines, _ := path.ReadFileAsLines()
+	lines := util.MustReadFileAsLines(path)
 	for _, line := range lines {
-		line, next := filterComment(line)
-		if next {
-			continue
-		}
 		manifest := strings.Split(line, " ")
 		profile := manifest[0]
 		flags := []string{}
@@ -52,21 +35,11 @@ func (f Flagger) Read(name string) map[string][]string {
 type Ignorer struct{}
 
 func (i Ignorer) Read(name string) []string {
-	res := []string{}
 	path := IgnoreDir.Join(name + ".ignore")
 	if !path.Exist() {
-		return res
+		return []string{}
 	}
-
-	lines, _ := path.ReadFileAsLines()
-	for _, line := range lines {
-		line, next := filterComment(line)
-		if next {
-			continue
-		}
-		res = append(res, line)
-	}
-	return res
+	return util.MustReadFileAsLines(path)
 }
 
 type Overwriter struct {
@@ -75,19 +48,11 @@ type Overwriter struct {
 
 // Get the list of upstream profiles to overwrite from dist/overwrite
 func (o Overwriter) Get() []string {
-	res := []string{}
-	lines, err := DistDir.Join("overwrite").ReadFileAsLines()
-	if err != nil {
-		panic(err)
+	path := DistDir.Join("overwrite")
+	if !path.Exist() {
+		return []string{}
 	}
-	for _, line := range lines {
-		line, next := filterComment(line)
-		if next {
-			continue
-		}
-		res = append(res, line)
-	}
-	return res
+	return util.MustReadFileAsLines(path)
 }
 
 // Overwrite upstream profile for APT: rename our profile & hide upstream

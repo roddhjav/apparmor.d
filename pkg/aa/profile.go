@@ -10,8 +10,12 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/arduino/go-paths-helper"
 	"golang.org/x/exp/slices"
 )
+
+// Default Apparmor magic directory: /etc/apparmor.d/.
+var MagicRoot = paths.New("/etc/apparmor.d")
 
 // AppArmorProfiles represents a full set of apparmor profiles
 type AppArmorProfiles map[string]*AppArmorProfile

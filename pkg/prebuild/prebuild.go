@@ -13,6 +13,7 @@ import (
 	"github.com/roddhjav/apparmor.d/pkg/prebuild/cfg"
 	"github.com/roddhjav/apparmor.d/pkg/prebuild/directive"
 	"github.com/roddhjav/apparmor.d/pkg/prebuild/prepare"
+	"github.com/roddhjav/apparmor.d/pkg/util"
 )
 
 func init() {
@@ -65,11 +66,10 @@ func Build() error {
 		if !file.Exist() {
 			continue
 		}
-		content, err := file.ReadFile()
+		profile, err := util.ReadFile(file)
 		if err != nil {
 			return err
 		}
-		profile := string(content)
 		for _, b := range builder.Builds {
 			profile = b.Apply(profile)
 		}

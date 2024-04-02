@@ -11,16 +11,12 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/arduino/go-paths-helper"
 	"golang.org/x/exp/slices"
 )
 
 var (
 	regVariablesDef = regexp.MustCompile(`@{(.*)}\s*[+=]+\s*(.*)`)
 	regVariablesRef = regexp.MustCompile(`@{([^{}]+)}`)
-
-	// Default Apparmor magic directory: /etc/apparmor.d/.
-	MagicRoot = paths.New("/etc/apparmor.d")
 )
 
 type Variable struct {

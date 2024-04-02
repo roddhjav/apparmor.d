@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/roddhjav/apparmor.d/pkg/prebuild/cfg"
+	"github.com/roddhjav/apparmor.d/pkg/util"
 )
 
 var (
@@ -43,13 +44,13 @@ func (p SetFlags) Apply() ([]string, error) {
 			// Overwrite profile flags
 			if len(flags) > 0 {
 				flagsStr := " flags=(" + strings.Join(flags, ",") + ") {"
-				content, err := file.ReadFile()
+				out, err := util.ReadFile(file)
 				if err != nil {
 					return res, err
 				}
 
 				// Remove all flags definition, then set manifest' flags
-				out := regFlags.ReplaceAllLiteralString(string(content), "")
+				out = regFlags.ReplaceAllLiteralString(out, "")
 				out = regProfileHeader.ReplaceAllLiteralString(out, flagsStr)
 				if err := file.WriteFile([]byte(out)); err != nil {
 					return res, err

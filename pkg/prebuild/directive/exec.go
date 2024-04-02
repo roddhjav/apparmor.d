@@ -9,6 +9,7 @@ import (
 
 	"github.com/roddhjav/apparmor.d/pkg/aa"
 	"github.com/roddhjav/apparmor.d/pkg/prebuild/cfg"
+	"github.com/roddhjav/apparmor.d/pkg/util"
 	"golang.org/x/exp/slices"
 )
 
@@ -21,7 +22,7 @@ func init() {
 		Base: cfg.Base{
 			Keyword: "exec",
 			Msg:     "Exec directive applied",
-			Help:    `#aa:exec [P|U|p|u|PU|pu|] profiles...`,
+			Help:    Keyword + `exec [P|U|p|u|PU|pu|] profiles...`,
 		},
 	})
 }
@@ -37,12 +38,7 @@ func (d Exec) Apply(opt *Option, profile string) string {
 
 	p := &aa.AppArmorProfile{}
 	for name := range opt.ArgMap {
-		content, err := cfg.RootApparmord.Join(name).ReadFile()
-		if err != nil {
-			panic(err)
-		}
-		profiletoTransition := string(content)
-
+		profiletoTransition := util.MustReadFile(cfg.RootApparmord.Join(name))
 		dstProfile := aa.DefaultTunables()
 		dstProfile.ParseVariables(profiletoTransition)
 		for _, variable := range dstProfile.Variables {

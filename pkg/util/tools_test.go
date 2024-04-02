@@ -151,3 +151,66 @@ func TestCopyTo(t *testing.T) {
 		})
 	}
 }
+
+func Test_Filter(t *testing.T) {
+	tests := []struct {
+		name string
+		src  string
+		want string
+	}{
+		{
+			name: "comment",
+			src:  "# comment",
+			want: "",
+		},
+		{
+			name: "comment with space",
+			src:  " # comment",
+			want: "",
+		},
+		{
+			name: "no comment",
+			src:  "no comment",
+			want: "no comment",
+		},
+		{
+			name: "no comment # comment",
+			src:  "no comment # comment",
+			want: "no comment",
+		},
+		{
+			name: "empty",
+			src: `
+
+`,
+			want: ``,
+		},
+		{
+			name: "main",
+			src: `
+# Common profile flags definition for all distributions
+# File format: one profile by line using the format: '<profile> <flags>'
+
+bwrap attach_disconnected,mediate_deleted,complain
+bwrap-app attach_disconnected,complain
+
+akonadi_akonotes_resource complain # Dev
+gnome-disks complain
+
+`,
+			want: `bwrap attach_disconnected,mediate_deleted,complain
+bwrap-app attach_disconnected,complain
+akonadi_akonotes_resource complain
+gnome-disks complain
+`,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotLine := Filter(tt.src)
+			if gotLine != tt.want {
+				t.Errorf("FilterComment() got = |%v|, want |%v|", gotLine, tt.want)
+			}
+		})
+	}
+}
