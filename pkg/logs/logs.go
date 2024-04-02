@@ -31,6 +31,7 @@ const (
 var (
 	quoted                bool
 	isAppArmorLogTemplate = regexp.MustCompile(`apparmor=("DENIED"|"ALLOWED"|"AUDIT")`)
+	hex                   = `[0-9a-fA-F]`
 	regCleanLogs          = util.ToRegexRepl([]string{
 		// Clean apparmor log file
 		`.*apparmor="`, `apparmor="`,
@@ -51,7 +52,8 @@ var (
 		// Resolve classic system variables
 		`/usr/lib(|32|64|exec)`, `@{lib}`,
 		`/usr/(|s)bin`, `@{bin}`,
-		`[^/]+-linux-gnu[^/]?`, `@{multiarch}`,
+		`x86_64-pc-linux-gnu[^/]?`, `@{multiarch}`,
+		`/usr/etc/`, `@{etc_ro}/`,
 		`/run/`, `@{run}/`,
 		`user/[0-9]*/`, `user/@{uid}/`,
 		`/proc/`, `@{PROC}/`,
@@ -59,15 +61,15 @@ var (
 		`@{PROC}/@{pid}/task/[0-9]*/`, `@{PROC}/@{pid}/task/@{tid}/`,
 		`/sys/`, `@{sys}/`,
 		`@{PROC}@{sys}/`, `@{PROC}/sys/`,
-		`pci[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]:[0-9a-fA-F][0-9a-fA-F]`, `@{pci_bus}`,
+		`pci` + strings.Repeat(hex, 4) + `:` + strings.Repeat(hex, 2), `@{pci_bus}`,
 
 		// Some system glob
 		`:1.[0-9]*`, `:*`, // dbus peer name
 		`@{bin}/(|ba|da)sh`, `@{sh_path}`, // collect all shell
 		`@{lib}/modules/[^/]+\/`, `@{lib}/modules/*/`, // strip kernel version numbers from kernel module accesses
-		`[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]`, `@{hex32}`,
-		`[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][-_][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][-_][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][-_][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][-_][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]`, `@{uuid}`,
-		`[0-9][0-9][0-9][0-9][0-9][0-9]+`, `@{int}`,
+		strings.Repeat(hex, 64), `@{hex64}`,
+		strings.Repeat(hex, 32), `@{hex32}`,
+		strings.Repeat(hex, 8) + `[-_]` + strings.Repeat(hex, 4) + `[-_]` + strings.Repeat(hex, 4) + `[-_]` + strings.Repeat(hex, 4) + `[-_]` + strings.Repeat(hex, 12), `@{uuid}`,
 
 		// Remove basic rules from abstractions/base
 		`(?m)^.*/etc/[^/]+so.*$`, ``,
