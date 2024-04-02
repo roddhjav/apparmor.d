@@ -13,10 +13,10 @@ import (
 	"github.com/roddhjav/apparmor.d/pkg/prebuild/cfg"
 )
 
-// Define the directive keyword globally
-const Keyword = "#aa:"
-
 var (
+	// Define the directive keyword globally
+	Keyword = "#aa:"
+
 	// Build the profiles with the following directive applied
 	Directives = map[string]Directive{}
 

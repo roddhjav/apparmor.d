@@ -33,7 +33,7 @@ func init() {
 		Base: cfg.Base{
 			Keyword: "stack",
 			Msg:     "Stack directive applied",
-			Help:    `#aa:stack profiles...`,
+			Help:    Keyword + `stack profiles...`,
 		},
 	})
 }
@@ -41,12 +41,7 @@ func init() {
 func (s Stack) Apply(opt *Option, profile string) string {
 	res := ""
 	for name := range opt.ArgMap {
-		tmp, err := cfg.RootApparmord.Join(name).ReadFile()
-		if err != nil {
-			panic(err)
-		}
-		stackedProfile := string(tmp)
-
+		stackedProfile := util.MustReadFile(cfg.RootApparmord.Join(name))
 		m := regRules.FindStringSubmatch(stackedProfile)
 		if len(m) < 2 {
 			panic(fmt.Sprintf("No profile found in %s", name))

@@ -11,51 +11,6 @@ import (
 	"github.com/arduino/go-paths-helper"
 )
 
-func Test_filterComment(t *testing.T) {
-	tests := []struct {
-		name     string
-		line     string
-		wantLine string
-		wantNext bool
-	}{
-		{
-			name:     "comment",
-			line:     "# comment",
-			wantLine: "",
-			wantNext: true,
-		},
-		{
-			name:     "comment with space",
-			line:     " # comment",
-			wantLine: "",
-			wantNext: true,
-		},
-		{
-			name:     "no comment",
-			line:     "no comment",
-			wantLine: "no comment",
-			wantNext: false,
-		},
-		{
-			name:     "no comment # comment",
-			line:     "no comment # comment",
-			wantLine: "no comment",
-			wantNext: false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			gotLine, gotNext := filterComment(tt.line)
-			if gotLine != tt.wantLine {
-				t.Errorf("filterComment() got = %v, want %v", gotLine, tt.wantLine)
-			}
-			if gotNext != tt.wantNext {
-				t.Errorf("filterComment() got1 = %v, want %v", gotNext, tt.wantNext)
-			}
-		})
-	}
-}
-
 func TestFlagger_Read(t *testing.T) {
 	tests := []struct {
 		name    string

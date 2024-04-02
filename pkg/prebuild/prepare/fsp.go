@@ -35,11 +35,11 @@ func (p FullSystemPolicy) Apply() ([]string, error) {
 
 	// Set systemd profile name
 	path := cfg.RootApparmord.Join("tunables/multiarch.d/system")
-	content, err := path.ReadFile()
+	out, err := util.ReadFile(path)
 	if err != nil {
 		return res, err
 	}
-	out := strings.Replace(string(content), "@{p_systemd}=unconfined", "@{p_systemd}=systemd", -1)
+	out = strings.Replace(out, "@{p_systemd}=unconfined", "@{p_systemd}=systemd", -1)
 	out = strings.Replace(out, "@{p_systemd_user}=unconfined", "@{p_systemd_user}=systemd-user", -1)
 	if err := path.WriteFile([]byte(out)); err != nil {
 		return res, err
@@ -47,11 +47,10 @@ func (p FullSystemPolicy) Apply() ([]string, error) {
 
 	// Fix conflicting x modifiers in abstractions - FIXME: Temporary solution
 	path = cfg.RootApparmord.Join("abstractions/gstreamer")
-	content, err = path.ReadFile()
+	out, err = util.ReadFile(path)
 	if err != nil {
 		return res, err
 	}
-	out = string(content)
 	regFixConflictX := util.ToRegexRepl([]string{`.*gst-plugin-scanner.*`, ``})
 	out = regFixConflictX.Replace(out)
 	if err := path.WriteFile([]byte(out)); err != nil {

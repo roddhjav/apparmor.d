@@ -11,6 +11,7 @@ import (
 
 var (
 	regDev = util.ToRegexRepl([]string{
+		`Cx`, `cx`,
 		`PUx`, `pux`,
 		`Px`, `px`,
 		`Ux`, `ux`,

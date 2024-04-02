@@ -25,14 +25,14 @@ func init() {
 		Base: cfg.Base{
 			Keyword: "only",
 			Msg:     "Only directive applied",
-			Help:    `#aa:only filters...`,
+			Help:    Keyword + `only filters...`,
 		},
 	})
 	RegisterDirective(&FilterExclude{
 		Base: cfg.Base{
 			Keyword: "exclude",
 			Msg:     "Exclude directive applied",
-			Help:    `#aa:exclude filters...`,
+			Help:    Keyword + `exclude filters...`,
 		},
 	})
 }
