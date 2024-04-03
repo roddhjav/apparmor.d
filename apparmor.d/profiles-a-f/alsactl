@@ -1,0 +1,26 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/alsactl
+profile alsactl @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/audio-client>
+  include <abstractions/audio-server>
+  include <abstractions/nameservice-strict>
+
+  @{exec_path} mr,
+
+  /var/lib/alsa/asound.state rw,
+  /var/lib/alsa/asound.state{,.*} rw,
+
+        @{run}/lock/asound.state.lock rwk,
+        @{run}/lock/card@{int}.lock rwk,
+  owner @{run}/alsa/{,**} rw,
+
+  include if exists <local/alsactl>
+}
