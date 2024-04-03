@@ -182,7 +182,8 @@ func (p *AppArmorProfile) MergeRules() {
 // Format the profile for better readability before printing it
 // Follow: https://apparmor.pujol.io/development/guidelines/#the-file-block
 func (p *AppArmorProfile) Format() {
-	hasOwnedRule := false
+	const prefixOwner = "      "
+	hasOwnerRule := false
 	for i := len(p.Rules) - 1; i > 0; i-- {
 		j := i - 1
 		typeOfI := reflect.TypeOf(p.Rules[i])
@@ -195,14 +196,14 @@ func (p *AppArmorProfile) Format() {
 
 			// Add prefix before rule path to align with other rule
 			if p.Rules[i].(*File).Owner {
-				hasOwnedRule = true
-			} else if hasOwnedRule {
-				p.Rules[i].(*File).Prefix = "      "
+				hasOwnerRule = true
+			} else if hasOwnerRule {
+				p.Rules[i].(*File).Prefix = prefixOwner
 			}
 
 			if letterI != letterJ {
 				// Add a new empty line between Files rule of different type
-				hasOwnedRule = false
+				hasOwnerRule = false
 				p.Rules = append(p.Rules[:i], append([]ApparmorRule{&Rule{}}, p.Rules[i:]...)...)
 			}
 		}
