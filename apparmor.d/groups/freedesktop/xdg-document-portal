@@ -12,15 +12,16 @@ profile xdg-document-portal @{exec_path} flags=(attach_disconnected) {
   include <abstractions/bus-session>
   include <abstractions/bus/org.freedesktop.impl.portal.PermissionStore>
 
-  capability sys_nice,
-  capability sys_resource,
   capability sys_admin,
+  capability sys_nice,
+  capability sys_ptrace,
+  capability sys_resource,
 
   mount fstype=fuse.portal -> @{run}/user/@{uid}/doc/,
 
   signal (receive) set=(term) peer=gdm,
 
-  ptrace (read) peer=xdg-desktop-portal,
+  ptrace (read),
 
   unix (send receive) type=stream peer=(label=xdg-document-portal//fusermount),
 
@@ -37,6 +38,7 @@ profile xdg-document-portal @{exec_path} flags=(attach_disconnected) {
   @{bin}/fusermount{,3}  rCx -> fusermount,
 
   / r,
+  owner /.flatpak-info r,
 
   owner @{user_share_dirs}/flatpak/db/documents r,
   owner @{user_share_dirs}/Trash/files/** r,
