@@ -11,7 +11,7 @@ include <tunables/global>
 profile x11-xsession @{exec_path} {
   include <abstractions/base>
   include <abstractions/nameservice-strict>
-  include <abstractions/X>
+  include <abstractions/X-strict>
 
   @{exec_path} r,
 
@@ -54,7 +54,7 @@ profile x11-xsession @{exec_path} {
   @{bin}/openbox-session      rPx,
   @{bin}/enlightenment_start  rPUx,
   @{bin}/sway                 rPUx,
-  @{bin}/ssh-agent            rPx,
+  @{bin}/ssh-agent            rCx -> ssh-agent,
 
   @{bin}/sudo rPx, #aa:only whonix
   @{lib}/*/*.sh r,
@@ -67,6 +67,31 @@ profile x11-xsession @{exec_path} {
 
   owner /tmp/file* rw,
   owner /tmp/tmp.@{rand10} rw,
+  owner /tmp/user/@{uid}/tmp.@{rand10} rw,
+
+  profile ssh-agent {
+    include <abstractions/base>
+  
+    @{bin}/ssh-agent mr,
+
+    audit @{bin}/gpg-agent             rPx,
+    @{sh_path}                   rix,   
+    @{bin}/enlightenment_start  rPUx,
+    @{bin}/env                   rix,
+    @{bin}/im-launch             rPx,
+    @{bin}/kwalletaskpass       rPUx,
+    @{bin}/openbox-session       rPx,
+    @{bin}/startkde             rPUx,
+    @{bin}/startxfce4           rPUx,
+    @{bin}/sway                 rPUx,
+
+    owner @{HOME}/.xsession-errors w,
+
+    owner /tmp/ssh-*/ rw,
+    owner /tmp/ssh-*/agent.* rw,
+
+    include if exists <local/x11-xsession_ssh-agent>
+  }
 
   profile run-parts {
     include <abstractions/base>
@@ -103,6 +128,8 @@ profile x11-xsession @{exec_path} {
     @{bin}/gpgconf mr,
 
     @{bin}/gpg-agent rix,
+
+    owner @{HOME}/.xsession-errors w,
 
     owner @{HOME}/@{XDG_GPG_DIR}/ rw,
     owner @{HOME}/@{XDG_GPG_DIR}/** rwkl -> @{HOME}/@{XDG_GPG_DIR}/**,
