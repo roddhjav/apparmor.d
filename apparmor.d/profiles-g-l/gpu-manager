@@ -1,0 +1,33 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/gpu-manager
+profile gpu-manager @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/graphics>
+
+  capability sys_admin,
+  capability syslog,
+
+  @{exec_path} mr,
+
+  @{sh_path}   rix,
+  @{bin}/grep  rix,
+
+  /etc/modprobe.d/{,**} r,
+  /usr/lib/modprobe.d/{,**} r,
+
+  /var/lib/ubuntu-drivers-common/* rw,
+
+  /var/log/gpu-manager.log w,
+
+  @{PROC}/modules r,
+  @{PROC}/cmdline r,
+
+  include if exists <local/gpu-manager>
+}
