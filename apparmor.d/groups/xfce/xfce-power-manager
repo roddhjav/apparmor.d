@@ -1,0 +1,27 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/xfce4-power-manager
+profile xfce-power-manager @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/xfce>
+  include <abstractions/nameservice-strict>
+
+  @{exec_path} mr,
+
+  @{bin}/xfpm-power-backlight-helper rPx,
+
+  /etc/xdg/autostart/xfce4-power-manager.desktop r,
+
+  owner @{PROC}/@{pid}/cgroup r,
+  owner @{PROC}/@{pid}/stat r,
+
+  @{run}/systemd/inhibit/*.ref rw,
+
+  include if exists <local/xfce-power-manager>
+}
