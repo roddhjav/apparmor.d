@@ -1,0 +1,30 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/security-misc/pam-info
+profile pam-info @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+
+  @{exec_path} mr,
+
+  @{sh_path}          rix,
+  @{bin}/faillock     rix,
+  @{bin}/grep         rix,
+  @{bin}/str_replace  rix,
+  @{bin}/wc           rix,
+  @{bin}/whoami       rix,
+
+  /etc/pam.d/* r,
+
+  @{run}/faillock/user rwk,
+
+  owner /dev/tty rw,
+
+  include if exists <local/pam-info>
+}

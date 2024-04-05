@@ -1,0 +1,24 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/pam-tmpdir-helper
+profile pam-tmpdir-helper @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+
+  capability chown,
+
+  @{exec_path} mr,
+
+  owner /tmp/user/ rw,
+  owner /tmp/user/@{uid}/ rw,
+
+  /dev/ptmx rw,
+
+  include if exists <local/pam-tmpdir-helper>
+}
