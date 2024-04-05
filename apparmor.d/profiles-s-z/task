@@ -1,0 +1,70 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Zane Zakraisek <zz@eng.utah.edu>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/task
+profile task @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+  include <abstractions/ssl_certs>
+
+  # Task can optionally connect to a taskserver
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  @{exec_path}            mr,
+
+  @{sh_path}             rix,
+
+  @{bin}/vim             rCx -> editor,
+  @{bin}/vim.*           rCx -> editor,
+  @{bin}/sensible-editor rCx -> editor,
+
+  /usr/share/{doc/,}task{warrior,}/** r,
+
+  # Task can edit it's own config, so write is needed
+  owner @{HOME}/.taskrc      rw,
+  owner @{HOME}/.task/{,**} rwk,
+
+  profile editor {
+    include <abstractions/base>
+    include <abstractions/nameservice-strict>
+
+    @{bin}/sensible-editor        mr,
+    @{bin}/vim                  mrix,
+    @{bin}/vim.*                mrix,
+    @{sh_path}                   rix,
+    @{bin}/which{,.debianutils}  rix,
+
+    /usr/share/vim/{,**} r,
+    /usr/share/terminfo/** r,
+
+    /etc/vimrc r,
+    /etc/vim/{,**} r,
+
+    owner @{HOME}/.selected_editor r,
+    owner @{HOME}/.viminfo{,.tmp} rw,
+    owner @{HOME}/.vimrc r,
+
+    # Vim swap file 
+    owner @{HOME}/ r,
+    owner @{user_cache_dirs}/ r,
+    owner @{user_cache_dirs}/vim/** wr,
+
+    # Taskwarrior related files
+    owner @{HOME}/.task/   r,
+    owner @{HOME}/.task/* rw,
+
+    include if exists <local/task_editor>
+  }
+  
+  include if exists <local/task>
+}
