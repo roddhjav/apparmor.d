@@ -12,7 +12,7 @@ include <tunables/global>
 @{config_dirs} = @{data_dirs}/Browser/*.default/
 @{cache_dirs} = @{data_dirs}/Browser/Caches
 
-@{exec_path} = @{lib_dirs}/firefox.*
+@{exec_path} = @{lib_dirs}/firefox{,.real}
 profile torbrowser @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/audio-client>
@@ -31,7 +31,6 @@ profile torbrowser @{exec_path} flags=(attach_disconnected) {
   include <abstractions/gstreamer>
   include <abstractions/nameservice-strict>
   include <abstractions/ssl_certs>
-  include <abstractions/thumbnails-cache-read>
   include <abstractions/user-download-strict>
   include <abstractions/user-read-strict>
 
@@ -44,13 +43,17 @@ profile torbrowser @{exec_path} flags=(attach_disconnected) {
   network inet6 stream,
   network netlink raw,
 
+  signal (send) set=(term, kill) peer=torbrowser-*,
+
+  deny dbus send bus=system path=/org/freedesktop/hostname1,
+
   @{exec_path} mrix,
 
   @{lib_dirs}/{,**}             r,
   @{lib_dirs}/*.so              mr,
-  @{lib_dirs}/glxtest           rPx -> torbrowser-glxtest,
-  @{lib_dirs}/plugin-container  rPx -> torbrowser-plugin-container,
-  @{lib_dirs}/vaapitest         rPx -> torbrowser-vaapitest,
+  @{lib_dirs}/glxtest           rPx,
+  @{lib_dirs}/plugin-container  rPx,
+  @{lib_dirs}/vaapitest         rPx,
 
   # Desktop integration
   @{bin}/lsb_release            rPx -> lsb_release,
@@ -86,8 +89,8 @@ profile torbrowser @{exec_path} flags=(attach_disconnected) {
   owner /tmp/user/@{uid}/* rwk,
   owner /tmp/user/@{uid}/Temp-@{uuid}/ rw,
   owner /tmp/user/@{uid}/Temp-@{uuid}/* rwk,
-  owner /tmp/user/@{uid}/@{name}/ rw,
-  owner /tmp/user/@{uid}/@{name}/* rwk,
+  owner /tmp/user/@{uid}/firefox/ rw,
+  owner /tmp/user/@{uid}/firefox/* rwk,
   owner /tmp/@{name}/ rw,
   owner /tmp/@{name}/* rwk,
   owner /tmp/Temp-@{uuid}/ rw,
@@ -130,9 +133,15 @@ profile torbrowser @{exec_path} flags=(attach_disconnected) {
   owner @{PROC}/@{pids}/cmdline r,
   owner @{PROC}/@{pids}/environ r,
 
+        /dev/ r,
+        /dev/hidraw@{int} rw,
+        /dev/tty rw,
+  owner /dev/shm/org.mozilla.ipc.@{pid}.@{int} rw,
+  owner /dev/shm/wayland.mozilla.ipc.@{int} rw,
+  owner /dev/tty@{int} rw, # File Inherit
+
   # Silencer
-  deny @{lib_dirs}/** w,
-  deny owner @{user_share_dirs}/gvfs-metadata/{,*} r,
+  deny @{user_share_dirs}/gvfs-metadata/{,*} r,
 
   include if exists <local/torbrowser>
 }

@@ -18,31 +18,46 @@ profile torbrowser-wrapper @{exec_path} {
 
   @{sh_path}                     rix,
   @{bin}/basename                rix,
+  @{bin}/cp                      rix,
   @{bin}/dirname                 rix,
   @{bin}/grep                    rix,
   @{bin}/id                      rix,
+  @{bin}/mkdir                   rix,
   @{bin}/mktemp                  rix,
   @{bin}/mount                   rix,
   @{bin}/str_replace             rix,
+  @{bin}/sudo                    rCx -> sudo,
   @{bin}/systemctl               rCx -> systemctl,
+  @{bin}/touch                   rix,
   @{bin}/tty                     rix,
   @{bin}/whoami                  rix,
 
-  @{lib_dirs}/start-tor-browser  rPx -> torbrowser-start,
-  @{lib}/msgcollector/msgcollector rPx,
-  @{lib}/open-link-confirmation/open-link-confirmation rPx,
+  @{lib_dirs}/start-tor-browser                         rPx,
+  @{lib}/msgcollector/msgcollector                      rPx,
+  @{lib}/open-link-confirmation/open-link-confirmation  rPx,
 
   @{lib}/helper-scripts/* r,
 
   /etc/torbrowser.d/{,*} r,
 
-  owner @{lib_dirs}/TorBrowser/Data/Browser/profile.default/prefs.js r,
+  owner @{HOME}/.tb/{,**} rw,
+  owner /var/cache/tb-binary/{,**} rw,
 
   owner /tmp/tmp.@{rand10} rw,
+  owner /tmp/user/@{uid}/tmp.@{rand10} rw,
 
   owner @{run}/mount/utab r,
   
   owner @{PROC}/@{pid}/mountinfo r,
+
+  profile sudo {
+    include <abstractions/base>
+    include <abstractions/app/sudo>
+
+    @{lib}/tb-updater/tb-permission-fix rPx,
+
+    include if exists <local/torbrowser-wrapper_sudo>
+  }
 
   profile systemctl {
     include <abstractions/base>
@@ -52,10 +67,8 @@ profile torbrowser-wrapper @{exec_path} {
 
     /{run,var}/log/journal/ r,
     /{run,var}/log/journal/@{hex32}/ r,
-    /{run,var}/log/journal/@{hex32}/user-@{hex}.journal* r,
-    /{run,var}/log/journal/@{hex32}/system.journal* r,
-    /{run,var}/log/journal/@{hex32}/system@@{hex}.journal* r,
-    
+    /{run,var}/log/journal/@{hex32}/*.journal* r,
+
     include if exists <local/torbrowser-wrapper_systemctl>
   }
 
