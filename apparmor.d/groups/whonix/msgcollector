@@ -1,0 +1,46 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/msgcollector/msgcollector
+profile msgcollector @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+
+  @{exec_path} mr,
+
+  @{sh_path}        rix,
+  @{bin}/basename   rix,
+  @{bin}/cat        rix,
+  @{bin}/touch      rix,
+  @{bin}/tput       rix,
+  @{bin}/whoami     rix,
+
+  @{lib}/msgcollector/msgdispatcher_dispatch_x rPx,
+  @{lib}/msgcollector/striphtml rPx,
+
+  @{lib}/msgcollector/{,**} r,
+
+  @{bin}/sudo rCx -> sudo,
+
+  owner @{run}/msgcollector/user/{,**} rw,
+
+  profile sudo {
+    include <abstractions/base>
+    include <abstractions/app/sudo>
+
+    @{bin}/rm rix,
+    @{lib}/msgcollector/msgdispatcher_delete_wrapper rix,
+
+    @{run}/msgcollector/user/* rw,
+
+    include if exists <local/msgcollector_sudo>
+  }
+
+  include if exists <local/msgcollector>
+}
