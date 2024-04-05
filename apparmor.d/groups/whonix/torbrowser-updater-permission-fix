@@ -1,0 +1,42 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/tb-updater/tb-permission-fix
+profile torbrowser-updater-permission-fix @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+
+  capability chown,
+  capability dac_read_search,
+  capability fowner,
+  capability fsetid,
+
+  @{exec_path} mr,
+
+  @{sh_path}     rix,
+  @{bin}/chmod   rix,
+  @{bin}/chown   rix,
+  @{bin}/find    rix,
+  @{bin}/id      rix,
+  @{bin}/mktemp  rix,
+  @{bin}/xargs   rix,
+
+  @{lib}/helper-scripts/* r,
+
+  /var/cache/tb-binary/{,**} rw,
+
+  owner /tmp/user/@{uid}/tmp.@{rand10} rw,
+
+  owner @{PROC}/@{pid}/fd/ r,
+
+  owner /dev/tty rw,
+
+  deny @{HOME}/ r,
+
+  include if exists <local/torbrowser-updater-permission-fix>
+}
