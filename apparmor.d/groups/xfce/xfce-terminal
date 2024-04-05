@@ -1,0 +1,45 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/xfce4-terminal
+profile xfce-terminal @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/dconf-write>
+  include <abstractions/nameservice-strict>
+  include <abstractions/xfce>
+
+  @{exec_path} mr,
+
+  # The shell is not confined on purpose.
+  @{bin}/@{shells}            rUx,
+
+  # Some CLI program can be launched directly from Gnome Shell
+  @{bin}/htop                 rPx,
+  @{bin}/micro               rPUx,
+  @{bin}/nvtop                rPx,
+
+  /usr/share/ r,
+  /usr/share/xfce4/ r,
+  /usr/share/xfce4/terminal/{,**} r,
+
+  /etc/fstab r,
+  /etc/xdg/ r,
+  /etc/xdg/xfce4/ r,
+
+  owner @{user_config_dirs}/xfce4/terminal/{,**} r,
+
+  owner /tmp/user/@{uid}/#@{int} rw,
+
+        @{PROC}/@{pid}/cgroup r,
+  owner @{PROC}/@{pid}/mountinfo r,
+
+  /dev/ptmx rw,
+
+  include if exists <local/xfce-terminal>
+}
