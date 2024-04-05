@@ -22,6 +22,7 @@ func TestDefaultTunables(t *testing.T) {
 						{"bin", []string{"/{,usr/}{,s}bin"}},
 						{"lib", []string{"/{,usr/}lib{,exec,32,64}"}},
 						{"multiarch", []string{"*-linux-gnu*"}},
+						{"HOME", []string{"/home/*"}},
 						{"user_share_dirs", []string{"/home/*/.local/share"}},
 						{"etc_ro", []string{"/{,usr/}etc/"}},
 						{"int", []string{"[0-9]{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}"}},
@@ -33,7 +34,7 @@ func TestDefaultTunables(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := DefaultTunables(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("NewAppArmorProfile() = %v, want %v", got, tt.want)
+				t.Errorf("DefaultTunables() = %v, want %v", got, tt.want)
 			}
 		})
 	}

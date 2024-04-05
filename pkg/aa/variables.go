@@ -44,6 +44,7 @@ func DefaultTunables() *AppArmorProfile {
 				{"bin", []string{"/{,usr/}{,s}bin"}},
 				{"lib", []string{"/{,usr/}lib{,exec,32,64}"}},
 				{"multiarch", []string{"*-linux-gnu*"}},
+				{"HOME", []string{"/home/*"}},
 				{"user_share_dirs", []string{"/home/*/.local/share"}},
 				{"etc_ro", []string{"/{,usr/}etc/"}},
 				{"int", []string{"[0-9]{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}"}},
