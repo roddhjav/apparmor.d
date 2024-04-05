@@ -1,0 +1,50 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/thunar
+profile thunar @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/deny-sensitive-home>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/nameservice-strict>
+  include <abstractions/trash-strict>
+  include <abstractions/xfce>
+
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  @{bin}/thunar-volman rPx,
+  @{open_path} rPx -> child-open,
+
+  /etc/fstab r,
+  /etc/timezone r,
+
+  # Full access to user's data
+  / r,
+  /*/ r,
+  @{bin}/ r,
+  @{lib}/ r,
+  @{MOUNTDIRS}/ r,
+  @{MOUNTS}/ r,
+  @{MOUNTS}/** rw,
+  owner @{HOME}/{,**} rw,
+  owner @{run}/user/@{uid}/{,**} rw,
+  owner /tmp/{,**} rw,
+
+  # Silence non user's data
+  deny /boot/{,**} r,
+  deny /opt/{,**} r,
+  deny /root/{,**} r,
+  deny /tmp/.* rw,
+  deny /tmp/.*/{,**} rw,
+
+  owner @{PROC}/@{pid}/mountinfo r,
+
+  include if exists <local/thunar>
+}

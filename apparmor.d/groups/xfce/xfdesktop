@@ -1,0 +1,34 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/xfdesktop
+profile xfdesktop @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/app-launcher-user>
+  include <abstractions/nameservice-strict>
+  include <abstractions/xfce>
+
+  @{exec_path} mr,
+
+  @{bin}/xfce4-mime-helper rix,
+
+  /usr/share/backgrounds/xfce/{,**} r,
+
+  /etc/fstab r,
+
+  owner @{HOME}/@{XDG_DESKTOP_DIR}/ r,
+
+  owner @{user_config_dirs}/Thunar/{,**} rw,
+  owner @{user_config_dirs}/xfce4/desktop/{,**} rw,
+
+  owner @{PROC}/@{pid}/mountinfo r,
+
+  deny @{user_share_dirs}/gvfs-metadata/{,*} r,
+
+  include if exists <local/xfdesktop>
+}

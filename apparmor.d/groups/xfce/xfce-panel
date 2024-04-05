@@ -1,0 +1,55 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/xfce4-panel @{lib}/{,@{multiarch}/}xfce4/panel/wrapper-2.0
+profile xfce-panel @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/app-launcher-user>
+  include <abstractions/audio-client>
+  include <abstractions/dconf-write>
+  include <abstractions/nameservice-strict>
+  include <abstractions/xfce>
+
+  @{exec_path} mr,
+
+  @{bin}/exo-open                                     rix,
+  @{bin}/xfce4-mime-helper                            rix,
+  @{lib}/{,@{multiarch}/}xfce4/panel/wrapper-2.0      rix,
+  @{lib}/@{multiarch}/glib-[0-9]*/gio-launch-desktop  rix,
+  @{lib}/gio-launch-desktop                           rix,
+
+  @{bin}/sudo                                         rCx -> root,
+
+  /usr/share/desktop-directories/{,**} r,
+  /usr/share/livecheck/** r,
+  /usr/share/xfce4/{,**} r,
+
+  /etc/fstab r,
+  /etc/machine-id r,
+  /etc/timezone r,
+  /etc/xdg/menus/{,**} r,
+  /etc/xdg/xfce4/{,**} r,
+
+  owner @{user_cache_dirs}/xfce4/notifyd/icons/ rw,
+  owner @{user_config_dirs}/xfce4/panel/{,**} rw,
+
+        @{PROC}/cmdline r,
+  owner @{PROC}/@{pid}/cgroup r,
+  owner @{PROC}/@{pid}/mountinfo r,
+
+  profile root {
+    include <abstractions/base>
+    include <abstractions/app/sudo>
+
+    @{bin}/lsblk rPx,
+
+    include if exists <local/xfce-panel-wrapper_root>
+  }
+
+  include if exists <local/xfce-panel>
+}
