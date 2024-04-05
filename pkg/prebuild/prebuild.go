@@ -37,6 +37,19 @@ func init() {
 			builder.Register("abi3")
 			cfg.Overwrite.Enabled = true
 		}
+	case "whonix":
+		cfg.Hide += `/etc/apparmor.d/abstractions/base.d/kicksecure
+/etc/apparmor.d/home.tor-browser.firefox
+/etc/apparmor.d/tunables/home.d/anondist
+/etc/apparmor.d/tunables/home.d/live-mode
+/etc/apparmor.d/tunables/home.d/qubes-whonix-anondist
+/etc/apparmor.d/usr.bin.hexchat
+/etc/apparmor.d/usr.bin.sdwdate
+/etc/apparmor.d/usr.bin.systemcheck
+/etc/apparmor.d/usr.bin.timesanitycheck
+/etc/apparmor.d/usr.bin.url_to_unixtime
+/etc/apparmor.d/whonix-firewall
+`
 	}
 }
 
