@@ -1,0 +1,56 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/sdwdate/sdwdate
+profile sdwdate @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+  include <abstractions/python>
+  include <abstractions/ssl_certs>
+
+  capability sys_time,
+
+  network inet stream,
+  network inet6 stream,
+
+  @{exec_path} mr,
+
+  @{bin}/cat                            rix,
+  @{bin}/date                           rix,
+  @{bin}/minimum-unixtime-show          rix,
+  @{bin}/sleep                          rix,
+  @{bin}/timeout                        rix,
+  @{bin}/timesanitycheck                rix,
+  @{bin}/tor-circuit-established-check  rix,
+  @{bin}/touch                          rix,
+  @{lib}/helper-scripts/*               rix,
+  @{bin}/url_to_unixtime                rix,
+  @{bin}/grep rix,
+
+  @{lib}/helper-scripts/ r,
+  @{lib}/sdwdate/ r,
+
+  /usr/share/timesanitycheck/* r,
+  /usr/share/tor/tor-service-defaults-torrc r,
+  /usr/share/translations/sdwdate.yaml r,
+  /usr/local/etc/torrc.d/{,**} r,
+
+  /etc/sdwdate.d/{,**} r,
+  /etc/tor/torrc r,
+  @{etc_ro}/torrc.d/{,**} r,
+
+  owner /var/lib/sdwdate/ rw,
+  owner /var/lib/sdwdate/* rw,
+
+        @{run}/tor/control.authcookie r,
+  owner @{run}/sdwdate/* rw,
+
+  /dev/tty rw,
+
+  include if exists <local/sdwdate>
+}
