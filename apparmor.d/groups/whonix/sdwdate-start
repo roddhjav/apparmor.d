@@ -1,0 +1,31 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/sdwdate/sdwdate-start-anondate-set-file-watcher
+profile sdwdate-start @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+
+  @{exec_path} mr,
+
+  @{bin}/mkdir rix,
+  @{bin}/chown rix,
+  @{bin}/mktemp rix,
+  @{bin}/rm rix,
+  @{bin}/mkfifo  rix,
+  @{bin}/inotifywait  rix,
+
+  owner /tmp/tmp.@{rand10} rw,
+
+  owner @{run}/sdwdate/ rw,
+  owner @{run}/sdwdate/status rw,
+
+  /dev/tty rw,
+
+  include if exists <local/sdwdate-start>
+}

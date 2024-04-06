@@ -1,0 +1,29 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/sdwdate-clock-jump
+profile sdwdate-clock-jump @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/app/sudo>
+
+  @{exec_path} mr,
+
+  @{bin}/id rix,
+  @{bin}/rm rix,
+  @{bin}/systemctl rCx -> systemctl,
+  @{bin}/touch rix,
+
+  profile systemctl {
+    include <abstractions/base>
+    include <abstractions/app/systemctl>
+
+    include if exists <local/sdwdate-clock-jump_systemctl>
+  }
+
+  include if exists <local/sdwdate-clock-jump>
+}

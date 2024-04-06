@@ -1,0 +1,53 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path}  = @{bin}/sdwdate-gui
+@{exec_path} += @{lib}/sdwdate-gui/start-maybe @{lib}/sdwdate-gui/sdwdate-gui
+profile sdwdate-gui @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/desktop>
+  include <abstractions/graphics>
+  include <abstractions/nameservice-strict>
+  include <abstractions/python>
+
+  ptrace (read) peer=@{p_systemd},
+  ptrace (read) peer=xfce-panel,
+
+  @{exec_path} mrix,
+
+  @{sh_path}  rix,
+
+  @{bin}/sudo rCx -> root,
+  @{bin}/xfce4-terminal rix,
+  @{lib}/helper-scripts/terminal-wrapper rix,
+  @{lib}/sdwdate-gui/log-viewer rix,
+  @{lib}/helper-scripts/* rix,
+
+  @{lib}/python3/dist-packages/sdwdate_gui/__pycache__/ rw,
+
+  @{lib}/sdwdate-gui/ r,
+
+  /usr/share/sdwdate-gui/{,**} r,
+
+  /etc/sdwdate-gui.d/{,**} r,
+
+  /dev/tty rw,
+
+  @{run}/sdwdate/status r,
+
+  profile root {
+    include <abstractions/base>
+    include <abstractions/app/sudo>
+
+    @{bin}/sdwdate-clock-jump rPx,
+
+    include if exists <local/sdwdate-gui_root>
+  }
+
+  include if exists <local/sdwdate-gui>
+}
