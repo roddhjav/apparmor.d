@@ -1,0 +1,58 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/rads/ram-adjusted-desktop-starter
+profile rads @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+
+  @{exec_path} mr,
+
+  @{sh_path}        rix,
+  @{bin}/basename   rix,
+  @{bin}/cat        rix,
+  @{bin}/chvt       rix,
+  @{bin}/free       rix,
+  @{bin}/gawk       rix,
+  @{bin}/grep       rix,
+  @{bin}/mkdir      rix,
+  @{bin}/rm         rix,
+  @{bin}/sed        rix,
+  @{bin}/systemctl  rCx -> systemctl,
+  @{bin}/touch      rix,
+  @{bin}/tput       rix,
+
+  @{lib}/helper-scripts/* r,
+
+  /usr/share/anon-gw-base-files/gateway r,
+  /usr/share/whonix/marker r,
+
+  /etc/dpkg/origins/whonix r,
+  /etc/rads.d/{,**} r,
+  /etc/whonix_version r,
+  /etc/X11/default-display-manager r,
+
+  owner @{run}/rads/{,**} rw,
+
+  profile systemctl {
+    include <abstractions/base>
+    include <abstractions/app/systemctl>
+
+    capability net_admin,
+    capability sys_ptrace,
+
+    /{run,var}/log/journal/ r,
+    /{run,var}/log/journal/@{hex32}/ r,
+    /{run,var}/log/journal/@{hex32}/*.journal* r,
+
+    include if exists <local/rads_systemctl>
+  }
+
+  include if exists <local/rads>
+}
