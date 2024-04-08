@@ -10,10 +10,12 @@ include <tunables/global>
 @{exec_path} += @{lib}/@{multiarch}/{,libexec/}kactivitymanagerd
 profile kactivitymanagerd @{exec_path} {
   include <abstractions/base>
+  include <abstractions/devices-usb>
   include <abstractions/graphics>
   include <abstractions/kde-strict>
   include <abstractions/nameservice-strict>
   include <abstractions/recent-documents-write>
+  include <abstractions/thumbnails-cache-read>
   include <abstractions/user-read-strict>
 
   @{exec_path} mr,
@@ -30,15 +32,26 @@ profile kactivitymanagerd @{exec_path} {
   owner @{user_cache_dirs}/ksycoca{5,6}_* r,
 
   owner @{user_config_dirs}/#@{int} rw,
+  owner @{user_config_dirs}/baloofilerc r,
+  owner @{user_config_dirs}/breezerc r,
+  owner @{user_config_dirs}/dolphinrc r,
   owner @{user_config_dirs}/kactivitymanagerdrc.lock rwk,
   owner @{user_config_dirs}/kactivitymanagerdrc{,.@{rand6}} rwl -> @{user_config_dirs}/#@{int},
+  owner @{user_config_dirs}/libreoffice/**.xcu r,
   owner @{user_config_dirs}/menus/{,**} r,
+  owner @{user_config_dirs}/trashrc r,
 
   owner @{user_share_dirs}/kactivitymanagerd/{,**} rwlk,
   owner @{user_share_dirs}/kservices{5,6}/{,**} r,
   owner @{user_share_dirs}/recently-used.xbel r,
+  owner @{user_share_dirs}/user-places.xbel r,
 
-  @{PROC}/sys/kernel/core_pattern r,
+  owner @{run}/user/@{uid}/#@{int} rw,
+  owner @{run}/user/@{uid}/*@{rand6}.*.socket rwl -> @{run}/user/@{uid}/#@{int},
+
+        @{PROC}/sys/kernel/core_pattern r,
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/mounts r,
 
   /dev/tty r,
 
