@@ -1,0 +1,32 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/xfce4-sensors
+profile xfce-sensors @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/xfce>
+
+  @{exec_path} mr,
+
+  @{sys}/class/hwmon/ r,
+  @{sys}/class/power_supply/ r,
+  @{sys}/class/thermal/ r,
+  @{sys}/devices/@{pci}/i2c-@{int}/name r,
+  @{sys}/devices/**/hwmon@{int}/ r,
+  @{sys}/devices/**/hwmon@{int}/{name,temp*} r,
+  @{sys}/devices/**/hwmon@{int}/**/ r,
+  @{sys}/devices/**/hwmon@{int}/**/{name,temp*} r,
+  @{sys}/devices/**/hwmon/ r,
+  @{sys}/devices/**/hwmon/{name,temp*} r,
+  @{sys}/devices/**/hwmon/**/ r,
+  @{sys}/devices/**/hwmon/**/{name,temp*} r,
+  @{sys}/devices/**/power_supply/**/{uevent,type,online} r,
+  @{sys}/devices/virtual/thermal/thermal_zone@{int}/temp r,
+
+  include if exists <local/xfce-sensors>
+}

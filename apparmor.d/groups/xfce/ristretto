@@ -1,0 +1,26 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/ristretto
+profile ristretto @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/thumbnails-cache-read>
+  include <abstractions/user-read-strict>
+  include <abstractions/user-write-strict>
+  include <abstractions/xfce>
+
+  @{exec_path} mr,
+
+  @{open_path} rPx -> child-open-help,
+
+  /usr/share/file/{,**} r,
+
+  owner @{user_config_dirs}/ristretto/{,**} rw,
+
+  include if exists <local/ristretto>
+}
