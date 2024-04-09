@@ -10,9 +10,9 @@ include <tunables/global>
 profile gnome-music @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/audio-client>
-  include <abstractions/dconf-write>
-  include <abstractions/gnome-strict>
-  include <abstractions/graphics>
+  include <abstractions/bus-system>
+  include <abstractions/bus/org.freedesktop.login1>
+  include <abstractions/common/gnome>
   include <abstractions/gstreamer>
   include <abstractions/nameservice-strict>
   include <abstractions/p11-kit>
@@ -25,13 +25,13 @@ profile gnome-music @{exec_path} flags=(attach_disconnected) {
   network inet6 dgram,
   network netlink raw,
 
+  #aa:dbus talk bus=session name=org.freedesktop.Tracker3.Writeback label=tracker-writeback
+
   @{exec_path} mr,
   @{bin}/ r,
   @{bin}/env r,
   @{bin}/python3.@{int} rix,
   @{lib}/python3.@{int}/site-packages/gnomemusic/__pycache__/{,**} rw,
-
-  @{open_path}  rPx -> child-open-help,
 
   /usr/share/grilo-plugins/grl-lua-factory/{,*} r,
   /usr/share/org.gnome.Music/{,**} r,
@@ -41,7 +41,6 @@ profile gnome-music @{exec_path} flags=(attach_disconnected) {
 
   owner @{user_music_dirs}/{,**} r,
 
-  owner @{user_cache_dirs}/gnome-music/{,**} rwk,
   owner @{user_cache_dirs}/media-art/{,*} rw,
   owner @{user_share_dirs}/grilo-plugins/ rwk,
   owner @{user_share_dirs}/grilo-plugins/*.db{,-shm,-journal,-wal} rwk,
@@ -52,7 +51,6 @@ profile gnome-music @{exec_path} flags=(attach_disconnected) {
   owner /var/tmp/etilqs_@{hex} rw,
 
         @{PROC}/sys/net/ipv6/conf/all/disable_ipv6 r,
-  owner @{PROC}/@{pid}/cmdline r,
   owner @{PROC}/@{pid}/mounts r,
 
   deny owner @{user_share_dirs}/gvfs-metadata/{,*} r,
