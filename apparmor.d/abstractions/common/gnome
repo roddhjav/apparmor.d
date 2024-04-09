@@ -1,0 +1,27 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Minimal set of rules for all gnome based UI application.
+
+  include <abstractions/bus-session>
+  include <abstractions/dconf-write>
+  include <abstractions/gnome-strict>
+  include <abstractions/graphics>
+
+  @{open_path}  rPx -> child-open-help,
+
+  /usr/share/@{profile_name}/{,**} r,
+
+  owner @{user_cache_dirs}/@{profile_name}/ rw,
+  owner @{user_cache_dirs}/@{profile_name}/** rwlk,
+
+  owner @{user_config_dirs}/@{profile_name}/ rw,
+  owner @{user_config_dirs}/@{profile_name}/** rwlk,
+
+  owner @{user_share_dirs}/@{profile_name}/ rw,
+  owner @{user_share_dirs}/@{profile_name}/** rwlk,
+
+  owner @{PROC}/@{pid}/cmdline r,
+
+  include if exists <abstractions/common/gnome.d>
