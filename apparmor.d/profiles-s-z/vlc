@@ -15,6 +15,9 @@ profile vlc @{exec_path} {
   include <abstractions/bus-session>
   include <abstractions/bus/org.a11y>
   include <abstractions/bus/org.freedesktop.ScreenSaver>
+  include <abstractions/bus/org.freedesktop.secrets>
+  include <abstractions/bus/org.kde.kwalletd>
+  include <abstractions/bus/org.kde.StatusNotifierWatcher>
   include <abstractions/dconf-write>
   include <abstractions/desktop>
   include <abstractions/devices-usb>
@@ -32,54 +35,8 @@ profile vlc @{exec_path} {
   network inet6 stream,
   network netlink raw,
 
-  dbus bind bus=session name=org.kde.StatusNotifierItem-*,
-
-  dbus bind bus=session name=org.mpris.MediaPlayer2.vlc*,
-  dbus (send, receive) bus=session path=/org/mpris/MediaPlayer2
-       interface=org.freedesktop.DBus.Properties
-       peer=(name="{org.freedesktop.DBus,:*}"), # all members
-  dbus (send, receive) bus=session path=/org/mpris/MediaPlayer2
-       interface=org.mpris.MediaPlayer2.*
-       peer=(name="{org.mpris.MediaPlayer2.vlc,org.freedesktop.DBus,:*}"), # all members
-
-  dbus send bus=session path=/StatusNotifierWatcher
-       interface=org.freedesktop.DBus.Introspectable
-       member=Introspect
-       peer=(name=org.kde.StatusNotifierWatcher),
-
-  dbus send bus=session path=/StatusNotifierWatcher
-       interface=org.freedesktop.DBus.Properties
-       member={Get,RegisterStatusNotifierItem}
-       peer=(name=org.kde.StatusNotifierWatcher),
-
-  dbus send bus=session path=/StatusNotifierWatcher
-       interface=org.kde.StatusNotifierWatcher
-       member=RegisterStatusNotifierItem
-       peer=(name=org.kde.StatusNotifierWatcher),
-
-  dbus send bus=session path=/StatusNotifierItem 
-       interface=org.kde.StatusNotifierItem
-       member={NewToolTip,NewStatus,NewAttentionIcon,NewTitle,NewStatus,NewIcon}
-       peer=(name=org.freedesktop.DBus),
-
-  dbus receive bus=session path=/StatusNotifierItem 
-       interface=org.kde.StatusNotifierItem
-       member=Activate
-       peer=(name=:*),
-
-  dbus receive bus=session path=/StatusNotifierItem
-       interface=org.freedesktop.DBus.Properties
-       member={Get,GetAll}
-       peer=(name=:*),
-
-  dbus send bus=session path=/MenuBar
-       interface=com.canonical.dbusmenu
-       member={LayoutUpdated,ItemsPropertiesUpdated}
-       peer=(name=org.freedesktop.DBus),
-
-  dbus (send receive) bus=session path=/MenuBar
-       interface=com.canonical.dbusmenu
-       peer=(name=:*),
+  #aa:dbus own bus=session name=org.mpris.MediaPlayer2.vlc
+  #aa:dbus talk bus=session name=org.mpris.MediaPlayer2.Player label=unconfined
 
   @{exec_path} mrix,
 
