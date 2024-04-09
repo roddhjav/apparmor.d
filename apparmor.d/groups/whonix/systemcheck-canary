@@ -1,0 +1,32 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/systemcheck/canary-daemon
+profile systemcheck-canary @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+
+  @{exec_path} mr,
+ 
+  @{bin}/sleep rix,
+  @{bin}/grep rix,
+  @{bin}/whoami rix,
+  @{bin}/cat rix,
+  @{bin}/date rix,
+  @{bin}/sleep rix,
+
+  @{lib}/systemcheck/canary rix,
+
+  #aa:stack systemd-detect-virt systemd-notify
+  @{bin}/systemd-detect-virt  rPx -> &systemd-detect-virt,
+  @{bin}/systemd-notify       rPx -> &systemd-notify,
+
+  @{PROC}/cmdline r,
+
+  include if exists <local/systemcheck-canary>
+}
