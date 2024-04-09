@@ -1,0 +1,25 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/gnome-calculator
+profile gnome-calculator @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/common/gnome>
+  include <abstractions/ssl_certs>
+
+  # Needed to get currency exchange rates
+  network inet dgram,
+  network inet stream,
+  network inet6 dgram,
+  network inet6 stream,
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  include if exists <local/gnome-calculator>
+}

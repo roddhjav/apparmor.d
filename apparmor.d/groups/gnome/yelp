@@ -1,0 +1,37 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/yelp @{bin}/gnome-help
+profile yelp @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/common/gnome>
+
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  @{lib}/{,@{multiarch}/}webkit{2,}gtk-*/WebKitNetworkProcess rix,
+  @{lib}/{,@{multiarch}/}webkit{2,}gtk-*/WebKitWebProcess rix,
+
+  /usr/share/help/{,**} r,
+  /usr/share/yelp-xsl/{,**} r,
+  /usr/share/xml/{,**} r,
+
+  /etc/xml/{,**} r,
+
+  @{sys}/devices/virtual/dmi/id/chassis_type r,
+  @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/app-gnome-yelp-*.scope/memory.* r,
+
+        @{PROC}/zoneinfo r,
+  owner @{PROC}/@{pid}/cgroup r,
+  owner @{PROC}/@{pid}/cmdline r,
+  owner @{PROC}/@{pid}/smaps r,
+  owner @{PROC}/@{pid}/statm r,
+
+  include if exists <local/yelp>
+}

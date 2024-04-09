@@ -1,0 +1,30 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/gnome-logs
+profile gnome-logs @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/common/gnome>
+  include <abstractions/user-download-strict>
+
+  @{exec_path} mr,
+
+  /etc/machine-id r,
+
+  /var/lib/systemd/catalog/database r,
+
+  /{run,var}/log/journal/ r,
+  /{run,var}/log/journal/@{hex32}/ r,
+  /{run,var}/log/journal/@{hex32}/system.journal r,
+  /{run,var}/log/journal/@{hex32}/system@@{hex32}-@{hex}-@{hex}.journal r,
+  /{run,var}/log/journal/@{hex32}/user-@{uid}.journal r,
+  /{run,var}/log/journal/@{hex32}/user-1000@@{hex32}-@{hex}-@{hex}.journal r,
+  /{run,var}/log/journal/remote/ r,
+
+  include if exists <local/gnome-logs>
+}
