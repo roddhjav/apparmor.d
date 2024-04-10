@@ -105,7 +105,11 @@ func (p *AppArmorProfile) ResolveAttachments() {
 	for _, variable := range p.Variables {
 		if variable.Name == "exec_path" {
 			for _, value := range variable.Values {
-				p.Attachments = append(p.Attachments, p.resolve(value)...)
+				attachments := p.resolve(value)
+				if len(attachments) == 0 {
+					panic("Variable not defined in: " + value)
+				}
+				p.Attachments = append(p.Attachments, attachments...)
 			}
 		}
 	}
