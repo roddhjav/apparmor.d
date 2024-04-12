@@ -9,10 +9,10 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"slices"
 	"strings"
 
 	"github.com/roddhjav/apparmor.d/pkg/logs"
-	"golang.org/x/exp/slices"
 )
 
 const usage = `aa-log [-h] [--systemd] [--file file] [--rules | --raw] [profile]

@@ -9,9 +9,8 @@ package aa
 
 import (
 	"regexp"
+	"slices"
 	"strings"
-
-	"golang.org/x/exp/slices"
 )
 
 var (
