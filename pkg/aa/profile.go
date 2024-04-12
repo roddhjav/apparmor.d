@@ -7,11 +7,11 @@ package aa
 import (
 	"bytes"
 	"reflect"
+	"slices"
 	"sort"
 	"strings"
 
 	"github.com/arduino/go-paths-helper"
-	"golang.org/x/exp/slices"
 )
 
 // Default Apparmor magic directory: /etc/apparmor.d/.

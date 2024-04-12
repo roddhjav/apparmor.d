@@ -5,12 +5,12 @@
 package directive
 
 import (
+	"slices"
 	"strings"
 
 	"github.com/roddhjav/apparmor.d/pkg/aa"
 	"github.com/roddhjav/apparmor.d/pkg/prebuild/cfg"
 	"github.com/roddhjav/apparmor.d/pkg/util"
-	"golang.org/x/exp/slices"
 )
 
 type Exec struct {
