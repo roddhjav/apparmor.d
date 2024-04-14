@@ -5,15 +5,17 @@
 package aa
 
 type Signal struct {
+	Rule
 	Qualifier
 	Access string
 	Set    string
 	Peer   string
 }
 
-func SignalFromLog(log map[string]string) ApparmorRule {
+func newSignalFromLog(log map[string]string) *Signal {
 	return &Signal{
-		Qualifier: NewQualifierFromLog(log),
+		Rule:      newRuleFromLog(log),
+		Qualifier: newQualifierFromLog(log),
 		Access:    toAccess(log["requested_mask"]),
 		Set:       log["signal"],
 		Peer:      log["peer"],
@@ -22,14 +24,14 @@ func SignalFromLog(log map[string]string) ApparmorRule {
 
 func (r *Signal) Less(other any) bool {
 	o, _ := other.(*Signal)
-	if r.Qualifier.Equals(o.Qualifier) {
-		if r.Access == o.Access {
-			if r.Set == o.Set {
-				return r.Peer < o.Peer
-			}
-			return r.Set < o.Set
-		}
+	if r.Access != o.Access {
 		return r.Access < o.Access
+	}
+	if r.Set != o.Set {
+		return r.Set < o.Set
+	}
+	if r.Peer != o.Peer {
+		return r.Peer < o.Peer
 	}
 	return r.Qualifier.Less(o.Qualifier)
 }

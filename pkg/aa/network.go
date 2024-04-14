@@ -10,53 +10,62 @@ type AddressExpr struct {
 	Port        string
 }
 
+func newAddressExprFromLog(log map[string]string) AddressExpr {
+	return AddressExpr{
+		Source:      log["laddr"],
+		Destination: log["faddr"],
+		Port:        log["lport"],
+	}
+}
+
+func (r AddressExpr) Less(other AddressExpr) bool {
+	if r.Source != other.Source {
+		return r.Source < other.Source
+	}
+	if r.Destination != other.Destination {
+		return r.Destination < other.Destination
+	}
+	return r.Port < other.Port
+}
+
 func (r AddressExpr) Equals(other AddressExpr) bool {
 	return r.Source == other.Source && r.Destination == other.Destination &&
 		r.Port == other.Port
 }
 
-func (r AddressExpr) Less(other AddressExpr) bool {
-	if r.Source == other.Source {
-		if r.Destination == other.Destination {
-			return r.Port < other.Port
-		}
-		return r.Destination < other.Destination
-	}
-	return r.Source < other.Source
-}
-
 type Network struct {
+	Rule
 	Qualifier
+	AddressExpr
 	Domain   string
 	Type     string
 	Protocol string
-	AddressExpr
 }
 
-func NetworkFromLog(log map[string]string) ApparmorRule {
+func newNetworkFromLog(log map[string]string) *Network {
 	return &Network{
-		Qualifier: NewQualifierFromLog(log),
-		AddressExpr: AddressExpr{
-			Source:      log["laddr"],
-			Destination: log["faddr"],
-			Port:        log["lport"],
-		},
-		Domain:   log["family"],
-		Type:     log["sock_type"],
-		Protocol: log["protocol"],
+		Rule:        newRuleFromLog(log),
+		Qualifier:   newQualifierFromLog(log),
+		AddressExpr: newAddressExprFromLog(log),
+		Domain:      log["family"],
+		Type:        log["sock_type"],
+		Protocol:    log["protocol"],
 	}
 }
 
 func (r *Network) Less(other any) bool {
 	o, _ := other.(*Network)
-	if r.Qualifier.Equals(o.Qualifier) {
-		if r.Domain == o.Domain {
-			if r.Type == o.Type {
-				return r.Protocol < o.Protocol
-			}
-			return r.Type < o.Type
-		}
+	if r.Domain != o.Domain {
 		return r.Domain < o.Domain
+	}
+	if r.Type != o.Type {
+		return r.Type < o.Type
+	}
+	if r.Protocol != o.Protocol {
+		return r.Protocol < o.Protocol
+	}
+	if r.AddressExpr.Less(o.AddressExpr) {
+		return r.AddressExpr.Less(o.AddressExpr)
 	}
 	return r.Qualifier.Less(o.Qualifier)
 }

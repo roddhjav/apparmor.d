@@ -17,76 +17,100 @@ func TestRule_FromLog(t *testing.T) {
 		want    ApparmorRule
 	}{
 		{
-			name:    "capbability",
-			fromLog: CapabilityFromLog,
-			log:     capability1Log,
-			want:    capability1,
+			name: "capbability",
+			fromLog: func(m map[string]string) ApparmorRule {
+				return newCapabilityFromLog(m)
+			},
+			log:  capability1Log,
+			want: capability1,
 		},
 		{
-			name:    "network",
-			fromLog: NetworkFromLog,
-			log:     network1Log,
-			want:    network1,
+			name: "network",
+			fromLog: func(m map[string]string) ApparmorRule {
+				return newNetworkFromLog(m)
+			},
+			log:  network1Log,
+			want: network1,
 		},
 		{
-			name:    "mount",
-			fromLog: MountFromLog,
-			log:     mount1Log,
-			want:    mount1,
+			name: "mount",
+			fromLog: func(m map[string]string) ApparmorRule {
+				return newMountFromLog(m)
+			},
+			log:  mount1Log,
+			want: mount1,
 		},
 		{
-			name:    "umount",
-			fromLog: UmountFromLog,
-			log:     umount1Log,
-			want:    umount1,
+			name: "umount",
+			fromLog: func(m map[string]string) ApparmorRule {
+				return newUmountFromLog(m)
+			},
+			log:  umount1Log,
+			want: umount1,
 		},
 		{
-			name:    "pivotroot",
-			fromLog: PivotRootFromLog,
-			log:     pivotroot1Log,
-			want:    pivotroot1,
+			name: "pivotroot",
+			fromLog: func(m map[string]string) ApparmorRule {
+				return newPivotRootFromLog(m)
+			},
+			log:  pivotroot1Log,
+			want: pivotroot1,
 		},
 		{
-			name:    "changeprofile",
-			fromLog: ChangeProfileFromLog,
-			log:     changeprofile1Log,
-			want:    changeprofile1,
+			name: "changeprofile",
+			fromLog: func(m map[string]string) ApparmorRule {
+				return newChangeProfileFromLog(m)
+			},
+			log:  changeprofile1Log,
+			want: changeprofile1,
 		},
 		{
-			name:    "signal",
-			fromLog: SignalFromLog,
-			log:     signal1Log,
-			want:    signal1,
+			name: "signal",
+			fromLog: func(m map[string]string) ApparmorRule {
+				return newSignalFromLog(m)
+			},
+			log:  signal1Log,
+			want: signal1,
 		},
 		{
-			name:    "ptrace/xdg-document-portal",
-			fromLog: PtraceFromLog,
-			log:     ptrace1Log,
-			want:    ptrace1,
+			name: "ptrace/xdg-document-portal",
+			fromLog: func(m map[string]string) ApparmorRule {
+				return newPtraceFromLog(m)
+			},
+			log:  ptrace1Log,
+			want: ptrace1,
 		},
 		{
-			name:    "ptrace/snap-update-ns.firefox",
-			fromLog: PtraceFromLog,
-			log:     ptrace2Log,
-			want:    ptrace2,
+			name: "ptrace/snap-update-ns.firefox",
+			fromLog: func(m map[string]string) ApparmorRule {
+				return newPtraceFromLog(m)
+			},
+			log:  ptrace2Log,
+			want: ptrace2,
 		},
 		{
-			name:    "unix",
-			fromLog: UnixFromLog,
-			log:     unix1Log,
-			want:    unix1,
+			name: "unix",
+			fromLog: func(m map[string]string) ApparmorRule {
+				return newUnixFromLog(m)
+			},
+			log:  unix1Log,
+			want: unix1,
 		},
 		{
-			name:    "dbus",
-			fromLog: DbusFromLog,
-			log:     dbus1Log,
-			want:    dbus1,
+			name: "dbus",
+			fromLog: func(m map[string]string) ApparmorRule {
+				return newDbusFromLog(m)
+			},
+			log:  dbus1Log,
+			want: dbus1,
 		},
 		{
-			name:    "file",
-			fromLog: FileFromLog,
-			log:     file1Log,
-			want:    file1,
+			name: "file",
+			fromLog: func(m map[string]string) ApparmorRule {
+				return newFileFromLog(m)
+			},
+			log:  file1Log,
+			want: file1,
 		},
 	}
 	for _, tt := range tests {
@@ -109,13 +133,13 @@ func TestRule_Less(t *testing.T) {
 			name:  "include1",
 			rule:  include1,
 			other: includeLocal1,
-			want:  true,
+			want:  false,
 		},
 		{
 			name:  "include2",
 			rule:  include1,
 			other: include2,
-			want:  true,
+			want:  false,
 		},
 		{
 			name:  "include3",
@@ -245,9 +269,9 @@ func TestRule_Less(t *testing.T) {
 		},
 		{
 			name:  "file/owner",
-			rule:  &File{Path: "/usr/share/poppler/cMap/Identity-H", Qualifier: Qualifier{Owner: true}},
+			rule:  &File{Path: "/usr/share/poppler/cMap/Identity-H", Owner: true},
 			other: &File{Path: "/usr/share/poppler/cMap/Identity-H"},
-			want:  false,
+			want:  true,
 		},
 		{
 			name:  "file/access",

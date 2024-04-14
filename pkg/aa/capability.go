@@ -5,23 +5,25 @@
 package aa
 
 type Capability struct {
+	Rule
 	Qualifier
 	Name string
 }
 
-func CapabilityFromLog(log map[string]string) ApparmorRule {
+func newCapabilityFromLog(log map[string]string) *Capability {
 	return &Capability{
-		Qualifier: NewQualifierFromLog(log),
+		Rule:      newRuleFromLog(log),
+		Qualifier: newQualifierFromLog(log),
 		Name:      log["capname"],
 	}
 }
 
 func (r *Capability) Less(other any) bool {
 	o, _ := other.(*Capability)
-	if r.Name == o.Name {
-		return r.Qualifier.Less(o.Qualifier)
+	if r.Name != o.Name {
+		return r.Name < o.Name
 	}
-	return r.Name < o.Name
+	return r.Qualifier.Less(o.Qualifier)
 }
 
 func (r *Capability) Equals(other any) bool {

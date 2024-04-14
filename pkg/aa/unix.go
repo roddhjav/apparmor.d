@@ -5,61 +5,63 @@
 package aa
 
 type Unix struct {
+	Rule
 	Qualifier
-	Access   string
-	Type     string
-	Protocol string
-	Address  string
-	Label    string
-	Attr     string
-	Opt      string
-	Peer     string
-	PeerAddr string
+	Access    string
+	Type      string
+	Protocol  string
+	Address   string
+	Label     string
+	Attr      string
+	Opt       string
+	PeerLabel string
+	PeerAddr  string
 }
 
-func UnixFromLog(log map[string]string) ApparmorRule {
+func newUnixFromLog(log map[string]string) *Unix {
 	return &Unix{
-		Qualifier: NewQualifierFromLog(log),
+		Rule:      newRuleFromLog(log),
+		Qualifier: newQualifierFromLog(log),
 		Access:    toAccess(log["requested_mask"]),
 		Type:      log["sock_type"],
 		Protocol:  log["protocol"],
 		Address:   log["addr"],
-		Label:     log["peer_label"],
+		Label:     log["label"],
 		Attr:      log["attr"],
 		Opt:       log["opt"],
-		Peer:      log["peer"],
+		PeerLabel: log["peer"],
 		PeerAddr:  log["peer_addr"],
 	}
 }
 
 func (r *Unix) Less(other any) bool {
 	o, _ := other.(*Unix)
-	if r.Qualifier.Equals(o.Qualifier) {
-		if r.Access == o.Access {
-			if r.Type == o.Type {
-				if r.Protocol == o.Protocol {
-					if r.Address == o.Address {
-						if r.Label == o.Label {
-							if r.Attr == o.Attr {
-								if r.Opt == o.Opt {
-									if r.Peer == o.Peer {
-										return r.PeerAddr < o.PeerAddr
-									}
-									return r.Peer < o.Peer
-								}
-								return r.Opt < o.Opt
-							}
-							return r.Attr < o.Attr
-						}
-						return r.Label < o.Label
-					}
-					return r.Address < o.Address
-				}
-				return r.Protocol < o.Protocol
-			}
-			return r.Type < o.Type
-		}
+	if r.Access != o.Access {
 		return r.Access < o.Access
+	}
+	if r.Type != o.Type {
+		return r.Type < o.Type
+	}
+	if r.Protocol != o.Protocol {
+		return r.Protocol < o.Protocol
+	}
+	if r.Address != o.Address {
+		return r.Address < o.Address
+	}
+	if r.Label != o.Label {
+		return r.Label < o.Label
+	}
+	if r.Attr != o.Attr {
+		return r.Attr < o.Attr
+	}
+	if r.Opt != o.Opt {
+		return r.Opt < o.Opt
+	}
+	if r.PeerLabel != o.PeerLabel {
+		return r.PeerLabel < o.PeerLabel
+	}
+	if r.PeerAddr != o.PeerAddr {
+		return r.PeerAddr < o.PeerAddr
 	}
 	return r.Qualifier.Less(o.Qualifier)
 }
@@ -69,5 +71,6 @@ func (r *Unix) Equals(other any) bool {
 	return r.Access == o.Access && r.Type == o.Type &&
 		r.Protocol == o.Protocol && r.Address == o.Address &&
 		r.Label == o.Label && r.Attr == o.Attr && r.Opt == o.Opt &&
-		r.Peer == o.Peer && r.PeerAddr == o.PeerAddr && r.Qualifier.Equals(o.Qualifier)
+		r.PeerLabel == o.PeerLabel && r.PeerAddr == o.PeerAddr &&
+		r.Qualifier.Equals(o.Qualifier)
 }

@@ -107,7 +107,7 @@ func (d Dbus) own(rules map[string]string) *aa.AppArmorProfile {
 			Bus:       rules["bus"],
 			Path:      rules["path"],
 			Interface: iface,
-			Name:      `":1.@{int}"`,
+			PeerName:  `":1.@{int}"`,
 		})
 	}
 	for _, iface := range interfaces {
@@ -116,7 +116,7 @@ func (d Dbus) own(rules map[string]string) *aa.AppArmorProfile {
 			Bus:       rules["bus"],
 			Path:      rules["path"],
 			Interface: iface,
-			Name:      `"{:1.@{int},org.freedesktop.DBus}"`,
+			PeerName:  `"{:1.@{int},org.freedesktop.DBus}"`,
 		})
 	}
 	p.Rules = append(p.Rules, &aa.Dbus{
@@ -125,7 +125,7 @@ func (d Dbus) own(rules map[string]string) *aa.AppArmorProfile {
 		Path:      rules["path"],
 		Interface: "org.freedesktop.DBus.Introspectable",
 		Member:    "Introspect",
-		Name:      `":1.@{int}"`,
+		PeerName:  `":1.@{int}"`,
 	})
 	return p
 }
@@ -139,8 +139,8 @@ func (d Dbus) talk(rules map[string]string) *aa.AppArmorProfile {
 			Bus:       rules["bus"],
 			Path:      rules["path"],
 			Interface: iface,
-			Name:      `"{:1.@{int},` + rules["name"] + `}"`,
-			Label:     rules["label"],
+			PeerName:  `"{:1.@{int},` + rules["name"] + `}"`,
+			PeerLabel: rules["label"],
 		})
 	}
 	for _, iface := range interfaces {
@@ -149,8 +149,8 @@ func (d Dbus) talk(rules map[string]string) *aa.AppArmorProfile {
 			Bus:       rules["bus"],
 			Path:      rules["path"],
 			Interface: iface,
-			Name:      `"{:1.@{int},` + rules["name"] + `}"`,
-			Label:     rules["label"],
+			PeerName:  `"{:1.@{int},` + rules["name"] + `}"`,
+			PeerLabel: rules["label"],
 		})
 	}
 	return p

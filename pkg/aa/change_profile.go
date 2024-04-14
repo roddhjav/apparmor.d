@@ -5,15 +5,17 @@
 package aa
 
 type ChangeProfile struct {
+	Rule
 	Qualifier
 	ExecMode    string
 	Exec        string
 	ProfileName string
 }
 
-func ChangeProfileFromLog(log map[string]string) ApparmorRule {
+func newChangeProfileFromLog(log map[string]string) *ChangeProfile {
 	return &ChangeProfile{
-		Qualifier:   NewQualifierFromLog(log),
+		Rule:        newRuleFromLog(log),
+		Qualifier:   newQualifierFromLog(log),
 		ExecMode:    log["mode"],
 		Exec:        log["exec"],
 		ProfileName: log["target"],
@@ -22,16 +24,20 @@ func ChangeProfileFromLog(log map[string]string) ApparmorRule {
 
 func (r *ChangeProfile) Less(other any) bool {
 	o, _ := other.(*ChangeProfile)
-	if r.ExecMode == o.ExecMode {
-		if r.Exec == o.Exec {
-			return r.ProfileName < o.ProfileName
-		}
+	if r.ExecMode != o.ExecMode {
+		return r.ExecMode < o.ExecMode
+	}
+	if r.Exec != o.Exec {
 		return r.Exec < o.Exec
 	}
-	return r.ExecMode < o.ExecMode
+	if r.ProfileName != o.ProfileName {
+		return r.ProfileName < o.ProfileName
+	}
+	return r.Qualifier.Less(o.Qualifier)
 }
 
 func (r *ChangeProfile) Equals(other any) bool {
 	o, _ := other.(*ChangeProfile)
-	return r.ExecMode == o.ExecMode && r.Exec == o.Exec && r.ProfileName == o.ProfileName
+	return r.ExecMode == o.ExecMode && r.Exec == o.Exec &&
+		r.ProfileName == o.ProfileName && r.Qualifier.Equals(o.Qualifier)
 }

@@ -56,7 +56,7 @@
     {{- end -}}
 
     {{- if eq $type "Rlimit" -}}
-        {{ "set rlimit " }}{{ .Key }} {{ .Op }} {{ .Value }}{{ "," }}
+        {{ "set rlimit " }}{{ .Key }} {{ .Op }} {{ .Value }}{{ "," }}{{ template "comment" . }}
     {{- end -}}
 
     {{- if eq $type "Capability" -}}
@@ -191,15 +191,24 @@
         {{- with .Type -}}
             {{ " type=" }}{{ . }}
         {{- end -}}
+        {{- with .Protocol -}}
+            {{ " protocol=" }}{{ . }}
+        {{- end -}}
         {{- with .Address -}}
             {{ " addr=" }}{{ . }}
         {{- end -}}
-        {{- if .Peer -}}
-            {{ " peer=(label=" }}{{ .Peer }}
-            {{- with .PeerAddr -}}
-                {{ ", addr="}}{{ . }}
+        {{- with .Label -}}
+            {{ " label=" }}{{ . }}
+        {{- end -}}
+        {{- if and .PeerLabel .PeerAddr -}}
+            {{ " peer=(label=" }}{{ .PeerLabel }}{{ ", addr="}}{{ .PeerAddr }}{{ ")" }}
+        {{- else -}}
+            {{- with .PeerLabel -}}
+                {{ overindent "peer=(label=" }}{{ . }}{{ ")" }}
             {{- end -}}
-            {{- ")" -}}
+            {{- with .PeerAddr -}}
+                {{ overindent "peer=(addr=" }}{{ . }}{{ ")" }}
+            {{- end -}}
         {{- end -}}
         {{- "," -}}
         {{- template "comment" . -}}
@@ -256,13 +265,13 @@
             {{- with .Member -}}
                 {{ overindent "member=" }}{{ . }}{{ "\n" }}
             {{- end -}}
-            {{- if and .Name .Label -}}
-                {{ overindent "peer=(name=" }}{{ .Name }}{{ ", label="}}{{ .Label }}{{ ")" }}
+            {{- if and .PeerName .PeerLabel -}}
+                {{ overindent "peer=(name=" }}{{ .PeerName }}{{ ", label="}}{{ .PeerLabel }}{{ ")" }}
             {{- else -}}
-                {{- with .Name -}}
+                {{- with .PeerName -}}
                     {{ overindent "peer=(name=" }}{{ . }}{{ ")" }}
                 {{- end -}}
-                {{- with .Label -}}
+                {{- with .PeerLabel -}}
                     {{ overindent "peer=(label=" }}{{ . }}{{ ")" }}
                 {{- end -}}
             {{- end -}}
@@ -273,6 +282,9 @@
 
     {{- if eq $type "File" -}}
         {{- template "qualifier" . -}}
+        {{- if .Owner -}}
+            {{- "owner " -}}
+        {{- end -}}
         {{- .Path -}}
         {{- " " -}}
         {{- with .Padding -}}

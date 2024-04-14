@@ -10,15 +10,24 @@ type Rlimit struct {
 	Value string
 }
 
+func newRlimitFromLog(log map[string]string) *Rlimit {
+	return &Rlimit{
+		Rule:  newRuleFromLog(log),
+		Key:   log["key"],
+		Op:    log["op"],
+		Value: log["value"],
+	}
+}
+
 func (r *Rlimit) Less(other any) bool {
 	o, _ := other.(*Rlimit)
-	if r.Key == o.Key {
-		if r.Op == o.Op {
-			return r.Value < o.Value
-		}
+	if r.Key != o.Key {
+		return r.Key < o.Key
+	}
+	if r.Op != o.Op {
 		return r.Op < o.Op
 	}
-	return r.Key < o.Key
+	return r.Value < o.Value
 }
 
 func (r *Rlimit) Equals(other any) bool {

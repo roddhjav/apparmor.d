@@ -71,13 +71,13 @@ var (
 		"flags":     "rw, rbind",
 	}
 	mount1 = &Mount{
-		Qualifier:       Qualifier{Comment: "failed perms check"},
+		Rule:            Rule{Comment: "failed perms check"},
 		MountConditions: MountConditions{FsType: "overlay"},
 		Source:          "overlay",
 		MountPoint:      "/var/lib/docker/overlay2/opaque-bug-check1209538631/merged/",
 	}
 	mount2 = &Mount{
-		Qualifier:       Qualifier{Comment: "failed perms check"},
+		Rule:            Rule{Comment: "failed perms check"},
 		MountConditions: MountConditions{Options: []string{"rw", "rbind"}},
 		Source:          "/oldroot/dev/tty",
 		MountPoint:      "/newroot/dev/tty",
@@ -197,17 +197,17 @@ var (
 		"protocol":       "0",
 	}
 	unix1 = &Unix{
-		Access:   "send receive",
-		Type:     "stream",
-		Protocol: "0",
-		Address:  "none",
-		Peer:     "dbus-daemon",
-		PeerAddr: "@/tmp/dbus-AaKMpxzC4k",
+		Access:    "send receive",
+		Type:      "stream",
+		Protocol:  "0",
+		Address:   "none",
+		PeerAddr:  "@/tmp/dbus-AaKMpxzC4k",
+		PeerLabel: "dbus-daemon",
 	}
 	unix2 = &Unix{
-		Qualifier: Qualifier{FileInherit: true},
-		Access:    "receive",
-		Type:      "stream",
+		Rule:   Rule{FileInherit: true},
+		Access: "receive",
+		Type:   "stream",
 	}
 
 	// Dbus
@@ -236,11 +236,11 @@ var (
 	dbus1 = &Dbus{
 		Access:    "receive",
 		Bus:       "session",
-		Name:      ":1.15",
 		Path:      "/org/gtk/vfs/metadata",
 		Interface: "org.gtk.vfs.Metadata",
 		Member:    "Remove",
-		Label:     "tracker-extract",
+		PeerName:  ":1.15",
+		PeerLabel: "tracker-extract",
 	}
 	dbus2 = &Dbus{
 		Access: "bind",
@@ -285,8 +285,9 @@ var (
 	}
 	file1 = &File{Path: "/usr/share/poppler/cMap/Identity-H", Access: "r"}
 	file2 = &File{
-		Qualifier: Qualifier{Owner: true, NoNewPrivs: true},
-		Path:      "@{PROC}/4163/cgroup",
-		Access:    "r",
+		Rule:   Rule{NoNewPrivs: true},
+		Owner:  true,
+		Path:   "@{PROC}/4163/cgroup",
+		Access: "r",
 	}
 )
