@@ -5,6 +5,7 @@
 package aa
 
 type Dbus struct {
+	Rule
 	Qualifier
 	Access    string
 	Bus       string
@@ -12,44 +13,57 @@ type Dbus struct {
 	Path      string
 	Interface string
 	Member    string
-	Label     string
+	PeerName  string
+	PeerLabel string
 }
 
-func DbusFromLog(log map[string]string) ApparmorRule {
+func newDbusFromLog(log map[string]string) *Dbus {
+	name := ""
+	peerName := ""
+	if log["mask"] == "bind" {
+		name = log["name"]
+	} else {
+		peerName = log["name"]
+	}
 	return &Dbus{
-		Qualifier: NewQualifierFromLog(log),
+		Rule:      newRuleFromLog(log),
+		Qualifier: newQualifierFromLog(log),
 		Access:    log["mask"],
 		Bus:       log["bus"],
-		Name:      log["name"],
+		Name:      name,
 		Path:      log["path"],
 		Interface: log["interface"],
 		Member:    log["member"],
-		Label:     log["peer_label"],
+		PeerName:  peerName,
+		PeerLabel: log["peer_label"],
 	}
 }
 
 func (r *Dbus) Less(other any) bool {
 	o, _ := other.(*Dbus)
-	if r.Qualifier.Equals(o.Qualifier) {
-		if r.Access == o.Access {
-			if r.Bus == o.Bus {
-				if r.Name == o.Name {
-					if r.Path == o.Path {
-						if r.Interface == o.Interface {
-							if r.Member == o.Member {
-								return r.Label < o.Label
-							}
-							return r.Member < o.Member
-						}
-						return r.Interface < o.Interface
-					}
-					return r.Path < o.Path
-				}
-				return r.Name < o.Name
-			}
-			return r.Bus < o.Bus
-		}
+	if r.Access != o.Access {
 		return r.Access < o.Access
+	}
+	if r.Bus != o.Bus {
+		return r.Bus < o.Bus
+	}
+	if r.Name != o.Name {
+		return r.Name < o.Name
+	}
+	if r.Path != o.Path {
+		return r.Path < o.Path
+	}
+	if r.Interface != o.Interface {
+		return r.Interface < o.Interface
+	}
+	if r.Member != o.Member {
+		return r.Member < o.Member
+	}
+	if r.PeerName != o.PeerName {
+		return r.PeerName < o.PeerName
+	}
+	if r.PeerLabel != o.PeerLabel {
+		return r.PeerLabel < o.PeerLabel
 	}
 	return r.Qualifier.Less(o.Qualifier)
 }
@@ -58,5 +72,6 @@ func (r *Dbus) Equals(other any) bool {
 	o, _ := other.(*Dbus)
 	return r.Access == o.Access && r.Bus == o.Bus && r.Name == o.Name &&
 		r.Path == o.Path && r.Interface == o.Interface &&
-		r.Member == o.Member && r.Label == o.Label && r.Qualifier.Equals(o.Qualifier)
+		r.Member == o.Member && r.PeerName == o.PeerName &&
+		r.PeerLabel == o.PeerLabel && r.Qualifier.Equals(o.Qualifier)
 }

@@ -4,9 +4,12 @@
 
 package aa
 
-import "strings"
+import (
+	"strings"
+)
 
 type Mqueue struct {
+	Rule
 	Qualifier
 	Access string
 	Type   string
@@ -14,7 +17,7 @@ type Mqueue struct {
 	Name   string
 }
 
-func MqueueFromLog(log map[string]string) ApparmorRule {
+func newMqueueFromLog(log map[string]string) *Mqueue {
 	mqueueType := "posix"
 	if strings.Contains(log["class"], "posix") {
 		mqueueType = "posix"
@@ -22,7 +25,8 @@ func MqueueFromLog(log map[string]string) ApparmorRule {
 		mqueueType = "sysv"
 	}
 	return &Mqueue{
-		Qualifier: NewQualifierFromLog(log),
+		Rule:      newRuleFromLog(log),
+		Qualifier: newQualifierFromLog(log),
 		Access:    toAccess(log["requested"]),
 		Type:      mqueueType,
 		Label:     log["label"],
@@ -32,19 +36,20 @@ func MqueueFromLog(log map[string]string) ApparmorRule {
 
 func (r *Mqueue) Less(other any) bool {
 	o, _ := other.(*Mqueue)
-	if r.Qualifier.Equals(o.Qualifier) {
-		if r.Access == o.Access {
-			if r.Type == o.Type {
-				return r.Label < o.Label
-			}
-			return r.Type < o.Type
-		}
+	if r.Access != o.Access {
 		return r.Access < o.Access
+	}
+	if r.Type != o.Type {
+		return r.Type < o.Type
+	}
+	if r.Label != o.Label {
+		return r.Label < o.Label
 	}
 	return r.Qualifier.Less(o.Qualifier)
 }
 
 func (r *Mqueue) Equals(other any) bool {
 	o, _ := other.(*Mqueue)
-	return r.Access == o.Access && r.Type == o.Type && r.Label == o.Label && r.Qualifier.Equals(o.Qualifier)
+	return r.Access == o.Access && r.Type == o.Type && r.Label == o.Label &&
+		r.Name == o.Name && r.Qualifier.Equals(o.Qualifier)
 }

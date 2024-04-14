@@ -43,10 +43,10 @@ func TestAppArmorProfile_String(t *testing.T) {
 			name: "foo",
 			p: &AppArmorProfile{
 				Preamble: Preamble{
-					Abi:      []Abi{{IsMagic: true, Path: "abi/4.0"}},
-					Includes: []Include{{IsMagic: true, Path: "tunables/global"}},
-					Aliases:  []Alias{{Path: "/mnt/usr", RewrittenPath: "/usr"}},
-					Variables: []Variable{{
+					Abi:      []*Abi{{IsMagic: true, Path: "abi/4.0"}},
+					Includes: []*Include{{IsMagic: true, Path: "tunables/global"}},
+					Aliases:  []*Alias{{Path: "/mnt/usr", RewrittenPath: "/usr"}},
+					Variables: []*Variable{{
 						Name:   "exec_path",
 						Values: []string{"@{bin}/foo", "@{lib}/foo"},
 					}},
@@ -83,11 +83,11 @@ func TestAppArmorProfile_String(t *testing.T) {
 						},
 						&Ptrace{Access: "read", Peer: "nautilus"},
 						&Unix{
-							Access:   "send receive",
-							Type:     "stream",
-							Address:  "@/tmp/.ICE-unix/1995",
-							Peer:     "gnome-shell",
-							PeerAddr: "none",
+							Access:    "send receive",
+							Type:      "stream",
+							Address:   "@/tmp/.ICE-unix/1995",
+							PeerLabel: "gnome-shell",
+							PeerAddr:  "none",
 						},
 						&Dbus{
 							Access: "bind",
@@ -97,11 +97,11 @@ func TestAppArmorProfile_String(t *testing.T) {
 						&Dbus{
 							Access:    "receive",
 							Bus:       "system",
-							Name:      ":1.3",
 							Path:      "/org/freedesktop/DBus",
 							Interface: "org.freedesktop.DBus",
 							Member:    "AddMatch",
-							Label:     "power-profiles-daemon",
+							PeerName:  ":1.3",
+							PeerLabel: "power-profiles-daemon",
 						},
 						&File{Path: "/opt/intel/oneapi/compiler/*/linux/lib/*.so./*", Access: "rm"},
 						&File{Path: "@{PROC}/@{pid}/task/@{tid}/comm", Access: "rw"},
@@ -290,9 +290,9 @@ func TestAppArmorProfile_Integration(t *testing.T) {
 			name: "aa-status",
 			p: &AppArmorProfile{
 				Preamble: Preamble{
-					Abi:      []Abi{{IsMagic: true, Path: "abi/3.0"}},
-					Includes: []Include{{IsMagic: true, Path: "tunables/global"}},
-					Variables: []Variable{{
+					Abi:      []*Abi{{IsMagic: true, Path: "abi/3.0"}},
+					Includes: []*Include{{IsMagic: true, Path: "tunables/global"}},
+					Variables: []*Variable{{
 						Name:   "exec_path",
 						Values: []string{"@{bin}/aa-status", "@{bin}/apparmor_status"},
 					}},
@@ -310,7 +310,7 @@ func TestAppArmorProfile_Integration(t *testing.T) {
 						&File{Path: "@{sys}/kernel/security/apparmor/profiles", Access: "r"},
 						&File{Path: "@{PROC}/@{pids}/attr/current", Access: "r"},
 						&Include{IsMagic: true, Path: "abstractions/consoles"},
-						&File{Qualifier: Qualifier{Owner: true}, Path: "@{PROC}/@{pid}/mounts", Access: "r"},
+						&File{Owner: true, Path: "@{PROC}/@{pid}/mounts", Access: "r"},
 						&Include{IsMagic: true, Path: "abstractions/base"},
 						&File{Path: "/dev/tty@{int}", Access: "rw"},
 						&Capability{Name: "sys_ptrace"},

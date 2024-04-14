@@ -31,10 +31,10 @@ type AppArmorProfile struct {
 
 // Preamble section of a profile
 type Preamble struct {
-	Abi       []Abi
-	Includes  []Include
-	Aliases   []Alias
-	Variables []Variable
+	Abi       []*Abi
+	Includes  []*Include
+	Aliases   []*Alias
+	Variables []*Variable
 }
 
 // Profile section of a profile
@@ -78,7 +78,7 @@ func (p *AppArmorProfile) AddRule(log map[string]string) {
 		}
 	case "-13":
 		if strings.Contains(log["info"], "namespace creation restricted") {
-			p.Rules = append(p.Rules, UsernsFromLog(log))
+			p.Rules = append(p.Rules, newUsernsFromLog(log))
 		} else if strings.Contains(log["info"], "disconnected path") && !slices.Contains(p.Flags, "attach_disconnected") {
 			p.Flags = append(p.Flags, "attach_disconnected")
 		}
@@ -87,49 +87,51 @@ func (p *AppArmorProfile) AddRule(log map[string]string) {
 
 	switch log["class"] {
 	case "cap":
-		p.Rules = append(p.Rules, CapabilityFromLog(log))
+		p.Rules = append(p.Rules, newCapabilityFromLog(log))
 	case "net":
 		if log["family"] == "unix" {
-			p.Rules = append(p.Rules, UnixFromLog(log))
+			p.Rules = append(p.Rules, newUnixFromLog(log))
 		} else {
-			p.Rules = append(p.Rules, NetworkFromLog(log))
+			p.Rules = append(p.Rules, newNetworkFromLog(log))
 		}
 	case "mount":
 		if strings.Contains(log["flags"], "remount") {
-			p.Rules = append(p.Rules, RemountFromLog(log))
+			p.Rules = append(p.Rules, newRemountFromLog(log))
 		} else {
 			switch log["operation"] {
 			case "mount":
-				p.Rules = append(p.Rules, MountFromLog(log))
+				p.Rules = append(p.Rules, newMountFromLog(log))
 			case "umount":
-				p.Rules = append(p.Rules, UmountFromLog(log))
+				p.Rules = append(p.Rules, newUmountFromLog(log))
 			case "remount":
-				p.Rules = append(p.Rules, RemountFromLog(log))
+				p.Rules = append(p.Rules, newRemountFromLog(log))
 			case "pivotroot":
-				p.Rules = append(p.Rules, PivotRootFromLog(log))
+				p.Rules = append(p.Rules, newPivotRootFromLog(log))
 			}
 		}
 	case "posix_mqueue", "sysv_mqueue":
-		p.Rules = append(p.Rules, MqueueFromLog(log))
+		p.Rules = append(p.Rules, newMqueueFromLog(log))
 	case "signal":
-		p.Rules = append(p.Rules, SignalFromLog(log))
+		p.Rules = append(p.Rules, newSignalFromLog(log))
 	case "ptrace":
-		p.Rules = append(p.Rules, PtraceFromLog(log))
+		p.Rules = append(p.Rules, newPtraceFromLog(log))
 	case "namespace":
-		p.Rules = append(p.Rules, UsernsFromLog(log))
+		p.Rules = append(p.Rules, newUsernsFromLog(log))
 	case "unix":
-		p.Rules = append(p.Rules, UnixFromLog(log))
+		p.Rules = append(p.Rules, newUnixFromLog(log))
+	case "dbus":
+		p.Rules = append(p.Rules, newDbusFromLog(log))
 	case "file":
 		if log["operation"] == "change_onexec" {
-			p.Rules = append(p.Rules, ChangeProfileFromLog(log))
+			p.Rules = append(p.Rules, newChangeProfileFromLog(log))
 		} else {
-			p.Rules = append(p.Rules, FileFromLog(log))
+			p.Rules = append(p.Rules, newFileFromLog(log))
 		}
 	default:
 		if strings.Contains(log["operation"], "dbus") {
-			p.Rules = append(p.Rules, DbusFromLog(log))
+			p.Rules = append(p.Rules, newDbusFromLog(log))
 		} else if log["family"] == "unix" {
-			p.Rules = append(p.Rules, UnixFromLog(log))
+			p.Rules = append(p.Rules, newUnixFromLog(log))
 		}
 	}
 }
@@ -155,7 +157,7 @@ func (p *AppArmorProfile) Sort() {
 	})
 }
 
-// MergeRules merge similar rules together
+// MergeRules merge similar rules together.
 // Steps:
 //   - Remove identical rules
 //   - Merge rule access. Eg: for same path, 'r' and 'w' becomes 'rw'
@@ -179,7 +181,7 @@ func (p *AppArmorProfile) MergeRules() {
 	}
 }
 
-// Format the profile for better readability before printing it
+// Format the profile for better readability before printing it.
 // Follow: https://apparmor.pujol.io/development/guidelines/#the-file-block
 func (p *AppArmorProfile) Format() {
 	const prefixOwner = "      "

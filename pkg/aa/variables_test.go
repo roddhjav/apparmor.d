@@ -9,6 +9,10 @@ import (
 	"testing"
 )
 
+// TODO: space in variable need to be tested.
+// @{name} = "Mullvad VPN"
+// profile mullvad-gui /{opt/"Mullvad/mullvad-gui,opt/VPN"/mullvad-gui,mullvad-gui}  flags=(attach_disconnected,complain) {
+
 func TestDefaultTunables(t *testing.T) {
 	tests := []struct {
 		name string
@@ -18,14 +22,14 @@ func TestDefaultTunables(t *testing.T) {
 			name: "aa",
 			want: &AppArmorProfile{
 				Preamble: Preamble{
-					Variables: []Variable{
-						{"bin", []string{"/{,usr/}{,s}bin"}},
-						{"lib", []string{"/{,usr/}lib{,exec,32,64}"}},
-						{"multiarch", []string{"*-linux-gnu*"}},
-						{"HOME", []string{"/home/*"}},
-						{"user_share_dirs", []string{"/home/*/.local/share"}},
-						{"etc_ro", []string{"/{,usr/}etc/"}},
-						{"int", []string{"[0-9]{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}"}},
+					Variables: []*Variable{
+						{Name: "bin", Values: []string{"/{,usr/}{,s}bin"}},
+						{Name: "lib", Values: []string{"/{,usr/}lib{,exec,32,64}"}},
+						{Name: "multiarch", Values: []string{"*-linux-gnu*"}},
+						{Name: "HOME", Values: []string{"/home/*"}},
+						{Name: "user_share_dirs", Values: []string{"/home/*/.local/share"}},
+						{Name: "etc_ro", Values: []string{"/{,usr/}etc/"}},
+						{Name: "int", Values: []string{"[0-9]{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}"}},
 					},
 				},
 			},
@@ -44,7 +48,7 @@ func TestAppArmorProfile_ParseVariables(t *testing.T) {
 	tests := []struct {
 		name    string
 		content string
-		want    []Variable
+		want    []*Variable
 	}{
 		{
 			name: "firefox",
@@ -54,12 +58,12 @@ func TestAppArmorProfile_ParseVariables(t *testing.T) {
 			@{firefox_cache_dirs} = @{user_cache_dirs}/mozilla/
 			@{exec_path} = /{usr/,}bin/@{firefox_name} @{firefox_lib_dirs}/@{firefox_name}
 			`,
-			want: []Variable{
-				{"firefox_name", []string{"firefox{,-esr,-bin}"}},
-				{"firefox_lib_dirs", []string{"/{usr/,}lib{,32,64}/@{firefox_name}", "/opt/@{firefox_name}"}},
-				{"firefox_config_dirs", []string{"@{HOME}/.mozilla/"}},
-				{"firefox_cache_dirs", []string{"@{user_cache_dirs}/mozilla/"}},
-				{"exec_path", []string{"/{usr/,}bin/@{firefox_name}", "@{firefox_lib_dirs}/@{firefox_name}"}},
+			want: []*Variable{
+				{Name: "firefox_name", Values: []string{"firefox{,-esr,-bin}"}},
+				{Name: "firefox_lib_dirs", Values: []string{"/{usr/,}lib{,32,64}/@{firefox_name}", "/opt/@{firefox_name}"}},
+				{Name: "firefox_config_dirs", Values: []string{"@{HOME}/.mozilla/"}},
+				{Name: "firefox_cache_dirs", Values: []string{"@{user_cache_dirs}/mozilla/"}},
+				{Name: "exec_path", Values: []string{"/{usr/,}bin/@{firefox_name}", "@{firefox_lib_dirs}/@{firefox_name}"}},
 			},
 		},
 		{
@@ -68,8 +72,8 @@ func TestAppArmorProfile_ParseVariables(t *testing.T) {
 			@{exec_path} += /{usr/,}bin/Xorg{,.bin}
 			@{exec_path} += /{usr/,}lib/Xorg{,.wrap}
 			@{exec_path} += /{usr/,}lib/xorg/Xorg{,.wrap}`,
-			want: []Variable{
-				{"exec_path", []string{
+			want: []*Variable{
+				{Name: "exec_path", Values: []string{
 					"/{usr/,}bin/X",
 					"/{usr/,}bin/Xorg{,.bin}",
 					"/{usr/,}lib/Xorg{,.wrap}",
@@ -81,9 +85,9 @@ func TestAppArmorProfile_ParseVariables(t *testing.T) {
 			name: "snapd",
 			content: `@{lib_dirs} = @{lib}/ /snap/snapd/@{int}@{lib}
 			@{exec_path} = @{lib_dirs}/snapd/snapd`,
-			want: []Variable{
-				{"lib_dirs", []string{"@{lib}/", "/snap/snapd/@{int}@{lib}"}},
-				{"exec_path", []string{"@{lib_dirs}/snapd/snapd"}},
+			want: []*Variable{
+				{Name: "lib_dirs", Values: []string{"@{lib}/", "/snap/snapd/@{int}@{lib}"}},
+				{Name: "exec_path", Values: []string{"@{lib_dirs}/snapd/snapd"}},
 			},
 		},
 	}
@@ -105,9 +109,19 @@ func TestAppArmorProfile_resolve(t *testing.T) {
 		want  []string
 	}{
 		{
+			name:  "default",
+			input: "@{etc_ro}",
+			want:  []string{"/{,usr/}etc/"},
+		},
+		{
 			name:  "empty",
 			input: "@{}",
 			want:  []string{"@{}"},
+		},
+		{
+			name:  "nil",
+			input: "@{foo}",
+			want:  []string{},
 		},
 	}
 	for _, tt := range tests {
@@ -123,15 +137,15 @@ func TestAppArmorProfile_resolve(t *testing.T) {
 func TestAppArmorProfile_ResolveAttachments(t *testing.T) {
 	tests := []struct {
 		name      string
-		variables []Variable
+		variables []*Variable
 		want      []string
 	}{
 		{
 			name: "firefox",
-			variables: []Variable{
-				{"firefox_name", []string{"firefox{,-esr,-bin}"}},
-				{"firefox_lib_dirs", []string{"/{usr/,}/lib{,32,64}/@{firefox_name}", "/opt/@{firefox_name}"}},
-				{"exec_path", []string{"/{usr/,}bin/@{firefox_name}", "@{firefox_lib_dirs}/@{firefox_name}"}},
+			variables: []*Variable{
+				{Name: "firefox_name", Values: []string{"firefox{,-esr,-bin}"}},
+				{Name: "firefox_lib_dirs", Values: []string{"/{usr/,}/lib{,32,64}/@{firefox_name}", "/opt/@{firefox_name}"}},
+				{Name: "exec_path", Values: []string{"/{usr/,}bin/@{firefox_name}", "@{firefox_lib_dirs}/@{firefox_name}"}},
 			},
 			want: []string{
 				"/{usr/,}bin/firefox{,-esr,-bin}",
@@ -141,10 +155,10 @@ func TestAppArmorProfile_ResolveAttachments(t *testing.T) {
 		},
 		{
 			name: "chromium",
-			variables: []Variable{
-				{"name", []string{"chromium"}},
-				{"lib_dirs", []string{"/{usr/,}lib/@{name}"}},
-				{"exec_path", []string{"@{lib_dirs}/@{name}"}},
+			variables: []*Variable{
+				{Name: "name", Values: []string{"chromium"}},
+				{Name: "lib_dirs", Values: []string{"/{usr/,}lib/@{name}"}},
+				{Name: "exec_path", Values: []string{"@{lib_dirs}/@{name}"}},
 			},
 			want: []string{
 				"/{usr/,}lib/chromium/chromium",
@@ -152,9 +166,9 @@ func TestAppArmorProfile_ResolveAttachments(t *testing.T) {
 		},
 		{
 			name: "geoclue",
-			variables: []Variable{
-				{"libexec", []string{"/{usr/,}libexec"}},
-				{"exec_path", []string{"@{libexec}/geoclue", "@{libexec}/geoclue-2.0/demos/agent"}},
+			variables: []*Variable{
+				{Name: "libexec", Values: []string{"/{usr/,}libexec"}},
+				{Name: "exec_path", Values: []string{"@{libexec}/geoclue", "@{libexec}/geoclue-2.0/demos/agent"}},
 			},
 			want: []string{
 				"/{usr/,}libexec/geoclue",
@@ -163,11 +177,11 @@ func TestAppArmorProfile_ResolveAttachments(t *testing.T) {
 		},
 		{
 			name: "opera",
-			variables: []Variable{
-				{"multiarch", []string{"*-linux-gnu*"}},
-				{"name", []string{"opera{,-beta,-developer}"}},
-				{"lib_dirs", []string{"/{usr/,}lib/@{multiarch}/@{name}"}},
-				{"exec_path", []string{"@{lib_dirs}/@{name}"}},
+			variables: []*Variable{
+				{Name: "multiarch", Values: []string{"*-linux-gnu*"}},
+				{Name: "name", Values: []string{"opera{,-beta,-developer}"}},
+				{Name: "lib_dirs", Values: []string{"/{usr/,}lib/@{multiarch}/@{name}"}},
+				{Name: "exec_path", Values: []string{"@{lib_dirs}/@{name}"}},
 			},
 			want: []string{
 				"/{usr/,}lib/*-linux-gnu*/opera{,-beta,-developer}/opera{,-beta,-developer}",

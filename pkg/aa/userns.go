@@ -5,20 +5,22 @@
 package aa
 
 type Userns struct {
+	Rule
 	Qualifier
 	Create bool
 }
 
-func UsernsFromLog(log map[string]string) ApparmorRule {
+func newUsernsFromLog(log map[string]string) *Userns {
 	return &Userns{
-		Qualifier: NewQualifierFromLog(log),
+		Rule:      newRuleFromLog(log),
+		Qualifier: newQualifierFromLog(log),
 		Create:    true,
 	}
 }
 
 func (r *Userns) Less(other any) bool {
 	o, _ := other.(*Userns)
-	if r.Qualifier.Equals(o.Qualifier) {
+	if r.Create != o.Create {
 		return r.Create
 	}
 	return r.Qualifier.Less(o.Qualifier)

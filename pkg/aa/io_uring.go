@@ -5,18 +5,28 @@
 package aa
 
 type IOUring struct {
+	Rule
 	Qualifier
 	Access string
 	Label  string
 }
 
+func newIOUringFromLog(log map[string]string) *IOUring {
+	return &IOUring{
+		Rule:      newRuleFromLog(log),
+		Qualifier: newQualifierFromLog(log),
+		Access:    toAccess(log["requested"]),
+		Label:     log["label"],
+	}
+}
+
 func (r *IOUring) Less(other any) bool {
 	o, _ := other.(*IOUring)
-	if r.Qualifier.Equals(o.Qualifier) {
-		if r.Access == o.Access {
-			return r.Label < o.Label
-		}
+	if r.Access != o.Access {
 		return r.Access < o.Access
+	}
+	if r.Label != o.Label {
+		return r.Label < o.Label
 	}
 	return r.Qualifier.Less(o.Qualifier)
 }

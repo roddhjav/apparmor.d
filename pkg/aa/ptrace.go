@@ -5,14 +5,16 @@
 package aa
 
 type Ptrace struct {
+	Rule
 	Qualifier
 	Access string
 	Peer   string
 }
 
-func PtraceFromLog(log map[string]string) ApparmorRule {
+func newPtraceFromLog(log map[string]string) *Ptrace {
 	return &Ptrace{
-		Qualifier: NewQualifierFromLog(log),
+		Rule:      newRuleFromLog(log),
+		Qualifier: newQualifierFromLog(log),
 		Access:    toAccess(log["requested_mask"]),
 		Peer:      log["peer"],
 	}
@@ -20,11 +22,11 @@ func PtraceFromLog(log map[string]string) ApparmorRule {
 
 func (r *Ptrace) Less(other any) bool {
 	o, _ := other.(*Ptrace)
-	if r.Qualifier.Equals(o.Qualifier) {
-		if r.Access == o.Access {
-			return r.Peer == o.Peer
-		}
+	if r.Access != o.Access {
 		return r.Access < o.Access
+	}
+	if r.Peer != o.Peer {
+		return r.Peer == o.Peer
 	}
 	return r.Qualifier.Less(o.Qualifier)
 }

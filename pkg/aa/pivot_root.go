@@ -5,15 +5,17 @@
 package aa
 
 type PivotRoot struct {
+	Rule
 	Qualifier
 	OldRoot       string
 	NewRoot       string
 	TargetProfile string
 }
 
-func PivotRootFromLog(log map[string]string) ApparmorRule {
+func newPivotRootFromLog(log map[string]string) *PivotRoot {
 	return &PivotRoot{
-		Qualifier:     NewQualifierFromLog(log),
+		Rule:          newRuleFromLog(log),
+		Qualifier:     newQualifierFromLog(log),
 		OldRoot:       log["srcname"],
 		NewRoot:       log["name"],
 		TargetProfile: "",
@@ -22,14 +24,14 @@ func PivotRootFromLog(log map[string]string) ApparmorRule {
 
 func (r *PivotRoot) Less(other any) bool {
 	o, _ := other.(*PivotRoot)
-	if r.Qualifier.Equals(o.Qualifier) {
-		if r.OldRoot == o.OldRoot {
-			if r.NewRoot == o.NewRoot {
-				return r.TargetProfile < o.TargetProfile
-			}
-			return r.NewRoot < o.NewRoot
-		}
+	if r.OldRoot != o.OldRoot {
 		return r.OldRoot < o.OldRoot
+	}
+	if r.NewRoot != o.NewRoot {
+		return r.NewRoot < o.NewRoot
+	}
+	if r.TargetProfile != o.TargetProfile {
+		return r.TargetProfile < o.TargetProfile
 	}
 	return r.Qualifier.Less(o.Qualifier)
 }

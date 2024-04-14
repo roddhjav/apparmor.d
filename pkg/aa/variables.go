@@ -9,7 +9,6 @@ package aa
 
 import (
 	"regexp"
-	"slices"
 	"strings"
 )
 
@@ -18,35 +17,19 @@ var (
 	regVariablesRef = regexp.MustCompile(`@{([^{}]+)}`)
 )
 
-type Variable struct {
-	Name   string
-	Values []string
-}
-
-func (r Variable) Less(other Variable) bool {
-	if r.Name == other.Name {
-		return len(r.Values) < len(other.Values)
-	}
-	return r.Name < other.Name
-}
-
-func (r Variable) Equals(other Variable) bool {
-	return r.Name == other.Name && slices.Equal(r.Values, other.Values)
-}
-
 // DefaultTunables return a minimal working profile to build the profile
 // It should not be used when loading file from /etc/apparmor.d
 func DefaultTunables() *AppArmorProfile {
 	return &AppArmorProfile{
 		Preamble: Preamble{
-			Variables: []Variable{
-				{"bin", []string{"/{,usr/}{,s}bin"}},
-				{"lib", []string{"/{,usr/}lib{,exec,32,64}"}},
-				{"multiarch", []string{"*-linux-gnu*"}},
-				{"HOME", []string{"/home/*"}},
-				{"user_share_dirs", []string{"/home/*/.local/share"}},
-				{"etc_ro", []string{"/{,usr/}etc/"}},
-				{"int", []string{"[0-9]{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}"}},
+			Variables: []*Variable{
+				{Name: "bin", Values: []string{"/{,usr/}{,s}bin"}},
+				{Name: "lib", Values: []string{"/{,usr/}lib{,exec,32,64}"}},
+				{Name: "multiarch", Values: []string{"*-linux-gnu*"}},
+				{Name: "HOME", Values: []string{"/home/*"}},
+				{Name: "user_share_dirs", Values: []string{"/home/*/.local/share"}},
+				{Name: "etc_ro", Values: []string{"/{,usr/}etc/"}},
+				{Name: "int", Values: []string{"[0-9]{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}"}},
 			},
 		},
 	}
@@ -68,7 +51,7 @@ func (p *AppArmorProfile) ParseVariables(content string) {
 				}
 			}
 			if !found {
-				variable := Variable{Name: key, Values: values}
+				variable := &Variable{Name: key, Values: values}
 				p.Variables = append(p.Variables, variable)
 			}
 		}

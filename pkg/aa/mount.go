@@ -15,7 +15,7 @@ type MountConditions struct {
 	Options []string
 }
 
-func MountConditionsFromLog(log map[string]string) MountConditions {
+func newMountConditionsFromLog(log map[string]string) MountConditions {
 	if _, present := log["flags"]; present {
 		return MountConditions{
 			FsType:  log["fstype"],
@@ -26,10 +26,10 @@ func MountConditionsFromLog(log map[string]string) MountConditions {
 }
 
 func (m MountConditions) Less(other MountConditions) bool {
-	if m.FsType == other.FsType {
-		return len(m.Options) < len(other.Options)
+	if m.FsType != other.FsType {
+		return m.FsType < other.FsType
 	}
-	return m.FsType < other.FsType
+	return len(m.Options) < len(other.Options)
 }
 
 func (m MountConditions) Equals(other MountConditions) bool {
@@ -37,16 +37,18 @@ func (m MountConditions) Equals(other MountConditions) bool {
 }
 
 type Mount struct {
+	Rule
 	Qualifier
 	MountConditions
 	Source     string
 	MountPoint string
 }
 
-func MountFromLog(log map[string]string) ApparmorRule {
+func newMountFromLog(log map[string]string) *Mount {
 	return &Mount{
-		Qualifier:       NewQualifierFromLog(log),
-		MountConditions: MountConditionsFromLog(log),
+		Rule:            newRuleFromLog(log),
+		Qualifier:       newQualifierFromLog(log),
+		MountConditions: newMountConditionsFromLog(log),
 		Source:          log["srcname"],
 		MountPoint:      log["name"],
 	}
@@ -54,14 +56,14 @@ func MountFromLog(log map[string]string) ApparmorRule {
 
 func (r *Mount) Less(other any) bool {
 	o, _ := other.(*Mount)
-	if r.Qualifier.Equals(o.Qualifier) {
-		if r.Source == o.Source {
-			if r.MountPoint == o.MountPoint {
-				return r.MountConditions.Less(o.MountConditions)
-			}
-			return r.MountPoint < o.MountPoint
-		}
+	if r.Source != o.Source {
 		return r.Source < o.Source
+	}
+	if r.MountPoint != o.MountPoint {
+		return r.MountPoint < o.MountPoint
+	}
+	if r.MountConditions.Equals(o.MountConditions) {
+		return r.MountConditions.Less(o.MountConditions)
 	}
 	return r.Qualifier.Less(o.Qualifier)
 }
@@ -74,26 +76,28 @@ func (r *Mount) Equals(other any) bool {
 }
 
 type Umount struct {
+	Rule
 	Qualifier
 	MountConditions
 	MountPoint string
 }
 
-func UmountFromLog(log map[string]string) ApparmorRule {
+func newUmountFromLog(log map[string]string) *Umount {
 	return &Umount{
-		Qualifier:       NewQualifierFromLog(log),
-		MountConditions: MountConditionsFromLog(log),
+		Rule:            newRuleFromLog(log),
+		Qualifier:       newQualifierFromLog(log),
+		MountConditions: newMountConditionsFromLog(log),
 		MountPoint:      log["name"],
 	}
 }
 
 func (r *Umount) Less(other any) bool {
 	o, _ := other.(*Umount)
-	if r.Qualifier.Equals(o.Qualifier) {
-		if r.MountPoint == o.MountPoint {
-			return r.MountConditions.Less(o.MountConditions)
-		}
+	if r.MountPoint != o.MountPoint {
 		return r.MountPoint < o.MountPoint
+	}
+	if r.MountConditions.Equals(o.MountConditions) {
+		return r.MountConditions.Less(o.MountConditions)
 	}
 	return r.Qualifier.Less(o.Qualifier)
 }
@@ -106,26 +110,28 @@ func (r *Umount) Equals(other any) bool {
 }
 
 type Remount struct {
+	Rule
 	Qualifier
 	MountConditions
 	MountPoint string
 }
 
-func RemountFromLog(log map[string]string) ApparmorRule {
+func newRemountFromLog(log map[string]string) *Remount {
 	return &Remount{
-		Qualifier:       NewQualifierFromLog(log),
-		MountConditions: MountConditionsFromLog(log),
+		Rule:            newRuleFromLog(log),
+		Qualifier:       newQualifierFromLog(log),
+		MountConditions: newMountConditionsFromLog(log),
 		MountPoint:      log["name"],
 	}
 }
 
 func (r *Remount) Less(other any) bool {
 	o, _ := other.(*Remount)
-	if r.Qualifier.Equals(o.Qualifier) {
-		if r.MountPoint == o.MountPoint {
-			return r.MountConditions.Less(o.MountConditions)
-		}
+	if r.MountPoint != o.MountPoint {
 		return r.MountPoint < o.MountPoint
+	}
+	if r.MountConditions.Equals(o.MountConditions) {
+		return r.MountConditions.Less(o.MountConditions)
 	}
 	return r.Qualifier.Less(o.Qualifier)
 }
