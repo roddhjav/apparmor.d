@@ -97,7 +97,8 @@ func (d Dbus) sanityCheck(opt *Option) string {
 
 func (d Dbus) own(rules map[string]string) *aa.AppArmorProfile {
 	interfaces := setInterfaces(rules)
-	p := &aa.AppArmorProfile{}
+	profile := &aa.AppArmorProfile{}
+	p := profile.GetDefaultProfile()
 	p.Rules = append(p.Rules, &aa.Dbus{
 		Access: "bind", Bus: rules["bus"], Name: rules["name"],
 	})
@@ -127,12 +128,13 @@ func (d Dbus) own(rules map[string]string) *aa.AppArmorProfile {
 		Member:    "Introspect",
 		PeerName:  `":1.@{int}"`,
 	})
-	return p
+	return profile
 }
 
 func (d Dbus) talk(rules map[string]string) *aa.AppArmorProfile {
 	interfaces := setInterfaces(rules)
-	p := &aa.AppArmorProfile{}
+	profile := &aa.AppArmorProfile{}
+	p := profile.GetDefaultProfile()
 	for _, iface := range interfaces {
 		p.Rules = append(p.Rules, &aa.Dbus{
 			Access:    "send",
@@ -153,5 +155,5 @@ func (d Dbus) talk(rules map[string]string) *aa.AppArmorProfile {
 			PeerLabel: rules["label"],
 		})
 	}
-	return p
+	return profile
 }

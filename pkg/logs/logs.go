@@ -208,8 +208,9 @@ func (aaLogs AppArmorLogs) ParseToProfiles() aa.AppArmorProfiles {
 		}
 
 		if _, ok := profiles[name]; !ok {
-			profile := &aa.AppArmorProfile{}
-			profile.Name = name
+			profile := &aa.AppArmorProfile{
+				Profiles: []*aa.Profile{{Header: aa.Header{Name: name}}},
+			}
 			profile.AddRule(log)
 			profiles[name] = profile
 		} else {

@@ -6,6 +6,7 @@ package aa
 
 import (
 	"bytes"
+	"maps"
 	"reflect"
 	"slices"
 	"sort"
@@ -20,16 +21,16 @@ var MagicRoot = paths.New("/etc/apparmor.d")
 // AppArmorProfiles represents a full set of apparmor profiles
 type AppArmorProfiles map[string]*AppArmorProfile
 
-// ApparmorProfile represents a full apparmor profile.
+// ApparmorProfile represents a full apparmor profile file.
 // Warning: close to the BNF grammar of apparmor profile but not exactly the same (yet):
 //   - Some rules are not supported yet (subprofile, hat...)
 //   - The structure is simplified as it only aims at writing profile, not parsing it.
 type AppArmorProfile struct {
 	Preamble
-	Profile
+	Profiles []*Profile
 }
 
-// Preamble section of a profile
+// Preamble section of a profile file,
 type Preamble struct {
 	Abi       []*Abi
 	Includes  []*Include
@@ -37,13 +38,29 @@ type Preamble struct {
 	Variables []*Variable
 }
 
-// Profile section of a profile
+// Profile represent a single AppArmor profile.
 type Profile struct {
+	Rule
+	Header
+	Rules Rules
+}
+
+type Header struct {
 	Name        string
 	Attachments []string
 	Attributes  map[string]string
 	Flags       []string
-	Rules       Rules
+}
+
+func (r *Profile) Less(other any) bool {
+	return false // TBD
+}
+
+func (r *Profile) Equals(other any) bool {
+	o, _ := other.(*Profile)
+	return r.Name == o.Name && slices.Equal(r.Attachments, o.Attachments) &&
+		maps.Equal(r.Attributes, o.Attributes) &&
+		slices.Equal(r.Flags, o.Flags)
 }
 
 // ApparmorRule generic interface
@@ -68,8 +85,20 @@ func (p *AppArmorProfile) String() string {
 	return res.String()
 }
 
+// GetDefaultProfile ensure a profile is always present in the profile file and
+// return it, as a default profile.
+func (p *AppArmorProfile) GetDefaultProfile() *Profile {
+	if len(p.Profiles) == 0 {
+		p.Profiles = append(p.Profiles, &Profile{})
+	}
+	return p.Profiles[0]
+}
+
 // AddRule adds a new rule to the profile from a log map
-func (p *AppArmorProfile) AddRule(log map[string]string) {
+// See utils/apparmor/logparser.py for the format of the log map
+func (profile *AppArmorProfile) AddRule(log map[string]string) {
+	p := profile.GetDefaultProfile()
+
 	// Generate profile flags and extra rules
 	switch log["error"] {
 	case "-2":
@@ -138,23 +167,25 @@ func (p *AppArmorProfile) AddRule(log map[string]string) {
 
 // Sort the rules in the profile
 // Follow: https://apparmor.pujol.io/development/guidelines/#guidelines
-func (p *AppArmorProfile) Sort() {
-	sort.Slice(p.Rules, func(i, j int) bool {
-		typeOfI := reflect.TypeOf(p.Rules[i])
-		typeOfJ := reflect.TypeOf(p.Rules[j])
-		if typeOfI != typeOfJ {
-			valueOfI := typeToValue(typeOfI)
-			valueOfJ := typeToValue(typeOfJ)
-			if typeOfI == reflect.TypeOf((*Include)(nil)) && p.Rules[i].(*Include).IfExists {
-				valueOfI = "include_if_exists"
+func (profile *AppArmorProfile) Sort() {
+	for _, p := range profile.Profiles {
+		sort.Slice(p.Rules, func(i, j int) bool {
+			typeOfI := reflect.TypeOf(p.Rules[i])
+			typeOfJ := reflect.TypeOf(p.Rules[j])
+			if typeOfI != typeOfJ {
+				valueOfI := typeToValue(typeOfI)
+				valueOfJ := typeToValue(typeOfJ)
+				if typeOfI == reflect.TypeOf((*Include)(nil)) && p.Rules[i].(*Include).IfExists {
+					valueOfI = "include_if_exists"
+				}
+				if typeOfJ == reflect.TypeOf((*Include)(nil)) && p.Rules[j].(*Include).IfExists {
+					valueOfJ = "include_if_exists"
+				}
+				return ruleWeights[valueOfI] < ruleWeights[valueOfJ]
 			}
-			if typeOfJ == reflect.TypeOf((*Include)(nil)) && p.Rules[j].(*Include).IfExists {
-				valueOfJ = "include_if_exists"
-			}
-			return ruleWeights[valueOfI] < ruleWeights[valueOfJ]
-		}
-		return p.Rules[i].Less(p.Rules[j])
-	})
+			return p.Rules[i].Less(p.Rules[j])
+		})
+	}
 }
 
 // MergeRules merge similar rules together.
@@ -163,19 +194,21 @@ func (p *AppArmorProfile) Sort() {
 //   - Merge rule access. Eg: for same path, 'r' and 'w' becomes 'rw'
 //
 // Note: logs.regCleanLogs helps a lot to do a first cleaning
-func (p *AppArmorProfile) MergeRules() {
-	for i := 0; i < len(p.Rules); i++ {
-		for j := i + 1; j < len(p.Rules); j++ {
-			typeOfI := reflect.TypeOf(p.Rules[i])
-			typeOfJ := reflect.TypeOf(p.Rules[j])
-			if typeOfI != typeOfJ {
-				continue
-			}
+func (profile *AppArmorProfile) MergeRules() {
+	for _, p := range profile.Profiles {
+		for i := 0; i < len(p.Rules); i++ {
+			for j := i + 1; j < len(p.Rules); j++ {
+				typeOfI := reflect.TypeOf(p.Rules[i])
+				typeOfJ := reflect.TypeOf(p.Rules[j])
+				if typeOfI != typeOfJ {
+					continue
+				}
 
-			// If rules are identical, merge them
-			if p.Rules[i].Equals(p.Rules[j]) {
-				p.Rules = append(p.Rules[:j], p.Rules[j+1:]...)
-				j--
+				// If rules are identical, merge them
+				if p.Rules[i].Equals(p.Rules[j]) {
+					p.Rules = append(p.Rules[:j], p.Rules[j+1:]...)
+					j--
+				}
 			}
 		}
 	}
@@ -183,30 +216,32 @@ func (p *AppArmorProfile) MergeRules() {
 
 // Format the profile for better readability before printing it.
 // Follow: https://apparmor.pujol.io/development/guidelines/#the-file-block
-func (p *AppArmorProfile) Format() {
+func (profile *AppArmorProfile) Format() {
 	const prefixOwner = "      "
-	hasOwnerRule := false
-	for i := len(p.Rules) - 1; i > 0; i-- {
-		j := i - 1
-		typeOfI := reflect.TypeOf(p.Rules[i])
-		typeOfJ := reflect.TypeOf(p.Rules[j])
+	for _, p := range profile.Profiles {
+		hasOwnerRule := false
+		for i := len(p.Rules) - 1; i > 0; i-- {
+			j := i - 1
+			typeOfI := reflect.TypeOf(p.Rules[i])
+			typeOfJ := reflect.TypeOf(p.Rules[j])
 
-		// File rule
-		if typeOfI == reflect.TypeOf((*File)(nil)) && typeOfJ == reflect.TypeOf((*File)(nil)) {
-			letterI := getLetterIn(fileAlphabet, p.Rules[i].(*File).Path)
-			letterJ := getLetterIn(fileAlphabet, p.Rules[j].(*File).Path)
+			// File rule
+			if typeOfI == reflect.TypeOf((*File)(nil)) && typeOfJ == reflect.TypeOf((*File)(nil)) {
+				letterI := getLetterIn(fileAlphabet, p.Rules[i].(*File).Path)
+				letterJ := getLetterIn(fileAlphabet, p.Rules[j].(*File).Path)
 
-			// Add prefix before rule path to align with other rule
-			if p.Rules[i].(*File).Owner {
-				hasOwnerRule = true
-			} else if hasOwnerRule {
-				p.Rules[i].(*File).Prefix = prefixOwner
-			}
+				// Add prefix before rule path to align with other rule
+				if p.Rules[i].(*File).Owner {
+					hasOwnerRule = true
+				} else if hasOwnerRule {
+					p.Rules[i].(*File).Prefix = prefixOwner
+				}
 
-			if letterI != letterJ {
-				// Add a new empty line between Files rule of different type
-				hasOwnerRule = false
-				p.Rules = append(p.Rules[:i], append([]ApparmorRule{&Rule{}}, p.Rules[i:]...)...)
+				if letterI != letterJ {
+					// Add a new empty line between Files rule of different type
+					hasOwnerRule = false
+					p.Rules = append(p.Rules[:i], append([]ApparmorRule{&Rule{}}, p.Rules[i:]...)...)
+				}
 			}
 		}
 	}

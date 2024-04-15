@@ -27,7 +27,7 @@ func init() {
 	})
 }
 
-func (d Exec) Apply(opt *Option, profile string) string {
+func (d Exec) Apply(opt *Option, profileRaw string) string {
 	transition := "Px"
 	transitions := []string{"P", "U", "p", "u", "PU", "pu"}
 	t := opt.ArgList[0]
@@ -36,7 +36,8 @@ func (d Exec) Apply(opt *Option, profile string) string {
 		delete(opt.ArgMap, t)
 	}
 
-	p := &aa.AppArmorProfile{}
+	profile := &aa.AppArmorProfile{}
+	p := profile.GetDefaultProfile()
 	for name := range opt.ArgMap {
 		profiletoTransition := util.MustReadFile(cfg.RootApparmord.Join(name))
 		dstProfile := aa.DefaultTunables()
@@ -53,9 +54,9 @@ func (d Exec) Apply(opt *Option, profile string) string {
 			}
 		}
 	}
-	p.Sort()
-	rules := p.String()
+	profile.Sort()
+	rules := profile.String()
 	lenRules := len(rules)
 	rules = rules[:lenRules-1]
-	return strings.Replace(profile, opt.Raw, rules, -1)
+	return strings.Replace(profileRaw, opt.Raw, rules, -1)
 }
