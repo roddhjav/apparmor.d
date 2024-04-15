@@ -96,7 +96,7 @@ var (
 )
 
 func generateTemplate() *template.Template {
-	res := template.New("profile.j2").Funcs(tmplFunctionMap)
+	res := template.New("file.j2").Funcs(tmplFunctionMap)
 	res = template.Must(res.ParseFS(tmplFiles, "templates/*.j2"))
 	return res
 }
