@@ -64,6 +64,7 @@ var (
 		"iouring",
 		"dbus",
 		"file",
+		"profile",
 		"include_if_exists",
 	}
 	ruleWeights = map[string]int{}

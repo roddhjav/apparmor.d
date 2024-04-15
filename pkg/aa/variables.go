@@ -83,11 +83,13 @@ func (p *AppArmorProfile) resolve(str string) []string {
 }
 
 // ResolveAttachments resolve profile attachments defined in exec_path
-func (p *AppArmorProfile) ResolveAttachments() {
-	for _, variable := range p.Variables {
+func (profile *AppArmorProfile) ResolveAttachments() {
+	p := profile.GetDefaultProfile()
+
+	for _, variable := range profile.Variables {
 		if variable.Name == "exec_path" {
 			for _, value := range variable.Values {
-				attachments := p.resolve(value)
+				attachments := profile.resolve(value)
 				if len(attachments) == 0 {
 					panic("Variable not defined in: " + value)
 				}
@@ -98,7 +100,8 @@ func (p *AppArmorProfile) ResolveAttachments() {
 }
 
 // NestAttachments return a nested attachment string
-func (p *AppArmorProfile) NestAttachments() string {
+func (profile *AppArmorProfile) NestAttachments() string {
+	p := profile.GetDefaultProfile()
 	if len(p.Attachments) == 0 {
 		return ""
 	} else if len(p.Attachments) == 1 {

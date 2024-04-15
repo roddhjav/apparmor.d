@@ -51,11 +51,13 @@ func TestAppArmorProfile_String(t *testing.T) {
 						Values: []string{"@{bin}/foo", "@{lib}/foo"},
 					}},
 				},
-				Profile: Profile{
-					Name:        "foo",
-					Attachments: []string{"@{exec_path}"},
-					Attributes:  map[string]string{"security.tagged": "allowed"},
-					Flags:       []string{"complain", "attach_disconnected"},
+				Profiles: []*Profile{{
+					Header: Header{
+						Name:        "foo",
+						Attachments: []string{"@{exec_path}"},
+						Attributes:  map[string]string{"security.tagged": "allowed"},
+						Flags:       []string{"complain", "attach_disconnected"},
+					},
 					Rules: []ApparmorRule{
 						&Include{IsMagic: true, Path: "abstractions/base"},
 						&Include{IsMagic: true, Path: "abstractions/nameservice-strict"},
@@ -108,7 +110,7 @@ func TestAppArmorProfile_String(t *testing.T) {
 						&File{Path: "@{sys}/devices/@{pci}/class", Access: "r"},
 						includeLocal1,
 					},
-				},
+				}},
 			},
 			want: readprofile("tests/string.aa"),
 		},
@@ -132,72 +134,72 @@ func TestAppArmorProfile_AddRule(t *testing.T) {
 			name: "capability",
 			log:  capability1Log,
 			want: &AppArmorProfile{
-				Profile: Profile{
+				Profiles: []*Profile{{
 					Rules: []ApparmorRule{capability1},
-				},
+				}},
 			},
 		},
 		{
 			name: "network",
 			log:  network1Log,
 			want: &AppArmorProfile{
-				Profile: Profile{
+				Profiles: []*Profile{{
 					Rules: []ApparmorRule{network1},
-				},
+				}},
 			},
 		},
 		{
 			name: "mount",
 			log:  mount2Log,
 			want: &AppArmorProfile{
-				Profile: Profile{
+				Profiles: []*Profile{{
 					Rules: []ApparmorRule{mount2},
-				},
+				}},
 			},
 		},
 		{
 			name: "signal",
 			log:  signal1Log,
 			want: &AppArmorProfile{
-				Profile: Profile{
+				Profiles: []*Profile{{
 					Rules: []ApparmorRule{signal1},
-				},
+				}},
 			},
 		},
 		{
 			name: "ptrace",
 			log:  ptrace2Log,
 			want: &AppArmorProfile{
-				Profile: Profile{
+				Profiles: []*Profile{{
 					Rules: []ApparmorRule{ptrace2},
-				},
+				}},
 			},
 		},
 		{
 			name: "unix",
 			log:  unix1Log,
 			want: &AppArmorProfile{
-				Profile: Profile{
+				Profiles: []*Profile{{
 					Rules: []ApparmorRule{unix1},
-				},
+				}},
 			},
 		},
 		{
 			name: "dbus",
 			log:  dbus2Log,
 			want: &AppArmorProfile{
-				Profile: Profile{
+				Profiles: []*Profile{{
 					Rules: []ApparmorRule{dbus2},
-				},
+				}},
 			},
 		},
 		{
 			name: "file",
 			log:  file2Log,
 			want: &AppArmorProfile{
-				Profile: Profile{
+				Profiles: []*Profile{{
 					Rules: []ApparmorRule{file2},
-				},
+				}},
 			},
 		},
 	}
@@ -221,20 +223,20 @@ func TestAppArmorProfile_Sort(t *testing.T) {
 		{
 			name: "all",
 			origin: &AppArmorProfile{
-				Profile: Profile{
+				Profiles: []*Profile{{
 					Rules: []ApparmorRule{
 						file2, network1, includeLocal1, dbus2, signal1, ptrace1,
 						capability2, file1, dbus1, unix2, signal2, mount2,
 					},
-				},
+				}},
 			},
 			want: &AppArmorProfile{
-				Profile: Profile{
+				Profiles: []*Profile{{
 					Rules: []ApparmorRule{
 						capability2, network1, mount2, signal1, signal2, ptrace1,
 						unix2, dbus2, dbus1, file1, file2, includeLocal1,
 					},
-				},
+				}},
 			},
 		},
 	}
@@ -258,14 +260,14 @@ func TestAppArmorProfile_MergeRules(t *testing.T) {
 		{
 			name: "all",
 			origin: &AppArmorProfile{
-				Profile: Profile{
+				Profiles: []*Profile{{
 					Rules: []ApparmorRule{capability1, capability1, network1, network1, file1, file1},
-				},
+				}},
 			},
 			want: &AppArmorProfile{
-				Profile: Profile{
+				Profiles: []*Profile{{
 					Rules: []ApparmorRule{capability1, network1, file1},
-				},
+				}},
 			},
 		},
 	}
@@ -297,9 +299,11 @@ func TestAppArmorProfile_Integration(t *testing.T) {
 						Values: []string{"@{bin}/aa-status", "@{bin}/apparmor_status"},
 					}},
 				},
-				Profile: Profile{
-					Name:        "aa-status",
-					Attachments: []string{"@{exec_path}"},
+				Profiles: []*Profile{{
+					Header: Header{
+						Name:        "aa-status",
+						Attachments: []string{"@{exec_path}"},
+					},
 					Rules: Rules{
 						&Include{IfExists: true, IsMagic: true, Path: "local/aa-status"},
 						&Capability{Name: "dac_read_search"},
@@ -316,7 +320,7 @@ func TestAppArmorProfile_Integration(t *testing.T) {
 						&Capability{Name: "sys_ptrace"},
 						&Ptrace{Access: "read"},
 					},
-				},
+				}},
 			},
 			want: readprofile("apparmor.d/profiles-a-f/aa-status"),
 		},

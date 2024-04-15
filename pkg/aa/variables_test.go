@@ -193,8 +193,9 @@ func TestAppArmorProfile_ResolveAttachments(t *testing.T) {
 			p := NewAppArmorProfile()
 			p.Variables = tt.variables
 			p.ResolveAttachments()
-			if !reflect.DeepEqual(p.Attachments, tt.want) {
-				t.Errorf("AppArmorProfile.ResolveAttachments() = %v, want %v", p.Attachments, tt.want)
+			profile := p.GetDefaultProfile()
+			if !reflect.DeepEqual(profile.Attachments, tt.want) {
+				t.Errorf("AppArmorProfile.ResolveAttachments() = %v, want %v", profile.Attachments, tt.want)
 			}
 		})
 	}
@@ -242,7 +243,8 @@ func TestAppArmorProfile_NestAttachments(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			p := NewAppArmorProfile()
-			p.Attachments = tt.Attachments
+			profile := p.GetDefaultProfile()
+			profile.Attachments = tt.Attachments
 			if got := p.NestAttachments(); got != tt.want {
 				t.Errorf("AppArmorProfile.NestAttachments() = %v, want %v", got, tt.want)
 			}

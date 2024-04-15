@@ -299,8 +299,8 @@ func TestAppArmorLogs_ParseToProfiles(t *testing.T) {
 			aaLogs: append(append(refKmod, refPowerProfiles...), refKmod...),
 			want: aa.AppArmorProfiles{
 				"kmod": &aa.AppArmorProfile{
-					Profile: aa.Profile{
-						Name: "kmod",
+					Profiles: []*aa.Profile{{
+						Header: aa.Header{Name: "kmod"},
 						Rules: aa.Rules{
 							&aa.Unix{
 								Rule:     aa.Rule{FileInherit: true},
@@ -315,11 +315,11 @@ func TestAppArmorLogs_ParseToProfiles(t *testing.T) {
 								Protocol: "0",
 							},
 						},
-					},
+					}},
 				},
 				"power-profiles-daemon": &aa.AppArmorProfile{
-					Profile: aa.Profile{
-						Name: "power-profiles-daemon",
+					Profiles: []*aa.Profile{{
+						Header: aa.Header{Name: "power-profiles-daemon"},
 						Rules: aa.Rules{
 							&aa.Dbus{
 								Access:    "send",
@@ -331,7 +331,7 @@ func TestAppArmorLogs_ParseToProfiles(t *testing.T) {
 								PeerLabel: "dbus-daemon",
 							},
 						},
-					},
+					}},
 				},
 			},
 		},

@@ -5,6 +5,7 @@
 package aa
 
 type Rlimit struct {
+	Rule
 	Key   string
 	Op    string
 	Value string
