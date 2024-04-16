@@ -5,46 +5,19 @@
 package aa
 
 import (
-	"bytes"
 	"maps"
-	"reflect"
 	"slices"
-	"sort"
 	"strings"
-
-	"github.com/arduino/go-paths-helper"
 )
 
-// Default Apparmor magic directory: /etc/apparmor.d/.
-var MagicRoot = paths.New("/etc/apparmor.d")
-
-// AppArmorProfiles represents a full set of apparmor profiles
-type AppArmorProfiles map[string]*AppArmorProfile
-
-// ApparmorProfile represents a full apparmor profile file.
-// Warning: close to the BNF grammar of apparmor profile but not exactly the same (yet):
-//   - Some rules are not supported yet (subprofile, hat...)
-//   - The structure is simplified as it only aims at writing profile, not parsing it.
-type AppArmorProfile struct {
-	Preamble
-	Profiles []*Profile
-}
-
-// Preamble section of a profile file,
-type Preamble struct {
-	Abi       []*Abi
-	Includes  []*Include
-	Aliases   []*Alias
-	Variables []*Variable
-}
-
-// Profile represent a single AppArmor profile.
+// Profile represents a single AppArmor profile.
 type Profile struct {
 	Rule
 	Header
 	Rules Rules
 }
 
+// Header represents the header of a profile.
 type Header struct {
 	Name        string
 	Attachments []string
@@ -53,7 +26,11 @@ type Header struct {
 }
 
 func (r *Profile) Less(other any) bool {
-	return false // TBD
+	o, _ := other.(*Profile)
+	if r.Name != o.Name {
+		return r.Name < o.Name
+	}
+	return len(r.Attachments) < len(o.Attachments)
 }
 
 func (r *Profile) Equals(other any) bool {
@@ -61,188 +38,4 @@ func (r *Profile) Equals(other any) bool {
 	return r.Name == o.Name && slices.Equal(r.Attachments, o.Attachments) &&
 		maps.Equal(r.Attributes, o.Attributes) &&
 		slices.Equal(r.Flags, o.Flags)
-}
-
-// ApparmorRule generic interface
-type ApparmorRule interface {
-	Less(other any) bool
-	Equals(other any) bool
-}
-
-type Rules []ApparmorRule
-
-func NewAppArmorProfile() *AppArmorProfile {
-	return &AppArmorProfile{}
-}
-
-// String returns the formatted representation of a profile as a string
-func (p *AppArmorProfile) String() string {
-	var res bytes.Buffer
-	err := tmplAppArmorProfile.Execute(&res, p)
-	if err != nil {
-		return err.Error()
-	}
-	return res.String()
-}
-
-// GetDefaultProfile ensure a profile is always present in the profile file and
-// return it, as a default profile.
-func (p *AppArmorProfile) GetDefaultProfile() *Profile {
-	if len(p.Profiles) == 0 {
-		p.Profiles = append(p.Profiles, &Profile{})
-	}
-	return p.Profiles[0]
-}
-
-// AddRule adds a new rule to the profile from a log map
-// See utils/apparmor/logparser.py for the format of the log map
-func (profile *AppArmorProfile) AddRule(log map[string]string) {
-	p := profile.GetDefaultProfile()
-
-	// Generate profile flags and extra rules
-	switch log["error"] {
-	case "-2":
-		if !slices.Contains(p.Flags, "mediate_deleted") {
-			p.Flags = append(p.Flags, "mediate_deleted")
-		}
-	case "-13":
-		if strings.Contains(log["info"], "namespace creation restricted") {
-			p.Rules = append(p.Rules, newUsernsFromLog(log))
-		} else if strings.Contains(log["info"], "disconnected path") && !slices.Contains(p.Flags, "attach_disconnected") {
-			p.Flags = append(p.Flags, "attach_disconnected")
-		}
-	default:
-	}
-
-	switch log["class"] {
-	case "cap":
-		p.Rules = append(p.Rules, newCapabilityFromLog(log))
-	case "net":
-		if log["family"] == "unix" {
-			p.Rules = append(p.Rules, newUnixFromLog(log))
-		} else {
-			p.Rules = append(p.Rules, newNetworkFromLog(log))
-		}
-	case "mount":
-		if strings.Contains(log["flags"], "remount") {
-			p.Rules = append(p.Rules, newRemountFromLog(log))
-		} else {
-			switch log["operation"] {
-			case "mount":
-				p.Rules = append(p.Rules, newMountFromLog(log))
-			case "umount":
-				p.Rules = append(p.Rules, newUmountFromLog(log))
-			case "remount":
-				p.Rules = append(p.Rules, newRemountFromLog(log))
-			case "pivotroot":
-				p.Rules = append(p.Rules, newPivotRootFromLog(log))
-			}
-		}
-	case "posix_mqueue", "sysv_mqueue":
-		p.Rules = append(p.Rules, newMqueueFromLog(log))
-	case "signal":
-		p.Rules = append(p.Rules, newSignalFromLog(log))
-	case "ptrace":
-		p.Rules = append(p.Rules, newPtraceFromLog(log))
-	case "namespace":
-		p.Rules = append(p.Rules, newUsernsFromLog(log))
-	case "unix":
-		p.Rules = append(p.Rules, newUnixFromLog(log))
-	case "dbus":
-		p.Rules = append(p.Rules, newDbusFromLog(log))
-	case "file":
-		if log["operation"] == "change_onexec" {
-			p.Rules = append(p.Rules, newChangeProfileFromLog(log))
-		} else {
-			p.Rules = append(p.Rules, newFileFromLog(log))
-		}
-	default:
-		if strings.Contains(log["operation"], "dbus") {
-			p.Rules = append(p.Rules, newDbusFromLog(log))
-		} else if log["family"] == "unix" {
-			p.Rules = append(p.Rules, newUnixFromLog(log))
-		}
-	}
-}
-
-// Sort the rules in the profile
-// Follow: https://apparmor.pujol.io/development/guidelines/#guidelines
-func (profile *AppArmorProfile) Sort() {
-	for _, p := range profile.Profiles {
-		sort.Slice(p.Rules, func(i, j int) bool {
-			typeOfI := reflect.TypeOf(p.Rules[i])
-			typeOfJ := reflect.TypeOf(p.Rules[j])
-			if typeOfI != typeOfJ {
-				valueOfI := typeToValue(typeOfI)
-				valueOfJ := typeToValue(typeOfJ)
-				if typeOfI == reflect.TypeOf((*Include)(nil)) && p.Rules[i].(*Include).IfExists {
-					valueOfI = "include_if_exists"
-				}
-				if typeOfJ == reflect.TypeOf((*Include)(nil)) && p.Rules[j].(*Include).IfExists {
-					valueOfJ = "include_if_exists"
-				}
-				return ruleWeights[valueOfI] < ruleWeights[valueOfJ]
-			}
-			return p.Rules[i].Less(p.Rules[j])
-		})
-	}
-}
-
-// MergeRules merge similar rules together.
-// Steps:
-//   - Remove identical rules
-//   - Merge rule access. Eg: for same path, 'r' and 'w' becomes 'rw'
-//
-// Note: logs.regCleanLogs helps a lot to do a first cleaning
-func (profile *AppArmorProfile) MergeRules() {
-	for _, p := range profile.Profiles {
-		for i := 0; i < len(p.Rules); i++ {
-			for j := i + 1; j < len(p.Rules); j++ {
-				typeOfI := reflect.TypeOf(p.Rules[i])
-				typeOfJ := reflect.TypeOf(p.Rules[j])
-				if typeOfI != typeOfJ {
-					continue
-				}
-
-				// If rules are identical, merge them
-				if p.Rules[i].Equals(p.Rules[j]) {
-					p.Rules = append(p.Rules[:j], p.Rules[j+1:]...)
-					j--
-				}
-			}
-		}
-	}
-}
-
-// Format the profile for better readability before printing it.
-// Follow: https://apparmor.pujol.io/development/guidelines/#the-file-block
-func (profile *AppArmorProfile) Format() {
-	const prefixOwner = "      "
-	for _, p := range profile.Profiles {
-		hasOwnerRule := false
-		for i := len(p.Rules) - 1; i > 0; i-- {
-			j := i - 1
-			typeOfI := reflect.TypeOf(p.Rules[i])
-			typeOfJ := reflect.TypeOf(p.Rules[j])
-
-			// File rule
-			if typeOfI == reflect.TypeOf((*File)(nil)) && typeOfJ == reflect.TypeOf((*File)(nil)) {
-				letterI := getLetterIn(fileAlphabet, p.Rules[i].(*File).Path)
-				letterJ := getLetterIn(fileAlphabet, p.Rules[j].(*File).Path)
-
-				// Add prefix before rule path to align with other rule
-				if p.Rules[i].(*File).Owner {
-					hasOwnerRule = true
-				} else if hasOwnerRule {
-					p.Rules[i].(*File).Prefix = prefixOwner
-				}
-
-				if letterI != letterJ {
-					// Add a new empty line between Files rule of different type
-					hasOwnerRule = false
-					p.Rules = append(p.Rules[:i], append([]ApparmorRule{&Rule{}}, p.Rules[i:]...)...)
-				}
-			}
-		}
-	}
 }

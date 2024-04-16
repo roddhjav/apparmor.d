@@ -16,11 +16,11 @@ import (
 func TestDefaultTunables(t *testing.T) {
 	tests := []struct {
 		name string
-		want *AppArmorProfile
+		want *AppArmorProfileFile
 	}{
 		{
 			name: "aa",
-			want: &AppArmorProfile{
+			want: &AppArmorProfileFile{
 				Preamble: Preamble{
 					Variables: []*Variable{
 						{Name: "bin", Values: []string{"/{,usr/}{,s}bin"}},

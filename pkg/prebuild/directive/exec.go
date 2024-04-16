@@ -36,7 +36,7 @@ func (d Exec) Apply(opt *Option, profileRaw string) string {
 		delete(opt.ArgMap, t)
 	}
 
-	profile := &aa.AppArmorProfile{}
+	profile := &aa.AppArmorProfileFile{}
 	p := profile.GetDefaultProfile()
 	for name := range opt.ArgMap {
 		profiletoTransition := util.MustReadFile(cfg.RootApparmord.Join(name))
