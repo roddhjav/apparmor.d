@@ -292,13 +292,13 @@ func TestAppArmorLogs_ParseToProfiles(t *testing.T) {
 	tests := []struct {
 		name   string
 		aaLogs AppArmorLogs
-		want   aa.AppArmorProfiles
+		want   aa.AppArmorProfileFiles
 	}{
 		{
 			name:   "",
 			aaLogs: append(append(refKmod, refPowerProfiles...), refKmod...),
-			want: aa.AppArmorProfiles{
-				"kmod": &aa.AppArmorProfile{
+			want: aa.AppArmorProfileFiles{
+				"kmod": &aa.AppArmorProfileFile{
 					Profiles: []*aa.Profile{{
 						Header: aa.Header{Name: "kmod"},
 						Rules: aa.Rules{
@@ -317,7 +317,7 @@ func TestAppArmorLogs_ParseToProfiles(t *testing.T) {
 						},
 					}},
 				},
-				"power-profiles-daemon": &aa.AppArmorProfile{
+				"power-profiles-daemon": &aa.AppArmorProfileFile{
 					Profiles: []*aa.Profile{{
 						Header: aa.Header{Name: "power-profiles-daemon"},
 						Rules: aa.Rules{

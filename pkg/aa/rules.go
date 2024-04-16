@@ -9,6 +9,14 @@ import (
 	"strings"
 )
 
+// ApparmorRule generic interface
+type ApparmorRule interface {
+	Less(other any) bool
+	Equals(other any) bool
+}
+
+type Rules []ApparmorRule
+
 type Rule struct {
 	Comment     string
 	NoNewPrivs  bool

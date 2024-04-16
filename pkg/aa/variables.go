@@ -19,8 +19,8 @@ var (
 
 // DefaultTunables return a minimal working profile to build the profile
 // It should not be used when loading file from /etc/apparmor.d
-func DefaultTunables() *AppArmorProfile {
-	return &AppArmorProfile{
+func DefaultTunables() *AppArmorProfileFile {
+	return &AppArmorProfileFile{
 		Preamble: Preamble{
 			Variables: []*Variable{
 				{Name: "bin", Values: []string{"/{,usr/}{,s}bin"}},
@@ -36,41 +36,41 @@ func DefaultTunables() *AppArmorProfile {
 }
 
 // ParseVariables extract all variables from the profile
-func (p *AppArmorProfile) ParseVariables(content string) {
+func (f *AppArmorProfileFile) ParseVariables(content string) {
 	matches := regVariablesDef.FindAllStringSubmatch(content, -1)
 	for _, match := range matches {
 		if len(match) > 2 {
 			key := match[1]
 			values := strings.Split(match[2], " ")
 			found := false
-			for idx, variable := range p.Variables {
+			for idx, variable := range f.Variables {
 				if variable.Name == key {
-					p.Variables[idx].Values = append(p.Variables[idx].Values, values...)
+					f.Variables[idx].Values = append(f.Variables[idx].Values, values...)
 					found = true
 					break
 				}
 			}
 			if !found {
 				variable := &Variable{Name: key, Values: values}
-				p.Variables = append(p.Variables, variable)
+				f.Variables = append(f.Variables, variable)
 			}
 		}
 	}
 }
 
 // resolve recursively resolves all variables references
-func (p *AppArmorProfile) resolve(str string) []string {
+func (f *AppArmorProfileFile) resolve(str string) []string {
 	if strings.Contains(str, "@{") {
 		vars := []string{}
 		match := regVariablesRef.FindStringSubmatch(str)
 		if len(match) > 1 {
 			variable := match[0]
 			varname := match[1]
-			for _, vrbl := range p.Variables {
+			for _, vrbl := range f.Variables {
 				if vrbl.Name == varname {
 					for _, value := range vrbl.Values {
 						newVar := strings.ReplaceAll(str, variable, value)
-						vars = append(vars, p.resolve(newVar)...)
+						vars = append(vars, f.resolve(newVar)...)
 					}
 				}
 			}
@@ -83,8 +83,8 @@ func (p *AppArmorProfile) resolve(str string) []string {
 }
 
 // ResolveAttachments resolve profile attachments defined in exec_path
-func (profile *AppArmorProfile) ResolveAttachments() {
-	p := profile.GetDefaultProfile()
+func (f *AppArmorProfileFile) ResolveAttachments() {
+	p := f.GetDefaultProfile()
 
 	for _, variable := range profile.Variables {
 		if variable.Name == "exec_path" {
@@ -100,8 +100,8 @@ func (profile *AppArmorProfile) ResolveAttachments() {
 }
 
 // NestAttachments return a nested attachment string
-func (profile *AppArmorProfile) NestAttachments() string {
-	p := profile.GetDefaultProfile()
+func (f *AppArmorProfileFile) NestAttachments() string {
+	p := f.GetDefaultProfile()
 	if len(p.Attachments) == 0 {
 		return ""
 	} else if len(p.Attachments) == 1 {

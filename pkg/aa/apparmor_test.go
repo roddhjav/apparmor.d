@@ -31,17 +31,17 @@ func readprofile(path string) string {
 func TestAppArmorProfile_String(t *testing.T) {
 	tests := []struct {
 		name string
-		p    *AppArmorProfile
+		f    *AppArmorProfileFile
 		want string
 	}{
 		{
 			name: "empty",
-			p:    &AppArmorProfile{},
+			f:    &AppArmorProfileFile{},
 			want: ``,
 		},
 		{
 			name: "foo",
-			p: &AppArmorProfile{
+			f: &AppArmorProfileFile{
 				Preamble: Preamble{
 					Abi:      []*Abi{{IsMagic: true, Path: "abi/4.0"}},
 					Includes: []*Include{{IsMagic: true, Path: "tunables/global"}},
@@ -117,7 +117,7 @@ func TestAppArmorProfile_String(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.p.String(); got != tt.want {
+			if got := tt.f.String(); got != tt.want {
 				t.Errorf("AppArmorProfile.String() = |%v|, want |%v|", got, tt.want)
 			}
 		})
@@ -128,12 +128,12 @@ func TestAppArmorProfile_AddRule(t *testing.T) {
 	tests := []struct {
 		name string
 		log  map[string]string
-		want *AppArmorProfile
+		want *AppArmorProfileFile
 	}{
 		{
 			name: "capability",
 			log:  capability1Log,
-			want: &AppArmorProfile{
+			want: &AppArmorProfileFile{
 				Profiles: []*Profile{{
 					Rules: []ApparmorRule{capability1},
 				}},
@@ -142,7 +142,7 @@ func TestAppArmorProfile_AddRule(t *testing.T) {
 		{
 			name: "network",
 			log:  network1Log,
-			want: &AppArmorProfile{
+			want: &AppArmorProfileFile{
 				Profiles: []*Profile{{
 					Rules: []ApparmorRule{network1},
 				}},
@@ -151,7 +151,7 @@ func TestAppArmorProfile_AddRule(t *testing.T) {
 		{
 			name: "mount",
 			log:  mount2Log,
-			want: &AppArmorProfile{
+			want: &AppArmorProfileFile{
 				Profiles: []*Profile{{
 					Rules: []ApparmorRule{mount2},
 				}},
@@ -160,7 +160,7 @@ func TestAppArmorProfile_AddRule(t *testing.T) {
 		{
 			name: "signal",
 			log:  signal1Log,
-			want: &AppArmorProfile{
+			want: &AppArmorProfileFile{
 				Profiles: []*Profile{{
 					Rules: []ApparmorRule{signal1},
 				}},
@@ -169,7 +169,7 @@ func TestAppArmorProfile_AddRule(t *testing.T) {
 		{
 			name: "ptrace",
 			log:  ptrace2Log,
-			want: &AppArmorProfile{
+			want: &AppArmorProfileFile{
 				Profiles: []*Profile{{
 					Rules: []ApparmorRule{ptrace2},
 				}},
@@ -178,7 +178,7 @@ func TestAppArmorProfile_AddRule(t *testing.T) {
 		{
 			name: "unix",
 			log:  unix1Log,
-			want: &AppArmorProfile{
+			want: &AppArmorProfileFile{
 				Profiles: []*Profile{{
 					Rules: []ApparmorRule{unix1},
 				}},
@@ -187,7 +187,7 @@ func TestAppArmorProfile_AddRule(t *testing.T) {
 		{
 			name: "dbus",
 			log:  dbus2Log,
-			want: &AppArmorProfile{
+			want: &AppArmorProfileFile{
 				Profiles: []*Profile{{
 					Rules: []ApparmorRule{dbus2},
 				}},
@@ -196,7 +196,7 @@ func TestAppArmorProfile_AddRule(t *testing.T) {
 		{
 			name: "file",
 			log:  file2Log,
-			want: &AppArmorProfile{
+			want: &AppArmorProfileFile{
 				Profiles: []*Profile{{
 					Rules: []ApparmorRule{file2},
 				}},
@@ -217,12 +217,12 @@ func TestAppArmorProfile_AddRule(t *testing.T) {
 func TestAppArmorProfile_Sort(t *testing.T) {
 	tests := []struct {
 		name   string
-		origin *AppArmorProfile
-		want   *AppArmorProfile
+		origin *AppArmorProfileFile
+		want   *AppArmorProfileFile
 	}{
 		{
 			name: "all",
-			origin: &AppArmorProfile{
+			origin: &AppArmorProfileFile{
 				Profiles: []*Profile{{
 					Rules: []ApparmorRule{
 						file2, network1, includeLocal1, dbus2, signal1, ptrace1,
@@ -230,7 +230,7 @@ func TestAppArmorProfile_Sort(t *testing.T) {
 					},
 				}},
 			},
-			want: &AppArmorProfile{
+			want: &AppArmorProfileFile{
 				Profiles: []*Profile{{
 					Rules: []ApparmorRule{
 						capability2, network1, mount2, signal1, signal2, ptrace1,
@@ -254,17 +254,17 @@ func TestAppArmorProfile_Sort(t *testing.T) {
 func TestAppArmorProfile_MergeRules(t *testing.T) {
 	tests := []struct {
 		name   string
-		origin *AppArmorProfile
-		want   *AppArmorProfile
+		origin *AppArmorProfileFile
+		want   *AppArmorProfileFile
 	}{
 		{
 			name: "all",
-			origin: &AppArmorProfile{
+			origin: &AppArmorProfileFile{
 				Profiles: []*Profile{{
 					Rules: []ApparmorRule{capability1, capability1, network1, network1, file1, file1},
 				}},
 			},
-			want: &AppArmorProfile{
+			want: &AppArmorProfileFile{
 				Profiles: []*Profile{{
 					Rules: []ApparmorRule{capability1, network1, file1},
 				}},
@@ -285,12 +285,12 @@ func TestAppArmorProfile_MergeRules(t *testing.T) {
 func TestAppArmorProfile_Integration(t *testing.T) {
 	tests := []struct {
 		name string
-		p    *AppArmorProfile
+		f    *AppArmorProfileFile
 		want string
 	}{
 		{
 			name: "aa-status",
-			p: &AppArmorProfile{
+			f: &AppArmorProfileFile{
 				Preamble: Preamble{
 					Abi:      []*Abi{{IsMagic: true, Path: "abi/3.0"}},
 					Includes: []*Include{{IsMagic: true, Path: "tunables/global"}},
@@ -327,10 +327,10 @@ func TestAppArmorProfile_Integration(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.p.Sort()
-			tt.p.MergeRules()
-			tt.p.Format()
-			if got := tt.p.String(); "\n"+got != tt.want {
+			tt.f.Sort()
+			tt.f.MergeRules()
+			tt.f.Format()
+			if got := tt.f.String(); "\n"+got != tt.want {
 				t.Errorf("AppArmorProfile = |%v|, want |%v|", "\n"+got, tt.want)
 			}
 		})

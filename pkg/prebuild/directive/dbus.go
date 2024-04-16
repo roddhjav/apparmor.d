@@ -51,7 +51,7 @@ func setInterfaces(rules map[string]string) []string {
 }
 
 func (d Dbus) Apply(opt *Option, profile string) string {
-	var p *aa.AppArmorProfile
+	var p *aa.AppArmorProfileFile
 
 	action := d.sanityCheck(opt)
 	switch action {
@@ -95,9 +95,9 @@ func (d Dbus) sanityCheck(opt *Option) string {
 	return action
 }
 
-func (d Dbus) own(rules map[string]string) *aa.AppArmorProfile {
+func (d Dbus) own(rules map[string]string) *aa.AppArmorProfileFile {
 	interfaces := setInterfaces(rules)
-	profile := &aa.AppArmorProfile{}
+	profile := &aa.AppArmorProfileFile{}
 	p := profile.GetDefaultProfile()
 	p.Rules = append(p.Rules, &aa.Dbus{
 		Access: "bind", Bus: rules["bus"], Name: rules["name"],
@@ -131,9 +131,9 @@ func (d Dbus) own(rules map[string]string) *aa.AppArmorProfile {
 	return profile
 }
 
-func (d Dbus) talk(rules map[string]string) *aa.AppArmorProfile {
+func (d Dbus) talk(rules map[string]string) *aa.AppArmorProfileFile {
 	interfaces := setInterfaces(rules)
-	profile := &aa.AppArmorProfile{}
+	profile := &aa.AppArmorProfileFile{}
 	p := profile.GetDefaultProfile()
 	for _, iface := range interfaces {
 		p.Rules = append(p.Rules, &aa.Dbus{
