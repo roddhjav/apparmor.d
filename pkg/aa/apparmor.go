@@ -44,7 +44,7 @@ func NewAppArmorProfile() *AppArmorProfileFile {
 // String returns the formatted representation of a profile as a string
 func (f *AppArmorProfileFile) String() string {
 	var res bytes.Buffer
-	err := tmplAppArmorProfile.Execute(&res, f)
+	err := tmpl["apparmor"].Execute(&res, f)
 	if err != nil {
 		return err.Error()
 	}
