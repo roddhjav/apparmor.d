@@ -6,6 +6,7 @@ package aa
 
 import (
 	"embed"
+	"fmt"
 	"reflect"
 	"strings"
 	"text/template"
@@ -26,8 +27,10 @@ var (
 		"overindent": indentDbus,
 	}
 
-	// The apparmor profile template
-	tmplAppArmorProfile = generateTemplate()
+	// The apparmor templates
+	tmpl = map[string]*template.Template{
+		"apparmor": generateTemplate("apparmor.j2"),
+	}
 
 	// convert apparmor requested mask to apparmor access mode
 	requestedMaskToAccess = map[string]string{
@@ -96,9 +99,27 @@ var (
 	fileWeights = map[string]int{}
 )
 
-func generateTemplate() *template.Template {
-	res := template.New("file.j2").Funcs(tmplFunctionMap)
-	res = template.Must(res.ParseFS(tmplFiles, "templates/*.j2"))
+func generateTemplate(name string) *template.Template {
+	res := template.New(name).Funcs(tmplFunctionMap)
+	switch name {
+	case "apparmor.j2":
+		res = template.Must(res.ParseFS(tmplFiles,
+			"templates/*.j2", "templates/rule/*.j2",
+		))
+	case "profile.j2":
+		res = template.Must(res.Parse("{{ template \"profile\" . }}"))
+		res = template.Must(res.ParseFS(tmplFiles,
+			"templates/profile.j2", "templates/rule/*.j2",
+		))
+	default:
+		res = template.Must(res.Parse(
+			fmt.Sprintf("{{ template \"%s\" . }}", name),
+		))
+		res = template.Must(res.ParseFS(tmplFiles,
+			fmt.Sprintf("templates/rule/%s.j2", name),
+			"templates/rule/qualifier.j2", "templates/rule/comment.j2",
+		))
+	}
 	return res
 }
 

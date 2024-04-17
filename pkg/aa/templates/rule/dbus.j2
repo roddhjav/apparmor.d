@@ -1,0 +1,40 @@
+{{- /* apparmor.d - Full set of apparmor profiles */ -}}
+{{- /* Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io> */ -}}
+{{- /* SPDX-License-Identifier: GPL-2.0-only */ -}}
+
+{{- define "dbus" -}}
+    {{- template "qualifier" . -}}
+    {{- "dbus" -}}
+    {{- if eq .Access "bind" -}}
+        {{ " bind bus=" }}{{ .Bus }}{{ " name=" }}{{ .Name }}
+    {{- else -}}
+        {{- with .Access -}}
+            {{ " " }}{{ . }}
+        {{- end -}}
+        {{- with .Bus -}}
+            {{ " bus=" }}{{ . }}
+        {{- end -}}
+        {{- with .Path -}}
+            {{ " path=" }}{{ . }}
+        {{- end -}}
+        {{ "\n" }}
+        {{- with .Interface -}}
+            {{ overindent "interface=" }}{{ . }}{{ "\n" }}
+        {{- end -}}
+        {{- with .Member -}}
+            {{ overindent "member=" }}{{ . }}{{ "\n" }}
+        {{- end -}}
+        {{- if and .PeerName .PeerLabel -}}
+            {{ overindent "peer=(name=" }}{{ .PeerName }}{{ ", label="}}{{ .PeerLabel }}{{ ")" }}
+        {{- else -}}
+            {{- with .PeerName -}}
+                {{ overindent "peer=(name=" }}{{ . }}{{ ")" }}
+            {{- end -}}
+            {{- with .PeerLabel -}}
+                {{ overindent "peer=(label=" }}{{ . }}{{ ")" }}
+            {{- end -}}
+        {{- end -}}
+    {{- end -}}
+    {{- "," -}}
+    {{- template "comment" . -}}
+{{- end -}}
