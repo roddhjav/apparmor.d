@@ -5,16 +5,16 @@
 package aa
 
 type ChangeProfile struct {
-	Rule
+	RuleBase
 	Qualifier
 	ExecMode    string
 	Exec        string
 	ProfileName string
 }
 
-func newChangeProfileFromLog(log map[string]string) *ChangeProfile {
+func newChangeProfileFromLog(log map[string]string) Rule {
 	return &ChangeProfile{
-		Rule:        newRuleFromLog(log),
+		RuleBase:    newRuleFromLog(log),
 		Qualifier:   newQualifierFromLog(log),
 		ExecMode:    log["mode"],
 		Exec:        log["exec"],

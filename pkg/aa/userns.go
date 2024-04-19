@@ -5,14 +5,14 @@
 package aa
 
 type Userns struct {
-	Rule
+	RuleBase
 	Qualifier
 	Create bool
 }
 
-func newUsernsFromLog(log map[string]string) *Userns {
+func newUsernsFromLog(log map[string]string) Rule {
 	return &Userns{
-		Rule:      newRuleFromLog(log),
+		RuleBase:  newRuleFromLog(log),
 		Qualifier: newQualifierFromLog(log),
 		Create:    true,
 	}

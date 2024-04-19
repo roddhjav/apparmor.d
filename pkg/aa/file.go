@@ -5,7 +5,7 @@
 package aa
 
 type File struct {
-	Rule
+	RuleBase
 	Qualifier
 	Owner  bool
 	Path   string
@@ -13,7 +13,7 @@ type File struct {
 	Target string
 }
 
-func newFileFromLog(log map[string]string) *File {
+func newFileFromLog(log map[string]string) Rule {
 	owner := false
 	fsuid, hasFsUID := log["fsuid"]
 	ouid, hasOuUID := log["ouid"]
@@ -22,7 +22,7 @@ func newFileFromLog(log map[string]string) *File {
 		owner = true
 	}
 	return &File{
-		Rule:      newRuleFromLog(log),
+		RuleBase:  newRuleFromLog(log),
 		Qualifier: newQualifierFromLog(log),
 		Owner:     owner,
 		Path:      log["name"],

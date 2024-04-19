@@ -5,15 +5,15 @@
 package aa
 
 type IOUring struct {
-	Rule
+	RuleBase
 	Qualifier
 	Access string
 	Label  string
 }
 
-func newIOUringFromLog(log map[string]string) *IOUring {
+func newIOUringFromLog(log map[string]string) Rule {
 	return &IOUring{
-		Rule:      newRuleFromLog(log),
+		RuleBase:  newRuleFromLog(log),
 		Qualifier: newQualifierFromLog(log),
 		Access:    toAccess(log["requested"]),
 		Label:     log["label"],

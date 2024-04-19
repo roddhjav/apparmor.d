@@ -12,105 +12,81 @@ import (
 func TestRule_FromLog(t *testing.T) {
 	tests := []struct {
 		name    string
-		fromLog func(map[string]string) ApparmorRule
+		fromLog func(map[string]string) Rule
 		log     map[string]string
-		want    ApparmorRule
+		want    Rule
 	}{
 		{
-			name: "capbability",
-			fromLog: func(m map[string]string) ApparmorRule {
-				return newCapabilityFromLog(m)
-			},
-			log:  capability1Log,
-			want: capability1,
+			name:    "capbability",
+			fromLog: newCapabilityFromLog,
+			log:     capability1Log,
+			want:    capability1,
 		},
 		{
-			name: "network",
-			fromLog: func(m map[string]string) ApparmorRule {
-				return newNetworkFromLog(m)
-			},
-			log:  network1Log,
-			want: network1,
+			name:    "network",
+			fromLog: newNetworkFromLog,
+			log:     network1Log,
+			want:    network1,
 		},
 		{
-			name: "mount",
-			fromLog: func(m map[string]string) ApparmorRule {
-				return newMountFromLog(m)
-			},
-			log:  mount1Log,
-			want: mount1,
+			name:    "mount",
+			fromLog: newMountFromLog,
+			log:     mount1Log,
+			want:    mount1,
 		},
 		{
-			name: "umount",
-			fromLog: func(m map[string]string) ApparmorRule {
-				return newUmountFromLog(m)
-			},
-			log:  umount1Log,
-			want: umount1,
+			name:    "umount",
+			fromLog: newUmountFromLog,
+			log:     umount1Log,
+			want:    umount1,
 		},
 		{
-			name: "pivotroot",
-			fromLog: func(m map[string]string) ApparmorRule {
-				return newPivotRootFromLog(m)
-			},
-			log:  pivotroot1Log,
-			want: pivotroot1,
+			name:    "pivotroot",
+			fromLog: newPivotRootFromLog,
+			log:     pivotroot1Log,
+			want:    pivotroot1,
 		},
 		{
-			name: "changeprofile",
-			fromLog: func(m map[string]string) ApparmorRule {
-				return newChangeProfileFromLog(m)
-			},
-			log:  changeprofile1Log,
-			want: changeprofile1,
+			name:    "changeprofile",
+			fromLog: newChangeProfileFromLog,
+			log:     changeprofile1Log,
+			want:    changeprofile1,
 		},
 		{
-			name: "signal",
-			fromLog: func(m map[string]string) ApparmorRule {
-				return newSignalFromLog(m)
-			},
-			log:  signal1Log,
-			want: signal1,
+			name:    "signal",
+			fromLog: newSignalFromLog,
+			log:     signal1Log,
+			want:    signal1,
 		},
 		{
-			name: "ptrace/xdg-document-portal",
-			fromLog: func(m map[string]string) ApparmorRule {
-				return newPtraceFromLog(m)
-			},
-			log:  ptrace1Log,
-			want: ptrace1,
+			name:    "ptrace/xdg-document-portal",
+			fromLog: newPtraceFromLog,
+			log:     ptrace1Log,
+			want:    ptrace1,
 		},
 		{
-			name: "ptrace/snap-update-ns.firefox",
-			fromLog: func(m map[string]string) ApparmorRule {
-				return newPtraceFromLog(m)
-			},
-			log:  ptrace2Log,
-			want: ptrace2,
+			name:    "ptrace/snap-update-ns.firefox",
+			fromLog: newPtraceFromLog,
+			log:     ptrace2Log,
+			want:    ptrace2,
 		},
 		{
-			name: "unix",
-			fromLog: func(m map[string]string) ApparmorRule {
-				return newUnixFromLog(m)
-			},
-			log:  unix1Log,
-			want: unix1,
+			name:    "unix",
+			fromLog: newUnixFromLog,
+			log:     unix1Log,
+			want:    unix1,
 		},
 		{
-			name: "dbus",
-			fromLog: func(m map[string]string) ApparmorRule {
-				return newDbusFromLog(m)
-			},
-			log:  dbus1Log,
-			want: dbus1,
+			name:    "dbus",
+			fromLog: newDbusFromLog,
+			log:     dbus1Log,
+			want:    dbus1,
 		},
 		{
-			name: "file",
-			fromLog: func(m map[string]string) ApparmorRule {
-				return newFileFromLog(m)
-			},
-			log:  file1Log,
-			want: file1,
+			name:    "file",
+			fromLog: newFileFromLog,
+			log:     file1Log,
+			want:    file1,
 		},
 	}
 	for _, tt := range tests {
@@ -125,8 +101,8 @@ func TestRule_FromLog(t *testing.T) {
 func TestRule_Less(t *testing.T) {
 	tests := []struct {
 		name  string
-		rule  ApparmorRule
-		other ApparmorRule
+		rule  Rule
+		other Rule
 		want  bool
 	}{
 		{
@@ -299,8 +275,8 @@ func TestRule_Less(t *testing.T) {
 func TestRule_Equals(t *testing.T) {
 	tests := []struct {
 		name  string
-		rule  ApparmorRule
-		other ApparmorRule
+		rule  Rule
+		other Rule
 		want  bool
 	}{
 		{

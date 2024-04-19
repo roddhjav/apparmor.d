@@ -34,7 +34,7 @@ func (r AddressExpr) Equals(other AddressExpr) bool {
 }
 
 type Network struct {
-	Rule
+	RuleBase
 	Qualifier
 	AddressExpr
 	Domain   string
@@ -42,9 +42,9 @@ type Network struct {
 	Protocol string
 }
 
-func newNetworkFromLog(log map[string]string) *Network {
+func newNetworkFromLog(log map[string]string) Rule {
 	return &Network{
-		Rule:        newRuleFromLog(log),
+		RuleBase:    newRuleFromLog(log),
 		Qualifier:   newQualifierFromLog(log),
 		AddressExpr: newAddressExprFromLog(log),
 		Domain:      log["family"],

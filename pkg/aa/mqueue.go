@@ -9,7 +9,7 @@ import (
 )
 
 type Mqueue struct {
-	Rule
+	RuleBase
 	Qualifier
 	Access string
 	Type   string
@@ -17,7 +17,7 @@ type Mqueue struct {
 	Name   string
 }
 
-func newMqueueFromLog(log map[string]string) *Mqueue {
+func newMqueueFromLog(log map[string]string) Rule {
 	mqueueType := "posix"
 	if strings.Contains(log["class"], "posix") {
 		mqueueType = "posix"
@@ -25,7 +25,7 @@ func newMqueueFromLog(log map[string]string) *Mqueue {
 		mqueueType = "sysv"
 	}
 	return &Mqueue{
-		Rule:      newRuleFromLog(log),
+		RuleBase:  newRuleFromLog(log),
 		Qualifier: newQualifierFromLog(log),
 		Access:    toAccess(log["requested"]),
 		Type:      mqueueType,

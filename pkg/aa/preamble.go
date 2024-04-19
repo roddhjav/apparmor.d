@@ -9,7 +9,7 @@ import (
 )
 
 type Abi struct {
-	Rule
+	RuleBase
 	Path    string
 	IsMagic bool
 }
@@ -28,7 +28,7 @@ func (r *Abi) Equals(other any) bool {
 }
 
 type Alias struct {
-	Rule
+	RuleBase
 	Path          string
 	RewrittenPath string
 }
@@ -47,7 +47,7 @@ func (r Alias) Equals(other any) bool {
 }
 
 type Include struct {
-	Rule
+	RuleBase
 	IfExists bool
 	Path     string
 	IsMagic  bool
@@ -70,18 +70,20 @@ func (r *Include) Equals(other any) bool {
 }
 
 type Variable struct {
-	Rule
+	RuleBase
 	Name   string
 	Values []string
 }
 
-func (r *Variable) Less(other Variable) bool {
-	if r.Name != other.Name {
-		return r.Name < other.Name
+func (r *Variable) Less(other any) bool {
+	o, _ := other.(*Variable)
+	if r.Name != o.Name {
+		return r.Name < o.Name
 	}
-	return len(r.Values) < len(other.Values)
+	return len(r.Values) < len(o.Values)
 }
 
-func (r *Variable) Equals(other Variable) bool {
-	return r.Name == other.Name && slices.Equal(r.Values, other.Values)
+func (r *Variable) Equals(other any) bool {
+	o, _ := other.(*Variable)
+	return r.Name == o.Name && slices.Equal(r.Values, o.Values)
 }

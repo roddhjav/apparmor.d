@@ -12,7 +12,7 @@ import (
 
 // Profile represents a single AppArmor profile.
 type Profile struct {
-	Rule
+	RuleBase
 	Header
 	Rules Rules
 }
@@ -25,17 +25,17 @@ type Header struct {
 	Flags       []string
 }
 
-func (r *Profile) Less(other any) bool {
+func (p *Profile) Less(other any) bool {
 	o, _ := other.(*Profile)
-	if r.Name != o.Name {
-		return r.Name < o.Name
+	if p.Name != o.Name {
+		return p.Name < o.Name
 	}
-	return len(r.Attachments) < len(o.Attachments)
+	return len(p.Attachments) < len(o.Attachments)
 }
 
-func (r *Profile) Equals(other any) bool {
+func (p *Profile) Equals(other any) bool {
 	o, _ := other.(*Profile)
-	return r.Name == o.Name && slices.Equal(r.Attachments, o.Attachments) &&
-		maps.Equal(r.Attributes, o.Attributes) &&
-		slices.Equal(r.Flags, o.Flags)
+	return p.Name == o.Name && slices.Equal(p.Attachments, o.Attachments) &&
+		maps.Equal(p.Attributes, o.Attributes) &&
+		slices.Equal(p.Flags, o.Flags)
 }

@@ -5,19 +5,18 @@
 package aa
 
 import (
-	"fmt"
 	"strings"
 )
 
-// ApparmorRule generic interface
-type ApparmorRule interface {
+// Rule generic interface for all AppArmor rules
+type Rule interface {
 	Less(other any) bool
 	Equals(other any) bool
 }
 
-type Rules []ApparmorRule
+type Rules []Rule
 
-type Rule struct {
+type RuleBase struct {
 	Comment     string
 	NoNewPrivs  bool
 	FileInherit bool
@@ -26,7 +25,7 @@ type Rule struct {
 	Optional    bool
 }
 
-func newRuleFromLog(log map[string]string) Rule {
+func newRuleFromLog(log map[string]string) RuleBase {
 	fileInherit := false
 	if log["operation"] == "file_inherit" {
 		fileInherit = true
@@ -54,7 +53,7 @@ func newRuleFromLog(log map[string]string) Rule {
 	default:
 	}
 
-	return Rule{
+	return RuleBase{
 		Comment:     msg,
 		NoNewPrivs:  noNewPrivs,
 		FileInherit: fileInherit,
@@ -62,11 +61,11 @@ func newRuleFromLog(log map[string]string) Rule {
 	}
 }
 
-func (r Rule) Less(other any) bool {
+func (r RuleBase) Less(other any) bool {
 	return false
 }
 
-func (r Rule) Equals(other any) bool {
+func (r RuleBase) Equals(other any) bool {
 	return false
 }
 
@@ -95,7 +94,7 @@ func (r Qualifier) Equals(other Qualifier) bool {
 }
 
 type All struct {
-	Rule
+	RuleBase
 }
 
 func (r *All) Less(other any) bool {

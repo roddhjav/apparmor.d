@@ -35,6 +35,7 @@ type Preamble struct {
 	Includes  []*Include
 	Aliases   []*Alias
 	Variables []*Variable
+	Comments  []*RuleBase
 }
 
 func NewAppArmorProfile() *AppArmorProfileFile {
