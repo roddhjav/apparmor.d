@@ -5,16 +5,16 @@
 package aa
 
 type Signal struct {
-	Rule
+	RuleBase
 	Qualifier
 	Access string
 	Set    string
 	Peer   string
 }
 
-func newSignalFromLog(log map[string]string) *Signal {
+func newSignalFromLog(log map[string]string) Rule {
 	return &Signal{
-		Rule:      newRuleFromLog(log),
+		RuleBase:  newRuleFromLog(log),
 		Qualifier: newQualifierFromLog(log),
 		Access:    toAccess(log["requested_mask"]),
 		Set:       log["signal"],

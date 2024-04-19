@@ -5,15 +5,15 @@
 package aa
 
 type Ptrace struct {
-	Rule
+	RuleBase
 	Qualifier
 	Access string
 	Peer   string
 }
 
-func newPtraceFromLog(log map[string]string) *Ptrace {
+func newPtraceFromLog(log map[string]string) Rule {
 	return &Ptrace{
-		Rule:      newRuleFromLog(log),
+		RuleBase:  newRuleFromLog(log),
 		Qualifier: newQualifierFromLog(log),
 		Access:    toAccess(log["requested_mask"]),
 		Peer:      log["peer"],

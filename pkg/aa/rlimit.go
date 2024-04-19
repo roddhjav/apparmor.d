@@ -5,18 +5,18 @@
 package aa
 
 type Rlimit struct {
-	Rule
+	RuleBase
 	Key   string
 	Op    string
 	Value string
 }
 
-func newRlimitFromLog(log map[string]string) *Rlimit {
+func newRlimitFromLog(log map[string]string) Rule {
 	return &Rlimit{
-		Rule:  newRuleFromLog(log),
-		Key:   log["key"],
-		Op:    log["op"],
-		Value: log["value"],
+		RuleBase: newRuleFromLog(log),
+		Key:      log["key"],
+		Op:       log["op"],
+		Value:    log["value"],
 	}
 }
 

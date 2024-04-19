@@ -5,14 +5,14 @@
 package aa
 
 type Capability struct {
-	Rule
+	RuleBase
 	Qualifier
 	Name string
 }
 
-func newCapabilityFromLog(log map[string]string) *Capability {
+func newCapabilityFromLog(log map[string]string) Rule {
 	return &Capability{
-		Rule:      newRuleFromLog(log),
+		RuleBase:  newRuleFromLog(log),
 		Qualifier: newQualifierFromLog(log),
 		Name:      log["capname"],
 	}

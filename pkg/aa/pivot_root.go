@@ -5,16 +5,16 @@
 package aa
 
 type PivotRoot struct {
-	Rule
+	RuleBase
 	Qualifier
 	OldRoot       string
 	NewRoot       string
 	TargetProfile string
 }
 
-func newPivotRootFromLog(log map[string]string) *PivotRoot {
+func newPivotRootFromLog(log map[string]string) Rule {
 	return &PivotRoot{
-		Rule:          newRuleFromLog(log),
+		RuleBase:      newRuleFromLog(log),
 		Qualifier:     newQualifierFromLog(log),
 		OldRoot:       log["srcname"],
 		NewRoot:       log["name"],

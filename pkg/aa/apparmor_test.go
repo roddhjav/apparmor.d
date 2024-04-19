@@ -58,7 +58,7 @@ func TestAppArmorProfile_String(t *testing.T) {
 						Attributes:  map[string]string{"security.tagged": "allowed"},
 						Flags:       []string{"complain", "attach_disconnected"},
 					},
-					Rules: []ApparmorRule{
+					Rules: []Rule{
 						&Include{IsMagic: true, Path: "abstractions/base"},
 						&Include{IsMagic: true, Path: "abstractions/nameservice-strict"},
 						rlimit1,
@@ -135,7 +135,7 @@ func TestAppArmorProfile_AddRule(t *testing.T) {
 			log:  capability1Log,
 			want: &AppArmorProfileFile{
 				Profiles: []*Profile{{
-					Rules: []ApparmorRule{capability1},
+					Rules: []Rule{capability1},
 				}},
 			},
 		},
@@ -144,7 +144,7 @@ func TestAppArmorProfile_AddRule(t *testing.T) {
 			log:  network1Log,
 			want: &AppArmorProfileFile{
 				Profiles: []*Profile{{
-					Rules: []ApparmorRule{network1},
+					Rules: []Rule{network1},
 				}},
 			},
 		},
@@ -153,7 +153,7 @@ func TestAppArmorProfile_AddRule(t *testing.T) {
 			log:  mount2Log,
 			want: &AppArmorProfileFile{
 				Profiles: []*Profile{{
-					Rules: []ApparmorRule{mount2},
+					Rules: []Rule{mount2},
 				}},
 			},
 		},
@@ -162,7 +162,7 @@ func TestAppArmorProfile_AddRule(t *testing.T) {
 			log:  signal1Log,
 			want: &AppArmorProfileFile{
 				Profiles: []*Profile{{
-					Rules: []ApparmorRule{signal1},
+					Rules: []Rule{signal1},
 				}},
 			},
 		},
@@ -171,7 +171,7 @@ func TestAppArmorProfile_AddRule(t *testing.T) {
 			log:  ptrace2Log,
 			want: &AppArmorProfileFile{
 				Profiles: []*Profile{{
-					Rules: []ApparmorRule{ptrace2},
+					Rules: []Rule{ptrace2},
 				}},
 			},
 		},
@@ -180,7 +180,7 @@ func TestAppArmorProfile_AddRule(t *testing.T) {
 			log:  unix1Log,
 			want: &AppArmorProfileFile{
 				Profiles: []*Profile{{
-					Rules: []ApparmorRule{unix1},
+					Rules: []Rule{unix1},
 				}},
 			},
 		},
@@ -189,7 +189,7 @@ func TestAppArmorProfile_AddRule(t *testing.T) {
 			log:  dbus2Log,
 			want: &AppArmorProfileFile{
 				Profiles: []*Profile{{
-					Rules: []ApparmorRule{dbus2},
+					Rules: []Rule{dbus2},
 				}},
 			},
 		},
@@ -198,7 +198,7 @@ func TestAppArmorProfile_AddRule(t *testing.T) {
 			log:  file2Log,
 			want: &AppArmorProfileFile{
 				Profiles: []*Profile{{
-					Rules: []ApparmorRule{file2},
+					Rules: []Rule{file2},
 				}},
 			},
 		},
@@ -224,7 +224,7 @@ func TestAppArmorProfile_Sort(t *testing.T) {
 			name: "all",
 			origin: &AppArmorProfileFile{
 				Profiles: []*Profile{{
-					Rules: []ApparmorRule{
+					Rules: []Rule{
 						file2, network1, includeLocal1, dbus2, signal1, ptrace1,
 						capability2, file1, dbus1, unix2, signal2, mount2,
 					},
@@ -232,7 +232,7 @@ func TestAppArmorProfile_Sort(t *testing.T) {
 			},
 			want: &AppArmorProfileFile{
 				Profiles: []*Profile{{
-					Rules: []ApparmorRule{
+					Rules: []Rule{
 						capability2, network1, mount2, signal1, signal2, ptrace1,
 						unix2, dbus2, dbus1, file1, file2, includeLocal1,
 					},
@@ -261,12 +261,12 @@ func TestAppArmorProfile_MergeRules(t *testing.T) {
 			name: "all",
 			origin: &AppArmorProfileFile{
 				Profiles: []*Profile{{
-					Rules: []ApparmorRule{capability1, capability1, network1, network1, file1, file1},
+					Rules: []Rule{capability1, capability1, network1, network1, file1, file1},
 				}},
 			},
 			want: &AppArmorProfileFile{
 				Profiles: []*Profile{{
-					Rules: []ApparmorRule{capability1, network1, file1},
+					Rules: []Rule{capability1, network1, file1},
 				}},
 			},
 		},

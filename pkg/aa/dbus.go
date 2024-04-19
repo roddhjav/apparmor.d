@@ -5,7 +5,7 @@
 package aa
 
 type Dbus struct {
-	Rule
+	RuleBase
 	Qualifier
 	Access    string
 	Bus       string
@@ -17,7 +17,7 @@ type Dbus struct {
 	PeerLabel string
 }
 
-func newDbusFromLog(log map[string]string) *Dbus {
+func newDbusFromLog(log map[string]string) Rule {
 	name := ""
 	peerName := ""
 	if log["mask"] == "bind" {
@@ -26,7 +26,7 @@ func newDbusFromLog(log map[string]string) *Dbus {
 		peerName = log["name"]
 	}
 	return &Dbus{
-		Rule:      newRuleFromLog(log),
+		RuleBase:  newRuleFromLog(log),
 		Qualifier: newQualifierFromLog(log),
 		Access:    log["mask"],
 		Bus:       log["bus"],

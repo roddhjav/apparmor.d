@@ -5,7 +5,7 @@
 package aa
 
 type Unix struct {
-	Rule
+	RuleBase
 	Qualifier
 	Access    string
 	Type      string
@@ -18,9 +18,9 @@ type Unix struct {
 	PeerAddr  string
 }
 
-func newUnixFromLog(log map[string]string) *Unix {
+func newUnixFromLog(log map[string]string) Rule {
 	return &Unix{
-		Rule:      newRuleFromLog(log),
+		RuleBase:  newRuleFromLog(log),
 		Qualifier: newQualifierFromLog(log),
 		Access:    toAccess(log["requested_mask"]),
 		Type:      log["sock_type"],

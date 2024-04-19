@@ -71,13 +71,13 @@ var (
 		"flags":     "rw, rbind",
 	}
 	mount1 = &Mount{
-		Rule:            Rule{Comment: "failed perms check"},
+		RuleBase:        RuleBase{Comment: "failed perms check"},
 		MountConditions: MountConditions{FsType: "overlay"},
 		Source:          "overlay",
 		MountPoint:      "/var/lib/docker/overlay2/opaque-bug-check1209538631/merged/",
 	}
 	mount2 = &Mount{
-		Rule:            Rule{Comment: "failed perms check"},
+		RuleBase:        RuleBase{Comment: "failed perms check"},
 		MountConditions: MountConditions{Options: []string{"rw", "rbind"}},
 		Source:          "/oldroot/dev/tty",
 		MountPoint:      "/newroot/dev/tty",
@@ -205,9 +205,9 @@ var (
 		PeerLabel: "dbus-daemon",
 	}
 	unix2 = &Unix{
-		Rule:   Rule{FileInherit: true},
-		Access: "receive",
-		Type:   "stream",
+		RuleBase: RuleBase{FileInherit: true},
+		Access:   "receive",
+		Type:     "stream",
 	}
 
 	// Dbus
@@ -285,9 +285,9 @@ var (
 	}
 	file1 = &File{Path: "/usr/share/poppler/cMap/Identity-H", Access: "r"}
 	file2 = &File{
-		Rule:   Rule{NoNewPrivs: true},
-		Owner:  true,
-		Path:   "@{PROC}/4163/cgroup",
-		Access: "r",
+		RuleBase: RuleBase{NoNewPrivs: true},
+		Owner:    true,
+		Path:     "@{PROC}/4163/cgroup",
+		Access:   "r",
 	}
 )

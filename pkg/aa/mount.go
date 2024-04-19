@@ -37,16 +37,16 @@ func (m MountConditions) Equals(other MountConditions) bool {
 }
 
 type Mount struct {
-	Rule
+	RuleBase
 	Qualifier
 	MountConditions
 	Source     string
 	MountPoint string
 }
 
-func newMountFromLog(log map[string]string) *Mount {
+func newMountFromLog(log map[string]string) Rule {
 	return &Mount{
-		Rule:            newRuleFromLog(log),
+		RuleBase:        newRuleFromLog(log),
 		Qualifier:       newQualifierFromLog(log),
 		MountConditions: newMountConditionsFromLog(log),
 		Source:          log["srcname"],
@@ -76,15 +76,15 @@ func (r *Mount) Equals(other any) bool {
 }
 
 type Umount struct {
-	Rule
+	RuleBase
 	Qualifier
 	MountConditions
 	MountPoint string
 }
 
-func newUmountFromLog(log map[string]string) *Umount {
+func newUmountFromLog(log map[string]string) Rule {
 	return &Umount{
-		Rule:            newRuleFromLog(log),
+		RuleBase:        newRuleFromLog(log),
 		Qualifier:       newQualifierFromLog(log),
 		MountConditions: newMountConditionsFromLog(log),
 		MountPoint:      log["name"],
@@ -110,15 +110,15 @@ func (r *Umount) Equals(other any) bool {
 }
 
 type Remount struct {
-	Rule
+	RuleBase
 	Qualifier
 	MountConditions
 	MountPoint string
 }
 
-func newRemountFromLog(log map[string]string) *Remount {
+func newRemountFromLog(log map[string]string) Rule {
 	return &Remount{
-		Rule:            newRuleFromLog(log),
+		RuleBase:        newRuleFromLog(log),
 		Qualifier:       newQualifierFromLog(log),
 		MountConditions: newMountConditionsFromLog(log),
 		MountPoint:      log["name"],
