@@ -86,10 +86,10 @@ func (f *AppArmorProfileFile) resolve(str string) []string {
 func (f *AppArmorProfileFile) ResolveAttachments() {
 	p := f.GetDefaultProfile()
 
-	for _, variable := range profile.Variables {
+	for _, variable := range f.Variables {
 		if variable.Name == "exec_path" {
 			for _, value := range variable.Values {
-				attachments := profile.resolve(value)
+				attachments := f.resolve(value)
 				if len(attachments) == 0 {
 					panic("Variable not defined in: " + value)
 				}
