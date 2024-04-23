@@ -52,7 +52,7 @@ func TestExec_Apply(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg.RootApparmord = tt.rootApparmord
 			if got := Directives["exec"].Apply(tt.opt, tt.profile); got != tt.want {
-				t.Errorf("Exec.Apply() = %v, want %v", got, tt.want)
+				t.Errorf("Exec.Apply() = |%v|, want |%v|", got, tt.want)
 			}
 		})
 	}
