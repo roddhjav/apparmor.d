@@ -4,110 +4,24 @@
 
 {{- define "profile" -}}
 
-    {{- with .Header -}}
-        {{- "profile" -}}
-        {{- with .Name -}}
-            {{ " " }}{{ . }}
-        {{- end -}}
-        {{- with .Attachments -}}
-            {{ " " }}{{ join . }}
-        {{- end -}}
-        {{- with .Attributes -}}
-            {{ " xattrs=(" }}{{ join . }}{{ ")" }}
-        {{- end -}}
-        {{- with .Flags -}}
-            {{ " flags=(" }}{{ join . }}{{ ")" }}
-        {{- end -}}
-        {{- " {\n" -}}
+    {{- "profile" -}}
+    {{- with .Name -}}
+        {{ " " }}{{ . }}
+    {{- end -}}
+    {{- with .Attachments -}}
+        {{ " " }}{{ join . }}
+    {{- end -}}
+    {{- with .Attributes -}}
+        {{ " xattrs=(" }}{{ join . }}{{ ")" }}
+    {{- end -}}
+    {{- with .Flags -}}
+        {{ " flags=(" }}{{ join . }}{{ ")" }}
     {{- end -}}
 
-    {{- $oldtype := "" -}}
-    {{- range .Rules -}}
-        {{- $type := typeof . -}}
-        {{- if eq $type "Rule" -}}
-            {{- template "comment" . -}}
-            {{- "\n" -}}
-            {{- continue -}}
-        {{- end -}}
-        {{- if and (ne $type $oldtype) (ne $oldtype "") -}}
-            {{- "\n" -}}
-        {{- end -}}
-        {{- indent "" -}}
-
-        {{- if eq $type "Include" -}}
-            {{ template "include" . }}
-        {{- end -}}
-
-        {{- if eq $type "Rlimit" -}}
-            {{- template "rlimit" . -}}
-        {{- end -}}
-
-        {{- if eq $type "Userns" -}}
-            {{- template "userns" . -}}
-        {{- end -}}
-
-        {{- if eq $type "Capability" -}}
-            {{- template "capability" . -}}
-        {{- end -}}
-
-        {{- if eq $type "Network" -}}
-            {{- template "network" . -}}
-        {{- end -}}
-
-        {{- if eq $type "Mount" -}}
-            {{- template "mount" . -}}
-        {{- end -}}
-
-        {{- if eq $type "Remount" -}}
-            {{- template "remount" . -}}
-        {{- end -}}
-
-        {{- if eq $type "Umount" -}}
-            {{- template "umount" . -}}
-        {{- end -}}
-
-        {{- if eq $type "PivotRoot" -}}
-            {{- template "pivot_root" . -}}
-        {{- end -}}
-
-        {{- if eq $type "ChangeProfile" -}}
-            {{- template "change_profile" . -}}
-        {{- end -}}
-
-        {{- if eq $type "Mqueue" -}}
-            {{- template "mqueue" . -}}
-        {{- end -}}
-
-        {{- if eq $type "Unix" -}}
-            {{- template "unix" . -}}
-        {{- end -}}
-
-        {{- if eq $type "Ptrace" -}}
-            {{- template "ptrace" . -}}
-        {{- end -}}
-
-        {{- if eq $type "Signal" -}}
-            {{- template "signal" . -}}
-        {{- end -}}
-
-        {{- if eq $type "Dbus" -}}
-            {{- template "dbus" . -}}
-        {{- end -}}
-
-        {{- if eq $type "File" -}}
-            {{- template "file" . -}}
-        {{- end -}}
-
-        {{- if eq $type "Profile" -}}
-            {{ template "profile" . }}
-        {{- end -}}
-
-        {{- "\n" -}}
-        {{- $oldtype = $type -}}
-    {{- end -}}
-
-    {{- with .Header -}}
-        {{- "}\n" -}}
-    {{- end -}}
+    {{- " {\n" -}}
+    {{- setindent "++" -}}
+    {{- template "rules" .Rules -}}
+    {{- setindent "--" -}}
+    {{- indent "}" -}}
 
 {{- end -}}

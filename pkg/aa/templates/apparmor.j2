@@ -2,26 +2,48 @@
 {{- /* Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io> */ -}}
 {{- /* SPDX-License-Identifier: GPL-2.0-only */ -}}
 
-{{- range .Abi -}}
-    {{- if .IsMagic -}}
-        {{ "abi <" }}{{ .Path }}{{ ">,\n" }}
-    {{- else -}}
-        {{ "abi \"" }}{{ .Path }}{{ "\",\n" }}
-    {{- end }}
-{{ end -}}
+{{- define "apparmor" -}}
 
-{{- range .Aliases -}}
-    {{ "alias " }}{{ .Path }}{{ " -> " }}{{ .RewrittenPath }}{{ ",\n" }}
-{{ end -}}
+    {{- with .Comments -}}
+        {{- range . -}}
+            {{- template "comment" . -}}
+            {{- "\n" -}}
+        {{- end -}}
+        {{- "\n" -}}
+    {{- end -}}
 
-{{- range .Includes -}}
-    {{ template "include" . }}{{ "\n" }}
-{{ end -}}
+    {{- with .Abi -}}
+        {{- range . -}}
+            {{- template "abi" . -}}
+            {{- "\n" -}}
+        {{- end -}}
+        {{- "\n" -}}
+    {{- end -}}
 
-{{- range .Variables -}}
-    {{ "@{" }}{{ .Name }}{{ "} = " }}{{ join .Values }}
-{{ end -}}
+    {{- with .Aliases -}}
+        {{- range . -}}
+            {{- template "alias" . -}}
+            {{- "\n" -}}
+        {{- end -}}
+        {{- "\n" -}}
+    {{- end -}}
 
-{{- range .Profiles -}}
-    {{ template "profile" . }}
+    {{- with .Includes -}}
+        {{- range . -}}
+            {{- template "include" . -}}
+            {{- "\n" -}}
+        {{- end -}}
+        {{- "\n" -}}
+    {{- end -}}
+
+    {{- range .Variables -}}
+        {{- template "variable" . -}}
+        {{- "\n" -}}
+    {{- end -}}
+
+    {{- range .Profiles -}}
+        {{- template "profile" . -}}
+        {{- "\n" -}}
+    {{- end -}}
+
 {{- end -}}
