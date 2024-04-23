@@ -4,6 +4,12 @@
 
 package aa
 
+const (
+	tokRLIMIT = "rlimit"
+	tokSET    = "set"
+)
+
+
 type Rlimit struct {
 	RuleBase
 	Key   string
@@ -34,4 +40,8 @@ func (r *Rlimit) Less(other any) bool {
 func (r *Rlimit) Equals(other any) bool {
 	o, _ := other.(*Rlimit)
 	return r.Key == o.Key && r.Op == o.Op && r.Value == o.Value
+}
+
+func (r *Rlimit) String() string {
+	return renderTemplate(tokRLIMIT, r)
 }

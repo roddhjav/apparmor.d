@@ -4,6 +4,8 @@
 
 package aa
 
+const tokUSERNS = "userns"
+
 type Userns struct {
 	RuleBase
 	Qualifier
@@ -29,4 +31,8 @@ func (r *Userns) Less(other any) bool {
 func (r *Userns) Equals(other any) bool {
 	o, _ := other.(*Userns)
 	return r.Create == o.Create && r.Qualifier.Equals(o.Qualifier)
+}
+
+func (r *Userns) String() string {
+	return renderTemplate(tokUSERNS, r)
 }

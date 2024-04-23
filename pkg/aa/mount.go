@@ -8,6 +8,13 @@ import (
 	"slices"
 	"strings"
 )
+
+const (
+	tokMOUNT   = "mount"
+	tokREMOUNT = "remount"
+	tokUMOUNT  = "umount"
+)
+
 )
 
 type MountConditions struct {
@@ -75,6 +82,10 @@ func (r *Mount) Equals(other any) bool {
 		r.Qualifier.Equals(o.Qualifier)
 }
 
+func (r *Mount) String() string {
+	return renderTemplate(tokMOUNT, r)
+}
+
 type Umount struct {
 	RuleBase
 	Qualifier
@@ -109,6 +120,10 @@ func (r *Umount) Equals(other any) bool {
 		r.Qualifier.Equals(o.Qualifier)
 }
 
+func (r *Umount) String() string {
+	return renderTemplate(tokUMOUNT, r)
+}
+
 type Remount struct {
 	RuleBase
 	Qualifier
@@ -141,4 +156,8 @@ func (r *Remount) Equals(other any) bool {
 	return r.MountPoint == o.MountPoint &&
 		r.MountConditions.Equals(o.MountConditions) &&
 		r.Qualifier.Equals(o.Qualifier)
+}
+
+func (r *Remount) String() string {
+	return renderTemplate(tokREMOUNT, r)
 }

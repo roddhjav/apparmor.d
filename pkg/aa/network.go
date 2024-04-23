@@ -4,6 +4,9 @@
 
 package aa
 
+const tokNETWORK = "network"
+
+
 type AddressExpr struct {
 	Source      string
 	Destination string
@@ -75,4 +78,8 @@ func (r *Network) Equals(other any) bool {
 	return r.Domain == o.Domain && r.Type == o.Type &&
 		r.Protocol == o.Protocol && r.AddressExpr.Equals(o.AddressExpr) &&
 		r.Qualifier.Equals(o.Qualifier)
+}
+
+func (r *Network) String() string {
+	return renderTemplate(tokNETWORK, r)
 }

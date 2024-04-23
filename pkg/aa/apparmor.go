@@ -42,14 +42,9 @@ func NewAppArmorProfile() *AppArmorProfileFile {
 	return &AppArmorProfileFile{}
 }
 
-// String returns the formatted representation of a profile as a string
+// String returns the formatted representation of a profile file as a string
 func (f *AppArmorProfileFile) String() string {
-	var res bytes.Buffer
-	err := tmpl["apparmor"].Execute(&res, f)
-	if err != nil {
-		return err.Error()
-	}
-	return res.String()
+	return renderTemplate("apparmor", f)
 }
 
 // GetDefaultProfile ensure a profile is always present in the profile file and

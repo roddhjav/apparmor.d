@@ -5,6 +5,8 @@
 package aa
 
 
+const tokCAPABILITY = "capability"
+
 type Capability struct {
 	RuleBase
 	Qualifier
@@ -36,4 +38,6 @@ func (r *Capability) Equals(other any) bool {
 	return slices.Equal(r.Names, o.Names) && r.Qualifier.Equals(o.Qualifier)
 }
 
+func (r *Capability) String() string {
+	return renderTemplate(tokCAPABILITY, r)
 }

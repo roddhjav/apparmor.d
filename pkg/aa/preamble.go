@@ -6,6 +6,12 @@ package aa
 
 import (
 	"slices"
+
+const (
+	tokABI      = "abi"
+	tokALIAS    = "alias"
+	tokINCLUDE  = "include"
+	tokIFEXISTS = "if exists"
 )
 
 type Abi struct {
@@ -27,6 +33,10 @@ func (r *Abi) Equals(other any) bool {
 	return r.Path == o.Path && r.IsMagic == o.IsMagic
 }
 
+func (r *Abi) String() string {
+	return renderTemplate(tokABI, r)
+}
+
 type Alias struct {
 	RuleBase
 	Path          string
@@ -44,6 +54,10 @@ func (r Alias) Less(other any) bool {
 func (r Alias) Equals(other any) bool {
 	o, _ := other.(*Alias)
 	return r.Path == o.Path && r.RewrittenPath == o.RewrittenPath
+}
+
+func (r *Alias) String() string {
+	return renderTemplate(tokALIAS, r)
 }
 
 type Include struct {
@@ -69,6 +83,10 @@ func (r *Include) Equals(other any) bool {
 	return r.Path == o.Path && r.IsMagic == o.IsMagic && r.IfExists == o.IfExists
 }
 
+func (r *Include) String() string {
+	return renderTemplate(tokINCLUDE, r)
+}
+
 type Variable struct {
 	RuleBase
 	Name   string
@@ -89,4 +107,8 @@ func (r *Variable) Less(other any) bool {
 func (r *Variable) Equals(other any) bool {
 	o, _ := other.(*Variable)
 	return r.Name == o.Name && slices.Equal(r.Values, o.Values)
+}
+
+func (r *Variable) String() string {
+	return renderTemplate("variable", r)
 }

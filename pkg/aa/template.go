@@ -8,29 +8,40 @@ import (
 	"embed"
 	"fmt"
 	"reflect"
+	"slices"
 	"strings"
 	"text/template"
 )
 
-// Default indentation for apparmor profile (2 spaces)
-const indentation = "  "
-
 var (
+	// Default indentation for apparmor profile (2 spaces)
+	TemplateIndentation = "  "
+
+	// The current indentation level
+	TemplateIndentationLevel = 0
+
 	//go:embed templates/*.j2
+	//go:embed templates/rule/*.j2
 	tmplFiles embed.FS
 
 	// The functions available in the template
 	tmplFunctionMap = template.FuncMap{
 		"typeof":     typeOf,
 		"join":       join,
+		"cjoin":      cjoin,
 		"indent":     indent,
 		"overindent": indentDbus,
+		"setindent":  setindent,
 	}
 
 	// The apparmor templates
-	tmpl = map[string]*template.Template{
-		"apparmor": generateTemplate("apparmor.j2"),
-	}
+	tmpl = generateTemplates([]string{
+		"apparmor", tokPROFILE, "rules", // Global templates
+		tokINCLUDE, tokRLIMIT, tokCAPABILITY, tokNETWORK,
+		tokMOUNT, tokPIVOTROOT, tokCHANGEPROFILE, tokSIGNAL,
+		tokPTRACE, tokUNIX, tokUSERNS, tokIOURING,
+		tokDBUS, "file",
+	})
 
 	// convert apparmor requested mask to apparmor access mode
 	maskToAccess = map[string]string{
@@ -90,28 +101,33 @@ var (
 	fileWeights = map[string]int{}
 )
 
-func generateTemplate(name string) *template.Template {
-	res := template.New(name).Funcs(tmplFunctionMap)
-	switch name {
-	case "apparmor.j2":
-		res = template.Must(res.ParseFS(tmplFiles,
-			"templates/*.j2", "templates/rule/*.j2",
+func generateTemplates(names []string) map[string]*template.Template {
+	res := make(map[string]*template.Template, len(names))
+	base := template.New("").Funcs(tmplFunctionMap)
+	base = template.Must(base.ParseFS(tmplFiles,
+		"templates/*.j2", "templates/rule/*.j2",
+	))
+	for _, name := range names {
+		t := template.Must(base.Clone())
+		t = template.Must(t.Parse(
+			fmt.Sprintf(`{{- template "%s" . -}}`, name),
 		))
-	case "profile.j2":
-		res = template.Must(res.Parse("{{ template \"profile\" . }}"))
-		res = template.Must(res.ParseFS(tmplFiles,
-			"templates/profile.j2", "templates/rule/*.j2",
-		))
-	default:
-		res = template.Must(res.Parse(
-			fmt.Sprintf("{{ template \"%s\" . }}", name),
-		))
-		res = template.Must(res.ParseFS(tmplFiles,
-			fmt.Sprintf("templates/rule/%s.j2", name),
-			"templates/rule/qualifier.j2", "templates/rule/comment.j2",
-		))
+		res[name] = t
 	}
 	return res
+}
+
+func renderTemplate(name string, data any) string {
+	var res strings.Builder
+	template, ok := tmpl[name]
+	if !ok {
+		panic("template not found")
+	}
+	err := template.Execute(&res, data)
+	if err != nil {
+		panic(err)
+	}
+	return res.String()
 }
 
 func init() {
@@ -138,6 +154,25 @@ func join(i any) string {
 	}
 }
 
+func cjoin(i any) string {
+	switch reflect.TypeOf(i).Kind() {
+	case reflect.Slice:
+		s := i.([]string)
+		if len(s) == 1 {
+			return s[0]
+		}
+		return "(" + strings.Join(s, " ") + ")"
+	case reflect.Map:
+		res := []string{}
+		for k, v := range i.(map[string]string) {
+			res = append(res, k+"="+v)
+		}
+		return "(" + strings.Join(res, " ") + ")"
+	default:
+		return i.(string)
+	}
+}
+
 func typeOf(i any) string {
 	return strings.TrimPrefix(reflect.TypeOf(i).String(), "*aa.")
 }
@@ -146,12 +181,22 @@ func typeToValue(i reflect.Type) string {
 	return strings.ToLower(strings.TrimPrefix(i.String(), "*aa."))
 }
 
+func setindent(i string) string {
+	switch i {
+	case "++":
+		TemplateIndentationLevel++
+	case "--":
+		TemplateIndentationLevel--
+	}
+	return ""
+}
+
 func indent(s string) string {
-	return indentation + s
+	return strings.Repeat(TemplateIndentation, TemplateIndentationLevel) + s
 }
 
 func indentDbus(s string) string {
-	return indentation + "     " + s
+	return strings.Join([]string{TemplateIndentation, s}, "     ")
 }
 
 func getLetterIn(alphabet []string, in string) string {

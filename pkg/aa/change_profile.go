@@ -4,6 +4,8 @@
 
 package aa
 
+const tokCHANGEPROFILE = "change_profile"
+
 type ChangeProfile struct {
 	RuleBase
 	Qualifier
@@ -40,4 +42,8 @@ func (r *ChangeProfile) Equals(other any) bool {
 	o, _ := other.(*ChangeProfile)
 	return r.ExecMode == o.ExecMode && r.Exec == o.Exec &&
 		r.ProfileName == o.ProfileName && r.Qualifier.Equals(o.Qualifier)
+}
+
+func (r *ChangeProfile) String() string {
+	return renderTemplate(tokCHANGEPROFILE, r)
 }

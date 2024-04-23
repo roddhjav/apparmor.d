@@ -4,6 +4,9 @@
 
 package aa
 
+const tokIOURING = "io_uring"
+
+
 type IOUring struct {
 	RuleBase
 	Qualifier
@@ -36,4 +39,6 @@ func (r *IOUring) Equals(other any) bool {
 	return slices.Equal(r.Access, o.Access) && r.Label == o.Label && r.Qualifier.Equals(o.Qualifier)
 }
 
+func (r *IOUring) String() string {
+	return renderTemplate(tokIOURING, r)
 }

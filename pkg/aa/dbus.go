@@ -4,6 +4,8 @@
 
 package aa
 
+const tokDBUS = "dbus"
+
 type Dbus struct {
 	RuleBase
 	Qualifier
@@ -76,4 +78,8 @@ func (r *Dbus) Equals(other any) bool {
 		r.Path == o.Path && r.Interface == o.Interface &&
 		r.Member == o.Member && r.PeerName == o.PeerName &&
 		r.PeerLabel == o.PeerLabel && r.Qualifier.Equals(o.Qualifier)
+}
+
+func (r *Dbus) String() string {
+	return renderTemplate(tokDBUS, r)
 }

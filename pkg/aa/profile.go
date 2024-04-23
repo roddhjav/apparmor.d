@@ -10,6 +10,12 @@ import (
 	"strings"
 )
 
+const (
+	tokATTRIBUTES = "xattrs"
+	tokFLAGS      = "flags"
+	tokPROFILE    = "profile"
+)
+
 // Profile represents a single AppArmor profile.
 type Profile struct {
 	RuleBase
@@ -39,6 +45,11 @@ func (p *Profile) Equals(other any) bool {
 		maps.Equal(p.Attributes, o.Attributes) &&
 		slices.Equal(p.Flags, o.Flags)
 }
+
+func (p *Profile) String() string {
+	return renderTemplate(tokPROFILE, p)
+}
+
 
 // AddRule adds a new rule to the profile from a log map.
 func (p *Profile) AddRule(log map[string]string) {
