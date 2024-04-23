@@ -73,6 +73,9 @@ type Variable struct {
 	RuleBase
 	Name   string
 	Values []string
+	Define bool
+}
+
 }
 
 func (r *Variable) Less(other any) bool {
