@@ -51,17 +51,20 @@ func setInterfaces(rules map[string]string) []string {
 }
 
 func (d Dbus) Apply(opt *Option, profile string) string {
-	var p *aa.AppArmorProfileFile
+	var r aa.Rules
 
 	action := d.sanityCheck(opt)
 	switch action {
 	case "own":
-		p = d.own(opt.ArgMap)
+		r = d.own(opt.ArgMap)
 	case "talk":
-		p = d.talk(opt.ArgMap)
+		r = d.talk(opt.ArgMap)
 	}
 
-	generatedDbus := p.String()
+	aa.TemplateIndentationLevel = strings.Count(
+		strings.SplitN(opt.Raw, Keyword, 1)[0], aa.TemplateIndentation,
+	)
+	generatedDbus := r.String()
 	lenDbus := len(generatedDbus)
 	generatedDbus = generatedDbus[:lenDbus-1]
 	profile = strings.Replace(profile, opt.Raw, generatedDbus, -1)
@@ -95,16 +98,15 @@ func (d Dbus) sanityCheck(opt *Option) string {
 	return action
 }
 
-func (d Dbus) own(rules map[string]string) *aa.AppArmorProfileFile {
+func (d Dbus) own(rules map[string]string) aa.Rules {
 	interfaces := setInterfaces(rules)
-	profile := &aa.AppArmorProfileFile{}
-	p := profile.GetDefaultProfile()
-	p.Rules = append(p.Rules, &aa.Dbus{
-		Access: "bind", Bus: rules["bus"], Name: rules["name"],
+	res := aa.Rules{}
+	res = append(res, &aa.Dbus{
+		Access: []string{"bind"}, Bus: rules["bus"], Name: rules["name"],
 	})
 	for _, iface := range interfaces {
-		p.Rules = append(p.Rules, &aa.Dbus{
-			Access:    "receive",
+		res = append(res, &aa.Dbus{
+			Access:    []string{"receive"},
 			Bus:       rules["bus"],
 			Path:      rules["path"],
 			Interface: iface,
@@ -112,32 +114,31 @@ func (d Dbus) own(rules map[string]string) *aa.AppArmorProfileFile {
 		})
 	}
 	for _, iface := range interfaces {
-		p.Rules = append(p.Rules, &aa.Dbus{
-			Access:    "send",
+		res = append(res, &aa.Dbus{
+			Access:    []string{"send"},
 			Bus:       rules["bus"],
 			Path:      rules["path"],
 			Interface: iface,
 			PeerName:  `"{:1.@{int},org.freedesktop.DBus}"`,
 		})
 	}
-	p.Rules = append(p.Rules, &aa.Dbus{
-		Access:    "receive",
+	res = append(res, &aa.Dbus{
+		Access:    []string{"receive"},
 		Bus:       rules["bus"],
 		Path:      rules["path"],
 		Interface: "org.freedesktop.DBus.Introspectable",
 		Member:    "Introspect",
 		PeerName:  `":1.@{int}"`,
 	})
-	return profile
+	return res
 }
 
-func (d Dbus) talk(rules map[string]string) *aa.AppArmorProfileFile {
+func (d Dbus) talk(rules map[string]string) aa.Rules {
 	interfaces := setInterfaces(rules)
-	profile := &aa.AppArmorProfileFile{}
-	p := profile.GetDefaultProfile()
+	res := aa.Rules{}
 	for _, iface := range interfaces {
-		p.Rules = append(p.Rules, &aa.Dbus{
-			Access:    "send",
+		res = append(res, &aa.Dbus{
+			Access:    []string{"send"},
 			Bus:       rules["bus"],
 			Path:      rules["path"],
 			Interface: iface,
@@ -146,8 +147,8 @@ func (d Dbus) talk(rules map[string]string) *aa.AppArmorProfileFile {
 		})
 	}
 	for _, iface := range interfaces {
-		p.Rules = append(p.Rules, &aa.Dbus{
-			Access:    "receive",
+		res = append(res, &aa.Dbus{
+			Access:    []string{"receive"},
 			Bus:       rules["bus"],
 			Path:      rules["path"],
 			Interface: iface,
@@ -155,5 +156,5 @@ func (d Dbus) talk(rules map[string]string) *aa.AppArmorProfileFile {
 			PeerLabel: rules["label"],
 		})
 	}
-	return profile
+	return res
 }

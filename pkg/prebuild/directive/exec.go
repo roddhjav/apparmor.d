@@ -36,8 +36,7 @@ func (d Exec) Apply(opt *Option, profileRaw string) string {
 		delete(opt.ArgMap, t)
 	}
 
-	profile := &aa.AppArmorProfileFile{}
-	p := profile.GetDefaultProfile()
+	rules := aa.Rules{}
 	for name := range opt.ArgMap {
 		profiletoTransition := util.MustReadFile(cfg.RootApparmord.Join(name))
 		dstProfile := aa.DefaultTunables()
@@ -45,18 +44,21 @@ func (d Exec) Apply(opt *Option, profileRaw string) string {
 		for _, variable := range dstProfile.Variables {
 			if variable.Name == "exec_path" {
 				for _, v := range variable.Values {
-					p.Rules = append(p.Rules, &aa.File{
+					rules = append(rules, &aa.File{
 						Path:   v,
-						Access: transition,
+						Access: []string{transition},
 					})
 				}
 				break
 			}
 		}
 	}
-	profile.Sort()
-	rules := profile.String()
-	lenRules := len(rules)
-	rules = rules[:lenRules-1]
-	return strings.Replace(profileRaw, opt.Raw, rules, -1)
+
+	aa.TemplateIndentationLevel = strings.Count(
+		strings.SplitN(opt.Raw, Keyword, 1)[0], aa.TemplateIndentation,
+	)
+	rules.Sort()
+	new := rules.String()
+	new = new[:len(new)-1]
+	return strings.Replace(profileRaw, opt.Raw, new, -1)
 }
