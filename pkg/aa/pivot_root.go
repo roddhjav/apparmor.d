@@ -4,6 +4,8 @@
 
 package aa
 
+const tokPIVOTROOT = "pivot_root"
+
 type PivotRoot struct {
 	RuleBase
 	Qualifier
@@ -41,4 +43,8 @@ func (r *PivotRoot) Equals(other any) bool {
 	return r.OldRoot == o.OldRoot && r.NewRoot == o.NewRoot &&
 		r.TargetProfile == o.TargetProfile &&
 		r.Qualifier.Equals(o.Qualifier)
+}
+
+func (r *PivotRoot) String() string {
+	return renderTemplate(tokPIVOTROOT, r)
 }

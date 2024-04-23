@@ -4,6 +4,9 @@
 
 package aa
 
+
+const tokSIGNAL = "signal"
+
 type Signal struct {
 	RuleBase
 	Qualifier
@@ -40,4 +43,8 @@ func (r *Signal) Equals(other any) bool {
 	o, _ := other.(*Signal)
 	return slices.Equal(r.Access, o.Access) && slices.Equal(r.Set, o.Set) &&
 		r.Peer == o.Peer && r.Qualifier.Equals(o.Qualifier)
+}
+
+func (r *Signal) String() string {
+	return renderTemplate(tokSIGNAL, r)
 }

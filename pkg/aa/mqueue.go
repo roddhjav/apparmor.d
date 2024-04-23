@@ -8,6 +8,9 @@ import (
 	"strings"
 )
 
+const tokMQUEUE = "mqueue"
+
+
 type Mqueue struct {
 	RuleBase
 	Qualifier
@@ -52,4 +55,8 @@ func (r *Mqueue) Equals(other any) bool {
 	o, _ := other.(*Mqueue)
 	return slices.Equal(r.Access, o.Access) && r.Type == o.Type && r.Label == o.Label &&
 		r.Name == o.Name && r.Qualifier.Equals(o.Qualifier)
+}
+
+func (r *Mqueue) String() string {
+	return renderTemplate(tokMQUEUE, r)
 }

@@ -367,3 +367,113 @@ func TestRule_Equals(t *testing.T) {
 		})
 	}
 }
+
+func TestRule_String(t *testing.T) {
+	tests := []struct {
+		name string
+		rule Rule
+		want string
+	}{
+		{
+			name: "include1",
+			rule: include1,
+			want: "include <abstraction/base>",
+		},
+		{
+			name: "include-local",
+			rule: includeLocal1,
+			want: "include if exists <local/foo>",
+		},
+		{
+			name: "include-abs",
+			rule: &Include{Path: "/usr/share/apparmor.d/", IsMagic: false},
+			want: `include "/usr/share/apparmor.d/"`,
+		},
+		{
+			name: "rlimit",
+			rule: rlimit1,
+			want: "set rlimit nproc <= 200,",
+		},
+		{
+			name: "capability",
+			rule: capability1,
+			want: "capability net_admin,",
+		},
+		{
+			name: "capability/multi",
+			rule: &Capability{Names: []string{"dac_override", "dac_read_search"}},
+			want: "capability dac_override dac_read_search,",
+		},
+		{
+			name: "capability/all",
+			rule: &Capability{},
+			want: "capability,",
+		},
+		{
+			name: "network",
+			rule: network1,
+			want: "network netlink raw,",
+		},
+		{
+			name: "mount",
+			rule: mount1,
+			want: "mount fstype=overlay overlay -> /var/lib/docker/overlay2/opaque-bug-check1209538631/merged/,  # failed perms check",
+		},
+		{
+			name: "pivot_root",
+			rule: pivotroot1,
+			want: "pivot_root oldroot=@{run}/systemd/mount-rootfs/ @{run}/systemd/mount-rootfs/,",
+		},
+		{
+			name: "change_profile",
+			rule: changeprofile1,
+			want: "change_profile -> systemd-user,",
+		},
+		{
+			name: "signal",
+			rule: signal1,
+			want: "signal receive set=kill peer=firefox//&firejail-default,",
+		},
+		{
+			name: "ptrace",
+			rule: ptrace1,
+			want: "ptrace read peer=nautilus,",
+		},
+		{
+			name: "unix",
+			rule: unix1,
+			want: "unix (receive send) type=stream protocol=0 addr=none peer=(label=dbus-daemon, addr=@/tmp/dbus-AaKMpxzC4k),",
+		},
+		{
+			name: "dbus",
+			rule: dbus1,
+			want: `dbus receive bus=session path=/org/gtk/vfs/metadata
+       interface=org.gtk.vfs.Metadata
+       member=Remove
+       peer=(name=:1.15, label=tracker-extract),`,
+		},
+		{
+			name: "dbus-bind",
+			rule: &Dbus{Access: []string{"bind"}, Bus: "session", Name: "org.gnome.*"},
+			want: `dbus bind bus=session name=org.gnome.*,`,
+		},
+		{
+			name: "dbus-full",
+			rule: &Dbus{Bus: "accessibility"},
+			want: `dbus bus=accessibility,`,
+		},
+		{
+			name: "file",
+			rule: file1,
+			want: "/usr/share/poppler/cMap/Identity-H r,",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := tt.rule
+			if got := r.String(); got != tt.want {
+				t.Errorf("Rule.String() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

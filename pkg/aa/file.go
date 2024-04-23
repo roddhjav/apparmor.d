@@ -59,5 +59,9 @@ func (r *File) Equals(other any) bool {
 		r.Target == o.Target && r.Qualifier.Equals(o.Qualifier)
 }
 
+func (r *File) String() string {
+	return renderTemplate("file", r)
+}
+
 		r.Target == o.Target && r.Qualifier.Equals(o.Qualifier)
 }

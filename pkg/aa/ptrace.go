@@ -4,6 +4,8 @@
 
 package aa
 
+const tokPTRACE = "ptrace"
+
 type Ptrace struct {
 	RuleBase
 	Qualifier
@@ -35,4 +37,8 @@ func (r *Ptrace) Equals(other any) bool {
 	o, _ := other.(*Ptrace)
 	return slices.Equal(r.Access, o.Access) && r.Peer == o.Peer &&
 		r.Qualifier.Equals(o.Qualifier)
+}
+
+func (r *Ptrace) String() string {
+	return renderTemplate(tokPTRACE, r)
 }

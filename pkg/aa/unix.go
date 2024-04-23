@@ -4,6 +4,8 @@
 
 package aa
 
+const tokUNIX = "unix"
+
 type Unix struct {
 	RuleBase
 	Qualifier
@@ -73,4 +75,8 @@ func (r *Unix) Equals(other any) bool {
 		r.Label == o.Label && r.Attr == o.Attr && r.Opt == o.Opt &&
 		r.PeerLabel == o.PeerLabel && r.PeerAddr == o.PeerAddr &&
 		r.Qualifier.Equals(o.Qualifier)
+}
+
+func (r *Unix) String() string {
+	return renderTemplate(tokUNIX, r)
 }

@@ -8,13 +8,26 @@ import (
 	"strings"
 )
 
+const (
+	tokALL   = "all"
+	tokALLOW = "allow"
+	tokAUDIT = "audit"
+	tokDENY  = "deny"
+)
+
 // Rule generic interface for all AppArmor rules
 type Rule interface {
 	Less(other any) bool
 	Equals(other any) bool
+	String() string
 }
 
 type Rules []Rule
+
+func (r Rules) String() string {
+	return renderTemplate("rules", r)
+}
+
 
 type RuleBase struct {
 	Comment     string
@@ -69,6 +82,10 @@ func (r RuleBase) Equals(other any) bool {
 	return false
 }
 
+func (r RuleBase) String() string {
+	return renderTemplate("comment", r)
+}
+
 type Qualifier struct {
 	Audit      bool
 	AccessType string
@@ -103,4 +120,8 @@ func (r *All) Less(other any) bool {
 
 func (r *All) Equals(other any) bool {
 	return false
+}
+
+func (r *All) String() string {
+	return renderTemplate(tokALL, r)
 }
