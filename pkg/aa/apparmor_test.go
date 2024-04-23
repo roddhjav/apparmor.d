@@ -6,27 +6,16 @@ package aa
 
 import (
 	"reflect"
-	"strings"
 	"testing"
 
 	"github.com/arduino/go-paths-helper"
+	"github.com/roddhjav/apparmor.d/pkg/util"
 )
 
-func readprofile(path string) string {
-	file := paths.New("../../").Join(path)
-	lines, err := file.ReadFileAsLines()
-	if err != nil {
-		panic(err)
-	}
-	res := ""
-	for _, line := range lines {
-		if strings.HasPrefix(line, "#") {
-			continue
-		}
-		res += line + "\n"
-	}
-	return res[:len(res)-1]
-}
+var (
+	testData = paths.New("../../").Join("tests")
+	intData  = paths.New("../../").Join("apparmor.d")
+)
 
 func TestAppArmorProfileFile_String(t *testing.T) {
 	tests := []struct {
@@ -50,6 +39,7 @@ func TestAppArmorProfileFile_String(t *testing.T) {
 						Name: "exec_path", Define: true,
 						Values: []string{"@{bin}/foo", "@{lib}/foo"},
 					}},
+					Comments: []*RuleBase{{Comment: "Simple test profile for the AppArmorProfileFile.String() method", IsLineRule: true}},
 				},
 				Profiles: []*Profile{{
 					Header: Header{
@@ -67,11 +57,12 @@ func TestAppArmorProfileFile_String(t *testing.T) {
 						&Network{Domain: "inet", Type: "stream"},
 						&Network{Domain: "inet6", Type: "stream"},
 						&Mount{
+							RuleBase: RuleBase{Comment: "failed perms check"},
 							MountConditions: MountConditions{
 								FsType:  "fuse.portal",
 								Options: []string{"rw", "rbind"},
 							},
-							Source:     "@{run}/user/@{uid}/ ",
+							Source:     "@{run}/user/@{uid}/",
 							MountPoint: "/",
 						},
 						&Umount{
@@ -112,7 +103,7 @@ func TestAppArmorProfileFile_String(t *testing.T) {
 					},
 				}},
 			},
-			want: readprofile("tests/string.aa"),
+			want: util.MustReadFile(testData.Join("string.aa")),
 		},
 	}
 	for _, tt := range tests {
@@ -205,9 +196,14 @@ func TestAppArmorProfileFile_Integration(t *testing.T) {
 					Abi:      []*Abi{{IsMagic: true, Path: "abi/3.0"}},
 					Includes: []*Include{{IsMagic: true, Path: "tunables/global"}},
 					Variables: []*Variable{{
-						Name:   "exec_path",
+						Name: "exec_path", Define: true,
 						Values: []string{"@{bin}/aa-status", "@{bin}/apparmor_status"},
 					}},
+					Comments: []*RuleBase{
+						{Comment: "apparmor.d - Full set of apparmor profiles", IsLineRule: true},
+						{Comment: "Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>", IsLineRule: true},
+						{Comment: "SPDX-License-Identifier: GPL-2.0-only", IsLineRule: true},
+					},
 				},
 				Profiles: []*Profile{{
 					Header: Header{
@@ -232,7 +228,7 @@ func TestAppArmorProfileFile_Integration(t *testing.T) {
 					},
 				}},
 			},
-			want: readprofile("apparmor.d/profiles-a-f/aa-status"),
+			want: util.MustReadFile(intData.Join("profiles-a-f/aa-status")),
 		},
 	}
 	for _, tt := range tests {
@@ -240,8 +236,8 @@ func TestAppArmorProfileFile_Integration(t *testing.T) {
 			tt.f.Sort()
 			tt.f.MergeRules()
 			tt.f.Format()
-			if got := tt.f.String(); "\n"+got != tt.want {
-				t.Errorf("AppArmorProfile = |%v|, want |%v|", "\n"+got, tt.want)
+			if got := tt.f.String(); got != tt.want {
+				t.Errorf("AppArmorProfile = |%v|, want |%v|", got, tt.want)
 			}
 		})
 	}
