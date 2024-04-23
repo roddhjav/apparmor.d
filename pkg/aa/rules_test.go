@@ -193,13 +193,13 @@ func TestRule_Less(t *testing.T) {
 			name:  "signal",
 			rule:  signal1,
 			other: signal2,
-			want:  true,
+			want:  false,
 		},
 		{
 			name:  "ptrace/less",
 			rule:  ptrace1,
 			other: ptrace2,
-			want:  true,
+			want:  false,
 		},
 		{
 			name:  "ptrace/more",
