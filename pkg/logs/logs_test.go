@@ -292,46 +292,42 @@ func TestAppArmorLogs_ParseToProfiles(t *testing.T) {
 	tests := []struct {
 		name   string
 		aaLogs AppArmorLogs
-		want   aa.AppArmorProfileFiles
+		want   map[string]*aa.Profile
 	}{
 		{
 			name:   "",
 			aaLogs: append(append(refKmod, refPowerProfiles...), refKmod...),
-			want: aa.AppArmorProfileFiles{
-				"kmod": &aa.AppArmorProfileFile{
-					Profiles: []*aa.Profile{{
-						Header: aa.Header{Name: "kmod"},
-						Rules: aa.Rules{
-							&aa.Unix{
-								RuleBase: aa.RuleBase{FileInherit: true},
-								Access:   "send receive",
-								Type:     "stream",
-								Protocol: "0",
-							},
-							&aa.Unix{
-								RuleBase: aa.RuleBase{FileInherit: true},
-								Access:   "send receive",
-								Type:     "stream",
-								Protocol: "0",
-							},
+			want: map[string]*aa.Profile{
+				"kmod": {
+					Header: aa.Header{Name: "kmod"},
+					Rules: aa.Rules{
+						&aa.Unix{
+							RuleBase: aa.RuleBase{FileInherit: true},
+							Access:   []string{"receive", "send"},
+							Type:     "stream",
+							Protocol: "0",
 						},
-					}},
+						&aa.Unix{
+							RuleBase: aa.RuleBase{FileInherit: true},
+							Access:   []string{"receive", "send"},
+							Type:     "stream",
+							Protocol: "0",
+						},
+					},
 				},
-				"power-profiles-daemon": &aa.AppArmorProfileFile{
-					Profiles: []*aa.Profile{{
-						Header: aa.Header{Name: "power-profiles-daemon"},
-						Rules: aa.Rules{
-							&aa.Dbus{
-								Access:    "send",
-								Bus:       "system",
-								Path:      "/org/freedesktop/DBus",
-								Interface: "org.freedesktop.DBus",
-								Member:    "AddMatch",
-								PeerName:  "org.freedesktop.DBus",
-								PeerLabel: "dbus-daemon",
-							},
+				"power-profiles-daemon": {
+					Header: aa.Header{Name: "power-profiles-daemon"},
+					Rules: aa.Rules{
+						&aa.Dbus{
+							Access:    []string{"send"},
+							Bus:       "system",
+							Path:      "/org/freedesktop/DBus",
+							Interface: "org.freedesktop.DBus",
+							Member:    "AddMatch",
+							PeerName:  "org.freedesktop.DBus",
+							PeerLabel: "dbus-daemon",
 						},
-					}},
+					},
 				},
 			},
 		},

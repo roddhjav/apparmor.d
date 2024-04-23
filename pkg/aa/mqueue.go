@@ -11,7 +11,7 @@ import (
 type Mqueue struct {
 	RuleBase
 	Qualifier
-	Access string
+	Access []string
 	Type   string
 	Label  string
 	Name   string
@@ -27,7 +27,7 @@ func newMqueueFromLog(log map[string]string) Rule {
 	return &Mqueue{
 		RuleBase:  newRuleFromLog(log),
 		Qualifier: newQualifierFromLog(log),
-		Access:    toAccess(log["requested"]),
+		Access:    toAccess(tokMQUEUE, log["requested"]),
 		Type:      mqueueType,
 		Label:     log["label"],
 		Name:      log["name"],
@@ -36,8 +36,8 @@ func newMqueueFromLog(log map[string]string) Rule {
 
 func (r *Mqueue) Less(other any) bool {
 	o, _ := other.(*Mqueue)
-	if r.Access != o.Access {
-		return r.Access < o.Access
+	if len(r.Access) != len(o.Access) {
+		return len(r.Access) < len(o.Access)
 	}
 	if r.Type != o.Type {
 		return r.Type < o.Type
@@ -50,6 +50,6 @@ func (r *Mqueue) Less(other any) bool {
 
 func (r *Mqueue) Equals(other any) bool {
 	o, _ := other.(*Mqueue)
-	return r.Access == o.Access && r.Type == o.Type && r.Label == o.Label &&
+	return slices.Equal(r.Access, o.Access) && r.Type == o.Type && r.Label == o.Label &&
 		r.Name == o.Name && r.Qualifier.Equals(o.Qualifier)
 }

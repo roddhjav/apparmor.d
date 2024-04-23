@@ -7,8 +7,8 @@ package aa
 type Signal struct {
 	RuleBase
 	Qualifier
-	Access string
-	Set    string
+	Access []string
+	Set    []string
 	Peer   string
 }
 
@@ -16,19 +16,19 @@ func newSignalFromLog(log map[string]string) Rule {
 	return &Signal{
 		RuleBase:  newRuleFromLog(log),
 		Qualifier: newQualifierFromLog(log),
-		Access:    toAccess(log["requested_mask"]),
-		Set:       log["signal"],
+		Access:    toAccess(tokSIGNAL, log["requested_mask"]),
+		Set:       toAccess(tokSIGNAL, log["signal"]),
 		Peer:      log["peer"],
 	}
 }
 
 func (r *Signal) Less(other any) bool {
 	o, _ := other.(*Signal)
-	if r.Access != o.Access {
-		return r.Access < o.Access
+	if len(r.Access) != len(o.Access) {
+		return len(r.Access) < len(o.Access)
 	}
-	if r.Set != o.Set {
-		return r.Set < o.Set
+	if len(r.Set) != len(o.Set) {
+		return len(r.Set) < len(o.Set)
 	}
 	if r.Peer != o.Peer {
 		return r.Peer < o.Peer
@@ -38,6 +38,6 @@ func (r *Signal) Less(other any) bool {
 
 func (r *Signal) Equals(other any) bool {
 	o, _ := other.(*Signal)
-	return r.Access == o.Access && r.Set == o.Set &&
+	return slices.Equal(r.Access, o.Access) && slices.Equal(r.Set, o.Set) &&
 		r.Peer == o.Peer && r.Qualifier.Equals(o.Qualifier)
 }

@@ -251,9 +251,9 @@ func TestRule_Less(t *testing.T) {
 		},
 		{
 			name:  "file/access",
-			rule:  &File{Path: "/usr/share/poppler/cMap/Identity-H", Access: "r"},
-			other: &File{Path: "/usr/share/poppler/cMap/Identity-H", Access: "w"},
-			want:  true,
+			rule:  &File{Path: "/usr/share/poppler/cMap/Identity-H", Access: []string{"r"}},
+			other: &File{Path: "/usr/share/poppler/cMap/Identity-H", Access: []string{"w"}},
+			want:  false,
 		},
 		{
 			name:  "file/close",

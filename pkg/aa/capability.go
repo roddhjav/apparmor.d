@@ -4,29 +4,36 @@
 
 package aa
 
+
 type Capability struct {
 	RuleBase
 	Qualifier
-	Name string
+	Names []string
+}
+
 }
 
 func newCapabilityFromLog(log map[string]string) Rule {
 	return &Capability{
 		RuleBase:  newRuleFromLog(log),
 		Qualifier: newQualifierFromLog(log),
-		Name:      log["capname"],
+		Names:     []string{log["capname"]},
 	}
 }
 
 func (r *Capability) Less(other any) bool {
 	o, _ := other.(*Capability)
-	if r.Name != o.Name {
-		return r.Name < o.Name
+	for i := 0; i < len(r.Names) && i < len(o.Names); i++ {
+		if r.Names[i] != o.Names[i] {
+			return r.Names[i] < o.Names[i]
+		}
 	}
 	return r.Qualifier.Less(o.Qualifier)
 }
 
 func (r *Capability) Equals(other any) bool {
 	o, _ := other.(*Capability)
-	return r.Name == o.Name && r.Qualifier.Equals(o.Qualifier)
+	return slices.Equal(r.Names, o.Names) && r.Qualifier.Equals(o.Qualifier)
+}
+
 }

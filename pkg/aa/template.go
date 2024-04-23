@@ -33,19 +33,10 @@ var (
 	}
 
 	// convert apparmor requested mask to apparmor access mode
-	requestedMaskToAccess = map[string]string{
-		"a":   "w",
-		"ac":  "w",
-		"c":   "w",
-		"d":   "w",
-		"m":   "rm",
-		"ra":  "rw",
-		"wc":  "w",
-		"wd":  "w",
-		"wr":  "rw",
-		"wrc": "rw",
-		"wrd": "rw",
-		"x":   "rix",
+	maskToAccess = map[string]string{
+		"a": "w",
+		"c": "w",
+		"d": "w",
 	}
 
 	// The order the apparmor rules should be sorted
@@ -172,9 +163,38 @@ func getLetterIn(alphabet []string, in string) string {
 	return ""
 }
 
-func toAccess(mask string) string {
-	if requestedMaskToAccess[mask] != "" {
-		return requestedMaskToAccess[mask]
+// Helper function to convert a access string to slice of access
+func toAccess(constraint string, input string) []string {
+	var res []string
+
+	switch constraint {
+	case "file", "file-log":
+		raw := strings.Split(input, "")
+		trans := []string{}
+		for _, access := range raw {
+			if slices.Contains(fileAccess, access) {
+				res = append(res, access)
+			} else if maskToAccess[access] != "" {
+				res = append(res, maskToAccess[access])
+				trans = append(trans, access)
+			}
+		}
+
+		if constraint != "file-log" {
+			transition := strings.Join(trans, "")
+			if len(transition) > 0 {
+				if slices.Contains(fileExecTransition, transition) {
+					res = append(res, transition)
+				} else {
+					panic("unrecognized pattern: " + transition)
+				}
+			}
+		}
+		return res
+
+	default:
+		res = strings.Fields(input)
+		slices.Sort(res)
+		return slices.Compact(res)
 	}
-	return mask
 }

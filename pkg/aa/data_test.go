@@ -26,8 +26,8 @@ var (
 		"profile":    "pkexec",
 		"comm":       "pkexec",
 	}
-	capability1 = &Capability{Name: "net_admin"}
-	capability2 = &Capability{Name: "sys_ptrace"}
+	capability1 = &Capability{Names: []string{"net_admin"}}
+	capability2 = &Capability{Names: []string{"sys_ptrace"}}
 
 	// Network
 	network1Log = map[string]string{
@@ -147,13 +147,13 @@ var (
 		"peer":           "firefox//&firejail-default",
 	}
 	signal1 = &Signal{
-		Access: "receive",
-		Set:    "kill",
+		Access: []string{"receive"},
+		Set:    []string{"kill"},
 		Peer:   "firefox//&firejail-default",
 	}
 	signal2 = &Signal{
-		Access: "receive",
-		Set:    "up",
+		Access: []string{"receive"},
+		Set:    []string{"up"},
 		Peer:   "firefox//&firejail-default",
 	}
 
@@ -177,8 +177,8 @@ var (
 		"denied_mask":    "readby",
 		"peer":           "systemd-journald",
 	}
-	ptrace1 = &Ptrace{Access: "read", Peer: "nautilus"}
-	ptrace2 = &Ptrace{Access: "readby", Peer: "systemd-journald"}
+	ptrace1 = &Ptrace{Access: []string{"read"}, Peer: "nautilus"}
+	ptrace2 = &Ptrace{Access: []string{"readby"}, Peer: "systemd-journald"}
 
 	// Unix
 	unix1Log = map[string]string{
@@ -197,7 +197,7 @@ var (
 		"protocol":       "0",
 	}
 	unix1 = &Unix{
-		Access:    "send receive",
+		Access:    []string{"receive", "send"},
 		Type:      "stream",
 		Protocol:  "0",
 		Address:   "none",
@@ -206,7 +206,7 @@ var (
 	}
 	unix2 = &Unix{
 		RuleBase: RuleBase{FileInherit: true},
-		Access:   "receive",
+		Access:   []string{"receive"},
 		Type:     "stream",
 	}
 
@@ -234,7 +234,7 @@ var (
 		"label":     "evolution-source-registry",
 	}
 	dbus1 = &Dbus{
-		Access:    "receive",
+		Access:    []string{"receive"},
 		Bus:       "session",
 		Path:      "/org/gtk/vfs/metadata",
 		Interface: "org.gtk.vfs.Metadata",
@@ -243,12 +243,12 @@ var (
 		PeerLabel: "tracker-extract",
 	}
 	dbus2 = &Dbus{
-		Access: "bind",
+		Access: []string{"bind"},
 		Bus:    "session",
 		Name:   "org.gnome.evolution.dataserver.Sources5",
 	}
 	dbus3 = &Dbus{
-		Access: "bind",
+		Access: []string{"bind"},
 		Bus:    "session",
 		Name:   "org.gnome.evolution.dataserver",
 	}
@@ -283,11 +283,11 @@ var (
 		"OUID":           "user",
 		"error":          "-1",
 	}
-	file1 = &File{Path: "/usr/share/poppler/cMap/Identity-H", Access: "r"}
+	file1 = &File{Path: "/usr/share/poppler/cMap/Identity-H", Access: []string{"r"}}
 	file2 = &File{
 		RuleBase: RuleBase{NoNewPrivs: true},
 		Owner:    true,
 		Path:     "@{PROC}/4163/cgroup",
-		Access:   "r",
+		Access:   []string{"r"},
 	}
 )
