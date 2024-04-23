@@ -5,11 +5,15 @@
 {{- define "dbus" -}}
     {{- template "qualifier" . -}}
     {{- "dbus" -}}
-    {{- if eq .Access "bind" -}}
+    {{- $access := "" -}}
+    {{- if .Access -}}
+        {{- $access = index .Access 0 -}}
+    {{- end -}}
+    {{- if eq $access "bind" -}}
         {{ " bind bus=" }}{{ .Bus }}{{ " name=" }}{{ .Name }}
     {{- else -}}
         {{- with .Access -}}
-            {{ " " }}{{ . }}
+            {{ " " }}{{ cjoin . }}
         {{- end -}}
         {{- with .Bus -}}
             {{ " bus=" }}{{ . }}
@@ -17,21 +21,20 @@
         {{- with .Path -}}
             {{ " path=" }}{{ . }}
         {{- end -}}
-        {{ "\n" }}
         {{- with .Interface -}}
-            {{ overindent "interface=" }}{{ . }}{{ "\n" }}
+            {{ "\n" }}{{ overindent "interface=" }}{{ . }}
         {{- end -}}
         {{- with .Member -}}
-            {{ overindent "member=" }}{{ . }}{{ "\n" }}
+            {{ "\n" }}{{ overindent "member=" }}{{ . }}
         {{- end -}}
         {{- if and .PeerName .PeerLabel -}}
-            {{ overindent "peer=(name=" }}{{ .PeerName }}{{ ", label="}}{{ .PeerLabel }}{{ ")" }}
+            {{ "\n" }}{{ overindent "peer=(name=" }}{{ .PeerName }}{{ ", label="}}{{ .PeerLabel }}{{ ")" }}
         {{- else -}}
             {{- with .PeerName -}}
-                {{ overindent "peer=(name=" }}{{ . }}{{ ")" }}
+                {{ "\n" }}{{ overindent "peer=(name=" }}{{ . }}{{ ")" }}
             {{- end -}}
             {{- with .PeerLabel -}}
-                {{ overindent "peer=(label=" }}{{ . }}{{ ")" }}
+                {{ "\n" }}{{ overindent "peer=(label=" }}{{ . }}{{ ")" }}
             {{- end -}}
         {{- end -}}
     {{- end -}}
