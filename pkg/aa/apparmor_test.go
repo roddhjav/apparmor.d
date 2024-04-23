@@ -47,7 +47,7 @@ func TestAppArmorProfile_String(t *testing.T) {
 					Includes: []*Include{{IsMagic: true, Path: "tunables/global"}},
 					Aliases:  []*Alias{{Path: "/mnt/usr", RewrittenPath: "/usr"}},
 					Variables: []*Variable{{
-						Name:   "exec_path",
+						Name: "exec_path", Define: true,
 						Values: []string{"@{bin}/foo", "@{lib}/foo"},
 					}},
 				},
