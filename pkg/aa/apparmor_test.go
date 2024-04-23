@@ -28,7 +28,7 @@ func readprofile(path string) string {
 	return res[:len(res)-1]
 }
 
-func TestAppArmorProfile_String(t *testing.T) {
+func TestAppArmorProfileFile_String(t *testing.T) {
 	tests := []struct {
 		name string
 		f    *AppArmorProfileFile
@@ -124,97 +124,7 @@ func TestAppArmorProfile_String(t *testing.T) {
 	}
 }
 
-func TestAppArmorProfile_AddRule(t *testing.T) {
-	tests := []struct {
-		name string
-		log  map[string]string
-		want *AppArmorProfileFile
-	}{
-		{
-			name: "capability",
-			log:  capability1Log,
-			want: &AppArmorProfileFile{
-				Profiles: []*Profile{{
-					Rules: []Rule{capability1},
-				}},
-			},
-		},
-		{
-			name: "network",
-			log:  network1Log,
-			want: &AppArmorProfileFile{
-				Profiles: []*Profile{{
-					Rules: []Rule{network1},
-				}},
-			},
-		},
-		{
-			name: "mount",
-			log:  mount2Log,
-			want: &AppArmorProfileFile{
-				Profiles: []*Profile{{
-					Rules: []Rule{mount2},
-				}},
-			},
-		},
-		{
-			name: "signal",
-			log:  signal1Log,
-			want: &AppArmorProfileFile{
-				Profiles: []*Profile{{
-					Rules: []Rule{signal1},
-				}},
-			},
-		},
-		{
-			name: "ptrace",
-			log:  ptrace2Log,
-			want: &AppArmorProfileFile{
-				Profiles: []*Profile{{
-					Rules: []Rule{ptrace2},
-				}},
-			},
-		},
-		{
-			name: "unix",
-			log:  unix1Log,
-			want: &AppArmorProfileFile{
-				Profiles: []*Profile{{
-					Rules: []Rule{unix1},
-				}},
-			},
-		},
-		{
-			name: "dbus",
-			log:  dbus2Log,
-			want: &AppArmorProfileFile{
-				Profiles: []*Profile{{
-					Rules: []Rule{dbus2},
-				}},
-			},
-		},
-		{
-			name: "file",
-			log:  file2Log,
-			want: &AppArmorProfileFile{
-				Profiles: []*Profile{{
-					Rules: []Rule{file2},
-				}},
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := NewAppArmorProfile()
-			got.AddRule(tt.log)
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("AppArmorProfile.AddRule() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestAppArmorProfile_Sort(t *testing.T) {
+func TestAppArmorProfileFile_Sort(t *testing.T) {
 	tests := []struct {
 		name   string
 		origin *AppArmorProfileFile
@@ -251,7 +161,7 @@ func TestAppArmorProfile_Sort(t *testing.T) {
 	}
 }
 
-func TestAppArmorProfile_MergeRules(t *testing.T) {
+func TestAppArmorProfileFile_MergeRules(t *testing.T) {
 	tests := []struct {
 		name   string
 		origin *AppArmorProfileFile
@@ -282,7 +192,7 @@ func TestAppArmorProfile_MergeRules(t *testing.T) {
 	}
 }
 
-func TestAppArmorProfile_Integration(t *testing.T) {
+func TestAppArmorProfileFile_Integration(t *testing.T) {
 	tests := []struct {
 		name string
 		f    *AppArmorProfileFile
