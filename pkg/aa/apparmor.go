@@ -5,12 +5,6 @@
 package aa
 
 import (
-	"bytes"
-	"reflect"
-	"slices"
-	"sort"
-	"strings"
-
 	"github.com/arduino/go-paths-helper"
 )
 
@@ -60,22 +54,7 @@ func (f *AppArmorProfileFile) GetDefaultProfile() *Profile {
 // Follow: https://apparmor.pujol.io/development/guidelines/#guidelines
 func (f *AppArmorProfileFile) Sort() {
 	for _, p := range f.Profiles {
-		sort.Slice(p.Rules, func(i, j int) bool {
-			typeOfI := reflect.TypeOf(p.Rules[i])
-			typeOfJ := reflect.TypeOf(p.Rules[j])
-			if typeOfI != typeOfJ {
-				valueOfI := typeToValue(typeOfI)
-				valueOfJ := typeToValue(typeOfJ)
-				if typeOfI == reflect.TypeOf((*Include)(nil)) && p.Rules[i].(*Include).IfExists {
-					valueOfI = "include_if_exists"
-				}
-				if typeOfJ == reflect.TypeOf((*Include)(nil)) && p.Rules[j].(*Include).IfExists {
-					valueOfJ = "include_if_exists"
-				}
-				return ruleWeights[valueOfI] < ruleWeights[valueOfJ]
-			}
-			return p.Rules[i].Less(p.Rules[j])
-		})
+		p.Sort()
 	}
 }
 
@@ -87,53 +66,14 @@ func (f *AppArmorProfileFile) Sort() {
 // Note: logs.regCleanLogs helps a lot to do a first cleaning
 func (f *AppArmorProfileFile) MergeRules() {
 	for _, p := range f.Profiles {
-		for i := 0; i < len(p.Rules); i++ {
-			for j := i + 1; j < len(p.Rules); j++ {
-				typeOfI := reflect.TypeOf(p.Rules[i])
-				typeOfJ := reflect.TypeOf(p.Rules[j])
-				if typeOfI != typeOfJ {
-					continue
-				}
-
-				// If rules are identical, merge them
-				if p.Rules[i].Equals(p.Rules[j]) {
-					p.Rules = append(p.Rules[:j], p.Rules[j+1:]...)
-					j--
-				}
-			}
-		}
+		p.Merge()
 	}
 }
 
 // Format the profile for better readability before printing it.
 // Follow: https://apparmor.pujol.io/development/guidelines/#the-file-block
 func (f *AppArmorProfileFile) Format() {
-	const prefixOwner = "      "
 	for _, p := range f.Profiles {
-		hasOwnerRule := false
-		for i := len(p.Rules) - 1; i > 0; i-- {
-			j := i - 1
-			typeOfI := reflect.TypeOf(p.Rules[i])
-			typeOfJ := reflect.TypeOf(p.Rules[j])
-
-			// File rule
-			if typeOfI == reflect.TypeOf((*File)(nil)) && typeOfJ == reflect.TypeOf((*File)(nil)) {
-				letterI := getLetterIn(fileAlphabet, p.Rules[i].(*File).Path)
-				letterJ := getLetterIn(fileAlphabet, p.Rules[j].(*File).Path)
-
-				// Add prefix before rule path to align with other rule
-				if p.Rules[i].(*File).Owner {
-					hasOwnerRule = true
-				} else if hasOwnerRule {
-					p.Rules[i].(*File).Prefix = prefixOwner
-				}
-
-				if letterI != letterJ {
-					// Add a new empty line between Files rule of different type
-					hasOwnerRule = false
-					p.Rules = append(p.Rules[:i], append([]ApparmorRule{&Rule{}}, p.Rules[i:]...)...)
-				}
-			}
-		}
+		p.Format()
 	}
 }
