@@ -7,7 +7,7 @@ package aa
 type Dbus struct {
 	RuleBase
 	Qualifier
-	Access    string
+	Access    []string
 	Bus       string
 	Name      string
 	Path      string
@@ -28,7 +28,7 @@ func newDbusFromLog(log map[string]string) Rule {
 	return &Dbus{
 		RuleBase:  newRuleFromLog(log),
 		Qualifier: newQualifierFromLog(log),
-		Access:    log["mask"],
+		Access:    []string{log["mask"]},
 		Bus:       log["bus"],
 		Name:      name,
 		Path:      log["path"],
@@ -41,8 +41,10 @@ func newDbusFromLog(log map[string]string) Rule {
 
 func (r *Dbus) Less(other any) bool {
 	o, _ := other.(*Dbus)
-	if r.Access != o.Access {
-		return r.Access < o.Access
+	for i := 0; i < len(r.Access) && i < len(o.Access); i++ {
+		if r.Access[i] != o.Access[i] {
+			return r.Access[i] < o.Access[i]
+		}
 	}
 	if r.Bus != o.Bus {
 		return r.Bus < o.Bus
@@ -70,7 +72,7 @@ func (r *Dbus) Less(other any) bool {
 
 func (r *Dbus) Equals(other any) bool {
 	o, _ := other.(*Dbus)
-	return r.Access == o.Access && r.Bus == o.Bus && r.Name == o.Name &&
+	return slices.Equal(r.Access, o.Access) && r.Bus == o.Bus && r.Name == o.Name &&
 		r.Path == o.Path && r.Interface == o.Interface &&
 		r.Member == o.Member && r.PeerName == o.PeerName &&
 		r.PeerLabel == o.PeerLabel && r.Qualifier.Equals(o.Qualifier)

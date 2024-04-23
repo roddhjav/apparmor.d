@@ -7,7 +7,7 @@ package aa
 type Ptrace struct {
 	RuleBase
 	Qualifier
-	Access string
+	Access []string
 	Peer   string
 }
 
@@ -15,15 +15,15 @@ func newPtraceFromLog(log map[string]string) Rule {
 	return &Ptrace{
 		RuleBase:  newRuleFromLog(log),
 		Qualifier: newQualifierFromLog(log),
-		Access:    toAccess(log["requested_mask"]),
+		Access:    toAccess(tokPTRACE, log["requested_mask"]),
 		Peer:      log["peer"],
 	}
 }
 
 func (r *Ptrace) Less(other any) bool {
 	o, _ := other.(*Ptrace)
-	if r.Access != o.Access {
-		return r.Access < o.Access
+	if len(r.Access) != len(o.Access) {
+		return len(r.Access) < len(o.Access)
 	}
 	if r.Peer != o.Peer {
 		return r.Peer == o.Peer
@@ -33,6 +33,6 @@ func (r *Ptrace) Less(other any) bool {
 
 func (r *Ptrace) Equals(other any) bool {
 	o, _ := other.(*Ptrace)
-	return r.Access == o.Access && r.Peer == o.Peer &&
+	return slices.Equal(r.Access, o.Access) && r.Peer == o.Peer &&
 		r.Qualifier.Equals(o.Qualifier)
 }

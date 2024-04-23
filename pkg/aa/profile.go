@@ -39,3 +39,76 @@ func (p *Profile) Equals(other any) bool {
 		maps.Equal(p.Attributes, o.Attributes) &&
 		slices.Equal(p.Flags, o.Flags)
 }
+
+// AddRule adds a new rule to the profile from a log map.
+func (p *Profile) AddRule(log map[string]string) {
+
+	// Generate profile flags and extra rules
+	switch log["error"] {
+	case "-2":
+		if !slices.Contains(p.Flags, "mediate_deleted") {
+			p.Flags = append(p.Flags, "mediate_deleted")
+		}
+	case "-13":
+		if strings.Contains(log["info"], "namespace creation restricted") {
+			p.Rules = append(p.Rules, newUsernsFromLog(log))
+		} else if strings.Contains(log["info"], "disconnected path") && !slices.Contains(p.Flags, "attach_disconnected") {
+			p.Flags = append(p.Flags, "attach_disconnected")
+		}
+	default:
+	}
+
+	switch log["class"] {
+	case "rlimits":
+		p.Rules = append(p.Rules, newRlimitFromLog(log))
+	case "cap":
+		p.Rules = append(p.Rules, newCapabilityFromLog(log))
+	case "net":
+		if log["family"] == "unix" {
+			p.Rules = append(p.Rules, newUnixFromLog(log))
+		} else {
+			p.Rules = append(p.Rules, newNetworkFromLog(log))
+		}
+	case "io_uring":
+		p.Rules = append(p.Rules, newIOUringFromLog(log))
+	case "mount":
+		if strings.Contains(log["flags"], "remount") {
+			p.Rules = append(p.Rules, newRemountFromLog(log))
+		} else {
+			switch log["operation"] {
+			case "mount":
+				p.Rules = append(p.Rules, newMountFromLog(log))
+			case "umount":
+				p.Rules = append(p.Rules, newUmountFromLog(log))
+			case "remount":
+				p.Rules = append(p.Rules, newRemountFromLog(log))
+			case "pivotroot":
+				p.Rules = append(p.Rules, newPivotRootFromLog(log))
+			}
+		}
+	case "posix_mqueue", "sysv_mqueue":
+		p.Rules = append(p.Rules, newMqueueFromLog(log))
+	case "signal":
+		p.Rules = append(p.Rules, newSignalFromLog(log))
+	case "ptrace":
+		p.Rules = append(p.Rules, newPtraceFromLog(log))
+	case "namespace":
+		p.Rules = append(p.Rules, newUsernsFromLog(log))
+	case "unix":
+		p.Rules = append(p.Rules, newUnixFromLog(log))
+	case "dbus":
+		p.Rules = append(p.Rules, newDbusFromLog(log))
+	case "file":
+		if log["operation"] == "change_onexec" {
+			p.Rules = append(p.Rules, newChangeProfileFromLog(log))
+		} else {
+			p.Rules = append(p.Rules, newFileFromLog(log))
+		}
+	default:
+		if strings.Contains(log["operation"], "dbus") {
+			p.Rules = append(p.Rules, newDbusFromLog(log))
+		} else if log["family"] == "unix" {
+			p.Rules = append(p.Rules, newUnixFromLog(log))
+		}
+	}
+}

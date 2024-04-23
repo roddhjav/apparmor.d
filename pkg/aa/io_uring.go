@@ -7,7 +7,7 @@ package aa
 type IOUring struct {
 	RuleBase
 	Qualifier
-	Access string
+	Access []string
 	Label  string
 }
 
@@ -15,15 +15,15 @@ func newIOUringFromLog(log map[string]string) Rule {
 	return &IOUring{
 		RuleBase:  newRuleFromLog(log),
 		Qualifier: newQualifierFromLog(log),
-		Access:    toAccess(log["requested"]),
+		Access:    toAccess(tokIOURING, log["requested"]),
 		Label:     log["label"],
 	}
 }
 
 func (r *IOUring) Less(other any) bool {
 	o, _ := other.(*IOUring)
-	if r.Access != o.Access {
-		return r.Access < o.Access
+	if len(r.Access) != len(o.Access) {
+		return len(r.Access) < len(o.Access)
 	}
 	if r.Label != o.Label {
 		return r.Label < o.Label
@@ -33,5 +33,7 @@ func (r *IOUring) Less(other any) bool {
 
 func (r *IOUring) Equals(other any) bool {
 	o, _ := other.(*IOUring)
-	return r.Access == o.Access && r.Label == o.Label && r.Qualifier.Equals(o.Qualifier)
+	return slices.Equal(r.Access, o.Access) && r.Label == o.Label && r.Qualifier.Equals(o.Qualifier)
+}
+
 }

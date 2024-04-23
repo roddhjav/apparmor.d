@@ -9,7 +9,7 @@ type File struct {
 	Qualifier
 	Owner  bool
 	Path   string
-	Access string
+	Access []string
 	Target string
 }
 
@@ -26,7 +26,7 @@ func newFileFromLog(log map[string]string) Rule {
 		Qualifier: newQualifierFromLog(log),
 		Owner:     owner,
 		Path:      log["name"],
-		Access:    toAccess(log["requested_mask"]),
+		Access:    toAccess("file-log", log["requested_mask"]),
 		Target:    log["target"],
 	}
 }
@@ -41,8 +41,8 @@ func (r *File) Less(other any) bool {
 	if r.Path != o.Path {
 		return r.Path < o.Path
 	}
-	if r.Access != o.Access {
-		return r.Access < o.Access
+	if len(r.Access) != len(o.Access) {
+		return len(r.Access) < len(o.Access)
 	}
 	if r.Target != o.Target {
 		return r.Target < o.Target
@@ -55,6 +55,9 @@ func (r *File) Less(other any) bool {
 
 func (r *File) Equals(other any) bool {
 	o, _ := other.(*File)
-	return r.Path == o.Path && r.Access == o.Access && r.Owner == o.Owner &&
+	return r.Path == o.Path && slices.Equal(r.Access, o.Access) && r.Owner == o.Owner &&
+		r.Target == o.Target && r.Qualifier.Equals(o.Qualifier)
+}
+
 		r.Target == o.Target && r.Qualifier.Equals(o.Qualifier)
 }

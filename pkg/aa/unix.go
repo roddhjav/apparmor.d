@@ -7,7 +7,7 @@ package aa
 type Unix struct {
 	RuleBase
 	Qualifier
-	Access    string
+	Access    []string
 	Type      string
 	Protocol  string
 	Address   string
@@ -22,7 +22,7 @@ func newUnixFromLog(log map[string]string) Rule {
 	return &Unix{
 		RuleBase:  newRuleFromLog(log),
 		Qualifier: newQualifierFromLog(log),
-		Access:    toAccess(log["requested_mask"]),
+		Access:    toAccess(tokUNIX, log["requested_mask"]),
 		Type:      log["sock_type"],
 		Protocol:  log["protocol"],
 		Address:   log["addr"],
@@ -36,8 +36,8 @@ func newUnixFromLog(log map[string]string) Rule {
 
 func (r *Unix) Less(other any) bool {
 	o, _ := other.(*Unix)
-	if r.Access != o.Access {
-		return r.Access < o.Access
+	if len(r.Access) != len(o.Access) {
+		return len(r.Access) < len(o.Access)
 	}
 	if r.Type != o.Type {
 		return r.Type < o.Type
@@ -68,7 +68,7 @@ func (r *Unix) Less(other any) bool {
 
 func (r *Unix) Equals(other any) bool {
 	o, _ := other.(*Unix)
-	return r.Access == o.Access && r.Type == o.Type &&
+	return slices.Equal(r.Access, o.Access) && r.Type == o.Type &&
 		r.Protocol == o.Protocol && r.Address == o.Address &&
 		r.Label == o.Label && r.Attr == o.Attr && r.Opt == o.Opt &&
 		r.PeerLabel == o.PeerLabel && r.PeerAddr == o.PeerAddr &&
