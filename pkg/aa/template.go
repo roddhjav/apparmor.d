@@ -53,7 +53,9 @@ var (
 	// The order the apparmor rules should be sorted
 	ruleAlphabet = []string{
 		"include",
+		"all",
 		"rlimit",
+		"userns",
 		"capability",
 		"network",
 		"mount",
@@ -62,11 +64,10 @@ var (
 		"pivotroot",
 		"changeprofile",
 		"mqueue",
+		"iouring",
 		"signal",
 		"ptrace",
 		"unix",
-		"userns",
-		"iouring",
 		"dbus",
 		"file",
 		"profile",
