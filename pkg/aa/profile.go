@@ -11,7 +11,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/arduino/go-paths-helper"
+	"github.com/roddhjav/apparmor.d/pkg/paths"
 )
 
 // Default Apparmor magic directory: /etc/apparmor.d/.

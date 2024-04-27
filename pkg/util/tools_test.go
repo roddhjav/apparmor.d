@@ -9,7 +9,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/arduino/go-paths-helper"
+	"github.com/roddhjav/apparmor.d/pkg/paths"
 )
 
 func TestDecodeHexInString(t *testing.T) {
