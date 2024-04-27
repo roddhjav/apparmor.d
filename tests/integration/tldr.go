@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/arduino/go-paths-helper"
+	"github.com/roddhjav/apparmor.d/pkg/paths"
 )
 
 type Tldr struct {

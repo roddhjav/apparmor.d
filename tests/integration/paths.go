@@ -12,7 +12,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/arduino/go-paths-helper"
+	"github.com/roddhjav/apparmor.d/pkg/paths"
 )
 
 // Either or not to extract the file
