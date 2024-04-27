@@ -7,11 +7,11 @@ package logs
 import (
 	"io"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/roddhjav/apparmor.d/pkg/aa"
 	"github.com/roddhjav/apparmor.d/pkg/util"
-	"golang.org/x/exp/slices"
 )
 
 // Colors
