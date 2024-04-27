@@ -7,8 +7,8 @@ package integration
 import (
 	"os"
 
-	"github.com/arduino/go-paths-helper"
 	"github.com/roddhjav/apparmor.d/pkg/logs"
+	"github.com/roddhjav/apparmor.d/pkg/paths"
 	"github.com/roddhjav/apparmor.d/pkg/util"
 	"gopkg.in/yaml.v3"
 )

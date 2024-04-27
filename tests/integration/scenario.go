@@ -18,8 +18,8 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/arduino/go-paths-helper"
 	"github.com/roddhjav/apparmor.d/pkg/logging"
+	"github.com/roddhjav/apparmor.d/pkg/paths"
 )
 
 var (
