@@ -4,7 +4,7 @@
 
 package cfg
 
-import "github.com/arduino/go-paths-helper"
+import "github.com/roddhjav/apparmor.d/pkg/paths"
 
 var (
 	// Root is the root directory for the build
