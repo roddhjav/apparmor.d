@@ -1,9 +1,8 @@
 module github.com/roddhjav/apparmor.d
 
-go 1.21
+go 1.22
 
 require (
 	github.com/arduino/go-paths-helper v1.12.0
-	golang.org/x/exp v0.0.0-20240222234643-814bf88cf225
-	gopkg.in/yaml.v2 v2.4.0
+	gopkg.in/yaml.v3 v3.0.1
 )

@@ -7,11 +7,11 @@ package prepare
 import (
 	"os"
 	"os/exec"
+	"slices"
 	"testing"
 
 	"github.com/arduino/go-paths-helper"
 	"github.com/roddhjav/apparmor.d/pkg/prebuild/cfg"
-	"golang.org/x/exp/slices"
 )
 
 func chdirGitRoot() {
