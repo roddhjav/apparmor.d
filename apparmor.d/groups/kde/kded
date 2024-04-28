@@ -34,14 +34,11 @@ profile kded @{exec_path} {
 
   signal (send) set=hup peer=xsettingsd,
 
-  dbus receive bus=system path=/org/freedesktop/NetworkManager/SecretAgent
-       interface=org.freedesktop.NetworkManager.SecretAgent
-       member=CancelGetSecrets
-       peer=(label=NetworkManager),
+  # dbus: own bus=system name=com.redhat.NewPrinterNotification
 
   dbus receive bus=system path=/org/freedesktop/NetworkManager/SecretAgent
        interface=org.freedesktop.NetworkManager.SecretAgent
-       member=CancelGetSecrets
+       member={GetSecrets,CancelGetSecrets}
        peer=(label=NetworkManager),
 
   dbus receive bus=system path=/org/freedesktop/NetworkManager/AccessPoint/@{int}
@@ -57,6 +54,30 @@ profile kded @{exec_path} {
   dbus send bus=system path=/org/freedesktop/NetworkManager/AgentManager
        interface=org.freedesktop.NetworkManager.AgentManager
        peer=(label=NetworkManager),
+
+  dbus send bus=system path=/org/freedesktop/NetworkManager/AgentManager
+       interface=org.freedesktop.NetworkManager.AgentManager
+       peer=(label=NetworkManager),
+
+  dbus send bus=system path=/org/freedesktop/bolt
+       interface=org.freedesktop.bolt1.Manager
+       member=ListDevices
+       peer=(name="{:*,org.freedesktop.bolt}", label=boltd),
+
+  dbus send bus=system path=/org/freedesktop/bolt{,/**}
+       interface=org.freedesktop.DBus.Properties
+       member=Get,
+       peer=(name="{:*,org.freedesktop.bolt}", label=boltd),
+
+  dbus receive bus=system path=/
+       interface=org.kde.kf5auth
+       member=remoteSignal,
+       peer=(name=:*, label=kauth-kded-smart-helper),
+
+  dbus send bus=system path=/
+       interface=org.kde.kf5auth
+       member=performAction,
+       peer=(name="{:*,org.kde.kded.smart}", label=kauth-kded-smart-helper),
 
   @{exec_path} mrix,
 
@@ -139,7 +160,7 @@ profile kded @{exec_path} {
   owner @{user_config_dirs}/Trolltech.conf{,.@{rand6}} rwl,
   owner @{user_config_dirs}/xsettingsd/{,**} rw,
 
-        @{user_share_dirs}/kcookiejar/cookies{,.@{rand6}} rwkl -> @{user_share_dirs}/kcookiejar/#@{int},
+  owner @{user_share_dirs}/kcookiejar/cookies{,.@{rand6}} rwkl -> @{user_share_dirs}/kcookiejar/#@{int},
   owner @{user_share_dirs}/icc/{,edid-*} r,
   owner @{user_share_dirs}/kcookiejar/#@{int} rw,
   owner @{user_share_dirs}/kcookiejar/cookies.lock rwk,
@@ -200,3 +221,10 @@ profile kded @{exec_path} {
 
   include if exists <local/kded>
 }
+
+ALLOWED kded5 open owner @{user_cache_dirs}/update-manager-core/meta-release-lts comm=python3 requested_mask=r denied_mask=r
+ALLOWED kded5 open owner @{user_config_dirs}/kcmfonts comm=kded5 requested_mask=r denied_mask=r
+ALLOWED kded5 open owner @{user_config_dirs}/plasmavaultrc comm=kded5 requested_mask=r denied_mask=r
+ALLOWED kded5 open owner @{user_config_dirs}/touchpadxlibinputrc comm=kded5 requested_mask=r denied_mask=r
+ALLOWED kded5 open owner @{user_lib_dirs}/python3.10/site-packages/ comm=python3 requested_mask=r denied_mask=r
+ALLOWED kded5 open owner /tmp/#@{int} comm=python3 requested_mask=wr denied_mask=wr
