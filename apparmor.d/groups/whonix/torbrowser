@@ -55,12 +55,9 @@ profile torbrowser @{exec_path} flags=(attach_disconnected) {
   @{lib_dirs}/plugin-container  rPx,
   @{lib_dirs}/vaapitest         rPx,
 
-  # Desktop integration
-  @{bin}/lsb_release            rPx -> lsb_release,
-  @{open_path}                  rPx -> child-open,
-
   /usr/share/@{name}/{,**} r,
   /usr/share/doc/{,**} r,
+  /usr/share/homepage/{,**} r,
   /usr/share/xul-ext/kwallet5/* r,
 
   /etc/@{name}.d/{,**} r,
@@ -140,8 +137,30 @@ profile torbrowser @{exec_path} flags=(attach_disconnected) {
   owner /dev/shm/wayland.mozilla.ipc.@{int} rw,
   owner /dev/tty@{int} rw, # File Inherit
 
-  # Silencer
-  deny @{user_share_dirs}/gvfs-metadata/{,*} r,
+  # Due to the nature of the browser, we silence much more than for Firefox.
+  deny @{bin}/lsb_release x,
+  deny /etc/group r,
+  deny /etc/host.conf r,
+  deny /etc/hosts r,
+  deny /etc/machine-id r,
+  deny /etc/mailcap r,
+  deny /etc/nsswitch.conf r,
+  deny /etc/os-release r,
+  deny /etc/passwd r,
+  deny /etc/resolv.conf r,
+  deny /var/lib/dbus/machine-id r,
+  deny /tmp/MozillaUpdateLock-* w,
+  deny owner @{HOME}/.* r,
+  deny owner @{user_config_dirs}/gtk-*/{,**} rw,
+  deny owner @{user_share_dirs}/gvfs-metadata/{,*} r,
+  deny owner @{run}/user/@{uid}/dconf/user rw,
+  deny owner @{run}/user/@{uid}/gnome-shell-disable-extensions w,
+  deny @{sys}/class/input/ r,
+  deny @{sys}/devices/system/cpu/*/cache/index@{int}/size r,
+  deny @{sys}/devices/system/cpu/cpufreq/policy@{int}/cpuinfo_max_freq r,
+  deny @{sys}/devices/virtual/block/*/uevent r,
+  deny @{PROC}/@{pid}/net/if_inet6 r,
+  deny @{PROC}/@{pid}/net/route r,
 
   include if exists <local/torbrowser>
 }
