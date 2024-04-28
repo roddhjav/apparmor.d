@@ -14,12 +14,15 @@ profile gnome-control-center @{exec_path} flags=(attach_disconnected) {
   include <abstractions/bus-session>
   include <abstractions/bus-system>
   include <abstractions/bus/org.a11y>
+  include <abstractions/bus/org.freedesktop.portal.Desktop>
+  include <abstractions/bus/org.gtk.vfs.MountTracker>
   include <abstractions/dconf-write>
   include <abstractions/gnome-strict>
   include <abstractions/graphics>
   include <abstractions/gstreamer>
   include <abstractions/nameservice-strict>
   include <abstractions/p11-kit>
+  include <abstractions/ssl_certs>
   include <abstractions/thumbnails-cache-write>
 
   network inet dgram,
@@ -33,9 +36,18 @@ profile gnome-control-center @{exec_path} flags=(attach_disconnected) {
 
   unix (send, receive, connect) type=stream peer=(addr="@/home/*/.cache/ibus/dbus-????????", label=ibus-daemon),
 
-  dbus bus=accessibility,
   dbus bus=session,
   dbus bus=system,
+
+  #aa:dbus own bus=session name=org.gnome.Settings
+
+  #aa:dbus talk bus=session name=org.gnome.Mutter label=gnome-shell
+  #aa:dbus talk bus=session name=org.gnome.SettingsDaemon.Color label=gsd-color
+  #aa:dbus talk bus=session name=org.gnome.Shell label=gnome-shell
+
+  #aa:dbus talk bus=system name=org.freedesktop.hostname1 label=systemd-hostnamed
+  #aa:dbus talk bus=system name=org.freedesktop.NetworkManager label=NetworkManager
+  #aa:dbus talk bus=system name=org.freedesktop.UPower label=upowerd
 
   @{exec_path} mr,
 

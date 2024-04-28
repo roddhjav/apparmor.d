@@ -12,7 +12,6 @@ profile gdm-session-worker @{exec_path} flags=(attach_disconnected) {
   include <abstractions/authentication>
   include <abstractions/bus-session>
   include <abstractions/bus-system>
-  include <abstractions/bus/org.freedesktop.Accounts>
   include <abstractions/nameservice-strict>
 
   capability audit_write,
@@ -46,15 +45,12 @@ profile gdm-session-worker @{exec_path} flags=(attach_disconnected) {
 
   unix (bind) type=stream addr=@@{hex}/bus/gdm-session-wor/system,
 
+  #aa:dbus talk bus=system name=org.freedesktop.Accounts.User label=accounts-daemon
+
   dbus send bus=system path=/org/freedesktop/login1
        interface=org.freedesktop.login1.Manager
        member={*Session,CreateSessionWithPIDFD}
        peer=(name=org.freedesktop.login1, label=systemd-logind),
-
-  dbus send bus=system path=/org/freedesktop/Accounts/User@{uid}
-       interface=org.freedesktop.Accounts.User
-       member=SetLanguage
-       peer=(name=:*, label=accounts-daemon),
 
   @{exec_path} mrix,
 
@@ -99,6 +95,7 @@ profile gdm-session-worker @{exec_path} flags=(attach_disconnected) {
   owner @{run}/user/@{uid}/keyring/control rw,
 
         @{run}/gdm{3,}/custom.conf r,
+        @{run}/gdm{3,}/dbus/dbus-@{rand8} r,
   owner @{run}/gdm{3,}/dbus/ w,
   owner @{run}/gdm{3,}/dbus/dbus-@{rand8} w,
 
