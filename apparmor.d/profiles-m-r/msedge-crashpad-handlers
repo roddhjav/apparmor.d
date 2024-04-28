@@ -1,0 +1,36 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2018-2022 Mikhail Morfikov
+# Copyright (C) 2022-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{lib_dirs} = /opt/microsoft/msedge{,-beta,-dev}
+@{config_dirs} = @{user_config_dirs}/microsoft-edge{,-beta,-dev}
+
+@{exec_path} = @{lib_dirs}/msedge_crashpad_handler
+profile msedge-crashpad-handler /opt/microsoft/msedge{,-beta,-dev}/msedge_crashpad_handler {
+  include <abstractions/base>
+
+  capability sys_ptrace,
+
+  ptrace peer=msedge,
+  signal (send) peer=msedge,
+
+  @{exec_path} mrix,
+
+  owner "@{config_dirs}/Crash Reports/**" rwk,
+
+        @{PROC}/sys/kernel/yama/ptrace_scope r,
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pids}/mem r,
+  owner @{PROC}/@{pids}/stat r,
+  owner @{PROC}/@{pids}/task/ r,
+
+  @{sys}/devices/system/cpu/cpufreq/policy@{int}/scaling_cur_freq r,
+  @{sys}/devices/system/cpu/cpufreq/policy@{int}/scaling_max_freq r,
+
+  include if exists <local/msedge-crashpad-handler>
+}
