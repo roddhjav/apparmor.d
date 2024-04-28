@@ -16,7 +16,6 @@ profile NetworkManager @{exec_path} flags=(attach_disconnected) {
   include <abstractions/bus/org.freedesktop.login1>
   include <abstractions/bus/org.freedesktop.ModemManager1>
   include <abstractions/bus/org.freedesktop.PolicyKit1>
-  include <abstractions/bus/org.freedesktop.resolve1>
   include <abstractions/nameservice-strict>
   include <abstractions/ssl_certs>
 
@@ -44,6 +43,9 @@ profile NetworkManager @{exec_path} flags=(attach_disconnected) {
 
   #aa:dbus own bus=system name=org.freedesktop.NetworkManager
 
+  #aa:dbus talk bus=system name=org.freedesktop.nm_dispatcher label=nm-dispatcher
+  #aa:dbus talk bus=system name=org.freedesktop.resolve1.Manager label=systemd-resolved
+
   dbus receive bus=system path=/org/freedesktop
        interface=org.freedesktop.DBus.ObjectManager
        member=GetManagedObjects
@@ -68,16 +70,6 @@ profile NetworkManager @{exec_path} flags=(attach_disconnected) {
        interface=org.freedesktop.DBus.ObjectManager
        member=InterfacesAdded
        peer=(name=org.freedesktop.DBus, label=nm-online),
-
-  dbus send bus=system path=/org/freedesktop/nm_dispatcher
-       interface=org.freedesktop.nm_dispatcher
-       member=Action
-       peer=(name=org.freedesktop.nm_dispatcher),
-
-  dbus send bus=system path=/org/freedesktop/resolve1
-       interface=org.freedesktop.resolve1.Manager
-       member={SetLink*,ResolveHostname}
-       peer=(name=org.freedesktop.resolve1, label=systemd-resolved),
 
   dbus send bus=system path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus

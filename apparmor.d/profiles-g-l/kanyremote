@@ -11,19 +11,14 @@ include <tunables/global>
 profile kanyremote @{exec_path} {
   include <abstractions/base>
   include <abstractions/consoles>
-  include <abstractions/X>
-  include <abstractions/nameservice-strict>
-  include <abstractions/gtk>
-  include <abstractions/freedesktop.org>
-  include <abstractions/fonts>
+  include <abstractions/desktop>
   include <abstractions/fontconfig-cache-read>
-  include <abstractions/user-download-strict>
+  include <abstractions/graphics>
+  include <abstractions/nameservice-strict>
   include <abstractions/python>
-  include <abstractions/dri-enumerate>
-  include <abstractions/mesa>
-  include <abstractions/qt5>
   include <abstractions/qt5-compose-cache-write>
   include <abstractions/qt5-settings-write>
+  include <abstractions/user-download-strict>
 
   network inet stream,
   network inet6 stream,
@@ -52,33 +47,26 @@ profile kanyremote @{exec_path} {
   @{bin}/pactl      rPUx,
 
   # Players
-  @{bin}/smplayer   rPUx,
   @{bin}/amarok     rPUx,
-  @{bin}/vlc        rPUx,
   @{bin}/mpv        rPUx,
+  @{bin}/smplayer   rPUx,
   @{bin}/strawberry rPUx,
-
-  owner @{HOME}/ r,
-  owner @{HOME}/.anyRemote/{,*} rw,
+  @{bin}/vlc        rPUx,
 
   /usr/share/anyremote/{,**} r,
-
-  deny owner @{PROC}/@{pid}/cmdline r,
-  deny       @{PROC}/sys/kernel/random/boot_id r,
-
-  /dev/shm/#@{int} rw,
-
-  /usr/share/hwdata/pnp.ids r,
 
   /var/lib/dbus/machine-id r,
   /etc/machine-id r,
 
-  # Doc dirs
-  deny /usr/local/share/ r,
-  deny /usr/share/ r,
-  deny /usr/share/doc/ r,
-       /usr/share/doc/anyremote{,-data}/ r,
+  owner @{HOME}/ r,
+  owner @{HOME}/.anyRemote/{,**} rw,
 
+  owner @{user_config_dirs}/anyRemote/{,**} rw,
+
+  owner /dev/shm/#@{int} rw,
+
+        @{PROC}/sys/kernel/random/boot_id r,
+  owner @{PROC}/@{pid}/cmdline r,
 
   profile killall {
     include <abstractions/base>
@@ -97,6 +85,7 @@ profile kanyremote @{exec_path} {
          @{PROC}/ r,
          @{PROC}/@{pids}/stat r,
 
+    include if exists <local/kanyremote_killall>
   }
 
   profile pgrep {
