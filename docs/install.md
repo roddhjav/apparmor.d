@@ -65,6 +65,12 @@ sudo dpkg -i ../apparmor.d_*.deb
     sudo apt install -t bookworm-backports golang-go
     ```
 
+!!! warning
+
+    **Beware**: do not install a `.deb` made for Debian on Ubuntu, the packages are differents.
+
+    If your distribution is based on Ubuntu or Debian, you may want to manually set the target distribution by exporting `DISTRIBUTION=debian` if is Debian based, or `DISTRIBUTION=ubuntu` if it is Ubuntu based.
+
 ## :simple-suse: OpenSUSE
 
 OpenSUSE users need to add [cboltz](https://en.opensuse.org/User:Cboltz) repo on OBS
@@ -77,7 +83,7 @@ zypper install apparmor.d
 
 ## Partial install
 
-For test purposes, you can install specific profiles with the following commands. Abstractions, tunables, and most of the OS dependent post-processing is managed.
+For test purposes, you can install specific profiles with the following commands. Abstractions, tunable, and most of the OS dependent post-processing is managed.
 
 ```sh
 make
