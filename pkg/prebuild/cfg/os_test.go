@@ -173,7 +173,7 @@ func Test_getDistribution(t *testing.T) {
 		{
 			name:      "Neon",
 			osRelease: osReleaseNeon,
-			want:      "neon",
+			want:      "ubuntu",
 		},
 	}
 
