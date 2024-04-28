@@ -67,6 +67,20 @@ PLATFORM_ID="platform:f37"
 PRETTY_NAME="Fedora Linux 37 (Workstation Edition)"
 ANSI_COLOR="0;38;2;60;110;180"
 LOGO=fedora-logo-icon`
+
+	osReleaseNeon = `PRETTY_NAME="KDE neon 6.0"
+NAME="KDE neon"
+VERSION_ID="22.04"
+VERSION="6.0"
+VERSION_CODENAME=jammy
+ID=neon
+ID_LIKE="ubuntu debian"
+HOME_URL="https://neon.kde.org/"
+SUPPORT_URL="https://neon.kde.org/"
+BUG_REPORT_URL="https://bugs.kde.org/"
+PRIVACY_POLICY_URL="https://kde.org/privacypolicy/"
+UBUNTU_CODENAME=jammy
+LOGO=start-here-kde-neon`
 )
 
 func Test_getOSRelease(t *testing.T) {
@@ -156,6 +170,11 @@ func Test_getDistribution(t *testing.T) {
 			osRelease: osReleaseFedora,
 			want:      "fedora",
 		},
+		{
+			name:      "Neon",
+			osRelease: osReleaseNeon,
+			want:      "neon",
+		},
 	}
 
 	osReleaseFile = "/tmp/os-release"
@@ -199,6 +218,11 @@ func Test_getFamily(t *testing.T) {
 			name: "OpenSUSE Tumbleweed",
 			dist: "opensuse",
 			want: "zypper",
+		},
+		{
+			name: "Neon",
+			dist: "neon",
+			want: "",
 		},
 	}
 
