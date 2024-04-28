@@ -2,9 +2,13 @@
 title: Installation
 ---
 
-!!! danger
+!!! warning
 
     In order to not break your system, the default package configuration installs all profiles in complain mode. They can be enforced later. See the [Enforce Mode](enforce.md) page.
+
+!!! danger
+
+    Do **not** install this project if your Desktop Environement and Display Manager is not supported. Your system will not boot, and that would be a feature.
 
 ## Requirements
 
@@ -17,7 +21,8 @@ An `apparmor` based Linux distribution is required. The basic profiles and abstr
 The following desktop environments are supported:
 
   - [x] :material-gnome: Gnome
-  - [ ] :simple-kde: KDE *(work in progress)*
+  - [x] :simple-kde: KDE
+  - [ ] :simple-xfce: XFCE *(work in progress)*
 
 **Build dependency**
 
