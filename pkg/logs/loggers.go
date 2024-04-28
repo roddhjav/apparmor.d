@@ -32,7 +32,8 @@ type systemdLog struct {
 
 // GetApparmorLogs return a list of cleaned apparmor logs from a file
 func GetApparmorLogs(file io.Reader, profile string) []string {
-	res := ""
+	var logs []string
+
 	isAppArmorLog := isAppArmorLogTemplate.Copy()
 	if profile != "" {
 		exp := `apparmor=("DENIED"|"ALLOWED"|"AUDIT")`
@@ -40,19 +41,15 @@ func GetApparmorLogs(file io.Reader, profile string) []string {
 		isAppArmorLog = regexp.MustCompile(exp)
 	}
 
-	// Select Apparmor logs
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := scanner.Text()
 		if isAppArmorLog.MatchString(line) {
-			res += line + "\n"
+			logs = append(logs,
+				regCleanLogs.Replace(util.DecodeHexInString(line)),
+			)
 		}
 	}
-
-	// Clean & remove doublon in logs
-	res = util.DecodeHexInString(res)
-	res = regCleanLogs.Replace(res)
-	logs := strings.Split(res, "\n")
 	return util.RemoveDuplicate(logs)
 }
 
@@ -60,23 +57,23 @@ func GetApparmorLogs(file io.Reader, profile string) []string {
 func GetAuditLogs(path string) (io.Reader, error) {
 	file, err := os.Open(filepath.Clean(path))
 	if err != nil {
-		return file, err
+		return nil, err
 	}
-	return file, err
+	return file, nil
 }
 
 // GetJournalctlLogs return a reader with the logs entries from Systemd
 func GetJournalctlLogs(path string, useFile bool) (io.Reader, error) {
 	var logs []systemdLog
 	var stdout bytes.Buffer
-	var unfilteredValue string
+	var scanner *bufio.Scanner
 
 	if useFile {
-		content, err := os.ReadFile(filepath.Clean(path))
+		file, err := os.Open(filepath.Clean(path))
 		if err != nil {
 			return nil, err
 		}
-		unfilteredValue = string(content)
+		scanner = bufio.NewScanner(file)
 	} else {
 		// journalctl -b -o json --output-fields=MESSAGE > systemd.log
 		cmd := exec.Command("journalctl", "--boot", "--output=json", "--output-fields=MESSAGE")
@@ -84,26 +81,27 @@ func GetJournalctlLogs(path string, useFile bool) (io.Reader, error) {
 		if err := cmd.Run(); err != nil {
 			return nil, err
 		}
-		unfilteredValue = stdout.String()
+		scanner = bufio.NewScanner(&stdout)
 	}
 
-	value := ""
-	for _, v := range strings.Split(unfilteredValue, "\n") {
-		if strings.Contains(v, "apparmor") {
-			value += v + "\n"
+	var jctlRaw []string
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.Contains(line, "apparmor") {
+			jctlRaw = append(jctlRaw, line)
 		}
 	}
-	value = strings.Replace(value, "\n", ",\n", -1)
-	value = strings.TrimSuffix(value, ",\n")
-	value = `[` + value + `]`
-	if err := json.Unmarshal([]byte(value), &logs); err != nil {
+
+	jctlStr := "[" + strings.Join(jctlRaw, ",\n") + "]"
+	if err := json.Unmarshal([]byte(jctlStr), &logs); err != nil {
 		return nil, err
 	}
-	res := ""
+
+	var res strings.Builder
 	for _, log := range logs {
-		res += log.Message + "\n"
+		res.WriteString(log.Message + "\n")
 	}
-	return strings.NewReader(res), nil
+	return strings.NewReader(res.String()), nil
 }
 
 // SelectLogFile return the path of the available log file to parse (audit, syslog, .1, .2)
