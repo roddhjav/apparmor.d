@@ -100,6 +100,7 @@ profile pacman @{exec_path} {
   @{bin}/xmlcatalog                  rix,
   @{lib}/systemd/systemd-*           rPx,
   @{lib}/vlc/vlc-cache-gen           rPx,
+  /opt/Mullvad*/resources/mullvad-setup  rPx,
   /usr/share/code-features/patch.py      rPx,
   /usr/share/code-marketplace/patch.py   rPx,
   /usr/share/libalpm/scripts/*           rPUx,
@@ -189,6 +190,19 @@ profile pacman @{exec_path} {
     include <abstractions/app/systemctl>
 
     capability net_admin,
+    capability dac_read_search,
+    capability sys_resource,
+
+    @{bin}/pager       rPx -> child-pager,
+    @{bin}/less        rPx -> child-pager,
+    @{bin}/more        rPx -> child-pager,
+    @{bin}/diff        rPx -> child-pager,
+
+    /etc/machine-id r,
+
+    /{run,var}/log/journal/ r,
+    /{run,var}/log/journal/@{hex32}/ r,
+    /{run,var}/log/journal/@{hex32}/*.journal* r,
 
     include if exists <local/pacman_systemctl>
   }
