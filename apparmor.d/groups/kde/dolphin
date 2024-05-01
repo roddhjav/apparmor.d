@@ -15,6 +15,7 @@ profile dolphin @{exec_path} {
   include <abstractions/bus/org.freedesktop.UDisks2>
   include <abstractions/deny-sensitive-home>
   include <abstractions/devices-usb>
+  include <abstractions/disks-read>
   include <abstractions/graphics>
   include <abstractions/kde-strict>
   include <abstractions/nameservice-strict>
@@ -45,9 +46,15 @@ profile dolphin @{exec_path} {
 
   # Full access to user's data
   / r,
+  /*/ r,
+  @{bin}/ r,
+  @{lib}/ r,
+  @{MOUNTDIRS}/ r,
+  @{MOUNTS}/ r,
+  @{MOUNTS}/** rw,
   owner @{HOME}/{,**} rw,
-
-  /var/lib/flatpak/exports/share/mime/ r,
+  owner @{run}/user/@{uid}/{,**} rw,
+  owner /tmp/{,**} rw,
 
   # Silence non user's data
   deny /boot/{,**} r,
@@ -65,7 +72,7 @@ profile dolphin @{exec_path} {
   owner @{user_config_dirs}/dolphinrc.@{rand6} rwl -> @{user_config_dirs}/#@{int},
   owner @{user_config_dirs}/dolphinrc.lock rwk,
   owner @{user_config_dirs}/kde.org/#@{int} rw,
-  owner @{user_config_dirs}/kde.org/UserFeedback.org.kde.dolphin.conf{,.@{rand6}} rwlk -> @{user_config_dirs}/kde.org/#@{int},
+  owner @{user_config_dirs}/kde.org/UserFeedback.org.kde.dolphin.conf{,.*} rwlk -> @{user_config_dirs}/kde.org/#@{int},
   owner @{user_config_dirs}/kde.org/UserFeedback.org.kde.dolphin.conf.lock rwk,
 
   owner @{user_config_dirs}/session/ rw,
