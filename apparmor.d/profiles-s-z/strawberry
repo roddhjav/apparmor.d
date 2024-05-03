@@ -10,22 +10,18 @@ include <tunables/global>
 @{exec_path} = @{bin}/strawberry
 profile strawberry @{exec_path} {
   include <abstractions/base>
-  include <abstractions/consoles>
-  include <abstractions/X>
-  include <abstractions/gtk>
-  include <abstractions/freedesktop.org>
-  include <abstractions/fonts>
-  include <abstractions/fontconfig-cache-read>
-  include <abstractions/dri-enumerate>
-  include <abstractions/mesa>
   include <abstractions/audio-client>
-  include <abstractions/qt5>
+  include <abstractions/consoles>
+  include <abstractions/desktop>
+  include <abstractions/devices-usb>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/graphics>
+  include <abstractions/gstreamer>
+  include <abstractions/nameservice-strict>
   include <abstractions/qt5-compose-cache-write>
   include <abstractions/qt5-settings-write>
-  include <abstractions/nameservice-strict>
   include <abstractions/ssl_certs>
-  include <abstractions/devices-usb>
-  include <abstractions/gstreamer>
+  include <abstractions/user-download-strict>
 
   signal (send) set=(term, kill) peer=strawberry-tagreader,
 
@@ -42,88 +38,45 @@ profile strawberry @{exec_path} {
 
   @{bin}/strawberry-tagreader rPx,
 
-  @{bin}/xdg-open             rCx -> open,
+  @{open_path} rPx -> child-open-help,
 
-  # Media library
+  /var/lib/dbus/machine-id r,
+  /etc/machine-id r,
+
+  owner @{HOME}/ r,
+
   owner @{user_music_dirs}/ r,
   owner @{user_music_dirs}/** rw,
 
-  # Playlists
-  owner @{HOME}/**.{m3u,xspf,pls,asx,cue,wpl} rw,
-  owner @{HOME}/**.{M3U,XSPF,PLS,ASX,CUE,WPL} rw,
-
-  owner @{HOME}/ r,
   owner @{user_config_dirs}/strawberry/ rw,
   owner @{user_config_dirs}/strawberry/* rwkl -> @{user_config_dirs}/strawberry/#@{int},
 
   owner @{user_share_dirs}/strawberry/ rw,
   owner @{user_share_dirs}/strawberry/** rwk,
 
-  owner @{user_cache_dirs}/ rw,
   owner @{user_cache_dirs}/strawberry/ rw,
   owner @{user_cache_dirs}/strawberry/** rwl -> @{user_cache_dirs}/strawberry/networkcache/prepared/#@{int},
 
   owner @{user_cache_dirs}/xine-lib/ rw,
   owner @{user_cache_dirs}/xine-lib/plugins.cache{,.new} rw,
 
-       owner @{PROC}/@{pid}/mountinfo r,
-       owner @{PROC}/@{pid}/mounts r,
-  deny owner @{PROC}/@{pid}/cmdline r,
-       owner @{PROC}/@{pid}/fd/ r,
-  deny       @{PROC}/sys/kernel/random/boot_id r,
+  owner @{tmp}/.*/ rw,
+  owner @{tmp}/.*/s rw,
+  owner @{tmp}/*= w,
+  owner @{tmp}/#@{int} rw,
+  owner @{tmp}/etilqs_@{hex} rw,
+  owner @{tmp}/qipc_{systemsem,sharedmemory}_*[a-f0-9]* rw,
+  owner @{tmp}/strawberry-cover-@{rand6}.jpg rwl -> @{tmp}/#@{int},
+  owner @{tmp}/strawberry*[0-9] w,
+  owner /dev/shm/#@{int} rw,
 
   @{run}/mount/utab r,
 
-  /etc/fstab r,
-
-  /dev/shm/#@{int} rw,
-  /dev/sr[0-9]* r,
-
-  owner @{tmp}/qipc_{systemsem,sharedmemory}_*[a-f0-9]* rw,
-  owner @{tmp}/.*/ rw,
-  owner @{tmp}/.*/s rw,
-  owner @{tmp}/strawberry*[0-9] w,
-  owner @{tmp}/strawberry-cover-*.jpg rwl -> /tmp/#@{int},
-  owner @{tmp}/#@{int} rw,
-  owner @{tmp}/*= w,
-
-  owner /var/tmp/etilqs_@{hex} rw,
-
-  /var/lib/dbus/machine-id r,
-  /etc/machine-id r,
-
-  /usr/share/hwdata/pnp.ids r,
-
-  # Allowed apps to open
-  @{lib}/firefox/firefox rPUx,
-
-  # file_inherit
-  owner /dev/tty@{int} rw,
-  owner @{HOME}/.anyRemote/anyremote.stdout w,
-
-
-  profile open {
-    include <abstractions/base>
-    include <abstractions/xdg-open>
-
-    @{bin}/xdg-open mr,
-
-    @{sh_path}             rix,
-    @{bin}/{m,g,}awk       rix,
-    @{bin}/readlink        rix,
-    @{bin}/basename        rix,
-
-    owner @{HOME}/ r,
-
-    owner @{run}/user/@{uid}/ r,
-
-    # Allowed apps to open
-    @{lib}/firefox/firefox rPUx,
-
-    # file_inherit
-    owner @{HOME}/.xsession-errors w,
-
-  }
+        @{PROC}/sys/kernel/random/boot_id r,
+  owner @{PROC}/@{pid}/cmdline r,
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/mounts r,
 
   include if exists <local/strawberry>
 }
