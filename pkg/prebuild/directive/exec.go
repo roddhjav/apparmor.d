@@ -54,8 +54,8 @@ func (d Exec) Apply(opt *Option, profileRaw string) string {
 		}
 	}
 
-	aa.TemplateIndentationLevel = strings.Count(
-		strings.SplitN(opt.Raw, Keyword, 1)[0], aa.TemplateIndentation,
+	aa.IndentationLevel = strings.Count(
+		strings.SplitN(opt.Raw, Keyword, 1)[0], aa.Indentation,
 	)
 	rules.Sort()
 	new := rules.String()

@@ -61,8 +61,8 @@ func (d Dbus) Apply(opt *Option, profile string) string {
 		r = d.talk(opt.ArgMap)
 	}
 
-	aa.TemplateIndentationLevel = strings.Count(
-		strings.SplitN(opt.Raw, Keyword, 1)[0], aa.TemplateIndentation,
+	aa.IndentationLevel = strings.Count(
+		strings.SplitN(opt.Raw, Keyword, 1)[0], aa.Indentation,
 	)
 	generatedDbus := r.String()
 	lenDbus := len(generatedDbus)
