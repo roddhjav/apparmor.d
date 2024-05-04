@@ -39,5 +39,13 @@ func (r *Capability) Equals(other any) bool {
 }
 
 func (r *Capability) String() string {
-	return renderTemplate(tokCAPABILITY, r)
+	return renderTemplate(r.Kind(), r)
+}
+
+func (r *Capability) Constraint() constraint {
+	return blockKind
+}
+
+func (r *Capability) Kind() string {
+	return tokCAPABILITY
 }

@@ -47,3 +47,11 @@ func (r *ChangeProfile) Equals(other any) bool {
 func (r *ChangeProfile) String() string {
 	return renderTemplate(tokCHANGEPROFILE, r)
 }
+
+func (r *ChangeProfile) Constraint() constraint {
+	return blockKind
+}
+
+func (r *ChangeProfile) Kind() string {
+	return tokCHANGEPROFILE
+}

@@ -40,5 +40,13 @@ func (r *Ptrace) Equals(other any) bool {
 }
 
 func (r *Ptrace) String() string {
-	return renderTemplate(tokPTRACE, r)
+	return renderTemplate(r.Kind(), r)
+}
+
+func (r *Ptrace) Constraint() constraint {
+	return blockKind
+}
+
+func (r *Ptrace) Kind() string {
+	return tokPTRACE
 }

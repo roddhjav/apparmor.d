@@ -34,5 +34,13 @@ func (r *Userns) Equals(other any) bool {
 }
 
 func (r *Userns) String() string {
-	return renderTemplate(tokUSERNS, r)
+	return renderTemplate(r.Kind(), r)
+}
+
+func (r *Userns) Constraint() constraint {
+	return blockKind
+}
+
+func (r *Userns) Kind() string {
+	return tokUSERNS
 }

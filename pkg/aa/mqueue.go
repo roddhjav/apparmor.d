@@ -58,5 +58,13 @@ func (r *Mqueue) Equals(other any) bool {
 }
 
 func (r *Mqueue) String() string {
-	return renderTemplate(tokMQUEUE, r)
+	return renderTemplate(r.Kind(), r)
+}
+
+func (r *Mqueue) Constraint() constraint {
+	return blockKind
+}
+
+func (r *Mqueue) Kind() string {
+	return tokMQUEUE
 }

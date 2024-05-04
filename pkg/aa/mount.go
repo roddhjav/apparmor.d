@@ -83,7 +83,15 @@ func (r *Mount) Equals(other any) bool {
 }
 
 func (r *Mount) String() string {
-	return renderTemplate(tokMOUNT, r)
+	return renderTemplate(r.Kind(), r)
+}
+
+func (r *Mount) Constraint() constraint {
+	return blockKind
+}
+
+func (r *Mount) Kind() string {
+	return tokMOUNT
 }
 
 type Umount struct {
@@ -121,7 +129,15 @@ func (r *Umount) Equals(other any) bool {
 }
 
 func (r *Umount) String() string {
-	return renderTemplate(tokUMOUNT, r)
+	return renderTemplate(r.Kind(), r)
+}
+
+func (r *Umount) Constraint() constraint {
+	return blockKind
+}
+
+func (r *Umount) Kind() string {
+	return tokUMOUNT
 }
 
 type Remount struct {
@@ -159,5 +175,13 @@ func (r *Remount) Equals(other any) bool {
 }
 
 func (r *Remount) String() string {
-	return renderTemplate(tokREMOUNT, r)
+	return renderTemplate(r.Kind(), r)
+}
+
+func (r *Remount) Constraint() constraint {
+	return blockKind
+}
+
+func (r *Remount) Kind() string {
+	return tokREMOUNT
 }

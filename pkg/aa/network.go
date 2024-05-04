@@ -81,5 +81,13 @@ func (r *Network) Equals(other any) bool {
 }
 
 func (r *Network) String() string {
-	return renderTemplate(tokNETWORK, r)
+	return renderTemplate(r.Kind(), r)
+}
+
+func (r *Network) Constraint() constraint {
+	return blockKind
+}
+
+func (r *Network) Kind() string {
+	return tokNETWORK
 }

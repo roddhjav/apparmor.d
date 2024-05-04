@@ -78,5 +78,13 @@ func (r *Unix) Equals(other any) bool {
 }
 
 func (r *Unix) String() string {
-	return renderTemplate(tokUNIX, r)
+	return renderTemplate(r.Kind(), r)
+}
+
+func (r *Unix) Constraint() constraint {
+	return blockKind
+}
+
+func (r *Unix) Kind() string {
+	return tokUNIX
 }

@@ -43,5 +43,13 @@ func (r *Rlimit) Equals(other any) bool {
 }
 
 func (r *Rlimit) String() string {
-	return renderTemplate(tokRLIMIT, r)
+	return renderTemplate(r.Kind(), r)
+}
+
+func (r *Rlimit) Constraint() constraint {
+	return blockKind
+}
+
+func (r *Rlimit) Kind() string {
+	return tokRLIMIT
 }
