@@ -175,6 +175,9 @@ func cjoin(i any) string {
 }
 
 func typeOf(i any) string {
+	if i == nil {
+		return ""
+	}
 	return strings.TrimPrefix(reflect.TypeOf(i).String(), "*aa.")
 }
 

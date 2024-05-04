@@ -31,15 +31,16 @@ func TestAppArmorProfileFile_String(t *testing.T) {
 		{
 			name: "foo",
 			f: &AppArmorProfileFile{
-				Preamble: Preamble{
-					Abi:      []*Abi{{IsMagic: true, Path: "abi/4.0"}},
-					Includes: []*Include{{IsMagic: true, Path: "tunables/global"}},
-					Aliases:  []*Alias{{Path: "/mnt/usr", RewrittenPath: "/usr"}},
-					Variables: []*Variable{{
+				Preamble: Rules{
+					&Comment{RuleBase: RuleBase{Comment: " Simple test profile for the AppArmorProfileFile.String() method", IsLineRule: true}},
+					nil,
+					&Abi{IsMagic: true, Path: "abi/4.0"},
+					&Alias{Path: "/mnt/usr", RewrittenPath: "/usr"},
+					&Include{IsMagic: true, Path: "tunables/global"},
+					&Variable{
 						Name: "exec_path", Define: true,
 						Values: []string{"@{bin}/foo", "@{lib}/foo"},
-					}},
-					Comments: []*RuleBase{{Comment: "Simple test profile for the AppArmorProfileFile.String() method", IsLineRule: true}},
+					},
 				},
 				Profiles: []*Profile{{
 					Header: Header{
@@ -192,17 +193,16 @@ func TestAppArmorProfileFile_Integration(t *testing.T) {
 		{
 			name: "aa-status",
 			f: &AppArmorProfileFile{
-				Preamble: Preamble{
-					Abi:      []*Abi{{IsMagic: true, Path: "abi/3.0"}},
-					Includes: []*Include{{IsMagic: true, Path: "tunables/global"}},
-					Variables: []*Variable{{
+				Preamble: Rules{
+					&Comment{RuleBase: RuleBase{Comment: " apparmor.d - Full set of apparmor profiles", IsLineRule: true}},
+					&Comment{RuleBase: RuleBase{Comment: " Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>", IsLineRule: true}},
+					&Comment{RuleBase: RuleBase{Comment: " SPDX-License-Identifier: GPL-2.0-only", IsLineRule: true}},
+					nil,
+					&Abi{IsMagic: true, Path: "abi/3.0"},
+					&Include{IsMagic: true, Path: "tunables/global"},
+					&Variable{
 						Name: "exec_path", Define: true,
 						Values: []string{"@{bin}/aa-status", "@{bin}/apparmor_status"},
-					}},
-					Comments: []*RuleBase{
-						{Comment: "apparmor.d - Full set of apparmor profiles", IsLineRule: true},
-						{Comment: "Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>", IsLineRule: true},
-						{Comment: "SPDX-License-Identifier: GPL-2.0-only", IsLineRule: true},
 					},
 				},
 				Profiles: []*Profile{{

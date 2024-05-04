@@ -21,16 +21,14 @@ func TestDefaultTunables(t *testing.T) {
 		{
 			name: "aa",
 			want: &AppArmorProfileFile{
-				Preamble: Preamble{
-					Variables: []*Variable{
-						{Name: "bin", Values: []string{"/{,usr/}{,s}bin"}},
-						{Name: "lib", Values: []string{"/{,usr/}lib{,exec,32,64}"}},
-						{Name: "multiarch", Values: []string{"*-linux-gnu*"}},
-						{Name: "HOME", Values: []string{"/home/*"}},
-						{Name: "user_share_dirs", Values: []string{"/home/*/.local/share"}},
-						{Name: "etc_ro", Values: []string{"/{,usr/}etc/"}},
-						{Name: "int", Values: []string{"[0-9]{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}"}},
-					},
+				Preamble: Rules{
+					&Variable{Name: "bin", Values: []string{"/{,usr/}{,s}bin"}},
+					&Variable{Name: "lib", Values: []string{"/{,usr/}lib{,exec,32,64}"}},
+					&Variable{Name: "multiarch", Values: []string{"*-linux-gnu*"}},
+					&Variable{Name: "HOME", Values: []string{"/home/*"}},
+					&Variable{Name: "user_share_dirs", Values: []string{"/home/*/.local/share"}},
+					&Variable{Name: "etc_ro", Values: []string{"/{,usr/}etc/"}},
+					&Variable{Name: "int", Values: []string{"[0-9]{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}"}},
 				},
 			},
 		},
