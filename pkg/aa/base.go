@@ -66,6 +66,14 @@ func (r RuleBase) String() string {
 	return renderTemplate("comment", r)
 }
 
+func (r RuleBase) Constraint() constraint {
+	return anyKind
+}
+
+func (r RuleBase) Kind() string {
+	return "base"
+}
+
 type Qualifier struct {
 	Audit      bool
 	AccessType string
@@ -104,5 +112,13 @@ func (r *All) Equals(other any) bool {
 }
 
 func (r *All) String() string {
-	return renderTemplate(tokALL, r)
+	return renderTemplate(r.Kind(), r)
+}
+
+func (r *All) Constraint() constraint {
+	return blockKind
+}
+
+func (r *All) Kind() string {
+	return tokALL
 }

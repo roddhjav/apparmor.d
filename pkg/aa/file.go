@@ -60,8 +60,13 @@ func (r *File) Equals(other any) bool {
 }
 
 func (r *File) String() string {
-	return renderTemplate("file", r)
+	return renderTemplate(r.Kind(), r)
 }
 
-		r.Target == o.Target && r.Qualifier.Equals(o.Qualifier)
+func (r *File) Constraint() constraint {
+	return blockKind
+}
+
+func (r *File) Kind() string {
+	return "file"
 }

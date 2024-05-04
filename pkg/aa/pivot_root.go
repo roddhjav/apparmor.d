@@ -46,5 +46,13 @@ func (r *PivotRoot) Equals(other any) bool {
 }
 
 func (r *PivotRoot) String() string {
-	return renderTemplate(tokPIVOTROOT, r)
+	return renderTemplate(r.Kind(), r)
+}
+
+func (r *PivotRoot) Constraint() constraint {
+	return blockKind
+}
+
+func (r *PivotRoot) Kind() string {
+	return tokPIVOTROOT
 }

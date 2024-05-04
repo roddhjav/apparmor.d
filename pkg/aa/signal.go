@@ -46,5 +46,13 @@ func (r *Signal) Equals(other any) bool {
 }
 
 func (r *Signal) String() string {
-	return renderTemplate(tokSIGNAL, r)
+	return renderTemplate(r.Kind(), r)
+}
+
+func (r *Signal) Constraint() constraint {
+	return blockKind
+}
+
+func (r *Signal) Kind() string {
+	return tokSIGNAL
 }

@@ -81,5 +81,13 @@ func (r *Dbus) Equals(other any) bool {
 }
 
 func (r *Dbus) String() string {
-	return renderTemplate(tokDBUS, r)
+	return renderTemplate(r.Kind(), r)
+}
+
+func (r *Dbus) Constraint() constraint {
+	return blockKind
+}
+
+func (r *Dbus) Kind() string {
+	return tokDBUS
 }

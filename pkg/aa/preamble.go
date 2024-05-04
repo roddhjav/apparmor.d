@@ -40,7 +40,7 @@ func (r *Comment) IsPreamble() bool {
 	return true
 }
 
-func (r *Comment) Constraint() RuleConstraint {
+func (r *Comment) Constraint() constraint {
 	return anyKind
 }
 
@@ -71,6 +71,14 @@ func (r *Abi) String() string {
 	return renderTemplate(tokABI, r)
 }
 
+func (r *Abi) Constraint() constraint {
+	return preambleKind
+}
+
+func (r *Abi) Kind() string {
+	return tokABI
+}
+
 type Alias struct {
 	RuleBase
 	Path          string
@@ -92,6 +100,14 @@ func (r Alias) Equals(other any) bool {
 
 func (r *Alias) String() string {
 	return renderTemplate(tokALIAS, r)
+}
+
+func (r *Alias) Constraint() constraint {
+	return preambleKind
+}
+
+func (r *Alias) Kind() string {
+	return tokALIAS
 }
 
 type Include struct {
@@ -121,6 +137,14 @@ func (r *Include) String() string {
 	return renderTemplate(tokINCLUDE, r)
 }
 
+func (r *Include) Constraint() constraint {
+	return anyKind
+}
+
+func (r *Include) Kind() string {
+	return tokINCLUDE
+}
+
 type Variable struct {
 	RuleBase
 	Name   string
@@ -145,4 +169,12 @@ func (r *Variable) Equals(other any) bool {
 
 func (r *Variable) String() string {
 	return renderTemplate("variable", r)
+}
+
+func (r *Variable) Constraint() constraint {
+	return preambleKind
+}
+
+func (r *Variable) Kind() string {
+	return tokVARIABLE
 }

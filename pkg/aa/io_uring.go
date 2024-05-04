@@ -40,5 +40,13 @@ func (r *IOUring) Equals(other any) bool {
 }
 
 func (r *IOUring) String() string {
-	return renderTemplate(tokIOURING, r)
+	return renderTemplate(r.Kind(), r)
+}
+
+func (r *IOUring) Constraint() constraint {
+	return blockKind
+}
+
+func (r *IOUring) Kind() string {
+	return tokIOURING
 }

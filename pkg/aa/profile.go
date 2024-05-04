@@ -48,7 +48,15 @@ func (p *Profile) Equals(other any) bool {
 }
 
 func (p *Profile) String() string {
-	return renderTemplate(tokPROFILE, p)
+	return renderTemplate(p.Kind(), p)
+}
+
+func (p *Profile) Constraint() constraint {
+	return blockKind
+}
+
+func (p *Profile) Kind() string {
+	return tokPROFILE
 }
 
 // Merge merge similar rules together.
