@@ -15,10 +15,10 @@ import (
 
 var (
 	// Default indentation for apparmor profile (2 spaces)
-	TemplateIndentation = "  "
+	Indentation = "  "
 
 	// The current indentation level
-	TemplateIndentationLevel = 0
+	IndentationLevel = 0
 
 	//go:embed templates/*.j2
 	//go:embed templates/rule/*.j2
@@ -122,7 +122,7 @@ func renderTemplate(name string, data any) string {
 	var res strings.Builder
 	template, ok := tmpl[name]
 	if !ok {
-		panic("template not found")
+		panic("template '" + name + "' not found")
 	}
 	err := template.Execute(&res, data)
 	if err != nil {
@@ -188,19 +188,19 @@ func typeToValue(i reflect.Type) string {
 func setindent(i string) string {
 	switch i {
 	case "++":
-		TemplateIndentationLevel++
+		IndentationLevel++
 	case "--":
-		TemplateIndentationLevel--
+		IndentationLevel--
 	}
 	return ""
 }
 
 func indent(s string) string {
-	return strings.Repeat(TemplateIndentation, TemplateIndentationLevel) + s
+	return strings.Repeat(Indentation, IndentationLevel) + s
 }
 
 func indentDbus(s string) string {
-	return strings.Join([]string{TemplateIndentation, s}, "     ")
+	return strings.Join([]string{Indentation, s}, "     ")
 }
 
 func getLetterIn(alphabet []string, in string) string {
