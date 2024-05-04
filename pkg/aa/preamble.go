@@ -14,6 +14,40 @@ const (
 	tokIFEXISTS = "if exists"
 )
 
+type Comment struct {
+	RuleBase
+}
+
+func newCommentFromRule(rule rule) (Rule, error) {
+	base := newRuleFromRule(rule)
+	base.IsLineRule = true
+	return &Comment{RuleBase: base}, nil
+}
+
+func (r *Comment) Less(other any) bool {
+	return false
+}
+
+func (r *Comment) Equals(other any) bool {
+	return false
+}
+
+func (r *Comment) String() string {
+	return renderTemplate("comment", r)
+}
+
+func (r *Comment) IsPreamble() bool {
+	return true
+}
+
+func (r *Comment) Constraint() RuleConstraint {
+	return anyKind
+}
+
+func (r *Comment) Kind() string {
+	return tokCOMMENT
+}
+
 type Abi struct {
 	RuleBase
 	Path    string
