@@ -49,7 +49,7 @@ func TestAppArmorProfileFile_String(t *testing.T) {
 						Attributes:  map[string]string{"security.tagged": "allowed"},
 						Flags:       []string{"complain", "attach_disconnected"},
 					},
-					Rules: []Rule{
+					Rules: Rules{
 						&Include{IsMagic: true, Path: "abstractions/base"},
 						&Include{IsMagic: true, Path: "abstractions/nameservice-strict"},
 						rlimit1,
@@ -58,7 +58,7 @@ func TestAppArmorProfileFile_String(t *testing.T) {
 						&Network{Domain: "inet", Type: "stream"},
 						&Network{Domain: "inet6", Type: "stream"},
 						&Mount{
-							RuleBase: RuleBase{Comment: "failed perms check"},
+							RuleBase: RuleBase{Comment: " failed perms check"},
 							MountConditions: MountConditions{
 								FsType:  "fuse.portal",
 								Options: []string{"rw", "rbind"},
@@ -83,11 +83,7 @@ func TestAppArmorProfileFile_String(t *testing.T) {
 							PeerLabel: "gnome-shell",
 							PeerAddr:  "none",
 						},
-						&Dbus{
-							Access: []string{"bind"},
-							Bus:    "session",
-							Name:   "org.gnome.*",
-						},
+						&Dbus{Access: []string{"bind"}, Bus: "session", Name: "org.gnome.*"},
 						&Dbus{
 							Access:    []string{"receive"},
 							Bus:       "system",

@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-func TestRule_FromLog(t *testing.T) {
+func TestRules_FromLog(t *testing.T) {
 	tests := []struct {
 		name    string
 		fromLog func(map[string]string) Rule
@@ -98,7 +98,7 @@ func TestRule_FromLog(t *testing.T) {
 	}
 }
 
-func TestRule_Less(t *testing.T) {
+func TestRules_Less(t *testing.T) {
 	tests := []struct {
 		name  string
 		rule  Rule
@@ -272,7 +272,7 @@ func TestRule_Less(t *testing.T) {
 	}
 }
 
-func TestRule_Equals(t *testing.T) {
+func TestRules_Equals(t *testing.T) {
 	tests := []struct {
 		name  string
 		rule  Rule
@@ -368,7 +368,7 @@ func TestRule_Equals(t *testing.T) {
 	}
 }
 
-func TestRule_String(t *testing.T) {
+func TestRules_String(t *testing.T) {
 	tests := []struct {
 		name string
 		rule Rule
@@ -417,7 +417,7 @@ func TestRule_String(t *testing.T) {
 		{
 			name: "mount",
 			rule: mount1,
-			want: "mount fstype=overlay overlay -> /var/lib/docker/overlay2/opaque-bug-check1209538631/merged/,  # failed perms check",
+			want: "mount fstype=overlay overlay -> /var/lib/docker/overlay2/opaque-bug-check1209538631/merged/,  #failed perms check",
 		},
 		{
 			name: "pivot_root",
