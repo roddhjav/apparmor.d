@@ -1,0 +1,22 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/epiphany/ephy-profile-migrator
+profile ephy-profile-migrator @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/dconf-write>
+  include <abstractions/gnome-strict>
+
+  @{exec_path} mr,
+
+  owner @{user_cache_dirs}/epiphany/** rw,
+  owner @{user_config_dirs}/epiphany/{,**} rw,
+  owner @{user_share_dirs}/epiphany/.migrated{,.@{rand6}} rw,
+
+  include if exists <local/ephy-profile-migrator>
+}
