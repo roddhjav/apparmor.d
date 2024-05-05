@@ -10,7 +10,6 @@ import (
 )
 
 const (
-	tokALL   = "all"
 	tokALLOW = "allow"
 	tokAUDIT = "audit"
 	tokDENY  = "deny"
