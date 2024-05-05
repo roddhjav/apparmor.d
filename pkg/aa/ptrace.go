@@ -4,6 +4,8 @@
 
 package aa
 
+import "slices"
+
 const tokPTRACE = "ptrace"
 
 type Ptrace struct {

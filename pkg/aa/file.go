@@ -4,6 +4,17 @@
 
 package aa
 
+import (
+	"slices"
+	"strings"
+)
+
+const (
+	tokLINK  = "link"
+	tokOWNER = "owner"
+)
+
+
 type File struct {
 	RuleBase
 	Qualifier

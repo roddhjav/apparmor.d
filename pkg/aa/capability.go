@@ -4,6 +4,9 @@
 
 package aa
 
+import (
+	"slices"
+)
 
 const tokCAPABILITY = "capability"
 

@@ -4,6 +4,8 @@
 
 package aa
 
+import "slices"
+
 const tokUNIX = "unix"
 
 type Unix struct {

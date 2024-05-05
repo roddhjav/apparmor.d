@@ -40,7 +40,7 @@ var (
 		tokINCLUDE, tokRLIMIT, tokCAPABILITY, tokNETWORK,
 		tokMOUNT, tokPIVOTROOT, tokCHANGEPROFILE, tokSIGNAL,
 		tokPTRACE, tokUNIX, tokUSERNS, tokIOURING,
-		tokDBUS, "file",
+		tokDBUS, "file", "variable",
 	})
 
 	// convert apparmor requested mask to apparmor access mode
@@ -73,7 +73,7 @@ var (
 		"profile",
 		"include_if_exists",
 	}
-	ruleWeights = map[string]int{}
+	ruleWeights = make(map[string]int, len(ruleAlphabet))
 
 	// The order the apparmor file rules should be sorted
 	fileAlphabet = []string{
@@ -98,8 +98,9 @@ var (
 		"@{PROC}",             // 10. Proc files
 		"/dev",                // 11. Dev files
 		"deny",                // 12. Deny rules
+		"profile",             // 13. Subprofiles
 	}
-	fileWeights = map[string]int{}
+	fileWeights = make(map[string]int, len(fileAlphabet))
 )
 
 func generateTemplates(names []string) map[string]*template.Template {

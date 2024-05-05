@@ -82,3 +82,53 @@ func TestProfile_AddRule(t *testing.T) {
 		})
 	}
 }
+
+func TestProfile_GetAttachments(t *testing.T) {
+	tests := []struct {
+		name        string
+		Attachments []string
+		want        string
+	}{
+		{
+			name: "firefox",
+			Attachments: []string{
+				"/{usr/,}bin/firefox{,-esr,-bin}",
+				"/{usr/,}lib{,32,64}/firefox{,-esr,-bin}/firefox{,-esr,-bin}",
+				"/opt/firefox{,-esr,-bin}/firefox{,-esr,-bin}",
+			},
+			want: "/{{usr/,}bin/firefox{,-esr,-bin},{usr/,}lib{,32,64}/firefox{,-esr,-bin}/firefox{,-esr,-bin},opt/firefox{,-esr,-bin}/firefox{,-esr,-bin}}",
+		},
+		{
+			name: "geoclue",
+			Attachments: []string{
+				"/{usr/,}libexec/geoclue",
+				"/{usr/,}libexec/geoclue-2.0/demos/agent",
+			},
+			want: "/{{usr/,}libexec/geoclue,{usr/,}libexec/geoclue-2.0/demos/agent}",
+		},
+		{
+			name:        "null",
+			Attachments: []string{},
+			want:        "",
+		},
+		{
+			name:        "empty",
+			Attachments: []string{""},
+			want:        "",
+		},
+		{
+			name:        "not valid aare",
+			Attachments: []string{"/file", "relative"},
+			want:        "/{file,relative}",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p := &Profile{}
+			p.Attachments = tt.Attachments
+			if got := p.GetAttachments(); got != tt.want {
+				t.Errorf("Profile.GetAttachments() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
