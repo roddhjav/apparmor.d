@@ -97,28 +97,3 @@ func (r Qualifier) Less(other Qualifier) bool {
 func (r Qualifier) Equals(other Qualifier) bool {
 	return r.Audit == other.Audit && r.AccessType == other.AccessType
 }
-
-type All struct {
-	RuleBase
-}
-
-
-func (r *All) Less(other any) bool {
-	return false
-}
-
-func (r *All) Equals(other any) bool {
-	return false
-}
-
-func (r *All) String() string {
-	return renderTemplate(r.Kind(), r)
-}
-
-func (r *All) Constraint() constraint {
-	return blockKind
-}
-
-func (r *All) Kind() string {
-	return tokALL
-}
