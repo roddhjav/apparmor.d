@@ -8,6 +8,7 @@ import (
 	"maps"
 	"reflect"
 	"slices"
+	"sort"
 	"strings"
 )
 
@@ -86,7 +87,22 @@ func (p *Profile) Merge() {
 // Sort the rules in a profile.
 // Follow: https://apparmor.pujol.io/development/guidelines/#guidelines
 func (p *Profile) Sort() {
-	p.Rules.Sort()
+	sort.Slice(p.Rules, func(i, j int) bool {
+		typeOfI := reflect.TypeOf(p.Rules[i])
+		typeOfJ := reflect.TypeOf(p.Rules[j])
+		if typeOfI != typeOfJ {
+			valueOfI := typeToValue(typeOfI)
+			valueOfJ := typeToValue(typeOfJ)
+			if typeOfI == reflect.TypeOf((*Include)(nil)) && p.Rules[i].(*Include).IfExists {
+				valueOfI = "include_if_exists"
+			}
+			if typeOfJ == reflect.TypeOf((*Include)(nil)) && p.Rules[j].(*Include).IfExists {
+				valueOfJ = "include_if_exists"
+			}
+			return ruleWeights[valueOfI] < ruleWeights[valueOfJ]
+		}
+		return p.Rules[i].Less(p.Rules[j])
+	})
 }
 
 // Format the profile for better readability before printing it.
@@ -121,9 +137,68 @@ func (p *Profile) Format() {
 	}
 }
 
-// AddRule adds a new rule to the profile from a log map.
-func (p *Profile) AddRule(log map[string]string) {
+// GetAttachments return a nested attachment string
+func (p *Profile) GetAttachments() string {
+	if len(p.Attachments) == 0 {
+		return ""
+	} else if len(p.Attachments) == 1 {
+		return p.Attachments[0]
+	} else {
+		res := []string{}
+		for _, attachment := range p.Attachments {
+			if strings.HasPrefix(attachment, "/") {
+				res = append(res, attachment[1:])
+			} else {
+				res = append(res, attachment)
+			}
+		}
+		return "/{" + strings.Join(res, ",") + "}"
+	}
+}
 
+var (
+	newLogMap = map[string]func(log map[string]string) Rule{
+		"rlimits":      newRlimitFromLog,
+		"cap":          newCapabilityFromLog,
+		"io_uring":     newIOUringFromLog,
+		"signal":       newSignalFromLog,
+		"ptrace":       newPtraceFromLog,
+		"namespace":    newUsernsFromLog,
+		"unix":         newUnixFromLog,
+		"dbus":         newDbusFromLog,
+		"posix_mqueue": newMqueueFromLog,
+		"sysv_mqueue":  newMqueueFromLog,
+		"mount": func(log map[string]string) Rule {
+			if strings.Contains(log["flags"], "remount") {
+				return newRemountFromLog(log)
+			}
+			newRule := newLogMountMap[log["operation"]]
+			return newRule(log)
+		},
+		"net": func(log map[string]string) Rule {
+			if log["family"] == "unix" {
+				return newUnixFromLog(log)
+			} else {
+				return newNetworkFromLog(log)
+			}
+		},
+		"file": func(log map[string]string) Rule {
+			if log["operation"] == "change_onexec" {
+				return newChangeProfileFromLog(log)
+			} else {
+				return newFileFromLog(log)
+			}
+		},
+	}
+	newLogMountMap = map[string]func(log map[string]string) Rule{
+		"mount":     newMountFromLog,
+		"umount":    newUmountFromLog,
+		"remount":   newRemountFromLog,
+		"pivotroot": newPivotRootFromLog,
+	}
+)
+
+func (p *Profile) AddRule(log map[string]string) {
 	// Generate profile flags and extra rules
 	switch log["error"] {
 	case "-2":
@@ -139,57 +214,15 @@ func (p *Profile) AddRule(log map[string]string) {
 	default:
 	}
 
-	switch log["class"] {
-	case "rlimits":
-		p.Rules = append(p.Rules, newRlimitFromLog(log))
-	case "cap":
-		p.Rules = append(p.Rules, newCapabilityFromLog(log))
-	case "net":
-		if log["family"] == "unix" {
-			p.Rules = append(p.Rules, newUnixFromLog(log))
-		} else {
-			p.Rules = append(p.Rules, newNetworkFromLog(log))
-		}
-	case "io_uring":
-		p.Rules = append(p.Rules, newIOUringFromLog(log))
-	case "mount":
-		if strings.Contains(log["flags"], "remount") {
-			p.Rules = append(p.Rules, newRemountFromLog(log))
-		} else {
-			switch log["operation"] {
-			case "mount":
-				p.Rules = append(p.Rules, newMountFromLog(log))
-			case "umount":
-				p.Rules = append(p.Rules, newUmountFromLog(log))
-			case "remount":
-				p.Rules = append(p.Rules, newRemountFromLog(log))
-			case "pivotroot":
-				p.Rules = append(p.Rules, newPivotRootFromLog(log))
-			}
-		}
-	case "posix_mqueue", "sysv_mqueue":
-		p.Rules = append(p.Rules, newMqueueFromLog(log))
-	case "signal":
-		p.Rules = append(p.Rules, newSignalFromLog(log))
-	case "ptrace":
-		p.Rules = append(p.Rules, newPtraceFromLog(log))
-	case "namespace":
-		p.Rules = append(p.Rules, newUsernsFromLog(log))
-	case "unix":
-		p.Rules = append(p.Rules, newUnixFromLog(log))
-	case "dbus":
-		p.Rules = append(p.Rules, newDbusFromLog(log))
-	case "file":
-		if log["operation"] == "change_onexec" {
-			p.Rules = append(p.Rules, newChangeProfileFromLog(log))
-		} else {
-			p.Rules = append(p.Rules, newFileFromLog(log))
-		}
-	default:
+	if newRule, ok := newLogMap[log["class"]]; ok {
+		p.Rules = append(p.Rules, newRule(log))
+	} else {
 		if strings.Contains(log["operation"], "dbus") {
 			p.Rules = append(p.Rules, newDbusFromLog(log))
 		} else if log["family"] == "unix" {
 			p.Rules = append(p.Rules, newUnixFromLog(log))
+		} else {
+			panic("unknown class: " + log["class"])
 		}
 	}
 }

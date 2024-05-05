@@ -27,6 +27,23 @@ func NewAppArmorProfile() *AppArmorProfileFile {
 	return &AppArmorProfileFile{}
 }
 
+// DefaultTunables return a minimal working profile to build the profile
+// It should not be used when loading file from /etc/apparmor.d
+func DefaultTunables() *AppArmorProfileFile {
+	return &AppArmorProfileFile{
+		Preamble: Rules{
+			&Variable{Name: "bin", Values: []string{"/{,usr/}{,s}bin"}, Define: true},
+			&Variable{Name: "lib", Values: []string{"/{,usr/}lib{,exec,32,64}"}, Define: true},
+			&Variable{Name: "multiarch", Values: []string{"*-linux-gnu*"}, Define: true},
+			&Variable{Name: "HOME", Values: []string{"/home/*"}, Define: true},
+			&Variable{Name: "user_share_dirs", Values: []string{"/home/*/.local/share"}, Define: true},
+			&Variable{Name: "etc_ro", Values: []string{"/{,usr/}etc/"}, Define: true},
+			&Variable{Name: "int", Values: []string{"[0-9]{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}"}, Define: true},
+			&Variable{Name: "user_cache_dirs", Values: []string{"/home/*/.cache"}, Define: true},
+		},
+	}
+}
+
 // String returns the formatted representation of a profile file as a string
 func (f *AppArmorProfileFile) String() string {
 	return renderTemplate("apparmor", f)
