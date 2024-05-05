@@ -32,3 +32,24 @@ type Rules []Rule
 func (r Rules) String() string {
 	return renderTemplate("rules", r)
 }
+
+func (r Rules) Get(filter string) Rules {
+	res := make(Rules, 0)
+	for _, rule := range r {
+		if rule.Kind() == filter {
+			res = append(res, rule)
+		}
+	}
+	return res
+}
+
+func (r Rules) GetVariables() []*Variable {
+	res := make([]*Variable, 0)
+	for _, rule := range r {
+		switch rule.(type) {
+		case *Variable:
+			res = append(res, rule.(*Variable))
+		}
+	}
+	return res
+}
