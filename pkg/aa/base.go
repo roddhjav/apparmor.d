@@ -4,7 +4,9 @@
 
 package aa
 
-import "strings"
+import (
+	"strings"
+)
 
 type RuleBase struct {
 	IsLineRule  bool

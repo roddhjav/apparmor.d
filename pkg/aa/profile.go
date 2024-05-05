@@ -131,7 +131,7 @@ func (p *Profile) Format() {
 			if letterI != letterJ {
 				// Add a new empty line between Files rule of different type
 				hasOwnerRule = false
-				p.Rules = append(p.Rules[:i], append([]Rule{&RuleBase{}}, p.Rules[i:]...)...)
+				p.Rules = append(p.Rules[:i], append(Rules{nil}, p.Rules[i:]...)...)
 			}
 		}
 	}

@@ -4,6 +4,10 @@
 
 package aa
 
+import (
+	"slices"
+)
+
 const tokDBUS = "dbus"
 
 type Dbus struct {

@@ -4,6 +4,7 @@
 
 package aa
 
+import "slices"
 
 const tokSIGNAL = "signal"
 
