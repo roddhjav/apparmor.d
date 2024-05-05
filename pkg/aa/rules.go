@@ -4,11 +4,6 @@
 
 package aa
 
-import (
-	"reflect"
-	"sort"
-)
-
 const (
 	tokALLOW = "allow"
 	tokAUDIT = "audit"
@@ -36,25 +31,4 @@ type Rules []Rule
 
 func (r Rules) String() string {
 	return renderTemplate("rules", r)
-}
-
-// Sort the rules in a profile.
-// Follow: https://apparmor.pujol.io/development/guidelines/#guidelines
-func (r Rules) Sort() {
-	sort.Slice(r, func(i, j int) bool {
-		typeOfI := reflect.TypeOf(r[i])
-		typeOfJ := reflect.TypeOf(r[j])
-		if typeOfI != typeOfJ {
-			valueOfI := typeToValue(typeOfI)
-			valueOfJ := typeToValue(typeOfJ)
-			if typeOfI == reflect.TypeOf((*Include)(nil)) && r[i].(*Include).IfExists {
-				valueOfI = "include_if_exists"
-			}
-			if typeOfJ == reflect.TypeOf((*Include)(nil)) && r[j].(*Include).IfExists {
-				valueOfJ = "include_if_exists"
-			}
-			return ruleWeights[valueOfI] < ruleWeights[valueOfJ]
-		}
-		return r[i].Less(r[j])
-	})
 }
