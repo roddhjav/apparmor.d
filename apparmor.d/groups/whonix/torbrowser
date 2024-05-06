@@ -38,6 +38,7 @@ profile torbrowser @{exec_path} flags=(attach_disconnected) {
 
   capability sys_admin, # If kernel.unprivileged_userns_clone = 1
   capability sys_chroot, # If kernel.unprivileged_userns_clone = 1
+  capability sys_ptrace,
 
   network inet stream,
   network inet6 stream,
@@ -49,11 +50,21 @@ profile torbrowser @{exec_path} flags=(attach_disconnected) {
 
   @{exec_path} mrix,
 
+  @{sh_path}                 rix,
+  @{bin}/basename            rix,
+  @{bin}/dirname             rix,
+  @{bin}/expr                rix,
+
   @{lib_dirs}/{,**}             r,
   @{lib_dirs}/*.so              mr,
+  @{lib_dirs}/abicheck          rix,
   @{lib_dirs}/glxtest           rPx,
   @{lib_dirs}/plugin-container  rPx,
+  @{lib_dirs}/updater           rPx,
   @{lib_dirs}/vaapitest         rPx,
+
+  # Desktop integration
+  @{bin}/lsb_release                                 rPx -> lsb_release,
 
   /usr/share/@{name}/{,**} r,
   /usr/share/doc/{,**} r,
@@ -72,8 +83,10 @@ profile torbrowser @{exec_path} flags=(attach_disconnected) {
   /var/lib/nscd/services r,
 
   owner @{lib_dirs}/.cache/{,**} rw,
+  owner @{lib_dirs}/.local/{,**} rw,
   owner @{lib_dirs}/Downloads/{,**} rw,
   owner @{lib_dirs}/fonts/** r,
+  owner @{lib_dirs}/TorBrowser/UpdateInfo/{,**} rw,
 
   owner @{config_dirs}/ rw,
   owner @{config_dirs}/** rwk,
@@ -91,7 +104,6 @@ profile torbrowser @{exec_path} flags=(attach_disconnected) {
   owner @{tmp}/firefox/* rwk,
   owner @{tmp}/@{name}/ rw,
   owner @{tmp}/@{name}/* rwk,
-  owner @{tmp}/Temp-@{uuid}/ rw,
   owner "@{tmp}/Tor Project*/" rw,
   owner "@{tmp}/Tor Project*/**" rwk,
   owner "@{tmp}/Tor Project*" rwk,
