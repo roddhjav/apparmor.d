@@ -1,0 +1,25 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/helper-scripts/tor_consensus_valid-after.py
+profile tor-consensus-valid-after @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+  include <abstractions/python>
+
+  @{exec_path} mr,
+
+  @{lib}/helper-scripts/{,**} r,
+
+        @{run}/tor/control.authcookie r,
+  owner @{run}/sdwdate/* rw,
+
+  owner /tmp/tmp.@{rand10} rw,
+
+  include if exists <local/tor-consensus-valid-after>
+}
