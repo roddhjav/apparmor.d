@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2024 Jeroen Rijken
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -9,20 +10,13 @@ include <tunables/global>
 @{exec_path} = @{bin}/kbuildsycoca5
 profile kbuildsycoca5 @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/freedesktop.org>
   include <abstractions/nameservice-strict>
 
   @{exec_path} mr,
 
-  /usr/share/applications/kde-mimeapps.list r,
-  /usr/share/mime/mime.cache r,
-  /usr/share/mime/types r,
-  /var/lib/flatpak/exports/share/mime/types r,
-
-  owner @{user_cache_dirs}/ksycoca5_* l -> @{user_cache_dirs}/#@{int},
   owner @{user_cache_dirs}/ksycoca5_* rw,
-  owner @{user_config_dirs}/mimeapps.list r,
-  owner @{user_share_dirs}/applications/mimeapps.list r,
-  owner @{user_share_dirs}/mime/types r,
+  link owner @{user_cache_dirs}/ksycoca5_* -> @{user_cache_dirs}/#@{int},
 
   /dev/tty r,
 
