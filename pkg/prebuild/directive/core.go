@@ -61,6 +61,13 @@ func NewOption(file *paths.Path, match []string) *Option {
 	}
 }
 
+// Clean the selected directive from profile.
+// Useful to remove directive text applied on some condition only
+func (o *Option) Clean(profile string) string {
+	reg := regexp.MustCompile(`\s*` + Keyword + o.Name + ` .*$`)
+	return reg.ReplaceAllString(profile, "")
+}
+
 func RegisterDirective(d Directive) {
 	Directives[d.Name()] = d
 }

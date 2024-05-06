@@ -33,7 +33,8 @@
     * OpenSUSE Tumbleweed
 - Support major desktop environments:
     * Gnome
-    * KDE *(work in progress)*
+    * KDE
+    * XFCE *(work in progress)*
 - Fully tested (Work in progress)
 
 

@@ -1,0 +1,32 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022-2024 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2022-2024 Jose Maldonado <josemald89@gmail.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{lib_dirs} = /opt/microsoft/msedge{,-beta,-dev}
+
+@{exec_path} = @{lib_dirs}/msedge-sandbox
+profile msedge-sandbox @{exec_path} {
+  include <abstractions/base>
+
+  capability setgid,
+  capability setuid,
+  capability sys_admin,
+  capability sys_chroot,
+  capability sys_resource,
+
+  @{exec_path} mr,
+
+  @{lib_dirs}/msedge{,-beta,-dev}      rPx,
+
+        @{PROC} r,
+        @{PROC}/@{pids}/ r,
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/oom_{,score_}adj rw,
+
+  include if exists <local/msedge-sandbox>
+}

@@ -2,9 +2,13 @@
 title: Installation
 ---
 
-!!! danger
+!!! warning
 
     In order to not break your system, the default package configuration installs all profiles in complain mode. They can be enforced later. See the [Enforce Mode](enforce.md) page.
+
+!!! danger
+
+    Do **not** install this project if your Desktop Environement and Display Manager is not supported. Your system will not boot, and that would be a feature.
 
 ## Requirements
 
@@ -17,7 +21,8 @@ An `apparmor` based Linux distribution is required. The basic profiles and abstr
 The following desktop environments are supported:
 
   - [x] :material-gnome: Gnome
-  - [ ] :simple-kde: KDE *(work in progress)*
+  - [x] :simple-kde: KDE
+  - [ ] :simple-xfce: XFCE *(work in progress)*
 
 **Build dependency**
 
@@ -65,6 +70,12 @@ sudo dpkg -i ../apparmor.d_*.deb
     sudo apt install -t bookworm-backports golang-go
     ```
 
+!!! warning
+
+    **Beware**: do not install a `.deb` made for Debian on Ubuntu, the packages are differents.
+
+    If your distribution is based on Ubuntu or Debian, you may want to manually set the target distribution by exporting `DISTRIBUTION=debian` if is Debian based, or `DISTRIBUTION=ubuntu` if it is Ubuntu based.
+
 ## :simple-suse: OpenSUSE
 
 OpenSUSE users need to add [cboltz](https://en.opensuse.org/User:Cboltz) repo on OBS
@@ -77,7 +88,7 @@ zypper install apparmor.d
 
 ## Partial install
 
-For test purposes, you can install specific profiles with the following commands. Abstractions, tunables, and most of the OS dependent post-processing is managed.
+For test purposes, you can install specific profiles with the following commands. Abstractions, tunable, and most of the OS dependent post-processing is managed.
 
 ```sh
 make

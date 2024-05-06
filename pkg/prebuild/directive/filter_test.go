@@ -31,7 +31,7 @@ func TestFilterOnly_Apply(t *testing.T) {
 				Raw:     "  @{bin}/arch-audit rPx, #aa:only apt",
 			},
 			profile: "  @{bin}/arch-audit rPx, #aa:only apt",
-			want:    "  @{bin}/arch-audit rPx, #aa:only apt",
+			want:    "  @{bin}/arch-audit rPx,",
 		},
 		{
 			name:   "paragraph",
@@ -121,7 +121,7 @@ func TestFilterExclude_Apply(t *testing.T) {
 				Raw:     "  @{bin}/dpkg rPx -> child-dpkg, #aa:exclude debian",
 			},
 			profile: "  @{bin}/dpkg rPx -> child-dpkg, #aa:exclude debian",
-			want:    "  @{bin}/dpkg rPx -> child-dpkg, #aa:exclude debian",
+			want:    "  @{bin}/dpkg rPx -> child-dpkg,",
 		},
 	}
 	for _, tt := range tests {

@@ -9,7 +9,6 @@ include <tunables/global>
 @{exec_path} = @{bin}/gnome-shell
 profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/base>
-  include <abstractions/app-launcher-user>
   include <abstractions/audio-client>
   include <abstractions/bus-accessibility>
   include <abstractions/bus-session>
@@ -20,13 +19,11 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/bus/org.a11y>
   include <abstractions/bus/org.freedesktop.Accounts>
   include <abstractions/bus/org.freedesktop.background.Monitor>
-  include <abstractions/bus/org.freedesktop.ColorManager>
   include <abstractions/bus/org.freedesktop.FileManager1>
   include <abstractions/bus/org.freedesktop.GeoClue2>
   include <abstractions/bus/org.freedesktop.impl.portal.PermissionStore>
   include <abstractions/bus/org.freedesktop.locale1>
   include <abstractions/bus/org.freedesktop.login1.Session>
-  include <abstractions/bus/org.freedesktop.login1>
   include <abstractions/bus/org.freedesktop.NetworkManager>
   include <abstractions/bus/org.freedesktop.Notifications>
   include <abstractions/bus/org.freedesktop.PackageKit>
@@ -89,10 +86,11 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   # Talk with gnome-shell
 
   #aa:dbus talk bus=system name=org.freedesktop.ColorManager label=colord
-  #aa:dbus talk bus=system name=org.freedesktop.login1.Manager label=systemd-logind
+  #aa:dbus talk bus=system name=org.freedesktop.login1 label=systemd-logind
   #aa:dbus talk bus=system name=org.gnome.DisplayManager label=gdm
 
   #aa:dbus talk bus=session name=com.rastersoft.ding label=gnome-extension-ding
+  #aa:dbus talk bus=session name=org.gnome.ScreenSaver label=gjs-console
   #aa:dbus talk bus=session name=org.gnome.SessionManager label=gnome-session-binary
   #aa:dbus talk bus=session name=org.gnome.SettingsDaemon.* label=gsd-*
 
@@ -198,7 +196,6 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   /usr/share/gdm/BuiltInSessions/{,*.desktop} r,
   /usr/share/gdm/greeter-dconf-defaults r,
   /usr/share/gdm/greeter/applications/{,**} r,
-  /usr/share/gnome-shell/{,**} r,
   /usr/share/libgweather/Locations.xml r,
   /usr/share/libinput*/ r,
   /usr/share/libinput*/{,**/}[0-9][0-9]-*.quirks r,
@@ -207,7 +204,9 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   /usr/share/wallpapers/** r,
   /usr/share/wayland-sessions/{,*.desktop} r,
   /usr/share/xml/iso-codes/{,**} r,
+  @{system_share_dirs}/gnome-shell/{,**} r,
 
+  / r,
   /.flatpak-info r,
   /etc/fstab r,
   /etc/timezone r,
@@ -218,7 +217,6 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
   /var/lib/flatpak/app/**/gnome-shell/{,**} r,
   /var/lib/flatpak/appstream/**/icons/** r,
-  /var/lib/flatpak/exports/share/gnome-shell/{,**} r,
 
   owner @{GDM_HOME}/greeter-dconf-defaults r,
   owner @{gdm_cache_dirs}/ w,
@@ -285,8 +283,8 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
         /tmp/.X@{int}-lock rw,
         /tmp/dbus-@{rand8} rw,
-  owner /tmp/@{rand6}.shell-extension.zip rw,
-  owner /tmp/gdkpixbuf-xpm-tmp.@{rand6} rw,
+  owner @{tmp}/@{rand6}.shell-extension.zip rw,
+  owner @{tmp}/gdkpixbuf-xpm-tmp.@{rand6} rw,
 
   @{run}/systemd/users/@{uid} r,
   @{run}/systemd/seats/seat@{int} r,

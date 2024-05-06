@@ -1,0 +1,29 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/gnome-firmware
+profile gnome-firmware @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/bus-system>
+  include <abstractions/common/gnome>
+  include <abstractions/nameservice-strict>
+  include <abstractions/ssl_certs>
+
+  network inet dgram,
+  network inet stream,
+  network inet6 dgram,
+  network inet6 stream,
+  network netlink raw,
+
+  #aa:dbus talk bus=system name=org.freedesktop.fwupd label=fwupd path=/
+  #aa:dbus talk bus=system name=org.freedesktop.login1 label=systemd-logind
+
+  @{exec_path} mr,
+
+  include if exists <local/gnome-firmware>
+}

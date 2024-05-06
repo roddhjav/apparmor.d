@@ -23,7 +23,7 @@ var (
 	supportedDists = map[string][]string{
 		"arch":     {},
 		"debian":   {},
-		"ubuntu":   {},
+		"ubuntu":   {"neon"},
 		"opensuse": {"suse", "opensuse-tumbleweed"},
 		"whonix":   {},
 	}

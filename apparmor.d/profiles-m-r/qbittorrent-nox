@@ -10,6 +10,7 @@ include <tunables/global>
 @{exec_path} = @{bin}/qbittorrent-nox
 profile qbittorrent-nox @{exec_path} {
   include <abstractions/base>
+  include <abstractions/freedesktop.org>
   include <abstractions/nameservice-strict>
   include <abstractions/ssl_certs>
 
@@ -22,48 +23,37 @@ profile qbittorrent-nox @{exec_path} {
 
   @{exec_path} mr,
 
-  # Qbittorrent home dirs
-  owner @{user_config_dirs}/qBittorrent/ rw,
-  owner @{user_config_dirs}/qBittorrent/** rwkl -> @{user_config_dirs}/qBittorrent/#@{int},
-  owner @{user_share_dirs}/qBittorrent/ rw,
-  owner @{user_share_dirs}/qBittorrent/** rwl -> @{user_share_dirs}/data/qBittorrent/**/#@{int},
-  # Old dir, not recommended to use:
-  deny owner @{user_share_dirs}/data/qBittorrent/ rw,
+  /var/lib/dbus/machine-id r,
+  /etc/machine-id r,
 
-  # Cache dir
+  owner @{user_torrents_dirs}/ r,
+  owner @{user_torrents_dirs}/** rw,
+
   owner @{user_cache_dirs}/ rw,
   owner @{user_cache_dirs}/#@{int} rw,
   owner @{user_cache_dirs}/qBittorrent/{,**} rw,
 
-  # Torrent files
-  owner @{user_torrents_dirs}/ r,
-  owner @{user_torrents_dirs}/** rw,
+  owner @{user_config_dirs}/qBittorrent/ rw,
+  owner @{user_config_dirs}/qBittorrent/** rwkl -> @{user_config_dirs}/qBittorrent/#@{int},
+  owner @{user_share_dirs}/qBittorrent/ rw,
+  owner @{user_share_dirs}/qBittorrent/** rwl -> @{user_share_dirs}/data/qBittorrent/**/#@{int},
+
+  owner @{tmp}/.*/{,s} rw,
+  owner @{tmp}/.qBittorrent/ rw,
+  owner @{tmp}/.qBittorrent/* rwl -> /tmp/.qBittorrent/*,
+  owner @{tmp}/*.torrent rw,
+  owner @{tmp}/mozilla_*/*.torrent rw,
+  owner @{tmp}/qtsingleapp-qBitto-* rw,
+  owner @{tmp}/qtsingleapp-qBitto-*-lockfile rwk,
+
+        @{PROC}/sys/kernel/random/boot_id r,
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/mounts r,
 
   /dev/disk/by-label/ r,
-
   /dev/shm/#@{int} rw,
-
-       owner @{PROC}/@{pid}/mountinfo r,
-       owner @{PROC}/@{pid}/mounts r,
-  deny       @{PROC}/sys/kernel/random/boot_id r,
-
-
-  /var/lib/dbus/machine-id r,
-  /etc/machine-id r,
-
-  /usr/share/mime/mime.cache r,
-  /usr/share/mime/types r,
-  owner @{user_share_dirs}/mime/mime.cache r,
-  owner @{user_share_dirs}/mime/types r,
-
-  # TMP
-  owner /tmp/qtsingleapp-qBitto-* rw,
-  owner /tmp/qtsingleapp-qBitto-*-lockfile rwk,
-  owner /tmp/.qBittorrent/ rw,
-  owner /tmp/.qBittorrent/* rwl -> /tmp/.qBittorrent/*,
-  owner /tmp/mozilla_*/*.torrent rw,
-  owner /tmp/*.torrent rw,
-  owner /tmp/.*/{,s} rw,
+ 
+  deny owner @{user_share_dirs}/data/qBittorrent/ rw,  # Old dir, not recommended to use
 
   include if exists <local/qbittorrent-nox>
 }
