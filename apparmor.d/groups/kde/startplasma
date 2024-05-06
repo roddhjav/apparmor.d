@@ -11,6 +11,7 @@ profile startplasma @{exec_path} {
   include <abstractions/base>
   include <abstractions/audio-client>
   include <abstractions/kde-strict>
+  include <abstractions/bus-session>
 
   signal (receive) set=(hup) peer=@{p_systemd},
   signal (receive) set=(term) peer=sddm,
@@ -20,11 +21,16 @@ profile startplasma @{exec_path} {
   @{sh_path}  rix,
   @{bin}/env  rix,
 
+  @{bin}/{,ba,da}sh         rix,
+  @{bin}/env                rix,
+  @{bin}/grep               rix,
   @{bin}/kapplymousetheme  rPUx,
   @{bin}/ksplashqml        rPUx,
   @{bin}/plasma_session     rPx,
   @{bin}/xrdb               rPx,
   @{bin}/xsetroot           rPx,
+
+  @{lib}/@{multiarch}/libexec/plasma-sourceenv.sh r,
 
   /usr/share/color-schemes/{,**} r,
   /usr/share/desktop-directories/{,**} r,
@@ -33,10 +39,16 @@ profile startplasma @{exec_path} {
   /usr/share/kservicetypes5/{,**} r,
   /usr/share/plasma/{,**} r,
 
+  /etc/locale.alias r,
   /etc/machine-id r,
   /etc/xdg/kcminputrc r,
   /etc/xdg/menus/{,**} r,
-  /etc/xdg/plasma-workspace/env/{,**} r,
+  /etc/xdg/plasma-workspace/env/{,*} r,
+
+  /var/lib/flatpak/exports/share/mime/ r,
+
+  @{HOME}/ r,
+  @{HOME}/.xsession-errors w,
 
         @{user_cache_dirs}/ksycoca{5,6}_* rwkl -> @{user_cache_dirs}/#@{int},
   owner @{user_cache_dirs}/#@{int} rwk,
@@ -71,7 +83,9 @@ profile startplasma @{exec_path} {
 
   owner @{run}/user/@{uid}/ r,
 
-  @{PROC}/sys/kernel/core_pattern r,
+        @{PROC}/sys/kernel/core_pattern r,
+        @{PROC}/sys/kernel/random/boot_id r,
+  owner @{PROC}/@{pid}/maps r,
 
   /dev/tty r,
   /dev/tty@{int} rw,

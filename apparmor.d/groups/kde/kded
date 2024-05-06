@@ -34,14 +34,11 @@ profile kded @{exec_path} {
 
   signal (send) set=hup peer=xsettingsd,
 
-  dbus receive bus=system path=/org/freedesktop/NetworkManager/SecretAgent
-       interface=org.freedesktop.NetworkManager.SecretAgent
-       member=CancelGetSecrets
-       peer=(label=NetworkManager),
+  # dbus: own bus=system name=com.redhat.NewPrinterNotification
 
   dbus receive bus=system path=/org/freedesktop/NetworkManager/SecretAgent
        interface=org.freedesktop.NetworkManager.SecretAgent
-       member=CancelGetSecrets
+       member={GetSecrets,CancelGetSecrets}
        peer=(label=NetworkManager),
 
   dbus receive bus=system path=/org/freedesktop/NetworkManager/AccessPoint/@{int}
@@ -57,6 +54,30 @@ profile kded @{exec_path} {
   dbus send bus=system path=/org/freedesktop/NetworkManager/AgentManager
        interface=org.freedesktop.NetworkManager.AgentManager
        peer=(label=NetworkManager),
+
+  dbus send bus=system path=/org/freedesktop/NetworkManager/AgentManager
+       interface=org.freedesktop.NetworkManager.AgentManager
+       peer=(label=NetworkManager),
+
+  dbus send bus=system path=/org/freedesktop/bolt
+       interface=org.freedesktop.bolt1.Manager
+       member=ListDevices
+       peer=(name="{:*,org.freedesktop.bolt}", label=boltd),
+
+  dbus send bus=system path=/org/freedesktop/bolt{,/**}
+       interface=org.freedesktop.DBus.Properties
+       member=Get
+       peer=(name="{:*,org.freedesktop.bolt}", label=boltd),
+
+  dbus receive bus=system path=/
+       interface=org.kde.kf5auth
+       member=remoteSignal
+       peer=(name=:*, label=kauth-kded-smart-helper),
+
+  dbus send bus=system path=/
+       interface=org.kde.kf5auth
+       member=performAction
+       peer=(name="{:*,org.kde.kded.smart}", label=kauth-kded-smart-helper),
 
   @{exec_path} mrix,
 
@@ -141,7 +162,7 @@ profile kded @{exec_path} {
   owner @{user_config_dirs}/Trolltech.conf{,.@{rand6}} rwl,
   owner @{user_config_dirs}/xsettingsd/{,**} rw,
 
-        @{user_share_dirs}/kcookiejar/cookies{,.@{rand6}} rwkl -> @{user_share_dirs}/kcookiejar/#@{int},
+  owner @{user_share_dirs}/kcookiejar/cookies{,.@{rand6}} rwkl -> @{user_share_dirs}/kcookiejar/#@{int},
   owner @{user_share_dirs}/icc/{,edid-*} r,
   owner @{user_share_dirs}/kcookiejar/#@{int} rw,
   owner @{user_share_dirs}/kcookiejar/cookies.lock rwk,
