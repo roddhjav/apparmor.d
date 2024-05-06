@@ -30,6 +30,9 @@
 @{XDG_GPG_DIR}=".gnupg"
 @{XDG_PASSWORD_STORE_DIR}=".password-store"
 
+# User personal private directories
+@{XDG_PRIVATE_DIR}=".{p,P}rivate" "{p,P}rivate"
+
 # Definition of local user configuration directories
 @{XDG_CACHE_DIR}=".cache"
 @{XDG_CONFIG_DIR}=".config"
@@ -61,3 +64,4 @@
 @{user_vm_dirs}=@{HOME}/@{XDG_VM_DIR} @{MOUNTS}/@{XDG_VM_DIR}
 @{user_work_dirs}=@{HOME}/@{XDG_WORK_DIR} @{MOUNTS}/@{XDG_WORK_DIR}
 @{user_password_store_dirs}=@{HOME}/@{XDG_PASSWORD_STORE_DIR} @{MOUNTS}/@{XDG_PASSWORD_STORE_DIR}
+@{user_private_dirs}=@{HOME}/@{XDG_PRIVATE_DIR} @{MOUNTS}/@{XDG_PRIVATE_DIR}
