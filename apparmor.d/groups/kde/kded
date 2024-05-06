@@ -15,7 +15,6 @@ profile kded @{exec_path} {
   include <abstractions/consoles>
   include <abstractions/dconf-write>
   include <abstractions/bus/org.bluez>
-  include <abstractions/bus/org.freedesktop.NetworkManager>
   include <abstractions/bus/org.freedesktop.PolicyKit1>
   include <abstractions/graphics>
   include <abstractions/gtk>
@@ -34,40 +33,9 @@ profile kded @{exec_path} {
 
   signal (send) set=hup peer=xsettingsd,
 
-  # dbus: own bus=system name=com.redhat.NewPrinterNotification
-
-  dbus receive bus=system path=/org/freedesktop/NetworkManager/SecretAgent
-       interface=org.freedesktop.NetworkManager.SecretAgent
-       member={GetSecrets,CancelGetSecrets}
-       peer=(label=NetworkManager),
-
-  dbus receive bus=system path=/org/freedesktop/NetworkManager/AccessPoint/@{int}
-       interface=org.freedesktop.DBus.Properties
-       member=PropertiesChanged
-       peer=(label=NetworkManager),
-
-  dbus receive bus=system path=/org/freedesktop/NetworkManager/Devices/@{int}
-       interface=org.freedesktop.DBus.Properties
-       member={PropertiesChanged,AccessPointAdded,AccessPointRemoved}
-       peer=(label=NetworkManager),
-
-  dbus send bus=system path=/org/freedesktop/NetworkManager/AgentManager
-       interface=org.freedesktop.NetworkManager.AgentManager
-       peer=(label=NetworkManager),
-
-  dbus send bus=system path=/org/freedesktop/NetworkManager/AgentManager
-       interface=org.freedesktop.NetworkManager.AgentManager
-       peer=(label=NetworkManager),
-
-  dbus send bus=system path=/org/freedesktop/bolt
-       interface=org.freedesktop.bolt1.Manager
-       member=ListDevices
-       peer=(name="{:*,org.freedesktop.bolt}", label=boltd),
-
-  dbus send bus=system path=/org/freedesktop/bolt{,/**}
-       interface=org.freedesktop.DBus.Properties
-       member=Get
-       peer=(name="{:*,org.freedesktop.bolt}", label=boltd),
+  #aa:dbus own bus=system name=com.redhat.NewPrinterNotification
+  #aa:dbus talk bus=system name=org.freedesktop.NetworkManager label=NetworkManager
+  #aa:dbus talk bus=system name=org.freedesktop.bolt label=boltd
 
   dbus receive bus=system path=/
        interface=org.kde.kf5auth
