@@ -11,6 +11,9 @@
 
 # Second part. First part in /etc/apparmor.d/tunables/home.d/apparmor.d
 
+#aa:only whonix
+@{XDG_DOWNLOAD_DIR}+=".tb/tor-browser/Browser/Downloads"
+
 # Other user directories
 @{user_documents_dirs}=@{HOME}/@{XDG_DOCUMENTS_DIR} @{MOUNTS}/@{XDG_DOCUMENTS_DIR}
 @{user_download_dirs}=@{HOME}/@{XDG_DOWNLOAD_DIR} @{MOUNTS}/@{XDG_DOWNLOAD_DIR}
