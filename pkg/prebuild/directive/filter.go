@@ -43,10 +43,10 @@ func filterRuleForUs(opt *Option) bool {
 
 func filter(only bool, opt *Option, profile string) string {
 	if only && filterRuleForUs(opt) {
-		return profile
+		return opt.Clean(profile)
 	}
 	if !only && !filterRuleForUs(opt) {
-		return profile
+		return opt.Clean(profile)
 	}
 
 	inline := true

@@ -75,8 +75,13 @@ func GetJournalctlLogs(path string, useFile bool) (io.Reader, error) {
 		}
 		scanner = bufio.NewScanner(file)
 	} else {
-		// journalctl -b -o json --output-fields=MESSAGE > systemd.log
-		cmd := exec.Command("journalctl", "--boot", "--output=json", "--output-fields=MESSAGE")
+		// journalctl -b -o json -g apparmor -t kernel -t audit -t dbus-daemon --output-fields=MESSAGE > systemd.log
+		args := []string{
+			"--boot", "--grep=apparmor",
+			"--identifier=kernel", "--identifier=audit", "--identifier=dbus-daemon",
+			"--output=json", "--output-fields=MESSAGE",
+		}
+		cmd := exec.Command("journalctl", args...)
 		cmd.Stdout = &stdout
 		if err := cmd.Run(); err != nil {
 			return nil, err

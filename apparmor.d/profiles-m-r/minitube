@@ -10,18 +10,14 @@ include <tunables/global>
 @{exec_path} = @{bin}/minitube
 profile minitube @{exec_path} {
   include <abstractions/base>
-  include <abstractions/consoles>
-  include <abstractions/opencl-intel>
-  include <abstractions/gtk>
-  include <abstractions/fonts>
-  include <abstractions/fontconfig-cache-read>
-  include <abstractions/freedesktop.org>
-  include <abstractions/mesa>
   include <abstractions/audio-client>
+  include <abstractions/consoles>
+  include <abstractions/desktop>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/graphics>
   include <abstractions/nameservice-strict>
-  include <abstractions/qt5>
-  include <abstractions/qt5-settings-write>
   include <abstractions/qt5-compose-cache-write>
+  include <abstractions/qt5-settings-write>
   include <abstractions/qt5-shader-cache>
   include <abstractions/ssl_certs>
 
@@ -34,83 +30,46 @@ profile minitube @{exec_path} {
 
   @{exec_path} mr,
 
-  # Minitube home files
+  # Be able to turn off the screensaver while playing movies
+  @{bin}/xdg-screensaver  rCx -> xdg-screensaver,
+
+  @{open_path}            rPx -> child-open,
+
+  /usr/share/minitube/{,**} r,
+
+  /etc/vdpau_wrapper.cfg r,
+  /etc/machine-id r,
+  /var/lib/dbus/machine-id r,
+
+  owner @{HOME}/vlcsnap-.png rw,
+
+  owner "@{user_cache_dirs}/Flavio Tordini/" rw,
+  owner "@{user_cache_dirs}/Flavio Tordini/Minitube/" rw,
+  owner "@{user_cache_dirs}/Flavio Tordini/Minitube/**" rwl -> "@{user_cache_dirs}/Flavio Tordini/Minitube/**",
+
   owner "@{user_config_dirs}/Flavio Tordini/" rw,
   owner "@{user_config_dirs}/Flavio Tordini/*" rwkl -> "@{user_config_dirs}/Flavio Tordini/#@{int}",
   owner "@{user_share_dirs}/Flavio Tordini/" rw,
   owner "@{user_share_dirs}/Flavio Tordini/Minitube/" rw,
   owner "@{user_share_dirs}/Flavio Tordini/Minitube/*" rwk,
 
-  # Snapshot
   owner @{user_pictures_dirs}/*.png rw,
-  owner @{HOME}/vlcsnap-.png rw,
 
-  /usr/share/minitube/{,**} r,
+  owner @{tmp}/qtsingleapp-minitu-* rw,
+  owner @{tmp}/qtsingleapp-minitu-*-lockfile rwk,
 
   # If one is blocked, the others are probed.
   deny owner @{HOME}/#@{int} mrw,
        owner @{HOME}/.glvnd* mrw,
-  #    owner /tmp/#@{int} mrw,
-  #    owner /tmp/.glvnd* mrw,
+  #    owner @{tmp}/#@{int} mrw,
+  #    owner @{tmp}/.glvnd* mrw,
 
-  # Cache
-  owner @{user_cache_dirs}/ rw,
-  owner "@{user_cache_dirs}/Flavio Tordini/" rw,
-  owner "@{user_cache_dirs}/Flavio Tordini/Minitube/" rw,
-  owner "@{user_cache_dirs}/Flavio Tordini/Minitube/**" rwl -> "@{user_cache_dirs}/Flavio Tordini/Minitube/**",
+        @{PROC}/sys/kernel/core_pattern r,
+        @{PROC}/sys/kernel/random/boot_id r,
+  owner @{PROC}/@{pid}/cmdline r,
 
-  deny /dev/ r,
-       /dev/shm/#@{int} rw,
-
-  /etc/vdpau_wrapper.cfg r,
-
-  deny owner @{PROC}/@{pid}/cmdline r,
-  deny       @{PROC}/sys/kernel/random/boot_id r,
-             @{PROC}/sys/kernel/core_pattern r,
-
-  /etc/machine-id r,
-  /var/lib/dbus/machine-id r,
-
-  /usr/share/hwdata/pnp.ids r,
-
-  # TMP
-  owner /tmp/qtsingleapp-minitu-* rw,
-  owner /tmp/qtsingleapp-minitu-*-lockfile rwk,
-
-  @{bin}/xdg-open         rCx -> open,
-
-  # Be able to turn off the screensaver while playing movies
-  @{bin}/xdg-screensaver  rCx -> xdg-screensaver,
-
-  # Allowed apps to open
-  @{lib}/firefox/firefox  rPx,
-
-  # file_inherit
+        /dev/shm/#@{int} rw,
   owner /dev/tty@{int} rw,
-
-
-  profile open {
-    include <abstractions/base>
-    include <abstractions/xdg-open>
-
-    @{bin}/xdg-open mr,
-
-    @{sh_path}             rix,
-    @{bin}/{m,g,}awk       rix,
-    @{bin}/readlink        rix,
-    @{bin}/basename        rix,
-
-    owner @{HOME}/ r,
-
-    owner @{run}/user/@{uid}/ r,
-
-    # Allowed apps to open
-    @{lib}/firefox/firefox rPUx,
-
-    # file_inherit
-    owner @{HOME}/.xsession-errors w,
-
-  }
 
   profile xdg-screensaver {
     include <abstractions/base>
@@ -133,6 +92,8 @@ profile minitube @{exec_path} {
     /dev/dri/card@{int} rw,
     network inet stream,
     network inet6 stream,
+
+    include if exists <local/minitube_xdg-screensaver>
   }
 
   include if exists <local/minitube>

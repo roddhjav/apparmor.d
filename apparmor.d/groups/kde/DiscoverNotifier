@@ -13,14 +13,22 @@ profile DiscoverNotifier @{exec_path} {
   include <abstractions/graphics>
   include <abstractions/kde-strict>
   include <abstractions/nameservice-strict>
+  include <abstractions/ssl_certs>
 
   network inet dgram,
+  network inet stream,
   network inet6 dgram,
+  network inet6 stream,
   network netlink dgram,
+  network netlink raw,
 
   @{exec_path} mr,
 
-  @{bin}/apt-config rPx,
+  @{bin}/apt-config          rPx,
+
+  @{bin}/gpg{,2}             rCx -> gpg,
+  @{bin}/gpgconf             rCx -> gpg,
+  @{bin}/gpgsm               rCx -> gpg,
 
   /usr/share/knotifications{5,6}/{,**} r,
   /usr/share/metainfo/{,**} r,
@@ -28,7 +36,7 @@ profile DiscoverNotifier @{exec_path} {
   /etc/machine-id r,
   /etc/flatpak/remotes.d/{,**} r,
 
-  /var/lib/flatpak/repo/{,**} r,
+  /var/lib/flatpak/{,**} r,
 
   /var/cache/swcatalog/cache/ w,
 
@@ -45,9 +53,29 @@ profile DiscoverNotifier @{exec_path} {
 
   owner @{user_share_dirs}/flatpak/{,**} rw,
 
+  owner @{tmp}/ostree-gpg-*/ rw,
+
   @{PROC}/sys/kernel/core_pattern r,
 
   /dev/tty r,
+
+  profile gpg {
+    include <abstractions/base>
+
+    @{bin}/gpg{,2}  mr,
+    @{bin}/gpgconf  mr,
+    @{bin}/gpgsm    mr,
+
+    @{HOME}/@{XDG_GPG_DIR}/*.conf r,
+
+          @{tmp}/ r,
+    owner @{tmp}/ostree-gpg-*/ r,
+    owner @{tmp}/ostree-gpg-*/** rwkl -> /tmp/ostree-gpg-*/**,
+
+    owner @{run}/user/@{uid}/gnupg/ w,
+
+    include if exists <local/DiscoverNotifier_gpg>
+  }
 
   include if exists <local/DiscoverNotifier>
 }
