@@ -21,14 +21,31 @@ profile msgdispatcher @{exec_path} {
   @{bin}/mkdir                rix,
   @{bin}/mkfifo               rix,
   @{bin}/rm                   rix,
+  @{bin}/cat                  rix,
   @{bin}/sleep                rix,
   @{bin}/touch                rix,
   @{bin}/whoami               rix,
+  @{bin}/sudo                 rCx -> sudo,
 
   @{lib}/msgcollector/* r,
+  @{lib}/msgcollector/msgdispatcher_dispatch_x rPx,
+
+  owner @{HOME}/.xsession-errors w,
 
         @{run}/msgcollector/ r,
   owner @{run}/msgcollector/user/{,**} rwk,
+
+  profile sudo {
+    include <abstractions/base>
+    include <abstractions/app/sudo>
+
+    @{bin}/sudo mr,
+    @{lib}/msgcollector/* rPx,
+
+    owner @{run}/msgcollector/user/msgdispatcher_x_* r,
+
+    include if exists <local/msgdispatcher_sudo>
+  }
 
   include if exists <local/msgdispatcher>
 }
