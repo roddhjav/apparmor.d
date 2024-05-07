@@ -1,0 +1,63 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/metadata-cleaner
+profile metadata-cleaner @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/dconf-write>
+  include <abstractions/desktop>
+  include <abstractions/graphics>
+  include <abstractions/nameservice-strict>
+  include <abstractions/python>
+  include <abstractions/user-read-strict>
+  include <abstractions/user-write-strict>
+
+  @{exec_path} mr,
+  @{bin}/python3.@{int} rix,
+
+  @{bin}/bwrap rCx -> bwrap,
+  @{open_path} rPx -> child-open-help,
+
+  /usr/share/metadata-cleaner/{,**} r,
+  /usr/share/metadata-cleaner/src/metadatacleaner/{,*/}__pycache__/ w,
+
+  /usr/share/poppler/{,**} r,
+
+  /etc/httpd/conf/mime.types r,
+  /etc/mime.types r,
+
+  owner @{tmp}/@{hex64}.png r,
+  owner @{tmp}/@{hex64}.png w,
+  owner @{tmp}/@{rand8} rw,
+  owner @{tmp}/tmp@{rand4}_*/{,**} rw,
+  owner @{tmp}/tmp@{rand8}/{,**} rw,
+
+  @{run}/mount/utab r,
+
+  owner @{PROC}/@{pid}/cmdline r,
+  owner @{PROC}/@{pid}/mounts r,
+  owner @{PROC}/@{pid}/mountinfo r,
+
+  deny owner @{user_share_dirs}/gvfs-metadata/* r,
+  deny owner @{user_cache_dirs}/thumbnails/** r,
+
+  profile bwrap flags=(attach_disconnected) {
+    include <abstractions/base>
+    include <abstractions/common/bwrap>
+    include <abstractions/perl>
+
+    signal (receive) set=(kill) peer=metadata-cleaner,
+
+    @{bin}/bwrap mr,
+    @{bin}/vendor_perl/exiftool rix,
+
+    include if exists <local/metadata-cleaner_bwrap>
+  }
+
+  include if exists <local/metadata-cleaner>
+}
