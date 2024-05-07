@@ -1,0 +1,43 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/fractal
+profile fractal @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/audio-client>
+  include <abstractions/common/gnome>
+  include <abstractions/gstreamer>
+  include <abstractions/nameservice-strict>
+  include <abstractions/ssl_certs>
+
+  network inet dgram,
+  network inet stream,
+  network inet6 dgram,
+  network inet6 stream,
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  owner @{tmp}/.@{rand6} rw, 
+  owner @{tmp}/.goutputstream-@{rand6} rw,
+  owner @{tmp}/@{rand6} rw,
+
+        @{sys}/fs/cgroup/user.slice/cpu.max r,
+        @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/cpu.max r,
+        @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/cpu.max r,
+  owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/cpu.max r,
+
+        @{PROC}/sys/net/ipv6/conf/all/disable_ipv6 r,
+  owner @{PROC}/@{pid}/cgroup r,
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/task/@{tid}/comm rw,
+
+  /dev/ r,
+
+  include if exists <local/fractal>
+}
