@@ -13,19 +13,25 @@ profile flatpak-session-helper @{exec_path} flags=(attach_disconnected) {
   include <abstractions/nameservice-strict>
   include <abstractions/p11-kit>
   include <abstractions/ssl_certs>
+  include <abstractions/consoles>
 
+  signal (send) set=(hup int) peer=user_unconfined,
   signal (send) set=(int) peer=@{p_systemd},
+  signal (send) set=(int) peer=flatpak-app,
 
   #aa:dbus own bus=session name=org.freedesktop.Flatpak
 
   @{exec_path} mr,
 
-  @{sh_path}                           rix,
+  @{shells_path}                       rUx -> user_unconfined,
   @{bin}/dbus-monitor                 rPUx,
+  @{bin}/env                           rix,
   @{bin}/flatpak                       rPx,
-  @{bin}/ps                            rPx,
+  @{bin}/test                          rix,
+  @{bin}/getent                        rix,
   @{bin}/p11-kit                       rix,
   @{bin}/pkexec                        rPx, # TODO: too wide, rCx.
+  @{bin}/ps                            rPx,
   @{lib}/p11-kit/p11-kit-remote        rix,
   @{lib}/p11-kit/p11-kit-server        rix,
   /var/lib/flatpak/app/*/**/@{bin}/**  rPx -> flatpak-app,
@@ -35,6 +41,8 @@ profile flatpak-session-helper @{exec_path} flags=(attach_disconnected) {
   owner @{run}/user/@{uid}/.flatpak-helper/pkcs11-flatpak-@{int} rw,
   
   owner @{PROC}/@{pids}/fd/ r,
+
+  /dev/ptmx rw,
 
   include if exists <local/flatpak-session-helper>
 }
