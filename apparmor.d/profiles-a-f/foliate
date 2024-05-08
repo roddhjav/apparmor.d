@@ -1,0 +1,71 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/foliate
+profile foliate @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/common/bwrap>
+  include <abstractions/common/gnome>
+  include <abstractions/nameservice-strict>
+  include <abstractions/p11-kit>
+  include <abstractions/ssl_certs>
+  include <abstractions/user-download-strict>
+
+  capability dac_override,
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  @{bin}/bwrap           rix,
+  @{bin}/gjs-console     rix,
+  @{bin}/xdg-dbus-proxy  rix,
+
+  @{lib}/{,@{multiarch}/}webkit{2,}gtk-*/WebKitNetworkProcess  rix,
+  @{lib}/{,@{multiarch}/}webkit{2,}gtk-*/WebKitWebProcess      rix,
+
+  /usr/share/com.github.johnfactotum.Foliate/{,**} r,
+
+  owner /bindfile@{rand6} rw,
+  owner /.flatpak-info r,
+
+  owner @{user_books_dirs}/{,**} r,
+  owner @{user_torrents_dirs}/{,**} r,
+
+  owner @{user_cache_dirs}/com.github.johnfactotum.Foliate/{,**} rwlk,
+  owner @{user_share_dirs}/com.github.johnfactotum.Foliate/{,**} rwlk,
+
+  owner @{run}/user/@{uid}/.flatpak/ w,
+  owner @{run}/user/@{uid}/.flatpak/webkit-*/{,bwrapinfo.json} rw,
+  owner @{run}/user/@{uid}/webkitgtk/ w,
+  owner @{run}/user/@{uid}/webkitgtk/a11y-proxy-@{rand6} rw,
+  owner @{run}/user/@{uid}/webkitgtk/bus-proxy-@{rand6} rw,
+  owner @{run}/user/@{uid}/webkitgtk/dbus-proxy-@{rand6} rw,
+
+  @{sys}/devices/virtual/dmi/id/chassis_type r,
+  @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/app-dbus*org.gnome.Nautilus.slice/dbus*org.gnome.Nautilus@*.service/memory.* r,
+  @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/app-gnome-com.github.johnfactotum.Foliate-@{int}.scope/memory.* r,
+
+        @{PROC}/sys/net/ipv6/conf/all/disable_ipv6 r,
+        @{PROC}/zoneinfo r,
+  owner @{PROC}/@{pid}/cgroup r,
+  owner @{PROC}/@{pid}/mounts r,
+  owner @{PROC}/@{pid}/smaps r,
+  owner @{PROC}/@{pid}/stat r,
+  owner @{PROC}/@{pid}/statm r,
+  owner @{PROC}/@{pid}/task/@{tid}/comm rw,
+  owner @{PROC}/@{pid}/task/@{tid}/stat r,
+
+  deny @{user_share_dirs}/gvfs-metadata/* r,
+
+  include if exists <local/foliate>
+}
