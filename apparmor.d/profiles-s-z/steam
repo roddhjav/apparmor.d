@@ -12,16 +12,17 @@ include <tunables/global>
 profile steam @{exec_path} flags=(attach_disconnected,mediate_deleted,complain) {
   include <abstractions/base>
   include <abstractions/audio-client>
+  include <abstractions/common/bwrap>
   include <abstractions/common/chromium>
   include <abstractions/consoles>
   include <abstractions/dconf-write>
   include <abstractions/desktop>
   include <abstractions/disks-read>
+  include <abstractions/fontconfig-cache-write>
   include <abstractions/graphics>
   include <abstractions/nameservice-strict>
   include <abstractions/ssl_certs>
-
-  capability sys_ptrace,
+  include <abstractions/video>
 
   network inet dgram,
   network inet6 dgram,
@@ -39,39 +40,19 @@ profile steam @{exec_path} flags=(attach_disconnected,mediate_deleted,complain) 
   @{exec_path} mrix,
 
   @{sh_path}                    rix,
-  @{bin}/{m,g,}awk              rix,
-  @{bin}/*sum                   rix,
-  @{bin}/basename               rix,
-  @{bin}/cat                    rix,
+  @{coreutils_path}             rix,
   @{bin}/cmp                    rix,
-  @{bin}/cp                     rix,
-  @{bin}/cut                    rix,
-  @{bin}/dirname                rix,
   @{bin}/file                   rix,
-  @{bin}/find                   rix,
   @{bin}/getopt                 rix,
-  @{bin}/grep                   rix,
-  @{bin}/head                   rix,
+  @{bin}/gzip                   rix,
   @{bin}/ldconfig               rix,
   @{bin}/ldd                    rix,
-  @{bin}/ln                     rix,
+  @{bin}/localedef              rix,
   @{bin}/lsb_release            rPx -> lsb_release,
   @{bin}/lsof                   rix,
   @{bin}/lspci                  rCx -> lspci,
-  @{bin}/mkdir                  rix,
-  @{bin}/mv                     rix,
-  @{bin}/readlink               rix,
-  @{bin}/realpath               rix,
-  @{bin}/rm                     rix,
-  @{bin}/rmdir                  rix,
-  @{bin}/sed                    rix,
   @{bin}/steam-runtime-urlopen  rix,
-  @{bin}/tail                   rix,
   @{bin}/tar                    rix,
-  @{bin}/timeout                rix,
-  @{bin}/touch                  rix,
-  @{bin}/tr                     rix,
-  @{bin}/uname                  rix,
   @{bin}/which                  rix,
   @{bin}/xdg-icon-resource      rPx,
   @{bin}/xdg-user-dir           rix,
@@ -79,21 +60,21 @@ profile steam @{exec_path} flags=(attach_disconnected,mediate_deleted,complain) 
   @{bin}/zenity                 rix,
   @{lib}/ld-linux.so*           rix,
 
-  @{lib_dirs}/*.so*  mr,
-  @{lib_dirs}/*driverquery rix,
-  @{lib_dirs}/fossilize_replay rpx,
-  @{lib_dirs}/gameoverlayui rpx,
-  @{lib_dirs}/panorama/** rm,
-  @{lib_dirs}/reaper rpx,
-  @{lib_dirs}/steam rix,
-  @{lib_dirs}/steam-runtime-heavy.sh rix,
-  @{lib_dirs}/steam-runtime{,-heavy}/{amd64,i386}/usr/bin/* rix,
-  @{lib_dirs}/steam-runtime{,-heavy}/{setup,run}.sh  rix,
-  @{lib_dirs}/steam-runtime/{usr/,}lib{exec,}/**  mrix,
-  @{lib_dirs}/steamwebhelper rix,
-  @{lib_dirs}/steamwebhelper.sh rix,
-  @{lib_dirs}/swiftshader/* rm,
-  @{user_share_dirs}/Steam/config/widevine/linux-x64/libwidevinecdm.so mr,
+  @{lib_dirs}/*                  mr,
+  @{lib_dirs}/*/**             mrix,
+  @{lib_dirs}/*driverquery      rix,
+  @{lib_dirs}/fossilize_replay  rpx,
+  @{lib_dirs}/gameoverlayui     rpx,
+  @{lib_dirs}/reaper            rpx,
+  @{lib_dirs}/steam*            rix,
+
+  @{lib}/pressure-vessel/from-host/** rix,
+
+  @{run}/host/@{bin}/* rix,
+  @{run}/host/@{lib}/** rix,
+
+  @{user_share_dirs}/Steam/config/widevine/linux-*/libwidevinecdm.so mr,
+  @{user_share_dirs}/Steam/linux{32,64}/steamerrorreporter rpx,
   @{user_share_dirs}/Steam/steamapps/common/SteamLinuxRuntime_soldier/*entry-point rpx,
 
   /usr/lib/os-release rk,
@@ -114,16 +95,22 @@ profile steam @{exec_path} flags=(attach_disconnected,mediate_deleted,complain) 
   /run/ r,
   /var/ r,
 
+  owner /bindfile@{rand6} rw,
+
+  owner /var/pressure-vessel/** rw,
+
   owner @{HOME}/ r,
   owner @{HOME}/.steam/{,**} rw,
   owner @{HOME}/.steam/registry.vdf rwk,
   owner @{HOME}/.steampath rw,
   owner @{HOME}/.steampid rw,
 
-  owner @{user_games_dirs}/{,**} rwkl,
+  owner @{user_games_dirs}/{,**} rwlk,
 
   owner @{user_config_dirs}/autostart/ r,
   owner @{user_config_dirs}/cef_user_data/{,**} r,
+  owner @{user_config_dirs}/cef_user_data/Dictionaries/* rw,
+  owner @{user_config_dirs}/cef_user_data/WidevineCdm/** rwm,
   owner @{user_config_dirs}/unity3d/{,**} rwk,
   owner @{user_config_dirs}/user-dirs.dirs r,
 
@@ -139,13 +126,21 @@ profile steam @{exec_path} flags=(attach_disconnected,mediate_deleted,complain) 
   owner /dev/shm/u@{uid}-ValveIPCSharedObj-Steam rwk,
   owner /dev/shm/ValveIPCSHM_@{uid} rw,
 
+  owner @{tmp}/#@{int} w,
   owner @{tmp}/dumps/ rw,
   owner @{tmp}/dumps/{assert,crash}_@{int}_@{int}.dmp rw,
+  owner @{tmp}/dumps/*/ r,
+  owner @{tmp}/dumps/settings.dat rwk,
   owner @{tmp}/gdkpixbuf-xpm-tmp.@{rand6} rw,
   owner @{tmp}/miles_image_* mrw,
+  owner @{tmp}/pressure-vessel-*-@{rand6}/** rw,
   owner @{tmp}/runtime-info.txt.* rwk,
   owner @{tmp}/sh-thd.* rw,
   owner @{tmp}/steam_chrome_shmem_uid@{uid}_spid@{int} rw,
+  owner @{tmp}/steam@{rand6}/{,**} rw,
+  owner @{tmp}/vdpau-drivers-@{rand6}/{,**} rw,
+
+  @{run}/host/{,**} r,
 
   @{run}/udev/data/+input:input@{int} r,  # for mouse, keyboard, touchpad
   @{run}/udev/data/+pci:* r,              # Identifies all PCI devices (CPU, GPU, Network, Disks, USB, etc.)
@@ -168,7 +163,7 @@ profile steam @{exec_path} flags=(attach_disconnected,mediate_deleted,complain) 
   @{sys}/devices/**/uevent r,
   @{sys}/devices/@{pci}/class r,
   @{sys}/devices/@{pci}/i2c-@{int}/report_descriptor r,
-  @{sys}/devices/@{pci}/sound/card[0-9]*/** r,
+  @{sys}/devices/@{pci}/sound/card@{int}/** r,
   @{sys}/devices/@{pci}/usb@{int}/{manufacturer,product,bcdDevice,bInterfaceNumber} r,
   @{sys}/devices/system/cpu/** r,
   @{sys}/devices/system/node/ r,
@@ -185,18 +180,20 @@ profile steam @{exec_path} flags=(attach_disconnected,mediate_deleted,complain) 
         @{PROC}/@{pids}/comm rk,
         @{PROC}/@{pids}/net/route r,
         @{PROC}/@{pids}/stat r,
+        @{PROC}/@{pid}/net/* r,
         @{PROC}/1/cgroup r,
         @{PROC}/sys/fs/inotify/max_user_watches r,
         @{PROC}/sys/kernel/sched_autogroup_enabled r,
         @{PROC}/sys/kernel/unprivileged_userns_clone r,
-        @{PROC}/sys/net/ipv{4,6}/conf/all/disable_ipv{4,6} r,
         @{PROC}/sys/kernel/yama/ptrace_scope r,
+        @{PROC}/sys/net/ipv{4,6}/conf/all/disable_ipv{4,6} r,
         @{PROC}/sys/user/max_user_namespaces r,
         @{PROC}/version r,
   owner @{PROC}/@{pid}/autogroup rw,
   owner @{PROC}/@{pid}/cmdline rk,
   owner @{PROC}/@{pid}/environ r,
   owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/fdinfo/@{int} r,
   owner @{PROC}/@{pid}/mounts r,
   owner @{PROC}/@{pid}/oom_score_adj w,
   owner @{PROC}/@{pid}/statm r,
