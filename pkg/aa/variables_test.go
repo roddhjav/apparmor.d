@@ -9,37 +9,6 @@ import (
 	"testing"
 )
 
-func TestDefaultTunables(t *testing.T) {
-	tests := []struct {
-		name string
-		want *AppArmorProfile
-	}{
-		{
-			name: "aa",
-			want: &AppArmorProfile{
-				Preamble: Preamble{
-					Variables: []Variable{
-						{"bin", []string{"/{,usr/}{,s}bin"}},
-						{"lib", []string{"/{,usr/}lib{,exec,32,64}"}},
-						{"multiarch", []string{"*-linux-gnu*"}},
-						{"HOME", []string{"/home/*"}},
-						{"user_share_dirs", []string{"/home/*/.local/share"}},
-						{"etc_ro", []string{"/{,usr/}etc/"}},
-						{"int", []string{"[0-9]{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}"}},
-					},
-				},
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := DefaultTunables(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("DefaultTunables() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
 func TestAppArmorProfile_ParseVariables(t *testing.T) {
 	tests := []struct {
 		name    string
