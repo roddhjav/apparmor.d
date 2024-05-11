@@ -40,6 +40,7 @@ func DefaultTunables() *AppArmorProfile {
 	return &AppArmorProfile{
 		Preamble: Preamble{
 			Variables: []Variable{
+				{"int2", []string{"[0-9][0-9]"}},
 				{"bin", []string{"/{,usr/}{,s}bin"}},
 				{"lib", []string{"/{,usr/}lib{,exec,32,64}"}},
 				{"multiarch", []string{"*-linux-gnu*"}},
