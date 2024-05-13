@@ -7,8 +7,6 @@ abi <abi/3.0>,
 
 include <tunables/global>
 
-@{ANDROID_SOURCE_DIR} = @{MOUNTS}/Android/
-
 @{exec_path} = @{bin}/repo
 profile repo @{exec_path} {
   include <abstractions/base>
@@ -23,54 +21,43 @@ profile repo @{exec_path} {
   network netlink raw,
 
   @{exec_path} r,
-  @{bin}/python3.@{int} rix,
 
-  @{bin}/               r,
-  @{bin}/env            rix,
-  @{sh_path}            rix,
-  @{bin}/uname          rix,
+  @{sh_path}               rix,
+  @{bin}/                  r,
+  @{bin}/curl              rix,
+  @{bin}/env               rix,
+  @{bin}/git               rix,
+  @{bin}/python3.@{int}    rix,
+  @{bin}/uname             rix,
+  @{lib}/git{,-core}/git*  rix,
 
-  @{bin}/git              rix,
-  @{lib}/git{,-core}/git* rix,
-
-  @{bin}/curl           rCx -> curl,
-  @{bin}/gpg{,2}        rCx -> gpg,
-  @{bin}/ssh            rPx,
-
-  # Android source dir
-  owner @{ANDROID_SOURCE_DIR}/** rwkl -> @{ANDROID_SOURCE_DIR}/**,
-  owner @{ANDROID_SOURCE_DIR}/**/.repo/repo/main.py rix,
-
-  owner @{HOME}/.repoconfig/{,**} rw,
-  owner @{HOME}/.repo_.gitconfig.json rw,
-
-  owner @{user_config_dirs}/git/config rw,
-  owner @{HOME}/.gitconfig rw,
-  owner @{HOME}/.gitconfig.lock rwk,
+  @{bin}/gpg{,2}           rCx -> gpg,
+  @{bin}/ssh               rPx,
 
   /usr/share/git-core/{,**} r,
+
+  # Android source dir
+  owner @{user_projects_dirs}/** rwkl -> @{user_projects_dirs}/**,
+  owner @{user_projects_dirs}/**/.repo/repo/main.py rix,
+
+  owner @{HOME}/.gitconfig rw,
+  owner @{HOME}/.gitconfig.lock rwk,
+  owner @{HOME}/.repo_.gitconfig.json rw,
+  owner @{HOME}/.repoconfig/{,**} rw,
+
+  owner @{user_config_dirs}/git/config rw,
 
   owner @{tmp}/.git_vtag_tmp@{rand6} rw,
   owner @{tmp}/ssh-*/ rw,
 
-  owner @{PROC}/@{pid}/fd/ r,
-  owner @{PROC}/@{pid}/mounts r,
-
   owner /dev/shm/* rw,
   owner /dev/shm/sem.mp-???????? rwl -> /dev/shm/*,  # unconventional '_' tail
 
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/mounts r,
+
   # Silencer
   deny /etc/.repo_gitconfig.json w,
-
-
-  profile curl {
-    include <abstractions/base>
-    include <abstractions/nameservice-strict>
-    include <abstractions/ssl_certs>
-
-    @{bin}/curl mr,
-
-  }
 
   profile gpg {
     include <abstractions/base>
@@ -82,6 +69,7 @@ profile repo @{exec_path} {
 
     owner @{tmp}/.git_vtag_tmp@{rand6} r,
 
+    include if exists <local/repo_gpg>
   }
 
   include if exists <local/repo>

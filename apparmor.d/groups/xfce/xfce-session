@@ -7,7 +7,7 @@ abi <abi/3.0>,
 include <tunables/global>
 
 @{exec_path} = @{bin}/xfce4-session
-profile xfce-session @{exec_path} {
+profile xfce-session @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/app-launcher-user>
   include <abstractions/graphics>
@@ -47,20 +47,22 @@ profile xfce-session @{exec_path} {
   /etc/xdg/autostart/ r,
   /etc/xdg/autostart/*.desktop r,
 
+  owner @{user_cache_dirs}/sessions/{,**} rw,
+
   owner @{tmp}/.xfsm-ICE-@{rand6} rw,
 
   owner @{PROC}/@{pid}/stat r,
 
   /dev/tty rw,
 
-  profile systemctl {
+  profile systemctl flags=(attach_disconnected) {
     include <abstractions/base>
     include <abstractions/app/systemctl>
   
     include if exists <local/xfce-session_systemctl>
   }
 
-  profile dbus {
+  profile dbus flags=(attach_disconnected) {
     include <abstractions/base>
     include <abstractions/bus-session>
 
