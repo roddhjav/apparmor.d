@@ -1,0 +1,25 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/iceauth
+profile iceauth @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/X-strict>
+
+  @{exec_path} mr,
+
+  owner @{tmp}/.xfsm-ICE-@{rand6} r,
+  owner @{tmp}/user/@{uid}/.xfsm-ICE-@{rand6} r, 
+
+  owner @{run}/user/@{uid}/ICEauthority rl -> @{run}/user/@{uid}/ICEauthority-n,
+  owner @{run}/user/@{uid}/ICEauthority-c w,
+  owner @{run}/user/@{uid}/ICEauthority-l wl -> @{run}/user/@{uid}/ICEauthority-c,
+  owner @{run}/user/@{uid}/ICEauthority-n rw,
+
+  include if exists <local/iceauth>
+}
