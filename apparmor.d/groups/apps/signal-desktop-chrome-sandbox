@@ -7,17 +7,22 @@ abi <abi/3.0>,
 
 include <tunables/global>
 
-@{SIGNAL_INSTALLDIR} = "/opt/Signal{, Beta}"
-@{SIGNAL_HOMEDIR} = "@{user_config_dirs}/Signal{, Beta}"
+@{lib_dirs} = "/usr/lib/signal-desktop"
+@{lib_dirs} += "/opt/Signal{, Beta}"
+@{config_dirs} = "@{user_config_dirs}/Signal{, Beta}"
 
-#@{exec_path} = @{SIGNAL_INSTALLDIR}/chrome-sandbox  # (#FIXME#)
-@{exec_path} = "/opt/Signal{, Beta}/chrome-sandbox"
+@{exec_path} = @{lib_dirs}/chrome-sandbox
 profile signal-desktop-chrome-sandbox @{exec_path} {
   include <abstractions/base>
 
+  capability sys_admin,
+  capability sys_chroot,
+
   @{exec_path} mr,
 
-  @{SIGNAL_INSTALLDIR}/signal-desktop{,-beta} rPx,
+  @{lib_dirs}/signal-desktop{,-beta} rPx,
+
+  @{PROC}/@{pid}/ r,
 
   include if exists <local/signal-desktop-chrome-sandbox>
 }
