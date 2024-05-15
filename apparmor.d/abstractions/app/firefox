@@ -1,0 +1,160 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Full set of rules for all firefox based browsers. It works as a *function*
+# and requires some variables to be provided as *arguments* and set in the
+# header of the calling profile. Example:
+#
+# @{name} = firefox{,.sh,-esr,-bin}
+# @{lib_dirs} = @{lib}/@{name} /opt/@{name}
+# @{config_dirs} = @{HOME}/.mozilla/
+# @{cache_dirs} = @{user_cache_dirs}/mozilla/
+#
+
+  include <abstractions/audio-client>
+  include <abstractions/bus-session>
+  include <abstractions/bus-system>
+  include <abstractions/bus/org.a11y>
+  include <abstractions/bus/org.freedesktop.FileManager1>
+  include <abstractions/dconf-write>
+  include <abstractions/desktop>
+  include <abstractions/enchant>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/graphics-full>
+  include <abstractions/gstreamer>
+  include <abstractions/nameservice-strict>
+  include <abstractions/ssl_certs>
+  include <abstractions/thumbnails-cache-read>
+  include <abstractions/user-download-strict>
+  include <abstractions/user-read-strict>
+
+  # userns,
+
+  capability sys_admin, # If kernel.unprivileged_userns_clone = 1
+  capability sys_chroot, # If kernel.unprivileged_userns_clone = 1
+  capability sys_ptrace,
+
+  network inet dgram,
+  network inet stream,
+  network inet6 dgram,
+  network inet6 stream,
+  network netlink raw,
+
+  signal (send) set=(term, kill) peer=@{profile_name}-*,
+
+  @{sh_path}                 rix,
+  @{bin}/basename            rix,
+  @{bin}/dirname             rix,
+  @{bin}/expr                rix,
+
+  @{lib_dirs}/{,**}             r,
+  @{lib_dirs}/*.so              mr,
+  @{lib_dirs}/crashreporter     rPx,
+  @{lib_dirs}/glxtest           rPx,
+  @{lib_dirs}/minidump-analyzer rPx,
+  @{lib_dirs}/pingsender        rPx,
+  @{lib_dirs}/plugin-container  rPx,
+  @{lib_dirs}/vaapitest         rPx,
+
+  # Desktop integration
+  @{bin}/lsb_release            rPx -> lsb_release,
+
+  /usr/share/@{name}/{,**} r,
+  /usr/share/doc/{,**} r,
+  /usr/share/mozilla/extensions/{,**} r,
+  /usr/share/webext/{,**} r,
+  /usr/share/xul-ext/kwallet5/* r,
+
+  /etc/@{name}/{,**} r,
+  /etc/cups/client.conf r,
+  /etc/fstab r,
+  /etc/mailcap r,
+  /etc/mime.types r,
+  /etc/opensc.conf r,
+  /etc/opensc/opensc.conf r,
+  /etc/sysconfig/proxy r,
+  /etc/xdg/* r,
+  /etc/xul-ext/kwallet5.js r,
+
+  /var/lib/nscd/services r,
+
+  owner @{HOME}/ r,
+  owner @{HOME}/.cups/lpoptions r,
+
+  owner @{config_dirs}/ rw,
+  owner @{config_dirs}/** rwk,
+
+  owner @{cache_dirs}/ rw,
+  owner @{cache_dirs}/** rwk,
+
+        /tmp/ r,
+        /var/tmp/ r,
+  owner @{tmp}/@{name}/ rw,
+  owner @{tmp}/@{name}/* rwk,
+  owner @{tmp}/firefox/ rw,
+  owner @{tmp}/firefox/* rwk,
+  owner @{tmp}/Temp-@{uuid}/ rw,
+  owner @{tmp}/Temp-@{uuid}/* rwk,
+  owner @{tmp}/tmp-???.xpi rw,
+  owner @{tmp}/tmpaddon r,
+  owner @{tmp}/tmpaddon-@{int} r,
+
+  @{run}/mount/utab r,
+
+  @{run}/udev/data/+input:input@{int} r,  # for mouse, keyboard, touchpad
+  @{run}/udev/data/c13:@{int}  r,         # for /dev/input/*
+
+        @{sys}/bus/ r,
+        @{sys}/cgroup/cpu,cpuacct/user.slice/cpu.cfs_quota_us r,
+        @{sys}/class/ r,
+        @{sys}/class/**/ r,
+        @{sys}/devices/@{pci}/ r,
+        @{sys}/devices/@{pci}/drm/card@{int}/ r,
+        @{sys}/devices/@{pci}/drm/renderD128/ r,
+        @{sys}/devices/@{pci}/drm/renderD129/ r,
+        @{sys}/devices/**/uevent r,
+        @{sys}/devices/power/events/energy-* r,
+        @{sys}/devices/power/type r,
+        @{sys}/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us r,
+  owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/session-@{int}.scope/cpu.max r,
+  owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/**/cpu.max r,
+
+        @{PROC}/@{pid}/net/arp r,
+        @{PROC}/@{pid}/net/if_inet6 r,
+        @{PROC}/@{pid}/net/route r,
+  owner @{PROC}/@{pid}/cgroup r,
+  owner @{PROC}/@{pid}/cmdline r,
+  owner @{PROC}/@{pid}/environ r,
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/gid_map w, # If kernel.unprivileged_userns_clone = 1
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/mounts r,
+  owner @{PROC}/@{pid}/oom_score_adj w,
+  owner @{PROC}/@{pid}/setgroups w, # If kernel.unprivileged_userns_clone = 1
+  owner @{PROC}/@{pid}/smaps r,
+  owner @{PROC}/@{pid}/stat r,
+  owner @{PROC}/@{pid}/statm r,
+  owner @{PROC}/@{pid}/task/ r,
+  owner @{PROC}/@{pid}/task/@{tid}/comm rw,
+  owner @{PROC}/@{pid}/task/@{tid}/stat r,
+  owner @{PROC}/@{pid}/uid_map w, # If kernel.unprivileged_userns_clone = 1
+
+        /dev/ r,
+        /dev/hidraw@{int} rw,
+        /dev/tty rw,
+        /dev/video@{int} rw,
+  owner /dev/shm/org.chromium.* rw,
+  owner /dev/shm/org.mozilla.ipc.@{pid}.@{int} rw,
+  owner /dev/shm/wayland.mozilla.ipc.@{int} rw,
+  owner /dev/tty@{int} rw, # File Inherit
+
+  # Silencer
+  deny dbus send bus=system path=/org/freedesktop/hostname1,
+  deny /tmp/MozillaUpdateLock-* w,
+  deny owner @{HOME}/ r,
+  deny owner @{HOME}/.* r,
+  deny owner @{user_share_dirs}/gvfs-metadata/{,*} r,
+  deny @{run}/user/@{uid}/gnome-shell-disable-extensions w,
+
+  include if exists <abstractions/app/firefox.d>

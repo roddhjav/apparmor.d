@@ -15,78 +15,14 @@ include <tunables/global>
 @{exec_path} = @{bin}/@{name} @{lib_dirs}/@{name}
 profile firefox @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/audio-client>
-  include <abstractions/bus-session>
-  include <abstractions/bus-system>
-  include <abstractions/bus/org.a11y>
-  include <abstractions/bus/org.freedesktop.FileManager1>
-  include <abstractions/bus/org.freedesktop.login1>
-  include <abstractions/bus/org.freedesktop.portal.Desktop>
-  include <abstractions/bus/org.freedesktop.RealtimeKit1>
-  include <abstractions/bus/org.gtk.Private.RemoteVolumeMonitor>
-  include <abstractions/dconf-write>
-  include <abstractions/desktop>
-  include <abstractions/enchant>
-  include <abstractions/fontconfig-cache-read>
-  include <abstractions/graphics-full>
-  include <abstractions/gstreamer>
-  include <abstractions/nameservice-strict>
-  include <abstractions/ssl_certs>
-  include <abstractions/thumbnails-cache-read>
-  include <abstractions/user-download-strict>
-  include <abstractions/user-read-strict>
-
-  # userns,
-
-  capability sys_admin, # If kernel.unprivileged_userns_clone = 1
-  capability sys_chroot, # If kernel.unprivileged_userns_clone = 1
-  capability sys_ptrace,
-
-  network inet dgram,
-  network inet6 dgram,
-  network inet stream,
-  network inet6 stream,
-  network netlink raw,
-
-  ptrace peer=@{profile_name},
+  include <abstractions/app/firefox>
 
   signal (send) set=(term, kill) peer=keepassxc-proxy,
-  signal (send) set=(term, kill) peer=firefox-*,
 
   #aa:dbus own bus=session name=org.mozilla.firefox
-
-  deny dbus send bus=system path=/org/freedesktop/hostname1,
-
-  dbus bind bus=session name=org.mpris.MediaPlayer2.firefox.*,
-  dbus (send, receive) bus=session path=/org/mpris/MediaPlayer2
-       interface=org.freedesktop.DBus.Properties
-       member={GetAll,PropertiesChanged}
-       peer=(name="{org.freedesktop.DBus,:*}"),
-  dbus receive bus=session path=/org/mpris/MediaPlayer2
-       interface=org.mpris.MediaPlayer2.Playlists
-       member=GetPlaylists
-       peer=(name=:*),
-
-  dbus send bus=session path=/org/freedesktop/PowerManagement/Inhibit
-       interface=org.freedesktop.PowerManagement.Inhibit
-       member=Inhibit
-       peer=(name=org.freedesktop.PowerManagement),
+  #aa:dbus own bus=session name=org.mpris.MediaPlayer2.firefox path=/org/mpris/MediaPlayer2
 
   @{exec_path} mrix,
-
-  @{sh_path}                 rix,
-  @{bin}/basename            rix,
-  @{bin}/expr                rix,
-
-  @{lib_dirs}/{,**}             r,
-  @{lib_dirs}/*.so              mr,
-  @{lib_dirs}/crashreporter     rPx,
-  @{lib_dirs}/glxtest           rPx,
-  @{lib_dirs}/minidump-analyzer rPx,
-  @{lib_dirs}/pingsender        rPx,
-  @{lib_dirs}/plugin-container  rPx,
-  @{lib_dirs}/vaapitest         rPx,
-  @{lib}/mozilla/kmozillahelper rPUx,
 
   @{lib}/@{multiarch}/qt5/plugins/kf5/org.kde.kwindowsystem.platforms/KF5WindowSystemX11Plugin.so mr,
   @{lib}/mozilla/plugins/ r,
@@ -95,10 +31,10 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
   # Desktop integration
   @{bin}/gnome-software                              rPx,
   @{bin}/kreadconfig5                                rix,
-  @{bin}/lsb_release                                 rPx -> lsb_release,
   @{bin}/plasma-browser-integration-host             rPx,
   @{bin}/update-mime-database                        rPx,
   @{lib}/gvfsd-metadata                              rPx,
+  @{lib}/mozilla/kmozillahelper                     rPUx,
   @{open_path}                                       rPx -> child-open,
 
   # Common extensions
@@ -107,33 +43,9 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
   # As a temporary solution - see issue #128
   @{bin}/keepassxc-proxy     rix,
 
-  /usr/share/@{name}/{,**} r,
-  /usr/share/doc/{,**} r,
-  /usr/share/mozilla/extensions/{,**} r,
-  /usr/share/webext/{,**} r,
-  /usr/share/xul-ext/kwallet5/* r,
-
-  /etc/@{name}/{,**} r,
-  /etc/cups/client.conf r,
-  /etc/fstab r,
-  /etc/mailcap r,
-  /etc/mime.types r,
-  /etc/opensc.conf r,
-  /etc/opensc/opensc.conf r,
-  /etc/sysconfig/proxy r,
-  /etc/xdg/* r,
-  /etc/xul-ext/kwallet5.js r,
-
-  /var/lib/nscd/services r,
-
-  owner @{HOME}/ r,
-  owner @{HOME}/.cups/lpoptions r,
-
   owner @{user_config_dirs}/gtk-{3,4}.0/assets/*.svg r,
   owner @{user_config_dirs}/ibus/bus/ r,
   owner @{user_config_dirs}/ibus/bus/@{hex32}-unix-{,wayland-}@{int} r,
-  owner @{user_config_dirs}/kdedefaults/kdeglobals r,
-  owner @{user_config_dirs}/kdeglobals r,
   owner @{user_config_dirs}/kioslaverc r,
   owner @{user_config_dirs}/mimeapps.list{,.@{rand6}} rw,
 
@@ -141,96 +53,21 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
   owner @{user_share_dirs}/mime/packages/user-extension-{htm,html,xht,xhtml,shtml}.xml rw,
   owner @{user_share_dirs}/mime/packages/user-extension-{htm,html,xht,xhtml,shtml}.xml.* rw,
 
-  owner @{config_dirs}/ rw,
-  owner @{config_dirs}/{extensions,systemextensionsdev}/ rw,
-  owner @{config_dirs}/extensions/\{*\}/ r,
-  owner @{config_dirs}/firefox/ rw,
-  owner @{config_dirs}/firefox/*/ rw,
-  owner @{config_dirs}/firefox/*/** rwk,
-  owner @{config_dirs}/firefox/installs.ini rw,
-  owner @{config_dirs}/firefox/profiles.ini rw,
-  owner @{config_dirs}/native-messaging-hosts/org.keepassxc.keepassxc_browser.json r,
-
-  owner @{cache_dirs}/ rw,
-  owner @{cache_dirs}/** rwk,
-
-        /tmp/ r,
-        /var/tmp/ r,
   owner @{tmp}/.xfsm-ICE-@{rand6} rw,
-  owner @{tmp}/@{name}/ rw,
-  owner @{tmp}/@{name}/* rwk,
   owner @{tmp}/@{rand6}.tmp r,
   owner @{tmp}/@{rand8}.txt w,
   owner @{tmp}/* w,  # file downloads (to anywhere)
-  owner @{tmp}/firefox_*/ rw,
-  owner @{tmp}/firefox_*/* rwk,
-  owner @{tmp}/mozilla_*/ rw,
-  owner @{tmp}/mozilla_*/* rw,
-  owner @{tmp}/mozilla-temp-@{int} rw,
   owner @{tmp}/Mozilla@{uuid}-cachePurge-??????????????? rwk,
+  owner @{tmp}/mozilla* rw,
+  owner @{tmp}/mozilla*/ rw,
+  owner @{tmp}/mozilla*/* rwk,
   owner @{tmp}/Mozilla\{@{uuid}\}-cachePurge-??????????????? rwk,
   owner @{tmp}/MozillaBackgroundTask-???????????????-removeDirectory/.parentlock k,
   owner @{tmp}/MozillaBackgroundTask-???????????????-removeDirectory/{**,} rw,
   owner @{tmp}/Mozillato-be-removed-cachePurge-??????????????? rwk,
-  owner @{tmp}/Temp-@{uuid}/ rw,
-  owner @{tmp}/Temp-@{uuid}/** rwk,
-  owner @{tmp}/tmp-???.xpi rw,
-  owner @{tmp}/tmpaddon r,
-  owner @{tmp}/tmpaddon-@{int} r,
-
-  @{run}/mount/utab r,
-
-  @{run}/udev/data/+input:input@{int} r,  # for mouse, keyboard, touchpad
-  @{run}/udev/data/c13:@{int}  r,         # for /dev/input/*
-
-  @{sys}/bus/ r,
-  @{sys}/cgroup/cpu,cpuacct/user.slice/cpu.cfs_quota_us r,
-  @{sys}/class/ r,
-  @{sys}/class/**/ r,
-  @{sys}/devices/**/uevent r,
-  @{sys}/devices/@{pci}/ r,
-  @{sys}/devices/@{pci}/drm/card@{int}/ r,
-  @{sys}/devices/@{pci}/drm/renderD128/ r,
-  @{sys}/devices/@{pci}/drm/renderD129/ r,
-  @{sys}/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us r,
-
-  owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/background.slice/*/cpu.max r,
-
-        @{PROC}/@{pid}/net/arp r,
-        @{PROC}/@{pid}/net/if_inet6 r,
-        @{PROC}/@{pid}/net/route r,
-  owner @{PROC}/@{pid}/cgroup r,
-  owner @{PROC}/@{pid}/fd/ r,
-  owner @{PROC}/@{pid}/gid_map w, # If kernel.unprivileged_userns_clone = 1
-  owner @{PROC}/@{pid}/mountinfo r,
-  owner @{PROC}/@{pid}/mounts r,
-  owner @{PROC}/@{pid}/oom_score_adj w,
-  owner @{PROC}/@{pid}/setgroups w, # If kernel.unprivileged_userns_clone = 1
-  owner @{PROC}/@{pid}/smaps r,
-  owner @{PROC}/@{pid}/stat r,
-  owner @{PROC}/@{pid}/statm r,
-  owner @{PROC}/@{pid}/task/ r,
-  owner @{PROC}/@{pid}/task/@{tid}/comm rw,
-  owner @{PROC}/@{pid}/task/@{tid}/stat r,
-  owner @{PROC}/@{pid}/uid_map w, # If kernel.unprivileged_userns_clone = 1
-  owner @{PROC}/@{pids}/cmdline r,
-  owner @{PROC}/@{pids}/environ r,
-
-        /dev/ r,
-        /dev/hidraw@{int} rw,
-        /dev/tty rw,
-        /dev/video@{int} rw,
-  owner /dev/shm/org.chromium.* rw,
-  owner /dev/shm/org.mozilla.ipc.@{pid}.@{int} rw,
-  owner /dev/shm/wayland.mozilla.ipc.@{int} rw,
-  owner /dev/tty@{int} rw, # File Inherit
 
   # Silencer
   deny @{lib_dirs}/** w,
-  deny @{run}/user/@{uid}/gnome-shell-disable-extensions w,
-  deny /tmp/MozillaUpdateLock-* w,
-  deny owner @{HOME}/.* r,
-  deny owner @{user_share_dirs}/gvfs-metadata/{,*} r,
 
   include if exists <local/firefox>
 }
