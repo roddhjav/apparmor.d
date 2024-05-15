@@ -19,7 +19,15 @@
   include <abstractions/audio-client>
   include <abstractions/bus-session>
   include <abstractions/bus-system>
+  include <abstractions/bus/org.bluez>
+  include <abstractions/bus/org.freedesktop.Avahi>
+  include <abstractions/bus/org.freedesktop.FileManager1>
+  include <abstractions/bus/org.freedesktop.Notifications>
+  include <abstractions/bus/org.freedesktop.ScreenSaver>
+  include <abstractions/bus/org.freedesktop.secrets>
   include <abstractions/bus/org.freedesktop.UPower>
+  include <abstractions/bus/org.gnome.SessionManager>
+  include <abstractions/bus/org.kde.kwalletd>
   include <abstractions/dconf-write>
   include <abstractions/desktop>
   include <abstractions/devices-usb>
@@ -41,6 +49,16 @@
   capability sys_chroot,
   capability sys_ptrace,
 
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  signal (receive) peer=@{profile_name}-crashpad-handler,
+  signal (send) set=(term, kill) peer=@{profile_name}-sandbox,
+  signal (send) set=(term, kill) peer=keepassxc-proxy,
+
   ptrace (read) peer=browserpass,
   ptrace (read) peer=chrome-gnome-shell,
   ptrace (read) peer=gnome-browser-connector-host,
@@ -49,21 +67,6 @@
   ptrace (read) peer=plasma-browser-integration-host,
   ptrace (read) peer=xdg-settings,
   ptrace (trace) peer=@{profile_name},
-
-  signal (receive) peer=@{profile_name}-crashpad-handler,
-  signal (send) set=(term, kill) peer=@{profile_name}-sandbox,
-  signal (send) set=(term, kill) peer=keepassxc-proxy,
-
-  network inet dgram,
-  network inet6 dgram,
-  network inet stream,
-  network inet6 stream,
-  network netlink raw,
-
-  dbus send bus=system path=/
-       interface=org.freedesktop.DBus.ObjectManager
-       member=GetManagedObjects
-       peer=(name=org.bluez, label=bluetoothd),
 
   @{lib_dirs}/{,**} r,
   @{lib_dirs}/*.so* mr,
@@ -103,7 +106,6 @@
 
   /usr/share/@{name}/{,**} r,
   /usr/share/chromium/extensions/{,**} r,
-  /usr/share/hwdata/pnp.ids r,
   /usr/share/mozilla/extensions/{,**} r,
   /usr/share/webext/{,**} r,
 
@@ -132,11 +134,6 @@
   owner @{config_dirs}/ rw,
   owner @{config_dirs}/** rwk,
   owner @{config_dirs}/WidevineCdm/*/_platform_specific/linux_*/libwidevinecdm.so mrw,
-  owner @{user_config_dirs}/kdedefaults/ r,
-  owner @{user_config_dirs}/kdedefaults/kdeglobals r,
-  owner @{user_config_dirs}/kdedefaults/kwinrc r,
-  owner @{user_config_dirs}/kdeglobals r,
-  owner @{user_config_dirs}/kwinrc r,
 
   owner @{cache_dirs}/{,**} rw,
 
