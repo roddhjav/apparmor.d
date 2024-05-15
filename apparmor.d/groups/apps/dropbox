@@ -7,143 +7,77 @@ abi <abi/3.0>,
 
 include <tunables/global>
 
-@{DROPBOX_DEMON_DIR}=@{HOME}/.dropbox-dist/
-@{DROPBOX_HOME_DIR}=@{HOME}/.dropbox/
-@{DROPBOX_SHARE_DIR}=@{HOME}/Dropbox*/
+@{name} = dropbox
+@{config_dirs}=@{HOME}/.@{name}/
+@{share_dirs}=@{HOME}/Dropbox*/
+@{demon_dirs}=@{HOME}/.dropbox-dist/
 
 @{exec_path} = @{bin}/dropbox
 profile dropbox @{exec_path} {
   include <abstractions/base>
-  include <abstractions/X>
-  include <abstractions/gtk>
-  include <abstractions/fonts>
+  include <abstractions/desktop>
   include <abstractions/fontconfig-cache-read>
-  include <abstractions/freedesktop.org>
-  include <abstractions/python>
   include <abstractions/nameservice-strict>
+  include <abstractions/python>
   include <abstractions/qt5-settings-write>
   include <abstractions/ssl_certs>
 
-  ptrace peer=@{profile_name},
-
-  @{exec_path} r,
+  @{exec_path} mr,
 
   @{bin}/ r,
-  @{bin}/python3.@{int} r,
-
-  # Dropbox home files
-  owner @{HOME}/ r,
-  owner @{DROPBOX_HOME_DIR}/ rw,
-  owner @{DROPBOX_HOME_DIR}/** rwk,
-
-  # Shared files
-  owner @{DROPBOX_SHARE_DIR}/ rw,
-  owner @{DROPBOX_SHARE_DIR}/{,**} rw,
-
-  # Dropbox proprietary demon files
-  owner @{DROPBOX_DEMON_DIR}/{,**} rw,
-  owner @{DROPBOX_DEMON_DIR}/dropboxd rwix,
-  owner @{DROPBOX_DEMON_DIR}/dropbox-lnx.*/dropbox rwix,
-  owner @{DROPBOX_DEMON_DIR}/dropbox-lnx.*/dropboxd rwix,
-  owner @{DROPBOX_DEMON_DIR}/dropbox-lnx.*/dropbox_py3 rwix,
-  owner @{DROPBOX_DEMON_DIR}/dropbox-lnx.*/wmctrl rwix,
-  owner @{DROPBOX_DEMON_DIR}/dropbox-lnx.*/*.so* mrw,
-  owner @{DROPBOX_DEMON_DIR}/dropbox-lnx.*/plugins/platforms/*.so mrw,
-
   @{sh_path}        rix,
   @{bin}/readlink   rix,
   @{bin}/dirname    rix,
   @{bin}/uname      rix,
-  @{bin}/ldconfig rix,
+  @{bin}/ldconfig   rix,
+  @{bin}/python3.@{int}             rix,
   @{lib}/llvm-[0-9]*/bin/clang      rix,
   @{bin}/{,@{multiarch}-}gcc-[0-9]* rix,
   @{bin}/{,@{multiarch}-}objdump    rix,
 
-  # Needed for updating Dropbox
-  owner @{tmp}/.dropbox-dist-new-*/{,**} rw,
-  owner @{tmp}/.dropbox-dist-new-*/.dropbox-dist/dropboxd rix,
-  owner @{tmp}/.dropbox-dist-new-*/.dropbox-dist/dropbox-lnx.*/dropbox rwix,
-  owner @{tmp}/.dropbox-dist-new-*/.dropbox-dist/dropbox-lnx.*/dropboxd rwix,
-  owner @{tmp}/.dropbox-dist-new-*/.dropbox-dist/dropbox-lnx.*/*.so mrw,
-  owner @{HOME}/.dropbox-dist-old*/{,**} rw,
-  owner @{HOME}/.dropbox-dist-tmp-*/{,**} rw,
+  @{bin}/xdg-open                   rCx -> child-open,
+  @{bin}/lsb_release                rPx -> lsb_release,
 
-  # For autostart
-  deny owner @{user_config_dirs}/autostart/dropbox.desktop rw,
+  owner @{HOME}/ r,
+  owner @{config_dirs}/ rw,
+  owner @{config_dirs}/** rwk,
 
-  # What's this for?
-  @{bin}/mount mrix,
-  @{sys}/devices/virtual/block/dm-@{int}/dm/name r,
-  @{sys}/devices/virtual/block/loop[0-9]/ r,
-  @{sys}/devices/virtual/block/loop[0-9]/loop/{autoclear,backing_file} r,
-  @{run}/mount/utab r,
+  owner @{share_dirs}/ rw,
+  owner @{share_dirs}/{,**} rw,
 
-  deny       @{PROC}/ r,
-  # Dropbox doesn't sync without the 'stat' file
-       owner @{PROC}/@{pid}/stat r,
-  #
-  deny owner @{PROC}/@{pid}/statm r,
-  deny owner @{PROC}/@{pid}/io r,
-  deny       @{PROC}/@{pid}/net/tcp{,6} r,
-  deny       @{PROC}/@{pid}/net/udp{,6} r,
-  # When "cmdline" is blocked, Dropbox has some issues while starting:
-  #  The Dropbox daemon is not installed! Run "dropbox start -i" to install the daemon
-             @{PROC}/@{pid}/cmdline r,
-  #
-       owner @{PROC}/@{pid}/fd/ r,
-       owner @{PROC}/@{pid}/fdinfo/* r,
-       owner @{PROC}/@{pid}/task/ r,
-       owner @{PROC}/@{pid}/task/@{tid}/stat r,
-       owner @{PROC}/@{pid}/task/@{tid}/comm r,
-  deny owner @{PROC}/@{pid}/oom_{,score_}adj rw,
-       owner @{PROC}/@{pid}/mounts r,
-       owner @{PROC}/@{pid}/mountinfo r,
-  deny       @{PROC}/version r,
-  # To remove the following error:
-  #  RuntimeWarning: 'sin' and 'sout' swap memory stats couldn't be determined and were set to 0
-  #  ([Errno 13] Permission denied: '/proc/vmstat')
-             @{PROC}/vmstat r,
+  # Dropbox proprietary demon files
+  owner @{demon_dirs}/{,**} rw,
+  owner @{demon_dirs}/dropboxd rwix,
+  owner @{demon_dirs}/dropbox-lnx.*/dropbox rwix,
+  owner @{demon_dirs}/dropbox-lnx.*/dropboxd rwix,
+  owner @{demon_dirs}/dropbox-lnx.*/dropbox_py3 rwix,
+  owner @{demon_dirs}/dropbox-lnx.*/wmctrl rwix,
+  owner @{demon_dirs}/dropbox-lnx.*/*.so* mrw,
+  owner @{demon_dirs}/dropbox-lnx.*/plugins/platforms/*.so mrw,
 
   # Dropbox first tries the /tmp/ dir, and if it's denied it uses the /var/tmp/ dir instead
   owner @{tmp}/dropbox-antifreeze-* rw,
-  owner @{tmp}/[a-zA-z0-9]* rw,
   owner @{tmp}/#@{int} rw,
   owner /var/tmp/etilqs_@{hex} rw,
 
   @{run}/systemd/users/@{uid} r,
 
+        @{PROC}/@{pid}/cmdline r,
+        @{PROC}/@{pid}/net/tcp{,6} r,
+        @{PROC}/@{pid}/net/udp{,6} r,
+        @{PROC}/vmstat r,
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/fdinfo/* r,
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/mounts r,
+  owner @{PROC}/@{pid}/oom_{,score_}adj rw,
+  owner @{PROC}/@{pid}/stat r,
+  owner @{PROC}/@{pid}/task/ r,
+  owner @{PROC}/@{pid}/task/@{tid}/comm r,
+  owner @{PROC}/@{pid}/task/@{tid}/stat r,
+
   deny @{sys}/module/apparmor/parameters/enabled r,
-
-  # External apps
-  @{bin}/xdg-open                                  rCx -> open,
-  @{bin}/lsb_release                               rPx -> lsb_release,
-
-  # Allowed apps to open
-  @{lib}/firefox/firefox rPUx,
-
-
-  profile open {
-    include <abstractions/base>
-    include <abstractions/xdg-open>
-
-    @{bin}/xdg-open mr,
-
-    @{sh_path}             rix,
-    @{bin}/{m,g,}awk       rix,
-    @{bin}/readlink        rix,
-    @{bin}/basename        rix,
-
-    owner @{HOME}/ r,
-
-    owner @{run}/user/@{uid}/ r,
-
-    # Allowed apps to open
-    @{lib}/firefox/firefox rPUx,
-
-    # file_inherit
-    owner @{HOME}/.xsession-errors w,
-
-  }
+  deny @{user_config_dirs}/autostart/dropbox.desktop rw,
 
   include if exists <local/dropbox>
 }

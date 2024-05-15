@@ -8,23 +8,16 @@ abi <abi/3.0>,
 include <tunables/global>
 
 @{name} = signal-desktop{,-beta}
-@{lib_dirs} = "/usr/lib/signal-desktop"
-@{lib_dirs} += "/opt/Signal{, Beta}"
+@{lib_dirs} = @{lib}/signal-desktop "/opt/Signal{, Beta}"
 @{config_dirs} = "@{user_config_dirs}/Signal{, Beta}"
 
 @{exec_path} = @{lib_dirs}/@{name}
 profile signal-desktop @{exec_path} {
   include <abstractions/base>
   include <abstractions/audio-client>
-  include <abstractions/common/chromium>
-  include <abstractions/desktop>
+  include <abstractions/common/electron>
   include <abstractions/fontconfig-cache-read>
-  include <abstractions/graphics>
-  include <abstractions/nameservice-strict>
   include <abstractions/user-download-strict>
-
-  # Needed?
-  deny capability sys_ptrace,
 
   network inet dgram,
   network inet6 dgram,
@@ -37,46 +30,19 @@ profile signal-desktop @{exec_path} {
   @{bin}/getconf rix,
   @{bin}/xdg-settings rPx,
 
-  @{lib_dirs}/ r,
-  @{lib_dirs}/{swiftshader/,}libEGL.so mr,
-  @{lib_dirs}/{swiftshader/,}libGLESv2.so mr,
-  @{lib_dirs}/** r,
   @{lib_dirs}/chrome-sandbox rPx,
-  @{lib_dirs}/libffmpeg.so mr,
-  @{lib_dirs}/libnode.so mr,
-  @{lib_dirs}/resources/app.asar.unpacked/node_modules/**.node mr,
-  @{lib_dirs}/resources/app.asar.unpacked/node_modules/**.so mr,
-  @{lib_dirs}/resources/app.asar.unpacked/node_modules/**.so.@{int} mr,
   @{lib_dirs}/chrome_crashpad_handler rix,
 
   /var/lib/dbus/machine-id r,
   /etc/machine-id r,
 
-  owner @{config_dirs}/ rw,
-  owner @{config_dirs}/** rwk,
-  owner @{config_dirs}/tmp/.org.chromium.Chromium.* mrw,
-
   @{run}/systemd/inhibit/*.ref rw,
 
-        @{PROC}/ r,
-        @{PROC}/@{pids}/stat r,
-        @{PROC}/sys/fs/inotify/max_user_watches r,
-        @{PROC}/sys/kernel/yama/ptrace_scope r,
-        @{PROC}/vmstat r,
-  owner @{PROC}/@{pid}/cmdline r,
-  owner @{PROC}/@{pid}/fd/ r,
-  owner @{PROC}/@{pid}/oom_{,score_}adj rw,
-  owner @{PROC}/@{pids}/statm r,
-  owner @{PROC}/@{pids}/task/ r,
-  owner @{PROC}/@{pids}/task/@{tid}/status r,
-
-  @{sys}/devices/system/cpu/kernel_max r,
-  @{sys}/devices/virtual/tty/tty@{int}/active r,
-  @{sys}/fs/cgroup/user.slice/** r,
   @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/session-@{int}.scope/cpu.max r,
   @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/session-@{int}.scope/memory.high r,
   @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/session-@{int}.scope/memory.max r,
 
+  @{PROC}/vmstat r,
 
   include if exists <local/signal-desktop>
 }
