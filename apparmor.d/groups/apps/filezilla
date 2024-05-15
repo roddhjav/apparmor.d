@@ -24,10 +24,20 @@ profile filezilla @{exec_path} {
   @{sh_path}         rix,
   @{bin}/uname       rix,
 
-  # When using SFTP protocol
-  @{bin}/fzsftp      rPx,
-
+  @{bin}/fzsftp      rPx,  # When using SFTP protocol
   @{bin}/lsb_release rPx -> lsb_release,
+
+  /usr/share/filezilla/{,**} r,
+
+  /etc/fstab r,
+
+  / r,
+  /*/ r,
+  /*/*/ r,
+
+  # FTP share folder
+  owner @{MOUNTS}/ftp/ r,
+  owner @{MOUNTS}/ftp/** rw,
 
   owner @{HOME}/ r,
   owner @{user_config_dirs}/filezilla/ rw,
@@ -36,36 +46,15 @@ profile filezilla @{exec_path} {
   owner @{user_cache_dirs}/filezilla/ rw,
   owner @{user_cache_dirs}/filezilla/default_*.png rw,
 
-  /usr/share/filezilla/{,**} r,
-
   owner @{PROC}/@{pid}/fd/ r,
-  # To remove the following error:
-  #  GLib-GIO-WARNING **: Error creating IO channel for /proc/self/mountinfo: Permission denied
-  #  (g-file-error-quark, 2)
   owner @{PROC}/@{pid}/mountinfo r,
   owner @{PROC}/@{pid}/mounts r,
 
-  /etc/fstab r,
-
-  # Creating new files on FTP
         /tmp/ r,
   owner @{tmp}/fz[0-9]temp-@{int}/ rw,
   owner @{tmp}/fz[0-9]temp-@{int}/fz*-lockfile rwk,
   owner @{tmp}/fz[0-9]temp-@{int}/empty_file_* rw,
 
-  # External apps
-  @{lib}/firefox/firefox rPUx,
-
-  # FTP share folder
-  owner @{MOUNTS}/ftp/ r,
-  owner @{MOUNTS}/ftp/** rw,
-
-  # Silencer
-  / r,
-  /*/ r,
-  /*/*/ r,
-
-  # file_inherit
   owner /dev/tty@{int} rw,
 
   include if exists <local/filezilla>
