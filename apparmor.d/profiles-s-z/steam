@@ -2,14 +2,28 @@
 # Copyright (C) 2022-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
+# Security objectives of the steam profiles:
+# - Ensure no user data is accessed by either steam or steam games
+# - Limit what steam/games can access to the host
+#
+# Current architecture:
+# steam
+# ├── steam-fossilize
+# ├── steam-reaper
+# │   └── steam-game
+# ├── steam-gameoverlayui
+# └── steamerrorreporter
+
 abi <abi/3.0>,
 
 include <tunables/global>
 
-@{lib_dirs} = @{user_share_dirs}/Steam/ubuntu@{int2}_{32,64}
+@{share_dirs} = @{user_share_dirs}/Steam
+@{lib_dirs} = @{share_dirs}/ubuntu@{int2}_{32,64}
+@{runtime_dirs} = @{share_dirs}/steamapps/common/SteamLinuxRuntime_sniper
 
-@{exec_path} = @{user_share_dirs}/Steam/steam.sh
-profile steam @{exec_path} flags=(attach_disconnected,mediate_deleted,complain) {
+@{exec_path} = @{share_dirs}/steam.sh
+profile steam @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/base>
   include <abstractions/audio-client>
   include <abstractions/common/bwrap>
@@ -31,6 +45,7 @@ profile steam @{exec_path} flags=(attach_disconnected,mediate_deleted,complain) 
   network netlink raw,
 
   ptrace (read),
+  ptrace (trace) peer=steam,
 
   signal (send) peer=steam-game,
   signal (read),
@@ -60,22 +75,23 @@ profile steam @{exec_path} flags=(attach_disconnected,mediate_deleted,complain) 
   @{bin}/zenity                 rix,
   @{lib}/ld-linux.so*           rix,
 
-  @{lib_dirs}/*                  mr,
-  @{lib_dirs}/*/**             mrix,
+  @{lib_dirs}/**                 mr,
+  @{lib_dirs}/*/**               ix,
   @{lib_dirs}/*driverquery      rix,
   @{lib_dirs}/fossilize_replay  rpx,
   @{lib_dirs}/gameoverlayui     rpx,
   @{lib_dirs}/reaper            rpx,
   @{lib_dirs}/steam*            rix,
 
-  @{lib}/pressure-vessel/from-host/** rix,
+  # Entry point for steam-game
+  @{runtime_dirs}/*entry-point  rpx,
 
-  @{run}/host/@{bin}/* rix,
-  @{run}/host/@{lib}/** rix,
+  @{lib}/pressure-vessel/from-host/**  rix,
+  @{run}/host/@{bin}/*                 rix,
+  @{run}/host/@{lib}/**                rix,
 
-  @{user_share_dirs}/Steam/config/widevine/linux-*/libwidevinecdm.so mr,
-  @{user_share_dirs}/Steam/linux{32,64}/steamerrorreporter rpx,
-  @{user_share_dirs}/Steam/steamapps/common/SteamLinuxRuntime_soldier/*entry-point rpx,
+  @{share_dirs}/linux{32,64}/steamerrorreporter rpx,
+  @{share_dirs}/config/cefdata/WidevineCdm/**/linux_*/libwidevinecdm.so rm,
 
   /usr/lib/os-release rk,
   /usr/share/fonts/**.{ttf,otf} rk,
@@ -93,11 +109,15 @@ profile steam @{exec_path} flags=(attach_disconnected,mediate_deleted,complain) 
   /etc/ r,
   /home/ r,
   /run/ r,
+  /usr/ r,
+  /usr/local/ r,
+  /usr/local/lib/ r,
   /var/ r,
 
   owner /bindfile@{rand6} rw,
 
   owner /var/pressure-vessel/** rw,
+  owner /var/cache/ldconfig/aux-cache* rw,
 
   owner @{HOME}/ r,
   owner @{HOME}/.steam/{,**} rw,
@@ -105,7 +125,11 @@ profile steam @{exec_path} flags=(attach_disconnected,mediate_deleted,complain) 
   owner @{HOME}/.steampath rw,
   owner @{HOME}/.steampid rw,
 
-  owner @{user_games_dirs}/{,**} rwlk,
+  owner @{share_dirs}/ rw,
+  owner @{share_dirs}/** rwkl -> @{share_dirs}/**,
+
+  owner @{user_games_dirs}/ rw,
+  owner @{user_games_dirs}/** rwlk -> @{user_games_dirs}/**,
 
   owner @{user_config_dirs}/autostart/ r,
   owner @{user_config_dirs}/cef_user_data/{,**} r,
@@ -116,8 +140,6 @@ profile steam @{exec_path} flags=(attach_disconnected,mediate_deleted,complain) 
 
   owner @{user_share_dirs}/applications/*.desktop w,
   owner @{user_share_dirs}/icons/hicolor/**/apps/steam*.png rw,
-  owner @{user_share_dirs}/Steam/ rw,
-  owner @{user_share_dirs}/Steam/** rwkl -> @{user_share_dirs}/Steam/**,
   owner @{user_share_dirs}/vulkan/implicit_layer.d/steam*.json rwk,
 
   owner /dev/shm/#@{int} rw,
@@ -126,19 +148,24 @@ profile steam @{exec_path} flags=(attach_disconnected,mediate_deleted,complain) 
   owner /dev/shm/u@{uid}-ValveIPCSharedObj-Steam rwk,
   owner /dev/shm/ValveIPCSHM_@{uid} rw,
 
-  owner @{tmp}/#@{int} w,
+        @{tmp}/ r,
+  owner @{tmp}/#@{int} rw,
   owner @{tmp}/dumps/ rw,
-  owner @{tmp}/dumps/{assert,crash}_@{int}_@{int}.dmp rw,
-  owner @{tmp}/dumps/*/ r,
-  owner @{tmp}/dumps/settings.dat rwk,
+  owner @{tmp}/dumps/** rwk,
   owner @{tmp}/gdkpixbuf-xpm-tmp.@{rand6} rw,
   owner @{tmp}/miles_image_* mrw,
-  owner @{tmp}/pressure-vessel-*-@{rand6}/** rw,
+  owner @{tmp}/pressure-vessel-*-@{rand6}/ rw,
+  owner @{tmp}/pressure-vessel-*-@{rand6}/** rwlk -> @{tmp}/pressure-vessel-*-@{rand6}/**,
   owner @{tmp}/runtime-info.txt.* rwk,
   owner @{tmp}/sh-thd.* rw,
   owner @{tmp}/steam_chrome_shmem_uid@{uid}_spid@{int} rw,
   owner @{tmp}/steam@{rand6}/{,**} rw,
+  owner @{tmp}/steam/ rw,
+  owner @{tmp}/steam/** rwk,
   owner @{tmp}/vdpau-drivers-@{rand6}/{,**} rw,
+
+  owner @{run}/pressure-vessel/** r,
+  owner @{run}/user/@{uid}/ r,
 
   @{run}/host/{,**} r,
 
@@ -157,20 +184,18 @@ profile steam @{exec_path} flags=(attach_disconnected,mediate_deleted,complain) 
   @{sys}/class/hidraw/ r,
   @{sys}/class/input/ r,
   @{sys}/class/net/ r,
+  @{sys}/devices/@{pci}/class r,
+  @{sys}/devices/@{pci}/i2c-@{int}/{,**/}report_descriptor r,
+  @{sys}/devices/@{pci}/sound/card@{int}/** r,
+  @{sys}/devices/@{pci}/usb@{int}/{manufacturer,product,bcdDevice,bInterfaceNumber} r,
   @{sys}/devices/**/input@{int}/ r,
   @{sys}/devices/**/input@{int}/capabilities/* r,
   @{sys}/devices/**/input/input@{int}/ r,
+  @{sys}/devices/**/input/input@{int}/properties r,
   @{sys}/devices/**/uevent r,
-  @{sys}/devices/@{pci}/class r,
-  @{sys}/devices/@{pci}/i2c-@{int}/report_descriptor r,
-  @{sys}/devices/@{pci}/sound/card@{int}/** r,
-  @{sys}/devices/@{pci}/usb@{int}/{manufacturer,product,bcdDevice,bInterfaceNumber} r,
   @{sys}/devices/system/cpu/** r,
   @{sys}/devices/system/node/ r,
-  @{sys}/devices/virtual/dmi/id/bios_version rk,
-  @{sys}/devices/virtual/dmi/id/board_{vendor,name,version} rk,
-  @{sys}/devices/virtual/dmi/id/product_{name,version} r,
-  @{sys}/devices/virtual/dmi/id/sys_vendor r,
+  @{sys}/devices/virtual/**/report_descriptor r,
   @{sys}/devices/virtual/net/*/ r,
   @{sys}/devices/virtual/tty/tty@{int}/active r,
   @{sys}/kernel/ r,
@@ -180,6 +205,7 @@ profile steam @{exec_path} flags=(attach_disconnected,mediate_deleted,complain) 
         @{PROC}/@{pids}/comm rk,
         @{PROC}/@{pids}/net/route r,
         @{PROC}/@{pids}/stat r,
+        @{PROC}/locks r,
         @{PROC}/@{pid}/net/* r,
         @{PROC}/1/cgroup r,
         @{PROC}/sys/fs/inotify/max_user_watches r,
@@ -189,6 +215,7 @@ profile steam @{exec_path} flags=(attach_disconnected,mediate_deleted,complain) 
         @{PROC}/sys/net/ipv{4,6}/conf/all/disable_ipv{4,6} r,
         @{PROC}/sys/user/max_user_namespaces r,
         @{PROC}/version r,
+  owner @{PROC}/@{pid}/mem r,
   owner @{PROC}/@{pid}/autogroup rw,
   owner @{PROC}/@{pid}/cmdline rk,
   owner @{PROC}/@{pid}/environ r,
@@ -206,7 +233,6 @@ profile steam @{exec_path} flags=(attach_disconnected,mediate_deleted,complain) 
   /dev/input/event@{int} r,
   /dev/tty rw,
   /dev/uinput w,
-  /dev/video@{int} rw,
 
   audit deny /**.steam_exec_test.sh rw,
   deny owner @{user_share_dirs}/gvfs-metadata/{,*} r,

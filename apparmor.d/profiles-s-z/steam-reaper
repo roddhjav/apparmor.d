@@ -6,25 +6,28 @@ abi <abi/3.0>,
 
 include <tunables/global>
 
-@{steam_lib_dirs} = @{user_share_dirs}/Steam/ubuntu[0-9]*_{32,64}
-@{exec_path} = @{steam_lib_dirs}/reaper
-profile steam-reaper @{exec_path} {
+@{share_dirs} = @{user_share_dirs}/Steam
+@{lib_dirs} = @{share_dirs}/ubuntu@{int2}_{32,64}
+@{runtime_dirs} = @{share_dirs}/steamapps/common/SteamLinuxRuntime_sniper
+
+@{exec_path} = @{lib_dirs}/reaper
+profile steam-reaper @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/nvidia>
+  include <abstractions/graphics>
 
   unix (receive) type=stream,
 
   @{exec_path} mr,
 
-  @{steam_lib_dirs}/*.so*  mr,
-  @{steam_lib_dirs}/steam-runtime/{usr/,}lib/**.so*  mr,
-  @{steam_lib_dirs}/steam-launch-wrapper rpx -> steam-game,
+  @{lib_dirs}/*.so*  mr,
+  @{lib_dirs}/steam-runtime/@{lib}/**.so*  mr,
+  @{lib_dirs}/steam-launch-wrapper rpx -> steam-game,
 
-  @{user_share_dirs}/Steam/steamapps/common/*/* rpx -> steam-game,
+  @{share_dirs}/steamapps/common/*/* rpx -> steam-game,
 
   owner @{HOME}/.steam/steam.pipe r,
 
-  owner @{user_share_dirs}/Steam/userdata/**/remotecache.vdf rw,
+  owner @{share_dirs}/userdata/**/remotecache.vdf rw,
 
   owner /dev/shm/u@{uid}-Shm_@{hex} rw,
   owner /dev/shm/u@{uid}-ValveIPCSharedObj-Steam rwk,

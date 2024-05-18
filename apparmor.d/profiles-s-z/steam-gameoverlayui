@@ -6,10 +6,12 @@ abi <abi/3.0>,
 
 include <tunables/global>
 
-@{steam_lib_dirs} = @{user_share_dirs}/Steam/ubuntu@{int2}_{32,64}
+@{share_dirs} = @{user_share_dirs}/Steam
+@{lib_dirs} = @{share_dirs}/ubuntu@{int2}_{32,64}
+@{runtime_dirs} = @{share_dirs}/steamapps/common/SteamLinuxRuntime_sniper
 
-@{exec_path} = @{steam_lib_dirs}/gameoverlayui
-profile steam-gameoverlayui @{exec_path} {
+@{exec_path} = @{lib_dirs}/gameoverlayui
+profile steam-gameoverlayui @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/audio-client>
   include <abstractions/desktop>
@@ -22,8 +24,8 @@ profile steam-gameoverlayui @{exec_path} {
 
   @{exec_path} mr,
 
-  @{steam_lib_dirs}/*.so*  mr,
-  @{steam_lib_dirs}/steam-runtime/@{lib}/**.so*  mr,
+  @{lib_dirs}/*.so*  mr,
+  @{lib_dirs}/steam-runtime/@{lib}/**.so*  mr,
 
   /usr/share/fonts/{,**}  rk,  # ?
 
@@ -34,12 +36,13 @@ profile steam-gameoverlayui @{exec_path} {
   owner @{HOME}/ r,
   owner @{HOME}/.steam/registry.vdf  rk,
   owner @{HOME}/.steam/steam.pipe r,
-  owner @{steam_lib_dirs}/fontconfig/{,**} rwl,
-  owner @{user_share_dirs}/Steam/{,**} r,
-  owner @{user_share_dirs}/Steam/config/DialogConfigOverlay*.vdf rw,
-  owner @{user_share_dirs}/Steam/public/* rk,
-  owner @{user_share_dirs}/Steam/resource/{,**} rk,
-  owner @{user_share_dirs}/Steam/userdata/@{int}/{,**} rk,
+  owner @{lib_dirs}/fontconfig/{,**} rwl,
+
+  owner @{share_dirs}/{,**} r,
+  owner @{share_dirs}/config/DialogConfigOverlay*.vdf rw,
+  owner @{share_dirs}/public/* rk,
+  owner @{share_dirs}/resource/{,**} rk,
+  owner @{share_dirs}/userdata/@{int}/{,**} rk,
 
   owner /dev/shm/u@{uid}-Shm_@{hex} rw,
   owner /dev/shm/u@{uid}-ValveIPCSharedObj-* rwk,
@@ -48,6 +51,11 @@ profile steam-gameoverlayui @{exec_path} {
   owner @{tmp}/gameoverlayui.log* rw,
   owner @{tmp}/steam_chrome_overlay_uid@{uid}_spid@{pids} rw,
   owner @{tmp}/miles_image_* mrw,
+
+  @{sys}/ r,
+  @{sys}/kernel/ r,
+
+  @{PROC}/version r,
 
   deny owner @{user_share_dirs}/gvfs-metadata/{,*} r,
 
