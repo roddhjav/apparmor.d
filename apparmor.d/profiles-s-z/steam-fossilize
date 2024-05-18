@@ -6,32 +6,36 @@ abi <abi/3.0>,
 
 include <tunables/global>
 
-@{steam_lib_dirs} = @{user_share_dirs}/Steam/ubuntu[0-9]*_{32,64}
-@{exec_path} = @{steam_lib_dirs}/fossilize_replay
+@{share_dirs} = @{user_share_dirs}/Steam
+@{lib_dirs} = @{share_dirs}/ubuntu@{int2}_{32,64}
+@{runtime_dirs} = @{share_dirs}/steamapps/common/SteamLinuxRuntime_sniper
+
+@{exec_path} = @{lib_dirs}/fossilize_replay
 profile steam-fossilize @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/graphics>
+  include <abstractions/wayland>
+  include <abstractions/X-strict>
 
   @{exec_path} mr,
 
-  @{steam_lib_dirs}/*.so*  mr,
+  @{lib_dirs}/*.so*  mr,
 
   owner @{HOME}/.steam/steam.pipe r,
 
-  owner @{user_share_dirs}/Steam/steamapps/shadercache/@{int}/fozpipelinesv@{int}/{,**} rw,
-  owner @{user_share_dirs}/Steam/steamapps/shadercache/@{int}/mesa_shader_cache_sf/{,**} rwk,
-  owner @{user_share_dirs}/Steam/steamapps/shadercache/@{int}/nvidiav@{int}/GLCache/ rw,
-  owner @{user_share_dirs}/Steam/steamapps/shadercache/@{int}/nvidiav@{int}/GLCache/** rwk,
+  owner @{share_dirs}/steamapps/shadercache/@{int}/fozpipelinesv@{int}/{,**} rw,
+  owner @{share_dirs}/steamapps/shadercache/@{int}/mesa_shader_cache_sf/{,**} rwk,
+  owner @{share_dirs}/steamapps/shadercache/@{int}/nvidiav@{int}/GLCache/ rw,
+  owner @{share_dirs}/steamapps/shadercache/@{int}/nvidiav@{int}/GLCache/** rwk,
 
-  owner @{run}/user/@{uid}/.mutter-Xwaylandauth.@{rand6} rw,
+  owner /dev/shm/fossilize-*-@{int}-@{int} rw,
 
   @{sys}/devices/system/node/node@{int}/cpumap r,
 
         @{PROC}/@{pids}/statm r,
         @{PROC}/pressure/io r,
+  owner @{PROC}/@{pid}/cmdline r,
   owner @{PROC}/@{pid}/task/@{tid}/comm rw,
-
-  owner /dev/shm/fossilize-*-@{int}-@{int} rw,
 
   deny owner @{user_share_dirs}/gvfs-metadata/{,*} r,
 

@@ -9,19 +9,25 @@
 # - steam-game-native for native linux games
 # - steam-runtime for all runtime related task up to the creation of the sandbox
 # - steam-game-proton for the sandboxed proton games
-# Requirments:
-# - AppArmor supports for {*^} regex
-# - AppArmor supports change profile from pivot_root 
-# - Bypass no-new-privs issue
+#
+# Tasks:
+# - AppArmor supports for {*^} regex, or find an alternative
+# - AppArmor supports change profile from pivot_root
+# - Stack steam//&game to bypass no-new-privs issue
+#
+# The current version of this profile is not very useful as it is very similar
+# to the main steam profile.
 
 abi <abi/3.0>,
 
 include <tunables/global>
 
-@{runtime} = @{user_share_dirs}/Steam/steamapps/common/SteamLinuxRuntime_soldier
-@{steam_lib_dirs} = @{user_share_dirs}/Steam/ubuntu[0-9]*_{32,64}
+@{share_dirs} = @{user_share_dirs}/Steam
+@{lib_dirs} = @{share_dirs}/ubuntu@{int}_{32,64}
+@{runtime_dirs} = @{share_dirs}/steamapps/common/SteamLinuxRuntime_sniper
 
-@{exec_path} = @{user_share_dirs}/Steam/steamapps/common/*/**
+@{exec_path}  = @{share_dirs}/steamapps/common/*/**
+@{exec_path} += @{lib_dirs}/steam-runtime-sniper/*entry-point
 profile steam-game @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/audio-client>
@@ -64,39 +70,36 @@ profile steam-game @{exec_path} flags=(attach_disconnected) {
   @{bin}/uname                               rix,
   @{bin}/xdg-open                            rPx,
 
-  @{lib}/pressure-vessel/from-host/bin/pressure-vessel-adverb rix,
-  @{lib}/pressure-vessel/from-host/bin/pressure-vessel-locale-gen rix,
-  @{lib}/pressure-vessel/from-host/bin/pressure-vessel-try-setlocale rix,
-  @{lib}/pressure-vessel/from-host/libexec/steam-runtime-tools-*/*-detect-platform rix,
-  @{lib}/steam-runtime-tools*/* mrix,
+  @{lib}/pressure-vessel/from-host/@{bin}/*   rix,
+  @{lib}/pressure-vessel/from-host/@{lib}/**  rix,
+  @{lib}/steam-runtime-tools*/*              mrix,
 
-  @{runtime}/pressure-vessel/bin/pressure-vessel-unruntime rix,
-  @{runtime}/pressure-vessel/bin/pressure-vessel-wrap rix,
-  @{runtime}/pressure-vessel/bin/pv-bwrap rix,
-  @{runtime}/pressure-vessel/bin/steam-runtime-launcher-interface-* rix,
-  @{runtime}/pressure-vessel/lib{,exec}/ r,
-  @{runtime}/pressure-vessel/lib{,exec}/** mrix,
-  @{runtime}/run rix,
+  @{lib_dirs}/{,**} r,
+  @{lib_dirs}/**.so*  mr,
+  @{lib_dirs}/reaper rix,
+  @{lib_dirs}/steam-launch-wrapper rm,
+  @{lib_dirs}/steam-runtime/@{lib}/** mrix,
 
-  @{steam_lib_dirs}/{,**} r,
-  @{steam_lib_dirs}/**.so*  mr,
-  @{steam_lib_dirs}/reaper rix,
-  @{steam_lib_dirs}/steam-launch-wrapper rm,
-  @{steam_lib_dirs}/steam-runtime/{usr/,}lib{exec,}/** mrix,
-  @{user_share_dirs}/Steam/bin/ r,
-  @{user_share_dirs}/Steam/bin/* mr,
-  @{user_share_dirs}/Steam/d3ddriverquery64.dxvk-cache rw,
-  @{user_share_dirs}/Steam/legacycompat/ r,
-  @{user_share_dirs}/Steam/legacycompat/** mr,
-  @{user_share_dirs}/Steam/linux{32,64}/ r,
-  @{user_share_dirs}/Steam/linux{32,64}/**.so* mr,
-  @{user_share_dirs}/Steam/standalone_installscript_progress_@{int}.vdf rw,
-  @{user_share_dirs}/Steam/steamapps/common/*/* mr,
-  @{user_share_dirs}/Steam/steamapps/common/Proton*/ r,
-  @{user_share_dirs}/Steam/steamapps/common/Proton*/files/bin/*  mrix,
-  @{user_share_dirs}/Steam/steamapps/common/Proton*/files/lib{,32,64}/** mrix,
-  @{user_share_dirs}/Steam/steamapps/common/Proton*/proton rix,
-  @{user_share_dirs}/Steam/steamapps/compatdata/@{int}/pfx/**.dll rm,
+  @{runtime_dirs}/pressure-vessel/@{bin}/ r,
+  @{runtime_dirs}/pressure-vessel/@{bin}/* rix,
+  @{runtime_dirs}/pressure-vessel/@{lib}/ r,
+  @{runtime_dirs}/pressure-vessel/@{lib}/** mrix,
+  @{runtime_dirs}/run rix,
+
+  @{share_dirs}/@{bin}/ r,
+  @{share_dirs}/@{bin}/* mr,
+  @{share_dirs}/d3ddriverquery64.dxvk-cache rw,
+  @{share_dirs}/legacycompat/ r,
+  @{share_dirs}/legacycompat/** mr,
+  @{share_dirs}/linux{32,64}/ r,
+  @{share_dirs}/linux{32,64}/**.so* mr,
+  @{share_dirs}/standalone_installscript_progress_@{int}.vdf rw,
+  @{share_dirs}/steamapps/common/*/* mr,
+  @{share_dirs}/steamapps/common/Proton*/ r,
+  @{share_dirs}/steamapps/common/Proton*/files/@{bin}/*  mrix,
+  @{share_dirs}/steamapps/common/Proton*/files/@{lib}/** mrix,
+  @{share_dirs}/steamapps/common/Proton*/proton rix,
+  @{share_dirs}/steamapps/compatdata/@{int}/pfx/**.dll rm,
 
   @{user_games_dirs}/*/* mr,
   @{user_games_dirs}/*/**.dll mr,
@@ -111,14 +114,15 @@ profile steam-game @{exec_path} flags=(attach_disconnected) {
   /etc/udev/udev.conf r,
   /var/lib/dbus/machine-id r,
 
-  /var/cache/ldconfig/aux-cache* rw,
-
   / r,
   /{usr/,}{local/,} r,
   /{usr/,}{local/,}lib{,32,64}/ r,
   /bindfile@{rand6} rw,
   /home/ r,
   /tmp/ r,
+
+  owner /var/pressure-vessel/** rw,
+  owner /var/cache/ldconfig/aux-cache* rw,
 
   owner @{HOME}/ r,
   owner @{HOME}/.steam/steam.pid r,
@@ -129,21 +133,20 @@ profile steam-game @{exec_path} flags=(attach_disconnected) {
 
   owner @{user_config_dirs}/unity3d/{,**} rwk,
 
-  owner @{user_share_dirs}/ r,
-  owner @{user_share_dirs}/Steam/ r,
-  owner @{user_share_dirs}/Steam/* r,
-  owner @{user_share_dirs}/Steam/*log* rw,
-  owner @{user_share_dirs}/Steam/config/config.vdf* rw,
-  owner @{user_share_dirs}/Steam/logs/{,*} rw,
-  owner @{user_share_dirs}/Steam/shader_cache_temp*/fozpipelinesv*/{,**} rw,
-  owner @{user_share_dirs}/Steam/steamapps/ r,
-  owner @{user_share_dirs}/Steam/steamapps/common/ r,
-  owner @{user_share_dirs}/Steam/steamapps/common/*/ r,
-  owner @{user_share_dirs}/Steam/steamapps/common/*/** rwkl,
-  owner @{user_share_dirs}/Steam/steamapps/common/Proton*/files/share/{,**} r,
-  owner @{user_share_dirs}/Steam/steamapps/compatdata/{,**} rwk,
-  owner @{user_share_dirs}/Steam/steamapps/shadercache/{,**} rwk,
-  owner @{user_share_dirs}/Steam/userdata/**/remotecache.vdf rw,
+  owner @{share_dirs}/ r,
+  owner @{share_dirs}/* r,
+  owner @{share_dirs}/*log* rw,
+  owner @{share_dirs}/config/config.vdf* rw,
+  owner @{share_dirs}/logs/{,*} rw,
+  owner @{share_dirs}/shader_cache_temp*/fozpipelinesv*/{,**} rw,
+  owner @{share_dirs}/steamapps/ r,
+  owner @{share_dirs}/steamapps/common/ r,
+  owner @{share_dirs}/steamapps/common/*/ r,
+  owner @{share_dirs}/steamapps/common/*/** rwkl,
+  owner @{share_dirs}/steamapps/common/Proton*/files/share/{,**} r,
+  owner @{share_dirs}/steamapps/compatdata/{,**} rwk,
+  owner @{share_dirs}/steamapps/shadercache/{,**} rwk,
+  owner @{share_dirs}/userdata/**/remotecache.vdf rw,
 
         @{run}/host/ r,
         @{run}/host/container-manager r,
@@ -161,10 +164,15 @@ profile steam-game @{exec_path} flags=(attach_disconnected) {
   owner /dev/shm/ValveIPCSHM_@{uid} rw,
   owner /dev/shm/wine-*-fsync rw,
 
+  owner @{tmp}/ r,
+  owner @{tmp}/.wine-@{int}/ rw,
+  owner @{tmp}/.wine-@{int}/** rwk,
   owner @{tmp}/.wine-@{uid}/server-*/* rwk,
-  owner @{tmp}/** rw,
+  owner @{tmp}/#@{int} rw,
+  owner @{tmp}/CASESENSITIVETEST@{hex32} rw,
   owner @{tmp}/miles_image_* mr,
   owner @{tmp}/pressure-vessel-*/{,**} rwl,
+  owner @{tmp}/vdpau-drivers-@{rand6}/{,**} rw,
 
   @{run}/udev/data/+input:input@{int} r,  # for mouse, keyboard, touchpad
 
@@ -193,11 +201,13 @@ profile steam-game @{exec_path} flags=(attach_disconnected) {
 
         @{PROC}/@{pids}/net/dev r,
         @{PROC}/@{pids}/net/route r,
+        @{PROC}/sys/net/core/bpf_jit_enable r,
         @{PROC}/uptime r,
         @{PROC}/version r,
   owner @{PROC}/@{pid}/cmdline r,
   owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/mounts r,
+  owner @{PROC}/@{pid}/pagemap r,
   owner @{PROC}/@{pid}/stat r,
   owner @{PROC}/@{pid}/task/ r,
   owner @{PROC}/@{pid}/task/@{tid}/comm rw,
