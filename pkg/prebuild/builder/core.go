@@ -21,7 +21,7 @@ var (
 // Main directive interface
 type Builder interface {
 	cfg.BaseInterface
-	Apply(profile string) string
+	Apply(profile string) (string, error)
 }
 
 func Register(names ...string) {

@@ -50,10 +50,13 @@ func setInterfaces(rules map[string]string) []string {
 	return interfaces
 }
 
-func (d Dbus) Apply(opt *Option, profile string) string {
+func (d Dbus) Apply(opt *Option, profile string) (string, error) {
 	var r aa.Rules
 
-	action := d.sanityCheck(opt)
+	action, err := d.sanityCheck(opt)
+	if err != nil {
+		return "", err
+	}
 	switch action {
 	case "own":
 		r = d.own(opt.ArgMap)
@@ -68,26 +71,26 @@ func (d Dbus) Apply(opt *Option, profile string) string {
 	lenDbus := len(generatedDbus)
 	generatedDbus = generatedDbus[:lenDbus-1]
 	profile = strings.Replace(profile, opt.Raw, generatedDbus, -1)
-	return profile
+	return profile, nil
 }
 
-func (d Dbus) sanityCheck(opt *Option) string {
+func (d Dbus) sanityCheck(opt *Option) (string, error) {
 	if len(opt.ArgList) < 1 {
-		panic(fmt.Sprintf("Unknown dbus action: %s in %s", opt.Name, opt.File))
+		return "", fmt.Errorf("Unknown dbus action: %s in %s", opt.Name, opt.File)
 	}
 	action := opt.ArgList[0]
 	if action != "own" && action != "talk" {
-		panic(fmt.Sprintf("Unknown dbus action: %s in %s", opt.Name, opt.File))
+		return "", fmt.Errorf("Unknown dbus action: %s in %s", opt.Name, opt.File)
 	}
 
 	if _, present := opt.ArgMap["name"]; !present {
-		panic(fmt.Sprintf("Missing name for 'dbus: %s' in %s", action, opt.File))
+		return "", fmt.Errorf("Missing name for 'dbus: %s' in %s", action, opt.File)
 	}
 	if _, present := opt.ArgMap["bus"]; !present {
-		panic(fmt.Sprintf("Missing bus for '%s' in %s", opt.ArgMap["name"], opt.File))
+		return "", fmt.Errorf("Missing bus for '%s' in %s", opt.ArgMap["name"], opt.File)
 	}
 	if _, present := opt.ArgMap["label"]; !present && action == "talk" {
-		panic(fmt.Sprintf("Missing label for '%s' in %s", opt.ArgMap["name"], opt.File))
+		return "", fmt.Errorf("Missing label for '%s' in %s", opt.ArgMap["name"], opt.File)
 	}
 
 	// Set default values
@@ -95,7 +98,7 @@ func (d Dbus) sanityCheck(opt *Option) string {
 		opt.ArgMap["path"] = "/" + strings.Replace(opt.ArgMap["name"], ".", "/", -1) + "{,/**}"
 	}
 	opt.ArgMap["name"] += "{,.*}"
-	return action
+	return action, nil
 }
 
 func (d Dbus) own(rules map[string]string) aa.Rules {

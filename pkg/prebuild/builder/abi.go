@@ -30,6 +30,6 @@ func init() {
 	})
 }
 
-func (b ABI3) Apply(profile string) string {
-	return regAbi4To3.Replace(profile)
+func (b ABI3) Apply(profile string) (string, error) {
+	return regAbi4To3.Replace(profile), nil
 }
