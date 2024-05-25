@@ -7,6 +7,7 @@ package builder
 import (
 	"fmt"
 
+	"github.com/arduino/go-paths-helper"
 	"github.com/roddhjav/apparmor.d/pkg/prebuild/cfg"
 )
 
@@ -21,7 +22,20 @@ var (
 // Main directive interface
 type Builder interface {
 	cfg.BaseInterface
-	Apply(profile string) (string, error)
+	Apply(opt *Option, profile string) (string, error)
+}
+
+// Builder options
+type Option struct {
+	Name string
+	File *paths.Path
+}
+
+func NewOption(file *paths.Path) *Option {
+	return &Option{
+		Name: file.Base(),
+		File: file,
+	}
 }
 
 func Register(names ...string) {
@@ -36,4 +50,16 @@ func Register(names ...string) {
 
 func RegisterBuilder(d Builder) {
 	Builders[d.Name()] = d
+}
+
+func Run(file *paths.Path, profile string) (string, error) {
+	var err error
+	opt := NewOption(file)
+	for _, b := range Builds {
+		profile, err = b.Apply(opt, profile)
+		if err != nil {
+			return "", err
+		}
+	}
+	return profile, nil
 }

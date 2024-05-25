@@ -31,6 +31,6 @@ func init() {
 	})
 }
 
-func (b Dev) Apply(profile string) (string, error) {
+func (b Dev) Apply(opt *Option, profile string) (string, error) {
 	return regDev.Replace(profile), nil
 }

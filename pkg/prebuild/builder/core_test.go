@@ -238,7 +238,8 @@ func TestBuilder_Apply(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := tt.b.Apply(tt.profile)
+			opt := &Option{}
+			got, err := tt.b.Apply(opt, tt.profile)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Builder.Apply() error = %v, wantErr %v", err, tt.wantErr)
 				return
