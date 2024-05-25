@@ -18,38 +18,27 @@ type RuleBase struct {
 	Optional    bool
 }
 
-
 func newRuleFromLog(log map[string]string) RuleBase {
-	fileInherit := false
+	comment := ""
+	fileInherit, noNewPrivs, optional := false, false, false
+
 	if log["operation"] == "file_inherit" {
 		fileInherit = true
 	}
-
-	noNewPrivs := false
-	optional := false
-	msg := ""
-	switch log["error"] {
-	case "-1":
+	if log["error"] == "-1" {
 		if strings.Contains(log["info"], "optional:") {
 			optional = true
-			msg = strings.Replace(log["info"], "optional: ", "", 1)
+			comment = strings.Replace(log["info"], "optional: ", "", 1)
 		} else {
 			noNewPrivs = true
 		}
-	case "-13":
-		ignoreProfileInfo := []string{"namespace", "disconnected path"}
-		for _, info := range ignoreProfileInfo {
-			if strings.Contains(log["info"], info) {
-				break
-			}
-		}
-		msg = log["info"]
-	default:
 	}
-
+	if log["info"] != "" {
+		comment += " " + log["info"]
+	}
 	return RuleBase{
 		IsLineRule:  false,
-		Comment:     msg,
+		Comment:     comment,
 		NoNewPrivs:  noNewPrivs,
 		FileInherit: fileInherit,
 		Optional:    optional,
