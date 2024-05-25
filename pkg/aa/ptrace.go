@@ -4,7 +4,9 @@
 
 package aa
 
-import "slices"
+import (
+	"slices"
+)
 
 const tokPTRACE = "ptrace"
 
@@ -27,7 +29,7 @@ func newPtraceFromLog(log map[string]string) Rule {
 	return &Ptrace{
 		RuleBase:  newRuleFromLog(log),
 		Qualifier: newQualifierFromLog(log),
-		Access:    toAccess(tokPTRACE, log["requested_mask"]),
+		Access:    Must(toAccess(tokPTRACE, log["requested_mask"])),
 		Peer:      log["peer"],
 	}
 }

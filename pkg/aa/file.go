@@ -5,6 +5,7 @@
 package aa
 
 import (
+	"fmt"
 	"slices"
 	"strings"
 )
@@ -26,6 +27,23 @@ func init() {
 	}
 }
 
+// cmpFileAccess compares two access strings for file rules.
+// It is aimed to be used in slices.SortFunc.
+func cmpFileAccess(i, j string) int {
+	if slices.Contains(requirements[tokFILE]["access"], i) &&
+		slices.Contains(requirements[tokFILE]["access"], j) {
+		return requirementsWeights[tokFILE]["access"][i] - requirementsWeights[tokFILE]["access"][j]
+	}
+	if slices.Contains(requirements[tokFILE]["transition"], i) &&
+		slices.Contains(requirements[tokFILE]["transition"], j) {
+		return requirementsWeights[tokFILE]["transition"][i] - requirementsWeights[tokFILE]["transition"][j]
+	}
+	if slices.Contains(requirements[tokFILE]["access"], i) {
+		return -1
+	}
+	return 1
+}
+
 type File struct {
 	RuleBase
 	Qualifier
@@ -36,12 +54,19 @@ type File struct {
 }
 
 func newFileFromLog(log map[string]string) Rule {
+	accesses, err := toAccess("file-log", log["requested_mask"])
+	if err != nil {
+		panic(fmt.Errorf("newFileFromLog(%v): %w", log, err))
+	}
+	if slices.Compare(accesses, []string{"l"}) == 0 {
+		return newLinkFromLog(log)
+	}
 	return &File{
 		RuleBase:  newRuleFromLog(log),
 		Qualifier: newQualifierFromLog(log),
 		Owner:     isOwner(log),
 		Path:      log["name"],
-		Access:    toAccess("file-log", log["requested_mask"]),
+		Access:    accesses,
 		Target:    log["target"],
 	}
 }
@@ -104,6 +129,7 @@ func newLinkFromLog(log map[string]string) Rule {
 		Target:    log["target"],
 	}
 }
+
 func (r *Link) Less(other any) bool {
 	o, _ := other.(*Link)
 	if r.Path != o.Path {

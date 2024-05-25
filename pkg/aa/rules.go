@@ -4,6 +4,12 @@
 
 package aa
 
+import (
+	"fmt"
+	"slices"
+	"strings"
+)
+
 const (
 	tokALLOW = "allow"
 	tokAUDIT = "audit"
@@ -54,4 +60,86 @@ func (r Rules) GetVariables() []*Variable {
 		}
 	}
 	return res
+}
+
+// Must is a helper that wraps a call to a function returning (any, error) and
+// panics if the error is non-nil.
+func Must[T any](v T, err error) T {
+	if err != nil {
+		panic(err)
+	}
+	return v
+}
+
+// Helper function to convert a string to a slice of rule values according to
+// the rule requirements as defined in the requirements map.
+func toValues(rule string, key string, input string) ([]string, error) {
+	var sep string
+	req, ok := requirements[rule][key]
+	if !ok {
+		return nil, fmt.Errorf("unrecognized requirement '%s' for rule %s", key, rule)
+	}
+
+	switch {
+	case strings.Contains(input, ","):
+		sep = ","
+	case strings.Contains(input, " "):
+		sep = " "
+	}
+	res := strings.Split(input, sep)
+	for _, access := range res {
+		if !slices.Contains(req, access) {
+			return nil, fmt.Errorf("unrecognized %s: %s", key, access)
+		}
+	}
+	slices.SortFunc(res, func(i, j string) int {
+		return requirementsWeights[rule][key][i] - requirementsWeights[rule][key][j]
+	})
+	return slices.Compact(res), nil
+}
+
+// Helper function to convert an access string to a slice of access according to
+// the rule requirements as defined in the requirements map.
+func toAccess(rule string, input string) ([]string, error) {
+	var res []string
+
+	switch rule {
+	case tokFILE:
+		raw := strings.Split(input, "")
+		trans := []string{}
+		for _, access := range raw {
+			if slices.Contains(requirements[tokFILE]["access"], access) {
+				res = append(res, access)
+			} else {
+				trans = append(trans, access)
+			}
+		}
+
+		transition := strings.Join(trans, "")
+		if len(transition) > 0 {
+			if slices.Contains(requirements[tokFILE]["transition"], transition) {
+				res = append(res, transition)
+			} else {
+				return nil, fmt.Errorf("unrecognized transition: %s", transition)
+			}
+		}
+
+	case tokFILE + "-log":
+		raw := strings.Split(input, "")
+		for _, access := range raw {
+			if slices.Contains(requirements[tokFILE]["access"], access) {
+				res = append(res, access)
+			} else if maskToAccess[access] != "" {
+				res = append(res, maskToAccess[access])
+			} else {
+				return nil, fmt.Errorf("toAccess: unrecognized file access '%s'", input)
+			}
+		}
+
+	default:
+		return toValues(rule, "access", input)
+	}
+
+	slices.SortFunc(res, cmpFileAccess)
+	return slices.Compact(res), nil
 }

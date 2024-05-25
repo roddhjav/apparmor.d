@@ -6,7 +6,6 @@ package aa
 
 import (
 	"slices"
-	"strings"
 )
 
 const (
@@ -37,7 +36,7 @@ func newMountConditionsFromLog(log map[string]string) MountConditions {
 	if _, present := log["flags"]; present {
 		return MountConditions{
 			FsType:  log["fstype"],
-			Options: strings.Split(log["flags"], ", "),
+			Options: Must(toValues(tokMOUNT, "flags", log["flags"])),
 		}
 	}
 	return MountConditions{FsType: log["fstype"]}
