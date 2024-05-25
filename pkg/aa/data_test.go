@@ -71,13 +71,13 @@ var (
 		"flags":     "rw, rbind",
 	}
 	mount1 = &Mount{
-		RuleBase:        RuleBase{Comment: "failed perms check"},
+		RuleBase:        RuleBase{Comment: " failed perms check"},
 		MountConditions: MountConditions{FsType: "overlay"},
 		Source:          "overlay",
 		MountPoint:      "/var/lib/docker/overlay2/opaque-bug-check1209538631/merged/",
 	}
 	mount2 = &Mount{
-		RuleBase:        RuleBase{Comment: "failed perms check"},
+		RuleBase:        RuleBase{Comment: " failed perms check"},
 		MountConditions: MountConditions{Options: []string{"rw", "rbind"}},
 		Source:          "/oldroot/dev/tty",
 		MountPoint:      "/newroot/dev/tty",
@@ -197,7 +197,7 @@ var (
 		"protocol":       "0",
 	}
 	unix1 = &Unix{
-		Access:    []string{"receive", "send"},
+		Access:    []string{"send", "receive"},
 		Type:      "stream",
 		Protocol:  "0",
 		Address:   "none",
@@ -289,5 +289,31 @@ var (
 		Owner:    true,
 		Path:     "@{PROC}/4163/cgroup",
 		Access:   []string{"r"},
+	}
+
+	// Link
+	link1Log    = map[string]string{
+		"apparmor":       "ALLOWED",
+		"operation":      "link",
+		"class":          "file",
+		"profile":        "mkinitcpio",
+		"name":           "/tmp/mkinitcpio.QDWtza/early@{lib}/firmware/i915/dg1_dmc_ver2_02.bin.zst",
+		"comm":           "cp",
+		"requested_mask": "l",
+		"denied_mask":    "l",
+		"fsuid":          "0",
+		"ouid":           "0",
+		"target":         "/tmp/mkinitcpio.QDWtza/root@{lib}/firmware/i915/dg1_dmc_ver2_02.bin.zst",
+		"FSUID":          "root",
+		"OUID":           "root",
+	}
+	link1 = &Link{
+		Path:   "/tmp/mkinitcpio.QDWtza/early@{lib}/firmware/i915/dg1_dmc_ver2_02.bin.zst",
+		Target: "/tmp/mkinitcpio.QDWtza/root@{lib}/firmware/i915/dg1_dmc_ver2_02.bin.zst",
+	}
+	link2 = &File{
+		Owner:  true,
+		Path:   "@{user_config_dirs}/powerdevilrc{,.@{rand6}}",
+		Target: "@{user_config_dirs}/#@{int}",
 	}
 )
