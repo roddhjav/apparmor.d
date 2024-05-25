@@ -88,6 +88,12 @@ func TestRules_FromLog(t *testing.T) {
 			log:     file1Log,
 			want:    file1,
 		},
+		{
+			name:    "link",
+			fromLog: newLinkFromLog,
+			log:     link1Log,
+			want:    link1,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -417,7 +423,7 @@ func TestRules_String(t *testing.T) {
 		{
 			name: "mount",
 			rule: mount1,
-			want: "mount fstype=overlay overlay -> /var/lib/docker/overlay2/opaque-bug-check1209538631/merged/,  #failed perms check",
+			want: "mount fstype=overlay overlay -> /var/lib/docker/overlay2/opaque-bug-check1209538631/merged/,  # failed perms check",
 		},
 		{
 			name: "pivot_root",
@@ -442,7 +448,7 @@ func TestRules_String(t *testing.T) {
 		{
 			name: "unix",
 			rule: unix1,
-			want: "unix (receive send) type=stream protocol=0 addr=none peer=(label=dbus-daemon, addr=@/tmp/dbus-AaKMpxzC4k),",
+			want: "unix (send receive) type=stream protocol=0 addr=none peer=(label=dbus-daemon, addr=@/tmp/dbus-AaKMpxzC4k),",
 		},
 		{
 			name: "dbus",
