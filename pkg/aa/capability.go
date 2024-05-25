@@ -10,6 +10,21 @@ import (
 
 const tokCAPABILITY = "capability"
 
+func init() {
+	requirements[tokCAPABILITY] = requirement{
+		"name": {
+			"audit_control", "audit_read", "audit_write", "block_suspend", "bpf",
+			"checkpoint_restore", "chown", "dac_override", "dac_read_search",
+			"fowner", "fsetid", "ipc_lock", "ipc_owner", "kill", "lease",
+			"linux_immutable", "mac_admin", "mac_override", "mknod", "net_admin",
+			"net_bind_service", "net_broadcast", "net_raw", "perfmon", "setfcap",
+			"setgid", "setpcap", "setuid", "sys_admin", "sys_boot", "sys_chroot",
+			"sys_module", "sys_nice", "sys_pacct", "sys_ptrace", "sys_rawio",
+			"sys_resource", "sys_time", "sys_tty_config", "syslog", "wake_alarm",
+		},
+	}
+}
+
 type Capability struct {
 	RuleBase
 	Qualifier

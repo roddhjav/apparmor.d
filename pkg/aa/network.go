@@ -4,10 +4,29 @@
 
 package aa
 
-import "slices"
-
 const tokNETWORK = "network"
 
+func init() {
+	requirements[tokNETWORK] = requirement{
+		"access": []string{
+			"create", "bind", "listen", "accept", "connect", "shutdown",
+			"getattr", "setattr", "getopt", "setopt", "send", "receive",
+			"r", "w", "rw",
+		},
+		"domains": []string{
+			"unix", "inet", "ax25", "ipx", "appletalk", "netrom", "bridge",
+			"atmpvc", "x25", "inet6", "rose", "netbeui", "security", "key",
+			"netlink", "packet", "ash", "econet", "atmsvc", "rds", "sna", "irda",
+			"pppox", "wanpipe", "llc", "ib", "mpls", "can", "tipc", "bluetooth",
+			"iucv", "rxrpc", "isdn", "phonet", "ieee802154", "caif", "alg",
+			"nfc", "vsock", "kcm", "qipcrtr", "smc", "xdp", "mctp",
+		},
+		"type": []string{
+			"stream", "dgram", "seqpacket", "rdm", "raw", "packet",
+		},
+		"protocol": []string{"tcp", "udp", "icmp"},
+	}
+}
 
 type AddressExpr struct {
 	Source      string

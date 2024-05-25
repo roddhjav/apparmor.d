@@ -10,6 +10,8 @@ const (
 	tokDENY  = "deny"
 )
 
+type requirement map[string][]string
+
 type constraint uint
 
 const (

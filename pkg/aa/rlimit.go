@@ -9,6 +9,15 @@ const (
 	tokSET    = "set"
 )
 
+func init() {
+	requirements[tokRLIMIT] = requirement{
+		"keys": {
+			"cpu", "fsize", "data", "stack", "core", "rss", "nofile", "ofile",
+			"as", "nproc", "memlock", "locks", "sigpending", "msgqueue", "nice",
+			"rtprio", "rttime",
+		},
+	}
+}
 
 type Rlimit struct {
 	RuleBase

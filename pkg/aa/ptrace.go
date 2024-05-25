@@ -8,6 +8,14 @@ import "slices"
 
 const tokPTRACE = "ptrace"
 
+func init() {
+	requirements[tokPTRACE] = requirement{
+		"access": []string{
+			"r", "w", "rw", "read", "readby", "trace", "tracedby",
+		},
+	}
+}
+
 type Ptrace struct {
 	RuleBase
 	Qualifier

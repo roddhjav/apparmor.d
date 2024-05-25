@@ -11,6 +11,15 @@ import (
 
 const tokMQUEUE = "mqueue"
 
+func init() {
+	requirements[tokMQUEUE] = requirement{
+		"access": []string{
+			"r", "w", "rw", "read", "write", "create", "open",
+			"delete", "getattr", "setattr",
+		},
+		"type": []string{"posix", "sysv"},
+	}
+}
 
 type Mqueue struct {
 	RuleBase

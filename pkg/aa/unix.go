@@ -8,6 +8,16 @@ import "slices"
 
 const tokUNIX = "unix"
 
+func init() {
+	requirements[tokUNIX] = requirement{
+		"access": []string{
+			"create", "bind", "listen", "accept", "connect", "shutdown",
+			"getattr", "setattr", "getopt", "setopt", "send", "receive",
+			"r", "w", "rw",
+		},
+	}
+}
+
 type Unix struct {
 	RuleBase
 	Qualifier

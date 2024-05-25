@@ -73,7 +73,7 @@ var (
 		"profile",
 		"include_if_exists",
 	}
-	ruleWeights = make(map[string]int, len(ruleAlphabet))
+	ruleWeights = generateWeights(ruleAlphabet)
 
 	// The order the apparmor file rules should be sorted
 	fileAlphabet = []string{
@@ -100,8 +100,16 @@ var (
 		"deny",                // 12. Deny rules
 		"profile",             // 13. Subprofiles
 	}
-	fileWeights = make(map[string]int, len(fileAlphabet))
+	fileWeights = generateWeights(fileAlphabet)
+
+	// The order the rule values (access, type, domains, etc) should be sorted
+	requirements        = map[string]requirement{}
+	requirementsWeights map[string]map[string]map[string]int
 )
+
+func init() {
+	requirementsWeights = generateRequirementsWeights(requirements)
+}
 
 func generateTemplates(names []string) map[string]*template.Template {
 	res := make(map[string]*template.Template, len(names))
@@ -132,13 +140,23 @@ func renderTemplate(name string, data any) string {
 	return res.String()
 }
 
-func init() {
-	for i, r := range fileAlphabet {
-		fileWeights[r] = i
+func generateWeights(alphabet []string) map[string]int {
+	res := make(map[string]int, len(alphabet))
+	for i, r := range alphabet {
+		res[r] = i
 	}
-	for i, r := range ruleAlphabet {
-		ruleWeights[r] = i
+	return res
+}
+
+func generateRequirementsWeights(requirements map[string]requirement) map[string]map[string]map[string]int {
+	res := make(map[string]map[string]map[string]int, len(requirements))
+	for rule, req := range requirements {
+		res[rule] = make(map[string]map[string]int, len(req))
+		for key, values := range req {
+			res[rule][key] = generateWeights(values)
+		}
 	}
+	return res
 }
 
 func join(i any) string {
