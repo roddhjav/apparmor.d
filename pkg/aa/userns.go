@@ -20,6 +20,10 @@ func newUsernsFromLog(log map[string]string) Rule {
 	}
 }
 
+func (r *Userns) Validate() error {
+	return nil
+}
+
 func (r *Userns) Less(other any) bool {
 	o, _ := other.(*Userns)
 	if r.Create != o.Create {

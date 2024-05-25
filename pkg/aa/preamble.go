@@ -21,6 +21,10 @@ type Comment struct {
 	RuleBase
 }
 
+func (r *Comment) Validate() error {
+	return nil
+}
+
 func (r *Comment) Less(other any) bool {
 	return false
 }
@@ -49,6 +53,10 @@ type Abi struct {
 	RuleBase
 	Path    string
 	IsMagic bool
+}
+
+func (r *Abi) Validate() error {
+	return nil
 }
 
 func (r *Abi) Less(other any) bool {
@@ -82,6 +90,10 @@ type Alias struct {
 	RewrittenPath string
 }
 
+func (r *Alias) Validate() error {
+	return nil
+}
+
 func (r Alias) Less(other any) bool {
 	o, _ := other.(*Alias)
 	if r.Path != o.Path {
@@ -112,6 +124,10 @@ type Include struct {
 	IfExists bool
 	Path     string
 	IsMagic  bool
+}
+
+func (r *Include) Validate() error {
+	return nil
 }
 
 func (r *Include) Less(other any) bool {
@@ -147,6 +163,10 @@ type Variable struct {
 	Name   string
 	Values []string
 	Define bool
+}
+
+func (r *Variable) Validate() error {
+	return nil
 }
 
 func (r *Variable) Less(other any) bool {

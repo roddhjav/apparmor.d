@@ -81,6 +81,10 @@ func newFileFromLog(log map[string]string) Rule {
 	}
 }
 
+func (r *File) Validate() error {
+	return nil
+}
+
 func (r *File) Less(other any) bool {
 	o, _ := other.(*File)
 	letterR := getLetterIn(fileAlphabet, r.Path)
@@ -138,6 +142,10 @@ func newLinkFromLog(log map[string]string) Rule {
 		Path:      log["name"],
 		Target:    log["target"],
 	}
+}
+
+func (r *Link) Validate() error {
+	return nil
 }
 
 func (r *Link) Less(other any) bool {

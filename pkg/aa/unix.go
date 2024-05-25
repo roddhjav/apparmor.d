@@ -4,7 +4,10 @@
 
 package aa
 
-import "slices"
+import (
+	"fmt"
+	"slices"
+)
 
 const tokUNIX = "unix"
 
@@ -46,6 +49,13 @@ func newUnixFromLog(log map[string]string) Rule {
 		PeerLabel: log["peer"],
 		PeerAddr:  log["peer_addr"],
 	}
+}
+
+func (r *Unix) Validate() error {
+	if err := validateValues(r.Kind(), "access", r.Access); err != nil {
+		return fmt.Errorf("%s: %w", r, err)
+	}
+	return nil
 }
 
 func (r *Unix) Less(other any) bool {

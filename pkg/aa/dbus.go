@@ -5,6 +5,7 @@
 package aa
 
 import (
+	"fmt"
 	"slices"
 )
 
@@ -53,6 +54,13 @@ func newDbusFromLog(log map[string]string) Rule {
 		PeerName:  peerName,
 		PeerLabel: log["peer_label"],
 	}
+}
+
+func (r *Dbus) Validate() error {
+	if err := validateValues(r.Kind(), "access", r.Access); err != nil {
+		return fmt.Errorf("%s: %w", r, err)
+	}
+	return validateValues(r.Kind(), "bus", []string{r.Bus})
 }
 
 func (r *Dbus) Less(other any) bool {

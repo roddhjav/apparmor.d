@@ -5,6 +5,7 @@
 package aa
 
 import (
+	"fmt"
 	"slices"
 )
 
@@ -32,6 +33,13 @@ func newPtraceFromLog(log map[string]string) Rule {
 		Access:    Must(toAccess(tokPTRACE, log["requested_mask"])),
 		Peer:      log["peer"],
 	}
+}
+
+func (r *Ptrace) Validate() error {
+	if err := validateValues(r.Kind(), "access", r.Access); err != nil {
+		return fmt.Errorf("%s: %w", r, err)
+	}
+	return nil
 }
 
 func (r *Ptrace) Less(other any) bool {

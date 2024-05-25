@@ -4,7 +4,10 @@
 
 package aa
 
-import "slices"
+import (
+	"fmt"
+	"slices"
+)
 
 const tokIOURING = "io_uring"
 
@@ -28,6 +31,13 @@ func newIOUringFromLog(log map[string]string) Rule {
 		Access:    Must(toAccess(tokIOURING, log["requested"])),
 		Label:     log["label"],
 	}
+}
+
+func (r *IOUring) Validate() error {
+	if err := validateValues(r.Kind(), "access", r.Access); err != nil {
+		return fmt.Errorf("%s: %w", r, err)
+	}
+	return nil
 }
 
 func (r *IOUring) Less(other any) bool {
