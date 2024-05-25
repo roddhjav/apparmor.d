@@ -65,7 +65,7 @@ func (r *Abi) Equals(other any) bool {
 }
 
 func (r *Abi) String() string {
-	return renderTemplate(tokABI, r)
+	return renderTemplate(r.Kind(), r)
 }
 
 func (r *Abi) Constraint() constraint {
@@ -96,7 +96,7 @@ func (r Alias) Equals(other any) bool {
 }
 
 func (r *Alias) String() string {
-	return renderTemplate(tokALIAS, r)
+	return renderTemplate(r.Kind(), r)
 }
 
 func (r *Alias) Constraint() constraint {
@@ -131,7 +131,7 @@ func (r *Include) Equals(other any) bool {
 }
 
 func (r *Include) String() string {
-	return renderTemplate(tokINCLUDE, r)
+	return renderTemplate(r.Kind(), r)
 }
 
 func (r *Include) Constraint() constraint {

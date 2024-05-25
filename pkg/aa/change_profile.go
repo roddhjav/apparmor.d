@@ -51,7 +51,7 @@ func (r *ChangeProfile) Equals(other any) bool {
 }
 
 func (r *ChangeProfile) String() string {
-	return renderTemplate(tokCHANGEPROFILE, r)
+	return renderTemplate(r.Kind(), r)
 }
 
 func (r *ChangeProfile) Constraint() constraint {
