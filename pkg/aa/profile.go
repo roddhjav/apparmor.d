@@ -79,6 +79,21 @@ func (p *Profile) Merge() {
 			if p.Rules[i].Equals(p.Rules[j]) {
 				p.Rules = append(p.Rules[:j], p.Rules[j+1:]...)
 				j--
+				continue
+			}
+
+			// File rule
+			if typeOfI == reflect.TypeFor[*File]() && typeOfJ == reflect.TypeFor[*File]() {
+				// Merge access
+				fileI := p.Rules[i].(*File)
+				fileJ := p.Rules[j].(*File)
+				if fileI.Path == fileJ.Path {
+					fileI.Access = append(fileI.Access, fileJ.Access...)
+					slices.SortFunc(fileI.Access, cmpFileAccess)
+					fileI.Access = slices.Compact(fileI.Access)
+					p.Rules = append(p.Rules[:j], p.Rules[j+1:]...)
+					j--
+				}
 			}
 		}
 	}
@@ -93,10 +108,10 @@ func (p *Profile) Sort() {
 		if typeOfI != typeOfJ {
 			valueOfI := typeToValue(typeOfI)
 			valueOfJ := typeToValue(typeOfJ)
-			if typeOfI == reflect.TypeOf((*Include)(nil)) && p.Rules[i].(*Include).IfExists {
+			if typeOfI == reflect.TypeFor[*Include]() && p.Rules[i].(*Include).IfExists {
 				valueOfI = "include_if_exists"
 			}
-			if typeOfJ == reflect.TypeOf((*Include)(nil)) && p.Rules[j].(*Include).IfExists {
+			if typeOfJ == reflect.TypeFor[*Include]() && p.Rules[j].(*Include).IfExists {
 				valueOfJ = "include_if_exists"
 			}
 			return ruleWeights[valueOfI] < ruleWeights[valueOfJ]
@@ -117,7 +132,7 @@ func (p *Profile) Format() {
 		typeOfJ := reflect.TypeOf(p.Rules[j])
 
 		// File rule
-		if typeOfI == reflect.TypeOf((*File)(nil)) && typeOfJ == reflect.TypeOf((*File)(nil)) {
+		if typeOfI == reflect.TypeFor[*File]() && typeOfJ == reflect.TypeFor[*File]() {
 			letterI := getLetterIn(fileAlphabet, p.Rules[i].(*File).Path)
 			letterJ := getLetterIn(fileAlphabet, p.Rules[j].(*File).Path)
 
