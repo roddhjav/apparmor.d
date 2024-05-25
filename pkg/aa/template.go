@@ -8,7 +8,6 @@ import (
 	"embed"
 	"fmt"
 	"reflect"
-	"slices"
 	"strings"
 	"text/template"
 )
@@ -36,11 +35,23 @@ var (
 
 	// The apparmor templates
 	tmpl = generateTemplates([]string{
-		"apparmor", tokPROFILE, "rules", // Global templates
-		tokINCLUDE, tokRLIMIT, tokCAPABILITY, tokNETWORK,
-		tokMOUNT, tokPIVOTROOT, tokCHANGEPROFILE, tokSIGNAL,
-		tokPTRACE, tokUNIX, tokUSERNS, tokIOURING,
-		tokDBUS, "file", "variable",
+		// Global templates
+		"apparmor",
+		tokPROFILE,
+		"rules",
+
+		// Preamble templates
+		tokABI,
+		tokALIAS,
+		tokINCLUDE,
+		"variable",
+		"comment",
+
+		// Rules templates
+		tokALL, tokRLIMIT, tokUSERNS, tokCAPABILITY, tokNETWORK,
+		tokMOUNT, tokREMOUNT, tokUMOUNT, tokPIVOTROOT, tokCHANGEPROFILE,
+		tokMQUEUE, tokIOURING, tokUNIX, tokPTRACE, tokSIGNAL, tokDBUS,
+		tokFILE, tokLINK,
 	})
 
 	// convert apparmor requested mask to apparmor access mode
@@ -72,6 +83,7 @@ var (
 		"unix",
 		"dbus",
 		"file",
+		"link",
 		"profile",
 		"include_if_exists",
 	}

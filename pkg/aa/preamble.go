@@ -6,22 +6,19 @@ package aa
 
 import (
 	"slices"
+)
 
 const (
 	tokABI      = "abi"
 	tokALIAS    = "alias"
 	tokINCLUDE  = "include"
 	tokIFEXISTS = "if exists"
+	tokVARIABLE = "@{"
+	tokCOMMENT  = "#"
 )
 
 type Comment struct {
 	RuleBase
-}
-
-func newCommentFromRule(rule rule) (Rule, error) {
-	base := newRuleFromRule(rule)
-	base.IsLineRule = true
-	return &Comment{RuleBase: base}, nil
 }
 
 func (r *Comment) Less(other any) bool {
@@ -150,8 +147,6 @@ type Variable struct {
 	Name   string
 	Values []string
 	Define bool
-}
-
 }
 
 func (r *Variable) Less(other any) bool {
