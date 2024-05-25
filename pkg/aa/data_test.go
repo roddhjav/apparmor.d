@@ -292,6 +292,7 @@ var (
 	}
 
 	// Link
+	link3LogStr = `apparmor="ALLOWED" operation="link" class="file" profile="dolphin" name="@{user_config_dirs}/kiorc"  comm="dolphin" requested_mask="l" denied_mask="l" fsuid=1000 ouid=1000 target="@{user_config_dirs}/#3954"`
 	link1Log    = map[string]string{
 		"apparmor":       "ALLOWED",
 		"operation":      "link",
@@ -307,13 +308,31 @@ var (
 		"FSUID":          "root",
 		"OUID":           "root",
 	}
+	link3Log = map[string]string{
+		"apparmor":       "ALLOWED",
+		"operation":      "link",
+		"class":          "file",
+		"profile":        "dolphin",
+		"name":           "@{user_config_dirs}/kiorc",
+		"comm":           "dolphin",
+		"requested_mask": "l",
+		"denied_mask":    "l",
+		"fsuid":          "1000",
+		"ouid":           "1000",
+		"target":         "@{user_config_dirs}/#3954",
+	}
 	link1 = &Link{
 		Path:   "/tmp/mkinitcpio.QDWtza/early@{lib}/firmware/i915/dg1_dmc_ver2_02.bin.zst",
 		Target: "/tmp/mkinitcpio.QDWtza/root@{lib}/firmware/i915/dg1_dmc_ver2_02.bin.zst",
 	}
-	link2 = &File{
+	link2 = &Link{
 		Owner:  true,
 		Path:   "@{user_config_dirs}/powerdevilrc{,.@{rand6}}",
 		Target: "@{user_config_dirs}/#@{int}",
+	}
+	link3 = &Link{
+		Owner:  true,
+		Path:   "@{user_config_dirs}/kiorc",
+		Target: "@{user_config_dirs}/#3954",
 	}
 )

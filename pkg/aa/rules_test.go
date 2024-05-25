@@ -94,6 +94,12 @@ func TestRules_FromLog(t *testing.T) {
 			log:     link1Log,
 			want:    link1,
 		},
+		{
+			name:    "link",
+			fromLog: newFileFromLog,
+			log:     link3Log,
+			want:    link3,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -267,6 +273,12 @@ func TestRules_Less(t *testing.T) {
 			other: &File{Path: "/usr/share/poppler/cMap/Identity-H"},
 			want:  true,
 		},
+		{
+			name:  "link",
+			rule:  link1,
+			other: link2,
+			want:  true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -362,6 +374,12 @@ func TestRules_Equals(t *testing.T) {
 			rule:  file2,
 			other: file2,
 			want:  true,
+		},
+		{
+			name:  "link",
+			rule:  link1,
+			other: link3,
+			want:  false,
 		},
 	}
 	for _, tt := range tests {
@@ -472,6 +490,11 @@ func TestRules_String(t *testing.T) {
 			name: "file",
 			rule: file1,
 			want: "/usr/share/poppler/cMap/Identity-H r,",
+		},
+		{
+			name: "link",
+			rule: link3,
+			want: "owner link @{user_config_dirs}/kiorc -> @{user_config_dirs}/#3954,",
 		},
 	}
 	for _, tt := range tests {
