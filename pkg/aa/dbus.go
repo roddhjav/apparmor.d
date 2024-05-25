@@ -10,6 +10,16 @@ import (
 
 const tokDBUS = "dbus"
 
+func init() {
+	requirements[tokDBUS] = requirement{
+		"access": []string{
+			"send", "receive", "bind", "eavesdrop", "r", "read",
+			"w", "write", "rw",
+		},
+		"bus": []string{"system", "session", "accessibility"},
+	}
+}
+
 type Dbus struct {
 	RuleBase
 	Qualifier

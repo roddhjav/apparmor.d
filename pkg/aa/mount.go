@@ -15,7 +15,18 @@ const (
 	tokUMOUNT  = "umount"
 )
 
-)
+func init() {
+	requirements[tokMOUNT] = requirement{
+		"flags": {
+			"acl", "async", "atime", "bind", "dev", "diratime", "dirsync", "exec",
+			"iversion", "loud", "mand", "move", "noacl", "noatime", "nodev",
+			"nodiratime", "noexec", "noiversion", "nomand", "norelatime", "nosuid",
+			"nouser", "private", "rbind", "relatime", "remount", "ro", "rprivate",
+			"rshared", "rslave", "runbindable", "rw", "shared", "silent", "slave",
+			"strictatime", "suid", "sync", "unbindable", "user", "verbose",
+		},
+	}
+}
 
 type MountConditions struct {
 	FsType  string

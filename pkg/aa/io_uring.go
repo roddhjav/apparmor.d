@@ -8,6 +8,11 @@ import "slices"
 
 const tokIOURING = "io_uring"
 
+func init() {
+	requirements[tokIOURING] = requirement{
+		"access": []string{"sqpoll", "override_creds"},
+	}
+}
 
 type IOUring struct {
 	RuleBase

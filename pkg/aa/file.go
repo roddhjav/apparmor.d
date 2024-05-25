@@ -16,6 +16,16 @@ const (
 	tokSUBSET = "subset"
 )
 
+func init() {
+	requirements[tokFILE] = requirement{
+		"access": {"m", "r", "w", "l", "k"},
+		"transition": {
+			"ix", "ux", "Ux", "px", "Px", "cx", "Cx", "pix", "Pix", "cix",
+			"Cix", "pux", "PUx", "cux", "CUx", "x",
+		},
+	}
+}
+
 type File struct {
 	RuleBase
 	Qualifier

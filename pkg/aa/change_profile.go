@@ -6,6 +6,12 @@ package aa
 
 const tokCHANGEPROFILE = "change_profile"
 
+func init() {
+	requirements[tokCHANGEPROFILE] = requirement{
+		"mode": []string{"safe", "unsafe"},
+	}
+}
+
 type ChangeProfile struct {
 	RuleBase
 	Qualifier
