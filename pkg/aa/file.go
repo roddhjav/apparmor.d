@@ -27,6 +27,16 @@ func init() {
 	}
 }
 
+func isOwner(log map[string]string) bool {
+	fsuid, hasFsUID := log["fsuid"]
+	ouid, hasOuUID := log["ouid"]
+	isDbus := strings.Contains(log["operation"], "dbus")
+	if hasFsUID && hasOuUID && fsuid == ouid && ouid != "0" && !isDbus {
+		return true
+	}
+	return false
+}
+
 // cmpFileAccess compares two access strings for file rules.
 // It is aimed to be used in slices.SortFunc.
 func cmpFileAccess(i, j string) int {
@@ -163,14 +173,4 @@ func (r *Link) Constraint() constraint {
 
 func (r *Link) Kind() string {
 	return tokLINK
-}
-
-func isOwner(log map[string]string) bool {
-	fsuid, hasFsUID := log["fsuid"]
-	ouid, hasOuUID := log["ouid"]
-	isDbus := strings.Contains(log["operation"], "dbus")
-	if hasFsUID && hasOuUID && fsuid == ouid && ouid != "0" && !isDbus {
-		return true
-	}
-	return false
 }
