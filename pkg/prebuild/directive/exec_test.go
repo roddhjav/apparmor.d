@@ -18,6 +18,7 @@ func TestExec_Apply(t *testing.T) {
 		opt           *Option
 		profile       string
 		want          string
+		wantErr       bool
 	}{
 		{
 			name:          "exec",
@@ -51,7 +52,12 @@ func TestExec_Apply(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg.RootApparmord = tt.rootApparmord
-			if got := Directives["exec"].Apply(tt.opt, tt.profile); got != tt.want {
+			got, err := Directives["exec"].Apply(tt.opt, tt.profile)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Exec.Apply() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
 				t.Errorf("Exec.Apply() = |%v|, want |%v|", got, tt.want)
 			}
 		})

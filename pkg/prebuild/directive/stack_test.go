@@ -18,6 +18,7 @@ func TestStack_Apply(t *testing.T) {
 		opt           *Option
 		profile       string
 		want          string
+		wantErr       bool
 	}{
 		{
 			name:          "stack",
@@ -68,7 +69,12 @@ profile parent @{exec_path} {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg.RootApparmord = tt.rootApparmord
-			if got := Directives["stack"].Apply(tt.opt, tt.profile); got != tt.want {
+			got, err := Directives["stack"].Apply(tt.opt, tt.profile)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Stack.Apply() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
 				t.Errorf("Stack.Apply() = %v, want %v", got, tt.want)
 			}
 		})

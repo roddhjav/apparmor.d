@@ -29,7 +29,7 @@ func init() {
 	})
 }
 
-func (b Userspace) Apply(profile string) string {
+func (b Userspace) Apply(profile string) (string, error) {
 	p := aa.DefaultTunables()
 	p.ParseVariables(profile)
 	p.ResolveAttachments()
@@ -37,7 +37,7 @@ func (b Userspace) Apply(profile string) string {
 	matches := regAttachments.FindAllString(profile, -1)
 	if len(matches) > 0 {
 		strheader := strings.Replace(matches[0], "@{exec_path}", att, -1)
-		return regAttachments.ReplaceAllLiteralString(profile, strheader)
+		return regAttachments.ReplaceAllLiteralString(profile, strheader), nil
 	}
-	return profile
+	return profile, nil
 }

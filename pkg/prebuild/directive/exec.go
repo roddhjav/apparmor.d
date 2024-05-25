@@ -27,7 +27,7 @@ func init() {
 	})
 }
 
-func (d Exec) Apply(opt *Option, profileRaw string) string {
+func (d Exec) Apply(opt *Option, profileRaw string) (string, error) {
 	transition := "Px"
 	transitions := []string{"P", "U", "p", "u", "PU", "pu"}
 	t := opt.ArgList[0]
@@ -60,5 +60,5 @@ func (d Exec) Apply(opt *Option, profileRaw string) string {
 	rules.Sort()
 	new := rules.String()
 	new = new[:len(new)-1]
-	return strings.Replace(profileRaw, opt.Raw, new, -1)
+	return strings.Replace(profileRaw, opt.Raw, new, -1), nil
 }

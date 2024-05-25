@@ -15,6 +15,7 @@ func TestBuilder_Apply(t *testing.T) {
 		b       Builder
 		profile string
 		want    string
+		wantErr bool
 	}{
 		{
 			name: "abi3",
@@ -237,7 +238,12 @@ func TestBuilder_Apply(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.b.Apply(tt.profile); got != tt.want {
+			got, err := tt.b.Apply(tt.profile)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Builder.Apply() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
 				t.Errorf("Builder.Apply() = %v, want %v", got, tt.want)
 			}
 		})

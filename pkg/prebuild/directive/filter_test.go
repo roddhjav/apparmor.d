@@ -18,6 +18,7 @@ func TestFilterOnly_Apply(t *testing.T) {
 		opt     *Option
 		profile string
 		want    string
+		wantErr bool
 	}{
 		{
 			name:   "inline",
@@ -79,7 +80,12 @@ func TestFilterOnly_Apply(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg.Distribution = tt.dist
 			cfg.Family = tt.family
-			if got := Directives["only"].Apply(tt.opt, tt.profile); got != tt.want {
+			got, err := Directives["only"].Apply(tt.opt, tt.profile)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("FilterOnly.Apply() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
 				t.Errorf("FilterOnly.Apply() = %v, want %v", got, tt.want)
 			}
 		})
@@ -94,6 +100,7 @@ func TestFilterExclude_Apply(t *testing.T) {
 		opt     *Option
 		profile string
 		want    string
+		wantErr bool
 	}{
 		{
 			name:   "inline",
@@ -128,7 +135,12 @@ func TestFilterExclude_Apply(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg.Distribution = tt.dist
 			cfg.Family = tt.family
-			if got := Directives["exclude"].Apply(tt.opt, tt.profile); got != tt.want {
+			got, err := Directives["exclude"].Apply(tt.opt, tt.profile)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("FilterExclude.Apply() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
 				t.Errorf("FilterExclude.Apply() = %v, want %v", got, tt.want)
 			}
 		})

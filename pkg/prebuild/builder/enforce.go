@@ -24,16 +24,16 @@ func init() {
 	})
 }
 
-func (b Enforce) Apply(profile string) string {
+func (b Enforce) Apply(profile string) (string, error) {
 	matches := regFlags.FindStringSubmatch(profile)
 	if len(matches) == 0 {
-		return profile
+		return profile, nil
 	}
 
 	flags := strings.Split(matches[1], ",")
 	idx := slices.Index(flags, "complain")
 	if idx == -1 {
-		return profile
+		return profile, nil
 	}
 	flags = slices.Delete(flags, idx, idx+1)
 	strFlags := "{"
@@ -43,5 +43,5 @@ func (b Enforce) Apply(profile string) string {
 
 	// Remove all flags definition, then set new flags
 	profile = regFlags.ReplaceAllLiteralString(profile, "")
-	return regProfileHeader.ReplaceAllLiteralString(profile, strFlags)
+	return regProfileHeader.ReplaceAllLiteralString(profile, strFlags), nil
 }

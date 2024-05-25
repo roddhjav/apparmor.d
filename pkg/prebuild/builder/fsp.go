@@ -28,6 +28,6 @@ func init() {
 	})
 }
 
-func (b FullSystemPolicy) Apply(profile string) string {
-	return regFullSystemPolicy.Replace(profile)
+func (b FullSystemPolicy) Apply(profile string) (string, error) {
+	return regFullSystemPolicy.Replace(profile), nil
 }
