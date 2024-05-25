@@ -83,11 +83,9 @@ func Build() error {
 		if err != nil {
 			return err
 		}
-		for _, b := range builder.Builds {
-			profile, err = b.Apply(profile)
-			if err != nil {
-				return err
-			}
+		profile, err = builder.Run(file, profile)
+		if err != nil {
+			return err
 		}
 		profile, err = directive.Run(file, profile)
 		if err != nil {

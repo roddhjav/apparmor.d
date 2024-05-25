@@ -29,7 +29,7 @@ func init() {
 	})
 }
 
-func (b Userspace) Apply(profile string) (string, error) {
+func (b Userspace) Apply(opt *Option, profile string) (string, error) {
 	p := aa.DefaultTunables()
 	p.ParseVariables(profile)
 	p.ResolveAttachments()

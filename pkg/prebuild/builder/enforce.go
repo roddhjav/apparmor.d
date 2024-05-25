@@ -24,7 +24,7 @@ func init() {
 	})
 }
 
-func (b Enforce) Apply(profile string) (string, error) {
+func (b Enforce) Apply(opt *Option, profile string) (string, error) {
 	matches := regFlags.FindStringSubmatch(profile)
 	if len(matches) == 0 {
 		return profile, nil

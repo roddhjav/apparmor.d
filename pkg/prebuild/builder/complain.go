@@ -30,7 +30,7 @@ func init() {
 	})
 }
 
-func (b Complain) Apply(profile string) (string, error) {
+func (b Complain) Apply(opt *Option, profile string) (string, error) {
 	flags := []string{}
 	matches := regFlags.FindStringSubmatch(profile)
 	if len(matches) != 0 {
