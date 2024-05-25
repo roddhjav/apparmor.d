@@ -31,13 +31,11 @@ type Capability struct {
 	Names []string
 }
 
-}
-
 func newCapabilityFromLog(log map[string]string) Rule {
 	return &Capability{
 		RuleBase:  newRuleFromLog(log),
 		Qualifier: newQualifierFromLog(log),
-		Names:     []string{log["capname"]},
+		Names:     Must(toValues(tokCAPABILITY, "name", log["capname"])),
 	}
 }
 

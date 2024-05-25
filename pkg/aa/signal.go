@@ -4,7 +4,9 @@
 
 package aa
 
-import "slices"
+import (
+	"slices"
+)
 
 const tokSIGNAL = "signal"
 
@@ -41,8 +43,8 @@ func newSignalFromLog(log map[string]string) Rule {
 	return &Signal{
 		RuleBase:  newRuleFromLog(log),
 		Qualifier: newQualifierFromLog(log),
-		Access:    toAccess(tokSIGNAL, log["requested_mask"]),
-		Set:       toAccess(tokSIGNAL, log["signal"]),
+		Access:    Must(toAccess(tokSIGNAL, log["requested_mask"])),
+		Set:       []string{log["signal"]},
 		Peer:      log["peer"],
 	}
 }
