@@ -62,6 +62,17 @@ func (r Rules) GetVariables() []*Variable {
 	return res
 }
 
+func (r Rules) GetIncludes() []*Include {
+	res := make([]*Include, 0)
+	for _, rule := range r {
+		switch rule.(type) {
+		case *Include:
+			res = append(res, rule.(*Include))
+		}
+	}
+	return res
+}
+
 // Must is a helper that wraps a call to a function returning (any, error) and
 // panics if the error is non-nil.
 func Must[T any](v T, err error) T {
