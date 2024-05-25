@@ -5,6 +5,7 @@
 package aa
 
 import (
+	"fmt"
 	"slices"
 )
 
@@ -37,6 +38,13 @@ func newCapabilityFromLog(log map[string]string) Rule {
 		Qualifier: newQualifierFromLog(log),
 		Names:     Must(toValues(tokCAPABILITY, "name", log["capname"])),
 	}
+}
+
+func (r *Capability) Validate() error {
+	if err := validateValues(r.Kind(), "name", r.Names); err != nil {
+		return fmt.Errorf("%s: %w", r, err)
+	}
+	return nil
 }
 
 func (r *Capability) Less(other any) bool {

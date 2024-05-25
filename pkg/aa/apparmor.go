@@ -49,6 +49,19 @@ func (f *AppArmorProfileFile) String() string {
 	return renderTemplate("apparmor", f)
 }
 
+// Validate the profile file
+func (f *AppArmorProfileFile) Validate() error {
+	if err := f.Preamble.Validate(); err != nil {
+		return err
+	}
+	for _, p := range f.Profiles {
+		if err := p.Validate(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // GetDefaultProfile ensure a profile is always present in the profile file and
 // return it, as a default profile.
 func (f *AppArmorProfileFile) GetDefaultProfile() *Profile {

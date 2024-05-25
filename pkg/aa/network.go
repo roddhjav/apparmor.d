@@ -4,6 +4,10 @@
 
 package aa
 
+import (
+	"fmt"
+)
+
 const tokNETWORK = "network"
 
 func init() {
@@ -75,6 +79,19 @@ func newNetworkFromLog(log map[string]string) Rule {
 		Type:        log["sock_type"],
 		Protocol:    log["protocol"],
 	}
+}
+
+func (r *Network) Validate() error {
+	if err := validateValues(r.Kind(), "domains", []string{r.Domain}); err != nil {
+		return fmt.Errorf("%s: %w", r, err)
+	}
+	if err := validateValues(r.Kind(), "type", []string{r.Type}); err != nil {
+		return fmt.Errorf("%s: %w", r, err)
+	}
+	if err := validateValues(r.Kind(), "protocol", []string{r.Protocol}); err != nil {
+		return fmt.Errorf("%s: %w", r, err)
+	}
+	return nil
 }
 
 func (r *Network) Less(other any) bool {

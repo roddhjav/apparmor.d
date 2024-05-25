@@ -5,6 +5,7 @@
 package aa
 
 import (
+	"fmt"
 	"maps"
 	"reflect"
 	"slices"
@@ -17,6 +18,17 @@ const (
 	tokFLAGS      = "flags"
 	tokPROFILE    = "profile"
 )
+
+func init() {
+	requirements[tokPROFILE] = requirement{
+		tokFLAGS: {
+			"enforce", "complain", "kill", "default_allow", "unconfined",
+			"prompt", "audit", "mediate_deleted", "attach_disconnected",
+			"attach_disconneced.path=", "chroot_relative", "debug",
+			"interruptible", "kill", "kill.signal=",
+		},
+	}
+}
 
 // Profile represents a single AppArmor profile.
 type Profile struct {
@@ -31,6 +43,13 @@ type Header struct {
 	Attachments []string
 	Attributes  map[string]string
 	Flags       []string
+}
+
+func (r *Profile) Validate() error {
+	if err := validateValues(r.Kind(), tokFLAGS, r.Flags); err != nil {
+		return fmt.Errorf("profile %s: %w", r.Name, err)
+	}
+	return r.Rules.Validate()
 }
 
 func (p *Profile) Less(other any) bool {

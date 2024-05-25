@@ -16,6 +16,10 @@ type Hat struct {
 	Rules Rules
 }
 
+func (r *Hat) Validate() error {
+	return nil
+}
+
 func (p *Hat) Less(other any) bool {
 	o, _ := other.(*Hat)
 	return p.Name < o.Name

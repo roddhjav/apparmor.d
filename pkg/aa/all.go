@@ -12,6 +12,10 @@ type All struct {
 	RuleBase
 }
 
+func (r *All) Validate() error {
+	return nil
+}
+
 func (r *All) Less(other any) bool {
 	return false
 }

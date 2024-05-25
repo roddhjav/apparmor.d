@@ -42,6 +42,10 @@ func newMountConditionsFromLog(log map[string]string) MountConditions {
 	return MountConditions{FsType: log["fstype"]}
 }
 
+func (m MountConditions) Validate() error {
+	return validateValues(tokMOUNT, "flags", m.Options)
+}
+
 func (m MountConditions) Less(other MountConditions) bool {
 	if m.FsType != other.FsType {
 		return m.FsType < other.FsType
@@ -69,6 +73,13 @@ func newMountFromLog(log map[string]string) Rule {
 		Source:          log["srcname"],
 		MountPoint:      log["name"],
 	}
+}
+
+func (r *Mount) Validate() error {
+	if err := r.MountConditions.Validate(); err != nil {
+		return fmt.Errorf("%s: %w", r, err)
+	}
+	return nil
 }
 
 func (r *Mount) Less(other any) bool {
@@ -120,6 +131,13 @@ func newUmountFromLog(log map[string]string) Rule {
 	}
 }
 
+func (r *Umount) Validate() error {
+	if err := r.MountConditions.Validate(); err != nil {
+		return fmt.Errorf("%s: %w", r, err)
+	}
+	return nil
+}
+
 func (r *Umount) Less(other any) bool {
 	o, _ := other.(*Umount)
 	if r.MountPoint != o.MountPoint {
@@ -164,6 +182,13 @@ func newRemountFromLog(log map[string]string) Rule {
 		MountConditions: newMountConditionsFromLog(log),
 		MountPoint:      log["name"],
 	}
+}
+
+func (r *Remount) Validate() error {
+	if err := r.MountConditions.Validate(); err != nil {
+		return fmt.Errorf("%s: %w", r, err)
+	}
+	return nil
 }
 
 func (r *Remount) Less(other any) bool {

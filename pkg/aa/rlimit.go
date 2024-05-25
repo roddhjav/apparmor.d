@@ -35,6 +35,13 @@ func newRlimitFromLog(log map[string]string) Rule {
 	}
 }
 
+func (r *Rlimit) Validate() error {
+	if err := validateValues(r.Kind(), "keys", []string{r.Key}); err != nil {
+		return fmt.Errorf("%s: %w", r, err)
+	}
+	return nil
+}
+
 func (r *Rlimit) Less(other any) bool {
 	o, _ := other.(*Rlimit)
 	if r.Key != o.Key {

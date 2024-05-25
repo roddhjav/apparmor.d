@@ -5,6 +5,7 @@
 package aa
 
 import (
+	"fmt"
 	"slices"
 )
 
@@ -47,6 +48,16 @@ func newSignalFromLog(log map[string]string) Rule {
 		Set:       []string{log["signal"]},
 		Peer:      log["peer"],
 	}
+}
+
+func (r *Signal) Validate() error {
+	if err := validateValues(r.Kind(), "access", r.Access); err != nil {
+		return fmt.Errorf("%s: %w", r, err)
+	}
+	if err := validateValues(r.Kind(), "set", r.Set); err != nil {
+		return fmt.Errorf("%s: %w", r, err)
+	}
+	return nil
 }
 
 func (r *Signal) Less(other any) bool {

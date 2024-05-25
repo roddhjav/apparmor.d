@@ -5,6 +5,7 @@
 package aa
 
 import (
+	"fmt"
 	"slices"
 	"strings"
 )
@@ -45,6 +46,16 @@ func newMqueueFromLog(log map[string]string) Rule {
 		Label:     log["label"],
 		Name:      log["name"],
 	}
+}
+
+func (r *Mqueue) Validate() error {
+	if err := validateValues(r.Kind(), "access", r.Access); err != nil {
+		return fmt.Errorf("%s: %w", r, err)
+	}
+	if err := validateValues(r.Kind(), "type", []string{r.Type}); err != nil {
+		return fmt.Errorf("%s: %w", r, err)
+	}
+	return nil
 }
 
 func (r *Mqueue) Less(other any) bool {

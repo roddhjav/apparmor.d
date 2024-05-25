@@ -24,6 +24,10 @@ func newPivotRootFromLog(log map[string]string) Rule {
 	}
 }
 
+func (r *PivotRoot) Validate() error {
+	return nil
+}
+
 func (r *PivotRoot) Less(other any) bool {
 	o, _ := other.(*PivotRoot)
 	if r.OldRoot != o.OldRoot {

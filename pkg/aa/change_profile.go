@@ -30,6 +30,13 @@ func newChangeProfileFromLog(log map[string]string) Rule {
 	}
 }
 
+func (r *ChangeProfile) Validate() error {
+	if err := validateValues(r.Kind(), "mode", []string{r.ExecMode}); err != nil {
+		return fmt.Errorf("%s: %w", r, err)
+	}
+	return nil
+}
+
 func (r *ChangeProfile) Less(other any) bool {
 	o, _ := other.(*ChangeProfile)
 	if r.ExecMode != o.ExecMode {

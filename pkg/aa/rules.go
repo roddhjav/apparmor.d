@@ -28,6 +28,7 @@ const (
 
 // Rule generic interface for all AppArmor rules
 type Rule interface {
+	Validate() error
 	Less(other any) bool
 	Equals(other any) bool
 	String() string
@@ -36,6 +37,15 @@ type Rule interface {
 }
 
 type Rules []Rule
+
+func (r Rules) Validate() error {
+	for _, rule := range r {
+		if err := rule.Validate(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
 
 func (r Rules) String() string {
 	return renderTemplate("rules", r)
@@ -80,6 +90,18 @@ func Must[T any](v T, err error) T {
 		panic(err)
 	}
 	return v
+}
+
+func validateValues(rule string, key string, values []string) error {
+	for _, v := range values {
+		if v == "" {
+			continue
+		}
+		if !slices.Contains(requirements[rule][key], v) {
+			return fmt.Errorf("invalid mode '%s'", v)
+		}
+	}
+	return nil
 }
 
 // Helper function to convert a string to a slice of rule values according to
