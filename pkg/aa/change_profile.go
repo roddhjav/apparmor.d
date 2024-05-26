@@ -4,6 +4,8 @@
 
 package aa
 
+import "fmt"
+
 const tokCHANGEPROFILE = "change_profile"
 
 func init() {

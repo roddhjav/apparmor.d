@@ -51,10 +51,56 @@ func (r Rules) String() string {
 	return renderTemplate("rules", r)
 }
 
-func (r Rules) Get(filter string) Rules {
+func (r Rules) IndexOf(rule Rule) int {
+	for idx, rr := range r {
+		if rr.Kind() == rule.Kind() && rr.Equals(rule) {
+			return idx
+		}
+	}
+	return -1
+}
+
+func (r Rules) Contains(rule Rule) bool {
+	return r.IndexOf(rule) != -1
+}
+
+func (r Rules) Add(rule Rule) Rules {
+	if r.Contains(rule) {
+		return r
+	}
+	return append(r, rule)
+}
+
+func (r Rules) Remove(rule Rule) Rules {
+	idx := r.IndexOf(rule)
+	if idx == -1 {
+		return r
+	}
+	return append(r[:idx], r[idx+1:]...)
+}
+
+func (r Rules) Insert(idx int, rules ...Rule) Rules {
+	return append(r[:idx], append(rules, r[idx:]...)...)
+}
+
+func (r Rules) Sort() Rules {
+	return r
+}
+
+func (r Rules) DeleteKind(kind string) Rules {
 	res := make(Rules, 0)
 	for _, rule := range r {
-		if rule.Kind() == filter {
+		if rule.Kind() != kind {
+			res = append(res, rule)
+		}
+	}
+	return res
+}
+
+func (r Rules) Filter(filter string) Rules {
+	res := make(Rules, 0)
+	for _, rule := range r {
+		if rule.Kind() != filter {
 			res = append(res, rule)
 		}
 	}
@@ -120,9 +166,10 @@ func toValues(rule string, key string, input string) ([]string, error) {
 		sep = " "
 	}
 	res := strings.Split(input, sep)
-	for _, access := range res {
-		if !slices.Contains(req, access) {
-			return nil, fmt.Errorf("unrecognized %s: %s", key, access)
+	for idx := range res {
+		res[idx] = strings.Trim(res[idx], `" `)
+		if !slices.Contains(req, res[idx]) {
+			return nil, fmt.Errorf("unrecognized %s: %s", key, res[idx])
 		}
 	}
 	slices.SortFunc(res, func(i, j string) int {
