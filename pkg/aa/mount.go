@@ -18,12 +18,13 @@ const (
 func init() {
 	requirements[tokMOUNT] = requirement{
 		"flags": {
-			"acl", "async", "atime", "bind", "dev", "diratime", "dirsync", "exec",
-			"iversion", "loud", "mand", "move", "noacl", "noatime", "nodev",
-			"nodiratime", "noexec", "noiversion", "nomand", "norelatime", "nosuid",
-			"nouser", "private", "rbind", "relatime", "remount", "ro", "rprivate",
-			"rshared", "rslave", "runbindable", "rw", "shared", "silent", "slave",
-			"strictatime", "suid", "sync", "unbindable", "user", "verbose",
+			"acl", "async", "atime", "ro", "rw", "bind", "rbind", "dev",
+			"diratime", "dirsync", "exec", "iversion", "loud", "mand", "move",
+			"noacl", "noatime", "nodev", "nodiratime", "noexec", "noiversion",
+			"nomand", "norelatime", "nosuid", "nouser", "private", "relatime",
+			"remount", "rprivate", "rshared", "rslave", "runbindable", "shared",
+			"silent", "slave", "strictatime", "suid", "sync", "unbindable",
+			"user", "verbose",
 		},
 	}
 }
