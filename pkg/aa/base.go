@@ -18,6 +18,37 @@ type RuleBase struct {
 	Optional    bool
 }
 
+func newRule(rule []string) RuleBase {
+	comment := ""
+	fileInherit, noNewPrivs, optional := false, false, false
+
+	idx := 0
+	for idx < len(rule) {
+		if rule[idx] == tokCOMMENT {
+			comment = " " + strings.Join(rule[idx+1:], " ")
+			break
+		}
+		idx++
+	}
+	switch {
+	case strings.Contains(comment, "file_inherit"):
+		fileInherit = true
+		comment = strings.Replace(comment, "file_inherit ", "", 1)
+	case strings.HasPrefix(comment, "no new privs"):
+		noNewPrivs = true
+		comment = strings.Replace(comment, "no new privs ", "", 1)
+	case strings.Contains(comment, "optional:"):
+		optional = true
+		comment = strings.Replace(comment, "optional: ", "", 1)
+	}
+	return RuleBase{
+		Comment:     comment,
+		NoNewPrivs:  noNewPrivs,
+		FileInherit: fileInherit,
+		Optional:    optional,
+	}
+}
+
 func newRuleFromLog(log map[string]string) RuleBase {
 	comment := ""
 	fileInherit, noNewPrivs, optional := false, false, false
