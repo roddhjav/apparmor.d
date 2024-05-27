@@ -153,19 +153,12 @@ func validateValues(rule string, key string, values []string) error {
 // Helper function to convert a string to a slice of rule values according to
 // the rule requirements as defined in the requirements map.
 func toValues(rule string, key string, input string) ([]string, error) {
-	var sep string
 	req, ok := requirements[rule][key]
 	if !ok {
 		return nil, fmt.Errorf("unrecognized requirement '%s' for rule %s", key, rule)
 	}
 
-	switch {
-	case strings.Contains(input, ","):
-		sep = ","
-	case strings.Contains(input, " "):
-		sep = " "
-	}
-	res := strings.Split(input, sep)
+	res := tokenToSlice(input)
 	for idx := range res {
 		res[idx] = strings.Trim(res[idx], `" `)
 		if !slices.Contains(req, res[idx]) {

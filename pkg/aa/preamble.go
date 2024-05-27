@@ -5,7 +5,9 @@
 package aa
 
 import (
+	"fmt"
 	"slices"
+	"strings"
 )
 
 const (
@@ -19,6 +21,12 @@ const (
 
 type Comment struct {
 	RuleBase
+}
+
+func newComment(rule []string) (Rule, error) {
+	base := newRule(rule)
+	base.IsLineRule = true
+	return &Comment{RuleBase: base}, nil
 }
 
 func (r *Comment) Validate() error {
@@ -53,6 +61,31 @@ type Abi struct {
 	RuleBase
 	Path    string
 	IsMagic bool
+}
+
+func newAbi(rule []string) (Rule, error) {
+	var magic bool
+	if len(rule) > 0 && rule[0] == tokABI {
+		rule = rule[1:]
+	}
+	if len(rule) != 1 {
+		return nil, fmt.Errorf("invalid abi format: %s", rule)
+	}
+
+	path := rule[0]
+	switch {
+	case path[0] == '"':
+		magic = false
+	case path[0] == '<':
+		magic = true
+	default:
+		return nil, fmt.Errorf("invalid path %s in rule: %s", path, rule)
+	}
+	return &Abi{
+		RuleBase: newRule(rule),
+		Path:     strings.Trim(path, "\"<>"),
+		IsMagic:  magic,
+	}, nil
 }
 
 func (r *Abi) Validate() error {
@@ -90,6 +123,23 @@ type Alias struct {
 	RewrittenPath string
 }
 
+func newAlias(rule []string) (Rule, error) {
+	if len(rule) > 0 && rule[0] == tokALIAS {
+		rule = rule[1:]
+	}
+	if len(rule) != 3 {
+		return nil, fmt.Errorf("invalid alias format: %s", rule)
+	}
+	if rule[1] != tokARROW {
+		return nil, fmt.Errorf("invalid alias format, missing %s in: %s", tokARROW, rule)
+	}
+	return &Alias{
+		RuleBase:      newRule(rule),
+		Path:          rule[0],
+		RewrittenPath: rule[2],
+	}, nil
+}
+
 func (r *Alias) Validate() error {
 	return nil
 }
@@ -124,6 +174,41 @@ type Include struct {
 	IfExists bool
 	Path     string
 	IsMagic  bool
+}
+
+func newInclude(rule []string) (Rule, error) {
+	var magic bool
+	var ifexists bool
+
+	if len(rule) > 0 && rule[0] == tokINCLUDE {
+		rule = rule[1:]
+	}
+
+	size := len(rule)
+	if size == 0 {
+		return nil, fmt.Errorf("invalid include format: %v", rule)
+	}
+
+	if size >= 3 && strings.Join(rule[:2], " ") == tokIFEXISTS {
+		ifexists = true
+		rule = rule[2:]
+	}
+
+	path := rule[0]
+	switch {
+	case path[0] == '"':
+		magic = false
+	case path[0] == '<':
+		magic = true
+	default:
+		return nil, fmt.Errorf("invalid path format: %v", path)
+	}
+	return &Include{
+		RuleBase: newRule(rule),
+		IfExists: ifexists,
+		Path:     strings.Trim(path, "\"<>"),
+		IsMagic:  magic,
+	}, nil
 }
 
 func (r *Include) Validate() error {
@@ -163,6 +248,35 @@ type Variable struct {
 	Name   string
 	Values []string
 	Define bool
+}
+
+func newVariable(rule []string) (Rule, error) {
+	var define bool
+	var values []string
+	if len(rule) < 3 {
+		return nil, fmt.Errorf("invalid variable format: %v", rule)
+	}
+
+	name := strings.Trim(rule[0], tokVARIABLE+"}")
+	switch rule[1] {
+	case tokEQUAL:
+		define = true
+		values = tokensStripComment(rule[2:])
+	case tokPLUS:
+		if rule[2] != tokEQUAL {
+			return nil, fmt.Errorf("invalid operator in variable: %v", rule)
+		}
+		define = false
+		values = tokensStripComment(rule[3:])
+	default:
+		return nil, fmt.Errorf("invalid operator in variable: %v", rule)
+	}
+	return &Variable{
+		RuleBase: newRule(rule),
+		Name:     name,
+		Values:   values,
+		Define:   define,
+	}, nil
 }
 
 func (r *Variable) Validate() error {
