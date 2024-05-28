@@ -133,6 +133,105 @@ func (r Rules) GetIncludes() []*Include {
 	return res
 }
 
+// Merge merge similar rules together.
+// Steps:
+//   - Remove identical rules
+//   - Merge rule access. Eg: for same path, 'r' and 'w' becomes 'rw'
+//
+// Note: logs.regCleanLogs helps a lot to do a first cleaning
+func (r Rules) Merge() Rules {
+	for i := 0; i < len(r); i++ {
+		for j := i + 1; j < len(r); j++ {
+			typeOfI := r[i].Kind()
+			typeOfJ := r[j].Kind()
+			if typeOfI != typeOfJ {
+				continue
+			}
+
+			// If rules are identical, merge them
+			if r[i].Equals(r[j]) {
+				r = r.Delete(j)
+				j--
+				continue
+			}
+
+			// File rule
+			if typeOfI == FILE && typeOfJ == FILE {
+				// Merge access
+				fileI := r[i].(*File)
+				fileJ := r[j].(*File)
+				if fileI.Path == fileJ.Path {
+					fileI.Access = append(fileI.Access, fileJ.Access...)
+					slices.SortFunc(fileI.Access, cmpFileAccess)
+					fileI.Access = slices.Compact(fileI.Access)
+					r = r.Delete(j)
+					j--
+				}
+			}
+		}
+	}
+	return r
+}
+
+// Sort the rules according to the guidelines:
+// https://apparmor.pujol.io/development/guidelines/#guidelines
+func (r Rules) Sort() Rules {
+	slices.SortFunc(r, func(a, b Rule) int {
+		kindOfA := a.Kind()
+		kindOfB := b.Kind()
+		if kindOfA != kindOfB {
+			if kindOfA == INCLUDE && a.(*Include).IfExists {
+				kindOfA = "include_if_exists"
+			}
+			if kindOfB == INCLUDE && b.(*Include).IfExists {
+				kindOfB = "include_if_exists"
+			}
+			return ruleWeights[kindOfA] - ruleWeights[kindOfB]
+		}
+		if a.Equals(b) {
+			return 0
+		}
+		if a.Less(b) {
+			return -1
+		}
+		return 1
+	})
+	return r
+}
+
+// Format the rules for better readability before printing it.
+// Follow: https://apparmor.pujol.io/development/guidelines/#the-file-block
+func (r Rules) Format() Rules {
+	const prefixOwner = "      "
+
+	hasOwnerRule := false
+	for i := len(r) - 1; i > 0; i-- {
+		j := i - 1
+		typeOfI := r[i].Kind()
+		typeOfJ := r[j].Kind()
+
+		// File rule
+		if typeOfI == FILE && typeOfJ == FILE {
+			letterI := getLetterIn(fileAlphabet, r[i].(*File).Path)
+			letterJ := getLetterIn(fileAlphabet, r[j].(*File).Path)
+
+			// Add prefix before rule path to align with other rule
+			if r[i].(*File).Owner {
+				hasOwnerRule = true
+			} else if hasOwnerRule {
+				r[i].(*File).Prefix = prefixOwner
+			}
+
+			if letterI != letterJ {
+				// Add a new empty line between Files rule of different type
+				hasOwnerRule = false
+				r = r.Insert(i, nil)
+			}
+		}
+	}
+	return r
+}
+
 // Must is a helper that wraps a call to a function returning (any, error) and
 // panics if the error is non-nil.
 func Must[T any](v T, err error) T {
