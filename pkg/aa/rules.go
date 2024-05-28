@@ -51,7 +51,8 @@ func (r Rules) String() string {
 	return renderTemplate("rules", r)
 }
 
-func (r Rules) IndexOf(rule Rule) int {
+// Index returns the index of the first occurrence of rule rin r, or -1 if not present.
+func (r Rules) Index(rule Rule) int {
 	for idx, rr := range r {
 		if rr.Kind() == rule.Kind() && rr.Equals(rule) {
 			return idx
@@ -60,31 +61,20 @@ func (r Rules) IndexOf(rule Rule) int {
 	return -1
 }
 
-func (r Rules) Contains(rule Rule) bool {
-	return r.IndexOf(rule) != -1
+// Replace replaces the elements r[i] by the given rules, and returns the
+// modified slice.
+func (r Rules) Replace(i int, rules ...Rule) Rules {
+	return append(r[:i], append(rules, r[i+1:]...)...)
 }
 
-func (r Rules) Add(rule Rule) Rules {
-	if r.Contains(rule) {
-		return r
-	}
-	return append(r, rule)
+// Insert inserts the rules into r at index i, returning the modified slice.
+func (r Rules) Insert(i int, rules ...Rule) Rules {
+	return append(r[:i], append(rules, r[i:]...)...)
 }
 
-func (r Rules) Remove(rule Rule) Rules {
-	idx := r.IndexOf(rule)
-	if idx == -1 {
-		return r
-	}
-	return append(r[:idx], r[idx+1:]...)
-}
-
-func (r Rules) Insert(idx int, rules ...Rule) Rules {
-	return append(r[:idx], append(rules, r[idx+1:]...)...)
-}
-
-func (r Rules) Sort() Rules {
-	return r
+// Delete removes the elements r[i] from r, returning the modified slice.
+func (r Rules) Delete(i int) Rules {
+	return append(r[:i], r[i+1:]...)
 }
 
 func (r Rules) DeleteKind(kind string) Rules {

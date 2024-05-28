@@ -159,7 +159,7 @@ func (f *AppArmorProfileFile) resolveInclude(include *Include) error {
 	}
 
 	// Insert iFile in the place of include in the current file
-	index := f.Preamble.IndexOf(include)
-	f.Preamble = f.Preamble.Insert(index, includeCache[include].Preamble...)
+	index := f.Preamble.Index(include)
+	f.Preamble = f.Preamble.Replace(index, includeCache[include].Preamble...)
 	return nil
 }
