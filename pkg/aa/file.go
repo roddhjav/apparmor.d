@@ -95,14 +95,14 @@ func (r *File) Less(other any) bool {
 	if r.Path != o.Path {
 		return r.Path < o.Path
 	}
+	if o.Owner != r.Owner {
+		return r.Owner
+	}
 	if len(r.Access) != len(o.Access) {
 		return len(r.Access) < len(o.Access)
 	}
 	if r.Target != o.Target {
 		return r.Target < o.Target
-	}
-	if o.Owner != r.Owner {
-		return r.Owner
 	}
 	return r.Qualifier.Less(o.Qualifier)
 }
@@ -153,11 +153,11 @@ func (r *Link) Less(other any) bool {
 	if r.Path != o.Path {
 		return r.Path < o.Path
 	}
-	if r.Target != o.Target {
-		return r.Target < o.Target
-	}
 	if o.Owner != r.Owner {
 		return r.Owner
+	}
+	if r.Target != o.Target {
+		return r.Target < o.Target
 	}
 	if r.Subset != o.Subset {
 		return r.Subset

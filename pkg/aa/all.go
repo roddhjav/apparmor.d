@@ -5,7 +5,7 @@
 package aa
 
 const (
-	tokALL = "all"
+	ALL Kind = "all"
 )
 
 type All struct {
@@ -32,6 +32,6 @@ func (r *All) Constraint() constraint {
 	return blockKind
 }
 
-func (r *All) Kind() string {
-	return tokALL
+func (r *All) Kind() Kind {
+	return ALL
 }
