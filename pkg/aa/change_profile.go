@@ -6,10 +6,10 @@ package aa
 
 import "fmt"
 
-const tokCHANGEPROFILE = "change_profile"
+const CHANGEPROFILE Kind = "change_profile"
 
 func init() {
-	requirements[tokCHANGEPROFILE] = requirement{
+	requirements[CHANGEPROFILE] = requirement{
 		"mode": []string{"safe", "unsafe"},
 	}
 }
@@ -67,6 +67,6 @@ func (r *ChangeProfile) Constraint() constraint {
 	return blockKind
 }
 
-func (r *ChangeProfile) Kind() string {
-	return tokCHANGEPROFILE
+func (r *ChangeProfile) Kind() Kind {
+	return CHANGEPROFILE
 }

@@ -5,8 +5,7 @@
 package aa
 
 const (
-	tokHAT   = "hat"
-	tokCARET = "^"
+	HAT Kind = "hat"
 )
 
 // Hat represents a single AppArmor hat.
@@ -26,7 +25,7 @@ func (p *Hat) Less(other any) bool {
 }
 
 func (p *Hat) Equals(other any) bool {
-	o, _ := other.(*Profile)
+	o, _ := other.(*Hat)
 	return p.Name == o.Name
 }
 
@@ -38,6 +37,6 @@ func (p *Hat) Constraint() constraint {
 	return blockKind
 }
 
-func (p *Hat) Kind() string {
-	return tokHAT
+func (p *Hat) Kind() Kind {
+	return HAT
 }

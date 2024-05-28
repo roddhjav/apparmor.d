@@ -25,7 +25,7 @@ var (
 
 	// The functions available in the template
 	tmplFunctionMap = template.FuncMap{
-		"typeof":     typeOf,
+		"kindof":     kindOf,
 		"join":       join,
 		"cjoin":      cjoin,
 		"indent":     indent,
@@ -34,24 +34,25 @@ var (
 	}
 
 	// The apparmor templates
-	tmpl = generateTemplates([]string{
+	tmpl = generateTemplates([]Kind{
 		// Global templates
 		"apparmor",
-		tokPROFILE,
+		PROFILE,
+		HAT,
 		"rules",
 
 		// Preamble templates
-		tokABI,
-		tokALIAS,
-		tokINCLUDE,
-		"variable",
-		"comment",
+		ABI,
+		ALIAS,
+		INCLUDE,
+		VARIABLE,
+		COMMENT,
 
 		// Rules templates
-		tokALL, tokRLIMIT, tokUSERNS, tokCAPABILITY, tokNETWORK,
-		tokMOUNT, tokREMOUNT, tokUMOUNT, tokPIVOTROOT, tokCHANGEPROFILE,
-		tokMQUEUE, tokIOURING, tokUNIX, tokPTRACE, tokSIGNAL, tokDBUS,
-		tokFILE, tokLINK,
+		ALL, RLIMIT, USERNS, CAPABILITY, NETWORK,
+		MOUNT, REMOUNT, UMOUNT, PIVOTROOT, CHANGEPROFILE,
+		MQUEUE, IOURING, UNIX, PTRACE, SIGNAL, DBUS,
+		FILE, LINK,
 	})
 
 	// convert apparmor requested mask to apparmor access mode
@@ -64,27 +65,28 @@ var (
 	}
 
 	// The order the apparmor rules should be sorted
-	ruleAlphabet = []string{
-		"include",
-		"all",
-		"rlimit",
-		"userns",
-		"capability",
-		"network",
-		"mount",
-		"remount",
-		"umount",
-		"pivotroot",
-		"changeprofile",
-		"mqueue",
-		"iouring",
-		"signal",
-		"ptrace",
-		"unix",
-		"dbus",
-		"file",
-		"link",
-		"profile",
+	ruleAlphabet = []Kind{
+		INCLUDE,
+		ALL,
+		RLIMIT,
+		USERNS,
+		CAPABILITY,
+		NETWORK,
+		MOUNT,
+		REMOUNT,
+		UMOUNT,
+		PIVOTROOT,
+		CHANGEPROFILE,
+		MQUEUE,
+		IOURING,
+		SIGNAL,
+		PTRACE,
+		UNIX,
+		DBUS,
+		FILE,
+		LINK,
+		PROFILE,
+		HAT,
 		"include_if_exists",
 	}
 	ruleWeights = generateWeights(ruleAlphabet)
@@ -117,16 +119,16 @@ var (
 	fileWeights = generateWeights(fileAlphabet)
 
 	// The order the rule values (access, type, domains, etc) should be sorted
-	requirements        = map[string]requirement{}
-	requirementsWeights map[string]map[string]map[string]int
+	requirements        = map[Kind]requirement{}
+	requirementsWeights map[Kind]map[string]map[string]int
 )
 
 func init() {
 	requirementsWeights = generateRequirementsWeights(requirements)
 }
 
-func generateTemplates(names []string) map[string]*template.Template {
-	res := make(map[string]*template.Template, len(names))
+func generateTemplates(names []Kind) map[Kind]*template.Template {
+	res := make(map[Kind]*template.Template, len(names))
 	base := template.New("").Funcs(tmplFunctionMap)
 	base = template.Must(base.ParseFS(tmplFiles,
 		"templates/*.j2", "templates/rule/*.j2",
@@ -141,11 +143,11 @@ func generateTemplates(names []string) map[string]*template.Template {
 	return res
 }
 
-func renderTemplate(name string, data any) string {
+func renderTemplate(name Kind, data any) string {
 	var res strings.Builder
 	template, ok := tmpl[name]
 	if !ok {
-		panic("template '" + name + "' not found")
+		panic("template '" + name.String() + "' not found")
 	}
 	err := template.Execute(&res, data)
 	if err != nil {
@@ -154,16 +156,16 @@ func renderTemplate(name string, data any) string {
 	return res.String()
 }
 
-func generateWeights(alphabet []string) map[string]int {
-	res := make(map[string]int, len(alphabet))
+func generateWeights[T Kind | string](alphabet []T) map[T]int {
+	res := make(map[T]int, len(alphabet))
 	for i, r := range alphabet {
 		res[r] = i
 	}
 	return res
 }
 
-func generateRequirementsWeights(requirements map[string]requirement) map[string]map[string]map[string]int {
-	res := make(map[string]map[string]map[string]int, len(requirements))
+func generateRequirementsWeights(requirements map[Kind]requirement) map[Kind]map[string]map[string]int {
+	res := make(map[Kind]map[string]map[string]int, len(requirements))
 	for rule, req := range requirements {
 		res[rule] = make(map[string]map[string]int, len(req))
 		for key, values := range req {
@@ -207,15 +209,11 @@ func cjoin(i any) string {
 	}
 }
 
-func typeOf(i any) string {
+func kindOf(i any) string {
 	if i == nil {
 		return ""
 	}
-	return strings.TrimPrefix(reflect.TypeOf(i).String(), "*aa.")
-}
-
-func typeToValue(i reflect.Type) string {
-	return strings.ToLower(strings.TrimPrefix(i.String(), "*aa."))
+	return i.(Rule).Kind().String()
 }
 
 func setindent(i string) string {

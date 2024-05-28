@@ -26,12 +26,16 @@ const (
 
 var (
 	newRuleMap = map[string]func([]string) (Rule, error){
-		tokCOMMENT: newComment,
-		tokABI:     newAbi,
-		tokALIAS:   newAlias,
-		tokINCLUDE: newInclude,
+		COMMENT.Tok(): newComment,
+		ABI.Tok():     newAbi,
+		ALIAS.Tok():   newAlias,
+		INCLUDE.Tok(): newInclude,
 	}
 
+	tok = map[Kind]string{
+		COMMENT:  "#",
+		VARIABLE: "@{",
+	}
 	openBlocks  = []rune{tokOPENPAREN, tokOPENBRACE, tokOPENBRACKET}
 	closeBlocks = []rune{tokCLOSEPAREN, tokCLOSEBRACE, tokCLOSEBRACKET}
 )
@@ -53,7 +57,7 @@ func tokenize(str string) []string {
 
 	blockStack := []rune{}
 	tokens := make([]string, 0, len(str)/2)
-	if len(str) > 2 && str[0:2] == tokVARIABLE {
+	if len(str) > 2 && str[0:2] == VARIABLE.Tok() {
 		isVariable = true
 	}
 	for _, r := range str {
@@ -122,7 +126,7 @@ func tokenToSlice(token string) []string {
 func tokensStripComment(tokens []string) []string {
 	res := []string{}
 	for _, v := range tokens {
-		if v == tokCOMMENT {
+		if v == COMMENT.Tok() {
 			break
 		}
 		res = append(res, v)
@@ -147,7 +151,7 @@ func newRules(rules [][]string) (Rules, error) {
 				return nil, err
 			}
 			res = append(res, r)
-		} else if strings.HasPrefix(rule[0], tokVARIABLE) {
+		} else if strings.HasPrefix(rule[0], VARIABLE.Tok()) {
 			r, err = newVariable(rule)
 			if err != nil {
 				return nil, err
@@ -167,7 +171,7 @@ func (f *AppArmorProfileFile) parsePreamble(input []string) error {
 
 	tokenizedRules := [][]string{}
 	for _, line := range input {
-		if strings.HasPrefix(line, tokCOMMENT) {
+		if strings.HasPrefix(line, COMMENT.Tok()) {
 			r, err = newComment(strings.Split(line, " "))
 			if err != nil {
 				return err
@@ -215,7 +219,7 @@ done:
 		switch {
 		case tmp == "":
 			continue
-		case strings.HasPrefix(tmp, tokPROFILE):
+		case strings.HasPrefix(tmp, PROFILE.Tok()):
 			rawHeader = tmp
 			break done
 		default:

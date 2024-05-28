@@ -9,10 +9,10 @@ import (
 	"slices"
 )
 
-const tokDBUS = "dbus"
+const DBUS Kind = "dbus"
 
 func init() {
-	requirements[tokDBUS] = requirement{
+	requirements[DBUS] = requirement{
 		"access": []string{
 			"send", "receive", "bind", "eavesdrop", "r", "read",
 			"w", "write", "rw",
@@ -110,6 +110,6 @@ func (r *Dbus) Constraint() constraint {
 	return blockKind
 }
 
-func (r *Dbus) Kind() string {
-	return tokDBUS
+func (r *Dbus) Kind() Kind {
+	return DBUS
 }

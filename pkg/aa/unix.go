@@ -9,10 +9,10 @@ import (
 	"slices"
 )
 
-const tokUNIX = "unix"
+const UNIX Kind = "unix"
 
 func init() {
-	requirements[tokUNIX] = requirement{
+	requirements[UNIX] = requirement{
 		"access": []string{
 			"create", "bind", "listen", "accept", "connect", "shutdown",
 			"getattr", "setattr", "getopt", "setopt", "send", "receive",
@@ -39,7 +39,7 @@ func newUnixFromLog(log map[string]string) Rule {
 	return &Unix{
 		RuleBase:  newRuleFromLog(log),
 		Qualifier: newQualifierFromLog(log),
-		Access:    Must(toAccess(tokUNIX, log["requested_mask"])),
+		Access:    Must(toAccess(UNIX, log["requested_mask"])),
 		Type:      log["sock_type"],
 		Protocol:  log["protocol"],
 		Address:   log["addr"],
@@ -107,6 +107,6 @@ func (r *Unix) Constraint() constraint {
 	return blockKind
 }
 
-func (r *Unix) Kind() string {
-	return tokUNIX
+func (r *Unix) Kind() Kind {
+	return UNIX
 }

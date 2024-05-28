@@ -4,7 +4,7 @@
 
 package aa
 
-const tokUSERNS = "userns"
+const USERNS Kind = "userns"
 
 type Userns struct {
 	RuleBase
@@ -45,6 +45,6 @@ func (r *Userns) Constraint() constraint {
 	return blockKind
 }
 
-func (r *Userns) Kind() string {
-	return tokUSERNS
+func (r *Userns) Kind() Kind {
+	return USERNS
 }

@@ -8,10 +8,10 @@ import (
 	"fmt"
 )
 
-const tokNETWORK = "network"
+const NETWORK Kind = "network"
 
 func init() {
-	requirements[tokNETWORK] = requirement{
+	requirements[NETWORK] = requirement{
 		"access": []string{
 			"create", "bind", "listen", "accept", "connect", "shutdown",
 			"getattr", "setattr", "getopt", "setopt", "send", "receive",
@@ -126,6 +126,6 @@ func (r *Network) Constraint() constraint {
 	return blockKind
 }
 
-func (r *Network) Kind() string {
-	return tokNETWORK
+func (r *Network) Kind() Kind {
+	return NETWORK
 }

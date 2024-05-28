@@ -26,6 +26,20 @@ const (
 	blockKind                      // The rule can only be found in a profile
 )
 
+// Kind represents an AppArmor rule kind.
+type Kind string
+
+func (k Kind) String() string {
+	return string(k)
+}
+
+func (k Kind) Tok() string {
+	if t, ok := tok[k]; ok {
+		return t
+	}
+	return string(k)
+}
+
 // Rule generic interface for all AppArmor rules
 type Rule interface {
 	Validate() error
@@ -33,7 +47,7 @@ type Rule interface {
 	Equals(other any) bool
 	String() string
 	Constraint() constraint
-	Kind() string
+	Kind() Kind
 }
 
 type Rules []Rule
@@ -77,7 +91,7 @@ func (r Rules) Delete(i int) Rules {
 	return append(r[:i], r[i+1:]...)
 }
 
-func (r Rules) DeleteKind(kind string) Rules {
+func (r Rules) DeleteKind(kind Kind) Rules {
 	res := make(Rules, 0)
 	for _, rule := range r {
 		if rule.Kind() != kind {
@@ -87,7 +101,7 @@ func (r Rules) DeleteKind(kind string) Rules {
 	return res
 }
 
-func (r Rules) Filter(filter string) Rules {
+func (r Rules) Filter(filter Kind) Rules {
 	res := make(Rules, 0)
 	for _, rule := range r {
 		if rule.Kind() != filter {
@@ -128,12 +142,12 @@ func Must[T any](v T, err error) T {
 	return v
 }
 
-func validateValues(rule string, key string, values []string) error {
+func validateValues(kind Kind, key string, values []string) error {
 	for _, v := range values {
 		if v == "" {
 			continue
 		}
-		if !slices.Contains(requirements[rule][key], v) {
+		if !slices.Contains(requirements[kind][key], v) {
 			return fmt.Errorf("invalid mode '%s'", v)
 		}
 	}
@@ -142,10 +156,10 @@ func validateValues(rule string, key string, values []string) error {
 
 // Helper function to convert a string to a slice of rule values according to
 // the rule requirements as defined in the requirements map.
-func toValues(rule string, key string, input string) ([]string, error) {
-	req, ok := requirements[rule][key]
+func toValues(kind Kind, key string, input string) ([]string, error) {
+	req, ok := requirements[kind][key]
 	if !ok {
-		return nil, fmt.Errorf("unrecognized requirement '%s' for rule %s", key, rule)
+		return nil, fmt.Errorf("unrecognized requirement '%s' for rule %s", key, kind)
 	}
 
 	res := tokenToSlice(input)
@@ -156,22 +170,22 @@ func toValues(rule string, key string, input string) ([]string, error) {
 		}
 	}
 	slices.SortFunc(res, func(i, j string) int {
-		return requirementsWeights[rule][key][i] - requirementsWeights[rule][key][j]
+		return requirementsWeights[kind][key][i] - requirementsWeights[kind][key][j]
 	})
 	return slices.Compact(res), nil
 }
 
 // Helper function to convert an access string to a slice of access according to
 // the rule requirements as defined in the requirements map.
-func toAccess(rule string, input string) ([]string, error) {
+func toAccess(kind Kind, input string) ([]string, error) {
 	var res []string
 
-	switch rule {
-	case tokFILE:
+	switch kind {
+	case FILE:
 		raw := strings.Split(input, "")
 		trans := []string{}
 		for _, access := range raw {
-			if slices.Contains(requirements[tokFILE]["access"], access) {
+			if slices.Contains(requirements[FILE]["access"], access) {
 				res = append(res, access)
 			} else {
 				trans = append(trans, access)
@@ -180,17 +194,17 @@ func toAccess(rule string, input string) ([]string, error) {
 
 		transition := strings.Join(trans, "")
 		if len(transition) > 0 {
-			if slices.Contains(requirements[tokFILE]["transition"], transition) {
+			if slices.Contains(requirements[FILE]["transition"], transition) {
 				res = append(res, transition)
 			} else {
 				return nil, fmt.Errorf("unrecognized transition: %s", transition)
 			}
 		}
 
-	case tokFILE + "-log":
+	case FILE + "-log":
 		raw := strings.Split(input, "")
 		for _, access := range raw {
-			if slices.Contains(requirements[tokFILE]["access"], access) {
+			if slices.Contains(requirements[FILE]["access"], access) {
 				res = append(res, access)
 			} else if maskToAccess[access] != "" {
 				res = append(res, maskToAccess[access])
@@ -200,7 +214,7 @@ func toAccess(rule string, input string) ([]string, error) {
 		}
 
 	default:
-		return toValues(rule, "access", input)
+		return toValues(kind, "access", input)
 	}
 
 	slices.SortFunc(res, cmpFileAccess)

@@ -11,12 +11,13 @@ import (
 )
 
 const (
-	tokABI      = "abi"
-	tokALIAS    = "alias"
-	tokINCLUDE  = "include"
+	ABI      Kind = "abi"
+	ALIAS    Kind = "alias"
+	INCLUDE  Kind = "include"
+	VARIABLE Kind = "variable"
+	COMMENT  Kind = "comment"
+
 	tokIFEXISTS = "if exists"
-	tokVARIABLE = "@{"
-	tokCOMMENT  = "#"
 )
 
 type Comment struct {
@@ -42,7 +43,7 @@ func (r *Comment) Equals(other any) bool {
 }
 
 func (r *Comment) String() string {
-	return renderTemplate("comment", r)
+	return renderTemplate(r.Kind(), r)
 }
 
 func (r *Comment) IsPreamble() bool {
@@ -53,8 +54,8 @@ func (r *Comment) Constraint() constraint {
 	return anyKind
 }
 
-func (r *Comment) Kind() string {
-	return tokCOMMENT
+func (r *Comment) Kind() Kind {
+	return COMMENT
 }
 
 type Abi struct {
@@ -65,7 +66,7 @@ type Abi struct {
 
 func newAbi(rule []string) (Rule, error) {
 	var magic bool
-	if len(rule) > 0 && rule[0] == tokABI {
+	if len(rule) > 0 && rule[0] == ABI.Tok() {
 		rule = rule[1:]
 	}
 	if len(rule) != 1 {
@@ -113,8 +114,8 @@ func (r *Abi) Constraint() constraint {
 	return preambleKind
 }
 
-func (r *Abi) Kind() string {
-	return tokABI
+func (r *Abi) Kind() Kind {
+	return ABI
 }
 
 type Alias struct {
@@ -124,7 +125,7 @@ type Alias struct {
 }
 
 func newAlias(rule []string) (Rule, error) {
-	if len(rule) > 0 && rule[0] == tokALIAS {
+	if len(rule) > 0 && rule[0] == ALIAS.Tok() {
 		rule = rule[1:]
 	}
 	if len(rule) != 3 {
@@ -165,8 +166,8 @@ func (r *Alias) Constraint() constraint {
 	return preambleKind
 }
 
-func (r *Alias) Kind() string {
-	return tokALIAS
+func (r *Alias) Kind() Kind {
+	return ALIAS
 }
 
 type Include struct {
@@ -180,7 +181,7 @@ func newInclude(rule []string) (Rule, error) {
 	var magic bool
 	var ifexists bool
 
-	if len(rule) > 0 && rule[0] == tokINCLUDE {
+	if len(rule) > 0 && rule[0] == INCLUDE.Tok() {
 		rule = rule[1:]
 	}
 
@@ -239,8 +240,8 @@ func (r *Include) Constraint() constraint {
 	return anyKind
 }
 
-func (r *Include) Kind() string {
-	return tokINCLUDE
+func (r *Include) Kind() Kind {
+	return INCLUDE
 }
 
 type Variable struct {
@@ -257,7 +258,7 @@ func newVariable(rule []string) (Rule, error) {
 		return nil, fmt.Errorf("invalid variable format: %v", rule)
 	}
 
-	name := strings.Trim(rule[0], tokVARIABLE+"}")
+	name := strings.Trim(rule[0], VARIABLE.Tok()+"}")
 	switch rule[1] {
 	case tokEQUAL:
 		define = true
@@ -297,13 +298,13 @@ func (r *Variable) Equals(other any) bool {
 }
 
 func (r *Variable) String() string {
-	return renderTemplate("variable", r)
+	return renderTemplate(r.Kind(), r)
 }
 
 func (r *Variable) Constraint() constraint {
 	return preambleKind
 }
 
-func (r *Variable) Kind() string {
-	return tokVARIABLE
+func (r *Variable) Kind() Kind {
+	return VARIABLE
 }
