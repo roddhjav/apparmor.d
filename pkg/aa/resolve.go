@@ -8,21 +8,34 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+
+	"github.com/arduino/go-paths-helper"
+	"github.com/roddhjav/apparmor.d/pkg/util"
 )
 
 var (
+	includeCache map[*Include]*AppArmorProfileFile = make(map[*Include]*AppArmorProfileFile)
+
 	regVariableReference = regexp.MustCompile(`@{([^{}]+)}`)
 )
 
-// Resolve resolves all variables and includes in the profile and merge the rules in the profile
+// Resolve resolves variables and includes definied in the profile preamble
 func (f *AppArmorProfileFile) Resolve() error {
+	// Resolve preamble includes
+	for _, include := range f.Preamble.GetIncludes() {
+		err := f.resolveInclude(include)
+		if err != nil {
+			return err
+		}
+	}
+
 	// Resolve variables
 	for _, variable := range f.Preamble.GetVariables() {
 		newValues := []string{}
 		for _, value := range variable.Values {
-			vars := f.resolveVariable(value)
-			if len(vars) == 0 {
-				return fmt.Errorf("Variable not defined in: %s", value)
+			vars, err := f.resolveValues(value)
+			if err != nil {
+				return err
 			}
 			newValues = append(newValues, vars...)
 		}
@@ -33,9 +46,9 @@ func (f *AppArmorProfileFile) Resolve() error {
 	for _, profile := range f.Profiles {
 		attachments := []string{}
 		for _, att := range profile.Attachments {
-			vars := f.resolveVariable(att)
-			if len(vars) == 0 {
-				return fmt.Errorf("Variable not defined in: %s", att)
+			vars, err := f.resolveValues(att)
+			if err != nil {
+				return err
 			}
 			attachments = append(attachments, vars...)
 		}
@@ -45,27 +58,108 @@ func (f *AppArmorProfileFile) Resolve() error {
 	return nil
 }
 
-func (f *AppArmorProfileFile) resolveVariable(input string) []string {
+func (f *AppArmorProfileFile) resolveValues(input string) ([]string, error) {
 	if !strings.Contains(input, tokVARIABLE) {
-		return []string{input}
+		return []string{input}, nil
 	}
 
-	vars := []string{}
+	values := []string{}
 	match := regVariableReference.FindStringSubmatch(input)
-	if len(match) > 1 {
-		variable := match[0]
-		varname := match[1]
-		for _, vrbl := range f.Preamble.GetVariables() {
-			if vrbl.Name == varname {
-				for _, v := range vrbl.Values {
-					newVar := strings.ReplaceAll(input, variable, v)
-					res := f.resolveVariable(newVar)
-					vars = append(vars, res...)
+	if len(match) == 0 {
+		return nil, fmt.Errorf("Invalid variable reference: %s", input)
+	}
+
+	variable := match[0]
+	varname := match[1]
+	found := false
+	for _, vrbl := range f.Preamble.GetVariables() {
+		if vrbl.Name == varname {
+			found = true
+			for _, v := range vrbl.Values {
+				if strings.Contains(v, tokVARIABLE+varname+"}") {
+					return nil, fmt.Errorf("recursive variable found in: %s", varname)
 				}
+				newValues := strings.ReplaceAll(input, variable, v)
+				newValues = strings.ReplaceAll(newValues, "//", "/")
+				res, err := f.resolveValues(newValues)
+				if err != nil {
+					return nil, err
+				}
+				values = append(values, res...)
 			}
 		}
-	} else {
-		vars = append(vars, input)
 	}
-	return vars
+
+	if !found {
+		return nil, fmt.Errorf("Variable %s not defined", varname)
+	}
+	return values, nil
+}
+
+// resolveInclude resolves all includes defined in the profile preamble
+func (f *AppArmorProfileFile) resolveInclude(include *Include) error {
+	if include == nil || include.Path == "" {
+		return fmt.Errorf("Invalid include: %v", include)
+	}
+
+	_, isCached := includeCache[include]
+	if !isCached {
+		var files paths.PathList
+		var err error
+
+		path := MagicRoot.Join(include.Path)
+		if !include.IsMagic {
+			path = paths.New(include.Path)
+		}
+
+		if path.IsDir() {
+			files, err = path.ReadDir(paths.FilterOutDirectories())
+			if err != nil {
+				if include.IfExists {
+					return nil
+				}
+				return fmt.Errorf("File %s not found: %v", path, err)
+			}
+
+		} else if path.Exist() {
+			files = append(files, path)
+
+		} else {
+			if include.IfExists {
+				return nil
+			}
+			return fmt.Errorf("File %s not found", path)
+
+		}
+
+		iFile := &AppArmorProfileFile{}
+		for _, file := range files {
+			raw, err := util.ReadFile(file)
+			if err != nil {
+				return err
+			}
+			if err := iFile.Parse(raw); err != nil {
+				return err
+			}
+		}
+		if err := iFile.Validate(); err != nil {
+			return err
+		}
+		for _, inc := range iFile.Preamble.GetIncludes() {
+			if err := iFile.resolveInclude(inc); err != nil {
+				return err
+			}
+		}
+
+		// Remove all includes in iFile
+		iFile.Preamble = iFile.Preamble.DeleteKind(tokINCLUDE)
+
+		// Cache the included file
+		includeCache[include] = iFile
+	}
+
+	// Insert iFile in the place of include in the current file
+	index := f.Preamble.IndexOf(include)
+	f.Preamble = f.Preamble.Insert(index, includeCache[include].Preamble...)
+	return nil
 }
