@@ -5,16 +5,40 @@
 package aa
 
 var (
+	// Comment
+	comment1 = &Comment{RuleBase: RuleBase{Comment: "comment", IsLineRule: true}}
+	comment2 = &Comment{RuleBase: RuleBase{Comment: "another comment", IsLineRule: true}}
+
+	// Abi
+	abi1 = &Abi{IsMagic: true, Path: "abi/4.0"}
+	abi2 = &Abi{IsMagic: true, Path: "abi/3.0"}
+
+	// Alias
+	alias1 = &Alias{Path: "/mnt/usr", RewrittenPath: "/usr"}
+	alias2 = &Alias{Path: "/mnt/var", RewrittenPath: "/var"}
+
 	// Include
 	include1      = &Include{IsMagic: true, Path: "abstraction/base"}
 	include2      = &Include{IsMagic: false, Path: "abstraction/base"}
 	include3      = &Include{IfExists: true, IsMagic: true, Path: "abstraction/base"}
 	includeLocal1 = &Include{IfExists: true, IsMagic: true, Path: "local/foo"}
 
+	// Variable
+	variable1 = &Variable{Name: "bin", Values: []string{"/{,usr/}{,s}bin"}, Define: true}
+	variable2 = &Variable{Name: "exec_path", Values: []string{"@{bin}/foo", "@{lib}/foo"}, Define: true}
+
+	// All
+	all1 = &All{}
+	all2 = &All{RuleBase: RuleBase{Comment: "comment"}}
+
 	// Rlimit
 	rlimit1 = &Rlimit{Key: "nproc", Op: "<=", Value: "200"}
 	rlimit2 = &Rlimit{Key: "cpu", Op: "<=", Value: "2"}
 	rlimit3 = &Rlimit{Key: "nproc", Op: "<", Value: "2"}
+
+	// Userns
+	userns1 = &Userns{Create: true}
+	userns2 = &Userns{}
 
 	// Capability
 	capability1Log = map[string]string{
@@ -83,8 +107,12 @@ var (
 		MountPoint:      "/newroot/dev/tty",
 	}
 
+	// Remount
+	remount1 = &Remount{MountPoint: "/"}
+	remount2 = &Remount{MountPoint: "/{,**}/"}
+
 	// Umount
-	umount1Log    = map[string]string{
+	umount1Log = map[string]string{
 		"apparmor":  "ALLOWED",
 		"class":     "mount",
 		"operation": "umount",
@@ -96,7 +124,6 @@ var (
 	umount2 = &Umount{MountPoint: "/oldroot/"}
 
 	// PivotRoot
-	// pivotroot1LogStr = `apparmor="ALLOWED" operation="pivotroot" class="mount" profile="systemd" name="@{run}/systemd/mount-rootfs/"  comm="(ostnamed)" srcname="@{run}/systemd/mount-rootfs/"`
 	pivotroot1Log = map[string]string{
 		"apparmor":  "ALLOWED",
 		"class":     "mount",
@@ -120,7 +147,6 @@ var (
 	}
 
 	// Change Profile
-	// changeprofile1LogStr = `apparmor="ALLOWED" operation="change_onexec" class="file" profile="systemd" name="systemd-user"  comm="(systemd)" target="systemd-user"`
 	changeprofile1Log = map[string]string{
 		"apparmor":  "ALLOWED",
 		"class":     "file",
@@ -133,6 +159,14 @@ var (
 	changeprofile1 = &ChangeProfile{ProfileName: "systemd-user"}
 	changeprofile2 = &ChangeProfile{ProfileName: "brwap"}
 	changeprofile3 = &ChangeProfile{ExecMode: "safe", Exec: "/bin/bash", ProfileName: "brwap//default"}
+
+	// Mqueue
+	mqueue1 = &Mqueue{Access: []string{"r"}, Type: "posix", Name: "/"}
+	mqueue2 = &Mqueue{Access: []string{"r"}, Type: "sysv", Name: "/"}
+
+	// IO Uring
+	iouring1 = &IOUring{Access: []string{"sqpoll"}, Label: "foo"}
+	iouring2 = &IOUring{Access: []string{"override_creds"}}
 
 	// Signal
 	signal1Log = map[string]string{
@@ -335,4 +369,26 @@ var (
 		Path:   "@{user_config_dirs}/kiorc",
 		Target: "@{user_config_dirs}/#3954",
 	}
+
+	// Profile
+	profile1 = &Profile{
+		Header: Header{
+			Name:        "sudo",
+			Attachments: []string{},
+			Attributes:  map[string]string{},
+			Flags:       []string{},
+		},
+	}
+	profile2 = &Profile{
+		Header: Header{
+			Name:        "systemctl",
+			Attachments: []string{},
+			Attributes:  map[string]string{},
+			Flags:       []string{},
+		},
+	}
+
+	// Hat
+	hat1 = &Hat{Name: "user"}
+	hat2 = &Hat{Name: "root"}
 )

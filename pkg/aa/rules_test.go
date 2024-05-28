@@ -118,6 +118,18 @@ func TestRules_Less(t *testing.T) {
 		want  bool
 	}{
 		{
+			name:  "comment",
+			rule:  comment1,
+			other: comment2,
+			want:  false,
+		},
+		{
+			name:  "abi",
+			rule:  abi1,
+			other: abi2,
+			want:  false,
+		},
+		{
 			name:  "include1",
 			rule:  include1,
 			other: includeLocal1,
@@ -133,6 +145,18 @@ func TestRules_Less(t *testing.T) {
 			name:  "include3",
 			rule:  include1,
 			other: include3,
+			want:  false,
+		},
+		{
+			name:  "variable",
+			rule:  variable2,
+			other: variable1,
+			want:  false,
+		},
+		{
+			name:  "all",
+			rule:  all1,
+			other: all2,
 			want:  false,
 		},
 		{
@@ -154,6 +178,12 @@ func TestRules_Less(t *testing.T) {
 			want:  false,
 		},
 		{
+			name:  "userns",
+			rule:  userns1,
+			other: userns2,
+			want:  true,
+		},
+		{
 			name:  "capability",
 			rule:  capability1,
 			other: capability2,
@@ -170,6 +200,12 @@ func TestRules_Less(t *testing.T) {
 			rule:  mount1,
 			other: mount2,
 			want:  false,
+		},
+		{
+			name:  "remount",
+			rule:  remount1,
+			other: remount2,
+			want:  true,
 		},
 		{
 			name:  "umount",
@@ -200,6 +236,18 @@ func TestRules_Less(t *testing.T) {
 			rule:  changeprofile1,
 			other: changeprofile3,
 			want:  true,
+		},
+		{
+			name:  "mqueue",
+			rule:  mqueue1,
+			other: mqueue2,
+			want:  true,
+		},
+		{
+			name:  "iouring",
+			rule:  iouring1,
+			other: iouring2,
+			want:  false,
 		},
 		{
 			name:  "signal",
@@ -279,6 +327,18 @@ func TestRules_Less(t *testing.T) {
 			other: link2,
 			want:  true,
 		},
+		{
+			name:  "profile",
+			rule:  profile1,
+			other: profile2,
+			want:  true,
+		},
+		{
+			name:  "hat",
+			rule:  hat1,
+			other: hat2,
+			want:  false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -298,15 +358,51 @@ func TestRules_Equals(t *testing.T) {
 		want  bool
 	}{
 		{
-			name:  "include1",
+			name:  "comment",
+			rule:  comment1,
+			other: comment2,
+			want:  false,
+		},
+		{
+			name:  "abi",
+			rule:  abi1,
+			other: abi1,
+			want:  true,
+		},
+		{
+			name:  "alias",
+			rule:  alias1,
+			other: alias2,
+			want:  false,
+		},
+		{
+			name:  "include",
 			rule:  include1,
 			other: includeLocal1,
+			want:  false,
+		},
+		{
+			name:  "variable",
+			rule:  variable1,
+			other: variable2,
+			want:  false,
+		},
+		{
+			name:  "all",
+			rule:  all1,
+			other: all2,
 			want:  false,
 		},
 		{
 			name:  "rlimit",
 			rule:  rlimit1,
 			other: rlimit1,
+			want:  true,
+		},
+		{
+			name:  "userns",
+			rule:  userns1,
+			other: userns1,
 			want:  true,
 		},
 		{
@@ -324,7 +420,19 @@ func TestRules_Equals(t *testing.T) {
 		{
 			name:  "mount",
 			rule:  mount1,
-			other: mount1,
+			other: mount2,
+			want:  false,
+		},
+		{
+			name:  "remount",
+			rule:  remount2,
+			other: remount2,
+			want:  true,
+		},
+		{
+			name:  "umount",
+			rule:  umount1,
+			other: umount1,
 			want:  true,
 		},
 		{
@@ -337,6 +445,18 @@ func TestRules_Equals(t *testing.T) {
 			name:  "change_profile",
 			rule:  changeprofile1,
 			other: changeprofile2,
+			want:  false,
+		},
+		{
+			name:  "mqueue",
+			rule:  mqueue1,
+			other: mqueue1,
+			want:  true,
+		},
+		{
+			name:  "iouring",
+			rule:  iouring1,
+			other: iouring2,
 			want:  false,
 		},
 		{
@@ -381,6 +501,18 @@ func TestRules_Equals(t *testing.T) {
 			other: link3,
 			want:  false,
 		},
+		{
+			name:  "profile",
+			rule:  profile1,
+			other: profile1,
+			want:  true,
+		},
+		{
+			name:  "hat",
+			rule:  hat1,
+			other: hat1,
+			want:  true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -399,7 +531,22 @@ func TestRules_String(t *testing.T) {
 		want string
 	}{
 		{
-			name: "include1",
+			name: "comment",
+			rule: comment1,
+			want: "#comment",
+		},
+		{
+			name: "abi",
+			rule: abi1,
+			want: "abi <abi/4.0>,",
+		},
+		{
+			name: "alias",
+			rule: alias1,
+			want: "alias /mnt/usr -> /usr,",
+		},
+		{
+			name: "include",
 			rule: include1,
 			want: "include <abstraction/base>",
 		},
@@ -414,9 +561,24 @@ func TestRules_String(t *testing.T) {
 			want: `include "/usr/share/apparmor.d/"`,
 		},
 		{
+			name: "variable",
+			rule: variable1,
+			want: "@{bin} = /{,usr/}{,s}bin",
+		},
+		{
+			name: "all",
+			rule: all1,
+			want: "all,",
+		},
+		{
 			name: "rlimit",
 			rule: rlimit1,
 			want: "set rlimit nproc <= 200,",
+		},
+		{
+			name: "userns",
+			rule: userns1,
+			want: "userns,",
 		},
 		{
 			name: "capability",
@@ -444,6 +606,16 @@ func TestRules_String(t *testing.T) {
 			want: "mount fstype=overlay overlay -> /var/lib/docker/overlay2/opaque-bug-check1209538631/merged/,  # failed perms check",
 		},
 		{
+			name: "remount",
+			rule: remount1,
+			want: "remount /,",
+		},
+		{
+			name: "umount",
+			rule: umount1,
+			want: "umount /,",
+		},
+		{
 			name: "pivot_root",
 			rule: pivotroot1,
 			want: "pivot_root oldroot=@{run}/systemd/mount-rootfs/ @{run}/systemd/mount-rootfs/,",
@@ -452,6 +624,16 @@ func TestRules_String(t *testing.T) {
 			name: "change_profile",
 			rule: changeprofile1,
 			want: "change_profile -> systemd-user,",
+		},
+		{
+			name: "mqeue",
+			rule: mqueue1,
+			want: "mqueue r type=posix /,",
+		},
+		{
+			name: "iouring",
+			rule: iouring1,
+			want: "io_uring sqpoll label=foo,",
 		},
 		{
 			name: "signal",
@@ -495,6 +677,11 @@ func TestRules_String(t *testing.T) {
 			name: "link",
 			rule: link3,
 			want: "owner link @{user_config_dirs}/kiorc -> @{user_config_dirs}/#3954,",
+		},
+		{
+			name: "hat",
+			rule: hat1,
+			want: "hat user {\n}",
 		},
 	}
 	for _, tt := range tests {
