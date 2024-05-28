@@ -9,10 +9,10 @@ import (
 	"slices"
 )
 
-const tokSIGNAL = "signal"
+const SIGNAL Kind = "signal"
 
 func init() {
-	requirements[tokSIGNAL] = requirement{
+	requirements[SIGNAL] = requirement{
 		"access": {
 			"r", "w", "rw", "read", "write", "send", "receive",
 		},
@@ -44,7 +44,7 @@ func newSignalFromLog(log map[string]string) Rule {
 	return &Signal{
 		RuleBase:  newRuleFromLog(log),
 		Qualifier: newQualifierFromLog(log),
-		Access:    Must(toAccess(tokSIGNAL, log["requested_mask"])),
+		Access:    Must(toAccess(SIGNAL, log["requested_mask"])),
 		Set:       []string{log["signal"]},
 		Peer:      log["peer"],
 	}
@@ -88,6 +88,6 @@ func (r *Signal) Constraint() constraint {
 	return blockKind
 }
 
-func (r *Signal) Kind() string {
-	return tokSIGNAL
+func (r *Signal) Kind() Kind {
+	return SIGNAL
 }

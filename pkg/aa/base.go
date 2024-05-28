@@ -24,7 +24,7 @@ func newRule(rule []string) RuleBase {
 
 	idx := 0
 	for idx < len(rule) {
-		if rule[idx] == tokCOMMENT {
+		if rule[idx] == COMMENT.Tok() {
 			comment = " " + strings.Join(rule[idx+1:], " ")
 			break
 		}
@@ -85,15 +85,15 @@ func (r RuleBase) Equals(other any) bool {
 }
 
 func (r RuleBase) String() string {
-	return renderTemplate("comment", r)
+	return renderTemplate(r.Kind(), r)
 }
 
 func (r RuleBase) Constraint() constraint {
 	return anyKind
 }
 
-func (r RuleBase) Kind() string {
-	return "base"
+func (r RuleBase) Kind() Kind {
+	return COMMENT
 }
 
 type Qualifier struct {

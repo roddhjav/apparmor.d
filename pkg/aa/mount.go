@@ -10,13 +10,13 @@ import (
 )
 
 const (
-	tokMOUNT   = "mount"
-	tokREMOUNT = "remount"
-	tokUMOUNT  = "umount"
+	MOUNT   Kind = "mount"
+	REMOUNT Kind = "remount"
+	UMOUNT  Kind = "umount"
 )
 
 func init() {
-	requirements[tokMOUNT] = requirement{
+	requirements[MOUNT] = requirement{
 		"flags": {
 			"acl", "async", "atime", "ro", "rw", "bind", "rbind", "dev",
 			"diratime", "dirsync", "exec", "iversion", "loud", "mand", "move",
@@ -38,14 +38,14 @@ func newMountConditionsFromLog(log map[string]string) MountConditions {
 	if _, present := log["flags"]; present {
 		return MountConditions{
 			FsType:  log["fstype"],
-			Options: Must(toValues(tokMOUNT, "flags", log["flags"])),
+			Options: Must(toValues(MOUNT, "flags", log["flags"])),
 		}
 	}
 	return MountConditions{FsType: log["fstype"]}
 }
 
 func (m MountConditions) Validate() error {
-	return validateValues(tokMOUNT, "flags", m.Options)
+	return validateValues(MOUNT, "flags", m.Options)
 }
 
 func (m MountConditions) Less(other MountConditions) bool {
@@ -113,8 +113,8 @@ func (r *Mount) Constraint() constraint {
 	return blockKind
 }
 
-func (r *Mount) Kind() string {
-	return tokMOUNT
+func (r *Mount) Kind() Kind {
+	return MOUNT
 }
 
 type Umount struct {
@@ -166,8 +166,8 @@ func (r *Umount) Constraint() constraint {
 	return blockKind
 }
 
-func (r *Umount) Kind() string {
-	return tokUMOUNT
+func (r *Umount) Kind() Kind {
+	return UMOUNT
 }
 
 type Remount struct {
@@ -219,6 +219,6 @@ func (r *Remount) Constraint() constraint {
 	return blockKind
 }
 
-func (r *Remount) Kind() string {
-	return tokREMOUNT
+func (r *Remount) Kind() Kind {
+	return REMOUNT
 }

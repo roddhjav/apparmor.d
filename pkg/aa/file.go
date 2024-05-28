@@ -11,14 +11,14 @@ import (
 )
 
 const (
-	tokLINK   = "link"
-	tokFILE   = "file"
-	tokOWNER  = "owner"
-	tokSUBSET = "subset"
+	LINK      Kind = "link"
+	FILE      Kind = "file"
+	tokOWNER       = "owner"
+	tokSUBSET      = "subset"
 )
 
 func init() {
-	requirements[tokFILE] = requirement{
+	requirements[FILE] = requirement{
 		"access": {"m", "r", "w", "l", "k"},
 		"transition": {
 			"ix", "ux", "Ux", "px", "Px", "cx", "Cx", "pix", "Pix", "cix",
@@ -40,15 +40,15 @@ func isOwner(log map[string]string) bool {
 // cmpFileAccess compares two access strings for file rules.
 // It is aimed to be used in slices.SortFunc.
 func cmpFileAccess(i, j string) int {
-	if slices.Contains(requirements[tokFILE]["access"], i) &&
-		slices.Contains(requirements[tokFILE]["access"], j) {
-		return requirementsWeights[tokFILE]["access"][i] - requirementsWeights[tokFILE]["access"][j]
+	if slices.Contains(requirements[FILE]["access"], i) &&
+		slices.Contains(requirements[FILE]["access"], j) {
+		return requirementsWeights[FILE]["access"][i] - requirementsWeights[FILE]["access"][j]
 	}
-	if slices.Contains(requirements[tokFILE]["transition"], i) &&
-		slices.Contains(requirements[tokFILE]["transition"], j) {
-		return requirementsWeights[tokFILE]["transition"][i] - requirementsWeights[tokFILE]["transition"][j]
+	if slices.Contains(requirements[FILE]["transition"], i) &&
+		slices.Contains(requirements[FILE]["transition"], j) {
+		return requirementsWeights[FILE]["transition"][i] - requirementsWeights[FILE]["transition"][j]
 	}
-	if slices.Contains(requirements[tokFILE]["access"], i) {
+	if slices.Contains(requirements[FILE]["access"], i) {
 		return -1
 	}
 	return 1
@@ -121,8 +121,8 @@ func (r *File) Constraint() constraint {
 	return blockKind
 }
 
-func (r *File) Kind() string {
-	return tokFILE
+func (r *File) Kind() Kind {
+	return FILE
 }
 
 type Link struct {
@@ -179,6 +179,6 @@ func (r *Link) Constraint() constraint {
 	return blockKind
 }
 
-func (r *Link) Kind() string {
-	return tokLINK
+func (r *Link) Kind() Kind {
+	return LINK
 }

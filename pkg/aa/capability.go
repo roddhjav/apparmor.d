@@ -9,10 +9,10 @@ import (
 	"slices"
 )
 
-const tokCAPABILITY = "capability"
+const CAPABILITY Kind = "capability"
 
 func init() {
-	requirements[tokCAPABILITY] = requirement{
+	requirements[CAPABILITY] = requirement{
 		"name": {
 			"audit_control", "audit_read", "audit_write", "block_suspend", "bpf",
 			"checkpoint_restore", "chown", "dac_override", "dac_read_search",
@@ -36,7 +36,7 @@ func newCapabilityFromLog(log map[string]string) Rule {
 	return &Capability{
 		RuleBase:  newRuleFromLog(log),
 		Qualifier: newQualifierFromLog(log),
-		Names:     Must(toValues(tokCAPABILITY, "name", log["capname"])),
+		Names:     Must(toValues(CAPABILITY, "name", log["capname"])),
 	}
 }
 
@@ -70,6 +70,6 @@ func (r *Capability) Constraint() constraint {
 	return blockKind
 }
 
-func (r *Capability) Kind() string {
-	return tokCAPABILITY
+func (r *Capability) Kind() Kind {
+	return CAPABILITY
 }

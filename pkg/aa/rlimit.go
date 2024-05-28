@@ -7,12 +7,11 @@ package aa
 import "fmt"
 
 const (
-	tokRLIMIT = "rlimit"
-	tokSET    = "set"
+	RLIMIT Kind = "rlimit"
 )
 
 func init() {
-	requirements[tokRLIMIT] = requirement{
+	requirements[RLIMIT] = requirement{
 		"keys": {
 			"cpu", "fsize", "data", "stack", "core", "rss", "nofile", "ofile",
 			"as", "nproc", "memlock", "locks", "sigpending", "msgqueue", "nice",
@@ -68,6 +67,6 @@ func (r *Rlimit) Constraint() constraint {
 	return blockKind
 }
 
-func (r *Rlimit) Kind() string {
-	return tokRLIMIT
+func (r *Rlimit) Kind() Kind {
+	return RLIMIT
 }

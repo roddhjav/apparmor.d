@@ -9,10 +9,10 @@ import (
 	"slices"
 )
 
-const tokIOURING = "io_uring"
+const IOURING Kind = "io_uring"
 
 func init() {
-	requirements[tokIOURING] = requirement{
+	requirements[IOURING] = requirement{
 		"access": []string{"sqpoll", "override_creds"},
 	}
 }
@@ -28,7 +28,7 @@ func newIOUringFromLog(log map[string]string) Rule {
 	return &IOUring{
 		RuleBase:  newRuleFromLog(log),
 		Qualifier: newQualifierFromLog(log),
-		Access:    Must(toAccess(tokIOURING, log["requested"])),
+		Access:    Must(toAccess(IOURING, log["requested"])),
 		Label:     log["label"],
 	}
 }
@@ -64,6 +64,6 @@ func (r *IOUring) Constraint() constraint {
 	return blockKind
 }
 
-func (r *IOUring) Kind() string {
-	return tokIOURING
+func (r *IOUring) Kind() Kind {
+	return IOURING
 }

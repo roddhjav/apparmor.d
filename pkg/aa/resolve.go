@@ -59,7 +59,7 @@ func (f *AppArmorProfileFile) Resolve() error {
 }
 
 func (f *AppArmorProfileFile) resolveValues(input string) ([]string, error) {
-	if !strings.Contains(input, tokVARIABLE) {
+	if !strings.Contains(input, VARIABLE.Tok()) {
 		return []string{input}, nil
 	}
 
@@ -76,7 +76,7 @@ func (f *AppArmorProfileFile) resolveValues(input string) ([]string, error) {
 		if vrbl.Name == varname {
 			found = true
 			for _, v := range vrbl.Values {
-				if strings.Contains(v, tokVARIABLE+varname+"}") {
+				if strings.Contains(v, VARIABLE.Tok()+varname+"}") {
 					return nil, fmt.Errorf("recursive variable found in: %s", varname)
 				}
 				newValues := strings.ReplaceAll(input, variable, v)
@@ -152,7 +152,7 @@ func (f *AppArmorProfileFile) resolveInclude(include *Include) error {
 		}
 
 		// Remove all includes in iFile
-		iFile.Preamble = iFile.Preamble.DeleteKind(tokINCLUDE)
+		iFile.Preamble = iFile.Preamble.DeleteKind(INCLUDE)
 
 		// Cache the included file
 		includeCache[include] = iFile

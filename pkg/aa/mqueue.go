@@ -10,10 +10,10 @@ import (
 	"strings"
 )
 
-const tokMQUEUE = "mqueue"
+const MQUEUE Kind = "mqueue"
 
 func init() {
-	requirements[tokMQUEUE] = requirement{
+	requirements[MQUEUE] = requirement{
 		"access": []string{
 			"r", "w", "rw", "read", "write", "create", "open",
 			"delete", "getattr", "setattr",
@@ -41,7 +41,7 @@ func newMqueueFromLog(log map[string]string) Rule {
 	return &Mqueue{
 		RuleBase:  newRuleFromLog(log),
 		Qualifier: newQualifierFromLog(log),
-		Access:    Must(toAccess(tokMQUEUE, log["requested"])),
+		Access:    Must(toAccess(MQUEUE, log["requested"])),
 		Type:      mqueueType,
 		Label:     log["label"],
 		Name:      log["name"],
@@ -86,6 +86,6 @@ func (r *Mqueue) Constraint() constraint {
 	return blockKind
 }
 
-func (r *Mqueue) Kind() string {
-	return tokMQUEUE
+func (r *Mqueue) Kind() Kind {
+	return MQUEUE
 }

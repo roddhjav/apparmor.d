@@ -9,10 +9,10 @@ import (
 	"slices"
 )
 
-const tokPTRACE = "ptrace"
+const PTRACE Kind = "ptrace"
 
 func init() {
-	requirements[tokPTRACE] = requirement{
+	requirements[PTRACE] = requirement{
 		"access": []string{
 			"r", "w", "rw", "read", "readby", "trace", "tracedby",
 		},
@@ -30,7 +30,7 @@ func newPtraceFromLog(log map[string]string) Rule {
 	return &Ptrace{
 		RuleBase:  newRuleFromLog(log),
 		Qualifier: newQualifierFromLog(log),
-		Access:    Must(toAccess(tokPTRACE, log["requested_mask"])),
+		Access:    Must(toAccess(PTRACE, log["requested_mask"])),
 		Peer:      log["peer"],
 	}
 }
@@ -67,6 +67,6 @@ func (r *Ptrace) Constraint() constraint {
 	return blockKind
 }
 
-func (r *Ptrace) Kind() string {
-	return tokPTRACE
+func (r *Ptrace) Kind() Kind {
+	return PTRACE
 }

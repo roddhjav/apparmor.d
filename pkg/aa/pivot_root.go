@@ -4,7 +4,7 @@
 
 package aa
 
-const tokPIVOTROOT = "pivot_root"
+const PIVOTROOT = "pivot_root"
 
 type PivotRoot struct {
 	RuleBase
@@ -57,6 +57,6 @@ func (r *PivotRoot) Constraint() constraint {
 	return blockKind
 }
 
-func (r *PivotRoot) Kind() string {
-	return tokPIVOTROOT
+func (r *PivotRoot) Kind() Kind {
+	return PIVOTROOT
 }

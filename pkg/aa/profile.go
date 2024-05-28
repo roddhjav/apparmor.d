@@ -14,13 +14,14 @@ import (
 )
 
 const (
+	PROFILE Kind = "profile"
+
 	tokATTRIBUTES = "xattrs"
 	tokFLAGS      = "flags"
-	tokPROFILE    = "profile"
 )
 
 func init() {
-	requirements[tokPROFILE] = requirement{
+	requirements[PROFILE] = requirement{
 		tokFLAGS: {
 			"enforce", "complain", "kill", "default_allow", "unconfined",
 			"prompt", "audit", "mediate_deleted", "attach_disconnected",
@@ -52,7 +53,7 @@ func newHeader(rule []string) (Header, error) {
 	if rule[len(rule)-1] == "{" {
 		rule = rule[:len(rule)-1]
 	}
-	if rule[0] == tokPROFILE {
+	if rule[0] == PROFILE.Tok() {
 		rule = rule[1:]
 	}
 
@@ -120,8 +121,8 @@ func (p *Profile) Constraint() constraint {
 	return blockKind
 }
 
-func (p *Profile) Kind() string {
-	return tokPROFILE
+func (p *Profile) Kind() Kind {
+	return PROFILE
 }
 
 // Merge merge similar rules together.
