@@ -80,7 +80,7 @@ func (r Rules) Remove(rule Rule) Rules {
 }
 
 func (r Rules) Insert(idx int, rules ...Rule) Rules {
-	return append(r[:idx], append(rules, r[idx:]...)...)
+	return append(r[:idx], append(rules, r[idx+1:]...)...)
 }
 
 func (r Rules) Sort() Rules {

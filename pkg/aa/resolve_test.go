@@ -7,24 +7,75 @@ package aa
 import (
 	"reflect"
 	"testing"
+
+	"github.com/arduino/go-paths-helper"
 )
 
-func TestAppArmorProfileFile_resolveVariable(t *testing.T) {
+func TestAppArmorProfileFile_resolveInclude(t *testing.T) {
 	tests := []struct {
-		name  string
-		f     AppArmorProfileFile
-		input string
-		want  []string
+		name    string
+		include *Include
+		want    *AppArmorProfileFile
+		wantErr bool
 	}{
 		{
-			name:  "nil",
-			input: "@{newvar}",
-			want:  []string{},
+			name:    "empty",
+			include: &Include{Path: "", IsMagic: true},
+			want:    &AppArmorProfileFile{Preamble: Rules{&Include{Path: "", IsMagic: true}}},
+			wantErr: true,
 		},
 		{
-			name:  "empty",
-			input: "@{}",
-			want:  []string{"@{}"},
+			name:    "tunables",
+			include: &Include{Path: "tunables/global", IsMagic: true},
+			want: &AppArmorProfileFile{
+				Preamble: Rules{
+					&Alias{Path: "/usr/", RewrittenPath: "/User/"},
+					&Alias{Path: "/lib/", RewrittenPath: "/Libraries/"},
+					&Comment{RuleBase: RuleBase{IsLineRule: true, Comment: " variable declarations for inclusion"}},
+					&Variable{
+						Name: "FOO", Define: true,
+						Values: []string{
+							"/foo", "/bar", "/baz", "/biff", "/lib", "/tmp",
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+	}
+	MagicRoot = paths.New("../../tests/testdata")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := &AppArmorProfileFile{}
+			got.Preamble = append(got.Preamble, tt.include)
+			if err := got.resolveInclude(tt.include); (err != nil) != tt.wantErr {
+				t.Errorf("AppArmorProfileFile.resolveInclude() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("AppArmorProfileFile.resolveValues() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestAppArmorProfileFile_resolveValues(t *testing.T) {
+	tests := []struct {
+		name    string
+		input   string
+		want    []string
+		wantErr bool
+	}{
+		{
+			name:    "not-defined",
+			input:   "@{newvar}",
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name:    "no-name",
+			input:   "@{}",
+			want:    nil,
+			wantErr: true,
 		},
 		{
 			name:  "default",
@@ -45,9 +96,12 @@ func TestAppArmorProfileFile_resolveVariable(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			f := DefaultTunables()
-			got := f.resolveVariable(tt.input)
+			got, err := f.resolveValues(tt.input)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("AppArmorProfileFile.resolveValues() error = %v, wantErr %v", err, tt.wantErr)
+			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("AppArmorProfileFile.resolveVariable() = %v, want %v", got, tt.want)
+				t.Errorf("AppArmorProfileFile.resolveValues() = %v, want %v", got, tt.want)
 			}
 		})
 	}
