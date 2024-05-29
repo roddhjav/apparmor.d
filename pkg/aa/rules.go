@@ -54,6 +54,9 @@ type Rules []Rule
 
 func (r Rules) Validate() error {
 	for _, rule := range r {
+		if rule == nil {
+			continue
+		}
 		if err := rule.Validate(); err != nil {
 			return err
 		}
@@ -66,9 +69,12 @@ func (r Rules) String() string {
 }
 
 // Index returns the index of the first occurrence of rule rin r, or -1 if not present.
-func (r Rules) Index(rule Rule) int {
-	for idx, rr := range r {
-		if rr.Kind() == rule.Kind() && rr.Equals(rule) {
+func (r Rules) Index(item Rule) int {
+	for idx, rule := range r {
+		if rule == nil {
+			continue
+		}
+		if rule.Kind() == item.Kind() && rule.Equals(item) {
 			return idx
 		}
 	}
@@ -94,6 +100,9 @@ func (r Rules) Delete(i int) Rules {
 func (r Rules) DeleteKind(kind Kind) Rules {
 	res := make(Rules, 0)
 	for _, rule := range r {
+		if rule == nil {
+			continue
+		}
 		if rule.Kind() != kind {
 			res = append(res, rule)
 		}
@@ -104,6 +113,9 @@ func (r Rules) DeleteKind(kind Kind) Rules {
 func (r Rules) Filter(filter Kind) Rules {
 	res := make(Rules, 0)
 	for _, rule := range r {
+		if rule == nil {
+			continue
+		}
 		if rule.Kind() != filter {
 			res = append(res, rule)
 		}
