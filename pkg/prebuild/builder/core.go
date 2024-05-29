@@ -58,7 +58,7 @@ func Run(file *paths.Path, profile string) (string, error) {
 	for _, b := range Builds {
 		profile, err = b.Apply(opt, profile)
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("%s %s: %w", b.Name(), opt.File, err)
 		}
 	}
 	return profile, nil

@@ -71,11 +71,11 @@ func Run(file *paths.Path, profile string) (string, error) {
 		opt := NewOption(file, match)
 		drtv, ok := Directives[opt.Name]
 		if !ok {
-			return "", fmt.Errorf("Unknown directive: %s", opt.Name)
+			return "", fmt.Errorf("Unknown directive '%s' in %s", opt.Name, opt.File)
 		}
 		profile, err = drtv.Apply(opt, profile)
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("%s %s: %w", drtv.Name(), opt.File, err)
 		}
 	}
 	return profile, nil
