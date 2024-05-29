@@ -123,16 +123,22 @@ func TestAppArmorProfileFile_Sort(t *testing.T) {
 			origin: &AppArmorProfileFile{
 				Profiles: []*Profile{{
 					Rules: []Rule{
-						file2, network1, includeLocal1, dbus2, signal1, ptrace1,
-						capability2, file1, dbus1, unix2, signal2, mount2,
+						file2, network1, userns1, include1, dbus2, signal1,
+						ptrace1, includeLocal1, rlimit3, capability1, network2,
+						mqueue2, iouring2, dbus1, link2, capability2, file1,
+						unix2, signal2, mount2, all1, umount2, mount1, remount2,
+						pivotroot1, changeprofile2,
 					},
 				}},
 			},
 			want: &AppArmorProfileFile{
 				Profiles: []*Profile{{
 					Rules: []Rule{
-						capability2, network1, mount2, signal1, signal2, ptrace1,
-						unix2, dbus2, dbus1, file1, file2, includeLocal1,
+						include1, all1, rlimit3, userns1, capability1, capability2,
+						network2, network1, mount2, mount1, remount2, umount2,
+						pivotroot1, changeprofile2, mqueue2, iouring2, signal2,
+						signal1, ptrace1, unix2, dbus2, dbus1, file1, file2,
+						link2, includeLocal1,
 					},
 				}},
 			},
@@ -232,6 +238,10 @@ func TestAppArmorProfileFile_Integration(t *testing.T) {
 			tt.f.Sort()
 			tt.f.MergeRules()
 			tt.f.Format()
+			err := tt.f.Validate()
+			if err != nil {
+				t.Errorf("AppArmorProfile.Validate() = %v", err)
+			}
 			if got := tt.f.String(); got != tt.want {
 				t.Errorf("AppArmorProfile = |%v|, want |%v|", got, tt.want)
 			}
