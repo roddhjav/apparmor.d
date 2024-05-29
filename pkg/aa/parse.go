@@ -35,6 +35,7 @@ var (
 	tok = map[Kind]string{
 		COMMENT:  "#",
 		VARIABLE: "@{",
+		HAT:      "^",
 	}
 	openBlocks  = []rune{tokOPENPAREN, tokOPENBRACE, tokOPENBRACKET}
 	closeBlocks = []rune{tokCLOSEPAREN, tokCLOSEBRACE, tokCLOSEBRACKET}
@@ -221,6 +222,8 @@ done:
 			continue
 		case strings.HasPrefix(tmp, PROFILE.Tok()):
 			rawHeader = tmp
+			break done
+		case strings.HasPrefix(tmp, HAT.String()), strings.HasPrefix(tmp, HAT.Tok()):
 			break done
 		default:
 			rawPreamble = append(rawPreamble, tmp)
