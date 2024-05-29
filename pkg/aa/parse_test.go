@@ -12,7 +12,7 @@ import (
 )
 
 func Test_tokenizeRule(t *testing.T) {
-	for _, tt := range testRules {
+	for _, tt := range testTokenRules {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := tokenize(tt.raw); !reflect.DeepEqual(got, tt.tokens) {
 				t.Errorf("tokenize() = %v, want %v", got, tt.tokens)
@@ -37,7 +37,7 @@ func Test_AppArmorProfileFile_Parse(t *testing.T) {
 
 var (
 	// Test cases for tokenize
-	testRules = []struct {
+	testTokenRules = []struct {
 		name   string
 		raw    string
 		tokens []string
