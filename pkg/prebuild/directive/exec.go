@@ -2,6 +2,8 @@
 // Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
 // SPDX-License-Identifier: GPL-2.0-only
 
+// TODO: Local variables in profile header need to be resolved
+
 package directive
 
 import (
@@ -40,8 +42,8 @@ func (d Exec) Apply(opt *Option, profileRaw string) (string, error) {
 	for name := range opt.ArgMap {
 		profiletoTransition := util.MustReadFile(cfg.RootApparmord.Join(name))
 		dstProfile := aa.DefaultTunables()
-		dstProfile.ParseVariables(profiletoTransition)
-		for _, variable := range dstProfile.Variables {
+		dstProfile.Parse(profiletoTransition)
+		for _, variable := range dstProfile.Preamble.GetVariables() {
 			if variable.Name == "exec_path" {
 				for _, v := range variable.Values {
 					rules = append(rules, &aa.File{
@@ -57,7 +59,7 @@ func (d Exec) Apply(opt *Option, profileRaw string) (string, error) {
 	aa.IndentationLevel = strings.Count(
 		strings.SplitN(opt.Raw, Keyword, 1)[0], aa.Indentation,
 	)
-	rules.Sort()
+	rules = rules.Sort()
 	new := rules.String()
 	new = new[:len(new)-1]
 	return strings.Replace(profileRaw, opt.Raw, new, -1), nil

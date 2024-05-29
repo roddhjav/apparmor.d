@@ -22,12 +22,12 @@ var (
 // Resolve resolves variables and includes definied in the profile preamble
 func (f *AppArmorProfileFile) Resolve() error {
 	// Resolve preamble includes
-	for _, include := range f.Preamble.GetIncludes() {
-		err := f.resolveInclude(include)
-		if err != nil {
-			return err
-		}
-	}
+	// for _, include := range f.Preamble.GetIncludes() {
+	// 	err := f.resolveInclude(include)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// }
 
 	// Resolve variables
 	for _, variable := range f.Preamble.GetVariables() {
