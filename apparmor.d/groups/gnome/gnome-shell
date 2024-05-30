@@ -175,10 +175,18 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
   @{exec_path} mr,
 
-  @{bin}/Xwayland         rPx,
-  @{lib}/polkit-1/polkit* rPx,
-  @{lib}/*                rPUx,
-  @{lib}/@{multiarch}/glib-[0-9]*/gio-launch-desktop rix,
+  @{bin}/unzip                  rix,
+
+  @{bin}/gjs-console            rPx,
+  @{bin}/glib-compile-schemas   rPx,
+  @{bin}/ibus-daemon            rPx,
+  @{bin}/Xwayland               rPx,
+  @{lib}/mutter-x11-frames      rPx,
+  #aa:exec polkit-agent-helper
+
+  @{sh_path}                                           rCx -> shell,
+  @{lib}/gio-launch-desktop                            rCx -> open,
+  @{lib}/@{multiarch}/glib-[0-9]*/gio-launch-desktop   rCx -> open,
 
   /usr/share/gnome-shell/extensions/ding@rastersoft.com/{,*/}ding.js rPx,
 
@@ -362,6 +370,45 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   /dev/input/event@{int} rw,
   /dev/media@{int} rw,
   /dev/tty@{int} rw,
+
+  profile shell flags=(attach_disconnected,mediate_deleted) {
+    include <abstractions/base>
+  
+    capability sys_ptrace,
+
+    ptrace (read),
+
+    @{sh_path} mr,
+  
+    @{bin}/pmap rix,
+    @{bin}/grep rix,
+
+    @{sys}/devices/system/node/ r,
+
+          @{PROC}/uptime r,
+    owner @{PROC}/@{pid}/cmdline r,
+    owner @{PROC}/@{pid}/stat r,
+
+    /dev/tty rw,
+
+    include if exists <local/gnome-shell_shell>
+  }
+
+  profile open flags=(attach_disconnected,mediate_deleted) {
+    include <abstractions/base>
+    include <abstractions/app-launcher-user>
+
+    @{lib}/gio-launch-desktop                               mr,
+    @{lib}/@{multiarch}/glib-[0-9]*/gio-launch-desktop      mr,
+  
+    @{lib}/*      PUx,
+    /usr/games/*  PUx,
+    /usr/share/gnome-shell/extensions/ding@rastersoft.com/{,*/}ding.js rPx,
+
+    deny @{user_share_dirs}/gvfs-metadata/* r,
+
+    include if exists <local/gnome-shell_open>
+  }
 
   include if exists <local/gnome-shell>
 }
