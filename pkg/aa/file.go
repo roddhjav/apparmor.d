@@ -37,23 +37,6 @@ func isOwner(log map[string]string) bool {
 	return false
 }
 
-// cmpFileAccess compares two access strings for file rules.
-// It is aimed to be used in slices.SortFunc.
-func cmpFileAccess(i, j string) int {
-	if slices.Contains(requirements[FILE]["access"], i) &&
-		slices.Contains(requirements[FILE]["access"], j) {
-		return requirementsWeights[FILE]["access"][i] - requirementsWeights[FILE]["access"][j]
-	}
-	if slices.Contains(requirements[FILE]["transition"], i) &&
-		slices.Contains(requirements[FILE]["transition"], j) {
-		return requirementsWeights[FILE]["transition"][i] - requirementsWeights[FILE]["transition"][j]
-	}
-	if slices.Contains(requirements[FILE]["access"], i) {
-		return -1
-	}
-	return 1
-}
-
 type File struct {
 	RuleBase
 	Qualifier
