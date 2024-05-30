@@ -7,6 +7,8 @@ package builder
 import (
 	"slices"
 	"testing"
+
+	"github.com/roddhjav/apparmor.d/pkg/prebuild/cfg"
 )
 
 func TestBuilder_Apply(t *testing.T) {
@@ -216,7 +218,7 @@ func TestBuilder_Apply(t *testing.T) {
 			  }`,
 		},
 		{
-			name: "userspace-1",
+			name: "userspace-2",
 			b:    Builders["userspace"],
 			profile: `
 			  profile foo /usr/bin/foo {
@@ -238,7 +240,7 @@ func TestBuilder_Apply(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			opt := &Option{}
+			opt := &Option{File: cfg.RootApparmord.Join(tt.name)}
 			got, err := tt.b.Apply(opt, tt.profile)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Builder.Apply() error = %v, wantErr %v", err, tt.wantErr)
@@ -264,7 +266,6 @@ func TestRegister(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-
 		t.Run(tt.name, func(t *testing.T) {
 			Register(tt.names...)
 			for _, name := range tt.names {
