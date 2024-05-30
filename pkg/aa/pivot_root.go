@@ -4,7 +4,7 @@
 
 package aa
 
-const PIVOTROOT = "pivot_root"
+const PIVOTROOT Kind = "pivot_root"
 
 type PivotRoot struct {
 	RuleBase

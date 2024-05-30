@@ -7,7 +7,6 @@ package aa
 import (
 	"embed"
 	"fmt"
-	"reflect"
 	"strings"
 	"text/template"
 )
@@ -176,12 +175,12 @@ func generateRequirementsWeights(requirements map[Kind]requirement) map[Kind]map
 }
 
 func join(i any) string {
-	switch reflect.TypeOf(i).Kind() {
-	case reflect.Slice:
-		return strings.Join(i.([]string), " ")
-	case reflect.Map:
+	switch i := i.(type) {
+	case []string:
+		return strings.Join(i, " ")
+	case map[string]string:
 		res := []string{}
-		for k, v := range i.(map[string]string) {
+		for k, v := range i {
 			res = append(res, k+"="+v)
 		}
 		return strings.Join(res, " ")
@@ -191,16 +190,15 @@ func join(i any) string {
 }
 
 func cjoin(i any) string {
-	switch reflect.TypeOf(i).Kind() {
-	case reflect.Slice:
-		s := i.([]string)
-		if len(s) == 1 {
-			return s[0]
+	switch i := i.(type) {
+	case []string:
+		if len(i) == 1 {
+			return i[0]
 		}
-		return "(" + strings.Join(s, " ") + ")"
-	case reflect.Map:
+		return "(" + strings.Join(i, " ") + ")"
+	case map[string]string:
 		res := []string{}
-		for k, v := range i.(map[string]string) {
+		for k, v := range i {
 			res = append(res, k+"="+v)
 		}
 		return "(" + strings.Join(res, " ") + ")"
