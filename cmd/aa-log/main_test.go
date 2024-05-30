@@ -5,7 +5,12 @@
 package main
 
 import (
+	"path/filepath"
 	"testing"
+)
+
+var (
+	testdata = "../../tests/testdata/logs"
 )
 
 func Test_app(t *testing.T) {
@@ -20,7 +25,7 @@ func Test_app(t *testing.T) {
 		{
 			name:    "Test audit.log",
 			logger:  "auditd",
-			path:    "../../tests/audit.log",
+			path:    filepath.Join(testdata, "audit.log"),
 			profile: "",
 			rules:   false,
 			wantErr: false,
@@ -28,7 +33,7 @@ func Test_app(t *testing.T) {
 		{
 			name:    "Test audit.log to rules",
 			logger:  "auditd",
-			path:    "../../tests/audit.log",
+			path:    filepath.Join(testdata, "audit.log"),
 			profile: "",
 			rules:   true,
 			wantErr: false,
@@ -36,7 +41,7 @@ func Test_app(t *testing.T) {
 		{
 			name:    "Test Dbus Session",
 			logger:  "systemd",
-			path:    "../../tests/systemd.log",
+			path:    filepath.Join(testdata, "systemd.log"),
 			profile: "",
 			rules:   false,
 			wantErr: false,
@@ -44,7 +49,7 @@ func Test_app(t *testing.T) {
 		{
 			name:    "No logfile",
 			logger:  "auditd",
-			path:    "../../tests/log",
+			path:    filepath.Join(testdata, "log"),
 			profile: "",
 			rules:   false,
 			wantErr: true,
@@ -52,7 +57,7 @@ func Test_app(t *testing.T) {
 		{
 			name:    "Logger not supported",
 			logger:  "raw",
-			path:    "../../tests/audit.log",
+			path:    filepath.Join(testdata, "audit.log"),
 			profile: "",
 			rules:   false,
 			wantErr: true,

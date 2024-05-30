@@ -5,8 +5,13 @@
 package logs
 
 import (
+	"path/filepath"
 	"reflect"
 	"testing"
+)
+
+var (
+	testdata = "../../tests/testdata/logs"
 )
 
 func TestGetJournalctlLogs(t *testing.T) {
@@ -19,7 +24,7 @@ func TestGetJournalctlLogs(t *testing.T) {
 		{
 			name:    "gsd-xsettings",
 			useFile: true,
-			path:    "../../tests/systemd.log",
+			path:    filepath.Join(testdata, "systemd.log"),
 			want: AppArmorLogs{
 				{
 					"apparmor":   "ALLOWED",
@@ -60,8 +65,8 @@ func TestSelectLogFile(t *testing.T) {
 	}{
 		{
 			name: "Get audit.log",
-			path: "../../tests/audit.log",
-			want: "../../tests/audit.log",
+			path: filepath.Join(testdata, "audit.log"),
+			want: filepath.Join(testdata, "audit.log"),
 		},
 		{
 			name: "Get /var/log/audit/audit.log.1",

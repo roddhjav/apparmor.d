@@ -20,7 +20,7 @@ func chdirGitRoot() {
 	if err != nil {
 		panic(err)
 	}
-	root := string(out)[0 : len(out)-1]
+	root := string(out[0 : len(out)-1])
 	if err := os.Chdir(root); err != nil {
 		panic(err)
 	}
