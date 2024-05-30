@@ -189,6 +189,10 @@ var (
 				return newFileFromLog(log)
 			}
 		},
+		"exec":         newFileFromLog,
+		"file_inherit": newFileFromLog,
+		"file_perm":    newFileFromLog,
+		"open":         newFileFromLog,
 	}
 	newLogMountMap = map[string]func(log map[string]string) Rule{
 		"mount":     newMountFromLog,
@@ -214,15 +218,20 @@ func (p *Profile) AddRule(log map[string]string) {
 	default:
 	}
 
-	if newRule, ok := newLogMap[log["class"]]; ok {
-		p.Rules = append(p.Rules, newRule(log))
-	} else {
+	done := false
+	for _, key := range []string{"class", "family", "operation"} {
+		if newRule, ok := newLogMap[log[key]]; ok {
+			p.Rules = append(p.Rules, newRule(log))
+			done = true
+			break
+		}
+	}
+
+	if !done {
 		if strings.Contains(log["operation"], "dbus") {
 			p.Rules = append(p.Rules, newDbusFromLog(log))
-		} else if log["family"] == "unix" {
-			p.Rules = append(p.Rules, newUnixFromLog(log))
 		} else {
-			panic("unknown class: " + log["class"])
+			fmt.Printf("unknown log type: %s", log)
 		}
 	}
 }
