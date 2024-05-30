@@ -4,59 +4,112 @@
 
 package aa
 
+import (
+	"fmt"
+	"slices"
+)
+
+const DBUS Kind = "dbus"
+
+func init() {
+	requirements[DBUS] = requirement{
+		"access": []string{
+			"send", "receive", "bind", "eavesdrop", "r", "read",
+			"w", "write", "rw",
+		},
+		"bus": []string{"system", "session", "accessibility"},
+	}
+}
+
 type Dbus struct {
+	RuleBase
 	Qualifier
-	Access    string
+	Access    []string
 	Bus       string
 	Name      string
 	Path      string
 	Interface string
 	Member    string
-	Label     string
+	PeerName  string
+	PeerLabel string
 }
 
-func DbusFromLog(log map[string]string) ApparmorRule {
+func newDbusFromLog(log map[string]string) Rule {
+	name := ""
+	peerName := ""
+	if log["mask"] == "bind" {
+		name = log["name"]
+	} else {
+		peerName = log["name"]
+	}
 	return &Dbus{
-		Qualifier: NewQualifierFromLog(log),
-		Access:    log["mask"],
+		RuleBase:  newRuleFromLog(log),
+		Qualifier: newQualifierFromLog(log),
+		Access:    []string{log["mask"]},
 		Bus:       log["bus"],
-		Name:      log["name"],
+		Name:      name,
 		Path:      log["path"],
 		Interface: log["interface"],
 		Member:    log["member"],
-		Label:     log["peer_label"],
+		PeerName:  peerName,
+		PeerLabel: log["peer_label"],
 	}
+}
+
+func (r *Dbus) Validate() error {
+	if err := validateValues(r.Kind(), "access", r.Access); err != nil {
+		return fmt.Errorf("%s: %w", r, err)
+	}
+	return validateValues(r.Kind(), "bus", []string{r.Bus})
 }
 
 func (r *Dbus) Less(other any) bool {
 	o, _ := other.(*Dbus)
-	if r.Qualifier.Equals(o.Qualifier) {
-		if r.Access == o.Access {
-			if r.Bus == o.Bus {
-				if r.Name == o.Name {
-					if r.Path == o.Path {
-						if r.Interface == o.Interface {
-							if r.Member == o.Member {
-								return r.Label < o.Label
-							}
-							return r.Member < o.Member
-						}
-						return r.Interface < o.Interface
-					}
-					return r.Path < o.Path
-				}
-				return r.Name < o.Name
-			}
-			return r.Bus < o.Bus
+	for i := 0; i < len(r.Access) && i < len(o.Access); i++ {
+		if r.Access[i] != o.Access[i] {
+			return r.Access[i] < o.Access[i]
 		}
-		return r.Access < o.Access
+	}
+	if r.Bus != o.Bus {
+		return r.Bus < o.Bus
+	}
+	if r.Name != o.Name {
+		return r.Name < o.Name
+	}
+	if r.Path != o.Path {
+		return r.Path < o.Path
+	}
+	if r.Interface != o.Interface {
+		return r.Interface < o.Interface
+	}
+	if r.Member != o.Member {
+		return r.Member < o.Member
+	}
+	if r.PeerName != o.PeerName {
+		return r.PeerName < o.PeerName
+	}
+	if r.PeerLabel != o.PeerLabel {
+		return r.PeerLabel < o.PeerLabel
 	}
 	return r.Qualifier.Less(o.Qualifier)
 }
 
 func (r *Dbus) Equals(other any) bool {
 	o, _ := other.(*Dbus)
-	return r.Access == o.Access && r.Bus == o.Bus && r.Name == o.Name &&
+	return slices.Equal(r.Access, o.Access) && r.Bus == o.Bus && r.Name == o.Name &&
 		r.Path == o.Path && r.Interface == o.Interface &&
-		r.Member == o.Member && r.Label == o.Label && r.Qualifier.Equals(o.Qualifier)
+		r.Member == o.Member && r.PeerName == o.PeerName &&
+		r.PeerLabel == o.PeerLabel && r.Qualifier.Equals(o.Qualifier)
+}
+
+func (r *Dbus) String() string {
+	return renderTemplate(r.Kind(), r)
+}
+
+func (r *Dbus) Constraint() constraint {
+	return blockKind
+}
+
+func (r *Dbus) Kind() Kind {
+	return DBUS
 }

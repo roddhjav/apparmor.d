@@ -50,41 +50,47 @@ func setInterfaces(rules map[string]string) []string {
 	return interfaces
 }
 
-func (d Dbus) Apply(opt *Option, profile string) string {
-	var p *aa.AppArmorProfile
+func (d Dbus) Apply(opt *Option, profile string) (string, error) {
+	var r aa.Rules
 
-	action := d.sanityCheck(opt)
+	action, err := d.sanityCheck(opt)
+	if err != nil {
+		return "", err
+	}
 	switch action {
 	case "own":
-		p = d.own(opt.ArgMap)
+		r = d.own(opt.ArgMap)
 	case "talk":
-		p = d.talk(opt.ArgMap)
+		r = d.talk(opt.ArgMap)
 	}
 
-	generatedDbus := p.String()
+	aa.IndentationLevel = strings.Count(
+		strings.SplitN(opt.Raw, Keyword, 1)[0], aa.Indentation,
+	)
+	generatedDbus := r.String()
 	lenDbus := len(generatedDbus)
 	generatedDbus = generatedDbus[:lenDbus-1]
 	profile = strings.Replace(profile, opt.Raw, generatedDbus, -1)
-	return profile
+	return profile, nil
 }
 
-func (d Dbus) sanityCheck(opt *Option) string {
+func (d Dbus) sanityCheck(opt *Option) (string, error) {
 	if len(opt.ArgList) < 1 {
-		panic(fmt.Sprintf("Unknown dbus action: %s in %s", opt.Name, opt.File))
+		return "", fmt.Errorf("Unknown dbus action: %s in %s", opt.Name, opt.File)
 	}
 	action := opt.ArgList[0]
 	if action != "own" && action != "talk" {
-		panic(fmt.Sprintf("Unknown dbus action: %s in %s", opt.Name, opt.File))
+		return "", fmt.Errorf("Unknown dbus action: %s in %s", opt.Name, opt.File)
 	}
 
 	if _, present := opt.ArgMap["name"]; !present {
-		panic(fmt.Sprintf("Missing name for 'dbus: %s' in %s", action, opt.File))
+		return "", fmt.Errorf("Missing name for 'dbus: %s' in %s", action, opt.File)
 	}
 	if _, present := opt.ArgMap["bus"]; !present {
-		panic(fmt.Sprintf("Missing bus for '%s' in %s", opt.ArgMap["name"], opt.File))
+		return "", fmt.Errorf("Missing bus for '%s' in %s", opt.ArgMap["name"], opt.File)
 	}
 	if _, present := opt.ArgMap["label"]; !present && action == "talk" {
-		panic(fmt.Sprintf("Missing label for '%s' in %s", opt.ArgMap["name"], opt.File))
+		return "", fmt.Errorf("Missing label for '%s' in %s", opt.ArgMap["name"], opt.File)
 	}
 
 	// Set default values
@@ -92,66 +98,66 @@ func (d Dbus) sanityCheck(opt *Option) string {
 		opt.ArgMap["path"] = "/" + strings.Replace(opt.ArgMap["name"], ".", "/", -1) + "{,/**}"
 	}
 	opt.ArgMap["name"] += "{,.*}"
-	return action
+	return action, nil
 }
 
-func (d Dbus) own(rules map[string]string) *aa.AppArmorProfile {
+func (d Dbus) own(rules map[string]string) aa.Rules {
 	interfaces := setInterfaces(rules)
-	p := &aa.AppArmorProfile{}
-	p.Rules = append(p.Rules, &aa.Dbus{
-		Access: "bind", Bus: rules["bus"], Name: rules["name"],
+	res := aa.Rules{}
+	res = append(res, &aa.Dbus{
+		Access: []string{"bind"}, Bus: rules["bus"], Name: rules["name"],
 	})
 	for _, iface := range interfaces {
-		p.Rules = append(p.Rules, &aa.Dbus{
-			Access:    "receive",
+		res = append(res, &aa.Dbus{
+			Access:    []string{"receive"},
 			Bus:       rules["bus"],
 			Path:      rules["path"],
 			Interface: iface,
-			Name:      `":1.@{int}"`,
+			PeerName:  `":1.@{int}"`,
 		})
 	}
 	for _, iface := range interfaces {
-		p.Rules = append(p.Rules, &aa.Dbus{
-			Access:    "send",
+		res = append(res, &aa.Dbus{
+			Access:    []string{"send"},
 			Bus:       rules["bus"],
 			Path:      rules["path"],
 			Interface: iface,
-			Name:      `"{:1.@{int},org.freedesktop.DBus}"`,
+			PeerName:  `"{:1.@{int},org.freedesktop.DBus}"`,
 		})
 	}
-	p.Rules = append(p.Rules, &aa.Dbus{
-		Access:    "receive",
+	res = append(res, &aa.Dbus{
+		Access:    []string{"receive"},
 		Bus:       rules["bus"],
 		Path:      rules["path"],
 		Interface: "org.freedesktop.DBus.Introspectable",
 		Member:    "Introspect",
-		Name:      `":1.@{int}"`,
+		PeerName:  `":1.@{int}"`,
 	})
-	return p
+	return res
 }
 
-func (d Dbus) talk(rules map[string]string) *aa.AppArmorProfile {
+func (d Dbus) talk(rules map[string]string) aa.Rules {
 	interfaces := setInterfaces(rules)
-	p := &aa.AppArmorProfile{}
+	res := aa.Rules{}
 	for _, iface := range interfaces {
-		p.Rules = append(p.Rules, &aa.Dbus{
-			Access:    "send",
+		res = append(res, &aa.Dbus{
+			Access:    []string{"send"},
 			Bus:       rules["bus"],
 			Path:      rules["path"],
 			Interface: iface,
-			Name:      `"{:1.@{int},` + rules["name"] + `}"`,
-			Label:     rules["label"],
+			PeerName:  `"{:1.@{int},` + rules["name"] + `}"`,
+			PeerLabel: rules["label"],
 		})
 	}
 	for _, iface := range interfaces {
-		p.Rules = append(p.Rules, &aa.Dbus{
-			Access:    "receive",
+		res = append(res, &aa.Dbus{
+			Access:    []string{"receive"},
 			Bus:       rules["bus"],
 			Path:      rules["path"],
 			Interface: iface,
-			Name:      `"{:1.@{int},` + rules["name"] + `}"`,
-			Label:     rules["label"],
+			PeerName:  `"{:1.@{int},` + rules["name"] + `}"`,
+			PeerLabel: rules["label"],
 		})
 	}
-	return p
+	return res
 }

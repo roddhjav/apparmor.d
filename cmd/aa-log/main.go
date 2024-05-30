@@ -67,11 +67,11 @@ func aaLog(logger string, path string, profile string) error {
 	aaLogs := logs.NewApparmorLogs(file, profile)
 	if rules {
 		profiles := aaLogs.ParseToProfiles()
-		for _, profile := range profiles {
-			profile.MergeRules()
-			profile.Sort()
-			profile.Format()
-			fmt.Print(profile.String() + "\n")
+		for _, p := range profiles {
+			p.Merge()
+			p.Sort()
+			p.Format()
+			fmt.Print(p.String() + "\n\n")
 		}
 	} else {
 		fmt.Print(aaLogs.String())

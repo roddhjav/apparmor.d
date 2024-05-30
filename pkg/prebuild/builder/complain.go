@@ -30,13 +30,13 @@ func init() {
 	})
 }
 
-func (b Complain) Apply(profile string) string {
+func (b Complain) Apply(opt *Option, profile string) (string, error) {
 	flags := []string{}
 	matches := regFlags.FindStringSubmatch(profile)
 	if len(matches) != 0 {
 		flags = strings.Split(matches[1], ",")
 		if slices.Contains(flags, "complain") {
-			return profile
+			return profile, nil
 		}
 	}
 	flags = append(flags, "complain")
@@ -44,5 +44,5 @@ func (b Complain) Apply(profile string) string {
 
 	// Remove all flags definition, then set manifest' flags
 	profile = regFlags.ReplaceAllLiteralString(profile, "")
-	return regProfileHeader.ReplaceAllLiteralString(profile, strFlags)
+	return regProfileHeader.ReplaceAllLiteralString(profile, strFlags), nil
 }

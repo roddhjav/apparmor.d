@@ -29,15 +29,26 @@ func init() {
 	})
 }
 
-func (b Userspace) Apply(profile string) string {
-	p := aa.DefaultTunables()
-	p.ParseVariables(profile)
-	p.ResolveAttachments()
-	att := p.NestAttachments()
+func (b Userspace) Apply(opt *Option, profile string) (string, error) {
+	if ok, _ := opt.File.IsInsideDir(cfg.RootApparmord.Join("abstractions")); ok {
+		return profile, nil
+	}
+	if ok, _ := opt.File.IsInsideDir(cfg.RootApparmord.Join("tunables")); ok {
+		return profile, nil
+	}
+
+	f := aa.DefaultTunables()
+	if err := f.Parse(profile); err != nil {
+		return "", err
+	}
+	if err := f.Resolve(); err != nil {
+		return "", err
+	}
+	att := f.GetDefaultProfile().GetAttachments()
 	matches := regAttachments.FindAllString(profile, -1)
 	if len(matches) > 0 {
 		strheader := strings.Replace(matches[0], "@{exec_path}", att, -1)
-		return regAttachments.ReplaceAllLiteralString(profile, strheader)
+		return regAttachments.ReplaceAllLiteralString(profile, strheader), nil
 	}
-	return profile
+	return profile, nil
 }

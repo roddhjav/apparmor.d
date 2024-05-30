@@ -6,67 +6,90 @@ package aa
 
 import (
 	"embed"
+	"fmt"
 	"reflect"
 	"strings"
 	"text/template"
 )
 
-// Default indentation for apparmor profile (2 spaces)
-const indentation = "  "
-
 var (
+	// Default indentation for apparmor profile (2 spaces)
+	Indentation = "  "
+
+	// The current indentation level
+	IndentationLevel = 0
+
 	//go:embed templates/*.j2
+	//go:embed templates/rule/*.j2
 	tmplFiles embed.FS
 
 	// The functions available in the template
 	tmplFunctionMap = template.FuncMap{
-		"typeof":     typeOf,
+		"kindof":     kindOf,
 		"join":       join,
+		"cjoin":      cjoin,
 		"indent":     indent,
 		"overindent": indentDbus,
+		"setindent":  setindent,
 	}
 
-	// The apparmor profile template
-	tmplAppArmorProfile = generateTemplate()
+	// The apparmor templates
+	tmpl = generateTemplates([]Kind{
+		// Global templates
+		"apparmor",
+		PROFILE,
+		HAT,
+		"rules",
+
+		// Preamble templates
+		ABI,
+		ALIAS,
+		INCLUDE,
+		VARIABLE,
+		COMMENT,
+
+		// Rules templates
+		ALL, RLIMIT, USERNS, CAPABILITY, NETWORK,
+		MOUNT, REMOUNT, UMOUNT, PIVOTROOT, CHANGEPROFILE,
+		MQUEUE, IOURING, UNIX, PTRACE, SIGNAL, DBUS,
+		FILE, LINK,
+	})
 
 	// convert apparmor requested mask to apparmor access mode
-	requestedMaskToAccess = map[string]string{
-		"a":   "w",
-		"ac":  "w",
-		"c":   "w",
-		"d":   "w",
-		"m":   "rm",
-		"ra":  "rw",
-		"wc":  "w",
-		"wd":  "w",
-		"wr":  "rw",
-		"wrc": "rw",
-		"wrd": "rw",
-		"x":   "rix",
+	maskToAccess = map[string]string{
+		"a":  "w",
+		"c":  "w",
+		"d":  "w",
+		"wc": "w",
+		"x":  "ix",
 	}
 
 	// The order the apparmor rules should be sorted
-	ruleAlphabet = []string{
-		"include",
-		"rlimit",
-		"capability",
-		"network",
-		"mount",
-		"remount",
-		"umount",
-		"pivotroot",
-		"changeprofile",
-		"mqueue",
-		"signal",
-		"ptrace",
-		"unix",
-		"userns",
-		"iouring",
-		"dbus",
-		"file",
+	ruleAlphabet = []Kind{
+		INCLUDE,
+		ALL,
+		RLIMIT,
+		USERNS,
+		CAPABILITY,
+		NETWORK,
+		MOUNT,
+		REMOUNT,
+		UMOUNT,
+		PIVOTROOT,
+		CHANGEPROFILE,
+		MQUEUE,
+		IOURING,
+		SIGNAL,
+		PTRACE,
+		UNIX,
+		DBUS,
+		FILE,
+		LINK,
+		PROFILE,
+		HAT,
 		"include_if_exists",
 	}
-	ruleWeights = map[string]int{}
+	ruleWeights = generateWeights(ruleAlphabet)
 
 	// The order the apparmor file rules should be sorted
 	fileAlphabet = []string{
@@ -91,23 +114,65 @@ var (
 		"@{PROC}",             // 10. Proc files
 		"/dev",                // 11. Dev files
 		"deny",                // 12. Deny rules
+		"profile",             // 13. Subprofiles
 	}
-	fileWeights = map[string]int{}
+	fileWeights = generateWeights(fileAlphabet)
+
+	// The order the rule values (access, type, domains, etc) should be sorted
+	requirements        = map[Kind]requirement{}
+	requirementsWeights map[Kind]map[string]map[string]int
 )
 
-func generateTemplate() *template.Template {
-	res := template.New("profile.j2").Funcs(tmplFunctionMap)
-	res = template.Must(res.ParseFS(tmplFiles, "templates/*.j2"))
+func init() {
+	requirementsWeights = generateRequirementsWeights(requirements)
+}
+
+func generateTemplates(names []Kind) map[Kind]*template.Template {
+	res := make(map[Kind]*template.Template, len(names))
+	base := template.New("").Funcs(tmplFunctionMap)
+	base = template.Must(base.ParseFS(tmplFiles,
+		"templates/*.j2", "templates/rule/*.j2",
+	))
+	for _, name := range names {
+		t := template.Must(base.Clone())
+		t = template.Must(t.Parse(
+			fmt.Sprintf(`{{- template "%s" . -}}`, name),
+		))
+		res[name] = t
+	}
 	return res
 }
 
-func init() {
-	for i, r := range fileAlphabet {
-		fileWeights[r] = i
+func renderTemplate(name Kind, data any) string {
+	var res strings.Builder
+	template, ok := tmpl[name]
+	if !ok {
+		panic("template '" + name.String() + "' not found")
 	}
-	for i, r := range ruleAlphabet {
-		ruleWeights[r] = i
+	err := template.Execute(&res, data)
+	if err != nil {
+		panic(err)
 	}
+	return res.String()
+}
+
+func generateWeights[T Kind | string](alphabet []T) map[T]int {
+	res := make(map[T]int, len(alphabet))
+	for i, r := range alphabet {
+		res[r] = i
+	}
+	return res
+}
+
+func generateRequirementsWeights(requirements map[Kind]requirement) map[Kind]map[string]map[string]int {
+	res := make(map[Kind]map[string]map[string]int, len(requirements))
+	for rule, req := range requirements {
+		res[rule] = make(map[string]map[string]int, len(req))
+		for key, values := range req {
+			res[rule][key] = generateWeights(values)
+		}
+	}
+	return res
 }
 
 func join(i any) string {
@@ -125,20 +190,48 @@ func join(i any) string {
 	}
 }
 
-func typeOf(i any) string {
-	return strings.TrimPrefix(reflect.TypeOf(i).String(), "*aa.")
+func cjoin(i any) string {
+	switch reflect.TypeOf(i).Kind() {
+	case reflect.Slice:
+		s := i.([]string)
+		if len(s) == 1 {
+			return s[0]
+		}
+		return "(" + strings.Join(s, " ") + ")"
+	case reflect.Map:
+		res := []string{}
+		for k, v := range i.(map[string]string) {
+			res = append(res, k+"="+v)
+		}
+		return "(" + strings.Join(res, " ") + ")"
+	default:
+		return i.(string)
+	}
 }
 
-func typeToValue(i reflect.Type) string {
-	return strings.ToLower(strings.TrimPrefix(i.String(), "*aa."))
+func kindOf(i any) string {
+	if i == nil {
+		return ""
+	}
+	return i.(Rule).Kind().String()
+}
+
+func setindent(i string) string {
+	switch i {
+	case "++":
+		IndentationLevel++
+	case "--":
+		IndentationLevel--
+	}
+	return ""
 }
 
 func indent(s string) string {
-	return indentation + s
+	return strings.Repeat(Indentation, IndentationLevel) + s
 }
 
 func indentDbus(s string) string {
-	return indentation + "     " + s
+	return strings.Join([]string{Indentation, s}, "     ")
 }
 
 func getLetterIn(alphabet []string, in string) string {
@@ -148,11 +241,4 @@ func getLetterIn(alphabet []string, in string) string {
 		}
 	}
 	return ""
-}
-
-func toAccess(mask string) string {
-	if requestedMaskToAccess[mask] != "" {
-		return requestedMaskToAccess[mask]
-	}
-	return mask
 }
