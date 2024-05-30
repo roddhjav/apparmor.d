@@ -13,8 +13,8 @@ import (
 )
 
 var (
-	testData = paths.New("../../").Join("tests")
-	intData  = paths.New("../../").Join("apparmor.d")
+	testData = paths.New("../../tests/testdata/")
+	intData  = paths.New("../../apparmor.d")
 )
 
 func TestAppArmorProfileFile_String(t *testing.T) {

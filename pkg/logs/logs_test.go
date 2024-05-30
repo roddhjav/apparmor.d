@@ -188,7 +188,7 @@ func TestNewApparmorLogs(t *testing.T) {
 	}{
 		{
 			name: "dnsmasq",
-			path: "../../tests/audit.log",
+			path: filepath.Join(testdata, "audit.log"),
 			want: AppArmorLogs{
 				{
 					"apparmor":       "DENIED",
@@ -233,17 +233,17 @@ func TestNewApparmorLogs(t *testing.T) {
 		},
 		{
 			name: "kmod",
-			path: "../../tests/audit.log",
+			path: filepath.Join(testdata, "audit.log"),
 			want: refKmod,
 		},
 		{
 			name: "man",
-			path: "../../tests/audit.log",
+			path: filepath.Join(testdata, "audit.log"),
 			want: refMan,
 		},
 		{
 			name: "power-profiles-daemon",
-			path: "../../tests/audit.log",
+			path: filepath.Join(testdata, "audit.log"),
 			want: refPowerProfiles,
 		},
 	}
