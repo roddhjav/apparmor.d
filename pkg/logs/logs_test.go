@@ -6,6 +6,7 @@ package logs
 
 import (
 	"os"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
