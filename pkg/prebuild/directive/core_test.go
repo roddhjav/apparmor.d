@@ -70,6 +70,7 @@ func TestRun(t *testing.T) {
 		file    *paths.Path
 		profile string
 		want    string
+		wantErr bool
 	}{
 		{
 			name:    "none",
@@ -86,7 +87,12 @@ func TestRun(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := Run(tt.file, tt.profile); got != tt.want {
+			got, err := Run(tt.file, tt.profile)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Run() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
 				t.Errorf("Run() = %v, want %v", got, tt.want)
 			}
 		})

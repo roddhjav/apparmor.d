@@ -83,10 +83,14 @@ func Build() error {
 		if err != nil {
 			return err
 		}
-		for _, b := range builder.Builds {
-			profile = b.Apply(profile)
+		profile, err = builder.Run(file, profile)
+		if err != nil {
+			return err
 		}
-		profile = directive.Run(file, profile)
+		profile, err = directive.Run(file, profile)
+		if err != nil {
+			return err
+		}
 		if err := file.WriteFile([]byte(profile)); err != nil {
 			return err
 		}

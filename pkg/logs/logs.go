@@ -197,8 +197,8 @@ func (aaLogs AppArmorLogs) String() string {
 }
 
 // ParseToProfiles convert the log data into a new AppArmorProfiles
-func (aaLogs AppArmorLogs) ParseToProfiles() aa.AppArmorProfiles {
-	profiles := make(aa.AppArmorProfiles, 0)
+func (aaLogs AppArmorLogs) ParseToProfiles() map[string]*aa.Profile {
+	profiles := make(map[string]*aa.Profile, 0)
 	for _, log := range aaLogs {
 		name := ""
 		if strings.Contains(log["operation"], "dbus") {
@@ -208,8 +208,7 @@ func (aaLogs AppArmorLogs) ParseToProfiles() aa.AppArmorProfiles {
 		}
 
 		if _, ok := profiles[name]; !ok {
-			profile := &aa.AppArmorProfile{}
-			profile.Name = name
+			profile := &aa.Profile{Header: aa.Header{Name: name}}
 			profile.AddRule(log)
 			profiles[name] = profile
 		} else {

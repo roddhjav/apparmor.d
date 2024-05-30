@@ -2,6 +2,8 @@
 // Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
 // SPDX-License-Identifier: GPL-2.0-only
 
+// TODO: Local variables in profile header need to be resolved
+
 package directive
 
 import (
@@ -27,7 +29,7 @@ func init() {
 	})
 }
 
-func (d Exec) Apply(opt *Option, profile string) string {
+func (d Exec) Apply(opt *Option, profileRaw string) (string, error) {
 	transition := "Px"
 	transitions := []string{"P", "U", "p", "u", "PU", "pu"}
 	t := opt.ArgList[0]
@@ -36,26 +38,34 @@ func (d Exec) Apply(opt *Option, profile string) string {
 		delete(opt.ArgMap, t)
 	}
 
-	p := &aa.AppArmorProfile{}
+	rules := aa.Rules{}
 	for name := range opt.ArgMap {
 		profiletoTransition := util.MustReadFile(cfg.RootApparmord.Join(name))
 		dstProfile := aa.DefaultTunables()
-		dstProfile.ParseVariables(profiletoTransition)
-		for _, variable := range dstProfile.Variables {
+		if err := dstProfile.Parse(profiletoTransition); err != nil {
+			return "", err
+		}
+		if err := dstProfile.Resolve(); err != nil {
+			return "", err
+		}
+		for _, variable := range dstProfile.Preamble.GetVariables() {
 			if variable.Name == "exec_path" {
 				for _, v := range variable.Values {
-					p.Rules = append(p.Rules, &aa.File{
+					rules = append(rules, &aa.File{
 						Path:   v,
-						Access: transition,
+						Access: []string{transition},
 					})
 				}
 				break
 			}
 		}
 	}
-	p.Sort()
-	rules := p.String()
-	lenRules := len(rules)
-	rules = rules[:lenRules-1]
-	return strings.Replace(profile, opt.Raw, rules, -1)
+
+	aa.IndentationLevel = strings.Count(
+		strings.SplitN(opt.Raw, Keyword, 1)[0], aa.Indentation,
+	)
+	rules = rules.Sort()
+	new := rules.String()
+	new = new[:len(new)-1]
+	return strings.Replace(profileRaw, opt.Raw, new, -1), nil
 }

@@ -5,16 +5,39 @@
 package aa
 
 var (
+	// Comment
+	comment1 = &Comment{RuleBase: RuleBase{Comment: "comment", IsLineRule: true}}
+	comment2 = &Comment{RuleBase: RuleBase{Comment: "another comment", IsLineRule: true}}
+
+	// Abi
+	abi1 = &Abi{IsMagic: true, Path: "abi/4.0"}
+	abi2 = &Abi{IsMagic: true, Path: "abi/3.0"}
+
+	// Alias
+	alias1 = &Alias{Path: "/mnt/usr", RewrittenPath: "/usr"}
+	alias2 = &Alias{Path: "/mnt/var", RewrittenPath: "/var"}
+
 	// Include
 	include1      = &Include{IsMagic: true, Path: "abstraction/base"}
 	include2      = &Include{IsMagic: false, Path: "abstraction/base"}
-	include3      = &Include{IfExists: true, IsMagic: true, Path: "abstraction/base"}
 	includeLocal1 = &Include{IfExists: true, IsMagic: true, Path: "local/foo"}
+
+	// Variable
+	variable1 = &Variable{Name: "bin", Values: []string{"/{,usr/}{,s}bin"}, Define: true}
+	variable2 = &Variable{Name: "exec_path", Values: []string{"@{bin}/foo", "@{lib}/foo"}, Define: true}
+
+	// All
+	all1 = &All{}
+	all2 = &All{RuleBase: RuleBase{Comment: "comment"}}
 
 	// Rlimit
 	rlimit1 = &Rlimit{Key: "nproc", Op: "<=", Value: "200"}
 	rlimit2 = &Rlimit{Key: "cpu", Op: "<=", Value: "2"}
 	rlimit3 = &Rlimit{Key: "nproc", Op: "<", Value: "2"}
+
+	// Userns
+	userns1 = &Userns{Create: true}
+	userns2 = &Userns{}
 
 	// Capability
 	capability1Log = map[string]string{
@@ -26,8 +49,8 @@ var (
 		"profile":    "pkexec",
 		"comm":       "pkexec",
 	}
-	capability1 = &Capability{Name: "net_admin"}
-	capability2 = &Capability{Name: "sys_ptrace"}
+	capability1 = &Capability{Names: []string{"net_admin"}}
+	capability2 = &Capability{Names: []string{"sys_ptrace"}}
 
 	// Network
 	network1Log = map[string]string{
@@ -71,20 +94,24 @@ var (
 		"flags":     "rw, rbind",
 	}
 	mount1 = &Mount{
-		Qualifier:       Qualifier{Comment: "failed perms check"},
+		RuleBase:        RuleBase{Comment: " failed perms check"},
 		MountConditions: MountConditions{FsType: "overlay"},
 		Source:          "overlay",
 		MountPoint:      "/var/lib/docker/overlay2/opaque-bug-check1209538631/merged/",
 	}
 	mount2 = &Mount{
-		Qualifier:       Qualifier{Comment: "failed perms check"},
+		RuleBase:        RuleBase{Comment: " failed perms check"},
 		MountConditions: MountConditions{Options: []string{"rw", "rbind"}},
 		Source:          "/oldroot/dev/tty",
 		MountPoint:      "/newroot/dev/tty",
 	}
 
+	// Remount
+	remount1 = &Remount{MountPoint: "/"}
+	remount2 = &Remount{MountPoint: "/{,**}/"}
+
 	// Umount
-	umount1Log    = map[string]string{
+	umount1Log = map[string]string{
 		"apparmor":  "ALLOWED",
 		"class":     "mount",
 		"operation": "umount",
@@ -96,7 +123,6 @@ var (
 	umount2 = &Umount{MountPoint: "/oldroot/"}
 
 	// PivotRoot
-	// pivotroot1LogStr = `apparmor="ALLOWED" operation="pivotroot" class="mount" profile="systemd" name="@{run}/systemd/mount-rootfs/"  comm="(ostnamed)" srcname="@{run}/systemd/mount-rootfs/"`
 	pivotroot1Log = map[string]string{
 		"apparmor":  "ALLOWED",
 		"class":     "mount",
@@ -120,7 +146,6 @@ var (
 	}
 
 	// Change Profile
-	// changeprofile1LogStr = `apparmor="ALLOWED" operation="change_onexec" class="file" profile="systemd" name="systemd-user"  comm="(systemd)" target="systemd-user"`
 	changeprofile1Log = map[string]string{
 		"apparmor":  "ALLOWED",
 		"class":     "file",
@@ -133,6 +158,14 @@ var (
 	changeprofile1 = &ChangeProfile{ProfileName: "systemd-user"}
 	changeprofile2 = &ChangeProfile{ProfileName: "brwap"}
 	changeprofile3 = &ChangeProfile{ExecMode: "safe", Exec: "/bin/bash", ProfileName: "brwap//default"}
+
+	// Mqueue
+	mqueue1 = &Mqueue{Access: []string{"r"}, Type: "posix", Name: "/"}
+	mqueue2 = &Mqueue{Access: []string{"r"}, Type: "sysv", Name: "/"}
+
+	// IO Uring
+	iouring1 = &IOUring{Access: []string{"sqpoll"}, Label: "foo"}
+	iouring2 = &IOUring{Access: []string{"override_creds"}}
 
 	// Signal
 	signal1Log = map[string]string{
@@ -147,13 +180,13 @@ var (
 		"peer":           "firefox//&firejail-default",
 	}
 	signal1 = &Signal{
-		Access: "receive",
-		Set:    "kill",
+		Access: []string{"receive"},
+		Set:    []string{"kill"},
 		Peer:   "firefox//&firejail-default",
 	}
 	signal2 = &Signal{
-		Access: "receive",
-		Set:    "up",
+		Access: []string{"receive"},
+		Set:    []string{"up"},
 		Peer:   "firefox//&firejail-default",
 	}
 
@@ -177,8 +210,8 @@ var (
 		"denied_mask":    "readby",
 		"peer":           "systemd-journald",
 	}
-	ptrace1 = &Ptrace{Access: "read", Peer: "nautilus"}
-	ptrace2 = &Ptrace{Access: "readby", Peer: "systemd-journald"}
+	ptrace1 = &Ptrace{Access: []string{"read"}, Peer: "nautilus"}
+	ptrace2 = &Ptrace{Access: []string{"readby"}, Peer: "systemd-journald"}
 
 	// Unix
 	unix1Log = map[string]string{
@@ -197,17 +230,17 @@ var (
 		"protocol":       "0",
 	}
 	unix1 = &Unix{
-		Access:   "send receive",
-		Type:     "stream",
-		Protocol: "0",
-		Address:  "none",
-		Peer:     "dbus-daemon",
-		PeerAddr: "@/tmp/dbus-AaKMpxzC4k",
+		Access:    []string{"send", "receive"},
+		Type:      "stream",
+		Protocol:  "0",
+		Address:   "none",
+		PeerAddr:  "@/tmp/dbus-AaKMpxzC4k",
+		PeerLabel: "dbus-daemon",
 	}
 	unix2 = &Unix{
-		Qualifier: Qualifier{FileInherit: true},
-		Access:    "receive",
-		Type:      "stream",
+		RuleBase: RuleBase{FileInherit: true},
+		Access:   []string{"receive"},
+		Type:     "stream",
 	}
 
 	// Dbus
@@ -234,21 +267,21 @@ var (
 		"label":     "evolution-source-registry",
 	}
 	dbus1 = &Dbus{
-		Access:    "receive",
+		Access:    []string{"receive"},
 		Bus:       "session",
-		Name:      ":1.15",
 		Path:      "/org/gtk/vfs/metadata",
 		Interface: "org.gtk.vfs.Metadata",
 		Member:    "Remove",
-		Label:     "tracker-extract",
+		PeerName:  ":1.15",
+		PeerLabel: "tracker-extract",
 	}
 	dbus2 = &Dbus{
-		Access: "bind",
+		Access: []string{"bind"},
 		Bus:    "session",
 		Name:   "org.gnome.evolution.dataserver.Sources5",
 	}
 	dbus3 = &Dbus{
-		Access: "bind",
+		Access: []string{"bind"},
 		Bus:    "session",
 		Name:   "org.gnome.evolution.dataserver",
 	}
@@ -283,10 +316,77 @@ var (
 		"OUID":           "user",
 		"error":          "-1",
 	}
-	file1 = &File{Path: "/usr/share/poppler/cMap/Identity-H", Access: "r"}
+	file1 = &File{Path: "/usr/share/poppler/cMap/Identity-H", Access: []string{"r"}}
 	file2 = &File{
-		Qualifier: Qualifier{Owner: true, NoNewPrivs: true},
-		Path:      "@{PROC}/4163/cgroup",
-		Access:    "r",
+		RuleBase: RuleBase{NoNewPrivs: true},
+		Owner:    true,
+		Path:     "@{PROC}/4163/cgroup",
+		Access:   []string{"r"},
 	}
+
+	// Link
+	link1Log = map[string]string{
+		"apparmor":       "ALLOWED",
+		"operation":      "link",
+		"class":          "file",
+		"profile":        "mkinitcpio",
+		"name":           "/tmp/mkinitcpio.QDWtza/early@{lib}/firmware/i915/dg1_dmc_ver2_02.bin.zst",
+		"comm":           "cp",
+		"requested_mask": "l",
+		"denied_mask":    "l",
+		"fsuid":          "0",
+		"ouid":           "0",
+		"target":         "/tmp/mkinitcpio.QDWtza/root@{lib}/firmware/i915/dg1_dmc_ver2_02.bin.zst",
+		"FSUID":          "root",
+		"OUID":           "root",
+	}
+	link3Log = map[string]string{
+		"apparmor":       "ALLOWED",
+		"operation":      "link",
+		"class":          "file",
+		"profile":        "dolphin",
+		"name":           "@{user_config_dirs}/kiorc",
+		"comm":           "dolphin",
+		"requested_mask": "l",
+		"denied_mask":    "l",
+		"fsuid":          "1000",
+		"ouid":           "1000",
+		"target":         "@{user_config_dirs}/#3954",
+	}
+	link1 = &Link{
+		Path:   "/tmp/mkinitcpio.QDWtza/early@{lib}/firmware/i915/dg1_dmc_ver2_02.bin.zst",
+		Target: "/tmp/mkinitcpio.QDWtza/root@{lib}/firmware/i915/dg1_dmc_ver2_02.bin.zst",
+	}
+	link2 = &Link{
+		Owner:  true,
+		Path:   "@{user_config_dirs}/powerdevilrc{,.@{rand6}}",
+		Target: "@{user_config_dirs}/#@{int}",
+	}
+	link3 = &Link{
+		Owner:  true,
+		Path:   "@{user_config_dirs}/kiorc",
+		Target: "@{user_config_dirs}/#3954",
+	}
+
+	// Profile
+	profile1 = &Profile{
+		Header: Header{
+			Name:        "sudo",
+			Attachments: []string{},
+			Attributes:  map[string]string{},
+			Flags:       []string{},
+		},
+	}
+	profile2 = &Profile{
+		Header: Header{
+			Name:        "systemctl",
+			Attachments: []string{},
+			Attributes:  map[string]string{},
+			Flags:       []string{},
+		},
+	}
+
+	// Hat
+	hat1 = &Hat{Name: "user"}
+	hat2 = &Hat{Name: "root"}
 )

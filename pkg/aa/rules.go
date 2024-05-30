@@ -5,133 +5,233 @@
 package aa
 
 import (
-	"strings"
+	"slices"
 )
 
-type Rule struct {
-	Comment     string
-	NoNewPrivs  bool
-	FileInherit bool
+type requirement map[string][]string
+
+type constraint uint
+
+const (
+	anyKind      constraint = iota // The rule can be found in either preamble or profile
+	preambleKind                   // The rule can only be found in the preamble
+	blockKind                      // The rule can only be found in a profile
+)
+
+// Kind represents an AppArmor rule kind.
+type Kind string
+
+func (k Kind) String() string {
+	return string(k)
 }
 
-func (r *Rule) Less(other any) bool {
-	return false
-}
-
-func (r *Rule) Equals(other any) bool {
-	return false
-}
-
-// Qualifier to apply extra settings to a rule
-type Qualifier struct {
-	Audit       bool
-	AccessType  string
-	Owner       bool
-	NoNewPrivs  bool
-	FileInherit bool
-	Optional    bool
-	Comment     string
-	Prefix      string
-	Padding     string
-}
-
-func NewQualifierFromLog(log map[string]string) Qualifier {
-	owner := false
-	fsuid, hasFsUID := log["fsuid"]
-	ouid, hasOuUID := log["ouid"]
-	isDbus := strings.Contains(log["operation"], "dbus")
-	if hasFsUID && hasOuUID && fsuid == ouid && ouid != "0" && !isDbus {
-		owner = true
+func (k Kind) Tok() string {
+	if t, ok := tok[k]; ok {
+		return t
 	}
+	return string(k)
+}
 
-	audit := false
-	if log["apparmor"] == "AUDIT" {
-		audit = true
-	}
+// Rule generic interface for all AppArmor rules
+type Rule interface {
+	Validate() error
+	Less(other any) bool
+	Equals(other any) bool
+	String() string
+	Constraint() constraint
+	Kind() Kind
+}
 
-	fileInherit := false
-	if log["operation"] == "file_inherit" {
-		fileInherit = true
-	}
+type Rules []Rule
 
-	noNewPrivs := false
-	optional := false
-	msg := ""
-	switch log["error"] {
-	case "-1":
-		if strings.Contains(log["info"], "optional:") {
-			optional = true
-			msg = strings.Replace(log["info"], "optional: ", "", 1)
-		} else {
-			noNewPrivs = true
+func (r Rules) Validate() error {
+	for _, rule := range r {
+		if rule == nil {
+			continue
 		}
-	case "-13":
-		ignoreProfileInfo := []string{"namespace", "disconnected path"}
-		for _, info := range ignoreProfileInfo {
-			if strings.Contains(log["info"], info) {
-				break
+		if err := rule.Validate(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (r Rules) String() string {
+	return renderTemplate("rules", r)
+}
+
+// Index returns the index of the first occurrence of rule rin r, or -1 if not present.
+func (r Rules) Index(item Rule) int {
+	for idx, rule := range r {
+		if rule == nil {
+			continue
+		}
+		if rule.Kind() == item.Kind() && rule.Equals(item) {
+			return idx
+		}
+	}
+	return -1
+}
+
+// Replace replaces the elements r[i] by the given rules, and returns the
+// modified slice.
+func (r Rules) Replace(i int, rules ...Rule) Rules {
+	return append(r[:i], append(rules, r[i+1:]...)...)
+}
+
+// Insert inserts the rules into r at index i, returning the modified slice.
+func (r Rules) Insert(i int, rules ...Rule) Rules {
+	return append(r[:i], append(rules, r[i:]...)...)
+}
+
+// Delete removes the elements r[i] from r, returning the modified slice.
+func (r Rules) Delete(i int) Rules {
+	return append(r[:i], r[i+1:]...)
+}
+
+func (r Rules) DeleteKind(kind Kind) Rules {
+	res := make(Rules, 0)
+	for _, rule := range r {
+		if rule == nil {
+			continue
+		}
+		if rule.Kind() != kind {
+			res = append(res, rule)
+		}
+	}
+	return res
+}
+
+func (r Rules) Filter(filter Kind) Rules {
+	res := make(Rules, 0)
+	for _, rule := range r {
+		if rule == nil {
+			continue
+		}
+		if rule.Kind() != filter {
+			res = append(res, rule)
+		}
+	}
+	return res
+}
+
+func (r Rules) GetVariables() []*Variable {
+	res := make([]*Variable, 0)
+	for _, rule := range r {
+		switch rule := rule.(type) {
+		case *Variable:
+			res = append(res, rule)
+		}
+	}
+	return res
+}
+
+func (r Rules) GetIncludes() []*Include {
+	res := make([]*Include, 0)
+	for _, rule := range r {
+		switch rule := rule.(type) {
+		case *Include:
+			res = append(res, rule)
+		}
+	}
+	return res
+}
+
+// Merge merge similar rules together.
+// Steps:
+//   - Remove identical rules
+//   - Merge rule access. Eg: for same path, 'r' and 'w' becomes 'rw'
+//
+// Note: logs.regCleanLogs helps a lot to do a first cleaning
+func (r Rules) Merge() Rules {
+	for i := 0; i < len(r); i++ {
+		for j := i + 1; j < len(r); j++ {
+			typeOfI := r[i].Kind()
+			typeOfJ := r[j].Kind()
+			if typeOfI != typeOfJ {
+				continue
+			}
+
+			// If rules are identical, merge them
+			if r[i].Equals(r[j]) {
+				r = r.Delete(j)
+				j--
+				continue
+			}
+
+			// File rule
+			if typeOfI == FILE && typeOfJ == FILE {
+				// Merge access
+				fileI := r[i].(*File)
+				fileJ := r[j].(*File)
+				if fileI.Path == fileJ.Path {
+					fileI.Access = append(fileI.Access, fileJ.Access...)
+					slices.SortFunc(fileI.Access, cmpFileAccess)
+					fileI.Access = slices.Compact(fileI.Access)
+					r = r.Delete(j)
+					j--
+				}
 			}
 		}
-		msg = log["info"]
-	default:
 	}
-
-	return Qualifier{
-		Audit:       audit,
-		Owner:       owner,
-		NoNewPrivs:  noNewPrivs,
-		FileInherit: fileInherit,
-		Optional:    optional,
-		Comment:     msg,
-	}
+	return r
 }
 
-func (r Qualifier) Less(other Qualifier) bool {
-	if r.Owner == other.Owner {
-		if r.Audit == other.Audit {
-			return r.AccessType < other.AccessType
+// Sort the rules according to the guidelines:
+// https://apparmor.pujol.io/development/guidelines/#guidelines
+func (r Rules) Sort() Rules {
+	slices.SortFunc(r, func(a, b Rule) int {
+		kindOfA := a.Kind()
+		kindOfB := b.Kind()
+		if kindOfA != kindOfB {
+			if kindOfA == INCLUDE && a.(*Include).IfExists {
+				kindOfA = "include_if_exists"
+			}
+			if kindOfB == INCLUDE && b.(*Include).IfExists {
+				kindOfB = "include_if_exists"
+			}
+			return ruleWeights[kindOfA] - ruleWeights[kindOfB]
 		}
-		return r.Audit
+		if a.Equals(b) {
+			return 0
+		}
+		if a.Less(b) {
+			return -1
+		}
+		return 1
+	})
+	return r
+}
+
+// Format the rules for better readability before printing it.
+// Follow: https://apparmor.pujol.io/development/guidelines/#the-file-block
+func (r Rules) Format() Rules {
+	const prefixOwner = "      "
+
+	hasOwnerRule := false
+	for i := len(r) - 1; i > 0; i-- {
+		j := i - 1
+		typeOfI := r[i].Kind()
+		typeOfJ := r[j].Kind()
+
+		// File rule
+		if typeOfI == FILE && typeOfJ == FILE {
+			letterI := getLetterIn(fileAlphabet, r[i].(*File).Path)
+			letterJ := getLetterIn(fileAlphabet, r[j].(*File).Path)
+
+			// Add prefix before rule path to align with other rule
+			if r[i].(*File).Owner {
+				hasOwnerRule = true
+			} else if hasOwnerRule {
+				r[i].(*File).Prefix = prefixOwner
+			}
+
+			if letterI != letterJ {
+				// Add a new empty line between Files rule of different type
+				hasOwnerRule = false
+				r = r.Insert(i, nil)
+			}
+		}
 	}
-	return other.Owner
-}
-
-func (r Qualifier) Equals(other Qualifier) bool {
-	return r.Audit == other.Audit && r.AccessType == other.AccessType &&
-		r.Owner == other.Owner && r.NoNewPrivs == other.NoNewPrivs &&
-		r.FileInherit == other.FileInherit
-}
-
-// Preamble specific rules
-
-type Abi struct {
-	Path    string
-	IsMagic bool
-}
-
-func (r Abi) Less(other Abi) bool {
-	if r.Path == other.Path {
-		return r.IsMagic == other.IsMagic
-	}
-	return r.Path < other.Path
-}
-
-func (r Abi) Equals(other Abi) bool {
-	return r.Path == other.Path && r.IsMagic == other.IsMagic
-}
-
-type Alias struct {
-	Path          string
-	RewrittenPath string
-}
-
-func (r Alias) Less(other Alias) bool {
-	if r.Path == other.Path {
-		return r.RewrittenPath < other.RewrittenPath
-	}
-	return r.Path < other.Path
-}
-
-func (r Alias) Equals(other Alias) bool {
-	return r.Path == other.Path && r.RewrittenPath == other.RewrittenPath
+	return r
 }

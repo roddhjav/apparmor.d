@@ -26,7 +26,7 @@ var (
 // Main directive interface
 type Directive interface {
 	cfg.BaseInterface
-	Apply(opt *Option, profile string) string
+	Apply(opt *Option, profile string) (string, error)
 }
 
 // Directive options
@@ -72,14 +72,18 @@ func RegisterDirective(d Directive) {
 	Directives[d.Name()] = d
 }
 
-func Run(file *paths.Path, profile string) string {
+func Run(file *paths.Path, profile string) (string, error) {
+	var err error
 	for _, match := range regDirective.FindAllStringSubmatch(profile, -1) {
 		opt := NewOption(file, match)
 		drtv, ok := Directives[opt.Name]
 		if !ok {
-			panic(fmt.Sprintf("Unknown directive: %s", opt.Name))
+			return "", fmt.Errorf("Unknown directive '%s' in %s", opt.Name, opt.File)
 		}
-		profile = drtv.Apply(opt, profile)
+		profile, err = drtv.Apply(opt, profile)
+		if err != nil {
+			return "", fmt.Errorf("%s %s: %w", drtv.Name(), opt.File, err)
+		}
 	}
-	return profile
+	return profile, nil
 }

@@ -41,12 +41,12 @@ func filterRuleForUs(opt *Option) bool {
 	return slices.Contains(opt.ArgList, cfg.Distribution) || slices.Contains(opt.ArgList, cfg.Family)
 }
 
-func filter(only bool, opt *Option, profile string) string {
+func filter(only bool, opt *Option, profile string) (string, error) {
 	if only && filterRuleForUs(opt) {
-		return opt.Clean(profile)
+		return opt.Clean(profile), nil
 	}
 	if !only && !filterRuleForUs(opt) {
-		return opt.Clean(profile)
+		return opt.Clean(profile), nil
 	}
 
 	inline := true
@@ -64,13 +64,13 @@ func filter(only bool, opt *Option, profile string) string {
 		regRemoveParagraph := regexp.MustCompile(`(?s)` + opt.Raw + `\n.*?\n\n`)
 		profile = regRemoveParagraph.ReplaceAllString(profile, "")
 	}
-	return profile
+	return profile, nil
 }
 
-func (d FilterOnly) Apply(opt *Option, profile string) string {
+func (d FilterOnly) Apply(opt *Option, profile string) (string, error) {
 	return filter(true, opt, profile)
 }
 
-func (d FilterExclude) Apply(opt *Option, profile string) string {
+func (d FilterExclude) Apply(opt *Option, profile string) (string, error) {
 	return filter(false, opt, profile)
 }

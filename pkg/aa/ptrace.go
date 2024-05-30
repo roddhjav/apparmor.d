@@ -4,33 +4,69 @@
 
 package aa
 
+import (
+	"fmt"
+	"slices"
+)
+
+const PTRACE Kind = "ptrace"
+
+func init() {
+	requirements[PTRACE] = requirement{
+		"access": []string{
+			"r", "w", "rw", "read", "readby", "trace", "tracedby",
+		},
+	}
+}
+
 type Ptrace struct {
+	RuleBase
 	Qualifier
-	Access string
+	Access []string
 	Peer   string
 }
 
-func PtraceFromLog(log map[string]string) ApparmorRule {
+func newPtraceFromLog(log map[string]string) Rule {
 	return &Ptrace{
-		Qualifier: NewQualifierFromLog(log),
-		Access:    toAccess(log["requested_mask"]),
+		RuleBase:  newRuleFromLog(log),
+		Qualifier: newQualifierFromLog(log),
+		Access:    Must(toAccess(PTRACE, log["requested_mask"])),
 		Peer:      log["peer"],
 	}
 }
 
+func (r *Ptrace) Validate() error {
+	if err := validateValues(r.Kind(), "access", r.Access); err != nil {
+		return fmt.Errorf("%s: %w", r, err)
+	}
+	return nil
+}
+
 func (r *Ptrace) Less(other any) bool {
 	o, _ := other.(*Ptrace)
-	if r.Qualifier.Equals(o.Qualifier) {
-		if r.Access == o.Access {
-			return r.Peer == o.Peer
-		}
-		return r.Access < o.Access
+	if len(r.Access) != len(o.Access) {
+		return len(r.Access) < len(o.Access)
+	}
+	if r.Peer != o.Peer {
+		return r.Peer == o.Peer
 	}
 	return r.Qualifier.Less(o.Qualifier)
 }
 
 func (r *Ptrace) Equals(other any) bool {
 	o, _ := other.(*Ptrace)
-	return r.Access == o.Access && r.Peer == o.Peer &&
+	return slices.Equal(r.Access, o.Access) && r.Peer == o.Peer &&
 		r.Qualifier.Equals(o.Qualifier)
+}
+
+func (r *Ptrace) String() string {
+	return renderTemplate(r.Kind(), r)
+}
+
+func (r *Ptrace) Constraint() constraint {
+	return blockKind
+}
+
+func (r *Ptrace) Kind() Kind {
+	return PTRACE
 }
