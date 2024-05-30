@@ -11,14 +11,12 @@ include <tunables/global>
 profile ganyremote @{exec_path} {
   include <abstractions/base>
   include <abstractions/consoles>
-  include <abstractions/nameservice-strict>
-  include <abstractions/gtk>
-  include <abstractions/freedesktop.org>
-  include <abstractions/fonts>
+  include <abstractions/desktop>
   include <abstractions/fontconfig-cache-read>
-  include <abstractions/user-download-strict>
+  include <abstractions/nameservice-strict>
   include <abstractions/python>
   include <abstractions/thumbnails-cache-read>
+  include <abstractions/user-download-strict>
 
   network inet stream,
   network inet6 stream,
@@ -52,23 +50,18 @@ profile ganyremote @{exec_path} {
   @{bin}/mpv        rPUx,
   @{bin}/strawberry rPUx,
 
-  owner @{HOME}/ r,
-  owner @{HOME}/.anyRemote/{,*} rw,
-
   /usr/share/anyremote/{,**} r,
-
-  deny       @{PROC}/sys/kernel/osrelease r,
-       owner @{PROC}/@{pid}/mounts r,
-       owner @{PROC}/@{pid}/mountinfo r,
+  /usr/share/doc/anyremote{,-data}/{,**} r,
 
   /etc/fstab r,
 
-  # Doc dirs
-  deny /usr/local/share/ r,
-  deny /usr/share/ r,
-  deny /usr/share/doc/ r,
-       /usr/share/doc/anyremote{,-data}/ r,
+  owner @{HOME}/ r,
+  owner @{HOME}/.anyRemote/{,*} rw,
 
+  owner @{PROC}/@{pid}/mounts r,
+  owner @{PROC}/@{pid}/mountinfo r,
+
+  deny @{PROC}/sys/kernel/osrelease r,
 
   profile killall {
     include <abstractions/base>
@@ -87,21 +80,16 @@ profile ganyremote @{exec_path} {
          @{PROC}/ r,
          @{PROC}/@{pids}/stat r,
 
+    include if exists <local/ganyremote_killall>
   }
 
   profile pgrep {
     include <abstractions/base>
-    include <abstractions/consoles>
-
-    @{bin}/pgrep mr,
-
-    # The /proc/ dir and the cmdline file have to be radable to avoid pgrep segfault.
-         @{PROC}/ r,
-         @{PROC}/@{pids}/cmdline r,
-    deny @{PROC}/sys/kernel/osrelease r,
+    include <abstractions/app/pgrep>
 
     /usr/share/anyremote/{,**} r,
 
+    include if exists <local/ganyremote_pgrep>
   }
 
   include if exists <local/ganyremote>
