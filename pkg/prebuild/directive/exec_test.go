@@ -31,8 +31,8 @@ func TestExec_Apply(t *testing.T) {
 				Raw:     "  #aa:exec DiscoverNotifier",
 			},
 			profile: `  #aa:exec DiscoverNotifier`,
-			want: `  @{lib}/@{multiarch}/{,libexec/}DiscoverNotifier Px,
-  @{lib}/DiscoverNotifier Px,`,
+			want: `  /{,usr/}lib{,exec,32,64}/*-linux-gnu*/{,libexec/}DiscoverNotifier Px,
+  /{,usr/}lib{,exec,32,64}/DiscoverNotifier Px,`,
 		},
 		{
 			name:          "exec-unconfined",
@@ -45,8 +45,8 @@ func TestExec_Apply(t *testing.T) {
 				Raw:     "  #aa:exec U polkit-agent-helper",
 			},
 			profile: `  #aa:exec U polkit-agent-helper`,
-			want: `  @{lib}/polkit-[0-9]/polkit-agent-helper-[0-9] Ux,
-  @{lib}/polkit-agent-helper-[0-9] Ux,`,
+			want: `  /{,usr/}lib{,exec,32,64}/polkit-[0-9]/polkit-agent-helper-[0-9] Ux,
+  /{,usr/}lib{,exec,32,64}/polkit-agent-helper-[0-9] Ux,`,
 		},
 	}
 	for _, tt := range tests {

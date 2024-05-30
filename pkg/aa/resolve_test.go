@@ -110,14 +110,37 @@ func TestAppArmorProfileFile_resolveValues(t *testing.T) {
 func TestAppArmorProfileFile_Resolve(t *testing.T) {
 	tests := []struct {
 		name         string
-		variables    Rules
+		preamble     Rules
 		attachements []string
 		want         *AppArmorProfileFile
 		wantErr      bool
 	}{
 		{
-			name: "firefox",
-			variables: Rules{
+			name: "variables/append",
+			preamble: Rules{
+				&Variable{Name: "lib", Values: []string{"/{usr/,}lib"}, Define: true},
+				&Variable{Name: "multiarch", Values: []string{"*-linux-gnu*"}, Define: true},
+				&Variable{Name: "exec_path", Values: []string{"@{lib}/DiscoverNotifier"}, Define: true},
+				&Variable{Name: "exec_path", Values: []string{"@{lib}/@{multiarch}/{,libexec/}DiscoverNotifier"}, Define: false},
+			},
+			want: &AppArmorProfileFile{
+				Preamble: Rules{
+					&Variable{Name: "lib", Values: []string{"/{usr/,}lib"}, Define: true},
+					&Variable{Name: "multiarch", Values: []string{"*-linux-gnu*"}, Define: true},
+					&Variable{
+						Name: "exec_path", Define: true,
+						Values: []string{
+							"/{usr/,}lib/DiscoverNotifier",
+							"/{usr/,}lib/*-linux-gnu*/{,libexec/}DiscoverNotifier",
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "attachment/firefox",
+			preamble: Rules{
 				&Variable{Name: "firefox_name", Values: []string{"firefox{,-esr,-bin}"}, Define: true},
 				&Variable{Name: "firefox_lib_dirs", Values: []string{"/{usr/,}/lib{,32,64}/@{firefox_name}", "/opt/@{firefox_name}"}, Define: true},
 				&Variable{Name: "exec_path", Values: []string{"/{usr/,}bin/@{firefox_name}", "@{firefox_lib_dirs}/@{firefox_name}"}, Define: true},
@@ -155,8 +178,8 @@ func TestAppArmorProfileFile_Resolve(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "chromium",
-			variables: Rules{
+			name: "attachment/chromium",
+			preamble: Rules{
 				&Variable{Name: "name", Values: []string{"chromium"}, Define: true},
 				&Variable{Name: "lib_dirs", Values: []string{"/{usr/,}lib/@{name}"}, Define: true},
 				&Variable{Name: "path", Values: []string{"@{lib_dirs}/@{name}"}, Define: true},
@@ -177,8 +200,8 @@ func TestAppArmorProfileFile_Resolve(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "geoclue",
-			variables: Rules{
+			name: "attachment/geoclue",
+			preamble: Rules{
 				&Variable{Name: "libexec", Values: []string{"/{usr/,}libexec"}, Define: true},
 				&Variable{Name: "exec_path", Values: []string{"@{libexec}/geoclue", "@{libexec}/geoclue-2.0/demos/agent"}, Define: true},
 			},
@@ -206,8 +229,8 @@ func TestAppArmorProfileFile_Resolve(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "opera",
-			variables: Rules{
+			name: "attachment/opera",
+			preamble: Rules{
 				&Variable{Name: "multiarch", Values: []string{"*-linux-gnu*"}, Define: true},
 				&Variable{Name: "name", Values: []string{"opera{,-beta,-developer}"}, Define: true},
 				&Variable{Name: "lib_dirs", Values: []string{"/{usr/,}lib/@{multiarch}/@{name}"}, Define: true},
@@ -234,12 +257,11 @@ func TestAppArmorProfileFile_Resolve(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := &AppArmorProfileFile{
-				Profiles: []*Profile{{
-					Header: Header{Attachments: tt.attachements},
-				}},
+			got := &AppArmorProfileFile{Preamble: tt.preamble}
+			if tt.attachements != nil {
+				got.Profiles = append(got.Profiles, &Profile{Header: Header{Attachments: tt.attachements}})
 			}
-			got.Preamble = tt.variables
+
 			if err := got.Resolve(); (err != nil) != tt.wantErr {
 				t.Errorf("AppArmorProfileFile.Resolve() error = %v, wantErr %v", err, tt.wantErr)
 			}

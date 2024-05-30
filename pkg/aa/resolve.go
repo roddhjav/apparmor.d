@@ -29,6 +29,21 @@ func (f *AppArmorProfileFile) Resolve() error {
 	// 	}
 	// }
 
+	// Append value to variable
+	seen := map[string]*Variable{}
+	for idx, variable := range f.Preamble.GetVariables() {
+		if _, ok := seen[variable.Name]; ok {
+			if variable.Define {
+				return fmt.Errorf("variable %s already defined", variable.Name)
+			}
+			seen[variable.Name].Values = append(seen[variable.Name].Values, variable.Values...)
+			f.Preamble = f.Preamble.Delete(idx)
+		}
+		if variable.Define {
+			seen[variable.Name] = variable
+		}
+	}
+
 	// Resolve variables
 	for _, variable := range f.Preamble.GetVariables() {
 		newValues := []string{}

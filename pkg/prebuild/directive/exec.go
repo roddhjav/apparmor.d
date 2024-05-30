@@ -42,8 +42,10 @@ func (d Exec) Apply(opt *Option, profileRaw string) (string, error) {
 	for name := range opt.ArgMap {
 		profiletoTransition := util.MustReadFile(cfg.RootApparmord.Join(name))
 		dstProfile := aa.DefaultTunables()
-		err := dstProfile.Parse(profiletoTransition)
-		if err != nil {
+		if err := dstProfile.Parse(profiletoTransition); err != nil {
+			return "", err
+		}
+		if err := dstProfile.Resolve(); err != nil {
 			return "", err
 		}
 		for _, variable := range dstProfile.Preamble.GetVariables() {
