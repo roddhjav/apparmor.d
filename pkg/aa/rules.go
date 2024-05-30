@@ -10,12 +10,6 @@ import (
 	"strings"
 )
 
-const (
-	tokALLOW = "allow"
-	tokAUDIT = "audit"
-	tokDENY  = "deny"
-)
-
 type requirement map[string][]string
 
 type constraint uint
@@ -126,9 +120,9 @@ func (r Rules) Filter(filter Kind) Rules {
 func (r Rules) GetVariables() []*Variable {
 	res := make([]*Variable, 0)
 	for _, rule := range r {
-		switch rule.(type) {
+		switch rule := rule.(type) {
 		case *Variable:
-			res = append(res, rule.(*Variable))
+			res = append(res, rule)
 		}
 	}
 	return res
@@ -137,9 +131,9 @@ func (r Rules) GetVariables() []*Variable {
 func (r Rules) GetIncludes() []*Include {
 	res := make([]*Include, 0)
 	for _, rule := range r {
-		switch rule.(type) {
+		switch rule := rule.(type) {
 		case *Include:
-			res = append(res, rule.(*Include))
+			res = append(res, rule)
 		}
 	}
 	return res

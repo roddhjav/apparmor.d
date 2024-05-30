@@ -303,13 +303,13 @@ func TestAppArmorLogs_ParseToProfiles(t *testing.T) {
 					Rules: aa.Rules{
 						&aa.Unix{
 							RuleBase: aa.RuleBase{FileInherit: true},
-							Access:   []string{"receive", "send"},
+							Access:   []string{"send", "receive"},
 							Type:     "stream",
 							Protocol: "0",
 						},
 						&aa.Unix{
 							RuleBase: aa.RuleBase{FileInherit: true},
-							Access:   []string{"receive", "send"},
+							Access:   []string{"send", "receive"},
 							Type:     "stream",
 							Protocol: "0",
 						},

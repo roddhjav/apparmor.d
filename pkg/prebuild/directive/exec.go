@@ -42,7 +42,10 @@ func (d Exec) Apply(opt *Option, profileRaw string) (string, error) {
 	for name := range opt.ArgMap {
 		profiletoTransition := util.MustReadFile(cfg.RootApparmord.Join(name))
 		dstProfile := aa.DefaultTunables()
-		dstProfile.Parse(profiletoTransition)
+		err := dstProfile.Parse(profiletoTransition)
+		if err != nil {
+			return "", err
+		}
 		for _, variable := range dstProfile.Preamble.GetVariables() {
 			if variable.Name == "exec_path" {
 				for _, v := range variable.Values {
