@@ -139,11 +139,12 @@ func (p *Profile) Format() {
 
 // GetAttachments return a nested attachment string
 func (p *Profile) GetAttachments() string {
-	if len(p.Attachments) == 0 {
+	switch len(p.Attachments) {
+	case 0:
 		return ""
-	} else if len(p.Attachments) == 1 {
+	case 1:
 		return p.Attachments[0]
-	} else {
+	default:
 		res := []string{}
 		for _, attachment := range p.Attachments {
 			if strings.HasPrefix(attachment, "/") {
