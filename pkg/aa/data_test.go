@@ -20,7 +20,6 @@ var (
 	// Include
 	include1      = &Include{IsMagic: true, Path: "abstraction/base"}
 	include2      = &Include{IsMagic: false, Path: "abstraction/base"}
-	include3      = &Include{IfExists: true, IsMagic: true, Path: "abstraction/base"}
 	includeLocal1 = &Include{IfExists: true, IsMagic: true, Path: "local/foo"}
 
 	// Variable
@@ -326,8 +325,7 @@ var (
 	}
 
 	// Link
-	link3LogStr = `apparmor="ALLOWED" operation="link" class="file" profile="dolphin" name="@{user_config_dirs}/kiorc"  comm="dolphin" requested_mask="l" denied_mask="l" fsuid=1000 ouid=1000 target="@{user_config_dirs}/#3954"`
-	link1Log    = map[string]string{
+	link1Log = map[string]string{
 		"apparmor":       "ALLOWED",
 		"operation":      "link",
 		"class":          "file",
