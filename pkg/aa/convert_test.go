@@ -7,8 +7,6 @@ package aa
 import (
 	"reflect"
 	"testing"
-
-	"github.com/k0kubun/pp/v3"
 )
 
 func Test_toAccess(t *testing.T) {
@@ -84,7 +82,7 @@ func Test_toAccess(t *testing.T) {
 					return
 				}
 				if !reflect.DeepEqual(got, tt.wants[i]) {
-					t.Errorf("toAccess() = %v, want %v", pp.Sprint(got), pp.Sprint(tt.wants[i]))
+					t.Errorf("toAccess() = %v, want %v", got, tt.wants[i])
 				}
 			}
 		})
