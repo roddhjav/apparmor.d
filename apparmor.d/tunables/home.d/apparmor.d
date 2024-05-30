@@ -21,7 +21,7 @@
 @{XDG_VM_DIR}=".vm"
 @{XDG_VM_SHARES_DIR}="VM_Shares"
 @{XDG_IMG_DIR}="images"
-@{XDG_MAIL_DIR}="Mail"
+@{XDG_MAIL_DIR}="Mail" ".{m,M}ail"
 @{XDG_SCREENSHOTS_DIR}="Pictures/Screenshots"
 @{XDG_WALLPAPERS_DIR}="Pictures/Wallpapers"
 
