@@ -9,7 +9,7 @@ include <tunables/global>
 
 @{exec_path}  = @{lib}/@{multiarch}/{,libexec/}polkit-kde-authentication-agent-[0-9]
 @{exec_path} += @{lib}/polkit-kde-authentication-agent-[0-9]
-profile polkit-kde-authentication-agent @{exec_path} flags=(attach_disconnected) {
+profile polkit-kde-authentication-agent @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/base>
   include <abstractions/consoles>
   include <abstractions/fontconfig-cache-read>
@@ -34,8 +34,17 @@ profile polkit-kde-authentication-agent @{exec_path} flags=(attach_disconnected)
   /var/lib/dbus/machine-id r,
 
   owner @{user_config_dirs}/breezerc r,
+  owner @{user_config_dirs}/kdedefaults/plasmarc r,
 
   owner @{user_cache_dirs}/icon-cache.kcache rw,
+  owner @{user_cache_dirs}/polkit-kde-authentication-agent-@{int}/qmlcache/#@{int} rwl,
+  owner @{user_cache_dirs}/polkit-kde-authentication-agent-@{int}/qmlcache/*.qmlc{,.@{rand6}} rw,
+  owner @{user_cache_dirs}/polkit-kde-authentication-agent-@{int}/qmlcache/*.qmlc{,.@{rand6}} l -> @{user_cache_dirs}/polkit-kde-authentication-agent-@{int}/qmlcache/#@{int},
+  owner @{user_cache_dirs}/polkit-kde-authentication-agent-@{int}/qtpipelinecache-*/qqpc_opengl.lck rwk,
+  owner @{user_cache_dirs}/polkit-kde-authentication-agent-@{int}/qtpipelinecache-*/#@{int} rwl,
+  owner @{user_cache_dirs}/polkit-kde-authentication-agent-@{int}/qtpipelinecache-*/qqpc_opengl{,.@{rand6}} rw,
+  owner @{user_cache_dirs}/polkit-kde-authentication-agent-@{int}/qtpipelinecache-*/qqpc_opengl{,.@{rand6}} l -> @{user_cache_dirs}/polkit-kde-authentication-agent-@{int}/qtpipelinecache-*/#@{int},
+  owner @{user_cache_dirs}/qtshadercache-*/* r,
 
   owner @{tmp}/#@{int} rw,
   owner @{tmp}/polkit-kde-authentication-agent-[0-9].* rwl -> /tmp/#@{int},
