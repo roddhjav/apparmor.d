@@ -1,1 +1,177 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2019-2021 Mikhail Morfikov
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2024 Besanon <m231009ts@mailfence.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_pathrunsv} = @{bin}/runsv
+profile runsv @{exec_pathrunsv} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/bus-session>
+  include <abstractions/bus-system>
+  include <abstractions/bus/org.freedesktop.login1>
+  include <abstractions/nameservice-strict>
+
+  capability fsetid,
+  capability fowner,
+  capability mknod,
+  capability chown,
+  capability setgid,
+  capability setpcap,
+  capability setuid,
+  capability fowner,
+  capability kill,
+
+  signal (send) peer=runsvdir,
+  signal (send) peer=runit,
+  signal (send) peer=NetworkManager,
+  signal (send) peer=agetty,
+  signal (send) set=(cont, term) peer=login,
+  signal (send) set=(cont, term) peer=dhcpcd,
+  signal (send) set=(cont, term) peer=sddm,
+  signal (send) peer=pause,
+  signal (send) peer=cupsd,
+  signal (send) peer=auditd,
+  signal (send) peer=chronyd,
+  signal (send) peer=dbus-daemon,
+  signal (send) peer=udevd,
+  signal (send) peer=rsyslogd,
+  signal (send) set=(kill, term) peer=startlxqt,
+  signal (send) set=(kill, term) peer=xorg,
+  signal (send) set=(term, cont) peer=@{p_systemd},
+  signal (receive) peer=runit,
+  signal (receive) peer=sddm,
+  signal (send) set=(cont, term) peer=elogind,
+  signal (receive) set=(cont, term) peer=elogind,
+  signal (receive) set=(hup) peer=@{p_systemd},
+
+  ptrace (read) peer=elogind,  
+  ptrace (read) peer=@{p_systemd},  
+  ptrace (trace) peer=@{profile_name},
+
+  @{exec_pathrunsv} 	 mr,
+  
+  @{bin}/sv 		 rPx,
+  @{bin}/vlogger         rPx,
+  @{bin}/udevadm 	 rCx -> udevadm, 
+  @{bin}/tlp             rPx,
+  @{bin}/readlink        rix,
+  @{bin}/ethtool         rix,
+  @{bin}/agetty          rPx,
+  @{bin}/id              rPx,
+  @{bin}/rsyslogd        rPx,
+  @{bin}/iw              rPx,
+  @{bin}/cupsd           rPx,
+  @{bin}/dhcpcd          rPx,
+  @{bin}/udevd           rPx,
+  @{bin}/dbus-daemon     rPx,
+  @{bin}/auditd          rPx,
+  @{bin}/chronyd         rPx,
+  @{bin}/NetworkManager  rPx,
+  @{bin}/mount  	 rPx,
+  @{bin}/sddm            rPx,
+  @{bin}/pause           rix,
+  @{bin}/install         rix,
+  @{bin}/chpst           rPx,
+  @{bin}/mkdir           rix,
+  @{bin}/mktemp          rix,
+  @{bin}/dbus-send       rix, # alt: rix
+  @{bin}/utmpset	 rix, # alt: rix
+  @{lib}exec/elogind/elogind          rPx,
+  @{lib}exec/elogind/elogind.wrapper  rPx,  # alt: rix
+  @{bin}/bash		 rPx, # alt: rix
+  @{bin}/tr		 rPx, # alt:rix
+  @{bin}/rm		 rix,
+  @{bin}/touch		 rix,
+  @{bin}/flock		 rix,
+  @{bin}/cat		 rix,
+  @{bin}/grep		 rPx, # alt:rix
+  @{bin}/mountpoint 	 rix,
+  @{bin}/systemctl       rCx -> systemctl,
+
+  /etc/sv/**/run  	 rix,   # rix,
+  /etc/sv/**/**/run  	 rix,   # rix,
+  /etc/sv/**/finish  	 rix,   # rix,
+  /etc/sv/**/run  	 rix,   # rix,
+  /etc/sv/dbus/check 	 rix,   # rix,
+
+  mount fstype=tmpfs ->   @{run}/systemd/,
+  mount fstype=tmpfs ->   @{run}/user/,
+  mount fstype=cgroup ->  @{sys}/fs/cgroup/elogind/,
+  umount  @{run}/systemd/ ,
+  umount  @{run}/user/ ,
+  umount  @{sys}/fs/cgroup/elogind/ ,
+
+  /etc/sv/ 		r,
+  /etc/sv/** 		rw,
+  /etc/runit/ 		r, 
+  /etc/runit/** 	rw, 
+
+  @{run}/ 		rw,
+  @{run}/*/ 		rw,
+  @{run}/*/* 		rw,
+  @{run}/auditd.pid 	r,
+  @{run}/credentials/{,**} rw,
+  @{run}/initctl 	rw,
+  @{run}/systemd/{,**}  rw,
+
+  @{run}/udev/data/+module:configfs r,
+  @{run}/udev/data/+module:fuse r,
+  @{run}/udev/data/c4:@{int} r,           # For TTY devices
+  @{run}/udev/data/c10:@{int}   r,        # For non-serial mice, misc features
+  @{run}/udev/data/c116:@{int} r,         # For ALSA
+  @{run}/udev/data/c@{dynamic}:@{int} r,  # For dynamic assignment range 234 to 254, 384 to 511
+  @{run}/udev/data/n@{int} r,
+  @{run}/runit/** rw,
+  owner @{run}/user/@{uid}/ r,
+  owner @{run}/user/@{uid}/#@{int} rw,
+  owner @{run}/runit/supervise.*/** rwk,
+  owner @{run}/runit/supervise.*/**/** rwk,
+  owner @{run}/dhcpcd/  rw,
+  owner @{run}/elogind.pid rwk,
+  owner @{run}/utmp rwk,
+
+  @{sys}/fs/cgroup/{,**} rw,
+
+        @{PROC}/@{pid}/cgroup r,
+        @{PROC}/@{pid}/fd/ r,
+        @{PROC}/@{pid}/mountinfo r,
+        @{PROC}/@{pid}/uid_map rw,
+        @{PROC}/sys/fs/binfmt_misc/ r,
+
+  owner /var/log/audit/** rw,
+  owner /var/log/audit/**/** rw,
+  owner /var/log/wtmp rwk,
+
+  owner /dev/tty@{int} rw,
+
+  profile systemctl {
+    include <abstractions/base>
+    include <abstractions/app/systemctl>
+  
+  }
+
+  profile udevadm {
+    include <abstractions/base>
+
+    capability sys_ptrace,
+
+    ptrace (read),
+
+    @{bin}/udevadm mr,
+
+    /etc/udev/udev.conf r,
+
+    owner @{PROC}/@{pid}/stat r,
+    owner @{PROC}/@{pid}/cgroup r,
+          @{PROC}/1/cgroup r,
+          @{PROC}/sys/kernel/random/boot_id r,
+
+  }
+
+}
 
