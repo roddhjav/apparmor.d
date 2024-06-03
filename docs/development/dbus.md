@@ -2,7 +2,13 @@
 title: Dbus
 ---
 
-All dbus rules are labelled under the name of the given profiles that provide dbus data. If the profiles were going to change (a renaming, an architectural change), the dbus rules need to be updated accordingly.
+All dbus rules are labelled under the name of the given profiles that provide dbus data. It is one of the value added by this project, as we have profile for *everything*, we can restrict the bus further by limitint connection to a given peer label (the profile name). In case of a renaming of a profile, all dbus rules related it this profile need to be updated accordingly.
+
+## Profiles
+
+Regardless of the Dbus implementation used (`dbus-daemon` or `dbus-broker`), all dbus daemons are handled under the same set of profiles: [`dbus-system`](https://github.com/roddhjav/apparmor.d/blob/main/apparmor.d/groups/bus/dbus-system), [`dbus-session`](https://github.com/roddhjav/apparmor.d/blob/main/apparmor.d/groups/bus/dbus-session), and [`dbus-accessibility`](https://github.com/roddhjav/apparmor.d/blob/main/apparmor.d/groups/bus/dbus-accessibility). This structure largely improves the confinement of each profile.
+
+To ensure system and session bus are handled by a different profile, a [systemd drop-in](https://github.com/roddhjav/apparmor.d/blob/main/systemd/default/system/dbus.service) configuration file is used to set the specific dbus profile a dbus service must use.
 
 ## Abstractions
 

@@ -91,24 +91,23 @@ If there is no predictable label it can be omitted.
 
 ### Profile rules
 
-`bin, sbin & lib`
+#### :material-numeric-1-circle: Variables
 
-:   - Do not use: `/usr/lib` or `/usr/bin` but `@{bin}/` or `@{lib}/`
-    - Do not use: `/usr/sbin` or `/sbin` but `@{bin}/`.
+:   Always use the apparmor [variables](../variables.md).
+    Example:
 
-`Variables`
+    - `/usr/lib` or `/usr/bin` become `@{bin}` or `@{lib}`
+    - `/usr/sbin` or `/sbin` become `@{bin}`.
 
-:   Always use the apparmor variables.
-
-`Sort`
+#### :material-numeric-2-circle: Sort
 
 :   In a rule block, the rules must be alphabetically sorted.
 
-`Sub profile`
+#### :material-numeric-3-circle: Sub profile
 
 :   Sub profile should come at the end of a profile.
 
-`Similar purpose`
+#### :material-numeric-4-circle: Similar purpose
 
 :   When some rules share similar purpose, they may be sorted together. Eg:
     ```
