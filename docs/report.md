@@ -16,5 +16,10 @@ If this command produce nothing, try:
 aa-log -s -R
 ```
 
+You can get more logs with:
+
+1. `aa-log -R -s` that will provide all apparmor logs since boot time (if journalctl collect them)
+2. `aa-log -R -f <nb>` where `<nb>` is `1`, `2`, `3` and `4` (the rotated audit log file)
+
 [newissue]: https://github.com/roddhjav/apparmor.d/issues/new
 [paste]: https://pastebin.com/

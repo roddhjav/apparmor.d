@@ -36,7 +36,7 @@ You want to contribute to `apparmor.d`, **thanks a lot for this.** Feedbacks, co
 
 :   As these are mandatory access control policies only what is explicitly required
     should be authorized. Meaning, you should **not** allow everything (or a large area)
-    and blacklist some sub areas.
+    and deny some sub areas.
 
 #### Rule :material-numeric-2-circle: - Do not break a program
 

@@ -114,7 +114,7 @@ Minimal set of rules for all electron based UI application. It works as a *funct
 
 !!! note ""
 
-    [apparmor.d/profile-s-z/spotify](https://github.com/roddhjav/apparmor.d/blob/e979fe05b06f525e5a65c767b4eabe5600147355/apparmor.d/profile-s-z/spotify#L10-L13)
+    [apparmor.d/profile-s-z/spotify](https://github.com/roddhjav/apparmor.d/blob/7d1380530aa56f31589ccc6a360a8144f3601731/apparmor.d/profiles-s-z/spotify#L10-L13)
     ``` sh linenums="10"
     @{name} = spotify
     @{lib_dirs} = /opt/@{name}

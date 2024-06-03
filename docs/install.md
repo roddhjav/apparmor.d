@@ -14,7 +14,7 @@ title: Installation
 
 **AppArmor**
 
-An `apparmor` based Linux distribution is required. The basic profiles and abstractions shipped with AppArmor must be installed.
+An `apparmor` based Linux distribution is required. The default profiles and abstractions shipped with AppArmor must be installed.
 
 **Desktop environment**
 
