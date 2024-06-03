@@ -1,1 +1,191 @@
 
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2024 Besanon <m231009ts@mailfence.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = /usr/libexec/elogind/elogind
+profile elogind @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/bus-system>
+  include <abstractions/bus/org.freedesktop.login1.Session>
+  include <abstractions/bus/org.freedesktop.login1>
+  include <abstractions/common/systemd>
+
+  capability dac_override,
+  capability net_admin,
+  capability chown,
+  capability fowner,
+  capability fsetid,
+  capability dac_read_search,
+  capability sys_resource,
+  capability sys_admin,
+  capability sys_ptrace,
+  capability sys_tty_config,
+  capability net_bind_service,
+  capability mknod,
+
+  network netlink raw,
+
+  ptrace (read) peer=runsvdir,
+  ptrace (read) peer=runsv,
+  ptrace (read) peer=login,
+  ptrace (read) peer=kde-powerdevil,
+  ptrace (read) peer=kwin_wayland,
+  ptrace (read) peer=sddm,
+  ptrace (read) peer=lxqt-session,
+
+  signal (send) set=(cont) peer=@{p_systemd},
+  signal (send) set=(term hup kill) peer=sddm,  
+  signal (receive) set=(term, cont) peer=runsv,  
+
+  dbus send bus=system path=/org/freedesktop/resolve1
+       interface=org.freedesktop.resolve1.Manager
+       member={SetLink*,ResolveHostname}
+       peer=(name=org.freedesktop.resolve1, label=systemd-resolved),
+
+  dbus send bus=system path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={GetConnectionUnixUser,GetConnectionUnixProcessID}
+       peer=(name=org.freedesktop.DBus, label=dbus-system),
+
+
+  @{exec_path} mrix,
+
+  @{bin}/halt rix,
+  @{bin}/runit-init rPx,
+  @{bin}/elogind-inhibit   rix, 
+  /usr/libexec/elogind/elogind/elogind.wrapper   rPx, # alt:rix, 
+  /usr/libexec/elogind/elogind/elogind-cgroups-agent rix,
+  /usr/libexec/elogind/elogind/uaccess-command   rix, 
+  /usr/libexec/elogind/elogind/elogind-uaccess-command   rPx, 
+
+  mount fstype=tmpfs ->  @{run}/user/@{uid}/,
+  mount fstype=cgroup ->  @{sys}/fs/cgroup/elogind/,
+  umount  @{run}/user/@{uid}/ ,
+  umount  @{sys}/fs/cgroup/elogind/ ,
+
+  @{etc_ro}/nologin                r,
+  @{etc_ro}/pam.d/*                r,
+  @{etc_ro}/securetty              r,
+  @{etc_ro}/security/*             r,
+  @{etc_ro}/shadow                 r,
+  @{etc_ro}/gshadow                r,
+  @{etc_ro}/passwd                 r,
+  @{etc_ro}/nsswitch.conf          r,
+  @{etc_ro}/pwdb.conf              r,
+  owner /etc/elogind/logind.conf   r,
+  owner /etc/runit/reboot 	   rw,
+
+  /{usr/,}lib{,32,64}/security/pam_filter/*       mr,
+  /{usr/,}lib{,32,64}/security/pam_*.so      	  mr,
+  /{usr/,}lib{,32,64}/security/                   r,
+  /{usr/,}lib/@{multiarch}/security/pam_filter/*  mr,
+  /{usr/,}lib/@{multiarch}/security/pam_*.so      mr,
+  /{usr/,}lib/@{multiarch}/security/              r,
+
+  # gssapi
+  @{etc_ro}/gss/mech               r,
+  @{etc_ro}/gss/mech.d/            r,
+  @{etc_ro}/gss/mech.d/*.conf      r,
+
+  # kerberos
+  include <abstractions/kerberosclient>
+  # SuSE's pwdutils are different:
+  @{etc_ro}/default/passwd         r,
+  @{etc_ro}/login.defs             r,
+  @{etc_ro}/login.defs.d/          r,
+  @{etc_ro}/login.defs.d/*.defs    r,
+  owner /etc/elogind/sleep.conf r,
+  owner /etc/runit/stopit rw,
+  /var/yp/binding/*           r,
+
+  @{lib}exec/elogind/system-shutdown/ r,
+
+  /etc/pkcs11/ r,
+  /etc/pkcs11/pkcs11.conf r,
+  /etc/pkcs11/modules/ r,
+  /etc/pkcs11/modules/* r,
+
+  /usr/lib{,32,64}/pkcs11/*.so mr,
+  /usr/lib/@{multiarch}/pkcs11/*.so mr,
+
+  /usr/share/p11-kit/modules/  r,
+  /usr/share/p11-kit/modules/* r,
+
+  # gnome-keyring pkcs11 module
+  owner @{run}/user/[0-9]*/keyring*/pkcs11 rw,
+  owner @{run}/elogind.pid rwk,
+  owner @{run}/systemd/ rw,
+  owner @{run}/systemd/** rw,
+  owner @{run}/systemd rw,
+  owner @{run}/systemd/cgroups-agent rw,
+  owner @{run}/systemd/inhibit/  rw,
+  owner @{run}/systemd/inhibit/**  rw,
+  owner @{run}/systemd/inhibit/**/**  rw,
+  owner @{run}/systemd/seats/ rw,
+  owner @{run}/systemd/seats/** rw,
+  owner @{run}/systemd/users/ rw,
+  owner @{run}/systemd/users/** rw,
+  owner @{run}/systemd/sessions/ rw, 
+  owner @{run}/systemd/sessions/** rw, 
+  owner @{run}/systemd/machines/ rw,
+  owner @{run}/systemd/inaccessible/ rw,
+  owner @{run}/systemd/inaccessible/** rw,
+  owner @{run}/systemd/inaccessible/**/** rw,
+  owner @{run}/udev/tags/** rw,
+  owner @{run}/udev/data/* rw,
+  owner @{run}/user/@{uid}/ rw,
+  owner @{run}/user/@{uid}/** rwk,
+  owner @{run}/user/@{uid}/**/** rwk,
+  owner @{run}/credentials/ rw,
+  owner @{run}/credentials/** rw,
+  owner @{run}/runit/stopit rw,
+  owner @{run}/runit/reboot rw,
+  owner @{run}/udev/static_node-tags/** r,
+  owner @{run}/udev/static_node-tags/**/** r,
+  owner @{run}/udev/data/+drm:card@{int}-* r,
+  owner @{run}/utmp rwk,
+  @{run}/user/@{uid}/ r,
+  @{run}/user/@{uid}/dconf/ rw,
+  @{run}/user/@{uid}/dconf/** rwk,
+  @{run}/user/@{uid}/dbus-1/ rw,
+  @{run}/user/@{uid}/dbus-1/** rw, 
+  @{run}/user/@{uid}/pulse/ rw,
+  @{run}/user/@{uid}/pulse/** rw,
+  owner @{sys}/firmware/efi/efivars/OsIndicationsSupported-@{uuid} r,
+  owner @{sys}/fs/cgroup/elogind/cgroup.procs rw,
+  owner @{sys}/fs/cgroup/memory/** rw,
+  owner @{sys}/fs/cgroup/elogind/ rw,
+  owner @{sys}/fs/cgroup/elogind/** rw,
+  owner @{sys}/fs/cgroup/memory/memory.limit rw,
+  owner @{sys}/module/vt/parameters/default_utf8 r,
+  owner @{sys}/devices/virtual/tty/tty0/active rw,
+  owner @{sys}/power/state r,
+  owner @{sys}/bus/ r,
+  owner @{sys}/class/ r,
+  owner @{sys}/class/** r,
+  owner /dev/input/event@{int}  rw,
+
+  @{PROC}/@{pid}/cgroup  r,
+  owner @{PROC}/@{pid}/comm  r,
+  owner @{PROC}/@{pid}/cmdline r,
+  owner @{PROC}/@{pid}/sessionid r,
+  owner @{PROC}/sysvipc/shm r,
+  owner @{PROC}/sysvipc/sem r,
+  owner @{PROC}/sysvipc/msg r,
+  @{PROC}/@{pid}/stat r,
+  @{sys}/devices/{,**}               r,
+  @{sys}/devices/**               r,
+
+  owner /var/log/wtmp rwk,
+  owner /dev/shm/ r,
+  owner /dev/dri/card@{int} rw,
+  owner /dev/tty@{int} rw,
+        /dev/tty@{int} rw,
+
+}
