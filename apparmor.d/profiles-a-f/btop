@@ -9,8 +9,9 @@ include <tunables/global>
 @{exec_path} = @{bin}/btop
 profile btop @{exec_path} {
   include <abstractions/base>
-  include <abstractions/nameservice-strict>
   include <abstractions/consoles>
+  include <abstractions/graphics-full>
+  include <abstractions/nameservice-strict>
 
   capability sys_ptrace,
 
@@ -21,30 +22,41 @@ profile btop @{exec_path} {
 
   @{exec_path} mr,
 
+  /usr/share/btop/{,**} r,
+
+  /etc/fstab r,
+
   owner @{user_config_dirs}/btop/{,**} rw,
 
+  @{sys}/bus/pci/devices/ r,
   @{sys}/class/hwmon/ r,
   @{sys}/class/power_supply/ r,
-  @{sys}/devices/@{pci}/host@{int}/*/*/block/*/*/stat r,
-  @{sys}/devices/@{pci}/net/*/address r,
-  @{sys}/devices/@{pci}/net/*/statistics/{rx,tx}_bytes r,
+  @{sys}/devices/@{pci}/**/stat r,
+  @{sys}/devices/@{pci}/net/*/{,**} r,
   @{sys}/devices/@{pci}/usb@{int}/**/power_supply/** r,
-  @{sys}/devices/platform/coretemp.@{int}/hwmon/hwmon@{int}/{,*} r,
+  @{sys}/devices/**/hwmon@{int}/{,*} r,
+  @{sys}/devices/**/power_supply/{AC,BAT@{int}}/{,**} r,
   @{sys}/devices/system/cpu/cpufreq/policy@{int}/scaling_{cur,min,max}_freq r,
-  @{sys}/devices/virtual/**/net/*/address r,
-  @{sys}/devices/virtual/**/net/*/statistics/{rx,tx}_bytes r,
+  @{sys}/devices/system/node/node@{int}/cpumap r,
   @{sys}/devices/virtual/block/dm-@{int}/stat r,
-  @{sys}/devices/virtual/thermal/thermal_zone@{int}/ r,
-  @{sys}/devices/virtual/thermal/thermal_zone@{int}/hwmon@{int}/{,*} r,
+  @{sys}/devices/virtual/net/{,**} r,
+  @{sys}/devices/virtual/thermal/thermal_zone@{int}/{,} r,
 
         @{PROC} r,
-        @{PROC}/loadavg r,
-        @{PROC}/uptime r,
-        @{PROC}/@{pids}/comm r,
+        @{PROC}/@{pid}/statm r,
         @{PROC}/@{pids}/cmdline r,
-        @{PROC}/@{pids}/stat r,
+        @{PROC}/@{pids}/comm r,
         @{PROC}/@{pids}/io r,
+        @{PROC}/@{pids}/stat r,
+        @{PROC}/devices r,
+        @{PROC}/driver/nvidia/capabilities/mig/monitor r,
+        @{PROC}/loadavg r,
+        @{PROC}/spl/kstat/zfs/arcstats r,
+        @{PROC}/uptime r,
   owner @{PROC}/@{pid}/mounts r,
+
+  /dev/nvidia-caps/ rw,
+  /dev/nvidia-caps/nvidia-cap@{int} rw,
 
   include if exists <local/btop>
 }
