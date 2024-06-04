@@ -37,9 +37,6 @@ systemctl is-active -q apparmor && systemctl reload apparmor ||:
 %files
 %license LICENSE
 %doc README.md
-%exclude /etc/apparmor.d/libvirtd
-%exclude /etc/apparmor.d/unix-chkpwd
-%exclude /etc/apparmor.d/virt-aa-helper
 %config /etc/apparmor.d/
 /usr/bin/aa-log
 
