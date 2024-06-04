@@ -35,6 +35,10 @@ func (p Configure) Apply() ([]string, error) {
 		}
 
 	case "ubuntu":
+		if err := cfg.DebianHide.Clean(); err != nil {
+			return res, err
+		}
+
 		if cfg.Overwrite {
 			if err := cfg.Overwrite.Apply(); err != nil {
 				return res, err
@@ -46,7 +50,9 @@ func (p Configure) Apply() ([]string, error) {
 		}
 
 	case "debian", "whonix":
-		cfg.Overwrite.AptClean()
+		if err := cfg.DebianHide.Init(); err != nil {
+			return res, err
+		}
 
 		// Copy Debian specific abstractions
 		if err := util.CopyTo(cfg.DistDir.Join("ubuntu"), cfg.RootApparmord); err != nil {
