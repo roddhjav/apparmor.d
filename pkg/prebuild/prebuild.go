@@ -32,11 +32,16 @@ func init() {
 	builder.Register("dev")
 
 	switch cfg.Distribution {
+	case "opensuse":
+		builder.Register("abi3")
+		cfg.Overwrite = true
+
 	case "ubuntu":
 		if cfg.Release["VERSION_CODENAME"] == "noble" {
 			builder.Register("abi3")
-			cfg.Overwrite.Enabled = true
+			cfg.Overwrite = true
 		}
+
 	case "whonix":
 		cfg.Hide += `/etc/apparmor.d/abstractions/base.d/kicksecure
 /etc/apparmor.d/home.tor-browser.firefox

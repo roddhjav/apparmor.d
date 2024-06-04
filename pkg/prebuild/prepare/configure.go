@@ -28,12 +28,17 @@ func (p Configure) Apply() ([]string, error) {
 	res := []string{}
 	switch cfg.Distribution {
 	case "arch", "opensuse":
+		if cfg.Overwrite {
+			if err := cfg.Overwrite.Apply(); err != nil {
+				return res, err
+			}
+		}
 
 	case "ubuntu":
-		cfg.Overwrite.AptClean()
-		if cfg.Overwrite.Enabled {
-			profiles := cfg.Overwrite.Get()
-			cfg.Overwrite.Apt(profiles)
+		if cfg.Overwrite {
+			if err := cfg.Overwrite.Apply(); err != nil {
+				return res, err
+			}
 		} else {
 			if err := util.CopyTo(cfg.DistDir.Join("ubuntu"), cfg.RootApparmord); err != nil {
 				return res, err
