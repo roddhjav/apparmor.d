@@ -33,6 +33,8 @@ var (
 	// counterpart
 	Overwrite Overwriter = false
 
+	// DebianHide is the path to the debian/apparmor.d.hide file
+	DebianHide = DebianHider{path: DebianDir.Join("apparmor.d.hide")}
 
 	Ignore = Ignorer{}
 	Flags  = Flagger{}
