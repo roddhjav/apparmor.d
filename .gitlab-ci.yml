@@ -119,7 +119,7 @@ opensuse:
   image: registry.gitlab.com/roddhjav/builders/opensuse
   script:
     - mkdir -p "$PKGDEST"
-    - sudo zypper install -y distribution-release golang-packaging rsync
+    - sudo zypper install -y distribution-release golang-packaging rsync apparmor-profiles
     - bash dists/build.sh rpm
   artifacts:
     expire_in: 1 day
@@ -151,11 +151,16 @@ preprocess-debian:
     - dpkg --install $PKGDEST/*
     - apparmor_parser --preprocess /etc/apparmor.d 1> /dev/null
 
-.preprocess-ubuntu:
-  extends: preprocess-debian
+preprocess-ubuntu:
+  stage: preprocess
   image: ubuntu
   dependencies:
     - ubuntu
+  script:
+    - apt-get update -q
+    - apt-get install -y apparmor apparmor-profiles
+    - dpkg --install $PKGDEST/*
+    - apparmor_parser --preprocess /etc/apparmor.d 1> /dev/null
 
 preprocess-whonix:
   extends: preprocess-debian
