@@ -28,8 +28,11 @@ var (
 	// DebianDir is the directory where the debian specific files are stored
 	DebianDir *paths.Path = paths.New("debian")
 
-	// Either or not overwrite some upstreamed profile
-	Overwrite = Overwriter{Enabled: false}
+	// AppArmor 4.0 contains several profiles that allow userns and are otherwise
+	// unconfined. Overwriter disables upstream profile in favor of (better) apparmor.d
+	// counterpart
+	Overwrite Overwriter = false
+
 
 	Ignore = Ignorer{}
 	Flags  = Flagger{}

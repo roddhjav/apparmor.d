@@ -50,42 +50,35 @@ func (i Ignorer) Read(name string) []string {
 	return util.MustReadFileAsLines(path)
 }
 
-type Overwriter struct {
-	Enabled bool
-}
+type Overwriter bool
 
-// Get the list of upstream profiles to overwrite from dist/overwrite
-func (o Overwriter) Get() []string {
+// Overwrite upstream profile: disable upstream & rename ours
+func (o Overwriter) Apply() error {
+	const ext = ".apparmor.d"
+	disableDir := RootApparmord.Join("disable")
+	if err := disableDir.Mkdir(); err != nil {
+		return err
+	}
+
 	path := DistDir.Join("overwrite")
 	if !path.Exist() {
-		return []string{}
+		return fmt.Errorf("%s not found", path)
 	}
-	return util.MustReadFileAsLines(path)
-}
-
-// Overwrite upstream profile for APT: rename our profile & hide upstream
-func (o Overwriter) Apt(files []string) {
-	const ext = ".apparmor.d"
-	file, err := DebianDir.Join("apparmor.d.hide").Append()
-	if err != nil {
-		panic(err)
-	}
-	for _, name := range files {
+	for _, name := range util.MustReadFileAsLines(path) {
 		origin := RootApparmord.Join(name)
 		dest := RootApparmord.Join(name + ext)
 		if err := origin.Rename(dest); err != nil {
-			panic(err)
+			return err
 		}
-		if _, err := file.WriteString("/etc/apparmor.d/" + name + "\n"); err != nil {
-			panic(err)
+		originRel, err := origin.RelFrom(dest)
+		if err != nil {
+			return err
+		}
+		if err := os.Symlink(originRel.String(), disableDir.Join(name).String()); err != nil {
+			return err
 		}
 	}
+	return nil
 }
 
-// Clean the debian/apparmor.d.hide file
-func (o Overwriter) AptClean() {
-	path := DebianDir.Join("apparmor.d.hide")
-	if err := path.WriteFile([]byte(Hide)); err != nil {
-		panic(err)
-	}
 }
