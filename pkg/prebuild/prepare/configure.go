@@ -35,7 +35,7 @@ func (p Configure) Apply() ([]string, error) {
 		}
 
 	case "ubuntu":
-		if err := cfg.DebianHide.Clean(); err != nil {
+		if err := cfg.DebianHide.Init(); err != nil {
 			return res, err
 		}
 

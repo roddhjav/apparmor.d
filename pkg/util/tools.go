@@ -71,11 +71,11 @@ func DecodeHexInString(str string) string {
 func RemoveDuplicate[T comparable](inlist []T) []T {
 	var empty T
 	list := []T{}
-	keys := map[T]bool{}
-	keys[empty] = true
+	seen := map[T]bool{}
+	seen[empty] = true
 	for _, item := range inlist {
-		if _, ok := keys[item]; !ok {
-			keys[item] = true
+		if _, ok := seen[item]; !ok {
+			seen[item] = true
 			list = append(list, item)
 		}
 	}
