@@ -1,0 +1,35 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2024 Besanon  <m231009ts@mailfence.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+#include <tunables/global>
+
+@{exec_path} = @{bin}/lxqt-runner 
+profile lxqt-runner @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/gtk>
+  include <abstractions/video>
+  include <abstractions/lxqt>
+  include <abstractions/dbus-session-strict>
+  include <abstractions/dbus-accessibility-strict>
+  include <abstractions/gvfs-open>
+    
+  @{exec_path}				mr,
+
+  /usr/share/icons/ 				r,
+  /usr/share/icons/{,**}  			r,
+  /usr/share/desktop-directories/ 		r,
+  /usr/share/desktop-directories/{,**} 		r,
+
+  /etc/xdg/menus/lxqt-applications.menu 	r,
+
+  # only needed if tor is installed on /opt
+   owner /opt/tor/tor-browser/Browser/browser/chrome/icons/default/default128.png        r,
+   owner /opt/tormedium/tor-browser/Browser/browser/chrome/icons/default/default128.png  r,
+   owner /opt/mullvad/mullvad-browser/Browser/browser/chrome/icons/default/default128.png r,
+
+   owner /tmp/{,**}  				r,
+
+  /dev/tty					rw,
+}
