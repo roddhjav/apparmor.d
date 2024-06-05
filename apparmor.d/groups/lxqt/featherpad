@@ -1,0 +1,57 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2024 Besanon  <m231009ts@mailfence.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+#include <tunables/global>
+
+@{exec_path} = @{bin}/featherpad
+profile featherpad @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/common/app>
+  include <abstractions/gtk>
+  include <abstractions/gvfs-open>
+  include <abstractions/video>
+  include <abstractions/lxqt>
+  include <abstractions/thumbnails-cache-read>
+  include <abstractions/qt5-shader-cache>
+  include <abstractions/dbus-session-strict>
+  include <abstractions/dbus-accessibility-strict>
+  include <abstractions/gvfs-open>
+  include <abstractions/user-read>
+  include <abstractions/user-write>
+    
+  @{exec_path}		     		  mr,
+
+  /usr/share/libfm-qt/translations/libfm-qt_de.qm r,
+  /usr/share/libdrm/amdgpu.ids r,
+
+  /etc/fstab r,
+
+  /opt/{,**}  r,
+
+  owner @{HOME}/.inputrc  r,
+  owner @{HOME}/.bashrc   r,
+  owner @{HOME}/.bash_profile  r,
+  owner @{HOME}/.bash_logout r,
+  owner @{HOME}/.xscreensaver r,
+
+  owner @{user_config_dirs}/QtProject.conf      r,
+  owner @{user_config_dirs}/featherpad/{,**}    rwk,
+  owner @{user_config_dirs}/featherpad/**  rwkl -> @{user_config_dirs}/featherpad/#@{int},
+
+  owner /tmp/@{int}  				r,
+
+  owner @{PROC}/@{pid}/mountinfo 		r,
+  owner @{PROC}/@{pid}/mounts 			r,
+
+  @{sys}/devices/@{pci_bus}/{,**}               r,
+  @{sys}/devices/@{pci_bus}/**/**/**            r,
+
+  @{PROC}/sys/kernel/random/boot_id  		r,
+
+  /var/cache/fontconfig/** rw,  
+
+  /dev/tty					rw,
+
+}
