@@ -1,0 +1,32 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2024 Besanon  <m231009ts@mailfence.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+#include <tunables/global>
+
+@{exec_path} = @{bin}/lxqt-leave
+profile lxqt-leave @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/gtk>
+  include <abstractions/video>
+  include <abstractions/lxqt>
+  include <abstractions/qt5-shader-cache>
+  include <abstractions/dbus-session-strict>
+  include <abstractions/dbus-accessibility-strict>
+  include <abstractions/gvfs-open>
+  
+  signal (receive) set=(term) peer=lxqt-session,  
+  
+  @{exec_path}					mr,
+  
+  /usr/share/libdrm/amdgpu.ids 			r,
+
+  @{sys}/devices/@{pci_bus}/{,**}		r,
+  @{sys}/devices/@{pci_bus}/**/**/**		r,
+
+  owner /tmp/{,**}  				r,
+
+  /dev/tty					rw,
+
+}
