@@ -1,0 +1,204 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2024 Besanon  <m231009ts@mailfence.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+#include <tunables/global>
+
+@{name} = falkon{,.sh,-wayland}
+@{exec_path} = @{bin}/falkon
+profile falkon @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/audio-client>
+  include <abstractions/bus-session>
+  include <abstractions/bus-system>
+  include <abstractions/bus/org.a11y>
+  include <abstractions/bus/org.freedesktop.FileManager1>
+  include <abstractions/bus/org.freedesktop.login1>
+  include <abstractions/bus/org.freedesktop.portal.Desktop>
+  include <abstractions/bus/org.freedesktop.RealtimeKit1>
+  include <abstractions/bus/org.gtk.Private.RemoteVolumeMonitor>
+  include <abstractions/dconf-write>
+  include <abstractions/desktop>
+  include <abstractions/enchant>
+  include <abstractions/lxqt>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/graphics-full>
+  include <abstractions/gstreamer>
+  include <abstractions/nameservice-strict>
+  include <abstractions/ssl_certs>
+  include <abstractions/qt5-shader-cache>
+  include <abstractions/thumbnails-cache-read>
+  include <abstractions/thumbnails-cache-write>
+  include <abstractions/user-download-strict>
+  include <abstractions/user-read-strict>
+
+  network inet dgram,
+  network inet stream,
+
+  signal (send, receive) set=(term, kill) peer=QtWebEngineProc,
+  signal (send) set=(term, kill) peer=falkon-*,
+  signal (send) set=(term) peer=dnsmasq,
+
+  deny dbus send bus=system path=/org/freedesktop/hostname1,
+
+  dbus bind bus=session name=org.mpris.MediaPlayer2.falkon.*,
+  dbus (send, receive) bus=session path=/org/mpris/MediaPlayer2
+       interface=org.freedesktop.DBus.Properties
+       member={GetAll,PropertiesChanged}
+       peer=(name="{org.freedesktop.DBus,:*}"),
+  dbus receive bus=session path=/org/mpris/MediaPlayer2
+       interface=org.mpris.MediaPlayer2.Playlists
+       member=GetPlaylists
+       peer=(name=:*),
+  dbus send bus=system path=/org/freedesktop/resolve1
+       interface=org.freedesktop.resolve1.Manager
+       member={SetLink*,ResolveHostname}
+       peer=(name=org.freedesktop.resolve1, label=systemd-resolved),
+  dbus send bus=session path=/org/freedesktop/PowerManagement/Inhibit
+       interface=org.freedesktop.PowerManagement.Inhibit
+       member=Inhibit
+       peer=(name=org.freedesktop.PowerManagement),
+  dbus send bus=system path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={GetConnectionUnixUser,GetConnectionUnixProcessID}
+       peer=(name=org.freedesktop.DBus, label=dbus-system),
+
+  @{exec_path} 					     mr,
+
+  @{lib}/qt6/QtWebEngineProcess 			     rix,
+  @{bin}/resolvconf                                          rPx,
+  @{bin}/dnsmasq                                             rPx,
+
+  @{sh_path}                 rix,
+  @{bin}/basename            rix,
+  @{bin}/expr                rix,
+
+  @{lib}/@{multiarch}/qt6/plugins/kf6/org.kde.kwindowsystem.platforms/KF6WindowSystemKWaylandPlugin.so mr,
+
+  # Desktop integration
+  @{bin}/kreadconfig6                                rPx,
+  @{bin}/update-mime-database                        rPx,
+  @{lib}/gvfsd-metadata                              rPx,
+
+  /usr/lib/qt6/plugins/falkon/*.so  	     	     mr,
+  /usr/share/libfm-qt/translations/libfm-qt_de.qm    r,
+  /usr/share/@{name}/{,**} 			     r,
+  /usr/share/doc/{,**} 				     rw,
+  /usr/share/publicsuffix/public_suffix_list.dafsa   r,
+  /usr/share/qt6/** 				     rw,
+  /usr/share/thumbnailers/ 			     r,
+  /usr/share/webext/{,**} 			     r,
+  /usr/share/hunspell-bdic/ 			     r,
+
+  /etc/fstab r,
+  /etc/mime.types r,
+  /etc/udev/udev.conf  r,
+
+  owner @{HOME}/ r,
+  owner @{HOME}/.pki/ r,
+  owner @{HOME}/.pki/nssdb/ rw,
+  owner @{HOME}/.pki/nssdb/pkcs11.txt rw,
+  owner @{HOME}/.pki/nssdb/{cert9,key4}.db rwk,
+  owner @{HOME}/.pki/nssdb/{cert9,key4}.db-journal rw,
+  owner @{HOME}/.mozilla/firefox/ r,
+
+  owner @{user_config_dirs}/ rw,
+  owner @{user_config_dirs}/#@{int}  rw,
+  owner @{user_config_dirs}/falkon/ r,
+  owner @{user_config_dirs}/falkon/* r,
+  owner @{user_config_dirs}/falkon/profiles/** rwkl -> @{user_config_dirs}/falkon/profiles/#@{int},
+  owner @{user_config_dirs}/falkonrc.lock rwk,
+  owner @{user_config_dirs}/chromium/WidevineCdm/**   r,
+  owner @{user_config_dirs}/chromium/WidevineCdm/4.10.2710.0/_platform_specific/linux_x64/*.so  m,
+  owner @{user_config_dirs}/gtk-{3,4}.0/assets/*.svg r,
+  owner @{user_config_dirs}/ibus/bus/ r,
+  owner @{user_config_dirs}/ibus/bus/@{hex32}-unix-{,wayland-}@{int} r,
+  owner @{user_config_dirs}/kdedefaults/* r,
+  owner @{user_config_dirs}/kdeglobals r,
+  owner @{user_config_dirs}/kdeglobals.lock rwk,
+  owner @{user_config_dirs}/** rwkl  -> @{user_config_dirs}/#@{int}, 
+  owner @{user_config_dirs}/kioslaverc r,
+  owner @{user_config_dirs}/QtProject.conf rwk,
+  owner @{user_config_dirs}/QtProject.conf.lock rwk,
+  owner @{user_config_dirs}/mimeapps.list{,.@{rand6}} rw,
+  owner @{user_config_dirs}/falkonrc.lock rw,
+
+  owner @{user_share_dirs}/applications/userapp-falkon-@{rand6}.desktop{,.@{rand6}} rw,
+  owner @{user_share_dirs}/falkon/falkonstaterc.lock rwk,
+  owner @{user_share_dirs}/falkon/QtWebEngine/Default/user_prefs.json r,
+
+  owner @{user_cache_dirs}/ r,
+  owner @{user_cache_dirs}/falkon/** rw,
+  owner @{user_cache_dirs}/falkon/qmlcache/** rwkl -> @{user_cache_dirs}/falkon/qmlcache/#@{int}, 
+  owner @{user_cache_dirs}/falkon/qtpipelinecache-x86_64-little_endian-lp64/qqpc_opengl.lck rwk,
+
+       /tmp/ r,
+  owner /tmp/.xfsm-ICE-@{rand6} rw,
+  owner /tmp/@{name}/ rw,
+  owner /tmp/@{name}/* rwk,
+  owner /tmp/@{rand6}.tmp r,
+  owner /tmp/falkon-*/ rw,
+  owner /tmp/falkon-*/* rwk,
+  owner /tmp/falkon-@{rand6}/** rwkl -> /tmp/falkon-@{rand6}/#@{int},
+  owner /tmp/@{rand8}.txt w,
+  owner /tmp/.org.chromium.Chromium.@{rand6}  rw,
+
+  /var/tmp/ r,
+
+  owner @{run}/user/@{uid}/#@{int}  rw, 
+  owner @{run}/user/@{uid}/**  rwkl  -> @{run}/user/@{uid}/#@{int},
+  @{run}/mount/utab r,
+  @{run}/udev/data/+input:input@{int} r,  # for mouse, keyboard, touchpad
+  @{run}/udev/data/c13:@{int}  r,         # for /dev/input/*
+
+  @{sys}/bus/ r,
+  @{sys}/devices/system/cpu/kernel_max r,
+  @{sys}/cgroup/cpu,cpuacct/user.slice/cpu.cfs_quota_us r,
+  @{sys}/class/ r,
+  @{sys}/class/**/ r,
+  @{sys}/devices/**/uevent r,
+  @{sys}/devices/@{pci}/ r,
+  @{sys}/devices/@{pci}/drm/card@{int}/ r,
+  @{sys}/devices/@{pci}/drm/renderD128/ r,
+  @{sys}/devices/@{pci}/drm/renderD129/ r,
+  @{sys}/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us r,
+
+  owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/background.slice/*/cpu.max r,
+
+        @{PROC}/ r,
+        @{PROC}/@{pid}/net/arp r,
+        @{PROC}/@{pid}/net/route r,
+  owner @{PROC}/@{pid}/cgroup r,
+  owner @{PROC}/@{pid}/setgroups w, 
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/mounts r,
+  owner @{PROC}/@{pid}/smaps r,
+  owner @{PROC}/@{pid}/stat r,
+  owner @{PROC}/@{pid}/statm r,
+  owner @{PROC}/@{pid}/task/ r,
+  owner @{PROC}/@{pid}/task/@{tid}/comm rw,
+  owner @{PROC}/@{pid}/task/@{tid}/stat r,
+  owner @{PROC}/@{pid}/task/@{tid}/status r,
+  owner @{PROC}/@{pids}/cmdline r,
+  owner @{PROC}/@{pids}/environ r,
+        @{PROC}/sys/kernel/yama/ptrace_scope r,
+        @{PROC}/sys/fs/inotify/max_user_watches r,
+
+        /dev/ r,
+        /dev/hidraw@{int} rw,
+        /dev/tty rw,
+        /dev/video@{int} rw,
+        /dev/snd/controlC@{int} r,
+  owner /dev/shm/org.chromium.* rw,
+  owner /dev/shm/org.mozilla.ipc.@{pid}.@{int} rw,
+  owner /dev/shm/wayland.mozilla.ipc.@{int} rw,
+  owner /dev/tty@{int} rw, # File Inherit
+  owner /dev/shm/.org.chromium.Chromium.@{rand6}  rwk,
+
+  # Silencer
+  deny owner @{HOME}/.* r,
+  deny owner @{user_share_dirs}/gvfs-metadata/{,*} r,
+
+}
