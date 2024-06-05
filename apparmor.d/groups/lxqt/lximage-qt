@@ -1,0 +1,64 @@
+#
+# Copyright (C) 2024 Besanon  <m231009ts@mailfence.com>
+# SPDX-License-Identifier: GPL-2.0-only
+#
+
+#include <tunables/global>
+
+@{exec_path} = @{bin}/lximage-qt
+profile lximage-qt @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/gtk>
+  include <abstractions/lxqt>
+  include <abstractions/dbus-session-strict>
+  include <abstractions/dbus-accessibility-strict>
+  include <abstractions/gvfs-open>
+  include <abstractions/user-read>
+  include <abstractions/user-write>
+  include <abstractions/user-download-strict>
+  include <abstractions/thumbnails-cache-read>
+
+  signal (receive) set=(kill, term) peer=lxqt-session,
+      
+  @{exec_path}						mr,
+  @{lib}exec/menu-cache/menu-cached  			mr,
+
+  /usr/share/icons/{,**}  		r,
+  /usr/share/desktop-directories/{,**}  r,
+  /usr/share/lximage-qt/translations/{,**} r,
+  /usr/share/libfm-qt6/translations/libfm-qt_de.qm  r,
+  /usr/share/thumbnailers/{,**} 	r,
+  /usr/share/gvfs/remote-volume-monitors/ r,
+  /usr/share/gvfs/remote-volume-monitors/udisks2.monitor r,
+
+  /etc/xdg/menus/lxqt-applications.menu r,
+
+  owner @{HOME}/.inputrc 		r,
+  owner @{HOME}/.bashrc 		r,
+  owner @{HOME}/.bash_profile 		r,
+  owner @{HOME}/.bash_logout 		r,
+  owner @{HOME}/.bash_history 		r,
+  owner @{HOME}/.xscreensaver           r,
+
+  owner @{user_cache_dirs}/thumbnails/normal/** rwk,
+
+  owner @{user_config_dirs}/#@{int} rwk,
+  owner @{user_config_dirs}/QtProject.conf rw,
+  owner @{user_config_dirs}/QtProject.conf.lock rwk, 
+  owner @{user_config_dirs}/**  rwkl  -> @{user_config_dirs}/#@{int},
+  owner @{user_config_dirs}/lximage-qt/settings.conf r,
+  owner @{user_config_dirs}/lximage-qt/{,**} rwk,
+  owner @{user_config_dirs}/lximage-qt/** rwkl -> @{user_config_dirs}/lximage-qt/#@{int},
+
+  owner /tmp/{,**}  			r,
+
+  @{PROC}/sys/kernel/random/boot_id 	r,
+  owner @{PROC}/@{pid}/mountinfo 	r,
+  owner @{PROC}/@{pid}/mounts 		r,
+
+  @{sys}/devices/@{pci_bus}/{,**}       r,
+  @{sys}/devices/@{pci_bus}/**/**/**    r,
+
+  /dev/tty						rw,
+
+}
