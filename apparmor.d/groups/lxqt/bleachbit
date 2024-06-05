@@ -1,0 +1,58 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2024 Besanon  <m231009ts@mailfence.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+#include <tunables/global>
+
+@{exec_path} = @{bin}/bleachbit
+profile bleachbit @{exec_path} {
+  #include <abstractions/base>
+  #include <abstractions/gtk>
+  #include <abstractions/python>
+  #include <abstractions/gvfs-open>
+  #include <abstractions/video>
+  #include <abstractions/lxqt>
+  #include <abstractions/thumbnails-cache-read>
+  #include <abstractions/qt5-shader-cache>
+  
+  ptrace (read),
+
+  @{exec_path}				mr,
+
+  /@{HOME}/** rwlk -> /@{HOME}/**,
+  /@{HOME}/** 					rw,
+  /usr/share/ 					rw,
+  /usr/share/** 				rw,
+
+  /usr/share/libfm-qt/translations/libfm-qt_de.qm r,
+  /usr/share/libdrm/amdgpu.ids 			r,
+
+  /etc/ 					r,
+  /etc/fstab					r,
+  /etc/host.conf 				r,
+  /etc/gai.conf 				r,
+
+  /var/cache/fontconfig/** 			rw,  
+  owner /var/tmp/etilqs* 			rwk,
+
+  /opt/{,**}  					r,
+
+  owner @{PROC}/@{pid}/mountinfo 		r,
+  owner @{PROC}/@{pid}/mounts 			r,
+  owner @{HOME}/.inputrc  			r,
+  owner @{HOME}/.bashrc   			r,
+  owner @{HOME}/.bash_profile  			r,
+  owner @{HOME}/.bash_logout 			r,
+
+  owner @{user_config_dirs}/QtProject.conf 	r,
+
+  owner /tmp/@{int}  				r,
+
+  @{sys}/devices/@{pci_bus}/{,**}               r,
+  @{sys}/devices/@{pci_bus}/**/**/**            r,
+
+  @{PROC}/sys/kernel/random/boot_id  		r,
+
+  /dev/tty					rw,
+}
