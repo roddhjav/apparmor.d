@@ -1,0 +1,67 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2024  Besanon <m231009ts@mailfence.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/qpdfview
+profile qpdfview @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/desktop>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/graphics>
+  include <abstractions/lxqt>
+  include <abstractions/nameservice-strict>
+  include <abstractions/qt5-compose-cache-write>
+  include <abstractions/qt5-settings-write>
+  include <abstractions/thumbnails-cache-read>
+  include <abstractions/user-download-strict>
+
+  @{exec_path} mr,
+
+  # For PDF's internal compression
+  @{bin}/gzip     rix,
+  @{bin}/bzip2    rix,
+  @{bin}/xz       rix,
+
+  @{lib}/firefox/firefox rPUx,
+  @{open_path}           rPx -> child-open,
+
+  /usr/share/poppler/** r,
+  /usr/share/qt5ct/** r,
+  /usr/share/djvu/** r,
+  /usr/share/icu/73.2/icudt73l.dat  r,
+
+  /etc/fstab r,
+  /etc/machine-id r,
+
+  /var/lib/dbus/machine-id r,
+
+  owner @{HOME}/ r,
+  owner @{user_documents_dirs}/{,**} rw,
+  owner @{user_books_dirs}/{,**} rw,
+  owner @{user_torrents_dirs}/{,**} rw,
+  owner @{user_work_dirs}/{,**} rw,
+
+  owner @{user_config_dirs}/qpdfview/ rw,
+  owner @{user_config_dirs}/qpdfview/* rwkl -> @{user_config_dirs}/qpdfview/#@{int},
+
+  owner @{user_share_dirs}/qpdfview/ rw,
+  owner @{user_share_dirs}/qpdfview/** rwk,
+
+  owner @{user_config_dirs}/qt5ct/{,**} r,
+
+  owner /tmp/@{hex} rw,
+  owner /tmp/#@{int} rw,
+  owner /tmp/qpdfview.*.pdf rwl -> /tmp/#@{int},
+
+  owner /dev/shm/#@{int} rw,
+  owner /dev/tty@{int} rw,
+
+  include if exists <local/qpdfview>
+}
+
+
