@@ -1,0 +1,50 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2024 Besanon  <m231009ts@mailfence.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+#include <tunables/global>
+
+@{exec_path} = @{bin}/obconf-qt
+profile obconf-qt @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/dconf-write>
+  include <abstractions/gtk>
+  include <abstractions/fonts>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/lxqt>
+  include <abstractions/qt5-shader-cache>
+  include <abstractions/freedesktop.org>
+  include <abstractions/nameservice-strict>
+  include <abstractions/user-download-strict>
+
+  @{exec_path}				mr,
+
+  /usr/share/obconf/{,*} 			r,
+  /usr/share/ibus/setup/{,**}  			rw,
+  /usr/share/drirc.d/ 				r,
+  /usr/share/drirc.d/00-mesa-defaults.conf	r,
+  /usr/share/drirc.d/00-radv-defaults.conf	r,
+  /usr/share/obconf-qt/translations/obconf-qt_de.qm r,
+
+  /etc/xdg/openbox/rc.xml 			r,
+  /etc/fstab 					r,
+
+  owner @{HOME}/.themes/{,**} 			r,
+
+  owner @{user_config_dirs}/openbox/rc.xml 	rw,
+  owner @{user_config_dirs}/openbox/{,**} rw,
+
+  owner /tmp/{,**}  				r,
+
+  @{sys}/devices/@{pci_bus}/**/**/**  		r,
+  @{sys}/devices/@{pci_bus}/{,**}               r,
+  @{sys}/devices/@{pci_bus}/**/**/**            r,
+
+  owner @{PROC}/@{pid}/mountinfo 		r,
+  owner @{PROC}/@{pid}/mounts 			r,
+
+  /dev/dri/card@{int}				rw,
+  owner /dev/tty@{int} 				rw,
+
+}
