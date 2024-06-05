@@ -1,0 +1,65 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Jeroen Rijken
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2024 Besanon  <m231009ts@mailfence.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/qterminal
+profile qterminal @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/audio-client>
+  include <abstractions/bus-accessibility>
+  include <abstractions/bus-session>
+  include <abstractions/consoles>
+  include <abstractions/graphics>
+  include <abstractions/lxqt>
+  include <abstractions/nameservice-strict>
+
+  ptrace (read),
+
+  signal (receive) set=(term) peer=lxqt-session,
+  signal (send)    set=(hup),
+  signal (send)    set=(kill) peer=htop,
+
+  @{exec_path}                          mr,
+  @{bin}/@{shells}                      rUx,
+  @{browsers_path}                      rPx,
+  @{bin}/htop	                        rPx,
+  @{bin}/startlxqt 			r,
+
+  /usr/share/color-schemes/{,**} 	r,
+  /usr/share/kf6/{,**} 			r,
+  /usr/share/qterminal/{,**} 		r,
+  /usr/share/sounds/** 			r,
+  /usr/share/lxqt/lxqt.conf 		r,
+  /usr/share/qtermwidget6/{,**} 	r,
+  /etc/xdg/ui/ui_standards.rc 		r,
+
+  owner @{HOME}/@{XDG_SSH_DIR}/config 	r,
+  @{HOME}/.Xdefaults 			r,
+
+  owner @{user_config_dirs}/#@{int} 	rwl,
+  owner @{user_config_dirs}/lxqt/lxqt.conf r,
+  owner @{user_config_dirs}/qterminal.org/ r,
+  owner @{user_config_dirs}/qterminal.org/** rwkl  -> @{user_config_dirs}/qterminal.org/#@{int},
+  owner @{user_config_dirs}/qterminal.org/qterminal.ini.lock rwk,
+
+  owner @{user_cache_dirs}/icon-cache.kcache rw,
+
+  owner @{user_share_dirs}/konsole/ 	rw,
+  owner @{user_share_dirs}/konsole/** 	rwlk,
+
+  owner /tmp/#@{int} 			rw,
+  owner /tmp/konsole.@{rand6} 		rw,
+
+        @{PROC}/sys/kernel/core_pattern r,
+  owner @{PROC}/@{pid}/cmdline 		r,
+  owner @{PROC}/@{pid}/stat 		r,
+
+  /dev/ptmx 				rw,
+
+}
