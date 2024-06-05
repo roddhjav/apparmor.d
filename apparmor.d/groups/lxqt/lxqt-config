@@ -1,0 +1,60 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2024 Besanon  <m231009ts@mailfence.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+#include <tunables/global>
+
+@{exec_path} = @{bin}/lxqt-config
+profile lxqt-config @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/gtk>
+  include <abstractions/video>
+  include <abstractions/lxqt>
+  include <abstractions/qt5-shader-cache>
+  include <abstractions/dbus-session-strict>
+  include <abstractions/dbus-accessibility-strict>
+  include <abstractions/gvfs-open>
+    
+  @{exec_path}				mr,
+
+  @{bin}/lxqt-admin-user			rPx,
+  @{bin}/ibus-setup				rPx,
+  @{bin}/lxqt-config-monitor			rPx,
+  @{bin}/pcmanfm-qt				rPx,
+  @{bin}/lxqt-admin-time 			rPx,
+  @{bin}/lxqt-config-input			rPx,
+  @{bin}/lxqt-config-locale			rPx,
+  @{bin}/lxqt-config-brightness			rPx,
+  @{bin}/lxqt-config-session			rPx,
+  @{bin}/lxqt-config-file-associations		rPx,
+  @{bin}/lxqt-config-powermanagement		rPx,
+  @{bin}/lxqt-config-appearance			rPx,
+  @{bin}/lxqt-config-globalkeyshortcuts		rPx,
+  @{bin}/lxqt-config-notificationd		rPx,
+  @{bin}/obconf-qt				rPx,
+  @{bin}/nm-connection-editor			rPx,
+  @{bin}/pavucontrol				rPx,
+  @{bin}/pavucontrol-qt				rPx,
+  @{bin}/system-config-printer			rPx,
+  @{bin}/nm-connection-editor			rPx,
+  @{bin}/ControlPanel				rPx,
+  
+  /etc/xdg/menus/lxqt-config.menu  r,
+
+  /usr/share/desktop-directories/lxqt-* r,
+  /usr/share/libdrm/amdgpu.ids r,
+
+  owner @{user_config_dirs}/lxqt/lxqt-config.conf.lock rwk,
+  owner @{user_config_dirs}/lxqt/** rwkl -> @{user_config_dirs}/lxqt/#@{int},
+  
+  @{sys}/devices/@{pci_bus}/**/*  r,
+  @{sys}/devices/@{pci_bus}/**/**/*  r,
+
+  @{PROC}/sys/kernel/random/boot_id r,
+
+  owner /tmp/{,**}  r,
+
+  /dev/tty						rw,
+
+}
