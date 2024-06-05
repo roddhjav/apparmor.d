@@ -1,0 +1,39 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2024 Besanon  <m231009ts@mailfence.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+#include <tunables/global>
+
+@{exec_path} = @{bin}/lxqt-config-appearance
+profile lxqt-config-appearance @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/gtk>
+  include <abstractions/mesa>
+  include <abstractions/video>
+  include <abstractions/lxqt>
+  include <abstractions/qt5-shader-cache>
+  include <abstractions/dbus-session-strict>
+  include <abstractions/dbus-accessibility-strict>
+  include <abstractions/gvfs-open>
+
+  @{exec_path}			mr,
+  @{bin}/gsettings			rPx,  
+  
+  /usr/share/libdrm/amdgpu.ids 		r,
+
+  owner @{user_config_dirs}/lxqt/** rwkl -> @{user_config_dirs}/lxqt/#@{int},
+  owner @{user_config_dirs}/dconf/user  r,
+  owner @{user_config_dirs}/pcmanfm-qt/lxqt/settings.conf r,
+
+  owner /tmp/#@{int} 			rw,
+  owner /tmp/** rwkl -> /tmp/#@{int},
+
+  @{sys}/devices/@{pci_bus}/{,**}       r,
+  @{sys}/devices/@{pci_bus}/**/**/**    r,
+
+  @{PROC}/sys/kernel/random/boot_id 	r,
+
+  /dev/tty				rw,
+
+}
