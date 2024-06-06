@@ -1,0 +1,152 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2024 Besanon <m231009ts@mailfence.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/sv
+profile sv @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/bus-session>
+  include <abstractions/bus-system>
+  include <abstractions/disks-read>
+  include <abstractions/nameservice-strict>
+
+  capability fsetid,
+  capability fowner,
+  capability mknod,
+  capability fowner,
+  capability kill,
+
+  signal (send) peer=runsvdir,
+  signal (send) peer=runit,
+  signal (receive) peer=runit,
+
+  signal (receive) set=(hup) peer=@{p_systemd},
+  signal (receive) peer=sddm,
+
+  ptrace (read) peer=elogind,  
+  ptrace (read) peer=@{p_systemd},  
+
+  @{exec_path}               mr,
+  
+  @{bin}/mkdir              rix,
+  @{bin}/dbus-send          rix,
+  @{bin}/bash	              rix,
+  @{bin}/mountpoint         rix,
+  /etc/sv/**/run            rix,
+  /etc/sv/**/**/run         rix,
+  /etc/sv/**/finish         rix,
+  /etc/sv/**/run            rix,
+  /etc/sv/dbus/check        rix,
+
+  /var/lib/dbus/machine-id   r,
+  /etc/machine-id            r,
+  /etc/sv/                   r,
+  /etc/sv/**                 rw,
+  /etc/runit/                r, 
+  /etc/runit/**              rw,
+ 
+  owner /                    r,
+
+  owner /etc/pam.d/**        r,
+
+  owner @{lib}/security/**    r,
+  owner @{lib}/gconv/gconv-modules.d/** r,
+
+  @{run}/                     rw,
+  @{run}/*/                   rw,
+  @{run}/*/*                  rw,
+  @{run}/auditd.pid           r,
+  @{run}/credentials/{,**}    rw,
+  @{run}/initctl              rw,
+  @{run}/systemd/{,**}        rw,
+
+  @{run}/udev/data/+bluetooth:* r,
+  @{run}/udev/data/+backlight:* r,
+  @{run}/udev/data/+leds:*backlight* r,
+
+  @{run}/udev/data/+module:configfs r,
+  @{run}/udev/data/+module:fuse r,
+  @{run}/udev/data/c4:@{int} r,           # For TTY devices
+  @{run}/udev/data/c10:@{int}   r,        # For non-serial mice, misc features
+  @{run}/udev/data/c116:@{int} r,         # For ALSA
+  @{run}/udev/data/c@{dynamic}:@{int} r,  # For dynamic assignment range 234 to 254, 384 to 511
+  @{run}/udev/data/n@{int} r,
+  @{run}/udev/tags/systemd/ r,
+  @{run}/runit/** rw,
+  owner @{run}/runit/supervise.*/** rwk,
+  owner @{run}/runit/supervise.*/**/** rwk,
+  owner @{run}/dhcpcd/  rw,
+  owner @{run}/elogind.pid rwk,
+  owner @{run}/utmp rwk,
+
+  @{sys}/bus/ r,
+  @{sys}/class/ r,
+  @{sys}/class/power_supply/ r,
+  @{sys}/class/sound/ r,
+  @{sys}/devices/@{pci}/** r,
+  @{sys}/devices/**/net/** r,
+  @{sys}/devices/**/uevent r,
+  @{sys}/devices/virtual/dmi/id/{sys,board,bios}_vendor r,
+  @{sys}/devices/virtual/dmi/id/product_name r,
+  @{sys}/devices/virtual/dmi/id/product_version r,
+  @{sys}/devices/virtual/tty/console/active r,
+  @{sys}/fs/cgroup/{,**} rw,
+  @{sys}/fs/fuse/connections/ r,
+  @{sys}/fs/pstore/ r,
+  #@{sys}/kernel/**/ r,
+  @{sys}/kernel/** r,
+  @{sys}/module/**/uevent r,
+  @{sys}/module/apparmor/parameters/enabled r,
+
+        @{PROC}/@{pid}/cgroup r,
+        @{PROC}/@{pid}/cmdline r,
+        @{PROC}/@{pid}/comm r,
+        @{PROC}/@{pid}/coredump_filter r,
+        @{PROC}/@{pid}/environ r,
+        @{PROC}/@{pid}/fd/ r,
+        @{PROC}/@{pid}/fdinfo/@{int} r,
+        @{PROC}/@{pid}/gid_map rw,
+        @{PROC}/@{pid}/loginuid rw,
+        @{PROC}/@{pid}/mountinfo r,
+        @{PROC}/@{pid}/setgroups rw,
+        @{PROC}/@{pid}/stat r,
+        @{PROC}/@{pid}/uid_map rw,
+        @{PROC}/cmdline r,
+        @{PROC}/devices r,
+        @{PROC}/pressure/* r,
+        @{PROC}/swaps r,
+        @{PROC}/sys/fs/binfmt_misc/ r,
+        @{PROC}/sys/fs/nr_open r,
+        @{PROC}/sys/kernel/* r,
+        @{PROC}/sysvipc/{shm,sem,msg} r,
+  owner @{PROC}/@{pid}/limits r,
+  owner @{PROC}/@{pid}/oom_score_adj rw,
+
+        /dev/autofs r,
+        /dev/kmsg w,
+  owner /dev/console rwk,
+  owner /dev/dri/card@{int} rw,
+  owner /dev/hugepages/ rw,
+  owner /dev/initctl rw,
+  owner /dev/input/event@{int} rw,
+  owner /dev/mqueue/ rw,
+  owner /dev/rfkill rw,
+  owner /dev/shm/ rw,
+  owner /dev/pts/@{int} rw,
+  owner /dev/ttyS@{int} rwk,
+  owner /var/log/audit/** rw,
+
+  owner @{user_config_dirs}/pulse/ rw,
+
+  # file_inherit
+  owner /dev/tty@{int} rw,
+  owner @{HOME}/.xsession-errors w,
+  owner @{HOME}/.anyRemote/anyremote.stdout w,
+
+  include if exists <local/sv>
+}
