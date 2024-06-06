@@ -1,0 +1,87 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 valoq <valoq@mailbox.org>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/libreoffice/program/oosplash
+profile libreoffice-oosplash @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/dconf-write>
+  include <abstractions/desktop>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/graphics>
+  include <abstractions/nameservice-strict>
+  include <abstractions/user-write-strict>
+  
+  @{exec_path} mr,
+  @{bin}/paperconf rix,
+
+  @{lib}/libreoffice/program/javaldx rix,  # no new privs
+  @{lib}/libreoffice/program/soffice.bin rPx -> libreoffice-soffice,
+  @{lib}/libreoffice/** r,
+  @{lib}/jvm/java-@{int}-openjdk/bin/java rix,
+  @{lib}/gconv/gconv-modules.cache r,
+
+  /usr/share/libreoffice/{,**} r,
+  /usr/share/libexttextcat/{,**} r,
+  /usr/share/liblangtag/{,**} r,
+  /usr/share/hunspell/{,**} r, 
+  /usr/share/hyphen/{,**} r,
+  /usr/share/mythes/{,**} r,
+
+  /etc/libreoffice/{,**} r,
+  /etc/java{,-*}-openjdk/{,**} r,
+  /etc/paperspecs r,
+  /etc/machine-id r,
+  /etc/ca-certificates/{,**} r,
+
+  owner /var/spool/libreoffice/{,**} rw, 
+
+  owner @{user_cache_dirs}/libreoffice/{,**} rw,
+  owner @{user_config_dirs}/libreoffice/{,**} rwk,
+
+  /tmp/ r,
+  owner @{tmp}/@{rand6} rwk,
+  owner @{tmp}/*.tmp/{,**} rwk,
+  owner @{tmp}/OSL_PIPE_@{uid}_SingleOfficeIPC_@{hex} w,
+  owner @{tmp}/.java_pid@{int}{,.tmp} rw,
+  owner @{tmp}/hsperfdata_@{user}/  rw,
+  owner @{tmp}/hsperfdata_@{user}/@{int} rwk,
+
+  owner /dev/pts/@{int} r,
+
+        @{sys}/devices/system/cpu/cpu@{int}/microcode/version r,
+        @{sys}/devices/virtual/block/**/queue/rotational r,
+        @{sys}/kernel/mm/hugepages/ r,
+        @{sys}/kernel/mm/transparent_hugepage/enabled r,
+        @{sys}/kernel/mm/transparent_hugepage/shmem_enabled r,
+  owner @{sys}/fs/cgroup/user.slice/user-@{int}.slice/user@@{int}.service/app.slice/**/memory.max r,
+
+  @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/session-@{int}.scope/cpu.max r,
+  @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/session-@{int}.scope/memory.max r,
+
+        @{PROC}/cgroups r,
+  owner @{PROC}/@{pid}/cgroup r,
+  owner @{PROC}/@{pid}/coredump_filter rw,
+  owner @{PROC}/@{pid}/mountinfo r,
+
+  @{sys}/devices/@{pci_bus}/**/nvme/** r,
+
+  profile paperconf {
+    @{bin}/paperconf r,
+  
+    @{lib}/libreoffice/program/types.rdb r,  # file_inherit
+    @{lib}/libreoffice/program/types/offapi.rdb r,  # file_inherit
+    @{lib}/libreoffice/program/types/oovbaapi.rdb r,  # file_inherit
+    @{lib}/libreoffice/share/config/images_elementary.zip r,  # file_inherit
+  
+    /etc/paperspecs r,
+  
+    owner @{user_config_dirs}/libreoffice/@{int}/user/extensions/bundled/extensions.pmap rw,  # file_inherit
+  }
+
+  include if exists <local/libreoffice>
+}
