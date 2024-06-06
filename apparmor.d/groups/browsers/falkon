@@ -3,11 +3,13 @@
 # Copyright (C) 2024 Besanon  <m231009ts@mailfence.com>
 # SPDX-License-Identifier: GPL-2.0-only
 
-#include <tunables/global>
+abi <abi/3.0>,
+
+include <tunables/global>
 
 @{name} = falkon{,.sh,-wayland}
-@{exec_path} = @{bin}/falkon
-profile falkon @{exec_path} {
+@{exec_pathFFal} = @{bin}/falkon
+profile falkon @{exec_pathFFal} {
   include <abstractions/base>
   include <abstractions/audio-client>
   include <abstractions/bus-session>
@@ -33,8 +35,15 @@ profile falkon @{exec_path} {
   include <abstractions/user-download-strict>
   include <abstractions/user-read-strict>
 
-  network inet dgram,
-  network inet stream,
+  network inet dgram,		# essential
+  network inet stream,		# essential
+
+  network inet6 stream,   	# Not needed
+  network inet6 dgram,    	# Not needed
+  network inet raw,      	# Not needed
+  network inet6 raw,		# Not needed
+  network netlink raw,		# Not needed
+  network packet dgram,		# Not needed
 
   signal (send, receive) set=(term, kill) peer=QtWebEngineProc,
   signal (send) set=(term, kill) peer=falkon-*,
@@ -64,7 +73,7 @@ profile falkon @{exec_path} {
        member={GetConnectionUnixUser,GetConnectionUnixProcessID}
        peer=(name=org.freedesktop.DBus, label=dbus-system),
 
-  @{exec_path} 					     mr,
+  @{exec_pathFFal} 					     mr,
 
   @{lib}/qt6/QtWebEngineProcess 			     rix,
   @{bin}/resolvconf                                          rPx,
@@ -82,12 +91,14 @@ profile falkon @{exec_path} {
   @{lib}/gvfsd-metadata                              rPx,
 
   /usr/lib/qt6/plugins/falkon/*.so  	     	     mr,
+
   /usr/share/libfm-qt/translations/libfm-qt_de.qm    r,
   /usr/share/@{name}/{,**} 			     r,
   /usr/share/doc/{,**} 				     rw,
   /usr/share/publicsuffix/public_suffix_list.dafsa   r,
+  /usr/share/libfm-qt6/translations/libfm-qt_de.qm   r,
   /usr/share/qt6/** 				     rw,
-  /usr/share/thumbnailers/ 			     r,
+  /usr/share/thumbnailers/* 			     r,
   /usr/share/webext/{,**} 			     r,
   /usr/share/hunspell-bdic/ 			     r,
 
@@ -110,14 +121,13 @@ profile falkon @{exec_path} {
   owner @{user_config_dirs}/falkon/profiles/** rwkl -> @{user_config_dirs}/falkon/profiles/#@{int},
   owner @{user_config_dirs}/falkonrc.lock rwk,
   owner @{user_config_dirs}/chromium/WidevineCdm/**   r,
-  owner @{user_config_dirs}/chromium/WidevineCdm/4.10.2710.0/_platform_specific/linux_x64/*.so  m,
+  owner @{user_config_dirs}/chromium/WidevineCdm/4.10.2710.0/_platform_specific/linux_x64/*.so  m,   # Hardcoded entry
   owner @{user_config_dirs}/gtk-{3,4}.0/assets/*.svg r,
   owner @{user_config_dirs}/ibus/bus/ r,
   owner @{user_config_dirs}/ibus/bus/@{hex32}-unix-{,wayland-}@{int} r,
   owner @{user_config_dirs}/kdedefaults/* r,
   owner @{user_config_dirs}/kdeglobals r,
   owner @{user_config_dirs}/kdeglobals.lock rwk,
-  owner @{user_config_dirs}/** rwkl  -> @{user_config_dirs}/#@{int}, 
   owner @{user_config_dirs}/kioslaverc r,
   owner @{user_config_dirs}/QtProject.conf rwk,
   owner @{user_config_dirs}/QtProject.conf.lock rwk,
@@ -147,7 +157,6 @@ profile falkon @{exec_path} {
   /var/tmp/ r,
 
   owner @{run}/user/@{uid}/#@{int}  rw, 
-  owner @{run}/user/@{uid}/**  rwkl  -> @{run}/user/@{uid}/#@{int},
   @{run}/mount/utab r,
   @{run}/udev/data/+input:input@{int} r,  # for mouse, keyboard, touchpad
   @{run}/udev/data/c13:@{int}  r,         # for /dev/input/*
@@ -200,5 +209,7 @@ profile falkon @{exec_path} {
   # Silencer
   deny owner @{HOME}/.* r,
   deny owner @{user_share_dirs}/gvfs-metadata/{,*} r,
+
+  include if exists <local/falkon>
 
 }
