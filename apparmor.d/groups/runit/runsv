@@ -8,8 +8,8 @@ abi <abi/3.0>,
 
 include <tunables/global>
 
-@{exec_pathrunsv} = @{bin}/runsv
-profile runsv @{exec_pathrunsv} flags=(attach_disconnected) {
+@{exec_path} = @{bin}/runsv
+profile runsv @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus-session>
   include <abstractions/bus-system>
@@ -53,11 +53,11 @@ profile runsv @{exec_pathrunsv} flags=(attach_disconnected) {
   ptrace (read) peer=@{p_systemd},  
   ptrace (trace) peer=@{profile_name},
 
-  @{exec_pathrunsv} 	 mr,
+  @{exec_path}         	 mr,
   
-  @{bin}/sv 		 rPx,
+  @{bin}/sv 		         rPx,
   @{bin}/vlogger         rPx,
-  @{bin}/udevadm 	 rCx -> udevadm, 
+  @{bin}/udevadm 	       rCx -> udevadm, 
   @{bin}/tlp             rPx,
   @{bin}/readlink        rix,
   @{bin}/ethtool         rix,
@@ -72,32 +72,32 @@ profile runsv @{exec_pathrunsv} flags=(attach_disconnected) {
   @{bin}/auditd          rPx,
   @{bin}/chronyd         rPx,
   @{bin}/NetworkManager  rPx,
-  @{bin}/mount  	 rPx,
+  @{bin}/mount  	       rPx,
   @{bin}/sddm            rPx,
   @{bin}/pause           rix,
   @{bin}/install         rix,
   @{bin}/chpst           rPx,
   @{bin}/mkdir           rix,
   @{bin}/mktemp          rix,
-  @{bin}/dbus-send       rix, # alt: rix
-  @{bin}/utmpset	 rix, # alt: rix
+  @{bin}/dbus-send       rix,
+  @{bin}/utmpset	       rix, 
   @{lib}exec/elogind/elogind          rPx,
-  @{lib}exec/elogind/elogind.wrapper  rPx,  # alt: rix
-  @{bin}/bash		 rPx, # alt: rix
-  @{bin}/tr		 rPx, # alt:rix
-  @{bin}/rm		 rix,
-  @{bin}/touch		 rix,
-  @{bin}/flock		 rix,
-  @{bin}/cat		 rix,
-  @{bin}/grep		 rPx, # alt:rix
-  @{bin}/mountpoint 	 rix,
+  @{lib}exec/elogind/elogind.wrapper  rPx,  
+  @{bin}/bash		         rPx,
+  @{bin}/tr		           rPx,
+  @{bin}/rm		           rix,
+  @{bin}/touch		       rix,
+  @{bin}/flock		       rix,
+  @{bin}/cat		         rix,
+  @{bin}/grep		         rPx,
+  @{bin}/mountpoint 	   rix,
   @{bin}/systemctl       rCx -> systemctl,
 
-  /etc/sv/**/run  	 rix,   # rix,
-  /etc/sv/**/**/run  	 rix,   # rix,
-  /etc/sv/**/finish  	 rix,   # rix,
-  /etc/sv/**/run  	 rix,   # rix,
-  /etc/sv/dbus/check 	 rix,   # rix,
+  /etc/sv/**/run  	     rix,   
+  /etc/sv/**/**/run  	   rix, 
+  /etc/sv/**/finish  	   rix, 
+  /etc/sv/**/run  	     rix,   
+  /etc/sv/dbus/check 	   rix, 
 
   mount fstype=tmpfs ->   @{run}/systemd/,
   mount fstype=tmpfs ->   @{run}/user/,
@@ -106,48 +106,48 @@ profile runsv @{exec_pathrunsv} flags=(attach_disconnected) {
   umount  @{run}/user/ ,
   umount  @{sys}/fs/cgroup/elogind/ ,
 
-  /etc/sv/ 		r,
-  /etc/sv/** 		rw,
-  /etc/runit/ 		r, 
-  /etc/runit/** 	rw, 
+  /etc/sv/ 		            r,
+  /etc/sv/** 		          rw,
+  /etc/runit/ 		        r, 
+  /etc/runit/** 	        rw, 
 
-  @{run}/ 		rw,
-  @{run}/*/ 		rw,
-  @{run}/*/* 		rw,
-  @{run}/auditd.pid 	r,
+  @{run}/ 		            rw,
+  @{run}/*/ 		          rw,
+  @{run}/*/* 		          rw,
+  @{run}/auditd.pid 	    r,
   @{run}/credentials/{,**} rw,
-  @{run}/initctl 	rw,
-  @{run}/systemd/{,**}  rw,
+  @{run}/initctl 	        rw,
+  @{run}/systemd/{,**}    rw,
 
-  @{run}/udev/data/+module:configfs r,
-  @{run}/udev/data/+module:fuse r,
-  @{run}/udev/data/c4:@{int} r,           # For TTY devices
-  @{run}/udev/data/c10:@{int}   r,        # For non-serial mice, misc features
-  @{run}/udev/data/c116:@{int} r,         # For ALSA
+  @{run}/udev/data/+module:configfs   r,
+  @{run}/udev/data/+module:fuse       r,
+  @{run}/udev/data/c4:@{int}          r,           # For TTY devices
+  @{run}/udev/data/c10:@{int}         r,        # For non-serial mice, misc features
+  @{run}/udev/data/c116:@{int}        r,         # For ALSA
   @{run}/udev/data/c@{dynamic}:@{int} r,  # For dynamic assignment range 234 to 254, 384 to 511
-  @{run}/udev/data/n@{int} r,
-  @{run}/runit/** rw,
-  owner @{run}/user/@{uid}/ r,
-  owner @{run}/user/@{uid}/#@{int} rw,
-  owner @{run}/runit/supervise.*/** rwk,
+  @{run}/udev/data/n@{int}            r,
+  @{run}/runit/**                     rw,
+  owner @{run}/user/@{uid}/           r,
+  owner @{run}/user/@{uid}/#@{int}    rw,
+  owner @{run}/runit/supervise.*/**   rwk,
   owner @{run}/runit/supervise.*/**/** rwk,
-  owner @{run}/dhcpcd/  rw,
-  owner @{run}/elogind.pid rwk,
-  owner @{run}/utmp rwk,
+  owner @{run}/dhcpcd/                rw,
+  owner @{run}/elogind.pid            rwk,
+  owner @{run}/utmp                   rwk,
 
-  @{sys}/fs/cgroup/{,**} rw,
+  @{sys}/fs/cgroup/{,**}              rw,
 
-        @{PROC}/@{pid}/cgroup r,
-        @{PROC}/@{pid}/fd/ r,
-        @{PROC}/@{pid}/mountinfo r,
-        @{PROC}/@{pid}/uid_map rw,
-        @{PROC}/sys/fs/binfmt_misc/ r,
+        @{PROC}/@{pid}/cgroup         r,
+        @{PROC}/@{pid}/fd/            r,
+        @{PROC}/@{pid}/mountinfo      r,
+        @{PROC}/@{pid}/uid_map        rw,
+        @{PROC}/sys/fs/binfmt_misc/   r,
 
-  owner /var/log/audit/** rw,
-  owner /var/log/audit/**/** rw,
-  owner /var/log/wtmp rwk,
+  owner /var/log/audit/**             rw,
+  owner /var/log/audit/**/**          rw,
+  owner /var/log/wtmp                 rwk,
 
-  owner /dev/tty@{int} rw,
+  owner /dev/tty@{int}                rw,
 
   profile systemctl {
     include <abstractions/base>
@@ -162,16 +162,17 @@ profile runsv @{exec_pathrunsv} flags=(attach_disconnected) {
 
     ptrace (read),
 
-    @{bin}/udevadm mr,
+    @{bin}/udevadm                   mr,
 
-    /etc/udev/udev.conf r,
+    /etc/udev/udev.conf              r,
 
-    owner @{PROC}/@{pid}/stat r,
-    owner @{PROC}/@{pid}/cgroup r,
-          @{PROC}/1/cgroup r,
+    owner @{PROC}/@{pid}/stat        r,
+    owner @{PROC}/@{pid}/cgroup      r,
+          @{PROC}/1/cgroup           r,
           @{PROC}/sys/kernel/random/boot_id r,
 
   }
 
+include if exists <local/runsv>
 }
 
