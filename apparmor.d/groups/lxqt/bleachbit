@@ -3,28 +3,32 @@
 # Copyright (C) 2024 Besanon  <m231009ts@mailfence.com>
 # SPDX-License-Identifier: GPL-2.0-only
 
-#include <tunables/global>
+abi <abi/3.0>,
+
+include <tunables/global>
 
 @{exec_path} = @{bin}/bleachbit
 profile bleachbit @{exec_path} {
-  #include <abstractions/base>
-  #include <abstractions/gtk>
-  #include <abstractions/python>
-  #include <abstractions/gvfs-open>
-  #include <abstractions/video>
-  #include <abstractions/lxqt>
-  #include <abstractions/thumbnails-cache-read>
-  #include <abstractions/qt5-shader-cache>
+  include <abstractions/base>
+  include <abstractions/gtk>
+  include <abstractions/python>
+  include <abstractions/gvfs-open>
+  include <abstractions/video>
+  include <abstractions/fontconfig-cache-read>  
+  include <abstractions/lxqt>
+  include <abstractions/thumbnails-cache-read>
+  include <abstractions/qt5-shader-cache>
   
   ptrace (read),
 
   @{exec_path}				mr,
 
+  @{bin}/loginctl 				rpx,
+
   /@{HOME}/** rwlk -> /@{HOME}/**,
   /@{HOME}/** 					rw,
   /usr/share/ 					rw,
   /usr/share/** 				rw,
-
   /usr/share/libfm-qt/translations/libfm-qt_de.qm r,
   /usr/share/libdrm/amdgpu.ids 			r,
 
@@ -32,14 +36,12 @@ profile bleachbit @{exec_path} {
   /etc/fstab					r,
   /etc/host.conf 				r,
   /etc/gai.conf 				r,
-
+  /etc/pulse/client.conf 			r,
   /var/cache/fontconfig/** 			rw,  
   owner /var/tmp/etilqs* 			rwk,
 
   /opt/{,**}  					r,
 
-  owner @{PROC}/@{pid}/mountinfo 		r,
-  owner @{PROC}/@{pid}/mounts 			r,
   owner @{HOME}/.inputrc  			r,
   owner @{HOME}/.bashrc   			r,
   owner @{HOME}/.bash_profile  			r,
@@ -47,12 +49,18 @@ profile bleachbit @{exec_path} {
 
   owner @{user_config_dirs}/QtProject.conf 	r,
 
+  owner @{run}/user/@{uid}/pulse/ 		rw,
+  
   owner /tmp/@{int}  				r,
 
-  @{sys}/devices/@{pci_bus}/{,**}               r,
-  @{sys}/devices/@{pci_bus}/**/**/**            r,
-
+  @{PROC}/ 					r,
   @{PROC}/sys/kernel/random/boot_id  		r,
+  owner @{PROC}/@{pid}/mounts 			r,
+  owner @{PROC}/@{pid}/mountinfo 		r,
 
+  /dev/shm/ 					r,
   /dev/tty					rw,
+
+  include if exists <local/bleachbit>
+  
 }
