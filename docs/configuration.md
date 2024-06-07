@@ -65,7 +65,7 @@ directories. Example:
 @{XDG_PROJECTS_DIR}+="Git" "Papers"
 ```
 
-Then restart the apparmor service to reload the profiles in the kernel:
+Then restart the AppArmor service to reload the profiles in the kernel:
 ```sh
 sudo systemctl restart apparmor.service
 ```
@@ -105,4 +105,4 @@ You can extend any profile with your own rules by creating a file in the `/etc/a
     `rPx` allows transition to the Firefox profile. Use `rPUx` to allow transition to an unconfined state if you do not have the profile for a given program.
 
 
-Then, reload the apparmor rules with `sudo systemctl restart apparmor`.
+Then, reload the AppArmor rules with `sudo systemctl restart AppArmor`.
