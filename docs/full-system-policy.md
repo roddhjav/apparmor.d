@@ -1,5 +1,5 @@
 ---
-title: Full system policy
+title: Full system policy (FSP)
 ---
 
 !!! danger
@@ -16,6 +16,19 @@ title: Full system policy
     AppArmor is also capable of being used for full system policy where processes are by default not running under the `unconfined` profile. This might be useful for high security environments or embedded systems.
 
     *Source: [AppArmor Wiki][apparmor-wiki]*
+
+
+## Overview
+
+The default mode of `apparmor.d` is the more advanced confinement configuration we can achieve while being as simple as installing a package and doing some minor configuration on your system. By design, a full system confinement does not work this way. Before enabling you need to consider your use case and security objective.
+
+Particularly:
+
+- Every system application will be **blocked** if they do not have a profile.
+- Any non-standard system app need to be explicitly profiled and allowed to run. For instance, if you want to use your own proxy or VPN software, you need to ensure it is correctly profiled and allowed to run in the `systemd` profile.
+- Desktop environment must be explicitly supported, your UI will not start otherwise. Again, it is a **feature**.
+- FSP mode will run unknown user application into the `default` profile. It might be enough for your application. If not you have to make a profile for it.
+- In FSP mode, all sandbox manager **must** have a profile. Then user sandboxed application (flatpak, snap...) will work as expected.
 
 
 ## Install

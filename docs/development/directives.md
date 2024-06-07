@@ -136,7 +136,7 @@ The `exec` directive is useful to allow executing transition to a profile withou
     include <abstractions/common/systemd>
     capability dac_override,
     capability kill,
-    unix (bind) type=stream addr=@@{hex}/bus/systemd-oomd/bus-api-oom,
+    unix (bind) type=stream addr=@@{hex16}/bus/systemd-oomd/bus-api-oom,
     #aa:dbus own bus=system name=org.freedesktop.oom1
     /etc/systemd/oomd.conf r,
     /etc/systemd/oomd.conf.d/{,**} r,

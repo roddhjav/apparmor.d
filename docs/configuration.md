@@ -49,7 +49,14 @@ The profiles heavily use the (largely extended) XDG directory variables defined 
     | Vm | `@{XDG_VM_DIR}` | `.vm`
     | Wallpapers | `@{XDG_WALLPAPERS_DIR}` | `@{XDG_PICTURES_DIR}/Wallpapers` |
 
-You can personalize these values by creating a file such as: `/etc/apparmor.d/tunables/xdg-user-dirs.d/local` where you define your own personal directories. Example:
+You can personalize these values.
+
+First create the directory `/etc/apparmor.d/tunables/xdg-user-dirs.d/apparmor.d.d`:
+```
+sudo mkdir /etc/apparmor.d/tunables/xdg-user-dirs.d/apparmor.d.d
+```
+Then create a `local` addition file in it where you define your own personal
+directories. Example:
 ```sh
 @{XDG_VIDEOS_DIR}+="Films"
 @{XDG_MUSIC_DIR}+="Musique"

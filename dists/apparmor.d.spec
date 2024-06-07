@@ -16,6 +16,7 @@ Source0:        %{name}-%{version}.tar.gz
 Requires:       apparmor-profiles
 BuildRequires:  distribution-release
 BuildRequires:  golang-packaging
+BuildRequires:  apparmor-profiles
 
 %description
 AppArmor.d is a set of over 1500 AppArmor profiles whose aim is to confine most Linux based applications and processes.
@@ -36,9 +37,6 @@ systemctl is-active -q apparmor && systemctl reload apparmor ||:
 %files
 %license LICENSE
 %doc README.md
-%exclude /etc/apparmor.d/libvirtd
-%exclude /etc/apparmor.d/unix-chkpwd
-%exclude /etc/apparmor.d/virt-aa-helper
 %config /etc/apparmor.d/
 /usr/bin/aa-log
 

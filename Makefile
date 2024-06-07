@@ -12,7 +12,7 @@ P = $(filter-out dpkg,$(notdir $(wildcard ${BUILD}/apparmor.d/*)))
 .PHONY: all build enforce full install local $(P) pkg dpkg rpm tests lint clean
 
 all: build
-	@./${BUILD}/prebuild --complain	
+	@./${BUILD}/prebuild --complain
 
 build:
 	@go build -o ${BUILD}/ ./cmd/aa-log
@@ -26,6 +26,7 @@ full: build
 
 ROOT = $(shell find "${BUILD}/root" -type f -printf "%P\n")
 PROFILES = $(shell find "${BUILD}/apparmor.d" -type f -printf "%P\n")
+DISABLES = $(shell find "${BUILD}/apparmor.d" -type l -printf "%P\n")
 install:
 	@install -Dm0755 ${BUILD}/aa-log ${DESTDIR}/usr/bin/aa-log
 	@for file in ${ROOT}; do \
@@ -33,6 +34,10 @@ install:
 	done;
 	@for file in ${PROFILES}; do \
 		install -Dm0644 "${BUILD}/apparmor.d/$${file}" "${DESTDIR}/etc/apparmor.d/$${file}"; \
+	done;
+	@for file in ${DISABLES}; do \
+		mkdir -p "${DESTDIR}/etc/apparmor.d/disable"; \
+		cp -d "${BUILD}/apparmor.d/$${file}" "${DESTDIR}/etc/apparmor.d/$${file}"; \
 	done;
 	@for file in ${BUILD}/systemd/system/*; do \
 		service="$$(basename "$$file")"; \

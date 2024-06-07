@@ -86,7 +86,6 @@ title: Variables References
 | Integer (up to 10 digits) | `@{int}` | `[0-9]{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}` |
 | Any 6, 8 or 10 characters | `@{rand6}`, `@{rand8}`, `@{rand10}` | |
 | Hexadecimal | `@{h}*@{h}` |  |
-| MD5 hash | `@{md5}` |  |
 | Universally unique identifier | `@{uuid}` |  |
 | Current Process id | `@{pid}` | `[0-9]*` |
 | Processes ids | `@{pids}` | `[0-9]*` |

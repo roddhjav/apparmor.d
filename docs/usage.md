@@ -86,15 +86,25 @@ Other AppArmor userspace tools such as `aa-enforce`, `aa-complain`, and `aa-logp
 
 To read the AppArmor log from `/var/log/audit/audit.log`:
 ```sh
-aa-log
+$ aa-log
 ```
 
 To optionally filter a given profile name: `aa-log <profile-name>` (your shell will autocomplete the profile name):
 ```
-aa-log dnsmasq
+$ aa-log dnsmasq
 DENIED  dnsmasq open /proc/sys/kernel/osrelease comm=dnsmasq requested_mask=r denied_mask=r
 DENIED  dnsmasq open /proc/1/environ comm=dnsmasq requested_mask=r denied_mask=r
 DENIED  dnsmasq open /proc/cmdline comm=dnsmasq requested_mask=r denied_mask=r
+```
+
+To generate AppArmor rule:
+```sh
+$ aa-log -r dnsmasq
+profile dnsmasq {
+  @{PROC}/@{pid}/environ r,
+  @{PROC}/cmdline r,
+  @{PROC}/sys/kernel/osrelease r,
+}
 ```
 
 !!! info
