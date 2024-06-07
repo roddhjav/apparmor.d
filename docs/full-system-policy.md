@@ -6,8 +6,8 @@ title: Full system policy (FSP)
 
     Full system policy is still under early development:
     
-    - Do not run it outside a development VM! 
-    - This is an **advanced** feature, you should understand what you are doing
+    - Do not run this outside of a development VM! 
+    - This is an **advanced** feature, you should understand what you are doing before use.
 
     **You have been warned!!!**
 
@@ -28,7 +28,7 @@ Particularly:
 - Any non-standard system app need to be explicitly profiled and allowed to run. For instance, if you want to use your own proxy or VPN software, you need to ensure it is correctly profiled and allowed to run in the `systemd` profile.
 - Desktop environment must be explicitly supported, your UI will not start otherwise. Again, it is a **feature**.
 - FSP mode will run unknown user application into the `default` profile. It might be enough for your application. If not you have to make a profile for it.
-- In FSP mode, all sandbox manager **must** have a profile. Then user sandboxed application (flatpak, snap...) will work as expected.
+- In FSP mode, all sandbox managers **must** have a profile. Then user sandboxed applications (flatpak, snap, etc) will work as expected.
 
 
 ## Install
@@ -43,7 +43,7 @@ cache-loc /etc/apparmor/earlypolicy/
 Optimize=compress-fast
 ```
 
-**:material-arch: Archlinux**
+**:material-arch: Arch Linux**
 
 In `PKGBUILD`, replace `make` by `make full`:
 ```diff
@@ -94,7 +94,7 @@ To work as intended, all privileged services started by systemd **must** have a 
 /usr/lib/systemd/system/*.service
 ```
 
-The main [fallback](#fallback) profile (`default`) is not intended to be used by privileged program or service. Such programs must have they dedicated profile and will fail otherwise. This is a **feature**, not a bug.
+The main [fallback](#fallback) profile (`default`) is not intended to be used by privileged program or service. Such programs must have a dedicated profile and will fail otherwise. This is a **feature**, not a bug.
 
 **`systemd-user`**
 
@@ -120,14 +120,14 @@ To work as intended, userland services started by `systemd --user` **should** ha
 
 ### Fallback
 
-In addition to the `systemd` profiles, a full system policy needs to ensure that no program run in an unconfined state at any time. The fallback profiles consist of a set generic specialized profiles:
+In addition to the `systemd` profiles, a full system policy needs to ensure that no programs run in an unconfined state at any time. The fallback profiles consist of a set generic specialized profiles:
 
 - **`default`** is used for any *classic* user application with a GUI. It has full access to user home directories.
 - **`bwrap`, `bwrap-app`** are used for *classic* user application that are sandboxed with **bwrap**.
 
 !!! warning
 
-    The main fallback profile (`default`) is not intended to be used by priviligied program or service. Such programs **must** have they dedicaded profile and would break otherwise.
+    The main fallback profile (`default`) is not intended to be used by privileged program or service. Such programs **must** have they dedicated profile and would break otherwise.
 
 Additionally, special user access can be setup using PAM rules set such as a random shell interactively opened (as user or as root). 
 
