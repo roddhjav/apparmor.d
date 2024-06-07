@@ -6,16 +6,16 @@ The default package configuration installs all profiles in *complain* mode. This
 
 !!! warning
 
-    - You need to test it in complain mode first and ensure your system boot!
-    - When reporting issue. Please ensure the profiles are in complain mode
+    - Please test in complain mode first and ensure your system boots!
+    - When reporting an issue, please ensure the affected profiles are in complain mode.
 
 
-#### :material-arch: Archlinux
+#### :material-arch: Arch Linux
 
 In `PKGBUILD`, replace `make` by `make enforce`:
 ```diff
--  make
-+  make enforce
+-  make DISTRIBUTION=arch
++  make enforce DISTRIBUTION=arch
 ```
 
 #### :material-ubuntu: Ubuntu & :material-debian: Debian
