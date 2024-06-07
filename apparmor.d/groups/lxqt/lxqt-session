@@ -3,23 +3,22 @@
 # Copyright (C) 2024 Besanon  <m231009ts@mailfence.com>
 # SPDX-License-Identifier: GPL-2.0-only
 
-#include <tunables/global>
+abi <abi/3.0>,
 
-@{exec_path} = @{bin}/lxqt-session
-profile lxqt-notificationd @{exec_path} {
+include <tunables/global>
+
+@{exec_path} = @{bin}/lxqt-session 
+profile lxqt-session /bin/lxqt-session flags=(attach_disconnected, complain) {
   include <abstractions/base>
-  include <abstractions/gtk>
+  include <abstractions/app-launcher-user>
+  include <abstractions/graphics>
+  include <abstractions/dbus-session-strict>
+  include <abstractions/nameservice-strict>
   include <abstractions/lxqt>
-  include <abstractions/video>
-  include <abstractions/qt5-shader-cache>
-  include <abstractions/dbus-session>
-  include <abstractions/dbus-accessibility>
-  include <abstractions/gvfs-open>
 
-#  signal (receive) set=(kill, term) peer=lxqt-session,
+  signal (receive) set=(term) peer=sddm,
+  signal (send),
 
-  /dev/tty						rw,
-  
   dbus receive
   	bus=session
   	path="/org/freedesktop/Notifications"
@@ -35,25 +34,69 @@ profile lxqt-notificationd @{exec_path} {
   	path="/org/freedesktop/Notifications"
   	interface="org.freedesktop.Notifications"
   	peer=(name=":[0-9]*.[0-9]*"),
-  
-   @{exec_path}				mr,
 
-   /usr/share/libdrm/amdgpu.ids 		r,
+  # aa:dbus own bus=session name=org.freedesktop.Notifications
 
-   /etc/nsswitch.conf 				r,
-  
-   /var/lib/dpkg/info/lxqt-notifications.conffiles r,
+  @{exec_path}			 		      mr,	
 
-   owner @{user_cache_dirs}/lxqt-notificationd/**  rwk,
-   owner @{user_cache_dirs}/lxqt-notificationd/#@{int} rw,
-   owner @{user_cache_dirs}/lxqt-notificationd/unattended.list.@{rand6} rwkl -> @{user_cache_dirs}/lxqt-notificationd/#@{int},
-   owner @{user_cache_dirs}/mesa_shader_cache/index rwk,
+  @{sh_path} 					      rix,
+  @{bin}/sleep 					      rix,
 
-   owner @{user_config_dirs}/lxqt/globalkeyshortcuts.conf.@{rand6} rwkl -> @{user_config_dirs}/lxqt/#@{int},
+  @{bin}/dbus-update-activation-environment           rcx -> dbus,
+  @{bin}/systemctl                                    rcx -> systemctl,
+  @{lib}/geoclue-2.0/demos/agent 		      rpux,
+  @{lib}/legacy-dist/deprecation-popup                rpux,
+  @{lib}/@{multiarch}/lxqt-policykit-agent-[0-9]      Px,
 
-   @{sys}/devices/@{pci_bus}/** r,
+  /etc/xdg/					r,
+  /etc/xdg/autostart/{,*}			r,
+  /etc/xdg/menus/lxqt-*				r,
+  /etc/xdg/openbox/*				r,
+  /usr/share/					r,
+  /usr/share/mime/				r,
+  /usr/share/cursors/				r,
+  /usr/share/backintime/common/*		r,
+  /usr/share/desktop-directories/*		r,
+  /usr/share/system-config-printer/*		r,
 
-   @{PROC}/sys/kernel/random/boot_id r,
+  owner @{HOME}/.local/share/			r,
+  owner @{HOME}/.config/			r,
+  owner @{HOME}/.config/autostart/		r,
+  owner @{HOME}/.config/autostart/*		rw,
+  owner @{HOME}/.config/mimeapps.list*		rw,
 
-   owner /tmp/{,**}  r,
+  owner @{user_cache_dirs}/openbox/openbox.log  rwk,
+
+  owner @{user_config_dirs}/dconf/user		r,
+  owner @{user_config_dirs}/openbox/rc.xml      r,
+
+  owner @{user_share_dirs}/sddm/xorg-session.log rw,
+
+  @{sys}/devices/@{pci_bus}/** 			r,
+ 
+  @{run}/systemd/inhibit/* 			rw,
+
+  /dev/tty                              rw,
+  /dev/tty[0-9]*                        rw,
+  /dev/pts/[0-9]*                       rw,
+ 
+  profile systemctl flags=(attach_disconnected, complain) {
+    include <abstractions/base>
+    include <abstractions/app/systemctl>
+
+  }
+
+  profile dbus flags=(attach_disconnected, complain) {
+    include <abstractions/base>
+    include <abstractions/bus-session>
+
+    @{bin}/dbus-update-activation-environment mr,
+
+    owner @{user_share_dirs}/sddm/xorg-session.log rw,
+
+  }
+
+  include if exists <local/lxqt-session>
+
 }
+
