@@ -16,6 +16,16 @@ If this command produce nothing, try:
 aa-log -s -R
 ```
 
+If the log file is empty, check that Auditd is running:
+```sh
+sudo systemctl status auditd.service
+```
+
+If Auditd is disabled aa-log will not have new results, you can enable Auditd by doing the following command:
+```sh
+sudo systemctl enable auditd.service --now
+```
+
 You can get more logs with:
 
 1. `aa-log -R -s` that will provide all apparmor logs since boot time (if journalctl collect them)
