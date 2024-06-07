@@ -20,18 +20,18 @@
   `polkit`, `NetworkManager`, `OpenVPN`, `GDM`, `rtkit`, `colord`
 - Confine all Desktop environments
 - Confine all user services such as `Pipewire`, `Gvfsd`, `dbus`, `xdg`, `xwayland`
-- Confine some *"special"* user applications: web browser, file browser...
+- Confine some *"special"* user applications: web browsers, file managers, etc
 - Should not break a normal usage of the confined software
 
 **Goals**
 
 - Target both desktops and servers
 - Support all distributions that support AppArmor:
-    * Archlinux
+    * Arch Linux
     * Ubuntu 22.04
     * Debian 12
     * OpenSUSE Tumbleweed
-- Support major desktop environments:
+- Support for all major desktop environments:
     * Gnome
     * KDE
     * XFCE *(work in progress)*
@@ -54,7 +54,7 @@ This is fundamentally different from how AppArmor is usually used on Linux serve
 
 **Presentations**
 
-Building large set of AppArmor profiles:
+Building the largest set of AppArmor profiles:
 
 - [Linux Security Summit North America (LSS-NA 2023)](https://events.linuxfoundation.org/linux-security-summit-north-america/) *([Slide](https://lssna2023.sched.com/event/1K7bI/building-the-largest-working-set-of-apparmor-profiles-alexandre-pujol-the-collaboratory-tudublin), [Video](https://www.youtube.com/watch?v=OzyalrOzxE8))*
 - [Ubuntu Summit 2023](https://events.canonical.com/event/31/) *([Slide](https://events.canonical.com/event/31/contributions/209/), [Video](https://www.youtube.com/watch?v=GK1J0TlxnFI))*
