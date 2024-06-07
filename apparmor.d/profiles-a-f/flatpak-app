@@ -41,6 +41,7 @@ profile flatpak-app flags=(attach_disconnected,mediate_deleted) {
   network netlink raw,
 
   ptrace (read),
+  ptrace trace peer=flatpak-app,
 
   signal (receive) set=(int) peer=flatpak-portal,
   signal (receive) set=(int) peer=flatpak-session-helper,
@@ -54,6 +55,10 @@ profile flatpak-app flags=(attach_disconnected,mediate_deleted) {
   /var/lib/flatpak/app/*/**/@{bin}/**  rmix,
   /var/lib/flatpak/app/*/**/@{lib}/**  rmix,
 
+  @{run}/parent/@{bin}/**              rmix,
+  @{run}/parent/@{lib}/**              rmix,
+  @{run}/parent/app/**                 rmix,
+
   @{bin}/gtk{,4}-update-icon-cache     rPx -> flatpak-app//&gtk-update-icon-cache,
   @{bin}/update-desktop-database       rPx -> flatpak-app//&update-desktop-database,
   @{bin}/update-mime-database          rPx -> flatpak-app//&update-mime-database,
@@ -62,23 +67,23 @@ profile flatpak-app flags=(attach_disconnected,mediate_deleted) {
   @{lib}/kf5/kioslave5                 rPx,
   @{lib}/kf6/kioworker                 rPx,
 
-  /var/lib/flatpak/app/{,**} r,
-
-  /usr/.ref rk,
-
   /etc/**/ rw,
   /etc/shells rw,
 
-  /app/.ref k,
+  /app/.ref rk,
   /app/extra/** rw,
   /app/lib/** rk,
   /bindfile@{rand6} rw,
+  /usr/.ref rk,
 
   /var/lib/flatpak/app/{,**} r,
   /var/lib/flatpak/exports/** rw,
   /var/tmp/etilqs_@{hex} rw,
 
         @{run}/.userns r,
+        @{run}/parent/** r,
+        @{run}/parent/app/.ref rk,
+        @{run}/parent/usr/.ref rk,
   owner @{run}/flatpak/{,**} rk,
   owner @{run}/flatpak/app/** rw,
   owner @{run}/flatpak/doc/** rw,
