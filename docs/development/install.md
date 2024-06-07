@@ -19,7 +19,7 @@ make package dist=<distribution>
 ```
 Then you can install the package with `dpkg`, `pacman` or `rpm`.
 
-**:material-arch: Archlinux**
+**:material-arch: Arch Linux**
 ```sh
 make pkg
 ```
