@@ -3,13 +3,16 @@
 # Copyright (C) 2024 Besanon  <m231009ts@mailfence.com>
 # SPDX-License-Identifier: GPL-2.0-only
 
-#include <tunables/global>
+abi <abi/3.0>,
+
+include <tunables/global>
 
 @{exec_path} = @{bin}/obconf-qt
 profile obconf-qt @{exec_path} {
   include <abstractions/base>
   include <abstractions/dconf-write>
   include <abstractions/gtk>
+  include <abstractions/graphics>
   include <abstractions/fonts>
   include <abstractions/fontconfig-cache-read>
   include <abstractions/lxqt>
@@ -22,9 +25,6 @@ profile obconf-qt @{exec_path} {
 
   /usr/share/obconf/{,*} 			r,
   /usr/share/ibus/setup/{,**}  			rw,
-  /usr/share/drirc.d/ 				r,
-  /usr/share/drirc.d/00-mesa-defaults.conf	r,
-  /usr/share/drirc.d/00-radv-defaults.conf	r,
   /usr/share/obconf-qt/translations/obconf-qt_de.qm r,
 
   /etc/xdg/openbox/rc.xml 			r,
@@ -37,14 +37,11 @@ profile obconf-qt @{exec_path} {
 
   owner /tmp/{,**}  				r,
 
-  @{sys}/devices/@{pci_bus}/**/**/**  		r,
-  @{sys}/devices/@{pci_bus}/{,**}               r,
-  @{sys}/devices/@{pci_bus}/**/**/**            r,
-
   owner @{PROC}/@{pid}/mountinfo 		r,
   owner @{PROC}/@{pid}/mounts 			r,
 
   /dev/dri/card@{int}				rw,
   owner /dev/tty@{int} 				rw,
 
+  include if exists <local/obconf-qt>
 }
