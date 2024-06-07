@@ -3,10 +3,12 @@
 # Copyright (C) 2024 Besanon  <m231009ts@mailfence.com>
 # SPDX-License-Identifier: GPL-2.0-only
 
-#include <tunables/global>
+abi <abi/3.0>,
+
+include <tunables/global>
 
 @{exec_path} = @{bin}/lxqt-admin-user
-profile lxqt-admin-user @{exec_path} {
+profile lxqt-admin-user @{exec_path} flags=(complain) {
   include <abstractions/base>
   include <abstractions/gtk>
   include <abstractions/video>
@@ -15,18 +17,13 @@ profile lxqt-admin-user @{exec_path} {
   include <abstractions/dbus-session-strict>
   include <abstractions/dbus-accessibility-strict>
   include <abstractions/gvfs-open>
+  include <abstractions/nameservice-strict>
   
   @{exec_path}			mr,
 
-   /etc/passwd  			r,
-   /etc/group   			r,
-   /etc/shells 				r, 
-   /etc/nsswitch.conf   		r,
-
   owner /tmp/{,**}  			r,
 
-  @{sys}/devices/@{pci_bus}/{,**}       r,
-  @{sys}/devices/@{pci_bus}/**/**/**    r,
-
   /dev/tty				rw,
+
+  include if exists <local/lxqt-admin-user>
 }
