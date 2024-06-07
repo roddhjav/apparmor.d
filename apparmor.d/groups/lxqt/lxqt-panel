@@ -3,16 +3,25 @@
 # Copyright (C) 2024 Besanon  <m231009ts@mailfence.com>
 # SPDX-License-Identifier: GPL-2.0-only
 
-#include <tunables/global>
+abi <abi/3.0>,
+
+include <tunables/global>
 
 @{exec_path} = @{bin}/lxqt-panel 
-profile lxqt-panel @{exec_path} {
+profile lxqt-panel @{exec_path} flags=(complain) {
   include <abstractions/base>
-  include <abstractions/app-open>
+  include <abstractions/app-launcher-user>
   include <abstractions/audio-client>
   include <abstractions/dconf-write>
   include <abstractions/lxqt>
   include <abstractions/nameservice-strict>
+
+#  network inet raw,             
+#  network inet6 raw,
+  network inet dgram,           
+  network inet stream,          
+  network netlink raw,          
+  network packet dgram,                
 
   @{exec_path} 						mr,
 
@@ -20,25 +29,7 @@ profile lxqt-panel @{exec_path} {
   @{bin}/nm-connection-editor       			rPx,
   @{bin}/xdg-open 					rPx,
 
-  @{bin}/obconf-qt					rPx,
   @{bin}/ControlPanel 					rPx,
-  @{bin}/lxqt-admin-user       				rPx,
-  @{bin}/lxqt-admin-user-helper       			rPx,
-  @{bin}/lxqt-archiver       				rPx,
-  @{bin}/lxqt-config       				rPx,
-  @{bin}/lxqt-config-session       			rPx,
-  @{bin}/lxqt-config-input       			rPx,
-  @{bin}/lxqt-config-monitor       			rPx,
-  @{bin}/lxqt-config-appearance       			rPx,
-  @{bin}/lxqt-config-locate       			rPx,
-  @{bin}/lxqt-monitor       				rPx,
-  @{bin}/lxqt-notificationd       			rPx,
-  @{bin}/lxqt-powermanagement       			rPx,
-  @{bin}/lxqt-session       				rPx,
-  @{bin}/lxqt-monitor       				rPx,
-  @{bin}/lxqt-leave       				rPx,
-  @{bin}/lxqt-about       				rPx,
-  @{bin}/lxqt-openssh-askpass       			rPx,
 
   /usr/lib{,32,64}/lxqt-panel/*.so 			mr,     # LXQT-Plugins
   /usr/lib{,32,64}/lxqt-config/*.so 			mr,     # LXQT-Plugins
@@ -73,8 +64,6 @@ profile lxqt-panel @{exec_path} {
 
   @{sys}/devices/system/cpu/cpufreq/policy@{int}/scaling_{cur,min,max}_freq 	r,
   @{sys}/class/i2c-adapter/ 							r,
-  @{sys}/devices/@{pci_bus}/{,**}  						r,
-  @{sys}/devices/@{pci_bus}/**/**/**               				r,
 
   @{PROC}/@{pid}/fd/					r,	
   @{PROC}/@{pid}/net/dev 				r,
@@ -85,5 +74,6 @@ profile lxqt-panel @{exec_path} {
   /dev/pts/[0-9]*                                       rw,
   /dev/snd/controlC[0-9]*                               rw,
 
+  include if exists <local/lxqt-panel>
 }
 
