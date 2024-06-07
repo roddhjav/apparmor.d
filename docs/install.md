@@ -4,17 +4,17 @@ title: Installation
 
 !!! warning
 
-    In order to not break your system, the default package configuration installs all profiles in complain mode. They can be enforced later. See the [Enforce Mode](enforce.md) page.
+    To prevent the risk of breaking your system, the default package configuration installs all profiles in complain mode. They can be enforced later. See the [Enforce Mode](enforce.md) page.
 
 !!! danger
 
-    Do **not** install this project if your Desktop Environement and Display Manager is not supported. Your system will not boot, and that would be a feature.
+    Do **not** expect this project to work correctly if your Desktop Environment and Display Manager are not supported. Your Desktop Environment or Display Manager might not load, and that would be a feature.
 
 ## Requirements
 
 **AppArmor**
 
-An `apparmor` based Linux distribution is required. The default profiles and abstractions shipped with AppArmor must be installed.
+An `AppArmor` supported Linux distribution is required. The default profiles and abstractions shipped with AppArmor must be installed.
 
 **Desktop environment**
 
@@ -28,7 +28,7 @@ The following desktop environments are supported:
 
 * Go >= 1.18
 
-## :material-arch: Archlinux
+## :material-arch: Arch Linux
 
 `apparmor.d-git` is available in the [Arch User Repository][aur]:
 ```
@@ -72,7 +72,7 @@ sudo dpkg -i ../apparmor.d_*.deb
 
 !!! warning
 
-    **Beware**: do not install a `.deb` made for Debian on Ubuntu, the packages are differents.
+    **Beware**: do not install a `.deb` made for Debian on Ubuntu, the packages are different.
 
     If your distribution is based on Ubuntu or Debian, you may want to manually set the target distribution by exporting `DISTRIBUTION=debian` if is Debian based, or `DISTRIBUTION=ubuntu` if it is Ubuntu based.
 
@@ -97,7 +97,7 @@ sudo make profile-names...
 
 !!! warning
 
-    Partial installation is discouraged because profile dependencies are not fetched. To prevent some apparmor issues, the dependencies are automatically switched to unconfined (`rPx` -> `rPUx`). The installation process warns on the missing profiles so that you can easily install them if desired. (PR is welcome see [#77](https://github.com/roddhjav/apparmor.d/issues/77))
+    Partial installation is discouraged because profile dependencies are not fetched. To prevent some AppArmor issues, the dependencies are automatically switched to unconfined (`rPx` -> `rPUx`). The installation process warns on the missing profiles so that you can easily install them if desired. (PR is welcome see [#77](https://github.com/roddhjav/apparmor.d/issues/77))
 
     For instance, `sudo make pass` gives:
     ```sh
@@ -115,7 +115,7 @@ sudo make profile-names...
 
 ## Uninstall
 
-- :material-arch: Archlinux `sudo pacman -R apparmor.d`
+- :material-arch: Arch Linux `sudo pacman -R apparmor.d`
 - :material-ubuntu: Ubuntu & :material-debian: Debian `sudo apt purge apparmor.d`
 - :simple-suse: OpenSUSE `sudo zypper remove apparmor.d`
 
