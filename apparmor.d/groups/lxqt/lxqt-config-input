@@ -3,10 +3,12 @@
 # Copyright (C) 2024 Besanon  <m231009ts@mailfence.com>
 # SPDX-License-Identifier: GPL-2.0-only
 
-#include <tunables/global>
+abi <abi/3.0>,
+
+include <tunables/global>
 
 @{exec_path} = @{bin}/lxqt-config-input
-profile lxqt-config-input @{exec_path} {
+profile lxqt-config-input @{exec_path} flags=(complain) {
   include <abstractions/base>
   include <abstractions/gtk>
   include <abstractions/video>
@@ -23,10 +25,6 @@ profile lxqt-config-input @{exec_path} {
   owner @{user_config_dirs}/lxqt/** rwkl -> @{user_config_dirs}/lxqt/#@{int},
 
   owner /tmp/@{int}  		       r,
-
-  owner @{run}/udev/data/ r,
-  owner @{run}/udev/data/** r,
-  owner @{run}/udev/data/**/** r,
 
   @{run}/udev/data/		       r,
   @{run}/udev/data/+acpi:*      r,
@@ -54,14 +52,12 @@ profile lxqt-config-input @{exec_path} {
   @{run}/udev/data/c@{dynamic}:@{int} r,  # For dynamic assignment range 234 to 254, 384 to 511
 
   @{sys}/devices/	               r,
-  @{sys}/devices/{,**}     	       r,
   @{sys}/class/ 		       r,
-  @{sys}/class/{,**} 		       r,
   @{sys}/bus/ 			       r,
-  @{sys}/bus/{,**}		       r,
 
   @{PROC}/sys/kernel/random/boot_id     r,
 
   /dev/tty				rw,
 
+  include if exists <local/lxqt-config-input>
 }
