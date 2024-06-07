@@ -76,8 +76,7 @@ ps (complain)                   user        ps auxZ
 
 ## AppArmor Log
 
-Ensure that `auditd` is installed and running on your system in order to read AppArmor log from `/var/log/audit/audit.log`. Then you can see the log with the provided command `aa-log` allowing you to review AppArmor generated messages in
-a colorful way.
+Ensure that `Auditd` is installed and running on your system in order to read AppArmor log from `/var/log/audit/audit.log`. Then you can see the log with the provided command `aa-log` allowing you to review AppArmor generated messages in a colorful way.
 
 Other AppArmor userspace tools such as `aa-enforce`, `aa-complain`, and `aa-logprof` should work as expected.
 
