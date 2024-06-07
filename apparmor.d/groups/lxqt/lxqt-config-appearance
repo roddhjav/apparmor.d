@@ -3,13 +3,17 @@
 # Copyright (C) 2024 Besanon  <m231009ts@mailfence.com>
 # SPDX-License-Identifier: GPL-2.0-only
 
-#include <tunables/global>
+abi <abi/3.0>,
+
+include <tunables/global>
 
 @{exec_path} = @{bin}/lxqt-config-appearance
-profile lxqt-config-appearance @{exec_path} {
+profile lxqt-config-appearance @{exec_path} flags=(complain) {
   include <abstractions/base>
+  include <abstractions/dconf-write>
   include <abstractions/gtk>
   include <abstractions/mesa>
+  include <abstractions/graphics>
   include <abstractions/video>
   include <abstractions/lxqt>
   include <abstractions/qt5-shader-cache>
@@ -17,23 +21,17 @@ profile lxqt-config-appearance @{exec_path} {
   include <abstractions/dbus-accessibility-strict>
   include <abstractions/gvfs-open>
 
-  @{exec_path}			mr,
+  @{exec_path}			    mr,
   @{bin}/gsettings			rPx,  
   
-  /usr/share/libdrm/amdgpu.ids 		r,
-
   owner @{user_config_dirs}/lxqt/** rwkl -> @{user_config_dirs}/lxqt/#@{int},
-  owner @{user_config_dirs}/dconf/user  r,
   owner @{user_config_dirs}/pcmanfm-qt/lxqt/settings.conf r,
 
   owner /tmp/#@{int} 			rw,
-  owner /tmp/** rwkl -> /tmp/#@{int},
-
-  @{sys}/devices/@{pci_bus}/{,**}       r,
-  @{sys}/devices/@{pci_bus}/**/**/**    r,
 
   @{PROC}/sys/kernel/random/boot_id 	r,
 
   /dev/tty				rw,
 
+  include if exists <local/lxqt-config-appearance>
 }
