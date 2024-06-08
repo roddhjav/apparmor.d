@@ -119,7 +119,7 @@ If there is no predictable label it can be omitted.
 ## Additional recommended documentation
 
 * [The AppArmor Core Policy Reference](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference)
-* [The OpenSUSE Documentation](https://doc.opensuse.org/documentation/leap/security/html/book-security/part-apparmor.html)
+* [The openSUSE Documentation](https://doc.opensuse.org/documentation/leap/security/html/book-security/part-apparmor.html)
 * https://documentation.suse.com/sles/12-SP5/html/SLES-all/cha-apparmor-intro.html
 * [The AppArmor.d man page](https://man.archlinux.org/man/apparmor.d.5)
 * [F**k AppArmor](https://presentations.nordisch.org/apparmor/#/)

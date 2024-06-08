@@ -29,7 +29,7 @@ make pkg
 make dpkg
 ```
 
-**:simple-suse: OpenSUSE**
+**:simple-suse: openSUSE**
 ```sh
 make rpm
 ```
