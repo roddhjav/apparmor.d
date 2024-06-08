@@ -60,7 +60,7 @@ override_dh_auto_build:
 	make full
 ```
 
-**:simple-suse: OpenSUSE**
+**:simple-suse: openSUSE**
 
 In `dists/apparmor.d.spec`, replace `%make_build` by `make full`
 ```diff

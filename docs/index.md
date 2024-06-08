@@ -36,7 +36,7 @@ See the [Concepts](concepts.md)' page for more detail on the architecture.
     * [:material-arch: Arch Linux](install.md#archlinux)
     * [:material-ubuntu: Ubuntu 22.04](install.md#ubuntu-debian)
     * [:material-debian: Debian 12](install.md#ubuntu-debian)
-    * [:simple-suse: OpenSUSE Tumbleweed](install.md#opensuse)
+    * [:simple-suse: openSUSE Tumbleweed](install.md#opensuse)
 - Support for all major desktop environments:
     - [x] :material-gnome: Gnome
     - [ ] :simple-kde: KDE *(work in progress)*

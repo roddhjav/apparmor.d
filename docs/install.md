@@ -76,9 +76,9 @@ sudo dpkg -i ../apparmor.d_*.deb
 
     If your distribution is based on Ubuntu or Debian, you may want to manually set the target distribution by exporting `DISTRIBUTION=debian` if is Debian based, or `DISTRIBUTION=ubuntu` if it is Ubuntu based.
 
-## :simple-suse: OpenSUSE
+## :simple-suse: openSUSE
 
-OpenSUSE users need to add [cboltz](https://en.opensuse.org/User:Cboltz) repo on OBS
+openSUSE users need to add [cboltz](https://en.opensuse.org/User:Cboltz) repo on OBS
 ```sh
 zypper addrepo https://download.opensuse.org/repositories/home:cboltz/openSUSE_Factory/home:cboltz.repo
 zypper refresh
@@ -117,7 +117,7 @@ sudo make profile-names...
 
 - :material-arch: Arch Linux `sudo pacman -R apparmor.d`
 - :material-ubuntu: Ubuntu & :material-debian: Debian `sudo apt purge apparmor.d`
-- :simple-suse: OpenSUSE `sudo zypper remove apparmor.d`
+- :simple-suse: openSUSE `sudo zypper remove apparmor.d`
 
 [aur]: https://aur.archlinux.org/packages/apparmor.d-git
 [repo]: https://repo.pujol.io/
