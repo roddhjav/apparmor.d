@@ -27,7 +27,7 @@ override_dh_auto_build:
 	make enforce
 ```
 
-#### :simple-suse: OpenSUSE
+#### :simple-suse: openSUSE
 
 In `dists/apparmor.d.spec`, replace `%make_build` by `make enforce`
 ```diff

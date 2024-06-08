@@ -47,7 +47,7 @@ To build a VM image for development purpose, run the following from the `tests` 
 | Arch Linux | Gnome | `make archlinux flavor=gnome` | `arch-gnome` |
 | Arch Linux | KDE | `make archlinux flavor=kde` | `arch-kde` |
 | Debian | Server | `make debian flavor=server` | `debian-server` |
-| OpenSUSE | KDE | `make opensuse flavor=kde` | `opensuse-kde` |
+| openSUSE | KDE | `make opensuse flavor=kde` | `opensuse-kde` |
 | Ubuntu | Server | `make ubuntu flavor=server` | `ubuntu-server` |
 | Ubuntu | Desktop | `make ubuntu falvor=desktop` | `ubuntu-desktop` |
 
