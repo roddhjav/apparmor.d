@@ -4,13 +4,13 @@ title: Integration Tests
 
 !!! danger "Work in Progress"
 
-The purpose of integration testing in apparmor.d is to ensure the profiles are not going to break a program when used in the Linux distribution and desktop environment we support.
+The purpose of integration testing in apparmor.d is to ensure the profiles are not going to break programs found in Linux distributions and Desktop Environment that we support.
 
 **Workflow**
 
-1. Build some tests VM
+1. Create a testing VM
 2. Start the VM, do some dev
-3. Run the integration test against a given test VM
+3. Run the integration tests against the testing VM
 4. Ensure no new logs have been raised
 
 
@@ -47,7 +47,7 @@ To build a VM image for development purpose, run the following from the `tests` 
 | Arch Linux | Gnome | `make archlinux flavor=gnome` | `arch-gnome` |
 | Arch Linux | KDE | `make archlinux flavor=kde` | `arch-kde` |
 | Debian | Server | `make debian flavor=server` | `debian-server` |
-| OpenSUSE | KDE | `make opensuse falvor=kde` | `opensuse-kde` |
+| OpenSUSE | KDE | `make opensuse flavor=kde` | `opensuse-kde` |
 | Ubuntu | Server | `make ubuntu flavor=server` | `ubuntu-server` |
 | Ubuntu | Desktop | `make ubuntu falvor=desktop` | `ubuntu-desktop` |
 
@@ -59,7 +59,7 @@ The development workflow is done through vagrant:
 * Shutdown a VM: `vagrant halt <name>`
 * Reboot a VM: `vagrant reload <name>`
 
-The available VM `name` are defined in the `tests/boxes.yml` file
+The available VM `name` is defined in the `tests/boxes.yml` file
 
 
 ### Develop
@@ -70,11 +70,11 @@ The admin user is: `user`, its password is: `user`. It has passwordless sudo acc
 
 **Directories**
 
-All the images come pre-configured with the lastest version of `apparmor.d` installed and running in the VM. The apparmor.d is mounted as `/home/user/Projects/apparmor.d`
+All the images come pre-configured with the latest version of `apparmor.d` installed and running in the VM. apparmor.d is mounted as `/home/user/Projects/apparmor.d`
 
 **Usage**
 
-On all images, `aa-update` can be used to rebuild and install latest version of the profiles. `p`, `pf`, and `pu` are two preconfigured aliases of `ps` that show the security status of processes. `htop` is also configured to show this status.
+On all images, `aa-update` can be used to rebuild and install the latest version of the profiles. `p`, `pf`, and `pu` are two preconfigured aliases of `ps` that show the security status of processes. `htop` is also configured to show this status.
 
 
 ## Tests
@@ -106,7 +106,7 @@ Initialise the tests with:
 ./aa-test --bootstrap
 ```
 
-List the tests scenario to be run
+List the tests scenarios to be run
 ```sh
 ./aa-test --list
 ```
