@@ -2,7 +2,7 @@
 title: Directives
 ---
 
-`apparmor.d` supports build directives, they are processed at build time of the project, when running `make`. They are valid apparmor comment, therefore, `apparmor_parser` can be used on a profile even if the directives have not been processed. They should not end with a comma. Multiline directive is not supported.
+`apparmor.d` supports build directives, they are processed at build time of the project. They are valid AppArmor comments, therefore, `apparmor_parser` can be used on a profile even if the directives have not been processed. They should not end with a comma. Multiline directive is not supported.
 
 The directives follow the format:
 ```sh
@@ -25,7 +25,7 @@ See the [dbus page](dbus.md#dbus-directive).
     
 ## Only, Exclude
 
-The `only` and `exclude` directives can be used to filter individual rule or rule paragraph depending on the target distribution of distribution family.
+The `only` and `exclude` directives can be used to filter individual rule or rule paragraphs depending on the target distribution or distribution family.
 
 **Format**
 
@@ -58,12 +58,12 @@ The `only` and `exclude` directives can be used to filter individual rule or rul
 `#aa:only pacman`
 
 :   
-    Remove the line/paragraph when the project is not compiled on the Archlinux family.
+    Remove the line/paragraph when the project is not compiled on the Arch Linux family.
 
 
 ## Exec
 
-The `exec` directive is useful to allow executing transition to a profile without having to manage the possible long list of profile attachment (it varies depending on the distribution). The directive parse and resolve the attachment variable (`@{exec_path}`) of the target profile and include it in the current profile.
+The `exec` directive is useful to allow executing transitions to a profile without having to manage the possible long list of profile attachments (it varies depending on the distribution). The directives parse and resolve the attachment variable (`@{exec_path}`) of the target profile and includes it in the current profile.
 
 **Format**
 
@@ -73,7 +73,7 @@ The `exec` directive is useful to allow executing transition to a profile withou
 
 **`profiles...`**
 
-:   List of profile **file** that can be executed from the current profile.
+:   List of profile **files** that can be executed from the current profile.
 
 **`[transition]`**
 
@@ -113,7 +113,7 @@ The `exec` directive is useful to allow executing transition to a profile withou
 
 **`profiles...`**
 
-:   List a profile **file** to stack at the end of the current profile.
+:   List a profile **files** to stack at the end of the current profile.
 
 
 **Example**

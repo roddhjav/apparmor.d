@@ -2,19 +2,19 @@
 title: Dbus
 ---
 
-All dbus rules are labelled under the name of the given profiles that provide dbus data. It is one of the value added by this project, as we have profile for *everything*, we can restrict the bus further by limitint connection to a given peer label (the profile name). In case of a renaming of a profile, all dbus rules related it this profile need to be updated accordingly.
+All dbus rules are labelled under the name of the given profiles that provide dbus data. It is one of the value added by this project, as we have profiles for *everything*, we can restrict the bus further by limiting connection to a given peer label (the profile name). In the case of renaming a profile, all dbus rules related in this profile need to be updated accordingly.
 
 ## Profiles
 
 Regardless of the Dbus implementation used (`dbus-daemon` or `dbus-broker`), all dbus daemons are handled under the same set of profiles: [`dbus-system`](https://github.com/roddhjav/apparmor.d/blob/main/apparmor.d/groups/bus/dbus-system), [`dbus-session`](https://github.com/roddhjav/apparmor.d/blob/main/apparmor.d/groups/bus/dbus-session), and [`dbus-accessibility`](https://github.com/roddhjav/apparmor.d/blob/main/apparmor.d/groups/bus/dbus-accessibility). This structure largely improves the confinement of each profile.
 
-To ensure system and session bus are handled by a different profile, a [systemd drop-in](https://github.com/roddhjav/apparmor.d/blob/main/systemd/default/system/dbus.service) configuration file is used to set the specific dbus profile a dbus service must use.
+To ensure the system and session bus are handled by a different profile, a [systemd drop-in](https://github.com/roddhjav/apparmor.d/blob/main/systemd/default/system/dbus.service) configuration file is used to set the specific dbus profile that a dbus service must use.
 
 ## Abstractions
 
 ### Base
 
-Default **system**, **session** and **accessibility** bus access are provided with the abstraction:
+Default **system**, **session**, and **accessibility** bus access are provided with the following abstractions:
 
 - `abstractions/bus-system`
 - `abstractions/bus-session`
@@ -22,13 +22,13 @@ Default **system**, **session** and **accessibility** bus access are provided wi
 
 ### Interfaces
 
-Access to common dbus interface is done using the abstractions under **[`abstractions/bus/`](https://github.com/roddhjav/apparmor.d/tree/main/apparmor.d/abstractions/bus)**. They are kept minimal on purpose. The goal is not to give full talk access an interface but to provide a *read-only* like view of it. It may be required to have a look at the dbus interface documentation to check what method can be safely allowed.
+Access to common dbus interfaces is done using the abstractions under **[`abstractions/bus/`](https://github.com/roddhjav/apparmor.d/tree/main/apparmor.d/abstractions/bus)**. They are kept minimal on purpose. The goal is not to give full talk access an interface but to provide a *read-only* like view of it. It may be required to have a look at the dbus interface documentation to check what method can be safely allowed.
 
 For more access, simply use the [`aa:dbus talk`](#dbus-directive) directive.
 
 ## Dbus Directive
 
-We use a special [directive](directives.md) to generate more advanced dbus access. The directive format is on purpose very similar to the apparmor dbus rule.
+We use a special [directive](directives.md) to generate more advanced dbus access. The directive format is on purpose very similar to the AppArmor dbus rule.
 
 **Format**
 
@@ -40,8 +40,8 @@ We use a special [directive](directives.md) to generate more advanced dbus acces
 
 :    Access type. Can be `own` or `talk`:
 
-     - `own` means the profile own the dbus interface. It is allowed to send and receive from anyone on this interface.
-     - `talk` means the profile can talk on a given interface to the profile owning it (that must be given under the `label` option).
+     - `own` means the profile owns the dbus interface. It is allowed to send and receive from anyone on this interface.
+     - `talk` means the profile can talk on a given interface to the profile that owns it (a label must be given under the `label` option).
 
 **`<bus>`**
 
@@ -64,7 +64,7 @@ We use a special [directive](directives.md) to generate more advanced dbus acces
 :    Can optionally be given when it is different to the dbus name.
 
 
-Note: `<access>`, `<bus>` and `<name>` are mandatory and will break the build if ignored.
+Note: `<access>`, `<bus>`, and `<name>` are mandatory and will break the build if ignored.
 
 
 **Example**
@@ -78,7 +78,7 @@ Allow owning a dbus interface:
     #aa:dbus own bus=system name=org.freedesktop.NetworkManager
     ```
 
-Allow talking to a dbus interface on a given profile
+Allow talking to a dbus interface on a given profile:
 
 !!! note ""
 

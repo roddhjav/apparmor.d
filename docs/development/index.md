@@ -2,15 +2,15 @@
 title: Development
 ---
 
-You want to contribute to `apparmor.d`, **thanks a lot for this.** Feedbacks, contributors, pull requests are all very welcome. You will find in this page all the useful information needed to contribute.
+If you're looking to contribute to `apparmor.d` you can get started by going to the project [GitHub repository](https://github.com/roddhjav/apparmor.d/)! All contributions are welcome no matter how small. In this page you will find all the useful information needed to contribute to the apparmor.d project.
 
-??? info "How to contribute"
+??? info "How to contribute pull requests"
 
     1. If you don't have git on your machine, [install it](https://help.github.com/articles/set-up-git/).
-    2. Fork this repo by clicking on the fork button on the top of the [project Github][project] page.
-    3. Clone the repository and go to the directory:
+    2. Fork this repo by clicking on the fork button on the top of the [project GitHub][project] page.
+    3. Clone the forked repository and go to the directory:
     ```sh
-    git clone https://github.com/this-is-you/apparmor.d.git
+    git clone https://github.com/your-github-username/apparmor.d.git
     cd apparmor.d
     ```
     4. Create a branch:
@@ -20,7 +20,7 @@ You want to contribute to `apparmor.d`, **thanks a lot for this.** Feedbacks, co
     5. Make the changes and commit:
     ```
     git add <files changed>
-    git commit -m "A message for sum up my contribution"
+    git commit -m "A message to sum up my contribution"
     ```
     6. Push changes to GitHub:
     ```
@@ -34,13 +34,13 @@ You want to contribute to `apparmor.d`, **thanks a lot for this.** Feedbacks, co
 
 #### Rule :material-numeric-1-circle: - Mandatory Access Control
 
-:   As these are mandatory access control policies only what is explicitly required
+:   As these are mandatory access control policies **only** what is explicitly required
     should be authorized. Meaning, you should **not** allow everything (or a large area)
     and deny some sub areas.
 
 #### Rule :material-numeric-2-circle: - Do not break a program
 
-:   A profile **should not break a normal usage of the confined software**. It can
+:   A profile **should not break a normal usage of the confined software**. this can
     be complex as simply running the program for your own use case is not always
     exhaustive of the program features and required permissions.
 
@@ -50,7 +50,7 @@ You want to contribute to `apparmor.d`, **thanks a lot for this.** Feedbacks, co
 
 #### Rule :material-numeric-4-circle: - Distribution and devices agnostic
 
-:   A profile should be compatible with all distributions, software and devices
+:   A profile should be compatible with all distributions, software, and devices
     in the Linux world. You cannot deny access to resources you do not use on
     your devices or for your use case.
 

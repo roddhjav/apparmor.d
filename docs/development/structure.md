@@ -19,15 +19,14 @@ It gets even worse. Let's say, we write a profile for `cat`. Such a profile woul
 However, as `/etc` can contain sensitive files, we now want to explicitly prevent access to these sensitive files. Problems:
 
 1. How do we know the exhaustive list of *sensitive files* in `/etc`?
-2. How do we ensure access to these sensitive files are not required?
+2. How do we ensure access to these sensitive files is not required?
 3. This breaks the principle of mandatory access control.
-   See the [first rule of this project](index.md#project-rules) that is to only allow
+   See the [first rule of this project](index.md#project-rules) which is to only allow
    what is required. Here we allow everything and blacklist some paths.
 
-It creates even more issues when we want to use this profile in other profiles. Let's take the example of `diff`. Using this rule: `@{bin}/diff rPx,` will restrict access to the very generic and not very confined `diff` profile. Whereas most of the time, we want to restrict `diff` to some specific file in our profile:
+It creates even more issues when we want to use this profile in other profiles. Let's take the example of `diff`. Using this rule: `@{bin}/diff rPx,` this will restrict access to the very generic and not very confined `diff` profile. Whereas most of the time, we want to restrict `diff` to some specific file in our profile:
 
-* In `dpkg`, an internal child profile (`rCx -> diff`), allows `diff` to only
-  access etc config files:
+* In `dpkg`, an internal child profile (`rCx -> diff`), allows `diff` to only access etc config files:
 
 !!! note ""
 
@@ -54,10 +53,7 @@ It creates even more issues when we want to use this profile in other profiles. 
     }
     ```
 
-* In `pass`, as it is a dependency of pass. Here `diff` inherits pass' profile 
-  and has the same access than the pass profile, so it will be allowed to diff
-  password files because more than a generic `diff` it is a `diff` for the pass
-  password manager:
+* As it is a dependency of pass, `diff` inherits the `pass' profile and has the same access as the pass profile, so it will be allowed to diff password files because more than a generic `diff`, it is a `diff` "version" for the pass password manager:
 
 !!! note ""
 
@@ -69,14 +65,12 @@ It creates even more issues when we want to use this profile in other profiles. 
 
 **What if I still want to protect these programs?**
 
-You do not protect these programs. *Protect the usage you have of these programs*.
-In practice, it means that you should put your development's terminal in a
-sandbox managed with [Toolbox].
+You do not protect these programs. *Protect the usage you have of these programs*. In practice, it means that you should put your terminal in a sandbox managed environment with a sandboxing tool such as Toolbox.
 
 !!! example "To sum up"
 
-    1. Do not a create profile for programs such as: `rm`, `ls`, `diff`, `cd`, `cat`
-    2. Do not a create profile for the shell: `bash`, `sh`, `dash`, `zsh`
+    1. Do not create a profile for programs such as: `rm`, `ls`, `diff`, `cd`, `cat`
+    2. Do not create a profile for the shell: `bash`, `sh`, `dash`, `zsh`
     3. Use [Toolbox].
 
 [Toolbox]: https://containertoolbx.org/
@@ -85,7 +79,7 @@ sandbox managed with [Toolbox].
 
 ## Abstractions
 
-This project and the apparmor profile official project provide a large selection of abstractions to be included in profiles. They should be used.
+This project and the apparmor-profiles official project provide a large selection of abstractions to be included in profiles. They should be used.
 
 For instance, to allow download directory access, instead of writing:
 ```sh
@@ -104,26 +98,17 @@ Usually, a child profile is in the [`children`][children] group. They have the f
 
 !!! quote
 
-    Note: This profile does not specify an attachment path because it is
-    intended to be used only via `"Px -> child-open"` exec transitions
-    from other profiles. 
+    Note: This profile does not specify an attachment path because it is intended to be used only via `"Px -> child-open"` exec transitions from other profiles. 
 
 [children]: https://github.com/roddhjav/apparmor.d/blob/main/apparmor.d/groups/children
 
 Here is an overview of the current children profile:
 
-1. **`child-open`**: To open resources. Instead of allowing the run of all
-   software in `@{bin}/`, the purpose of this profile is to list all GUI
-   programs that can open resources. Ultimately, only sandbox manager programs
-   such as `bwrap`, `snap`, `flatpak`, `firejail` should be present here. Until
-   this day, this profile will be a controlled mess.
+1. **`child-open`**: To open resources. Instead of allowing the ability to run all software in `@{bin}/`, the purpose of this profile is to list all GUI programs that can open resources. Ultimately, only sandbox manager programs such as `bwrap`, `snap`, `flatpak`, `firejail` should be present here. Until this day, this profile will be a controlled mess.
 
-2. **`child-pager`**: Simple access to pager such as `pager`, `less` and `more`.
-   This profile supposes the pager is reading its data from stdin, not from a
-   file on disk.
+2. **`child-pager`**: Simple access to pagers such as `pager`, `less` and `more`. This profile assumes the pager is reading its data from stdin, not from a file on disk.
 
-3. **`child-systemctl`**: Common `systemctl` action. Do not use it too much as most
-   of the time you will need more privilege than what this profile is giving you.
+3. **`child-systemctl`**: Common `systemctl` action. Do not use it too much as most of the time you will need more privilege than what this profile is giving you.
 
 
 ## Browsers
@@ -162,7 +147,7 @@ Special care must be given as sometimes udev numbers are allocated dynamically b
 
 ## No New Privileges
 
-[**No New Privileges**](https://www.kernel.org/doc/html/latest/userspace-api/no_new_privs.html) is a flag preventing a newly-started program to get more privileges that its parent. So it is a **good thing** for security. And it is commonly used in systemd unit files (when possible). This flag also prevents transition to other profile because it could be less restrictive than the parent profile (no `Px` or `Ux` allowed).
+[**No New Privileges**](https://www.kernel.org/doc/html/latest/userspace-api/no_new_privs.html) is a flag preventing a newly started program to get more privileges than its parent process. This is a **good thing** for security. And it is commonly used in systemd unit files (when possible). This flag also prevents transitions to other profiles because it could be less restrictive than the parent profile (no `Px` or `Ux` allowed).
 
 The possible solutions are:
 

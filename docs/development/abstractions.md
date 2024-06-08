@@ -2,11 +2,11 @@
 title: Abstractions
 ---
 
-This project and the apparmor profile official project provide a large selection of abstractions to be included in profiles. They should always be used as they target wide compatibility across hardware and distribution wile only allowing the bare minimum access.
+This project and the official apparmor-profiles project provide a large selection of abstractions to be included in profiles. They should always be used as they target wide compatibility across hardware and distributions while only allowing the bare minimum access.
 
 !!! example
 
-    For instance, to allow download directory access, instead of writing:
+    For instance, to allow download directory access instead of read and write permissions:
     ```sh
     owner @{HOME}/@{XDG_DOWNLOAD_DIR}/{,**} rw,
     ```
@@ -21,13 +21,13 @@ All of these abstractions can be extended by a system admin by adding rules in a
 
 ## Application helper
 
-Abstraction that aim at including a complete set of rule for a given program. The calling profile only need to add rules dependant of its use case/program.
+Abstraction that aims at including a complete set of rules for a given program. The calling profile only needs to add rules dependant of its use case/program.
 
 It is mostly useful for program often used in sub profile or for forks based on the same upstream.
 
 ### **`app/chromium`**
 
-Full set of rules for all chromium based browsers. It works as a *function* and requires some variables to be provided as *arguments* and set in the header of the calling profile:
+A full set of rules for all chromium based browsers. It works as a *function* and requires some variables to be provided as *arguments* and to be set in the header of the calling profile:
 
 !!! note ""
 
@@ -49,7 +49,7 @@ instead.
 
 ### **`app/sudo`**
 
-Minimal set of rules for profile including internal `sudo`. Interactive sudo need more rules. It is intended to be used in profile or sub profile that need to elevate their privileges using `sudo` or `su` for a very specific action:
+A minimal set of rules for profiles including internal `sudo`. Interactive sudo needs more rules. It is intended to be used in profiles or sub-profiles that need to elevate their privileges using `sudo` or `su` for a very specific action:
 ```sh
   @{bin}/sudo rCx  -> root,
 
@@ -63,7 +63,7 @@ Minimal set of rules for profile including internal `sudo`. Interactive sudo nee
 
 ### **`app/systemctl`**
 
-Alternative solution for [child-systemctl](structure.md#children-profiles), when the child profile provide too much/not enough access. This abstraction should be used by a sub profile as follows:
+An alternative solution for [child-systemctl](structure.md#children-profiles), when the child profile provides too much/not enough access. This abstraction should be used by a sub profile as follows:
 ```sh
   @{bin}/systemctl  rCx ->  systemctl,
 
@@ -82,7 +82,7 @@ On the contrary of [`abstractions/app/`](#application-helper), abstractions in t
 
 ### **`common/app`**
 
-Common rules for unknown userland UI applications sandboxed using `bwrap`.
+Common rules for unknown userland UI applications that are sandboxed using `bwrap`.
 
 !!! warning
 
@@ -93,11 +93,11 @@ Common rules for unknown userland UI applications sandboxed using `bwrap`.
 
 ### **`common/apt`**
 
-Minimal access to apt sources, preferences and configuration.
+Minimal access to apt sources, preferences, and configuration.
 
 ### **`common/bwrap`**
 
-Minimal set of rules for sandboxed program using `bwrap`. A profile using this abstraction still needs to set:
+Minimal set of rules for sandboxed programs using `bwrap`. A profile using this abstraction still needs to set:
 
 - The flag: `attach_disconnected`
 - Bwrap execution: `@{bin}/bwrap rix,`
@@ -105,12 +105,12 @@ Minimal set of rules for sandboxed program using `bwrap`. A profile using this a
 
 ### **`common/chromium`**
 
-Minimal set of rules for chromium based application. Handle access for internal sandbox.
+A minimal set of rules for chromium based application. Handle access for internal sandbox.
 
 
 ### **`common/electron`**
 
-Minimal set of rules for all electron based UI application. It works as a *function* and requires some variables to be provided as *arguments* and set in the header of the calling profile:
+A minimal set of rules for all electron based UI applications. It works as a *function* and requires some variables to be provided as *arguments* and set in the header of the calling profile:
 
 !!! note ""
 
@@ -139,7 +139,7 @@ Most programs do not need access to audio devices, `audio-client` only includes 
 
 ### **`audio-server`**
 
-Provide access to audio devices. It should only be used by audio servers that need direct access to them. 
+Provides access to audio devices. It should only be used by audio servers that need direct access to them. 
 
 
 ## Dbus
@@ -156,16 +156,16 @@ This abstraction gives read access on all defined user directories. It should on
 
 ### **`user-download-strict`**
 
-Provide write access to all user download directories
+Provides write access to all user download directories
 
 
 ### **`deny-sensitive-home`**
 
-Deny access to some sensitive directories under `/home/`. It is intended to be used by the few profiles that legitimately require full unrestricted access over all user directories (file browser and search engines). It allows to us to block access to really sensitive data to such profiles.
+Denies access to some sensitive directories under `/home/`. It is intended to be used by the few profiles that legitimately require full unrestricted access over all user directories (file managers and search engines). It allows to us to block access to really sensitive data to such profiles.
 
 !!! danger
 
-    **Do not use this abstraction for other profile without explicit authorisation from the project maintainer**
+    **Do not use this abstraction for other profiles without explicit authorisation from the project maintainer**
 
     Per the **[Rule :material-numeric-1-circle:](index.md#rule-mandatory-access-control)** of this project:
 
@@ -205,7 +205,7 @@ Common rules for interactive shell using zsh.
 
 ### **`nameservice-strict`**
 
-Many programs wish to perform nameservice like operations, such as looking up users by name or Id, groups by name or Id, hosts by name or IP, etc.
+Many programs wish to perform nameservice like operations, such as looking up users by name or ID, groups by name or ID, hosts by name or IP, etc.
 
 Use this abstraction instead of upstream `abstractions/nameservice` as upstream abstraction also provide full network access which is not needed for a lot of programs.
 
@@ -218,36 +218,36 @@ Instead of allowing the run of all software under `@{bin}` or `@{lib}` the purpo
 
 ### **`devices-usb`**
 
-Provide access to USB devices
+Provides access to USB devices
 
 ### **`disks-write`**
 
-Provide read write access to disks devices
+Provides read write access to disks devices
 
 ### **`disks-read`**
 
-Provide read only access to disks devices
+Provides read-only access to disks devices
 
 
 ## Desktop Environment
 
 ### **`desktop`**
 
-Unified minimal abstraction for all UI application regardless of the desktop environment. When supported in apparmor, condition will be used in this abstraction to filter resources specific for supported DE.
+Unified minimal abstraction for all UI applications regardless of the desktop environment. When supported in apparmor, the condition will be used in this abstraction to filter resources specific for supported DE.
 
-It is safe to use it in GUI application. As well as minimal desktop resource files, it includes access to configuration for: `fonts`, `gtk` & `qt`, `wayland` & `xorg`.
+It is safe to use this in GUI applications as well as minimal desktop resource files, it includes access to configuration for: `fonts`, `gtk` & `qt`, `wayland` & `xorg`.
 
 ### **`gnome-strict`**
 
-Same than `abstractions/desktop` but limited to gnome.
+Same as `abstractions/desktop` but limited to gnome.
 
 ### **`kde-strict`**
 
-Same than `abstractions/desktop` but limited to KDE.
+Same as `abstractions/desktop` but limited to KDE.
 
 ## Graphics
 
-Use either [`graphics`](#graphics) or [`graphics-full`](#graphics-full). The other abstractions are hardware/software dependant and should not usually be used directly.
+Use either [`graphics`](#graphics) or [`graphics-full`](#graphics-full). The other abstractions are hardware/software dependent and should not usually be used directly.
 
 ### **`graphics`**
 
@@ -261,7 +261,7 @@ Identical to [`graphics`](#graphics) with more direct access to nvidia GPU devic
 
 ### **`dri`**
 
-Linux's graphics stack which allows unprivileged user-space programs to issue commands to graphics hardware without conflicting with other programs. Mostly used by Intel (integrated or not) and AMD GPU.
+Linux's graphics stack which allows unprivileged user-space programs to issue commands to graphics hardware without conflicting with other programs. Mostly used by Intel (integrated or not) and AMD GPUs.
 
 Modernized equivalent of both `dri-common` and `dri-enumerate`
 
