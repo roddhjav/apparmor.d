@@ -1,6 +1,7 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
+# vim:syntax=apparmor
 
 # To allow extended personalisation by the user without breaking everything.
 # All apparmor profiles should always use the variables defined here.
