@@ -1,5 +1,5 @@
 # apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2022-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -13,29 +13,25 @@ include <tunables/global>
 @{runtime_dirs} = @{lib_dirs}/steam-runtime{,-sniper}
 @{app_dirs} = @{share_dirs}/steamapps/common/
 
-@{exec_path} = @{lib_dirs}/steamerrorreporter
-profile steamerrorreporter @{exec_path} flags=(attach_disconnected) {
+@{exec_path} = @{app_dirs}/*/**
+profile steam-game-native @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/nameservice-strict>
+  include <abstractions/common/steam-game>
 
   network inet dgram,
-  network inet stream,
   network inet6 dgram,
+  network inet stream,
   network inet6 stream,
   network unix stream,
 
-  @{exec_path} mr,
+  signal receive peer=steam,
 
-  owner @{HOME}/.steam/steam.pipe r,
+  @{exec_path} rmix,
 
-  owner @{lib_dirs}/{,**} r, 
-  owner @{runtime_dirs}/pinned_libs_{32,64}/ r,
-  owner @{share_dirs}/ r,
+  @{sh_path}                                            rix,
 
-  owner @{tmp}/dumps/ r,
-  owner @{tmp}/dumps/*_log.txt rw,
+  @{app_dirs}/**                                         mr,
+  @{lib_dirs}/**                                         mr,
 
-  owner @{PROC}/@{pid}/status r,
-
-  include if exists <local/steamerrorreporter>
+  include if exists <local/steam-game-native>
 }
