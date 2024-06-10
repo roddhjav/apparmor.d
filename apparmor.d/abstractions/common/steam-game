@@ -1,0 +1,115 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+  include <abstractions/audio-client>
+  include <abstractions/desktop>
+  include <abstractions/devices-usb>
+  include <abstractions/fontconfig-cache-write>
+  include <abstractions/graphics>
+  include <abstractions/nameservice-strict>
+  include <abstractions/ssl_certs>
+
+  @{bin}/uname          rix,
+  @{bin}/xdg-settings   rPx,
+  @{browsers_path}      rPx,
+
+  @{bin}/env r,
+
+  @{app_dirs}/ r,
+  @{lib_dirs}/ r,
+  @{lib}/ r,
+  / r,
+  /home/ r,
+  /usr/ r,
+  /usr/local/ r,
+  /usr/local/lib/ r,
+
+  /etc/machine-id r,
+  /var/lib/dbus/machine-id r,
+
+  owner @{HOME}/ r,
+  owner @{HOME}/.steam/steam.pid r,
+  owner @{HOME}/.steam/steam.pipe r,
+
+  owner @{user_games_dirs}/ r,
+  owner @{user_games_dirs}/*/ r,
+  owner @{user_games_dirs}/*/{,**} rwkl,
+
+  owner @{user_config_dirs}/unity3d/{,**} rwk,
+
+  owner @{share_dirs}/ r,
+  owner @{share_dirs}/* r,
+  owner @{share_dirs}/config/*.vdf* rw,
+  owner @{share_dirs}/logs/* rw,
+  owner @{share_dirs}/steamapps/ r,
+  owner @{share_dirs}/steamapps/common/ r,
+  owner @{share_dirs}/steamapps/common/*/** rwlk,
+  owner @{share_dirs}/steamapps/shadercache/{,**} rwk,
+  owner @{share_dirs}/shader_cache_temp_dir_*/fozpipelinesv@{int}/{,**} rw,
+
+        @{tmp}/ r,
+  owner @{tmp}/#@{int} rw,
+  owner @{tmp}/CASESENSITIVETEST@{hex32} rw,
+  owner @{tmp}/crashes/ rw,
+  owner @{tmp}/crashes/** rwk,
+  owner @{tmp}/miles_image_@{rand6} mrw,
+  owner @{tmp}/runtime-info.txt.@{rand6} rw, 
+  owner @{tmp}/vdpau-drivers-@{rand6}/{,**} rw,
+
+  owner /dev/shm/mono.@{int} rw,
+  owner /dev/shm/softbuffer-x11-@{rand6}@{c} rw,
+  owner /dev/shm/u@{uid}-Shm_@{hex6} rw,
+  owner /dev/shm/u@{uid}-Shm_@{hex6}@{h} rw,
+  owner /dev/shm/u@{uid}-Shm_@{hex8} rw,
+  owner /dev/shm/u@{uid}-ValveIPCSharedObj-Steam rwk,
+  owner /dev/shm/ValveIPCSHM_@{uid} rw,
+
+  @{run}/udev/data/+input:input@{int} r,  # for mouse, keyboard, touchpad
+  @{run}/udev/data/c13:@{int}  r,         # for /dev/input/*
+
+  @{sys}/ r,
+  @{sys}/bus/ r,
+  @{sys}/class/ r,
+  @{sys}/class/hidraw/ r,
+  @{sys}/class/input/ r,
+  @{sys}/devices/ r,
+  @{sys}/devices/@{pci}/boot_vga r,
+  @{sys}/devices/@{pci}/net/*/carrier r,
+  @{sys}/devices/**/input@{int}/ r,
+  @{sys}/devices/**/input@{int}/**/{vendor,product} r,
+  @{sys}/devices/**/input@{int}/capabilities/* r,
+  @{sys}/devices/**/input/input@{int}/ r,
+  @{sys}/devices/**/uevent r,
+  @{sys}/devices/system/ r,
+  @{sys}/devices/system/clocksource/clocksource@{int}/current_clocksource r,
+  @{sys}/devices/system/cpu/cpu@{int}/ r,
+  @{sys}/devices/virtual/dmi/id/* r,
+  @{sys}/devices/virtual/net/*/carrier r,
+  @{sys}/kernel/ r,
+
+        @{sys}/fs/cgroup/user.slice/cpu.max r,
+        @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/cpu.max r,
+        @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/cpu.max r,
+  owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/cpu.max  r,
+
+        @{PROC}/uptime r,
+        @{PROC}/version r,
+  owner @{PROC}/@{pid}/cgroup r,
+  owner @{PROC}/@{pid}/cmdline r,
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/mounts r,
+  owner @{PROC}/@{pid}/pagemap r,
+  owner @{PROC}/@{pid}/stat r,
+  owner @{PROC}/@{pid}/task/ r,
+  owner @{PROC}/@{pid}/task/@{tid}/comm rw,
+  owner @{PROC}/@{pid}/task/@{tid}/stat r,
+
+  /dev/ r,
+  /dev/hidraw@{int} rw,
+  /dev/input/ r,
+  /dev/input/event@{int} rw,
+  /dev/tty rw,
+  /dev/uinput rw,
+
+  include if exists <abstractions/common/steam-game.d>
