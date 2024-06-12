@@ -7,22 +7,17 @@ abi <abi/3.0>,
 
 include <tunables/global>
 
-@{exec_path} = @{bin}/lxqt-session
-profile lxqt-notificationd @{exec_path} flags=(complain) {
+@{exec_path} = @{bin}/lxqt-notificationd
+profile lxqt-notificationd @{exec_path} {
   include <abstractions/base>
-  include <abstractions/fonts>
-  include <abstractions/qt5>
-  include <abstractions/lxqt>
-  include <abstractions/fontconfig-cache-read>
+  include <abstractions/gtk>
   include <abstractions/graphics>
-  include <abstractions/mesa>
-
-  # TODO: local only
-  network inet dgram,
-  network inet stream,
-  network inet6 dgram,
-  network inet6 stream,
-  network netlink raw,
+  include <abstractions/lxqt>
+  include <abstractions/video>
+  include <abstractions/qt5-shader-cache>
+  include <abstractions/dbus-session>
+  include <abstractions/dbus-accessibility>
+  include <abstractions/gvfs-open>
 
   dbus receive
   	bus=session
@@ -39,32 +34,25 @@ profile lxqt-notificationd @{exec_path} flags=(complain) {
   	path="/org/freedesktop/Notifications"
   	interface="org.freedesktop.Notifications"
   	peer=(name=":[0-9]*.[0-9]*"),
-
-   @{exec_path}				mr,
-   @{bin}/xrdb 					rPx,
-##   @{bin}/dbus-update-activation-environment    rix,    this should not be set here
-
-   /usr/share/lxqt/power.conf   		r,
-
-   /etc/nsswitch.conf 				r,
   
-   /var/lib/dpkg/info/lxqt-notifications.conffiles r,
+   @{exec_path}					mr,
 
-   owner @{user_cache_dirs}/lxqt-notificationd/**  rwk,
-   owner @{user_cache_dirs}/lxqt-notificationd/#@{int} rw,
+   /etc/nsswitch.conf 					r,
+  
+   /var/lib/dpkg/info/lxqt-notifications.conffiles 	r,
+
+   owner @{user_cache_dirs}/lxqt-notificationd/**  	rwk,
+   owner @{user_cache_dirs}/lxqt-notificationd/#@{int} 	rw,
    owner @{user_cache_dirs}/lxqt-notificationd/unattended.list.@{rand6} rwkl -> @{user_cache_dirs}/lxqt-notificationd/#@{int},
+   owner @{user_cache_dirs}/mesa_shader_cache/index 	rwk,
 
    owner @{user_config_dirs}/lxqt/globalkeyshortcuts.conf.@{rand6} rwkl -> @{user_config_dirs}/lxqt/#@{int},
-   owner @{user_config_dirs}/lxqt/power.conf r,
-
-   # useless :
-   @{run}/systemd/inhibit/2.ref  			rw,
-
-   @{PROC}/sys/kernel/random/boot_id 			r,
 
    owner /tmp/{,**}  					r,
 
+   @{PROC}/sys/kernel/random/boot_id 			r,
+
    /dev/tty						rw,
 
-  include if exists <local/lxqt-notificationd>
+   include if exists <local/lxqt-notificationd>
 }

@@ -7,11 +7,10 @@ abi <abi/3.0>,
 
 include <tunables/global>
 
-@{exec_path} = @{bin}/lxqt-leave
-profile lxqt-leave @{exec_path} {
+@{exec_path} = @{bin}/lxqt-backlight_backend
+profile lxqt-backlight_backend @{exec_path} {
   include <abstractions/base>
   include <abstractions/gtk>
-  include <abstractions/graphics>
   include <abstractions/video>
   include <abstractions/lxqt>
   include <abstractions/qt5-shader-cache>
@@ -19,11 +18,15 @@ profile lxqt-leave @{exec_path} {
   include <abstractions/dbus-accessibility-strict>
   include <abstractions/gvfs-open>
   
-  @{exec_path}					mr,
-  
-  owner /tmp/@{int}  		       		r,
+  @{exec_path}		mr,
 
-  /dev/tty					rw,
+  @{sys}/class/backlight/ 	r,
+  owner @{sys}/devices/@{pci_bus}/0000:00:02.0/drm/card@{int}/card@{int}-eDP-@{int}/intel_backlight/*     rw,
+  owner @{sys}/devices/@{pci_bus}/**/**/drm/card@{int}/card@{int}-eDP-1/amdgpu_bl@{int}/*  		  rw,
 
-  include if exists <local/lxqt-leave>
+  owner /tmp/@{int}  		r,
+
+  /dev/tty 			rw,
+
+  include if exists <local/lxqt-backlight_backend>
 }

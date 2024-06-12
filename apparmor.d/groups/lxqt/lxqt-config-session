@@ -8,33 +8,43 @@ abi <abi/3.0>,
 include <tunables/global>
 
 @{exec_path} = @{bin}/lxqt-config-session
-profile lxqt-config-session @{exec_path} flags=(complain) {
+profile lxqt-config-session @{exec_path} {
   include <abstractions/base>
   include <abstractions/gtk>
   include <abstractions/graphics>
   include <abstractions/video>
   include <abstractions/lxqt>
+  include <abstractions/qt5>
   include <abstractions/qt5-shader-cache>
   include <abstractions/dbus-session-strict>
   include <abstractions/dbus-accessibility-strict>
   include <abstractions/gvfs-open>
+  include <abstractions/thumbnails-cache-read>
+  include <abstractions/thumbnails-cache-write>
 
-  @{exec_path}			mr,
+  @{exec_path}					mr,
   
-  /etc/xdg/autostart/ 			r,
-  /etc/xdg/autostart/** 		r,
+  /usr/share/libfm-qt6/translations/libfm-qt_de.qm 	r,
+  /usr/share/gvfs/remote-volume-monitors/ 		r,
+  /usr/share/gvfs/remote-volume-monitors/udisks2.monitor r,
+
+  /etc/fstab 						r,
+  /etc/xdg/autostart/ 					r,
+  /etc/xdg/autostart/** 				r,
   
-  owner @{user_config_dirs}/autostart/ r,
+  owner @{user_config_dirs}/#@{int}    			rw,
+  owner @{user_config_dirs}/QtProject.conf.@{rand6}	rwkl, 
+  owner @{user_config_dirs}/QtProject.conf.lock 	rwk,
+  owner @{user_config_dirs}/autostart/ 			r,
   owner @{user_config_dirs}/autostart/lxqt-config-monitor-autostart.desktop  r,
   owner @{user_config_dirs}/lxqt/**  rwkl -> @{user_config_dirs}/lxqt/#@{int},
 
-  owner /tmp/@{int}  			r,
-
-  @{sys}/devices/@{pci_bus}/{,**}       r,
-  @{sys}/devices/@{pci_bus}/**/**/**    r,
+  owner /tmp/@{int}  			 r,
 
   @{PROC}/sys/kernel/random/boot_id  	r,
+  owner @{PROC}/@{pid}/mountinfo 	r,
 
   /dev/tty				rw,
 
+ include if exists <local/lxqt-config-session>
 }

@@ -8,7 +8,8 @@ abi <abi/3.0>,
 include <tunables/global>
 
 @{exec_path} = @{bin}/lxqt-config-input
-profile lxqt-config-input @{exec_path} flags=(complain) {
+profile lxqt-config-input @{exec_path} {
+  include <abstractions/audio-client>
   include <abstractions/base>
   include <abstractions/bus-system>
   include <abstractions/bus/org.bluez>
@@ -17,28 +18,44 @@ profile lxqt-config-input @{exec_path} flags=(complain) {
   include <abstractions/dbus-session-strict>
   include <abstractions/dbus-accessibility-strict>
   include <abstractions/gtk>
+  include <abstractions/graphics>
   include <abstractions/gvfs-open>
   include <abstractions/lxqt>
   include <abstractions/qt5-shader-cache>
   include <abstractions/video>
   
-  @{exec_path}			mr,
+
+  @{exec_path}				mr,
   
   @{bin}/setxkbmap 			rix,  
 
+  /etc/udev/udev.conf 			r,
+
   owner @{user_config_dirs}/lxqt/** rwkl -> @{user_config_dirs}/lxqt/#@{int},
 
-  owner /tmp/@{int}  		       r,
+  owner /tmp/@{int}  		        r,
 
-  # There are hundreds of files to be accessed - Question: better to deny the few not to be accessed??
-  @{run}/udev/data/**		       r,
-  @{sys}/devices/**	           r,
-  @{sys}/class/**              r, 
-  @{sys}/bus/**                r,
-  @{sys}/devices/**            r,
+  @{run}/udev/data/c@{int}:*   		r,
+  @{run}/udev/data/b@{int}:*   		r,
+  @{run}/udev/data/+sound:card@{int}   	r,
+  @{run}/udev/data/+bluetooth:*		r,
+  @{run}/udev/data/+platform:* 		r,
+  @{run}/udev/data/+acpi:* 		r,
+  @{run}/udev/data/+i2c:* 		r,
+  @{run}/udev/data/+backlight:* 	r,
+  @{run}/udev/data/+leds:* 		r,
+  @{run}/udev/data/n@{int} 		r,
+  @{run}/udev/data/+input:* 		r,
+  @{run}/udev/data/+dmi:* 		r,
+  @{run}/udev/data/+drm:* 		r,
+  @{run}/udev/data/+pci:* 		r,
+  @{run}/udev/data/+rfkill:*		r,
+
+  @{sys}/bus/**		   		r,
+  @{sys}/class/**		   	r,  
+  @{sys}/devices/**	   		r,   
 
   @{PROC}/sys/kernel/random/boot_id     r,
-
 
   /dev/tty				rw,
 
