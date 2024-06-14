@@ -13,6 +13,7 @@ title: Variables References
 | Disk images | `@{XDG_IMG_DIR}` | `images` |
 | Documents | `@{XDG_DOCUMENTS_DIR}` | `Documents` |
 | Download | `@{XDG_DOWNLOAD_DIR}` | `Downloads` |
+| Games | `@{XDG_GAMES_DIR}` | `.games` |
 | Music | `@{XDG_MUSIC_DIR}` | `Music` |
 | Pictures | `@{XDG_PICTURES_DIR}` | `Pictures` |
 | Projects | `@{XDG_PROJECTS_DIR}` | `Projects` |
