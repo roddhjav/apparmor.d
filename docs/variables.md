@@ -21,9 +21,13 @@ title: Variables References
 | Templates | `@{XDG_TEMPLATES_DIR}` | `Templates` |
 | Public | `@{XDG_PUBLICSHARE_DIR}` | `Public` |
 | Projects | `@{XDG_PROJECTS_DIR}` | `Projects` |
+| Private | `@{XDG_PRIVATE_DIR}` | `.{p,P}rivate {p,P}rivate` |
+| Work | `@{XDG_WORK_DIR}` | `Work` |
+| Mail | `@{XDG_MAIL_DIR}` | `Mail .{m,M}ail` |
 | Sync | `@{XDG_SYNC_DIR}` | `Sync` |
 | Torrents | `@{XDG_TORRENTS_DIR}` | `Torrents` |
 | Vm | `@{XDG_VM_DIR}` | `.vm`
+| Vm Shares | `@{XDG_VM_SHARES_DIR}` | `VM_Shares`
 | Disk images | `@{XDG_IMG_DIR}` | `images` |
 
 ### Dotfiles
@@ -38,7 +42,9 @@ title: Variables References
 | Lib | `@{XDG_LIB_DIR}` | `.local/lib` |
 | GPG | `@{XDG_GPG_DIR}` | `.gnupg` |
 | SSH | `@{XDG_SSH_DIR}` | `.ssh` |
+| Private | `@{XDG_PRIVATE_DIR}` | `.{p,P}rivate {p,P}rivate` |
 | Passwords | `@{XDG_PASSWORD_STORE_DIR}` | `.password-store` |
+| Mail | `@{XDG_MAIL_DIR}` | `Mail .{m,M}ail` |
 
 ### Full configuration path
 
@@ -65,14 +71,18 @@ title: Variables References
 | Videos | `@{user_videos_dirs}` | `@{HOME}/@{XDG_VIDEOS_DIR} @{MOUNTS}/@{XDG_VIDEOS_DIR}` |
 | Books | `@{user_books_dirs}` | `@{HOME}/@{XDG_BOOKS_DIR} @{MOUNTS}/@{XDG_BOOKS_DIR}` |
 | Games | `@{user_games_dirs}` | `@{HOME}/@{XDG_GAMES_DIR} @{MOUNTS}/@{XDG_GAMES_DIR}` |
+| Private | `@{user_private_dirs}` | `@{HOME}/@{XDG_PRIVATE_DIR} @{MOUNTS}/@{XDG_PRIVATE_DIR}` |
 | Passwords | `@{user_password_store_dirs}` | `@{HOME}/@{XDG_PASSWORD_STORE_DIR} @{MOUNTS}/@{XDG_PASSWORD_STORE_DIR}` |
+| Work | `@{user_work_dirs}` | `@{HOME}/@{XDG_WORK_DIR} @{MOUNTS}/@{XDG_WORK_DIR}` |
+| Mail | `@{user_mail_dirs}` | `@{HOME}/@{XDG_MAIL_DIR} @{MOUNTS}/@{XDG_MAIL_DIR}` |
 | Projects | `@{user_projects_dirs}` | `@{HOME}/@{XDG_PROJECTS_DIR} @{MOUNTS}/@{XDG_PROJECTS_DIR}` |
 | Public | `@{user_publicshare_dirs}` | `@{HOME}/@{XDG_PUBLICSHARE_DIR} @{MOUNTS}/@{XDG_PUBLICSHARE_DIR}` |
 | Templates | `@{user_templates_dirs}` | `@{HOME}/@{XDG_TEMPLATES_DIR} @{MOUNTS}/@{XDG_TEMPLATES_DIR}` |
 | Torrents | `@{user_torrents_dirs}` | `@{HOME}/@{XDG_TORRENTS_DIR} @{MOUNTS}/@{XDG_TORRENTS_DIR}` |
 | Sync | `@{user_sync_dirs}` | `@{HOME}/@{XDG_SYNC_DIR} @{MOUNTS}/*/@{XDG_SYNC_DIR}` |
 | Vm | `@{user_vm_dirs}` | `@{HOME}/@{XDG_VM_DIR} @{MOUNTS}/@{XDG_VM_DIR}`
-| Disk images | `@{user_img_dirs}` | `@{HOME}/@{XDG_IMG_DIR} @{MOUNTS}/@{XDG_IMG_DIR}` |
+| Vm Shares | `@{user_vm_shares}` | `@{HOME}/@{XDG_VM_DIR} @{MOUNTS}/@{XDG_VM_DIR}`
+| Disk images | `@{user_img_dirs}` | `@{HOME}/@{XDG_VM_SHARES_DIR} @{MOUNTS}/@{XDG_VM_SHARES_DIR}` |
 
 
 ## System variables
