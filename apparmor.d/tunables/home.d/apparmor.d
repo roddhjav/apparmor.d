@@ -12,7 +12,6 @@
 # First part, second part in /etc/apparmor.d/tunables/xdg-user-dirs.d/apparmor.d
 
 # Extra user personal directories
-@{XDG_IMG_DIR}="images"
 @{XDG_SCREENSHOTS_DIR}="Pictures/Screenshots"
 @{XDG_WALLPAPERS_DIR}="Pictures/Wallpapers"
 @{XDG_BOOKS_DIR}="Books"
@@ -24,6 +23,7 @@
 @{XDG_TORRENTS_DIR}="Torrents"
 @{XDG_VM_DIR}=".vm"
 @{XDG_VM_SHARES_DIR}="VM_Shares"
+@{XDG_IMG_DIR}="images"
 
 # User personal keyrings
 @{XDG_GPG_DIR}=".gnupg"
