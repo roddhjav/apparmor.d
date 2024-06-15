@@ -24,6 +24,7 @@
 @{XDG_VM_DIR}=".vm"
 @{XDG_VM_SHARES_DIR}="VM_Shares"
 @{XDG_IMG_DIR}="images"
+@{XDG_GAMESSTUDIO_DIR}="unity3d"
 
 # User personal keyrings
 @{XDG_GPG_DIR}=".gnupg"
