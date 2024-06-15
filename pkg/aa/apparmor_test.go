@@ -6,6 +6,7 @@ package aa
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/roddhjav/apparmor.d/pkg/paths"
@@ -16,6 +17,13 @@ var (
 	testData = paths.New("../../tests/testdata/")
 	intData  = paths.New("../../apparmor.d")
 )
+
+// mustReadProfileFile read a file and return its content as a slice of string.
+// It panics if an error occurs. It removes the last comment line.
+func mustReadProfileFile(path *paths.Path) string {
+	res := strings.Split(util.MustReadFile(path), "\n")
+	return strings.Join(res[:len(res)-2], "\n")
+}
 
 func TestAppArmorProfileFile_String(t *testing.T) {
 	tests := []struct {
@@ -230,7 +238,7 @@ func TestAppArmorProfileFile_Integration(t *testing.T) {
 					},
 				}},
 			},
-			want: util.MustReadFile(intData.Join("profiles-a-f/aa-status")),
+			want: mustReadProfileFile(intData.Join("profiles-a-f/aa-status")),
 		},
 	}
 	for _, tt := range tests {
