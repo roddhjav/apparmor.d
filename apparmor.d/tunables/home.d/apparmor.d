@@ -2,7 +2,6 @@
 # Extended user XDG directories definition
 # Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
-# vim:syntax=apparmor
 
 # To allow extended personalisation by the user without breaking everything.
 # All apparmor profiles should always use the variables defined here.
@@ -66,3 +65,5 @@
 @{user_work_dirs}=@{HOME}/@{XDG_WORK_DIR} @{MOUNTS}/@{XDG_WORK_DIR}
 @{user_password_store_dirs}=@{HOME}/@{XDG_PASSWORD_STORE_DIR} @{MOUNTS}/@{XDG_PASSWORD_STORE_DIR}
 @{user_private_dirs}=@{HOME}/@{XDG_PRIVATE_DIR} @{MOUNTS}/@{XDG_PRIVATE_DIR}
+
+# vim:syntax=apparmor
