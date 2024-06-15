@@ -12,34 +12,21 @@ profile partprobe @{exec_path} {
   include <abstractions/base>
   include <abstractions/disks-write>
 
-  # To remove the following errors:
-  #  device-mapper: version ioctl on   failed: Permission denied
-  #  Incompatible libdevmapper 1.02.167 (2019-11-30) and kernel driver (unknown version).
   capability sys_admin,
-
-  # To remove the following errors:
-  #  kernel: device-mapper: core: partprobe: sending ioctl 1261 to DM device without required
-  #  privilege.
   capability sys_rawio,
 
-  # Needed?
-  ptrace (read),
+  ptrace read,
 
   @{exec_path} mr,
 
   @{sh_path}        rix,
 
   @{bin}/udevadm    rCx -> udevadm,
+  @{bin}/dmidecode  rPx,
 
-  @{bin}/dmidecode rPx,
-
-  owner @{PROC}/@{pid}/mounts r,
-        @{PROC}/swaps r,
         @{PROC}/devices r,
-
-  /dev/mapper/ r,
-  /dev/mapper/control rw,
-
+        @{PROC}/swaps r,
+  owner @{PROC}/@{pid}/mounts r,
 
   profile udevadm {
     include <abstractions/base>

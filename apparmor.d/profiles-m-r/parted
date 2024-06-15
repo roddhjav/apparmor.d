@@ -12,39 +12,25 @@ profile parted @{exec_path} {
   include <abstractions/base>
   include <abstractions/disks-write>
 
-  # Needed to inform the system of newly created/removed partitions
-  #  ioctl(3, BLKRRPART)              = -1 EACCES (Permission denied)
-  #
-  #  Error: Partition(s) * on /dev/sd* have been written, but we have been unable to inform the
-  #  kernel of the change, probably because it/they are in use.  As a result, the old partition(s)
-  #  will remain in use.  You should reboot now before making further changes.
   capability sys_admin,
-
-  # Needed? (#FIXME#)
   capability sys_rawio,
 
-  # Needed?
-  ptrace (read),
+  ptrace read,
 
   @{exec_path} mr,
 
   @{sh_path}        rix,
 
   @{bin}/udevadm    rCx -> udevadm,
-
-  @{bin}/dmidecode rPx,
+  @{bin}/dmidecode  rPx,
 
   /etc/inputrc r,
 
-  # Image files
   owner @{user_img_dirs}/{,**} rwk,
 
         @{PROC}/devices r,
         @{PROC}/swaps r,
   owner @{PROC}/@{pid}/mounts r,
-
-  /dev/mapper/ r,
-  /dev/mapper/control rw,
 
   profile udevadm {
     include <abstractions/base>

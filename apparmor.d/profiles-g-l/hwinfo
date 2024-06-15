@@ -12,19 +12,10 @@ profile hwinfo @{exec_path} {
   include <abstractions/base>
   include <abstractions/disks-read>
 
-  # Without the sys_admin CAP, some information, for instance the reserved I/O port address range
-  # in the /proc/ioports, will be hidden.
-  capability sys_admin,
-
-  # For the kernel log entries to be shown in the output
-  capability syslog,
-
-  # To remove the following errors:
-  #  eth0: socket failed: Operation not permitted
-  capability net_raw,
-
-  # Needed when passed disk related options (--block, --partition, --floppy)
-  capability sys_rawio,
+  capability net_raw, # Needed for network related options
+  capability sys_admin, # Needed for /proc/ioports
+  capability sys_rawio, # Needed for disk related options
+  capability syslog, # Needed for /proc/kmsg
 
   network inet dgram,
   network inet6 dgram,
@@ -36,58 +27,61 @@ profile hwinfo @{exec_path} {
 
   @{bin}/kmod       rCx -> kmod,
   @{bin}/udevadm    rCx -> udevadm,
+  @{bin}/acpidump   rPUx,
 
   @{bin}/dmraid rPUx,
 
-  @{PROC}/version r,
-  @{PROC}/cmdline r,
-  @{PROC}/dma r,
-  @{PROC}/interrupts r,
-  @{PROC}/modules r,
-  @{PROC}/tty/driver/serial r,
-  @{PROC}/ioports r,
-  @{PROC}/bus/input/devices r,
-  @{PROC}/partitions r,
-  @{PROC}/driver/nvram r,
-  @{PROC}/sys/dev/cdrom/info r,
+  /usr/share/hwinfo/{,**} r,
 
-  /dev/mem r,
-  /dev/nvram r,
-  /dev/psaux r,
-  /dev/console rw,
-  /dev/ttyS@{int} r,
-  /dev/fb@{int} r,
+  /var/lib/hardware/udi/{,**} r,
+
+  owner @{tmp}/hwinfo*.txt rw,
 
   @{sys}/bus/{,**/} r,
   @{sys}/class/*/ r,
-  @{sys}/devices/@{pci_bus}/** r,
-  @{sys}/devices/**/input/**/dev r,
+  @{sys}/devices/@{pci}/** r,
   @{sys}/devices/**/{modalias,uevent} r,
+  @{sys}/devices/**/input/**/dev r,
   @{sys}/devices/virtual/net/*/{type,carrier,address} r,
   @{sys}/firmware/dmi/tables/DMI r,
   @{sys}/firmware/dmi/tables/smbios_entry_point r,
   @{sys}/firmware/edd/{,**} r,
 
-  /var/lib/hardware/udi/ r,
+  @{PROC}/bus/input/devices r,
+  @{PROC}/cmdline r,
+  @{PROC}/dma r,
+  @{PROC}/driver/nvram r,
+  @{PROC}/interrupts r,
+  @{PROC}/ioports r,
+  @{PROC}/modules r,
+  @{PROC}/partitions r,
+  @{PROC}/sys/dev/cdrom/info r,
+  @{PROC}/tty/driver/serial r,
+  @{PROC}/version r,
 
-  # For a log file
-  owner @{tmp}/hwinfo*.txt rw,
-
+  /dev/console rw,
+  /dev/fb@{int} r,
+  /dev/mem r,
+  /dev/nvram r,
+  /dev/psaux r,
+  /dev/ttyS@{int} r,
 
   profile kmod {
     include <abstractions/base>
+    include <abstractions/consoles>
 
     @{bin}/kmod mr,
 
     /etc/modprobe.d/{,*.conf} r,
 
-    @{PROC}/cmdline r,
-
-    # file_inherit
-    /dev/ttyS@{int} r,
     owner @{tmp}/hwinfo*.txt rw,
+
     @{sys}/devices/@{pci}/drm/card@{int}/ r,
 
+    @{PROC}/cmdline r,
+    @{PROC}/modules r,
+
+    include if exists <local/hwinfo_udevadm>
   }
 
   profile udevadm {
