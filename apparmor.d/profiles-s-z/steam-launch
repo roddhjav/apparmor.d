@@ -13,29 +13,34 @@ include <tunables/global>
 @{runtime_dirs} = @{lib_dirs}/steam-runtime{,-sniper}
 @{app_dirs} = @{share_dirs}/steamapps/common/
 
-@{exec_path} = @{lib_dirs}/steamerrorreporter
-profile steamerrorreporter @{exec_path} flags=(attach_disconnected) {
+@{exec_path} = @{bin}/steam @{bin}/steam-runtime
+profile steam-launch @{exec_path} {
   include <abstractions/base>
-  include <abstractions/nameservice-strict>
+  include <abstractions/python>
 
-  network inet dgram,
-  network inet stream,
-  network inet6 dgram,
-  network inet6 stream,
   network unix stream,
 
   @{exec_path} mr,
 
-  owner @{HOME}/.steam/steam.pipe r,
+  @{sh_path}         rix,
+  @{bin}/cp          rix,
+  @{bin}/dirname     rix,
+  @{bin}/env         rix,
+  @{bin}/id          rix,
+  @{bin}/readlink    rix,
 
-  owner @{lib_dirs}/{,**} r, 
-  owner @{runtime_dirs}/pinned_libs_{32,64}/ r,
-  owner @{share_dirs}/ r,
+  @{lib}/steam/steam         rix,
+  @{lib}/steam/bin_steam.sh  rix,
+  @{share_dirs}/steam.sh     rPx,
 
-  owner @{tmp}/dumps/ r,
-  owner @{tmp}/dumps/*_log.txt rw,
+  /usr/ r,
+  /usr/local/ r,
 
-  owner @{PROC}/@{pid}/status r,
+  owner @{share_dirs}/bootstrap.tar.xz rw,
 
-  include if exists <local/steamerrorreporter>
+  /dev/tty rw,
+
+  deny /opt/** r,
+
+  include if exists <local/steam-launch>
 }
