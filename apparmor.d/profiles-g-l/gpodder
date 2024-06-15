@@ -10,14 +10,12 @@ include <tunables/global>
 @{exec_path} = @{bin}/gpodder
 profile gpodder @{exec_path} {
   include <abstractions/base>
-  include <abstractions/freedesktop.org>
-  include <abstractions/fonts>
+  include <abstractions/desktop>
   include <abstractions/fontconfig-cache-read>
-  include <abstractions/gtk>
-  include <abstractions/python>
   include <abstractions/nameservice-strict>
-  include <abstractions/user-download-strict>
+  include <abstractions/python>
   include <abstractions/ssl_certs>
+  include <abstractions/user-download-strict>
 
   network inet dgram,
   network inet6 dgram,
@@ -32,64 +30,30 @@ profile gpodder @{exec_path} {
   @{sh_path}        rix,
   @{bin}/uname      rix,
 
-  owner @{HOME}/ r,
-  owner @{HOME}/gPodder/ rw,
-  owner @{HOME}/gPodder/** rwk,
-
-  /usr/share/gpodder/{,**} r,
-
-  owner @{PROC}/@{pid}/fd/ r,
-  owner @{PROC}/@{pid}/mounts r,
-  owner @{PROC}/@{pid}/mountinfo r,
-
-  /etc/fstab r,
-
-  owner /var/tmp/etilqs_@{hex} rw,
-
-  /etc/mime.types r,
-
-  /usr/share/*/*.desktop r,
-
-  @{bin}/xdg-settings    rPUx,
-
-  @{bin}/xdg-open                                    rCx -> open,
-  @{lib}/@{multiarch}/glib-[0-9]*/gio-launch-desktop rCx -> open,
+  @{bin}/xdg-settings    rPx,
+  @{open_path}           rPx -> child-open,
 
   # A/V players
   @{bin}/smplayer        rPUx,
   @{bin}/vlc             rPUx,
   @{bin}/mpv             rPUx,
 
-  # Open in a web browser
-  @{lib}/firefox/firefox rPUx,
+  /usr/share/gpodder/{,**} r,
 
-  # file_inherit
+  /etc/fstab r,
+  /etc/mime.types r,
+
+  owner @{HOME}/ r,
+  owner @{HOME}/gPodder/ rw,
+  owner @{HOME}/gPodder/** rwk,
+
+  owner /var/tmp/etilqs_@{hex16} rw,
+
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/mounts r,
+  owner @{PROC}/@{pid}/mountinfo r,
+
   owner /dev/tty@{int} rw,
-
-
-  profile open {
-    include <abstractions/base>
-    include <abstractions/xdg-open>
-
-    @{bin}/xdg-open mr,
-    @{lib}/@{multiarch}/glib-[0-9]*/gio-launch-desktop mr,
-
-    @{sh_path}             rix,
-    @{bin}/{m,g,}awk       rix,
-    @{bin}/readlink        rix,
-    @{bin}/basename        rix,
-
-    owner @{HOME}/ r,
-
-    owner @{run}/user/@{uid}/ r,
-
-    # Allowed apps to open
-    @{lib}/firefox/firefox rPUx,
-
-    # file_inherit
-    owner @{HOME}/.xsession-errors w,
-
-  }
 
   include if exists <local/gpodder>
 }

@@ -8,9 +8,10 @@ abi <abi/3.0>,
 include <tunables/global>
 
 @{exec_path} = @{bin}/hw-probe
-profile hw-probe @{exec_path} {
+profile hw-probe @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/perl>
+  include <abstractions/X-strict>
 
   capability sys_admin,
 
@@ -20,111 +21,134 @@ profile hw-probe @{exec_path} {
   @{exec_path} rm,
   @{bin}/perl r,
 
-  @{sh_path}         rix,
-  @{bin}/{,e}grep    rix,
-  @{bin}/{m,g,}awk   rix,
-  @{bin}/dd          rix,
-  @{bin}/efibootmgr  rix,
-  @{bin}/efivar      rix,
-  @{bin}/md5sum      rix,
-  @{bin}/pwd         rix,
-  @{bin}/sleep       rix,
-  @{bin}/tar         rix,
-  @{bin}/uname       rix,
+  @{sh_path}             rix,
+  @{bin}/{,e}grep        rix,
+  @{bin}/{m,g,}awk       rix,
+  @{bin}/dd              rix,
+  @{bin}/efibootmgr      rix,
+  @{bin}/efivar          rix,
+  @{bin}/find            rix,
+  @{bin}/md5sum          rix,
+  @{bin}/pwd             rix,
+  @{bin}/sleep           rix,
+  @{bin}/sort            rix,
+  @{bin}/tar             rix,
+  @{bin}/uname           rix,
 
-  @{bin}/lsb_release rPx -> lsb_release,
-  @{bin}/dpkg        rPx -> child-dpkg,
-
-  @{bin}/acpi        rPx,
-  @{bin}/amixer      rPx,
-  @{bin}/aplay       rPx,
-  @{bin}/biosdecode  rPx,
-  @{bin}/cpuid       rPx,
-  @{bin}/cpupower    rPx,
-  @{bin}/df          rPx,
-  @{bin}/dkms        rPx,
-  @{bin}/dmesg       rPx,
-  @{bin}/dmidecode   rPx,
-  @{bin}/edid-decode rPx,
-  @{bin}/fdisk       rPx,
-  @{bin}/glxgears    rPx,
-  @{bin}/glxinfo     rPx,
-  @{bin}/hciconfig   rPx,
-  @{bin}/hdparm      rPx,
-  @{bin}/hwinfo      rPx,
-  @{bin}/i2cdetect   rPx,
-  @{bin}/inxi        rPx,
-  @{bin}/lsblk       rPx,
-  @{bin}/lscpu       rPx,
-  @{bin}/lspci       rPx,
-  @{bin}/lsusb       rPx,
-  @{bin}/memtester   rPx,
-  @{bin}/rfkill      rPx,
-  @{bin}/sensors     rPx,
-  @{bin}/smartctl    rPx,
-  @{bin}/upower      rPx,
-  @{bin}/uptime      rPx,
-  @{bin}/usb-devices rPx,
-  @{bin}/xdpyinfo    rPx,
-  @{bin}/xinput      rPx,
-  @{bin}/xrandr      rPx,
-
+  @{bin}/acpi            rPx,
+  @{bin}/amixer          rPx,
+  @{bin}/aplay           rPx,
+  @{bin}/biosdecode      rPx,
+  @{bin}/cpuid           rPx,
+  @{bin}/cpupower        rPx,
   @{bin}/curl            rCx -> curl,
+  @{bin}/df              rPx,
+  @{bin}/dkms            rPx,
+  @{bin}/dmesg           rPx,
+  @{bin}/dmidecode       rPx,
+  @{bin}/dpkg            rPx -> child-dpkg,
+  @{bin}/edid-decode     rPx,
   @{bin}/ethtool         rCx -> netconfig,
-  @{bin}/find            rCx -> find,
+  @{bin}/fdisk           rPx,
+  @{bin}/glxgears        rPx,
+  @{bin}/glxinfo         rPx,
+  @{bin}/hciconfig       rPx,
+  @{bin}/hdparm          rPx,
+  @{bin}/hwinfo          rPx,
+  @{bin}/i2cdetect       rPx,
   @{bin}/ifconfig        rCx -> netconfig,
+  @{bin}/inxi            rPx,
   @{bin}/iw              rCx -> netconfig,
   @{bin}/iwconfig        rCx -> netconfig,
   @{bin}/journalctl      rCx -> journalctl,
   @{bin}/killall         rCx -> killall,
-  @{bin}/kmod            rCx -> kmod,
+  @{bin}/kmod            rix,
+  @{bin}/lsb_release     rPx -> lsb_release,
+  @{bin}/lsblk           rPx,
+  @{bin}/lscpu           rPx,
+  @{bin}/lspci           rPx,
+  @{bin}/lsusb           rPx,
+  @{bin}/memtester       rPx,
+  @{bin}/nmcli           rPx,
+  @{bin}/pacman          rCx -> pacman,
+  @{bin}/rfkill          rPx,
+  @{bin}/rpm             rCx -> rpm, 
+  @{bin}/sensors         rPx,
+  @{bin}/smartctl        rPx,
   @{bin}/systemctl       rCx -> systemctl,
   @{bin}/systemd-analyze rPx,
   @{bin}/udevadm         rCx -> udevadm,
-
-  /usr/share/X11/xorg.conf.d/{,*.conf} r,
+  @{bin}/upower          rPx,
+  @{bin}/uptime          rPx,
+  @{bin}/usb-devices     rPx,
+  @{bin}/xdpyinfo        rPx,
+  @{bin}/xinput          rPx,
+  @{bin}/xrandr          rPx,
 
   /etc/modprobe.d/{,*.conf} r,
-  /etc/X11/xorg.conf.d/{,*.conf} r,
 
-  /var/log/Xorg.[0-9].log{,.old} r,
+  owner @{HOME}/HW_PROBE/{,**} rw,
 
-  owner /root/HW_PROBE/{,**} rw,
-
-  owner @{tmp}/*/ rw,
+  audit owner @{tmp}/*/ rw,
   owner @{tmp}/*/cpu_perf rw,
 
   @{sys}/class/drm/ r,
   @{sys}/class/power_supply/ r,
-
-  @{sys}/devices/virtual/dmi/id/* r,
   @{sys}/devices/@{pci}/drm/card@{int}/*/edid r,
   @{sys}/devices/**/power_supply/*/uevent r,
-
+  @{sys}/devices/virtual/dmi/id/* r,
   @{sys}/firmware/efi/efivars/ r,
   @{sys}/firmware/efi/efivars/* r,
+  @{sys}/module/*/ r,
+  @{sys}/module/*/{coresize,refcnt} r,
+  @{sys}/module/*/holders/ r,
 
   @{PROC}/bus/input/devices r,
+  @{PROC}/cmdline r,
   @{PROC}/interrupts r,
   @{PROC}/ioports r,
+  @{PROC}/modules r,
   @{PROC}/scsi/scsi r,
 
-  profile find {
+  /dev/{,**} r,
+
+  profile pacman flags=(attach_disconnected) {
     include <abstractions/base>
-    include <abstractions/nameservice-strict>
+    include <abstractions/consoles>
+
+    @{bin}/pacman mr,
+
+    @{bin}/gpg      rPx -> pacman//gpg,
+    @{bin}/gpgconf  rPx -> pacman//gpg,
+    @{bin}/gpgsm    rPx -> pacman//gpg,
+
+    /etc/pacman.conf r,
+    /etc/pacman.d/{,**} r,
+
+    /var/lib/pacman/{,**} r,
+
+    include if exists <local/hw-probe_pacman>
+  }
+
+  profile rpm flags=(attach_disconnected) {
+    include <abstractions/base>
+    include <abstractions/consoles>
 
     capability dac_read_search,
 
-    @{bin}/find mr,
+    @{bin}/rpm mr,
 
-    /root/ r,
+    /var/ r,
+    /var/lib/ r,
+    /var/lib/rpm/ r,
+    /var/lib/rpm/rpmdb.sqlite rk,
+    /var/lib/rpm/rpmdb.sqlite-shm rwk,
+    /var/lib/rpm/rpmdb.sqlite-wal rw,
 
-    /dev/{,**} r,
-
-    include if exists <local/hw-probe_find>
+    include if exists <local/hw-probe_rpm>
   }
 
-  profile journalctl {
+  profile journalctl flags=(attach_disconnected) {
     include <abstractions/base>
 
     @{bin}/journalctl mr,
@@ -133,18 +157,18 @@ profile hw-probe @{exec_path} {
     /etc/machine-id r,
 
     @{run}/log/ rw,
-    /{run,var}/log/journal/ rw,
-    /{run,var}/log/journal/@{hex32}/ rw,
-    /{run,var}/log/journal/@{hex32}/user-@{hex}.journal* rw,
-    /{run,var}/log/journal/@{hex32}/system.journal* rw,
-    /{run,var}/log/journal/@{hex32}/system@@{hex}.journal* rw,
+    /{run,var}/log/journal/ r,
+    /{run,var}/log/journal/@{hex32}/ r,
+    /{run,var}/log/journal/@{hex32}/user-@{hex}.journal* r,
+    /{run,var}/log/journal/@{hex32}/system.journal* r,
+    /{run,var}/log/journal/@{hex32}/system@@{hex}.journal* r,
 
     owner @{PROC}/@{pid}/stat r,
 
     include if exists <local/hw-probe_journalctl>
   }
 
-  profile killall {
+  profile killall flags=(attach_disconnected) {
     include <abstractions/base>
 
     capability sys_ptrace,
@@ -155,8 +179,6 @@ profile hw-probe @{exec_path} {
 
     @{bin}/killall mr,
 
-    # The /proc/ dir is needed to avoid the following error:
-    #  /proc: Permission denied
     @{PROC}/ r,
     @{PROC}/@{pids}/stat r,
 
@@ -170,22 +192,7 @@ profile hw-probe @{exec_path} {
     include if exists <local/hw-probe_udevadm>
   }
 
-  profile kmod {
-    include <abstractions/base>
-
-    @{bin}/kmod mr,
-
-    @{sys}/module/*/ r,
-    @{sys}/module/*/{coresize,refcnt} r,
-    @{sys}/module/*/holders/ r,
-
-    @{PROC}/cmdline r,
-    @{PROC}/modules r,
-
-    include if exists <local/hw-probe_kmod>
-  }
-
-  profile netconfig {
+  profile netconfig flags=(attach_disconnected) {
     include <abstractions/base>
 
     # Not needed
@@ -210,7 +217,7 @@ profile hw-probe @{exec_path} {
     include if exists <local/hw-probe_netconfig>
   }
 
-  profile systemctl {
+  profile systemctl flags=(attach_disconnected) {
     include <abstractions/base>
     include <abstractions/app/systemctl>
   
