@@ -176,13 +176,7 @@ var (
 			newRule := newLogMountMap[log["operation"]]
 			return newRule(log)
 		},
-		"net": func(log map[string]string) Rule {
-			if log["family"] == "unix" {
-				return newUnixFromLog(log)
-			} else {
-				return newNetworkFromLog(log)
-			}
-		},
+		"net": newNetworkFromLog,
 		"file": func(log map[string]string) Rule {
 			if log["operation"] == "change_onexec" {
 				return newChangeProfileFromLog(log)
