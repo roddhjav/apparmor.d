@@ -49,7 +49,7 @@ profile steam @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   network inet stream,
   network inet6 stream,
   network netlink raw,
-  network unix stream,
+  network unix,
 
   ptrace read,
   ptrace trace peer=steam,
@@ -58,6 +58,8 @@ profile steam @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   signal send peer=steam-launcher,
   signal send peer=steam//journalctl,
   signal send peer=steam//web,
+
+  unix,
 
   @{exec_path} mrix,
 
@@ -88,9 +90,11 @@ profile steam @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
   @{share_dirs}/linux{32,64}/steamerrorreporter rpx,
 
+  @{runtime_dirs}/@{arch}/@{bin}/srt-logger rix,
   @{runtime_dirs}/@{arch}/@{bin}/steam-runtime-check-requirements rcx -> check,
   @{runtime_dirs}/@{arch}/@{bin}/steam-runtime-identify-library-abi rix,
   @{runtime_dirs}/@{arch}/@{bin}/steam-runtime-launcher-service rpx,
+  @{runtime_dirs}/@{arch}/@{bin}/steam-runtime-supervisor rix,
   @{runtime_dirs}/@{arch}/@{bin}/steam-runtime-system-info rix,
   @{runtime_dirs}/@{lib}/steam-runtime-tools-@{int}/@{multiarch}-* rix,
   @{runtime_dirs}/*entry-point rix,
@@ -132,18 +136,22 @@ profile steam @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{user_games_dirs}/ rw,
   owner @{user_games_dirs}/** rwlk -> @{user_games_dirs}/**,
 
+  owner @{user_config_dirs}/@{XDG_GAMESSTUDIO_DIR}/ rw,
+  owner @{user_config_dirs}/@{XDG_GAMESSTUDIO_DIR}/** rwlk,
   owner @{user_config_dirs}/autostart/ r,
   owner @{user_config_dirs}/cef_user_data/{,**} r,
   owner @{user_config_dirs}/cef_user_data/Dictionaries/* rw,
   owner @{user_config_dirs}/cef_user_data/WidevineCdm/** rwm,
-  owner @{user_config_dirs}/unity3d/{,**} rwk,
-  owner @{user_config_dirs}/user-dirs.dirs r,
 
+  owner @{user_share_dirs}/@{XDG_GAMESSTUDIO_DIR}/ rw,
+  owner @{user_share_dirs}/@{XDG_GAMESSTUDIO_DIR}/** rwlk,
   owner @{user_share_dirs}/applications/*.desktop w,
   owner @{user_share_dirs}/icons/hicolor/**/apps/steam*.png rw,
   owner @{user_share_dirs}/vulkan/implicit_layer.d/steam*.json rwk,
 
         @{tmp}/ r,
+  owner @{tmp}/@{XDG_GAMESSTUDIO_DIR}/ rw,
+  owner @{tmp}/@{XDG_GAMESSTUDIO_DIR}/** rwlk,
   owner @{tmp}/#@{int} rw,
   owner @{tmp}/dumps/ rw,
   owner @{tmp}/dumps/** rwk,
@@ -155,7 +163,6 @@ profile steam @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{tmp}/steam/** rwk,
   owner @{tmp}/vdpau-drivers-@{rand6}/{,**} rw,
 
-        /dev/shm/ r,
   owner /dev/shm/fossilize-*-@{int}-@{int} rw,
   owner /dev/shm/u@{uid}-Shm_@{hex6} rw,
   owner /dev/shm/u@{uid}-Shm_@{hex6}@{h} rw,
@@ -176,6 +183,7 @@ profile steam @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   @{sys}/class/hidraw/ r,
   @{sys}/class/input/ r,
   @{sys}/class/net/ r,
+  @{sys}/class/power_supply/ r,
   @{sys}/devices/ r,
   @{sys}/devices/@{pci}/boot_vga r,
   @{sys}/devices/@{pci}/sound/card@{int}/input@{int}/properties r,
@@ -183,6 +191,7 @@ profile steam @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   @{sys}/devices/**/input@{int}/capabilities/* r,
   @{sys}/devices/**/input/input@{int}/ r,
   @{sys}/devices/**/input/input@{int}/properties r,
+  @{sys}/devices/**/power_supply/{AC,BAT@{int},hidpp_battery_@{int}}/{,*} r,
   @{sys}/devices/**/report_descriptor r,
   @{sys}/devices/**/uevent r,
   @{sys}/devices/system/ r,
@@ -204,15 +213,19 @@ profile steam @{exec_path} flags=(attach_disconnected,mediate_deleted) {
         @{PROC}/1/cgroup r,
         @{PROC}/locks r,
         @{PROC}/sys/kernel/sched_autogroup_enabled r,
+        @{PROC}/sys/kernel/unprivileged_userns_clone r,
         @{PROC}/sys/net/ipv6/conf/all/disable_ipv6 r,
+        @{PROC}/sys/user/max_user_namespaces r,
         @{PROC}/version r,
   owner @{PROC}/@{pid}/autogroup rw,
   owner @{PROC}/@{pid}/cmdline rk,
   owner @{PROC}/@{pid}/environ r,
   owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/fd/@{int} rw,
   owner @{PROC}/@{pid}/mem r,
   owner @{PROC}/@{pid}/mounts r,
   owner @{PROC}/@{pid}/task/ r,
+  owner @{PROC}/@{pid}/task/@{tid}/children r,
   owner @{PROC}/@{pid}/task/@{tid}/comm rw,
 
   /dev/input/ r,
@@ -229,6 +242,9 @@ profile steam @{exec_path} flags=(attach_disconnected,mediate_deleted) {
     include <abstractions/fontconfig-cache-write>
     include <abstractions/graphics>
     include <abstractions/nameservice-strict>
+
+    capability dac_read_search,
+    capability sys_chroot,
 
     network inet dgram,
     network inet6 dgram,
@@ -302,6 +318,7 @@ profile steam @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
           /dev/shm/ r,
     owner /dev/shm/.org.chromium.Chromium.@{rand6} rw,
+    owner /dev/shm/u@{uid}-Shm_@{hex4}@{h} rw,
     owner /dev/shm/u@{uid}-Shm_@{hex6} rw,
     owner /dev/shm/u@{uid}-Shm_@{hex6}@{h} rw,
     owner /dev/shm/u@{uid}-Shm_@{hex8} rw,
@@ -325,9 +342,11 @@ profile steam @{exec_path} flags=(attach_disconnected,mediate_deleted) {
           @{PROC}/sys/fs/inotify/max_user_watches r,
           @{PROC}/sys/kernel/yama/ptrace_scope r,
     owner @{PROC}/@{pid}/cmdline r,
+    owner @{PROC}/@{pid}/mem r,
     owner @{PROC}/@{pid}/oom_score_adj w,
     owner @{PROC}/@{pid}/statm r,
     owner @{PROC}/@{pid}/task/ r,
+    owner @{PROC}/@{pid}/task/@{tid}/comm r,
     owner @{PROC}/@{pid}/task/@{tid}/status r,
 
     /dev/hidraw@{int} rw,
@@ -340,6 +359,8 @@ profile steam @{exec_path} flags=(attach_disconnected,mediate_deleted) {
     include <abstractions/base>
     include <abstractions/common/bwrap>
     include <abstractions/nameservice-strict>
+
+    capability dac_read_search,
 
     unix receive type=stream,
 
@@ -376,7 +397,7 @@ profile steam @{exec_path} flags=(attach_disconnected,mediate_deleted) {
     @{sys}/bus/pci/slots/ r,
     @{sys}/bus/pci/slots/@{int}/address r,
     @{sys}/devices/@{pci}/** r,
-  
+
     owner /dev/shm/ValveIPCSHM_@{uid} rw,
 
     include if exists <local/steam_lspci>
@@ -385,7 +406,7 @@ profile steam @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   profile systemctl {
     include <abstractions/base>
     include <abstractions/app/systemctl>
-  
+
     /{run,var}/log/journal/ r,
     /{run,var}/log/journal/@{hex32}/ r,
     /{run,var}/log/journal/@{hex32}/system.journal* r,
@@ -394,6 +415,6 @@ profile steam @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
     include if exists <local/steam_systemctl>
   }
-  
+
   include if exists <local/steam>
 }
