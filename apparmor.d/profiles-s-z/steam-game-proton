@@ -1,0 +1,107 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{arch} = amd64 i386
+@{runtime} = SteamLinuxRuntime_sniper
+@{share_dirs} = @{user_share_dirs}/Steam @{HOME}/.steam/debian-installation
+@{lib_dirs} = @{share_dirs}/ubuntu@{int2}_{32,64} @{share_dirs}/linux{32,64}
+@{runtime_dirs} = @{lib_dirs}/steam-runtime{,-sniper}
+@{app_dirs} = @{share_dirs}/steamapps/common/
+
+@{exec_path} = @{app_dirs}/@{runtime}/pressure-vessel/@{lib}/steam-runtime-tools-@{int}/srt-bwrap
+profile steam-game-proton @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/common/bwrap>
+  include <abstractions/common/steam-game>
+  include <abstractions/python>
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network unix stream,
+
+  signal receive peer=steam,
+
+  @{exec_path} mr,
+  @{bin}/bwrap mrix,
+
+  @{bin}/getopt                                         rix,
+  @{bin}/gzip                                           rix,
+  @{bin}/ldconfig                                       rix,
+  @{bin}/localedef                                      rix,
+  @{bin}/python3.@{int}                                 rix,
+  @{bin}/readlink                                       rix,
+  @{bin}/steam-runtime-launcher-interface-@{int}        rix,
+  @{bin}/steam-runtime-system-info                      rix,
+  @{bin}/steam-runtime-urlopen                          rix,
+  @{bin}/true                                           rix,
+  @{bin}/chmod                                          rix,
+  @{open_path}                                          rix,
+
+  @{lib_dirs}/**                                         mr,
+  @{lib}/pressure-vessel/from-host/@{bin}/*             rix,
+  @{lib}/pressure-vessel/from-host/@{lib}/**            rix,
+  @{lib}/steam-runtime-tools-@{int}/@{multiarch}-*      rix,
+
+  @{app_dirs}/**                                         mr,
+  @{app_dirs}/pressure-vessel/@{bin}/pressure-vessel-*  rix,
+  @{app_dirs}/Proton*/files/@{bin}/*                    rix,
+  @{app_dirs}/Proton*/files/@{lib}/**                   rix,
+  @{app_dirs}/Proton*/proton                            rix,
+  @{app_dirs}/@{runtime}/pressure-vessel/@{bin}/steam-runtime-launcher-interface-@{int} rix,
+
+  @{run}/host/@{bin}/ldconfig                           rix,
+  @{run}/host/@{bin}/localedef                          rix,
+  @{run}/host/@{lib}/**                                  mr,
+
+  @{share_dirs}/bin/d3ddriverquery64.exe                 mr,
+  @{share_dirs}/steamapps/compatdata/@{int}/pfx/**       mr,
+
+  @{user_games_dirs}/**                                  mr,
+
+  owner /bindfile@{rand6} rw,
+
+  owner /var/pressure-vessel/** rw,
+  owner /var/cache/ldconfig/aux-cache* rw,
+
+  owner @{app_dirs}/@{runtime}/var/tmp-@{rand6}/usr/.ref rwk,
+  owner @{app_dirs}/Proton*/** rwkl,
+
+  owner @{share_dirs}/*.dll r,
+  owner @{share_dirs}/steamapps/compatdata/{,**} rwk,
+  owner @{share_dirs}/legacycompat/ r,
+  owner @{share_dirs}/legacycompat/** mr,
+
+  owner @{user_share_dirs}/applications/wine/ rw,
+  owner @{user_share_dirs}/applications/wine/**/ rw,
+
+  owner @{tmp}/ r,
+  owner @{tmp}/.wine-@{uid}/ rw,
+  owner @{tmp}/.wine-@{uid}/** rwk,
+  owner @{tmp}/glx-icds-@{rand6}/{,**} w,
+  owner @{tmp}/pressure-vessel-*-@{rand6}/ rw,
+  owner @{tmp}/pressure-vessel-*-@{rand6}/** rwlk -> @{tmp}/pressure-vessel-*-@{rand6}/**,
+  owner @{tmp}/vdpau-drivers-@{rand6}/{,**} w,
+
+  owner /dev/shm/wine-@{hex6}-fsync rw,
+  owner /dev/shm/wine-@{hex6}@{h}-fsync rw,
+
+        @{run}/host/fonts/{,**} r,
+        @{run}/host/share/{,**} r,
+        @{run}/host/usr/{,**} r,
+  owner @{run}/pressure-vessel/{,**} r,
+
+  @{sys}/devices/system/node/node@{int}/cpumap r,
+  @{sys}/devices/system/node/online r,
+
+  @{PROC}/@{pids}/net/* r,
+  @{PROC}/sys/net/core/bpf_jit_enable r,
+
+  include if exists <local/steam-game-proton>
+}
