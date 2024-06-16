@@ -1,0 +1,47 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/ddcutil
+profile ddcutil @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/dri>
+  include <abstractions/nameservice-strict>
+
+  capability sys_admin,
+
+  @{exec_path} mr,
+
+  @{sh_path}               rix,
+  @{bin}/find              rix,
+  @{bin}/sed               rix,
+  @{bin}/xargs             rix,
+  @{bin}/grep              rix,
+
+  owner @{user_cache_dirs}/ddcutil/ rw,
+  owner @{user_cache_dirs}/ddcutil/** rwlk,
+
+  @{run}/udev/data/* r,
+
+  @{sys}/ r,
+  @{sys}/bus/ r,
+  @{sys}/bus/** r,
+  @{sys}/class/ r,
+  @{sys}/class/** r,
+  @{sys}/devices/ r,
+  @{sys}/devices/** r,
+
+  owner @{PROC}/@{pid}/fd/ r,
+
+  /dev/ r,
+  /dev/i2c-@{int} rwk,
+
+  include if exists <local/ddcutil>
+}
+
+# vim:syntax=apparmor
