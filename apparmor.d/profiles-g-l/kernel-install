@@ -33,7 +33,14 @@ profile kernel-install @{exec_path} {
   /etc/kernel/install.d/ r,
   /etc/kernel/install.d/*.install rix,
 
-  owner @{tmp}/sh-thd.* rw,
+  @{lib}/os-release r,
+  /etc/kernel/cmdline r,
+  /etc/kernel/tries r,
+  /etc/machine-id r,
+  /etc/os-release r,
+  /var/lib/dbus/machine-id r,
+
+  @{lib}/modules/*/modules.* w,
 
   owner /boot/{vmlinuz,initrd.img}-* r,
   owner /boot/[a-f0-9]*/*/ rw,
@@ -42,25 +49,15 @@ profile kernel-install @{exec_path} {
   owner /boot/loader/entries/ rw,
   owner /boot/loader/entries/*.conf w,
 
-  @{lib}/modules/*/modules.* w,
+  owner @{tmp}/sh-thd.* rw,
 
-  /etc/os-release r,
-  @{lib}/os-release r,
-
-  /etc/kernel/tries r,
-
-  /etc/kernel/cmdline r,
   @{PROC}/cmdline r,
 
-  /var/lib/dbus/machine-id r,
-  /etc/machine-id r,
-
-
-  profile kmod flags=(complain) {
+  profile kmod {
     include <abstractions/base>
+    include <abstractions/app/kmod>
 
-    @{bin}/kmod mr,
-
+    include if exists <local/kernel-install_kmod>
   }
 
   include if exists <local/kernel-install>
