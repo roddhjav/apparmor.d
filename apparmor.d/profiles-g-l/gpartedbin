@@ -7,30 +7,26 @@ abi <abi/3.0>,
 
 include <tunables/global>
 
-@{exec_path} = @{bin}/gpartedbin
-@{exec_path} += @{lib}/gpartedbin
-@{exec_path} += @{lib}/gparted/gpartedbin
+@{exec_path} = @{bin}/gpartedbin @{lib}/{,gparted/}gpartedbin
 profile gpartedbin @{exec_path} {
   include <abstractions/base>
   include <abstractions/dconf-write>
+  include <abstractions/desktop>
   include <abstractions/disks-write>
   include <abstractions/fontconfig-cache-read>
-  include <abstractions/fonts>
-  include <abstractions/freedesktop.org>
-  include <abstractions/gtk>
 
   capability dac_read_search,
   capability ipc_lock,
   capability sys_admin,
   capability sys_rawio,
 
-  ptrace (read),
+  ptrace read,
 
-  signal (send) peer=mke2fs,
+  signal send peer=mke2fs,
 
   @{exec_path} mr,
 
-  @{sh_path}         rix,
+  @{sh_path}        rix,
 
   @{bin}/blkid      rPx,
   @{bin}/dmidecode  rPx,
@@ -84,29 +80,21 @@ profile gpartedbin @{exec_path} {
   owner @{PROC}/@{pid}/mountinfo r,
   owner @{PROC}/@{pid}/mounts r,
 
-  /dev/mapper/control rw,
-
   profile mount {
     include <abstractions/base>
+    include <abstractions/disks-read>
 
     capability sys_admin,
 
-    mount /dev/{s,v}d[a-z]*[0-9]* -> /tmp/gparted-*/,
+    mount /dev/{s,v}d[a-z]*@{int} -> /tmp/gparted-*/,
 
-    mount /dev/{s,v}d[a-z]*[0-9]* -> /boot/,
-    mount /dev/{s,v}d[a-z]*[0-9]* -> @{MOUNTS}/,
-    mount /dev/{s,v}d[a-z]*[0-9]* -> @{MOUNTS}/*/,
+    mount /dev/{s,v}d[a-z]*@{int} -> /boot/,
+    mount /dev/{s,v}d[a-z]*@{int} -> @{MOUNTS}/,
+    mount /dev/{s,v}d[a-z]*@{int} -> @{MOUNTS}/*/,
 
     @{bin}/mount mr,
 
-    @{sys}/devices/@{pci}/block/{s,v}d[a-z]/ r,
-    @{sys}/devices/@{pci}/block/{s,v}d[a-z]/dev r,
-    @{sys}/devices/@{pci}/block/{s,v}d[a-z]/{s,v}d[a-z][0-9]*/ r,
-    @{sys}/devices/@{pci}/block/{s,v}d[a-z]/{s,v}d[a-z][0-9]*/{start,size} r,
-
-    /dev/{s,v}d[a-z]* r,
-    /dev/{s,v}d[a-z]*[0-9]* r,
-
+    include if exists <local/gpartedbin_umount>
   }
 
   profile umount {
@@ -128,29 +116,18 @@ profile gpartedbin @{exec_path} {
 
     owner @{PROC}/@{pid}/mountinfo r,
 
+    include if exists <local/gpartedbin_umount>
   }
 
   profile udevadm {
     include <abstractions/base>
+    include <abstractions/app/udevadm>
     include <abstractions/disks-write>
 
-    ptrace (read),
-
-    @{bin}/udevadm mr,
-
-    /etc/udev/udev.conf r,
-
-          @{PROC}/1/environ r,
-          @{PROC}/1/sched r,
-          @{PROC}/cmdline r,
-          @{PROC}/sys/kernel/osrelease r,
-          @{PROC}/sys/kernel/random/boot_id r,
-    owner @{PROC}/@{pid}/cgroup r,
-    owner @{PROC}/@{pid}/stat r,
-
-    /dev/mapper/control rw,
-
+    include if exists <local/gpartedbin_udevadm>
   }
 
   include if exists <local/gpartedbin>
 }
+
+# vim:syntax=apparmor

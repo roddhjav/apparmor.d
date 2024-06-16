@@ -85,6 +85,8 @@ profile foo @{exec_path} {
 
   include if exists <local/foo>
 }
+
+# vim:syntax=apparmor
 ```
 
 
