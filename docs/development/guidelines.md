@@ -4,11 +4,11 @@ title: Guidelines
 
 ## Common structure
 
-AppArmor profiles can be written without any specific guidelines. However, when you work with over 1400 profiles, you need a common structure among all the profiles. 
+AppArmor profiles can be written without any specific guidelines. However, when you work with over 1500 profiles, you need a common structure among all the profiles. 
 
-The logic behind it is that if a rule is present in a profile, it should only be in one place, making profile review easier. 
+The logic behind it is that if a rule is present in a profile, it should only be in one place, making it easier to review profiles. 
 
-For example, if a program needs to run executables binary. The rules allowing it can only be in a specific rule block (just after the `@{exec_path} mr,` rule). It is therefore easy to ensure some profile features such as:
+For example, if a program needs to run executable binaries then the rules allowing it can only be in a specific rule block (just after the `@{exec_path} mr,` rule). It is therefore easy to ensure some profile features such as:
 
 * A profile has access to a given resource 
 * A profile enforces a strict [write xor execute] (W^X) policy. 
@@ -50,7 +50,7 @@ The rules in the profile should be sorted in the rule ***block*** as follows:
 
 This rule order is taken from AppArmor with minor changes as we tend to:
 
-- Divide the file block in multiple subcategories
+- Divide the file block into multiple subcategories
 - Put the block with the longer rules (`files`, `dbus`) after the other blocks
 
 ### The file block
@@ -93,7 +93,7 @@ If there is no predictable label it can be omitted.
 
 #### :material-numeric-1-circle: Variables
 
-:   Always use the apparmor [variables](../variables.md).
+:   Always use the apparmor.d [variables](../variables.md).
     Example:
 
     - `/usr/lib` or `/usr/bin` become `@{bin}` or `@{lib}`
@@ -101,15 +101,15 @@ If there is no predictable label it can be omitted.
 
 #### :material-numeric-2-circle: Sort
 
-:   In a rule block, the rules must be alphabetically sorted.
+:   In a rule block, all rules must be alphabetically sorted.
 
-#### :material-numeric-3-circle: Sub profile
+#### :material-numeric-3-circle: Sub-profiles
 
-:   Sub profile should come at the end of a profile.
+:   Sub-profiles should come at the end of a profile.
 
 #### :material-numeric-4-circle: Similar purpose
 
-:   When some rules share similar purpose, they may be sorted together. Eg:
+:   When some rules share similar purposes, they may be sorted together. E.g.:
     ```
     /etc/machine-id r,
     /var/lib/dbus/machine-id r,
@@ -119,7 +119,7 @@ If there is no predictable label it can be omitted.
 ## Additional recommended documentation
 
 * [The AppArmor Core Policy Reference](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference)
-* [The OpenSUSE Documentation](https://doc.opensuse.org/documentation/leap/security/html/book-security/part-apparmor.html)
+* [The openSUSE Documentation](https://doc.opensuse.org/documentation/leap/security/html/book-security/part-apparmor.html)
 * https://documentation.suse.com/sles/12-SP5/html/SLES-all/cha-apparmor-intro.html
 * [The AppArmor.d man page](https://man.archlinux.org/man/apparmor.d.5)
 * [F**k AppArmor](https://presentations.nordisch.org/apparmor/#/)

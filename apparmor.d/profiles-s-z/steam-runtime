@@ -6,38 +6,80 @@ abi <abi/3.0>,
 
 include <tunables/global>
 
-@{share_dirs} = @{user_share_dirs}/Steam
-@{lib_dirs} = @{share_dirs}/ubuntu@{int2}_{32,64}
-@{runtime_dirs} = @{share_dirs}/steamapps/common/SteamLinuxRuntime_sniper
+@{arch} = amd64 i386
+@{runtime} = SteamLinuxRuntime_sniper
+@{share_dirs} = @{user_share_dirs}/Steam @{HOME}/.steam/debian-installation
+@{lib_dirs} = @{share_dirs}/ubuntu@{int2}_{32,64} @{share_dirs}/linux{32,64}
+@{runtime_dirs} = @{lib_dirs}/steam-runtime{,-sniper}
+@{app_dirs} = @{share_dirs}/steamapps/common/
 
-@{exec_path} = @{bin}/steam @{bin}/steam-runtime
-profile steam-runtime @{exec_path} {
+@{exec_path} = @{lib_dirs}/reaper
+profile steam-runtime @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/python>
+  include <abstractions/audio-client>
+  include <abstractions/graphics>
+  include <abstractions/nameservice-strict>
+  include <abstractions/wayland>
+  include <abstractions/X-strict>
 
-  unix (receive) type=stream,
+  network unix stream,
 
   @{exec_path} mr,
 
-  @{sh_path}         rix,
-  @{bin}/cp          rix,
-  @{bin}/dirname     rix,
-  @{bin}/env         rix,
-  @{bin}/id          rix,
-  @{bin}/readlink    rix,
+  @{sh_path} r,
+  @{bin}/getopt    rix,
+  @{bin}/readlink  rix,
 
-  @{lib}/steam/steam         rix,
-  @{lib}/steam/bin_steam.sh  rix,
-  @{share_dirs}/steam.sh     rPx,
+  @{lib_dirs}/** mr,
+  @{lib_dirs}/steam-launch-wrapper rix,
 
-  /usr/ r,
-  /usr/local/ r,
+  # Native linux games (steam-game-native)
+  @{app_dirs}/[^S]*/** rpx -> steam-game-native,
 
-  owner @{share_dirs}/bootstrap.tar.xz rw,
+  # Proton games, sandboxed (steam-game-proton)
+  @{app_dirs}/@{runtime}/*entry-point rmix,
+  @{app_dirs}/@{runtime}/pressure-vessel/@{bin}/pressure-vessel-* rix,
+  @{app_dirs}/@{runtime}/pressure-vessel/@{lib}/** mr,
+  @{app_dirs}/@{runtime}/pressure-vessel/@{lib}/steam-runtime-tools-@{int}/@{multiarch}-capsule-capture-libs rix,
+  @{app_dirs}/@{runtime}/pressure-vessel/@{lib}/steam-runtime-tools-@{int}/@{multiarch}-detect-platform rix,
+  @{app_dirs}/@{runtime}/pressure-vessel/@{lib}/steam-runtime-tools-@{int}/@{multiarch}-inspect-library rix,
+  @{app_dirs}/@{runtime}/pressure-vessel/@{lib}/steam-runtime-tools-@{int}/srt-bwrap rpx -> steam-game-proton,
+  @{app_dirs}/@{runtime}/run rix,
+  @{bin}/bwrap rpx -> steam-game-proton,
+
+  / r,
+  @{lib}/ r,
+  @{lib_dirs}/ r,
+
+  owner @{HOME}/.steam/steam.pipe r,
+
+  owner @{app_dirs}/*/ r,
+  owner @{app_dirs}/config/config.vdf rw,
+  owner @{app_dirs}/@{runtime}/** r,
+  owner @{app_dirs}/@{runtime}/pressure-vessel/** rwk,
+  owner @{app_dirs}/@{runtime}/sniper_platform_*/** rwk,
+  owner @{app_dirs}/@{runtime}/var/** rwk,
+  owner link @{app_dirs}/@{runtime}/var/** -> @{app_dirs}/@{runtime}/pressure-vessel/**,
+  owner link @{app_dirs}/@{runtime}/var/** -> @{app_dirs}/@{runtime}/sniper_platform_*/**,
+
+  owner @{tmp}/ r,
+  owner @{tmp}/#@{int} rw,
+  owner @{tmp}/vdpau-drivers-@{rand6}/{,**} rw,
+
+  owner @{run}/user/@{uid}/ r,
+
+  owner /dev/shm/u@{uid}-Shm_@{hex6} rw,
+  owner /dev/shm/u@{uid}-Shm_@{hex6}@{h} rw,
+  owner /dev/shm/u@{uid}-Shm_@{hex8} rw,
+  owner /dev/shm/u@{uid}-ValveIPCSharedObj-Steam rwk,
+
+  owner @{PROC}/@{pid}/cmdline r,
+  owner @{PROC}/@{pid}/comm r,
+  owner @{PROC}/@{pid}/fd/ r,
 
   /dev/tty rw,
 
-  deny /opt/** r,
-
   include if exists <local/steam-runtime>
 }
+
+# vim:syntax=apparmor

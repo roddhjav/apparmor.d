@@ -6,12 +6,15 @@ abi <abi/3.0>,
 
 include <tunables/global>
 
-@{share_dirs} = @{user_share_dirs}/Steam
-@{lib_dirs} = @{share_dirs}/ubuntu@{int2}_{32,64}
-@{runtime_dirs} = @{share_dirs}/steamapps/common/SteamLinuxRuntime_sniper
+@{arch} = amd64 i386
+@{runtime} = SteamLinuxRuntime_sniper
+@{share_dirs} = @{user_share_dirs}/Steam @{HOME}/.steam/debian-installation
+@{lib_dirs} = @{share_dirs}/ubuntu@{int2}_{32,64} @{share_dirs}/linux{32,64}
+@{runtime_dirs} = @{lib_dirs}/steam-runtime{,-sniper}
+@{app_dirs} = @{share_dirs}/steamapps/common/
 
-@{exec_path} = @{share_dirs}/linux{32,64}/steamerrorreporter
-profile steamerrorreporter @{exec_path} {
+@{exec_path} = @{lib_dirs}/steamerrorreporter
+profile steamerrorreporter @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/nameservice-strict>
 
@@ -19,14 +22,14 @@ profile steamerrorreporter @{exec_path} {
   network inet stream,
   network inet6 dgram,
   network inet6 stream,
+  network unix stream,
 
   @{exec_path} mr,
 
   owner @{HOME}/.steam/steam.pipe r,
 
-  owner @{lib_dirs}/ r,
-  owner @{lib_dirs}/steam-runtime/pinned_libs_{32,64}/ r,
-
+  owner @{lib_dirs}/{,**} r, 
+  owner @{runtime_dirs}/pinned_libs_{32,64}/ r,
   owner @{share_dirs}/ r,
 
   owner @{tmp}/dumps/ r,
@@ -36,3 +39,5 @@ profile steamerrorreporter @{exec_path} {
 
   include if exists <local/steamerrorreporter>
 }
+
+# vim:syntax=apparmor

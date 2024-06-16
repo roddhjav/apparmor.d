@@ -100,7 +100,7 @@ build_in_docker_rpm() {
 		docker pull "$BASEIMAGE/$dist"
 		docker run -tid --name "$img" --volume "$VOLUME:$BUILDIR" \
 			"$BASEIMAGE/$dist"
-		docker exec "$img" sudo zypper install -y distribution-release golang-packaging rsync
+		docker exec "$img" sudo zypper install -y distribution-release golang-packaging rsync apparmor-profiles
 	fi
 
 	docker exec --workdir="$BUILDIR/$PKGNAME" "$img" bash dists/build.sh rpm

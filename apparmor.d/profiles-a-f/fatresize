@@ -12,51 +12,30 @@ profile fatresize @{exec_path} {
   include <abstractions/base>
   include <abstractions/disks-write>
 
-  # Needed to inform the system of newly created/removed partitions
-  # ioctl(3, BLKFLSBUF)              = -1 EACCES (Permission denied)
   capability sys_admin,
-
-  # Needed? (##FIXME##)
   capability sys_rawio,
 
-  # Needed?
-  ptrace (read),
+  ptrace read,
 
   @{exec_path} mr,
 
-  @{sh_path}         rix,
+  @{sh_path}  rix,
 
   @{bin}/dmidecode  rPx,
+  @{bin}/udevadm    rCx -> udevadm,
 
-  @{bin}/udevadm     rCx -> udevadm,
-
-  owner @{PROC}/@{pid}/mounts r,
         @{PROC}/swaps r,
-
+  owner @{PROC}/@{pid}/mounts r,
 
   profile udevadm {
     include <abstractions/base>
+    include <abstractions/app/udevadm>
+    include <abstractions/disks-write>
 
-    ptrace (read),
-
-    @{bin}/udevadm mr,
-
-    /etc/udev/udev.conf r,
-
-    owner @{PROC}/@{pid}/stat r,
-    owner @{PROC}/@{pid}/cgroup r,
-          @{PROC}/cmdline r,
-          @{PROC}/1/sched r,
-          @{PROC}/1/environ r,
-          @{PROC}/sys/kernel/osrelease r,
-          @{PROC}/sys/kernel/random/boot_id r,
-
-    @{sys}/firmware/efi/efivars/SecureBoot-@{uuid} r,
-
-    # file_inherit
-    /dev/{s,v}d[a-z]* rw,
-
+    include if exists <local/fatresize_udevadm>
   }
 
   include if exists <local/fatresize>
 }
+
+# vim:syntax=apparmor

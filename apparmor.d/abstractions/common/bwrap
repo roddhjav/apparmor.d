@@ -2,10 +2,9 @@
 # Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-# Minimal set of rules for bwrap
-
+# A minimal set of rules for sandboxed programs using bwrap. 
 # A profile using this abstraction still needs to set:
-# - the attach_disconnected flag
+# - the flag: attach_disconnected
 # - bwrap execution: '@{bin}/bwrap rix,'
 
   # userns,
@@ -31,6 +30,9 @@
   umount /,
   umount /oldroot/,
 
+  #aa:only debian whonix
+  mount -> /newroot/{,**}, # Debian does not support the remount rule.
+
   pivot_root oldroot=/newroot/ /newroot/,
   pivot_root oldroot=/tmp/oldroot/ /tmp/,
 
@@ -51,3 +53,5 @@
   owner @{PROC}/@{pid}/uid_map rw,
 
   include if exists <abstractions/common/bwrap.d>
+
+# vim:syntax=apparmor

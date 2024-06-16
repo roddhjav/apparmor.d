@@ -49,6 +49,7 @@ profile cron-popularity-contest @{exec_path} {
   /var/log/popularity-contest{,.new} rw,
   /var/log/popularity-contest{,.new}.gpg rw,
   /var/log/popularity-contest.@{int} rw,
+  /var/log/popularity-contest.@{int}.gpg rw,
 
   # Store last successful http submission timestamp
   /var/lib/popularity-contest/ rw,
@@ -66,15 +67,14 @@ profile cron-popularity-contest @{exec_path} {
 
     @{bin}/savelog mr,
 
-    @{bin}/date       rix,
     @{bin}/basename   rix,
-    @{bin}/which{,.debianutils}      rix,
+    @{bin}/date       rix,
     @{bin}/dirname    rix,
-    @{bin}/rm         rix,
-    @{bin}/mv         rix,
-    @{bin}/touch      rix,
     @{bin}/gzip       rix,
-
+    @{bin}/mv         rix,
+    @{bin}/rm         rix,
+    @{bin}/touch      rix,
+    @{bin}/which{,.debianutils}      rix,
     @{sh_path}        rix,
 
     /var/log/ r,
@@ -82,9 +82,9 @@ profile cron-popularity-contest @{exec_path} {
     /var/log/popularity-contest.@{int} rw,
     /var/log/popularity-contest rw,
 
-    # file_inherit
-    owner @{tmp}/#@{int} rw,
+    owner @{tmp}/#@{int} rw,  # file_inherit
 
+    include if exists <local/cron-popularity-contest_savelog>
   }
 
   profile runuser {
@@ -96,19 +96,18 @@ profile cron-popularity-contest @{exec_path} {
     @{bin}/runuser mr,
 
     @{sh_path}                 rix,
-
-    @{bin}/popularity-contest rPx,
-
-    owner @{PROC}/@{pids}/loginuid r,
-          @{PROC}/1/limits r,
+    @{bin}/popularity-contest  rPx,
 
     @{etc_ro}/security/limits.d/ r,
 
     /var/log/popularity-contest.new w,
 
-    # file_inherit
-    owner @{tmp}/#@{int} rw,
+          @{PROC}/1/limits r,
+    owner @{PROC}/@{pids}/loginuid r,
 
+    owner @{tmp}/#@{int} rw,  # file_inherit
+
+    include if exists <local/cron-popularity-contest_runuser>
   }
 
   profile gpg {
@@ -126,9 +125,9 @@ profile cron-popularity-contest @{exec_path} {
 
     owner @{tmp}/tmp.*/** rwkl -> /tmp/tmp.*/**,
 
-    # file_inherit
-    owner @{tmp}/#@{int} rw,
+    owner @{tmp}/#@{int} rw,  # file_inherit
 
+    include if exists <local/cron-popularity-contest_gpg>
   }
 
   profile popcon-upload {
@@ -142,18 +141,18 @@ profile cron-popularity-contest @{exec_path} {
     network inet6 stream,
     network netlink raw,
 
-    /usr/share/popularity-contest/popcon-upload r,
     @{bin}/perl r,
-
     @{bin}/gzip rix,
+
+    /usr/share/popularity-contest/popcon-upload r,
 
     /var/log/ r,
     /var/log/popularity-contest.new.gpg r,
     /var/log/popularity-contest.@{int}.gpg r,
 
-    # file_inherit
-    owner @{tmp}/#@{int} rw,
+    owner @{tmp}/#@{int} rw,  # file_inherit
 
+    include if exists <local/cron-popularity-contest_/popcon-upload>
   }
 
   include if exists <local/cron-popularity-contest>

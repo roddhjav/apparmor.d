@@ -176,13 +176,7 @@ var (
 			newRule := newLogMountMap[log["operation"]]
 			return newRule(log)
 		},
-		"net": func(log map[string]string) Rule {
-			if log["family"] == "unix" {
-				return newUnixFromLog(log)
-			} else {
-				return newNetworkFromLog(log)
-			}
-		},
+		"net": newNetworkFromLog,
 		"file": func(log map[string]string) Rule {
 			if log["operation"] == "change_onexec" {
 				return newChangeProfileFromLog(log)
@@ -190,10 +184,14 @@ var (
 				return newFileFromLog(log)
 			}
 		},
-		"exec":         newFileFromLog,
-		"file_inherit": newFileFromLog,
-		"file_perm":    newFileFromLog,
-		"open":         newFileFromLog,
+		"exec":       newFileFromLog,
+		"getattr":    newFileFromLog,
+		"mkdir":      newFileFromLog,
+		"mknod":      newFileFromLog,
+		"open":       newFileFromLog,
+		"rename_src": newFileFromLog,
+		"truncate":   newFileFromLog,
+		"unlink":     newFileFromLog,
 	}
 	newLogMountMap = map[string]func(log map[string]string) Rule{
 		"mount":     newMountFromLog,
@@ -229,10 +227,13 @@ func (p *Profile) AddRule(log map[string]string) {
 	}
 
 	if !done {
-		if strings.Contains(log["operation"], "dbus") {
+		switch {
+		case strings.HasPrefix(log["operation"], "file_"):
+			p.Rules = append(p.Rules, newFileFromLog(log))
+		case strings.Contains(log["operation"], "dbus"):
 			p.Rules = append(p.Rules, newDbusFromLog(log))
-		} else {
-			fmt.Printf("unknown log type: %s", log)
+		default:
+			fmt.Printf("unknown log type: %s", log["operation"])
 		}
 	}
 }

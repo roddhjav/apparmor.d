@@ -1,0 +1,35 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 valoq <valoq@mailbox.org>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/w3m
+profile w3m @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+  include <abstractions/ssl_certs>
+  include <abstractions/user-download-strict>
+  include <abstractions/user-read-strict>
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+
+  @{exec_path} mr,
+
+  /usr/share/terminfo/{,**} r,
+
+  /etc/w3m/{,**} r,
+  owner @{HOME}/.w3m/{,**} r,
+  owner @{user_config_dirs}/w3m/{,**} r,
+
+  owner /tmp/@{rand6}/{,**} rw,
+
+  include if exists <local/w3m>
+}
+
+# vim:syntax=apparmor
