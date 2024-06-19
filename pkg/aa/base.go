@@ -15,6 +15,7 @@ type RuleBase struct {
 	FileInherit bool
 	Prefix      string
 	Padding     string
+	Suffix      string
 	Optional    bool
 }
 

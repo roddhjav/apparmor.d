@@ -144,8 +144,8 @@ func TestAppArmorProfileFile_Sort(t *testing.T) {
 					Rules: []Rule{
 						include1, all1, rlimit3, userns1, capability1, capability2,
 						network2, network1, mount2, mount1, remount2, umount2,
-						pivotroot1, changeprofile2, mqueue2, iouring2, signal2,
-						signal1, ptrace1, unix2, dbus2, dbus1, file1, file2,
+						pivotroot1, changeprofile2, mqueue2, iouring2, signal1,
+						signal2, ptrace1, unix2, dbus2, dbus1, file1, file2,
 						link2, includeLocal1,
 					},
 				}},
