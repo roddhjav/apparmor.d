@@ -82,6 +82,26 @@ func validateValues(kind Kind, key string, values []string) error {
 	return nil
 }
 
+func tokenToSlice(token string) []string {
+	res := []string{}
+	token = strings.Trim(token, "()\n")
+	if strings.ContainsAny(token, ", ") {
+		var sep string
+		switch {
+		case strings.Contains(token, ","):
+			sep = ","
+		case strings.Contains(token, " "):
+			sep = " "
+		}
+		for _, v := range strings.Split(token, sep) {
+			res = append(res, strings.Trim(v, " "))
+		}
+	} else {
+		res = append(res, token)
+	}
+	return res
+}
+
 // Helper function to convert a string to a slice of rule values according to
 // the rule requirements as defined in the requirements map.
 func toValues(kind Kind, key string, input string) ([]string, error) {
