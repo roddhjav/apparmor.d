@@ -46,6 +46,45 @@ type File struct {
 	Target string
 }
 
+func newFile(q Qualifier, rule rule) (Rule, error) {
+	path, access, target, owner := "", "", "", false
+	if len(rule) > 0 {
+		if rule.Get(0) == tokOWNER {
+			owner = true
+			rule = rule[1:]
+		}
+		if rule.Get(0) == FILE.Tok() {
+			rule = rule[1:]
+		}
+
+		r := rule.GetSlice()
+		size := len(r)
+		if size < 2 {
+			return nil, fmt.Errorf("missing file or access in rule: %s", rule)
+		}
+
+		path, access = r[0], r[1]
+		if size > 2 {
+			if r[2] != tokARROW {
+				return nil, fmt.Errorf("missing '%s' in rule: %s", tokARROW, rule)
+			}
+			target = r[3]
+		}
+	}
+	accesses, err := toAccess(FILE, access)
+	if err != nil {
+		return nil, err
+	}
+	return &File{
+		RuleBase:  newBase(rule),
+		Qualifier: q,
+		Owner:     owner,
+		Path:      path,
+		Access:    accesses,
+		Target:    target,
+	}, nil
+}
+
 func newFileFromLog(log map[string]string) Rule {
 	accesses, err := toAccess("file-log", log["requested_mask"])
 	if err != nil {
@@ -110,6 +149,40 @@ type Link struct {
 	Subset bool
 	Path   string
 	Target string
+}
+
+func newLink(q Qualifier, rule rule) (Rule, error) {
+	owner, subset, path, target := false, false, "", ""
+	if len(rule) > 0 {
+		if rule.Get(0) == tokOWNER {
+			owner = true
+			rule = rule[1:]
+		}
+		if len(rule) > 0 && rule.Get(0) == tokSUBSET {
+			subset = true
+			rule = rule[1:]
+		}
+
+		r := rule.GetSlice()
+		size := len(r)
+		if size > 0 {
+			path = r[0]
+		}
+		if size > 2 {
+			if r[1] != tokARROW {
+				return nil, fmt.Errorf("missing '%s' in rule: %s", tokARROW, rule)
+			}
+			target = r[2]
+		}
+	}
+	return &Link{
+		RuleBase:  newBase(rule),
+		Qualifier: q,
+		Owner:     owner,
+		Subset:    subset,
+		Path:      path,
+		Target:    target,
+	}, nil
 }
 
 func newLinkFromLog(log map[string]string) Rule {

@@ -33,6 +33,25 @@ type Dbus struct {
 	PeerLabel string
 }
 
+func newDbus(q Qualifier, rule rule) (Rule, error) {
+	accesses, err := toAccess(DBUS, rule.GetString())
+	if err != nil {
+		return nil, err
+	}
+	return &Dbus{
+		RuleBase:  newBase(rule),
+		Qualifier: q,
+		Access:    accesses,
+		Bus:       rule.GetValuesAsString("bus"),
+		Name:      rule.GetValuesAsString("name"),
+		Path:      rule.GetValuesAsString("path"),
+		Interface: rule.GetValuesAsString("interface"),
+		Member:    rule.GetValuesAsString("member"),
+		PeerName:  rule.GetValues("peer").GetValuesAsString("name"),
+		PeerLabel: rule.GetValues("peer").GetValuesAsString("label"),
+	}, nil
+}
+
 func newDbusFromLog(log map[string]string) Rule {
 	name := ""
 	peerName := ""

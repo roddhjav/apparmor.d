@@ -30,6 +30,26 @@ const (
 
 var (
 	newRuleMap = map[string]func(q Qualifier, r rule) (Rule, error){
+		ABI.Tok():           newAbi,
+		ALIAS.Tok():         newAlias,
+		ALL.Tok():           newAll,
+		"set":               newRlimit,
+		USERNS.Tok():        newUserns,
+		CAPABILITY.Tok():    newCapability,
+		NETWORK.Tok():       newNetwork,
+		MOUNT.Tok():         newMount,
+		UMOUNT.Tok():        newUmount,
+		REMOUNT.Tok():       newRemount,
+		MQUEUE.Tok():        newMqueue,
+		IOURING.Tok():       newIOUring,
+		PIVOTROOT.Tok():     newPivotRoot,
+		CHANGEPROFILE.Tok(): newChangeProfile,
+		SIGNAL.Tok():        newSignal,
+		PTRACE.Tok():        newPtrace,
+		UNIX.Tok():          newUnix,
+		DBUS.Tok():          newDbus,
+		FILE.Tok():          newFile,
+		LINK.Tok():          newLink,
 	}
 
 	tok = map[Kind]string{

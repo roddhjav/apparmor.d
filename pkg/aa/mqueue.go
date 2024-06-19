@@ -31,6 +31,31 @@ type Mqueue struct {
 	Name   string
 }
 
+func newMqueue(q Qualifier, rule rule) (Rule, error) {
+	access, name := "", ""
+	r := rule.GetSlice()
+	size := len(r)
+	if size > 0 {
+		access = strings.Join(r[:size-1], " ")
+		name = r[size-1]
+		if slices.Contains(requirements[MQUEUE]["access"], name) {
+			access += " " + name
+		}
+	}
+	accesses, err := toAccess(MQUEUE, access)
+	if err != nil {
+		return nil, err
+	}
+	return &Mqueue{
+		RuleBase:  newBase(rule),
+		Qualifier: q,
+		Access:    accesses,
+		Type:      rule.GetValuesAsString("type"),
+		Label:     rule.GetValuesAsString("label"),
+		Name:      name,
+	}, nil
+}
+
 func newMqueueFromLog(log map[string]string) Rule {
 	mqueueType := "posix"
 	if strings.Contains(log["class"], "posix") {

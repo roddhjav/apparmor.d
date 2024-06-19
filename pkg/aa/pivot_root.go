@@ -4,6 +4,8 @@
 
 package aa
 
+import "fmt"
+
 const PIVOTROOT Kind = "pivot_root"
 
 type PivotRoot struct {
@@ -12,6 +14,30 @@ type PivotRoot struct {
 	OldRoot       string
 	NewRoot       string
 	TargetProfile string
+}
+
+func newPivotRoot(q Qualifier, rule rule) (Rule, error) {
+	newroot, target := "", ""
+	r := rule.GetSlice()
+	if len(r) > 0 {
+		if r[0] != tokARROW {
+			newroot = r[0]
+			r = r[1:]
+		}
+		if len(r) == 2 {
+			if r[0] != tokARROW {
+				return nil, fmt.Errorf("missing '%s' in rule: %s", tokARROW, rule)
+			}
+			target = r[1]
+		}
+	}
+	return &PivotRoot{
+		RuleBase:      newBase(rule),
+		Qualifier:     q,
+		OldRoot:       rule.GetValuesAsString("oldroot"),
+		NewRoot:       newroot,
+		TargetProfile: target,
+	}, nil
 }
 
 func newPivotRootFromLog(log map[string]string) Rule {

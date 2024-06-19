@@ -6,6 +6,7 @@ package aa
 
 import (
 	"fmt"
+	"slices"
 )
 
 const NETWORK Kind = "network"
@@ -68,6 +69,28 @@ type Network struct {
 	Domain   string
 	Type     string
 	Protocol string
+}
+
+func newNetwork(q Qualifier, rule rule) (Rule, error) {
+	nType, protocol, domain := "", "", ""
+	r := rule.GetSlice()
+	if len(r) > 0 {
+		domain = r[0]
+	}
+	if len(r) >= 2 {
+		if slices.Contains(requirements[NETWORK]["type"], r[1]) {
+			nType = r[1]
+		} else if slices.Contains(requirements[NETWORK]["protocol"], r[1]) {
+			protocol = r[1]
+		}
+	}
+	return &Network{
+		RuleBase:  newBase(rule),
+		Qualifier: q,
+		Domain:    domain,
+		Type:      nType,
+		Protocol:  protocol,
+	}, nil
 }
 
 func newNetworkFromLog(log map[string]string) Rule {

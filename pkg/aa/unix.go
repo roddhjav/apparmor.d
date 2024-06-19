@@ -34,6 +34,26 @@ type Unix struct {
 	PeerAddr  string
 }
 
+func newUnix(q Qualifier, rule rule) (Rule, error) {
+	accesses, err := toAccess(UNIX, rule.GetString())
+	if err != nil {
+		return nil, err
+	}
+	return &Unix{
+		RuleBase:  newBase(rule),
+		Qualifier: q,
+		Access:    accesses,
+		Type:      rule.GetValuesAsString("type"),
+		Protocol:  rule.GetValuesAsString("protocol"),
+		Address:   rule.GetValuesAsString("addr"),
+		Label:     rule.GetValuesAsString("label"),
+		Attr:      rule.GetValuesAsString("attr"),
+		Opt:       rule.GetValuesAsString("opt"),
+		PeerLabel: rule.GetValues("peer").GetValuesAsString("label"),
+		PeerAddr:  rule.GetValues("peer").GetValuesAsString("addr"),
+	}, nil
+}
+
 func newUnixFromLog(log map[string]string) Rule {
 	return &Unix{
 		RuleBase:  newBaseFromLog(log),

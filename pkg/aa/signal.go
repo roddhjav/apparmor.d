@@ -39,6 +39,24 @@ type Signal struct {
 	Peer   string
 }
 
+func newSignal(q Qualifier, rule rule) (Rule, error) {
+	accesses, err := toAccess(SIGNAL, rule.GetString())
+	if err != nil {
+		return nil, err
+	}
+	set, err := toValues(SIGNAL, "set", rule.GetValuesAsString("set"))
+	if err != nil {
+		return nil, err
+	}
+	return &Signal{
+		RuleBase:  newBase(rule),
+		Qualifier: q,
+		Access:    accesses,
+		Set:       set,
+		Peer:      rule.GetValuesAsString("peer"),
+	}, nil
+}
+
 func newSignalFromLog(log map[string]string) Rule {
 	return &Signal{
 		RuleBase:  newBaseFromLog(log),

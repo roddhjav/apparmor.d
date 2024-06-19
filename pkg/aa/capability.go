@@ -31,6 +31,18 @@ type Capability struct {
 	Names []string
 }
 
+func newCapability(q Qualifier, rule rule) (Rule, error) {
+	names, err := toValues(CAPABILITY, "name", rule.GetString())
+	if err != nil {
+		return nil, err
+	}
+	return &Capability{
+		RuleBase:  newBase(rule),
+		Qualifier: q,
+		Names:     names,
+	}, nil
+}
+
 func newCapabilityFromLog(log map[string]string) Rule {
 	return &Capability{
 		RuleBase:  newBaseFromLog(log),

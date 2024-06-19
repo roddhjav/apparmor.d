@@ -18,17 +18,19 @@ type RuleBase struct {
 	Optional    bool
 }
 
-func newRule(rule []string) RuleBase {
+func newBase(rule rule) RuleBase {
 	comment := ""
 	fileInherit, noNewPrivs, optional := false, false, false
 
-	idx := 0
-	for idx < len(rule) {
-		if rule[idx] == COMMENT.Tok() {
-			comment = " " + strings.Join(rule[idx+1:], " ")
-			break
+	if len(rule) > 0 {
+		if len(rule.Get(0)) > 0 && rule.Get(0)[0] == '#' {
+			// Line rule is a comment
+			rule = rule[1:]
+			comment = rule.GetString()
+		} else {
+			// Comma rule, with comment at the end
+			comment = rule[len(rule)-1].comment
 		}
-		idx++
 	}
 	switch {
 	case strings.Contains(comment, "file_inherit"):
