@@ -14,6 +14,26 @@ type Userns struct {
 	Create bool
 }
 
+func newUserns(q Qualifier, rule rule) (Rule, error) {
+	var create bool
+	switch len(rule) {
+	case 0:
+		create = true
+	case 1:
+		if rule.Get(0) != "create" {
+			return nil, fmt.Errorf("invalid userns format: %s", rule)
+		}
+		create = true
+	default:
+		return nil, fmt.Errorf("invalid userns format: %s", rule)
+	}
+	return &Userns{
+		RuleBase:  newBase(rule),
+		Qualifier: q,
+		Create:    create,
+	}, nil
+}
+
 func newUsernsFromLog(log map[string]string) Rule {
 	return &Userns{
 		RuleBase:  newBaseFromLog(log),

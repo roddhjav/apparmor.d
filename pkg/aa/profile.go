@@ -43,48 +43,29 @@ type Header struct {
 	Flags       []string
 }
 
-func newHeader(rule []string) (Header, error) {
+func newHeader(rule rule) (Header, error) {
 	if len(rule) == 0 {
 		return Header{}, nil
 	}
-	if rule[len(rule)-1] == "{" {
-		rule = rule[:len(rule)-1]
-	}
-	if rule[0] == PROFILE.Tok() {
+	if rule.Get(0) == PROFILE.Tok() {
 		rule = rule[1:]
 	}
-
-	delete := []int{}
-	flags := []string{}
-	attributes := make(map[string]string)
-	for idx, token := range rule {
-		if item, ok := strings.CutPrefix(token, tokFLAGS+"="); ok {
-			flags = tokenToSlice(item)
-			delete = append(delete, idx)
-		} else if item, ok := strings.CutPrefix(token, tokATTRIBUTES+"="); ok {
-			for _, m := range tokenToSlice(item) {
-				kv := strings.SplitN(m, "=", 2)
-				attributes[kv[0]] = kv[1]
-			}
-			delete = append(delete, idx)
-		}
-	}
-	for i := len(delete) - 1; i >= 0; i-- {
-		rule = slices.Delete(rule, delete[i], delete[i]+1)
-	}
-
 	name, attachments := "", []string{}
 	if len(rule) >= 1 {
-		name = rule[0]
+		name = rule.Get(0)
 		if len(rule) > 1 {
-			attachments = rule[1:]
+			attachments = rule[1:].GetSlice()
 		}
+	}
+	attributes := make(map[string]string)
+	for k, v := range rule.GetValues(tokATTRIBUTES).GetAsMap() {
+		attributes[k] = strings.Join(v, "")
 	}
 	return Header{
 		Name:        name,
 		Attachments: attachments,
 		Attributes:  attributes,
-		Flags:       flags,
+		Flags:       rule.GetValuesAsSlice(tokFLAGS),
 	}, nil
 }
 

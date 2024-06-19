@@ -23,8 +23,8 @@ type Comment struct {
 	RuleBase
 }
 
-func newComment(rule []string) (Rule, error) {
-	base := newRule(rule)
+func newComment(rule rule) (Rule, error) {
+	base := newBase(rule)
 	base.IsLineRule = true
 	return &Comment{RuleBase: base}, nil
 }
@@ -41,10 +41,6 @@ func (r *Comment) String() string {
 	return renderTemplate(r.Kind(), r)
 }
 
-func (r *Comment) IsPreamble() bool {
-	return true
-}
-
 func (r *Comment) Constraint() constraint {
 	return anyKind
 }
@@ -59,16 +55,13 @@ type Abi struct {
 	IsMagic bool
 }
 
-func newAbi(rule []string) (Rule, error) {
+func newAbi(q Qualifier, rule rule) (Rule, error) {
 	var magic bool
-	if len(rule) > 0 && rule[0] == ABI.Tok() {
-		rule = rule[1:]
-	}
 	if len(rule) != 1 {
 		return nil, fmt.Errorf("invalid abi format: %s", rule)
 	}
 
-	path := rule[0]
+	path := rule.Get(0)
 	switch {
 	case path[0] == '"':
 		magic = false
@@ -78,7 +71,7 @@ func newAbi(rule []string) (Rule, error) {
 		return nil, fmt.Errorf("invalid path %s in rule: %s", path, rule)
 	}
 	return &Abi{
-		RuleBase: newRule(rule),
+		RuleBase: newBase(rule),
 		Path:     strings.Trim(path, "\"<>"),
 		IsMagic:  magic,
 	}, nil
@@ -114,20 +107,17 @@ type Alias struct {
 	RewrittenPath string
 }
 
-func newAlias(rule []string) (Rule, error) {
-	if len(rule) > 0 && rule[0] == ALIAS.Tok() {
-		rule = rule[1:]
-	}
+func newAlias(q Qualifier, rule rule) (Rule, error) {
 	if len(rule) != 3 {
 		return nil, fmt.Errorf("invalid alias format: %s", rule)
 	}
-	if rule[1] != tokARROW {
+	if rule.Get(1) != tokARROW {
 		return nil, fmt.Errorf("invalid alias format, missing %s in: %s", tokARROW, rule)
 	}
 	return &Alias{
-		RuleBase:      newRule(rule),
-		Path:          rule[0],
-		RewrittenPath: rule[2],
+		RuleBase:      newBase(rule),
+		Path:          rule.Get(0),
+		RewrittenPath: rule.Get(2),
 	}, nil
 }
 
@@ -162,25 +152,22 @@ type Include struct {
 	IsMagic  bool
 }
 
-func newInclude(rule []string) (Rule, error) {
+func newInclude(rule rule) (Rule, error) {
 	var magic bool
 	var ifexists bool
-
-	if len(rule) > 0 && rule[0] == INCLUDE.Tok() {
-		rule = rule[1:]
-	}
 
 	size := len(rule)
 	if size == 0 {
 		return nil, fmt.Errorf("invalid include format: %v", rule)
 	}
 
-	if size >= 3 && strings.Join(rule[:2], " ") == tokIFEXISTS {
+	r := rule.GetSlice()
+	if size >= 3 && strings.Join(r[:2], " ") == tokIFEXISTS {
 		ifexists = true
-		rule = rule[2:]
+		r = r[2:]
 	}
 
-	path := rule[0]
+	path := r[0]
 	switch {
 	case path[0] == '"':
 		magic = false
@@ -190,7 +177,7 @@ func newInclude(rule []string) (Rule, error) {
 		return nil, fmt.Errorf("invalid path format: %v", path)
 	}
 	return &Include{
-		RuleBase: newRule(rule),
+		RuleBase: newBase(rule),
 		IfExists: ifexists,
 		Path:     strings.Trim(path, "\"<>"),
 		IsMagic:  magic,
@@ -238,29 +225,27 @@ type Variable struct {
 	Define bool
 }
 
-func newVariable(rule []string) (Rule, error) {
+func newVariableFromRule(rule rule) (Rule, error) {
 	var define bool
 	var values []string
 	if len(rule) < 3 {
 		return nil, fmt.Errorf("invalid variable format: %v", rule)
 	}
 
-	name := strings.Trim(rule[0], VARIABLE.Tok()+"}")
-	switch rule[1] {
+	r := rule.GetSlice()
+	name := strings.Trim(rule.Get(0), VARIABLE.Tok()+"}")
+	switch rule.Get(1) {
 	case tokEQUAL:
 		define = true
-		values = tokensStripComment(rule[2:])
-	case tokPLUS:
-		if rule[2] != tokEQUAL {
-			return nil, fmt.Errorf("invalid operator in variable: %v", rule)
-		}
+		values = r[2:]
+	case tokPLUS + tokEQUAL:
 		define = false
-		values = tokensStripComment(rule[3:])
+		values = r[2:]
 	default:
 		return nil, fmt.Errorf("invalid operator in variable: %v", rule)
 	}
 	return &Variable{
-		RuleBase: newRule(rule),
+		RuleBase: newBase(rule),
 		Name:     name,
 		Values:   values,
 		Define:   define,

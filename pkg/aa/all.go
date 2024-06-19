@@ -12,6 +12,10 @@ type All struct {
 	RuleBase
 }
 
+func newAll(q Qualifier, rule rule) (Rule, error) {
+	return &All{RuleBase: newBase(rule)}, nil
+}
+
 func (r *All) Validate() error {
 	return nil
 }

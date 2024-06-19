@@ -33,6 +33,17 @@ type MountConditions struct {
 	Options []string
 }
 
+func newMountConditions(rule rule) (MountConditions, error) {
+	options, err := toValues(MOUNT, "flags", rule.GetValuesAsString("options"))
+	if err != nil {
+		return MountConditions{}, err
+	}
+	return MountConditions{
+		FsType:  rule.GetValuesAsString("fstype"),
+		Options: options,
+	}, nil
+}
+
 func newMountConditionsFromLog(log map[string]string) MountConditions {
 	if _, present := log["flags"]; present {
 		return MountConditions{
@@ -60,6 +71,35 @@ type Mount struct {
 	MountConditions
 	Source     string
 	MountPoint string
+}
+
+func newMount(q Qualifier, rule rule) (Rule, error) {
+	mount, src := "", ""
+	r := rule.GetSlice()
+	if len(r) > 0 {
+		if r[0] != tokARROW {
+			src = r[0]
+			r = r[1:]
+		}
+		if len(r) == 2 {
+			if r[0] != tokARROW {
+				return nil, fmt.Errorf("missing '%s' in rule: %s", tokARROW, rule)
+			}
+			mount = r[1]
+		}
+	}
+
+	conditions, err := newMountConditions(rule)
+	if err != nil {
+		return nil, err
+	}
+	return &Mount{
+		RuleBase:        newBase(rule),
+		Qualifier:       q,
+		MountConditions: conditions,
+		Source:          src,
+		MountPoint:      mount,
+	}, nil
 }
 
 func newMountFromLog(log map[string]string) Rule {
@@ -112,6 +152,24 @@ type Umount struct {
 	MountPoint string
 }
 
+func newUmount(q Qualifier, rule rule) (Rule, error) {
+	mount := ""
+	r := rule.GetSlice()
+	if len(r) > 0 {
+		mount = r[0]
+	}
+	conditions, err := newMountConditions(rule)
+	if err != nil {
+		return nil, err
+	}
+	return &Umount{
+		RuleBase:        newBase(rule),
+		Qualifier:       q,
+		MountConditions: conditions,
+		MountPoint:      mount,
+	}, nil
+}
+
 func newUmountFromLog(log map[string]string) Rule {
 	return &Umount{
 		RuleBase:        newBaseFromLog(log),
@@ -156,6 +214,25 @@ type Remount struct {
 	Qualifier
 	MountConditions
 	MountPoint string
+}
+
+func newRemount(q Qualifier, rule rule) (Rule, error) {
+	mount := ""
+	r := rule.GetSlice()
+	if len(r) > 0 {
+		mount = r[0]
+	}
+
+	conditions, err := newMountConditions(rule)
+	if err != nil {
+		return nil, err
+	}
+	return &Remount{
+		RuleBase:        newBase(rule),
+		Qualifier:       q,
+		MountConditions: conditions,
+		MountPoint:      mount,
+	}, nil
 }
 
 func newRemountFromLog(log map[string]string) Rule {

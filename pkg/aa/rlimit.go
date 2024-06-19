@@ -27,6 +27,21 @@ type Rlimit struct {
 	Value string
 }
 
+func newRlimit(q Qualifier, rule rule) (Rule, error) {
+	if len(rule) != 4 {
+		return nil, fmt.Errorf("invalid set format: %s", rule)
+	}
+	if rule.Get(0) != RLIMIT.Tok() {
+		return nil, fmt.Errorf("invalid rlimit format: %s", rule)
+	}
+	return &Rlimit{
+		RuleBase: newBase(rule),
+		Key:      rule.Get(1),
+		Op:       rule.Get(2),
+		Value:    rule.Get(3),
+	}, nil
+}
+
 func newRlimitFromLog(log map[string]string) Rule {
 	return &Rlimit{
 		RuleBase: newBaseFromLog(log),

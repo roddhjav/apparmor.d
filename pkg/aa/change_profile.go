@@ -4,7 +4,10 @@
 
 package aa
 
-import "fmt"
+import (
+	"fmt"
+	"slices"
+)
 
 const CHANGEPROFILE Kind = "change_profile"
 
@@ -20,6 +23,38 @@ type ChangeProfile struct {
 	ExecMode    string
 	Exec        string
 	ProfileName string
+}
+
+func newChangeProfile(q Qualifier, rule rule) (Rule, error) {
+	mode, exec, target := "", "", ""
+	if len(rule) > 0 {
+		if slices.Contains(requirements[CHANGEPROFILE]["mode"], rule.Get(0)) {
+			mode = rule.Get(0)
+			rule = rule[1:]
+		}
+		if len(rule) > 0 {
+			if rule.Get(0) != tokARROW {
+				exec = rule.Get(0)
+				if len(rule) > 2 {
+					if rule.Get(1) != tokARROW {
+						return nil, fmt.Errorf("missing '%s' in rule: %s", tokARROW, rule)
+					}
+					target = rule.Get(2)
+				}
+			} else {
+				if len(rule) > 1 {
+					target = rule.Get(1)
+				}
+			}
+		}
+	}
+	return &ChangeProfile{
+		RuleBase:    newBase(rule),
+		Qualifier:   q,
+		ExecMode:    mode,
+		Exec:        exec,
+		ProfileName: target,
+	}, nil
 }
 
 func newChangeProfileFromLog(log map[string]string) Rule {

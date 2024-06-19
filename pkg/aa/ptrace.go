@@ -25,6 +25,19 @@ type Ptrace struct {
 	Peer   string
 }
 
+func newPtrace(q Qualifier, rule rule) (Rule, error) {
+	accesses, err := toAccess(PTRACE, rule.GetString())
+	if err != nil {
+		return nil, err
+	}
+	return &Ptrace{
+		RuleBase:  newBase(rule),
+		Qualifier: q,
+		Access:    accesses,
+		Peer:      rule.GetValuesAsString("peer"),
+	}, nil
+}
+
 func newPtraceFromLog(log map[string]string) Rule {
 	return &Ptrace{
 		RuleBase:  newBaseFromLog(log),

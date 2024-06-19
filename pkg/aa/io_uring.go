@@ -23,6 +23,19 @@ type IOUring struct {
 	Label  string
 }
 
+func newIOUring(q Qualifier, rule rule) (Rule, error) {
+	accesses, err := toAccess(IOURING, rule.GetString())
+	if err != nil {
+		return nil, err
+	}
+	return &IOUring{
+		RuleBase:  newBase(rule),
+		Qualifier: q,
+		Access:    accesses,
+		Label:     rule.GetValuesAsString("label"),
+	}, nil
+}
+
 func newIOUringFromLog(log map[string]string) Rule {
 	return &IOUring{
 		RuleBase:  newBaseFromLog(log),
