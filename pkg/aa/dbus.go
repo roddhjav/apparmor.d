@@ -6,7 +6,6 @@ package aa
 
 import (
 	"fmt"
-	"slices"
 )
 
 const DBUS Kind = "dbus"
@@ -63,43 +62,33 @@ func (r *Dbus) Validate() error {
 	return validateValues(r.Kind(), "bus", []string{r.Bus})
 }
 
-func (r *Dbus) Less(other any) bool {
+func (r *Dbus) Compare(other Rule) int {
 	o, _ := other.(*Dbus)
-	for i := 0; i < len(r.Access) && i < len(o.Access); i++ {
-		if r.Access[i] != o.Access[i] {
-			return r.Access[i] < o.Access[i]
-		}
+	if res := compare(r.Access, o.Access); res != 0 {
+		return res
 	}
-	if r.Bus != o.Bus {
-		return r.Bus < o.Bus
+	if res := compare(r.Bus, o.Bus); res != 0 {
+		return res
 	}
-	if r.Name != o.Name {
-		return r.Name < o.Name
+	if res := compare(r.Name, o.Name); res != 0 {
+		return res
 	}
-	if r.Path != o.Path {
-		return r.Path < o.Path
+	if res := compare(r.Path, o.Path); res != 0 {
+		return res
 	}
-	if r.Interface != o.Interface {
-		return r.Interface < o.Interface
+	if res := compare(r.Interface, o.Interface); res != 0 {
+		return res
 	}
-	if r.Member != o.Member {
-		return r.Member < o.Member
+	if res := compare(r.Member, o.Member); res != 0 {
+		return res
 	}
-	if r.PeerName != o.PeerName {
-		return r.PeerName < o.PeerName
+	if res := compare(r.PeerName, o.PeerName); res != 0 {
+		return res
 	}
-	if r.PeerLabel != o.PeerLabel {
-		return r.PeerLabel < o.PeerLabel
+	if res := compare(r.PeerLabel, o.PeerLabel); res != 0 {
+		return res
 	}
-	return r.Qualifier.Less(o.Qualifier)
-}
-
-func (r *Dbus) Equals(other any) bool {
-	o, _ := other.(*Dbus)
-	return slices.Equal(r.Access, o.Access) && r.Bus == o.Bus && r.Name == o.Name &&
-		r.Path == o.Path && r.Interface == o.Interface &&
-		r.Member == o.Member && r.PeerName == o.PeerName &&
-		r.PeerLabel == o.PeerLabel && r.Qualifier.Equals(o.Qualifier)
+	return r.Qualifier.Compare(o.Qualifier)
 }
 
 func (r *Dbus) String() string {

@@ -6,7 +6,6 @@ package aa
 
 import (
 	"fmt"
-	"slices"
 )
 
 const IOURING Kind = "io_uring"
@@ -40,20 +39,15 @@ func (r *IOUring) Validate() error {
 	return nil
 }
 
-func (r *IOUring) Less(other any) bool {
+func (r *IOUring) Compare(other Rule) int {
 	o, _ := other.(*IOUring)
-	if len(r.Access) != len(o.Access) {
-		return len(r.Access) < len(o.Access)
+	if res := compare(r.Access, o.Access); res != 0 {
+		return res
 	}
-	if r.Label != o.Label {
-		return r.Label < o.Label
+	if res := compare(r.Label, o.Label); res != 0 {
+		return res
 	}
-	return r.Qualifier.Less(o.Qualifier)
-}
-
-func (r *IOUring) Equals(other any) bool {
-	o, _ := other.(*IOUring)
-	return slices.Equal(r.Access, o.Access) && r.Label == o.Label && r.Qualifier.Equals(o.Qualifier)
+	return r.Qualifier.Compare(o.Qualifier)
 }
 
 func (r *IOUring) String() string {

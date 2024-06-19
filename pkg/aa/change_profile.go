@@ -39,24 +39,18 @@ func (r *ChangeProfile) Validate() error {
 	return nil
 }
 
-func (r *ChangeProfile) Less(other any) bool {
+func (r *ChangeProfile) Compare(other Rule) int {
 	o, _ := other.(*ChangeProfile)
-	if r.ExecMode != o.ExecMode {
-		return r.ExecMode < o.ExecMode
+	if res := compare(r.ExecMode, o.ExecMode); res != 0 {
+		return res
 	}
-	if r.Exec != o.Exec {
-		return r.Exec < o.Exec
+	if res := compare(r.Exec, o.Exec); res != 0 {
+		return res
 	}
-	if r.ProfileName != o.ProfileName {
-		return r.ProfileName < o.ProfileName
+	if res := compare(r.ProfileName, o.ProfileName); res != 0 {
+		return res
 	}
-	return r.Qualifier.Less(o.Qualifier)
-}
-
-func (r *ChangeProfile) Equals(other any) bool {
-	o, _ := other.(*ChangeProfile)
-	return r.ExecMode == o.ExecMode && r.Exec == o.Exec &&
-		r.ProfileName == o.ProfileName && r.Qualifier.Equals(o.Qualifier)
+	return r.Qualifier.Compare(o.Qualifier)
 }
 
 func (r *ChangeProfile) String() string {

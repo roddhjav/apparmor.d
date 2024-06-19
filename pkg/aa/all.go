@@ -16,12 +16,8 @@ func (r *All) Validate() error {
 	return nil
 }
 
-func (r *All) Less(other any) bool {
-	return false
-}
-
-func (r *All) Equals(other any) bool {
-	return false
+func (r *All) Compare(other Rule) int {
+	return 0
 }
 
 func (r *All) String() string {

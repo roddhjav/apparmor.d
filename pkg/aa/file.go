@@ -68,32 +68,27 @@ func (r *File) Validate() error {
 	return nil
 }
 
-func (r *File) Less(other any) bool {
+func (r *File) Compare(other Rule) int {
 	o, _ := other.(*File)
+
 	letterR := getLetterIn(fileAlphabet, r.Path)
 	letterO := getLetterIn(fileAlphabet, o.Path)
 	if fileWeights[letterR] != fileWeights[letterO] && letterR != "" && letterO != "" {
-		return fileWeights[letterR] < fileWeights[letterO]
+		return fileWeights[letterR] - fileWeights[letterO]
 	}
-	if r.Path != o.Path {
-		return r.Path < o.Path
+	if res := compare(r.Owner, o.Owner); res != 0 {
+		return res
 	}
-	if o.Owner != r.Owner {
-		return r.Owner
+	if res := compare(r.Path, o.Path); res != 0 {
+		return res
 	}
-	if len(r.Access) != len(o.Access) {
-		return len(r.Access) < len(o.Access)
+	if res := compare(r.Access, o.Access); res != 0 {
+		return res
 	}
-	if r.Target != o.Target {
-		return r.Target < o.Target
+	if res := compare(r.Target, o.Target); res != 0 {
+		return res
 	}
-	return r.Qualifier.Less(o.Qualifier)
-}
-
-func (r *File) Equals(other any) bool {
-	o, _ := other.(*File)
-	return r.Path == o.Path && slices.Equal(r.Access, o.Access) && r.Owner == o.Owner &&
-		r.Target == o.Target && r.Qualifier.Equals(o.Qualifier)
+	return r.Qualifier.Compare(o.Qualifier)
 }
 
 func (r *File) String() string {
@@ -131,27 +126,22 @@ func (r *Link) Validate() error {
 	return nil
 }
 
-func (r *Link) Less(other any) bool {
+func (r *Link) Compare(other Rule) int {
 	o, _ := other.(*Link)
-	if r.Path != o.Path {
-		return r.Path < o.Path
-	}
-	if o.Owner != r.Owner {
-		return r.Owner
-	}
-	if r.Target != o.Target {
-		return r.Target < o.Target
-	}
-	if r.Subset != o.Subset {
-		return r.Subset
-	}
-	return r.Qualifier.Less(o.Qualifier)
-}
 
-func (r *Link) Equals(other any) bool {
-	o, _ := other.(*Link)
-	return r.Subset == o.Subset && r.Owner == o.Owner && r.Path == o.Path &&
-		r.Target == o.Target && r.Qualifier.Equals(o.Qualifier)
+	if res := compare(r.Owner, o.Owner); res != 0 {
+		return res
+	}
+	if res := compare(r.Path, o.Path); res != 0 {
+		return res
+	}
+	if res := compare(r.Target, o.Target); res != 0 {
+		return res
+	}
+	if res := compare(r.Subset, o.Subset); res != 0 {
+		return res
+	}
+	return r.Qualifier.Compare(o.Qualifier)
 }
 
 func (r *Link) String() string {

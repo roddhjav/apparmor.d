@@ -28,25 +28,18 @@ func (r *PivotRoot) Validate() error {
 	return nil
 }
 
-func (r *PivotRoot) Less(other any) bool {
+func (r *PivotRoot) Compare(other Rule) int {
 	o, _ := other.(*PivotRoot)
-	if r.OldRoot != o.OldRoot {
-		return r.OldRoot < o.OldRoot
+	if res := compare(r.OldRoot, o.OldRoot); res != 0 {
+		return res
 	}
-	if r.NewRoot != o.NewRoot {
-		return r.NewRoot < o.NewRoot
+	if res := compare(r.NewRoot, o.NewRoot); res != 0 {
+		return res
 	}
-	if r.TargetProfile != o.TargetProfile {
-		return r.TargetProfile < o.TargetProfile
+	if res := compare(r.TargetProfile, o.TargetProfile); res != 0 {
+		return res
 	}
-	return r.Qualifier.Less(o.Qualifier)
-}
-
-func (r *PivotRoot) Equals(other any) bool {
-	o, _ := other.(*PivotRoot)
-	return r.OldRoot == o.OldRoot && r.NewRoot == o.NewRoot &&
-		r.TargetProfile == o.TargetProfile &&
-		r.Qualifier.Equals(o.Qualifier)
+	return r.Qualifier.Compare(o.Qualifier)
 }
 
 func (r *PivotRoot) String() string {

@@ -19,9 +19,43 @@ func Must[T any](v T, err error) T {
 	return v
 }
 
-// cmpFileAccess compares two access strings for file rules.
+func boolToInt(b bool) int {
+	if b {
+		return 1
+	}
+	return 0
+}
+
+func compare(a, b any) int {
+	switch a := a.(type) {
+	case int:
+		return a - b.(int)
+	case string:
+		a = strings.ToLower(a)
+		b := strings.ToLower(b.(string))
+		if a == b {
+			return 0
+		}
+		for i := 0; i < len(a) && i < len(b); i++ {
+			if a[i] != b[i] {
+				return stringWeights[a[i]] - stringWeights[b[i]]
+			}
+		}
+		return len(a) - len(b)
+	case []string:
+		return slices.CompareFunc(a, b.([]string), func(s1, s2 string) int {
+			return compare(s1, s2)
+		})
+	case bool:
+		return boolToInt(a) - boolToInt(b.(bool))
+	default:
+		panic("compare: unsupported type")
+	}
+}
+
+// compareFileAccess compares two access strings for file rules.
 // It is aimed to be used in slices.SortFunc.
-func cmpFileAccess(i, j string) int {
+func compareFileAccess(i, j string) int {
 	if slices.Contains(requirements[FILE]["access"], i) &&
 		slices.Contains(requirements[FILE]["access"], j) {
 		return requirementsWeights[FILE]["access"][i] - requirementsWeights[FILE]["access"][j]
@@ -115,6 +149,6 @@ func toAccess(kind Kind, input string) ([]string, error) {
 		return toValues(kind, "access", input)
 	}
 
-	slices.SortFunc(res, cmpFileAccess)
+	slices.SortFunc(res, compareFileAccess)
 	return slices.Compact(res), nil
 }

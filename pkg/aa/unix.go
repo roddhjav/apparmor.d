@@ -6,7 +6,6 @@ package aa
 
 import (
 	"fmt"
-	"slices"
 )
 
 const UNIX Kind = "unix"
@@ -58,45 +57,36 @@ func (r *Unix) Validate() error {
 	return nil
 }
 
-func (r *Unix) Less(other any) bool {
+func (r *Unix) Compare(other Rule) int {
 	o, _ := other.(*Unix)
-	if len(r.Access) != len(o.Access) {
-		return len(r.Access) < len(o.Access)
+	if res := compare(r.Access, o.Access); res != 0 {
+		return res
 	}
-	if r.Type != o.Type {
-		return r.Type < o.Type
+	if res := compare(r.Type, o.Type); res != 0 {
+		return res
 	}
-	if r.Protocol != o.Protocol {
-		return r.Protocol < o.Protocol
+	if res := compare(r.Protocol, o.Protocol); res != 0 {
+		return res
 	}
-	if r.Address != o.Address {
-		return r.Address < o.Address
+	if res := compare(r.Address, o.Address); res != 0 {
+		return res
 	}
-	if r.Label != o.Label {
-		return r.Label < o.Label
+	if res := compare(r.Label, o.Label); res != 0 {
+		return res
 	}
-	if r.Attr != o.Attr {
-		return r.Attr < o.Attr
+	if res := compare(r.Attr, o.Attr); res != 0 {
+		return res
 	}
-	if r.Opt != o.Opt {
-		return r.Opt < o.Opt
+	if res := compare(r.Opt, o.Opt); res != 0 {
+		return res
 	}
-	if r.PeerLabel != o.PeerLabel {
-		return r.PeerLabel < o.PeerLabel
+	if res := compare(r.PeerLabel, o.PeerLabel); res != 0 {
+		return res
 	}
-	if r.PeerAddr != o.PeerAddr {
-		return r.PeerAddr < o.PeerAddr
+	if res := compare(r.PeerAddr, o.PeerAddr); res != 0 {
+		return res
 	}
-	return r.Qualifier.Less(o.Qualifier)
-}
-
-func (r *Unix) Equals(other any) bool {
-	o, _ := other.(*Unix)
-	return slices.Equal(r.Access, o.Access) && r.Type == o.Type &&
-		r.Protocol == o.Protocol && r.Address == o.Address &&
-		r.Label == o.Label && r.Attr == o.Attr && r.Opt == o.Opt &&
-		r.PeerLabel == o.PeerLabel && r.PeerAddr == o.PeerAddr &&
-		r.Qualifier.Equals(o.Qualifier)
+	return r.Qualifier.Compare(o.Qualifier)
 }
 
 func (r *Unix) String() string {

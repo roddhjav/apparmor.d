@@ -46,14 +46,14 @@ func newAddressExprFromLog(log map[string]string) AddressExpr {
 	}
 }
 
-func (r AddressExpr) Less(other AddressExpr) bool {
-	if r.Source != other.Source {
-		return r.Source < other.Source
+func (r AddressExpr) Compare(other AddressExpr) int {
+	if res := compare(r.Source, other.Source); res != 0 {
+		return res
 	}
-	if r.Destination != other.Destination {
-		return r.Destination < other.Destination
+	if res := compare(r.Destination, other.Destination); res != 0 {
+		return res
 	}
-	return r.Port < other.Port
+	return compare(r.Port, other.Port)
 }
 
 func (r AddressExpr) Equals(other AddressExpr) bool {
@@ -94,28 +94,21 @@ func (r *Network) Validate() error {
 	return nil
 }
 
-func (r *Network) Less(other any) bool {
+func (r *Network) Compare(other Rule) int {
 	o, _ := other.(*Network)
-	if r.Domain != o.Domain {
-		return r.Domain < o.Domain
+	if res := compare(r.Domain, o.Domain); res != 0 {
+		return res
 	}
-	if r.Type != o.Type {
-		return r.Type < o.Type
+	if res := compare(r.Type, o.Type); res != 0 {
+		return res
 	}
-	if r.Protocol != o.Protocol {
-		return r.Protocol < o.Protocol
+	if res := compare(r.Protocol, o.Protocol); res != 0 {
+		return res
 	}
-	if r.AddressExpr.Less(o.AddressExpr) {
-		return r.AddressExpr.Less(o.AddressExpr)
+	if res := r.AddressExpr.Compare(o.AddressExpr); res != 0 {
+		return res
 	}
-	return r.Qualifier.Less(o.Qualifier)
-}
-
-func (r *Network) Equals(other any) bool {
-	o, _ := other.(*Network)
-	return r.Domain == o.Domain && r.Type == o.Type &&
-		r.Protocol == o.Protocol && r.AddressExpr.Equals(o.AddressExpr) &&
-		r.Qualifier.Equals(o.Qualifier)
+	return r.Qualifier.Compare(o.Qualifier)
 }
 
 func (r *Network) String() string {
