@@ -6,7 +6,6 @@ package aa
 
 import (
 	"fmt"
-	"slices"
 	"strings"
 )
 
@@ -34,12 +33,8 @@ func (r *Comment) Validate() error {
 	return nil
 }
 
-func (r *Comment) Less(other any) bool {
-	return false
-}
-
-func (r *Comment) Equals(other any) bool {
-	return false
+func (r *Comment) Compare(other Rule) int {
+	return 0
 }
 
 func (r *Comment) String() string {
@@ -93,17 +88,12 @@ func (r *Abi) Validate() error {
 	return nil
 }
 
-func (r *Abi) Less(other any) bool {
+func (r *Abi) Compare(other Rule) int {
 	o, _ := other.(*Abi)
-	if r.Path != o.Path {
-		return r.Path < o.Path
+	if res := compare(r.Path, o.Path); res != 0 {
+		return res
 	}
-	return r.IsMagic == o.IsMagic
-}
-
-func (r *Abi) Equals(other any) bool {
-	o, _ := other.(*Abi)
-	return r.Path == o.Path && r.IsMagic == o.IsMagic
+	return compare(r.IsMagic, o.IsMagic)
 }
 
 func (r *Abi) String() string {
@@ -145,17 +135,12 @@ func (r *Alias) Validate() error {
 	return nil
 }
 
-func (r Alias) Less(other any) bool {
+func (r *Alias) Compare(other Rule) int {
 	o, _ := other.(*Alias)
-	if r.Path != o.Path {
-		return r.Path < o.Path
+	if res := compare(r.Path, o.Path); res != 0 {
+		return res
 	}
-	return r.RewrittenPath < o.RewrittenPath
-}
-
-func (r Alias) Equals(other any) bool {
-	o, _ := other.(*Alias)
-	return r.Path == o.Path && r.RewrittenPath == o.RewrittenPath
+	return compare(r.RewrittenPath, o.RewrittenPath)
 }
 
 func (r *Alias) String() string {
@@ -216,20 +201,22 @@ func (r *Include) Validate() error {
 	return nil
 }
 
-func (r *Include) Less(other any) bool {
+func (r *Include) Compare(other Rule) int {
+	const base = "abstractions/base"
 	o, _ := other.(*Include)
-	if r.Path == o.Path {
-		return r.Path < o.Path
+	if res := compare(r.Path, o.Path); res != 0 {
+		if r.Path == base {
+			return -1
+		}
+		if o.Path == base {
+			return 1
+		}
+		return res
 	}
-	if r.IsMagic != o.IsMagic {
-		return r.IsMagic
+	if res := compare(r.IsMagic, o.IsMagic); res != 0 {
+		return res
 	}
-	return r.IfExists
-}
-
-func (r *Include) Equals(other any) bool {
-	o, _ := other.(*Include)
-	return r.Path == o.Path && r.IsMagic == o.IsMagic && r.IfExists == o.IfExists
+	return compare(r.IfExists, o.IfExists)
 }
 
 func (r *Include) String() string {
@@ -284,17 +271,8 @@ func (r *Variable) Validate() error {
 	return nil
 }
 
-func (r *Variable) Less(other any) bool {
-	o, _ := other.(*Variable)
-	if r.Name != o.Name {
-		return r.Name < o.Name
-	}
-	return len(r.Values) < len(o.Values)
-}
-
-func (r *Variable) Equals(other any) bool {
-	o, _ := other.(*Variable)
-	return r.Name == o.Name && slices.Equal(r.Values, o.Values)
+func (r *Variable) Compare(other Rule) int {
+	return 0
 }
 
 func (r *Variable) String() string {

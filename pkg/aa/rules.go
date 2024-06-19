@@ -35,8 +35,7 @@ func (k Kind) Tok() string {
 // Rule generic interface for all AppArmor rules
 type Rule interface {
 	Validate() error
-	Less(other any) bool
-	Equals(other any) bool
+	Compare(other Rule) int
 	String() string
 	Constraint() constraint
 	Kind() Kind
@@ -66,7 +65,7 @@ func (r Rules) Index(item Rule) int {
 		if rule == nil {
 			continue
 		}
-		if rule.Kind() == item.Kind() && rule.Equals(item) {
+		if rule.Kind() == item.Kind() && rule.Compare(item) == 0 {
 			return idx
 		}
 	}
@@ -153,7 +152,7 @@ func (r Rules) Merge() Rules {
 			}
 
 			// If rules are identical, merge them
-			if r[i].Equals(r[j]) {
+			if r[i].Compare(r[j]) == 0 {
 				r = r.Delete(j)
 				j--
 				continue
@@ -166,7 +165,7 @@ func (r Rules) Merge() Rules {
 				fileJ := r[j].(*File)
 				if fileI.Path == fileJ.Path {
 					fileI.Access = append(fileI.Access, fileJ.Access...)
-					slices.SortFunc(fileI.Access, cmpFileAccess)
+					slices.SortFunc(fileI.Access, compareFileAccess)
 					fileI.Access = slices.Compact(fileI.Access)
 					r = r.Delete(j)
 					j--
@@ -192,13 +191,7 @@ func (r Rules) Sort() Rules {
 			}
 			return ruleWeights[kindOfA] - ruleWeights[kindOfB]
 		}
-		if a.Equals(b) {
-			return 0
-		}
-		if a.Less(b) {
-			return -1
-		}
-		return 1
+		return a.Compare(b)
 	})
 	return r
 }

@@ -6,7 +6,6 @@ package aa
 
 import (
 	"fmt"
-	"slices"
 )
 
 const (
@@ -48,15 +47,11 @@ func (m MountConditions) Validate() error {
 	return validateValues(MOUNT, "flags", m.Options)
 }
 
-func (m MountConditions) Less(other MountConditions) bool {
-	if m.FsType != other.FsType {
-		return m.FsType < other.FsType
+func (m MountConditions) Compare(other MountConditions) int {
+	if res := compare(m.FsType, other.FsType); res != 0 {
+		return res
 	}
-	return len(m.Options) < len(other.Options)
-}
-
-func (m MountConditions) Equals(other MountConditions) bool {
-	return m.FsType == other.FsType && slices.Equal(m.Options, other.Options)
+	return compare(m.Options, other.Options)
 }
 
 type Mount struct {
@@ -84,25 +79,18 @@ func (r *Mount) Validate() error {
 	return nil
 }
 
-func (r *Mount) Less(other any) bool {
+func (r *Mount) Compare(other Rule) int {
 	o, _ := other.(*Mount)
-	if r.Source != o.Source {
-		return r.Source < o.Source
+	if res := compare(r.Source, o.Source); res != 0 {
+		return res
 	}
-	if r.MountPoint != o.MountPoint {
-		return r.MountPoint < o.MountPoint
+	if res := compare(r.MountPoint, o.MountPoint); res != 0 {
+		return res
 	}
-	if r.MountConditions.Equals(o.MountConditions) {
-		return r.MountConditions.Less(o.MountConditions)
+	if res := r.MountConditions.Compare(o.MountConditions); res != 0 {
+		return res
 	}
-	return r.Qualifier.Less(o.Qualifier)
-}
-
-func (r *Mount) Equals(other any) bool {
-	o, _ := other.(*Mount)
-	return r.Source == o.Source && r.MountPoint == o.MountPoint &&
-		r.MountConditions.Equals(o.MountConditions) &&
-		r.Qualifier.Equals(o.Qualifier)
+	return r.Qualifier.Compare(o.Qualifier)
 }
 
 func (r *Mount) String() string {
@@ -140,22 +128,15 @@ func (r *Umount) Validate() error {
 	return nil
 }
 
-func (r *Umount) Less(other any) bool {
+func (r *Umount) Compare(other Rule) int {
 	o, _ := other.(*Umount)
-	if r.MountPoint != o.MountPoint {
-		return r.MountPoint < o.MountPoint
+	if res := compare(r.MountPoint, o.MountPoint); res != 0 {
+		return res
 	}
-	if r.MountConditions.Equals(o.MountConditions) {
-		return r.MountConditions.Less(o.MountConditions)
+	if res := r.MountConditions.Compare(o.MountConditions); res != 0 {
+		return res
 	}
-	return r.Qualifier.Less(o.Qualifier)
-}
-
-func (r *Umount) Equals(other any) bool {
-	o, _ := other.(*Umount)
-	return r.MountPoint == o.MountPoint &&
-		r.MountConditions.Equals(o.MountConditions) &&
-		r.Qualifier.Equals(o.Qualifier)
+	return r.Qualifier.Compare(o.Qualifier)
 }
 
 func (r *Umount) String() string {
@@ -193,22 +174,15 @@ func (r *Remount) Validate() error {
 	return nil
 }
 
-func (r *Remount) Less(other any) bool {
+func (r *Remount) Compare(other Rule) int {
 	o, _ := other.(*Remount)
-	if r.MountPoint != o.MountPoint {
-		return r.MountPoint < o.MountPoint
+	if res := compare(r.MountPoint, o.MountPoint); res != 0 {
+		return res
 	}
-	if r.MountConditions.Equals(o.MountConditions) {
-		return r.MountConditions.Less(o.MountConditions)
+	if res := r.MountConditions.Compare(o.MountConditions); res != 0 {
+		return res
 	}
-	return r.Qualifier.Less(o.Qualifier)
-}
-
-func (r *Remount) Equals(other any) bool {
-	o, _ := other.(*Remount)
-	return r.MountPoint == o.MountPoint &&
-		r.MountConditions.Equals(o.MountConditions) &&
-		r.Qualifier.Equals(o.Qualifier)
+	return r.Qualifier.Compare(o.Qualifier)
 }
 
 func (r *Remount) String() string {

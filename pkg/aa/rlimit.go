@@ -43,20 +43,15 @@ func (r *Rlimit) Validate() error {
 	return nil
 }
 
-func (r *Rlimit) Less(other any) bool {
+func (r *Rlimit) Compare(other Rule) int {
 	o, _ := other.(*Rlimit)
-	if r.Key != o.Key {
-		return r.Key < o.Key
+	if res := compare(r.Key, o.Key); res != 0 {
+		return res
 	}
-	if r.Op != o.Op {
-		return r.Op < o.Op
+	if res := compare(r.Op, o.Op); res != 0 {
+		return res
 	}
-	return r.Value < o.Value
-}
-
-func (r *Rlimit) Equals(other any) bool {
-	o, _ := other.(*Rlimit)
-	return r.Key == o.Key && r.Op == o.Op && r.Value == o.Value
+	return compare(r.Value, o.Value)
 }
 
 func (r *Rlimit) String() string {

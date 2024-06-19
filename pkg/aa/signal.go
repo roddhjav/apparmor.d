@@ -6,7 +6,6 @@ package aa
 
 import (
 	"fmt"
-	"slices"
 )
 
 const SIGNAL Kind = "signal"
@@ -60,24 +59,18 @@ func (r *Signal) Validate() error {
 	return nil
 }
 
-func (r *Signal) Less(other any) bool {
+func (r *Signal) Compare(other Rule) int {
 	o, _ := other.(*Signal)
-	if len(r.Access) != len(o.Access) {
-		return len(r.Access) < len(o.Access)
+	if res := compare(r.Access, o.Access); res != 0 {
+		return res
 	}
-	if len(r.Set) != len(o.Set) {
-		return len(r.Set) < len(o.Set)
+	if res := compare(r.Set, o.Set); res != 0 {
+		return res
 	}
-	if r.Peer != o.Peer {
-		return r.Peer < o.Peer
+	if res := compare(r.Peer, o.Peer); res != 0 {
+		return res
 	}
-	return r.Qualifier.Less(o.Qualifier)
-}
-
-func (r *Signal) Equals(other any) bool {
-	o, _ := other.(*Signal)
-	return slices.Equal(r.Access, o.Access) && slices.Equal(r.Set, o.Set) &&
-		r.Peer == o.Peer && r.Qualifier.Equals(o.Qualifier)
+	return r.Qualifier.Compare(o.Qualifier)
 }
 
 func (r *Signal) String() string {

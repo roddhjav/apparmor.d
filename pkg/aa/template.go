@@ -117,6 +117,12 @@ var (
 	}
 	fileWeights = generateWeights(fileAlphabet)
 
+	// The order AARE should be sorted
+	stringAlphabet = []byte(
+		"!\"#$%&'(){}[]*+,-./:;<=>?@\\^_`|~0123456789abcdefghijklmnopqrstuvwxyz",
+	)
+	stringWeights = generateWeights(stringAlphabet)
+
 	// The order the rule values (access, type, domains, etc) should be sorted
 	requirements        = map[Kind]requirement{}
 	requirementsWeights map[Kind]map[string]map[string]int
@@ -155,7 +161,7 @@ func renderTemplate(name Kind, data any) string {
 	return res.String()
 }
 
-func generateWeights[T Kind | string](alphabet []T) map[T]int {
+func generateWeights[T comparable](alphabet []T) map[T]int {
 	res := make(map[T]int, len(alphabet))
 	for i, r := range alphabet {
 		res[r] = i

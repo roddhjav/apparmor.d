@@ -76,26 +76,6 @@ func newRuleFromLog(log map[string]string) RuleBase {
 	}
 }
 
-func (r RuleBase) Less(other any) bool {
-	return false
-}
-
-func (r RuleBase) Equals(other any) bool {
-	return false
-}
-
-func (r RuleBase) String() string {
-	return renderTemplate(r.Kind(), r)
-}
-
-func (r RuleBase) Constraint() constraint {
-	return anyKind
-}
-
-func (r RuleBase) Kind() Kind {
-	return COMMENT
-}
-
 type Qualifier struct {
 	Audit      bool
 	AccessType string
@@ -109,13 +89,9 @@ func newQualifierFromLog(log map[string]string) Qualifier {
 	return Qualifier{Audit: audit}
 }
 
-func (r Qualifier) Less(other Qualifier) bool {
-	if r.Audit != other.Audit {
-		return r.Audit
+func (r Qualifier) Compare(o Qualifier) int {
+	if r := compare(r.Audit, o.Audit); r != 0 {
+		return r
 	}
-	return r.AccessType < other.AccessType
-}
-
-func (r Qualifier) Equals(other Qualifier) bool {
-	return r.Audit == other.Audit && r.AccessType == other.AccessType
+	return compare(r.AccessType, o.AccessType)
 }

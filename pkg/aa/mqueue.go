@@ -58,24 +58,18 @@ func (r *Mqueue) Validate() error {
 	return nil
 }
 
-func (r *Mqueue) Less(other any) bool {
+func (r *Mqueue) Compare(other Rule) int {
 	o, _ := other.(*Mqueue)
-	if len(r.Access) != len(o.Access) {
-		return len(r.Access) < len(o.Access)
+	if res := compare(r.Access, o.Access); res != 0 {
+		return res
 	}
-	if r.Type != o.Type {
-		return r.Type < o.Type
+	if res := compare(r.Type, o.Type); res != 0 {
+		return res
 	}
-	if r.Label != o.Label {
-		return r.Label < o.Label
+	if res := compare(r.Label, o.Label); res != 0 {
+		return res
 	}
-	return r.Qualifier.Less(o.Qualifier)
-}
-
-func (r *Mqueue) Equals(other any) bool {
-	o, _ := other.(*Mqueue)
-	return slices.Equal(r.Access, o.Access) && r.Type == o.Type && r.Label == o.Label &&
-		r.Name == o.Name && r.Qualifier.Equals(o.Qualifier)
+	return r.Qualifier.Compare(o.Qualifier)
 }
 
 func (r *Mqueue) String() string {

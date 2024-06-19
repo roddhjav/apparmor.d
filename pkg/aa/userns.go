@@ -4,6 +4,8 @@
 
 package aa
 
+import "fmt"
+
 const USERNS Kind = "userns"
 
 type Userns struct {
@@ -24,17 +26,12 @@ func (r *Userns) Validate() error {
 	return nil
 }
 
-func (r *Userns) Less(other any) bool {
+func (r *Userns) Compare(other Rule) int {
 	o, _ := other.(*Userns)
-	if r.Create != o.Create {
-		return r.Create
+	if res := compare(r.Create, o.Create); res != 0 {
+		return res
 	}
-	return r.Qualifier.Less(o.Qualifier)
-}
-
-func (r *Userns) Equals(other any) bool {
-	o, _ := other.(*Userns)
-	return r.Create == o.Create && r.Qualifier.Equals(o.Qualifier)
+	return r.Qualifier.Compare(o.Qualifier)
 }
 
 func (r *Userns) String() string {

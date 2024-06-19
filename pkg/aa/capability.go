@@ -6,7 +6,6 @@ package aa
 
 import (
 	"fmt"
-	"slices"
 )
 
 const CAPABILITY Kind = "capability"
@@ -47,19 +46,12 @@ func (r *Capability) Validate() error {
 	return nil
 }
 
-func (r *Capability) Less(other any) bool {
+func (r *Capability) Compare(other Rule) int {
 	o, _ := other.(*Capability)
-	for i := 0; i < len(r.Names) && i < len(o.Names); i++ {
-		if r.Names[i] != o.Names[i] {
-			return r.Names[i] < o.Names[i]
-		}
+	if res := compare(r.Names, o.Names); res != 0 {
+		return res
 	}
-	return r.Qualifier.Less(o.Qualifier)
-}
-
-func (r *Capability) Equals(other any) bool {
-	o, _ := other.(*Capability)
-	return slices.Equal(r.Names, o.Names) && r.Qualifier.Equals(o.Qualifier)
+	return r.Qualifier.Compare(o.Qualifier)
 }
 
 func (r *Capability) String() string {

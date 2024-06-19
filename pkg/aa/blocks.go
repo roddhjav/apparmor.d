@@ -19,14 +19,9 @@ func (r *Hat) Validate() error {
 	return nil
 }
 
-func (p *Hat) Less(other any) bool {
+func (r *Hat) Compare(other Rule) int {
 	o, _ := other.(*Hat)
-	return p.Name < o.Name
-}
-
-func (p *Hat) Equals(other any) bool {
-	o, _ := other.(*Hat)
-	return p.Name == o.Name
+	return compare(r.Name, o.Name)
 }
 
 func (p *Hat) String() string {

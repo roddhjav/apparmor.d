@@ -6,7 +6,6 @@ package aa
 
 import (
 	"fmt"
-	"maps"
 	"slices"
 	"strings"
 )
@@ -96,19 +95,12 @@ func (r *Profile) Validate() error {
 	return r.Rules.Validate()
 }
 
-func (p *Profile) Less(other any) bool {
+func (r *Profile) Compare(other Rule) int {
 	o, _ := other.(*Profile)
-	if p.Name != o.Name {
-		return p.Name < o.Name
+	if res := compare(r.Name, o.Name); res != 0 {
+		return res
 	}
-	return len(p.Attachments) < len(o.Attachments)
-}
-
-func (p *Profile) Equals(other any) bool {
-	o, _ := other.(*Profile)
-	return p.Name == o.Name && slices.Equal(p.Attachments, o.Attachments) &&
-		maps.Equal(p.Attributes, o.Attributes) &&
-		slices.Equal(p.Flags, o.Flags)
+	return compare(r.Attachments, o.Attachments)
 }
 
 func (p *Profile) String() string {

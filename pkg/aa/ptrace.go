@@ -6,7 +6,6 @@ package aa
 
 import (
 	"fmt"
-	"slices"
 )
 
 const PTRACE Kind = "ptrace"
@@ -42,21 +41,15 @@ func (r *Ptrace) Validate() error {
 	return nil
 }
 
-func (r *Ptrace) Less(other any) bool {
+func (r *Ptrace) Compare(other Rule) int {
 	o, _ := other.(*Ptrace)
-	if len(r.Access) != len(o.Access) {
-		return len(r.Access) < len(o.Access)
+	if res := compare(r.Access, o.Access); res != 0 {
+		return res
 	}
-	if r.Peer != o.Peer {
-		return r.Peer == o.Peer
+	if res := compare(r.Peer, o.Peer); res != 0 {
+		return res
 	}
-	return r.Qualifier.Less(o.Qualifier)
-}
-
-func (r *Ptrace) Equals(other any) bool {
-	o, _ := other.(*Ptrace)
-	return slices.Equal(r.Access, o.Access) && r.Peer == o.Peer &&
-		r.Qualifier.Equals(o.Qualifier)
+	return r.Qualifier.Compare(o.Qualifier)
 }
 
 func (r *Ptrace) String() string {
