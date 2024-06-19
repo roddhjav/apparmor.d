@@ -1,0 +1,110 @@
+# Simple test profile with all rules used
+
+abi <abi/4.0>,
+
+alias /mnt/usr -> /usr,
+
+include <tunables/global> # optional: a comment
+include if exists "/etc/apparmor.d/global/dummy space"
+
+@{name}=torbrowser "tor browser" 
+@{lib_dirs} = @{lib}/@{name} /opt/@{name} # another comment
+@{config_dirs} = @{HOME}/.mozilla/
+@{cache_dirs}=@{user_cache_dirs}/mozilla/
+
+alias /mnt/{,usr.sbin.}mount.cifs -> /sbin/mount.cifs,
+
+@{exec_path} = @{bin}/@{name} @{lib_dirs}/@{name}
+profile foo @{exec_path} xattrs=(security.tagged=allowed) flags=(complain attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+  include "/etc/apparmor.d/abstractions/dummy space"
+
+  all,
+
+  set rlimit nproc <= 200,
+
+  userns,
+
+  capability dac_read_search,
+  capability dac_override,
+
+  network inet stream,
+  network netlink raw,
+
+  mount /{,**},
+  mount               options=(rw rbind)           /tmp/newroot/ -> /tmp/newroot/,
+  mount               options=(rw silent rprivate)               -> /oldroot/,
+  mount fstype=devpts options=(rw nosuid noexec)          devpts -> /newroot/dev/pts/,
+
+  remount /newroot/{,**},
+
+  umount @{run}/user/@{uid}/,
+
+  pivot_root oldroot=/tmp/oldroot/ /tmp/,
+
+  change_profile -> libvirt-@{uuid},
+
+  mqueue r type=posix /,
+
+  io_uring sqpoll label=foo,
+
+  signal (receive) set=(cont,term,winch) peer=at-spi-bus-launcher,
+
+  ptrace (read) peer=nautilus,
+
+  unix (send receive) type=stream addr="@/tmp/.ICE[0-9]-unix/19 5" peer=(label=gnome-shell, addr=none),
+
+  dbus bind bus=session name=org.gnome.*,
+  dbus receive bus=system path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member=AddMatch
+       peer=(name=:1.3, label=power-profiles-daemon),
+
+  # A comment! before a paragraph of rules
+  "/opt/Mullvad VPN/resources/*.so*" mr,
+  "/opt/Mullvad VPN/resources/*" r,
+  "/opt/Mullvad VPN/resources/openvpn" rix,
+  /usr/share/gnome-shell/extensions/ding@rastersoft.com/{,*/}ding.js rPx,
+  /opt/intel/oneapi/compiler/*/linux/lib/*.so./* rm,
+
+  owner @{user_config_dirs}/powerdevilrc{,.@{rand6}} rwl -> @{user_config_dirs}/#@{int},
+  link @{user_config_dirs}/kiorc -> @{user_config_dirs}/#@{int},
+
+  @{run}/udev/data/+pci:* r,
+
+  @{sys}/devices/@{pci}/class r,
+
+  owner @{PROC}/@{pid}/task/@{tid}/comm rw,
+
+  ^action {
+    include <abstractions/base>
+    include if exists <local/foo_action>
+  }
+
+  profile systemctl {
+    include <abstractions/base>
+    include <abstractions/systemctl>
+
+    capability net_admin,
+  
+    include if exists <local/foo_systemctl>
+  }
+
+  profile sudo {
+    include <abstractions/base>
+    include <abstractions/app/sudo>
+
+    @{sh_path} rix,
+
+    include if exists <local/foo_sudo>
+  }
+
+  include if exists <local/foo>
+}
+
+profile foo2 {
+  include <abstractions/base>
+
+  include if exists <local/foo2>
+}
