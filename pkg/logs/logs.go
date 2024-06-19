@@ -31,13 +31,24 @@ const (
 var (
 	quoted                bool
 	isAppArmorLogTemplate = regexp.MustCompile(`apparmor=("DENIED"|"ALLOWED"|"AUDIT")`)
-	hex                   = `[0-9a-fA-F]`
+	_hex                  = `[0-9a-fA-F]`
+	_int                  = `[0-9]`
 	regCleanLogs          = util.ToRegexRepl([]string{
 		// Clean apparmor log file
 		`.*apparmor="`, `apparmor="`,
 		`(peer_|)pid=[0-9]*\s`, " ",
 		`\x1d`, " ",
 
+		// Remove basic rules from abstractions/base
+		`(?m)^.*/etc/[^/]+so.*$`, ``,
+		`(?m)^.*/usr/(lib|lib32|lib64|libexec)/[^/]+so.*$`, ``,
+		`(?m)^.*/usr/(lib|lib32|lib64|libexec)/locale/.*$`, ``,
+		`(?m)^.*/usr/share/locale[^/]?/.*$`, ``,
+		`(?m)^.*/usr/share/zoneinfo[^/]?/.*$`, ``,
+		`(?m)^.*/dev/(null|zero|full|log).*$`, ``,
+		`(?m)^.*/dev/(u|)random.*$`, ``,
+	})
+	regResolveLogs = util.ToRegexRepl([]string{
 		// Resolve classic user variables
 		`/home/[^/]+/.cache`, `@{user_cache_dirs}`,
 		`/home/[^/]+/.config`, `@{user_config_dirs}`,
@@ -47,38 +58,42 @@ var (
 		`/home/[^/]+/.local/lib`, `@{user_lib_dirs}`,
 		`/home/[^/]+/.ssh`, `@{HOME}/@{XDG_SSH_DIR}`,
 		`/home/[^/]+/.gnupg`, `@{HOME}/@{XDG_GPG_DIR}`,
-		`/home/[^/]+`, `@{HOME}`,
+		`/home/[^/]+/`, `@{HOME}/`,
 
 		// Resolve classic system variables
-		`/usr/lib(|32|64|exec)`, `@{lib}`,
-		`/usr/(|s)bin`, `@{bin}`,
+		`/usr/(lib|lib32|lib64|libexec)`, `@{lib}`,
+		`/usr/(bin|sbin)`, `@{bin}`,
 		`x86_64-pc-linux-gnu[^/]?`, `@{multiarch}`,
 		`/usr/etc/`, `@{etc_ro}/`,
+		`/var/run/`, `@{run}/`,
 		`/run/`, `@{run}/`,
 		`user/[0-9]*/`, `user/@{uid}/`,
+		`/tmp/user/@{uid}/`, `@{tmp}/`,
 		`/proc/`, `@{PROC}/`,
 		`@{PROC}/[0-9]*/`, `@{PROC}/@{pid}/`,
 		`@{PROC}/@{pid}/task/[0-9]*/`, `@{PROC}/@{pid}/task/@{tid}/`,
 		`/sys/`, `@{sys}/`,
 		`@{PROC}@{sys}/`, `@{PROC}/sys/`,
-		`pci` + strings.Repeat(hex, 4) + `:` + strings.Repeat(hex, 2), `@{pci_bus}`,
+		`pci` + strings.Repeat(_hex, 4) + `:` + strings.Repeat(_hex, 2), `@{pci_bus}`,
+		`1000`, `@{pid}`,
 
 		// Some system glob
 		`:1.[0-9]*`, `:*`, // dbus peer name
 		`@{bin}/(|ba|da)sh`, `@{sh_path}`, // collect all shell
 		`@{lib}/modules/[^/]+\/`, `@{lib}/modules/*/`, // strip kernel version numbers from kernel module accesses
-		strings.Repeat(hex, 64), `@{hex64}`,
-		strings.Repeat(hex, 32), `@{hex32}`,
-		strings.Repeat(hex, 8) + `[-_]` + strings.Repeat(hex, 4) + `[-_]` + strings.Repeat(hex, 4) + `[-_]` + strings.Repeat(hex, 4) + `[-_]` + strings.Repeat(hex, 12), `@{uuid}`,
 
-		// Remove basic rules from abstractions/base
-		`(?m)^.*/etc/[^/]+so.*$`, ``,
-		`(?m)^.*@{lib}/[^/]+so.*$`, ``,
-		`(?m)^.*@{lib}/locale/.*$`, ``,
-		`(?m)^.*/usr/share/locale[^/]?/.*$`, ``,
-		`(?m)^.*/usr/share/zoneinfo[^/]?/.*$`, ``,
-		`(?m)^.*/dev/(null|zero|full|log).*$`, ``,
-		`(?m)^.*/dev/(u|)random.*$`, ``,
+		// int, hex, uuid
+		strings.Repeat(_hex, 8) + `[-_]` + strings.Repeat(_hex, 4) + `[-_]` + strings.Repeat(_hex, 4) + `[-_]` + strings.Repeat(_hex, 4) + `[-_]` + strings.Repeat(_hex, 12), `@{uuid}`,
+		strings.Repeat(_int, 64), `@{int64}`,
+		strings.Repeat(_hex, 64), `@{hex64}`,
+		strings.Repeat(_hex, 38), `@{hex38}`,
+		strings.Repeat(_int, 32), `@{int32}`,
+		strings.Repeat(_hex, 32), `@{hex32}`,
+		strings.Repeat(_int, 16), `@{int16}`,
+		strings.Repeat(_hex, 16), `@{hex16}`,
+		strings.Repeat(_int, 10), `@{int10}`,
+		strings.Repeat(_int, 8), `@{int8}`,
+		strings.Repeat(_int, 6), `@{int6}`,
 	})
 )
 
@@ -107,6 +122,7 @@ func NewApparmorLogs(file io.Reader, profile string) AppArmorLogs {
 
 	// Parse log into ApparmorLog struct
 	aaLogs := make(AppArmorLogs, 0)
+	toClean := []string{"profile", "name", "target"}
 	for _, log := range logs {
 		quoted = false
 		tmp := strings.FieldsFunc(log, splitQuoted)
@@ -115,7 +131,11 @@ func NewApparmorLogs(file io.Reader, profile string) AppArmorLogs {
 		for _, item := range tmp {
 			kv := strings.Split(item, "=")
 			if len(kv) >= 2 {
-				aa[kv[0]] = strings.Trim(kv[1], `"`)
+				key, value := kv[0], kv[1]
+				if slices.Contains(toClean, key) {
+					value = regResolveLogs.Replace(kv[1])
+				}
+				aa[key] = strings.Trim(value, `"`)
 			}
 		}
 		aaLogs = append(aaLogs, aa)

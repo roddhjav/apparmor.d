@@ -104,7 +104,8 @@ func GetJournalctlLogs(path string, useFile bool) (io.Reader, error) {
 
 	var res strings.Builder
 	for _, log := range logs {
-		res.WriteString(log.Message + "\n")
+		res.WriteString(log.Message)
+		res.WriteString("\n")
 	}
 	return strings.NewReader(res.String()), nil
 }
