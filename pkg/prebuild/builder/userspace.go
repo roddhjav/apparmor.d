@@ -38,7 +38,7 @@ func (b Userspace) Apply(opt *Option, profile string) (string, error) {
 	}
 
 	f := aa.DefaultTunables()
-	if err := f.Parse(profile); err != nil {
+	if _, err := f.Parse(profile); err != nil {
 		return "", err
 	}
 	if err := f.Resolve(); err != nil {
