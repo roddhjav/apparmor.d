@@ -94,9 +94,11 @@ var (
 	fileAlphabet = []string{
 		"@{exec_path}",        // 1. entry point
 		"@{sh_path}",          // 2.1 shells
-		"@{bin}",              // 2.1 binaries
-		"@{lib}",              // 2.2 libraries
-		"/opt",                // 2.3 opt binaries & libraries
+		"@{coreutils_path}",   // 2.2 coreutils
+		"@{open_path}",        // 2.3 binaries paths
+		"@{bin}",              // 2.3 binaries
+		"@{lib}",              // 2.4 libraries
+		"/opt",                // 2.5 opt binaries & libraries
 		"/usr/share",          // 3. shared data
 		"/etc",                // 4. system configuration
 		"/var",                // 5.1 system read/write data
@@ -107,8 +109,9 @@ var (
 		"@{user_config_dirs}", // 7.2 user config
 		"@{user_share_dirs}",  // 7.3 user shared
 		"/tmp",                // 8.1 Temporary data
-		"@{run}",              // 8.2 Runtime data
-		"/dev/shm",            // 8.3 Shared memory
+		"@{tmp}",              // 8.1. User temporary data
+		"/dev/shm",            // 8.2 Shared memory
+		"@{run}",              // 8.3 Runtime data
 		"@{sys}",              // 9. Sys files
 		"@{PROC}",             // 10. Proc files
 		"/dev",                // 11. Dev files
@@ -116,6 +119,20 @@ var (
 		"profile",             // 13. Subprofiles
 	}
 	fileWeights = generateWeights(fileAlphabet)
+
+	// Some file rule should be sorted in the same group
+	fileAlphabetGroups = map[string]string{
+		"@{exec_path}":      "exec",
+		"@{sh_path}":        "exec",
+		"@{coreutils_path}": "exec",
+		"@{open_path}":      "exec",
+		"@{bin}":            "exec",
+		"@{lib}":            "exec",
+		"/opt":              "exec",
+		"/tmp":              "tmp",
+		"@{tmp}":            "tmp",
+		"/dev/shm":          "tmp",
+	}
 
 	// The order AARE should be sorted
 	stringAlphabet = []byte(
