@@ -153,7 +153,7 @@ func (f *AppArmorProfileFile) resolveInclude(include *Include) error {
 			if err != nil {
 				return err
 			}
-			if err := iFile.Parse(raw); err != nil {
+			if _, err := iFile.Parse(raw); err != nil {
 				return err
 			}
 		}
