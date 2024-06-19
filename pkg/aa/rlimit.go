@@ -29,7 +29,7 @@ type Rlimit struct {
 
 func newRlimitFromLog(log map[string]string) Rule {
 	return &Rlimit{
-		RuleBase: newRuleFromLog(log),
+		RuleBase: newBaseFromLog(log),
 		Key:      log["key"],
 		Op:       log["op"],
 		Value:    log["value"],

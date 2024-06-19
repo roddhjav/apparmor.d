@@ -41,7 +41,7 @@ type Signal struct {
 
 func newSignalFromLog(log map[string]string) Rule {
 	return &Signal{
-		RuleBase:  newRuleFromLog(log),
+		RuleBase:  newBaseFromLog(log),
 		Qualifier: newQualifierFromLog(log),
 		Access:    Must(toAccess(SIGNAL, log["requested_mask"])),
 		Set:       []string{log["signal"]},

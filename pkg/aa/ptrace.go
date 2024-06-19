@@ -27,7 +27,7 @@ type Ptrace struct {
 
 func newPtraceFromLog(log map[string]string) Rule {
 	return &Ptrace{
-		RuleBase:  newRuleFromLog(log),
+		RuleBase:  newBaseFromLog(log),
 		Qualifier: newQualifierFromLog(log),
 		Access:    Must(toAccess(PTRACE, log["requested_mask"])),
 		Peer:      log["peer"],

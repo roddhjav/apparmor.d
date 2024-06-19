@@ -42,7 +42,7 @@ func newDbusFromLog(log map[string]string) Rule {
 		peerName = log["name"]
 	}
 	return &Dbus{
-		RuleBase:  newRuleFromLog(log),
+		RuleBase:  newBaseFromLog(log),
 		Qualifier: newQualifierFromLog(log),
 		Access:    []string{log["mask"]},
 		Bus:       log["bus"],

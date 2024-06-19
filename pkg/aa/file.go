@@ -55,7 +55,7 @@ func newFileFromLog(log map[string]string) Rule {
 		return newLinkFromLog(log)
 	}
 	return &File{
-		RuleBase:  newRuleFromLog(log),
+		RuleBase:  newBaseFromLog(log),
 		Qualifier: newQualifierFromLog(log),
 		Owner:     isOwner(log),
 		Path:      log["name"],
@@ -114,7 +114,7 @@ type Link struct {
 
 func newLinkFromLog(log map[string]string) Rule {
 	return &Link{
-		RuleBase:  newRuleFromLog(log),
+		RuleBase:  newBaseFromLog(log),
 		Qualifier: newQualifierFromLog(log),
 		Owner:     isOwner(log),
 		Path:      log["name"],

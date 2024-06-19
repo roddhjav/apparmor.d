@@ -36,7 +36,7 @@ type Unix struct {
 
 func newUnixFromLog(log map[string]string) Rule {
 	return &Unix{
-		RuleBase:  newRuleFromLog(log),
+		RuleBase:  newBaseFromLog(log),
 		Qualifier: newQualifierFromLog(log),
 		Access:    Must(toAccess(UNIX, log["requested_mask"])),
 		Type:      log["sock_type"],

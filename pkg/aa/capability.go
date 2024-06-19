@@ -33,7 +33,7 @@ type Capability struct {
 
 func newCapabilityFromLog(log map[string]string) Rule {
 	return &Capability{
-		RuleBase:  newRuleFromLog(log),
+		RuleBase:  newBaseFromLog(log),
 		Qualifier: newQualifierFromLog(log),
 		Names:     Must(toValues(CAPABILITY, "name", log["capname"])),
 	}

@@ -49,7 +49,7 @@ func newRule(rule []string) RuleBase {
 	}
 }
 
-func newRuleFromLog(log map[string]string) RuleBase {
+func newBaseFromLog(log map[string]string) RuleBase {
 	comment := ""
 	fileInherit, noNewPrivs, optional := false, false, false
 
