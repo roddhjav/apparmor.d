@@ -8,7 +8,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/samber/lo"
+	"github.com/roddhjav/apparmor.d/pkg/util"
 )
 
 type requirement map[string][]string
@@ -225,7 +225,7 @@ func (r Rules) Format() Rules {
 			rule := r[i].(*File)
 
 			// Add padding to align with other transition rule
-			isTransition := lo.Intersect(transitions, rule.Access)
+			isTransition := util.Intersect(transitions, rule.Access)
 			if len(isTransition) > 0 {
 				ruleLen := len(rule.Path) + 1
 				paddingMaxLenght = max(ruleLen, paddingMaxLenght)
@@ -265,7 +265,7 @@ func (r Rules) Format() Rules {
 			}
 
 			// Do not add new line on executable rule
-			isTransition := lo.Intersect(transitions, rule.Access)
+			isTransition := util.Intersect(transitions, rule.Access)
 			if len(isTransition) > 0 {
 				continue
 			}

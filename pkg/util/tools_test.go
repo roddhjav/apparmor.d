@@ -59,6 +59,53 @@ func TestRemoveDuplicate(t *testing.T) {
 	}
 }
 
+func TestIntersect(t *testing.T) {
+	tests := []struct {
+		name  string
+		list1 []int
+		list2 []int
+		want  []int
+	}{
+		{
+			name:  "1",
+			list1: []int{0, 1, 2, 3, 4, 5},
+			list2: []int{0, 2},
+			want:  []int{0, 2},
+		},
+		{
+			name:  "2",
+			list1: []int{0, 1, 2, 3, 4, 5},
+			list2: []int{0, 6},
+			want:  []int{0},
+		},
+		{
+			name:  "3",
+			list1: []int{0, 1, 2, 3, 4, 5},
+			list2: []int{-1, 6},
+			want:  []int{},
+		},
+		{
+			name:  "4",
+			list1: []int{0, 6},
+			list2: []int{0, 1, 2, 3, 4, 5},
+			want:  []int{0},
+		},
+		{
+			name:  "5",
+			list1: []int{0, 6, 0},
+			list2: []int{0, 1, 2, 3, 4, 5},
+			want:  []int{0},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := Intersect(tt.list1, tt.list2); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Intersect() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestToRegexRepl(t *testing.T) {
 	tests := []struct {
 		name string
