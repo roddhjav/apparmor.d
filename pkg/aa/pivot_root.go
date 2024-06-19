@@ -16,7 +16,7 @@ type PivotRoot struct {
 
 func newPivotRootFromLog(log map[string]string) Rule {
 	return &PivotRoot{
-		RuleBase:      newRuleFromLog(log),
+		RuleBase:      newBaseFromLog(log),
 		Qualifier:     newQualifierFromLog(log),
 		OldRoot:       log["srcname"],
 		NewRoot:       log["name"],

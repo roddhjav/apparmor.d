@@ -72,7 +72,7 @@ type Network struct {
 
 func newNetworkFromLog(log map[string]string) Rule {
 	return &Network{
-		RuleBase:    newRuleFromLog(log),
+		RuleBase:    newBaseFromLog(log),
 		Qualifier:   newQualifierFromLog(log),
 		AddressExpr: newAddressExprFromLog(log),
 		Domain:      log["family"],

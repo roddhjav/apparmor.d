@@ -24,7 +24,7 @@ type ChangeProfile struct {
 
 func newChangeProfileFromLog(log map[string]string) Rule {
 	return &ChangeProfile{
-		RuleBase:    newRuleFromLog(log),
+		RuleBase:    newBaseFromLog(log),
 		Qualifier:   newQualifierFromLog(log),
 		ExecMode:    log["mode"],
 		Exec:        log["exec"],

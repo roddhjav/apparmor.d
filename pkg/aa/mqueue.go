@@ -39,7 +39,7 @@ func newMqueueFromLog(log map[string]string) Rule {
 		mqueueType = "sysv"
 	}
 	return &Mqueue{
-		RuleBase:  newRuleFromLog(log),
+		RuleBase:  newBaseFromLog(log),
 		Qualifier: newQualifierFromLog(log),
 		Access:    Must(toAccess(MQUEUE, log["requested"])),
 		Type:      mqueueType,

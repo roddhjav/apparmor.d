@@ -16,7 +16,7 @@ type Userns struct {
 
 func newUsernsFromLog(log map[string]string) Rule {
 	return &Userns{
-		RuleBase:  newRuleFromLog(log),
+		RuleBase:  newBaseFromLog(log),
 		Qualifier: newQualifierFromLog(log),
 		Create:    true,
 	}

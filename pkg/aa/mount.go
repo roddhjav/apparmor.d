@@ -64,7 +64,7 @@ type Mount struct {
 
 func newMountFromLog(log map[string]string) Rule {
 	return &Mount{
-		RuleBase:        newRuleFromLog(log),
+		RuleBase:        newBaseFromLog(log),
 		Qualifier:       newQualifierFromLog(log),
 		MountConditions: newMountConditionsFromLog(log),
 		Source:          log["srcname"],
@@ -114,7 +114,7 @@ type Umount struct {
 
 func newUmountFromLog(log map[string]string) Rule {
 	return &Umount{
-		RuleBase:        newRuleFromLog(log),
+		RuleBase:        newBaseFromLog(log),
 		Qualifier:       newQualifierFromLog(log),
 		MountConditions: newMountConditionsFromLog(log),
 		MountPoint:      log["name"],
@@ -160,7 +160,7 @@ type Remount struct {
 
 func newRemountFromLog(log map[string]string) Rule {
 	return &Remount{
-		RuleBase:        newRuleFromLog(log),
+		RuleBase:        newBaseFromLog(log),
 		Qualifier:       newQualifierFromLog(log),
 		MountConditions: newMountConditionsFromLog(log),
 		MountPoint:      log["name"],

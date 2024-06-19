@@ -25,7 +25,7 @@ type IOUring struct {
 
 func newIOUringFromLog(log map[string]string) Rule {
 	return &IOUring{
-		RuleBase:  newRuleFromLog(log),
+		RuleBase:  newBaseFromLog(log),
 		Qualifier: newQualifierFromLog(log),
 		Access:    Must(toAccess(IOURING, log["requested"])),
 		Label:     log["label"],
