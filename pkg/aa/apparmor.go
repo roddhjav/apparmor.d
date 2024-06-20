@@ -92,7 +92,7 @@ func (f *AppArmorProfileFile) Sort() {
 // Note: logs.regCleanLogs helps a lot to do a first cleaning
 func (f *AppArmorProfileFile) MergeRules() {
 	for _, p := range f.Profiles {
-		p.Merge()
+		p.Merge(nil)
 	}
 }
 

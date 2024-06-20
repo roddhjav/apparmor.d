@@ -79,6 +79,10 @@ func newBaseFromLog(log map[string]string) RuleBase {
 	}
 }
 
+func (r RuleBase) Merge(other Rule) bool {
+	return false
+}
+
 type Qualifier struct {
 	Audit      bool
 	AccessType string
