@@ -68,7 +68,7 @@ func aaLog(logger string, path string, profile string) error {
 	if rules {
 		profiles := aaLogs.ParseToProfiles()
 		for _, p := range profiles {
-			p.Merge()
+			p.Merge(nil)
 			p.Sort()
 			p.Format()
 			fmt.Print(p.String() + "\n\n")

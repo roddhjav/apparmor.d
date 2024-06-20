@@ -96,10 +96,11 @@ func (p *Profile) Kind() Kind {
 	return PROFILE
 }
 
-func (p *Profile) Merge() {
+func (p *Profile) Merge(other Rule) bool {
 	slices.Sort(p.Flags)
 	p.Flags = slices.Compact(p.Flags)
 	p.Rules = p.Rules.Merge()
+	return false
 }
 
 func (p *Profile) Sort() {

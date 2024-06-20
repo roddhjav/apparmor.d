@@ -39,6 +39,7 @@ func (k Kind) Tok() string {
 type Rule interface {
 	Validate() error
 	Compare(other Rule) int
+	Merge(other Rule) bool
 	String() string
 	Constraint() constraint
 	Kind() Kind
@@ -156,30 +157,20 @@ func (r Rules) Merge() Rules {
 			if r[i] == nil || r[j] == nil {
 				continue
 			}
-			kindOfI := r[i].Kind()
-			if kindOfI != r[j].Kind() {
+			if r[i].Kind() != r[j].Kind() {
 				continue
 			}
 
 			// If rules are identical, merge them. Ignore comments
-			if kindOfI != COMMENT && r[i].Compare(r[j]) == 0 {
+			if r[i].Kind() != COMMENT && r[i].Compare(r[j]) == 0 {
 				r = r.Delete(j)
 				j--
 				continue
 			}
 
-			// File rule
-			if kindOfI == FILE {
-				// Merge access
-				fileI := r[i].(*File)
-				fileJ := r[j].(*File)
-				if fileI.Path == fileJ.Path {
-					fileI.Access = append(fileI.Access, fileJ.Access...)
-					slices.SortFunc(fileI.Access, compareFileAccess)
-					fileI.Access = slices.Compact(fileI.Access)
-					r = r.Delete(j)
-					j--
-				}
+			if r[i].Merge(r[j]) {
+				r = r.Delete(j)
+				j--
 			}
 		}
 	}

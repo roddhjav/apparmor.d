@@ -130,6 +130,17 @@ func (r *File) Compare(other Rule) int {
 	return r.Qualifier.Compare(o.Qualifier)
 }
 
+func (r *File) Merge(other Rule) bool {
+	o, _ := other.(*File)
+	if r.Path == o.Path {
+		r.Access = append(r.Access, o.Access...)
+		slices.SortFunc(r.Access, compareFileAccess)
+		r.Access = slices.Compact(r.Access)
+		return true
+	}
+	return false
+}
+
 func (r *File) String() string {
 	return renderTemplate(r.Kind(), r)
 }
