@@ -34,7 +34,7 @@ func (r *Comment) Validate() error {
 }
 
 func (r *Comment) Compare(other Rule) int {
-	return 0
+	return 0 // Comments are always equal to each other as they are not compared
 }
 
 func (r *Comment) String() string {
