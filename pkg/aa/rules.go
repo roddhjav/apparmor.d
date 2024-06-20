@@ -157,20 +157,19 @@ func (r Rules) Merge() Rules {
 				continue
 			}
 			kindOfI := r[i].Kind()
-			kindOfJ := r[j].Kind()
-			if kindOfI != kindOfJ {
+			if kindOfI != r[j].Kind() {
 				continue
 			}
 
-			// If rules are identical, merge them
-			if r[i].Compare(r[j]) == 0 {
+			// If rules are identical, merge them. Ignore comments
+			if kindOfI != COMMENT && r[i].Compare(r[j]) == 0 {
 				r = r.Delete(j)
 				j--
 				continue
 			}
 
 			// File rule
-			if kindOfI == FILE && kindOfJ == FILE {
+			if kindOfI == FILE {
 				// Merge access
 				fileI := r[i].(*File)
 				fileJ := r[j].(*File)
