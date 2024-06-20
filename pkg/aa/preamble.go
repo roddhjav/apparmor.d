@@ -225,7 +225,7 @@ type Variable struct {
 	Define bool
 }
 
-func newVariableFromRule(rule rule) (Rule, error) {
+func newVariable(rule rule) (Rule, error) {
 	var define bool
 	var values []string
 	if len(rule) < 3 {

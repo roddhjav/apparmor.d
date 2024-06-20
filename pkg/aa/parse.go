@@ -90,7 +90,7 @@ func parseLineRules(isPreamble bool, input string) (string, Rules, error) {
 			input = strings.Replace(input, line, "", 1)
 
 		case strings.HasPrefix(tmp, VARIABLE.Tok()) && isPreamble:
-			r, err = newVariableFromRule(parseRule(line))
+			r, err = newVariable(parseRule(line))
 			if err != nil {
 				return "", nil, err
 			}
