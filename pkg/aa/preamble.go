@@ -256,8 +256,25 @@ func (r *Variable) Validate() error {
 	return nil
 }
 
+func (r *Variable) Merge(other Rule) bool {
+	o, _ := other.(*Variable)
+
+	if r.Name == o.Name && r.Define == o.Define {
+		r.Values = merge(r.Kind(), "access", r.Values, o.Values)
+		return r.RuleBase.merge(o.RuleBase)
+	}
+	return false
+}
+
 func (r *Variable) Compare(other Rule) int {
-	return 0
+	o, _ := other.(*Variable)
+	if res := compare(r.Name, o.Name); res != 0 {
+		return res
+	}
+	if res := compare(r.Define, o.Define); res != 0 {
+		return res
+	}
+	return compare(r.Values, o.Values)
 }
 
 func (r *Variable) String() string {

@@ -97,6 +97,19 @@ func (r *Mqueue) Compare(other Rule) int {
 	return r.Qualifier.Compare(o.Qualifier)
 }
 
+func (r *Mqueue) Merge(other Rule) bool {
+	o, _ := other.(*Mqueue)
+
+	if !r.Qualifier.Equal(o.Qualifier) {
+		return false
+	}
+	if r.Type == o.Type && r.Label == o.Label && r.Name == o.Name {
+		r.Access = merge(r.Kind(), "access", r.Access, o.Access)
+		return r.RuleBase.merge(o.RuleBase)
+	}
+	return false
+}
+
 func (r *Mqueue) String() string {
 	return renderTemplate(r.Kind(), r)
 }

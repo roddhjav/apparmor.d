@@ -26,6 +26,23 @@ func boolToInt(b bool) int {
 	return 0
 }
 
+func merge(kind Kind, key string, a, b []string) []string {
+	a = append(a, b...)
+	switch kind {
+	case FILE:
+		slices.SortFunc(a, compareFileAccess)
+	case VARIABLE:
+		slices.SortFunc(a, func(s1, s2 string) int {
+			return compare(s1, s2)
+		})
+	default:
+		slices.SortFunc(a, func(i, j string) int {
+			return requirementsWeights[kind][key][i] - requirementsWeights[kind][key][j]
+		})
+	}
+	return slices.Compact(a)
+}
+
 func compare(a, b any) int {
 	switch a := a.(type) {
 	case int:

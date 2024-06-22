@@ -57,11 +57,6 @@ func (r AddressExpr) Compare(other AddressExpr) int {
 	return compare(r.Port, other.Port)
 }
 
-func (r AddressExpr) Equals(other AddressExpr) bool {
-	return r.Source == other.Source && r.Destination == other.Destination &&
-		r.Port == other.Port
-}
-
 type Network struct {
 	RuleBase
 	Qualifier

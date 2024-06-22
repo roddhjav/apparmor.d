@@ -54,6 +54,11 @@ func (r *Userns) Compare(other Rule) int {
 	return r.Qualifier.Compare(o.Qualifier)
 }
 
+func (r *Userns) Merge(other Rule) bool {
+	o, _ := other.(*Userns)
+	return r.RuleBase.merge(o.RuleBase)
+}
+
 func (r *Userns) String() string {
 	return renderTemplate(r.Kind(), r)
 }

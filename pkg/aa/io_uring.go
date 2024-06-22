@@ -63,6 +63,19 @@ func (r *IOUring) Compare(other Rule) int {
 	return r.Qualifier.Compare(o.Qualifier)
 }
 
+func (r *IOUring) Merge(other Rule) bool {
+	o, _ := other.(*IOUring)
+
+	if !r.Qualifier.Equal(o.Qualifier) {
+		return false
+	}
+	if r.Label == o.Label {
+		r.Access = merge(r.Kind(), "access", r.Access, o.Access)
+		return r.RuleBase.merge(o.RuleBase)
+	}
+	return false
+}
+
 func (r *IOUring) String() string {
 	return renderTemplate(r.Kind(), r)
 }

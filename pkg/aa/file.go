@@ -132,11 +132,13 @@ func (r *File) Compare(other Rule) int {
 
 func (r *File) Merge(other Rule) bool {
 	o, _ := other.(*File)
-	if r.Path == o.Path {
-		r.Access = append(r.Access, o.Access...)
-		slices.SortFunc(r.Access, compareFileAccess)
-		r.Access = slices.Compact(r.Access)
-		return true
+
+	if !r.Qualifier.Equal(o.Qualifier) {
+		return false
+	}
+	if r.Owner == o.Owner && r.Path == o.Path && r.Target == o.Target {
+		r.Access = merge(r.Kind(), "access", r.Access, o.Access)
+		return r.RuleBase.merge(o.RuleBase)
 	}
 	return false
 }

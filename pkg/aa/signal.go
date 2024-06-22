@@ -77,6 +77,23 @@ func (r *Signal) Validate() error {
 	return nil
 }
 
+func (r *Signal) Merge(other Rule) bool {
+	o, _ := other.(*Signal)
+
+	if !r.Qualifier.Equal(o.Qualifier) {
+		return false
+	}
+	switch {
+	case r.Peer == o.Peer && compare(r.Set, o.Set) == 0:
+		r.Access = merge(r.Kind(), "access", r.Access, o.Access)
+		return r.RuleBase.merge(o.RuleBase)
+	case r.Peer == o.Peer && compare(r.Access, o.Access) == 0:
+		r.Set = merge(r.Kind(), "set", r.Set, o.Set)
+		return r.RuleBase.merge(o.RuleBase)
+	}
+	return false
+}
+
 func (r *Signal) Compare(other Rule) int {
 	o, _ := other.(*Signal)
 	if res := compare(r.Access, o.Access); res != 0 {
