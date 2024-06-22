@@ -24,6 +24,11 @@ func (r *All) Compare(other Rule) int {
 	return 0
 }
 
+func (r *All) Merge(other Rule) bool {
+	o, _ := other.(*All)
+	return r.RuleBase.merge(o.RuleBase)
+}
+
 func (r *All) String() string {
 	return renderTemplate(r.Kind(), r)
 }

@@ -109,6 +109,21 @@ func (r *Unix) Compare(other Rule) int {
 	return r.Qualifier.Compare(o.Qualifier)
 }
 
+func (r *Unix) Merge(other Rule) bool {
+	o, _ := other.(*Unix)
+
+	if !r.Qualifier.Equal(o.Qualifier) {
+		return false
+	}
+	if r.Type == o.Type && r.Protocol == o.Protocol && r.Address == o.Address &&
+		r.Label == o.Label && r.Attr == o.Attr && r.Opt == o.Opt &&
+		r.PeerLabel == o.PeerLabel && r.PeerAddr == o.PeerAddr {
+		r.Access = merge(r.Kind(), "access", r.Access, o.Access)
+		return r.RuleBase.merge(o.RuleBase)
+	}
+	return false
+}
+
 func (r *Unix) String() string {
 	return renderTemplate(r.Kind(), r)
 }

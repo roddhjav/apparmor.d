@@ -83,6 +83,11 @@ func (r RuleBase) Merge(other Rule) bool {
 	return false
 }
 
+func (r RuleBase) merge(other RuleBase) bool {
+	r.Comment += " " + other.Comment
+	return true
+}
+
 type Qualifier struct {
 	Audit      bool
 	AccessType string
@@ -101,4 +106,8 @@ func (r Qualifier) Compare(o Qualifier) int {
 		return r
 	}
 	return compare(r.AccessType, o.AccessType)
+}
+
+func (r Qualifier) Equal(o Qualifier) bool {
+	return r.Audit == o.Audit && r.AccessType == o.AccessType
 }

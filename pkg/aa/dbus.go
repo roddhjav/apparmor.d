@@ -110,6 +110,21 @@ func (r *Dbus) Compare(other Rule) int {
 	return r.Qualifier.Compare(o.Qualifier)
 }
 
+func (r *Dbus) Merge(other Rule) bool {
+	o, _ := other.(*Dbus)
+
+	if !r.Qualifier.Equal(o.Qualifier) {
+		return false
+	}
+	if r.Bus == o.Bus && r.Name == o.Name && r.Path == o.Path &&
+		r.Interface == o.Interface && r.Member == o.Member &&
+		r.PeerName == o.PeerName && r.PeerLabel == o.PeerLabel {
+		r.Access = merge(r.Kind(), "access", r.Access, o.Access)
+		return r.RuleBase.merge(o.RuleBase)
+	}
+	return false
+}
+
 func (r *Dbus) String() string {
 	return renderTemplate(r.Kind(), r)
 }
