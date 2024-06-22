@@ -40,6 +40,14 @@ var (
 	tree    bool
 )
 
+type kind uint8
+
+const (
+	isProfile kind = iota
+	isAbstraction
+	isTunable
+)
+
 func init() {
 	flag.BoolVar(&help, "h", false, "Show this help message and exit.")
 	flag.BoolVar(&help, "help", false, "Show this help message and exit.")
@@ -68,25 +76,40 @@ func getIndentationLevel(input string) int {
 	return level
 }
 
-func parse(profile string) (*aa.AppArmorProfileFile, []aa.Rules, []string, error) {
-	f := &aa.AppArmorProfileFile{}
-	nb, err := f.Parse(profile)
-	if err != nil {
-		return nil, nil, nil, err
+func parse(kind kind, profile string) ([]aa.Rules, []string, error) {
+	var raw string
+	paragraphs := []string{}
+	rulesByParagraph := []aa.Rules{}
+
+	switch kind {
+	case isTunable, isProfile:
+		f := &aa.AppArmorProfileFile{}
+		nb, err := f.Parse(profile)
+		if err != nil {
+			return nil, nil, err
+		}
+		lines := strings.Split(profile, "\n")
+		raw = strings.Join(lines[nb:], "\n")
+
+	case isAbstraction:
+		raw = profile
 	}
-	paragraphRules, paragraphs, err := aa.ParseRules(strings.Join(strings.Split(profile, "\n")[nb:], "\n"))
+
+	r, par, err := aa.ParseRules(raw)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
-	return f, paragraphRules, paragraphs, nil
+	rulesByParagraph = append(rulesByParagraph, r...)
+	paragraphs = append(paragraphs, par...)
+	return rulesByParagraph, paragraphs, nil
 }
 
-func formatFile(profile string) (string, error) {
-	_, paragraphRules, paragraphs, err := parse(profile)
+func formatFile(kind kind, profile string) (string, error) {
+	rulesByParagraph, paragraphs, err := parse(kind, profile)
 	if err != nil {
 		return "", err
 	}
-	for idx, rules := range paragraphRules {
+	for idx, rules := range rulesByParagraph {
 		if err := rules.Validate(); err != nil {
 			return "", err
 		}
@@ -95,6 +118,20 @@ func formatFile(profile string) (string, error) {
 		profile = strings.Replace(profile, paragraphs[idx], rules.String()+"\n", -1)
 	}
 	return profile, nil
+}
+
+// getKind checks if the file is a full apparmor profile file or an
+// included (abstraction or tunable) file.
+func getKind(file *paths.Path) kind {
+	dirname := file.Parent().String()
+	switch {
+	case strings.Contains(dirname, "abstractions"):
+		return isAbstraction
+	case strings.Contains(dirname, "tunables"):
+		return isTunable
+	default:
+		return isProfile
+	}
 }
 
 func aaFormat(files paths.PathList) error {
@@ -106,7 +143,8 @@ func aaFormat(files paths.PathList) error {
 		if err != nil {
 			return err
 		}
-		profile, err = formatFile(profile)
+
+		profile, err = formatFile(getKind(file), profile)
 		if err != nil {
 			return err
 		}
