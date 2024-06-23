@@ -119,7 +119,8 @@ func (r *Unix) Merge(other Rule) bool {
 		r.Label == o.Label && r.Attr == o.Attr && r.Opt == o.Opt &&
 		r.PeerLabel == o.PeerLabel && r.PeerAddr == o.PeerAddr {
 		r.Access = merge(r.Kind(), "access", r.Access, o.Access)
-		return r.RuleBase.merge(o.RuleBase)
+		b := &r.RuleBase
+		return b.merge(o.RuleBase)
 	}
 	return false
 }

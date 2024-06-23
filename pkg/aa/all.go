@@ -26,7 +26,8 @@ func (r *All) Compare(other Rule) int {
 
 func (r *All) Merge(other Rule) bool {
 	o, _ := other.(*All)
-	return r.RuleBase.merge(o.RuleBase)
+	b := &r.RuleBase
+	return b.merge(o.RuleBase)
 }
 
 func (r *All) String() string {

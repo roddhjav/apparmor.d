@@ -83,8 +83,10 @@ func (r RuleBase) Merge(other Rule) bool {
 	return false
 }
 
-func (r RuleBase) merge(other RuleBase) bool {
-	r.Comment += " " + other.Comment
+func (r *RuleBase) merge(other RuleBase) bool {
+	if other.Comment != "" {
+		r.Comment += " " + other.Comment
+	}
 	return true
 }
 

@@ -56,7 +56,8 @@ func (r *Userns) Compare(other Rule) int {
 
 func (r *Userns) Merge(other Rule) bool {
 	o, _ := other.(*Userns)
-	return r.RuleBase.merge(o.RuleBase)
+	b := &r.RuleBase
+	return b.merge(o.RuleBase)
 }
 
 func (r *Userns) String() string {

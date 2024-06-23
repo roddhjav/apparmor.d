@@ -261,7 +261,8 @@ func (r *Variable) Merge(other Rule) bool {
 
 	if r.Name == o.Name && r.Define == o.Define {
 		r.Values = merge(r.Kind(), "access", r.Values, o.Values)
-		return r.RuleBase.merge(o.RuleBase)
+		b := &r.RuleBase
+		return b.merge(o.RuleBase)
 	}
 	return false
 }

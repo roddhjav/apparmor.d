@@ -138,7 +138,8 @@ func (r *File) Merge(other Rule) bool {
 	}
 	if r.Owner == o.Owner && r.Path == o.Path && r.Target == o.Target {
 		r.Access = merge(r.Kind(), "access", r.Access, o.Access)
-		return r.RuleBase.merge(o.RuleBase)
+		b := &r.RuleBase
+		return b.merge(o.RuleBase)
 	}
 	return false
 }

@@ -120,7 +120,8 @@ func (r *Dbus) Merge(other Rule) bool {
 		r.Interface == o.Interface && r.Member == o.Member &&
 		r.PeerName == o.PeerName && r.PeerLabel == o.PeerLabel {
 		r.Access = merge(r.Kind(), "access", r.Access, o.Access)
-		return r.RuleBase.merge(o.RuleBase)
+		b := &r.RuleBase
+		return b.merge(o.RuleBase)
 	}
 	return false
 }
