@@ -52,6 +52,16 @@ func TestRules_String(t *testing.T) {
 	}
 }
 
+func TestCapability_Merge(t *testing.T) {
+	for _, tt := range testRule {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.rule.Merge(tt.other); got != tt.wMerge {
+				t.Errorf("Rule.Merge() = %v, want %v", got, tt.wMerge)
+			}
+		})
+	}
+}
+
 var (
 	// Test cases for the Rule interface
 	testRule = []struct {
@@ -62,6 +72,7 @@ var (
 		wValidErr bool
 		other     Rule
 		wCompare  int
+		wMerge    bool
 		wString   string
 	}{
 		{
@@ -69,6 +80,7 @@ var (
 			rule:     comment1,
 			other:    comment2,
 			wCompare: 0,
+			wMerge:   false,
 			wString:  "#comment",
 		},
 		{
@@ -76,6 +88,7 @@ var (
 			rule:     abi1,
 			other:    abi2,
 			wCompare: 1,
+			wMerge:   false,
 			wString:  "abi <abi/4.0>,",
 		},
 		{
@@ -83,6 +96,7 @@ var (
 			rule:     alias1,
 			other:    alias2,
 			wCompare: -1,
+			wMerge:   false,
 			wString:  "alias /mnt/usr -> /usr,",
 		},
 		{
@@ -90,6 +104,7 @@ var (
 			rule:     include1,
 			other:    includeLocal1,
 			wCompare: -11,
+			wMerge:   false,
 			wString:  "include <abstraction/base>",
 		},
 		{
@@ -97,6 +112,7 @@ var (
 			rule:     include1,
 			other:    include2,
 			wCompare: 1,
+			wMerge:   false,
 			wString:  "include <abstraction/base>",
 		},
 		{
@@ -104,6 +120,7 @@ var (
 			rule:     includeLocal1,
 			other:    include1,
 			wCompare: 11,
+			wMerge:   false,
 			wString:  "include if exists <local/foo>",
 		},
 		{
@@ -111,13 +128,15 @@ var (
 			rule:     &Include{Path: "/usr/share/apparmor.d/", IsMagic: false},
 			other:    &Include{Path: "/usr/share/apparmor.d/", IsMagic: true},
 			wCompare: -1,
+			wMerge:   false,
 			wString:  `include "/usr/share/apparmor.d/"`,
 		},
 		{
 			name:     "variable",
 			rule:     variable1,
 			other:    variable2,
-			wCompare: 0,
+			wCompare: -3,
+			wMerge:   false,
 			wString:  "@{bin} = /{,usr/}{,s}bin",
 		},
 		{
@@ -125,6 +144,7 @@ var (
 			rule:     all1,
 			other:    all2,
 			wCompare: 0,
+			wMerge:   true,
 			wString:  "all,",
 		},
 		{
@@ -132,6 +152,7 @@ var (
 			rule:     rlimit1,
 			other:    rlimit2,
 			wCompare: 11,
+			wMerge:   false,
 			wString:  "set rlimit nproc <= 200,",
 		},
 		{
@@ -139,6 +160,7 @@ var (
 			rule:     rlimit2,
 			other:    rlimit2,
 			wCompare: 0,
+			wMerge:   false,
 			wString:  "set rlimit cpu <= 2,",
 		},
 		{
@@ -146,6 +168,7 @@ var (
 			rule:     rlimit3,
 			other:    rlimit1,
 			wCompare: -1,
+			wMerge:   false,
 			wString:  "set rlimit nproc < 2,",
 		},
 		{
@@ -153,6 +176,7 @@ var (
 			rule:     userns1,
 			other:    userns2,
 			wCompare: 1,
+			wMerge:   true,
 			wString:  "userns,",
 		},
 		{
@@ -162,6 +186,7 @@ var (
 			rule:     capability1,
 			other:    capability2,
 			wCompare: -5,
+			wMerge:   false,
 			wString:  "capability net_admin,",
 		},
 		{
@@ -169,6 +194,7 @@ var (
 			rule:     &Capability{Names: []string{"dac_override", "dac_read_search"}},
 			other:    capability2,
 			wCompare: -15,
+			wMerge:   false,
 			wString:  "capability dac_override dac_read_search,",
 		},
 		{
@@ -176,6 +202,7 @@ var (
 			rule:     &Capability{},
 			other:    capability2,
 			wCompare: -1,
+			wMerge:   false,
 			wString:  "capability,",
 		},
 		{
@@ -186,6 +213,7 @@ var (
 			wValidErr: true,
 			other:     network2,
 			wCompare:  5,
+			wMerge:    false,
 			wString:   "network netlink raw,",
 		},
 		{
@@ -195,6 +223,7 @@ var (
 			rule:     mount1,
 			other:    mount2,
 			wCompare: 38,
+			wMerge:   false,
 			wString:  "mount fstype=overlay overlay -> /var/lib/docker/overlay2/opaque-bug-check1209538631/merged/, # failed perms check",
 		},
 		{
@@ -202,6 +231,7 @@ var (
 			rule:     remount1,
 			other:    remount2,
 			wCompare: -6,
+			wMerge:   false,
 			wString:  "remount /,",
 		},
 		{
@@ -211,6 +241,7 @@ var (
 			rule:     umount1,
 			other:    umount2,
 			wCompare: -8,
+			wMerge:   false,
 			wString:  "umount /,",
 		},
 		{
@@ -220,6 +251,7 @@ var (
 			rule:     pivotroot1,
 			other:    pivotroot2,
 			wCompare: 7,
+			wMerge:   false,
 			wString:  "pivot_root oldroot=@{run}/systemd/mount-rootfs/ @{run}/systemd/mount-rootfs/,",
 		},
 		{
@@ -227,6 +259,7 @@ var (
 			rule:     pivotroot1,
 			other:    pivotroot3,
 			wCompare: 28,
+			wMerge:   false,
 			wString:  "pivot_root oldroot=@{run}/systemd/mount-rootfs/ @{run}/systemd/mount-rootfs/,",
 		},
 		{
@@ -236,6 +269,7 @@ var (
 			rule:     changeprofile1,
 			other:    changeprofile2,
 			wCompare: 17,
+			wMerge:   false,
 			wString:  "change_profile -> systemd-user,",
 		},
 		{
@@ -243,6 +277,7 @@ var (
 			rule:     changeprofile2,
 			other:    changeprofile3,
 			wCompare: -4,
+			wMerge:   false,
 			wString:  "change_profile -> brwap,",
 		},
 		{
@@ -250,6 +285,7 @@ var (
 			rule:     mqueue1,
 			other:    mqueue2,
 			wCompare: -3,
+			wMerge:   false,
 			wString:  "mqueue r type=posix /,",
 		},
 		{
@@ -257,6 +293,7 @@ var (
 			rule:     iouring1,
 			other:    iouring2,
 			wCompare: 4,
+			wMerge:   false,
 			wString:  "io_uring sqpoll label=foo,",
 		},
 		{
@@ -266,6 +303,7 @@ var (
 			rule:     signal1,
 			other:    signal2,
 			wCompare: -10,
+			wMerge:   true,
 			wString:  "signal receive set=kill peer=firefox//&firejail-default,",
 		},
 		{
@@ -275,6 +313,7 @@ var (
 			rule:     ptrace1,
 			other:    ptrace1,
 			wCompare: 0,
+			wMerge:   true,
 			wString:  "ptrace read peer=nautilus,",
 		},
 		{
@@ -284,6 +323,7 @@ var (
 			rule:     ptrace2,
 			other:    ptrace1,
 			wCompare: 2,
+			wMerge:   false,
 			wString:  "ptrace readby peer=systemd-journald,",
 		},
 		{
@@ -293,6 +333,7 @@ var (
 			rule:     unix1,
 			other:    unix1,
 			wCompare: 0,
+			wMerge:   true,
 			wString:  "unix (send receive) type=stream protocol=0 addr=none peer=(label=dbus-daemon, addr=@/tmp/dbus-AaKMpxzC4k),",
 		},
 		{
@@ -302,6 +343,7 @@ var (
 			rule:     dbus1,
 			other:    dbus1,
 			wCompare: 0,
+			wMerge:   true,
 			wString:  "dbus receive bus=session path=/org/gtk/vfs/metadata\n       interface=org.gtk.vfs.Metadata\n       member=Remove\n       peer=(name=:1.15, label=tracker-extract),",
 		},
 		{
@@ -309,13 +351,15 @@ var (
 			rule:     dbus2,
 			other:    dbus3,
 			wCompare: 9,
+			wMerge:   false,
 			wString:  "dbus bind bus=session name=org.gnome.evolution.dataserver.Sources5,",
 		},
 		{
 			name:     "dbus/bind",
 			rule:     &Dbus{Access: []string{"bind"}, Bus: "session", Name: "org.gnome.*"},
 			other:    dbus2,
-			wCompare: -33,
+			wCompare: -39,
+			wMerge:   false,
 			wString:  `dbus bind bus=session name=org.gnome.*,`,
 		},
 		{
@@ -323,6 +367,7 @@ var (
 			rule:     &Dbus{Bus: "accessibility"},
 			other:    dbus1,
 			wCompare: -1,
+			wMerge:   false,
 			wString:  `dbus bus=accessibility,`,
 		},
 		{
@@ -332,6 +377,7 @@ var (
 			rule:     file1,
 			other:    file2,
 			wCompare: -14,
+			wMerge:   false,
 			wString:  "/usr/share/poppler/cMap/Identity-H r,",
 		},
 		{
@@ -339,6 +385,7 @@ var (
 			rule:     &File{},
 			other:    &File{},
 			wCompare: 0,
+			wMerge:   true,
 			wString:  " ,",
 		},
 		{
@@ -346,6 +393,7 @@ var (
 			rule:     &File{Path: "/usr/share/poppler/cMap/Identity-H"},
 			other:    &File{Path: "/usr/share/poppler/cMap/Identity-H"},
 			wCompare: 0,
+			wMerge:   true,
 			wString:  "/usr/share/poppler/cMap/Identity-H ,",
 		},
 		{
@@ -353,6 +401,7 @@ var (
 			rule:     &File{Path: "/usr/share/poppler/cMap/Identity-H", Owner: true},
 			other:    &File{Path: "/usr/share/poppler/cMap/Identity-H"},
 			wCompare: 1,
+			wMerge:   false,
 			wString:  "owner /usr/share/poppler/cMap/Identity-H ,",
 		},
 		{
@@ -360,6 +409,7 @@ var (
 			rule:     &File{Path: "/usr/share/poppler/cMap/Identity-H", Access: []string{"r"}},
 			other:    &File{Path: "/usr/share/poppler/cMap/Identity-H", Access: []string{"w"}},
 			wCompare: -5,
+			wMerge:   true,
 			wString:  "/usr/share/poppler/cMap/Identity-H r,",
 		},
 		{
@@ -367,6 +417,7 @@ var (
 			rule:     &File{Path: "/usr/share/poppler/cMap/"},
 			other:    &File{Path: "/usr/share/poppler/cMap/Identity-H"},
 			wCompare: -10,
+			wMerge:   false,
 			wString:  "/usr/share/poppler/cMap/ ,",
 		},
 		{
@@ -376,6 +427,7 @@ var (
 			rule:     link1,
 			other:    link2,
 			wCompare: -1,
+			wMerge:   false,
 			wString:  "link /tmp/mkinitcpio.QDWtza/early@{lib}/firmware/i915/dg1_dmc_ver2_02.bin.zst -> /tmp/mkinitcpio.QDWtza/root@{lib}/firmware/i915/dg1_dmc_ver2_02.bin.zst,",
 		},
 		{
@@ -385,6 +437,7 @@ var (
 			rule:     link3,
 			other:    link1,
 			wCompare: 1,
+			wMerge:   false,
 			wString:  "owner link @{user_config_dirs}/kiorc -> @{user_config_dirs}/#3954,",
 		},
 		{
@@ -392,6 +445,7 @@ var (
 			rule:     profile1,
 			other:    profile2,
 			wCompare: -4,
+			wMerge:   false,
 			wString:  "profile sudo {\n}",
 		},
 		{
@@ -399,6 +453,7 @@ var (
 			rule:     hat1,
 			other:    hat2,
 			wCompare: 3,
+			wMerge:   false,
 			wString:  "hat user {\n}",
 		},
 	}
