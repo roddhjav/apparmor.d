@@ -394,18 +394,21 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
     include if exists <local/gnome-shell_shell>
   }
 
-  profile open flags=(attach_disconnected,mediate_deleted) {
+  profile open flags=(attach_disconnected,mediate_deleted,complain) {
     include <abstractions/base>
-    include <abstractions/app-launcher-user>
 
-    unix receive type=stream,
+    network inet stream,
+    network unix stream,
 
-    @{lib}/gio-launch-desktop                               mr,
     @{lib}/@{multiarch}/glib-[0-9]*/gio-launch-desktop      mr,
+    @{lib}/gio-launch-desktop                               mr,
 
-    @{lib}/*      PUx,
-    /usr/games/*  PUx,
-    /usr/share/gnome-shell/extensions/ding@rastersoft.com/{,*/}ding.js rPx,
+    @{lib}/**                     PUx,
+    @{bin}/**                     PUx,
+    /opt/*/**                     PUx,
+    /usr/share/*/**               PUx,
+    /usr/local/bin/**             PUx,
+    /usr/games/**                 PUx,
 
     owner @{run}/user/@{uid}/gnome-shell-disable-extensions w, 
 
