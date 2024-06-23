@@ -29,7 +29,6 @@ profile pass @{exec_path} {
   @{bin}/mkdir       rix,
   @{bin}/mktemp      rix,
   @{bin}/mv          rix,
-  @{bin}/pkill       rix,
   @{bin}/rm          rix,
   @{bin}/rmdir       rix,
   @{bin}/sed         rix,
@@ -44,10 +43,11 @@ profile pass @{exec_path} {
   @{bin}/which       rix,
 
   @{bin}/git             rCx -> git,
-  @{lib}/git{,-core}/git rCx -> git,
   @{bin}/gpg{2,}         rCx -> gpg,
+  @{bin}/pkill           rCx -> pkill,
   @{bin}/qdbus           rCx -> qdbus,
   @{bin}/vim{,.*}        rCx -> editor,
+  @{lib}/git{,-core}/git rCx -> git,
   @{bin}/wl-{copy,paste} rPx,
   @{bin}/xclip           rPx,
 
@@ -71,6 +71,21 @@ profile pass @{exec_path} {
   @{PROC}/uptime r,
 
   /dev/tty rw,
+
+  profile pkill {
+    include <abstractions/base>
+
+    capability sys_ptrace,
+
+    ptrace read,
+
+    @{bin}/pkill mr,
+
+    @{PROC}/@{pid}/cgroup r,
+    @{PROC}/tty/drivers r,
+
+    include if exists <local/pass_pkill>
+  }
 
   profile editor {
     include <abstractions/base>
