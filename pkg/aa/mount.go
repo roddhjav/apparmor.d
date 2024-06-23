@@ -65,7 +65,7 @@ func (m MountConditions) Compare(other MountConditions) int {
 	return compare(m.Options, other.Options)
 }
 
-func (m MountConditions) Merge(other MountConditions) bool {
+func (m *MountConditions) Merge(other MountConditions) bool {
 	if m.FsType == other.FsType {
 		m.Options = merge(MOUNT, "flags", m.Options, other.Options)
 		return true
@@ -143,13 +143,15 @@ func (r *Mount) Compare(other Rule) int {
 
 func (r *Mount) Merge(other Rule) bool {
 	o, _ := other.(*Mount)
+	mc := &r.MountConditions
 
 	if !r.Qualifier.Equal(o.Qualifier) {
 		return false
 	}
 	if r.Source == o.Source && r.MountPoint == o.MountPoint &&
-		r.MountConditions.Merge(o.MountConditions) {
-		return r.RuleBase.merge(o.RuleBase)
+		mc.Merge(o.MountConditions) {
+		b := &r.RuleBase
+		return b.merge(o.RuleBase)
 	}
 	return false
 }
@@ -220,12 +222,14 @@ func (r *Umount) Compare(other Rule) int {
 
 func (r *Umount) Merge(other Rule) bool {
 	o, _ := other.(*Umount)
+	mc := &r.MountConditions
 
 	if !r.Qualifier.Equal(o.Qualifier) {
 		return false
 	}
-	if r.MountPoint == o.MountPoint && r.MountConditions.Merge(o.MountConditions) {
-		return r.RuleBase.merge(o.RuleBase)
+	if r.MountPoint == o.MountPoint && mc.Merge(o.MountConditions) {
+		b := &r.RuleBase
+		return b.merge(o.RuleBase)
 	}
 	return false
 }
@@ -297,12 +301,14 @@ func (r *Remount) Compare(other Rule) int {
 
 func (r *Remount) Merge(other Rule) bool {
 	o, _ := other.(*Remount)
+	mc := &r.MountConditions
 
 	if !r.Qualifier.Equal(o.Qualifier) {
 		return false
 	}
-	if r.MountPoint == o.MountPoint && r.MountConditions.Merge(o.MountConditions) {
-		return r.RuleBase.merge(o.RuleBase)
+	if r.MountPoint == o.MountPoint && mc.Merge(o.MountConditions) {
+		b := &r.RuleBase
+		return b.merge(o.RuleBase)
 	}
 	return false
 }

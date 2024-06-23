@@ -86,10 +86,12 @@ func (r *Signal) Merge(other Rule) bool {
 	switch {
 	case r.Peer == o.Peer && compare(r.Set, o.Set) == 0:
 		r.Access = merge(r.Kind(), "access", r.Access, o.Access)
-		return r.RuleBase.merge(o.RuleBase)
+		b := &r.RuleBase
+		return b.merge(o.RuleBase)
 	case r.Peer == o.Peer && compare(r.Access, o.Access) == 0:
 		r.Set = merge(r.Kind(), "set", r.Set, o.Set)
-		return r.RuleBase.merge(o.RuleBase)
+		b := &r.RuleBase
+		return b.merge(o.RuleBase)
 	}
 	return false
 }

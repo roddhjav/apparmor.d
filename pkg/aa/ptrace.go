@@ -62,7 +62,8 @@ func (r *Ptrace) Merge(other Rule) bool {
 	}
 	if r.Peer == o.Peer {
 		r.Access = merge(r.Kind(), "access", r.Access, o.Access)
-		return r.RuleBase.merge(o.RuleBase)
+		b := &r.RuleBase
+		return b.merge(o.RuleBase)
 	}
 	return false
 }
