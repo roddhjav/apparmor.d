@@ -129,6 +129,8 @@ var (
 		"@{bin}":            "exec",
 		"@{lib}":            "exec",
 		"/opt":              "exec",
+		"/home":             "home",
+		"@{HOME}":           "home",
 		"/tmp":              "tmp",
 		"@{tmp}":            "tmp",
 		"/dev/shm":          "tmp",
@@ -136,7 +138,7 @@ var (
 
 	// The order AARE should be sorted
 	stringAlphabet = []byte(
-		"!\"#$%&'(){}[]*+,-./:;<=>?@\\^_`|~0123456789abcdefghijklmnopqrstuvwxyz",
+		"!\"#$%&'*(){}[]+,-./:;<=>?@\\^_`|~0123456789abcdefghijklmnopqrstuvwxyz",
 	)
 	stringWeights = generateWeights(stringAlphabet)
 
