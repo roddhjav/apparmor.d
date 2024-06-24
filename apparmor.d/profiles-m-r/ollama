@@ -1,0 +1,50 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/ollama
+profile ollama @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/graphics-full>
+  include <abstractions/nameservice-strict>
+  include <abstractions/ssl_certs>
+
+  network inet dgram,
+  network inet stream,
+  network inet6 dgram,
+  network inet6 stream,
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  /tmp/ollama@{int}/runners/*/*                mr,
+  /tmp/ollama@{int}/runners/*/ollama_*_server  rix, # TODO: rPx and remove graphics from here.
+
+  /usr/ r,
+  /usr/local/ r,
+  /usr/local/lib/ r,
+
+  @{lib}/ r,
+
+  owner /var/lib/ollama/ rw,
+  owner /var/lib/ollama/** rwlk,
+
+        /tmp/ r,
+  owner @{tmp}/ollama@{int}/{,**} rw,
+  owner @{tmp}/ollama@{int}/runners/{,**} mr,
+
+  @{sys}/devices/@{pci}/numa_node r,
+  @{sys}/devices/system/node/node@{int}/cpumap r,
+
+        @{PROC}/devices r,
+        @{PROC}/sys/net/core/somaxconn r,
+  owner @{PROC}/@{pid}/cmdline r,
+  owner @{PROC}/@{pid}/task/@{tid}/comm w,
+
+  include if exists <local/ollama>
+}
