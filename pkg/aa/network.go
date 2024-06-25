@@ -140,3 +140,7 @@ func (r *Network) Compare(other Rule) int {
 	}
 	return r.Qualifier.Compare(o.Qualifier)
 }
+
+func (r *Network) Merge(other Rule) bool {
+	return false // Never merge network
+}

@@ -242,3 +242,7 @@ func (r *Link) Compare(other Rule) int {
 	}
 	return r.Qualifier.Compare(o.Qualifier)
 }
+
+func (r *Link) Merge(other Rule) bool {
+	return false // Never merge link
+}

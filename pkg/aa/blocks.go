@@ -35,3 +35,7 @@ func (r *Hat) Compare(other Rule) int {
 	o, _ := other.(*Hat)
 	return compare(r.Name, o.Name)
 }
+
+func (r *Hat) Merge(other Rule) bool {
+	return false // Never merge hat blocks
+}

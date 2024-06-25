@@ -79,3 +79,7 @@ func (r *PivotRoot) Compare(other Rule) int {
 	}
 	return r.Qualifier.Compare(o.Qualifier)
 }
+
+func (r *PivotRoot) Merge(other Rule) bool {
+	return false // Never merge pivot root
+}
