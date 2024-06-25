@@ -20,10 +20,10 @@ const (
 func init() {
 	requirements[PROFILE] = requirement{
 		tokFLAGS: {
-			"enforce", "complain", "kill", "default_allow", "unconfined",
-			"prompt", "audit", "mediate_deleted", "attach_disconnected",
-			"attach_disconneced.path=", "chroot_relative", "debug",
-			"interruptible", "kill", "kill.signal=",
+			"attach_disconneced.path=", "attach_disconnected", "audit",
+			"chroot_relative", "complain", "debug", "default_allow", "enforce",
+			"interruptible", "kill.signal=", "kill", "kill", "mediate_deleted",
+			"prompt", "unconfined",
 		},
 	}
 }
