@@ -79,10 +79,6 @@ func newBaseFromLog(log map[string]string) Base {
 	}
 }
 
-func (r Base) Merge(other Rule) bool {
-	return false
-}
-
 func (r *Base) merge(other Base) bool {
 	if other.Comment != "" {
 		r.Comment += " " + other.Comment

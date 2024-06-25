@@ -66,6 +66,17 @@ func (r *Ptrace) Validate() error {
 	return nil
 }
 
+func (r *Ptrace) Compare(other Rule) int {
+	o, _ := other.(*Ptrace)
+	if res := compare(r.Access, o.Access); res != 0 {
+		return res
+	}
+	if res := compare(r.Peer, o.Peer); res != 0 {
+		return res
+	}
+	return r.Qualifier.Compare(o.Qualifier)
+}
+
 func (r *Ptrace) Merge(other Rule) bool {
 	o, _ := other.(*Ptrace)
 
@@ -78,15 +89,4 @@ func (r *Ptrace) Merge(other Rule) bool {
 		return b.merge(o.Base)
 	}
 	return false
-}
-
-func (r *Ptrace) Compare(other Rule) int {
-	o, _ := other.(*Ptrace)
-	if res := compare(r.Access, o.Access); res != 0 {
-		return res
-	}
-	if res := compare(r.Peer, o.Peer); res != 0 {
-		return res
-	}
-	return r.Qualifier.Compare(o.Qualifier)
 }

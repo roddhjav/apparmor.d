@@ -80,3 +80,7 @@ func (r *Rlimit) Compare(other Rule) int {
 	}
 	return compare(r.Value, o.Value)
 }
+
+func (r *Rlimit) Merge(other Rule) bool {
+	return false // Never merge rlimit
+}

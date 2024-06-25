@@ -99,3 +99,7 @@ func (r *ChangeProfile) Compare(other Rule) int {
 	}
 	return r.Qualifier.Compare(o.Qualifier)
 }
+
+func (r *ChangeProfile) Merge(other Rule) bool {
+	return false // Never merge change_profile
+}

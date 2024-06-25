@@ -49,6 +49,10 @@ func (r *Comment) Compare(other Rule) int {
 	return 0 // Comments are always equal to each other as they are not compared
 }
 
+func (r *Comment) Merge(other Rule) bool {
+	return false // Never merge comments
+}
+
 type Abi struct {
 	Base
 	Path    string
@@ -101,6 +105,10 @@ func (r *Abi) Compare(other Rule) int {
 	return compare(r.IsMagic, o.IsMagic)
 }
 
+func (r *Abi) Merge(other Rule) bool {
+	return false // Never merge abi
+}
+
 type Alias struct {
 	Base
 	Path          string
@@ -143,6 +151,10 @@ func (r *Alias) Compare(other Rule) int {
 		return res
 	}
 	return compare(r.RewrittenPath, o.RewrittenPath)
+}
+
+func (r *Alias) Merge(other Rule) bool {
+	return false // Never merge alias
 }
 
 type Include struct {
@@ -216,6 +228,10 @@ func (r *Include) Compare(other Rule) int {
 		return res
 	}
 	return compare(r.IfExists, o.IfExists)
+}
+
+func (r *Include) Merge(other Rule) bool {
+	return false // Never merge include
 }
 
 type Variable struct {

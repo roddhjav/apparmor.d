@@ -77,3 +77,7 @@ func (r *Capability) Compare(other Rule) int {
 	}
 	return r.Qualifier.Compare(o.Qualifier)
 }
+
+func (r *Capability) Merge(other Rule) bool {
+	return false // Never merge capabilities
+}
