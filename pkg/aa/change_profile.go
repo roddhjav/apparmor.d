@@ -18,7 +18,7 @@ func init() {
 }
 
 type ChangeProfile struct {
-	RuleBase
+	Base
 	Qualifier
 	ExecMode    string
 	Exec        string
@@ -49,7 +49,7 @@ func newChangeProfile(q Qualifier, rule rule) (Rule, error) {
 		}
 	}
 	return &ChangeProfile{
-		RuleBase:    newBase(rule),
+		Base:        newBase(rule),
 		Qualifier:   q,
 		ExecMode:    mode,
 		Exec:        exec,
@@ -59,7 +59,7 @@ func newChangeProfile(q Qualifier, rule rule) (Rule, error) {
 
 func newChangeProfileFromLog(log map[string]string) Rule {
 	return &ChangeProfile{
-		RuleBase:    newBaseFromLog(log),
+		Base:        newBaseFromLog(log),
 		Qualifier:   newQualifierFromLog(log),
 		ExecMode:    log["mode"],
 		Exec:        log["exec"],

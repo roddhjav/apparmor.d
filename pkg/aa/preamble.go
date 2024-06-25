@@ -20,13 +20,13 @@ const (
 )
 
 type Comment struct {
-	RuleBase
+	Base
 }
 
 func newComment(rule rule) (Rule, error) {
 	base := newBase(rule)
 	base.IsLineRule = true
-	return &Comment{RuleBase: base}, nil
+	return &Comment{Base: base}, nil
 }
 
 func (r *Comment) Validate() error {
@@ -50,7 +50,7 @@ func (r *Comment) Kind() Kind {
 }
 
 type Abi struct {
-	RuleBase
+	Base
 	Path    string
 	IsMagic bool
 }
@@ -71,9 +71,9 @@ func newAbi(q Qualifier, rule rule) (Rule, error) {
 		return nil, fmt.Errorf("invalid path %s in rule: %s", path, rule)
 	}
 	return &Abi{
-		RuleBase: newBase(rule),
-		Path:     strings.Trim(path, "\"<>"),
-		IsMagic:  magic,
+		Base:    newBase(rule),
+		Path:    strings.Trim(path, "\"<>"),
+		IsMagic: magic,
 	}, nil
 }
 
@@ -102,7 +102,7 @@ func (r *Abi) Kind() Kind {
 }
 
 type Alias struct {
-	RuleBase
+	Base
 	Path          string
 	RewrittenPath string
 }
@@ -115,7 +115,7 @@ func newAlias(q Qualifier, rule rule) (Rule, error) {
 		return nil, fmt.Errorf("invalid alias format, missing %s in: %s", tokARROW, rule)
 	}
 	return &Alias{
-		RuleBase:      newBase(rule),
+		Base:          newBase(rule),
 		Path:          rule.Get(0),
 		RewrittenPath: rule.Get(2),
 	}, nil
@@ -146,7 +146,7 @@ func (r *Alias) Kind() Kind {
 }
 
 type Include struct {
-	RuleBase
+	Base
 	IfExists bool
 	Path     string
 	IsMagic  bool
@@ -177,7 +177,7 @@ func newInclude(rule rule) (Rule, error) {
 		return nil, fmt.Errorf("invalid path format: %v", path)
 	}
 	return &Include{
-		RuleBase: newBase(rule),
+		Base:     newBase(rule),
 		IfExists: ifexists,
 		Path:     strings.Trim(path, "\"<>"),
 		IsMagic:  magic,
@@ -219,7 +219,7 @@ func (r *Include) Kind() Kind {
 }
 
 type Variable struct {
-	RuleBase
+	Base
 	Name   string
 	Values []string
 	Define bool
@@ -245,10 +245,10 @@ func newVariable(rule rule) (Rule, error) {
 		return nil, fmt.Errorf("invalid operator in variable: %v", rule)
 	}
 	return &Variable{
-		RuleBase: newBase(rule),
-		Name:     name,
-		Values:   values,
-		Define:   define,
+		Base:   newBase(rule),
+		Name:   name,
+		Values: values,
+		Define: define,
 	}, nil
 }
 
@@ -261,8 +261,8 @@ func (r *Variable) Merge(other Rule) bool {
 
 	if r.Name == o.Name && r.Define == o.Define {
 		r.Values = merge(r.Kind(), "access", r.Values, o.Values)
-		b := &r.RuleBase
-		return b.merge(o.RuleBase)
+		b := &r.Base
+		return b.merge(o.Base)
 	}
 	return false
 }

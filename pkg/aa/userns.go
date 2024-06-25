@@ -9,7 +9,7 @@ import "fmt"
 const USERNS Kind = "userns"
 
 type Userns struct {
-	RuleBase
+	Base
 	Qualifier
 	Create bool
 }
@@ -28,7 +28,7 @@ func newUserns(q Qualifier, rule rule) (Rule, error) {
 		return nil, fmt.Errorf("invalid userns format: %s", rule)
 	}
 	return &Userns{
-		RuleBase:  newBase(rule),
+		Base:      newBase(rule),
 		Qualifier: q,
 		Create:    create,
 	}, nil
@@ -36,7 +36,7 @@ func newUserns(q Qualifier, rule rule) (Rule, error) {
 
 func newUsernsFromLog(log map[string]string) Rule {
 	return &Userns{
-		RuleBase:  newBaseFromLog(log),
+		Base:      newBaseFromLog(log),
 		Qualifier: newQualifierFromLog(log),
 		Create:    true,
 	}
@@ -56,8 +56,8 @@ func (r *Userns) Compare(other Rule) int {
 
 func (r *Userns) Merge(other Rule) bool {
 	o, _ := other.(*Userns)
-	b := &r.RuleBase
-	return b.merge(o.RuleBase)
+	b := &r.Base
+	return b.merge(o.Base)
 }
 
 func (r *Userns) String() string {

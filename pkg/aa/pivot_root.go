@@ -9,7 +9,7 @@ import "fmt"
 const PIVOTROOT Kind = "pivot_root"
 
 type PivotRoot struct {
-	RuleBase
+	Base
 	Qualifier
 	OldRoot       string
 	NewRoot       string
@@ -32,7 +32,7 @@ func newPivotRoot(q Qualifier, rule rule) (Rule, error) {
 		}
 	}
 	return &PivotRoot{
-		RuleBase:      newBase(rule),
+		Base:          newBase(rule),
 		Qualifier:     q,
 		OldRoot:       rule.GetValuesAsString("oldroot"),
 		NewRoot:       newroot,
@@ -42,7 +42,7 @@ func newPivotRoot(q Qualifier, rule rule) (Rule, error) {
 
 func newPivotRootFromLog(log map[string]string) Rule {
 	return &PivotRoot{
-		RuleBase:      newBaseFromLog(log),
+		Base:          newBaseFromLog(log),
 		Qualifier:     newQualifierFromLog(log),
 		OldRoot:       log["srcname"],
 		NewRoot:       log["name"],

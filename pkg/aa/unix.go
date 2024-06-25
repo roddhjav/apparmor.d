@@ -21,7 +21,7 @@ func init() {
 }
 
 type Unix struct {
-	RuleBase
+	Base
 	Qualifier
 	Access    []string
 	Type      string
@@ -40,7 +40,7 @@ func newUnix(q Qualifier, rule rule) (Rule, error) {
 		return nil, err
 	}
 	return &Unix{
-		RuleBase:  newBase(rule),
+		Base:      newBase(rule),
 		Qualifier: q,
 		Access:    accesses,
 		Type:      rule.GetValuesAsString("type"),
@@ -56,7 +56,7 @@ func newUnix(q Qualifier, rule rule) (Rule, error) {
 
 func newUnixFromLog(log map[string]string) Rule {
 	return &Unix{
-		RuleBase:  newBaseFromLog(log),
+		Base:      newBaseFromLog(log),
 		Qualifier: newQualifierFromLog(log),
 		Access:    Must(toAccess(UNIX, log["requested_mask"])),
 		Type:      log["sock_type"],
@@ -119,8 +119,8 @@ func (r *Unix) Merge(other Rule) bool {
 		r.Label == o.Label && r.Attr == o.Attr && r.Opt == o.Opt &&
 		r.PeerLabel == o.PeerLabel && r.PeerAddr == o.PeerAddr {
 		r.Access = merge(r.Kind(), "access", r.Access, o.Access)
-		b := &r.RuleBase
-		return b.merge(o.RuleBase)
+		b := &r.Base
+		return b.merge(o.Base)
 	}
 	return false
 }

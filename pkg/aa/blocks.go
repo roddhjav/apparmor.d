@@ -10,7 +10,7 @@ const (
 
 // Hat represents a single AppArmor hat.
 type Hat struct {
-	RuleBase
+	Base
 	Name  string
 	Rules Rules
 }

@@ -74,7 +74,7 @@ func (m *MountConditions) Merge(other MountConditions) bool {
 }
 
 type Mount struct {
-	RuleBase
+	Base
 	Qualifier
 	MountConditions
 	Source     string
@@ -102,7 +102,7 @@ func newMount(q Qualifier, rule rule) (Rule, error) {
 		return nil, err
 	}
 	return &Mount{
-		RuleBase:        newBase(rule),
+		Base:            newBase(rule),
 		Qualifier:       q,
 		MountConditions: conditions,
 		Source:          src,
@@ -112,7 +112,7 @@ func newMount(q Qualifier, rule rule) (Rule, error) {
 
 func newMountFromLog(log map[string]string) Rule {
 	return &Mount{
-		RuleBase:        newBaseFromLog(log),
+		Base:            newBaseFromLog(log),
 		Qualifier:       newQualifierFromLog(log),
 		MountConditions: newMountConditionsFromLog(log),
 		Source:          log["srcname"],
@@ -150,8 +150,8 @@ func (r *Mount) Merge(other Rule) bool {
 	}
 	if r.Source == o.Source && r.MountPoint == o.MountPoint &&
 		mc.Merge(o.MountConditions) {
-		b := &r.RuleBase
-		return b.merge(o.RuleBase)
+		b := &r.Base
+		return b.merge(o.Base)
 	}
 	return false
 }
@@ -169,7 +169,7 @@ func (r *Mount) Kind() Kind {
 }
 
 type Umount struct {
-	RuleBase
+	Base
 	Qualifier
 	MountConditions
 	MountPoint string
@@ -186,7 +186,7 @@ func newUmount(q Qualifier, rule rule) (Rule, error) {
 		return nil, err
 	}
 	return &Umount{
-		RuleBase:        newBase(rule),
+		Base:            newBase(rule),
 		Qualifier:       q,
 		MountConditions: conditions,
 		MountPoint:      mount,
@@ -195,7 +195,7 @@ func newUmount(q Qualifier, rule rule) (Rule, error) {
 
 func newUmountFromLog(log map[string]string) Rule {
 	return &Umount{
-		RuleBase:        newBaseFromLog(log),
+		Base:            newBaseFromLog(log),
 		Qualifier:       newQualifierFromLog(log),
 		MountConditions: newMountConditionsFromLog(log),
 		MountPoint:      log["name"],
@@ -228,8 +228,8 @@ func (r *Umount) Merge(other Rule) bool {
 		return false
 	}
 	if r.MountPoint == o.MountPoint && mc.Merge(o.MountConditions) {
-		b := &r.RuleBase
-		return b.merge(o.RuleBase)
+		b := &r.Base
+		return b.merge(o.Base)
 	}
 	return false
 }
@@ -247,7 +247,7 @@ func (r *Umount) Kind() Kind {
 }
 
 type Remount struct {
-	RuleBase
+	Base
 	Qualifier
 	MountConditions
 	MountPoint string
@@ -265,7 +265,7 @@ func newRemount(q Qualifier, rule rule) (Rule, error) {
 		return nil, err
 	}
 	return &Remount{
-		RuleBase:        newBase(rule),
+		Base:            newBase(rule),
 		Qualifier:       q,
 		MountConditions: conditions,
 		MountPoint:      mount,
@@ -274,7 +274,7 @@ func newRemount(q Qualifier, rule rule) (Rule, error) {
 
 func newRemountFromLog(log map[string]string) Rule {
 	return &Remount{
-		RuleBase:        newBaseFromLog(log),
+		Base:            newBaseFromLog(log),
 		Qualifier:       newQualifierFromLog(log),
 		MountConditions: newMountConditionsFromLog(log),
 		MountPoint:      log["name"],
@@ -307,8 +307,8 @@ func (r *Remount) Merge(other Rule) bool {
 		return false
 	}
 	if r.MountPoint == o.MountPoint && mc.Merge(o.MountConditions) {
-		b := &r.RuleBase
-		return b.merge(o.RuleBase)
+		b := &r.Base
+		return b.merge(o.Base)
 	}
 	return false
 }

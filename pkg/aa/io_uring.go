@@ -17,7 +17,7 @@ func init() {
 }
 
 type IOUring struct {
-	RuleBase
+	Base
 	Qualifier
 	Access []string
 	Label  string
@@ -29,7 +29,7 @@ func newIOUring(q Qualifier, rule rule) (Rule, error) {
 		return nil, err
 	}
 	return &IOUring{
-		RuleBase:  newBase(rule),
+		Base:      newBase(rule),
 		Qualifier: q,
 		Access:    accesses,
 		Label:     rule.GetValuesAsString("label"),
@@ -38,7 +38,7 @@ func newIOUring(q Qualifier, rule rule) (Rule, error) {
 
 func newIOUringFromLog(log map[string]string) Rule {
 	return &IOUring{
-		RuleBase:  newBaseFromLog(log),
+		Base:      newBaseFromLog(log),
 		Qualifier: newQualifierFromLog(log),
 		Access:    Must(toAccess(IOURING, log["requested"])),
 		Label:     log["label"],
@@ -71,8 +71,8 @@ func (r *IOUring) Merge(other Rule) bool {
 	}
 	if r.Label == o.Label {
 		r.Access = merge(r.Kind(), "access", r.Access, o.Access)
-		b := &r.RuleBase
-		return b.merge(o.RuleBase)
+		b := &r.Base
+		return b.merge(o.Base)
 	}
 	return false
 }

@@ -21,7 +21,7 @@ func init() {
 }
 
 type Dbus struct {
-	RuleBase
+	Base
 	Qualifier
 	Access    []string
 	Bus       string
@@ -39,7 +39,7 @@ func newDbus(q Qualifier, rule rule) (Rule, error) {
 		return nil, err
 	}
 	return &Dbus{
-		RuleBase:  newBase(rule),
+		Base:      newBase(rule),
 		Qualifier: q,
 		Access:    accesses,
 		Bus:       rule.GetValuesAsString("bus"),
@@ -61,7 +61,7 @@ func newDbusFromLog(log map[string]string) Rule {
 		peerName = log["name"]
 	}
 	return &Dbus{
-		RuleBase:  newBaseFromLog(log),
+		Base:      newBaseFromLog(log),
 		Qualifier: newQualifierFromLog(log),
 		Access:    []string{log["mask"]},
 		Bus:       log["bus"],
@@ -120,8 +120,8 @@ func (r *Dbus) Merge(other Rule) bool {
 		r.Interface == o.Interface && r.Member == o.Member &&
 		r.PeerName == o.PeerName && r.PeerLabel == o.PeerLabel {
 		r.Access = merge(r.Kind(), "access", r.Access, o.Access)
-		b := &r.RuleBase
-		return b.merge(o.RuleBase)
+		b := &r.Base
+		return b.merge(o.Base)
 	}
 	return false
 }

@@ -30,7 +30,7 @@ func init() {
 
 // Profile represents a single AppArmor profile.
 type Profile struct {
-	RuleBase
+	Base
 	Header
 	Rules Rules
 }

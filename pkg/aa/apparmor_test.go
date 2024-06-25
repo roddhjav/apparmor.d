@@ -40,7 +40,7 @@ func TestAppArmorProfileFile_String(t *testing.T) {
 			name: "foo",
 			f: &AppArmorProfileFile{
 				Preamble: Rules{
-					&Comment{RuleBase: RuleBase{Comment: " Simple test profile for the AppArmorProfileFile.String() method", IsLineRule: true}},
+					&Comment{Base: Base{Comment: " Simple test profile for the AppArmorProfileFile.String() method", IsLineRule: true}},
 					nil,
 					&Abi{IsMagic: true, Path: "abi/4.0"},
 					&Alias{Path: "/mnt/usr", RewrittenPath: "/usr"},
@@ -66,7 +66,7 @@ func TestAppArmorProfileFile_String(t *testing.T) {
 						&Network{Domain: "inet", Type: "stream"},
 						&Network{Domain: "inet6", Type: "stream"},
 						&Mount{
-							RuleBase: RuleBase{Comment: " failed perms check"},
+							Base: Base{Comment: " failed perms check"},
 							MountConditions: MountConditions{
 								FsType:  "fuse.portal",
 								Options: []string{"rw", "rbind"},
@@ -204,9 +204,9 @@ func TestAppArmorProfileFile_Integration(t *testing.T) {
 			name: "aa-status",
 			f: &AppArmorProfileFile{
 				Preamble: Rules{
-					&Comment{RuleBase: RuleBase{Comment: " apparmor.d - Full set of apparmor profiles", IsLineRule: true}},
-					&Comment{RuleBase: RuleBase{Comment: " Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>", IsLineRule: true}},
-					&Comment{RuleBase: RuleBase{Comment: " SPDX-License-Identifier: GPL-2.0-only", IsLineRule: true}},
+					&Comment{Base: Base{Comment: " apparmor.d - Full set of apparmor profiles", IsLineRule: true}},
+					&Comment{Base: Base{Comment: " Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>", IsLineRule: true}},
+					&Comment{Base: Base{Comment: " SPDX-License-Identifier: GPL-2.0-only", IsLineRule: true}},
 					nil,
 					&Abi{IsMagic: true, Path: "abi/3.0"},
 					&Include{IsMagic: true, Path: "tunables/global"},

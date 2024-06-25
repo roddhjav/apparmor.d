@@ -32,7 +32,7 @@ func init() {
 }
 
 type Signal struct {
-	RuleBase
+	Base
 	Qualifier
 	Access []string
 	Set    []string
@@ -49,7 +49,7 @@ func newSignal(q Qualifier, rule rule) (Rule, error) {
 		return nil, err
 	}
 	return &Signal{
-		RuleBase:  newBase(rule),
+		Base:      newBase(rule),
 		Qualifier: q,
 		Access:    accesses,
 		Set:       set,
@@ -59,7 +59,7 @@ func newSignal(q Qualifier, rule rule) (Rule, error) {
 
 func newSignalFromLog(log map[string]string) Rule {
 	return &Signal{
-		RuleBase:  newBaseFromLog(log),
+		Base:      newBaseFromLog(log),
 		Qualifier: newQualifierFromLog(log),
 		Access:    Must(toAccess(SIGNAL, log["requested_mask"])),
 		Set:       []string{log["signal"]},
@@ -86,12 +86,12 @@ func (r *Signal) Merge(other Rule) bool {
 	switch {
 	case r.Peer == o.Peer && compare(r.Set, o.Set) == 0:
 		r.Access = merge(r.Kind(), "access", r.Access, o.Access)
-		b := &r.RuleBase
-		return b.merge(o.RuleBase)
+		b := &r.Base
+		return b.merge(o.Base)
 	case r.Peer == o.Peer && compare(r.Access, o.Access) == 0:
 		r.Set = merge(r.Kind(), "set", r.Set, o.Set)
-		b := &r.RuleBase
-		return b.merge(o.RuleBase)
+		b := &r.Base
+		return b.merge(o.Base)
 	}
 	return false
 }

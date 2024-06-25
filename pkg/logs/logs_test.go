@@ -303,13 +303,13 @@ func TestAppArmorLogs_ParseToProfiles(t *testing.T) {
 					Header: aa.Header{Name: "kmod"},
 					Rules: aa.Rules{
 						&aa.Unix{
-							RuleBase: aa.RuleBase{FileInherit: true},
+							Base:     aa.Base{FileInherit: true},
 							Access:   []string{"send", "receive"},
 							Type:     "stream",
 							Protocol: "0",
 						},
 						&aa.Unix{
-							RuleBase: aa.RuleBase{FileInherit: true},
+							Base:     aa.Base{FileInherit: true},
 							Access:   []string{"send", "receive"},
 							Type:     "stream",
 							Protocol: "0",

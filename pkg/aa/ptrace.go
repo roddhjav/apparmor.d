@@ -19,7 +19,7 @@ func init() {
 }
 
 type Ptrace struct {
-	RuleBase
+	Base
 	Qualifier
 	Access []string
 	Peer   string
@@ -31,7 +31,7 @@ func newPtrace(q Qualifier, rule rule) (Rule, error) {
 		return nil, err
 	}
 	return &Ptrace{
-		RuleBase:  newBase(rule),
+		Base:      newBase(rule),
 		Qualifier: q,
 		Access:    accesses,
 		Peer:      rule.GetValuesAsString("peer"),
@@ -40,7 +40,7 @@ func newPtrace(q Qualifier, rule rule) (Rule, error) {
 
 func newPtraceFromLog(log map[string]string) Rule {
 	return &Ptrace{
-		RuleBase:  newBaseFromLog(log),
+		Base:      newBaseFromLog(log),
 		Qualifier: newQualifierFromLog(log),
 		Access:    Must(toAccess(PTRACE, log["requested_mask"])),
 		Peer:      log["peer"],
@@ -62,8 +62,8 @@ func (r *Ptrace) Merge(other Rule) bool {
 	}
 	if r.Peer == o.Peer {
 		r.Access = merge(r.Kind(), "access", r.Access, o.Access)
-		b := &r.RuleBase
-		return b.merge(o.RuleBase)
+		b := &r.Base
+		return b.merge(o.Base)
 	}
 	return false
 }

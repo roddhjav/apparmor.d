@@ -38,7 +38,7 @@ func isOwner(log map[string]string) bool {
 }
 
 type File struct {
-	RuleBase
+	Base
 	Qualifier
 	Owner  bool
 	Path   string
@@ -76,7 +76,7 @@ func newFile(q Qualifier, rule rule) (Rule, error) {
 		return nil, err
 	}
 	return &File{
-		RuleBase:  newBase(rule),
+		Base:      newBase(rule),
 		Qualifier: q,
 		Owner:     owner,
 		Path:      path,
@@ -94,7 +94,7 @@ func newFileFromLog(log map[string]string) Rule {
 		return newLinkFromLog(log)
 	}
 	return &File{
-		RuleBase:  newBaseFromLog(log),
+		Base:      newBaseFromLog(log),
 		Qualifier: newQualifierFromLog(log),
 		Owner:     isOwner(log),
 		Path:      log["name"],
@@ -138,8 +138,8 @@ func (r *File) Merge(other Rule) bool {
 	}
 	if r.Owner == o.Owner && r.Path == o.Path && r.Target == o.Target {
 		r.Access = merge(r.Kind(), "access", r.Access, o.Access)
-		b := &r.RuleBase
-		return b.merge(o.RuleBase)
+		b := &r.Base
+		return b.merge(o.Base)
 	}
 	return false
 }
@@ -157,7 +157,7 @@ func (r *File) Kind() Kind {
 }
 
 type Link struct {
-	RuleBase
+	Base
 	Qualifier
 	Owner  bool
 	Subset bool
@@ -190,7 +190,7 @@ func newLink(q Qualifier, rule rule) (Rule, error) {
 		}
 	}
 	return &Link{
-		RuleBase:  newBase(rule),
+		Base:      newBase(rule),
 		Qualifier: q,
 		Owner:     owner,
 		Subset:    subset,
@@ -201,7 +201,7 @@ func newLink(q Qualifier, rule rule) (Rule, error) {
 
 func newLinkFromLog(log map[string]string) Rule {
 	return &Link{
-		RuleBase:  newBaseFromLog(log),
+		Base:      newBaseFromLog(log),
 		Qualifier: newQualifierFromLog(log),
 		Owner:     isOwner(log),
 		Path:      log["name"],

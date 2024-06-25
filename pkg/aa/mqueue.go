@@ -23,7 +23,7 @@ func init() {
 }
 
 type Mqueue struct {
-	RuleBase
+	Base
 	Qualifier
 	Access []string
 	Type   string
@@ -47,7 +47,7 @@ func newMqueue(q Qualifier, rule rule) (Rule, error) {
 		return nil, err
 	}
 	return &Mqueue{
-		RuleBase:  newBase(rule),
+		Base:      newBase(rule),
 		Qualifier: q,
 		Access:    accesses,
 		Type:      rule.GetValuesAsString("type"),
@@ -64,7 +64,7 @@ func newMqueueFromLog(log map[string]string) Rule {
 		mqueueType = "sysv"
 	}
 	return &Mqueue{
-		RuleBase:  newBaseFromLog(log),
+		Base:      newBaseFromLog(log),
 		Qualifier: newQualifierFromLog(log),
 		Access:    Must(toAccess(MQUEUE, log["requested"])),
 		Type:      mqueueType,
@@ -105,8 +105,8 @@ func (r *Mqueue) Merge(other Rule) bool {
 	}
 	if r.Type == o.Type && r.Label == o.Label && r.Name == o.Name {
 		r.Access = merge(r.Kind(), "access", r.Access, o.Access)
-		b := &r.RuleBase
-		return b.merge(o.RuleBase)
+		b := &r.Base
+		return b.merge(o.Base)
 	}
 	return false
 }

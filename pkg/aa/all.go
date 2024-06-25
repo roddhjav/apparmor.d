@@ -9,11 +9,11 @@ const (
 )
 
 type All struct {
-	RuleBase
+	Base
 }
 
 func newAll(q Qualifier, rule rule) (Rule, error) {
-	return &All{RuleBase: newBase(rule)}, nil
+	return &All{Base: newBase(rule)}, nil
 }
 
 func (r *All) Validate() error {
@@ -26,8 +26,8 @@ func (r *All) Compare(other Rule) int {
 
 func (r *All) Merge(other Rule) bool {
 	o, _ := other.(*All)
-	b := &r.RuleBase
-	return b.merge(o.RuleBase)
+	b := &r.Base
+	return b.merge(o.Base)
 }
 
 func (r *All) String() string {
