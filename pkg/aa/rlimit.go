@@ -51,6 +51,18 @@ func newRlimitFromLog(log map[string]string) Rule {
 	}
 }
 
+func (r *Rlimit) Kind() Kind {
+	return RLIMIT
+}
+
+func (r *Rlimit) Constraint() constraint {
+	return blockKind
+}
+
+func (r *Rlimit) String() string {
+	return renderTemplate(r.Kind(), r)
+}
+
 func (r *Rlimit) Validate() error {
 	if err := validateValues(r.Kind(), "keys", []string{r.Key}); err != nil {
 		return fmt.Errorf("%s: %w", r, err)
@@ -67,16 +79,4 @@ func (r *Rlimit) Compare(other Rule) int {
 		return res
 	}
 	return compare(r.Value, o.Value)
-}
-
-func (r *Rlimit) String() string {
-	return renderTemplate(r.Kind(), r)
-}
-
-func (r *Rlimit) Constraint() constraint {
-	return blockKind
-}
-
-func (r *Rlimit) Kind() Kind {
-	return RLIMIT
 }

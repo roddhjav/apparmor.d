@@ -120,6 +120,18 @@ func newMountFromLog(log map[string]string) Rule {
 	}
 }
 
+func (r *Mount) Kind() Kind {
+	return MOUNT
+}
+
+func (r *Mount) Constraint() constraint {
+	return blockKind
+}
+
+func (r *Mount) String() string {
+	return renderTemplate(r.Kind(), r)
+}
+
 func (r *Mount) Validate() error {
 	if err := r.MountConditions.Validate(); err != nil {
 		return fmt.Errorf("%s: %w", r, err)
@@ -156,18 +168,6 @@ func (r *Mount) Merge(other Rule) bool {
 	return false
 }
 
-func (r *Mount) String() string {
-	return renderTemplate(r.Kind(), r)
-}
-
-func (r *Mount) Constraint() constraint {
-	return blockKind
-}
-
-func (r *Mount) Kind() Kind {
-	return MOUNT
-}
-
 type Umount struct {
 	Base
 	Qualifier
@@ -202,6 +202,18 @@ func newUmountFromLog(log map[string]string) Rule {
 	}
 }
 
+func (r *Umount) Kind() Kind {
+	return UMOUNT
+}
+
+func (r *Umount) Constraint() constraint {
+	return blockKind
+}
+
+func (r *Umount) String() string {
+	return renderTemplate(r.Kind(), r)
+}
+
 func (r *Umount) Validate() error {
 	if err := r.MountConditions.Validate(); err != nil {
 		return fmt.Errorf("%s: %w", r, err)
@@ -232,18 +244,6 @@ func (r *Umount) Merge(other Rule) bool {
 		return b.merge(o.Base)
 	}
 	return false
-}
-
-func (r *Umount) String() string {
-	return renderTemplate(r.Kind(), r)
-}
-
-func (r *Umount) Constraint() constraint {
-	return blockKind
-}
-
-func (r *Umount) Kind() Kind {
-	return UMOUNT
 }
 
 type Remount struct {
@@ -281,6 +281,18 @@ func newRemountFromLog(log map[string]string) Rule {
 	}
 }
 
+func (r *Remount) Kind() Kind {
+	return REMOUNT
+}
+
+func (r *Remount) Constraint() constraint {
+	return blockKind
+}
+
+func (r *Remount) String() string {
+	return renderTemplate(r.Kind(), r)
+}
+
 func (r *Remount) Validate() error {
 	if err := r.MountConditions.Validate(); err != nil {
 		return fmt.Errorf("%s: %w", r, err)
@@ -311,16 +323,4 @@ func (r *Remount) Merge(other Rule) bool {
 		return b.merge(o.Base)
 	}
 	return false
-}
-
-func (r *Remount) String() string {
-	return renderTemplate(r.Kind(), r)
-}
-
-func (r *Remount) Constraint() constraint {
-	return blockKind
-}
-
-func (r *Remount) Kind() Kind {
-	return REMOUNT
 }

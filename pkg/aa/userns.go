@@ -42,6 +42,18 @@ func newUsernsFromLog(log map[string]string) Rule {
 	}
 }
 
+func (r *Userns) Kind() Kind {
+	return USERNS
+}
+
+func (r *Userns) Constraint() constraint {
+	return blockKind
+}
+
+func (r *Userns) String() string {
+	return renderTemplate(r.Kind(), r)
+}
+
 func (r *Userns) Validate() error {
 	return nil
 }
@@ -58,16 +70,4 @@ func (r *Userns) Merge(other Rule) bool {
 	o, _ := other.(*Userns)
 	b := &r.Base
 	return b.merge(o.Base)
-}
-
-func (r *Userns) String() string {
-	return renderTemplate(r.Kind(), r)
-}
-
-func (r *Userns) Constraint() constraint {
-	return blockKind
-}
-
-func (r *Userns) Kind() Kind {
-	return USERNS
 }

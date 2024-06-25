@@ -99,6 +99,18 @@ func newNetworkFromLog(log map[string]string) Rule {
 	}
 }
 
+func (r *Network) Kind() Kind {
+	return NETWORK
+}
+
+func (r *Network) Constraint() constraint {
+	return blockKind
+}
+
+func (r *Network) String() string {
+	return renderTemplate(r.Kind(), r)
+}
+
 func (r *Network) Validate() error {
 	if err := validateValues(r.Kind(), "domains", []string{r.Domain}); err != nil {
 		return fmt.Errorf("%s: %w", r, err)
@@ -127,16 +139,4 @@ func (r *Network) Compare(other Rule) int {
 		return res
 	}
 	return r.Qualifier.Compare(o.Qualifier)
-}
-
-func (r *Network) String() string {
-	return renderTemplate(r.Kind(), r)
-}
-
-func (r *Network) Constraint() constraint {
-	return blockKind
-}
-
-func (r *Network) Kind() Kind {
-	return NETWORK
 }

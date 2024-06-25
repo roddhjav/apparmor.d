@@ -69,6 +69,18 @@ func newHeader(rule rule) (Header, error) {
 	}, nil
 }
 
+func (p *Profile) Kind() Kind {
+	return PROFILE
+}
+
+func (p *Profile) Constraint() constraint {
+	return blockKind
+}
+
+func (p *Profile) String() string {
+	return renderTemplate(p.Kind(), p)
+}
+
 func (r *Profile) Validate() error {
 	if err := validateValues(r.Kind(), tokFLAGS, r.Flags); err != nil {
 		return fmt.Errorf("profile %s: %w", r.Name, err)
@@ -82,18 +94,6 @@ func (r *Profile) Compare(other Rule) int {
 		return res
 	}
 	return compare(r.Attachments, o.Attachments)
-}
-
-func (p *Profile) String() string {
-	return renderTemplate(p.Kind(), p)
-}
-
-func (p *Profile) Constraint() constraint {
-	return blockKind
-}
-
-func (p *Profile) Kind() Kind {
-	return PROFILE
 }
 
 func (p *Profile) Merge(other Rule) bool {

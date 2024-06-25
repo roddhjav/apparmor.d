@@ -16,6 +16,18 @@ func newAll(q Qualifier, rule rule) (Rule, error) {
 	return &All{Base: newBase(rule)}, nil
 }
 
+func (r *All) Kind() Kind {
+	return ALL
+}
+
+func (r *All) Constraint() constraint {
+	return blockKind
+}
+
+func (r *All) String() string {
+	return renderTemplate(r.Kind(), r)
+}
+
 func (r *All) Validate() error {
 	return nil
 }
@@ -28,16 +40,4 @@ func (r *All) Merge(other Rule) bool {
 	o, _ := other.(*All)
 	b := &r.Base
 	return b.merge(o.Base)
-}
-
-func (r *All) String() string {
-	return renderTemplate(r.Kind(), r)
-}
-
-func (r *All) Constraint() constraint {
-	return blockKind
-}
-
-func (r *All) Kind() Kind {
-	return ALL
 }

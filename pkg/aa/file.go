@@ -103,6 +103,18 @@ func newFileFromLog(log map[string]string) Rule {
 	}
 }
 
+func (r *File) Kind() Kind {
+	return FILE
+}
+
+func (r *File) Constraint() constraint {
+	return blockKind
+}
+
+func (r *File) String() string {
+	return renderTemplate(r.Kind(), r)
+}
+
 func (r *File) Validate() error {
 	return nil
 }
@@ -142,18 +154,6 @@ func (r *File) Merge(other Rule) bool {
 		return b.merge(o.Base)
 	}
 	return false
-}
-
-func (r *File) String() string {
-	return renderTemplate(r.Kind(), r)
-}
-
-func (r *File) Constraint() constraint {
-	return blockKind
-}
-
-func (r *File) Kind() Kind {
-	return FILE
 }
 
 type Link struct {
@@ -209,6 +209,18 @@ func newLinkFromLog(log map[string]string) Rule {
 	}
 }
 
+func (r *Link) Kind() Kind {
+	return LINK
+}
+
+func (r *Link) Constraint() constraint {
+	return blockKind
+}
+
+func (r *Link) String() string {
+	return renderTemplate(r.Kind(), r)
+}
+
 func (r *Link) Validate() error {
 	return nil
 }
@@ -229,16 +241,4 @@ func (r *Link) Compare(other Rule) int {
 		return res
 	}
 	return r.Qualifier.Compare(o.Qualifier)
-}
-
-func (r *Link) String() string {
-	return renderTemplate(r.Kind(), r)
-}
-
-func (r *Link) Constraint() constraint {
-	return blockKind
-}
-
-func (r *Link) Kind() Kind {
-	return LINK
 }

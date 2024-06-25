@@ -51,6 +51,18 @@ func newCapabilityFromLog(log map[string]string) Rule {
 	}
 }
 
+func (r *Capability) Kind() Kind {
+	return CAPABILITY
+}
+
+func (r *Capability) Constraint() constraint {
+	return blockKind
+}
+
+func (r *Capability) String() string {
+	return renderTemplate(r.Kind(), r)
+}
+
 func (r *Capability) Validate() error {
 	if err := validateValues(r.Kind(), "name", r.Names); err != nil {
 		return fmt.Errorf("%s: %w", r, err)
@@ -64,16 +76,4 @@ func (r *Capability) Compare(other Rule) int {
 		return res
 	}
 	return r.Qualifier.Compare(o.Qualifier)
-}
-
-func (r *Capability) String() string {
-	return renderTemplate(r.Kind(), r)
-}
-
-func (r *Capability) Constraint() constraint {
-	return blockKind
-}
-
-func (r *Capability) Kind() Kind {
-	return CAPABILITY
 }

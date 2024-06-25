@@ -70,6 +70,18 @@ func newUnixFromLog(log map[string]string) Rule {
 	}
 }
 
+func (r *Unix) Kind() Kind {
+	return UNIX
+}
+
+func (r *Unix) Constraint() constraint {
+	return blockKind
+}
+
+func (r *Unix) String() string {
+	return renderTemplate(r.Kind(), r)
+}
+
 func (r *Unix) Validate() error {
 	if err := validateValues(r.Kind(), "access", r.Access); err != nil {
 		return fmt.Errorf("%s: %w", r, err)
@@ -123,16 +135,4 @@ func (r *Unix) Merge(other Rule) bool {
 		return b.merge(o.Base)
 	}
 	return false
-}
-
-func (r *Unix) String() string {
-	return renderTemplate(r.Kind(), r)
-}
-
-func (r *Unix) Constraint() constraint {
-	return blockKind
-}
-
-func (r *Unix) Kind() Kind {
-	return UNIX
 }
