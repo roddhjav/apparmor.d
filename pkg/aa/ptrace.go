@@ -47,6 +47,18 @@ func newPtraceFromLog(log map[string]string) Rule {
 	}
 }
 
+func (r *Ptrace) Kind() Kind {
+	return PTRACE
+}
+
+func (r *Ptrace) Constraint() constraint {
+	return blockKind
+}
+
+func (r *Ptrace) String() string {
+	return renderTemplate(r.Kind(), r)
+}
+
 func (r *Ptrace) Validate() error {
 	if err := validateValues(r.Kind(), "access", r.Access); err != nil {
 		return fmt.Errorf("%s: %w", r, err)
@@ -77,16 +89,4 @@ func (r *Ptrace) Compare(other Rule) int {
 		return res
 	}
 	return r.Qualifier.Compare(o.Qualifier)
-}
-
-func (r *Ptrace) String() string {
-	return renderTemplate(r.Kind(), r)
-}
-
-func (r *Ptrace) Constraint() constraint {
-	return blockKind
-}
-
-func (r *Ptrace) Kind() Kind {
-	return PTRACE
 }

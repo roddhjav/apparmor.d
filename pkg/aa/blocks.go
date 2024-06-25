@@ -15,6 +15,18 @@ type Hat struct {
 	Rules Rules
 }
 
+func (p *Hat) Kind() Kind {
+	return HAT
+}
+
+func (p *Hat) Constraint() constraint {
+	return blockKind
+}
+
+func (p *Hat) String() string {
+	return renderTemplate(p.Kind(), p)
+}
+
 func (r *Hat) Validate() error {
 	return nil
 }
@@ -22,16 +34,4 @@ func (r *Hat) Validate() error {
 func (r *Hat) Compare(other Rule) int {
 	o, _ := other.(*Hat)
 	return compare(r.Name, o.Name)
-}
-
-func (p *Hat) String() string {
-	return renderTemplate(p.Kind(), p)
-}
-
-func (p *Hat) Constraint() constraint {
-	return blockKind
-}
-
-func (p *Hat) Kind() Kind {
-	return HAT
 }

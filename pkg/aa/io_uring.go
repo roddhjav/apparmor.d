@@ -45,6 +45,18 @@ func newIOUringFromLog(log map[string]string) Rule {
 	}
 }
 
+func (r *IOUring) Kind() Kind {
+	return IOURING
+}
+
+func (r *IOUring) Constraint() constraint {
+	return blockKind
+}
+
+func (r *IOUring) String() string {
+	return renderTemplate(r.Kind(), r)
+}
+
 func (r *IOUring) Validate() error {
 	if err := validateValues(r.Kind(), "access", r.Access); err != nil {
 		return fmt.Errorf("%s: %w", r, err)
@@ -75,16 +87,4 @@ func (r *IOUring) Merge(other Rule) bool {
 		return b.merge(o.Base)
 	}
 	return false
-}
-
-func (r *IOUring) String() string {
-	return renderTemplate(r.Kind(), r)
-}
-
-func (r *IOUring) Constraint() constraint {
-	return blockKind
-}
-
-func (r *IOUring) Kind() Kind {
-	return IOURING
 }

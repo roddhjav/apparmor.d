@@ -74,6 +74,18 @@ func newDbusFromLog(log map[string]string) Rule {
 	}
 }
 
+func (r *Dbus) Kind() Kind {
+	return DBUS
+}
+
+func (r *Dbus) Constraint() constraint {
+	return blockKind
+}
+
+func (r *Dbus) String() string {
+	return renderTemplate(r.Kind(), r)
+}
+
 func (r *Dbus) Validate() error {
 	if err := validateValues(r.Kind(), "access", r.Access); err != nil {
 		return fmt.Errorf("%s: %w", r, err)
@@ -124,16 +136,4 @@ func (r *Dbus) Merge(other Rule) bool {
 		return b.merge(o.Base)
 	}
 	return false
-}
-
-func (r *Dbus) String() string {
-	return renderTemplate(r.Kind(), r)
-}
-
-func (r *Dbus) Constraint() constraint {
-	return blockKind
-}
-
-func (r *Dbus) Kind() Kind {
-	return DBUS
 }

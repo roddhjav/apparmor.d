@@ -29,24 +29,24 @@ func newComment(rule rule) (Rule, error) {
 	return &Comment{Base: base}, nil
 }
 
-func (r *Comment) Validate() error {
-	return nil
-}
-
-func (r *Comment) Compare(other Rule) int {
-	return 0 // Comments are always equal to each other as they are not compared
-}
-
-func (r *Comment) String() string {
-	return renderTemplate(r.Kind(), r)
+func (r *Comment) Kind() Kind {
+	return COMMENT
 }
 
 func (r *Comment) Constraint() constraint {
 	return anyKind
 }
 
-func (r *Comment) Kind() Kind {
-	return COMMENT
+func (r *Comment) String() string {
+	return renderTemplate(r.Kind(), r)
+}
+
+func (r *Comment) Validate() error {
+	return nil
+}
+
+func (r *Comment) Compare(other Rule) int {
+	return 0 // Comments are always equal to each other as they are not compared
 }
 
 type Abi struct {
@@ -77,6 +77,18 @@ func newAbi(q Qualifier, rule rule) (Rule, error) {
 	}, nil
 }
 
+func (r *Abi) Kind() Kind {
+	return ABI
+}
+
+func (r *Abi) Constraint() constraint {
+	return preambleKind
+}
+
+func (r *Abi) String() string {
+	return renderTemplate(r.Kind(), r)
+}
+
 func (r *Abi) Validate() error {
 	return nil
 }
@@ -87,18 +99,6 @@ func (r *Abi) Compare(other Rule) int {
 		return res
 	}
 	return compare(r.IsMagic, o.IsMagic)
-}
-
-func (r *Abi) String() string {
-	return renderTemplate(r.Kind(), r)
-}
-
-func (r *Abi) Constraint() constraint {
-	return preambleKind
-}
-
-func (r *Abi) Kind() Kind {
-	return ABI
 }
 
 type Alias struct {
@@ -121,6 +121,18 @@ func newAlias(q Qualifier, rule rule) (Rule, error) {
 	}, nil
 }
 
+func (r *Alias) Kind() Kind {
+	return ALIAS
+}
+
+func (r *Alias) Constraint() constraint {
+	return preambleKind
+}
+
+func (r *Alias) String() string {
+	return renderTemplate(r.Kind(), r)
+}
+
 func (r *Alias) Validate() error {
 	return nil
 }
@@ -131,18 +143,6 @@ func (r *Alias) Compare(other Rule) int {
 		return res
 	}
 	return compare(r.RewrittenPath, o.RewrittenPath)
-}
-
-func (r *Alias) String() string {
-	return renderTemplate(r.Kind(), r)
-}
-
-func (r *Alias) Constraint() constraint {
-	return preambleKind
-}
-
-func (r *Alias) Kind() Kind {
-	return ALIAS
 }
 
 type Include struct {
@@ -184,6 +184,18 @@ func newInclude(rule rule) (Rule, error) {
 	}, nil
 }
 
+func (r *Include) Kind() Kind {
+	return INCLUDE
+}
+
+func (r *Include) Constraint() constraint {
+	return anyKind
+}
+
+func (r *Include) String() string {
+	return renderTemplate(r.Kind(), r)
+}
+
 func (r *Include) Validate() error {
 	return nil
 }
@@ -204,18 +216,6 @@ func (r *Include) Compare(other Rule) int {
 		return res
 	}
 	return compare(r.IfExists, o.IfExists)
-}
-
-func (r *Include) String() string {
-	return renderTemplate(r.Kind(), r)
-}
-
-func (r *Include) Constraint() constraint {
-	return anyKind
-}
-
-func (r *Include) Kind() Kind {
-	return INCLUDE
 }
 
 type Variable struct {
@@ -252,19 +252,20 @@ func newVariable(rule rule) (Rule, error) {
 	}, nil
 }
 
-func (r *Variable) Validate() error {
-	return nil
+func (r *Variable) Kind() Kind {
+	return VARIABLE
 }
 
-func (r *Variable) Merge(other Rule) bool {
-	o, _ := other.(*Variable)
+func (r *Variable) Constraint() constraint {
+	return preambleKind
+}
 
-	if r.Name == o.Name && r.Define == o.Define {
-		r.Values = merge(r.Kind(), "access", r.Values, o.Values)
-		b := &r.Base
-		return b.merge(o.Base)
-	}
-	return false
+func (r *Variable) String() string {
+	return renderTemplate(r.Kind(), r)
+}
+
+func (r *Variable) Validate() error {
+	return nil
 }
 
 func (r *Variable) Compare(other Rule) int {
@@ -278,14 +279,13 @@ func (r *Variable) Compare(other Rule) int {
 	return compare(r.Values, o.Values)
 }
 
-func (r *Variable) String() string {
-	return renderTemplate(r.Kind(), r)
-}
+func (r *Variable) Merge(other Rule) bool {
+	o, _ := other.(*Variable)
 
-func (r *Variable) Constraint() constraint {
-	return preambleKind
-}
-
-func (r *Variable) Kind() Kind {
-	return VARIABLE
+	if r.Name == o.Name && r.Define == o.Define {
+		r.Values = merge(r.Kind(), "access", r.Values, o.Values)
+		b := &r.Base
+		return b.merge(o.Base)
+	}
+	return false
 }

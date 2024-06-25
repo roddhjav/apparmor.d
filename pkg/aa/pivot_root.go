@@ -50,6 +50,18 @@ func newPivotRootFromLog(log map[string]string) Rule {
 	}
 }
 
+func (r *PivotRoot) Kind() Kind {
+	return PIVOTROOT
+}
+
+func (r *PivotRoot) Constraint() constraint {
+	return blockKind
+}
+
+func (r *PivotRoot) String() string {
+	return renderTemplate(r.Kind(), r)
+}
+
 func (r *PivotRoot) Validate() error {
 	return nil
 }
@@ -66,16 +78,4 @@ func (r *PivotRoot) Compare(other Rule) int {
 		return res
 	}
 	return r.Qualifier.Compare(o.Qualifier)
-}
-
-func (r *PivotRoot) String() string {
-	return renderTemplate(r.Kind(), r)
-}
-
-func (r *PivotRoot) Constraint() constraint {
-	return blockKind
-}
-
-func (r *PivotRoot) Kind() Kind {
-	return PIVOTROOT
 }

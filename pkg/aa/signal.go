@@ -67,6 +67,18 @@ func newSignalFromLog(log map[string]string) Rule {
 	}
 }
 
+func (r *Signal) Kind() Kind {
+	return SIGNAL
+}
+
+func (r *Signal) Constraint() constraint {
+	return blockKind
+}
+
+func (r *Signal) String() string {
+	return renderTemplate(r.Kind(), r)
+}
+
 func (r *Signal) Validate() error {
 	if err := validateValues(r.Kind(), "access", r.Access); err != nil {
 		return fmt.Errorf("%s: %w", r, err)
@@ -108,16 +120,4 @@ func (r *Signal) Compare(other Rule) int {
 		return res
 	}
 	return r.Qualifier.Compare(o.Qualifier)
-}
-
-func (r *Signal) String() string {
-	return renderTemplate(r.Kind(), r)
-}
-
-func (r *Signal) Constraint() constraint {
-	return blockKind
-}
-
-func (r *Signal) Kind() Kind {
-	return SIGNAL
 }

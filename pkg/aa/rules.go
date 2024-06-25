@@ -37,12 +37,12 @@ func (k Kind) Tok() string {
 
 // Rule generic interface for all AppArmor rules
 type Rule interface {
+	Kind() Kind
+	Constraint() constraint
+	String() string
 	Validate() error
 	Compare(other Rule) int
 	Merge(other Rule) bool
-	String() string
-	Constraint() constraint
-	Kind() Kind
 }
 
 type Rules []Rule
