@@ -6,8 +6,8 @@ package aa
 
 var (
 	// Comment
-	comment1 = &Comment{RuleBase: RuleBase{Comment: "comment", IsLineRule: true}}
-	comment2 = &Comment{RuleBase: RuleBase{Comment: "another comment", IsLineRule: true}}
+	comment1 = &Comment{Base: Base{Comment: "comment", IsLineRule: true}}
+	comment2 = &Comment{Base: Base{Comment: "another comment", IsLineRule: true}}
 
 	// Abi
 	abi1 = &Abi{IsMagic: true, Path: "abi/4.0"}
@@ -28,7 +28,7 @@ var (
 
 	// All
 	all1 = &All{}
-	all2 = &All{RuleBase: RuleBase{Comment: "comment"}}
+	all2 = &All{Base: Base{Comment: "comment"}}
 
 	// Rlimit
 	rlimit1 = &Rlimit{Key: "nproc", Op: "<=", Value: "200"}
@@ -94,13 +94,13 @@ var (
 		"flags":     "rw, rbind",
 	}
 	mount1 = &Mount{
-		RuleBase:        RuleBase{Comment: " failed perms check"},
+		Base:            Base{Comment: " failed perms check"},
 		MountConditions: MountConditions{FsType: "overlay"},
 		Source:          "overlay",
 		MountPoint:      "/var/lib/docker/overlay2/opaque-bug-check1209538631/merged/",
 	}
 	mount2 = &Mount{
-		RuleBase:        RuleBase{Comment: " failed perms check"},
+		Base:            Base{Comment: " failed perms check"},
 		MountConditions: MountConditions{Options: []string{"rw", "rbind"}},
 		Source:          "/oldroot/dev/tty",
 		MountPoint:      "/newroot/dev/tty",
@@ -238,9 +238,9 @@ var (
 		PeerLabel: "dbus-daemon",
 	}
 	unix2 = &Unix{
-		RuleBase: RuleBase{FileInherit: true},
-		Access:   []string{"receive"},
-		Type:     "stream",
+		Base:   Base{FileInherit: true},
+		Access: []string{"receive"},
+		Type:   "stream",
 	}
 
 	// Dbus
@@ -318,10 +318,10 @@ var (
 	}
 	file1 = &File{Path: "/usr/share/poppler/cMap/Identity-H", Access: []string{"r"}}
 	file2 = &File{
-		RuleBase: RuleBase{NoNewPrivs: true},
-		Owner:    true,
-		Path:     "@{PROC}/4163/cgroup",
-		Access:   []string{"r"},
+		Base:   Base{NoNewPrivs: true},
+		Owner:  true,
+		Path:   "@{PROC}/4163/cgroup",
+		Access: []string{"r"},
 	}
 
 	// Link

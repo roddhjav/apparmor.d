@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-type RuleBase struct {
+type Base struct {
 	IsLineRule  bool
 	Comment     string
 	NoNewPrivs  bool
@@ -19,7 +19,7 @@ type RuleBase struct {
 	Optional    bool
 }
 
-func newBase(rule rule) RuleBase {
+func newBase(rule rule) Base {
 	comment := ""
 	fileInherit, noNewPrivs, optional := false, false, false
 
@@ -44,7 +44,7 @@ func newBase(rule rule) RuleBase {
 		optional = true
 		comment = strings.Replace(comment, "optional: ", "", 1)
 	}
-	return RuleBase{
+	return Base{
 		Comment:     comment,
 		NoNewPrivs:  noNewPrivs,
 		FileInherit: fileInherit,
@@ -52,7 +52,7 @@ func newBase(rule rule) RuleBase {
 	}
 }
 
-func newBaseFromLog(log map[string]string) RuleBase {
+func newBaseFromLog(log map[string]string) Base {
 	comment := ""
 	fileInherit, noNewPrivs, optional := false, false, false
 
@@ -70,7 +70,7 @@ func newBaseFromLog(log map[string]string) RuleBase {
 	if log["info"] != "" {
 		comment += " " + log["info"]
 	}
-	return RuleBase{
+	return Base{
 		IsLineRule:  false,
 		Comment:     comment,
 		NoNewPrivs:  noNewPrivs,
@@ -79,11 +79,11 @@ func newBaseFromLog(log map[string]string) RuleBase {
 	}
 }
 
-func (r RuleBase) Merge(other Rule) bool {
+func (r Base) Merge(other Rule) bool {
 	return false
 }
 
-func (r *RuleBase) merge(other RuleBase) bool {
+func (r *Base) merge(other Base) bool {
 	if other.Comment != "" {
 		r.Comment += " " + other.Comment
 	}

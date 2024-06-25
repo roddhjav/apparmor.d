@@ -26,7 +26,7 @@ func init() {
 }
 
 type Capability struct {
-	RuleBase
+	Base
 	Qualifier
 	Names []string
 }
@@ -37,7 +37,7 @@ func newCapability(q Qualifier, rule rule) (Rule, error) {
 		return nil, err
 	}
 	return &Capability{
-		RuleBase:  newBase(rule),
+		Base:      newBase(rule),
 		Qualifier: q,
 		Names:     names,
 	}, nil
@@ -45,7 +45,7 @@ func newCapability(q Qualifier, rule rule) (Rule, error) {
 
 func newCapabilityFromLog(log map[string]string) Rule {
 	return &Capability{
-		RuleBase:  newBaseFromLog(log),
+		Base:      newBaseFromLog(log),
 		Qualifier: newQualifierFromLog(log),
 		Names:     Must(toValues(CAPABILITY, "name", log["capname"])),
 	}

@@ -58,7 +58,7 @@ func (r AddressExpr) Compare(other AddressExpr) int {
 }
 
 type Network struct {
-	RuleBase
+	Base
 	Qualifier
 	AddressExpr
 	Domain   string
@@ -80,7 +80,7 @@ func newNetwork(q Qualifier, rule rule) (Rule, error) {
 		}
 	}
 	return &Network{
-		RuleBase:  newBase(rule),
+		Base:      newBase(rule),
 		Qualifier: q,
 		Domain:    domain,
 		Type:      nType,
@@ -90,7 +90,7 @@ func newNetwork(q Qualifier, rule rule) (Rule, error) {
 
 func newNetworkFromLog(log map[string]string) Rule {
 	return &Network{
-		RuleBase:    newBaseFromLog(log),
+		Base:        newBaseFromLog(log),
 		Qualifier:   newQualifierFromLog(log),
 		AddressExpr: newAddressExprFromLog(log),
 		Domain:      log["family"],

@@ -755,14 +755,14 @@ var (
 			@{lib_dirs} = @{lib}/@{name} /opt/@{name} # comment in variable`,
 			want: "\n\n\n",
 			rules: Rules{
-				&Comment{RuleBase: RuleBase{IsLineRule: true, Comment: " IsLineRule comment"}},
+				&Comment{Base: Base{IsLineRule: true, Comment: " IsLineRule comment"}},
 				&Include{
-					RuleBase: RuleBase{Comment: " comment included"},
-					IsMagic:  true, Path: "tunables/global",
+					Base:    Base{Comment: " comment included"},
+					IsMagic: true, Path: "tunables/global",
 				},
 				&Variable{
-					RuleBase: RuleBase{Comment: " comment in variable"},
-					Name:     "lib_dirs", Define: true,
+					Base: Base{Comment: " comment in variable"},
+					Name: "lib_dirs", Define: true,
 					Values: []string{"@{lib}/@{name}", "/opt/@{name}"},
 				},
 			},
@@ -862,14 +862,14 @@ var (
 			@{lib_dirs} = @{lib}/@{name} /opt/@{name} # comment in variable`,
 			apparmor: &AppArmorProfileFile{
 				Preamble: Rules{
-					&Comment{RuleBase: RuleBase{IsLineRule: true, Comment: " IsLineRule comment"}},
+					&Comment{Base: Base{IsLineRule: true, Comment: " IsLineRule comment"}},
 					&Include{
-						RuleBase: RuleBase{Comment: " comment included"},
-						Path:     "tunables/global", IsMagic: true,
+						Base: Base{Comment: " comment included"},
+						Path: "tunables/global", IsMagic: true,
 					},
 					&Variable{
-						RuleBase: RuleBase{Comment: " comment in variable"},
-						Name:     "lib_dirs", Define: true,
+						Base: Base{Comment: " comment in variable"},
+						Name: "lib_dirs", Define: true,
 						Values: []string{"@{lib}/@{name}", "/opt/@{name}"},
 					},
 				},
@@ -893,9 +893,9 @@ var (
 			`,
 			apparmor: &AppArmorProfileFile{
 				Preamble: Rules{
-					&Comment{RuleBase: RuleBase{IsLineRule: true, Comment: " Simple test"}},
+					&Comment{Base: Base{IsLineRule: true, Comment: " Simple test"}},
 					&Include{IsMagic: true, Path: "tunables/global"},
-					&Comment{RuleBase: RuleBase{IsLineRule: true, Comment: " { commented block }"}},
+					&Comment{Base: Base{IsLineRule: true, Comment: " { commented block }"}},
 					&Variable{Name: "name", Values: []string{"{D,d}ummy"}, Define: true},
 					&Variable{Name: "exec_path", Values: []string{"@{bin}/@{name}"}, Define: true},
 					&Variable{Name: "exec_path", Values: []string{"@{lib}/@{name}"}},
@@ -922,7 +922,7 @@ var (
 			raw:  util.MustReadFile(testData.Join("string.aa")),
 			apparmor: &AppArmorProfileFile{
 				Preamble: Rules{
-					&Comment{RuleBase: RuleBase{Comment: " Simple test profile for the AppArmorProfileFile.String() method", IsLineRule: true}},
+					&Comment{Base: Base{Comment: " Simple test profile for the AppArmorProfileFile.String() method", IsLineRule: true}},
 					&Include{IsMagic: true, Path: "tunables/global"},
 					&Variable{
 						Name: "exec_path", Define: true,
@@ -961,7 +961,7 @@ var (
 				},
 				{
 					&Mount{
-						RuleBase: RuleBase{IsLineRule: false, Comment: " failed perms check"},
+						Base: Base{IsLineRule: false, Comment: " failed perms check"},
 						MountConditions: MountConditions{
 							FsType:  "fuse.portal",
 							Options: []string{"rw", "rbind"},
@@ -1020,15 +1020,15 @@ var (
 			raw:  util.MustReadFile(testData.Join("full.aa")),
 			apparmor: &AppArmorProfileFile{
 				Preamble: Rules{
-					&Comment{RuleBase: RuleBase{IsLineRule: true, Comment: " Simple test profile with all rules used"}},
+					&Comment{Base: Base{IsLineRule: true, Comment: " Simple test profile with all rules used"}},
 					&Include{
-						RuleBase: RuleBase{Comment: " a comment", Optional: true},
-						IsMagic:  true, Path: "tunables/global",
+						Base:    Base{Comment: " a comment", Optional: true},
+						IsMagic: true, Path: "tunables/global",
 					},
 					&Include{IfExists: true, Path: "/etc/apparmor.d/global/dummy space"},
 					&Variable{Name: "name", Values: []string{"torbrowser", "\"tor browser\""}, Define: true},
 					&Variable{
-						RuleBase: RuleBase{Comment: " another comment"}, Define: true,
+						Base: Base{Comment: " another comment"}, Define: true,
 						Name: "lib_dirs", Values: []string{"@{lib}/@{name}", "/opt/@{name}"},
 					},
 					&Variable{Name: "config_dirs", Values: []string{"@{HOME}/.mozilla/"}, Define: true},
@@ -1152,7 +1152,7 @@ var (
 					},
 				},
 				{
-					&Comment{RuleBase: RuleBase{IsLineRule: true, Comment: " A comment! before a paragraph of rules"}},
+					&Comment{Base: Base{IsLineRule: true, Comment: " A comment! before a paragraph of rules"}},
 					&File{
 						Path:   "\"/opt/Mullvad VPN/resources/*.so*\"",
 						Access: []string{"m", "r"},

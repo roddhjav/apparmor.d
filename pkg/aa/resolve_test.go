@@ -31,7 +31,7 @@ func TestAppArmorProfileFile_resolveInclude(t *testing.T) {
 				Preamble: Rules{
 					&Alias{Path: "/usr/", RewrittenPath: "/User/"},
 					&Alias{Path: "/lib/", RewrittenPath: "/Libraries/"},
-					&Comment{RuleBase: RuleBase{IsLineRule: true, Comment: " variable declarations for inclusion"}},
+					&Comment{Base: Base{IsLineRule: true, Comment: " variable declarations for inclusion"}},
 					&Variable{
 						Name: "FOO", Define: true,
 						Values: []string{

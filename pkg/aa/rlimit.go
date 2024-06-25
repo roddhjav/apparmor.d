@@ -21,7 +21,7 @@ func init() {
 }
 
 type Rlimit struct {
-	RuleBase
+	Base
 	Key   string
 	Op    string
 	Value string
@@ -35,19 +35,19 @@ func newRlimit(q Qualifier, rule rule) (Rule, error) {
 		return nil, fmt.Errorf("invalid rlimit format: %s", rule)
 	}
 	return &Rlimit{
-		RuleBase: newBase(rule),
-		Key:      rule.Get(1),
-		Op:       rule.Get(2),
-		Value:    rule.Get(3),
+		Base:  newBase(rule),
+		Key:   rule.Get(1),
+		Op:    rule.Get(2),
+		Value: rule.Get(3),
 	}, nil
 }
 
 func newRlimitFromLog(log map[string]string) Rule {
 	return &Rlimit{
-		RuleBase: newBaseFromLog(log),
-		Key:      log["key"],
-		Op:       log["op"],
-		Value:    log["value"],
+		Base:  newBaseFromLog(log),
+		Key:   log["key"],
+		Op:    log["op"],
+		Value: log["value"],
 	}
 }
 
