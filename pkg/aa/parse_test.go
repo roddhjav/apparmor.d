@@ -14,7 +14,7 @@ import (
 
 func Test_tokenizeRule(t *testing.T) {
 	inHeader = true
-	for _, tt := range testRules {
+	for _, tt := range testParseRules {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := tokenizeRule(tt.raw); !reflect.DeepEqual(got, tt.tokens) {
 				t.Errorf("tokenize() = %v, want %v", got, tt.tokens)
@@ -25,7 +25,7 @@ func Test_tokenizeRule(t *testing.T) {
 
 func Test_parseRule(t *testing.T) {
 	inHeader = true
-	for _, tt := range testRules {
+	for _, tt := range testParseRules {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := parseRule(tt.raw); !reflect.DeepEqual(got, tt.rule) {
 				t.Errorf("parseRule() = %v, want %v", got, tt.rule)
@@ -35,7 +35,7 @@ func Test_parseRule(t *testing.T) {
 }
 
 func Test_rule_Getter(t *testing.T) {
-	for _, tt := range testRules {
+	for _, tt := range testParseRules {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.wGetAsMap == nil {
 				tt.wGetAsMap = map[string][]string{}
@@ -113,7 +113,7 @@ func Test_parseCommaRules(t *testing.T) {
 }
 
 func Test_newRules(t *testing.T) {
-	for _, tt := range testRules {
+	for _, tt := range testParseRules {
 		if tt.wRule == nil {
 			continue
 		}
@@ -159,7 +159,7 @@ func Test_AppArmorProfileFile_Parse(t *testing.T) {
 
 var (
 	// Test cases for tokenizeRule, parseRule,rule getters, and newRules
-	testRules = []struct {
+	testParseRules = []struct {
 		name               string
 		raw                string
 		tokens             []string
@@ -497,7 +497,7 @@ var (
 			wString:            "signal receive set=(cont term winch) peer=at-spi-bus-launcher",
 			wRule: &Signal{
 				Access: []string{"receive"},
-				Set:    []string{"term", "cont", "winch"},
+				Set:    []string{"cont", "term", "winch"},
 				Peer:   "at-spi-bus-launcher",
 			},
 		},
@@ -1123,7 +1123,7 @@ var (
 				{
 					&Signal{
 						Access: []string{"receive"},
-						Set:    []string{"term", "cont", "winch"},
+						Set:    []string{"cont", "term", "winch"},
 						Peer:   "at-spi-bus-launcher",
 					},
 				},
