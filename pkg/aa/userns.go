@@ -46,8 +46,8 @@ func (r *Userns) Kind() Kind {
 	return USERNS
 }
 
-func (r *Userns) Constraint() constraint {
-	return blockKind
+func (r *Userns) Constraint() Constraint {
+	return BlockRule
 }
 
 func (r *Userns) String() string {

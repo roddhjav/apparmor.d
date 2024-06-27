@@ -49,8 +49,8 @@ func (r *IOUring) Kind() Kind {
 	return IOURING
 }
 
-func (r *IOUring) Constraint() constraint {
-	return blockKind
+func (r *IOUring) Constraint() Constraint {
+	return BlockRule
 }
 
 func (r *IOUring) String() string {

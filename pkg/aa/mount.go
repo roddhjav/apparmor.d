@@ -124,8 +124,8 @@ func (r *Mount) Kind() Kind {
 	return MOUNT
 }
 
-func (r *Mount) Constraint() constraint {
-	return blockKind
+func (r *Mount) Constraint() Constraint {
+	return BlockRule
 }
 
 func (r *Mount) String() string {
@@ -206,8 +206,8 @@ func (r *Umount) Kind() Kind {
 	return UMOUNT
 }
 
-func (r *Umount) Constraint() constraint {
-	return blockKind
+func (r *Umount) Constraint() Constraint {
+	return BlockRule
 }
 
 func (r *Umount) String() string {
@@ -285,8 +285,8 @@ func (r *Remount) Kind() Kind {
 	return REMOUNT
 }
 
-func (r *Remount) Constraint() constraint {
-	return blockKind
+func (r *Remount) Constraint() Constraint {
+	return BlockRule
 }
 
 func (r *Remount) String() string {

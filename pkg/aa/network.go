@@ -103,8 +103,8 @@ func (r *Network) Kind() Kind {
 	return NETWORK
 }
 
-func (r *Network) Constraint() constraint {
-	return blockKind
+func (r *Network) Constraint() Constraint {
+	return BlockRule
 }
 
 func (r *Network) String() string {

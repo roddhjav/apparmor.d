@@ -188,7 +188,7 @@ func parseParagraph(input string) (Rules, error) {
 
 	res = append(res, rrr...)
 	for _, r := range res {
-		if r.Constraint() == preambleKind {
+		if r.Constraint() == PreambleRule {
 			return nil, fmt.Errorf("Rule not allowed in block: %s", r)
 		}
 	}
@@ -588,7 +588,7 @@ func (f *AppArmorProfileFile) parsePreamble(preamble string) error {
 	f.Preamble = append(f.Preamble, commaRules...)
 
 	for _, r := range f.Preamble {
-		if r.Constraint() == blockKind {
+		if r.Constraint() == BlockRule {
 			f.Preamble = nil
 			return fmt.Errorf("Rule not allowed in preamble: %s", r)
 		}

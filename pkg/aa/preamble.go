@@ -33,8 +33,8 @@ func (r *Comment) Kind() Kind {
 	return COMMENT
 }
 
-func (r *Comment) Constraint() constraint {
-	return anyKind
+func (r *Comment) Constraint() Constraint {
+	return AnyRule
 }
 
 func (r *Comment) String() string {
@@ -85,8 +85,8 @@ func (r *Abi) Kind() Kind {
 	return ABI
 }
 
-func (r *Abi) Constraint() constraint {
-	return preambleKind
+func (r *Abi) Constraint() Constraint {
+	return PreambleRule
 }
 
 func (r *Abi) String() string {
@@ -133,8 +133,8 @@ func (r *Alias) Kind() Kind {
 	return ALIAS
 }
 
-func (r *Alias) Constraint() constraint {
-	return preambleKind
+func (r *Alias) Constraint() Constraint {
+	return PreambleRule
 }
 
 func (r *Alias) String() string {
@@ -200,8 +200,8 @@ func (r *Include) Kind() Kind {
 	return INCLUDE
 }
 
-func (r *Include) Constraint() constraint {
-	return anyKind
+func (r *Include) Constraint() Constraint {
+	return AnyRule
 }
 
 func (r *Include) String() string {
@@ -272,8 +272,8 @@ func (r *Variable) Kind() Kind {
 	return VARIABLE
 }
 
-func (r *Variable) Constraint() constraint {
-	return preambleKind
+func (r *Variable) Constraint() Constraint {
+	return PreambleRule
 }
 
 func (r *Variable) String() string {

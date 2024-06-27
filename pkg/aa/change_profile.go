@@ -71,8 +71,8 @@ func (r *ChangeProfile) Kind() Kind {
 	return CHANGEPROFILE
 }
 
-func (r *ChangeProfile) Constraint() constraint {
-	return blockKind
+func (r *ChangeProfile) Constraint() Constraint {
+	return BlockRule
 }
 
 func (r *ChangeProfile) String() string {

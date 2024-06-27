@@ -20,8 +20,8 @@ func (r *All) Kind() Kind {
 	return ALL
 }
 
-func (r *All) Constraint() constraint {
-	return blockKind
+func (r *All) Constraint() Constraint {
+	return BlockRule
 }
 
 func (r *All) String() string {

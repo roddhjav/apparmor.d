@@ -73,8 +73,8 @@ func (p *Profile) Kind() Kind {
 	return PROFILE
 }
 
-func (p *Profile) Constraint() constraint {
-	return blockKind
+func (p *Profile) Constraint() Constraint {
+	return BlockRule
 }
 
 func (p *Profile) String() string {

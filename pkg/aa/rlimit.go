@@ -55,8 +55,8 @@ func (r *Rlimit) Kind() Kind {
 	return RLIMIT
 }
 
-func (r *Rlimit) Constraint() constraint {
-	return blockKind
+func (r *Rlimit) Constraint() Constraint {
+	return BlockRule
 }
 
 func (r *Rlimit) String() string {

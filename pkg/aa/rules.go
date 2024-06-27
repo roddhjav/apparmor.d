@@ -13,12 +13,12 @@ import (
 
 type requirement map[string][]string
 
-type constraint uint
+type Constraint uint
 
 const (
-	anyKind      constraint = iota // The rule can be found in either preamble or profile
-	preambleKind                   // The rule can only be found in the preamble
-	blockKind                      // The rule can only be found in a profile
+	AnyRule      Constraint = iota // The rule can be found in either preamble or profile
+	PreambleRule                   // The rule can only be found in the preamble
+	BlockRule                      // The rule can only be found in a profile
 )
 
 // Kind represents an AppArmor rule kind.
@@ -37,12 +37,12 @@ func (k Kind) Tok() string {
 
 // Rule generic interface for all AppArmor rules
 type Rule interface {
-	Kind() Kind
-	Constraint() constraint
-	String() string
-	Validate() error
-	Compare(other Rule) int
-	Merge(other Rule) bool
+	Kind() Kind             // Kind of the rule
+	Constraint() Constraint // Where the rule can be found (preamble, profile, any)
+	String() string         // Render the rule as a string
+	Validate() error        // Validate the rule. Return an error if the rule is invalid
+	Compare(other Rule) int // Compare two rules. Return 0 if they are identical
+	Merge(other Rule) bool  // Merge rules of same kind together. Return true if merged
 }
 
 type Rules []Rule

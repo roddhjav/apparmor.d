@@ -74,8 +74,8 @@ func (r *Unix) Kind() Kind {
 	return UNIX
 }
 
-func (r *Unix) Constraint() constraint {
-	return blockKind
+func (r *Unix) Constraint() Constraint {
+	return BlockRule
 }
 
 func (r *Unix) String() string {
