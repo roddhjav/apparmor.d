@@ -1,0 +1,46 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2024 Besanon  <m231009ts@mailfence.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/lxqt-config-input
+profile lxqt-config-input @{exec_path} flags=(complain) {
+  include <abstractions/base>
+  include <abstractions/bus-system>
+  include <abstractions/bus/org.bluez>
+  include <abstractions/bus/org.freedesktop.login1>
+  include <abstractions/devices-usb>
+  include <abstractions/dbus-session-strict>
+  include <abstractions/dbus-accessibility-strict>
+  include <abstractions/gtk>
+  include <abstractions/gvfs-open>
+  include <abstractions/lxqt>
+  include <abstractions/qt5-shader-cache>
+  include <abstractions/video>
+  
+  @{exec_path}			mr,
+  
+  @{bin}/setxkbmap 			rix,  
+
+  owner @{user_config_dirs}/lxqt/** rwkl -> @{user_config_dirs}/lxqt/#@{int},
+
+  owner /tmp/@{int}  		       r,
+
+  # There are hundreds of files to be accessed - Question: better to deny the few not to be accessed??
+  @{run}/udev/data/**		       r,
+  @{sys}/devices/**	           r,
+  @{sys}/class/**              r, 
+  @{sys}/bus/**                r,
+  @{sys}/devices/**            r,
+
+  @{PROC}/sys/kernel/random/boot_id     r,
+
+
+  /dev/tty				rw,
+
+  include if exists <local/lxqt-config-input>
+}

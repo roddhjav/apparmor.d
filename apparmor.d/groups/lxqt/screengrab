@@ -1,0 +1,53 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2024 Besanon  <m231009ts@mailfence.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+#include <tunables/global>
+
+@{exec_path} = @{bin}/screengrab
+profile screengrab @{exec_path} {
+  include <abstractions/common/app>
+  include <abstractions/gvfs-open>
+  include <abstractions/video>
+  include <abstractions/lxqt>
+  include <abstractions/qt5-shader-cache>
+  include <abstractions/dbus-session-strict>
+  include <abstractions/dbus-accessibility-strict>
+  include <abstractions/user-write-strict>
+  include <abstractions/user-read-strict>
+  include <abstractions/thumbnails-cache-read>
+    
+  @{exec_path}				mr,
+ 
+  /etc/xdg/menus/lxqt-config.menu  		r,
+
+  /usr/share/desktop-directories/lxqt-* 	r,
+  /usr/share/libdrm/amdgpu.ids 			r,
+
+  owner @{user_config_dirs}/lxqt-mimeapps.list	r,
+  owner @{user_config_dirs}/QtProject.conf 	r,
+  owner @{user_config_dirs}/screengrab/screengrab.conf 		rw,
+  owner @{user_config_dirs}/lxqt/lxqt-config.conf.lock 		rwk,
+  owner @{user_config_dirs}/lxqt/** rwkl -> @{user_config_dirs}/lxqt/#@{int},
+  owner @{user_config_dirs}/qterminal.org/qterminal.ini 	r,
+
+   @{sys}/bus/ 							r,
+   @{sys}/class/ 						r,
+   @{sys}/class/i2c-adapter/ 					r,
+   @{sys}/devices/@{pci_bus}/{,**}  				r,
+   @{sys}/devices/system/cpu/cpufreq/policy0/cpuinfo_max_freq 	r,
+
+  owner @{PROC}/@{pid}/mountinfo				r,
+  owner @{PROC}/@{pid}/mounts 					r,
+  @{PROC}/sys/kernel/random/boot_id 				r,
+
+  owner /tmp/xauth_@{rand6}			rw,
+
+  /dev/tty 					r,
+  owner /dev/tty@{int} 				rw,
+
+  include if exists <local/screengrab>
+}
