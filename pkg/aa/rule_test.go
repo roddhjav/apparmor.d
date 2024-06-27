@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-func TestRules_FromLog(t *testing.T) {
+func TestRule_FromLog(t *testing.T) {
 	for _, tt := range testRule {
 		if tt.fromLog == nil {
 			continue
@@ -22,27 +22,7 @@ func TestRules_FromLog(t *testing.T) {
 	}
 }
 
-func TestRules_Validate(t *testing.T) {
-	for _, tt := range testRule {
-		t.Run(tt.name, func(t *testing.T) {
-			if err := tt.rule.Validate(); (err != nil) != tt.wValidErr {
-				t.Errorf("Rules.Validate() error = %v, wantErr %v", err, tt.wValidErr)
-			}
-		})
-	}
-}
-
-func TestCapability_Compare(t *testing.T) {
-	for _, tt := range testRule {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.rule.Compare(tt.other); got != tt.wCompare {
-				t.Errorf("Rule.Compare() = %v, want %v", got, tt.wCompare)
-			}
-		})
-	}
-}
-
-func TestRules_String(t *testing.T) {
+func TestRule_String(t *testing.T) {
 	for _, tt := range testRule {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := tt.rule.String(); got != tt.wString {
@@ -52,7 +32,27 @@ func TestRules_String(t *testing.T) {
 	}
 }
 
-func TestCapability_Merge(t *testing.T) {
+func TestRule_Validate(t *testing.T) {
+	for _, tt := range testRule {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.rule.Validate(); (err != nil) != tt.wValidErr {
+				t.Errorf("Rules.Validate() error = %v, wantErr %v", err, tt.wValidErr)
+			}
+		})
+	}
+}
+
+func TestRule_Compare(t *testing.T) {
+	for _, tt := range testRule {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.rule.Compare(tt.other); got != tt.wCompare {
+				t.Errorf("Rule.Compare() = %v, want %v", got, tt.wCompare)
+			}
+		})
+	}
+}
+
+func TestRule_Merge(t *testing.T) {
 	for _, tt := range testRule {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := tt.rule.Merge(tt.other); got != tt.wMerge {
