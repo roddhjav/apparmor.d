@@ -19,8 +19,8 @@ func (p *Hat) Kind() Kind {
 	return HAT
 }
 
-func (p *Hat) Constraint() constraint {
-	return blockKind
+func (p *Hat) Constraint() Constraint {
+	return BlockRule
 }
 
 func (p *Hat) String() string {

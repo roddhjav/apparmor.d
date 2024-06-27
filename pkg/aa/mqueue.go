@@ -77,8 +77,8 @@ func (r *Mqueue) Kind() Kind {
 	return MQUEUE
 }
 
-func (r *Mqueue) Constraint() constraint {
-	return blockKind
+func (r *Mqueue) Constraint() Constraint {
+	return BlockRule
 }
 
 func (r *Mqueue) String() string {

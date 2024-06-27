@@ -55,8 +55,8 @@ func (r *Capability) Kind() Kind {
 	return CAPABILITY
 }
 
-func (r *Capability) Constraint() constraint {
-	return blockKind
+func (r *Capability) Constraint() Constraint {
+	return BlockRule
 }
 
 func (r *Capability) String() string {

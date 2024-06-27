@@ -71,8 +71,8 @@ func (r *Signal) Kind() Kind {
 	return SIGNAL
 }
 
-func (r *Signal) Constraint() constraint {
-	return blockKind
+func (r *Signal) Constraint() Constraint {
+	return BlockRule
 }
 
 func (r *Signal) String() string {

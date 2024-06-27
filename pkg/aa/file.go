@@ -107,8 +107,8 @@ func (r *File) Kind() Kind {
 	return FILE
 }
 
-func (r *File) Constraint() constraint {
-	return blockKind
+func (r *File) Constraint() Constraint {
+	return BlockRule
 }
 
 func (r *File) String() string {
@@ -213,8 +213,8 @@ func (r *Link) Kind() Kind {
 	return LINK
 }
 
-func (r *Link) Constraint() constraint {
-	return blockKind
+func (r *Link) Constraint() Constraint {
+	return BlockRule
 }
 
 func (r *Link) String() string {

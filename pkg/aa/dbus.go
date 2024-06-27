@@ -78,8 +78,8 @@ func (r *Dbus) Kind() Kind {
 	return DBUS
 }
 
-func (r *Dbus) Constraint() constraint {
-	return blockKind
+func (r *Dbus) Constraint() Constraint {
+	return BlockRule
 }
 
 func (r *Dbus) String() string {

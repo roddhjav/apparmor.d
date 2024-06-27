@@ -51,8 +51,8 @@ func (r *Ptrace) Kind() Kind {
 	return PTRACE
 }
 
-func (r *Ptrace) Constraint() constraint {
-	return blockKind
+func (r *Ptrace) Constraint() Constraint {
+	return BlockRule
 }
 
 func (r *Ptrace) String() string {

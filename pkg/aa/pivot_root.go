@@ -54,8 +54,8 @@ func (r *PivotRoot) Kind() Kind {
 	return PIVOTROOT
 }
 
-func (r *PivotRoot) Constraint() constraint {
-	return blockKind
+func (r *PivotRoot) Constraint() Constraint {
+	return BlockRule
 }
 
 func (r *PivotRoot) String() string {
