@@ -284,3 +284,21 @@ func (r *Link) Compare(other Rule) int {
 func (r *Link) Merge(other Rule) bool {
 	return false // Never merge link
 }
+
+func (r *Link) Lengths() []int {
+	return []int{
+		r.Qualifier.getLenAudit(),
+		r.Qualifier.getLenAccess(),
+		length("owner", r.Owner),
+		length("subset", r.Subset),
+		length("", r.Path),
+		length("", r.Target),
+	}
+}
+
+func (r *Link) setPaddings(max []int) {
+	r.Paddings = append(r.Qualifier.setPaddings(max[:2]), setPaddings(
+		max[2:], []string{"owner", "subset", "", ""},
+		[]any{r.Owner, r.Subset, r.Path, r.Target})...,
+	)
+}
