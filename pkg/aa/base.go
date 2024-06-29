@@ -13,10 +13,8 @@ type Base struct {
 	Comment     string
 	NoNewPrivs  bool
 	FileInherit bool
-	Prefix      string
-	Padding     string
-	Suffix      string
 	Optional    bool
+	Paddings    []string
 }
 
 func newBase(rule rule) Base {
@@ -79,11 +77,25 @@ func newBaseFromLog(log map[string]string) Base {
 	}
 }
 
+func (r Base) Padding(i int) string {
+	if i >= len(r.Paddings) {
+		return ""
+	}
+	return r.Paddings[i]
+}
+
 func (r *Base) merge(other Base) bool {
+	r.NoNewPrivs = r.NoNewPrivs || other.NoNewPrivs
+	r.FileInherit = r.FileInherit || other.FileInherit
+	r.Optional = r.Optional || other.Optional
 	if other.Comment != "" {
 		r.Comment += " " + other.Comment
 	}
 	return true
+}
+
+func (r Base) addLine(other Rule) bool {
+	return false
 }
 
 type Qualifier struct {
@@ -108,4 +120,23 @@ func (r Qualifier) Compare(o Qualifier) int {
 
 func (r Qualifier) Equal(o Qualifier) bool {
 	return r.Audit == o.Audit && r.AccessType == o.AccessType
+}
+
+func (r Qualifier) getLenAudit() int {
+	return length("audit", r.Audit)
+}
+
+func (r Qualifier) getLenAccess() int {
+	lenAccess := 0
+	if r.AccessType != "" {
+		lenAccess = length("", r.AccessType)
+	}
+	return lenAccess
+}
+
+func (r Qualifier) setPaddings(max []int) []string {
+	return setPaddings(max,
+		[]string{"audit", ""},
+		[]any{r.Audit, r.AccessType},
+	)
 }

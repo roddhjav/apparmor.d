@@ -37,12 +37,16 @@ func (k Kind) Tok() string {
 
 // Rule generic interface for all AppArmor rules
 type Rule interface {
-	Kind() Kind             // Kind of the rule
-	Constraint() Constraint // Where the rule can be found (preamble, profile, any)
-	String() string         // Render the rule as a string
-	Validate() error        // Validate the rule. Return an error if the rule is invalid
-	Compare(other Rule) int // Compare two rules. Return 0 if they are identical
-	Merge(other Rule) bool  // Merge rules of same kind together. Return true if merged
+	Kind() Kind              // Kind of the rule
+	Constraint() Constraint  // Where the rule can be found (preamble, profile, any)
+	String() string          // Render the rule as a string
+	Validate() error         // Validate the rule. Return an error if the rule is invalid
+	Compare(other Rule) int  // Compare two rules. Return 0 if they are identical
+	Merge(other Rule) bool   // Merge rules of same kind together. Return true if merged
+	Padding(i int) string    // Padding for rule items at index i
+	Lengths() []int          // Length of each item in the rule
+	setPaddings(max []int)   // Set paddings for each item in the rule
+	addLine(other Rule) bool // Check either a new line should be added before the rule
 }
 
 type Rules []Rule
