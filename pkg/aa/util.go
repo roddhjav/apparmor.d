@@ -43,6 +43,53 @@ func merge(kind Kind, key string, a, b []string) []string {
 	return slices.Compact(a)
 }
 
+func length(prefix string, value any) int {
+	var res int
+	switch value := value.(type) {
+	case bool:
+		if value {
+			return len(prefix) + 1
+		}
+		return 0
+	case string:
+		if value != "" {
+			res = len(value) + len(prefix) + 1
+		}
+		return res
+	case []string:
+		for _, v := range value {
+			lenV := len(v)
+			if lenV > 0 {
+				res += lenV + 1 // Space between values
+			}
+		}
+		if len(value) > 1 {
+			res += 2 // Brackets on slices
+		}
+		return res
+	default:
+		panic("length: unsupported type")
+	}
+}
+
+func setPaddings(max []int, prefixes []string, values []any) []string {
+	if len(max) != len(values) || len(max) != len(prefixes) {
+		panic("setPaddings: max, prefix, and values must have the same length")
+	}
+	res := make([]string, len(max))
+	for i, v := range values {
+		if max[i] == 0 {
+			res[i] = ""
+			continue
+		}
+		count := max[i] - length(prefixes[i], v)
+		if count > 0 {
+			res[i] = strings.Repeat(" ", count)
+		}
+	}
+	return res
+}
+
 func compare(a, b any) int {
 	switch a := a.(type) {
 	case int:

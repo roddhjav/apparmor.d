@@ -53,6 +53,12 @@ func (r *Comment) Merge(other Rule) bool {
 	return false // Never merge comments
 }
 
+func (r *Comment) Lengths() []int {
+	return []int{} // No len for comments
+}
+
+func (r *Comment) setPaddings(max []int) {} // No paddings for comments
+
 type Abi struct {
 	Base
 	Path    string
@@ -109,6 +115,12 @@ func (r *Abi) Merge(other Rule) bool {
 	return false // Never merge abi
 }
 
+func (r *Abi) Lengths() []int {
+	return []int{} // No len for abi
+}
+
+func (r *Abi) setPaddings(max []int) {} // No paddings for abi
+
 type Alias struct {
 	Base
 	Path          string
@@ -156,6 +168,12 @@ func (r *Alias) Compare(other Rule) int {
 func (r *Alias) Merge(other Rule) bool {
 	return false // Never merge alias
 }
+
+func (r *Alias) Lengths() []int {
+	return []int{} // No len for alias
+}
+
+func (r *Alias) setPaddings(max []int) {} // No paddings for alias
 
 type Include struct {
 	Base
@@ -234,6 +252,12 @@ func (r *Include) Merge(other Rule) bool {
 	return false // Never merge include
 }
 
+func (r *Include) Lengths() []int {
+	return []int{} // No len for include
+}
+
+func (r *Include) setPaddings(max []int) {} // No paddings for include
+
 type Variable struct {
 	Base
 	Name   string
@@ -305,3 +329,9 @@ func (r *Variable) Merge(other Rule) bool {
 	}
 	return false
 }
+
+func (r *Variable) Lengths() []int {
+	return []int{} // No len for variable
+}
+
+func (r *Variable) setPaddings(max []int) {} // No paddings for variable

@@ -122,3 +122,21 @@ func (r *Mqueue) Merge(other Rule) bool {
 	}
 	return false
 }
+
+func (r *Mqueue) Lengths() []int {
+	return []int{
+		r.Qualifier.getLenAudit(),
+		r.Qualifier.getLenAccess(),
+		length("", r.Access),
+		length("type=", r.Type),
+		length("label=", r.Label),
+		length("", r.Name),
+	}
+}
+
+func (r *Mqueue) setPaddings(max []int) {
+	r.Paddings = append(r.Qualifier.setPaddings(max[:2]), setPaddings(
+		max[2:], []string{"", "type=", "label=", ""},
+		[]any{r.Access, r.Type, r.Label, r.Name})...,
+	)
+}

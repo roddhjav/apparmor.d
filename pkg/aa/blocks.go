@@ -39,3 +39,9 @@ func (r *Hat) Compare(other Rule) int {
 func (r *Hat) Merge(other Rule) bool {
 	return false // Never merge hat blocks
 }
+
+func (r *Hat) Lengths() []int {
+	return []int{} // No len for hat
+}
+
+func (r *Hat) setPaddings(max []int) {} // No paddings for hat

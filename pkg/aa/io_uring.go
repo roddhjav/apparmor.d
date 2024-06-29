@@ -88,3 +88,19 @@ func (r *IOUring) Merge(other Rule) bool {
 	}
 	return false
 }
+
+func (r *IOUring) Lengths() []int {
+	return []int{
+		r.Qualifier.getLenAudit(),
+		r.Qualifier.getLenAccess(),
+		length("", r.Access),
+		length("label=", r.Label),
+	}
+}
+
+func (r *IOUring) setPaddings(max []int) {
+	r.Paddings = append(r.Qualifier.setPaddings(max[:2]), setPaddings(
+		max[2:], []string{"", "label="},
+		[]any{r.Access, r.Label})...,
+	)
+}

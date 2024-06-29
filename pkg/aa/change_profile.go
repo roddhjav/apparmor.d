@@ -103,3 +103,20 @@ func (r *ChangeProfile) Compare(other Rule) int {
 func (r *ChangeProfile) Merge(other Rule) bool {
 	return false // Never merge change_profile
 }
+
+func (r *ChangeProfile) Lengths() []int {
+	return []int{
+		r.Qualifier.getLenAudit(),
+		r.Qualifier.getLenAccess(),
+		length("", r.ExecMode),
+		length("", r.Exec),
+		length("", r.ProfileName),
+	}
+}
+
+func (r *ChangeProfile) setPaddings(max []int) {
+	r.Paddings = append(r.Qualifier.setPaddings(max[:2]), setPaddings(
+		max[2:], []string{"", "", ""},
+		[]any{r.ExecMode, r.Exec, r.ProfileName})...,
+	)
+}

@@ -39,5 +39,11 @@ func (r *All) Compare(other Rule) int {
 func (r *All) Merge(other Rule) bool {
 	o, _ := other.(*All)
 	b := &r.Base
-	return b.merge(o.Base)
+	return b.merge(o.Base) // Always merge all rules
 }
+
+func (r *All) Lengths() []int {
+	return []int{} // No len for all
+}
+
+func (r *All) setPaddings(max []int) {} // No paddings for all
