@@ -6,9 +6,6 @@ package aa
 
 import (
 	"slices"
-	"strings"
-
-	"github.com/roddhjav/apparmor.d/pkg/util"
 )
 
 type requirement map[string][]string
@@ -144,8 +141,7 @@ func (r Rules) GetIncludes() []*Include {
 	return res
 }
 
-// Merge merge similar rules together.
-// Steps:
+// Merge merge similar rules together:
 //   - Remove identical rules
 //   - Merge rule access. Eg: for same path, 'r' and 'w' becomes 'rw'
 //
@@ -201,90 +197,53 @@ func (r Rules) Sort() Rules {
 	return r
 }
 
-// Format the rules for better readability before printing it.
-// Follow: https://apparmor.pujol.io/development/guidelines/#the-file-block
-func (r Rules) Format() Rules {
-	const prefixOwner = "      "
-	suffixMaxlen := 36
-	transitions := append(requirements[FILE]["transition"], "m")
-
-	paddingIndex := []int{}
-	paddingMaxLenght := 0
-	for i, rule := range r {
-		if rule == nil {
+// setPaddings set paddings for each element in each rules
+func (r *Rules) setPaddings(paddingsIndex map[Kind][]int, paddingsMaxLen map[Kind][]int) {
+	for kind, index := range paddingsIndex {
+		if len(index) <= 1 {
 			continue
 		}
-
-		if rule.Kind() == FILE {
-			rule := r[i].(*File)
-
-			// Add padding to align with other transition rule
-			isTransition := util.Intersect(transitions, rule.Access)
-			if len(isTransition) > 0 {
-				ruleLen := len(rule.Path) + 1
-				paddingMaxLenght = max(ruleLen, paddingMaxLenght)
-				paddingIndex = append(paddingIndex, i)
-			}
-
-			// Add suffix to align comment on udev/data rule
-			if rule.Comment != "" && strings.HasPrefix(rule.Path, "@{run}/udev/data/") {
-				suffixlen := suffixMaxlen - len(rule.Path)
-				if suffixlen < 0 {
-					suffixlen = 0
-				}
-				rule.Suffix = strings.Repeat(" ", suffixlen)
-			}
+		for _, i := range index {
+			(*r)[i].setPaddings(paddingsMaxLen[kind])
 		}
 	}
-	if len(paddingIndex) > 1 {
-		r.setPadding(paddingIndex, paddingMaxLenght)
-	}
-
-	hasOwnerRule := false
-	for i := len(r) - 1; i >= 0; i-- {
-		if r[i] == nil {
-			hasOwnerRule = false
-			continue
-		}
-
-		// File rule
-		if r[i].Kind() == FILE {
-			rule := r[i].(*File)
-
-			// Add prefix before rule path to align with other rule
-			if rule.Owner {
-				hasOwnerRule = true
-			} else if hasOwnerRule {
-				rule.Prefix = prefixOwner
-			}
-
-			// Do not add new line on executable rule
-			isTransition := util.Intersect(transitions, rule.Access)
-			if len(isTransition) > 0 {
-				continue
-			}
-
-			// Add a new line between Files rule of different group type
-			j := i - 1
-			if j < 0 || r[j] == nil || r[j].Kind() != FILE {
-				continue
-			}
-			letterI := getLetterIn(fileAlphabet, rule.Path)
-			letterJ := getLetterIn(fileAlphabet, r[j].(*File).Path)
-			groupI, ok1 := fileAlphabetGroups[letterI]
-			groupJ, ok2 := fileAlphabetGroups[letterJ]
-			if letterI != letterJ && !(ok1 && ok2 && groupI == groupJ) {
-				hasOwnerRule = false
-				r = r.Insert(i, nil)
-			}
-		}
-	}
-	return r
 }
 
-// setPadding adds padding to the rule path to align with other rules.
-func (r *Rules) setPadding(paddingIndex []int, paddingMaxLenght int) {
-	for _, i := range paddingIndex {
-		(*r)[i].(*File).Padding = strings.Repeat(" ", paddingMaxLenght-len((*r)[i].(*File).Path))
+// Format the rules for better readability before printing it. Format supposes
+// the rules are merged and sorted.
+// Follow: https://apparmor.pujol.io/development/guidelines/#the-file-block
+func (r Rules) Format() Rules {
+	// Insert new line between rule of different type/subtype.
+	for i := len(r) - 1; i >= 0; i-- {
+		j := i - 1
+		if j < 0 || r[j] == nil {
+			continue
+		}
+		if r[i].addLine(r[j]) {
+			r = r.Insert(i, nil)
+		}
 	}
+
+	// Find max paddings for each element in each rules
+	paddingsIndex := map[Kind][]int{}
+	paddingsMaxLen := map[Kind][]int{}
+	for i, rule := range r {
+		if rule == nil {
+			r.setPaddings(paddingsIndex, paddingsMaxLen)
+			paddingsIndex = map[Kind][]int{}
+			paddingsMaxLen = map[Kind][]int{}
+			continue
+		}
+
+		lengths := rule.Lengths()
+		paddingsIndex[rule.Kind()] = append(paddingsIndex[rule.Kind()], i)
+		for idx, length := range lengths {
+			if _, ok := paddingsMaxLen[rule.Kind()]; !ok {
+				paddingsMaxLen[rule.Kind()] = make([]int, len(lengths))
+			}
+			paddingsMaxLen[rule.Kind()][idx] = max(paddingsMaxLen[rule.Kind()][idx], length)
+		}
+	}
+	r.setPaddings(paddingsIndex, paddingsMaxLen)
+	return r
 }
