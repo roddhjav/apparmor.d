@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+
+	"github.com/roddhjav/apparmor.d/pkg/util"
 )
 
 const (
@@ -154,6 +156,42 @@ func (r *File) Merge(other Rule) bool {
 		return b.merge(o.Base)
 	}
 	return false
+}
+
+func (r *File) Lengths() []int {
+	// Add padding to align with other transition rule
+	lenPath := 0
+	isTransition := util.Intersect(
+		append(requirements[FILE]["transition"], "m"), r.Access,
+	)
+	if len(isTransition) > 0 {
+		lenPath = length("", r.Path)
+	}
+	return []int{
+		r.Qualifier.getLenAudit(),
+		r.Qualifier.getLenAccess(),
+		length("owner", r.Owner),
+		lenPath,
+	}
+}
+
+func (r *File) setPaddings(max []int) {
+	r.Paddings = append(r.Qualifier.setPaddings(max[:2]), setPaddings(
+		max[2:], []string{"owner", ""},
+		[]any{r.Owner, r.Path})...,
+	)
+}
+
+func (r *File) addLine(other Rule) bool {
+	if other.Kind() != r.Kind() {
+		return false
+	}
+
+	letterI := getLetterIn(fileAlphabet, r.Path)
+	letterJ := getLetterIn(fileAlphabet, other.(*File).Path)
+	groupI, ok1 := fileAlphabetGroups[letterI]
+	groupJ, ok2 := fileAlphabetGroups[letterJ]
+	return letterI != letterJ && !(ok1 && ok2 && groupI == groupJ)
 }
 
 type Link struct {

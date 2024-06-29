@@ -84,3 +84,18 @@ func (r *Rlimit) Compare(other Rule) int {
 func (r *Rlimit) Merge(other Rule) bool {
 	return false // Never merge rlimit
 }
+
+func (r *Rlimit) Lengths() []int {
+	return []int{
+		length("", r.Key),
+		length("", r.Op),
+		length("", r.Value),
+	}
+}
+
+func (r *Rlimit) setPaddings(max []int) {
+	r.Paddings = setPaddings(
+		max, []string{"", "", ""},
+		[]any{r.Key, r.Op, r.Value},
+	)
+}

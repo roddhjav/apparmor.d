@@ -90,3 +90,19 @@ func (r *Ptrace) Merge(other Rule) bool {
 	}
 	return false
 }
+
+func (r *Ptrace) Lengths() []int {
+	return []int{
+		r.Qualifier.getLenAudit(),
+		r.Qualifier.getLenAccess(),
+		length("", r.Access),
+		length("peer=", r.Peer),
+	}
+}
+
+func (r *Ptrace) setPaddings(max []int) {
+	r.Paddings = append(r.Qualifier.setPaddings(max[:2]), setPaddings(
+		max[2:], []string{"", "peer="},
+		[]any{r.Access, r.Peer})...,
+	)
+}

@@ -103,6 +103,12 @@ func (p *Profile) Merge(other Rule) bool {
 	return false
 }
 
+func (r *Profile) Lengths() []int {
+	return []int{} // No len for profile
+}
+
+func (r *Profile) setPaddings(max []int) {} // No paddings for profile
+
 func (p *Profile) Sort() {
 	p.Rules = p.Rules.Sort()
 }

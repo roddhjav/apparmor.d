@@ -81,3 +81,17 @@ func (r *Capability) Compare(other Rule) int {
 func (r *Capability) Merge(other Rule) bool {
 	return false // Never merge capabilities
 }
+
+func (r *Capability) Lengths() []int {
+	return []int{
+		r.Qualifier.getLenAudit(),
+		r.Qualifier.getLenAccess(),
+		length("", r.Names),
+	}
+}
+
+func (r *Capability) setPaddings(max []int) {
+	r.Paddings = append(r.Qualifier.setPaddings(max[:2]), setPaddings(
+		max[2:], []string{""}, []any{r.Names})...,
+	)
+}

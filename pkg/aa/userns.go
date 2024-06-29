@@ -69,5 +69,11 @@ func (r *Userns) Compare(other Rule) int {
 func (r *Userns) Merge(other Rule) bool {
 	o, _ := other.(*Userns)
 	b := &r.Base
-	return b.merge(o.Base)
+	return b.merge(o.Base) // Always merge userns rules
 }
+
+func (r *Userns) Lengths() []int {
+	return []int{} // No len for userns
+}
+
+func (r *Userns) setPaddings(max []int) {} // No paddings for userns

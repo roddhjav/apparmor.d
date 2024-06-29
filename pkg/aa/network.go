@@ -144,3 +144,20 @@ func (r *Network) Compare(other Rule) int {
 func (r *Network) Merge(other Rule) bool {
 	return false // Never merge network
 }
+
+func (r *Network) Lengths() []int {
+	return []int{
+		r.Qualifier.getLenAudit(),
+		r.Qualifier.getLenAccess(),
+		length("", r.Domain),
+		length("", r.Type),
+		length("", r.Protocol),
+	}
+}
+
+func (r *Network) setPaddings(max []int) {
+	r.Paddings = append(r.Qualifier.setPaddings(max[:2]), setPaddings(
+		max[2:], []string{"", "", ""},
+		[]any{r.Domain, r.Type, r.Protocol})...,
+	)
+}

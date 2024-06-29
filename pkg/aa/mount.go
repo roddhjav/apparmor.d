@@ -73,6 +73,21 @@ func (m *MountConditions) Merge(other MountConditions) bool {
 	return false
 }
 
+func (m MountConditions) getLenFsType() int {
+	return length("fstype=", m.FsType)
+}
+
+func (m MountConditions) getLenOptions() int {
+	return length("options=", m.Options)
+}
+
+func (m MountConditions) setPaddings(max []int) []string {
+	return setPaddings(max,
+		[]string{"fstype=", "options="},
+		[]any{m.FsType, m.Options},
+	)
+}
+
 type Mount struct {
 	Base
 	Qualifier
@@ -168,6 +183,24 @@ func (r *Mount) Merge(other Rule) bool {
 	return false
 }
 
+func (r *Mount) Lengths() []int {
+	return []int{
+		r.Qualifier.getLenAudit(),
+		r.Qualifier.getLenAccess(),
+		r.MountConditions.getLenFsType(),
+		r.MountConditions.getLenOptions(),
+		length("", r.Source),
+		length("", r.MountPoint),
+	}
+}
+
+func (r *Mount) setPaddings(max []int) {
+	r.Paddings = append(r.Qualifier.setPaddings(max[:2]), r.MountConditions.setPaddings(max[2:4])...)
+	r.Paddings = append(r.Paddings,
+		setPaddings(max[4:], []string{"", ""}, []any{r.Source, r.MountPoint})...,
+	)
+}
+
 type Umount struct {
 	Base
 	Qualifier
@@ -244,6 +277,23 @@ func (r *Umount) Merge(other Rule) bool {
 		return b.merge(o.Base)
 	}
 	return false
+}
+
+func (r *Umount) Lengths() []int {
+	return []int{
+		r.Qualifier.getLenAudit(),
+		r.Qualifier.getLenAccess(),
+		r.MountConditions.getLenFsType(),
+		r.MountConditions.getLenOptions(),
+		length("", r.MountPoint),
+	}
+}
+
+func (r *Umount) setPaddings(max []int) {
+	r.Paddings = append(r.Qualifier.setPaddings(max[:2]), r.MountConditions.setPaddings(max[2:4])...)
+	r.Paddings = append(r.Paddings,
+		setPaddings(max[4:], []string{""}, []any{r.MountPoint})...,
+	)
 }
 
 type Remount struct {
@@ -323,4 +373,21 @@ func (r *Remount) Merge(other Rule) bool {
 		return b.merge(o.Base)
 	}
 	return false
+}
+
+func (r *Remount) Lengths() []int {
+	return []int{
+		r.Qualifier.getLenAudit(),
+		r.Qualifier.getLenAccess(),
+		r.MountConditions.getLenFsType(),
+		r.MountConditions.getLenOptions(),
+		length("", r.MountPoint),
+	}
+}
+
+func (r *Remount) setPaddings(max []int) {
+	r.Paddings = append(r.Qualifier.setPaddings(max[:2]), r.MountConditions.setPaddings(max[2:4])...)
+	r.Paddings = append(r.Paddings,
+		setPaddings(max[4:], []string{""}, []any{r.MountPoint})...,
+	)
 }

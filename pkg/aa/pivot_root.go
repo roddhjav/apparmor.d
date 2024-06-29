@@ -83,3 +83,20 @@ func (r *PivotRoot) Compare(other Rule) int {
 func (r *PivotRoot) Merge(other Rule) bool {
 	return false // Never merge pivot root
 }
+
+func (r *PivotRoot) Lengths() []int {
+	return []int{
+		r.Qualifier.getLenAudit(),
+		r.Qualifier.getLenAccess(),
+		length("oldroot=", r.OldRoot),
+		length("", r.NewRoot),
+		length("", r.TargetProfile),
+	}
+}
+
+func (r *PivotRoot) setPaddings(max []int) {
+	r.Paddings = append(r.Qualifier.setPaddings(max[:2]), setPaddings(
+		max[2:], []string{"oldroot=", "", ""},
+		[]any{r.OldRoot, r.NewRoot, r.TargetProfile})...,
+	)
+}

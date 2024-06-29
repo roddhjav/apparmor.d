@@ -121,3 +121,20 @@ func (r *Signal) Merge(other Rule) bool {
 	}
 	return false
 }
+
+func (r *Signal) Lengths() []int {
+	return []int{
+		r.Qualifier.getLenAudit(),
+		r.Qualifier.getLenAccess(),
+		length("", r.Access),
+		length("set=", r.Set),
+		length("peer=", r.Peer),
+	}
+}
+
+func (r *Signal) setPaddings(max []int) {
+	r.Paddings = append(r.Qualifier.setPaddings(max[:2]), setPaddings(
+		max[2:], []string{"", "set=", "peer="},
+		[]any{r.Access, r.Set, r.Peer})...,
+	)
+}

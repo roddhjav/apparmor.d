@@ -136,3 +136,22 @@ func (r *Unix) Merge(other Rule) bool {
 	}
 	return false
 }
+
+func (r *Unix) Lengths() []int {
+	return []int{
+		r.Qualifier.getLenAudit(),
+		r.Qualifier.getLenAccess(),
+		length("", r.Access),
+		length("type=", r.Type),
+		length("protocol=", r.Protocol),
+		length("addr=", r.Address),
+		length("label=", r.Label),
+	}
+}
+
+func (r *Unix) setPaddings(max []int) {
+	r.Paddings = append(r.Qualifier.setPaddings(max[:2]), setPaddings(
+		max[2:], []string{"", "type=", "protocol=", "addr=", "label="},
+		[]any{r.Access, r.Type, r.Protocol, r.Address, r.Label})...,
+	)
+}

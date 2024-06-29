@@ -137,3 +137,9 @@ func (r *Dbus) Merge(other Rule) bool {
 	}
 	return false
 }
+
+func (r *Dbus) Lengths() []int {
+	return []int{} // No len for dbus
+}
+
+func (r *Dbus) setPaddings(max []int) {} // No paddings for dbus
