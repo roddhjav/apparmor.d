@@ -49,7 +49,7 @@ var (
 		`(?m)^.*/dev/(u|)random.*$`, ``,
 	})
 	regResolveLogs = util.ToRegexRepl([]string{
-		// Resolve classic user variables
+		// Resolve user variables
 		`/home/[^/]+/.cache`, `@{user_cache_dirs}`,
 		`/home/[^/]+/.config`, `@{user_config_dirs}`,
 		`/home/[^/]+/.local/share`, `@{user_share_dirs}`,
@@ -60,7 +60,7 @@ var (
 		`/home/[^/]+/.gnupg`, `@{HOME}/@{XDG_GPG_DIR}`,
 		`/home/[^/]+/`, `@{HOME}/`,
 
-		// Resolve classic system variables
+		// Resolve system variables
 		`/usr/(lib|lib32|lib64|libexec)`, `@{lib}`,
 		`/usr/(bin|sbin)`, `@{bin}`,
 		`x86_64-pc-linux-gnu[^/]?`, `@{multiarch}`,
@@ -75,7 +75,8 @@ var (
 		`/sys/`, `@{sys}/`,
 		`@{PROC}@{sys}/`, `@{PROC}/sys/`,
 		`pci` + strings.Repeat(_hex, 4) + `:` + strings.Repeat(_hex, 2), `@{pci_bus}`,
-		`1000`, `@{pid}`,
+		`@{pci_bus}/[0-9a-f:*./]*`, `@{pci}/`,
+		`1000`, `@{uid}`,
 
 		// Some system glob
 		`:1.[0-9]*`, `:*`, // dbus peer name
