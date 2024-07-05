@@ -6,6 +6,8 @@ title: Installation
 
     To prevent the risk of breaking your system, the default package configuration installs all profiles in complain mode. They can be enforced later. See the [Enforce Mode](enforce.md) page.
 
+    After installation, you need to regularly check AppArmor log with [`aa-log`](usage.md#apparmor-log). You can also configure [a desktop notification on denied actions](https://wiki.archlinux.org/title/AppArmor#Get_desktop_notification_on_DENIED_actions).
+
 !!! danger
 
     Do **not** expect this project to work correctly if your Desktop Environment and Display Manager are not supported. Your Desktop Environment or Display Manager might not load, and that would be a feature.
