@@ -176,7 +176,7 @@ func (p *Path) IsAbs() bool {
 	return filepath.IsAbs(p.path)
 }
 
-// ToAbs transofrm the current Path to the corresponding absolute path
+// ToAbs transform the current Path to the corresponding absolute path
 func (p *Path) ToAbs() error {
 	abs, err := filepath.Abs(p.path)
 	if err != nil {
@@ -552,7 +552,7 @@ func (p *Path) String() string {
 // Canonical return a "canonical" Path for the given filename.
 // The meaning of "canonical" is OS-dependent but the goal of this method
 // is to always return the same path for a given file (factoring out all the
-// possibile ambiguities including, for example, relative paths traversal,
+// possible ambiguities including, for example, relative paths traversal,
 // symlinks, drive volume letter case, etc).
 func (p *Path) Canonical() *Path {
 	canonical := p.Clone()
