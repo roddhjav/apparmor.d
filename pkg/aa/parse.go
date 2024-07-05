@@ -599,7 +599,7 @@ func (f *AppArmorProfileFile) parsePreamble(preamble string) error {
 
 // Parse an apparmor profile file.
 //
-// Warning: It is purposelly an uncomplete basic parser for apparmor profile,
+// Warning: It is purposely an uncomplete basic parser for apparmor profile,
 // it is only aimed for internal tooling purpose. For "simplicity", it is not
 // using antlr / participle. It is only used for experimental feature in the
 // apparmor.d project.
