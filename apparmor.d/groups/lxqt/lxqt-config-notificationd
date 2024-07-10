@@ -1,0 +1,36 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2024 Besanon  <m231009ts@mailfence.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_pathlx12} = @{bin}/lxqt-config-notificationd
+profile lxqt-config-notificationd @{exec_pathlx12} {
+  include <abstractions/base>
+  include <abstractions/fonts>
+  include <abstractions/qt5>
+  include <abstractions/lxqt>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/graphics>
+  include <abstractions/mesa>
+      
+  @{exec_pathlx12}			mr,
+
+  /etc/machine-id 			r,
+
+  /var/lib/dbus/machine-id 		r,
+
+  owner @{user_config_dirs}/lxqt/ 	r,
+  owner @{user_config_dirs}/lxqt/** rwkl -> @{user_config_dirs}/lxqt/#@{int},
+
+  owner /tmp/#@{int}  			r,
+  
+  @{PROC}/sys/kernel/random/boot_id      r,
+  
+  /dev/tty				 rw,
+
+  include if exists <local/lxqt-config-notificationd>
+}

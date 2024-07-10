@@ -1,0 +1,130 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2024 Besanon  <m231009ts@mailfence.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_pathlx771} = @{bin}/lxqt-session
+profile lxqt-session @{exec_pathlx771} {
+  include <abstractions/app-open>
+  include <abstractions/base>
+  include <abstractions/bus/org.freedesktop.NetworkManager>
+  include <abstractions/bus/org.freedesktop.UPower>
+  include <abstractions/consoles>
+  include <abstractions/dconf-write>
+  include <abstractions/gtk>
+  include <abstractions/graphics>
+  include <abstractions/lxqt>
+  include <abstractions/video>
+  include <abstractions/qt5-shader-cache>
+  include <abstractions/nameservice-strict>
+  include <abstractions/dbus-session>
+  include <abstractions/dbus-accessibility>
+  include <abstractions/gvfs-open>
+  include <abstractions/recent-documents-write>
+  include <abstractions/ssl_certs>
+  include <abstractions/thumbnails-cache-read>
+
+  signal (send),
+  signal (receive) set=(kill, term) peer=startlxqt,		
+  signal (receive) set=(kill, term) peer=sddm,		
+
+  ptrace (read),
+
+  network netlink raw,
+
+  @{exec_pathlx771}  			mr,	
+
+  @{sh_path}                   		rix,
+  @{bin}/sed                   		rix,
+  @{bin}/readlink 	       		rix,
+  @{bin}/dirname			rix,
+  @{bin}/system-config-printer-applet	rPx,  
+  @{bin}/lxqt-config-input		rPx,
+  @{bin}/lxqt-session-settings		rPx,	
+  @{bin}/lxqt-globalkeysd		rPx,
+  @{bin}/lxqt-panel			rPx,
+  @{bin}/lxqt-policykit-agent		rPx,
+  @{bin}/lxqt-runner			rPx,
+  @{bin}/lxqt-notificationd		rPx,
+  @{bin}/lxqt-powermanagement		rPx,
+  @{bin}/lxqt-config 			rPx,
+  @{bin}/lxqt-leave			rPx,
+  @{bin}/lxqt-about			rPx,
+  @{bin}/dbus-send			rPUx,	
+  @{bin}/dbus-update-activation-environment            rCx -> dbus,
+  @{bin}/systemctl                                     rCx -> systemctl,
+
+  @{bin}/pavucontrol			rPx,	
+  @{bin}/pulseaudio			rPx,	
+  @{bin}/python3.@{int}			rPx,
+  @{lib}/python3.@{int}			rPx,
+  @{bin}/xfe				rPx,
+  @{bin}/nm-connection-editor		rPx,
+  @{bin}/nm-applet			rPx,
+  @{bin}/nm-tray 			rPx,
+  @{bin}/pcmanfm-qt			rPx,
+  @{bin}/openbox			rix,
+  @{bin}/dconf-editor			rPx,	
+  @{bin}/setxkbmap			rix,   
+  @{bin}/start-pulseaudio-x11		rPx,
+  @{bin}/xrdb              		rPx,
+  @{bin}/xdg-user-dirs-update		rPx,
+  /usr/lib/{/,x86_64-linux-gnu/}tumbler-1/tumblerd rPx,
+
+  /usr/share/					r,
+  /usr/share/mime/				r,
+  /usr/share/cursors/				r,
+  /usr/share/backintime/common/*		r,
+  /usr/share/desktop-directories/*		r,
+  /usr/share/system-config-printer/*		r,
+
+  /etc/xdg/                                     r,
+  /etc/xdg/autostart/                           r,
+  /etc/xdg/autostart/*.desktop                  r,
+  /etc/xdg/menus/lxqt-*                         r,
+  /etc/xdg/openbox/*                            r,
+  /etc/udev/udev.conf                           r,
+
+  owner @{HOME}/.local/share/			r,
+  owner @{HOME}/.config/			r,
+  owner @{HOME}/.config/autostart/		r,
+  owner @{HOME}/.config/autostart/*		rw,
+  owner @{user_cache_dirs}/openbox/openbox.log  rwk,
+  owner @{user_config_dirs}/mimeapps.list{,.@{rand6}} 	rw,
+  owner @{user_config_dirs}/dconf/user			r,
+  owner @{user_config_dirs}/openbox/rc.xml      	r,
+  owner @{user_share_dirs}/sddm/xorg-session.log 	rw,
+
+  @{PROC}/ 					r, 
+  @{PROC}/uptime 				r,
+  @{PROC}/@{pid}/stat 				r,
+  owner @{PROC}/@{pid}/stat 			r,
+
+  @{run}/systemd/inhibit/** 			rw,
+
+  include if exists <local/lxqt-session>
+
+  profile systemctl {
+    include <abstractions/base>
+    include <abstractions/app/systemctl>
+  
+    include if exists <local/lxqt-session_systemctl>
+  }
+
+  profile dbus {
+    include <abstractions/base>
+    include <abstractions/bus-session>
+
+    @{bin}/dbus-update-activation-environment mr,
+
+    owner @{user_share_dirs}/sddm/xorg-session.log rw,
+
+    include if exists <local/lxqt-session_dbus>
+  }
+
+}
+
