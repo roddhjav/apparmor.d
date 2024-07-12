@@ -11,15 +11,31 @@ include <tunables/global>
 profile nemo @{exec_path} {
   include <abstractions/base>
   include <abstractions/dconf-write>
+  include <abstractions/deny-sensitive-home>
   include <abstractions/desktop>
   include <abstractions/nameservice-strict>
+  include <abstractions/trash-strict>
 
   network inet stream,
   network inet6 stream,
 
   @{exec_path} mr,
 
-#   @{lib}/@{multiarch}/nemo/** mrix,
+  /usr/share/nemo/** r,
+
+  # Full access to user's data
+  / r,
+  /*/ r,
+  @{bin}/ r,
+  @{lib}/ r,
+  @{MOUNTDIRS}/ r,
+  @{MOUNTS}/ r,
+  @{MOUNTS}/** rw,
+  owner @{HOME}/{,**} rw,
+  owner @{run}/user/@{uid}/{,**} rw,
+  owner @{tmp}/{,**} rw,
+
+  @{run}/mount/utab r,
 
   owner @{PROC}/@{pid}/mountinfo r,
   owner @{PROC}/@{pid}/mounts r,
