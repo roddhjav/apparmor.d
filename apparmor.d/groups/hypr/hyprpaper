@@ -1,0 +1,32 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 odomingao
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/hyprpaper
+
+profile hyprpaper /{,usr/}{,s}bin/hyprpaper flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+
+  @{exec_path} mr,
+
+  /usr/share/icons/** r,
+
+  owner @{XDG_WALLPAPERS_DIR}/** r,
+
+  owner @{user_config_dirs}/hypr/hyprpaper.conf r,
+
+  owner @{run}/user/*/ r,
+  owner @{run}/user/*/.hyprpaper* rw,
+  owner @{run}/user/*/hypr/*/.hyprpaper.sock w,
+  owner @{run}/user/*/hyprpaper.lock rw,
+
+  include if exists <local/hyprpaper>
+}
+
+# vim:syntax=apparmor
+

@@ -1,0 +1,47 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 odomingao
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/hyprlock
+
+profile hyprlock /{,usr/}{,s}bin/hyprlock {
+  include <abstractions/base>
+  include <abstractions/dri>
+  include <abstractions/fonts>
+  include <abstractions/mesa>
+  include <abstractions/nameservice-strict>
+  include <abstractions/opencl-mesa>
+  include <abstractions/vulkan>
+  include <abstractions/vulkan-strict>
+
+  capability audit_write,
+
+  network netlink raw,
+
+  @{exec_path} mr,
+  @{bin}/unix_chkpwd mrix,
+
+  /etc/login.defs r,
+  /etc/pam.d/* r,
+  /etc/security/faillock.conf r,
+  /etc/shells r,
+  owner /etc/shadow r,
+
+  owner @{XDG_PICTURES_DIR}/** r,
+  owner @{XDG_WALLPAPERS_DIR}/** r,
+
+  owner @{user_config_dirs}/hypr/hyprlock.conf r,
+
+  owner @{run}/faillock/@{user} rwk,
+
+  owner /dev/tty@{int} rw,
+
+  include if exists <local/hyprlock>
+}
+
+# vim:syntax=apparmor
+
