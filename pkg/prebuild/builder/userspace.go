@@ -5,6 +5,7 @@
 package builder
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
 
@@ -12,8 +13,10 @@ import (
 	"github.com/roddhjav/apparmor.d/pkg/prebuild/cfg"
 )
 
+const tokATTACHMENT = "@{exec_path}"
+
 var (
-	regAttachments = regexp.MustCompile(`(profile .* @{exec_path})`)
+	regAttachments = regexp.MustCompile(`(profile .* ` + tokATTACHMENT + `)`)
 )
 
 type Userspace struct {
@@ -41,13 +44,18 @@ func (b Userspace) Apply(opt *Option, profile string) (string, error) {
 	if _, err := f.Parse(profile); err != nil {
 		return "", err
 	}
+	if len(f.GetDefaultProfile().Attachments) > 0 &&
+		f.GetDefaultProfile().Attachments[0] != tokATTACHMENT {
+		return "", fmt.Errorf("missing '%s' attachment", tokATTACHMENT)
+	}
 	if err := f.Resolve(); err != nil {
 		return "", err
 	}
-	att := f.GetDefaultProfile().GetAttachments()
+
 	matches := regAttachments.FindAllString(profile, -1)
 	if len(matches) > 0 {
-		strheader := strings.Replace(matches[0], "@{exec_path}", att, -1)
+		att := f.GetDefaultProfile().GetAttachments()
+		strheader := strings.Replace(matches[0], tokATTACHMENT, att, -1)
 		return regAttachments.ReplaceAllLiteralString(profile, strheader), nil
 	}
 	return profile, nil
