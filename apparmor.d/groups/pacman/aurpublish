@@ -29,7 +29,7 @@ profile aurpublish @{exec_path} {
   @{bin}/date        rix,
   @{bin}/gettext     rix,
   @{bin}/git         rPx,
-  @{bin}/gpg{,2}     rPx,
+  @{bin}/gpg{,2}     rCx -> gpg,
   @{bin}/grep        rix,
   @{bin}/makepkg     rix,
   @{bin}/mkdir       rix,
@@ -48,10 +48,9 @@ profile aurpublish @{exec_path} {
   /etc/makepkg.conf.d/{,**} r,
 
   owner @{user_build_dirs}/**/ w,
-  owner @{user_projects_dirs}/**/ r,
+  owner @{user_projects_dirs}/** r,
   owner @{user_projects_dirs}/**/.git/COMMIT_EDITMSG rw,
   owner @{user_projects_dirs}/**/.SRCINFO rw,
-  owner @{user_projects_dirs}/**/PKGBUILD r,
 
   owner @{user_cache_dirs}/makepkg/src/* rw,
   owner @{user_config_dirs}/pacman/makepkg.conf r,
@@ -61,6 +60,22 @@ profile aurpublish @{exec_path} {
   owner @{PROC}/@{pid}/maps r,
 
   /dev/tty rw,
+
+  profile gpg {
+    include <abstractions/base>
+
+    @{bin}/gpg{,2} mr,
+    @{bin}/gpgconf mr,
+
+    owner @{HOME}/@{XDG_GPG_DIR}/ rw,
+    owner @{HOME}/@{XDG_GPG_DIR}/** rwkl -> @{HOME}/@{XDG_GPG_DIR}/**,
+
+    owner @{user_cache_dirs}/makepkg/src/*.asc r,
+
+    owner @{tmp}/tmp.@{rand10} rw,
+
+    include if exists <local/aurpublish_gpg>
+  }
 
   include if exists <local/aurpublish>
 }
