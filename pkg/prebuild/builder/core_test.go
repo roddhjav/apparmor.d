@@ -228,14 +228,8 @@ func TestBuilder_Apply(t *testing.T) {
 
 				include if exists <local/foo>
 			  }`,
-			want: `
-			  profile foo /usr/bin/foo {
-			    include <abstractions/base>
-
-			    /usr/bin/foo mr,
-
-				include if exists <local/foo>
-			  }`,
+			want:    "",
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
