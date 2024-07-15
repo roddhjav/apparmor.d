@@ -25,6 +25,7 @@ profile crontab @{exec_path} {
   @{bin}/vim.*           rCx -> editor,
 
   /etc/cron.{allow,deny} r,
+  /etc/pam.d/* r,
 
         /var/spool/cron/ r,
         /var/spool/cron/crontabs/ rw,
@@ -32,19 +33,18 @@ profile crontab @{exec_path} {
 
   owner @{tmp}/crontab.*/{,crontab} rw,
 
-
   profile editor {
     include <abstractions/base>
     include <abstractions/app/editor>
 
     capability fsetid,
 
+    /etc/cron.{allow,deny} r,
+
           /tmp/ r,
     owner @{tmp}/crontab.*/crontab rw,
 
-    # file_inherit
-    /etc/cron.{allow,deny} r,
-
+    include if exists <local/crontab_editor>
   }
 
   include if exists <local/crontab>
