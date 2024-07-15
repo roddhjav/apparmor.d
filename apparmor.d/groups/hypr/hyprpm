@@ -1,0 +1,41 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 odomingao
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/hyprpm
+
+profile hyprpm @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+  include <abstractions/ssl_certs>
+  include <abstractions/user-tmp>
+
+  network inet dgram,
+  network inet stream,
+  network inet6 dgram,
+  network inet6 stream,
+
+  @{exec_path} mr,
+
+  @{bin}/** rix,
+  @{lib}/gcc/** rix,
+  @{lib}/git-core/** rix,
+
+  /usr/include/** r,
+  /usr/share/git-core/** r,
+  /usr/share/pkgconfig/** r,
+
+  owner @{HOME}/.gitconfig r,
+
+  owner @{user_share_dirs}/hyprpm/{,**} rw,
+
+  /tmp/hyprpm/** rw,
+
+  include if exists <local/hyprpm>
+}
+
+# vim:syntax=apparmor
