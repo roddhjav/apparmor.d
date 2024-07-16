@@ -1,0 +1,33 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 odomingao
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/waybar
+profile waybar @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/audio>
+  include <abstractions/dconf-write>
+  include <abstractions/desktop>
+  include <abstractions/nameservice-strict>
+
+  network inet dgram,
+  network inet6 dgram,
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  @{bin}/** rPUx,
+  @{user_bin_dirs}/** rPUx,
+
+  owner @{user_config_dirs}/waybar/{,**} r,
+
+  owner /dev/tty@{int} rw,
+
+  include if exists <local/waybar>
+}
+
+# vim:syntax=apparmor

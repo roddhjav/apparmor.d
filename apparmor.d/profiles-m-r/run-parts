@@ -14,7 +14,9 @@ profile run-parts @{exec_path} {
   include <abstractions/consoles>
   include <abstractions/nameservice-strict>
 
-  @{exec_path} mr,
+  capability mknod,
+
+  @{exec_path} mrix,
   
   @{sh_path}         rix,
   @{bin}/anacron     rix,
@@ -29,6 +31,7 @@ profile run-parts @{exec_path} {
   /etc/ r,
   /etc/anacrontab                                      r,
   /etc/conf.d/snapper{,**}                             r,
+  /etc/default/*                                       r,
   /etc/snapper/configs/root                            r,
 
   # Crontab
@@ -42,7 +45,6 @@ profile run-parts @{exec_path} {
   /etc/cron.{hourly,daily,weekly,monthly}/aptitude             rPx,
   /etc/cron.{hourly,daily,weekly,monthly}/bsdmainutils        rPUx,
   /etc/cron.{hourly,daily,weekly,monthly}/checksecurity       rPUx,
-  /etc/cron.{hourly,daily,weekly,monthly}/cracklib-runtime     rPx,
   /etc/cron.{hourly,daily,weekly,monthly}/debsums              rPx,
   /etc/cron.{hourly,daily,weekly,monthly}/debtags              rPx,
   /etc/cron.{hourly,daily,weekly,monthly}/dlocate              rPx,
@@ -55,6 +57,7 @@ profile run-parts @{exec_path} {
   /etc/cron.{hourly,daily,weekly,monthly}/passwd              rPUx,
   /etc/cron.{hourly,daily,weekly,monthly}/plocate              rPx,
   /etc/cron.{hourly,daily,weekly,monthly}/popularity-contest   rPx,
+  /etc/cron.{hourly,daily,weekly,monthly}/snapper             rPUx,
   /etc/cron.{hourly,daily,weekly,monthly}/spamassassin        rPUx,
   /etc/cron.{hourly,daily,weekly,monthly}/sysstat              rPx,
   /etc/cron.{hourly,daily,weekly,monthly}/tor                 rPUx,
@@ -134,10 +137,14 @@ profile run-parts @{exec_path} {
 
   /usr/share/landscape/landscape-sysinfo.wrapper rPUx,
 
+  /root/ r,
+
+  /var/spool/anacron/cron.daily k,
+
   owner @{tmp}/#@{int} rw,
-  owner @{tmp}/$anacron* rw,
+  owner @{tmp}/$anacron@{rand6} rw,
   owner @{tmp}/file@{rand6} rw,
-  
+
   owner @{sys}/class/power_supply/            r,
 
   /dev/tty@{int} rw,

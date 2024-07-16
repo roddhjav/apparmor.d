@@ -1,0 +1,31 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 valoq <valoq@mailbox.org>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/cmus
+profile cmus @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/audio-client>
+
+  @{exec_path} mr,
+
+  /usr/share/cmus/{,**} r,
+  /usr/share/terminfo/{,**} r,
+
+  /etc/machine-id r,
+
+  owner @{user_music_dirs}/{,**} r,
+
+  owner @{user_config_dirs}/ r,
+  owner @{user_config_dirs}/cmus/{,**} rw,
+
+  owner @{run}/user/@{uid}/cmus-socket w,
+
+  /dev/shm/ r,
+
+  include if exists <local/cmus>
+}
