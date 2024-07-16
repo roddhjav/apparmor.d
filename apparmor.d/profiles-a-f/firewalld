@@ -14,6 +14,7 @@ profile firewalld @{exec_path} flags=(attach_disconnected) {
   include <abstractions/bus/org.freedesktop.PolicyKit1>
   include <abstractions/bus/org.freedesktop.NetworkManager>
   include <abstractions/nameservice-strict>
+  include <abstractions/app/kmod>
 
   capability dac_read_search,
   capability mknod,
@@ -51,12 +52,12 @@ profile firewalld @{exec_path} flags=(attach_disconnected) {
   @{bin}/ebtables-legacy-restore  rix,
   @{bin}/false                    rix,
   @{bin}/ipset                    rix,
-  @{bin}/kmod                     rPx,
+  @{bin}/kmod                     rix,
   @{bin}/modprobe                 rPx,
   @{bin}/xtables-legacy-multi     rix,
   @{bin}/xtables-nft-multi        rix,
 
-  /usr/local/lib/python*/dist-packages/ r,
+  /usr/local/lib/python3.@{int}/dist-packages/ r,
 
   /usr/share/libalternatives/ r,
   /usr/share/libalternatives/ebtables*/{,*} r,
@@ -65,37 +66,27 @@ profile firewalld @{exec_path} flags=(attach_disconnected) {
   /etc/firewalld/{,**} rw,
   /etc/iproute2/group r,
   /etc/iproute2/rt_realms r,
-  # Maybe change to as in kmod,lspci,...?
-  # /etc/modprobe.d/{,*.conf} r,
-  /etc/modprobe.d/ r,
-  /etc/modprobe.d/firewalld-sysctls.conf r,
 
   /var/lib/ebtables/lock rwk,
 
   /var/log/firewalld rw,
 
   @{run}/firewalld/{,*} rw,
-  @{run}/modprobe.d/ r, # Maybe change to as in kmod,lspci?
-                        # @{run}/modprobe.d/{,*.conf} r,
+  @{run}/modprobe.d/{,*.conf} r,
   @{run}/xtables.lock rwk,
 
-        @{PROC}/cmdline r,
+  @{sys}/module/compression r,
+  @{sys}/module/crc32c_{generic,intel}/initstate r,
+  @{sys}/module/libcrc32c/initstate r,
+  @{sys}/module/nf_conntrack{,_tftp}/initstate r,
+  @{sys}/module/nf_defrag_ipv{4,6}/initstate r,
+  @{sys}/module/nf_nat/initstate r,
+
         @{PROC}/sys/kernel/modprobe r,
         @{PROC}/sys/net/ipv{4,6}/ip_forward rw,
   owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/mounts r,
   owner @{PROC}/@{pids}/net/ip_tables_names r,
-
-  @{sys}/module/compression r,
-  # Maybe change to as in systemd-modules-load?
-  # @{sys}/module/*/initstate r,
-  @{sys}/module/crc32c_generic/initstate r,
-  @{sys}/module/crc32c_intel/initstate r,
-  @{sys}/module/libcrc32c/initstate r,
-  @{sys}/module/nf_conntrack/initstate r,
-  @{sys}/module/nf_conntrack_tftp/initstate r,
-  @{sys}/module/nf_defrag_ipv{4,6}/initstate r,
-  @{sys}/module/nf_nat/initstate r,
 
   include if exists <local/firewalld>
 }
