@@ -9,12 +9,12 @@ include <tunables/global>
 @{exec_path} = @{bin}/firewalld
 profile firewalld @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/app/kmod>
   include <abstractions/bus-session>
   include <abstractions/bus-system>
-  include <abstractions/bus/org.freedesktop.PolicyKit1>
   include <abstractions/bus/org.freedesktop.NetworkManager>
+  include <abstractions/bus/org.freedesktop.PolicyKit1>
   include <abstractions/nameservice-strict>
-  include <abstractions/app/kmod>
 
   capability dac_read_search,
   capability mknod,
@@ -27,21 +27,6 @@ profile firewalld @{exec_path} flags=(attach_disconnected) {
   network inet6 raw,
   network netlink raw,
 
-  dbus receive bus=system path=/org/fedoraproject/FirewallD1
-       interface=org.fedoraproject.FirewallD1.direct
-       member=passthrough
-       peer=(name=:*, label=libvirtd),
-
-  dbus receive bus=system path=/org/fedoraproject/FirewallD1
-       interface=org.fedoraproject.FirewallD1.zone
-       member={changeZoneOfInterface,getZones}
-       peer=(name=:*, label=libvirtd),
-
-  dbus receive bus=system path=/org/fedoraproject/FirewallD1
-       interface=org.fedoraproject.FirewallD1.zone
-       member={changeZoneOfInterface,removeInterface}
-       peer=(name=:*, label=libvirtd),
-
   #aa:dbus own bus=system name=org.fedoraproject.FirewallD1
 
   @{exec_path} mr,
@@ -53,7 +38,7 @@ profile firewalld @{exec_path} flags=(attach_disconnected) {
   @{bin}/false                    rix,
   @{bin}/ipset                    rix,
   @{bin}/kmod                     rix,
-  @{bin}/modprobe                 rPx,
+  @{bin}/modprobe                 rix,
   @{bin}/xtables-legacy-multi     rix,
   @{bin}/xtables-nft-multi        rix,
 
@@ -76,11 +61,9 @@ profile firewalld @{exec_path} flags=(attach_disconnected) {
   @{run}/xtables.lock rwk,
 
   @{sys}/module/compression r,
-  @{sys}/module/crc32c_{generic,intel}/initstate r,
+  @{sys}/module/crc32c_*/initstate r,
   @{sys}/module/libcrc32c/initstate r,
-  @{sys}/module/nf_conntrack{,_tftp}/initstate r,
-  @{sys}/module/nf_defrag_ipv{4,6}/initstate r,
-  @{sys}/module/nf_nat/initstate r,
+  @{sys}/module/nf_*/initstate r,
 
         @{PROC}/sys/kernel/modprobe r,
         @{PROC}/sys/net/ipv{4,6}/ip_forward rw,
