@@ -1,4 +1,5 @@
 # apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
 # Copyright (C) 2024 valoq <valoq@mailbox.org>
 # SPDX-License-Identifier: GPL-2.0-only
 
@@ -9,6 +10,7 @@ include <tunables/global>
 @{exec_path} = @{bin}/w3m
 profile w3m @{exec_path} {
   include <abstractions/base>
+  include <abstractions/consoles>
   include <abstractions/nameservice-strict>
   include <abstractions/ssl_certs>
   include <abstractions/user-download-strict>
@@ -21,13 +23,20 @@ profile w3m @{exec_path} {
 
   @{exec_path} mr,
 
+  @{sh_path} rix,
+  @{lib}/w3m/cgi-bin/* rix,
+  @{lib}/w3m/* rix,
+
   /usr/share/terminfo/{,**} r,
 
+  /etc/mime.types r,
   /etc/w3m/{,**} r,
-  owner @{HOME}/.w3m/{,**} r,
-  owner @{user_config_dirs}/w3m/{,**} r,
 
-  owner /tmp/@{rand6}/{,**} rw,
+  owner @{HOME}/.w3m/{,**} rw,
+
+  owner @{user_config_dirs}/w3m/{,**} rw,
+
+  owner @{tmp}/@{rand6}/{,**} rw,
 
   include if exists <local/w3m>
 }
