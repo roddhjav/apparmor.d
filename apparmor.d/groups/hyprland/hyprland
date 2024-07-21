@@ -1,0 +1,70 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 odomingao
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/Hyprland
+profile hyprland @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/desktop>
+  include <abstractions/graphics>
+  include <abstractions/wayland>
+
+  capability sys_ptrace,
+
+  ptrace read,
+
+  network netlink raw,
+
+  signal send,
+
+  @{exec_path} mr,
+
+  @{bin}/** rPUx,
+  @{user_bin_dirs}/** rPUx,
+  owner @{user_share_dirs}/hyprpm/** mr,
+
+  /usr/share/hyprland/{,*} r,
+  /usr/share/libinput/{,*} r,
+
+  owner @{user_cache_dirs}/hyprland/** w,
+  owner @{user_config_dirs}/hypr/hyprland.conf r,
+
+  @{run}/systemd/sessions/@{int} r,
+  @{run}/udev/data/+acpi:* r,
+  @{run}/udev/data/+dmi:id r,
+  @{run}/udev/data/+drm:card@{int}-* r,
+  @{run}/udev/data/+input:input@{int} r,
+  @{run}/udev/data/+pci:* r,
+  @{run}/udev/data/+platform:pcspkr r,
+  @{run}/udev/data/+sound:card@{int} r,
+  @{run}/udev/data/+usb:* r,
+  @{run}/udev/data/c13:@{int} r,
+  @{run}/udev/data/c189:@{int} r,
+  @{run}/udev/data/c226:@{int} r,
+  owner @{run}/user/@{uid}/hypr/{,**} rw,
+  owner @{run}/user/@{uid}/.hyprpaper_* rw,
+  owner @{run}/user/@{uid}/.hyprpicker_* rw,
+  owner /tmp/.X@{int}-lock w,
+  owner /dev/shm/@{uuid} rw,
+  owner /dev/shm/.org.chromium.Chromium.@{rand6} rw,
+
+  @{sys}/bus/ r,
+  @{sys}/class/input/ r,
+  @{sys}/devices/@{pci}/oot_vga r,
+  @{sys}/devices/**/uevent r,
+
+  owner @{PROC}/@{pid}/environ r,
+
+  /dev/input/event@{int} rw,
+  /dev/tty r,
+  owner /dev/tty@{int} rw,
+
+  include if exists <local/hyprland>
+}
+
+# vim:syntax=apparmor
+
