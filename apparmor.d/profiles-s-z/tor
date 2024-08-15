@@ -1,0 +1,32 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 odomingao
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/tor
+profile tor @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+
+  capability setgid,
+  capability setuid,
+
+  network inet dgram,
+  network inet stream,
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  /usr/share/tor/{,**} r,
+
+  owner /etc/tor/torrc r,
+
+  owner /var/lib/tor/{,**} rwk,
+
+  include if exists <local/tor>
+}
+
+# vim:syntax=apparmor
