@@ -39,7 +39,7 @@
 @{XDG_CONFIG_DIR}=".config"
 @{XDG_DATA_DIR}=".local/share"
 @{XDG_STATE_DIR}=".local/state"
-@{XDG_BIN_DIR}="bin" ".bin" ".local/bin"
+@{XDG_BIN_DIR}=".local/bin"
 @{XDG_LIB_DIR}=".local/lib"
 
 # Full path of the user configuration directories
