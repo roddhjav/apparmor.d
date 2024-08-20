@@ -197,6 +197,6 @@ func main() {
 		os.Exit(1)
 	}
 	if err != nil {
-		logging.Fatal(err.Error())
+		logging.Fatal("%s", err.Error())
 	}
 }

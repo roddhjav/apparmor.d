@@ -37,7 +37,7 @@ func Print(msg string, a ...interface{}) int {
 
 // Println prints a formatted message. Arguments are handled in the manner of fmt.Println.
 func Println(msg string) int {
-	n, _ := fmt.Fprintf(os.Stdout, msg+"\n")
+	n, _ := fmt.Fprintf(os.Stdout, "%s\n", msg)
 	return n
 }
 
@@ -48,7 +48,7 @@ func Bulletf(msg string, a ...interface{}) string {
 
 // Bullet prints a formatted bullet point string
 func Bullet(msg string, a ...interface{}) int {
-	return Print(Bulletf(msg, a...))
+	return Print("%s", Bulletf(msg, a...))
 }
 
 // Stepf returns a formatted step string
@@ -58,7 +58,7 @@ func Stepf(msg string, a ...interface{}) string {
 
 // Step prints a step title
 func Step(msg string, a ...interface{}) int {
-	return Print(Stepf(msg, a...))
+	return Print("%s", Stepf(msg, a...))
 }
 
 // Successf returns a formatted success string
@@ -68,7 +68,7 @@ func Successf(msg string, a ...interface{}) string {
 
 // Success prints a formatted success message to stdout
 func Success(msg string, a ...interface{}) int {
-	return Print(Successf(msg, a...))
+	return Print("%s", Successf(msg, a...))
 }
 
 // Warningf returns a formatted warning string
@@ -78,12 +78,12 @@ func Warningf(msg string, a ...interface{}) string {
 
 // Warning prints a formatted warning message to stdout
 func Warning(msg string, a ...interface{}) int {
-	return Print(Warningf(msg, a...))
+	return Print("%s", Warningf(msg, a...))
 }
 
 // Fatalf returns a formatted error message
 func Error(msg string, a ...interface{}) int {
-	return Print(fmt.Sprintf("%s%s%s\n", Indent, errorText, fmt.Sprintf(msg, a...)))
+	return Print("%s", fmt.Sprintf("%s%s%s\n", Indent, errorText, fmt.Sprintf(msg, a...)))
 }
 
 // Fatalf returns a formatted error message

@@ -199,7 +199,7 @@ func main() {
 	case format:
 		files, err = pathsFromArgs()
 		if err != nil {
-			logging.Fatal(err.Error())
+			logging.Fatal("%s", err.Error())
 		}
 		err = aaFormat(files)
 	case tree:
@@ -207,6 +207,6 @@ func main() {
 	}
 
 	if err != nil {
-		logging.Fatal(err.Error())
+		logging.Fatal("%s", err.Error())
 	}
 }
