@@ -10,7 +10,7 @@ func TestPrint(t *testing.T) {
 	msg := "Print message"
 	wantN := 13
 
-	gotN := Print(msg)
+	gotN := Print("%s", msg)
 	if gotN != wantN {
 		t.Errorf("Print() = %v, want %v", gotN, wantN)
 	}
@@ -28,7 +28,7 @@ func TestPrintln(t *testing.T) {
 func TestBulletf(t *testing.T) {
 	msg := "Bullet message"
 	want := "\033[1m ⋅ \033[0mBullet message\n"
-	if got := Bulletf(msg); got != want {
+	if got := Bulletf("%s", msg); got != want {
 		t.Errorf("Bulletf() = %v, want %v", got, want)
 	}
 }
@@ -36,7 +36,7 @@ func TestBulletf(t *testing.T) {
 func TestBullet(t *testing.T) {
 	msg := "Bullet message"
 	wantN := 28
-	gotN := Bullet(msg)
+	gotN := Bullet("%s", msg)
 	if gotN != wantN {
 		t.Errorf("Bullet() = %v, want %v", gotN, wantN)
 	}
@@ -45,7 +45,7 @@ func TestBullet(t *testing.T) {
 func TestStepf(t *testing.T) {
 	msg := "Step message"
 	want := "\033[1;32mStep message\033[0m\n"
-	if got := Stepf(msg); got != want {
+	if got := Stepf("%s", msg); got != want {
 		t.Errorf("Stepf() = %v, want %v", got, want)
 	}
 }
@@ -53,7 +53,7 @@ func TestStepf(t *testing.T) {
 func TestStep(t *testing.T) {
 	msg := "Step message"
 	wantN := 24
-	gotN := Step(msg)
+	gotN := Step("%s", msg)
 	if gotN != wantN {
 		t.Errorf("Step() = %v, want %v", gotN, wantN)
 	}
@@ -62,7 +62,7 @@ func TestStep(t *testing.T) {
 func TestSuccessf(t *testing.T) {
 	msg := "Success message"
 	want := "\033[1;32m ✓ \033[0mSuccess message\n"
-	if got := Successf(msg); got != want {
+	if got := Successf("%s", msg); got != want {
 		t.Errorf("Successf() = %v, want %v", got, want)
 	}
 }
@@ -70,7 +70,7 @@ func TestSuccessf(t *testing.T) {
 func TestSuccess(t *testing.T) {
 	msg := "Success message"
 	wantN := 32
-	gotN := Success(msg)
+	gotN := Success("%s", msg)
 	if gotN != wantN {
 		t.Errorf("Success() = %v, want %v", gotN, wantN)
 	}
@@ -79,7 +79,7 @@ func TestSuccess(t *testing.T) {
 func TestWarningf(t *testing.T) {
 	msg := "Warning message"
 	want := "\033[1;33m ‼ \033[0mWarning message\n"
-	if got := Warningf(msg); got != want {
+	if got := Warningf("%s", msg); got != want {
 		t.Errorf("Warningf() = %v, want %v", got, want)
 	}
 }
@@ -87,7 +87,7 @@ func TestWarningf(t *testing.T) {
 func TestWarning(t *testing.T) {
 	msg := "Warning message"
 	wantN := 32
-	gotN := Warning(msg)
+	gotN := Warning("%s", msg)
 	if gotN != wantN {
 		t.Errorf("Warning() = %v, want %v", gotN, wantN)
 	}
@@ -96,7 +96,7 @@ func TestWarning(t *testing.T) {
 func TestError(t *testing.T) {
 	msg := "Error message"
 	wantN := 30
-	gotN := Error(msg)
+	gotN := Error("%s", msg)
 	if gotN != wantN {
 		t.Errorf("Error() = %v, want %v", gotN, wantN)
 	}
@@ -105,7 +105,7 @@ func TestError(t *testing.T) {
 func TestFatalf(t *testing.T) {
 	msg := "Error message"
 	want := "\033[1;31m ✗ Error: \033[0mError message\n"
-	if got := Fatalf(msg); got != want {
+	if got := Fatalf("%s", msg); got != want {
 		t.Errorf("Fatalf() = %v, want %v", got, want)
 	}
 }

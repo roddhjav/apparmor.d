@@ -91,6 +91,6 @@ func main() {
 		os.Exit(0)
 	}
 	if err := aaPrebuild(); err != nil {
-		logging.Fatal(err.Error())
+		logging.Fatal("%s", err.Error())
 	}
 }
