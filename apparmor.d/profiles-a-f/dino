@@ -1,0 +1,52 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Mikhail Morfikov
+# Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/dino{,-im}
+profile dino @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/audio-client>
+  include <abstractions/dconf-write>
+  include <abstractions/desktop>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/gstreamer>
+  include <abstractions/nameservice-strict>
+  include <abstractions/p11-kit>
+  include <abstractions/ssl_certs>
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  # Not in a subprofile because of no new privs
+  @{bin}/gpg{,2}         rix,
+  @{bin}/gpgconf         rix,
+  @{bin}/gpgsm           rix,
+  @{lib}/gnupg/keyboxd   rix,
+
+  owner @{HOME}/@{XDG_GPG_DIR}/ rw,
+  owner @{HOME}/@{XDG_GPG_DIR}/** rwkl -> @{HOME}/@{XDG_GPG_DIR}/**,
+
+  owner @{user_share_dirs}/dino/ rw,
+  owner @{user_share_dirs}/dino/** rwk,
+
+  owner @{run}/user/@{uid}/gnupg/ rw,
+  owner @{run}/user/@{uid}/gnupg/S.keyboxd rw,
+
+        @{PROC}/sys/net/ipv6/conf/all/disable_ipv6 r,
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/mountinfo r,
+
+  include if exists <local/dino>
+}
+
+# vim:syntax=apparmor
