@@ -77,6 +77,7 @@ profile gdm-session-worker @{exec_path} flags=(attach_disconnected) {
   @{etc_ro}/environment r,
   @{etc_ro}/security/limits.d/{,*.conf} r,
   /etc/default/locale r,
+  /etc/fscrypt.conf r,
   /etc/gdm{3,}/custom.conf r,
   /etc/gdm{3,}/daemon.conf r,
   /etc/locale.conf r,
@@ -93,6 +94,15 @@ profile gdm-session-worker @{exec_path} flags=(attach_disconnected) {
   /var/lib/wtmpdb/ r,
   /var/lib/wtmpdb/* rwk,
 
+        /.fscrypt/policies/ r,
+        /.fscrypt/protectors/ r,
+  owner /.fscrypt/protectors/@{hex16} r,
+
+        /home/ r,
+        /home/.fscrypt/policies/ r,
+  owner /home/.fscrypt/policies/@{hex32} r,
+  owner /home/.fscrypt/protectors/@{hex16}.link r,
+
   owner @{HOME}/.pam_environment r,
 
         @{run}/cockpit/inactive.motd r,
@@ -106,12 +116,15 @@ profile gdm-session-worker @{exec_path} flags=(attach_disconnected) {
 
   @{run}/cockpit/active.motd r,
   @{run}/faillock/@{user} rwk,
+  @{run}/fscrypt/ rw,
+  @{run}/fscrypt/@{uid}.count rwk,
   @{run}/motd.d/{,*} r,
   @{run}/systemd/sessions/* r,
   @{run}/systemd/sessions/*.ref rw,
   @{run}/systemd/users/@{uid} r,
   @{run}/utmp rwk,
 
+        @{PROC}/@{pid}/mountinfo r,
         @{PROC}/@{pids}/cgroup r,
         @{PROC}/1/limits r,
         @{PROC}/keys r,

@@ -102,13 +102,13 @@ func (t *Test) Run(dryRun bool) (ran int, nb int, err error) {
 			if !strings.Contains(cmd, "{{") {
 				nb++
 				if dryRun {
-					logging.Bullet(cmd)
+					logging.Bullet("%s", cmd)
 				} else {
 					cmdErr := t.run(cmd, strings.Join(test.Stdin, "\n"))
 					if cmdErr != nil {
 						logging.Error("%v", cmdErr)
 					} else {
-						logging.Success(cmd)
+						logging.Success("%s", cmd)
 					}
 				}
 			}

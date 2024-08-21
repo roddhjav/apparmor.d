@@ -122,6 +122,15 @@ A minimal set of rules for all electron based UI applications. It works as a *fu
     @{cache_dirs} = @{user_cache_dirs}/@{name}
     ```
 
+### **`common/game`**
+
+Core set of resources for any games on Linux. Runtimes such as sandboxing, wine, proton, game launchers should use this abstraction. 
+
+This abstraction uses the following tunables:
+
+- `@{XDG_GAMESSTUDIO_DIR}` for game studio and game engines specific directories (Default: `@{XDG_GAMESSTUDIO_DIR}="unity3d"`)
+- `@{user_games_dirs}` for user specific game directories (e.g.: steam storage dir)
+
 ### **`common/systemd`**
 
 Common set of rules for internal systemd suite.

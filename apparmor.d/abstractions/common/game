@@ -1,0 +1,112 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Core set of resources for any games on Linux. Runtimes such as sandboxing,
+# wine, proton, game launchers should use this abstraction. 
+
+# This abstraction use the following tunables:
+# - @{XDG_GAMESSTUDIO_DIR} for game studio and game engines specific directories
+#   (Default: @{XDG_GAMESSTUDIO_DIR}="unity3d")
+# - @{user_games_dirs} for user specific game directories (eg: steam storage dir)
+
+  include <abstractions/audio-client>
+  include <abstractions/desktop>
+  include <abstractions/devices-usb>
+  include <abstractions/fontconfig-cache-write>
+  include <abstractions/graphics>
+  include <abstractions/nameservice-strict>
+  include <abstractions/ssl_certs>
+
+  @{bin}/uname          rix,
+  @{bin}/xdg-settings   rPx,
+  @{browsers_path}      rPx,
+
+  @{bin}/env r,
+
+  @{lib}/ r,
+  / r,
+  /home/ r,
+  /usr/ r,
+  /usr/local/ r,
+  /usr/local/lib/ r,
+
+  /etc/machine-id r,
+  /var/lib/dbus/machine-id r,
+
+  owner @{HOME}/ r,
+
+  owner @{user_games_dirs}/ r,
+  owner @{user_games_dirs}/*/ r,
+  owner @{user_games_dirs}/*/{,**} rwkl,
+
+  owner @{user_config_dirs}/@{XDG_GAMESSTUDIO_DIR}/ rw,
+  owner @{user_config_dirs}/@{XDG_GAMESSTUDIO_DIR}/** rwlk,
+
+  owner @{user_share_dirs}/@{XDG_GAMESSTUDIO_DIR}/ rw,
+  owner @{user_share_dirs}/@{XDG_GAMESSTUDIO_DIR}/** rwlk,
+
+        @{tmp}/ r,
+  owner @{tmp}/@{XDG_GAMESSTUDIO_DIR}/ rw,
+  owner @{tmp}/@{XDG_GAMESSTUDIO_DIR}/** rwlk,
+  owner @{tmp}/#@{int} rw,
+  owner @{tmp}/CASESENSITIVETEST@{hex32} rw,
+  owner @{tmp}/crashes/ rw,
+  owner @{tmp}/crashes/** rwk,
+  owner @{tmp}/miles_image_@{rand6} mrw,
+  owner @{tmp}/runtime-info.txt.@{rand6} rw, 
+  owner @{tmp}/vdpau-drivers-@{rand6}/{,**} rw,
+
+  owner /dev/shm/mono.@{int} rw,
+  owner /dev/shm/softbuffer-x11-@{rand6}@{c} rw,
+
+  @{run}/udev/data/+input:input@{int} r,  # for mouse, keyboard, touchpad
+  @{run}/udev/data/c13:@{int}  r,         # for /dev/input/*
+
+  @{sys}/ r,
+  @{sys}/bus/ r,
+  @{sys}/class/ r,
+  @{sys}/class/hidraw/ r,
+  @{sys}/class/input/ r,
+  @{sys}/devices/ r,
+  @{sys}/devices/@{pci}/boot_vga r,
+  @{sys}/devices/@{pci}/net/*/carrier r,
+  @{sys}/devices/**/input@{int}/ r,
+  @{sys}/devices/**/input@{int}/**/{vendor,product} r,
+  @{sys}/devices/**/input@{int}/capabilities/* r,
+  @{sys}/devices/**/input/input@{int}/ r,
+  @{sys}/devices/**/uevent r,
+  @{sys}/devices/system/ r,
+  @{sys}/devices/system/clocksource/clocksource@{int}/current_clocksource r,
+  @{sys}/devices/system/cpu/cpu@{int}/ r,
+  @{sys}/devices/virtual/dmi/id/* r,
+  @{sys}/devices/virtual/net/*/carrier r,
+  @{sys}/kernel/ r,
+
+        @{sys}/fs/cgroup/user.slice/cpu.max r,
+        @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/cpu.max r,
+        @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/cpu.max r,
+  owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/cpu.max  r,
+
+        @{PROC}/uptime r,
+        @{PROC}/version r,
+  owner @{PROC}/@{pid}/cgroup r,
+  owner @{PROC}/@{pid}/cmdline r,
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/mounts r,
+  owner @{PROC}/@{pid}/pagemap r,
+  owner @{PROC}/@{pid}/stat r,
+  owner @{PROC}/@{pid}/task/ r,
+  owner @{PROC}/@{pid}/task/@{tid}/comm rw,
+  owner @{PROC}/@{pid}/task/@{tid}/stat r,
+
+  /dev/ r,
+  /dev/hidraw@{int} rw,
+  /dev/input/ r,
+  /dev/input/event@{int} rw,
+  /dev/tty rw,
+  /dev/uinput rw,
+
+  include if exists <abstractions/common/game.d>
+
+# vim:syntax=apparmor
