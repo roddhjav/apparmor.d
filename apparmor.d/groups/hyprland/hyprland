@@ -9,9 +9,9 @@ include <tunables/global>
 @{exec_path} = @{bin}/Hyprland
 profile hyprland @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/app-launcher-user>
   include <abstractions/desktop>
   include <abstractions/graphics>
-  include <abstractions/wayland>
 
   capability sys_ptrace,
 
@@ -23,39 +23,37 @@ profile hyprland @{exec_path} flags=(attach_disconnected) {
 
   @{exec_path} mr,
 
-  @{bin}/** rPUx,
   @{user_bin_dirs}/** rPUx,
   owner @{user_share_dirs}/hyprpm/** mr,
 
   /usr/share/hyprland/{,*} r,
   /usr/share/libinput/{,*} r,
 
-  owner @{user_cache_dirs}/hyprland/** w,
-  owner @{user_config_dirs}/hypr/hyprland.conf r,
+  owner @{user_cache_dirs}/hyprland/{,**} rw,
+  owner @{user_config_dirs}/hypr/** r,
 
-  @{run}/systemd/sessions/@{int} r,
-  @{run}/udev/data/+acpi:* r,
-  @{run}/udev/data/+dmi:id r,
-  @{run}/udev/data/+drm:card@{int}-* r,
-  @{run}/udev/data/+input:input@{int} r,
-  @{run}/udev/data/+pci:* r,
-  @{run}/udev/data/+platform:pcspkr r,
-  @{run}/udev/data/+sound:card@{int} r,
-  @{run}/udev/data/+usb:* r,
-  @{run}/udev/data/c13:@{int} r,
-  @{run}/udev/data/c189:@{int} r,
-  @{run}/udev/data/c226:@{int} r,
   owner @{run}/user/@{uid}/gamescope-* rw,
   owner @{run}/user/@{uid}/hypr/{,**} rw,
-  owner @{run}/user/@{uid}/.hyprpaper_* rw,
-  owner @{run}/user/@{uid}/.hyprpicker_* rw,
-  owner /tmp/.X@{int}-lock w,
-  owner /dev/shm/@{uuid} rw,
   owner /dev/shm/.org.chromium.Chromium.@{rand6} rw,
+
+  @{run}/systemd/sessions/@{int} r,
+ 
+  @{run}/udev/data/+acpi:* r,             # for acpi
+  @{run}/udev/data/+dmi:id r,             # for motherboard info
+  @{run}/udev/data/+drm:card@{int}-* r,   # For screen outputs
+  @{run}/udev/data/+hid:* r,              # for HID-Compliant Keyboard
+  @{run}/udev/data/+input:input@{int} r,  # for mouse, keyboard, touchpad
+  @{run}/udev/data/+pci:* r,              # Identifies all PCI devices (CPU, GPU, Network, Disks, USB, etc.)
+  @{run}/udev/data/+platform:* r,
+  @{run}/udev/data/+sound:card@{int} r,   # for sound card
+  @{run}/udev/data/+usb* r,               # for USB mouse and keyboard
+  @{run}/udev/data/c13:@{int} r,          # for /dev/input/*
+  @{run}/udev/data/c189:@{int}  r,        # for /dev/bus/usb/**
+  @{run}/udev/data/c226:@{int} r,         # for /dev/dri/card* 
 
   @{sys}/bus/ r,
   @{sys}/class/input/ r,
-  @{sys}/devices/@{pci}/oot_vga r,
+  @{sys}/devices/@{pci}/boot_vga r,
   @{sys}/devices/**/uevent r,
 
   owner @{PROC}/@{pid}/environ r,
