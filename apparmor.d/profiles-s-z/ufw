@@ -1,0 +1,57 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 EricLin
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/ufw
+profile ufw @{exec_path} {
+
+    include <abstractions/base>
+
+    capability dac_read_search,
+    capability net_admin,
+
+    network netlink raw,
+    network inet dgram,
+    network inet6 dgram,
+
+    @{exec_path} mr,
+
+    @{bin}/ r,
+    @{bin}/python3* ix,
+    @{bin}/cat ix,
+    @{bin}/xtables-nft-multi ix,
+
+    @{lib}/ufw/ufw-init ix,
+
+    @{PROC}/@{pid}/stat r,
+    @{PROC}/@{pid}/fd/ r,
+    @{PROC}/@{pid}/net/ip_tables_names r,
+
+    owner @{bin}/env r,
+
+    /etc/ufw/{,**} rwk,
+
+    /etc/default/ufw r,
+
+    /run/ufw.lock wk,
+
+    /etc/gai.conf r,
+    /etc/nsswitch.conf r,
+    /etc/passwd r,
+    /etc/services r,
+
+    /var/tmp/* rw,
+    /tmp/* rw,
+
+    /dev/pts/[0-9]* rw,
+    /dev/tty rw, 
+
+    include if exists <local/ufw>
+
+}
+
+# vim:syntax=apparmor
