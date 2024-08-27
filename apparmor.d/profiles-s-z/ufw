@@ -8,8 +8,9 @@ include <tunables/global>
 
 @{exec_path} = @{bin}/ufw
 profile ufw @{exec_path} {
-
     include <abstractions/base>
+    include <abstractions/nameservice-strict>
+    include <abstractions/python>
 
     capability dac_read_search,
     capability net_admin,
@@ -21,33 +22,27 @@ profile ufw @{exec_path} {
     @{exec_path} mr,
 
     @{bin}/ r,
-    @{bin}/python3* ix,
+    @{bin}/env r,
+    @{bin}/python3.@{int} ix,
     @{bin}/cat ix,
     @{bin}/xtables-nft-multi ix,
 
     @{lib}/ufw/ufw-init ix,
 
-    @{PROC}/@{pid}/stat r,
-    @{PROC}/@{pid}/fd/ r,
-    @{PROC}/@{pid}/net/ip_tables_names r,
-
-    owner @{bin}/env r,
-
     /etc/ufw/{,**} rwk,
 
     /etc/default/ufw r,
 
-    /run/ufw.lock wk,
-
-    /etc/gai.conf r,
-    /etc/nsswitch.conf r,
-    /etc/passwd r,
-    /etc/services r,
+    @{run}/ufw.lock rwk,
 
     /var/tmp/@{rand8} rw,
     /var/tmp/tmp* rw,
     /tmp/@{rand8} rw,
     /tmp/tmp* rw,
+
+    @{PROC}/@{pid}/stat r,
+    @{PROC}/@{pid}/fd/ r,
+    @{PROC}/@{pid}/net/ip_tables_names r,
 
     /dev/pts/[0-9]* rw,
     /dev/tty rw, 
