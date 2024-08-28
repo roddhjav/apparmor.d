@@ -1,0 +1,40 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2024 Besanon  <m231009ts@mailfence.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/lxqt-config-file-associations
+profile lxqt-config-file-associations @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/gtk>
+  include <abstractions/video>
+  include <abstractions/fontconfig-cache-read> 
+  include <abstractions/lxqt>
+  include <abstractions/qt5-shader-cache>
+  include <abstractions/bus-accessibility>
+  include <abstractions/bus-session>
+  include <abstractions/gvfs-open>
+  include <abstractions/nameservice-strict>
+    
+  @{exec_path}				mr,
+ 
+  owner @{user_config_dirs}/  	       r,  
+  owner @{user_config_dirs}/mimeapps*  rwk,  
+  owner @{user_config_dirs}/lxqt-*     rwk,
+  owner @{user_config_dirs}/lxqt/        r,
+  owner @{user_config_dirs}/lxqt/#@{int} rw,
+  owner @{user_config_dirs}/lxqt/lxqt-config-file-associations.conf.lock rwk,
+  owner @{user_config_dirs}/lxqt/lxqt-config-file-associations.conf kl -> @{user_config_dirs}/lxqt/#@{int},
+
+  owner /tmp/#@{int} rwk,
+
+  /dev/tty				rw,
+
+  include if exists <local/lxqt-config-file-associations>
+}
+
+# vim:syntax=apparmor
