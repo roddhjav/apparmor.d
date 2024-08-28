@@ -1,0 +1,45 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2017-2021 Mikhail Morfikov
+# Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2024 Besanon <m231009ts@mailfence.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/pavucontrol-qt
+profile pavucontrol-qt @{bin}/pavucontrol-qt {
+  include <abstractions/base>
+  include <abstractions/qt5>
+  include <abstractions/lxqt>
+  include <abstractions/audio-client>
+  include <abstractions/dconf-write>
+  include <abstractions/desktop>
+  include <abstractions/nameservice-strict>
+  include <abstractions/fontconfig-cache-read>
+
+  @{exec_path} mr,
+
+  /usr/share/pavucontrol-qt/** rw,
+
+  /var/lib/dbus/machine-id r,
+  /etc/machine-id r,
+
+  owner @{user_config_dirs}/ r,
+  owner @{user_config_dirs}/pavucontrol-qt/ r,
+  owner @{user_config_dirs}/pavucontrol-qt/{,**}  rw, 
+  owner @{user_config_dirs}/pavucontrol-qt/pavucontrol-qt.conf.lock k,
+  owner @{user_config_dirs}/pavucontrol-qt/pavucontrol-qt.conf l -> @{user_config_dirs}/pavucontrol-qt/#@{int},
+  owner @{user_config_dirs}/pavucontrol.ini* rw,
+
+  owner @{PROC}/@{pid}/cmdline r,
+
+  # file_inherit
+  owner /dev/tty@{int} rw,
+  /dev/tty r,
+
+  include if exists <local/pavucontrol>
+}
+
+# vim:syntax=apparmor
