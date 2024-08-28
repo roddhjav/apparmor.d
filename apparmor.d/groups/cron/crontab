@@ -10,9 +10,12 @@ include <tunables/global>
 @{exec_path} = @{bin}/crontab
 profile crontab @{exec_path} {
   include <abstractions/base>
+  include <abstractions/authentication>
   include <abstractions/consoles>
   include <abstractions/nameservice-strict>
 
+  capability dac_read_search,
+  capability net_admin,
   capability setgid,
   capability setuid,
 
@@ -23,15 +26,17 @@ profile crontab @{exec_path} {
   # When editing the crontab file
   @{bin}/sensible-editor rCx -> editor,
   @{bin}/vim.*           rCx -> editor,
+  @{bin}/nvim            rCx -> editor,
 
   /etc/cron.{allow,deny} r,
   /etc/pam.d/* r,
 
         /var/spool/cron/ r,
         /var/spool/cron/crontabs/ rw,
+        /var/spool/cron/user r,
   owner /var/spool/cron/crontabs/* rw,
 
-  owner @{tmp}/crontab.*/{,crontab} rw,
+  owner @{tmp}/crontab.@{rand6}/{,crontab} rw,
 
   profile editor {
     include <abstractions/base>
@@ -42,7 +47,8 @@ profile crontab @{exec_path} {
     /etc/cron.{allow,deny} r,
 
           /tmp/ r,
-    owner @{tmp}/crontab.*/crontab rw,
+    owner @{tmp}/crontab.@{rand6}/crontab rw,
+    owner @{tmp}/crontab.@{rand6} rw,
 
     include if exists <local/crontab_editor>
   }
