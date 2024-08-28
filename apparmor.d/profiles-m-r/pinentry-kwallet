@@ -11,42 +11,31 @@ include <tunables/global>
 profile pinentry-kwallet @{exec_path} {
   include <abstractions/base>
   include <abstractions/consoles>
-  include <abstractions/freedesktop.org>
+  include <abstractions/kde-strict>
 
   signal (send) set=(term, kill) peer=gpg-agent,
 
   @{exec_path} mr,
 
-  @{bin}/pinentry-*        rPx,
-
-  @{bin}/kwalletcli_getpin rix,
-  @{bin}/kwalletcli        rCx -> kwalletcli,
-
-  # when wrong PIN is provided
   @{bin}/date              rix,
-
-  @{bin}/mksh              rix,
   @{bin}/env               rix,
-
-  owner @{HOME}/.Xauthority r,
-
-  /usr/share/hwdata/pnp.ids r,
-
+  @{bin}/kwalletcli        rCx -> kwalletcli,
+  @{bin}/kwalletcli_getpin rix,
+  @{bin}/mksh              rix,
+  @{bin}/pinentry-*        rPx,
 
   profile kwalletcli {
     include <abstractions/base>
+    include <abstractions/kde-strict>
 
     @{bin}/kwalletcli mr,
 
-    owner @{user_config_dirs}/kdeglobals r,
-    owner @{user_config_dirs}/kwalletrc r,
     @{lib}/@{multiarch}/qt5/plugins/kf5/org.kde.kwindowsystem.platforms/KF5WindowSystemKWaylandPlugin.so mr,
     @{lib}/@{multiarch}/qt5/plugins/kf5/org.kde.kwindowsystem.platforms/KF5WindowSystemX11Plugin.so mr,
 
-   owner @{HOME}/.Xauthority r,
+    owner @{user_config_dirs}/kwalletrc r,
 
-   /usr/share/hwdata/pnp.ids r,
-
+    include if exists <local/pinentry-kwallet_kwalletcli>
   }
 
   include if exists <local/pinentry-kwallet>
