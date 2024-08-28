@@ -1,0 +1,34 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2024 Besanon  <m231009ts@mailfence.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/lxqt-config-monitor
+profile lxqt-config-monitor @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/gtk>
+  include <abstractions/video>
+  include <abstractions/lxqt>
+  include <abstractions/qt5-shader-cache>
+  include <abstractions/bus-accessibility>
+  include <abstractions/bus-session>
+  include <abstractions/gvfs-open>
+  
+  signal (read) set=(kill,term) peer=lxqt-session,
+
+  @{exec_path}					mr,
+
+  /var/cache/fontconfig/ rw,
+  
+  owner /tmp/@{int}  				r,
+
+  /dev/tty					rw,
+
+  include if exists <local/lxqt-config-monitor>
+}
+
+# vim:syntax=apparmor
