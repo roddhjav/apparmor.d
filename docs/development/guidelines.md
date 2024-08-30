@@ -78,7 +78,7 @@ The file block should be sorted as follows:
 The dbus block should be sorted as follows:
 
 - The system bus should be sorted *before* the session bus
-- The bind rules should be sorted *after* the send & receive rules
+- The bind rules should be sorted *after* send & receive rules
 
 For DBus, try to determine peer's label when possible. E.g.:
 ```
@@ -114,6 +114,23 @@ If there is no predictable label it can be omitted.
     /etc/machine-id r,
     /var/lib/dbus/machine-id r,
     ```
+
+#### :material-numeric-5-circle: Limit the use of `deny`
+
+:   The use of `deny` should be limited to the minimum:
+
+    - In MAC policies, we only allow access ([Rule :material-numeric-1-circle:](index.md#rule-mandatory-access-control "Mandatory Access Control"))
+    - `deny` rules are enforced even in complain mode,
+    - If it works on your machine does not mean it will work on others ([Rule :material-numeric-4-circle:](index.md#rule-distribution-and-devices-agnostic "Distribution and devices agnostic")).
+
+#### :material-numeric-6-circle: Comments
+
+:   Ensure you only have useful comments. E.g.:
+    ```
+    # Config files for foo
+    owner @{user_config_dirs}/foo/{,**} r,
+    ```
+    Does not help, and if generalized it would add a lot of complexity to any profiles.
 
 
 ## Additional recommended documentation

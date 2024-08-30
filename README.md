@@ -27,15 +27,15 @@
 
 - Target both desktops and servers
 - Support all distributions that support AppArmor:
-    * Arch Linux
-    * Ubuntu 22.04
-    * Debian 12
-    * OpenSUSE Tumbleweed
+    * [Arch Linux](https://apparmor.pujol.io/install#archlinux)
+    * [Ubuntu 24.04/22.04](https://apparmor.pujol.io/install#ubuntu)
+    * [Debian 12](https://apparmor.pujol.io/install#debian)
+    * [OpenSUSE Tumbleweed](https://apparmor.pujol.io/install#opensuse)
 - Support for all major desktop environments:
-    * Gnome
-    * KDE
-    * XFCE *(work in progress)*
-- Fully tested (Work in progress)
+    * Gnome (GDM)
+    * KDE (SDDM)
+    * XFCE (Lightdm) *(work in progress)*
+- Fully tested *(work in progress)*
 
 
 > This project is originally based on the work from [Morfikov][upstream] and aims to extend it to more Linux distributions and desktop environments.

@@ -11,28 +11,39 @@ title: Installation
     See `debian/`, `PKGBUILD` and `dists/apparmor.d.spec`.
 
 
-**:material-docker: Docker**
+=== ":material-arch: Archlinux"
 
-For any system with docker installed you can simply build the package with:
-```sh
-make package dist=<distribution>
-```
-Then you can install the package with `dpkg`, `pacman` or `rpm`.
+    ```sh
+    make pkg
+    ```
 
-**:material-arch: Arch Linux**
-```sh
-make pkg
-```
+=== ":material-ubuntu: Ubuntu"
 
-**:material-ubuntu: Ubuntu & :material-debian: Debian**
-```sh
-make dpkg
-```
+    ```sh
+    make dpkg
+    ```
 
-**:simple-suse: openSUSE**
-```sh
-make rpm
-```
+=== ":material-debian: Debian"
+
+    ```sh
+    make dpkg
+    ```
+
+=== ":simple-suse: openSUSE"
+
+    ```sh
+    make rpm
+    ```
+
+=== ":material-docker: Docker"
+
+    For any system with docker installed you can simply build the package with:
+
+    ```sh
+    make package dist=<distribution>
+    ```
+
+    Then you can install the package with `dpkg`, `pacman` or `rpm`.
 
 
 ## Profile flags

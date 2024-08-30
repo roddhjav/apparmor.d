@@ -11,25 +11,39 @@ When creating [an issue on Github][newissue], please post a link to the [paste] 
 aa-log -R
 ```
 
-If this command produce nothing, try:
+??? question "No logs with `aa-log`?"
+
+    If the log file is empty, check that Auditd is running:
+
+    ```sh
+    sudo systemctl status auditd.service
+    ```
+
+    If Auditd is disabled aa-log will not have new results, you can enable Auditd with:
+
+    ```sh
+    sudo systemctl enable auditd.service --now
+    ```
+
+If this command produces nothing, use `-s` to provide all logs since boot time (provided that `journalctl` collected them):
 ```sh
 aa-log -s -R
 ```
 
-If the log file is empty, check that Auditd is running:
+??? question "No logs with `aa-log -s`?"
+
+    On certain distributions/configurations, AppArmor logs in journal could be taken over by *auditd* when it is installed. To overcome this, `systemd-journald-audit.socket` could be enabled:
+
+    ```sh
+    sudo systemctl enable systemd-journald-audit.socket
+    ```
+
+You can get older logs with:
+
 ```sh
-sudo systemctl status auditd.service
+aa-log -R -f <nb>
 ```
-
-If Auditd is disabled aa-log will not have new results, you can enable Auditd by doing the following command:
-```sh
-sudo systemctl enable auditd.service --now
-```
-
-You can get more logs with:
-
-1. `aa-log -R -s` that will provide all apparmor logs since boot time (if journalctl collect them)
-2. `aa-log -R -f <nb>` where `<nb>` is `1`, `2`, `3` and `4` (the rotated audit log file)
+Where `<nb>` is `1`, `2`, `3` and `4` (the rotated audit log file).
 
 [newissue]: https://github.com/roddhjav/apparmor.d/issues/new
 [paste]: https://pastebin.com/

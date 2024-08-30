@@ -70,7 +70,7 @@ If you're looking to contribute to `apparmor.d` you can get started by going to 
    Here is the bare minimum for the program `foo`:
 ``` sh
 # apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2023 You <your@email>
+# Copyright (C) 2024 You <your@email>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,

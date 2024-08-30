@@ -2,13 +2,7 @@
 title: AppArmor.d
 ---
 
-<!-- https://youtu.be/9dqHOrM4KHo?t=146
-
-Business Benefits of an LSM
-
-- Increased IT productivity -> ????
-- Regulatory Compliance
-- Peace of mind: Protect against unknown threats and "zero-days" attacks -->
+<style>.md-typeset .md-content__button { display: none; }</style>
 
 **Full set of AppArmor profiles**
 
@@ -34,13 +28,14 @@ See the [Concepts](concepts.md)' page for more detail on the architecture.
 - Target both desktops and servers
 - Support for all distributions that support AppArmor:
     * [:material-arch: Arch Linux](install.md#archlinux)
-    * [:material-ubuntu: Ubuntu 22.04](install.md#ubuntu-debian)
-    * [:material-debian: Debian 12](install.md#ubuntu-debian)
+    * [:material-ubuntu: Ubuntu 24.04/22.04](install.md#ubuntu)
+    * [:material-debian: Debian 12](install.md#debian)
     * [:simple-suse: openSUSE Tumbleweed](install.md#opensuse)
 - Support for all major desktop environments:
-    - [x] :material-gnome: Gnome
-    - [ ] :simple-kde: KDE *(work in progress)*
-- Fully tested (Work in progress)
+    - [x] :material-gnome: Gnome (GDM)
+    - [x] :simple-kde: KDE (SDDM)
+    - [ ] :simple-xfce: XFCE (Lightdm) *(work in progress)*
+- Fully tested *(work in progress)*
 
 **Presentations**
 
