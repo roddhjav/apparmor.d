@@ -1,20 +1,18 @@
-#------------------------------------------------------------------
-#    Author: Nishit Majithia (nishitm)
-#
-#    This program is free software; you can redistribute it and/or
-#    modify it under the terms of version 2 of the GNU General Public
-#    License published by the Free Software Foundation.
-#    SPDX-License-Identifier: GPL-2.0-only
-#------------------------------------------------------------------
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Nishit Majithia (nishitm)
+# SPDX-License-Identifier: GPL-2.0-only
 # vim: ft=apparmor
 
-abi <abi/4.0>,
+abi <abi/3.0>,
 
 include <tunables/global>
 
-profile socat /usr/bin/socat {
+@{exec_path} = /usr/bin/socat
+profile socat @{exec_path} {
   include <abstractions/base>
   include <abstractions/nameservice-strict>
+  include <abstractions/ssl_certs>
+  include <abstractions/consoles>
 
   capability dac_read_search,
   capability dac_override,
@@ -32,27 +30,17 @@ profile socat /usr/bin/socat {
   network,
 
   # Enale /dev/ptmx access for testsuite
-  # file rw /dev/ptmx,
-  # file rw /dev/pts/*,
+  # /dev/ptmx rw,
 
   # TUN/TAP device
-  file rw /dev/net/tun,
+  /dev/net/tun rw,
 
   # Process-specific access
-  file rw @{PROC}/@{pid}/fd/*,
-  file r @{PROC}/@{pid}/stat,
+  @{PROC}/@{pid}/fdinfo/@{int} rw,
+  @{PROC}/@{pid}/stat           r,
 
-  # Allow reading from /dev/tty
-  file rw /dev/tty,
-
-  # Allow reading /dev/vsock
-  file r /dev/vsock,
-
-  # certs/keys can be are stored in:
-  #     - /etc/ssl/certs/*.{key,crt}
-  #     - $HOME/.cert/**/*.pem
-  file r /etc/ssl/certs/{,*.{key,crt}},
-  file r @{HOME}/.certs/{,**},
+  # For bi-directional communication between vms and host/hypervisor
+  /dev/vsock r,
 
   # Site-specific additions and overrides. See local/README for details.
   include if exists <local/socat>
