@@ -1,0 +1,49 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Nishit Majithia (nishitm)
+# SPDX-License-Identifier: GPL-2.0-only
+# vim: ft=apparmor
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/socat
+profile socat @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+  include <abstractions/ssl_certs>
+  include <abstractions/consoles>
+
+  capability dac_read_search,
+  capability dac_override,
+  capability net_raw,
+  capability net_admin,
+  capability sys_module,
+  capability sys_admin,
+  capability fsetid,
+  capability chown,
+  capability net_bind_service,
+  capability sys_resource,
+
+  # Allow creation of network sockets and `socat` uses dccp for some
+  # fuctionalities that is why it is necessary to allow whole `network`
+  network,
+
+  @{exec_path} mr,
+
+  # Enale /dev/ptmx access for testsuite
+  # /dev/ptmx rw,
+
+  # TUN/TAP device
+  /dev/net/tun rw,
+
+  # Process-specific access
+  @{PROC}/@{pid}/fdinfo/@{int} rw,
+  @{PROC}/@{pid}/stat           r,
+
+  # For bi-directional communication between vms and host/hypervisor
+  /dev/vsock r,
+
+  # Site-specific additions and overrides. See local/README for details.
+  include if exists <local/socat>
+}
