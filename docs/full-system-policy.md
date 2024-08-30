@@ -31,7 +31,7 @@ Particularly:
 - In FSP mode, all sandbox managers **must** have a profile. Then user sandboxed applications (flatpak, snap, etc) will work as expected.
 
 
-## Install
+## Installation
 
 
 This feature is only enabled when the project is built with `make full`. [Early policy](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmorInSystemd#early-policy-loads) load **must** also be enabled. Once `apparmor.d` has been installed in FSP mode, it is required to reboot to apply the changes.
@@ -43,35 +43,53 @@ cache-loc /etc/apparmor/earlypolicy/
 Optimize=compress-fast
 ```
 
-**:material-arch: Arch Linux**
+=== ":material-arch: Archlinux"
 
-In `PKGBUILD`, replace `make` by `make full`:
-```diff
--  make
-+  make full
-```
+    In `PKGBUILD`, replace `make` by `make full`:
 
-**:material-ubuntu: Ubuntu & :material-debian: Debian**
+    ```diff
+    -  make
+    +  make full
+    ```
 
-In `debian/rules`, add the following lines:
+    Then, build the package with: `make pkg`
 
-```make
-override_dh_auto_build:
-	make full
-```
+=== ":material-ubuntu: Ubuntu"
 
-**:simple-suse: openSUSE**
+    In `debian/rules`, add the following lines:
 
-In `dists/apparmor.d.spec`, replace `%make_build` by `make full`
-```diff
--  %make_build
-+  %make_build full
-```
+    ```make
+    override_dh_auto_build:
+        make full
+    ```
 
-**Partial install**
+    Then, build the package with: `make dpkg`
 
-Use the `make full` command to build instead of `make`
+=== ":material-debian: Debian"
+    
+    In `debian/rules`, add the following lines:
 
+    ```make
+    override_dh_auto_build:
+        make full
+    ```
+
+    Then, build the package with: `make dpkg`
+
+=== ":simple-suse: openSUSE"
+
+    In `dists/apparmor.d.spec`, replace `%make_build` by `%make_build full`
+
+    ```diff
+    -  %make_build
+    +  %make_build full
+    ```
+
+    Then, build the package with: `make rpm`
+
+=== ":material-home: Partial Install"
+
+    Use the `make full` command to build instead of `make`
 
 
 ## Structure
@@ -113,7 +131,7 @@ To work as intended, userland services started by `systemd --user` **should** ha
 
 !!! info
 
-    To be allowed to run, additional root or user services may need to add extra rules inside the `usr/systemd.d` or `usr/systemd-user.d` directory. For example, when installing a new privileged service `foo` with [stacking](#no-new-privileges) you may need to add the following to `/etc/apparmor.d/usr/systemd.d/foo`:
+    To be allowed to run, additional root or user services may need to add extra rules inside the `usr/systemd.d` or `usr/systemd-user.d` directory. For example, when installing a new privileged service `foo` with [stacking](development/structure.md#no-new-privileges) you may need to add the following to `/etc/apparmor.d/usr/systemd.d/foo`:
     ```
     @{lib}/foo rPx -> systemd//&foo,
     ```

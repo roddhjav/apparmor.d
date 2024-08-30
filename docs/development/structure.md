@@ -9,7 +9,7 @@ Description of common structure found across various AppArmor profiles
 
 Some programs should not be confined by themselves. For example, tools such as `ls`, `rm`, `diff` or `cat` do not have profiles in this project. Let's see why.
 
-These are general tools that in a general context can legitimately access any file in the system. Therefore, the confinement of such tools by a global profile would at best be minimal at worst be a security theater.
+These are general tools that in a general context can legitimately access any file in the system. Therefore, the confinement of such tools by a global profile would at best be minimal at worst be a security theatre.
 
 It gets even worse. Let's say, we write a profile for `cat`. Such a profile would need access to `/etc/`. We will add the following rule:
 ```sh
@@ -76,20 +76,17 @@ You do not protect these programs. *Protect the usage you have of these programs
 [Toolbox]: https://containertoolbx.org/
 
 
+## Open Resources
 
-## Abstractions
+The standard way to allow opening resource in this project is to use one of the 
+child-open profile. Eg: `@{open_path} rPx -> child-open,`
 
-This project and the apparmor-profiles official project provide a large selection of abstractions to be included in profiles. They should be used.
+They are available in the [`children`][children] group.
 
-For instance, to allow download directory access, instead of writing:
-```sh
-owner @{HOME}/@{XDG_DOWNLOAD_DIR}/{,**} rw,
-```
-
-You should write:
-```sh
-include <abstractions/user-download-strict>
-```
+* **`child-open`**: Instead of allowing the ability to run all software in `@{bin}/`, the purpose of this profile is to list all GUI programs that can open resources. Ultimately, only sandbox manager programs such as `bwrap`, `snap`, `flatpak`, `firejail` should be present here. Until this day, this profile will be a controlled mess.
+* **`child-open-browsers`**: This version of child-open only allow to open browsers.
+* **`child-open-help`**: This version of child-open only allow to open browsers and help programs.
+* **`child-open-strict`**: This version of child-open only allow to open browsers & folders.
 
 
 ## Children profiles
@@ -104,30 +101,10 @@ Usually, a child profile is in the [`children`][children] group. They have the f
 
 Here is an overview of the current children profile:
 
-1. **`child-open`**: To open resources. Instead of allowing the ability to run all software in `@{bin}/`, the purpose of this profile is to list all GUI programs that can open resources. Ultimately, only sandbox manager programs such as `bwrap`, `snap`, `flatpak`, `firejail` should be present here. Until this day, this profile will be a controlled mess.
-
 2. **`child-pager`**: Simple access to pagers such as `pager`, `less` and `more`. This profile assumes the pager is reading its data from stdin, not from a file on disk.
 
 3. **`child-systemctl`**: Common `systemctl` action. Do not use it too much as most of the time you will need more privilege than what this profile is giving you.
 
-
-## Browsers
-
-Chromium based browsers share a similar structure. Therefore, they share the same abstraction: [`abstractions/chromium`][chromium] that includes most of the profile content.
-
-This abstraction requires the following variables defined in the profile header:
-```sh
-@{name} = chromium
-@{domain} = org.chromium.Chromium
-@{lib_dirs} = @{lib}/chromium
-@{config_dirs} = @{user_config_dirs}/chromium
-@{cache_dirs} = @{user_cache_dirs}/chromium
-```
-
-If your application requires chromium to run (like electron) use [`abstractions/chromium-common`][chromium-common] instead.
-
-[chromium]: https://github.com/roddhjav/apparmor.d/blob/main/apparmor.d/abstractions/chromium
-[chromium-common]: https://github.com/roddhjav/apparmor.d/blob/main/apparmor.d/abstractions/chromium-common
 
 ## Udev rules
 

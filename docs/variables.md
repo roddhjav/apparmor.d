@@ -26,9 +26,10 @@ title: Variables References
 | Mail | `@{XDG_MAIL_DIR}` | `Mail .{m,M}ail` |
 | Sync | `@{XDG_SYNC_DIR}` | `Sync` |
 | Torrents | `@{XDG_TORRENTS_DIR}` | `Torrents` |
-| Vm | `@{XDG_VM_DIR}` | `.vm`
-| Vm Shares | `@{XDG_VM_SHARES_DIR}` | `VM_Shares`
+| Vm | `@{XDG_VM_DIR}` | `.vm` |
+| Vm Shares | `@{XDG_VM_SHARES_DIR}` | `VM_Shares` |
 | Disk images | `@{XDG_IMG_DIR}` | `images` |
+| Games Studio | `@{XDG_GAMESSTUDIO_DIR}` | `.unity3d` |
 
 ### Dotfiles
 
@@ -56,7 +57,7 @@ title: Variables References
 | Lib | `@{user_lib_dirs}` | `@{HOME}/@{XDG_LIB_DIR}` |
 | Share | `@{user_share_dirs}` | ` @{HOME}/@{XDG_DATA_DIR}` |
 | State | `@{user_state_dirs}` | ` @{HOME}/@{XDG_STATE_DIR}` |
-| Build | `@{user_build_dirs}` | `/tmp/` |
+| Build | `@{user_build_dirs}` | `/tmp//build/` |
 | Packages | `@{user_pkg_dirs}` | `/tmp/pkg/` |
 | Tmp | `@{user_tmp_dirs}` | `@{run}/user/@{uid} /tmp/` |
 
@@ -80,9 +81,9 @@ title: Variables References
 | Templates | `@{user_templates_dirs}` | `@{HOME}/@{XDG_TEMPLATES_DIR} @{MOUNTS}/@{XDG_TEMPLATES_DIR}` |
 | Torrents | `@{user_torrents_dirs}` | `@{HOME}/@{XDG_TORRENTS_DIR} @{MOUNTS}/@{XDG_TORRENTS_DIR}` |
 | Sync | `@{user_sync_dirs}` | `@{HOME}/@{XDG_SYNC_DIR} @{MOUNTS}/*/@{XDG_SYNC_DIR}` |
-| Vm | `@{user_vm_dirs}` | `@{HOME}/@{XDG_VM_DIR} @{MOUNTS}/@{XDG_VM_DIR}`
-| Vm Shares | `@{user_vm_shares}` | `@{HOME}/@{XDG_VM_DIR} @{MOUNTS}/@{XDG_VM_DIR}`
-| Disk images | `@{user_img_dirs}` | `@{HOME}/@{XDG_VM_SHARES_DIR} @{MOUNTS}/@{XDG_VM_SHARES_DIR}` |
+| Vm | `@{user_vm_dirs}` | `@{HOME}/@{XDG_VM_DIR} @{MOUNTS}/@{XDG_VM_DIR}` |
+| Vm Shares | `@{user_vm_shares}` | `@{HOME}/@{XDG_VM_SHARES_DIR} @{MOUNTS}/@{XDG_VM_SHARES_DIR}` |
+| Disk images | `@{user_img_dirs}` | `@{HOME}/@{XDG_IMG_DIR} @{MOUNTS}/@{XDG_IMG_DIR}` |
 
 
 ## System variables
