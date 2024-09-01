@@ -22,33 +22,44 @@ profile cockpit-bridge @{exec_path} {
   network inet stream,
   network inet6 dgram,
   network inet6 stream,
+  network netlink raw,
 
-  ptrace (read),
+  ptrace read,
 
-  signal (send) set=term peer=cockpit-pcp,
-  signal (send) set=term peer=dbus-daemon,
-  signal (send) set=term peer=journalctl,
-  signal (send) set=term peer=ssh-agent,
-  signal (send) set=term peer=sudo,
-  signal (send) set=term peer=unconfined,
+  signal send set=term peer=cockpit-pcp,
+  signal send set=term peer=dbus-daemon,
+  signal send set=term peer=journalctl,
+  signal send set=term peer=ssh-agent,
+  signal send set=term peer=sudo,
+  signal send set=term peer=unconfined,
 
   @{exec_path} mr,
 
   @{bin}/cat                  ix,
   @{bin}/date                 ix,
+  @{bin}/find                 ix,
+  @{bin}/ip                   ix,
+  @{bin}/python3.@{int}       ix,
+  @{bin}/test                 ix,
+
   @{bin}/findmnt              Px,
   @{bin}/journalctl           Px,
-  @{bin}/python3.@{int}       ix,
+  @{bin}/lastlog              Px,
+  @{bin}/passwd               Px,
   @{bin}/ssh-agent            Px,
   @{bin}/sudo                 Px, # TODO: rCx -> privilieged ? or rix?
+  @{bin}/udevadm              Cx -> udevadm,
+  @{bin}/virt-install        PUx, # TODO: rPx
   @{lib}/cockpit/cockpit-pcp  Px,
   @{lib}/cockpit/cockpit-ssh  Px,
+  @{bin}/virsh               rPUx,
 
   # The shell is not confined on purpose.
   @{bin}/@{shells}            Ux,
 
-  /usr/share/cockpit/{,**} r,
   /usr/{,local/}share/ r,
+  /usr/share/cockpit/{,**} r,
+  /usr/share/iproute2/* r,
 
   /etc/cockpit/{,**} r,
   /etc/httpd/conf/mime.types r,
@@ -59,6 +70,8 @@ profile cockpit-bridge @{exec_path} {
   /etc/shadow r,
   /etc/shells r,
 
+  / r,
+
   owner @{user_cache_dirs}/ssh-agent.[0-9A-Z]* rw,
   owner @{user_share_dirs}/ r,
 
@@ -66,6 +79,7 @@ profile cockpit-bridge @{exec_path} {
   @{run}/utmp r,
 
   @{sys}/class/hwmon/ r,
+  @{sys}/class/net/ r,
   @{sys}/devices/**/hwmon@{int}/ r,
   @{sys}/devices/**/hwmon@{int}/{name,temp*} r,
   @{sys}/fs/cgroup/ r,
@@ -88,6 +102,13 @@ profile cockpit-bridge @{exec_path} {
   owner @{PROC}/@{pid}/mounts r,
 
   /dev/ptmx rw,
+
+  profile udevadm {
+    include <abstractions/base>
+    include <abstractions/app/udevadm>
+
+    include if exists <local/cockpit-bridge_udevadm>
+  }
 
   include if exists <local/cockpit-bridge>
 }
