@@ -1,0 +1,51 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 odomingao
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/cemu
+profile cemu @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/audio-client>
+  include <abstractions/dconf-write>
+  include <abstractions/desktop>
+  include <abstractions/graphics>
+  include <abstractions/nameservice-strict>
+
+  network inet dgram,
+  network inet stream,
+  network inet6 dgram,
+  network inet6 stream,
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  /usr/share/Cemu/{,**} r,
+
+  owner @{user_cache_dirs}/Cemu/{,**} rw,
+  owner @{user_config_dirs}/Cemu/{,**} rw,
+  owner @{user_share_dirs}/Cemu/{,**} rw,
+
+  owner @{PROC}/@{pid}/cmdline r,
+  owner @{PROC}/@{pid}/fd r,
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/statm r,
+  
+  owner @{sys}/class/ r,
+  @{sys}/class/input/ r,
+  @{sys}/devices/@{pci}/usb@{int}/**/input@{int}/capabilities/abs r,
+  @{sys}/devices/@{pci}/usb@{int}/**/input@{int}/capabilities/ev r,
+  @{sys}/devices/@{pci}/usb@{int}/**/input@{int}/capabilities/key r,
+  @{sys}/devices/@{pci}/usb@{int}/**/input@{int}/capabilities/rel r,
+
+  /dev/input/ r,
+  /dev/input/event@{int} rw,
+  /dev/input/js@{int} rw,
+
+  include if exists <local/cemu>
+}
+
+# vim:syntax=apparmor
