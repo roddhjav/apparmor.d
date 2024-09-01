@@ -1,0 +1,165 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 EricLin <ericlin050914@gmail.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/gnome-boxes
+profile gnome-boxes @{exec_path} {
+    include <abstractions/base>
+    include <abstractions/nameservice-strict>
+    include <abstractions/dconf-write>
+
+    network netlink raw,
+    network inet stream,
+    network inet dgram,
+    network inet6 dgram,
+    network inet6 stream,
+
+    @{bin}/virtqemud ix,
+    @{bin}/virtstoraged ix,
+    @{bin}/virsh ix,
+    @{bin}/virtlogd ix,
+    @{bin}/qemu-system-x86_64 ix,
+    @{bin}/pkttyagent ix,
+    @{lib}/gstreamer-1.0/gst-plugin-scanner ix,
+    @{bin}/qemu-img ix,
+
+    /usr/share/applications/ r,
+    /usr/share/applications/**.desktop r,
+    /usr/share/glib-2.0/schemas/gschemas.compiled r,
+    /usr/share/icons/default/index.theme r,
+    /usr/share/gtk-3.0/settings.ini r,
+    /usr/share/themes/Default/gtk-3.0/gtk-keys.css r,
+    /usr/share/X11/xkb/{,**} r,
+    /usr/share/icons/{,**} r,
+    /usr/share/mime/{,**} r,
+    /usr/share/fonts/{,**} r,
+    /usr/share/fontconfig/conf.avail/{,**} r,
+    /usr/share/pixmaps/ r,
+    /usr/share/ladspa/rdf/{,**} r,
+    /usr/share/glvnd/egl_vendor.d/{,**} r,
+    /usr/share/gnome-boxes/osinfo/{,**} r,
+    /usr/share/drirc.d/{,**} r,
+    /usr/share/hwdata/**.ids r,
+    /usr/share/osinfo/{,**} r,
+    /usr/share/libvirt/cpu_map/**.xml r,
+    /usr/share/qemu/{,**} r,
+    /usr/share/edk2/x64/{,**} rk,
+
+    /etc/fonts/conf.d/ r,
+    /etc/fonts/fonts.conf r,
+    /etc/sasl2/qemu.conf r,
+
+    /var/cache/fontconfig/{,**} rw,
+
+    /var/lib/flatpak/{,**} r,
+
+    /tmp/orcexec.@{rand6} rw,
+
+    @{lib}/gnome-boxes/ r,
+
+    @{sys}/devices/system/node/ r,
+
+    owner @{HOME}/@{XDG_DOWNLOAD_DIR}/ r,
+    owner @{HOME}/ r,
+    owner @{HOME}/@{XDG_DOWNLOAD_DIR}/**.iso rk,
+    owner @{HOME}/**.iso rk,
+
+    @{HOME}/.themes/{,**} r,
+    @{HOME}/orcexec.@{rand6} rw,
+
+    @{run}/user/@{uid}/libvirt/common/system.token rwk,
+    @{run}/user/@{uid}/libvirt/qemu@{run}/ r,
+    @{run}/user/@{uid}/libvirt/qemu@{run}/dbus/ w,
+    @{run}/user/@{uid}/libvirt/qemu@{run}/driver.pid rwk,
+    @{run}/user/@{uid}/libvirt/virtqemud.pid wk,
+    @{run}/user/@{uid}/libvirt/virtlogd.pid rwk,
+    @{run}/user/@{uid}/libvirt/virtlogd* w,
+    @{run}/user/@{uid}/libvirt/virtlogd.lock rwk,
+    @{run}/user/@{uid}/libvirt/virtqemud* w,
+    @{run}/user/@{uid}/libvirt/virtqemud.lock rwk,
+    @{run}/user/@{uid}/libvirt/virtstoraged* w,
+    @{run}/user/@{uid}/libvirt/virtstoraged.lock rwk,
+    @{run}/user/@{uid}/libvirt/virtstoraged.pid rwk,
+    @{run}/user/@{uid}/libvirt/storage/{,**} rwk,
+    @{run}/user/@{uid}/libvirt/qemu@{run}/**.pid rwk,
+    @{run}/user/@{uid}/libvirt/qemu@{run}/**.xml.new rw,
+    @{run}/user/@{uid}/libvirt/qemu@{run}/**.xml rw,
+    @{run}/user/@{uid}/libvirt/qemu@{run}/channel/{,**} rw,
+    @{run}/utmp rk,
+    @{run}/udev/data/{,**} r,
+    @{run}/user/@{uid}/orcexec.@{rand6} rw,
+
+    @{user_cache_dirs}/fontconfig/@{hex32}-le64.cache-9.TMP-@{rand6} rw,
+    @{user_cache_dirs}/gnome-boxes/sources/ rw,
+    @{user_cache_dirs}/gnome-boxes/unattended/ rw,
+    @{user_cache_dirs}/fontconfig/@{hex32}-le64.cache-9.LCK/ w,
+    @{user_cache_dirs}/libvirt/qemu/cache/capabilities/@{hex64}.xml rw,
+    @{user_cache_dirs}/libvirt/qemu/log/{,**} rw,
+    @{user_cache_dirs}/gstreamer-1.0/registry.x86_64** rw,
+
+    owner @{user_cache_dirs}/mesa_shader_cache_db/index rw,
+    owner @{user_cache_dirs}/mesa_shader_cache_db/part@{int}/mesa_cache.db rwk,
+    owner @{user_cache_dirs}/mesa_shader_cache_db/part@{int}/mesa_cache.idx rwk,
+    owner @{user_cache_dirs}/thumbnails/large/@{hex32}.png r,
+    owner @{user_cache_dirs}/gnome-boxes/@{uuid}-screenshot.png rw,
+
+    @{user_config_dirs}/gtk-3.0/{,**} r,
+
+    @{user_config_dirs}/user-dirs.dirs r,
+    @{user_config_dirs}/gtk-4.0/settings.ini r,
+    @{user_config_dirs}/gnome-boxes/sources/{,**} r,
+    @{user_config_dirs}/libvirt/qemu/ r,
+    @{user_config_dirs}/libvirt/qemu/**.xml rw,
+    @{user_config_dirs}/libvirt/qemu/**.xml.new rw,
+    @{user_config_dirs}/libvirt/storage/{,**} rw,
+    @{user_config_dirs}/libvirt/qemu/lib/{,**} rw,
+    @{user_config_dirs}/libvirt/qemu/nvram/**{.fd,.fd.new} rwk,
+    @{user_config_dirs}/gnome-boxes/sources/QEMU** rw,
+
+    @{user_share_dirs}/recently-used.xbel rw,
+    @{user_share_dirs}/recently-used.xbel.@{rand6} rw,
+    @{user_share_dirs}/gvfs-metadata/home r,
+    @{user_share_dirs}/gvfs-metadata/home-@{rand8}.log r,
+    @{user_share_dirs}/gnome-boxes/images/{,**} rwk,
+
+    link @{user_cache_dirs}/fontconfig/@{hex32}-le64.cache-9.LCK -> @{user_cache_dirs}/fontconfig/@{hex32}-le64.cache-9.TMP-@{rand6},
+
+    @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/app-org.gnome.Terminal.slice/vte-spawn-@{uuid}.scope/memory.** r,
+    @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/app-dbus\x2d:*\x2dorg.gnome.Boxes.slice/dbus-:*-org.gnome.Boxes@@{int}.service/memory.** r,
+
+    @{sys}/devices/@{pci}/{uevent,vendor,vice} r,
+    @{sys}/bus/ r,
+    @{sys}/bus/usb/devices/ r,
+    @{sys}/devices/@{pci}/usb@{int}/{,**} r,
+    @{sys}/class/ r,
+    @{sys}/devices/system/cpu/{,**} r,
+    @{sys}/kernel/iommu_groups/ r,
+    @{sys}/kernel/mm/hugepages/{,**} r,
+    @{sys}/devices/system/node/node@{int}/ r,
+    @{sys}/devices/system/node/node@{int}/meminfo r,
+    @{sys}/module/kvm_intel/parameters/nested r,
+
+    @{PROC}/sys/vm/max_map_count r,
+    @{PROC}/modules r,
+    @{PROC}/zoneinfo r,
+    @{PROC}/uptime r,
+    @{PROC}/@{pid}/{cgroup,cmdline,stat} r,
+    @{PROC}/@{pid}/task/@{tid}/comm rw,
+    @{PROC}/@{pid}/fdinfo/3 r,
+
+    /dev/ r,
+    /dev/dri/ r,
+    /dev/dri/renderD128 rw,
+    /dev/bus/usb/ r,
+    /dev/kvm rw,
+    /dev/ptmx rw,
+    /dev/tty rw,
+    /dev/pts/[0-9]* rw,
+
+}
+
+# vim:syntax=apparmor
