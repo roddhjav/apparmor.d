@@ -14,11 +14,9 @@ profile wemeet @{exec_path} flags=(attach_disconnected) {
     include <abstractions/nameservice-strict>
     include <abstractions/common/bwrap>
     include <abstractions/common/chromium>
-    include <abstractions/X-strict>
-    include <abstractions/mesa>
-    include <abstractions/vulkan-strict>
-    include <abstractions/dri>
+    include <abstractions/graphics>
     include <abstractions/desktop>
+    include <abstractions/ssl_certs>
     include <abstractions/fontconfig-cache-read>
     include <abstractions/audio-client>
 
@@ -29,26 +27,20 @@ profile wemeet @{exec_path} flags=(attach_disconnected) {
     network inet6 dgram,
     network inet6 stream,
 
+    @{exec_path} mr,
+
     @{sh_path} r,
     @{bin}/basename rix,
     @{bin}/bwrap rix,
     @{bin}/id rix,
     @{bin}/mkdir rix,
+    /opt/wemeet/bin/** rix,
 
-    @{exec_path} mr,
-
-    /usr/share/hwdata/pnp.ids r,
-    /usr/share/icons/{,**} r,
-    /usr/share/mime/{,**} r,
     /etc/machine-id r,
-    /usr/share/ca-certificates/trust-source/{,**} r, 
-    /etc/ca-certificates/extracted/tls-ca-bundle.pem r,
-    /etc/ca-certificates/trust-source/{,**} r,
     /var/cache/ w,
 
-    # wemeet specifics
-    /opt/wemeet/bin/** rix,
-    owner @{user_share_dirs}/wemeetapp/{,**} rwk,
+    owner @{user_share_dirs}/wemeetapp/ rw,
+    owner @{user_share_dirs}/wemeetapp/** rwlk -> @{user_share_dirs}/wemeetapp/**,
 
     @{PROC}/ r,
     @{PROC}/asound/ r,
@@ -62,7 +54,9 @@ profile wemeet @{exec_path} flags=(attach_disconnected) {
     /dev/ r,
     /dev/tty rw,
     /dev/shm/ r,
-    /dev/pts/[0-9]* rw,
+    /dev/pts/@{int} rw,
+
+    include if exists <local/wemeet>
 
 }
 
