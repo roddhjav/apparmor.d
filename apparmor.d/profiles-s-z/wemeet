@@ -1,0 +1,63 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 EricLin <ericlin050914@gmail.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/wemeet
+@{exec_path} += /opt/wemeet/bin/wemeetapp
+@{exec_path} += /opt/wemeet/bin/QtWebEngineProcess
+profile wemeet @{exec_path} flags=(attach_disconnected) {
+    include <abstractions/base>
+    include <abstractions/nameservice-strict>
+    include <abstractions/common/bwrap>
+    include <abstractions/common/chromium>
+    include <abstractions/graphics>
+    include <abstractions/desktop>
+    include <abstractions/ssl_certs>
+    include <abstractions/fontconfig-cache-read>
+    include <abstractions/audio-client>
+
+    network netlink raw,
+    network netlink dgram,
+    network inet stream,
+    network inet dgram,
+    network inet6 dgram,
+    network inet6 stream,
+
+    @{exec_path} mr,
+
+    @{sh_path} r,
+    @{bin}/basename rix,
+    @{bin}/bwrap rix,
+    @{bin}/id rix,
+    @{bin}/mkdir rix,
+    /opt/wemeet/bin/** rix,
+
+    /etc/machine-id r,
+    /var/cache/ w,
+
+    owner @{user_share_dirs}/wemeetapp/ rw,
+    owner @{user_share_dirs}/wemeetapp/** rwlk -> @{user_share_dirs}/wemeetapp/**,
+
+    @{PROC}/ r,
+    @{PROC}/asound/ r,
+    @{PROC}/@{pid}/net/route r,
+    @{PROC}/@{pid}/net/wireless r,
+    @{PROC}/@{pid}/stat r,
+    @{PROC}/@{pid}/statm r,
+    @{PROC}/sys/fs/inotify/max_user_watches r,
+    owner @{PROC}/@{pid}/cmdline r,
+
+    /dev/ r,
+    /dev/tty rw,
+    /dev/shm/ r,
+    /dev/pts/@{int} rw,
+
+    include if exists <local/wemeet>
+
+}
+
+# vim:syntax=apparmor
