@@ -33,6 +33,7 @@ func DefaultTunables() *AppArmorProfileFile {
 	return &AppArmorProfileFile{
 		Preamble: Rules{
 			&Variable{Name: "bin", Values: []string{"/{,usr/}{,s}bin"}, Define: true},
+			&Variable{Name: "c", Values: []string{"[0-9a-zA-Z]"}, Define: true},
 			&Variable{Name: "etc_ro", Values: []string{"/{,usr/}etc/"}, Define: true},
 			&Variable{Name: "HOME", Values: []string{"/home/*"}, Define: true},
 			&Variable{Name: "int", Values: []string{"[0-9]{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}"}, Define: true},
@@ -40,11 +41,13 @@ func DefaultTunables() *AppArmorProfileFile {
 			&Variable{Name: "lib", Values: []string{"/{,usr/}lib{,exec,32,64}"}, Define: true},
 			&Variable{Name: "MOUNTS", Values: []string{"/media/*/", "/run/media/*/*/", "/mnt/*/"}, Define: true},
 			&Variable{Name: "multiarch", Values: []string{"*-linux-gnu*"}, Define: true},
+			&Variable{Name: "rand", Values: []string{"@{c}{@{c},}{@{c},}{@{c},}{@{c},}{@{c},}{@{c},}{@{c},}{@{c},}{@{c},}"}, Define: true}, // Up to 10 characters
 			&Variable{Name: "run", Values: []string{"/run/", "/var/run/"}, Define: true},
 			&Variable{Name: "uid", Values: []string{"{[0-9],[1-9][0-9],[1-9][0-9][0-9],[1-9][0-9][0-9][0-9],[1-9][0-9][0-9][0-9][0-9],[1-9][0-9][0-9][0-9][0-9][0-9],[1-9][0-9][0-9][0-9][0-9][0-9][0-9],[1-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9],[1-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9],[1-4][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]}"}, Define: true},
 			&Variable{Name: "user_cache_dirs", Values: []string{"/home/*/.cache"}, Define: true},
 			&Variable{Name: "user_config_dirs", Values: []string{"/home/*/.config"}, Define: true},
 			&Variable{Name: "user_share_dirs", Values: []string{"/home/*/.local/share"}, Define: true},
+			&Variable{Name: "version", Values: []string{"@{int}{.@{int},}{.@{int},}{-@{rand},}"}, Define: true},
 		},
 	}
 }
