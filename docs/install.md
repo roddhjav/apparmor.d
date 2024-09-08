@@ -148,9 +148,7 @@ The following desktop environments are supported:
         @{bin}/wl-{copy,paste} rPx,
         @{bin}/xclip           rPx,
         @{bin}/python3.@{int} rPx -> pass-import,  # pass-import
-            @{bin}/pager         rPx -> child-pager,
-            @{bin}/less          rPx -> child-pager,
-            @{bin}/more          rPx -> child-pager,
+            @{pager_path}        rPx -> child-pager,
         '.build/apparmor.d/pass' -> '/etc/apparmor.d/pass'
         ```
         So, you can install the additional profiles `wl-copy`, `xclip`, `pass-import`, and `child-pager` if desired.
