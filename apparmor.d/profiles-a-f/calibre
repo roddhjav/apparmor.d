@@ -7,23 +7,22 @@ abi <abi/3.0>,
 
 include <tunables/global>
 
-@{exec_path}  = @{bin}/calibre{,-parallel,-debug,-server,-smtp,-complete,-customize}
-@{exec_path} += @{bin}/calibredb
-@{exec_path} += @{bin}/ebook{-viewer,-edit,-device,-meta,-polish,-convert}
+@{exec_path}  = @{bin}/calibre{,-*} @{bin}/calibredb @{bin}/ebook{,-*}
 @{exec_path} += @{bin}/fetch-ebook-metadata
-@{exec_path} += @{bin}/lrs2lrf @{bin}/lrf2lrs @{bin}/lrfviewer
-@{exec_path} += @{bin}/web2disk
+@{exec_path} += @{bin}/lrs2lrf @{bin}/lrf2lrs @{bin}/lrfviewer @{bin}/web2disk
 profile calibre @{exec_path} {
   include <abstractions/base>
   include <abstractions/bus-accessibility>
   include <abstractions/bus-session>
   include <abstractions/bus/org.a11y>
   include <abstractions/bus/org.gtk.vfs.MountTracker>
-  include <abstractions/common/chromium>
+  include <abstractions/bus/org.freedesktop.UDisks2>
+  include <abstractions/bus/org.kde.StatusNotifierWatcher>
   include <abstractions/desktop>
   include <abstractions/devices-usb>
   include <abstractions/fontconfig-cache-read>
   include <abstractions/graphics>
+  include <abstractions/gstreamer>
   include <abstractions/nameservice-strict>
   include <abstractions/python>
   include <abstractions/qt5-compose-cache-write>
@@ -45,20 +44,19 @@ profile calibre @{exec_path} {
   unix (bind)          type=stream addr="@calibre-*",
 
   @{exec_path} mrix,
-  @{bin}/python3.@{int} r,
 
-  @{bin}/ldconfig{,.real} rix,
   @{sh_path}              rix,
+  @{python_path}          rix,
   @{bin}/file             rix,
+  @{bin}/ldconfig{,.real} rix,
   @{bin}/uname            rix,
-  @{lib}/@{multiarch}/qt5/libexec/QtWebEngineProcess rix,
+  @{lib}/{,@{multiarch}/}qt{5,6}{,/libexec/}QtWebEngineProcess rix,
 
   @{bin}/pdftoppm        rPUx, # (#FIXME#)
   @{bin}/pdfinfo         rPUx,
   @{bin}/pdftohtml       rPUx,
 
-  @{bin}/xdg-open         rPx -> child-open,
-  @{bin}/xdg-mime         rPx,
+  @{open_path}            rPx -> child-open,
 
   /usr/share/calibre/{,**} r,
 
@@ -79,15 +77,10 @@ profile calibre @{exec_path} {
   owner @{user_config_dirs}/calibre/** rwk,
 
   owner @{user_share_dirs}/calibre-ebook.com/ rw,
-  owner @{user_share_dirs}/calibre-ebook.com/calibre/ rw,
-  owner @{user_share_dirs}/calibre-ebook.com/calibre/** rwk,
+  owner @{user_share_dirs}/calibre-ebook.com/** rwk,
 
-  owner @{user_cache_dirs}/ rw,
   owner @{user_cache_dirs}/calibre/ rw,
   owner @{user_cache_dirs}/calibre/** rwkl -> @{user_cache_dirs}/calibre/**,
-
-  owner @{user_cache_dirs}/gstreamer-@{int}/ rw,
-  owner @{user_cache_dirs}/gstreamer-@{int}/registry.*.bin{,.tmp@{rand6}} rw,
 
   owner @{tmp}/calibre_*_tmp_*/{,**} rw,
   owner @{tmp}/calibre-*/{,**} rw,
@@ -98,18 +91,31 @@ profile calibre @{exec_path} {
 
   @{sys}/devices/@{pci}/irq r,
 
-             @{PROC}/ r,
-             @{PROC}/@{pids}/net/route r,
-             @{PROC}/sys/fs/inotify/max_user_watches r,
-             @{PROC}/sys/kernel/yama/ptrace_scope r,
-             @{PROC}/vmstat r,
-       owner @{PROC}/@{pid}/fd/ r,
-       owner @{PROC}/@{pid}/mountinfo r,
-       owner @{PROC}/@{pid}/mounts r,
+        @{PROC}/ r,
+        @{PROC}/@{pids}/net/route r,
+        @{PROC}/sys/fs/inotify/max_user_watches r,
+        @{PROC}/sys/kernel/yama/ptrace_scope r,
+        @{PROC}/vmstat r,
+  owner @{PROC}/@{pid}/cmdline r,
+  owner @{PROC}/@{pid}/comm r,
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/mounts r,
+  owner @{PROC}/@{pid}/oom_{,score_}adj rw,
+       owner @{PROC}/@{pid}/stat{,m} r,
        owner @{PROC}/@{pid}/stat{,m} r,
        owner @{PROC}/@{pid}/comm r,
-       owner @{PROC}/@{pid}/task/ r,
+  owner @{PROC}/@{pid}/stat{,m} r,
+       owner @{PROC}/@{pid}/comm r,
+  owner @{PROC}/@{pid}/task/ r,
+  owner @{PROC}/@{pid}/task/@{tid}/comm rw,
        owner @{PROC}/@{pid}/task/@{tid}/status r,
+       owner @{PROC}/@{pid}/task/@{tid}/status r,
+       owner @{PROC}/@{pid}/task/@{tid}/comm rw,
+  deny owner @{PROC}/@{pid}/cmdline r,
+  deny owner @{PROC}/@{pid}/oom_{,score_}adj rw,
+  deny       @{PROC}/sys/kernel/random/boot_id r,
+  owner @{PROC}/@{pid}/task/@{tid}/status r,
        owner @{PROC}/@{pid}/task/@{tid}/comm rw,
   deny owner @{PROC}/@{pid}/cmdline r,
   deny owner @{PROC}/@{pid}/oom_{,score_}adj rw,

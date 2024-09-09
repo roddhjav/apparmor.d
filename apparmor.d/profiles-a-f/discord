@@ -16,6 +16,9 @@ include <tunables/global>
 profile discord @{exec_path} {
   include <abstractions/base>
   include <abstractions/audio-client>
+  include <abstractions/bus-session>
+  include <abstractions/bus/org.freedesktop.ScreenSaver>
+  include <abstractions/bus/org.kde.StatusNotifierWatcher>
   include <abstractions/common/electron>
   include <abstractions/thumbnails-cache-read>
   include <abstractions/user-download-strict>
@@ -28,22 +31,25 @@ profile discord @{exec_path} {
 
   @{exec_path} mrix,
   @{sh_path}    rix,
+  @{bin}/lsb_release rPx -> lsb_release,
 
   @{lib_dirs}/chrome-sandbox rix,
   @{lib_dirs}/chrome_crashpad_handler rix,
 
-  @{open_path}         rPx -> child-open-browsers,
+  @{open_path}         rPx -> child-open-strict,
 
-  /var/lib/dbus/machine-id r,
-  /etc/machine-id r,
+  owner @{user_videos_dirs}/{,**} rwl,
+  owner @{user_pictures_dirs}/{,**} rwl,
 
   owner @{tmp}/net-export/ rw,
   owner @{tmp}/discord.sock rw,
   owner "@{tmp}/Discord Crashes/" rw,
 
-  owner @{config_dirs}/*/modules/** rm,
+  audit owner @{config_dirs}/*/modules/** rm,
 
   owner @{run}/user/@{uid}/discord-ipc-@{int} rw,
+
+  owner @{PROC}/@{pid}/task/@{tid}/comm r,
 
   include if exists <local/discord>
 }
