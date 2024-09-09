@@ -1,0 +1,75 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/makepkg
+profile makepkg @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+
+  network inet stream,
+  network inet6 stream,
+  network inet dgram,
+  network inet6 dgram,
+  network netlink raw,
+
+  file,
+
+  @{bin}/gpg{,2}  Cx -> gpg,
+  @{bin}/gpgconf  Cx -> gpg,
+  @{bin}/gpgsm    Cx -> gpg,
+  @{bin}/sudo     Cx -> sudo,
+
+  profile gpg {
+    include <abstractions/base>
+    include <abstractions/consoles>
+
+    @{bin}/gpg{,2} mr,
+    @{bin}/gpgconf mr,
+    @{bin}/gpgsm   mr,
+
+    @{bin}/dirmngr           rix,
+    @{bin}/gpg-agent         rix,
+    @{bin}/gpg-connect-agent rix,
+    @{lib}/{,gnupg/}scdaemon rix,
+
+    /etc/pacman.d/gnupg/ r,
+    /etc/pacman.d/gnupg/** rwkl -> /etc/pacman.d/gnupg/**,
+
+    owner @{user_pkg_dirs}/{,**} rw,
+
+    owner @{HOME}/@{XDG_GPG_DIR}/ rw,
+    owner @{HOME}/@{XDG_GPG_DIR}/** rwkl -> @{HOME}/@{XDG_GPG_DIR}/**,
+
+    owner @{run}/user/@{uid}/ r,
+    owner @{run}/user/@{uid}/gnupg/ r,
+    owner @{run}/user/@{uid}/gnupg/d.@{rand}/ rw,
+    owner @{run}/user/@{uid}/gnupg/d.@{rand}/S.scdaemon rw,
+    owner @{run}/user/@{uid}/gnupg/S.scdaemon rw,
+
+    owner @{PROC}/@{pid}/fd/ r,
+
+    include if exists <local/makepkg_gpg>
+  }
+
+  profile sudo {
+    include <abstractions/base>
+    include <abstractions/app/sudo>
+
+    capability sys_ptrace,
+
+    ptrace read,
+
+    @{bin}/pacman Px,
+
+    include if exists <local/makepkg_sudo>
+  }
+
+  include if exists <local/makepkg>
+}
+
+# vim:syntax=apparmor
