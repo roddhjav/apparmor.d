@@ -31,37 +31,13 @@ profile gsd-media-keys @{exec_path} flags=(attach_disconnected) {
   network netlink raw,
 
   #aa:dbus own bus=session name=org.gnome.SettingsDaemon.MediaKeys
+  #aa:dbus talk bus=session name=org.gnome.SettingsDaemon.Rfkill label=gsd-rfkill
+  #aa:dbus talk bus=session name=org.gnome.Shell label=gnome-shell
 
   dbus send bus=system path=/org/freedesktop/login1
        interface=org.freedesktop.login1.Manager
        member=PowerOff
        peer=(name=:*, label=systemd-logind),
-
-  dbus send bus=session path=/org/gnome/Shell
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=:*, label=gnome-shell),
-  dbus send bus=session path=/org/gnome/Shell
-       interface=org.gnome.Shell
-       member={GrabAccelerators,UngrabAccelerators}
-       peer=(name=:*, label=gnome-shell),
-  dbus receive bus=session path=/org/gnome/Shell
-       interface=org.freedesktop.DBus.Properties
-       member={GetAll,PropertiesChanged}
-       peer=(name=:*, label=gnome-shell),
-  dbus receive bus=session path=/org/gnome/Shell
-       interface=org.gnome.Shell
-       member=AcceleratorActivated
-       peer=(name=:*, label=gnome-shell),
-
-  dbus send bus=session path=/org/gnome/SettingsDaemon/Rfkill
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=:*, label=gsd-rfkill),
-  dbus receive bus=session path=/org/gnome/SettingsDaemon/Rfkill
-       interface=org.freedesktop.DBus.Properties
-       member=PropertiesChanged
-       peer=(name=:*, label=gsd-rfkill),
 
   dbus send bus=session path=/
        interface=org.freedesktop.DBus
