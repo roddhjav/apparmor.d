@@ -8,14 +8,17 @@ abi <abi/3.0>,
 include <tunables/global>
 
 @{name} = signal-desktop{,-beta}
-@{lib_dirs} = @{lib}/signal-desktop "/opt/Signal{, Beta}"
-@{config_dirs} = "@{user_config_dirs}/Signal{, Beta}"
+@{lib_dirs} = @{lib}/signal-desktop /opt/Signal{,?Beta}
+@{config_dirs} = @{user_config_dirs}/Signal{,?Beta}
 @{cache_dirs} = @{user_cache_dirs}/@{name}
 
 @{exec_path} = @{lib_dirs}/@{name}
 profile signal-desktop @{exec_path} {
   include <abstractions/base>
   include <abstractions/audio-client>
+  include <abstractions/bus-session>
+  include <abstractions/bus/org.freedesktop.ScreenSaver>
+  include <abstractions/bus/org.kde.StatusNotifierWatcher>
   include <abstractions/common/electron>
   include <abstractions/fontconfig-cache-read>
   include <abstractions/user-download-strict>
@@ -28,23 +31,27 @@ profile signal-desktop @{exec_path} {
 
   @{exec_path} mrix,
 
-  @{bin}/getconf rix,
-  @{bin}/xdg-settings rPx,
+  @{bin}/basename      rix,
+  @{bin}/getconf       rix,
+  @{bin}/xdg-settings  rix,
+  @{open_path} rPx -> child-open-strict,
 
-  @{lib_dirs}/chrome-sandbox rPx,
+  audit @{lib_dirs}/chrome-sandbox rPx,
   @{lib_dirs}/chrome_crashpad_handler rix,
-
-  /var/lib/dbus/machine-id r,
-  /etc/machine-id r,
 
   @{run}/systemd/inhibit/@{int}.ref rw,
 
-  @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/session-@{int}.scope/cpu.max r,
-  @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/session-@{int}.scope/memory.high r,
-  @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/session-@{int}.scope/memory.max r,
+        @{sys}/fs/cgroup/user.slice/cpu.max r,
+        @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/cpu.max r,
+        @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/session-@{int}.scope/memory.high r,
+        @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/session-@{int}.scope/memory.max r,
+        @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/cpu.max r,
+  owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/cpu.max r,
 
   @{PROC}/@{pid}/fd/ r,
   @{PROC}/vmstat r,
+
+  /dev/tty rw,
 
   include if exists <local/signal-desktop>
 }
