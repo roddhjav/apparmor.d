@@ -16,7 +16,7 @@ profile ss @{exec_path} {
   capability dac_read_search,
   capability sys_ptrace,
 
-  ptrace (read),  # unconfined, TODO
+  ptrace read,
 
   network netlink raw,
 
@@ -27,21 +27,20 @@ profile ss @{exec_path} {
   owner @{tmp}/*.ss     rw,
   owner @{HOME}/*.ss  rw,
 
+  @{sys}/fs/cgroup/{,**/} r,
+
         @{PROC} r,
-        @{PROC}/sys/net/ipv{4,6}/ip_local_port_range r,
+        @{PROC}/@{pids}/attr/current r,
         @{PROC}/@{pids}/fd/ r,
         @{PROC}/@{pids}/stat r,
-        @{PROC}/@{pids}/attr/current r,
-  owner @{PROC}/@{pids}/net/sockstat r,
-  owner @{PROC}/@{pids}/net/snmp r,
-  owner @{PROC}/@{pids}/net/unix r,
+        @{PROC}/sys/net/ipv{4,6}/ip_local_port_range r,
+  owner @{PROC}/@{pids}/mounts r,
   owner @{PROC}/@{pids}/net/raw r,
+  owner @{PROC}/@{pids}/net/snmp r,
+  owner @{PROC}/@{pids}/net/sockstat r,
   owner @{PROC}/@{pids}/net/tcp r,
   owner @{PROC}/@{pids}/net/udp r,
-
-  # [e]xtended
-  owner @{PROC}/@{pids}/mounts r,
-        @{sys}/fs/cgroup/{,**/} r,
+  owner @{PROC}/@{pids}/net/unix r,
 
   include if exists <local/ss>
 }

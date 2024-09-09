@@ -18,19 +18,18 @@ profile apt-cdrom @{exec_path} flags=(complain) {
   @{exec_path} mr,
 
   @{bin}/dpkg        rPx -> child-dpkg,
-
   @{bin}/mount       rCx -> mount,
   @{bin}/umount      rCx -> umount,
 
   /etc/fstab r,
 
-  # Are all of these needed? (#FIXME#)
-  @{sys}/bus/ r,
-  @{sys}/bus/*/devices/ r,
-  @{sys}/class/ r,
-  @{sys}/class/*/ r,
-  @{sys}/devices/**/uevent r,
-  # @{run}/udev/data/* r,
+  /etc/apt/sources.list{,.new} rw,
+  /etc/apt/sources.list~ w,
+
+  /var/lib/apt/lists/** rw,
+
+  /var/lib/apt/cdroms.list{,.new} rw,
+  /var/lib/apt/cdroms.list~ w,
 
   # For cd-roms
   /media/cdrom@{int}/ r,
@@ -46,15 +45,14 @@ profile apt-cdrom @{exec_path} flags=(complain) {
   @{MOUNTS}/dists/**/binary-*/Packages{,.gz} r,
   @{MOUNTS}/dists/**/i18n/Translation-en{,.gz} r,
 
-  /var/lib/apt/lists/** rw,
+  # Are all of these needed? (#FIXME#)
+  @{sys}/bus/ r,
+  @{sys}/bus/*/devices/ r,
+  @{sys}/class/ r,
+  @{sys}/class/*/ r,
+  @{sys}/devices/**/uevent r,
 
   owner @{PROC}/@{pid}/fd/ r,
-
-  /var/lib/apt/cdroms.list{,.new} rw,
-  /var/lib/apt/cdroms.list~ w,
-
-  /etc/apt/sources.list{,.new} rw,
-  /etc/apt/sources.list~ w,
 
   profile mount flags=(complain) {
     include <abstractions/base>
