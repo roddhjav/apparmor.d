@@ -67,40 +67,6 @@ func DecodeHexInString(str string) string {
 	return str
 }
 
-// RemoveDuplicate filter out all duplicates from a slice. Also filter out empty element.
-func RemoveDuplicate[T comparable](inlist []T) []T {
-	var empty T
-	list := []T{}
-	seen := map[T]bool{}
-	seen[empty] = true
-	for _, item := range inlist {
-		if _, ok := seen[item]; !ok {
-			seen[item] = true
-			list = append(list, item)
-		}
-	}
-	return list
-}
-
-// Intersect returns the intersection between two collections.
-// From https://github.com/samber/lo
-func Intersect[T comparable](list1 []T, list2 []T) []T {
-	result := []T{}
-	seen := map[T]struct{}{}
-
-	for _, elem := range list1 {
-		seen[elem] = struct{}{}
-	}
-
-	for _, elem := range list2 {
-		if _, ok := seen[elem]; ok {
-			result = append(result, elem)
-		}
-	}
-
-	return result
-}
-
 // CopyTo recursivelly copy all files from a source path to a destination path.
 func CopyTo(src *paths.Path, dst *paths.Path) error {
 	files, err := src.ReadDirRecursiveFiltered(nil,
