@@ -1,0 +1,28 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 odomingao
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/earlyoom
+profile earlyoom @{exec_path} {
+  include <abstractions/base>
+
+  capability kill,
+
+  @{exec_path} mr,
+
+        @{PROC}/ r,
+        @{PROC}/@{pid}/cmdline r,
+        @{PROC}/@{pid}/comm r,
+        @{PROC}/@{pid}/oom_adj r,
+        @{PROC}/@{pid}/oom_score r,
+        @{PROC}/@{pid}/oom_score_adj r,
+        @{PROC}/@{pid}/stat r,
+
+  include if exists <local/earlyoom>
+}
+
+# vim:syntax=apparmor
