@@ -32,6 +32,7 @@ func NewAppArmorProfile() *AppArmorProfileFile {
 func DefaultTunables() *AppArmorProfileFile {
 	return &AppArmorProfileFile{
 		Preamble: Rules{
+			&Variable{Name: "arch", Values: []string{"x86_64", "amd64", "i386"}, Define: true},
 			&Variable{Name: "bin", Values: []string{"/{,usr/}{,s}bin"}, Define: true},
 			&Variable{Name: "c", Values: []string{"[0-9a-zA-Z]"}, Define: true},
 			&Variable{Name: "etc_ro", Values: []string{"/{,usr/}etc/"}, Define: true},
