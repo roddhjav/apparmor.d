@@ -15,7 +15,7 @@ import (
 
 var (
 	regFlags         = regexp.MustCompile(`flags=\(([^)]+)\)`)
-	regProfileHeader = regexp.MustCompile(` {`)
+	regProfileHeader = regexp.MustCompile(` {\n`)
 )
 
 type SetFlags struct {
@@ -43,7 +43,7 @@ func (p SetFlags) Apply() ([]string, error) {
 
 			// Overwrite profile flags
 			if len(flags) > 0 {
-				flagsStr := " flags=(" + strings.Join(flags, ",") + ") {"
+				flagsStr := " flags=(" + strings.Join(flags, ",") + ") {\n"
 				out, err := util.ReadFile(file)
 				if err != nil {
 					return res, err

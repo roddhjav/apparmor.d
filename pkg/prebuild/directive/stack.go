@@ -7,6 +7,7 @@ package directive
 import (
 	"fmt"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/roddhjav/apparmor.d/pkg/prebuild/cfg"
@@ -19,7 +20,6 @@ var (
 	regCleanStakedRules = util.ToRegexRepl([]string{
 		`(?m)^.*include <abstractions/base>.*$`, ``, // Remove mandatory base abstraction
 		`(?m)^.*@{exec_path}.*$`, ``, // Remove entry point
-		`(?m)^.*(|P|p)(|U|u)(|i)x,.*$`, ``, // Remove transition rules
 		`(?m)^(?:[\t ]*(?:\r?\n))+`, ``, // Remove empty lines
 	})
 )
@@ -33,12 +33,26 @@ func init() {
 		Base: cfg.Base{
 			Keyword: "stack",
 			Msg:     "Stack directive applied",
-			Help:    Keyword + `stack profiles...`,
+			Help:    Keyword + `stack [X] profiles...`,
 		},
 	})
 }
 
 func (s Stack) Apply(opt *Option, profile string) (string, error) {
+	if len(opt.ArgList) == 0 {
+		return "", fmt.Errorf("No profile to stack")
+	}
+	t := opt.ArgList[0]
+	if t != "X" {
+		regCleanStakedRules = slices.Insert(regCleanStakedRules, 0,
+			util.ToRegexRepl([]string{
+				`(?m)^.*(|P|p)(|U|u)(|i)x,.*$`, ``, // Remove X transition rules
+			})...,
+		)
+	} else {
+		delete(opt.ArgMap, t)
+	}
+
 	res := ""
 	for name := range opt.ArgMap {
 		stackedProfile := util.MustReadFile(cfg.RootApparmord.Join(name))
