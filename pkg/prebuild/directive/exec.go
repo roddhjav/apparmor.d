@@ -7,6 +7,7 @@
 package directive
 
 import (
+	"fmt"
 	"slices"
 	"strings"
 
@@ -30,6 +31,9 @@ func init() {
 }
 
 func (d Exec) Apply(opt *Option, profileRaw string) (string, error) {
+	if len(opt.ArgList) == 0 {
+		return "", fmt.Errorf("No profile to exec")
+	}
 	transition := "Px"
 	transitions := []string{"P", "U", "p", "u", "PU", "pu"}
 	t := opt.ArgList[0]

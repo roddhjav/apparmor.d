@@ -115,6 +115,10 @@ The `exec` directive is useful to allow executing transitions to a profile witho
 
 :   List a profile **files** to stack at the end of the current profile.
 
+**`[X]`**
+
+:   If `X` is set, the directive will conserve the `x` file rules regardless of the transition. Not enabled by default as it may conflict with the parent profile.
+
 
 **Example**
 
