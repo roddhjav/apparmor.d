@@ -6,15 +6,18 @@ abi <abi/3.0>,
 
 include <tunables/global>
 
+@{name} = QQ
+@{lib_dirs} = /opt/QQ/
+@{config_dirs} = @{user_config_dirs}/@{name}
+@{cache_dirs} = @{user_cache_dirs}/@{name}
+
 @{exec_path} = @{bin}/linuxqq
 @{exec_path} += /opt/QQ/qq
 profile linuxqq @{exec_path} flags=(attach_disconnected) {
     include <abstractions/base>
     include <abstractions/nameservice-strict>
-    include <abstractions/common/bwrap>
-    include <abstractions/common/chromium>
+    include <abstractions/common/electron>
     include <abstractions/graphics>
-    include <abstractions/desktop>
     include <abstractions/ssl_certs>
     include <abstractions/fontconfig-cache-read>
     include <abstractions/audio-client>
@@ -32,27 +35,20 @@ profile linuxqq @{exec_path} flags=(attach_disconnected) {
     @{bin}/find rix,
     @{bin}/rm   rix,
     @{bin}/xdg-open rix,
+    @{bin}/grep rix,
+    /opt/QQ/qq ix,
     /opt/QQ/chrome_crashpad_handler ix,
-    /opt/QQ/qq  rix,
 
-    /opt/QQ/{,**} mr,
+    @{lib_dirs}/resources/app/{,**} m,
+
+    /etc/machine-id r,
 
     @{run}/systemd/inhibit/@{int}.ref rw,
     @{run}/utmp r,
 
-    @{user_config_dirs}/dconf/user r,
     @{user_config_dirs}/ibus/bus/ r,
-    owner @{user_config_dirs}/QQ/{,**} rwk,
-    owner @{run}/user/@{uid}/dconf/user rw,
     owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/app-gnome-qq-@{int6}.scope/memory.{high,max} r,
 
-    @{PROC}/ r,
-    @{PROC}/sys/fs/inotify/max_user_watches r,
-    @{PROC}/@{pid}/oom_score_adj w,
-    @{PROC}/@{pid}/task/@{tid}/status r,
-    @{PROC}/@{pid}/stat r,
-    @{PROC}/@{pid}/statm r,
-    @{PROC}/@{pid}/task/ r,
     owner @{PROC}/@{pid}/loginuid r,
     owner @{PROC}/@{pid}/mounts r,
     owner @{PROC}/@{pid}/cmdline r,
