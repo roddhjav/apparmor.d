@@ -10,175 +10,105 @@ include <tunables/global>
 @{exec_path} = @{bin}/synaptic @{bin}/synaptic-pkexec
 profile synaptic @{exec_path} {
   include <abstractions/base>
-  include <abstractions/consoles>
-  include <abstractions/gtk>
-  include <abstractions/fonts>
-  include <abstractions/fontconfig-cache-read>
-  include <abstractions/freedesktop.org>
   include <abstractions/common/apt>
+  include <abstractions/consoles>
+  include <abstractions/desktop>
   include <abstractions/nameservice-strict>
 
-  # To remove the following errors:
-  #  W: chmod 0700 of directory /var/lib/apt/lists/partial failed - SetupAPTPartialDirectory
-  #     (1: Operation not permitted)
-  #  W: chmod 0700 of directory /var/lib/apt/lists/auxfiles failed - SetupAPTPartialDirectory
-  #     (1: Operation not permitted)
-  #  W: chmod 0600 of file /var/lib/apt/lists/deb.debian.org_debian_dists_sid_InRelease failed -
-  #     Item::QueueURI (1: Operation not permitted)
-  capability fowner,
-
-  # To remove the following errors:
-  #  W: chown to _apt:root of directory /var/lib/apt/lists/partial failed - SetupAPTPartialDirectory
-  #  (1: Operation not permitted)
-  #  W: chown to _apt:root of directory /var/lib/apt/lists/auxfiles failed - SetupAPTPartialDirectory
-  #  (1: Operation not permitted)
   capability chown,
-
-  # To remove the following errors:
-  #  E: setgroups 65534 failed - setgroups (1: Operation not permitted)
-  #  E: setegid 65534 failed - setegid (1: Operation not permitted)
-  #  E: seteuid 100 failed - seteuid (1: Operation not permitted)
-  #  E: setgroups 0 failed - setgroups (1: Operation not permitted)
-  capability setuid,
-  capability setgid,
-
-  # To remove the following errors:
-  #  W: Problem unlinking the file /var/lib/apt/lists/partial/*_InRelease -
-  #     PrepareFiles (13: Permission denied)
-  #  E: Unable to read /var/lib/apt/lists/partial/ - open (13: Permission denied)
-  capability dac_read_search,
-
-  # To remove the following errors:
-  #  E: Failed to fetch https://**.deb  rename failed, Permission denied
-  #     (/var/cache/apt/archives/partial/*.deb -> /var/cache/apt/archives/*.deb).
-  #  E: Unable to fetch some archives, maybe run apt-get update or try with --fix-missing?
   capability dac_override,
-
-  # Needed? (##FIXME##)
-  capability kill,
+  capability dac_read_search,
+  capability fowner,
   capability fsetid,
-  deny capability net_admin,
-  deny capability sys_nice,
+  capability kill,
+  capability net_admin,
+  capability setgid,
+  capability setuid,
+  capability sys_nice,
 
-  signal (send) peer=apt-methods-*,
+  signal send peer=apt-methods-*,
 
   @{exec_path} mr,
 
   @{sh_path}        rix,
   @{bin}/{,e,f}grep rix,
-  @{bin}/test       rix,
   @{bin}/echo       rix,
-
-  # For update-apt-xapian-index
-  @{bin}/nice       rix,
   @{bin}/ionice     rix,
+  @{bin}/nice       rix,
+  @{bin}/test       rix,
 
-  # When synaptic is run as root, it wants to exec dbus-launch, and hence it creates the two
-  # following root processes:
-  #  dbus-launch --autolaunch e0a30ad97cd6421c85247839ccef9db2 --binary-syntax --close-stderr
-  #  /usr/bin/dbus-daemon --syslog-only --fork --print-pid 5 --print-address 7 --session
-  #
-  # Should this be allowed? Synaptic works fine without this.
-  #@{bin}/dbus-launch        rCx -> dbus,
-  #@{bin}/dbus-send          rCx -> dbus,
-  deny @{bin}/dbus-launch rx,
-  deny @{bin}/dbus-send   rx,
-  deny @{bin}/gdbus       rx,
-
-  @{bin}/ps                 rPx,
-  @{bin}/dpkg               rPx,
+  @{bin}/adequate           rPx,
+  @{bin}/appstreamcli       rPx,
   @{bin}/apt-listbugs       rPx,
   @{bin}/apt-listchanges    rPx,
   @{bin}/apt-show-versions  rPx,
-  @{bin}/dpkg-preconfigure  rPx,
+  @{bin}/deborphan          rPx,
   @{bin}/debtags            rPx,
+  @{bin}/dpkg               rPx,
+  @{bin}/dpkg-preconfigure  rPx,
   @{bin}/localepurge        rPx,
-  @{bin}/appstreamcli       rPx,
-  @{bin}/adequate           rPx,
+  @{bin}/lsb_release        rPx -> lsb_release,
+  @{bin}/pkexec             rPx,
+  @{bin}/ps                 rPx,
+  @{bin}/software-properties-gtk rPx,
+  @{bin}/tasksel            rPx,
+  @{bin}/update-apt-xapian-index       rPx,
   @{bin}/update-command-not-found      rPx,
   /usr/share/command-not-found/cnf-update-db rPx,
-  @{bin}/update-apt-xapian-index       rPx,
-  @{bin}/lsb_release        rPx -> lsb_release,
-  @{bin}/deborphan          rPx,
-  @{bin}/tasksel            rPx,
-  @{bin}/pkexec             rPx,
-  @{bin}/software-properties-gtk rPx,
 
   # Methods to use to download packages from the net
   @{lib}/apt/methods/*      rPx,
 
-  /var/lib/apt/lists/** rw,
-  /var/lib/apt/lists/lock rwk,
-  /var/lib/apt/extended_states{,.*} rw,
+  /usr/share/synaptic/{,**} r,
 
   /etc/apt/apt.conf.d/99synaptic rw,
+
+  # For editing the sources.list file
+  /etc/apt/sources.list rwk,
+  /etc/apt/sources.list.d/ r,
+  /etc/apt/sources.list.d/*.list rw,
+
+  /etc/fstab r,
+  /etc/machine-id r,
+  /var/lib/dbus/machine-id r,
 
   /var/log/apt/eipp.log.xz w,
   /var/log/apt/{term,history}.log w,
 
-  # For editing the sources.list file
-  /etc/apt/sources.list.d/ r,
-  /etc/apt/sources.list.d/*.list rw,
-  /etc/apt/sources.list rwk,
-
-  /var/lib/apt-xapian-index/index r,
+  /var/cache/apt/ r,
+  /var/cache/apt/** rwk,
   /var/cache/apt-xapian-index/index.[0-9]/*.glass r,
   /var/cache/apt-xapian-index/index.[0-9]/iamglass r,
 
+  /var/lib/apt-xapian-index/index r,
   /var/lib/dpkg/** r,
   /var/lib/dpkg/lock{,-frontend} rwk,
+  /var/lib/apt/lists/** rw,
+  /var/lib/apt/lists/lock rwk,
+  /var/lib/apt/extended_states{,.*} rw,
 
-  /var/lib/dbus/machine-id r,
-  /etc/machine-id r,
+  # For package building
+  @{user_build_dirs}/** rwkl -> @{user_build_dirs}/**,
+
+  owner @{HOME}/.synaptic/ rw,
+  owner @{HOME}/.synaptic/** rwk,
 
         /tmp/ r,
   owner @{tmp}/apt-dpkg-install-*/ rw,
   owner @{tmp}/apt-dpkg-install-*/@{int}-*.deb w,
 
-  /var/cache/apt/ r,
-  /var/cache/apt/** rwk,
-
-  /usr/share/synaptic/{,**} r,
-  owner @{HOME}/.synaptic/ rw,
-  owner @{HOME}/.synaptic/** rwk,
   @{run}/synaptic.socket w,
-
-  @{run}/user/@{uid}/.mutter-Xwaylandauth.@{rand6} r,
 
   owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/mountinfo r,
 
-  # To remove the following error:
-  #  Internal Error: impossible to fork children. Synaptics is going to stop. Please report.
-  #  errorcode: 2
-  /dev/ptmx rw,
-
-  /etc/fstab r,
-
-  # Synaptic is a GUI app started by root, so without "owner"
-  @{HOME}/.Xauthority r,
-
-  # For package building
-  @{user_build_dirs}/** rwkl -> @{user_build_dirs}/**,
-
-  # file_inherit
+        /dev/ptmx rw,
   owner /dev/tty@{int} rw,
 
+  deny @{bin}/dbus-launch x,
+  deny @{bin}/dbus-send x,
+  deny @{bin}/gdbus x,
   deny @{user_share_dirs}/gvfs-metadata/{*,} r,
-
-  profile dbus {
-    include <abstractions/base>
-    include <abstractions/nameservice-strict>
-
-    @{bin}/dbus-launch   mr,
-    @{bin}/dbus-send     mr,
-    @{bin}/dbus-daemon rPUx,
-
-    # for dbus-launch
-    owner @{HOME}/.dbus/session-bus/@{hex}-[0-9] w,
-
-    @{HOME}/.Xauthority r,
-  }
 
   include if exists <local/synaptic>
 }

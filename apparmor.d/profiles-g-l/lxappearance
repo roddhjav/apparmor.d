@@ -10,59 +10,31 @@ include <tunables/global>
 @{exec_path} = @{bin}/lxappearance
 profile lxappearance @{exec_path} {
   include <abstractions/base>
-  include <abstractions/gtk>
-  include <abstractions/fonts>
-  include <abstractions/fontconfig-cache-read>
-  include <abstractions/freedesktop.org>
+  include <abstractions/desktop>
 
   @{exec_path} mr,
 
-  # When lxappearance is run as root, it wants to exec dbus-launch, and hence it creates the two
-  # following root processes:
-  #  dbus-launch --autolaunch e0a30ad97cd6421c85247839ccef9db2 --binary-syntax --close-stderr
-  #  /usr/bin/dbus-daemon --syslog-only --fork --print-pid 5 --print-address 7 --session
-  #
-  # Should this be allowed? Lxappearance works fine without this.
-  #@{bin}/dbus-launch        rCx -> dbus,
-  #@{bin}/dbus-send          rCx -> dbus,
-  deny @{bin}/dbus-launch rx,
-  deny @{bin}/dbus-send   rx,
+  @{bin}/dbus-launch        Cx -> bus,
+  @{bin}/dbus-send          Cx -> bus,
 
   /usr/share/lxappearance/{,**} r,
-
-  owner @{HOME}/.themes/{,**} r,
-  owner @{HOME}/.icons/{,**} rw,
-
-  owner @{HOME}/.gtkrc-2.0{,.*} rw,
-  owner @{user_config_dirs}/gtk-3.0/settings.ini{,.*} rw,
-
-  /etc/X11/cursors/*.theme r,
-
-  owner @{PROC}/@{pid}/fd/ r,
-  owner @{PROC}/@{pid}/mountinfo r,
-  owner @{PROC}/@{pid}/mounts r,
 
   /etc/fstab r,
 
   /etc/machine-id r,
   /var/lib/dbus/machine-id r,
 
-  # file_inherit
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/mounts r,
+
   owner /dev/tty@{int} rw,
 
-
-  profile dbus {
+  profile bus {
     include <abstractions/base>
-    include <abstractions/nameservice-strict>
+    include <abstractions/app/bus>
 
-    @{bin}/dbus-launch   mr,
-    @{bin}/dbus-send     mr,
-    @{bin}/dbus-daemon rPUx,
-
-    # for dbus-launch
-    owner @{HOME}/.dbus/session-bus/@{hex}-[0-9] w,
-
-    @{HOME}/.Xauthority r,
+    include if exists <local/lxappearance_bus>
   }
 
   include if exists <local/lxappearance>
