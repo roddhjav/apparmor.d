@@ -1,0 +1,54 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{lib_dirs} = @{user_share_dirs}/torbrowser/tbb/@{arch}/tor-browser/Browser/ @{HOME}/.tb/tor-browser/Browser/
+
+@{exec_path} = @{lib_dirs}/start-tor-browser
+profile torbrowser-start @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+
+  @{exec_path} rm,
+
+  @{sh_path}                  rix,
+  @{bin}/cp                    ix,
+  @{bin}/dirname               ix,
+  @{bin}/env                    r,
+  @{bin}/expr                  ix,
+  @{bin}/file                  ix,
+  @{bin}/getconf               ix,
+  @{bin}/grep                  ix,
+  @{bin}/id                    ix,
+  @{bin}/ln                    ix,
+  @{bin}/mkdir                 ix,
+  @{bin}/rm                    ix,
+  @{bin}/sed                   ix,
+  @{bin}/srm                   ix,
+
+  @{lib_dirs}/abicheck         ix,
+  @{lib_dirs}/firefox{,.real}  Px -> torbrowser,
+
+  /usr/share/file/** r,
+
+  /etc/magic r,
+
+  owner @{lib_dirs}/.config/ibus/{,**} rw,
+  owner @{lib_dirs}/.local/* rw,
+  owner @{lib_dirs}/sed@{rand6} rw,
+  owner @{lib_dirs}/TorBrowser/Tor/tor r,
+
+  owner @{user_share_dirs}/torbrowser/tbb/@{arch}/tor-browser/sed@{rand6} rw,
+  owner @{user_share_dirs}/torbrowser/tbb/@{arch}/tor-browser/start-tor-browser.desktop rw,
+
+  owner @{HOME}/.xsession-errors rw,
+  owner @{HOME}/.tb/tor-browser/* rw,
+
+  include if exists <local/torbrowser-start>
+}
+
+# vim:syntax=apparmor

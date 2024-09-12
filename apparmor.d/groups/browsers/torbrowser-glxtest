@@ -7,13 +7,13 @@ abi <abi/3.0>,
 include <tunables/global>
 
 @{name} = torbrowser "tor browser"
-@{lib_dirs} = @{HOME}/.tb/tor-browser/Browser/
+@{lib_dirs} = @{user_share_dirs}/torbrowser/tbb/@{arch}/tor-browser/Browser/ @{HOME}/.tb/tor-browser/Browser/
 @{data_dirs} = @{lib_dirs}/TorBrowser/Data/
-@{config_dirs} = @{data_dirs}/Browser/*.default/
+@{config_dirs} = @{data_dirs}/Browser/profile.default/
 @{cache_dirs} = @{data_dirs}/Browser/Caches
 
 @{exec_path} = @{lib_dirs}/glxtest
-profile torbrowser-glxtest @{exec_path} {
+profile torbrowser-glxtest @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/graphics>
   include <abstractions/nameservice-strict>
@@ -21,11 +21,9 @@ profile torbrowser-glxtest @{exec_path} {
 
   @{exec_path} mr,
 
-  owner @{config_dirs}/.parentlock rw,
-
-  owner @{tmp}/@{name}/.parentlock rw,
-
   owner @{PROC}/@{pid}/cmdline r,
+
+  deny @{config_dirs}/.parentlock rw,
 
   include if exists <local/torbrowser-glxtest>
 }

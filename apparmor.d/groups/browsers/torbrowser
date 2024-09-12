@@ -7,9 +7,9 @@ abi <abi/3.0>,
 include <tunables/global>
 
 @{name} = torbrowser "tor browser"
-@{lib_dirs} = @{HOME}/.tb/tor-browser/Browser/
+@{lib_dirs} = @{user_share_dirs}/torbrowser/tbb/@{arch}/tor-browser/Browser/ @{HOME}/.tb/tor-browser/Browser/
 @{data_dirs} = @{lib_dirs}/TorBrowser/Data/
-@{config_dirs} = @{data_dirs}/Browser/*.default/
+@{config_dirs} = @{data_dirs}/Browser/profile.default/
 @{cache_dirs} = @{data_dirs}/Browser/Caches
 
 @{exec_path} = @{lib_dirs}/firefox{,.real}
@@ -19,8 +19,14 @@ profile torbrowser @{exec_path} flags=(attach_disconnected) {
 
   @{exec_path} mrix,
 
-  @{lib_dirs}/abicheck          rix,
-  @{lib_dirs}/updater           rPx,
+  @{lib_dirs}/abicheck           ix,
+  @{lib_dirs}/glxtest            Px -> torbrowser//&torbrowser-glxtest,
+  @{lib_dirs}/updater            Px,
+  @{lib_dirs}/vaapitest          Px -> torbrowser//&torbrowser-vaapitest,
+
+  #aa:exclude whonix
+  @{lib_dirs}/TorBrowser/Tor/PluggableTransports/**  Px -> torbrowser-tor,
+  @{lib_dirs}/TorBrowser/Tor/tor                     Px -> torbrowser-tor,
 
   /usr/share/homepage/{,**} r,
 
@@ -37,10 +43,10 @@ profile torbrowser @{exec_path} flags=(attach_disconnected) {
   # Due to the nature of the browser, we silence much more than for Firefox.
   deny network inet dgram, # TOR does not work over UDP
   deny network inet6 dgram,
+  deny network inet6 stream, # TOR does not work over IPv6
   deny dbus (send receive) bus=session path=/ca/desrt/dconf/Writer/user,
   deny @{bin}/lsb_release x,
   deny @{lib_dirs}/crashreporter x,
-  deny @{lib_dirs}/glxtest x,
   deny @{lib_dirs}/minidump-analyzer x,
   deny @{lib_dirs}/pingsender x,
   deny /usr/share/dconf/** r,
@@ -56,6 +62,7 @@ profile torbrowser @{exec_path} flags=(attach_disconnected) {
   deny /etc/passwd r,
   deny /etc/resolv.conf r,
   deny /var/lib/dbus/machine-id r,
+  deny owner @{HOME}/ r,
   deny owner @{user_config_dirs}/dconf/user r,
   deny owner @{user_config_dirs}/gtk-*/{,**} rw,
   deny owner @{run}/user/@{uid}/dconf/ rw,

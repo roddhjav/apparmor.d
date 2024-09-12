@@ -1,0 +1,51 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{lib_dirs} = @{user_share_dirs}/torbrowser/tbb/@{arch}/tor-browser/Browser/ @{HOME}/.tb/tor-browser/Browser/
+@{data_dirs} = @{lib_dirs}/TorBrowser/Data/
+
+@{exec_path} = @{lib_dirs}/TorBrowser/Tor/tor 
+profile torbrowser-tor @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+  include <abstractions/ssl_certs>
+
+  network inet stream,
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  @{lib_dirs}/{,**}                                    r,
+  @{lib_dirs}/TorBrowser/Tor/*.so*                     m,
+  @{lib_dirs}/TorBrowser/Tor/PluggableTransports/**  mix,
+
+  owner @{data_dirs}/Tor/ rw,
+  owner @{data_dirs}/Tor/** rw,
+  owner @{data_dirs}/Tor/lock rwk,
+
+  /tmp/onionshare/** rw,  # OnionShare compatibility
+
+  @{PROC}/sys/kernel/random/uuid r,
+  @{PROC}/sys/net/core/somaxconn r,
+
+  deny /etc/group r,
+  deny /etc/host.conf r,
+  deny /etc/hosts r,
+  deny /etc/machine-id r,
+  deny /etc/mailcap r,
+  deny /etc/nsswitch.conf r,
+  deny /etc/os-release r,
+  deny /etc/passwd r,
+  deny /etc/resolv.conf r,
+  deny /etc/services r,
+  deny /var/lib/dbus/machine-id r,
+
+  include if exists <local/torbrowser-tor>
+}
+
+# vim:syntax=apparmor
