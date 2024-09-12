@@ -10,14 +10,14 @@ include <tunables/global>
 profile flatpak-session-helper @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus-session>
+  include <abstractions/consoles>
   include <abstractions/nameservice-strict>
   include <abstractions/p11-kit>
   include <abstractions/ssl_certs>
-  include <abstractions/consoles>
 
-  signal (send) set=(hup int) peer=user_unconfined,
-  signal (send) set=(int) peer=@{p_systemd},
-  signal (send) set=(int) peer=flatpak-app,
+  signal send set=(hup int) peer=user_unconfined,
+  signal send set=(int) peer=@{p_systemd},
+  signal send set=(int) peer=flatpak-app,
 
   #aa:dbus own bus=session name=org.freedesktop.Flatpak
 
@@ -27,11 +27,13 @@ profile flatpak-session-helper @{exec_path} flags=(attach_disconnected) {
   @{bin}/dbus-monitor                 rPUx,
   @{bin}/env                           rix,
   @{bin}/flatpak                       rPx,
-  @{bin}/test                          rix,
   @{bin}/getent                        rix,
   @{bin}/p11-kit                       rix,
   @{bin}/pkexec                        rPx, # TODO: too wide, rCx.
+  @{bin}/printenv                      rix,
   @{bin}/ps                            rPx,
+  @{bin}/test                          rix,
+  @{bin}/touch                         rix,
   @{lib}/p11-kit/p11-kit-remote        rix,
   @{lib}/p11-kit/p11-kit-server        rix,
   /var/lib/flatpak/app/*/**/@{bin}/**  rPx -> flatpak-app,
