@@ -7,13 +7,13 @@ abi <abi/3.0>,
 include <tunables/global>
 
 @{name} = torbrowser "tor browser"
-@{lib_dirs} = @{HOME}/.tb/tor-browser/Browser/
+@{lib_dirs} = @{user_share_dirs}/torbrowser/tbb/@{arch}/tor-browser/Browser/ @{HOME}/.tb/tor-browser/Browser/
 @{data_dirs} = @{lib_dirs}/TorBrowser/Data/
-@{config_dirs} = @{data_dirs}/Browser/*.default/
+@{config_dirs} = @{data_dirs}/Browser/profile.default/
 @{cache_dirs} = @{data_dirs}/Browser/Caches
 
 @{exec_path} = @{lib_dirs}/vaapitest
-profile torbrowser-vaapitest @{exec_path} {
+profile torbrowser-vaapitest @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/graphics>
 
@@ -21,11 +21,9 @@ profile torbrowser-vaapitest @{exec_path} {
 
   @{exec_path} mr,
 
-  owner @{tmp}/@{name}/.parentlock rw,
-
+  deny @{lib_dirs}/{,browser/}omni.ja r,
+  deny @{cache_dirs}/profile.default/startupCache/* r,
   deny @{config_dirs}/.parentlock rw,
-  deny @{config_dirs}/startupCache/** r,
-  deny @{user_cache_dirs}/startupCache/* r,
 
   include if exists <local/torbrowser-vaapitest>
 }
