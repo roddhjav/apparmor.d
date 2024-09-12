@@ -8,17 +8,18 @@ abi <abi/3.0>,
 include <tunables/global>
 
 @{exec_path} = @{bin}/fwupdmgr
-profile fwupdmgr @{exec_path} flags=(attach_disconnected,complain) {
+profile fwupdmgr @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus-system>
   include <abstractions/bus/org.freedesktop.NetworkManager>
   include <abstractions/dconf-write>
+  include <abstractions/freedesktop.org>
   include <abstractions/nameservice-strict>
   include <abstractions/ssl_certs>
 
   capability sys_nice,
 
-  signal (send),
+  signal send,
 
   network inet stream,
   network inet6 stream,
@@ -30,19 +31,16 @@ profile fwupdmgr @{exec_path} flags=(attach_disconnected,complain) {
   
   @{exec_path} mr,
 
-  @{bin}/dbus-launch  rCx -> dbus,
-  @{bin}/pkttyagent   rPx,
-
-  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+  @{bin}/dbus-launch   Cx -> bus,
+  @{bin}/pkttyagent    Px,
 
   /etc/machine-id r,
 
   owner /var/cache/private/fwupdmgr/fwupd/lvfs-metadata.xml.gz{,.asc}.* rw,
   owner /var/cache/private/fwupdmgr/fwupd/lvfs-metadata.xml.gz{,.asc} rw,
-  /var/lib/flatpak/exports/share/mime/mime.cache r,
 
-  owner @{user_cache_dirs}/ rw,
         @{user_cache_dirs}/dconf/user rw,
+  owner @{user_cache_dirs}/ rw,
   owner @{user_cache_dirs}/fwupd/ rw,
   owner @{user_cache_dirs}/fwupd/lvfs-metadata.xml.gz{,.*} rw,
 
@@ -53,14 +51,9 @@ profile fwupdmgr @{exec_path} flags=(attach_disconnected,complain) {
   /dev/i2c-@{int} rw,
   /dev/tty rw,
 
-  profile dbus {
+  profile bus flags=(attach_disconnected) {
     include <abstractions/base>
-    include <abstractions/nameservice-strict>
-
-    @{bin}/dbus-launch mr,
-
-    owner @{HOME}/.Xauthority r,
-
+    include <abstractions/app/bus>
     include if exists <local/fwupdmgr_dbus>
   }
 
