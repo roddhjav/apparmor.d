@@ -1,0 +1,47 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{name} = {S,s}ession
+@{lib_dirs} = /opt/@{name} 
+@{config_dirs} = @{user_config_dirs}/@{name}
+@{cache_dirs} = @{user_cache_dirs}/@{name}
+
+@{exec_path} = @{bin}/session-messenger-desktop @{lib_dirs}/session-desktop
+profile session-desktop @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/audio-client>
+  include <abstractions/bus-session>
+  include <abstractions/bus/org.freedesktop.Notifications>
+  include <abstractions/bus/org.kde.StatusNotifierWatcher>
+  include <abstractions/common/electron>
+  include <abstractions/user-download-strict>
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  @{exec_path} mrix,
+ 
+  @{lib_dirs}/resources/app.asar.unpacked/ts/webworker/workers/node/**.node mr,
+
+  @{open_path} rPx -> child-open-strict,
+
+  deny / r,
+  deny @{HOME}/ r,
+  deny @{HOME}/.pki/{,**} rw,
+  deny @{user_share_dirs}/gvfs-metadata/* r,
+  deny @{user_cache_dirs}/thumbnails/** rw,
+  deny /etc/machine-id r,
+  deny /var/lib/dbus/machine-id r,
+
+  include if exists <local/session-desktop>
+}
+
+# vim:syntax=apparmor
