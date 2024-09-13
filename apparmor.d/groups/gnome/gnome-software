@@ -75,8 +75,11 @@ profile gnome-software @{exec_path} {
 
   owner @{HOME}/.var/app/{,**} rw,
 
+  owner @{user_download_dirs}/*.flatpakref r,
+
   owner @{user_cache_dirs}/flatpak/{,**} rwl,
-  owner @{user_cache_dirs}/gnome-software/{,**} rw,
+  owner @{user_cache_dirs}/gnome-software/ rw,
+  owner @{user_cache_dirs}/gnome-software/** rwlk -> @{user_cache_dirs}/gnome-software/**,
 
   owner @{user_config_dirs}/flatpak/{,**} r,
   owner @{user_config_dirs}/pulse/*.conf r,
@@ -124,6 +127,8 @@ profile gnome-software @{exec_path} {
 
   /dev/fuse rw,
  
+  deny owner @{user_share_dirs}/gvfs-metadata/* r,
+
   profile gpg {
     include <abstractions/base>
 
@@ -131,14 +136,26 @@ profile gnome-software @{exec_path} {
     @{bin}/gpgconf  mr,
     @{bin}/gpgsm    mr,
 
+    @{bin}/gpg-agent         rix,
+    @{bin}/gpg-connect-agent rix,
+    @{lib}/{,gnupg/}scdaemon rix,
+
     @{HOME}/@{XDG_GPG_DIR}/*.conf r,
 
           @{tmp}/ r,
     owner @{tmp}/ostree-gpg-@{rand6}/ r,
     owner @{tmp}/ostree-gpg-@{rand6}/** rwkl -> /tmp/ostree-gpg-@{rand6}/**,
 
-    owner @{run}/user/@{uid}/gnupg/ w,
-
+    owner @{run}/user/@{uid}/ r,
+    owner @{run}/user/@{uid}/gnupg/ rw,
+    owner @{run}/user/@{uid}/gnupg/d.@{rand}/ rw,
+    owner @{run}/user/@{uid}/gnupg/d.@{rand}/S.gpg-agent{,.ssh,.browser,.extra} rw,
+    owner @{run}/user/@{uid}/gnupg/d.@{rand}/S.scdaemon rw,
+    owner @{run}/user/@{uid}/gnupg/S.scdaemon rw,
+  
+    owner @{PROC}/@{pid}/fd/ r,
+    owner @{PROC}/@{pid}/task/@{tid}/comm rw,
+  
     include if exists <local/gnome-software_gpg>
   }
 
