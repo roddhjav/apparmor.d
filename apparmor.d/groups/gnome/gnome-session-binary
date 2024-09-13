@@ -14,7 +14,6 @@ profile gnome-session-binary @{exec_path} flags=(attach_disconnected) {
   include <abstractions/bus-system>
   include <abstractions/bus/org.a11y>
   include <abstractions/bus/org.freedesktop.login1.Session>
-  include <abstractions/bus/org.freedesktop.login1>
   include <abstractions/bus/org.freedesktop.systemd1-session>
   include <abstractions/bus/org.gnome.Mutter.IdleMonitor>
   include <abstractions/bus/org.gnome.ScreenSaver>
@@ -33,16 +32,12 @@ profile gnome-session-binary @{exec_path} flags=(attach_disconnected) {
   signal (send) set=(term) peer=gsd-*,
 
   #aa:dbus own bus=session name=org.gnome.SessionManager
+  #aa:dbus talk bus=system name=org.freedesktop.login1 label=systemd-logind
 
   dbus send bus=session path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus
        member={GetConnectionUnixUser,GetConnectionUnixProcessID,UpdateActivationEnvironment}
        peer=(name=org.freedesktop.DBus label=dbus-session),
-
-  dbus send bus=system path=/org/freedesktop/login1
-       interface=org.freedesktop.login1.Manager
-       member={CanPowerOff,PowerOff,Reboot}
-       peer=(name=:*, label=systemd-logind),
 
   dbus send bus=session path=/org/freedesktop/systemd1
        interface=org.freedesktop.systemd1.Manager
