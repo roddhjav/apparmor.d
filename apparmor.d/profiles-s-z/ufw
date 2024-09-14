@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2024 EricLin <ericlin050914@gmail.com>
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/3.0>,
@@ -9,6 +10,7 @@ include <tunables/global>
 @{exec_path} = @{bin}/ufw
 profile ufw @{exec_path} {
     include <abstractions/base>
+    include <abstractions/consoles>
     include <abstractions/nameservice-strict>
     include <abstractions/python>
 
@@ -22,16 +24,16 @@ profile ufw @{exec_path} {
     @{exec_path} mr,
 
     @{bin}/ r,
+    @{bin}/cat ix,
     @{bin}/env r,
     @{bin}/python3.@{int} ix,
-    @{bin}/cat ix,
+    @{bin}/xtables-legacy-multi ix,
     @{bin}/xtables-nft-multi ix,
-
     @{lib}/ufw/ufw-init ix,
 
-    /etc/ufw/{,**} rwk,
-
     /etc/default/ufw r,
+    /etc/ufw/ rw,
+    /etc/ufw/** rwk,
 
     owner @{run}/ufw.lock rwk,
 
@@ -40,12 +42,9 @@ profile ufw @{exec_path} {
     owner @{tmp}/???????? rw,
     owner @{tmp}/tmp???????? rw,
 
-    @{PROC}/@{pid}/stat r,
     @{PROC}/@{pid}/fd/ r,
     @{PROC}/@{pid}/net/ip_tables_names r,
-
-    /dev/pts/[0-9]* rw,
-    /dev/tty rw, 
+    @{PROC}/@{pid}/stat r,
 
     include if exists <local/ufw>
 
