@@ -9,7 +9,10 @@ include <tunables/global>
 @{exec_path} = @{bin}/systemsettings
 profile systemsettings @{exec_path} {
   include <abstractions/base>
+  include <abstractions/audio-client>
   include <abstractions/bus-session>
+  include <abstractions/cups-client>
+  include <abstractions/dconf-write>
   include <abstractions/graphics>
   include <abstractions/kde-strict>
   include <abstractions/nameservice-strict>
@@ -22,7 +25,9 @@ profile systemsettings @{exec_path} {
 
   @{exec_path} mr,
 
+  @{sh_path} rix,
   @{bin}/cat rix,
+  @{bin}/eglinfo rPUx,
   @{bin}/kcminit rPx,
   @{bin}/lspci rPx,
   @{bin}/openssl rix,
@@ -38,7 +43,8 @@ profile systemsettings @{exec_path} {
   /usr/share/kcmkeys/{,*.kksrc} r,
   /usr/share/kglobalaccel/* r,
   /usr/share/kinfocenter/{,**} r,
-  /usr/share/kinfocenter/{,**} r,
+  /usr/share/knotifications{5,6}/{,**} r,
+  /usr/share/solid/{,**} r,
   /usr/share/kpackage/{,**} r,
   /usr/share/kservices{5,6}/{,**} r,
   /usr/share/kservicetypes5/{,**} r,
@@ -46,9 +52,9 @@ profile systemsettings @{exec_path} {
   /usr/share/kxmlgui5/systemsettings/systemsettingsui.rc r,
   /usr/share/plasma/{,**} r,
   /usr/share/sddm/themes/{,**} r,
-  /usr/share/sddm/themes/{,**} r,
   /usr/share/systemsettings/{,**} r,
   /usr/share/wallpapers/{,**} r,
+  /usr/share/thumbnailers/{,**} r,
 
   /etc/fstab r,
   /etc/machine-id r,
@@ -56,10 +62,19 @@ profile systemsettings @{exec_path} {
   /etc/xdg/plasmanotifyrc r,
   /etc/xdg/ui/ui_standards.rc r,
   /var/lib/dbus/machine-id r,
+  /etc/xdg/* r,
+
+  /var/cache/cracklib/cracklib_dict.* r,
+  /var/cache/samba/ rw,
+  /var/lib/AccountsService/icons/* r,
+  /var/lib/flatpak/repo/{,**} r,
+
+  owner @{HOME}/@{XDG_WALLPAPERS_DIR}/{,**} r,
 
   owner @{user_cache_dirs}/#@{int} rw,
   owner @{user_cache_dirs}/icon-cache.kcache rw,
-  owner @{user_cache_dirs}/kinfocenter/{,**} rwl,
+  owner @{user_cache_dirs}/kcrash-metadata/*.ini rw,
+  owner @{user_cache_dirs}/kinfocenter/{,**} rwlk,
   owner @{user_cache_dirs}/ksvg-elements rw,
   owner @{user_cache_dirs}/ksvg-elements.@{rand6} rwlk -> @{user_cache_dirs}/#@{int},
   owner @{user_cache_dirs}/ksvg-elements.lock rwlk,
@@ -69,22 +84,24 @@ profile systemsettings @{exec_path} {
   owner @{user_cache_dirs}/systemsettings/** rwlk -> @{user_cache_dirs}/systemsettings/**,
 
   owner @{user_config_dirs}/{P,p}lasma* r,
+  owner @{user_config_dirs}/*rc r,
   owner @{user_config_dirs}/#@{int} rw,
+  owner @{user_config_dirs}/device_automounter_kcmrc.lock rwk,
+  owner @{user_config_dirs}/emaildefaults r,
   owner @{user_config_dirs}/kactivitymanagerdrc r,
   owner @{user_config_dirs}/kde.org/{,**} rwlk,
   owner @{user_config_dirs}/kdedefaults/kscreenlockerrc r,
   owner @{user_config_dirs}/kdedefaults/plasmarc r,
-  owner @{user_config_dirs}/khotkeysrc r,
   owner @{user_config_dirs}/kinfocenterrc* rwlk,
-  owner @{user_config_dirs}/kscreenlockerrc r,
-  owner @{user_config_dirs}/kxkbrc r,
+  owner @{user_config_dirs}/libaccounts-glib/ rw,
+  owner @{user_config_dirs}/libaccounts-glib/accounts.db{,-shm,-wal,-journal} rwk,
   owner @{user_config_dirs}/menus/ r,
   owner @{user_config_dirs}/menus/applications-merged/ r,
-  owner @{user_config_dirs}/plasmarc r,
   owner @{user_config_dirs}/session/ rw,
   owner @{user_config_dirs}/session/** rwlk,
   owner @{user_config_dirs}/systemsettingsrc.lock rwk,
   owner @{user_config_dirs}/systemsettingsrc{,.@{rand6}} rwl -> @{user_config_dirs}/#@{int},
+  owner @{user_share_dirs}/baloo/index r,
 
   owner @{user_share_dirs}/kactivitymanagerd/resources/database rwk,
   owner @{user_share_dirs}/kactivitymanagerd/resources/database-shm rwk,
@@ -98,12 +115,25 @@ profile systemsettings @{exec_path} {
   owner @{user_share_dirs}/systemsettings/** rwlk,
   owner @{user_share_dirs}/wallpapers/{,**} r,
 
+  owner @{run}/user/@{uid}/#@{int} rw,
+
+  @{run}/udev/data/+drm:card@{int}-* r,   # For screen outputs
+
   @{sys}/bus/ r,
+  @{sys}/bus/acpi/devices/ r,
   @{sys}/bus/cpu/devices/ r,
   @{sys}/class/ r,
+  @{sys}/firmware/acpi/pm_profile r,
 
+        @{PROC}/interrupts r,
   owner @{PROC}/@{pid}/mounts r,
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/mountinfo r,
 
+  /dev/ r,
+  /dev/bus/usb/ r,
+  /dev/input/ r,
+  /dev/rfkill r,
   /dev/tty r,
 
   include if exists <local/systemsettings>
