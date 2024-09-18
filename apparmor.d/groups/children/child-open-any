@@ -1,0 +1,42 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# This profile is designed to be used in a child profile to limit what
+# confined application can invoke via open helper.
+
+# This version of child-open allows to open any programs.
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+profile child-open-any flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/desktop>
+
+  @{open_path} mr,
+
+  @{sh_path} r,
+
+  @{bin}/**                     PUx,
+  @{lib}/**                     PUx,
+  @{user_bin_dirs}/**           PUx,
+  /opt/*/**                     PUx,
+  /usr/local/bin/**             PUx,
+  /usr/share/**                 PUx,
+
+  @{bin}/                       r,
+  @{user_bin_dirs}/             r,
+  /                             r,
+  /usr/                         r,
+  /usr/local/bin/               r,
+  
+  /dev/tty rw,
+
+  include if exists <usr/child-open-any.d>
+  include if exists <local/child-open-any>
+}
+
+# vim:syntax=apparmor
+
