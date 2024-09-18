@@ -32,15 +32,24 @@ profile dockerd @{exec_path} flags=(attach_disconnected) {
   network inet6 stream,
   network netlink raw,
 
+  mount /tmp/containerd-mount@{int}/, 
+  mount /var/lib/docker/buildkit/**/,
   mount /var/lib/docker/overlay2/**/,
+  mount /var/lib/docker/tmp/buildkit-mount@{int}/,
   mount options=(rw, bind) -> /run/docker/netns/*,
   mount options=(rw, rbind) -> /var/lib/docker/tmp/docker-builder@{int}/,
   mount options=(rw, rprivate) -> /.pivot_root@{int}/,
   mount options=(rw, rslave) -> /,
 
+  remount /tmp/containerd-mount@{int10}/,
+  remount /var/lib/docker/tmp/buildkit-mount@{int10}/,
+
   umount /.pivot_root@{int}/,
   umount /run/docker/netns/*,
+  umount /tmp/containerd-mount@{int}/,
+  umount /var/lib/docker/buildkit/**/,
   umount /var/lib/docker/overlay*/**/,
+  umount /var/lib/docker/tmp/buildkit-mount@{int}/,
 
   pivot_root oldroot=/var/lib/docker/overlay*/**/.pivot_root@{int}/ /var/lib/docker/overlay2/**/,
   pivot_root oldroot=/var/lib/docker/tmp/**/.pivot_root@{int}/ /var/lib/docker/tmp/**/,
