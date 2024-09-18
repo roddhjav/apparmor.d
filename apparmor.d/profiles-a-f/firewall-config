@@ -1,0 +1,29 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/firewall-config
+profile firewall-config @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/dconf-write>
+  include <abstractions/desktop>
+  include <abstractions/python>
+
+  @{exec_path} mr,
+
+  @{open_path}  rPx -> child-open-help,
+
+  /usr/share/firewalld/__pycache__/ rw,
+
+  /usr/share/firewalld/{,**} r,
+
+  owner @{PROC}/@{pid}/mounts r,
+
+  include if exists <local/firewall-config>
+}
+
+# vim:syntax=apparmor
