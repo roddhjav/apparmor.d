@@ -1,0 +1,43 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Jeroen Rijken
+# Copyright (C) 2022-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/xtables-nft-multi @{bin}/xtables-legacy-multi
+profile xtables {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+
+  capability net_admin,
+  capability net_raw,
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet raw,
+  network inet6 raw,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  /usr/share/iproute2/{,**} r,
+
+  /etc/iproute2/{,**} r,
+  /etc/iptables/{,**} rw,
+  /etc/libnl/classid r,
+  /etc/nftables.conf rw,
+
+  @{run}/xtables.lock rwk,
+
+  @{PROC}/@{pids}/net/ip_tables_names r,
+
+  include if exists <local/xtables>
+}
+
+# vim:syntax=apparmor

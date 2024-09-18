@@ -26,11 +26,11 @@ profile cockpit-bridge @{exec_path} {
 
   ptrace read,
 
+  signal send set=term peer=cockpit-bridge//sudo,
   signal send set=term peer=cockpit-pcp,
   signal send set=term peer=dbus-daemon,
   signal send set=term peer=journalctl,
   signal send set=term peer=ssh-agent,
-  signal send set=term peer=sudo,
   signal send set=term peer=unconfined,
 
   @{exec_path} mr,
@@ -41,24 +41,30 @@ profile cockpit-bridge @{exec_path} {
   @{bin}/ip                   ix,
   @{bin}/python3.@{int}       ix,
   @{bin}/test                 ix,
+  @{bin}/file                 ix,
 
+  @{bin}/chage                Px,
+  @{bin}/dmidecode            Px,
   @{bin}/findmnt              Px,
   @{bin}/journalctl           Px,
+  @{bin}/last                 Px,
   @{bin}/lastlog              Px,
+  @{bin}/lscpu                Px,
   @{bin}/passwd               Px,
   @{bin}/ssh-agent            Px,
-  @{bin}/sudo                 Px, # TODO: rCx -> privilieged ? or rix?
+  @{bin}/sudo                 Cx -> sudo,
   @{bin}/udevadm              Cx -> udevadm,
+  @{bin}/virsh               rPUx,
   @{bin}/virt-install        PUx, # TODO: rPx
   @{lib}/cockpit/cockpit-pcp  Px,
   @{lib}/cockpit/cockpit-ssh  Px,
-  @{bin}/virsh               rPUx,
 
   # The shell is not confined on purpose.
   @{bin}/@{shells}            Ux,
 
   /usr/{,local/}share/ r,
   /usr/share/cockpit/{,**} r,
+  /usr/share/file/** r,
   /usr/share/iproute2/* r,
 
   /etc/cockpit/{,**} r,
@@ -70,7 +76,8 @@ profile cockpit-bridge @{exec_path} {
   /etc/shadow r,
   /etc/shells r,
 
-  / r,
+  / r, 
+  @{HOME}/ r,
 
   owner @{user_cache_dirs}/ssh-agent.[0-9A-Z]* rw,
   owner @{user_share_dirs}/ r,
@@ -102,6 +109,18 @@ profile cockpit-bridge @{exec_path} {
   owner @{PROC}/@{pid}/mounts r,
 
   /dev/ptmx rw,
+
+  profile sudo {
+    include <abstractions/base>
+    include <abstractions/app/sudo>
+
+    signal (send receive) set=term peer=cockpit-bridge,
+
+    @{bin}/cockpit-bridge Px,
+    @{lib}/cockpit/cockpit-askpass Px,
+
+    include if exists <local/cockpit-bridge_sudo>
+  }
 
   profile udevadm {
     include <abstractions/base>

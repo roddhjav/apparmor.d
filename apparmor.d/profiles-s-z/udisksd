@@ -11,8 +11,6 @@ include <tunables/global>
 profile udisksd @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus-system>
-  include <abstractions/bus/org.freedesktop.login1>
-  include <abstractions/bus/org.freedesktop.PolicyKit1>
   include <abstractions/disks-write>
   include <abstractions/nameservice-strict>
 
@@ -60,9 +58,11 @@ profile udisksd @{exec_path} flags=(attach_disconnected) {
   umount @{run}/udisks2/temp-mount-*/,
   umount /media/cdrom@{int}/,
 
-  signal (receive) set=(int) peer=@{p_systemd},
+  signal receive set=int peer=@{p_systemd},
 
   #aa:dbus own bus=system name=org.freedesktop.UDisks2
+  #aa:dbus talk bus=system name=org.freedesktop.login1 label=systemd-logind
+  #aa:dbus talk bus=system name=org.freedesktop.PolicyKit1 label=polkitd
 
   dbus send bus=system path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus
@@ -88,6 +88,7 @@ profile udisksd @{exec_path} flags=(attach_disconnected) {
   @{bin}/sgdisk               rPx,
   @{bin}/systemctl            rCx -> systemctl,
   @{bin}/systemd-escape       rPx,
+  @{bin}/xfs_db              rPUx,
 
   /etc/crypttab r,
   /etc/fstab r,

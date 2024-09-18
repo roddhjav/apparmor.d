@@ -13,7 +13,6 @@ profile xdg-desktop-portal-gnome @{exec_path} flags=(attach_disconnected) {
   include <abstractions/bus-system>
   include <abstractions/bus/org.freedesktop.Accounts>
   include <abstractions/bus/org.freedesktop.portal.Desktop>
-  include <abstractions/bus/org.gnome.Mutter.DisplayConfig>
   include <abstractions/bus/org.gnome.Shell.Introspect>
   include <abstractions/bus/org.gtk.vfs.MountTracker>
   include <abstractions/dconf-write>
@@ -30,39 +29,16 @@ profile xdg-desktop-portal-gnome @{exec_path} flags=(attach_disconnected) {
   signal (receive) set=(hup term) peer=gdm-session-worker,
 
   #aa:dbus own bus=session name=org.freedesktop.impl.portal.desktop.gnome
-
-  dbus send bus=session path=/org/gnome/Shell/Screenshot
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=:*, label=gnome-shell),
-
-  dbus send bus=session path=/org/freedesktop/portal/desktop
-       interface=org.freedesktop.impl.portal.Background
-       member=RunningApplicationsChanged
-       peer=(name=org.freedesktop.DBus, label=xdg-desktop-portal),
-
-  dbus receive bus=session path=/org/freedesktop/portal/desktop
-       interface=org.freedesktop.impl.portal.Background
-       member=GetAppState
-       peer=(name=:*, label=xdg-desktop-portal),
-
-  dbus send bus=session path=/org/freedesktop/portal/desktop
-       interface=org.freedesktop.impl.portal.Settings
-       member=SettingChanged
-       peer=(name=org.freedesktop.DBus, label=xdg-desktop-portal),
-
-  dbus (send, receive) bus=session path=/org/gnome/Mutter/*
-       interface=org.gnome.Mutter.*
-       peer=(name=:*, label="{gnome-shell,gsd-xsettings}"),
-  dbus send bus=session path=/org/gnome/Mutter/*
-       interface=org.freedesktop.DBus.Properties
-       peer=(name=:*, label="{gnome-shell,gsd-xsettings}"),
+  #aa:dbus talk bus=session name=org.freedesktop.impl.portal path=/org/freedesktop/portal/desktop label=xdg-desktop-portal
+  #aa:dbus talk bus=session name=org.gnome.Mutter label=gnome-shell
+  #aa:dbus talk bus=session name=org.gnome.Shell.Screenshot label=gnome-shell
 
   @{exec_path} mr,
 
   / r,
   @{bin}/ r,
   @{bin}/* r,
+  /opt/*/* r,
 
   /usr/share/dconf/profile/gdm r,
   /usr/share/thumbnailers/{,**} r,

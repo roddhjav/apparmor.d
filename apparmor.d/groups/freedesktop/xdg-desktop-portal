@@ -20,6 +20,7 @@ profile xdg-desktop-portal @{exec_path} flags=(attach_disconnected) {
   include <abstractions/dconf-write>
   include <abstractions/freedesktop.org>
   include <abstractions/nameservice-strict>
+  include <abstractions/thumbnails-cache-read>
   include <abstractions/user-download-strict>
 
   capability sys_ptrace,
@@ -34,19 +35,9 @@ profile xdg-desktop-portal @{exec_path} flags=(attach_disconnected) {
        member=MakeThread*
        peer=(name=:*),
 
-  dbus receive bus=system path=/org/freedesktop/NetworkManager
-       interface=org.freedesktop.NetworkManager
-       member=CheckPermissions
-       peer=(name=:*, label=NetworkManager),
-
   #aa:dbus own bus=session name=org.freedesktop.background.Monitor path=/org/freedesktop/background/monitor
 
-  dbus send bus=session path=/org/freedesktop/portal/documents
-       interface=org.freedesktop.DBus.Properties
-       peer=(name=:*, label=xdg-document-portal),
-  dbus send bus=session path=/org/freedesktop/portal/documents
-       interface=org.freedesktop.portal.Documents
-       peer=(name=:*, label=xdg-document-portal),
+  #aa:dbus talk bus=session name=org.freedesktop.portal.Documents path=/org/freedesktop/portal/documents label=xdg-document-portal
 
   dbus send bus=session path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus
@@ -62,10 +53,9 @@ profile xdg-desktop-portal @{exec_path} flags=(attach_disconnected) {
 
   @{sh_path}         rix,
   @{bin}/nautilus    rPx,
-  @{bin}/snap       rPUx,
 
-  @{bin}/kreadconfig5                     rPx,
-  @{lib}/xdg-desktop-portal-validate-icon rPUx,
+  @{bin}/kreadconfig{,5}                  rPx,
+  @{lib}/xdg-desktop-portal-validate-icon rPx,
   @{open_path}                            rPx -> child-open,
 
   / r,
@@ -76,7 +66,7 @@ profile xdg-desktop-portal @{exec_path} flags=(attach_disconnected) {
 
   /etc/sysconfig/proxy r,
 
-  /var/lib/gdm{,3}/greeter-dconf-defaults r,
+  @{GDM_HOME}/greeter-dconf-defaults r,
 
         @{user_config_dirs}/kioslaverc r,
   owner @{user_config_dirs}/xdg-desktop-portal/* r,
