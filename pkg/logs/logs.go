@@ -40,8 +40,8 @@ var (
 		`\x1d`, " ",
 
 		// Remove basic rules from abstractions/base
-		`(?m)^.*/etc/[^/]+so.*$`, ``,
-		`(?m)^.*/usr/(lib|lib32|lib64|libexec)/[^/]+so.*$`, ``,
+		`(?m)^.*/etc/[^/]+\.so.*$`, ``,
+		`(?m)^.*/usr/(lib|lib32|lib64|libexec)/[^/]+\.so.*$`, ``,
 		`(?m)^.*/usr/(lib|lib32|lib64|libexec)/locale/.*$`, ``,
 		`(?m)^.*/usr/share/locale[^/]?/.*$`, ``,
 		`(?m)^.*/usr/share/zoneinfo[^/]?/.*$`, ``,
