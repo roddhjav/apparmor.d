@@ -1,0 +1,39 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Minimal set of rules for pkexec.
+
+  include <abstractions/authentication>
+  include <abstractions/bus-system>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+  include <abstractions/wutmp>
+
+  capability audit_write,
+  capability dac_override,
+  capability dac_read_search,
+  capability net_admin,
+  capability setgid,
+  capability setuid,
+  capability sys_resource,
+
+  network netlink raw,   # PAM
+
+  #aa:dbus talk bus=system name=org.freedesktop.PolicyKit1.Authority label=polkitd
+
+  @{bin}/pkexec    mr,
+
+  @{etc_ro}/environment r,
+  @{etc_ro}/security/limits.d/{,*} r,
+  /etc/shells r,
+
+  owner @{PROC}/@{pid}/loginuid r,
+
+  owner /dev/tty@{int} rw,
+
+  deny @{user_share_dirs}/gvfs-metadata/* r,
+
+  include if exists <abstractions/app/pkexec.d>
+
+# vim:syntax=apparmor

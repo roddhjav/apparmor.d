@@ -29,7 +29,7 @@ profile flatpak-session-helper @{exec_path} flags=(attach_disconnected) {
   @{bin}/flatpak                       rPx,
   @{bin}/getent                        rix,
   @{bin}/p11-kit                       rix,
-  @{bin}/pkexec                        rPx, # TODO: too wide, rCx.
+  @{bin}/pkexec                        rCx -> pkexec,
   @{bin}/printenv                      rix,
   @{bin}/ps                            rPx,
   @{bin}/test                          rix,
@@ -45,6 +45,13 @@ profile flatpak-session-helper @{exec_path} flags=(attach_disconnected) {
   owner @{PROC}/@{pids}/fd/ r,
 
   /dev/ptmx rw,
+
+  profile pkexec {
+    include <abstractions/base>
+    include <abstractions/app/pkexec>
+
+    include if exists <local/flatpak-session-helper_pkexec>
+  }
 
   include if exists <local/flatpak-session-helper>
 }
