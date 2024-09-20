@@ -53,7 +53,7 @@ profile update-notifier @{exec_path} {
 
   @{bin}/dpkg                                    rPx -> child-dpkg,
   @{bin}/lsb_release                             rPx -> lsb_release,
-  @{bin}/pkexec                                  rPx, # TODO: rCx or rix to run /usr/lib/update-notifier/package-system-locked
+  @{bin}/pkexec                                  rCx -> pkexec,
   @{bin}/snap                                   rPUx,
   @{bin}/software-properties-gtk                 rPx,
   @{bin}/systemctl                               rCx -> systemctl,
@@ -84,6 +84,15 @@ profile update-notifier @{exec_path} {
 
         @{PROC}/@{pids}/mountinfo r,
   owner @{PROC}/@{pid}/fd/ r,
+
+  profile pkexec {
+    include <abstractions/base>
+    include <abstractions/app/pkexec>
+
+    @{lib}/update-notifier/package-system-locked Px,
+
+    include if exists <local/update-notifier_pkexec>
+  }
 
   profile systemctl {
     include <abstractions/base>

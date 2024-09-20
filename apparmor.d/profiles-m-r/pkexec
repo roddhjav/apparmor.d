@@ -8,30 +8,15 @@ abi <abi/3.0>,
 include <tunables/global>
 
 @{exec_path} = @{bin}/pkexec
-profile pkexec @{exec_path} {
+profile pkexec @{exec_path} flags=(complain) {
   include <abstractions/base>
-  include <abstractions/authentication>
-  include <abstractions/bus-system>
-  include <abstractions/consoles>
-  include <abstractions/nameservice-strict>
-  include <abstractions/wutmp>
+  include <abstractions/app/pkexec>
 
-  capability audit_write,
-  capability dac_read_search,
-  capability net_admin,
-  capability setgid,  # gdbus
-  capability setuid,  # gmain
-  capability sys_ptrace,
-  capability sys_resource,
-  audit deny capability sys_nice,
-
-  network netlink raw,
+  audit capability sys_nice,
 
   signal (send) set=(term, kill) peer=polkit-agent-helper,
 
   ptrace (read),
-
-  #aa:dbus talk bus=system name=org.freedesktop.PolicyKit1.Authority label=polkitd
 
   @{exec_path} mr,
 
@@ -40,22 +25,11 @@ profile pkexec @{exec_path} {
   /opt/*/**      PUx,
   /usr/share/**  PUx,
 
-  @{etc_ro}/environment r,
-  @{etc_ro}/security/limits.d/{,*} r,
   /etc/default/locale r,
-  /etc/shells r,
 
         @{PROC}/@{pid}/fdinfo/@{int} r,
         @{PROC}/@{pids}/stat r,
   owner @{PROC}/@{pid}/fd/ r,
-  owner @{PROC}/@{pid}/loginuid r,
-
-  # file_inherit
-  owner /dev/tty@{int} rw,
-  owner @{HOME}/.xsession-errors w,
-
-  # Silencer
-  deny @{user_share_dirs}/gvfs-metadata/* r,
 
   include if exists <local/pkexec>
 }
