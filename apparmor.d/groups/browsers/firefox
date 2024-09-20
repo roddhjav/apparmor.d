@@ -19,7 +19,7 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
   include <abstractions/user-download-strict>
   include <abstractions/user-read-strict>
 
-  signal (send) set=(term, kill) peer=keepassxc-proxy,
+  signal send set=(term, kill) peer=firefox//&keepassxc-proxy,
 
   #aa:dbus own bus=session name=org.mozilla.firefox
   #aa:dbus own bus=session name=org.mpris.MediaPlayer2.firefox path=/org/mpris/MediaPlayer2
@@ -46,8 +46,7 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
   # Common extensions
   /opt/net.downloadhelper.coapp/bin/net.downloadhelper.coapp*  rPx,
   @{bin}/browserpass         rPx,
-  # As a temporary solution - see issue #128
-  @{bin}/keepassxc-proxy     rix,
+  @{bin}/keepassxc-proxy     rPx -> firefox//&keepassxc-proxy,
 
   owner @{user_config_dirs}/gtk-{3,4}.0/assets/*.svg r,
   owner @{user_config_dirs}/ibus/bus/ r,
@@ -71,6 +70,8 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
   owner @{tmp}/MozillaBackgroundTask-{@{hex15},@{hex16}}-removeDirectory/.parentlock k,
   owner @{tmp}/MozillaBackgroundTask-{@{hex15},@{hex16}}-removeDirectory/{**,} rw,
   owner @{tmp}/Mozillato-be-removed-cachePurge-{@{hex15},@{hex16}} rwk,
+
+  owner @{run}/user/@{uid}/org.keepassxc.KeePassXC.BrowsrServer w,
 
   # Silencer
   deny @{lib_dirs}/** w,
