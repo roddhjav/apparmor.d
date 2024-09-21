@@ -63,7 +63,7 @@ The `only` and `exclude` directives can be used to filter individual rule or rul
 
 ## Exec
 
-The `exec` directive is useful to allow executing transitions to a profile without having to manage the possible long list of profile attachments (it varies depending on the distribution). The directives parse and resolve the attachment variable (`@{exec_path}`) of the target profile and includes it in the current profile.
+The `exec` directive is useful to allow executing transitions to a profile without having to manage the possible long list of profile attachments (it varies depending on the distribution). The directive parses and resolves the attachment variable (`@{exec_path}`) of the target profile and includes it in the current profile.
 
 **Format**
 
@@ -103,7 +103,7 @@ The `exec` directive is useful to allow executing transitions to a profile witho
 
 ## Stack
 
-[Stacked](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmorStacking) profiles can be hard to maintain. The *parent* profile needs to manage its own rules as well as always include the stacked profile rules. This directive automatically include the stacked profile rules into the parent profile.
+[Stacked](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmorStacking) profiles can be hard to maintain. The *parent* profile needs to manage its own rules as well as always including access from the *child* profile. In most profile using stacking, the *child* profile is often naturally included in the *parent*. However, sometime the child profile is fully different. This directive automatically include the stacked profile rules into the parent profile.
 
 **Format**
 
@@ -147,7 +147,6 @@ The `exec` directive is useful to allow executing transitions to a profile witho
             @{run}/systemd/io.system.ManagedOOM rw,
             @{run}/systemd/io.systemd.ManagedOOM rw,
             @{run}/systemd/notify rw,
-    owner @{run}/systemd/journal/socket w,
     @{sys}/fs/cgroup/cgroup.controllers r,
     @{sys}/fs/cgroup/memory.pressure r,
     @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/memory.* r,
