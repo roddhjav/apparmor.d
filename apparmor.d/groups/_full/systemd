@@ -107,7 +107,7 @@ profile systemd flags=(attach_disconnected,mediate_deleted) {
   umount @{run}/systemd/unit-root/{,**},
 
   pivot_root oldroot=@{run}/systemd/mount-rootfs/ @{run}/systemd/mount-rootfs/,
-  pivot_root oldroot=@{run}/systemd/unit-root/ @{run}/systemd/unit-root/,
+  pivot_root oldroot=@{run}/systemd/unit-root/    @{run}/systemd/unit-root/,
 
   change_profile,
 
@@ -129,29 +129,37 @@ profile systemd flags=(attach_disconnected,mediate_deleted) {
        member=GetConnectionUnixUser
        peer=(name=org.freedesktop.DBus, label=dbus-system),
 
-  @{bin}/systemctl                  rix,
-  @{bin}/mount                      rix,
+  @{bin}/**                         Px,
+  @{lib}/**                         Px,
+  /etc/cron.*/*                     Px,
+  /etc/init.d/*                     Px,
+  /usr/share/*/**                   Px,
 
-  @{lib}/systemd/systemd-executor   rix,
-  @{lib}/systemd/systemd            rpx -> systemd-user,
+  # Systemd internal service started and config handler (sandboxing, namespacing, cgroup, etc.)
+  @{lib}/systemd/systemd-executor   ix,
 
-  @{bin}/ldconfig                   rPx -> systemd-service,
-  @{bin}/mandb                      rPx -> systemd-service,
-  @{bin}/savelog                    rPx -> systemd-service,
-  @{coreutils_path}                 rPx -> systemd-service,
-  @{sh_path}                        rPx -> systemd-service,
+  # Systemd user: systemd --user
+  @{lib}/systemd/systemd            px -> systemd-user,
 
-  @{bin}/**                          Px,
-  @{lib}/**                          Px,
-  /etc/cron.*/*                      Px,
-  /etc/init.d/*                      Px,
-  /usr/share/*/**                    Px,
+  # Unit services using systemctl
+  @{bin}/systemctl                  Cx -> systemctl,
 
+  # Unit services
+  @{bin}/mount                      ix,
+
+  # Shell based systemd unit services
+  @{bin}/ldconfig                   Px -> systemd-service,
+  @{bin}/mandb                      Px -> systemd-service,
+  @{bin}/savelog                    Px -> systemd-service,
+  @{coreutils_path}                 Px -> systemd-service,
+  @{sh_path}                        Px -> systemd-service,
+
+  # Systemd profiles that need be stacked
   #aa:stack systemd-networkd systemd-oomd systemd-resolved systemd-timesyncd
-  @{lib}/systemd/systemd-networkd   rPx -> systemd//&systemd-networkd,
-  @{lib}/systemd/systemd-oomd       rPx -> systemd//&systemd-oomd,
-  @{lib}/systemd/systemd-resolved   rPx -> systemd//&systemd-resolved,
-  @{lib}/systemd/systemd-timesyncd  rPx -> systemd//&systemd-timesyncd,
+  @{lib}/systemd/systemd-networkd   Px -> systemd//&systemd-networkd,
+  @{lib}/systemd/systemd-oomd       Px -> systemd//&systemd-oomd,
+  @{lib}/systemd/systemd-resolved   Px -> systemd//&systemd-resolved,
+  @{lib}/systemd/systemd-timesyncd  Px -> systemd//&systemd-timesyncd,
 
   @{lib}/ r,
   / r,
@@ -253,6 +261,14 @@ profile systemd flags=(attach_disconnected,mediate_deleted) {
   owner /dev/rfkill rw,
   owner /dev/shm/ rw,
   owner /dev/ttyS@{int} rwk,
+
+  profile systemctl {
+    include <abstractions/base>
+    include <abstractions/app/systemctl>
+
+    include if exists <usr/systemd_systemctl.d>
+    include if exists <local/systemd_systemctl>
+  }
 
   include if exists <usr/systemd.d>
   include if exists <local/systemd>
