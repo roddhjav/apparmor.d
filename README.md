@@ -97,3 +97,7 @@ and thus has the same license (GPL2).
 [android_model]: https://arxiv.org/pdf/1904.05572
 [clipos]: https://clip-os.org/en/
 [write xor execute]: https://en.wikipedia.org/wiki/W%5EX
+
+### Contributors
+
+<img src="https://markupgo.com/github/roddhjav/apparmor.d/contributors?count=0&circleSize=40&circleRadius=40&center=true" width="100%" /> 
