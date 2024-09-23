@@ -1,0 +1,45 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 curiosityseeker
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{name} = "Proton Mail"
+@{lib_dirs} = /opt/@{name}
+@{config_dirs} = @{user_config_dirs}/@{name}
+@{cache_dirs} = @{user_cache_dirs}/@{name}
+
+@{exec_path} = "/opt/proton-mail/Proton Mail{, Beta}"
+profile protonmail @{exec_path} flags=(complain) {
+  include <abstractions/base>
+  include <abstractions/common/electron>
+
+  network inet stream,
+  network inet dgram,
+  network inet6 dgram,
+  network netlink raw,
+
+  ptrace read peer=xdg-settings,
+
+  @{exec_path} mrix,
+
+  /opt/proton-mail/** r,
+  /opt/proton-mail/*.so m,
+  /opt/proton-mail/libvulkan.so.1 m,
+
+  @{bin}/xdg-settings Px,
+  @{open_path}        rpx -> child-open,
+
+  /etc/machine-id r,
+
+  owner @{user_config_dirs}/ibus/bus/ r,
+
+  @{sys}/devices/@{pci}/boot_vga r,
+
+  owner @{tmp}/gtkprint_ppd_@{rand6} rw,
+
+  include if exists <local/protonmail>
+
+}
