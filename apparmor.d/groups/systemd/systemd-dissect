@@ -11,16 +11,22 @@ profile systemd-dissect @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/consoles>
   include <abstractions/disks-read>
+  include <abstractions/common/systemd>
 
   capability dac_read_search,
   capability sys_admin,
   capability sys_resource,
 
-  mount options=(rw, rslave) -> /,
-  mount options=(rw, nodev) -> /mnt/*/,
-  mount -> /tmp/dissect-@{rand6}/,
+  mount options=(rw rshared rslave)                 -> /,
+  mount options=(rw nodev)                          -> /mnt/*/,
+  mount                                             -> /tmp/dissect-@{rand6}/,
+  mount options=(ro nodev)          /dev/loop* -> @{run}/systemd/dissect-root/,
 
-  signal (send) set=(cont) peer=child-pager,
+  umount @{run}/systemd/dissect-root/,
+
+  signal send set=cont peer=child-pager,
+
+  ptrace read peer=unconfined,
 
   @{exec_path} mr,
 
@@ -35,14 +41,19 @@ profile systemd-dissect @{exec_path} flags=(attach_disconnected) {
 
   owner @{tmp}/dissect-@{rand6}/{,**} rw,
 
+  @{run}/systemd/dissect-root/ rw,
+  @{run}/systemd/dissect-root/** rwlk,
+
   @{sys}/devices/virtual/block/loop@{int}/{,**} r,
   @{sys}/kernel/uevent_seqnum r,
 
-  @{PROC}/@{pids}/cgroup r,
+  @{PROC}/@{pid}/cgroup r,
+  @{PROC}/@{pid}/mountinfo r,
 
   /dev/btrfs-control rw,
   /dev/loop-control rwk,
-  /dev/loop*  rwk,
+  /dev/loop* rwk,
+  /dev/mapper/control w,
 
   include if exists <local/systemd-dissect>
 }
