@@ -7,7 +7,7 @@ abi <abi/3.0>,
 include <tunables/global>
 
 @{exec_path} = @{lib}/xdg-desktop-portal-gtk
-profile xdg-desktop-portal-gtk @{exec_path} {
+profile xdg-desktop-portal-gtk @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus-accessibility>
   include <abstractions/bus-session>
@@ -27,7 +27,8 @@ profile xdg-desktop-portal-gtk @{exec_path} {
   include <abstractions/nameservice-strict>
   include <abstractions/thumbnails-cache-read>
   include <abstractions/user-download-strict>
-  include <abstractions/user-write>
+
+  signal receive set=term peer=gdm,
 
   unix (send, receive, connect) type=stream peer=(addr="@/tmp/.X11-unix/*", label=gnome-shell),
 
@@ -53,9 +54,13 @@ profile xdg-desktop-portal-gtk @{exec_path} {
 
   @{exec_path} mr,
 
+  /usr/share/gdm/greeter-dconf-defaults r,
+
   / r,
 
   owner /var/lib/xkb/server-@{int}.xkm rw,
+
+  owner @{gdm_config_dirs}/dconf/user r,
 
   owner @{tmp}/runtime-*/xauth_@{rand6} r,
 
