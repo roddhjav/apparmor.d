@@ -2,18 +2,19 @@
 title: Known issues
 ---
 
-Known bugs are tracked on the meta issue **[#75](https://github.com/roddhjav/apparmor.d/issues/74)**.
+!!! info
 
-!!! info 
+    Known bugs are tracked on the meta issue **[#75](https://github.com/roddhjav/apparmor.d/issues/74)**.
 
-    Usually, a profile in complain mode cannot break the program it confines.
-    However, there are some **major exceptions**:
+## Complain mode
 
-    * `deny` rules are enforced even in complain mode,
-    * `attach_disconnected` (and `mediate_deleted`) will break the program if they are required and missing in the profile,
-    * If AppArmor does not find the profile to transition `rPx`.
+A profile in *complain* mode cannot break the program it confines. However, there are some **major exceptions**:
 
-### Pacman "could not get current working directory"
+1. `deny` rules are enforced even in *complain* mode,
+2. `attach_disconnected` (and `mediate_deleted`) will break the program if they are required and missing in the profile,
+3. If AppArmor does not find the profile to transition `rPx`.
+
+## Pacman "could not get current working directory"
 
 ```sh
 $ sudo pacman -Syu
@@ -30,15 +31,3 @@ According to the Arch Linux guideline, on Arch Linux, packages cannot install fi
 This provides a basic protection against some packages (on the AUR) that may have rogue install script.
 
 [pacman]: https://github.com/roddhjav/apparmor.d/blob/main/apparmor.d/groups/pacman/pacman
-
-
-### Gnome can be very slow to start.
-
-[Gnome](https://github.com/roddhjav/apparmor.d/issues/80) can be slow to start. This is a known bug, help is very welcome.
-
-The complexity is that:
-
-- It works fine without AppArmor
-- It works fine on most system (including test VM)
-- It seems to be dbus related
-- On archlinux, the dbus mediation is not enabled. So, there is nothing special to allow.
