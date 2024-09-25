@@ -51,4 +51,6 @@ systemctl is-active -q apparmor && systemctl reload apparmor ||:
 %dir /usr/share/zsh/site-functions
 /usr/share/zsh/site-functions/_aa-log.zsh
 
+%doc %{_mandir}/man8/aa-log.8.gz
+
 %changelog

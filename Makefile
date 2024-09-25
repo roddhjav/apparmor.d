@@ -9,7 +9,7 @@ PKGDEST := /tmp/pkg
 PKGNAME := apparmor.d
 P = $(filter-out dpkg,$(notdir $(wildcard ${BUILD}/apparmor.d/*)))
 
-.PHONY: all build enforce full install local $(P) pkg dpkg rpm tests lint clean
+.PHONY: all build enforce full install local $(P) pkg dpkg rpm tests lint man docs serve clean
 
 all: build
 	@./${BUILD}/prebuild --complain
@@ -24,7 +24,7 @@ enforce: build
 full: build
 	@./${BUILD}/prebuild --complain --full
 
-ROOT = $(shell find "${BUILD}/root" -type f -printf "%P\n")
+ROOT = $(shell find "${BUILD}/root" -type f -not -name "*.md" -printf "%P\n")
 PROFILES = $(shell find "${BUILD}/apparmor.d" -type f -printf "%P\n")
 DISABLES = $(shell find "${BUILD}/apparmor.d" -type l -printf "%P\n")
 install:
@@ -56,7 +56,7 @@ local:
 ABSTRACTIONS = $(shell find ${BUILD}/apparmor.d/abstractions/ -type f -printf "%P\n")
 TUNABLES = $(shell find ${BUILD}/apparmor.d/tunables/ -type f -printf "%P\n")
 $(P):
-	@[ -f ${BUILD}/aa-log ] || exit 0; install -Dm755 ${BUILD}/aa-log ${DESTDIR}/usr/bin/aa-log
+	@install -Dm0755 ${BUILD}/aa-log ${DESTDIR}/usr/bin/aa-log
 	@for file in ${ABSTRACTIONS}; do \
 		install -Dm0644 "${BUILD}/apparmor.d/abstractions/$${file}" "${DESTDIR}/etc/apparmor.d/abstractions/$${file}"; \
 	done;
@@ -98,6 +98,15 @@ lint:
 		PKGBUILD dists/build.sh dists/docker.sh \
 		tests/packer/init/init.sh tests/packer/src/aa-update tests/packer/init/clean.sh \
 		debian/${PKGNAME}.postinst debian/${PKGNAME}.postrm
+
+man:
+	pandoc -t man -s -o root/usr/share/man/man8/aa-log.8 root/usr/share/man/man8/aa-log.md
+
+docs:
+	ENABLED_GIT_REVISION_DATE=false MKDOCS_OFFLINE=true mkdocs build --strict
+
+serve:
+	ENABLED_GIT_REVISION_DATE=false MKDOCS_OFFLINE=false mkdocs serve
 
 clean:
 	@rm -rf \
