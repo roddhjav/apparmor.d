@@ -17,10 +17,10 @@ const (
 func init() {
 	requirements[MOUNT] = requirement{
 		"flags": {
-			"acl", "async", "atime", "ro", "rw", "bind", "rbind", "dev",
-			"diratime", "dirsync", "exec", "iversion", "loud", "mand", "move",
-			"noacl", "noatime", "nodev", "nodiratime", "noexec", "noiversion",
-			"nomand", "norelatime", "nosuid", "nouser", "private", "relatime",
+			"ro", "rw", "acl", "async", "atime", "bind", "dev", "diratime",
+			"dirsync", "exec", "iversion", "loud", "mand", "move", "noacl",
+			"noatime", "nodev", "nodiratime", "noexec", "noiversion", "nomand",
+			"norelatime", "nosuid", "nouser", "private", "rbind", "relatime",
 			"remount", "rprivate", "rshared", "rslave", "runbindable", "shared",
 			"silent", "slave", "strictatime", "suid", "sync", "unbindable",
 			"user", "verbose",

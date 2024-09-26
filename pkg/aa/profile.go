@@ -139,16 +139,18 @@ func (p *Profile) GetAttachments() string {
 
 var (
 	newLogMap = map[string]func(log map[string]string) Rule{
+		// class
 		"rlimits":      newRlimitFromLog,
-		"cap":          newCapabilityFromLog,
-		"io_uring":     newIOUringFromLog,
-		"signal":       newSignalFromLog,
-		"ptrace":       newPtraceFromLog,
 		"namespace":    newUsernsFromLog,
-		"unix":         newUnixFromLog,
-		"dbus":         newDbusFromLog,
+		"cap":          newCapabilityFromLog,
+		"net":          newNetworkFromLog,
 		"posix_mqueue": newMqueueFromLog,
 		"sysv_mqueue":  newMqueueFromLog,
+		"signal":       newSignalFromLog,
+		"ptrace":       newPtraceFromLog,
+		"unix":         newUnixFromLog,
+		"io_uring":     newIOUringFromLog,
+		"dbus":         newDbusFromLog,
 		"mount": func(log map[string]string) Rule {
 			if strings.Contains(log["flags"], "remount") {
 				return newRemountFromLog(log)
@@ -156,7 +158,6 @@ var (
 			newRule := newLogMountMap[log["operation"]]
 			return newRule(log)
 		},
-		"net": newNetworkFromLog,
 		"file": func(log map[string]string) Rule {
 			if log["operation"] == "change_onexec" {
 				return newChangeProfileFromLog(log)
@@ -164,14 +165,19 @@ var (
 				return newFileFromLog(log)
 			}
 		},
-		"exec":       newFileFromLog,
-		"getattr":    newFileFromLog,
-		"mkdir":      newFileFromLog,
-		"mknod":      newFileFromLog,
-		"open":       newFileFromLog,
-		"rename_src": newFileFromLog,
-		"truncate":   newFileFromLog,
-		"unlink":     newFileFromLog,
+		// operation
+		"capable":     newCapabilityFromLog,
+		"chmod":       newFileFromLog,
+		"exec":        newFileFromLog,
+		"getattr":     newFileFromLog,
+		"link":        newFileFromLog,
+		"mkdir":       newFileFromLog,
+		"mknod":       newFileFromLog,
+		"open":        newFileFromLog,
+		"rename_dest": newFileFromLog,
+		"rename_src":  newFileFromLog,
+		"truncate":    newFileFromLog,
+		"unlink":      newFileFromLog,
 	}
 	newLogMountMap = map[string]func(log map[string]string) Rule{
 		"mount":     newMountFromLog,
@@ -213,7 +219,7 @@ func (p *Profile) AddRule(log map[string]string) {
 		case strings.Contains(log["operation"], "dbus"):
 			p.Rules = append(p.Rules, newDbusFromLog(log))
 		default:
-			fmt.Printf("unknown log type: %s", log["operation"])
+			fmt.Printf("unknown log type: %s\n", log["operation"])
 		}
 	}
 }

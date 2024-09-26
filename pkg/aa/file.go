@@ -118,6 +118,21 @@ func (r *File) String() string {
 }
 
 func (r *File) Validate() error {
+	if !isAARE(r.Path) {
+		return fmt.Errorf("'%s' is not a valid AARE", r.Path)
+	}
+	for _, v := range r.Access {
+		if v == "" {
+			continue
+		}
+		if !slices.Contains(requirements[r.Kind()]["access"], v) ||
+			!slices.Contains(requirements[r.Kind()]["transition"], v) {
+			return fmt.Errorf("invalid mode '%s'", v)
+		}
+	}
+	if r.Target != "" && !isAARE(r.Target) {
+		return fmt.Errorf("'%s' is not a valid AARE", r.Target)
+	}
 	return nil
 }
 
@@ -260,6 +275,12 @@ func (r *Link) String() string {
 }
 
 func (r *Link) Validate() error {
+	if !isAARE(r.Path) {
+		return fmt.Errorf("'%s' is not a valid AARE", r.Path)
+	}
+	if !isAARE(r.Target) {
+		return fmt.Errorf("'%s' is not a valid AARE", r.Target)
+	}
 	return nil
 }
 
