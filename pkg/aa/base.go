@@ -9,8 +9,8 @@ import (
 )
 
 type Base struct {
-	IsLineRule  bool
 	Comment     string
+	IsLineRule  bool
 	NoNewPrivs  bool
 	FileInherit bool
 	Optional    bool

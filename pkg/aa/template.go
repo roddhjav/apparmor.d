@@ -138,7 +138,7 @@ var (
 
 	// The order AARE should be sorted
 	stringAlphabet = []byte(
-		"!\"#$%&'*(){}[]+,-./:;<=>?@\\^_`|~0123456789abcdefghijklmnopqrstuvwxyz",
+		"!\"#$%&'*(){}[]@+,-./:;<=>?\\^_`|~0123456789abcdefghijklmnopqrstuvwxyz",
 	)
 	stringWeights = generateWeights(stringAlphabet)
 
@@ -232,11 +232,11 @@ func cjoin(i any) string {
 	}
 }
 
-func kindOf(i any) string {
+func kindOf(i Rule) string {
 	if i == nil {
 		return ""
 	}
-	return i.(Rule).Kind().String()
+	return i.Kind().String()
 }
 
 func setindent(i string) string {
