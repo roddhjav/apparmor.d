@@ -76,10 +76,10 @@ func getIndentationLevel(input string) int {
 	return level
 }
 
-func parse(kind kind, profile string) ([]aa.Rules, []string, error) {
+func parse(kind kind, profile string) (aa.ParaRules, []string, error) {
 	var raw string
 	paragraphs := []string{}
-	rulesByParagraph := []aa.Rules{}
+	rulesByParagraph := aa.ParaRules{}
 
 	switch kind {
 	case isTunable, isProfile:
@@ -110,9 +110,6 @@ func formatFile(kind kind, profile string) (string, error) {
 		return "", err
 	}
 	for idx, rules := range rulesByParagraph {
-		if err := rules.Validate(); err != nil {
-			return "", err
-		}
 		aa.IndentationLevel = getIndentationLevel(paragraphs[idx])
 		rules = rules.Merge().Sort().Format()
 		profile = strings.Replace(profile, paragraphs[idx], rules.String()+"\n", -1)
@@ -202,8 +199,12 @@ func main() {
 			logging.Fatal("%s", err.Error())
 		}
 		err = aaFormat(files)
+
 	case tree:
 		err = aaTree()
+
+	default:
+		flag.Usage()
 	}
 
 	if err != nil {
