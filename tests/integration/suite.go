@@ -101,7 +101,7 @@ func (t *TestSuite) ReadSettings(path *paths.Path) error {
 // Results returns a sum up of the apparmor logs raised by the scenarios
 func (t *TestSuite) Results() string {
 	file, _ := logs.GetAuditLogs(logs.LogFiles[0])
-	aaLogs := logs.NewApparmorLogs(file, "")
+	aaLogs := logs.New(file, "")
 	return aaLogs.String()
 }
 
