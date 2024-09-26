@@ -49,16 +49,7 @@ func filter(only bool, opt *Option, profile string) (string, error) {
 		return opt.Clean(profile), nil
 	}
 
-	inline := true
-	tmp := strings.Split(opt.Raw, Keyword)
-	if len(tmp) >= 1 {
-		left := strings.TrimSpace(tmp[0])
-		if len(left) == 0 {
-			inline = false
-		}
-	}
-
-	if inline {
+	if opt.IsInline() {
 		profile = strings.Replace(profile, opt.Raw, "", -1)
 	} else {
 		regRemoveParagraph := regexp.MustCompile(`(?s)` + opt.Raw + `\n.*?\n\n`)
