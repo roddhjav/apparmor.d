@@ -174,14 +174,14 @@ func TestAppArmorEvents(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			file := strings.NewReader(tt.event)
-			if got := NewApparmorLogs(file, ""); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("NewApparmorLogs() = %v, want %v", got, tt.want)
+			if got := New(file, ""); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("New() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func TestNewApparmorLogs(t *testing.T) {
+func TestNew(t *testing.T) {
 	tests := []struct {
 		name string
 		path string
@@ -208,7 +208,7 @@ func TestNewApparmorLogs(t *testing.T) {
 					"apparmor":       "DENIED",
 					"profile":        "dnsmasq",
 					"operation":      "open",
-					"name":           "@{PROC}/@{pid}/environ",
+					"name":           "@{PROC}/1/environ",
 					"comm":           "dnsmasq",
 					"requested_mask": "r",
 					"denied_mask":    "r",
@@ -251,8 +251,8 @@ func TestNewApparmorLogs(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			file, _ := os.Open(tt.path)
-			if got := NewApparmorLogs(file, tt.name); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("NewApparmorLogs() = %v, want %v", got, tt.want)
+			if got := New(file, tt.name); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("New() = %v, want %v", got, tt.want)
 			}
 		})
 	}

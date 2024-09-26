@@ -17,7 +17,7 @@ import (
 
 const usage = `aa-log [-h] [--systemd] [--file file] [--rules | --raw] [profile]
 
-    Review AppArmor generated messages in a colorful way. Supports logs from
+    Review AppArmor generated messages in a colorful way. It supports logs from
     auditd, systemd, syslog as well as dbus session events.
 
     It can be given an optional profile name to filter the output with.
@@ -64,7 +64,7 @@ func aaLog(logger string, path string, profile string) error {
 		return nil
 	}
 
-	aaLogs := logs.NewApparmorLogs(file, profile)
+	aaLogs := logs.New(file, profile)
 	if rules {
 		profiles := aaLogs.ParseToProfiles()
 		for _, p := range profiles {
