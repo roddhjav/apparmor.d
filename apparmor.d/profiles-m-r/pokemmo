@@ -1,0 +1,100 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 odomingao
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/pokemmo-launcher
+profile pokemmo @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/audio-client>
+  include <abstractions/dconf-write> # Installer
+  include <abstractions/desktop>
+  include <abstractions/fontconfig-cache-write> # Installer
+  include <abstractions/glfw>
+  include <abstractions/graphics>
+  include <abstractions/nameservice-strict>
+  include <abstractions/p11-kit> # Installer
+  include <abstractions/ssl_certs>
+
+  # The installer is a GTK app and requires a few extra abstractions
+  # GTK/QT/fonts abstractions are unused by the game itself and can
+  # be removed if this profile is later split into stacked profiles
+
+  network inet  dgram,
+  network inet6 dgram,
+  network inet  stream,
+  network inet6 stream,
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  @{coreutils_path} ix,
+  @{sh_path} ix,
+
+  @{bin}/java ix,
+  @{bin}/perl ix,
+  @{bin}/python ix,
+  @{bin}/python@{int} ix,
+  @{bin}/python@{int}.@{int} ix,
+  @{bin}/which ix,
+  @{lib}/jvm/java-@{int}-openjdk/bin/java ix,
+
+  # Installer
+  @{bin}/openssl ix,
+  @{bin}/ps ix,
+  @{bin}/wget ix,
+  @{bin}/zenity ix,
+  @{lib}/jvm/java-@{int}-openjdk/lib/jspawnhelper ix,
+
+  /etc/lsb-release r, # Installer
+  /etc/java-openjdk/** r,
+  /etc/timezone r,
+  /etc/wgetrc r, # Installer
+
+  # Installer
+  owner @{HOME}/ r,
+  owner @{HOME}/.java/fonts/** rw,
+  owner @{HOME}/.wget-hsts rwk,
+
+  owner @{user_config_dirs}/pokemmo/{,**} rw,
+  owner @{user_share_dirs}/pokemmo/{,**} rw,
+
+  owner /tmp/hsperfdata_user/ rw,
+  owner /tmp/hsperfdata_user/@{int} rwk,
+  owner /tmp/libgdxuser/{,**} rw,
+  owner /tmp/libgdxuser/**/*.so mrw,
+  owner /tmp/lwjgl_user/{,**} rw,
+  owner /tmp/lwjgl_user/**/*.so mrwk,
+
+  @{sys}/devices/system/cpu/cpu@{int}/microcode/version r,
+
+        @{PROC}/@{pid}/net/if_inet6 r,
+        @{PROC}/cgroups r,
+  owner @{PROC}/@{pid}/cgroup r,
+  owner @{PROC}/@{pid}/coredump_filter rw,
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/task/@{tid}/comm rw,
+
+  # Installer
+        @{PROC}/ r,
+        @{PROC}/uptime r,
+        @{PROC}/sys/kernel/pid_max r,
+  owner @{PROC}/@{pid}/cmdline r,
+  owner @{PROC}/@{pid}/environ r,
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/stat r,
+
+        /dev/input/ r,
+        /dev/input/event@{int} rw,
+        /dev/input/js@{int} rw,
+
+        /dev/tty rw,
+  owner /dev/tty@{int} rw,
+
+  include if exists <local/pokemmo>
+}
+
+# vim:syntax=apparmor
