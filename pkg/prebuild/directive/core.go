@@ -20,7 +20,7 @@ var (
 	// Build the profiles with the following directive applied
 	Directives = map[string]Directive{}
 
-	regDirective = regexp.MustCompile(`(?m).*` + Keyword + `([a-z]*) (.*)`)
+	regDirective = regexp.MustCompile(`(?m).*` + Keyword + `([a-z]*)( .*)?`)
 )
 
 // Main directive interface
