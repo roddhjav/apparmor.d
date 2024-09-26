@@ -35,10 +35,12 @@ func init() {
 		Base: cfg.Base{
 			Keyword: "dbus",
 			Msg:     "Dbus directive applied",
-			Help: `#aa:dbus own bus=<bus> name=<name> [interface=AARE] [path=AARE]
-    #aa:dbus talk bus=<bus> name=<name> label=<profile> [interface=AARE] [path=AARE]`,
-		},
-	})
+			Help: []string{
+				"own bus=<bus> name=<name> [interface=AARE] [path=AARE]",
+				"talk bus=<bus> name=<name> label=<profile> [interface=AARE] [path=AARE]",
+			},
+		}},
+	)
 }
 
 func setInterfaces(rules map[string]string) []string {

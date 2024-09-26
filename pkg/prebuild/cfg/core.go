@@ -9,20 +9,20 @@ import "fmt"
 type BaseInterface interface {
 	Message() string
 	Name() string
-	Usage() string
+	Usage() []string
 }
 
 type Base struct {
 	Msg     string
 	Keyword string
-	Help    string
+	Help    []string
 }
 
 func (b Base) Name() string {
 	return b.Keyword
 }
 
-func (b Base) Usage() string {
+func (b Base) Usage() []string {
 	return b.Help
 }
 
@@ -41,7 +41,9 @@ func Help[T BaseInterface](name string, tasks map[string]T) string {
 func Usage[T BaseInterface](name string, tasks map[string]T) string {
 	res := fmt.Sprintf("%s\n", name)
 	for _, t := range tasks {
-		res += fmt.Sprintf("    %s\n", t.Usage())
+		for _, h := range t.Usage() {
+			res += fmt.Sprintf("    #aa:%s %s\n", t.Name(), h)
+		}
 	}
 	return res
 }

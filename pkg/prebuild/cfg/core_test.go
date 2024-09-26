@@ -5,6 +5,7 @@
 package cfg
 
 import (
+	"slices"
 	"strings"
 	"testing"
 )
@@ -17,7 +18,7 @@ func TestBase_Helpers(t *testing.T) {
 	}{
 		{
 			name: "base",
-			b:    Base{Keyword: "test", Help: "test", Msg: "test"},
+			b:    Base{Keyword: "test", Help: []string{"test"}, Msg: "test"},
 			want: "test",
 		},
 	}
@@ -26,7 +27,7 @@ func TestBase_Helpers(t *testing.T) {
 			if got := tt.b.Name(); got != tt.want {
 				t.Errorf("Base.Name() = %v, want %v", got, tt.want)
 			}
-			if got := tt.b.Usage(); got != tt.want {
+			if got := tt.b.Usage(); !slices.Equal(got, []string{tt.want}) {
 				t.Errorf("Base.Usage() = %v, want %v", got, tt.want)
 			}
 			if got := tt.b.Message(); got != tt.want {
@@ -45,8 +46,8 @@ func TestHelp(t *testing.T) {
 		{
 			name: "one",
 			tasks: map[string]Base{
-				"one": {Keyword: "one", Help: "one", Msg: "one"},
-				"two": {Keyword: "two", Help: "two", Msg: "two"},
+				"one": {Keyword: "one", Help: []string{"one"}, Msg: "one"},
+				"two": {Keyword: "two", Help: []string{"two"}, Msg: "two"},
 			},
 			want: `one`,
 		},

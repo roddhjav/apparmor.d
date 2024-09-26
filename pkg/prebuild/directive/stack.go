@@ -33,7 +33,7 @@ func init() {
 		Base: cfg.Base{
 			Keyword: "stack",
 			Msg:     "Stack directive applied",
-			Help:    Keyword + `stack [X] profiles...`,
+			Help:    []string{"[X] profiles..."},
 		},
 	})
 }

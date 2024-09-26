@@ -25,7 +25,7 @@ func init() {
 		Base: cfg.Base{
 			Keyword: "exec",
 			Msg:     "Exec directive applied",
-			Help:    Keyword + `exec [P|U|p|u|PU|pu|] profiles...`,
+			Help:    []string{"[P|U|p|u|PU|pu|] profiles..."},
 		},
 	})
 }
