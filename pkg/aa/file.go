@@ -118,14 +118,20 @@ func (r *File) String() string {
 }
 
 func (r *File) Validate() error {
+	if r.Path == "" && r.Target == "" && len(r.Access) == 0 {
+		return nil // rule: `file` or `owner file`
+	}
 	if !isAARE(r.Path) {
 		return fmt.Errorf("'%s' is not a valid AARE", r.Path)
+	}
+	if len(r.Access) == 0 {
+		return fmt.Errorf("missing file access")
 	}
 	for _, v := range r.Access {
 		if v == "" {
 			continue
 		}
-		if !slices.Contains(requirements[r.Kind()]["access"], v) ||
+		if !slices.Contains(requirements[r.Kind()]["access"], v) &&
 			!slices.Contains(requirements[r.Kind()]["transition"], v) {
 			return fmt.Errorf("invalid mode '%s'", v)
 		}
