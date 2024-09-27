@@ -843,7 +843,7 @@ var (
 		raw            string
 		apparmor       *AppArmorProfileFile
 		wParseErr      bool
-		wRules         []Rules
+		wRules         ParaRules
 		wParseRulesErr bool
 	}{
 		{
@@ -851,7 +851,7 @@ var (
 			raw:            "",
 			apparmor:       &AppArmorProfileFile{},
 			wParseErr:      false,
-			wRules:         []Rules{},
+			wRules:         ParaRules{},
 			wParseRulesErr: false,
 		},
 		{
@@ -875,7 +875,7 @@ var (
 				},
 			},
 			wParseErr:      false,
-			wRules:         []Rules{},
+			wRules:         ParaRules{},
 			wParseRulesErr: false,
 		},
 		{
@@ -914,7 +914,7 @@ var (
 				},
 			},
 			wParseErr:      false,
-			wRules:         []Rules{},
+			wRules:         ParaRules{},
 			wParseRulesErr: false,
 		},
 		{
@@ -943,7 +943,7 @@ var (
 				},
 			},
 			wParseErr: false,
-			wRules: []Rules{
+			wRules: ParaRules{
 				{
 					&Include{IsMagic: true, Path: "abstractions/base"},
 					&Include{IsMagic: true, Path: "abstractions/nameservice-strict"},
@@ -1050,7 +1050,7 @@ var (
 				},
 			},
 			wParseErr: false,
-			wRules: []Rules{
+			wRules: ParaRules{
 				{
 					&Include{IsMagic: true, Path: "abstractions/base"},
 					&Include{IsMagic: true, Path: "abstractions/nameservice-strict"},

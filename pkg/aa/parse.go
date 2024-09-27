@@ -187,11 +187,11 @@ func parseParagraph(input string) (Rules, error) {
 	}
 
 	res = append(res, rrr...)
-	for _, r := range res {
-		if r.Constraint() == PreambleRule {
-			return nil, fmt.Errorf("Rule not allowed in block: %s", r)
-		}
-	}
+	// for _, r := range res {
+	// 	if r.Constraint() == PreambleRule {
+	// 		return nil, fmt.Errorf("Rule not allowed in block: %s", r)
+	// 	}
+	// }
 	return res, nil
 }
 
