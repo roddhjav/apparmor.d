@@ -1,0 +1,50 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2024 Besanon <m231009ts@mailfence.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/obconf-qt
+profile obconf-qt @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/dconf-write>
+  include <abstractions/gtk>
+  include <abstractions/mesa>
+  include <abstractions/fonts>
+  include <abstractions/graphics>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/lxqt>
+  include <abstractions/qt5-shader-cache>
+  include <abstractions/freedesktop.org>
+  include <abstractions/nameservice-strict>
+  include <abstractions/user-download-strict>
+
+  @{exec_path}				    mr,
+
+  /usr/share/obconf/{,*} 			    r,
+  /usr/share/ibus/setup/{,**}  			    rw,
+  /usr/share/obconf-qt/translations/obconf-qt_de.qm r,
+  /usr/share/drirc.d/ 				    r,
+
+  /etc/xdg/openbox/rc.xml 			    r,
+
+  owner @{user_config_dirs}/openbox/{,**} 	rw,
+
+  owner @{HOME}/.themes/{,**} 			    r,
+
+  owner @{PROC}/@{pid}/mountinfo 		r,
+  owner @{PROC}/@{pid}/mounts 			r,
+
+  /etc/fstab 					r,
+
+  owner /dev/tty@{int} rw,
+
+  owner /tmp/#@{int}  r,
+
+  include if exists <local/obconf-qt>
+}
+
+# vim:syntax=apparmor

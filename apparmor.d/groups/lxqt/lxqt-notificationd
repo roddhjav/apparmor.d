@@ -1,0 +1,59 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2024 Besanon  <m231009ts@mailfence.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/lxqt-notificationd
+profile lxqt-notificationd @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/gtk>
+  include <abstractions/graphics>
+  include <abstractions/lxqt>
+  include <abstractions/video>
+  include <abstractions/fontconfig-cache-read> 
+  include <abstractions/qt5-shader-cache>
+  include <abstractions/dbus-session>
+  include <abstractions/dbus-accessibility>
+  include <abstractions/gvfs-open>
+  include <abstractions/nameservice-strict>
+
+  dbus receive
+  	bus=session
+  	path="/org/freedesktop/Notifications"
+  	interface="org.freedesktop.DBus.Introspectable"
+  	peer=(name=":[0-9]*.[0-9]*"),
+  dbus send
+  	bus=session
+  	path="/org/freedesktop/Notifications"
+  	interface="org.freedesktop.Notifications"
+  	peer=(name="org.freedesktop.DBus"),
+  dbus receive
+  	bus=session
+  	path="/org/freedesktop/Notifications"
+  	interface="org.freedesktop.Notifications"
+  	peer=(name=":[0-9]*.[0-9]*"),
+  
+   @{exec_path}					mr,
+
+   /var/lib/dpkg/info/lxqt-notifications.conffiles 	r,
+
+   owner @{user_cache_dirs}/lxqt-notificationd/**  	rwk,
+   owner @{user_cache_dirs}/lxqt-notificationd/		rw,
+   owner @{user_cache_dirs}/lxqt-notificationd/#@{int} 	rw,
+   owner @{user_cache_dirs}/lxqt-notificationd/unattended.list.@{rand6} rwkl -> @{user_cache_dirs}/lxqt-notificationd/#@{int},
+   owner @{user_cache_dirs}/mesa_shader_cache/index 	rwk,
+
+   owner @{user_config_dirs}/lxqt/globalkeyshortcuts.conf.@{rand6} rwkl -> @{user_config_dirs}/lxqt/#@{int},
+
+   owner /tmp/@{int}  					r,
+
+   /dev/tty						rw,
+
+   include if exists <local/lxqt-notificationd>
+}
+
+# vim:syntax=apparmor
