@@ -43,9 +43,67 @@ A full set of rules for all chromium based browsers. It works as a *function* an
 If your application requires chromium to run use [`common/chromium`](#commonchromium) or [`common/electron`](#commonelectron)
 instead.
 
+### **`app/firefox`**
+
+Similar to `app/chromium` but for Firefox based browsers (and thunderbird). It requires the same *arguments* as `app/chromium`:
+
+
+## Context helper
+
+These are context helper to be used for in sub profile, they aim at providing a minimal set of rules for a given program. The calling profile only needs to add rules dependant of its use case.
+
+### **`app/editor`**
+
+A minimal set of rules for profiles including terminal editor. It is intended to be used in profiles or sub-profiles that need to edit file using the user editor of choice. The following editors are supported:
+
+- neo vim
+- vim
+- nano
+
+```sh
+  @{editor_path} rCx -> editor,
+
+  profile editor {
+    include <abstractions/base>
+    include <abstractions/app/editor>
+
+    include if exists <local/<profile_name>_editor>
+  }
+```
+
+### **`app/kmod`**
+
+A minimal set of rules for profiles that need to load kernel modules. It is intended to be used in profiles or sub-profiles that need to load kernel modules for a very specific action:
+
+```sh
+  @{bin}/modprobe rCx -> kmod,
+
+  profile kmod {
+    include <abstractions/base>
+    include <abstractions/app/kmod>
+
+    include if exists <local/<profile_name>_kmod>
+  }
+``` 
+
+### **`app/open`**
+
+Set of rules for `child-open-*` profiles. It should usually not be used directly in a profile.
 
 ### **`app/pgrep`**
 
+ Minimal set of rules for pgrep/pkill. It is intended to be used in profiles or sub-profiles that need to use `pgrep` or `pkill` for a very specific action:
+
+ ```sh
+  @{bin}/pgrep rCx -> pgrep,
+
+  profile pgrep {
+    include <abstractions/base>
+    include <abstractions/app/pgrep>
+
+    include if exists <local/<profile_name>_pgrep>
+  }
+ ```
 
 ### **`app/sudo`**
 
@@ -58,6 +116,22 @@ A minimal set of rules for profiles including internal `sudo`. Interactive sudo 
     include <abstractions/app/sudo>
 
     include if exists <local/<profile_name>_root>
+  }
+```
+
+
+### **`app/pkexec`**
+
+A minimal set of rules for profiles including internal `pkexec`. Like `app/sudo`, it should be used in profiles or sub-profiles that need to elevate their privileges using `pkexec` for a very specific action:
+
+```sh
+  @{bin}/pkexec rCx -> pkexec,
+
+  profile pkexec {
+    include <abstractions/base>
+    include <abstractions/app/pkexec>
+
+    include if exists <local/<profile_name>_pkexec>
   }
 ```
 
@@ -75,6 +149,20 @@ An alternative solution for [child-systemctl](structure.md#children-profiles), w
   }
 ```
 
+### **`app/udevadm`**
+
+A minimal set of rules for profiles including internal `udevadm` as read-only. It is intended to be used in profiles or sub-profiles that need to use `udevadm` for a very specific action:
+
+```sh
+  @{bin}/udevadm rCx -> udevadm,
+
+  profile udevadm {
+    include <abstractions/base>
+    include <abstractions/app/udevadm>
+
+    include if exists <local/<profile_name>_udevadm>
+  }
+```
 
 ## Common Dependencies
 
@@ -207,6 +295,9 @@ Common rules for interactive shell using bash.
 
 Common rules for interactive shell using zsh.
 
+### **`fish`**
+
+Common rules for interactive shell using fish.
 
 ## System
 
@@ -221,6 +312,10 @@ Use this abstraction instead of upstream `abstractions/nameservice` as upstream 
 ### **`app-open`**
 
 Instead of allowing the run of all software under `@{bin}` or `@{lib}` the purpose of this abstraction is to list all GUI program that can open resources. Ultimately, only sandbox manager program such as `bwrap`, `snap`, `flatpak`, `firejail` should be present here. Until this day, this profile will be a controlled mess.
+
+### **`app-launcher-root`**
+
+### **`app-launcher-user`**
 
 
 ## Devices
