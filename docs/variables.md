@@ -6,8 +6,10 @@ title: Variables References
 
 ### User directories
 
+<figure markdown>
+
 | Description | Name | Default Value(s) |
-|-------------|:----:|---------------|
+|-------------|------|------------------|
 | Desktop | `@{XDG_DESKTOP_DIR}` | `Desktop` |
 | Documents | `@{XDG_DOCUMENTS_DIR}` | `Documents` |
 | Downloads | `@{XDG_DOWNLOAD_DIR}` | `Downloads` |
@@ -31,10 +33,14 @@ title: Variables References
 | Disk images | `@{XDG_IMG_DIR}` | `images` |
 | Games Studio | `@{XDG_GAMESSTUDIO_DIR}` | `.unity3d` |
 
+</figure>
+
 ### Dotfiles
 
+<figure markdown>
+
 | Description | Name | Default Value(s) |
-|-------------|:----:|---------------|
+|-------------|------|------------------|
 | Cache | ` @{XDG_CACHE_DIR}` | `.cache` |
 | Config | `@{XDG_CONFIG_DIR}` | `.config` |
 | Data | `@{XDG_DATA_DIR}` | `.local/share` |
@@ -45,26 +51,33 @@ title: Variables References
 | SSH | `@{XDG_SSH_DIR}` | `.ssh` |
 | Private | `@{XDG_PRIVATE_DIR}` | `.{p,P}rivate {p,P}rivate` |
 | Passwords | `@{XDG_PASSWORD_STORE_DIR}` | `.password-store` |
-| Mail | `@{XDG_MAIL_DIR}` | `Mail .{m,M}ail` |
+
+</figure>
 
 ### Full configuration path
 
+<figure markdown>
+
 | Description | Name | Default Value(s) |
-|-------------|:----:|---------------|
+|-------------|------|------------------|
 | Cache | `@{user_cache_dirs}` | `@{HOME}/@{XDG_CACHE_DIR}` |
 | Config | `@{user_config_dirs}` | `@{HOME}/@{XDG_CONFIG_DIR}` |
 | Bin | `@{user_bin_dirs}` | `@{HOME}/@{XDG_BIN_DIR}` |
 | Lib | `@{user_lib_dirs}` | `@{HOME}/@{XDG_LIB_DIR}` |
 | Share | `@{user_share_dirs}` | ` @{HOME}/@{XDG_DATA_DIR}` |
 | State | `@{user_state_dirs}` | ` @{HOME}/@{XDG_STATE_DIR}` |
-| Build | `@{user_build_dirs}` | `/tmp//build/` |
+| Build | `@{user_build_dirs}` | `/tmp/build/` |
 | Packages | `@{user_pkg_dirs}` | `/tmp/pkg/` |
 | Tmp | `@{user_tmp_dirs}` | `@{run}/user/@{uid} /tmp/` |
 
+</figure>
+
 ### Full user path
 
+<figure markdown>
+
 | Description | Name | Default Value(s) |
-|-------------|:----:|---------------|
+|-------------|------|------------------|
 | Documents | `@{user_documents_dirs}` | `@{HOME}/@{XDG_DOCUMENTS_DIR} @{MOUNTS}/@{XDG_DOCUMENTS_DIR}` |
 | Downloads | `@{user_download_dirs}` | `@{HOME}/@{XDG_DOWNLOAD_DIR} @{MOUNTS}/@{XDG_DOWNLOAD_DIR}` |
 | Music | `@{user_music_dirs}` | `@{HOME}/@{XDG_MUSIC_DIR} @{MOUNTS}/@{XDG_MUSIC_DIR}` |
@@ -85,39 +98,77 @@ title: Variables References
 | Vm Shares | `@{user_vm_shares}` | `@{HOME}/@{XDG_VM_SHARES_DIR} @{MOUNTS}/@{XDG_VM_SHARES_DIR}` |
 | Disk images | `@{user_img_dirs}` | `@{HOME}/@{XDG_IMG_DIR} @{MOUNTS}/@{XDG_IMG_DIR}` |
 
+</figure>
+
 
 ## System variables
 
-!!! warning
+!!! danger
 
     Do not modify these variables unless you know what you are doing
 
-**Helper variables**
+#### Base variables
+
+<figure markdown>
 
 | Description | Name | Default Value(s) |
-|-------------|:----:|---------------|
-| Integer (up to 10 digits) | `@{int}` | `[0-9]{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}{[0-9],}` |
-| Any 6, 8 or 10 characters | `@{rand6}`, `@{rand8}`, `@{rand10}` | |
-| Hexadecimal | `@{h}*@{h}` |  |
-| Universally unique identifier | `@{uuid}` |  |
-| Current Process id | `@{pid}` | `[0-9]*` |
-| Processes ids | `@{pids}` | `[0-9]*` |
-| User id | `@{uid}` | `[0-9]*` |
-| Thread id | `@{tid}` | `[0-9]*` |
-| Single hexadecimal character | `@{h}` | `[0-9a-fA-F]` |
+|-------------|------|------------------|
+| Any digit | `@{d}` | `[0-9]` |
+| Any letter | `@{l}` | `[a-zA-Z]` |
 | Single alphanumeric character | `@{c}` | `[0-9a-zA-Z]` |
-| PCI Devices | `@{pci}` | `@{pci_bus}/**/` |
-| PCI Bus | `@{pci_bus}` | `pci@{h}@{h}@{h}@{h}:@{h}@{h}` |
-| PCI Id | `@{pci_id}` | `@{h}@{h}@{h}@{h}:@{h}@{h}:@{h}@{h}.@{h}` |
+| Word character: matches any letter, digit or underscore. | `@{w}` | `[0-9a-zA-Z_]` |
+| Single hexadecimal character | `@{h}` | `[0-9a-fA-F]` |
+| Integer up to 10 digits (0-9999999999) | `@{int}` | `@{d}{@{d},}{@{d},}{@{d},}{@{d},}{@{d},}{@{d},}{@{d},}{@{d},}{@{d},}` |
+| Unsigned integer over 8 bits (0-255) | `@{u8}` | `[0-9]{[0-9],} 1[0-9][0-9] 2[0-4][0-9] 25[0-5]` |
+| Unsigned integer over 16 bits (0-65535, 5 digits) | `@{u16}` | `@{d}{@{d},}{@{d},}{@{d},}{@{d},}` |
+| Hexadecimal up to 64 characters | `@{hex}` | |
+| Alphanumeric up to 64 characters | `@{rand}` | |
+| Word up to 64 characters | `@{word}` | |
 
-**System Paths**
+</figure>
+
+#### Basic variables of a given length
+
+<figure markdown>
+
+| Description | Name |
+|-------------|------|
+| Any x digits characters | `@{int2}` `@{int4}` `@{int6}` `@{int8}` `@{int9}` `@{int10}` `@{int12}` `@{int15}` `@{int16}` `@{int32}` `@{int64}` |
+| Any x hexadecimal characters | `@{hex2}` `@{hex4}` `@{hex6}` `@{hex8}` `@{hex9}` `@{hex10}` `@{hex12}` `@{hex15}` `@{hex16}` `@{hex32}` `@{hex38}` `@{hex64}` |
+| Any x alphanumeric characters | `@{rand2}` `@{rand4}` `@{rand6}` `@{rand8}` `@{rand9}` `@{rand10}` `@{rand12}` `@{rand15}` `@{rand16}` `@{rand32}` `@{rand64}` |
+| Any x word characters | `@{word2}` `@{word4}` `@{word6}` `@{word8}` `@{word9}` `@{word10}` `@{word12}` `@{word15}` `@{word16}` `@{word32}` `@{word64}` |
+
+</figure>
+
+#### System Variables
+
+<figure markdown>
 
 | Description | Name | Default Value(s) |
-|-------------|:----:|---------------|
+|-------------|------|------------------|
+| Common architecture names | `@{arch}` | `x86_64 amd64 i386 i686` |
+| Dbus unique name | `@{busname}` | `:1.@{u16} :not.active.yet` |
+| Universally unique identifier | `@{uuid}` | `@{h}@{h}@{h}@{h}@{h}@{h}@{h}@{h}[-_]@{h}@{h}@{h}@{h}[-_]@{h}@{h}@{h}@{h}[-_]@{h}@{h}@{h}@{h}[-_]@{h}@{h}@{h}@{h}@{h}@{h}@{h}@{h}@{h}@{h}@{h}@{h}` |
+| Username valid characters | `@{user}` | `[a-zA-Z_]{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}` |
+| Group valid characters | `@{group}` | `@{user}` |
+| Semantic version | `@{version}` | `@{int}{.@{int},}{.@{int},}{-@{rand},}` |
+| Current Process Id | `@{pid}` | `{[1-9],[1-9][0-9],[1-9][0-9][0-9],[1-9][0-9][0-9][0-9],[1-9][0-9][0-9][0-9][0-9],[1-9][0-9][0-9][0-9][0-9][0-9],[1-4][0-9][0-9][0-9][0-9][0-9][0-9]}` |
+| Processes Ids | `@{pids}` | `@{pid}` |
+| Thread Id | `@{tid}` | `@{pid}` |
+| User Id (equivalent to `@{int}`) | `@{uid}` | `{[0-9],[1-9][0-9],[1-9][0-9][0-9],[1-9][0-9][0-9][0-9],[1-9][0-9][0-9][0-9][0-9],[1-9][0-9][0-9][0-9][0-9][0-9],[1-9][0-9][0-9][0-9][0-9][0-9][0-9],[1-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9],[1-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9],[1-4][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]}` |
+
+</figure>
+
+#### System Paths
+
+<figure markdown>
+
+| Description | Name | Default Value(s) |
+|-------------|------|------------------|
 | Root Home | `@{HOMEDIRS}` | `/home/` |
 | Home directories | `@{HOME}` | `@{HOMEDIRS}/*/ /root/` |
-| Root Mountpoints | `@{MOUNTDIRS}` | `/media/ @{run}/media/ /mnt/` |
-| Mountpoints directories | `@{MOUNTS}` | `@{MOUNTDIRS}/*/` |
+| Root Mountpoints | `@{MOUNTDIRS}` | `/media/ @{run}/media/@{user}/ /mnt/` |
+| Mountpoints directories | `@{MOUNTS}` | `@{MOUNTDIRS}/*/ @{run}/user/@{uid}/gvfs/` |
 | Bin | `@{bin}` |  `/{usr/,}{s,}bin` |
 | Lib | `@{lib}` |  `/{usr/,}lib{,exec,32,64}` |
 | multi-arch library | `@{multiarch}` | `*-linux-gnu*` |
@@ -127,13 +178,29 @@ title: Variables References
 | System wide share | `@{system_share_dirs}` | `/{usr,usr/local,var/lib/@{flatpak_exports_root}}/share` |
 | Flatpak export | `@{flatpak_exports_root}` | `{flatpak/exports,flatpak/{app,runtime}/*/*/*/*/export}` |
 
-**Program paths**
+</figure>
+
+#### System Internal
 
 | Description | Name | Default Value(s) |
-|-------------|:----:|---------------|
+|-------------|------|------------------|
+| PCI Devices | `@{pci}` | `@{pci_bus}/**/` |
+| PCI Bus | `@{pci_bus}` | `pci@{h}@{h}@{h}@{h}:@{h}@{h}` |
+| PCI Id | `@{pci_id}` | `@{h}@{h}@{h}@{h}:@{h}@{h}:@{h}@{h}.@{h}` |
+| HCI devices | `@{hci_id}` | `dev_@{c}@{c}_@{c}@{c}_@{c}@{c}_@{c}@{c}_@{c}@{c}_@{c}@{c}` |
+| Udev data dynamic assignment ranges (234 to 254 then 384 to 511) | `@{dynamic}` | `23[4-9] 24[0-9] 25[0-4] 38[4-9] 39[0-9] 4[0-9][0-9] 50[0-9] 51[0-1]` |
+
+#### Program paths
+
+<figure markdown>
+
+| Description | Name | Default Value(s) |
+|-------------|------|------------------|
 | All the shells | `@{shells}` | `sh zsh bash dash fish rbash ksh tcsh csh` |
 | Shells path | `@{shells_path}` | `@{bin}/@{shells}` |
 | Coreutils programs that should not have dedicated profile | `@{coreutils}` | See [tunables/multiarch.d/paths](https://github.com/roddhjav/apparmor.d/blob/c2d88c9bffc626fcf7d9b15b42b50706afb29562/apparmor.d/tunables/multiarch.d/paths#L46) |
 | Coreutils paths | `@{coreutils_path}` | `@{bin}/@{coreutils}` |
 | Launcher paths | `@{open_path}` | `@{bin}/exo-open @{bin}/xdg-open @{lib}/@{multiarch}/glib-@{version}/gio-launch-desktop @{lib}/gio-launch-desktop`
 | All browser paths | `@{*_path}` | See [tunables/multiarch.d/paths](https://github.com/roddhjav/apparmor.d/blob/c2d88c9bffc626fcf7d9b15b42b50706afb29562/apparmor.d/tunables/multiarch.d/paths#L11)
+
+</figure>
