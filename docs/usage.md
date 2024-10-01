@@ -24,9 +24,10 @@ apparmor module is loaded.
    ...
 30 processes are in complain mode.
    ...
+0 processes are in prompt mode.
+0 processes are in kill mode.
 0 processes are unconfined but have a profile defined.
 0 processes are in mixed mode.
-0 processes are in kill mode.
 ```
 
 You can also list the current processes alongside with their security profile with:

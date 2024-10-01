@@ -10,13 +10,13 @@ title: Installation
 
 Due to the development stage of this project, the default package configuration installs all profiles in **complain** mode. The recommended installation workflow is as-follow:
 
-1. [Install](#installation) *apparmor.d* in the (default) complain mode.
-1. Configure [apparmor settings](configuration.md#apparmor) as well as your [personal directories](configuration.md#personal-directories).
-1. Ensure you have reloaded the profiles in the kernel: `sudo systemctl restart apparmor.service`.
+1. **[Configure AppArmor](#configure-apparmor)** AppArmor for *apparmor.d*.
+1. **[Install](#installation)** *apparmor.d* in the (default) complain mode.
+1. **[Configure your personal directories](configuration.md)**.
 1. Reboot your system.
 1. You **must** check for any AppArmor logs with [`aa-log`](usage.md#apparmor-log).
-1. [Report](https://apparmor.pujol.io/report/) any raised logs.
-1. Use the profiles in complain mode for a while (a week), regularly check for new AppArmor logs.
+1. **[Report](https://apparmor.pujol.io/report/)** any raised logs.
+1. Use the profiles in *complain* mode for a while (a week), regularly check for new AppArmor logs.
 1. Only if there are no logs raised for your daily usage, install it in [enforce mode](enforce.md).
 
 
@@ -30,13 +30,23 @@ An `AppArmor` supported Linux distribution is required. The default profiles and
 
 The following desktop environments are supported:
 
-  - [x] :material-gnome: Gnome (GDM)
-  - [x] :simple-kde: KDE (SDDM)
-  - [ ] :simple-xfce: XFCE (Lightdm) *(work in progress)*
+- [x] :material-gnome: Gnome (GDM)
+- [x] :simple-kde: KDE (SDDM)
+- [ ] :simple-xfce: XFCE (Lightdm) *(work in progress)*
 
 **Build dependency**
 
 * Go >= 1.21
+
+
+## Configure AppArmor
+
+As there are a lot of rules (~80k lines), it is recommended to enable fast caching compression of AppArmor profiles. In `/etc/apparmor/parser.conf`, add `write-cache` and `Optimize=compress-fast`:
+
+```sh
+echo 'write-cache' | sudo tee -a /etc/apparmor/parser.conf
+echo 'Optimize=compress-fast' | sudo tee -a /etc/apparmor/parser.conf
+```
 
 
 ## Installation
@@ -115,7 +125,7 @@ The following desktop environments are supported:
 
     !!! warning
 
-        **Beware**: do not install a `.deb` made for Debian on Ubuntu, the packages are different.
+        **Beware**: do not install a `.deb` made for Ubuntu on Debian, the packages are different.
 
         If your distribution is based on Debian, you may want to manually set the target distribution by exporting `DISTRIBUTION=debian`.
 
@@ -152,6 +162,9 @@ The following desktop environments are supported:
         '.build/apparmor.d/pass' -> '/etc/apparmor.d/pass'
         ```
         So, you can install the additional profiles `wl-copy`, `xclip`, `pass-import`, and `child-pager` if desired.
+
+
+[Next: Configure your personal directories](configuration.md){ .md-button .md-button--primary }
 
 
 ## Uninstallation
