@@ -16,10 +16,16 @@ profile ufw @{exec_path} {
 
     capability dac_read_search,
     capability net_admin,
+    capability net_raw,
+    capability sys_ptrace,
 
-    network netlink raw,
     network inet dgram,
+    network inet raw,
     network inet6 dgram,
+    network inet6 raw,
+    network netlink raw,
+
+    ptrace read,
 
     @{exec_path} mr,
 
@@ -27,14 +33,16 @@ profile ufw @{exec_path} {
     @{bin}/cat ix,
     @{bin}/env r,
     @{bin}/python3.@{int} ix,
+    @{bin}/sysctl ix,
     @{bin}/xtables-legacy-multi ix,
     @{bin}/xtables-nft-multi ix,
     @{lib}/ufw/ufw-init ix,
 
-    /etc/default/ufw r,
+    /etc/default/ufw rw,
     /etc/ufw/ rw,
     /etc/ufw/** rwk,
 
+          @{run}/xtables.lock rwk,
     owner @{run}/ufw.lock rwk,
 
     owner @{tmp}/@{word8} rw,
@@ -45,9 +53,10 @@ profile ufw @{exec_path} {
     @{PROC}/@{pid}/fd/ r,
     @{PROC}/@{pid}/net/ip_tables_names r,
     @{PROC}/@{pid}/stat r,
+    @{PROC}/sys/net/ipv{4,6}/** rw,
+    @{PROC}/sys/kernel/modprobe r,
 
     include if exists <local/ufw>
-
 }
 
 # vim:syntax=apparmor
