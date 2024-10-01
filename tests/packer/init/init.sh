@@ -24,8 +24,13 @@ main() {
 	install -Dm0755 $SRC/aa-log-clean /usr/bin/aa-log-clean
 	cat $SRC/parser.conf >>/etc/apparmor/parser.conf
 	chown -R "$SUDO_USER:$SUDO_USER" "/home/$SUDO_USER/.config/"
+
 	case "$DISTRIBUTION" in
-	arch) pacman --noconfirm -U $SRC/*.pkg.tar.zst ;;
+	arch)
+		pacman --noconfirm -U $SRC/*.pkg.tar.zst
+		systemctl start apparmor.service
+		;;
+
 	debian | ubuntu)
 		apt-get update -y
 		apt-get install -y apparmor-profiles build-essential config-package-dev \
@@ -34,8 +39,9 @@ main() {
 		;;
 
 	opensuse*)
+		mv "/home/$SUDO_USER/.bash_aliases" "/home/$SUDO_USER/.alias"
 		zypper install -y bash-completion git go htop make rsync vim
-		sudo rpm -i $SRC/*.rpm
+		rpm -i $SRC/*.rpm
 		;;
 
 	esac
