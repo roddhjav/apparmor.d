@@ -163,6 +163,10 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
        member=Introspect
        peer=(name=org.freedesktop.DBus, label=dbus-session),
 
+  dbus send bus=session path=/org/gnome/*/SearchProvider
+      interface=org.gnome.Shell.SearchProvider2
+      peer=(name=@{busname}),
+
   @{exec_path} mr,
 
   @{bin}/unzip                  rix,
@@ -280,7 +284,7 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{run}/user/@{uid}/snap.snap*/wayland-cursor-shared-* rw,
   owner @{run}/user/@{uid}/systemd/notify rw,
 
-  owner /dev/shm/.org.chromium.Chromium.@{rand6} r,
+  owner /dev/shm/.org.chromium.Chromium.@{rand6} rw,
   owner /dev/shm/wayland.mozilla.ipc.@{int} rw,
 
         /tmp/.X@{int}-lock rw,
@@ -343,6 +347,8 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/session.slice/cpu.max r,
 
         @{PROC}/ r,
+        @{PROC}/@{pid}/attr/current r,
+        @{PROC}/@{pid}/cgroup r,
         @{PROC}/@{pid}/cmdline r,
         @{PROC}/@{pid}/net/* r,
         @{PROC}/1/cgroup r,
@@ -350,8 +356,6 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
         @{PROC}/sys/kernel/osrelease r,
         @{PROC}/sys/net/ipv{4,6}/conf/all/disable_ipv{4,6} r,
         @{PROC}/vmstat r,
-  owner @{PROC}/@{pid}/attr/current r,
-  owner @{PROC}/@{pid}/cgroup r,
   owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/fdinfo/@{int} r,
   owner @{PROC}/@{pid}/mountinfo r,

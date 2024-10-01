@@ -100,15 +100,16 @@ profile gajim @{exec_path} {
     @{bin}/{,@{multiarch}-}ld.bfd     rix,
     @{lib}/gcc/@{multiarch}/@{int}/collect2 rix,
 
-    owner @{tmp}/cc* rw,
-    owner @{tmp}/tmp* rw,
+    /etc/debian_version r,
 
     /media/ccache/*/** rw,
 
+    owner @{tmp}/cc* rw,
+    owner @{tmp}/tmp* rw,
+
     owner @{run}/user/@{uid}/ccache-tmp/ rw,
 
-    /etc/debian_version r,
-
+    include if exists <local/gajim_ccache>
   }
 
   profile gpg {
@@ -121,8 +122,8 @@ profile gajim @{exec_path} {
     @{bin}/gpg-agent         rix,
     @{lib}/{,gnupg/}scdaemon rix,
 
-    owner @{run}/user/@{uid}/gnupg/d.*/ rw,
-    owner @{run}/user/@{uid}/gnupg/d.*/S.gpg-agent{,.extra,.browser,.ssh} w,
+    owner @{run}/user/@{uid}/gnupg/d.@{rand}/ rw,
+    owner @{run}/user/@{uid}/gnupg/d.@{rand}/S.gpg-agent{,.extra,.browser,.ssh} w,
 
     owner @{HOME}/@{XDG_GPG_DIR}/ rw,
     owner @{HOME}/@{XDG_GPG_DIR}/** rwkl -> @{HOME}/@{XDG_GPG_DIR}/**,
@@ -134,6 +135,7 @@ profile gajim @{exec_path} {
     @{PROC}/@{pid}/fd/ r,
     @{PROC}/@{pid}/task/@{tid}/comm rw,
 
+    include if exists <local/gajim_gpg>
   }
 
   include if exists <local/gajim>
