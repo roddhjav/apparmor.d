@@ -72,7 +72,6 @@ func Prebuild() {
 		flag.Usage()
 		return
 	}
-	logging.Step("Building apparmor.d profiles for %s.", prebuild.Distribution)
 
 	if full {
 		prepare.Register("fsp")
@@ -111,6 +110,7 @@ func Prebuild() {
 		configure.OneFile = true
 	}
 
+	logging.Step("Building apparmor.d profiles for %s on ABI%d.", prebuild.Distribution, prebuild.ABI)
 	if err := Prepare(); err != nil {
 		logging.Fatal("%s", err.Error())
 	}
