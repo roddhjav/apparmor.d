@@ -82,7 +82,7 @@ var (
 		`/sys/`, `@{sys}/`,
 		`@{PROC}@{sys}/`, `@{PROC}/sys/`,
 		`pci` + strings.Repeat(h, 4) + `:` + strings.Repeat(h, 2), `@{pci_bus}`,
-		`@{pci_bus}/[0-9a-f:*./]*`, `@{pci}/`,
+		`@{pci_bus}/[0-9a-f:*./]*/`, `@{pci}/`,
 		`1000`, `@{uid}`,
 
 		// Some system glob
