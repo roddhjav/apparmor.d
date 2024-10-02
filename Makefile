@@ -9,7 +9,7 @@ PKGDEST := /tmp/pkg
 PKGNAME := apparmor.d
 P = $(filter-out dpkg,$(notdir $(wildcard ${BUILD}/apparmor.d/*)))
 
-.PHONY: all build enforce full install local $(P) pkg dpkg rpm tests lint man docs serve clean
+.PHONY: all build enforce full install local $(P) dev package pkg dpkg rpm tests lint man docs serve clean
 
 all: build
 	@./${BUILD}/prebuild --complain
@@ -70,6 +70,12 @@ $(P):
 		install -Dvm0644 "${BUILD}/apparmor.d/$${file}" "${DESTDIR}/etc/apparmor.d/$${file}"; \
 	done;
 	@systemctl restart apparmor || systemctl status apparmor
+
+name ?= 
+dev:
+	@go run ./cmd/prebuild --complain --file $(shell find apparmor.d -iname ${name})
+	@sudo install -Dm644 ${BUILD}/${name} /etc/apparmor.d/${name}
+	@sudo systemctl restart apparmor || systemctl status apparmor
 
 dist ?= archlinux
 package:
