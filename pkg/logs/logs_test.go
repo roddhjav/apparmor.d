@@ -247,6 +247,26 @@ func TestNew(t *testing.T) {
 			path: filepath.Join(testdata, "audit.log"),
 			want: refPowerProfiles,
 		},
+		{
+			name: "signal-desktop",
+			path: filepath.Join(testdata, "audit.log"),
+			want: AppArmorLogs{
+				{
+					"apparmor":       "ALLOWED",
+					"profile":        "signal-desktop",
+					"operation":      "open",
+					"class":          "file",
+					"name":           "@{sys}/devices/@{pci}/boot_vga",
+					"comm":           "signal-desktop",
+					"requested_mask": "r",
+					"denied_mask":    "r",
+					"fsuid":          "1000",
+					"ouid":           "0",
+					"FSUID":          "user",
+					"OUID":           "root",
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
