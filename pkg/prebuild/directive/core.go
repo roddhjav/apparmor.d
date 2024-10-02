@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/roddhjav/apparmor.d/pkg/paths"
-	"github.com/roddhjav/apparmor.d/pkg/prebuild/cfg"
+	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 )
 
 var (
@@ -25,8 +25,18 @@ var (
 
 // Main directive interface
 type Directive interface {
-	cfg.BaseInterface
+	prebuild.BaseInterface
 	Apply(opt *Option, profile string) (string, error)
+}
+
+func Usage() string {
+	res := fmt.Sprintf("Directive:\n")
+	for _, d := range Directives {
+		for _, h := range d.Usage() {
+			res += fmt.Sprintf("    %s%s %s\n", Keyword, d.Name(), h)
+		}
+	}
+	return res
 }
 
 // Directive options

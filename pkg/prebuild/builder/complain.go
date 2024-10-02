@@ -9,7 +9,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/roddhjav/apparmor.d/pkg/prebuild/cfg"
+	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 )
 
 var (
@@ -18,12 +18,12 @@ var (
 )
 
 type Complain struct {
-	cfg.Base
+	prebuild.Base
 }
 
 func init() {
 	RegisterBuilder(&Complain{
-		Base: cfg.Base{
+		Base: prebuild.Base{
 			Keyword: "complain",
 			Msg:     "Set complain flag on all profiles",
 		},

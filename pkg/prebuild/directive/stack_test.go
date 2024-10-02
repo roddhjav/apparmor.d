@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/roddhjav/apparmor.d/pkg/paths"
-	"github.com/roddhjav/apparmor.d/pkg/prebuild/cfg"
+	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 )
 
 func TestStack_Apply(t *testing.T) {
@@ -68,7 +68,7 @@ profile parent @{exec_path} {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cfg.RootApparmord = tt.rootApparmord
+			prebuild.RootApparmord = tt.rootApparmord
 			got, err := Directives["stack"].Apply(tt.opt, tt.profile)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Stack.Apply() error = %v, wantErr %v", err, tt.wantErr)

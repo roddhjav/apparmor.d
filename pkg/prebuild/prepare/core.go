@@ -7,7 +7,7 @@ package prepare
 import (
 	"fmt"
 
-	"github.com/roddhjav/apparmor.d/pkg/prebuild/cfg"
+	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 )
 
 var (
@@ -20,7 +20,7 @@ var (
 
 // Main directive interface
 type Task interface {
-	cfg.BaseInterface
+	prebuild.BaseInterface
 	Apply() ([]string, error)
 }
 

@@ -5,7 +5,7 @@
 package builder
 
 import (
-	"github.com/roddhjav/apparmor.d/pkg/prebuild/cfg"
+	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 	"github.com/roddhjav/apparmor.d/pkg/util"
 )
 
@@ -16,12 +16,12 @@ var (
 )
 
 type FullSystemPolicy struct {
-	cfg.Base
+	prebuild.Base
 }
 
 func init() {
 	RegisterBuilder(&FullSystemPolicy{
-		Base: cfg.Base{
+		Base: prebuild.Base{
 			Keyword: "fsp",
 			Msg:     "Prevent unconfined transitions in profile rules",
 		},

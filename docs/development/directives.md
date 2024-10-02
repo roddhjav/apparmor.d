@@ -40,6 +40,7 @@ The `only` and `exclude` directives can be used to filter individual rule or rul
 
     - A supported target distribution: `arch`, `debian`, `ubuntu`, `opensuse`, `whonix`.
     - A supported distribution family: `apt`, `pacman`, `zypper`.
+    - A supported ABI: `abi3`, `abi4`.
 
 **Example**
 

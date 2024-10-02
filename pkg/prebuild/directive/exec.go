@@ -12,17 +12,17 @@ import (
 	"strings"
 
 	"github.com/roddhjav/apparmor.d/pkg/aa"
-	"github.com/roddhjav/apparmor.d/pkg/prebuild/cfg"
+	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 	"github.com/roddhjav/apparmor.d/pkg/util"
 )
 
 type Exec struct {
-	cfg.Base
+	prebuild.Base
 }
 
 func init() {
 	RegisterDirective(&Exec{
-		Base: cfg.Base{
+		Base: prebuild.Base{
 			Keyword: "exec",
 			Msg:     "Exec directive applied",
 			Help:    []string{"[P|U|p|u|PU|pu|] profiles..."},
@@ -44,7 +44,7 @@ func (d Exec) Apply(opt *Option, profileRaw string) (string, error) {
 
 	rules := aa.Rules{}
 	for name := range opt.ArgMap {
-		profiletoTransition := util.MustReadFile(cfg.RootApparmord.Join(name))
+		profiletoTransition := util.MustReadFile(prebuild.RootApparmord.Join(name))
 		dstProfile := aa.DefaultTunables()
 		if _, err := dstProfile.Parse(profiletoTransition); err != nil {
 			return "", err
