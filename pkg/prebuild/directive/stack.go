@@ -10,7 +10,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/roddhjav/apparmor.d/pkg/prebuild/cfg"
+	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 	"github.com/roddhjav/apparmor.d/pkg/util"
 )
 
@@ -25,12 +25,12 @@ var (
 )
 
 type Stack struct {
-	cfg.Base
+	prebuild.Base
 }
 
 func init() {
 	RegisterDirective(&Stack{
-		Base: cfg.Base{
+		Base: prebuild.Base{
 			Keyword: "stack",
 			Msg:     "Stack directive applied",
 			Help:    []string{"[X] profiles..."},
@@ -55,7 +55,7 @@ func (s Stack) Apply(opt *Option, profile string) (string, error) {
 
 	res := ""
 	for name := range opt.ArgMap {
-		stackedProfile := util.MustReadFile(cfg.RootApparmord.Join(name))
+		stackedProfile := util.MustReadFile(prebuild.RootApparmord.Join(name))
 		m := regRules.FindStringSubmatch(stackedProfile)
 		if len(m) < 2 {
 			return "", fmt.Errorf("No profile found in %s", name)

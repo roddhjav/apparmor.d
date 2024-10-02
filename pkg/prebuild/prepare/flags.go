@@ -9,7 +9,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/roddhjav/apparmor.d/pkg/prebuild/cfg"
+	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 	"github.com/roddhjav/apparmor.d/pkg/util"
 )
 
@@ -19,12 +19,12 @@ var (
 )
 
 type SetFlags struct {
-	cfg.Base
+	prebuild.Base
 }
 
 func init() {
 	RegisterTask(&SetFlags{
-		Base: cfg.Base{
+		Base: prebuild.Base{
 			Keyword: "setflags",
 			Msg:     "Set flags on some profiles",
 		},
@@ -33,9 +33,9 @@ func init() {
 
 func (p SetFlags) Apply() ([]string, error) {
 	res := []string{}
-	for _, name := range []string{"main", cfg.Distribution} {
-		for profile, flags := range cfg.Flags.Read(name) {
-			file := cfg.RootApparmord.Join(profile)
+	for _, name := range []string{"main", prebuild.Distribution} {
+		for profile, flags := range prebuild.Flags.Read(name) {
+			file := prebuild.RootApparmord.Join(profile)
 			if !file.Exist() {
 				res = append(res, fmt.Sprintf("Profile %s not found, ignoring", profile))
 				continue
@@ -57,7 +57,7 @@ func (p SetFlags) Apply() ([]string, error) {
 				}
 			}
 		}
-		res = append(res, cfg.FlagDir.Join(name+".flags").String())
+		res = append(res, prebuild.FlagDir.Join(name+".flags").String())
 	}
 	return res, nil
 }

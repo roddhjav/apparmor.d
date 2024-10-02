@@ -6,16 +6,16 @@ package prepare
 
 import (
 	"github.com/roddhjav/apparmor.d/pkg/paths"
-	"github.com/roddhjav/apparmor.d/pkg/prebuild/cfg"
+	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 )
 
 type Ignore struct {
-	cfg.Base
+	prebuild.Base
 }
 
 func init() {
 	RegisterTask(&Ignore{
-		Base: cfg.Base{
+		Base: prebuild.Base{
 			Keyword: "ignore",
 			Msg:     "Ignore profiles and files from:",
 		},
@@ -24,11 +24,11 @@ func init() {
 
 func (p Ignore) Apply() ([]string, error) {
 	res := []string{}
-	for _, name := range []string{"main", cfg.Distribution} {
-		for _, ignore := range cfg.Ignore.Read(name) {
-			profile := cfg.Root.Join(ignore)
+	for _, name := range []string{"main", prebuild.Distribution} {
+		for _, ignore := range prebuild.Ignore.Read(name) {
+			profile := prebuild.Root.Join(ignore)
 			if profile.NotExist() {
-				files, err := cfg.RootApparmord.ReadDirRecursiveFiltered(nil, paths.FilterNames(ignore))
+				files, err := prebuild.RootApparmord.ReadDirRecursiveFiltered(nil, paths.FilterNames(ignore))
 				if err != nil {
 					return res, err
 				}
@@ -43,7 +43,7 @@ func (p Ignore) Apply() ([]string, error) {
 				}
 			}
 		}
-		res = append(res, cfg.IgnoreDir.Join(name+".ignore").String())
+		res = append(res, prebuild.IgnoreDir.Join(name+".ignore").String())
 	}
 	return res, nil
 }

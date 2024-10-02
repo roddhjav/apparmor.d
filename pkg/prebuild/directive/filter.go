@@ -5,31 +5,32 @@
 package directive
 
 import (
+	"fmt"
 	"regexp"
 	"slices"
 	"strings"
 
-	"github.com/roddhjav/apparmor.d/pkg/prebuild/cfg"
+	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 )
 
 type FilterOnly struct {
-	cfg.Base
+	prebuild.Base
 }
 
 type FilterExclude struct {
-	cfg.Base
+	prebuild.Base
 }
 
 func init() {
 	RegisterDirective(&FilterOnly{
-		Base: cfg.Base{
+		Base: prebuild.Base{
 			Keyword: "only",
 			Msg:     "Only directive applied",
 			Help:    []string{"filters..."},
 		},
 	})
 	RegisterDirective(&FilterExclude{
-		Base: cfg.Base{
+		Base: prebuild.Base{
 			Keyword: "exclude",
 			Msg:     "Exclude directive applied",
 			Help:    []string{"filters..."},
@@ -38,7 +39,11 @@ func init() {
 }
 
 func filterRuleForUs(opt *Option) bool {
-	return slices.Contains(opt.ArgList, cfg.Distribution) || slices.Contains(opt.ArgList, cfg.Family)
+	abiStr := fmt.Sprintf("abi%d", prebuild.ABI)
+	if slices.Contains(opt.ArgList, abiStr) {
+		return true
+	}
+	return slices.Contains(opt.ArgList, prebuild.Distribution) || slices.Contains(opt.ArgList, prebuild.Family)
 }
 
 func filter(only bool, opt *Option, profile string) (string, error) {

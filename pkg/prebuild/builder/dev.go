@@ -5,7 +5,7 @@
 package builder
 
 import (
-	"github.com/roddhjav/apparmor.d/pkg/prebuild/cfg"
+	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 	"github.com/roddhjav/apparmor.d/pkg/util"
 )
 
@@ -19,12 +19,12 @@ var (
 )
 
 type Dev struct {
-	cfg.Base
+	prebuild.Base
 }
 
 func init() {
 	RegisterBuilder(&Dev{
-		Base: cfg.Base{
+		Base: prebuild.Base{
 			Keyword: "dev",
 			Msg:     "Apply test development changes",
 		},

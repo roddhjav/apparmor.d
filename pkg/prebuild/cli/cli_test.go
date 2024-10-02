@@ -2,7 +2,7 @@
 // Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
 // SPDX-License-Identifier: GPL-2.0-only
 
-package prebuild
+package cli
 
 import (
 	"os"
@@ -10,15 +10,15 @@ import (
 	"testing"
 
 	"github.com/roddhjav/apparmor.d/pkg/paths"
+	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 	"github.com/roddhjav/apparmor.d/pkg/prebuild/builder"
-	"github.com/roddhjav/apparmor.d/pkg/prebuild/cfg"
 	"github.com/roddhjav/apparmor.d/pkg/prebuild/prepare"
 )
 
 func setTestBuildDirectories(name string) {
 	testRoot := paths.New("/tmp/tests")
-	cfg.Root = testRoot.Join(name)
-	cfg.RootApparmord = cfg.Root.Join("apparmor.d")
+	prebuild.Root = testRoot.Join(name)
+	prebuild.RootApparmord = prebuild.Root.Join("apparmor.d")
 }
 
 func chdirGitRoot() {
@@ -33,7 +33,7 @@ func chdirGitRoot() {
 	}
 }
 
-func Test_PreBuild(t *testing.T) {
+func Test_Prebuild(t *testing.T) {
 	tests := []struct {
 		name     string
 		wantErr  bool
@@ -79,17 +79,26 @@ func Test_PreBuild(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			setTestBuildDirectories(tt.name)
-			cfg.Distribution = tt.dist
-			if tt.full {
+			prebuild.Distribution = tt.dist
+			prepare.Prepares = []prepare.Task{}
+			prepare.Register(
+				"synchronise", "ignore", "merge",
+				"configure", "setflags", "systemd-default",
+			)
+
+			if full {
 				prepare.Register("fsp")
 				builder.Register("fsp")
+			} else {
+				prepare.Register("systemd-early")
 			}
-			if tt.complain {
+
+			if complain {
 				builder.Register("complain")
-			}
-			if tt.enforce {
+			} else if enforce {
 				builder.Register("enforce")
 			}
+
 			if err := Prepare(); (err != nil) != tt.wantErr {
 				t.Errorf("Prepare() error = %v, wantErr %v", err, tt.wantErr)
 			}

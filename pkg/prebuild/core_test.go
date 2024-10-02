@@ -2,7 +2,7 @@
 // Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
 // SPDX-License-Identifier: GPL-2.0-only
 
-package cfg
+package prebuild
 
 import (
 	"slices"
@@ -56,9 +56,6 @@ func TestHelp(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := Help(tt.name, tt.tasks); !strings.Contains(got, tt.want) {
 				t.Errorf("Help() = %v, want %v", got, tt.want)
-			}
-			if got := Usage(tt.name, tt.tasks); !strings.Contains(got, tt.want) {
-				t.Errorf("Usage() = %v, want %v", got, tt.want)
 			}
 		})
 	}

@@ -14,7 +14,7 @@ import (
 	"github.com/roddhjav/apparmor.d/pkg/aa"
 	"github.com/roddhjav/apparmor.d/pkg/logging"
 	"github.com/roddhjav/apparmor.d/pkg/paths"
-	bcfg "github.com/roddhjav/apparmor.d/pkg/prebuild/cfg"
+	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 	"github.com/roddhjav/apparmor.d/tests/integration"
 )
 
@@ -28,8 +28,8 @@ Options:
     -r, --run          Run a predefined list of tests.
     -l, --list         List the configured tests.
     -f, --file FILE    Set a tests file. Default: tests/tests.yml
-	-d, --deps         Install tests dependencies.
-	-D, --dryrun       Do not do the action, list it.
+    -d, --deps         Install tests dependencies.
+    -D, --dryrun       Do not do the action, list it.
 
 `
 
@@ -123,7 +123,7 @@ func testDeps(dryRun bool) error {
 	}
 
 	deps := tSuite.GetDependencies()
-	switch bcfg.Distribution {
+	switch prebuild.Distribution {
 	case "arch":
 		arg := []string{"pacman", "-Sy", "--noconfirm"}
 		arg = append(arg, deps...)

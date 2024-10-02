@@ -2,11 +2,9 @@
 // Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
 // SPDX-License-Identifier: GPL-2.0-only
 
-package cfg
+package prebuild
 
 import (
-	"fmt"
-	"os"
 	"strings"
 
 	"github.com/roddhjav/apparmor.d/pkg/paths"
@@ -52,37 +50,6 @@ func (i Ignorer) Read(name string) []string {
 		return []string{}
 	}
 	return util.MustReadFileAsLines(path)
-}
-
-type Overwriter bool
-
-// Overwrite upstream profile: disable upstream & rename ours
-func (o Overwriter) Apply() error {
-	const ext = ".apparmor.d"
-	disableDir := RootApparmord.Join("disable")
-	if err := disableDir.Mkdir(); err != nil {
-		return err
-	}
-
-	path := DistDir.Join("overwrite")
-	if !path.Exist() {
-		return fmt.Errorf("%s not found", path)
-	}
-	for _, name := range util.MustReadFileAsLines(path) {
-		origin := RootApparmord.Join(name)
-		dest := RootApparmord.Join(name + ext)
-		if err := origin.Rename(dest); err != nil {
-			return err
-		}
-		originRel, err := origin.RelFrom(dest)
-		if err != nil {
-			return err
-		}
-		if err := os.Symlink(originRel.String(), disableDir.Join(name).String()); err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 type DebianHider struct {

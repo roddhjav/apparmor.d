@@ -8,16 +8,16 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/roddhjav/apparmor.d/pkg/prebuild/cfg"
+	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 )
 
 type Enforce struct {
-	cfg.Base
+	prebuild.Base
 }
 
 func init() {
 	RegisterBuilder(&Enforce{
-		Base: cfg.Base{
+		Base: prebuild.Base{
 			Keyword: "enforce",
 			Msg:     "All profiles have been enforced",
 		},

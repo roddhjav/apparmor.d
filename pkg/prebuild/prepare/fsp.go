@@ -8,17 +8,17 @@ import (
 	"strings"
 
 	"github.com/roddhjav/apparmor.d/pkg/paths"
-	"github.com/roddhjav/apparmor.d/pkg/prebuild/cfg"
+	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 	"github.com/roddhjav/apparmor.d/pkg/util"
 )
 
 type FullSystemPolicy struct {
-	cfg.Base
+	prebuild.Base
 }
 
 func init() {
 	RegisterTask(&FullSystemPolicy{
-		Base: cfg.Base{
+		Base: prebuild.Base{
 			Keyword: "fsp",
 			Msg:     "Configure AppArmor for full system policy",
 		},
@@ -29,12 +29,12 @@ func (p FullSystemPolicy) Apply() ([]string, error) {
 	res := []string{}
 
 	// Install full system policy profiles
-	if err := util.CopyTo(paths.New("apparmor.d/groups/_full/"), cfg.Root.Join("apparmor.d")); err != nil {
+	if err := util.CopyTo(paths.New("apparmor.d/groups/_full/"), prebuild.Root.Join("apparmor.d")); err != nil {
 		return res, err
 	}
 
 	// Set systemd profile name
-	path := cfg.RootApparmord.Join("tunables/multiarch.d/system")
+	path := prebuild.RootApparmord.Join("tunables/multiarch.d/system")
 	out, err := util.ReadFile(path)
 	if err != nil {
 		return res, err
@@ -46,7 +46,7 @@ func (p FullSystemPolicy) Apply() ([]string, error) {
 	}
 
 	// Fix conflicting x modifiers in abstractions - FIXME: Temporary solution
-	path = cfg.RootApparmord.Join("abstractions/gstreamer")
+	path = prebuild.RootApparmord.Join("abstractions/gstreamer")
 	out, err = util.ReadFile(path)
 	if err != nil {
 		return res, err
@@ -58,5 +58,5 @@ func (p FullSystemPolicy) Apply() ([]string, error) {
 	}
 
 	// Set systemd unit drop-in files
-	return res, util.CopyTo(cfg.SystemdDir.Join("full"), cfg.Root.Join("systemd"))
+	return res, util.CopyTo(prebuild.SystemdDir.Join("full"), prebuild.Root.Join("systemd"))
 }

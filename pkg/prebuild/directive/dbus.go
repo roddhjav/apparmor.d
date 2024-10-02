@@ -18,7 +18,7 @@ import (
 	"strings"
 
 	"github.com/roddhjav/apparmor.d/pkg/aa"
-	"github.com/roddhjav/apparmor.d/pkg/prebuild/cfg"
+	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 )
 
 var defaultInterfaces = []string{
@@ -27,12 +27,12 @@ var defaultInterfaces = []string{
 }
 
 type Dbus struct {
-	cfg.Base
+	prebuild.Base
 }
 
 func init() {
 	RegisterDirective(&Dbus{
-		Base: cfg.Base{
+		Base: prebuild.Base{
 			Keyword: "dbus",
 			Msg:     "Dbus directive applied",
 			Help: []string{

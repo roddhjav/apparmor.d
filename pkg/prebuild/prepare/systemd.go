@@ -5,27 +5,27 @@
 package prepare
 
 import (
-	"github.com/roddhjav/apparmor.d/pkg/prebuild/cfg"
+	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 	"github.com/roddhjav/apparmor.d/pkg/util"
 )
 
 type SystemdDefault struct {
-	cfg.Base
+	prebuild.Base
 }
 
 type SystemdEarly struct {
-	cfg.Base
+	prebuild.Base
 }
 
 func init() {
 	RegisterTask(&SystemdDefault{
-		Base: cfg.Base{
+		Base: prebuild.Base{
 			Keyword: "systemd-default",
 			Msg:     "Configure systemd unit drop in files to a profile for some units",
 		},
 	})
 	RegisterTask(&SystemdEarly{
-		Base: cfg.Base{
+		Base: prebuild.Base{
 			Keyword: "systemd-early",
 			Msg:     "Configure systemd unit drop in files to ensure some service start after apparmor",
 		},
@@ -33,9 +33,9 @@ func init() {
 }
 
 func (p SystemdDefault) Apply() ([]string, error) {
-	return []string{}, util.CopyTo(cfg.SystemdDir.Join("default"), cfg.Root.Join("systemd"))
+	return []string{}, util.CopyTo(prebuild.SystemdDir.Join("default"), prebuild.Root.Join("systemd"))
 }
 
 func (p SystemdEarly) Apply() ([]string, error) {
-	return []string{}, util.CopyTo(cfg.SystemdDir.Join("early"), cfg.Root.Join("systemd"))
+	return []string{}, util.CopyTo(prebuild.SystemdDir.Join("early"), prebuild.Root.Join("systemd"))
 }

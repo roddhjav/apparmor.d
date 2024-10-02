@@ -8,7 +8,7 @@ import (
 	"fmt"
 
 	"github.com/roddhjav/apparmor.d/pkg/paths"
-	"github.com/roddhjav/apparmor.d/pkg/prebuild/cfg"
+	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 )
 
 var (
@@ -21,7 +21,7 @@ var (
 
 // Main directive interface
 type Builder interface {
-	cfg.BaseInterface
+	prebuild.BaseInterface
 	Apply(opt *Option, profile string) (string, error)
 }
 
