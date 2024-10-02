@@ -74,7 +74,7 @@ $(P):
 name ?= 
 dev:
 	@go run ./cmd/prebuild --complain --file $(shell find apparmor.d -iname ${name})
-	@sudo install -Dm644 ${BUILD}/${name} /etc/apparmor.d/${name}
+	@sudo install -Dm644 ${BUILD}/apparmor.d/${name} /etc/apparmor.d/${name}
 	@sudo systemctl restart apparmor || systemctl status apparmor
 
 dist ?= archlinux
