@@ -39,7 +39,7 @@ title: Workflow
 # Copyright (C) 2024 You <your@email>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
