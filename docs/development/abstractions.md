@@ -137,7 +137,8 @@ A minimal set of rules for profiles including internal `pkexec`. Like `app/sudo`
 
 ### **`app/systemctl`**
 
-An alternative solution for [child-systemctl](structure.md#children-profiles), when the child profile provides too much/not enough access. This abstraction should be used by a sub profile as follows:
+An alternative solution for [child-systemctl](internal.md#children-profiles), when the child profile provides too much/not enough access. This abstraction should be used by a sub profile as follows:
+
 ```sh
   @{bin}/systemctl  rCx ->  systemctl,
 

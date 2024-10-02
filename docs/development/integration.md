@@ -74,7 +74,7 @@ All the images come pre-configured with the latest version of `apparmor.d` insta
 
 **Usage**
 
-On all images, `aa-update` can be used to rebuild and install the latest version of the profiles. `p`, `pf`, and `pu` are two preconfigured aliases of `ps` that show the security status of processes. `htop` is also configured to show this status.
+On all images, `aa-update` can be used to rebuild and install the latest version of the profiles. `p`, `pf`, and `pu` are two pre-configured aliases of `ps` that show the security status of processes. `htop` is also configured to show this status.
 
 
 ## Tests
@@ -118,7 +118,7 @@ Start the tests and collect the results
 
 **Tests manifest**
 
-A basic set of test is generated on initialisation. More tests can be manually written in yaml file. They must have the following structure:
+A basic set of test is generated on initialization. More tests can be manually written in yaml file. They must have the following structure:
 
 ```yaml
 - name: acpi
