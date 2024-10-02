@@ -13,7 +13,11 @@ import (
 	"github.com/roddhjav/apparmor.d/pkg/prebuild/prepare"
 )
 
+// Cli arguments have priority over the settings entered here
 func init() {
+	// Define the default ABI
+	prebuild.ABI = 4
+
 	// Define the tasks applied by default
 	prepare.Register(
 		"synchronise",

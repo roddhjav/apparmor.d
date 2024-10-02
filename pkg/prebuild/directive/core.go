@@ -30,7 +30,7 @@ type Directive interface {
 }
 
 func Usage() string {
-	res := fmt.Sprintf("Directive:\n")
+	res := "Directive:\n"
 	for _, d := range Directives {
 		for _, h := range d.Usage() {
 			res += fmt.Sprintf("    %s%s %s\n", Keyword, d.Name(), h)
