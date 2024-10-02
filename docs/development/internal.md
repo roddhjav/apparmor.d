@@ -42,7 +42,7 @@ Instead of allowing the ability to run all software in `@{bin}/`, the purpose of
       @{bin}/flatpak                rPx,
       @{bin}/snap                   rPx,
 
-      # Labeled programs
+      # Labelled programs
       @{archive_viewers_path}       rPUx,
       @{browsers_path}              rPx,
       @{document_viewers_path}      rPUx,
@@ -81,9 +81,6 @@ Instead of allowing the ability to run all software in `@{bin}/`, the purpose of
 
       # Backup
        @{lib}/deja-dup/deja-dup-monitor rPx,
-
-      @{browsers_path}              rPx,
-      @{help_path}                  rPx,
     ```
 
 ### **`child-open-browsers`**
@@ -153,6 +150,12 @@ It can be as follows in a profile:
 Common `systemctl` action. Do not use it too much as most of the time you will need more privilege than what this profile is giving you.
 
 It is recommended to transition [in a subprofile](abstractions.md#appsystemctl) everything that is not generic and that may require some access (so restart, enable...), while `child-systemctl` can handle the more basic tasks.
+
+
+## Labelled programs
+
+All common programs are tracked and labelled in the [`apparmor.d/tunables/multiarch.d/programs`](https://github.com/roddhjav/apparmor.d/blob/main/apparmor.d/tunables/multiarch.d/programs) and 
+[`apparmor.d/tunables/multiarch.d/paths`](https://github.com/roddhjav/apparmor.d/blob/main/apparmor.d/tunables/multiarch.d/paths) files. They can be used in a `child-open` profile or directly in a profile. They are useful to allow opening resources using a kind of program (browsers, image viewer, text editor...), instead of allowing a given program path.
 
 
 ## User Confinement [:material-police-badge-outline:{ .pg-red }](../full-system-policy.md "Only for Full System Policy (FSP)")
