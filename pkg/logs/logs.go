@@ -138,7 +138,12 @@ func New(file io.Reader, profile string) AppArmorLogs {
 
 		aa := make(AppArmorLog)
 		for _, item := range tmp {
-			kv := strings.Split(item, "=")
+			kv := strings.FieldsFunc(item, func(r rune) bool {
+				if r == '"' {
+					quoted = !quoted
+				}
+				return !quoted && r == '='
+			})
 			if len(kv) >= 2 {
 				key, value := kv[0], kv[1]
 				if slices.Contains(toClean, key) {
