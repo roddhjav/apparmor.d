@@ -4,30 +4,37 @@ title: Development
 
 If you're looking to contribute to `apparmor.d` you can get started by going to the project [GitHub repository](https://github.com/roddhjav/apparmor.d/)! All contributions are welcome no matter how small. In this page you will find all the useful information needed to contribute to the apparmor.d project.
 
-??? info "How to contribute pull requests"
+??? info "How to contribute pull requests?"
 
     1. If you don't have git on your machine, [install it](https://help.github.com/articles/set-up-git/).
-    2. Fork this repo by clicking on the fork button on the top of the [project GitHub][project] page.
-    3. Clone the forked repository and go to the directory:
+    1. Fork this repo by clicking on the fork button on the top of the [project GitHub](https://github.com/roddhjav/apparmor.d) page.
+    1. [Generate a new SSH key](    https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent) and add it to your GitHub account.
+    1. Clone the forked repository and go to the directory:
     ```sh
-    git clone https://github.com/your-github-username/apparmor.d.git
+    git clone git@github.com:your-github-username/apparmor.d.git 
     cd apparmor.d
     ```
-    4. Create a branch:
+    1. Create a branch:
     ```
     git checkout -b my_contribution
     ```
-    5. Make the changes and commit:
+    1. Make the changes and commit:
     ```
     git add <files changed>
     git commit -m "A message to sum up my contribution"
     ```
-    6. Push changes to GitHub:
+    1. Push changes to GitHub:
     ```
     git push origin my_contribution
     ```
-    7. Submit your changes for review: If you go to your repository on GitHub,
+    1. Submit your changes for review: If you go to your repository on GitHub,
     you'll see a Compare & pull request button, fill and submit the pull request.
+
+<div class="grid cards" markdown>
+
+-   :material-arrow-right: &nbsp; **[See the workflow to write profiles](workflow.md)**
+
+</div>
 
 
 ## Project rules
@@ -55,48 +62,11 @@ If you're looking to contribute to `apparmor.d` you can get started by going to 
     your devices or for your use case.
 
 
-## Add a profile
+## Additional recommended documentation
 
-!!! danger "Warning"
-
-    Following the [profile guidelines](guidelines.md) is **mandatory** for all new profiles.
-
-
-1. To add a new profile `foo`, add the file `foo` in [`apparmor.d/profile-a-f`][profiles-a-f]. 
-   If your profile is part of a large group of profiles, it can also go in
-   [`apparmor.d/groups`][groups].
-
-2. Write the profile content, the rules depend on the confined program,
-   Here is the bare minimum for the program `foo`:
-``` sh
-# apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2024 You <your@email>
-# SPDX-License-Identifier: GPL-2.0-only
-
-abi <abi/3.0>,
-
-include <tunables/global>
-
-@{exec_path} = @{bin}/foo
-profile foo @{exec_path} {
-  include <abstractions/base>
-
-  @{exec_path} mr,
-
-  include if exists <local/foo>
-}
-
-# vim:syntax=apparmor
-```
-
-
-3. You can automatically set the `complain` flag on your profile by editing the file [`dists/flags/main.flags`][flags] and add a new line with: `foo complain`
-
-4. Build & install for your distribution.
-
-
-[project]: https://github.com/roddhjav/apparmor.d
-
-[flags]: https://github.com/roddhjav/apparmor.d/blob/main/dists/flags/main.flags
-[profiles-a-f]: https://github.com/roddhjav/apparmor.d/blob/main/apparmor.d/profiles-a-f
-[groups]: https://github.com/roddhjav/apparmor.d/blob/main/apparmor.d/groups
+* [The AppArmor Core Policy Reference](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference)
+* [The openSUSE Documentation](https://doc.opensuse.org/documentation/leap/security/html/book-security/part-apparmor.html)
+* https://documentation.suse.com/sles/12-SP5/html/SLES-all/cha-apparmor-intro.html
+* [The AppArmor.d man page](https://man.archlinux.org/man/apparmor.d.5)
+* [F**k AppArmor](https://presentations.nordisch.org/apparmor/#/)
+* [A Brief Tour of Linux Security Modules](https://www.starlab.io/blog/a-brief-tour-of-linux-security-modules)

@@ -11,7 +11,7 @@ The logic behind it is that if a rule is present in a profile, it should only be
 For example, if a program needs to run executable binaries then the rules allowing it can only be in a specific rule block (just after the `@{exec_path} mr,` rule). It is therefore easy to ensure some profile features such as:
 
 * A profile has access to a given resource 
-* A profile enforces a strict [write xor execute] (W^X) policy. 
+* A profile enforces a strict [write xor execute](https://en.wikipedia.org/wiki/W%5EX) (W^X) policy. 
 
 It also improves compatibilities and makes personalization easier thanks to the use of more variables.
 
@@ -132,14 +132,3 @@ If there is no predictable label it can be omitted.
     ```
     Does not help, and if generalized it would add a lot of complexity to any profiles.
 
-
-## Additional recommended documentation
-
-* [The AppArmor Core Policy Reference](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference)
-* [The openSUSE Documentation](https://doc.opensuse.org/documentation/leap/security/html/book-security/part-apparmor.html)
-* https://documentation.suse.com/sles/12-SP5/html/SLES-all/cha-apparmor-intro.html
-* [The AppArmor.d man page](https://man.archlinux.org/man/apparmor.d.5)
-* [F**k AppArmor](https://presentations.nordisch.org/apparmor/#/)
-* [A Brief Tour of Linux Security Modules](https://www.starlab.io/blog/a-brief-tour-of-linux-security-modules)
-
-[write xor execute]: https://en.wikipedia.org/wiki/W%5EX

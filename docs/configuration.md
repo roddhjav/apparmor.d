@@ -181,9 +181,9 @@ All profiles use the variables defined above. Therefore, you can personalize the
     @{user_pkg_dirs}+=@{user_cache_dirs}/yay/
     ```
 
-### Mountpoints
+### Mount points
 
-Common mountpoints are defined in the `@{MOUNTS}` variable. If you mount a disk on a different location, you can add it to the `@{MOUNTS}` variable.
+Common mount points are defined in the `@{MOUNTS}` variable. If you mount a disk on a different location, you can add it to the `@{MOUNTS}` variable.
 
 **Example**
 
@@ -202,6 +202,6 @@ All supported file browsers (`nautilus`, `dolphin`, `thunar`) are configured to 
 
 ### Games
 
-In order to not allow access to user data, game profiles use the `@{XDG_GAMESSTUDIO_DIR}` variable. It may needs to be expanded with other game studio directory. The default is `@{XDG_GAMESSTUDIO_DIR}="unity3d"`.
+In order to not allow access to user data, game profiles use the `@{XDG_GAMESSTUDIO_DIR}` variable. It may need to be expanded with other game studio directory. The default is `@{XDG_GAMESSTUDIO_DIR}="unity3d"`.
 
-The `@{XDG_GAMES_DIR}` variable is used to define the game directory such as steam storage directory. If your steam storage is on another drive/mountpoint, you should personalize `@{user_games_dirs}` instead.
+The `@{XDG_GAMES_DIR}` variable is used to define the game directory such as steam storage directory. If your steam storage is on another drive, you should personalize `@{user_games_dirs}` instead.

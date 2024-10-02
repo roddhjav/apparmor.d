@@ -131,7 +131,7 @@ To work as intended, userland services started by `systemd --user` **should** ha
 
 !!! info
 
-    To be allowed to run, additional root or user services may need to add extra rules inside the `usr/systemd.d` or `usr/systemd-user.d` directory. For example, when installing a new privileged service `foo` with [stacking](development/structure.md#no-new-privileges) you may need to add the following to `/etc/apparmor.d/usr/systemd.d/foo`:
+    To be allowed to run, additional root or user services may need to add extra rules inside the `usr/systemd.d` or `usr/systemd-user.d` directory. For example, when installing a new privileged service `foo` with [stacking](development/internal.md#no-new-privileges) you may need to add the following to `/etc/apparmor.d/usr/systemd.d/foo`:
     ```
     @{lib}/foo rPx -> systemd//&foo,
     ```
