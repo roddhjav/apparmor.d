@@ -208,7 +208,7 @@ func TestAppArmorProfileFile_Integration(t *testing.T) {
 					&Comment{Base: Base{Comment: " Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>", IsLineRule: true}},
 					&Comment{Base: Base{Comment: " SPDX-License-Identifier: GPL-2.0-only", IsLineRule: true}},
 					nil,
-					&Abi{IsMagic: true, Path: "abi/3.0"},
+					&Abi{IsMagic: true, Path: "abi/4.0"},
 					&Include{IsMagic: true, Path: "tunables/global"},
 					&Variable{
 						Name: "exec_path", Define: true,
