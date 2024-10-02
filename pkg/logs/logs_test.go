@@ -267,6 +267,27 @@ func TestNew(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "startplasma",
+			path: filepath.Join(testdata, "audit.log"),
+			want: AppArmorLogs{
+				{
+					"apparmor":       "ALLOWED",
+					"operation":      "link",
+					"class":          "file",
+					"profile":        "startplasma",
+					"name":           "@{user_cache_dirs}/ksycoca5_de_LQ6f0J2qZg4vOKgw2NbXuW7iuVU=.isNSBz",
+					"target":         "@{user_cache_dirs}/#@{int}",
+					"comm":           "startplasma-way",
+					"denied_mask":    "k",
+					"requested_mask": "k",
+					"fsuid":          "1000",
+					"ouid":           "1000",
+					"FSUID":          "user",
+					"OUID":           "user",
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
