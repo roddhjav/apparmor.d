@@ -12,8 +12,8 @@ import (
 var (
 	regAbi4To3 = util.ToRegexRepl([]string{
 		`abi/4.0`, `abi/3.0`,
-		`userns,`, `# userns,`,
-		`mqueue`, `# mqueue`,
+		`  userns,`, `  # userns,`,
+		`  mqueue`, `  # mqueue`,
 	})
 )
 
