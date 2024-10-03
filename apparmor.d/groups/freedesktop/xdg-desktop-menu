@@ -10,37 +10,47 @@ include <tunables/global>
 @{exec_path} = @{bin}/xdg-desktop-menu
 profile xdg-desktop-menu @{exec_path} flags=(complain) {
   include <abstractions/base>
-  include <abstractions/nameservice-strict>
   include <abstractions/consoles>
+  include <abstractions/freedesktop.org>
+  include <abstractions/nameservice-strict>
 
   @{exec_path} r,
 
-  @{sh_path}        rix,
-  @{bin}/mkdir      rix,
-  @{bin}/sed        rix,
-  @{bin}/cut        rix,
-  @{bin}/basename   rix,
-  @{bin}/rm         rix,
-  @{bin}/cp         rix,
-  @{bin}/cat        rix,
-  @{bin}/touch      rix,
-  @{bin}/{m,g,}awk  rix,
-  @{bin}/whoami     rix,
-  @{bin}/mv         rix,
-  @{bin}/{,e}grep   rix,
-  @{bin}/readlink   rix,
+  @{sh_path}       rix,
+  @{bin}/{,e}grep   ix,
+  @{bin}/{m,g,}awk  ix,
+  @{bin}/basename   ix,
+  @{bin}/cat        ix,
+  @{bin}/chmod      ix,
+  @{bin}/cp         ix,
+  @{bin}/cut        ix,
+  @{bin}/dirname    ix,
+  @{bin}/ln         ix,
+  @{bin}/mkdir      ix,
+  @{bin}/mktemp     ix,
+  @{bin}/mv         ix,
+  @{bin}/readlink   ix,
+  @{bin}/realpath   ix,
+  @{bin}/rm         ix,
+  @{bin}/sed        ix,
+  @{bin}/touch      ix,
+  @{bin}/tr         ix,
+  @{bin}/umask      ix,
+  @{bin}/uname      ix,
 
-  @{bin}/update-desktop-database rPx,
+  # To get DE information
+  @{bin}/kde{,4}-config           ix,
 
-  owner @{user_config_dirs}/menus/applications-merged/xdg-desktop-menu-dummy.menu rw,
-  owner @{user_share_dirs}/applications/chrome-*.desktop rw,
-  owner @{HOME}/.gnome/apps/chrome-*.desktop rw,
+  @{bin}/dbus-send                Cx -> bus,
+  @{bin}/update-desktop-database  Px,
+  @{bin}/xprop                    Px,
 
-  /usr/share/applications/*.desktop rw,
-  /usr/share/*/*.desktop r,
-
-  /usr/share/applications/defaults.list r,
-  /usr/share/applications/defaults.list.new w,
+  profile bus flags=(complain) {
+    include <abstractions/base>
+    include <abstractions/app/bus>
+    include <abstractions/bus-session>
+    include if exists <local/xdg-desktop-menu_bus>
+  }
 
   include if exists <local/xdg-desktop-menu>
 }
