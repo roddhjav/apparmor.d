@@ -3,8 +3,6 @@
 # Copyright (C) 2022-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-# TODO: This profile needs to be rewritten and integrated with the xdg-open profiles.
-
 abi <abi/4.0>,
 
 include <tunables/global>
@@ -16,73 +14,51 @@ profile xdg-mime @{exec_path} flags=(attach_disconnected) {
 
   @{exec_path} r,
 
-  @{sh_path}        rix,
-  @{bin}/{,e}grep   rix,
-  @{bin}/{m,g,}awk  rix,
-  @{bin}/basename   rix,
-  @{bin}/cat        rix,
-  @{bin}/cut        rix,
-  @{bin}/file       rix,
-  @{bin}/head       rix,
-  @{bin}/mv         rix,
-  @{bin}/readlink   rix,
-  @{bin}/realpath   rix,
-  @{bin}/sed        rix,
-  @{bin}/tr         rix,
-  @{bin}/uname      rix,
-  @{bin}/which{,.debianutils}      rix,
+  @{sh_path}       rix,
+  @{bin}/{,e}grep   ix,
+  @{bin}/{m,g,}awk  ix,
+  @{bin}/basename   ix,
+  @{bin}/cat        ix,
+  @{bin}/cut        ix,
+  @{bin}/file       ix,
+  @{bin}/head       ix,
+  @{bin}/mkdir      ix,
+  @{bin}/mv         ix,
+  @{bin}/readlink   ix,
+  @{bin}/realpath   ix,
+  @{bin}/rm         ix,
+  @{bin}/sed        ix,
+  @{bin}/touch      ix,
+  @{bin}/tr         ix,
+  @{bin}/umask      ix,
+  @{bin}/uname      ix,
 
-  @{bin}/gio        rPx,
-  @{bin}/kbuildsycoca5 rPx,
-  @{bin}/ktraderclient5 rPUx,
-  @{bin}/vendor_perl/mimetype rPx,
-  @{bin}/mimetype   rPx,
-  @{bin}/xprop      rPx,
+  # To query DE information
+  @{bin}/gio                  ix,
+  @{bin}/gnomevfs-info        ix,
+  @{bin}/gvfs-info            ix,
+  @{bin}/kde{,4}-config       ix,
+  @{bin}/kfile                ix,
+  @{bin}/kmimetypefinder{,5}  ix,
+  @{bin}/ktraderclient{,5}    ix,
+  @{bin}/qtpaths              ix,
+  @{bin}/qtxdg-mat            ix,
 
-  /usr/share/file/misc/** r,
-  /usr/share/terminfo/** r,
+  @{bin}/dbus-send            Cx -> bus,
+  @{bin}/kbuildsycoca{,5}     Px,
+  @{bin}/mimetype             Px,
+  @{bin}/vendor_perl/mimetype Px,
+  @{bin}/xprop                Px,
 
-  owner @{HOME}/** r,
-  owner @{HOME}/.Xauthority r,
-  owner @{user_config_dirs}/mimeapps.list{,.new} rw,
+  owner @{tmp}/wl-copy-buffer-@{rand6}/stdin r,
 
-  owner @{run}/user/@{uid}/ r,
-
-  owner /tmp/wl-copy-buffer-@{rand6}/stdin r,
-
-  @{sys}/devices/platform/**/hwmon/hwmon@{int}/temp* r,
-  @{sys}/devices/platform/**/hwmon/hwmon@{int}/fan* r,
-
-  @{PROC}/version r,
-
-  /dev/dri/card@{int} rw,
   /dev/tty rw,
 
-  # When xdg-mime is run as root, it wants to exec dbus-launch, and hence it creates the two
-  # following root processes:
-  #  dbus-launch --autolaunch e0a30ad97cd6421c85247839ccef9db2 --binary-syntax --close-stderr
-  #  /usr/bin/dbus-daemon --syslog-only --fork --print-pid 5 --print-address 7 --session
-  #
-  # Should this be allowed? Xdg-mime works fine without this.
-  #@{bin}/dbus-launch        rCx -> dbus,
-  #@{bin}/dbus-send          rCx -> dbus,
-  deny @{bin}/dbus-launch rx,
-  deny @{bin}/dbus-send   rx,
-
-  deny owner @{user_share_dirs}/gvfs-metadata/{,*} r,
-
-  profile dbus {
+  profile bus flags=(complain) {
     include <abstractions/base>
-    include <abstractions/nameservice-strict>
-
-    @{bin}/dbus-launch   mr,
-    @{bin}/dbus-send     mr,
-    @{bin}/dbus-daemon  rPx,
-
-          @{HOME}/.Xauthority r,
-    owner @{HOME}/.dbus/session-bus/@{hex}-[0-9] w,
-
-    include if exists <local/xdg-mime_dbus>
+    include <abstractions/app/bus>
+    include <abstractions/bus-session>
+    include if exists <local/xdg-mime_bus>
   }
 
   include if exists <local/xdg-mime>

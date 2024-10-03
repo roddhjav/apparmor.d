@@ -11,36 +11,43 @@ include <tunables/global>
 profile xdg-icon-resource @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/consoles>
-  include <abstractions/nameservice-strict>
   include <abstractions/freedesktop.org>
 
   @{exec_path} r,
 
-  @{sh_path}        rix,
-  @{bin}/{,e}grep   rix,
-  @{bin}/whoami     rix,
-  @{bin}/sed        rix,
-  @{bin}/basename   rix,
-  @{bin}/mkdir      rix,
-  @{bin}/cp         rix,
-  @{bin}/rm         rix,
-  @{bin}/readlink   rix,
-  @{bin}/touch      rix,
+  @{sh_path}       rix,
+  @{bin}/{,e}grep   ix,
+  @{bin}/{m,g,}awk  ix,
+  @{bin}/basename   ix,
+  @{bin}/cat        ix,
+  @{bin}/cp         ix,
+  @{bin}/cut        ix,
+  @{bin}/dirname    ix,
+  @{bin}/ln         ix,
+  @{bin}/mkdir      ix,
+  @{bin}/readlink   ix,
+  @{bin}/realpath   ix,
+  @{bin}/rm         ix,
+  @{bin}/sed        ix,
+  @{bin}/touch      ix,
+  @{bin}/tr         ix,
+  @{bin}/umask      ix,
+  @{bin}/uname      ix,
+  @{bin}/whoami     ix,
 
-  @{bin}/gtk{,4}-update-icon-cache rPx,
+  # To get DE information
+  @{bin}/kde{,4}-config            ix,
 
-  /usr/share/**/icons/**.png r,
-  /usr/share/icons/**.png rw,
-  /usr/share/icons/*/.xdg-icon-resource-dummy rw,
-  /usr/share/terminfo/** r,
+  @{bin}/dbus-send                 Cx -> bus,
+  @{bin}/gtk{,4}-update-icon-cache Px,
+  @{bin}/xprop                     Px,
 
-  owner @{tmp}/.com.google.Chrome.*/chrome-*.png r,
-
-  owner @{user_share_dirs}/icons/**/apps/chrome-*.png rw,
-  owner @{user_share_dirs}/icons/**/.xdg-icon-resource-dummy rw,
-  /opt/**/*.png r,
-
-  deny @{user_share_dirs}/gvfs-metadata/* r,
+  profile bus flags=(complain) {
+    include <abstractions/base>
+    include <abstractions/app/bus>
+    include <abstractions/bus-session>
+    include if exists <local/xdg-icon-resource_bus>
+  }
 
   include if exists <local/xdg-icon-resource>
 }
