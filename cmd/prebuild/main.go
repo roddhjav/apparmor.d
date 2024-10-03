@@ -25,6 +25,7 @@ func init() {
 		"merge",
 		"configure",
 		"setflags",
+		"overwrite",
 		"systemd-default",
 	)
 

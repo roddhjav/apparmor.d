@@ -106,8 +106,8 @@ func Prebuild() {
 	if file != "" {
 		sync, _ := prepare.Tasks["synchronise"].(*prepare.Synchronise)
 		sync.Path = file
-		configure, _ := prepare.Tasks["configure"].(*prepare.Configure)
-		configure.OneFile = true
+		overwrite, _ := prepare.Tasks["overwrite"].(*prepare.Overwrite)
+		overwrite.OneFile = true
 	}
 
 	logging.Step("Building apparmor.d profiles for %s on ABI%d.", prebuild.Distribution, prebuild.ABI)

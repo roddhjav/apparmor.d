@@ -65,6 +65,12 @@ func TestTask_Apply(t *testing.T) {
 			want:    "dists/flags/main.flags",
 		},
 		{
+			name:      "overwrite",
+			task:      Tasks["overwrite"],
+			wantErr:   false,
+			wantFiles: paths.PathList{prebuild.RootApparmord.Join("flatpak.apparmor.d")},
+		},
+		{
 			name:      "systemd-default",
 			task:      Tasks["systemd-default"],
 			wantErr:   false,

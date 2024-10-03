@@ -6,7 +6,6 @@ package prepare
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 	"github.com/roddhjav/apparmor.d/pkg/util"
@@ -14,7 +13,6 @@ import (
 
 type Configure struct {
 	prebuild.Base
-	OneFile bool
 }
 
 func init() {
@@ -23,18 +21,12 @@ func init() {
 			Keyword: "configure",
 			Msg:     "Set distribution specificities",
 		},
-		OneFile: false,
 	})
 }
 
 func (p Configure) Apply() ([]string, error) {
 	res := []string{}
 
-	if prebuild.ABI == 4 {
-		if err := OverwriteUpstreamProfile(p.OneFile); err != nil {
-			return res, err
-		}
-	}
 	switch prebuild.Distribution {
 	case "arch", "opensuse":
 
@@ -64,37 +56,4 @@ func (p Configure) Apply() ([]string, error) {
 
 	}
 	return res, nil
-}
-
-// Overwrite upstream profile: disable upstream & rename ours
-func OverwriteUpstreamProfile(oneFile bool) error {
-	const ext = ".apparmor.d"
-	disableDir := prebuild.RootApparmord.Join("disable")
-	if err := disableDir.Mkdir(); err != nil {
-		return err
-	}
-
-	path := prebuild.DistDir.Join("overwrite")
-	if !path.Exist() {
-		return fmt.Errorf("%s not found", path)
-	}
-	for _, name := range util.MustReadFileAsLines(path) {
-		origin := prebuild.RootApparmord.Join(name)
-		dest := prebuild.RootApparmord.Join(name + ext)
-		if !dest.Exist() && oneFile {
-			continue
-		}
-		if err := origin.Rename(dest); err != nil {
-
-			return err
-		}
-		originRel, err := origin.RelFrom(dest)
-		if err != nil {
-			return err
-		}
-		if err := os.Symlink(originRel.String(), disableDir.Join(name).String()); err != nil {
-			return err
-		}
-	}
-	return nil
 }
