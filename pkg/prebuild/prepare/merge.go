@@ -20,7 +20,7 @@ func init() {
 	RegisterTask(&Merge{
 		Base: prebuild.Base{
 			Keyword: "merge",
-			Msg:     "Merge all profiles into a unified apparmor.d directory",
+			Msg:     "Merge profiles (from group/, profiles-*-*/) to a unified apparmor.d directory",
 		},
 	})
 }

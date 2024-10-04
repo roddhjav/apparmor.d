@@ -20,18 +20,18 @@ func init() {
 
 	// Define the tasks applied by default
 	prepare.Register(
-		"synchronise",
-		"ignore",
-		"merge",
-		"configure",
-		"setflags",
-		"overwrite",
-		"systemd-default",
+		"synchronise",     // Initialize a new clean apparmor.d build directory
+		"ignore",          // Ignore profiles and files from dist/ignore
+		"merge",           // Merge profiles (from group/, profiles-*-*/) to a unified apparmor.d directory
+		"configure",       // Set distribution specificities
+		"setflags",        // Set flags as definied in dist/flags
+		"overwrite",       // Overwrite dummy upstream profiles
+		"systemd-default", // Set systemd unit drop in files for dbus profiles
 	)
 
 	// Build tasks applied by default
 	builder.Register(
-		"userspace", // Resolve variable in  the userspace profile
+		"userspace", // Resolve variable in the userspace profile
 		"dev",       // Temporary fix for #74, #80 & #235
 	)
 
@@ -64,9 +64,6 @@ func init() {
 		/etc/apparmor.d/usr.bin.timeto_unixtime
 		/etc/apparmor.d/whonix-firewall
 		`
-	}
-	if prebuild.ABI == 3 {
-		builder.Register("abi3")
 	}
 }
 

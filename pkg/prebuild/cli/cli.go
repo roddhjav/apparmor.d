@@ -86,21 +86,11 @@ func Prebuild() {
 		builder.Register("enforce")
 	}
 
-	switch abi {
-	case 3:
-		prebuild.ABI = 3
-		builder.Register("abi3")
-	case 4:
-		prebuild.ABI = 4
-		for i, b := range builder.Builds {
-			if b.Name() == "abi3" {
-				builder.Builds = append(builder.Builds[:i], builder.Builds[i+1:]...)
-				break
-			}
-		}
-	case nilABI:
-	default:
-		logging.Fatal("ABI %d not supported", abi)
+	if abi != nilABI {
+		prebuild.ABI = abi
+	}
+	if prebuild.ABI == 3 {
+		builder.Register("abi3") // Convert all profiles from abi 4.0 to abi 3.0
 	}
 
 	if file != "" {
