@@ -1,0 +1,97 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Roman Beslik <me@beroal.in.ua>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/briar-desktop
+profile briar-desktop @{exec_path} {
+  include <abstractions/audio-client>
+  include <abstractions/base>
+  include <abstractions/dconf-write>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/gnome-strict>
+  include <abstractions/graphics>
+  include <abstractions/nameservice-strict>
+
+  network inet dgram,
+  network inet stream,
+  network inet6 dgram,
+  network inet6 stream,
+
+  @{lib}/jvm/java*/lib/jspawnhelper Cx -> jspawnhelper,
+
+  ptrace read peer=briar-desktop-tor,
+  ptrace read peer=@{profile_name}//jspawnhelper,
+
+  @{exec_path} mr,
+
+  @{lib}/jvm/java*/bin/java rix,
+  @{lib}/jvm/java*/lib/** rm,
+  @{sh_path} mr,
+
+  @{system_share_dirs}/icons/{,**} r,
+  @{system_share_dirs}/java/briar-desktop.jar r,
+
+  /etc/java*/{{logging,net,sound}.properties,security/java.{security,policy}} r,
+
+  owner @{HOME}/.briar/{,**} rw,
+  owner @{HOME}/.briar/desktop/db/db.mv.db k,
+
+  owner @{HOME}/.java/{,.userPrefs/{,org/}} w,
+  owner @{HOME}/.java/.userPrefs/.user.lock.@{user} wk,
+  owner @{HOME}/.java/.userPrefs/.userRootModFile.@{user} rw,
+  owner @{HOME}/.java/.userPrefs/{,org/}prefs.{xml,tmp} rw,
+  owner @{HOME}/.java/.userPrefs/org/briarproject/{,**} rw,
+
+  owner @{HOME}/.skiko/ w,
+  owner @{HOME}/.skiko/@{hex64}/{,libskiko-*.so,skiko[0-9]*} mrw,
+
+  owner @{user_pictures_dirs}/{,**} r,
+
+  owner @{user_cache_dirs}/JNA/{,**} mrw,
+
+  owner @{tmp}/hsperfdata_@{user}/ rw,
+  owner @{tmp}/hsperfdata_@{user}/@{pid} rwk,
+  owner @{tmp}/imageio[0-9]*.tmp rw,
+  owner @{tmp}/jna[0-9]*.tmp mrw,
+
+  @{sys}/devices/system/cpu/cpu@{int}/microcode/version r,
+  @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/session-@{int}.scope/{cpu,memory}.max r,
+  @{sys}/kernel/mm/{hugepages/,transparent_hugepage/enabled} r,
+
+        @{PROC}/cgroups r,
+  owner @{PROC}/@{pid}/cgroup r,
+  owner @{PROC}/@{pid}/cmdline r,
+  owner @{PROC}/@{pid}/coredump_filter rw,
+  owner @{PROC}/@{pid}/mountinfo r,
+        @{PROC}/@{pid}/net/if_inet6 r,
+  owner @{PROC}/@{pid}/stat r,
+
+  /dev/tty rw,
+  /dev/urandom rw,
+
+  deny @{HOME}/ r,
+
+  include if exists <local/briar-desktop>
+
+  profile jspawnhelper flags=(attach_disconnected) {
+    include <abstractions/base>
+
+    @{bin}/ldconfig ix,
+    owner @{HOME}/.briar/desktop/tor/tor Px -> briar-desktop-tor,
+
+    @{system_share_dirs}/java/briar-desktop.jar r,
+    owner @{PROC}/@{pid}/fd/ r,
+    owner @{PROC}/@{pid}/stat r,
+
+    deny owner @{HOME}/.briar/desktop/db/db.mv.db rw, # file_inherit
+    deny network inet6 stream, # file_inherit
+
+    include if exists <local/briar-desktop_jspawnhelper>
+  }
+}
+
+# vim:syntax=apparmor
