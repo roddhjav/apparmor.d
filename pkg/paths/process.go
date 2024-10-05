@@ -55,7 +55,8 @@ func NewProcess(extraEnv []string, args ...string) (*Process, error) {
 		cmd: exec.Command(args[0], args[1:]...),
 	}
 	p.cmd.Env = append(os.Environ(), extraEnv...)
-	p.TellCommandNotToSpawnShell()
+	tellCommandNotToSpawnShell(p.cmd)          // windows specific
+	tellCommandToStartOnNewProcessGroup(p.cmd) // linux specific
 
 	// This is required because some tools detects if the program is running
 	// from terminal by looking at the stdin/out bindings.
@@ -146,7 +147,7 @@ func (p *Process) Signal(sig os.Signal) error {
 // actually exited. This only kills the Process itself, not any other processes it may
 // have started.
 func (p *Process) Kill() error {
-	return p.cmd.Process.Kill()
+	return kill(p.cmd)
 }
 
 // SetDir sets the working directory of the command. If Dir is the empty string, Run

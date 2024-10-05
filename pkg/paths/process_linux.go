@@ -31,8 +31,34 @@
 
 package paths
 
-import "os/exec"
+import (
+	"os/exec"
+	"syscall"
+)
 
 func tellCommandNotToSpawnShell(_ *exec.Cmd) {
 	// no op
+}
+
+func tellCommandToStartOnNewProcessGroup(oscmd *exec.Cmd) {
+	// https://groups.google.com/g/golang-nuts/c/XoQ3RhFBJl8
+
+	// Start the process in a new process group.
+	// This is needed to kill the process and its children
+	// if we need to kill the process.
+	if oscmd.SysProcAttr == nil {
+		oscmd.SysProcAttr = &syscall.SysProcAttr{}
+	}
+	oscmd.SysProcAttr.Setpgid = true
+}
+
+func kill(oscmd *exec.Cmd) error {
+	// https://groups.google.com/g/golang-nuts/c/XoQ3RhFBJl8
+
+	// Kill the process group
+	pgid, err := syscall.Getpgid(oscmd.Process.Pid)
+	if err != nil {
+		return err
+	}
+	return syscall.Kill(-pgid, syscall.SIGKILL)
 }
