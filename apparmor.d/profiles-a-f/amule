@@ -2,7 +2,7 @@
 # Copyright (C) 2024 Roman Beslik <me@beroal.in.ua>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
@@ -19,7 +19,6 @@ profile amule @{exec_path} {
   network inet6 stream,
   network netlink raw,
 
-  @{sh_path} Cx -> shell, 
 
   # Previewing files isn't allowed
   # because aMule opens viewers directly instead of via `xdg-open`.
@@ -28,26 +27,13 @@ profile amule @{exec_path} {
   # @{open_path} rPx -> child-open,
 
   @{exec_path} mr,
+  @{bin}/uname rPx,
+  @{sh_path} rix,
   @{system_share_dirs}/amule/{,**} r,
   owner @{HOME}/.aMule/{,**} rwk,
+  @{user_torrents_dirs}/{,**} rw,
 
   include if exists <local/amule>
-
-  profile shell flags=(attach_disconnected) {
-    include <abstractions/base>
-
-    network inet dgram,
-    network inet stream,
-    network inet6 dgram,
-    network inet6 stream,
-
-    @{bin}/uname rPx,
-
-    @{sh_path} mr,
-
-    deny /dev/tty rw,
-    deny @{HOME}/.aMule/{,**} rw, # file_inherit
-  }
 }
 
 # vim:syntax=apparmor
