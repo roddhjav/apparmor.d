@@ -10,10 +10,10 @@ var (
 	// AppArmor ABI version
 	ABI uint = 0
 
-	// Root is the root directory for the build
+	// Root is the root directory for the build (default: .build)
 	Root *paths.Path = paths.New(".build")
 
-	// RootApparmord is the final built apparmor.d directory
+	// RootApparmord is the final built apparmor.d directory (default: .build/apparmor.d)
 	RootApparmord *paths.Path = Root.Join("apparmor.d")
 
 	// DistDir is the directory where the distribution specific files are stored
