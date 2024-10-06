@@ -200,12 +200,11 @@ func (aaLogs AppArmorLogs) String() string {
 	for _, log := range aaLogs {
 		seen := map[string]bool{"apparmor": true}
 		res.WriteString(state[log["apparmor"]])
-		fsuid := log["fsuid"]
-		ouid := log["ouid"]
+		owner := aa.IsOwner(log)
 
 		for _, key := range keys {
 			if item, present := log[key]; present {
-				if key == "name" && fsuid == ouid && !strings.Contains(log["operation"], "dbus") {
+				if key == "name" && owner {
 					res.WriteString(template[key] + " owner" + reset)
 				}
 				if temp, present := template[key]; present {

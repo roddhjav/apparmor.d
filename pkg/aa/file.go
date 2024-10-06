@@ -29,7 +29,7 @@ func init() {
 	}
 }
 
-func isOwner(log map[string]string) bool {
+func IsOwner(log map[string]string) bool {
 	fsuid, hasFsUID := log["fsuid"]
 	ouid, hasOuUID := log["ouid"]
 	isDbus := strings.Contains(log["operation"], "dbus")
@@ -98,7 +98,7 @@ func newFileFromLog(log map[string]string) Rule {
 	return &File{
 		Base:      newBaseFromLog(log),
 		Qualifier: newQualifierFromLog(log),
-		Owner:     isOwner(log),
+		Owner:     IsOwner(log),
 		Path:      log["name"],
 		Access:    accesses,
 		Target:    log["target"],
@@ -262,7 +262,7 @@ func newLinkFromLog(log map[string]string) Rule {
 	return &Link{
 		Base:      newBaseFromLog(log),
 		Qualifier: newQualifierFromLog(log),
-		Owner:     isOwner(log),
+		Owner:     IsOwner(log),
 		Path:      log["name"],
 		Target:    log["target"],
 	}
