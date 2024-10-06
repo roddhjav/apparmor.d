@@ -17,10 +17,11 @@ profile systemd-dissect @{exec_path} flags=(attach_disconnected) {
   capability sys_admin,
   capability sys_resource,
 
-  mount options=(rw rshared rslave)                 -> /,
-  mount options=(rw nodev)                          -> /mnt/*/,
   mount                                             -> /tmp/dissect-@{rand6}/,
-  mount options=(ro nodev)          /dev/loop* -> @{run}/systemd/dissect-root/,
+  mount fstype=tmpfs options=(rw nodev)      rootfs -> @{run}/systemd/dissect-root/,
+  mount options=(ro nodev)               /dev/loop* -> @{run}/systemd/dissect-root/{,**/},
+  mount options=(rw nodev)                          -> /mnt/*/,
+  mount options=(rw rshared rslave)                 -> /,
 
   umount @{run}/systemd/dissect-root/,
 

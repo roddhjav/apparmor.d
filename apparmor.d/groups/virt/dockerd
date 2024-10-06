@@ -83,9 +83,19 @@ profile dockerd @{exec_path} flags=(attach_disconnected) {
   # TODO: should be in a sub profile started with pivot_root, not supported yet.
   /{,**} rwl,
 
+  /etc/docker/{,**} r,
+
+  / r,
+
+  owner @{lib}/containerd/** w,
   owner @{lib}/docker/overlay2/*/work/{,**} rw,
+  owner /var/lib/containerd/** w,
   owner /var/lib/docker/{,**} rwk,
   owner /var/lib/docker/tmp/qemu-check@{int}/check rix,
+
+  owner @{run}/docker/ rw,
+  owner @{run}/docker/** rwlk,
+  owner @{run}/docker.pid rw,
 
   @{sys}/fs/cgroup/cgroup.controllers r,
   @{sys}/fs/cgroup/cpuset.cpus.effective r,
@@ -101,16 +111,20 @@ profile dockerd @{exec_path} flags=(attach_disconnected) {
         @{PROC}/sys/kernel/threads-max r,
         @{PROC}/sys/net/bridge/bridge-nf-call-ip*tables r,
         @{PROC}/sys/net/core/somaxconn r,
-        @{PROC}/sys/net/ipv{4,6}/conf/all/disable_ipv{4,6} rw,
+        @{PROC}/sys/net/ipv{4,6}/conf/*/disable_ipv{4,6} rw,
         @{PROC}/sys/net/ipv{4,6}/conf/docker@{int}/accept_ra rw,
         @{PROC}/sys/net/ipv{4,6}/ip_forward rw,
         @{PROC}/sys/net/ipv{4,6}/ip_local_port_range r,
-  owner @{PROC}/@{pids}/attr/current r,
-  owner @{PROC}/@{pids}/cgroup r,
-  owner @{PROC}/@{pids}/fd/ r,
-  owner @{PROC}/@{pids}/mountinfo r,
-  owner @{PROC}/@{pids}/net/ip_tables_names r,
-  owner @{PROC}/@{pids}/uid_map r,
+  owner @{PROC}/@{pid}/attr/current r,
+  owner @{PROC}/@{pid}/cgroup r,
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/net/ip_tables_names r,
+  owner @{PROC}/@{pid}/task/@{tid}/mountinfo r,
+  owner @{PROC}/@{pid}/uid_map r,
+
+  /dev/ r,
+  /dev/**/ r,
 
   include if exists <local/dockerd>
 }
