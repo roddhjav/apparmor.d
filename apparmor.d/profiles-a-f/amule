@@ -1,0 +1,39 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Roman Beslik <me@beroal.in.ua>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/amule
+profile amule @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/dconf-write>
+  include <abstractions/gnome-strict>
+  include <abstractions/nameservice-strict>
+
+  network inet dgram,
+  network inet stream,
+  network inet6 dgram,
+  network inet6 stream,
+  network netlink raw,
+
+
+  # Previewing files isn't allowed
+  # because aMule opens viewers directly instead of via `xdg-open`.
+  # If aMule uses `xdg-open` in your time,
+  # uncomment the following line to allow previewing files.
+  # @{open_path} rPx -> child-open,
+
+  @{exec_path} mr,
+  @{bin}/uname rPx,
+  @{sh_path} rix,
+  @{system_share_dirs}/amule/{,**} r,
+  owner @{HOME}/.aMule/{,**} rwk,
+  @{user_torrents_dirs}/{,**} rw,
+
+  include if exists <local/amule>
+}
+
+# vim:syntax=apparmor
