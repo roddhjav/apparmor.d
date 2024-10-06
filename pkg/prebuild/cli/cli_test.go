@@ -78,7 +78,7 @@ func Test_Prebuild(t *testing.T) {
 	chdirGitRoot()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			setTestBuildDirectories(tt.name)
+			setTestBuildDirectories(tt.dist)
 			prebuild.Distribution = tt.dist
 			prepare.Prepares = []prepare.Task{}
 			prepare.Register(

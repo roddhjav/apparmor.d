@@ -61,7 +61,7 @@ func init() {
 
 func Prebuild() {
 	flag.Usage = func() {
-		fmt.Printf("%s%s\n%s\n%s", usage,
+		fmt.Printf("%s\n%s\n%s\n%s", usage,
 			prebuild.Help("Prepare", prepare.Tasks),
 			prebuild.Help("Build", builder.Builders),
 			directive.Usage(),
