@@ -42,7 +42,9 @@ profile xarchiver @{exec_path} {
   # For deb packages
   @{bin}/{,@{multiarch}-}ar rix,
 
-  @{bin}/xdg-open      rCx -> open,
+  @{path_open}         rPx -> child-open,
+
+  /etc/fstab r,
 
   owner @{user_config_dirs}/xarchiver/ rw,
   owner @{user_config_dirs}/xarchiver/xarchiverrc{,.*} rw,
@@ -58,45 +60,11 @@ profile xarchiver @{exec_path} {
         /tmp/ r,
   owner @{tmp}/** rw,
 
-  owner @{PROC}/@{pid}/fd/ r,
         @{PROC}/@{pid}/mountinfo r,
         @{PROC}/@{pid}/mounts r,
+  owner @{PROC}/@{pid}/fd/ r,
 
-  /etc/fstab r,
-
-  # Allowed apps to open
-  @{bin}/engrampa  rPUx,
-  @{bin}/geany     rPUx,
-  @{bin}/viewnior  rPUx,
-
-  # file_inherit
   owner /dev/tty@{int} rw,
-
-
-  profile open {
-    include <abstractions/base>
-    include <abstractions/xdg-open>
-
-    @{bin}/xdg-open mr,
-
-    @{sh_path}             rix,
-    @{bin}/{m,g,}awk       rix,
-    @{bin}/readlink        rix,
-    @{bin}/basename        rix,
-
-    owner @{HOME}/ r,
-
-    owner @{run}/user/@{uid}/ r,
-
-    # Allowed apps to open
-    @{bin}/engrampa  rPUx,
-    @{bin}/geany     rPUx,
-    @{bin}/viewnior  rPUx,
-
-    # file_inherit
-    owner @{HOME}/.xsession-errors w,
-
-  }
 
   include if exists <local/xarchiver>
 }
