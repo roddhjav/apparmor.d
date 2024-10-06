@@ -4,18 +4,12 @@
 
 build {
   sources = [
-    "source.qemu.archlinux-gnome",
-    "source.qemu.archlinux-kde",
-    "source.qemu.archlinux-server",
-    "source.qemu.debian-gnome",
-    "source.qemu.debian-kde",
-    "source.qemu.debian-server",
-    "source.qemu.opensuse-gnome",
-    "source.qemu.opensuse-kde",
-    "source.qemu.ubuntu-desktop",
-    "source.qemu.ubuntu-desktop24",
-    "source.qemu.ubuntu-server",
-    "source.qemu.ubuntu-server24",
+    "source.qemu.archlinux",
+    "source.qemu.debian",
+    "source.qemu.fedora",
+    "source.qemu.opensuse",
+    "source.qemu.ubuntu22",
+    "source.qemu.ubuntu24",
   ]
 
   # Upload local files
@@ -25,26 +19,28 @@ build {
   }
 
   provisioner "file" {
-    only        = ["qemu.archlinux-gnome", "qemu.archlinux-kde", "qemu.archlinux-server"]
+    only        = ["qemu.archlinux"]
     destination = "/tmp/src/"
-    sources     = ["${path.cwd}/../apparmor.d-${var.version}-1-x86_64.pkg.tar.zst"]
+    sources = [
+      "${path.cwd}/../apparmor.d-${var.version}-1-x86_64.pkg.tar.zst",
+    ]
   }
 
   provisioner "file" {
-    only        = ["qemu.opensuse-*"]
+    only        = ["qemu.opensuse"]
     destination = "/tmp/src/"
     sources     = ["${path.cwd}/../apparmor.d-${var.version}-1.x86_64.rpm"]
   }
 
   provisioner "file" {
-    only        = ["qemu.debian-server", "qemu.debian-gnome", "qemu.debian-kde", "qemu.ubuntu-server", "qemu.ubuntu-server24", "qemu.ubuntu-desktop", "qemu.ubuntu-desktop24"]
+    only        = ["qemu.debian", "qemu.ubuntu22", "qemu.ubuntu24"]
     destination = "/tmp/src/"
     sources     = ["${path.cwd}/../apparmor.d_${var.version}-1_amd64.deb"]
   }
 
   # Wait for cloud-init to finish
   provisioner "shell" {
-    except          = ["qemu.opensuse-*"]
+    except          = ["qemu.opensuse"]
     execute_command = "echo '${var.password}' | sudo -S sh -c '{{ .Vars }} {{ .Path }}'"
     inline = [
       "while [ ! -f /var/lib/cloud/instance/boot-finished ]; do echo 'Waiting for Cloud-Init...'; sleep 20; done",
