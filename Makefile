@@ -4,12 +4,12 @@
 # SPDX-License-Identifier: GPL-2.0-only
 
 DESTDIR ?= /
-BUILD := .build
-PKGDEST := /tmp/pkg
+BUILD ?= .build
+PKGDEST ?= /tmp/pkg
 PKGNAME := apparmor.d
 P = $(filter-out dpkg,$(notdir $(wildcard ${BUILD}/apparmor.d/*)))
 
-.PHONY: all build enforce full install local $(P) dev package pkg dpkg rpm tests lint man docs serve clean
+.PHONY: all build enforce full install local $(P) dev package pkg dpkg rpm tests lint check manual docs serve clean
 
 all: build
 	@./${BUILD}/prebuild --complain
@@ -101,18 +101,21 @@ lint:
 	@golangci-lint run
 	@make --directory=tests lint
 	@shellcheck --shell=bash \
-		PKGBUILD dists/build.sh dists/docker.sh \
+		PKGBUILD dists/build.sh dists/docker.sh tests/check.sh \
 		tests/packer/init/init.sh tests/packer/src/aa-update tests/packer/init/clean.sh \
 		debian/${PKGNAME}.postinst debian/${PKGNAME}.postrm
 
-man:
-	pandoc -t man -s -o root/usr/share/man/man8/aa-log.8 root/usr/share/man/man8/aa-log.md
+check:
+	@bash tests/check.sh
+
+manual:
+	@pandoc -t man -s -o root/usr/share/man/man8/aa-log.8 root/usr/share/man/man8/aa-log.md
 
 docs:
-	ENABLED_GIT_REVISION_DATE=false MKDOCS_OFFLINE=true mkdocs build --strict
+	@ENABLED_GIT_REVISION_DATE=false MKDOCS_OFFLINE=true mkdocs build --strict
 
 serve:
-	ENABLED_GIT_REVISION_DATE=false MKDOCS_OFFLINE=false mkdocs serve
+	@ENABLED_GIT_REVISION_DATE=false MKDOCS_OFFLINE=false mkdocs serve
 
 clean:
 	@rm -rf \
