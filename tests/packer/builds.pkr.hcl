@@ -22,7 +22,7 @@ build {
     only        = ["qemu.archlinux"]
     destination = "/tmp/src/"
     sources = [
-      "${path.cwd}/../apparmor.d-${var.version}-1-x86_64.pkg.tar.zst",
+      "${path.cwd}/../.pkg/apparmor.d-${var.version}-1-x86_64.pkg.tar.zst",
     ]
   }
 
@@ -61,12 +61,12 @@ build {
   }
 
   post-processor "vagrant" {
-    output = "${var.base_dir}/packer_${var.prefix}${source.name}.box"
+    output = "${var.base_dir}/packer_${var.prefix}${source.name}-${var.flavor}.box"
   }
 
   post-processor "shell-local" {
     inline = [
-      "vagrant box add --force --name ${var.prefix}${source.name} ${var.base_dir}/packer_${var.prefix}${source.name}.box"
+      "vagrant box add --force --name ${var.prefix}${source.name}-${var.flavor} ${var.base_dir}/packer_${var.prefix}${source.name}-${var.flavor}.box"
     ]
   }
 

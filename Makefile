@@ -120,5 +120,4 @@ serve:
 clean:
 	@rm -rf \
 		debian/.debhelper debian/debhelper* debian/*.debhelper debian/${PKGNAME} \
-		${PKGNAME}-*.pkg.tar.zst.sig ${PKGNAME}-*.pkg.tar.zst coverage.out \
-		${PKGNAME}_*.* ${PKGNAME}-*.rpm ${BUILD}
+		.pkg/${PKGNAME}* ${BUILD} coverage.out
