@@ -99,5 +99,3 @@ variable "release" {
     }
   }
 }
-
-}
