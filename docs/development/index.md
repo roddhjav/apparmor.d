@@ -62,11 +62,11 @@ If you're looking to contribute to `apparmor.d` you can get started by going to 
     your devices or for your use case.
 
 
-## Additional recommended documentation
+## Recommended documentation
 
 * [The AppArmor Core Policy Reference](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmor_Core_Policy_Reference)
 * [The openSUSE Documentation](https://doc.opensuse.org/documentation/leap/security/html/book-security/part-apparmor.html)
-* https://documentation.suse.com/sles/12-SP5/html/SLES-all/cha-apparmor-intro.html
+* [SUSE Documentation](https://documentation.suse.com/sles/12-SP5/html/SLES-all/cha-apparmor-intro.html)
 * [The AppArmor.d man page](https://man.archlinux.org/man/apparmor.d.5)
 * [F**k AppArmor](https://presentations.nordisch.org/apparmor/#/)
 * [A Brief Tour of Linux Security Modules](https://www.starlab.io/blog/a-brief-tour-of-linux-security-modules)

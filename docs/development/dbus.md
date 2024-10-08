@@ -29,10 +29,7 @@ For more access, simply use the [`aa:dbus talk`](#dbus-directive) directive.
 There is a trade of between security and maintenance to make:
 
 - `aa:dbus talk` will generate less issue as it gives full talk access
-- `abstractions/bus/*` will provide more restriction, and possibly more issue.
-
-Ideally, these rules should be automatically generated from either the dbus interface documentation or the program call.
-
+- `abstractions/bus/*` will provide more restriction, and possibly more issue. In the future, these rules will be automatically generated from the interface documentation.
 
 ## Dbus Directive
 
