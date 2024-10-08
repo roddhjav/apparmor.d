@@ -32,7 +32,7 @@ func init() {
 	// Build tasks applied by default
 	builder.Register(
 		"userspace", // Resolve variable in the userspace profile
-		"dev",       // Temporary fix for #74, #80 & #235
+		"hotfix",    // Temporary fix for #74, #80 & #235
 	)
 
 	// Compatibility with AppArmor 3

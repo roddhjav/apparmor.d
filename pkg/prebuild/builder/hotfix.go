@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	regDev = util.ToRegexRepl([]string{
+	regHotfix = util.ToRegexRepl([]string{
 		`Cx`, `cx`,
 		`PUx`, `pux`,
 		`Px`, `px`,
@@ -18,19 +18,19 @@ var (
 	})
 )
 
-type Dev struct {
+type Hotfix struct {
 	prebuild.Base
 }
 
 func init() {
-	RegisterBuilder(&Dev{
+	RegisterBuilder(&Hotfix{
 		Base: prebuild.Base{
-			Keyword: "dev",
-			Msg:     "Apply test development changes",
+			Keyword: "hotfix",
+			Msg:     "Temporary fix for #74, #80 & #235",
 		},
 	})
 }
 
-func (b Dev) Apply(opt *Option, profile string) (string, error) {
-	return regDev.Replace(profile), nil
+func (b Hotfix) Apply(opt *Option, profile string) (string, error) {
+	return regHotfix.Replace(profile), nil
 }
