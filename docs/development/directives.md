@@ -118,8 +118,7 @@ The `exec` directive is useful to allow executing transitions to a profile witho
 
 **`[X]`**
 
-:   If `X` is set, the directive will conserve the `x` file rules regardless of the transition. Not enabled by default as it may conflict with the parent profile.
-
+:   If `X` is set, the directive will conserve the `x` file rules regardless of the transition. It is not enabled by default as it may conflict with the parent profile. Indeed, automatically adding `Px` and `ix` transition in a profile is a very effective way to have conflict between transitions as you can automatically add rule already present in the profile but with another transition (you would then get the AppArmor error: `profile has merged rule with conflicting x modifiers`).
 
 **Example**
 
