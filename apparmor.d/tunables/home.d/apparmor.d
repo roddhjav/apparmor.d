@@ -52,7 +52,6 @@
 # User build directories and output
 @{user_build_dirs}="/tmp/build/"
 @{user_pkg_dirs}="/tmp/pkg/"
-@{user_tmp_dirs}=@{run}/user/@{uid} /tmp/
 @{user_img_dirs}=@{HOME}/@{XDG_IMG_DIR} @{MOUNTS}/@{XDG_IMG_DIR}
 
 # Other user directories

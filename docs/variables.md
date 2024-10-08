@@ -68,7 +68,6 @@ title: Variables References
 | State | `@{user_state_dirs}` | ` @{HOME}/@{XDG_STATE_DIR}` |
 | Build | `@{user_build_dirs}` | `/tmp/build/` |
 | Packages | `@{user_pkg_dirs}` | `/tmp/pkg/` |
-| Tmp | `@{user_tmp_dirs}` | `@{run}/user/@{uid} /tmp/` |
 
 </figure>
 
