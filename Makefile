@@ -5,7 +5,7 @@
 
 DESTDIR ?= /
 BUILD ?= .build
-PKGDEST ?= /tmp/pkg
+PKGDEST ?= ${PWD}/.pkg
 PKGNAME := apparmor.d
 P = $(filter-out dpkg,$(notdir $(wildcard ${BUILD}/apparmor.d/*)))
 
