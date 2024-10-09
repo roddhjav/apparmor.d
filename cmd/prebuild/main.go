@@ -31,7 +31,7 @@ func init() {
 
 	// Build tasks applied by default
 	builder.Register(
-		"userspace", // Resolve variable in the userspace profile
+		"userspace", // Resolve variable in profile attachments
 		"hotfix",    // Temporary fix for #74, #80 & #235
 	)
 
