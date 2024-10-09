@@ -73,10 +73,10 @@ func Prebuild() {
 		return
 	}
 
-	if full {
+	if full && paths.New("apparmor.d/groups/_full").Exist() {
 		prepare.Register("fsp")
 		builder.Register("fsp")
-	} else {
+	} else if prebuild.SystemdDir.Exist() {
 		prepare.Register("systemd-early")
 	}
 
