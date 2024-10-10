@@ -1,0 +1,50 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 curiosityseeker
+# Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/ksystemstats
+profile ksystemstats @{exec_path} flags=(complain) {
+  include <abstractions/base>
+  include <abstractions/qt5>
+
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  /etc/fstab r,
+  /etc/libnl/classid r,
+  /etc/sensors.d/ r,
+  /etc/sensors3.conf r,
+
+  @{run}/udev/data/+drm:card@{int}-* r,
+  @{run}/udev/data/c226:* r,
+  @{run}/udev/data/b259:* r,
+  @{run}/udev/data/b8:@{int} r,
+
+  @{sys}/bus/ r,
+  @{sys}/class/ r,
+  @{sys}/class/drm/ r,
+  @{sys}/class/hwmon/ r,
+  @{sys}/class/i2c-adapter/ r,
+  @{sys}/devices/@{pci}/** r,
+  @{sys}/devices/platform/** r,
+  @{sys}/devices/system/cpu/** r,
+  @{sys}/devices/virtual/thermal/** r,
+
+        @{PROC}/pressure/cpu r,
+        @{PROC}/pressure/io r,
+        @{PROC}/pressure/memory r,
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/mounts r,
+
+  /dev/tty r,
+
+  include if exists <local/ksystemstats>
+}
+
+# vim:syntax=apparmor
