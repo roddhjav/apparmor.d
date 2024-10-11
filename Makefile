@@ -24,13 +24,14 @@ enforce: build
 full: build
 	@./${BUILD}/prebuild --complain --full
 
-ROOT = $(shell find "${BUILD}/root" -type f -not -name "*.md" -printf "%P\n")
+SHARE = $(shell find "${BUILD}/share" -type f -not -name "*.md" -printf "%P\n")
 PROFILES = $(shell find "${BUILD}/apparmor.d" -type f -printf "%P\n")
 DISABLES = $(shell find "${BUILD}/apparmor.d" -type l -printf "%P\n")
 install:
+	@install -Dm0755 ${BUILD}/aa ${DESTDIR}/usr/bin/aa
 	@install -Dm0755 ${BUILD}/aa-log ${DESTDIR}/usr/bin/aa-log
-	@for file in ${ROOT}; do \
-		install -Dm0644 "${BUILD}/root/$${file}" "${DESTDIR}/$${file}"; \
+	@for file in ${SHARE}; do \
+		install -Dm0644 "${BUILD}/share/$${file}" "${DESTDIR}/usr/share/$${file}"; \
 	done;
 	@for file in ${PROFILES}; do \
 		install -Dm0644 "${BUILD}/apparmor.d/$${file}" "${DESTDIR}/etc/apparmor.d/$${file}"; \

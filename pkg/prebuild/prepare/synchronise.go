@@ -27,14 +27,14 @@ func init() {
 
 func (p Synchronise) Apply() ([]string, error) {
 	res := []string{}
-	dirs := paths.PathList{prebuild.RootApparmord, prebuild.Root.Join("root"), prebuild.Root.Join("systemd")}
+	dirs := paths.PathList{prebuild.RootApparmord, prebuild.Root.Join("share"), prebuild.Root.Join("systemd")}
 	for _, dir := range dirs {
 		if err := dir.RemoveAll(); err != nil {
 			return res, err
 		}
 	}
 	if p.Path == "" {
-		for _, name := range []string{"apparmor.d", "root"} {
+		for _, name := range []string{"apparmor.d", "share"} {
 			if err := util.CopyTo(paths.New(name), prebuild.Root.Join(name)); err != nil {
 				return res, err
 			}
