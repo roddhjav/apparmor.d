@@ -9,6 +9,7 @@ include <tunables/global>
 @{exec_path} = @{lib}/xdg-document-portal
 profile xdg-document-portal @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/attached/consoles>
   include <abstractions/bus-session>
   include <abstractions/bus/org.freedesktop.impl.portal.PermissionStore>
   include <abstractions/deny-sensitive-home>
@@ -39,8 +40,8 @@ profile xdg-document-portal @{exec_path} flags=(attach_disconnected) {
   @{bin}/flatpak         rPUx,
   @{bin}/fusermount{,3}  rCx -> fusermount,
 
-  / r,
-  owner /.flatpak-info r,
+  owner @{att}/ r,
+  owner @{att}/.flatpak-info r,
 
   owner @{HOME}/ r,
   owner @{HOME}/*/{,**} rw,
@@ -57,7 +58,6 @@ profile xdg-document-portal @{exec_path} flags=(attach_disconnected) {
   owner @{PROC}/@{pid}/fd/ r,
 
         /dev/fuse rw,
-  owner /dev/tty@{int} rw,
 
   profile fusermount flags=(attach_disconnected) {
     include <abstractions/base>
@@ -83,7 +83,7 @@ profile xdg-document-portal @{exec_path} flags=(attach_disconnected) {
     @{PROC}/@{pids}/mounts r,
 
           /dev/fuse rw,
-    owner /dev/tty@{int} rw,
+    @{att}/dev/tty@{int} rw,
   
     include if exists <local/xdg-document-portal_fusermount>
   }

@@ -79,9 +79,10 @@ profile gnome-session-binary @{exec_path} flags=(attach_disconnected) {
   owner @{user_config_dirs}/gnome-session/ rw,
   owner @{user_config_dirs}/gnome-session/saved-session/ rw,
 
-        @{run}/systemd/inhibit/@{int}.ref rw,
+  @{att}/@{run}/systemd/inhibit/@{int}.ref rw,
+  @{att}/@{run}/systemd/sessions/{,@{l}}@{int}.ref rw,
+
         @{run}/systemd/sessions/* r,
-        @{run}/systemd/sessions/*.ref rw,
         @{run}/systemd/users/@{uid} r,
   owner @{run}/user/@{uid}/gnome-session-leader-fifo rw,
   owner @{run}/user/@{uid}/ICEauthority rw,
@@ -104,6 +105,7 @@ profile gnome-session-binary @{exec_path} flags=(attach_disconnected) {
 
   profile open flags=(attach_disconnected) {
     include <abstractions/base>
+    include <abstractions/attached/consoles>
     include <abstractions/desktop>
 
     @{bin}/env rix,
@@ -119,7 +121,6 @@ profile gnome-session-binary @{exec_path} flags=(attach_disconnected) {
     /usr/games/**                 PUx,
 
     /dev/tty rw,
-    /dev/tty@{int} rw,
 
     include if exists <usr/gnome-session-binary_open.d>
     include if exists <local/gnome-session-binary_open>
