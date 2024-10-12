@@ -35,7 +35,7 @@ func (p FullSystemPolicy) Apply() ([]string, error) {
 
 	// Set systemd profile name
 	path := prebuild.RootApparmord.Join("tunables/multiarch.d/system")
-	out, err := util.ReadFile(path)
+	out, err := path.ReadFileAsString()
 	if err != nil {
 		return res, err
 	}
@@ -47,7 +47,7 @@ func (p FullSystemPolicy) Apply() ([]string, error) {
 
 	// Fix conflicting x modifiers in abstractions - FIXME: Temporary solution
 	path = prebuild.RootApparmord.Join("abstractions/gstreamer")
-	out, err = util.ReadFile(path)
+	out, err = path.ReadFileAsString()
 	if err != nil {
 		return res, err
 	}

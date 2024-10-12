@@ -13,7 +13,6 @@ import (
 	"github.com/roddhjav/apparmor.d/pkg/aa"
 	"github.com/roddhjav/apparmor.d/pkg/logging"
 	"github.com/roddhjav/apparmor.d/pkg/paths"
-	"github.com/roddhjav/apparmor.d/pkg/util"
 )
 
 const usage = `aa [-h] [--lint | --format | --tree] [-s] [-F file] [profiles...]
