@@ -28,7 +28,6 @@ SHARE = $(shell find "${BUILD}/share" -type f -not -name "*.md" -printf "%P\n")
 PROFILES = $(shell find "${BUILD}/apparmor.d" -type f -printf "%P\n")
 DISABLES = $(shell find "${BUILD}/apparmor.d" -type l -printf "%P\n")
 install:
-	@install -Dm0755 ${BUILD}/aa ${DESTDIR}/usr/bin/aa
 	@install -Dm0755 ${BUILD}/aa-log ${DESTDIR}/usr/bin/aa-log
 	@for file in ${SHARE}; do \
 		install -Dm0644 "${BUILD}/share/$${file}" "${DESTDIR}/usr/share/$${file}"; \
