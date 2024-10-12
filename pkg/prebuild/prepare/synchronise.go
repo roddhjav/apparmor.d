@@ -7,7 +7,6 @@ package prepare
 import (
 	"github.com/roddhjav/apparmor.d/pkg/paths"
 	"github.com/roddhjav/apparmor.d/pkg/prebuild"
-	"github.com/roddhjav/apparmor.d/pkg/util"
 )
 
 type Synchronise struct {
@@ -35,7 +34,7 @@ func (p Synchronise) Apply() ([]string, error) {
 	}
 	if p.Path == "" {
 		for _, name := range []string{"apparmor.d", "share"} {
-			if err := util.CopyTo(paths.New(name), prebuild.Root.Join(name)); err != nil {
+			if err := paths.CopyTo(paths.New(name), prebuild.Root.Join(name)); err != nil {
 				return res, err
 			}
 		}
