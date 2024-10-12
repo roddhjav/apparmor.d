@@ -15,7 +15,6 @@ import (
 	"github.com/roddhjav/apparmor.d/pkg/prebuild/builder"
 	"github.com/roddhjav/apparmor.d/pkg/prebuild/directive"
 	"github.com/roddhjav/apparmor.d/pkg/prebuild/prepare"
-	"github.com/roddhjav/apparmor.d/pkg/util"
 )
 
 const (
@@ -138,7 +137,7 @@ func Build() error {
 		if !file.Exist() {
 			continue
 		}
-		profile, err := util.ReadFile(file)
+		profile, err := file.ReadFileAsString()
 		if err != nil {
 			return err
 		}

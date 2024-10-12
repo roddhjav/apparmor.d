@@ -13,7 +13,6 @@ import (
 
 	"github.com/roddhjav/apparmor.d/pkg/aa"
 	"github.com/roddhjav/apparmor.d/pkg/prebuild"
-	"github.com/roddhjav/apparmor.d/pkg/util"
 )
 
 type Exec struct {
@@ -44,7 +43,7 @@ func (d Exec) Apply(opt *Option, profileRaw string) (string, error) {
 
 	rules := aa.Rules{}
 	for name := range opt.ArgMap {
-		profiletoTransition := util.MustReadFile(prebuild.RootApparmord.Join(name))
+		profiletoTransition := prebuild.RootApparmord.Join(name).MustReadFileAsString()
 		dstProfile := aa.DefaultTunables()
 		if _, err := dstProfile.Parse(profiletoTransition); err != nil {
 			return "", err

@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/roddhjav/apparmor.d/pkg/paths"
-	"github.com/roddhjav/apparmor.d/pkg/util"
 )
 
 var (
@@ -149,7 +148,7 @@ func (f *AppArmorProfileFile) resolveInclude(include *Include) error {
 
 		iFile := &AppArmorProfileFile{}
 		for _, file := range files {
-			raw, err := util.ReadFile(file)
+			raw, err := file.ReadFileAsString()
 			if err != nil {
 				return err
 			}

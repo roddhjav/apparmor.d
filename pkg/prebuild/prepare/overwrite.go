@@ -9,7 +9,6 @@ import (
 	"os"
 
 	"github.com/roddhjav/apparmor.d/pkg/prebuild"
-	"github.com/roddhjav/apparmor.d/pkg/util"
 )
 
 const ext = ".apparmor.d"
@@ -44,7 +43,7 @@ func (p Overwrite) Apply() ([]string, error) {
 	if !path.Exist() {
 		return res, fmt.Errorf("%s not found", path)
 	}
-	for _, name := range util.MustReadFileAsLines(path) {
+	for _, name := range path.MustReadFilteredFileAsLines() {
 		origin := prebuild.RootApparmord.Join(name)
 		dest := prebuild.RootApparmord.Join(name + ext)
 		if !dest.Exist() && p.OneFile {

@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/roddhjav/apparmor.d/pkg/prebuild"
-	"github.com/roddhjav/apparmor.d/pkg/util"
 )
 
 var (
@@ -44,7 +43,7 @@ func (p SetFlags) Apply() ([]string, error) {
 			// Overwrite profile flags
 			if len(flags) > 0 {
 				flagsStr := " flags=(" + strings.Join(flags, ",") + ") {\n"
-				out, err := util.ReadFile(file)
+				out, err := file.ReadFileAsString()
 				if err != nil {
 					return res, err
 				}

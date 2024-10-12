@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/roddhjav/apparmor.d/pkg/paths"
-	"github.com/roddhjav/apparmor.d/pkg/util"
 )
 
 // Default content of debian/apparmor.d.hide. Whonix has special addition.
@@ -29,7 +28,7 @@ func (f Flagger) Read(name string) map[string][]string {
 		return res
 	}
 
-	lines := util.MustReadFileAsLines(path)
+	lines := path.MustReadFilteredFileAsLines()
 	for _, line := range lines {
 		manifest := strings.Split(line, " ")
 		profile := manifest[0]
@@ -49,7 +48,7 @@ func (i Ignorer) Read(name string) []string {
 	if !path.Exist() {
 		return []string{}
 	}
-	return util.MustReadFileAsLines(path)
+	return path.MustReadFilteredFileAsLines()
 }
 
 type DebianHider struct {
