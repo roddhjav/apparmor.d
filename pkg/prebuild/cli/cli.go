@@ -88,8 +88,13 @@ func Prebuild() {
 	if abi != nilABI {
 		prebuild.ABI = abi
 	}
-	if prebuild.ABI == 3 {
+	switch prebuild.ABI {
+	case 3:
 		builder.Register("abi3") // Convert all profiles from abi 4.0 to abi 3.0
+	case 4:
+		// builder.Register("attach") // Re-attach disconnect path
+	default:
+		logging.Fatal("Invalid ABI version: %d", prebuild.ABI)
 	}
 
 	if file != "" {
