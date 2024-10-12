@@ -35,17 +35,10 @@ var (
 	// The apparmor templates
 	tmpl = generateTemplates([]Kind{
 		// Global templates
-		"apparmor",
-		PROFILE,
-		HAT,
-		"rules",
+		"apparmor", PROFILE, HAT, "rules",
 
 		// Preamble templates
-		ABI,
-		ALIAS,
-		INCLUDE,
-		VARIABLE,
-		COMMENT,
+		ABI, ALIAS, INCLUDE, VARIABLE, COMMENT,
 
 		// Rules templates
 		ALL, RLIMIT, USERNS, CAPABILITY, NETWORK,
