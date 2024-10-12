@@ -5,8 +5,8 @@
 package prepare
 
 import (
+	"github.com/roddhjav/apparmor.d/pkg/paths"
 	"github.com/roddhjav/apparmor.d/pkg/prebuild"
-	"github.com/roddhjav/apparmor.d/pkg/util"
 )
 
 type SystemdDefault struct {
@@ -33,9 +33,9 @@ func init() {
 }
 
 func (p SystemdDefault) Apply() ([]string, error) {
-	return []string{}, util.CopyTo(prebuild.SystemdDir.Join("default"), prebuild.Root.Join("systemd"))
+	return []string{}, paths.CopyTo(prebuild.SystemdDir.Join("default"), prebuild.Root.Join("systemd"))
 }
 
 func (p SystemdEarly) Apply() ([]string, error) {
-	return []string{}, util.CopyTo(prebuild.SystemdDir.Join("early"), prebuild.Root.Join("systemd"))
+	return []string{}, paths.CopyTo(prebuild.SystemdDir.Join("early"), prebuild.Root.Join("systemd"))
 }

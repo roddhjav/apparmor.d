@@ -7,8 +7,8 @@ package prepare
 import (
 	"fmt"
 
+	"github.com/roddhjav/apparmor.d/pkg/paths"
 	"github.com/roddhjav/apparmor.d/pkg/prebuild"
-	"github.com/roddhjav/apparmor.d/pkg/util"
 )
 
 type Configure struct {
@@ -36,7 +36,7 @@ func (p Configure) Apply() ([]string, error) {
 		}
 
 		if prebuild.ABI == 3 {
-			if err := util.CopyTo(prebuild.DistDir.Join("ubuntu"), prebuild.RootApparmord); err != nil {
+			if err := paths.CopyTo(prebuild.DistDir.Join("ubuntu"), prebuild.RootApparmord); err != nil {
 				return res, err
 			}
 		}
@@ -47,7 +47,7 @@ func (p Configure) Apply() ([]string, error) {
 		}
 
 		// Copy Debian specific abstractions
-		if err := util.CopyTo(prebuild.DistDir.Join("ubuntu"), prebuild.RootApparmord); err != nil {
+		if err := paths.CopyTo(prebuild.DistDir.Join("ubuntu"), prebuild.RootApparmord); err != nil {
 			return res, err
 		}
 
