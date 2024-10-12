@@ -135,7 +135,7 @@ func aaFormat(files paths.PathList) error {
 		if !file.Exist() {
 			return nil
 		}
-		profile, err := util.ReadFile(file)
+		profile, err := file.ReadFileAsString()
 		if err != nil {
 			return err
 		}
