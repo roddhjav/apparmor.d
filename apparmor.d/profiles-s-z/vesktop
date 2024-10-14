@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2024 odomingao
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/4.0>,
@@ -15,6 +16,7 @@ profile vesktop @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/audio-client>
   include <abstractions/common/electron>
+  include <abstractions/nameservice-strict>
   include <abstractions/p11-kit>
   include <abstractions/user-download-strict>
   include <abstractions/video>
@@ -26,6 +28,9 @@ profile vesktop @{exec_path} flags=(attach_disconnected) {
   network netlink raw,
 
   @{exec_path} mr,
+
+  @{bin}/speech-dispatcher rPx,
+  @{open_path}             rPx -> child-open,
 
   owner /tmp/.org.chromium.Chromium.@{rand6} mr,
   owner @{run}/user/@{uid}/discord-ipc-@{int} rw,
