@@ -29,6 +29,7 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected mediate_deleted) {
 
   @{exec_path} mr,
 
+  /etc/xdg/Xwayland-session.d/00-at-spi Cx -> at-spi,
   #aa:exec kscreenlocker_greet
 
   /usr/share/color-schemes/*.colors r,
@@ -47,6 +48,7 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected mediate_deleted) {
   /etc/xdg/menus/{,applications.menu} r,
   /etc/xdg/menus/applications-merged/ r,
   /etc/xdg/plasmarc r,
+  /etc/xdg/Xwayland-session.d/{,*} r,
 
   /etc/machine-id r,
   /var/lib/dbus/machine-id r,
@@ -127,9 +129,27 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected mediate_deleted) {
 
   @{PROC}/@{pid}/task/@{tid}/comm rw,
 
-  /dev/input/event@{int} rw,
+  @{att}/dev/input/event@{int} rw,
+  @{att}/dev/dri/card@{int} rw,
+
   /dev/tty r,
   /dev/tty@{int} rw,
+
+  profile at-spi {
+    include <abstractions/base>
+
+    @{sh_path}    r,
+    @{bin}/busctl rix,
+    @{bin}/sed    rix,
+    @{bin}/xprop  rPx,
+
+    /etc/xdg/Xwayland-session.d/00-at-spi r,
+
+    /home/ r,
+    owner @{HOME}/ r,
+
+    include if exists <local/kwin_wayland_at-spi>
+  }
 
   include if exists <local/kwin_wayland>
 }
