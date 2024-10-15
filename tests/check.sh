@@ -10,6 +10,21 @@ set -eu -o pipefail
 
 readonly APPARMORD="apparmor.d"
 
+_ensure_header() {
+    local file="$1"
+    headers=(
+        "# apparmor.d - Full set of apparmor profiles"
+        "# Copyright (C) "
+        "# SPDX-License-Identifier: GPL-2.0-only"
+    )
+    for header in "${headers[@]}"; do
+        if ! grep -q "^$header" "$file"; then
+            echo "$file does not contain '$header'"
+            exit 1
+        fi
+    done
+}
+
 _ensure_include() {
     local file="$1"
     local include="$2"
@@ -37,6 +52,7 @@ _ensure_vim() {
 
 check_profiles() {
     echo "⋅ Checking if all profiles contain:"
+    echo "    - apparmor.d header & license"
     echo "    - 'abi <abi/4.0>,'"
     echo "    - 'profile <profile_name>'"
     echo "    - 'include if exists <local/*>'"
@@ -50,6 +66,7 @@ check_profiles() {
             name="$(basename "$file")"
             name="${name/.apparmor.d/}"
             include="include if exists <local/$name>"
+            _ensure_header "$file"
             _ensure_include "$file" "$include"
             _ensure_abi "$file"
             _ensure_vim "$file"
@@ -71,11 +88,13 @@ check_profiles() {
 
 check_abstractions() {
     echo "⋅ Checking if all abstractions contain:"
+    echo "    - apparmor.d header & license"
     echo "    - 'abi <abi/4.0>,'"
     echo "    - 'include if exists <abstractions/*.d>'"
     echo "    - vim:syntax=apparmor"
     directories=(
         "$APPARMORD/abstractions/" "$APPARMORD/abstractions/app/"
+        "$APPARMORD/abstractions/attached/"
         "$APPARMORD/abstractions/bus/" "$APPARMORD/abstractions/common/"
     )
     for dir in "${directories[@]}"; do
@@ -83,6 +102,7 @@ check_abstractions() {
             name="$(basename "$file")"
             root="${dir/${APPARMORD}\/abstractions\//}"
             include="include if exists <abstractions/${root}${name}.d>"
+            _ensure_header "$file"
             _ensure_include "$file" "$include"
             _ensure_abi "$file"
             _ensure_vim "$file"
