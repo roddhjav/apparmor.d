@@ -9,6 +9,11 @@ include <tunables/global>
 @{exec_path} = @{bin}/transmission-{gtk,qt}
 profile transmission @{exec_path} {
   include <abstractions/base>
+  include <abstractions/bus-accessibility>
+  include <abstractions/bus-session>
+  include <abstractions/bus/org.a11y>
+  include <abstractions/bus/org.freedesktop.Notifications>
+  include <abstractions/bus/org.kde.StatusNotifierWatcher>
   include <abstractions/dconf-write>
   include <abstractions/desktop>
   include <abstractions/graphics>
@@ -23,11 +28,17 @@ profile transmission @{exec_path} {
   network inet6 stream,
   network netlink raw,
 
+  #aa:dbus own bus=session name=com.transmissionbt.Transmission
+  #aa:dbus own bus=session name=com.transmissionbt.transmission_*
+  #aa:dbus talk bus=session name=org.gtk.vfs label="gvfsd{,-*}"
+
   @{exec_path} mr,
 
   @{open_path}         rPx -> child-open,
 
   /usr/share/transmission/{,**} r,
+
+  owner @{HOME}/ r,
 
   owner @{user_torrents_dirs}/ r,
   owner @{user_torrents_dirs}/** rw,
@@ -48,6 +59,7 @@ profile transmission @{exec_path} {
   owner @{PROC}/@{pid}/comm r,
   owner @{PROC}/@{pid}/mountinfo r,
   owner @{PROC}/@{pid}/mounts r,
+  owner @{PROC}/@{pid}/task/@{tid}/comm rw,
 
   deny @{user_share_dirs}/gvfs-metadata/* r,
 
