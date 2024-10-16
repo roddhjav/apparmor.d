@@ -29,18 +29,17 @@ build {
   provisioner "file" {
     only        = ["qemu.opensuse"]
     destination = "/tmp/src/"
-    sources     = ["${path.cwd}/../apparmor.d-${var.version}-1.x86_64.rpm"]
+    sources     = ["${path.cwd}/../.pkg/apparmor.d-${var.version}-1.x86_64.rpm"]
   }
 
   provisioner "file" {
     only        = ["qemu.debian", "qemu.ubuntu22", "qemu.ubuntu24"]
     destination = "/tmp/src/"
-    sources     = ["${path.cwd}/../apparmor.d_${var.version}-1_amd64.deb"]
+    sources     = ["${path.cwd}/../.pkg/apparmor.d_${var.version}-1_amd64.deb"]
   }
 
   # Wait for cloud-init to finish
   provisioner "shell" {
-    except          = ["qemu.opensuse"]
     execute_command = "echo '${var.password}' | sudo -S sh -c '{{ .Vars }} {{ .Path }}'"
     inline = [
       "while [ ! -f /var/lib/cloud/instance/boot-finished ]; do echo 'Waiting for Cloud-Init...'; sleep 20; done",
