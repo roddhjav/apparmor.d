@@ -1,0 +1,39 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2024 Besanon  <m231009ts@mailfence.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/lxqt-config-notificationd
+profile lxqt-config-notificationd @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/fonts>
+  include <abstractions/qt5>
+  include <abstractions/fontconfig-cache-read> 
+  include <abstractions/lxqt>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/graphics>
+  include <abstractions/nameservice-strict>
+      
+  @{exec_path}			mr,
+
+  /etc/machine-id 			r,
+
+  /var/lib/dbus/machine-id 		r,
+
+  owner @{user_config_dirs}/lxqt/notifications.conf.lock  rwk,
+  owner @{user_config_dirs}/lxqt/#* rw,
+  owner @{user_config_dirs}/lxqt/notifications.conf.@{rand6} rw,
+  owner @{user_config_dirs}/lxqt/notifications.conf.@{rand6} l -> @{user_config_dirs}/lxqt/#@*,
+
+  owner /tmp/#@{int}  			r,
+  
+  /dev/tty				 rw,
+
+  include if exists <local/lxqt-config-notificationd>
+}
+
+# vim:syntax=apparmor
