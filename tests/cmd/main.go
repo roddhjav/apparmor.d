@@ -8,171 +8,76 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"os/exec"
-	"strings"
 
-	"github.com/roddhjav/apparmor.d/pkg/aa"
 	"github.com/roddhjav/apparmor.d/pkg/logging"
 	"github.com/roddhjav/apparmor.d/pkg/paths"
-	"github.com/roddhjav/apparmor.d/pkg/prebuild"
-	"github.com/roddhjav/apparmor.d/tests/integration"
 )
 
-const usage = `aa-test [-h] [--bootstrap | --run | --list]
+const usage = `aa-test [-h] --bootstrap
 
     Integration tests manager tool for apparmor.d
 
 Options:
     -h, --help         Show this help message and exit.
-    -b, --bootstrap    Bootstrap tests using tldr pages.
-    -r, --run          Run a predefined list of tests.
-    -l, --list         List the configured tests.
-    -f, --file FILE    Set a tests file. Default: tests/tests.yml
-    -d, --deps         Install tests dependencies.
-    -D, --dryrun       Do not do the action, list it.
+    -b, --bootstrap    Download tests using tldr pages and generate Bats tests.
 
 `
 
 var (
 	help      bool
 	bootstrap bool
-	run       bool
-	list      bool
-	deps      bool
-	dryRun    bool
-	cfg       Config
 )
 
-type Config struct {
-	TldrDir      *paths.Path    // Default: tests/tldr
-	ScenariosDir *paths.Path    // Default: tests
-	TldrFile     *paths.Path    // Default: tests/tldr.yml
-	TestsFile    *paths.Path    // Default: tests/tests.yml
-	SettingsFile *paths.Path    // Default: tests/settings.yml
-	Profiles     paths.PathList // List of profiles
-}
-
-func NewConfig() Config {
-	cfg := Config{
-		TldrDir:      paths.New("tests/tldr"),
-		ScenariosDir: paths.New("tests/"),
-		Profiles:     paths.PathList{},
-	}
-	cfg.TldrFile = cfg.ScenariosDir.Join("tldr.yml")
-	cfg.TestsFile = cfg.ScenariosDir.Join("tests.yml")
-	cfg.SettingsFile = cfg.ScenariosDir.Join("settings.yml")
-	return cfg
-}
-
-func LoadTestSuite() (*integration.TestSuite, error) {
-	tSuite := integration.NewTestSuite()
-	if err := tSuite.ReadTests(cfg.TestsFile); err != nil {
-		return tSuite, err
-	}
-	if err := tSuite.ReadSettings(cfg.SettingsFile); err != nil {
-		return tSuite, err
-	}
-	return tSuite, nil
-}
-
 func init() {
-	cfg = NewConfig()
-	files, _ := aa.MagicRoot.ReadDir(paths.FilterOutDirectories())
-	for _, path := range files {
-		cfg.Profiles.Add(path)
-	}
-
 	flag.BoolVar(&help, "h", false, "Show this help message and exit.")
 	flag.BoolVar(&help, "help", false, "Show this help message and exit.")
-	flag.BoolVar(&bootstrap, "b", false, "Bootstrap tests using tldr pages.")
-	flag.BoolVar(&bootstrap, "bootstrap", false, "Bootstrap tests using tldr pages.")
-	flag.BoolVar(&run, "r", false, "Run a predefined list of tests.")
-	flag.BoolVar(&run, "run", false, "Run a predefined list of tests.")
-	flag.BoolVar(&list, "l", false, "List the tests to run.")
-	flag.BoolVar(&list, "list", false, "List the tests to run.")
-	flag.BoolVar(&deps, "d", false, "Install tests dependencies.")
-	flag.BoolVar(&deps, "deps", false, "Install tests dependencies.")
-	flag.BoolVar(&dryRun, "D", false, "Do not do the action, list it.")
-	flag.BoolVar(&dryRun, "dryrun", false, "Do not do the action, list it.")
+	flag.BoolVar(&bootstrap, "b", false, "Download tests using tldr pages and generate Bats tests.")
+	flag.BoolVar(&bootstrap, "bootstrap", false, "Download tests using tldr pages and generate Bats tests.")
 }
 
-func testDownload() error {
-	tldr := integration.NewTldr(cfg.TldrDir)
+type Config struct {
+	TestsDir  *paths.Path // Default: tests
+	TldrDir   *paths.Path // Default: tests/tldr
+	TldrFile  *paths.Path // Default: tests/tldr.yml
+	TestsFile *paths.Path // Default: tests/tests.yml
+	BatsDir   *paths.Path // Default: tests/bats
+}
+
+func NewConfig() *Config {
+	testsDir := paths.New("tests")
+	cfg := Config{
+		TestsDir:  testsDir,
+		TldrDir:   testsDir.Join("tldr"),
+		TldrFile:  testsDir.Join("tldr.yml"),
+		TestsFile: testsDir.Join("tldr.yml"),
+		BatsDir:   testsDir.Join("bats_dirty"),
+	}
+	return &cfg
+}
+
+func run() error {
+	logging.Step("Bootstraping tests")
+	cfg := NewConfig()
+
+	tldr := NewTldr(cfg.TldrDir)
 	if err := tldr.Download(); err != nil {
 		return err
 	}
 
-	tSuite, err := tldr.Parse()
+	tests, err := tldr.Parse()
 	if err != nil {
 		return err
 	}
+	tests = tests.Filter()
 
-	// Default bootstraped scenarios file
-	if err := tSuite.Write(cfg.TldrFile); err != nil {
-		return err
-	}
-	logging.Bullet("Default scenarios saved: %s", cfg.TldrFile)
-	logging.Bullet("Number of tests found %d", len(tSuite.Tests))
-	return nil
-}
-
-func testDeps(dryRun bool) error {
-	tSuite, err := LoadTestSuite()
-	if err != nil {
-		return nil
-	}
-
-	deps := tSuite.GetDependencies()
-	switch prebuild.Distribution {
-	case "arch":
-		arg := []string{"pacman", "-Sy", "--noconfirm"}
-		arg = append(arg, deps...)
-		cmd := exec.Command("sudo", arg...)
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		if dryRun {
-			fmt.Println(strings.Join(cmd.Args, " "))
-		} else {
-			return cmd.Run()
-		}
-	default:
-	}
-	return nil
-}
-
-func testRun(dryRun bool) error {
-	// Warning: There is no guarantee that the tests are not destructive
-	if dryRun {
-		logging.Step("List tests")
-	} else {
-		logging.Step("Run tests")
-	}
-
-	tSuite, err := LoadTestSuite()
-	if err != nil {
-		return nil
-	}
-	integration.Arguments = tSuite.Arguments
-	integration.Ignore = tSuite.Ignore
-	integration.Profiles = cfg.Profiles
-	nbCmd := 0
-	nbTest := 0
-	for _, test := range tSuite.Tests {
-		ran, nb, err := test.Run(dryRun)
-		nbTest += ran
-		nbCmd += nb
-		if err != nil {
+	for _, test := range tests {
+		if err := test.Write(cfg.BatsDir); err != nil {
 			return err
 		}
 	}
 
-	if dryRun {
-		logging.Bullet("Number of tests to run %d", nbTest)
-		logging.Bullet("Number of test commands to run %d", nbCmd)
-	} else {
-		logging.Success("Number of tests ran %d", nbTest)
-		logging.Success("Number of test command to ran %d", nbCmd)
-	}
+	logging.Bullet("Bats tests directory: %s", cfg.BatsDir)
+	logging.Bullet("Number of tests found %d", len(tests))
 	return nil
 }
 
@@ -184,18 +89,12 @@ func main() {
 		os.Exit(0)
 	}
 
-	var err error
-	if bootstrap {
-		logging.Step("Bootstraping tests")
-		err = testDownload()
-	} else if run || list {
-		err = testRun(list)
-	} else if deps {
-		err = testDeps(dryRun)
-	} else {
+	if !bootstrap {
 		flag.Usage()
 		os.Exit(1)
 	}
+
+	err := run()
 	if err != nil {
 		logging.Fatal("%s", err.Error())
 	}
