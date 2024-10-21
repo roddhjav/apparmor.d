@@ -31,6 +31,7 @@ Options:
     -s, --systemd      Parse systemd logs from journalctl.
     -r, --rules        Convert the log into AppArmor rules.
     -R, --raw          Print the raw log without any formatting.
+    -S, --since DATE   Show entries not older than the specified date.
 
 `
 
@@ -41,6 +42,7 @@ var (
 	path    string
 	systemd bool
 	raw     bool
+	since   string
 )
 
 func aaLog(logger string, path string, profile string) error {
@@ -51,7 +53,7 @@ func aaLog(logger string, path string, profile string) error {
 	case "auditd":
 		file, err = logs.GetAuditLogs(path)
 	case "systemd":
-		file, err = logs.GetJournalctlLogs(path, !slices.Contains(logs.LogFiles, path))
+		file, err = logs.GetJournalctlLogs(path, since, !slices.Contains(logs.LogFiles, path))
 	default:
 		err = fmt.Errorf("Logger %s not supported.", logger)
 	}

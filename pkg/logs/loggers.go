@@ -63,9 +63,10 @@ func GetAuditLogs(path string) (io.Reader, error) {
 }
 
 // GetJournalctlLogs return a reader with the logs entries from Systemd
-func GetJournalctlLogs(path string, useFile bool) (io.Reader, error) {
+func GetJournalctlLogs(path string, since string, useFile bool) (io.Reader, error) {
 	var logs []systemdLog
 	var stdout bytes.Buffer
+	var stderr bytes.Buffer
 	var scanner *bufio.Scanner
 
 	if useFile {
@@ -77,14 +78,20 @@ func GetJournalctlLogs(path string, useFile bool) (io.Reader, error) {
 	} else {
 		// journalctl -b -o json -g apparmor -t kernel -t audit -t dbus-daemon --output-fields=MESSAGE > systemd.log
 		args := []string{
-			"--boot", "--grep=apparmor",
-			"--identifier=kernel", "--identifier=audit", "--identifier=dbus-daemon",
+			"--grep=apparmor", "--identifier=kernel",
+			"--identifier=audit", "--identifier=dbus-daemon",
 			"--output=json", "--output-fields=MESSAGE",
+		}
+		if since == "" {
+			args = append(args, "--boot")
+		} else {
+			args = append(args, "--since="+since)
 		}
 		cmd := exec.Command("journalctl", args...)
 		cmd.Stdout = &stdout
-		if err := cmd.Run(); err != nil {
-			return nil, err
+		cmd.Stderr = &stderr
+		if err := cmd.Run(); err != nil && stderr.Len() != 0 {
+			return nil, fmt.Errorf("journalctl: %s", stderr.String())
 		}
 		scanner = bufio.NewScanner(&stdout)
 	}
