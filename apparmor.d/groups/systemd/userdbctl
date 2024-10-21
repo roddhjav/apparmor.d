@@ -9,10 +9,13 @@ include <tunables/global>
 @{exec_path} = @{bin}/userdbctl
 profile userdbctl @{exec_path} {
   include <abstractions/base>
+  include <abstractions/consoles>
   include <abstractions/nameservice-strict>
 
   capability dac_read_search,
   capability sys_resource,
+
+  signal send set=cont peer=child-pager,
 
   @{exec_path} mr,
   
@@ -21,7 +24,9 @@ profile userdbctl @{exec_path} {
   /etc/shadow r,
   /etc/gshadow r,
 
-  @{PROC}/1/cgroup r,
+        @{PROC}/1/cgroup r,
+  owner @{PROC}/@{pid}/cgroup r,
+  owner @{PROC}/@{pid}/uid_map r,
 
   include if exists <local/userdbctl>
 }

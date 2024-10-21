@@ -22,6 +22,8 @@ profile needrestart @{exec_path} flags=(attach_disconnected) {
 
   ptrace (read),
 
+  mqueue r type=posix /,
+
   @{exec_path} mrix,
 
   @{sh_path}                               rix,
@@ -76,7 +78,12 @@ profile needrestart @{exec_path} flags=(attach_disconnected) {
     include <abstractions/base>
     include <abstractions/app/systemctl>
 
+    capability sys_resource,
     capability net_admin,
+
+    signal send set=term peer=systemd-tty-ask-password-agent,
+
+    @{bin}/systemd-tty-ask-password-agent Px,
 
     include if exists <local/needrestart_systemctl>
   }
