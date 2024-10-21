@@ -40,7 +40,7 @@ type Config struct {
 	TldrDir   *paths.Path // Default: tests/tldr
 	TldrFile  *paths.Path // Default: tests/tldr.yml
 	TestsFile *paths.Path // Default: tests/tests.yml
-	BatsDir   *paths.Path // Default: tests/bats
+	BatsDir   *paths.Path // Default: tests/bats_dirty
 }
 
 func NewConfig() *Config {
@@ -70,6 +70,12 @@ func run() error {
 	}
 	tests = tests.Filter()
 
+	if err := cfg.BatsDir.RemoveAll(); err != nil {
+		return err
+	}
+	if err := cfg.BatsDir.MkdirAll(); err != nil {
+		return err
+	}
 	for _, test := range tests {
 		if err := test.Write(cfg.BatsDir); err != nil {
 			return err

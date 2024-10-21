@@ -18,11 +18,18 @@ const tmplTest = `#!/usr/bin/env bats
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
+
+load common
+
+setup_file() {
+    aa_setup
+}
 {{ $name := .Name -}}
 {{ range .Commands }}
 # bats test_tags={{ $name }}
 @test "{{ $name }}: {{ .Description }}" {
     {{ .Cmd }}
+    aa_check
 }
 {{ end }}
 `
@@ -56,20 +63,13 @@ type Command struct {
 	Cmd         string
 }
 
-func NewTest() *Test {
-	return &Test{
-		Name:     "",
-		Commands: []Command{},
-	}
-}
-
 // HasProfile returns true if the program in the scenario is profiled in apparmor.d
-func (t *Test) HasProfile() bool {
+func (t Test) HasProfile() bool {
 	return slices.Contains(Profiles, t.Name)
 }
 
 // IsInstalled returns true if the program in the scenario is installed on the system
-func (t *Test) IsInstalled() bool {
+func (t Test) IsInstalled() bool {
 	if _, err := exec.LookPath(t.Name); err != nil {
 		return false
 	}
@@ -82,6 +82,9 @@ func (t Test) Write(dir *paths.Path) error {
 	}
 
 	path := dir.Join(t.Name + ".bats")
+	if paths.New("tests/bats").Join(t.Name + ".bats").Exist() {
+		path = dir.Join("00." + t.Name + ".bats")
+	}
 	content := renderBatsFile(t)
 	if err := path.WriteFile([]byte(content)); err != nil {
 		return err
