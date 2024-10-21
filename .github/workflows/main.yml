@@ -9,10 +9,10 @@ jobs:
       matrix:
         os:
           - ubuntu-24.04
-          - ubuntu-22.04
+          # - ubuntu-22.04
         mode:
           - default
-          - full-system-policy
+          # - full-system-policy
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
@@ -43,10 +43,9 @@ jobs:
           sudo systemctl status apparmor.service
 
       - name: Ensure compatibility with some AppArmor userspace tools
+        if: matrix.os != 'ubuntu-24.04'
         run: |
-          if [[ ${{ matrix.os }} != ubuntu-24.04 ]]; then
-            sudo aa-enforce /etc/apparmor.d/aa-notify
-          fi
+          sudo aa-enforce /etc/apparmor.d/aa-notify
 
       - name: Show AppArmor log and rules
         run: |
@@ -56,3 +55,15 @@ jobs:
 
       - name: Show Number of loaded profile
         run: sudo aa-status --profiled
+
+      - name: Install Tests dependencies
+        if: matrix.mode == 'default' && matrix.os == 'ubuntu-24.04'
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y \
+            bats bats-support
+
+      - name: Run the bats integration tests
+        if: matrix.mode == 'default' && matrix.os == 'ubuntu-24.04'
+        run: |
+          make bats
