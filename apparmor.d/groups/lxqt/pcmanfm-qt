@@ -1,9 +1,9 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2020-2021 Mikhail Morfikov
-# Copyright (C) 2024 Besanon <m231009ts@mailfence.com>
+# Copyright (C) 2024 Besanon  <m231009ts@mailfence.com>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
@@ -19,13 +19,12 @@ profile pcmanfm-qt @{exec_path} {
   include <abstractions/thumbnails-cache-read>
   include <abstractions/disks-read>
   include <abstractions/consoles>
-  include <abstractions/qt5>
   include <abstractions/app-launcher-user>
   include <abstractions/app-launcher-root>
+  include <abstractions/trash-strict>
 
   deny capability sys_nice,
 
-  # needs this for killing/terminating processes it initiates.
   signal (send) set=(term, kill),
   signal (receive) set=(term, kill) peer=lxqt-session,
 
@@ -34,8 +33,8 @@ profile pcmanfm-qt @{exec_path} {
 
   @{exec_path} mr,
 
-  @{lib}/menu-cache/menu-cached rix,
-  @{lib}/menu-cache/menu-cache-gen rix,
+  @{lib}exec/menu-cache/menu-cached rix,
+  @{lib}exec/menu-cache/menu-cache-gen rpx,
 
   owner @{PROC}/@{pid}/mountinfo r,
   owner @{PROC}/@{pid}/mounts r,
@@ -44,17 +43,21 @@ profile pcmanfm-qt @{exec_path} {
 
   @{sys}/bus/ r,
   @{sys}/class/ r,
-  @{sys}/devices/@{pci_bus}/** r,
   @{sys}/devices/system/node/ r,
   @{sys}/devices/system/node/node@{int}/meminfo r,
 
   @{sys}/fs/cgroup/{,**} r,
 
    owner @{user_cache_dirs}/pcmanfm-qt/**  r,
-   owner @{user_config_dirs}/pcmanfm-qt/lxqt/** rw,
+   owner @{user_config_dirs}/pcmanfm-qt/lxqt/ r,
    owner @{user_config_dirs}/pcmanfm-qt/lxqt/recent-files.conf.lock rwk,
-   owner @{user_config_dirs}/pcmanfm-qt/qterminal.org  kl ->  @{user_config_dirs}/qterminal.org/#@{int},
-   owner @{user_config_dirs}/pcmanfm-qt/lxqt/** rwkl -> @{user_config_dirs}/pcmanfm-qt/lxqt/#@{int},
+ #  owner @{user_config_dirs}/pcmanfm-qt/qterminal.org/**  rwkl ->  @{user_config_dirs}/qterminal.org/#@{int},
+   owner @{user_config_dirs}/pcmanfm-qt/lxqt/desktop-items-0.conf.@{rand6} l -> @{user_config_dirs}/pcmanfm-qt/lxqt/#@{int},
+   owner @{user_config_dirs}/pcmanfm-qt/lxqt/dir-settings.conf~ l -> @{user_config_dirs}/pcmanfm-qt/lxqt/dir-settings.conf,
+   owner @{user_config_dirs}/pcmanfm-qt/lxqt/settings.conf.lock rwk,
+   owner @{user_config_dirs}/pcmanfm-qt/lxqt/settings.conf.@{rand6} l -> @{user_config_dirs}/pcmanfm-qt/lxqt/#@{int},
+   owner @{user_config_dirs}/pcmanfm-qt/lxqt/desktop-items-0.conf.lock rwk,
+   owner @{user_config_dirs}/pcmanfm-qt/lxqt/recent-files.conf.@{rand6} l -> @{user_config_dirs}/pcmanfm-qt/lxqt/#@{int},
 
   # To read/write files in the system. The read permission is granted for all files, the write
   # permission only for the owner. Also, dirs like /dev/, /efi/, /proc/, /sys/ are not included in
