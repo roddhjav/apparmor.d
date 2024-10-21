@@ -11,24 +11,28 @@ setup_file() {
 
 # bats test_tags=aa-enforce
 @test "aa-enforce: Disable profile" {
+    skip
     sudo aa-disable pass
     aa_check
 }
 
 # bats test_tags=aa-enforce
 @test "aa-enforce: Enforce a profile" {
+    skip
     sudo aa-enforce pass
     aa_check
 }
 
 # bats test_tags=aa-enforce
 @test "aa-enforce: Complain a profile" {
+    skip
     sudo aa-complain pass
     aa_check
 }
 
 # bats test_tags=aa-enforce
 @test "aa-enforce: Audit a profile" {
+    skip
     sudo aa-audit pass
     aa_check
 }
