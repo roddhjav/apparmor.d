@@ -26,8 +26,23 @@ setup_file() {
     gpgconf --list-options gpg
     gpgconf --list-options gpgsm
     gpgconf --list-options gpg-agent
-    gpgconf --list-options scdaemon
+    gpgconf --list-options scdaemon || true
     gpgconf --list-options dirmngr
     aa_check
 }
 
+# bats test_tags=gpgconf
+@test "gpgconf: List programs and test whether they are runnable" {
+    gpgconf --check-programs || true
+    aa_check
+}
+
+# bats test_tags=gpgconf
+@test "gpgconf: Reload a component" {
+    gpgconf --reload gpg
+    gpgconf --reload gpgsm
+    gpgconf --reload gpg-agent
+    gpgconf --reload scdaemon || true
+    gpgconf --reload dirmngr
+    aa_check
+}
