@@ -2,7 +2,7 @@
 # Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
@@ -12,10 +12,14 @@ profile libreoffice @{exec_path} {
   include <abstractions/base>
   include <abstractions/audio-client>
   include <abstractions/bus-session>
+  include <abstractions/cups-client>
   include <abstractions/dconf-write>
   include <abstractions/desktop>
   include <abstractions/enchant>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/graphics>
   include <abstractions/nameservice-strict>
+  include <abstractions/qt5-settings-write>
   include <abstractions/ssl_certs>
   include <abstractions/user-read-strict>
   include <abstractions/user-write-strict>
@@ -41,14 +45,14 @@ profile libreoffice @{exec_path} {
 
   @{open_path}      rPx -> child-open-browsers,
 
-  @{bin}/gpgconf rPx,
-  @{bin}/gpgsm rPx, 
-  @{bin}/gpg rPx, 
+  @{bin}/gpg        rPx,
+  @{bin}/gpgconf    rPx,
+  @{bin}/gpgsm      rPx,
 
   @{lib}/libreoffice/program/javaldx      rix,
   @{lib}/libreoffice/program/oosplash     rix,
   @{lib}/libreoffice/program/soffice.bin  rix,
-  @{lib}/jvm/java*/bin/java              rix,
+  @{lib}/jvm/java*/bin/java               rix,
   @{lib}/jvm/java*/lib/** rm,
 
   @{lib}/libreoffice/{,**} rm,
@@ -61,15 +65,24 @@ profile libreoffice @{exec_path} {
   /usr/share/liblangtag/{,**} r,
   /usr/share/libreoffice/{,**} r,
   /usr/share/mythes/{,**} r,
+  /usr/share/thumbnailers/{,**} r,
 
-  /etc/java-openjdk/{,**} r,
+  /etc/java{,@{version}}-openjdk/{,**} r,
   /etc/libreoffice/{,**} r,
   /etc/paperspecs r,
+  /etc/xdg/* r,
 
   owner @{user_cache_dirs}/libreoffice/{,**} rw,
   owner @{user_config_dirs}/libreoffice/ rw,
   owner @{user_config_dirs}/libreoffice/** rwk,
+  owner @{user_config_dirs}/soffice.*.lock rwk,
+  owner @{user_config_dirs}/plasma_workspace.notifyrc r,
+  owner @{user_config_dirs}/kservicemenurc r,
 
+  owner @{user_share_dirs}/#@{int} rw,
+  owner @{user_share_dirs}/user-places.xbel r,
+
+  owner @{tmp}/ r,
   owner @{tmp}/@{rand6} rwk,
   owner @{tmp}/*.tmp/{,**} rwk,
   owner @{tmp}/OSL_PIPE_@{uid}_SingleOfficeIPC_@{hex} w,
@@ -77,18 +90,22 @@ profile libreoffice @{exec_path} {
   owner @{tmp}/hsperfdata_@{user}/  rw,
   owner @{tmp}/hsperfdata_@{user}/@{int} rwk,
 
+  owner @{run}/user/@{uid}/#@{int} rw,
+
         @{sys}/devices/system/cpu/cpu@{int}/microcode/version r,
         @{sys}/devices/virtual/block/**/queue/rotational r,
         @{sys}/kernel/mm/hugepages/ r,
         @{sys}/kernel/mm/transparent_hugepage/enabled r,
         @{sys}/kernel/mm/transparent_hugepage/shmem_enabled r,
-  owner @{sys}/fs/cgroup/user.slice/user-@{int}.slice/user@@{int}.service/app.slice/**/memory.max r,
-  owner @{sys}/fs/cgroup/user.slice/user-@{int}.slice/user@@{int}.service/session.slice/org.gnome.Shell@wayland.service/memory.max r,
+        @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/session-@{int}.scope/{cpu,memory}.max r,
+  owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/**/memory.max r,
+  owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/session.slice/org.gnome.Shell@wayland.service/memory.max r,
 
         @{PROC}/cgroups r,
   owner @{PROC}/@{pid}/cgroup r,
   owner @{PROC}/@{pid}/coredump_filter rw,
   owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/mounts r,
 
   /dev/tty rw,
 

@@ -1,0 +1,32 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{name} = torbrowser "tor browser"
+@{lib_dirs} = @{user_share_dirs}/torbrowser/tbb/@{arch}/tor-browser/Browser/ @{HOME}/.tb/tor-browser/Browser/
+@{data_dirs} = @{lib_dirs}/TorBrowser/Data/
+@{config_dirs} = @{data_dirs}/Browser/profile.default/
+@{cache_dirs} = @{data_dirs}/Browser/Caches
+
+@{exec_path} = @{lib_dirs}/glxtest
+profile torbrowser-glxtest @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/graphics>
+  include <abstractions/nameservice-strict>
+  include <abstractions/X-strict>
+  include <abstractions/wayland>
+
+  @{exec_path} mr,
+
+  owner @{PROC}/@{pid}/cmdline r,
+
+  deny @{config_dirs}/.parentlock rw,
+
+  include if exists <local/torbrowser-glxtest>
+}
+
+# vim:syntax=apparmor

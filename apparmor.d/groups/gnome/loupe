@@ -2,7 +2,7 @@
 # Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
@@ -18,6 +18,8 @@ profile loupe @{exec_path} flags=(attach_disconnected) {
   include <abstractions/user-write-strict>
 
   signal (send) set=(kill) peer=loupe//bwrap,
+
+  #aa:dbus talk bus=session name=org.gtk.vfs label="gvfsd{,-*}"
 
   @{exec_path} mr,
 
@@ -38,6 +40,7 @@ profile loupe @{exec_path} flags=(attach_disconnected) {
   owner @{PROC}/@{pid}/cgroup r,
   owner @{PROC}/@{pid}/cmdline r,
   owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/task/@{tid}/comm rw,
 
   deny @{user_share_dirs}/gvfs-metadata/* r,
 

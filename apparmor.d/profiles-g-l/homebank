@@ -1,0 +1,24 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/homebank
+profile homebank @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/desktop>
+  include <abstractions/dconf-write>
+
+  @{exec_path} mr,
+
+  /usr/share/homebank/{,**} r,
+
+  owner @{user_config_dirs}/homebank/{,**} rw,
+
+  include if exists <local/homebank>
+}
+
+# vim:syntax=apparmor

@@ -3,7 +3,7 @@
 # Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
@@ -28,7 +28,7 @@ profile apt-listchanges @{exec_path} {
   #  shared object file): ignored.
   @{bin}/dpkg-deb       rpx,
   #
-  @{bin}/sensible-pager rCx -> pager,
+  @{pager_path}        rCx -> pager,
   # Send results using email
   @{bin}/exim4         rPx,
 
@@ -83,12 +83,11 @@ profile apt-listchanges @{exec_path} {
     capability dac_read_search,
     #capability sys_tty_config,
 
-    @{bin}/sensible-pager mr,
+    @{pager_path}  mrix,
 
     @{bin}/           r,
     @{sh_path}        rix,
     @{bin}/which{,.debianutils}      rix,
-    @{bin}/less       rix,
 
     owner @{HOME}/.less* rw,
 
@@ -98,6 +97,7 @@ profile apt-listchanges @{exec_path} {
           /tmp/ r,
     owner @{tmp}/apt-listchanges-tmp*.txt r,
 
+    include if exists <local/apt-listchanges_pager>
   }
 
   include if exists <local/apt-listchanges>

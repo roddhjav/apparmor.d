@@ -4,7 +4,7 @@ include:
   - template: Security/SAST.gitlab-ci.yml
 
 variables:
-  PKGDEST: $CI_PROJECT_DIR/packages
+  PKGDEST: $CI_PROJECT_DIR/.pkg
   PACKAGER: 'Alexandre Pujol <alexandre@pujol.io>'
 
 stages:
@@ -23,14 +23,14 @@ bash:
   image: koalaman/shellcheck-alpine
   script:
     - shellcheck --shell=bash
-        PKGBUILD dists/build.sh dists/docker.sh
+        PKGBUILD dists/build.sh dists/docker.sh tests/check.sh
         tests/packer/init/init.sh tests/packer/src/aa-update tests/packer/init/clean.sh
 
 golangci-lint:
   stage: lint
   image: golangci/golangci-lint
   script:
-    - golangci-lint run --skip-dirs pkg/paths
+    - golangci-lint run --exclude-dirs pkg/paths
 
 packer:
   stage: lint
@@ -63,6 +63,11 @@ tests:
     - go test $(go list ./pkg/... | grep -v /pkg/paths) -v -cover -coverprofile=coverage.out
     - go tool cover -func=coverage.out
 
+check:
+  stage: test
+  image: registry.gitlab.com/roddhjav/builders/archlinux
+  script:
+    - make check
 
 # Package Build
 # -------------
@@ -190,7 +195,7 @@ pages:
     GIT_DEPTH: 0
   script:
     - pip install -r requirements.txt
-    - mkdocs build --strict --site-dir public
+    - mkdocs build --site-dir public
   artifacts:
     paths:
       - public

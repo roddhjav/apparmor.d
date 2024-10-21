@@ -12,13 +12,14 @@
 # intended to be used only via "Px -> child-modprobe-nvidia" exec transitions 
 # from other profiles.
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
 @{exec_path} = @{bin}/nvidia-modprobe
 profile child-modprobe-nvidia flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/attached/consoles>
   include <abstractions/consoles>
 
   capability chown,
@@ -53,8 +54,6 @@ profile child-modprobe-nvidia flags=(attach_disconnected) {
   owner /dev/nvidia-caps/ w,
   owner /dev/nvidia-caps/nvidia-cap@{int} w,
 
-  /dev/tty@{int} rw,
-
   deny  @{HOME}/.steam/** r,
 
   profile kmod {
@@ -62,13 +61,9 @@ profile child-modprobe-nvidia flags=(attach_disconnected) {
     include <abstractions/app/kmod>
 
     capability mknod,
-    # capability sys_module,
 
     /etc/nvidia/{current,legacy*,tesla*}/*.conf r,
 
-    # @{sys}/module/ipmi_devintf/initstate r,
-    # @{sys}/module/ipmi_msghandler/initstate r,
-    # @{sys}/module/{drm,nvidia}/initstate r,
     @{sys}/module/compression r,
 
     deny @{HOME}/.steam/** r,

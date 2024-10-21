@@ -1,0 +1,31 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/baobab
+profile baobab @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/bus/org.freedesktop.hostname1>
+  include <abstractions/common/gnome>
+  include <abstractions/deny-sensitive-home>
+
+  #aa:dbus talk bus=session name=org.gtk.vfs label="gvfsd{,-*}"
+
+  @{exec_path} mr,
+
+  @{open_path}  rPx -> child-open-help,
+
+  # As a directory tree analyzer it needs full access to the filesystem
+  / r,
+  /** r,
+
+  deny /boot/{,**} r,
+
+  include if exists <local/baobab>
+}
+
+# vim:syntax=apparmor

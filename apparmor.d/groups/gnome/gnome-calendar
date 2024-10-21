@@ -2,16 +2,14 @@
 # Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
 @{exec_path} = @{bin}/gnome-calendar
 profile gnome-calendar @{exec_path} {
   include <abstractions/base>
-  include <abstractions/bus-accessibility>
   include <abstractions/bus-system>
-  include <abstractions/bus/org.a11y>
   include <abstractions/bus/org.freedesktop.login1>
   include <abstractions/bus/org.freedesktop.NetworkManager>
   include <abstractions/bus/org.freedesktop.portal.Desktop>
@@ -40,9 +38,12 @@ profile gnome-calendar @{exec_path} {
        peer=(name=:*, label=evolution-source-registry),
 
   @{exec_path} mr,
+  @{open_path}  rPx -> child-open-help,
 
   /usr/share/evolution-data-server/{,**} r,
   /usr/share/libgweather/Locations.xml r,
+
+  owner @{tmp}/pid-@{pid}/*.ics r,
 
   include if exists <local/gnome-calendar>
 }

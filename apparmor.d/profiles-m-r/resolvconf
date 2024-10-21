@@ -2,7 +2,7 @@
 # Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
@@ -15,6 +15,7 @@ profile resolvconf @{exec_path} {
 
   @{sh_path}         rix,
   @{bin}/cat         rix,
+  @{bin}/cp          rix,
   @{bin}/flock       rix,
   @{bin}/mkdir       rix,
   @{bin}/mv          rix,
@@ -22,19 +23,34 @@ profile resolvconf @{exec_path} {
   @{bin}/rm          rix,
   @{bin}/run-parts   rix,
   @{bin}/sed         rix,
+  @{bin}/systemctl   rCx -> systemctl,
   @{lib}/resolvconf/list-records rix,
 
   /usr/lib/resolvconf/{,**} r,
 
+  @{etc_rw}/resolv.conf.bak rw,
   @{etc_rw}/resolv.conf rw,
+  /etc/resolvconf.conf r,
   /etc/resolvconf/{,**} r,
   /etc/resolvconf/update.d/libc rix,
+
+  / r,
 
   owner @{run}/resolvconf/{,**} rw,
   owner @{run}/resolvconf/run-lock wk,
 
   /dev/tty rw,
 
+  profile systemctl {
+    include <abstractions/base>
+    include <abstractions/app/systemctl>
+
+    capability net_admin,
+    capability sys_ptrace,
+
+    include if exists <local/resolvconf_systemctl>
+  }
+  
   include if exists <local/resolvconf>
 }
 

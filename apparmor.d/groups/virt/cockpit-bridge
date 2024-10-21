@@ -2,14 +2,13 @@
 # Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
 @{exec_path} = @{bin}/cockpit-bridge
 profile cockpit-bridge @{exec_path} {
   include <abstractions/base>
-  include <abstractions/app-launcher-root>
   include <abstractions/consoles>
   include <abstractions/nameservice-strict>
   include <abstractions/python>
@@ -23,24 +22,50 @@ profile cockpit-bridge @{exec_path} {
   network inet stream,
   network inet6 dgram,
   network inet6 stream,
+  network netlink raw,
 
-  ptrace (read),
+  ptrace read,
 
-  signal (send) set=term peer=cockpit-pcp,
-  signal (send) set=term peer=dbus-daemon,
-  signal (send) set=term peer=journalctl,
-  signal (send) set=term peer=ssh-agent,
-  signal (send) set=term peer=sudo,
-  signal (send) set=term peer=unconfined,
+  signal send set=term peer=cockpit-bridge//sudo,
+  signal send set=term peer=cockpit-pcp,
+  signal send set=term peer=dbus-daemon,
+  signal send set=term peer=journalctl,
+  signal send set=term peer=ssh-agent,
+  signal send set=term peer=unconfined,
 
   @{exec_path} mr,
 
-  @{bin}/journalctl rPx,
-  @{lib}/cockpit/cockpit-pcp rPx,
-  @{lib}/cockpit/cockpit-ssh rPx,
+  @{bin}/cat                  ix,
+  @{bin}/date                 ix,
+  @{bin}/find                 ix,
+  @{bin}/ip                   ix,
+  @{bin}/python3.@{int}       ix,
+  @{bin}/test                 ix,
+  @{bin}/file                 ix,
 
-  /usr/share/cockpit/{,**} r,
+  @{bin}/chage                Px,
+  @{bin}/dmidecode            Px,
+  @{bin}/findmnt              Px,
+  @{bin}/journalctl           Px,
+  @{bin}/last                 Px,
+  @{bin}/lastlog              Px,
+  @{bin}/lscpu                Px,
+  @{bin}/passwd               Px,
+  @{bin}/ssh-agent            Px,
+  @{bin}/sudo                 Cx -> sudo,
+  @{bin}/udevadm              Cx -> udevadm,
+  @{bin}/virsh               rPUx,
+  @{bin}/virt-install        PUx, # TODO: rPx
+  @{lib}/cockpit/cockpit-pcp  Px,
+  @{lib}/cockpit/cockpit-ssh  Px,
+
+  # The shell is not confined on purpose.
+  @{bin}/@{shells}            Ux,
+
   /usr/{,local/}share/ r,
+  /usr/share/cockpit/{,**} r,
+  /usr/share/file/** r,
+  /usr/share/iproute2/* r,
 
   /etc/cockpit/{,**} r,
   /etc/httpd/conf/mime.types r,
@@ -51,6 +76,9 @@ profile cockpit-bridge @{exec_path} {
   /etc/shadow r,
   /etc/shells r,
 
+  / r, 
+  @{HOME}/ r,
+
   owner @{user_cache_dirs}/ssh-agent.[0-9A-Z]* rw,
   owner @{user_share_dirs}/ r,
 
@@ -58,12 +86,14 @@ profile cockpit-bridge @{exec_path} {
   @{run}/utmp r,
 
   @{sys}/class/hwmon/ r,
+  @{sys}/class/net/ r,
   @{sys}/devices/**/hwmon@{int}/ r,
   @{sys}/devices/**/hwmon@{int}/{name,temp*} r,
   @{sys}/fs/cgroup/ r,
   @{sys}/fs/cgroup/**/ r,
   @{sys}/fs/cgroup/**/cpu.{stat,weight} r,
   @{sys}/fs/cgroup/**/memory* r,
+  @{sys}/kernel/kexec_crash_size r,
 
         @{PROC}/ r,
         @{PROC}/@{pids}/cgroup r,
@@ -79,6 +109,25 @@ profile cockpit-bridge @{exec_path} {
   owner @{PROC}/@{pid}/mounts r,
 
   /dev/ptmx rw,
+
+  profile sudo {
+    include <abstractions/base>
+    include <abstractions/app/sudo>
+
+    signal (send receive) set=term peer=cockpit-bridge,
+
+    @{bin}/cockpit-bridge Px,
+    @{lib}/cockpit/cockpit-askpass Px,
+
+    include if exists <local/cockpit-bridge_sudo>
+  }
+
+  profile udevadm {
+    include <abstractions/base>
+    include <abstractions/app/udevadm>
+
+    include if exists <local/cockpit-bridge_udevadm>
+  }
 
   include if exists <local/cockpit-bridge>
 }

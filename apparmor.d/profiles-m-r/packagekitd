@@ -2,7 +2,7 @@
 # Copyright (C) 2022-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
@@ -36,6 +36,7 @@ profile packagekitd @{exec_path} flags=(attach_disconnected) {
   network netlink raw,
 
   signal send set=int peer=apt-methods-*,
+  signal send set=term peer=systemd-inhibit,
 
   #aa:dbus own bus=system name=org.freedesktop.PackageKit
 
@@ -93,7 +94,8 @@ profile packagekitd @{exec_path} flags=(attach_disconnected) {
   owner @{tmp}/apt-changelog-@{rand6}/.apt-acquire-privs-test.@{rand6} rw,
   owner @{tmp}/packagekit* rw,
 
-        @{run}/systemd/inhibit/*.ref rw,
+  @{att}/@{run}/systemd/inhibit/@{int}.ref rw,
+
   owner @{run}/systemd/users/@{uid} r,
 
   #aa:only opensuse

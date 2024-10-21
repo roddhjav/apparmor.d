@@ -2,7 +2,7 @@
 # Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
@@ -18,16 +18,18 @@ profile aa-notify @{exec_path} {
   capability setuid,
   capability sys_ptrace,
 
-  ptrace (read),
+  ptrace read,
 
   @{exec_path} mr,
 
   @{bin}/ r,
 
-  /etc/apparmor/*.conf r,
-  /etc/inputrc r,
-  /usr/etc/inputrc.keys r,
   /usr/share/terminfo/** r,
+
+  @{etc_ro}/inputrc r,
+  @{etc_ro}/inputrc.keys r,
+  /etc/apparmor.d/{,**} r,
+  /etc/apparmor/*.conf r,
 
   /var/log/audit/audit.log r,
 
@@ -35,7 +37,7 @@ profile aa-notify @{exec_path} {
   owner @{HOME}/.terminfo/@{int}/dumb r,
 
   owner @{tmp}/@{rand8} rw,
-  owner @{tmp}/apparmor-bugreport-*.txt rw,
+  owner @{tmp}/apparmor-bugreport-@{rand8}.txt rw,
 
   @{PROC}/ r,
   @{PROC}/@{pid}/stat r,

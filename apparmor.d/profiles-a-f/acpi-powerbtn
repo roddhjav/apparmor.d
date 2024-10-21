@@ -2,7 +2,7 @@
 # Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
@@ -11,9 +11,8 @@ profile acpi-powerbtn flags=(attach_disconnected) {
 
   /etc/acpi/powerbtn-acpi-support.sh r,
 
-  @{bin}/{ba,da,}sh   rix,
+  @{sh_path}          rix,
   @{bin}/{e,}grep     rix,
-  @{bin}/dbus-send    rix,
   @{bin}/killall5     rix,
   @{bin}/pgrep        rix,
   @{bin}/pinky        rix,
@@ -21,10 +20,10 @@ profile acpi-powerbtn flags=(attach_disconnected) {
   @{bin}/shutdown     rix,
   /etc/acpi/powerbtn.sh    rix,
 
-  @{bin}/systemctl    rCx -> systemctl,
-  @{bin}/ps           rPx,
-
-  @{bin}/fgconsole    rCx -> fgconsole,
+  @{bin}/dbus-send     Cx -> bus,
+  @{bin}/fgconsole     Cx -> fgconsole,
+  @{bin}/ps            Px,
+  @{bin}/systemctl     Cx -> systemctl,
 
   /usr/share/acpi-support/** r,
 
@@ -44,6 +43,15 @@ profile acpi-powerbtn flags=(attach_disconnected) {
 
           /dev/tty       rw,
     owner /dev/tty@{int} rw,
+
+    include if exists <local/acpi-powerbtn_fgconsole>
+  }
+
+  profile bus flags=(complain) {
+    include <abstractions/base>
+    include <abstractions/app/bus>
+
+    include if exists <local/acpi-powerbtn_bus>
   }
 
   profile systemctl {

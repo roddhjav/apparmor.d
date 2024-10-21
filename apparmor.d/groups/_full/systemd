@@ -11,7 +11,18 @@
 
 # Distributions and other programs can add rules in the usr/systemd.d directory
 
-abi <abi/3.0>,
+# TODO: rework this to get a controlled environment: (cf security model)
+# - No global allow anymore: in high security environments, we must manage the list
+#   of program/service that can be started by systemd and ensure that they are all
+#   listed and confined. Programs not listed will not be able to start.
+# - Outside common systemd service, the list may have to be automatically
+#   generated at install time, in `/etc/apparmor.d/usr/systemd.d/exec`
+# - Stop disabling nnp flags in systemd dropin files.
+# - Each systemd services in `systemd-service` (when the service is more complex than foo.service -> Exec=/usr/bin/foo)
+#   need they own profile, profile name configured as a dropin unit file.
+# - When this is done: the fallback profile as root will not be needed.
+
+abi <abi/4.0>,
 
 include <tunables/global>
 
@@ -107,7 +118,7 @@ profile systemd flags=(attach_disconnected,mediate_deleted) {
   umount @{run}/systemd/unit-root/{,**},
 
   pivot_root oldroot=@{run}/systemd/mount-rootfs/ @{run}/systemd/mount-rootfs/,
-  pivot_root oldroot=@{run}/systemd/unit-root/ @{run}/systemd/unit-root/,
+  pivot_root oldroot=@{run}/systemd/unit-root/    @{run}/systemd/unit-root/,
 
   change_profile,
 
@@ -129,39 +140,43 @@ profile systemd flags=(attach_disconnected,mediate_deleted) {
        member=GetConnectionUnixUser
        peer=(name=org.freedesktop.DBus, label=dbus-system),
 
-  @{bin}/systemctl                  rix,
-  @{bin}/mount                      rix,
+  @{bin}/**                         Px,
+  @{lib}/**                         Px,
+  /etc/cron.*/*                     Px,
+  /etc/init.d/*                     Px,
+  /usr/share/*/**                   Px,
 
-  @{lib}/systemd/systemd-executor   rix,
-  @{lib}/systemd/systemd            rpx -> systemd-user,
+  # Systemd internal service started and config handler (sandboxing, namespacing, cgroup, etc.)
+  @{lib}/systemd/systemd-executor   ix,
 
-  @{bin}/ldconfig                   rPx -> systemd-service,
-  @{bin}/mandb                      rPx -> systemd-service,
-  @{bin}/savelog                    rPx -> systemd-service,
-  @{coreutils_path}                 rPx -> systemd-service,
-  @{sh_path}                        rPx -> systemd-service,
+  # Systemd user: systemd --user
+  @{lib}/systemd/systemd            px -> systemd-user,
 
-  @{bin}/**                          Px,
-  @{lib}/**                          Px,
-  /etc/cron.*/*                      Px,
-  /etc/init.d/*                      Px,
-  /usr/share/*/**                    Px,
+  # Unit services using systemctl
+  @{bin}/systemctl                  Cx -> systemctl,
 
+  # Unit services
+  @{bin}/mount                      ix,
+
+  # Shell based systemd unit services
+  @{bin}/ldconfig                   Px -> systemd-service,
+  @{bin}/mandb                      Px -> systemd-service,
+  @{bin}/savelog                    Px -> systemd-service,
+  @{coreutils_path}                 Px -> systemd-service,
+  @{sh_path}                        Px -> systemd-service,
+
+  # Systemd profiles that need be stacked
   #aa:stack systemd-networkd systemd-oomd systemd-resolved systemd-timesyncd
-  @{lib}/systemd/systemd-networkd   rPx -> systemd//&systemd-networkd,
-  @{lib}/systemd/systemd-oomd       rPx -> systemd//&systemd-oomd,
-  @{lib}/systemd/systemd-resolved   rPx -> systemd//&systemd-resolved,
-  @{lib}/systemd/systemd-timesyncd  rPx -> systemd//&systemd-timesyncd,
+  @{lib}/systemd/systemd-networkd   Px -> systemd//&systemd-networkd,
+  @{lib}/systemd/systemd-oomd       Px -> systemd//&systemd-oomd,
+  @{lib}/systemd/systemd-resolved   Px -> systemd//&systemd-resolved,
+  @{lib}/systemd/systemd-timesyncd  Px -> systemd//&systemd-timesyncd,
 
   @{lib}/ r,
   / r,
-  /boot/ r,
+  /*/ r,
   /boot/efi/ r,
-  /efi/ r,
-  /snap/ r,
   /snap/*/@{int}/ r,
-  /tmp/ r,
-  /usr/ r,
   /var/cache/*/ r,
   /var/lib/*/ r,
   /var/tmp/ r,
@@ -257,6 +272,14 @@ profile systemd flags=(attach_disconnected,mediate_deleted) {
   owner /dev/rfkill rw,
   owner /dev/shm/ rw,
   owner /dev/ttyS@{int} rwk,
+
+  profile systemctl {
+    include <abstractions/base>
+    include <abstractions/app/systemctl>
+
+    include if exists <usr/systemd_systemctl.d>
+    include if exists <local/systemd_systemctl>
+  }
 
   include if exists <usr/systemd.d>
   include if exists <local/systemd>

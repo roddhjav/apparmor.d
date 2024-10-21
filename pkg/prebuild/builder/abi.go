@@ -5,25 +5,25 @@
 package builder
 
 import (
-	"github.com/roddhjav/apparmor.d/pkg/prebuild/cfg"
+	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 	"github.com/roddhjav/apparmor.d/pkg/util"
 )
 
 var (
-	regAbi4To3 = util.ToRegexRepl([]string{ // Currently Abi3 -> Abi4
-		`abi/3.0`, `abi/4.0`,
-		`# userns,`, `userns,`,
-		`# mqueue`, `mqueue`,
+	regAbi4To3 = util.ToRegexRepl([]string{
+		`abi/4.0`, `abi/3.0`,
+		`  userns,`, `  # userns,`,
+		`  mqueue`, `  # mqueue`,
 	})
 )
 
 type ABI3 struct {
-	cfg.Base
+	prebuild.Base
 }
 
 func init() {
 	RegisterBuilder(&ABI3{
-		Base: cfg.Base{
+		Base: prebuild.Base{
 			Keyword: "abi3",
 			Msg:     "Convert all profiles from abi 4.0 to abi 3.0",
 		},

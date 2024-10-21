@@ -1,0 +1,43 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/mkcert
+profile mkcert @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/app/sudo>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+  include <abstractions/ssl_certs>
+
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  @{bin}/certutil         rix,
+  @{bin}/rm               rix,
+  @{bin}/sudo             rix,
+  @{bin}/tee              rix,
+  @{bin}/trust            rix,
+  @{bin}/update-ca-trust  rPx,
+
+  owner @{HOME}/.mozilla/firefox/*/{cert9,key4}.db{,-journal} rwk,
+
+  owner @{HOME}/.pki/ rw,
+  owner @{HOME}/.pki/nssdb/ rw,
+  owner @{HOME}/.pki/nssdb/pkcs11.txt rw,
+  owner @{HOME}/.pki/nssdb/{cert9,key4}.db rwk,
+  owner @{HOME}/.pki/nssdb/{cert9,key4}.db-journal rw,
+
+  owner @{user_share_dirs}/mkcert/{,**} rw,
+
+  owner @{PROC}/@{pids}//cgroup r,
+
+  include if exists <local/mkcert>
+}
+
+# vim:syntax=apparmor

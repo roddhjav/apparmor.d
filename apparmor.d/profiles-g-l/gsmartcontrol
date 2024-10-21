@@ -3,49 +3,37 @@
 # Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
 @{exec_path} = @{bin}/gsmartcontrol
 profile gsmartcontrol @{exec_path} {
   include <abstractions/base>
-  include <abstractions/gtk>
-  include <abstractions/fonts>
-  include <abstractions/fontconfig-cache-read>
-  include <abstractions/freedesktop.org>
+  include <abstractions/desktop>
   include <abstractions/nameservice-strict>
 
   capability dac_read_search,
-
-  # Needed?
-  deny capability sys_nice,
+  capability sys_nice,
 
   @{exec_path} mr,
 
-  @{bin}/smartctl rPx,
-  @{bin}/xterm     rCx -> terminal,
+  @{bin}/dbus-launch        Cx -> bus,
+  @{bin}/dbus-send          Cx -> bus,
+  @{bin}/smartctl           Px,
+  @{bin}/xterm              Cx -> terminal,
 
-  # When gsmartcontrol is run as root, it wants to exec dbus-launch, and hence it creates the two
-  # following root processes:
-  #  dbus-launch --autolaunch e0a30ad97cd6421c85247839ccef9db2 --binary-syntax --close-stderr
-  #  /usr/bin/dbus-daemon --syslog-only --fork --print-pid 5 --print-address 7 --session
-  #
-  # Should this be allowed? Gsmartcontrol works fine without this.
-  #@{bin}/dbus-launch        rCx -> dbus,
-  #@{bin}/dbus-send          rCx -> dbus,
-  deny @{bin}/dbus-launch rx,
-  deny @{bin}/dbus-send   rx,
+  /etc/fstab r,
 
-  owner @{user_config_dirs}/gsmartcontrol/ rw,
-  owner @{user_config_dirs}/gsmartcontrol/gsmartcontrol.conf rw,
-
-  # As it's started as root
-  @{HOME}/.Xauthority r,
+  /var/lib/dbus/machine-id r,
+  /etc/machine-id r,
 
   # For saving SMART raport
   owner /root/ r,
   owner /root/**.txt w,
+
+  owner @{user_config_dirs}/gsmartcontrol/ rw,
+  owner @{user_config_dirs}/gsmartcontrol/** rw,
 
   owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/mountinfo r,
@@ -55,57 +43,37 @@ profile gsmartcontrol @{exec_path} {
   owner @{PROC}/scsi/scsi r,
   owner @{PROC}/scsi/sg/devices r,
 
-  /etc/fstab r,
-
-  /var/lib/dbus/machine-id r,
-  /etc/machine-id r,
-
   # The Help menu (and links in it) requires access to a web browser. Since gsmartcontrol is run as
   # root (even when used sudo or gsmartcontrol-root), the web browser will also be run as root and
   # hence this behavior should be blocked.
-  deny @{lib}/@{multiarch}/glib-[0-9]*/gio-launch-desktop rx,
+  deny @{open_path} rx,
 
-
-  profile dbus {
+  profile bus flags=(complain) {
     include <abstractions/base>
-    include <abstractions/nameservice-strict>
+    include <abstractions/app/bus>
 
-    @{bin}/dbus-launch   mr,
-    @{bin}/dbus-send     mr,
-    @{bin}/dbus-daemon rPUx,
-
-    # for dbus-launch
-    owner @{HOME}/.dbus/session-bus/@{hex}-[0-9] w,
-
-    @{HOME}/.Xauthority r,
+    include if exists <local/gsmartcontrol_bus>
   }
 
   profile terminal {
     include <abstractions/base>
     include <abstractions/consoles>
+    include <abstractions/desktop>
     include <abstractions/nameservice-strict>
-    include <abstractions/freedesktop.org>
+    include <abstractions/shells>
 
-    capability setuid,
-    capability setgid,
     capability fsetid,
+    capability setgid,
+    capability setuid,
 
     @{bin}/xterm mr,
-
-    /usr/sbin/update-smart-drivedb rPx,
-
-    owner @{HOME}/.Xauthority r,
-
-    /etc/shells r,
-
-    /etc/X11/app-defaults/XTerm-color r,
-    /etc/X11/app-defaults/XTerm r,
-    /etc/X11/cursors/*.theme r,
+    @{bin}/update-smart-drivedb rPx,
 
     /usr/include/X11/bitmaps/vlines2 r,
 
     /dev/ptmx rw,
 
+    include if exists <local/gsmartcontrol_terminal>
   }
 
   include if exists <local/gsmartcontrol>

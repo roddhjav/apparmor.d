@@ -2,13 +2,14 @@
 # Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
-@{name} = firefox{,.sh,-esr,-bin}
+@{name} = firefox{,-esr,-bin}
 @{lib_dirs} = @{lib}/@{name} /opt/@{name}
 @{config_dirs} = @{HOME}/.mozilla/
+@{cache_dirs} = @{user_cache_dirs}/mozilla/
 
 @{exec_path} = @{lib_dirs}/glxtest
 profile firefox-glxtest @{exec_path} flags=(attach_disconnected) {
@@ -16,14 +17,20 @@ profile firefox-glxtest @{exec_path} flags=(attach_disconnected) {
   include <abstractions/graphics>
   include <abstractions/nameservice-strict>
   include <abstractions/X-strict>
+  include <abstractions/wayland>
 
   @{exec_path} mr,
+
+  owner @{cache_dirs}/firefox/*/startupCache/scriptCache-* r,
+  owner @{cache_dirs}/firefox/*/startupCache/startupCache* r,
 
   owner @{config_dirs}/firefox/*/.parentlock rw,
 
   owner @{tmp}/@{name}/.parentlock rw,
 
   owner @{PROC}/@{pid}/cmdline r,
+
+  deny @{user_share_dirs}/gnome-shell/session.gvdb rw,
 
   include if exists <local/firefox-glxtest>
 }

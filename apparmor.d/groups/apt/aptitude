@@ -3,7 +3,7 @@
 # Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
@@ -105,7 +105,7 @@ profile aptitude @{exec_path} flags=(complain) {
   owner @{user_cache_dirs}/aptitude/ rw,
   owner @{user_cache_dirs}/aptitude/metadata-download{,-journal} rw,
   owner @{user_cache_dirs}/aptitude/metadata-download rwk,
-  @{bin}/sensible-pager rCx -> pager,
+  @{pager_path} rCx -> pager,
 
   # For aptitude-run-state-bundle
   owner @{tmp}/aptitudebug.*/ r,
@@ -171,20 +171,19 @@ profile aptitude @{exec_path} flags=(complain) {
     include <abstractions/base>
     include <abstractions/consoles>
 
-    @{bin}/                r,
-    @{bin}/sensible-pager mr,
-    @{sh_path}        rix,
+    @{bin}/            r,
+    @{editor_path}  mrix,
+    @{sh_path}       rix,
 
     @{bin}/which{,.debianutils}      rix,
-    @{bin}/less       rix,
 
     owner @{HOME}/.less* rw,
-
     owner @{tmp}/aptitude-*.@{pid}:*/aptitude-download-* rw,
 
     # For shell pwd
     /root/ r,
 
+    include if exists <local/aptitude_pager>
   }
 
   include if exists <local/aptitude>

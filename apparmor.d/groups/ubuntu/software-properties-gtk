@@ -2,7 +2,7 @@
 # Copyright (C) 2022-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
@@ -20,35 +20,15 @@ profile software-properties-gtk @{exec_path} {
   include <abstractions/nameservice-strict>
   include <abstractions/python>
 
-  dbus bind bus=session name=com.ubuntu.SoftwareProperties,
-  dbus (send, receive) bus=system path=/com/ubuntu/SoftwareProperties
-       interface={com.ubuntu.SoftwareProperties,org.gtk.{Application,Actions}}
-       peer=(name="{:*,com.ubuntu.SoftwareProperties}", label=software-properties-gtk),
-  dbus send bus=system path=/
-       interface=com.ubuntu.SoftwareProperties
-       peer=(name=:*, label=software-properties-dbus),
-
-  dbus send bus=system path=/
-       interface=org.freedesktop.DBus.Introspectable
-       member=Introspect
-       peer=(name=:*),
-
-  dbus send bus=system path=/
-       interface=org.freedesktop.DBus.ObjectManager
-       member=GetManagedObjects
-       peer=(name=:*, label=ubuntu-advantage-desktop-daemon),
-
-  dbus send bus=system path=/com/canonical/UbuntuAdvantage/Manager
-       interface=org.freedesktop.DBus.Introspectable
-       member=Introspect
-       peer=(name=:*, label=ubuntu-advantage-desktop-daemon),
+  #aa:dbus own bus=session name=com.ubuntu.SoftwareProperties
+  #aa:dbus talk bus=system name=com.canonical.UbuntuAdvantage label=ubuntu-advantage-desktop-daemon
 
   @{exec_path} mr,
 
   @{bin}/ r,
 
+  @{sh_path}                      rix,
   @{bin}/python3.@{int}           r,
-  @{bin}/{,da,ba}sh               rix,
   @{bin}/aplay                    rPx,
   @{bin}/apt-key                  rPx,
   @{bin}/dpkg                     rPx -> child-dpkg,
@@ -73,9 +53,9 @@ profile software-properties-gtk @{exec_path} {
   /var/crash/*software-properties-gtk.@{uid}.crash rw,
   /var/lib/ubuntu-advantage/status.json r,
 
-  owner @{tmp}/???????? rw,
-  owner @{tmp}/tmp????????/ rw, # change to 'c'
-  owner @{tmp}/tmp????????/apt.conf rw,
+  owner @{tmp}/@{word8} rw,
+  owner @{tmp}/tmp@{word8}/ rw,
+  owner @{tmp}/tmp@{word8}/apt.conf rw,
 
   owner @{run}/user/@{uid}/gnome-shell-disable-extensions w,
 

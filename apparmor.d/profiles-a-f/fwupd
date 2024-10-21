@@ -3,12 +3,12 @@
 # Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
 @{exec_path} = @{lib}/{,fwupd/}fwupd
-profile fwupd @{exec_path} flags=(complain,attach_disconnected) {
+profile fwupd @{exec_path} flags=(attach_disconnected,complain) {
   include <abstractions/base>
   include <abstractions/bus-system>
   include <abstractions/bus/org.bluez>
@@ -31,6 +31,10 @@ profile fwupd @{exec_path} flags=(complain,attach_disconnected) {
   capability sys_rawio,
   capability syslog,
 
+  network inet dgram,
+  network inet stream,
+  network inet6 dgram,
+  network inet6 stream,
   network netlink raw,
 
   #aa:dbus own bus=system name=org.freedesktop.fwupd path=/
@@ -54,6 +58,7 @@ profile fwupd @{exec_path} flags=(complain,attach_disconnected) {
   @{bin}/gpgsm       rCx -> gpg,
 
   /usr/share/fwupd/{,**} r,
+  /usr/share/hwdata/*.ids r,
   /usr/share/mime/mime.cache r,
 
   /etc/fwupd/{,**} rw,
@@ -83,22 +88,28 @@ profile fwupd @{exec_path} flags=(complain,attach_disconnected) {
   @{sys}/**/ r,
   @{sys}/devices/** r,
 
+  @{sys}/bus/hid/drivers/*/uevent r,
+  @{sys}/bus/usb/drivers/usbhid/uevent r,
   @{sys}/firmware/acpi/** r,
   @{sys}/firmware/dmi/tables/DMI r,
   @{sys}/firmware/dmi/tables/smbios_entry_point r,
   @{sys}/firmware/efi/** r,
-  @{sys}/firmware/efi/efivars/BootNext-@{uuid} rw,
   @{sys}/firmware/efi/efivars/Boot@{hex}-@{uuid} rw,
+  @{sys}/firmware/efi/efivars/BootNext-@{uuid} rw,
   @{sys}/firmware/efi/efivars/fwupd-* rw,
   @{sys}/kernel/security/lockdown r,
-  @{sys}/kernel/security/tpm[0-9]/binary_bios_measurements r,
+  @{sys}/kernel/security/tpm@{int}/binary_bios_measurements r,
+  @{sys}/module/*/uevent r,
+  @{sys}/module/uhid/uevent r,
+  @{sys}/module/usbhid/uevent r,
   @{sys}/power/mem_sleep r,
+
+  @{att}/@{run}/systemd/inhibit/@{int}.ref rw,
 
   @{run}/motd.d/ r,
   @{run}/motd.d/@{int}-fwupd* rw,
   @{run}/motd.d/fwupd/{,**} rw,
   @{run}/mount/utab r,
-  @{run}/systemd/inhibit/[0-9]*.ref rw,
   @{run}/udev/data/* r,
 
   @{PROC}/@{pids}/fd/ r,
@@ -126,7 +137,7 @@ profile fwupd @{exec_path} flags=(complain,attach_disconnected) {
   /dev/tpmrm@{int} rw,
   /dev/wmi/* r,
 
-  profile gpg flags=(complain) {
+  profile gpg flags=(attach_disconnected,complain) {
     include <abstractions/base>
     include <abstractions/nameservice-strict>
 

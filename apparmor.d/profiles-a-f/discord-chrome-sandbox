@@ -1,0 +1,35 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2020-2021 Mikhail Morfikov
+# Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{name} = discord
+@{lib_dirs} = /usr/share/@{name} /opt/@{name} 
+@{config_dirs} = @{user_config_dirs}/@{name} @{user_config_dirs}/discordptb
+@{cache_dirs} = @{user_cache_dirs}/@{name}
+
+@{exec_path} = @{lib_dirs}/chrome-sandbox
+profile discord-chrome-sandbox @{exec_path} {
+  include <abstractions/base>
+
+  #capability setgid,
+  #capability setuid,
+  capability sys_admin,
+  capability sys_chroot,
+  capability sys_resource,
+
+  @{exec_path} mr,
+
+  @{lib_dirs}/Discord rpx,
+
+             @{PROC}/@{pids}/ r,
+  deny owner @{PROC}/@{pid}/oom_{,score_}adj rw,
+
+  include if exists <local/discord-chrome-sandbox>
+}
+
+# vim:syntax=apparmor

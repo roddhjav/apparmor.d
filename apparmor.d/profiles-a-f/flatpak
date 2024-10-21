@@ -2,7 +2,7 @@
 # Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
@@ -18,7 +18,7 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted,complain
   include <abstractions/nameservice-strict>
   include <abstractions/ssl_certs>
 
-  # userns,
+  userns,
 
   capability dac_override,
   capability dac_read_search,
@@ -34,6 +34,8 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted,complain
   mount fstype=fuse.revokefs-fuse options=(rw, nosuid, nodev) -> /var/tmp/flatpak-cache-*/*/,
 
   ptrace (read) peer=flatpak-app,
+
+  signal send peer=flatpak-app,
 
   @{exec_path} mr,
 
@@ -59,6 +61,8 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted,complain
 
   owner @{HOME}/.var/ w,
   owner @{HOME}/.var/app/{,**} rw,
+
+  owner @{user_documents_dirs}/ rw,
 
   owner @{user_cache_dirs}/flatpak/{,**} rw,
   owner @{user_config_dirs}/pulse/client.conf r,
@@ -93,7 +97,7 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted,complain
   /dev/tty rw,
   /dev/tty@{int} rw,
 
-  deny @{user_share_dirs}/gvfs-metadata/* r,
+  deny owner @{user_share_dirs}/gvfs-metadata/* r,
 
   profile gpg {
     include <abstractions/base>

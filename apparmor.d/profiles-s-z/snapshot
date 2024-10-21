@@ -3,24 +3,27 @@
 # SPDX-License-Identifier: GPL-2.0-only
 # vim:syntax=apparmor
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
 @{exec_path} = @{bin}/snapshot
-profile snapshot @{exec_path} {
+profile snapshot @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/audio-client>
   include <abstractions/common/gnome>
   include <abstractions/gstreamer>
   include <abstractions/nameservice-strict>
+  include <abstractions/video>
 
   @{exec_path} mr,
+
+  @{open_path}  rPx -> child-open-help,
 
   owner @{user_pictures_dirs}/Camera/{,**} rw,
   owner @{user_videos_dirs}/Camera/{,**} rw,
 
-  owner @{PROC}/@{pid}/task/@{tid}/comm rw,
+  @{sys}/devices/virtual/dmi/id/bios_vendor r,
 
   include if exists <local/snapshot>
 }

@@ -40,6 +40,7 @@ The `only` and `exclude` directives can be used to filter individual rule or rul
 
     - A supported target distribution: `arch`, `debian`, `ubuntu`, `opensuse`, `whonix`.
     - A supported distribution family: `apt`, `pacman`, `zypper`.
+    - A supported ABI: `abi3`, `abi4`.
 
 **Example**
 
@@ -63,7 +64,7 @@ The `only` and `exclude` directives can be used to filter individual rule or rul
 
 ## Exec
 
-The `exec` directive is useful to allow executing transitions to a profile without having to manage the possible long list of profile attachments (it varies depending on the distribution). The directives parse and resolve the attachment variable (`@{exec_path}`) of the target profile and includes it in the current profile.
+The `exec` directive is useful to allow executing transitions to a profile without having to manage the possible long list of profile attachments (it varies depending on the distribution). The directive parses and resolves the attachment variable (`@{exec_path}`) of the target profile and includes it in the current profile.
 
 **Format**
 
@@ -103,7 +104,7 @@ The `exec` directive is useful to allow executing transitions to a profile witho
 
 ## Stack
 
-[Stacked](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmorStacking) profiles can be hard to maintain. The *parent* profile needs to manage its own rules as well as always include the stacked profile rules. This directive automatically include the stacked profile rules into the parent profile.
+[Stacked](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmorStacking) profiles can be hard to maintain. The *parent* profile needs to manage its own rules as well as always including access from the *child* profile. In most profile using stacking, the *child* profile is often naturally included in the *parent*. However, sometime the child profile is fully different. This directive automatically include the stacked profile rules into the parent profile.
 
 **Format**
 
@@ -115,6 +116,9 @@ The `exec` directive is useful to allow executing transitions to a profile witho
 
 :   List a profile **files** to stack at the end of the current profile.
 
+**`[X]`**
+
+:   If `X` is set, the directive will conserve the `x` file rules regardless of the transition. It is not enabled by default as it may conflict with the parent profile. Indeed, automatically adding `Px` and `ix` transition in a profile is a very effective way to have conflict between transitions as you can automatically add rule already present in the profile but with another transition (you would then get the AppArmor error: `profile has merged rule with conflicting x modifiers`).
 
 **Example**
 
@@ -143,7 +147,6 @@ The `exec` directive is useful to allow executing transitions to a profile witho
             @{run}/systemd/io.system.ManagedOOM rw,
             @{run}/systemd/io.systemd.ManagedOOM rw,
             @{run}/systemd/notify rw,
-    owner @{run}/systemd/journal/socket w,
     @{sys}/fs/cgroup/cgroup.controllers r,
     @{sys}/fs/cgroup/memory.pressure r,
     @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/memory.* r,

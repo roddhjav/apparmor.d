@@ -2,7 +2,7 @@
 # Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
@@ -37,16 +37,17 @@ profile pacman @{exec_path} flags=(attach_disconnected) {
   network netlink raw,
   network unix stream,
 
-  ptrace (read),
+  ptrace read,
 
-  signal (send) set=(usr1) peer=gvfsd,
+  signal send set=usr1 peer=gvfsd,
+  signal receive set=winch peer=makepkg//sudo,
 
   @{exec_path} mrix,
 
   @{bin}/gpg{,2}      rCx -> gpg,
   @{bin}/gpgconf      rCx -> gpg,
   @{bin}/gpgsm        rCx -> gpg,
-  
+
   # Pacman hooks & install scripts
   @{sh_path}                         rix,
   @{coreutils_path}                  rix,
@@ -64,7 +65,7 @@ profile pacman @{exec_path} flags=(attach_disconnected) {
   @{bin}/gdk-pixbuf-query-loaders    rPx,
   @{bin}/getent                      rix,
   @{bin}/gettext                     rix,
-  @{bin}/ghc-pkg{,-*}                rPx,
+  @{bin}/ghc-pkg-@{version}          rix,
   @{bin}/gio-querymodules            rPx,
   @{bin}/glib-compile-schemas        rPx,
   @{bin}/groupadd                    rPx,
@@ -100,6 +101,7 @@ profile pacman @{exec_path} flags=(attach_disconnected) {
   @{bin}/vercmp                      rix,
   @{bin}/xmlcatalog                  rix,
   @{lib}/systemd/systemd-*           rPx,
+  @{lib}/ghc-@{version}/bin/ghc-pkg-@{version} rix,
   @{lib}/vlc/vlc-cache-gen           rPx,
   /opt/Mullvad*/resources/mullvad-setup  rPx,
   /usr/share/code-features/patch.py      rPx,
@@ -118,11 +120,10 @@ profile pacman @{exec_path} flags=(attach_disconnected) {
   /var/** rwlk -> /var/**,
 
   # Read packages files
-  @{user_pkg_dirs}/**/ r,
-  @{user_pkg_dirs}/**.pkg.tar.zst{,.sig} r,
+  @{user_pkg_dirs}/{,**} r,
 
   owner /var/lib/pacman/{,**} rwl,
-  owner @{tmp}/alpm_*/{,**} rw,
+  owner @{tmp}/alpm_@{rand6}/{,**} rw,
   owner @{tmp}/checkup-db-@{int}/sync/{,*.db*} rw,
   owner @{tmp}/checkup-db-@{int}/db.lck rw,
 
@@ -170,7 +171,7 @@ profile pacman @{exec_path} flags=(attach_disconnected) {
     @{bin}/gpg-connect-agent rix,
 
     /etc/pacman.d/gnupg/ rw,
-    /etc/pacman.d/gnupg/** rwkl,
+    /etc/pacman.d/gnupg/** rwkl -> /etc/pacman.d/gnupg/**,
 
     @{HOME}/@{XDG_GPG_DIR}/*.conf r,
 
@@ -193,10 +194,10 @@ profile pacman @{exec_path} flags=(attach_disconnected) {
     capability dac_read_search,
     capability sys_resource,
 
-    @{bin}/pager       rPx -> child-pager,
-    @{bin}/less        rPx -> child-pager,
-    @{bin}/more        rPx -> child-pager,
-    @{bin}/diff        rPx -> child-pager,
+    signal send set=cont peer=child-pager,
+    signal receive set=winch peer=makepkg//sudo,
+
+    @{pager_path}      rPx -> child-pager,
 
     /etc/machine-id r,
 

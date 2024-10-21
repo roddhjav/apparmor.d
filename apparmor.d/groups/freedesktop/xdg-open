@@ -3,58 +3,48 @@
 # Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
 @{exec_path} = @{bin}/xdg-open
 profile xdg-open @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/app-launcher-user>
+  include <abstractions/app-open>
   include <abstractions/consoles>
+  include <abstractions/freedesktop.org>
 
   @{exec_path} r,
 
-  @{sh_path}          rix,
-  @{bin}/{,e}grep     rix,
-  @{bin}/sed          rix,
-  @{bin}/cut          rix,
-  @{bin}/which{,.debianutils}        rix,
-  @{bin}/cat          rix,
-  @{bin}/uname        rix,
+  @{sh_path}       rix,
+  @{bin}/{,e}grep   ix,
+  @{bin}/basename   ix,
+  @{bin}/cat        ix,
+  @{bin}/cut        ix,
+  @{bin}/env        ix,
+  @{bin}/readlink   ix,
+  @{bin}/realpath   ix,
+  @{bin}/sed        ix,
+  @{bin}/tr         ix,
+  @{bin}/uname      ix,
 
-  @{bin}/xprop        rPx,
-  @{bin}/xdg-mime     rPx,
+  # To get DE information
+  @{bin}/kde{,4}-config       ix,
 
-  @{bin}/exo-open     rPx,
-  @{bin}/gio          rPx,
-  #@{bin}/kde-open5  rPUx,
-  @{bin}/ktraderclient5 rPUx,
+  @{bin}/dbus-send            Cx -> bus,
+  @{bin}/gdbus                Cx -> bus,
+  @{bin}/xprop                Px,
+  @{bin}/xdg-mime             Px,
+  @{open_path}                Px -> child-open-any,
 
-  @{bin}/dbus-launch  rCx -> dbus,
-  @{bin}/dbus-send    rCx -> dbus,
+  @{PROC}/version r,
 
-        /** r,
-  owner /** rw,
-
-  # freedesktop.org-strict
-  owner @{user_share_dirs}/applications/ r,
-  /usr/share/applications/*.desktop r,
-
-  /dev/tty rw,
-
-  profile dbus {
+  profile bus flags=(attach_disconnected) {
     include <abstractions/base>
-    include <abstractions/nameservice-strict>
+    include <abstractions/app/bus>
+    include <abstractions/bus-session>
 
-    @{bin}/dbus-launch   mr,
-    @{bin}/dbus-send     mr,
-    @{bin}/dbus-daemon  rPx,
-
-    # for dbus-launch
-    owner @{HOME}/.dbus/session-bus/@{hex}-[0-9] w,
-
-    @{HOME}/.Xauthority r,
+    include if exists <local/xdg-open_bus>
   }
 
   include if exists <local/xdg-open>

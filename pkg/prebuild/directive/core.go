@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/roddhjav/apparmor.d/pkg/paths"
-	"github.com/roddhjav/apparmor.d/pkg/prebuild/cfg"
+	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 )
 
 var (
@@ -20,13 +20,23 @@ var (
 	// Build the profiles with the following directive applied
 	Directives = map[string]Directive{}
 
-	regDirective = regexp.MustCompile(`(?m).*` + Keyword + `([a-z]*) (.*)`)
+	regDirective = regexp.MustCompile(`(?m).*` + Keyword + `([a-z]*)( .*)?`)
 )
 
 // Main directive interface
 type Directive interface {
-	cfg.BaseInterface
+	prebuild.BaseInterface
 	Apply(opt *Option, profile string) (string, error)
+}
+
+func Usage() string {
+	res := "Directive:\n"
+	for _, d := range Directives {
+		for _, h := range d.Usage() {
+			res += fmt.Sprintf("    %s%s %s\n", Keyword, d.Name(), h)
+		}
+	}
+	return res
 }
 
 // Directive options
@@ -61,11 +71,29 @@ func NewOption(file *paths.Path, match []string) *Option {
 	}
 }
 
-// Clean the selected directive from profile.
+// Clean removes selected directive line from input string.
 // Useful to remove directive text applied on some condition only
-func (o *Option) Clean(profile string) string {
-	reg := regexp.MustCompile(`\s*` + Keyword + o.Name + ` .*$`)
-	return strings.Replace(profile, o.Raw, reg.ReplaceAllString(o.Raw, ""), 1)
+func (o *Option) Clean(input string) string {
+	return strings.Replace(input, o.Raw, o.cleanKeyword(o.Raw), 1)
+}
+
+// cleanKeyword removes the dirextive keywork (#aa:...) from the input string
+func (o *Option) cleanKeyword(input string) string {
+	reg := regexp.MustCompile(`\s*` + Keyword + o.Name + `( .*)?$`)
+	return reg.ReplaceAllString(input, "")
+}
+
+// Check if the directive is inline or if it is a paragraph
+func (o *Option) IsInline() bool {
+	inline := true
+	tmp := strings.Split(o.Raw, Keyword)
+	if len(tmp) >= 1 {
+		left := strings.TrimSpace(tmp[0])
+		if len(left) == 0 {
+			inline = false
+		}
+	}
+	return inline
 }
 
 func RegisterDirective(d Directive) {

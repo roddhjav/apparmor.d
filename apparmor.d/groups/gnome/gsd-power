@@ -2,13 +2,14 @@
 # Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
 @{exec_path} = @{lib}/gsd-power
 profile gsd-power @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/attached/consoles>
   include <abstractions/audio-client>
   include <abstractions/bus-accessibility>
   include <abstractions/bus-session>
@@ -20,7 +21,6 @@ profile gsd-power @{exec_path} flags=(attach_disconnected) {
   include <abstractions/bus/org.freedesktop.login1>
   include <abstractions/bus/org.freedesktop.systemd1>
   include <abstractions/bus/org.freedesktop.UPower>
-  include <abstractions/bus/org.gnome.Mutter.DisplayConfig>
   include <abstractions/bus/org.gnome.Mutter.IdleMonitor>
   include <abstractions/bus/org.gnome.ScreenSaver>
   include <abstractions/bus/org.gnome.SessionManager>
@@ -37,10 +37,7 @@ profile gsd-power @{exec_path} flags=(attach_disconnected) {
 
   #aa:dbus own bus=session name=org.gnome.SettingsDaemon.Power
 
-  dbus send bus=session path=/org/gnome/Mutter/DisplayConfig
-       interface=org.freedesktop.DBus.Properties
-       member=Set
-       peer=(name=:*, label=gnome-shell),
+  #aa:dbus talk bus=session name=org.gnome.Mutter.DisplayConfig label=gnome-shell
 
   dbus send bus=system path=/org/freedesktop/UPower/KbdBacklight
        interface=org.freedesktop.UPower.KbdBacklight
@@ -64,7 +61,7 @@ profile gsd-power @{exec_path} flags=(attach_disconnected) {
   @{run}/udev/data/+drm:card@{int}-* r,   # For screen outputs
   @{run}/udev/data/+leds:* r,
 
-  @{run}/systemd/inhibit/[0-9]*.ref rw,
+  @{att}/@{run}/systemd/inhibit/@{int}.ref rw,
 
   @{sys}/bus/ r,
   @{sys}/class/ r,
@@ -86,8 +83,6 @@ profile gsd-power @{exec_path} flags=(attach_disconnected) {
         @{PROC}/cmdline r,
         @{PROC}/sys/kernel/osrelease r,
   owner @{PROC}/@{pid}/cgroup r,
-
-  owner /dev/tty@{int} rw,
 
   include if exists <local/gsd-power>
 }

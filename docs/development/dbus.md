@@ -26,6 +26,11 @@ Access to common dbus interfaces is done using the abstractions under **[`abstra
 
 For more access, simply use the [`aa:dbus talk`](#dbus-directive) directive.
 
+There is a trade of between security and maintenance to make:
+
+- `aa:dbus talk` will generate less issue as it gives full talk access
+- `abstractions/bus/*` will provide more restriction, and possibly more issue. In the future, these rules will be automatically generated from the interface documentation.
+
 ## Dbus Directive
 
 We use a special [directive](directives.md) to generate more advanced dbus access. The directive format is on purpose very similar to the AppArmor dbus rule.

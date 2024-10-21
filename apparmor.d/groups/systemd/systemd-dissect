@@ -2,7 +2,7 @@
 # Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
@@ -11,23 +11,28 @@ profile systemd-dissect @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/consoles>
   include <abstractions/disks-read>
+  include <abstractions/common/systemd>
 
   capability dac_read_search,
   capability sys_admin,
   capability sys_resource,
 
-  mount options=(rw, rslave) -> /,
-  mount options=(rw, nodev) -> /mnt/*/,
-  mount -> /tmp/dissect-@{rand6}/,
+  mount                                             -> /tmp/dissect-@{rand6}/,
+  mount fstype=tmpfs options=(rw nodev)      rootfs -> @{run}/systemd/dissect-root/,
+  mount options=(ro nodev)               /dev/loop* -> @{run}/systemd/dissect-root/{,**/},
+  mount options=(rw nodev)                          -> /mnt/*/,
+  mount options=(rw rshared rslave)                 -> /,
 
-  signal (send) set=(cont) peer=child-pager,
+  umount @{run}/systemd/dissect-root/,
+
+  signal send set=cont peer=child-pager,
+
+  ptrace read peer=unconfined,
 
   @{exec_path} mr,
 
   @{bin}/fsck  rPx,
-  @{bin}/less  rPx -> child-pager,
-  @{bin}/more  rPx -> child-pager,
-  @{bin}/pager rPx -> child-pager,
+  @{pager_path} rPx -> child-pager,
 
   # Location of file system OS images
   @{user_build_dirs}/{,**} r,
@@ -37,14 +42,19 @@ profile systemd-dissect @{exec_path} flags=(attach_disconnected) {
 
   owner @{tmp}/dissect-@{rand6}/{,**} rw,
 
+  @{run}/systemd/dissect-root/ rw,
+  @{run}/systemd/dissect-root/** rwlk,
+
   @{sys}/devices/virtual/block/loop@{int}/{,**} r,
   @{sys}/kernel/uevent_seqnum r,
 
-  @{PROC}/@{pids}/cgroup r,
+  @{PROC}/@{pid}/cgroup r,
+  @{PROC}/@{pid}/mountinfo r,
 
   /dev/btrfs-control rw,
   /dev/loop-control rwk,
-  /dev/loop*  rwk,
+  /dev/loop* rwk,
+  /dev/mapper/control w,
 
   include if exists <local/systemd-dissect>
 }

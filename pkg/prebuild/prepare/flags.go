@@ -9,22 +9,21 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/roddhjav/apparmor.d/pkg/prebuild/cfg"
-	"github.com/roddhjav/apparmor.d/pkg/util"
+	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 )
 
 var (
 	regFlags         = regexp.MustCompile(`flags=\(([^)]+)\)`)
-	regProfileHeader = regexp.MustCompile(` {`)
+	regProfileHeader = regexp.MustCompile(` {\n`)
 )
 
 type SetFlags struct {
-	cfg.Base
+	prebuild.Base
 }
 
 func init() {
 	RegisterTask(&SetFlags{
-		Base: cfg.Base{
+		Base: prebuild.Base{
 			Keyword: "setflags",
 			Msg:     "Set flags on some profiles",
 		},
@@ -33,9 +32,9 @@ func init() {
 
 func (p SetFlags) Apply() ([]string, error) {
 	res := []string{}
-	for _, name := range []string{"main", cfg.Distribution} {
-		for profile, flags := range cfg.Flags.Read(name) {
-			file := cfg.RootApparmord.Join(profile)
+	for _, name := range []string{"main", prebuild.Distribution} {
+		for profile, flags := range prebuild.Flags.Read(name) {
+			file := prebuild.RootApparmord.Join(profile)
 			if !file.Exist() {
 				res = append(res, fmt.Sprintf("Profile %s not found, ignoring", profile))
 				continue
@@ -43,8 +42,8 @@ func (p SetFlags) Apply() ([]string, error) {
 
 			// Overwrite profile flags
 			if len(flags) > 0 {
-				flagsStr := " flags=(" + strings.Join(flags, ",") + ") {"
-				out, err := util.ReadFile(file)
+				flagsStr := " flags=(" + strings.Join(flags, ",") + ") {\n"
+				out, err := file.ReadFileAsString()
 				if err != nil {
 					return res, err
 				}
@@ -57,7 +56,7 @@ func (p SetFlags) Apply() ([]string, error) {
 				}
 			}
 		}
-		res = append(res, cfg.FlagDir.Join(name+".flags").String())
+		res = append(res, prebuild.FlagDir.Join(name+".flags").String())
 	}
 	return res, nil
 }

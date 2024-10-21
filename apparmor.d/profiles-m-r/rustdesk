@@ -1,7 +1,8 @@
 # apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
@@ -34,9 +35,9 @@ profile rustdesk @{exec_path} {
   @{bin}/curl     rix,
   @{bin}/ls       rix,
 
-  @{bin}/sudo rCx           -> sudo,
-  @{bin}/python3.@{int} rPx -> rustdesk_python,
-  @{sh_path}            rPx -> rustdesk_shell,
+  @{bin}/sudo           rCx -> sudo,
+  @{bin}/python3.@{int} rCx -> python,
+  @{sh_path}            rCx -> shell,
 
   /etc/gdm{,3}/custom.conf r,
 
@@ -59,80 +60,72 @@ profile rustdesk @{exec_path} {
 
   profile sudo {
     include <abstractions/base>
-    include <abstractions/python>
     include <abstractions/app/sudo>
+    include <abstractions/python>
 
     @{bin}/rustdesk rPx,
-    @{bin}/python3.@{int}    rPx -> rustdesk_python,
+    @{bin}/python3.@{int}    rPx -> rustdesk//python,
 
     include if exists <local/rustdesk_sudo>
   }
 
+  profile python {
+    include <abstractions/base>
+    include <abstractions/python>
+
+    capability dac_read_search,
+    capability dac_override,
+
+    @{bin}/python3.@{int} r,
+
+    @{sh_path}   rix,
+    @{bin}/chmod rix,
+    @{bin}/uname rPx,
+    /usr/share/rustdesk/files/pynput_service.py rix,
+
+    /usr/share/[rR]ust[dD]esk/files/{,**} r,
+    /tmp/[rR]ust[dD]esk/ w,
+    /tmp/[rR]ust[dD]esk/pynput_service rw,
+
+    @{run}/user/@{uid}/gdm{,3}/Xauthority r,
+
+    owner @{PROC}/@{pid}/fd/ r,
+
+    # X-tiny
+    /tmp/.X11-unix/* rw,
+    owner @{HOME}/.xsession-errors w,
+    owner @{HOME}/.Xauthority r,
+
+    include if exists <local/rustdesk_python>
+  }
+
+  profile shell {
+    include <abstractions/base>
+
+    capability dac_override,
+    capability dac_read_search,
+    capability sys_ptrace,
+
+    ptrace read,
+
+    @{sh_path}        r,
+
+    @{bin}/tr       rix,
+    @{bin}/{,e}grep rix,
+    @{bin}/tail     rix,
+    @{bin}/xargs    rix,
+    @{bin}/sed      rix,
+    @{bin}/cat      rix,
+
+    @{bin}/ps rPx,
+
+          @{PROC}/@{pid}/environ r,
+    owner @{PROC}/@{pid}/fd/ r,
+
+    include if exists <local/rustdesk_shell>
+  }
+
   include if exists <local/rustdesk>
-}
-
-profile rustdesk_pynput_service /usr/share/rustdesk/files/pynput_service.py {
-  include <abstractions/base>
-
-  @{exec_path} r,
-
-  include if exists <local/rustdesk_pynput_service>
-}
-
-profile rustdesk_python {
-  include <abstractions/base>
-  include <abstractions/python>
-
-  capability dac_read_search,
-  capability dac_override,
-
-  @{bin}/python3.@{int} r,
-
-  @{sh_path}        rix,
-  @{bin}/chmod rix,
-  @{bin}/uname rPx,
-  /usr/share/rustdesk/files/pynput_service.py rPx,
-
-  /usr/share/[rR]ust[dD]esk/files/{,**} r,
-  /tmp/[rR]ust[dD]esk/ w,
-  /tmp/[rR]ust[dD]esk/pynput_service rw,
-
-  @{run}/user/@{uid}/gdm{,3}/Xauthority r,
-
-  owner @{PROC}/@{pid}/fd/ r,
-
-  # X-tiny
-  /tmp/.X11-unix/* rw,
-  owner @{HOME}/.xsession-errors w,
-  owner @{HOME}/.Xauthority r,
-
-  include if exists <local/rustdesk_python>
-}
-
-profile rustdesk_shell {
-  include <abstractions/base>
-
-       capability sys_ptrace,
-       capability dac_read_search,
-  deny capability dac_override,
-
-  ptrace (read),
-
-  @{sh_path}        r,
-
-  @{bin}/tr       rix,
-  @{bin}/{,e}grep rix,
-  @{bin}/tail     rix,
-  @{bin}/xargs    rix,
-  @{bin}/sed      rix,
-  @{bin}/cat      rix,
-
-  @{bin}/ps rPx,
-
-  owner @{PROC}/@{pid}/fd/ r,
-        @{PROC}/@{pid}/environ r,
-
-  include if exists <local/rustdesk_shell>
 }
 
 # vim:syntax=apparmor

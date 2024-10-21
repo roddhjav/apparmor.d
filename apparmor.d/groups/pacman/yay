@@ -1,0 +1,110 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/yay
+profile yay @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+  include <abstractions/ssl_certs>
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  @{editor_path}      Cx -> editor,
+  @{bin}/git          Cx -> git,
+  @{bin}/gpg{,2}      Cx -> gpg,
+  @{bin}/makepkg      Px,
+  @{bin}/pacman-conf  Px,
+  @{bin}/sudo         Cx -> sudo,
+
+  /var/lib/pacman/** r,
+
+  owner @{user_cache_dirs}/yay/ rw,
+  owner @{user_cache_dirs}/yay/** rwkl -> @{user_cache_dirs}/yay/**,
+
+  owner @{user_config_dirs}/yay/{,**} rw,
+
+  profile git {
+    include <abstractions/base>
+    include <abstractions/consoles>
+    include <abstractions/nameservice-strict>
+    include <abstractions/ssl_certs>
+
+    network inet dgram,
+    network inet6 dgram,
+    network inet stream,
+    network inet6 stream,
+    network netlink raw,
+
+    @{bin}/git*              mrix,
+    @{lib}/git{,-core}/git*  mrix,
+
+    @{pager_path}   rPx -> child-pager,
+    @{bin}/gpg{2,}  rPx -> yay//gpg,
+
+    /usr/share/git{,-core}/{,**} r,
+
+    owner @{user_build_dirs}/**/.git/** r,
+    owner @{user_pkg_dirs}/**/.git/** r,
+    owner @{user_projects_dirs}/**/.git/** r,
+
+    owner @{HOME}/.gitconfig r,
+    owner @{user_cache_dirs}/yay/ rw,
+    owner @{user_cache_dirs}/yay/** rwlk -> @{user_cache_dirs}/yay/**,
+    owner @{user_config_dirs}/git/{,*} r,
+
+    include if exists <local/yay_git>
+  }
+
+  profile editor {
+    include <abstractions/base>
+    include <abstractions/app/editor>
+
+    owner @{HOME}/**/ r, # For pwd
+
+    owner @{user_cache_dirs}/yay/*/** rw,
+
+    include if exists <local/yay_editor>
+  }
+
+  profile gpg {
+    include <abstractions/base>
+    include <abstractions/consoles>
+
+    @{bin}/gpg{,2}     mr,
+    @{bin}/gpg-agent  rPx,
+
+    owner @{HOME}/@{XDG_GPG_DIR}/ rw,
+    owner @{HOME}/@{XDG_GPG_DIR}/** rwkl -> @{HOME}/@{XDG_GPG_DIR}/**,
+
+    include if exists <local/yay_gpg>
+  }
+
+  profile sudo {
+    include <abstractions/base>
+    include <abstractions/app/sudo>
+
+    capability sys_ptrace,
+
+    ptrace read peer=unconfined,
+
+    @{bin}/pacman Px,
+
+    include if exists <local/yay_sudo>
+  }
+
+  include if exists <local/yay>
+}
+
+# vim:syntax=apparmor

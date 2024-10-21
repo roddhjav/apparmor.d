@@ -9,9 +9,7 @@ import (
 	"os/exec"
 	"testing"
 
-	"github.com/roddhjav/apparmor.d/pkg/prebuild/builder"
-	"github.com/roddhjav/apparmor.d/pkg/prebuild/cfg"
-	"github.com/roddhjav/apparmor.d/pkg/prebuild/prepare"
+	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 )
 
 func chdirGitRoot() {
@@ -26,64 +24,33 @@ func chdirGitRoot() {
 	}
 }
 
-func Test_AAPrebuild(t *testing.T) {
+func Test_main(t *testing.T) {
 	tests := []struct {
-		name     string
-		wantErr  bool
-		full     bool
-		complain bool
-		dist     string
+		name string
+		dist string
 	}{
 		{
-			name:     "Build for Archlinux",
-			wantErr:  false,
-			full:     false,
-			complain: true,
-			dist:     "arch",
+			name: "Build for Archlinux",
+			dist: "arch",
 		},
 		{
-			name:     "Build for Ubuntu",
-			wantErr:  false,
-			full:     true,
-			complain: false,
-			dist:     "ubuntu",
+			name: "Build for Ubuntu",
+			dist: "ubuntu",
 		},
 		{
-			name:     "Build for Debian",
-			wantErr:  false,
-			full:     true,
-			complain: false,
-			dist:     "debian",
+			name: "Build for Debian",
+			dist: "debian",
 		},
 		{
-			name:     "Build for OpenSUSE Tumbleweed",
-			wantErr:  false,
-			full:     true,
-			complain: true,
-			dist:     "opensuse",
+			name: "Build for OpenSUSE Tumbleweed",
+			dist: "opensuse",
 		},
-		// {
-		// 	name:     "Build for Fedora",
-		// 	wantErr:  true,
-		// 	full:     false,
-		// 	complain: false,
-		// 	dist:     "fedora",
-		// },
 	}
 	chdirGitRoot()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cfg.Distribution = tt.dist
-			if tt.full {
-				prepare.Register("fsp")
-				builder.Register("fsp")
-			}
-			if tt.complain {
-				builder.Register("complain")
-			}
-			if err := aaPrebuild(); (err != nil) != tt.wantErr {
-				t.Errorf("aaPrebuild() error = %v, wantErr %v", err, tt.wantErr)
-			}
+			prebuild.Distribution = tt.dist
+			main()
 		})
 	}
 }

@@ -16,11 +16,20 @@ const (
 
 func init() {
 	requirements[MOUNT] = requirement{
+		"flags_bind": {
+			"B", "bind", "R", "rbind",
+		},
+		"flags_change": {
+			"remount", "unbindable", "shared", "private", "slave", "runbindable",
+			"rshared", "rprivate", "rslave", "make-unbindable", "make-shared",
+			"make-private", "make-slave", "make-runbindable", "make-rshared",
+			"make-rprivate", "make-rslave",
+		},
 		"flags": {
-			"acl", "async", "atime", "ro", "rw", "bind", "rbind", "dev",
-			"diratime", "dirsync", "exec", "iversion", "loud", "mand", "move",
-			"noacl", "noatime", "nodev", "nodiratime", "noexec", "noiversion",
-			"nomand", "norelatime", "nosuid", "nouser", "private", "relatime",
+			"ro", "rw", "acl", "async", "atime", "bind", "dev", "diratime",
+			"dirsync", "exec", "iversion", "loud", "mand", "move", "noacl",
+			"noatime", "nodev", "nodiratime", "noexec", "noiversion", "nomand",
+			"norelatime", "nosuid", "nouser", "private", "rbind", "relatime",
 			"remount", "rprivate", "rshared", "rslave", "runbindable", "shared",
 			"silent", "slave", "strictatime", "suid", "sync", "unbindable",
 			"user", "verbose",

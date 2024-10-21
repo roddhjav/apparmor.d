@@ -2,7 +2,7 @@
 # Copyright (C) 2022-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
@@ -64,8 +64,7 @@ profile gnome-software @{exec_path} {
 
   /var/lib/PackageKit/offline-update-competed r,
   /var/lib/PackageKit/prepared-update r,
-  /var/lib/swcatalog/icons/**.png r,
-  /var/lib/swcatalog/yaml/ r,
+  /var/lib/swcatalog/** r,
 
   /var/tmp/flatpak-cache-*/ rw,
   /var/tmp/flatpak-cache-*/** rwkl,
@@ -75,14 +74,23 @@ profile gnome-software @{exec_path} {
 
   owner @{HOME}/.var/app/{,**} rw,
 
+  owner @{user_download_dirs}/*.flatpakref r,
+
   owner @{user_cache_dirs}/flatpak/{,**} rwl,
-  owner @{user_cache_dirs}/gnome-software/{,**} rw,
+  owner @{user_cache_dirs}/gnome-software/ rw,
+  owner @{user_cache_dirs}/gnome-software/** rwlk -> @{user_cache_dirs}/gnome-software/**,
 
   owner @{user_config_dirs}/flatpak/{,**} r,
   owner @{user_config_dirs}/pulse/*.conf r,
 
   owner @{user_share_dirs}/ r,
   owner @{user_share_dirs}/flatpak/.changed w,
+  owner @{user_share_dirs}/flatpak/{app,runtime}/ r,
+  owner @{user_share_dirs}/flatpak/{app,runtime}/*/ r,
+  owner @{user_share_dirs}/flatpak/{app,runtime}/*/**/@{hex64}/deploy r,
+  owner @{user_share_dirs}/flatpak/{app,runtime}/*/**/@{hex64}/metadata r,
+  owner @{user_share_dirs}/flatpak/{app,runtime}/*/*/ r,
+  owner @{user_share_dirs}/flatpak/overrides/* r,
   owner @{user_share_dirs}/flatpak/repo/ rw,
   owner @{user_share_dirs}/flatpak/repo/** rwl -> @{user_share_dirs}/flatpak/repo/**,
   owner @{user_share_dirs}/gnome-software/{,**} rw,
@@ -103,19 +111,26 @@ profile gnome-software @{exec_path} {
   owner /dev/shm/flatpak-com.*/ rw,
   owner /dev/shm/flatpak-com.*/.flatpak-tmpdir rw,
 
-  @{run}/systemd/inhibit/*.ref rw,
+  @{att}/@{run}/systemd/inhibit/@{int}.ref rw,
+  @{run}/systemd/sessions/@{int} r,
+  @{run}/systemd/users/@{uid} r,
 
   @{sys}/module/nvidia/version r,
 
         @{PROC}/@{pids}/mounts r,
+        @{PROC}/1/cgroup r,
         @{PROC}/sys/fs/pipe-max-size r,
         @{PROC}/sys/net/ipv6/conf/all/disable_ipv6 r,
+  owner @{PROC}/@{pid}/cgroup r,
   owner @{PROC}/@{pid}/cmdline r,
   owner @{PROC}/@{pid}/fdinfo/@{int} r,
   owner @{PROC}/@{pid}/stat r,
+  owner @{PROC}/@{pid}/task/@{tid}/comm rw,
 
   /dev/fuse rw,
- 
+
+  deny owner @{user_share_dirs}/gvfs-metadata/* r,
+
   profile gpg {
     include <abstractions/base>
 
@@ -123,14 +138,26 @@ profile gnome-software @{exec_path} {
     @{bin}/gpgconf  mr,
     @{bin}/gpgsm    mr,
 
+    @{bin}/gpg-agent         rix,
+    @{bin}/gpg-connect-agent rix,
+    @{lib}/{,gnupg/}scdaemon rix,
+
     @{HOME}/@{XDG_GPG_DIR}/*.conf r,
 
           @{tmp}/ r,
     owner @{tmp}/ostree-gpg-@{rand6}/ r,
     owner @{tmp}/ostree-gpg-@{rand6}/** rwkl -> /tmp/ostree-gpg-@{rand6}/**,
 
-    owner @{run}/user/@{uid}/gnupg/ w,
-
+    owner @{run}/user/@{uid}/ r,
+    owner @{run}/user/@{uid}/gnupg/ rw,
+    owner @{run}/user/@{uid}/gnupg/d.@{rand}/ rw,
+    owner @{run}/user/@{uid}/gnupg/d.@{rand}/S.gpg-agent{,.ssh,.browser,.extra} rw,
+    owner @{run}/user/@{uid}/gnupg/d.@{rand}/S.scdaemon rw,
+    owner @{run}/user/@{uid}/gnupg/S.scdaemon rw,
+  
+    owner @{PROC}/@{pid}/fd/ r,
+    owner @{PROC}/@{pid}/task/@{tid}/comm rw,
+  
     include if exists <local/gnome-software_gpg>
   }
 

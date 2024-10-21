@@ -9,18 +9,18 @@ import (
 	"path/filepath"
 
 	"github.com/roddhjav/apparmor.d/pkg/paths"
-	"github.com/roddhjav/apparmor.d/pkg/prebuild/cfg"
+	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 )
 
 type Merge struct {
-	cfg.Base
+	prebuild.Base
 }
 
 func init() {
 	RegisterTask(&Merge{
-		Base: cfg.Base{
+		Base: prebuild.Base{
 			Keyword: "merge",
-			Msg:     "Merge all profiles into a unified apparmor.d directory",
+			Msg:     "Merge profiles (from group/, profiles-*-*/) to a unified apparmor.d directory",
 		},
 	})
 }
@@ -35,18 +35,18 @@ func (p Merge) Apply() ([]string, error) {
 	idx := 0
 	for idx < len(dirToMerge)-1 {
 		dirMoved, dirRemoved := dirToMerge[idx], dirToMerge[idx+1]
-		files, err := filepath.Glob(cfg.RootApparmord.Join(dirMoved).String())
+		files, err := filepath.Glob(prebuild.RootApparmord.Join(dirMoved).String())
 		if err != nil {
 			return res, err
 		}
 		for _, file := range files {
-			err := os.Rename(file, cfg.RootApparmord.Join(filepath.Base(file)).String())
+			err := os.Rename(file, prebuild.RootApparmord.Join(filepath.Base(file)).String())
 			if err != nil {
 				return res, err
 			}
 		}
 
-		files, err = filepath.Glob(cfg.RootApparmord.Join(dirRemoved).String())
+		files, err = filepath.Glob(prebuild.RootApparmord.Join(dirRemoved).String())
 		if err != nil {
 			return []string{}, err
 		}

@@ -18,7 +18,7 @@
 #    This this only defence in depth. 
 # 3. The main purpose of this profile is to ensure all processes are confined.
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
@@ -44,8 +44,9 @@ profile flatpak-app flags=(attach_disconnected,mediate_deleted) {
   ptrace (read),
   ptrace trace peer=flatpak-app,
 
-  signal (receive) set=(int term) peer=flatpak-portal,
-  signal (receive) set=(int) peer=flatpak-session-helper,
+  signal receive peer=flatpak,
+  signal receive set=(int term) peer=flatpak-portal,
+  signal receive set=(int) peer=flatpak-session-helper,
 
   @{bin}/**                            rmix,
   @{lib}/**                            rmix,
@@ -56,6 +57,7 @@ profile flatpak-app flags=(attach_disconnected,mediate_deleted) {
   /var/lib/flatpak/app/*/**/@{bin}/**  rmix,
   /var/lib/flatpak/app/*/**/@{lib}/**  rmix,
 
+  @{run}/flatpak/app/*/**so*           rm,
   @{run}/parent/@{bin}/**              rmix,
   @{run}/parent/@{lib}/**              rmix,
   @{run}/parent/app/**                 rmix,
@@ -89,8 +91,7 @@ profile flatpak-app flags=(attach_disconnected,mediate_deleted) {
   owner @{run}/flatpak/app/** rw,
   owner @{run}/flatpak/doc/** rw,
   owner @{run}/ld-so-cache-dir/* rw,
-  owner @{run}/user/@{uid}/*.kioworker.socket r,
-  owner @{run}/user/@{uid}/#@{int} rwl,
+  owner @{run}/user/ r,
 
   include if exists <usr/flatpak-app.d>
   include if exists <local/flatpak-app>

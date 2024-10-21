@@ -1,0 +1,87 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{name} = torbrowser "tor browser"
+@{lib_dirs} = @{user_share_dirs}/torbrowser/tbb/@{arch}/tor-browser/Browser/ @{HOME}/.tb/tor-browser/Browser/
+@{data_dirs} = @{lib_dirs}/TorBrowser/Data/
+@{config_dirs} = @{data_dirs}/Browser/profile.default/
+@{cache_dirs} = @{data_dirs}/Browser/Caches
+
+@{exec_path} = @{lib_dirs}/firefox{,.real}
+profile torbrowser @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/app/firefox>
+
+  # Uncomment if you want to give the Tor Browser access to the common download directory.
+  # include <abstractions/user-download-strict>
+
+  @{exec_path} mrix,
+
+  @{lib_dirs}/abicheck           ix,
+  @{lib_dirs}/glxtest            Px -> torbrowser//&torbrowser-glxtest,
+  @{lib_dirs}/updater            Px,
+  @{lib_dirs}/vaapitest          Px -> torbrowser//&torbrowser-vaapitest,
+
+  #aa:exclude whonix
+  @{lib_dirs}/TorBrowser/Tor/PluggableTransports/**  Px -> torbrowser-tor,
+  @{lib_dirs}/TorBrowser/Tor/tor                     Px -> torbrowser-tor,
+
+  /usr/share/homepage/{,**} r,
+
+  owner @{lib_dirs}/.cache/{,**} rw,
+  owner @{lib_dirs}/.local/{,**} rw,
+  owner @{lib_dirs}/Downloads/{,**} rw,
+  owner @{lib_dirs}/fonts/** r,
+  owner @{lib_dirs}/TorBrowser/UpdateInfo/{,**} rw,
+
+  owner "@{tmp}/Tor Project*" rwk,
+  owner "@{tmp}/Tor Project*/" rw,
+  owner "@{tmp}/Tor Project*/**" rwk,
+  owner @{tmp}/@{rand8}.* rw,
+  owner @{tmp}/mozilla_pc@{int}/ rw,
+  owner @{tmp}/mozilla_pc@{int}/* rwk,
+
+  # Due to the nature of the browser, we silence much more than for Firefox.
+  deny capability sys_ptrace,
+  deny network inet dgram, # TOR does not work over UDP
+  deny network inet6 dgram,
+  deny network inet6 stream, # TOR does not work over IPv6
+  deny dbus (send receive) bus=session path=/ca/desrt/dconf/Writer/user,
+  deny @{bin}/lsb_release x,
+  deny @{lib_dirs}/crashreporter x,
+  deny @{lib_dirs}/minidump-analyzer x,
+  deny @{lib_dirs}/pingsender x,
+  deny /usr/share/dconf/** r,
+  deny /etc/dconf/** r,
+  deny /etc/fstab r,
+  deny /etc/group r,
+  deny /etc/host.conf r,
+  deny /etc/hosts r,
+  deny /etc/machine-id r,
+  deny /etc/mailcap r,
+  deny /etc/nsswitch.conf r,
+  deny /etc/os-release r,
+  deny /etc/passwd r,
+  deny /etc/resolv.conf r,
+  deny /var/lib/dbus/machine-id r,
+  deny owner @{HOME}/ r,
+  deny owner @{user_config_dirs}/dconf/user r,
+  deny owner @{user_config_dirs}/gtk-*/{,**} rw,
+  deny owner @{run}/user/@{uid}/dconf/ rw,
+  deny owner @{run}/user/@{uid}/dconf/user rw,
+  deny @{sys}/class/input/ r,
+  deny @{sys}/devices/system/cpu/*/cache/index@{int}/size r,
+  deny @{sys}/devices/system/cpu/cpufreq/policy@{int}/cpuinfo_max_freq r,
+  deny @{sys}/devices/virtual/block/*/uevent r,
+  deny @{PROC}/@{pid}/net/if_inet6 r,
+  deny @{PROC}/@{pid}/net/route r,
+
+  include if exists <local/torbrowser>
+}
+
+# vim:syntax=apparmor

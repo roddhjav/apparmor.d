@@ -9,6 +9,8 @@
 # applications (bwrap) that have no way to restrict access depending on the
 # application being confined.
 
+  abi <abi/4.0>,
+
   include <abstractions/audio-client>
   include <abstractions/bus-accessibility>
   include <abstractions/bus-session>
@@ -20,7 +22,7 @@
   include <abstractions/devices-usb>
   include <abstractions/disks-read>
   include <abstractions/enchant>
-  include <abstractions/fontconfig-cache-read>
+  include <abstractions/fontconfig-cache-write>
   include <abstractions/graphics>
   include <abstractions/gstreamer>
   include <abstractions/nameservice-strict>
@@ -54,25 +56,32 @@
   @{MOUNTDIRS}/ r,
   @{MOUNTS}/ r,
   @{MOUNTS}/** rwl,
+  owner @{HOME}/ r,
   owner @{HOME}/.var/app/** rmix,
-  owner @{HOME}/{,**} rwlk,
-  owner @{run}/user/@{uid}/{,**} rw,
-  owner @{user_config_dirs}/** rwkl,
-  owner @{user_share_dirs}/** rwkl,
-  owner @{user_games_dirs}/{,**} rm,
+  owner @{HOME}/** rwlk -> @{HOME}/**,
+  owner @{run}/user/@{uid}/ r,
+  owner @{run}/user/@{uid}/** rwlk -> @{run}/user/@{uid}/**,
+  owner @{user_games_dirs}/** rm,
 
+  owner /var/cache/tmp/** rwlk -> /var/cache/tmp/**,
   owner @{tmp}/** rmwk,
   owner /dev/shm/** rwlk -> /dev/shm/**,
+
+  @{att}/@{run}/systemd/inhibit/@{int}.ref rw,
 
   @{run}/havahi-daemon/socket rw, # Allow access to avahi-daemon socket.
   @{run}/host/{,**} r,
   @{run}/pcscd/pcscd.comm rw, # Allow access to pcscd socket.
   @{run}/utmp rk,
 
+  @{run}/udev/data/c13:@{int}  r,         # for /dev/input/*
+
   @{sys}/ r,
   @{sys}/block/ r,
   @{sys}/bus/ r,
   @{sys}/bus/*/devices/ r,
+  @{sys}/bus/pci/slots/ r,
+  @{sys}/bus/pci/slots/@{int}/address r,
   @{sys}/class/*/ r,
   @{sys}/devices/** r,
 

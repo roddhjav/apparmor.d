@@ -29,7 +29,7 @@ func init() {
 	}
 }
 
-func isOwner(log map[string]string) bool {
+func IsOwner(log map[string]string) bool {
 	fsuid, hasFsUID := log["fsuid"]
 	ouid, hasOuUID := log["ouid"]
 	isDbus := strings.Contains(log["operation"], "dbus")
@@ -98,7 +98,7 @@ func newFileFromLog(log map[string]string) Rule {
 	return &File{
 		Base:      newBaseFromLog(log),
 		Qualifier: newQualifierFromLog(log),
-		Owner:     isOwner(log),
+		Owner:     IsOwner(log),
 		Path:      log["name"],
 		Access:    accesses,
 		Target:    log["target"],
@@ -118,6 +118,27 @@ func (r *File) String() string {
 }
 
 func (r *File) Validate() error {
+	if r.Path == "" && r.Target == "" && len(r.Access) == 0 {
+		return nil // rule: `file` or `owner file`
+	}
+	if !isAARE(r.Path) {
+		return fmt.Errorf("'%s' is not a valid AARE", r.Path)
+	}
+	if len(r.Access) == 0 {
+		return fmt.Errorf("missing file access")
+	}
+	for _, v := range r.Access {
+		if v == "" {
+			continue
+		}
+		if !slices.Contains(requirements[r.Kind()]["access"], v) &&
+			!slices.Contains(requirements[r.Kind()]["transition"], v) {
+			return fmt.Errorf("invalid mode '%s'", v)
+		}
+	}
+	if r.Target != "" && !isAARE(r.Target) {
+		return fmt.Errorf("'%s' is not a valid AARE", r.Target)
+	}
 	return nil
 }
 
@@ -241,7 +262,7 @@ func newLinkFromLog(log map[string]string) Rule {
 	return &Link{
 		Base:      newBaseFromLog(log),
 		Qualifier: newQualifierFromLog(log),
-		Owner:     isOwner(log),
+		Owner:     IsOwner(log),
 		Path:      log["name"],
 		Target:    log["target"],
 	}
@@ -260,6 +281,12 @@ func (r *Link) String() string {
 }
 
 func (r *Link) Validate() error {
+	if !isAARE(r.Path) {
+		return fmt.Errorf("'%s' is not a valid AARE", r.Path)
+	}
+	if !isAARE(r.Target) {
+		return fmt.Errorf("'%s' is not a valid AARE", r.Target)
+	}
 	return nil
 }
 

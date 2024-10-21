@@ -2,37 +2,38 @@
 # Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
 @{exec_path} = @{bin}/remmina
 profile remmina @{exec_path} {
   include <abstractions/base>
+  include <abstractions/audio-client>
   include <abstractions/bus-accessibility>
   include <abstractions/bus-session>
   include <abstractions/bus-system>
   include <abstractions/bus/org.a11y>
+  include <abstractions/bus/org.freedesktop.Avahi>
   include <abstractions/bus/org.freedesktop.hostname1>
+  include <abstractions/bus/org.freedesktop.Notifications>
   include <abstractions/bus/org.freedesktop.secrets>
   include <abstractions/bus/org.gtk.Private.RemoteVolumeMonitor>
   include <abstractions/bus/org.kde.StatusNotifierWatcher>
   include <abstractions/dconf-write>
-  include <abstractions/fonts>
-  include <abstractions/freedesktop.org>
+  include <abstractions/desktop>
   include <abstractions/ibus>
   include <abstractions/nameservice-strict>
   include <abstractions/ssl_certs>
-  include <abstractions/X-strict>
+  include <abstractions/user-download-strict>
 
   network inet stream,
   network inet6 stream,
   network netlink raw,
 
   #aa:dbus own bus=session name=org.remmina.Remmina
-
-  dbus (send, receive) bus=session path=/org/ayatana/NotificationItem/remmina_icon{,/**}
-       peer=(name="{:*,org.freedesktop.DBus}"),  # all interfaces and members
+  #aa:dbus talk bus=session name=org.ayatana.NotificationItem label=gnome-shell
+  #aa:dbus talk bus=session name=org.gtk.vfs label="gvfsd{,-*}"
 
   @{exec_path} r,
 
@@ -42,14 +43,13 @@ profile remmina @{exec_path} {
   /etc/timezone r,
   /etc/ssh/ssh_config r,
   /etc/ssh/ssh_config.d/{,*} r,
-  /etc/gtk-3.0/settings.ini r,
 
   owner @{HOME}/@{XDG_SSH_DIR}/{,*} r,
 
+  owner @{user_cache_dirs}/org.remmina.Remmina/{,**} rw,
   owner @{user_cache_dirs}/remmina/{,**} rw,
   owner @{user_config_dirs}/autostart/remmina-applet.desktop r,
   owner @{user_config_dirs}/freerdp/known_hosts2 rwk,
-  owner @{user_config_dirs}/gtk-3.0/bookmarks r,
   owner @{user_config_dirs}/remmina/{,**} rw,
   owner @{user_share_dirs}/remmina/{,**} rw,
 

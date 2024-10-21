@@ -1,0 +1,27 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2020-2022 Mikhail Morfikov
+# Copyright (C) 2022-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{name} = torbrowser "tor browser"
+@{lib_dirs} = @{user_share_dirs}/torbrowser/tbb/@{arch}/tor-browser/Browser/ @{HOME}/.tb/tor-browser/Browser/
+@{data_dirs} = @{lib_dirs}/TorBrowser/Data/
+@{config_dirs} = @{data_dirs}/Browser/profile.default/
+@{cache_dirs} = @{data_dirs}/Browser/Caches
+
+@{exec_path} = @{lib_dirs}/plugin-container
+profile torbrowser-plugin-container @{exec_path} {
+  include <abstractions/base>
+
+  signal (receive) set=(term, kill) peer=torbrowser,
+
+  @{exec_path} mr,
+
+  include if exists <local/torbrowser-plugin-container>
+}
+
+# vim:syntax=apparmor

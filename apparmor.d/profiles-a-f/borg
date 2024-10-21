@@ -3,7 +3,7 @@
 # Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
@@ -20,6 +20,9 @@ profile borg @{exec_path} {
   network inet dgram,
   network inet6 dgram,
   network netlink raw,
+
+  mount fstype=fuse options=(ro nosuid nodev) borgfs -> @{MOUNTS}/,
+  mount fstype=fuse options=(ro nosuid nodev) borgfs -> @{MOUNTS}/*/,
 
   @{exec_path} r,
 
@@ -106,6 +109,9 @@ profile borg @{exec_path} {
     @{bin}/fusermount{,3} mr,
 
     /etc/fuse.conf r,
+
+    @{MOUNTS}/ r,
+    @{MOUNTS}/*/ r, 
 
     @{PROC}/@{pids}/mounts r,
 

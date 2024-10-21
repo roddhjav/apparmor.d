@@ -1,0 +1,60 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2018-2021 Mikhail Morfikov
+# Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{name} = signal-desktop{,-beta}
+@{lib_dirs} = @{lib}/signal-desktop /opt/Signal{,?Beta}
+@{config_dirs} = @{user_config_dirs}/Signal{,?Beta}
+@{cache_dirs} = @{user_cache_dirs}/@{name}
+
+@{exec_path} = @{lib_dirs}/@{name}
+profile signal-desktop @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/audio-client>
+  include <abstractions/bus-session>
+  include <abstractions/bus/org.freedesktop.ScreenSaver>
+  include <abstractions/bus/org.kde.StatusNotifierWatcher>
+  include <abstractions/common/electron>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/user-download-strict>
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  @{exec_path} mrix,
+
+  @{bin}/getconf       rix,
+  @{open_path}         rPx -> child-open-strict,
+
+  #aa:stack X xdg-settings
+  @{bin}/xdg-settings  rPx -> signal-desktop//&xdg-settings,
+
+  audit @{lib_dirs}/chrome-sandbox rPx,
+  @{lib_dirs}/chrome_crashpad_handler rix,
+
+  @{att}/@{run}/systemd/inhibit/@{int}.ref rw,
+
+        @{sys}/fs/cgroup/user.slice/cpu.max r,
+        @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/cpu.max r,
+        @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/session-@{int}.scope/memory.high r,
+        @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/session-@{int}.scope/memory.max r,
+        @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/cpu.max r,
+  owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/cpu.max r,
+
+  @{PROC}/@{pid}/fd/ r,
+  @{PROC}/vmstat r,
+
+  /dev/tty rw,
+
+  include if exists <local/signal-desktop>
+}
+
+# vim:syntax=apparmor

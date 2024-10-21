@@ -2,7 +2,7 @@
 # Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
@@ -21,7 +21,6 @@ profile tracker-miner @{exec_path} flags=(attach_disconnected) {
   include <abstractions/gnome-strict>
   include <abstractions/gstreamer>
   include <abstractions/nameservice-strict>
-  include <abstractions/private-files-strict>
 
   network netlink raw,
 
@@ -47,7 +46,6 @@ profile tracker-miner @{exec_path} flags=(attach_disconnected) {
   /usr/share/dconf/profile/gdm r,
   /usr/share/gdm/greeter/applications/{,mimeinfo.cache,*.list} r,
   /usr/share/gvfs/remote-volume-monitors/{,*.monitor} r,
-  /usr/share/hwdata/*.ids r,
   /usr/share/ladspa/rdf/{,**} r,
   /usr/share/osinfo/{,**} r,
   /usr/share/poppler/{,**} r,
@@ -65,7 +63,9 @@ profile tracker-miner @{exec_path} flags=(attach_disconnected) {
   owner @{gdm_config_dirs}/dconf/user r,
   owner @{gdm_share_dirs}/applications/ r,
 
+  owner /var/tmp/etilqs_@{hex15} rw,
   owner /var/tmp/etilqs_@{hex16} rw,
+  owner @{tmp}/etilqs_@{hex15} rw,
   owner @{tmp}/etilqs_@{hex16} rw,
 
   # Allow to search user files
@@ -85,8 +85,10 @@ profile tracker-miner @{exec_path} flags=(attach_disconnected) {
         @{PROC}/@{pid}/cmdline r,
         @{PROC}/sys/fs/fanotify/max_user_marks r,
         @{PROC}/sys/fs/inotify/max_user_watches r,
+        @{PROC}/sys/vm/mmap_min_addr r,
   owner @{PROC}/@{pid}/mountinfo r,
   owner @{PROC}/@{pid}/mounts r,
+  owner @{PROC}/@{pid}/task/@{tid}/comm rw,
 
         /dev/media@{int} rw,
         /dev/video@{int} rw,

@@ -7,13 +7,14 @@
 # confined under this profile. The resulting profile is quite broad.
 # This architecture needs to be rethinked.
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
 @{exec_path} = @{bin}/gjs-console
 profile gjs-console @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/attached/consoles>
   include <abstractions/bus-session>
   include <abstractions/bus-system>
   include <abstractions/bus/org.freedesktop.portal.Desktop>
@@ -35,9 +36,7 @@ profile gjs-console @{exec_path} flags=(attach_disconnected) {
   #aa:dbus own bus=session name=org.gnome.Shell.Notifications
   #aa:dbus own bus=session name=org.gnome.Shell.Screencast
 
-  dbus send bus=session path=/org/gnome/Mutter/ScreenCast
-       interface=org.freedesktop.DBus.Properties
-       peer=(name=:*, label=gnome-shell),
+  #aa:dbus talk bus=session name=org.gnome.Mutter.ScreenCast label=gnome-shell
 
   dbus send bus=session path=/org/gnome/Shell
        interface=org.freedesktop.DBus.Properties
@@ -62,7 +61,6 @@ profile gjs-console @{exec_path} flags=(attach_disconnected) {
   /usr/share/dconf/profile/gdm r,
   /usr/share/gdm/greeter-dconf-defaults r,
   /usr/share/gnome-shell/{,**} r,
-  /usr/share/icu/@{int}.@{int}/*.dat r,
 
   /tmp/ r,
   /var/tmp/ r,
@@ -88,7 +86,6 @@ profile gjs-console @{exec_path} flags=(attach_disconnected) {
 
   /dev/ r,
   /dev/tty rw,
-  /dev/tty@{int} rw,
 
   include if exists <local/gjs-console>
 }

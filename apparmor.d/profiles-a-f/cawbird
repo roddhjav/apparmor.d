@@ -3,7 +3,7 @@
 # Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
@@ -31,8 +31,12 @@ profile cawbird @{exec_path} {
 
   @{sh_path}         rix,
 
-  @{bin}/xdg-open    rCx -> open,
-  @{bin}/exo-open    rCx -> open,
+  @{open_path}       rPx -> child-open,
+
+  /usr/share/xml/iso-codes/{,**} r,
+
+  /var/lib/dbus/machine-id r,
+  /etc/machine-id r,
 
   owner @{user_config_dirs}/cawbird/ rw,
   owner @{user_config_dirs}/cawbird/** rwk,
@@ -40,35 +44,7 @@ profile cawbird @{exec_path} {
   owner @{user_cache_dirs}/ rw,
   owner @{user_cache_dirs}/cawbird-* rw,
 
-  /usr/share/xml/iso-codes/{,**} r,
-
-  /var/lib/dbus/machine-id r,
-  /etc/machine-id r,
-
   owner @{PROC}/@{pid}/fd/ r,
-
-  profile open {
-    include <abstractions/base>
-    include <abstractions/xdg-open>
-
-    @{bin}/xdg-open mr,
-
-    @{sh_path}             rix,
-    @{bin}/{m,g,}awk       rix,
-    @{bin}/readlink        rix,
-    @{bin}/basename        rix,
-
-    owner @{HOME}/ r,
-
-    owner @{run}/user/@{uid}/ r,
-
-    # Allowed apps to open
-    @{lib}/firefox/firefox rPUx,
-
-    # file_inherit
-    owner @{HOME}/.xsession-errors w,
-
-  }
 
   include if exists <local/cawbird>
 }

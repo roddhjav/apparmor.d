@@ -174,14 +174,14 @@ func TestAppArmorEvents(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			file := strings.NewReader(tt.event)
-			if got := NewApparmorLogs(file, ""); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("NewApparmorLogs() = %v, want %v", got, tt.want)
+			if got := New(file, ""); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("New() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func TestNewApparmorLogs(t *testing.T) {
+func TestNew(t *testing.T) {
 	tests := []struct {
 		name string
 		path string
@@ -208,7 +208,7 @@ func TestNewApparmorLogs(t *testing.T) {
 					"apparmor":       "DENIED",
 					"profile":        "dnsmasq",
 					"operation":      "open",
-					"name":           "@{PROC}/@{pid}/environ",
+					"name":           "@{PROC}/1/environ",
 					"comm":           "dnsmasq",
 					"requested_mask": "r",
 					"denied_mask":    "r",
@@ -247,12 +247,53 @@ func TestNewApparmorLogs(t *testing.T) {
 			path: filepath.Join(testdata, "audit.log"),
 			want: refPowerProfiles,
 		},
+		{
+			name: "signal-desktop",
+			path: filepath.Join(testdata, "audit.log"),
+			want: AppArmorLogs{
+				{
+					"apparmor":       "ALLOWED",
+					"profile":        "signal-desktop",
+					"operation":      "open",
+					"class":          "file",
+					"name":           "@{sys}/devices/@{pci}/boot_vga",
+					"comm":           "signal-desktop",
+					"requested_mask": "r",
+					"denied_mask":    "r",
+					"fsuid":          "1000",
+					"ouid":           "0",
+					"FSUID":          "user",
+					"OUID":           "root",
+				},
+			},
+		},
+		{
+			name: "startplasma",
+			path: filepath.Join(testdata, "audit.log"),
+			want: AppArmorLogs{
+				{
+					"apparmor":       "ALLOWED",
+					"operation":      "link",
+					"class":          "file",
+					"profile":        "startplasma",
+					"name":           "@{user_cache_dirs}/ksycoca5_de_LQ6f0J2qZg4vOKgw2NbXuW7iuVU=.isNSBz",
+					"target":         "@{user_cache_dirs}/#@{int}",
+					"comm":           "startplasma-way",
+					"denied_mask":    "k",
+					"requested_mask": "k",
+					"fsuid":          "1000",
+					"ouid":           "1000",
+					"FSUID":          "user",
+					"OUID":           "user",
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			file, _ := os.Open(tt.path)
-			if got := NewApparmorLogs(file, tt.name); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("NewApparmorLogs() = %v, want %v", got, tt.want)
+			if got := New(file, tt.name); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("New() = %v, want %v", got, tt.want)
 			}
 		})
 	}

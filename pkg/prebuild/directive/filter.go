@@ -5,40 +5,45 @@
 package directive
 
 import (
+	"fmt"
 	"regexp"
 	"slices"
 	"strings"
 
-	"github.com/roddhjav/apparmor.d/pkg/prebuild/cfg"
+	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 )
 
 type FilterOnly struct {
-	cfg.Base
+	prebuild.Base
 }
 
 type FilterExclude struct {
-	cfg.Base
+	prebuild.Base
 }
 
 func init() {
 	RegisterDirective(&FilterOnly{
-		Base: cfg.Base{
+		Base: prebuild.Base{
 			Keyword: "only",
 			Msg:     "Only directive applied",
-			Help:    Keyword + `only filters...`,
+			Help:    []string{"filters..."},
 		},
 	})
 	RegisterDirective(&FilterExclude{
-		Base: cfg.Base{
+		Base: prebuild.Base{
 			Keyword: "exclude",
 			Msg:     "Exclude directive applied",
-			Help:    Keyword + `exclude filters...`,
+			Help:    []string{"filters..."},
 		},
 	})
 }
 
 func filterRuleForUs(opt *Option) bool {
-	return slices.Contains(opt.ArgList, cfg.Distribution) || slices.Contains(opt.ArgList, cfg.Family)
+	abiStr := fmt.Sprintf("abi%d", prebuild.ABI)
+	if slices.Contains(opt.ArgList, abiStr) {
+		return true
+	}
+	return slices.Contains(opt.ArgList, prebuild.Distribution) || slices.Contains(opt.ArgList, prebuild.Family)
 }
 
 func filter(only bool, opt *Option, profile string) (string, error) {
@@ -49,16 +54,7 @@ func filter(only bool, opt *Option, profile string) (string, error) {
 		return opt.Clean(profile), nil
 	}
 
-	inline := true
-	tmp := strings.Split(opt.Raw, Keyword)
-	if len(tmp) >= 1 {
-		left := strings.TrimSpace(tmp[0])
-		if len(left) == 0 {
-			inline = false
-		}
-	}
-
-	if inline {
+	if opt.IsInline() {
 		profile = strings.Replace(profile, opt.Raw, "", -1)
 	} else {
 		regRemoveParagraph := regexp.MustCompile(`(?s)` + opt.Raw + `\n.*?\n\n`)

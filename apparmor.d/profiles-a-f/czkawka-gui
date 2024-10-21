@@ -3,7 +3,7 @@
 # Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
@@ -18,7 +18,7 @@ profile czkawka-gui @{exec_path} {
 
   @{exec_path} mr,
 
-  @{bin}/xdg-open   rCx -> open,
+  @{open_path} rPx -> child-open,
 
   # Dirs to scan for duplicates
   #owner @{HOME}/** rw,
@@ -37,32 +37,6 @@ profile czkawka-gui @{exec_path} {
   owner @{PROC}/@{pid}/mounts r,
 
   @{sys}/fs/cgroup/{,**} r,
-
-  profile open {
-    include <abstractions/base>
-    include <abstractions/xdg-open>
-
-    @{bin}/xdg-open mr,
-
-    @{sh_path}             rix,
-    @{bin}/{m,g,}awk       rix,
-    @{bin}/readlink        rix,
-    @{bin}/basename        rix,
-
-    owner @{HOME}/ r,
-
-    owner @{run}/user/@{uid}/ r,
-
-    # Allowed apps to open
-    #@{lib}/firefox/firefox  rPx,
-    @{bin}/smplayer          rPx,
-    @{bin}/geany             rPx,
-    @{bin}/viewnior         rPUx,
-
-    # file_inherit
-    owner @{HOME}/.xsession-errors w,
-
-  }
 
   include if exists <local/czkawka-gui>
 }

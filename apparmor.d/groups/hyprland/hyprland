@@ -1,0 +1,71 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 odomingao
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/Hyprland
+profile hyprland @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/app-launcher-user>
+  include <abstractions/dconf-write>
+  include <abstractions/desktop>
+  include <abstractions/glfw>
+  include <abstractions/graphics>
+
+  capability sys_ptrace,
+
+  network netlink raw,
+
+  signal send,
+
+  ptrace read,
+
+  @{exec_path} mr,
+
+  /usr/share/hyprland/{,*} r,
+  /usr/share/libinput/{,*} r,
+
+  owner @{user_cache_dirs}/hyprland/{,**} rw,
+  owner @{user_config_dirs}/hypr/** r,
+  owner @{user_share_dirs}/hyprpm/** mr,
+
+  owner @{run}/user/@{uid}/gamescope-* rw,
+  owner @{run}/user/@{uid}/.hyprpaper_* rw,
+  owner @{run}/user/@{uid}/.hyprpicker_* rw,
+  owner @{run}/user/@{uid}/hypr/{,**} rw,
+  owner /dev/shm/.org.chromium.Chromium.@{rand6} rw,
+
+  @{run}/systemd/sessions/@{int} r,
+
+  @{run}/udev/data/+acpi:* r,             # for acpi
+  @{run}/udev/data/+dmi:id r,             # for motherboard info
+  @{run}/udev/data/+drm:card@{int}-* r,   # For screen outputs
+  @{run}/udev/data/+hid:* r,              # for HID-Compliant Keyboard
+  @{run}/udev/data/+input:input@{int} r,  # for mouse, keyboard, touchpad
+  @{run}/udev/data/+pci:* r,              # Identifies all PCI devices (CPU, GPU, Network, Disks, USB, etc.)
+  @{run}/udev/data/+platform:* r,
+  @{run}/udev/data/+sound:card@{int} r,   # for sound card
+  @{run}/udev/data/+usb* r,               # for USB mouse and keyboard
+  @{run}/udev/data/c13:@{int} r,          # for /dev/input/*
+  @{run}/udev/data/c189:@{int}  r,        # for /dev/bus/usb/**
+  @{run}/udev/data/c226:@{int} r,         # for /dev/dri/card* 
+
+  @{sys}/bus/ r,
+  @{sys}/class/input/ r,
+  @{sys}/devices/@{pci}/boot_vga r,
+  @{sys}/devices/**/uevent r,
+
+  owner @{PROC}/@{pid}/environ r,
+
+        /dev/input/event@{int} rw,
+        /dev/tty r,
+  owner /dev/tty@{int} rw,
+
+  include if exists <local/hyprland>
+}
+
+# vim:syntax=apparmor
+

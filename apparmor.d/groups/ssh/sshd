@@ -11,7 +11,7 @@
 # If you want real protection disallow SSH access.
 
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
@@ -67,6 +67,7 @@ profile sshd @{exec_path} flags=(attach_disconnected) {
   @{bin}/nologin              rPx,
   @{bin}/passwd               rPx,
   @{lib}/openssh/sftp-server  rPx,
+  @{lib}/ssh/sshd-session     rix,
 
   @{etc_ro}/environment r,
   @{etc_ro}/security/limits.d/{,*.conf} r,
@@ -96,12 +97,13 @@ profile sshd @{exec_path} flags=(attach_disconnected) {
   owner @{HOME}/@{XDG_SSH_DIR}/authorized_keys{,.*} r,
   owner @{user_cache_dirs}/{,motd*} rw,
 
+  @{att}/@{run}/systemd/sessions/@{int}.ref rw,
+
         @{run}/faillock/@{user} rwk,
         @{run}/motd.d/{,*} r,
         @{run}/motd.dynamic rw,
         @{run}/motd.dynamic.new rw,
         @{run}/systemd/notify w,
-        @{run}/systemd/sessions/*.ref rw,
   owner @{run}/sshd{,.init}.pid wl,
 
   @{sys}/fs/cgroup/*/user/*/@{int}/ rw,

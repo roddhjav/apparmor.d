@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/roddhjav/apparmor.d/pkg/aa"
-	"github.com/roddhjav/apparmor.d/pkg/prebuild/cfg"
+	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 )
 
 const tokATTACHMENT = "@{exec_path}"
@@ -20,23 +20,23 @@ var (
 )
 
 type Userspace struct {
-	cfg.Base
+	prebuild.Base
 }
 
 func init() {
 	RegisterBuilder(&Userspace{
-		Base: cfg.Base{
+		Base: prebuild.Base{
 			Keyword: "userspace",
-			Msg:     "Bypass userspace tools restriction",
+			Msg:     "Resolve variable in profile attachments",
 		},
 	})
 }
 
 func (b Userspace) Apply(opt *Option, profile string) (string, error) {
-	if ok, _ := opt.File.IsInsideDir(cfg.RootApparmord.Join("abstractions")); ok {
+	if ok, _ := opt.File.IsInsideDir(prebuild.RootApparmord.Join("abstractions")); ok {
 		return profile, nil
 	}
-	if ok, _ := opt.File.IsInsideDir(cfg.RootApparmord.Join("tunables")); ok {
+	if ok, _ := opt.File.IsInsideDir(prebuild.RootApparmord.Join("tunables")); ok {
 		return profile, nil
 	}
 

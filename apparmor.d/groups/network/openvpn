@@ -18,7 +18,7 @@
 # If a user wants to type user/pass interactively, systemd-ask-password is
 # invoked for that.
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
@@ -59,7 +59,7 @@ profile openvpn @{exec_path} flags=(attach_disconnected) {
 
   @{run}/NetworkManager/nm-openvpn-@{uuid} rw,
   @{run}/openvpn/*.{pid,status} rw,
-  @{run}/systemd/journal/dev-log rw,
+  @{run}/systemd/journal/dev-log r,
 
   @{bin}/ip                                rix,
   @{bin}/systemd-ask-password              rPx,
@@ -90,6 +90,7 @@ profile openvpn @{exec_path} flags=(attach_disconnected) {
     /etc/iproute2/rt_tables r,
     /etc/iproute2/rt_tables.d/ r,
 
+    include if exists <local/openvpn_update-resolv>
   }
 
   profile force-user-traffic-via-vpn {
@@ -121,6 +122,7 @@ profile openvpn @{exec_path} flags=(attach_disconnected) {
 
     owner @{PROC}/sys/net/ipv{4,}/route/flush w,
 
+    include if exists <local/openvpn_force-user-traffic-via-vpn>
   }
 
   include if exists <local/openvpn>

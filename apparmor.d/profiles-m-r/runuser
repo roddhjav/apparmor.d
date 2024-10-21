@@ -3,49 +3,36 @@
 # Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
 @{exec_path} = @{bin}/runuser
 profile runuser @{exec_path} {
   include <abstractions/base>
-  include <abstractions/consoles>
   include <abstractions/authentication>
+  include <abstractions/consoles>
   include <abstractions/nameservice-strict>
   include <abstractions/wutmp>
 
-  # To remove the following errors:
-  #  runuser: cannot set user id: Operation not permitted
   capability setuid,
-
-  # To remove the following errrors:
-  #  runuser: cannot set groups: Operation not permitted
   capability setgid,
-
-  # To write records to the kernel auditing log.
   capability audit_write,
-
-  # Needed? (#FIXME#)
   capability sys_resource,
 
   network netlink raw,
 
   @{exec_path} mr,
 
-  # Shells to use
-  @{bin}/{,b,d,rb}ash rpux,
-  @{bin}/{c,k,tc,z}sh rpux,
-
-  owner @{PROC}/@{pid}/loginuid r,
-        @{PROC}/1/limits r,
+  @{bin}/@{shells}    rUx,
 
   @{etc_ro}/security/limits.d/ r,
-
   /etc/default/runuser r,
 
-  # file_inherit
   owner @{tmp}/debian-security-support.postinst.*/output w,
+
+        @{PROC}/1/limits r,
+  owner @{PROC}/@{pid}/loginuid r,
 
   include if exists <local/runuser>
 }

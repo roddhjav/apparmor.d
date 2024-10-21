@@ -13,7 +13,6 @@ import (
 	"github.com/roddhjav/apparmor.d/pkg/aa"
 	"github.com/roddhjav/apparmor.d/pkg/logging"
 	"github.com/roddhjav/apparmor.d/pkg/paths"
-	"github.com/roddhjav/apparmor.d/pkg/util"
 )
 
 const usage = `aa [-h] [--lint | --format | --tree] [-s] [-F file] [profiles...]
@@ -76,10 +75,10 @@ func getIndentationLevel(input string) int {
 	return level
 }
 
-func parse(kind kind, profile string) ([]aa.Rules, []string, error) {
+func parse(kind kind, profile string) (aa.ParaRules, []string, error) {
 	var raw string
 	paragraphs := []string{}
-	rulesByParagraph := []aa.Rules{}
+	rulesByParagraph := aa.ParaRules{}
 
 	switch kind {
 	case isTunable, isProfile:
@@ -110,9 +109,6 @@ func formatFile(kind kind, profile string) (string, error) {
 		return "", err
 	}
 	for idx, rules := range rulesByParagraph {
-		if err := rules.Validate(); err != nil {
-			return "", err
-		}
 		aa.IndentationLevel = getIndentationLevel(paragraphs[idx])
 		rules = rules.Merge().Sort().Format()
 		profile = strings.Replace(profile, paragraphs[idx], rules.String()+"\n", -1)
@@ -139,7 +135,7 @@ func aaFormat(files paths.PathList) error {
 		if !file.Exist() {
 			return nil
 		}
-		profile, err := util.ReadFile(file)
+		profile, err := file.ReadFileAsString()
 		if err != nil {
 			return err
 		}
@@ -199,14 +195,18 @@ func main() {
 	case format:
 		files, err = pathsFromArgs()
 		if err != nil {
-			logging.Fatal(err.Error())
+			logging.Fatal("%s", err.Error())
 		}
 		err = aaFormat(files)
+
 	case tree:
 		err = aaTree()
+
+	default:
+		flag.Usage()
 	}
 
 	if err != nil {
-		logging.Fatal(err.Error())
+		logging.Fatal("%s", err.Error())
 	}
 }

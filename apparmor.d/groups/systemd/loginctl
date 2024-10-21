@@ -2,26 +2,30 @@
 # Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
 @{exec_path} = @{bin}/loginctl
 profile loginctl @{exec_path} {
   include <abstractions/base>
+  include <abstractions/consoles>
   include <abstractions/bus-system>
-  include <abstractions/bus/org.freedesktop.login1.Session>
-  include <abstractions/bus/org.freedesktop.login1>
   include <abstractions/common/systemd>
 
   capability net_admin,
   capability sys_resource,
 
+  signal send set=cont peer=child-pager,
+
+  #aa:dbus talk bus=system name=org.freedesktop.login1 label=systemd-logind
+
   @{exec_path} mr,
 
-  @{bin}/less  rPx -> child-pager,
-  @{bin}/more  rPx -> child-pager,
-  @{bin}/pager rPx -> child-pager,
+  @{pager_path} rPx -> child-pager,
+
+        @{PROC}/sys/fs/nr_open r,
+  owner @{PROC}/@{pid}/cgroup r,
 
   include if exists <local/loginctl>
 }

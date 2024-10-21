@@ -2,13 +2,14 @@
 # Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
 @{exec_path} = @{lib}/gsd-sharing
 profile gsd-sharing @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/attached/consoles>
   include <abstractions/bus-session>
   include <abstractions/bus-system>
   include <abstractions/bus/org.freedesktop.NetworkManager>
@@ -41,9 +42,8 @@ profile gsd-sharing @{exec_path} flags=(attach_disconnected) {
   @{run}/systemd/sessions/* r,
   @{run}/systemd/users/@{uid} r,
 
-  @{PROC}/@{pid}/cgroup r,
-
-  owner /dev/tty@{int} rw,
+        @{PROC}/1/cgroup r,
+  owner @{PROC}/@{pid}/cgroup r,
 
   include if exists <local/gsd-sharing>
 }

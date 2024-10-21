@@ -2,7 +2,7 @@
 # Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
@@ -28,7 +28,7 @@ profile plasmashell @{exec_path} flags=(mediate_deleted) {
   include <abstractions/ssl_certs>
   include <abstractions/thumbnails-cache-read>
 
-  # userns,
+  userns,
 
   capability sys_ptrace,
 
@@ -59,12 +59,11 @@ profile plasmashell @{exec_path} flags=(mediate_deleted) {
   /opt/**/share/icons/{,**} r,
   /opt/*/**/*.desktop r,
   /opt/*/**/*.png r,
+  /usr/share/*/icons/{,**} r,
   /usr/share/akonadi/{,**} r,
-  /usr/share/desktop-base/{,**} r,
   /usr/share/desktop-directories/kf5-*.directory r,
   /usr/share/kf{5,6}/{,**} r,
   /usr/share/kio/servicemenus/{,*.desktop} r,
-  /usr/share/knotifications{5,6}/*.notifyrc r,
   /usr/share/konsole/ r,
   /usr/share/krunner/{,**} r,
   /usr/share/kservices{5,6}/{,**} r,
@@ -77,6 +76,7 @@ profile plasmashell @{exec_path} flags=(mediate_deleted) {
   /usr/share/solid/actions/{,**} r,
   /usr/share/swcatalog/{,**} r,
   /usr/share/templates/{,*.desktop} r,
+  /usr/share/thumbnailers/{,*} r,
   /usr/share/wallpapers/{,**} r,
 
   /etc/appstream.conf r,
@@ -90,9 +90,14 @@ profile plasmashell @{exec_path} flags=(mediate_deleted) {
 
   /var/lib/AccountsService/icons/* r,
 
+  @{MOUNTS}/ r,
+
         @{HOME}/ r,
+  owner @{HOME}/.var/app/**.{png,jpg,svg} r,
   owner @{HOME}/@{XDG_DESKTOP_DIR}/*.desktop r,
   owner @{HOME}/@{XDG_WALLPAPERS_DIR}/{,**} r,
+  owner @{user_games_dirs}/**.{png,jpg,svg} r,
+  owner @{user_music_dirs}/**.{png,jpg,svg} r,
   owner @{user_pictures_dirs}/{,**} r,
 
   owner @{user_templates_dirs}/ r,
@@ -103,12 +108,10 @@ profile plasmashell @{exec_path} flags=(mediate_deleted) {
   owner @{user_cache_dirs}/appstream/*.xb rw,
   owner @{user_cache_dirs}/bookmarksrunner/ rw,
   owner @{user_cache_dirs}/bookmarksrunner/** rwkl -> @{user_cache_dirs}/bookmarksrunner/#@{int},
-  owner @{user_cache_dirs}/icon-cache.kcache rw,
   owner @{user_cache_dirs}/kcrash-metadata/plasmashell.*.ini w,
   owner @{user_cache_dirs}/ksvg-elements rw,
   owner @{user_cache_dirs}/ksvg-elements.@{rand6} rwlk -> @{user_cache_dirs}/#@{int},
   owner @{user_cache_dirs}/ksvg-elements.lock rwlk,
-  owner @{user_cache_dirs}/ksycoca{5,6}_* rwlk -> @{user_cache_dirs}/#@{int},
   owner @{user_cache_dirs}/org.kde.dirmodel-qml.kcache rw,
   owner @{user_cache_dirs}/plasma_engine_potd/{,**} rw,
   owner @{user_cache_dirs}/plasma_theme_*.kcache rw,
@@ -128,9 +131,7 @@ profile plasmashell @{exec_path} flags=(mediate_deleted) {
   owner @{user_config_dirs}/akonadi/akonadi*rc r,
   owner @{user_config_dirs}/arkrc r,
   owner @{user_config_dirs}/baloofileinformationrc r,
-  owner @{user_config_dirs}/baloofilerc r,
   owner @{user_config_dirs}/breezerc r,
-  owner @{user_config_dirs}/dolphinrc r,
   owner @{user_config_dirs}/eventviewsrc r,
   owner @{user_config_dirs}/kactivitymanagerd* rwkl -> @{user_config_dirs}/#@{int},
   owner @{user_config_dirs}/kcookiejarrc r,
@@ -147,8 +148,8 @@ profile plasmashell @{exec_path} flags=(mediate_deleted) {
   owner @{user_config_dirs}/menus/{,**} r,
   owner @{user_config_dirs}/networkmanagement.notifyrc r,
   owner @{user_config_dirs}/plasma* rwlk,
-  owner @{user_config_dirs}/trashrc r,
 
+  owner @{user_share_dirs}/*/sessions/ r,
   owner @{user_share_dirs}/#@{int} rw,
   owner @{user_share_dirs}/akonadi/search_db/{,**} r,
   owner @{user_share_dirs}/kactivitymanagerd/resources/database rwk,
@@ -172,12 +173,18 @@ profile plasmashell @{exec_path} flags=(mediate_deleted) {
   owner @{user_share_dirs}/user-places.xbel{,*} rwl,
   owner @{user_share_dirs}/wallpapers/{,**} rw,
 
+  owner @{user_state_dirs}/#@{int} rw,
+  owner @{user_state_dirs}/plasmashellstaterc rw,
+  owner @{user_state_dirs}/plasmashellstaterc.lock rwk,
+  owner @{user_state_dirs}/plasmashellstaterc.@{rand6} rwl,
+
         /tmp/.mount_nextcl@{rand6}/{,*} r,
   owner @{tmp}/#@{int} rw,
 
         @{run}/mount/utab r,
         @{run}/user/@{uid}/gvfs/ r,
   owner @{run}/user/@{uid}/#@{int} rw,
+  owner @{run}/user/@{uid}/app/*/*.@{rand6} r,
   owner @{run}/user/@{uid}/kdesud_:@{int} w,
   owner @{run}/user/@{uid}/plasmashell@{rand6}.@{int}.kioworker.socket rwl -> @{run}/user/@{uid}/#@{int},
 
@@ -187,11 +194,17 @@ profile plasmashell @{exec_path} flags=(mediate_deleted) {
   @{sys}/devices/platform/** r,
 
   @{sys}/devices/@{pci}/name r,
-  @{sys}/devices/virtual/thermal/thermal_zone@{int}/hwmon@{int}/ r,
   @{sys}/devices/system/cpu/cpufreq/policy@{int}/scaling_cur_freq r,
+  @{sys}/devices/virtual/dmi/id/bios_vendor r,
+  @{sys}/devices/virtual/dmi/id/board_vendor r,
+  @{sys}/devices/virtual/dmi/id/product_name r,
+  @{sys}/devices/virtual/dmi/id/sys_vendor r,
   @{sys}/devices/virtual/thermal/**/{name,type} r,
+  @{sys}/devices/virtual/thermal/thermal_zone@{int}/hwmon@{int}/ r,
 
         @{PROC}/ r,
+        @{PROC}/@{pid}/cmdline r,
+        @{PROC}/@{pid}/stat r,
         @{PROC}/cmdline r,
         @{PROC}/diskstats r,
         @{PROC}/loadavg r,

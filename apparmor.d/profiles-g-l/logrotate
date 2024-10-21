@@ -3,7 +3,7 @@
 # Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
@@ -50,19 +50,7 @@ profile logrotate @{exec_path} flags=(attach_disconnected) {
   @{bin}/squid                             rPUx,
 
   @{bin}/pgrep rCx -> pgrep,
-
-  # no new privs
-  #@{bin}/systemctl              rCx -> systemctl,
-  @{bin}/systemctl rix,
-  @{bin}/runlevel rix,
-  include <abstractions/wutmp>
-  ptrace (read),
-  capability sys_ptrace,
-  owner @{PROC}/@{pid}/stat r,
-        @{PROC}/1/environ r,
-        @{PROC}/1/sched r,
-        @{PROC}/cmdline r,
-        @{PROC}/sys/kernel/osrelease r,
+  @{bin}/systemctl rCx -> systemctl,
 
   /etc/ r,
   @{etc_ro}/logrotate.conf rk,
@@ -91,6 +79,8 @@ profile logrotate @{exec_path} flags=(attach_disconnected) {
 
     capability net_admin,
     capability sys_ptrace,
+
+    @{run}/utmp rk,
 
     include if exists <local/logrotate_systemctl>
   }

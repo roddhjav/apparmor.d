@@ -4,7 +4,7 @@
 # Copyright (C) 2022 Jeroen Rijken
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
@@ -81,18 +81,22 @@ profile mkinitramfs @{exec_path} {
   /etc/modprobe.d/{,*.conf} r,
 
         /boot/ r,
-  owner /boot/initrd.img-*.new rw,
   owner /boot/config-* r,
+  owner /boot/initrd.img-*.new rw,
 
         /var/tmp/ r,
+        /var/tmp/mkinitramfs_*/usr/lib/modules/*/modules.{order,builtin} rw,
   owner /var/tmp/mkinitramfs_*/ rw,
   owner /var/tmp/mkinitramfs_*/** rwl -> /var/tmp/mkinitramfs_*/**,
-        /var/tmp/mkinitramfs_*/usr/lib/modules/*/modules.{order,builtin} rw,
   owner /var/tmp/mkinitramfs-* rw,
 
-  owner @{PROC}/@{pid}/fd/ r,
+  @{sys}/devices/platform/ r,
+  @{sys}/devices/platform/reg-dummy/{,**}/ r,
+  @{sys}/module/compression r,
+
         @{PROC}/cmdline r,
         @{PROC}/modules r,
+  owner @{PROC}/@{pid}/fd/ r,
 
   profile ldd {
     include <abstractions/base>

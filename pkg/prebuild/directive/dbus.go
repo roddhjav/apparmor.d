@@ -18,7 +18,7 @@ import (
 	"strings"
 
 	"github.com/roddhjav/apparmor.d/pkg/aa"
-	"github.com/roddhjav/apparmor.d/pkg/prebuild/cfg"
+	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 )
 
 var defaultInterfaces = []string{
@@ -27,18 +27,20 @@ var defaultInterfaces = []string{
 }
 
 type Dbus struct {
-	cfg.Base
+	prebuild.Base
 }
 
 func init() {
 	RegisterDirective(&Dbus{
-		Base: cfg.Base{
+		Base: prebuild.Base{
 			Keyword: "dbus",
 			Msg:     "Dbus directive applied",
-			Help: `#aa:dbus own bus=<bus> name=<name> [interface=AARE] [path=AARE]
-    #aa:dbus talk bus=<bus> name=<name> label=<profile> [interface=AARE] [path=AARE]`,
-		},
-	})
+			Help: []string{
+				"own bus=<bus> name=<name> [interface=AARE] [path=AARE]",
+				"talk bus=<bus> name=<name> label=<profile> [interface=AARE] [path=AARE]",
+			},
+		}},
+	)
 }
 
 func setInterfaces(rules map[string]string) []string {

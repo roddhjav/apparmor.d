@@ -7,7 +7,7 @@
 # "dbus-session". It is intended to be used only via "Px ->" or via 
 # systemd drop-in AppArmorProfile= setting.
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
@@ -15,8 +15,9 @@ include <tunables/global>
 @{exec_path} += @{bin}/dbus-daemon @{lib}/dbus-1{,.0}/dbus-daemon-launch-helper
 profile dbus-system flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/consoles>
   include <abstractions/bus-system>
+  include <abstractions/consoles>
+  include <abstractions/deny-sensitive-home>
   include <abstractions/nameservice-strict>
 
   capability audit_write,
@@ -32,7 +33,7 @@ profile dbus-system flags=(attach_disconnected) {
 
   ptrace (read) peer=@{p_systemd},
 
-  dbus bus=system,
+  #aa:dbus own bus=system name=org.freedesktop.DBus
 
   @{exec_path} mrix,
 
@@ -48,14 +49,17 @@ profile dbus-system flags=(attach_disconnected) {
   /etc/machine-id r,
   /var/lib/dbus/machine-id r,
 
-  @{desktop_share_dirs}/icc/ r,
-  @{desktop_share_dirs}/icc/edid-@{hex32}.icc r,
-  @{user_share_dirs}/icc/ r,
-  @{user_share_dirs}/icc/edid-@{hex32}.icc r,
+  @{att}/@{desktop_share_dirs}/icc/ r,
+  @{att}/@{desktop_share_dirs}/icc/edid-@{hex32}.icc r,
+  @{att}/@{user_share_dirs}/icc/ r,
+  @{att}/@{user_share_dirs}/icc/edid-@{hex32}.icc r,
 
-  @{run}/systemd/inhibit/*.ref rw,
+  # Dbus can receive any user files
+  @{HOME}/** r,
+
+  @{att}/@{run}/systemd/inhibit/@{int}.ref rw,
+  @{att}/@{run}/systemd/sessions/{,@{l}}@{int}.ref rw,
   @{run}/systemd/notify w,
-  @{run}/systemd/sessions/*.ref rw,
   @{run}/systemd/users/@{int} r,
 
   @{sys}/kernel/security/apparmor/.access rw,
@@ -66,14 +70,15 @@ profile dbus-system flags=(attach_disconnected) {
         @{PROC}/@{pid}/cmdline r,
         @{PROC}/@{pid}/environ r,
         @{PROC}/@{pid}/mounts r,
+        @{PROC}/@{pid}/oom_score_adj r,
         @{PROC}/cmdline r,
         @{PROC}/sys/kernel/osrelease r,
   owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/mounts r,
   owner @{PROC}/@{pid}/oom_score_adj rw,
 
-  /dev/dri/card@{int} rw,
-  /dev/input/event@{int} rw,
+  @{att}/dev/dri/card@{int} rw,
+  @{att}/dev/input/event@{int} rw,
 
   include if exists <local/dbus-system>
 }

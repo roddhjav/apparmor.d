@@ -3,35 +3,42 @@
 # Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
 @{exec_path} = @{bin}/crontab
 profile crontab @{exec_path} {
   include <abstractions/base>
+  include <abstractions/authentication>
   include <abstractions/consoles>
   include <abstractions/nameservice-strict>
 
+  capability audit_write,
+  capability chown,
+  capability dac_read_search,
+  capability net_admin,
   capability setgid,
   capability setuid,
+
+  network netlink raw,
 
   @{exec_path} mr,
 
   @{sh_path}             rix,
-
-  # When editing the crontab file
-  @{bin}/sensible-editor rCx -> editor,
-  @{bin}/vim.*           rCx -> editor,
+  @{editor_path}         rCx -> editor,
 
   /etc/cron.{allow,deny} r,
+  /etc/environment r,
   /etc/pam.d/* r,
+  /etc/security/*.conf r,
 
-        /var/spool/cron/ r,
-        /var/spool/cron/crontabs/ rw,
-  owner /var/spool/cron/crontabs/* rw,
+  /var/spool/cron/ r,
+  /var/spool/cron/** rw,
 
-  owner @{tmp}/crontab.*/{,crontab} rw,
+  owner @{user_cache_dirs}/crontab/crontab.bak rw,
+
+  @{tmp}/crontab.@{rand6}/{,crontab} rwl,
 
   profile editor {
     include <abstractions/base>
@@ -42,7 +49,8 @@ profile crontab @{exec_path} {
     /etc/cron.{allow,deny} r,
 
           /tmp/ r,
-    owner @{tmp}/crontab.*/crontab rw,
+    owner @{tmp}/crontab.@{rand6}/crontab rw,
+    owner @{tmp}/crontab.@{rand6} rw,
 
     include if exists <local/crontab_editor>
   }

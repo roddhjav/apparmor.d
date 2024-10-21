@@ -4,25 +4,35 @@
 
 # Minimal set of rules for all gnome based UI application.
 
+  abi <abi/4.0>,
+
+  include <abstractions/bus-accessibility>
   include <abstractions/bus-session>
+  include <abstractions/bus/org.a11y>
   include <abstractions/dconf-write>
   include <abstractions/gnome-strict>
   include <abstractions/graphics>
 
-  @{open_path}  rPx -> child-open-help,
-
   /usr/share/@{profile_name}/{,**} r,
 
+  / r,
+
   owner @{user_cache_dirs}/@{profile_name}/ rw,
-  owner @{user_cache_dirs}/@{profile_name}/** rwlk,
+  owner @{user_cache_dirs}/@{profile_name}/** rwlk -> @{user_cache_dirs}/@{profile_name}/**,
 
   owner @{user_config_dirs}/@{profile_name}/ rw,
-  owner @{user_config_dirs}/@{profile_name}/** rwlk,
+  owner @{user_config_dirs}/@{profile_name}/** rwlk -> @{user_config_dirs}/@{profile_name}/**,
 
   owner @{user_share_dirs}/@{profile_name}/ rw,
-  owner @{user_share_dirs}/@{profile_name}/** rwlk,
+  owner @{user_share_dirs}/@{profile_name}/** rwlk -> @{user_share_dirs}/@{profile_name}/**,
+
+        @{sys}/fs/cgroup/user.slice/cpu.max r,
+        @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/cpu.max r,
+        @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/cpu.max r,
+  owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/cpu.max r,
 
   owner @{PROC}/@{pid}/cmdline r,
+  owner @{PROC}/@{pid}/task/@{tid}/comm rw,
 
   include if exists <abstractions/common/gnome.d>
 

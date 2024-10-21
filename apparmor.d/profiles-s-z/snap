@@ -2,7 +2,7 @@
 # Copyright (C) 2022-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
@@ -70,7 +70,6 @@ profile snap @{exec_path} {
   @{run}/mount/utab r,
   @{run}/snapd.socket rw,
 
-  @{sys}/kernel/mm/transparent_hugepage/hpage_pmd_size r,
   @{sys}/kernel/security/apparmor/features/{,**} r,
 
         @{PROC}/@{pids}/cgroup r,
@@ -105,7 +104,10 @@ profile snap @{exec_path} {
   profile systemctl {
     include <abstractions/base>
     include <abstractions/app/systemctl>
-  
+    include <abstractions/bus/org.freedesktop.systemd1>
+
+    network unix stream,
+
     include if exists <local/snap_systemctl>
   }
 

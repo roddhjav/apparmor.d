@@ -3,11 +3,11 @@
 # Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
-@{name} = thunderbird{,.sh,-bin} 
+@{name} = thunderbird{,-bin} 
 @{lib_dirs} = @{lib}/@{name}
 @{config_dirs} = @{HOME}/.@{name}/
 @{cache_dirs} = @{user_cache_dirs}/@{name}/
@@ -15,60 +15,18 @@ include <tunables/global>
 @{exec_path} = @{bin}/@{name} @{lib_dirs}/@{name}
 profile thunderbird @{exec_path} {
   include <abstractions/base>
-  include <abstractions/audio-client>
-  include <abstractions/bus-session>
-  include <abstractions/bus-system>
-  include <abstractions/bus/org.a11y>
-  include <abstractions/bus/org.freedesktop.portal.Desktop>
-  include <abstractions/bus/org.freedesktop.RealtimeKit1>
-  include <abstractions/dconf-write>
-  include <abstractions/desktop>
-  include <abstractions/enchant>
-  include <abstractions/fontconfig-cache-read>
-  include <abstractions/graphics>
-  include <abstractions/nameservice-strict>
-  include <abstractions/qt5>
-  include <abstractions/ssl_certs>
-  include <abstractions/thumbnails-cache-read>
-  include <abstractions/uim>
+  include <abstractions/app/firefox>
   include <abstractions/user-download-strict>
-
-  # userns,
-
-  capability sys_admin, # If kernel.unprivileged_userns_clone = 1
-  capability sys_chroot, # If kernel.unprivileged_userns_clone = 1
-
-  network inet dgram,
-  network inet6 dgram,
-  network inet stream,
-  network inet6 stream,
-  network netlink raw,
-
-  ptrace peer=@{profile_name},
+  include <abstractions/user-read-strict>
 
   #aa:dbus own bus=session name=org.mozilla.thunderbird
 
-  dbus receive bus=system path=/org/freedesktop/login1
-       interface=org.freedesktop.login1.Manager
-       member={UserAdded,UserRemoved}
-       peer=(name=:*, label=systemd-logind),
-
-  dbus receive bus=system
-       interface=org.freedesktop.DBus.Introspectable
-       member=Introspect
-       peer=(name=:*, label=gnome-shell),
-
   @{exec_path} mrix,
 
-  @{sh_path}                rix,
-  @{bin}/which.debianutils  rix,
+  @{lib_dirs}/glxtest    rPx,
+  @{lib_dirs}/vaapitest  rPx,
 
-  @{lib_dirs}/{,**}                            r,
-  @{lib_dirs}/*.so                            mr,
-  @{lib_dirs}/glxtest                        rPx,
-  @{lib_dirs}/thunderbird-wrapper-helper.sh  rix,
-  @{lib_dirs}/vaapitest                      rPx,
-
+  @{lib}/@{multiarch}/qt5/plugins/kf5/org.kde.kwindowsystem.platforms/KF5WindowSystemKWaylandPlugin.so mr,
   @{lib}/@{multiarch}/qt5/plugins/kf5/org.kde.kwindowsystem.platforms/KF5WindowSystemX11Plugin.so mr,
 
   # GPG integration
@@ -77,105 +35,35 @@ profile thunderbird @{exec_path} {
   @{bin}/gpgsm       rPx,
 
   # Desktop integration
-  @{bin}/lsb_release rPx -> lsb_release,
   @{open_path}       rPx -> child-open,
 
-  # Allowed apps to open
-  @{bin}/engrampa                                         rPx,
-  @{bin}/geany                                            rPx,
-  @{bin}/qpdfview                                         rPx,
-  @{bin}/viewnior                                        rPUx,
-  @{brave_path}                                           rPx,
-  @{chrome_path}                                          rPx,
-  @{firefox_path}                                         rPx,
-  @{opera_path}                                           rPx,
-
-  /usr/share/@{name}/{,**} r,
-  /usr/share/gvfs/remote-volume-monitors/{,*} r,
   /usr/share/lightning/{,**} r,
-  /usr/share/mozilla/extensions/{,**} r,
-  /usr/share/xul-ext/kwallet5/* r,
 
-  /etc/@{name}/{,**} r,
-  /etc/fstab r,
-  /etc/mailcap r,
-  /etc/mime.types r,
-  /etc/timezone r,
-  /etc/xul-ext/kwallet5.js r,
-
-  owner /var/mail/* rwk,
-
-  owner @{HOME}/ r,
-
-  owner @{user_config_dirs}/kwalletrc r,
-  owner @{user_config_dirs}/mimeapps.list.* rw,
+  owner /var/mail/** rwk,
 
   owner @{user_mail_dirs}/ rw,
   owner @{user_mail_dirs}/** rwl -> @{user_mail_dirs}/**,
 
-  owner @{config_dirs}/ rw,
-  owner @{user_config_dirs}/gtk-3.0/assets/* r,
-  owner @{config_dirs}/*/ rw,
-  owner @{config_dirs}/*/** rwk,
-  owner @{config_dirs}/installs.ini rw,
-  owner @{config_dirs}/profiles.ini rw,
+  owner @{user_config_dirs}/gtk-{3,4}.0/assets/*.svg r,
+  owner @{user_config_dirs}/ibus/bus/ r,
+  owner @{user_config_dirs}/ibus/bus/@{hex32}-unix-{,wayland-}@{int} r,
+  owner @{user_config_dirs}/kioslaverc r,
+  owner @{user_config_dirs}/mimeapps.list{,.@{rand6}} rw,
 
-  owner @{user_cache_dirs}/gtk-3.0/**/*.cache r,
-
-  owner @{cache_dirs}/{,**} rw,
-
-        /tmp/ r,
-    /var/tmp/ r,
-  owner @{tmp}/@{name}{,_*}/ rw,
-  owner @{tmp}/@{name}{,_*}/* rwk,
-  owner @{tmp}/* rw,
-  owner @{tmp}/mozilla_*/ rw,
-  owner @{tmp}/mozilla_*/* rw,
   owner @{tmp}/MozillaMailnews/ rw,
   owner @{tmp}/MozillaMailnews/*.msf rw,
-  owner @{tmp}/Temp-@{uuid}/ rw,
+  owner @{tmp}/nsemail.eml rw,
+  owner @{tmp}/nsma rw,
+  owner @{tmp}/pid-@{pid}/{,**} w,
 
-  @{run}/mount/utab r,
-
-  @{sys}/cgroup/cpu,cpuacct/user.slice/cpu.cfs_quota_us r,
-  @{sys}/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us r,
-
-        @{PROC}/@{pids}/net/arp r,
-        @{PROC}/@{pids}/net/route r,
-  owner @{PROC}/@{pid}/cgroup r,
-  owner @{PROC}/@{pid}/cmdline r,
-  owner @{PROC}/@{pid}/environ r,
-  owner @{PROC}/@{pid}/fd/ r,
-  owner @{PROC}/@{pid}/gid_map w, # If kernel.unprivileged_userns_clone = 1
-  owner @{PROC}/@{pid}/mountinfo r,
-  owner @{PROC}/@{pid}/mounts r,
-  owner @{PROC}/@{pid}/setgroups w, # If kernel.unprivileged_userns_clone = 1
-  owner @{PROC}/@{pid}/smaps r,
-  owner @{PROC}/@{pid}/stat r,
-  owner @{PROC}/@{pid}/statm r,
-  owner @{PROC}/@{pid}/task/ r,
-  owner @{PROC}/@{pid}/task/@{tid}/comm rw,
-  owner @{PROC}/@{pid}/task/@{tid}/stat r,
-  owner @{PROC}/@{pid}/uid_map w, # If kernel.unprivileged_userns_clone = 1
-
-        /dev/shm/ r,
-  owner /dev/shm/org.chromium.* rw,
-  owner /dev/shm/org.mozilla.ipc.@{pid}.@{int} rw,
-  owner /dev/shm/wayland.mozilla.ipc.@{int} rw,
-
-  /dev/tty rw,
-
-  # file_inherit
-  owner /dev/tty@{int} rw,
+  /dev/urandom w,
 
   # Silencer
-  deny @{HOME}/.mozilla/** mrwkl,
-  deny @{config_dirs}/*.*/pepmda/ rw,
-  deny @{config_dirs}/*.*/pepmda/** rwklmx,
+  deny capability sys_ptrace,
   deny @{lib_dirs}/** w,
-  deny /dev/ r,
-  deny /dev/urandom w,
-  deny owner @{user_share_dirs}/gvfs-metadata/{,*} r,
+  deny @{lib_dirs}/crashreporter x,
+  deny @{lib_dirs}/minidump-analyzer x,
+  deny @{HOME}/.mozilla/** mrwkl,
 
   include if exists <local/thunderbird>
 }

@@ -187,11 +187,11 @@ func parseParagraph(input string) (Rules, error) {
 	}
 
 	res = append(res, rrr...)
-	for _, r := range res {
-		if r.Constraint() == PreambleRule {
-			return nil, fmt.Errorf("Rule not allowed in block: %s", r)
-		}
-	}
+	// for _, r := range res {
+	// 	if r.Constraint() == PreambleRule {
+	// 		return nil, fmt.Errorf("Rule not allowed in block: %s", r)
+	// 	}
+	// }
 	return res, nil
 }
 
@@ -495,9 +495,15 @@ func (r rule) String() string {
 }
 
 func isAARE(str string) bool {
-	return strings.HasPrefix(str, "@") ||
-		strings.HasPrefix(str, "/") ||
-		strings.HasPrefix(str, "\"")
+	if len(str) < 1 {
+		return false
+	}
+	switch str[0] {
+	case '@', '/', '"':
+		return true
+	default:
+		return false
+	}
 }
 
 // Convert a slice of internal rules to a slice of ApparmorRule.
@@ -652,8 +658,8 @@ done:
 }
 
 // Parse apparmor profile rules by paragraphs
-func ParseRules(input string) ([]Rules, []string, error) {
-	paragraphRules := []Rules{}
+func ParseRules(input string) (ParaRules, []string, error) {
+	paragraphRules := ParaRules{}
 	paragraphs := []string{}
 
 	for _, match := range regParagraph.FindAllStringSubmatch(input, -1) {

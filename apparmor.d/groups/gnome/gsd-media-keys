@@ -2,13 +2,14 @@
 # Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
 @{exec_path} = @{lib}/gsd-media-keys
 profile gsd-media-keys @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/attached/consoles>
   include <abstractions/audio-client>
   include <abstractions/bus-accessibility>
   include <abstractions/bus-session>
@@ -31,37 +32,13 @@ profile gsd-media-keys @{exec_path} flags=(attach_disconnected) {
   network netlink raw,
 
   #aa:dbus own bus=session name=org.gnome.SettingsDaemon.MediaKeys
+  #aa:dbus talk bus=session name=org.gnome.SettingsDaemon.Rfkill label=gsd-rfkill
+  #aa:dbus talk bus=session name=org.gnome.Shell label=gnome-shell
 
   dbus send bus=system path=/org/freedesktop/login1
        interface=org.freedesktop.login1.Manager
        member=PowerOff
        peer=(name=:*, label=systemd-logind),
-
-  dbus send bus=session path=/org/gnome/Shell
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=:*, label=gnome-shell),
-  dbus send bus=session path=/org/gnome/Shell
-       interface=org.gnome.Shell
-       member={GrabAccelerators,UngrabAccelerators}
-       peer=(name=:*, label=gnome-shell),
-  dbus receive bus=session path=/org/gnome/Shell
-       interface=org.freedesktop.DBus.Properties
-       member={GetAll,PropertiesChanged}
-       peer=(name=:*, label=gnome-shell),
-  dbus receive bus=session path=/org/gnome/Shell
-       interface=org.gnome.Shell
-       member=AcceleratorActivated
-       peer=(name=:*, label=gnome-shell),
-
-  dbus send bus=session path=/org/gnome/SettingsDaemon/Rfkill
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=:*, label=gsd-rfkill),
-  dbus receive bus=session path=/org/gnome/SettingsDaemon/Rfkill
-       interface=org.freedesktop.DBus.Properties
-       member=PropertiesChanged
-       peer=(name=:*, label=gsd-rfkill),
 
   dbus send bus=session path=/
        interface=org.freedesktop.DBus
@@ -96,7 +73,7 @@ profile gsd-media-keys @{exec_path} flags=(attach_disconnected) {
 
   owner @{user_share_dirs}/recently-used.xbel{,.*} rw,
 
-  @{run}/systemd/inhibit/[0-9]*.ref rw,
+  @{att}/@{run}/systemd/inhibit/@{int}.ref rw,
 
   @{run}/udev/data/+sound:card@{int} r,   # For sound card
   @{run}/udev/data/c13:@{int} r,          # for /dev/input/*
@@ -109,8 +86,6 @@ profile gsd-media-keys @{exec_path} flags=(attach_disconnected) {
 
         @{PROC}/1/cgroup r,
   owner @{PROC}/@{pid}/cgroup r,
-
-  owner /dev/tty@{int} rw,
 
   include if exists <local/gsd-media-keys>
 }

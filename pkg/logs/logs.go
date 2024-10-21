@@ -28,11 +28,14 @@ const (
 	boldYellow = "\033[1;33m"
 )
 
+const (
+	h = `[0-9a-fA-F]`
+	d = `[0-9]`
+)
+
 var (
 	quoted                bool
 	isAppArmorLogTemplate = regexp.MustCompile(`apparmor=("DENIED"|"ALLOWED"|"AUDIT")`)
-	_hex                  = `[0-9a-fA-F]`
-	_int                  = `[0-9]`
 	regCleanLogs          = util.ToRegexRepl([]string{
 		// Clean apparmor log file
 		`.*apparmor="`, `apparmor="`,
@@ -40,8 +43,8 @@ var (
 		`\x1d`, " ",
 
 		// Remove basic rules from abstractions/base
-		`(?m)^.*/etc/[^/]+so.*$`, ``,
-		`(?m)^.*/usr/(lib|lib32|lib64|libexec)/[^/]+so.*$`, ``,
+		`(?m)^.*/etc/[^/]+\.so.*$`, ``,
+		`(?m)^.*/usr/(lib|lib32|lib64|libexec)/[^/]+\.so.*$`, ``,
 		`(?m)^.*/usr/(lib|lib32|lib64|libexec)/locale/.*$`, ``,
 		`(?m)^.*/usr/share/locale[^/]?/.*$`, ``,
 		`(?m)^.*/usr/share/zoneinfo[^/]?/.*$`, ``,
@@ -61,40 +64,47 @@ var (
 		`/home/[^/]+/`, `@{HOME}/`,
 
 		// Resolve system variables
-		`/usr/(lib|lib32|lib64|libexec)`, `@{lib}`,
+		`/att/[^/@]+`, `@{att}/`,
+		`/usr/lib(32|64|exec)`, `@{lib}`,
+		`/usr/lib`, `@{lib}`,
 		`/usr/(bin|sbin)`, `@{bin}`,
-		`x86_64-pc-linux-gnu[^/]?`, `@{multiarch}`,
+		`(x86_64|amd64|i386|i686)`, `@{arch}`,
+		`@{arch}-*linux-gnu[^/]?`, `@{multiarch}`,
 		`/usr/etc/`, `@{etc_ro}/`,
 		`/var/run/`, `@{run}/`,
 		`/run/`, `@{run}/`,
 		`user/[0-9]*/`, `user/@{uid}/`,
 		`/tmp/user/@{uid}/`, `@{tmp}/`,
 		`/proc/`, `@{PROC}/`,
+		`@{PROC}/1/`, `@{PROC}/one/`, // Go does not support lookahead assertions like (?!1\b)d+, so we have to use a workaround
 		`@{PROC}/[0-9]*/`, `@{PROC}/@{pid}/`,
+		`@{PROC}/one/`, `@{PROC}/1/`,
 		`@{PROC}/@{pid}/task/[0-9]*/`, `@{PROC}/@{pid}/task/@{tid}/`,
 		`/sys/`, `@{sys}/`,
 		`@{PROC}@{sys}/`, `@{PROC}/sys/`,
-		`pci` + strings.Repeat(_hex, 4) + `:` + strings.Repeat(_hex, 2), `@{pci_bus}`,
-		`@{pci_bus}/[0-9a-f:*./]*`, `@{pci}/`,
+		`pci` + strings.Repeat(h, 4) + `:` + strings.Repeat(h, 2), `@{pci_bus}`,
+		`@{pci_bus}/[0-9a-f:*./]*/`, `@{pci}/`,
 		`1000`, `@{uid}`,
+		`@{att}//`, `@{att}/`,
 
 		// Some system glob
-		`:1.[0-9]*`, `:*`, // dbus peer name
+		`:not.active.yet`, `@{busname}`, // dbus unique bus name
+		`:1.[0-9]*`, `@{busname}`, // dbus unique bus name
 		`@{bin}/(|ba|da)sh`, `@{sh_path}`, // collect all shell
 		`@{lib}/modules/[^/]+\/`, `@{lib}/modules/*/`, // strip kernel version numbers from kernel module accesses
 
 		// int, hex, uuid
-		strings.Repeat(_hex, 8) + `[-_]` + strings.Repeat(_hex, 4) + `[-_]` + strings.Repeat(_hex, 4) + `[-_]` + strings.Repeat(_hex, 4) + `[-_]` + strings.Repeat(_hex, 12), `@{uuid}`,
-		strings.Repeat(_int, 64), `@{int64}`,
-		strings.Repeat(_hex, 64), `@{hex64}`,
-		strings.Repeat(_hex, 38), `@{hex38}`,
-		strings.Repeat(_int, 32), `@{int32}`,
-		strings.Repeat(_hex, 32), `@{hex32}`,
-		strings.Repeat(_int, 16), `@{int16}`,
-		strings.Repeat(_hex, 16), `@{hex16}`,
-		strings.Repeat(_int, 10), `@{int10}`,
-		strings.Repeat(_int, 8), `@{int8}`,
-		strings.Repeat(_int, 6), `@{int6}`,
+		strings.Repeat(h, 8) + `[-_]` + strings.Repeat(h, 4) + `[-_]` + strings.Repeat(h, 4) + `[-_]` + strings.Repeat(h, 4) + `[-_]` + strings.Repeat(h, 12), `@{uuid}`,
+		strings.Repeat(d, 64), `@{int64}`,
+		strings.Repeat(h, 64), `@{hex64}`,
+		strings.Repeat(h, 38), `@{hex38}`,
+		strings.Repeat(d, 32), `@{int32}`,
+		strings.Repeat(h, 32), `@{hex32}`,
+		strings.Repeat(d, 16), `@{int16}`,
+		strings.Repeat(h, 16), `@{hex16}`,
+		strings.Repeat(d, 10), `@{int10}`,
+		strings.Repeat(d, 8), `@{int8}`,
+		strings.Repeat(d, 6), `@{int6}`,
 	})
 )
 
@@ -117,8 +127,8 @@ func toQuote(str string) string {
 	return str
 }
 
-// NewApparmorLogs return a new ApparmorLogs list of map from a log file
-func NewApparmorLogs(file io.Reader, profile string) AppArmorLogs {
+// New returns a new ApparmorLogs list of map from a log file
+func New(file io.Reader, profile string) AppArmorLogs {
 	logs := GetApparmorLogs(file, profile)
 
 	// Parse log into ApparmorLog struct
@@ -130,7 +140,12 @@ func NewApparmorLogs(file io.Reader, profile string) AppArmorLogs {
 
 		aa := make(AppArmorLog)
 		for _, item := range tmp {
-			kv := strings.Split(item, "=")
+			kv := strings.FieldsFunc(item, func(r rune) bool {
+				if r == '"' {
+					quoted = !quoted
+				}
+				return !quoted && r == '='
+			})
 			if len(kv) >= 2 {
 				key, value := kv[0], kv[1]
 				if slices.Contains(toClean, key) {
@@ -187,12 +202,11 @@ func (aaLogs AppArmorLogs) String() string {
 	for _, log := range aaLogs {
 		seen := map[string]bool{"apparmor": true}
 		res.WriteString(state[log["apparmor"]])
-		fsuid := log["fsuid"]
-		ouid := log["ouid"]
+		owner := aa.IsOwner(log)
 
 		for _, key := range keys {
 			if item, present := log[key]; present {
-				if key == "name" && fsuid == ouid && !strings.Contains(log["operation"], "dbus") {
+				if key == "name" && owner {
 					res.WriteString(template[key] + " owner" + reset)
 				}
 				if temp, present := template[key]; present {

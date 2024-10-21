@@ -3,7 +3,7 @@
 # Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
@@ -18,26 +18,25 @@ profile apt-cdrom @{exec_path} flags=(complain) {
   @{exec_path} mr,
 
   @{bin}/dpkg        rPx -> child-dpkg,
-
   @{bin}/mount       rCx -> mount,
   @{bin}/umount      rCx -> umount,
 
   /etc/fstab r,
 
-  # Are all of these needed? (#FIXME#)
-  @{sys}/bus/ r,
-  @{sys}/bus/*/devices/ r,
-  @{sys}/class/ r,
-  @{sys}/class/*/ r,
-  @{sys}/devices/**/uevent r,
-  # @{run}/udev/data/* r,
+  /etc/apt/sources.list{,.new} rw,
+  /etc/apt/sources.list~ w,
+
+  /var/lib/apt/lists/** rw,
+
+  /var/lib/apt/cdroms.list{,.new} rw,
+  /var/lib/apt/cdroms.list~ w,
 
   # For cd-roms
-  /media/cdrom[0-9]/ r,
-  /media/cdrom[0-9]/**/ r,
-  /media/cdrom[0-9]/.disk/info r,
-  /media/cdrom[0-9]/dists/**/binary-*/Packages{,.gz} r,
-  /media/cdrom[0-9]/dists/**/i18n/Translation-en{,.gz} r,
+  /media/cdrom@{int}/ r,
+  /media/cdrom@{int}/**/ r,
+  /media/cdrom@{int}/.disk/info r,
+  /media/cdrom@{int}/dists/**/binary-*/Packages{,.gz} r,
+  /media/cdrom@{int}/dists/**/i18n/Translation-en{,.gz} r,
 
   # For pendrives
   @{MOUNTS}/ r,
@@ -46,15 +45,14 @@ profile apt-cdrom @{exec_path} flags=(complain) {
   @{MOUNTS}/dists/**/binary-*/Packages{,.gz} r,
   @{MOUNTS}/dists/**/i18n/Translation-en{,.gz} r,
 
-  /var/lib/apt/lists/** rw,
+  # Are all of these needed? (#FIXME#)
+  @{sys}/bus/ r,
+  @{sys}/bus/*/devices/ r,
+  @{sys}/class/ r,
+  @{sys}/class/*/ r,
+  @{sys}/devices/**/uevent r,
 
   owner @{PROC}/@{pid}/fd/ r,
-
-  /var/lib/apt/cdroms.list{,.new} rw,
-  /var/lib/apt/cdroms.list~ w,
-
-  /etc/apt/sources.list{,.new} rw,
-  /etc/apt/sources.list~ w,
 
   profile mount flags=(complain) {
     include <abstractions/base>
@@ -63,7 +61,7 @@ profile apt-cdrom @{exec_path} flags=(complain) {
 
     /etc/fstab r,
 
-    /media/cdrom[0-9]/ r,
+    /media/cdrom@{int}/ r,
 
     include if exists <local/apt-cdrom_mount>
   }

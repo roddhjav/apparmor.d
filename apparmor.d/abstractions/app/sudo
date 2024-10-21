@@ -1,14 +1,18 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
+# LOGPROF-SUGGEST: no
 
 # Minimal set of rules for sudo. Interactive sudo need more rules.
+
+  abi <abi/4.0>,
 
   include <abstractions/authentication>
   include <abstractions/bus-system>
   include <abstractions/consoles>
   include <abstractions/nameservice-strict>
   include <abstractions/wutmp>
+  include <abstractions/devices-usb>
 
   capability audit_write,
   capability dac_override,
@@ -48,6 +52,10 @@
 
   owner @{HOME}/.sudo_as_admin_successful rw,
 
+  # yubikey support
+  owner @{HOME}/.yubico/challenge-* rw,
+        @{HOME}/.yubico/ r,
+
         @{run}/faillock/ rw,
         @{run}/faillock/@{user} rwk,
   owner @{run}/sudo/ rw,
@@ -57,8 +65,6 @@
   @{PROC}/@{pid}/limits r,
   @{PROC}/@{pid}/loginuid r,
   @{PROC}/@{pid}/stat r,
-  @{PROC}/sys/kernel/cap_last_cap r,
-  @{PROC}/sys/kernel/ngroups_max r,
   @{PROC}/sys/kernel/seccomp/actions_avail r,
 
         /dev/ r,

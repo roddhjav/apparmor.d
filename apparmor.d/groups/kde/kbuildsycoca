@@ -1,0 +1,23 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Jeroen Rijken
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/kbuildsycoca{,5}
+profile kbuildsycoca @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/freedesktop.org>
+  include <abstractions/nameservice-strict>
+
+  @{exec_path} mr,
+
+  /dev/tty r,
+
+  include if exists <local/kbuildsycoca>
+}
+
+# vim:syntax=apparmor

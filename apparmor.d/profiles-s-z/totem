@@ -2,7 +2,7 @@
 # Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
@@ -10,8 +10,6 @@ include <tunables/global>
 profile totem @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/audio-client>
-  include <abstractions/bus-accessibility>
-  include <abstractions/bus/org.a11y>
   include <abstractions/bus/org.freedesktop.ScreenSaver>
   include <abstractions/bus/org.gnome.SessionManager>
   include <abstractions/common/gnome>
@@ -30,6 +28,7 @@ profile totem @{exec_path} flags=(attach_disconnected) {
   @{exec_path} mr,
 
   @{bin}/bwrap rCx -> bwrap,
+  @{open_path}  rPx -> child-open-help,
 
   /usr/share/xml/iso-codes/{,**} r,
   /usr/share/grilo-plugins/{,**} r,
@@ -56,7 +55,6 @@ profile totem @{exec_path} flags=(attach_disconnected) {
   @{run}/mount/utab r,
 
   owner @{PROC}/@{pid}/mountinfo r,
-  owner @{PROC}/@{pid}/task/@{tid}/comm w,
 
   deny @{user_share_dirs}/gvfs-metadata/* r,
 
@@ -65,6 +63,7 @@ profile totem @{exec_path} flags=(attach_disconnected) {
     include <abstractions/common/bwrap>
     include <abstractions/fonts>
     include <abstractions/freedesktop.org>
+    include <abstractions/graphics>
     include <abstractions/gstreamer>
 
     capability dac_override,
@@ -72,15 +71,19 @@ profile totem @{exec_path} flags=(attach_disconnected) {
     @{bin}/bwrap mr,
     @{bin}/totem-video-thumbnailer rix,
 
+    /usr/share/ladspa/rdf/{,*} r,
+
+    owner @{user_cache_dirs}/gnome-desktop-thumbnailer/{,**} rw,
+
     owner @{tmp}/flatpak-seccomp-@{rand6} rw,
     owner @{tmp}/gnome-desktop-file-to-thumbnail.* rw,
-    owner @{user_cache_dirs}/gnome-desktop-thumbnailer/{,**} rw,
+    owner @{tmp}/gnome-desktop-thumbnailer-@{rand6}/{,**} rw,
 
           @{PROC}/sys/vm/mmap_min_addr r,
     owner @{PROC}/@{pid}/task/@{tid}/comm w,
 
     /dev/ r,
- 
+
     include if exists <local/totem_bwrap>
   }
 

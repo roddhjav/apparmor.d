@@ -2,7 +2,7 @@
 # Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
@@ -17,13 +17,14 @@ profile ibus-x11 @{exec_path} flags=(attach_disconnected) {
   include <abstractions/graphics>
   include <abstractions/nameservice-strict>
 
-  unix (connect, receive, send) type=stream peer=(label=ibus-daemon),
-
   network inet stream,
   network inet6 stream,
   network inet dgram,
   network inet6 dgram,
   network netlink raw,
+
+  # unix (connect, receive, send) type=stream peer=(label=ibus-daemon),
+  unix (send receive connect) type=stream addr=none peer=(label=gnome-shell, addr=@/tmp/.X11-unix/X@{int}),
 
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable
@@ -32,6 +33,7 @@ profile ibus-x11 @{exec_path} flags=(attach_disconnected) {
 
   @{exec_path} mr,
 
+  owner @{desktop_cache_dirs}/ibus/dbus-@{rand8} rw,
   owner @{desktop_config_dirs}/ibus/bus/ r,
   owner @{desktop_config_dirs}/ibus/bus/@{hex32}-unix-{,wayland-}@{int} r,
 

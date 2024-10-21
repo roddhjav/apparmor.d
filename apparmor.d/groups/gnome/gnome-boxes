@@ -1,0 +1,93 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/gnome-boxes
+profile gnome-boxes @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/audio-client>
+  include <abstractions/bus-session>
+  include <abstractions/bus-system>
+  include <abstractions/bus/org.freedesktop.timedate1>
+  include <abstractions/dconf-write>
+  include <abstractions/gnome-strict>
+  include <abstractions/graphics>
+  include <abstractions/gstreamer>
+  include <abstractions/nameservice-strict>
+  include <abstractions/p11-kit>
+  include <abstractions/ssl_certs>
+  include <abstractions/user-download-strict>
+
+  network inet dgram,
+  network inet stream,
+  network inet6 dgram,
+  network inet6 stream,
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  @{open_path}  rPx -> child-open,
+
+  @{bin}/virtqemud  rPUx,
+  @{bin}/virsh      rCx -> virsh,
+
+  /usr/share/osinfo/{,**} r,
+  /usr/share/gnome-boxes/{,**} r,
+
+  /etc/qemu/bridge.conf r,
+
+        @{MOUNTS}/ r,
+  owner @{HOME}/ r,
+
+  # For disk images
+  owner @{user_img_dirs}/{,**} rw,
+  owner @{user_vm_dirs}/{,**} rw,
+
+  owner @{user_cache_dirs}/gnome-boxes/ rw,
+  owner @{user_cache_dirs}/gnome-boxes/** rwk,
+  owner @{user_cache_dirs}/libvirt/qemu/log/*.log r,
+
+  owner @{user_config_dirs}/gnome-boxes/ rw,
+  owner @{user_config_dirs}/gnome-boxes/** rwk,
+
+  owner @{tmp}/.goutputstream-@{rand6} rw,
+  owner @{tmp}/*.iso-@{rand6} rw,
+  owner @{tmp}/*.svg-@{rand6} rw,
+
+  owner @{run}/user/@{uid}/libvirt/virtqemud.lock rwk,
+
+  @{run}/mount/utab r,
+
+  owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/app-dbus*org.gnome.Boxes.slice/*/memory.* r,
+
+        @{PROC}/sys/net/ipv6/conf/all/disable_ipv6 r,
+        @{PROC}/zoneinfo r,
+  owner @{PROC}/@{pid}/cgroup r,
+  owner @{PROC}/@{pid}/cmdline r,
+  owner @{PROC}/@{pid}/mountinfo r,
+
+  deny owner @{user_share_dirs}/gvfs-metadata/{,*} r,
+
+  profile virsh {
+    include <abstractions/base>
+    include <abstractions/consoles>
+
+    @{bin}/virsh mr,
+    @{bin}/pkttyagent r,
+    
+    owner @{run}/user/@{uid}/libvirt/ r,
+    owner @{run}/user/@{uid}/libvirt/virtqemud.lock rwk,
+
+    @{sys}/devices/system/node/ r,
+
+    include if exists <local/gnome-boxes_virsh>
+  }
+
+  include if exists <local/gnome-boxes>
+}
+
+# vim:syntax=apparmor

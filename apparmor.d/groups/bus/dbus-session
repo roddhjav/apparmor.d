@@ -4,10 +4,10 @@
 
 # Profile for session dbus, regardless of the dbus implementation used.
 # It does not specify an attachment path as it would be the same than
-# "dbus-system". It is intended to be used only via "Px ->" or via 
+# "dbus-system". It is intended to be used only via "Px ->" or via
 # systemd drop-in AppArmorProfile= setting.
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
@@ -18,20 +18,19 @@ profile dbus-session flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus-session>
   include <abstractions/consoles>
+  include <abstractions/deny-sensitive-home>
   include <abstractions/nameservice-strict>
 
   network unix stream,
 
   unix (send receive) type=stream addr=none peer=(label=gnome-shell, addr=none),
 
-  signal (receive) set=(term hup)      peer=gdm-session-worker,
-  signal (receive) set=(term hup)      peer=gdm-session,
-  signal (receive) set=(term hup)      peer=gdm,
+  signal (receive) set=(term hup)      peer=gdm{,-*},
   signal (send)    set=(term hup kill) peer=dbus-accessibility,
   signal (send)    set=(term hup kill) peer=dconf-service,
   signal (send)    set=(term hup kill) peer=xdg-*,
 
-  dbus bus=session,
+  #aa:dbus own bus=session name=org.freedesktop.DBus path=/{,org/freedesktop/{d,D}Bus}
 
   @{exec_path} mrix,
 
@@ -51,6 +50,9 @@ profile dbus-session flags=(attach_disconnected) {
   /etc/machine-id r,
   /var/lib/dbus/machine-id r,
 
+  # Dbus can receive any user files
+  owner @{HOME}/** r,
+
   owner @{HOME}/.var/app/*/**/.ref rw,
   owner @{HOME}/.var/app/*/**/logs/* rw,
 
@@ -64,7 +66,7 @@ profile dbus-session flags=(attach_disconnected) {
   @{sys}/kernel/security/apparmor/.access rw,
   @{sys}/kernel/security/apparmor/features/dbus/mask r,
   @{sys}/module/apparmor/parameters/enabled r,
- 
+
         @{PROC}/@{pid}/cmdline r,
   owner @{PROC}/@{pid}/attr/apparmor/current r,
   owner @{PROC}/@{pid}/fd/ r,

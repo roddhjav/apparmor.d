@@ -43,8 +43,10 @@ theme:
     - content.action.edit
     - content.code.annotate
     - content.code.copy
+    - content.tabs.link
     - content.tooltips
     - navigation.indexes
+    - navigation.instant
     - navigation.sections
     - navigation.tabs
     - navigation.top
@@ -62,11 +64,16 @@ plugins:
   - offline:
       enabled: !ENV [MKDOCS_OFFLINE, true]
   - git-revision-date-localized:
-      enabled: !ENV [ENABLED_GIT_REVISION_DATE, True]
+      enabled: !ENV [ENABLED_GIT_REVISION_DATE, true]
       enable_creation_date: true
       fallback_to_build_date: true
   - minify:
       minify_html: true
+  - git-committers:
+      enabled: !ENV [ENABLED_GIT_REVISION_DATE, true]
+      token: !ENV [MKDOCS_GIT_COMMITTERS_APIKEY]
+      repository: roddhjav/apparmor.d
+      branch: main
 
 # Customization
 extra:
@@ -110,7 +117,9 @@ markdown_extensions:
       user: squidfunk
       repo: mkdocs-material
   - pymdownx.smartsymbols
-  - pymdownx.snippets
+  - pymdownx.snippets:
+      auto_append:
+        - docs/abbreviations.md
   - pymdownx.superfences:
       custom_fences:
         - name: mermaid
@@ -118,6 +127,9 @@ markdown_extensions:
           format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.tabbed:
       alternate_style: true
+      slugify: !!python/object/apply:pymdownx.slugs.slugify
+        kwds:
+          case: lower
   - pymdownx.tasklist:
       custom_checkbox: true
 
@@ -130,24 +142,24 @@ nav:
       - install.md
       - configuration.md
       - usage.md
+      - report.md
     - Advanced:
       - variables.md
       - enforce.md
       - full-system-policy.md
     - Troubleshooting:
       - issues.md
-      - report.md
       - recovery.md
   - Development:
     - development/index.md
-    - Architecture:
-      - development/install.md
+    - Profiles:
+      - development/workflow.md
       - development/guidelines.md
-      - development/structure.md
-    - Profile:
       - development/abstractions.md
+      - development/internal.md
       - development/directives.md
       - development/dbus.md
+      - development/recommendations.md
     - Tests:
       - development/tests.md
       - development/integration.md

@@ -2,7 +2,7 @@
 # Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
@@ -12,12 +12,13 @@ profile kded @{exec_path} {
   include <abstractions/audio-client>
   include <abstractions/bus-system>
   include <abstractions/bus/org.bluez>
+  include <abstractions/bus/org.freedesktop.PolicyKit1>
   include <abstractions/consoles>
   include <abstractions/dconf-write>
-  include <abstractions/bus/org.bluez>
-  include <abstractions/bus/org.freedesktop.PolicyKit1>
+  include <abstractions/devices-usb>
   include <abstractions/graphics>
   include <abstractions/gtk>
+  include <abstractions/kde-globals-write>
   include <abstractions/kde-strict>
   include <abstractions/nameservice-strict>
   include <abstractions/wutmp>
@@ -31,7 +32,8 @@ profile kded @{exec_path} {
 
   ptrace (read),
 
-  signal (send) set=hup peer=xsettingsd,
+  signal send set=hup peer=xsettingsd,
+  signal send set=term peer=kioworker,
 
   #aa:dbus own bus=system name=com.redhat.NewPrinterNotification
   #aa:dbus talk bus=system name=org.freedesktop.NetworkManager label=NetworkManager
@@ -54,12 +56,13 @@ profile kded @{exec_path} {
   @{bin}/plasma-welcome    rPUx,
   @{bin}/python3.@{int}     rix,
   @{bin}/setxkbmap          rix,
+  @{bin}/xmodmap           rPUx,
   @{bin}/xrdb               rPx,
   @{bin}/xsetroot           rPx,
   @{bin}/xsettingsd         rPx,
   @{lib}/drkonqi            rPx,
 
-  #aa:exec utempter
+  @{lib}/{,@{multiarch}/}utempter/utempter rPx,
   #aa:exec kconf_update
 
   /usr/share/color-schemes/{,**} r,
@@ -67,13 +70,11 @@ profile kded @{exec_path} {
   /usr/share/kded{5,6}/{,**} r,
   /usr/share/kf{5,6}/kcookiejar/* r,
   /usr/share/khotkeys/{,**} r,
-  /usr/share/knotifications{5,6}/{,**} r,
   /usr/share/kservices{5,6}/{,**} r,
   /usr/share/kservicetypes5/{,**} r,
 
   /etc/fstab r,
   /etc/xdg/accept-languages.codes r,
-  /etc/xdg/kcminputrc r,
   /etc/xdg/kde* r,
   /etc/xdg/kioslaverc r,
   /etc/xdg/menus/{,**} r,
@@ -83,63 +84,43 @@ profile kded @{exec_path} {
 
   / r,
 
+  owner @{HOME}/ r,
   owner @{HOME}/.gtkrc-2.0 rw,
 
         @{user_cache_dirs}/ksycoca{5,6}_* rwlk -> @{user_cache_dirs}/#@{int},
-  owner @{user_cache_dirs}/#@{int} rw,
-  owner @{user_cache_dirs}/icon-cache.kcache rw,
   owner @{user_cache_dirs}/plasmashell/ rw,
   owner @{user_cache_dirs}/plasmashell/** rwlk ->  @{user_cache_dirs}/plasmashell/**,
 
         @{user_config_dirs}/kcookiejarrc.lock rwk,
         @{user_config_dirs}/kcookiejarrc{,.@{rand6}} rwl -> @{user_config_dirs}/#@{int},
-  owner @{user_config_dirs}/#@{int} rw,
-  owner @{user_config_dirs}/bluedevilglobalrc.lock rwk,
-  owner @{user_config_dirs}/bluedevilglobalrc{,.@{rand6}} rwl -> @{user_config_dirs}/#@{int},
-  owner @{user_config_dirs}/breezerc r,
+  owner @{user_config_dirs}/*rc rwl -> @{user_config_dirs}/#@{int},
+  owner @{user_config_dirs}/*rc.@{rand6} rwl -> @{user_config_dirs}/#@{int},
+  owner @{user_config_dirs}/*rc.lock rwk,
   owner @{user_config_dirs}/gtk-{3,4}.0/{,**} rwl,
   owner @{user_config_dirs}/gtk-{3,4}.0/settings.ini.lock rk,
-  owner @{user_config_dirs}/gtkrc{,*} rwlk,
-  owner @{user_config_dirs}/kcminputrc r,
-  owner @{user_config_dirs}/kconf_updaterc rw,
-  owner @{user_config_dirs}/kconf_updaterc.lock rwk,
-  owner @{user_config_dirs}/kdebugrc r,
-  owner @{user_config_dirs}/kded{5,6}rc.lock rwk,
-  owner @{user_config_dirs}/kded{5,6}rc{,.@{rand6}} rwl,
   owner @{user_config_dirs}/kdedefaults/{,**} r,
-  owner @{user_config_dirs}/kdeglobals.lock rwk,
-  owner @{user_config_dirs}/kdeglobals{,.@{rand6}} rwl,
-  owner @{user_config_dirs}/khotkeysrc.lock rwk,
-  owner @{user_config_dirs}/khotkeysrc{,.@{rand6}} rwl -> @{user_config_dirs}/#@{int},
-  owner @{user_config_dirs}/kioslaverc{,.@{rand6}} rwl -> @{user_config_dirs}/#@{int},
-  owner @{user_config_dirs}/ksmserverrc r,
-  owner @{user_config_dirs}/ktimezonedrc.lock rwk,
-  owner @{user_config_dirs}/ktimezonedrc{,.@{rand6}} rwl -> @{user_config_dirs}/#@{int},
-  owner @{user_config_dirs}/kwalletrc r,
-  owner @{user_config_dirs}/kwinrc.lock rwk,
-  owner @{user_config_dirs}/kwinrc{,.@{rand6}} rwl -> @{user_config_dirs}/#@{int},
-  owner @{user_config_dirs}/kxkbrc r,
   owner @{user_config_dirs}/libaccounts-glib/ rw,
   owner @{user_config_dirs}/libaccounts-glib/accounts.db{,-shm,-wal,-journal} rwk,
   owner @{user_config_dirs}/menus/{,**} r,
-  owner @{user_config_dirs}/networkmanagement.notifyrc r,
-  owner @{user_config_dirs}/plasma-nm r,
-  owner @{user_config_dirs}/plasma-welcomerc r,
-  owner @{user_config_dirs}/touchpadrc r,
+  owner @{user_config_dirs}/plasma* r,
   owner @{user_config_dirs}/Trolltech.conf.lock rwk,
   owner @{user_config_dirs}/Trolltech.conf{,.@{rand6}} rwl,
   owner @{user_config_dirs}/xsettingsd/{,**} rw,
 
-  owner @{user_share_dirs}/kcookiejar/cookies{,.@{rand6}} rwkl -> @{user_share_dirs}/kcookiejar/#@{int},
   owner @{user_share_dirs}/icc/{,edid-*} r,
   owner @{user_share_dirs}/kcookiejar/#@{int} rw,
   owner @{user_share_dirs}/kcookiejar/cookies.lock rwk,
+  owner @{user_share_dirs}/kcookiejar/cookies{,.@{rand6}} rwkl -> @{user_share_dirs}/kcookiejar/#@{int},
   owner @{user_share_dirs}/kded{5,6}/{,**} rw,
   owner @{user_share_dirs}/kscreen/{,**} rwl,
   owner @{user_share_dirs}/kservices{5,6}/{,**} r,
   owner @{user_share_dirs}/ktp/cache.db rwk,
   owner @{user_share_dirs}/remoteview/ r,
   owner @{user_share_dirs}/services5/{,**} r,
+  owner @{user_share_dirs}/user-places.xbel r,
+
+  owner @{user_state_dirs}/#@{int} rw,
+  owner @{user_state_dirs}/plasmashellstaterc{,*} rwlk,
 
         @{run}/mount/utab r,
         @{run}/udev/data/c189:@{int} r,                # for /dev/bus/usb/**
@@ -150,6 +131,8 @@ profile kded @{exec_path} {
   owner @{tmp}/#@{int} rw,
   owner @{tmp}/kded6.@{rand6} rwl -> /tmp/#@{int},
   owner @{tmp}/plasma-csd-generator.@{rand6}/{,**} rw,
+
+  @{sys}/class/leds/ r,
 
         @{PROC}/ r,
         @{PROC}/@{pids}/cmdline/ r,

@@ -3,7 +3,7 @@
 # Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
@@ -14,24 +14,18 @@ profile deluser @{exec_path} {
   include <abstractions/consoles>
   include <abstractions/nameservice-strict>
 
-  # The deluser command is issued as root and its task is to delete regular user accounts. It
-  # optionally can remove user files (via --remove-home or --remove-all-files) or create a backup.
-  # Because of that, the deluser command needs the following CAPs to be able to do so.
   capability dac_read_search,
   capability dac_override,
 
   @{exec_path} r,
   @{bin}/perl r,
 
-  @{sh_path}        rix,
-
-  @{bin}/userdel   rPx,
+  @{sh_path}       rix,
+  @{bin}/crontab   rPx,
+  @{bin}/gpasswd   rPx,
   @{bin}/groupdel  rPx,
-  @{bin}/gpasswd    rPx,
-
-  @{bin}/crontab    rPx,
-
-  @{bin}/mount      rCx -> mount,
+  @{bin}/mount     rCx -> mount,
+  @{bin}/userdel   rPx,
 
   /etc/adduser.conf r,
   /etc/deluser.conf r,
@@ -45,7 +39,6 @@ profile deluser @{exec_path} {
   /   r,
   /** rw,
 
-
   profile mount {
     include <abstractions/base>
 
@@ -55,6 +48,7 @@ profile deluser @{exec_path} {
 
     @{sys}/devices/virtual/block/**/name r,
 
+    include if exists <local/deluser_mount>
   }
 
   include if exists <local/deluser>

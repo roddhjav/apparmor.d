@@ -12,13 +12,15 @@
 # @{cache_dirs} = @{user_cache_dirs}/@{name}
 #
 
+  abi <abi/4.0>,
+
   include <abstractions/dconf-write>
   include <abstractions/desktop>
   include <abstractions/graphics>
   include <abstractions/nameservice-strict>
   include <abstractions/ssl_certs>
 
-  # userns,
+  userns,
 
   capability setgid, # If kernel.unprivileged_userns_clone = 1
   capability setuid, # If kernel.unprivileged_userns_clone = 1
@@ -26,6 +28,7 @@
   capability sys_chroot,
   capability sys_ptrace,
 
+  @{bin}/electron rix,
   @{bin}/electron@{int} rix,
   @{lib}/electron@{int}/{,**} r,
   @{lib}/electron@{int}/electron  rix,
@@ -50,7 +53,8 @@
   owner @{HOME}/.pki/nssdb/{cert9,key4}.db rwk,
   owner @{HOME}/.pki/nssdb/{cert9,key4}.db-journal rw,
 
-  owner @{user_share_dirs}/.org.chromium.Chromium.* rw,
+  owner @{user_config_dirs}/electron-flags.conf r,
+  owner @{user_share_dirs}/.org.chromium.Chromium.@{rand6} rw,
 
   owner @{tmp}/.org.chromium.Chromium.@{rand6} rw,
   owner @{tmp}/.org.chromium.Chromium.@{rand6}/ rw,
@@ -61,6 +65,7 @@
   owner @{tmp}/scoped_dir@{rand6}/SingletonSocket w,
   owner @{tmp}/scoped_dir@{rand6}/SS w,
 
+        /dev/shm/ r,
   owner /dev/shm/.org.chromium.Chromium.@{rand6} rw,
 
   @{sys}/devices/system/cpu/kernel_max r,
@@ -85,6 +90,8 @@
   owner @{PROC}/@{pid}/task/@{tid}/stat r,
   owner @{PROC}/@{pid}/task/@{tid}/status r,
   owner @{PROC}/@{pid}/uid_map w, # If kernel.unprivileged_userns_clone = 1
+
+  deny @{user_share_dirs}/gvfs-metadata/* r,
 
   include if exists <abstractions/common/electron.d>
 

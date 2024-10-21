@@ -2,7 +2,7 @@
 # Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
@@ -14,7 +14,6 @@ profile gnome-session-binary @{exec_path} flags=(attach_disconnected) {
   include <abstractions/bus-system>
   include <abstractions/bus/org.a11y>
   include <abstractions/bus/org.freedesktop.login1.Session>
-  include <abstractions/bus/org.freedesktop.login1>
   include <abstractions/bus/org.freedesktop.systemd1-session>
   include <abstractions/bus/org.gnome.Mutter.IdleMonitor>
   include <abstractions/bus/org.gnome.ScreenSaver>
@@ -33,16 +32,12 @@ profile gnome-session-binary @{exec_path} flags=(attach_disconnected) {
   signal (send) set=(term) peer=gsd-*,
 
   #aa:dbus own bus=session name=org.gnome.SessionManager
+  #aa:dbus talk bus=system name=org.freedesktop.login1 label=systemd-logind
 
   dbus send bus=session path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus
        member={GetConnectionUnixUser,GetConnectionUnixProcessID,UpdateActivationEnvironment}
        peer=(name=org.freedesktop.DBus label=dbus-session),
-
-  dbus send bus=system path=/org/freedesktop/login1
-       interface=org.freedesktop.login1.Manager
-       member={CanPowerOff,PowerOff,Reboot}
-       peer=(name=:*, label=systemd-logind),
 
   dbus send bus=session path=/org/freedesktop/systemd1
        interface=org.freedesktop.systemd1.Manager
@@ -53,14 +48,11 @@ profile gnome-session-binary @{exec_path} flags=(attach_disconnected) {
   @{sh_path}                                     rix,
   @{bin}/tput                                    rix,
   @{bin}/session-migration                       rPx,
+  @{lib}/gnome-session-check-*                   rPx,
+  @{lib}/gnome-session-failed                    rix,
 
-  @{lib}/gnome-session-check-accelerated               rix,
-  @{lib}/gnome-session-check-accelerated-gl-helper     rix,
-  @{lib}/gnome-session-check-accelerated-gles-helper   rix,
-  @{lib}/gnome-session-failed                          rix,
-
-  @{lib}/gio-launch-desktop                            rCx -> open,
-  @{lib}/@{multiarch}/glib-[0-9]*/gio-launch-desktop   rCx -> open,
+  @{lib}/gio-launch-desktop                               rCx -> open,
+  @{lib}/@{multiarch}/glib-@{version}/gio-launch-desktop  rCx -> open,
 
   /usr/share/dconf/profile/gdm r,
   /usr/share/gdm/greeter-dconf-defaults r,
@@ -84,9 +76,10 @@ profile gnome-session-binary @{exec_path} flags=(attach_disconnected) {
   owner @{user_config_dirs}/gnome-session/ rw,
   owner @{user_config_dirs}/gnome-session/saved-session/ rw,
 
-        @{run}/systemd/inhibit/[0-9]*.ref rw,
+  @{att}/@{run}/systemd/inhibit/@{int}.ref rw,
+  @{att}/@{run}/systemd/sessions/{,@{l}}@{int}.ref rw,
+
         @{run}/systemd/sessions/* r,
-        @{run}/systemd/sessions/*.ref rw,
         @{run}/systemd/users/@{uid} r,
   owner @{run}/user/@{uid}/gnome-session-leader-fifo rw,
   owner @{run}/user/@{uid}/ICEauthority rw,
@@ -96,9 +89,10 @@ profile gnome-session-binary @{exec_path} flags=(attach_disconnected) {
 
   @{sys}/devices/**/{vendor,device} r,
 
-        @{PROC}/@{pid}/cgroup r,
+        @{PROC}/1/cgroup r,
         @{PROC}/cmdline r,
         @{PROC}/sys/net/ipv{4,6}/conf/all/disable_ipv{4,6} r,
+  owner @{PROC}/@{pid}/cgroup r,
   owner @{PROC}/@{pid}/cmdline r,
   owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/loginuid r,
@@ -108,11 +102,12 @@ profile gnome-session-binary @{exec_path} flags=(attach_disconnected) {
 
   profile open flags=(attach_disconnected) {
     include <abstractions/base>
+    include <abstractions/attached/consoles>
     include <abstractions/desktop>
 
     @{bin}/env rix,
     @{sh_path} r,
-    @{lib}/@{multiarch}/glib-[0-9]*/gio-launch-desktop      mr,
+    @{lib}/@{multiarch}/glib-@{version}/gio-launch-desktop  mr,
     @{lib}/gio-launch-desktop                               mr,
 
     @{lib}/**                     PUx,
@@ -123,7 +118,6 @@ profile gnome-session-binary @{exec_path} flags=(attach_disconnected) {
     /usr/games/**                 PUx,
 
     /dev/tty rw,
-    /dev/tty@{int} rw,
 
     include if exists <usr/gnome-session-binary_open.d>
     include if exists <local/gnome-session-binary_open>

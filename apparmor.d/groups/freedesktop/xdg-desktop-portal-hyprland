@@ -1,0 +1,40 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 odomingao
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/xdg-desktop-portal-hyprland
+profile xdg-desktop-portal-hyprland @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/audio-client>
+  include <abstractions/dconf-write>
+  include <abstractions/desktop>
+  include <abstractions/graphics>
+  include <abstractions/nameservice-strict>
+
+  @{exec_path} mr,
+
+  @{sh_path} ix,
+  @{bin}/hyprland-share-picker rix,
+  @{bin}/sleep rix,
+  @{bin}/slurp rix,
+
+  owner /tmp/hypr/ rw,
+  owner /tmp/hypr/\#@{int} rwkl,
+  owner /tmp/hypr/hyprland-share-picker.conf* rwkl,
+
+  @{sys}/devices/virtual/dmi/id/bios_vendor r,
+  @{sys}/devices/virtual/dmi/id/board_vendor r,
+  @{sys}/devices/virtual/dmi/id/product_name r,
+  @{sys}/devices/virtual/dmi/id/sys_vendor r,
+
+  owner @{PROC}/@{pid}/cmdline r,
+
+  include if exists <local/xdg-desktop-portal-hyprland>
+}
+
+# vim:syntax=apparmor

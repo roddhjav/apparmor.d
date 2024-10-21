@@ -4,12 +4,12 @@
 # SPDX-License-Identifier: GPL-2.0-only
 
 DESTDIR ?= /
-BUILD := .build
-PKGDEST := /tmp/pkg
+BUILD ?= .build
+PKGDEST ?= ${PWD}/.pkg
 PKGNAME := apparmor.d
 P = $(filter-out dpkg,$(notdir $(wildcard ${BUILD}/apparmor.d/*)))
 
-.PHONY: all build enforce full install local $(P) pkg dpkg rpm tests lint clean
+.PHONY: all build enforce full install local $(P) dev package pkg dpkg rpm tests lint check manual docs serve clean
 
 all: build
 	@./${BUILD}/prebuild --complain
@@ -24,13 +24,13 @@ enforce: build
 full: build
 	@./${BUILD}/prebuild --complain --full
 
-ROOT = $(shell find "${BUILD}/root" -type f -printf "%P\n")
+SHARE = $(shell find "${BUILD}/share" -type f -not -name "*.md" -printf "%P\n")
 PROFILES = $(shell find "${BUILD}/apparmor.d" -type f -printf "%P\n")
 DISABLES = $(shell find "${BUILD}/apparmor.d" -type l -printf "%P\n")
 install:
 	@install -Dm0755 ${BUILD}/aa-log ${DESTDIR}/usr/bin/aa-log
-	@for file in ${ROOT}; do \
-		install -Dm0644 "${BUILD}/root/$${file}" "${DESTDIR}/$${file}"; \
+	@for file in ${SHARE}; do \
+		install -Dm0644 "${BUILD}/share/$${file}" "${DESTDIR}/usr/share/$${file}"; \
 	done;
 	@for file in ${PROFILES}; do \
 		install -Dm0644 "${BUILD}/apparmor.d/$${file}" "${DESTDIR}/etc/apparmor.d/$${file}"; \
@@ -56,7 +56,7 @@ local:
 ABSTRACTIONS = $(shell find ${BUILD}/apparmor.d/abstractions/ -type f -printf "%P\n")
 TUNABLES = $(shell find ${BUILD}/apparmor.d/tunables/ -type f -printf "%P\n")
 $(P):
-	@[ -f ${BUILD}/aa-log ] || exit 0; install -Dm755 ${BUILD}/aa-log ${DESTDIR}/usr/bin/aa-log
+	@install -Dm0755 ${BUILD}/aa-log ${DESTDIR}/usr/bin/aa-log
 	@for file in ${ABSTRACTIONS}; do \
 		install -Dm0644 "${BUILD}/apparmor.d/abstractions/$${file}" "${DESTDIR}/etc/apparmor.d/abstractions/$${file}"; \
 	done;
@@ -70,6 +70,12 @@ $(P):
 		install -Dvm0644 "${BUILD}/apparmor.d/$${file}" "${DESTDIR}/etc/apparmor.d/$${file}"; \
 	done;
 	@systemctl restart apparmor || systemctl status apparmor
+
+name ?= 
+dev:
+	@go run ./cmd/prebuild --complain --file $(shell find apparmor.d -iname ${name})
+	@sudo install -Dm644 ${BUILD}/apparmor.d/${name} /etc/apparmor.d/${name}
+	@sudo systemctl restart apparmor || systemctl status apparmor
 
 dist ?= archlinux
 package:
@@ -95,12 +101,23 @@ lint:
 	@golangci-lint run
 	@make --directory=tests lint
 	@shellcheck --shell=bash \
-		PKGBUILD dists/build.sh dists/docker.sh \
+		PKGBUILD dists/build.sh dists/docker.sh tests/check.sh \
 		tests/packer/init/init.sh tests/packer/src/aa-update tests/packer/init/clean.sh \
 		debian/${PKGNAME}.postinst debian/${PKGNAME}.postrm
+
+check:
+	@bash tests/check.sh
+
+manual:
+	@pandoc -t man -s -o root/usr/share/man/man8/aa-log.8 root/usr/share/man/man8/aa-log.md
+
+docs:
+	@ENABLED_GIT_REVISION_DATE=false MKDOCS_OFFLINE=true mkdocs build --strict
+
+serve:
+	@ENABLED_GIT_REVISION_DATE=false MKDOCS_OFFLINE=false mkdocs serve
 
 clean:
 	@rm -rf \
 		debian/.debhelper debian/debhelper* debian/*.debhelper debian/${PKGNAME} \
-		${PKGNAME}-*.pkg.tar.zst.sig ${PKGNAME}-*.pkg.tar.zst coverage.out \
-		${PKGNAME}_*.* ${PKGNAME}-*.rpm ${BUILD}
+		.pkg/${PKGNAME}* ${BUILD} coverage.out

@@ -3,7 +3,7 @@
 # Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
@@ -28,7 +28,26 @@ profile gpg @{exec_path} {
   @{bin}/gpgsm             rPx,
   @{lib}/{,gnupg/}scdaemon rPx,
 
+  /usr/share/terminfo/** r,
+
   /etc/inputrc r,
+
+  #aa:only pacman
+  /etc/pacman.d/gnupg/gpg.conf r,
+  /etc/pacman.d/gnupg/pubring.gpg r,
+  /etc/pacman.d/gnupg/trustdb.gpg r,
+
+  #aa:only apt
+  owner /etc/apt/keyrings/ rw,
+  owner /etc/apt/keyrings/** rwkl -> /etc/apt/keyrings/**,
+
+  owner /var/lib/*/{,.}gnupg/ rw,
+  owner /var/lib/*/{,.}gnupg/** rwkl -> /var/lib/*/{,.}gnupg/**,
+
+  # TODO: Remove after zypper profile is created
+  #aa:only zypper
+  owner /var/tmp/zypp.@{rand6}/ rw,
+  owner /var/tmp/zypp.@{rand6}/** rwkl -> /var/tmp/zypp.@{rand6}/**,
 
   owner @{HOME}/@{XDG_GPG_DIR}/ rw,
   owner @{HOME}/@{XDG_GPG_DIR}/** rwkl -> @{HOME}/@{XDG_GPG_DIR}/**,
@@ -39,25 +58,9 @@ profile gpg @{exec_path} {
   owner @{user_projects_dirs}/**/gnupg/ rw,
   owner @{user_projects_dirs}/**/gnupg/** rwkl -> @{user_projects_dirs}/**/gnupg/**,
 
-  #aa:only apt
-  owner /etc/apt/keyrings/ rw,
-  owner /etc/apt/keyrings/** rwkl -> /etc/apt/keyrings/**,
-
-  #aa:only pacman
-  /etc/pacman.d/gnupg/gpg.conf r,
-  /etc/pacman.d/gnupg/pubring.gpg r,
-  /etc/pacman.d/gnupg/trustdb.gpg r,
-
-  owner /var/lib/*/gnupg/ rw,
-  owner /var/lib/*/gnupg/** rwkl -> /var/lib/*/gnupg/**,
-
-  owner /var/lib/*/.gnupg/ rw,
-  owner /var/lib/*/.gnupg/** rwkl -> /var/lib/*/.gnupg/**,
-
-  # TODO: Remove after zypper profile is created
-  #aa:only zypper
-  owner /var/tmp/zypp.@{rand6}/ rw,
-  owner /var/tmp/zypp.@{rand6}/** rwkl -> /var/tmp/zypp.@{rand6}/**,
+  # TODO: For compatibility with torbrowser profile from upstream.
+  owner @{user_share_dirs}/torbrowser/gnupg_homedir/ rw,
+  owner @{user_share_dirs}/torbrowser/gnupg_homedir/** rwkl -> @{user_share_dirs}/torbrowser/gnupg_homedir/**,
 
   #aa:exclude ubuntu
   owner @{tmp}/ostree-gpg-@{rand6}/ r,

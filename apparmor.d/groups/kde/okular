@@ -3,7 +3,7 @@
 # Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
@@ -11,26 +11,44 @@ include <tunables/global>
 profile okular @{exec_path} {
   include <abstractions/base>
   include <abstractions/bus-session>
+  include <abstractions/devices-usb>
   include <abstractions/graphics>
+  include <abstractions/kde-globals-write>
   include <abstractions/kde-strict>
   include <abstractions/nameservice-strict>
+  include <abstractions/qt5-settings-write>
   include <abstractions/user-download-strict>
   include <abstractions/user-read-strict>
   include <abstractions/user-write-strict>
+
+  network netlink raw,
+
+  signal send set=term peer=kioworker,
 
   @{exec_path} mr,
 
   @{bin}/ps2pdf   rPUx,
 
   @{bin}/gpg{,2}  rCx -> gpg,
-  @{bin}/gpgcon   rCx -> gpg,
+  @{bin}/gpgconf  rCx -> gpg,
   @{bin}/gpgsm    rCx -> gpg,
 
   @{open_path}    rPx -> child-open,
+  #aa:exec kioworker
 
   /usr/share/color-schemes/{,**} r,
   /usr/share/okular/{,**} r,
   /usr/share/poppler/{,**} r,
+
+  /etc/fstab r,
+  /etc/xdg/dolphinrc r,
+  /etc/xdg/menus/ r,
+  /etc/xdg/menus/applications-merged/ r,
+
+  / r,
+  @{MOUNTS}/ r,
+
+  owner @{user_cache_dirs}/okular/{,**} rw,
 
   owner @{user_config_dirs}/#@{int} rw,
   owner @{user_config_dirs}/okularpartrc rw,
@@ -39,21 +57,47 @@ profile okular @{exec_path} {
   owner @{user_config_dirs}/okularrc rw,
   owner @{user_config_dirs}/okularrc.@{rand6} rwl -> @{user_config_dirs}/#@{int},
   owner @{user_config_dirs}/okularrc.lock rwk,
+  owner @{user_config_dirs}/okular-generator-popplerrc r,
+  owner @{user_config_dirs}/KDE/*.conf r,
+  owner @{user_config_dirs}/kioslaverc r,
+  owner @{user_config_dirs}/kservicemenurc r,
+  owner @{user_config_dirs}/kwalletrc r,
+  owner @{user_config_dirs}/menus/ r,
+  owner @{user_config_dirs}/menus/applications-merged/ r,
 
+  owner @{user_share_dirs}/#@{int} rw,
+  owner @{user_share_dirs}/kxmlgui{5,6}/okular/{,*} r,
   owner @{user_share_dirs}/okular/ rw,
   owner @{user_share_dirs}/okular/** rwlk -> @{user_share_dirs}/okular/**,
+  owner @{user_share_dirs}/recently-used.xbel.@{rand6} rwl -> @{user_share_dirs}/#@{int},
+  owner @{user_share_dirs}/recently-used.xbel.lock rk,
+  owner @{user_share_dirs}/user-places.xbel r,
 
-  owner @{user_cache_dirs}/okular/{,**} rw,
+  owner @{user_state_dirs}/#@{int} rw,
+  owner @{user_state_dirs}/okularstaterc rw,
+  owner @{user_state_dirs}/okularstaterc.@{rand6} rwl -> @{user_state_dirs}/#@{int},
+  owner @{user_state_dirs}/okularstaterc.lock rwk,
 
   owner @{tmp}/#@{int} rw,
+  owner @{tmp}/okular.@{rand6} rwl -> /tmp/#@{int},
   owner @{tmp}/okular_@{rand6}.ps rwl -> /tmp/#@{int},
+  owner @{tmp}/messageviewer_attachment_@{rand6}/{,*} r, # files opened from KMail as mail attachment, 
+
+  owner @{run}/user/@{uid}/#@{int} rw,
+  owner @{run}/user/@{uid}/okular@{rand6}.@{int}.kioworker.socket rwl -> @{run}/user/@{uid}/#@{int},
+
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/mounts r,
 
   profile gpg {
     include <abstractions/base>
+    include <abstractions/consoles>
 
     @{bin}/gpg{,2}  mr,
     @{bin}/gpgcon   mr,
     @{bin}/gpgsm    mr,
+
+    owner @{HOME}/@{XDG_GPG_DIR}/*.conf r,
 
     owner @{run}/user/@{uid}/ r,
     owner @{run}/user/@{uid}/gnupg/ r,

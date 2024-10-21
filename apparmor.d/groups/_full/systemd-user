@@ -11,7 +11,9 @@
 
 # Distributions and other programs can add rules in the usr/systemd-user.d directory
 
-abi <abi/3.0>,
+# TODO: rework this to get a controlled environment. cf comments in systemd profile.
+
+abi <abi/4.0>,
 
 include <tunables/global>
 
@@ -25,40 +27,47 @@ profile systemd-user flags=(attach_disconnected,mediate_deleted) {
 
   network netlink raw,
 
-  signal (send) set=(term, cont, kill),
-  signal (receive) set=(hup) peer=@{p_systemd},
+  signal send set=(term, cont, kill),
+  signal receive set=hup peer=@{p_systemd},
 
-  ptrace (read) peer=@{p_systemd},
+  ptrace read peer=@{p_systemd},
 
-  unix (bind) type=stream addr=@@{hex16}/bus/systemd/bus-system,
-  unix (bind) type=stream addr=@@{hex16}/bus/systemd/bus-api-user,
+  unix bind type=stream addr=@@{hex16}/bus/systemd/bus-system,
+  unix bind type=stream addr=@@{hex16}/bus/systemd/bus-api-user,
 
   #aa:dbus own bus=session name=org.freedesktop.systemd1
 
   @{exec_path} mr,
 
-  @{bin}/dbus-broker                         rpx -> dbus-session,
-  @{bin}/dbus-broker-launch                  rpx -> dbus-session,
-  @{bin}/dbus-daemon                         rpx -> dbus-session,
-  @{lib}/dbus-1.0/dbus-daemon-launch-helper  rpx -> dbus-session,
+  @{bin}/**                         Px,
+  @{lib}/**                         Px,
+  /etc/cron.*/*                     Px,
+  /opt/*/**                         Px,
+  /usr/share/*/**                   Px,
 
-  @{bin}/systemctl                  rCx -> systemctl,
-  @{lib}/systemd/systemd-executor   rix,
-  @{sh_path}                        rix, # Should be handled by default profile?
-  @{bin}/grep                       rix,
-  @{bin}/sleep                      rix,
+  # Systemd internal service started and config handler (sandboxing, namespacing, cgroup, etc.)
+  @{lib}/systemd/systemd-executor   ix,
 
-  @{bin}/**                          Px,
-  @{lib}/**                          Px,
-  /opt/*/**                          Px,
-  /usr/share/*/**                    Px,
+  # Unit services using systemctl
+  @{bin}/systemctl                  Cx -> systemctl,
 
+  # Shell based ystemd unit services
+  @{coreutils_path}                 Px -> systemd-user-service,
+  @{sh_path}                        Px -> systemd-user-service,
+
+  # Dbus needs to be started without environment scrubbing
+  @{bin}/dbus-broker                         px -> dbus-session,
+  @{bin}/dbus-broker-launch                  px -> dbus-session,
+  @{bin}/dbus-daemon                         px -> dbus-session,
+  @{lib}/dbus-1.0/dbus-daemon-launch-helper  px -> dbus-session,
+
+  # Audio profiles need to be stacked
   #aa:stack pipewire pipewire-media-session pipewire-pulse pulseaudio wireplumber
-  @{bin}/pipewire                   rPx -> systemd-user//&pipewire,
-  @{bin}/pipewire-media-session     rPx -> systemd-user//&pipewire-media-session,
-  @{bin}/pipewire-pulse             rPx -> systemd-user//&pipewire-pulse,
-  @{bin}/pulseaudio                 rPx -> systemd-user//&pulseaudio,
-  @{bin}/wireplumber                rPx -> systemd-user//&wireplumber,
+  @{bin}/pipewire                   Px -> systemd-user//&pipewire,
+  @{bin}/pipewire-media-session     Px -> systemd-user//&pipewire-media-session,
+  @{bin}/pipewire-pulse             Px -> systemd-user//&pipewire-pulse,
+  @{bin}/pulseaudio                 Px -> systemd-user//&pulseaudio,
+  @{bin}/wireplumber                Px -> systemd-user//&wireplumber,
 
   /usr/ r,
   /usr/share/defaults/**.conf r,

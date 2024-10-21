@@ -1,0 +1,26 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 valoq <valoq@mailbox.org>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/ssh/ssh-sk-helper
+profile ssh-sk-helper flags=(complain) {
+  include <abstractions/base>
+
+  @{exec_path} mr,
+
+  @{sys}/ r,
+  @{sys}/bus/ r,
+  @{sys}/class/ r,
+  @{sys}/class/hidraw/ r,
+  @{sys}/class/hidraw/hidraw@{int} r,
+
+  /dev/hidraw@{int} rwk,
+
+  include if exists <local/ssh-sk-helper>
+}
+
+# vim:syntax=apparmor

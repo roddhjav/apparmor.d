@@ -1,0 +1,35 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/{,qemu/}qemu-bridge-helper
+profile qemu-bridge-helper @{exec_path} {
+  include <abstractions/base>
+
+  capability net_admin,
+  capability setpcap,
+
+  network inet stream,
+
+  unix (send, receive) type=stream addr=none peer=(label=libvirtd),
+
+  signal receive set=term peer=libvirtd,
+
+  @{exec_path} mr,
+
+  /etc/qemu/bridge.conf r,
+
+  @{sys}/devices/system/node/ r,
+
+  owner @{PROC}/@{pids}/status r,
+
+  /dev/net/tun rw,
+
+  include if exists <local/qemu-bridge-helper>
+}
+
+# vim:syntax=apparmor

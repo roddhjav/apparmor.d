@@ -3,7 +3,7 @@
 # Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
@@ -99,11 +99,10 @@ profile apt @{exec_path} flags=(attach_disconnected) {
   /usr/share/language-tools/language-options            rPx,
 
   # For editing the sources.list file
-  @{bin}/sensible-editor rCx -> editor,
-  @{bin}/vim.*           rCx -> editor,
+  @{editor_path} rCx -> editor,
 
   # For changelogs
-  @{bin}/sensible-pager  rCx -> pager,
+  @{pager_path}  rCx -> pager,
 
   #aa:only whonix
   @{lib}/uwt/uwtwrapper rix,
@@ -142,14 +141,14 @@ profile apt @{exec_path} flags=(attach_disconnected) {
   owner @{tmp}/apt.conf.* rw,
   owner @{tmp}/apt.data.* rw,
 
+  @{att}/@{run}/systemd/inhibit/@{int}.ref rw,
+
         @{PROC}/@{pids}/cmdline r,
         @{PROC}/@{pids}/mountinfo r,
   owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/mounts r,
 
   /dev/ptmx rw,
-
-  @{run}/systemd/inhibit/[0-9]*.ref rw,
 
   profile editor flags=(complain) {
     include <abstractions/base>
@@ -168,8 +167,7 @@ profile apt @{exec_path} flags=(attach_disconnected) {
 
     @{bin}/                      r,
     @{sh_path}                   rix,
-    @{bin}/less                  rix,
-    @{bin}/sensible-pager         mr,
+    @{pager_path}               rmix,
     @{bin}/which{,.debianutils}  rix,
 
     /root/ r,  # For shell pwd

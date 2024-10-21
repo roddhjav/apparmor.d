@@ -94,7 +94,7 @@ func (r Rules) Delete(i int) Rules {
 }
 
 func (r Rules) DeleteKind(kind Kind) Rules {
-	res := make(Rules, 0)
+	res := make(Rules, 0, len(r))
 	for _, rule := range r {
 		if rule == nil {
 			continue
@@ -106,8 +106,8 @@ func (r Rules) DeleteKind(kind Kind) Rules {
 	return res
 }
 
-func (r Rules) Filter(filter Kind) Rules {
-	res := make(Rules, 0)
+func (r Rules) FilterOut(filter Kind) Rules {
+	res := make(Rules, 0, len(r))
 	for _, rule := range r {
 		if rule == nil {
 			continue
@@ -119,8 +119,21 @@ func (r Rules) Filter(filter Kind) Rules {
 	return res
 }
 
+func (r Rules) Filter(filter Kind) Rules {
+	res := make(Rules, 0, len(r))
+	for _, rule := range r {
+		if rule == nil {
+			continue
+		}
+		if rule.Kind() == filter {
+			res = append(res, rule)
+		}
+	}
+	return res
+}
+
 func (r Rules) GetVariables() []*Variable {
-	res := make([]*Variable, 0)
+	res := make([]*Variable, 0, len(r))
 	for _, rule := range r {
 		switch rule := rule.(type) {
 		case *Variable:
@@ -131,7 +144,7 @@ func (r Rules) GetVariables() []*Variable {
 }
 
 func (r Rules) GetIncludes() []*Include {
-	res := make([]*Include, 0)
+	res := make([]*Include, 0, len(r))
 	for _, rule := range r {
 		switch rule := rule.(type) {
 		case *Include:
@@ -246,4 +259,21 @@ func (r Rules) Format() Rules {
 	}
 	r.setPaddings(paddingsIndex, paddingsMaxLen)
 	return r
+}
+
+// ParaRules is a slice of Rules grouped by paragraph
+type ParaRules []Rules
+
+func (r ParaRules) Flatten() Rules {
+	totalLen := 0
+	for i := range r {
+		totalLen += len(r[i])
+	}
+
+	res := make(Rules, 0, totalLen)
+	for i := range r {
+		res = append(res, r[i]...)
+	}
+
+	return res
 }

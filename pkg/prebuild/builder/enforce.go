@@ -8,16 +8,16 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/roddhjav/apparmor.d/pkg/prebuild/cfg"
+	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 )
 
 type Enforce struct {
-	cfg.Base
+	prebuild.Base
 }
 
 func init() {
 	RegisterBuilder(&Enforce{
-		Base: cfg.Base{
+		Base: prebuild.Base{
 			Keyword: "enforce",
 			Msg:     "All profiles have been enforced",
 		},
@@ -36,9 +36,9 @@ func (b Enforce) Apply(opt *Option, profile string) (string, error) {
 		return profile, nil
 	}
 	flags = slices.Delete(flags, idx, idx+1)
-	strFlags := "{"
+	strFlags := "{\n"
 	if len(flags) >= 1 {
-		strFlags = " flags=(" + strings.Join(flags, ",") + ") {"
+		strFlags = " flags=(" + strings.Join(flags, ",") + ") {\n"
 	}
 
 	// Remove all flags definition, then set new flags

@@ -24,9 +24,10 @@ apparmor module is loaded.
    ...
 30 processes are in complain mode.
    ...
+0 processes are in prompt mode.
+0 processes are in kill mode.
 0 processes are unconfined but have a profile defined.
 0 processes are in mixed mode.
-0 processes are in kill mode.
 ```
 
 You can also list the current processes alongside with their security profile with:
@@ -76,9 +77,9 @@ ps (complain)                   user        ps auxZ
 
 ## AppArmor Log
 
-Ensure that `Auditd` is installed and running on your system in order to read AppArmor log from `/var/log/audit/audit.log`. Then you can see the log with the provided command `aa-log` allowing you to review AppArmor generated messages in a colorful way.
+Ensure that `Auditd` is installed and running on your system in order to read AppArmor log from `/var/log/audit/audit.log`. Then you can see the log with the provided command `aa-log` allowing you to review AppArmor generated messages in a colourful way.
 
-Other AppArmor userspace tools such as `aa-enforce`, `aa-complain`, and `aa-logprof` should work as expected.
+Other AppArmor userspace tools such as `aa-enforce`, `aa-complain`, and `aa-logprof` should work as expected. You can also configure [a desktop notification on denied actions](https://wiki.archlinux.org/title/AppArmor#Get_desktop_notification_on_DENIED_actions).
 
 
 ### Basic use

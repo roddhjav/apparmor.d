@@ -3,7 +3,7 @@
 # Copyright (C) 2022-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
@@ -43,6 +43,7 @@ profile git @{exec_path} flags=(attach_disconnected) {
   # These are needed for "git submodule update"
   @{sh_path}         rix,
   @{bin}/{,e}grep    rix,
+  @{bin}/alts        rix,
   @{bin}/basename    rix,
   @{bin}/cat         rix,
   @{bin}/date        rix,
@@ -61,23 +62,20 @@ profile git @{exec_path} flags=(attach_disconnected) {
   @{bin}/wc          rix,
   @{bin}/whoami      rix,
 
-  @{bin}/pager       rPx -> child-pager,
-  @{bin}/less        rPx -> child-pager,
-  @{bin}/more        rPx -> child-pager,
+  @{pager_path}      rPx -> child-pager,
 
   @{bin}/man         rPx,
   @{bin}/meld       rPUx,
-  @{lib}/code/extensions/git/dist/askpass.sh rPx,
-  @{lib}/code/extensions/git/dist/git-editor.sh rPx,
-  /usr/share/aurpublish/*.hook rPx,
+  @{lib}/code/extensions/git/dist/askpass.sh     rPx,
+  @{lib}/code/extensions/git/dist/git-editor.sh  rPx,
+  /usr/share/aurpublish/*.hook                   rPx,
 
   @{bin}/gpg{,2}         rCx -> gpg,
   @{bin}/ssh             rCx -> ssh,
-  @{bin}/sensible-editor rCx -> editor,
-  @{bin}/vim             rCx -> editor,
-  @{bin}/vim.*           rCx -> editor,
-  
+  @{editor_path}         rCx -> editor,
+
   /usr/share/git{,-core}/{,**} r,
+  /usr/share/libalternatives/{,**} r,
   /usr/share/terminfo/** r,
 
   /etc/gitconfig r,
@@ -90,25 +88,20 @@ profile git @{exec_path} flags=(attach_disconnected) {
   owner @{user_cache_dirs}/*/ rw,
   owner @{user_cache_dirs}/*/** rwkl -> @{user_cache_dirs}/*/**,
 
-  owner @{tmp}/**        rwkl -> /tmp/**,
-  owner @{tmp}/**/bin/*  rCx -> exec,
-
   owner @{HOME}/.gitconfig* rw,
   owner @{HOME}/.netrc r,
   owner @{user_config_dirs}/git/{,*} rw,
 
-  owner @{tmp}/git-difftool.*/ rw,             # For diffs
-  owner @{tmp}/git-difftool.*/right/{,**} rw,
-  owner @{tmp}/git-difftool.*/left/{,**} rw,
-  owner @{tmp}/* rw,
-  owner @{tmp}/tmp*/ rw,                       # For TWRP-device-tree-generator
-  owner @{tmp}/tmp*/** rwkl -> /tmp/tmp*/**,
   owner @{tmp}/.git_vtag_tmp@{rand6} rw,       # For git log --show-signature
   owner @{tmp}/git-commit-msg-.txt rw,         # For android studio
+  owner @{tmp}/git-difftool.*/{,**} rw,        # For diffs
 
-  deny @{user_share_dirs}/gvfs-metadata/* r,
-  deny /dev/shm/.org.chromium.Chromium* rw,
   deny owner @{code_config_dirs}/** rw,
+  deny owner @{user_share_dirs}/gvfs-metadata/* r,
+  deny owner @{user_share_dirs}/vulkan/** r,
+  deny owner @{user_share_dirs}/zed/**/data.mdb rw,
+  deny /usr/share/nvidia/nvidia-application-profiles-* r,
+  deny /dev/shm/.org.chromium.Chromium.@{rand6} rw,
 
   profile gpg flags=(attach_disconnected) {
     include <abstractions/base>
@@ -129,6 +122,7 @@ profile git @{exec_path} flags=(attach_disconnected) {
 
   profile ssh flags=(attach_disconnected) {
     include <abstractions/base>
+    include <abstractions/consoles>
     include <abstractions/nameservice-strict>
 
     network inet dgram,
@@ -139,14 +133,15 @@ profile git @{exec_path} flags=(attach_disconnected) {
 
     @{bin}/ssh mr,
 
-    /etc/ssh/ssh_config.d/{,*} r,
-    /etc/ssh/ssh_config r,
+    @{etc_ro}/ssh/ssh_config.d/{,*} r,
+    @{etc_ro}/ssh/ssh_config r,
 
     owner @{HOME}/@{XDG_SSH_DIR}/* r,
-    owner @{HOME}/@{XDG_SSH_DIR}/known_hosts{,.*} rw,
     owner @{HOME}/@{XDG_SSH_DIR}/known_hosts.old rwl,
+    owner @{HOME}/@{XDG_SSH_DIR}/known_hosts{,.*} rw,
+    owner @{HOME}/@{XDG_SSH_DIR}/ssh_control_* rwl,
 
-    owner @{tmp}/git@*:@{int} rwl -> /tmp/git@*:@{int}.*,
+    owner @{tmp}/git@*:@{int} rwl -> @{tmp}/git@*:@{int}.*,
     owner @{tmp}/ssh-*/agent.@{int} rw,
 
     owner @{PROC}/@{pid}/fd/ r,
@@ -167,11 +162,11 @@ profile git @{exec_path} flags=(attach_disconnected) {
   profile editor flags=(attach_disconnected) {
     include <abstractions/base>
     include <abstractions/app/editor>
-  
+
     owner @{user_projects_dirs}/**/ r,
     owner @{user_projects_dirs}/**/.git/@{int} rw,
     owner @{user_projects_dirs}/**/.git/*MSG rw,
-  
+
     # The git repository files
     owner @{user_build_dirs}/ r,
     owner @{user_build_dirs}/** rw,

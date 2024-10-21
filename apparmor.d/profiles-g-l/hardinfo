@@ -3,7 +3,7 @@
 # Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
@@ -12,9 +12,7 @@ profile hardinfo @{exec_path} {
   include <abstractions/base>
   include <abstractions/consoles>
   include <abstractions/fontconfig-cache-read>
-  include <abstractions/fonts>
-  include <abstractions/freedesktop.org>
-  include <abstractions/gtk>
+  include <abstractions/desktop>
   include <abstractions/nameservice-strict>
   include <abstractions/python>
   include <abstractions/user-download-strict>
@@ -49,7 +47,7 @@ profile hardinfo @{exec_path} {
   @{lib}/@{multiarch}/valgrind/memcheck-*-linux rix,
 
   @{bin}/lsb_release rPx -> lsb_release,
-  @{bin}/xdg-open    rCx -> open,
+  @{open_path}       rPx -> child-open,
   @{bin}/ccache      rCx -> ccache,
   @{bin}/kmod        rCx -> kmod,
 
@@ -62,7 +60,21 @@ profile hardinfo @{exec_path} {
 
   @{lib}/jvm/java-[0-9]*-openjdk-amd64/bin/javac rCx -> javac,
 
+  /usr/share/gdb/python/ r,
+  /usr/share/gdb/python/** r,
   /usr/share/hardinfo/{,**} r,
+
+  /etc/fstab r,
+  /etc/exports r,
+  /etc/samba/smb.conf  r,
+
+  /etc/gdb/gdbinit.d/ r,
+
+  /var/log/wtmp r,
+
+  owner @{HOME}/.hardinfo/ rw,
+
+  owner @{tmp}/#@{int} rw,
 
   @{sys}/class/power_supply/ r,
   @{sys}/class/thermal/ r,
@@ -78,48 +90,27 @@ profile hardinfo @{exec_path} {
   @{sys}/devices/@{pci}/hwmon/hwmon@{int}/temp* r,
   @{sys}/devices/**/power_supply/** r,
 
-        @{PROC}/@{pid}/net/wireless r,
-        @{PROC}/@{pid}/net/dev r,
         @{PROC}/@{pid}/net/arp r,
+        @{PROC}/@{pid}/net/dev r,
+        @{PROC}/@{pid}/net/route r,
+        @{PROC}/@{pid}/net/wireless r,
+        @{PROC}/@{pids}/loginuid r,
+        @{PROC}/asound/cards r,
+        @{PROC}/bus/input/devices r,
+        @{PROC}/dma r,
+        @{PROC}/iomem r,
+        @{PROC}/ioports r,
+        @{PROC}/loadavg r,
+        @{PROC}/scsi/scsi r,
+        @{PROC}/sys/kernel/random/entropy_avail r,
+        @{PROC}/uptime r,
   owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/mountinfo r,
   owner @{PROC}/@{pid}/mounts r,
-        @{PROC}/@{pids}/loginuid r,
-        @{PROC}/uptime r,
-        @{PROC}/loadavg r,
-        @{PROC}/ioports r,
-        @{PROC}/iomem r,
-        @{PROC}/dma r,
-        @{PROC}/asound/cards r,
-        @{PROC}/scsi/scsi r,
-        @{PROC}/bus/input/devices r,
-        @{PROC}/sys/kernel/random/entropy_avail r,
-        @{PROC}/@{pids}/net/route r,
 
-  /etc/fstab r,
-  /etc/exports r,
-  /etc/samba/smb.conf  r,
-
-  /etc/gdb/gdbinit.d/ r,
-
-  /usr/share/gdb/python/ r,
-  /usr/share/gdb/python/** r,
-
-  /var/log/wtmp r,
-
-  owner @{HOME}/.hardinfo/ rw,
-
-  owner @{tmp}/#@{int} rw,
-
-  # Allowed apps to open
-  @{lib}/firefox/firefox rPUx,
-
-  # Silencer
-  deny /usr/share/gdb/python/** w,
-
-  # file_inherit
   owner /dev/tty@{int} rw,
 
+  deny /usr/share/gdb/python/** w,
 
   profile ccache {
     include <abstractions/base>
@@ -134,6 +125,7 @@ profile hardinfo @{exec_path} {
 
     /etc/debian_version r,
 
+    include if exists <local/hardinfo_ccache>
   }
 
   profile javac {
@@ -157,29 +149,7 @@ profile hardinfo @{exec_path} {
     owner @{tmp}/hsperfdata_@{user}/ rw,
     owner @{tmp}/hsperfdata_@{user}/@{pid} rw,
 
-  }
-
-  profile open {
-    include <abstractions/base>
-    include <abstractions/xdg-open>
-
-    @{bin}/xdg-open mr,
-
-    @{sh_path}             rix,
-    @{bin}/{m,g,}awk       rix,
-    @{bin}/readlink        rix,
-    @{bin}/basename        rix,
-
-    owner @{HOME}/ r,
-
-    owner @{run}/user/@{uid}/ r,
-
-    # Allowed apps to open
-    @{lib}/firefox/firefox rPUx,
-
-    # file_inherit
-    owner @{HOME}/.xsession-errors w,
-
+    include if exists <local/hardinfo_javac>
   }
 
   profile kmod {

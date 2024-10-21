@@ -3,13 +3,14 @@
 # Copyright (C) 2022-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
 @{exec_path} = @{lib}/{,at-spi2{,-core}/}at-spi2-registryd
 profile at-spi2-registryd @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/attached/consoles>
   include <abstractions/bus-accessibility>
   include <abstractions/bus-session>
   include <abstractions/bus/org.gnome.SessionManager>
@@ -17,24 +18,8 @@ profile at-spi2-registryd @{exec_path} flags=(attach_disconnected) {
 
   signal (receive) set=(term) peer=gdm,
 
-  #aa:dbus own bus=accessibility name=org.a11y.atspi.{R,r}egistry
-  dbus send bus=accessibility path=/org/a11y/atspi/accessible/root
-       interface=org.freedesktop.DBus.Properties
-       member=Set
-       peer=(name=:*),
-  dbus receive bus=accessibility path=/org/a11y/atspi/accessible/root
-       interface=org.a11y.atspi.Socket
-       member=Embed
-       peer=(name=:*),
-  dbus receive bus=accessibility path=/org/a11y/atspi/registry/deviceeventcontroller
-       interface=org.a11y.atspi.DeviceEventController
-       member={GetKeystrokeListeners,GetDeviceEventListeners}
-       peer=(name=:*),
-
-  dbus send bus=session path=/org/a11y/bus
-       interface=org.a11y.Bus
-       member=GetAddress
-       peer=(name=org.a11y.Bus, label=dbus-accessibility),
+  #aa:dbus own bus=accessibility name=org.a11y.atspi
+  #aa:dbus talk bus=session name=org.a11y.{B,b}us label=dbus-accessibility
 
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable
@@ -42,8 +27,6 @@ profile at-spi2-registryd @{exec_path} flags=(attach_disconnected) {
        peer=(name=:*, label=gnome-shell),
 
   @{exec_path} mr,
-
-  owner /dev/tty@{int} rw,
 
   include if exists <local/at-spi2-registryd>
 }

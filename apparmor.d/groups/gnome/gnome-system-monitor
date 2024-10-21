@@ -2,7 +2,7 @@
 # Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
@@ -37,6 +37,10 @@ profile gnome-system-monitor @{exec_path} flags=(attach_disconnected) {
 
   /usr/share/gnome-system-monitor/{,**} r,
   /usr/share/firefox-esr/browser/chrome/icons/default/*.png r,
+
+  / r,
+
+  owner @{tmp}/gdkpixbuf-xpm-tmp.@{rand6} rw,
 
   owner @{run}/user/@{uid}/doc/ rw,
   owner @{run}/user/@{uid}/gnome-shell-disable-extensions w,
@@ -74,14 +78,15 @@ profile gnome-system-monitor @{exec_path} flags=(attach_disconnected) {
   @{PROC}/diskstats r,
   @{PROC}/vmstat r,
 
+  owner @{PROC}/@{pid}/task/@{tid}/comm rw,
+
   deny owner @{user_share_dirs}/gvfs-metadata/{,*} r,
 
   /dev/tty rw,
 
   profile pkexec {
     include <abstractions/base>
-
-    @{bin}/pkexec mr,
+    include <abstractions/app/pkexec>
 
     include if exists <local/gnome-system-monitor_pkexec>
   }

@@ -2,7 +2,7 @@
 # Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
@@ -10,6 +10,7 @@ include <tunables/global>
 profile xdg-desktop-portal @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/app-open>
+  include <abstractions/attached/consoles>
   include <abstractions/audio-client>
   include <abstractions/bus-session>
   include <abstractions/bus-system>
@@ -20,13 +21,17 @@ profile xdg-desktop-portal @{exec_path} flags=(attach_disconnected) {
   include <abstractions/dconf-write>
   include <abstractions/freedesktop.org>
   include <abstractions/nameservice-strict>
+  include <abstractions/thumbnails-cache-read>
+  include <abstractions/trash-strict>
   include <abstractions/user-download-strict>
 
   capability sys_ptrace,
 
   network netlink raw,
 
-  ptrace (read),
+  ptrace read,
+
+  signal receive set=term peer=gdm,
 
   #aa:dbus own bus=session name=org.freedesktop.portal.Desktop path=/org/freedesktop/portal/desktop interface={org.freedesktop.DBus.Properties,org.freedesktop{,.impl}.portal.{Settings,Background}}
   dbus receive bus=session path=/org/freedesktop/portal/desktop
@@ -34,19 +39,9 @@ profile xdg-desktop-portal @{exec_path} flags=(attach_disconnected) {
        member=MakeThread*
        peer=(name=:*),
 
-  dbus receive bus=system path=/org/freedesktop/NetworkManager
-       interface=org.freedesktop.NetworkManager
-       member=CheckPermissions
-       peer=(name=:*, label=NetworkManager),
-
   #aa:dbus own bus=session name=org.freedesktop.background.Monitor path=/org/freedesktop/background/monitor
 
-  dbus send bus=session path=/org/freedesktop/portal/documents
-       interface=org.freedesktop.DBus.Properties
-       peer=(name=:*, label=xdg-document-portal),
-  dbus send bus=session path=/org/freedesktop/portal/documents
-       interface=org.freedesktop.portal.Documents
-       peer=(name=:*, label=xdg-document-portal),
+  #aa:dbus talk bus=session name=org.freedesktop.portal.Documents path=/org/freedesktop/portal/documents label=xdg-document-portal
 
   dbus send bus=session path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus
@@ -62,23 +57,27 @@ profile xdg-desktop-portal @{exec_path} flags=(attach_disconnected) {
 
   @{sh_path}         rix,
   @{bin}/nautilus    rPx,
-  @{bin}/snap       rPUx,
 
-  @{bin}/kreadconfig5                     rPx,
-  @{lib}/xdg-desktop-portal-validate-icon rPUx,
+  @{bin}/kreadconfig{,5}                  rPx,
+  @{lib}/xdg-desktop-portal-validate-icon rPx,
   @{open_path}                            rPx -> child-open,
 
-  / r,
-  /.flatpak-info r,
+        / r,
+  @{att}/.flatpak-info r,
 
   /usr/share/dconf/profile/gdm r,
   /usr/share/xdg-desktop-portal/** r,
+  /usr/share/gdm/greeter-dconf-defaults r,
 
   /etc/sysconfig/proxy r,
 
-  /var/lib/gdm{,3}/greeter-dconf-defaults r,
+        @{GDM_HOME}/greeter-dconf-defaults r,
+  owner @{gdm_config_dirs}/dconf/user r,
+  owner @{gdm_config_dirs}/user-dirs.dirs r,
 
-  @{user_config_dirs}/kioslaverc r,
+
+        @{user_config_dirs}/kioslaverc r,
+  owner @{user_config_dirs}/xdg-desktop-portal/* r,
 
   owner @{tmp}/icon* rw,
 

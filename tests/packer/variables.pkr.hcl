@@ -22,12 +22,6 @@ variable "ssh_publickey" {
   default     = "~/.ssh/id_ed25519.pub"
 }
 
-variable "ssh_privatekey" {
-  description = "Path to the ssh private key"
-  type        = string
-  default     = "~/.ssh/id_ed25519"
-}
-
 variable "disk_size" {
   description = "Disk size of the VM to build"
   type        = string
@@ -49,7 +43,7 @@ variable "base_dir" {
 variable "firmware" {
   description = "Path to the UEFI firmware"
   type        = string
-  default     = "/usr/share/edk2-ovmf/x64/OVMF_CODE.fd"
+  default     = "/usr/share/edk2/x64/OVMF_CODE.fd"
 }
 
 variable "output" {
@@ -83,7 +77,7 @@ variable "release" {
     version  = string
   }))
   default = {
-    "ubuntu" : {
+    "ubuntu22" : {
       codename = "jammy",
       version  = "22.04.2",
     },
@@ -98,6 +92,10 @@ variable "release" {
     "opensuse" : {
       codename = "tumbleweed",
       version  = "",
+    }
+    "fedora" : {
+      codename = "40",
+      version  = "1.14",
     }
   }
 }

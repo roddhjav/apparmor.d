@@ -9,21 +9,21 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/roddhjav/apparmor.d/pkg/prebuild/cfg"
+	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 )
 
 var (
 	regFlags         = regexp.MustCompile(`flags=\(([^)]+)\)`)
-	regProfileHeader = regexp.MustCompile(` {`)
+	regProfileHeader = regexp.MustCompile(` {\n`)
 )
 
 type Complain struct {
-	cfg.Base
+	prebuild.Base
 }
 
 func init() {
 	RegisterBuilder(&Complain{
-		Base: cfg.Base{
+		Base: prebuild.Base{
 			Keyword: "complain",
 			Msg:     "Set complain flag on all profiles",
 		},
@@ -40,7 +40,7 @@ func (b Complain) Apply(opt *Option, profile string) (string, error) {
 		}
 	}
 	flags = append(flags, "complain")
-	strFlags := " flags=(" + strings.Join(flags, ",") + ") {"
+	strFlags := " flags=(" + strings.Join(flags, ",") + ") {\n"
 
 	// Remove all flags definition, then set manifest' flags
 	profile = regFlags.ReplaceAllLiteralString(profile, "")

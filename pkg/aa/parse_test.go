@@ -8,8 +8,6 @@ import (
 	"reflect"
 	"strings"
 	"testing"
-
-	"github.com/roddhjav/apparmor.d/pkg/util"
 )
 
 func Test_tokenizeRule(t *testing.T) {
@@ -843,7 +841,7 @@ var (
 		raw            string
 		apparmor       *AppArmorProfileFile
 		wParseErr      bool
-		wRules         []Rules
+		wRules         ParaRules
 		wParseRulesErr bool
 	}{
 		{
@@ -851,7 +849,7 @@ var (
 			raw:            "",
 			apparmor:       &AppArmorProfileFile{},
 			wParseErr:      false,
-			wRules:         []Rules{},
+			wRules:         ParaRules{},
 			wParseRulesErr: false,
 		},
 		{
@@ -875,7 +873,7 @@ var (
 				},
 			},
 			wParseErr:      false,
-			wRules:         []Rules{},
+			wRules:         ParaRules{},
 			wParseRulesErr: false,
 		},
 		{
@@ -914,12 +912,12 @@ var (
 				},
 			},
 			wParseErr:      false,
-			wRules:         []Rules{},
+			wRules:         ParaRules{},
 			wParseRulesErr: false,
 		},
 		{
 			name: "string.aa",
-			raw:  util.MustReadFile(testData.Join("string.aa")),
+			raw:  testData.Join("string.aa").MustReadFileAsString(),
 			apparmor: &AppArmorProfileFile{
 				Preamble: Rules{
 					&Comment{Base: Base{Comment: " Simple test profile for the AppArmorProfileFile.String() method", IsLineRule: true}},
@@ -943,7 +941,7 @@ var (
 				},
 			},
 			wParseErr: false,
-			wRules: []Rules{
+			wRules: ParaRules{
 				{
 					&Include{IsMagic: true, Path: "abstractions/base"},
 					&Include{IsMagic: true, Path: "abstractions/nameservice-strict"},
@@ -1017,7 +1015,7 @@ var (
 		},
 		{
 			name: "full.aa",
-			raw:  util.MustReadFile(testData.Join("full.aa")),
+			raw:  testData.Join("full.aa").MustReadFileAsString(),
 			apparmor: &AppArmorProfileFile{
 				Preamble: Rules{
 					&Comment{Base: Base{IsLineRule: true, Comment: " Simple test profile with all rules used"}},
@@ -1050,7 +1048,7 @@ var (
 				},
 			},
 			wParseErr: false,
-			wRules: []Rules{
+			wRules: ParaRules{
 				{
 					&Include{IsMagic: true, Path: "abstractions/base"},
 					&Include{IsMagic: true, Path: "abstractions/nameservice-strict"},

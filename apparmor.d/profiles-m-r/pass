@@ -2,7 +2,7 @@
 # Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
@@ -15,52 +15,52 @@ profile pass @{exec_path} {
   @{exec_path} mr,
 
   @{sh_path}         rix,
-  @{bin}/base64      rix,
-  @{bin}/basename    rix,
-  @{bin}/cat         rix,
-  @{bin}/cp          rix,
-  @{bin}/diff        rix,
-  @{bin}/dirname     rix,
-  @{bin}/env         rix,
-  @{bin}/find        rix,
-  @{bin}/getopt      rix,
-  @{bin}/grep        rix,
-  @{bin}/head        rix,
-  @{bin}/mkdir       rix,
-  @{bin}/mktemp      rix,
-  @{bin}/mv          rix,
-  @{bin}/rm          rix,
-  @{bin}/rmdir       rix,
-  @{bin}/sed         rix,
-  @{bin}/shred       rix,
-  @{bin}/sleep       rix,
-  @{bin}/sort        rix,
-  @{bin}/tail        rix,
-  @{bin}/touch       rix,
-  @{bin}/tr          rix,
-  @{bin}/tree        rix,
-  @{bin}/tty         rix,
-  @{bin}/which       rix,
+  @{bin}/base64       ix,
+  @{bin}/basename     ix,
+  @{bin}/cat          ix,
+  @{bin}/cp           ix,
+  @{bin}/diff         ix,
+  @{bin}/dirname      ix,
+  @{bin}/env           r,
+  @{bin}/find         ix,
+  @{bin}/getopt       ix,
+  @{bin}/grep         ix,
+  @{bin}/head         ix,
+  @{bin}/mkdir        ix,
+  @{bin}/mktemp       ix,
+  @{bin}/mv           ix,
+  @{bin}/rm           ix,
+  @{bin}/rmdir        ix,
+  @{bin}/sed          ix,
+  @{bin}/shred        ix,
+  @{bin}/sleep        ix,
+  @{bin}/sort         ix,
+  @{bin}/tail         ix,
+  @{bin}/touch        ix,
+  @{bin}/tr           ix,
+  @{bin}/tree         ix,
+  @{bin}/tty          ix,
+  @{bin}/which        ix,
 
-  @{bin}/git             rCx -> git,
-  @{bin}/gpg{2,}         rCx -> gpg,
-  @{bin}/pkill           rCx -> pkill,
-  @{bin}/qdbus           rCx -> qdbus,
-  @{bin}/vim{,.*}        rCx -> editor,
-  @{lib}/git{,-core}/git rCx -> git,
-  @{bin}/wl-{copy,paste} rPx,
-  @{bin}/xclip           rPx,
+  @{bin}/git             Cx -> git,
+  @{bin}/gpg{2,}         Cx -> gpg,
+  @{bin}/pkill           Cx -> pkill,
+  @{bin}/qdbus           Cx -> qdbus,
+  @{bin}/wl-{copy,paste} Px,
+  @{bin}/xclip           Px,
+  @{editor_path}         Cx -> editor,
+  @{lib}/git{,-core}/git Cx -> git,
 
   # Pass extensions
-  @{bin}/oathtool       rix,   # pass-otp
-  @{bin}/python3.@{int} rPx -> pass-import,  # pass-import, pass-audit
-  @{bin}/qrencode       rPUx,  # pass-otp
-  @{bin}/tomb           rPUx,  # pass-tomb
+  @{bin}/oathtool        ix,   # pass-otp
+  @{bin}/python3.@{int}  Px -> pass-import,  # pass-import, pass-audit
+  @{bin}/qrencode        PUx,  # pass-otp
+  @{bin}/tomb            PUx,  # pass-tomb
 
   /usr/share/terminfo/** r,
 
   owner @{user_password_store_dirs}/{,**} rw,
-  owner /dev/shm/pass.*/{,*} rw,
+  owner /dev/shm/pass.@{rand}/{,*} rw,
 
   @{sys}/devices/system/node/ r,
 
@@ -74,15 +74,9 @@ profile pass @{exec_path} {
 
   profile pkill {
     include <abstractions/base>
-
-    capability sys_ptrace,
-
-    ptrace read,
+    include <abstractions/app/pgrep>
 
     @{bin}/pkill mr,
-
-    @{PROC}/@{pid}/cgroup r,
-    @{PROC}/tty/drivers r,
 
     include if exists <local/pass_pkill>
   }
@@ -96,7 +90,7 @@ profile pass @{exec_path} {
 
     owner @{user_password_store_dirs}/{,**/} r,
 
-    owner /dev/shm/pass.*/{,*} rw,
+    owner /dev/shm/pass.@{rand}/{,*} rw,
 
     deny owner @{HOME}/ r,
 
@@ -118,10 +112,7 @@ profile pass @{exec_path} {
     @{bin}/git*              mrix,
     @{lib}/git{,-core}/git*  mrix,
 
-    @{bin}/pager         rPx -> child-pager,
-    @{bin}/less          rPx -> child-pager,
-    @{bin}/more          rPx -> child-pager,
-
+    @{pager_path}   rPx -> child-pager,
     @{bin}/gpg{2,}  rPx -> pass//gpg,
 
     /usr/share/git{,-core}/{,**} r,
@@ -133,7 +124,7 @@ profile pass @{exec_path} {
     owner @{user_password_store_dirs}/** rwkl -> @{HOME}/.password-store/**,
 
     owner @{tmp}/.git_vtag_tmp@{rand6} rw,  # For git log --show-signature
-    owner /dev/shm/pass.*/.git_vtag_tmp@{rand6} rw,
+    owner /dev/shm/pass.@{rand}/.git_vtag_tmp@{rand6} rw,
 
     include if exists <local/pass_git>
   }
@@ -153,7 +144,7 @@ profile pass @{exec_path} {
 
     owner @{user_password_store_dirs}/   rw,
     owner @{user_password_store_dirs}/** rwkl -> @{HOME}/.password-store/**,
-    owner /dev/shm/pass.*/{,*} rw,
+    owner /dev/shm/pass.@{rand}/* rw,
     owner @{tmp}/.git_vtag_tmp@{rand6} rw,  # For git log --show-signature
 
     owner /dev/pts/@{int} rw,

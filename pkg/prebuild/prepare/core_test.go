@@ -11,7 +11,7 @@ import (
 	"testing"
 
 	"github.com/roddhjav/apparmor.d/pkg/paths"
-	"github.com/roddhjav/apparmor.d/pkg/prebuild/cfg"
+	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 )
 
 func chdirGitRoot() {
@@ -39,7 +39,7 @@ func TestTask_Apply(t *testing.T) {
 			name:      "synchronise",
 			task:      Tasks["synchronise"],
 			wantErr:   false,
-			wantFiles: paths.PathList{cfg.RootApparmord.Join("/groups/_full/systemd")},
+			wantFiles: paths.PathList{prebuild.RootApparmord.Join("/groups/_full/systemd")},
 		},
 		{
 			name:    "ignore",
@@ -51,7 +51,7 @@ func TestTask_Apply(t *testing.T) {
 			name:      "merge",
 			task:      Tasks["merge"],
 			wantErr:   false,
-			wantFiles: paths.PathList{cfg.RootApparmord.Join("aa-log")},
+			wantFiles: paths.PathList{prebuild.RootApparmord.Join("aa-log")},
 		},
 		{
 			name:    "configure",
@@ -65,26 +65,32 @@ func TestTask_Apply(t *testing.T) {
 			want:    "dists/flags/main.flags",
 		},
 		{
+			name:      "overwrite",
+			task:      Tasks["overwrite"],
+			wantErr:   false,
+			wantFiles: paths.PathList{prebuild.RootApparmord.Join("flatpak.apparmor.d")},
+		},
+		{
 			name:      "systemd-default",
 			task:      Tasks["systemd-default"],
 			wantErr:   false,
-			wantFiles: paths.PathList{cfg.Root.Join("systemd/system/dbus.service")},
+			wantFiles: paths.PathList{prebuild.Root.Join("systemd/system/dbus.service")},
 		},
 		{
 			name:      "systemd-early",
 			task:      Tasks["systemd-early"],
 			wantErr:   false,
-			wantFiles: paths.PathList{cfg.Root.Join("systemd/system/pcscd.service")},
+			wantFiles: paths.PathList{prebuild.Root.Join("systemd/system/pcscd.service")},
 		},
 		{
 			name:      "fsp",
 			task:      Tasks["fsp"],
 			wantErr:   false,
-			wantFiles: paths.PathList{cfg.RootApparmord.Join("systemd")},
+			wantFiles: paths.PathList{prebuild.RootApparmord.Join("systemd")},
 		},
 	}
 	chdirGitRoot()
-	_ = cfg.Root.RemoveAll()
+	_ = prebuild.Root.RemoveAll()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := tt.task.Apply()

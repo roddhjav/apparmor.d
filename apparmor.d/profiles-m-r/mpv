@@ -3,14 +3,14 @@
 # Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
 @{exec_path} = @{bin}/mpv
 profile mpv @{exec_path} {
   include <abstractions/base>
-  include <abstractions/audio-client>
+  include <abstractions/audio-server>
   include <abstractions/consoles>
   include <abstractions/desktop>
   include <abstractions/fontconfig-cache-read>
@@ -32,8 +32,7 @@ profile mpv @{exec_path} {
 
   @{exec_path} mr,
 
-  @{bin}/xdg-screensaver rCx -> xdg-screensaver,
-
+  @{bin}/xdg-screensaver Px,
   @{bin}/youtube-dl rPx,
   @{bin}/yt-dlp     rPx,
 
@@ -77,33 +76,13 @@ profile mpv @{exec_path} {
   @{sys}/devices/**/input/**/uevent r,
   @{sys}/devices/**/sound/**/capabilities/* r,
   @{sys}/devices/**/sound/**/uevent r,
+  @{sys}/devices/virtual/dmi/id/bios_vendor r,
+  @{sys}/devices/virtual/dmi/id/board_vendor r,
+  @{sys}/devices/virtual/dmi/id/product_name r,
+  @{sys}/devices/virtual/dmi/id/sys_vendor r,
 
         /dev/input/event@{int} r,
   owner /dev/tty@{int} rw,
-
-  profile xdg-screensaver {
-    include <abstractions/base>
-    include <abstractions/consoles>
-
-    @{bin}/xdg-screensaver mr,
-
-    @{sh_path}          rix,
-    @{bin}/mv           rix,
-    @{bin}/{,e}grep     rix,
-    @{bin}/sed          rix,
-    @{bin}/which{,.debianutils}        rix,
-    @{bin}/xset         rix,
-    @{bin}/xautolock    rix,
-    @{bin}/dbus-send    rix,
-    @{bin}/xscreensaver-command rix,
-
-    owner @{HOME}/.Xauthority r,
-
-    # file_inherit
-    /dev/dri/card@{int} rw,
-    network inet stream,
-    network inet6 stream,
-  }
 
   include if exists <local/mpv>
 }

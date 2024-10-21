@@ -1,6 +1,7 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2022-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
+# LOGPROF-SUGGEST: no
 
 # Full set of rules for all chromium based browsers. It works as a *function*
 # and requires some variables to be provided as *arguments* and set in the
@@ -16,6 +17,8 @@
 # or abstractions/common/electron instead.
 #
 
+  abi <abi/4.0>,
+
   include <abstractions/audio-client>
   include <abstractions/bus-session>
   include <abstractions/bus-system>
@@ -26,6 +29,8 @@
   include <abstractions/bus/org.freedesktop.ScreenSaver>
   include <abstractions/bus/org.freedesktop.secrets>
   include <abstractions/bus/org.freedesktop.UPower>
+  include <abstractions/bus/org.gnome.Mutter.IdleMonitor>
+  include <abstractions/bus/org.gnome.ScreenSaver>
   include <abstractions/bus/org.gnome.SessionManager>
   include <abstractions/bus/org.kde.kwalletd>
   include <abstractions/dconf-write>
@@ -41,7 +46,7 @@
   include <abstractions/user-read-strict>
   include <abstractions/video>
 
-  # userns,
+  userns,
 
   capability setgid,
   capability setuid,
@@ -127,13 +132,16 @@
   owner @{user_config_dirs}/gtk-3.0/servers r,
   owner @{user_share_dirs}/.@{domain}.@{rand6} rw,
   owner @{user_cache_dirs}/gtk-3.0/**/*.cache r,
-  owner @{user_cache_dirs}/icon-cache.kcache rw,
 
   owner @{config_dirs}/ rw,
   owner @{config_dirs}/** rwk,
   owner @{config_dirs}/WidevineCdm/*/_platform_specific/linux_*/libwidevinecdm.so mrw,
 
   owner @{cache_dirs}/{,**} rw,
+
+  owner @{user_config_dirs}/kioslaverc r,
+  owner @{user_config_dirs}/menus/applications-merged/ r,
+  owner @{user_config_dirs}/menus/applications-merged/xdg-desktop-menu-dummy.menu r,
 
   # For importing data (bookmarks, cookies, etc) from Firefox
   # owner @{HOME}/.mozilla/firefox/profiles.ini r,
@@ -177,14 +185,15 @@
 
         @{PROC}/ r,
         @{PROC}/@{pid}/fd/ r,
-        @{PROC}/@{pids}/stat r,
-        @{PROC}/@{pids}/statm r,
-        @{PROC}/@{pids}/task/@{tid}/stat r,
-        @{PROC}/@{pids}/task/@{tid}/status r,
+        @{PROC}/@{pid}/stat r,
+        @{PROC}/@{pid}/task/@{tid}/status r,
         @{PROC}/pressure/{memory,cpu,io} r,
         @{PROC}/sys/fs/inotify/max_user_watches r,
         @{PROC}/sys/kernel/yama/ptrace_scope r,
         @{PROC}/vmstat r,
+  owner @{PROC}/@{pid}/clear_refs w,
+  owner @{PROC}/@{pid}/cmdline r,
+  owner @{PROC}/@{pid}/environ r,
   owner @{PROC}/@{pid}/gid_map w,
   owner @{PROC}/@{pid}/limits r,
   owner @{PROC}/@{pid}/mem r,
@@ -192,12 +201,11 @@
   owner @{PROC}/@{pid}/mounts r,
   owner @{PROC}/@{pid}/oom_{,score_}adj rw,
   owner @{PROC}/@{pid}/setgroups w,
+  owner @{PROC}/@{pid}/statm r,
+  owner @{PROC}/@{pid}/task/ r,
   owner @{PROC}/@{pid}/task/@{tid}/comm rw,
+  owner @{PROC}/@{pid}/task/@{tid}/stat r,
   owner @{PROC}/@{pid}/uid_map w,
-  owner @{PROC}/@{pids}/clear_refs w,
-  owner @{PROC}/@{pids}/cmdline r,
-  owner @{PROC}/@{pids}/environ r,
-  owner @{PROC}/@{pids}/task/ r,
 
         /dev/ r,
         /dev/hidraw@{int} rw,

@@ -2,7 +2,7 @@
 # Copyright (C) 2022-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
@@ -25,24 +25,7 @@ profile update-notifier @{exec_path} {
   unix (bind) type=stream addr=@@{hex16}/bus/systemd/bus-api-user,
 
   #aa:dbus talk bus=system name=org.debian.apt label=apt
-
-  dbus receive bus=session path=/org/ayatana/NotificationItem/software_update_available
-       interface=org.freedesktop.DBus.Properties
-       member={Get,GetAll}
-       peer=(name=:*, label=gnome-shell),
-
-  dbus receive bus=session path=/org/ayatana/NotificationItem/livepatch{,/Menu}
-       interface=org.freedesktop.DBus.Properties
-       member=={Get,GetAll}
-       peer=(name=:*, label=gnome-shell),
-  dbus receive bus=session path=/org/ayatana/NotificationItem/livepatch/Menu
-       interface=com.canonical.dbusmenu
-       member={AboutToShow,GetGroupProperties,GetLayout}
-       peer=(name=:*, label=gnome-shell),
-
-  dbus send bus=session path=/org/ayatana/NotificationItem/*
-       interface=org.kde.StatusNotifierItem
-       peer=(name=org.freedesktop.DBus, label=gnome-shell),
+  #aa:dbus talk bus=session name=org.ayatana.NotificationItem label=gnome-shell
 
   @{exec_path} mr,
 
@@ -53,7 +36,7 @@ profile update-notifier @{exec_path} {
 
   @{bin}/dpkg                                    rPx -> child-dpkg,
   @{bin}/lsb_release                             rPx -> lsb_release,
-  @{bin}/pkexec                                  rPx, # TODO: rCx or rix to run /usr/lib/update-notifier/package-system-locked
+  @{bin}/pkexec                                  rCx -> pkexec,
   @{bin}/snap                                   rPUx,
   @{bin}/software-properties-gtk                 rPx,
   @{bin}/systemctl                               rCx -> systemctl,
@@ -84,6 +67,20 @@ profile update-notifier @{exec_path} {
 
         @{PROC}/@{pids}/mountinfo r,
   owner @{PROC}/@{pid}/fd/ r,
+
+  profile pkexec {
+    include <abstractions/base>
+    include <abstractions/app/pkexec>
+
+    ptrace read peer=update-notifier,
+
+    @{lib}/update-notifier/package-system-locked Px,
+
+    @{PROC}/@{pid}/fdinfo/@{int} r,
+    @{PROC}/@{pid}/stat r,
+
+    include if exists <local/update-notifier_pkexec>
+  }
 
   profile systemctl {
     include <abstractions/base>

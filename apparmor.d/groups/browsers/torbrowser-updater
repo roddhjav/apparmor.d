@@ -1,0 +1,28 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{lib_dirs} = @{user_share_dirs}/torbrowser/tbb/@{arch}/tor-browser/Browser/ @{HOME}/.tb/tor-browser/Browser/
+
+@{exec_path} = @{lib_dirs}/updater
+profile torbrowser-updater @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/desktop>
+
+  @{exec_path} mr,
+
+  @{lib_dirs}/*.so              mr,
+  @{lib_dirs}/firefox{,.real}   Px -> torbrowser,
+
+  owner @{lib_dirs}/{,**} rw,
+
+  owner @{tmp}/#@{int} rw,
+
+  include if exists <local/torbrowser-updater>
+}
+
+# vim:syntax=apparmor

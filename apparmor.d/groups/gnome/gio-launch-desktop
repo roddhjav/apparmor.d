@@ -8,13 +8,13 @@
 # - Direct access should only be needed is some special context and it should not
 #   require access to that much resources.
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
 @{exec_path}  = @{bin}/gio
 @{exec_path} += @{bin}/gio-launch-desktop @{lib}/gio-launch-desktop
-@{exec_path} += @{lib}/@{multiarch}/glib-[0-9]*/gio-launch-desktop
+@{exec_path} += @{lib}/@{multiarch}/glib-@{version}/gio-launch-desktop
 profile gio-launch-desktop @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/app-launcher-user>
@@ -23,6 +23,8 @@ profile gio-launch-desktop @{exec_path} flags=(attach_disconnected) {
   include <abstractions/gnome-strict>
   include <abstractions/nameservice-strict>
   include <abstractions/trash-strict>
+  include <abstractions/user-read-strict>
+  include <abstractions/user-write-strict>
 
   @{exec_path} mr,
 
@@ -30,6 +32,8 @@ profile gio-launch-desktop @{exec_path} flags=(attach_disconnected) {
   @{lib}/gio-launch-desktop  rix,
 
   owner @{HOME}/{,**} rw,
+
+  owner @{user_share_dirs}/gvfs-metadata/{,*} r,
 
   owner @{tmp}/wl-copy-buffer-@{rand6}/stdin r,
 
@@ -41,7 +45,6 @@ profile gio-launch-desktop @{exec_path} flags=(attach_disconnected) {
 
   /dev/dri/card@{int} rw,
 
-  deny @{user_share_dirs}/gvfs-metadata/{,*} r,
 
   include if exists <local/gio-launch-desktop>
 }

@@ -8,8 +8,6 @@ import (
 	"reflect"
 	"regexp"
 	"testing"
-
-	"github.com/roddhjav/apparmor.d/pkg/paths"
 )
 
 func TestDecodeHexInString(t *testing.T) {
@@ -33,74 +31,6 @@ func TestDecodeHexInString(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := DecodeHexInString(tt.str); got != tt.want {
 				t.Errorf("DecodeHexInString() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestRemoveDuplicate(t *testing.T) {
-	tests := []struct {
-		name   string
-		inlist []string
-		want   []string
-	}{
-		{
-			name:   "Duplicate",
-			inlist: []string{"foo", "bar", "foo", "bar", ""},
-			want:   []string{"foo", "bar"},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := RemoveDuplicate(tt.inlist); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("RemoveDuplicate() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestIntersect(t *testing.T) {
-	tests := []struct {
-		name  string
-		list1 []int
-		list2 []int
-		want  []int
-	}{
-		{
-			name:  "1",
-			list1: []int{0, 1, 2, 3, 4, 5},
-			list2: []int{0, 2},
-			want:  []int{0, 2},
-		},
-		{
-			name:  "2",
-			list1: []int{0, 1, 2, 3, 4, 5},
-			list2: []int{0, 6},
-			want:  []int{0},
-		},
-		{
-			name:  "3",
-			list1: []int{0, 1, 2, 3, 4, 5},
-			list2: []int{-1, 6},
-			want:  []int{},
-		},
-		{
-			name:  "4",
-			list1: []int{0, 6},
-			list2: []int{0, 1, 2, 3, 4, 5},
-			want:  []int{0},
-		},
-		{
-			name:  "5",
-			list1: []int{0, 6, 0},
-			list2: []int{0, 1, 2, 3, 4, 5},
-			want:  []int{0},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := Intersect(tt.list1, tt.list2); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Intersect() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -153,47 +83,6 @@ func TestRegexReplList_Replace(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := tt.rr.Replace(tt.str); got != tt.want {
 				t.Errorf("RegexReplList.Replace() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestCopyTo(t *testing.T) {
-	tests := []struct {
-		name    string
-		src     *paths.Path
-		dst     *paths.Path
-		wantErr bool
-	}{
-		{
-			name:    "default",
-			src:     paths.New("../../apparmor.d/groups/_full/"),
-			dst:     paths.New("/tmp/test/apparmor.d/groups/_full/"),
-			wantErr: false,
-		},
-		{
-			name:    "issue-source",
-			src:     paths.New("../../apparmor.d/groups/nope/"),
-			dst:     paths.New("/tmp/test/apparmor.d/groups/_full/"),
-			wantErr: true,
-		},
-		// {
-		// 	name:    "issue-dest-1",
-		// 	src:     paths.New("../../apparmor.d/groups/_full/"),
-		// 	dst:     paths.New("/"),
-		// 	wantErr: true,
-		// },
-		// {
-		// 	name:    "issue-dest-2",
-		// 	src:     paths.New("../../apparmor.d/groups/_full/"),
-		// 	dst:     paths.New("/_full/"),
-		// 	wantErr: true,
-		// },
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if err := CopyTo(tt.src, tt.dst); (err != nil) != tt.wantErr {
-				t.Errorf("CopyTo() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}

@@ -35,9 +35,12 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"syscall"
 	"time"
+
+	"github.com/roddhjav/apparmor.d/pkg/util"
 )
 
 // Path represents a path
@@ -360,6 +363,31 @@ func (p *Path) CopyTo(dst *Path) error {
 	return nil
 }
 
+// CopyTo recursivelly copy all files from a source path to a destination path.
+func CopyTo(src *Path, dst *Path) error {
+	files, err := src.ReadDirRecursiveFiltered(nil,
+		FilterOutDirectories(),
+		FilterOutNames("README.md"),
+	)
+	if err != nil {
+		return err
+	}
+	for _, file := range files {
+		destination, err := file.RelFrom(src)
+		if err != nil {
+			return err
+		}
+		destination = dst.JoinPath(destination)
+		if err := destination.Parent().MkdirAll(); err != nil {
+			return err
+		}
+		if err := file.CopyTo(destination); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // CopyDirTo recursively copies the directory denoted by the current path to
 // the destination path. The source directory must exist and the destination
 // directory must NOT exist (no implicit destination name allowed).
@@ -460,6 +488,24 @@ func WriteToTempFile(data []byte, dir *Path, prefix string) (res *Path, err erro
 	return New(f.Name()), nil
 }
 
+// ReadFileAsString read a file and return its content as a string.
+func (p *Path) ReadFileAsString() (string, error) {
+	content, err := p.ReadFile()
+	if err != nil {
+		return "", err
+	}
+	return string(content), nil
+}
+
+// MustReadFileAsString read a file and return its content as a string. Panic if an error occurs.
+func (p *Path) MustReadFileAsString() string {
+	content, err := p.ReadFile()
+	if err != nil {
+		panic(err)
+	}
+	return string(content)
+}
+
 // ReadFileAsLines reads the file named by filename and returns it as an
 // array of lines. This function takes care of the newline encoding
 // differences between different OS
@@ -471,6 +517,33 @@ func (p *Path) ReadFileAsLines() ([]string, error) {
 	txt := string(data)
 	txt = strings.Replace(txt, "\r\n", "\n", -1)
 	return strings.Split(txt, "\n"), nil
+}
+
+// MustReadFileAsLines read a file and return its content as a slice of string. Panic if an error occurs.
+func (p *Path) MustReadFileAsLines() []string {
+	lines, err := p.ReadFileAsLines()
+	if err != nil {
+		panic(err)
+	}
+	return lines
+}
+
+// MustReadFilteredFileAsLines read a file and return its content as a slice of string.
+// It filter out comments and empty lines. Panic if an error occurs.
+func (p *Path) MustReadFilteredFileAsLines() []string {
+	data, err := p.ReadFile()
+	if err != nil {
+		panic(err)
+	}
+	txt := string(data)
+	txt = strings.Replace(txt, "\r\n", "\n", -1)
+	txt = util.Filter(txt)
+	res := strings.Split(txt, "\n")
+	if slices.Contains(res, "") {
+		idx := slices.Index(res, "")
+		res = slices.Delete(res, idx, idx+1)
+	}
+	return res
 }
 
 // Truncate create an empty file named by path or if the file already

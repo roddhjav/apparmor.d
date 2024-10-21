@@ -3,7 +3,7 @@
 # Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
@@ -11,8 +11,6 @@ include <tunables/global>
 profile udisksd @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus-system>
-  include <abstractions/bus/org.freedesktop.login1>
-  include <abstractions/bus/org.freedesktop.PolicyKit1>
   include <abstractions/disks-write>
   include <abstractions/nameservice-strict>
 
@@ -60,9 +58,11 @@ profile udisksd @{exec_path} flags=(attach_disconnected) {
   umount @{run}/udisks2/temp-mount-*/,
   umount /media/cdrom@{int}/,
 
-  signal (receive) set=(int) peer=@{p_systemd},
+  signal receive set=int peer=@{p_systemd},
 
   #aa:dbus own bus=system name=org.freedesktop.UDisks2
+  #aa:dbus talk bus=system name=org.freedesktop.login1 label=systemd-logind
+  #aa:dbus talk bus=system name=org.freedesktop.PolicyKit1 label=polkitd
 
   dbus send bus=system path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus
@@ -88,6 +88,7 @@ profile udisksd @{exec_path} flags=(attach_disconnected) {
   @{bin}/sgdisk               rPx,
   @{bin}/systemctl            rCx -> systemctl,
   @{bin}/systemd-escape       rPx,
+  @{bin}/xfs_*               rPUx,
 
   /etc/crypttab r,
   /etc/fstab r,
@@ -103,11 +104,12 @@ profile udisksd @{exec_path} flags=(attach_disconnected) {
   @{MOUNTS}/ rw,
   @{MOUNTS}/*/ rw,
 
+  @{att}/@{run}/systemd/inhibit/@{int}.ref rw,
+
   @{run}/ r,
   @{run}/mount/utab{,.*} rwk,
   @{run}/udisks2/{,**} rw,
   @{run}/systemd/seats/seat@{int} r,
-  @{run}/systemd/inhibit/[0-9]*.ref rw,
   @{run}/cryptsetup/ r,
   @{run}/cryptsetup/L* rwk,
 
@@ -119,6 +121,7 @@ profile udisksd @{exec_path} flags=(attach_disconnected) {
   @{sys}/bus/ r,
   @{sys}/bus/pci/slots/ r,
   @{sys}/bus/pci/slots/@{int}/address r,
+  @{sys}/bus/scsi/devices/ r,
   @{sys}/class/ r,
   @{sys}/class/nvme-subsystem/ r,
   @{sys}/class/nvme/ r,

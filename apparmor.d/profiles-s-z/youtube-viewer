@@ -3,7 +3,7 @@
 # Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
@@ -32,12 +32,6 @@ profile youtube-viewer @{exec_path} {
 
   @{bin}/wget       rCx -> wget,
 
-  owner @{user_config_dirs}/youtube-viewer/{,*} rw,
-  owner @{user_cache_dirs}/youtube-viewer/{,*} rw,
-  owner @{HOME}/Downloads/youtube-viewer/{,*} rw,
-
-  /etc/inputrc r,
-
   # Players
   @{bin}/mpv      rPUx,
   @{bin}/vlc      rPUx,
@@ -45,6 +39,11 @@ profile youtube-viewer @{exec_path} {
 
   @{bin}/ffmpeg   rPUx,
 
+  /etc/inputrc r,
+
+  owner @{user_config_dirs}/youtube-viewer/{,*} rw,
+  owner @{user_cache_dirs}/youtube-viewer/{,*} rw,
+  owner @{HOME}/Downloads/youtube-viewer/{,*} rw,
 
   profile wget {
     include <abstractions/base>
@@ -62,6 +61,7 @@ profile youtube-viewer @{exec_path} {
     owner @{HOME}/.wget-hsts r,
     owner @{HOME}/wget-log{,.@{int}} rw,
 
+    include if exists <local/youtube-viewer_wget>
   }
 
   include if exists <local/youtube-viewer>

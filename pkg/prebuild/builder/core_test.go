@@ -8,7 +8,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/roddhjav/apparmor.d/pkg/prebuild/cfg"
+	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 )
 
 func TestBuilder_Apply(t *testing.T) {
@@ -23,16 +23,16 @@ func TestBuilder_Apply(t *testing.T) {
 			name: "abi3",
 			b:    Builders["abi3"],
 			profile: `
-			  abi <abi/3.0>,
-			  profile test {
-			    # userns,
-			    # mqueue r type=posix /,
-			  }`,
-			want: `
 			  abi <abi/4.0>,
 			  profile test {
 			    userns,
 			    mqueue r type=posix /,
+			  }`,
+			want: `
+			  abi <abi/3.0>,
+			  profile test {
+			    # userns,
+			    # mqueue r type=posix /,
 			  }`,
 		},
 		{
@@ -234,7 +234,7 @@ func TestBuilder_Apply(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			opt := &Option{File: cfg.RootApparmord.Join(tt.name)}
+			opt := &Option{File: prebuild.RootApparmord.Join(tt.name)}
 			got, err := tt.b.Apply(opt, tt.profile)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Builder.Apply() error = %v, wantErr %v", err, tt.wantErr)

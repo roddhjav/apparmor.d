@@ -2,7 +2,7 @@
 # Copyright (C) 2022-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
@@ -48,7 +48,7 @@ profile apport-gtk @{exec_path} {
   @{bin}/ldd                    rix,
   @{bin}/lsb_release            rPx -> lsb_release,
   @{bin}/md5sum                 rix,
-  @{bin}/pkexec                 rPx, # TODO: rCx or something
+  @{bin}/pkexec                 rCx -> pkexec,
   @{bin}/systemctl              rCx -> systemctl,
   @{bin}/systemd-detect-virt    rPx,
   @{bin}/uname                  rix,
@@ -79,12 +79,12 @@ profile apport-gtk @{exec_path} {
         /var/crash/ rw,
   owner /var/crash/*.@{uid}.{crash,upload} rw,
 
-   @{run}/snapd.socket rw,
+  @{run}/snapd.socket rw,
 
-  /tmp/[a-z0-9]* rw,
-  /tmp/apport_core_* rw,
-  /tmp/launchpadlib.cache.[a-z0-9]*/ rw,
-  /tmp/tmp[a-z0-9]*/{,**} rw,
+  owner @{tmp}/@{rand8} rw,
+  owner @{tmp}/apport_core_@{rand8} rw,
+  owner @{tmp}/launchpadlib.cache.@{rand8}/ rw,
+  owner @{tmp}/tmp@{rand8}/{,**} rw,
 
         @{PROC}/ r,
         @{PROC}/@{pids}/cmdline r,
@@ -122,6 +122,13 @@ profile apport-gtk @{exec_path} {
     @{PROC}/@{pids}/fd/ r,
 
     include if exists <local/apport-gtk_gdb>
+  }
+
+  profile pkexec {
+    include <abstractions/base>
+    include <abstractions/app/pkexec>
+
+    include if exists <local/apport-gtk_pkexec>
   }
 
   profile systemctl {

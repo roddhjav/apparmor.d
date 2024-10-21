@@ -2,7 +2,7 @@
 # Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
@@ -14,20 +14,16 @@ profile ibus-portal @{exec_path} flags=(attach_disconnected) {
 
   signal (receive) set=(term, hup) peer=gdm*,
 
-  dbus bind bus=session name=org.freedesktop.portal.IBus,
+  #aa:dbus own bus=session name=org.freedesktop.portal.IBus
 
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
        peer=(name=:*, label=gnome-shell),
 
-  dbus receive bus=session path=/org/freedesktop/IBus
-       interface=org.freedesktop.DBus.Peer
-       member=Ping 
-       peer=(name=:*, label=ibus-daemon),
-
   @{exec_path} mr,
 
+  owner @{desktop_cache_dirs}/ibus/dbus-@{rand8} rw,
   owner @{desktop_config_dirs}/ibus/bus/ r,
   owner @{desktop_config_dirs}/ibus/bus/@{hex32}-unix-{,wayland-}@{int} r,
 

@@ -12,6 +12,8 @@ readonly PREFIX="builder-"
 readonly PKGNAME=apparmor.d
 readonly VOLUME=/tmp/build
 readonly BUILDIR=/home/build/tmp
+readonly OUTDIR=".pkg"
+readonly OUTPUT="$PWD/$OUTDIR"
 readonly COMMAND="$1"
 VERSION="0.$(git rev-list --count HEAD)"
 PACKAGER="$(git config user.name) <$(git config user.email)>"
@@ -62,7 +64,7 @@ build_in_docker_makepkg() {
 	fi
 
 	docker exec --workdir="$BUILDIR/$PKGNAME" "$img" bash dists/build.sh pkg
-	mv "$VOLUME/$PKGNAME"-*.pkg.* .
+	mv "$VOLUME/$PKGNAME/$OUTDIR/$PKGNAME"-*.pkg.* "$OUTPUT"
 }
 
 build_in_docker_dpkg() {
@@ -85,7 +87,7 @@ build_in_docker_dpkg() {
 	fi
 
 	docker exec --workdir="$BUILDIR/$PKGNAME" "$img" bash dists/build.sh dpkg
-	mv "$VOLUME/$PKGNAME/${PKGNAME}_${VERSION}-1"_*.* .
+	mv "$VOLUME/$PKGNAME/$OUTDIR/${PKGNAME}_${VERSION}-1"_*.* "$OUTPUT"
 }
 
 build_in_docker_rpm() {
@@ -104,14 +106,14 @@ build_in_docker_rpm() {
 	fi
 
 	docker exec --workdir="$BUILDIR/$PKGNAME" "$img" bash dists/build.sh rpm
-	mv "$VOLUME/$PKGNAME/$PKGNAME-$VERSION-"*.rpm .
+	mv "$VOLUME/$PKGNAME/$OUTDIR/$PKGNAME-$VERSION-"*.rpm "$OUTPUT"
 }
 
 main() {
 	case "$COMMAND" in
 	archlinux)
 		# build_in_docker_makepkg "$COMMAND"
-		PKGDEST=. makepkg -Cf
+		PKGDEST="$OUTPUT" makepkg -Cf
 		;;
 
 	debian | ubuntu | whonix)
@@ -128,4 +130,5 @@ main() {
 	esac
 }
 
+mkdir -p "$OUTPUT"
 main "$@"

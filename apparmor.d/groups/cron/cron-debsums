@@ -3,7 +3,7 @@
 # Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
@@ -14,15 +14,13 @@ profile cron-debsums @{exec_path} {
   @{exec_path} mr,
 
   @{sh_path}        rix,
-  @{bin}/true       rix,
+  @{bin}/{,e}grep   rix,
+  @{bin}/debsums    rPx,
+  @{bin}/ionice     rix,
   @{bin}/logger     rix,
   @{bin}/sed        rix,
-  @{bin}/{,e}grep   rix,
-
-  @{bin}/ionice     rix,
-
-  @{bin}/debsums    rPx,
   @{bin}/tee        rCx -> tee,
+  @{bin}/true       rix,
 
   /etc/ r,
   /etc/default/debsums r,
@@ -31,18 +29,17 @@ profile cron-debsums @{exec_path} {
   # For shell pwd
   / r,
 
-
   profile tee {
     include <abstractions/base>
     include <abstractions/consoles>
 
-    # Needed to write to /proc/self/fd/3
     capability dac_override,
 
     @{bin}/tee mr,
 
-    owner @{PROC}/@{pid}/fd/3 rw,
+    owner @{PROC}/@{pid}/fd/@{int} rw,
 
+    include if exists <local/cron-debsums_tee>
   }
 
   include if exists <local/cron-debsums>

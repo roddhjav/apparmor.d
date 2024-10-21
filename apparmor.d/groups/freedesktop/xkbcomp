@@ -3,13 +3,16 @@
 # Copyright (C) 2022-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
 @{exec_path} = @{bin}/xkbcomp
 profile xkbcomp @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/attached/consoles>
+  include <abstractions/consoles>
+  include <abstractions/mesa>
   include <abstractions/X-strict>
 
   unix (send,receive) type=stream addr=none peer=(label=gnome-shell),
@@ -27,6 +30,7 @@ profile xkbcomp @{exec_path} flags=(attach_disconnected) {
   owner @{user_share_dirs}/xorg/Xorg.@{int}.log w,
 
         /var/lib/{gdm{3,},sddm}/.local/share/xorg/Xorg.@{int}.log w,
+        /var/log/Xorg.@{int}.log w,
   owner /var/log/lightdm/x-@{int}.log w,
 
   owner @{run}/user/@{uid}/server-@{int}.xkm rwk,
@@ -36,10 +40,7 @@ profile xkbcomp @{exec_path} flags=(attach_disconnected) {
   /dev/dri/card@{int} rw,
   /dev/fb@{int} rw,
   /dev/tty rw,
-  /dev/tty@{int} rw,
-
-  deny /dev/input/event@{int} rw,
-  deny /var/log/Xorg.@{int}.log w,
+  /dev/input/event@{int} rw,
 
   include if exists <local/xkbcomp>
 }

@@ -5,92 +5,68 @@
 package main
 
 import (
-	"flag"
-	"fmt"
-	"os"
+	"slices"
 
-	"github.com/roddhjav/apparmor.d/pkg/logging"
 	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 	"github.com/roddhjav/apparmor.d/pkg/prebuild/builder"
-	"github.com/roddhjav/apparmor.d/pkg/prebuild/cfg"
-	"github.com/roddhjav/apparmor.d/pkg/prebuild/directive"
+	"github.com/roddhjav/apparmor.d/pkg/prebuild/cli"
 	"github.com/roddhjav/apparmor.d/pkg/prebuild/prepare"
 )
 
-const usage = `prebuild [-h] [--full] [--complain | --enforce]
-
-    Prebuild apparmor.d profiles for a given distribution and apply
-    internal built-in directives.
-
-Options:
-    -h, --help      Show this help message and exit.
-    -f, --full      Set AppArmor for full system policy.
-    -c, --complain  Set complain flag on all profiles.
-    -e, --enforce   Set enforce flag on all profiles.
-        --abi4      Convert the profiles to Apparmor abi/4.0.
-
-`
-
-var (
-	help     bool
-	full     bool
-	complain bool
-	enforce  bool
-	abi4     bool
-)
-
+// Cli arguments have priority over the settings entered here
 func init() {
-	flag.BoolVar(&help, "h", false, "Show this help message and exit.")
-	flag.BoolVar(&help, "help", false, "Show this help message and exit.")
-	flag.BoolVar(&full, "f", false, "Set AppArmor for full system policy.")
-	flag.BoolVar(&full, "full", false, "Set AppArmor for full system policy.")
-	flag.BoolVar(&complain, "c", false, "Set complain flag on all profiles.")
-	flag.BoolVar(&complain, "complain", false, "Set complain flag on all profiles.")
-	flag.BoolVar(&enforce, "e", false, "Set enforce flag on all profiles.")
-	flag.BoolVar(&enforce, "enforce", false, "Set enforce flag on all profiles.")
-	flag.BoolVar(&abi4, "abi4", false, "Convert the profiles to Apparmor abi/4.0.")
-}
+	// Define the default ABI
+	prebuild.ABI = 4
 
-func aaPrebuild() error {
-	logging.Step("Building apparmor.d profiles for %s.", cfg.Distribution)
+	// Define the tasks applied by default
+	prepare.Register(
+		"synchronise",     // Initialize a new clean apparmor.d build directory
+		"ignore",          // Ignore profiles and files from dist/ignore
+		"merge",           // Merge profiles (from group/, profiles-*-*/) to a unified apparmor.d directory
+		"configure",       // Set distribution specificities
+		"setflags",        // Set flags as definied in dist/flags
+		"overwrite",       // Overwrite dummy upstream profiles
+		"systemd-default", // Set systemd unit drop in files for dbus profiles
+	)
 
-	if full {
-		prepare.Register("fsp")
-		builder.Register("fsp")
-	} else {
-		prepare.Register("systemd-early")
+	// Build tasks applied by default
+	builder.Register(
+		"userspace", // Resolve variable in profile attachments
+		"hotfix",    // Temporary fix for #74, #80 & #235
+	)
+
+	// Compatibility with AppArmor 3
+	switch prebuild.Distribution {
+	case "arch":
+		prebuild.ABI = 3
+
+	case "ubuntu":
+		if !slices.Contains([]string{"noble"}, prebuild.Release["VERSION_CODENAME"]) {
+			prebuild.ABI = 3
+		}
+
+	case "debian":
+		prebuild.ABI = 3
+
+	case "whonix":
+		prebuild.ABI = 3
+
+		// Hide rewrittem Whonix profiles
+		prebuild.Hide += `/etc/apparmor.d/abstractions/base.d/kicksecure
+		/etc/apparmor.d/home.tor-browser.firefox
+		/etc/apparmor.d/tunables/homsanitycheck
+		/etc/apparmor.d/usr.bin.url_e.d/anondist
+		/etc/apparmor.d/tunables/home.d/live-mode
+		/etc/apparmor.d/tunables/home.d/qubes-whonix-anondist
+		/etc/apparmor.d/usr.bin.hexchat
+		/etc/apparmor.d/usr.bin.sdwdate
+		/etc/apparmor.d/usr.bin.systemcheck
+		/etc/apparmor.d/usr.bin.timeto_unixtime
+		/etc/apparmor.d/whonix-firewall
+		`
 	}
-
-	if complain {
-		builder.Register("complain")
-	} else if enforce {
-		builder.Register("enforce")
-	}
-
-	if abi4 {
-		builder.Register("abi3")
-	}
-
-	if err := prebuild.Prepare(); err != nil {
-		return err
-	}
-	return prebuild.Build()
 }
 
 func main() {
-	flag.Usage = func() {
-		fmt.Printf("%s%s\n%s\n%s", usage,
-			cfg.Help("Prepare", prepare.Tasks),
-			cfg.Help("Build", builder.Builders),
-			cfg.Usage("Directives", directive.Directives),
-		)
-	}
-	flag.Parse()
-	if help {
-		flag.Usage()
-		os.Exit(0)
-	}
-	if err := aaPrebuild(); err != nil {
-		logging.Fatal(err.Error())
-	}
+	cli.Prebuild()
 }

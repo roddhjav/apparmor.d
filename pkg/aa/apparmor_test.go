@@ -10,7 +10,6 @@ import (
 	"testing"
 
 	"github.com/roddhjav/apparmor.d/pkg/paths"
-	"github.com/roddhjav/apparmor.d/pkg/util"
 )
 
 var (
@@ -21,7 +20,7 @@ var (
 // mustReadProfileFile read a file and return its content as a slice of string.
 // It panics if an error occurs. It removes the last comment line.
 func mustReadProfileFile(path *paths.Path) string {
-	res := strings.Split(util.MustReadFile(path), "\n")
+	res := strings.Split(path.MustReadFileAsString(), "\n")
 	return strings.Join(res[:len(res)-2], "\n")
 }
 
@@ -108,7 +107,7 @@ func TestAppArmorProfileFile_String(t *testing.T) {
 					},
 				}},
 			},
-			want: util.MustReadFile(testData.Join("string.aa")),
+			want: testData.Join("string.aa").MustReadFileAsString(),
 		},
 	}
 	for _, tt := range tests {
@@ -208,7 +207,7 @@ func TestAppArmorProfileFile_Integration(t *testing.T) {
 					&Comment{Base: Base{Comment: " Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>", IsLineRule: true}},
 					&Comment{Base: Base{Comment: " SPDX-License-Identifier: GPL-2.0-only", IsLineRule: true}},
 					nil,
-					&Abi{IsMagic: true, Path: "abi/3.0"},
+					&Abi{IsMagic: true, Path: "abi/4.0"},
 					&Include{IsMagic: true, Path: "tunables/global"},
 					&Variable{
 						Name: "exec_path", Define: true,

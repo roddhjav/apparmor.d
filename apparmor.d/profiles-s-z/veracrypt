@@ -1,0 +1,96 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/veracrypt
+profile veracrypt @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/app/kmod>
+  include <abstractions/app/sudo>
+  include <abstractions/consoles>
+  include <abstractions/dconf-write>
+  include <abstractions/desktop>
+  include <abstractions/disks-write>
+  include <abstractions/nameservice-strict>
+
+  capability chown,
+  capability dac_read_search,
+  capability fsetid,
+  capability sys_admin,
+  capability sys_ptrace,
+
+  mount fstype=fuse.veracrypt options=(rw nodev nosuid) veracrypt -> /tmp/.veracrypt_*/,
+
+  @{exec_path} mrix,
+
+  @{sh_path}       rix,
+  @{open_path}     rPx -> child-open-help,
+  @{bin}/dmsetup   rPx,
+  @{bin}/grep      rix,
+  @{bin}/kmod      rix,
+  @{bin}/ldconfig  rix,
+  @{bin}/losetup   rCx -> losetup,
+  @{bin}/mount     rPx,
+  @{bin}/sudo      rix,
+  @{bin}/umount    rCx -> umount,
+  @{bin}/wc        rix,
+  @{file_explorers_path} rPx,
+
+  /home/ r,
+
+  # Mount points
+  @{MOUNTS}/ rw,
+  @{MOUNTS}/*/ rw,
+
+  owner @{HOME}/ r,
+  owner @{HOME}/.VeraCrypt-lock-@{user} rwk,
+
+  owner @{user_config_dirs}/VeraCrypt/ rw,
+  owner @{user_config_dirs}/VeraCrypt/** rwk,
+
+  /tmp/.veracrypt_*/ rw,
+  /tmp/.veracrypt_*/** rwk,
+
+  @{sys}/module/compression r,
+  @{sys}/module/dm_mod/initstate r,
+
+        @{PROC}/partitions r,
+  owner @{PROC}/@{pid}/mounts r,
+
+  /dev/fuse rw,
+  /dev/tty rw,
+
+  profile umount {
+    include <abstractions/base>
+
+    capability sys_admin,
+
+    umount /tmp/.veracrypt_*/,
+    umount @{MOUNTS}/{,*/},
+
+    @{bin}/umount mr,
+
+    owner @{run}/mount/utab r,
+
+    include if exists <local/veracrypt_umount>
+  }
+
+  profile losetup {
+    include <abstractions/base>
+    include <abstractions/disks-write>
+
+    capability sys_rawio,
+
+    @{bin}/losetup mr,
+
+    include if exists <local/veracrypt_losetup>
+  }
+
+  include if exists <local/veracrypt>
+}
+
+# vim:syntax=apparmor

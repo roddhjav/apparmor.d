@@ -10,7 +10,7 @@
 
 # Warning: Such a profile is limited as it gives access to a lot of resources.
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
@@ -68,6 +68,7 @@ profile libvirtd @{exec_path} flags=(attach_disconnected) {
 
   ptrace (read,trace) peer=@{profile_name},
   ptrace (read,trace) peer=dnsmasq,
+  ptrace (read,trace) peer=gnome-boxes,
   ptrace (read,trace) peer=libvirt-@{uuid},
   ptrace (read,trace) peer=libvirt-dbus,
   ptrace (read,trace) peer=unconfined,
@@ -93,15 +94,14 @@ profile libvirtd @{exec_path} flags=(attach_disconnected) {
   @{lib}/libvirt/libvirt_iohelper                   rix,
   @{lib}/libvirt/libvirt_parthelper                 rix,
 
+  @{lib}/{,qemu/}qemu-bridge-helper                 rPx,
+  @{lib}/{,qemu/}vhost-user-gpu                    rPUx,
+  @{lib}/{,qemu/}virtiofsd                         rux, # TODO: WIP
   @{lib}/udev/scsi_id                              rPUx,
   @{lib}/xen-*/bin/libxl-save-helper               rPUx,
   @{lib}/xen-*/bin/pygrub                          rPUx,
   @{lib}/xen-common/bin/xen-toolstack              rPUx,
   @{lib}/xen/bin/*                                 rPUx,
-  /{usr/,}{lib,lib64,lib/qemu,libexec}/vhost-user-gpu  rPUx,
-  /{usr/,}{lib,lib64,lib/qemu,libexec}/virtiofsd        rux, # TODO: WIP
-
-  /{usr/,}{lib,lib64,lib/qemu,libexec}/qemu-bridge-helper Cx -> qemu_bridge_helper,
 
   @{bin}/dmidecode                            rPx,
   @{bin}/dnsmasq                              rPx,
@@ -131,6 +131,7 @@ profile libvirtd @{exec_path} flags=(attach_disconnected) {
 
   /usr/share/edk2*/{,**} rk,
   /usr/share/hwdata/* r,
+  /usr/share/iproute2/{,**} r,
   /usr/share/libvirt/{,**} r,
   /usr/share/mime/mime.cache r,
   /usr/share/misc/pci.ids r,
@@ -152,11 +153,12 @@ profile libvirtd @{exec_path} flags=(attach_disconnected) {
   @{user_vm_dirs}/{,**} rwk,
   @{user_publicshare_dirs}/{,**} rwk,
 
+  @{att}/@{run}/systemd/inhibit/@{int}.ref rw,
+
   @{run}/libvirt/ rw,
   @{run}/libvirt/** rwk,
   @{run}/libvirtd.pid wk,
   @{run}/lock/LCK.._pts_@{int} rw,
-  @{run}/systemd/inhibit/[0-9]*.ref rw,
   @{run}/systemd/notify w,
   @{run}/utmp rk,
 
@@ -289,6 +291,8 @@ profile libvirtd @{exec_path} flags=(attach_disconnected) {
     owner @{PROC}/@{pids}/status r,
 
     /dev/net/tun rw,
+
+    include if exists <local/libvirtd_qemu_bridge_helper>
   }
 
   include if exists <usr/libvirtd>

@@ -2,30 +2,32 @@
 # Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
+  abi <abi/4.0>,
+
   dbus send bus=system path=/org/freedesktop/Accounts
        interface=org.freedesktop.Accounts
        member={FindUserByName,ListCachedUsers}
-       peer=(name=:*, label=accounts-daemon),
+       peer=(name="@{busname}", label=accounts-daemon),
 
   dbus send bus=system path=/org/freedesktop/Accounts{,/User@{uid}}
        interface=org.freedesktop.DBus.Properties
        member=GetAll
-       peer=(name=:*, label=accounts-daemon),
+       peer=(name="@{busname}", label=accounts-daemon),
 
   dbus receive bus=system path=/org/freedesktop/Accounts/User@{uid}
        interface=org.freedesktop.Accounts.User
        member=*Changed
-       peer=(name=:*, label=accounts-daemon),
+       peer=(name="@{busname}", label=accounts-daemon),
 
   dbus receive bus=system path=/org/freedesktop/Accounts
        interface=org.freedesktop.Accounts
        member=UserAdded
-       peer=(name=:*, label=accounts-daemon),
+       peer=(name="@{busname}", label=accounts-daemon),
 
   dbus receive bus=system path=/org/freedesktop/Accounts/User@{uid}
        interface=org.freedesktop.DBus.Properties
        member=*Changed
-       peer=(name=:*, label=accounts-daemon),
+       peer=(name="@{busname}", label=accounts-daemon),
 
   include if exists <abstractions/bus/org.freedesktop.Accounts.d>
 
