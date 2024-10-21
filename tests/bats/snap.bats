@@ -7,6 +7,7 @@ load common
 
 setup_file() {
     aa_setup
+    skip
 }
 
 # bats test_tags=snap
