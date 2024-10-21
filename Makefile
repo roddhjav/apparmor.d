@@ -108,6 +108,10 @@ lint:
 check:
 	@bash tests/check.sh
 
+.PHONY: bats
+bats:
+	@bats --print-output-on-failure tests/bats/
+
 manual:
 	@pandoc -t man -s -o root/usr/share/man/man8/aa-log.8 root/usr/share/man/man8/aa-log.md
 
