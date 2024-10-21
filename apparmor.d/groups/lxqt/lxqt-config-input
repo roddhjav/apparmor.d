@@ -3,7 +3,7 @@
 # Copyright (C) 2024 Besanon  <m231009ts@mailfence.com>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
@@ -15,9 +15,8 @@ profile lxqt-config-input @{exec_path} {
   include <abstractions/bus/org.bluez>
   include <abstractions/bus/org.freedesktop.login1>
   include <abstractions/devices-usb>
-  include <abstractions/bus-accessibility>
-  include <abstractions/bus-session>
-  include <abstractions/fontconfig-cache-read> 
+  include <abstractions/dbus-session-strict>
+  include <abstractions/dbus-accessibility-strict>
   include <abstractions/gtk>
   include <abstractions/graphics>
   include <abstractions/gvfs-open>
@@ -28,14 +27,21 @@ profile lxqt-config-input @{exec_path} {
   
   signal (read) set=(kill,term) peer=lxqt-session,
 
-  @{exec_path}				mr,
+  @{exec_path}			mr,
   
   @{bin}/setxkbmap 			rix,  
 
   /etc/udev/udev.conf 			r,
 
+  owner @{user_config_dirs}/lxqt/lxqt.conf.@{rand6} l -> @{user_config_dirs}/lxqt/#@{int},
+  owner @{user_config_dirs}/lxqt/lxqt.conf.@{rand6} rw,
+  owner @{user_config_dirs}/lxqt/session.conf.@{rand6} l -> @{user_config_dirs}/lxqt/#@{int},
+  owner @{user_config_dirs}/lxqt/session.conf.@{rand6} rw,
+  owner @{user_config_dirs}/lxqt/lxqt.conf.lock rwk,
+  owner @{user_config_dirs}/lxqt/lxqt-config-input.conf.lock rwk,
   owner @{user_config_dirs}/lxqt/lxqt-config-input.conf.@{rand6}  rwkl -> @{user_config_dirs}/lxqt/#@{int},
-  owner @{user_config_dirs}/lxqt/#@{int}  rw,
+  owner @{user_config_dirs}/lxqt/#@{int}  rwk,
+  owner @{user_config_dirs}/lxqt/session.conf.lock rwk,
 
   owner /tmp/@{int}  		        r,
 
@@ -90,8 +96,10 @@ profile lxqt-config-input @{exec_path} {
   @{sys}/devices/LNXSYSTM:00/LNXSYBUS:@{rand2}/AMDI*/**/wakeup@{int}/uevent r,
   @{sys}/devices/LNXSYSTM:00/LNXSYBUS:@{rand2}/PNP*/uevent r,
   @{sys}/devices/LNXSYSTM:00/LNXSYBUS:@{rand2}/PNP*/**/wakeup/wakeup@{int}/uevent r,
- 
+  
   /dev/tty				rw,
+
+  deny @{sys}/class/usbmisc/ r,
 
   include if exists <local/lxqt-config-input>
 }
