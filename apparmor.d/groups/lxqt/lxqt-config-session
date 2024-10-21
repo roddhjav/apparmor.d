@@ -3,7 +3,7 @@
 # Copyright (C) 2024 Besanon  <m231009ts@mailfence.com>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
@@ -14,11 +14,11 @@ profile lxqt-config-session @{exec_path} {
   include <abstractions/graphics>
   include <abstractions/video>
   include <abstractions/lxqt>
-  include <abstractions/fontconfig-cache-read> 
+  include <abstractions/nameservice-strict>
   include <abstractions/qt5>
   include <abstractions/qt5-shader-cache>
-  include <abstractions/bus-accessibility>
-  include <abstractions/bus-session>
+  include <abstractions/dbus-session-strict>
+  include <abstractions/dbus-accessibility-strict>
   include <abstractions/gvfs-open>
   include <abstractions/thumbnails-cache-read>
   include <abstractions/thumbnails-cache-write>
@@ -28,20 +28,28 @@ profile lxqt-config-session @{exec_path} {
   /usr/share/libfm-qt6/translations/libfm-qt_de.qm 	r,
   /usr/share/gvfs/remote-volume-monitors/ 		r,
   /usr/share/gvfs/remote-volume-monitors/udisks2.monitor r,
-
+  /usr/share/thumbnailers/ r,
+  
   /etc/fstab 						r,
   /etc/xdg/autostart/ 					r,
   /etc/xdg/autostart/** 				r,
   
   owner @{user_config_dirs}/#@{int}    			rw,
+  owner @{user_config_dirs}/autostart/ 			r,
+  owner @{user_config_dirs}/QtProject.conf		rw,
   owner @{user_config_dirs}/QtProject.conf.@{rand6}	rwkl, 
   owner @{user_config_dirs}/QtProject.conf.lock 	rwk,
-  owner @{user_config_dirs}/autostart/ 			r,
+  owner @{user_config_dirs}/autostart/*.desktop		r,
   owner @{user_config_dirs}/autostart/lxqt-config-monitor-autostart.desktop  r,
-  owner @{user_config_dirs}/lxqt/lxqt**  rwkl -> @{user_config_dirs}/lxqt/#@{int},
+  owner @{user_config_dirs}/lxqt/  r,
+  owner @{user_config_dirs}/lxqt/#@{int}                rwk,
+  owner @{user_config_dirs}/lxqt/lxqt.conf.lock         rwk,
+  owner @{user_config_dirs}/lxqt/lxqt-config-session.conf.lock 	  rwk,
   owner @{user_config_dirs}/lxqt/session.conf.lock 	rwk,
+  owner @{user_config_dirs}/lxqt/session.conf.@{rand6} rwkl -> @{user_config_dirs}/lxqt/#@{int}, 
+  owner @{user_config_dirs}/user-dirs.dirs 		rw,
 
-  owner /tmp/@{int}  			 r,
+  owner /tmp/@{int}  			r,
 
   owner @{PROC}/@{pid}/mountinfo 	r,
 
