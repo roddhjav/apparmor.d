@@ -92,6 +92,8 @@ func init() {
 	flag.BoolVar(&rules, "rules", false, "Convert the log into AppArmor rules.")
 	flag.BoolVar(&raw, "R", false, "Print the raw log without any formatting.")
 	flag.BoolVar(&raw, "raw", false, "Print the raw log without any formatting.")
+	flag.StringVar(&since, "S", "", "Display logs since the START time.")
+	flag.StringVar(&since, "since", "", "Display logs since the START time.")
 }
 
 func main() {
