@@ -3,30 +3,18 @@
 # Copyright (C) 2024 Besanon  <m231009ts@mailfence.com>
 # SPDX-License-Identifier: GPL-2.0-only
 
-abi <abi/3.0>,
+abi <abi/4.0>,
 
 include <tunables/global>
 
 @{exec_path} = @{bin}/lxqt-session
 profile lxqt-session @{exec_path} flags=(attach_disconnected) {
-  include <abstractions/app-open>
   include <abstractions/base>
-  include <abstractions/bus/org.freedesktop.NetworkManager>
-  include <abstractions/bus/org.freedesktop.UPower>
-  include <abstractions/consoles>
-  include <abstractions/dconf-write>
   include <abstractions/gtk>
-  include <abstractions/graphics>
   include <abstractions/lxqt>
-  include <abstractions/video>
   include <abstractions/qt5-shader-cache>
   include <abstractions/nameservice-strict>
-  include <abstractions/dbus-session>
   include <abstractions/dbus-accessibility>
-  include <abstractions/gvfs-open>
-  include <abstractions/recent-documents-write>
-  include <abstractions/ssl_certs>
-  include <abstractions/thumbnails-cache-read>
 
   signal (send),
   signal (receive) set=(kill, term) peer=startlxqt,		
@@ -55,11 +43,9 @@ profile lxqt-session @{exec_path} flags=(attach_disconnected) {
   @{bin}/lxqt-leave			rPx,
   @{bin}/lxqt-about			rPx,
   @{bin}/lxqt-config-monitor 		rPx,
-  @{bin}/dbus-send			rPUx,	
   @{bin}/dbus-update-activation-environment            rCx -> dbus,
   @{bin}/systemctl                                     rCx -> systemctl,
 
-  @{bin}/system-config-printer-applet   rPx,
   @{bin}/pavucontrol			rPx,
   @{lib}/geoclue-2.0/demos/agent	rPx,	
   @{bin}/python3.@{int}			rPx,
@@ -67,7 +53,6 @@ profile lxqt-session @{exec_path} flags=(attach_disconnected) {
   @{bin}/xfe				rPx,
   @{bin}/nm-connection-editor		rPx,
   @{bin}/nm-applet			rPx,
-  @{bin}/nm-tray 			rPx,
   @{bin}/pcmanfm-qt			rPx,
   @{bin}/openbox			rix,
   @{bin}/dconf-editor			rPx,	
@@ -75,7 +60,8 @@ profile lxqt-session @{exec_path} flags=(attach_disconnected) {
   @{bin}/start-pulseaudio-x11		rPx,
   @{bin}/xrdb              		rPx,
   @{bin}/xdg-user-dirs-update		rPx,
-  /usr/lib/{/,x86_64-linux-gnu/}tumbler-1/tumblerd rPx,
+  # only if Opensnitch is to be started
+  @{bin}/opensnitch-ui 			rPx,
 
   /usr/share/					r,
   /usr/share/mime/				r,
@@ -91,17 +77,19 @@ profile lxqt-session @{exec_path} flags=(attach_disconnected) {
   /etc/xdg/openbox/*                            r,
   /etc/udev/udev.conf                           r,
 
+  /var/lib/dbus/machine-id 			r,
+
   owner @{HOME}/.local/share/			r,
   owner @{HOME}/.config/			r,
   owner @{HOME}/.config/autostart/		r,
   owner @{HOME}/.config/autostart/*		rw,
-  owner @{user_cache_dirs}/openbox/openbox.log  rwk,
   owner @{user_cache_dirs}/openbox/ 		rw,
+  owner @{user_cache_dirs}/openbox/sessions/ 	rw,
+  owner @{user_cache_dirs}/openbox/openbox.log  rwk,
   owner @{user_config_dirs}/mimeapps.list{,.@{rand6}} 	rw,
   owner @{user_config_dirs}/dconf/user			r,
   owner @{user_config_dirs}/openbox/rc.xml      	r,
   owner @{user_share_dirs}/sddm/xorg-session.log 	rw,
-  owner @{user_cache_dirs}/openbox/sessions/ 		rw,
 
   @{PROC}/ 					r, 
   @{PROC}/uptime 				r,
@@ -110,6 +98,8 @@ profile lxqt-session @{exec_path} flags=(attach_disconnected) {
 
   @{run}/systemd/inhibit/** 			rw,
 
+  /dev/tty rw,
+  
   include if exists <local/lxqt-session>
 
   profile systemctl {
@@ -126,6 +116,8 @@ profile lxqt-session @{exec_path} flags=(attach_disconnected) {
     @{bin}/dbus-update-activation-environment mr,
 
     owner @{user_share_dirs}/sddm/xorg-session.log rw,
+
+    owner @{PROC}/@{pid}/fd/ r,
 
     include if exists <local/lxqt-session_dbus>
   }
