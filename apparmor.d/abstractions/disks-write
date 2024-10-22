@@ -3,99 +3,43 @@
 # Copyright (C) 2022-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-  # The /sys/ entries probably should be tightened
-
   abi <abi/4.0>,
 
-  /dev/ r,
-  /dev/block/ r,
-  /dev/disk/{,*/} r,
+  include <abstractions/disks-read>
 
   # Regular disk/partition devices
-  /dev/{s,v}d[a-z]* rwk,
-  /dev/{s,v}d[a-z]*@{int} rwk,
-  @{sys}/devices/@{pci}/ata@{int}/** r,
-  @{sys}/devices/@{pci}/block/{s,v}d[a-z]/ r,
-  @{sys}/devices/@{pci}/block/{s,v}d[a-z]/** r,
-  @{sys}/devices/@{pci}/host@{int}/** r,
-  @{sys}/devices/@{pci}/usb@{int}/** r,
-  @{sys}/devices/@{pci}/virtio@{int}/** r,
-  @{sys}/devices/**/host@{int}/** r,
+  /dev/{s,v}d[a-z]* w,
+  /dev/{s,v}d[a-z]*@{int} w,
 
   # SSD Nvme devices
-  /dev/nvme[0-9]* rwk,
-  @{sys}/devices/@{pci}/nvme/nvme@{int}/{,**} r,
+  /dev/nvme[0-9]* w,
 
   # SD card devices
-  /dev/mmcblk[0-9]* rwk,
-  /dev/mmcblk[0-9]*p@{int} rwk,
-  @{sys}/devices/@{pci}/block/mmcblk@{int}/ r,
-  @{sys}/devices/@{pci}/block/mmcblk@{int}/** r,
-  @{sys}/devices/@{pci}/mmc@{int}/mmc*/ r,
-  @{sys}/devices/@{pci}/mmc@{int}/mmc*/** r,
-  @{sys}/devices/platform/**/block/mmcblk@{int}/ r,
-  @{sys}/devices/platform/**/block/mmcblk@{int}/** r,
-  @{sys}/devices/platform/**/mmc@{int}/ r,
-  @{sys}/devices/platform/**/mmc@{int}/** r,
+  /dev/mmcblk[0-9]* w,
+  /dev/mmcblk[0-9]*p@{int} w,
 
   # Loop devices
-  /dev/loop[0-9]* rwk,
-  /dev/loop[0-9]*p@{int} rwk,
-  @{sys}/devices/virtual/block/loop@{int}/ r,
-  @{sys}/devices/virtual/block/loop@{int}/** r,
+  /dev/loop[0-9]* w,
+  /dev/loop[0-9]*p@{int} w,
 
   # LUKS/LVM (device-mapper) devices
-  /dev/dm-@{int} rwk,
-  /dev/mapper/{,*} rw,
-  @{sys}/devices/virtual/block/dm-@{int}/ r,
-  @{sys}/devices/virtual/block/dm-@{int}/** r,
+  /dev/dm-@{int} w,
+  /dev/mapper/{,*} w,
 
   # ZFS devices
-  /dev/zd@{int} rwk,
-  /dev/*pool/ r,
-  /dev/zvol/{,*/} r,
-  @{sys}/devices/virtual/block/zd@{int}/ r,
-  @{sys}/devices/virtual/block/zd@{int}/** r,
+  /dev/zd@{int} w,
 
   # ZRAM devices
-  /dev/zram@{int} rwk,
-  @{sys}/devices/virtual/block/zram@{int}/ r,
-  @{sys}/devices/virtual/block/zram@{int}/** r,
+  /dev/zram@{int} w,
 
   # NBD devices
-  /dev/nbd* rwk,
-  @{sys}/devices/virtual/block/nbd@{int}/ r,
-  @{sys}/devices/virtual/block/nbd@{int}/** r,
+  /dev/nbd* w,
 
   # Floppy disks
-  /dev/fd@{int} rwk,
-  @{sys}/devices/platform/floppy.@{int}/block/fd@{int}/ r,
-  @{sys}/devices/platform/floppy.@{int}/block/fd@{int}/** r,
+  /dev/fd@{int} w,
 
   # CD-ROM
-  /dev/sr@{int} rwk,
-
-  # Lookup block device by major:minor numbers
-  # See: https://apparmor.pujol.io/development/structure/#udev-rules
-
-  @{sys}/block/ r,
-  @{sys}/class/block/ r,
-  @{sys}/dev/block/ r,
-
-  @{run}/udev/data/b2:@{int} r,       # for /dev/fd*
-  @{run}/udev/data/b7:@{int} r,       # for /dev/loop*
-  @{run}/udev/data/b8:@{int} r,       # for /dev/sd*
-  @{run}/udev/data/b11:@{int} r,      # for /dev/sr*
-  @{run}/udev/data/b43:@{int} r,      # for /dev/nbd*
-  @{run}/udev/data/b179:@{int} r,     # for /dev/mmcblk*
-  @{run}/udev/data/b230:@{int} r,     # for /dev/zvol*
-  @{run}/udev/data/b24[0-9]:@{int} r, # for dynamic assignment range 240 to 254
-  @{run}/udev/data/b25[0-4]:@{int} r,
-  @{run}/udev/data/b259:@{int} r,     # Block Extended Major
-
-  @{run}/udev/data/c189:@{int} r,     # for /dev/bus/usb/**
-
-  @{run}/udev/data/+usb:*      r,     # for disk over usb hub
+  /dev/sr@{int} w,
 
   include if exists <abstractions/disks-write.d>
 
