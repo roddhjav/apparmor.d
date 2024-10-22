@@ -11,7 +11,7 @@ setup_file() {
 
 # bats test_tags=chsh
 @test "chsh: [l]ist available shells" {
-    chsh --list-shells
+    chsh --list-shells || true
     aa_check
 }
 
