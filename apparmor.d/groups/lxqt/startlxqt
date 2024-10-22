@@ -7,18 +7,16 @@ abi <abi/4.0>,
 
 include <tunables/global>
 
-@{exec_pathstlx} = @{bin}/startlxqt
-profile startlxqt @{exec_pathstlx} {
+@{exec_path} = @{bin}/startlxqt
+profile startlxqt @{exec_path} {
   include <abstractions/base>
   include <abstractions/consoles>
-  include <abstractions/freedesktop.org>
   include <abstractions/fontconfig-cache-read>
   include <abstractions/lxqt>
-  include <abstractions/X-strict>
 
   signal (receive) set=(term) peer=sddm,
 
-  @{exec_pathstlx} mr,
+  @{exec_path} mr,
 
   @{bin}/xrdb               rPx,
   @{bin}/xsetroot           rPx,
@@ -35,14 +33,11 @@ profile startlxqt @{exec_pathstlx} {
   /usr/share/kservices5/{,**} r,
   /usr/share/mime/{,**} r,
 
-  /etc/locale.alias r,
   /etc/machine-id r,
   /etc/xdg/menus/{,**} r,
 
   @{HOME}/ r,
-  owner @{HOME}/.Xauthority r,
 
-  owner @{user_cache_dirs}/ rw,
   owner @{user_cache_dirs}/#@{int} rw,
         @{user_cache_dirs}/ksycoca5_* rwkl -> @{user_cache_dirs}/#@{int},
 
@@ -59,11 +54,12 @@ profile startlxqt @{exec_pathstlx} {
 
   owner @{run}/user/@{uid}/ r,
 
-        @{PROC}/sys/kernel/core_pattern r,
   owner @{PROC}/@{pid}/maps r,
 
   /dev/tty rw,
   /dev/tty@{int} rw,
+
+ include if exists <local/startlxqt>
 
   profile systemctl flags=(attach_disconnected) {
     include <abstractions/base>
