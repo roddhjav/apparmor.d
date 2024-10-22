@@ -17,7 +17,7 @@ readonly HEADERS=(
 
 _die() {
     echo -e "\033[1;31m ✗ Error: \033[0m$*"
-    #exit 1
+    exit 1
 }
 
 _ensure_header() {
