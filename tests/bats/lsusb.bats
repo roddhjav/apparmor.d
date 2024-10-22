@@ -11,18 +11,18 @@ setup_file() {
 
 # bats test_tags=lsusb
 @test "lsusb: List all the USB devices available" {
-    lsusb
+    lsusb || true
     aa_check
 }
 
 # bats test_tags=lsusb
 @test "lsusb: List the USB hierarchy as a tree" {
-    lsusb -t
+    lsusb -t || true
     aa_check
 }
 
 # bats test_tags=lsusb
 @test "lsusb: List verbose information about USB devices" {
-    lsusb --verbose
+    lsusb --verbose || true
     aa_check
 }

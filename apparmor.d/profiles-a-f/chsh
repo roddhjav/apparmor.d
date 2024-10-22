@@ -10,25 +10,18 @@ include <tunables/global>
 @{exec_path} = @{bin}/chsh
 profile chsh @{exec_path} {
   include <abstractions/base>
-  include <abstractions/wutmp>
   include <abstractions/authentication>
   include <abstractions/nameservice-strict>
+  include <abstractions/wutmp>
 
-  # To write records to the kernel auditing log.
   capability audit_write,
-
-  # To set the right permission to the files in the /etc/ dir.
   capability chown,
   capability fsetid,
-
-  # gpasswd is a SETUID binary
   capability setuid,
 
   network netlink raw,
 
   @{exec_path} mr,
-
-  owner @{PROC}/@{pid}/loginuid r,
 
   /etc/shells r,
 
@@ -43,6 +36,8 @@ profile chsh @{exec_path} {
   # A process first uses lckpwdf() to lock the lock file, thereby gaining exclusive rights to
   # modify the /etc/passwd or /etc/shadow password database.
   /etc/.pwd.lock rwk,
+
+  owner @{PROC}/@{pid}/loginuid r,
 
   include if exists <local/chsh>
 }
