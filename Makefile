@@ -7,35 +7,35 @@ DESTDIR ?= /
 BUILD ?= .build
 PKGDEST ?= ${PWD}/.pkg
 PKGNAME := apparmor.d
-P = $(filter-out dpkg,$(notdir $(wildcard ${BUILD}/apparmor.d/*)))
+PROFILES = $(filter-out dpkg,$(notdir $(wildcard ${BUILD}/apparmor.d/*)))
 
-.PHONY: all build enforce full install local $(P) dev package pkg dpkg rpm tests lint check manual docs serve clean
-
+.PHONY: all
 all: build
 	@./${BUILD}/prebuild --complain
 
+.PHONY: build
 build:
 	@go build -o ${BUILD}/ ./cmd/aa-log
 	@go build -o ${BUILD}/ ./cmd/prebuild
 
+.PHONY: enforce
 enforce: build
 	@./${BUILD}/prebuild
 
+.PHONY: full
 full: build
 	@./${BUILD}/prebuild --complain --full
 
-SHARE = $(shell find "${BUILD}/share" -type f -not -name "*.md" -printf "%P\n")
-PROFILES = $(shell find "${BUILD}/apparmor.d" -type f -printf "%P\n")
-DISABLES = $(shell find "${BUILD}/apparmor.d" -type l -printf "%P\n")
+.PHONY: install
 install:
 	@install -Dm0755 ${BUILD}/aa-log ${DESTDIR}/usr/bin/aa-log
-	@for file in ${SHARE}; do \
+	@for file in $(shell find "${BUILD}/share" -type f -not -name "*.md" -printf "%P\n"); do \
 		install -Dm0644 "${BUILD}/share/$${file}" "${DESTDIR}/usr/share/$${file}"; \
 	done;
-	@for file in ${PROFILES}; do \
+	@for file in $(shell find "${BUILD}/apparmor.d" -type f -printf "%P\n"); do \
 		install -Dm0644 "${BUILD}/apparmor.d/$${file}" "${DESTDIR}/etc/apparmor.d/$${file}"; \
 	done;
-	@for file in ${DISABLES}; do \
+	@for file in $(shell find "${BUILD}/apparmor.d" -type l -printf "%P\n"); do \
 		mkdir -p "${DESTDIR}/etc/apparmor.d/disable"; \
 		cp -d "${BUILD}/apparmor.d/$${file}" "${DESTDIR}/etc/apparmor.d/$${file}"; \
 	done;
@@ -48,19 +48,14 @@ install:
 		install -Dm0644 "$${file}" "${DESTDIR}/usr/lib/systemd/user/$${service}.d/apparmor.conf"; \
 	done
 
-local:
-	@make
-	@sudo make install
-	@sudo systemctl restart apparmor || sudo systemctl status apparmor
 
-ABSTRACTIONS = $(shell find ${BUILD}/apparmor.d/abstractions/ -type f -printf "%P\n")
-TUNABLES = $(shell find ${BUILD}/apparmor.d/tunables/ -type f -printf "%P\n")
-$(P):
+.PHONY: $(PROFILES)
+$(PROFILES):
 	@install -Dm0755 ${BUILD}/aa-log ${DESTDIR}/usr/bin/aa-log
-	@for file in ${ABSTRACTIONS}; do \
+	@for file in $(shell find ${BUILD}/apparmor.d/abstractions/ -type f -printf "%P\n"); do \
 		install -Dm0644 "${BUILD}/apparmor.d/abstractions/$${file}" "${DESTDIR}/etc/apparmor.d/abstractions/$${file}"; \
 	done;
-	@for file in ${TUNABLES}; do \
+	@for file in $(shell find ${BUILD}/apparmor.d/tunables/ -type f -printf "%P\n"); do \
 		install -Dm0644 "${BUILD}/apparmor.d/tunables/$${file}" "${DESTDIR}/etc/apparmor.d/tunables/$${file}"; \
 	done;
 	@echo "Warning: profile dependencies fallback to unconfined."
@@ -69,34 +64,41 @@ $(P):
 		sed -i -e "s/rPx/rPUx/g" "${BUILD}/apparmor.d/$${file}"; \
 		install -Dvm0644 "${BUILD}/apparmor.d/$${file}" "${DESTDIR}/etc/apparmor.d/$${file}"; \
 	done;
-	@systemctl restart apparmor || systemctl status apparmor
+	@systemctl restart apparmor || sudo journalctl -xeu apparmor.service
 
+.PHONY: dev
 name ?= 
 dev:
 	@go run ./cmd/prebuild --complain --file $(shell find apparmor.d -iname ${name})
 	@sudo install -Dm644 ${BUILD}/apparmor.d/${name} /etc/apparmor.d/${name}
-	@sudo systemctl restart apparmor || systemctl status apparmor
+	@sudo systemctl restart apparmor || sudo journalctl -xeu apparmor.service
 
+.PHONY: package
 dist ?= archlinux
 package:
 	@bash dists/docker.sh ${dist}
 
+.PHONY: pkg
 pkg:
 	@makepkg --syncdeps --install --cleanbuild --force --noconfirm
 
+.PHONY: dpkg
 dpkg:
 	@bash dists/build.sh dpkg
 	@sudo dpkg -i ${PKGDEST}/${PKGNAME}_*.deb
 
+.PHONY: rpm
 rpm:
 	@bash dists/build.sh rpm
 	@sudo rpm -ivh --force  ${PKGDEST}/${PKGNAME}-*.rpm
 
+.PHONY: tests
 tests:
 	@go test ./cmd/... -v -cover -coverprofile=coverage.out
 	@go test ./pkg/... -v -cover -coverprofile=coverage.out
 	@go tool cover -func=coverage.out
 
+.PHONY: lint
 lint:
 	@golangci-lint run
 	@make --directory=tests lint
@@ -105,6 +107,7 @@ lint:
 		tests/packer/init/init.sh tests/packer/src/aa-update tests/packer/init/clean.sh \
 		debian/${PKGNAME}.postinst debian/${PKGNAME}.postrm
 
+.PHONY: check
 check:
 	@bash tests/check.sh
 
@@ -112,15 +115,19 @@ check:
 bats:
 	@bats --print-output-on-failure tests/bats/
 
+.PHONY: manual
 manual:
 	@pandoc -t man -s -o root/usr/share/man/man8/aa-log.8 root/usr/share/man/man8/aa-log.md
 
+.PHONY: docs
 docs:
 	@ENABLED_GIT_REVISION_DATE=false MKDOCS_OFFLINE=true mkdocs build --strict
 
+.PHONY: serve
 serve:
 	@ENABLED_GIT_REVISION_DATE=false MKDOCS_OFFLINE=false mkdocs serve
 
+.PHONY: clean
 clean:
 	@rm -rf \
 		debian/.debhelper debian/debhelper* debian/*.debhelper debian/${PKGNAME} \
