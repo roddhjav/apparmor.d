@@ -12,34 +12,16 @@ profile vnstat @{exec_path} {
   include <abstractions/base>
   include <abstractions/consoles>
 
-  # The following rules are needed when adding a new interface to the vnstat database. Usually this
-  # action is performed as root, but the vnstatd daemon is run as vnstat (user/group), and all the
-  # database files under /var/lib/vnstat/ are owned by vnstat:vnstat. Because of the above, the
-  # dac_override CAP is needed to allow writing files in that dir.
-  #
-  # If this CAP was denied, then the following error is printed when adding new interfaces:
-  #
-  #  Error: Exec step failed (8: attempt to write a readonly database): "insert into interface
-  #  (name, active, created, updated, rxcounter, txcounter, rxtotal, txtotal) values ('eth0', 1,
-  #  datetime('now', 'localtime'), datetime('now', 'localtime'), 0, 0, 0, 0)"
-  #  Error: Adding interface "ifb0" to database failed.
-  #
-  capability dac_override,
-  #
-  # Also the vnstat.db file has to have the write permission:
-  /var/lib/vnstat/vnstat.db w,
-  /var/lib/vnstat/vnstat.db-journal rw,
-  #
-  # This is needed to change the owner:group to vnstat:vnstat of the database file.
   capability chown,
+  capability dac_override,
 
   @{exec_path} mr,
 
-  # Many apps/users can query vnstat database, so don't use owner here.
-  /var/lib/vnstat/ r,
-  /var/lib/vnstat/vnstat.db rk,
-
   /etc/vnstat.conf r,
+
+  /var/lib/vnstat/ r,
+  /var/lib/vnstat/vnstat.db rwk,
+  /var/lib/vnstat/vnstat.db-journal rw,
 
   @{sys}/class/net/ r,
 
