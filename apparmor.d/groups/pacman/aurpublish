@@ -47,14 +47,15 @@ profile aurpublish @{exec_path} {
   /etc/makepkg.conf r,
   /etc/makepkg.conf.d/{,**} r,
 
-  owner @{user_build_dirs}/**/ w,
+  owner @{user_build_dirs}/{,**/} w,
   owner @{user_projects_dirs}/** r,
   owner @{user_projects_dirs}/**/.git/COMMIT_EDITMSG rw,
   owner @{user_projects_dirs}/**/.SRCINFO rw,
 
-  owner @{user_cache_dirs}/makepkg/src/* rw,
+  owner @{user_cache_dirs}/makepkg/src/** rw,
   owner @{user_config_dirs}/pacman/makepkg.conf r,
 
+  owner /tmp/*/src/ w,
   owner @{tmp}/tmp.@{rand10} rw,
 
   /dev/tty rw,
@@ -64,13 +65,25 @@ profile aurpublish @{exec_path} {
 
     @{bin}/gpg{,2} mr,
     @{bin}/gpgconf mr,
+    @{bin}/gpg-agent rix,
+    @{lib}/{,gnupg/}scdaemon rix,
 
     owner @{HOME}/@{XDG_GPG_DIR}/ rw,
     owner @{HOME}/@{XDG_GPG_DIR}/** rwkl -> @{HOME}/@{XDG_GPG_DIR}/**,
 
     owner @{user_cache_dirs}/makepkg/src/*.asc r,
 
+    owner @{run}/user/@{uid}/ r,
+    owner @{run}/user/@{uid}/gnupg/ r,
+    owner @{run}/user/@{uid}/gnupg/d.@{rand}/ rw,
+    owner @{run}/user/@{uid}/gnupg/d.@{rand}/S.gpg-agent rw,
+    owner @{run}/user/@{uid}/gnupg/d.@{rand}/S.gpg-agent.browser w,
+    owner @{run}/user/@{uid}/gnupg/d.@{rand}/S.gpg-agent.extra w,
+    owner @{run}/user/@{uid}/gnupg/d.@{rand}/S.gpg-agent.ssh w,
+
     owner @{tmp}/tmp.@{rand10} rw,
+
+    owner @{PROC}/@{pid}/fd/ r,
 
     include if exists <local/aurpublish_gpg>
   }

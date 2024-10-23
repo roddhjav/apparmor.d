@@ -16,7 +16,7 @@ readonly HEADERS=(
 )
 
 _die() {
-    echo " ✗ $*"
+    echo -e "\033[1;31m ✗ Error: \033[0m$*"
     exit 1
 }
 
@@ -45,6 +45,9 @@ _ensure_indentation() {
         if [[ "$line" =~ ^profile ]]; then
             in_profile=true
             first_line_after_profile=true
+
+        elif [[ "$line" =~ [[:space:]]+$ ]]; then
+            _die "$file:$line_number: line has trailing whitespace."
 
         elif $in_profile; then
             if $first_line_after_profile; then
@@ -104,9 +107,10 @@ _ensure_vim() {
 }
 
 check_profiles() {
-    echo " ⋅ Checking if all profiles contain:"
+    echo -e "\033[1m ⋅ \033[0mChecking if all profiles contain:"
     echo "    - apparmor.d header & license"
     echo "    - Check indentation: 2 spaces"
+    echo "    - Check for trailing whitespaces"
     echo "    - 'abi <abi/4.0>,'"
     echo "    - 'profile <profile_name>'"
     echo "    - 'include if exists <local/*>'"
@@ -140,9 +144,10 @@ check_profiles() {
 }
 
 check_abstractions() {
-    echo " ⋅ Checking if all abstractions contain:"
+    echo -e "\033[1m ⋅ \033[0mChecking if all abstractions contain:"
     echo "    - apparmor.d header & license"
     echo "    - Check indentation: 2 spaces"
+    echo "    - Check for trailing whitespaces"
     echo "    - 'abi <abi/4.0>,'"
     echo "    - 'include if exists <abstractions/*.d>'"
     echo "    - vim:syntax=apparmor"
