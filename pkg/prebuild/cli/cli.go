@@ -15,6 +15,7 @@ import (
 	"github.com/roddhjav/apparmor.d/pkg/prebuild/builder"
 	"github.com/roddhjav/apparmor.d/pkg/prebuild/directive"
 	"github.com/roddhjav/apparmor.d/pkg/prebuild/prepare"
+	"github.com/roddhjav/apparmor.d/pkg/util"
 )
 
 const (

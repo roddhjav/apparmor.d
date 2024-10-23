@@ -66,7 +66,7 @@ func getRootBuild() *paths.Path {
 func getPackages() []string {
 	files, err := PkgDir.ReadDirRecursiveFiltered(nil, paths.FilterOutDirectories())
 	if err != nil {
-		panic(err)
+		return []string{}
 	}
 	packages := make([]string, 0, len(files))
 	for _, file := range files {

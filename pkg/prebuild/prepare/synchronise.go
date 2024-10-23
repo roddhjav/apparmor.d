@@ -33,14 +33,15 @@ func (p Synchronise) Apply() ([]string, error) {
 		}
 	}
 	if p.Path == "" {
-		for _, name := range []string{"apparmor.d", "share"} {
-			if err := paths.CopyTo(paths.New(name), prebuild.Root.Join(name)); err != nil {
-				return res, err
-			}
+		if err := paths.CopyTo(paths.New("share"), prebuild.Root.Join("share")); err != nil {
+			return res, err
+		}
+		if err := paths.CopyTo(prebuild.SrcApparmord, prebuild.RootApparmord); err != nil {
+			return res, err
 		}
 	} else {
 		file := paths.New(p.Path)
-		destination, err := file.RelFrom(paths.New("apparmor.d"))
+		destination, err := file.RelFrom(prebuild.SrcApparmord)
 		if err != nil {
 			return res, err
 		}
