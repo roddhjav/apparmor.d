@@ -6,10 +6,12 @@ package directive
 
 import (
 	"fmt"
+	"path/filepath"
 	"regexp"
 	"slices"
 	"strings"
 
+	"github.com/roddhjav/apparmor.d/pkg/paths"
 	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 	"github.com/roddhjav/apparmor.d/pkg/util"
 )
@@ -55,7 +57,14 @@ func (s Stack) Apply(opt *Option, profile string) (string, error) {
 
 	res := ""
 	for name := range opt.ArgMap {
-		stackedProfile := prebuild.RootApparmord.Join(name).MustReadFileAsString()
+		match, err := filepath.Glob(prebuild.Root.String() + "/*/" + name)
+		if err != nil {
+			return "", err
+		}
+		if len(match) != 1 {
+			return "", fmt.Errorf("No profile found for %s", name)
+		}
+		stackedProfile := paths.New(match[0]).MustReadFileAsString()
 		m := regRules.FindStringSubmatch(stackedProfile)
 		if len(m) < 2 {
 			return "", fmt.Errorf("No profile found in %s", name)

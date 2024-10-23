@@ -50,7 +50,6 @@ func (p Overwrite) Apply() ([]string, error) {
 			continue
 		}
 		if err := origin.Rename(dest); err != nil {
-
 			return res, err
 		}
 		originRel, err := origin.RelFrom(dest)

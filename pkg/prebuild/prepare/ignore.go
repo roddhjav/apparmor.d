@@ -5,6 +5,9 @@
 package prepare
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/roddhjav/apparmor.d/pkg/paths"
 	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 )
@@ -26,21 +29,39 @@ func (p Ignore) Apply() ([]string, error) {
 	res := []string{}
 	for _, name := range []string{"main", prebuild.Distribution} {
 		for _, ignore := range prebuild.Ignore.Read(name) {
-			profile := prebuild.Root.Join(ignore)
-			if profile.NotExist() {
-				files, err := prebuild.RootApparmord.ReadDirRecursiveFiltered(nil, paths.FilterNames(ignore))
+			// Ignore file from share/
+			path := prebuild.Root.Join(ignore)
+			if path.Exist() {
+				if err := path.RemoveAll(); err != nil {
+					return res, err
+				}
+				continue
+			}
+
+			// Ignore file from apparmor.d/
+			profile := strings.TrimPrefix(ignore, prebuild.Src+"/")
+			if strings.HasPrefix(ignore, prebuild.Src) {
+				path = prebuild.RootApparmord.Join(profile)
+			}
+			if path.Exist() {
+				if err := path.RemoveAll(); err != nil {
+					return res, err
+				}
+
+			} else {
+				files, err := prebuild.RootApparmord.ReadDirRecursiveFiltered(nil, paths.FilterNames(profile))
 				if err != nil {
 					return res, err
+				}
+				if len(files) == 0 {
+					return res, fmt.Errorf("%s.ignore: no files found for '%s'", name, profile)
 				}
 				for _, path := range files {
 					if err := path.RemoveAll(); err != nil {
 						return res, err
 					}
 				}
-			} else {
-				if err := profile.RemoveAll(); err != nil {
-					return res, err
-				}
+
 			}
 		}
 		res = append(res, prebuild.IgnoreDir.Join(name+".ignore").String())
