@@ -19,17 +19,19 @@ import (
 
 const (
 	nilABI uint = 0
-	usage       = `aa-prebuild [-h] [--complain | --enforce] [--full] [--abi 3|4]
+	usage       = `aa-prebuild [-h] [-s] [--complain|--enforce] [--packages] [--full] [--abi 3|4]
 
-    Prebuild apparmor.d profiles for a given distribution and apply
-    internal built-in directives.
+    Prebuild apparmor.d profiles for a given distribution, apply
+    internal built-in directives and build sub-packages structure.
 
 Options:
     -h, --help      Show this help message and exit.
     -c, --complain  Set complain flag on all profiles.
-    -e, --enforce   Set enforce flag on all profiles.
+    -e, --enforce   Set enforce flag on ALL profiles.
     -a, --abi ABI   Target apparmor ABI.
     -f, --full      Set AppArmor for full system policy.
+    -p, --packages  Build all split packages.
+    -s, --status    Show build configuration.
     -F, --file      Only prebuild a given file.
 `
 )
@@ -39,6 +41,7 @@ var (
 	complain bool
 	enforce  bool
 	full     bool
+	packages bool
 	abi      uint
 	file     string
 )
@@ -54,6 +57,8 @@ func init() {
 	flag.BoolVar(&enforce, "enforce", false, "Set enforce flag on all profiles.")
 	flag.UintVar(&abi, "a", nilABI, "Target apparmor ABI.")
 	flag.UintVar(&abi, "abi", nilABI, "Target apparmor ABI.")
+	flag.BoolVar(&packages, "p", false, "Build all split packages.")
+	flag.BoolVar(&packages, "packages", false, "Build all split packages.")
 	flag.StringVar(&file, "F", "", "Only prebuild a given file.")
 	flag.StringVar(&file, "file", "", "Only prebuild a given file.")
 }
@@ -79,12 +84,6 @@ func Prebuild() {
 		prepare.Register("systemd-early")
 	}
 
-	if complain {
-		builder.Register("complain")
-	} else if enforce {
-		builder.Register("enforce")
-	}
-
 	if abi != nilABI {
 		prebuild.ABI = abi
 	}
@@ -104,12 +103,31 @@ func Prebuild() {
 		overwrite.OneFile = true
 	}
 
-	logging.Step("Building apparmor.d profiles for %s on ABI%d.", prebuild.Distribution, prebuild.ABI)
+	// Prepare the build directories
+	logging.Step("Building apparmor.d profiles for %s (abi%d).", prebuild.Distribution, prebuild.ABI)
+	prebuild.RootApparmord = prebuild.Root.Join(prebuild.Src)
 	if err := Prepare(); err != nil {
 		logging.Fatal("%s", err.Error())
 	}
+
+	// Generate the packages
+	if packages {
+		if err := Packages(); err != nil {
+			logging.Fatal("%s", err.Error())
+		}
+	}
+
+	// Build the apparmor.d profiles
 	if err := Build(); err != nil {
 		logging.Fatal("%s", err.Error())
+	}
+
+	if packages {
+		// Move all other profiles to apparmor.d.other
+		prebuild.RootApparmord = prebuild.Root.Join(prebuild.Src)
+		if err := prebuild.RootApparmord.Rename(prebuild.Root.Join("other")); err != nil {
+			logging.Fatal("%s", err.Error())
+		}
 	}
 }
 
@@ -136,26 +154,64 @@ func Prepare() error {
 	return nil
 }
 
+func Packages() error {
+	logging.Success("Building apparmor.d.* packages structure:")
+
+	for _, name := range prebuild.Packages {
+		pkg := prebuild.NewPackage(name)
+		msg, err := pkg.Generate()
+		if err != nil {
+			return err
+		}
+		if err = pkg.Validate(); err != nil {
+			return err
+		}
+		logging.Indent = "   "
+		logging.Bullet("apparmor.d.%s", name)
+		logging.Indent += "   "
+		for _, line := range util.RemoveDuplicate(msg) {
+			logging.Warning("%s", line)
+		}
+		logging.Indent = ""
+	}
+	return nil
+}
+
 func Build() error {
-	files, _ := prebuild.RootApparmord.ReadDirRecursiveFiltered(nil, paths.FilterOutDirectories())
-	for _, file := range files {
-		if !file.Exist() {
-			continue
+	sources := []string{prebuild.Src}
+	if packages {
+		sources = append(sources, prebuild.Packages...)
+	}
+
+	for _, src := range sources {
+		prebuild.RootApparmord = prebuild.Root.Join(src)
+		if src == prebuild.Src {
+			setMode("")
+		} else {
+			pkg := prebuild.NewPackage(src)
+			setMode(pkg.Mode)
 		}
-		profile, err := file.ReadFileAsString()
-		if err != nil {
-			return err
-		}
-		profile, err = builder.Run(file, profile)
-		if err != nil {
-			return err
-		}
-		profile, err = directive.Run(file, profile)
-		if err != nil {
-			return err
-		}
-		if err := file.WriteFile([]byte(profile)); err != nil {
-			return err
+
+		files, _ := prebuild.RootApparmord.ReadDirRecursiveFiltered(nil, paths.FilterOutDirectories())
+		for _, file := range files {
+			if !file.Exist() {
+				continue
+			}
+			profile, err := file.ReadFileAsString()
+			if err != nil {
+				return err
+			}
+			profile, err = builder.Run(file, profile)
+			if err != nil {
+				return err
+			}
+			profile, err = directive.Run(file, profile)
+			if err != nil {
+				return err
+			}
+			if err := file.WriteFile([]byte(profile)); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -172,4 +228,21 @@ func Build() error {
 	}
 	logging.Indent = ""
 	return nil
+}
+
+func setMode(mode string) {
+	if mode == "" {
+		if complain {
+			mode = "complain"
+		} else if enforce {
+			mode = "enforce"
+		}
+	}
+	switch mode {
+	case "complain":
+		builder.Register("complain")
+		builder.Unregister("enforce")
+	case "enforce":
+		builder.Unregister("complain")
+	}
 }

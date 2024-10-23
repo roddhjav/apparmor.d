@@ -6,6 +6,8 @@ package builder
 
 import (
 	"fmt"
+	"slices"
+	"strings"
 
 	"github.com/roddhjav/apparmor.d/pkg/paths"
 	"github.com/roddhjav/apparmor.d/pkg/prebuild"
@@ -33,7 +35,7 @@ type Option struct {
 
 func NewOption(file *paths.Path) *Option {
 	return &Option{
-		Name: file.Base(),
+		Name: strings.TrimSuffix(file.Base(), ".apparmor.d"),
 		File: file,
 	}
 }
@@ -41,9 +43,22 @@ func NewOption(file *paths.Path) *Option {
 func Register(names ...string) {
 	for _, name := range names {
 		if b, present := Builders[name]; present {
-			Builds = append(Builds, b)
+			if !slices.Contains(Builds, b) {
+				Builds = append(Builds, b)
+			}
 		} else {
 			panic(fmt.Sprintf("Unknown builder: %s", name))
+		}
+	}
+}
+
+func Unregister(names ...string) {
+	for _, name := range names {
+		for i, b := range Builds {
+			if b.Name() == name {
+				Builds = slices.Delete(Builds, i, i+1)
+				break
+			}
 		}
 	}
 }
