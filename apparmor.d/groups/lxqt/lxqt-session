@@ -10,16 +10,17 @@ include <tunables/global>
 @{exec_path} = @{bin}/lxqt-session
 profile lxqt-session @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/dbus-accessibility>
+  include <abstractions/bus-accessibility>
+  include <abstractions/dconf>
   include <abstractions/lxqt>
   include <abstractions/qt5-shader-cache>
   include <abstractions/nameservice-strict>
 
+  ptrace (read),
+
   signal (send),
   signal (receive) set=(kill, term) peer=startlxqt,
   signal (receive) set=(kill, term) peer=sddm,
-
-  ptrace (read),
 
   network netlink raw,
 
@@ -47,8 +48,6 @@ profile lxqt-session @{exec_path} flags=(attach_disconnected) {
 
   @{bin}/pavucontrol                  rPx,
   @{lib}/geoclue-2.0/demos/agent      rPx,
-  @{bin}/python3.@{int}               rPx,
-  @{lib}/python3.@{int}               rPx,
   @{bin}/nm-connection-editor         rPx,
   @{bin}/nm-applet                    rPx,
   @{bin}/pcmanfm-qt                   rPx,
@@ -73,35 +72,29 @@ profile lxqt-session @{exec_path} flags=(attach_disconnected) {
   /etc/xdg/openbox/*                  r,
   /etc/udev/udev.conf                 r,
 
-  owner @{HOME}/.local/share/         r,
-  owner @{HOME}/.config/              r,
-  owner @{HOME}/.config/autostart/    r,
-  owner @{HOME}/.config/autostart/*   rw,
+  owner @{user_config_dirs}/autostart/ r,
+  owner @{user_config_dirs}/autostart/*.desktop r,
   owner @{user_cache_dirs}/openbox/   rw,
   owner @{user_cache_dirs}/openbox/sessions/          rw,
   owner @{user_cache_dirs}/openbox/openbox.log        rwk,
   owner @{user_config_dirs}/mimeapps.list{,.@{rand6}} rw,
-  owner @{user_config_dirs}/dconf/user r,
   owner @{user_config_dirs}/openbox/rc.xml            r,
-  owner @{user_share_dirs}/sddm/xorg-session.log      rw,
+
+  @{att}/@{run}/systemd/inhibit/@{int}.ref rw,
 
   @{PROC}/                             r,
-  @{PROC}/uptime                       r,
+  @{PROC}/uptime                       r, 
   @{PROC}/@{pid}/stat                  r,
   owner @{PROC}/@{pid}/stat            r,
 
-  @{run}/systemd/inhibit/**            rw,
-
   /dev/tty                             rw,
-
-  include if exists <local/lxqt-session>
 
   profile systemctl {
     include <abstractions/base>
     include <abstractions/app/systemctl>
 
     include if exists <local/lxqt-session_systemctl>
-
+  }
   profile dbus {
     include <abstractions/base>
     include <abstractions/bus-session>
@@ -110,6 +103,8 @@ profile lxqt-session @{exec_path} flags=(attach_disconnected) {
 
     include if exists <local/lxqt-session_dbus>
   }
+
+  include if exists <local/lxqt-session>
 }
 
 # vim:syntax=apparmor
