@@ -1,0 +1,122 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Barmogund
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/tlp
+profile tlp @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/bus-system>
+  include <abstractions/graphics>
+  include <abstractions/bus/org.freedesktop.PolicyKit1>
+  include <abstractions/nameservice-strict>
+
+  capability dac_read_search,
+  capability net_admin,
+  capability sys_nice,
+  capability sys_rawio,
+  capability sys_tty_config,
+
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  @{bin}/systemctl              rix,
+  @{bin}/logger                 rix,
+  @{shells_path}                rix,
+  @{bin}/cp                     rix,
+  @{bin}/chmod                  rix,
+  @{bin}/flock                  rix,
+  @{bin}/sort                   rix,
+  @{bin}/head                   rix,
+  @{bin}/mktemp                 rix,
+  @{bin}/readlink               rix,
+  @{bin}/tr                     rix,
+  @{bin}/ethtool                rix,
+  @{bin}/grep                   rix,
+  @{bin}/touch                  rix,
+  @{bin}/cat                    rix,
+  @{bin}/rm                     rix,
+  @{bin}/id                     rpx,
+  @{bin}/iw                     rpx,
+  @{bin}/hdparm                 rix,
+  @{bin}/uname                  rpx,
+  @{bin}/udevadm                rix, 
+  /usr/share/tlp/tlp-readconfs  rix,
+
+  owner / r,
+
+  owner /etc/tlp.d/ r,
+  owner /etc/tlp.d/** rw,
+  owner /etc/udev/udev.conf r,
+  /etc/tlp.conf rw,
+
+  owner /usr/share/tlp/** rw,
+  owner /usr/share/tlp/func.d/** rw,
+  
+  /usr/share/tlp/tlp-readconfs   rw,
+
+  /var/lib/power-profiles-daemon/{,**} rw,
+
+  owner /usr/share/tlp/bat.d/** rw,
+  owner /usr/share/perl5/core_perl/** r,
+
+  @{run}/udev/data/+platform:* r,
+  owner @{run}/tlp/* rw,
+  owner @{run}/tlp/lock_tlp  rwk,
+  owner @{run}/udev/data/b@{int}:@{int} r,
+
+  @{sys}/bus/ r,
+  owner @{sys}/bus/pci/drivers/nouveau/ r,
+  owner @{sys}/devices/@{pci}/ r,
+  owner @{sys}/devices/@{pci}/power/control rw,
+  owner @{sys}/devices/@{pci}/ta@{int}/host@{int}/scsi_host/ r,
+  owner @{sys}/devices/@{pci}/ta@{int}/host@{int}/scsi_host/host@{int}/link_power_management_policy rw,
+  @{sys}/bus/platform/devices/ r,
+  @{sys}/class/ r,
+  @{sys}/class/power_supply/ r,
+  @{sys}/devices/@{pci}/uevent r,
+  @{sys}/devices/**/power_supply/*/scope r,
+  @{sys}/devices/**/power_supply/*/uevent r,
+  @{sys}/devices/platform/**/uevent r,
+  @{sys}/devices/system/cpu/*_pstate/{no_turbo,turbo_pct} r,
+  @{sys}/devices/system/cpu/*_pstate/status r,
+  @{sys}/devices/system/cpu/cpu@{int}/power/energy_perf_bias rw,
+  @{sys}/devices/system/cpu/cpufreq/ r,
+  @{sys}/devices/system/cpu/cpufreq/policy@{int}/energy_performance_preference rw,
+  @{sys}/devices/system/cpu/cpufreq/policy@{int}/scaling_governor rw,
+  owner @{sys}/bus/pci/drivers/mei_me/ r,
+  owner @{sys}/bus/pci/devices/ r,
+  owner @{sys}/block/ r,
+  owner @{sys}/class/net/ r,
+  owner @{sys}/devices/platform/**/**/** r,
+  owner @{sys}/devices/virtual/block/loop@{int}/ r,
+  owner @{sys}/devices/virtual/block/loop@{int}/dev r,
+  owner @{sys}/devices/virtual/net/lo/uevent r,
+  owner @{sys}/devices/virtual/dmi/id/product_version rw,
+  owner @{sys}/class/drm/ rw,
+  owner @{sys}/module/pcie_aspm/parameters/policy  rw,
+  owner @{sys}/module/snd_hda_intel/parameters/power_save rw,
+  owner @{sys}/module/snd_hda_intel/parameters/power_save_controller rw,
+
+  @{sys}/firmware/acpi/platform_profile* rw,
+  @{sys}/firmware/acpi/pm_profile* rw,
+  @{sys}/devices/virtusl/** rw,
+
+  owner @{PROC}/sys/vm/laptop_mode rw,
+  owner @{PROC}/sys/vm/dirty_writeback_centisecs rw,
+  owner @{PROC}/sys/vm/dirty_expire_centisecs rw,
+  owner @{PROC}/sys/fs/xfs/xfssyncd_centisecs rw,
+  owner @{PROC}/sys/kernel/nmi_watchdog rw,
+
+  /dev/disk/by-id/ r,
+  owner /dev/sda r,
+  /dev/tty rw,
+  
+  include if exists <local/tlp>
+}
+
+# vim:syntax=apparmor
