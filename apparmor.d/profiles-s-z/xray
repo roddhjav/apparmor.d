@@ -1,0 +1,32 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 EricLin
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/xray
+profile xray @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/attached/consoles>
+
+  network inet dgram,
+  network inet stream,
+  network inet raw,
+  network inet6 dgram,
+  network inet6 raw,
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  /etc/xray/ r,
+  /etc/xray/**.json r,
+  /usr/share/xray/**.dat r,
+
+  @{PROC}/sys/net/core/somaxconn r,
+
+  include if exists <local/xray>
+}
+
+# vim:syntax=apparmor
