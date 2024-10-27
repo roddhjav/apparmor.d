@@ -1,0 +1,29 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 valoq <valoq@mailbox.org>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/pinentry-gtk
+profile pinentry-gtk @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/gtk>
+  include <abstractions/fonts>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/freedesktop.org>
+
+  @{exec_path} mr,
+
+  /usr/share/** r,
+
+  owner @{run}/user/@{uid}/.mutter-Xwaylandauth.@{rand6} r,
+
+  owner /dev/tty@{int} r,
+
+  include if exists <local/pinentry-gtk>
+}
+
+# vim:syntax=apparmor
