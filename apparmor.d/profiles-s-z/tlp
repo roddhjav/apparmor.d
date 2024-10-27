@@ -26,7 +26,7 @@ profile tlp @{exec_path} flags=(attach_disconnected) {
 
   @{bin}/systemctl              rix,
   @{bin}/logger                 rix,
-  @{shells_path}                rix,
+  @{sh_path}                    rix,
   @{bin}/cp                     rix,
   @{bin}/chmod                  rix,
   @{bin}/flock                  rix,
@@ -44,25 +44,24 @@ profile tlp @{exec_path} flags=(attach_disconnected) {
   @{bin}/iw                     rpx,
   @{bin}/hdparm                 rix,
   @{bin}/uname                  rpx,
-  @{bin}/udevadm                rix, 
+  @{bin}/udevadm rCx            -> udevadm,
   /usr/share/tlp/tlp-readconfs  rix,
 
-  owner / r,
+  / r,
 
-  owner /etc/tlp.d/ r,
-  owner /etc/tlp.d/** rw,
-  owner /etc/udev/udev.conf r,
+  /etc/tlp.d/ r,
+  /etc/tlp.d/** rw,
   /etc/tlp.conf rw,
+  /etc/udev/udev.conf r,
 
-  owner /usr/share/tlp/** rw,
-  owner /usr/share/tlp/func.d/** rw,
+  /usr/share/tlp/** rw,
+  /usr/share/tlp/func.d/** rw,
   
   /usr/share/tlp/tlp-readconfs   rw,
 
-  /var/lib/power-profiles-daemon/{,**} rw,
+  /var/lib/power-profiles-daemon/state.ini rw,
 
   owner /usr/share/tlp/bat.d/** rw,
-  owner /usr/share/perl5/core_perl/** r,
 
   @{run}/udev/data/+platform:* r,
   owner @{run}/tlp/* rw,
@@ -104,7 +103,6 @@ profile tlp @{exec_path} flags=(attach_disconnected) {
 
   @{sys}/firmware/acpi/platform_profile* rw,
   @{sys}/firmware/acpi/pm_profile* rw,
-  @{sys}/devices/virtusl/** rw,
 
   owner @{PROC}/sys/vm/laptop_mode rw,
   owner @{PROC}/sys/vm/dirty_writeback_centisecs rw,
@@ -117,6 +115,13 @@ profile tlp @{exec_path} flags=(attach_disconnected) {
   /dev/tty rw,
   
   include if exists <local/tlp>
+
+  profile udevadm {
+    include <abstractions/base>
+    include <abstractions/app/udevadm>
+
+    include if exists <local/tlp_udevadm>
+  }
 }
 
 # vim:syntax=apparmor
