@@ -1,0 +1,32 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 EricLin
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/v2ray
+profile v2ray @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/attached/consoles>
+
+  network inet dgram,
+  network inet stream,
+  network inet raw,
+  network inet6 dgram,
+  network inet6 raw,
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  /etc/v2ray/ r,
+  /etc/v2ray/**.json r,
+  /usr/share/v2ray/**.dat r,
+
+  @{PROC}/sys/net/core/somaxconn r,
+
+  include if exists <local/v2ray>
+}
+
+# vim:syntax=apparmor
