@@ -12,7 +12,6 @@ profile lxqt-panel @{exec_path} {
   include <abstractions/base>
   include <abstractions/audio-client>
   include <abstractions/dconf-write>
-  include <abstractions/ibus>
   include <abstractions/lxqt>
   include <abstractions/nameservice-strict>
 
@@ -25,12 +24,13 @@ profile lxqt-panel @{exec_path} {
 
   @{exec_path} mr,
 
-  @{open_path} rPx -> child-open,
-  @{bin}/ControlPanel rPx,
-  @{bin}/lxqt-leave rPx,
+  @{bin}/exo-open rix,
+  @{lib}/gio-launch-desktop  rix,
   @{bin}/nm-applet rPx,
   @{bin}/nm-connection-editor rPx,
-  @{bin}/pulseaudio rPx,
+  @{bin}/ControlPanel rPx,
+
+  @{bin}/sudo rCx -> root,
 
   @{lib}/lxqt-panel/*.so mr, #  LXQT-Plugins
   @{lib}/lxqt-config/*.so mr, # LXQT-Plugins
@@ -76,6 +76,15 @@ profile lxqt-panel @{exec_path} {
   /dev/tty@{int} rw,
   /dev/pts/@{int} rw,
   /dev/snd/controlC@{int} rw,
+
+  profile root {
+    include <abstractions/base>
+    include <abstractions/app/sudo>
+
+    @{bin}/lsblk rPx,
+
+    include if exists <local/lxqt-panel_root>
+  }
 
   include if exists <local/lxqt-panel>
 }
