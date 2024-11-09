@@ -1,0 +1,102 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2024 Barmogund <set508@proton.me>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/tlp
+profile tlp @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/bus-system>
+  include <abstractions/disks-read>
+  include <abstractions/graphics>
+  include <abstractions/bus/org.freedesktop.PolicyKit1>
+  include <abstractions/nameservice-strict>
+  include <abstractions/perl>
+
+  capability dac_read_search,
+  capability net_admin,
+  capability sys_nice,
+  capability sys_rawio,
+  capability sys_tty_config,
+
+  network netlink raw,
+
+  ptrace read peer=unconfined,
+
+  @{exec_path} mr,
+
+  @{bin}/systemctl  rCx ->  systemctl,
+  @{bin}/logger                 rix,
+  @{sh_path}                    rix,
+  @{bin}/cp                     rix,
+  @{bin}/chmod                  rix,
+  @{bin}/flock                  rix,
+  @{bin}/sort                   rix,
+  @{bin}/head                   rix,
+  @{bin}/mktemp                 rix,
+  @{bin}/readlink               rix,
+  @{bin}/tr                     rix,
+  @{bin}/ethtool                rix,
+  @{bin}/grep                   rix,
+  @{bin}/touch                  rix,
+  @{bin}/cat                    rix,
+  @{bin}/rm                     rix,
+  @{bin}/id                     rPx,
+  @{bin}/iw                     rPx,
+  @{bin}/hdparm                 rPx,
+  @{bin}/uname                  rpx,
+  @{bin}/udevadm rCx            -> udevadm,
+  /usr/share/tlp/tlp-readconfs  rix,
+
+  / r,
+
+  /etc/tlp.d/ r,
+  /etc/tlp.d/** rw,
+  /etc/tlp.conf rw,
+
+  /usr/share/tlp/** r,
+
+  /var/lib/power-profiles-daemon/state.ini rw,
+
+  @{run}/udev/data/+platform:* r,
+  owner @{run}/tlp/* rw,
+  owner @{run}/tlp/lock_tlp  rwk,
+
+  @{sys}/devices/system/cpu/cpufreq/policy@{int}/energy_performance_preference rw,
+  @{sys}/module/pcie_aspm/parameters/policy rw,
+  @{sys}/module/snd_hda_intel/parameters/power_save rw,
+  @{sys}/module/snd_hda_intel/parameters/power_save_controller rw,
+  @{sys}/firmware/acpi/platform_profile* rw,
+  @{sys}/firmware/acpi/pm_profile* rw,
+
+  owner @{PROC}/sys/vm/laptop_mode rw,
+  owner @{PROC}/sys/vm/dirty_writeback_centisecs rw,
+  owner @{PROC}/sys/vm/dirty_expire_centisecs rw,
+  owner @{PROC}/sys/fs/xfs/xfssyncd_centisecs rw,
+  owner @{PROC}/sys/kernel/nmi_watchdog rw,
+
+  /dev/disk/by-id/ r,
+  /dev/tty rw,
+
+  profile systemctl {
+    include <abstractions/base>
+    include <abstractions/app/systemctl>
+
+    include if exists <local/tlp_systemctl>
+  }
+
+  profile udevadm {
+    include <abstractions/base>
+    include <abstractions/app/udevadm>
+
+    include if exists <local/tlp_udevadm>
+  }
+
+  include if exists <local/tlp>
+}
+
+# vim:syntax=apparmor
