@@ -8,10 +8,12 @@ package directive
 
 import (
 	"fmt"
+	"path/filepath"
 	"slices"
 	"strings"
 
 	"github.com/roddhjav/apparmor.d/pkg/aa"
+	"github.com/roddhjav/apparmor.d/pkg/paths"
 	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 )
 
@@ -43,7 +45,14 @@ func (d Exec) Apply(opt *Option, profileRaw string) (string, error) {
 
 	rules := aa.Rules{}
 	for name := range opt.ArgMap {
-		profiletoTransition := prebuild.RootApparmord.Join(name).MustReadFileAsString()
+		match, err := filepath.Glob(prebuild.Root.String() + "/*/" + name)
+		if err != nil {
+			return "", err
+		}
+		if len(match) != 1 {
+			return "", fmt.Errorf("No profile found for %s", name)
+		}
+		profiletoTransition := paths.New(match[0]).MustReadFileAsString()
 		dstProfile := aa.DefaultTunables()
 		if _, err := dstProfile.Parse(profiletoTransition); err != nil {
 			return "", err

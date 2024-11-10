@@ -37,8 +37,6 @@ func init() {
 
 	// Compatibility with AppArmor 3
 	switch prebuild.Distribution {
-	case "arch":
-
 	case "ubuntu":
 		if !slices.Contains([]string{"noble"}, prebuild.Release["VERSION_CODENAME"]) {
 			prebuild.ABI = 3

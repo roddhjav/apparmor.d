@@ -48,7 +48,7 @@ func (p Merge) Apply() ([]string, error) {
 
 		files, err = filepath.Glob(prebuild.RootApparmord.Join(dirRemoved).String())
 		if err != nil {
-			return []string{}, err
+			return res, err
 		}
 		for _, file := range files {
 			if err := paths.New(file).RemoveAll(); err != nil {

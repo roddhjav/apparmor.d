@@ -7,7 +7,8 @@ DESTDIR ?= /
 BUILD ?= .build
 PKGDEST ?= ${PWD}/.pkg
 PKGNAME := apparmor.d
-PROFILES = $(filter-out dpkg,$(notdir $(wildcard ${BUILD}/apparmor.d/*)))
+PROFILE = $(filter-out dpkg,$(notdir $(wildcard ${BUILD}/apparmor.d/*)))
+PROFILES = profiles-apparmor.d profiles-other $(patsubst dists/packages/%,profiles-%,$(basename $(wildcard dists/packages/*.conf)))
 
 .PHONY: all
 all: build
@@ -26,32 +27,53 @@ enforce: build
 full: build
 	@./${BUILD}/prebuild --complain --full
 
+.PHONY: packages
+packages: clean build
+	@./${BUILD}/prebuild --complain --packages 
+
+# Install apparmor.d
 .PHONY: install
-install:
+install: install-bin install-share install-systemd profiles-apparmor.d
+
+# Install apparmor.d.base
+.PHONY: install-base
+install-base: install-bin install-share install-systemd profiles-base
+
+.PHONY: install-bin
+install-bin:
 	@install -Dm0755 ${BUILD}/aa-log ${DESTDIR}/usr/bin/aa-log
+
+.PHONY: install-share
+install-share:
 	@for file in $(shell find "${BUILD}/share" -type f -not -name "*.md" -printf "%P\n"); do \
 		install -Dm0644 "${BUILD}/share/$${file}" "${DESTDIR}/usr/share/$${file}"; \
 	done;
-	@for file in $(shell find "${BUILD}/apparmor.d" -type f -printf "%P\n"); do \
-		install -Dm0644 "${BUILD}/apparmor.d/$${file}" "${DESTDIR}/etc/apparmor.d/$${file}"; \
-	done;
-	@for file in $(shell find "${BUILD}/apparmor.d" -type l -printf "%P\n"); do \
-		mkdir -p "${DESTDIR}/etc/apparmor.d/disable"; \
-		cp -d "${BUILD}/apparmor.d/$${file}" "${DESTDIR}/etc/apparmor.d/$${file}"; \
-	done;
+
+.PHONY: install-systemd
+install-systemd:
 	@for file in ${BUILD}/systemd/system/*; do \
-		service="$$(basename "$$file")"; \
+		service="$$(basename "$${file}")"; \
 		install -Dm0644 "$${file}" "${DESTDIR}/usr/lib/systemd/system/$${service}.d/apparmor.conf"; \
 	done;
 	@for file in ${BUILD}/systemd/user/*; do \
-		service="$$(basename "$$file")"; \
+		service="$$(basename "$${file}")"; \
 		install -Dm0644 "$${file}" "${DESTDIR}/usr/lib/systemd/user/$${service}.d/apparmor.conf"; \
 	done
 
-
+# Install all profiles for a given (sub)package
 .PHONY: $(PROFILES)
 $(PROFILES):
-	@install -Dm0755 ${BUILD}/aa-log ${DESTDIR}/usr/bin/aa-log
+	@for file in $(shell find "${BUILD}/$(patsubst profiles-%,%,$@)" -type f -printf "%P\n"); do \
+		install -Dm0644 "${BUILD}/$(patsubst profiles-%,%,$@)/$${file}" "${DESTDIR}/etc/apparmor.d/$${file}"; \
+	done;
+	@for file in $(shell find "${BUILD}/$(patsubst profiles-%,%,$@)" -type l -printf "%P\n"); do \
+		mkdir -p "${DESTDIR}/etc/apparmor.d/disable"; \
+		cp -d "${BUILD}/$(patsubst profiles-%,%,$@)/$${file}" "${DESTDIR}/etc/apparmor.d/$${file}"; \
+	done;
+
+# Partial install (not recommended)
+.PHONY: $(PROFILE)
+$(PROFILE): install-bin
 	@for file in $(shell find ${BUILD}/apparmor.d/abstractions/ -type f -printf "%P\n"); do \
 		install -Dm0644 "${BUILD}/apparmor.d/abstractions/$${file}" "${DESTDIR}/etc/apparmor.d/abstractions/$${file}"; \
 	done;
