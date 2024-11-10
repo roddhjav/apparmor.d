@@ -1,0 +1,29 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Mikhail Morfikov
+# Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+  abi <abi/4.0>,
+
+  /dev/ r,
+  /dev/bus/usb/ r,
+  /dev/bus/usb/@{int}/ r,
+  /dev/bus/usb/@{int}/@{int} r,
+
+  @{sys}/class/ r,
+  @{sys}/class/usbmisc/ r,
+
+  @{sys}/bus/ r,
+  @{sys}/bus/usb/ r,
+  @{sys}/bus/usb/devices/{,**} r,
+
+  @{sys}/devices/**/usb@{int}/{,**} r,
+
+  # Udev data about usb devices (~equal to content of lsusb -v)
+  @{run}/udev/data/+usb:* r,
+  @{run}/udev/data/c16[6,7]:@{int} r,   # USB modems
+  @{run}/udev/data/c18[0,8,9]:@{int} r, # USB devices & USB serial converters
+
+  include if exists <abstractions/devices-usb-read.d>
+
+# vim:syntax=apparmor
