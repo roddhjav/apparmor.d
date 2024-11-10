@@ -15,7 +15,6 @@ profile unbound @{exec_path} flags=(attach_disconnected) {
   include <abstractions/nameservice-strict>
   include <abstractions/p11-kit>
   include <abstractions/ssl_certs>
-  include <abstractions/common/systemd>
 
   capability net_bind_service,
   capability net_raw,
@@ -23,7 +22,6 @@ profile unbound @{exec_path} flags=(attach_disconnected) {
   capability sys_chroot,
   capability setgid,
   capability setuid,
-  capability setpcap,
 
   network unix stream,
   network unix dgram,
@@ -34,22 +32,13 @@ profile unbound @{exec_path} flags=(attach_disconnected) {
   network netlink raw,
 
   signal (receive) set=(term, cont) peer=runsv,
-  #aa:dbus own bus=system name=org.freedesktop.resolve1
-
-  dbus send bus=system path=/org/freedesktop/DBus
-       interface=org.freedesktop.DBus
-       member={GetConnectionUnixUser,GetConnectionUnixProcessID}
-       peer=(name=org.freedesktop.DBus, label=dbus-system),
 
   @{exec_path} mr,
 
-  /etc/unbound/{,**} rw,
-  /etc/systemd/resolved.conf r,
-  /etc/systemd/resolved.conf.d/{,*} r,
+  /etc/unbound/{,**} r,
 
   @{run}/systemd/netif/links/* r,
   @{run}/systemd/notify rw,
-  @{run}/systemd/resolve/{,**} rw,
 
   @{PROC}/@{pid}/cgroup r,
         @{PROC}/ r,
