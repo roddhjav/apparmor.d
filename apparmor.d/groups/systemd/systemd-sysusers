@@ -16,7 +16,11 @@ profile systemd-sysusers @{exec_path} flags=(attach_disconnected) {
   capability fsetid,
   capability net_admin,
 
+  signal send set=cont peer=child-pager,
+
   @{exec_path} mr,
+
+  @{pager_path} rPx -> child-pager,
 
   # Config file locations
   /etc/sysusers.d/{,*.conf} r,
@@ -39,6 +43,8 @@ profile systemd-sysusers @{exec_path} flags=(attach_disconnected) {
   /etc/{group,gshadow}+ rw,
   /etc/.#{group,gshadow}@{hex} rw,
   /etc/.pwd.lock rwk,
+
+  owner @{PROC}/@{pid}/cgroup r,
 
         /dev/tty@{int} rw,
   owner /dev/pts/@{int} rw,
