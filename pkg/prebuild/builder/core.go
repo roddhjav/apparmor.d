@@ -6,6 +6,7 @@ package builder
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/roddhjav/apparmor.d/pkg/paths"
 	"github.com/roddhjav/apparmor.d/pkg/prebuild"
@@ -33,7 +34,7 @@ type Option struct {
 
 func NewOption(file *paths.Path) *Option {
 	return &Option{
-		Name: file.Base(),
+		Name: strings.TrimSuffix(file.Base(), ".apparmor.d"),
 		File: file,
 	}
 }
