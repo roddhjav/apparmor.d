@@ -17,7 +17,7 @@ setup_file() {
 
 # bats test_tags=chsh
 @test "chsh: Set a specific login [s]hell for the current user" {
-    chsh --shell /usr/bin/bash
+    echo "$PASSWORD" | chsh --shell /usr/bin/bash
     aa_check
 }
 

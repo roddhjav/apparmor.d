@@ -6,6 +6,9 @@
 export BATS_LIB_PATH=${BATS_LIB_PATH:-/usr/lib/bats}
 load "$BATS_LIB_PATH/bats-support/load"
 
+# User password for sudo commands
+export PASSWORD=${PASSWORD:-user}
+
 export XDG_CACHE_DIR=".cache"
 export XDG_CONFIG_DIR=".config"
 export XDG_DATA_DIR=".local/share"
@@ -100,7 +103,7 @@ aa_check() {
     local now duration logs
 
     now=$(date +%s)
-    duration=$((now - _START + 2))
+    duration=$((now - _START + 1))
     logs=$(aa-log --raw --systemd --since "-${duration}s")
     if [[ -n "$logs" ]]; then
         fail "profile $PROGRAM raised logs: $logs"
