@@ -16,14 +16,8 @@ setup_file() {
 }
 
 # bats test_tags=ip
-@test "ip: List interfaces with brief network layer info" {
-    ip -brief address
-    aa_check
-}
-
-# bats test_tags=ip
 @test "ip: List interfaces with brief link layer info" {
-    ip -brief link
+    ip link
     aa_check
 }
 
@@ -38,4 +32,14 @@ setup_file() {
     ip neighbour
     aa_check
 }
+
+# bats test_tags=ip
+@test "ip: Manage network namespace" {
+    sudo ip netns add foo
+    sudo ip netns list
+    sudo ip netns exec foo bash -c "pwd"
+    sudo ip netns delete foo
+    aa_check
+}
+
 

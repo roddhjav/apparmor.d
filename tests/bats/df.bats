@@ -22,6 +22,12 @@ setup_file() {
 }
 
 # bats test_tags=df
+@test "df: Display the filesystem and its disk usage containing the given file or directory" {
+    df apparmor.d/
+    aa_check
+}
+
+# bats test_tags=df
 @test "df: Include statistics on the number of free inodes" {
     df --inodes
     aa_check
