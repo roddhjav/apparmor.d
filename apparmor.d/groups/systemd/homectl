@@ -1,0 +1,39 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/homectl
+profile homectl @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/bus-system>
+  include <abstractions/common/systemd>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+
+  capability net_admin,
+  capability sys_resource,
+
+  signal send peer=child-pager,
+
+  #aa:dbus talk bus=system name=org.freedesktop.home1 label=systemd-homed
+
+  @{exec_path} mr,
+
+  @{bin}/pkttyagent  rpx,
+
+  @{pager_path} rPx -> child-pager,
+
+  /etc/machine-id r,
+
+  owner @{PROC}/@{pids}/cgroup r,
+
+  /dev/tty rw,
+
+  include if exists <local/homectl>
+}
+
+# vim:syntax=apparmor
