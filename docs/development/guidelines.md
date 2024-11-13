@@ -85,7 +85,7 @@ For DBus, try to determine peer's label when possible. E.g.:
 dbus send bus=session path=/org/freedesktop/DBus
      interface=org.freedesktop.DBus
      member={RequestName,ReleaseName}
-     peer=(name=org.freedesktop.DBus, label=dbus-session),
+     peer=(name=org.freedesktop.DBus, label="@{p_dbus_session}"),
 ```
 If there is no predictable label it can be omitted.
 
