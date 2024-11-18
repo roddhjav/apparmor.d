@@ -445,7 +445,7 @@ def main(argv):
     return None
 
 if __name__ == '__main__':
-    '''Safeguard errors does NOT cover loosening existing profiles after loading!'''
+
     try:
         from apparmor.regex         import *
         from apparmor.aa            import is_skippable_file
