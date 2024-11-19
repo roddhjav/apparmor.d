@@ -35,7 +35,7 @@ load common
 }
 
 @test "ip rule: Flush all deleted rules" {
-    ip rule flush
+    sudo ip rule flush
 }
 
 @test "ip: Manage network namespace" {
