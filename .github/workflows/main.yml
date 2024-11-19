@@ -15,6 +15,7 @@ jobs:
 
   build:
     runs-on: ${{ matrix.os }}
+    needs: check
     strategy:
       matrix:
         os:
@@ -93,19 +94,42 @@ jobs:
           sudo apt-get install -y \
             apparmor-profiles apparmor-utils \
             bats bats-support
-          bash tests/requirements.sh
 
       - name: Install apparmor.d
         run: |
-          sudo install -Dm0644 tests/github.local /etc/apparmor.d/tunables/global.d/github.local
           sudo dpkg --install .pkg/apparmor.d_*_amd64.deb || true
           sudo systemctl restart apparmor.service
+
+      - name: Restart some services to ensure they are confined
+        run: |
+          services=(
+            containerd cron
+            dbus docker
+            ModemManager multipathd
+            networkd-dispatcher
+            packagekit polkit
+            snapd
+            systemd-journald systemd-hostnamed systemd-logind systemd-networkd
+            systemd-resolved systemd-udevd
+            udisks2
+          )
+          sudo systemctl daemon-reload
+          for service in "${services[@]}"; do
+            sudo systemctl restart "$service" || systemctl status "$service.service" || true
+          done
+          sudo ps auxZ | grep -v '\[.*\]'
+          sudo aa-log -s --raw
+
+      - name: Install integration dependencies
+        run: |
+          bash tests/requirements.sh
 
       - name: Run the bats integration tests
         run: |
           make bats
 
-      - name: Show final AppArmor logs
+      - name: Show final AppArmor logs and processes security context
         if: always()
         run: |
           sudo aa-log -s --raw
+          sudo ps auxZ | grep -v '\[.*\]'
