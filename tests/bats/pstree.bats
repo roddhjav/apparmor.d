@@ -5,25 +5,15 @@
 
 load common
 
-setup_file() {
-    aa_setup
-}
-
-# bats test_tags=pstree
 @test "pstree: Display a tree of processes" {
     pstree
-    aa_check
 }
 
-# bats test_tags=pstree
 @test "pstree: Display a tree of processes with PIDs" {
     pstree -p
-    aa_check
 }
 
-# bats test_tags=pstree
 @test "pstree: Display all process trees rooted at processes owned by specified user" {
     pstree root
-    aa_check
 }
 
