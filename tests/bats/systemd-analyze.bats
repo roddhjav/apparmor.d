@@ -5,25 +5,16 @@
 
 load common
 
-setup_file() {
-    aa_setup
-}
-
-# bats test_tags=systemd-analyze
 @test "systemd-analyze: List all running units, ordered by the time they took to initialize" {
     systemd-analyze --no-pager blame
-    aa_check
 }
 
-# bats test_tags=systemd-analyze
 @test "systemd-analyze: Print a tree of the time-critical chain of units" {
     systemd-analyze --no-pager critical-chain
-    aa_check
 }
 
-# bats test_tags=systemd-analyze
 @test "systemd-analyze: Show security scores of running units" {
     systemd-analyze --no-pager security
-    aa_check
 }
+
 

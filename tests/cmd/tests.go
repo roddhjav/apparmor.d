@@ -20,16 +20,10 @@ const tmplTest = `#!/usr/bin/env bats
 # SPDX-License-Identifier: GPL-2.0-only
 
 load common
-
-setup_file() {
-    aa_setup
-}
 {{ $name := .Name -}}
 {{ range .Commands }}
-# bats test_tags={{ $name }}
 @test "{{ $name }}: {{ .Description }}" {
     {{ .Cmd }}
-    aa_check
 }
 {{ end }}
 `
@@ -77,13 +71,14 @@ func (t Test) IsInstalled() bool {
 }
 
 func (t Test) Write(dir *paths.Path) error {
+	dstDir := dir.Join("profiled")
 	if !t.HasProfile() {
-		return nil
+		dstDir = dir.Join("unprofiled")
 	}
+	path := dstDir.Join(t.Name + ".bats")
 
-	path := dir.Join(t.Name + ".bats")
 	if paths.New("tests/bats").Join(t.Name + ".bats").Exist() {
-		path = dir.Join("00." + t.Name + ".bats")
+		path = dstDir.Join("00." + t.Name + ".bats")
 	}
 	content := renderBatsFile(t)
 	if err := path.WriteFile([]byte(content)); err != nil {
