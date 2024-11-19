@@ -5,11 +5,6 @@
 
 load common
 
-setup_file() {
-    aa_setup
-    skip
-}
-
 @test "homectl: Display help" {
     homectl --no-pager --help
 }
