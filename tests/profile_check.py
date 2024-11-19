@@ -49,9 +49,11 @@ def handleFileMessages(l, file, profile, lineNum):
 #        '',
     )
     suggestOwner = (  # TODO: switch to AARE
-        r'^@{HOME}',
+        r'^@{HOME}/',
         r'^/home/\w+/',
+        r'^@{run}/user/@{uid}/',
         r'^/run/user/\d+/',
+        r'^@{tmp}/',
         r'^/tmp/',
         r'^/var/tmp/',
         r'^/dev/shm/',
@@ -60,7 +62,7 @@ def handleFileMessages(l, file, profile, lineNum):
     lG = l.groupdict()
     reason_ = None
     if lG.get('path'):
-        if lG.get('path').startswith('/**') and profile not in wholeFileAccessProfiles:
+        if lG.get('path').startswith('/**') and profile not in wholeFileAccessProfiles:  # false positives
             severity_   = 'ERROR'
             reason_     = 'Whole filesystem access is too broad'
             suggestion_ = None
@@ -84,12 +86,12 @@ def handleFileMessages(l, file, profile, lineNum):
         suggestion_ = None
 
     if reason_:  # something matched
-        msg = ({'filename':   file,
-                'profile':    profile,
-                'severity':   severity_,
-                'line':       lineNum,
-                'reason':     reason_,
-                'suggestion': suggestion_})
+        msg = {'filename':   file,
+               'profile':    profile,
+               'severity':   severity_,
+               'line':       lineNum,
+               'reason':     reason_,
+               'suggestion': suggestion_}
     else:
         msg = None
 
@@ -98,7 +100,7 @@ def handleFileMessages(l, file, profile, lineNum):
 def readApparmorFile(fullpath):
     '''AA file could contain multiple AA profiles'''
     headers = (
-        '# AppArmor.d - Full set of apparmor profiles',
+        '# apparmor.d - Full set of apparmor profiles',
         '# Copyright (C) ',
         '# SPDX-License-Identifier: GPL-2.0-only',
     )
@@ -129,14 +131,14 @@ def readApparmorFile(fullpath):
                         indent = ''
 
                     if indent != expectedIndent:
-                        spacesCount = len(nestingStacker) * 2
-                        nesingCount = len(nestingStacker)
+                        spacesCount  = len(nestingStacker) * 2
+                        nestingCount = len(nestingStacker)
                         messages.append({'filename':   fullpath,
                                          'profile':    getCurrentProfile(nestingStacker),
                                          'severity':   'WARNING',
                                          'line':       n,
-                                         'reason':     f"Expected {spacesCount} spaces for {nesingCount} nesting",
-                                         'suggestion': f"{expectedIndent}{line}"})
+                                         'reason':     f"Expected {spacesCount} spaces for {nestingCount} nesting",
+                                         'suggestion': f"{expectedIndent}{line.lstrip()}"})
 
                 if line.endswith(' \n'):
                     messages.append({'filename':   fullpath,
@@ -152,7 +154,7 @@ def readApparmorFile(fullpath):
                                      'severity':   'WARNING',
                                      'line':       n,
                                      'reason':     "Tabs are not allowed",
-                                     'suggestion': line.replace('\t', '')})
+                                     'suggestion': line.replace('\t', '  ')})
 
                 if len(gotHeaders) < 3 and not nestingStacker:
                     for nH,i in enumerate(headers):
