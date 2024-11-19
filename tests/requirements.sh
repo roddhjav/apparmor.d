@@ -19,7 +19,7 @@ arch)
 	;;
 debian | ubuntu | whonix)
 	sudo apt-get install -y \
-		cpuid dfc systemd-userdbd
+		cpuid dfc systemd-userdbd systemd-homed tlp
 	;;
 opensuse*)
 	;;
