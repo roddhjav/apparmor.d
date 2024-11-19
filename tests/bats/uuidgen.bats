@@ -5,19 +5,10 @@
 
 load common
 
-setup_file() {
-    aa_setup
-}
-
-# bats test_tags=uuidgen
 @test "uuidgen: Create a random UUIDv4" {
     uuidgen --random
-    aa_check
 }
 
-# bats test_tags=uuidgen
 @test "uuidgen: Create a UUIDv1 based on the current time" {
     uuidgen --time
-    aa_check
 }
-

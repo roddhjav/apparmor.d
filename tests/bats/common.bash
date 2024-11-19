@@ -105,8 +105,18 @@ aa_check() {
     now=$(date +%s)
     duration=$((now - _START + 1))
     logs=$(aa-log --raw --systemd --since "-${duration}s")
+    aa_start
     if [[ -n "$logs" ]]; then
         fail "profile $PROGRAM raised logs: $logs"
     fi
-    aa_start
+}
+
+# Bats setup and teardown hooks
+
+setup_file() {
+    aa_setup
+}
+
+teardown() {
+	aa_check
 }
