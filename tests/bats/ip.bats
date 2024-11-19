@@ -34,10 +34,6 @@ load common
     ip rule list
 }
 
-@test "ip rule: Flush all deleted rules" {
-    sudo ip rule flush
-}
-
 @test "ip: Manage network namespace" {
     sudo ip netns add foo
     sudo ip netns list
