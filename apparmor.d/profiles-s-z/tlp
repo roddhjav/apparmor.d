@@ -45,7 +45,7 @@ profile tlp @{exec_path} flags=(attach_disconnected) {
   @{bin}/readlink               rix,
   @{bin}/rm                     rix,
   @{bin}/sort                   rix,
-  @{bin}/systemctl              rCx ->  systemctl,
+  @{bin}/systemctl              rCx -> systemctl,
   @{bin}/touch                  rix,
   @{bin}/tr                     rix,
   @{bin}/udevadm                rCx -> udevadm,
@@ -63,29 +63,32 @@ profile tlp @{exec_path} flags=(attach_disconnected) {
   /var/lib/tlp/{,**} rw,
   /var/lib/power-profiles-daemon/state.ini rw,
 
+  owner /tmp/tlp-run.conf_tmp@{rand6} rw,
+
   owner @{run}/tlp/{,**} rw,
   owner @{run}/tlp/lock_tlp  rwk,
 
   @{run}/udev/data/+platform:* r,
 
+  @{sys}/bus/pci/devices/ r,
+  @{sys}/devices/@{pci}/{,**/}power/control w,
   @{sys}/devices/system/cpu/cpufreq/policy@{int}/energy_performance_preference rw,
-  @{sys}/module/pcie_aspm/parameters/policy rw,
-  @{sys}/module/snd_hda_intel/parameters/power_save rw,
-  @{sys}/module/snd_hda_intel/parameters/power_save_controller rw,
   @{sys}/firmware/acpi/platform_profile* rw,
   @{sys}/firmware/acpi/pm_profile* rw,
+  @{sys}/module/*/parameters/power_save rw,
+  @{sys}/module/*/parameters/power_save_controller rw,
+  @{sys}/module/pcie_aspm/parameters/policy rw,
 
   owner @{PROC}/sys/fs/xfs/xfssyncd_centisecs rw,
   owner @{PROC}/sys/kernel/nmi_watchdog rw,
   owner @{PROC}/sys/vm/dirty_*_centisecs rw,
   owner @{PROC}/sys/vm/laptop_mode rw,
 
-  /dev/disk/by-id/ r,
-  /dev/tty rw,
-
   profile systemctl {
     include <abstractions/base>
     include <abstractions/app/systemctl>
+
+    capability net_admin,
 
     include if exists <local/tlp_systemctl>
   }
