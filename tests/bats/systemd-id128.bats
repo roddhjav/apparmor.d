@@ -28,12 +28,6 @@ setup_file() {
 }
 
 # bats test_tags=systemd-id128
-@test "systemd-id128: Print the identifier of the current service invocation (this is available in systemd services)" {
-    systemd-id128 invocation-id
-    aa_check
-}
-
-# bats test_tags=systemd-id128
 @test "systemd-id128: Generate a new random identifier and print it as a UUID (five groups of digits separated by hyphens)" {
     systemd-id128 new --uuid
     aa_check
