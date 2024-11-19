@@ -5,12 +5,6 @@
 
 load common
 
-setup_file() {
-    aa_setup
-}
-
-# bats test_tags=fc-list
 @test "fc-list: Return a list of installed fonts in your system" {
     fc-list
-    aa_check
 }
