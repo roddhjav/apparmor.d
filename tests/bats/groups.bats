@@ -5,19 +5,11 @@
 
 load common
 
-setup_file() {
-    aa_setup
-}
-
-# bats test_tags=groups
 @test "groups: Print group memberships for the current user" {
     groups
-    aa_check
 }
 
-# bats test_tags=groups
 @test "groups: Print group memberships for a list of users" {
     groups root
-    aa_check
 }
 

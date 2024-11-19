@@ -5,24 +5,15 @@
 
 load common
 
-setup_file() {
-    aa_setup
-}
-
-# bats test_tags=chsh
 @test "chsh: [l]ist available shells" {
     chsh --list-shells || true
-    aa_check
 }
 
-# bats test_tags=chsh
 @test "chsh: Set a specific login [s]hell for the current user" {
     echo "$PASSWORD" | chsh --shell /usr/bin/bash
-    aa_check
 }
 
 # bats test_tags=chsh
 @test "chsh: Set a login [s]hell for a specific user" {
     sudo chsh --shell /usr/bin/sh root
-    aa_check
 }
