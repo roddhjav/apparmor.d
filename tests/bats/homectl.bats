@@ -5,6 +5,12 @@
 
 load common
 
+setup_file() {
+    sudo systemctl start systemd-homed
+    skip
+    aa_setup
+}
+
 @test "homectl: Display help" {
     homectl --no-pager --help
 }
