@@ -17,8 +17,16 @@ load common
     sudo groupadd --gid 3000 user3
 }
 
+@test "groupmod: Change the group name" {
+    sudo groupmod --new-name user22 user2
+}
+
+@test "groupmod: Change the group ID" {
+    sudo groupmod --gid 2222 user22
+}
+
 @test "groupdel: Delete newly created group" {
-    sudo groupdel user2
+    sudo groupdel user22
     sudo groupdel system2
     sudo groupdel user3
 }
