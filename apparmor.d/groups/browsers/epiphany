@@ -19,6 +19,7 @@ profile epiphany @{exec_path} flags=(attach_disconnected) {
   include <abstractions/p11-kit>
   include <abstractions/ssl_certs>
   include <abstractions/user-download-strict>
+  include <abstractions/webkit>
 
   capability dac_override,
 
@@ -28,20 +29,13 @@ profile epiphany @{exec_path} flags=(attach_disconnected) {
   network inet6 stream,
   network netlink raw,
 
-  mount options=(rw rbind) /bindfile@{rand6} -> /newroot/.flatpak-info,
-
   @{exec_path} mr,
 
   @{open_path}  rPx -> child-open,
 
   @{bin}/bwrap           rix,
-  @{bin}/xdg-dbus-proxy  rix,
-  @{lib}/{,@{multiarch}/}webkit{,2}gtk-*/WebKit{Web,Network}Process rix,
 
   /usr/share/enchant*/{,**} r,
-
-  owner /bindfile@{rand6} rw,
-  owner @{att}/.flatpak-info r,
 
   owner @{user_config_dirs}/glib-2.0/ w,
   owner @{user_config_dirs}/glib-2.0/settings/ w,
@@ -50,14 +44,6 @@ profile epiphany @{exec_path} flags=(attach_disconnected) {
   owner @{tmp}/epiphany-*-@{rand6}/{,**} rw,
   owner @{tmp}/Serialized@{rand9} rw,
   owner @{tmp}/WebKit-Media-@{rand6} rw,
-
-  owner @{run}/user/@{uid}/.dbus-proxy/{system,session,a11y}-bus-proxy-@{rand6} rw,
-  owner @{run}/user/@{uid}/.flatpak/ w,
-  owner @{run}/user/@{uid}/.flatpak/webkit-*/{,bwrapinfo.json} rw,
-  owner @{run}/user/@{uid}/webkitgtk/ w,
-  owner @{run}/user/@{uid}/webkitgtk/a11y-proxy-@{rand6} rw,
-  owner @{run}/user/@{uid}/webkitgtk/bus-proxy-@{rand6} rw,
-  owner @{run}/user/@{uid}/webkitgtk/dbus-proxy-@{rand6} rw,
 
   @{sys}/devices/virtual/dmi/id/chassis_type r,
   @{sys}/firmware/acpi/pm_profile r,
