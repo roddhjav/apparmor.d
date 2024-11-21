@@ -29,7 +29,7 @@ title: Variables References
 | Sync | `@{XDG_SYNC_DIR}` | `Sync` |
 | Torrents | `@{XDG_TORRENTS_DIR}` | `Torrents` |
 | Vm | `@{XDG_VM_DIR}` | `.vm` |
-| Vm Shares | `@{XDG_VM_SHARES_DIR}` | `VM_Shares` |
+| Vm Shares | `@{XDG_VMSHARE_DIR}` | `VM_Shares` |
 | Disk images | `@{XDG_IMG_DIR}` | `images` |
 | Games Studio | `@{XDG_GAMESSTUDIO_DIR}` | `.unity3d` |
 
@@ -85,7 +85,7 @@ title: Variables References
 | Books | `@{user_books_dirs}` | `@{HOME}/@{XDG_BOOKS_DIR} @{MOUNTS}/@{XDG_BOOKS_DIR}` |
 | Games | `@{user_games_dirs}` | `@{HOME}/@{XDG_GAMES_DIR} @{MOUNTS}/@{XDG_GAMES_DIR}` |
 | Private | `@{user_private_dirs}` | `@{HOME}/@{XDG_PRIVATE_DIR} @{MOUNTS}/@{XDG_PRIVATE_DIR}` |
-| Passwords | `@{user_password_store_dirs}` | `@{HOME}/@{XDG_PASSWORD_STORE_DIR} @{MOUNTS}/@{XDG_PASSWORD_STORE_DIR}` |
+| Passwords | `@{user_passwordstore_dirs}` | `@{HOME}/@{XDG_PASSWORD_STORE_DIR} @{MOUNTS}/@{XDG_PASSWORD_STORE_DIR}` |
 | Work | `@{user_work_dirs}` | `@{HOME}/@{XDG_WORK_DIR} @{MOUNTS}/@{XDG_WORK_DIR}` |
 | Mail | `@{user_mail_dirs}` | `@{HOME}/@{XDG_MAIL_DIR} @{MOUNTS}/@{XDG_MAIL_DIR}` |
 | Projects | `@{user_projects_dirs}` | `@{HOME}/@{XDG_PROJECTS_DIR} @{MOUNTS}/@{XDG_PROJECTS_DIR}` |
@@ -94,7 +94,7 @@ title: Variables References
 | Torrents | `@{user_torrents_dirs}` | `@{HOME}/@{XDG_TORRENTS_DIR} @{MOUNTS}/@{XDG_TORRENTS_DIR}` |
 | Sync | `@{user_sync_dirs}` | `@{HOME}/@{XDG_SYNC_DIR} @{MOUNTS}/*/@{XDG_SYNC_DIR}` |
 | Vm | `@{user_vm_dirs}` | `@{HOME}/@{XDG_VM_DIR} @{MOUNTS}/@{XDG_VM_DIR}` |
-| Vm Shares | `@{user_vm_shares}` | `@{HOME}/@{XDG_VM_SHARES_DIR} @{MOUNTS}/@{XDG_VM_SHARES_DIR}` |
+| Vm Shares | `@{user_vmshare_dirs}` | `@{HOME}/@{XDG_VMSHARE_DIR} @{MOUNTS}/@{XDG_VMSHARE_DIR}` |
 | Disk images | `@{user_img_dirs}` | `@{HOME}/@{XDG_IMG_DIR} @{MOUNTS}/@{XDG_IMG_DIR}` |
 
 </figure>
