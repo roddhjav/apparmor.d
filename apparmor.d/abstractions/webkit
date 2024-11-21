@@ -1,0 +1,31 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Minimal set of rules for webkit UI.
+
+  abi <abi/4.0>,
+
+  mount options=(rw rbind) /bindfile@{rand6} -> /newroot/.flatpak-info,
+
+  @{bin}/xdg-dbus-proxy  rix,
+
+  @{lib}/{,@{multiarch}/}webkit{2,}gtk-*/WebKitNetworkProcess rix,
+  @{lib}/{,@{multiarch}/}webkit{2,}gtk-*/WebKitWebProcess rix,
+
+  owner /bindfile@{rand6} rw,
+  owner @{att}/.flatpak-info r,
+
+  owner @{run}/user/@{uid}/.dbus-proxy/{system,session,a11y}-bus-proxy-@{rand6} rw,
+
+  owner @{run}/user/@{uid}/.flatpak/ w,
+  owner @{run}/user/@{uid}/.flatpak/webkit-*/{,bwrapinfo.json} rw,
+
+  owner @{run}/user/@{uid}/webkitgtk/ w,
+  owner @{run}/user/@{uid}/webkitgtk/a11y-proxy-@{rand6} rw,
+  owner @{run}/user/@{uid}/webkitgtk/bus-proxy-@{rand6} rw,
+  owner @{run}/user/@{uid}/webkitgtk/dbus-proxy-@{rand6} rw,
+
+  include if exists <abstractions/webkit.d>
+
+# vim:syntax=apparmor
