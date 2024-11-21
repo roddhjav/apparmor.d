@@ -5,6 +5,10 @@
 
 load common
 
+setup_file() {
+    skip "mqueue raised despite the rule being present. See https://gitlab.com/apparmor/apparmor/-/issues/362"
+}
+
 @test "needrestart: List outdated processes" {
     needrestart
 }
