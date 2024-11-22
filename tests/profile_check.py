@@ -13,6 +13,21 @@ import shlex
 import json
 from copy import deepcopy
 
+try:
+    from apparmor.regex         import *
+    from apparmor.aa            import is_skippable_file
+    from apparmor.rule.file     import FileRule, FileRuleset
+    from apparmor.common        import convert_regexp
+    try:
+        from apparmor.rule.variable import separate_vars
+    except ImportError:
+        from apparmor.aa            import separate_vars
+
+    LIBAPPARMOR = True
+
+except ImportError:
+    LIBAPPARMOR = False
+
 def sanitizeProfileName(name):
 
     if name.startswith('/') or name.startswith('@{'):
@@ -118,6 +133,7 @@ def readApparmorFile(fullpath):
     gotHeaders = {}
     gotAttach = False
     isAfterProfileStart = False
+    lastLineNum = None
     try:
         with open(fullpath, 'r') as f:
             for n,line in enumerate(f, start=1):
@@ -262,6 +278,8 @@ def readApparmorFile(fullpath):
                             localExists_eol[profileIdentity] = n
                             del nestingStacker[-1]  # remove last
 
+                lastLineNum = n
+
     except PermissionError:
         exceptionMsg = 'Unable to read the file (PermissionError)'
 
@@ -308,12 +326,12 @@ def readApparmorFile(fullpath):
 
     # Ensure trailing vim syntax
     if line:
-        trailingSyntax = '# vim:syntax=apparmor'
+        trailingSyntax = '# vim:syntax=apparmor\n'
         if line != trailingSyntax:
             messages.append({'filename':   fullpath,
                              'profile':    None,
                              'severity':   'WARNING',
-                             'line':       None,
+                             'line':       lastLineNum,
                              'reason':     'No trailing syntax hint',
                              'suggestion': trailingSyntax})
 
@@ -448,18 +466,8 @@ def main(argv):
 
 if __name__ == '__main__':
 
-    try:
-        from apparmor.regex         import *
-        from apparmor.aa            import is_skippable_file
-        from apparmor.rule.file     import FileRule, FileRuleset
-        from apparmor.common        import convert_regexp
-        try:
-            from apparmor.rule.variable import separate_vars
-        except ModuleNotFoundError:
-            from apparmor.aa            import separate_vars
- 
-    except ModuleNotFoundError:
-        raise ModuleNotFoundError(f"""Can't find 'python3-apparmor' package! Install with:
+    if not LIBAPPARMOR:
+        raise ImportError(f"""Can't find 'python3-apparmor' package! Install with:
 $ sudo apt install python3-apparmor""")
 
     main(sys.argv)
