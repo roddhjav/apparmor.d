@@ -47,6 +47,10 @@ profile NetworkManager @{exec_path} flags=(attach_disconnected) {
   #aa:dbus talk bus=system name=org.freedesktop.nm_dispatcher label=nm-dispatcher
   #aa:dbus talk bus=system name=org.freedesktop.resolve1 label=systemd-resolved
 
+  dbus send bus=system path=/org/freedesktop/nm_dispatcher
+       interface=org.freedesktop.nm_dispatcher
+       peer=(name=org.freedesktop.nm_dispatcher),
+
   dbus receive bus=system path=/org/freedesktop
        interface=org.freedesktop.DBus.ObjectManager
        member=GetManagedObjects
@@ -70,7 +74,7 @@ profile NetworkManager @{exec_path} flags=(attach_disconnected) {
   dbus send bus=system path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus
        member={GetConnectionUnixUser,GetConnectionUnixProcessID}
-       peer=(name=org.freedesktop.DBus, label=dbus-system),
+       peer=(name=org.freedesktop.DBus, label="@{p_dbus_system}"),
 
   @{exec_path} mr,
 
@@ -128,10 +132,11 @@ profile NetworkManager @{exec_path} flags=(attach_disconnected) {
   @{run}/udev/data/+rfkill:* r,
   @{run}/udev/data/n@{int} r,
 
-  @{sys}/devices/**/uevent r,
-  @{sys}/devices/virtual/net/{,**} r,
   @{sys}/devices/@{pci}/net/*/{,**} r,
   @{sys}/devices/@{pci}/usb@{int}/**/net/{,**} r,
+  @{sys}/devices/**/@{uuid}/net/*/{,**} r,
+  @{sys}/devices/**/uevent r,
+  @{sys}/devices/virtual/net/{,**} r,
 
         @{PROC}/@{pids}/stat r,
         @{PROC}/1/environ r,

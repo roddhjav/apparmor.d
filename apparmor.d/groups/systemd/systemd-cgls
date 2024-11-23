@@ -9,8 +9,17 @@ include <tunables/global>
 @{exec_path} = @{bin}/systemd-cgls
 profile systemd-cgls @{exec_path} {
   include <abstractions/base>
+  include <abstractions/bus-system>
+  include <abstractions/bus/org.freedesktop.systemd1>
+  include <abstractions/consoles>
 
-  ptrace (read),
+  capability sys_ptrace,
+
+  ptrace read,
+
+  signal send set=cont peer=child-pager,
+
+  unix bind type=stream addr=@@{udbus}/bus/systemd-cgls/system,
 
   @{exec_path} mr,
 

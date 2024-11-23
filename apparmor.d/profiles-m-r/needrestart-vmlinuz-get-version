@@ -1,0 +1,30 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/needrestart/vmlinuz-get-version
+profile needrestart-vmlinuz-get-version @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+
+  @{exec_path} mr,
+
+  @{sh_path}                   rix,
+  @{bin}/grep                  rix,
+  @{bin}/mktemp                rix,
+  @{bin}/rm                    rix,
+  @{bin}/tr                    rix,
+  @{bin}/which{,.debianutils}  rix,
+
+  /boot/vmlinuz* r,
+
+  owner @{tmp}/tmp.@{rand10} rw,
+
+  include if exists <local/needrestart-vmlinuz-get-version>
+}
+
+# vim:syntax=apparmor

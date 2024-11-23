@@ -3,8 +3,19 @@ name: Ubuntu
 on: [push, pull_request, workflow_dispatch]
 
 jobs:
+  check:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Run basic profile linter check
+        run: |
+          make check
+
   build:
     runs-on: ${{ matrix.os }}
+    needs: check
     strategy:
       matrix:
         os:
@@ -89,6 +100,30 @@ jobs:
           sudo dpkg --install .pkg/apparmor.d_*_amd64.deb || true
           sudo systemctl restart apparmor.service
 
+      - name: Restart some services to ensure they are confined
+        run: |
+          services=(
+            containerd cron
+            dbus docker
+            ModemManager multipathd
+            networkd-dispatcher
+            packagekit polkit
+            snapd
+            systemd-journald systemd-hostnamed systemd-logind systemd-networkd
+            systemd-resolved systemd-udevd
+            udisks2
+          )
+          sudo systemctl daemon-reload
+          for service in "${services[@]}"; do
+            sudo systemctl restart "$service" || systemctl status "$service.service" || true
+          done
+          sudo ps auxZ | grep -v '\[.*\]'
+          sudo aa-log -s --raw
+
+      - name: Install integration dependencies
+        run: |
+          bash tests/requirements.sh
+
       - name: Run the bats integration tests
         run: |
           make bats
@@ -97,3 +132,8 @@ jobs:
         if: always()
         run: |
           sudo aa-log -s --raw
+
+      - name: Show final processes security context
+        if: always()
+        run: |
+          sudo ps auxZ | grep -v '\[.*\]'

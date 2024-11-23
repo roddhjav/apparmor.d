@@ -5,19 +5,11 @@
 
 load common
 
-setup_file() {
-    aa_setup
-}
-
-# bats test_tags=users
 @test "users: Print logged in usernames" {
     users
-    aa_check
 }
 
-# bats test_tags=users
 @test "users: Print logged in usernames according to a given file" {
     users /var/log/wmtp
-    aa_check
 }
 

@@ -1,0 +1,34 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Zane Zakraisek <zz@eng.utah.edu>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/iftop
+profile iftop @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+
+  capability net_raw,
+
+  network inet dgram,
+  network inet6 dgram,
+  network netlink raw,
+  network packet raw,
+
+  @{exec_path} mr,
+
+  /usr/share/terminfo/** r,
+
+  owner @{HOME}/.iftoprc r,
+
+  # When running in promiscuous mode
+  @{sys}/devices/**/net/*/statistics/* r,
+
+  include if exists <local/iftop>
+}
+
+# vim:syntax=apparmor

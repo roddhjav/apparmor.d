@@ -5,12 +5,18 @@
 
 load common
 
-setup_file() {
-    aa_setup
-}
-
-# bats test_tags=fc-list
 @test "fc-list: Return a list of installed fonts in your system" {
     fc-list
-    aa_check
+}
+
+@test "fc-match: Return a sorted list of best matching fonts" {
+    fc-match -s 'DejaVu Serif'
+}
+
+@test "fc-pattern: Display default information about a font" {
+    fc-pattern --default 'DejaVu Serif'
+}
+
+@test "fc-pattern: Display configuration information about a font" {
+    fc-pattern --config 'DejaVu Serif'
 }

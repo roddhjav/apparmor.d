@@ -5,32 +5,28 @@
 
 load common
 
-setup_file() {
-    aa_setup
-}
-
-# bats test_tags=groupadd
 @test "groupadd: Create a new group" {
     sudo groupadd user2
-    aa_check
 }
 
-# bats test_tags=groupadd
 @test "groupadd: Create a new system group" {
     sudo groupadd --system system2
-    aa_check
 }
 
-# bats test_tags=groupadd
 @test "groupadd: Create a new group with the specific groupid" {
     sudo groupadd --gid 3000 user3
-    aa_check
 }
 
-# bats test_tags=groupadd
+@test "groupmod: Change the group name" {
+    sudo groupmod --new-name user22 user2
+}
+
+@test "groupmod: Change the group ID" {
+    sudo groupmod --gid 2222 user22
+}
+
 @test "groupdel: Delete newly created group" {
-    sudo groupdel user2
+    sudo groupdel user22
     sudo groupdel system2
     sudo groupdel user3
-    aa_check
 }

@@ -113,7 +113,7 @@ check:
 
 .PHONY: bats
 bats:
-	@bats --print-output-on-failure tests/bats/
+	@bats --timing --print-output-on-failure tests/bats/
 
 .PHONY: manual
 manual:

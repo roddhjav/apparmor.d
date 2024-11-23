@@ -17,7 +17,6 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/bus/net.hadess.SwitcherooControl>
   include <abstractions/bus/net.reactivated.Fprint>
   include <abstractions/bus/org.a11y>
-  include <abstractions/bus/org.freedesktop.Accounts>
   include <abstractions/bus/org.freedesktop.background.Monitor>
   include <abstractions/bus/org.freedesktop.FileManager1>
   include <abstractions/bus/org.freedesktop.GeoClue2>
@@ -83,6 +82,7 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
   # Talk with gnome-shell
 
+  #aa:dbus talk bus=system name=org.freedesktop.Accounts label=accounts-daemon
   #aa:dbus talk bus=system name=org.freedesktop.ColorManager label=colord
   #aa:dbus talk bus=system name=org.freedesktop.login1 label=systemd-logind
   #aa:dbus talk bus=system name=org.gnome.DisplayManager label=gdm
@@ -112,22 +112,22 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   dbus send bus=system path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus
        member={GetConnectionUnixUser,GetConnectionUnixProcessID,GetNameOwner,ListNames}
-       peer=(name=org.freedesktop.DBus, label=dbus-system),
+       peer=(name=org.freedesktop.DBus, label="@{p_dbus_system}"),
 
   # Session bus
 
   dbus send bus=session path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus
        member={GetConnectionUnixUser,GetConnectionUnixProcessID,GetNameOwner,ListNames}
-       peer=(name=org.freedesktop.DBus, label=dbus-session),
+       peer=(name=org.freedesktop.DBus, label="@{p_dbus_session}"),
   dbus send bus=session path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus.Properties
        member=GetAll
-       peer=(name=org.freedesktop.DBus, label=dbus-session),
+       peer=(name=org.freedesktop.DBus, label="@{p_dbus_session}"),
   dbus send bus=session path=/
        interface=org.freedesktop.DBus
        member={GetConnectionUnixProcessID,GetNameOwner,ListNames}
-       peer=(name=org.freedesktop.DBus, label=dbus-session),
+       peer=(name=org.freedesktop.DBus, label="@{p_dbus_session}"),
 
   dbus send bus=accessibility path=/org/a11y/atspi/accessible/root
        interface=org.a11y.atspi.Socket
@@ -161,7 +161,7 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   dbus send bus=session
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
-       peer=(name=org.freedesktop.DBus, label=dbus-session),
+       peer=(name=org.freedesktop.DBus, label="@{p_dbus_session}"),
 
   dbus send bus=session path=/org/gnome/*/SearchProvider
       interface=org.gnome.Shell.SearchProvider2
@@ -175,6 +175,7 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   @{bin}/glib-compile-schemas   rPx,
   @{bin}/ibus-daemon            rPx,
   @{bin}/Xwayland               rPx,
+  @{bin}/tecla                  rPx,
   @{lib}/{,NetworkManager/}nm-openvpn-auth-dialog rPx,
   @{lib}/mutter-x11-frames      rPx,
   #aa:exec polkit-agent-helper
@@ -198,10 +199,9 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   /usr/share/gdm/greeter-dconf-defaults r,
   /usr/share/gdm/greeter/applications/{,**} r,
   /usr/share/libgweather/Locations.xml r,
-  /usr/share/libinput*/ r,
-  /usr/share/libinput*/{,**/}@{int2}-*.quirks r,
-  /usr/share/libinput*/libinput/ r,
+  /usr/share/libinput*/{,**} r,
   /usr/share/libwacom/{,*.stylus,*.tablet} r,
+  /usr/share/poppler/{,**} r,
   /usr/share/wallpapers/** r,
   /usr/share/wayland-sessions/{,*.desktop} r,
   /usr/share/xml/iso-codes/{,**} r,

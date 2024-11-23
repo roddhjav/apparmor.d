@@ -17,7 +17,7 @@ profile loupe @{exec_path} flags=(attach_disconnected) {
   include <abstractions/user-read-strict>
   include <abstractions/user-write-strict>
 
-  signal (send) set=(kill) peer=loupe//bwrap,
+  signal send set=kill peer=loupe//bwrap,
 
   #aa:dbus talk bus=session name=org.gtk.vfs label="gvfsd{,-*}"
 
@@ -29,6 +29,8 @@ profile loupe @{exec_path} flags=(attach_disconnected) {
   /usr/share/glycin-loaders/{,**} r,
 
   / r,
+
+  owner @{user_cache_dirs}/glycin/{,**} rw,
 
   @{run}/mount/utab r,
 
@@ -51,7 +53,9 @@ profile loupe @{exec_path} flags=(attach_disconnected) {
     signal (receive) set=(kill) peer=loupe,
 
     @{bin}/bwrap mr,
-    @{lib}/glycin-loaders/*/glycin-image-rs rix,
+    @{lib}/glycin-loaders/*/glycin-* rix,
+
+    owner @{PROC}/@{pid}/fd/ r,
 
     deny @{user_share_dirs}/gvfs-metadata/* r,
 

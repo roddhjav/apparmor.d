@@ -34,7 +34,9 @@ profile apt @{exec_path} flags=(attach_disconnected) {
 
   signal (send) peer=apt-methods-*,
 
-  unix (bind) type=stream addr=@@{hex16}/bus/apt/system,
+  unix bind type=stream addr=@@{udbus}/bus/apt-get/system,
+  unix bind type=stream addr=@@{udbus}/bus/apt/system,
+
   unix (send, receive) type=stream peer=(label=apt-esm-json-hook),
   unix (send, receive) type=stream peer=(label=snapd),
 
@@ -43,7 +45,7 @@ profile apt @{exec_path} flags=(attach_disconnected) {
   dbus send bus=system path=/org/freedesktop/DBus/Bus
        interface=org.freedesktop.DBus
        member={GetConnectionUnixProcessID,GetConnectionUnixUser}
-       peer=(name=org.freedesktop.DBus, label=dbus-system),
+       peer=(name=org.freedesktop.DBus, label="@{p_dbus_system}"),
 
   dbus send bus=system
        interface=org.freedesktop.DBus.Introspectable

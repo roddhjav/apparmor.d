@@ -68,12 +68,17 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	tests = tests.Filter()
 
 	if err := cfg.BatsDir.RemoveAll(); err != nil {
 		return err
 	}
 	if err := cfg.BatsDir.MkdirAll(); err != nil {
+		return err
+	}
+	if err := cfg.BatsDir.Join("profiled").MkdirAll(); err != nil {
+		return err
+	}
+	if err := cfg.BatsDir.Join("unprofiled").MkdirAll(); err != nil {
 		return err
 	}
 	for _, test := range tests {

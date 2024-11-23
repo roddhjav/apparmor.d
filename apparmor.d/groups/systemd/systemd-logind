@@ -29,7 +29,7 @@ profile systemd-logind @{exec_path} flags=(attach_disconnected) {
 
   mqueue r type=posix /,
 
-  unix (bind) type=stream addr=@@{hex16}/bus/systemd-logind/system,
+  unix (bind) type=stream addr=@@{udbus}/bus/systemd-logind/system,
 
   #aa:dbus own bus=system name=org.freedesktop.login1
 
@@ -43,7 +43,7 @@ profile systemd-logind @{exec_path} flags=(attach_disconnected) {
   dbus send bus=system path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus
        member={GetConnectionUnixUser,GetConnectionUnixProcessID,GetConnectionCredentials}
-       peer=(name=org.freedesktop.DBus, label=dbus-system),
+       peer=(name=org.freedesktop.DBus, label="@{p_dbus_system}"),
 
   @{exec_path} mr,
 
@@ -94,10 +94,12 @@ profile systemd-logind @{exec_path} flags=(attach_disconnected) {
   @{run}/udev/data/c226:@{int} r,         # For /dev/dri/card*
   @{run}/udev/data/c@{dynamic}:@{int} r,  # For dynamic assignment range 234 to 254, 384 to 511
 
+  @{att}/@{run}/systemd/notify w,
+  @{att}/@{run}/systemd/userdb/io.systemd.Multiplexer rw,
+
   @{run}/systemd/inhibit/ rw,
   @{run}/systemd/inhibit/.#* rw,
   @{run}/systemd/inhibit/@{int}{,.ref} rw,
-  @{run}/systemd/notify rw,
   @{run}/systemd/seats/ rw,
   @{run}/systemd/seats/.#seat* rw,
   @{run}/systemd/seats/seat@{int} rw,

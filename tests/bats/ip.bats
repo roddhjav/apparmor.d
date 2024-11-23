@@ -5,37 +5,38 @@
 
 load common
 
-setup_file() {
-    aa_setup
-}
-
-# bats test_tags=ip
-@test "ip: List interfaces with detailed info" {
+@test "ip-address: List network interfaces and their associated IP addresses" {
     ip address
-    aa_check
 }
 
-# bats test_tags=ip
-@test "ip: List interfaces with brief network layer info" {
-    ip -brief address
-    aa_check
+@test "ip-address: Filter to show only active network interfaces" {
+    ip address show up
 }
 
-# bats test_tags=ip
-@test "ip: List interfaces with brief link layer info" {
-    ip -brief link
-    aa_check
-}
-
-# bats test_tags=ip
-@test "ip: Display the routing table" {
+@test "ip-route: Display the routing table" {
     ip route
-    aa_check
 }
 
-# bats test_tags=ip
-@test "ip: Show neighbors (ARP table)" {
+@test "ip-route-get: Print route to a destination" {
+    ip route get 1.1.1.1
+}
+
+@test "ip link: Show information about all network interfaces" {
+    ip link
+}
+
+@test "ip neighbour: Display the neighbour/ARP table entries" {
     ip neighbour
-    aa_check
 }
 
+@test "ip rule: Display the routing policy" {
+    ip rule show
+    ip rule list
+}
+
+@test "ip: Manage network namespace" {
+    sudo ip netns add foo
+    sudo ip netns list
+    sudo ip netns exec foo bash -c "pwd"
+    sudo ip netns delete foo
+}

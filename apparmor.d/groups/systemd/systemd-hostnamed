@@ -18,14 +18,14 @@ profile systemd-hostnamed @{exec_path} flags=(attach_disconnected) {
 
   network unix stream,
 
-  unix (bind) type=stream addr=@@{hex16}/bus/systemd-hostnam/system,
+  unix (bind) type=stream addr=@@{udbus}/bus/systemd-hostnam/system,
 
   #aa:dbus own bus=system name=org.freedesktop.hostname1
 
   dbus send bus=system path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus
        member=GetConnectionUnixUser
-       peer=(name=org.freedesktop.DBus, label=dbus-system),
+       peer=(name=org.freedesktop.DBus, label="@{p_dbus_system}"),
 
   @{exec_path} mr,
 
@@ -37,8 +37,9 @@ profile systemd-hostnamed @{exec_path} flags=(attach_disconnected) {
   /etc/machine-info rw,
   /etc/os-release r,
 
+  @{att}/@{run}/systemd/notify rw,
+
   @{run}/systemd/default-hostname rw,
-  @{run}/systemd/notify rw,
   @{run}/udev/data/+dmi:* r,              # for motherboard info
 
   @{sys}/devices/virtual/dmi/id/ r,

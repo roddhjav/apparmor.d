@@ -29,6 +29,7 @@ profile snap @{exec_path} {
   mount options=(ro, silent) -> /tmp/snapd-auto-import-mount-@{int}/,
 
   #aa:dbus own bus=session name=io.snapcraft.Launcher
+  #aa:dbus own bus=session name=io.snapcraft.SessionAgent
   #aa:dbus own bus=session name=io.snapcraft.Settings
 
   #aa:dbus talk bus=session name=org.freedesktop.systemd1 label="@{p_systemd_user}"
@@ -41,10 +42,12 @@ profile snap @{exec_path} {
   @{exec_path} mrix,
 
   @{bin}/mount rix,
+  @{bin}/getent rix,
 
   @{bin}/gpg{,2}          rCx -> gpg,
   @{bin}/systemctl        rCx -> systemctl,
 
+  @{lib_dirs}/**          mr,
   @{lib_dirs}/snapd/snap-confine     rPx,
   @{lib_dirs}/snapd/snap-seccomp     rPx,
   @{lib_dirs}/snapd/snapd            rPx,
@@ -107,6 +110,9 @@ profile snap @{exec_path} {
     include <abstractions/bus/org.freedesktop.systemd1>
 
     network unix stream,
+
+    owner @{run}/user/@{uid}/systemd/notify rw,
+    owner @{run}/user/@{uid}/systemd/private rw,
 
     include if exists <local/snap_systemctl>
   }

@@ -32,6 +32,7 @@ profile xdg-desktop-portal @{exec_path} flags=(attach_disconnected) {
   ptrace read,
 
   signal receive set=term peer=gdm,
+  signal receive set=hup  peer=gdm-session-worker,
 
   #aa:dbus own bus=session name=org.freedesktop.portal.Desktop path=/org/freedesktop/portal/desktop interface={org.freedesktop.DBus.Properties,org.freedesktop{,.impl}.portal.{Settings,Background}}
   dbus receive bus=session path=/org/freedesktop/portal/desktop
@@ -46,7 +47,7 @@ profile xdg-desktop-portal @{exec_path} flags=(attach_disconnected) {
   dbus send bus=session path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus
        member={GetConnectionUnixUser,GetConnectionUnixProcessID}
-       peer=(name=org.freedesktop.DBus, label=dbus-session),
+       peer=(name=org.freedesktop.DBus, label="@{p_dbus_session}"),
 
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable
@@ -62,8 +63,9 @@ profile xdg-desktop-portal @{exec_path} flags=(attach_disconnected) {
   @{lib}/xdg-desktop-portal-validate-icon rPx,
   @{open_path}                            rPx -> child-open,
 
-        / r,
-  @{att}/.flatpak-info r,
+              / r,
+        @{att}/.flatpak-info r,
+  owner @{att}/ r,
 
   /usr/share/dconf/profile/gdm r,
   /usr/share/xdg-desktop-portal/** r,
