@@ -186,14 +186,8 @@ def readApparmorFile(fullpath):
                     if m.get('profile'):
                         nestingStacker.append(m.get('profile'))  # set early
 
-                    if m.get('attachment') != '@{exec_path}' and not gotAttach:  # can be only singular
+                    if m.get('attachment') == '@{exec_path}' and not gotAttach:  # can be only singular
                         gotAttach = True
-                        messages.append({'filename':   fullpath,
-                                         'profile':    getCurrentProfile(nestingStacker),
-                                         'severity':   'WARNING',
-                                         'line':       n,
-                                         'reason':     "'@{exec_path}' must be defined as main path attachment",
-                                         'suggestion': None})
                         
                     profileMsg = {'filename':   fullpath,
                                   'profile':    getCurrentProfile(nestingStacker),
@@ -324,6 +318,15 @@ def readApparmorFile(fullpath):
                          'reason':     'ABI is required',
                          'suggestion': abi})
 
+    # Ensure singular '@{exec_path}'
+    if not gotAttach:
+        messages.append({'filename':   fullpath,
+                         'profile':    None,
+                         'severity':   'WARNING',
+                         'line':       None,
+                         'reason':     "'@{exec_path}' must be defined as main path attachment",
+                         'suggestion': None})
+
     # Ensure trailing vim syntax
     if line:
         trailingSyntax = '# vim:syntax=apparmor\n'
@@ -450,10 +453,11 @@ def main(argv):
 
     profile_data = {}
     for path in sorted(profiles):
-        readApparmorFile_Out = readApparmorFile(path)
-        profilesInFile = readApparmorFile_Out[1]
-        messages.extend(readApparmorFile_Out[0])
-        profile_data.update(profilesInFile)
+        if not is_skippable_file(path):
+            readApparmorFile_Out = readApparmorFile(path)
+            profilesInFile = readApparmorFile_Out[1]
+            messages.extend(readApparmorFile_Out[0])
+            profile_data.update(profilesInFile)
 
     for m in messages:
         if m.get('suggestion'):
