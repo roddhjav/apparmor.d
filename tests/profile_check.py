@@ -456,6 +456,9 @@ def main(argv):
         profile_data.update(profilesInFile)
 
     for m in messages:
+        if m.get('suggestion'):
+            if m['suggestion'].endswith('\n'):
+                m['suggestion'] = m.get('suggestion').removesuffix('\n')
         m['filename'] = str(m.get('filename'))
         print(json.dumps(m, indent=2))
 
