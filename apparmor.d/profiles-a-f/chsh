@@ -10,17 +10,23 @@ include <tunables/global>
 @{exec_path} = @{bin}/chsh
 profile chsh @{exec_path} {
   include <abstractions/base>
-  include <abstractions/consoles>
   include <abstractions/authentication>
+  include <abstractions/bus-system>
+  include <abstractions/consoles>
   include <abstractions/nameservice-strict>
   include <abstractions/wutmp>
 
   capability audit_write,
   capability chown,
   capability fsetid,
+  capability net_admin,
   capability setuid,
 
   network netlink raw,
+
+  unix type=stream addr=@@{udbus}/bus/chsh/system,
+
+  #aa:dbus talk bus=system name=org.freedesktop.home1 label=systemd-homed
 
   @{exec_path} mr,
 
