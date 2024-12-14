@@ -1,0 +1,56 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2024 Besanon  <m231009ts@mailfence.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/lxqt-notificationd
+profile lxqt-notificationd @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/bus-accessibility>
+  include <abstractions/lxqt>
+  include <abstractions/nameservice-strict>
+
+  dbus receive
+        bus=session
+        path="/org/freedesktop/Notifications"
+        interface="org.freedesktop.DBus.Introspectable"
+        peer=(name=":[0-9]*.[0-9]*"),
+  dbus send
+        bus=session
+        path="/org/freedesktop/Notifications"
+        interface="org.freedesktop.Notifications"
+        peer=(name="org.freedesktop.DBus"),
+  dbus receive
+        bus=session
+        path="/org/freedesktop/Notifications"
+        interface="org.freedesktop.Notifications"
+        peer=(name=":[0-9]*.[0-9]*"),
+
+   @{exec_path} mr,
+
+   @{bin}/lxqt-config-notificationd rPx,
+
+   /etc/machine-id r,
+
+   owner @{user_cache_dirs}/lxqt-notificationd/ r,
+   owner @{user_cache_dirs}/lxqt-notificationd/#@{int} rwk,
+   owner @{user_cache_dirs}/lxqt-notificationd/unattended.list rw,
+   owner @{user_cache_dirs}/lxqt-notificationd/unattended.list l -> @{user_cache_dirs}/lxqt-notificationd/#@{int},
+   owner @{user_cache_dirs}/lxqt-notificationd/unattended.list.lock  rwk,
+   owner @{user_cache_dirs}/lxqt-notificationd/unattended.list.@{rand6} rwkl -> @{user_cache_dirs}/lxqt-notificationd/#@{int},
+
+   owner /tmp/@{int} r,
+   owner /tmp/falkon-@{rand6}/falkon_notif.png r,
+
+   /dev/tty rw,
+   /dev/tty@{int} rw,
+   owner /dev/tty@{int} rw,
+
+   include if exists <local/lxqt-notificationd>
+}
+
+# vim:syntax=apparmor
