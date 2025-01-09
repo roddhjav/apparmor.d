@@ -12,15 +12,28 @@ profile mount-cifs @{exec_path} flags=(complain) {
   include <abstractions/base>
   include <abstractions/nameservice-strict>
 
-  # To mount anything.
   capability sys_admin,
-
-  # (#FIXME#)
   capability setpcap,
 
+  network inet dgram,
   network inet stream,
+  network inet6 dgram,
   network inet6 stream,
   network netlink raw,
+
+  mount fstype=cifs -> @{HOME}/*/,
+  mount fstype=cifs -> @{HOME}/*/*/,
+  mount fstype=cifs -> @{MOUNTDIRS}/,
+  mount fstype=cifs -> @{MOUNTS}/,
+  mount fstype=cifs -> @{MOUNTS}/*/,
+  mount fstype=cifs -> @{MOUNTS}/*/*/,
+
+  umount @{HOME}/*/,
+  umount @{HOME}/*/*/,
+  umount @{MOUNTDIRS}/,
+  umount @{MOUNTS}/,
+  umount @{MOUNTS}/*/,
+  umount @{MOUNTS}/*/*/,
 
   @{exec_path} mr,
 
@@ -31,18 +44,12 @@ profile mount-cifs @{exec_path} flags=(complain) {
   owner @{HOME}/.smbcredentials r,
 
   # Mount points
+  @{HOME}/*/ r,
+  @{HOME}/*/*/ r,
   @{MOUNTDIRS}/ r,
   @{MOUNTS}/ r,
   @{MOUNTS}/*/ r,
-
-  # Allow to mount smb/cifs disks only under the /media/ dirs
-  mount fstype=cifs -> @{MOUNTDIRS}/,
-  mount fstype=cifs -> @{MOUNTS}/,
-  mount fstype=cifs -> @{MOUNTS}/*/,
-
-  umount @{MOUNTDIRS}/,
-  umount @{MOUNTS}/,
-  umount @{MOUNTS}/*/,
+  @{MOUNTS}/*/*/ r,
 
   include if exists <local/mount-cifs>
 }
