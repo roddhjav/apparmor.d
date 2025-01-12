@@ -67,5 +67,6 @@ func init() {
 }
 
 func main() {
+	cli.Configure()
 	cli.Prebuild()
 }
