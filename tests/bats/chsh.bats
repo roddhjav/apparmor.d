@@ -5,15 +5,15 @@
 
 load common
 
-@test "chsh: [l]ist available shells" {
+@test "chsh: list available shells" {
     chsh --list-shells || true
 }
 
-@test "chsh: Set a specific login [s]hell for the current user" {
+@test "chsh: Set a specific login shell for the current user" {
     echo "$PASSWORD" | chsh --shell /usr/bin/bash
 }
 
 # bats test_tags=chsh
-@test "chsh: Set a login [s]hell for a specific user" {
+@test "chsh: Set a login shell for a specific user" {
     sudo chsh --shell /usr/bin/sh root
 }

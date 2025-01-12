@@ -19,7 +19,7 @@ arch)
 	;;
 debian | ubuntu | whonix)
 	sudo apt-get install -y \
-		cpuid dfc systemd-userdbd systemd-homed tlp
+		cpuid dfc systemd-userdbd systemd-homed tlp network-manager
 	;;
 opensuse*)
 	;;
