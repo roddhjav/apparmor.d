@@ -33,11 +33,10 @@ func init() {
 }
 
 func (b Userspace) Apply(opt *Option, profile string) (string, error) {
-	if ok, _ := opt.File.IsInsideDir(prebuild.RootApparmord.Join("abstractions")); ok {
-		return profile, nil
-	}
-	if ok, _ := opt.File.IsInsideDir(prebuild.RootApparmord.Join("tunables")); ok {
-		return profile, nil
+	for _, dir := range []string{"abstractions", "tunables", "local"} {
+		if ok, _ := opt.File.IsInsideDir(prebuild.RootApparmord.Join(dir)); ok {
+			return profile, nil
+		}
 	}
 
 	f := aa.DefaultTunables()
