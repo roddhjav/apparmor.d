@@ -58,7 +58,7 @@ func init() {
 	flag.StringVar(&file, "file", "", "Only prebuild a given file.")
 }
 
-func Prebuild() {
+func Configure() {
 	flag.Usage = func() {
 		fmt.Printf("%s\n%s\n%s\n%s", usage,
 			prebuild.Help("Prepare", prepare.Tasks),
@@ -103,7 +103,9 @@ func Prebuild() {
 		overwrite, _ := prepare.Tasks["overwrite"].(*prepare.Overwrite)
 		overwrite.OneFile = true
 	}
+}
 
+func Prebuild() {
 	logging.Step("Building apparmor.d profiles for %s on ABI%d.", prebuild.Distribution, prebuild.ABI)
 	if err := Prepare(); err != nil {
 		logging.Fatal("%s", err.Error())
