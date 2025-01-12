@@ -49,9 +49,10 @@ func (p Overwrite) Apply() ([]string, error) {
 		if !dest.Exist() && p.OneFile {
 			continue
 		}
-		if err := origin.Rename(dest); err != nil {
-
-			return res, err
+		if origin.Exist() {
+			if err := origin.Rename(dest); err != nil {
+				return res, err
+			}
 		}
 		originRel, err := origin.RelFrom(dest)
 		if err != nil {
