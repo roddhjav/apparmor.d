@@ -88,7 +88,8 @@ func run() error {
 	}
 
 	logging.Bullet("Bats tests directory: %s", cfg.BatsDir)
-	logging.Bullet("Number of tests found %d", len(tests))
+	logging.Bullet("Number of profiles with tests found %d", len(tests))
+	logging.Bullet("Number of programs without profile found %d", len(tests))
 	return nil
 }
 
