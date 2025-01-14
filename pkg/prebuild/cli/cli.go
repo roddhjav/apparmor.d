@@ -101,7 +101,7 @@ func Configure() {
 		sync, _ := prepare.Tasks["synchronise"].(*prepare.Synchronise)
 		sync.Paths = []string{file}
 		overwrite, _ := prepare.Tasks["overwrite"].(*prepare.Overwrite)
-		overwrite.OneFile = true
+		overwrite.Optional = true
 	}
 }
 
