@@ -49,7 +49,7 @@ To build a VM image for development purpose, run the following from the `tests` 
 | Debian | Server | `make debian flavor=server` | `debian-server` |
 | openSUSE | KDE | `make opensuse flavor=kde` | `opensuse-kde` |
 | Ubuntu | Server | `make ubuntu flavor=server` | `ubuntu-server` |
-| Ubuntu | Desktop | `make ubuntu falvor=desktop` | `ubuntu-desktop` |
+| Ubuntu | Desktop | `make ubuntu flavor=desktop` | `ubuntu-desktop` |
 
 **VM management**
 
@@ -88,7 +88,7 @@ On all images, `aa-update` can be used to rebuild and install the latest version
 Prepare the test environment:
 ```sh
 cd tests
-make <dist> falvor=<flavor>
+make <dist> flavor=<flavor>
 AA_INTEGRATION=true vagrant up <name>
 ```
 
