@@ -10,6 +10,9 @@ var (
 	// AppArmor ABI version
 	ABI uint = 0
 
+	// Pkgname is the name of the package
+	Pkgname string = "apparmor.d"
+
 	// Root is the root directory for the build (default: .build)
 	Root *paths.Path = paths.New(".build")
 
