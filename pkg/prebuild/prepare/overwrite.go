@@ -11,7 +11,7 @@ import (
 	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 )
 
-const ext = ".apparmor.d"
+var ext = "." + prebuild.Pkgname
 
 type Overwrite struct {
 	prebuild.Base
