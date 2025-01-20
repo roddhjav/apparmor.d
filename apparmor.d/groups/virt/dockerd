@@ -33,15 +33,9 @@ profile dockerd @{exec_path} flags=(attach_disconnected) {
   network netlink raw,
 
   mount                        /tmp/containerd-mount@{int}/,
-  mount                        /var/lib/docker/buildkit/**/,
-  mount                        /var/lib/docker/overlay2/**/,
-  mount                        /var/lib/docker/tmp/buildkit-mount@{int}/,
-  mount fstype=overlay                              overlay -> /var/lib/docker/rootfs/overlayfs/@{hex64}/,
+  mount                        /var/lib/docker/**/,
   mount options=(rw bind)                                   -> /run/docker/netns/*,
-  mount options=(rw rbind)                                  -> /var/lib/docker/tmp/docker-builder@{int}/,
-  mount options=(rw rbind)     /var/lib/docker/volumes/**/- -> /var/lib/docker/rootfs/overlayfs/**/,
   mount options=(rw rprivate)                               -> /.pivot_root@{int}/,
-  mount options=(rw rprivate)                               -> /var/lib/docker/rootfs/overlayfs/@{hex64}/var/lib/buildkit/,
   mount options=(rw rslave)                                 -> /,
 
   remount /tmp/containerd-mount@{int10}/,
@@ -89,6 +83,9 @@ profile dockerd @{exec_path} flags=(attach_disconnected) {
   owner /var/lib/containerd/** rw,
   owner /var/lib/docker/{,**} rwk,
   owner /var/lib/docker/tmp/qemu-check@{int}/check rix,
+
+  /tmp/build/ w,
+  /tmp/containerd-mount@{int10}/{,**} rw,
 
   owner @{run}/docker/ rw,
   owner @{run}/docker/** rwlk,
