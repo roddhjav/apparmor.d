@@ -9,6 +9,8 @@ include <tunables/global>
 @{exec_path} = @{bin}/thunar
 profile thunar @{exec_path} {
   include <abstractions/base>
+  include <abstractions/bus-accessibility>
+  include <abstractions/bus-session>
   include <abstractions/deny-sensitive-home>
   include <abstractions/fontconfig-cache-read>
   include <abstractions/nameservice-strict>
@@ -16,6 +18,10 @@ profile thunar @{exec_path} {
   include <abstractions/xfce>
 
   network netlink raw,
+
+  dbus (bind) bus=session name=org.xfce.Thunar,
+  dbus (bind) bus=session name=org.xfce.FileManager,
+  dbus (bind) bus=session name=org.freedesktop.FileManager1,
 
   @{exec_path} mr,
 
@@ -30,6 +36,7 @@ profile thunar @{exec_path} {
 
   /etc/fstab r,
   /etc/timezone r,
+  /etc/xdg/{,xdg-xubuntu/}Thunar/{,**} r,
 
   # Full access to user's data
   / r,
@@ -49,6 +56,8 @@ profile thunar @{exec_path} {
   deny /root/{,**} r,
   deny /tmp/.* rw,
   deny /tmp/.*/{,**} rw,
+
+  @{run}/mount/utab r,
 
   owner @{PROC}/@{pid}/mountinfo r,
 
