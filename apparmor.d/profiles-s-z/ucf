@@ -1,0 +1,45 @@
+# apparmor.d - Full set of apparmor profiles
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/ucf
+profile ucf @{bin}/ucf {
+  include <abstractions/base>
+  include <abstractions/consoles>
+
+  @{exec_path} mr,
+
+  @{bin}/dpkg-query rPx,
+  @{bin}/dpkg-divert rPx -> child-dpkg-divert,
+  /usr/share/debconf/frontend rPx,
+
+  @{sh_path}  rix,
+  @{bin}/perl rix,
+  @{bin}/basename rix,
+  @{bin}/dirname rix,
+  @{bin}/getopt rix,
+  @{bin}/id rix,
+  @{bin}/readlink rix,
+  @{bin}/sed rix,
+  @{bin}/tr rix,
+  @{bin}/{,e,f}grep rix,
+  @{bin}/{,g,m}awk rix,
+  @{bin}/md5sum rix,
+  @{bin}/cp rix,
+
+  /etc/ucf.conf r,
+  /etc/libreoffice/registry/** r,
+
+  /var/lib/ucf/hashfile r,
+
+  /usr/share/debconf/confmodule r,
+
+  owner /tmp/tmp.@{rand10} r,
+
+  include if exists <local/ucf>
+}
+
+# vim:syntax=apparmor
