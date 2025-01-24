@@ -6,7 +6,7 @@ source "qemu" "ubuntu22" {
   disk_image         = true
   iso_url            = "https://cloud-images.ubuntu.com/${var.release.ubuntu22.codename}/current/${var.release.ubuntu22.codename}-server-cloudimg-amd64.img"
   iso_checksum       = "file:https://cloud-images.ubuntu.com/${var.release.ubuntu22.codename}/current/SHA256SUMS"
-  iso_target_path    = "${var.iso_dir}/ubuntu22-cloudimg-amd64.img"
+  iso_target_path    = "${var.iso_dir}/ubuntu-${var.release.ubuntu22.codename}-cloudimg-amd64.img"
   cpu_model          = "host"
   cpus               = 6
   memory             = 4096
@@ -28,7 +28,7 @@ source "qemu" "ubuntu22" {
   cd_label           = "cidata"
   cd_content = {
     "meta-data" = ""
-    "user-data" = templatefile("${path.cwd}/packer/init/${source.name}-${var.flavor}.user-data.yml",
+    "user-data" = templatefile("${path.cwd}/cloud-init/${source.name}-${var.flavor}.user-data.yml",
       {
         username = "${var.username}"
         password = "${var.password}"
@@ -43,7 +43,7 @@ source "qemu" "ubuntu24" {
   disk_image         = true
   iso_url            = "https://cloud-images.ubuntu.com/${var.release.ubuntu24.codename}/current/${var.release.ubuntu24.codename}-server-cloudimg-amd64.img"
   iso_checksum       = "file:https://cloud-images.ubuntu.com/${var.release.ubuntu24.codename}/current/SHA256SUMS"
-  iso_target_path    = "${var.iso_dir}/ubuntu24-cloudimg-amd64.img"
+  iso_target_path    = "${var.iso_dir}/ubuntu-${var.release.ubuntu24.codename}-cloudimg-amd64.img"
   cpu_model          = "host"
   cpus               = 6
   memory             = 4096
@@ -65,7 +65,7 @@ source "qemu" "ubuntu24" {
   cd_label           = "cidata"
   cd_content = {
     "meta-data" = ""
-    "user-data" = templatefile("${path.cwd}/packer/init/${source.name}-${var.flavor}.user-data.yml",
+    "user-data" = templatefile("${path.cwd}/cloud-init/${source.name}-${var.flavor}.user-data.yml",
       {
         username = "${var.username}"
         password = "${var.password}"

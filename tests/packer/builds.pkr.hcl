@@ -12,51 +12,36 @@ build {
     "source.qemu.ubuntu24",
   ]
 
-  # Upload local files
+  # Upload artifacts
   provisioner "file" {
-    destination = "/tmp"
-    sources     = ["${path.cwd}/packer/src"]
-  }
-
-  provisioner "file" {
-    only        = ["qemu.archlinux"]
-    destination = "/tmp/src/"
+    destination = "/tmp/"
     sources = [
-      "${path.cwd}/../.pkg/apparmor.d-${var.version}-1-x86_64.pkg.tar.zst",
+      "${path.cwd}/packer/src/",
+      "${path.cwd}/packer/init.sh",
+      "${path.cwd}/packer/clean.sh",
+      "${path.cwd}/../.pkg/",
     ]
   }
 
-  provisioner "file" {
-    only        = ["qemu.opensuse"]
-    destination = "/tmp/src/"
-    sources     = ["${path.cwd}/../.pkg/apparmor.d-${var.version}-1.x86_64.rpm"]
-  }
-
-  provisioner "file" {
-    only        = ["qemu.debian", "qemu.ubuntu22", "qemu.ubuntu24"]
-    destination = "/tmp/src/"
-    sources     = ["${path.cwd}/../.pkg/apparmor.d_${var.version}-1_amd64.deb"]
-  }
-
-  # Wait for cloud-init to finish
+  # Full system provisioning
   provisioner "shell" {
     execute_command = "echo '${var.password}' | sudo -S sh -c '{{ .Vars }} {{ .Path }}'"
     inline = [
+      # Wait for cloud-init to finish
       "while [ ! -f /var/lib/cloud/instance/boot-finished ]; do echo 'Waiting for Cloud-Init...'; sleep 20; done",
-      "cloud-init clean", # Remove logs and artifacts so cloud-init can re-run
+
+      # Ensure cloud-init is successful
+      "cloud-init status",
+
+      # Remove logs and artifacts so cloud-init can re-run
+      "cloud-init clean",
+
+      # Install local files and config
+      "bash /tmp/init.sh",
+
+      # Minimize the image
+      "bash /tmp/clean.sh",
     ]
-  }
-
-  # Install local files and config
-  provisioner "shell" {
-    script          = "${path.cwd}/packer/init/init.sh"
-    execute_command = "echo '${var.password}' | sudo -S sh -c '{{ .Vars }} {{ .Path }}'"
-  }
-
-  # Minimize the image
-  provisioner "shell" {
-    script          = "${path.cwd}/packer/init/clean.sh"
-    execute_command = "echo '${var.password}' | sudo -S sh -c '{{ .Vars }} {{ .Path }}'"
   }
 
   post-processor "vagrant" {
