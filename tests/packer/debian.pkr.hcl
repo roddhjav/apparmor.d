@@ -8,8 +8,8 @@ source "qemu" "debian" {
   iso_checksum       = "file:https://cdimage.debian.org/images/cloud/${var.release.debian.codename}/latest/SHA512SUMS"
   iso_target_path    = "${var.iso_dir}/debian-${var.release.debian.codename}-cloudimg-amd64.img"
   cpu_model          = "host"
-  cpus               = 6
-  memory             = 4096
+  cpus               = var.cpus
+  memory             = var.ram
   disk_size          = var.disk_size
   accelerator        = "kvm"
   headless           = true

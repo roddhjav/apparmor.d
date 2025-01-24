@@ -22,6 +22,18 @@ variable "ssh_publickey" {
   default     = "~/.ssh/id_ed25519.pub"
 }
 
+variable "cpus" {
+  description = "Default CPU of the VM"
+  type        = string
+  default     = "6"
+}
+
+variable "ram" {
+  description = "Default RAM of the VM"
+  type        = string
+  default     = "4096"
+}
+
 variable "disk_size" {
   description = "Disk size of the VM to build"
   type        = string
