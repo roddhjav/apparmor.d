@@ -12,14 +12,13 @@
 flavor ?= 
 disk ?= 10G
 
-VERSION := 0.$(shell git rev-list --count HEAD)
-BASE = archlinux debian ubuntu opensuse fedora
+BASE = archlinux debian ubuntu22 ubuntu24 opensuse fedora
 
 .PHONY: ${BASE} lint
 
 $(BASE):
 	@make --directory=../ package dist=${@}
-	@packer build -force -var version=${VERSION} \
+	@packer build -force \
 		-var disk_size=${disk} -var flavor="${flavor}" \
 		-only=qemu.${@} packer/
 

@@ -6,7 +6,7 @@ source "qemu" "debian" {
   disk_image         = true
   iso_url            = "https://cdimage.debian.org/images/cloud/${var.release.debian.codename}/latest/debian-${var.release.debian.version}-genericcloud-amd64.qcow2"
   iso_checksum       = "file:https://cdimage.debian.org/images/cloud/${var.release.debian.codename}/latest/SHA512SUMS"
-  iso_target_path    = "${var.iso_dir}/debian-cloudimg-amd64.img"
+  iso_target_path    = "${var.iso_dir}/debian-${var.release.debian.codename}-cloudimg-amd64.img"
   cpu_model          = "host"
   cpus               = 6
   memory             = 4096
@@ -28,7 +28,7 @@ source "qemu" "debian" {
   cd_label           = "cidata"
   cd_content = {
     "meta-data" = ""
-    "user-data" = templatefile("${path.cwd}/packer/init/${source.name}-${var.flavor}.user-data.yml",
+    "user-data" = templatefile("${path.cwd}/cloud-init/${source.name}-${var.flavor}.user-data.yml",
       {
         username = "${var.username}"
         password = "${var.password}"

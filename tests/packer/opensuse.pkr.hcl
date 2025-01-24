@@ -30,7 +30,7 @@ source "qemu" "opensuse" {
   cd_label           = "cidata"
   cd_content = {
     "meta-data" = ""
-    "user-data" = templatefile("${path.cwd}/packer/init/${source.name}-${var.flavor}.user-data.yml",
+    "user-data" = templatefile("${path.cwd}/cloud-init/${source.name}-${var.flavor}.user-data.yml",
       {
         username = "${var.username}"
         password = "${var.password}"

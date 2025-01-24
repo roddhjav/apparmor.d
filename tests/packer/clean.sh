@@ -3,7 +3,7 @@
 # Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-set -u
+set -eu -o pipefail
 
 # shellcheck source=/dev/null
 _lsb_release() {
@@ -46,23 +46,15 @@ _sshdgenkeys() {
 	_EOF
 }
 
-clean_debian() {
-	_msg "Apt clean configuration"
-
-	_msg "Full system upgrade"
-	apt-get update -y
-	apt-get -qq -y --no-install-recommends upgrade
-	apt-get -qq -y --no-install-recommends dist-upgrade
-
-	_msg "Clean the apt cache"
+clean_apt() {
+	_msg "Cleaning the apt cache"
 	apt-get -y autoremove --purge
 	apt-get -y autoclean
 	apt-get -y clean
 }
 
-clean_arch() {
-	_msg "Pacman clean configuration"
-
+clean_pacman() {
+	_msg "Cleaning pacman cache"
 	pacman -Syu --noconfirm
 	pacman -Qdtq | while IFS='' read -r pkg; do
 		pacman -Rsccn --noconfirm "$pkg"
@@ -70,16 +62,15 @@ clean_arch() {
 	pacman -Scc --noconfirm
 }
 
-clean_opensuse() {
-	_msg "zypper clean configuration"
-
+clean_zypper() {
+	_msg "Cleaning zypper cache"
 	zypper update -y
 	zypper clean -y
 }
 
 # Make the image as impersonal as possible.
 impersonalize() {
-	_msg "Make the image as impersonal as possible."
+	_msg "Making the image as impersonal as possible."
 
 	# Remove remaining pkg file, docs and caches
 	dirs=(
@@ -159,16 +150,16 @@ main() {
 	begin=$(_diskused)
 	case "$DISTRIBUTION" in
 	debian | ubuntu)
-		clean_debian
+		clean_apt
 		_sshdgenkeys
 		;;
 
 	opensuse*)
-		clean_opensuse
+		clean_zypper
 		;;
 
 	arch)
-		clean_arch
+		clean_pacman
 		;;
 	esac
 	impersonalize

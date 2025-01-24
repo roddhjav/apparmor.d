@@ -58,12 +58,6 @@ variable "prefix" {
   default     = "aa-"
 }
 
-variable "version" {
-  description = "apparmor.d version"
-  type        = string
-  default     = "0.001"
-}
-
 variable "flavor" {
   description = "Distribution flavor to use (server, desktop, gnome, kde...)"
   type        = string

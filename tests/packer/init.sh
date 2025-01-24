@@ -11,7 +11,7 @@ _lsb_release() {
 	echo "$ID"
 }
 DISTRIBUTION="$(_lsb_release)"
-readonly SRC=/tmp/src
+readonly SRC=/tmp/
 readonly DISTRIBUTION
 
 main() {
@@ -28,23 +28,22 @@ main() {
 	case "$DISTRIBUTION" in
 	arch)
 		pacman --noconfirm -U $SRC/*.pkg.tar.zst
-		systemctl start apparmor.service
 		;;
 
 	debian | ubuntu)
-		apt-get update -y
-		apt-get install -y apparmor-profiles build-essential config-package-dev \
-			debhelper devscripts htop rsync vim
 		dpkg -i $SRC/*.deb
 		;;
 
 	opensuse*)
 		mv "/home/$SUDO_USER/.bash_aliases" "/home/$SUDO_USER/.alias"
-		zypper install -y bash-completion git go htop make rsync vim
 		rpm -i $SRC/*.rpm
 		;;
 
 	esac
+
+	rm -rf /var/cache/apparmor/*
+	rm -rf /etc/apparmor/earlypolicy/
+	systemctl reload apparmor.service
 }
 
 main "$@"
