@@ -8,8 +8,8 @@ source "qemu" "archlinux" {
   iso_checksum       = "file:https://geo.mirror.pkgbuild.com/images/latest/Arch-Linux-x86_64-cloudimg.qcow2.SHA256"
   iso_target_path    = "${var.iso_dir}/archlinux-cloudimg-amd64.img"
   cpu_model          = "host"
-  cpus               = 6
-  memory             = 4096
+  cpus               = var.cpus
+  memory             = var.ram
   disk_size          = var.disk_size
   accelerator        = "kvm"
   headless           = true

@@ -10,8 +10,8 @@ source "qemu" "opensuse" {
   iso_checksum       = "sha256:223ed62160ef4f1a4f21b69c574f552a07eee6ef66cf66eef2b49c5a7c4864f4"
   iso_target_path    = "${var.base_dir}/base-tumbleweed-gnome.qcow2"
   cpu_model          = "host"
-  cpus               = 6
-  memory             = 4096
+  cpus               = var.cpus
+  memory             = var.ram
   disk_size          = var.disk_size
   accelerator        = "kvm"
   headless           = false
