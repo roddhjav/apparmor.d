@@ -104,7 +104,7 @@ lint:
 	@make --directory=tests lint
 	@shellcheck --shell=bash \
 		PKGBUILD dists/build.sh dists/docker.sh tests/check.sh \
-		tests/packer/init/init.sh tests/packer/src/aa-update tests/packer/init/clean.sh \
+		tests/packer/init.sh tests/packer/src/aa-update tests/packer/clean.sh \
 		debian/${PKGNAME}.postinst debian/${PKGNAME}.postrm
 
 .PHONY: check
