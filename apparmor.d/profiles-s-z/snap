@@ -14,6 +14,7 @@ profile snap @{exec_path} {
   include <abstractions/base>
   include <abstractions/bus-session>
   include <abstractions/bus-system>
+  include <abstractions/bus/org.freedesktop.systemd1>
   include <abstractions/consoles>
   include <abstractions/disks-read>
   include <abstractions/nameservice-strict>
@@ -24,6 +25,8 @@ profile snap @{exec_path} {
 
   network netlink raw,
 
+  ptrace read peer=snap.snap-store.snap-store,
+
   unix (send, receive) type=stream peer=(label=apt),
 
   mount options=(ro, silent) -> /tmp/snapd-auto-import-mount-@{int}/,
@@ -32,12 +35,18 @@ profile snap @{exec_path} {
   #aa:dbus own bus=session name=io.snapcraft.SessionAgent
   #aa:dbus own bus=session name=io.snapcraft.Settings
 
+  #aa:dbus talk bus=session name=io.snapcraft.PrivilegedDesktopLauncher label=snap.snap-store.snap-store
   #aa:dbus talk bus=session name=org.freedesktop.systemd1 label="@{p_systemd_user}"
 
   dbus send bus=session path=/org/freedesktop/portal/documents
        interface=org.freedesktop.portal.Documents
        member=GetMountPoint
        peer=(name=org.freedesktop.portal.Documents, label="{xdg-document-portal,unconfined}"),
+
+  dbus receive bus=session
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name=@{busname}, label=gnome-shell),
 
   @{exec_path} mrix,
 
@@ -83,6 +92,7 @@ profile snap @{exec_path} {
         @{PROC}/sys/kernel/random/uuid r,
         @{PROC}/sys/kernel/seccomp/actions_avail r,
         @{PROC}/version r,
+  owner @{PROC}/@{pid}/attr/apparmor/current r,
   owner @{PROC}/@{pid}/mounts r,
 
   /dev/tty@{int} rw,
