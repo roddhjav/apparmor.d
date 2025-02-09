@@ -9,12 +9,18 @@ include <tunables/global>
 @{exec_path} = @{bin}/xfce4-session
 profile xfce-session @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/desktop>
+  include <abstractions/bus-session>
+  include <abstractions/bus-accessibility>
+  include <abstractions/fontconfig-cache-read>
   include <abstractions/app-launcher-user>
   include <abstractions/graphics>
   include <abstractions/nameservice-strict>
   include <abstractions/xfce>
 
   signal (receive) set=(term) peer=lightdm,
+
+  #aa:dbus own bus=session name=org.xfce.SessionManager
 
   @{exec_path} mr,
 
@@ -33,6 +39,7 @@ profile xfce-session @{exec_path} flags=(attach_disconnected) {
   @{lib}/msgcollector/msgdispatcher_xdg_autostart      rPx,
   @{lib}/sdwdate-gui/start-maybe                       rPx,
   @{lib}/setup-wizard-dist/setup-dist_check_for_start  rPx,
+  @{lib}/xapps/sn-watcher/xapp-sn-watcher             rPUx,
 
   /usr/share/kde-power-savings-disable-in-vms/{,**} r,
   /usr/share/kde-screen-locker-disable-in-vms/{,**} r,
@@ -48,10 +55,14 @@ profile xfce-session @{exec_path} flags=(attach_disconnected) {
   /etc/xdg/autostart/*.desktop r,
 
   owner @{user_cache_dirs}/sessions/{,**} rw,
+  owner @{user_config_dirs}/autostart/ r,
+  owner @{user_config_dirs}/autostart/*.desktop r,
 
   owner @{tmp}/.xfsm-ICE-@{rand6} rw,
 
   owner @{PROC}/@{pid}/stat r,
+
+  @{sys}/class/i2c-adapter/ r,
 
   /dev/tty rw,
 
