@@ -237,7 +237,7 @@ func TestAppArmorProfileFile_Integration(t *testing.T) {
 					},
 				}},
 			},
-			want: mustReadProfileFile(intData.Join("profiles-a-f/aa-status")),
+			want: mustReadProfileFile(intData.Join("groups/apparmor/aa-status")),
 		},
 	}
 	for _, tt := range tests {
