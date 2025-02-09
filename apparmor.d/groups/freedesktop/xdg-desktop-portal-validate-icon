@@ -1,0 +1,26 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/xdg-desktop-portal-validate-icon
+profile xdg-desktop-portal-validate-icon @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/common/bwrap>
+  include <abstractions/freedesktop.org>
+
+  capability dac_override,
+
+  @{exec_path} mrix,
+
+  @{bin}/bwrap ix,
+
+  owner @{tmp}/icon@{rand6} r,
+
+  include if exists <local/xdg-desktop-portal-validate-icon>
+}
+
+# vim:syntax=apparmor
