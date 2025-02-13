@@ -111,9 +111,9 @@ lint:
 check:
 	@bash tests/check.sh
 
-.PHONY: bats
-bats:
-	@bats --timing --print-output-on-failure tests/bats/
+.PHONY: integration
+integration :
+	@bats --timing --print-output-on-failure tests/integration/
 
 .PHONY: manual
 manual:
