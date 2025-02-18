@@ -1,0 +1,95 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 EricLin
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{name} = wechat-appimage
+@{lib_dirs} = /opt/wechat-appimage/
+@{config_dirs} = @{user_config_dirs}/@{name}
+@{cache_dirs} = @{user_cache_dirs}/@{name}
+
+@{exec_path} = @{bin}/wechat @{lib_dirs}/wechat-appimage.Appimage /tmp/.mount_wechat??????/user/bin/wechat
+profile wechat-appimage @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/attached/consoles>
+  include <abstractions/audio-client>
+  include <abstractions/common/electron>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/app/bus>
+
+  capability dac_override,
+  capability dac_read_search,
+
+  network netlink raw,
+  network netlink dgram,
+  network inet stream,
+  network inet dgram,
+  network inet6 dgram,
+  network inet6 stream,
+
+  @{exec_path} r,
+
+  @{sh_path}  rix,
+  @{lib_dirs}/wechat-appimage.AppImage ix,
+  /tmp/.mount_wechat??????/AppRun ix,
+  @{bin}/mkdir ix,
+  @{bin}/gawk  rix,
+  @{bin}/lsblk rix,
+  @{bin}/ip rix,
+  @{bin}/xdg-user-dir rix,
+  @{tmp}/.mount_wechat??????/opt/wechat/{,**} ix,
+  @{tmp}/.mount_wechat??????/usr/bin/wechat ix,
+  @{open_path} rpx -> child-open-strict,
+
+  mount fstype=fuse.wechat-appimage.AppImage options=(ro nodev nosuid) wechat-appimage.AppImage -> @{tmp}/.mount_wechat??????/,
+
+  umount @{tmp}/.mount_wechat??????/,
+
+  @{bin}/fusermount{,3} ix -> fusermount,
+  @{bin}/dirname  rix -> fusermount,
+  @{bin}/readlink rix -> fusermount,
+
+  @{bin}/ r,
+  @{bin}/core_perl/ r,
+  @{bin}/site_perl/ r,
+  @{bin}/vendor_perl/ r,
+
+  /usr/local/bin/ r,
+  /usr/local/sbin/ r,
+
+  /etc/machine-id r,
+  /etc/fuse.conf r,
+
+  @{tmp}/.mount_wechat??????/AppRun r,
+  @{tmp}/.mount_wechat??????/ rw,
+  @{tmp}/.mount_wechat??????/opt/wechat/{,**} mr,
+
+  owner /var/tmp/etilqs_* rw,
+
+  @{HOME}/.xwechat/{,**} rwk,
+  owner @{user_documents_dirs}/xwechat_files/{,**} rwk,
+
+  /dev/fuse rw,
+  /dev/tty rw,
+
+  profile fusermount {
+    include <abstractions/base>
+    include <abstractions/consoles>
+    include <abstractions/nameservice-strict>
+    @{bin}/fusermount{,3} mr,
+
+    @{lib_dirs}/wechat-appimage.AppImage r,
+
+    @{PROC}/@{pid}/mounts r,
+
+    /dev/fuse rw,
+    include if exists <local/wechat-appimage_fusermount>
+  }
+
+  include if exists <local/wechat-appimage>
+}
+
+# vim:syntax=apparmor
