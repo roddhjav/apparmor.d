@@ -11,17 +11,15 @@ include <tunables/global>
 @{config_dirs} = @{user_config_dirs}/@{name}
 @{cache_dirs} = @{user_cache_dirs}/@{name}
 
-@{exec_path} = @{bin}/wechat @{lib_dirs}/wechat-appimage.Appimage /tmp/.mount_wechat??????/user/bin/wechat
+@{exec_path} = @{bin}/wechat
+@{exec_path} += @{lib_dirs}/wechat-appimage.Appimage
+@{exec_path} += /tmp/.mount_wechat??????/user/bin/wechat
 profile wechat-appimage @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/attached/consoles>
   include <abstractions/audio-client>
   include <abstractions/common/electron>
   include <abstractions/fontconfig-cache-read>
-  include <abstractions/app/bus>
-
-  capability dac_override,
-  capability dac_read_search,
 
   network netlink raw,
   network netlink dgram,
@@ -29,6 +27,10 @@ profile wechat-appimage @{exec_path} flags=(attach_disconnected) {
   network inet dgram,
   network inet6 dgram,
   network inet6 stream,
+
+  mount fstype=fuse.wechat-appimage.AppImage options=(ro nodev nosuid) wechat-appimage.AppImage -> @{tmp}/.mount_wechat??????/,
+
+  umount @{tmp}/.mount_wechat??????/,
 
   @{exec_path} r,
 
@@ -44,13 +46,9 @@ profile wechat-appimage @{exec_path} flags=(attach_disconnected) {
   @{tmp}/.mount_wechat??????/usr/bin/wechat ix,
   @{open_path} rpx -> child-open-strict,
 
-  mount fstype=fuse.wechat-appimage.AppImage options=(ro nodev nosuid) wechat-appimage.AppImage -> @{tmp}/.mount_wechat??????/,
-
-  umount @{tmp}/.mount_wechat??????/,
-
-  @{bin}/fusermount{,3} ix -> fusermount,
-  @{bin}/dirname  rix -> fusermount,
-  @{bin}/readlink rix -> fusermount,
+  @{bin}/fusermount{,3} Cx -> fusermount,
+  @{bin}/dirname  rix,
+  @{bin}/readlink rix,
 
   @{bin}/ r,
   @{bin}/core_perl/ r,
@@ -61,7 +59,6 @@ profile wechat-appimage @{exec_path} flags=(attach_disconnected) {
   /usr/local/sbin/ r,
 
   /etc/machine-id r,
-  /etc/fuse.conf r,
 
   @{tmp}/.mount_wechat??????/AppRun r,
   @{tmp}/.mount_wechat??????/ rw,
@@ -79,11 +76,22 @@ profile wechat-appimage @{exec_path} flags=(attach_disconnected) {
     include <abstractions/base>
     include <abstractions/consoles>
     include <abstractions/nameservice-strict>
+
+    capability dac_override,
+    capability dac_read_search,
+    capability sys_admin,
+
+    mount fstype=fuse.wechat-appimage.AppImage options=(ro nodev nosuid) wechat-appimage.AppImage -> @{tmp}/.mount_wechat??????/,
+
+    umount @{tmp}/.mount_wechat??????/,
+
     @{bin}/fusermount{,3} mr,
 
     @{lib_dirs}/wechat-appimage.AppImage r,
 
     @{PROC}/@{pid}/mounts r,
+
+    /etc/fuse.conf r,
 
     /dev/fuse rw,
     include if exists <local/wechat-appimage_fusermount>
