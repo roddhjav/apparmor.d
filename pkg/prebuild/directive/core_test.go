@@ -20,7 +20,7 @@ func TestNewOption(t *testing.T) {
 	}{
 		{
 			name: "dbus",
-			file: nil,
+			file: paths.New("dbus"),
 			match: []string{
 				"  #aa:dbus own bus=system name=org.gnome.DisplayManager",
 				"dbus",
@@ -34,13 +34,13 @@ func TestNewOption(t *testing.T) {
 					"own":  "",
 				},
 				ArgList: []string{"own", "bus=system", "name=org.gnome.DisplayManager"},
-				File:    nil,
+				File:    paths.New("dbus"),
 				Raw:     "  #aa:dbus own bus=system name=org.gnome.DisplayManager",
 			},
 		},
 		{
 			name: "only",
-			file: nil,
+			file: paths.New("only"),
 			match: []string{
 				"    #aa:only opensuse",
 				"only",
@@ -50,7 +50,7 @@ func TestNewOption(t *testing.T) {
 				Name:    "only",
 				ArgMap:  map[string]string{"opensuse": ""},
 				ArgList: []string{"opensuse"},
-				File:    nil,
+				File:    paths.New("only"),
 				Raw:     "    #aa:only opensuse",
 			},
 		},
@@ -74,13 +74,13 @@ func TestRun(t *testing.T) {
 	}{
 		{
 			name:    "none",
-			file:    nil,
+			file:    paths.New("dummy"),
 			profile: `  `,
 			want:    `  `,
 		},
 		{
 			name:    "present",
-			file:    nil,
+			file:    paths.New("fake-own"),
 			profile: `  #aa:dbus own bus=system name=org.freedesktop.systemd1`,
 			want:    dbusOwnSystemd1,
 		},
