@@ -10,18 +10,23 @@ include <tunables/global>
 profile losetup @{exec_path} {
   include <abstractions/base>
   include <abstractions/consoles>
+  include <abstractions/devices-usb>
 
   capability dac_override,
   capability dac_read_search,
 
-  unix (receive) type=stream,
+  unix receive type=stream,
 
   @{exec_path} mr,
 
-  @{sys}/devices/**/usb[0-9]/{,**} r,
+  @{user_img_dirs}/** rw,
+  @{user_vm_dirs}/** rw,
+
+  @{sys}/block/ r,
+  @{sys}/devices/virtual/block/loop@{int}/{,**} r,
 
   /dev/loop-control rw,
-  /dev/loop[0-9]* rw,
+  /dev/loop@{int} rw,
 
   include if exists <local/losetup>
 }
