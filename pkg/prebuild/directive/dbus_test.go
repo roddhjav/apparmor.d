@@ -6,31 +6,35 @@ package directive
 
 import (
 	"testing"
+
+	"github.com/roddhjav/apparmor.d/pkg/paths"
 )
 
-const dbusOwnSystemd1 = `  dbus bind bus=system name=org.freedesktop.systemd1{,.*},
+const dbusOwnSystemd1 = `  unix bind type=stream addr=@@{udbus}/bus/fake-own/system,
+
+  dbus bind bus=system name=org.freedesktop.systemd1{,.*},
   dbus receive bus=system path=/org/freedesktop/systemd1{,/**}
        interface=org.freedesktop.systemd1{,.*}
-       peer=(name=":1.@{int}"),
-  dbus receive bus=system path=/org/freedesktop/systemd1{,/**}
-       interface=org.freedesktop.DBus.Properties
-       peer=(name=":1.@{int}"),
-  dbus receive bus=system path=/org/freedesktop/systemd1{,/**}
-       interface=org.freedesktop.DBus.ObjectManager
-       peer=(name=":1.@{int}"),
+       peer=(name="@{busname}"),
   dbus send bus=system path=/org/freedesktop/systemd1{,/**}
        interface=org.freedesktop.systemd1{,.*}
-       peer=(name="{:1.@{int},org.freedesktop.DBus}"),
-  dbus send bus=system path=/org/freedesktop/systemd1{,/**}
+       peer=(name="{@{busname},org.freedesktop.DBus}"),
+  dbus (send receive) bus=system path=/org/freedesktop/systemd1{,/**}
        interface=org.freedesktop.DBus.Properties
-       peer=(name="{:1.@{int},org.freedesktop.DBus}"),
-  dbus send bus=system path=/org/freedesktop/systemd1{,/**}
-       interface=org.freedesktop.DBus.ObjectManager
-       peer=(name="{:1.@{int},org.freedesktop.DBus}"),
+       member={Get,GetAll,Set,PropertiesChanged}
+       peer=(name="{@{busname},org.freedesktop.DBus}"),
   dbus receive bus=system path=/org/freedesktop/systemd1{,/**}
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
-       peer=(name=":1.@{int}"),`
+       peer=(name="@{busname}"),
+  dbus receive bus=system path=/org/freedesktop/systemd1{,/**}
+       interface=org.freedesktop.DBus.ObjectManager
+       member=GetManagedObjects
+       peer=(name="{@{busname},org.freedesktop.systemd1{,.*}}"),
+  dbus send bus=system path=/org/freedesktop/systemd1{,/**}
+       interface=org.freedesktop.DBus.ObjectManager
+       member={InterfacesAdded,InterfacesRemoved}
+       peer=(name="{@{busname},org.freedesktop.DBus}"),`
 
 func TestDbus_Apply(t *testing.T) {
 	tests := []struct {
@@ -50,7 +54,7 @@ func TestDbus_Apply(t *testing.T) {
 					"own":  "",
 				},
 				ArgList: []string{"own", "bus=system", "name=org.freedesktop.systemd1"},
-				File:    nil,
+				File:    paths.New("fake-own"),
 				Raw:     "  #aa:dbus own bus=system name=org.freedesktop.systemd1",
 			},
 			profile: "  #aa:dbus own bus=system name=org.freedesktop.systemd1",
@@ -61,45 +65,47 @@ func TestDbus_Apply(t *testing.T) {
 			opt: &Option{
 				Name: "dbus",
 				ArgMap: map[string]string{
-					"bus":       "session",
-					"name":      "com.rastersoft.dingextension",
-					"interface": "org.gtk.Actions",
-					"own":       "",
+					"bus":        "session",
+					"name":       "com.rastersoft.ding",
+					"interface+": "org.gtk.Actions",
+					"own":        "",
 				},
-				ArgList: []string{"own", "bus=session", "name=com.rastersoft.dingextension", "interface=org.gtk.Actions"},
-				File:    nil,
-				Raw:     "  #aa:dbus own bus=session name=com.rastersoft.dingextension interface=org.gtk.Actions",
+				ArgList: []string{"own", "bus=session", "name=com.rastersoft.ding", "interface+=org.gtk.Actions"},
+				File:    paths.New("fake-interface"),
+				Raw:     "  #aa:dbus own bus=session name=com.rastersoft.ding interface+=org.gtk.Actions",
 			},
-			profile: "  #aa:dbus own bus=session name=com.rastersoft.dingextension interface=org.gtk.Actions",
-			want: `  dbus bind bus=session name=com.rastersoft.dingextension{,.*},
-  dbus receive bus=session path=/com/rastersoft/dingextension{,/**}
-       interface=com.rastersoft.dingextension{,.*}
-       peer=(name=":1.@{int}"),
-  dbus receive bus=session path=/com/rastersoft/dingextension{,/**}
+			profile: "  #aa:dbus own bus=session name=com.rastersoft.ding interface+=org.gtk.Actions",
+			want: `  unix bind type=stream addr=@@{udbus}/bus/fake-interface/session,
+
+  dbus bind bus=session name=com.rastersoft.ding{,.*},
+  dbus receive bus=session path=/com/rastersoft/ding{,/**}
+       interface=com.rastersoft.ding{,.*}
+       peer=(name="@{busname}"),
+  dbus send bus=session path=/com/rastersoft/ding{,/**}
+       interface=com.rastersoft.ding{,.*}
+       peer=(name="{@{busname},org.freedesktop.DBus}"),
+  dbus receive bus=session path=/com/rastersoft/ding{,/**}
        interface=org.gtk.Actions
-       peer=(name=":1.@{int}"),
-  dbus receive bus=session path=/com/rastersoft/dingextension{,/**}
-       interface=org.freedesktop.DBus.Properties
-       peer=(name=":1.@{int}"),
-  dbus receive bus=session path=/com/rastersoft/dingextension{,/**}
-       interface=org.freedesktop.DBus.ObjectManager
-       peer=(name=":1.@{int}"),
-  dbus send bus=session path=/com/rastersoft/dingextension{,/**}
-       interface=com.rastersoft.dingextension{,.*}
-       peer=(name="{:1.@{int},org.freedesktop.DBus}"),
-  dbus send bus=session path=/com/rastersoft/dingextension{,/**}
+       peer=(name="@{busname}"),
+  dbus send bus=session path=/com/rastersoft/ding{,/**}
        interface=org.gtk.Actions
-       peer=(name="{:1.@{int},org.freedesktop.DBus}"),
-  dbus send bus=session path=/com/rastersoft/dingextension{,/**}
+       peer=(name="{@{busname},org.freedesktop.DBus}"),
+  dbus (send receive) bus=session path=/com/rastersoft/ding{,/**}
        interface=org.freedesktop.DBus.Properties
-       peer=(name="{:1.@{int},org.freedesktop.DBus}"),
-  dbus send bus=session path=/com/rastersoft/dingextension{,/**}
-       interface=org.freedesktop.DBus.ObjectManager
-       peer=(name="{:1.@{int},org.freedesktop.DBus}"),
-  dbus receive bus=session path=/com/rastersoft/dingextension{,/**}
+       member={Get,GetAll,Set,PropertiesChanged}
+       peer=(name="{@{busname},org.freedesktop.DBus}"),
+  dbus receive bus=session path=/com/rastersoft/ding{,/**}
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
-       peer=(name=":1.@{int}"),`,
+       peer=(name="@{busname}"),
+  dbus receive bus=session path=/com/rastersoft/ding{,/**}
+       interface=org.freedesktop.DBus.ObjectManager
+       member=GetManagedObjects
+       peer=(name="{@{busname},com.rastersoft.ding{,.*}}"),
+  dbus send bus=session path=/com/rastersoft/ding{,/**}
+       interface=org.freedesktop.DBus.ObjectManager
+       member={InterfacesAdded,InterfacesRemoved}
+       peer=(name="{@{busname},org.freedesktop.DBus}"),`,
 		},
 		{
 			name: "talk",
@@ -112,28 +118,31 @@ func TestDbus_Apply(t *testing.T) {
 					"talk":  "",
 				},
 				ArgList: []string{"talk", "bus=system", "name=org.freedesktop.Accounts", "label=accounts-daemon"},
-				File:    nil,
+				File:    paths.New("gdm-session-worker"),
 				Raw:     "  #aa:dbus talk bus=system name=org.freedesktop.Accounts label=accounts-daemon",
 			},
 			profile: "  #aa:dbus talk bus=system name=org.freedesktop.Accounts label=accounts-daemon",
-			want: `  dbus send bus=system path=/org/freedesktop/Accounts{,/**}
+			want: `  unix bind type=stream addr=@@{udbus}/bus/gdm-session-wor/system,
+
+  dbus (send receive) bus=system path=/org/freedesktop/Accounts{,/**}
        interface=org.freedesktop.Accounts{,.*}
-       peer=(name="{:1.@{int},org.freedesktop.Accounts{,.*}}", label=accounts-daemon),
-  dbus send bus=system path=/org/freedesktop/Accounts{,/**}
+       peer=(name="{@{busname},org.freedesktop.Accounts{,.*}}", label=accounts-daemon),
+  dbus (send receive) bus=system path=/org/freedesktop/Accounts{,/**}
        interface=org.freedesktop.DBus.Properties
-       peer=(name="{:1.@{int},org.freedesktop.Accounts{,.*}}", label=accounts-daemon),
+       member={Get,GetAll,Set,PropertiesChanged}
+       peer=(name="{@{busname},org.freedesktop.Accounts{,.*}}", label=accounts-daemon),
+  dbus send bus=system path=/org/freedesktop/Accounts{,/**}
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name="{@{busname},org.freedesktop.Accounts{,.*}}", label=accounts-daemon),
   dbus send bus=system path=/org/freedesktop/Accounts{,/**}
        interface=org.freedesktop.DBus.ObjectManager
-       peer=(name="{:1.@{int},org.freedesktop.Accounts{,.*}}", label=accounts-daemon),
-  dbus receive bus=system path=/org/freedesktop/Accounts{,/**}
-       interface=org.freedesktop.Accounts{,.*}
-       peer=(name="{:1.@{int},org.freedesktop.Accounts{,.*}}", label=accounts-daemon),
-  dbus receive bus=system path=/org/freedesktop/Accounts{,/**}
-       interface=org.freedesktop.DBus.Properties
-       peer=(name="{:1.@{int},org.freedesktop.Accounts{,.*}}", label=accounts-daemon),
+       member=GetManagedObjects
+       peer=(name="{@{busname},org.freedesktop.Accounts{,.*}}", label=accounts-daemon),
   dbus receive bus=system path=/org/freedesktop/Accounts{,/**}
        interface=org.freedesktop.DBus.ObjectManager
-       peer=(name="{:1.@{int},org.freedesktop.Accounts{,.*}}", label=accounts-daemon),`,
+       member={InterfacesAdded,InterfacesRemoved}
+       peer=(name="{@{busname},org.freedesktop.Accounts{,.*}}", label=accounts-daemon),`,
 		},
 	}
 	for _, tt := range tests {

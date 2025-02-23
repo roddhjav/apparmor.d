@@ -21,11 +21,6 @@ import (
 	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 )
 
-var defaultInterfaces = []string{
-	"org.freedesktop.DBus.Properties",
-	"org.freedesktop.DBus.ObjectManager",
-}
-
 type Dbus struct {
 	prebuild.Base
 }
@@ -43,15 +38,6 @@ func init() {
 	)
 }
 
-func setInterfaces(rules map[string]string) []string {
-	interfaces := []string{rules["name"]}
-	if _, present := rules["interface"]; present {
-		interfaces = append(interfaces, rules["interface"])
-	}
-	interfaces = append(interfaces, defaultInterfaces...)
-	return interfaces
-}
-
 func (d Dbus) Apply(opt *Option, profile string) (string, error) {
 	var r aa.Rules
 
@@ -59,11 +45,15 @@ func (d Dbus) Apply(opt *Option, profile string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	name := opt.File.Base()
+	if len(name) > 15 {
+		name = name[:15]
+	}
 	switch action {
 	case "own":
-		r = d.own(opt.ArgMap)
+		r = d.own(opt.ArgMap, name)
 	case "talk":
-		r = d.talk(opt.ArgMap)
+		r = d.talk(opt.ArgMap, name)
 	}
 
 	aa.IndentationLevel = strings.Count(
@@ -103,63 +93,132 @@ func (d Dbus) sanityCheck(opt *Option) (string, error) {
 	return action, nil
 }
 
-func (d Dbus) own(rules map[string]string) aa.Rules {
-	interfaces := setInterfaces(rules)
-	res := aa.Rules{}
-	res = append(res, &aa.Dbus{
-		Access: []string{"bind"}, Bus: rules["bus"], Name: rules["name"],
-	})
-	for _, iface := range interfaces {
-		res = append(res, &aa.Dbus{
-			Access:    []string{"receive"},
-			Bus:       rules["bus"],
-			Path:      rules["path"],
-			Interface: iface,
-			PeerName:  `":1.@{int}"`,
-		})
+func getInterfaces(rules map[string]string) []string {
+	var interfaces []string
+	if _, present := rules["interface"]; present {
+		interfaces = []string{rules["interface"]}
+	} else {
+		interfaces = []string{rules["name"]}
 	}
-	for _, iface := range interfaces {
-		res = append(res, &aa.Dbus{
-			Access:    []string{"send"},
-			Bus:       rules["bus"],
-			Path:      rules["path"],
-			Interface: iface,
-			PeerName:  `"{:1.@{int},org.freedesktop.DBus}"`,
-		})
+
+	if _, present := rules["interface+"]; present {
+		interfaces = append(interfaces, rules["interface+"])
 	}
-	res = append(res, &aa.Dbus{
-		Access:    []string{"receive"},
-		Bus:       rules["bus"],
-		Path:      rules["path"],
-		Interface: "org.freedesktop.DBus.Introspectable",
-		Member:    "Introspect",
-		PeerName:  `":1.@{int}"`,
-	})
+	return interfaces
+}
+
+func (d Dbus) own(rules map[string]string, name string) aa.Rules {
+	interfaces := getInterfaces(rules)
+
+	res := aa.Rules{
+		&aa.Unix{
+			Access: []string{"bind"}, Type: "stream",
+			Address: `@@{udbus}/bus/` + name + `/` + rules["bus"],
+		},
+		&aa.Dbus{
+			Access: []string{"bind"}, Bus: rules["bus"], Name: rules["name"],
+		},
+	}
+
+	// Interfaces
+	for _, iface := range interfaces {
+		res = append(res,
+			&aa.Dbus{
+				Access: []string{"receive"}, Bus: rules["bus"], Path: rules["path"],
+				Interface: iface,
+				PeerName:  `"@{busname}"`,
+			},
+			&aa.Dbus{
+				Access: []string{"send"}, Bus: rules["bus"], Path: rules["path"],
+				Interface: iface,
+				PeerName:  `"{@{busname},org.freedesktop.DBus}"`,
+			},
+		)
+	}
+
+	res = append(res,
+		// DBus.Properties
+		&aa.Dbus{
+			Access: []string{"send", "receive"}, Bus: rules["bus"], Path: rules["path"],
+			Interface: "org.freedesktop.DBus.Properties",
+			Member:    "{Get,GetAll,Set,PropertiesChanged}",
+			PeerName:  `"{@{busname},org.freedesktop.DBus}"`,
+		},
+
+		// DBus.Introspectable
+		&aa.Dbus{
+			Access: []string{"receive"}, Bus: rules["bus"], Path: rules["path"],
+			Interface: "org.freedesktop.DBus.Introspectable",
+			Member:    "Introspect",
+			PeerName:  `"@{busname}"`,
+		},
+
+		// DBus.ObjectManager
+		&aa.Dbus{
+			Access: []string{"receive"}, Bus: rules["bus"], Path: rules["path"],
+			Interface: "org.freedesktop.DBus.ObjectManager",
+			Member:    "GetManagedObjects",
+			PeerName:  `"{@{busname},` + rules["name"] + `}"`,
+		},
+		&aa.Dbus{
+			Access: []string{"send"}, Bus: rules["bus"], Path: rules["path"],
+			Interface: "org.freedesktop.DBus.ObjectManager",
+			Member:    "{InterfacesAdded,InterfacesRemoved}",
+			PeerName:  `"{@{busname},org.freedesktop.DBus}"`,
+		},
+	)
 	return res
 }
 
-func (d Dbus) talk(rules map[string]string) aa.Rules {
-	interfaces := setInterfaces(rules)
-	res := aa.Rules{}
+func (d Dbus) talk(rules map[string]string, name string) aa.Rules {
+	interfaces := getInterfaces(rules)
+
+	res := aa.Rules{
+		&aa.Unix{
+			Access: []string{"bind"}, Type: "stream",
+			Address: `@@{udbus}/bus/` + name + `/` + rules["bus"],
+		},
+	}
+
+	// Interfaces
 	for _, iface := range interfaces {
 		res = append(res, &aa.Dbus{
-			Access:    []string{"send"},
-			Bus:       rules["bus"],
-			Path:      rules["path"],
+			Access: []string{"send", "receive"}, Bus: rules["bus"], Path: rules["path"],
 			Interface: iface,
-			PeerName:  `"{:1.@{int},` + rules["name"] + `}"`,
-			PeerLabel: rules["label"],
+			PeerName:  `"{@{busname},` + rules["name"] + `}"`, PeerLabel: rules["label"],
 		})
 	}
-	for _, iface := range interfaces {
-		res = append(res, &aa.Dbus{
-			Access:    []string{"receive"},
-			Bus:       rules["bus"],
-			Path:      rules["path"],
-			Interface: iface,
-			PeerName:  `"{:1.@{int},` + rules["name"] + `}"`,
-			PeerLabel: rules["label"],
-		})
-	}
+
+	res = append(res,
+		// DBus.Properties
+		&aa.Dbus{
+			Access: []string{"send", "receive"}, Bus: rules["bus"], Path: rules["path"],
+			Interface: "org.freedesktop.DBus.Properties",
+			Member:    "{Get,GetAll,Set,PropertiesChanged}",
+			PeerName:  `"{@{busname},` + rules["name"] + `}"`, PeerLabel: rules["label"],
+		},
+
+		// DBus.Introspectable
+		&aa.Dbus{
+			Access: []string{"send"}, Bus: rules["bus"], Path: rules["path"],
+			Interface: "org.freedesktop.DBus.Introspectable",
+			Member:    "Introspect",
+			PeerName:  `"{@{busname},` + rules["name"] + `}"`, PeerLabel: rules["label"],
+		},
+
+		// DBus.ObjectManager
+		&aa.Dbus{
+			Access: []string{"send"}, Bus: rules["bus"], Path: rules["path"],
+			Interface: "org.freedesktop.DBus.ObjectManager",
+			Member:    "GetManagedObjects",
+			PeerName:  `"{@{busname},` + rules["name"] + `}"`, PeerLabel: rules["label"],
+		},
+		&aa.Dbus{
+			Access: []string{"receive"}, Bus: rules["bus"], Path: rules["path"],
+			Interface: "org.freedesktop.DBus.ObjectManager",
+			Member:    "{InterfacesAdded,InterfacesRemoved}",
+			PeerName:  `"{@{busname},` + rules["name"] + `}"`, PeerLabel: rules["label"],
+		},
+	)
 	return res
 }
