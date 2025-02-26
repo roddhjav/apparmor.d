@@ -1,0 +1,28 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Zane Zakraisek <zz@eng.utah.edu>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+include <tunables/booleans>
+
+@{exec_path} = {/usr,}/bin/yara
+profile yara @{exec_path} {
+  include <abstractions/base>
+
+  @{exec_path} mr,
+
+  capability dac_override dac_read_search,
+
+  if $ANTIVIRUS_CAN_PTRACE {
+    ptrace (read, trace),
+    capability sys_ptrace,
+  }
+
+  /{,**} r,
+
+  deny capability sys_admin,
+
+  include if exists <local/yara>
+}
