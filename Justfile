@@ -20,7 +20,6 @@
 base_dir := home_dir() / ".libvirt/base"
 vm := home_dir() / ".vm"
 output := base_dir / "packer"
-disk_size := "15G"
 prefix := "aa-"
 c := "--connect=qemu:///system"
 sshopt := "-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
@@ -46,7 +45,6 @@ img dist flavor: (package dist)
 	packer build -force \
 		-var dist={{dist}} \
 		-var flavor={{flavor}} \
-		-var disk_size={{disk_size}} \
 		-var prefix={{prefix}} \
 		-var base_dir={{base_dir}} \
 		-var output={{output}} \
@@ -137,8 +135,8 @@ integration dist flavor:
 
 [doc('Run the linters')]
 lint:
-	@packer fmt packer/
-	@packer validate --syntax-only packer/
+	@packer fmt tests/packer/
+	@packer validate --syntax-only tests/packer/
 
 [doc('Remove the machine images')]
 clean:
@@ -146,6 +144,7 @@ clean:
 
 get_ip dist flavor:
 	@virsh --quiet --readonly {{c}} domifaddr {{prefix}}{{dist}}-{{flavor}} | \
+		head -1 | \
 		grep -E -o '([[:digit:]]{1,3}\.){3}[[:digit:]]{1,3}'
 
 get_osinfo dist:
