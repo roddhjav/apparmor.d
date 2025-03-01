@@ -157,12 +157,14 @@ It is recommended to transition [in a subprofile](abstractions.md#appsystemctl) 
 All common programs are tracked and labelled in the [`apparmor.d/tunables/multiarch.d/programs`](https://github.com/roddhjav/apparmor.d/blob/main/apparmor.d/tunables/multiarch.d/programs) and 
 [`apparmor.d/tunables/multiarch.d/paths`](https://github.com/roddhjav/apparmor.d/blob/main/apparmor.d/tunables/multiarch.d/paths) files. They can be used in a `child-open` profile or directly in a profile. They are useful to allow opening resources using a kind of program (browsers, image viewer, text editor...), instead of allowing a given program path.
 
-## Re-attached path 
+## Re-attached path
+
+**[<span class="pg-red">:material-tag-heart-outline: abi/4.0</span>]("Minimum version")**
 
 The flag `attach_disconnect` control how disconnected paths are handled. It determines if pathnames resolved to be outside the namespace are attached to the root (ie. have the `/` character prepended). 
 It is a security issue as it allows disconnected paths to alias to other files that exist in the file name. Therefore, it is only provided to work around problems that can arise with sandboxed programs.
 
-AppAmor 4.0 provides the `attach_disconnect.path` flag allowing to reattach this path to a prefix that is not `/`. When used it provide an important security improvement from AppArmor 3.0.
+AppAmor 4.0 provides the `attach_disconnect.path` flag allowing to reattach this path to a prefix that is not `/`. When used it provides an important security improvement from AppArmor 3.0.
 
 **`apparmor.d`** uses `attach_disconnect.path` by **default and automatically** on all profiles with the `attach_disconnect` flag. The attached path is set to `@{att}` a new dynamically generated variable set at build time in the preamble of all profile to be:
 
@@ -170,7 +172,9 @@ AppAmor 4.0 provides the `attach_disconnect.path` flag allowing to reattach this
 - `@{att}=/` for other profiles
 
 
-## User Confinement [:material-police-badge-outline:{ .pg-red }](../full-system-policy.md "Only for Full System Policy (FSP)")
+## User Confinement
+
+[:material-police-badge-outline:{ .pg-red }](../full-system-policy.md "Full System Policy only (FSP)")
 
 !!! warning "TODO"
 
