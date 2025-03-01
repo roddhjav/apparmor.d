@@ -17,29 +17,23 @@ packages:
   - ubuntu-desktop
   - vim
 
-snap:
-  commands:
-    - install firefox
-    - install gtk-common-themes
-    - install snap-store
-    - install snapd-desktop-integration
-
 runcmd:
+  # Add missing snap packages
+  - snap install snap-store
+  - snap install snapd-desktop-integration
+
   # Remove default filesystem and related tools not used with the suggested
   # storage layout. These may yet be required if different partitioning schemes
   # are used.
-  - apt-get -y purge btrfs-progs cryptsetup* lvm2 xfsprogs
+  - apt-get -y purge btrfs-progs xfsprogs
 
   # Remove other packages present by default in Ubuntu Server but not
   # normally present in Ubuntu Desktop.
-  # - >-
-  #   apt-get -y purge
-  #     ubuntu-server ubuntu-server-minimal netplan.io cloud-init
-  #     binutils byobu curl dmeventd finalrd gawk
-  #     kpartx mdadm ncurses-term needrestart open-iscsi
-  #     sg3-utils ssh-import-id sssd thin-provisioning-tools tmux
-  #     sosreport screen open-vm-tools motd-news-config lxd-agent-loader
-  #     landscape-common fonts-ubuntu-console ethtool
+  - >-
+    apt-get -y purge
+      byobu dmeventd finalrd gawk kpartx landscape-common lxd-agent-loader
+      mdadm motd-news-config ncurses-term open-iscsi open-vm-tools
+      screen sg3-utils sosreport ssh-import-id sssd tmux
 
   # Finally, remove things only installed as dependencies of other things
   # we have already removed.
@@ -51,16 +45,3 @@ write_files:
     append: true
     content: |
       0a31bc478ef8e2461a4b1cc10a24cc4 /home/user/Projects/apparmor.d  virtiofs defaults  0  1
-
-  - path: /etc/systemd/network/20-wired.network
-    owner: "root:root"
-    permissions: "0644"
-    content: |
-      [Match]
-      Name=en*
-
-      [Network]
-      DHCP=yes
-
-      [DHCPv4]
-      RouteMetric=10
