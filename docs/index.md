@@ -34,7 +34,7 @@ See the [Concepts](concepts.md)' page for more detail on the architecture.
     - [x] :material-gnome: Gnome (GDM)
     - [x] :simple-kde: KDE (SDDM)
     - [ ] :simple-xfce: XFCE (Lightdm) *(work in progress)*
-- Fully tested *(work in progress)*
+- [Fully tested](development/tests.md)
 
 ### Presentations
 

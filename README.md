@@ -35,8 +35,7 @@
     * Gnome (GDM)
     * KDE (SDDM)
     * XFCE (Lightdm) *(work in progress)*
-- Fully tested *(work in progress)*
-
+- [Fully tested](https://apparmor.pujol.io/development/tests/)
 
 > This project is originally based on the work from [Morfikov][upstream] and aims to extend it to more Linux distributions and desktop environments.
 
