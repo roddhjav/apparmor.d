@@ -26,6 +26,7 @@ main() {
 
 	case "$DISTRIBUTION" in
 	arch)
+		rm -f $SRC/*.sig # Ignore signature files
 		pacman --noconfirm -U $SRC/*.pkg.tar.zst
 		;;
 
@@ -40,9 +41,12 @@ main() {
 
 	esac
 
-	rm -rf /var/cache/apparmor/*
-	rm -rf /etc/apparmor/earlypolicy/
-	systemctl reload apparmor.service
+	verb="start"
+	rm -rf /var/cache/apparmor/* || true
+	if systemctl is-active -q apparmor; then
+		verb="reload"
+	fi
+	systemctl "$verb" apparmor.service || journalctl -xeu apparmor.service
 }
 
 main "$@"

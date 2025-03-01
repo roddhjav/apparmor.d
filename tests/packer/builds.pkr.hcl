@@ -2,24 +2,63 @@
 # Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
+locals {
+  name = "${var.prefix}${var.dist}-${var.flavor}"
+}
+
+source "qemu" "default" {
+  disk_image         = true
+  iso_url            = var.DM[var.dist].img_url
+  iso_checksum       = "file:${var.DM[var.dist].img_checksum}"
+  iso_target_path    = pathexpand("${var.iso_dir}/${basename("${var.DM[var.dist].img_url}")}")
+  cpu_model          = "host"
+  cpus               = var.cpus
+  memory             = var.ram
+  disk_size          = var.disk_size
+  accelerator        = "kvm"
+  headless           = true
+  ssh_username       = var.username
+  ssh_password       = var.password
+  ssh_port           = 22
+  ssh_wait_timeout   = "1000s"
+  disk_compression   = true
+  disk_detect_zeroes = "unmap"
+  disk_discard       = "unmap"
+  output_directory   = pathexpand(var.output)
+  vm_name            = "${local.name}.qcow2"
+  boot_wait          = "10s"
+  firmware           = pathexpand(var.firmware)
+  shutdown_command   = "echo ${var.password} | sudo -S /sbin/shutdown -hP now"
+  cd_label           = "cidata"
+  cd_content = {
+    "meta-data" = ""
+    "user-data" = format("%s\n%s",
+      templatefile("${path.cwd}/tests/cloud-init/common.yml",
+        {
+          username = "${var.username}"
+          password = "${var.password}"
+          ssh_key  = file("${var.ssh_publickey}")
+          hostname = "${local.name}"
+        }
+      ),
+      file("${path.cwd}/tests/cloud-init/${var.dist}-${var.flavor}.user-data.yml")
+    )
+  }
+}
+
 build {
   sources = [
-    "source.qemu.archlinux",
-    "source.qemu.debian",
-    "source.qemu.fedora",
-    "source.qemu.opensuse",
-    "source.qemu.ubuntu22",
-    "source.qemu.ubuntu24",
+    "source.qemu.default",
   ]
 
   # Upload artifacts
   provisioner "file" {
     destination = "/tmp/"
     sources = [
-      "${path.cwd}/packer/src/",
-      "${path.cwd}/packer/init.sh",
-      "${path.cwd}/packer/clean.sh",
-      "${path.cwd}/../.pkg/",
+      "${path.cwd}/tests/packer/src/",
+      "${path.cwd}/tests/packer/init.sh",
+      "${path.cwd}/tests/packer/clean.sh",
+      "${path.cwd}/.pkg/",
     ]
   }
 
@@ -44,13 +83,9 @@ build {
     ]
   }
 
-  post-processor "vagrant" {
-    output = "${var.base_dir}/packer_${var.prefix}${source.name}-${var.flavor}.box"
-  }
-
   post-processor "shell-local" {
     inline = [
-      "vagrant box add --force --name ${var.prefix}${source.name}-${var.flavor} ${var.base_dir}/packer_${var.prefix}${source.name}-${var.flavor}.box"
+      "mv ${var.output}/${local.name}.qcow2 ${var.base_dir}/${local.name}.qcow2",
     ]
   }
 
