@@ -1,0 +1,112 @@
+---
+title: Development VM
+---
+
+To ensure compatibility across distribution, this project ships a wide range of development and tests VM images.
+
+The test VMs can be built locally using [cloud-init](https://cloud-init.io/), [packer](https://www.packer.io/) on Qemu/KVM using Libvirt. No other hypervisor will be targeted for these tests. The files that generate these images can be found in the **[tests/packer](https://github.com/roddhjav/apparmor.d/tree/main/tests/packer)** directory.
+The VMs are fully managed using a [justfile](https://github.com/casey/just) that provide an integration environment helper for `apparmor.d`.
+
+```sh
+$ just
+```
+
+```
+Integration environment helper for apparmor.d
+
+Available recipes:
+    default                 # Show this help message
+    package dist            # Build the apparmor.d package
+    img dist flavor         # Build the image
+    vm dist flavor          # Create the machine
+    up dist flavor          # Start a machine
+    halt dist flavor        # Stops the machine
+    destroy dist flavor     # Destroy the machine
+    ssh dist flavor         # Connect to the machine
+    list                    # List the machines
+    images                  # List the machine images
+    available               # List the machine that can be created
+    integration dist flavor # Run the integration tests on the machine
+    lint                    # Run the linters
+    clean                   # Remove the machine images
+    get_ip dist flavor
+    get_osinfo dist
+```
+
+## Requirements
+
+* [docker](https://www.docker.com/)
+* [just](https://github.com/casey/just)
+* [packer](https://www.packer.io/)
+* [libvirt](https://libvirt.org/)
+* [qemu](https://www.qemu.org/)
+
+!!! note
+
+    You may need to edit some settings to fit your setup:
+
+    - The default ssh key and ISO directory in `tests/packer/variables.pkr.hcl`
+
+## Build
+
+One can see the available images by running:
+
+```sh
+$ just available
+```
+
+```
+Distribution       Flavor    
+archlinux          gnome
+archlinux          kde
+archlinux          server
+archlinux          xfce
+debian12           gnome
+debian12           kde
+debian12           server
+ubuntu24           server
+...
+```
+
+A VM image can be build with:
+
+```sh
+$ just img archlinux gnome
+```
+
+The image will then be showed in the list of images:
+
+```sh
+$ just images
+```
+
+```
+Distribution       Flavor     Size  Date
+archlinux          gnome      3.3G  Mar 1 14:49
+```
+
+The VM can then be created with:
+
+```sh
+$ just vm archlinux gnome
+```
+
+And connected to with:
+
+```sh
+$ just ssh archlinux gnome
+```
+
+## Develop
+
+**Credentials**
+
+The admin user is: `user`, its password is: `user`. It has passwordless sudo access. Automatic login is **not** enabled on DE. The root user is not locked.
+
+**Directories**
+
+All the images come pre-configured with the latest version of `apparmor.d` installed and running in the VM. The apparmor.d project directory is mounted as `/home/user/Projects/apparmor.d`
+
+**Usage**
+
+On all images, `aa-update` can be used to rebuild and install the latest version of the profiles. `p`, `pf`, and `pu` are two pre-configured aliases of `ps` that show the security status of processes. `htop` is also configured to show this status.
