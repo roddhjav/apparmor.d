@@ -112,8 +112,8 @@ check:
 	@bash tests/check.sh
 
 .PHONY: integration
-integration :
-	@bats --timing --print-output-on-failure tests/integration/
+integration:
+	@bats --recursive --timing --print-output-on-failure tests/integration/
 
 .PHONY: manual
 manual:
