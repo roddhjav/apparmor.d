@@ -9,12 +9,17 @@ include <tunables/global>
 @{exec_path} = @{bin}/chpasswd
 profile chpasswd @{exec_path} {
   include <abstractions/base>
+  include <abstractions/bus-system>
   include <abstractions/consoles>
   include <abstractions/nameservice-strict>
 
+  capability audit_write,
   capability chown,
   capability fsetid,
+  capability net_admin,
   capability setuid,
+
+  network netlink raw,
 
   @{exec_path} mr,
 
@@ -31,6 +36,9 @@ profile chpasswd @{exec_path} {
   /etc/shadow.lock l -> /etc/shadow.@{int},
   /etc/shadow.lock w,
   /etc/shadow+ rw,
+
+  /etc/pam.d/chpasswd r,
+  /etc/pam.d/common-* r,
 
   include if exists <local/chpasswd>
 }
