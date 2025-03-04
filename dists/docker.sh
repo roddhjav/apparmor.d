@@ -14,7 +14,7 @@ readonly VOLUME=/tmp/build
 readonly BUILDIR=/home/build/tmp
 readonly OUTDIR=".pkg"
 readonly OUTPUT="$PWD/$OUTDIR"
-readonly COMMAND="$1"
+readonly COMMAND="${1:-}"
 VERSION="0.$(git rev-list --count HEAD)"
 PACKAGER="$(git config user.name) <$(git config user.email)>"
 readonly VERSION PACKAGER
