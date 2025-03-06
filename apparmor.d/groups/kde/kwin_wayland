@@ -30,6 +30,7 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected mediate_deleted) {
   @{exec_path} mr,
 
   /etc/xdg/Xwayland-session.d/00-at-spi Cx -> at-spi,
+  /etc/xdg/Xwayland-session.d/00-pulseaudio-x11 Cx -> pulseaudio,
   #aa:exec kscreenlocker_greet
 
   /usr/share/color-schemes/*.colors r,
@@ -119,6 +120,7 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected mediate_deleted) {
   @{run}/udev/data/+input:input@{int} r,  # for mouse, keyboard, touchpad
   @{run}/udev/data/+pci:* r,              # Identifies all PCI devices (CPU, GPU, Network, Disks, USB, etc.)
   @{run}/udev/data/+platform:* r,         # for ?
+  @{run}/udev/data/+serio:* r,            # for touchpad
   @{run}/udev/data/+sound:card@{int} r,   # for sound card
   @{run}/udev/data/+usb:* r,
 
@@ -137,6 +139,7 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected mediate_deleted) {
 
   profile at-spi {
     include <abstractions/base>
+    include <abstractions/consoles>
 
     @{sh_path}    r,
     @{bin}/busctl rix,
@@ -149,6 +152,20 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected mediate_deleted) {
     owner @{HOME}/ r,
 
     include if exists <local/kwin_wayland_at-spi>
+  }
+
+  profile pulseaudio {
+    include <abstractions/base>
+    include <abstractions/consoles>
+
+    @{sh_path}   rix,
+    @{bin}/pactl  Px,
+
+    /etc/xdg/Xwayland-session.d/00-pulseaudio-x11 r,
+
+    owner @{HOME}/ r,
+
+    include if exists <local/kwin_wayland_pulseaudio>
   }
 
   include if exists <local/kwin_wayland>
