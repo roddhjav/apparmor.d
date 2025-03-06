@@ -45,15 +45,11 @@ func (d Dbus) Apply(opt *Option, profile string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	name := opt.File.Base()
-	if len(name) > 15 {
-		name = name[:15]
-	}
 	switch action {
 	case "own":
-		r = d.own(opt.ArgMap, name)
+		r = d.own(opt.ArgMap)
 	case "talk":
-		r = d.talk(opt.ArgMap, name)
+		r = d.talk(opt.ArgMap)
 	}
 
 	aa.IndentationLevel = strings.Count(
@@ -107,14 +103,10 @@ func getInterfaces(rules map[string]string) []string {
 	return interfaces
 }
 
-func (d Dbus) own(rules map[string]string, name string) aa.Rules {
+func (d Dbus) own(rules map[string]string) aa.Rules {
 	interfaces := getInterfaces(rules)
 
 	res := aa.Rules{
-		&aa.Unix{
-			Access: []string{"bind"}, Type: "stream",
-			Address: `@@{udbus}/bus/` + name + `/` + rules["bus"],
-		},
 		&aa.Dbus{
 			Access: []string{"bind"}, Bus: rules["bus"], Name: rules["name"],
 		},
@@ -170,15 +162,9 @@ func (d Dbus) own(rules map[string]string, name string) aa.Rules {
 	return res
 }
 
-func (d Dbus) talk(rules map[string]string, name string) aa.Rules {
+func (d Dbus) talk(rules map[string]string) aa.Rules {
 	interfaces := getInterfaces(rules)
-
-	res := aa.Rules{
-		&aa.Unix{
-			Access: []string{"bind"}, Type: "stream",
-			Address: `@@{udbus}/bus/` + name + `/` + rules["bus"],
-		},
-	}
+	res := aa.Rules{}
 
 	// Interfaces
 	for _, iface := range interfaces {

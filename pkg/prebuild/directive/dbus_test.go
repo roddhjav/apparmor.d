@@ -10,9 +10,7 @@ import (
 	"github.com/roddhjav/apparmor.d/pkg/paths"
 )
 
-const dbusOwnSystemd1 = `  unix bind type=stream addr=@@{udbus}/bus/fake-own/system,
-
-  dbus bind bus=system name=org.freedesktop.systemd1{,.*},
+const dbusOwnSystemd1 = `  dbus bind bus=system name=org.freedesktop.systemd1{,.*},
   dbus receive bus=system path=/org/freedesktop/systemd1{,/**}
        interface=org.freedesktop.systemd1{,.*}
        peer=(name="@{busname}"),
@@ -75,9 +73,7 @@ func TestDbus_Apply(t *testing.T) {
 				Raw:     "  #aa:dbus own bus=session name=com.rastersoft.ding interface+=org.gtk.Actions",
 			},
 			profile: "  #aa:dbus own bus=session name=com.rastersoft.ding interface+=org.gtk.Actions",
-			want: `  unix bind type=stream addr=@@{udbus}/bus/fake-interface/session,
-
-  dbus bind bus=session name=com.rastersoft.ding{,.*},
+			want: `  dbus bind bus=session name=com.rastersoft.ding{,.*},
   dbus receive bus=session path=/com/rastersoft/ding{,/**}
        interface=com.rastersoft.ding{,.*}
        peer=(name="@{busname}"),
@@ -122,9 +118,7 @@ func TestDbus_Apply(t *testing.T) {
 				Raw:     "  #aa:dbus talk bus=system name=org.freedesktop.Accounts label=accounts-daemon",
 			},
 			profile: "  #aa:dbus talk bus=system name=org.freedesktop.Accounts label=accounts-daemon",
-			want: `  unix bind type=stream addr=@@{udbus}/bus/gdm-session-wor/system,
-
-  dbus (send receive) bus=system path=/org/freedesktop/Accounts{,/**}
+			want: `  dbus (send receive) bus=system path=/org/freedesktop/Accounts{,/**}
        interface=org.freedesktop.Accounts{,.*}
        peer=(name="{@{busname},org.freedesktop.Accounts{,.*}}", label=accounts-daemon),
   dbus (send receive) bus=system path=/org/freedesktop/Accounts{,/**}
