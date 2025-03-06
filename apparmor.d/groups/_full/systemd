@@ -65,14 +65,21 @@ profile systemd flags=(attach_disconnected,mediate_deleted) {
 
   mount fstype=autofs                                                 systemd-1 -> @{PROC}/sys/fs/binfmt_misc/,
   mount fstype=autofs                                                 systemd-1 -> /efi/,
-  mount fstype=hugetlbfs options=(rw nosuid nodev)                    hugetlbfs -> /dev/hugepages/,
-  mount fstype=proc      options=(rw nosuid nodev noexec)                  proc -> @{run}/systemd/namespace-@{rand6}/,
-  mount fstype=sysfs     options=(rw nosuid nodev noexec)                 sysfs -> @{run}/systemd/namespace-@{rand6}/,
+  mount fstype=binfmt_misc options=(rw nodev noexec nosuid)         binfmt_misc -> @{PROC}/sys/fs/binfmt_misc/,
+  mount fstype=configfs    options=(rw nodev noexec nosuid)            configfs -> @{sys}/kernel/config/,
+  mount fstype=debugfs     options=(rw nodev noexec nosuid)             debugfs -> @{sys}/kernel/debug/,
+  mount fstype=fusectl     options=(rw nodev noexec nosuid)             fusectl -> @{sys}/fs/fuse/connections/,
+  mount fstype=hugetlbfs   options=(rw nosuid nodev)                  hugetlbfs -> /dev/hugepages/,
+  mount fstype=mqueue      options=(rw nodev noexec nosuid)              mqueue -> /dev/mqueue/,
+  mount fstype=proc        options=(rw nosuid nodev noexec)                proc -> @{run}/systemd/namespace-@{rand6}/,
+  mount fstype=sysfs       options=(rw nosuid nodev noexec)               sysfs -> @{run}/systemd/namespace-@{rand6}/,
   mount fstype=tmpfs                                                      tmpfs -> /dev/shm/,
   mount fstype=tmpfs                                                      tmpfs -> /tmp/,
-  mount fstype=tmpfs     options=(rw nosuid nodev noexec strictatime)     tmpfs -> @{run}/systemd/mount-rootfs/@{run}/credentials/,
-  mount fstype=tmpfs     options=(rw nosuid nodev noexec)                 tmpfs -> /dev/shm/,
-  mount fstype=tmpfs     options=(rw nosuid noexec strictatime)           tmpfs -> @{run}/systemd/namespace-@{rand6}/dev/,
+  mount fstype=tmpfs       options=(rw nosuid nodev noexec strictatime)   tmpfs -> @{run}/systemd/mount-rootfs/@{run}/credentials/,
+  mount fstype=tmpfs       options=(rw nosuid nodev noexec)               tmpfs -> /dev/shm/,
+  mount fstype=tmpfs       options=(rw nosuid noexec strictatime)         tmpfs -> @{run}/systemd/namespace-@{rand6}/dev/,
+  mount fstype=tracefs     options=(rw nodev noexec nosuid)             tracefs -> @{sys}/kernel/tracing/,
+  mount fstype=vfat                                                             -> /boot/efi/,
 
   mount options=(rw bind)                                           /dev/** -> /tmp/namespace-dev-@{rand6}/**,
   mount options=(rw bind)                                           /dev/** -> @{run}/systemd/namespace-@{rand6}/dev/**,
@@ -157,8 +164,10 @@ profile systemd flags=(attach_disconnected,mediate_deleted) {
 
   # Unit services
   @{bin}/mount                      ix,
+  @{bin}/kill                       ix,
 
   # Shell based systemd unit services
+  # TODO: create unit profile for all of them
   @{bin}/ldconfig                   Px -> systemd-service,
   @{bin}/mandb                      Px -> systemd-service,
   @{bin}/savelog                    Px -> systemd-service,
@@ -187,8 +196,10 @@ profile systemd flags=(attach_disconnected,mediate_deleted) {
   /etc/conf.d/{,**} r,
   /etc/credstore.encrypted/{,**} r,
   /etc/credstore/{,**} r,
+  /etc/default/{,**} r,
   /etc/machine-id r,
   /etc/modules-load.d/{,**} r,
+  /etc/networkd-dispatcher/{,**} r,
   /etc/systemd/{,**} r,
   /etc/udev/hwdb.d/{,**} r,
 
@@ -199,6 +210,7 @@ profile systemd flags=(attach_disconnected,mediate_deleted) {
   /tmp/systemd-private-*/{,**} rw,
 
   @{run}/ rw,
+  @{run}/*.socket w,
   @{run}/*/ rw,
   @{run}/*/* rw,
   @{run}/auditd.pid r,
@@ -263,6 +275,7 @@ profile systemd flags=(attach_disconnected,mediate_deleted) {
 
         /dev/autofs r,
         /dev/kmsg w,
+        /dev/tty@{int} rw,
   owner /dev/console rwk,
   owner /dev/dri/card@{int} rw,
   owner /dev/hugepages/ rw,

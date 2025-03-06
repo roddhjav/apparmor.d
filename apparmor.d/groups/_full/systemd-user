@@ -102,6 +102,9 @@ profile systemd-user flags=(attach_disconnected,mediate_deleted) {
   @{run}/udev/tags/systemd/ r,
 
   @{sys}/devices/virtual/dmi/id/bios_vendor r,
+  @{sys}/devices/virtual/dmi/id/board_vendor r,
+  @{sys}/devices/virtual/dmi/id/product_name r,
+  @{sys}/devices/virtual/dmi/id/sys_vendor r,
 
         @{sys}/devices/**/uevent r,
         @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/{,**} r,
@@ -112,6 +115,7 @@ profile systemd-user flags=(attach_disconnected,mediate_deleted) {
         @{PROC}/@{pids}/cgroup r,
         @{PROC}/@{pids}/comm r,
         @{PROC}/@{pids}/stat r,
+        @{PROC}/1/environ r,
         @{PROC}/cmdline r,
         @{PROC}/pressure/* r,
         @{PROC}/swaps r,
@@ -133,6 +137,12 @@ profile systemd-user flags=(attach_disconnected,mediate_deleted) {
   owner @{PROC}/@{pids}/oom_score_adj rw,
 
   /dev/tty rw,
+
+  deny capability bpf,
+  deny capability mknod,
+  deny capability net_admin,
+  deny capability perfmon,
+  deny capability sys_resource,
 
   profile systemctl {
     include <abstractions/base>
