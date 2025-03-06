@@ -119,22 +119,22 @@ This task will convert all profiles from `abi/4.0` to `abi/3.0`. The rules not s
 
 ### **`complain | enforce`**
 
-Set or remove the complain flag on all profiles. The `complain` task is enabled by default. When building in enforce mode, it is disabled. Enabling the `enforce` task will enforce **all** profiles including the one set in the [flags manifest](workflow.md#profile-flags). It is intended to be used in specialized system such as CTF or (very) high security VM. 
+Set or remove the complain flag on all profiles. The `complain` task is enabled by default. When building in enforce mode, it is disabled. Enabling the `enforce` task will enforce **all** profiles including the one set in the [flags manifest](workflow.md#profile-flags). It is intended to be used in specialized system such as a CTF challenge or in (very) high security VM. 
 
 *Enable with the `--complain` or `--enforce` option in the prebuild command.*
 
 ### **`userspace`**
 
-Resolve variables in profile attachments. It fixes issues with the userland AppArmor tools (aa-enforce, aa-logprof...) that does not support identical variable in the profiles attachments.
+Resolve variables in profile attachments. It fixes issues with the userland AppArmor tools (aa-enforce, aa-logprof...) that do not support identical variable in the profiles attachments.
 
 *Enabled by default. Can be disabled in `cmd/prebuild/main.go`*
 
 ### **`attach`**
 
-This task reattaches disconnected paths. See [#559](https://github.com/roddhjav/apparmor.d/issues/559):
+This task reattaches disconnected paths. See the [Re-attached path](internal.md#re-attached-path) page. It will:
 
 - Add the `attach_disconnected.path` flag on all profiles with the `attach_disconnected` flag
-- Add the attached/base abstraction in the profile
+- Add the `<abstractions/attached/base>` abstraction in the profile
 - For compatibility, non-disconnected profile will have the `@{att}` variable set to `/`
 
 *Enabled when abi >= 4.0*
