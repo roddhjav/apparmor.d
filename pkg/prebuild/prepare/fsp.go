@@ -34,7 +34,7 @@ func (p FullSystemPolicy) Apply() ([]string, error) {
 	}
 
 	// Set systemd profile name
-	path := prebuild.RootApparmord.Join("tunables/multiarch.d/system")
+	path := prebuild.RootApparmord.Join("tunables/multiarch.d/profiles")
 	out, err := path.ReadFileAsString()
 	if err != nil {
 		return res, err
