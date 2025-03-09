@@ -1,0 +1,58 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = /etc/update-motd.d/*
+profile motd @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+
+  network inet dgram,
+  network inet6 dgram,
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  @{sh_path}        rix,
+  @{bin}/{e,}grep   rix,
+  @{bin}/cat        rix,
+  @{bin}/cut        rix,
+  @{bin}/find       rix,
+  @{bin}/head       rix,
+  @{bin}/hostname   rPx,
+  @{bin}/id         rix,
+  @{bin}/snap       rPx,
+  @{bin}/sort       rix,
+  @{bin}/tr         rix,
+  @{bin}/uname      rPx,
+
+  @{lib}/ubuntu-release-upgrader/release-upgrade-motd            rPx,
+  @{lib}/update-notifier/update-motd-fsck-at-reboot              rPx,
+  @{lib}/update-notifier/update-motd-reboot-required             rix,
+  /usr/share/unattended-upgrades/update-motd-unattended-upgrades rix,
+  /usr/share/update-notifier/notify-updates-outdated             rPx,
+
+  / r,
+  /etc/default/motd-news r,
+  /etc/lsb-release r,
+  /etc/update-motd.d/* r,
+
+  /var/cache/motd-news rw,
+  /var/lib/update-notifier/updates-available r,
+  /var/lib/ubuntu-advantage/messages/motd-esm-announce r,
+
+  @{run}/motd.d/{,*} r,
+  @{run}/motd.dynamic.new rw,
+
+  @{PROC}/@{pids}/mounts r,
+
+  /dev/tty@{int} rw,
+
+  include if exists <local/motd>
+}
+
+# vim:syntax=apparmor
