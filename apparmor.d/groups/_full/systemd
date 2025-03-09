@@ -108,6 +108,7 @@ profile systemd flags=(attach_disconnected,mediate_deleted) {
   remount                                        @{run}/systemd/unit-root/{,**},
   remount                                        /,
   remount                                        /snap/{,**},
+  remount options=(ro bind)                      /boot/efi/,
   remount options=(ro noexec noatime bind)       /var/snap/{,**},
   remount options=(ro nosuid bind)               /dev/,
   remount options=(ro nosuid nodev bind)         /dev/hugepages/,
@@ -127,18 +128,20 @@ profile systemd flags=(attach_disconnected,mediate_deleted) {
   pivot_root oldroot=@{run}/systemd/mount-rootfs/ @{run}/systemd/mount-rootfs/,
   pivot_root oldroot=@{run}/systemd/unit-root/    @{run}/systemd/unit-root/,
 
+  mqueue (read getattr) type=posix /,
+
   change_profile,
 
-  signal (receive) set=(rtmin+23) peer=plymouthd,
-  signal (receive) set=(term, hup, cont),
-  signal (send),
+  signal receive set=(rtmin+23) peer=plymouthd,
+  signal receive set=(term hup cont),
+  signal send,
 
   ptrace (read, readby),
 
-  unix (send) type=dgram,
+  unix send type=dgram,
 
-  unix (receive) type=dgram addr=none peer=(label=systemd-timesyncd, addr=none),
-  unix (send, receive, connect) type=stream addr=none peer=(label=plymouthd, addr=@/org/freedesktop/plymouthd),
+  unix receive type=dgram peer=(label=systemd-timesyncd),
+  unix (send, receive, connect) type=stream peer=(label=plymouthd, addr=@/org/freedesktop/plymouthd),
 
   #aa:dbus own bus=system name=org.freedesktop.systemd1
 
@@ -151,6 +154,7 @@ profile systemd flags=(attach_disconnected,mediate_deleted) {
   @{lib}/**                         Px,
   /etc/cron.*/*                     Px,
   /etc/init.d/*                     Px,
+  /etc/update-motd.d/*              Px,
   /usr/share/*/**                   Px,
 
   # Systemd internal service started and config handler (sandboxing, namespacing, cgroup, etc.)
@@ -192,6 +196,7 @@ profile systemd flags=(attach_disconnected,mediate_deleted) {
 
   @{etc_ro}/environment r,
   @{etc_ro}/environment.d/{,**} r,
+  /etc/acpi/events/{,**} r,
   /etc/binfmt.d/{,**} r,
   /etc/conf.d/{,**} r,
   /etc/credstore.encrypted/{,**} r,
@@ -203,11 +208,15 @@ profile systemd flags=(attach_disconnected,mediate_deleted) {
   /etc/systemd/{,**} r,
   /etc/udev/hwdb.d/{,**} r,
 
+        /var/log/dmesg rw,
         /var/lib/systemd/{,**} rw,
   owner /var/tmp/systemd-private-*/{,**} rw,
 
   /tmp/namespace-dev-@{rand6}/{,**} rw,
   /tmp/systemd-private-*/{,**} rw,
+
+  @{att}/@{run}/systemd/journal/socket r,
+  @{att}/@{run}/systemd/journal/dev-log r,
 
   @{run}/ rw,
   @{run}/*.socket w,
@@ -274,6 +283,7 @@ profile systemd flags=(attach_disconnected,mediate_deleted) {
   owner @{PROC}/@{pid}/oom_score_adj rw,
 
         /dev/autofs r,
+        /dev/input/ r,
         /dev/kmsg w,
         /dev/tty@{int} rw,
   owner /dev/console rwk,

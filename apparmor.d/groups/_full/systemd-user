@@ -136,17 +136,23 @@ profile systemd-user flags=(attach_disconnected,mediate_deleted) {
   owner @{PROC}/@{pids}/fd/ r,
   owner @{PROC}/@{pids}/oom_score_adj rw,
 
+  /dev/kmsg w,
   /dev/tty rw,
 
   deny capability bpf,
+  deny capability dac_override,
+  deny capability dac_read_search,
   deny capability mknod,
   deny capability net_admin,
   deny capability perfmon,
+  deny capability sys_admin,
   deny capability sys_resource,
 
   profile systemctl {
     include <abstractions/base>
     include <abstractions/app/systemctl>
+
+    deny capability net_admin,
 
     include if exists <usr/systemd-user_systemctl.d>
     include if exists <local/systemd-user_systemctl>
