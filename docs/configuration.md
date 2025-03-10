@@ -189,7 +189,7 @@ Common mount points are defined in the `@{MOUNTS}` variable. If you mount a disk
 
 If you mount a disk on `/ssd/`, add the following to `/etc/apparmor.d/tunables/xdg-user-dirs.d/apparmor.d.d/local`:
 ```sh
-@{MOUNT}+=/ssd/
+@{MOUNTS}+=/ssd/
 ```
 
 <!-- ### User data
