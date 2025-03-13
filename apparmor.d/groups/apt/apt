@@ -13,7 +13,6 @@ profile apt @{exec_path} flags=(attach_disconnected) {
   include <abstractions/common/apt>
   include <abstractions/bus-system>
   include <abstractions/bus/org.freedesktop.login1>
-  include <abstractions/bus/org.freedesktop.PackageKit>
   include <abstractions/bus/org.freedesktop.PolicyKit1>
   include <abstractions/consoles>
   include <abstractions/nameservice-strict>
@@ -37,10 +36,21 @@ profile apt @{exec_path} flags=(attach_disconnected) {
   unix bind type=stream addr=@@{udbus}/bus/apt-get/system,
   unix bind type=stream addr=@@{udbus}/bus/apt/system,
 
+  unix                 type=stream peer=(label=snap),
   unix (send, receive) type=stream peer=(label=apt-esm-json-hook),
   unix (send, receive) type=stream peer=(label=snapd),
 
   #aa:dbus own bus=system name=org.debian.apt
+
+  #aa:dbus talk bus=system name=org.freedesktop.PackageKit label=packagekitd
+  dbus send bus=system path=/org/freedesktop/PackageKit
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name=org.freedesktop.PackageKit),
+  dbus send bus=system path=/org/freedesktop/PackageKit
+       interface=org.freedesktop.PackageKit
+       member=StateHasChanged
+       peer=(name=org.freedesktop.PackageKit),
 
   dbus send bus=system path=/org/freedesktop/DBus/Bus
        interface=org.freedesktop.DBus
