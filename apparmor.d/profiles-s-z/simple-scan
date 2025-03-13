@@ -1,0 +1,45 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/simple-scan
+profile simple-scan @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/bus-accessibility>
+  include <abstractions/bus/org.a11y>
+  include <abstractions/common/gnome>
+  include <abstractions/devices-usb>
+  include <abstractions/user-download-strict>
+
+  network inet dgram,
+  network inet6 dgram,
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  @{open_path}  rPx -> child-open-help,
+
+  /usr/share/snmp/{,**} r,
+
+  /etc/sane.d/{,**} r,
+
+  @{sys}/bus/scsi/devices/ r,
+  @{sys}/devices/virtual/dmi/id/board_name r,
+  @{sys}/devices/virtual/dmi/id/board_vendor r,
+  @{sys}/devices/virtual/dmi/id/board_version r,
+  @{sys}/devices/virtual/dmi/id/product_name r,
+  @{sys}/devices/virtual/dmi/id/product_version r,
+  @{sys}/devices/virtual/dmi/id/sys_vendor r,
+
+  @{PROC}/scsi/scsi r,
+
+  /dev/video@{int} rw,
+
+  include if exists <local/simple-scan>
+}
+
+# vim:syntax=apparmor
