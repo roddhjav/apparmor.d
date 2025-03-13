@@ -17,6 +17,7 @@ profile apport @{exec_path} flags=(attach_disconnected) {
 
   capability chown,
   capability dac_read_search,
+  capability fowner,
   capability fsetid,
   capability setgid,
   capability setuid,
@@ -41,18 +42,20 @@ profile apport @{exec_path} flags=(attach_disconnected) {
 
         /var/crash/ rw,
         /var/crash/*.@{uid}.crash rw,
+  owner /var/cache/apt/pkgcache.bin.@{rand6} rw,
   owner /var/log/apport.log rw,
 
   @{run}/apport.lock rwk,
 
+        @{PROC}/@{pid}/cgroup r,
         @{PROC}/@{pid}/environ r,
+        @{PROC}/@{pid}/fd/ r,
         @{PROC}/@{pid}/stat r,
         @{PROC}/sys/fs/suid_dumpable w,
         @{PROC}/sys/kernel/core_pattern w,
         @{PROC}/sys/kernel/core_pipe_limit w,
   owner @{PROC}/@{pid}/attr/current r,
   owner @{PROC}/@{pid}/cmdline r,
-  owner @{PROC}/@{pid}/fd/ r,
 
   include if exists <local/apport>
 }
