@@ -6,8 +6,6 @@ package directive
 
 import (
 	"testing"
-
-	"github.com/roddhjav/apparmor.d/pkg/paths"
 )
 
 const dbusOwnSystemd1 = `  dbus bind bus=system name=org.freedesktop.systemd1{,.*},
@@ -52,7 +50,7 @@ func TestDbus_Apply(t *testing.T) {
 					"own":  "",
 				},
 				ArgList: []string{"own", "bus=system", "name=org.freedesktop.systemd1"},
-				File:    paths.New("fake-own"),
+				File:    nil,
 				Raw:     "  #aa:dbus own bus=system name=org.freedesktop.systemd1",
 			},
 			profile: "  #aa:dbus own bus=system name=org.freedesktop.systemd1",
@@ -69,7 +67,7 @@ func TestDbus_Apply(t *testing.T) {
 					"own":        "",
 				},
 				ArgList: []string{"own", "bus=session", "name=com.rastersoft.ding", "interface+=org.gtk.Actions"},
-				File:    paths.New("fake-interface"),
+				File:    nil,
 				Raw:     "  #aa:dbus own bus=session name=com.rastersoft.ding interface+=org.gtk.Actions",
 			},
 			profile: "  #aa:dbus own bus=session name=com.rastersoft.ding interface+=org.gtk.Actions",
@@ -114,7 +112,7 @@ func TestDbus_Apply(t *testing.T) {
 					"talk":  "",
 				},
 				ArgList: []string{"talk", "bus=system", "name=org.freedesktop.Accounts", "label=accounts-daemon"},
-				File:    paths.New("gdm-session-worker"),
+				File:    nil,
 				Raw:     "  #aa:dbus talk bus=system name=org.freedesktop.Accounts label=accounts-daemon",
 			},
 			profile: "  #aa:dbus talk bus=system name=org.freedesktop.Accounts label=accounts-daemon",
@@ -137,6 +135,39 @@ func TestDbus_Apply(t *testing.T) {
        interface=org.freedesktop.DBus.ObjectManager
        member={InterfacesAdded,InterfacesRemoved}
        peer=(name="{@{busname},org.freedesktop.Accounts{,.*}}", label=accounts-daemon),`,
+		},
+		{
+			name: "common",
+			opt: &Option{
+				Name: "dbus",
+				ArgMap: map[string]string{
+					"bus":   "system",
+					"name":  "net.hadess.PowerProfiles",
+					"label": "power-profiles-daemon",
+					"talk":  "",
+				},
+				ArgList: []string{"common", "bus=system", "name=net.hadess.PowerProfiles", "power-profiles-daemon"},
+				File:    nil,
+				Raw:     "  #aa:dbus common bus=system name=net.hadess.PowerProfiles label=power-profiles-daemon",
+			},
+			profile: "  #aa:dbus common bus=system name=net.hadess.PowerProfiles label=power-profiles-daemon",
+			want: `  # DBus.Properties: read all properties from the interface
+  dbus send bus=system path=/net/hadess/PowerProfiles{,/**}
+       interface=org.freedesktop.DBus.Properties
+       member={Get,GetAll}
+       peer=(name="{@{busname},net.hadess.PowerProfiles{,.*}}", label=power-profiles-daemon),
+
+  # DBus.Properties: receive property changed events
+  dbus receive bus=system path=/net/hadess/PowerProfiles{,/**}
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged
+       peer=(name="{@{busname},net.hadess.PowerProfiles{,.*}}", label=power-profiles-daemon),
+
+  # DBus.Introspectable: allow clients to introspect the service
+  dbus send bus=system path=/net/hadess/PowerProfiles{,/**}
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name="{@{busname},net.hadess.PowerProfiles{,.*}}", label=power-profiles-daemon),`,
 		},
 	}
 	for _, tt := range tests {

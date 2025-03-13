@@ -33,6 +33,7 @@ func init() {
 			Help: []string{
 				"own bus=<bus> name=<name> [interface=AARE] [path=AARE]",
 				"talk bus=<bus> name=<name> label=<profile> [interface=AARE] [path=AARE]",
+				"common bus=<bus> name=<name> label=<profile>",
 			},
 		}},
 	)
@@ -50,6 +51,8 @@ func (d Dbus) Apply(opt *Option, profile string) (string, error) {
 		r = d.own(opt.ArgMap)
 	case "talk":
 		r = d.talk(opt.ArgMap)
+	case "common":
+		r = d.common(opt.ArgMap)
 	}
 
 	aa.IndentationLevel = strings.Count(
@@ -67,7 +70,7 @@ func (d Dbus) sanityCheck(opt *Option) (string, error) {
 		return "", fmt.Errorf("Unknown dbus action: %s in %s", opt.Name, opt.File)
 	}
 	action := opt.ArgList[0]
-	if action != "own" && action != "talk" {
+	if action != "own" && action != "talk" && action != "common" {
 		return "", fmt.Errorf("Unknown dbus action: %s in %s", opt.Name, opt.File)
 	}
 
@@ -206,5 +209,55 @@ func (d Dbus) talk(rules map[string]string) aa.Rules {
 			PeerName:  `"{@{busname},` + rules["name"] + `}"`, PeerLabel: rules["label"],
 		},
 	)
+	return res
+}
+
+func (d Dbus) common(rules map[string]string) aa.Rules {
+	res := aa.Rules{
+
+		// DBus.Properties: read all properties from the interface
+		&aa.Comment{
+			Base: aa.Base{
+				Comment:    " DBus.Properties: read all properties from the interface",
+				IsLineRule: true,
+			},
+		},
+		&aa.Dbus{
+			Access: []string{"send"}, Bus: rules["bus"], Path: rules["path"],
+			Interface: "org.freedesktop.DBus.Properties",
+			Member:    "{Get,GetAll}",
+			PeerName:  `"{@{busname},` + rules["name"] + `}"`, PeerLabel: rules["label"],
+		},
+		nil,
+
+		// DBus.Properties: receive property changed events
+		&aa.Comment{
+			Base: aa.Base{
+				Comment:    " DBus.Properties: receive property changed events",
+				IsLineRule: true,
+			},
+		},
+		&aa.Dbus{
+			Access: []string{"receive"}, Bus: rules["bus"], Path: rules["path"],
+			Interface: "org.freedesktop.DBus.Properties",
+			Member:    "PropertiesChanged",
+			PeerName:  `"{@{busname},` + rules["name"] + `}"`, PeerLabel: rules["label"],
+		},
+		nil,
+
+		// DBus.Introspectable: allow clients to introspect the service
+		&aa.Comment{
+			Base: aa.Base{
+				Comment:    " DBus.Introspectable: allow clients to introspect the service",
+				IsLineRule: true,
+			},
+		},
+		&aa.Dbus{
+			Access: []string{"send"}, Bus: rules["bus"], Path: rules["path"],
+			Interface: "org.freedesktop.DBus.Introspectable",
+			Member:    "Introspect",
+			PeerName:  `"{@{busname},` + rules["name"] + `}"`, PeerLabel: rules["label"],
+		},
+	}
 	return res
 }
