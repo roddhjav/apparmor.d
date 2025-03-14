@@ -55,5 +55,21 @@ func (p Configure) Apply() ([]string, error) {
 		return []string{}, fmt.Errorf("%s is not a supported distribution", prebuild.Distribution)
 
 	}
+
+	if prebuild.Version == "4.1" {
+		// Remove files upstreamed in 4.1
+		remove := []string{
+			"abstractions/devices-usb-read",
+			"abstractions/devices-usb",
+			"abstractions/nameservice-strict",
+			"tunables/multiarch.d/base",
+			"wg", // Upstream version is identical
+		}
+		for _, name := range remove {
+			if err := prebuild.RootApparmord.Join(name).RemoveAll(); err != nil {
+				return res, err
+			}
+		}
+	}
 	return res, nil
 }
