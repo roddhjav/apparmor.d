@@ -10,6 +10,9 @@ var (
 	// AppArmor ABI version
 	ABI uint = 0
 
+	// AppArmor version
+	Version string = "4.0"
+
 	// Pkgname is the name of the package
 	Pkgname string = "apparmor.d"
 

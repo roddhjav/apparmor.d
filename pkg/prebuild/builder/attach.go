@@ -23,7 +23,7 @@ func init() {
 	RegisterBuilder(&ReAttach{
 		Base: prebuild.Base{
 			Keyword: "attach",
-			Msg:     "Re-attach disconnect path",
+			Msg:     "Re-attach disconnected path",
 		},
 	})
 }

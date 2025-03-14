@@ -19,7 +19,8 @@ import (
 
 const (
 	nilABI uint = 0
-	usage       = `aa-prebuild [-h] [--complain | --enforce] [--full] [--abi 3|4]
+	nilVer      = "4.0"
+	usage       = `aa-prebuild [-h] [--complain | --enforce] [--full] [--abi 3|4] [--version V] [--file FILE]
 
     Prebuild apparmor.d profiles for a given distribution and apply
     internal built-in directives.
@@ -29,6 +30,7 @@ Options:
     -c, --complain  Set complain flag on all profiles.
     -e, --enforce   Set enforce flag on all profiles.
     -a, --abi ABI   Target apparmor ABI.
+    -v, --version V Target apparmor version.
     -f, --full      Set AppArmor for full system policy.
     -F, --file      Only prebuild a given file.
 `
@@ -40,6 +42,7 @@ var (
 	enforce  bool
 	full     bool
 	abi      uint
+	version  string
 	file     string
 )
 
@@ -54,6 +57,8 @@ func init() {
 	flag.BoolVar(&enforce, "enforce", false, "Set enforce flag on all profiles.")
 	flag.UintVar(&abi, "a", nilABI, "Target apparmor ABI.")
 	flag.UintVar(&abi, "abi", nilABI, "Target apparmor ABI.")
+	flag.StringVar(&version, "v", nilVer, "Target apparmor version.")
+	flag.StringVar(&version, "version", nilVer, "Target apparmor version.")
 	flag.StringVar(&file, "F", "", "Only prebuild a given file.")
 	flag.StringVar(&file, "file", "", "Only prebuild a given file.")
 }
@@ -92,11 +97,14 @@ func Configure() {
 	case 3:
 		builder.Register("abi3") // Convert all profiles from abi 4.0 to abi 3.0
 	case 4:
-		// builder.Register("attach") // Re-attach disconnect path
+		// builder.Register("attach") // Re-attach disconnected path
 	default:
 		logging.Fatal("Invalid ABI version: %d", prebuild.ABI)
 	}
 
+	if version != nilVer {
+		prebuild.Version = version
+	}
 	if file != "" {
 		sync, _ := prepare.Tasks["synchronise"].(*prepare.Synchronise)
 		sync.Paths = []string{file}
