@@ -17,6 +17,8 @@ profile netplan-generate @{exec_path} flags=(attach_disconnected) {
 
   @{exec_path} mr,
 
+  @{bin}/systemctl         rCx -> systemctl,
+
   /etc/netplan/{,*} r,
 
   @{run}/systemd/generator/multi-user.target.wants/ w,
@@ -38,9 +40,21 @@ profile netplan-generate @{exec_path} flags=(attach_disconnected) {
 
   @{sys}/devices/**/net/*/address r,
 
+  @{run}/netplan/ r,
 
   @{run}/udev/rules.d/ r,
   @{run}/udev/rules.d/@{int}-netplan{,-*}.rules{,.@{rand6}} rw,
+
+  profile systemctl {
+    include <abstractions/base>
+    include <abstractions/app/systemctl>
+
+    capability net_admin,
+
+    @{att}/@{run}/systemd/private rw,
+
+    include if exists <local/netplan-generate_systemctl>
+  }
 
   include if exists <local/netplan-generate>
 }
