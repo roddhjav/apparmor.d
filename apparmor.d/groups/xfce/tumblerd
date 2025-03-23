@@ -9,17 +9,29 @@ include <tunables/global>
 @{exec_path} = @{lib}/{,@{multiarch}/}tumbler-1/tumblerd
 profile tumblerd @{exec_path} {
   include <abstractions/base>
+  include <abstractions/bus-session>
+  include <abstractions/desktop>
+  include <abstractions/fontconfig-cache-read>
   include <abstractions/gstreamer>
   include <abstractions/nameservice-strict>
   include <abstractions/thumbnails-cache-write>
 
+  #aa:dbus own bus=session name=org.freedesktop.thumbnails.Cache1
+  #aa:dbus own bus=session name=org.freedesktop.thumbnails.Manager1
+  #aa:dbus own bus=session name=org.freedesktop.thumbnails.Thumbnailer1
+
   @{exec_path} mr,
+
+  @{bin}/gdk-pixbuf-thumbnailer rPx,
 
   /usr/share/backgrounds/xfce/{,**} r,
   /usr/share/thumbnailers/{,**} r,
 
   /etc/fstab r,
   /etc/xdg/tumbler/* r,
+
+  owner /tmp/tumbler-@{rand6}.png r,
+  owner /tmp/tumbler-@{rand6}.??? w,
 
   owner @{PROC}/@{pid}/mountinfo r,
 
