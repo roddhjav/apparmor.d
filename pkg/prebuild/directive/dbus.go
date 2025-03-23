@@ -110,6 +110,9 @@ func (d Dbus) own(rules map[string]string) aa.Rules {
 	interfaces := getInterfaces(rules)
 
 	res := aa.Rules{
+		&aa.Include{
+			IsMagic: true, Path: "abstractions/bus/own-" + rules["bus"],
+		},
 		&aa.Dbus{
 			Access: []string{"bind"}, Bus: rules["bus"], Name: rules["name"],
 		},

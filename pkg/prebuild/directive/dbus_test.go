@@ -8,7 +8,9 @@ import (
 	"testing"
 )
 
-const dbusOwnSystemd1 = `  dbus bind bus=system name=org.freedesktop.systemd1{,.*},
+const dbusOwnSystemd1 = `  include <abstractions/bus/own-system>
+
+  dbus bind bus=system name=org.freedesktop.systemd1{,.*},
   dbus receive bus=system path=/org/freedesktop/systemd1{,/**}
        interface=org.freedesktop.systemd1{,.*}
        peer=(name="@{busname}"),
@@ -71,7 +73,9 @@ func TestDbus_Apply(t *testing.T) {
 				Raw:     "  #aa:dbus own bus=session name=com.rastersoft.ding interface+=org.gtk.Actions",
 			},
 			profile: "  #aa:dbus own bus=session name=com.rastersoft.ding interface+=org.gtk.Actions",
-			want: `  dbus bind bus=session name=com.rastersoft.ding{,.*},
+			want: `  include <abstractions/bus/own-session>
+
+  dbus bind bus=session name=com.rastersoft.ding{,.*},
   dbus receive bus=session path=/com/rastersoft/ding{,/**}
        interface=com.rastersoft.ding{,.*}
        peer=(name="@{busname}"),
