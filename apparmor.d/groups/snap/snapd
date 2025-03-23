@@ -50,7 +50,7 @@ profile snapd @{exec_path} {
   ptrace read peer=@{p_systemd},
   ptrace read peer=snap{,.*},
 
-  unix (bind) type=stream addr=@@{udbus}/bus/systemctl/,
+  signal send set=kill peer=journalctl,
 
   dbus send bus=system path=/org/freedesktop/
          interface=org.freedesktop.login1.Manager
@@ -64,29 +64,28 @@ profile snapd @{exec_path} {
 
   @{exec_path} mrix,
 
-  @{bin}/adduser                  rPx,
-  @{bin}/groupadd                 rPx,
-  @{bin}/hostnamectl              rPx,
-  @{bin}/ssh-keygen               rPx,
-  @{bin}/useradd                  rPx,
-
   @{sh_path}                      rix,
+  @{bin}/adduser                  rPx,
   @{bin}/apparmor_parser          rPx,
   @{bin}/cp                       rix,
   @{bin}/getent                   rix,
+  @{bin}/groupadd                 rPx,
   @{bin}/gzip                     rix,
+  @{bin}/hostnamectl              rPx,
   @{bin}/journalctl               rPx,
   @{bin}/kmod                     rPx,
   @{bin}/mount                    rix,
   @{bin}/runuser                  rCx -> runuser,
+  @{bin}/ssh-keygen               rPx,
   @{bin}/sync                     rix,
-  @{bin}/systemctl                rix,
+  @{bin}/systemctl                rCx -> systemctl,
   @{bin}/systemd-detect-virt      rPx,
   @{bin}/tar                      rix,
   @{bin}/udevadm                  rPx,
   @{bin}/umount                   rix,
   @{bin}/unsquashfs               rix,
   @{bin}/update-desktop-database  rPx,
+  @{bin}/useradd                  rPx,
 
   @{bin_dirs}/fc-cache-*              mr,
   @{bin_dirs}/snap                  rPUx,
@@ -111,11 +110,6 @@ profile snapd @{exec_path} {
   /etc/modprobe.d/{,**/} r,
   /etc/modules-load.d/{,**/} r,
   /etc/modules-load.d/*snap* rw,
-  /etc/systemd/system/{,**/} r,
-  /etc/systemd/system/snap* rw,
-  /etc/systemd/user/{,**/} rw,
-  /etc/systemd/user/**/*snap* rw,
-  /etc/systemd/user/*snap* rw,
   /etc/udev/rules.d/{,*snap*} rw,
 
   /snap/{,**} rw,
@@ -180,6 +174,23 @@ profile snapd @{exec_path} {
   owner @{PROC}/@{pids}/mountinfo r,
 
   /dev/loop-control rw,
+
+  profile systemctl {
+    include <abstractions/base>
+    include <abstractions/app/systemctl>
+
+    capability net_admin,
+
+    /etc/systemd/system/{,**/} r,
+    /etc/systemd/system/snap* rw,
+    /etc/systemd/user/{,**/} rw,
+    /etc/systemd/user/**/*snap* rw,
+    /etc/systemd/user/*snap* rw,
+
+    @{run}/systemd/notify rw,
+
+    include if exists <local/snapd_systemctl>
+  }
 
   profile runuser {
     include <abstractions/base>
