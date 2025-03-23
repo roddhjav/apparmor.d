@@ -13,6 +13,7 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/bus-accessibility>
   include <abstractions/bus-session>
   include <abstractions/bus-system>
+  include <abstractions/bus/com.canonical.dbusmenu>
   include <abstractions/bus/net.hadess.PowerProfiles>
   include <abstractions/bus/net.hadess.SwitcherooControl>
   include <abstractions/bus/net.reactivated.Fprint>
@@ -160,17 +161,18 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
   @{bin}/unzip                  rix,
 
+  @{bin}/flatpak                rPx,
   @{bin}/gjs-console            rPx,
   @{bin}/glib-compile-schemas   rPx,
   @{bin}/ibus-daemon            rPx,
-  @{bin}/Xwayland               rPx,
   @{bin}/tecla                  rPx,
-  @{bin}/flatpak rPx,
+  @{bin}/Xwayland               rPx,
   @{lib}/{,NetworkManager/}nm-openvpn-auth-dialog rPx,
   @{lib}/mutter-x11-frames      rPx,
   #aa:exec polkit-agent-helper
 
   @{sh_path}                                              rCx -> shell,
+  @{bin}/pkexec                                           rCx -> pkexec,
   @{lib}/gio-launch-desktop                               rCx -> open,
   @{lib}/@{multiarch}/glib-@{version}/gio-launch-desktop  rCx -> open,
 
@@ -388,6 +390,20 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
     /dev/tty rw,
 
     include if exists <local/gnome-shell_shell>
+  }
+
+  profile pkexec {
+    include <abstractions/base>
+    include <abstractions/app/pkexec>
+
+    ptrace read peer=gnome-shell,
+
+    @{bin}/pkexec mr,
+
+    /usr/local/bin/batteryhealthchargingctl{,-@{user}} rPx,
+    @{bin}/batteryhealthchargingctl{,-@{user}} rPx,
+
+    include if exists <local/gnome-shell_pkexec>
   }
 
   profile open flags=(attach_disconnected,mediate_deleted,complain) {

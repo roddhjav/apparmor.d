@@ -1,0 +1,39 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/batteryhealthchargingctl{,-@{user}}
+@{exec_path} += /usr/local/bin/batteryhealthchargingctl{,-@{user}}
+profile batteryhealthchargingctl @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+
+  capability dac_read_search,
+
+  @{exec_path} mr,
+
+  @{sh_path}       rix,
+  @{bin}/env       rix,
+  @{bin}/cmp       rix,
+  @{bin}/cut       rix,
+  @{bin}/pkaction  rix,
+  @{bin}/sed       rix,
+  @{bin}/sort      rix,
+
+  /etc/polkit-1/rules.d/*.batteryhealthcharging.setthreshold-@{user}.rules r,
+
+  @{user_share_dirs}/gnome-shell/extensions/Battery-Health-Charging@maniacx.github.com/resources/** r,
+
+  @{sys}/class/power_supply/ r,
+  @{sys}/devices/**/power_supply/BAT@{int}/charge_control_end_threshold w,
+  @{sys}/devices/**/power_supply/BAT@{int}/charge_control_start_threshold w,
+  @{sys}/devices/**/power_supply/BAT@{int}/charge_types rw,
+
+  include if exists <local/batteryhealthchargingctl>
+}
+
+# vim:syntax=apparmor
