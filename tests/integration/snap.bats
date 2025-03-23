@@ -10,11 +10,11 @@ load common
 }
 
 @test "snap: Install a package" {
-    sudo snap install nano-strict
+    sudo snap install vault
 }
 
 @test "snap: Update a package to another channel (track, risk, or branch)" {
-    sudo snap refresh nano-strict --channel=edge
+    sudo snap refresh vault --channel=edge
 }
 
 @test "snap: Update all packages" {
@@ -25,10 +25,31 @@ load common
     sudo snap list
 }
 
-@test "snap: Check for recent snap changes in the system" {
-    sudo snap changes
+@test "snap: lists information about the services" {
+    sudo snap services
+    sudo snap services vault
+}
+
+@test "snap: starts, and optionally enables, the given services" {
+    sudo snap start --enable vault
+}
+
+@test "snap: logs of the given services" {
+    sudo snap logs vault || true
+}
+
+@test "snap: restarts the given services" {
+    sudo snap restart vault
+}
+
+@test "snap: stops, and optionally disables, the given services" {
+    sudo snap stop --disable vault
 }
 
 @test "snap: Uninstall a package" {
-    sudo snap remove nano-strict
+    sudo snap remove vault
+}
+
+@test "snap: Check for recent snap changes in the system" {
+    sudo snap changes
 }
