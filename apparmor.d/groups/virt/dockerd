@@ -28,6 +28,7 @@ profile dockerd @{exec_path} flags=(attach_disconnected) {
   capability sys_ptrace,
 
   network inet dgram,
+  network inet raw,
   network inet stream,
   network inet6 dgram,
   network inet6 stream,
@@ -64,8 +65,9 @@ profile dockerd @{exec_path} flags=(attach_disconnected) {
 
   @{bin}/apparmor_parser         rPx,
   @{bin}/containerd              rPx,
-  @{bin}/docker-init             rix,
+  @{bin}/docker-init             rCx -> init,
   @{bin}/docker-proxy            rPx,
+  @{bin}/git                     rCx -> git,
   @{bin}/kmod                    rPx,
   @{bin}/ps                      rPx,
   @{bin}/runc                    rUx,
@@ -122,6 +124,22 @@ profile dockerd @{exec_path} flags=(attach_disconnected) {
 
   /dev/ r,
   /dev/**/ r,
+
+  profile init flags=(attach_disconnected) {
+    include <abstractions/base>
+
+    @{bin}/docker-init mr,
+
+    include if exists <local/dockerd_init>
+  }
+
+  profile git flags=(attach_disconnected) {
+    include <abstractions/base>
+
+    @{bin}/git mr,
+
+    include if exists <local/dockerd_git>
+  }
 
   include if exists <local/dockerd>
 }
