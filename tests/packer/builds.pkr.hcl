@@ -24,7 +24,7 @@ source "qemu" "default" {
   disk_compression   = true
   disk_detect_zeroes = "unmap"
   disk_discard       = "unmap"
-  output_directory   = pathexpand(var.output)
+  output_directory   = pathexpand(var.output_dir)
   vm_name            = "${local.name}.qcow2"
   boot_wait          = "10s"
   firmware           = pathexpand(var.firmware)
@@ -85,7 +85,7 @@ build {
 
   post-processor "shell-local" {
     inline = [
-      "mv ${var.output}/${local.name}.qcow2 ${var.base_dir}/${local.name}.qcow2",
+      "mv ${var.output_dir}/${local.name}.qcow2 ${var.base_dir}/${local.name}.qcow2",
     ]
   }
 
