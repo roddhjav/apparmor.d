@@ -52,16 +52,16 @@ variable "base_dir" {
   default     = "~/.libvirt/base"
 }
 
+variable "output_dir" {
+  description = "Output build directory"
+  type        = string
+  default     = "~/.libvirt/base/packer"
+}
+
 variable "firmware" {
   description = "Path to the UEFI firmware"
   type        = string
   default     = "/usr/share/edk2/x64/OVMF.4m.fd"
-}
-
-variable "output" {
-  description = "Output build directory"
-  type        = string
-  default     = "/tmp/packer"
 }
 
 variable "prefix" {
