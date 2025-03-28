@@ -14,7 +14,7 @@ load ../common
 }
 
 @test "df: Display the filesystem and its disk usage containing the given file or directory" {
-    df apparmor.d/
+    df /etc/apparmor.d/
 }
 
 @test "df: Include statistics on the number of free inodes" {
