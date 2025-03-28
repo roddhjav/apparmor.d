@@ -5,12 +5,25 @@
 
 load common
 
-@test "flatpak: List installed applications, ignoring runtimes" {
-    flatpak list --app
+@test "flatpak: Add a new remote repository (by URL)" {
+    sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+}
+
+@test "flatpak: List all remote repositories" {
+    flatpak remotes
+}
+
+@test "flatpak: Search for an application in a remote repository" {
+    sudo flatpak search vim
+    sudo flatpak search org.freedesktop.Platform
 }
 
 @test "flatpak: Install an application from a remote source" {
-    flatpak install --noninteractive org.vim.Vim
+    sudo flatpak install --noninteractive org.vim.Vim
+}
+
+@test "flatpak: List installed applications, ignoring runtimes" {
+    flatpak list --app
 }
 
 @test "flatpak: Show information about an installed application" {
@@ -18,17 +31,17 @@ load common
 }
 
 @test "flatpak: Run an installed application" {
-    flatpak run org.vim.Vim
+    _timeout flatpak run org.vim.Vim
 }
 
 @test "flatpak: Update all installed applications and runtimes" {
-    flatpak update --noninteractive
+    sudo flatpak update --noninteractive
 }
 
 @test "flatpak: Remove an installed application" {
-    flatpak remove --noninteractive org.vim.Vim
+    sudo flatpak remove --noninteractive org.vim.Vim
 }
 
 @test "flatpak: Remove all unused applications" {
-    flatpak remove --unused
+    sudo flatpak remove --noninteractive --unused
 }
