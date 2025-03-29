@@ -81,7 +81,7 @@ build_in_docker_dpkg() {
 		docker run -tid --name "$img" --volume "$VOLUME:$BUILDIR" \
 			--env DISTRIBUTION="$target" "$BASEIMAGE/$dist"
 		docker exec "$img" sudo apt-get update -q
-		docker exec "$img" sudo apt-get install -y config-package-dev rsync
+		docker exec "$img" sudo apt-get install -y config-package-dev lsb-release libdistro-info-perl
 		[[ "$dist" == debian ]] && aptopt=(-t bookworm-backports)
 		docker exec "$img" sudo apt-get install -y "${aptopt[@]}" golang-go
 	fi
@@ -102,7 +102,7 @@ build_in_docker_rpm() {
 		docker pull "$BASEIMAGE/$dist"
 		docker run -tid --name "$img" --volume "$VOLUME:$BUILDIR" \
 			"$BASEIMAGE/$dist"
-		docker exec "$img" sudo zypper install -y distribution-release golang-packaging rsync apparmor-profiles
+		docker exec "$img" sudo zypper install -y distribution-release golang-packaging apparmor-profiles
 	fi
 
 	docker exec --workdir="$BUILDIR/$PKGNAME" "$img" bash dists/build.sh rpm
