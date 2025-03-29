@@ -9,9 +9,11 @@ include <tunables/global>
 @{exec_path} = @{bin}/flatpak
 profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted,complain) {
   include <abstractions/base>
+  include <abstractions/bus-accessibility>
   include <abstractions/bus-session>
   include <abstractions/bus-system>
-  include <abstractions/bus/org.freedesktop.Accounts>
+  include <abstractions/bus/org.a11y>
+  include <abstractions/bus/org.gtk.vfs.MountTracker>
   include <abstractions/consoles>
   include <abstractions/dconf-write>
   include <abstractions/desktop>
@@ -37,6 +39,10 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted,complain
 
   signal send peer=flatpak-app,
 
+  #aa:dbus talk bus=session name=org.freedesktop.Flatpak.SessionHelper label=flatpak-session-helper
+  #aa:dbus talk bus=system name=org.freedesktop.Accounts label=accounts-daemon
+  #aa:dbus talk bus=system name=org.freedesktop.PolicyKit1 label=polkitd
+
   @{exec_path} mr,
 
   @{bin}/bwrap               rPx -> flatpak-app,
@@ -45,6 +51,9 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted,complain
   @{bin}/gpgconf             rCx -> gpg,
   @{bin}/gpgsm               rCx -> gpg,
   @{lib}/revokefs-fuse       rix,
+
+  @{lib}/polkit-[0-9]/polkit-agent-helper-[0-9]  rPx,
+  @{lib}/polkit-agent-helper-[0-9]               rPx,
 
   /usr/share/flatpak/{,**} r,
 
@@ -57,7 +66,8 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted,complain
 
         /var/tmp/#@{int} rw,
         /var/tmp/flatpak-cache-@{rand6}/{,**/} r,
-  owner /var/tmp/flatpak-cache-@{rand6}/{,**} rwk,
+  owner /var/tmp/flatpak-cache-@{rand6}/ rw,
+  owner /var/tmp/flatpak-cache-@{rand6}/** rwlk -> /var/tmp/flatpak-cache-@{rand6}/**,
 
   owner @{HOME}/.var/ w,
   owner @{HOME}/.var/app/{,**} rw,
