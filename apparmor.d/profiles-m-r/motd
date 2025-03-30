@@ -10,9 +10,12 @@ include <tunables/global>
 profile motd @{exec_path} {
   include <abstractions/base>
   include <abstractions/nameservice-strict>
+  include <abstractions/ssl_certs>
 
   network inet dgram,
+  network inet stream,
   network inet6 dgram,
+  network inet6 stream,
   network netlink raw,
 
   @{exec_path} mr,
@@ -20,8 +23,11 @@ profile motd @{exec_path} {
   @{sh_path}         rix,
   @{coreutils_path}  rix,
   @{bin}/cloud-id    rix,
+  @{bin}/systemctl   rCx -> systemctl,
   @{bin}/hostname    rPx,
   @{bin}/snap        rPx,
+  @{bin}/dpkg        rPx -> child-dpkg,
+  @{bin}/systemd-detect-virt rPx,
   @{bin}/wget        rix,
 
   @{lib}/ubuntu-release-upgrader/release-upgrade-motd            rPx,
@@ -34,19 +40,34 @@ profile motd @{exec_path} {
   /etc/default/motd-news r,
   /etc/lsb-release r,
   /etc/update-motd.d/* r,
+  /etc/cloud/cloud.cfg r,
+  /etc/cloud/cloud.cfg.d/{,*} r,
 
   /var/cache/motd-news rw,
   /var/lib/update-notifier/updates-available r,
   /var/lib/ubuntu-advantage/messages/motd-esm-announce r,
 
-  /tmp/tmp.@{rand10} w,
+  /tmp/tmp.@{rand10} rw,
 
   @{run}/motd.d/{,*} r,
   @{run}/motd.dynamic.new rw,
+  @{run}/reboot-required r,
 
   @{PROC}/@{pids}/mounts r,
 
   /dev/tty@{int} rw,
+
+  profile systemctl {
+    include <abstractions/base>
+    include <abstractions/app/systemctl>
+
+    capability net_admin,
+    capability sys_ptrace,
+
+    @{run}/systemd/private rw,
+
+    include if exists <local/motd_systemctl>
+  }
 
   include if exists <local/motd>
 }
