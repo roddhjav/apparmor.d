@@ -18,8 +18,10 @@ case "$DISTRIBUTION" in
 arch)
 	;;
 debian | ubuntu | whonix)
-	sudo apt-get install -y \
-		cpuid dfc systemd-userdbd systemd-homed tlp network-manager
+	sudo apt update -y
+	sudo apt install -y \
+		bats bats-support \
+		cpuid dfc systemd-userdbd systemd-homed tlp network-manager flatpak
 	;;
 opensuse*)
 	;;
