@@ -6,6 +6,11 @@
 export BATS_LIB_PATH=${BATS_LIB_PATH:-/usr/lib/bats}
 load "$BATS_LIB_PATH/bats-support/load"
 
+export SYSTEMD_PAGER=
+
+# Ignore the profile not managed by apparmor.d
+IGNORE=(php-fpm snapd/snap-confine)
+
 # User password for sudo commands
 export PASSWORD=${PASSWORD:-user}
 
@@ -105,10 +110,19 @@ aa_check() {
     now=$(date +%s)
     duration=$((now - _START + 1))
     logs=$(aa-log --raw --systemd --since "-${duration}s")
+    for profile in "${IGNORE[@]}"; do
+        logs=$(echo "$logs" | grep -v "$profile")
+    done
+
     aa_start
     if [[ -n "$logs" ]]; then
         fail "profile $PROGRAM raised logs: $logs"
     fi
+}
+
+_timeout() {
+    local duration="2s"
+    timeout --preserve-status --kill-after="$duration" "$duration" "$@"
 }
 
 # Bats setup and teardown hooks
