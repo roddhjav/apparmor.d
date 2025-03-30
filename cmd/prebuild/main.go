@@ -5,8 +5,6 @@
 package main
 
 import (
-	"slices"
-
 	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 	"github.com/roddhjav/apparmor.d/pkg/prebuild/builder"
 	"github.com/roddhjav/apparmor.d/pkg/prebuild/cli"
