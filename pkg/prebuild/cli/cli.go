@@ -18,9 +18,9 @@ import (
 )
 
 const (
-	nilABI uint = 0
-	nilVer      = "4.0"
-	usage       = `aa-prebuild [-h] [--complain | --enforce] [--full] [--abi 3|4] [--version V] [--file FILE]
+	nilABI uint    = 0
+	nilVer float64 = 0.0
+	usage          = `aa-prebuild [-h] [--complain | --enforce] [--full] [--abi 3|4] [--version V] [--file FILE]
 
     Prebuild apparmor.d profiles for a given distribution and apply
     internal built-in directives.
@@ -42,7 +42,7 @@ var (
 	enforce  bool
 	full     bool
 	abi      uint
-	version  string
+	version  float64
 	file     string
 )
 
@@ -57,8 +57,8 @@ func init() {
 	flag.BoolVar(&enforce, "enforce", false, "Set enforce flag on all profiles.")
 	flag.UintVar(&abi, "a", nilABI, "Target apparmor ABI.")
 	flag.UintVar(&abi, "abi", nilABI, "Target apparmor ABI.")
-	flag.StringVar(&version, "v", nilVer, "Target apparmor version.")
-	flag.StringVar(&version, "version", nilVer, "Target apparmor version.")
+	flag.Float64Var(&version, "v", nilVer, "Target apparmor version.")
+	flag.Float64Var(&version, "version", nilVer, "Target apparmor version.")
 	flag.StringVar(&file, "F", "", "Only prebuild a given file.")
 	flag.StringVar(&file, "file", "", "Only prebuild a given file.")
 }
@@ -115,6 +115,9 @@ func Configure() {
 
 func Prebuild() {
 	logging.Step("Building apparmor.d profiles for %s on ABI%d.", prebuild.Distribution, prebuild.ABI)
+	if prebuild.Version != nilVer {
+		logging.Success("AppArmor version targeted: %.1f", prebuild.Version)
+	}
 	if err := Prepare(); err != nil {
 		logging.Fatal("%s", err.Error())
 	}

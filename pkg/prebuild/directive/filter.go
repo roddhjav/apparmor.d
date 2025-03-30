@@ -43,7 +43,7 @@ func filterRuleForUs(opt *Option) bool {
 	if slices.Contains(opt.ArgList, abiStr) {
 		return true
 	}
-	versionStr := fmt.Sprintf("apparmor%s", prebuild.Version)
+	versionStr := fmt.Sprintf("apparmor%.1f", prebuild.Version)
 	if slices.Contains(opt.ArgList, versionStr) {
 		return true
 	}
