@@ -21,6 +21,7 @@ profile dockerd @{exec_path} flags=(attach_disconnected) {
   capability kill,
   capability mknod,
   capability net_admin,
+  capability net_bind_service,
   capability net_raw,
   capability setfcap,
   capability sys_admin,
@@ -77,13 +78,15 @@ profile dockerd @{exec_path} flags=(attach_disconnected) {
 
   # Docker needs full access of the containers it manages.
   # TODO: should be in a sub profile started with pivot_root, not supported yet.
-  /{,**} rwl,
+  /{,**} rwl, #aa:only apt
+
+  @{att}/@{lib}/containerd/** rw,
+  @{att}/var/lib/docker/{,**} rwk,
 
   /etc/docker/{,**} r,
 
   @{att}/ r,
 
-  owner @{att}/@{lib}/containerd/** rw,
   owner @{lib}/docker/overlay2/*/work/{,**} rw,
   owner /var/lib/containerd/** rw,
   owner /var/lib/docker/{,**} rwk,
@@ -92,9 +95,12 @@ profile dockerd @{exec_path} flags=(attach_disconnected) {
   /tmp/build/ w,
   /tmp/containerd-mount@{int}/{,**} rw,
 
+  @{run}/systemd/notify rw,
+
+        @{run}/containerd/containerd.sock rw,
+  owner @{run}/docker.pid rw,
   owner @{run}/docker/ rw,
   owner @{run}/docker/** rwlk,
-  owner @{run}/docker.pid rw,
 
   @{sys}/devices/virtual/net/** r,
   @{sys}/fs/cgroup/cgroup.controllers r,
@@ -106,6 +112,9 @@ profile dockerd @{exec_path} flags=(attach_disconnected) {
         @{PROC}/1/cgroup r,
         @{PROC}/1/environ r,
         @{PROC}/cmdline r,
+        @{PROC}/pressure/cpu r,
+        @{PROC}/pressure/io r,
+        @{PROC}/pressure/memory r,
         @{PROC}/sys/kernel/keys/root_maxkeys r,
         @{PROC}/sys/kernel/osrelease r,
         @{PROC}/sys/kernel/threads-max r,
