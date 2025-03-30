@@ -42,6 +42,10 @@ jobs:
           if [[ ${{ matrix.mode }} == full-system-policy ]]; then
             echo -e "\noverride_dh_auto_build:\n\tmake full" >> debian/rules
           fi
+          if [[ ${{ matrix.os }} == ubuntu-24.04 ]] && [[ ${{ matrix.mode }} == default ]]; then
+            # Test with Re-attach disconnected path
+            sed -e 's;// builder.Register("attach");builder.Register("attach");' -i pkg/prebuild/cli/cli.go
+          fi
           bash dists/build.sh dpkg
 
       - name: Install apparmor.d
