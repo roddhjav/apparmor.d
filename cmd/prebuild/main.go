@@ -18,6 +18,9 @@ func init() {
 	// Define the default ABI
 	prebuild.ABI = 4
 
+	// Define the default version
+	prebuild.Version = 4.0
+
 	// Define the tasks applied by default
 	prepare.Register(
 		"synchronise",     // Initialize a new clean apparmor.d build directory
@@ -40,15 +43,31 @@ func init() {
 	case "arch":
 
 	case "ubuntu":
-		if !slices.Contains([]string{"noble"}, prebuild.Release["VERSION_CODENAME"]) {
+		switch prebuild.Release["VERSION_CODENAME"] {
+		case "jammy":
 			prebuild.ABI = 3
+			prebuild.Version = 3.0
+		case "noble", "oracular":
+			prebuild.ABI = 4
+			prebuild.Version = 4.0
+		case "plucky":
+			prebuild.ABI = 4
+			prebuild.Version = 4.1
 		}
 
 	case "debian":
-		prebuild.ABI = 3
+		switch prebuild.Release["VERSION_CODENAME"] {
+		case "bookworm":
+			prebuild.ABI = 3
+			prebuild.Version = 3.0
+		case "trixie", "sid":
+			prebuild.ABI = 4
+			prebuild.Version = 4.1
+		}
 
 	case "whonix":
 		prebuild.ABI = 3
+		prebuild.Version = 3.0
 
 		// Hide rewrittem Whonix profiles
 		prebuild.Hide += `/etc/apparmor.d/abstractions/base.d/kicksecure
