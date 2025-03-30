@@ -16,20 +16,33 @@ profile aa-log @{exec_path} {
 
   @{exec_path} mr,
 
-  @{bin}/journalctl rix,
-
-  /etc/machine-id r,
-  /var/lib/dbus/machine-id r,
+  @{bin}/journalctl rCx -> journalctl,
 
   /var/log/audit/* r,
   /var/log/syslog* r,
 
-  /{run,var}/log/journal/ r,
-  /{run,var}/log/journal/@{hex32}/{,*} r,
-
   @{sys}/kernel/mm/transparent_hugepage/hpage_pmd_size r,
 
   /dev/tty@{int} rw,
+
+  profile journalctl {
+    include <abstractions/base>
+    include <abstractions/consoles>
+
+    capability sys_resource,
+
+    @{bin}/journalctl mr,
+
+    /etc/machine-id r,
+    /var/lib/dbus/machine-id r,
+
+    /{run,var}/log/journal/ r,
+    /{run,var}/log/journal/@{hex32}/{,*} r,
+
+    @{PROC}/sys/kernel/random/boot_id r,
+
+    include if exists <local/aa-log_journalctl>
+  }
 
   include if exists <local/aa-log>
 }
