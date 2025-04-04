@@ -286,10 +286,7 @@ func parseRule(str string) rule {
 	res := make(rule, 0, len(str)/2)
 	tokens := tokenizeRule(str)
 
-	inAare := false
-	if len(tokens) > 0 && (isAARE(tokens[0]) || tokens[0] == tokOWNER) {
-		inAare = true
-	}
+	inAare := len(tokens) > 0 && (isAARE(tokens[0]) || tokens[0] == tokOWNER)
 	for idx, token := range tokens {
 		switch {
 		case token == tokEQUAL, token == tokPLUS+tokEQUAL, token == tokLESS+tokEQUAL: // Variable & Rlimit

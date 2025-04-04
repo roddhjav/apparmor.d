@@ -111,7 +111,7 @@ func formatFile(kind kind, profile string) (string, error) {
 	for idx, rules := range rulesByParagraph {
 		aa.IndentationLevel = getIndentationLevel(paragraphs[idx])
 		rules = rules.Merge().Sort().Format()
-		profile = strings.Replace(profile, paragraphs[idx], rules.String()+"\n", -1)
+		profile = strings.ReplaceAll(profile, paragraphs[idx], rules.String()+"\n")
 	}
 	return profile, nil
 }
