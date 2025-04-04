@@ -29,7 +29,7 @@ func (p FullSystemPolicy) Apply() ([]string, error) {
 	res := []string{}
 
 	// Install full system policy profiles
-	if err := paths.CopyTo(paths.New("apparmor.d/groups/_full/"), prebuild.Root.Join("apparmor.d")); err != nil {
+	if err := paths.New("apparmor.d/groups/_full/").CopyFS(prebuild.Root.Join("apparmor.d")); err != nil {
 		return res, err
 	}
 
@@ -58,5 +58,5 @@ func (p FullSystemPolicy) Apply() ([]string, error) {
 	}
 
 	// Set systemd unit drop-in files
-	return res, paths.CopyTo(prebuild.SystemdDir.Join("full"), prebuild.Root.Join("systemd"))
+	return res, prebuild.SystemdDir.Join("full").CopyFS(prebuild.Root.Join("systemd"))
 }

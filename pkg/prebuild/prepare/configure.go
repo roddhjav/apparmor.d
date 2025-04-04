@@ -7,7 +7,6 @@ package prepare
 import (
 	"fmt"
 
-	"github.com/roddhjav/apparmor.d/pkg/paths"
 	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 )
 
@@ -36,7 +35,7 @@ func (p Configure) Apply() ([]string, error) {
 		}
 
 		if prebuild.Version < 3.0 {
-			if err := paths.CopyTo(prebuild.DistDir.Join("ubuntu"), prebuild.RootApparmord); err != nil {
+			if err := prebuild.DistDir.Join("ubuntu").CopyFS(prebuild.RootApparmord); err != nil {
 				return res, err
 			}
 		}
@@ -48,7 +47,7 @@ func (p Configure) Apply() ([]string, error) {
 
 		if prebuild.Version < 4.1 {
 			// Copy Debian specific abstractions
-			if err := paths.CopyTo(prebuild.DistDir.Join("ubuntu"), prebuild.RootApparmord); err != nil {
+			if err := prebuild.DistDir.Join("ubuntu").CopyFS(prebuild.RootApparmord); err != nil {
 				return res, err
 			}
 		}

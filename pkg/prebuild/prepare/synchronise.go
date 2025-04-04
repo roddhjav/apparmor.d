@@ -41,7 +41,7 @@ func (p Synchronise) Apply() ([]string, error) {
 		}
 
 		if src.IsDir() {
-			if err := paths.CopyTo(src, dst); err != nil {
+			if err := src.CopyFS(dst); err != nil {
 				return res, err
 			}
 		} else {
