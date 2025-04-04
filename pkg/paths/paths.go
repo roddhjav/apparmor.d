@@ -388,6 +388,12 @@ func CopyTo(src *Path, dst *Path) error {
 	return nil
 }
 
+// CopyFS copies the file system fsys into the directory dir,
+// creating dir if necessary. It is the exivalent of os.CopyFS with Path.
+func (p *Path) CopyFS(dst *Path) error {
+	return os.CopyFS(dst.String(), os.DirFS(p.String()))
+}
+
 // CopyDirTo recursively copies the directory denoted by the current path to
 // the destination path. The source directory must exist and the destination
 // directory must NOT exist (no implicit destination name allowed).
