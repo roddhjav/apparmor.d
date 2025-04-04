@@ -212,7 +212,7 @@ func (r *File) addLine(other Rule) bool {
 	letterJ := getLetterIn(fileAlphabet, other.(*File).Path)
 	groupI, ok1 := fileAlphabetGroups[letterI]
 	groupJ, ok2 := fileAlphabetGroups[letterJ]
-	return letterI != letterJ && !(ok1 && ok2 && groupI == groupJ)
+	return letterI != letterJ && (!ok1 || !ok2 || groupI != groupJ)
 }
 
 type Link struct {
