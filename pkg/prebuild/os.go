@@ -67,13 +67,13 @@ func getDistribution() string {
 	if id == "ubuntu" {
 		return id
 	}
-	id_like := Release["ID_LIKE"]
+	idLike := Release["ID_LIKE"]
 	for main, based := range supportedDists {
-		if main == id || main == id_like {
+		if main == id || main == idLike {
 			return main
 		} else if slices.Contains(based, id) {
 			return main
-		} else if slices.Contains(based, id_like) {
+		} else if slices.Contains(based, idLike) {
 			return main
 		}
 	}

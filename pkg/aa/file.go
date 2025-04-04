@@ -168,7 +168,7 @@ func (r *File) Compare(other Rule) int {
 func (r *File) Merge(other Rule) bool {
 	o, _ := other.(*File)
 
-	if !r.Qualifier.Equal(o.Qualifier) {
+	if !r.Equal(o.Qualifier) {
 		return false
 	}
 	if r.Owner == o.Owner && r.Path == o.Path && r.Target == o.Target {
@@ -189,8 +189,8 @@ func (r *File) Lengths() []int {
 		lenPath = length("", r.Path)
 	}
 	return []int{
-		r.Qualifier.getLenAudit(),
-		r.Qualifier.getLenAccess(),
+		r.getLenAudit(),
+		r.getLenAccess(),
 		length("owner", r.Owner),
 		lenPath,
 	}
@@ -314,8 +314,8 @@ func (r *Link) Merge(other Rule) bool {
 
 func (r *Link) Lengths() []int {
 	return []int{
-		r.Qualifier.getLenAudit(),
-		r.Qualifier.getLenAccess(),
+		r.getLenAudit(),
+		r.getLenAccess(),
 		length("owner", r.Owner),
 		length("subset", r.Subset),
 		length("", r.Path),

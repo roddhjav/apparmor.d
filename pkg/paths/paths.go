@@ -521,7 +521,7 @@ func (p *Path) ReadFileAsLines() ([]string, error) {
 		return nil, err
 	}
 	txt := string(data)
-	txt = strings.Replace(txt, "\r\n", "\n", -1)
+	txt = strings.ReplaceAll(txt, "\r\n", "\n")
 	return strings.Split(txt, "\n"), nil
 }
 
@@ -542,7 +542,7 @@ func (p *Path) MustReadFilteredFileAsLines() []string {
 		panic(err)
 	}
 	txt := string(data)
-	txt = strings.Replace(txt, "\r\n", "\n", -1)
+	txt = strings.ReplaceAll(txt, "\r\n", "\n")
 	txt = util.Filter(txt)
 	res := strings.Split(txt, "\n")
 	if slices.Contains(res, "") {
@@ -636,7 +636,9 @@ func (p *Path) String() string {
 func (p *Path) Canonical() *Path {
 	canonical := p.Clone()
 	// https://github.com/golang/go/issues/17084#issuecomment-246645354
-	canonical.FollowSymLink()
+	if err := canonical.FollowSymLink(); err != nil {
+		return nil
+	}
 	if absPath, err := canonical.Abs(); err == nil {
 		canonical = absPath
 	}

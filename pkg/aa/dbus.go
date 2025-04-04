@@ -125,7 +125,7 @@ func (r *Dbus) Compare(other Rule) int {
 func (r *Dbus) Merge(other Rule) bool {
 	o, _ := other.(*Dbus)
 
-	if !r.Qualifier.Equal(o.Qualifier) {
+	if !r.Equal(o.Qualifier) {
 		return false
 	}
 	if r.Bus == o.Bus && r.Name == o.Name && r.Path == o.Path &&

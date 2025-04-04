@@ -104,10 +104,7 @@ type Qualifier struct {
 }
 
 func newQualifierFromLog(log map[string]string) Qualifier {
-	audit := false
-	if log["apparmor"] == "AUDIT" {
-		audit = true
-	}
+	audit := log["apparmor"] == "AUDIT"
 	return Qualifier{Audit: audit}
 }
 

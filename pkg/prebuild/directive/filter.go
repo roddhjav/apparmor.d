@@ -59,7 +59,7 @@ func filter(only bool, opt *Option, profile string) (string, error) {
 	}
 
 	if opt.IsInline() {
-		profile = strings.Replace(profile, opt.Raw, "", -1)
+		profile = strings.ReplaceAll(profile, opt.Raw, "")
 	} else {
 		regRemoveParagraph := regexp.MustCompile(`(?s)` + opt.Raw + `\n.*?\n\n`)
 		profile = regRemoveParagraph.ReplaceAllString(profile, "")

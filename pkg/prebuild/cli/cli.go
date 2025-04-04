@@ -18,9 +18,9 @@ import (
 )
 
 const (
-	nilABI uint    = 0
-	nilVer float64 = 0.0
-	usage          = `aa-prebuild [-h] [--complain | --enforce] [--full] [--abi 3|4] [--version V] [--file FILE]
+	nilABI = 0
+	nilVer = 0.0
+	usage  = `aa-prebuild [-h] [--complain | --enforce] [--full] [--abi 3|4] [--version V] [--file FILE]
 
     Prebuild apparmor.d profiles for a given distribution and apply
     internal built-in directives.
@@ -41,7 +41,7 @@ var (
 	complain bool
 	enforce  bool
 	full     bool
-	abi      uint
+	abi      int
 	version  float64
 	file     string
 )
@@ -55,8 +55,8 @@ func init() {
 	flag.BoolVar(&complain, "complain", false, "Set complain flag on all profiles.")
 	flag.BoolVar(&enforce, "e", false, "Set enforce flag on all profiles.")
 	flag.BoolVar(&enforce, "enforce", false, "Set enforce flag on all profiles.")
-	flag.UintVar(&abi, "a", nilABI, "Target apparmor ABI.")
-	flag.UintVar(&abi, "abi", nilABI, "Target apparmor ABI.")
+	flag.IntVar(&abi, "a", nilABI, "Target apparmor ABI.")
+	flag.IntVar(&abi, "abi", nilABI, "Target apparmor ABI.")
 	flag.Float64Var(&version, "v", nilVer, "Target apparmor version.")
 	flag.Float64Var(&version, "version", nilVer, "Target apparmor version.")
 	flag.StringVar(&file, "F", "", "Only prebuild a given file.")

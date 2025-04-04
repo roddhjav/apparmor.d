@@ -80,7 +80,7 @@ func (f *AppArmorProfileFile) resolveValues(input string) ([]string, error) {
 	values := []string{}
 	match := regVariableReference.FindStringSubmatch(input)
 	if len(match) == 0 {
-		return nil, fmt.Errorf("Invalid variable reference: %s", input)
+		return nil, fmt.Errorf("invalid variable reference: %s", input)
 	}
 
 	variable := match[0]
@@ -105,7 +105,7 @@ func (f *AppArmorProfileFile) resolveValues(input string) ([]string, error) {
 	}
 
 	if !found {
-		return nil, fmt.Errorf("Variable %s not defined", varname)
+		return nil, fmt.Errorf("variable %s not defined", varname)
 	}
 	return values, nil
 }
@@ -113,7 +113,7 @@ func (f *AppArmorProfileFile) resolveValues(input string) ([]string, error) {
 // resolveInclude resolves all includes defined in the profile preamble
 func (f *AppArmorProfileFile) resolveInclude(include *Include) error {
 	if include == nil || include.Path == "" {
-		return fmt.Errorf("Invalid include: %v", include)
+		return fmt.Errorf("invalid include: %v", include)
 	}
 
 	_, isCached := includeCache[include]

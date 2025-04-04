@@ -55,7 +55,7 @@ func aaLog(logger string, path string, profile string) error {
 	case "systemd":
 		file, err = logs.GetJournalctlLogs(path, since, !slices.Contains(logs.LogFiles, path))
 	default:
-		err = fmt.Errorf("Logger %s not supported.", logger)
+		err = fmt.Errorf("logger %s not supported", logger)
 	}
 	if err != nil {
 		return err

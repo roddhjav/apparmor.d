@@ -106,7 +106,7 @@ func (r *Signal) Compare(other Rule) int {
 func (r *Signal) Merge(other Rule) bool {
 	o, _ := other.(*Signal)
 
-	if !r.Qualifier.Equal(o.Qualifier) {
+	if !r.Equal(o.Qualifier) {
 		return false
 	}
 	switch {
@@ -124,8 +124,8 @@ func (r *Signal) Merge(other Rule) bool {
 
 func (r *Signal) Lengths() []int {
 	return []int{
-		r.Qualifier.getLenAudit(),
-		r.Qualifier.getLenAccess(),
+		r.getLenAudit(),
+		r.getLenAccess(),
 		length("", r.Access),
 		length("set=", r.Set),
 		length("peer=", r.Peer),

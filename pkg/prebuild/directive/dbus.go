@@ -61,32 +61,32 @@ func (d Dbus) Apply(opt *Option, profile string) (string, error) {
 	generatedDbus := r.String()
 	lenDbus := len(generatedDbus)
 	generatedDbus = generatedDbus[:lenDbus-1]
-	profile = strings.Replace(profile, opt.Raw, generatedDbus, -1)
+	profile = strings.ReplaceAll(profile, opt.Raw, generatedDbus)
 	return profile, nil
 }
 
 func (d Dbus) sanityCheck(opt *Option) (string, error) {
 	if len(opt.ArgList) < 1 {
-		return "", fmt.Errorf("Unknown dbus action: %s in %s", opt.Name, opt.File)
+		return "", fmt.Errorf("unknown dbus action: %s in %s", opt.Name, opt.File)
 	}
 	action := opt.ArgList[0]
 	if action != "own" && action != "talk" && action != "common" {
-		return "", fmt.Errorf("Unknown dbus action: %s in %s", opt.Name, opt.File)
+		return "", fmt.Errorf("unknown dbus action: %s in %s", opt.Name, opt.File)
 	}
 
 	if _, present := opt.ArgMap["name"]; !present {
-		return "", fmt.Errorf("Missing name for 'dbus: %s' in %s", action, opt.File)
+		return "", fmt.Errorf("missing name for 'dbus: %s' in %s", action, opt.File)
 	}
 	if _, present := opt.ArgMap["bus"]; !present {
-		return "", fmt.Errorf("Missing bus for '%s' in %s", opt.ArgMap["name"], opt.File)
+		return "", fmt.Errorf("missing bus for '%s' in %s", opt.ArgMap["name"], opt.File)
 	}
 	if _, present := opt.ArgMap["label"]; !present && action == "talk" {
-		return "", fmt.Errorf("Missing label for '%s' in %s", opt.ArgMap["name"], opt.File)
+		return "", fmt.Errorf("missing label for '%s' in %s", opt.ArgMap["name"], opt.File)
 	}
 
 	// Set default values
 	if _, present := opt.ArgMap["path"]; !present {
-		opt.ArgMap["path"] = "/" + strings.Replace(opt.ArgMap["name"], ".", "/", -1) + "{,/**}"
+		opt.ArgMap["path"] = "/" + strings.ReplaceAll(opt.ArgMap["name"], ".", "/") + "{,/**}"
 	}
 	opt.ArgMap["name"] += "{,.*}"
 	return action, nil

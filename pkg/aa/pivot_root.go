@@ -86,8 +86,8 @@ func (r *PivotRoot) Merge(other Rule) bool {
 
 func (r *PivotRoot) Lengths() []int {
 	return []int{
-		r.Qualifier.getLenAudit(),
-		r.Qualifier.getLenAccess(),
+		r.getLenAudit(),
+		r.getLenAccess(),
 		length("oldroot=", r.OldRoot),
 		length("", r.NewRoot),
 		length("", r.TargetProfile),

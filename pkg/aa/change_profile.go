@@ -106,8 +106,8 @@ func (r *ChangeProfile) Merge(other Rule) bool {
 
 func (r *ChangeProfile) Lengths() []int {
 	return []int{
-		r.Qualifier.getLenAudit(),
-		r.Qualifier.getLenAccess(),
+		r.getLenAudit(),
+		r.getLenAccess(),
 		length("", r.ExecMode),
 		length("", r.Exec),
 		length("", r.ProfileName),

@@ -17,14 +17,14 @@ import (
 )
 
 type Tldr struct {
-	Url    string      // Tldr download url
+	URL    string      // Tldr download url
 	Dir    *paths.Path // Tldr cache directory
 	Ignore []string    // List of ignored software
 }
 
 func NewTldr(dir *paths.Path) Tldr {
 	return Tldr{
-		Url: "https://github.com/tldr-pages/tldr/archive/refs/heads/main.tar.gz",
+		URL: "https://github.com/tldr-pages/tldr/archive/refs/heads/main.tar.gz",
 		Dir: dir,
 	}
 }
@@ -33,9 +33,9 @@ func NewTldr(dir *paths.Path) Tldr {
 func (t Tldr) Download() error {
 	gzPath := t.Dir.Parent().Join("tldr.tar.gz")
 	if !gzPath.Exist() {
-		resp, err := http.Get(t.Url)
+		resp, err := http.Get(t.URL)
 		if err != nil {
-			return fmt.Errorf("downloading %s: %w", t.Url, err)
+			return fmt.Errorf("downloading %s: %w", t.URL, err)
 		}
 		defer resp.Body.Close()
 
