@@ -78,7 +78,7 @@ func (r *IOUring) Compare(other Rule) int {
 func (r *IOUring) Merge(other Rule) bool {
 	o, _ := other.(*IOUring)
 
-	if !r.Qualifier.Equal(o.Qualifier) {
+	if !r.Equal(o.Qualifier) {
 		return false
 	}
 	if r.Label == o.Label {
@@ -91,8 +91,8 @@ func (r *IOUring) Merge(other Rule) bool {
 
 func (r *IOUring) Lengths() []int {
 	return []int{
-		r.Qualifier.getLenAudit(),
-		r.Qualifier.getLenAccess(),
+		r.getLenAudit(),
+		r.getLenAccess(),
 		length("", r.Access),
 		length("label=", r.Label),
 	}

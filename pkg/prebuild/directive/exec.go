@@ -31,7 +31,7 @@ func init() {
 
 func (d Exec) Apply(opt *Option, profileRaw string) (string, error) {
 	if len(opt.ArgList) == 0 {
-		return "", fmt.Errorf("No profile to exec")
+		return "", fmt.Errorf("no profile to exec")
 	}
 	transition := "Px"
 	transitions := []string{"P", "U", "p", "u", "PU", "pu"}
@@ -70,5 +70,5 @@ func (d Exec) Apply(opt *Option, profileRaw string) (string, error) {
 	rules = rules.Sort()
 	new := rules.String()
 	new = new[:len(new)-1]
-	return strings.Replace(profileRaw, opt.Raw, new, -1), nil
+	return strings.ReplaceAll(profileRaw, opt.Raw, new), nil
 }

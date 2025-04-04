@@ -8,7 +8,7 @@ import (
 	"github.com/roddhjav/apparmor.d/pkg/paths"
 )
 
-// Default Apparmor magic directory: /etc/apparmor.d/.
+// MagicRoot is the default Apparmor magic directory: /etc/apparmor.d/.
 var MagicRoot = paths.New("/etc/apparmor.d")
 
 // AppArmorProfileFiles represents a full set of apparmor profiles

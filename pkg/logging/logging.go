@@ -81,7 +81,7 @@ func Warning(msg string, a ...interface{}) int {
 	return Print("%s", Warningf(msg, a...))
 }
 
-// Fatalf returns a formatted error message
+// Error returns a formatted error message
 func Error(msg string, a ...interface{}) int {
 	return Print("%s", fmt.Sprintf("%s%s%s\n", Indent, errorText, fmt.Sprintf(msg, a...)))
 }

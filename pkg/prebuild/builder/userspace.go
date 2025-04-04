@@ -54,7 +54,7 @@ func (b Userspace) Apply(opt *Option, profile string) (string, error) {
 	matches := regAttachments.FindAllString(profile, -1)
 	if len(matches) > 0 {
 		att := f.GetDefaultProfile().GetAttachments()
-		strheader := strings.Replace(matches[0], tokATTACHMENT, att, -1)
+		strheader := strings.ReplaceAll(matches[0], tokATTACHMENT, att)
 		return regAttachments.ReplaceAllLiteralString(profile, strheader), nil
 	}
 	return profile, nil

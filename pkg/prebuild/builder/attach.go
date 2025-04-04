@@ -38,9 +38,9 @@ func (b ReAttach) Apply(opt *Option, profile string) (string, error) {
 
 	if strings.Contains(profile, "attach_disconnected") {
 		insert = "@{att} = /att/" + opt.Name + "/\n"
-		profile = strings.Replace(profile,
+		profile = strings.ReplaceAll(profile,
 			"attach_disconnected",
-			"attach_disconnected,attach_disconnected.path=@{att}", -1,
+			"attach_disconnected,attach_disconnected.path=@{att}",
 		)
 
 		old := "include if exists <local/" + opt.Name + ">"

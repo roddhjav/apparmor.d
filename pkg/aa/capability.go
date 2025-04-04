@@ -84,8 +84,8 @@ func (r *Capability) Merge(other Rule) bool {
 
 func (r *Capability) Lengths() []int {
 	return []int{
-		r.Qualifier.getLenAudit(),
-		r.Qualifier.getLenAccess(),
+		r.getLenAudit(),
+		r.getLenAccess(),
 		length("", r.Names),
 	}
 }

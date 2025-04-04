@@ -8,13 +8,13 @@ import "github.com/roddhjav/apparmor.d/pkg/paths"
 
 var (
 	// AppArmor ABI version
-	ABI uint = 0
+	ABI = 0
 
 	// AppArmor version
-	Version float64 = 4.0
+	Version = 4.0
 
 	// Pkgname is the name of the package
-	Pkgname string = "apparmor.d"
+	Pkgname = "apparmor.d"
 
 	// Root is the root directory for the build (default: .build)
 	Root *paths.Path = paths.New(".build")

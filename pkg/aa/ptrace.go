@@ -80,7 +80,7 @@ func (r *Ptrace) Compare(other Rule) int {
 func (r *Ptrace) Merge(other Rule) bool {
 	o, _ := other.(*Ptrace)
 
-	if !r.Qualifier.Equal(o.Qualifier) {
+	if !r.Equal(o.Qualifier) {
 		return false
 	}
 	if r.Peer == o.Peer {
@@ -93,8 +93,8 @@ func (r *Ptrace) Merge(other Rule) bool {
 
 func (r *Ptrace) Lengths() []int {
 	return []int{
-		r.Qualifier.getLenAudit(),
-		r.Qualifier.getLenAccess(),
+		r.getLenAudit(),
+		r.getLenAccess(),
 		length("", r.Access),
 		length("peer=", r.Peer),
 	}

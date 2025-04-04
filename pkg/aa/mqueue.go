@@ -112,7 +112,7 @@ func (r *Mqueue) Compare(other Rule) int {
 func (r *Mqueue) Merge(other Rule) bool {
 	o, _ := other.(*Mqueue)
 
-	if !r.Qualifier.Equal(o.Qualifier) {
+	if !r.Equal(o.Qualifier) {
 		return false
 	}
 	if r.Type == o.Type && r.Label == o.Label && r.Name == o.Name {
@@ -125,8 +125,8 @@ func (r *Mqueue) Merge(other Rule) bool {
 
 func (r *Mqueue) Lengths() []int {
 	return []int{
-		r.Qualifier.getLenAudit(),
-		r.Qualifier.getLenAccess(),
+		r.getLenAudit(),
+		r.getLenAccess(),
 		length("", r.Access),
 		length("type=", r.Type),
 		length("label=", r.Label),
