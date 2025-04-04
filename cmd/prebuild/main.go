@@ -55,7 +55,7 @@ func init() {
 
 	case "debian":
 		switch prebuild.Release["VERSION_CODENAME"] {
-		case "bookworm":
+		case "bullseye", "bookworm":
 			prebuild.ABI = 3
 			prebuild.Version = 3.0
 		case "trixie", "sid":

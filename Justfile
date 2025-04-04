@@ -163,12 +163,18 @@ clean:
 
 [doc('Build the apparmor.d package')]
 package dist:
-    #!/usr/bin/env bash
-    set -eu -o pipefail
-    dist="{{dist}}"
-    [[ $dist =~ ubuntu* ]] && dist=ubuntu
-    [[ $dist =~ debian* ]] && dist=debian
-    bash dists/docker.sh $dist
+	#!/usr/bin/env bash
+	set -eu -o pipefail
+	dist="{{dist}}"
+	version=""
+	if [[ $dist =~ ubuntu([0-9]+) ]]; then
+		version="${BASH_REMATCH[1]}.04"
+		dist="ubuntu"
+	elif [[ $dist =~ debian([0-9]+) ]]; then
+		version="${BASH_REMATCH[1]}"
+		dist="debian"
+	fi
+	bash dists/docker.sh $dist $version
 
 [doc('Build the image')]
 img dist flavor: (package dist)
