@@ -36,7 +36,7 @@ The following desktop environments are supported:
 
 **Build dependency**
 
-* Go >= 1.21
+* Go >= 1.23
 
 
 ## Configure AppArmor
@@ -157,7 +157,7 @@ echo 'Optimize=compress-fast' | sudo tee -a /etc/apparmor/parser.conf
         Warning: profile dependencies fallback to unconfined.
         @{bin}/wl-{copy,paste} rPx,
         @{bin}/xclip           rPx,
-        @{bin}/python3.@{int} rPx -> pass-import,  # pass-import
+        @{python_path}         rPx -> pass-import,  # pass-import
             @{pager_path}        rPx -> child-pager,
         '.build/apparmor.d/pass' -> '/etc/apparmor.d/pass'
         ```
