@@ -17,6 +17,12 @@
 #   just available
 #   just clean
 
+# Build setings
+destdir := "/"
+build := ".build"
+pkgdest := `pwd` / ".pkg/dist"
+pkgname := "apparmor.d"
+
 # Admin username
 username := "user"
 
@@ -55,14 +61,8 @@ c := "--connect=qemu:///system"
 # VM prefix
 prefix := "aa-"
 
-# Build setings
-destdir := "/"
-build := ".build"
-pkgdest := `pwd` / ".pkg/dist"
-pkgname := "apparmor.d"
-
 [doc('Show this help message')]
-default:
+help:
 	@echo -e "Integration environment helper for apparmor.d\n"
 	@just --list --unsorted
 	@echo -e "\nSee https://apparmor.pujol.io/development/vm/ for more information."
@@ -89,7 +89,6 @@ install:
 	#!/usr/bin/env bash
 	set -eu -o pipefail
 	install -Dm0755 {{build}}/aa-log {{destdir}}/usr/bin/aa-log
-	install -Dm0644 systemd/aa-fix.service {{destdir}}/usr/lib/systemd/system/aa-fix.service
 	for file in $(find "{{build}}/share" -type f -not -name "*.md" -printf "%P\n"); do
 		install -Dm0644 "{{build}}/share/$file" "{{destdir}}/usr/share/$file"
 	done
@@ -288,14 +287,14 @@ get_ip dist flavor:
 		grep -E -o '([[:digit:]]{1,3}\.){3}[[:digit:]]{1,3}'
 
 get_osinfo dist:
-    #!/usr/bin/env python3
-    osinfo = {
-        "archlinux": "archlinux",
-        "debian12": "debian12",
-        "debian13": "debian13",
-        "ubuntu22": "ubuntu22.04",
-        "ubuntu24": "ubuntu24.04",
-        "ubuntu25": "ubuntu25.04", 
-        "opensuse": "opensusetumbleweed",
-    }
-    print(osinfo.get("{{dist}}", "{{dist}}"))
+	#!/usr/bin/env python3
+	osinfo = {
+		"archlinux": "archlinux",
+		"debian12": "debian12",
+		"debian13": "debian13",
+		"ubuntu22": "ubuntu22.04",
+		"ubuntu24": "ubuntu24.04",
+		"ubuntu25": "ubuntu25.04", 
+		"opensuse": "opensusetumbleweed",
+	}
+	print(osinfo.get("{{dist}}", "{{dist}}"))
