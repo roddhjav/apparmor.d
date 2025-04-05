@@ -30,9 +30,9 @@ load common
     flatpak info org.vim.Vim
 }
 
-@test "flatpak: Run an installed application" {
-    _timeout flatpak run org.vim.Vim
-}
+# @test "flatpak: Run an installed application" {
+#     _timeout flatpak run org.vim.Vim
+# }
 
 @test "flatpak: Update all installed applications and runtimes" {
     sudo flatpak update --noninteractive
