@@ -42,6 +42,10 @@ func (b ReAttach) Apply(opt *Option, profile string) (string, error) {
 			"attach_disconnected",
 			"attach_disconnected,attach_disconnected.path=@{att}",
 		)
+		profile = strings.ReplaceAll(profile,
+			"include <abstractions/consoles>",
+			"include <abstractions/attached/consoles>",
+		)
 
 		old := "include if exists <local/" + opt.Name + ">"
 		new := "include <abstractions/attached/base>\n  " + old
