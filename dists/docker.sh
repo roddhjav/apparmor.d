@@ -62,6 +62,7 @@ build_in_docker_makepkg() {
 			--env PKGDEST="$BUILDIR" --env PACKAGER="$PACKAGER" \
 			--env BUILDDIR=/tmp/build \
 			"$BASEIMAGE/$dist"
+		docker exec "$img" sudo pacman -Syu --noconfirm --noprogressbar
 	fi
 
 	docker exec --workdir="$BUILDIR/$PKGNAME" "$img" bash dists/build.sh pkg
@@ -116,8 +117,7 @@ build_in_docker_rpm() {
 main() {
 	case "$DISTRIBUTION" in
 	archlinux)
-		# build_in_docker_makepkg "$COMMAND"
-		PKGDEST="$OUTPUT" makepkg -Cf
+		build_in_docker_makepkg "$DISTRIBUTION"
 		;;
 
 	debian | ubuntu | whonix)
