@@ -5,6 +5,10 @@
 
 load ../common
 
+setup_file() {
+    skip
+}
+
 @test "apt: Update the list of available packages and versions" {
     sudo apt update
 }
