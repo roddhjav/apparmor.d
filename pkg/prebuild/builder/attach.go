@@ -5,14 +5,9 @@
 package builder
 
 import (
-	"regexp"
 	"strings"
 
 	"github.com/roddhjav/apparmor.d/pkg/prebuild"
-)
-
-var (
-	regProfile = regexp.MustCompile(`profile ([^ ]+)`)
 )
 
 type ReAttach struct {
