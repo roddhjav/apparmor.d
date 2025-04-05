@@ -30,7 +30,8 @@ func init() {
 
 // Apply will re-attach the disconnected path
 //   - Add the attach_disconnected.path flag on all frofile with the attach_disconnected flag
-//   - Add the attached/base abstraction in the profile
+//   - Replace the base abstraction by attached/base
+//   - Replace the consoles abstraction by attached/consoles
 //   - For compatibility, non disconnected profile will have the @{att} variable set to /
 func (b ReAttach) Apply(opt *Option, profile string) (string, error) {
 	var insert string
@@ -43,23 +44,13 @@ func (b ReAttach) Apply(opt *Option, profile string) (string, error) {
 			"attach_disconnected,attach_disconnected.path=@{att}",
 		)
 		profile = strings.ReplaceAll(profile,
+			"include <abstractions/base>",
+			"include <abstractions/attached/base>",
+		)
+		profile = strings.ReplaceAll(profile,
 			"include <abstractions/consoles>",
 			"include <abstractions/attached/consoles>",
 		)
-
-		old := "include if exists <local/" + opt.Name + ">"
-		new := "include <abstractions/attached/base>\n  " + old
-		profile = strings.Replace(profile, old, new, 1)
-
-		for _, match := range regProfile.FindAllStringSubmatch(profile, -1) {
-			name := match[1]
-			if name == opt.Name {
-				continue
-			}
-			old = "include if exists <local/" + opt.Name + "_" + name + ">"
-			new = "include <abstractions/attached/base>\n    " + old
-			profile = strings.Replace(profile, old, new, 1)
-		}
 
 	} else {
 		insert = "@{att} = /\n"
