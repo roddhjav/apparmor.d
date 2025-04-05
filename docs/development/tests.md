@@ -19,7 +19,7 @@ Misconfigured AppArmor profiles is one of the most effective ways to break someo
     - Ensure modern profile naming
     - Ensure `vim:syntax=apparmor`
 
-- [x] **[Integration Tests:](integration.md)** `make integration`
+- [x] **[Integration Tests:](integration.md)** `just integration <dist> <flavor>`
     - Run simple CLI commands to ensure no logs are raised.
     - Uses the [bats](https://github.com/bats-core/bats-core) test system.
     - Run in the Github Action as well as in all local [test VM](vm.md).
