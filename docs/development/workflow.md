@@ -92,7 +92,7 @@ Instead, install an individual profile or the development package, the following
     For any system with docker installed you can simply build the package with:
 
     ```sh
-    make package dist=<distribution>
+    just package <distribution>
     ```
 
     Then you can install the package with `dpkg`, `pacman` or `rpm`.

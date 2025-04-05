@@ -73,11 +73,6 @@ dev:
 	@sudo install -Dm644 ${BUILD}/apparmor.d/${name} /etc/apparmor.d/${name}
 	@sudo systemctl restart apparmor || sudo journalctl -xeu apparmor.service
 
-.PHONY: package
-dist ?= archlinux
-package:
-	@bash dists/docker.sh ${dist}
-
 .PHONY: pkg
 pkg:
 	@makepkg --syncdeps --install --cleanbuild --force --noconfirm
@@ -92,43 +87,6 @@ rpm:
 	@bash dists/build.sh rpm
 	@sudo rpm -ivh --force  ${PKGDEST}/${PKGNAME}-*.rpm
 
-.PHONY: tests
-tests:
-	@go test ./cmd/... -v -cover -coverprofile=coverage.out
-	@go test ./pkg/... -v -cover -coverprofile=coverage.out
-	@go tool cover -func=coverage.out
-
-.PHONY: lint
-lint:
-	@golangci-lint run
-	@make --directory=tests lint
-	@shellcheck --shell=bash \
-		PKGBUILD dists/build.sh dists/docker.sh tests/check.sh \
-		tests/packer/init.sh tests/packer/src/aa-update tests/packer/clean.sh \
-		debian/${PKGNAME}.postinst debian/${PKGNAME}.postrm
-
 .PHONY: check
 check:
 	@bash tests/check.sh
-
-.PHONY: integration
-integration:
-	@bats --recursive --timing --print-output-on-failure tests/integration/
-
-.PHONY: manual
-manual:
-	@pandoc -t man -s -o root/usr/share/man/man8/aa-log.8 root/usr/share/man/man8/aa-log.md
-
-.PHONY: docs
-docs:
-	@ENABLED_GIT_REVISION_DATE=false MKDOCS_OFFLINE=true mkdocs build --strict
-
-.PHONY: serve
-serve:
-	@ENABLED_GIT_REVISION_DATE=false MKDOCS_OFFLINE=false mkdocs serve
-
-.PHONY: clean
-clean:
-	@rm -rf \
-		debian/.debhelper debian/debhelper* debian/*.debhelper debian/${PKGNAME} \
-		.pkg/${PKGNAME}* ${BUILD} coverage.out

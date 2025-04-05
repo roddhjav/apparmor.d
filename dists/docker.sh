@@ -3,7 +3,10 @@
 # Copyright (C) 2022-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-# Usage: make package dist=<distribution> version=<version>
+# Usage:
+#  just package ubuntu24
+#  just package archlinux
+#  just package opensuse
 
 set -eu -o pipefail
 
