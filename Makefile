@@ -90,3 +90,7 @@ rpm:
 .PHONY: check
 check:
 	@bash tests/check.sh
+
+.PHONY: integration
+integration:
+	@bats --recursive --timing --print-output-on-failure tests/integration/
