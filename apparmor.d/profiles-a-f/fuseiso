@@ -36,27 +36,17 @@ profile fuseiso @{exec_path} {
 
   profile fusermount {
     include <abstractions/base>
-    include <abstractions/nameservice-strict>
-
-    # To mount anything:
-    capability sys_admin,
-
-    capability dac_read_search,
+    include <abstractions/app/fusermount>
 
     mount fstype={fuse,fuse.fuseiso} -> @{HOME}/*/,
     mount fstype={fuse,fuse.fuseiso} -> @{HOME}/*/*/,
     mount fstype={fuse,fuse.fuseiso} -> @{user_cache_dirs}/**/,
 
-    @{bin}/fusermount{,3} mr,
+    umount @{HOME}/*/,
+    umount @{HOME}/*/*/,
+    umount @{user_cache_dirs}/**/,
 
-    /etc/fuse.conf r,
-
-    # Image files to be mounted
-    owner @{user_img_dirs}/{,**} r,
-
-    @{PROC}/@{pid}/mounts r,
-
-    /dev/fuse rw,
+    owner @{user_img_dirs}/{,**} r, # Image files to be mounted
 
     include if exists <local/fuseiso_fusermount>
   }

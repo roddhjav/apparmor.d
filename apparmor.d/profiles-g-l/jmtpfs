@@ -18,8 +18,7 @@ profile jmtpfs @{exec_path} {
 
   @{bin}/fusermount{,3} rCx -> fusermount,
 
-  owner @{tmp}/tmp* rw,
-  owner @{tmp}/#@{int} rw,
+  /etc/magic r,
 
   # Mount points
   owner @{HOME}/*/ r,
@@ -27,36 +26,20 @@ profile jmtpfs @{exec_path} {
 
   owner @{user_cache_dirs}/*/mtp{,-@{int}}/ rw,
 
-  mount fstype={fuse,fuse.jmtpfs} -> @{HOME}/*/,
-  mount fstype={fuse,fuse.jmtpfs} -> @{HOME}/*/*/,
-  mount fstype={fuse,fuse.jmtpfs} -> @{user_cache_dirs}/*/*/,
-
-  /etc/magic r,
-
-  /dev/fuse rw,
-
+  owner @{tmp}/tmp* rw,
+  owner @{tmp}/#@{int} rw,
 
   profile fusermount {
     include <abstractions/base>
-    include <abstractions/nameservice-strict>
-
-    # To mount anything:
-    capability sys_admin,
-
-    #
-    capability dac_read_search,
-
-    @{bin}/fusermount{,3} mr,
+    include <abstractions/app/fusermount>
 
     mount fstype={fuse,fuse.jmtpfs} -> @{HOME}/*/,
     mount fstype={fuse,fuse.jmtpfs} -> @{HOME}/*/*/,
     mount fstype={fuse,fuse.jmtpfs} -> @{user_cache_dirs}/*/*/,
 
-    /etc/fuse.conf r,
-
-    /dev/fuse rw,
-
-    @{PROC}/@{pid}/mounts r,
+    umount @{HOME}/*/,
+    umount @{HOME}/*/*/,
+    umount @{user_cache_dirs}/*/*/,
 
     include if exists <local/jmtpfs_fusermount>
   }
