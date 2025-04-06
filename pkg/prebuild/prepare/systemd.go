@@ -5,6 +5,7 @@
 package prepare
 
 import (
+	"github.com/roddhjav/apparmor.d/pkg/paths"
 	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 )
 
@@ -32,9 +33,9 @@ func init() {
 }
 
 func (p SystemdDefault) Apply() ([]string, error) {
-	return []string{}, prebuild.SystemdDir.Join("default").CopyFS(prebuild.Root.Join("systemd"))
+	return []string{}, paths.CopyTo(prebuild.SystemdDir.Join("default"), prebuild.Root.Join("systemd"))
 }
 
 func (p SystemdEarly) Apply() ([]string, error) {
-	return []string{}, prebuild.SystemdDir.Join("early").CopyFS(prebuild.Root.Join("systemd"))
+	return []string{}, paths.CopyTo(prebuild.SystemdDir.Join("early"), prebuild.Root.Join("systemd"))
 }
