@@ -45,5 +45,5 @@ func (p FullSystemPolicy) Apply() ([]string, error) {
 	}
 
 	// Set systemd unit drop-in files
-	return res, prebuild.SystemdDir.Join("full").CopyFS(prebuild.Root.Join("systemd"))
+	return res, paths.CopyTo(prebuild.SystemdDir.Join("full"), prebuild.Root.Join("systemd"))
 }
