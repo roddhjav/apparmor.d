@@ -27,26 +27,17 @@ profile obexfs @{exec_path} {
 
   /dev/fuse rw,
 
-
   profile fusermount {
     include <abstractions/base>
-    include <abstractions/nameservice-strict>
-
-    # To mount anything:
-    capability sys_admin,
+    include <abstractions/app/fusermount>
 
     network bluetooth stream,
-
-    @{bin}/fusermount{,3} mr,
-
-    /etc/fuse.conf r,
-
-    /dev/fuse rw,
 
     mount fstype={fuse,fuse.obexfs} -> @{HOME}/*/,
     mount fstype={fuse,fuse.obexfs} -> @{HOME}/*/*/,
 
-    @{PROC}/@{pid}/mounts r,
+    umount @{HOME}/*/,
+    umount @{HOME}/*/*/,
 
     include if exists <local/obexfs_fusermount>
   }

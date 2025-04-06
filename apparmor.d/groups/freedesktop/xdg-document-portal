@@ -63,10 +63,11 @@ profile xdg-document-portal @{exec_path} flags=(attach_disconnected) {
 
   profile fusermount flags=(attach_disconnected) {
     include <abstractions/base>
-    include <abstractions/nameservice-strict>
+    include <abstractions/app/fusermount>
 
-    capability sys_admin,
     capability dac_read_search,
+    capability dac_override,
+    capability setuid,
 
     mount options=(rw, rprivate) -> /,
     mount options=(rw, rbind) @{run}/user/@{uid}/ -> /,
@@ -76,16 +77,13 @@ profile xdg-document-portal @{exec_path} flags=(attach_disconnected) {
 
     unix (send receive) type=stream peer=(label=xdg-document-portal),
 
-    @{bin}/fusermount{,3} mr,
-
-    /etc/fuse{,3}.conf r,
+    @{bin}/mount          rix,
+    @{bin}/umount         rix,
 
     owner @{run}/user/@{uid}/doc/ rw,
 
-    @{PROC}/@{pids}/mounts r,
-
-          /dev/fuse rw,
-    @{att}/dev/tty@{int} rw,
+    @{run}/mount/utab r,
+    @{run}/mount/utab.* rwk,
 
     include if exists <local/xdg-document-portal_fusermount>
   }
