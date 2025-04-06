@@ -9,7 +9,6 @@ import (
 
 	"github.com/roddhjav/apparmor.d/pkg/paths"
 	"github.com/roddhjav/apparmor.d/pkg/prebuild"
-	"github.com/roddhjav/apparmor.d/pkg/util"
 )
 
 type FullSystemPolicy struct {
@@ -41,18 +40,6 @@ func (p FullSystemPolicy) Apply() ([]string, error) {
 	}
 	out = strings.ReplaceAll(out, "@{p_systemd}=unconfined", "@{p_systemd}=systemd")
 	out = strings.ReplaceAll(out, "@{p_systemd_user}=unconfined", "@{p_systemd_user}=systemd-user")
-	if err := path.WriteFile([]byte(out)); err != nil {
-		return res, err
-	}
-
-	// Fix conflicting x modifiers in abstractions - FIXME: Temporary solution
-	path = prebuild.RootApparmord.Join("abstractions/gstreamer")
-	out, err = path.ReadFileAsString()
-	if err != nil {
-		return res, err
-	}
-	regFixConflictX := util.ToRegexRepl([]string{`.*gst-plugin-scanner.*`, ``})
-	out = regFixConflictX.Replace(out)
 	if err := path.WriteFile([]byte(out)); err != nil {
 		return res, err
 	}
