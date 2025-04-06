@@ -1,0 +1,28 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# This profile is designed to be used in a child profile to limit what
+# confined application can invoke via open helper.
+
+# This version of child-open only allow to open text editor.
+
+# Note: This profile does not specify an attachment path because it is
+# intended to be used only via "Px -> child-open-browsers" exec transitions
+# from other profiles.
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+profile child-open-editor flags=(attach_disconnected,mediate_deleted) {
+  include <abstractions/base>
+  include <abstractions/app/open>
+
+  @{editor_ui_path}              PUx,
+
+  include if exists <usr/child-open-editor.d>
+  include if exists <local/child-open-editor>
+}
+
+# vim:syntax=apparmor
