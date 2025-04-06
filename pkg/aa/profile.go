@@ -140,10 +140,16 @@ func (p *Profile) GetAttachments() string {
 var (
 	newLogMap = map[string]func(log map[string]string) Rule{
 		// class
-		"rlimits":      newRlimitFromLog,
-		"namespace":    newUsernsFromLog,
-		"cap":          newCapabilityFromLog,
-		"net":          newNetworkFromLog,
+		"rlimits":   newRlimitFromLog,
+		"namespace": newUsernsFromLog,
+		"cap":       newCapabilityFromLog,
+		"net": func(log map[string]string) Rule {
+			if log["family"] == "unix" {
+				return newUnixFromLog(log)
+			} else {
+				return newNetworkFromLog(log)
+			}
+		},
 		"posix_mqueue": newMqueueFromLog,
 		"sysv_mqueue":  newMqueueFromLog,
 		"signal":       newSignalFromLog,
@@ -176,6 +182,7 @@ var (
 		"open":        newFileFromLog,
 		"rename_dest": newFileFromLog,
 		"rename_src":  newFileFromLog,
+		"rmdir":       newFileFromLog,
 		"truncate":    newFileFromLog,
 		"unlink":      newFileFromLog,
 	}
@@ -219,7 +226,7 @@ func (p *Profile) AddRule(log map[string]string) {
 		case strings.Contains(log["operation"], "dbus"):
 			p.Rules = append(p.Rules, newDbusFromLog(log))
 		default:
-			fmt.Printf("unknown log type: %s\n", log["operation"])
+			fmt.Printf("unknown log type: %s:%v\n", log["operation"], log)
 		}
 	}
 }
