@@ -11,6 +11,8 @@ profile aa-notify @{exec_path} {
   include <abstractions/base>
   include <abstractions/bus-session>
   include <abstractions/consoles>
+  include <abstractions/dconf-write>
+  include <abstractions/desktop>
   include <abstractions/nameservice-strict>
   include <abstractions/python>
 
@@ -22,8 +24,14 @@ profile aa-notify @{exec_path} {
 
   @{exec_path} mr,
 
+  @{bin}/gtk-launch  ix,
+  @{bin}/pkexec      Cx -> pkexec,
+  @{bin}/xdg-mime    Px,
+  @{open_path}       Cx -> open,
+
   @{bin}/ r,
 
+  /usr/share/apparmor/** r,
   /usr/share/terminfo/** r,
 
   @{etc_ro}/inputrc r,
@@ -42,6 +50,60 @@ profile aa-notify @{exec_path} {
   @{PROC}/ r,
   @{PROC}/@{pid}/stat r,
   @{PROC}/@{pid}/cmdline r,
+
+  profile open {
+    include <abstractions/base>
+    include <abstractions/app/open>
+
+    @{editor_ui_path}  rPx -> aa-notify//editor,
+
+    include if exists <local/aa-notify_open>
+  }
+
+  profile editor {
+    include <abstractions/base>
+    include <abstractions/app/open>
+    include <abstractions/bus/org.freedesktop.FileManager1>
+    include <abstractions/common/gnome>
+    include <abstractions/enchant>
+
+    @{editor_ui_path} rix,
+    @{open_path}  rPx -> child-open-help,
+
+    /etc/apparmor.d/{,**} r,
+
+    owner @{user_share_dirs}/org.gnome.TextEditor/{,**} rw,
+
+    owner @{PROC}/@{pid}/mountinfo r,
+    owner @{PROC}/@{pid}/stat r,
+
+    deny @{user_share_dirs}/gvfs-metadata/* r,
+
+    include if exists <local/aa-notify_editor>
+  }
+
+  profile pkexec {
+    include <abstractions/base>
+    include <abstractions/app/pkexec>
+    include <abstractions/python>
+
+    ptrace read peer=aa-notify,
+
+    @{bin}/apparmor_parser Px,
+    @{lib}/@{python_name}/site-packages/apparmor/update_profile.py ix,
+
+    /usr/share/apparmor/** r,
+    /usr/share/terminfo/** r,
+  
+    @{etc_ro}/inputrc r,
+    @{etc_ro}/inputrc.keys r,
+
+    /etc/apparmor.d/ r,
+    /etc/apparmor.d/** rw,
+    /etc/apparmor/* r,
+  
+    include if exists <local/aa-notify_pkexec>
+  }
 
   include if exists <local/aa-notify>
 }
