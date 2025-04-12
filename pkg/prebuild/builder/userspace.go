@@ -33,7 +33,7 @@ func init() {
 }
 
 func (b Userspace) Apply(opt *Option, profile string) (string, error) {
-	for _, dir := range []string{"abstractions", "tunables", "local"} {
+	for _, dir := range []string{"abstractions", "tunables", "local", "mappings"} {
 		if ok, _ := opt.File.IsInsideDir(prebuild.RootApparmord.Join(dir)); ok {
 			return profile, nil
 		}
