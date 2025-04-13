@@ -79,8 +79,8 @@ profile systemd flags=(attach_disconnected,mediate_deleted) {
   mount fstype=tmpfs       options=(rw nosuid nodev noexec)               tmpfs -> /dev/shm/,
   mount fstype=tmpfs       options=(rw nosuid noexec strictatime)         tmpfs -> @{run}/systemd/namespace-@{rand6}/dev/,
   mount fstype=tracefs     options=(rw nodev noexec nosuid)             tracefs -> @{sys}/kernel/tracing/,
-  mount fstype=vfat                                                             -> /boot/efi/,
 
+  mount                                                             /dev/** -> /boot/{,efi/},
   mount options=(rw bind)                                           /dev/** -> /tmp/namespace-dev-@{rand6}/**,
   mount options=(rw bind)                                           /dev/** -> @{run}/systemd/namespace-@{rand6}/dev/**,
   mount options=(rw bind)                       @{run}/systemd/propagate/*/ -> @{run}/systemd/mount-rootfs/@{run}/systemd/incoming/,
@@ -108,7 +108,7 @@ profile systemd flags=(attach_disconnected,mediate_deleted) {
   remount                                        @{run}/systemd/unit-root/{,**},
   remount                                        /,
   remount                                        /snap/{,**},
-  remount options=(ro bind)                      /boot/efi/,
+  remount options=(ro bind)                      /boot/{,efi/},
   remount options=(ro noexec noatime bind)       /var/snap/{,**},
   remount options=(ro nosuid bind)               /dev/,
   remount options=(ro nosuid nodev bind)         /dev/hugepages/,
@@ -221,12 +221,10 @@ profile systemd flags=(attach_disconnected,mediate_deleted) {
   @{att}/@{run}/systemd/journal/dev-log r,
 
   @{run}/ rw,
-  @{run}/*.socket w,
+  @{run}/* rw,
   @{run}/*/ rw,
   @{run}/*/* rw,
-  @{run}/auditd.pid r,
   @{run}/credentials/{,**} rw,
-  @{run}/initctl rw,
   @{run}/systemd/{,**} rw,
 
   @{run}/udev/data/+bluetooth:* r,
