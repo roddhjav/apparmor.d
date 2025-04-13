@@ -20,8 +20,10 @@ profile journalctl @{exec_path} flags=(attach_disconnected) {
   capability net_admin,
   capability sys_resource,
 
-  signal (receive) set=(term) peer=cockpit-bridge,
-  signal (send) peer=child-pager,
+  network netlink raw,
+
+  signal receive set=term peer=cockpit-bridge,
+  signal send peer=child-pager,
 
   @{exec_path} mr,
 
@@ -49,6 +51,7 @@ profile journalctl @{exec_path} flags=(attach_disconnected) {
 
   @{run}/host/container-manager r,
   @{run}/systemd/journal/io.systemd.journal rw,
+  @{run}/systemd/notify rw,
 
         @{PROC}/sys/fs/nr_open r,
   owner @{PROC}/@{pid}/cgroup r,
