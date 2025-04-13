@@ -17,7 +17,7 @@ func init() {
 	prebuild.ABI = 4
 
 	// Define the default version
-	prebuild.Version = 4.0
+	prebuild.Version = 4.1
 
 	// Define the tasks applied by default
 	prepare.Register(
@@ -36,7 +36,7 @@ func init() {
 		"hotfix",    // Temporary fix for #74, #80 & #235
 	)
 
-	// Compatibility with AppArmor 3
+	// Matrix of ABI/Apparmor version to integrate with
 	switch prebuild.Distribution {
 	case "arch":
 
@@ -45,12 +45,9 @@ func init() {
 		case "jammy":
 			prebuild.ABI = 3
 			prebuild.Version = 3.0
-		case "noble", "oracular":
+		case "noble":
 			prebuild.ABI = 4
 			prebuild.Version = 4.0
-		case "plucky":
-			prebuild.ABI = 4
-			prebuild.Version = 4.1
 		}
 
 	case "debian":
@@ -58,16 +55,13 @@ func init() {
 		case "bullseye", "bookworm":
 			prebuild.ABI = 3
 			prebuild.Version = 3.0
-		case "trixie", "sid":
-			prebuild.ABI = 4
-			prebuild.Version = 4.1
 		}
 
 	case "whonix":
 		prebuild.ABI = 3
 		prebuild.Version = 3.0
 
-		// Hide rewrittem Whonix profiles
+		// Hide rewritten Whonix profiles
 		prebuild.Hide += `/etc/apparmor.d/abstractions/base.d/kicksecure
 		/etc/apparmor.d/home.tor-browser.firefox
 		/etc/apparmor.d/tunables/homsanitycheck
