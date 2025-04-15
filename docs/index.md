@@ -36,6 +36,10 @@ See the [Concepts](concepts.md)' page for more detail on the architecture.
     - [ ] :simple-xfce: XFCE (Lightdm) *(work in progress)*
 - [Fully tested](development/tests.md)
 
+### Demo
+
+You want to try this project, or you are curious about the advanced usage and security it can provide without installing it on your machine. You can try it online on my AppArmor play machine at https://play.pujol.io/
+
 ### Presentations
 
 Building the largest set of AppArmor profiles:
