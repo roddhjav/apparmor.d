@@ -21,7 +21,7 @@ This is the current list of features that must be implemented to get to a stable
     - [ ] General documentation improvements
 
 - [ ] **General improvements**
-    - [ ] Provide a proper fix for #74, #80 & #235
+    - [ ] Provide a proper fix for [#74](https://github.com/roddhjav/apparmor.d/issues/74), [#80](https://github.com/roddhjav/apparmor.d/issues/80) & [#235](https://github.com/roddhjav/apparmor.d/issues/235)
     - [ ] The apt/dpkg profiles needs to be reworked
 
 ## Next features
