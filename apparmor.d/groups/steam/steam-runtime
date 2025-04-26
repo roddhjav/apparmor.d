@@ -6,7 +6,8 @@ abi <abi/4.0>,
 
 include <tunables/global>
 
-@{runtime} = SteamLinuxRuntime_sniper
+@{runtime_name} = sniper soldier
+@{runtime} = SteamLinuxRuntime_@{runtime_name}
 @{share_dirs} = @{user_share_dirs}/Steam @{HOME}/.steam/debian-installation
 @{lib_dirs} = @{share_dirs}/ubuntu@{int2}_{32,64} @{share_dirs}/linux{32,64}
 @{runtime_dirs} = @{lib_dirs}/steam-runtime{,-sniper}
@@ -50,16 +51,17 @@ profile steam-runtime @{exec_path} flags=(attach_disconnected) {
   @{lib}/ r,
   @{lib_dirs}/ r,
 
+  owner @{HOME}/ r,
   owner @{HOME}/.steam/steam.pipe r,
 
   owner @{app_dirs}/*/ r,
   owner @{app_dirs}/config/config.vdf{,.*} rw,
   owner @{app_dirs}/@{runtime}/** r,
   owner @{app_dirs}/@{runtime}/pressure-vessel/** rwk,
-  owner @{app_dirs}/@{runtime}/sniper_platform_*/** rwk,
+  owner @{app_dirs}/@{runtime}/@{runtime_name}_platform_*/** rwk,
   owner @{app_dirs}/@{runtime}/var/** rwk,
   owner link @{app_dirs}/@{runtime}/var/** -> @{app_dirs}/@{runtime}/pressure-vessel/**,
-  owner link @{app_dirs}/@{runtime}/var/** -> @{app_dirs}/@{runtime}/sniper_platform_*/**,
+  owner link @{app_dirs}/@{runtime}/var/** -> @{app_dirs}/@{runtime}/@{runtime_name}_platform_*/**,
 
   owner @{share_dirs}/config/config.vdf{,.*} rw,
   owner @{share_dirs}/steamapps/appmanifest_* rw,
@@ -78,6 +80,7 @@ profile steam-runtime @{exec_path} flags=(attach_disconnected) {
   owner @{PROC}/@{pid}/cmdline r,
   owner @{PROC}/@{pid}/comm r,
   owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/stat r,
 
   /dev/tty rw,
 

@@ -21,7 +21,7 @@ abi <abi/4.0>,
 
 include <tunables/global>
 
-@{runtime} = SteamLinuxRuntime_sniper
+@{runtime} = SteamLinuxRuntime_{sniper,soldier}
 @{share_dirs} = @{user_share_dirs}/Steam @{HOME}/.steam/debian-installation
 @{lib_dirs} = @{share_dirs}/ubuntu@{int2}_{32,64}
 @{runtime_dirs} = @{lib_dirs}/steam-runtime{,-sniper}
@@ -174,6 +174,7 @@ profile steam @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{tmp}/steam/** rwk,
   owner @{tmp}/steam@{rand6}/{,**} rw,
   owner @{tmp}/vdpau-drivers-@{rand6}/{,**} rw,
+  owner @{tmp}/steam@{rand6} rwk,
 
   owner @{att}/dev/shm/ValveIPCSHM_@{uid} rw,
   owner /dev/shm/fossilize-*-@{int}-@{int} rw,
@@ -292,6 +293,8 @@ profile steam @{exec_path} flags=(attach_disconnected,mediate_deleted) {
     @{run}/host/@{lib}/**                rix,
 
     @{share_dirs}/config/cefdata/WidevineCdm/**/linux_*/libwidevinecdm.so mr,
+    @{share_dirs}/config/htmlcache/WidevineCdm/**/linux_*/libwidevinecdm.so mr,
+    @{share_dirs}/linux{32,64}/steamclient.so mr,
 
     @{runtime_dirs}/var/tmp-@{rand6}/usr/.ref w,
 
@@ -302,11 +305,14 @@ profile steam @{exec_path} flags=(attach_disconnected,mediate_deleted) {
     @{lib}/ r,
     /usr/local/lib/ r,
     /var/tmp/ r,
+    /home/ r,
 
     owner /bindfile@{rand6} rw,
 
     owner /var/cache/ldconfig/aux-cache* rw,
     owner /var/pressure-vessel/ldso/* rw,
+
+    owner @{HOME}/ r,
 
     owner @{lib_dirs}/.cef-* wk,
 
@@ -348,6 +354,7 @@ profile steam @{exec_path} flags=(attach_disconnected,mediate_deleted) {
     @{sys}/devices/virtual/tty/tty@{int}/active r,
 
           @{PROC}/ r,
+          @{PROC}/version r,
           @{PROC}/@{pid}/stat r,
           @{PROC}/sys/fs/inotify/max_user_watches r,
           @{PROC}/sys/kernel/yama/ptrace_scope r,
