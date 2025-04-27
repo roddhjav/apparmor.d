@@ -2,8 +2,6 @@
 # Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-# Integration environment for apparmor.d
-#
 # Usage:
 #   just
 #   just img ubuntu24 server
@@ -63,9 +61,8 @@ prefix := "aa-"
 
 [doc('Show this help message')]
 help:
-	@echo -e "Integration environment helper for apparmor.d\n"
 	@just --list --unsorted
-	@echo -e "\nSee https://apparmor.pujol.io/development/vm/ for more information."
+	@echo -e "\nSee https://apparmor.pujol.io/development/ for more information."
 
 [doc('Build the go programs')]
 build:
@@ -160,7 +157,7 @@ clean:
 		debian/.debhelper debian/debhelper* debian/*.debhelper debian/{{pkgname}} \
 		.pkg/{{pkgname}}* {{build}} coverage.out
 
-[doc('Build the apparmor.d package')]
+[doc('Build the package in a clean OCI container')]
 package dist:
 	#!/usr/bin/env bash
 	set -eu -o pipefail
@@ -175,7 +172,7 @@ package dist:
 	fi
 	bash dists/docker.sh $dist $version
 
-[doc('Build the image')]
+[doc('Build the VM image')]
 img dist flavor: (package dist)
 	@mkdir -p {{base_dir}}
 	packer build -force \
@@ -238,7 +235,7 @@ list:
 	@echo -e '\033[1m Id   Distribution Flavor  State\033[0m'
 	@virsh {{c}} list --all | grep {{prefix}} | sed 's/{{prefix}}//g'
 
-[doc('List the images')]
+[doc('List the VM images')]
 images:
 	#!/usr/bin/env bash
 	set -eu -o pipefail
@@ -254,7 +251,7 @@ images:
 	}
 	'
 
-[doc('List the machine that can be created')]
+[doc('List the VM images that can be created')]
 available:
 	#!/usr/bin/env bash
 	set -eu -o pipefail
