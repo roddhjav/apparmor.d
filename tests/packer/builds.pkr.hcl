@@ -32,7 +32,7 @@ source "qemu" "default" {
   cd_label           = "cidata"
   cd_content = {
     "meta-data" = ""
-    "user-data" = format("%s\n%s",
+    "user-data" = format("%s\n%s\n%s",
       templatefile("${path.cwd}/tests/cloud-init/common.yml",
         {
           username = "${var.username}"
@@ -41,6 +41,7 @@ source "qemu" "default" {
           hostname = "${local.name}"
         }
       ),
+      file("${path.cwd}/tests/cloud-init/${regex_replace(var.dist, "[0-9]*$", "")}.yml"),
       file("${path.cwd}/tests/cloud-init/${var.dist}-${var.flavor}.user-data.yml")
     )
   }
@@ -70,10 +71,10 @@ build {
       "while [ ! -f /var/lib/cloud/instance/boot-finished ]; do echo 'Waiting for Cloud-Init...'; sleep 20; done",
 
       # Ensure cloud-init is successful
-      "cloud-init status",
+      # "cloud-init status",
 
       # Remove logs and artifacts so cloud-init can re-run
-      "cloud-init clean",
+      # "cloud-init clean",
 
       # Install local files and config
       "bash /tmp/init.sh",
