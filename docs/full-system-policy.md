@@ -29,6 +29,8 @@ Particularly:
 - Desktop environment must be explicitly supported, your UI will not start otherwise. Again, it is a **feature**.
 - FSP mode will run unknown user application into the `default` profile. It might be enough for your application. If not you have to make a profile for it.
 - In FSP mode, all sandbox managers **must** have a profile. Then user sandboxed applications (flatpak, snap, etc) will work as expected.
+- PID 1 is the last program that should be confined. It does not make sense to confine only PID. All other programs must be confined first.
+
 
 
 ## Installation

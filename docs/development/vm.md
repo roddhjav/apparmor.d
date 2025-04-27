@@ -5,32 +5,48 @@ title: Development VM
 To ensure compatibility across distribution, this project ships a wide range of development and tests VM images.
 
 The test VMs can be built locally using [cloud-init](https://cloud-init.io/), [packer](https://www.packer.io/) on Qemu/KVM using Libvirt. No other hypervisor will be targeted for these tests. The files that generate these images can be found in the **[tests/packer](https://github.com/roddhjav/apparmor.d/tree/main/tests/packer)** directory.
-The VMs are fully managed using a [justfile](https://github.com/casey/just) that provide an integration environment helper for `apparmor.d`.
+The VMs are fully managed using a [justfile](https://github.com/casey/just) that provides an integration environment helper for `apparmor.d`.
 
 ```sh
 $ just
 ```
 
 ```
-Integration environment helper for apparmor.d
-
 Available recipes:
-    default                 # Show this help message
-    package dist            # Build the apparmor.d package
-    img dist flavor         # Build the image
-    vm dist flavor          # Create the machine
+    help                    # Show this help message
+    build                   # Build the go programs
+    enforce                 # Prebuild the profiles in enforced mode
+    complain                # Prebuild the profiles in complain mode
+    fsp                     # Prebuild the profiles in FSP mode
+    install                 # Install the profiles
+    pkg                     # Build & install apparmor.d on Arch based systems
+    dpkg                    # Build & install apparmor.d on Debian based systems
+    rpm                     # Build & install apparmor.d on OpenSUSE based systems
+    tests                   # Run the unit tests
+    lint                    # Run the linters
+    check                   # Run style checks on the profiles
+    man                     # Generate the man pages
+    docs                    # Build the documentation
+    serve                   # Serve the documentation
+    clean                   # Remove all build artifacts
+    package dist            # Build the package in a clean OCI container
+    img dist flavor         # Build the VM image
+    create dist flavor      # Create the machine
     up dist flavor          # Start a machine
     halt dist flavor        # Stops the machine
+    reboot dist flavor      # Reboot the machine
     destroy dist flavor     # Destroy the machine
     ssh dist flavor         # Connect to the machine
     list                    # List the machines
-    images                  # List the machine images
-    available               # List the machine that can be created
+    images                  # List the VM images
+    available               # List the VM images that can be created
+    init dist flavor        # Install dependencies for the bats integration tests
     integration dist flavor # Run the integration tests on the machine
-    lint                    # Run the linters
-    clean                   # Remove the machine images
     get_ip dist flavor
     get_osinfo dist
+
+See https://apparmor.pujol.io/development/ for more information.
+
 ```
 
 ## Requirements
@@ -88,7 +104,7 @@ archlinux          gnome      3.3G  Mar 1 14:49
 The VM can then be created with:
 
 ```sh
-$ just vm archlinux gnome
+$ just create archlinux gnome
 ```
 
 And connected to with:

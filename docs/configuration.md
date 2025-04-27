@@ -32,7 +32,7 @@ The profiles heavily use the **largely extended** [XDG directory variables](#xdg
   ```
 3. Then restart the AppArmor service to reload the profiles in the kernel:
   ```sh
-  sudo systemctl restart apparmor.service
+  sudo systemctl reload apparmor.service
   ```
 
 ### Profile Additions
@@ -55,7 +55,7 @@ By default, `nautilus` (and any file browser) only allows access to user files. 
   ```
 2. Then restart the AppArmor service to reload the profiles in the kernel:
   ```sh
-  sudo systemctl restart apparmor.service
+  sudo systemctl reload apparmor.service
   ```
 
 ### XDG variables
