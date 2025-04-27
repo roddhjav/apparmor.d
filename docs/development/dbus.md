@@ -20,6 +20,8 @@ Default **system**, **session**, and **accessibility** bus access are provided w
 - `abstractions/bus-session`
 - `abstractions/bus-accessibility`
 
+Do not use the dbus abstractions from apparmor in this project, they won't work as expected as the dbus daemon is confined. Furthermore, in `apparmor.d` there is no such thing as a strict dbus abstraction (`abstractions/dbus-strict`) as they are strict by default: bus access needs to be explicitly allowed using an interface abstraction or a directive.
+
 ### Interfaces
 
 Access to common dbus interfaces is done using the abstractions under **[`abstractions/bus/`](https://github.com/roddhjav/apparmor.d/tree/main/apparmor.d/abstractions/bus)**. They are kept minimal on purpose. The goal is not to give full talk access an interface but to provide a *read-only* like view of it. It may be required to have a look at the dbus interface documentation to check what method can be safely allowed.
