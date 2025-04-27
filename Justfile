@@ -201,7 +201,7 @@ create dist flavor:
 		--vcpus {{vcpus}} \
 		--ram {{ram}} \
 		--machine q35 \
-		--boot uefi \
+		{{ if dist == "archlinux" { "" } else { "--boot uefi" } }} \
 		--memorybacking source.type=memfd,access.mode=shared \
 		--disk path={{vm}}/{{prefix}}{{dist}}-{{flavor}}.qcow2,format=qcow2,bus=virtio \
 		--filesystem "`pwd`,0a31bc478ef8e2461a4b1cc10a24cc4",accessmode=passthrough,driver.type=virtiofs \

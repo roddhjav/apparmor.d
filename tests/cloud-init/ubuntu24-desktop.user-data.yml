@@ -1,47 +1,8 @@
 #cloud-config
 
-# Based on https://github.com/canonical/autoinstall-desktop
+packages: *desktop-packages
 
-packages:
-  - apparmor-profiles
-  - build-essential
-  - config-package-dev
-  - debhelper
-  - devscripts
-  - golang-go
-  - linux-generic-hwe-24.04
-  - qemu-guest-agent
-  - rsync
-  - spice-vdagent
-  - terminator
-  - ubuntu-desktop
-  - vim
-
-runcmd:
-  # Add missing snap packages
-  - snap install snap-store
-  - snap install snapd-desktop-integration
-
-  # Remove default filesystem and related tools not used with the suggested
-  # storage layout. These may yet be required if different partitioning schemes
-  # are used.
-  - apt-get -y purge btrfs-progs xfsprogs
-
-  # Remove other packages present by default in Ubuntu Server but not
-  # normally present in Ubuntu Desktop.
-  - >-
-    apt-get -y purge
-      byobu dmeventd finalrd gawk kpartx landscape-common lxd-agent-loader
-      mdadm motd-news-config ncurses-term open-iscsi open-vm-tools
-      screen sg3-utils sosreport ssh-import-id sssd tmux
-
-  # Finally, remove things only installed as dependencies of other things
-  # we have already removed.
-  - apt-get -y autoremove
+runcmd: *desktop-runcmd
 
 write_files:
-  # Setup shared directory
-  - path: /etc/fstab
-    append: true
-    content: |
-      0a31bc478ef8e2461a4b1cc10a24cc4 /home/user/Projects/apparmor.d  virtiofs defaults  0  1
+  - *shared-directory  # Setup shared directory

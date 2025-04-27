@@ -1,0 +1,47 @@
+#cloud-config
+
+# Core packages for Archlinux
+core-packages: &core-packages
+  # Install core packages
+  - apparmor
+  - base-devel
+  - qemu-guest-agent
+  - rng-tools
+  - spice-vdagent
+
+  # Install usefull core packages
+  - bash-completion
+  - git
+  - htop
+  - man
+  - pass
+  - python-notify2
+  - vim
+  - wget
+
+# Core desktop packages for Archlinux
+desktop-packages: &desktop-packages
+  # Install basic services
+  - networkmanager
+  - cups
+  - cups-pdf
+  - system-config-printer
+
+  # Install Applications
+  - firefox
+  - chromium
+  - terminator
+
+# Enable AppArmor in kernel parameters
+grub-enable-apparmor: &grub-enable-apparmor
+  path: /etc/default/grub
+  append: true
+  content: |
+    GRUB_CMDLINE_LINUX_DEFAULT="$GRUB_CMDLINE_LINUX_DEFAULT lsm=landlock,lockdown,yama,integrity,apparmor,bpf apparmor.debug=1"
+
+# Set some bash aliases
+setup-bash-aliases: &setup-bash-aliases
+  path: /etc/skel/.bashrc
+  append: true
+  content: |
+    [[ -f ~/.bash_aliases ]] && source ~/.bash_aliases

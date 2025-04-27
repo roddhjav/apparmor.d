@@ -1,22 +1,6 @@
 #cloud-config
 
-packages:
-  # Install core packages
-  - apparmor
-  - base-devel
-  - qemu-guest-agent
-  - rng-tools
-  - spice-vdagent
-
-  # Install usefull core packages
-  - bash-completion
-  - git
-  - htop
-  - man
-  - pass
-  - python-notify2
-  - vim
-  - wget
+packages: *core-packages
 
 runcmd:
   # Regenerate grub.cfg
@@ -34,34 +18,7 @@ runcmd:
   - systemctl enable systemd-timesyncd.service
 
 write_files:
-  # Enable AppArmor in kernel parameters
-  - path: /etc/default/grub
-    append: true
-    content: |
-      GRUB_CMDLINE_LINUX_DEFAULT="$GRUB_CMDLINE_LINUX_DEFAULT lsm=landlock,lockdown,yama,integrity,apparmor,bpf apparmor.debug=1"
-
-  # Set some bash aliases
-  - path: /etc/skel/.bashrc
-    append: true
-    content: |
-      [[ -f ~/.bash_aliases ]] && source ~/.bash_aliases
-
-  # Setup shared directory
-  - path: /etc/fstab
-    append: true
-    content: |
-      0a31bc478ef8e2461a4b1cc10a24cc4 /home/user/Projects/apparmor.d  virtiofs defaults  0  1
-
-  # Network configuration
-  - path: /etc/systemd/network/20-wired.network
-    owner: "root:root"
-    permissions: "0644"
-    content: |
-      [Match]
-      Name=en*
-
-      [Network]
-      DHCP=yes
-
-      [DHCPv4]
-      RouteMetric=10
+  - *grub-enable-apparmor # Enable AppArmor in kernel parameters
+  - *setup-bash-aliases   # Set some bash aliases
+  - *shared-directory     # Setup shared directory
+  - *systemd-netword      # Network configuration for server
