@@ -81,7 +81,7 @@ func TestAppArmorEvents(t *testing.T) {
 			want: AppArmorLogs{
 				{
 					"apparmor":       "ALLOWED",
-					"profile":        "@{bin}/httpd2-prefork//vhost_foo",
+					"profile":        "@{sbin}/httpd2-prefork//vhost_foo",
 					"operation":      "rename_dest",
 					"name":           "@{HOME}/foo.bar.in/httpdocs/apparmor/images/test/image 1.jpg",
 					"comm":           "httpd2-prefork",
