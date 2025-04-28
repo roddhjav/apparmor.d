@@ -106,6 +106,16 @@ _ensure_vim() {
     fi
 }
 
+check_sbin() {
+    echo -e "\033[1m ⋅ \033[0mEnsuring '@{sbin}' is used in all profiles:"
+    while IFS= read -r name; do
+        mapfile -t files < <(grep -l -R "@{bin}/$name" apparmor.d)
+        for file in "${files[@]}"; do
+            _die "$file contains '@{bin}/$name' instead of '@{sbin}/$name'"
+        done
+    done <tests/sbin.list
+}
+
 check_profiles() {
     echo -e "\033[1m ⋅ \033[0mChecking if all profiles contain:"
     echo "    - apparmor.d header & license"
@@ -170,5 +180,6 @@ check_abstractions() {
     done
 }
 
+check_sbin
 check_profiles
 check_abstractions
