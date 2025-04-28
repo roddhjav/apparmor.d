@@ -109,7 +109,7 @@ _ensure_vim() {
 check_sbin() {
     echo -e "\033[1m ⋅ \033[0mEnsuring '@{sbin}' is used in all profiles:"
     while IFS= read -r name; do
-        mapfile -t files < <(grep -l -R "@{bin}/$name" apparmor.d)
+        mapfile -t files < <(grep --files-with-matches --recursive -E "(^|[[:space:]])@{bin}/$name([[:space:]]|$)" apparmor.d)
         for file in "${files[@]}"; do
             _die "$file contains '@{bin}/$name' instead of '@{sbin}/$name'"
         done
