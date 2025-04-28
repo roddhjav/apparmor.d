@@ -211,7 +211,7 @@ func TestAppArmorProfileFile_Integration(t *testing.T) {
 					&Include{IsMagic: true, Path: "tunables/global"},
 					&Variable{
 						Name: "exec_path", Define: true,
-						Values: []string{"@{bin}/aa-status", "@{bin}/apparmor_status"},
+						Values: []string{"@{sbin}/aa-status", "@{sbin}/apparmor_status"},
 					},
 				},
 				Profiles: []*Profile{{
