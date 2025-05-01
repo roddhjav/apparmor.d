@@ -2,15 +2,11 @@
 # Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-# Allow setting realtime priorities. Clients require RLIMIT_RTTIME in the first
-# place and client authorization is done via PolicyKit. Note that setrlimit()
-# is allowed by default seccomp policy but requires 'capability sys_resource',
-# which we deny be default.
-# http://git.0pointer.net/rtkit.git/tree/README
+# Allow setting realtime priorities.
 
   abi <abi/4.0>,
 
-  #-aa-dbus common bus=system name=org.freedesktop.RealtimeKit1 label=rtkit-daemon
+  #aa:dbus common bus=system name=org.freedesktop.RealtimeKit1 label=rtkit-daemon
   dbus send bus=system path=/org/freedesktop/RealtimeKit1
        interface=org.freedesktop.DBus.Properties
        member=Get
@@ -18,8 +14,13 @@
 
   dbus send bus=system path=/org/freedesktop/RealtimeKit1
        interface=org.freedesktop.RealtimeKit1
-       member={MakeThreadHighPriority,MakeThreadRealtime,MakeThreadRealtimeWithPID}
-       peer=(name=org.freedesktop.RealtimeKit1, label=rtkit-daemon),
+       member={MakeThreadHighPriority,MakeThreadRealtime}
+       peer=(name="{@{busname},org.freedesktop.RealtimeKit1}", label=rtkit-daemon),
+
+  dbus send bus=system path=/org/freedesktop/RealtimeKit1
+       interface=org.freedesktop.RealtimeKit1
+       member={MakeThreadHighPriorityWithPID,MakeThreadRealtimeWithPID}
+       peer=(name="{@{busname},org.freedesktop.RealtimeKit1}", label=rtkit-daemon),
 
   include if exists <abstractions/bus/org.freedesktop.RealtimeKit1.d>
 
