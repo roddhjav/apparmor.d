@@ -168,7 +168,8 @@ title: Variables References
 | Home directories | `@{HOME}` | `@{HOMEDIRS}/*/ /root/` |
 | Root Mountpoints | `@{MOUNTDIRS}` | `/media/ @{run}/media/@{user}/ /mnt/` |
 | Mountpoints directories | `@{MOUNTS}` | `@{MOUNTDIRS}/*/ @{run}/user/@{uid}/gvfs/` |
-| Bin | `@{bin}` |  `/{usr/,}{s,}bin` |
+| Bin | `@{bin}` |  `/{usr/,}bin` |
+| Sbin | `@{sbin}` |  `/{usr/,}sbin` |
 | Lib | `@{lib}` |  `/{usr/,}lib{,exec,32,64}` |
 | multi-arch library | `@{multiarch}` | `*-linux-gnu*` |
 | Proc | `@{PROC}` | `/proc/` |
