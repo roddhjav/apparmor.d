@@ -85,7 +85,7 @@ func TestAppArmorProfileFile_resolveValues(t *testing.T) {
 		{
 			name:  "simple",
 			input: "@{bin}/foo",
-			want:  []string{"/{,usr/}{,s}bin/foo"},
+			want:  []string{"/{,usr/}bin/foo"},
 		},
 		{
 			name:  "double",

@@ -209,7 +209,7 @@ func TestBuilder_Apply(t *testing.T) {
 			want: `
 			  @{exec_path}  = @{bin}/baloo_file @{lib}/{,kf6/}baloo_file
 			  @{exec_path} += @{lib}/@{multiarch}/{,libexec/}baloo_file
-			  profile baloo /{{,usr/}{,s}bin/baloo_file,{,usr/}lib{,exec,32,64}/{,kf6/}baloo_file,{,usr/}lib{,exec,32,64}/*-linux-gnu*/{,libexec/}baloo_file} {
+			  profile baloo /{{,usr/}bin/baloo_file,{,usr/}lib{,exec,32,64}/{,kf6/}baloo_file,{,usr/}lib{,exec,32,64}/*-linux-gnu*/{,libexec/}baloo_file} {
 			    include <abstractions/base>
 
 			    @{exec_path} mr,
