@@ -10,14 +10,21 @@ include <tunables/global>
 profile fuse-overlayfs @{exec_path} {
   include <abstractions/base>
 
-  capability sys_admin,
+  capability chown,
   capability dac_override,
   capability dac_read_search,
-  capability chown,
+  capability fowner,
+  capability setfcap,
+  capability setuid,
+  capability sys_admin,
+
+  mount fstype=fuse.* options=(rw,nodev,noatime) @{user_share_dirs}/containers/storage/overlay/**/merged/ -> **,
+  mount fstype=fuse.overlayfs  options=(rw,nodev,noatime) fuse-overlayfs -> @{user_share_dirs}/containers/storage/overlay/**/merged/,
 
   @{exec_path} mr,
 
-  mount fstype=fuse.* options=(rw,nodev,noatime) @{user_share_dirs}/containers/storage/overlay/**/merged/ -> **,
+  @{bin}/mount          rix,
+  @{bin}/umount         rix,
 
   owner @{user_share_dirs}/containers/storage/overlay/{,**} rwl,
 
