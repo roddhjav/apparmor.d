@@ -1,0 +1,22 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/systemd-stdio-bridge
+profile systemd-stdio-bridge @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/common/systemd>
+  include <abstractions/consoles>
+
+  signal send set=term peer=@{p_systemd},
+
+  @{exec_path} mr,
+
+  include if exists <local/systemd-stdio-bridge>
+}
+
+# vim:syntax=apparmor
