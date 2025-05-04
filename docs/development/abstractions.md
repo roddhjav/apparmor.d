@@ -19,6 +19,27 @@ This project and the official apparmor-profiles project provide a large selectio
 
 All of these abstractions can be extended by a system admin by adding rules in a file under `/etc/apparmor.d/<name>.d` where `<name>` is the name of one of these abstractions.
 
+## Architecture
+
+Abstraction are structured in layers as follows:
+
+- **Layer 0:** for core atomic functionalities. They cannot include other abstractions.
+
+    E.g.: *this resource uses* `mesa`, `openssl`, `bash-strict`, `gtk`...
+
+- **Layer 1:** for generic access. Cannot be architecture or device specific. Needs to be agnostic.
+
+    E.g.: *This program needs/has this resource.* `nameservice`, `authentication`, `base`, `shell`, `graphics`, `audio-client`, `desktop`, `kde`, `gnome`...
+
+- **Layer 2:** for common kind of program. Only present inside `abstraction/common`. Multiple layer 2 can be used alongside with layer 1 and 0 abstractions.
+
+    E.g.: *This program kind is* is a game, an electron app, a gnome app, sandboxed with bwrap app, a systemd app...
+
+- **Layer 3:** for application. Only present inside `abstraction/app`. The use of a layer 3 abstraction usually means you should not use any other abstractions (but base). Not a strict rule, but a good practice. Mostly used to provide common rules for subprofiles where the subprofiles only need to add rules for the specific use case.
+
+    E.g.: *This program is* `firefox`, `sudo`, `systemctl`, `pgrep`, `editor`, `chromium`...
+
+
 ## Application helper
 
 Abstraction that aims at including a complete set of rules for a given program. The calling profile only needs to add rules dependant of its use case/program.
