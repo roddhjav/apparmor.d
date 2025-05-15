@@ -89,7 +89,7 @@ echo 'Optimize=compress-fast' | sudo tee -a /etc/apparmor/parser.conf
 
     !!! warning
 
-        **Beware**: do not install a `.deb` made for Debian on Ubuntu, the packages are different.
+        **Beware**: do not install a `.deb` made for Debian on Ubuntu as the packages are different.
 
         If your distribution is based on Ubuntu, you may want to manually set the target distribution by exporting `DISTRIBUTION=ubuntu`.
 
@@ -125,7 +125,7 @@ echo 'Optimize=compress-fast' | sudo tee -a /etc/apparmor/parser.conf
 
     !!! warning
 
-        **Beware**: do not install a `.deb` made for Ubuntu on Debian, the packages are different.
+        **Beware**: do not install a `.deb` made for Ubuntu on Debian as the packages are different.
 
         If your distribution is based on Debian, you may want to manually set the target distribution by exporting `DISTRIBUTION=debian`.
 
