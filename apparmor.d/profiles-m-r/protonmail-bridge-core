@@ -12,8 +12,9 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{exec_path} = @{lib}/protonmail/bridge/bridge
-profile protonmail-bridge-core @{exec_path} {
+profile protonmail-bridge-core @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/consoles>
   include <abstractions/nameservice-strict>
   include <abstractions/ssl_certs>
 
@@ -25,7 +26,7 @@ profile protonmail-bridge-core @{exec_path} {
 
   @{exec_path} mr,
 
-  @{bin}/pass rCx -> pass,
+  @{bin}/pass Cx -> pass,
 
   @{lib}/protonmail/bridge/bridge-gui ix,
 
@@ -49,7 +50,6 @@ profile protonmail-bridge-core @{exec_path} {
   @{PROC}/1/cgroup r,
   @{PROC}/sys/net/core/somaxconn r,
 
-  deny @{bin}/pass x,
   deny owner @{user_passwordstore_dirs}/** r,
 
   profile pass {
@@ -76,6 +76,7 @@ profile protonmail-bridge-core @{exec_path} {
 
          owner @{user_passwordstore_dirs}/ r,
          owner @{user_passwordstore_dirs}/.gpg-id r,
+         owner @{user_passwordstore_dirs}/docker-credential-helpers/{,**} rw,
          owner @{user_passwordstore_dirs}/protonmail-credentials/{,**} rw,
     deny owner @{user_passwordstore_dirs}/**/ r,
 
