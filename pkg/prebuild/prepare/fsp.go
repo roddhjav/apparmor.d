@@ -40,7 +40,9 @@ func (p FullSystemPolicy) Apply() ([]string, error) {
 		return res, err
 	}
 	out = strings.ReplaceAll(out, "@{p_systemd}=unconfined", "@{p_systemd}=systemd")
+	out = strings.ReplaceAll(out, "@{p_systemd_executor}=unconfined", "@{p_systemd_executor}=systemd-executor")
 	out = strings.ReplaceAll(out, "@{p_systemd_user}=unconfined", "@{p_systemd_user}=systemd-user")
+	out = strings.ReplaceAll(out, "@{p_systemd_user_executor}=unconfined", "@{p_systemd_user_executor}=systemd-user-executor")
 	if err := path.WriteFile([]byte(out)); err != nil {
 		return res, err
 	}
