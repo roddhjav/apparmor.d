@@ -19,6 +19,11 @@ hide:
     display: none;
   }
 
+  /* Hide the date of revision */
+  .md-source-file {
+    display: none;
+  }
+
   /* Get started button */
   .md-typeset .md-button--primary {
     color: var(--md-primary-fg-color);
