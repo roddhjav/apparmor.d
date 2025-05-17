@@ -28,7 +28,7 @@ profile kmod @{exec_path} flags=(attach_disconnected) {
   @{bin}/basename    rix,
   @{bin}/false       rix,
   @{bin}/id          rix,
-  @{sbin}/sysctl     rPx,
+  @{sbin}/sysctl     rCx -> sysctl,
   @{bin}/true        rix,
 
   @{lib}/modprobe.d/{,*.conf} r,
@@ -73,6 +73,18 @@ profile kmod @{exec_path} flags=(attach_disconnected) {
 
   deny @{user_share_dirs}/gvfs-metadata/* r,
   deny unix (receive) type=stream,
+
+  profile sysctl {
+    include <abstractions/base>
+
+    @{sbin}/sysctl mr,
+
+    /etc/sysctl.conf r,
+    /etc/sysctl.d/{,**} r,
+    /usr/lib/sysctl.d/{,**} r,
+
+    include if exists <local/kmod_sysctl>
+  }
 
   include if exists <local/kmod>
 }
