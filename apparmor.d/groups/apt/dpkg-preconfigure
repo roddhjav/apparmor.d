@@ -11,35 +11,36 @@ include <tunables/global>
 profile dpkg-preconfigure @{exec_path} {
   include <abstractions/base>
   include <abstractions/consoles>
-  include <abstractions/perl>
   include <abstractions/nameservice-strict>
-
-  #capability sys_tty_config,
+  include <abstractions/perl>
+  include <abstractions/ssl_certs>
 
   @{exec_path} r,
 
-  @{sh_path}        rix,
-  @{bin}/{,e}grep   rix,
-  @{bin}/{,g,m}awk  rix,
-  @{bin}/cat        rix,
-  @{bin}/debconf-escape rix,
-  @{bin}/dialog     rix,
-  @{bin}/expr       rix,
-  @{bin}/locale     rix,
-  @{bin}/readlink   rix,
-  @{bin}/sed        rix,
-  @{bin}/sort       rix,
-  @{bin}/stty       rix,
-  @{bin}/tr         rix,
-  @{bin}/head       rix,
-  @{bin}/readlink   rix,
-  @{bin}/realpath   rix,
+  @{sh_path}                  rix,
+  @{bin}/{,e}grep              ix,
+  @{bin}/{,g,m}awk             ix,
+  @{bin}/cat                   ix,
+  @{bin}/debconf-escape        Px,
+  @{bin}/dialog                ix,
+  @{bin}/expr                  ix,
+  @{bin}/find                  ix,
+  @{bin}/head                  ix,
+  @{bin}/locale                ix,
+  @{bin}/readlink              ix,
+  @{bin}/readlink              ix,
+  @{bin}/realpath              ix,
+  @{bin}/sed                   ix,
+  @{bin}/sort                  ix,
+  @{bin}/stty                  ix,
+  @{bin}/tr                    ix,
+  @{bin}/uniq                  ix,
 
-  @{bin}/findmnt              rPx,
-  @{bin}/dpkg                 rPx -> child-dpkg,
-  @{bin}/apt-extracttemplates rPx,
-  @{bin}/whiptail             rPx,
-  @{lib}/apt/apt-extracttemplates rPx,
+  @{bin}/apt-extracttemplates      Px,
+  @{bin}/dpkg                      Px -> child-dpkg,
+  @{bin}/findmnt                   Px,
+  @{bin}/whiptail                  Px,
+  @{lib}/apt/apt-extracttemplates  Px,
 
   /usr/share/debconf/confmodule r,
   /usr/share/dictionaries-common/{,*} r,
@@ -59,9 +60,6 @@ profile dpkg-preconfigure @{exec_path} {
 
   /var/cache/debconf/tmp.ci/ w,
 
-  owner @{tmp}/*.template.* rw,
-  owner @{tmp}/*.config.* rwPUx,
-
         /var/lib/dbus/machine-id r,
   owner /var/cache/debconf/ rw,
   owner /var/cache/debconf/{config,passwords,templates}.dat{,-old,-new} rwk,
@@ -73,23 +71,15 @@ profile dpkg-preconfigure @{exec_path} {
   owner /var/cache/dictionaries-common/flag-wordlist-new w,
   owner /var/log/unattended-upgrades/unattended-upgrades-dpkg.log rw,
 
+  owner @{tmp}/*.template.* rw,
+  owner @{tmp}/*.config.* rwPUx,
+
   @{run}/user/@{uid}/.mutter-Xwaylandauth.@{rand6} r,
   @{run}/user/@{uid}/pk-debconf-socket rw,
 
   owner @{PROC}/@{pid}/fd/ r,
 
-  # The following is needed when dpkg-preconfigure uses debcconf GUI frontends.
-  include <abstractions/gtk>
-  include <abstractions/fonts>
-  include <abstractions/fontconfig-cache-read>
-  include <abstractions/freedesktop.org>
-  capability dac_read_search,
-  @{bin}/lsb_release rPx -> lsb_release,
-  @{bin}/hostname    rix,
-  @{HOME}/.Xauthority r,
-  owner @{PROC}/@{pid}/mounts r,
-
-  include if exists <local/dpkg-preconfigure>
+   include if exists <local/dpkg-preconfigure>
 }
 
 # vim:syntax=apparmor
