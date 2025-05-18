@@ -10,32 +10,24 @@ include <tunables/global>
 @{exec_path} = @{bin}/tasksel
 profile tasksel @{exec_path} flags=(complain) {
   include <abstractions/base>
-  include <abstractions/perl>
+  include <abstractions/common/debconf>
 
   @{exec_path} r,
 
   @{sh_path}                     rix,
   @{bin}/tempfile                rix,
   @{lib}/tasksel/tasksel-debconf rix,
-
-  @{lib}/tasksel/tests/*         rCx -> tasksel-tests,
-
-  # Think what to do about this (#FIXME#)
-  /usr/share/debconf/frontend         rPx,
-  #/usr/share/debconf/frontend        rCx -> frontend,
+  @{lib}/tasksel/tests/*          Cx -> tasksel-tests,
 
   # Do not strip env to avoid errors like the following:
   #  ERROR: ld.so: object 'libfakeroot-sysv.so' from LD_PRELOAD cannot be preloaded (cannot open
   #  shared object file): ignored.
-  @{bin}/dpkg-query              rpx,
+  @{bin}/dpkg-query               px,
   #
-  @{bin}/apt-cache               rPx,
+  @{bin}/apt-cache                Px,
+  @{bin}/debconf-apt-progress     Px,
 
-  @{bin}/debconf-apt-progress    rPx,
-
-  /usr/share/tasksel/** r,
-
-  /usr/share/debconf/confmodule r,
+  /usr/share/tasksel/{,**} r,
 
   owner @{tmp}/file* w,
 
@@ -46,35 +38,6 @@ profile tasksel @{exec_path} flags=(complain) {
     @{sh_path}        rix,
 
     include if exists <local/tasksel_tasksel-tests>
-  }
-
-  profile frontend flags=(complain) {
-    include <abstractions/base>
-    include <abstractions/consoles>
-    include <abstractions/perl>
-    include <abstractions/nameservice-strict>
-
-    /usr/share/debconf/frontend r,
-
-    @{bin}/tasksel rPx,
-
-    @{sh_path}        rix,
-    @{bin}/stty       rix,
-    @{bin}/locale     rix,
-
-    # The following is needed when debconf uses dialog/whiptail frontend.
-    @{bin}/whiptail rPx,
-    owner @{tmp}/file* w,
-
-    /usr/share/debconf/confmodule r,
-
-    /etc/debconf.conf r,
-    owner /var/cache/debconf/{config,passwords,templates}.dat{,-new,-old} rwk,
-    /usr/share/debconf/templates/adequate.templates r,
-
-    /etc/shadow r,
-
-    include if exists <local/tasksel_frontend>
   }
 
   include if exists <local/tasksel>
