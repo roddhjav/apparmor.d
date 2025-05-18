@@ -1,0 +1,45 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = /var/lib/dpkg/info/linux*
+profile dpkg-script-linux @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/app/debconf>
+
+  @{exec_path} mrix,
+
+  @{sh_path}        rix,
+  @{bin}/cat         ix,
+  @{bin}/locale      ix,
+  @{bin}/mkdir       ix,
+  @{bin}/mkdir       ix,
+  @{bin}/rm          ix,
+  @{bin}/run-parts   ix,
+  @{bin}/stty        ix,
+
+  @{bin}/dpkg-trigger           Px,
+  @{bin}/kmod                   Px,
+  @{bin}/linux-check-removal    Px,
+  @{bin}/linux-update-symlinks  Px,
+  @{bin}/whiptail               Px,
+
+  /usr/share/{update,reboot}-notifier/notify-reboot-required  Px,
+  /etc/kernel/{,header_}postinst.d/*                          Px,
+  /etc/kernel/postrm.d/*                                      Px,
+  /etc/kernel/preinst.d/*                                     Px,
+  /etc/kernel/prerm.d/*                                       Px,
+
+  /etc/kernel/*.d/ r,
+
+  @{lib}/linux/triggers/* w,
+  @{lib}/modules/*/.fresh-install w,
+
+  include if exists <local/dpkg-script-linux>
+}
+
+# vim:syntax=apparmor
