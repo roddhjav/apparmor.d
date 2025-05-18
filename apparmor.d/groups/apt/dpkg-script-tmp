@@ -1,0 +1,53 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = /var/lib/dpkg/tmp.ci/@{dpkg_script_ext}
+profile dpkg-script-tmp @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/consoles>
+
+  @{exec_path} mrix,
+
+  @{sh_path}                      rix,
+  @{coreutils_path}               rix,
+  @{bin}/run-parts                rix,
+  @{bin}/deb-systemd-invoke        Px,
+  @{bin}/dpkg                      Px,
+  @{bin}/dpkg-divert               Px,
+  @{bin}/dpkg-maintscript-helper   Px,
+  @{bin}/kmod                      Cx -> kmod,
+  @{bin}/systemctl                 Cx -> systemctl,
+
+  /etc/kernel/preinst.d/*-microcode ix,
+
+  @{lib}/modules/*/.fresh-install w,
+
+  profile kmod {
+    include <abstractions/base>
+    include <abstractions/app/kmod>
+
+    include if exists <local/dpkg-script-tmp_kmod>
+  }
+
+  profile systemctl {
+    include <abstractions/base>
+    include <abstractions/app/systemctl>
+
+    capability net_admin,
+    capability sys_ptrace,
+    capability sys_resource,
+
+    @{bin}/systemd-tty-ask-password-agent Px,
+
+    include if exists <local/dpkg-script-tmp_systemctl>
+  }
+
+  include if exists <local/dpkg-script-tmp>
+}
+
+# vim:syntax=apparmor
