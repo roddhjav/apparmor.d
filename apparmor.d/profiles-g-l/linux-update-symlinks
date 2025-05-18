@@ -1,0 +1,25 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/linux-update-symlinks
+profile linux-update-symlinks @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/perl>
+
+  @{exec_path} mr,
+
+  /etc/kernel-img.conf r,
+
+  @{efi}/ r,
+  @{efi}/* rw,
+
+  include if exists <local/linux-update-symlinks>
+}
+
+# vim:syntax=apparmor
