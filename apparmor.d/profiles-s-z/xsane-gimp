@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2024 Roman Beslik <me@beroal.in.ua>
+# Copyright (C) 2024-2025 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/4.0>,
@@ -10,27 +11,30 @@ include <tunables/global>
 profile xsane-gimp @{exec_path} {
   include <abstractions/base>
   include <abstractions/devices-usb>
-  include <abstractions/gnome-strict>
-
-  signal (receive) set=(term, kill) peer=gimp,
+  include <abstractions/desktop>
 
   network inet dgram,
   network inet6 dgram,
   network netlink raw,
 
+  signal receive set=(term, kill) peer=gimp,
+
   @{exec_path} mr,
+
   @{system_share_dirs}/gimp/{,**} r,
   @{system_share_dirs}/sane/xsane/{,**} r,
-  @{system_share_dirs}/snmp/mibs/{,**} r, # network
+  @{system_share_dirs}/snmp/mibs/{,**} r,
+
   /etc/sane.d/{,**} r,
+
   owner @{HOME}/.sane/{,**} rw,
   owner @{tmp}/xsane-*-@{rand6} rw,
-  @{sys}/devices/@{pci}/{model,type,vendor} r,
-  @{PROC}/sys/dev/parport/{,parport@{int}/{base-addr,irq}} r,
 
-  # SCSI
   @{sys}/bus/scsi/devices/ r,
+  @{sys}/devices/@{pci}/{model,type,vendor} r,
+
   @{PROC}/scsi/scsi r,
+  @{PROC}/sys/dev/parport/{,parport@{int}/{base-addr,irq}} r,
 
   include if exists <local/xsane-gimp>
 }
