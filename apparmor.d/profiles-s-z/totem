@@ -14,6 +14,7 @@ profile totem @{exec_path} flags=(attach_disconnected) {
   include <abstractions/bus/org.gnome.SessionManager>
   include <abstractions/common/gnome>
   include <abstractions/gstreamer>
+  include <abstractions/thumbnails-cache-write>
   include <abstractions/user-download-strict>
 
   network netlink raw,
@@ -67,6 +68,10 @@ profile totem @{exec_path} flags=(attach_disconnected) {
     include <abstractions/gstreamer>
 
     capability dac_override,
+    capability sys_ptrace,
+
+    network inet dgram,
+    network inet6 dgram,
 
     @{bin}/bwrap mr,
     @{bin}/totem-video-thumbnailer rix,
@@ -78,8 +83,11 @@ profile totem @{exec_path} flags=(attach_disconnected) {
     owner @{tmp}/flatpak-seccomp-@{rand6} rw,
     owner @{tmp}/gnome-desktop-file-to-thumbnail.* rw,
     owner @{tmp}/gnome-desktop-thumbnailer-@{rand6}/{,**} rw,
+    owner @{tmp}/gnome-desktop-thumbnailer.png rw,
 
           @{PROC}/sys/vm/mmap_min_addr r,
+    owner @{PROC}/@{pid}/mountinfo r,
+    owner @{PROC}/@{pid}/stat r,
     owner @{PROC}/@{pid}/task/@{tid}/comm w,
 
     /dev/ r,
