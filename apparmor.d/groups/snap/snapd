@@ -60,7 +60,7 @@ profile snapd @{exec_path} {
   dbus send bus=system path=/org/freedesktop/timedate1
        interface=org.freedesktop.DBus.Properties
        member=Get
-       peer=(name=org.freedesktop.timedate1, label=unconfined),
+       peer=(name=org.freedesktop.timedate1),
 
   @{exec_path} mrix,
 
@@ -72,7 +72,7 @@ profile snapd @{exec_path} {
   @{sbin}/groupadd                rPx,
   @{bin}/gzip                     rix,
   @{bin}/hostnamectl              rPx,
-  @{bin}/journalctl               rPx,
+  @{bin}/journalctl               rCx -> journalctl,
   @{bin}/kmod                     rPx,
   @{bin}/mount                    rix,
   @{sbin}/runuser                 rCx -> runuser,
@@ -197,6 +197,25 @@ profile snapd @{exec_path} {
     @{run}/systemd/notify rw,
 
     include if exists <local/snapd_systemctl>
+  }
+
+  profile journalctl {
+    include <abstractions/base>
+    include <abstractions/consoles>
+
+    capability net_admin,
+
+    network netlink raw,
+
+    @{bin}/journalctl mr,
+
+    /etc/machine-id r,
+    /var/lib/dbus/machine-id r,
+
+    /{run,var}/log/journal/ r,
+    /{run,var}/log/journal/@{hex32}/{,*} r,
+
+    include if exists <local/snapd_journalctl>
   }
 
   profile runuser {
