@@ -18,7 +18,7 @@
 # Build setings
 destdir := "/"
 build := ".build"
-pkgdest := `pwd` / ".pkg/dist"
+pkgdest := `pwd` / ".pkg"
 pkgname := "apparmor.d"
 
 # Admin username
@@ -86,13 +86,16 @@ install:
 	#!/usr/bin/env bash
 	set -eu -o pipefail
 	install -Dm0755 {{build}}/aa-log {{destdir}}/usr/bin/aa-log
-	for file in $(find "{{build}}/share" -type f -not -name "*.md" -printf "%P\n"); do
+	mapfile -t share < <(find "{{build}}/share" -type f -not -name "*.md" -printf "%P\n")
+	for file in "${share[@]}"; do
 		install -Dm0644 "{{build}}/share/$file" "{{destdir}}/usr/share/$file"
 	done
-	for file in $(find "{{build}}/apparmor.d" -type f -printf "%P\n"); do
+	mapfile -t aa < <(find "{{build}}/apparmor.d" -type f -printf "%P\n")
+	for file in "${aa[@]}"; do
 		install -Dm0644 "{{build}}/apparmor.d/$file" "{{destdir}}/etc/apparmor.d/$file"
 	done
-	for file in $(find "{{build}}/apparmor.d" -type l -printf "%P\n"); do
+	mapfile -t links < <(find "{{build}}/apparmor.d" -type l -printf "%P\n")
+	for file in "${links[@]}"; do
 		mkdir -p "{{destdir}}/etc/apparmor.d/disable"
 		cp -d "{{build}}/apparmor.d/$file" "{{destdir}}/etc/apparmor.d/$file"
 	done
@@ -155,7 +158,7 @@ serve:
 clean:
 	@rm -rf \
 		debian/.debhelper debian/debhelper* debian/*.debhelper debian/{{pkgname}} \
-		.pkg/{{pkgname}}* {{build}} coverage.out
+		{{pkgdest}}/{{pkgname}}* {{build}} coverage.out
 
 [doc('Build the package in a clean OCI container')]
 package dist:
