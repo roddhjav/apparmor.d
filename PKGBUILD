@@ -30,7 +30,8 @@ build() {
   export CGO_CXXFLAGS="${CXXFLAGS}"
   export CGO_LDFLAGS="${LDFLAGS}"
   export GOFLAGS="-buildmode=pie -trimpath -ldflags=-linkmode=external -mod=readonly -modcacherw"
-  DISTRIBUTION=arch just complain
+  export DISTRIBUTION=arch
+  just complain
 }
 
 package() {
