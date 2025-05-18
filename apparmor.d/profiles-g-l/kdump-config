@@ -1,0 +1,60 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{sbin}/kdump-config
+profile kdump-config @{exec_path} {
+  include <abstractions/base>
+
+  ptrace readby peer=systemd-journald,
+
+  @{exec_path} mr,
+
+  @{sh_path}        ix,
+  @{bin}/basename   ix,
+  @{bin}/cut        ix,
+  @{bin}/file       ix,
+  @{bin}/find       ix,
+  @{bin}/grep       ix,
+  @{bin}/hexdump    ix,
+  @{bin}/ln         ix,
+  @{bin}/logger     ix,
+  @{bin}/rev        ix,
+  @{bin}/run-parts  ix,
+  @{bin}/sed        ix,
+  @{sbin}/kexec     Cx -> kexec,
+  @{sbin}/sysctl    Cx -> sysctl,
+
+  /etc/kernel/postinst.d/kdump-tools rPx,
+
+  owner /var/lib/kdump/{,**} rw,
+
+  profile sysctl {
+    include <abstractions/base>
+
+    @{sbin}/sysctl mr,
+
+    @{PROC}/sys/kernel/panic_on_oops rw,
+
+    include if exists <local/kdump-config_sysctl>
+  }
+
+  profile kexec {
+    include <abstractions/base>
+
+    capability sys_admin,
+    capability sys_boot,
+
+    @{sbin}/kexec mr,
+
+    include if exists <local/kdump-config_kexec>
+  }
+
+  include if exists <local/kdump-config>
+}
+
+# vim:syntax=apparmor
