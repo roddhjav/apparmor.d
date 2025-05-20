@@ -9,7 +9,6 @@ include <tunables/global>
 @{exec_path} = @{sbin}/firewalld
 profile firewalld @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/app/kmod>
   include <abstractions/bus-session>
   include <abstractions/bus-system>
   include <abstractions/bus/org.freedesktop.NetworkManager>
@@ -21,7 +20,6 @@ profile firewalld @{exec_path} flags=(attach_disconnected) {
   capability net_admin,
   capability net_raw,
   capability setpcap,
-  capability sys_module,
 
   network inet raw,
   network inet6 raw,
@@ -34,15 +32,14 @@ profile firewalld @{exec_path} flags=(attach_disconnected) {
 
   @{bin}/ r,
   @{sbin}/ r,
-  @{bin}/alts                     rix,
-  @{sbin}/ebtables-legacy         rix,
-  @{sbin}/ebtables-legacy-restore rix,
-  @{bin}/false                    rix,
-  @{sbin}/ipset                   rix,
-  @{bin}/kmod                     rix,
-  @{sbin}/modprobe                rix,
-  @{sbin}/xtables-legacy-multi    rix,
-  @{sbin}/xtables-nft-multi       rmix,
+  @{bin}/alts                      ix,
+  @{bin}/false                     ix,
+  @{bin}/kmod                      Cx -> kmod,
+  @{sbin}/ebtables-legacy          ix,
+  @{sbin}/ebtables-legacy-restore  ix,
+  @{sbin}/ipset                    ix,
+  @{sbin}/xtables-legacy-multi     ix,
+  @{sbin}/xtables-nft-multi       mix,
 
   /usr/local/lib/@{python_name}/dist-packages/ r,
 
@@ -58,17 +55,24 @@ profile firewalld @{exec_path} flags=(attach_disconnected) {
   /var/log/firewalld rw,
 
   @{run}/firewalld/{,*} rw,
-  @{run}/modprobe.d/{,*.conf} r,
   @{run}/xtables.lock rwk,
 
-  @{sys}/module/compression r,
-  @{sys}/module/*/initstate r,
-
-        @{PROC}/sys/kernel/modprobe r,
         @{PROC}/sys/net/ipv{4,6}/ip_forward rw,
   owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/mounts r,
   owner @{PROC}/@{pids}/net/ip_tables_names r,
+
+  profile kmod flags=(attach_disconnected) {
+    include <abstractions/base>
+    include <abstractions/app/kmod>
+
+    capability sys_module,
+
+    @{sys}/module/compression r,
+    @{sys}/module/nf_*/initstate r,
+
+    include if exists <local/firewalld_kmod>
+  }
 
   include if exists <local/firewalld>
 }
