@@ -39,7 +39,7 @@ profile ucf @{exec_path} {
   @{bin}/dpkg-divert    rPx,
   @{pager_path}         rCx -> child-pager,
 
-  /usr/share/debconf/frontend     rPx, # TODO: rCx -> debonc-frontend,
+  /usr/share/debconf/frontend  Cx -> debconf,
 
   # For md5sum
   /usr/share/** r,
@@ -54,6 +54,15 @@ profile ucf @{exec_path} {
   owner /var/lib/ucf/** rw,
 
   owner /tmp/tmp.@{rand10} r,
+
+  deny capability sys_admin, # optional: no audit
+
+  profile debconf {
+    include <abstractions/base>
+    include <abstractions/common/debconf>
+
+    include if exists <local/ucf_debconf>
+  }
 
   include if exists <local/ucf>
 }
