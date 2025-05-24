@@ -1,0 +1,34 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = /etc/kernel/postinst.d/kdump-tools
+profile kernel-postinst-kdump @{exec_path} {
+  include <abstractions/base>
+
+  @{exec_path} mr,
+
+  @{bin}/du            rix,
+  @{bin}/find          rix,
+  @{bin}/gawk          rix,
+  @{bin}/mv            rix,
+  @{bin}/rm            rix,
+  @{bin}/sync          rix,
+  @{sbin}/mkinitramfs  rPx,
+
+  owner /var/lib/kdump/* w,
+
+  owner /tmp/tmp.@{rand10}/mkinitramfs_@{rand6} rw,
+  owner /tmp/tmp.@{rand10}/mkinitramfs_@{rand6}/ rw,
+  owner /tmp/tmp.@{rand10}/mkinitramfs_@{rand6}/** rwl -> /tmp/tmp.@{rand10}/mkinitramfs_@{rand6}/**,
+  owner /tmp/tmp.@{rand10}/mkinitramfs-@{rand6} rw,
+  owner /tmp/tmp.@{rand10}/mkinitramfs-*_@{rand6} rw,
+
+  include if exists <local/kernel-postinst-kdump>
+}
+
+# vim:syntax=apparmor

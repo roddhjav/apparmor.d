@@ -1,0 +1,36 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = /usr/share/kdump-tools/kdump_mem_estimator
+profile kdump_mem_estimator @{exec_path} {
+  include <abstractions/base>
+
+  @{exec_path} mr,
+
+  @{sh_path} r,
+  @{bin}/cat                               ix,
+  @{bin}/mkdir                             ix,
+  @{bin}/uname                             ix,
+  @{bin}/systemctl                         Cx -> systemctl,
+  @{bin}/uname                             ix,
+
+  owner /var/lib/kdump/mem* w,
+
+  profile systemctl {
+    include <abstractions/base>
+    include <abstractions/app/systemctl>
+
+    capability net_admin,
+
+    include if exists <local/kdump_mem_estimator_systemctl>
+  }
+
+  include if exists <local/kdump_mem_estimator>
+}
+
+# vim:syntax=apparmor
