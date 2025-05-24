@@ -31,6 +31,8 @@ profile systemd-networkd @{exec_path} flags=(attach_disconnected) {
 
   unix bind type=stream addr=@@{udbus}/bus/systemd-network/bus-api-network,
 
+  signal receive set=usr2 peer=@{p_systemd},
+
   #aa:dbus own bus=system name=org.freedesktop.network1
 
   dbus send bus=system path=/org/freedesktop/hostname1
@@ -47,13 +49,17 @@ profile systemd-networkd @{exec_path} flags=(attach_disconnected) {
   /var/lib/dbus/machine-id r,
   /etc/machine-id r,
 
-  /etc/systemd/networkd.conf r,
+  /etc/systemd/network.conf r,
   /etc/systemd/network/{,**} r,
+  /etc/systemd/networkd.conf r,
+  /etc/systemd/networkd.conf.d/{,**} r,
 
   /etc/networkd-dispatcher/carrier.d/{,*} r,
 
   @{att}/ r,
   @{att}/@{run}/systemd/notify rw,
+
+  @{run}/mount/utab r,
 
   owner @{att}/var/lib/systemd/network/ r,
 
@@ -75,6 +81,7 @@ profile systemd-networkd @{exec_path} flags=(attach_disconnected) {
         @{PROC}/@{pid}/cgroup r,
         @{PROC}/pressure/* r,
         @{PROC}/sys/net/ipv{4,6}/** rw,
+        @{PROC}/version_signature r,
   owner @{PROC}/@{pid}/fdinfo/@{int} r,
   owner @{PROC}/@{pid}/mountinfo r,
 
