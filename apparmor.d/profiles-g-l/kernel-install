@@ -11,22 +11,19 @@ include <tunables/global>
 profile kernel-install @{exec_path} {
   include <abstractions/base>
   include <abstractions/consoles>
+  include <abstractions/disks-read>
   include <abstractions/nameservice-strict>
+
+  capability sys_resource,
+
+  ptrace read peer=@{p_systemd},
 
   @{exec_path} r,
   @{sh_path}        rix,
-
-  @{bin}/mountpoint rix,
-  @{bin}/sort       rix,
-  @{bin}/rm         rix,
-  @{bin}/mkdir      rix,
-  @{bin}/cp         rix,
-  @{bin}/chown      rix,
-  @{bin}/chmod      rix,
-  @{bin}/basename   rix,
-
-  @{pager_path}     rPx -> child-pager,
+  @{coreutils_path} rix,
   @{bin}/kmod       rCx -> kmod,
+  @{bin}/mountpoint rix,
+  @{pager_path}     rPx -> child-pager,
 
   @{lib}/kernel/install.d/ r,
   @{lib}/kernel/install.d/@{int2}-*.install rix,
@@ -37,6 +34,7 @@ profile kernel-install @{exec_path} {
   @{lib}/os-release r,
   /etc/kernel/cmdline r,
   /etc/kernel/tries r,
+  /etc/kernel/entry-token r,
   /etc/machine-id r,
   /etc/os-release r,
   /var/lib/dbus/machine-id r,
@@ -50,13 +48,21 @@ profile kernel-install @{exec_path} {
   owner /boot/loader/entries/ rw,
   owner /boot/loader/entries/*.conf w,
 
+  owner /tmp/kernel-install.staging.@{rand6}/{,**} rw,
+
   owner @{tmp}/sh-thd.* rw,
 
+  @{PROC}/1/environ r,
   @{PROC}/cmdline r,
+  @{PROC}/sys/kernel/osrelease r,
 
   profile kmod {
     include <abstractions/base>
     include <abstractions/app/kmod>
+
+    @{lib}/modules/*/modules.* w,
+
+    @{sys}/module/compression r,
 
     include if exists <local/kernel-install_kmod>
   }
