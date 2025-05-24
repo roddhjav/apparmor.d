@@ -22,35 +22,34 @@ profile needrestart @{exec_path} flags=(attach_disconnected) {
 
   ptrace read,
 
-  mqueue (r,getattr) type=posix /,
-
   @{exec_path} mrix,
 
   @{sh_path}                               rix,
   @{bin}/dpkg-query                        rpx,
   @{bin}/fail2ban-server                   rPx,
-  @{bin}/locale                            rix,
-  @{python_path}                           rix,
   @{bin}/sed                               rix,
   @{bin}/stty                              rix,
   @{bin}/systemctl                         rCx -> systemctl,
   @{bin}/systemd-detect-virt               rPx,
   @{bin}/udevadm                           rCx -> udevadm,
-  @{sbin}/unix_chkpwd                      rPx,
-  @{bin}/whiptail                          rPx,
   @{bin}/who                               rix,
   @{lib}/needrestart/*                     rPx,
+  @{python_path}                           rix,
+  @{sbin}/unix_chkpwd                      rPx,
+
   /usr/share/debconf/frontend              rCx -> debconf,
 
-  /etc/debconf.conf r,
+  /etc/needrestart/hook.d/*                rPx,
+  /etc/needrestart/notify.d/*              rPx,
+  /etc/needrestart/restart.d/*             rPx,
+
   /etc/init.d/* r,
   /etc/needrestart/{,**} r,
-  /etc/needrestart/*.d/* rix,
   /etc/shadow r,
 
   / r,
-  /boot/ r,
-  /boot/* r,
+  @{efi}/ r,
+  @{efi}/* r,
   /opt/*/** r,
   @{bin}/* r,
   @{lib}/** r,
@@ -59,22 +58,22 @@ profile needrestart @{exec_path} flags=(attach_disconnected) {
   /usr/share/** r,
   /var/lib/*/** r,
 
-  owner /var/cache/debconf/{config,passwords,templates}.dat{,-new,-old} rwk,
+  @{run}/systemd/sessions/* r,
 
   /tmp/@{word10}/ rw,
 
-  owner @{run}/sshd.pid r,
-
         @{PROC}/ r,
-        @{PROC}/@{pids}/cgroup r,
-        @{PROC}/@{pids}/cmdline r,
-        @{PROC}/@{pids}/environ r,
-        @{PROC}/@{pids}/maps r,
-        @{PROC}/@{pids}/stat r,
+        @{PROC}/@{pid}/cgroup r,
+        @{PROC}/@{pid}/cmdline r,
+        @{PROC}/@{pid}/environ r,
+        @{PROC}/@{pid}/maps r,
+        @{PROC}/@{pid}/stat r,
   owner @{PROC}/@{pid}/fd/ r,
 
   /dev/ r,
   /dev/**/ r,
+
+  deny mqueue type=posix /,
 
   profile systemctl {
     include <abstractions/base>
@@ -100,6 +99,8 @@ profile needrestart @{exec_path} flags=(attach_disconnected) {
   profile debconf {
     include <abstractions/base>
     include <abstractions/common/debconf>
+
+    @{sbin}/needrestart Px,
 
     include if exists <local/needrestart_debconf>
   }
