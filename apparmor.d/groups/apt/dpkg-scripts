@@ -38,6 +38,7 @@ profile dpkg-scripts @{exec_path} {
   @{lib}/ubuntu-advantage/postinst-migrations.sh  ix,
 
   @{bin}/dbus-send                                Cx -> bus,
+  @{bin}/kmod                                     Cx -> kmod,
   @{bin}/dpkg                                     Px -> child-dpkg,
   @{bin}/systemctl                                Cx -> systemctl,
   @{sbin}/invoke-rc.d                             Cx -> rc,
@@ -51,9 +52,6 @@ profile dpkg-scripts @{exec_path} {
   @{lib}/**                                       Px,
   /usr/share/**                                   Px,
   /etc/init.d/*                                   Px,
-
-  /var/lib/dpkg/info/*.@{dpkg_script_ext}         ix, # dpkg-scripts-*
-  /var/lib/dpkg/tmp.ci/@{dpkg_script_ext}         Px, # dpkg-script-tmp
 
   # Maintainer's scripts can update a lot of files
   / r,
@@ -85,12 +83,20 @@ profile dpkg-scripts @{exec_path} {
     include if exists <local/dpkg-scripts_bus>
   }
 
+  profile kmod {
+    include <abstractions/base>
+    include <abstractions/app/kmod>
+
+    include if exists <local/dpkg-scripts_kmod>
+  }
+
   profile systemctl {
     include <abstractions/base>
     include <abstractions/app/systemctl>
 
     capability net_admin,
     capability sys_ptrace,
+    capability sys_resource,
 
     @{run}/utmp rk,
 
@@ -99,6 +105,7 @@ profile dpkg-scripts @{exec_path} {
 
   profile rc {
     include <abstractions/base>
+    include <abstractions/consoles>
     include <abstractions/perl>
 
     @{sbin}/update-rc.d     mr,
@@ -110,10 +117,10 @@ profile dpkg-scripts @{exec_path} {
 
     /etc/ r,
     /etc/init.d/* r,
-    /etc/rc?.d/ r,
+    /etc/rc@{c}.d/ r,
+    /etc/rc@{c}.d/* rw,
     /etc/rc@{int}.d/ r,
     /etc/rc@{int}.d/* rw,
-    /etc/rc@{c}.d/* rw,
 
     include if exists <local/dpkg-scripts_rc>
   }
