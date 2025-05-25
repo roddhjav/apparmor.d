@@ -9,11 +9,8 @@ include <tunables/global>
 @{exec_path} = @{sbin}/needrestart
 profile needrestart @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/consoles>
-  include <abstractions/nameservice-strict>
-  include <abstractions/perl>
+  include <abstractions/common/debconf>
   include <abstractions/python>
-  include <abstractions/wutmp>
 
   capability checkpoint_restore,
   capability dac_read_search,
@@ -27,17 +24,12 @@ profile needrestart @{exec_path} flags=(attach_disconnected) {
   @{sh_path}                               rix,
   @{bin}/dpkg-query                        rpx,
   @{bin}/fail2ban-server                   rPx,
-  @{bin}/sed                               rix,
-  @{bin}/stty                              rix,
   @{bin}/systemctl                         rCx -> systemctl,
   @{bin}/systemd-detect-virt               rPx,
   @{bin}/udevadm                           rCx -> udevadm,
-  @{bin}/who                               rix,
   @{lib}/needrestart/*                     rPx,
   @{python_path}                           rix,
   @{sbin}/unix_chkpwd                      rPx,
-
-  /usr/share/debconf/frontend              rCx -> debconf,
 
   /etc/needrestart/hook.d/*                rPx,
   /etc/needrestart/notify.d/*              rPx,
@@ -94,15 +86,6 @@ profile needrestart @{exec_path} flags=(attach_disconnected) {
     include <abstractions/app/udevadm>
 
     include if exists <local/needrestart_udevadm>
-  }
-
-  profile debconf {
-    include <abstractions/base>
-    include <abstractions/common/debconf>
-
-    @{sbin}/needrestart Px,
-
-    include if exists <local/needrestart_debconf>
   }
 
   include if exists <local/needrestart>
