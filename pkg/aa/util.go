@@ -182,7 +182,7 @@ func toValues(kind Kind, key string, input string) ([]string, error) {
 			continue
 		}
 		if !slices.Contains(req, res[idx]) {
-			return nil, fmt.Errorf("unrecognized %s: %s", key, res[idx])
+			return nil, fmt.Errorf("unrecognized %s for rule %s: %s", key, kind, res[idx])
 		}
 	}
 	slices.SortFunc(res, func(i, j string) int {
