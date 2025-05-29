@@ -7,7 +7,7 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{exec_path} = @{bin}/bootctl
-profile bootctl @{exec_path} flags=(attach_disconnected) {
+profile bootctl @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/base>
   include <abstractions/consoles>
   include <abstractions/disks-read>
@@ -17,27 +17,22 @@ profile bootctl @{exec_path} flags=(attach_disconnected) {
   capability net_admin,
   capability sys_resource,
 
-  signal (send) peer=child-pager,
+  signal send peer=child-pager,
 
-  ptrace (read) peer=unconfined,
+  ptrace read peer=unconfined,
 
   @{exec_path} mr,
 
   @{pager_path} rPx -> child-pager,
 
   @{efi}/ r,
-  @{efi}/EFI/{,**} r,
-  @{efi}/EFI/BOOT/.#BOOT*.EFI@{hex} rw,
-  @{efi}/EFI/BOOT/BOOTX64.EFI w,
-  @{efi}/EFI/systemd/.#systemd-boot*.efi@{hex} rw,
-  @{efi}/EFI/systemd/systemd-boot*.efi w,
-  @{efi}/loader/.#bootctlrandom-seed@{hex} rw,
-  @{efi}/loader/.#entries.srel* w,
-  @{efi}/loader/{,**} r,
-  @{efi}/loader/entries.srel w,
-  @{efi}/loader/random-seed w,
+  @{efi}/@{hex32}/ rw,
+  @{efi}/EFI/{,**} rwl,
+  @{efi}/loader/ rw,
+  @{efi}/loader/** rwl -> @{efi}/loader/#@{int},
 
-  /etc/kernel/entry-token r,
+  /etc/kernel/.#entry-token@{hex16} rw,
+  /etc/kernel/entry-token rw,
   /etc/machine-id r,
   /etc/machine-info r,
 
@@ -63,7 +58,7 @@ profile bootctl @{exec_path} flags=(attach_disconnected) {
   @{sys}/firmware/efi/efivars/LoaderFirmwareType-@{uuid} r,
   @{sys}/firmware/efi/efivars/LoaderImageIdentifier-@{uuid} r,
   @{sys}/firmware/efi/efivars/LoaderInfo-@{uuid} r,
-  @{sys}/firmware/efi/efivars/LoaderSystemToken-@{uuid} r,
+  @{sys}/firmware/efi/efivars/LoaderSystemToken-@{uuid} rw,
   @{sys}/firmware/efi/efivars/OsIndications-@{uuid} r,
   @{sys}/firmware/efi/efivars/OsIndicationsSupported-@{uuid} r,
   @{sys}/firmware/efi/efivars/SecureBoot-@{uuid} r,

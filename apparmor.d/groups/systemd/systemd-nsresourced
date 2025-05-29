@@ -7,7 +7,7 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{exec_path} = @{lib}/systemd/systemd-nsresourced
-profile systemd-nsresourced @{exec_path} {
+profile systemd-nsresourced @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/common/systemd>
 
@@ -19,7 +19,7 @@ profile systemd-nsresourced @{exec_path} {
 
   @{exec_path} mr,
 
-  @{lib}/systemd/systemd-nsresourcework Px -> systemd-nsresourced//&systemd-nsresourcework,
+  @{lib}/systemd/systemd-nsresourcework ix, # no new privs
 
   @{run}/systemd/nsresource/ rw,
   @{run}/systemd/nsresource/** rw,
@@ -31,6 +31,9 @@ profile systemd-nsresourced @{exec_path} {
   @{sys}/fs/cgroup/system.slice/systemd-nsresourced.service/memory.pressure rw,
   @{sys}/kernel/btf/vmlinux r,
   @{sys}/kernel/security/lsm r,
+
+  @{PROC}/@{pid}/cgroup r,
+  @{PROC}/pressure/* r,
 
   include if exists <local/systemd-nsresourced>
 }
