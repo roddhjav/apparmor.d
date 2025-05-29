@@ -7,14 +7,68 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{exec_path} = @{lib}/systemd/systemd-homework
-profile systemd-homework @{exec_path} {
+profile systemd-homework @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/nameservice-strict>
   include <abstractions/common/systemd>
+  include <abstractions/disks-write>
+  include <abstractions/nameservice-strict>
+
+  userns,
+
+  capability chown,
+  capability fowner,
+  capability fsetid,
+  capability setfcap,
+  capability setgid,
+  capability setuid,
+  capability sys_admin,
+  capability sys_resource,
+
+  network netlink raw,
+
+  mount options=(rw rslave) -> @{run}/,
+  mount                     -> @{run}/systemd/user-home-mount/,
+
+  umount @{run}/systemd/user-home-mount/,
+
+  signal (send receive) set=kill peer=systemd-homed//&systemd-homework,
+
+  ptrace read peer=systemd-homed//&systemd-homework,
 
   @{exec_path} mr,
 
+  @{sbin}/mkfs.btrfs rPx,
+  @{sbin}/mkfs.fat   rPx,
+  @{sbin}/mke2fs     rPx,
+
   /etc/machine-id r,
+  /etc/skel/{,**} r,
+
+  /var/cache/systemd/home/{,**} rw,
+
+  @{HOMEDIRS}/ r,
+  @{HOMEDIRS}/.#homework@{user}.* rw,
+  @{HOMEDIRS}/@{user}.home rw,
+
+  @{run}/ r,
+  @{run}/cryptsetup/ r,
+  @{run}/cryptsetup/* rwk,
+  @{run}/systemd/user-home-mount/ rw,
+  @{run}/systemd/user-home-mount/@{user}/{,**} rw,
+
+  @{sys}/fs/ r,
+
+        @{PROC}/devices r,
+        @{PROC}/swaps r,
+        @{PROC}/sys/fs/nr_open r,
+  owner @{PROC}/@{pid}/gid_map w,
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/mounts r,
+  owner @{PROC}/@{pid}/uid_map w,
+
+  /dev/loop-control rwk,
+  /dev/loop@{int} rw,
+  /dev/mapper/control rw,
 
   include if exists <local/systemd-homework>
 }
