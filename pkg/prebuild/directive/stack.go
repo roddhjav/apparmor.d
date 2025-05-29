@@ -55,7 +55,10 @@ func (s Stack) Apply(opt *Option, profile string) (string, error) {
 
 	res := ""
 	for name := range opt.ArgMap {
-		stackedProfile := prebuild.RootApparmord.Join(name).MustReadFileAsString()
+		stackedProfile, err := prebuild.RootApparmord.Join(name).ReadFileAsString()
+		if err != nil {
+			return "", fmt.Errorf("%s need to stack: %w", name, err)
+		}
 		m := regRules.FindStringSubmatch(stackedProfile)
 		if len(m) < 2 {
 			return "", fmt.Errorf("no profile found in %s", name)

@@ -13,6 +13,9 @@ var (
 	// AppArmor version
 	Version = 4.0
 
+	// Either or not RBAC is enabled
+	RBAC = false
+
 	// Pkgname is the name of the package
 	Pkgname = "apparmor.d"
 

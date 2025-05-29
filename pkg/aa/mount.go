@@ -29,7 +29,7 @@ func init() {
 			"ro", "rw", "acl", "async", "atime", "bind", "dev", "diratime",
 			"dirsync", "exec", "iversion", "loud", "mand", "move", "noacl",
 			"noatime", "nodev", "nodiratime", "noexec", "noiversion", "nomand",
-			"norelatime", "nosuid", "nouser", "private", "rbind", "relatime",
+			"norelatime", "nosuid", "nosymfollow", "nouser", "private", "rbind", "relatime",
 			"remount", "rprivate", "rshared", "rslave", "runbindable", "shared",
 			"silent", "slave", "strictatime", "suid", "sync", "unbindable",
 			"user", "verbose",
