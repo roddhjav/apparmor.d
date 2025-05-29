@@ -37,44 +37,45 @@ profile systemd-udevd @{exec_path} flags=(attach_disconnected) {
 
   @{exec_path} mrix,
 
-  @{sh_path}              rix,
-  @{coreutils_path}       rix,
-  @{pager_path}           rPx -> child-pager,
-  @{bin}/*-print-pci-ids  rix,
-  @{sbin}/alsactl         rPUx,
-  @{bin}/ddcutil          rPx,
-  @{sbin}/dmsetup         rPx,
-  @{sbin}/ethtool         rix,
-  @{sbin}/issue-generator rPx,
-  @{sbin}/kdump-config    rPUx,
-  @{bin}/kmod             rPx,
-  @{bin}/logger           rix,
-  @{bin}/ls               rix,
-  @{sbin}/lvm             rPx,
-  @{bin}/mknod            rix,
-  @{sbin}/multipath       rPx,
-  @{bin}/nfsrahead        rix,
-  @{bin}/nvidia-modprobe  rPx -> child-modprobe-nvidia,
-  @{bin}/setfacl          rix,
-  @{bin}/sg_inq           rix,
-  @{bin}/snap             rPx,
-  @{bin}/systemctl        rCx -> systemctl,
-  @{bin}/systemd-run      rix,
-  @{bin}/unshare          rix,
-  @{bin}/vmmouse_detect   rPUx,
+  @{sh_path}                               rix,
+  @{coreutils_path}                        rix,
+  @{bin}/logger                            rix,
+  @{bin}/ls                                rix,
+  @{bin}/mknod                             rix,
+  @{bin}/nfsrahead                         rix,
+  @{bin}/setfacl                           rix,
+  @{bin}/sg_inq                            rix,
+  @{bin}/systemd-run                       rix, # TODO: rCx -> run,
+  @{bin}/unshare                           rix,
+  @{sbin}/ethtool                          rix,
+
+  @{bin}/ddcutil                           rPx,
+  @{bin}/kmod                              rCx -> kmod,
+  @{bin}/nvidia-modprobe                   rPx -> child-modprobe-nvidia,
+  @{bin}/snap                              rPx,
+  @{bin}/systemctl                         rCx -> systemctl,
+  @{bin}/vmmouse_detect                    rPx,
+  @{pager_path}                            rPx -> child-pager,
+  @{sbin}/alsactl                          rPx,
+  @{sbin}/dmsetup                          rPx,
+  @{sbin}/issue-generator                  rPx,
+  @{sbin}/kdump-config                     rPx,
+  @{sbin}/lvm                              rPx,
+  @{sbin}/multipath                        rPx,
+  @{sbin}/u-d-c-print-pci-ids              rPx,
 
   @{lib}/crda/*                            rPUx,
   @{lib}/gdm-runtime-config                rPx,
   @{lib}/nfsrahead                         rPUx,
-  @{lib}/open-iscsi/net-interface-handler  rPUx,
+  @{lib}/open-iscsi/net-interface-handler  rPx,
   @{lib}/pm-utils/power.d/*                rPUx,
   @{lib}/snapd/snap-device-helper          rPx,
   @{lib}/systemd/systemd-*                 rPx,
   @{lib}/udev/*                            rPUx,
   /usr/share/hplip/config_usb_printer.py   rPUx,
 
-  /etc/console-setup/*.sh             rPUx,
-  /etc/network/cloud-ifupdown-helper  rPUx,
+  /etc/console-setup/*.sh                  rPUx,
+  /etc/network/cloud-ifupdown-helper       rPUx,
 
   /etc/default/* r,
   /etc/machine-id r,
@@ -120,14 +121,19 @@ profile systemd-udevd @{exec_path} flags=(attach_disconnected) {
   /dev/ rw,
   /dev/** rwk,
 
+  profile kmod flags=(attach_disconnected,complain) {
+    include <abstractions/base>
+    include <abstractions/app/kmod>
+
+    include if exists <local/systemd-udevd_kmod>
+  }
+
   profile systemctl flags=(attach_disconnected,complain) {
     include <abstractions/base>
     include <abstractions/app/systemctl>
 
     capability net_admin,
     capability sys_ptrace,
-
-    # / r,
 
     include if exists <local/systemd-udevd_systemctl>
   }
