@@ -11,15 +11,18 @@ include <tunables/global>
 profile pipewire-pulse @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/audio-client>
+  include <abstractions/bus-session>
+  include <abstractions/bus-system>
   include <abstractions/nameservice-strict>
 
   capability sys_ptrace,
 
-  ptrace (read),
+  ptrace read,
 
   @{exec_path} mr,
 
   @{bin}/pactl rix,
+  @{bin}/pipewire mr,
 
   /usr/share/pipewire/{,**} r,
 
@@ -38,6 +41,9 @@ profile pipewire-pulse @{exec_path} flags=(attach_disconnected) {
   @{sys}/devices/virtual/dmi/id/sys_vendor r,
   @{sys}/devices/virtual/dmi/id/board_vendor r,
   @{sys}/devices/virtual/dmi/id/bios_vendor r,
+  @{sys}/module/apparmor/parameters/enabled r,
+
+  owner @{PROC}/@{pid}/task/@{tid}/comm rw,
 
   include if exists <local/pipewire-pulse>
 }
