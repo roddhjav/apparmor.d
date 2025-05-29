@@ -1,0 +1,27 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/systemd/system-generators/openvpn-generator
+profile systemd-generator-openvpn @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+
+  @{exec_path} mr,
+
+  @{sh_path}                               r,
+  @{bin}/ls                                ix,
+  @{bin}/mkdir                             ix,
+
+  /etc/default/openvpn r,
+  /etc/openvpn/ r,
+
+  @{run}/systemd/generator/openvpn.service.wants/{,**} w,
+
+  include if exists <local/systemd-generator-openvpn>
+}
+
+# vim:syntax=apparmor
