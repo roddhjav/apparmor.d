@@ -1,0 +1,34 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/whoopsie-preferences
+profile whoopsie-preferences @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/bus-system>
+  include <abstractions/nameservice-strict>
+
+  #aa:dbus own bus=system name=com.ubuntu.WhoopsiePreferences
+
+  @{exec_path} mr,
+
+  @{bin}/systemctl Cx -> systemctl,
+
+  /etc/whoopsie w,
+  /etc/whoopsie.@{rand6} rw,
+
+  profile systemctl {
+    include <abstractions/base>
+    include <abstractions/app/systemctl>
+
+    include if exists <local/whoopsie-preferences_systemctl>
+  }
+
+  include if exists <local/whoopsie-preferences>
+}
+
+# vim:syntax=apparmor
