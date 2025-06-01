@@ -18,7 +18,7 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{exec_path} = @{bin}/systemd-executor
-profile sd flags=(attach_disconnected,mediate_deleted) {
+profile sd flags=(attach_disconnected,mediate_deleted,complain) {
   include <abstractions/base>
   include <abstractions/authentication>
   include <abstractions/bus-system>
@@ -42,6 +42,7 @@ profile sd flags=(attach_disconnected,mediate_deleted) {
   capability linux_immutable,
   capability mknod,
   capability net_admin,
+  capability net_bind_service,
   capability net_raw,
   capability perfmon,
   capability setfcap,
@@ -57,6 +58,8 @@ profile sd flags=(attach_disconnected,mediate_deleted) {
   capability sys_tty_config,
   capability syslog,
 
+  network alg seqpacket,
+  network bluetooth,
   network inet dgram,
   network inet stream,
   network inet6 dgram,
@@ -83,6 +86,22 @@ profile sd flags=(attach_disconnected,mediate_deleted) {
   umount /,
   umount /dev/shm/,
   umount @{run}/systemd/mount-rootfs/{,**},
+
+  # mount tmpfs -> @{run}/lock/,
+  # mount tmpfs -> @{sys}/fs/cgroup/,
+  # mount cgroup -> @{sys}/fs/cgroup/systemd/,
+  # audit mount                                                             /dev/** -> /boot/{,efi/},
+  # audit mount options=(rw bind)                                           /dev/** -> /tmp/namespace-dev-@{rand6}/**,
+  # audit mount options=(rw rbind)                                                  -> @{run}/systemd/unit-root/{,**},
+
+  # audit remount                                        @{run}/systemd/unit-root/{,**},
+  # audit remount options=(ro noexec noatime bind)       /var/snap/{,**},
+  # audit remount options=(ro nosuid nodev bind)         /var/,
+  # audit remount options=(ro nosuid nodev noexec bind)  /boot/,
+
+  # audit umount @{PROC}/sys/fs/binfmt_misc/,
+  # audit umount @{run}/systemd/namespace-@{rand6}/{,**},
+  # audit umount @{run}/systemd/unit-root/{,**},
 
   pivot_root oldroot=/run/systemd/mount-rootfs/ @{run}/systemd/mount-rootfs/,
 
