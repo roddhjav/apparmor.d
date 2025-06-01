@@ -256,13 +256,39 @@ _res_vim() {
 }
 
 check_sbin() {
-    echo -e "\033[1m ⋅ \033[0mEnsuring '@{sbin}' is used in all profiles:"
-    while IFS= read -r name; do
-        mapfile -t files < <(grep --files-with-matches --recursive -E "(^|[[:space:]])@{bin}/$name([[:space:]]|$)" apparmor.d)
-        for file in "${files[@]}"; do
-            _die "$file contains '@{bin}/$name' instead of '@{sbin}/$name'"
-        done
-    done <tests/sbin.list
+    local file name jobs
+    mapfile -t sbin <tests/sbin.list
+    _msg "Ensuring '@{bin} and '@{sbin}' are correctly used in profiles"
+
+    jobs=0
+    for name in "${sbin[@]}"; do
+        (
+            mapfile -t files < <(grep --files-with-matches --recursive -E "(^|[[:space:]])@{bin}/$name([[:space:]]|$)" apparmor.d)
+            for file in "${files[@]}"; do
+                _err compatibility "$file" "contains '@{bin}/$name' instead of '@{sbin}/$name'"
+            done
+        ) &
+        _wait jobs
+    done
+    wait
+
+    local pattern='[[:alnum:]_.-]+' # Pattern for valid file names
+    jobs=0
+    mapfile -t files < <(grep --files-with-matches --recursive -E "(^|[[:space:]])@{sbin}/$pattern([[:space:]]|$)" apparmor.d)
+    for file in "${files[@]}"; do
+        (
+            while read -r match; do
+                if [[ $match =~ (@\{sbin\}/($pattern)) ]]; then
+                    name="${BASH_REMATCH[2]}"
+                    if ! _in_array "$name" "${sbin[@]}"; then
+                        _err compatibility "$file" "contains '@{sbin}/$name' but it is not in sbin.list"
+                    fi
+                fi
+            done < <(grep --only-matching -E "@\{sbin\}/$pattern" "$file")
+        ) &
+        _wait jobs
+    done
+    wait
 }
 
 check_profiles() {
