@@ -12,7 +12,7 @@ RES=$(mktemp)
 echo "false" >"$RES"
 MAX_JOBS=$(nproc)
 declare WITH_CHECK
-readonly MAX_JOBS APPARMORD="apparmor.d"
+readonly RES MAX_JOBS APPARMORD="apparmor.d"
 readonly reset="\033[0m" fgRed="\033[0;31m" fgYellow="\033[0;33m" fgWhite="\033[0;37m" BgWhite="\033[1;37m"
 _msg() { printf '%b%s%b\n' "$BgWhite" "$*" "$reset"; }
 _warn() {
@@ -58,6 +58,12 @@ _check() {
     while IFS= read -r line; do
         line_number=$((line_number + 1))
 
+        # Rules checks
+        _check_abstractions
+        _check_directory_mark
+        _check_equivalent
+        _check_too_wide
+
         # Guidelines check
         _check_abi
         _check_include
@@ -84,13 +90,82 @@ _check() {
     _res_vim
 }
 
+# Rules checks: security, compatibility and rule issues
+
+readonly ABS="abstractions"
+readonly ABS_DANGEROUS=(dbus-session dbus-system dbus-accessibility user-tmp)
+declare -A ABS_DEPRECATED=(
+    ["nameservice"]="nameservice-strict"
+    ["bash"]="shell"
+    ["X"]="X-strict"
+    ["dbus-accessibility-strict"]="bus-accessibility"
+    ["dbus-network-manager-strict"]="bus/org.freedesktop.NetworkManager"
+    ["dbus-session-strict"]="bus-session"
+    ["dbus-system-strict"]="bus-system"
+)
+_check_abstractions() {
+    _is_enabled abstractions || return 0
+
+    local absname
+    for absname in "${ABS_DANGEROUS[@]}"; do
+        if [[ "$line" == *"<$ABS/$absname>"* ]]; then
+            _err security "$file:$line_number" "dangerous abstraction '<$ABS/$absname>'"
+        fi
+    done
+    for absname in "${!ABS_DEPRECATED[@]}"; do
+        if [[ "$line" == *"<$ABS/$absname>"* ]]; then
+            _err security "$file:$line_number" "deprecated abstraction '<$ABS/$absname>', use '<$ABS/${ABS_DEPRECATED[$absname]}>' instead"
+        fi
+    done
+}
+
+readonly DIRECTORIES=('@{HOME}' '@{MOUNTS}' '@{bin}' '@{sbin}' '@{lib}' '@{tmp}' '_dirs}' '_DIR}')
+_check_directory_mark() {
+    _is_enabled directory_mark || return 0
+    for pattern in "${DIRECTORIES[@]}"; do
+        if [[ "$line" == *"$pattern"* ]]; then
+            [[ "$line" == *'='* ]] && continue
+            if [[ ! "$line" == *"$pattern/"* ]]; then
+                _err issue "$file:$line_number" "missing directory mark: '$pattern' instead of '$pattern/'"
+            fi
+        fi
+    done
+}
+
+declare -A EQUIVALENTS=(
+    ["awk"]="{m,g,}awk"
+    ["grep"]="{,e}grep"
+    ["which"]="which{,.debianutils}"
+)
+_check_equivalent() {
+    _is_enabled equivalent || return 0
+    local prgmname
+    for prgmname in "${!EQUIVALENTS[@]}"; do
+        if [[ "$line" == *"/$prgmname"* ]]; then
+            if [[ ! "$line" == *"${EQUIVALENTS[$prgmname]}"* ]]; then
+                _err compatibility "$file:$line_number" "missing equivalent program: '@{bin}/$prgmname' instead of '@{bin}/${EQUIVALENTS[$prgmname]}'"
+            fi
+        fi
+    done
+}
+
+readonly TOOWIDE=('/**' '/tmp/**' '/var/tmp/**' '@{tmp}/**' '/etc/**' '/dev/shm/**' '@{run}/user/@{uid}/**')
+_check_too_wide() {
+    _is_enabled too_wide || return 0
+    for pattern in "${TOOWIDE[@]}"; do
+        if [[ "$line" == *" $pattern "* ]]; then
+            _err security "$file:$line_number" "rule too wide: '$pattern'"
+        fi
+    done
+}
+
 # Guidelines check: https://apparmor.pujol.io/development/guidelines/
 
 RES_ABI=false
 readonly ABI_SYNTAX='abi <abi/4.0>,'
 _check_abi() {
     _is_enabled abi || return 0
-    if [[ "$line" =~ ^' '*"$ABI_SYNTAX" ]]; then
+    if [[ "$line" == *"$ABI_SYNTAX" ]]; then
         RES_ABI=true
     fi
 }
@@ -104,7 +179,7 @@ _res_abi() {
 RES_INCLUDE=false
 _check_include() {
     _is_enabled include || return 0
-    if [[ "$line" =~ ^.*"${include}"$ ]]; then
+    if [[ "$line" == *"${include}"* ]]; then
         RES_INCLUDE=true
     fi
 }
