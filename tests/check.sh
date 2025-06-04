@@ -338,7 +338,7 @@ check_sbin() {
     jobs=0
     for name in "${sbin[@]}"; do
         (
-            mapfile -t files < <(grep --files-with-matches --recursive -E "(^|[[:space:]])@{bin}/$name([[:space:]]|$)" apparmor.d)
+            mapfile -t files < <(grep --line-number --recursive -E "(^|[[:space:]])@{bin}/$name([[:space:]]|$)" apparmor.d | cut -d: -f1,2)
             for file in "${files[@]}"; do
                 _err compatibility "$file" "contains '@{bin}/$name' instead of '@{sbin}/$name'"
             done
@@ -349,7 +349,7 @@ check_sbin() {
 
     local pattern='[[:alnum:]_.-]+' # Pattern for valid file names
     jobs=0
-    mapfile -t files < <(grep --files-with-matches --recursive -E "(^|[[:space:]])@{sbin}/$pattern([[:space:]]|$)" apparmor.d)
+    mapfile -t files < <(grep --line-number --recursive -E "(^|[[:space:]])@{sbin}/$pattern([[:space:]]|$)" apparmor.d | cut -d: -f1,2)
     for file in "${files[@]}"; do
         (
             while read -r match; do
@@ -359,7 +359,7 @@ check_sbin() {
                         _err compatibility "$file" "contains '@{sbin}/$name' but it is not in sbin.list"
                     fi
                 fi
-            done < <(grep --only-matching -E "@\{sbin\}/$pattern" "$file")
+            done < <(grep --only-matching -E "@\{sbin\}/$pattern" "${file%%:*}")
         ) &
         _wait jobs
     done
