@@ -32,11 +32,13 @@ profile ufw @{exec_path} flags=(attach_disconnected) {
   @{python_path}               rix,
   @{bin}/ r,
   @{bin}/cat                   rix,
+  @{bin}/echo                  rix,
   @{bin}/env                   r,
+  @{bin}/kmod                  rCx -> kmod,
+  @{lib}/ufw/ufw-init          rix,
   @{sbin}/sysctl               rix,
   @{sbin}/xtables-legacy-multi rix,
   @{sbin}/xtables-nft-multi    rix,
-  @{lib}/ufw/ufw-init          rix,
 
   /etc/default/ufw rw,
   /etc/ufw/ rw,
@@ -55,6 +57,18 @@ profile ufw @{exec_path} flags=(attach_disconnected) {
   @{PROC}/@{pid}/stat r,
   @{PROC}/sys/net/ipv{4,6}/** rw,
   @{PROC}/sys/kernel/modprobe r,
+
+  profile kmod flags=(attach_disconnected) {
+    include <abstractions/base>
+    include <abstractions/app/kmod>
+
+    capability sys_module,
+
+    @{sys}/module/compression r,
+    @{sys}/module/*/initstate r,
+
+    include if exists <local/ufw_kmod>
+  }
 
   include if exists <local/ufw>
 }
