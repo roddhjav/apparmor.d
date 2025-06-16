@@ -49,6 +49,10 @@ func (b ReAttach) Apply(opt *Option, profile string) (string, error) {
 
 	} else {
 		insert = "@{att} = /\n"
+		profile = strings.ReplaceAll(profile,
+			"include <abstractions/base>",
+			"include <abstractions/base-strict>",
+		)
 	}
 
 	return strings.Replace(profile, origin, insert+origin, 1), nil
