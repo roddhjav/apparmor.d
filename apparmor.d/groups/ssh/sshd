@@ -29,8 +29,8 @@ profile sshd @{exec_path} flags=(attach_disconnected) {
 
   capability audit_write,
   capability chown,
-  capability dac_read_search,
   capability dac_override,
+  capability dac_read_search,
   capability fowner,
   capability kill,
   capability net_bind_service,
@@ -50,9 +50,11 @@ profile sshd @{exec_path} flags=(attach_disconnected) {
   network inet6 dgram,
   network netlink raw,
 
-  signal (receive) set=(hup) peer=@{p_systemd},
+  unix type=stream peer=(label=sshd-session),
 
-  ptrace (read,trace) peer=@{p_systemd},
+  signal receive set=hup peer=@{p_systemd},
+
+  ptrace (read trace) peer=@{p_systemd},
 
   dbus send bus=system path=/org/freedesktop/login1
        interface=org.freedesktop.login1.Manager
