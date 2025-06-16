@@ -1,0 +1,22 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# /bin/bash -c 'read args <&3; echo "args=$args"; \
+#                         exec /usr/bin/cloud-init devel hotplug-hook $args; \
+#                         exit 0'
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+profile cloud-init-hotplugd.service {
+  include <abstractions/base>
+
+  @{sh_path}         ix,
+  @{bin}/cloud-init  Px,
+
+  include if exists <local/cloud-init-hotplugd.service>
+}
+
+# vim:syntax=apparmor

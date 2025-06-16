@@ -1,0 +1,27 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/systemd/systemd-initctl
+profile systemd-initctl @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/bus-system>
+  include <abstractions/common/systemd>
+
+  capability net_admin,
+
+  unix type=stream addr=@@{udbus}/bus/systemd-initctl/,
+
+  @{exec_path} mr,
+
+  @{run}/initctl rw,
+  @{run}/systemd/notify rw,
+
+  include if exists <local/systemd-initctl>
+}
+
+# vim:syntax=apparmor

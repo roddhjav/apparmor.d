@@ -1,0 +1,30 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# It is used by su/sudo to run pre login scripts (as root) such as the motd.
+# After the login, Apparmor libpam will transition to the roles defined in
+# other files under <mappings/sudo>
+
+  @{shells_path} rCx -> shell,
+
+  profile shell flags=(attach_disconnected) {
+    include <abstractions/base>
+    include <abstractions/consoles>
+    include <abstractions/shells>
+
+    @{shells_path}    rix,
+    @{bin}/env        rix,
+    @{bin}/run-parts  rix, #aa:only apt
+
+    #aa:only apt
+    /etc/update-motd.d/ r,
+    /etc/update-motd.d/*                            rPx,
+    /usr/share/landscape/landscape-sysinfo.wrapper  rPx,
+
+    @{run}/motd.dynamic.new rw,  #aa:only apt
+
+    include if exists <local/mappings/sudo/shell>
+  }
+
+# vim:syntax=apparmor

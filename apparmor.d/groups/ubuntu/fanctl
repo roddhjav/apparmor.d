@@ -1,0 +1,33 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{sbin}/fanctl
+profile fanctl @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  @{sh_path}    rix,
+  @{bin}/flock   ix,
+  @{bin}/id      ix,
+  @{bin}/touch   ix,
+  @{bin}/mkdir   ix,
+  @{bin}/ip      ix,
+  @{bin}/sed     ix,
+
+  /etc/network/fan r,
+
+  @{run}/ubuntu-fan/ rw,
+  @{run}/ubuntu-fan/.lock rwk,
+
+  include if exists <local/fanctl>
+}
+
+# vim:syntax=apparmor
