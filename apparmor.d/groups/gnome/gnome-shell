@@ -170,6 +170,7 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   @{bin}/gjs-console            rPx,
   @{bin}/glib-compile-schemas   rPx,
   @{bin}/ibus-daemon            rPx,
+  @{bin}/sensors                rPx,
   @{bin}/tecla                  rPx,
   @{bin}/Xwayland               rPx,
   @{lib}/{,NetworkManager/}nm-openvpn-auth-dialog rPx,
@@ -386,8 +387,10 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
     @{sh_path} mr,
 
-    @{bin}/pmap rix,
-    @{bin}/grep rix,
+    @{bin}/cat   rix,
+    @{bin}/grep  rix,
+    @{bin}/kmod  rPx -> gnome-shell//lsmod,
+    @{bin}/pmap  rix,
 
     @{sys}/devices/system/node/ r,
 
@@ -398,6 +401,15 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
     /dev/tty rw,
 
     include if exists <local/gnome-shell_shell>
+  }
+
+  profile lsmod flags=(attach_disconnected,mediate_deleted) {
+    include <abstractions/base>
+    include <abstractions/app/kmod>
+
+    @{sys}/module/{,**} r,
+
+    include if exists <local/gnome-shell_lsmod>
   }
 
   profile pkexec {
