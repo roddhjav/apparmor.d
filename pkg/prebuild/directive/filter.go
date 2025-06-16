@@ -39,6 +39,10 @@ func init() {
 }
 
 func filterRuleForUs(opt *Option) bool {
+	if prebuild.RBAC && slices.Contains(opt.ArgList, "RBAC") {
+		return true
+	}
+
 	abiStr := fmt.Sprintf("abi%d", prebuild.ABI)
 	if slices.Contains(opt.ArgList, abiStr) {
 		return true

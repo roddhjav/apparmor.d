@@ -64,24 +64,34 @@ help:
 	@just --list --unsorted
 	@echo -e "\nSee https://apparmor.pujol.io/development/ for more information."
 
+[group('build')]
 [doc('Build the go programs')]
 build:
 	@go build -o {{build}}/ ./cmd/aa-log
 	@go build -o {{build}}/ ./cmd/prebuild
 
+[group('build')]
 [doc('Prebuild the profiles in enforced mode')]
 enforce: build
 	@./{{build}}/prebuild
 
+[group('build')]
 [doc('Prebuild the profiles in complain mode')]
 complain: build
 	@./{{build}}/prebuild --complain
 
+[group('build')]
 [doc('Prebuild the profiles in FSP mode')]
 fsp: build
+	@./{{build}}/prebuild --full
+
+[group('build')]
+[doc('Prebuild the profiles in FSP mode (complain)')]
+fsp-complain: build
 	@./{{build}}/prebuild --complain --full
 
-[doc('Install the profiles')]
+[group('build')]
+[doc('Install prebuild profiles')]
 install:
 	#!/usr/bin/env bash
 	set -eu -o pipefail
@@ -108,26 +118,31 @@ install:
 		install -Dm0644 "$file" "{{destdir}}/usr/lib/systemd/user/$service.d/apparmor.conf"
 	done
 
+[group('packages')]
 [doc('Build & install apparmor.d on Arch based systems')]
 pkg:
 	@makepkg --syncdeps --install --cleanbuild --force --noconfirm
 
+[group('packages')]
 [doc('Build & install apparmor.d on Debian based systems')]
 dpkg:
 	@bash dists/build.sh dpkg
 	@sudo dpkg -i {{pkgdest}}/{{pkgname}}_*.deb
 
+[group('packages')]
 [doc('Build & install apparmor.d on OpenSUSE based systems')]
 rpm:
 	@bash dists/build.sh rpm
 	@sudo rpm -ivh --force  {{pkgdest}}/{{pkgname}}-*.rpm
 
+[group('tests')]
 [doc('Run the unit tests')]
 tests:
 	@go test ./cmd/... -v -cover -coverprofile=coverage.out
 	@go test ./pkg/... -v -cover -coverprofile=coverage.out
 	@go tool cover -func=coverage.out
 
+[group('linter')]
 [doc('Run the linters')]
 lint:
 	golangci-lint run
@@ -138,18 +153,22 @@ lint:
 		tests/packer/init.sh tests/packer/src/aa-update tests/packer/clean.sh \
 		debian/{{pkgname}}.postinst debian/{{pkgname}}.postrm
 
+[group('linter')]
 [doc('Run style checks on the profiles')]
 check:
 	@bash tests/check.sh
 
+[group('docs')]
 [doc('Generate the man pages')]
 man:
 	@pandoc -t man -s -o share/man/man8/aa-log.8 share/man/man8/aa-log.md
 
+[group('docs')]
 [doc('Build the documentation')]
 docs:
 	@ENABLED_GIT_REVISION_DATE=false MKDOCS_OFFLINE=true mkdocs build --strict
 
+[group('docs')]
 [doc('Serve the documentation')]
 serve:
 	@ENABLED_GIT_REVISION_DATE=false MKDOCS_OFFLINE=false mkdocs serve
@@ -160,6 +179,7 @@ clean:
 		debian/.debhelper debian/debhelper* debian/*.debhelper debian/{{pkgname}} \
 		{{pkgdest}}/{{pkgname}}* {{build}} coverage.out
 
+[group('packages')]
 [doc('Build the package in a clean OCI container')]
 package dist:
 	#!/usr/bin/env bash
@@ -175,6 +195,7 @@ package dist:
 	fi
 	bash dists/docker.sh $dist $version
 
+[group('vm')]
 [doc('Build the VM image')]
 img dist flavor: (package dist)
 	@mkdir -p {{base_dir}}
@@ -192,6 +213,7 @@ img dist flavor: (package dist)
 		-var output_dir={{output_dir}} \
 		tests/packer/
 
+[group('vm')]
 [doc('Create the machine')]
 create dist flavor:
 	@cp -f {{base_dir}}/{{prefix}}{{dist}}-{{flavor}}.qcow2 {{vm}}/{{prefix}}{{dist}}-{{flavor}}.qcow2
@@ -211,33 +233,40 @@ create dist flavor:
 		--sound model=ich9 \
 		--noautoconsole
 
+[group('vm')]
 [doc('Start a machine')]
 up dist flavor:
 	@virsh {{c}} start {{prefix}}{{dist}}-{{flavor}}
 
+[group('vm')]
 [doc('Stops the machine')]
 halt dist flavor:
 	@virsh {{c}} shutdown {{prefix}}{{dist}}-{{flavor}}
 
+[group('vm')]
 [doc('Reboot the machine')]
 reboot dist flavor:
 	@virsh {{c}} reboot {{prefix}}{{dist}}-{{flavor}}
 
+[group('vm')]
 [doc('Destroy the machine')]
 destroy dist flavor:
 	@virsh {{c}} destroy {{prefix}}{{dist}}-{{flavor}} || true
 	@virsh {{c}} undefine {{prefix}}{{dist}}-{{flavor}} --nvram
 	@rm -fv {{vm}}/{{prefix}}{{dist}}-{{flavor}}.qcow2
 
+[group('vm')]
 [doc('Connect to the machine')]
 ssh dist flavor:
 	@ssh {{sshopt}} {{username}}@`just get_ip {{dist}} {{flavor}}`
 
+[group('vm')]
 [doc('List the machines')]
 list:
 	@echo -e '\033[1m Id   Distribution Flavor  State\033[0m'
 	@virsh {{c}} list --all | grep {{prefix}} | sed 's/{{prefix}}//g'
 
+[group('vm')]
 [doc('List the VM images')]
 images:
 	#!/usr/bin/env bash
@@ -254,6 +283,7 @@ images:
 	}
 	'
 
+[group('vm')]
 [doc('List the VM images that can be created')]
 available:
 	#!/usr/bin/env bash
@@ -270,6 +300,8 @@ available:
 	}
 	'
 
+
+[group('tests')]
 [doc('Run the integration tests on the machine')]
 integration dist flavor:
 	@ssh {{sshopt}} user@`just get_ip {{dist}} {{flavor}}` \
@@ -280,12 +312,13 @@ integration dist flavor:
 		@bats --recursive --timing --print-output-on-failure Projects/integration/
 
 
-
+[group('internal')]
 get_ip dist flavor:
 	@virsh --quiet --readonly {{c}} domifaddr {{prefix}}{{dist}}-{{flavor}} | \
 		head -1 | \
 		grep -E -o '([[:digit:]]{1,3}\.){3}[[:digit:]]{1,3}'
 
+[group('internal')]
 get_osinfo dist:
 	#!/usr/bin/env python3
 	osinfo = {

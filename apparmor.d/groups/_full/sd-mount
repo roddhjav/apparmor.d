@@ -1,0 +1,71 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Part of the systemd (as PID 1) profile.
+
+# sd-mount is a subprofile of sd responsible to handle mounting operation.
+
+# Only use this profile with a fully configured system. Otherwise it **WILL**
+# break your computer. See https://apparmor.pujol.io/full-system-policy/.
+
+# Distributions and other programs can add rules in the usr/sd-mount.d directory
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/mount
+profile sd-mount flags=(complain) {
+  include <abstractions/base>
+  include <abstractions/disks-write>
+
+  capability dac_read_search,
+  capability sys_admin,
+
+  mount                                                                         -> @{efi}/,
+  mount                                                                         -> @{HOME}/{,**},
+  mount                                                                         -> @{HOMEDIRS}/,
+  mount                                                                         -> @{MOUNTDIRS}/,
+  mount                                                                         -> @{MOUNTS}/{,**},
+  mount fstype=binfmt_misc options=(rw nodev noexec nosuid)         binfmt_misc -> @{PROC}/sys/fs/binfmt_misc/,
+  mount fstype=configfs    options=(rw nodev noexec nosuid)            configfs -> @{sys}/kernel/config/,
+  mount fstype=debugfs     options=(rw nodev noexec nosuid)             debugfs -> @{sys}/kernel/debug/,
+  mount fstype=fusectl     options=(rw nodev noexec nosuid)             fusectl -> @{sys}/fs/fuse/connections/,
+  mount fstype=hugetlbfs   options=(rw nosuid nodev)                  hugetlbfs -> /dev/hugepages/,
+  mount fstype=mqueue      options=(rw nodev noexec nosuid)                     -> /dev/mqueue/,
+  mount fstype=squashfs    options=(ro nodev)                   /dev/loop@{int} -> /snap/*/@{int}/,
+  mount fstype=tmpfs       options=(rw nodev noexec nosuid)               tmpfs -> @{run}/lock/,
+  mount fstype=tmpfs       options=(rw nodev nosuid strictatime)          tmpfs -> /tmp/,
+  mount fstype=tracefs     options=(rw nodev noexec nosuid)             tracefs -> @{sys}/kernel/tracing/,
+
+  mount options=(rw move)                                                       -> @{efi},
+  mount options=(rw move)                                                       -> @{HOME}/{,**},
+  mount options=(rw move)                                                       -> @{HOMEDIRS}/,
+  mount options=(rw move)                                                       -> @{MOUNTDIRS}/,
+  mount options=(rw move)                                                       -> @{MOUNTS}/{,**},
+  mount options=(rw move)                                                       -> @{sys}/fs/fuse/connections/,
+  mount options=(rw move)                                                       -> @{sys}/kernel/config/,
+  mount options=(rw move)                                                       -> @{sys}/kernel/debug/,
+  mount options=(rw move)                                                       -> @{sys}/kernel/tracing/,
+  mount options=(rw move)                                                       -> /dev/hugepages/,
+  mount options=(rw move)                                                       -> /dev/mqueue/,
+  mount options=(rw move)                                                       -> /tmp/,
+
+  @{exec_path} mr,
+
+  /var/lib/snapd/snaps/*.snap r,
+
+        @{run}/ r,
+  owner @{run}/mount/ rw,
+  owner @{run}/mount/utab{,.*} rwk,
+
+  @{PROC}/@{pid}/mountinfo r,
+
+  /dev/loop-control rw,
+
+  include if exists <usr/sd-mount.d>
+  include if exists <local/sd-mount>
+}
+
+# vim:syntax=apparmor

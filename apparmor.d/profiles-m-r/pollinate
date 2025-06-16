@@ -1,0 +1,48 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/pollinate
+profile pollinate @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+
+  network inet dgram,
+  network inet stream,
+  network inet6 dgram,
+  network inet6 stream,
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  @{sh_path}                  rix,
+  @{coreutils_path}           rix,
+  @{bin}/curl                 rix,
+  @{bin}/dpkg                 rPx -> child-dpkg,
+  @{bin}/dpkg-query           rpx,
+  @{bin}/hostname             rix,
+  @{bin}/logger               rix,
+  @{bin}/systemd-detect-virt  rPx,
+  @{bin}/xxd                  rix,
+
+  /etc/cloud/build.info r,
+  /etc/default/pollinate r,
+  /etc/lsb-release r,
+  /etc/pollinate/{,**} r,
+
+  owner /var/cache/pollinate/seeded w,
+
+  owner /tmp/pollinate.@{rand12}/{,**} rw,
+
+  @{PROC}/uptime r,
+
+  /dev/urandom w,
+
+  include if exists <local/pollinate>
+}
+
+# vim:syntax=apparmor

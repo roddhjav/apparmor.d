@@ -80,6 +80,7 @@ func Configure() {
 	if full && paths.New("apparmor.d/groups/_full").Exist() {
 		prepare.Register("fsp")
 		builder.Register("fsp")
+		prebuild.RBAC = true
 	} else if prebuild.SystemdDir.Exist() {
 		prepare.Register("systemd-early")
 	}
