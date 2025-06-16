@@ -1,0 +1,34 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Part of the systemd (as PID 1) profile.
+
+# sd-umount is a subprofile of sd responsible to handle unmounting operation.
+
+# Only use this profile with a fully configured system. Otherwise it **WILL**
+# break your computer. See https://apparmor.pujol.io/full-system-policy/.
+
+# Distributions and other programs can add rules in the usr/sd-umount.d directory
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/umount
+profile sd-umount flags=(complain) {
+  include <abstractions/base>
+
+  capability sys_admin,
+
+  umount @{efi},
+
+  @{exec_path} mr,
+
+  @{PROC}/@{pid}/mountinfo r,
+
+  include if exists <usr/sd-umount.d>
+  include if exists <local/sd-umount>
+}
+
+# vim:syntax=apparmor
