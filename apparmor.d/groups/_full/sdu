@@ -24,6 +24,7 @@ profile sdu flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/bus-session>
   include <abstractions/bus-system>
   include <abstractions/nameservice-strict>
+  include <abstractions/xdg-desktop>
 
   network netlink raw,
 
@@ -71,16 +72,27 @@ profile sdu flags=(attach_disconnected,mediate_deleted) {
   owner @{run}/user/@{uid}/pipewire-@{int}.lock rwk,
   owner @{run}/user/@{uid}/pulse/pid rw,
 
-  owner @{user_state_dirs}/wireplumber/ r,
+  owner @{user_state_dirs}/wireplumber/ rw,
   owner @{user_state_dirs}/wireplumber/stream-properties rw,
   owner @{user_state_dirs}/wireplumber/stream-properties.@{rand6} rw,
 
   @{run}/systemd/users/@{uid} r,
   @{run}/systemd/users/@{int} r,
 
-  @{run}/udev/data/c116:@{int} r,         # for ALSA
+  @{run}/udev/data/c14:@{int} r,          # Open Sound System (OSS)
+  @{run}/udev/data/c81:@{int} r,          # For video4linux
+  @{run}/udev/data/c116:@{int} r,         # For ALSA
+  @{run}/udev/data/c@{dynamic}:@{int} r,  # For dynamic assignment range 234 to 254, 384 to 511
 
   @{sys}/bus/ r,
+  @{sys}/bus/media/devices/ r,
+  @{sys}/devices/@{pci}/video4linux/video@{int}/uevent r,
+  @{sys}/devices/**/device:*/{,**/}path r,
+  @{sys}/devices/**/sound/**/pcm_class r,
+  @{sys}/devices/**/sound/**/uevent r,
+  @{sys}/devices/system/node/ r,
+  @{sys}/devices/system/node/node@{int}/meminfo r,
+  @{sys}/devices/virtual/dmi/id/bios_vendor r,
   @{sys}/devices/virtual/dmi/id/product_name r,
   @{sys}/devices/virtual/dmi/id/sys_vendor r,
   @{sys}/devices/virtual/sound/seq/uevent r,
