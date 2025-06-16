@@ -91,6 +91,11 @@ fsp-complain: build
 	@./{{build}}/prebuild --complain --full
 
 [group('build')]
+[doc('Prebuild the profiles in FSP mode (debug)')]
+fsp-debug: build
+	@./{{build}}/prebuild --complain --full --debug
+
+[group('build')]
 [doc('Install prebuild profiles')]
 install:
 	#!/usr/bin/env bash
@@ -312,13 +317,13 @@ integration dist flavor:
 		@bats --recursive --timing --print-output-on-failure Projects/integration/
 
 
-[group('internal')]
+[private]
 get_ip dist flavor:
 	@virsh --quiet --readonly {{c}} domifaddr {{prefix}}{{dist}}-{{flavor}} | \
 		head -1 | \
 		grep -E -o '([[:digit:]]{1,3}\.){3}[[:digit:]]{1,3}'
 
-[group('internal')]
+[private]
 get_osinfo dist:
 	#!/usr/bin/env python3
 	osinfo = {
