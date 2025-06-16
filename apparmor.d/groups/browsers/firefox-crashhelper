@@ -1,0 +1,26 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{name} = firefox{,.sh,-esr,-bin}
+@{lib_dirs} = @{lib}/@{name} /opt/@{name}
+@{config_dirs} = @{HOME}/.mozilla/
+@{cache_dirs} = @{user_cache_dirs}/mozilla/
+
+@{exec_path} = @{lib_dirs}/crashhelper
+profile firefox-crashhelper @{exec_path} {
+  include <abstractions/base>
+
+  @{exec_path} mr,
+
+  owner "@{config_dirs}/firefox/Crash Reports/" rw,
+  owner "@{config_dirs}/firefox/Crash Reports/crash_helper_server.log" rw,
+
+  include if exists <local/firefox-crashhelper>
+}
+
+# vim:syntax=apparmor
