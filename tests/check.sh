@@ -353,11 +353,9 @@ check_sbin() {
     for file in "${files[@]}"; do
         (
             while read -r match; do
-                if [[ $match =~ (@\{sbin\}/($pattern)) ]]; then
-                    name="${BASH_REMATCH[2]}"
-                    if ! _in_array "$name" "${sbin[@]}"; then
-                        _err compatibility "$file" "contains '@{sbin}/$name' but it is not in sbin.list"
-                    fi
+                name="${match/\@\{sbin\}\//}"
+                if ! _in_array "$name" "${sbin[@]}"; then
+                    _err compatibility "$file" "contains '@{sbin}/$name' but it is not in sbin.list"
                 fi
             done < <(grep --only-matching -E "@\{sbin\}/$pattern" "${file%%:*}")
         ) &
