@@ -134,6 +134,7 @@ _check_directory_mark() {
 
 declare -A EQUIVALENTS=(
     ["awk"]="{m,g,}awk"
+    ["gawk"]="{m,g,}awk"
     ["grep"]="{,e}grep"
     ["which"]="which{,.debianutils}"
 )
@@ -371,7 +372,10 @@ check_profiles() {
             -prune -o -type f -print
     )
     jobs=0
-    WITH_CHECK=(abi include profile header tabs trailing indentation subprofiles vim)
+    WITH_CHECK=(
+        equivalent
+        abi include profile header tabs trailing indentation subprofiles vim
+    )
     for file in "${files[@]}"; do
         (
             name="$(basename "$file")"
@@ -388,7 +392,10 @@ check_abstractions() {
     _msg "Checking abstractions"
     mapfile -t files < <(find "$APPARMORD/abstractions" -type f -not -path "$APPARMORD/abstractions/*.d/*")
     jobs=0
-    WITH_CHECK=(abi include header tabs trailing indentation vim)
+    WITH_CHECK=(
+        equivalent
+        abi include header tabs trailing indentation vim
+    )
     for file in "${files[@]}"; do
         (
             name="$(basename "$file")"
@@ -406,7 +413,10 @@ check_abstractions() {
     )
     # shellcheck disable=SC2034
     jobs=0
-    WITH_CHECK=(header tabs trailing indentation vim)
+    WITH_CHECK=(
+        equivalent
+        header tabs trailing indentation vim
+    )
     for file in "${files[@]}"; do
         _check "$file" &
         _wait jobs
