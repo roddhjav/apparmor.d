@@ -93,7 +93,7 @@ _check() {
 # Rules checks: security, compatibility and rule issues
 
 readonly ABS="abstractions"
-readonly ABS_DANGEROUS=(dbus-session dbus-system dbus-accessibility user-tmp)
+readonly ABS_DANGEROUS=(dbus dbus-session dbus-system dbus-accessibility user-tmp)
 declare -A ABS_DEPRECATED=(
     ["nameservice"]="nameservice-strict"
     ["bash"]="shell"
@@ -142,7 +142,7 @@ _check_equivalent() {
     _is_enabled equivalent || return 0
     local prgmname
     for prgmname in "${!EQUIVALENTS[@]}"; do
-        if [[ "$line" == *"/$prgmname"* ]]; then
+        if [[ "$line" == *"/$prgmname "* ]]; then
             if [[ ! "$line" == *"${EQUIVALENTS[$prgmname]}"* ]]; then
                 _err compatibility "$file:$line_number" "missing equivalent program: '@{bin}/$prgmname' instead of '@{bin}/${EQUIVALENTS[$prgmname]}'"
             fi
@@ -373,7 +373,7 @@ check_profiles() {
     )
     jobs=0
     WITH_CHECK=(
-        equivalent
+        abstractions equivalent
         abi include profile header tabs trailing indentation subprofiles vim
     )
     for file in "${files[@]}"; do
@@ -393,7 +393,7 @@ check_abstractions() {
     mapfile -t files < <(find "$APPARMORD/abstractions" -type f -not -path "$APPARMORD/abstractions/*.d/*")
     jobs=0
     WITH_CHECK=(
-        equivalent
+        abstractions equivalent
         abi include header tabs trailing indentation vim
     )
     for file in "${files[@]}"; do
@@ -414,7 +414,7 @@ check_abstractions() {
     # shellcheck disable=SC2034
     jobs=0
     WITH_CHECK=(
-        equivalent
+        abstractions equivalent
         header tabs trailing indentation vim
     )
     for file in "${files[@]}"; do
