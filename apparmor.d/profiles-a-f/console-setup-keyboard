@@ -1,0 +1,31 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/console-setup/keyboard-setup.sh /etc/console-setup/cached_setup_keyboard.sh
+profile console-setup-keyboard @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+
+  capability sys_tty_config,
+
+  @{exec_path} mrix,
+
+  @{sh_path}  rix,
+  @{bin}/gzip rix,
+  @{bin}/kbd_mode rix,
+  @{bin}/loadkeys rix,
+
+  /etc/console-setup/{,**} r,
+
+  /dev/tty@{int} rw,
+  /dev/tty rw,
+
+  include if exists <local/console-setup-keyboard>
+}
+
+# vim:syntax=apparmor

@@ -1,0 +1,36 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = /etc/console-setup/cached_setup_font.sh /etc/console-setup/cached_setup_terminal.sh
+profile console-setup-cached @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+
+  capability sys_tty_config,
+
+  @{exec_path} mr,
+
+  @{sh_path}     rix,
+  @{bin}/gzip    rix,
+  @{bin}/ls       ix,
+  @{bin}/mkdir    ix,
+  @{bin}/setfont  ix,
+
+  /usr/share/consolefonts/{,**} r,
+
+  @{run}/console-setup/ w,
+  @{run}/console-setup/font-loaded w,
+
+  /dev/ r,
+  /dev/tty rw,
+  /dev/tty@{int} rw,
+
+  include if exists <local/console-setup-cached>
+}
+
+# vim:syntax=apparmor
