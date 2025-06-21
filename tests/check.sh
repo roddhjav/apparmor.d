@@ -390,7 +390,7 @@ check_profiles() {
 
 check_abstractions() {
     _msg "Checking abstractions"
-    mapfile -t files < <(find "$APPARMORD/abstractions" -type f -not -path "$APPARMORD/abstractions/*.d/*")
+    mapfile -t files < <(find "$APPARMORD/abstractions" -type f -not -path "$APPARMORD/abstractions/*.d/*" 2>/dev/null || true)
     jobs=0
     WITH_CHECK=(
         abstractions equivalent
@@ -408,8 +408,8 @@ check_abstractions() {
     wait
 
     mapfile -t files < <(
-        find "$APPARMORD/abstractions" -type f -path "$APPARMORD/abstractions/*.d/*"
-        find "$APPARMORD/mappings" -type f
+        find "$APPARMORD/abstractions" -type f -path "$APPARMORD/abstractions/*.d/*" 2>/dev/null || true
+        find "$APPARMORD/mappings" -type f 2>/dev/null || true
     )
     # shellcheck disable=SC2034
     jobs=0
