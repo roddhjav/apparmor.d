@@ -61,7 +61,7 @@ profile hw-probe @{exec_path} flags=(attach_disconnected) {
   @{sbin}/iwconfig       rCx -> netconfig,
   @{bin}/journalctl      rCx -> journalctl,
   @{bin}/killall         rCx -> killall,
-  @{bin}/kmod            rix,
+  @{bin}/kmod            rCx -> kmod,
   @{bin}/lsb_release     rPx -> lsb_release,
   @{bin}/lsblk           rPx,
   @{bin}/lscpu           rPx,
@@ -98,18 +98,26 @@ profile hw-probe @{exec_path} flags=(attach_disconnected) {
   @{sys}/devices/virtual/dmi/id/* r,
   @{sys}/firmware/efi/efivars/ r,
   @{sys}/firmware/efi/efivars/* r,
-  @{sys}/module/*/ r,
-  @{sys}/module/*/{coresize,refcnt} r,
-  @{sys}/module/*/holders/ r,
 
   @{PROC}/bus/input/devices r,
   @{PROC}/cmdline r,
   @{PROC}/interrupts r,
   @{PROC}/ioports r,
-  @{PROC}/modules r,
   @{PROC}/scsi/scsi r,
 
   /dev/{,**} r,
+
+  profile kmod {
+    include <abstractions/base>
+    include <abstractions/app/kmod>
+
+    capability sys_module,
+
+    @{sys}/module/compression r,
+
+    include if exists <local/hw-probe_kmod>
+  }
+
 
   profile pacman flags=(attach_disconnected) {
     include <abstractions/base>
