@@ -10,7 +10,7 @@ include <tunables/global>
 @{exec_path} = @{bin}/{kmod,lsmod,depmod,insmod,rmmod,modinfo,modprobe}
 profile kmod @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/consoles>
+  include <abstractions/app/kmod>
   include <abstractions/nameservice-strict>
 
   capability dac_read_search,
@@ -31,13 +31,9 @@ profile kmod @{exec_path} flags=(attach_disconnected) {
   @{sbin}/sysctl     rCx -> sysctl,
   @{bin}/true        rix,
 
-  @{lib}/modprobe.d/{,*.conf} r,
   @{lib}/modules/*/modules.* rw,
 
   @{run}/modprobe.d/{,*.conf} r,
-
-  /etc/depmod.d/{,**} r,
-  /etc/modprobe.d/{,*.conf} r,
 
   /tmp/**/*.ko{,.zst} r,
   /usr/src/*/*.ko r,
@@ -65,9 +61,6 @@ profile kmod @{exec_path} flags=(attach_disconnected) {
   owner @{run}/tmpfiles.d/static-nodes.conf w,
 
   @{sys}/module/{,**} r,
-
-  @{PROC}/cmdline r,
-  @{PROC}/modules r,
 
   /dev/tty@{int} rw,
 

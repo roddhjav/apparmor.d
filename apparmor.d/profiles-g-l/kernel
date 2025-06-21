@@ -13,8 +13,6 @@ profile kernel @{exec_path} {
   include <abstractions/consoles>
   include <abstractions/nameservice-strict>
 
-  capability sys_module,
-
   @{exec_path} mr,
 
   @{sh_path}        rix,
@@ -24,7 +22,7 @@ profile kernel @{exec_path} {
   @{bin}/chmod      rix,
   @{bin}/cut        rix,
   @{bin}/dirname    rix,
-  @{bin}/kmod       rix,
+  @{bin}/kmod       rCx -> kmod,
   @{bin}/mv         rix,
   @{bin}/rm         rix,
   @{bin}/rmdir      rix,
@@ -56,14 +54,19 @@ profile kernel @{exec_path} {
 
   /etc/apt/apt.conf.d/ r,
   /etc/apt/apt.conf.d/01autoremove-kernels{,.dpkg-new} rw,
-  /etc/modprobe.d/ r,
-  /etc/modprobe.d/*.conf r,
 
   @{run}/reboot-required w,
   @{run}/reboot-required.pkgs rw,
 
   @{PROC}/devices r,
   @{PROC}/cmdline r,
+
+  profile kmod {
+    include <abstractions/base>
+    include <abstractions/app/kmod>
+
+    include if exists <local/kernel_kmod>
+  }
 
   include if exists <local/kernel>
 }
