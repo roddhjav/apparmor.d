@@ -70,11 +70,12 @@ profile dockerd @{exec_path} flags=(attach_disconnected) {
   @{lib}/docker/docker-init      rCx -> init,
   @{bin}/docker-proxy            rPx,
   @{bin}/git                     rCx -> git,
-  @{bin}/kmod                    rPx,
+  @{bin}/kmod                    rCx -> kmod,
   @{bin}/ps                      rPx,
   @{sbin}/runc                   rUx,
   @{bin}/unpigz                  rix,
-  @{sbin}/xtables-nft-multi      rix,
+  @{sbin}/xtables-nft-multi      rCx -> nft,
+  @{sbin}/xtables-legacy-multi   rCx -> nft,
 
   # Docker needs full access of the containers it manages.
   # TODO: should be in a sub profile started with pivot_root, not supported yet.
@@ -128,12 +129,47 @@ profile dockerd @{exec_path} flags=(attach_disconnected) {
   owner @{PROC}/@{pid}/cgroup r,
   owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/mountinfo r,
-  owner @{PROC}/@{pid}/net/ip_tables_names r,
   owner @{PROC}/@{pid}/task/@{tid}/mountinfo r,
   owner @{PROC}/@{pid}/uid_map r,
 
   /dev/ r,
   /dev/**/ r,
+
+  profile nft flags=(attach_disconnected) {
+    include <abstractions/base>
+
+    capability net_admin,
+    capability net_raw,
+
+    network inet raw,
+    network inet6 raw,
+    network netlink raw,
+
+    @{sbin}/xtables-nft-multi     rix,
+    @{sbin}/xtables-legacy-multi  rix,
+    @{bin}/kmod                   rPx -> dockerd//kmod,
+
+    @{PROC}/@{pid}/net/ip{,6}_tables_names r,
+    @{PROC}/sys/kernel/modprobe r,
+
+    @{run}/xtables.lock rwk,
+
+    include if exists <local/dockerd_nft>
+  }
+
+  profile kmod {
+    include <abstractions/base>
+    include <abstractions/app/kmod>
+
+    capability sys_module,
+
+    @{run}/xtables.lock r,
+
+    @{sys}/module/compression r,
+    @{sys}/module/*/initstate r,
+
+    include if exists <local/dockerd_kmod>
+  }
 
   profile init flags=(attach_disconnected) {
     include <abstractions/base>
