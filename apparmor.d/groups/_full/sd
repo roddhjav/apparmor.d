@@ -86,22 +86,7 @@ profile sd flags=(attach_disconnected,mediate_deleted,complain) {
   umount /,
   umount /dev/shm/,
   umount @{run}/systemd/mount-rootfs/{,**},
-
-  # mount tmpfs -> @{run}/lock/,
-  # mount tmpfs -> @{sys}/fs/cgroup/,
-  # mount cgroup -> @{sys}/fs/cgroup/systemd/,
-  # audit mount                                                             /dev/** -> /boot/{,efi/},
-  # audit mount options=(rw bind)                                           /dev/** -> /tmp/namespace-dev-@{rand6}/**,
-  # audit mount options=(rw rbind)                                                  -> @{run}/systemd/unit-root/{,**},
-
-  # audit remount                                        @{run}/systemd/unit-root/{,**},
-  # audit remount options=(ro noexec noatime bind)       /var/snap/{,**},
-  # audit remount options=(ro nosuid nodev bind)         /var/,
-  # audit remount options=(ro nosuid nodev noexec bind)  /boot/,
-
-  # audit umount @{PROC}/sys/fs/binfmt_misc/,
-  # audit umount @{run}/systemd/namespace-@{rand6}/{,**},
-  # audit umount @{run}/systemd/unit-root/{,**},
+  umount @{run}/systemd/namespace-@{rand6}/{,**},
 
   pivot_root oldroot=/run/systemd/mount-rootfs/ @{run}/systemd/mount-rootfs/,
 
@@ -150,20 +135,22 @@ profile sd flags=(attach_disconnected,mediate_deleted,complain) {
   @{bin}/true                                      ix,
 
   # Required due to stacked profiles
-  @{sbin}/grpck                                    ix,
+  @{bin}/find                                      ix,
   @{bin}/gzip                                      ix,
   @{bin}/install                                   ix,
-  @{sbin}/pwck                                     ix,
   @{bin}/readlink                                  ix,
   @{lib}/colord-sane                               ix,
   @{lib}/systemd/systemd-nsresourcework            ix,
   @{lib}/systemd/systemd-userwork                  ix,
+  @{sbin}/grpck                                    ix,
+  @{sbin}/pwck                                     ix,
 
   / r,
   @{att}/ r,
   @{bin}/{,**} r,
   @{lib}/{,**} r,
   @{sbin}/{,*} r,
+  /usr/local/{,**} r,
   /usr/share/** r,
   /etc/*/ w,
   /etc/** rk,
@@ -179,6 +166,7 @@ profile sd flags=(attach_disconnected,mediate_deleted,complain) {
   /var/lib/*/ rw,
   /var/lib/*/** rwk,
   /var/lib/systemd/*/ r,
+  /var/log/ r,
   /var/log/** rw,
   /var/log/journal/** rwl -> /var/log/journal/**,
 
