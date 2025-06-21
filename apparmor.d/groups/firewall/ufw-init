@@ -11,6 +11,7 @@ profile ufw-init @{exec_path} {
   include <abstractions/base>
   include <abstractions/nameservice-strict>
 
+  capability dac_read_search,
   capability net_admin,
 
   network inet dgram,
@@ -22,7 +23,8 @@ profile ufw-init @{exec_path} {
   @{exec_path} mr,
 
   @{sh_path}                   rix,
-  @{sbin}/sysctl               rix,
+  @{bin}/echo                  rix,
+  @{sbin}/sysctl               rCx -> sysctl,
   @{sbin}/xtables-legacy-multi rix,
   @{sbin}/xtables-nft-multi    rix,
 
@@ -30,7 +32,22 @@ profile ufw-init @{exec_path} {
   /etc/ufw/* r,
 
   @{PROC}/@{pid}/net/ip_tables_names r,
-  @{PROC}/sys/net/ipv{4,6}/** rw,
+  # @{PROC}/sys/net/ipv{4,6}/** rw,
+
+  profile sysctl {
+    include <abstractions/base>
+    include <abstractions/consoles>
+
+    capability net_admin,
+
+    @{sbin}/sysctl mr,
+
+    /etc/ufw/sysctl.conf r,
+
+    @{PROC}/sys/net/ipv{4,6}/** rw,
+
+    include if exists <local/ufw-init_sysctl>
+  }
 
   include if exists <local/ufw-init>
 }

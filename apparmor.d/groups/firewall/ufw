@@ -30,13 +30,12 @@ profile ufw @{exec_path} flags=(attach_disconnected) {
   @{exec_path} mr,
 
   @{python_path}               rix,
-  @{bin}/ r,
+  @{sbin}/ r,
   @{bin}/cat                   rix,
-  @{bin}/echo                  rix,
   @{bin}/env                   r,
   @{bin}/kmod                  rCx -> kmod,
-  @{lib}/ufw/ufw-init          rix,
-  @{sbin}/sysctl               rix,
+  @{lib}/ufw/ufw-init          rPx,
+  @{sbin}/sysctl               rCx -> sysctl,
   @{sbin}/xtables-legacy-multi rix,
   @{sbin}/xtables-nft-multi    rix,
 
@@ -68,6 +67,21 @@ profile ufw @{exec_path} flags=(attach_disconnected) {
     @{sys}/module/*/initstate r,
 
     include if exists <local/ufw_kmod>
+  }
+
+  profile sysctl {
+    include <abstractions/base>
+    include <abstractions/consoles>
+
+    capability net_admin,
+
+    @{sbin}/sysctl mr,
+
+    /etc/ufw/sysctl.conf r,
+
+    @{PROC}/sys/net/ipv{4,6}/** rw,
+
+    include if exists <local/ufw_sysctl>
   }
 
   include if exists <local/ufw>
