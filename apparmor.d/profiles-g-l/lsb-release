@@ -1,0 +1,40 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Note: named "lsb-release" to not conflict with upstreamed "lsb_release" that
+# does attach @{bin}/lsb_release.
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/lsb_release
+profile lsb-release @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/consoles>
+
+  @{exec_path} mr,
+
+  @{sh_path}        rix,
+  @{bin}/basename   rix,
+  @{bin}/cat        rix,
+  @{bin}/cut        rix,
+  @{bin}/find       rix,
+  @{bin}/getopt     rix,
+  @{bin}/head       rix,
+  @{bin}/sed        rix,
+  @{bin}/tr         rix,
+
+  #aa:only apt
+  @{bin}/dpkg-query  px,
+
+  /etc/ r,
+  /etc/*-release r,
+  /etc/lsb-release r,
+  /etc/lsb-release.d/{,*} r,
+
+  include if exists <local/lsb-release>
+}
+
+# vim:syntax=apparmor
