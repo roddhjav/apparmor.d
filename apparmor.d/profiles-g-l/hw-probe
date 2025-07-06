@@ -33,6 +33,7 @@ profile hw-probe @{exec_path} flags=(attach_disconnected) {
   @{bin}/tar             rix,
   @{bin}/uname           rix,
 
+  @{bin}/vulkaninfo     rPUx,
   @{bin}/acpi            rPx,
   @{bin}/amixer          rPx,
   @{bin}/aplay           rPx,
@@ -55,7 +56,6 @@ profile hw-probe @{exec_path} flags=(attach_disconnected) {
   @{bin}/lsblk           rPx,
   @{bin}/lscpu           rPx,
   @{bin}/lspci           rPx,
-  @{bin}/lsscsi          rPx,
   @{bin}/lsusb           rPx,
   @{bin}/memtester       rPx,
   @{bin}/nmcli           rPx,
@@ -76,11 +76,14 @@ profile hw-probe @{exec_path} flags=(attach_disconnected) {
   @{sbin}/dmidecode      rPx,
   @{sbin}/fdisk          rPx,
   @{sbin}/hdparm         rPx,
+  @{bin}/boltctl        rPUx,
   @{sbin}/hwinfo         rPx,
   @{sbin}/rfkill         rPx,
   @{sbin}/smartctl       rPx,
 
   /etc/modprobe.d/{,*.conf} r,
+
+  @{efi}/EFI/{,**} r,
 
   owner @{HOME}/HW_PROBE/{,**} rw,
 
@@ -107,9 +110,9 @@ profile hw-probe @{exec_path} flags=(attach_disconnected) {
     include <abstractions/base>
     include <abstractions/app/kmod>
 
-    capability sys_module,
+    capability syslog,
 
-    @{sys}/module/compression r,
+    @{sys}/module/{,**} r,
 
     include if exists <local/hw-probe_kmod>
   }
@@ -169,9 +172,12 @@ profile hw-probe @{exec_path} flags=(attach_disconnected) {
     @{run}/log/ rw,
     /{run,var}/log/journal/ r,
     /{run,var}/log/journal/@{hex32}/ r,
-    /{run,var}/log/journal/@{hex32}/user-@{hex}.journal* r,
     /{run,var}/log/journal/@{hex32}/system.journal* r,
-    /{run,var}/log/journal/@{hex32}/system@@{hex}.journal* r,
+    /{run,var}/log/journal/@{hex32}/system@@{hex}-@{hex}.journal* r,
+    /{run,var}/log/journal/@{hex32}/system@@{hex32}-@{hex16}-@{hex16}.journal* r,
+    /{run,var}/log/journal/@{hex32}/user-@{hex}.journal* r,
+    /{run,var}/log/journal/@{hex32}/user-@{uid}@@{hex}-@{hex}.journal* r,
+    /{run,var}/log/journal/@{hex32}/user-@{uid}@@{hex32}-@{hex16}-@{hex16}.journal* r,
 
     owner @{PROC}/@{pid}/stat r,
 
