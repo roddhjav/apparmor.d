@@ -23,6 +23,7 @@ profile sdu flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/audio-server>
   include <abstractions/bus-session>
   include <abstractions/bus-system>
+  include <abstractions/consoles>
   include <abstractions/nameservice-strict>
   include <abstractions/xdg-desktop>
 
@@ -108,6 +109,8 @@ profile sdu flags=(attach_disconnected,mediate_deleted) {
   owner @{PROC}/@{pid}/oom_score_adj rw,
   owner @{PROC}/@{pid}/task/@{tid}/comm rw,
 
+  /dev/kmsg w,
+
   deny capability net_admin,
 
   profile shell flags=(attach_disconnected,mediate_deleted,complain) {
@@ -123,9 +126,9 @@ profile sdu flags=(attach_disconnected,mediate_deleted) {
     include <abstractions/base>
     include <abstractions/app/systemctl>
 
-    audit capability net_admin,
-
     owner @{run}/user/@{uid}/systemd/private rw,
+
+    deny capability net_admin,
 
     include if exists <usr/sdu_systemctl.d>
     include if exists <local/sdu_systemctl>
