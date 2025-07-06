@@ -22,8 +22,12 @@ build:
 enforce: build
 	@./${BUILD}/prebuild
 
-.PHONY: full
-full: build
+.PHONY: fsp
+fsp: build
+	@./${BUILD}/prebuild --full
+
+.PHONY: fsp-complain
+fsp-complain: build
 	@./${BUILD}/prebuild --complain --full
 
 .PHONY: install
