@@ -1,0 +1,27 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/vmstat
+profile vmstat @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+
+  @{exec_path} mr,
+
+  @{sys}/block/ r,
+  @{sys}/devices/system/node/ r,
+
+  @{PROC}/diskstats r,
+  @{PROC}/slabinfo r,
+  @{PROC}/uptime r,
+  @{PROC}/vmstat r,
+
+  include if exists <local/vmstat>
+}
+
+# vim:syntax=apparmor
