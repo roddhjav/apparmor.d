@@ -27,7 +27,6 @@ Particularly:
 - Every system application will be **blocked** if they do not have a profile.
 - Any non-standard system app need to be explicitly profiled and allowed to run. For instance, if you want to use your own proxy or VPN software, you need to ensure it is correctly profiled and allowed to run in the `systemd` profile.
 - Desktop environment must be explicitly supported, your UI will not start otherwise. Again, it is a **feature**.
-- FSP mode will run unknown user application into the `default` profile. It might be enough for your application. If not you have to make a profile for it.
 - In FSP mode, all sandbox managers **must** have a profile. Then user sandboxed applications (flatpak, snap, etc) will work as expected.
 - PID 1 is the last program that should be confined. It does not make sense to confine only PID. All other programs must be confined first.
 
@@ -47,11 +46,11 @@ Optimize=compress-fast
 
 === ":material-arch: Archlinux"
 
-    In `PKGBUILD`, replace `make` by `make full`:
+    In `PKGBUILD`, replace `make` by `make fsp`:
 
     ```diff
     -  make
-    +  make full
+    +  make fsp
     ```
 
     Then, build the package with: `make pkg`
@@ -62,7 +61,7 @@ Optimize=compress-fast
 
     ```make
     override_dh_auto_build:
-        make full
+        make fsp
     ```
 
     Then, build the package with: `make dpkg`
@@ -73,25 +72,25 @@ Optimize=compress-fast
 
     ```make
     override_dh_auto_build:
-        make full
+        make fsp
     ```
 
     Then, build the package with: `make dpkg`
 
 === ":simple-suse: openSUSE"
 
-    In `dists/apparmor.d.spec`, replace `%make_build` by `%make_build full`
+    In `dists/apparmor.d.spec`, replace `%make_build` by `%make_build fsp`
 
     ```diff
     -  %make_build
-    +  %make_build full
+    +  %make_build fsp
     ```
 
     Then, build the package with: `make rpm`
 
 === ":material-home: Partial Install"
 
-    Use the `make full` command to build instead of `make`
+    Use the `make fsp` command to build instead of `make`
 
 
 ## Structure
@@ -149,7 +148,7 @@ In addition to the `systemd` profiles, a full system policy needs to ensure that
 
     The main fallback profile (`default`) is not intended to be used by privileged program or service. Such programs **must** have they dedicated profile and would break otherwise.
 
-Additionally, special user access can be setup using PAM rules set such as a random shell interactively opened (as user or as root). 
+Additionally, special user access can be setup using PAM rules set such as a random shell interactively opened (as user or as root).
 
 [apparmor-wiki]: https://gitlab.com/apparmor/apparmor/-/wikis/FullSystemPolicy
 [full]: https://github.com/roddhjav/apparmor.d/blob/main/apparmor.d/groups/_full
