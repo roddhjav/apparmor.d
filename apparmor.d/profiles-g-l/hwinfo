@@ -28,6 +28,7 @@ profile hwinfo @{exec_path} {
   @{bin}/kmod       rCx -> kmod,
   @{bin}/udevadm    rCx -> udevadm,
   @{sbin}/acpidump  rPUx,
+  @{bin}/lsscsi     rPx,
 
   @{sbin}/dmraid rPUx,
 
@@ -39,7 +40,7 @@ profile hwinfo @{exec_path} {
 
   @{sys}/bus/{,**/} r,
   @{sys}/class/*/ r,
-  @{sys}/devices/@{pci}/** r,
+  @{sys}/devices/@{pci}/{,**} r,
   @{sys}/devices/**/{modalias,uevent} r,
   @{sys}/devices/**/input/**/dev r,
   @{sys}/devices/virtual/net/*/{type,carrier,address} r,
@@ -70,9 +71,12 @@ profile hwinfo @{exec_path} {
     include <abstractions/base>
     include <abstractions/app/kmod>
 
+    capability sys_module,
+
     owner @{tmp}/hwinfo*.txt rw,
 
     @{sys}/devices/@{pci}/drm/card@{int}/ r,
+    @{sys}/module/compression r,
 
     include if exists <local/hwinfo_kmod>
   }
