@@ -10,6 +10,7 @@ include <tunables/global>
 @{exec_path} += /opt/Mullvad*/resources/mullvad-daemon
 profile mullvad-daemon @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/bus-system>
   include <abstractions/nameservice-strict>
 
   capability dac_override,
@@ -39,7 +40,8 @@ profile mullvad-daemon @{exec_path} flags=(attach_disconnected) {
   "/opt/Mullvad VPN/resources/*.so*" mr,
   "/opt/Mullvad VPN/resources/*" r,
 
-  /etc/mullvad-vpn/{,*} r,
+  /etc/mullvad-vpn/ rw,
+  /etc/mullvad-vpn/* r,
   /etc/mullvad-vpn/@{uuid} rw,
   /etc/mullvad-vpn/*.json rw,
   @{etc_rw}/resolv.conf rw,
@@ -49,16 +51,19 @@ profile mullvad-daemon @{exec_path} flags=(attach_disconnected) {
   owner /var/log/mullvad-vpn/{,*} rw,
   owner /var/log/private/mullvad-vpn/*.log rw,
 
+  owner @{tmp}/@{uuid} rw,
+  owner @{tmp}/talpid-openvpn-@{uuid} rw,
+
         @{run}/NetworkManager/resolv.conf r,
   owner @{run}/mullvad-vpn rw,
 
   @{sys}/fs/cgroup/net_cls/ w,
   @{sys}/fs/cgroup/net_cls/mullvad-exclusions/ w,
   @{sys}/fs/cgroup/net_cls/mullvad-exclusions/net_cls.classid rw,
+  @{sys}/fs/cgroup/system.slice/cpu.max r,
+  @{sys}/fs/cgroup/system.slice/mullvad-daemon.service/cpu.max r,
 
-  owner @{tmp}/@{uuid} rw,
-  owner @{tmp}/talpid-openvpn-@{uuid} rw,
-
+        @{PROC}/@{pid}/cgroup r,
         @{PROC}/sys/net/ipv{4,6}/conf/all/arp_ignore rw,
         @{PROC}/sys/net/ipv{4,6}/conf/all/src_valid_mark rw,
   owner @{PROC}/@{pid}/mounts r,
