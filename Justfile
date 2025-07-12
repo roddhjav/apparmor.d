@@ -95,7 +95,7 @@ fsp-complain: build
 fsp-debug: build
 	@./{{build}}/prebuild --complain --full --debug
 
-[group('build')]
+[group('install')]
 [doc('Install prebuild profiles')]
 install:
 	#!/usr/bin/env bash
@@ -122,6 +122,35 @@ install:
 		service="$(basename "$file")"
 		install -Dm0644 "$file" "{{destdir}}/usr/lib/systemd/user/$service.d/apparmor.conf"
 	done
+
+[group('install')]
+[doc('Locally install prebuild profiles')]
+local +args:
+	#!/usr/bin/env bash
+	set -eu -o pipefail
+	install -Dm0755 {{build}}/aa-log {{destdir}}/usr/bin/aa-log
+	mapfile -t abs < <(find "{{build}}/apparmor.d/abstractions" -type f -printf "%P\n")
+	for file in "${abs[@]}"; do
+		install -Dm0644 "{{build}}/apparmor.d/abstractions/$file" "{{destdir}}/etc/apparmor.d/abstractions/$file"
+	done;
+	mapfile -t tunables < <(find "{{build}}/apparmor.d/tunables" -type f -printf "%P\n")
+	for file in "${tunables[@]}"; do
+		install -Dm0644 "{{build}}/apparmor.d/tunables/$file" "{{destdir}}/etc/apparmor.d/tunables/$file"
+	done;
+	echo "Warning: profile dependencies fallback to unconfined."
+	for file in {{args}}; do
+		grep -Ei 'rPx|rpx' "{{build}}/apparmor.d/$file" || true
+		sed -i -e "s/rPx/rPUx/g" "{{build}}/apparmor.d/$file"
+		install -Dvm0644 "{{build}}/apparmor.d/$file" "{{destdir}}/etc/apparmor.d/$file"
+	done;
+	systemctl restart apparmor || sudo journalctl -xeu apparmor.service
+
+[group('install')]
+[doc('Prebuild, install, and load a dev profile')]
+dev name:
+	go run ./cmd/prebuild --complain --file `find apparmor.d -iname {{name}}`
+	sudo install -Dm644 {{build}}/apparmor.d/{{name}} /etc/apparmor.d/{{name}}
+	sudo systemctl restart apparmor || sudo journalctl -xeu apparmor.service
 
 [group('packages')]
 [doc('Build & install apparmor.d on Arch based systems')]
