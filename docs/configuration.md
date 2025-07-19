@@ -41,7 +41,7 @@ You can extend any profile with your own rules by creating a file in the `/etc/a
 
 **Example**
 
-By default, `nautilus` (and any file browser) only allows access to user files. Thus, your cannot browse system files such as `/etc/`, `/srv/`, `/var/`. You can change this behaviour by creating a local profile addition file for `nautilus`:
+By default, `nautilus` (and any file browser) only allows access to user files. Thus, your cannot browse system files such as `/etc/`, `/srv/`, `/var/`. You can change this behavior by creating a local profile addition file for `nautilus`:
 
 1. Create the file `/etc/apparmor.d/local/nautilus` and add the following rules in it:
   ```sh

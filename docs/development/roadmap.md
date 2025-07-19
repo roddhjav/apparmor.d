@@ -22,13 +22,13 @@ This is the current list of features that must be implemented to get to a stable
 
 - [ ] **General improvements**
     - [ ] Provide a proper fix for [#74](https://github.com/roddhjav/apparmor.d/issues/74), [#80](https://github.com/roddhjav/apparmor.d/issues/80) & [#235](https://github.com/roddhjav/apparmor.d/issues/235)
-    - [ ] The apt/dpkg profiles needs to be reworked
+    - [x] The apt/dpkg profiles needs to be reworked
 
 - [ ] Build system
     - [ ] Continuous release on the main branch, ~2 releases per week
     - [ ] Provide packages repo for ubuntu/debian
     - [ ] Provide complain/enforced packages version
-    - [ ] Add a `just` target to install the profiles in the right place
+    - [x] Add a `just` target to install the profiles in the right place
     - [ ] Fully drop the Makefile in favor of `just`
 
 ## Next features
@@ -41,9 +41,9 @@ This is the current list of features that must be implemented to get to a stable
     - [ ] Fully rewrite the way user data is allowed / denied. The current implementation requires too much configuration to be usable by everyone.
     - [ ] Add a prompt listener to handle the user data access.
 
-- [ ] **[Full System Policy](https://github.com/roddhjav/apparmor.d/issues/252)**
+- [x] **[Full System Policy](https://github.com/roddhjav/apparmor.d/issues/252)**
     - [ ] Debug tool to show the profiles transition tree, and ensure no profile is missing
-    - [ ] Remove the `default` profile
+    - [x] Remove the `default` profile
 
 ## Done
 
