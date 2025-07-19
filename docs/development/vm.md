@@ -14,22 +14,42 @@ $ just
 ```
 Available recipes:
     help                    # Show this help message
+    clean                   # Remove all build artifacts
+
+    [build]
     build                   # Build the go programs
     enforce                 # Prebuild the profiles in enforced mode
     complain                # Prebuild the profiles in complain mode
     fsp                     # Prebuild the profiles in FSP mode
-    install                 # Install the profiles
+    fsp-complain            # Prebuild the profiles in FSP mode (complain)
+    fsp-debug               # Prebuild the profiles in FSP mode (debug)
+
+    [install]
+    install                 # Install prebuild profiles
+    local +names            # Locally install prebuild profiles
+    dev name                # Prebuild, install, and load a dev profile
+
+    [packages]
     pkg                     # Build & install apparmor.d on Arch based systems
     dpkg                    # Build & install apparmor.d on Debian based systems
     rpm                     # Build & install apparmor.d on OpenSUSE based systems
+    package dist            # Build the package in a clean OCI container
+
+    [tests]
     tests                   # Run the unit tests
+    init dist flavor        # Install dependencies for the bats integration tests
+    integration dist flavor # Run the integration tests on the machine
+
+    [linter]
     lint                    # Run the linters
     check                   # Run style checks on the profiles
+
+    [docs]
     man                     # Generate the man pages
     docs                    # Build the documentation
     serve                   # Serve the documentation
-    clean                   # Remove all build artifacts
-    package dist            # Build the package in a clean OCI container
+
+    [vm]
     img dist flavor         # Build the VM image
     create dist flavor      # Create the machine
     up dist flavor          # Start a machine
@@ -40,13 +60,8 @@ Available recipes:
     list                    # List the machines
     images                  # List the VM images
     available               # List the VM images that can be created
-    init dist flavor        # Install dependencies for the bats integration tests
-    integration dist flavor # Run the integration tests on the machine
-    get_ip dist flavor
-    get_osinfo dist
 
 See https://apparmor.pujol.io/development/ for more information.
-
 ```
 
 ## Requirements

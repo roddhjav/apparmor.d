@@ -137,6 +137,16 @@ To work as intended, userland services started by `systemd --user` **should** ha
     @{lib}/foo rPx -> systemd//&foo,
     ```
 
+### Role Based Access Control (RBAC)
+
+In FSP, interactive shell from the user must be confined. This is done through [pam_apparmor](https://gitlab.com/apparmor/apparmor/-/wikis/pam_apparmor). It provides [Role-based access controls (RBAC)](https://en.wikipedia.org/wiki/Role-based_access_control) that can restrict interactive shell to well-defined role. The role needs to be defined. This project ship with a default set of roles, but you can create your own. The default roles are:
+
+- **`user`**: This is the default role. It is used for any user that does not have a specific role defined. It has access to the user home directory and other sensitive files.
+
+- **`admin`**: This role is used for any user that has administrative access. It has access to the system files and directories, but not to the user home directory.
+
+- **`system`**: This role is used for any user that has system access. It has access to the system files and directories, but not to the user home directory.
+
 ### Fallback
 
 In addition to the `systemd` profiles, a full system policy needs to ensure that no programs run in an unconfined state at any time. The fallback profiles consist of a set generic specialized profiles:
