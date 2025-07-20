@@ -28,14 +28,12 @@ profile firefox-crashreporter @{exec_path} flags=(attach_disconnected) {
   network inet6 stream,
   network netlink raw,
 
-  @{exec_path} mr,
+  @{exec_path} mrix,
 
   @{bin}/curl rix,
   @{bin}/mv   rix,
 
   @{lib_dirs}/minidump-analyzer rPx,
-
-  @{bin}/mv rix,
 
   owner "@{config_dirs}/firefox/Crash Reports/{,**}" rw,
   owner @{config_dirs}/firefox/*.*/crashes/{,**} rw,
@@ -43,7 +41,10 @@ profile firefox-crashreporter @{exec_path} flags=(attach_disconnected) {
   owner @{config_dirs}/firefox/*.*/extensions/*.xpi r,
   owner @{config_dirs}/firefox/*.*/minidumps/{,**} rw,
   owner @{config_dirs}/firefox/*.*/minidumps//@{uuid}.{dmp,extra} r,
+  owner @{config_dirs}/firefox/*.*/prefs.js r,
+  owner @{config_dirs}/firefox/*.*/storage-sync-v2.sqlite-shm r,
   owner @{config_dirs}/firefox/*.*/storage/default/* r,
+  owner @{config_dirs}/firefox/Profile*/*.sqlite-shm r,
 
   owner @{cache_dirs}/firefox/*.*/** r,
 
@@ -54,10 +55,14 @@ profile firefox-crashreporter @{exec_path} flags=(attach_disconnected) {
 
   owner /dev/shm/org.mozilla.ipc.@{int}.@{int} r,
 
+  owner @{PROC}/@{pid}/cgroup r,
   owner @{PROC}/@{pid}/cmdline r,
+  owner @{PROC}/@{pid}/mountinfo r,
 
   /dev/dri/card@{int} rw,
   /dev/dri/renderD128 rw,
+  /dev/nvidia@{int} r,
+  /dev/nvidiactl r,
 
   # Silencer
   deny owner @{user_share_dirs}/gvfs-metadata/{,*} r,
