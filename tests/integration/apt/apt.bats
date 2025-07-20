@@ -25,12 +25,24 @@ setup_file() {
     sudo apt install -y pass
 }
 
-@test "apt: Remove a package (using 'purge' instead also removes its configuration files)" {
-    sudo apt remove -y pass
+@test "apt: Remove a package and its configuration files" {
+    sudo apt purge -y pass
 }
 
 @test "apt: Upgrade all installed packages to their newest available versions" {
     sudo apt upgrade -y
+}
+
+@test "apt: Upgrade installed packages, but remove obsolete packages and install additional packages to meet new dependencies" {
+    sudo apt dist-upgrade -y
+}
+
+@test "apt: Clean the local repository - removing package files (.deb) from interrupted downloads that can no longer be downloaded" {
+    sudo apt autoclean
+}
+
+@test "apt: Remove all packages that are no longer needed" {
+    sudo apt autoremove
 }
 
 @test "apt: List all packages" {
@@ -41,6 +53,6 @@ setup_file() {
     apt list --installed
 }
 
-@test "apt-moo: Print a cow easter egg" {
+@test "apt: Print a cow easter egg" {
     apt moo
 }
