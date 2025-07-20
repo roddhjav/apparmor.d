@@ -1,0 +1,59 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/lsfd
+profile lsfd @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+
+  capability checkpoint_restore,
+  capability dac_read_search,
+  capability sys_admin,
+  capability sys_ptrace,
+  capability sys_resource,
+  capability syslog,
+
+  network netlink dgram,
+  network netlink raw,
+
+  ptrace read,
+  ptrace trace,
+
+  mqueue (read create delete getattr) type=posix /.lsfd-mqueue-nodev-test:@{int},
+
+  @{exec_path} mr,
+
+  / r,
+  @{att}/ r,
+
+  owner @{att}/.lsfd-mqueue-nodev-test:@{int} rw,
+
+  @{run}/ r,
+  @{run}/netns/ r,
+
+  @{sys}/kernel/cpu_byteorder r,
+
+        @{PROC}/ r,
+        @{PROC}/@{pid}/ r,
+        @{PROC}/@{pid}/comm r,
+        @{PROC}/@{pid}/fd/ r,
+        @{PROC}/@{pid}/fdinfo/@{int} r,
+        @{PROC}/@{pid}/mountinfo r,
+        @{PROC}/@{pid}/net/* r,
+        @{PROC}/@{pid}/stat r,
+        @{PROC}/@{pid}/task/ r,
+        @{PROC}/devices r,
+        @{PROC}/misc r,
+        @{PROC}/partitions r,
+        @{PROC}/tty/drivers r,
+  owner @{PROC}/@{pid}/syscall r,
+
+  include if exists <local/lsfd>
+}
+
+# vim:syntax=apparmor
