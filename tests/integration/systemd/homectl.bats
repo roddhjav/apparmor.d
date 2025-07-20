@@ -16,7 +16,7 @@ setup_file() {
 }
 
 @test "homectl: Create a user account and their associated home directory" {
-    sudo homectl create user2
+    printf "user2\nuser2" | sudo homectl create user2
 }
 
 @test "homectl: List user accounts and their associated home directories" {
