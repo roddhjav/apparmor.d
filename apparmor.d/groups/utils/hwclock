@@ -1,0 +1,30 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{sbin}/hwclock
+profile hwclock @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+
+  capability audit_write,
+  capability sys_time,
+
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  /etc/adjtime rw,
+
+  @{sys}/devices/pnp@{int}/*/rtc/rtc@{int}/{,*} r,
+
+  /dev/rtc@{int} r,
+
+  include if exists <local/hwclock>
+}
+
+# vim:syntax=apparmor
