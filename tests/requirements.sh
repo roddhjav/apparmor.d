@@ -21,7 +21,8 @@ debian | ubuntu | whonix)
 	sudo apt update -y
 	sudo apt install -y \
 		bats bats-support \
-		cpuid dfc systemd-userdbd systemd-homed tlp network-manager flatpak
+		cpuid dfc systemd-userdbd systemd-homed tlp network-manager flatpak \
+		util-linux-extra
 	;;
 opensuse*)
 	;;
