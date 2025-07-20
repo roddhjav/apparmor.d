@@ -2,18 +2,8 @@
 # Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-# Usage:
-#   just
-#   just img ubuntu24 server
-#   just vm ubuntu24 server
-#   just up ubuntu24 server
-#   just ssh ubuntu24 server
-#   just halt ubuntu24 server
-#   just destroy ubuntu24 server
-#   just list
-#   just images
-#   just available
-#   just clean
+# Usage: `just`
+# See https://apparmor.pujol.io/development/ for more information.
 
 # Build setings
 destdir := "/"
@@ -125,7 +115,7 @@ install:
 
 [group('install')]
 [doc('Locally install prebuild profiles')]
-local +args:
+local +names:
 	#!/usr/bin/env bash
 	set -eu -o pipefail
 	install -Dm0755 {{build}}/aa-log {{destdir}}/usr/bin/aa-log
@@ -138,7 +128,7 @@ local +args:
 		install -Dm0644 "{{build}}/apparmor.d/tunables/$file" "{{destdir}}/etc/apparmor.d/tunables/$file"
 	done;
 	echo "Warning: profile dependencies fallback to unconfined."
-	for file in {{args}}; do
+	for file in {{names}}; do
 		grep -Ei 'rPx|rpx' "{{build}}/apparmor.d/$file" || true
 		sed -i -e "s/rPx/rPUx/g" "{{build}}/apparmor.d/$file"
 		install -Dvm0644 "{{build}}/apparmor.d/$file" "{{destdir}}/etc/apparmor.d/$file"
@@ -336,15 +326,52 @@ available:
 
 
 [group('tests')]
-[doc('Run the integration tests on the machine')]
-integration dist flavor:
-	@ssh {{sshopt}} user@`just get_ip {{dist}} {{flavor}}` \
-		cp -rf /home/user/Projects/apparmor.d/tests/integration/ /home/user/Projects
-	@ssh {{sshopt}} user@`just get_ip {{dist}} {{flavor}}` \
-		sudo umount /home/user/Projects/apparmor.d
-	@ssh {{sshopt}} user@`just get_ip {{dist}} {{flavor}}` \
-		@bats --recursive --timing --print-output-on-failure Projects/integration/
+[doc('Install dependencies for the integration tests')]
+init:
+	@bash tests/requirements.sh
 
+[group('tests')]
+[doc('Run the integration tests')]
+integration:
+	bats --recursive --pretty --timing --print-output-on-failure tests/integration
+
+[group('tests')]
+[doc('Install dependencies for the integration tests (machine)')]
+tests-init dist flavor:
+	@ssh {{sshopt}} {{username}}@`just get_ip {{dist}} {{flavor}}` \
+		just --justfile /home/{{username}}/Projects/apparmor.d/Justfile init
+
+[group('tests')]
+[doc('Synchronize the integration tests (machine)')]
+tests-sync dist flavor:
+	@ssh {{sshopt}} {{username}}@`just get_ip {{dist}} {{flavor}}` \
+		rsync -a --delete /home/{{username}}/Projects/apparmor.d/tests/ /home/{{username}}/Projects/tests/
+
+[group('tests')]
+[doc('Re-synchronize the integration tests (machine)')]
+tests-resync dist flavor: (tests-mount dist flavor) \
+	(tests-sync dist flavor) \
+	(tests-umount dist flavor)
+
+[group('tests')]
+[doc('Unmout the integration tests (machine)')]
+tests-umount dist flavor:
+	@ssh {{sshopt}} {{username}}@`just get_ip {{dist}} {{flavor}}` \
+		sudo umount /home/{{username}}/Projects/apparmor.d
+
+[group('tests')]
+[doc('Run the integration tests (machine)')]
+tests-run dist flavor name="":
+	ssh {{sshopt}} {{username}}@`just get_ip {{dist}} {{flavor}}` \
+		TERM=xterm \
+		bats --recursive --pretty --timing --print-output-on-failure \
+			/home/{{username}}/Projects/tests/integration/{{name}}
+
+[group('tests')]
+[doc('Mount integration tests (machine)')]
+tests-mount dist flavor:
+	@ssh {{sshopt}} {{username}}@`just get_ip {{dist}} {{flavor}}` \
+		sudo mount 0a31bc478ef8e2461a4b1cc10a24cc4
 
 [private]
 get_ip dist flavor:
