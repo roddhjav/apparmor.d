@@ -1,0 +1,33 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/lslocks
+profile lslocks @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+
+  capability dac_read_search,
+  capability sys_ptrace,
+
+  ptrace read,
+
+  @{exec_path} mr,
+
+        @{PROC}/ r,
+        @{PROC}/@{pid}/ r,
+        @{PROC}/@{pid}/comm r,
+        @{PROC}/@{pid}/fd/ r,
+        @{PROC}/@{pid}/fdinfo/ r,
+        @{PROC}/@{pid}/fdinfo/@{int} r,
+        @{PROC}/locks r,
+  owner @{PROC}/@{pid}/ r,
+  owner @{PROC}/@{pid}/mountinfo r,
+
+  include if exists <local/lslocks>
+}
+
+# vim:syntax=apparmor
