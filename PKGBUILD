@@ -8,9 +8,9 @@ pkgver=0.001
 pkgrel=1
 pkgdesc="Full set of apparmor profiles"
 arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
-url="https://github.com/roddhjav/$pkgname"
+url="https://github.com/roddhjav/apparmor.d"
 license=('GPL-2.0-only')
-depends=('apparmor')
+depends=('apparmor>=4.1.0' 'apparmor<5.0.0')
 makedepends=('go' 'git' 'rsync' 'just')
 conflicts=("$pkgname-git")
 
