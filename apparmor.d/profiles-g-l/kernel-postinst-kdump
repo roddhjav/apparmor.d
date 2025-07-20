@@ -12,21 +12,45 @@ profile kernel-postinst-kdump @{exec_path} {
 
   @{exec_path} mr,
 
+  @{sh_path}           r,
+  @{bin}/{,e}grep      rix,
+  @{bin}/{m,g,}awk     rix,
+  @{bin}/cp            rix,
   @{bin}/du            rix,
   @{bin}/find          rix,
-  @{bin}/{m,g,}awk     rix,
+  @{bin}/kmod          rCx -> kmod, 
+  @{bin}/ischroot      rPx,
+  @{bin}/linux-version rPx,
+  @{bin}/mkdir         rix,
+  @{bin}/mktemp        rix,
   @{bin}/mv            rix,
   @{bin}/rm            rix,
   @{bin}/sync          rix,
+  @{bin}/cut           rix,
   @{sbin}/mkinitramfs  rPx,
 
-  owner /var/lib/kdump/* w,
+  / r,
+
+  /etc/initramfs-tools/conf.d/{,**} r,
+  /etc/initramfs-tools/initramfs.conf r,
+
+  owner /var/lib/kdump/** rw,
+
+  owner /tmp/tmp.@{rand10}/ rw,
+  owner /tmp/tmp.@{rand10}/modules_@{rand6} rw,
 
   owner /tmp/tmp.@{rand10}/mkinitramfs_@{rand6} rw,
   owner /tmp/tmp.@{rand10}/mkinitramfs_@{rand6}/ rw,
   owner /tmp/tmp.@{rand10}/mkinitramfs_@{rand6}/** rwl -> /tmp/tmp.@{rand10}/mkinitramfs_@{rand6}/**,
   owner /tmp/tmp.@{rand10}/mkinitramfs-@{rand6} rw,
   owner /tmp/tmp.@{rand10}/mkinitramfs-*_@{rand6} rw,
+
+  profile kmod {
+    include <abstractions/base>
+    include <abstractions/app/kmod>
+
+    include if exists <local/dkernel-postinst-kdump_kmod>
+  }
 
   include if exists <local/kernel-postinst-kdump>
 }
