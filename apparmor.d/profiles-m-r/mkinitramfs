@@ -47,13 +47,16 @@ profile mkinitramfs @{exec_path} {
   @{bin}/rmdir      rix,
   @{bin}/sed        rix,
   @{bin}/sort       rix,
+  @{bin}/stat       rix,
   @{bin}/touch      rix,
   @{bin}/tr         rix,
   @{bin}/tsort      rix,
+  @{bin}/uname      rix,
   @{bin}/uniq       rix,
   @{bin}/xargs      rix,
   @{bin}/xz         rix,
   @{bin}/zstd       rix,
+  @{sbin}/blkid     rPx,
   @{lib}/dracut/dracut-install rix,
 
   @{bin}/find                 rCx -> find,
@@ -87,6 +90,9 @@ profile mkinitramfs @{exec_path} {
   owner /boot/config-* r,
   owner /boot/initrd.img-*.new rw,
 
+  owner /var/lib/kdump/initramfs-tools/** rw,
+  owner /var/lib/kdump/initrd.* rw,
+
         /var/tmp/ r,
         /var/tmp/mkinitramfs_@{rand6}/** w,
         /var/tmp/modules_@{rand6} rw,
@@ -102,13 +108,17 @@ profile mkinitramfs @{exec_path} {
   owner /tmp/tmp.@{rand10}/mkinitramfs_@{rand6}/** w,
   owner /tmp/tmp.@{rand10}/mkinitramfs-@{rand6} rw,
   owner /tmp/tmp.@{rand10}/mkinitramfs-*_@{rand6} rw,
+  owner /tmp/tmp.@{rand10}/modules_@{rand6} rw,
 
+  @{sys}/bus/ r,
+  @{sys}/bus/*/drivers/ r,
   @{sys}/devices/platform/ r,
   @{sys}/devices/platform/**/ r,
   @{sys}/devices/platform/**/modalias r,
   @{sys}/module/compression r,
   @{sys}/module/firmware_class/parameters/path r,
 
+        @{PROC}/@{pid}/mounts r,
         @{PROC}/cmdline r,
         @{PROC}/modules r,
   owner @{PROC}/@{pid}/fd/ r,
@@ -143,18 +153,8 @@ profile mkinitramfs @{exec_path} {
     @{sh_path}               rix,
     @{sbin}/ldconfig.real    rix,
 
-    owner /var/tmp/mkinitramfs_@{rand6}/etc/ld.so.conf r,
-    owner /var/tmp/mkinitramfs_@{rand6}/etc/ld.so.conf.d/{,*.conf} r,
-
-    owner /var/tmp/mkinitramfs_@{rand6}/@{lib}/ r,
-    owner /var/tmp/mkinitramfs_@{rand6}/@{lib}/@{multiarch}/ r,
-    owner /var/tmp/mkinitramfs_@{rand6}/@{lib}/@{multiarch}/*.so* rw,
-    owner /var/tmp/mkinitramfs_@{rand6}/@{lib}/*.so* rw,
-
-    owner /var/tmp/mkinitramfs_@{rand6}/etc/ld.so.cache{,~} rw,
-
-    owner /var/tmp/mkinitramfs_@{rand6}/var/cache/ldconfig/ rw,
-    owner /var/tmp/mkinitramfs_@{rand6}/var/cache/ldconfig/aux-cache{,~} rw,
+    owner /var/tmp/mkinitramfs_@{rand6}/** rwl -> /var/tmp/mkinitramfs_@{rand6}/**,
+    owner /tmp/tmp.@{rand10}/mkinitramfs_@{rand6}/** rwl -> /tmp/tmp.@{rand10}/mkinitramfs_@{rand6}/**,
 
     include if exists <local/mkinitramfs_ldconfig>
   }
