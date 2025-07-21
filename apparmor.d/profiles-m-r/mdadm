@@ -1,0 +1,39 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{sbin}/mdadm
+profile mdadm @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/disks-write>
+
+  capability sys_admin,
+
+  mqueue (read getattr) type=posix /,
+
+  @{exec_path} mr,
+
+  @{run}/initctl r,
+
+  /var/tmp/mkinitramfs_@{rand6}/etc/mdadm/mdadm.conf.tmp rw,
+
+  @{sys}/bus/pci/drivers/*/ r,
+  @{sys}/devices/@{pci}/class r,
+  @{sys}/devices/@{pci}/device r,
+  @{sys}/devices/@{pci}/vendor r,
+
+  @{PROC}/@{pid}/fd/ r,
+  @{PROC}/cmdline r,
+  @{PROC}/kcore r,
+  @{PROC}/partitions r,
+
+  /dev/**/ r,
+
+  include if exists <local/mdadm>
+}
+
+# vim:syntax=apparmor

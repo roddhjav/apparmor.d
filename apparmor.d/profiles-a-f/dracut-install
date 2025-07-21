@@ -1,0 +1,26 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/dracut/dracut-install
+profile dracut-install @{exec_path} {
+  include <abstractions/base>
+
+  @{exec_path} mr,
+
+  /etc/modprobe.d/{,**} r,
+
+  @{sys}/devices/platform/{,**/} r,
+  @{sys}/devices/platform/**/modalias r,
+  @{sys}/module/compression r,
+
+  @{PROC}/cmdline r,
+
+  include if exists <local/dracut-install>
+}
+
+# vim:syntax=apparmor
