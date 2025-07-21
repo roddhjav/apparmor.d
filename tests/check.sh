@@ -75,6 +75,8 @@ _check() {
         _check_directory_mark
         _check_equivalent
         _check_too_wide
+        _check_transition
+        _check_useless
 
         # Guidelines check
         _check_abi
@@ -137,6 +139,7 @@ _check_directory_mark() {
     for pattern in "${DIRECTORIES[@]}"; do
         if [[ "$line" == *"$pattern"* ]]; then
             [[ "$line" == *'='* ]] && continue
+            [[ "$line" =~ ^[[:space:]]*# ]] && continue
             if [[ ! "$line" == *"$pattern/"* ]]; then
                 _err issue "$file:$line_number" "missing directory mark: '$pattern' instead of '$pattern/'"
             fi
@@ -168,6 +171,55 @@ _check_too_wide() {
     for pattern in "${TOOWIDE[@]}"; do
         if [[ "$line" == *" $pattern "* ]]; then
             _err security "$file:$line_number" "rule too wide: '$pattern'"
+        fi
+    done
+}
+
+readonly TRANSITION_MUST_CI=( # Must transition to 'ix' or 'Cx'
+    chgrp chmod chown cp find head install link ln ls mkdir mktemp mv rm rmdir
+    sed shred stat tail tee test timeout touch truncate unlink
+)
+readonly TRANSITION_MUST_PC=( # Must transition to 'Px'
+    ischroot
+)
+readonly TRANSITION_MUST_C=( # Must transition to 'Cx'
+    sysctl kmod pgrep pkexec sudo systemctl udevadm
+    fusermount fusermount3 fusermount{,3}
+    nvim vim sensible-editor
+)
+_check_transition() {
+    _is_enabled transition || return 0
+    for prgmname in "${!TRANSITION_MUST_CI[@]}"; do
+        if [[ "$line" =~ "@{bin}/${TRANSITION_MUST_CI[$prgmname]} ".*([uU]x|[pP][uU]x|[pP]x) ]]; then
+            _err security "$file:$line_number" \
+                "@{bin}/${TRANSITION_MUST_CI[$prgmname]} should be used inherited: 'ix' | 'Cx'"
+        fi
+    done
+    for prgmname in "${!TRANSITION_MUST_PC[@]}"; do
+        if [[ "$line" =~ "@{bin}/${TRANSITION_MUST_PC[$prgmname]} ".*(Pix|ix) ]]; then
+            _err security "$file:$line_number" \
+                "@{bin}/${TRANSITION_MUST_PC[$prgmname]} should transition to another (sub)profile with 'Px' or 'Cx'"
+        fi
+    done
+    for prgmname in "${!TRANSITION_MUST_C[@]}"; do
+        if [[ "$line" =~ "@{bin}/${TRANSITION_MUST_C[$prgmname]} ".*([pP]ix|[uU]x|[pP][uU]x|ix) ]]; then
+            _warn security "$file:$line_number" \
+                "@{bin}/${TRANSITION_MUST_C[$prgmname]} should transition to a subprofile with 'Cx'"
+        fi
+    done
+}
+
+readonly USELESS=(
+    '@{PROC}/filesystems' '@{PROC}/sys/kernel/cap_last_cap'
+    '@{PROC}/meminfo' '@{PROC}/stat' '@{PROC}/cpuinfo'
+    '@{sys}/devices/system/cpu/online' '@{sys}/devices/system/cpu/possible'
+    '/usr/share/locale/'
+)
+_check_useless() {
+    _is_enabled useless || return 0
+    for rule in "${!USELESS[@]}"; do
+        if [[ "$line" == *"${USELESS[$rule]}"* ]]; then
+            _err issue "$file:$line_number" "rule already included in the base abstraction, remove it"
         fi
     done
 }
@@ -388,7 +440,7 @@ check_profiles() {
     )
     jobs=0
     WITH_CHECK=(
-        abstractions equivalent
+        abstractions directory_mark equivalent useless transition
         abi include profile header tabs trailing indentation subprofiles vim
     )
     for file in "${files[@]}"; do
@@ -408,7 +460,7 @@ check_abstractions() {
     mapfile -t files < <(find "$APPARMORD/abstractions" -type f -not -path "$APPARMORD/abstractions/*.d/*" 2>/dev/null || true)
     jobs=0
     WITH_CHECK=(
-        abstractions equivalent
+        abstractions directory_mark equivalent too_wide
         abi include header tabs trailing indentation vim
     )
     for file in "${files[@]}"; do
@@ -429,7 +481,7 @@ check_abstractions() {
     # shellcheck disable=SC2034
     jobs=0
     WITH_CHECK=(
-        abstractions equivalent
+        abstractions directory_mark equivalent too_wide
         header tabs trailing indentation vim
     )
     for file in "${files[@]}"; do
