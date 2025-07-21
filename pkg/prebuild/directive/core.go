@@ -106,6 +106,9 @@ func Run(file *paths.Path, profile string) (string, error) {
 		opt := NewOption(file, match)
 		drtv, ok := Directives[opt.Name]
 		if !ok {
+			if opt.Name == "lint" {
+				continue
+			}
 			return "", fmt.Errorf("unknown directive '%s' in %s", opt.Name, opt.File)
 		}
 		profile, err = drtv.Apply(opt, profile)
