@@ -51,12 +51,24 @@ _wait() {
     fi
 }
 
+readonly _IGNORE_LINT="#aa:lint ignore"
+_ignore_lint() {
+    local line="$1"
+    if [[ "$line" == *"$_IGNORE_LINT"* ]]; then
+        return 0
+    fi
+    return 1
+}
+
 _check() {
     local file="$1"
     local line_number=0
 
     while IFS= read -r line; do
         line_number=$((line_number + 1))
+        if _ignore_lint "$line"; then
+            continue
+        fi
 
         # Rules checks
         _check_abstractions
@@ -339,7 +351,10 @@ check_sbin() {
     jobs=0
     for name in "${sbin[@]}"; do
         (
-            mapfile -t files < <(grep --line-number --recursive -E "(^|[[:space:]])@{bin}/$name([[:space:]]|$)" apparmor.d | cut -d: -f1,2)
+            mapfile -t files < <(
+                grep --line-number --recursive -P "(^|[[:space:]])@{bin}/$name([[:space:]]|$)(?!.*$_IGNORE_LINT)" apparmor.d |
+                    cut -d: -f1,2
+            )
             for file in "${files[@]}"; do
                 _err compatibility "$file" "contains '@{bin}/$name' instead of '@{sbin}/$name'"
             done
