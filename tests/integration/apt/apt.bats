@@ -5,10 +5,6 @@
 
 load ../common
 
-setup_file() {
-    skip
-}
-
 @test "apt: Update the list of available packages and versions" {
     sudo apt update
 }
@@ -38,11 +34,11 @@ setup_file() {
 }
 
 @test "apt: Clean the local repository - removing package files (.deb) from interrupted downloads that can no longer be downloaded" {
-    sudo apt autoclean
+    sudo apt autoclean -y
 }
 
 @test "apt: Remove all packages that are no longer needed" {
-    sudo apt autoremove
+    sudo apt autoremove -y
 }
 
 @test "apt: List all packages" {
