@@ -11,6 +11,8 @@ profile dpkg-script-systemd @{exec_path} {
   include <abstractions/base>
   include <abstractions/common/debconf>
 
+  capability dac_read_search,
+
   @{exec_path} mrix,
 
   @{coreutils_path}               rix,
@@ -21,7 +23,7 @@ profile dpkg-script-systemd @{exec_path} {
   @{bin}/dpkg-divert               Px,
   @{bin}/dpkg-maintscript-helper   Px,
   @{bin}/journalctl                Px,
-  @{bin}/kernel-install            Px,
+  @{bin}/kernel-install          mrPx,
   @{bin}/systemctl                 Cx -> systemctl,
   @{bin}/systemd-machine-id-setup  Px,
   @{bin}/systemd-sysusers          Px,
@@ -35,11 +37,14 @@ profile dpkg-script-systemd @{exec_path} {
   /etc/pam.d/sed@{rand6} rw,
   /etc/pam.d/common-password  rw,
 
+  @{efi}/ r,
+
   /var/lib/systemd/{,*} rw,
   /var/log/journal/ rw,
 
   profile dpkg {
     include <abstractions/base>
+    include <abstractions/consoles>
     include <abstractions/common/apt>
 
     capability dac_read_search,
