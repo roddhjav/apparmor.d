@@ -344,7 +344,7 @@ init:
 [group('tests')]
 [doc('Run the integration tests')]
 integration:
-	bats --recursive --pretty --timing --print-output-on-failure tests/integration
+	TERM=xterm bats --recursive --pretty --timing --print-output-on-failure tests/integration
 
 [group('tests')]
 [doc('Install dependencies for the integration tests (machine)')]
@@ -368,7 +368,6 @@ tests-resync dist flavor: (mount dist flavor) \
 [doc('Run the integration tests (machine)')]
 tests-run dist flavor name="": (tests-resync dist flavor)
 	ssh {{sshopt}} {{username}}@`just get_ip {{dist}} {{flavor}}` \
-		TERM=xterm \
 		bats --recursive --pretty --timing --print-output-on-failure \
 			/home/{{username}}/Projects/tests/integration/{{name}}
 
