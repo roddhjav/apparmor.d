@@ -19,11 +19,14 @@ profile dpkg-script-linux @{exec_path} {
   @{bin}/run-parts   ix,
   @{bin}/stty        ix,
 
+  @{bin}/deb-systemd-helper       Px,
+  @{bin}/deb-systemd-invoke       Px,
+  @{bin}/dpkg-maintscript-helper  Px,
   @{bin}/dpkg-trigger             Px,
   @{bin}/kmod                     Px,
   @{bin}/linux-check-removal      Px,
   @{bin}/linux-update-symlinks    Px,
-  @{bin}/dpkg-maintscript-helper  Px,
+  @{bin}/systemctl                Cx -> systemctl,
 
   /usr/share/{update,reboot}-notifier/notify-reboot-required  Px,
   /etc/kernel/{,header_}postinst.d/*                          Px,
@@ -35,6 +38,13 @@ profile dpkg-script-linux @{exec_path} {
 
   @{lib}/linux/triggers/* w,
   @{lib}/modules/*/.fresh-install w,
+
+  profile systemctl {
+    include <abstractions/base>
+    include <abstractions/app/systemctl>
+
+    include if exists <local/dpkg-script-linux_systemctl>
+  }
 
   include if exists <local/dpkg-script-linux>
 }
