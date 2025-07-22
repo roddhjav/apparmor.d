@@ -70,6 +70,18 @@ _check() {
             continue
         fi
 
+        # Style check
+        if [[ $line_number -lt 10 ]]; then
+            _check_header
+        fi
+        _check_tabs
+        _check_trailing
+        _check_indentation
+        _check_vim
+
+        # The following checks do not apply to comment lines
+        [[ "$line" =~ ^[[:space:]]*# ]] && continue
+
         # Rules checks
         _check_abstractions
         _check_directory_mark
@@ -83,15 +95,6 @@ _check() {
         _check_include
         _check_profile
         _check_subprofiles
-
-        # Style check
-        if [[ $line_number -lt 10 ]]; then
-            _check_header
-        fi
-        _check_tabs
-        _check_trailing
-        _check_indentation
-        _check_vim
 
     done <"$file"
 
@@ -139,7 +142,6 @@ _check_directory_mark() {
     for pattern in "${DIRECTORIES[@]}"; do
         if [[ "$line" == *"$pattern"* ]]; then
             [[ "$line" == *'='* ]] && continue
-            [[ "$line" =~ ^[[:space:]]*# ]] && continue
             if [[ ! "$line" == *"$pattern/"* ]]; then
                 _err issue "$file:$line_number" "missing directory mark: '$pattern' instead of '$pattern/'"
             fi
