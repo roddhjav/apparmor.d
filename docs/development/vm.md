@@ -13,53 +13,59 @@ $ just
 
 ```
 Available recipes:
-    help                    # Show this help message
-    clean                   # Remove all build artifacts
+    help                          # Show this help message
+    clean                         # Remove all build artifacts
 
     [build]
-    build                   # Build the go programs
-    enforce                 # Prebuild the profiles in enforced mode
-    complain                # Prebuild the profiles in complain mode
-    fsp                     # Prebuild the profiles in FSP mode
-    fsp-complain            # Prebuild the profiles in FSP mode (complain)
-    fsp-debug               # Prebuild the profiles in FSP mode (debug)
+    build                         # Build the go programs
+    enforce                       # Prebuild the profiles in enforced mode
+    complain                      # Prebuild the profiles in complain mode
+    fsp                           # Prebuild the profiles in FSP mode
+    fsp-complain                  # Prebuild the profiles in FSP mode (complain)
+    fsp-debug                     # Prebuild the profiles in FSP mode (debug)
 
     [install]
-    install                 # Install prebuild profiles
-    local +names            # Locally install prebuild profiles
-    dev name                # Prebuild, install, and load a dev profile
+    install                       # Install prebuild profiles
+    local +names                  # Locally install prebuild profiles
+    dev name                      # Prebuild, install, and load a dev profile
 
     [packages]
-    pkg                     # Build & install apparmor.d on Arch based systems
-    dpkg                    # Build & install apparmor.d on Debian based systems
-    rpm                     # Build & install apparmor.d on OpenSUSE based systems
-    package dist            # Build the package in a clean OCI container
+    pkg                           # Build & install apparmor.d on Arch based systems
+    dpkg                          # Build & install apparmor.d on Debian based systems
+    rpm                           # Build & install apparmor.d on OpenSUSE based systems
+    package dist                  # Build the package in a clean OCI container
 
     [tests]
-    tests                   # Run the unit tests
-    init dist flavor        # Install dependencies for the bats integration tests
-    integration dist flavor # Run the integration tests on the machine
+    tests                         # Run the unit tests
+    init                          # Install dependencies for the integration tests
+    integration                   # Run the integration tests
+    tests-init dist flavor        # Install dependencies for the integration tests (machine)
+    tests-sync dist flavor        # Synchronize the integration tests (machine)
+    tests-resync dist flavor      # Re-synchronize the integration tests (machine)
+    tests-run dist flavor name="" # Run the integration tests (machine)
 
     [linter]
-    lint                    # Run the linters
-    check                   # Run style checks on the profiles
+    lint                          # Run the linters
+    check                         # Run style checks on the profiles
 
     [docs]
-    man                     # Generate the man pages
-    docs                    # Build the documentation
-    serve                   # Serve the documentation
+    man                           # Generate the man pages
+    docs                          # Build the documentation
+    serve                         # Serve the documentation
 
     [vm]
-    img dist flavor         # Build the VM image
-    create dist flavor      # Create the machine
-    up dist flavor          # Start a machine
-    halt dist flavor        # Stops the machine
-    reboot dist flavor      # Reboot the machine
-    destroy dist flavor     # Destroy the machine
-    ssh dist flavor         # Connect to the machine
-    list                    # List the machines
-    images                  # List the VM images
-    available               # List the VM images that can be created
+    img dist flavor               # Build the VM image
+    create dist flavor            # Create the machine
+    up dist flavor                # Start a machine
+    halt dist flavor              # Stops the machine
+    reboot dist flavor            # Reboot the machine
+    destroy dist flavor           # Destroy the machine
+    ssh dist flavor               # Connect to the machine
+    mount dist flavor             # Mount the shared directory on the machine
+    umount dist flavor            # Unmout the shared directory on the machine
+    list                          # List the machines
+    images                        # List the VM images
+    available                     # List the VM images that can be created
 
 See https://apparmor.pujol.io/development/ for more information.
 ```
