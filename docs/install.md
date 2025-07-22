@@ -37,6 +37,7 @@ The following desktop environments are supported:
 **Build dependency**
 
 * Go >= 1.23
+* [just](https://github.com/casey/just)
 
 
 ## Configure AppArmor

@@ -285,6 +285,18 @@ ssh dist flavor:
 	@ssh {{sshopt}} {{username}}@`just get_ip {{dist}} {{flavor}}`
 
 [group('vm')]
+[doc('Mount the shared directory on the machine')]
+mount dist flavor:
+	@ssh {{sshopt}} {{username}}@`just get_ip {{dist}} {{flavor}}` \
+		sh -c 'mount | grep 0a31bc478ef8e2461a4b1cc10a24cc4 || sudo mount 0a31bc478ef8e2461a4b1cc10a24cc4'
+
+[group('vm')]
+[doc('Unmout the shared directory on the machine')]
+umount dist flavor:
+	@ssh {{sshopt}} {{username}}@`just get_ip {{dist}} {{flavor}}` \
+		sh -c 'true; sudo umount /home/{{username}}/Projects/apparmor.d || true'
+
+[group('vm')]
 [doc('List the machines')]
 list:
 	@echo -e '\033[1m Id   Distribution Flavor  State\033[0m'
@@ -324,7 +336,6 @@ available:
 	}
 	'
 
-
 [group('tests')]
 [doc('Install dependencies for the integration tests')]
 init:
@@ -349,29 +360,17 @@ tests-sync dist flavor:
 
 [group('tests')]
 [doc('Re-synchronize the integration tests (machine)')]
-tests-resync dist flavor: (tests-mount dist flavor) \
+tests-resync dist flavor: (mount dist flavor) \
 	(tests-sync dist flavor) \
-	(tests-umount dist flavor)
-
-[group('tests')]
-[doc('Unmout the integration tests (machine)')]
-tests-umount dist flavor:
-	@ssh {{sshopt}} {{username}}@`just get_ip {{dist}} {{flavor}}` \
-		sudo umount /home/{{username}}/Projects/apparmor.d
+	(umount dist flavor)
 
 [group('tests')]
 [doc('Run the integration tests (machine)')]
-tests-run dist flavor name="":
+tests-run dist flavor name="": (tests-resync dist flavor)
 	ssh {{sshopt}} {{username}}@`just get_ip {{dist}} {{flavor}}` \
 		TERM=xterm \
 		bats --recursive --pretty --timing --print-output-on-failure \
 			/home/{{username}}/Projects/tests/integration/{{name}}
-
-[group('tests')]
-[doc('Mount integration tests (machine)')]
-tests-mount dist flavor:
-	@ssh {{sshopt}} {{username}}@`just get_ip {{dist}} {{flavor}}` \
-		sudo mount 0a31bc478ef8e2461a4b1cc10a24cc4
 
 [private]
 get_ip dist flavor:
