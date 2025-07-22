@@ -66,7 +66,7 @@ check:
   stage: test
   image: registry.gitlab.com/roddhjav/builders/archlinux
   script:
-    - make check
+    - just check
 
 # Package Build
 # -------------
@@ -84,13 +84,12 @@ archlinux:
 
 debian:
   stage: build
-  image: registry.gitlab.com/roddhjav/builders/debian:12
+  image: registry.gitlab.com/roddhjav/builders/debian:trixie
   script:
     - sudo chown -R build:build /builds/
     - git config --global --add safe.directory $CI_PROJECT_DIR
     - mkdir -p "$PKGDEST"
-    - sudo apt-get update -q && sudo apt-get install -y config-package-dev lsb-release
-    - sudo apt-get install -y -t bookworm-backports golang-go
+    - sudo apt-get update -q && sudo apt-get install -y config-package-dev golang-go lsb-release libdistro-info-perl
     - bash dists/build.sh dpkg
   artifacts:
     expire_in: 1 day
@@ -105,7 +104,7 @@ ubuntu:
   script:
     - git config --global --add safe.directory $CI_PROJECT_DIR
     - mkdir -p "$PKGDEST"
-    - sudo apt-get update -q && sudo apt-get install -y config-package-dev golang-go lsb-release
+    - sudo apt-get update -q && sudo apt-get install -y config-package-dev golang-go lsb-release libdistro-info-perl
     - bash dists/build.sh dpkg
   artifacts:
     expire_in: 1 day
@@ -117,7 +116,7 @@ whonix:
   variables:
     DISTRIBUTION: whonix
   before_script:
-    - echo "\noverride_dh_auto_build:\n\tmake fsp" >> debian/rules
+    - sed -e "s/just complain/just fsp-complain/" -i debian/rules
 
 opensuse:
   stage: build

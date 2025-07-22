@@ -35,7 +35,7 @@ Particularly:
 ## Installation
 
 
-This feature is only enabled when the project is built with `make full`. [Early policy](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmorInSystemd#early-policy-loads) load **must** also be enabled. Once `apparmor.d` has been installed in FSP mode, it is required to reboot to apply the changes.
+This feature is only enabled when the project is built with `just fsp`. [Early policy](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmorInSystemd#early-policy-loads) load **must** also be enabled. Once `apparmor.d` has been installed in FSP mode, it is required to reboot to apply the changes.
 
 In `/etc/apparmor/parser.conf` ensure you have:
 ```
@@ -46,51 +46,57 @@ Optimize=compress-fast
 
 === ":material-arch: Archlinux"
 
-    In `PKGBUILD`, replace `make` by `make fsp`:
+    In `PKGBUILD`, replace `just complain` by `just fsp-complain`:
 
     ```diff
-    -  make
-    +  make fsp
+    -  just complain
+    +  just fsp-complain
     ```
 
-    Then, build the package with: `make pkg`
+    Then, build the package with: `just pkg`
 
 === ":material-ubuntu: Ubuntu"
 
-    In `debian/rules`, add the following lines:
+    In `debian/rules`, replace `just complain` by `just fsp-complain`:
 
     ```make
-    override_dh_auto_build:
-        make fsp
+      override_dh_auto_build:
+    -     just complain
+      override_dh_auto_build:
+    +     just fsp-complain
     ```
 
-    Then, build the package with: `make dpkg`
+    Then, build the package with: `just dpkg`
 
 === ":material-debian: Debian"
     
-    In `debian/rules`, add the following lines:
+    In `debian/rules`, replace `just complain` by `just fsp-complain`:
 
     ```make
-    override_dh_auto_build:
-        make fsp
+      override_dh_auto_build:
+    -     just complain
+      override_dh_auto_build:
+    +     just fsp-complain
     ```
 
-    Then, build the package with: `make dpkg`
+    Then, build the package with: `just dpkg`
 
 === ":simple-suse: openSUSE"
 
-    In `dists/apparmor.d.spec`, replace `%make_build` by `%make_build fsp`
+    In `dists/apparmor.d.spec`, replace `just complain` by `just fsp-complain`:
 
     ```diff
-    -  %make_build
-    +  %make_build fsp
+       %build
+    -  just complain
+       %build
+    +  just fsp-complain
     ```
 
-    Then, build the package with: `make rpm`
+    Then, build the package with: `just rpm`
 
 === ":material-home: Partial Install"
 
-    Use the `make fsp` command to build instead of `make`
+    Use the `just fsp-complain` command to build instead of `just complain`
 
 
 ## Structure

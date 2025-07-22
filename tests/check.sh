@@ -3,7 +3,7 @@
 # Copyright (C) 2024-2025 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-# Usage: make check
+# Usage: just check
 # shellcheck disable=SC2044
 
 set -eu -o pipefail

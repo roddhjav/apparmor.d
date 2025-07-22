@@ -9,9 +9,14 @@ jobs:
       - name: Check out repository code
         uses: actions/checkout@v4
 
+      - name: Install linter dependencies
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y just
+
       - name: Run basic profile linter check
         run: |
-          make check
+          just check
 
   build:
     runs-on: ${{ matrix.os }}
@@ -32,13 +37,13 @@ jobs:
           sudo apt-get update -q
           sudo apt-get install -y \
             devscripts debhelper config-package-dev \
-            auditd apparmor-profiles apparmor-utils
+            auditd apparmor-profiles apparmor-utils just
           sudo rm /etc/apparmor.d/usr.lib.snapd.snap-confine.real
 
       - name: Build the apparmor.d package
         run: |
           if [[ ${{ matrix.mode }} == full-system-policy ]]; then
-            echo -e "\noverride_dh_auto_build:\n\tmake fsp" >> debian/rules
+            sed -e "s/just complain/just fsp-complain/" -i debian/rules
           fi
           if [[ ${{ matrix.os }} == ubuntu-24.04 ]] && [[ ${{ matrix.mode }} == default ]]; then
             # Test with Re-attach disconnected path
@@ -95,7 +100,7 @@ jobs:
           sudo apt-get update -q
           sudo apt-get install -y \
             apparmor-profiles apparmor-utils \
-            bats bats-support
+            bats bats-support just
 
       - name: Install apparmor.d
         run: |
@@ -127,12 +132,12 @@ jobs:
 
       - name: Install integration dependencies
         run: |
-          bash tests/requirements.sh
+          just init
           find /usr/sbin/ -type f
 
       - name: Run the integration tests
         run: |
-          make integration
+          just integration
 
       - name: Show final AppArmor logs
         if: always()

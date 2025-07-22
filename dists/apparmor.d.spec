@@ -15,6 +15,7 @@ URL:            https://github.com/roddhjav/apparmor.d
 Source0:        %{name}-%{version}.tar.gz
 Requires:       apparmor-profiles
 BuildRequires:  distribution-release
+BuildRequires:  just
 BuildRequires:  golang-packaging
 BuildRequires:  apparmor-profiles
 
@@ -25,10 +26,10 @@ AppArmor.d is a set of over 1500 AppArmor profiles whose aim is to confine most 
 %autosetup
 
 %build
-%make_build
+just complain
 
 %install
-%make_install
+just destdir="%{buildroot}" install
 
 %posttrans
 rm -f /var/cache/apparmor/* 2>/dev/null

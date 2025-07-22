@@ -2,7 +2,7 @@
 title: Building the profiles
 ---
 
-The profiles in `apparmor.d` must not be used directly. They need to be prebuilt (by running `make`). This page documents all possibles prebuild tasks. It is not intended to be read by end user, and it is only targeted at developers and maintainers.
+The profiles in `apparmor.d` must not be used directly. They need to be prebuilt (by running `just complain`). This page documents all possibles prebuild tasks. It is not intended to be read by end user, and it is only targeted at developers and maintainers.
 
 The build system is fully configurable, general usage can be seen with:
 ```sh
