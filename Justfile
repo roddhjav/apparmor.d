@@ -157,7 +157,7 @@ dpkg:
 [doc('Build & install apparmor.d on OpenSUSE based systems')]
 rpm:
 	@bash dists/build.sh rpm
-	@sudo rpm -ivh --force  {{pkgdest}}/{{pkgname}}-*.rpm
+	@sudo rpm -ivh --force {{pkgdest}}/{{pkgname}}-*.rpm
 
 [group('tests')]
 [doc('Run the unit tests')]
@@ -213,8 +213,8 @@ package dist:
 	if [[ $dist =~ ubuntu([0-9]+) ]]; then
 		version="${BASH_REMATCH[1]}.04"
 		dist="ubuntu"
-	elif [[ $dist =~ debian([0-9]+) ]]; then
-		version="${BASH_REMATCH[1]}"
+	elif [[ $dist == debian ]]; then
+		version="trixie"
 		dist="debian"
 	fi
 	bash dists/docker.sh $dist $version

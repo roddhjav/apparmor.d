@@ -29,7 +29,7 @@ This is the current list of features that must be implemented to get to a stable
     - [ ] Provide packages repo for ubuntu/debian
     - [ ] Provide complain/enforced packages version
     - [x] Add a `just` target to install the profiles in the right place
-    - [ ] Fully drop the Makefile in favor of `just`
+    - [x] Fully drop the Makefile in favor of `just`
 
 ## Next features
 
