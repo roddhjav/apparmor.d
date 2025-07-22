@@ -57,7 +57,7 @@ profile foo @{exec_path} {
 
 ## Development Install
 
-It is not recommended installing the full project *"manually"* (with `make`, `sudo make install`). The distribution specific packages are intended to be used in development as they include additional rule to ensure compatibility with upstream (see `debian/`, `PKGBUILD` and `dists/apparmor.d.spec`).
+It is not recommended installing the full project *"manually"* (with `just complain`, `sudo just install`). The distribution specific packages are intended to be used in development as they include additional rule to ensure compatibility with upstream (see `debian/`, `PKGBUILD` and `dists/apparmor.d.spec`).
 
 Instead, install an individual profile or the development package, the following way.
 
@@ -66,25 +66,25 @@ Instead, install an individual profile or the development package, the following
 === ":material-arch: Archlinux"
 
     ```sh
-    make pkg
+    just pkg
     ```
 
 === ":material-ubuntu: Ubuntu"
 
     ```sh
-    make dpkg
+    just dpkg
     ```
 
 === ":material-debian: Debian"
 
     ```sh
-    make dpkg
+    just dpkg
     ```
 
 === ":simple-suse: openSUSE"
 
     ```sh
-    make rpm
+    just rpm
     ```
 
 === ":material-docker: Docker"
@@ -102,7 +102,7 @@ Instead, install an individual profile or the development package, the following
 **Format**
 
 ```sh
-make dev name=<profile-name>
+just dev <profile-name>
 ```
 
 **Exampe**
@@ -110,7 +110,7 @@ make dev name=<profile-name>
 :   Testing the profile `pass`
 
     ```
-    make dev name=pass
+    just dev pass
     ```
 
     This:

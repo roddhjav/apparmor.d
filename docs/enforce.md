@@ -13,50 +13,56 @@ The default package configuration installs all profiles in *complain* mode. This
 
 === ":material-arch: Archlinux"
 
-    In the `PKGBUILD`, replace `make` by `make enforce`:
+    In the `PKGBUILD`, replace `just complain` by `just enforce`:
 
     ```diff
-    -  make DISTRIBUTION=arch
-    +  make enforce DISTRIBUTION=arch
+    -  just complain
+    +  just enforce
     ```
 
-    Then, build the package with: `make pkg`
+    Then, build the package with: `just pkg`
 
 === ":material-ubuntu: Ubuntu"
 
-    In `debian/rules`, add the following lines:
+    In `debian/rules`, replace `just complain` by `just enforce`:
 
-    ```make
-    override_dh_auto_build:
-        make enforce
+    ```diff
+      override_dh_auto_build:
+    -     just complain
+      override_dh_auto_build:
+    +     just enforce
     ```
 
-    Then, build the package with: `make dpkg`
+    Then, build the package with: `just dpkg`
 
 === ":material-debian: Debian"
     
-    In `debian/rules`, add the following lines:
+    In `debian/rules`, replace `just complain` by `just enforce`:
 
-    ```make
-    override_dh_auto_build:
-        make enforce
+    ```diff
+      override_dh_auto_build:
+    -     just complain
+      override_dh_auto_build:
+    +     just enforce
     ```
 
-    Then, build the package with: `make dpkg`
+    Then, build the package with: `just dpkg`
 
 === ":simple-suse: openSUSE"
 
-    In `dists/apparmor.d.spec`, replace `%make_build` by `%make_build enforce`
+    In `dists/apparmor.d.spec`, replace `just complain` by `just enforce`:
 
     ```diff
-    -  %make_build
-    +  %make_build enforce
+       %build
+    -  just complain
+       %build
+    +  just enforce
     ```
 
-    Then, build the package with: `make rpm`
+    Then, build the package with: `just rpm`
 
 === ":material-home: Partial Install"
 
-    Use the `make enforce` command to build instead of `make`
+    Use the `just enforce` command to build instead of `just complain`
 
 [aur]: https://aur.archlinux.org/packages/apparmor.d-git

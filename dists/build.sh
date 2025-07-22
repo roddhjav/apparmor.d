@@ -3,7 +3,7 @@
 # Copyright (C) 2022-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-# Usage: make [ dpkg | pkg | rpm ]
+# Usage: just [ dpkg | pkg | rpm ]
 
 set -eu -o pipefail
 
