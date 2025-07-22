@@ -37,7 +37,7 @@ The following desktop environments are supported:
 **Build dependency**
 
 * Go >= 1.23
-* [just](https://github.com/casey/just)
+* [just](https://github.com/casey/just) >= 1.40.0
 
 
 ## Configure AppArmor
@@ -86,6 +86,15 @@ echo 'Optimize=compress-fast' | sudo tee -a /etc/apparmor/parser.conf
 
         ```sh
         just dpkg
+        ```
+
+    !!! note
+
+        **Ubuntu 24.04 user will need to:**
+
+        Install [just](https://github.com/casey/just). E.g:
+        ```sh
+        pipx install rust-just
         ```
 
     !!! warning
