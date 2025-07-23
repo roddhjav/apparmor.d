@@ -1,0 +1,31 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 valoq <valoq@mailbox.org>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/curl
+profile curl @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/ssl_certs>
+  include <abstractions/p11-kit>
+  include <abstractions/nameservice-strict>
+  include <abstractions/user-download-strict>
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  owner @{HOME}/.curlrc r,
+  owner @{user_config_dirs}/curlrc r,
+
+  include if exists <local/curl>
+}
+
+# vim:syntax=apparmor
