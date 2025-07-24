@@ -344,7 +344,7 @@ init:
 [group('tests')]
 [doc('Run the integration tests')]
 integration:
-	TERM=xterm bats --recursive --pretty --timing --print-output-on-failure tests/integration
+	bats --recursive --timing --print-output-on-failure tests/integration
 
 [group('tests')]
 [doc('Install dependencies for the integration tests (machine)')]
