@@ -89,6 +89,7 @@ _check() {
         _check_too_wide
         _check_transition
         _check_useless
+        _check_variables
 
         # Guidelines check
         _check_abi
@@ -107,7 +108,7 @@ _check() {
     _res_vim
 }
 
-# Rules checks: security, compatibility and rule issues
+# Rules checks: security, compatibility, and rule issues
 
 readonly ABS="abstractions"
 readonly ABS_DANGEROUS=(dbus dbus-session dbus-system dbus-accessibility user-tmp)
@@ -222,6 +223,51 @@ _check_useless() {
     for rule in "${!USELESS[@]}"; do
         if [[ "$line" == *"${USELESS[$rule]}"* ]]; then
             _err issue "$file:$line_number" "rule already included in the base abstraction, remove it"
+        fi
+    done
+}
+
+declare -A VARIABLES_MISSING=(
+    # User variables
+    ["(@\{HOME\}/|/home/[^/]+/).cache"]="@{user_cache_dirs}"
+    ["(@\{HOME\}/|/home/[^/]+/).config"]="@{user_config_dirs}"
+    ["(@\{HOME\}/|/home/[^/]+/).local/share"]="@{user_share_dirs}"
+    ["(@\{HOME\}/|/home/[^/]+/).local/state"]="@{user_state_dirs}"
+    ["(@\{HOME\}/|/home/[^/]+/).local/bin"]="@{user_bin_dirs}"
+    ["(@\{HOME\}/|/home/[^/]+/).local/lib"]="@{user_lib_dirs}"
+    ["(@\{HOME\}/|/home/[^/]+/).ssh"]="@{HOME}/@{XDG_SSH_DIR}"
+    ["(@\{HOME\}/|/home/[^/]+/).gnupg"]="@{HOME}/@{XDG_GPG_DIR}"
+    ["/home/[^/]+/"]="@{HOME}/"
+
+    # System variables
+    ["/usr/lib(|32|64|exec)"]='@{lib}'
+    ["/usr/sbin"]='@{sbin}'
+    ["/usr/bin"]='@{bin}'
+    ["(x86_64|amd64|i386|i686)"]='@{arch}'
+    ["(@\{arch\}|x86_64|amd64|i386|i686)-*linux-gnu[^/]?"]='@{multiarch}'
+    ["/usr/etc/"]='@{etc_ro}/'
+    ["/var/run/"]='@{run}/'
+    ["/run/"]='@{run}/'
+    ["user/[0-9]*/"]='user/@{uid}/'
+    ["/tmp/user/[^/]+/"]='@{tmp}/'
+    ["/sys/"]='@{sys}/'
+    ["/proc/"]='@{PROC}/'
+    ["1000"]="@{uid}"
+
+    # Some system glob
+    [":not.active.yet"]="@{busname}"
+    [":1.[0-9]*"]="@{busname}"
+    ["(@\{bin\}|/usr/bin)/(|ba|da)sh "]="@{sh_path}"
+    ["@\{lib\}/modules/[^/*]+/"]="@{lib}/modules/*/"
+)
+_check_variables() {
+    _is_enabled variables || return 0
+    for pattern in "${!VARIABLES_MISSING[@]}"; do
+        rpattern="$pattern"
+        [[ "$rpattern" == /* ]] && rpattern=" $rpattern"
+        if [[ "$line" =~ $rpattern ]]; then
+            match="${BASH_REMATCH[0]}"
+            _err issue "$file:$line_number" "variable '${VARIABLES_MISSING[$pattern]}' must be used instead of: $match"
         fi
     done
 }
@@ -442,7 +488,7 @@ check_profiles() {
     )
     jobs=0
     WITH_CHECK=(
-        abstractions directory_mark equivalent useless transition
+        abstractions directory_mark equivalent useless transition variables
         abi include profile header tabs trailing indentation subprofiles vim
     )
     for file in "${files[@]}"; do
@@ -462,7 +508,7 @@ check_abstractions() {
     mapfile -t files < <(find "$APPARMORD/abstractions" -type f -not -path "$APPARMORD/abstractions/*.d/*" 2>/dev/null || true)
     jobs=0
     WITH_CHECK=(
-        abstractions directory_mark equivalent too_wide
+        abstractions directory_mark equivalent too_wide variables
         abi include header tabs trailing indentation vim
     )
     for file in "${files[@]}"; do
@@ -483,7 +529,7 @@ check_abstractions() {
     # shellcheck disable=SC2034
     jobs=0
     WITH_CHECK=(
-        abstractions directory_mark equivalent too_wide
+        abstractions directory_mark equivalent too_wide variables
         header tabs trailing indentation vim
     )
     for file in "${files[@]}"; do
