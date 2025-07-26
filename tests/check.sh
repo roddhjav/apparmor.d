@@ -17,14 +17,14 @@ readonly RES MAX_JOBS APPARMORD="apparmor.d"
 readonly reset="\033[0m" fgRed="\033[0;31m" fgYellow="\033[0;33m" fgWhite="\033[0;37m" BgWhite="\033[1;37m"
 _msg() { printf '%b%s%b\n' "$BgWhite" "$*" "$reset"; }
 _warn() {
-    local type="$1" file="$2"
+    local name="$1" file="$2"
     shift 2
-    printf '%bwarning%b %s(%b%s%b): %s\n' "$fgYellow" "$reset" "$type" "$fgWhite" "$file" "$reset" "$*"
+    printf '%bwarning%b %s(%b%s%b): %s\n' "$fgYellow" "$reset" "$name" "$fgWhite" "$file" "$reset" "$*"
 }
 _err() {
-    local type="$1" file="$2"
+    local name="$1" file="$2"
     shift 2
-    printf '  %berror%b %s(%b%s%b): %s\n' "$fgRed" "$reset" "$type" "$fgWhite" "$file" "$reset" "$*"
+    printf '  %berror%b %s(%b%s%b): %s\n' "$fgRed" "$reset" "$name" "$fgWhite" "$file" "$reset" "$*"
     echo "true" >"$RES"
 }
 
@@ -160,24 +160,24 @@ _check_abstractions() {
     local absname
     for absname in "${ABS_DANGEROUS[@]}"; do
         if [[ "$line" == *"<$ABS/$absname>"* ]]; then
-            _err security "$file:$line_number" "dangerous abstraction '<$ABS/$absname>'"
+            _err abstractions "$file:$line_number" "dangerous abstraction '<$ABS/$absname>'"
         fi
     done
     for absname in "${!ABS_DEPRECATED[@]}"; do
         if [[ "$line" == *"<$ABS/$absname>"* ]]; then
-            _err security "$file:$line_number" "deprecated abstraction '<$ABS/$absname>', use '<$ABS/${ABS_DEPRECATED[$absname]}>' instead"
+            _err abstractions "$file:$line_number" "deprecated abstraction '<$ABS/$absname>', use '<$ABS/${ABS_DEPRECATED[$absname]}>' instead"
         fi
     done
 }
 
 readonly DIRECTORIES=('@{HOME}' '@{MOUNTS}' '@{bin}' '@{sbin}' '@{lib}' '@{tmp}' '_dirs}' '_DIR}')
 _check_directory_mark() {
-    _is_enabled directory_mark || return 0
+    _is_enabled directory-mark || return 0
     for pattern in "${DIRECTORIES[@]}"; do
         if [[ "$line" == *"$pattern"* ]]; then
             [[ "$line" == *'='* ]] && continue
             if [[ ! "$line" == *"$pattern/"* ]]; then
-                _err issue "$file:$line_number" "missing directory mark: '$pattern' instead of '$pattern/'"
+                _err directory-mark "$file:$line_number" "missing directory mark: '$pattern' instead of '$pattern/'"
             fi
         fi
     done
@@ -195,7 +195,7 @@ _check_equivalent() {
     for prgmname in "${!EQUIVALENTS[@]}"; do
         if [[ "$line" == *"/$prgmname "* ]]; then
             if [[ ! "$line" == *"${EQUIVALENTS[$prgmname]}"* ]]; then
-                _err compatibility "$file:$line_number" "missing equivalent program: '@{bin}/$prgmname' instead of '@{bin}/${EQUIVALENTS[$prgmname]}'"
+                _err equivalent "$file:$line_number" "missing equivalent program: '@{bin}/$prgmname' instead of '@{bin}/${EQUIVALENTS[$prgmname]}'"
             fi
         fi
     done
@@ -203,10 +203,10 @@ _check_equivalent() {
 
 readonly TOOWIDE=('/**' '/tmp/**' '/var/tmp/**' '@{tmp}/**' '/etc/**' '/dev/shm/**' '@{run}/user/@{uid}/**')
 _check_too_wide() {
-    _is_enabled too_wide || return 0
+    _is_enabled too-wide || return 0
     for pattern in "${TOOWIDE[@]}"; do
         if [[ "$line" == *" $pattern "* ]]; then
-            _err security "$file:$line_number" "rule too wide: '$pattern'"
+            _warn too-wide "$file:$line_number" "rule too wide: '$pattern'"
         fi
     done
 }
@@ -227,19 +227,19 @@ _check_transition() {
     _is_enabled transition || return 0
     for prgmname in "${!TRANSITION_MUST_CI[@]}"; do
         if [[ "$line" =~ "@{bin}/${TRANSITION_MUST_CI[$prgmname]} ".*([uU]x|[pP][uU]x|[pP]x) ]]; then
-            _err security "$file:$line_number" \
+            _err transition "$file:$line_number" \
                 "@{bin}/${TRANSITION_MUST_CI[$prgmname]} should be used inherited: 'ix' | 'Cx'"
         fi
     done
     for prgmname in "${!TRANSITION_MUST_PC[@]}"; do
         if [[ "$line" =~ "@{bin}/${TRANSITION_MUST_PC[$prgmname]} ".*(Pix|ix) ]]; then
-            _err security "$file:$line_number" \
+            _err transition "$file:$line_number" \
                 "@{bin}/${TRANSITION_MUST_PC[$prgmname]} should transition to another (sub)profile with 'Px' or 'Cx'"
         fi
     done
     for prgmname in "${!TRANSITION_MUST_C[@]}"; do
         if [[ "$line" =~ "@{bin}/${TRANSITION_MUST_C[$prgmname]} ".*([pP]ix|[uU]x|[pP][uU]x|ix) ]]; then
-            _warn security "$file:$line_number" \
+            _warn transition "$file:$line_number" \
                 "@{bin}/${TRANSITION_MUST_C[$prgmname]} should transition to a subprofile with 'Cx'"
         fi
     done
@@ -255,7 +255,7 @@ _check_useless() {
     _is_enabled useless || return 0
     for rule in "${!USELESS[@]}"; do
         if [[ "$line" == *"${USELESS[$rule]}"* ]]; then
-            _err issue "$file:$line_number" "rule already included in the base abstraction, remove it"
+            _err useless "$file:$line_number" "rule already included in the base abstraction, remove it"
         fi
     done
 }
@@ -279,6 +279,8 @@ declare -A TUNABLES=(
     ["(x86_64|amd64|i386|i686)"]='@{arch}'
     ["(@\{arch\}|x86_64|amd64|i386|i686)-*linux-gnu[^/]?"]='@{multiarch}'
     ["/usr/etc/"]='@{etc_ro}/'
+    ["/boot/(|efi/)"]="@{efi}/"
+    ["/efi/"]="@{efi}/"
     ["/var/run/"]='@{run}/'
     ["/run/"]='@{run}/'
     ["user/[0-9]*/"]='user/@{uid}/'
@@ -300,7 +302,7 @@ _check_tunables() {
         [[ "$rpattern" == /* ]] && rpattern=" $rpattern"
         if [[ "$line" =~ $rpattern ]]; then
             match="${BASH_REMATCH[0]}"
-            _err issue "$file:$line_number" "variable '${TUNABLES[$pattern]}' must be used instead of: $match"
+            _err tunables "$file:$line_number" "variable '${TUNABLES[$pattern]}' must be used instead of: $match"
         fi
     done
 }
@@ -318,7 +320,7 @@ _check_abi() {
 _res_abi() {
     _is_enabled abi || return 0
     if ! $RES_ABI; then
-        _err guideline "$file" "missing 'abi <abi/4.0>,'"
+        _err abi "$file" "missing 'abi <abi/4.0>,'"
     fi
 }
 
@@ -332,7 +334,7 @@ _check_include() {
 _res_include() {
     _is_enabled include || return 0
     if ! $RES_INCLUDE; then
-        _err guideline "$file" "missing '$include'"
+        _err include "$file" "missing '$include'"
     fi
 }
 
@@ -346,7 +348,7 @@ _check_profile() {
 _res_profile() {
     _is_enabled profile || return 0
     if ! $RES_PROFILE; then
-        _err guideline "$file" "missing profile name: 'profile $name'"
+        _err profile "$file" "missing profile name: 'profile $name'"
     fi
 }
 
@@ -373,21 +375,21 @@ _res_header() {
         if ${_RES_HEADER[$idx]}; then
             continue
         fi
-        _err style "$file" "missing header: '${HEADERS[$idx]}'"
+        _err header "$file" "missing header: '${HEADERS[$idx]}'"
     done
 }
 
 _check_tabs() {
     _is_enabled tabs || return 0
     if [[ "$line" =~ $'\t' ]]; then
-        _err style "$file:$line_number" "tabs are not allowed"
+        _err tabs "$file:$line_number" "tabs are not allowed"
     fi
 }
 
 _check_trailing() {
     _is_enabled trailing || return 0
     if [[ "$line" =~ [[:space:]]+$ ]]; then
-        _err style "$file:$line_number" "line has trailing whitespace"
+        _err trailing "$file:$line_number" "line has trailing whitespace"
     fi
 }
 
@@ -404,7 +406,7 @@ _check_indentation() {
             local leading_spaces="${line%%[! ]*}"
             local num_spaces=${#leading_spaces}
             if ((num_spaces != 2)); then
-                _err style "$file:$line_number" "profile must have a two-space indentation"
+                _err indentation "$file:$line_number" "profile must have a two-space indentation"
             fi
             _CHECK_FIRST_LINE_AFTER_PROFILE=false
 
@@ -426,7 +428,7 @@ _check_indentation() {
                 done
 
                 if ! $ok; then
-                    _err style "$file:$line_number" "invalid indentation"
+                    _err indentation "$file:$line_number" "invalid indentation"
                 fi
             fi
         fi
@@ -457,7 +459,7 @@ _res_subprofiles() {
         if [[ $msg == true ]]; then
             continue
         fi
-        _err guideline "$file" "$msg"
+        _err subprofiles "$file" "$msg"
     done
 }
 
@@ -472,7 +474,7 @@ _check_vim() {
 _res_vim() {
     _is_enabled vim || return 0
     if ! $RES_VIM; then
-        _err style "$file" "missing vim syntax: '$VIM_SYNTAX'"
+        _err vim "$file" "missing vim syntax: '$VIM_SYNTAX'"
     fi
 }
 
@@ -489,7 +491,7 @@ check_sbin() {
                     cut -d: -f1,2
             )
             for file in "${files[@]}"; do
-                _err compatibility "$file" "contains '@{bin}/$name' instead of '@{sbin}/$name'"
+                _err sbin "$file" "contains '@{bin}/$name' instead of '@{sbin}/$name'"
             done
         ) &
         _wait jobs
@@ -504,7 +506,7 @@ check_sbin() {
             while read -r match; do
                 name="${match/\@\{sbin\}\//}"
                 if ! _in_array "$name" "${sbin[@]}"; then
-                    _err compatibility "$file" "contains '@{sbin}/$name' but it is not in sbin.list"
+                    _err bin "$file" "contains '@{sbin}/$name' but it is not in sbin.list"
                 fi
             done < <(grep --only-matching -E "@\{sbin\}/$pattern" "${file%%:*}")
         ) &
@@ -521,7 +523,7 @@ check_profiles() {
     )
     jobs=0
     WITH_CHECK=(
-        abstractions directory_mark equivalent useless transition tunables
+        abstractions directory-mark equivalent too-wide useless transition tunables
         abi include profile header tabs trailing indentation subprofiles vim
     )
     for file in "${files[@]}"; do
@@ -541,7 +543,7 @@ check_abstractions() {
     mapfile -t files < <(find "$APPARMORD/abstractions" -type f -not -path "$APPARMORD/abstractions/*.d/*" 2>/dev/null || true)
     jobs=0
     WITH_CHECK=(
-        abstractions directory_mark equivalent too_wide tunables
+        abstractions directory-mark equivalent too-wide tunables
         abi include header tabs trailing indentation vim
     )
     for file in "${files[@]}"; do
@@ -562,7 +564,7 @@ check_abstractions() {
     # shellcheck disable=SC2034
     jobs=0
     WITH_CHECK=(
-        abstractions directory_mark equivalent too_wide tunables
+        abstractions directory-mark equivalent too-wide tunables
         header tabs trailing indentation vim
     )
     for file in "${files[@]}"; do
