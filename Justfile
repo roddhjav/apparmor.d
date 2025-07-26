@@ -52,7 +52,7 @@ prefix := "aa-"
 [doc('Show this help message')]
 help:
 	@just --list --unsorted
-	@echo -e "\nSee https://apparmor.pujol.io/development/ for more information."
+	@printf "\n%s\n" "See https://apparmor.pujol.io/development/ for more information."
 
 [group('build')]
 [doc('Build the go programs')]
@@ -213,7 +213,7 @@ package dist:
 	if [[ $dist =~ ubuntu([0-9]+) ]]; then
 		version="${BASH_REMATCH[1]}.04"
 		dist="ubuntu"
-	elif [[ $dist == debian ]]; then
+	elif [[ $dist == debian* ]]; then
 		version="trixie"
 		dist="debian"
 	fi
@@ -299,7 +299,7 @@ umount dist flavor:
 [group('vm')]
 [doc('List the machines')]
 list:
-	@echo -e '\033[1m Id   Distribution Flavor  State\033[0m'
+	@printf "{{BOLD}} %-4s %-22s %s{{NORMAL}}\n" "Id" "Distribution-Flavor" "State"
 	@virsh {{c}} list --all | grep {{prefix}} | sed 's/{{prefix}}//g'
 
 [group('vm')]
@@ -309,7 +309,7 @@ images:
 	set -eu -o pipefail
 	ls -lh {{base_dir}} | awk '
 	BEGIN {
-		printf("\033[1m%-18s %-10s %-5s %s\033[0m\n", "Distribution", "Flavor", "Size", "Date")
+		printf("{{BOLD}}%-18s %-10s %-5s %s{{NORMAL}}\n", "Distribution", "Flavor", "Size", "Date")
 	}
 	{
 		if ($9 ~ /^{{prefix}}.*\.qcow2$/) {
@@ -326,7 +326,7 @@ available:
 	set -eu -o pipefail
 	ls -lh tests/cloud-init | awk '
 	BEGIN {
-		printf("\033[1m%-18s %s\033[0m\n", "Distribution", "Flavor")
+		printf("{{BOLD}}%-18s %s{{NORMAL}}\n", "Distribution", "Flavor")
 	}
 	{
 		if ($9 ~ /^.*\.user-data.yml$/) {
