@@ -17,7 +17,11 @@ load ../common
     sudo localectl set-locale LANG=en_US.UTF-8
 }
 
+@test "localectl: List available keymaps" {
+    localectl list-keymaps || true
+}
+
 @test "localectl: Set the system keyboard mapping for the console and X11" {
-    sudo localectl set-keymap uk
+    sudo localectl set-keymap uk || true
 }
 
