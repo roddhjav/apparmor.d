@@ -12,6 +12,7 @@ RES=$(mktemp)
 echo "false" >"$RES"
 MAX_JOBS=$(nproc)
 declare WITH_CHECK
+declare _check_is_disabled
 readonly RES MAX_JOBS APPARMORD="apparmor.d"
 readonly reset="\033[0m" fgRed="\033[0;31m" fgYellow="\033[0;33m" fgWhite="\033[0;37m" BgWhite="\033[1;37m"
 _msg() { printf '%b%s%b\n' "$BgWhite" "$*" "$reset"; }
@@ -39,7 +40,17 @@ _in_array() {
 }
 
 _is_enabled() {
-    _in_array "$1" "${WITH_CHECK[@]}"
+    local check="$1"
+    if _in_array "$check" "${WITH_CHECK[@]}"; then
+        if [[ ${#_check_is_disabled[@]} -eq 0 ]]; then
+            return 0
+        fi
+        if _in_array "$check" "${_check_is_disabled[@]}"; then
+            return 1
+        fi
+        return 0
+    fi
+    return 1
 }
 
 _wait() {
@@ -51,13 +62,34 @@ _wait() {
     fi
 }
 
+_IGNORE_LINT_BLOCK=false
 readonly _IGNORE_LINT="#aa:lint ignore"
 _ignore_lint() {
-    local line="$1"
-    if [[ "$line" == *"$_IGNORE_LINT"* ]]; then
+    local checks line="$1"
+
+    if [[ "$line" =~ ^[[:space:]]*$_IGNORE_LINT=.*$ ]]; then
+        # Start of an ignore block
+        _IGNORE_LINT_BLOCK=true
+        checks="${line#*"$_IGNORE_LINT="}"
+        read -ra _check_is_disabled <<<"${checks//,/ }"
+
+    elif [[ $_IGNORE_LINT_BLOCK == true && "$line" =~ ^[[:space:]]*$ ]]; then
+        # New paragraph, end of block
+        _IGNORE_LINT_BLOCK=false
+        _check_is_disabled=()
+
+    elif [[ $_IGNORE_LINT_BLOCK == true ]]; then
+        # Nothing to do, we are in a block
         return 0
+
+    elif [[ "$line" == *"$_IGNORE_LINT="* ]]; then
+        # Inline ignore
+        checks="${line#*"$_IGNORE_LINT="}"
+        read -ra _check_is_disabled <<<"${checks//,/ }"
+
+    else
+        _check_is_disabled=()
     fi
-    return 1
 }
 
 _check() {
@@ -66,9 +98,7 @@ _check() {
 
     while IFS= read -r line; do
         line_number=$((line_number + 1))
-        if _ignore_lint "$line"; then
-            continue
-        fi
+        _ignore_lint "$line"
 
         # Style check
         if [[ $line_number -lt 10 ]]; then
@@ -79,8 +109,11 @@ _check() {
         _check_indentation
         _check_vim
 
-        # The following checks do not apply to comment lines
+        # The following checks do not apply to commented lines
         [[ "$line" =~ ^[[:space:]]*# ]] && continue
+        if [[ "$line" =~ ,[[:space:]]*# ]]; then
+            line="${line%%#*}"
+        fi
 
         # Rules checks
         _check_abstractions
@@ -89,7 +122,7 @@ _check() {
         _check_too_wide
         _check_transition
         _check_useless
-        _check_variables
+        _check_tunables
 
         # Guidelines check
         _check_abi
@@ -227,7 +260,7 @@ _check_useless() {
     done
 }
 
-declare -A VARIABLES_MISSING=(
+declare -A TUNABLES=(
     # User variables
     ["(@\{HOME\}/|/home/[^/]+/).cache"]="@{user_cache_dirs}"
     ["(@\{HOME\}/|/home/[^/]+/).config"]="@{user_config_dirs}"
@@ -260,14 +293,14 @@ declare -A VARIABLES_MISSING=(
     ["(@\{bin\}|/usr/bin)/(|ba|da)sh "]="@{sh_path}"
     ["@\{lib\}/modules/[^/*]+/"]="@{lib}/modules/*/"
 )
-_check_variables() {
-    _is_enabled variables || return 0
-    for pattern in "${!VARIABLES_MISSING[@]}"; do
+_check_tunables() {
+    _is_enabled tunables || return 0
+    for pattern in "${!TUNABLES[@]}"; do
         rpattern="$pattern"
         [[ "$rpattern" == /* ]] && rpattern=" $rpattern"
         if [[ "$line" =~ $rpattern ]]; then
             match="${BASH_REMATCH[0]}"
-            _err issue "$file:$line_number" "variable '${VARIABLES_MISSING[$pattern]}' must be used instead of: $match"
+            _err issue "$file:$line_number" "variable '${TUNABLES[$pattern]}' must be used instead of: $match"
         fi
     done
 }
@@ -452,7 +485,7 @@ check_sbin() {
     for name in "${sbin[@]}"; do
         (
             mapfile -t files < <(
-                grep --line-number --recursive -P "(^|[[:space:]])@{bin}/$name([[:space:]]|$)(?!.*$_IGNORE_LINT)" apparmor.d |
+                grep --line-number --recursive -P "(^|[[:space:]])@{bin}/$name([[:space:]]|$)(?!.*$_IGNORE_LINT=sbin)" apparmor.d |
                     cut -d: -f1,2
             )
             for file in "${files[@]}"; do
@@ -488,7 +521,7 @@ check_profiles() {
     )
     jobs=0
     WITH_CHECK=(
-        abstractions directory_mark equivalent useless transition variables
+        abstractions directory_mark equivalent useless transition tunables
         abi include profile header tabs trailing indentation subprofiles vim
     )
     for file in "${files[@]}"; do
@@ -508,7 +541,7 @@ check_abstractions() {
     mapfile -t files < <(find "$APPARMORD/abstractions" -type f -not -path "$APPARMORD/abstractions/*.d/*" 2>/dev/null || true)
     jobs=0
     WITH_CHECK=(
-        abstractions directory_mark equivalent too_wide variables
+        abstractions directory_mark equivalent too_wide tunables
         abi include header tabs trailing indentation vim
     )
     for file in "${files[@]}"; do
@@ -529,7 +562,7 @@ check_abstractions() {
     # shellcheck disable=SC2034
     jobs=0
     WITH_CHECK=(
-        abstractions directory_mark equivalent too_wide variables
+        abstractions directory_mark equivalent too_wide tunables
         header tabs trailing indentation vim
     )
     for file in "${files[@]}"; do
