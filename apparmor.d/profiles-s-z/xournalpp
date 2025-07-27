@@ -1,0 +1,44 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 valoq <valoq@mailbox.org>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/xournalpp
+profile xournalpp @{exec_path} {
+  include <abstractions/audio-client>
+  include <abstractions/base>
+  include <abstractions/dconf-write>
+  include <abstractions/desktop>
+  include <abstractions/fonts>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/nameservice-strict>
+  include <abstractions/user-read-strict>
+  include <abstractions/user-write-strict>
+
+  @{exec_path} mr,
+
+  /usr/share/xournalpp/** r,
+
+  /etc/machine-id r,
+  /etc/pipewire/jack.conf.d/ r,
+
+  owner @{user_config_dirs}/xournalpp/** rw,
+  owner @{user_cache_dirs}/xournalpp/** rw,
+
+  /dev/snd/controlC@{int} w,
+  /dev/snd/pcmC@{rand4} rw,
+
+  @{sys}/devices/virtual/dmi/id/bios_vendor r,
+  @{sys}/devices/virtual/dmi/id/board_vendor r,
+  @{sys}/devices/virtual/dmi/id/product_name r,
+  @{sys}/devices/virtual/dmi/id/sys_vendor r,
+
+  owner @{PROC}/@{pid}/task/@{tid}/comm rw,
+
+  include if exists <local/xournalpp>
+}
+
+# vim:syntax=apparmor
