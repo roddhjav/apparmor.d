@@ -22,6 +22,10 @@ load ../common
     lspci -s 00:00.0
 }
 
+@test "lspci: Query the PCI ID database for unknown ID's via DNS" {
+    sudo lspci -q
+}
+
 @test "lspci: Dump info in a readable form" {
     lspci -vm
 }
