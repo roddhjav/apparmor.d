@@ -246,10 +246,16 @@ _check_transition() {
 }
 
 readonly USELESS=(
-    '@{PROC}/filesystems' '@{PROC}/sys/kernel/cap_last_cap'
-    '@{PROC}/meminfo' '@{PROC}/stat' '@{PROC}/cpuinfo'
-    '@{sys}/devices/system/cpu/online' '@{sys}/devices/system/cpu/possible'
+    'ptrace readby'
     '/usr/share/locale/'
+    '@{sys}/devices/system/cpu/online'
+    '@{sys}/devices/system/cpu/possible'
+    '@{sys}/kernel/mm/transparent_hugepage/hpage_pmd_size'
+    '@{PROC}/@{pid}/auxv' '@{PROC}/@{pid}/maps' '@{PROC}/@{pid}/status' '@{PROC}/cpuinfo'
+    '@{PROC}/filesystems' '@{PROC}/meminfo' '@{PROC}/stat'
+    '@{PROC}/sys/kernel/cap_last_cap' '@{PROC}/sys/kernel/ngroups_max'
+    '@{PROC}/sys/kernel/version' '@{PROC}/sys/vm/overcommit_memory'
+    '/dev/full' '/dev/zero'
 )
 _check_useless() {
     _is_enabled useless || return 0
