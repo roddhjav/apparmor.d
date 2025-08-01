@@ -17,6 +17,10 @@ profile systemd-localed @{exec_path} flags=(attach_disconnected) {
   unix bind type=stream addr=@@{udbus}/bus/systemd-localed/system,
 
   #aa:dbus own bus=system name=org.freedesktop.locale1
+  dbus send bus=system path=/org/freedesktop/systemd1
+       interface=org.freedesktop.systemd1.Manager
+       member=Reload
+       peer=(name=org.freedesktop.systemd1, label="@{p_systemd}"),
 
   @{exec_path} mr,
 
@@ -33,8 +37,8 @@ profile systemd-localed @{exec_path} flags=(attach_disconnected) {
   /etc/default/locale rw,
   /etc/locale.conf rw,
   /etc/vconsole.conf rw,
-  /etc/X11/xorg.conf.d/ r,
-  /etc/X11/xorg.conf.d/.#*.confd* rw,
+  /etc/X11/xorg.conf.d/ rw,
+  /etc/X11/xorg.conf.d/.#*.conf@{hex} rw,
   /etc/X11/xorg.conf.d/*.conf rw,
 
   @{att}/@{run}/systemd/notify rw,

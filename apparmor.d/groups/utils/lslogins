@@ -1,0 +1,33 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/lslogins
+profile lslogins @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+
+  @{exec_path} mr,
+
+  /etc/.pwd.lock w,
+  /etc/.pwd.lock wk,
+  /etc/login.defs r,
+  /etc/shadow r,
+
+  /var/log/lastlog r,
+  /var/log/wtmp rk,
+
+  @{run}/systemd/userdb/ r,
+
+  @{PROC}/ r,
+  @{PROC}/sys/kernel/random/boot_id r,
+
+  include if exists <local/lslogins>
+}
+
+# vim:syntax=apparmor

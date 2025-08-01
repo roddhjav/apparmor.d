@@ -7,6 +7,7 @@ load ../common
 
 @test "lspci: Show a brief list of devices" {
     lspci
+    sudo lspci
 }
 
 @test "lspci: Display additional info" {

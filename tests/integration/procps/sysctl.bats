@@ -21,6 +21,6 @@ load ../common
     sysctl fs.file-max
 }
 
-@test "sysctl: Apply changes from `/etc/sysctl.conf`" {
-    sysctl -p
+@test "sysctl: Apply changes from '/etc/sysctl.conf'" {
+    sudo sysctl -p
 }

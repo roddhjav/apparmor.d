@@ -2,18 +2,8 @@
 # Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-# Usage:
-#   just
-#   just img ubuntu24 server
-#   just vm ubuntu24 server
-#   just up ubuntu24 server
-#   just ssh ubuntu24 server
-#   just halt ubuntu24 server
-#   just destroy ubuntu24 server
-#   just list
-#   just images
-#   just available
-#   just clean
+# Usage: `just`
+# See https://apparmor.pujol.io/development/ for more information.
 
 # Build setings
 destdir := "/"
@@ -62,7 +52,7 @@ prefix := "aa-"
 [doc('Show this help message')]
 help:
 	@just --list --unsorted
-	@echo -e "\nSee https://apparmor.pujol.io/development/ for more information."
+	@printf "\n%s\n" "See https://apparmor.pujol.io/development/ for more information."
 
 [group('build')]
 [doc('Build the go programs')]
@@ -125,7 +115,7 @@ install:
 
 [group('install')]
 [doc('Locally install prebuild profiles')]
-local +args:
+local +names:
 	#!/usr/bin/env bash
 	set -eu -o pipefail
 	install -Dm0755 {{build}}/aa-log {{destdir}}/usr/bin/aa-log
@@ -138,7 +128,7 @@ local +args:
 		install -Dm0644 "{{build}}/apparmor.d/tunables/$file" "{{destdir}}/etc/apparmor.d/tunables/$file"
 	done;
 	echo "Warning: profile dependencies fallback to unconfined."
-	for file in {{args}}; do
+	for file in {{names}}; do
 		grep -Ei 'rPx|rpx' "{{build}}/apparmor.d/$file" || true
 		sed -i -e "s/rPx/rPUx/g" "{{build}}/apparmor.d/$file"
 		install -Dvm0644 "{{build}}/apparmor.d/$file" "{{destdir}}/etc/apparmor.d/$file"
@@ -167,7 +157,7 @@ dpkg:
 [doc('Build & install apparmor.d on OpenSUSE based systems')]
 rpm:
 	@bash dists/build.sh rpm
-	@sudo rpm -ivh --force  {{pkgdest}}/{{pkgname}}-*.rpm
+	@sudo rpm -ivh --force {{pkgdest}}/{{pkgname}}-*.rpm
 
 [group('tests')]
 [doc('Run the unit tests')]
@@ -223,8 +213,8 @@ package dist:
 	if [[ $dist =~ ubuntu([0-9]+) ]]; then
 		version="${BASH_REMATCH[1]}.04"
 		dist="ubuntu"
-	elif [[ $dist =~ debian([0-9]+) ]]; then
-		version="${BASH_REMATCH[1]}"
+	elif [[ $dist == debian* ]]; then
+		version="trixie"
 		dist="debian"
 	fi
 	bash dists/docker.sh $dist $version
@@ -295,9 +285,21 @@ ssh dist flavor:
 	@ssh {{sshopt}} {{username}}@`just get_ip {{dist}} {{flavor}}`
 
 [group('vm')]
+[doc('Mount the shared directory on the machine')]
+mount dist flavor:
+	@ssh {{sshopt}} {{username}}@`just get_ip {{dist}} {{flavor}}` \
+		sh -c 'mount | grep 0a31bc478ef8e2461a4b1cc10a24cc4 || sudo mount 0a31bc478ef8e2461a4b1cc10a24cc4'
+
+[group('vm')]
+[doc('Unmout the shared directory on the machine')]
+umount dist flavor:
+	@ssh {{sshopt}} {{username}}@`just get_ip {{dist}} {{flavor}}` \
+		sh -c 'true; sudo umount /home/{{username}}/Projects/apparmor.d || true'
+
+[group('vm')]
 [doc('List the machines')]
 list:
-	@echo -e '\033[1m Id   Distribution Flavor  State\033[0m'
+	@printf "{{BOLD}} %-4s %-22s %s{{NORMAL}}\n" "Id" "Distribution-Flavor" "State"
 	@virsh {{c}} list --all | grep {{prefix}} | sed 's/{{prefix}}//g'
 
 [group('vm')]
@@ -307,7 +309,7 @@ images:
 	set -eu -o pipefail
 	ls -lh {{base_dir}} | awk '
 	BEGIN {
-		printf("\033[1m%-18s %-10s %-5s %s\033[0m\n", "Distribution", "Flavor", "Size", "Date")
+		printf("{{BOLD}}%-18s %-10s %-5s %s{{NORMAL}}\n", "Distribution", "Flavor", "Size", "Date")
 	}
 	{
 		if ($9 ~ /^{{prefix}}.*\.qcow2$/) {
@@ -324,7 +326,7 @@ available:
 	set -eu -o pipefail
 	ls -lh tests/cloud-init | awk '
 	BEGIN {
-		printf("\033[1m%-18s %s\033[0m\n", "Distribution", "Flavor")
+		printf("{{BOLD}}%-18s %s{{NORMAL}}\n", "Distribution", "Flavor")
 	}
 	{
 		if ($9 ~ /^.*\.user-data.yml$/) {
@@ -334,17 +336,40 @@ available:
 	}
 	'
 
+[group('tests')]
+[doc('Install dependencies for the integration tests')]
+init:
+	@bash tests/requirements.sh
 
 [group('tests')]
-[doc('Run the integration tests on the machine')]
-integration dist flavor:
-	@ssh {{sshopt}} user@`just get_ip {{dist}} {{flavor}}` \
-		cp -rf /home/user/Projects/apparmor.d/tests/integration/ /home/user/Projects
-	@ssh {{sshopt}} user@`just get_ip {{dist}} {{flavor}}` \
-		sudo umount /home/user/Projects/apparmor.d
-	@ssh {{sshopt}} user@`just get_ip {{dist}} {{flavor}}` \
-		@bats --recursive --timing --print-output-on-failure Projects/integration/
+[doc('Run the integration tests')]
+integration:
+	bats --recursive --timing --print-output-on-failure tests/integration
 
+[group('tests')]
+[doc('Install dependencies for the integration tests (machine)')]
+tests-init dist flavor:
+	@ssh {{sshopt}} {{username}}@`just get_ip {{dist}} {{flavor}}` \
+		just --justfile /home/{{username}}/Projects/apparmor.d/Justfile init
+
+[group('tests')]
+[doc('Synchronize the integration tests (machine)')]
+tests-sync dist flavor:
+	@ssh {{sshopt}} {{username}}@`just get_ip {{dist}} {{flavor}}` \
+		rsync -a --delete /home/{{username}}/Projects/apparmor.d/tests/ /home/{{username}}/Projects/tests/
+
+[group('tests')]
+[doc('Re-synchronize the integration tests (machine)')]
+tests-resync dist flavor: (mount dist flavor) \
+	(tests-sync dist flavor) \
+	(umount dist flavor)
+
+[group('tests')]
+[doc('Run the integration tests (machine)')]
+tests-run dist flavor name="": (tests-resync dist flavor)
+	ssh {{sshopt}} {{username}}@`just get_ip {{dist}} {{flavor}}` \
+		bats --recursive --pretty --timing --print-output-on-failure \
+			/home/{{username}}/Projects/tests/integration/{{name}}
 
 [private]
 get_ip dist flavor:

@@ -14,6 +14,7 @@ profile kernel-install @{exec_path} {
   include <abstractions/disks-read>
   include <abstractions/nameservice-strict>
 
+  capability sys_rawio,
   capability sys_resource,
 
   ptrace read peer=@{p_systemd},
@@ -41,14 +42,14 @@ profile kernel-install @{exec_path} {
 
   @{lib}/modules/*/modules.* w,
 
-  @{efi}/@{hex32}/** rw,
+  / r,
 
-  owner /boot/{vmlinuz,initrd.img}-* r,
-  owner /boot/[a-f0-9]*/*/ rw,
-  owner /boot/[a-f0-9]*/*/{linux,initrd} w,
-  owner /boot/loader/ rw,
-  owner /boot/loader/entries/ rw,
-  owner /boot/loader/entries/*.conf w,
+        @{efi}/@{hex32}/** rw,
+        @{efi}/loader/entries.srel r,
+  owner @{efi}/{vmlinuz,initrd.img}-* r,
+  owner @{efi}/loader/ rw,
+  owner @{efi}/loader/entries/ rw,
+  owner @{efi}/loader/entries/*.conf w,
 
   owner /tmp/kernel-install.staging.@{rand6}/{,**} rw,
 
