@@ -37,6 +37,7 @@ profile gvfsd @{exec_path} {
 
   @{sh_path}              rix,
   @{lib}/{,gvfs/}gvfsd-*  rpx,
+  @{bin}/pkexec           rCx -> pkexec,
 
   /usr/share/gvfs/{,**} r,
 
@@ -44,6 +45,17 @@ profile gvfsd @{exec_path} {
   owner @{run}/user/@{uid}/gvfsd/ rw,
 
   owner @{PROC}/@{pid}/fd/ r,
+
+  profile pkexec {
+    include <abstractions/base>
+    include <abstractions/app/pkexec>
+
+    ptrace read peer=gvfsd,
+
+    @{lib}/{,gvfs/}gvfsd-admin rPx,
+
+    include if exists <local/gvfsd_pkexec>
+  }
 
   include if exists <local/gvfsd>
 }
