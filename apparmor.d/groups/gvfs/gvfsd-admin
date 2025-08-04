@@ -10,8 +10,26 @@ include <tunables/global>
 @{exec_path} = @{lib}/{,gvfs/}gvfsd-admin
 profile gvfsd-admin @{exec_path} {
   include <abstractions/base>
+  include <abstractions/nameservice-strict>
+
+  capability chown,
+  capability dac_override,
+  capability dac_read_search,
+  capability fowner,
+  capability setuid,
 
   @{exec_path} mr,
+
+  /usr/share/mime/mime.cache r,
+
+  @{MOUNTS}/{,**} rw,
+
+  @{run}/mount/utab r,
+  @{run}/user/@{uid}/gvfsd/socket-@{rand8} rw,
+
+  @{PROC}/@{pid}/fdinfo/@{int} r,
+  @{PROC}/@{pid}/mountinfo r,
+  @{PROC}/@{pid}/stat r,
 
   include if exists <local/gvfsd-admin>
 }
