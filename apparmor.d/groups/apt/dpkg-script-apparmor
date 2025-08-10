@@ -11,6 +11,8 @@ profile dpkg-script-apparmor @{exec_path} {
   include <abstractions/base>
   include <abstractions/common/debconf>
 
+  capability dac_read_search,
+
   @{exec_path} mrix,
 
   @{bin}/{,e}grep   ix,
@@ -43,10 +45,15 @@ profile dpkg-script-apparmor @{exec_path} {
 
     capability net_admin,
     capability sys_resource,
+    capability dac_override,
+    capability dac_read_search,
 
     signal send set=(cont term) peer=systemd-tty-ask-password-agent,
 
     @{bin}/systemd-tty-ask-password-agent rix,
+
+    @{run}/user/@{uid}/systemd/ask-password/ rw,
+    @{run}/user/@{uid}/systemd/ask-password-block/{,*} rw,
 
     owner @{run}/systemd/ask-password/ rw,
     owner @{run}/systemd/ask-password-block/{,*} rw,
