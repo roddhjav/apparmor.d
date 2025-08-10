@@ -153,6 +153,8 @@ declare -A ABS_DEPRECATED=(
     ["dbus-network-manager-strict"]="bus/org.freedesktop.NetworkManager"
     ["dbus-session-strict"]="bus-session"
     ["dbus-system-strict"]="bus-system"
+    ["gnome"]="gnome-strict"
+    ["kde"]="kde-strict"
 )
 _check_abstractions() {
     _is_enabled abstractions || return 0
@@ -216,7 +218,7 @@ readonly TRANSITION_MUST_CI=( # Must transition to 'ix' or 'Cx'
     sed shred stat tail tee test timeout touch truncate unlink
 )
 readonly TRANSITION_MUST_PC=( # Must transition to 'Px'
-    ischroot
+    ischroot who
 )
 readonly TRANSITION_MUST_C=( # Must transition to 'Cx'
     sysctl kmod pgrep pkexec sudo systemctl udevadm
@@ -226,19 +228,19 @@ readonly TRANSITION_MUST_C=( # Must transition to 'Cx'
 _check_transition() {
     _is_enabled transition || return 0
     for prgmname in "${!TRANSITION_MUST_CI[@]}"; do
-        if [[ "$line" =~ "@{bin}/${TRANSITION_MUST_CI[$prgmname]} ".*([uU]x|[pP][uU]x|[pP]x) ]]; then
+        if [[ "$line" =~ "/${TRANSITION_MUST_CI[$prgmname]} ".*([uU]x|[pP][uU]x|[pP]x) ]]; then
             _err transition "$file:$line_number" \
                 "@{bin}/${TRANSITION_MUST_CI[$prgmname]} should be used inherited: 'ix' | 'Cx'"
         fi
     done
     for prgmname in "${!TRANSITION_MUST_PC[@]}"; do
-        if [[ "$line" =~ "@{bin}/${TRANSITION_MUST_PC[$prgmname]} ".*(Pix|ix) ]]; then
+        if [[ "$line" =~ "/${TRANSITION_MUST_PC[$prgmname]} ".*(Pix|ix) ]]; then
             _err transition "$file:$line_number" \
                 "@{bin}/${TRANSITION_MUST_PC[$prgmname]} should transition to another (sub)profile with 'Px' or 'Cx'"
         fi
     done
     for prgmname in "${!TRANSITION_MUST_C[@]}"; do
-        if [[ "$line" =~ "@{bin}/${TRANSITION_MUST_C[$prgmname]} ".*([pP]ix|[uU]x|[pP][uU]x|ix) ]]; then
+        if [[ "$line" =~ "/${TRANSITION_MUST_C[$prgmname]} ".*([pP]ix|[uU]x|[pP][uU]x|ix) ]]; then
             _warn transition "$file:$line_number" \
                 "@{bin}/${TRANSITION_MUST_C[$prgmname]} should transition to a subprofile with 'Cx'"
         fi
@@ -455,7 +457,6 @@ _check_subprofiles() {
     elif $_CHEK_IN_SUBPROFILE; then
         if [[ "$line" == *"$include" ]]; then
             _RES_SUBPROFILES["$subprofile"]=true
-
         fi
     fi
 }
