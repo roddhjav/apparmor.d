@@ -1,0 +1,31 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+  abi <abi/4.0>,
+
+  #aa-dbus common bus=session name=org.mpris.MediaPlayer2.Player label=unconfined
+
+  dbus receive bus=session path=/org/mpris/MediaPlayer2
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged
+       peer=(name=@{busname}),
+
+  dbus receive bus=session path=/org/mpris/MediaPlayer2
+       interface=org.mpris.MediaPlayer2.Player
+       member=Seeked
+       peer=(name=@{busname}),
+
+  dbus send bus=session path=/org/mpris/MediaPlayer2
+       interface=org.freedesktop.DBus.Properties
+       member=Get
+       peer=(name=@{busname}),
+
+  dbus send bus=session path=/org/mpris/MediaPlayer2
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=@{busname}),
+
+  include if exists <abstractions/bus/org.mpris.MediaPlayer2.Player.d>
+
+# vim:syntax=apparmor
