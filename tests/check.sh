@@ -108,6 +108,7 @@ _check() {
         _check_trailing
         _check_indentation
         _check_vim
+        _check_udev
 
         # The following checks do not apply to commented lines
         [[ "$line" =~ ^[[:space:]]*# ]] && continue
@@ -485,6 +486,15 @@ _res_vim() {
     fi
 }
 
+_check_udev() {
+    _is_enabled udev || return 0
+    if [[ "$line" == *"@{run}/udev/data/"* ]]; then
+        if [[ "$line" != *"#"* ]]; then
+            _err udev "$file:$line_number" "udev data path without a description comment"
+        fi
+    fi
+}
+
 check_sbin() {
     local file name jobs
     mapfile -t sbin <tests/sbin.list
@@ -531,7 +541,7 @@ check_profiles() {
     jobs=0
     WITH_CHECK=(
         abstractions directory-mark equivalent too-wide useless transition tunables
-        abi include profile header tabs trailing indentation subprofiles vim
+        abi include profile header tabs trailing indentation subprofiles vim udev
     )
     for file in "${files[@]}"; do
         (
@@ -551,7 +561,7 @@ check_abstractions() {
     jobs=0
     WITH_CHECK=(
         abstractions directory-mark equivalent too-wide tunables
-        abi include header tabs trailing indentation vim
+        abi include header tabs trailing indentation vim udev
     )
     for file in "${files[@]}"; do
         (
@@ -572,7 +582,7 @@ check_abstractions() {
     jobs=0
     WITH_CHECK=(
         abstractions directory-mark equivalent too-wide tunables
-        header tabs trailing indentation vim
+        header tabs trailing indentation vim udev
     )
     for file in "${files[@]}"; do
         _check "$file" &
