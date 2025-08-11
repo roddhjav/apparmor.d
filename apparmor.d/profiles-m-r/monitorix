@@ -10,10 +10,11 @@ include <tunables/global>
 @{exec_path} = @{bin}/monitorix
 profile monitorix @{exec_path} {
   include <abstractions/base>
-  include <abstractions/perl>
-  include <abstractions/nameservice-strict>
-  include <abstractions/fonts>
+  include <abstractions/consoles>
   include <abstractions/fontconfig-cache-read>
+  include <abstractions/fonts>
+  include <abstractions/nameservice-strict>
+  include <abstractions/perl>
 
   capability net_admin,
   capability chown,
@@ -28,71 +29,46 @@ profile monitorix @{exec_path} {
   network inet stream,
   network inet6 stream,
 
-  ptrace (read),
+  ptrace read,
 
-  signal (receive) set=(hup) peer=logroate,
+  signal receive set=(hup) peer=logroate,
 
   @{exec_path} mr,
 
   @{sh_path}                rix,
-  @{bin}/{,e}grep           rix,
-  @{bin}/df                 rix,
-  @{bin}/cat                rix,
-  @{bin}/tail               rix,
-  @{bin}/{m,g,}awk          rix,
-  @{bin}/free               rix,
-  @{sbin}/ss                rix,
-  @{bin}/who                rix,
-  @{sbin}/lvm               rix,
-  @{sbin}/xtables-nft-multi rix,
-  @{bin}/sensors            rix,
-  @{bin}/getconf            rix,
-  @{bin}/ps                 rix,
+  @{bin}/{,e}grep            ix,
+  @{bin}/{m,g,}awk           ix,
+  @{bin}/cat                 ix,
+  @{bin}/df                  ix,
+  @{bin}/free                ix,
+  @{bin}/getconf             ix,
+  @{bin}/ps                  Px,
+  @{bin}/sensors             Px,
+  @{bin}/tail                ix,
+  @{bin}/who                 Px,
+  @{sbin}/lvm                Px,
+  @{sbin}/ss                 Px,
+  @{sbin}/xtables-nft-multi  ix,
 
-  /etc/monitorix/monitorix.conf r,
-  /etc/monitorix/conf.d/ r,
-  /etc/monitorix/conf.d/@{int2}-*.conf r,
+  /var/lib/monitorix/www/cgi/monitorix.cgi ix,
+
+  /etc/monitorix/{,**} r,
+
+  /var/lib/monitorix/ rw,
+  /var/lib/monitorix/** rwk,
 
   /var/log/monitorix w,
   /var/log/monitorix-* w,
 
-  owner @{run}/monitorix.pid w,
-
-  /var/lib/monitorix/*.rrd* rwk,
-  /var/lib/monitorix/www/** rw,
-  /var/lib/monitorix/www/cgi/monitorix.cgi rwix,
+  /srv/http/monitorix/ rw,
+  /srv/http/monitorix/** rwk,
 
   / r,
   /tmp/ r,
-  /etc/shadow r,
 
-  /dev/tty r,
+  owner @{run}/monitorix.pid w,
 
   @{run}/utmp rk,
-
-        @{PROC}/ r,
-        @{PROC}/swaps r,
-        @{PROC}/diskstats r,
-        @{PROC}/loadavg r,
-        @{PROC}/sys/kernel/random/entropy_avail r,
-        @{PROC}/uptime r,
-        @{PROC}/interrupts r,
-        @{PROC}/sys/fs/dentry-state r,
-        @{PROC}/sys/fs/file-nr r,
-        @{PROC}/sys/fs/inode-nr r,
-        @{PROC}/sys/kernel/osrelease r,
-  owner @{PROC}/@{pid}/mountinfo r,
-  owner @{PROC}/@{pid}/mounts r,
-  owner @{PROC}/@{pid}/net/dev r,
-  owner @{PROC}/@{pid}/net/ip_tables_names r,
-  owner @{PROC}/@{pid}/net/ip6_tables_names r,
-        @{PROC}/@{pid}/net/udp{,6} r,
-        @{PROC}/@{pid}/net/tcp{,6} r,
-        @{PROC}/sys/kernel/pid_max r,
-        @{PROC}/@{pids}/stat r,
-        @{PROC}/@{pids}/cmdline r,
-        @{PROC}/@{pids}/fdinfo/ r,
-        @{PROC}/@{pids}/io r,
 
   @{sys}/class/i2c-adapter/ r,
   @{sys}/devices/@{pci}/i2c-*/{,**/}name r,
@@ -100,8 +76,29 @@ profile monitorix @{exec_path} {
   @{sys}/devices/**/thermal*/{,**} r,
   @{sys}/devices/**/hwmon*/{,**} r,
 
-  /etc/sensors3.conf r,
-  /etc/sensors.d/ r,
+        @{PROC}/ r,
+        @{PROC}/@{pid}/net/dev r,
+        @{PROC}/@{pid}/net/tcp{,6} r,
+        @{PROC}/@{pid}/net/udp{,6} r,
+        @{PROC}/@{pids}/cmdline r,
+        @{PROC}/@{pids}/fdinfo/ r,
+        @{PROC}/@{pids}/io r,
+        @{PROC}/@{pids}/stat r,
+        @{PROC}/diskstats r,
+        @{PROC}/interrupts r,
+        @{PROC}/loadavg r,
+        @{PROC}/swaps r,
+        @{PROC}/sys/fs/dentry-state r,
+        @{PROC}/sys/fs/file-nr r,
+        @{PROC}/sys/fs/inode-nr r,
+        @{PROC}/sys/kernel/osrelease r,
+        @{PROC}/sys/kernel/pid_max r,
+        @{PROC}/sys/kernel/random/entropy_avail r,
+        @{PROC}/uptime r,
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/mounts r,
+  owner @{PROC}/@{pid}/net/ip_tables_names r,
+  owner @{PROC}/@{pid}/net/ip6_tables_names r,
 
   include if exists <local/monitorix>
 }
