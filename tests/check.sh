@@ -42,7 +42,7 @@ _in_array() {
 _is_enabled() {
     local check="$1"
     if _in_array "$check" "${WITH_CHECK[@]}"; then
-        if [[ ${#_check_is_disabled[@]} -eq 0 ]]; then
+        if [[ -z "${_check_is_disabled+x}" || ${#_check_is_disabled[@]} -eq 0 ]]; then
             return 0
         fi
         if _in_array "$check" "${_check_is_disabled[@]}"; then
