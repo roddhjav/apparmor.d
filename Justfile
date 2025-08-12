@@ -5,7 +5,7 @@
 # Usage: `just`
 # See https://apparmor.pujol.io/development/ for more information.
 
-# Build setings
+# Build settings
 destdir := "/"
 build := ".build"
 pkgdest := `pwd` / ".pkg"
@@ -251,7 +251,7 @@ create dist flavor:
 		--memorybacking source.type=memfd,access.mode=shared \
 		--disk path={{vm}}/{{prefix}}{{dist}}-{{flavor}}.qcow2,format=qcow2,bus=virtio \
 		--filesystem "`pwd`,0a31bc478ef8e2461a4b1cc10a24cc4",accessmode=passthrough,driver.type=virtiofs \
-		--os-variant "`just get_osinfo {{dist}}`" \
+		--os-variant "`just _get_osinfo {{dist}}`" \
 		--graphics spice \
 		--audio id=1,type=spice \
 		--sound model=ich9 \
@@ -282,18 +282,18 @@ destroy dist flavor:
 [group('vm')]
 [doc('Connect to the machine')]
 ssh dist flavor:
-	@ssh {{sshopt}} {{username}}@`just get_ip {{dist}} {{flavor}}`
+	@ssh {{sshopt}} {{username}}@`just _get_ip {{dist}} {{flavor}}`
 
 [group('vm')]
 [doc('Mount the shared directory on the machine')]
 mount dist flavor:
-	@ssh {{sshopt}} {{username}}@`just get_ip {{dist}} {{flavor}}` \
+	@ssh {{sshopt}} {{username}}@`just _get_ip {{dist}} {{flavor}}` \
 		sh -c 'mount | grep 0a31bc478ef8e2461a4b1cc10a24cc4 || sudo mount 0a31bc478ef8e2461a4b1cc10a24cc4'
 
 [group('vm')]
 [doc('Unmout the shared directory on the machine')]
 umount dist flavor:
-	@ssh {{sshopt}} {{username}}@`just get_ip {{dist}} {{flavor}}` \
+	@ssh {{sshopt}} {{username}}@`just _get_ip {{dist}} {{flavor}}` \
 		sh -c 'true; sudo umount /home/{{username}}/Projects/apparmor.d || true'
 
 [group('vm')]
@@ -307,6 +307,7 @@ list:
 images:
 	#!/usr/bin/env bash
 	set -eu -o pipefail
+	mkdir -p {{base_dir}}
 	ls -lh {{base_dir}} | awk '
 	BEGIN {
 		printf("{{BOLD}}%-18s %-10s %-5s %s{{NORMAL}}\n", "Distribution", "Flavor", "Size", "Date")
@@ -343,19 +344,19 @@ init:
 
 [group('tests')]
 [doc('Run the integration tests')]
-integration:
-	bats --recursive --timing --print-output-on-failure tests/integration
+integration name="":
+	bats --recursive --timing --print-output-on-failure tests/integration/{{name}}
 
 [group('tests')]
 [doc('Install dependencies for the integration tests (machine)')]
 tests-init dist flavor:
-	@ssh {{sshopt}} {{username}}@`just get_ip {{dist}} {{flavor}}` \
+	@ssh {{sshopt}} {{username}}@`just _get_ip {{dist}} {{flavor}}` \
 		just --justfile /home/{{username}}/Projects/apparmor.d/Justfile init
 
 [group('tests')]
 [doc('Synchronize the integration tests (machine)')]
 tests-sync dist flavor:
-	@ssh {{sshopt}} {{username}}@`just get_ip {{dist}} {{flavor}}` \
+	@ssh {{sshopt}} {{username}}@`just _get_ip {{dist}} {{flavor}}` \
 		rsync -a --delete /home/{{username}}/Projects/apparmor.d/tests/ /home/{{username}}/Projects/tests/
 
 [group('tests')]
@@ -367,18 +368,16 @@ tests-resync dist flavor: (mount dist flavor) \
 [group('tests')]
 [doc('Run the integration tests (machine)')]
 tests-run dist flavor name="": (tests-resync dist flavor)
-	ssh {{sshopt}} {{username}}@`just get_ip {{dist}} {{flavor}}` \
+	ssh {{sshopt}} {{username}}@`just _get_ip {{dist}} {{flavor}}` \
 		bats --recursive --pretty --timing --print-output-on-failure \
 			/home/{{username}}/Projects/tests/integration/{{name}}
 
-[private]
-get_ip dist flavor:
+_get_ip dist flavor:
 	@virsh --quiet --readonly {{c}} domifaddr {{prefix}}{{dist}}-{{flavor}} | \
 		head -1 | \
 		grep -E -o '([[:digit:]]{1,3}\.){3}[[:digit:]]{1,3}'
 
-[private]
-get_osinfo dist:
+_get_osinfo dist:
 	#!/usr/bin/env python3
 	osinfo = {
 		"archlinux": "archlinux",
