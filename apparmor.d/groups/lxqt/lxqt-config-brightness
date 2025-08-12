@@ -13,7 +13,8 @@ profile lxqt-config-brightness @{exec_path} {
   include <abstractions/lxqt>
 
   @{exec_path} mr,
-  @{bin}/pkexec rpx,
+
+  @{bin}/pkexec Cx -> pkexec,
 
   @{sh_path} rix,
 
@@ -22,10 +23,38 @@ profile lxqt-config-brightness @{exec_path} {
   owner /tmp/@{int} r,
 
   @{sys}/class/backlight/ r,
-  @{sys}/devices/@{pci}/**/**/drm/card@{int}/card@{int}-eDP-@{int}/amdgpu_bl@{int}/* rw,
-  @{sys}/devices/@{pci}/**/drm/card@{int}/card@{int}-eDP-@{int}/intel_backlight/* rw,
+  @{sys}/devices/@{pci}/*_backlight/{,max_,actual_}brightness rw,
+  @{sys}/devices/@{pci}/*_backlight/{uevent,type,enabled} r,  
+  @{sys}/devices/@{pci}/backlight/**/{,max_,actual_}brightness rw,
+  @{sys}/devices/@{pci}/backlight/**/{uevent,type,enabled} r,
+  @{sys}/devices/@{pci}/backlight/**/brightness rw,
 
   /dev/tty rw,
+
+  profile pkexec {
+    include <abstractions/base>
+    include <abstractions/app/pkexec>
+    include <abstractions/python>
+
+    ptrace read peer=aa-notify,
+
+    @{sbin}/apparmor_parser Px,
+    @{lib}/@{python_name}/site-packages/apparmor/update_profile.py ix,
+
+    /usr/share/apparmor/** r,
+    /usr/share/terminfo/** r,
+
+    @{etc_ro}/inputrc r,
+    @{etc_ro}/inputrc.keys r,
+
+    /etc/apparmor.d/ r,
+    /etc/apparmor.d/** rw,
+    /etc/apparmor/* r,
+
+    @{PROC}/@{pid}/mounts r,
+
+    include if exists <local/lxqt-config-brightness_pkexec>
+  }
 
   include if exists <local/lxqt-config-brightness>
 }
