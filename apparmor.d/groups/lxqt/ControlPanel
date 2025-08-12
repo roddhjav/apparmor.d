@@ -1,0 +1,38 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2025 Besanon  <m231009ts@mailfence.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/ControlPanel
+profile ControlPanel @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/bus-session>
+  include <abstractions/bus-accessibility>
+  include <abstractions/lxqt>
+  include <abstractions/nameservice-strict>
+
+  @{exec_path}							mr,
+
+  /usr/share/desktop-directories/lxqt-* r,
+
+  /etc/xdg/menus/lxqt-config.menu  		r,
+
+  # only for xfe file manager:
+  owner @{HOME}/.foxrc/ rw,
+  owner @{HOME}/.foxrc/Desktop 			rw,
+
+  owner @{user_config_dirs}/lxqt/lxqt-config.conf.lock rwk,
+
+  owner /tmp/@{int}  					r,
+
+  /dev/pts/@{int}						rw,
+  /dev/tty								rw,
+
+  include if exists <local/ControlPanel>
+}
+
+# vim:syntax=apparmor
