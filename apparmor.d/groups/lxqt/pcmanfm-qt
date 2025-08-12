@@ -1,0 +1,110 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2020-2021 Mikhail Morfikov
+# Copyright (C) 2024 Besanon  <m231009ts@mailfence.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/pcmanfm-qt
+profile pcmanfm-qt @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/app-launcher-user>
+  include <abstractions/bus-session>
+  include <abstractions/bus-system>
+  include <abstractions/bus/org.freedesktop.UDisks2>
+  include <abstractions/deny-sensitive-home>
+  include <abstractions/devices-usb>
+  include <abstractions/disks-read>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/graphics>
+  include <abstractions/lxqt>
+  include <abstractions/nameservice-strict>
+  include <abstractions/recent-documents-write>
+  include <abstractions/thumbnails-cache-write>
+
+  signal (send) set=(term, kill),
+  signal (receive) set=(term, kill) peer=lxqt-session,
+
+  network netlink raw,
+
+  #aa:dbus own bus=session name=org.pcmanfm.PCManFM
+  #aa:exec kioworker
+
+  @{exec_path} mr,
+
+  @{lib}/menu-cache/menu-cached rPx,
+  @{lib}exec/menu-cache/menu-cache-gen rix,
+
+  owner @{user_cache_dirs}/pcmanfm-qt/**  r,
+  owner @{user_config_dirs}/pcmanfm-qt/lxqt/ r,
+  owner @{user_config_dirs}/pcmanfm-qt/lxqt/recent-files.conf.lock rwk,
+  owner @{user_config_dirs}/pcmanfm-qt/lxqt/desktop-items-0.conf.@{rand6} l -> @{user_config_dirs}/pcmanfm-qt/lxqt/#@{int},
+  owner @{user_config_dirs}/pcmanfm-qt/lxqt/dir-settings.conf~ l -> @{user_config_dirs}/pcmanfm-qt/lxqt/dir-settings.conf,
+  owner @{user_config_dirs}/pcmanfm-qt/lxqt/desktop-items-eDP-@{int}.conf.lock rwk,
+  owner @{user_config_dirs}/pcmanfm-qt/lxqt/settings.conf.lock rwk,
+  owner @{user_config_dirs}/pcmanfm-qt/lxqt/settings.conf.@{rand6} l -> @{user_config_dirs}/pcmanfm-qt/lxqt/#@{int},
+  owner @{user_config_dirs}/pcmanfm-qt/lxqt/desktop-items-0.conf.lock rwk,
+  owner @{user_config_dirs}/pcmanfm-qt/lxqt/desktop-items-eDP-@{int}.conf l -> @{user_config_dirs}/pcmanfm-qt/lxqt/#@{int},
+  owner @{user_config_dirs}/pcmanfm-qt/lxqt/recent-files.conf.@{rand6} l -> @{user_config_dirs}/pcmanfm-qt/lxqt/#@{int},
+  owner @{user_config_dirs}/pcmanfm-qt/lxqt/settings.conf.lock.* rwk,
+
+  @{sys}/bus/ r,
+  @{sys}/class/ r,
+  @{sys}/devices/system/node/ r,
+  @{sys}/devices/system/node/node@{int}/meminfo r,
+  @{sys}/fs/cgroup/{,**} r,
+  
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/mounts r,
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/cgroup r,
+
+  # To read/write files in the system. The read permission is granted for all files, the write
+  # permission only for the owner. Also, dirs like /dev/, /efi/, /proc/, /sys/ are not included in
+  # the list.
+        /         r,
+        /boot/    r,
+        /boot/**  r,
+  owner /boot/**  rw,
+        /etc/     r,
+        /etc/**   r,
+  owner /etc/**   rw,
+        /home/    r,
+        /home/**  r,
+        /home/**  rw,
+        /lost+found/ r,
+        /lost+found/** r,
+  owner /lost+found/** rw,
+        @{MOUNTS}/   r,
+        @{MOUNTS}/** r,
+  owner @{MOUNTS}/** rw,
+        /opt/     r,
+        /opt/**   r,
+  owner /opt/**   rw,
+        /root/    r,
+        /root/**  r,
+  owner /root/**  rw,
+        @{run}/   r,
+        @{run}/** r,
+  owner @{run}/** rw,
+        /srv/     r,
+        /srv/**   r,
+  owner /srv/**   rw,
+        /tmp/     r,
+        /tmp/**   r,
+  owner /tmp/**   rw,
+        /usr/     r,
+        /usr/**   r,
+  owner /usr/**   rw,
+        /var/     r,
+        /var/**   r,
+  owner /var/**   rw,
+
+  /dev/tty r,
+
+  include if exists <local/pcmanfm-qt>
+}
+
+# vim:syntax=apparmor
