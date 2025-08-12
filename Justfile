@@ -63,27 +63,27 @@ build:
 [group('build')]
 [doc('Prebuild the profiles in enforced mode')]
 enforce: build
-	@./{{build}}/prebuild
+	@./{{build}}/prebuild --buildir {{build}}
 
 [group('build')]
 [doc('Prebuild the profiles in complain mode')]
 complain: build
-	@./{{build}}/prebuild --complain
+	./{{build}}/prebuild --buildir {{build}} --complain
 
 [group('build')]
 [doc('Prebuild the profiles in FSP mode')]
 fsp: build
-	@./{{build}}/prebuild --full
+	@./{{build}}/prebuild --buildir {{build}} --full
 
 [group('build')]
 [doc('Prebuild the profiles in FSP mode (complain)')]
 fsp-complain: build
-	@./{{build}}/prebuild --complain --full
+	@./{{build}}/prebuild --buildir {{build}} --complain --full
 
 [group('build')]
 [doc('Prebuild the profiles in FSP mode (debug)')]
 fsp-debug: build
-	@./{{build}}/prebuild --complain --full --debug
+	@./{{build}}/prebuild --buildir {{build}} --complain --full --debug
 
 [group('install')]
 [doc('Install prebuild profiles')]
