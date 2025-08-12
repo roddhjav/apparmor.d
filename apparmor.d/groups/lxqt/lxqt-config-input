@@ -1,0 +1,104 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2024 Besanon  <m231009ts@mailfence.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/lxqt-config-input
+profile lxqt-config-input @{exec_path} {
+  include <abstractions/audio-client>
+  include <abstractions/base>
+  include <abstractions/bus-system>
+  include <abstractions/bus/org.bluez>
+  include <abstractions/bus/org.freedesktop.login1>
+  include <abstractions/devices-usb>
+  include <abstractions/bus-session>
+  include <abstractions/bus-accessibility>
+  include <abstractions/graphics>
+  include <abstractions/lxqt>
+  include <abstractions/nameservice-strict>
+
+  signal (read) set=(kill,term) peer=lxqt-session,
+
+  @{exec_path}				mr,
+
+  @{bin}/setxkbmap 			rix,  
+
+  /etc/udev/udev.conf 		r,
+
+  owner @{user_config_dirs}/lxqt/lxqt.conf.@{rand6} l -> @{user_config_dirs}/lxqt/#@{int},
+  owner @{user_config_dirs}/lxqt/lxqt.conf.@{rand6} rw,
+  owner @{user_config_dirs}/lxqt/session.conf.@{rand6} l -> @{user_config_dirs}/lxqt/#@{int},
+  owner @{user_config_dirs}/lxqt/session.conf.@{rand6} rw,
+  owner @{user_config_dirs}/lxqt/lxqt.conf.lock rwk,
+  owner @{user_config_dirs}/lxqt/lxqt-config-input.conf.lock rwk,
+  owner @{user_config_dirs}/lxqt/lxqt-config-input.conf.@{rand6}  rwkl -> @{user_config_dirs}/lxqt/#@{int},
+  owner @{user_config_dirs}/lxqt/#@{int}  rwk,
+  owner @{user_config_dirs}/lxqt/session.conf.lock rwk,
+  owner @{user_config_dirs}/lxqt/lxqt-config-input.conf rwl -> @{user_config_dirs}/lxqt/#@{int}, 
+
+  owner /tmp/@{int}  		        r,
+
+  @{run}/udev/data/c@{int}:*   			r,
+  @{run}/udev/data/b@{int}:*   			r,
+  @{run}/udev/data/+sound:card@{int}   	r,
+  @{run}/udev/data/+bluetooth:*			r,
+  @{run}/udev/data/+platform:* 			r,
+  @{run}/udev/data/+acpi:* 				r,
+  @{run}/udev/data/+i2c:* 				r,
+  @{run}/udev/data/+backlight:* 		r,
+  @{run}/udev/data/+leds:* 				r,
+  @{run}/udev/data/n@{int} 				r,
+  @{run}/udev/data/+input:* 			r,
+  @{run}/udev/data/+dmi:* 				r,
+  @{run}/udev/data/+drm:* 				r,
+  @{run}/udev/data/+pci:* 				r,
+  @{run}/udev/data/+rfkill:*			r,
+
+  @{sys}/bus/**/devices/   				r,   # ALL under /sys/bus/* is asked for read
+  @{sys}/class/**/		   				r,   # ALL but usbmisc under /sys/class is being read 
+  @{sys}/devices/**/uevent 				r,
+  @{sys}/devices/platform/**/uevent 	r,
+  @{sys}/devices/platform/cpu/**/uevent r,
+  @{sys}/devices/system/machinecheck/**/uevent r,
+  @{sys}/devices/pnp@{int}/**/uevent 	r,
+  @{sys}/devices/system/clockevents/clockevent@{int}/uevent r,
+  @{sys}/devices/system/cpu/cpu@{int}/uevent r,
+  @{sys}/devices/system/memory/memory@{int}/uevent r,
+  @{sys}/devices/virtual/devlink/**/uevent r,
+  @{sys}/devices/virtual/mem/**/uevent 	r,
+  @{sys}/devices/virtual/bdi/@{int}:@{int}/uevent r,
+  @{sys}/devices/virtual/block/loop@{int}/uevent r,
+  @{sys}/devices/virtual/input/**/uevent r,
+  @{sys}/devices/virtual/memory_tiering/memory_tier@{int}/uevent r,
+  @{sys}/devices/virtual/misc/**/uevent r,
+  @{sys}/devices/virtual/sound/seq/uevent r,
+  @{sys}/devices/virtual/sound/timer/uevent r,
+  @{sys}/devices/virtual/sound/ctl-led/uevent r,
+  @{sys}/devices/virtual/thermal/thermal_zone@{int}/uevent r,
+  @{sys}/devices/virtual/thermal/cooling_device@{int}/uevent r,
+  @{sys}/devices/virtual/tty/**/uevent r,
+  @{sys}/devices/virtual/vc/vcsu@{int}/uevent r,
+  @{sys}/devices/virtual/vc/vcsa@{int}/uevent r,
+  @{sys}/devices/virtual/vc/vcs@{int}/uevent r,
+  @{sys}/devices/LNXSYSTM:00/PNP*/uevent r,
+  @{sys}/devices/LNXSYSTM:00/LNXSYBUS:@{rand2}/LNXTHERM:@{rand2}/uevent r,
+  @{sys}/devices/LNXSYSTM:00/LNXSYBUS:00/PNP*/PNP*/uevent r,
+  @{sys}/devices/LNXSYSTM:00/LNXSYBUS:00/HPIC*/uevent r,
+  @{sys}/devices/LNXSYSTM:00/LNXSYBUS:@{rand2}/PNP*/device*/device*/device*/uevent r, 
+  @{sys}/devices/LNXSYSTM:00/LNXSYBUS:@{rand2}/PNP*/device*/device*/device*/device*/uevent r, 
+  @{sys}/devices/LNXSYSTM:00/LNXSYBUS:@{rand2}/AMDI*/**/wakeup@{int}/uevent r,
+  @{sys}/devices/LNXSYSTM:00/LNXSYBUS:@{rand2}/PNP*/uevent r,
+  @{sys}/devices/LNXSYSTM:00/LNXSYBUS:@{rand2}/PNP*/**/wakeup/wakeup@{int}/uevent r,
+
+  /dev/tty				rw,
+
+  deny @{sys}/class/usbmisc/ r,
+
+  include if exists <local/lxqt-config-input>
+}
+
+# vim:syntax=apparmor
