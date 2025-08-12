@@ -1,0 +1,55 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2024 Besanon  <m231009ts@mailfence.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/@{multiarch}/lxqt-policykit-agent-[0-9]
+@{exec_path} += @{bin}/lxqt-policykit-agent
+profile lxqt-policykit-agent @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/dri-enumerate>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/gtk>
+  include <abstractions/lxqt>
+  include <abstractions/nameservice-strict>
+  include <abstractions/vulkan>
+
+  signal (send)    set=(term, kill) peer=polkit-agent-helper,
+
+  @{exec_path} 			mr,
+
+  @{lib}/polkit-[0-9]/polkit-agent-helper-[0-9] rPx,
+
+  /usr/share/lxqt/translations/lxqt-policykit-agent/lxqt-policykit-agent_de.qm r,
+
+  /etc/machine-id 			r,
+
+  /var/lib/dbus/machine-id 		r,
+
+  owner @{user_cache_dirs}/icon-cache.kcache rw,
+  owner @{user_config_dirs}/qt5ct/{,**} r,
+
+  owner /tmp/#@{int} 			rw,
+  owner /tmp/lxqt-policykit-agent-[0-9].* rwl -> /tmp/#@{int},
+
+  @{run}/systemd/users/@{uid} 	r,
+
+  @{sys}/devices/system/node/ 	r,
+  @{sys}/devices/system/node/node@{int}/meminfo r,
+
+  @{PROC}/@{pid}/cgroup 		r,
+  @{PROC}/@{pid}/cmdline 		r,
+  @{PROC}/@{pid}/fd/ 			r,
+  @{PROC}/sys/kernel/core_pattern 	r,
+
+  /dev/shm/#@{int} 				rw,
+
+  include if exists <local/lxqt-policykit-agent>
+}
+
+# vim:syntax=apparmor
