@@ -10,26 +10,13 @@ include <tunables/global>
 @{exec_path} = @{bin}/lxqt-notificationd
 profile lxqt-notificationd @{exec_path} {
   include <abstractions/base>
+  include <abstractions/consoles>
   include <abstractions/bus-accessibility>
   include <abstractions/lxqt>
   include <abstractions/nameservice-strict>
 
-  dbus receive
-        bus=session
-        path="/org/freedesktop/Notifications"
-        interface="org.freedesktop.DBus.Introspectable"
-        peer=(name=":[0-9]*.[0-9]*"),
-  dbus send
-        bus=session
-        path="/org/freedesktop/Notifications"
-        interface="org.freedesktop.Notifications"
-        peer=(name="org.freedesktop.DBus"),
-  dbus receive
-        bus=session
-        path="/org/freedesktop/Notifications"
-        interface="org.freedesktop.Notifications"
-        peer=(name=":[0-9]*.[0-9]*"),
-
+  #aa:dbus own bus=session name=org.freedesktop.Notifications
+  
   @{exec_path} mr,
 
   @{bin}/lxqt-config-notificationd rPx,
@@ -44,10 +31,6 @@ profile lxqt-notificationd @{exec_path} {
   owner @{user_cache_dirs}/lxqt-notificationd/unattended.list.@{rand6} rwkl -> @{user_cache_dirs}/lxqt-notificationd/#@{int},
 
   owner /tmp/@{int} r,
-
-  /dev/tty rw,
-  /dev/tty@{int} rw,
-  owner /dev/tty@{int} rw,
 
   include if exists <local/lxqt-notificationd>
 }
