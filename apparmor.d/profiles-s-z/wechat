@@ -1,0 +1,46 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 EricLin
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{name} = wechat
+@{lib_dirs} = /opt/wechat/
+@{config_dirs} = @{user_config_dirs}/@{name}
+@{cache_dirs} = @{user_cache_dirs}/@{name}
+
+@{exec_path} = @{lib_dirs}/wechat
+profile wechat @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/audio-client>
+  include <abstractions/common/electron>
+  include <abstractions/consoles>
+  include <abstractions/fontconfig-cache-read>
+
+  network netlink raw,
+  network netlink dgram,
+  network inet stream,
+  network inet dgram,
+  network inet6 dgram,
+  network inet6 stream,
+
+  @{exec_path} mr,
+
+  @{sh_path}                                    rix,
+  @{bin}/{m,g,}awk                              rix,
+  @{bin}/ip                                     rix,
+  @{bin}/lsblk                                   Px,
+  @{bin}/mkdir                                  rix,
+  @{bin}/xdg-user-dir                           rix,
+  @{lib_dirs}/crashpad_handler                   ix,
+  @{open_path}                                   Px -> child-open-strict,
+
+  owner @{HOME}/.xwechat/{,**} rwk,
+  owner @{user_documents_dirs}/xwechat_files/{,**} rwk,
+
+  include if exists <local/wechat>
+}
+
+# vim:syntax=apparmor

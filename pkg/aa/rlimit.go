@@ -45,8 +45,8 @@ func newRlimit(q Qualifier, rule rule) (Rule, error) {
 func newRlimitFromLog(log map[string]string) Rule {
 	return &Rlimit{
 		Base:  newBaseFromLog(log),
-		Key:   log["key"],
-		Op:    log["op"],
+		Key:   log["rlimit"],
+		Op:    "<=",
 		Value: log["value"],
 	}
 }

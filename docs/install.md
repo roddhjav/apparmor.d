@@ -36,7 +36,8 @@ The following desktop environments are supported:
 
 **Build dependency**
 
-* Go >= 1.21
+* Go >= 1.23
+* [just](https://github.com/casey/just) >= 1.40.0
 
 
 ## Configure AppArmor
@@ -84,12 +85,21 @@ echo 'Optimize=compress-fast' | sudo tee -a /etc/apparmor/parser.conf
         If you have `devscripts` installed, you can use the one liner:
 
         ```sh
-        make dpkg
+        just dpkg
+        ```
+
+    !!! note
+
+        **Ubuntu 24.04 user will need to:**
+
+        Install [just](https://github.com/casey/just). E.g:
+        ```sh
+        pipx install rust-just
         ```
 
     !!! warning
 
-        **Beware**: do not install a `.deb` made for Debian on Ubuntu, the packages are different.
+        **Beware**: do not install a `.deb` made for Debian on Ubuntu as the packages are different.
 
         If your distribution is based on Ubuntu, you may want to manually set the target distribution by exporting `DISTRIBUTION=ubuntu`.
 
@@ -110,22 +120,29 @@ echo 'Optimize=compress-fast' | sudo tee -a /etc/apparmor/parser.conf
         If you have `devscripts` installed, you can use the one liner:
 
         ```sh
-        make dpkg
+        just dpkg
         ```
 
     !!! note
 
-        You may need golang from the backports repository to build:
+        **Debian 12 user will need to:**
 
+        1. Install Golang from the backports repository:
         ```sh
         echo 'deb http://deb.debian.org/debian bookworm-backports main contrib non-free' | sudo tee -a /etc/apt/sources.list
         sudo apt update
         sudo apt install -t bookworm-backports golang-go
         ```
 
+        2. Install [just](https://github.com/casey/just) locally, and ignore the dependence. E.g:
+        ```sh
+        pipx install rust-just
+        sed '/just/d' -i debian/control
+        ```
+
     !!! warning
 
-        **Beware**: do not install a `.deb` made for Ubuntu on Debian, the packages are different.
+        **Beware**: do not install a `.deb` made for Ubuntu on Debian as the packages are different.
 
         If your distribution is based on Debian, you may want to manually set the target distribution by exporting `DISTRIBUTION=debian`.
 
@@ -144,20 +161,20 @@ echo 'Optimize=compress-fast' | sudo tee -a /etc/apparmor/parser.conf
     For test purposes, you can install specific profiles with the following commands. Abstractions, tunable, and most of the OS dependent post-processing is managed.
 
     ```sh
-    make
-    sudo make profile-names...
+    just complain
+    sudo just local profile-names...
     ```
 
     !!! warning
 
         Partial installation is discouraged because profile dependencies are not fetched. To prevent some AppArmor issues, the dependencies are automatically switched to unconfined (`rPx` -> `rPUx`). The installation process warns on the missing profiles so that you can easily install them if desired. (PR is welcome see [#77](https://github.com/roddhjav/apparmor.d/issues/77))
 
-        For instance, `sudo make pass` gives:
+        For instance, `sudo just local pass` gives:
         ```sh
         Warning: profile dependencies fallback to unconfined.
         @{bin}/wl-{copy,paste} rPx,
         @{bin}/xclip           rPx,
-        @{bin}/python3.@{int} rPx -> pass-import,  # pass-import
+        @{python_path}         rPx -> pass-import,  # pass-import
             @{pager_path}        rPx -> child-pager,
         '.build/apparmor.d/pass' -> '/etc/apparmor.d/pass'
         ```

@@ -1,0 +1,46 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2019-2021 Mikhail Morfikov
+# Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/chfn
+profile chfn @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/authentication>
+  include <abstractions/bus-system>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+  include <abstractions/wutmp>
+
+  capability audit_write,
+  capability chown,
+  capability fsetid,
+  capability net_admin,
+  capability setuid,
+
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  owner @{PROC}/@{pid}/loginuid r,
+
+  /etc/passwd rw,
+  /etc/passwd- w,
+  /etc/passwd+ rw,
+  /etc/passwd.@{pid} w,
+  /etc/passwd.lock wl -> /etc/passwd.@{pid},
+
+  /etc/shadow r,
+
+  # A process first uses lckpwdf() to lock the lock file, thereby gaining exclusive rights to
+  # modify the /etc/passwd or /etc/shadow password database.
+  /etc/.pwd.lock rwk,
+
+  include if exists <local/chfn>
+}
+
+# vim:syntax=apparmor

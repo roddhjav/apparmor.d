@@ -7,42 +7,36 @@ abi <abi/4.0>,
 
 include <tunables/global>
 
-@{exec_path} = @{bin}/gparted
-profile gparted @{exec_path} {
+@{exec_path} = @{sbin}/gparted
+profile gparted @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/consoles>
 
-  ptrace (read),
+  ptrace read,
 
   @{exec_path} r,
 
-  @{bin}/          r,
+  @{bin}/            r,
+  @{coreutils_path}  rix,
   @{sh_path}         rix,
-  @{bin}/{,e}grep    rix,
-  @{bin}/{m,g,}awk   rix,
-  @{bin}/cut         rix,
-  @{bin}/id          rix,
-  @{bin}/ls          rix,
-  @{bin}/mkdir       rix,
-  @{bin}/pidof       rix,
-  @{bin}/rm          rix,
-  @{bin}/sed         rix,
-  @{bin}/touch       rix,
 
-  @{bin}/gpartedbin          rPx,
+  @{sbin}/killall5   rCx -> killall,
+  @{bin}/systemctl   rCx -> systemctl,
+  @{bin}/udevadm     rCx -> udevadm,
+
+  @{bin}/pidof       rPx,
+  @{bin}/pkexec      rPx,
+  @{bin}/ps          rPx,
+  @{bin}/xhost       rPx,
+
+  @{sbin}/gpartedbin         rPx,
   @{lib}/gparted/gpartedbin  rPx,
   @{lib}/gpartedbin          rPx,
 
   @{lib}/{,udisks2/}udisks2-inhibit  rix,
+
   @{run}/udev/rules.d/ rw,
-  @{run}/udev/rules.d/90-udisks-inhibit.rules rw,
-
-  @{bin}/udevadm       rCx -> udevadm,
-  @{bin}/killall5      rCx -> killall,
-
-  @{bin}/ps          rPx,
-  @{bin}/xhost       rPx,
-  @{bin}/pkexec      rPx,
-  @{bin}/systemctl   rCx -> systemctl,
+  @{run}/udev/rules.d/@{int}-*.rules rw,
 
   # For shell pwd
   / r,
@@ -56,7 +50,6 @@ profile gparted @{exec_path} {
 
   # file_inherit
   owner /dev/tty@{int} rw,
-
 
   profile udevadm {
     include <abstractions/base>
@@ -78,13 +71,11 @@ profile gparted @{exec_path} {
 
     ptrace (read),
 
-    @{bin}/killall5 mr,
+    @{sbin}/killall5 mr,
 
-    # The /proc/ dir is needed to avoid the following error:
-    #  /proc: Permission denied
-         @{PROC}/ r,
-         @{PROC}/@{pids}/stat r,
-         @{PROC}/@{pids}/cmdline r,
+    @{PROC}/ r,
+    @{PROC}/@{pids}/stat r,
+    @{PROC}/@{pids}/cmdline r,
 
     include if exists <local/gparted_killall>
   }
@@ -92,6 +83,8 @@ profile gparted @{exec_path} {
   profile systemctl {
     include <abstractions/base>
     include <abstractions/app/systemctl>
+
+    capability net_admin,
 
     include if exists <local/gparted_systemctl>
   }

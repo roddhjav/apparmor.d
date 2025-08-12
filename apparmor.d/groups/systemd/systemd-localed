@@ -14,15 +14,21 @@ profile systemd-localed @{exec_path} flags=(attach_disconnected) {
   include <abstractions/consoles>
   include <abstractions/common/systemd>
 
-  unix (bind) type=stream addr=@@{udbus}/bus/systemd-localed/system,
+  unix bind type=stream addr=@@{udbus}/bus/systemd-localed/system,
 
   #aa:dbus own bus=system name=org.freedesktop.locale1
+  dbus send bus=system path=/org/freedesktop/systemd1
+       interface=org.freedesktop.systemd1.Manager
+       member=Reload
+       peer=(name=org.freedesktop.systemd1, label="@{p_systemd}"),
 
   @{exec_path} mr,
 
   /usr/share/kbd/keymaps/{,**} r,
+  /usr/share/xkeyboard-config-2/{,**} r,
   /usr/share/systemd/*-map r,
   /usr/share/X11/xkb/{,**} r,
+  /usr/share/xkeyboard-config-2/{,**} r,
 
   /etc/.#locale.conf@{hex16} rw,
   /etc/.#vconsole.conf* rw,
@@ -31,8 +37,8 @@ profile systemd-localed @{exec_path} flags=(attach_disconnected) {
   /etc/default/locale rw,
   /etc/locale.conf rw,
   /etc/vconsole.conf rw,
-  /etc/X11/xorg.conf.d/ r,
-  /etc/X11/xorg.conf.d/.#*.confd* rw,
+  /etc/X11/xorg.conf.d/ rw,
+  /etc/X11/xorg.conf.d/.#*.conf@{hex} rw,
   /etc/X11/xorg.conf.d/*.conf rw,
 
   @{att}/@{run}/systemd/notify rw,

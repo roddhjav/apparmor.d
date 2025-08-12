@@ -26,12 +26,12 @@ profile cockpit-bridge @{exec_path} {
 
   ptrace read,
 
-  signal send set=term peer=cockpit-bridge//sudo,
   signal send set=term peer=cockpit-pcp,
   signal send set=term peer=dbus-daemon,
   signal send set=term peer=journalctl,
   signal send set=term peer=ssh-agent,
   signal send set=term peer=unconfined,
+  signal (send receive) set=term peer=cockpit-bridge//sudo,
 
   @{exec_path} mr,
 
@@ -39,12 +39,12 @@ profile cockpit-bridge @{exec_path} {
   @{bin}/date                 ix,
   @{bin}/find                 ix,
   @{bin}/ip                   ix,
-  @{bin}/python3.@{int}       ix,
+  @{python_path}              ix,
   @{bin}/test                 ix,
   @{bin}/file                 ix,
 
   @{bin}/chage                Px,
-  @{bin}/dmidecode            Px,
+  @{sbin}/dmidecode           Px,
   @{bin}/findmnt              Px,
   @{bin}/journalctl           Px,
   @{bin}/last                 Px,
@@ -67,9 +67,9 @@ profile cockpit-bridge @{exec_path} {
   /usr/share/file/** r,
   /usr/share/iproute2/* r,
 
+  @{etc_ro}/login.defs r,
   /etc/cockpit/{,**} r,
   /etc/httpd/conf/mime.types r,
-  /etc/login.defs r,
   /etc/machine-id r,
   /etc/mime.types r,
   /etc/motd r,
@@ -114,7 +114,7 @@ profile cockpit-bridge @{exec_path} {
     include <abstractions/base>
     include <abstractions/app/sudo>
 
-    signal (send receive) set=term peer=cockpit-bridge,
+    signal (send receive) set=(cont hup term) peer=cockpit-bridge,
 
     @{bin}/cockpit-bridge Px,
     @{lib}/cockpit/cockpit-askpass Px,

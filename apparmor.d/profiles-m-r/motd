@@ -1,0 +1,93 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = /etc/update-motd.d/*
+profile motd @{exec_path} {
+  include <abstractions/base>
+
+  capability net_admin,
+
+  @{exec_path} mr,
+  @{bin}/ r,
+
+  @{sh_path}         rix,
+  @{coreutils_path}  rix,
+  @{bin}/cloud-id    rix,
+  @{bin}/systemctl   rCx -> systemctl,
+  @{bin}/hostname    rPx,
+  @{bin}/snap        rPx,
+  @{bin}/dpkg        rPx -> child-dpkg,
+  @{bin}/systemd-detect-virt rPx,
+  @{bin}/wget        rCx -> wget,
+
+  @{lib}/ubuntu-release-upgrader/release-upgrade-motd            rPx,
+  @{lib}/update-notifier/update-motd-fsck-at-reboot              rPx,
+  @{lib}/update-notifier/update-motd-reboot-required             rix,
+  /usr/share/unattended-upgrades/update-motd-unattended-upgrades rix,
+  /usr/share/update-notifier/notify-updates-outdated             rPx,
+
+  / r,
+  /etc/cloud/cloud.cfg r,
+  /etc/cloud/cloud.cfg.d/{,*} r,
+  /etc/default/motd-news r,
+  /etc/lsb-release r,
+  /etc/update-motd.d/* r,
+  /etc/wgetrc r,
+
+  /var/cache/motd-news rw,
+  /var/lib/update-notifier/updates-available r,
+  /var/lib/ubuntu-advantage/messages/motd-esm-announce r,
+  /var/lib/cloud/instances/nocloud/cloud-config.txt r,
+
+  # /tmp/tmp.@{rand10} rw,
+
+  @{run}/cloud-init/cloud.cfg r,
+  @{run}/motd.d/{,*} r,
+  @{run}/motd.dynamic.new rw,
+  @{run}/reboot-required r,
+
+  @{PROC}/@{pids}/mounts r,
+  @{PROC}/1/environ r,
+  @{PROC}/cmdline r,
+
+  /dev/tty@{int} rw,
+
+  profile wget {
+    include <abstractions/base>
+    include <abstractions/nameservice-strict>
+    include <abstractions/ssl_certs>
+
+    network inet dgram,
+    network inet stream,
+    network inet6 dgram,
+    network inet6 stream,
+    network netlink raw,
+
+    @{bin}/wget mr,
+
+    /tmp/tmp.@{rand10} rw,
+
+    include if exists <local/motd_wget>
+  }
+
+  profile systemctl {
+    include <abstractions/base>
+    include <abstractions/app/systemctl>
+
+    capability net_admin,
+    capability sys_ptrace,
+
+    @{run}/systemd/private rw,
+
+    include if exists <local/motd_systemctl>
+  }
+
+  include if exists <local/motd>
+}
+
+# vim:syntax=apparmor

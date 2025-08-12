@@ -12,28 +12,20 @@ profile debsums @{exec_path} {
   include <abstractions/base>
   include <abstractions/perl>
 
-  # Needed to read files owned by other users than root.
   capability dac_read_search,
 
   @{exec_path} r,
 
   @{sh_path}        rix,
-  @{bin}/{m,g,}awk  rix,
+  @{bin}/{m,g,}awk   ix,
 
   # Do not strip env to avoid errors like the following:
   #  ERROR: ld.so: object 'libfakeroot-sysv.so' from LD_PRELOAD cannot be preloaded (cannot open
   #  shared object file): ignored.
-  @{bin}/dpkg-query  rpx,
+  @{bin}/dpkg-query   px,
   #
-  @{bin}/dpkg        rPx -> child-dpkg,
-  @{bin}/dpkg-divert rPx -> child-dpkg-divert,
-
-  /etc/dpkg/dpkg.cfg.d/{,*} r,
-  /etc/dpkg/dpkg.cfg r,
-
-  /etc/locale.nopurge r,
-
-  /var/lib/dpkg/info/* r,
+  @{bin}/dpkg         Px -> child-dpkg,
+  @{bin}/dpkg-divert  Px -> child-dpkg-divert,
 
   # For shell pwd
   / r,
@@ -45,7 +37,7 @@ profile debsums @{exec_path} {
   /etc/{,**} r,
   /var/lib/{,**} r,
   /opt/{,**} r,
-  /boot/{,**} r,
+  @{efi}/{,**} r,
   /lib*/{,**} r,
 
   include if exists <local/debsums>

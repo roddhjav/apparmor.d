@@ -1,0 +1,25 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{etc_ro}/needrestart/hook.d/*
+profile needrestart-hook @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/perl>
+
+  @{exec_path} mr,
+  @{sh_path} rix,
+
+  @{bin}/dpkg-query   px,
+
+  /tmp/ r,
+
+  include if exists <local/needrestart-hook>
+}
+
+# vim:syntax=apparmor

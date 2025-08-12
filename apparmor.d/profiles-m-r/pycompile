@@ -1,0 +1,52 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/py{,3}compile @{bin}/py{,3}clean
+profile pycompile @{exec_path} flags=(attach_disconnected,complain) {
+  include <abstractions/base>
+  include <abstractions/common/apt>
+  include <abstractions/consoles>
+  include <abstractions/python>
+
+  capability dac_override,
+  capability dac_read_search,
+
+  @{exec_path} mr,
+  @{python_path} rix,
+
+  @{bin}/dpkg rCx -> dpkg,
+
+  @{lib}/@{python_name}/**/__pycache__/ w,
+  @{lib}/@{python_name}/**/__pycache__/*.pyc w,
+  @{lib}/@{python_name}/**/__pycache__/*.pyc.* w,
+
+  /usr/share/python3/{,**} r,
+
+  / r,
+  @{bin}/ r,
+
+  profile dpkg {
+    include <abstractions/base>
+    include <abstractions/consoles>
+    include <abstractions/common/apt>
+
+    capability dac_read_search,
+
+    @{bin}/dpkg mr,
+    @{bin}/dpkg-query rpx,
+
+    /etc/dpkg/dpkg.cfg.d/{,*} r,
+    /etc/dpkg/dpkg.cfg r,
+
+    include if exists <local/pycompile_dpkg>
+  }
+
+  include if exists <local/pycompile>
+}
+
+# vim:syntax=apparmor

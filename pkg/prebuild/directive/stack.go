@@ -40,7 +40,7 @@ func init() {
 
 func (s Stack) Apply(opt *Option, profile string) (string, error) {
 	if len(opt.ArgList) == 0 {
-		return "", fmt.Errorf("No profile to stack")
+		return "", fmt.Errorf("no profile to stack")
 	}
 	t := opt.ArgList[0]
 	if t != "X" {
@@ -55,10 +55,13 @@ func (s Stack) Apply(opt *Option, profile string) (string, error) {
 
 	res := ""
 	for name := range opt.ArgMap {
-		stackedProfile := prebuild.RootApparmord.Join(name).MustReadFileAsString()
+		stackedProfile, err := prebuild.RootApparmord.Join(name).ReadFileAsString()
+		if err != nil {
+			return "", fmt.Errorf("%s need to stack: %w", name, err)
+		}
 		m := regRules.FindStringSubmatch(stackedProfile)
 		if len(m) < 2 {
-			return "", fmt.Errorf("No profile found in %s", name)
+			return "", fmt.Errorf("no profile found in %s", name)
 		}
 		stackedRules := m[1]
 		stackedRules = regCleanStakedRules.Replace(stackedRules)
@@ -68,9 +71,9 @@ func (s Stack) Apply(opt *Option, profile string) (string, error) {
 	// Insert the stacked profile at the end of the current profile, remove the stack directive
 	m := regEndOfRules.FindStringSubmatch(profile)
 	if len(m) <= 1 {
-		return "", fmt.Errorf("No end of rules found in %s", opt.File)
+		return "", fmt.Errorf("no end of rules found in %s", opt.File)
 	}
-	profile = strings.Replace(profile, m[0], res+m[0], -1)
-	profile = strings.Replace(profile, opt.Raw, "", -1)
+	profile = strings.ReplaceAll(profile, m[0], res+m[0])
+	profile = strings.ReplaceAll(profile, opt.Raw, "")
 	return profile, nil
 }

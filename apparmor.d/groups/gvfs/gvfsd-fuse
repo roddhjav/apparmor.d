@@ -40,24 +40,14 @@ profile gvfsd-fuse @{exec_path} {
 
   profile fusermount {
     include <abstractions/base>
-    include <abstractions/nameservice-strict>
+    include <abstractions/app/fusermount>
 
-    capability dac_read_search,
-    capability sys_admin,  # To mount anything
+    capability setuid,
 
     mount fstype={fuse,fuse.*} -> @{run}/user/@{uid}/gvfs/,
     umount @{run}/user/@{uid}/**/,
 
     unix (send,receive) type=stream addr=none peer=(label=gvfsd-fuse),
-
-    @{bin}/fusermount{,3} mr,
-
-    /etc/fuse{,3}.conf r,
-    /etc/machine-id r,
-
-    @{PROC}/@{pid}/mounts r,
-
-    /dev/fuse rw,
 
     include if exists <local/gvfsd-fuse_fusermount>
   }

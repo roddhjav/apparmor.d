@@ -1,0 +1,48 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/deb-systemd-helper
+profile deb-systemd-helper @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/perl>
+
+  @{exec_path} mr,
+
+  @{bin}/systemctl rCx -> systemctl,
+
+  /etc/systemd/system/{,**} rw,
+  /etc/systemd/user/{,**} rw,
+
+  /var/lib/systemd/deb-systemd-helper-enabled/{,**} rw,
+  /var/lib/systemd/deb-systemd-helper-masked/{,**} rw,
+  /var/lib/systemd/deb-systemd-user-helper-enabled/{,**} rw,
+
+  profile systemctl {
+    include <abstractions/base>
+    include <abstractions/app/systemctl>
+
+    capability net_admin,
+
+    /etc/ r,
+    /etc/systemd/ r,
+    /etc/systemd/system/ r,
+    /etc/systemd/system/* rw,
+    /etc/systemd/system/*.wants/ rw,
+    /etc/systemd/system/*.wants/* rw,
+    /etc/systemd/user/ r,
+    /etc/systemd/user/*.wants/ rw,
+    /etc/systemd/user/*.wants/* rw,
+
+    include if exists <local/deb-systemd-helper_systemctl>
+  }
+
+  include if exists <local/deb-systemd-helper>
+}
+
+# vim:syntax=apparmor

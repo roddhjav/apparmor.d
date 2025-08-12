@@ -10,7 +10,7 @@ include <tunables/global>
 @{exec_path} = @{bin}/{kmod,lsmod,depmod,insmod,rmmod,modinfo,modprobe}
 profile kmod @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/consoles>
+  include <abstractions/app/kmod>
   include <abstractions/nameservice-strict>
 
   capability dac_read_search,
@@ -28,16 +28,12 @@ profile kmod @{exec_path} flags=(attach_disconnected) {
   @{bin}/basename    rix,
   @{bin}/false       rix,
   @{bin}/id          rix,
-  @{bin}/sysctl      rPx,
+  @{sbin}/sysctl     rCx -> sysctl,
   @{bin}/true        rix,
 
-  @{lib}/modprobe.d/{,*.conf} r,
   @{lib}/modules/*/modules.* rw,
 
   @{run}/modprobe.d/{,*.conf} r,
-
-  /etc/depmod.d/{,**} r,
-  /etc/modprobe.d/{,*.conf} r,
 
   /tmp/**/*.ko{,.zst} r,
   /usr/src/*/*.ko r,
@@ -48,7 +44,7 @@ profile kmod @{exec_path} flags=(attach_disconnected) {
   owner /var/tmp/*modules*/{,**} rw,
   owner /var/tmp/dracut.*/{,**} rw,
 
-  owner /boot/System.map-* r,
+  owner @{efi}/System.map-* r,
   owner @{tmp}/mkinitcpio.*/{,**} rw,
 
   # For local kernel build
@@ -66,13 +62,22 @@ profile kmod @{exec_path} flags=(attach_disconnected) {
 
   @{sys}/module/{,**} r,
 
-  @{PROC}/cmdline r,
-  @{PROC}/modules r,
-
   /dev/tty@{int} rw,
 
   deny @{user_share_dirs}/gvfs-metadata/* r,
   deny unix (receive) type=stream,
+
+  profile sysctl {
+    include <abstractions/base>
+
+    @{sbin}/sysctl mr,
+
+    /etc/sysctl.conf r,
+    /etc/sysctl.d/{,**} r,
+    @{lib}/sysctl.d/{,**} r,
+
+    include if exists <local/kmod_sysctl>
+  }
 
   include if exists <local/kmod>
 }

@@ -1,0 +1,52 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Mikhail Morfikov
+# Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/blueman-mechanism @{lib}/blueman/blueman-mechanism
+profile blueman-mechanism @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/bus-system>
+  include <abstractions/nameservice-strict>
+  include <abstractions/python>
+
+  capability mknod,
+  capability net_admin,
+  capability sys_nice,
+
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  #aa:dbus own bus=system name=org.blueman.Mechanism
+
+  @{exec_path} mr,
+
+  @{lib}/ r,
+
+  /var/lib/blueman/network.state rw,
+
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/mounts r,
+
+  /dev/rfkill rw,
+
+  # For network AP
+  #@{sbin}/ip                 rix,
+  #@{sbin}/xtables-nft-multi rix,
+  #@{sbin}/dnsmasq           rPx,
+  #@{bin}/dhclient          rPx,
+  #      @{PROC}/sys/net/ipv4/ip_forward w,
+  #      @{PROC}/sys/net/ipv4/conf/ r,
+  #      @{PROC}/sys/net/ipv4/conf/*/forwarding w,
+  #owner @{run}/blueman-iptables rw,
+  #owner @{run}/blueman-netconfig rw,
+
+  include if exists <local/blueman-mechanism>
+}
+
+# vim:syntax=apparmor

@@ -1,0 +1,70 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/netplan/generate
+profile netplan-generate @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+
+  capability chown,
+
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  @{bin}/systemctl         rCx -> systemctl,
+
+  /etc/netplan/{,*} r,
+
+  @{run}/NetworkManager/ rw,
+  @{run}/NetworkManager/conf.d/ rw,
+  @{run}/NetworkManager/conf.d/@{int}-globally-managed-devices.conf rw,
+  @{run}/NetworkManager/conf.d/@{int}-globally-managed-devices.conf.@{rand6} rw,
+  @{run}/NetworkManager/system-connections/ rw,
+  @{run}/NetworkManager/system-connections/* rw,
+
+  @{run}/systemd/generator/multi-user.target.wants/ w,
+  @{run}/systemd/generator/multi-user.target.wants/systemd-networkd.service w,
+  @{run}/systemd/generator/netplan.stamp w,
+  @{run}/systemd/generator/network-online.target.wants/ w,
+  @{run}/systemd/generator/network-online.target.wants/systemd-networkd-wait-online.service w,
+  @{run}/systemd/network/ rw,
+  @{run}/systemd/network/@{int}-netplan{,-*}.{network,link}{,.@{rand6}} rw,
+  @{run}/systemd/system/ r,
+  @{run}/systemd/system/netplan-* rw,
+  @{run}/systemd/system/systemd-networkd-wait-online.service.d/ rw,
+  @{run}/systemd/system/systemd-networkd-wait-online.service.d/@{int}-netplan.conf{,.@{rand6}} rw,
+  @{run}/systemd/system/systemd-networkd.service.wants/ rw,
+  @{run}/systemd/system/systemd-networkd.service.wants/netplan-*.service rw,
+
+  @{run}/udev/rules.d/ rw,
+  @{run}/udev/rules.d/@{int}-netplan{,-*}.rules{,.@{rand6}} rw,
+
+  @{run}/netplan/ r,
+
+  @{run}/udev/rules.d/ r,
+  @{run}/udev/rules.d/@{int}-netplan{,-*}.rules{,.@{rand6}} rw,
+
+  @{sys}/devices/**/net/*/address r,
+
+  profile systemctl {
+    include <abstractions/base>
+    include <abstractions/app/systemctl>
+
+    capability net_admin,
+
+    @{att}/@{run}/systemd/private rw,
+
+    include if exists <local/netplan-generate_systemctl>
+  }
+
+  include if exists <local/netplan-generate>
+}
+
+# vim:syntax=apparmor

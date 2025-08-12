@@ -14,12 +14,13 @@ include <tunables/global>
 @{exec_path} = @{bin}/gjs-console
 profile gjs-console @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/attached/consoles>
+  include <abstractions/bus-accessibility>
   include <abstractions/bus-session>
   include <abstractions/bus-system>
   include <abstractions/bus/org.freedesktop.portal.Desktop>
   include <abstractions/bus/org.gnome.Shell.Introspect>
   include <abstractions/bus/org.gtk.vfs.MountTracker>
+  include <abstractions/consoles>
   include <abstractions/dconf-write>
   include <abstractions/fontconfig-cache-write>
   include <abstractions/gnome-strict>
@@ -28,7 +29,9 @@ profile gjs-console @{exec_path} flags=(attach_disconnected) {
 
   network netlink raw,
 
-  signal (receive) set=(term hup) peer=gdm*,
+  unix type=stream peer=(label=gnome-shell),
+
+  signal receive set=(term hup) peer=gdm*,
 
   #aa:dbus own bus=session name=org.freedesktop.Notifications
   #aa:dbus own bus=session name=org.gnome.ScreenSaver
@@ -82,6 +85,7 @@ profile gjs-console @{exec_path} flags=(attach_disconnected) {
   owner @{PROC}/@{pid}/mounts r,
   owner @{PROC}/@{pid}/stat r,
   owner @{PROC}/@{pid}/task/ r,
+  owner @{PROC}/@{pid}/task/@{tid}/comm rw,
   owner @{PROC}/@{pid}/task/@{tid}/stat r,
 
   /dev/ r,

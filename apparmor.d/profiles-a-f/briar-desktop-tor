@@ -1,5 +1,5 @@
 # apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2024 Roman Beslik <me@beroal.in.ua>
+# Copyright (C) 2024-2025 Roman Beslik <me@beroal.in.ua>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/4.0>,
@@ -13,11 +13,13 @@ profile briar-desktop-tor {
   network inet6 stream,
   network netlink raw,
 
+  signal send set=term peer=briar-desktop-tor//lyrebird,
   signal send set=term peer=briar-desktop-tor//obfs4proxy,
   signal send set=term peer=briar-desktop-tor//snowflake,
 
   owner @{HOME}/.briar/desktop/tor/.tor/{,**} rw,
   owner @{HOME}/.briar/desktop/tor/.tor/lock k,
+  owner @{HOME}/.briar/desktop/tor/lyrebird Cx -> lyrebird,
   owner @{HOME}/.briar/desktop/tor/obfs4proxy Cx -> obfs4proxy,
   owner @{HOME}/.briar/desktop/tor/snowflake Cx -> snowflake,
   owner @{HOME}/.briar/desktop/tor/tor r,
@@ -26,6 +28,25 @@ profile briar-desktop-tor {
   @{PROC}/sys/kernel/random/uuid r,
 
   include if exists <local/briar-desktop-tor>
+
+  profile lyrebird {
+    include <abstractions/base>
+    include <abstractions/nameservice-strict>
+    include <abstractions/ssl_certs>
+
+    network inet dgram,
+    network inet stream,
+    network inet6 dgram,
+    network inet6 stream,
+    network netlink raw,
+
+    signal receive set=term peer=briar-desktop-tor,
+
+    owner @{HOME}/.briar/desktop/tor/lyrebird mr,
+    @{PROC}/sys/net/core/somaxconn r,
+
+    include if exists <local/briar-desktop-tor_lyrebird>
+  }
 
   profile obfs4proxy {
     include <abstractions/base>

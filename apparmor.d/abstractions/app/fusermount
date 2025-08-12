@@ -1,0 +1,35 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+# LOGPROF-SUGGEST: no
+
+# Minimal set of rules for fusermount subprofiles. Path to mount/unmount should
+# be defined in the calling profile.
+
+  abi <abi/4.0>,
+
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+
+  capability dac_override,
+  capability dac_read_search,
+  capability sys_admin,  # To mount anything
+
+  @{bin}/fusermount{,3} mr,
+
+  @{bin}/mount          rix,
+  @{bin}/umount         rix,
+
+  @{etc_ro}/fuse{,3}.conf r,
+
+  @{run}/mount/utab r,
+  @{run}/mount/utab.* rwk,
+
+  @{PROC}/@{pid}/mountinfo r,
+  @{PROC}/@{pid}/mounts r,
+
+  /dev/fuse rw,
+
+  include if exists <abstractions/app/fusermount.d>
+
+# vim:syntax=apparmor

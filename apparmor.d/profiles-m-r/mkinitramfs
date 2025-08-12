@@ -8,7 +8,7 @@ abi <abi/4.0>,
 
 include <tunables/global>
 
-@{exec_path} = @{bin}/mkinitramfs
+@{exec_path} = @{sbin}/mkinitramfs
 profile mkinitramfs @{exec_path} {
   include <abstractions/base>
   include <abstractions/consoles>
@@ -19,11 +19,10 @@ profile mkinitramfs @{exec_path} {
   capability fsetid,
 
   @{exec_path} r,
-  @{sh_path}        rix,
+  @{sh_path}   rix,
 
-  @{bin}/       r,
-  @{lib}/           r,
-  @{lib}64/         r,
+  @{bin}/ r,
+  @{lib}/ r,
 
   @{bin}/{,e}grep   rix,
   @{bin}/basename   rix,
@@ -43,36 +42,43 @@ profile mkinitramfs @{exec_path} {
   @{bin}/mkdir      rix,
   @{bin}/mktemp     rix,
   @{bin}/readlink   rix,
+  @{bin}/realpath   rix,
   @{bin}/rm         rix,
   @{bin}/rmdir      rix,
   @{bin}/sed        rix,
   @{bin}/sort       rix,
+  @{bin}/stat       rix,
   @{bin}/touch      rix,
   @{bin}/tr         rix,
   @{bin}/tsort      rix,
+  @{bin}/uname      rix,
   @{bin}/uniq       rix,
   @{bin}/xargs      rix,
   @{bin}/xz         rix,
   @{bin}/zstd       rix,
+  @{sbin}/blkid     rPx,
   @{lib}/dracut/dracut-install rix,
 
   @{bin}/find                 rCx -> find,
   @{bin}/kmod                 rCx -> kmod,
-  @{bin}/ldconfig             rCx -> ldconfig,
+  @{sbin}/ldconfig            rCx -> ldconfig,
   @{bin}/ldd                  rCx -> ldd,
+  @{lib}/@{multiarch}/ld-linux-*so* rCx -> ldd,
   @{lib}/ld-linux.so*         rCx -> ldd,
 
   @{bin}/dpkg          rPx -> child-dpkg,
   @{bin}/linux-version rPx,
 
-  # What to do with it? (#FIXME#)
-  /usr/share/initramfs-tools/hooks/*     rPUx,
-  /usr/share/initramfs-tools/scripts/*/* rPUx,
-  /etc/initramfs-tools/hooks/*           rPUx,
-  /etc/initramfs-tools/scripts/*/*       rPUx,
+  @{lib}/initramfs-tools/hooks/**         rPx,
+  /etc/initramfs-tools/hooks/**           rPx,
+  /etc/initramfs-tools/scripts/**         rPx,
+  /usr/share/initramfs-tools/hooks/**     rPx,
+  /usr/share/initramfs-tools/scripts/**   rPx,
 
   /usr/share/initramfs-tools/{,**} r,
   /etc/initramfs-tools/{,**} r,
+
+  /etc/xattr.conf r,
 
   # For shell pwd
   / r,
@@ -81,23 +87,39 @@ profile mkinitramfs @{exec_path} {
 
   /etc/modprobe.d/{,*.conf} r,
 
-        /boot/ r,
-  owner /boot/config-* r,
-  owner /boot/initrd.img-*.new rw,
+        @{efi}/ r,
+  owner @{efi}/config-* r,
+  owner @{efi}/initrd.img-*.new rw,
 
-        /var/tmp/ r,
-        /var/tmp/modules_@{rand6} rw,
-  owner /var/tmp/mkinitramfs_@{rand6} rw,
-  owner /var/tmp/mkinitramfs_@{rand6}/ rw,
-  owner /var/tmp/mkinitramfs_@{rand6}/** rwl -> /var/tmp/mkinitramfs_*/**,
-  owner /var/tmp/mkinitramfs-@{rand6} rw,
-  owner /var/tmp/mkinitramfs-*_@{rand6} rw,
+  owner /var/lib/kdump/initramfs-tools/** rw,
+  owner /var/lib/kdump/initrd.* rw,
 
+  /var/tmp/ r,
+  /var/tmp/mkinitramfs_@{rand6}/** w,
+  /var/tmp/modules_@{rand6} rw,
+  /var/tmp/mkinitramfs_@{rand6} rw,
+  /var/tmp/mkinitramfs_@{rand6}/ rw,
+  /var/tmp/mkinitramfs_@{rand6}/** rwl -> /var/tmp/mkinitramfs_@{rand6}/**,
+  /var/tmp/mkinitramfs-@{rand6} rw,
+  /var/tmp/mkinitramfs-*_@{rand6} rw,
+
+  owner /tmp/tmp.@{rand10}/mkinitramfs_@{rand6} rw,
+  owner /tmp/tmp.@{rand10}/mkinitramfs_@{rand6}/ rw,
+  owner /tmp/tmp.@{rand10}/mkinitramfs_@{rand6}/** rwl -> /tmp/tmp.@{rand10}/mkinitramfs_@{rand6}/**,
+  owner /tmp/tmp.@{rand10}/mkinitramfs_@{rand6}/** w,
+  owner /tmp/tmp.@{rand10}/mkinitramfs-@{rand6} rw,
+  owner /tmp/tmp.@{rand10}/mkinitramfs-*_@{rand6} rw,
+  owner /tmp/tmp.@{rand10}/modules_@{rand6} rw,
+
+  @{sys}/bus/ r,
+  @{sys}/bus/*/drivers/ r,
   @{sys}/devices/platform/ r,
   @{sys}/devices/platform/**/ r,
   @{sys}/devices/platform/**/modalias r,
   @{sys}/module/compression r,
+  @{sys}/module/firmware_class/parameters/path r,
 
+        @{PROC}/@{pid}/mounts r,
         @{PROC}/cmdline r,
         @{PROC}/modules r,
   owner @{PROC}/@{pid}/fd/ r,
@@ -108,6 +130,8 @@ profile mkinitramfs @{exec_path} {
     include <abstractions/nameservice-strict>
 
     @{bin}/ldd mr,
+    @{lib}/@{multiarch}/ld-linux-*so* mr,
+    @{lib}/ld-linux.so* mr,
 
     @{sh_path}        rix,
     @{bin}/kmod mr,
@@ -125,23 +149,13 @@ profile mkinitramfs @{exec_path} {
 
     capability sys_chroot,
 
-    @{bin}/ldconfig  mr,
+    @{sbin}/ldconfig  mr,
 
     @{sh_path}               rix,
-    @{bin}/ldconfig.real     rix,
+    @{sbin}/ldconfig.real    rix,
 
-    owner /var/tmp/mkinitramfs_@{rand6}/etc/ld.so.conf r,
-    owner /var/tmp/mkinitramfs_@{rand6}/etc/ld.so.conf.d/{,*.conf} r,
-
-    owner /var/tmp/mkinitramfs_@{rand6}/@{lib}/ r,
-    owner /var/tmp/mkinitramfs_@{rand6}/@{lib}/@{multiarch}/ r,
-    owner /var/tmp/mkinitramfs_@{rand6}/@{lib}/@{multiarch}/*.so* rw,
-    owner /var/tmp/mkinitramfs_@{rand6}/@{lib}/*.so* rw,
-
-    owner /var/tmp/mkinitramfs_@{rand6}/etc/ld.so.cache{,~} rw,
-
-    owner /var/tmp/mkinitramfs_@{rand6}/var/cache/ldconfig/ rw,
-    owner /var/tmp/mkinitramfs_@{rand6}/var/cache/ldconfig/aux-cache{,~} rw,
+    owner /var/tmp/mkinitramfs_@{rand6}/** rwl -> /var/tmp/mkinitramfs_@{rand6}/**,
+    owner /tmp/tmp.@{rand10}/mkinitramfs_@{rand6}/** rwl -> /tmp/tmp.@{rand10}/mkinitramfs_@{rand6}/**,
 
     include if exists <local/mkinitramfs_ldconfig>
   }
@@ -171,7 +185,7 @@ profile mkinitramfs @{exec_path} {
 
     owner /var/tmp/mkinitramfs_@{rand6}/usr/lib/modules/*/ r,
     owner /var/tmp/mkinitramfs_@{rand6}/usr/lib/modules/*/modules.* rw,
-    owner /var/tmp/mkinitramfs_@{rand6}usr/lib/modules/*/updates/{,**} r,
+    owner /var/tmp/mkinitramfs_@{rand6}/usr/lib/modules/*/updates/{,**} r,
     owner /var/tmp/mkinitramfs_@{rand6}/usr/lib/modules/*/kernel/{,**/} r,
     owner /var/tmp/mkinitramfs_@{rand6}/usr/lib/modules/*/kernel/**/*.ko* r,
 

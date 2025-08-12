@@ -1,0 +1,32 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/{openssh,ssh}/sshd-auth
+profile sshd-auth @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+
+  capability setgid,
+  capability setuid,
+  capability sys_chroot,
+
+  network inet dgram,
+  network inet stream,
+  network inet6 dgram,
+  network inet6 stream,
+  network netlink raw,
+
+  @{exec_path} mr,
+  @{sbin}/sshd.hmac r,
+
+  /etc/gss/mech.d/{,*} r,
+
+  include if exists <local/sshd-auth>
+}
+
+# vim:syntax=apparmor

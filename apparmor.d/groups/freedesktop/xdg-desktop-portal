@@ -10,7 +10,6 @@ include <tunables/global>
 profile xdg-desktop-portal @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/app-open>
-  include <abstractions/attached/consoles>
   include <abstractions/audio-client>
   include <abstractions/bus-session>
   include <abstractions/bus-system>
@@ -18,7 +17,10 @@ profile xdg-desktop-portal @{exec_path} flags=(attach_disconnected) {
   include <abstractions/bus/org.freedesktop.impl.portal.PermissionStore>
   include <abstractions/bus/org.freedesktop.NetworkManager>
   include <abstractions/bus/org.freedesktop.RealtimeKit1>
+  include <abstractions/bus/org.freedesktop.UPower.PowerProfiles>
+  include <abstractions/consoles>
   include <abstractions/dconf-write>
+  include <abstractions/devices-usb-read>
   include <abstractions/freedesktop.org>
   include <abstractions/nameservice-strict>
   include <abstractions/thumbnails-cache-read>
@@ -38,16 +40,15 @@ profile xdg-desktop-portal @{exec_path} flags=(attach_disconnected) {
   dbus receive bus=session path=/org/freedesktop/portal/desktop
        interface=org.freedesktop.portal.Realtime
        member=MakeThread*
-       peer=(name=:*),
+       peer=(name=@{busname}),
+  dbus receive bus=session path=/org/freedesktop/portal/desktop
+       interface=org.freedesktop.host.portal.Registry
+       member=Register
+       peer=(name=@{busname}),
 
   #aa:dbus own bus=session name=org.freedesktop.background.Monitor path=/org/freedesktop/background/monitor
 
   #aa:dbus talk bus=session name=org.freedesktop.portal.Documents path=/org/freedesktop/portal/documents label=xdg-document-portal
-
-  dbus send bus=session path=/org/freedesktop/DBus
-       interface=org.freedesktop.DBus
-       member={GetConnectionUnixUser,GetConnectionUnixProcessID}
-       peer=(name=org.freedesktop.DBus, label="@{p_dbus_session}"),
 
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable
@@ -77,11 +78,14 @@ profile xdg-desktop-portal @{exec_path} flags=(attach_disconnected) {
   owner @{gdm_config_dirs}/dconf/user r,
   owner @{gdm_config_dirs}/user-dirs.dirs r,
 
+  # The portal can receive any user file as it is a file chooser for UI app.
+  owner @{HOME}/** r,
 
         @{user_config_dirs}/kioslaverc r,
   owner @{user_config_dirs}/xdg-desktop-portal/* r,
+  owner @{user_share_dirs}/xdg-desktop-portal/{,**} rw,
 
-  owner @{tmp}/icon* rw,
+  owner @{tmp}/icon@{rand6} rw,
 
   owner @{run}/user/@{uid}/.flatpak/{,*/*} r,
 

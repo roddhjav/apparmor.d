@@ -10,31 +10,19 @@ include <tunables/global>
 @{exec_path} = @{bin}/hddtemp
 profile hddtemp @{exec_path} {
   include <abstractions/base>
+  include <abstractions/disks-read>
+  include <abstractions/nameservice-strict>
 
-  # To remove the following errors:
-  #  /dev/sda: Permission denied
+  capability sys_admin,
   capability sys_rawio,
-
-  # There's the following error in strace:
-  #  ioctl(3, HDIO_DRIVE_CMD, 0x7ffdfeafc074) = -1 EACCES (Permission denied)
-  # This should be covered by CAP_SYS_RAWIO instead.
-  # (see: https://www.kernel.org/doc/Documentation/ioctl/hdio.rst)
-  # It looks like hddtemp works just fine without it.
-  deny capability sys_admin,
 
   network inet stream,
   network inet6 stream,
 
   @{exec_path} mr,
 
-  # Monitored hard drives
-  /dev/sd[a-z]* r,
-
   # Database file that allows hddtemp to recognize supported drives
   /etc/hddtemp.db r,
-
-  # Needed when the hddtemp daemon is started in the TCP/IP mode
-  /etc/gai.conf r,
 
   include if exists <local/hddtemp>
 }

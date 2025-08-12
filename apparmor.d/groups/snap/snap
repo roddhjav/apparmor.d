@@ -1,0 +1,134 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{bin_dirs} = @{bin}/ /snap/{snapd,core}/@{int}@{bin}
+@{lib_dirs} = @{lib}/ /snap/{snapd,core}/@{int}@{lib}
+
+@{exec_path} = @{bin_dirs}/snap
+profile snap @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/bus-session>
+  include <abstractions/bus-system>
+  include <abstractions/consoles>
+  include <abstractions/disks-read>
+  include <abstractions/nameservice-strict>
+
+  capability dac_read_search,
+  capability setuid,
+  capability sys_admin,
+
+  network netlink raw,
+
+  ptrace read peer=snap.*,
+
+  unix (send, receive) type=stream peer=(label=apt),
+
+  mount options=(ro, silent) -> /tmp/snapd-auto-import-mount-@{int}/,
+
+  #aa:dbus own bus=session name=io.snapcraft.Launcher
+  #aa:dbus own bus=session name=io.snapcraft.SessionAgent
+  #aa:dbus own bus=session name=io.snapcraft.Settings
+
+  #aa:dbus talk bus=session name=io.snapcraft.PrivilegedDesktopLauncher label=snap.snap-store.snap-store
+  #aa:dbus talk bus=session name=org.freedesktop.systemd1 label="@{p_systemd_user}"
+  #aa:dbus talk bus=system name=org.freedesktop.systemd1 label="@{p_systemd}"
+
+  dbus send bus=session path=/org/freedesktop/portal/documents
+       interface=org.freedesktop.portal.Documents
+       member=GetMountPoint
+       peer=(name=org.freedesktop.portal.Documents, label="{xdg-document-portal,unconfined}"),
+
+  dbus receive bus=session
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name=@{busname}, label=gnome-shell),
+
+  @{exec_path} mrix,
+
+  @{bin}/mount rix,
+  @{bin}/getent rix,
+
+  @{bin}/gpg{,2}          rCx -> gpg,
+  @{bin}/systemctl        rCx -> systemctl,
+
+  @{lib_dirs}/**          mr,
+  @{lib_dirs}/snapd/snap-confine     rPx,
+  @{lib_dirs}/snapd/snap-seccomp     rPx,
+  @{lib_dirs}/snapd/snapd            rPx,
+
+  /etc/fstab r,
+
+  /var/lib/snapd/{,**} rwk,
+  /var/cache/snapd/commands.db rwk,
+  /var/cache/snapd/names r,
+
+  @{DESKTOP_HOME}/snap/{,**} rw,
+  @{HOME}/snap/{,**} rw,
+  /snap/{,**} rw,
+
+  owner @{tmp}/snapd-auto-import-mount-@{int}/ rw,
+
+        @{run}/user/@{uid}/bus rw,
+  owner @{run}/user/@{uid}/.mutter-Xwaylandauth.@{rand6} r,
+  owner @{run}/user/@{uid}/gdm/Xauthority r,
+  owner @{run}/user/@{uid}/snapd-session-agent.socket rw,
+  owner @{run}/user/@{uid}/systemd/notify rw,
+
+  @{run}/mount/utab r,
+  @{run}/snapd.socket rw,
+
+  @{sys}/fs/cgroup/cgroup.controllers r,
+  @{sys}/kernel/security/apparmor/features/{,**} r,
+
+        @{PROC}/@{pid}/cgroup r,
+        @{PROC}/@{pid}/mountinfo r,
+        @{PROC}/cgroups r,
+        @{PROC}/cmdline r,
+        @{PROC}/sys/kernel/random/uuid r,
+        @{PROC}/sys/kernel/seccomp/actions_avail r,
+        @{PROC}/version r,
+  owner @{PROC}/@{pid}/attr/apparmor/current r,
+  owner @{PROC}/@{pid}/mounts r,
+
+  /dev/tty@{int} rw,
+  /dev/ttyS@{int} rw,
+
+  deny @{user_share_dirs}/gvfs-metadata/* r,
+
+  profile gpg {
+    include <abstractions/base>
+
+    @{bin}/gpg{,2} mr,
+
+    @{bin}/dirmngr           rix,
+    @{bin}/gpg-agent         rix,
+    @{bin}/gpg-connect-agent rix,
+
+    owner @{HOME}/.snap/gnupg/ rw,
+    owner @{HOME}/.snap/gnupg/** rwkl,
+
+    include if exists <local/snap_gpg>
+  }
+
+  profile systemctl {
+    include <abstractions/base>
+    include <abstractions/app/systemctl>
+    include <abstractions/bus/org.freedesktop.systemd1>
+
+    network unix stream,
+
+    owner @{run}/user/@{uid}/systemd/notify rw,
+    owner @{run}/user/@{uid}/systemd/private rw,
+
+    include if exists <local/snap_systemctl>
+  }
+
+  include if exists <local/snap>
+}
+
+# vim:syntax=apparmor

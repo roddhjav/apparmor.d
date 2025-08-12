@@ -2,147 +2,61 @@
 title: Integration Tests
 ---
 
-!!! danger "Work in Progress"
-
 The purpose of integration testing in apparmor.d is to ensure the profiles are not going to break programs found in Linux distributions and Desktop Environment that we support.
+
+Although the integration test suite is intended to be run in a [Development VM](vm.md), it is also deployed the GitHub Action pipeline.
 
 **Workflow**
 
 1. Create a testing VM
-2. Start the VM, do some dev
-3. Run the integration tests against the testing VM
-4. Ensure no new logs have been raised
+2. Run the integration tests against the testing VM
+3. Ensure no new logs have been raised
 
+## Getting started
 
-## Test Virtual Machines
-
-The test VMs are built using [`cloud-init`][cloud-init] (when available), [`packer`][packer], and [`vagrant`][vagrant] on Qemu/KVM using Libvirt. No other hypervisor will be targeted for these tests. The files that generate these images can be found in the **[tests/packer](https://github.com/roddhjav/apparmor.d/tree/main/tests/packer)** directory.
-
-[cloud-init]: https://cloud-init.io/
-[packer]: https://www.packer.io/
-[vagrant]: https://www.vagrantup.com/
-
-### Requirements
-
-* docker
-* [packer]
-* [vagrant]
-* vagrant plugin install vagrant-libvirt
-
-!!! note
-
-    You may need to edit some settings to fit your setup:
-
-    - The libvirt configuration in `tests/Vagrantfile` 
-    - The default ssh key and ISO directory in `tests/packer/variables.pkr.hcl`
-
-### Build
-
-**Build an image**
-
-To build a VM image for development purpose, run the following from the `tests` directory:
-
-| Distribution | Flavor | Build command | VM name |
-|:------------:|:------:|:-------------:|:-------:|
-| Arch Linux | Gnome | `make archlinux flavor=gnome` | `arch-gnome` |
-| Arch Linux | KDE | `make archlinux flavor=kde` | `arch-kde` |
-| Debian | Server | `make debian flavor=server` | `debian-server` |
-| openSUSE | KDE | `make opensuse flavor=kde` | `opensuse-kde` |
-| Ubuntu | Server | `make ubuntu flavor=server` | `ubuntu-server` |
-| Ubuntu | Desktop | `make ubuntu falvor=desktop` | `ubuntu-desktop` |
-
-**VM management**
-
-The development workflow is done through vagrant:
-
-* Star a VM: `vagran up <name>`
-* Shutdown a VM: `vagrant halt <name>`
-* Reboot a VM: `vagrant reload <name>`
-
-The available VM `name` is defined in the `tests/boxes.yml` file
-
-
-### Develop
-
-**Credentials**
-
-The admin user is: `user`, its password is: `user`. It has passwordless sudo access. Automatic login is **not** enabled on DE. The root user is not locked.
-
-**Directories**
-
-All the images come pre-configured with the latest version of `apparmor.d` installed and running in the VM. apparmor.d is mounted as `/home/user/Projects/apparmor.d`
-
-**Usage**
-
-On all images, `aa-update` can be used to rebuild and install the latest version of the profiles. `p`, `pf`, and `pu` are two pre-configured aliases of `ps` that show the security status of processes. `htop` is also configured to show this status.
-
-
-## Tests
-
-!!! warning
-
-    The test suite is expected to be run in a [VM](#test-virtual-machines)
-
-### Getting started
-
-Prepare the test environment:
+**Prepare the test environment:**
 ```sh
-cd tests
-make <dist> falvor=<flavor>
-AA_INTEGRATION=true vagrant up <name>
+just img <dist> <flavor>
+just create <dist> <flavor>
 ```
 
-Run the integration tests on the test VM:
+Example:
 ```sh
-make integration box=<dist> IP=<ip>
+just img ubuntu25 desktop
+just create ubuntu25 desktop
 ```
 
-### Create integration tests
-
-**Test suite usage**
-
-Initialise the tests with:
+**Install dependencies for the integration tests**
 ```sh
-./aa-test --bootstrap
+just tests-init <dist> <flavor>
 ```
 
-List the tests scenarios to be run
+Example:
 ```sh
-./aa-test --list
+just tests-init ubuntu25 desktop
 ```
 
-Start the tests and collect the results
+**Run the integration tests**
+
+It: synchronizes the tests, unmount the shared directory, then run the tests.
 ```sh
-./aa-test --run
+just tests-run <dist> <flavor>
 ```
 
-**Tests manifest**
+Example:
+```sh
+just tests-run ubuntu25 desktop
+```
 
-A basic set of test is generated on initialization. More tests can be manually written in yaml file. They must have the following structure:
+Partial tests can also be run. For example the following command will only run the tests in the `tests/integration/apt` directory on the `ubuntu25` `desktop` machine:
+```sh
+just tests-run ubuntu25 desktop apt
+```
 
-```yaml
-- name: acpi
-  profiled: true
-  root: false
-  require: []
-  arguments: {}
-  tests:
-    - dsc: Show battery information
-      cmd: acpi
-      stdin: []
-    - dsc: Show thermal information
-      cmd: acpi -t
-      stdin: []
-    - dsc: Show cooling device information
-      cmd: acpi -c
-      stdin: []
-    - dsc: Show thermal information in Fahrenheit
-      cmd: acpi -tf
-      stdin: []
-    - dsc: Show all information
-      cmd: acpi -V
-      stdin: []
-    - dsc: Extract information from `/proc` instead of `/sys`
-      cmd: acpi -p
-      stdin: []
+## Create integration tests
+
+All integration tests are written in [Bats](https://github.com/bats-core/bats-core) and are located in the `tests/integration` directory. The initial tests have been generated using [tldr page](https://tldr.sh/) with the following command:
+
+```sh
+go run ./tests/cmd --bootstrap
 ```

@@ -1,0 +1,33 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{sbin}/zramctl
+profile zramctl @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+
+  @{exec_path} mr,
+
+  @{sys}/devices/virtual/block/zram@{int}/ r,
+  @{sys}/devices/virtual/block/zram@{int}/comp_algorithm rw,
+  @{sys}/devices/virtual/block/zram@{int}/disksize r,
+  @{sys}/devices/virtual/block/zram@{int}/disksize w,
+  @{sys}/devices/virtual/block/zram@{int}/max_comp_streams r,
+  @{sys}/devices/virtual/block/zram@{int}/mm_stat r,
+  @{sys}/devices/virtual/block/zram@{int}/reset w,
+
+        @{PROC}/swaps r,
+  owner @{PROC}/@{pid}/mounts r,
+
+  /dev/ r,
+  /dev/zram@{int} rw,
+
+  include if exists <local/zramctl>
+}
+
+# vim:syntax=apparmor

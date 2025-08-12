@@ -1,0 +1,113 @@
+#cloud-config
+
+core-packages: &core-packages
+  - apparmor-profiles
+  - apparmor-utils
+  - auditd
+  - build-essential
+  - config-package-dev
+  - debhelper
+  - devscripts
+  - docker.io
+  - golang-go
+  - htop
+  - just
+  - libpam-apparmor
+  - lintian
+  - qemu-guest-agent
+  - rsync
+  - systemd-container
+  - systemd-coredump
+  - systemd-homed
+  - systemd-oomd
+  - unattended-upgrades
+  - vim
+
+desktop-packages: &desktop-packages
+  # Core packages for Ubuntu
+  - apparmor-profiles
+  - apparmor-utils
+  - auditd
+  - build-essential
+  - config-package-dev
+  - debhelper
+  - devscripts
+  - docker.io
+  - golang-go
+  - htop
+  - just
+  - libpam-apparmor
+  - lintian
+  - qemu-guest-agent
+  - rsync
+  - systemd-container
+  - systemd-coredump
+  - systemd-homed
+  - systemd-oomd
+  - unattended-upgrades
+  - vim
+
+  # Desktop packages for Ubuntu
+  - spice-vdagent
+  - terminator
+  - ubuntu-desktop
+  - loupe
+  - ptyxis
+
+kubuntu-packages: &kubuntu-packages
+  # Core packages for Ubuntu
+  - apparmor-profiles
+  - apparmor-utils
+  - auditd
+  - build-essential
+  - config-package-dev
+  - debhelper
+  - devscripts
+  - docker.io
+  - golang-go
+  - htop
+  - just
+  - libpam-apparmor
+  - lintian
+  - qemu-guest-agent
+  - rsync
+  - systemd-container
+  - systemd-coredump
+  - systemd-homed
+  - systemd-oomd
+  - unattended-upgrades
+  - vim
+
+  # Desktop packages for Ubuntu
+  - spice-vdagent
+  - terminator
+  - kubuntu-desktop
+
+desktop-runcmd: &desktop-runcmd
+  # Add missing snap packages
+  - snap install snap-store
+  - snap install snapd-desktop-integration
+  - snap install --edge desktop-security-center
+
+  # Remove default filesystem and related tools not used with the suggested
+  # storage layout. These may yet be required if different partitioning schemes
+  # are used.
+  - apt-get -y purge btrfs-progs xfsprogs
+
+  # Remove other packages present by default in Ubuntu Server but not
+  # normally present in Ubuntu Desktop.
+  - >-
+    apt-get -y purge
+      byobu dmeventd finalrd gawk kpartx landscape-common lxd-agent-loader
+      mdadm motd-news-config ncurses-term open-iscsi open-vm-tools
+      screen sg3-utils sosreport ssh-import-id sssd tmux
+
+  # Finally, remove things only installed as dependencies of other things
+  # we have already removed.
+  - apt-get -y autoremove
+
+  # Ensure systemd-networkd is disabled
+  - systemctl disable systemd-networkd-wait-online.service
+
+  # Ensure auditd is enabled
+  - systemctl enable systemd-journald-audit.socket

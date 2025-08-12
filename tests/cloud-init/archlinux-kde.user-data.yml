@@ -1,0 +1,26 @@
+#cloud-config
+
+packages: *kde-packages
+
+runcmd:
+  # Regenerate grub.cfg
+  - grub-mkconfig -o /boot/grub/grub.cfg
+
+  # Remove swapfile
+  - swapoff -a
+  - rm -rf /swap/
+  - sed -e "/swap/d" -i /etc/fstab
+
+  # Enable core services
+  - systemctl enable apparmor
+  - systemctl enable auditd
+  - systemctl enable sddm
+  - systemctl enable NetworkManager
+  - systemctl enable rngd
+  - systemctl enable avahi-daemon
+  - systemctl enable systemd-timesyncd.service
+
+write_files:
+  - *grub-enable-apparmor # Enable AppArmor in kernel parameters
+  - *setup-bash-aliases   # Set some bash aliases
+  - *shared-directory     # Setup shared directory

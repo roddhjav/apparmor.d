@@ -1,0 +1,40 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/update-notifier/update-notifier-crash
+profile update-notifier-crash @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+
+  @{exec_path} mr,
+
+  @{bin}/{,e}grep                       ix,
+  @{bin}/groups                         Px,
+  @{bin}/systemctl                      Cx -> systemctl,
+  @{bin}/which{,.debianutils}           ix,
+  @{sh_path}                            mr,
+  /usr/share/apport/apport-checkreports Px,
+
+  owner @{HOME}/ r,
+
+  profile systemctl {
+    include <abstractions/base>
+    include <abstractions/app/systemctl>
+
+    dbus send bus=system path=/org/freedesktop/systemd1
+        interface=org.freedesktop.systemd1.Manager
+        member=GetUnitFileState
+        peer=(name=org.freedesktop.systemd1, label="@{p_systemd}"),
+
+    include if exists <local/update-notifier-crash_systemctl>
+  }
+
+  include if exists <local/update-notifier-crash>
+}
+
+# vim:syntax=apparmor

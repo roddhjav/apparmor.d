@@ -1,0 +1,33 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = /usr/share/mdadm/mkconf
+profile mdadm-mkconf @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+
+  @{exec_path} mr,
+
+  @{sh_path}       r,
+  @{bin}/date     ix,
+  @{bin}/cat      ix,
+  @{bin}/sed      ix,
+  @{sbin}/mdadm   Px,
+
+  /etc/default/mdadm r,
+  /etc/mdadm/mdadm.conf r,
+
+  / r,
+
+  /var/tmp/mkinitramfs_@{rand6}/etc/mdadm/mdadm.conf.tmp rw,
+  /tmp/tmp.@{rand10}/mkinitramfs_@{rand6}/etc/mdadm/mdadm.conf.tmp rw,
+
+  include if exists <local/mdadm-mkconf>
+}
+
+# vim:syntax=apparmor

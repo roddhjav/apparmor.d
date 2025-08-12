@@ -1,0 +1,38 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/ptyxis
+profile ptyxis @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/common/gnome>
+  include <abstractions/consoles>
+
+  @{exec_path} mr,
+
+  @{lib}/ptyxis-agent          Px,
+  @{open_path}                 Px -> child-open-help,
+
+  /etc/shells r,
+
+  owner @{user_cache_dirs}/org.gnome.Ptyxis/ rw,
+  owner @{user_cache_dirs}/org.gnome.Ptyxis/** rwlk -> @{user_cache_dirs}/org.gnome.Ptyxis/**,
+
+  owner @{user_config_dirs}/org.gnome.Ptyxis/ rw,
+  owner @{user_config_dirs}/org.gnome.Ptyxis/** rwlk -> @{user_config_dirs}/org.gnome.Ptyxis/**,
+
+  owner @{user_share_dirs}/org.gnome.Ptyxis/ rw,
+  owner @{user_share_dirs}/org.gnome.Ptyxis/** rwlk -> @{user_share_dirs}/org.gnome.Ptyxis/**,
+
+  owner /tmp/#@{int} w,
+
+  /dev/ptmx rw,
+
+  include if exists <local/ptyxis>
+}
+
+# vim:syntax=apparmor

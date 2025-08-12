@@ -14,10 +14,8 @@ profile fwupd @{exec_path} flags=(attach_disconnected,complain) {
   include <abstractions/bus/org.bluez>
   include <abstractions/bus/org.freedesktop.ModemManager1>
   include <abstractions/bus/org.freedesktop.PolicyKit1>
-  include <abstractions/bus/org.freedesktop.UDisks2>
-  include <abstractions/bus/org.freedesktop.UPower>
   include <abstractions/consoles>
-  include <abstractions/disks-read>
+  include <abstractions/disks-write>
   include <abstractions/fonts>
   include <abstractions/nameservice-strict>
 
@@ -38,16 +36,14 @@ profile fwupd @{exec_path} flags=(attach_disconnected,complain) {
   network netlink raw,
 
   #aa:dbus own bus=system name=org.freedesktop.fwupd path=/
+  #aa:dbus talk bus=system name=org.bluez.GattCharacteristic1 label=bluetoothd
+  #aa:dbus talk bus=system name=org.freedesktop.UDisks2 label=udisksd
+  #aa:dbus talk bus=system name=org.freedesktop.UPower label=upowerd
 
-  dbus send bus=system path=/org/freedesktop/DBus
-       interface=org.freedesktop.DBus
-       member={GetConnectionUnixUser,GetConnectionUnixProcessID}
-       peer=(name=org.freedesktop.DBus, label="@{p_dbus_system}"),
-
-  dbus send bus=system path=/org/freedesktop/UDisks2/Manager
-       interface=org.freedesktop.UDisks2.Manager
-       member=GetBlockDevices
-       peer=(name=:*, label=udisksd),
+  dbus receive bus=system path=/
+       interface=org.freedesktop.DBus.ObjectManager
+       member=InterfacesAdded
+       peer=(name=@{busname}, label=bluetoothd),
 
   @{exec_path} mr,
 
@@ -59,7 +55,9 @@ profile fwupd @{exec_path} flags=(attach_disconnected,complain) {
 
   /usr/share/fwupd/{,**} r,
   /usr/share/hwdata/* r,
+  /usr/share/libdrm/*.ids r,
   /usr/share/mime/mime.cache r,
+  /usr/share/misc/*.ids r,
 
   /etc/fwupd/{,**} rw,
   /etc/lsb-release r,
@@ -69,36 +67,41 @@ profile fwupd @{exec_path} flags=(attach_disconnected,complain) {
   /etc/machine-id r,
   /var/lib/dbus/machine-id r,
 
-  /boot/{,**} r,
-  /boot/EFI/*/.goutputstream-@{rand6} rw,
-  /boot/EFI/*/fw/fwupd-*.cap{,.*} rw,
-  /boot/EFI/*/fwupdx@{int}.efi rw,
+  @{efi}/{,**} r,
+  @{efi}/EFI/*/.goutputstream-@{rand6} rw,
+  @{efi}/EFI/*/fw/fwupd-*.cap{,.*} rw,
+  @{efi}/EFI/*/fwupdx@{int}.efi rw,
   @{lib}/fwupd/efi/fwupdx@{int}.efi{,.signed} r,
 
+  @{MOUNTDIRS}/*/{,@{efi}/} r,
+  @{MOUNTDIRS}/*/{,@{efi}/}EFI/{,**} r,
+
         /var/lib/flatpak/exports/share/mime/mime.cache r,
-        /var/tmp/etilqs_@{hex16} rw,
+        /var/tmp/etilqs_@{sqlhex} rw,
   owner /var/cache/fwupd/ rw,
   owner /var/cache/fwupd/** rwk,
   owner /var/lib/fwupd/ rw,
   owner /var/lib/fwupd/** rwk,
 
-  # In order to get to this file, the attach_disconnected flag has to be set
+        @{att}/@{user_cache_dirs}/gnome-software/fwupd/{,**} r,
   owner @{user_cache_dirs}/fwupd/lvfs-metadata.xml.gz r,
   owner @{user_cache_dirs}/gnome-software/fwupd/{,**} r,
 
   @{sys}/**/ r,
   @{sys}/devices/** r,
 
+  @{sys}/**/uevent r,
   @{sys}/firmware/acpi/** r,
   @{sys}/firmware/dmi/tables/DMI r,
   @{sys}/firmware/dmi/tables/smbios_entry_point r,
   @{sys}/firmware/efi/** r,
   @{sys}/firmware/efi/efivars/Boot@{hex}-@{uuid} rw,
   @{sys}/firmware/efi/efivars/BootNext-@{uuid} rw,
+  @{sys}/firmware/efi/efivars/dbx-@{uuid} rw,
   @{sys}/firmware/efi/efivars/fwupd-* rw,
+  @{sys}/firmware/efi/efivars/KEK-@{uuid} rw,
   @{sys}/kernel/security/lockdown r,
   @{sys}/kernel/security/tpm@{int}/binary_bios_measurements r,
-  @{sys}/**/uevent r,
   @{sys}/power/mem_sleep r,
 
   @{att}/@{run}/systemd/inhibit/@{int}.ref rw,
@@ -107,7 +110,9 @@ profile fwupd @{exec_path} flags=(attach_disconnected,complain) {
   @{run}/motd.d/@{int}-fwupd* rw,
   @{run}/motd.d/fwupd/{,**} rw,
   @{run}/mount/utab r,
-  @{run}/udev/data/* r,
+
+  @{run}/udev/data/+*:* r,                # Identifies all subsystems
+  @{run}/udev/data/c@{int}:@{int} r,      # Identifies all character devices
 
   @{PROC}/@{pids}/fd/ r,
   @{PROC}/@{pids}/mountinfo r,
@@ -129,7 +134,6 @@ profile fwupd @{exec_path} flags=(attach_disconnected,complain) {
   /dev/mei@{int} rw,
   /dev/mem r,
   /dev/mtd@{int} rw,
-  /dev/sd[a-z]* r,
   /dev/tpm@{int} rw,
   /dev/tpmrm@{int} rw,
   /dev/wmi/* r,

@@ -9,7 +9,6 @@ include <tunables/global>
 @{exec_path} = @{lib}/gsd-power
 profile gsd-power @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/attached/consoles>
   include <abstractions/audio-client>
   include <abstractions/bus-accessibility>
   include <abstractions/bus-session>
@@ -20,11 +19,13 @@ profile gsd-power @{exec_path} flags=(attach_disconnected) {
   include <abstractions/bus/org.freedesktop.login1.Session>
   include <abstractions/bus/org.freedesktop.login1>
   include <abstractions/bus/org.freedesktop.systemd1>
+  include <abstractions/bus/org.freedesktop.UPower.PowerProfiles>
   include <abstractions/bus/org.freedesktop.UPower>
   include <abstractions/bus/org.gnome.Mutter.IdleMonitor>
   include <abstractions/bus/org.gnome.ScreenSaver>
   include <abstractions/bus/org.gnome.SessionManager>
   include <abstractions/bus/org.gtk.vfs.MountTracker>
+  include <abstractions/consoles>
   include <abstractions/dconf-write>
   include <abstractions/fontconfig-cache-write>
   include <abstractions/gnome-strict>
@@ -42,7 +43,7 @@ profile gsd-power @{exec_path} flags=(attach_disconnected) {
   dbus send bus=system path=/org/freedesktop/UPower/KbdBacklight
        interface=org.freedesktop.UPower.KbdBacklight
        member=GetBrightness
-       peer=(name=:*, label=upowerd),
+       peer=(name=:*, label="@{p_upowerd}"),
 
   dbus receive bus=session path=/org/gtk/Settings
        interface=org.freedesktop.DBus.Properties
@@ -57,9 +58,9 @@ profile gsd-power @{exec_path} flags=(attach_disconnected) {
   owner @{GDM_HOME}/greeter-dconf-defaults r,
   owner @{gdm_config_dirs}/dconf/user r,
 
-  @{run}/udev/data/+backlight:* r,
+  @{run}/udev/data/+backlight:* r,        # For display backlights on laptops, monitors, and other screens.
   @{run}/udev/data/+drm:card@{int}-* r,   # For screen outputs
-  @{run}/udev/data/+leds:* r,
+  @{run}/udev/data/+leds:* r,             # Identifies all LEDs (keyboard, mouse, etc.)
 
   @{att}/@{run}/systemd/inhibit/@{int}.ref rw,
 

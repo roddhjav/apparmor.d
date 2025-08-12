@@ -20,18 +20,26 @@ profile journalctl @{exec_path} flags=(attach_disconnected) {
   capability net_admin,
   capability sys_resource,
 
-  signal (receive) set=(term) peer=cockpit-bridge,
-  signal (send) peer=child-pager,
+  network netlink raw,
+
+  signal receive set=kill peer=snapd,
+  signal receive set=term peer=cockpit-bridge,
+  signal send peer=child-pager,
 
   @{exec_path} mr,
 
   @{pager_path} rPx -> child-pager,
+
+  @{bin}/* r,
+  @{sbin}/* r,
 
   /var/lib/dbus/machine-id r,
   /etc/machine-id r,
 
   /var/lib/systemd/catalog/database rw,
   /var/lib/systemd/catalog/.#database* rw,
+
+  /var/log/dmesg w,
 
         /{run,var}/log/journal/ r,
         /{run,var}/log/journal/@{hex32}/ r,
@@ -47,6 +55,7 @@ profile journalctl @{exec_path} flags=(attach_disconnected) {
 
   @{run}/host/container-manager r,
   @{run}/systemd/journal/io.systemd.journal rw,
+  @{run}/systemd/notify rw,
 
         @{PROC}/sys/fs/nr_open r,
   owner @{PROC}/@{pid}/cgroup r,

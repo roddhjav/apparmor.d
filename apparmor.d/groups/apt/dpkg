@@ -21,43 +21,33 @@ profile dpkg @{exec_path} {
 
   @{exec_path} mr,
 
-  @{sh_path}         rix,
-  @{bin}/cat         rix,
-  @{bin}/rm          rix,
+  @{sh_path}                 rix,
+  @{bin}/cat                  ix,
+  @{bin}/deb-systemd-helper   Px,
+  @{bin}/deb-systemd-invoke   Px,
+  @{bin}/rm                   ix,
 
-  @{bin}/deb-systemd-helper rix,
-  @{bin}/deb-systemd-invoke rix,
-  @{bin}/dpkg-deb    rpx,
-  @{bin}/dpkg-query  rpx,
-  @{bin}/dpkg-split  rPx,
-  @{bin}/systemctl   rCx -> systemctl,
-  @{lib}/needrestart/dpkg-status rPx,
-  /usr/share/debian-security-support/check-support-status.hook rPx,
-
-  @{pager_path}      rPx -> child-pager,
+  @{bin}/dpkg-deb                   px,
+  @{bin}/dpkg-query                 px,
+  @{bin}/dpkg-split                 px,
+  @{bin}/systemctl                  Cx -> systemctl,
+  @{lib}/needrestart/dpkg-status    Px,
+  @{pager_path}                     Px -> child-pager,
+  /usr/share/debian-security-support/check-support-status.hook Px,
 
   # Package maintainer's scripts
-  # Move it to a child profile once more transitions will be available
-  /var/lib/dpkg/info/*.{config,templates} rPUx,
-  /var/lib/dpkg/info/*.{preinst,postinst} rPUx,
-  /var/lib/dpkg/info/*.{prerm,postrm}     rPUx,
-  /var/lib/dpkg/tmp.ci/{config,templates} rPUx,
-  /var/lib/dpkg/tmp.ci/{preinst,postinst} rPUx,
-  /var/lib/dpkg/tmp.ci/{prerm,postrm}     rPUx,
-  #/var/lib/dpkg/info/*.{config,templates} rCx -> scripts,
-  #/var/lib/dpkg/info/*.{preinst,postinst} rCx -> scripts,
-  #/var/lib/dpkg/info/*.{prerm,postrm}     rCx -> scripts,
-  #/var/lib/dpkg/tmp.ci/{config,templates} rCx -> scripts,
-  #/var/lib/dpkg/tmp.ci/{preinst,postinst} rCx -> scripts,
-  #/var/lib/dpkg/tmp.ci/{prerm,postrm}     rCx -> scripts,
+  /var/lib/dpkg/info/*.@{dpkg_script_ext} Px,
+  /var/lib/dpkg/info/*.control            r,
+  /var/lib/dpkg/tmp.ci/@{dpkg_script_ext} Px,
 
   # For shell pwd
   /root/ r,
 
+  #aa:lint ignore=too-wide
   # Install/update packages
   / r,
   /*{,/} rw,
-  /boot/** rwl -> /boot/**,
+  @{efi}/** rwl -> @{efi}/**,
   /etc/** rwl -> /etc/**,
   /opt/** rwl -> /opt/**,
   /srv/** rwl -> /srv/**,

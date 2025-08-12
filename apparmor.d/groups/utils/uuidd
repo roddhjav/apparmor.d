@@ -1,0 +1,31 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{sbin}/uuidd
+profile uuidd @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/consoles>
+
+  capability dac_override,
+
+  network inet dgram,
+
+  @{exec_path} mr,
+
+  owner /var/lib/libuuid/clock.txt rwk,
+  owner /var/lib/libuuid/clock-cont.txt rwk,
+
+  @{att}/@{run}/uuidd/request rw,
+
+  @{run}/uuidd/request rw,
+  @{run}/uuidd/uuidd.pid rwk,
+
+  include if exists <local/uuidd>
+}
+
+# vim:syntax=apparmor

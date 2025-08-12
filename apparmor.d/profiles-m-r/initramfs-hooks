@@ -1,0 +1,89 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = /usr/share/initramfs-tools/hooks/** /etc/initramfs-tools/hooks/**
+profile initramfs-hooks @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+
+  @{exec_path} mr,
+
+  @{sh_path}                               rix,
+  @{coreutils_path}                        rix,
+  @{bin}/fc-cache                           ix,
+  @{bin}/ischroot                           Px,
+  @{bin}/ldd                                Cx -> ldd,
+  @{bin}/plymouth                           Px,
+  @{bin}/update-alternatives                Px,
+  @{lib}/dracut/dracut-install              Px,
+  @{lib}/initramfs-tools/bin/busybox        ix,
+  @{lib}/klibc/bin/fstype                   ix,
+  @{sbin}/blkid                             Px,
+  /usr/share/mdadm/mkconf                   Px,
+
+  @{bin}/* mr,
+  @{sbin}/* mr,
+  @{lib}/ r,
+  @{lib}/** mr,
+
+  /usr/share/initramfs-tools/{,**} r,
+  /usr/share/plymouth/{,**} r,
+  /usr/share/cryptsetup/initramfs/{,**} r,
+
+  /etc/console-setup/{,**} r,
+  /etc/cryptsetup-initramfs/{,**} r,
+  /etc/crypttab r,
+  /etc/default/* r,
+  /etc/fstab r,
+  /etc/iscsi/*.iscsi r,
+  /etc/lvm/{,**} r,
+  /etc/mdadm/mdadm.conf r,
+  /etc/systemd/network/{,**} r,
+  /etc/udev/{,**} r,
+
+  / r,
+  @{efi}/config-* r,
+
+        /var/tmp/ r,
+        /var/tmp/modules_@{rand6} rw,
+  owner /var/tmp/mkinitramfs_@{rand6} rw,
+  owner /var/tmp/mkinitramfs_@{rand6}/ rw,
+  owner /var/tmp/mkinitramfs_@{rand6}/** rwl -> /var/tmp/mkinitramfs_@{rand6}/**,
+  owner /var/tmp/mkinitramfs-@{rand6} rw,
+  owner /var/tmp/mkinitramfs-*_@{rand6} rw,
+
+  owner /tmp/tmp.@{rand10}/mkinitramfs_@{rand6} rw,
+  owner /tmp/tmp.@{rand10}/mkinitramfs_@{rand6}/ rw,
+  owner /tmp/tmp.@{rand10}/mkinitramfs_@{rand6}/** rwl -> /tmp/tmp.@{rand10}/mkinitramfs_@{rand6}/**,
+  owner /tmp/tmp.@{rand10}/mkinitramfs-@{rand6} rw,
+  owner /tmp/tmp.@{rand10}/mkinitramfs-*_@{rand6} rw,
+
+  @{sys}/firmware/efi/efivars/ r,
+
+  @{PROC}/@{pid}/mounts r,
+  @{PROC}/cmdline r,
+  @{PROC}/swaps r,
+
+  profile ldd {
+    include <abstractions/base>
+    include <abstractions/consoles>
+    include <abstractions/nameservice-strict>
+
+    @{bin}/ldd mr,
+    @{bin}/* mr,
+    @{lib}/@{multiarch}/ld-linux-*so* mrix,
+    @{lib}/ld-linux.so* mr,
+
+    include if exists <local/initramfs-hooks_ldd>
+  }
+
+  include if exists <local/initramfs-hooks>
+}
+
+# vim:syntax=apparmor

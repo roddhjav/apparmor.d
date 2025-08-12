@@ -7,32 +7,31 @@ abi <abi/4.0>,
 
 include <tunables/global>
 
-# Debugging the syslogger can be difficult if it can't write to the file
-# that the kernel is logging denials to. In these cases, you can do the
-# following:
-# watch -n 1 'dmesg | tail -5'
-
-@{exec_path} = @{bin}/rsyslogd
+@{exec_path} = @{sbin}/rsyslogd
 profile rsyslogd @{exec_path} {
   include <abstractions/base>
-  include <abstractions/nameservice>
+  include <abstractions/nameservice-strict>
 
-  capability chown,  # For creating new log files and changing their owner/group
-  capability net_admin,  # For remote logs
-  capability setgid,  # For downgrading privileges
+  capability dac_override,
+  capability dac_read_search,
+  capability setgid,
   capability setuid,
   capability sys_nice,
+  capability sys_tty_config,
   capability syslog,
 
+  network inet dgram,
+  network inet6 dgram,
+
+  signal receive set=hup peer=@{p_systemd},
+
   @{exec_path} mr,
+  @{sh_path} mr,
 
   @{lib}/@{multiarch}/rsyslog/*.so mr,
 
   /etc/rsyslog.conf r,
   /etc/rsyslog.d/{,**} r,
-
-  /etc/CA/*.crt r,
-  /etc/CA/*.key r,
 
   /var/log/** rw,
   /var/spool/rsyslog/ r,

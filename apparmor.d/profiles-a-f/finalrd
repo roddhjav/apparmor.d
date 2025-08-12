@@ -1,0 +1,81 @@
+
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/finalrd
+profile finalrd @{exec_path} {
+  include <abstractions/base>
+
+  capability dac_read_search,
+  capability sys_admin,
+  capability sys_chroot,
+
+  remount options=(rw nodev nosuid relatime remount) @{run}/,
+
+  @{exec_path} mr,
+
+  @{sh_path}               rix,
+  @{bin}/cp                 ix,
+  @{bin}/dirname            ix,
+  @{bin}/env                ix,
+  @{bin}/find               ix,
+  @{bin}/{,e}grep           ix,
+  @{bin}/ln                 ix,
+  @{bin}/mkdir              ix,
+  @{bin}/mount              ix,
+  @{bin}/readlink           ix,
+  @{bin}/realpath           ix,
+  @{bin}/rm                 ix,
+  @{bin}/run-parts          ix,
+  @{bin}/sed                ix,
+  @{bin}/touch              ix,
+  @{sbin}/ldconfig{,.real}  ix,
+
+  @{bin}/ldd                         Cx -> ldd,
+  @{bin}/systemd-tmpfiles            Px,
+  @{lib}/@{multiarch}/ld-linux-*so*  Cx -> ldd,
+  @{lib}/systemd/systemd-shutdown    Px,
+  /usr/share/finalrd/*.finalrd       ix,
+
+  @{bin}/{,*} r,
+  @{lib}/{,*} r,
+  @{sbin}/{,*} r,
+
+  /usr/share/finalrd/{,**} r,
+  /usr/share/initramfs-tools/hook-functions r,
+
+  /etc/fstab r,
+  /etc/iscsi/initiatorname.iscsi r,
+  /etc/iscsi/iscsid.conf r,
+
+  / r,
+
+  @{run}/ r,
+  @{run}/finalrd-libs.conf rw,
+  @{run}/initramfs/{,**} rw,
+  @{run}/mount/ r,
+  @{run}/mount/utab r,
+
+  @{PROC}/@{pid}/mountinfo r,
+
+  profile ldd {
+    include <abstractions/base>
+    include <abstractions/consoles>
+    include <abstractions/nameservice-strict>
+
+    @{bin}/* mr,
+    @{sbin}/* mr,
+    @{lib}/@{multiarch}/ld-linux-*so* mrix,
+
+    include if exists <local/finalrd_ldd>
+  }
+
+  include if exists <local/finalrd>
+}
+
+# vim:syntax=apparmor

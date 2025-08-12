@@ -15,12 +15,18 @@ profile deja-dup-monitor @{exec_path} {
   include <abstractions/bus/org.freedesktop.portal.Desktop>
   include <abstractions/bus/org.gtk.Private.RemoteVolumeMonitor>
   include <abstractions/bus/org.gtk.vfs.Daemon>
+  include <abstractions/bus/org.gtk.vfs.MountTracker>
   include <abstractions/dconf-write>
 
   network netlink raw,
 
   #aa:dbus own bus=session name=org.gnome.DejaDup.Monitor
-  #aa:dbus talk bus=session name=org.gnome.DejaDup label=deja-dup
+  #aa:dbus talk bus=session name=org.gnome.DejaDup interface+=org.gtk.Actions label=deja-dup
+
+  dbus send bus=session path=/org/gnome/DejaDup
+       interface=org.gtk.Actions
+       member=Activate
+       peer=(name=org.gnome.DejaDup),
 
   dbus send bus=system path=/org/freedesktop/NetworkManager
        interface=org.freedesktop.DBus.Properties
@@ -28,6 +34,9 @@ profile deja-dup-monitor @{exec_path} {
        peer=(name=:*, label=NetworkManager),
 
   @{exec_path} mr,
+
+  @{bin}/chrt       rix,
+  @{bin}/ionice     rix,
 
   /usr/share/glib-2.0/schemas/gschemas.compiled r,
 

@@ -1,0 +1,33 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{etc_ro}/needrestart/restart.d/*
+profile needrestart-restart @{exec_path} {
+  include <abstractions/base>
+
+  @{exec_path} mr,
+
+  @{bin}/systemctl Cx -> systemctl,
+  @{sh_path} r,
+
+  /var/log/unattended-upgrades/unattended-upgrades-dpkg.log rw,
+
+  profile systemctl {
+    include <abstractions/base>
+    include <abstractions/app/systemctl>
+
+    capability net_admin,
+    capability sys_ptrace,
+
+    include if exists <local/needrestart-restart_systemctl>
+  }
+
+  include if exists <local/needrestart-restart>
+}
+
+# vim:syntax=apparmor

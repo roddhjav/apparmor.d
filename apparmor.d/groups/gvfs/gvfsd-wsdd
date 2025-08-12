@@ -9,8 +9,27 @@ include <tunables/global>
 @{exec_path} = @{lib}/{,gvfs/}gvfsd-wsdd
 profile gvfsd-wsdd @{exec_path} {
   include <abstractions/base>
+  include <abstractions/bus-session>
+  include <abstractions/bus-system>
+  include <abstractions/bus/org.freedesktop.NetworkManager>
+  include <abstractions/bus/org.gtk.vfs.MountTracker>
 
   network netlink raw,
+
+  #aa:dbus own bus=session name=org.gtk.vfs.mountpoint_wsdd
+
+  dbus receive bus=session path=/org/gtk/vfs/mountable
+       interface=org.gtk.vfs.Mountable
+       member=Mount
+       peer=(name="@{busname}", label=gvfsd),
+  dbus send bus=session path=/org/gtk/gvfs/exec_spaw/@{int}
+       interface=org.gtk.vfs.Spawner
+       member=Spawned
+       peer=(name="@{busname}", label=gvfsd),
+  dbus send bus=session path=/org/gtk/vfs/mounttracker
+       interface=org.gtk.vfs.MountTracker
+       member=RegisterMount
+       peer=(name="@{busname}", label=gvfsd),
 
   @{exec_path} mr,
 
@@ -19,6 +38,7 @@ profile gvfsd-wsdd @{exec_path} {
 
         @{run}/mount/utab r,
   owner @{run}/user/@{uid}/gvfsd/socket-@{rand8} rw,
+  owner @{run}/user/@{uid}/gvfsd/wsdd rw,
 
   include if exists <local/gvfsd-wsdd>
 }

@@ -1,0 +1,25 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+# LOGPROF-SUGGEST: no
+
+# Do not use it manually, It is automatically included in a profile by the
+# `aa:dbus own` directive.
+
+# Allow owning a name on DBus public bus
+
+  abi <abi/4.0>,
+
+  dbus send bus=accessibility path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={RequestName,ReleaseName}
+       peer=(name=org.freedesktop.DBus, label="@{p_dbus_accessibility}"),
+
+  dbus send bus=accessibility path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={GetConnectionUnixProcessID,GetConnectionUnixUser,GetConnectionCredentials}
+       peer=(name=org.freedesktop.DBus, label="@{p_dbus_accessibility}"),
+
+  include if exists <abstractions/bus/own-accessibility.d>
+
+# vim:syntax=apparmor

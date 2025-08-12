@@ -7,9 +7,10 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{exec_path} = @{lib}/systemd/systemd-machined
-profile systemd-machined @{exec_path} {
+profile systemd-machined @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus-system>
+  include <abstractions/consoles>
   include <abstractions/nameservice-strict>
   include <abstractions/common/systemd>
 
@@ -21,6 +22,7 @@ profile systemd-machined @{exec_path} {
   capability kill,
   capability mknod,
   capability setgid,
+  capability setuid,
   capability sys_admin,
   capability sys_chroot,
   capability sys_ptrace,
@@ -31,26 +33,47 @@ profile systemd-machined @{exec_path} {
   network inet6 dgram,
   network netlink raw,
 
+  signal send set=rtmin+6 peer=systemd-nspawn,
+
+  ptrace read peer=systemd-nspawn,
+
+  unix type=stream addr=@@{udbus}/bus/systemd-machine/system,
+
   #aa:dbus own bus=system name=org.freedesktop.machine1
 
   #aa:dbus talk bus=system name=org.freedesktop.systemd1 label="@{p_systemd}"
 
   @{exec_path} mr,
 
-  /var/lib/machines/{,**} rw,
   /etc/machine-id r,
+
+  / r,
+  @{att}/ r,
+
+  owner /var/lib/machines/ rw,
+  owner /var/lib/machines/** rwk,
+
+  owner @{run}/systemd/nspawn/ w,
+  owner @{run}/systemd/nspawn/locks/ w,
+  owner @{run}/systemd/nspawn/locks/** rwk,
 
   @{run}/systemd/machine/{,**} rw,
   @{run}/systemd/machines/{,**} rw,
   @{run}/systemd/notify w,
 
   @{PROC}/@{pid}/cgroup r,
+  @{PROC}/@{pid}/fdinfo/@{int} r,
+  @{PROC}/@{pid}/gid_map r,
+  @{PROC}/@{pid}/setgroups r,
+  @{PROC}/@{pid}/uid_map r,
   @{PROC}/pressure/cpu r,
   @{PROC}/pressure/io r,
   @{PROC}/pressure/memory r,
 
   /dev/ptmx rw,
   /dev/pts/@{int} rw,
+  /dev/pts/ptmx rw,
+  /dev/vsock r,
 
   include if exists <local/systemd-machined>
 }

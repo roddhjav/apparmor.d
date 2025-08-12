@@ -1,0 +1,41 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/systemd/systemd-nsresourced
+profile systemd-nsresourced @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/common/systemd>
+
+  capability bpf,
+  capability perfmon,
+  capability sys_resource,
+
+  signal receive set=usr2 peer=systemd-nsresourced//&systemd-nsresourcework,
+
+  @{exec_path} mr,
+
+  @{lib}/systemd/systemd-nsresourcework ix, # no new privs
+
+  @{run}/systemd/nsresource/ rw,
+  @{run}/systemd/nsresource/** rw,
+
+  @{sys}/devices/kprobe/type r,
+  @{sys}/fs/bpf/ r,
+  @{sys}/fs/bpf/systemd/ rw,
+  @{sys}/fs/bpf/systemd/userns-restrict/{,**} rw,
+  @{sys}/fs/cgroup/system.slice/systemd-nsresourced.service/memory.pressure rw,
+  @{sys}/kernel/btf/vmlinux r,
+  @{sys}/kernel/security/lsm r,
+
+  @{PROC}/@{pid}/cgroup r,
+  @{PROC}/pressure/* r,
+
+  include if exists <local/systemd-nsresourced>
+}
+
+# vim:syntax=apparmor

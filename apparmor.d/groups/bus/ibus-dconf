@@ -11,13 +11,12 @@ profile ibus-dconf @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus-session>
   include <abstractions/bus-system>
+  include <abstractions/bus/org.gtk.vfs.MountTracker>
   include <abstractions/dconf-write>
   include <abstractions/nameservice-strict>
 
-  signal (receive) set=term peer=ibus-daemon,
-
-  unix (send, receive, connect) type=stream peer=(addr="@/home/*/.cache/ibus/dbus-????????",          label=ibus-daemon),
-  unix (send, receive, connect) type=stream peer=(addr="@/var/lib/gdm{3,}/.cache/ibus/dbus-????????", label=ibus-daemon),
+  signal receive set=kill peer=@{p_systemd_user},
+  signal receive set=term peer=ibus-daemon,
 
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable

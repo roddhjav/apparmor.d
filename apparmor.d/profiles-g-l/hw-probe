@@ -11,7 +11,6 @@ include <tunables/global>
 profile hw-probe @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/perl>
-  include <abstractions/X-strict>
 
   capability sys_admin,
 
@@ -19,13 +18,12 @@ profile hw-probe @{exec_path} flags=(attach_disconnected) {
   network inet6 dgram,
 
   @{exec_path} rm,
-  @{bin}/perl r,
 
   @{sh_path}             rix,
   @{bin}/{,e}grep        rix,
   @{bin}/{m,g,}awk       rix,
   @{bin}/dd              rix,
-  @{bin}/efibootmgr      rix,
+  @{sbin}/efibootmgr     rix,
   @{bin}/efivar          rix,
   @{bin}/find            rix,
   @{bin}/md5sum          rix,
@@ -35,35 +33,26 @@ profile hw-probe @{exec_path} flags=(attach_disconnected) {
   @{bin}/tar             rix,
   @{bin}/uname           rix,
 
+  @{bin}/vulkaninfo     rPUx,
   @{bin}/acpi            rPx,
   @{bin}/amixer          rPx,
   @{bin}/aplay           rPx,
-  @{bin}/biosdecode      rPx,
   @{bin}/cpuid           rPx,
   @{bin}/cpupower        rPx,
   @{bin}/curl            rCx -> curl,
   @{bin}/df              rPx,
-  @{bin}/dkms            rPx,
   @{bin}/dmesg           rPx,
-  @{bin}/dmidecode       rPx,
   @{bin}/dpkg            rPx -> child-dpkg,
   @{bin}/edid-decode     rPx,
-  @{bin}/ethtool         rCx -> netconfig,
-  @{bin}/fdisk           rPx,
   @{bin}/glxgears        rPx,
   @{bin}/glxinfo         rPx,
   @{bin}/hciconfig       rPx,
-  @{bin}/hdparm          rPx,
-  @{bin}/hwinfo          rPx,
   @{bin}/i2cdetect       rPx,
-  @{bin}/ifconfig        rCx -> netconfig,
   @{bin}/inxi            rPx,
-  @{bin}/iw              rCx -> netconfig,
-  @{bin}/iwconfig        rCx -> netconfig,
   @{bin}/journalctl      rCx -> journalctl,
   @{bin}/killall         rCx -> killall,
-  @{bin}/kmod            rix,
-  @{bin}/lsb_release     rPx -> lsb_release,
+  @{bin}/kmod            rCx -> kmod,
+  @{bin}/lsb_release     rPx,
   @{bin}/lsblk           rPx,
   @{bin}/lscpu           rPx,
   @{bin}/lspci           rPx,
@@ -71,10 +60,8 @@ profile hw-probe @{exec_path} flags=(attach_disconnected) {
   @{bin}/memtester       rPx,
   @{bin}/nmcli           rPx,
   @{bin}/pacman          rCx -> pacman,
-  @{bin}/rfkill          rPx,
   @{bin}/rpm             rCx -> rpm,
   @{bin}/sensors         rPx,
-  @{bin}/smartctl        rPx,
   @{bin}/systemctl       rCx -> systemctl,
   @{bin}/systemd-analyze rPx,
   @{bin}/udevadm         rCx -> udevadm,
@@ -84,12 +71,23 @@ profile hw-probe @{exec_path} flags=(attach_disconnected) {
   @{bin}/xdpyinfo        rPx,
   @{bin}/xinput          rPx,
   @{bin}/xrandr          rPx,
+  @{sbin}/biosdecode     rPx,
+  @{sbin}/dkms           rPx,
+  @{sbin}/dmidecode      rPx,
+  @{sbin}/fdisk          rPx,
+  @{sbin}/hdparm         rPx,
+  @{bin}/boltctl        rPUx,
+  @{sbin}/hwinfo         rPx,
+  @{sbin}/rfkill         rPx,
+  @{sbin}/smartctl       rPx,
 
   /etc/modprobe.d/{,*.conf} r,
 
+  @{efi}/EFI/{,**} r,
+
   owner @{HOME}/HW_PROBE/{,**} rw,
 
-  audit owner @{tmp}/*/ rw,
+  owner @{tmp}/@{rand10}/  rw,
   owner @{tmp}/*/cpu_perf rw,
 
   @{sys}/class/drm/ r,
@@ -99,18 +97,33 @@ profile hw-probe @{exec_path} flags=(attach_disconnected) {
   @{sys}/devices/virtual/dmi/id/* r,
   @{sys}/firmware/efi/efivars/ r,
   @{sys}/firmware/efi/efivars/* r,
-  @{sys}/module/*/ r,
-  @{sys}/module/*/{coresize,refcnt} r,
-  @{sys}/module/*/holders/ r,
 
   @{PROC}/bus/input/devices r,
   @{PROC}/cmdline r,
   @{PROC}/interrupts r,
   @{PROC}/ioports r,
-  @{PROC}/modules r,
   @{PROC}/scsi/scsi r,
 
   /dev/{,**} r,
+
+  profile kmod {
+    include <abstractions/base>
+    include <abstractions/app/kmod>
+
+    capability syslog,
+
+    @{sys}/module/{,**} r,
+
+    include if exists <local/hw-probe_kmod>
+  }
+
+  profile curl flags=(attach_disconnected) {
+    include <abstractions/base>
+
+    @{bin}/curl mr,
+
+    include if exists <local/hw-probe_curl>
+  }
 
   profile pacman flags=(attach_disconnected) {
     include <abstractions/base>
@@ -159,9 +172,12 @@ profile hw-probe @{exec_path} flags=(attach_disconnected) {
     @{run}/log/ rw,
     /{run,var}/log/journal/ r,
     /{run,var}/log/journal/@{hex32}/ r,
-    /{run,var}/log/journal/@{hex32}/user-@{hex}.journal* r,
     /{run,var}/log/journal/@{hex32}/system.journal* r,
-    /{run,var}/log/journal/@{hex32}/system@@{hex}.journal* r,
+    /{run,var}/log/journal/@{hex32}/system@@{hex}-@{hex}.journal* r,
+    /{run,var}/log/journal/@{hex32}/system@@{hex32}-@{hex16}-@{hex16}.journal* r,
+    /{run,var}/log/journal/@{hex32}/user-@{hex}.journal* r,
+    /{run,var}/log/journal/@{hex32}/user-@{uid}@@{hex}-@{hex}.journal* r,
+    /{run,var}/log/journal/@{hex32}/user-@{uid}@@{hex32}-@{hex16}-@{hex16}.journal* r,
 
     owner @{PROC}/@{pid}/stat r,
 
@@ -190,31 +206,6 @@ profile hw-probe @{exec_path} flags=(attach_disconnected) {
     include <abstractions/app/udevadm>
 
     include if exists <local/hw-probe_udevadm>
-  }
-
-  profile netconfig flags=(attach_disconnected) {
-    include <abstractions/base>
-
-    # Not needed
-    deny capability net_admin,
-    deny capability net_raw,
-
-    network inet dgram,
-    network inet6 dgram,
-    network ipx dgram,
-    network ax25 dgram,
-    network appletalk dgram,
-    network netlink raw,
-
-    @{bin}/iw       mr,
-    @{bin}/ifconfig mr,
-    @{bin}/iwconfig mr,
-    @{bin}/ethtool  mr,
-
-    owner @{PROC}/@{pid}/net/if_inet6 r,
-    owner @{PROC}/@{pid}/net/dev r,
-
-    include if exists <local/hw-probe_netconfig>
   }
 
   profile systemctl flags=(attach_disconnected) {

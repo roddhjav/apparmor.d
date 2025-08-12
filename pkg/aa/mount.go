@@ -29,7 +29,7 @@ func init() {
 			"ro", "rw", "acl", "async", "atime", "bind", "dev", "diratime",
 			"dirsync", "exec", "iversion", "loud", "mand", "move", "noacl",
 			"noatime", "nodev", "nodiratime", "noexec", "noiversion", "nomand",
-			"norelatime", "nosuid", "nouser", "private", "rbind", "relatime",
+			"norelatime", "nosuid", "nosymfollow", "nouser", "private", "rbind", "relatime",
 			"remount", "rprivate", "rshared", "rslave", "runbindable", "shared",
 			"silent", "slave", "strictatime", "suid", "sync", "unbindable",
 			"user", "verbose",
@@ -181,7 +181,7 @@ func (r *Mount) Merge(other Rule) bool {
 	o, _ := other.(*Mount)
 	mc := &r.MountConditions
 
-	if !r.Qualifier.Equal(o.Qualifier) {
+	if !r.Equal(o.Qualifier) {
 		return false
 	}
 	if r.Source == o.Source && r.MountPoint == o.MountPoint &&
@@ -194,10 +194,10 @@ func (r *Mount) Merge(other Rule) bool {
 
 func (r *Mount) Lengths() []int {
 	return []int{
-		r.Qualifier.getLenAudit(),
-		r.Qualifier.getLenAccess(),
-		r.MountConditions.getLenFsType(),
-		r.MountConditions.getLenOptions(),
+		r.getLenAudit(),
+		r.getLenAccess(),
+		r.getLenFsType(),
+		r.getLenOptions(),
 		length("", r.Source),
 		length("", r.MountPoint),
 	}
@@ -278,7 +278,7 @@ func (r *Umount) Merge(other Rule) bool {
 	o, _ := other.(*Umount)
 	mc := &r.MountConditions
 
-	if !r.Qualifier.Equal(o.Qualifier) {
+	if !r.Equal(o.Qualifier) {
 		return false
 	}
 	if r.MountPoint == o.MountPoint && mc.Merge(o.MountConditions) {
@@ -290,10 +290,10 @@ func (r *Umount) Merge(other Rule) bool {
 
 func (r *Umount) Lengths() []int {
 	return []int{
-		r.Qualifier.getLenAudit(),
-		r.Qualifier.getLenAccess(),
-		r.MountConditions.getLenFsType(),
-		r.MountConditions.getLenOptions(),
+		r.getLenAudit(),
+		r.getLenAccess(),
+		r.getLenFsType(),
+		r.getLenOptions(),
 		length("", r.MountPoint),
 	}
 }
@@ -374,7 +374,7 @@ func (r *Remount) Merge(other Rule) bool {
 	o, _ := other.(*Remount)
 	mc := &r.MountConditions
 
-	if !r.Qualifier.Equal(o.Qualifier) {
+	if !r.Equal(o.Qualifier) {
 		return false
 	}
 	if r.MountPoint == o.MountPoint && mc.Merge(o.MountConditions) {
@@ -386,10 +386,10 @@ func (r *Remount) Merge(other Rule) bool {
 
 func (r *Remount) Lengths() []int {
 	return []int{
-		r.Qualifier.getLenAudit(),
-		r.Qualifier.getLenAccess(),
-		r.MountConditions.getLenFsType(),
-		r.MountConditions.getLenOptions(),
+		r.getLenAudit(),
+		r.getLenAccess(),
+		r.getLenFsType(),
+		r.getLenOptions(),
 		length("", r.MountPoint),
 	}
 }

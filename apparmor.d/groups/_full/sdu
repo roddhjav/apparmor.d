@@ -1,0 +1,141 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Part of the systemd-user profile.
+
+# sdu is a profile for SystemD-executor run as User, it is used to run all services
+# files and to encapsulate stacked services profiles (hence the short name).
+# It aims at reducing the size of the systemd-user profile.
+
+# Only use this profile with a fully configured system. Otherwise it **WILL**
+# break your computer. See https://apparmor.pujol.io/full-system-policy/.
+
+# Distributions and other programs can add rules in the usr/sdu.d directory
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/systemd-executor
+profile sdu flags=(attach_disconnected,mediate_deleted) {
+  include <abstractions/base>
+  include <abstractions/audio-server>
+  include <abstractions/bus-session>
+  include <abstractions/bus-system>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+  include <abstractions/xdg-desktop>
+
+  network netlink raw,
+
+  change_profile,
+
+  ptrace read,
+
+  unix type=dgram peer=(label=@{p_systemd_user}),
+
+  dbus bus=session,
+
+  @{exec_path} mr,
+
+  @{bin}/**                                       mPx,
+  @{sbin}/**                                      mPx,
+  @{lib}/**                                        Px,
+  /etc/cron.*/*                                    Px,
+  /opt/*/**                                        Px,
+  /usr/share/*/**                                  Px,
+
+  # Unit services using systemctl
+  @{bin}/systemctl                                 Cx -> systemctl,
+
+  # Shell based user unit services
+  @{sh_path}                                       Cx -> shell,
+
+  # Dbus needs to be started without environment scrubbing
+  @{bin}/dbus-broker                               px -> dbus-session,
+  @{bin}/dbus-broker-launch                        px -> dbus-session,
+  @{bin}/dbus-daemon                               px -> dbus-session,
+  @{lib}/dbus-1.0/dbus-daemon-launch-helper        px -> dbus-session,
+
+  / r,
+  @{bin}/* r,
+  @{sbin}/* r,
+  /usr/share/** r,
+
+  owner @{desktop_local_dirs}/ w,
+  owner @{desktop_local_dirs}/state/ w,
+  owner @{desktop_local_dirs}/state/wireplumber/{,**} rw,
+
+  owner @{run}/user/@{uid}/pipewire-@{int} rw,
+  owner @{run}/user/@{uid}/pipewire-@{int}-manager rw,
+  owner @{run}/user/@{uid}/pipewire-@{int}-manager.lock rwk,
+  owner @{run}/user/@{uid}/pipewire-@{int}.lock rwk,
+  owner @{run}/user/@{uid}/pulse/pid rw,
+
+  owner @{user_state_dirs}/wireplumber/ rw,
+  owner @{user_state_dirs}/wireplumber/stream-properties rw,
+  owner @{user_state_dirs}/wireplumber/stream-properties.@{rand6} rw,
+
+  @{run}/systemd/users/@{uid} r,
+  @{run}/systemd/users/@{int} r,
+
+  @{run}/udev/data/c14:@{int} r,          # Open Sound System (OSS)
+  @{run}/udev/data/c81:@{int} r,          # For video4linux
+  @{run}/udev/data/c116:@{int} r,         # For ALSA
+  @{run}/udev/data/c@{dynamic}:@{int} r,  # For dynamic assignment range 234 to 254, 384 to 511
+
+  @{sys}/bus/ r,
+  @{sys}/bus/media/devices/ r,
+  @{sys}/devices/@{pci}/video4linux/video@{int}/uevent r,
+  @{sys}/devices/**/device:*/{,**/}path r,
+  @{sys}/devices/**/sound/**/pcm_class r,
+  @{sys}/devices/**/sound/**/uevent r,
+  @{sys}/devices/system/node/ r,
+  @{sys}/devices/system/node/node@{int}/meminfo r,
+  @{sys}/devices/virtual/dmi/id/bios_vendor r,
+  @{sys}/devices/virtual/dmi/id/product_name r,
+  @{sys}/devices/virtual/dmi/id/sys_vendor r,
+  @{sys}/devices/virtual/sound/seq/uevent r,
+  @{sys}/devices/virtual/sound/timer/uevent r,
+
+        @{sys}/module/apparmor/parameters/enabled r,
+  owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/{,**} rw,
+
+        @{PROC}/pressure/* r,
+        @{PROC}/sys/fs/nr_open r,
+  owner @{PROC}/@{pid}/attr/apparmor/exec w,
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/oom_score_adj rw,
+  owner @{PROC}/@{pid}/task/@{tid}/comm rw,
+
+  /dev/kmsg w,
+
+  deny capability net_admin,
+
+  profile shell flags=(attach_disconnected,mediate_deleted,complain) {
+    include <abstractions/base>
+
+    @{sh_path}         mr,
+    @{bin}/systemctl   Px -> sdu//systemctl,
+
+    include if exists <local/sdu_shell>
+  }
+
+  profile systemctl flags=(attach_disconnected,mediate_deleted,complain) {
+    include <abstractions/base>
+    include <abstractions/app/systemctl>
+
+    owner @{run}/user/@{uid}/systemd/private rw,
+
+    deny capability net_admin,
+
+    include if exists <usr/sdu_systemctl.d>
+    include if exists <local/sdu_systemctl>
+  }
+
+  include if exists <usr/sdu.d>
+  include if exists <local/sdu>
+}
+
+# vim:syntax=apparmor

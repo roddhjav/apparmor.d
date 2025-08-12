@@ -1,0 +1,24 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/udev/fido_id
+profile udev-fido_id @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/devices-usb-read>
+
+  @{exec_path} mr,
+
+  /etc/udev/udev.conf r,
+
+  @{sys}/devices/@{pci}/report_descriptor r,
+  @{sys}/devices/virtual/**/report_descriptor r,
+
+  include if exists <local/udev-fido_id>
+}
+
+# vim:syntax=apparmor

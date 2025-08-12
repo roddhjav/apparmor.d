@@ -13,6 +13,7 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/bus-accessibility>
   include <abstractions/bus-session>
   include <abstractions/bus-system>
+  include <abstractions/bus/com.canonical.dbusmenu>
   include <abstractions/bus/net.hadess.PowerProfiles>
   include <abstractions/bus/net.hadess.SwitcherooControl>
   include <abstractions/bus/net.reactivated.Fprint>
@@ -55,16 +56,14 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   network netlink raw,
   network unix stream,
 
-  ptrace (read),
-  ptrace (readby) peer=pipewire,
+  ptrace read,
 
-  signal (receive) set=(term, hup) peer=gdm*,
-  signal (send),
+  signal receive set=(term, hup) peer=gdm*,
+  signal send,
 
   unix (send,receive) type=stream addr=none peer=(label=gnome-extension-ding),
   unix (send,receive) type=stream addr=none peer=(label=xkbcomp),
   unix (send,receive) type=stream addr=none peer=(label=xwayland),
-  unix (send,receive, connect) type=stream peer=(addr="@/var/lib/gdm{3,}/.cache/ibus/dbus-????????", label=ibus-daemon),
 
   # Owned by gnome-shell
 
@@ -75,6 +74,7 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   #aa:dbus own bus=session name=com.canonical.{U,u}nity
   #aa:dbus own bus=session name=com.rastersoft.dingextension
   #aa:dbus own bus=session name=org.ayatana.NotificationItem
+  #aa:dbus own bus=session name=org.freedesktop.a11y.Manager
   #aa:dbus own bus=session name=org.gtk.Actions path=/**
   #aa:dbus own bus=session name=org.gtk.MountOperationHandler
   #aa:dbus own bus=session name=org.gtk.Notifications
@@ -82,14 +82,18 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
   # Talk with gnome-shell
 
-  #aa:dbus talk bus=system name=org.freedesktop.Accounts label=accounts-daemon
-  #aa:dbus talk bus=system name=org.freedesktop.ColorManager label=colord
-  #aa:dbus talk bus=system name=org.freedesktop.login1 label=systemd-logind
+  #aa:dbus talk bus=system name=org.freedesktop.Accounts label="@{p_accounts_daemon}"
+  #aa:dbus talk bus=system name=org.freedesktop.bolt label=boltd
+  #aa:dbus talk bus=system name=org.freedesktop.ColorManager label="@{p_colord}"
+  #aa:dbus talk bus=system name=org.freedesktop.login1 label="@{p_systemd_logind}"
+  #aa:dbus talk bus=system name=org.freedesktop.UPower.PowerProfiles label=@{p_power_profiles_daemon}
   #aa:dbus talk bus=system name=org.gnome.DisplayManager label=gdm
 
   #aa:dbus talk bus=session name=com.rastersoft.ding label=gnome-extension-ding
+  #aa:dbus talk bus=session name=org.gnome.* label=gnome-*
+  #aa:dbus talk bus=session name=org.gnome.*.SearchProvider interface+=org.gnome.Shell.SearchProvider2 label="*"
+  #aa:dbus talk bus=session name=org.gnome.Nautilus label=nautilus
   #aa:dbus talk bus=session name=org.gnome.ScreenSaver label=gjs-console
-  #aa:dbus talk bus=session name=org.gnome.SessionManager label=gnome-session-binary
   #aa:dbus talk bus=session name=org.gnome.SettingsDaemon.* label=gsd-*
   #aa:dbus talk bus=session name=org.gtk.vfs label="gvfsd{,-*}"
 
@@ -98,35 +102,29 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   dbus send bus=system path=/org/freedesktop/PolicyKit1/Authority
        interface=org.freedesktop.PolicyKit1.Authority
        member=RegisterAuthenticationAgent
-       peer=(name=:*, label=polkitd),
+       peer=(name=:*, label="@{p_polkitd}"),
   dbus receive bus=system path=/org/freedesktop/PolicyKit1/AuthenticationAgent
        interface=org.freedesktop.PolicyKit1.AuthenticationAgent
        member=BeginAuthentication
-       peer=(name=:*, label=polkitd),
+       peer=(name=:*, label="@{p_polkitd}"),
 
   dbus send bus=system path=/org/freedesktop/NetworkManager/AgentManager
        interface=org.freedesktop.NetworkManager.AgentManager
        member={RegisterWithCapabilities,Unregister}
        peer=(name=:*, label=NetworkManager),
 
-  dbus send bus=system path=/org/freedesktop/DBus
-       interface=org.freedesktop.DBus
-       member={GetConnectionUnixUser,GetConnectionUnixProcessID,GetNameOwner,ListNames}
-       peer=(name=org.freedesktop.DBus, label="@{p_dbus_system}"),
-
   # Session bus
 
-  dbus send bus=session path=/org/freedesktop/DBus
-       interface=org.freedesktop.DBus
-       member={GetConnectionUnixUser,GetConnectionUnixProcessID,GetNameOwner,ListNames}
-       peer=(name=org.freedesktop.DBus, label="@{p_dbus_session}"),
+  dbus send bus=session path=/org/gnome/**
+       peer=(name=org.gnome.*),
+
   dbus send bus=session path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus.Properties
        member=GetAll
        peer=(name=org.freedesktop.DBus, label="@{p_dbus_session}"),
   dbus send bus=session path=/
        interface=org.freedesktop.DBus
-       member={GetConnectionUnixProcessID,GetNameOwner,ListNames}
+       member={GetNameOwner,ListNames}
        peer=(name=org.freedesktop.DBus, label="@{p_dbus_session}"),
 
   dbus send bus=accessibility path=/org/a11y/atspi/accessible/root
@@ -163,24 +161,25 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
        member=Introspect
        peer=(name=org.freedesktop.DBus, label="@{p_dbus_session}"),
 
-  dbus send bus=session path=/org/gnome/*/SearchProvider
-      interface=org.gnome.Shell.SearchProvider2
-      peer=(name=@{busname}),
-
   @{exec_path} mr,
 
   @{bin}/unzip                  rix,
 
+  @{bin}/flatpak                rPx,
   @{bin}/gjs-console            rPx,
   @{bin}/glib-compile-schemas   rPx,
   @{bin}/ibus-daemon            rPx,
-  @{bin}/Xwayland               rPx,
+  @{bin}/sensors                rPx,
   @{bin}/tecla                  rPx,
+  @{bin}/Xwayland               rPx,
+  @{bin}/nvidia-smi             rPx, # FIXME; for extension only
+  @{lib}/@{multiarch}/glib-2.0/glib-compile-schemas rPx,
   @{lib}/{,NetworkManager/}nm-openvpn-auth-dialog rPx,
   @{lib}/mutter-x11-frames      rPx,
   #aa:exec polkit-agent-helper
 
   @{sh_path}                                              rCx -> shell,
+  @{bin}/pkexec                                           rCx -> pkexec,
   @{lib}/gio-launch-desktop                               rCx -> open,
   @{lib}/@{multiarch}/glib-@{version}/gio-launch-desktop  rCx -> open,
 
@@ -188,8 +187,8 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   /usr/share/gnome-shell/extensions/*/**               rPUx,
 
   /opt/**/share/icons/{,**} r,
-  /snap/*/@{uid}/**.png r,
-  /usr/share/**.{png,jpg,svg} r,
+  /snap/*/@{uid}/**.@{image_ext} r,
+  /usr/share/**.@{image_ext} r,
   /usr/share/**/icons/{,**} r,
   /usr/share/backgrounds/{,**} r,
   /usr/share/byobu/desktop/byobu* r,
@@ -229,6 +228,8 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{gdm_cache_dirs}/gstreamer-@{int}/registry.*.bin{,.tmp@{rand6}} rw,
   owner @{gdm_cache_dirs}/ibus/dbus-@{rand8} rw,
   owner @{gdm_cache_dirs}/libgweather/ r,
+  owner @{gdm_cache_dirs}/nvidia/GLCache/ rw,
+  owner @{gdm_cache_dirs}/nvidia/GLCache/** rwk,
   owner @{gdm_config_dirs}/dconf/user r,
   owner @{gdm_config_dirs}/ibus/ rw,
   owner @{gdm_config_dirs}/ibus/bus/ rw,
@@ -236,30 +237,38 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{gdm_config_dirs}/pulse/ rw,
   owner @{gdm_config_dirs}/pulse/client.conf r,
   owner @{gdm_config_dirs}/pulse/cookie rwk,
+  owner @{gdm_local_dirs}/ w,
+  owner @{gdm_share_dirs}/ w,
   owner @{gdm_share_dirs}/applications/{,**} r,
   owner @{gdm_share_dirs}/gnome-shell/{,**} rw,
   owner @{gdm_share_dirs}/icc/ rw,
-  owner @{gdm_share_dirs}/icc/edid-@{hex32}.icc rw,
   owner @{gdm_share_dirs}/icc/.goutputstream-@{rand6} rw,
+  owner @{gdm_share_dirs}/icc/edid-@{hex32}.icc rw,
 
   owner @{HOME}/.face r,
   owner @{HOME}/.mozilla/firefox/firefox-mpris/{,*} r,
+  owner @{HOME}/.mozilla/native-messaging-hosts/ rw,
+  owner @{HOME}/.mozilla/native-messaging-hosts/org.gnome.shell.*.json{,.@{rand6}} rw,
   owner @{HOME}/.tpm2_pkcs11/tpm2_pkcs11.sqlite3 rw,
-  owner @{HOME}/.var/app/**.{png,jpg,svg} r,
+  owner @{HOME}/.var/app/**.@{image_ext} r,
   owner @{HOME}/.var/app/**/ r,
   owner @{HOME}/@{XDG_SCREENSHOTS_DIR}/{,**} rw,
   owner @{HOME}/@{XDG_WALLPAPERS_DIR}/{,**} rw,
 
-  owner @{user_games_dirs}/**.{png,jpg,svg} r,
-  owner @{user_music_dirs}/**.{png,jpg,svg} r,
+  owner @{user_games_dirs}/**.@{image_ext} r,
+  owner @{user_music_dirs}/**.@{image_ext} r,
 
   owner @{user_config_dirs}/.goutputstream{,-@{rand6}} rw,
+  owner @{user_config_dirs}/**/NativeMessagingHosts/ rw,
+  owner @{user_config_dirs}/**/NativeMessagingHosts/org.gnome.shell.*.json{,.@{rand6}} rw,
   owner @{user_config_dirs}/background r,
   owner @{user_config_dirs}/ibus/ w,
   owner @{user_config_dirs}/monitors.xml{,~} rwl,
   owner @{user_config_dirs}/tiling-assistant/{,**} rw,
 
   owner @{user_share_dirs}/backgrounds/{,**} rw,
+  owner @{user_share_dirs}/dbus-1/services/ r,
+  owner @{user_share_dirs}/dbus-1/services/org.gnome.Shell.*.service{,.@{rand6}} rw,
   owner @{user_share_dirs}/desktop-directories/{,**} r,
   owner @{user_share_dirs}/gnome-shell/{,**} rw,
   owner @{user_share_dirs}/gnome-shell/extensions/{,**} r,
@@ -267,7 +276,9 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{user_share_dirs}/icc/ rw,
   owner @{user_share_dirs}/icc/.goutputstream-@{rand6} rw,
   owner @{user_share_dirs}/icc/edid-@{hex32}.icc rw,
+  owner @{user_share_dirs}/icons/**/org.gnome.Shell.*.svg{,.@{rand6}} w,
 
+  owner @{user_share_dirs}/applications/org.gnome.Shell.*.desktop{,.@{rand6}} rw,
   owner @{user_cache_dirs}/evolution/addressbook/*/PHOTO-* r,
   owner @{user_cache_dirs}/gnome-boxes/*.png r,
   owner @{user_cache_dirs}/gnome-photos/{,**} r,
@@ -304,19 +315,19 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   @{run}/udev/tags/seat/ r,
 
   @{run}/udev/data/+input:input@{int} r,  # for mouse, keyboard, touchpad
-  @{run}/udev/data/+platform:* r,
+  @{run}/udev/data/+platform:* r,         # Identifies onboard devices (laptop/board model, power controllers, thermal sensors)
   @{run}/udev/data/+dmi:id r,             # for motherboard info
-  @{run}/udev/data/+acpi* r,
+  @{run}/udev/data/+acpi:* r,             # Exposes ACPI objects (power buttons, batteries, thermal)
   @{run}/udev/data/+pci:* r,              # Identifies all PCI devices (CPU, GPU, Network, Disks, USB, etc.)
   @{run}/udev/data/+sound:card@{int} r,   # for sound card
-  @{run}/udev/data/+usb* r,               # for USB mouse and keyboard
-  @{run}/udev/data/+i2c:* r,
-  @{run}/udev/data/+hid:* r,              # for HID-Compliant Keyboard
+  @{run}/udev/data/+usb:* r,              # Identifies all USB devices
+  @{run}/udev/data/+i2c:* r,              # For Inter-Integrated Circuit, low-speed peripherals (sensors, EEPROMs, etc.)
+  @{run}/udev/data/+hid:* r,              # For Human Interface Device (mice, controllers, drawing tablets, scanners)
   @{run}/udev/data/c10:@{int} r,          # for non-serial mice, misc features
   @{run}/udev/data/c13:@{int} r,          # for /dev/input/*
   @{run}/udev/data/c189:@{int}  r,        # for /dev/bus/usb/**
   @{run}/udev/data/c226:@{int} r,         # for /dev/dri/card*
-  @{run}/udev/data/n@{int} r,
+  @{run}/udev/data/n@{int} r,             # For network interfaces
 
   @{sys}/**/uevent r,
   @{sys}/bus/ r,
@@ -377,12 +388,14 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
     capability sys_ptrace,
 
-    ptrace (read),
+    ptrace read,
 
     @{sh_path} mr,
 
-    @{bin}/pmap rix,
-    @{bin}/grep rix,
+    @{bin}/cat   rix,
+    @{bin}/{,e}grep  rix,
+    @{bin}/kmod  rPx -> gnome-shell//lsmod,
+    @{bin}/pmap  rix,
 
     @{sys}/devices/system/node/ r,
 
@@ -393,6 +406,29 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
     /dev/tty rw,
 
     include if exists <local/gnome-shell_shell>
+  }
+
+  profile lsmod flags=(attach_disconnected,mediate_deleted) {
+    include <abstractions/base>
+    include <abstractions/app/kmod>
+
+    @{sys}/module/{,**} r,
+
+    include if exists <local/gnome-shell_lsmod>
+  }
+
+  profile pkexec {
+    include <abstractions/base>
+    include <abstractions/app/pkexec>
+
+    ptrace read peer=gnome-shell,
+
+    @{bin}/pkexec mr,
+
+    /usr/local/bin/batteryhealthchargingctl{,-@{user}} rPx,
+    @{bin}/batteryhealthchargingctl{,-@{user}} rPx,
+
+    include if exists <local/gnome-shell_pkexec>
   }
 
   profile open flags=(attach_disconnected,mediate_deleted,complain) {

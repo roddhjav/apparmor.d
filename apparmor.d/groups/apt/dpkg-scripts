@@ -1,0 +1,178 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = /var/lib/dpkg/**
+profile dpkg-scripts @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/common/debconf>
+  include <abstractions/disks-read>
+  include <abstractions/python>
+
+  capability chown,
+  capability dac_read_search,
+  capability fowner,
+  capability fsetid,
+  capability setgid,
+  capability setuid,
+
+  @{exec_path} mrix,
+
+  # Common program found in maintainer scripts
+  @{sh_path}                                     rix,
+  @{coreutils_path}                              rix,
+  @{python_path}                                 rix,
+  @{bin}/run-parts                               rix,
+
+  @{bin}/envsubst                                 ix,
+  @{bin}/file                                     ix,
+  @{bin}/getent                                   ix,
+  @{bin}/gzip                                     ix,
+  @{bin}/helpztags                                ix,
+  @{bin}/setpriv                                  ix,
+  @{bin}/tput                                     ix,
+  @{bin}/zcat                                     ix,
+  @{lib}/ubuntu-advantage/cloud-id-shim.sh        ix,
+  @{lib}/ubuntu-advantage/postinst-migrations.sh  ix,
+
+  @{bin}/dbus-send                                Cx -> bus,
+  @{bin}/kmod                                     Cx -> kmod,
+  @{bin}/dpkg                                     Px -> child-dpkg,
+  @{bin}/systemctl                                Cx -> systemctl,
+  @{sbin}/invoke-rc.d                             Cx -> rc,
+  @{sbin}/ldconfig                                Cx -> ldconfig,
+  @{sbin}/ldconfig.real                           Cx -> ldconfig,
+  @{sbin}/update-rc.d                             Cx -> rc,
+
+  # Maintainer scripts can legitimately start/restart anything
+  # PU is only used as a safety fallback.
+  @{bin}/**                                       PUx,
+  @{sbin}/**                                      PUx,
+  @{lib}/**                                       PUx,
+  /etc/**                                         PUx,
+  /usr/share/**                                   PUx,
+
+  #aa:lint ignore=too-wide
+  # Maintainer's scripts can update a lot of files
+  / r,
+  /*/ r,
+  @{bin}/ r,
+  @{bin}/* w,
+  @{lib}/ r,
+  @{lib}/** w,
+  /opt/*/** rw,
+
+  #aa:lint ignore=too-wide
+  /etc/ r,
+  /etc/** rw,
+  /usr/share/*/{,**} rw,
+  /usr/local/share/*/{,**} rw,
+  /var/** rw,
+  @{run}/** rw,
+  @{efi}/grub/* rw,
+
+  /tmp/grub.@{rand10} rw,
+  /tmp/sed@{rand6} rw,
+  /tmp/tmp.@{rand10} rw,
+
+  @{PROC}/@{pid}/fd/ r,
+  @{PROC}/@{pid}/mountinfo r,
+
+  profile bus {
+    include <abstractions/base>
+    include <abstractions/app/bus>
+    include <abstractions/bus-system>
+
+    capability dac_read_search,
+
+    dbus send bus=system path=/
+         interface=org.freedesktop.DBus
+         member=ReloadConfig
+         peer=(name=org.freedesktop.DBus, label="@{p_dbus_system}"),
+
+    include if exists <local/dpkg-scripts_bus>
+  }
+
+  profile kmod {
+    include <abstractions/base>
+    include <abstractions/app/kmod>
+
+    include if exists <local/dpkg-scripts_kmod>
+  }
+
+  profile systemctl {
+    include <abstractions/base>
+    include <abstractions/app/systemctl>
+
+    capability net_admin,
+    capability sys_ptrace,
+    capability sys_resource,
+
+    @{bin}/systemd-tty-ask-password-agent  Px,
+    @{pager_path}                          Px -> child-pager,
+
+    /etc/machine-id r,
+
+    /var/lib/systemd/catalog/database r,
+
+    /{run,var}/log/journal/ r,
+    /{run,var}/log/journal/@{hex32}/ r,
+    /{run,var}/log/journal/@{hex32}/system.journal* r,
+    /{run,var}/log/journal/@{hex32}/system@@{hex}-@{hex}.journal* r,
+    /{run,var}/log/journal/@{hex32}/system@@{hex32}-@{hex16}-@{hex16}.journal* r,
+    /{run,var}/log/journal/@{hex32}/user-@{hex}.journal* r,
+    /{run,var}/log/journal/@{hex32}/user-@{uid}@@{hex}-@{hex}.journal* r,
+    /{run,var}/log/journal/@{hex32}/user-@{uid}@@{hex32}-@{hex16}-@{hex16}.journal* r,
+
+    @{run}/utmp rk,
+
+    include if exists <local/dpkg-scripts_systemctl>
+  }
+
+  profile rc {
+    include <abstractions/base>
+    include <abstractions/consoles>
+    include <abstractions/perl>
+
+    @{sbin}/update-rc.d     mr,
+    @{sbin}/invoke-rc.d     mr,
+
+    @{coreutils_path}      rix,
+    @{sh_path}             rix,
+    @{bin}/systemctl       rPx -> dpkg-scripts//systemctl,
+
+    /etc/ r,
+    /etc/init.d/* r,
+    /etc/rc@{c}.d/ r,
+    /etc/rc@{c}.d/* rw,
+    /etc/rc@{int}.d/ r,
+    /etc/rc@{int}.d/* rw,
+
+    include if exists <local/dpkg-scripts_rc>
+  }
+
+  profile ldconfig {
+    include <abstractions/base>
+    include <abstractions/consoles>
+
+    @{sh_path}              rix,
+    @{sbin}/ldconfig       mrix,
+    @{sbin}/ldconfig.real   rix,
+
+    @{lib}/ r,
+    /usr/local/ r,
+    /usr/local/lib/ r,
+
+    owner /var/cache/ldconfig/aux-cache* rw,
+
+    include if exists <local/dpkg-scripts_ldconfig>
+  }
+
+  include if exists <local/dpkg-scripts>
+}
+
+# vim:syntax=apparmor

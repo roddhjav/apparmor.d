@@ -24,13 +24,13 @@ bash:
   script:
     - shellcheck --shell=bash
         PKGBUILD dists/build.sh dists/docker.sh tests/check.sh
-        tests/packer/init/init.sh tests/packer/src/aa-update tests/packer/init/clean.sh
+        tests/packer/init.sh tests/packer/src/aa-update tests/packer/clean.sh
 
 golangci-lint:
   stage: lint
   image: golangci/golangci-lint
   script:
-    - golangci-lint run --exclude-dirs pkg/paths
+    - golangci-lint run
 
 packer:
   stage: lint
@@ -54,7 +54,6 @@ tests:
   image: golang
   coverage: '/Coverage: \d+.\d+/'
   script:
-    - apt update && apt install -y rsync
     - cp tests/journalctl /usr/bin/journalctl
     - chmod 755 /usr/bin/journalctl
     - mkdir -p /var/log/audit/
@@ -67,7 +66,7 @@ check:
   stage: test
   image: registry.gitlab.com/roddhjav/builders/archlinux
   script:
-    - make check
+    - just check
 
 # Package Build
 # -------------
@@ -85,13 +84,12 @@ archlinux:
 
 debian:
   stage: build
-  image: registry.gitlab.com/roddhjav/builders/debian
+  image: registry.gitlab.com/roddhjav/builders/debian:trixie
   script:
     - sudo chown -R build:build /builds/
     - git config --global --add safe.directory $CI_PROJECT_DIR
     - mkdir -p "$PKGDEST"
-    - sudo apt-get update -q && sudo apt-get install -y config-package-dev rsync
-    - sudo apt-get install -y -t bookworm-backports golang-go
+    - sudo apt-get update -q && sudo apt-get install -y config-package-dev golang-go lsb-release libdistro-info-perl
     - bash dists/build.sh dpkg
   artifacts:
     expire_in: 1 day
@@ -100,12 +98,13 @@ debian:
 
 ubuntu:
   stage: build
-  image: registry.gitlab.com/roddhjav/builders/ubuntu
+  image: registry.gitlab.com/roddhjav/builders/ubuntu:24.04
+  variables:
+    GOFLAGS: "-buildvcs=false"
   script:
-    - sudo chown -R ubuntu:ubuntu /builds/
     - git config --global --add safe.directory $CI_PROJECT_DIR
     - mkdir -p "$PKGDEST"
-    - sudo apt-get update -q && sudo apt-get install -y config-package-dev rsync golang-go
+    - sudo apt-get update -q && sudo apt-get install -y config-package-dev golang-go lsb-release libdistro-info-perl
     - bash dists/build.sh dpkg
   artifacts:
     expire_in: 1 day
@@ -117,14 +116,14 @@ whonix:
   variables:
     DISTRIBUTION: whonix
   before_script:
-    - echo "\noverride_dh_auto_build:\n\tmake full" >> debian/rules
+    - sed -e "s/just complain/just fsp-complain/" -i debian/rules
 
 opensuse:
   stage: build
   image: registry.gitlab.com/roddhjav/builders/opensuse
   script:
     - mkdir -p "$PKGDEST"
-    - sudo zypper install -y distribution-release golang-packaging rsync apparmor-profiles
+    - sudo zypper install -y distribution-release golang-packaging apparmor-profiles
     - bash dists/build.sh rpm
   artifacts:
     expire_in: 1 day
@@ -147,7 +146,7 @@ preprocess-archlinux:
 
 preprocess-debian:
   stage: preprocess
-  image: debian
+  image: debian:trixie
   dependencies:
     - debian
   script:
@@ -167,7 +166,7 @@ preprocess-ubuntu:
     - dpkg --install $PKGDEST/*
     - apparmor_parser --preprocess /etc/apparmor.d 1> /dev/null
 
-preprocess-whonix:
+.preprocess-whonix:
   extends: preprocess-debian
   dependencies:
     - whonix

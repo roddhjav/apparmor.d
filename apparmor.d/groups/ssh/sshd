@@ -15,7 +15,7 @@ abi <abi/4.0>,
 
 include <tunables/global>
 
-@{exec_path} = @{bin}/sshd
+@{exec_path} = @{sbin}/sshd
 profile sshd @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/authentication>
@@ -25,12 +25,14 @@ profile sshd @{exec_path} flags=(attach_disconnected) {
   include <abstractions/nameservice-strict>
   include <abstractions/ssl_certs>
   include <abstractions/wutmp>
+  include <mappings/sshd> #aa:only RBAC
 
   capability audit_write,
   capability chown,
-  capability dac_read_search,
   capability dac_override,
+  capability dac_read_search,
   capability fowner,
+  capability fsetid,
   capability kill,
   capability net_bind_service,
   capability setgid,
@@ -49,25 +51,31 @@ profile sshd @{exec_path} flags=(attach_disconnected) {
   network inet6 dgram,
   network netlink raw,
 
-  signal (receive) set=(hup) peer=@{p_systemd},
+  unix type=stream peer=(label=sshd-session),
 
-  ptrace (read,trace) peer=@{p_systemd},
+  signal receive set=hup peer=@{p_systemd},
 
-  unix (bind) type=stream addr=@@{udbus}/bus/sshd/system,
+  ptrace (read trace) peer=@{p_systemd},
 
   dbus send bus=system path=/org/freedesktop/login1
        interface=org.freedesktop.login1.Manager
        member={CreateSession,ReleaseSession,CreateSessionWithPIDFD}
-       peer=(name=org.freedesktop.login1, label=systemd-logind),
+       peer=(name=org.freedesktop.login1, label="@{p_systemd_logind}"),
+
+  dbus send bus=system path=/org/freedesktop/home1
+       interface=org.freedesktop.home1.Manager
+       member=GetUserRecordByName
+       peer=(name=org.freedesktop.home1, label="@{p_systemd_homed}"),
 
   @{exec_path} mrix,
 
-  @{bin}/@{shells}            rUx,
-  @{bin}/false                rix,
-  @{bin}/nologin              rPx,
-  @{bin}/passwd               rPx,
-  @{lib}/openssh/sftp-server  rPx,
-  @{lib}/ssh/sshd-session     rix,
+  @{bin}/@{shells}                   Ux, #aa:exclude RBAC
+  @{bin}/false                       ix,
+  @{sbin}/nologin                    Px,
+  @{bin}/passwd                      Px,
+  @{lib}/{openssh,ssh}/sftp-server   Px,
+  @{lib}/{openssh,ssh}/sshd-auth     Px,
+  @{lib}/{openssh,ssh}/sshd-session  Px,
 
   @{etc_ro}/environment r,
   @{etc_ro}/security/limits.d/{,*.conf} r,
@@ -94,7 +102,7 @@ profile sshd @{exec_path} flags=(attach_disconnected) {
   owner @{user_download_dirs}/{,**} rwl,
   owner @{user_sync_dirs}/{,**} rwl,
 
-  owner @{HOME}/@{XDG_SSH_DIR}/authorized_keys{,.*} r,
+  @{HOME}/@{XDG_SSH_DIR}/authorized_keys{,.*} r,
   owner @{user_cache_dirs}/{,motd*} rw,
 
   @{att}/@{run}/systemd/sessions/@{int}.ref rw,
@@ -107,7 +115,7 @@ profile sshd @{exec_path} flags=(attach_disconnected) {
   owner @{run}/sshd{,.init}.pid wl,
 
   @{sys}/fs/cgroup/*/user/*/@{int}/ rw,
-  @{sys}/fs/cgroup/systemd/user.slice/user-@{uid}.slice/session-*.scope/ rw,
+  @{sys}/fs/cgroup/systemd/user.slice/user-@{uid}.slice/session-@{word}.scope/ rw,
 
         @{PROC}/@{pids}/fd/ r,
         @{PROC}/1/environ r,

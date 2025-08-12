@@ -1,0 +1,41 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Minimal set of rules for login based hat mapping.
+
+  abi <abi/4.0>,
+
+  include <abstractions/bus-system>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+  include <abstractions/wutmp>
+
+  capability audit_write,
+  capability chown,
+  capability fowner,
+  capability setgid,
+  capability setuid,
+  capability fsetid,
+
+  deny capability net_admin,
+
+  network netlink raw,
+
+  dbus send bus=system path=/org/freedesktop/login1
+       interface=org.freedesktop.login1.Manager
+       member=ReleaseSession
+       peer=(name=org.freedesktop.login1, label="@{p_systemd_logind}"),
+
+  @{etc_ro}/security/group.conf r,
+  @{etc_ro}/security/limits.conf r,
+  @{etc_ro}/security/limits.d/{,*} r,
+  @{etc_ro}/security/pam_env.conf r,
+
+  @{etc_ro}/login.defs r,
+  @{etc_ro}/login.defs.d/{,*} r,
+  @{etc_ro}/security/capability.conf r,
+
+  include if exists <abstractions/mapping/login.d>
+
+# vim:syntax=apparmor

@@ -1,0 +1,58 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Minimal set of rules for sshd based hat mapping. Similar to sshd-session
+
+  abi <abi/4.0>,
+
+  include <abstractions/authentication>
+  include <abstractions/bus-system>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+  include <abstractions/wutmp>
+
+  capability audit_write,
+  capability chown,
+  capability dac_read_search,
+  capability fowner,
+  capability fsetid,
+  capability kill,
+  capability setgid,
+  capability setuid,
+  capability sys_resource,
+
+  # sshd doesn't require net_admin. libpam-systemd tries to
+  # use it if available to set the send/receive buffers size,
+  # but will fall back to a non-privileged version if it fails.
+  deny capability net_admin,
+
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  signal receive set=exists peer=@{p_systemd_journald},
+  signal receive set=hup peer=@{p_systemd},
+
+  unix bind type=stream addr=@@{udbus}/bus/sshd-session/system,
+  unix bind type=stream addr=@@{udbus}/bus/sshd/system,
+
+  dbus send bus=system path=/org/freedesktop/login1
+       interface=org.freedesktop.login1.Manager
+       member={CreateSession,ReleaseSession,CreateSessionWithPIDFD}
+       peer=(name=org.freedesktop.login1, label="@{p_systemd_logind}"),
+
+  /etc/motd r,
+  /etc/locale.conf r,
+
+  @{run}/motd.dynamic rw,
+  @{run}/motd.dynamic.new rw,
+
+  @{PROC}/1/limits r,
+
+  /dev/ptmx rw,
+  /dev/pts/@{int} k,
+
+  include if exists <abstractions/mapping/sshd.d>
+
+# vim:syntax=apparmor

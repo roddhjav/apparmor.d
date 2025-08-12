@@ -3,7 +3,10 @@
 # Copyright (C) 2022-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-# Usage: make package dist=<distribution>
+# Usage:
+#  just package ubuntu24
+#  just package archlinux
+#  just package opensuse
 
 set -eu -o pipefail
 
@@ -14,7 +17,8 @@ readonly VOLUME=/tmp/build
 readonly BUILDIR=/home/build/tmp
 readonly OUTDIR=".pkg"
 readonly OUTPUT="$PWD/$OUTDIR"
-readonly COMMAND="$1"
+readonly DISTRIBUTION="${1:-}"
+readonly RELEASE="${2:-}"
 VERSION="0.$(git rev-list --count HEAD)"
 PACKAGER="$(git config user.name) <$(git config user.email)>"
 readonly VERSION PACKAGER
@@ -61,6 +65,7 @@ build_in_docker_makepkg() {
 			--env PKGDEST="$BUILDIR" --env PACKAGER="$PACKAGER" \
 			--env BUILDDIR=/tmp/build \
 			"$BASEIMAGE/$dist"
+		docker exec "$img" sudo pacman -Syu --noconfirm --noprogressbar
 	fi
 
 	docker exec --workdir="$BUILDIR/$PKGNAME" "$img" bash dists/build.sh pkg
@@ -68,21 +73,24 @@ build_in_docker_makepkg() {
 }
 
 build_in_docker_dpkg() {
-	local dist="$1" target="$1"
-	local img="$PREFIX$dist"
+	local img dist="$1" target="$1" release="$2"
 
 	[[ "$dist" == whonix ]] && dist=debian
+	[[ "$release" == "13" ]] && release=trixie
+	img="$PREFIX$dist$release"
 	if _exist "$img"; then
 		if ! _is_running "$img"; then
 			_start "$img"
 		fi
 	else
-		docker pull "$BASEIMAGE/$dist"
+		docker pull "$BASEIMAGE/$dist:$release"
 		docker run -tid --name "$img" --volume "$VOLUME:$BUILDIR" \
-			--env DISTRIBUTION="$target" "$BASEIMAGE/$dist"
+			--env DISTRIBUTION="$target" "$BASEIMAGE/$dist:$release"
 		docker exec "$img" sudo apt-get update -q
-		docker exec "$img" sudo apt-get install -y config-package-dev rsync
-		[[ "$dist" == debian ]] && aptopt=(-t bookworm-backports)
+		docker exec "$img" sudo apt-get install -y config-package-dev lsb-release libdistro-info-perl
+		if [[ "$dist" == debian && "$release" == "12"  ]]; then
+			aptopt=(-t bookworm-backports)
+		fi
 		docker exec "$img" sudo apt-get install -y "${aptopt[@]}" golang-go
 	fi
 
@@ -102,7 +110,7 @@ build_in_docker_rpm() {
 		docker pull "$BASEIMAGE/$dist"
 		docker run -tid --name "$img" --volume "$VOLUME:$BUILDIR" \
 			"$BASEIMAGE/$dist"
-		docker exec "$img" sudo zypper install -y distribution-release golang-packaging rsync apparmor-profiles
+		docker exec "$img" sudo zypper install -y distribution-release golang-packaging apparmor-profiles
 	fi
 
 	docker exec --workdir="$BUILDIR/$PKGNAME" "$img" bash dists/build.sh rpm
@@ -110,20 +118,19 @@ build_in_docker_rpm() {
 }
 
 main() {
-	case "$COMMAND" in
+	case "$DISTRIBUTION" in
 	archlinux)
-		# build_in_docker_makepkg "$COMMAND"
-		PKGDEST="$OUTPUT" makepkg -Cf
+		build_in_docker_makepkg "$DISTRIBUTION"
 		;;
 
 	debian | ubuntu | whonix)
 		sync
-		build_in_docker_dpkg "$COMMAND"
+		build_in_docker_dpkg "$DISTRIBUTION" "$RELEASE"
 		;;
 
 	opensuse)
 		sync
-		build_in_docker_rpm "$COMMAND"
+		build_in_docker_rpm "$DISTRIBUTION"
 		;;
 
 	*) ;;

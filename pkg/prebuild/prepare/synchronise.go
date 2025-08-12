@@ -11,7 +11,7 @@ import (
 
 type Synchronise struct {
 	prebuild.Base
-	Path string
+	Paths []string // File or directory to sync into the build directory.
 }
 
 func init() {
@@ -20,38 +20,39 @@ func init() {
 			Keyword: "synchronise",
 			Msg:     "Initialize a new clean apparmor.d build directory",
 		},
-		Path: "",
+		Paths: []string{"apparmor.d", "share"},
 	})
 }
 
 func (p Synchronise) Apply() ([]string, error) {
 	res := []string{}
-	dirs := paths.PathList{prebuild.RootApparmord, prebuild.Root.Join("share"), prebuild.Root.Join("systemd")}
-	for _, dir := range dirs {
-		if err := dir.RemoveAll(); err != nil {
+	if err := prebuild.Root.Join("systemd").RemoveAll(); err != nil {
+		return res, err
+	}
+	if err := prebuild.RootApparmord.RemoveAll(); err != nil {
+		return res, err
+	}
+
+	for _, name := range p.Paths {
+		src := paths.New(name)
+		dst := prebuild.Root.Join(name)
+		if err := dst.RemoveAll(); err != nil {
 			return res, err
 		}
-	}
-	if p.Path == "" {
-		for _, name := range []string{"apparmor.d", "share"} {
-			if err := paths.CopyTo(paths.New(name), prebuild.Root.Join(name)); err != nil {
+
+		if src.IsDir() {
+			if err := src.CopyFS(dst); err != nil {
+				return res, err
+			}
+		} else {
+			if err := dst.Parent().MkdirAll(); err != nil {
+				return res, err
+			}
+			if err := src.CopyTo(dst); err != nil {
 				return res, err
 			}
 		}
-	} else {
-		file := paths.New(p.Path)
-		destination, err := file.RelFrom(paths.New("apparmor.d"))
-		if err != nil {
-			return res, err
-		}
-		destination = prebuild.RootApparmord.JoinPath(destination)
-		if err := destination.Parent().MkdirAll(); err != nil {
-			return res, err
-		}
-		if err := file.CopyTo(destination); err != nil {
-			return res, err
-		}
-		res = append(res, destination.String())
+		res = append(res, dst.String())
 	}
 	return res, nil
 }

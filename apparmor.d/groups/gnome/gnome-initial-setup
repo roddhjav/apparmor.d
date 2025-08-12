@@ -29,7 +29,12 @@ profile gnome-initial-setup @{exec_path} {
   network inet6 stream,
   network netlink raw,
 
-  #aa:dbus own bus=session name=org.gnome.InitialSetup interface=org.gtk.Actions
+  #aa:dbus own bus=session name=org.gnome.InitialSetup interface+=org.gtk.Actions
+
+  dbus send bus=system path=/com/canonical/UbuntuAdvantage/Manager
+       interface=org.freedesktop.DBus.Properties
+       member=Get
+       peer=(name=com.canonical.UbuntuAdvantage),
 
   @{exec_path} mr,
 
@@ -41,13 +46,14 @@ profile gnome-initial-setup @{exec_path} {
   @{bin}/xrandr  rPx,
 
   @{lib}/gnome-initial-setup-goa-helper rix,
+  @{lib}/@{multiarch}/ld-linux-*.so* rix,
 
   /usr/share/dconf/profile/gdm r,
   /usr/share/gnome-initial-setup/{,**} r,
   /usr/share/xml/iso-codes/{,**} r,
 
-  /etc/security/pwquality.conf r,
-  /etc/security/pwquality.conf.d/{,**} r,
+  @{etc_ro}/security/pwquality.conf r,
+  @{etc_ro}/security/pwquality.conf.d/{,**} r,
   /etc/timezone r,
 
   /etc/gdm{,3}/custom.conf r,
@@ -73,6 +79,10 @@ profile gnome-initial-setup @{exec_path} {
   @{run}/systemd/sessions/@{int} r,
   @{run}/systemd/users/@{uid} r,
 
+        @{sys}/fs/cgroup/user.slice/cpu.max r,
+        @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/cpu.max r,
+        @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/cpu.max r,
+  owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/cpu.max r,
   owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/gnome-initial-setup-first-login.service/memory.* r,
 
   @{sys}/devices/virtual/dmi/id/bios_vendor r,

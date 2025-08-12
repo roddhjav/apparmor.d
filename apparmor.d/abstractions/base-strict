@@ -1,0 +1,131 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2002-2009 Novell/SUSE
+# Copyright (C) 2009-2011 Canonical Ltd.
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+# LOGPROF-SUGGEST: no
+
+  # Do not use it manually, It automatically replaces the base abstraction in
+  # profiles when the re-attached mode is enabled.
+
+  # For now, it is only a restructuring of the base abstraction with awareness
+  # of the apparmor.d architecture.
+
+  abi <abi/4.0>,
+
+  include <abstractions/crypto>
+  include <abstractions/glibc>
+  include <abstractions/ld>
+  include <abstractions/locale>
+
+  # Allow us to signal ourselves
+  signal peer=@{profile_name},
+
+  # Checking for PID existence is quite common so add it by default for now
+  signal (receive, send) set=exists,
+
+  #aa:exclude RBAC
+  # Allow unconfined processes to send us signals by default
+  signal receive                           peer=unconfined,
+
+  # Systemd: allow to receive any signal from the systemd profiles stack
+  signal receive                           peer=@{p_systemd},
+  signal receive                           peer=@{p_systemd_user},
+
+  # Htop like programs can send any signal to any process
+  signal receive                           peer=btop,
+  signal receive                           peer=htop,
+  signal receive                           peer=top,
+  signal receive set=(cont,term,kill,stop) peer=gnome-system-monitor,
+
+  # Allow to receive termination signal from manager such as sudo, login, shutdown or systemd
+  signal receive                           peer=su,
+  signal receive                           peer=sudo,
+  signal receive set=(cont,term,kill,stop) peer=gnome-shell,
+  signal receive set=(cont,term,kill,stop) peer=login,
+  signal receive set=(cont,term,kill,stop) peer=openbox,
+  signal receive set=(cont,term,kill,stop) peer=systemd-shutdown,
+  signal receive set=(cont,term,kill,stop) peer=xinit,
+
+  # Allow other processes to read our /proc entries, futexes, perf tracing and
+  # kcmp for now (they will need 'read' in the first place). Administrators can
+  # override with:
+  #   deny ptrace readby ...
+  ptrace readby,
+
+  # Allow other processes to trace us by default (they will need 'trace' in
+  # the first place). Administrators can override with:
+  #   deny ptrace tracedby ...
+  ptrace tracedby,
+
+  # Allow us to ptrace read ourselves
+  ptrace read peer=@{profile_name},
+
+  # Allow us to create and use abstract and anonymous sockets
+  unix peer=(label=@{profile_name}),
+
+  # Allow unconfined processes to us via unix sockets
+  unix receive peer=(label=unconfined),
+
+  # Allow communication to children profiles
+  signal peer=@{profile_name}//*,
+  unix type=stream peer=(label=@{profile_name}//*),
+
+  # Allow us to create abstract and anonymous sockets
+  unix create,
+
+  # Allow us to getattr, getopt, setop and shutdown on unix sockets
+  unix (getattr, getopt, setopt, shutdown),
+
+  # Allow all programs to use common libraries
+  @{lib}/** r,
+  @{lib}/**.so* m,
+  @{lib}/@{multiarch}/**.so* m,
+  @{lib}/@{multiarch}/** r,
+
+  # Some applications will display license information
+  /usr/share/common-licenses/** r,
+
+  # Allow access to the uuidd daemon (this daemon is a thin wrapper around
+  # time and getrandom()/{,u}random and, when available, runs under an
+  # unprivilged, dedicated user).
+  @{run}/uuidd/request r,
+
+  # Transparent hugepage support
+  @{sys}/kernel/mm/transparent_hugepage/hpage_pmd_size r,
+
+  # Systemd's equivalent of /dev/log
+  @{run}/systemd/journal/dev-log w,
+
+  # Systemd native journal API (see sd_journal_print(4))
+  @{run}/systemd/journal/socket w,
+
+  # Nested containers and anything using systemd-cat need this. 'r' shouldn't
+  # be required but applications fail without it. journald doesn't leak
+  # anything when reading so this is ok.
+  @{run}/systemd/journal/stdout rw,
+
+  # Allow determining the highest valid capability of the running kernel
+  @{PROC}/sys/kernel/cap_last_cap r,
+
+  # Controls how core dump files are named
+  @{PROC}/sys/kernel/core_pattern r,
+
+  # Sometimes used to determine kernel/user interfaces to use
+  @{PROC}/sys/kernel/version r,
+
+  # Harmless and frequently used
+  /dev/null rw,
+  /dev/random r,
+  /dev/urandom r,
+  /dev/zero rw,
+
+  # The __canary_death_handler function writes a time-stamped log
+  # message to /dev/log for logging by syslogd. So, /dev/log, timezones,
+  # and localisations of date should be available EVERYWHERE, so
+  # StackGuard, FormatGuard, etc., alerts can be properly logged.
+  /dev/log w,
+
+  include if exists <abstractions/base-strict.d>
+
+# vim:syntax=apparmor

@@ -7,13 +7,12 @@ abi <abi/4.0>,
 
 include <tunables/global>
 
-@{exec_path} = @{bin}/apt @{bin}/apt-get @{bin}/aptd
+@{exec_path} = @{bin}/apt @{bin}/apt-get @{sbin}/aptd
 profile apt @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/common/apt>
   include <abstractions/bus-system>
   include <abstractions/bus/org.freedesktop.login1>
-  include <abstractions/bus/org.freedesktop.PackageKit>
   include <abstractions/bus/org.freedesktop.PolicyKit1>
   include <abstractions/consoles>
   include <abstractions/nameservice-strict>
@@ -37,15 +36,21 @@ profile apt @{exec_path} flags=(attach_disconnected) {
   unix bind type=stream addr=@@{udbus}/bus/apt-get/system,
   unix bind type=stream addr=@@{udbus}/bus/apt/system,
 
+  unix                 type=stream peer=(label=@{p_snap}),
   unix (send, receive) type=stream peer=(label=apt-esm-json-hook),
   unix (send, receive) type=stream peer=(label=snapd),
 
   #aa:dbus own bus=system name=org.debian.apt
 
-  dbus send bus=system path=/org/freedesktop/DBus/Bus
-       interface=org.freedesktop.DBus
-       member={GetConnectionUnixProcessID,GetConnectionUnixUser}
-       peer=(name=org.freedesktop.DBus, label="@{p_dbus_system}"),
+  #aa:dbus talk bus=system name=org.freedesktop.PackageKit label=packagekitd
+  dbus send bus=system path=/org/freedesktop/PackageKit
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name=org.freedesktop.PackageKit),
+  dbus send bus=system path=/org/freedesktop/PackageKit
+       interface=org.freedesktop.PackageKit
+       member=StateHasChanged
+       peer=(name=org.freedesktop.PackageKit),
 
   dbus send bus=system
        interface=org.freedesktop.DBus.Introspectable
@@ -53,15 +58,16 @@ profile apt @{exec_path} flags=(attach_disconnected) {
        peer=(name="{:*,org.freedesktop.DBus}"),
 
   @{exec_path} mr,
+  @{python_path} mr,
 
   @{bin}/ r,
 
   @{sh_path}        rix,
   @{bin}/{,e}grep   rix,
+  @{bin}/cat        rix,
   @{bin}/echo       rix,
   @{bin}/gdbus      rix,
   @{bin}/id         rix,
-  @{bin}/ischroot   rix,
   @{bin}/test       rix,
   @{bin}/touch      rix,
 
@@ -74,14 +80,15 @@ profile apt @{exec_path} flags=(attach_disconnected) {
   @{bin}/df                              rPx,
   @{bin}/dmesg                           rPx,
   @{bin}/dpkg                            rPx,
-  @{bin}/dpkg-preconfigure               rPx,
   @{bin}/dpkg-source                     rcx -> dpkg-source,
   @{bin}/etckeeper                       rPx,
+  @{bin}/ischroot                        rPx,
   @{bin}/localepurge                     rPx,
   @{bin}/ps                              rPx,
-  @{bin}/snap                           rPUx,
-  @{bin}/systemctl                       rCx ->  systemctl,
+  @{bin}/snap                            rPx,
+  @{bin}/systemctl                       rCx -> systemctl,
   @{bin}/update-command-not-found        rPx,
+  @{sbin}/dpkg-preconfigure              rPx,
   @{lib}/cnf-update-db                   rPx,
   @{lib}/needrestart/apt-pinvoke         rPx,
   @{lib}/zsys-system-autosnapshot        rPx,
@@ -130,6 +137,9 @@ profile apt @{exec_path} flags=(attach_disconnected) {
   /var/lib/update-notifier/dpkg-run-stamp rw,
 
   /var/log/apt/{,**} rw,
+  /var/log/ubuntu-advantage-apt-hook.log w,
+
+  @{efi}/ r,
 
   # For package building
   @{user_build_dirs}/** rwkl -> @{user_build_dirs}/**,
@@ -163,18 +173,7 @@ profile apt @{exec_path} flags=(attach_disconnected) {
 
   profile pager {
     include <abstractions/base>
-    include <abstractions/consoles>
-
-    capability dac_read_search,
-
-    @{bin}/                      r,
-    @{sh_path}                   rix,
-    @{pager_path}               rmix,
-    @{bin}/which{,.debianutils}  rix,
-
-    /root/ r,  # For shell pwd
-
-    owner @{HOME}/.less* rw,
+    include <abstractions/app/pager>
 
     owner @{tmp}/apt-changelog-*/ r,
     owner @{tmp}/apt-changelog-*/*.changelog r,
@@ -188,7 +187,6 @@ profile apt @{exec_path} flags=(attach_disconnected) {
     include <abstractions/perl>
 
     @{bin}/dpkg-source mr,
-    @{bin}/perl r,
 
     @{bin}/bunzip2 rix,
     @{bin}/chmod   rix,

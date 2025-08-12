@@ -1,0 +1,48 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Mikhail Morfikov
+# Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/obexfs
+profile obexfs @{exec_path} {
+  include <abstractions/base>
+
+  network bluetooth raw,
+  network bluetooth seqpacket,
+  network bluetooth stream,
+
+  @{exec_path} mr,
+
+  @{bin}/fusermount{,3} rCx -> fusermount,
+
+  owner @{HOME}/*/ r,
+  owner @{HOME}/*/*/ r,
+
+  mount fstype=fuse.obexfs -> @{HOME}/*/,
+  mount fstype=fuse.obexfs -> @{HOME}/*/*/,
+
+  /dev/fuse rw,
+
+  profile fusermount {
+    include <abstractions/base>
+    include <abstractions/app/fusermount>
+
+    network bluetooth stream,
+
+    mount fstype={fuse,fuse.obexfs} -> @{HOME}/*/,
+    mount fstype={fuse,fuse.obexfs} -> @{HOME}/*/*/,
+
+    umount @{HOME}/*/,
+    umount @{HOME}/*/*/,
+
+    include if exists <local/obexfs_fusermount>
+  }
+
+  include if exists <local/obexfs>
+}
+
+# vim:syntax=apparmor

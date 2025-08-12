@@ -1,0 +1,42 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/dpkg/dpkg-db-backup
+profile dpkg-db-backup @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/common/apt>
+  include <abstractions/nameservice-strict>
+
+  @{exec_path} mr,
+
+  @{sh_path}       rix,
+  @{bin}/basename  rix,
+  @{bin}/cmp       rix,
+  @{bin}/cp        rix,
+  @{bin}/date      rix,
+  @{bin}/dirname   rix,
+  @{bin}/gzip      rix,
+  @{bin}/mv        rix,
+  @{bin}/rm        rix,
+  @{bin}/savelog   rix,
+  @{bin}/tar       rix,
+  @{bin}/touch     rix,
+
+  /usr/share/dpkg/{,**} r,
+
+  /var/lib/dpkg/ r,
+  /var/lib/dpkg/alternatives/{,*} r,
+  /var/lib/dpkg/diversions r,
+  /var/lib/dpkg/statoverride r,
+
+  /var/backups/{,**} rw,
+
+  include if exists <local/dpkg-db-backup>
+}
+
+# vim:syntax=apparmor

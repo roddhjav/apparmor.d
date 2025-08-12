@@ -7,35 +7,34 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{exec_path} = @{bin}/bootctl
-profile bootctl @{exec_path} {
+profile bootctl @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/base>
   include <abstractions/consoles>
   include <abstractions/disks-read>
   include <abstractions/common/systemd>
 
+  capability linux_immutable,
   capability mknod,
   capability net_admin,
+  capability sys_rawio,
+  capability sys_resource,
 
-  signal (send) peer=child-pager,
+  signal send peer=child-pager,
 
-  ptrace (read) peer=unconfined,
+  ptrace read peer=unconfined,
 
   @{exec_path} mr,
 
   @{pager_path} rPx -> child-pager,
 
-  /{boot,efi}/ r,
-  /{boot,efi}/EFI/{,**} r,
-  /{boot,efi}/EFI/BOOT/.#BOOT*.EFI@{hex} rw,
-  /{boot,efi}/EFI/BOOT/BOOTX64.EFI w,
-  /{boot,efi}/EFI/systemd/.#systemd-boot*.efi@{hex} rw,
-  /{boot,efi}/EFI/systemd/systemd-boot*.efi w,
-  /{boot,efi}/loader/.#bootctlrandom-seed@{hex} rw,
-  /{boot,efi}/loader/.#entries.srel* w,
-  /{boot,efi}/loader/{,**} r,
-  /{boot,efi}/loader/entries.srel w,
-  /{boot,efi}/loader/random-seed w,
+  @{efi}/ r,
+  @{efi}/@{hex32}/ rw,
+  @{efi}/EFI/{,**} rwl,
+  @{efi}/loader/ rw,
+  @{efi}/loader/** rwl -> @{efi}/loader/#@{int},
 
+  /etc/kernel/.#entry-token@{hex16} rw,
+  /etc/kernel/entry-token rw,
   /etc/machine-id r,
   /etc/machine-info r,
 
@@ -43,14 +42,15 @@ profile bootctl @{exec_path} {
 
   @{sys}/class/tpmrm/ r,
 
+  @{sys}/devices/pnp@{int}/**/tpm/tpm@{int}/tpm_version_major r,
   @{sys}/devices/virtual/dmi/id/{board_vendor,bios_vendor} r,
   @{sys}/devices/virtual/dmi/id/{sys_vendor,product_version,product_name} r,
 
   @{sys}/firmware/dmi/entries/*/raw r,
   @{sys}/firmware/efi/efivars/ r,
   @{sys}/firmware/efi/efivars/AuditMode-@{uuid} r,
-  @{sys}/firmware/efi/efivars/Boot@{hex}-@{uuid} r,
-  @{sys}/firmware/efi/efivars/BootOrder-@{uuid} r,
+  @{sys}/firmware/efi/efivars/Boot@{hex}-@{uuid} rw,
+  @{sys}/firmware/efi/efivars/BootOrder-@{uuid} rw,
   @{sys}/firmware/efi/efivars/DeployedMode-@{uuid} r,
   @{sys}/firmware/efi/efivars/LoaderDevicePartUUID-@{uuid} r,
   @{sys}/firmware/efi/efivars/LoaderEntries-@{uuid} r,
@@ -60,8 +60,8 @@ profile bootctl @{exec_path} {
   @{sys}/firmware/efi/efivars/LoaderFirmwareType-@{uuid} r,
   @{sys}/firmware/efi/efivars/LoaderImageIdentifier-@{uuid} r,
   @{sys}/firmware/efi/efivars/LoaderInfo-@{uuid} r,
-  @{sys}/firmware/efi/efivars/LoaderSystemToken-@{uuid} r,
-  @{sys}/firmware/efi/efivars/OsIndications-@{uuid} r,
+  @{sys}/firmware/efi/efivars/LoaderSystemToken-@{uuid} rw,
+  @{sys}/firmware/efi/efivars/OsIndications-@{uuid} rw,
   @{sys}/firmware/efi/efivars/OsIndicationsSupported-@{uuid} r,
   @{sys}/firmware/efi/efivars/SecureBoot-@{uuid} r,
   @{sys}/firmware/efi/efivars/SetupMode-@{uuid} r,

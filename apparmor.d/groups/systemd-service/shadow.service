@@ -1,0 +1,23 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+profile shadow.service flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+
+  @{sh_path}    rix,
+  @{sbin}/grpck  Px -> &grpck,
+  @{sbin}/pwck   Px -> &pwck,
+
+  /etc/machine-id r,
+  /etc/shadow r,
+
+  include if exists <local/shadow.service>
+}
+
+# vim:syntax=apparmor

@@ -1,0 +1,118 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{sbin}/cupsd
+profile cupsd @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/authentication>
+  include <abstractions/bus-system>
+  include <abstractions/bus/org.freedesktop.Avahi>
+  include <abstractions/bus/org.freedesktop.ColorManager>
+  include <abstractions/nameservice-strict>
+  include <abstractions/python>
+
+  capability audit_write,
+  capability chown,
+  capability dac_override,
+  capability dac_read_search,
+  capability fowner,
+  capability fsetid,
+  capability kill,
+  capability net_admin,
+  capability net_bind_service,
+  capability setgid,
+  capability setuid,
+  capability wake_alarm,
+
+  network inet dgram,
+  network inet stream,
+  network inet6 dgram,
+  network inet6 stream,
+
+  network appletalk dgram,
+  network ash dgram,
+  network ax25 dgram,
+  network bluetooth,
+  network econet dgram,
+  network ipx dgram,
+  network netrom seqpacket,
+  network rose dgram,
+  network x25 seqpacket,
+
+  signal (send) set=(term) peer=cups-notifier-dbus,
+
+  dbus send bus=system path=/org/freedesktop/ColorManager
+       interface=org.freedesktop.ColorManager
+       member=DeleteDevice
+       peer=(name=org.freedesktop.ColorManager, label="@{p_colord}"),
+  dbus send bus=system path=/org/freedesktop/ColorManager
+       interface=org.freedesktop.ColorManager
+       member=FindDeviceById
+       peer=(name=org.freedesktop.ColorManager, label="@{p_colord}"),
+
+  @{exec_path} mr,
+
+  @{sh_path}                 rix,
+  @{bin}/cat                 rix,
+  @{bin}/chmod               rix,
+  @{bin}/cp                  rix,
+  @{bin}/{,e}grep            rix,
+  @{bin}/gs                  rix,
+  @{bin}/gsc                 rix,
+  @{bin}/hostname            rix,
+  @{bin}/ippfind             rix,
+  @{bin}/mktemp              rix,
+  @{bin}/printenv            rix,
+  @{python_path}             rix,
+  @{bin}/rm                  rix,
+  @{bin}/sed                 rix,
+  @{bin}/smbspool            rPx,
+  @{bin}/touch               rix,
+  @{bin}/xz                  rix,
+  @{lib}/cups/backend/*      rPx,
+  @{lib}/cups/cgi-bin/*.cgi  rix,
+  @{lib}/cups/daemon/*       rix,
+  @{lib}/cups/driver/*       rix,
+  @{lib}/cups/filter/*       rix,
+  @{lib}/cups/monitor/*      rix,
+  @{lib}/cups/notifier/*     rPx,
+
+  /usr/share/cups/{,**} r,
+  /usr/share/ghostscript/{,**} r,
+  /usr/share/poppler/{,**} r,
+  /usr/share/ppd/{,**} r,
+
+  /etc/cups/{,**} rw,
+  /etc/foomatic/* r,
+  /etc/papersize r,
+  /etc/paperspecs r,
+  /etc/pnm2ppa.conf r,
+  /etc/printcap rwl,
+
+  /var/cache/cups/ rw,
+  /var/cache/cups/** rwk,
+  /var/log/cups/{,*} rw,
+  /var/spool/cups/{,**} rw,
+
+  @{run}/cups/{,**} rw,
+  @{run}/systemd/notify w,
+  @{run}/avahi-daemon/socket rw,
+
+  @{sys}/module/apparmor/parameters/enabled r,
+
+        @{PROC}/@{pids}/fd/ r,
+  owner @{PROC}/@{pid}/mounts r,
+
+  owner @{tmp}/*_latest_print_info w,
+
+  /dev/tty rw,
+
+  include if exists <local/cupsd>
+}
+
+# vim:syntax=apparmor

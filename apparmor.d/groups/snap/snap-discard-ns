@@ -1,0 +1,36 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{lib_dirs} = @{lib}/ /snap/{snapd,core}/@{int}@{lib}
+
+@{exec_path} = @{lib_dirs}/snapd/snap-discard-ns
+profile snap-discard-ns @{exec_path} {
+  include <abstractions/base>
+
+  capability setgid,
+  capability sys_admin,
+
+  network netlink raw,
+
+  umount @{run}/snapd/ns/*.mnt,
+
+  @{exec_path} mr,
+  @{lib_dirs}/**.so* mr,
+
+  / r,
+  @{run}/ r,
+  @{run}/snapd/ r,
+  @{run}/snapd/lock/ r,
+  @{run}/snapd/lock/*.lock rwk,
+  @{run}/snapd/ns/ r,
+  @{run}/snapd/ns/* rw,
+
+  include if exists <local/snap-discard-ns>
+}
+
+# vim:syntax=apparmor

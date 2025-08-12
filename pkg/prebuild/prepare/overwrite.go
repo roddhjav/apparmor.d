@@ -11,11 +11,11 @@ import (
 	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 )
 
-const ext = ".apparmor.d"
+var ext = "." + prebuild.Pkgname
 
 type Overwrite struct {
 	prebuild.Base
-	OneFile bool
+	Optional bool
 }
 
 func init() {
@@ -24,7 +24,7 @@ func init() {
 			Keyword: "overwrite",
 			Msg:     "Overwrite dummy upstream profiles",
 		},
-		OneFile: false,
+		Optional: false,
 	})
 }
 
@@ -46,12 +46,13 @@ func (p Overwrite) Apply() ([]string, error) {
 	for _, name := range path.MustReadFilteredFileAsLines() {
 		origin := prebuild.RootApparmord.Join(name)
 		dest := prebuild.RootApparmord.Join(name + ext)
-		if !dest.Exist() && p.OneFile {
+		if !dest.Exist() && p.Optional {
 			continue
 		}
-		if err := origin.Rename(dest); err != nil {
-
-			return res, err
+		if origin.Exist() {
+			if err := origin.Rename(dest); err != nil {
+				return res, err
+			}
 		}
 		originRel, err := origin.RelFrom(dest)
 		if err != nil {

@@ -4,25 +4,42 @@
 
   abi <abi/4.0>,
 
+  #aa:dbus common bus=system name=org.freedesktop.Avahi label="@{p_avahi_daemon}"
+
   dbus send bus=system path=/
        interface=org.freedesktop.DBus.Peer
        member=Ping
-       peer=(name=org.freedesktop.Avahi, label=avahi-daemon),
+       peer=(name=org.freedesktop.Avahi),
 
   dbus send bus=system path=/
        interface=org.freedesktop.Avahi.Server
        member={GetAPIVersion,GetState,Service*New}
-       peer=(name=org.freedesktop.Avahi, label=avahi-daemon),
+       peer=(name=org.freedesktop.Avahi, label="@{p_avahi_daemon}"),
 
   dbus send bus=system path=/Client@{int}/ServiceBrowser@{int}
        interface=org.freedesktop.Avahi.ServiceBrowser
        member=Free
-       peer=(name=org.freedesktop.Avahi, label=avahi-daemon),
+       peer=(name=org.freedesktop.Avahi, label="@{p_avahi_daemon}"),
 
   dbus receive bus=system path=/Client@{int}/ServiceBrowser@{int}
        interface=org.freedesktop.Avahi.ServiceBrowser
        member={ItemNew,AllForNow,CacheExhausted}
-       peer=(name="@{busname}", label=avahi-daemon),
+       peer=(name="@{busname}", label="@{p_avahi_daemon}"),
+
+  dbus receive bus=system path=/
+       interface=org.freedesktop.Avahi.Server
+       member=StateChanged
+       peer=(name=@{busname},  label="@{p_avahi_daemon}"),
+
+  dbus receive bus=system path=/Client@{int}/ServiceResolver@{int}
+       interface=org.freedesktop.Avahi.ServiceResolver
+       member=Found
+       peer=(name=@{busname}, label="@{p_avahi_daemon}"),
+
+  dbus send bus=system path=/Client@{int}/ServiceResolver@{int}
+       interface=org.freedesktop.Avahi.ServiceResolver
+       member=Free
+       peer=(name=org.freedesktop.Avahi, label="@{p_avahi_daemon}"),
 
   include if exists <abstractions/bus/org.freedesktop.Avahi.d>
 

@@ -16,10 +16,16 @@ DISTRIBUTION="$(_lsb_release)"
 
 case "$DISTRIBUTION" in
 arch)
+	sudo pacman -Syu --noconfirm \
+		bats bats-support \
+		pacman-contrib tlp flatpak networkmanager
 	;;
 debian | ubuntu | whonix)
-	sudo apt-get install -y \
-		cpuid dfc systemd-userdbd systemd-homed tlp
+	sudo apt update -y
+	sudo apt install -y \
+		bats bats-support \
+		cpuid dfc systemd-boot systemd-userdbd systemd-homed systemd-container tlp \
+		network-manager systemd-container flatpak util-linux-extra
 	;;
 opensuse*)
 	;;

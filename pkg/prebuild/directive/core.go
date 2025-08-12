@@ -23,7 +23,7 @@ var (
 	regDirective = regexp.MustCompile(`(?m).*` + Keyword + `([a-z]*)( .*)?`)
 )
 
-// Main directive interface
+// Directive main interface
 type Directive interface {
 	prebuild.BaseInterface
 	Apply(opt *Option, profile string) (string, error)
@@ -39,7 +39,7 @@ func Usage() string {
 	return res
 }
 
-// Directive options
+// Option for the directive
 type Option struct {
 	Name    string
 	ArgMap  map[string]string
@@ -83,7 +83,7 @@ func (o *Option) cleanKeyword(input string) string {
 	return reg.ReplaceAllString(input, "")
 }
 
-// Check if the directive is inline or if it is a paragraph
+// IsInline checks if either the directive is in one line or if it is a paragraph
 func (o *Option) IsInline() bool {
 	inline := true
 	tmp := strings.Split(o.Raw, Keyword)
@@ -106,7 +106,10 @@ func Run(file *paths.Path, profile string) (string, error) {
 		opt := NewOption(file, match)
 		drtv, ok := Directives[opt.Name]
 		if !ok {
-			return "", fmt.Errorf("Unknown directive '%s' in %s", opt.Name, opt.File)
+			if opt.Name == "lint" {
+				continue
+			}
+			return "", fmt.Errorf("unknown directive '%s' in %s", opt.Name, opt.File)
 		}
 		profile, err = drtv.Apply(opt, profile)
 		if err != nil {

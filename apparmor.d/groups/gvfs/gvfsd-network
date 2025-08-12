@@ -11,6 +11,8 @@ include <tunables/global>
 profile gvfsd-network @{exec_path} {
   include <abstractions/base>
   include <abstractions/bus-session>
+  include <abstractions/bus/org.gtk.vfs.Daemon>
+  include <abstractions/bus/org.gtk.vfs.MountTracker>
   include <abstractions/dconf-write>
 
   #aa:dbus own bus=session name=org.gtk.vfs.mountpoint_@{int}
@@ -18,27 +20,17 @@ profile gvfsd-network @{exec_path} {
   dbus send bus=session path=/org/gtk/gvfs/exec_spaw/@{int}
        interface=org.gtk.vfs.Spawner
        member=Spawned
-       peer=(name=:*, label=gvfsd),
+       peer=(name="@{busname}", label=gvfsd),
 
   dbus receive bus=session path=/org/gtk/vfs/mountable
        interface=org.gtk.vfs.Mountable
        member=Mount
-       peer=(name=:*, label=gvfsd),
+       peer=(name="@{busname}", label=gvfsd),
 
   dbus send bus=session path=/org/gtk/vfs/mounttracker
        interface=org.gtk.vfs.MountTracker
        member={MountLocation,LookupMount,RegisterMount}
-       peer=(name=:*, label=gvfsd),
-
-  dbus send bus=session path=/org/gtk/vfs/Daemon
-       interface=org.gtk.vfs.Daemon
-       member=GetConnection
-       peer=(name=:*, label=gvfsd-dnssd),
-
-  dbus receive bus=session path=/org/gtk/vfs/Daemon
-       interface=org.gtk.vfs.Daemon
-       member=GetConnection
-       peer=(name=:*, label=gnome-control-center),
+       peer=(name="@{busname}", label=gvfsd),
 
   @{exec_path} mr,
 

@@ -1,0 +1,72 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2019-2021 Mikhail Morfikov
+# Copyright (C) 2022-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = /usr/share/debconf/frontend
+profile debconf-frontend @{exec_path} flags=(complain) {
+  include <abstractions/base>
+  include <abstractions/common/debconf>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/fonts>
+  include <abstractions/freedesktop.org>
+  include <abstractions/gtk>
+
+  capability dac_read_search,
+
+  @{exec_path} r,
+
+  @{bin}/hostname                   ix,
+  @{bin}/lsb_release                Px,
+  @{bin}/stty                       ix,
+  @{sbin}/update-secureboot-policy  Px,
+
+  # debconf apps
+  @{bin}/adequate                     Px,
+  @{bin}/debconf-apt-progress         Px,
+  @{bin}/linux-check-removal          Px,
+  @{bin}/ucf                          Px,
+  @{sbin}/aspell-autobuildhash        Px,
+  @{sbin}/pam-auth-update             Px,
+  @{lib}/tasksel/tasksel-debconf      Px -> tasksel,
+  /usr/share/debian-security-support/check-support-status.hook Px,
+
+  # Grub
+  @{lib}/grub/grub-multi-install           Px,
+  /usr/share/grub/grub-check-signatures    Px,
+
+  # Package maintainer's scripts
+  /var/lib/dpkg/info/*.@{dpkg_script_ext} Px,
+  /var/lib/dpkg/info/*.control            r,
+  /var/lib/dpkg/tmp.ci/@{dpkg_script_ext} Px -> dpkg-scripts,
+
+  # DKMS scipts
+  @{lib}/dkms/common.postinst        rPUx,
+  @{lib}/dkms/dkms-*                 rPUx,
+  @{lib}/dkms/dkms_*                 rPUx,
+
+  /usr/share/debconf/{,**} r,
+
+  /etc/inputrc r,
+  /etc/shadow r,
+
+  owner /var/cache/debconf/* rwk,
+
+  owner @{tmp}/file* w,
+  owner @{tmp}/tmp.@{rand10} rw,
+  owner @{tmp}/updateppds.@{rand6} rw,
+
+  @{HOME}/.Xauthority r,
+
+  @{run}/user/@{uid}/pk-debconf-socket rw,
+
+  owner @{PROC}/@{pid}/mounts r,
+
+  include if exists <local/debconf-frontend>
+}
+
+# vim:syntax=apparmor

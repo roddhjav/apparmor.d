@@ -14,6 +14,8 @@ var (
 		`abi/4.0`, `abi/3.0`,
 		`  userns,`, `  # userns,`,
 		`  mqueue`, `  # mqueue`,
+		`  all`, `  # all`,
+		`  deny mqueue`, `  # deny mqueue`,
 	})
 )
 

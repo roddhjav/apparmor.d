@@ -13,6 +13,10 @@ profile sshfs @{exec_path} flags=(complain) {
 
   mount fstype=fuse.sshfs -> @{HOME}/*/,
   mount fstype=fuse.sshfs -> @{HOME}/*/*/,
+  mount fstype=fuse.sshfs -> @{MOUNTDIRS}/,
+  mount fstype=fuse.sshfs -> @{MOUNTS}/,
+  mount fstype=fuse.sshfs -> @{MOUNTS}/*/,
+  mount fstype=fuse.sshfs -> @{MOUNTS}/*/*/,
 
   unix (connect, send, receive) type=stream peer=(label="sshfs//fusermount",addr=none),
 
@@ -27,22 +31,23 @@ profile sshfs @{exec_path} flags=(complain) {
 
   profile fusermount flags=(complain) {
     include <abstractions/base>
-    include <abstractions/nameservice-strict>
-
-    capability sys_admin,
+    include <abstractions/app/fusermount>
 
     mount fstype={fuse,fuse.sshfs} -> @{HOME}/*/,
     mount fstype={fuse,fuse.sshfs} -> @{HOME}/*/*/,
+    mount fstype={fuse,fuse.sshfs} -> @{MOUNTDIRS}/,
+    mount fstype={fuse,fuse.sshfs} -> @{MOUNTS}/,
+    mount fstype={fuse,fuse.sshfs} -> @{MOUNTS}/*/,
+    mount fstype={fuse,fuse.sshfs} -> @{MOUNTS}/*/*/,
+
+    umount @{HOME}/*/,
+    umount @{HOME}/*/*/,
+    umount @{MOUNTDIRS}/,
+    umount @{MOUNTS}/,
+    umount @{MOUNTS}/*/,
+    umount @{MOUNTS}/*/*/,
 
     unix (connect, send, receive) type=stream peer=(label="sshfs",addr=none),
-
-    @{bin}/fusermount{,3} mr,
-
-    /etc/fuse.conf r,
-
-    @{PROC}/@{pid}/mounts r,
-
-    /dev/fuse rw,
 
     include if exists <local/sshfs_fusermount>
   }

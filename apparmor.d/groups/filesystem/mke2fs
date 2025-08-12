@@ -1,0 +1,46 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2019-2021 Mikhail Morfikov
+# Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{sbin}/mke2fs @{sbin}/mkfs.ext2 @{sbin}/mkfs.ext3 @{sbin}/mkfs.ext4
+profile mke2fs @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/disks-write>
+  include <abstractions/user-download-strict>
+
+  capability sys_rawio,
+
+  @{exec_path} mr,
+
+  # To check for badblocks
+  @{sh_path}        rix,
+  @{sbin}/badblocks rPx,
+
+  /usr/share/file/misc/magic.mgc r,
+
+  /etc/mke2fs.conf r,
+
+  # A place for file images
+  owner @{user_img_dirs}/{,**} rwk,
+
+  # For virt-resize
+  owner /var/tmp/.guestfs-@{int}/** rwk,
+
+  owner @{run}/blkid/blkid.tab{,-@{rand6}} rw,
+  owner @{run}/blkid/blkid.tab.old rwl -> @{run}/blkid/blkid.tab,
+
+  owner @{tmp}/.guestfs-@{uid}/appliance.d.@{rand8}/@{user} rw,
+
+        @{PROC}/swaps r,
+  owner @{PROC}/@{pid}/mounts r,
+
+  include if exists <local/mke2fs>
+}
+
+# vim:syntax=apparmor

@@ -9,17 +9,28 @@ include <tunables/global>
 @{exec_path} = @{bin}/loupe
 profile loupe @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/bus-accessibility>
+  include <abstractions/bus-session>
+  include <abstractions/bus-system>
   include <abstractions/dconf-write>
   include <abstractions/gnome-strict>
   include <abstractions/graphics>
   include <abstractions/nameservice-strict>
+  include <abstractions/thumbnails-cache-write>
   include <abstractions/trash-strict>
   include <abstractions/user-read-strict>
   include <abstractions/user-write-strict>
 
+  unix type=stream peer=(label=loupe//bwrap),
+
   signal send set=kill peer=loupe//bwrap,
 
   #aa:dbus talk bus=session name=org.gtk.vfs label="gvfsd{,-*}"
+
+  dbus send bus=system path=/org/freedesktop/hostname1
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=@{busname}, label=@{p_systemd_hostnamed}),
 
   @{exec_path} mr,
 
@@ -32,7 +43,8 @@ profile loupe @{exec_path} flags=(attach_disconnected) {
 
   owner @{user_cache_dirs}/glycin/{,**} rw,
 
-  @{run}/mount/utab r,
+        @{run}/mount/utab r,
+  owner @{run}/user/@{uid}/gvfsd/socket-@{rand8} rw,
 
   @{sys}/fs/cgroup/user.slice/cpu.max r,
   @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/cpu.max r,
@@ -42,6 +54,7 @@ profile loupe @{exec_path} flags=(attach_disconnected) {
   owner @{PROC}/@{pid}/cgroup r,
   owner @{PROC}/@{pid}/cmdline r,
   owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/stat r,
   owner @{PROC}/@{pid}/task/@{tid}/comm rw,
 
   deny @{user_share_dirs}/gvfs-metadata/* r,
@@ -50,7 +63,9 @@ profile loupe @{exec_path} flags=(attach_disconnected) {
     include <abstractions/base>
     include <abstractions/common/bwrap>
 
-    signal (receive) set=(kill) peer=loupe,
+    unix type=stream peer=(label=loupe),
+
+    signal receive set=kill peer=loupe,
 
     @{bin}/bwrap mr,
     @{lib}/glycin-loaders/*/glycin-* rix,

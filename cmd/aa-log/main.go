@@ -15,15 +15,15 @@ import (
 	"github.com/roddhjav/apparmor.d/pkg/logs"
 )
 
-const usage = `aa-log [-h] [--systemd] [--file file] [--rules | --raw] [profile]
+const usage = `aa-log [-h] [--systemd] [--file file] [--rules | --raw] [--since] [profile]
 
     Review AppArmor generated messages in a colorful way. It supports logs from
     auditd, systemd, syslog as well as dbus session events.
 
     It can be given an optional profile name to filter the output with.
 
-    Default logs are read from '/var/log/audit/audit.log'. Other files in 
-    '/var/log/audit/' can easily be checked: 'aa-log -f 1' parses 'audit.log.1' 
+    Default logs are read from '/var/log/audit/audit.log'. Other files in
+    '/var/log/audit/' can easily be checked: 'aa-log -f 1' parses 'audit.log.1'
 
 Options:
     -h, --help         Show this help message and exit.
@@ -55,7 +55,7 @@ func aaLog(logger string, path string, profile string) error {
 	case "systemd":
 		file, err = logs.GetJournalctlLogs(path, since, !slices.Contains(logs.LogFiles, path))
 	default:
-		err = fmt.Errorf("Logger %s not supported.", logger)
+		err = fmt.Errorf("logger %s not supported", logger)
 	}
 	if err != nil {
 		return err

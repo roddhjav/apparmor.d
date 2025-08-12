@@ -7,14 +7,16 @@ abi <abi/4.0>,
 
 include <tunables/global>
 
-@{exec_path} = @{bin}/gpartedbin @{lib}/{,gparted/}gpartedbin
-profile gpartedbin @{exec_path} {
+@{exec_path} = @{sbin}/gpartedbin @{lib}/{,gparted/}gpartedbin
+profile gpartedbin @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/dconf-write>
   include <abstractions/desktop>
   include <abstractions/disks-write>
   include <abstractions/fontconfig-cache-read>
+  include <abstractions/nameservice-strict>
 
+  capability dac_override,
   capability dac_read_search,
   capability ipc_lock,
   capability sys_admin,
@@ -28,42 +30,44 @@ profile gpartedbin @{exec_path} {
 
   @{sh_path}        rix,
 
-  @{bin}/blkid      rPx,
-  @{bin}/dmidecode  rPx,
-  @{bin}/hdparm     rPx,
+  @{sbin}/blkid     rPx,
+  @{sbin}/dmidecode rPx,
+  @{sbin}/hdparm    rPx,
   @{bin}/kmod       rPx,
 
   @{bin}/mount      rCx -> mount,
   @{bin}/udevadm    rCx -> udevadm,
   @{bin}/umount     rCx -> umount,
 
-  @{bin}/btrfs      rPx,
-  @{bin}/btrfstune  rPx,
-  @{bin}/dmraid     rPUx,
-  @{bin}/dmsetup    rPUx,
-  @{bin}/dumpe2fs   rPx,
-  @{bin}/e2fsck     rPx,
-  @{bin}/e2image    rPx,
-  @{bin}/fsck.btrfs rPx,
-  @{bin}/fsck.fat   rPx,
-  @{bin}/lvm        rPUx,
-  @{bin}/mdadm      rPUx,
-  @{bin}/mke2fs     rPx,
-  @{bin}/mkfs.*     rPx,
-  @{bin}/mkntfs     rPx,
-  @{bin}/mkswap     rPx,
+  @{sbin}/btrfs     rPx,
+  @{sbin}/btrfstune rPx,
+  @{sbin}/dmraid    rPUx,
+  @{sbin}/dmsetup   rPUx,
+  @{sbin}/dumpe2fs  rPx,
+  @{sbin}/e2fsck    rPx,
+  @{sbin}/e2image   rPx,
+  @{sbin}/fsck.*    rPUx,
+  @{sbin}/lvm       rPUx,
+  @{sbin}/mdadm     rPUx,
+  @{sbin}/mke2fs    rPx,
+  @{sbin}/mkfs.*    rPUx,
+  @{sbin}/mkntfs    rPx,
+  @{sbin}/mkswap    rPx,
   @{bin}/mtools     rPx,
   @{bin}/ntfsinfo   rPx,
-  @{bin}/ntfslabel  rPx,
-  @{bin}/ntfsresize rPx,
-  @{bin}/resize2fs  rPx,
-  @{bin}/swaplabel  rPx,
-  @{bin}/swapoff    rPx,
-  @{bin}/swapon     rPx,
-  @{bin}/tune2fs    rPx,
-  @{bin}/xfs_io     rPUx,
+  @{sbin}/ntfslabel rPx,
+  @{sbin}/ntfsresize rPx,
+  @{sbin}/resize2fs rPx,
+  @{sbin}/swaplabel rPx,
+  @{sbin}/swapoff   rPx,
+  @{sbin}/swapon    rPx,
+  @{bin}/tune.*     rPUx,
+  @{sbin}/tune2fs   rPx,
+  @{sbin}/xfs_io    rPUx,
 
   @{open_path}      rPx -> child-open,
+
+  /etc/fstab r,
 
         @{HOME}/.Xauthority r,
   owner @{HOME}/*.htm w,
@@ -88,7 +92,7 @@ profile gpartedbin @{exec_path} {
 
     mount /dev/{s,v}d[a-z]*@{int} -> /tmp/gparted-*/,
 
-    mount /dev/{s,v}d[a-z]*@{int} -> /boot/,
+    mount /dev/{s,v}d[a-z]*@{int} -> @{efi}/,
     mount /dev/{s,v}d[a-z]*@{int} -> @{MOUNTS}/,
     mount /dev/{s,v}d[a-z]*@{int} -> @{MOUNTS}/*/,
 
@@ -104,7 +108,7 @@ profile gpartedbin @{exec_path} {
 
     umount /tmp/gparted-*/,
 
-    umount /boot/,
+    umount @{efi}/,
     umount @{MOUNTS}/,
     umount @{MOUNTS}/*/,
 

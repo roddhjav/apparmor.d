@@ -29,8 +29,6 @@ profile kscreenlocker_greet @{exec_path} {
   signal (receive) set=(usr1, term) peer=ksmserver,
   signal (send) peer=kcheckpass,
 
-  unix (send,receive) type=stream peer=(label="ksmserver",addr=none),
-
   dbus send bus=system path=/org/freedesktop/DisplayManager/Seat@{int}
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
@@ -41,7 +39,7 @@ profile kscreenlocker_greet @{exec_path} {
   @{lib}/libheif/ r,
   @{lib}/libheif/*.so* rm,
 
-  @{bin}/unix_chkpwd rPx,
+  @{sbin}/unix_chkpwd rPx,
   @{lib}/@{multiarch}/libexec/kcheckpass rPx,
 
   /usr/share/plasma/** r,
@@ -51,12 +49,13 @@ profile kscreenlocker_greet @{exec_path} {
   /usr/share/xsessions/{,*.desktop} r,
   /usr/share/hunspell/* r,
 
-  /{usr/,}etc/environment r,
-  /{usr/,}etc/login.defs r,
-  /{usr/,}etc/login.defs.d/ r,
-  /{usr/,}etc/security/*.conf r,
+  @{etc_ro}/environment r,
+  @{etc_ro}/login.defs r,
+  @{etc_ro}/login.defs.d/{,*} r,
+  @{etc_ro}/security/*.conf r,
   /etc/fstab r,
   /etc/machine-id r,
+  /etc/os-release r,
   /etc/pam.d/* r,
   /etc/shells r,
   /etc/xdg/kscreenlockerrc r,
@@ -100,9 +99,11 @@ profile kscreenlocker_greet @{exec_path} {
   @{sys}/devices/system/node/ r,
   @{sys}/devices/system/node/node@{int}/meminfo r,
 
+        @{PROC}/@{pid}/cgroup r,
         @{PROC}/@{pid}/cmdline r,
         @{PROC}/@{pid}/fd/ r,
         @{PROC}/@{pid}/loginuid r,
+        @{PROC}/@{pid}/mountinfo r,
         @{PROC}/@{pid}/mounts r,
   owner @{PROC}/@{pid}/loginuid r,
 

@@ -8,11 +8,12 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{exec_path} = @{bin}/udevadm @{lib}/systemd/systemd-udevd
-profile systemd-udevd @{exec_path} flags=(attach_disconnected,complain) {
+profile systemd-udevd @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/common/systemd>
   include <abstractions/consoles>
   include <abstractions/nameservice-strict>
+  include <abstractions/perl>
 
   capability chown,
   capability dac_override,
@@ -36,50 +37,52 @@ profile systemd-udevd @{exec_path} flags=(attach_disconnected,complain) {
 
   @{exec_path} mrix,
 
-  @{sh_path}              rix,
-  @{coreutils_path}       rix,
-  @{pager_path}           rPx -> child-pager,
-  @{bin}/*-print-pci-ids  rix,
-  @{bin}/alsactl          rPUx,
-  @{bin}/ddcutil          rPx,
-  @{bin}/dmsetup          rPUx,
-  @{bin}/ethtool          rix,
-  @{bin}/issue-generator  rPx,
-  @{bin}/kmod             rPx,
-  @{bin}/logger           rix,
-  @{bin}/ls               rix,
-  @{bin}/lvm              rPx,
-  @{bin}/mknod            rix,
-  @{bin}/multipath        rPx,
-  @{bin}/nfsrahead        rix,
-  @{bin}/nvidia-modprobe  rPx -> child-modprobe-nvidia,
-  @{bin}/perl             rix,
-  @{bin}/setfacl          rix,
-  @{bin}/sg_inq           rix,
-  @{bin}/snap             rPUx,
-  @{bin}/systemctl        rCx -> systemctl,
-  @{bin}/systemd-run      rix,
-  @{bin}/unshare          rix,
+  @{sh_path}                               rix,
+  @{coreutils_path}                        rix,
+  @{bin}/logger                            rix,
+  @{bin}/ls                                rix,
+  @{bin}/mknod                             rix,
+  @{bin}/nfsrahead                         rix,
+  @{bin}/setfacl                           rix,
+  @{bin}/sg_inq                            rix,
+  @{bin}/systemd-run                       rix, # TODO: rCx -> run,
+  @{bin}/unshare                           rix,
+  @{sbin}/ethtool                          rix,
+
+  @{bin}/ddcutil                           rPx,
+  @{bin}/kmod                              rCx -> kmod,
+  @{bin}/nvidia-modprobe                   rPx -> child-modprobe-nvidia,
+  @{bin}/snap                              rPx,
+  @{bin}/systemctl                         rCx -> systemctl,
+  @{bin}/vmmouse_detect                    rPx,
+  @{pager_path}                            rPx -> child-pager,
+  @{sbin}/alsactl                          rPx,
+  @{sbin}/dmsetup                          rPx,
+  @{sbin}/issue-generator                  rPx,
+  @{sbin}/kdump-config                     rPx,
+  @{sbin}/lvm                              rPx,
+  @{sbin}/multipath                        rPx,
+  @{sbin}/u-d-c-print-pci-ids              rPx,
 
   @{lib}/crda/*                            rPUx,
   @{lib}/gdm-runtime-config                rPx,
   @{lib}/nfsrahead                         rPUx,
-  @{lib}/open-iscsi/net-interface-handler  rPUx,
+  @{lib}/open-iscsi/net-interface-handler  rPx,
   @{lib}/pm-utils/power.d/*                rPUx,
   @{lib}/snapd/snap-device-helper          rPx,
   @{lib}/systemd/systemd-*                 rPx,
   @{lib}/udev/*                            rPUx,
   /usr/share/hplip/config_usb_printer.py   rPUx,
 
-  /etc/console-setup/*.sh             rPUx,
-  /etc/network/cloud-ifupdown-helper  rPUx,
+  /etc/console-setup/*.sh                  rPUx,
+  /etc/network/cloud-ifupdown-helper       rPUx,
 
   /etc/default/* r,
   /etc/machine-id r,
   /etc/nfs.conf rk,
 
   /etc/udev/{,**} r,
-  /etc/udev/.#hwdb.bin* rw,
+  /etc/udev/.#hwdb.bin{@{hex16},@{rand6}} rw,
   /etc/udev/hwdb.bin rw,
 
   /etc/modprobe.d/ r,
@@ -94,6 +97,9 @@ profile systemd-udevd @{exec_path} flags=(attach_disconnected,complain) {
   @{run}/systemd/network/*.link rw,
   @{run}/systemd/notify rw,
   @{run}/systemd/seats/seat@{int} r,
+
+  @{att}/@{run}/systemd/notify w,
+  @{att}/@{run}/udev/control rw,
 
   @{run}/udev/ rw,
   @{run}/udev/** rwk,
@@ -115,14 +121,19 @@ profile systemd-udevd @{exec_path} flags=(attach_disconnected,complain) {
   /dev/ rw,
   /dev/** rwk,
 
+  profile kmod flags=(attach_disconnected,complain) {
+    include <abstractions/base>
+    include <abstractions/app/kmod>
+
+    include if exists <local/systemd-udevd_kmod>
+  }
+
   profile systemctl flags=(attach_disconnected,complain) {
     include <abstractions/base>
     include <abstractions/app/systemctl>
 
     capability net_admin,
     capability sys_ptrace,
-
-    # / r,
 
     include if exists <local/systemd-udevd_systemctl>
   }

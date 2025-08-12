@@ -7,8 +7,8 @@ abi <abi/4.0>,
 
 include <tunables/global>
 
-@{name} = firefox{,.sh,-esr,-bin}
-@{lib_dirs} = @{lib}/@{name} /opt/@{name}
+@{name} = firefox{,-esr,-bin}
+@{lib_dirs} = @{lib}/firefox{,-esr,-beta,-devedition,-nightly} /opt/@{name}
 @{config_dirs} = @{HOME}/.mozilla/
 @{cache_dirs} = @{user_cache_dirs}/mozilla/
 
@@ -26,8 +26,9 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
 
   @{exec_path} mrix,
 
-  @{lib_dirs}/glxtest    rPx -> firefox//&firefox-glxtest,
-  @{lib_dirs}/vaapitest  rPx -> firefox//&firefox-vaapitest,
+  @{lib_dirs}/crashhelper rPx -> firefox//&firefox-crashhelper,
+  @{lib_dirs}/glxtest     rPx -> firefox//&firefox-glxtest,
+  @{lib_dirs}/vaapitest   rPx -> firefox//&firefox-vaapitest,
 
   @{lib}/@{multiarch}/qt5/plugins/kf5/org.kde.kwindowsystem.platforms/KF5WindowSystemKWaylandPlugin.so mr,
   @{lib}/@{multiarch}/qt5/plugins/kf5/org.kde.kwindowsystem.platforms/KF5WindowSystemX11Plugin.so mr,
@@ -38,6 +39,7 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
   @{bin}/gnome-software                              rPx,
   @{bin}/kreadconfig{,5}                             rPx,
   @{bin}/plasma-browser-integration-host             rPx,
+  @{bin}/speech-dispatcher                           rPx,
   @{bin}/update-mime-database                        rPx,
   @{lib}/gvfsd-metadata                              rPx,
   @{lib}/mozilla/kmozillahelper                     rPUx,
@@ -59,9 +61,8 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
   owner @{user_share_dirs}/mime/packages/user-extension-{htm,html,xht,xhtml,shtml}.xml.* rw,
 
   owner @{tmp}/.xfsm-ICE-@{rand6} rw,
-  owner @{tmp}/@{rand6}.tmp r,
-  owner @{tmp}/@{rand8}.txt w,
-  owner @{tmp}/* w,  # file downloads (to anywhere)
+  owner @{tmp}/@{rand8}.* rw,  # file downloads (to anywhere)
+  owner @{tmp}/@{uuid}.zip{,.tmp} rw,
   owner @{tmp}/Mozilla@{uuid}-cachePurge-{@{hex15},@{hex16}} rwk,
   owner @{tmp}/mozilla* rw,
   owner @{tmp}/mozilla*/ rw,

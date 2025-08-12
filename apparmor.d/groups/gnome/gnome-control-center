@@ -32,27 +32,42 @@ profile gnome-control-center @{exec_path} flags=(attach_disconnected) {
   network inet6 stream,
   network netlink raw,
 
-  signal (send) set=(kill) peer=unconfined,
-  signal (send) set=(kill) peer=passwd,
-
-  unix (send, receive, connect) type=stream peer=(addr="@/home/*/.cache/ibus/dbus-????????", label=ibus-daemon),
+  signal send set=kill peer=unconfined,
+  signal send set=kill peer=passwd,
 
   #aa:dbus own bus=session name=org.gnome.Settings
+  #aa:dbus own bus=session name=org.bluez.obex.Agent1
 
+  #aa:dbus talk bus=session name=org.bluez.obex label=obexd
+  #aa:dbus talk bus=session name=org.freedesktop.impl.portal.PermissionStore label=xdg-permission-store
   #aa:dbus talk bus=session name=org.gnome.Mutter label=gnome-shell
+  #aa:dbus talk bus=session name=org.gnome.SessionManager label=gnome-session-binary
   #aa:dbus talk bus=session name=org.gnome.SettingsDaemon.Color label=gsd-color
+  #aa:dbus talk bus=session name=org.gnome.SettingsDaemon.Power label=gsd-power
+  #aa:dbus talk bus=session name=org.gnome.SettingsDaemon.Rfkill label=gsd-rfkill
   #aa:dbus talk bus=session name=org.gnome.Shell label=gnome-shell
 
-  #aa:dbus talk bus=system name=org.freedesktop.hostname1 label=systemd-hostnamed
+  #aa:dbus talk bus=system name=com.ubuntu.WhoopsiePreferences label=whoopsie-preferences
+  #aa:dbus talk bus=system name=net.hadess.SwitcherooControl label=switcheroo-control
+  #aa:dbus talk bus=system name=net.reactivated.Fprint.Manager label="@{p_fprintd}"
+  #aa:dbus talk bus=system name=org.freedesktop.Accounts label="@{p_accounts_daemon}"
+  #aa:dbus talk bus=system name=org.freedesktop.bolt1 label=boltd
+  #aa:dbus talk bus=system name=org.freedesktop.hostname1 label="@{p_systemd_hostnamed}"
+  #aa:dbus talk bus=system name=org.freedesktop.login1 label="@{p_systemd_logind}"
+  #aa:dbus talk bus=system name=org.freedesktop.ModemManager1 label="@{p_ModemManager}"
   #aa:dbus talk bus=system name=org.freedesktop.NetworkManager label=NetworkManager
-  #aa:dbus talk bus=system name=org.freedesktop.UPower label=upowerd
+  #aa:dbus talk bus=system name=org.freedesktop.PolicyKit1 label="@{p_polkitd}"
+  #aa:dbus talk bus=system name=org.freedesktop.systemd1 label="@{p_systemd}"
+  #aa:dbus talk bus=system name=org.freedesktop.UDisks2 label=udisksd
+  #aa:dbus talk bus=system name=org.freedesktop.UPower label="@{p_upowerd}"
+  #aa:dbus talk bus=system name=org.freedesktop.UPower.PowerProfiles label=@{p_power_profiles_daemon}
 
   @{exec_path} mr,
 
   @{bin}/@{shells}     rUx,
 
   @{bin}/gcm-viewer    rix,
-  @{bin}/grep          rix,
+  @{bin}/{,e}grep      rix,
   @{bin}/locale        rix,
   @{bin}/sed           rix,
   @{bin}/tecla         rPx,
@@ -60,11 +75,11 @@ profile gnome-control-center @{exec_path} flags=(attach_disconnected) {
   @{bin}/bwrap                                   rCx -> bwrap,
   @{bin}/gkbd-keyboard-display                   rPx,
   @{bin}/gnome-software                          rPx,
-  @{bin}/openvpn                                 rPx,
+  @{sbin}/openvpn                                rPx,
   @{bin}/passwd                                  rPx,
   @{bin}/pkexec                                  rCx -> pkexec,
   @{bin}/software-properties-gtk                 rPx,
-  @{bin}/usermod                                 rPx,
+  @{sbin}/usermod                                rPx,
   @{lib}/{,@{multiarch}/}webkit{2,}gtk-*/WebKitNetworkProcess rix,
   @{lib}/cups/backend/snmp                       rPx,
   @{lib}/gnome-control-center-goa-helper         rPx,
@@ -90,10 +105,10 @@ profile gnome-control-center @{exec_path} flags=(attach_disconnected) {
   /usr/share/wallpapers/{,**} r,
   /usr/share/xml/iso-codes/{,**} r,
 
+  @{etc_ro}/security/pwquality.conf r,
+  @{etc_ro}/security/pwquality.conf.d/{,**} r,
   /etc/machine-info r,
   /etc/rygel.conf r,
-  /etc/security/pwquality.conf r,
-  /etc/security/pwquality.conf.d/{,**} r,
 
   /etc/fstab r,
   /etc/machine-id r,
@@ -111,6 +126,7 @@ profile gnome-control-center @{exec_path} flags=(attach_disconnected) {
   owner @{HOME}/@{XDG_WALLPAPERS_DIR}/{,**} r,
 
   owner @{user_cache_dirs}/gnome-control-center/{,**} rw,
+  owner @{user_cache_dirs}/thumbnails/fail/gnome-thumbnail-factory/@{hex32}.png.@{rand6} rw,
 
   owner @{user_config_dirs}/background rw,
   owner @{user_config_dirs}/gnome-control-center/{,**} rw,
@@ -143,7 +159,7 @@ profile gnome-control-center @{exec_path} flags=(attach_disconnected) {
   @{run}/udev/data/+pci:* r,              # Identifies all PCI devices (CPU, GPU, Network, Disks, USB, etc.)
   @{run}/udev/data/c13:@{int} r,          # for /dev/input/*
   @{run}/udev/data/c@{dynamic}:@{int} r,  # For dynamic assignment range 234 to 254, 384 to 511
-  @{run}/udev/data/n@{int} r,
+  @{run}/udev/data/n@{int} r,             # For network interfaces
 
   @{sys}/bus/ r,
   @{sys}/class/ r,
@@ -193,6 +209,7 @@ profile gnome-control-center @{exec_path} flags=(attach_disconnected) {
   profile pkexec {
     include <abstractions/base>
     include <abstractions/app/pkexec>
+
     include if exists <local/gnome-control-center_pkexec>
   }
 

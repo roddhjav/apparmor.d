@@ -1,0 +1,60 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2020-2022 Mikhail Morfikov
+# Copyright (C) 2022-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{sbin}/mount.cifs
+profile mount-cifs @{exec_path} flags=(complain) {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+
+  capability sys_admin,
+  capability setpcap,
+  capability dac_read_search,
+
+  network inet dgram,
+  network inet stream,
+  network inet6 dgram,
+  network inet6 stream,
+  network netlink raw,
+
+  mount fstype=cifs -> @{HOME}/*/,
+  mount fstype=cifs -> @{HOME}/*/*/,
+  mount fstype=cifs -> @{MOUNTDIRS}/,
+  mount fstype=cifs -> @{MOUNTS}/,
+  mount fstype=cifs -> @{MOUNTS}/*/,
+  mount fstype=cifs -> @{MOUNTS}/*/*/,
+
+  umount @{HOME}/*/,
+  umount @{HOME}/*/*/,
+  umount @{MOUNTDIRS}/,
+  umount @{MOUNTS}/,
+  umount @{MOUNTS}/*/,
+  umount @{MOUNTS}/*/*/,
+
+  @{exec_path} mr,
+
+  @{bin}/systemd-ask-password rPUx,
+
+  /etc/fstab r,
+  /etc/sync-credentials r,
+
+  owner @{HOME}/.smbcredentials r,
+
+  # Mount points
+  @{HOME}/*/ r,
+  @{HOME}/*/*/ r,
+  @{MOUNTDIRS}/ r,
+  @{MOUNTS}/ r,
+  @{MOUNTS}/*/ r,
+  @{MOUNTS}/*/*/ r,
+
+  include if exists <local/mount-cifs>
+}
+
+# vim:syntax=apparmor

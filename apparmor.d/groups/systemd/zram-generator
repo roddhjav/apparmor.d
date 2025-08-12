@@ -11,29 +11,32 @@ profile zram-generator @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/common/systemd>
 
-  capability sys_module,
-
   @{exec_path} mr,
 
-  @{bin}/kmod                    rix,
+  @{bin}/kmod                    rCx,
   @{bin}/systemd-detect-virt     rPx,
   @{lib}/systemd/systemd-makefs  rPx,
 
   /etc/systemd/zram-generator.conf r,
-  /etc/modprobe.d/{,**} r,
 
   owner @{run}/systemd/generator/{,*/}var-cache-makepkg.mount rw,
   owner @{run}/systemd/generator/dev-zram@{int}.swap rw,
   owner @{run}/systemd/generator/swap.target.wants/{,dev-zram@{int}.swap} rw,
   owner @{run}/systemd/generator/systemd-zram-setup@zram@{int}.service.d/{,*.conf} rw,
 
-  @{sys}/block/zram@{int}/{disksize,reset} rw,
-  @{sys}/devices/virtual/block/zram@{int}/{disksize,reset,comp_algorithm} rw,
-  @{sys}/module/compression r,
+  @{sys}/block/zram@{int}/* rw,
+  @{sys}/devices/virtual/block/zram@{int}/* rw,
 
   @{PROC}/crypto r,
 
   owner /dev/pts/@{int} rw,
+
+  profile kmod {
+    include <abstractions/base>
+    include <abstractions/app/kmod>
+
+    include if exists <local/zram-generator_kmod>
+  }
 
   include if exists <local/zram-generator>
 }

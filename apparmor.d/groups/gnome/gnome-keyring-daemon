@@ -10,7 +10,7 @@ include <tunables/global>
 @{exec_path} = @{bin}/gnome-keyring-daemon
 profile gnome-keyring-daemon @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/attached/consoles>
+  include <abstractions/consoles>
   include <abstractions/bus-session>
   include <abstractions/bus-system>
   include <abstractions/bus/org.freedesktop.login1.Session>
@@ -24,6 +24,7 @@ profile gnome-keyring-daemon @{exec_path} flags=(attach_disconnected) {
 
   #aa:dbus own bus=session name=org.gnome.keyring
   #aa:dbus own bus=session name=org.freedesktop.{S,s}ecret{,s}
+  #aa:dbus own bus=session name=org.freedesktop.impl.portal.Secret
 
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable
@@ -33,7 +34,7 @@ profile gnome-keyring-daemon @{exec_path} flags=(attach_disconnected) {
   dbus send bus=system path=/org/freedesktop/login1
        interface=org.freedesktop.login1.Manager
        member=GetSession
-       peer=(name=org.freedesktop.login1, label=systemd-logind),
+       peer=(name=org.freedesktop.login1, label="@{p_systemd_logind}"),
 
   @{exec_path} mr,
 

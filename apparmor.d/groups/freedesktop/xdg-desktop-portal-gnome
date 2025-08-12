@@ -9,7 +9,7 @@ include <tunables/global>
 @{exec_path} = @{lib}/xdg-desktop-portal-gnome
 profile xdg-desktop-portal-gnome @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/attached/consoles>
+  include <abstractions/bus-accessibility>
   include <abstractions/bus-session>
   include <abstractions/bus-system>
   include <abstractions/bus/org.a11y>
@@ -17,6 +17,7 @@ profile xdg-desktop-portal-gnome @{exec_path} flags=(attach_disconnected) {
   include <abstractions/bus/org.freedesktop.portal.Desktop>
   include <abstractions/bus/org.gnome.Shell.Introspect>
   include <abstractions/bus/org.gtk.vfs.MountTracker>
+  include <abstractions/consoles>
   include <abstractions/dconf-write>
   include <abstractions/deny-sensitive-home>
   include <abstractions/fontconfig-cache-write>
@@ -27,13 +28,29 @@ profile xdg-desktop-portal-gnome @{exec_path} flags=(attach_disconnected) {
 
   network unix stream,
 
-  signal (receive) set=term peer=gdm,
-  signal (receive) set=(hup term) peer=gdm-session-worker,
+  signal receive set=term peer=gdm,
+  signal receive set=(hup term) peer=gdm-session-worker,
 
   #aa:dbus own bus=session name=org.freedesktop.impl.portal.desktop.gnome
   #aa:dbus talk bus=session name=org.freedesktop.impl.portal path=/org/freedesktop/portal/desktop label=xdg-desktop-portal
   #aa:dbus talk bus=session name=org.gnome.Mutter label=gnome-shell
+  #aa:dbus talk bus=session name=org.gnome.Settings.GlobalShortcutsProvider label=gnome-control-center-global-shortcuts-provider
   #aa:dbus talk bus=session name=org.gnome.Shell.Screenshot label=gnome-shell
+
+  dbus send bus=session path=/org/freedesktop/portal/desktop
+       interface=org.freedesktop.impl.portal.Background
+       member=RunningApplicationsChanged
+       peer=(name=org.freedesktop.DBus, label=xdg-desktop-portal),
+
+  dbus send bus=session path=/org/gtk/Notifications
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=:*, label=gnome-shell),
+
+  dbus receive bus=session path=/org/gnome/Shell
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged
+       peer=(name=@{busname}, label=gnome-shell),
 
   @{exec_path} mr,
 
@@ -58,12 +75,16 @@ profile xdg-desktop-portal-gnome @{exec_path} flags=(attach_disconnected) {
 
   owner @{tmp}/.goutputstream-@{rand6} rw,
   owner @{tmp}/@{rand6} rw,
+  owner @{tmp}/gtkprint_ppd_@{rand6} rw,
+  owner @{tmp}/gtkprint@{rand6} r,
+  owner @{tmp}/xdg-desktop-portal-gnome@{rand6} rw,
 
   @{run}/mount/utab r,
 
   owner @{PROC}/@{pid}/ r,
   owner @{PROC}/@{pid}/cmdline r,
   owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/stat r,
   owner @{PROC}/@{pid}/task/@{tid}/ r,
   owner @{PROC}/@{pid}/task/@{tid}/comm rw,
   owner @{PROC}/@{pid}/task/@{tid}/status r,

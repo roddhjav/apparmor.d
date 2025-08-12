@@ -1,0 +1,26 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{sbin}/update-catalog
+profile update-catalog @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/perl>
+
+  @{exec_path} mr,
+
+  /etc/sgml/ r,
+  /etc/sgml/* r,
+
+  /var/lib/sgml-base/*catalog rw,
+  /var/lib/sgml-base/*catalog.new rw,
+  /var/lib/sgml-base/*catalog.old w,
+
+  include if exists <local/update-catalog>
+}
+
+# vim:syntax=apparmor

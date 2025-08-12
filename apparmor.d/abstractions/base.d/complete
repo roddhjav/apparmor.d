@@ -3,14 +3,17 @@
 # Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
+  # Systemd: allow to receive any signal from the systemd profiles stack
+  signal receive                           peer=@{p_systemd},
+  signal receive                           peer=@{p_systemd_user},
+
   # Allow to receive some signals from new well-known profiles
   signal (receive)                           peer=btop,
   signal (receive)                           peer=htop,
+  signal (receive)                           peer=pkill,
   signal (receive)                           peer=sudo,
   signal (receive)                           peer=top,
   signal (receive) set=(cont,term,kill,stop) peer=systemd-shutdown,
-  signal (receive) set=(cont,term)           peer=@{p_systemd_user},
-  signal (receive) set=(cont,term)           peer=@{p_systemd},
   signal (receive) set=(hup term)            peer=login,
   signal (receive) set=(hup)                 peer=xinit,
   signal (receive) set=(term,kill)           peer=gnome-shell,
@@ -18,16 +21,10 @@
   signal (receive) set=(term,kill)           peer=openbox,
   signal (receive) set=(term,kill)           peer=su,
 
-  ptrace (readby) peer=systemd-coredump,
+  ptrace (readby) peer=@{p_systemd_coredump},
 
   @{etc_rw}/localtime r,
   /etc/locale.conf r,
-
-  # mesa 24.2 introduced a shader disk cache which opens quite a lot of fd.
-  # They are not closed and get inherited by child programs. Denying it can cause
-  # crash, so we are allowing it globally while the issue is beeing fixed in mesa.
-  owner @{user_cache_dirs}/mesa_shader_cache_db/part@{int}/mesa_cache.db rw,
-  owner @{user_cache_dirs}/mesa_shader_cache_db/part@{int}/mesa_cache.idx rw,
 
   @{sys}/devices/system/cpu/possible r,
 

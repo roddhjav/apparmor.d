@@ -16,7 +16,7 @@ include <tunables/global>
 profile dbus-system flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus-system>
-  include <abstractions/attached/consoles>
+  include <abstractions/consoles>
   include <abstractions/deny-sensitive-home>
   include <abstractions/nameservice-strict>
 
@@ -31,7 +31,7 @@ profile dbus-system flags=(attach_disconnected) {
   network bluetooth stream,
   network bluetooth seqpacket,
 
-  ptrace (read) peer=@{p_systemd},
+  ptrace read peer=@{p_systemd},
 
   #aa:dbus own bus=system name=org.freedesktop.DBus path=/{,org/freedesktop/DBus}
   dbus receive bus=system path=/org/freedesktop/DBus
@@ -39,9 +39,15 @@ profile dbus-system flags=(attach_disconnected) {
        member=Hello
        peer=(name=@{busname}),
 
+  dbus receive bus=system path=/org/freedesktop/systemd1
+       interface=org.freedesktop.systemd1.Activator
+       member=ActivationFailure
+       peer=(name=@{busname}, label="@{p_systemd}"),
+
   @{exec_path} mrix,
 
   @{bin}/**                   PUx,
+  @{sbin}/**                  PUx,
   @{lib}/**                   PUx,
   /usr/share/*/**             PUx,
 
@@ -63,6 +69,7 @@ profile dbus-system flags=(attach_disconnected) {
 
   @{att}/@{run}/systemd/inhibit/@{int}.ref rw,
   @{att}/@{run}/systemd/sessions/{,@{l}}@{int}.ref rw,
+
   @{run}/systemd/notify w,
   @{run}/systemd/users/@{int} r,
 
@@ -78,6 +85,7 @@ profile dbus-system flags=(attach_disconnected) {
         @{PROC}/cmdline r,
         @{PROC}/sys/kernel/osrelease r,
   owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/fdinfo/@{int} r,
   owner @{PROC}/@{pid}/mounts r,
   owner @{PROC}/@{pid}/oom_score_adj rw,
 

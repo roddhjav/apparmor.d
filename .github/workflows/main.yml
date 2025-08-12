@@ -9,21 +9,25 @@ jobs:
       - name: Check out repository code
         uses: actions/checkout@v4
 
+      - name: Install linter dependencies
+        run: |
+          pipx install rust-just
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
       - name: Run basic profile linter check
         run: |
-          make check
+          just check
 
   build:
     runs-on: ${{ matrix.os }}
     needs: check
     strategy:
       matrix:
-        os:
-          - ubuntu-24.04
-          - ubuntu-22.04
-        mode:
-          - default
-          - full-system-policy
+        include:
+          - os: ubuntu-24.04
+            mode: default
+          - os: ubuntu-24.04
+            mode: full-system-policy
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
@@ -34,12 +38,19 @@ jobs:
           sudo apt-get install -y \
             devscripts debhelper config-package-dev \
             auditd apparmor-profiles apparmor-utils
+          pipx install rust-just
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
           sudo rm /etc/apparmor.d/usr.lib.snapd.snap-confine.real
 
       - name: Build the apparmor.d package
         run: |
           if [[ ${{ matrix.mode }} == full-system-policy ]]; then
-            echo -e "\noverride_dh_auto_build:\n\tmake full" >> debian/rules
+            sed -e "s/just complain/just fsp-complain/" -i debian/rules
+          fi
+          if [[ ${{ matrix.os }} == ubuntu-24.04 ]] && [[ ${{ matrix.mode }} == default ]]; then
+            # Test with Re-attach disconnected path
+            sed -e 's;// builder.Register("attach");builder.Register("attach");' -i pkg/prebuild/cli/cli.go
+            sed -e '/@{att}/d' -i apparmor.d/tunables/multiarch.d/system
           fi
           bash dists/build.sh dpkg
 
@@ -48,13 +59,10 @@ jobs:
 
       - name: Reload AppArmor
         run: |
-          sudo systemctl restart apparmor.service || true
-          sudo systemctl status apparmor.service
-
-      - name: Ensure compatibility with some AppArmor userspace tools
-        if: matrix.os != 'ubuntu-24.04'
-        run: |
-          sudo aa-enforce /etc/apparmor.d/aa-notify
+            if ! sudo systemctl restart apparmor.service; then
+              sudo journalctl -xeu apparmor.service
+              exit 1
+            fi
 
       - name: Show AppArmor log and rules
         run: |
@@ -75,6 +83,7 @@ jobs:
   tests:
     runs-on: ubuntu-24.04
     needs: build
+    if: github.ref == 'refs/heads/dev'
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
@@ -94,12 +103,15 @@ jobs:
           sudo apt-get install -y \
             apparmor-profiles apparmor-utils \
             bats bats-support
-          sudo install -Dm0644 .github/local/needrestart /etc/apparmor.d/local/needrestart
+          pipx install rust-just
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Install apparmor.d
         run: |
           sudo dpkg --install .pkg/apparmor.d_*_amd64.deb || true
           sudo systemctl restart apparmor.service
+          sudo systemctl daemon-reload
+          systemctl --user daemon-reload
 
       - name: Restart some services to ensure they are confined
         run: |
@@ -118,16 +130,18 @@ jobs:
           for service in "${services[@]}"; do
             sudo systemctl restart "$service" || systemctl status "$service.service" || true
           done
+          systemctl restart --user dbus || systemctl status --user "dbus.service" || true
           sudo ps auxZ | grep -v '\[.*\]'
           sudo aa-log -s --raw
 
       - name: Install integration dependencies
         run: |
-          bash tests/requirements.sh
+          just init
+          find /usr/sbin/ -type f
 
-      - name: Run the bats integration tests
+      - name: Run the integration tests
         run: |
-          make bats
+          just integration
 
       - name: Show final AppArmor logs
         if: always()

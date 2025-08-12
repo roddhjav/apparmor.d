@@ -6,7 +6,7 @@ abi <abi/4.0>,
 
 include <tunables/global>
 
-@{exec_path} = @{bin}/ModemManager
+@{exec_path} = @{sbin}/ModemManager
 profile ModemManager @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus-system>
@@ -14,7 +14,7 @@ profile ModemManager @{exec_path} flags=(attach_disconnected) {
   include <abstractions/bus/org.freedesktop.PolicyKit1>
   include <abstractions/consoles>
   include <abstractions/devices-usb>
-  include <abstractions/dri-enumerate>
+  include <abstractions/dri>
 
   capability net_admin,
 
@@ -25,18 +25,18 @@ profile ModemManager @{exec_path} flags=(attach_disconnected) {
 
   @{exec_path} mr,
 
-  @{run}/udev/data/+acpi:* r,             # for acpi
+  @{run}/udev/data/+acpi:* r,             # Exposes ACPI objects (power buttons, batteries, thermal)
   @{run}/udev/data/+pci:* r,              # Identifies all PCI devices (CPU, GPU, Network, Disks, USB, etc.)
-  @{run}/udev/data/+platform:* r,
-  @{run}/udev/data/+pnp:* r,
-  @{run}/udev/data/+serial*:* r,
-  @{run}/udev/data/+usb:* r,
-  @{run}/udev/data/+vmbus:* r,
+  @{run}/udev/data/+platform:* r,         # Identifies onboard devices (laptop/board model, power controllers, thermal sensors)
+  @{run}/udev/data/+pnp:* r,              # For Plug and Play devices (legacy hardware, sound cards, etc.)
+  @{run}/udev/data/+serial*:* r,          # For serial devices (modems, serial ports, etc.)
+  @{run}/udev/data/+usb:* r,              # Identifies all USB devices
+  @{run}/udev/data/+vmbus:* r,            # For Hyper-V devices, (network adapters, storage controllers, and other virtual devices)
   @{run}/udev/data/c16[6,7]:@{int} r,     # USB modems
   @{run}/udev/data/c18[0,8,9]:@{int} r,   # USB devices & USB serial converters
   @{run}/udev/data/c4:@{int} r,           # for /dev/tty[0-9]*
   @{run}/udev/data/c5:@{int} r,           # for /dev/tty, /dev/console, /dev/ptmx
-  @{run}/udev/data/n@{int} r,
+  @{run}/udev/data/n@{int} r,             # For network interfaces
 
   @{att}/@{run}/systemd/inhibit/@{int}.ref rw,
 
@@ -47,7 +47,6 @@ profile ModemManager @{exec_path} flags=(attach_disconnected) {
   @{sys}/class/tty/ r,
   @{sys}/class/wwan/ r,
 
-  @{sys}/devices/@{pci}/revision r,
   @{sys}/devices/**/net/*/ r,
   @{sys}/devices/**/uevent r,
   @{sys}/devices/virtual/tty/*/ r,

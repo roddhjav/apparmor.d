@@ -32,7 +32,7 @@ The profiles heavily use the **largely extended** [XDG directory variables](#xdg
   ```
 3. Then restart the AppArmor service to reload the profiles in the kernel:
   ```sh
-  sudo systemctl restart apparmor.service
+  sudo systemctl reload apparmor.service
   ```
 
 ### Profile Additions
@@ -41,7 +41,7 @@ You can extend any profile with your own rules by creating a file in the `/etc/a
 
 **Example**
 
-By default, `nautilus` (and any file browser) only allows access to user files. Thus, your cannot browse system files such as `/etc/`, `/srv/`, `/var/`. You can change this behaviour by creating a local profile addition file for `nautilus`:
+By default, `nautilus` (and any file browser) only allows access to user files. Thus, your cannot browse system files such as `/etc/`, `/srv/`, `/var/`. You can change this behavior by creating a local profile addition file for `nautilus`:
 
 1. Create the file `/etc/apparmor.d/local/nautilus` and add the following rules in it:
   ```sh
@@ -55,7 +55,7 @@ By default, `nautilus` (and any file browser) only allows access to user files. 
   ```
 2. Then restart the AppArmor service to reload the profiles in the kernel:
   ```sh
-  sudo systemctl restart apparmor.service
+  sudo systemctl reload apparmor.service
   ```
 
 ### XDG variables
@@ -189,7 +189,7 @@ Common mount points are defined in the `@{MOUNTS}` variable. If you mount a disk
 
 If you mount a disk on `/ssd/`, add the following to `/etc/apparmor.d/tunables/xdg-user-dirs.d/apparmor.d.d/local`:
 ```sh
-@{MOUNT}+=/ssd/
+@{MOUNTS}+=/ssd/
 ```
 
 <!-- ### User data

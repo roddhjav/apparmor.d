@@ -2,32 +2,25 @@
 # Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
+# Allow setting realtime priorities.
+
   abi <abi/4.0>,
 
+  #aa:dbus common bus=system name=org.freedesktop.RealtimeKit1 label="@{p_rtkit_daemon}"
   dbus send bus=system path=/org/freedesktop/RealtimeKit1
        interface=org.freedesktop.DBus.Properties
        member=Get
        peer=(name=org.freedesktop.RealtimeKit1),
 
   dbus send bus=system path=/org/freedesktop/RealtimeKit1
-       interface=org.freedesktop.DBus.Properties
-       member={Get,GetAll}
-       peer=(name="@{busname}", label=rtkit-daemon),
+       interface=org.freedesktop.RealtimeKit1
+       member={MakeThreadHighPriority,MakeThreadRealtime}
+       peer=(name="{@{busname},org.freedesktop.RealtimeKit1}", label="@{p_rtkit_daemon}"),
 
   dbus send bus=system path=/org/freedesktop/RealtimeKit1
        interface=org.freedesktop.RealtimeKit1
-       member=MakeThread*
-       peer=(name="@{busname}", label=rtkit-daemon),
-
-  dbus send bus=system path=/org/freedesktop/RealtimeKit1
-       interface=org.freedesktop.RealtimeKit1
-       member=MakeThread*
-       peer=(name=org.freedesktop.RealtimeKit1),
-
-  dbus send bus=system path=/org/freedesktop/RealtimeKit1
-       interface=org.freedesktop.RealtimeKit1
-       member=MakeThread*
-       peer=(name=org.freedesktop.RealtimeKit1, label=rtkit-daemon),
+       member={MakeThreadHighPriorityWithPID,MakeThreadRealtimeWithPID}
+       peer=(name="{@{busname},org.freedesktop.RealtimeKit1}", label="@{p_rtkit_daemon}"),
 
   include if exists <abstractions/bus/org.freedesktop.RealtimeKit1.d>
 

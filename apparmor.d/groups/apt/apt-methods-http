@@ -8,7 +8,7 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{exec_path} = @{lib}/apt/methods/http{,s}
-profile apt-methods-http @{exec_path} {
+profile apt-methods-http @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/consoles>
   include <abstractions/nameservice-strict>
@@ -23,14 +23,16 @@ profile apt-methods-http @{exec_path} {
   network inet6 stream,
   network netlink raw,
 
-  signal (receive) peer=apt-get,
-  signal (receive) peer=apt,
-  signal (receive) peer=aptitude,
-  signal (receive) peer=packagekitd,
-  signal (receive) peer=synaptic,
-  signal (receive) peer=ubuntu-advantage,
-  signal (receive) peer=unattended-upgrade,
-  signal (receive) peer=update-manager,
+  signal receive peer=@{p_apt_news},
+  signal receive peer=@{p_packagekitd},
+  signal receive peer=apt-get,
+  signal receive peer=apt,
+  signal receive peer=aptitude,
+  signal receive peer=role_*,
+  signal receive peer=synaptic,
+  signal receive peer=ubuntu-advantage,
+  signal receive peer=unattended-upgrade,
+  signal receive peer=update-manager,
 
   ptrace (read),
 
@@ -69,7 +71,8 @@ profile apt-methods-http @{exec_path} {
   owner @{tmp}/aptitude-root.*/aptitude-download-* rw,
   owner @{tmp}/apt-changelog-*/*.changelog rw,
 
-  @{run}/ubuntu-advantage/aptnews.json rw,
+        @{run}/ubuntu-advantage/aptnews.json rw,
+  owner @{run}/ubuntu-advantage/apt-news/aptnews.json rw,
 
   @{PROC}/1/cgroup r,
   @{PROC}/@{pid}/cgroup r,

@@ -1,0 +1,43 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2019-2021 Mikhail Morfikov
+# Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/apt/methods/sqv
+profile apt-methods-sqv @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+
+  # To handle the _apt user
+  capability setgid,
+  capability setuid,
+
+  signal receive set=int peer=apt,
+  signal receive set=int peer=packagekitd,
+
+  @{exec_path} mr,
+
+  @{bin}/sqv ix,
+
+  /usr/share/apt/default-sequoia.config r,
+  /usr/share/keyrings/debian-archive-keyring.gpg r,
+  /usr/share/keyrings/debian-archive-keyring.pgp r,
+
+  owner /var/lib/apt/lists/{,**} r,
+
+  owner /tmp/apt.data.@{rand6} rw,
+  owner /tmp/apt.sig.@{rand6} rw,
+  owner /tmp/apt.sqverr.@{rand6} rw,
+  owner /tmp/apt.sqvout.@{rand6} rw,
+
+  @{PROC}/@{pid}/fd/ r,
+
+  include if exists <local/apt-methods-sqv>
+}
+
+# vim:syntax=apparmor

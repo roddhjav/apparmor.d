@@ -7,7 +7,7 @@ abi <abi/4.0>,
 
 include <tunables/global>
 
-@{exec_path} = @{bin}/logrotate
+@{exec_path} = @{sbin}/logrotate
 profile logrotate @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/nameservice-strict>
@@ -21,8 +21,8 @@ profile logrotate @{exec_path} flags=(attach_disconnected) {
   capability setgid,
   capability setuid,
 
-  signal (send) set=(hup),
-  signal (send) set=(term cont) peer=systemd-tty-ask-password-agent,
+  signal send set=hup,
+  signal send set=(term cont) peer=systemd-tty-ask-password-agent,
 
   @{exec_path} mr,
 
@@ -30,9 +30,9 @@ profile logrotate @{exec_path} flags=(attach_disconnected) {
 
   @{sh_path}                    rix,
   @{bin}/cat                    rix,
-  @{bin}/grep                   rix,
+  @{bin}/{,e}grep               rix,
   @{bin}/gzip                   rix,
-  @{bin}/invoke-rc.d            rix,
+  @{sbin}/invoke-rc.d           rix,
   @{bin}/kill                   rix,
   @{bin}/ls                     rix,
   @{bin}/setfacl                rix,
@@ -79,6 +79,11 @@ profile logrotate @{exec_path} flags=(attach_disconnected) {
 
     capability net_admin,
     capability sys_ptrace,
+
+    dbus send bus=system path=/org/freedesktop/systemd1
+         interface=org.freedesktop.systemd1.Manager
+         member=KillUnit
+         peer=(name=org.freedesktop.systemd1, label="@{p_systemd}"),
 
     @{run}/utmp rk,
 

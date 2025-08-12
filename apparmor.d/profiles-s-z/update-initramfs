@@ -7,7 +7,7 @@ abi <abi/4.0>,
 
 include <tunables/global>
 
-@{exec_path} = @{bin}/update-initramfs
+@{exec_path} = @{sbin}/update-initramfs
 profile update-initramfs @{exec_path} {
   include <abstractions/base>
   include <abstractions/consoles>
@@ -22,17 +22,20 @@ profile update-initramfs @{exec_path} {
   @{bin}/cat           rix,
   @{bin}/{m,g,}awk     rix,
   @{bin}/getopt        rix,
-  @{bin}/ischroot      rix,
   @{bin}/ln            rix,
   @{bin}/mv            rix,
   @{bin}/rm            rix,
   @{bin}/sha1sum       rix,
   @{bin}/sync          rix,
   @{bin}/uname         rix,
+  @{bin}/run-parts     rix,
 
   @{bin}/dpkg-trigger  rPx,
+  @{bin}/ischroot      rPx,
   @{bin}/linux-version rPx,
-  @{bin}/mkinitramfs  rPx,
+  @{sbin}/mkinitramfs  rPx,
+
+  /etc/initramfs/post-update.d/* rPUx,
 
   /var/lib/initramfs-tools/* w,
 
@@ -47,9 +50,9 @@ profile update-initramfs @{exec_path} {
   owner @{PROC}/@{pid}/mountinfo r,
   owner @{PROC}/@{pid}/mounts r,
 
-  owner /boot/ r,
-  owner /boot/initrd.img-* rw,
-  owner /boot/initrd.img-*.dpkg-bak rwl -> /boot/initrd.img-*,
+  owner @{efi}/ r,
+  owner @{efi}/initrd.img-* rw,
+  owner @{efi}/initrd.img-*.dpkg-bak rwl -> @{efi}/initrd.img-*,
 
   include if exists <local/update-initramfs>
 }

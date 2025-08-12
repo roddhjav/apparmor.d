@@ -10,14 +10,26 @@ include <tunables/global>
 profile localectl @{exec_path} {
   include <abstractions/base>
   include <abstractions/common/systemd>
+  include <abstractions/bus-system>
 
   capability net_admin,
+
+  signal send set=cont peer=child-pager,
+
+  #aa:dbus talk bus=system name=org.freedesktop.locale1 label="@{p_systemd_localed}"
+  dbus send bus=system path=/org/freedesktop/locale1
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=org.freedesktop.locale1),
 
   @{exec_path} mr,
 
   @{pager_path} rPx -> child-pager,
+  @{bin}/pkttyagent rPx,
 
   /usr/share/kbd/keymaps/{,**} r,
+
+  owner @{PROC}/@{pid}/cgroup r,
 
   include if exists <local/localectl>
 }

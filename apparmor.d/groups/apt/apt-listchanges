@@ -14,10 +14,10 @@ profile apt-listchanges @{exec_path} {
   include <abstractions/python>
   include <abstractions/nameservice-strict>
 
-  #capability sys_tty_config,
+  capability dac_read_search,
 
   @{exec_path} r,
-  @{bin}/python3.@{int} r,
+  @{python_path} r,
 
   @{bin}/ r,
   @{sh_path}            rix,
@@ -26,11 +26,11 @@ profile apt-listchanges @{exec_path} {
   # Do not strip env to avoid errors like the following:
   #  ERROR: ld.so: object 'libfakeroot-sysv.so' from LD_PRELOAD cannot be preloaded (cannot open
   #  shared object file): ignored.
-  @{bin}/dpkg-deb       rpx,
-  #
-  @{pager_path}        rCx -> pager,
-  # Send results using email
-  @{bin}/exim4         rPx,
+  @{bin}/dpkg-deb        px,
+
+  @{pager_path}          Cx -> pager,
+  @{bin}/dpkg            Px -> child-dpkg,
+  @{sbin}/exim4          Px,  # Send results using email
 
   /usr/share/apt-listchanges/{,**} r,
 
@@ -50,51 +50,17 @@ profile apt-listchanges @{exec_path} {
 
   /var/cache/apt/archives/ r,
 
-  owner @{PROC}/@{pid}/fd/ r,
-
         /tmp/ r,
-  owner @{tmp}/* rw,
-  owner @{tmp}/apt-listchanges*/ rw,
-  owner @{tmp}/apt-listchanges*/**/ rw,
-  owner @{tmp}/apt-listchanges*/*/*/*/*/changelog.gz rw,
-  owner @{tmp}/apt-listchanges*/*/*/*/*/changelog.Debian*.gz rw,
-  owner @{tmp}/apt-listchanges*/*/*/*/*/NEWS.Debian.gz rw,
-  owner @{tmp}/apt-listchanges*/*/*/*/*/*/changelog.gz rw,
-  owner @{tmp}/apt-listchanges*/*/*/*/*/*/changelog/changelog_to_file rw,
-  owner @{tmp}/apt-listchanges*/*/*/*/*/*/changelog/simple_changelog rw,
-  owner @{tmp}/apt-listchanges*/*/*/*/*/*/*-local/debian/changelog rw,
+  owner @{tmp}/@{word8} rw,
+  owner @{tmp}/apt-listchanges@{word8}/ rw,
+  owner @{tmp}/apt-listchanges@{word8}/** rw,
 
-  # The following is needed when apt-listchanges uses debcconf GUI frontends.
-  include <abstractions/gtk>
-  include <abstractions/fonts>
-  include <abstractions/fontconfig-cache-read>
-  include <abstractions/freedesktop.org>
-  capability dac_read_search,
-  @{bin}/lsb_release rPx -> lsb_release,
-  @{bin}/hostname    rix,
-  owner @{PROC}/@{pid}/mounts r,
-  @{HOME}/.Xauthority r,
-
+  owner @{PROC}/@{pid}/fd/ r,
 
   profile pager {
     include <abstractions/base>
-    include <abstractions/consoles>
+    include <abstractions/app/pager>
 
-    capability dac_read_search,
-    #capability sys_tty_config,
-
-    @{pager_path}  mrix,
-
-    @{bin}/           r,
-    @{sh_path}        rix,
-    @{bin}/which{,.debianutils}      rix,
-
-    owner @{HOME}/.less* rw,
-
-    # For shell pwd
-    /root/ r,
-
-          /tmp/ r,
     owner @{tmp}/apt-listchanges-tmp*.txt r,
 
     include if exists <local/apt-listchanges_pager>

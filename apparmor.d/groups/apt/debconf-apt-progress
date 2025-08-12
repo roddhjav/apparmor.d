@@ -10,44 +10,11 @@ include <tunables/global>
 @{exec_path} = @{bin}/debconf-apt-progress
 profile debconf-apt-progress @{exec_path} flags=(complain) {
   include <abstractions/base>
-  include <abstractions/perl>
+  include <abstractions/common/debconf>
 
   @{exec_path} r,
-  @{bin}/perl r,
 
   @{bin}/apt-get          rPx,
-
-  # Think what to do about this (#FIXME#)
-  /usr/share/debconf/frontend  rPx,
-  #/usr/share/debconf/frontend rCx -> frontend,
-
-
-  profile frontend flags=(complain) {
-    include <abstractions/base>
-    include <abstractions/consoles>
-    include <abstractions/perl>
-    include <abstractions/nameservice-strict>
-
-    /usr/share/debconf/frontend r,
-    @{bin}/perl r,
-
-    @{bin}/debconf-apt-progress rPx,
-
-    @{sh_path}        rix,
-    @{bin}/stty       rix,
-    @{bin}/locale     rix,
-
-    # The following is needed when debconf uses dialog/whiptail frontend.
-    @{bin}/whiptail             rPx,
-
-    /etc/debconf.conf r,
-    owner /var/cache/debconf/{config,passwords,templates}.dat{,-new,-old} rwk,
-    /usr/share/debconf/templates/adequate.templates r,
-
-    /etc/shadow r,
-
-    include if exists <local/debconf-apt-progress_frontend>
-  }
 
   include if exists <local/debconf-apt-progress>
 }

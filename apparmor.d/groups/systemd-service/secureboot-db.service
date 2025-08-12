@@ -1,0 +1,27 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# ExecStartPre=-/usr/bin/chattr -i /sys/firmware/efi/efivars/KEK-8be4df61-93ca-11d2-aa0d-00e098032b8c
+# ExecStartPre=-/usr/bin/chattr -i /sys/firmware/efi/efivars/db-d719b2cb-3d3a-4596-a3bc-dad00e67656f
+# ExecStartPre=-/usr/bin/chattr -i /sys/firmware/efi/efivars/dbx-d719b2cb-3d3a-4596-a3bc-dad00e67656f
+# ExecStart=/usr/bin/sbkeysync --no-default-keystores --keystore /usr/share/secureboot/updates --verbose
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+profile secureboot-db.service flags=(complain) {
+  include <abstractions/base>
+
+  @{bin}/chattr     ix,
+  @{bin}/sbkeysync  PUx,
+
+  @{sys}/firmware/efi/efivars/KEK-@{uuid} rw,
+  @{sys}/firmware/efi/efivars/db-@{uuid} rw,
+  @{sys}/firmware/efi/efivars/dbx-@{uuid} rw,
+
+  include if exists <local/secureboot-db.service>
+}
+
+# vim:syntax=apparmor

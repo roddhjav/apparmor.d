@@ -6,72 +6,66 @@ abi <abi/4.0>,
 
 include <tunables/global>
 
-@{exec_path} = @{bin}/needrestart
+@{exec_path} = @{sbin}/needrestart
 profile needrestart @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/consoles>
-  include <abstractions/nameservice-strict>
-  include <abstractions/perl>
+  include <abstractions/common/debconf>
   include <abstractions/python>
-  include <abstractions/wutmp>
 
   capability checkpoint_restore,
   capability dac_read_search,
-  capability kill,
   capability sys_ptrace,
 
-  ptrace (read),
-
-  mqueue (r,getattr) type=posix /,
+  ptrace read,
 
   @{exec_path} mrix,
 
-  @{bin}/*                                 r,
   @{sh_path}                               rix,
   @{bin}/dpkg-query                        rpx,
   @{bin}/fail2ban-server                   rPx,
-  @{bin}/locale                            rix,
-  @{bin}/python3.@{int}                    rix,
-  @{bin}/sed                               rix,
   @{bin}/stty                              rix,
   @{bin}/systemctl                         rCx -> systemctl,
   @{bin}/systemd-detect-virt               rPx,
   @{bin}/udevadm                           rCx -> udevadm,
-  @{bin}/unix_chkpwd                       rPx,
-  @{bin}/whiptail                          rPx,
-  @{bin}/who                               rix,
+  @{bin}/who                               rPx,
   @{lib}/needrestart/*                     rPx,
-  /usr/share/debconf/frontend              rix,
+  @{python_path}                           rix,
+  @{sbin}/unix_chkpwd                      rPx,
 
-  /usr/share/needrestart/{,**} r,
-  /usr/share/unattended-upgrades/unattended-upgrade-shutdown r,
+  @{etc_ro}/needrestart/hook.d/*           rPx,
+  @{etc_ro}/needrestart/notify.d/*         rPx,
+  @{etc_ro}/needrestart/restart.d/*        rPx,
 
-  /etc/debconf.conf r,
   /etc/init.d/* r,
   /etc/needrestart/{,**} r,
-  /etc/needrestart/*.d/* rix,
   /etc/shadow r,
 
   / r,
-  /boot/ r,
-  /boot/intel-ucode.img r,
-  /boot/vmlinuz* r,
+  @{efi}/ r,
+  @{efi}/* r,
+  /opt/*/** r,
+  @{bin}/* r,
+  @{lib}/** r,
+  @{sbin}/** r,
+  @{att}/@{lib}/** r,
+  /usr/share/** r,
+  /var/lib/*/** r,
 
-  owner /var/lib/juju/agents/{,**} r,
-  owner /var/cache/debconf/{config,passwords,templates}.dat{,-new,-old} rwk,
+  @{run}/systemd/sessions/* r,
 
-  owner @{run}/sshd.pid r,
+  /tmp/@{word10}/ rw,
 
         @{PROC}/ r,
-        @{PROC}/@{pids}/cgroup r,
-        @{PROC}/@{pids}/cmdline r,
-        @{PROC}/@{pids}/environ r,
-        @{PROC}/@{pids}/maps r,
-        @{PROC}/@{pids}/stat r,
+        @{PROC}/@{pid}/cgroup r,
+        @{PROC}/@{pid}/cmdline r,
+        @{PROC}/@{pid}/environ r,
+        @{PROC}/@{pid}/stat r,
   owner @{PROC}/@{pid}/fd/ r,
 
   /dev/ r,
   /dev/**/ r,
+
+  deny mqueue type=posix /,
 
   profile systemctl {
     include <abstractions/base>
@@ -80,7 +74,7 @@ profile needrestart @{exec_path} flags=(attach_disconnected) {
     capability sys_resource,
     capability net_admin,
 
-    signal send set=term peer=systemd-tty-ask-password-agent,
+    signal send set=(cont term) peer=systemd-tty-ask-password-agent,
 
     @{bin}/systemd-tty-ask-password-agent Px,
 

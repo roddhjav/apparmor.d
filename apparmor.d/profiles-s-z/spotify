@@ -8,7 +8,7 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{name} = spotify
-@{lib_dirs} = /opt/spotify/
+@{lib_dirs} = /opt/@{name}/ /usr/share/@{name}/
 @{config_dirs} = @{user_config_dirs}/@{name}
 @{cache_dirs} = @{user_cache_dirs}/@{name}
 
@@ -16,7 +16,16 @@ include <tunables/global>
 profile spotify @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/audio-client>
+  include <abstractions/bus-accessibility>
+  include <abstractions/bus-session>
+  include <abstractions/bus/org.a11y>
+  include <abstractions/bus/org.freedesktop.Notifications>
+  include <abstractions/bus/org.freedesktop.ScreenSaver>
+  include <abstractions/bus/org.freedesktop.secrets>
+  include <abstractions/bus/org.gtk.vfs.MountTracker>
+  include <abstractions/bus/org.kde.StatusNotifierWatcher>
   include <abstractions/common/electron>
+  include <abstractions/devices-usb-read>
 
   network inet dgram,
   network inet6 dgram,
@@ -24,16 +33,21 @@ profile spotify @{exec_path} flags=(attach_disconnected) {
   network inet6 stream,
   network netlink raw,
 
+  #aa:dbus own bus=session name=org.mpris.MediaPlayer2.spotify
+  #aa:dbus talk bus=session name=org.ayatana.NotificationItem label=gnome-shell
+
   @{exec_path} mrix,
 
   @{sh_path} mr,
-  @{bin}/grep rix,
+  @{bin}/{,e}grep rix,
 
   @{open_path}     rPx -> child-open-strict,
 
   /etc/machine-id r,
   /etc/spotify-adblock/* r,
   /var/lib/dbus/machine-id r,
+
+  owner @{HOME}/.tmp rw,
 
   owner @{user_music_dirs}/{,**} r,
 
@@ -44,16 +58,13 @@ profile spotify @{exec_path} flags=(attach_disconnected) {
 
   owner @{tmp}/.org.chromium.Chromium.@{rand6}/** rw,
 
-        @{PROC}/pressure/* r,
         @{PROC}/@{pid}/net/unix r,
+        @{PROC}/pressure/* r,
   owner @{PROC}/@{pid}/clear_refs w,
+  owner @{PROC}/@{pid}/task/@{tid}/comm rw,
 
   /dev/tty rw,
 
-  deny @{sys}/bus/ r,
-  deny @{sys}/bus/*/devices/ r,
-  deny @{sys}/class/*/ r,
-  deny @{sys}/devices/@{pci}/usb@{int}/** r,
   deny @{user_share_dirs}/gvfs-metadata/* r,
 
   include if exists <local/spotify>

@@ -1,0 +1,78 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/login
+profile login @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/authentication>
+  include <abstractions/bus-system>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+  include <abstractions/wutmp>
+  include <mappings/login>  #aa:only RBAC
+
+  capability audit_write,
+  capability chown,
+  capability dac_override,
+  capability dac_read_search,
+  capability fowner,
+  capability fsetid,
+  capability kill,
+  capability net_admin,
+  capability setgid,
+  capability setuid,
+  capability sys_resource,
+  capability sys_tty_config,
+
+  network netlink raw,
+
+  signal send set=(hup term),
+
+  ptrace read,
+
+  #aa:dbus talk bus=system name=org.freedesktop.login1 label="@{p_systemd_logind}"
+
+  @{exec_path} mr,
+
+  @{shells_path}     Ux, #aa:exclude RBAC
+
+  @{etc_ro}/environment r,
+  @{etc_ro}/security/group.conf r,
+  @{etc_ro}/security/limits.conf r,
+  @{etc_ro}/security/limits.d/{,*} r,
+  @{etc_ro}/security/pam_env.conf r,
+  /etc/default/locale r,
+  /etc/legal r,
+  /etc/machine-id r,
+  /etc/motd r,
+  /etc/motd.d/ r,
+  /etc/shells r,
+
+  /var/lib/faillock/@{user} rwk,
+  /var/log/btmp{,.@{int}} r,
+
+  owner @{user_cache_dirs}/motd.legal-displayed rw,
+
+  @{att}/@{run}/systemd/sessions/@{int}.ref w,
+
+  @{run}/credentials/getty@tty@{int}.service/ r,
+  @{run}/faillock/@{user} rwk,
+  @{run}/motd.d/{,*} r,
+  @{run}/motd.dynamic{,.new} rw,
+
+        @{PROC}/@{pids}/cgroup r,
+        @{PROC}/1/limits r,
+  owner @{PROC}/@{pid}/loginuid rw,
+  owner @{PROC}/@{pid}/uid_map r,
+
+  /dev/tty@{int} rw,
+
+  include if exists <local/login>
+}
+
+# vim:syntax=apparmor

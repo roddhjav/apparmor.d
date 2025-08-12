@@ -27,14 +27,15 @@ Particularly:
 - Every system application will be **blocked** if they do not have a profile.
 - Any non-standard system app need to be explicitly profiled and allowed to run. For instance, if you want to use your own proxy or VPN software, you need to ensure it is correctly profiled and allowed to run in the `systemd` profile.
 - Desktop environment must be explicitly supported, your UI will not start otherwise. Again, it is a **feature**.
-- FSP mode will run unknown user application into the `default` profile. It might be enough for your application. If not you have to make a profile for it.
 - In FSP mode, all sandbox managers **must** have a profile. Then user sandboxed applications (flatpak, snap, etc) will work as expected.
+- PID 1 is the last program that should be confined. It does not make sense to confine only PID. All other programs must be confined first.
+
 
 
 ## Installation
 
 
-This feature is only enabled when the project is built with `make full`. [Early policy](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmorInSystemd#early-policy-loads) load **must** also be enabled. Once `apparmor.d` has been installed in FSP mode, it is required to reboot to apply the changes.
+This feature is only enabled when the project is built with `just fsp`. [Early policy](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmorInSystemd#early-policy-loads) load **must** also be enabled. Once `apparmor.d` has been installed in FSP mode, it is required to reboot to apply the changes.
 
 In `/etc/apparmor/parser.conf` ensure you have:
 ```
@@ -45,51 +46,57 @@ Optimize=compress-fast
 
 === ":material-arch: Archlinux"
 
-    In `PKGBUILD`, replace `make` by `make full`:
+    In `PKGBUILD`, replace `just complain` by `just fsp-complain`:
 
     ```diff
-    -  make
-    +  make full
+    -  just complain
+    +  just fsp-complain
     ```
 
-    Then, build the package with: `make pkg`
+    Then, build the package with: `just pkg`
 
 === ":material-ubuntu: Ubuntu"
 
-    In `debian/rules`, add the following lines:
+    In `debian/rules`, replace `just complain` by `just fsp-complain`:
 
     ```make
-    override_dh_auto_build:
-        make full
+      override_dh_auto_build:
+    -     just complain
+      override_dh_auto_build:
+    +     just fsp-complain
     ```
 
-    Then, build the package with: `make dpkg`
+    Then, build the package with: `just dpkg`
 
 === ":material-debian: Debian"
     
-    In `debian/rules`, add the following lines:
+    In `debian/rules`, replace `just complain` by `just fsp-complain`:
 
     ```make
-    override_dh_auto_build:
-        make full
+      override_dh_auto_build:
+    -     just complain
+      override_dh_auto_build:
+    +     just fsp-complain
     ```
 
-    Then, build the package with: `make dpkg`
+    Then, build the package with: `just dpkg`
 
 === ":simple-suse: openSUSE"
 
-    In `dists/apparmor.d.spec`, replace `%make_build` by `%make_build full`
+    In `dists/apparmor.d.spec`, replace `just complain` by `just fsp-complain`:
 
     ```diff
-    -  %make_build
-    +  %make_build full
+       %build
+    -  just complain
+       %build
+    +  just fsp-complain
     ```
 
-    Then, build the package with: `make rpm`
+    Then, build the package with: `just rpm`
 
 === ":material-home: Partial Install"
 
-    Use the `make full` command to build instead of `make`
+    Use the `just fsp-complain` command to build instead of `just complain`
 
 
 ## Structure
@@ -136,6 +143,16 @@ To work as intended, userland services started by `systemd --user` **should** ha
     @{lib}/foo rPx -> systemd//&foo,
     ```
 
+### Role Based Access Control (RBAC)
+
+In FSP, interactive shell from the user must be confined. This is done through [pam_apparmor](https://gitlab.com/apparmor/apparmor/-/wikis/pam_apparmor). It provides [Role-based access controls (RBAC)](https://en.wikipedia.org/wiki/Role-based_access_control) that can restrict interactive shell to well-defined role. The role needs to be defined. This project ship with a default set of roles, but you can create your own. The default roles are:
+
+- **`user`**: This is the default role. It is used for any user that does not have a specific role defined. It has access to the user home directory and other sensitive files.
+
+- **`admin`**: This role is used for any user that has administrative access. It has access to the system files and directories, but not to the user home directory.
+
+- **`system`**: This role is used for any user that has system access. It has access to the system files and directories, but not to the user home directory.
+
 ### Fallback
 
 In addition to the `systemd` profiles, a full system policy needs to ensure that no programs run in an unconfined state at any time. The fallback profiles consist of a set generic specialized profiles:
@@ -147,7 +164,7 @@ In addition to the `systemd` profiles, a full system policy needs to ensure that
 
     The main fallback profile (`default`) is not intended to be used by privileged program or service. Such programs **must** have they dedicated profile and would break otherwise.
 
-Additionally, special user access can be setup using PAM rules set such as a random shell interactively opened (as user or as root). 
+Additionally, special user access can be setup using PAM rules set such as a random shell interactively opened (as user or as root).
 
 [apparmor-wiki]: https://gitlab.com/apparmor/apparmor/-/wikis/FullSystemPolicy
 [full]: https://github.com/roddhjav/apparmor.d/blob/main/apparmor.d/groups/_full

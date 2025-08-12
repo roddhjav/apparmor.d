@@ -11,7 +11,14 @@ include <tunables/global>
 profile libreoffice @{exec_path} {
   include <abstractions/base>
   include <abstractions/audio-client>
+  include <abstractions/bus-accessibility>
   include <abstractions/bus-session>
+  include <abstractions/bus-system>
+  include <abstractions/bus/org.a11y>
+  include <abstractions/bus/org.freedesktop.Avahi>
+  include <abstractions/bus/org.freedesktop.portal.Desktop>
+  include <abstractions/bus/org.gnome.SessionManager>
+  include <abstractions/bus/org.gtk.vfs.MountTracker>
   include <abstractions/cups-client>
   include <abstractions/dconf-write>
   include <abstractions/desktop>
@@ -30,14 +37,14 @@ profile libreoffice @{exec_path} {
   network inet6 stream,
   network netlink raw,
 
-  #aa:dbus own bus=session name=org.libreoffice.LibreOfficeIpc0
+  #aa:dbus own bus=session name=org.libreoffice interface+=org.gtk.Actions
 
   @{exec_path} mr,
 
   @{sh_path}        rix,
   @{bin}/basename   rix,
   @{bin}/dirname    rix,
-  @{bin}/grep       rix,
+  @{bin}/{,e}grep   rix,
   @{bin}/ls         rix,
   @{bin}/paperconf  rix,
   @{bin}/sed        rix,
@@ -49,11 +56,12 @@ profile libreoffice @{exec_path} {
   @{bin}/gpgconf    rPx,
   @{bin}/gpgsm      rPx,
 
+  @{lib}/jvm/java*/bin/java               rix,
+  @{lib}/jvm/java*/lib/** rm,
   @{lib}/libreoffice/program/javaldx      rix,
   @{lib}/libreoffice/program/oosplash     rix,
   @{lib}/libreoffice/program/soffice.bin  rix,
-  @{lib}/jvm/java*/bin/java               rix,
-  @{lib}/jvm/java*/lib/** rm,
+  @{lib}/libreoffice/program/xpdfimport   rix,
 
   @{lib}/libreoffice/{,**} rm,
   @{lib}/libreoffice/share/uno_packages/cache/stamp.sys w,
@@ -67,10 +75,14 @@ profile libreoffice @{exec_path} {
   /usr/share/mythes/{,**} r,
   /usr/share/thumbnailers/{,**} r,
 
-  /etc/java{,@{version}}-openjdk/{,**} r,
+  /etc/java{,-}{,@{version}}-openjdk/{,**} r,
   /etc/libreoffice/{,**} r,
   /etc/paperspecs r,
+  /etc/papersize r,
   /etc/xdg/* r,
+
+        /var/tmp/ r,
+  owner /var/spool/libreoffice/uno_packages/cache/stamp.sys w,
 
   owner @{user_cache_dirs}/libreoffice/{,**} rw,
   owner @{user_config_dirs}/libreoffice/ rw,
@@ -82,7 +94,7 @@ profile libreoffice @{exec_path} {
   owner @{user_share_dirs}/#@{int} rw,
   owner @{user_share_dirs}/user-places.xbel r,
 
-  owner @{tmp}/ r,
+        @{tmp}/ r,
   owner @{tmp}/.java_pid@{int}{,.tmp} rw,
   owner @{tmp}/@{hex} rw,
   owner @{tmp}/@{rand6} rwk,
@@ -90,7 +102,7 @@ profile libreoffice @{exec_path} {
   owner @{tmp}/*.tmp/{,**} rwk,
   owner @{tmp}/hsperfdata_@{user}/  rw,
   owner @{tmp}/hsperfdata_@{user}/@{int} rwk,
-  owner @{tmp}/OSL_PIPE_@{uid}_SingleOfficeIPC_@{hex} w,
+  owner @{tmp}/OSL_PIPE_@{uid}_SingleOfficeIPC_@{hex} rw,
 
   owner @{run}/user/@{uid}/#@{int} rw,
 
@@ -99,7 +111,7 @@ profile libreoffice @{exec_path} {
         @{sys}/kernel/mm/hugepages/ r,
         @{sys}/kernel/mm/transparent_hugepage/enabled r,
         @{sys}/kernel/mm/transparent_hugepage/shmem_enabled r,
-        @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/session-@{int}.scope/{cpu,memory}.max r,
+        @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/session-@{word}.scope/{cpu,memory}.max r,
   owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/**/memory.max r,
   owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/session.slice/org.gnome.Shell@wayland.service/memory.max r,
 

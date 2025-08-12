@@ -286,10 +286,7 @@ func parseRule(str string) rule {
 	res := make(rule, 0, len(str)/2)
 	tokens := tokenizeRule(str)
 
-	inAare := false
-	if len(tokens) > 0 && (isAARE(tokens[0]) || tokens[0] == tokOWNER) {
-		inAare = true
-	}
+	inAare := len(tokens) > 0 && (isAARE(tokens[0]) || tokens[0] == tokOWNER)
 	for idx, token := range tokens {
 		switch {
 		case token == tokEQUAL, token == tokPLUS+tokEQUAL, token == tokLESS+tokEQUAL: // Variable & Rlimit
@@ -514,7 +511,7 @@ func newRules(rules []rule) (Rules, error) {
 
 	for _, rule := range rules {
 		if len(rule) == 0 {
-			return nil, fmt.Errorf("Empty rule")
+			return nil, fmt.Errorf("empty rule")
 		}
 
 		owner := false
@@ -563,7 +560,7 @@ func newRules(rules []rule) (Rules, error) {
 						// return nil, fmt.Errorf("Unknown rule: %s", rule)
 					}
 				} else {
-					return nil, fmt.Errorf("Unrecognized  rule: %s", rule)
+					return nil, fmt.Errorf("unrecognized rule: %s", rule)
 				}
 			}
 		}
@@ -657,7 +654,7 @@ done:
 	return nb, nil
 }
 
-// Parse apparmor profile rules by paragraphs
+// ParseRules parses apparmor profile rules by paragraphs
 func ParseRules(input string) (ParaRules, []string, error) {
 	paragraphRules := ParaRules{}
 	paragraphs := []string{}

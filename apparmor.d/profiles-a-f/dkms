@@ -8,7 +8,7 @@ abi <abi/4.0>,
 
 include <tunables/global>
 
-@{exec_path} = @{bin}/dkms
+@{exec_path} = @{sbin}/dkms
 profile dkms @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/consoles>
@@ -28,29 +28,39 @@ profile dkms @{exec_path} flags=(attach_disconnected) {
   @{coreutils_path} rix,
   @{bin}/as         rix,
   @{bin}/bc         rix,
+  @{bin}/clang-@{version} rix,
+  @{bin}/g++        rix,
   @{bin}/gcc        rix,
   @{bin}/getconf    rix,
+  @{bin}/hostname   rix,
   @{bin}/kill       rix,
   @{bin}/kmod       rCx -> kmod,
   @{bin}/ld         rix,
-  @{bin}/lsb_release rPx -> lsb_release,
+  @{bin}/ld.lld     rix,
+  @{bin}/llvm-objcopy rix,
+  @{bin}/lsb_release rPx,
   @{bin}/make       rix,
   @{bin}/objcopy    rix,
   @{bin}/pahole     rix,
   @{bin}/readelf    rix,
   @{bin}/rpm       rPUx,
   @{bin}/strip      rix,
-  @{bin}/update-secureboot-policy rPUx,
+  @{bin}/xz         rix,
   @{bin}/zstd       rix,
+  @{sbin}/update-secureboot-policy rPUx,
 
   @{lib}/gcc/@{multiarch}/@{version}/*         rix,
   @{lib}/linux-kbuild-*/scripts/**             rix,
   @{lib}/linux-kbuild-*/tools/objtool/objtool  rix,
   @{lib}/llvm-[0-9]*/bin/clang                 rix,
+  @{lib}/modules/*/build/arch/x86/**           rix,
+  @{lib}/modules/*/build/include/**            rix,
   @{lib}/modules/*/build/scripts/**            rix,
   @{lib}/modules/*/build/tools/**              rix,
+  @{lib}/os-release rix,
 
   /var/lib/dkms/**/build/* rix,
+  /var/lib/dkms/vboxhost/*/build/** rw,
   /var/lib/dkms/**/configure rix,
   /var/lib/dkms/**/dkms.postbuild rix,
 
@@ -97,6 +107,8 @@ profile dkms @{exec_path} flags=(attach_disconnected) {
         @{PROC}/sys/kernel/osrelease r,
   owner @{PROC}/@{pid}/fd/ r,
 
+  /dev/pts/@{int} rw,
+
   profile kmod {
     include <abstractions/base>
     include <abstractions/app/kmod>
@@ -104,7 +116,7 @@ profile dkms @{exec_path} flags=(attach_disconnected) {
     @{lib}/modules/*/modules.* rw,
     /var/lib/dkms/**/module/*.ko* r,
 
-    owner /boot/System.map-* r,
+    owner @{efi}/System.map-* r,
 
     owner @{tmp}/tmp.@{rand10} r,
 

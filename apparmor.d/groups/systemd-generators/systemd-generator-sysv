@@ -1,0 +1,32 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/systemd/system-generators/systemd-sysv-generator
+profile systemd-generator-sysv @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+
+  ptrace read peer=@{p_systemd},
+
+  @{exec_path} mr,
+
+  /etc/init.d/{,**} r,
+  /etc/rc@{int}.d/{,**} r,
+
+  @{run}/systemd/generator.late/** w,
+
+  @{PROC}/@{pid}/cgroup r,
+  @{PROC}/1/environ r,
+  @{PROC}/cmdline r,
+  @{PROC}/sys/kernel/osrelease r,
+
+  /dev/kmsg w,
+
+  include if exists <local/systemd-generator-sysv>
+}
+
+# vim:syntax=apparmor

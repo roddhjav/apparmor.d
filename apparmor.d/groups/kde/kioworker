@@ -26,10 +26,11 @@ profile kioworker @{exec_path} {
   network netlink raw,
   network netlink dgram,
 
-  signal (receive) set=term peer=dolphin,
-  signal (receive) set=term peer=firefox-kmozillahelper,
-  signal (receive) set=term peer=plasma-discover,
-  signal (receive) set=term peer=plasmashell,
+  signal receive set=term peer=dolphin,
+  signal receive set=term peer=firefox-kmozillahelper,
+  signal receive set=term peer=plasma-discover,
+  signal receive set=term peer=plasmashell,
+  signal receive set=term peer=xdg-desktop-portal-kde,
 
   @{exec_path} mr,
 
@@ -37,10 +38,11 @@ profile kioworker @{exec_path} {
   @{lib}/libheif/*.so* rm,
 
   @{bin}/wrestool rPUx,
+  @{bin}/gs rix,
 
   #aa:exec kio_http_cache_cleaner
 
-  /usr/share/kio_desktop/directory.desktop r,
+  /usr/share/kio_desktop/{,**} r,
   /usr/share/kservices{5,6}/{,**} r,
   /usr/share/kservicetypes{5,6}/*.desktop r,
   /usr/share/remoteview/* r,
@@ -54,6 +56,8 @@ profile kioworker @{exec_path} {
   /*/ r,
   @{bin}/ r,
   @{bin}/* r,
+  @{sbin}/ r,
+  @{sbin}/* r,
   @{lib}/ r,
   @{MOUNTDIRS}/ r,
   @{MOUNTS}/ r,
@@ -63,7 +67,7 @@ profile kioworker @{exec_path} {
   owner @{tmp}/{,**} rw,
 
   # Silence non user's data
-  deny /boot/{,**} r,
+  deny @{efi}/{,**} r,
   deny /etc/{,**} r,
   deny /opt/{,**} r,
   deny /root/{,**} r,
@@ -91,6 +95,7 @@ profile kioworker @{exec_path} {
   owner @{run}/user/@{uid}/kio_*.socket rwl -> @{run}/user/@{uid}/#@{int},
   owner @{run}/user/@{uid}/kioworker*.kioworker.socket rwl -> @{run}/user/@{uid}/#@{int},
 
+  owner @{PROC}/@{pid}/cmdline r,
   owner @{PROC}/@{pid}/mountinfo r,
   owner @{PROC}/@{pid}/mounts r,
 

@@ -4,12 +4,6 @@
 # Copyright (C) 2022 Jeroen Rijken
 # SPDX-License-Identifier: GPL-2.0-only
 
-# TODO: Rewrite this profile. Most of the rule should be confined directly by the calling profile
-# Possible confinement depending of profile architecture:
-# - As rix,
-# - As rCx -> run-parts,
-# - As rPx -> foo-run-parts,
-
 abi <abi/4.0>,
 
 include <tunables/global>
@@ -25,7 +19,7 @@ profile run-parts @{exec_path} {
   @{exec_path} mrix,
 
   @{sh_path}         rix,
-  @{bin}/anacron     rix,
+  @{sbin}/anacron    rix,
   @{bin}/cat         rix,
   @{bin}/date        rix,
   @{bin}/nice        rix,
@@ -38,6 +32,7 @@ profile run-parts @{exec_path} {
   /etc/anacrontab                                      r,
   /etc/conf.d/snapper{,**}                             r,
   /etc/default/*                                       r,
+  /etc/profile.d/{,**}                                 r,
   /etc/snapper/configs/root                            r,
 
   # Crontab
@@ -112,36 +107,24 @@ profile run-parts @{exec_path} {
 
   # Motd
   /etc/update-motd.d/ r,
-  /etc/update-motd.d/* rCx -> motd,
+  /etc/update-motd.d/* rPx,
 
   # Kernel
-  /etc/kernel/header_postinst.d/ r,
-  /etc/kernel/header_postinst.d/dkms          rCx -> kernel,
-
-  /etc/kernel/postinst.d/ r,
-  /etc/kernel/postinst.d/apt-auto-removal     rCx -> kernel,
-  /etc/kernel/postinst.d/dkms                 rCx -> kernel,
-  /etc/kernel/postinst.d/initramfs-tools      rCx -> kernel,
-  /etc/kernel/postinst.d/unattended-upgrades  rCx -> kernel,
-  /etc/kernel/postinst.d/zz-update-grub       rCx -> kernel,
-  /etc/kernel/postinst.d/zz-shim              rCx -> kernel,
-  /etc/kernel/postinst.d/xx-update-initrd-links rCx -> kernel,
-
+  /etc/kernel/{,header_}postinst.d/ r,
+  /etc/kernel/{,header_}postinst.d/* rPx,
   /etc/kernel/postrm.d/ r,
-  /etc/kernel/postrm.d/initramfs-tools        rCx -> kernel,
-  /etc/kernel/postrm.d/zz-update-grub         rCx -> kernel,
-
+  /etc/kernel/postrm.d/* rPx,
   /etc/kernel/preinst.d/ r,
-  /etc/kernel/preinst.d/intel-microcode       rCx -> kernel,
-
+  /etc/kernel/preinst.d/* rPx,
   /etc/kernel/prerm.d/ r,
-  /etc/kernel/prerm.d/dkms                    rCx -> kernel,
+  /etc/kernel/prerm.d/* rPx,
 
+  # Finalrd
   /usr/share/finalrd/ r,
-  /usr/share/finalrd/mdadm.finalrd rPUx,
-  /usr/share/finalrd/open-iscsi.finalrd rPUx,
+  /usr/share/finalrd/mdadm.finalrd                rPUx,
+  /usr/share/finalrd/open-iscsi.finalrd           rPUx,
 
-  /usr/share/landscape/landscape-sysinfo.wrapper rPUx,
+  /usr/share/landscape/landscape-sysinfo.wrapper  rPx,
 
   /root/ r,
 
@@ -151,107 +134,11 @@ profile run-parts @{exec_path} {
   owner @{tmp}/$anacron@{rand6} rw,
   owner @{tmp}/file@{rand6} rw,
 
-  owner @{sys}/class/power_supply/            r,
+  owner @{sys}/class/power_supply/ r,
+
+  @{run}/motd.dynamic.new w,
 
   /dev/tty@{int} rw,
-
-  profile motd {
-    include <abstractions/base>
-    include <abstractions/nameservice-strict>
-
-    @{sh_path}        rix,
-    @{bin}/{e,}grep   rix,
-    @{bin}/cat        rix,
-    @{bin}/cut        rix,
-    @{bin}/find       rix,
-    @{bin}/head       rix,
-    @{bin}/id         rix,
-    @{bin}/sort       rix,
-    @{bin}/tr         rix,
-    @{bin}/uname      rix,
-
-    @{bin}/snap                                                   rPUx,
-    @{lib}/ubuntu-release-upgrader/release-upgrade-motd            rPx,
-    @{lib}/update-notifier/update-motd-fsck-at-reboot              rPx,
-    @{lib}/update-notifier/update-motd-reboot-required             rix,
-    /usr/share/unattended-upgrades/update-motd-unattended-upgrades rix,
-    /usr/share/update-notifier/notify-updates-outdated             rPx,
-
-    / r,
-    /etc/default/motd-news r,
-    /etc/lsb-release r,
-    /etc/update-motd.d/* r,
-
-    /var/cache/motd-news rw,
-    /var/lib/update-notifier/updates-available r,
-    /var/lib/ubuntu-advantage/messages/motd-esm-announce r,
-
-    @{run}/motd.d/{,*} r,
-
-    @{PROC}/@{pids}/mounts r,
-
-    /dev/tty@{int} rw,
-
-    include if exists <local/run-parts_motd>
-  }
-
-  profile kernel {
-    include <abstractions/base>
-    include <abstractions/consoles>
-    include <abstractions/nameservice-strict>
-
-    capability sys_module,
-
-    @{sh_path}        rix,
-    @{bin}/{,e}grep   rix,
-    @{bin}/{,m,g}awk  rix,
-    @{bin}/cat        rix,
-    @{bin}/chmod      rix,
-    @{bin}/cut        rix,
-    @{bin}/dirname    rix,
-    @{bin}/kmod       rix,
-    @{bin}/mv         rix,
-    @{bin}/rm         rix,
-    @{bin}/rmdir      rix,
-    @{bin}/sed        rix,
-    @{bin}/sort       rix,
-    @{bin}/touch      rix,
-    @{bin}/tr         rix,
-    @{bin}/uname      rix,
-    @{bin}/which{,.debianutils}      rix,
-
-    @{bin}/apt-config               rPx,
-    @{bin}/dkms                     rPx,
-    @{bin}/dpkg                     rPx -> child-dpkg,
-    @{bin}/systemd-detect-virt      rPx,
-    @{bin}/update-alternatives      rPx,
-    @{bin}/update-grub             rPUx,
-    @{bin}/update-initramfs         rPx,
-    @{lib}/dkms/dkms_autoinstaller  rPx,
-
-    @{lib}/modules/*/updates/ w,
-    @{lib}/modules/*/updates/dkms/ w,
-
-    /etc/kernel/header_postinst.d/* r,
-    /etc/kernel/{postinst,postrm,preinst,prerm}.d/* r,
-
-    # For shell pwd
-    / r,
-    /boot/ r,
-
-    /etc/apt/apt.conf.d/ r,
-    /etc/apt/apt.conf.d/01autoremove-kernels{,.dpkg-new} rw,
-    /etc/modprobe.d/ r,
-    /etc/modprobe.d/*.conf r,
-
-    @{run}/reboot-required w,
-    @{run}/reboot-required.pkgs rw,
-
-    @{PROC}/devices r,
-    @{PROC}/cmdline r,
-
-    include if exists <local/run-parts_kernel>
-  }
 
   include if exists <local/run-parts>
 }

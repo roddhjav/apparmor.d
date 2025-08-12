@@ -10,6 +10,7 @@ include <tunables/global>
 @{exec_path} = @{bin}/lightdm
 profile lightdm @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/bus-system>
   include <abstractions/authentication>
   include <abstractions/desktop>
   include <abstractions/fontconfig-cache-read>
@@ -36,15 +37,21 @@ profile lightdm @{exec_path} flags=(attach_disconnected) {
   signal (send) set=(term) peer=xfce-session,
   signal (send) set=(term) peer=xorg,
 
+  #aa:dbus own bus=system name=org.freedesktop.DisplayManager
+
   @{exec_path} mrix,
 
-  @{bin}/rm     rix,
+  @{sh_path}        rix,
+  @{bin}/{,e,f}grep rix,
+  @{bin}/df         rix,
+  @{bin}/rm         rix,
 
   @{bin}/lightdm-*-greeter    rPUx,
   @{bin}/startx                rPx,
   @{bin}/Xorg                  rPx,
   @{bin}/plymouth              rPx,
   @{bin}/gnome-keyring-daemon  rPx,
+  @{bin}/lightdm-session       rPx,
 
   @{lib}/security-misc/*       rPx, #aa:only whonix
   @{lib}/{,at-spi2{,-core}/}at-spi-bus-launcher rPx,
@@ -56,11 +63,11 @@ profile lightdm @{exec_path} flags=(attach_disconnected) {
   /usr/share/wayland-sessions/{,*.desktop} r,
   /usr/share/xgreeters/{,**} r,
 
+  @{etc_ro}/environment r,
+  @{etc_ro}/security/limits.d/{,*} r,
   /etc/default/locale r,
-  /etc/environment r,
   /etc/lightdm/{,**} r,
   /etc/machine-id r,
-  /etc/security/limits.d/{,*} r,
   /etc/shells r,
 
   /var/cache/lightdm/dmrc/*.dmrc* rw,
@@ -81,6 +88,7 @@ profile lightdm @{exec_path} flags=(attach_disconnected) {
   owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/loginuid rw,
   owner @{PROC}/@{pid}/uid_map r,
+  owner @{PROC}/@{pid}/mountinfo r,
 
   /dev/tty@{int} r,
 

@@ -1,0 +1,28 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{sbin}/aa-teardown
+profile aa-teardown @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+
+  capability dac_read_search,
+
+  @{exec_path} mr,
+
+  @{sh_path}        rix,
+  @{lib}/apparmor/apparmor.systemd rPx,
+
+  /usr/share/terminfo/** r,
+
+  /dev/tty rw,
+
+  include if exists <local/aa-teardown>
+}
+
+# vim:syntax=apparmor

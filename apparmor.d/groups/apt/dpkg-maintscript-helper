@@ -1,0 +1,41 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/dpkg-maintscript-helper
+profile dpkg-maintscript-helper @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+
+  @{exec_path} mr,
+
+  @{sh_path}       rix,
+  @{bin}/basename  rix,
+  @{bin}/dpkg      rCx -> dpkg,
+
+  /usr/share/dpkg/sh/* r,
+
+  profile dpkg {
+    include <abstractions/base>
+    include <abstractions/consoles>
+    include <abstractions/common/apt>
+
+    capability dac_read_search,
+
+    @{bin}/dpkg mr,
+    @{bin}/dpkg-query rpx,
+
+    /etc/dpkg/dpkg.cfg r,
+    /etc/dpkg/dpkg.cfg.d/{,*} r,
+
+    include if exists <local/dpkg-maintscript-helper_dpkg>
+  }
+
+  include if exists <local/dpkg-maintscript-helper>
+}
+
+# vim:syntax=apparmor

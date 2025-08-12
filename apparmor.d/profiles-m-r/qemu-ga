@@ -6,40 +6,38 @@ abi <abi/4.0>,
 
 include <tunables/global>
 
-@{exec_path} = @{bin}/qemu-ga
+@{exec_path} = @{sbin}/qemu-ga
 profile qemu-ga @{exec_path} {
   include <abstractions/base>
-  include <abstractions/bus-system>
-
-  capability mknod,
-  capability net_admin,
-  capability sys_ptrace,
-
-  network inet stream,
-  network inet6 stream,
-  network netlink raw,
-
-  ptrace (read) peer=@{p_systemd},
-
-  unix type=stream addr=@@{udbus}/bus/shutdown/system,
-
-  #aa:dbus talk bus=system name=org.freedesktop.login1 label=systemd-logind
 
   @{exec_path} mr,
 
-  @{bin}/systemctl rix,
+  @{bin}/systemctl Cx -> systemctl,
 
   /etc/qemu/qemu-ga.conf r,
 
-  owner @{run}/qga.state* rw,
+  owner @{run}/qga.state rw,
+  owner @{run}/qga.state.@{rand6} rw,
 
   @{sys}/devices/system/node/ r,
   @{sys}/devices/system/node/node@{int}/meminfo r,
 
-        @{PROC}/sys/vm/max_map_count r,
-  owner @{PROC}/@{pid}/net/dev r,
+  @{PROC}/sys/vm/max_map_count r,
 
   /dev/vport@{int}p@{int} rw,
+
+  profile systemctl {
+    include <abstractions/base>
+    include <abstractions/app/systemctl>
+
+    capability net_admin,
+
+    unix type=stream addr=@@{udbus}/bus/shutdown/system,
+
+    #aa:dbus talk bus=system name=org.freedesktop.login1 label="@{p_systemd_logind}"
+
+    include if exists <local/qemu-ga_systemctl>
+  }
 
   include if exists <local/qemu-ga>
 }

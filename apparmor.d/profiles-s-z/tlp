@@ -7,25 +7,23 @@ abi <abi/4.0>,
 
 include <tunables/global>
 
-@{exec_path} = @{bin}/tlp
+@{exec_path} = @{sbin}/tlp
 profile tlp @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus-system>
-  include <abstractions/disks-read>
-  include <abstractions/graphics>
   include <abstractions/bus/org.freedesktop.PolicyKit1>
+  include <abstractions/consoles>
+  include <abstractions/devices-usb-read>
+  include <abstractions/disks-read>
   include <abstractions/nameservice-strict>
   include <abstractions/perl>
 
   capability dac_read_search,
-  capability net_admin,
   capability sys_nice,
   capability sys_rawio,
   capability sys_tty_config,
 
   network netlink raw,
-
-  ptrace read peer=unconfined,
 
   @{exec_path} mr,
 
@@ -33,23 +31,25 @@ profile tlp @{exec_path} flags=(attach_disconnected) {
   @{bin}/cat                    rix,
   @{bin}/chmod                  rix,
   @{bin}/cp                     rix,
-  @{bin}/ethtool                rix,
+  @{sbin}/ethtool               rix,
   @{bin}/flock                  rix,
-  @{bin}/grep                   rix,
-  @{bin}/hdparm                 rPx,
+  @{bin}/{,e}grep               rix,
+  @{sbin}/hdparm                rPx,
   @{bin}/head                   rix,
   @{bin}/id                     rPx,
-  @{bin}/iw                     rPx,
+  @{sbin}/iw                    rPx,
   @{bin}/logger                 rix,
   @{bin}/mktemp                 rix,
   @{bin}/readlink               rix,
   @{bin}/rm                     rix,
+  @{bin}/sed                    rix,
   @{bin}/sort                   rix,
   @{bin}/systemctl              rCx -> systemctl,
   @{bin}/touch                  rix,
   @{bin}/tr                     rix,
   @{bin}/udevadm                rCx -> udevadm,
-  @{bin}/uname                  rpx,
+  @{bin}/uname                  rix,
+  @{bin}/timeout                rix,
   /usr/share/tlp/tlp-readconfs  rix,
 
   / r,
@@ -68,11 +68,23 @@ profile tlp @{exec_path} flags=(attach_disconnected) {
   owner @{run}/tlp/{,**} rw,
   owner @{run}/tlp/lock_tlp  rwk,
 
-  @{run}/udev/data/+platform:* r,
+  @{run}/udev/data/+platform:* r,         # Identifies onboard devices (laptop/board model, power controllers, thermal sensors)
 
   @{sys}/bus/pci/devices/ r,
+  @{sys}/bus/pci/drivers/*/ r,
+  @{sys}/bus/platform/devices/ r,
+  @{sys}/class/drm/ r,
+  @{sys}/class/net/ r,
+  @{sys}/class/power_supply/ r,
+  @{sys}/devices/@{pci}/ r,
   @{sys}/devices/@{pci}/{,**/}power/control w,
+  @{sys}/devices/@{pci}/**/host@{int}/**/link_power_management_policy w,
+  @{sys}/devices/@{pci}/class r,
+  @{sys}/devices/**/net/**/uevent r,
   @{sys}/devices/system/cpu/cpufreq/policy@{int}/energy_performance_preference rw,
+  @{sys}/devices/virtual/dmi/id/chassis_type r,
+  @{sys}/devices/virtual/dmi/id/product_version r,
+  @{sys}/devices/virtual/net/**/uevent r,
   @{sys}/firmware/acpi/platform_profile* rw,
   @{sys}/firmware/acpi/pm_profile* rw,
   @{sys}/module/*/parameters/power_save rw,
@@ -96,6 +108,8 @@ profile tlp @{exec_path} flags=(attach_disconnected) {
   profile udevadm {
     include <abstractions/base>
     include <abstractions/app/udevadm>
+
+    @{run}/tlp/lock_tlp rw, # file_inherit
 
     include if exists <local/tlp_udevadm>
   }

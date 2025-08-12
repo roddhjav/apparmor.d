@@ -30,6 +30,7 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected mediate_deleted) {
   @{exec_path} mr,
 
   /etc/xdg/Xwayland-session.d/00-at-spi Cx -> at-spi,
+  /etc/xdg/Xwayland-session.d/00-pulseaudio-x11 Cx -> pulseaudio,
   #aa:exec kscreenlocker_greet
 
   /usr/share/color-schemes/*.colors r,
@@ -44,11 +45,7 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected mediate_deleted) {
   /usr/share/plasma/desktoptheme/** r,
 
   /etc/pipewire/client.conf.d/ r,
-  /etc/xdg/kscreenlockerrc r,
-  /etc/xdg/menus/{,applications.menu} r,
-  /etc/xdg/menus/applications-merged/ r,
-  /etc/xdg/plasmarc r,
-  /etc/xdg/Xwayland-session.d/{,*} r,
+  /etc/xdg/** r,
 
   /etc/machine-id r,
   /var/lib/dbus/machine-id r,
@@ -92,7 +89,7 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected mediate_deleted) {
   owner @{user_config_dirs}/kwinrc{,.@{rand6}} rwl -> @{user_config_dirs}/#@{int},
   owner @{user_config_dirs}/kwinrulesrc r,
   owner @{user_config_dirs}/kxkbrc r,
-  owner @{user_config_dirs}/menus/{,applications-merged/} r,
+  owner @{user_config_dirs}/menus/** r,
   owner @{user_config_dirs}/plasmarc r,
   owner @{user_config_dirs}/session/* r,
 
@@ -113,14 +110,15 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected mediate_deleted) {
   @{sys}/devices/virtual/dmi/id/product_name r,
   @{sys}/devices/virtual/dmi/id/sys_vendor r,
 
-  @{run}/udev/data/+acpi:* r,             # for ACPI
+  @{run}/udev/data/+acpi:* r,             # Exposes ACPI objects (power buttons, batteries, thermal)
   @{run}/udev/data/+dmi:* r,              # for motherboard info
-  @{run}/udev/data/+hid:* r,              # for HID subsystem
+  @{run}/udev/data/+hid:* r,              # For Human Interface Device (mice, controllers, drawing tablets, scanners)
   @{run}/udev/data/+input:input@{int} r,  # for mouse, keyboard, touchpad
   @{run}/udev/data/+pci:* r,              # Identifies all PCI devices (CPU, GPU, Network, Disks, USB, etc.)
-  @{run}/udev/data/+platform:* r,         # for ?
+  @{run}/udev/data/+platform:* r,         # Identifies onboard devices (laptop/board model, power controllers, thermal sensors)
+  @{run}/udev/data/+serio:* r,            # for touchpad
   @{run}/udev/data/+sound:card@{int} r,   # for sound card
-  @{run}/udev/data/+usb:* r,
+  @{run}/udev/data/+usb:* r,              # Identifies all USB devices
 
   @{run}/udev/data/c10:@{int} r,          # for non-serial mice, misc features
   @{run}/udev/data/c13:@{int}  r,         # for /dev/input/*
@@ -137,6 +135,7 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected mediate_deleted) {
 
   profile at-spi {
     include <abstractions/base>
+    include <abstractions/consoles>
 
     @{sh_path}    r,
     @{bin}/busctl rix,
@@ -149,6 +148,20 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected mediate_deleted) {
     owner @{HOME}/ r,
 
     include if exists <local/kwin_wayland_at-spi>
+  }
+
+  profile pulseaudio {
+    include <abstractions/base>
+    include <abstractions/consoles>
+
+    @{sh_path}   rix,
+    @{bin}/pactl  Px,
+
+    /etc/xdg/Xwayland-session.d/00-pulseaudio-x11 r,
+
+    owner @{HOME}/ r,
+
+    include if exists <local/kwin_wayland_pulseaudio>
   }
 
   include if exists <local/kwin_wayland>

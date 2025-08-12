@@ -388,6 +388,16 @@ func CopyTo(src *Path, dst *Path) error {
 	return nil
 }
 
+// CopyFS copies the file system fsys into the directory dir,
+// creating dir if necessary. It is the exivalent of os.CopyFS with Path.
+func (p *Path) CopyFS(dst *Path) error {
+	err := os.CopyFS(dst.String(), os.DirFS(p.String()))
+	if err != nil {
+		return fmt.Errorf("copying %s to %s: %s", p, dst, err)
+	}
+	return nil
+}
+
 // CopyDirTo recursively copies the directory denoted by the current path to
 // the destination path. The source directory must exist and the destination
 // directory must NOT exist (no implicit destination name allowed).
@@ -515,7 +525,7 @@ func (p *Path) ReadFileAsLines() ([]string, error) {
 		return nil, err
 	}
 	txt := string(data)
-	txt = strings.Replace(txt, "\r\n", "\n", -1)
+	txt = strings.ReplaceAll(txt, "\r\n", "\n")
 	return strings.Split(txt, "\n"), nil
 }
 
@@ -536,7 +546,7 @@ func (p *Path) MustReadFilteredFileAsLines() []string {
 		panic(err)
 	}
 	txt := string(data)
-	txt = strings.Replace(txt, "\r\n", "\n", -1)
+	txt = strings.ReplaceAll(txt, "\r\n", "\n")
 	txt = util.Filter(txt)
 	res := strings.Split(txt, "\n")
 	if slices.Contains(res, "") {
@@ -630,7 +640,9 @@ func (p *Path) String() string {
 func (p *Path) Canonical() *Path {
 	canonical := p.Clone()
 	// https://github.com/golang/go/issues/17084#issuecomment-246645354
-	canonical.FollowSymLink()
+	if err := canonical.FollowSymLink(); err != nil {
+		return nil
+	}
 	if absPath, err := canonical.Abs(); err == nil {
 		canonical = absPath
 	}

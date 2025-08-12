@@ -1,0 +1,51 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/papers
+profile papers @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/common/gnome>
+  include <abstractions/ssl_certs>
+  include <abstractions/user-download-strict>
+  include <abstractions/user-read-strict>
+  include <abstractions/user-write-strict>
+
+  #aa:dbus talk bus=session name=org.gtk.vfs label="gvfsd{,-*}"
+
+  @{exec_path} mr,
+
+  @{open_path}  Cx -> open,
+
+  /usr/share/poppler/{,**} r,
+
+  owner @{user_share_dirs}/gvfs-metadata/{,*} r,
+
+  owner @{tmp}/.goutputstream-@{rand6} rw,
+  owner @{tmp}/papers-@{int}/{,**} rw,
+  owner @{tmp}/gtkprint_@{rand6} rw,
+  owner @{tmp}/gtkprint@{rand6} rw,
+
+  @{run}/mount/utab r,
+
+  owner @{PROC}/@{pid}/mountinfo r,
+
+  profile open {
+    include <abstractions/base>
+    include <abstractions/app/open>
+
+    @{browsers_path}              Px,
+    @{help_path}                  Px,
+    @{bin}/papers                 Px,
+
+    include if exists <local/papers_open>
+  }
+
+  include if exists <local/papers>
+}
+
+# vim:syntax=apparmor

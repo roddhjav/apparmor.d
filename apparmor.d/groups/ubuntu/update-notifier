@@ -31,11 +31,11 @@ profile update-notifier @{exec_path} {
 
   @{sh_path}                                     rix,
   @{bin}/ionice                                  rix,
-  @{bin}/ischroot                                rix,
   @{bin}/nice                                    rix,
 
   @{bin}/dpkg                                    rPx -> child-dpkg,
-  @{bin}/lsb_release                             rPx -> lsb_release,
+  @{bin}/ischroot                                rPx,
+  @{bin}/lsb_release                             rPx,
   @{bin}/pkexec                                  rCx -> pkexec,
   @{bin}/snap                                   rPUx,
   @{bin}/software-properties-gtk                 rPx,
@@ -49,7 +49,7 @@ profile update-notifier @{exec_path} {
   /usr/share/apport/apport-checkreports          rPx,
   /usr/share/apport/apport-gtk                   rPx,
 
-  @{lib}/python3.@{int}/dist-packages/{apt,gi}/**/__pycache__/{,**} rw,
+  @{lib}/@{python_name}/dist-packages/{apt,gi}/**/__pycache__/{,**} rw,
 
   /usr/share/dpkg/cputable r,
   /usr/share/dpkg/tupletable r,
@@ -85,9 +85,6 @@ profile update-notifier @{exec_path} {
   profile systemctl {
     include <abstractions/base>
     include <abstractions/app/systemctl>
-    include <abstractions/bus-system>
-
-    unix (bind) type=stream addr=@@{udbus}/bus/systemctl/system,
 
     dbus send bus=system path=/org/freedesktop/systemd1
          interface=org.freedesktop.systemd1.Manager

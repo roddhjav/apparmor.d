@@ -7,7 +7,7 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{exec_path} = @{bin}/nvidia-settings
-profile nvidia-settings @{exec_path} {
+profile nvidia-settings @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/dconf-write>
   include <abstractions/desktop>
@@ -21,8 +21,20 @@ profile nvidia-settings @{exec_path} {
 
   @{sys}/bus/pci/devices/ r,
   @{sys}/devices/@{pci}/config r,
+  @{sys}/devices/system/node/ r,
+  @{sys}/devices/system/node/node@{int}/cpumap r,
 
-  @{PROC}/devices r,
+        @{PROC}/devices r,
+        @{PROC}/driver/nvidia/capabilities/mig/config r,
+        @{PROC}/driver/nvidia/capabilities/mig/monitor r,
+  owner @{PROC}/@{pid}/cmdline r,
+  owner @{PROC}/@{pid}/task/@{tid}/comm rw,
+
+  /dev/char/@{dynamic}:@{int} w,          # For dynamic assignment range 234 to 254, 384 to 511
+  /dev/nvidia-caps/ rw,
+  /dev/nvidia-caps/nvidia-cap@{int} r,
+  /dev/nvidia-uvm rw,
+  /dev/nvidia-uvm-tools r,
 
   include if exists <local/nvidia-settings>
 }

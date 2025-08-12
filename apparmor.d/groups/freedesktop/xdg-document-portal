@@ -9,10 +9,11 @@ include <tunables/global>
 @{exec_path} = @{lib}/xdg-document-portal
 profile xdg-document-portal @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/attached/consoles>
   include <abstractions/bus-session>
   include <abstractions/bus/org.freedesktop.impl.portal.PermissionStore>
+  include <abstractions/consoles>
   include <abstractions/deny-sensitive-home>
+  include <abstractions/freedesktop.org>
   include <abstractions/nameservice-strict>
 
   capability sys_admin,
@@ -38,8 +39,9 @@ profile xdg-document-portal @{exec_path} flags=(attach_disconnected) {
 
   @{exec_path} mr,
 
-  @{bin}/flatpak         rPUx,
+  @{bin}/flatpak         rPx,
   @{bin}/fusermount{,3}  rCx -> fusermount,
+  @{bin}/snap            rPx,
 
               / r,
   owner @{att}/ r,
@@ -63,10 +65,12 @@ profile xdg-document-portal @{exec_path} flags=(attach_disconnected) {
 
   profile fusermount flags=(attach_disconnected) {
     include <abstractions/base>
-    include <abstractions/nameservice-strict>
+    include <abstractions/consoles>
+    include <abstractions/app/fusermount>
 
-    capability sys_admin,
     capability dac_read_search,
+    capability dac_override,
+    capability setuid,
 
     mount options=(rw, rprivate) -> /,
     mount options=(rw, rbind) @{run}/user/@{uid}/ -> /,
@@ -76,16 +80,7 @@ profile xdg-document-portal @{exec_path} flags=(attach_disconnected) {
 
     unix (send receive) type=stream peer=(label=xdg-document-portal),
 
-    @{bin}/fusermount{,3} mr,
-
-    /etc/fuse{,3}.conf r,
-
     owner @{run}/user/@{uid}/doc/ rw,
-
-    @{PROC}/@{pids}/mounts r,
-
-          /dev/fuse rw,
-    @{att}/dev/tty@{int} rw,
 
     include if exists <local/xdg-document-portal_fusermount>
   }

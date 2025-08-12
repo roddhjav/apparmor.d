@@ -14,11 +14,12 @@ abi <abi/4.0>,
 
 include <tunables/global>
 
-@{exec_path} = @{bin}/libvirtd
+@{exec_path} = @{sbin}/libvirtd
 profile libvirtd @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/bus-session>
+  include <abstractions/bus-system>
   include <abstractions/consoles>
-  include <abstractions/dbus>
   include <abstractions/devices-usb>
   include <abstractions/disks-write>
   include <abstractions/nameservice-strict>
@@ -85,6 +86,7 @@ profile libvirtd @{exec_path} flags=(attach_disconnected) {
   unix (send, receive) type=stream addr=none peer=(label=libvirtd//qemu_bridge_helper),
   unix (send, receive) type=stream addr=none peer=(label=unconfined addr=none),
   unix (send, receive) type=stream addr=none peer=(label=unconfined),
+  unix (send, receive) type=stream addr=none peer=(label=virt-manager),
 
   # Allow changing to our UUID-based named profiles
   change_profile -> libvirt-@{uuid},
@@ -103,26 +105,26 @@ profile libvirtd @{exec_path} flags=(attach_disconnected) {
   @{lib}/xen-common/bin/xen-toolstack              rPUx,
   @{lib}/xen/bin/*                                 rPUx,
 
-  @{bin}/dmidecode                            rPx,
-  @{bin}/dnsmasq                              rPx,
-  @{bin}/kmod                                 rPx,
-  @{bin}/lvm                                 rPUx,
+  @{sbin}/dmidecode                           rPx,
+  @{sbin}/dnsmasq                             rPx,
+  @{bin}/kmod                                 rCx -> kmod,
+  @{sbin}/lvm                                 rPUx,
   @{bin}/mdevctl                              rPx,
   @{bin}/swtpm                                rPx,
   @{bin}/swtpm_ioctl                          rPx,
   @{bin}/swtpm_setup                          rPx,
   @{bin}/udevadm                              rPx,
   @{bin}/virtiofsd                            rux, # TODO: WIP
-  @{bin}/virtlogd                             rPx,
+  @{sbin}/virtlogd                            rPx,
 
   @{sh_path}                    rix,
   @{bin}/ip                     rix,
-  @{bin}/nft                    rix,
+  @{sbin}/nft                   rix,
   @{bin}/qemu-img               rUx, # TODO: Integration with virt-aa-helper
   @{bin}/qemu-system*           rUx, # TODO: Integration with virt-aa-helper
-  @{bin}/tc                     rix,
+  @{sbin}/tc                    rix,
   @{bin}/xmllint                rix,
-  @{bin}/xtables-nft-multi      rix,
+  @{sbin}/xtables-nft-multi     rix,
   @{lib}/libvirt/virt-aa-helper rPx,
 
   /etc/libvirt/hooks/**    rPUx,
@@ -162,35 +164,9 @@ profile libvirtd @{exec_path} flags=(attach_disconnected) {
   @{run}/systemd/notify w,
   @{run}/utmp rk,
 
-  @{run}/udev/data/+backlight:* r,
-  @{run}/udev/data/+bluetooth:* r,
-  @{run}/udev/data/+dmi:* r,              # for motherboard info
-  @{run}/udev/data/+drm:card@{int}-* r,   # For screen outputs
-  @{run}/udev/data/+hid:* r,
-  @{run}/udev/data/+input:input@{int} r,  # For mouse, keyboard, touchpad
-  @{run}/udev/data/+leds:* r,
-  @{run}/udev/data/+pci:* r,              # Identifies all PCI devices (CPU, GPU, Network, Disks, USB, etc.)
-  @{run}/udev/data/+platform:* r,
-  @{run}/udev/data/+rfkill:* r,
-  @{run}/udev/data/+sound:card@{int} r,   # For sound card
-  @{run}/udev/data/+thunderbolt:* r,
-  @{run}/udev/data/c1:@{int} r,           # For RAM disk
-  @{run}/udev/data/c6:@{int} r,           # For parallel printer devices /dev/lp*
-  @{run}/udev/data/c10:@{int} r,          # For non-serial mice, misc features
-  @{run}/udev/data/c13:@{int} r,          # For /dev/input/*
-  @{run}/udev/data/c21:@{int} r,          # Generic SCSI access
-  @{run}/udev/data/c29:@{int} r,          # For /dev/fb[0-9]*
-  @{run}/udev/data/c81:@{int}  r,         # For video4linux
-  @{run}/udev/data/c89:@{int}  r,         # For I2C bus interface
-  @{run}/udev/data/c90:@{int} r,          # For RAM, ROM, Flash
-  @{run}/udev/data/c99:@{int} r,          # For raw parallel ports /dev/parport*
-  @{run}/udev/data/c108:@{int} r,         # For /dev/ppp
-  @{run}/udev/data/c116:@{int} r,         # For ALSA
-  @{run}/udev/data/c202:@{int} r,         # CPU model-specific registers
-  @{run}/udev/data/c203:@{int} r,         # CPU CPUID information
-  @{run}/udev/data/c226:@{int} r,         # For /dev/dri/card[0-9]*
-  @{run}/udev/data/c@{dynamic}:@{int} r,  # For dynamic assignment range 234 to 254, 384 to 511
-  @{run}/udev/data/n@{int} r,
+  @{run}/udev/data/+*:* r,                # Identifies all subsystems
+  @{run}/udev/data/c@{int}:@{int} r,      # Identifies all character devices
+  @{run}/udev/data/n@{int} r,             # For network interfaces
 
   @{sys}/bus/[a-z]*/devices/ r,
   @{sys}/bus/pci/drivers_probe w,
@@ -264,11 +240,18 @@ profile libvirtd @{exec_path} flags=(attach_disconnected) {
   /dev/vhost-net rw,
 
   # Force the use of virt-aa-helper
-  audit deny @{bin}/apparmor_parser rwxl,
+  audit deny @{sbin}/apparmor_parser rwxl,
   audit deny @{etc_rw}/apparmor.d/libvirt/** wxl,
   audit deny @{sys}/kernel/security/apparmor/features rwxl,
   audit deny @{sys}/kernel/security/apparmor/matching rwxl,
   audit deny @{sys}/kernel/security/apparmor/.* rwxl,
+
+  profile kmod {
+    include <abstractions/base>
+    include <abstractions/app/kmod>
+
+    include if exists <local/libvirtd_kmod>
+  }
 
   profile qemu_bridge_helper {
     include <abstractions/base>

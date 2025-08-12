@@ -1,0 +1,76 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{runtime} = SteamLinuxRuntime_{sniper,soldier}
+@{share_dirs} = @{user_share_dirs}/Steam @{HOME}/.steam/debian-installation
+@{lib_dirs} = @{share_dirs}/ubuntu@{int2}_{32,64} @{share_dirs}/linux{32,64}
+@{runtime_dirs} = @{lib_dirs}/steam-runtime{,-sniper}
+@{app_dirs} = @{share_dirs}/steamapps/common/
+
+@{exec_path} = @{lib_dirs}/gameoverlayui
+profile steam-gameoverlayui @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/audio-client>
+  include <abstractions/desktop>
+  include <abstractions/fontconfig-cache-write>
+  include <abstractions/graphics>
+
+  network inet stream,
+  network inet6 stream,
+
+  unix,
+
+  @{exec_path} mr,
+
+  @{lib_dirs}/**.so*  mr,
+  @{runtime_dirs}/@{lib}/**.so*  mr,
+
+  @{lib_dirs}/steamerrorreporter rpx,
+
+  /usr/share/fonts/{,**}  rk,
+
+  / r,
+  /home/ r,
+  /tmp/ r,
+
+  owner @{HOME}/ r,
+  owner @{HOME}/.steam/registry.vdf  rk,
+  owner @{HOME}/.steam/steam.pipe r,
+  owner @{lib_dirs}/fontconfig/{,**} rwl,
+
+  owner @{share_dirs}/{,**} r,
+  owner @{share_dirs}/config/DialogConfigOverlay*.vdf rw,
+  owner @{share_dirs}/public/* rk,
+  owner @{share_dirs}/resource/{,**} rk,
+  owner @{share_dirs}/userdata/@{int}/{,**} rk,
+
+  owner @{att}/dev/shm/ValveIPCSHM_@{uid} rw,
+
+  owner /dev/shm/u@{uid}-Shm_@{hex} rw,
+  owner /dev/shm/u@{uid}-ValveIPCSharedObj-Steam rwk,
+  owner /dev/shm/ValveIPCSHM_@{uid} rw,
+
+  owner @{tmp}/gameoverlayui.log* rw,
+  owner @{tmp}/miles_image_@{rand6} mrw,
+  owner @{tmp}/runtime-info.txt.@{rand6} rw,
+  owner @{tmp}/steam_chrome_overlay_uid@{uid}_spid@{pids} rw,
+
+  @{sys}/ r,
+  @{sys}/kernel/ r,
+  @{sys}/devices/ r,
+  @{sys}/devices/system/ r,
+  @{sys}/devices/system/cpu/cpu@{int}/ r,
+
+  @{PROC}/version r,
+
+  deny owner @{user_share_dirs}/gvfs-metadata/{,*} r,
+
+  include if exists <local/steam-gameoverlayui>
+}
+
+# vim:syntax=apparmor

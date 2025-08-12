@@ -1,0 +1,31 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{lib_dirs} = @{lib}/ /snap/{snapd,core}/@{int}@{lib}
+
+@{exec_path} = @{lib_dirs}/snapd/snapd-apparmor
+profile snapd-apparmor @{exec_path} {
+  include <abstractions/base>
+
+  @{exec_path} mrix,
+
+  @{bin}/systemd-detect-virt         rPx,
+  @{sbin}/apparmor_parser            rPx,
+
+  @{lib_dirs}/** mr,
+  @{lib_dirs}/snapd/apparmor_parser  rPx -> apparmor_parser,
+  @{lib_dirs}/snapd/info r,
+
+  /var/lib/snapd/apparmor/profiles/ r,
+
+  @{PROC}/cmdline r,
+
+  include if exists <local/snapd-apparmor>
+}
+
+# vim:syntax=apparmor

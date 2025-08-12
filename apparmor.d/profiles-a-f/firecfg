@@ -19,11 +19,13 @@ profile firecfg @{exec_path} flags=(attach_disconnected) {
   @{exec_path} mr,
 
   @{sh_path}         rix,
-  @{bin}/apparmor_parser rPx,
+  @{sbin}/apparmor_parser rPx,
 
-  /etc/login.defs r,
+  @{etc_ro}/login.defs r,
+
   /etc/firejail/firejail.users r,
   /etc/firejail/firecfg.config r,
+  /etc/firejail/firecfg.d/{,*} r,
 
   /usr/local/bin/ r,
   /usr/local/bin/* rw,
@@ -32,10 +34,14 @@ profile firecfg @{exec_path} flags=(attach_disconnected) {
   /usr/share/applications/ r,
   /usr/share/applications/*.desktop r,
   @{user_share_dirs}/applications/ r,
-
   @{user_share_dirs}/applications/*.desktop rw,
 
-  /dev/tty rw,
+  @{user_config_dirs}/firejail/{,*} r,
+
+        /dev/tty rw,
+        /dev/tty@{int}  rw,
+  owner /dev/pts/@{int} rw,
+
 
   include if exists <local/firecfg>
 }

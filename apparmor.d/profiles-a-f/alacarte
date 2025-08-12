@@ -7,16 +7,16 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{exec_path} = @{bin}/alacarte
-profile alacarte @{exec_path} {
+profile alacarte @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/dconf-write>
   include <abstractions/desktop>
   include <abstractions/python>
 
   @{exec_path} mr,
-  @{bin}/python3.@{int} rix,
+  @{python_path} rix,
 
-  @{lib}/python3.@{int}/site-packages/Alacarte/{,**/}__pycache__/*.cpython-@{int}.*.pyc.@{int} w,
+  @{lib}/@{python_name}/site-packages/Alacarte/{,**/}__pycache__/*.cpython-@{int}.*.pyc.@{int} w,
 
   /usr/share/alacarte/{,**} r,
   /usr/share/desktop-directories/{,**} r,
@@ -29,6 +29,11 @@ profile alacarte @{exec_path} {
   owner @{user_share_dirs}/desktop-directories/{,**} r,
 
   owner @{tmp}/gdkpixbuf-xpm-tmp.@{rand6} rw,
+
+        @{sys}/fs/cgroup/user.slice/cpu.max r,
+        @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/cpu.max r,
+        @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/cpu.max r,
+  owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/cpu.max r,
 
   owner @{PROC}/@{pid}/cgroup r,
   owner @{PROC}/@{pid}/mounts r,

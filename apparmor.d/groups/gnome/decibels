@@ -1,0 +1,36 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/decibels @{bin}/org.gnome.Decibels
+profile decibels @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/audio-client>
+  include <abstractions/common/gnome>
+  include <abstractions/gstreamer>
+  include <abstractions/user-download-strict>
+
+  @{exec_path} mr,
+
+  @{bin}/gjs-console rix,
+
+  @{open_path}  rPx -> child-open-help,
+
+  /usr/share/org.gnome.Decibels/{,**} r,
+
+  owner @{user_music_dirs}/{,**} r,
+  owner @{user_pictures_dirs}/{,**} r,
+  owner @{user_torrents_dirs}/{,**} r,
+  owner @{user_videos_dirs}/{,**} r,
+
+  owner @{PROC}/@{pid}/mounts r,
+  owner @{PROC}/@{pid}/task/@{tid}/stat r,
+
+  include if exists <local/decibels>
+}
+
+# vim:syntax=apparmor

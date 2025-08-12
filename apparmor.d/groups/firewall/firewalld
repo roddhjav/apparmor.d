@@ -1,0 +1,80 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{sbin}/firewalld
+profile firewalld @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/bus-session>
+  include <abstractions/bus-system>
+  include <abstractions/bus/org.freedesktop.NetworkManager>
+  include <abstractions/bus/org.freedesktop.PolicyKit1>
+  include <abstractions/nameservice-strict>
+
+  capability dac_read_search,
+  capability mknod,
+  capability net_admin,
+  capability net_raw,
+  capability setpcap,
+
+  network inet raw,
+  network inet6 raw,
+  network netlink raw,
+
+  #aa:dbus own bus=system name=org.fedoraproject.FirewallD1
+
+  @{exec_path} mr,
+  @{python_path} r,
+
+  @{bin}/ r,
+  @{sbin}/ r,
+  @{bin}/alts                      ix,
+  @{bin}/false                     ix,
+  @{bin}/kmod                      Cx -> kmod,
+  @{bin}/ebtables-legacy           ix,
+  @{bin}/ebtables-legacy-restore   ix,
+  @{sbin}/ipset                    ix,
+  @{sbin}/xtables-legacy-multi     ix,
+  @{sbin}/xtables-nft-multi       mix,
+
+  /usr/local/lib/@{python_name}/dist-packages/ r,
+
+  /usr/share/iproute2/{,**} r,
+  /usr/share/libalternatives/{,**} r,
+
+  /etc/firewalld/{,**} rw,
+  /etc/iproute2/group r,
+  /etc/iproute2/rt_realms r,
+
+  /var/lib/ebtables/lock rwk,
+
+  /var/log/firewalld rw,
+
+  @{run}/firewalld/{,*} rw,
+  @{run}/xtables.lock rwk,
+
+        @{PROC}/sys/net/ipv{4,6}/ip_forward rw,
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/mounts r,
+  owner @{PROC}/@{pids}/net/ip_tables_names r,
+
+  profile kmod flags=(attach_disconnected) {
+    include <abstractions/base>
+    include <abstractions/app/kmod>
+
+    capability sys_module,
+
+    @{sys}/module/compression r,
+    @{sys}/module/nf_*/initstate r,
+
+    include if exists <local/firewalld_kmod>
+  }
+
+  include if exists <local/firewalld>
+}
+
+# vim:syntax=apparmor

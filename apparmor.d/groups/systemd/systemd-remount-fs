@@ -7,7 +7,7 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{exec_path} = @{lib}/systemd/systemd-remount-fs
-profile systemd-remount-fs @{exec_path} {
+profile systemd-remount-fs @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/nameservice-strict>
   include <abstractions/common/systemd>
@@ -17,18 +17,18 @@ profile systemd-remount-fs @{exec_path} {
   capability sys_resource,
 
   mount options=(rw, remount) -> /,
-  mount options=(rw, remount) -> /proc/,
+  mount options=(rw, remount) -> @{PROC}/,
 
   @{exec_path} mr,
 
   @{bin}/mount rix,
 
+  /etc/blkid.conf r,
   /etc/fstab r,
 
   @{run}/host/container-manager r,
   @{run}/mount/utab rw,
-  @{run}/mount/utab.@{rand6} rw,
-  @{run}/mount/utab.lock rwk,
+  @{run}/mount/utab.* rwk,
 
   @{sys}/devices/virtual/block/dm-@{int}/dm/name r,
 

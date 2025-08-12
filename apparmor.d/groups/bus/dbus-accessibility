@@ -9,7 +9,7 @@ include <tunables/global>
 @{exec_path} = @{lib}/{,at-spi2{,-core}/}at-spi-bus-launcher
 profile dbus-accessibility @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/attached/consoles>
+  include <abstractions/consoles>
   include <abstractions/bus-accessibility>
   include <abstractions/bus-session>
   include <abstractions/bus/org.a11y>
@@ -25,6 +25,8 @@ profile dbus-accessibility @{exec_path} flags=(attach_disconnected) {
 
   signal (receive) set=(term hup kill) peer=dbus-session,
   signal (receive) set=(term hup kill) peer=gdm{,-session-worker},
+
+  unix type=stream addr=none peer=(label=xorg, addr=@/tmp/.X11-unix/X0),
 
   #aa:dbus own bus=accessibility name=org.freedesktop.DBus
   #aa:dbus own bus=session name=org.a11y.{B,b}us
@@ -74,6 +76,7 @@ profile dbus-accessibility @{exec_path} flags=(attach_disconnected) {
   owner @{PROC}/@{pid}/cgroup r,
   owner @{PROC}/@{pid}/cmdline r,
   owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/fdinfo/@{int} r,
   owner @{PROC}/@{pid}/mounts r,
   owner @{PROC}/@{pid}/oom_score_adj r,
 

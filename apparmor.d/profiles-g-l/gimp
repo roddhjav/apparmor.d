@@ -11,8 +11,11 @@ profile gimp @{exec_path} {
   include <abstractions/base>
   include <abstractions/bus-session>
   include <abstractions/bus/org.freedesktop.FileManager1>
+  include <abstractions/dconf-write>
   include <abstractions/desktop>
   include <abstractions/graphics>
+  include <abstractions/nameservice-strict>
+  include <abstractions/python>
   include <abstractions/thumbnails-cache-write>
   include <abstractions/user-download-strict>
 
@@ -23,21 +26,36 @@ profile gimp @{exec_path} {
 
   @{exec_path} mr,
 
-  @{lib}/gimp/*/plug-ins/** rix,
+  @{python_path}                         rix,
+  @{bin}/env                             rix,
+  @{bin}/gimp-debug-tool-3.0             rix,
+  @{bin}/gimp-script-fu-interpreter-*    rix,
+  @{bin}/gjs-console                     rix,
+  @{bin}/lua                             rix,
+  @{lib}/gimp/@{version}/extensions/*/*  rix,
+  @{lib}/gimp/*/plug-ins/**              rix,
 
   @{bin}/xsane-gimp rPx,
   @{open_path}      rPx -> child-open-help,
 
+  @{lib}/gimp/@{version}/plug-ins/python-console/__pycache__/{,*} w,
+
   /usr/share/gimp/{,**} r,
   /usr/share/mypaint-data/{,**} r,
+  /usr/share/poppler/{,**} r,
   /usr/share/xml/iso-codes/{,**} r,
 
+  /etc/fstab r,
   /etc/gimp/{,**} r,
+
+  owner @{HOME}/@{XDG_SCREENSHOTS_DIR}/{,**} rw,
+  owner @{HOME}/@{XDG_WALLPAPERS_DIR}/{,**} rw,
 
   owner @{user_documents_dirs}/{,**} rw,
   owner @{user_pictures_dirs}/{,**} rw,
   owner @{user_work_dirs}/{,**} rw,
 
+  owner @{user_cache_dirs}//thumbnails/normal/gimp-thumb* rw,
   owner @{user_cache_dirs}/babl/{,**} rw,
   owner @{user_cache_dirs}/gegl-*/{,**} r,
   owner @{user_cache_dirs}/gegl-*/{,**} r,
@@ -51,6 +69,19 @@ profile gimp @{exec_path} {
   owner @{user_share_dirs}/GIMP/{,**} rw,
 
   owner @{tmp}/gimp/{,**} rw,
+
+  @{run}/mount/utab r,
+
+        @{sys}/fs/cgroup/user.slice/cpu.max r,
+        @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/cpu.max r,
+        @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/cpu.max r,
+  owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/cpu.max r,
+
+  owner @{PROC}/@{pid}/cgroup r,
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/mounts r,
+  owner @{PROC}/@{pid}/stat r,
+  owner @{PROC}/@{pid}/task/@{tid}/stat r,
 
   include if exists <local/gimp>
 }

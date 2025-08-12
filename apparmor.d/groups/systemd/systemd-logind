@@ -12,11 +12,11 @@ profile systemd-logind @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus-system>
   include <abstractions/bus/org.freedesktop.PolicyKit1>
+  include <abstractions/common/systemd>
   include <abstractions/consoles>
   include <abstractions/devices-usb>
   include <abstractions/disks-write>
   include <abstractions/nameservice-strict>
-  include <abstractions/common/systemd>
 
   capability chown,
   capability dac_override,
@@ -27,9 +27,10 @@ profile systemd-logind @{exec_path} flags=(attach_disconnected) {
 
   network netlink raw,
 
+  mqueue getattr type=posix /,
   mqueue r type=posix /,
 
-  unix (bind) type=stream addr=@@{udbus}/bus/systemd-logind/system,
+  unix bind type=stream addr=@@{udbus}/bus/systemd-logind/system,
 
   #aa:dbus own bus=system name=org.freedesktop.login1
 
@@ -40,11 +41,6 @@ profile systemd-logind @{exec_path} flags=(attach_disconnected) {
        member=Introspect
        peer=(label=ksmserver-logout-greeter),
 
-  dbus send bus=system path=/org/freedesktop/DBus
-       interface=org.freedesktop.DBus
-       member={GetConnectionUnixUser,GetConnectionUnixProcessID,GetConnectionCredentials}
-       peer=(name=org.freedesktop.DBus, label="@{p_dbus_system}"),
-
   @{exec_path} mr,
 
   /etc/machine-id r,
@@ -54,13 +50,12 @@ profile systemd-logind @{exec_path} flags=(attach_disconnected) {
   /etc/systemd/sleep.conf.d/{,**} r,
 
   / r,
-  /boot/{,**} r,
-  /efi/{,**} r,
+  @{efi}/{,**} r,
   /swap.img r,
   /swap/swapfile r,
   /swapfile r,
 
-  /var/lib/systemd/linger/ r,
+  /var/lib/systemd/linger/{,@{user}} rw,
 
   @{run}/.#nologin* rw,
   @{run}/credentials/getty@tty@{int}.service/ r,
@@ -73,15 +68,15 @@ profile systemd-logind @{exec_path} flags=(attach_disconnected) {
   @{run}/udev/tags/uaccess/ r,
   @{run}/udev/static_node-tags/uaccess/ r,
 
-  @{run}/udev/data/+backlight:* r,
-  @{run}/udev/data/+drivers:* r,
+  @{run}/udev/data/+backlight:* r,        # For display backlights on laptops, monitors, and other screens.
+  @{run}/udev/data/+drivers:* r,          # For drivers loaded in the system
   @{run}/udev/data/+drm:card@{int}-* r,   # For screen outputs
-  @{run}/udev/data/+hid:* r,
-  @{run}/udev/data/+i2c:* r,
+  @{run}/udev/data/+hid:* r,              # For Human Interface Device (mice, controllers, drawing tablets, scanners)
+  @{run}/udev/data/+i2c:* r,              # For Inter-Integrated Circuit, low-speed peripherals (sensors, EEPROMs, etc.)
   @{run}/udev/data/+input:input@{int} r,  # for mouse, keyboard, touchpad
-  @{run}/udev/data/+leds:* r,
+  @{run}/udev/data/+leds:* r,             # Identifies all LEDs (keyboard, mouse, etc.)
   @{run}/udev/data/+pci:* r,              # Identifies all PCI devices (CPU, GPU, Network, Disks, USB, etc.)
-  @{run}/udev/data/+wakeup:* r,
+  @{run}/udev/data/+wakeup:* r,           # For wakeup events (e.g., from sleep or hibernation)
   @{run}/udev/data/c1:@{int}    r,        # For RAM disk
   @{run}/udev/data/c10:@{int}   r,        # For non-serial mice, misc features
   @{run}/udev/data/c13:@{int} r,          # For /dev/input/*
@@ -95,6 +90,7 @@ profile systemd-logind @{exec_path} flags=(attach_disconnected) {
   @{run}/udev/data/c@{dynamic}:@{int} r,  # For dynamic assignment range 234 to 254, 384 to 511
 
   @{att}/@{run}/systemd/notify w,
+  @{att}/@{run}/systemd/userdb/io.systemd.DynamicUser rw,
   @{att}/@{run}/systemd/userdb/io.systemd.Multiplexer rw,
 
   @{run}/systemd/inhibit/ rw,
@@ -140,11 +136,11 @@ profile systemd-logind @{exec_path} flags=(attach_disconnected) {
         @{PROC}/sysvipc/{shm,sem,msg} r,
   owner @{PROC}/@{pid}/fdinfo/@{int} r,
 
-        /dev/dri/card@{int} rw,
-        /dev/input/event@{int} rw,  # Input devices (keyboard, mouse, etc)
-        /dev/mqueue/ r,
-        /dev/tty@{int} rw,
-  owner /dev/shm/{,**/} rw,
+  /dev/dri/card@{int} rw,
+  /dev/input/event@{int} rw,  # Input devices (keyboard, mouse, etc)
+  /dev/mqueue/ r,
+  /dev/tty@{int} rw,
+  /dev/shm/{,**/} rw,
 
   include if exists <local/systemd-logind>
 }

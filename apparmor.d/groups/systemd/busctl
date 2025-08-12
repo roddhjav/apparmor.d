@@ -7,7 +7,7 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{exec_path} = @{bin}/busctl
-profile busctl @{exec_path} {
+profile busctl @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus-accessibility>
   include <abstractions/bus-session>
@@ -20,11 +20,11 @@ profile busctl @{exec_path} {
   capability net_admin,
   capability sys_ptrace,
 
-  ptrace (read),
+  ptrace read,
 
-  unix (bind) type=stream addr=@@{udbus}/bus/busctl/busctl,
+  unix bind type=stream addr=@@{udbus}/bus/busctl/busctl,
 
-  signal (send) set=(cont) peer=child-pager,
+  signal send set=cont peer=child-pager,
 
   dbus eavesdrop bus=accessibility,
   dbus eavesdrop bus=session,
@@ -34,18 +34,39 @@ profile busctl @{exec_path} {
        interface=org.freedesktop.DBus.Monitoring
        member=BecomeMonitor
        peer=(name=org.freedesktop.DBus, label="@{p_dbus_system}"),
+  dbus send bus=system path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={GetConnectionCredentials,ListNames,ListActivatableNames}
+       peer=(name=org.freedesktop.DBus, label="@{p_dbus_system}"),
+
+  dbus send bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus.Monitoring
+       member=BecomeMonitor
+       peer=(name=org.freedesktop.DBus, label="@{p_dbus_session}"),
+  dbus send bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={GetConnectionCredentials,ListNames,ListActivatableNames}
+       peer=(name=org.freedesktop.DBus, label="@{p_dbus_session}"),
+
+  dbus send bus=system
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect,
+  dbus send bus=system
+       interface=org.freedesktop.DBus.Properties
+       member={GetAll,Get},
 
   @{exec_path} mr,
 
   @{pager_path} rPx -> child-pager,
 
-        @{PROC}/@{pid}/cgroup r,
-        @{PROC}/@{pid}/comm r,
-        @{PROC}/@{pid}/stat r,
-  owner @{PROC}/@{pid}/cmdline r,
-  owner @{PROC}/@{pid}/fdinfo/@{int} r,
-  owner @{PROC}/@{pid}/loginuid r,
-  owner @{PROC}/@{pid}/sessionid r,
+  @{PROC}/@{pid}/attr/current r,
+  @{PROC}/@{pid}/cgroup r,
+  @{PROC}/@{pid}/cmdline r,
+  @{PROC}/@{pid}/comm r,
+  @{PROC}/@{pid}/fdinfo/@{int} r,
+  @{PROC}/@{pid}/loginuid r,
+  @{PROC}/@{pid}/sessionid r,
+  @{PROC}/@{pid}/stat r,
 
   include if exists <local/busctl>
 }

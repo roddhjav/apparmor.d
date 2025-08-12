@@ -1,0 +1,46 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/ptyxis-agent
+profile ptyxis-agent @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+  include <abstractions/dconf-write>
+
+  signal send set=hup peer=unconfined,
+
+  ptrace read,
+
+  @{exec_path} mr,
+
+  @{bin}/podman       Px,
+  @{bin}/systemd-run  Cx -> shell,
+
+  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+
+  @{PROC}/@{pid}/cmdline r,
+
+  /dev/ptmx rw,
+
+  profile shell {
+    include <abstractions/base>
+    include <abstractions/consoles>
+
+    signal send,
+
+    @{bin}/systemd-run mr,
+    @{bin}/@{shells}   Ux,
+
+    include if exists <local/ptyxis-agent_shell>
+  }
+
+  include if exists <local/ptyxis-agent>
+}
+
+# vim:syntax=apparmor

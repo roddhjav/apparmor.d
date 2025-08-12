@@ -1,0 +1,112 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{sbin}/aa-notify
+profile aa-notify @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/bus-session>
+  include <abstractions/consoles>
+  include <abstractions/dconf-write>
+  include <abstractions/desktop>
+  include <abstractions/nameservice-strict>
+  include <abstractions/python>
+
+  capability setgid,
+  capability setuid,
+  capability sys_ptrace,
+
+  ptrace read,
+
+  @{exec_path} mr,
+
+  @{bin}/gtk-launch  ix,
+  @{bin}/pkexec      Cx -> pkexec,
+  @{bin}/xdg-mime    Px,
+  @{open_path}       Cx -> open,
+
+  @{bin}/ r,
+
+  /usr/share/apparmor/** r,
+  /usr/share/terminfo/** r,
+
+  @{etc_ro}/inputrc r,
+  @{etc_ro}/inputrc.keys r,
+  /etc/apparmor.d/{,**} r,
+  /etc/apparmor/*.conf r,
+
+  /var/log/audit/audit.log r,
+
+  owner @{HOME}/.inputrc r,
+  owner @{HOME}/.terminfo/@{int}/dumb r,
+
+  owner @{tmp}/@{word8} rw,
+  owner @{tmp}/apparmor-bugreport-@{rand8}.txt rw,
+
+  @{PROC}/ r,
+  @{PROC}/@{pid}/stat r,
+  @{PROC}/@{pid}/cmdline r,
+
+  profile open {
+    include <abstractions/base>
+    include <abstractions/app/open>
+
+    @{editor_ui_path}  rPx -> aa-notify//editor,
+
+    include if exists <local/aa-notify_open>
+  }
+
+  profile editor {
+    include <abstractions/base>
+    include <abstractions/app/open>
+    include <abstractions/bus/org.freedesktop.FileManager1>
+    include <abstractions/common/gnome>
+    include <abstractions/enchant>
+
+    @{editor_ui_path} rix,
+    @{open_path}  rPx -> child-open-help,
+
+    /etc/apparmor.d/{,**} r,
+
+    owner @{user_share_dirs}/org.gnome.TextEditor/{,**} rw,
+
+    owner @{PROC}/@{pid}/mountinfo r,
+
+    deny @{user_share_dirs}/gvfs-metadata/* r,
+
+    include if exists <local/aa-notify_editor>
+  }
+
+  profile pkexec {
+    include <abstractions/base>
+    include <abstractions/app/pkexec>
+    include <abstractions/python>
+
+    ptrace read peer=aa-notify,
+
+    @{sbin}/apparmor_parser Px,
+    @{lib}/@{python_name}/site-packages/apparmor/update_profile.py ix,
+
+    /usr/share/apparmor/** r,
+    /usr/share/terminfo/** r,
+
+    @{etc_ro}/inputrc r,
+    @{etc_ro}/inputrc.keys r,
+
+    /etc/apparmor.d/ r,
+    /etc/apparmor.d/** rw,
+    /etc/apparmor/* r,
+
+    @{PROC}/@{pid}/mounts r,
+
+    include if exists <local/aa-notify_pkexec>
+  }
+
+  include if exists <local/aa-notify>
+}
+
+# vim:syntax=apparmor

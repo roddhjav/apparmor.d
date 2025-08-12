@@ -72,10 +72,10 @@ func newAbi(q Qualifier, rule rule) (Rule, error) {
 	}
 
 	path := rule.Get(0)
-	switch {
-	case path[0] == '"':
+	switch path[0] {
+	case '"':
 		magic = false
-	case path[0] == '<':
+	case '<':
 		magic = true
 	default:
 		return nil, fmt.Errorf("invalid path %s in rule: %s", path, rule)
@@ -198,10 +198,10 @@ func newInclude(rule rule) (Rule, error) {
 	}
 
 	path := r[0]
-	switch {
-	case path[0] == '"':
+	switch path[0] {
+	case '"':
 		magic = false
-	case path[0] == '<':
+	case '<':
 		magic = true
 	default:
 		return nil, fmt.Errorf("invalid path format: %v", path)

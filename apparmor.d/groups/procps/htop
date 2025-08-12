@@ -1,0 +1,140 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2019-2021 Mikhail Morfikov
+# Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/htop
+profile htop @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+
+  capability dac_read_search,
+  capability kill,
+  capability sys_nice,
+  capability sys_ptrace,
+
+  network netlink raw,
+
+  signal send,
+  signal receive set=hup peer=gnome-terminal-server,
+
+  ptrace read,
+
+  @{exec_path} mr,
+
+  @{bin}/lsof   rix,
+  @{bin}/strace rix,
+
+  /usr/share/terminfo/** r,
+
+  /etc/sensors.d/ r,
+  /etc/sensors3.conf r,
+
+  owner @{user_config_dirs}/ rw,
+  owner @{user_config_dirs}/htop/ rw,
+  owner @{user_config_dirs}/htop/* rw,
+
+  @{sys}/bus/dax/devices/ r,
+  @{sys}/bus/i2c/devices/ r,
+  @{sys}/bus/soc/devices/ r,
+  @{sys}/class/hwmon/ r,
+  @{sys}/class/i2c-adapter/ r,
+  @{sys}/class/power_supply/ r,
+  @{sys}/devices/@{pci}/i2c-*/{,**/}name r,
+  @{sys}/devices/**/hwmon@{int}/ r,
+  @{sys}/devices/**/hwmon@{int}/{name,temp*} r,
+  @{sys}/devices/**/hwmon@{int}/**/ r,
+  @{sys}/devices/**/hwmon@{int}/**/{name,temp*} r,
+  @{sys}/devices/**/hwmon/ r,
+  @{sys}/devices/**/hwmon/{name,temp*} r,
+  @{sys}/devices/**/hwmon/**/ r,
+  @{sys}/devices/**/hwmon/**/{name,temp*} r,
+  @{sys}/devices/**/power_supply/**/{uevent,type,online} r,
+  @{sys}/devices/*/name r,
+  @{sys}/devices/i2c-*/name r,
+  @{sys}/devices/platform/*/i2c-*/name r,
+  @{sys}/devices/system/cpu/cpu@{int}/** r,
+  @{sys}/devices/system/cpu/cpufreq/policy@{int}/cpuinfo_{cur,min,max}_freq r,
+  @{sys}/devices/system/cpu/cpufreq/policy@{int}/scaling_{cur,min,max}_freq r,
+  @{sys}/devices/system/node/node@{int}/cpumap r,
+  @{sys}/devices/system/node/node@{int}/hugepages/ r,
+  @{sys}/devices/system/node/node@{int}/hugepages/hugepages-*/nr_hugepages r,
+  @{sys}/devices/system/node/node@{int}/meminfo r,
+  @{sys}/devices/system/node/online r,
+  @{sys}/devices/virtual/block/zram@{int}/{disksize,mm_stat} r,
+  @{sys}/devices/virtual/dmi/id/ r,
+  @{sys}/devices/virtual/dmi/id/bios_date r,
+  @{sys}/devices/virtual/dmi/id/bios_vendor r,
+  @{sys}/devices/virtual/dmi/id/bios_version r,
+  @{sys}/devices/virtual/dmi/id/chassis_asset_tag r,
+  @{sys}/devices/virtual/dmi/id/chassis_type r,
+  @{sys}/devices/virtual/dmi/id/chassis_vendor r,
+  @{sys}/devices/virtual/dmi/id/chassis_version r,
+  @{sys}/devices/virtual/dmi/id/product_name r,
+  @{sys}/devices/virtual/dmi/id/product_version r,
+  @{sys}/devices/virtual/dmi/id/sys_vendor r,
+  @{sys}/devices/virtual/thermal/thermal_zone@{int}/temp r,
+  @{sys}/fs/cgroup/cgroup.controllers r,
+  @{sys}/fs/cgroup/cpuset.cpus.effective r,
+  @{sys}/fs/cgroup/cpuset.mems.effective r,
+  @{sys}/kernel/mm/hugepages/ r,
+  @{sys}/kernel/mm/hugepages/hugepages-*/nr_hugepages r,
+
+  @{PROC}/ r,
+  @{PROC}/diskstats r,
+  @{PROC}/loadavg r,
+  @{PROC}/pressure/cpu r,
+  @{PROC}/pressure/io r,
+  @{PROC}/pressure/memory r,
+  @{PROC}/sys/kernel/osrelease r,
+  @{PROC}/sys/kernel/pid_max r,
+  @{PROC}/sys/kernel/sched_autogroup_enabled r,
+  @{PROC}/tty/drivers r,
+  @{PROC}/uptime r,
+
+  @{PROC}/@{pids}/ r,
+  @{PROC}/@{pids}/attr/current r,
+  @{PROC}/@{pids}/autogroup rw,
+  @{PROC}/@{pids}/cgroup r,
+  @{PROC}/@{pids}/cmdline r,
+  @{PROC}/@{pids}/comm r,
+  @{PROC}/@{pids}/environ r,
+  @{PROC}/@{pids}/io r,
+  @{PROC}/@{pids}/mounts r,
+  @{PROC}/@{pids}/net/dev r,
+  @{PROC}/@{pids}/oom_{,score_}adj r,
+  @{PROC}/@{pids}/oom_score r,
+  @{PROC}/@{pids}/stat r,
+  @{PROC}/@{pids}/statm r,
+  @{PROC}/@{pids}/wchan r,
+
+  @{PROC}/@{pids}/task/ r,
+  @{PROC}/@{pids}/task/@{tid}/ r,
+  @{PROC}/@{pids}/task/@{tid}/attr/current r,
+  @{PROC}/@{pids}/task/@{tid}/cgroup r,
+  @{PROC}/@{pids}/task/@{tid}/cmdline r,
+  @{PROC}/@{pids}/task/@{tid}/comm r,
+  @{PROC}/@{pids}/task/@{tid}/environ r,
+  @{PROC}/@{pids}/task/@{tid}/io r,
+  @{PROC}/@{pids}/task/@{tid}/oom_{,score_}adj r,
+  @{PROC}/@{pids}/task/@{tid}/oom_score r,
+  @{PROC}/@{pids}/task/@{tid}/stat r,
+  @{PROC}/@{pids}/task/@{tid}/statm r,
+  @{PROC}/@{pids}/task/@{tid}/status r,
+  @{PROC}/@{pids}/task/@{tid}/wchan r,
+
+        @{PROC}/cmdline r,
+  owner @{PROC}/@{pid}/cpuset r,
+  owner @{PROC}/@{pid}/smaps_rollup r,
+
+  /dev/tty@{int} rw,
+
+  include if exists <local/htop>
+}
+
+# vim:syntax=apparmor

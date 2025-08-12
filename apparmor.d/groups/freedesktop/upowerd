@@ -13,6 +13,7 @@ profile upowerd @{exec_path} flags=(attach_disconnected) {
   include <abstractions/bus-system>
   include <abstractions/bus/org.bluez>
   include <abstractions/bus/org.freedesktop.login1>
+  include <abstractions/bus/org.freedesktop.PolicyKit1>
   include <abstractions/devices-usb>
 
   network netlink raw,
@@ -27,15 +28,15 @@ profile upowerd @{exec_path} flags=(attach_disconnected) {
   /var/lib/upower/ r,
   /var/lib/upower/history-*.dat{,.*} rw,
 
-  @{run}/udev/data/ r,
-  @{run}/udev/data/+acpi:* r,             # for acpi
-  @{run}/udev/data/+hid:* r,              # for HID-Compliant Keyboard
-  @{run}/udev/data/+i2c:* r,
+  @{run}/udev/data/ r,                    # Lists all udev data files
+  @{run}/udev/data/+acpi:* r,             # Exposes ACPI objects (power buttons, batteries, thermal)
+  @{run}/udev/data/+hid:* r,              # For Human Interface Device (mice, controllers, drawing tablets, scanners)
+  @{run}/udev/data/+i2c:* r,              # For Inter-Integrated Circuit, low-speed peripherals (sensors, EEPROMs, etc.)
   @{run}/udev/data/+input:input@{int} r,  # for mouse, keyboard, touchpad
   @{run}/udev/data/+pci:* r,              # Identifies all PCI devices (CPU, GPU, Network, Disks, USB, etc.)
-  @{run}/udev/data/+platform:* r,
+  @{run}/udev/data/+platform:* r,         # Identifies onboard devices (laptop/board model, power controllers, thermal sensors)
   @{run}/udev/data/+serio:* r,            # for serial mice
-  @{run}/udev/data/+power_supply* r,
+  @{run}/udev/data/+power_supply:* r,     # For power supply devices (batteries, AC adapters, USB chargers)
   @{run}/udev/data/+sound:card@{int} r,   # for sound card
   @{run}/udev/data/c10:@{int} r,          # for non-serial mice, misc features
   @{run}/udev/data/c13:@{int}  r,         # for /dev/input/*
@@ -56,6 +57,7 @@ profile upowerd @{exec_path} flags=(attach_disconnected) {
   @{sys}/devices/**/power_supply/**/* r,
   @{sys}/devices/**/uevent r,
   @{sys}/devices/virtual/dmi/id/product_name r,
+  @{sys}/devices/virtual/misc/uhid/*/input/input@{int}/name r,
 
   /dev/input/event* r,
 

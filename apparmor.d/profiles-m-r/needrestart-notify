@@ -1,0 +1,35 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{etc_ro}/needrestart/notify.d/*
+profile needrestart-notify @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+
+  capability dac_read_search,
+  capability sys_ptrace,
+
+  ptrace read,
+
+  @{exec_path} mr,
+
+  @{sh_path} r,
+  @{bin}/fold         ix,
+  @{bin}/gettext.sh    r,
+  @{bin}/mail         Px,
+  @{bin}/notify-send  Px,
+  @{bin}/sed          ix,
+
+  /etc/needrestart/notify.conf r,
+
+  @{PROC}/@{pid}/environ r,
+
+  include if exists <local/needrestart-notify>
+}
+
+# vim:syntax=apparmor

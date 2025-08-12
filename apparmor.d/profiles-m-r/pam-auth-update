@@ -7,61 +7,24 @@ abi <abi/4.0>,
 
 include <tunables/global>
 
-@{exec_path} = @{bin}/pam-auth-update
+@{exec_path} = @{sbin}/pam-auth-update
 profile pam-auth-update @{exec_path} flags=(complain) {
   include <abstractions/base>
-  include <abstractions/consoles>
-  include <abstractions/perl>
+  include <abstractions/common/debconf>
 
-  @{exec_path} mr,
-  @{bin}/perl r,
+  @{exec_path} mrix,
 
-  @{bin}/md5sum rix,
-  @{bin}/cp     rix,
+  @{bin}/cp      ix,
+  @{bin}/md5sum  ix,
+  @{bin}/stty    ix,
 
-  # Think what to do about this (#FIXME#)
-  /usr/share/debconf/frontend     rPx,
-  #/usr/share/debconf/frontend    rCx -> frontend,
-
-  /etc/pam.d/* rw,
-  /var/lib/pam/* rw,
   /usr/share/pam{,-configs}/{,*} r,
 
+  /etc/pam.d/* rw,
+  /etc/shadow r,
 
-  profile frontend flags=(complain) {
-    include <abstractions/base>
-    include <abstractions/consoles>
-    include <abstractions/perl>
-    include <abstractions/nameservice-strict>
-
-    /usr/share/debconf/frontend r,
-    @{bin}/perl r,
-
-    @{bin}/pam-auth-update rPx,
-
-    @{sh_path}              rix,
-    @{bin}/stty             rix,
-    @{bin}/locale           rix,
-
-    /etc/debconf.conf r,
-    owner /var/cache/debconf/{config,passwords,templates}.dat{,-new,-old} rwk,
-    /usr/share/debconf/templates/adequate.templates r,
-
-    # The following is needed when debconf uses GUI frontends.
-    include <abstractions/gtk>
-    include <abstractions/fonts>
-    include <abstractions/fontconfig-cache-read>
-    include <abstractions/freedesktop.org>
-    capability dac_read_search,
-    @{bin}/lsb_release rPx -> lsb_release,
-    @{bin}/hostname    rix,
-    owner @{PROC}/@{pid}/mounts r,
-    @{HOME}/.Xauthority r,
-
-    /etc/shadow r,
-
-    include if exists <local/pam-auth-update_frontend>
-  }
+  /var/lib/dpkg/info/libpam-runtime.templates r,
+  /var/lib/pam/* rw,
 
   include if exists <local/pam-auth-update>
 }

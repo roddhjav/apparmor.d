@@ -11,24 +11,47 @@
 
 # Distributions and other programs can add rules in the usr/systemd.d directory
 
-# TODO: rework this to get a controlled environment: (cf security model)
+# Overall architecture of the systemd profiles:
+# systemd                                # PID 1, entrypoint, requires "Early policy"
+# ├── systemd                            # To restart itself
+# ├── systemd-generators-*               # Systemd system and environment generators
+# └── sd                                 # Internal service starter and config handler, handles all services
+#     ├── Px or px,                      # Any service with profile
+#     ├── Px ->                          # Any service without profile defined in the unit file (see systemd/full/systemd)
+#     ├── &*                             # Stacked service as defined in the unit file (see systemd/full/systemd)
+#     ├── sd-mount                       # Handles all mounts from services
+#     ├── sd//systemctl                  # Internal system systemctl
+#     └── systemd-user                   # Profile for 'systemd --user'
+#         ├── systemd-user               # To restart itself
+#         ├── systemd-user-generators-*  # Systemd user and environment generators
+#         └── sdu                        # Handles all user services
+#             ├── Px or px,              # Any user service with profile
+#             ├── Px ->                  # Any user service without profile defined in the unit file (see systemd/full/systemd)
+#             ├── &*                     # Stacked user service as defined in the unit file (see systemd/full/systemd)
+#             └── sdu//systemctl         # Internal user systemctl
+
+# Advantages:
+# - Differentiate systemd (PID 1) and `system --user`
+# - Keep `systemd` and systemd-user as mininal as possible, and transition to less privileged profiles.
+# - Allow the executor profiles to handled stacked profiles.
+# - Most additions need to be done in the `sd`/`sdu` profile, not in `systemd`/`systemd-user`.
+# - Dedicated `sd-mount` profile for most mount from the unit services.
+
+
+# TODO: rework this to get a controlled environment:
 # - No global allow anymore: in high security environments, we must manage the list
 #   of program/service that can be started by systemd and ensure that they are all
 #   listed and confined. Programs not listed will not be able to start.
 # - Outside common systemd service, the list may have to be automatically
 #   generated at install time, in `/etc/apparmor.d/usr/systemd.d/exec`
-# - Stop disabling nnp flags in systemd dropin files.
-# - Each systemd services in `systemd-service` (when the service is more complex than foo.service -> Exec=/usr/bin/foo)
-#   need they own profile, profile name configured as a dropin unit file.
-# - When this is done: the fallback profile as root will not be needed.
 
 abi <abi/4.0>,
 
 include <tunables/global>
 
-profile systemd flags=(attach_disconnected,mediate_deleted) {
+@{exec_path} = @{lib}/systemd/systemd
+profile systemd flags=(attach_disconnected,mediate_deleted,complain) {
   include <abstractions/base>
-  include <abstractions/authentication>
   include <abstractions/bus-system>
   include <abstractions/disks-read>
   include <abstractions/nameservice-strict>
@@ -43,16 +66,13 @@ profile systemd flags=(attach_disconnected,mediate_deleted) {
   capability dac_read_search,
   capability fowner,
   capability fsetid,
-  capability mknod,
+  capability kill,
   capability net_admin,
+  capability net_bind_service,
   capability perfmon,
-  capability setfcap,
-  capability setgid,
   capability setpcap,
-  capability setuid,
   capability sys_admin,
-  capability sys_chroot,
-  capability sys_nice,
+  capability sys_boot,
   capability sys_ptrace,
   capability sys_resource,
   capability sys_tty_config,
@@ -62,194 +82,124 @@ profile systemd flags=(attach_disconnected,mediate_deleted) {
   network inet6 dgram,
   network inet6 stream,
   network netlink raw,
+  network vsock stream,
 
   mount fstype=autofs                                                 systemd-1 -> @{PROC}/sys/fs/binfmt_misc/,
-  mount fstype=autofs                                                 systemd-1 -> /efi/,
-  mount fstype=hugetlbfs options=(rw nosuid nodev)                    hugetlbfs -> /dev/hugepages/,
-  mount fstype=proc      options=(rw nosuid nodev noexec)                  proc -> @{run}/systemd/namespace-@{rand6}/,
-  mount fstype=sysfs     options=(rw nosuid nodev noexec)                 sysfs -> @{run}/systemd/namespace-@{rand6}/,
-  mount fstype=tmpfs                                                      tmpfs -> /dev/shm/,
+  mount fstype=autofs                                                 systemd-1 -> @{efi}/,
   mount fstype=tmpfs                                                      tmpfs -> /tmp/,
-  mount fstype=tmpfs     options=(rw nosuid nodev noexec strictatime)     tmpfs -> @{run}/systemd/mount-rootfs/@{run}/credentials/,
-  mount fstype=tmpfs     options=(rw nosuid nodev noexec)                 tmpfs -> /dev/shm/,
-  mount fstype=tmpfs     options=(rw nosuid noexec strictatime)           tmpfs -> @{run}/systemd/namespace-@{rand6}/dev/,
 
-  mount options=(rw bind)                                           /dev/** -> /tmp/namespace-dev-@{rand6}/**,
-  mount options=(rw bind)                                           /dev/** -> @{run}/systemd/namespace-@{rand6}/dev/**,
-  mount options=(rw bind)                       @{run}/systemd/propagate/*/ -> @{run}/systemd/mount-rootfs/@{run}/systemd/incoming/,
-  mount options=(rw move)                                                   -> @{sys}/fs/fuse/connections/,
-  mount options=(rw move)                                                   -> @{sys}/kernel/config/,
-  mount options=(rw move)                                                   -> @{sys}/kernel/debug/,
-  mount options=(rw move)                                                   -> @{sys}/kernel/tracing/,
-  mount options=(rw move)                                                   -> /dev/hugepages/,
-  mount options=(rw move)                                                   -> /dev/mqueue/,
-  mount options=(rw move)                                                   -> /efi/,
-  mount options=(rw move)                                                   -> /tmp/,
-  mount options=(rw move)           @{run}/systemd/namespace-@{rand6}/{,**} -> @{run}/systemd/mount-rootfs/{,**},
-  mount options=(rw rbind)                                                  -> @{run}/systemd/mount-rootfs/{,**},
-  mount options=(rw rbind)                                                  -> @{run}/systemd/unit-root/{,**},
-  mount options=(rw rshared)                                                -> /,
   mount options=(rw rslave)                                                 -> /,
-  mount options=(rw rslave)                                                 -> /dev/,
-  mount options=(rw slave)                                                  -> @{run}/systemd/incoming/,
 
   remount                                        @{HOME}/{,**},
   remount                                        @{HOMEDIRS}/,
   remount                                        @{MOUNTDIRS}/,
   remount                                        @{MOUNTS}/{,**},
-  remount                                        @{run}/systemd/mount-rootfs/{,**},
-  remount                                        @{run}/systemd/unit-root/{,**},
-  remount                                        /,
   remount                                        /snap/{,**},
-  remount options=(ro noexec noatime bind)       /var/snap/{,**},
-  remount options=(ro nosuid bind)               /dev/,
-  remount options=(ro nosuid nodev bind)         /dev/hugepages/,
-  remount options=(ro nosuid nodev bind)         /var/,
-  remount options=(ro nosuid nodev noexec bind)  /boot/,
-  remount options=(ro nosuid nodev noexec bind)  /dev/mqueue/,
-  remount options=(ro nosuid nodev noexec bind)  /efi/,
-  remount options=(ro nosuid noexec bind)        /dev/pts/,
+  remount options=(ro bind nodev noexec nosuid)  /dev/mqueue/,
+  remount options=(ro bind nodev nosuid)         /dev/hugepages/,
+  remount options=(ro bind noexec nosuid)        /dev/pts/,
+  remount options=(ro bind nosuid)               /dev/,
+  remount options=(ro bind)                      @{efi}/,
+  remount options=(ro bind)                      /,
 
-  umount /,
-  umount /dev/shm/,
   umount @{PROC}/sys/fs/binfmt_misc/,
-  umount @{run}/systemd/mount-rootfs/{,**},
-  umount @{run}/systemd/namespace-@{rand6}/{,**},
-  umount @{run}/systemd/unit-root/{,**},
+  umount @{run}/credentials/*/,
 
-  pivot_root oldroot=@{run}/systemd/mount-rootfs/ @{run}/systemd/mount-rootfs/,
-  pivot_root oldroot=@{run}/systemd/unit-root/    @{run}/systemd/unit-root/,
+  mqueue (read getattr) type=posix /,
 
-  change_profile,
-
-  signal (receive) set=(rtmin+23) peer=plymouthd,
-  signal (receive) set=(term, hup, cont),
-  signal (send),
+  signal send,
 
   ptrace (read, readby),
 
-  unix (send) type=dgram,
-
-  unix (receive) type=dgram addr=none peer=(label=systemd-timesyncd, addr=none),
-  unix (send, receive, connect) type=stream addr=none peer=(label=plymouthd, addr=@/org/freedesktop/plymouthd),
+  unix type=dgram,
+  unix type=stream,
 
   #aa:dbus own bus=system name=org.freedesktop.systemd1
 
-  dbus send bus=system path=/org/freedesktop/DBus
-       interface=org.freedesktop.DBus
-       member=GetConnectionUnixUser
-       peer=(name=org.freedesktop.DBus, label="@{p_dbus_system}"),
+  @{exec_path} mrix,
+  @{sh_path} mr,
 
-  @{bin}/**                         Px,
-  @{lib}/**                         Px,
-  /etc/cron.*/*                     Px,
-  /etc/init.d/*                     Px,
-  /usr/share/*/**                   Px,
+  # Systemd internal service starter and config handler (sandboxing, namespacing, cgroup, etc.)
+  @{lib}/systemd/systemd-executor                 mPx -> sd,
 
-  # Systemd internal service started and config handler (sandboxing, namespacing, cgroup, etc.)
-  @{lib}/systemd/systemd-executor   ix,
+  # Systemd system generators. Profiles must exist
+  @{lib}/netplan/generate                         mPx,
+  @{lib}/systemd/system-environment-generators/*  mPx,
+  @{lib}/systemd/system-generators/*              mPx,
 
-  # Systemd user: systemd --user
-  @{lib}/systemd/systemd            px -> systemd-user,
-
-  # Unit services using systemctl
-  @{bin}/systemctl                  Cx -> systemctl,
-
-  # Unit services
-  @{bin}/mount                      ix,
-
-  # Shell based systemd unit services
-  @{bin}/ldconfig                   Px -> systemd-service,
-  @{bin}/mandb                      Px -> systemd-service,
-  @{bin}/savelog                    Px -> systemd-service,
-  @{coreutils_path}                 Px -> systemd-service,
-  @{sh_path}                        Px -> systemd-service,
-
-  # Systemd profiles that need be stacked
-  #aa:stack systemd-networkd systemd-oomd systemd-resolved systemd-timesyncd
-  @{lib}/systemd/systemd-networkd   Px -> systemd//&systemd-networkd,
-  @{lib}/systemd/systemd-oomd       Px -> systemd//&systemd-oomd,
-  @{lib}/systemd/systemd-resolved   Px -> systemd//&systemd-resolved,
-  @{lib}/systemd/systemd-timesyncd  Px -> systemd//&systemd-timesyncd,
-
-  @{lib}/ r,
-  / r,
-  /*/ r,
-  /boot/efi/ r,
-  /snap/*/@{int}/ r,
-  /var/cache/*/ r,
-  /var/lib/*/ r,
-  /var/tmp/ r,
-
+  @{etc_ro}/environment r,
+  @{etc_ro}/environment.d/{,**} r,
+  /etc/acpi/events/{,**} r,
   /etc/binfmt.d/{,**} r,
   /etc/conf.d/{,**} r,
-  /etc/credstore.encrypted/{,**} r,
-  /etc/credstore/{,**} r,
-  /etc/environment r,
-  /etc/environment.d/{,**} r,
+  /etc/default/{,**} r,
   /etc/machine-id r,
   /etc/modules-load.d/{,**} r,
+  /etc/networkd-dispatcher/{,**} r,
   /etc/systemd/{,**} r,
+  /etc/systemd/system/** w,
   /etc/udev/hwdb.d/{,**} r,
 
-        /var/lib/systemd/{,**} rw,
+  #aa:only pacman
+  # It is unclear why this is needed here and not in sd
+  /etc/pacman.d/gnupg/S.dirmngr w,
+  /etc/pacman.d/gnupg/S.gpg-agent w,
+  /etc/pacman.d/gnupg/S.gpg-agent.browser w,
+  /etc/pacman.d/gnupg/S.gpg-agent.extra w,
+  /etc/pacman.d/gnupg/S.gpg-agent.ssh w,
+  /etc/pacman.d/gnupg/S.keyboxd w,
+
+  @{efi}/ r,
+  /snap/*/@{int}/ r,
+
+        /tmp/ r,
+        /var/tmp/ r,
+  owner /tmp/systemd-private-*/{,**} rw,
   owner /var/tmp/systemd-private-*/{,**} rw,
 
-  /tmp/namespace-dev-@{rand6}/{,**} rw,
-  /tmp/systemd-private-*/{,**} rw,
+  @{att}/@{run}/systemd/journal/dev-log r,
+  @{att}/@{run}/systemd/journal/socket r,
+  @{att}/@{run}/systemd/notify r,
 
   @{run}/ rw,
+  @{run}/* rw,
   @{run}/*/ rw,
   @{run}/*/* rw,
-  @{run}/auditd.pid r,
   @{run}/credentials/{,**} rw,
-  @{run}/initctl rw,
   @{run}/systemd/{,**} rw,
 
-  @{run}/udev/data/+bluetooth:* r,
-  @{run}/udev/data/+backlight:* r,
-  @{run}/udev/data/+leds:*backlight* r,
-
-  @{run}/udev/data/+module:configfs r,
-  @{run}/udev/data/+module:fuse r,
+  @{run}/udev/data/+module:* r,           # Identifies kernel modules loaded by udev
   @{run}/udev/data/c4:@{int} r,           # For TTY devices
+  @{run}/udev/data/c5:@{int}   r,         # for /dev/tty, /dev/console, /dev/ptmx
   @{run}/udev/data/c10:@{int}   r,        # For non-serial mice, misc features
   @{run}/udev/data/c116:@{int} r,         # For ALSA
   @{run}/udev/data/c@{dynamic}:@{int} r,  # For dynamic assignment range 234 to 254, 384 to 511
-  @{run}/udev/data/n@{int} r,
+  @{run}/udev/data/n@{int} r,             # For network interfaces
   @{run}/udev/tags/systemd/ r,
 
+  @{sys}/**/uevent r,
   @{sys}/bus/ r,
   @{sys}/class/ r,
   @{sys}/class/power_supply/ r,
-  @{sys}/class/sound/ r,
-  @{sys}/devices/@{pci}/** r,
-  @{sys}/devices/**/net/** r,
-  @{sys}/devices/**/uevent r,
-  @{sys}/devices/virtual/dmi/id/{sys,board,bios}_vendor r,
+  @{sys}/devices/virtual/dmi/id/bios_vendor r,
+  @{sys}/devices/virtual/dmi/id/board_vendor r,
   @{sys}/devices/virtual/dmi/id/product_name r,
   @{sys}/devices/virtual/dmi/id/product_version r,
+  @{sys}/devices/virtual/dmi/id/sys_vendor r,
   @{sys}/devices/virtual/tty/console/active r,
+  @{sys}/firmware/efi/efivars/LoaderSystemToken-@{uuid} rw,
   @{sys}/fs/cgroup/{,**} rw,
   @{sys}/fs/fuse/connections/ r,
   @{sys}/fs/pstore/ r,
   @{sys}/kernel/**/ r,
-  @{sys}/module/**/uevent r,
   @{sys}/module/apparmor/parameters/enabled r,
+  @{sys}/module/vt/parameters/default_utf8 r,
 
         @{PROC}/@{pid}/cgroup r,
         @{PROC}/@{pid}/cmdline r,
         @{PROC}/@{pid}/comm r,
-        @{PROC}/@{pid}/coredump_filter r,
-        @{PROC}/@{pid}/environ r,
         @{PROC}/@{pid}/fd/ r,
-        @{PROC}/@{pid}/fdinfo/@{int} r,
-        @{PROC}/@{pid}/gid_map rw,
-        @{PROC}/@{pid}/loginuid rw,
-        @{PROC}/@{pid}/mountinfo r,
-        @{PROC}/@{pid}/setgroups rw,
         @{PROC}/@{pid}/stat r,
-        @{PROC}/@{pid}/uid_map rw,
         @{PROC}/cmdline r,
         @{PROC}/devices r,
         @{PROC}/pressure/* r,
@@ -257,29 +207,32 @@ profile systemd flags=(attach_disconnected,mediate_deleted) {
         @{PROC}/sys/fs/binfmt_misc/ r,
         @{PROC}/sys/fs/nr_open r,
         @{PROC}/sys/kernel/* r,
-        @{PROC}/sysvipc/{shm,sem,msg} r,
-  owner @{PROC}/@{pid}/limits r,
-  owner @{PROC}/@{pid}/oom_score_adj rw,
+        @{PROC}/sys/kernel/random/boot_id r,
+        @{PROC}/sysvipc/msg r,
+        @{PROC}/sysvipc/sem r,
+        @{PROC}/sysvipc/shm r,
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/1/coredump_filter r,
+  owner @{PROC}/1/fdinfo/@{int} r,
+  owner @{PROC}/1/gid_map r,
+  owner @{PROC}/1/oom_score_adj rw,
+  owner @{PROC}/1/setgroups r,
+  owner @{PROC}/1/uid_map r,
 
         /dev/autofs r,
+        /dev/dri/card@{int} rw,
+        /dev/initctl w,
+        /dev/input/ r,
         /dev/kmsg w,
+        /dev/tty rw,
+        /dev/tty@{int} rw,
   owner /dev/console rwk,
-  owner /dev/dri/card@{int} rw,
   owner /dev/hugepages/ rw,
-  owner /dev/initctl rw,
   owner /dev/input/event@{int} rw,
   owner /dev/mqueue/ rw,
   owner /dev/rfkill rw,
-  owner /dev/shm/ rw,
+  owner /dev/shm/ r,
   owner /dev/ttyS@{int} rwk,
-
-  profile systemctl {
-    include <abstractions/base>
-    include <abstractions/app/systemctl>
-
-    include if exists <usr/systemd_systemctl.d>
-    include if exists <local/systemd_systemctl>
-  }
 
   include if exists <usr/systemd.d>
   include if exists <local/systemd>

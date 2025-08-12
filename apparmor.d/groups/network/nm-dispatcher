@@ -26,7 +26,12 @@ profile nm-dispatcher @{exec_path} flags=(attach_disconnected) {
   dbus send bus=system path=/org/freedesktop
        interface=org.freedesktop.DBus.ObjectManager
        member=GetManagedObjects
-       peer=(name=:*, label=NetworkManager),
+       peer=(name=@{busname}, label=NetworkManager),
+
+  dbus send bus=system path=/org/freedesktop/NetworkManager/Settings/@{int}
+       interface=org.freedesktop.NetworkManager.Settings.Connection
+       member=GetSettings
+       peer=(name=@{busname}, label=NetworkManager),
 
   @{exec_path} mr,
 
@@ -36,22 +41,22 @@ profile nm-dispatcher @{exec_path} flags=(attach_disconnected) {
   @{bin}/chown              rix,
   @{bin}/chronyc           rPUx,
   @{bin}/date               rix,
-  @{bin}/gawk               rix,
-  @{bin}/grep               rix,
+  @{bin}/{m,g,}awk          rix,
+  @{bin}/{,e}grep           rix,
   @{bin}/id                 rix,
-  @{bin}/invoke-rc.d        rCx -> invoke-rc,
+  @{sbin}/invoke-rc.d       rCx -> invoke-rc,
   @{bin}/logger             rix,
   @{bin}/mkdir              rix,
   @{bin}/mktemp             rix,
   @{bin}/netconfig         rPUx,
   @{bin}/nmcli              rix,
-  @{bin}/python3.@{int}     rix,
+  @{python_path}            rix,
   @{bin}/readlink           rix,
   @{bin}/rm                 rix,
   @{bin}/run-parts          rCx -> run-parts,
   @{bin}/sed                rix,
   @{bin}/systemctl          rCx -> systemctl,
-  @{bin}/systemd-cat        rPx,
+  @{bin}/systemd-cat        rix,
   @{bin}/tr                 rix,
   /usr/share/tlp/tlp-readconfs  rPUx,
 
@@ -101,7 +106,7 @@ profile nm-dispatcher @{exec_path} flags=(attach_disconnected) {
   profile invoke-rc {
     include <abstractions/base>
 
-    @{bin}/invoke-rc.d rm,
+    @{sbin}/invoke-rc.d rm,
     @{sh_path}       rix,
     @{bin}/basename  rix,
     @{bin}/ls        rix,

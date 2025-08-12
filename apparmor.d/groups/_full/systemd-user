@@ -11,14 +11,12 @@
 
 # Distributions and other programs can add rules in the usr/systemd-user.d directory
 
-# TODO: rework this to get a controlled environment. cf comments in systemd profile.
-
 abi <abi/4.0>,
 
 include <tunables/global>
 
 @{exec_path} = @{lib}/systemd/systemd
-profile systemd-user flags=(attach_disconnected,mediate_deleted) {
+profile systemd-user flags=(attach_disconnected,mediate_deleted,complain) {
   include <abstractions/base>
   include <abstractions/bus-session>
   include <abstractions/bus-system>
@@ -27,91 +25,61 @@ profile systemd-user flags=(attach_disconnected,mediate_deleted) {
 
   network netlink raw,
 
-  signal send set=(term, cont, kill),
-  signal receive set=hup peer=@{p_systemd},
+  signal send,
 
-  ptrace read peer=@{p_systemd},
+  ptrace read,
+
+  unix type=dgram peer=(label=@{p_sdu}),
 
   unix bind type=stream addr=@@{udbus}/bus/systemd/bus-system,
   unix bind type=stream addr=@@{udbus}/bus/systemd/bus-api-user,
 
   #aa:dbus own bus=session name=org.freedesktop.systemd1
 
-  @{exec_path} mr,
+  @{exec_path} mrix,
 
-  @{bin}/**                         Px,
-  @{lib}/**                         Px,
-  /etc/cron.*/*                     Px,
-  /opt/*/**                         Px,
-  /usr/share/*/**                   Px,
+  # Systemd internal service starter and config handler (sandboxing, namespacing, cgroup, etc.)
+  @{lib}/systemd/systemd-executor                 mPx -> sdu,
 
-  # Systemd internal service started and config handler (sandboxing, namespacing, cgroup, etc.)
-  @{lib}/systemd/systemd-executor   ix,
+  # Systemd user generators. Profiles must exist
+  @{lib}/systemd/user-environment-generators/*     Px,
+  @{lib}/systemd/user-generators/*                 Px,
 
-  # Unit services using systemctl
-  @{bin}/systemctl                  Cx -> systemctl,
-
-  # Shell based ystemd unit services
-  @{coreutils_path}                 Px -> systemd-user-service,
-  @{sh_path}                        Px -> systemd-user-service,
-
-  # Dbus needs to be started without environment scrubbing
-  @{bin}/dbus-broker                         px -> dbus-session,
-  @{bin}/dbus-broker-launch                  px -> dbus-session,
-  @{bin}/dbus-daemon                         px -> dbus-session,
-  @{lib}/dbus-1.0/dbus-daemon-launch-helper  px -> dbus-session,
-
-  # Audio profiles need to be stacked
-  #aa:stack pipewire pipewire-media-session pipewire-pulse pulseaudio wireplumber
-  @{bin}/pipewire                   Px -> systemd-user//&pipewire,
-  @{bin}/pipewire-media-session     Px -> systemd-user//&pipewire-media-session,
-  @{bin}/pipewire-pulse             Px -> systemd-user//&pipewire-pulse,
-  @{bin}/pulseaudio                 Px -> systemd-user//&pulseaudio,
-  @{bin}/wireplumber                Px -> systemd-user//&wireplumber,
-
-  /usr/ r,
-  /usr/share/defaults/**.conf r,
-
+  @{etc_ro}/environment r,
   /etc/systemd/user.conf r,
   /etc/systemd/user.conf.d/{,**} r,
   /etc/systemd/user/{,**} r,
 
-  / r,
-
-  owner @{HOME}/.local/ w,
-
   owner @{user_config_dirs}/systemd/user/{,**} rw,
 
-        @{run}/systemd/users/@{uid} r,
   owner @{run}/user/@{uid}/ rw,
   owner @{run}/user/@{uid}/** rwkl,
 
   @{run}/mount/utab r,
   @{run}/systemd/notify w,
+  @{run}/systemd/oom/io.systemd.ManagedOOM rw,
 
-  @{run}/udev/data/+backlight:* r,
-  @{run}/udev/data/+leds:*backlight* r,
-  @{run}/udev/data/+module:configfs r,
-  @{run}/udev/data/+module:fuse r,
-  @{run}/udev/data/b254:@{int} r,         # for /dev/zram*
+  @{run}/udev/data/+module:* r,           # Identifies kernel modules loaded by udev
   @{run}/udev/data/c4:@{int} r,           # For TTY devices
   @{run}/udev/data/c5:@{int}   r,         # for /dev/tty, /dev/console, /dev/ptmx
   @{run}/udev/data/c10:@{int}   r,        # For non-serial mice, misc features
+  @{run}/udev/data/c116:@{int} r,         # for ALSA
   @{run}/udev/data/c@{dynamic}:@{int} r,  # For dynamic assignment range 234 to 254, 384 to 511
-  @{run}/udev/data/n@{int} r,
+  @{run}/udev/data/n@{int} r,             # For network interfaces
   @{run}/udev/tags/systemd/ r,
 
   @{sys}/devices/virtual/dmi/id/bios_vendor r,
+  @{sys}/devices/virtual/dmi/id/board_vendor r,
+  @{sys}/devices/virtual/dmi/id/product_name r,
+  @{sys}/devices/virtual/dmi/id/sys_vendor r,
 
         @{sys}/devices/**/uevent r,
         @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/{,**} r,
-        @{sys}/module/apparmor/parameters/enabled r,
   owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/{,**} rw,
 
-        @{PROC}/@{pid}/cmdline r,
-        @{PROC}/@{pids}/cgroup r,
-        @{PROC}/@{pids}/comm r,
-        @{PROC}/@{pids}/stat r,
+        @{PROC}/@{pid}/cgroup r,
+        @{PROC}/@{pid}/comm r,
+        @{PROC}/@{pid}/stat r,
         @{PROC}/cmdline r,
         @{PROC}/pressure/* r,
         @{PROC}/swaps r,
@@ -120,27 +88,25 @@ profile systemd-user flags=(attach_disconnected,mediate_deleted) {
         @{PROC}/sys/kernel/overflowgid r,
         @{PROC}/sys/kernel/overflowuid r,
         @{PROC}/sys/kernel/pid_max r,
+        @{PROC}/sys/kernel/random/boot_id r,
         @{PROC}/sys/kernel/threads-max r,
-  owner @{PROC}/@{pid}/coredump_filter r,
+  owner @{PROC}/@{pid}/cmdline r,
   owner @{PROC}/@{pid}/fdinfo/@{int} r,
   owner @{PROC}/@{pid}/gid_map r,
   owner @{PROC}/@{pid}/mountinfo r,
   owner @{PROC}/@{pid}/oom_score_adj rw,
-  owner @{PROC}/@{pid}/stat r,
-  owner @{PROC}/@{pid}/task/@{tid}/comm rw,
   owner @{PROC}/@{pid}/uid_map r,
   owner @{PROC}/@{pids}/fd/ r,
-  owner @{PROC}/@{pids}/oom_score_adj rw,
 
-  /dev/tty rw,
-
-  profile systemctl {
-    include <abstractions/base>
-    include <abstractions/app/systemctl>
-
-    include if exists <usr/systemd-user_systemctl.d>
-    include if exists <local/systemd-user_systemctl>
-  }
+  deny capability bpf,
+  deny capability dac_override,
+  deny capability dac_read_search,
+  deny capability mknod,
+  deny capability net_admin,
+  deny capability perfmon,
+  deny capability sys_admin,
+  deny capability sys_boot,
+  deny capability sys_resource,
 
   include if exists <usr/systemd-user.d>
   include if exists <local/systemd-user>

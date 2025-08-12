@@ -1,0 +1,42 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2018-2021 Mikhail Morfikov
+# Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/usbguard-applet-qt
+profile usbguard-applet-qt @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/desktop>
+  include <abstractions/dri-enumerate>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/mesa>
+  include <abstractions/nameservice-strict>
+  include <abstractions/qt5-compose-cache-write>
+
+  # Needed?
+  ptrace (read),
+
+  @{exec_path} mr,
+
+  /var/lib/dbus/machine-id r,
+  /etc/machine-id r,
+
+  owner @{user_config_dirs}/USBGuard/ rw,
+  owner @{user_config_dirs}/USBGuard/* rwkl -> @{user_config_dirs}/USBGuard/#@{int},
+
+  /dev/shm/#@{int} rw,
+  /dev/shm/qb-usbguard-{request,response,event}-@{int}-@{int}-@{int}-{header,data} rw,
+  /dev/shm/qb-@{int}-@{int}-@{int}-*/qb-{request,response,event}-usbguard-{header,data} rw,
+
+  owner @{run}/user/@{uid}/sni-qt_usbguard-applet-qt_@{int}-[a-zA-Z0-9]*/{,**} rw,
+
+  owner @{PROC}/@{pid}/cmdline r,
+
+  include if exists <local/usbguard-applet-qt>
+}
+
+# vim:syntax=apparmor

@@ -12,8 +12,9 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{exec_path} = @{lib}/protonmail/bridge/bridge
-profile protonmail-bridge-core @{exec_path} {
+profile protonmail-bridge-core @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/consoles>
   include <abstractions/nameservice-strict>
   include <abstractions/ssl_certs>
 
@@ -25,7 +26,9 @@ profile protonmail-bridge-core @{exec_path} {
 
   @{exec_path} mr,
 
-  @{bin}/pass rCx -> pass,
+  @{bin}/pass Cx -> pass,
+
+  @{lib}/protonmail/bridge/bridge-gui ix,
 
   /etc/lsb-release r,
   /etc/machine-id r,
@@ -40,14 +43,13 @@ profile protonmail-bridge-core @{exec_path} {
   owner "@{user_config_dirs}/autostart/Proton Mail Bridge.desktop" rw,
 
   owner @{tmp}/bridge@{int} rw,
-  owner @{tmp}/etilqs_@{hex16} rw,
-  owner /var/tmp/etilqs_@{hex16} rw,
+  owner @{tmp}/etilqs_@{sqlhex} rw,
+  owner /var/tmp/etilqs_@{sqlhex} rw,
 
   @{PROC}/ r,
   @{PROC}/1/cgroup r,
   @{PROC}/sys/net/core/somaxconn r,
 
-  deny @{bin}/pass x,
   deny owner @{user_passwordstore_dirs}/** r,
 
   profile pass {
@@ -70,10 +72,11 @@ profile protonmail-bridge-core @{exec_path} {
     @{bin}/tail        rix,
     @{bin}/tree        rix,
     @{bin}/tty         rix,
-    @{bin}/which       rix,
+    @{bin}/which{,.debianutils}  rix,
 
          owner @{user_passwordstore_dirs}/ r,
          owner @{user_passwordstore_dirs}/.gpg-id r,
+         owner @{user_passwordstore_dirs}/docker-credential-helpers/{,**} rw,
          owner @{user_passwordstore_dirs}/protonmail-credentials/{,**} rw,
     deny owner @{user_passwordstore_dirs}/**/ r,
 

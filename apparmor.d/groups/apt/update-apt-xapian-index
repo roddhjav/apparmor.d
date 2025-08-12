@@ -10,16 +10,20 @@ include <tunables/global>
 @{exec_path} = @{bin}/update-apt-xapian-index
 profile update-apt-xapian-index @{exec_path} {
   include <abstractions/base>
+  include <abstractions/consoles>
   include <abstractions/common/apt>
   include <abstractions/python>
 
   @{exec_path} r,
-  @{bin}/python3.@{int} r,
+  @{python_path} r,
 
   @{bin}/ r,
-  @{bin}/dpkg rPx -> child-dpkg,
+  @{bin}/dpkg  Px -> child-dpkg,
 
   /usr/share/apt-xapian-index/{,**} r,
+
+  /var/lib/dbus/machine-id r,
+  /etc/machine-id r,
 
   /var/cache/apt-xapian-index/ rw,
   /var/cache/apt-xapian-index/** rwk,
@@ -30,15 +34,9 @@ profile update-apt-xapian-index @{exec_path} {
   /var/cache/apt/ r,
   /var/cache/apt/** rwk,
 
-  owner @{PROC}/@{pid}/fd/ r,
-
   /var/lib/debtags/package-tags r,
 
-  /var/lib/dbus/machine-id r,
-  /etc/machine-id r,
-
-  # file_inherit
-  owner /dev/tty@{int} rw,
+  owner @{PROC}/@{pid}/fd/ r,
 
   include if exists <local/update-apt-xapian-index>
 }

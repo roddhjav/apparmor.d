@@ -147,8 +147,8 @@ func (r *Network) Merge(other Rule) bool {
 
 func (r *Network) Lengths() []int {
 	return []int{
-		r.Qualifier.getLenAudit(),
-		r.Qualifier.getLenAccess(),
+		r.getLenAudit(),
+		r.getLenAccess(),
 		length("", r.Domain),
 		length("", r.Type),
 		length("", r.Protocol),

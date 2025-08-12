@@ -21,34 +21,32 @@ profile dockerd @{exec_path} flags=(attach_disconnected) {
   capability kill,
   capability mknod,
   capability net_admin,
+  capability net_bind_service,
+  capability net_raw,
   capability setfcap,
   capability sys_admin,
   capability sys_chroot,
   capability sys_ptrace,
 
   network inet dgram,
+  network inet raw,
   network inet stream,
   network inet6 dgram,
   network inet6 stream,
   network netlink raw,
+  network packet dgram,
 
   mount                        /tmp/containerd-mount@{int}/,
-  mount                        /var/lib/docker/buildkit/**/,
-  mount                        /var/lib/docker/overlay2/**/,
-  mount                        /var/lib/docker/tmp/buildkit-mount@{int}/,
-  mount fstype=overlay                              overlay -> /var/lib/docker/rootfs/overlayfs/@{hex64}/,
-  mount options=(rw bind)                                   -> /run/docker/netns/*,
-  mount options=(rw rbind)                                  -> /var/lib/docker/tmp/docker-builder@{int}/,
-  mount options=(rw rbind)     /var/lib/docker/volumes/**/- -> /var/lib/docker/rootfs/overlayfs/**/,
+  mount                        /var/lib/docker/**/,
+  mount options=(rw bind)                                   -> @{run}/docker/netns/*,
   mount options=(rw rprivate)                               -> /.pivot_root@{int}/,
-  mount options=(rw rprivate)                               -> /var/lib/docker/rootfs/overlayfs/@{hex64}/var/lib/buildkit/,
   mount options=(rw rslave)                                 -> /,
 
   remount /tmp/containerd-mount@{int10}/,
   remount /var/lib/docker/**/,
 
   umount /.pivot_root@{int}/,
-  umount /run/docker/netns/*,
+  umount @{run}/docker/netns/*,
   umount /tmp/containerd-mount@{int}/,
   umount /var/lib/docker/**/,
 
@@ -66,34 +64,47 @@ profile dockerd @{exec_path} flags=(attach_disconnected) {
 
   @{exec_path} mrix,
 
-  @{bin}/apparmor_parser         rPx,
+  @{sbin}/apparmor_parser        rPx,
   @{bin}/containerd              rPx,
-  @{bin}/docker-init             rix,
+  @{bin}/docker-init             rCx -> init,
+  @{lib}/docker/docker-init      rCx -> init,
   @{bin}/docker-proxy            rPx,
-  @{bin}/kmod                    rPx,
+  @{bin}/git                     rCx -> git,
+  @{bin}/kmod                    rCx -> kmod,
   @{bin}/ps                      rPx,
-  @{bin}/runc                    rUx,
+  @{sbin}/runc                   rUx,
+  @{bin}/runc                    rUx, #aa:lint ignore=sbin
   @{bin}/unpigz                  rix,
-  @{bin}/xtables-nft-multi       rix,
+  @{sbin}/xtables-nft-multi      rCx -> nft,
+  @{sbin}/xtables-legacy-multi   rCx -> nft,
 
   # Docker needs full access of the containers it manages.
   # TODO: should be in a sub profile started with pivot_root, not supported yet.
-  /{,**} rwl,
+  /{,**} rwl, #aa:only apt
+
+  @{att}/@{lib}/containerd/** rw,
+  @{att}/var/lib/docker/{,**} rwk,
 
   /etc/docker/{,**} r,
 
   @{att}/ r,
 
-  owner @{att}/@{lib}/containerd/** rw,
   owner @{lib}/docker/overlay2/*/work/{,**} rw,
   owner /var/lib/containerd/** rw,
   owner /var/lib/docker/{,**} rwk,
   owner /var/lib/docker/tmp/qemu-check@{int}/check rix,
 
+  /tmp/build/ w,
+  /tmp/containerd-mount@{int}/{,**} rw,
+
+  @{run}/systemd/notify rw,
+
+        @{run}/containerd/containerd.sock rw,
+  owner @{run}/docker.pid rw,
   owner @{run}/docker/ rw,
   owner @{run}/docker/** rwlk,
-  owner @{run}/docker.pid rw,
 
+  @{sys}/devices/virtual/net/** r,
   @{sys}/fs/cgroup/cgroup.controllers r,
   @{sys}/fs/cgroup/cpuset.cpus.effective r,
   @{sys}/fs/cgroup/cpuset.mems.effective r,
@@ -103,6 +114,9 @@ profile dockerd @{exec_path} flags=(attach_disconnected) {
         @{PROC}/1/cgroup r,
         @{PROC}/1/environ r,
         @{PROC}/cmdline r,
+        @{PROC}/pressure/cpu r,
+        @{PROC}/pressure/io r,
+        @{PROC}/pressure/memory r,
         @{PROC}/sys/kernel/keys/root_maxkeys r,
         @{PROC}/sys/kernel/osrelease r,
         @{PROC}/sys/kernel/threads-max r,
@@ -116,12 +130,64 @@ profile dockerd @{exec_path} flags=(attach_disconnected) {
   owner @{PROC}/@{pid}/cgroup r,
   owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/mountinfo r,
-  owner @{PROC}/@{pid}/net/ip_tables_names r,
   owner @{PROC}/@{pid}/task/@{tid}/mountinfo r,
   owner @{PROC}/@{pid}/uid_map r,
 
   /dev/ r,
   /dev/**/ r,
+
+  profile nft flags=(attach_disconnected) {
+    include <abstractions/base>
+
+    capability net_admin,
+    capability net_raw,
+
+    network inet raw,
+    network inet6 raw,
+    network netlink raw,
+
+    @{sbin}/xtables-nft-multi     rix,
+    @{sbin}/xtables-legacy-multi  rix,
+    @{bin}/kmod                   rPx -> dockerd//kmod,
+
+    @{PROC}/@{pid}/net/ip{,6}_tables_names r,
+    @{PROC}/sys/kernel/modprobe r,
+
+    @{run}/xtables.lock rwk,
+
+    include if exists <local/dockerd_nft>
+  }
+
+  profile kmod {
+    include <abstractions/base>
+    include <abstractions/app/kmod>
+
+    capability sys_module,
+
+    @{run}/xtables.lock r,
+
+    @{sys}/module/compression r,
+    @{sys}/module/*/initstate r,
+
+    include if exists <local/dockerd_kmod>
+  }
+
+  profile init flags=(attach_disconnected) {
+    include <abstractions/base>
+
+    @{bin}/docker-init mr,
+    @{lib}/docker/docker-init mr,
+
+    include if exists <local/dockerd_init>
+  }
+
+  profile git flags=(attach_disconnected) {
+    include <abstractions/base>
+
+    @{bin}/git mr,
+
+    include if exists <local/dockerd_git>
+  }
 
   include if exists <local/dockerd>
 }

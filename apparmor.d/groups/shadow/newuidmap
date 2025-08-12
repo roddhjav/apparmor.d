@@ -1,0 +1,33 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2022 Jeroen Rijken
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/newuidmap
+profile newuidmap @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+
+  capability dac_override,
+  capability setuid,
+  capability sys_admin,
+
+  @{exec_path} mr,
+
+  @{etc_ro}/login.defs r,
+  @{etc_ro}/login.defs.d/{,*} r,
+  /etc/subuid r,
+
+  @{PROC}/@{pids}/ r,
+  @{PROC}/@{pids}/logingid r,
+  @{PROC}/@{pids}/loginuid r,
+  @{PROC}/@{pids}/uid_map w,
+
+  include if exists <local/newuidmap>
+}
+
+# vim:syntax=apparmor

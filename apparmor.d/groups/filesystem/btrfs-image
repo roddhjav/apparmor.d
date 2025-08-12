@@ -1,0 +1,25 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2019-2021 Mikhail Morfikov
+# Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{sbin}/btrfs-image
+profile btrfs-image @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/disks-write>
+
+  @{exec_path} mr,
+
+  # Image files
+  owner @{user_img_dirs}/{,**} rwk,
+
+  owner @{PROC}/@{pid}/mounts r,
+
+  include if exists <local/btrfs-image>
+}
+
+# vim:syntax=apparmor

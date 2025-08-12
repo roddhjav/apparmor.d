@@ -1,0 +1,48 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{sbin}/chpasswd
+profile chpasswd @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/bus-system>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+
+  capability audit_write,
+  capability chown,
+  capability fsetid,
+  capability net_admin,
+  capability setuid,
+
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  @{etc_ro}/login.defs r,
+
+  /etc/.pwd.lock wk,
+  /etc/passwd rw,
+  /etc/passwd.@{int} w,
+  /etc/passwd.lock l -> /etc/passwd.@{int},
+  /etc/passwd.lock w,
+  /etc/shadow rw,
+  /etc/shadow- w,
+  /etc/shadow.@{int} w,
+  /etc/shadow.lock l -> /etc/shadow.@{int},
+  /etc/shadow.lock w,
+  /etc/shadow+ rw,
+
+  /etc/pam.d/* r,
+  /etc/security/pwquality.conf r,
+
+  @{PROC}/@{pid}/loginuid r,
+
+  include if exists <local/chpasswd>
+}
+
+# vim:syntax=apparmor

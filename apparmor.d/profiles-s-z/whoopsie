@@ -1,0 +1,33 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/whoopsie
+profile whoopsie @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+
+  capability setgid,
+  capability setuid,
+
+  @{exec_path} mr,
+
+  /var/crash/ r,
+
+  /var/lib/whoopsie/ rw,
+  /var/lib/whoopsie/whoopsie-id rw,
+  /var/lib/whoopsie/whoopsie-id.@{rand6} rw,
+
+  owner @{run}/lock/whoopsie/ rw,
+  owner @{run}/lock/whoopsie/lock rwk,
+
+  @{sys}/devices/virtual/dmi/id/product_uuid r,
+
+  include if exists <local/whoopsie>
+}
+
+# vim:syntax=apparmor

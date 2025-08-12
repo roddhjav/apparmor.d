@@ -1,0 +1,34 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{sbin}/pwck
+profile pwck @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+
+  @{exec_path} mr,
+
+  @{bin}/nscd rix,
+
+  @{etc_ro}/login.defs r,
+
+  /etc/.pwd.lock wk,
+  /etc/passwd rw,
+  /etc/passwd.@{int} rw,
+  /etc/passwd.lock wl,
+  /etc/shadow rw,
+  /etc/shadow.@{int} rw,
+  /etc/shadow.lock wl,
+
+  /etc/machine-id r,
+
+  include if exists <local/pwck>
+}
+
+# vim:syntax=apparmor

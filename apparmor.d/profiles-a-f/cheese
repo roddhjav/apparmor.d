@@ -1,0 +1,54 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Roman Beslik <me@beroal.in.ua>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/cheese
+profile cheese @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/audio-client>
+  include <abstractions/dconf-write>
+  include <abstractions/desktop>
+  include <abstractions/graphics>
+  include <abstractions/gstreamer>
+  include <abstractions/nameservice-strict>
+  include <abstractions/thumbnails-cache-write>
+
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  @{bin}/bwrap Px -> gnome-desktop-thumbnailers,
+  @{open_path} rPx -> child-open-help,
+
+  @{system_share_dirs}/gnome-video-effects/{,*.effect} r,
+  @{system_share_dirs}/ladspa/rdf/{,**} r,
+  @{system_share_dirs}/thumbnailers/{,*.thumbnailer} r,
+
+  /etc/machine-id r,
+
+  owner @{HOME}/ r, # file save dialog
+  owner @{user_pictures_dirs}/{,**} rw,
+  owner @{user_videos_dirs}/{,**} rw,
+
+  owner @{user_cache_dirs}/gnome-desktop-thumbnailer/gstreamer-1.0/ r,
+
+  owner @{tmp}/flatpak-seccomp-@{rand6} rw,
+  owner @{tmp}/gnome-desktop-thumbnailer-@{rand6}/{,**} rw,
+
+  @{run}/udev/data/c@{dynamic}:@{int} r,  # For dynamic assignment range 234 to 254, 384 to 511
+
+  @{sys}/devices/virtual/dmi/id/{bios_vendor,board_vendor,product_name,sys_vendor} r,
+
+  owner @{PROC}/@{pid}/task/@{tid}/comm rw,
+
+  /dev/media@{int} rw,
+  /dev/video@{int} rw,
+
+  include if exists <local/cheese>
+}
+
+# vim:syntax=apparmor

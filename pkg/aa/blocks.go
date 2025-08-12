@@ -27,21 +27,21 @@ func (p *Hat) String() string {
 	return renderTemplate(p.Kind(), p)
 }
 
-func (r *Hat) Validate() error {
+func (p *Hat) Validate() error {
 	return nil
 }
 
-func (r *Hat) Compare(other Rule) int {
+func (p *Hat) Compare(other Rule) int {
 	o, _ := other.(*Hat)
-	return compare(r.Name, o.Name)
+	return compare(p.Name, o.Name)
 }
 
-func (r *Hat) Merge(other Rule) bool {
+func (p *Hat) Merge(other Rule) bool {
 	return false // Never merge hat blocks
 }
 
-func (r *Hat) Lengths() []int {
+func (p *Hat) Lengths() []int {
 	return []int{} // No len for hat
 }
 
-func (r *Hat) setPaddings(max []int) {} // No paddings for hat
+func (p *Hat) setPaddings(max []int) {} // No paddings for hat

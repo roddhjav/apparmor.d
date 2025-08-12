@@ -1,0 +1,35 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/lsipc
+profile lsipc @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+
+  @{exec_path} mr,
+
+  @{PROC}/sys/fs/mqueue/msg_max r,
+  @{PROC}/sys/fs/mqueue/msgsize_max r,
+  @{PROC}/sys/fs/mqueue/queues_max r,
+  @{PROC}/sys/kernel/msgmax r,
+  @{PROC}/sys/kernel/msgmnb r,
+  @{PROC}/sys/kernel/msgmni r,
+  @{PROC}/sys/kernel/sem r,
+  @{PROC}/sys/kernel/shmall r,
+  @{PROC}/sys/kernel/shmmax r,
+  @{PROC}/sys/kernel/shmmni r,
+  @{PROC}/sysvipc/msg r,
+  @{PROC}/sysvipc/sem r,
+  @{PROC}/sysvipc/shm r,
+
+  /dev/mqueue/ r,
+
+  include if exists <local/lsipc>
+}
+
+# vim:syntax=apparmor

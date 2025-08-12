@@ -10,13 +10,14 @@ include <tunables/global>
 @{exec_path} = @{bin}/unattended-upgrade
 profile unattended-upgrade @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/common/apt>
   include <abstractions/bus-system>
   include <abstractions/bus/org.freedesktop.login1>
   include <abstractions/bus/org.freedesktop.NetworkManager>
   include <abstractions/bus/org.freedesktop.PackageKit>
+  include <abstractions/common/apt>
   include <abstractions/consoles>
   include <abstractions/nameservice-strict>
+  include <abstractions/perl>
   include <abstractions/python>
 
   capability chown,
@@ -29,9 +30,11 @@ profile unattended-upgrade @{exec_path} flags=(attach_disconnected) {
   capability setuid,
   capability sys_nice,
 
+  network inet dgram,
+  network inet6 dgram,
   network netlink raw,
 
-  signal (send) peer=apt-methods-http,
+  signal send peer=apt-methods-http,
 
   unix type=stream addr=@@{udbus}/bus/unattended-upgr/system,
 
@@ -40,32 +43,39 @@ profile unattended-upgrade @{exec_path} flags=(attach_disconnected) {
   @{bin}/ r,
 
   @{sh_path}                      rix,
-  @{bin}/echo                     rix,
-  @{bin}/gdbus                    rix,
-  @{bin}/ischroot                 rix,
-  @{bin}/python3.@{int}           rix,
-  @{bin}/test                     rix,
-  @{bin}/touch                    rix,
-  @{bin}/uname                    rix,
+  @{python_path}                  rix,
+  @{bin}/echo                      ix,
+  @{bin}/gdbus                     ix,
+  @{bin}/md5sum                    ix,
+  @{bin}/tar                       ix,
+  @{bin}/test                      ix,
+  @{bin}/touch                     ix,
+  @{bin}/uname                     ix,
 
-  @{bin}/apt-listchanges          rPx,
-  @{bin}/dpkg                     rPx,
-  @{bin}/dpkg-preconfigure        rPx,
-  @{bin}/etckeeper                rPx,
-  @{bin}/lsb_release              rPx -> lsb_release,
-  @{bin}/on_ac_power              rPx,
-  @{bin}/sendmail                rPUx,
-  @{lib}/apt/methods/http{,s}     rPx,
-  @{lib}/needrestart/apt-pinvoke  rPx,
-  @{lib}/update-notifier/update-motd-updates-available rPx,
-  @{lib}/zsys-system-autosnapshot rPx,
+  @{bin}/dpkg-deb                  px,
+  @{bin}/apt-listchanges           Px,
+  @{bin}/dpkg                      Px,
+  @{bin}/dpkg-divert               Px,
+  @{bin}/etckeeper                 Px,
+  @{bin}/ischroot                  Px,
+  @{bin}/lsb_release               Px,
+  @{sbin}/dpkg-preconfigure        Px,
+  @{sbin}/on_ac_power              Px,
+  @{sbin}/sendmail                 Px,
+  @{lib}/apt/methods/http{,s}      Px,
+  @{lib}/needrestart/apt-pinvoke   Px,
+  @{lib}/update-notifier/update-motd-updates-available Px,
+  @{lib}/zsys-system-autosnapshot  Px,
 
   /usr/share/distro-info/* r,
 
+  @{etc_ro}/login.defs r,
+  @{etc_ro}/security/capability.conf r,
+  /etc/apport/report-ignore/{,**} r,
   /etc/apt/*.list r,
   /etc/apt/apt.conf.d/{,**} r,
   /etc/debian_version r,
-  /etc/default/grub.d/* r,
+  /etc/default/{,**} r,
   /etc/dpkg/origins/{,debian,ubuntu} r,
   /etc/fwupd/{,**} r,
   /etc/grub.d/* r,
@@ -79,14 +89,19 @@ profile unattended-upgrade @{exec_path} flags=(attach_disconnected) {
   /etc/pki/fwupd-metadata/{,**} r,
   /etc/pki/fwupd/{,**} r,
   /etc/profile.d/* r,
-  /etc/security/capability.conf r,
+  /etc/ssh/moduli r,
+  /etc/ssh/ssh_config r,
+  /etc/ufw/{,**} r,
   /etc/update-manager/{,**} r,
-  /etc/update-motd.d/* r,
-  /etc/vmware-tools/* r,
+  /etc/update-motd.d/{,**} r,
+  /etc/vim/{,**} r,
+  /etc/vmware-tools/{,**} r,
 
   /var/log/unattended-upgrades/{,**} rw,
+  /var/crash/*.crash w,
 
   /var/lib/apt/periodic/unattended-upgrades-stamp w,
+  /var/lib/dpkg/info/{,*} r,
   /var/lib/dpkg/lock rwk,
   /var/lib/dpkg/lock-frontend rwk,
   /var/lib/dpkg/updates/ r,
@@ -107,6 +122,9 @@ profile unattended-upgrade @{exec_path} flags=(attach_disconnected) {
 
   owner @{tmp}/apt-dpkg-install-*/{,*} rw,
 
+        @{PROC}/@{pid}/attr/current r,
+        @{PROC}/@{pid}/cmdline r,
+        @{PROC}/@{pid}/environ r,
         @{PROC}/@{pids}/mountinfo r,
         @{PROC}/@{pids}/stat r,
   owner @{PROC}/@{pids}/fd/ r,

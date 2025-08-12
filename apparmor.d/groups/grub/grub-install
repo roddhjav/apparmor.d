@@ -7,7 +7,7 @@ abi <abi/4.0>,
 
 include <tunables/global>
 
-@{exec_path} = @{bin}/grub-install
+@{exec_path} = @{sbin}/grub-install
 profile grub-install @{exec_path} flags=(complain) {
   include <abstractions/base>
   include <abstractions/consoles>
@@ -19,26 +19,34 @@ profile grub-install @{exec_path} flags=(complain) {
   @{exec_path} mr,
 
   @{sh_path}               rix,
-  @{bin}/efibootmgr        rix,
+  @{sbin}/efibootmgr       rix,
   @{bin}/kmod              rPx,
-  @{bin}/lsb_release       rPx -> lsb_release,
+  @{bin}/lsb_release       rPx,
   @{bin}/udevadm           rPx,
 
   /usr/share/grub/{,**} r,
+  /usr/share/locale-langpack/{,**} r,
 
   /etc/default/grub.d/{,**} r,
   /etc/default/grub r,
 
-  /boot/efi/EFI/ubuntu/* w,
-  /boot/efi/EFI/BOOT/{,**} rw,
-  /boot/EFI/*/grubx*.efi rw,
-  /boot/grub/{,**} rw,
+  @{efi}/ r,
+  @{efi}/EFI/ r,
+  @{efi}/EFI/*/grubx*.efi rw,
+  @{efi}/EFI/BOOT/{,**} rw,
+  @{efi}/EFI/ubuntu/* w,
+  @{efi}/grub/{,**} rw,
 
+  @{sys}/devices/**/hid r,
+  @{sys}/devices/**/path r,
+  @{sys}/devices/**/uid r,
+  @{sys}/firmware/efi/ r,
   @{sys}/firmware/efi/efivars/ r,
   @{sys}/firmware/efi/efivars/Boot@{hex}-@{uuid} rw,
   @{sys}/firmware/efi/efivars/BootCurrent-@{uuid} r,
-  @{sys}/firmware/efi/efivars/BootOrder-@{uuid} r,
+  @{sys}/firmware/efi/efivars/BootOrder-@{uuid} rw,
   @{sys}/firmware/efi/efivars/Timeout-@{uuid} r,
+  @{sys}/firmware/efi/fw_platform_size r,
   @{sys}/firmware/efi/w_platform_size r,
 
         @{PROC}/devices r,

@@ -1,0 +1,45 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Jeroen Rijken
+# Copyright (C) 2022-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/whereis
+profile whereis @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+
+  @{exec_path} mr,
+
+  @{bin}/{,*/} r,
+  @{sbin}/{,*/} r,
+  @{lib}/ r,
+  @{lib}/go-*/bin/ r,
+  /usr/{local/,}games/ r,
+  /usr/include/ r,
+  /usr/local/{,etc/,lib/} r,
+  /usr/local/{s,}bin/{,*/} r,
+  /usr/share/ r,
+  /usr/share/info/{**,} r,
+  /usr/share/man/{**,} r,
+  /usr/src/{**,} r,
+
+  /opt/ r,
+  /opt/**/bin/ r,
+  /opt/**/lib/ r,
+
+  @{etc_ro}/ r,
+
+  /snap/bin/ r,
+  /var/lib/flatpak/exports/bin/ r,
+
+  owner @{HOME}/{.,}go/bin/ r,
+  owner @{user_bin_dirs}/ r,
+
+  include if exists <local/whereis>
+}
+
+# vim:syntax=apparmor

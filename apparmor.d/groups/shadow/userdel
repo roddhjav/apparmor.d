@@ -1,0 +1,59 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2019-2021 Mikhail Morfikov
+# Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{sbin}/userdel
+profile userdel @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+
+  capability audit_write,
+  capability chown,
+  capability dac_override,
+  capability dac_read_search,
+  capability fsetid,
+  capability sys_ptrace,
+
+  network netlink raw,
+
+  ptrace (read),
+
+  @{exec_path} mr,
+
+  @{etc_ro}/login.defs r,
+
+  /etc/{passwd,shadow,gshadow,group,subuid,subgid} rw,
+  /etc/{passwd,shadow,gshadow,group,subuid,subgid}.@{pid} w,
+  /etc/{passwd,shadow,gshadow,group,subuid,subgid}- w,
+  /etc/{passwd,shadow,gshadow,group,subuid,subgid}+ rw,
+
+  /etc/passwd.lock  wl -> /etc/passwd.@{pid},
+  /etc/shadow.lock  wl -> /etc/shadow.@{pid},
+  /etc/group.lock   wl -> /etc/group.@{pid},
+  /etc/gshadow.lock wl -> /etc/gshadow.@{pid},
+  /etc/subuid.lock  wl -> /etc/subuid.@{pid},
+  /etc/subgid.lock  wl -> /etc/subgid.@{pid},
+
+  # A process first uses lckpwdf() to lock the lock file, thereby gaining exclusive rights to
+  # modify the /etc/passwd or /etc/shadow password database.
+  /etc/.pwd.lock rwk,
+
+  # To remove user home files
+  @{HOME}/{,**}    rw,
+  /var/            r,
+  /var/lib/        r,
+  /var/lib/*/{,**} rw,
+
+  @{PROC}/ r,
+  @{PROC}/@{pids}/task/ r,
+
+  include if exists <local/userdel>
+}
+
+# vim:syntax=apparmor

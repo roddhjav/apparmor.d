@@ -1,0 +1,79 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/localsearch @{lib}/localsearch-3
+profile localsearch @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/bus-session>
+  include <abstractions/bus-system>
+  include <abstractions/bus/org.freedesktop.UPower>
+  include <abstractions/bus/org.gtk.Private.RemoteVolumeMonitor>
+  include <abstractions/bus/org.gtk.vfs.Daemon>
+  include <abstractions/bus/org.gtk.vfs.MountTracker>
+  include <abstractions/dconf-write>
+  include <abstractions/deny-sensitive-home>
+  include <abstractions/disks-read>
+  include <abstractions/freedesktop.org>
+  include <abstractions/gnome-strict>
+  include <abstractions/graphics>
+  include <abstractions/gstreamer>
+  include <abstractions/nameservice-strict>
+
+  network netlink raw,
+
+  #aa:dbus own bus=session name=org.freedesktop.Tracker3.Miner.Files
+  #aa:dbus own bus=session name=org.freedesktop.LocalSearch3
+
+  dbus receive bus=session path=/org/freedesktop/Tracker3/Endpoint
+       interface=org.freedesktop.DBus.Peer
+       member=Ping
+       peer=(name=@{busname}, label=nautilus),
+  dbus receive bus=session path=/org/freedesktop/Tracker3/Endpoint
+       interface=org.freedesktop.Tracker3.Endpoint
+       member=Query
+       peer=(name=@{busname}, label=nautilus),
+
+  @{exec_path} mr,
+
+  @{lib}/localsearch-extractor-3 ix, # nnp
+
+  /usr/share/localsearch3/{,**} r,
+  /usr/share/osinfo/{,**} r,
+  /usr/share/poppler/{,**} r,
+
+  # Allow to search user files
+  owner @{HOME}/ r,
+  owner @{HOME}/{,**} r,
+  owner @{MOUNTS}/{,**} r,
+  owner @{tmp}/*/{,**} r,
+
+  owner @{user_cache_dirs}/tracker3/ rw,
+  owner @{user_cache_dirs}/tracker3/files/ rw,
+  owner @{user_cache_dirs}/tracker3/files/** rwk,
+
+  owner @{tmp}/etilqs_@{sqlhex} rw,
+  owner /var/tmp/etilqs_@{sqlhex} rw,
+
+  @{run}/mount/utab r,
+
+  @{run}/udev/data/c@{dynamic}:@{int} r,  # For dynamic assignment range 234 to 254, 384 to 511
+
+        @{PROC}/sys/fs/fanotify/max_user_marks r,
+        @{PROC}/sys/fs/inotify/max_user_watches r,
+  owner @{PROC}/@{pid}/cmdline r,
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/mounts r,
+  owner @{PROC}/@{pid}/task/@{tid}/comm rw,
+
+  /dev/media@{int} rw,
+  /dev/video@{int} rw,
+
+  include if exists <local/localsearch>
+}
+
+# vim:syntax=apparmor

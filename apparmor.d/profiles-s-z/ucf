@@ -1,0 +1,62 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2019-2022 Mikhail Morfikov
+# Copyright (C) 2022-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/ucf
+profile ucf @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/common/debconf>
+  include <abstractions/consoles>
+  include <abstractions/perl>
+
+  @{exec_path}          rix,
+  @{sh_path}            rix,
+
+  @{bin}/{,e}grep       rix,
+  @{bin}/{m,g,}awk      rix,
+  @{bin}/basename       rix,
+  @{bin}/cat            rix,
+  @{bin}/cp             rix,
+  @{bin}/dirname        rix,
+  @{bin}/getopt         rix,
+  @{bin}/id             rix,
+  @{bin}/md5sum         rix,
+  @{bin}/mkdir          rix,
+  @{bin}/mv             rix,
+  @{bin}/readlink       rix,
+  @{bin}/rm             rix,
+  @{bin}/sed            rix,
+  @{bin}/seq            rix,
+  @{bin}/stat           rix,
+  @{bin}/tr             rix,
+  @{bin}/which{,.debianutils}  rix,
+
+  @{bin}/dpkg-query     rpx,
+  @{bin}/dpkg-divert    rPx,
+  @{pager_path}         rCx -> child-pager,
+
+  # For md5sum
+  /usr/share/** r,
+
+  # For writing new config files
+  /etc/** rw, #aa:lint ignore=too-wide
+
+  # For shell pwd
+  / r,
+  /root/ r,
+
+  owner /var/lib/ucf/** rw,
+
+  owner /tmp/tmp.@{rand10} r,
+
+  deny capability sys_admin, # optional: no audit
+
+  include if exists <local/ucf>
+}
+
+# vim:syntax=apparmor

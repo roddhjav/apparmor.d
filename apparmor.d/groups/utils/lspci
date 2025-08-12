@@ -1,0 +1,53 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2019-2021 Mikhail Morfikov
+# Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/lspci
+profile lspci @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+
+  capability dac_read_search,
+  capability sys_admin,
+
+  network inet dgram,
+  network inet6 dgram,
+
+  @{exec_path} mr,
+
+  /usr/share/hwdata/pci.ids r,
+  /usr/share/misc/pci.ids r,
+  /usr/share/misc/pci.ids.gz r,
+  /usr/share/pci.ids r,
+
+  @{run}/modprobe.d/{,*.conf} r,
+  /etc/modprobe.d/{,*.conf} r,
+  /etc/udev/hwdb.bin r,
+
+  owner @{HOME}/.pciids-cache.tmp-*-@{pid} rw,
+  owner @{HOME}/.pciids-cache rw,
+  owner @{user_cache_dirs}/pci-ids rw,
+
+  @{sys}/bus/pci/devices/ r,
+  @{sys}/bus/pci/slots/ r,
+  @{sys}/bus/pci/slots/@{int}-@{int}/address r,
+  @{sys}/bus/pci/slots/@{int}/address r,
+  @{sys}/devices/@{pci}/** r,
+  @{sys}/module/compression r,
+
+  @{PROC}/bus/pci/devices r,
+  @{PROC}/cmdline r,
+  @{PROC}/ioports r,
+
+  deny @{user_share_dirs}/gvfs-metadata/* r,
+
+  include if exists <local/lspci>
+}
+
+# vim:syntax=apparmor

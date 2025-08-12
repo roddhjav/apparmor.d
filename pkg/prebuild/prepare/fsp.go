@@ -5,11 +5,60 @@
 package prepare
 
 import (
-	"strings"
+	"regexp"
 
 	"github.com/roddhjav/apparmor.d/pkg/paths"
 	"github.com/roddhjav/apparmor.d/pkg/prebuild"
-	"github.com/roddhjav/apparmor.d/pkg/util"
+)
+
+var (
+	tunables = map[string]string{
+		// Set systemd profiles name
+		"sd":           "sd",
+		"sdu":          "sdu",
+		"systemd_user": "systemd-user",
+		"systemd":      "systemd",
+
+		// With FSP on apparmor 4.1+, the dbus profiles don't get stacked as they
+		"dbus_system":  "dbus-system",
+		"dbus_session": "dbus-session",
+
+		// Update name of stacked profiles
+		"apt_news":               "",
+		"colord":                 "",
+		"e2scrub_all":            "",
+		"e2scrub":                "",
+		"fprintd":                "",
+		"fwupd":                  "",
+		"fwupdmgr":               "",
+		"geoclue":                "",
+		"irqbalance":             "",
+		"logrotate":              "",
+		"ModemManager":           "",
+		"nm_priv_helper":         "",
+		"pcscd":                  "",
+		"polkitd":                "",
+		"power_profiles_daemon":  "",
+		"rsyslogd":               "",
+		"systemd_coredump":       "",
+		"systemd_homed":          "",
+		"systemd_hostnamed":      "",
+		"systemd_importd":        "",
+		"systemd_initctl":        "",
+		"systemd_journal_remote": "",
+		"systemd_journald":       "",
+		"systemd_localed":        "",
+		"systemd_logind":         "",
+		"systemd_machined":       "",
+		"systemd_networkd":       "",
+		"systemd_oomd":           "",
+		"systemd_resolved":       "",
+		"systemd_rfkill":         "",
+		"systemd_timedated":      "",
+		"systemd_timesyncd":      "",
+		"systemd_userdbd":        "",
+		"upowerd":                "",
+	}
 )
 
 type FullSystemPolicy struct {
@@ -29,30 +78,24 @@ func (p FullSystemPolicy) Apply() ([]string, error) {
 	res := []string{}
 
 	// Install full system policy profiles
-	if err := paths.CopyTo(paths.New("apparmor.d/groups/_full/"), prebuild.Root.Join("apparmor.d")); err != nil {
+	if err := paths.New("apparmor.d/groups/_full/").CopyFS(prebuild.Root.Join("apparmor.d")); err != nil {
 		return res, err
 	}
 
-	// Set systemd profile name
-	path := prebuild.RootApparmord.Join("tunables/multiarch.d/system")
+	// Set profile name for FSP
+	path := prebuild.RootApparmord.Join("tunables/multiarch.d/profiles")
 	out, err := path.ReadFileAsString()
 	if err != nil {
 		return res, err
 	}
-	out = strings.Replace(out, "@{p_systemd}=unconfined", "@{p_systemd}=systemd", -1)
-	out = strings.Replace(out, "@{p_systemd_user}=unconfined", "@{p_systemd_user}=systemd-user", -1)
-	if err := path.WriteFile([]byte(out)); err != nil {
-		return res, err
+	for varname, profile := range tunables {
+		pattern := regexp.MustCompile(`(@\{p_` + varname + `}=)([^\s]+)`)
+		if profile == "" {
+			out = pattern.ReplaceAllString(out, `@{p_`+varname+`}={$2,sd//&$2,$2//&sd}`)
+		} else {
+			out = pattern.ReplaceAllString(out, `@{p_`+varname+`}=`+profile)
+		}
 	}
-
-	// Fix conflicting x modifiers in abstractions - FIXME: Temporary solution
-	path = prebuild.RootApparmord.Join("abstractions/gstreamer")
-	out, err = path.ReadFileAsString()
-	if err != nil {
-		return res, err
-	}
-	regFixConflictX := util.ToRegexRepl([]string{`.*gst-plugin-scanner.*`, ``})
-	out = regFixConflictX.Replace(out)
 	if err := path.WriteFile([]byte(out)); err != nil {
 		return res, err
 	}

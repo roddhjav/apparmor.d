@@ -7,11 +7,11 @@ pkgname=apparmor.d
 pkgver=0.001
 pkgrel=1
 pkgdesc="Full set of apparmor profiles"
-arch=("x86_64")
-url="https://github.com/roddhjav/$pkgname"
-license=('GPL2')
-depends=('apparmor')
-makedepends=('go' 'git' 'rsync')
+arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
+url="https://github.com/roddhjav/apparmor.d"
+license=('GPL-2.0-only')
+depends=('apparmor>=4.1.0' 'apparmor<5.0.0')
+makedepends=('go' 'git' 'rsync' 'just')
 conflicts=("$pkgname-git")
 
 pkgver() {
@@ -30,10 +30,11 @@ build() {
   export CGO_CXXFLAGS="${CXXFLAGS}"
   export CGO_LDFLAGS="${LDFLAGS}"
   export GOFLAGS="-buildmode=pie -trimpath -ldflags=-linkmode=external -mod=readonly -modcacherw"
-  make DISTRIBUTION=arch
+  export DISTRIBUTION=arch
+  just complain
 }
 
 package() {
   cd "$srcdir/$pkgname"
-  make install DESTDIR="$pkgdir"
+  just destdir="$pkgdir" install
 }

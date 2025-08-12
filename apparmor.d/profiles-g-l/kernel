@@ -1,0 +1,76 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path}  = /etc/kernel/{,header_}postinst.d/* /etc/kernel/postrm.d/*
+@{exec_path} += /etc/kernel/preinst.d/* /etc/kernel/prerm.d/*
+profile kernel @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+
+  @{exec_path} mr,
+
+  @{sh_path}        rix,
+  @{bin}/{,e}grep   rix,
+  @{bin}/{,m,g}awk  rix,
+  @{bin}/cat        rix,
+  @{bin}/chmod      rix,
+  @{bin}/cut        rix,
+  @{bin}/dirname    rix,
+  @{bin}/kmod       rCx -> kmod,
+  @{bin}/mv         rix,
+  @{bin}/rm         rix,
+  @{bin}/rmdir      rix,
+  @{bin}/sed        rix,
+  @{bin}/sort       rix,
+  @{bin}/touch      rix,
+  @{bin}/tr         rix,
+  @{bin}/uname      rix,
+  @{bin}/which{,.debianutils}  rix,
+
+  @{bin}/apt-config               rPx,
+  @{bin}/bootctl                  rPx,
+  @{bin}/dpkg                     rPx -> child-dpkg,
+  @{bin}/kernel-install           rPx,
+  @{bin}/systemd-detect-virt      rPx,
+  @{bin}/update-alternatives      rPx,
+  @{lib}/dkms/dkms_autoinstaller  rPx,
+  @{sbin}/dkms                    rPx,
+  @{sbin}/update-grub             rPx,
+  @{sbin}/update-initramfs        rPx,
+
+  @{lib}/modules/*/updates/ w,
+  @{lib}/modules/*/updates/dkms/ w,
+
+  /etc/kernel/header_postinst.d/* r,
+  /etc/kernel/{postinst,postrm,preinst,prerm}.d/* r,
+
+  # For shell pwd
+  / r,
+  @{efi}/ r,
+
+  /etc/apt/apt.conf.d/ r,
+  /etc/apt/apt.conf.d/01autoremove-kernels{,.dpkg-new} rw,
+
+  @{run}/reboot-required w,
+  @{run}/reboot-required.pkgs rw,
+
+  @{PROC}/devices r,
+  @{PROC}/cmdline r,
+
+  profile kmod {
+    include <abstractions/base>
+    include <abstractions/app/kmod>
+
+    include if exists <local/kernel_kmod>
+  }
+
+  include if exists <local/kernel>
+}
+
+# vim:syntax=apparmor

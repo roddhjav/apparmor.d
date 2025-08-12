@@ -1,0 +1,53 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Mikhail Morfikov
+# Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/obexautofs
+profile obexautofs @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/devices-usb>
+
+  network bluetooth seqpacket,
+  network bluetooth stream,
+  network bluetooth raw,
+  network netlink raw,
+
+  mount fstype=fuse.obexautofs -> @{HOME}/*/,
+  mount fstype=fuse.obexautofs -> @{HOME}/*/*/,
+
+  @{exec_path} mr,
+
+  @{bin}/fusermount{,3} rCx -> fusermount,
+
+  owner @{HOME}/*/ r,
+  owner @{HOME}/*/*/ r,
+
+  @{sys}/devices/@{pci}/usb@{int}/bConfigurationValue r,
+  @{sys}/devices/@{pci}/usb@{int}/**/bConfigurationValue r,
+  @{sys}/devices/@{pci}/usb@{int}/{uevent,busnum,devnum,speed,descriptors} r,
+  @{sys}/devices/@{pci}/usb@{int}/**/{uevent,busnum,devnum,speed,descriptors} r,
+
+  /dev/fuse rw,
+
+  profile fusermount {
+    include <abstractions/base>
+    include <abstractions/app/fusermount>
+
+    mount fstype={fuse,fuse.obexautofs} -> @{HOME}/*/,
+    mount fstype={fuse,fuse.obexautofs} -> @{HOME}/*/*/,
+
+    umount @{HOME}/*/,
+    umount @{HOME}/*/*/,
+
+    include if exists <local/obexautofs_fusermount>
+  }
+
+  include if exists <local/obexautofs>
+}
+
+# vim:syntax=apparmor

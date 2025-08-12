@@ -2,7 +2,7 @@
 
 # apparmor.d
 
-[![][workflow]][action] [![][build]][project] [![][quality]][goreportcard] [![][matrix]][matrix-link] 
+[![][workflow]][action] [![][build]][project] [![][quality]][goreportcard] [![][matrix]][matrix-link] [![][play]][play-link]
 
 **Full set of AppArmor profiles**
 
@@ -35,8 +35,11 @@
     * Gnome (GDM)
     * KDE (SDDM)
     * XFCE (Lightdm) *(work in progress)*
-- Fully tested *(work in progress)*
+- [Fully tested](https://apparmor.pujol.io/development/tests/)
 
+**Demo**
+
+You want to try this project, or you are curious about the advanced usage and security it can provide without installing it on your machine. You can try it online on my AppArmor play machine at https://play.pujol.io/
 
 > This project is originally based on the work from [Morfikov][upstream] and aims to extend it to more Linux distributions and desktop environments.
 
@@ -58,6 +61,10 @@ Building the largest set of AppArmor profiles:
 
 - [Linux Security Summit North America (LSS-NA 2023)](https://events.linuxfoundation.org/linux-security-summit-north-america/) *([Slide](https://lssna2023.sched.com/event/1K7bI/building-the-largest-working-set-of-apparmor-profiles-alexandre-pujol-the-collaboratory-tudublin), [Video](https://www.youtube.com/watch?v=OzyalrOzxE8))*
 - [Ubuntu Summit 2023](https://events.canonical.com/event/31/) *([Slide](https://events.canonical.com/event/31/contributions/209/), [Video](https://www.youtube.com/watch?v=GK1J0TlxnFI))*
+
+Lessons learned while making an AppArmor Play machine:
+
+- [Linux Security Summit North America (LSS-NA 2025)](https://events.linuxfoundation.org/linux-security-summit-north-america/) *([Slide](https://lssna2025.sched.com/event/1zalf/lessons-learned-while-making-an-apparmor-play-machine-alexandre-pujol-linagora), [Video](https://www.youtube.com/watch?v=zCSl8honRI0))*
 
 ## Installation
 
@@ -93,6 +100,8 @@ and thus has the same license (GPL2).
 [goreportcard]: https://goreportcard.com/report/github.com/roddhjav/apparmor.d
 [matrix]: https://img.shields.io/badge/Matrix-%23apparmor.d-blue?style=flat-square&logo=matrix
 [matrix-link]: https://matrix.to/#/#apparmor.d:matrix.org
+[play]: https://img.shields.io/badge/Live_Demo-play.pujol.io-blue?style=flat-square
+[play-link]: https://play.pujol.io
 
 [android_model]: https://arxiv.org/pdf/1904.05572
 [clipos]: https://clip-os.org/en/

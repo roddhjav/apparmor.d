@@ -1,0 +1,45 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2019-2021 Mikhail Morfikov
+# Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{sbin}/groupmod
+profile groupmod @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+
+  # To write records to the kernel auditing log.
+  capability audit_write,
+
+  # To set the right permission to the files in the /etc/ dir.
+  capability chown,
+  capability fsetid,
+
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  @{etc_ro}/login.defs r,
+
+  /etc/{passwd,gshadow,group} rw,
+  /etc/{passwd,gshadow,group}.@{pid} w,
+  /etc/{passwd,gshadow,group}- w,
+  /etc/{passwd,gshadow,group}+ rw,
+
+  /etc/passwd.lock  wl -> /etc/passwd.@{pid},
+  /etc/group.lock   wl -> /etc/group.@{pid},
+  /etc/gshadow.lock wl -> /etc/gshadow.@{pid},
+
+  # A process first uses lckpwdf() to lock the lock file, thereby gaining exclusive rights to
+  # modify the /etc/passwd or /etc/shadow password database.
+  /etc/.pwd.lock rwk,
+
+  include if exists <local/groupmod>
+}
+
+# vim:syntax=apparmor

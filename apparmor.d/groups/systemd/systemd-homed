@@ -14,6 +14,8 @@ profile systemd-homed @{exec_path} flags=(attach_disconnected) {
   include <abstractions/nameservice-strict>
   include <abstractions/common/systemd>
 
+  userns,
+
   capability chown,
   capability dac_override,
   capability dac_read_search,
@@ -24,6 +26,7 @@ profile systemd-homed @{exec_path} flags=(attach_disconnected) {
   capability setpcap,
   capability setuid,
   capability sys_admin,
+  capability sys_ptrace,
   capability sys_resource,
 
   network inet dgram,
@@ -32,19 +35,27 @@ profile systemd-homed @{exec_path} flags=(attach_disconnected) {
   network inet6 raw,
   network netlink raw,
 
-  mount options=(rw, rslave) -> @{run}/,
-  mount /dev/dm-@{int} -> @{run}/systemd/user-home-mount/,
+  mount                      -> @{run}/systemd/user-home-mount/,
+  mount options=(rw private) -> @{run}/systemd/user-home-mount/,
+  mount options=(rw rslave)  -> @{run}/,
+
+  umount @{run}/systemd/user-home-mount/,
+
+  signal (send receive) set=kill peer=systemd-homed//&systemd-homework,
+
+  ptrace read peer=systemd-homed//&systemd-homework,
 
   unix bind type=stream addr=@@{udbus}/bus/systemd-homed/system,
 
   #aa:dbus own bus=system name=org.freedesktop.home1
+  #aa:dbus talk bus=system name=org.freedesktop.PolicyKit1 label=polkitd
 
   @{exec_path} mr,
 
-  @{lib}/systemd/systemd-homework rPx,
-  @{bin}/mkfs.btrfs rPx,
-  @{bin}/mkfs.fat   rPx,
-  @{bin}/mke2fs     rPx,
+  @{lib}/systemd/systemd-homework rPx -> &systemd-homework,
+  @{sbin}/mkfs.btrfs rPx,
+  @{sbin}/mkfs.fat   rPx,
+  @{sbin}/mke2fs     rPx,
 
   /etc/machine-id r,
   /etc/systemd/homed.conf r,
@@ -74,9 +85,12 @@ profile systemd-homed @{exec_path} flags=(attach_disconnected) {
         @{PROC}/@{pid}/cgroup r,
         @{PROC}/devices r,
         @{PROC}/pressure/* r,
+        @{PROC}/swaps r,
+        @{PROC}/sys/fs/nr_open r,
         @{PROC}/sysvipc/{shm,sem,msg} r,
   owner @{PROC}/@{pid}/gid_map w,
   owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/mounts r,
   owner @{PROC}/@{pid}/uid_map w,
 
   /dev/loop-control rwk,

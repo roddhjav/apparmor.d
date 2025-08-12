@@ -1,0 +1,56 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = /usr/share/initramfs-tools/scripts/** /etc/initramfs-tools/scripts/**
+profile initramfs-scripts @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+
+  @{exec_path} mr,
+
+  @{sh_path}                         rix,
+  @{coreutils_path}                  rix,
+  @{sbin}/blkid                       Px,
+  @{bin}/dd                           ix,
+  @{bin}/debconf-escape               Px,
+  @{bin}/ischroot                     Px,
+  @{bin}/ldd                          Cx -> ldd,
+  @{bin}/plymouth                     Px,
+  @{bin}/update-alternatives          Px,
+  @{lib}/dracut/dracut-install        Px,
+  @{lib}/initramfs-tools/bin/busybox  Px,
+  /usr/share/mdadm/mkconf             Px,
+
+  /usr/share/initramfs-tools/{,**} r,
+
+  /etc/cryptsetup-initramfs/{,**} r,
+  /etc/crypttab r,
+  /etc/default/console-setup r,
+  /etc/fstab r,
+  /etc/initramfs-tools/{,**} r,
+  /etc/mdadm/mdadm.conf r,
+  /etc/udev/rules.d/{,**} r,
+
+        /var/tmp/modules_@{rand6} rw,
+  owner /var/tmp/mkinitramfs_@{rand6}/** rwl -> /var/tmp/mkinitramfs_@{rand6}/**,
+
+  profile ldd {
+    include <abstractions/base>
+    include <abstractions/nameservice-strict>
+
+    @{bin}/ldd mr,
+    @{lib}/@{multiarch}/ld-linux-*so* mrix,
+    @{lib}/ld-linux.so* mr,
+
+    include if exists <local/initramfs-scripts_ldd>
+  }
+
+  include if exists <local/initramfs-scripts>
+}
+
+# vim:syntax=apparmor

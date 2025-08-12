@@ -11,6 +11,7 @@ profile makepkg @{exec_path} {
   include <abstractions/base>
   include <abstractions/consoles>
   include <abstractions/nameservice-strict>
+  include <abstractions/path>
   include <abstractions/perl>
   include <abstractions/python>
   include <abstractions/shells>
@@ -28,14 +29,20 @@ profile makepkg @{exec_path} {
 
   file,
 
-  @{bin}/gpg{,2}  Cx -> gpg,
-  @{bin}/gpgconf  Cx -> gpg,
-  @{bin}/gpgsm    Cx -> gpg,
-  @{bin}/sudo     Cx -> sudo,
+  @{bin}/gpg{,2}                Cx -> gpg,
+  @{bin}/gpgconf                Cx -> gpg,
+  @{bin}/gpgsm                  Cx -> gpg,
+  @{bin}/sudo                   Cx -> sudo,
+
+  deny capability sys_ptrace,
+  deny ptrace read,
 
   profile gpg {
     include <abstractions/base>
     include <abstractions/consoles>
+    include <abstractions/devices-usb>
+
+    network netlink raw,
 
     @{bin}/gpg{,2} mr,
     @{bin}/gpgconf mr,
@@ -66,8 +73,8 @@ profile makepkg @{exec_path} {
     owner @{run}/user/@{uid}/gnupg/d.@{rand}/S.scdaemon rw,
     owner @{run}/user/@{uid}/gnupg/S.scdaemon rw,
 
-    owner @{PROC}/@{pid}/fd/ r,
-    owner @{PROC}/@{pid}/task/@{tid}/comm rw,
+    @{PROC}/@{pid}/fd/ r,
+    @{PROC}/@{pid}/task/@{tid}/comm rw,
 
     include if exists <local/makepkg_gpg>
   }
@@ -80,8 +87,9 @@ profile makepkg @{exec_path} {
 
     ptrace read,
 
-    signal send set=winch peer=pacman,
-    signal send set=winch peer=pacman//systemctl,
+    signal send set=(term winch) peer=pacman,
+    signal send set=(term winch) peer=pacman//systemctl,
+    signal send set=(term winch) peer=systemd-tty-ask-password-agent,
 
     @{bin}/pacman Px,
 

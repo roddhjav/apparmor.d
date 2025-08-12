@@ -40,11 +40,6 @@ profile packagekitd @{exec_path} flags=(attach_disconnected) {
 
   #aa:dbus own bus=system name=org.freedesktop.PackageKit
 
-  dbus send bus=system path=/org/freedesktop/DBus
-       interface=org.freedesktop.DBus
-       member={GetConnectionUnixUser,GetConnectionUnixProcessID}
-       peer=(name=org.freedesktop.DBus, label="@{p_dbus_system}"),
-
   @{exec_path} mr,
 
   @{bin}/gpg{,2}  rCx -> gpg,
@@ -56,8 +51,7 @@ profile packagekitd @{exec_path} flags=(attach_disconnected) {
   @{bin}/echo           rix,
   @{bin}/gdbus          rix,
   @{bin}/gzip           rix,
-  @{bin}/ischroot       rix,
-  @{bin}/ldconfig       rix,
+  @{sbin}/ldconfig      rix,
   @{bin}/repo2solv      rix,
   @{bin}/tar            rix,
   @{bin}/test           rix,
@@ -69,6 +63,8 @@ profile packagekitd @{exec_path} flags=(attach_disconnected) {
   @{bin}/fc-cache                    rPx,
   @{bin}/glib-compile-schemas        rPx,
   @{bin}/install-info                rPx,
+  @{bin}/ischroot                    rPx,
+  @{bin}/rpm                        rPUx, #aa:only opensuse
   @{bin}/rpmdb2solv                 rPUx, #aa:only opensuse
   @{bin}/systemd-inhibit             rPx,
   @{bin}/update-desktop-database     rPx,
@@ -78,10 +74,11 @@ profile packagekitd @{exec_path} flags=(attach_disconnected) {
   @{lib}/zypp/plugins/appdata/InstallAppdata rPUx, # TODO: write the profile
   /usr/share/libalpm/scripts/*       rPx,
 
+  #aa:lint ignore=too-wide
   # Install/update packages
   / r,
   /*{,/} rw,
-  /boot/** rwl -> /boot/**,
+  @{efi}/** rwl -> @{efi}/**,
   /etc/** rwl -> /etc/**,
   /opt/** rwl -> /opt/**,
   /srv/** rwl -> /srv/**,

@@ -1,0 +1,62 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{sbin}/cups-browsed
+profile cups-browsed @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/bus-system>
+  include <abstractions/bus/org.freedesktop.Avahi>
+  include <abstractions/bus/org.freedesktop.NetworkManager>
+  include <abstractions/cups-client>
+  include <abstractions/nameservice-strict>
+  include <abstractions/p11-kit>
+
+#   capability net_admin,
+  capability net_bind_service,
+#   capability sys_nice,
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  dbus receive bus=system path=/
+       interface=org.freedesktop.Avahi.Server
+       member=StateChanged
+       peer=(name=:*, label="@{p_avahi_daemon}"),
+
+  dbus receive bus=system path=/org/freedesktop/NetworkManager
+       interface=org.freedesktop.NetworkManager
+       member=CheckPermissions
+       peer=(name=:*, label=NetworkManager),
+
+  dbus receive bus=system path=/org/cups/cupsd/Notifier
+       interface=org.cups.cupsd.Notifier
+       member=PrinterDeleted
+       peer=(name=@{busname}, label=cups-notifier-dbus),
+
+  @{exec_path} mr,
+
+  @{bin}/ippfind rPx,
+
+  /usr/share/cups/locale/{,**} r,
+
+  /etc/cups/{,**} r,
+
+  /var/cache/cups/{,**} rw,
+  /var/log/cups/{,**} rw,
+
+  @{run}/cups/certs/* r,
+
+  @{PROC}/sys/net/ipv6/conf/all/disable_ipv6 r,
+
+  include if exists <local/cups-browsed>
+}
+
+# vim:syntax=apparmor

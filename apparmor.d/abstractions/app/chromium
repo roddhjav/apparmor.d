@@ -37,7 +37,7 @@
   include <abstractions/desktop>
   include <abstractions/devices-usb>
   include <abstractions/fontconfig-cache-read>
-  include <abstractions/graphics-full>
+  include <abstractions/graphics>
   include <abstractions/nameservice-strict>
   include <abstractions/ssl_certs>
   include <abstractions/thumbnails-cache-read>
@@ -78,7 +78,7 @@
   @{lib_dirs}/chrome-sandbox           rPx,
 
   # Desktop integration
-  @{bin}/lsb_release        rPx -> lsb_release,
+  @{bin}/lsb_release        rPx,
   @{bin}/xdg-desktop-menu   rPx,
   @{bin}/xdg-email          rPx,
   @{bin}/xdg-icon-resource  rPx,
@@ -86,16 +86,11 @@
   @{bin}/xdg-open           rPx -> child-open,
   @{bin}/xdg-settings       rPx,
 
-  # Installing/removing extensions & applications
-  @{bin}/{,e}grep rix,
-  @{bin}/basename rix,
-  @{bin}/cat      rix,
-  @{bin}/cut      rix,
-  @{bin}/mkdir    rix,
-  @{bin}/mktemp   rix,
-  @{bin}/rm       rix,
-  @{bin}/sed      rix,
-  @{bin}/touch    rix,
+  # Installing/removing extensions, applications, and stacked xdg menus
+  @{sh_path}        rix,
+  @{bin}/{,e}grep    ix,
+  @{bin}/{m,g,}awk   ix,
+  @{coreutils_path}  ix,
 
   # For storing passwords externally
   @{bin}/keepassxc-proxy    rix, # as a temporary solution - see issue #128
@@ -129,9 +124,10 @@
   owner @{HOME}/.pki/nssdb/{cert9,key4}.db rwk,
   owner @{HOME}/.pki/nssdb/{cert9,key4}.db-journal rw,
 
+  owner @{user_cache_dirs}/gtk-3.0/**/*.cache r,
   owner @{user_config_dirs}/gtk-3.0/servers r,
   owner @{user_share_dirs}/.@{domain}.@{rand6} rw,
-  owner @{user_cache_dirs}/gtk-3.0/**/*.cache r,
+  owner @{user_share_dirs}/icons/hicolor/.xdg-icon-resource-dummy w,
 
   owner @{config_dirs}/ rw,
   owner @{config_dirs}/** rwk,
@@ -141,7 +137,7 @@
 
   owner @{user_config_dirs}/kioslaverc r,
   owner @{user_config_dirs}/menus/applications-merged/ r,
-  owner @{user_config_dirs}/menus/applications-merged/xdg-desktop-menu-dummy.menu r,
+  owner @{user_config_dirs}/menus/applications-merged/*.menu rw,
 
   # For importing data (bookmarks, cookies, etc) from Firefox
   # owner @{HOME}/.mozilla/firefox/profiles.ini r,
@@ -159,6 +155,7 @@
   owner @{tmp}/.@{domain}.@{rand6}/{,**} rw,
   owner @{tmp}/@{name}-crashlog-@{int}-@{int}.txt rw,
   owner @{tmp}/scoped_dir@{rand6}/{,**} rw,
+  owner @{tmp}/tmp.@{rand10} rw,
   owner @{tmp}/tmp.@{rand6} rw,
   owner @{tmp}/tmp.@{rand6}/ rw,
   owner @{tmp}/tmp.@{rand6}/** rwk,
@@ -202,6 +199,7 @@
   owner @{PROC}/@{pid}/mounts r,
   owner @{PROC}/@{pid}/oom_{,score_}adj rw,
   owner @{PROC}/@{pid}/setgroups w,
+  owner @{PROC}/@{pid}/smaps_rollup r,
   owner @{PROC}/@{pid}/task/ r,
   owner @{PROC}/@{pid}/task/@{tid}/comm rw,
   owner @{PROC}/@{pid}/task/@{tid}/stat r,

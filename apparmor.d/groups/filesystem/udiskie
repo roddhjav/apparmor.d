@@ -1,0 +1,42 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2018-2021 Mikhail Morfikov
+# Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/udiskie
+profile udiskie @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/dconf-write>
+  include <abstractions/desktop>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/graphics>
+  include <abstractions/python>
+  include <abstractions/thumbnails-cache-read>
+  include <abstractions/user-download-strict>
+
+  @{exec_path} r,
+  @{python_path} r,
+
+  @{bin}/ r,
+  @{open_path} rPx -> child-open,
+
+  /etc/fstab r,
+
+  owner @{user_config_dirs}/udiskie/ r,
+  owner @{user_config_dirs}/udiskie/config.yml r,
+
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/mounts r,
+  owner @{PROC}/@{pid}/mountinfo r,
+
+  # Silencer
+  deny @{lib}/** w,
+
+  include if exists <local/udiskie>
+}
+
+# vim:syntax=apparmor

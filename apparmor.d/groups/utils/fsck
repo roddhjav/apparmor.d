@@ -1,0 +1,44 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2020-2022 Mikhail Morfikov
+# Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{sbin}/fsck
+profile fsck @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/disks-read>
+
+  capability dac_override,
+  capability dac_read_search,
+  capability sys_rawio,
+
+  @{exec_path} mr,
+
+  @{sbin}/e2fsck rPx,
+  @{sbin}/fsck.* rPx,
+
+  /etc/fstab r,
+
+  # When a mount dir is passed to fsck as an argument.
+  @{HOME}/ r,
+  @{MOUNTS}/ r,
+  @{efi}/ r,
+
+        @{run}/mount/utab r,
+        @{run}/systemd/fsck.progress rw,
+  owner @{run}/blkid/blkid.tab.old rwl -> @{run}/blkid/blkid.tab,
+  owner @{run}/blkid/blkid.tab{,-@{rand6}} rw,
+  owner @{run}/fsck/ rw,
+  owner @{run}/fsck/*.lock rwk,
+
+  @{PROC}/@{pids}/mountinfo r,
+  @{PROC}/partitions r,
+
+  include if exists <local/fsck>
+}
+
+# vim:syntax=apparmor

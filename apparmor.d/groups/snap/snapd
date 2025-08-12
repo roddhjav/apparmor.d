@@ -1,0 +1,238 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{bin_dirs} = @{bin}/ /snap/{snapd,core}/@{int}@{bin}
+@{lib_dirs} = @{lib}/ /snap/{snapd,core}/@{int}@{lib}
+
+@{exec_path} = @{lib_dirs}/snapd/snapd
+profile snapd @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/authentication>
+  include <abstractions/bus-system>
+  include <abstractions/bus/org.freedesktop.PolicyKit1>
+  include <abstractions/bus/org.freedesktop.timedate1>
+  include <abstractions/disks-write>
+  include <abstractions/fontconfig-cache-write>
+  include <abstractions/fonts>
+  include <abstractions/nameservice-strict>
+  include <abstractions/ssl_certs>
+
+  capability audit_write,
+  capability chown,
+  capability dac_override,
+  capability dac_read_search,
+  capability fowner,
+  capability fsetid,
+  capability mac_admin,
+  capability net_admin,
+  capability setgid,
+  capability setuid,
+  capability sys_admin,
+  capability sys_ptrace,
+  capability sys_resource,
+
+  network inet stream,
+  network inet6 stream,
+  network inet dgram,
+  network inet6 dgram,
+  network netlink raw,
+  network unix stream,
+
+  mount fstype=squashfs /dev/loop@{int} -> /tmp/syscheck-mountpoint-@{int}/,
+  umount /tmp/syscheck-mountpoint-@{int}/,
+  umount /snap/*/*/,
+
+  ptrace read peer=@{p_systemd},
+  ptrace read peer=snap{,.*},
+
+  signal send set=kill peer=snapd//journalctl,
+
+  dbus send bus=system path=/org/freedesktop/
+         interface=org.freedesktop.login1.Manager
+         member={SetWallMessage,ScheduleShutdown}
+         peer=(name=org.freedesktop.login1, label="@{p_systemd_logind}"),
+
+  dbus send bus=system path=/org/freedesktop/timedate1
+       interface=org.freedesktop.DBus.Properties
+       member=Get
+       peer=(name=org.freedesktop.timedate1),
+
+  @{exec_path} mrix,
+
+  @{sh_path}                      rix,
+  @{sbin}/adduser                 rPx,
+  @{sbin}/apparmor_parser         rPx,
+  @{bin}/cp                       rix,
+  @{bin}/getent                   rix,
+  @{sbin}/groupadd                rPx,
+  @{bin}/gzip                     rix,
+  @{bin}/hostnamectl              rPx,
+  @{bin}/journalctl               rCx -> journalctl,
+  @{bin}/kmod                     rPx,
+  @{bin}/mount                    rix,
+  @{sbin}/runuser                 rCx -> runuser,
+  @{bin}/ssh-keygen               rPx,
+  @{bin}/sync                     rix,
+  @{bin}/systemctl                rCx -> systemctl,
+  @{bin}/systemd-detect-virt      rPx,
+  @{bin}/tar                      rix,
+  @{bin}/udevadm                  rPx,
+  @{bin}/umount                   rix,
+  @{bin}/unsquashfs               rix,
+  @{bin}/update-desktop-database  rPx,
+  @{sbin}/useradd                 rPx,
+
+  @{bin_dirs}/fc-cache-*              mr,
+  @{bin_dirs}/snap                  rPUx,
+  @{bin_dirs}/xdelta3                rix,
+  @{lib_dirs}/@{multiarch}/**         mr,
+  @{lib_dirs}/@{multiarch}/ld-*.so   rix,
+  @{lib_dirs}/snapd/apparmor_parser  rPx,
+  @{lib_dirs}/snapd/snap-discard-ns  rPx,
+  @{lib_dirs}/snapd/snap-seccomp     rPx,
+  @{lib_dirs}/snapd/snap-update-ns   rPx,
+
+  /usr/share/bash-completion/{,**} r,
+  /usr/share/dbus-1/{system,session}.d/{,snapd*} rw,
+  /usr/share/dbus-1/services/*snap* r,
+  /usr/share/polkit-1/actions/{,**/} r,
+
+  @{etc_ro}/environment r,
+  /etc/apparmor.d/*snapd.snap* r,
+  /etc/dbus-1/system.d/{,**/} r,
+  /etc/fstab r,
+  /etc/mime.types r,
+  /etc/modprobe.d/{,**/} r,
+  /etc/modules-load.d/{,**/} r,
+  /etc/modules-load.d/*snap* rw,
+  /etc/polkit-1/rules.d/{,**/} r,
+  /etc/systemd/system/{,**/} r,
+  /etc/systemd/system/snap* rw,
+  /etc/systemd/user/{,**/} rw,
+  /etc/systemd/user/**/*snap* rw,
+  /etc/systemd/user/*snap* rw,
+  /etc/udev/rules.d/{,*snap*} rw,
+
+  /snap/{,**} rw,
+  /var/cache/snapd/{,**} rwlk,
+  /var/lib/snapd/{,**} rwlk,
+  /var/snap/{,**} rw,
+
+  /var/cache/apparmor/{,*/} r,
+  /var/cache/apparmor/*/snap* rw,
+
+  /tmp/ r,
+  /tmp/read-file@{int}/{,**} rw,
+  /tmp/snapd@{int}/ rw,
+  /tmp/snapd@{int}/** rw,
+  /tmp/syscheck-mountpoint-@{int}/{,**} rw,
+  /tmp/syscheck-squashfs-@{int} rw,
+
+  @{efi}/ r,
+  @{efi}/grub/grubenv r,
+
+  / r,
+  /home/ r,
+  @{HOME}/ r,
+  @{HOME}/snap/{,**} rw,
+  @{HOME}/.snap*/{,**} rw,
+
+  owner @{run}/mount/ rw,
+  owner @{run}/mount/utab{,.*} rw,
+  owner @{run}/mount/utab.lock wk,
+
+  @{run}/user/ r,
+  @{run}/user/@{uid}/ r,
+  @{run}/user/@{uid}/snapd-session-agent.socket rw,
+  @{run}/user/snap.*/{,**} rw,
+
+  @{run}/mount/utab.act rk,
+  @{run}/snapd*.socket rw,
+  @{run}/snapd/{,**} rw,
+  @{run}/snapd/lock/*.lock rwk,
+  @{run}/systemd/notify rw,
+  @{run}/systemd/private rw,
+
+  @{sys}/fs/cgroup/{,*/} r,
+  @{sys}/fs/cgroup/*.slice/ r,
+  @{sys}/fs/cgroup/*.slice/{,**/} r,
+  @{sys}/fs/cgroup/*.slice/**/cgroup.procs r,
+  @{sys}/fs/cgroup/cgroup.controllers r,
+  @{sys}/kernel/kexec_loaded r,
+  @{sys}/kernel/security/apparmor/.notify r,
+  @{sys}/kernel/security/apparmor/features/{,**} r,
+  @{sys}/kernel/security/apparmor/profiles r,
+
+        @{PROC}/@{pid}/cgroup r,
+        @{PROC}/@{pid}/mounts r,
+        @{PROC}/@{pid}/stat r,
+        @{PROC}/cgroups r,
+        @{PROC}/cmdline r,
+        @{PROC}/sys/kernel/seccomp/actions_avail r,
+        @{PROC}/version r,
+  owner @{PROC}/@{pids}/cmdline r,
+  owner @{PROC}/@{pids}/mountinfo r,
+
+  /dev/loop-control rw,
+
+  profile systemctl {
+    include <abstractions/base>
+    include <abstractions/app/systemctl>
+
+    capability net_admin,
+    capability sys_resource,
+
+    network netlink raw,
+
+    /etc/systemd/system/{,**/} r,
+    /etc/systemd/system/snap* rw,
+    /etc/systemd/user/{,**/} rw,
+    /etc/systemd/user/**/*snap* rw,
+    /etc/systemd/user/*snap* rw,
+
+    @{run}/systemd/notify rw,
+
+    include if exists <local/snapd_systemctl>
+  }
+
+  profile journalctl {
+    include <abstractions/base>
+    include <abstractions/consoles>
+
+    capability net_admin,
+    capability sys_resource,
+
+    network netlink raw,
+
+    signal receive set=kill peer=snapd,
+
+    @{bin}/journalctl mr,
+
+    /etc/machine-id r,
+    /var/lib/dbus/machine-id r,
+
+    /{run,var}/log/journal/ r,
+    /{run,var}/log/journal/@{hex32}/{,*} r,
+
+    @{run}/systemd/notify w,
+
+    include if exists <local/snapd_journalctl>
+  }
+
+  profile runuser {
+    include <abstractions/base>
+
+    @{sbin}/runuser mr,
+
+    include if exists <local/snapd_runuser>
+  }
+
+  include if exists <local/snapd>
+}
+
+# vim:syntax=apparmor

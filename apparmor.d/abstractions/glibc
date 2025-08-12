@@ -1,0 +1,41 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2002-2009 Novell/SUSE
+# Copyright (C) 2009-2011 Canonical Ltd.
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+  abi <abi/4.0>,
+
+  # Used by Glibc when binding to ephemeral ports
+  @{etc_ro}/bindresvport.blacklist r,
+
+  # Depending on which Glibc routine uses this file, base may not be the
+  # best place -- but many profiles require it, and it is quite harmless.
+  @{PROC}/sys/kernel/ngroups_max r,
+
+  # Glibc's sysconf(3) routine to determine free memory, etc
+  @{sys}/devices/system/cpu/ r,
+  @{sys}/devices/system/cpu/online r,
+  @{sys}/devices/system/cpu/possible r,
+  @{PROC}/cpuinfo r,
+  @{PROC}/meminfo r,
+  @{PROC}/stat r,
+
+  # Glibc's *printf protections read the maps file
+  @{PROC}/@{pid}/auxv r,
+  @{PROC}/@{pid}/maps r,
+  @{PROC}/@{pid}/status r,
+
+  # Glibc statvfs
+  @{PROC}/filesystems r,
+
+  # Glibc malloc (man 5 proc)
+  @{PROC}/sys/vm/overcommit_memory r,
+
+  # Recent glibc uses /dev/full in preference to /dev/null for programs
+  # that don't have open fds at exec()
+  /dev/full rw,
+
+  include if exists <abstractions/glibc.d>
+
+# vim:syntax=apparmor

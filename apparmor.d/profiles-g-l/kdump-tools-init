@@ -1,0 +1,38 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = /etc/init.d/kdump-tools
+profile kdump-tools-init @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+
+  @{exec_path} mr,
+  @{sh_path} mr,
+
+  @{bin}/cat            ix,
+  @{bin}/plymouth       Px,
+  @{bin}/run-parts      ix,
+  @{bin}/systemctl      Cx -> systemctl,
+  @{sbin}/kdump-config  Px,
+
+  /etc/default/kdump-tools r,
+
+  @{PROC}/cmdline r,
+
+  profile systemctl flags=(attach_disconnected) {
+    include <abstractions/base>
+    include <abstractions/app/systemctl>
+
+    capability net_admin,
+
+    include if exists <local/kdump-tools-init_systemctl>
+  }
+
+  include if exists <local/kdump-tools-init>
+}
+
+# vim:syntax=apparmor

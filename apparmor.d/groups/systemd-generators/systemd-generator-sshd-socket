@@ -1,0 +1,28 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/systemd/system-generators/sshd-socket-generator
+profile systemd-generator-sshd-socket @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+
+  network inet dgram,
+  network inet6 dgram,
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  @{etc_ro}/ssh/sshd_config r,
+  @{etc_ro}/ssh/sshd_config.d/{,*} r,
+
+  @{run}/systemd/generator/ssh.socket.d/{,*} rw,
+
+  include if exists <local/systemd-generator-sshd-socket>
+}
+
+# vim:syntax=apparmor

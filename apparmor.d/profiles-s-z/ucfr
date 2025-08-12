@@ -1,0 +1,38 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/ucfr
+profile ucfr @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+
+  @{exec_path} mr,
+
+  @{sh_path}                     r,
+  @{bin}/{,e}grep               ix,
+  @{bin}/{m,g,}awk              ix,
+  @{bin}/basename               ix,
+  @{bin}/dirname                ix,
+  @{bin}/getopt                 ix,
+  @{bin}/id                     ix,
+  @{bin}/readlink               ix,
+  @{bin}/sed                    ix,
+
+  /usr/share/ucf/{,**} r,
+
+  /etc/ucf.conf r,
+
+  / r,
+
+  /var/lib/ucf/ r,
+  /var/lib/ucf/registry r,
+
+  include if exists <local/ucfr>
+}
+
+# vim:syntax=apparmor

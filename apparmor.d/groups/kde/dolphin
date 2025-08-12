@@ -21,6 +21,7 @@ profile dolphin @{exec_path} {
   include <abstractions/kde-strict>
   include <abstractions/nameservice-strict>
   include <abstractions/recent-documents-write>
+  include <abstractions/thumbnails-cache-write>
 
   network netlink raw,
 
@@ -28,8 +29,11 @@ profile dolphin @{exec_path} {
 
   @{exec_path} mr,
 
+  @{lib}/libheif/            r,
+  @{lib}/libheif/*.so*      mr,
+
   @{bin}/ldd            rix,
-  @{bin}/lsb_release    rPx -> lsb_release,
+  @{bin}/lsb_release    rPx,
   @{lib}/{,@{multiarch}/}utempter/utempter rPx,
   @{thunderbird_path}   rPx,
 
@@ -40,8 +44,10 @@ profile dolphin @{exec_path} {
   /usr/share/kservices{5,6}/{,**} r,
   /usr/share/kservicetypes5/{,**} r,
   /usr/share/misc/termcap r,
+  /usr/share/thumbnailers/{,**} r,
 
   /etc/fstab r,
+  /etc/exports r,
   /etc/machine-id r,
   /etc/xdg/arkrc r,
   /etc/xdg/dolphinrc r,
@@ -62,7 +68,7 @@ profile dolphin @{exec_path} {
   owner @{tmp}/{,**} rw,
 
   # Silence non user's data
-  deny /boot/{,**} r,
+  deny @{efi}/{,**} r,
   deny /opt/{,**} r,
   deny /root/{,**} r,
   deny /tmp/.* rw,
@@ -71,14 +77,17 @@ profile dolphin @{exec_path} {
   owner @{user_share_dirs}/dolphin/ rw,
   owner @{user_share_dirs}/dolphin/** rwkl -> @{user_share_dirs}/dolphin/#@{int},
   owner @{user_share_dirs}/recently-used.xbel{,.*} rwlk,
+  owner @{user_state_dirs}/dolphinstaterc{,.*} rwlk,
 
   owner @{user_config_dirs}/#@{int} rw,
   owner @{user_config_dirs}/dolphinrc rwl -> @{user_config_dirs}/#@{int},
   owner @{user_config_dirs}/dolphinrc.@{rand6} rwl -> @{user_config_dirs}/#@{int},
   owner @{user_config_dirs}/dolphinrc.lock rwk,
   owner @{user_config_dirs}/kde.org/#@{int} rw,
-  owner @{user_config_dirs}/kde.org/UserFeedback.org.kde.dolphin.conf{,.*} rwlk -> @{user_config_dirs}/kde.org/#@{int},
   owner @{user_config_dirs}/kde.org/UserFeedback.org.kde.dolphin.conf.lock rwk,
+  owner @{user_config_dirs}/kde.org/UserFeedback.org.kde.dolphin.conf{,.*} rwlk -> @{user_config_dirs}/kde.org/#@{int},
+  owner @{user_config_dirs}/knfsshare.{,.@{rand6}} rwk,
+  owner @{user_config_dirs}/knfsshare.lock rwk,
 
   owner @{user_config_dirs}/session/ rw,
   owner @{user_config_dirs}/session/#@{int} rw,
@@ -89,14 +98,22 @@ profile dolphin @{exec_path} {
 
   owner @{user_state_dirs}/dolphinstaterc{,.*} rwlk -> @{user_state_dirs}/#@{int},
 
+  owner @{tmp}/dolphin.@{rand6}{,.lock} rwlk,
+
         @{run}/issue r,
         @{run}/mount/utab r,
   owner @{run}/user/@{uid}/#@{int} rw,
   owner @{run}/user/@{uid}/dolphin@{rand6}.@{int}.kioworker.socket rwl -> @{run}/user/@{uid}/#@{int},
 
+  @{run}/udev/data/+*:* r,                # Identifies all subsystems
+  @{run}/udev/data/c@{int}:@{int} r,      # Identifies all character devices
+
   @{sys}/bus/ r,
   @{sys}/bus/*/devices/ r,
+  @{sys}/class/*/ r,
+  @{sys}/devices/**/uevent r,
 
+  owner @{PROC}/@{pid}/cmdline r,
   owner @{PROC}/@{pid}/mountinfo r,
   owner @{PROC}/@{pid}/mounts r,
 

@@ -1,0 +1,24 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/systemd/systemd-nsresourcework
+profile systemd-nsresourcework @{exec_path} {
+  include <abstractions/base>
+
+  capability sys_resource,
+
+  signal send set=usr2 peer=systemd-nsresourced,
+
+  @{exec_path} mr,
+
+  @{run}/systemd/nsresource/registry/ r,
+
+  include if exists <local/systemd-nsresourcework>
+}
+
+# vim:syntax=apparmor

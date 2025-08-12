@@ -1,0 +1,40 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 tpaau-17DB <tpaau-17db@tutamail.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/spotdl
+profile spotdl @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+  include <abstractions/python>
+  include <abstractions/ssl_certs>
+  include <abstractions/user-download-strict>
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+
+  @{exec_path} mr,
+  @{python_path} r,
+
+  @{bin}/ffmpeg rPx,
+  @{bin}/ffprobe rPx,
+
+  owner @{user_music_dirs}/{,**} rwk,
+
+  owner @{HOME}/.spotdl/** rw,
+
+  owner @{user_cache_dirs}/spotdl/{,**} rw,
+  owner @{user_config_dirs}/spotdl/{,**} rw,
+
+  owner @{PROC}/@{pid}/fd/ r,
+
+  include if exists <local/spotdl>
+}
+
+# vim:syntax=apparmor

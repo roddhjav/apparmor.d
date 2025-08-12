@@ -32,11 +32,11 @@ profile gnome-session-binary @{exec_path} flags=(attach_disconnected) {
   signal (send) set=(term) peer=gsd-*,
 
   #aa:dbus own bus=session name=org.gnome.SessionManager
-  #aa:dbus talk bus=system name=org.freedesktop.login1 label=systemd-logind
+  #aa:dbus talk bus=system name=org.freedesktop.login1 label="@{p_systemd_logind}"
 
   dbus send bus=session path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus
-       member={GetConnectionUnixUser,GetConnectionUnixProcessID,UpdateActivationEnvironment}
+       member=UpdateActivationEnvironment
        peer=(name=org.freedesktop.DBus label="@{p_dbus_session}"),
 
   dbus send bus=session path=/org/freedesktop/systemd1
@@ -60,6 +60,7 @@ profile gnome-session-binary @{exec_path} flags=(attach_disconnected) {
   /usr/share/gdm/greeter/autostart/{,*.desktop} r,
   /usr/share/gnome-session/hardware-compatibility r,
   /usr/share/gnome-session/sessions/*.session r,
+  /usr/share/gnome-shell/extensions/ r,
   /usr/share/gnome-shell/extensions/*/metadata.json r,
   /usr/share/gnome/autostart/{,*.desktop} r,
 
@@ -69,6 +70,7 @@ profile gnome-session-binary @{exec_path} flags=(attach_disconnected) {
   owner @{gdm_config_dirs}/dconf/user rw,
   owner @{gdm_config_dirs}/gnome-session/ rw,
   owner @{gdm_config_dirs}/gnome-session/saved-session/ rw,
+  owner @{gdm_config_dirs}/user-dirs.dirs r,
   owner @{GDM_HOME}/greeter-dconf-defaults r,
   owner @{gdm_share_dirs}/applications/{,**} r,
 
@@ -102,7 +104,7 @@ profile gnome-session-binary @{exec_path} flags=(attach_disconnected) {
 
   profile open flags=(attach_disconnected) {
     include <abstractions/base>
-    include <abstractions/attached/consoles>
+    include <abstractions/consoles>
     include <abstractions/desktop>
 
     @{bin}/env rix,

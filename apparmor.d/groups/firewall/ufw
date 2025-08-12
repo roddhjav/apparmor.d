@@ -1,0 +1,90 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 EricLin <ericlin050914@gmail.com>
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{sbin}/ufw
+profile ufw @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+  include <abstractions/python>
+
+  capability dac_read_search,
+  capability net_admin,
+  capability net_raw,
+  capability sys_ptrace,
+
+  network inet dgram,
+  network inet raw,
+  network inet6 dgram,
+  network inet6 raw,
+  network netlink raw,
+
+  ptrace read,
+
+  @{exec_path} mr,
+
+  @{python_path}               rix,
+  @{sbin}/ r,
+  @{bin}/cat                   rix,
+  @{bin}/env                   r,
+  @{bin}/kmod                  rCx -> kmod,
+  @{lib}/ufw/ufw-init          rPx,
+  @{sbin}/sysctl               rCx -> sysctl,
+  @{sbin}/xtables-legacy-multi rix,
+  @{sbin}/xtables-nft-multi    rix,
+
+  /etc/default/ufw rw,
+  /etc/ufw/ rw,
+  /etc/ufw/** rwk,
+
+        @{run}/xtables.lock rwk,
+  owner @{run}/ufw.lock rwk,
+
+  owner @{tmp}/@{word8} rw,
+  owner @{tmp}/tmp@{word8} rw,
+  owner /var/tmp/@{word8} rw,
+  owner /var/tmp/tmp@{word8} rw,
+
+  @{PROC}/@{pid}/fd/ r,
+  @{PROC}/@{pid}/net/ip_tables_names r,
+  @{PROC}/@{pid}/stat r,
+  @{PROC}/sys/net/ipv{4,6}/** rw,
+  @{PROC}/sys/kernel/modprobe r,
+
+  profile kmod flags=(attach_disconnected) {
+    include <abstractions/base>
+    include <abstractions/app/kmod>
+
+    capability sys_module,
+
+    @{sys}/module/compression r,
+    @{sys}/module/*/initstate r,
+
+    include if exists <local/ufw_kmod>
+  }
+
+  profile sysctl {
+    include <abstractions/base>
+    include <abstractions/consoles>
+
+    capability net_admin,
+
+    @{sbin}/sysctl mr,
+
+    /etc/ufw/sysctl.conf r,
+
+    @{PROC}/sys/net/ipv{4,6}/** rw,
+
+    include if exists <local/ufw_sysctl>
+  }
+
+  include if exists <local/ufw>
+}
+
+# vim:syntax=apparmor

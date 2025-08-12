@@ -6,7 +6,7 @@ abi <abi/4.0>,
 
 include <tunables/global>
 
-@{exec_path} = @{bin}/gdm{3,}
+@{exec_path} = @{sbin}/gdm @{sbin}/gdm3
 profile gdm @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus-session>
@@ -34,13 +34,8 @@ profile gdm @{exec_path} flags=(attach_disconnected) {
 
   #aa:dbus own bus=system name=org.gnome.DisplayManager
 
-  #aa:dbus talk bus=system name=org.freedesktop.login1 label=systemd-logind
-  #aa:dbus talk bus=system name=org.freedesktop.Accounts label=accounts-daemon
-
-  dbus send bus=system path=/org/freedesktop/DBus
-       interface=org.freedesktop.DBus
-       member={GetConnectionUnixProcessID,GetConnectionUnixUser}
-       peer=(name=org.freedesktop.DBus, label="@{p_dbus_system}"),
+  #aa:dbus talk bus=system name=org.freedesktop.login1 label="@{p_systemd_logind}"
+  #aa:dbus talk bus=system name=org.freedesktop.Accounts label="@{p_accounts_daemon}"
 
   @{exec_path} mr,
 
@@ -50,7 +45,7 @@ profile gdm @{exec_path} flags=(attach_disconnected) {
   @{bin}/plymouth                  rPx,
   @{bin}/prime-switch             rPUx,
   @{bin}/sleep                     rix,
-  @{bin}/systemd-cat               rPx,
+  @{bin}/systemd-cat               rix,
   @{lib}/{,gdm/}gdm-session-worker rPx,
   /etc/gdm{3,}/PrimeOff/Default    rix,
 
@@ -92,7 +87,7 @@ profile gdm @{exec_path} flags=(attach_disconnected) {
   @{sys}/devices/**/uevent r,
   @{sys}/devices/@{pci}/boot_vga r,
   @{sys}/devices/virtual/tty/tty@{int}/active r,
-  @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/session-@{int}.scope/cgroup.events r,
+  @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/session-@{word}.scope/cgroup.events r,
 
         @{PROC}/@{pid}/cgroup r,
         @{PROC}/1/environ r,

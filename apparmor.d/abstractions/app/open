@@ -3,18 +3,45 @@
 # SPDX-License-Identifier: GPL-2.0-only
 # LOGPROF-SUGGEST: no
 
-# Full set of rules for child-open-* profiles.
+# Full set of rules for desktop generic open-* used in child-open-* profiles.
 
   abi <abi/4.0>,
 
   include <abstractions/desktop>
 
-  @{open_path} mrix,
+  # We cannot use `@{open_path} mrix,` here because it includes:
+  #     @{lib}/@{multiarch}/glib-@{version}/gio-launch-desktop
+  # And `@{multiarch}` has a wildcard that cannot be merged and that will generate
+  # "has merged rule with conflicting x modifiers" error when used with other
+  # wilcard over PUx transition.
+  @{bin}/exo-open            mrix,
+  @{bin}/xdg-open            mrix,
+  @{bin}/gio                 mrix,
+  @{bin}/kde-open            mrix,
+  @{bin}/gio-launch-desktop  mrix,
+  @{lib}/gio-launch-desktop  mrix,
 
-  @{sh_path} r,
   @{bin}/env rix,
+  @{sh_path} r,
 
   /dev/tty rw,
+
+  # if @{DE} == kde
+
+    include <abstractions/audio-client>
+    include <abstractions/bus-accessibility>
+    include <abstractions/bus-session>
+    include <abstractions/bus/org.a11y>
+    include <abstractions/graphics>
+
+    /etc/xdg/menus/ r,
+
+    owner @{run}/user/@{uid}/#@{int} rw,
+    owner @{run}/user/@{uid}/kioclient@{rand6}.@{int}.kioworker.socket rwl -> @{run}/user/@{uid}/#@{int},
+
+    @{PROC}/sys/kernel/random/boot_id r,
+
+  # fi
 
   include if exists <abstractions/app/open.d>
 

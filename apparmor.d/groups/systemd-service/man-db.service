@@ -1,0 +1,41 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# ExecStart=+/usr/bin/install -d -o man -g man -m 0755 /var/cache/man
+# ExecStart=/usr/bin/find /var/cache/man -type f -name *.gz -atime +6 -delete
+# ExecStart=/usr/bin/mandb --quiet
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+profile man-db.service flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+
+  @{bin}/find     ix,
+  @{bin}/install  ix,
+  @{bin}/mandb    r,
+
+  /usr/{,local/}share/man/{,**} r,
+
+  /etc/man_db.conf r,
+  /etc/manpath.config r,
+
+  /usr/share/man/{,**} r,
+  /usr/local/man/{,**} r,
+  /usr/local/share/man/{,**} r,
+
+  /usr/{,share/}man/{,**} r,
+  /usr/local/{,share/}man/{,**} r,
+
+  /usr/share/**/man/man@{u8}/*.@{int}.gz r,
+
+  owner /var/cache/man/ rw,
+  owner /var/cache/man/** rwk,
+
+  include if exists <local/man-db.service>
+}
+
+# vim:syntax=apparmor

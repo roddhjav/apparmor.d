@@ -1,0 +1,35 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{lib_dirs} = @{lib}/ /snap/{snapd,core}/@{int}@{lib}
+
+@{exec_path} = @{lib_dirs}/snapd/snap-seccomp
+profile snap-seccomp @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+
+  capability dac_read_search,
+
+  network netlink raw,
+
+  @{exec_path} mr,
+  @{lib_dirs}/**.so* mr,
+
+  @{bin}/getent rix,
+
+  /var/lib/snapd/seccomp/bpf/{,**} rw,
+
+  owner @{PROC}/@{pids}/mountinfo r,
+
+  deny @{user_share_dirs}/gvfs-metadata/* r,
+
+  include if exists <local/snap-seccomp>
+}
+
+# vim:syntax=apparmor

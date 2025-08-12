@@ -14,10 +14,12 @@ profile systemd-networkd @{exec_path} flags=(attach_disconnected) {
   include <abstractions/bus/org.freedesktop.hostname1>
   include <abstractions/common/systemd>
 
+  capability bpf,
   capability net_admin,
   capability net_bind_service,
   capability net_broadcast,
   capability net_raw,
+  capability sys_admin,
 
   network inet dgram,
   network inet6 dgram,
@@ -27,7 +29,9 @@ profile systemd-networkd @{exec_path} flags=(attach_disconnected) {
   network packet dgram,
   network packet raw,
 
-  unix (bind) type=stream addr=@@{udbus}/bus/systemd-network/bus-api-network,
+  unix bind type=stream addr=@@{udbus}/bus/systemd-network/bus-api-network,
+
+  signal receive set=usr2 peer=@{p_systemd},
 
   #aa:dbus own bus=system name=org.freedesktop.network1
 
@@ -38,39 +42,52 @@ profile systemd-networkd @{exec_path} flags=(attach_disconnected) {
   dbus send bus=system path=/org/freedesktop/hostname1
        interface=org.freedesktop.hostname1
        member=SetHostname
-       peer=(name=org.freedesktop.hostname1, label=systemd-hostnamed),
+       peer=(name=org.freedesktop.hostname1, label="@{p_systemd_hostnamed}"),
 
   @{exec_path} mr,
 
   /var/lib/dbus/machine-id r,
   /etc/machine-id r,
 
-  /etc/systemd/networkd.conf r,
+  /etc/systemd/network.conf r,
   /etc/systemd/network/{,**} r,
+  /etc/systemd/networkd.conf r,
+  /etc/systemd/networkd.conf.d/{,**} r,
 
   /etc/networkd-dispatcher/carrier.d/{,*} r,
 
   @{att}/ r,
+  @{att}/@{run}/systemd/notify rw,
+
+  @{run}/mount/utab r,
+  @{run}/systemd/resolve/resolv.conf r,
 
   owner @{att}/var/lib/systemd/network/ r,
 
+  owner /var/lib/systemd/network/ rw,
+  owner /var/lib/systemd/network/** rwk,
+
         @{run}/systemd/network/ r,
         @{run}/systemd/network/*.network r,
-        @{run}/systemd/notify rw,
   owner @{run}/systemd/netif/** rw,
 
-  @{run}/udev/data/n@{int} r,
+  @{run}/udev/data/n@{int} r,             # For network interfaces
 
+  @{sys}/devices/@{pci}/ r,
   @{sys}/devices/@{pci}/rfkill@{int}/* r,
   @{sys}/devices/**/net/** r,
-  @{sys}/devices/@{pci}/ r,
   @{sys}/devices/virtual/dmi/id/{sys,board,bios}_vendor r,
   @{sys}/devices/virtual/dmi/id/product_name r,
   @{sys}/devices/virtual/dmi/id/product_version r,
+  @{sys}/fs/cgroup/ r,
+  @{sys}/kernel/btf/vmlinux r,
 
-  @{PROC}/@{pid}/cgroup r,
-  @{PROC}/pressure/* r,
-  @{PROC}/sys/net/ipv{4,6}/** rw,
+        @{PROC}/@{pid}/cgroup r,
+        @{PROC}/pressure/* r,
+        @{PROC}/sys/net/ipv{4,6}/** rw,
+        @{PROC}/version_signature r,
+  owner @{PROC}/@{pid}/fdinfo/@{int} r,
+  owner @{PROC}/@{pid}/mountinfo r,
 
   include if exists <local/systemd-networkd>
 }

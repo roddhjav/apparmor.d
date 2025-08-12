@@ -22,29 +22,37 @@ profile remmina @{exec_path} {
   include <abstractions/bus/org.kde.StatusNotifierWatcher>
   include <abstractions/dconf-write>
   include <abstractions/desktop>
+  include <abstractions/fontconfig-cache-read>
   include <abstractions/ibus>
   include <abstractions/nameservice-strict>
   include <abstractions/ssl_certs>
+  include <abstractions/thumbnails-cache-read>
   include <abstractions/user-download-strict>
 
   network inet stream,
   network inet6 stream,
+  network inet dgram,
+  network inet6 dgram,
   network netlink raw,
 
-  #aa:dbus own bus=session name=org.remmina.Remmina
+  #aa:dbus own bus=session name=org.remmina.Remmina interface+=org.gtk.Actions
   #aa:dbus talk bus=session name=org.ayatana.NotificationItem label=gnome-shell
   #aa:dbus talk bus=session name=org.gtk.vfs label="gvfsd{,-*}"
 
-  @{exec_path} r,
+  @{exec_path} rm,
+
+  @{open_path} rPx -> child-open-browsers,
 
   /usr/share/remmina/{,**} r,
   /usr/share/themes/{,**} r,
 
-  /etc/timezone r,
+  /etc/fstab r,
   /etc/ssh/ssh_config r,
   /etc/ssh/ssh_config.d/{,*} r,
+  /etc/timezone r,
 
-  owner @{HOME}/@{XDG_SSH_DIR}/{,*} r,
+  owner @{HOME}/@{XDG_SSH_DIR}/config r,
+  owner @{HOME}/@{XDG_SSH_DIR}/known_hosts r,
 
   owner @{user_cache_dirs}/org.remmina.Remmina/{,**} rw,
   owner @{user_cache_dirs}/remmina/{,**} rw,
@@ -57,6 +65,9 @@ profile remmina @{exec_path} {
   owner @{PROC}/@{pid}/mountinfo r,
 
   owner @{run}/user/@{uid}/keyring/ssh rw,
+
+  @{sys}/devices/system/node/ r,
+  @{sys}/devices/system/node/node@{int}/meminfo r,
 
   include if exists <local/remmina>
 }

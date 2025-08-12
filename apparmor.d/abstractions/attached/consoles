@@ -3,10 +3,26 @@
 # SPDX-License-Identifier: GPL-2.0-only
 # LOGPROF-SUGGEST: no
 
+  # Do not use it manually, It automatically replaces the consoles abstraction in a
+  # profile with the attach_disconnected flag set and the re-attached path enabled.
+
   abi <abi/4.0>,
 
-        @{att}/dev/tty@{int} rw,
-  owner @{att}/dev/pts/@{int} rw,
+  # There are the common ways to refer to consoles
+  /dev/console          rw,
+  /dev/tty              rw,
+  /dev/tty@{u8}         rw,
+  @{att}/dev/tty        rw,
+  @{att}/dev/tty@{u8}   rw,
+
+  # These entries are a bit unfortunate; /dev/tty will always be
+  # associated with the controlling terminal by the kernel, but if a
+  # program uses the /dev/pts/ interface, it actually has access to
+  # -all- xterm, sshd, etc, terminals on the system.
+        /dev/pts/ r,
+  owner /dev/pts/@{u16} rw,
+        @{att}/pts/ r,
+  owner @{att}/dev/pts/@{u16} rw,
 
   include if exists <abstractions/attached/consoles.d>
 

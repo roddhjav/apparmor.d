@@ -1,0 +1,48 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/aa-log
+profile aa-log @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+
+  capability dac_read_search,
+
+  @{exec_path} mr,
+
+  @{bin}/journalctl rCx -> journalctl,
+
+  /var/log/audit/* r,
+  /var/log/syslog* r,
+
+  /dev/tty@{int} rw,
+
+  profile journalctl {
+    include <abstractions/base>
+    include <abstractions/consoles>
+
+    capability sys_resource,
+
+    @{bin}/journalctl mr,
+
+    /etc/machine-id r,
+    /var/lib/dbus/machine-id r,
+
+    /{run,var}/log/journal/ r,
+    /{run,var}/log/journal/@{hex32}/{,*} r,
+
+    @{PROC}/sys/kernel/random/boot_id r,
+
+    include if exists <local/aa-log_journalctl>
+  }
+
+  include if exists <local/aa-log>
+}
+
+# vim:syntax=apparmor

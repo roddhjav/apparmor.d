@@ -10,10 +10,11 @@ include <tunables/global>
 profile gsd-housekeeping @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/app-launcher-user>
-  include <abstractions/attached/consoles>
   include <abstractions/bus-session>
+  include <abstractions/bus/org.freedesktop.systemd1-session>
   include <abstractions/bus/org.gnome.SessionManager>
   include <abstractions/bus/org.gtk.vfs.MountTracker>
+  include <abstractions/consoles>
   include <abstractions/dconf-write>
   include <abstractions/gnome-strict>
   include <abstractions/thumbnails-cache-write>
@@ -23,10 +24,10 @@ profile gsd-housekeeping @{exec_path} flags=(attach_disconnected) {
 
   #aa:dbus own bus=session name=org.gnome.SettingsDaemon.Housekeeping
 
-  dbus receive bus=session
-       interface=org.freedesktop.DBus.Introspectable
-       member=Introspect
-       peer=(name=:*, label=gnome-shell),
+  dbus send bus=session path=/org/freedesktop/systemd1
+       interface=org.freedesktop.systemd1.Manager
+       member=Subscribe
+       peer=(name=org.freedesktop.systemd1),
 
   @{exec_path} mr,
 

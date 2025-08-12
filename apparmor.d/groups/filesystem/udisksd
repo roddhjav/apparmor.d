@@ -1,0 +1,162 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2018-2021 Mikhail Morfikov
+# Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/{,udisks2/}udisksd
+profile udisksd @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/bus-system>
+  include <abstractions/disks-write>
+  include <abstractions/nameservice-strict>
+
+  capability chown,
+  capability dac_override,
+  capability dac_read_search,
+  capability fowner,
+  capability fsetid,
+  capability ipc_lock,
+  capability net_admin,
+  capability setgid,
+  capability setuid,
+  capability sys_admin,
+  capability sys_nice,
+  capability sys_rawio,
+
+  network netlink raw,
+
+  # Allow mounting of removable devices
+  mount fstype={btrfs,ext*,vfat,exfat,iso9660,udf,ntfs3} /dev/{s,v}d[a-z]*       -> @{MOUNTS}/*/,
+  mount fstype={btrfs,ext*,vfat,exfat,iso9660,udf,ntfs3} /dev/{s,v}d[a-z]*[0-9]* -> @{MOUNTS}/*/,
+  mount fstype={btrfs,ext*,vfat,exfat,iso9660,udf,ntfs3} /dev/dm-[0-9]*          -> @{MOUNTS}/*/,
+
+  # Allow mounting of loop devices (ISO files)
+  mount fstype={btrfs,ext*,vfat,exfat,iso9660,udf,ntfs3} /dev/loop[0-9]*        -> @{MOUNTS}/*/,
+  mount fstype={btrfs,ext*,vfat,exfat,iso9660,udf,ntfs3} /dev/loop[0-9]*p[0-9]* -> @{MOUNTS}/*/,
+
+  # Allow mounting of cdrom
+  mount fstype={btrfs,ext*,vfat,exfat,iso9660,udf,ntfs3} /dev/loop[0-9]* -> @{MOUNTS}/*/,
+  mount fstype={iso9660,udf,ntfs3}                       /dev/sr[0-9]*   -> @{MOUNTS}/*/,
+
+  # Allow mounting od sd cards
+  mount fstype={btrfs,ext*,vfat,exfat,iso9660,udf,ntfs3} /dev/mmcblk[0-9]         -> @{MOUNTS}/*/,
+  mount fstype={btrfs,ext*,vfat,exfat,iso9660,udf,ntfs3} /dev/mmcblk[0-9]*p[0-9]* -> @{MOUNTS}/*/,
+
+  mount options=(rw move) -> @{MOUNTS}/,
+  mount options=(rw move) -> @{MOUNTS}/*/,
+
+  mount fstype=vfat -> @{efi}/,
+
+  # Allow mounting on temporary mount point
+  mount -> @{run}/udisks2/temp-mount-*/,
+  mount / -> @{MOUNTS}/*/,
+
+  # Allow unmounting
+  umount @{MOUNTS}/,
+  umount @{MOUNTS}/*/,
+  umount @{run}/udisks2/temp-mount-*/,
+  umount @{efi}/,
+  umount /media/cdrom@{int}/,
+
+  signal receive set=int peer=@{p_systemd},
+
+  #aa:dbus own bus=system name=org.freedesktop.UDisks2
+  #aa:dbus talk bus=system name=org.freedesktop.login1 label="@{p_systemd_logind}"
+  #aa:dbus talk bus=system name=org.freedesktop.PolicyKit1 label="@{p_polkitd}"
+
+  @{exec_path} mr,
+
+  @{sh_path}             rix,
+  @{bin}/umount          rix,
+
+  @{sbin}/dmidecode           rPx,
+  @{sbin}/dumpe2fs            rPx,
+  @{bin}/eject                rPx,
+  @{sbin}/fsck.fat            rPx,
+  @{sbin}/lvm                 rPUx,
+  @{sbin}/mke2fs              rPx,
+  @{sbin}/mkfs.*              rPx,
+  @{bin}/mount.exfat-fuse    rPUx,
+  @{bin}/ntfs-3g              rPx,
+  @{bin}/ntfsfix              rPx,
+  @{sbin}/sfdisk              rPx,
+  @{sbin}/sgdisk              rPx,
+  @{bin}/systemctl            rCx -> systemctl,
+  @{bin}/systemd-escape       rPx,
+  @{bin}/xfs_*               rPUx,
+
+  /etc/crypttab r,
+  /etc/fstab r,
+  /etc/libblockdev/{,**} r,
+  /etc/nvme/* r,
+  /etc/udisks2/{,**} r,
+
+  /var/lib/udisks2/{,**} r,
+  /var/lib/udisks2/mounted-fs{,*} rw,
+
+  # Be able to create/delete dirs for removable media
+  @{MOUNTDIRS}/ rw,
+  @{MOUNTS}/ rw,
+  @{MOUNTS}/*/ rw,
+
+  @{att}/@{run}/systemd/inhibit/@{int}.ref rw,
+
+  @{run}/ r,
+  @{run}/mount/utab{,.*} rwk,
+  @{run}/udisks2/{,**} rw,
+  @{run}/systemd/seats/seat@{int} r,
+  @{run}/cryptsetup/ r,
+  @{run}/cryptsetup/L* rwk,
+
+  @{run}/udev/data/+acpi:* r,             # Exposes ACPI objects (power buttons, batteries, thermal)
+  @{run}/udev/data/+pci:* r,              # Identifies all PCI devices (CPU, GPU, Network, Disks, USB, etc.)
+  @{run}/udev/data/+platform:* r,         # Identifies onboard devices (laptop/board model, power controllers, thermal sensors)
+  @{run}/udev/data/+scsi:*      r,        # For SCSI devices. Block-storage for SATA, SAS, USB, iSCSI
+  @{run}/udev/data/+vmbus:* r,            # For Hyper-V devices, (network adapters, storage controllers, and other virtual devices)
+  @{run}/udev/data/c@{dynamic}:@{int} r,  # For dynamic assignment range 234 to 254, 384 to 511
+
+  @{sys}/bus/ r,
+  @{sys}/bus/pci/slots/ r,
+  @{sys}/bus/pci/slots/@{int}-@{int}/address r,
+  @{sys}/bus/pci/slots/@{int}/address r,
+  @{sys}/bus/scsi/devices/ r,
+  @{sys}/class/ r,
+  @{sys}/class/nvme-subsystem/ r,
+  @{sys}/class/nvme/ r,
+  @{sys}/devices/@{pci}/{ata,usb,mmc,virtio}@{int}/{,**/}uevent w,
+  @{sys}/devices/@{pci}/{ata,usb,mmc}@{int}/{,**/}remove rw,
+  @{sys}/devices/@{pci}/uevent rw,
+  @{sys}/devices/**/net/*/ r,
+  @{sys}/devices/**/uevent r,
+  @{sys}/devices/virtual/bdi/**/read_ahead_kb r,
+  @{sys}/devices/virtual/block/*/{,**} rw,
+  @{sys}/devices/virtual/block/loop@{int}/uevent rw,
+  @{sys}/devices/virtual/dmi/id/product_uuid r,
+  @{sys}/devices/virtual/nvme-subsystem/{,**} r,
+  @{sys}/fs/ r,
+
+        @{PROC}/cmdline r,
+        @{PROC}/devices r,
+        @{PROC}/swaps r,
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/mounts r,
+
+  /dev/loop-control rw,
+  /dev/null.@{int} rw,
+
+  profile systemctl {
+    include <abstractions/base>
+    include <abstractions/app/systemctl>
+
+    include if exists <local/udisksd_systemctl>
+  }
+
+  include if exists <local/udisksd>
+}
+
+# vim:syntax=apparmor

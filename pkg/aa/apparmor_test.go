@@ -211,7 +211,7 @@ func TestAppArmorProfileFile_Integration(t *testing.T) {
 					&Include{IsMagic: true, Path: "tunables/global"},
 					&Variable{
 						Name: "exec_path", Define: true,
-						Values: []string{"@{bin}/aa-status", "@{bin}/apparmor_status"},
+						Values: []string{"@{sbin}/aa-status", "@{sbin}/apparmor_status"},
 					},
 				},
 				Profiles: []*Profile{{
@@ -223,11 +223,11 @@ func TestAppArmorProfileFile_Integration(t *testing.T) {
 						&Include{IfExists: true, IsMagic: true, Path: "local/aa-status"},
 						&Capability{Names: []string{"dac_read_search"}},
 						&File{Path: "@{exec_path}", Access: []string{"m", "r"}},
-						&File{Path: "@{PROC}/@{pids}/attr/apparmor/current", Access: []string{"r"}},
+						&File{Path: "@{PROC}/@{pid}/attr/apparmor/current", Access: []string{"r"}},
 						&File{Path: "@{PROC}/", Access: []string{"r"}},
 						&File{Path: "@{sys}/module/apparmor/parameters/enabled", Access: []string{"r"}},
 						&File{Path: "@{sys}/kernel/security/apparmor/profiles", Access: []string{"r"}},
-						&File{Path: "@{PROC}/@{pids}/attr/current", Access: []string{"r"}},
+						&File{Path: "@{PROC}/@{pid}/attr/current", Access: []string{"r"}},
 						&Include{IsMagic: true, Path: "abstractions/consoles"},
 						&File{Owner: true, Path: "@{PROC}/@{pid}/mounts", Access: []string{"r"}},
 						&Include{IsMagic: true, Path: "abstractions/base"},
@@ -237,7 +237,7 @@ func TestAppArmorProfileFile_Integration(t *testing.T) {
 					},
 				}},
 			},
-			want: mustReadProfileFile(intData.Join("profiles-a-f/aa-status")),
+			want: mustReadProfileFile(intData.Join("groups/apparmor/aa-status")),
 		},
 	}
 	for _, tt := range tests {

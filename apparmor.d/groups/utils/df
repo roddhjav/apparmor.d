@@ -1,0 +1,30 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2019-2021 Mikhail Morfikov
+# Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/df
+profile df @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/consoles>
+
+  capability dac_read_search,
+
+  @{exec_path} mr,
+
+  /usr/share/icons/*/index.theme r,
+
+  # For dir stats
+  / r,
+  /**/ r,
+
+  owner @{PROC}/@{pid}/mountinfo r,
+
+  include if exists <local/df>
+}
+
+# vim:syntax=apparmor

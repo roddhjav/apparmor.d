@@ -20,13 +20,13 @@ var (
 	Builders = map[string]Builder{}
 )
 
-// Main directive interface
+// Builder main directive interface
 type Builder interface {
 	prebuild.BaseInterface
 	Apply(opt *Option, profile string) (string, error)
 }
 
-// Builder options
+// Option for a builder
 type Option struct {
 	Name string
 	File *paths.Path

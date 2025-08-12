@@ -9,10 +9,8 @@ include <tunables/global>
 @{exec_path} = @{bin}/gnome-software
 profile gnome-software @{exec_path} {
   include <abstractions/base>
-  include <abstractions/dconf-write>
+  include <abstractions/common/gnome>
   include <abstractions/fontconfig-cache-write>
-  include <abstractions/gnome-strict>
-  include <abstractions/graphics>
   include <abstractions/nameservice-strict>
   include <abstractions/p11-kit>
   include <abstractions/ssl_certs>
@@ -39,6 +37,7 @@ profile gnome-software @{exec_path} {
 
   /usr/share/app-info/{,**} r,
   /usr/share/appdata/{,**} r,
+  /usr/share/flatpak/remotes.d/ r,
   /usr/share/metainfo/{,**} r,
   /usr/share/swcatalog/{,**} r,
   /usr/share/xml/iso-codes/{,**} r,
@@ -70,15 +69,11 @@ profile gnome-software @{exec_path} {
   /var/tmp/flatpak-cache-*/** rwkl,
   /var/tmp/#@{int} rw,
 
-  / r,
-
   owner @{HOME}/.var/app/{,**} rw,
 
   owner @{user_download_dirs}/*.flatpakref r,
 
   owner @{user_cache_dirs}/flatpak/{,**} rwl,
-  owner @{user_cache_dirs}/gnome-software/ rw,
-  owner @{user_cache_dirs}/gnome-software/** rwlk -> @{user_cache_dirs}/gnome-software/**,
 
   owner @{user_config_dirs}/flatpak/{,**} r,
   owner @{user_config_dirs}/pulse/*.conf r,
@@ -93,7 +88,6 @@ profile gnome-software @{exec_path} {
   owner @{user_share_dirs}/flatpak/overrides/* r,
   owner @{user_share_dirs}/flatpak/repo/ rw,
   owner @{user_share_dirs}/flatpak/repo/** rwl -> @{user_share_dirs}/flatpak/repo/**,
-  owner @{user_share_dirs}/gnome-software/{,**} rw,
 
   owner @{tmp}/ostree-gpg-@{rand6}/ rw,
   owner @{tmp}/ostree-gpg-@{rand6}/** rwkl -> /tmp/ostree-gpg-@{rand6}/**,
@@ -122,10 +116,7 @@ profile gnome-software @{exec_path} {
         @{PROC}/sys/fs/pipe-max-size r,
         @{PROC}/sys/net/ipv6/conf/all/disable_ipv6 r,
   owner @{PROC}/@{pid}/cgroup r,
-  owner @{PROC}/@{pid}/cmdline r,
   owner @{PROC}/@{pid}/fdinfo/@{int} r,
-  owner @{PROC}/@{pid}/stat r,
-  owner @{PROC}/@{pid}/task/@{tid}/comm rw,
 
   /dev/fuse rw,
 
@@ -163,20 +154,12 @@ profile gnome-software @{exec_path} {
 
   profile fusermount {
     include <abstractions/base>
-    include <abstractions/nameservice-strict>
+    include <abstractions/app/fusermount>
 
-    capability sys_admin,
+    capability setuid,
 
     mount fstype=fuse.revokefs-fuse options=(rw, nosuid, nodev) -> /var/tmp/flatpak-cache-*/*/,
     umount /var/tmp/flatpak-cache-*/*/,
-
-    @{bin}/fusermount{,3} mr,
-
-    /etc/fuse.conf r,
-
-    @{PROC}/@{pids}/mounts r,
-
-    /dev/fuse rw,
 
     include if exists <local/gnome-software_fusermount>
   }

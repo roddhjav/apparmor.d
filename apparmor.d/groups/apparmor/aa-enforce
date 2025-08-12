@@ -1,0 +1,41 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{sbin}/aa-enforce @{sbin}/aa-complain @{sbin}/aa-audit @{sbin}/aa-disable
+profile aa-enforce @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/python>
+
+  capability dac_read_search,
+
+  @{exec_path} mr,
+
+  @{sbin}/ r,
+  @{sbin}/apparmor_parser    rPx,
+
+  /usr/share/terminfo/** r,
+
+  /etc/apparmor/logprof.conf r,
+  /etc/apparmor.d/{,**} rw,
+
+  @{etc_ro}/inputrc r,
+  @{etc_ro}/inputrc.keys r,
+
+  owner /snap/core@{int}/@{int}/etc/apparmor.d/{,**} rw,
+  owner /var/lib/snapd/apparmor/{,**} rw,
+
+  owner @{tmp}/@{rand8} rw,
+  owner @{tmp}/apparmor-bugreport-@{rand8}.txt rw,
+
+  @{PROC}/@{pid}/fd/ r,
+
+  include if exists <local/aa-enforce>
+}
+
+# vim:syntax=apparmor

@@ -1,0 +1,31 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{sbin}/sulogin
+profile sulogin @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+
+  capability checkpoint_restore,
+  capability sys_admin,
+  capability sys_tty_config,
+
+  @{exec_path} mr,
+
+  # The shell is not confined on purpose.
+  @{bin}/@{shells}     rUx,
+
+  /etc/shadow r,
+
+  @{PROC}/consoles r,
+
+  include if exists <local/sulogin>
+}
+
+# vim:syntax=apparmor

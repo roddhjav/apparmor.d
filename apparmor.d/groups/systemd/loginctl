@@ -7,25 +7,45 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{exec_path} = @{bin}/loginctl
-profile loginctl @{exec_path} {
+profile loginctl @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/consoles>
   include <abstractions/bus-system>
+  include <abstractions/bus/org.freedesktop.systemd1>
   include <abstractions/common/systemd>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
 
   capability net_admin,
   capability sys_resource,
 
   signal send set=cont peer=child-pager,
 
-  #aa:dbus talk bus=system name=org.freedesktop.login1 label=systemd-logind
+  #aa:dbus talk bus=system name=org.freedesktop.login1 label="@{p_systemd_logind}"
 
   @{exec_path} mr,
 
   @{pager_path} rPx -> child-pager,
+  @{bin}/ssh    rPx,
+
+  /etc/machine-id r,
+
+  @{run}/log/journal/ r,
+
+  /var/lib/systemd/catalog/database r,
+
+  /{run,var}/log/journal/ r,
+  /{run,var}/log/journal/@{hex32}/ r,
+  /{run,var}/log/journal/@{hex32}/system.journal* r,
+  /{run,var}/log/journal/@{hex32}/system@@{hex}-@{hex}.journal* r,
+  /{run,var}/log/journal/@{hex32}/system@@{hex32}-@{hex16}-@{hex16}.journal* r,
+  /{run,var}/log/journal/@{hex32}/user-@{hex}.journal* r,
+  /{run,var}/log/journal/@{hex32}/user-@{uid}@@{hex}-@{hex}.journal* r,
+  /{run,var}/log/journal/@{hex32}/user-@{uid}@@{hex32}-@{hex16}-@{hex16}.journal* r,
 
         @{PROC}/sys/fs/nr_open r,
   owner @{PROC}/@{pid}/cgroup r,
+
+  /dev/rfkill r,
 
   include if exists <local/loginctl>
 }

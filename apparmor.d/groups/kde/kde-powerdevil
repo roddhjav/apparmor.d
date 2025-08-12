@@ -24,9 +24,10 @@ profile kde-powerdevil @{exec_path} flags=(attach_disconnected mediate_deleted) 
 
   @{sh_path}          rix,
   @{bin}/find         rix,
-  @{bin}/grep         rix,
+  @{bin}/{,e}grep     rix,
   @{bin}/kcminit      rPx,
   @{bin}/sed          rix,
+  @{bin}/uname        rPx,
   @{bin}/xargs        rix,
   @{lib}/drkonqi      rPx,
 
@@ -45,9 +46,12 @@ profile kde-powerdevil @{exec_path} flags=(attach_disconnected mediate_deleted) 
   owner @{user_config_dirs}/powermanagementprofilesrc.lock rwk,
   owner @{user_config_dirs}/powermanagementprofilesrc{,.@{rand6}} rwl -> @{user_config_dirs}/#@{int},
 
-        @{att}/@{run}/systemd/inhibit/@{int}.ref rw,
-        @{run}/udev/data/c189:@{int} r,       # for /dev/bus/usb/**
+  @{att}/@{run}/systemd/inhibit/@{int}.ref rw,
+
+        @{run}/mount/utab r,
   owner @{run}/user/@{uid}kcrash_@{int} rw,
+
+  @{run}/udev/data/c189:@{int} r,       # for /dev/bus/usb/**
 
   @{sys}/bus/ r,
   @{sys}/bus/i2c/devices/ r,
@@ -59,19 +63,22 @@ profile kde-powerdevil @{exec_path} flags=(attach_disconnected mediate_deleted) 
   @{sys}/devices/@{pci}/*_backlight/{,max_,actual_}brightness r,
   @{sys}/devices/@{pci}/card@{int}/*/dpms r,
   @{sys}/devices/@{pci}/drm/card@{int}/**/{,max_,actual_}brightness r,
+  @{sys}/devices/@{pci}/drm/card@{int}/**/*_id r,
   @{sys}/devices/@{pci}/drm/card@{int}/**/dev r,
+  @{sys}/devices/@{pci}/drm/card@{int}/**/name r,
   @{sys}/devices/@{pci}/drm/card@{int}/*/dpms r,
   @{sys}/devices/@{pci}/drm/card@{int}/*/edid r,
   @{sys}/devices/@{pci}/drm/card@{int}/*/enabled r,
   @{sys}/devices/@{pci}/drm/card@{int}/*/status r,
-  @{sys}/devices/@{pci}/i2c-@{int}/{,**/}name r,
-  @{sys}/devices/@{pci}/i2c-@{int}/**/dev r,
+  @{sys}/devices/@{pci}/i2c-*/{,**/}name r,
+  @{sys}/devices/@{pci}/i2c-*/**/dev r,
   @{sys}/devices/**/ r,
-  @{sys}/devices/i2c-@{int}/name r,
-  @{sys}/devices/platform/**/i2c-@{int}/**/name r,
-  @{sys}/devices/platform/*/i2c-@{int}/name r,
+  @{sys}/devices/i2c-*/name r,
+  @{sys}/devices/platform/**/i2c-*/**/name r,
+  @{sys}/devices/platform/*/i2c-*/name r,
 
   @{PROC}/@{pid}/fd/ r,
+  @{PROC}/@{pid}/mountinfo r,
   @{PROC}/@{pid}/mounts r,
 
   /dev/i2c-@{int} rwk,

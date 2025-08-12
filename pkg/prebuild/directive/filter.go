@@ -39,8 +39,16 @@ func init() {
 }
 
 func filterRuleForUs(opt *Option) bool {
+	if prebuild.RBAC && slices.Contains(opt.ArgList, "RBAC") {
+		return true
+	}
+
 	abiStr := fmt.Sprintf("abi%d", prebuild.ABI)
 	if slices.Contains(opt.ArgList, abiStr) {
+		return true
+	}
+	versionStr := fmt.Sprintf("apparmor%.1f", prebuild.Version)
+	if slices.Contains(opt.ArgList, versionStr) {
 		return true
 	}
 	return slices.Contains(opt.ArgList, prebuild.Distribution) || slices.Contains(opt.ArgList, prebuild.Family)
@@ -55,7 +63,7 @@ func filter(only bool, opt *Option, profile string) (string, error) {
 	}
 
 	if opt.IsInline() {
-		profile = strings.Replace(profile, opt.Raw, "", -1)
+		profile = strings.ReplaceAll(profile, opt.Raw, "")
 	} else {
 		regRemoveParagraph := regexp.MustCompile(`(?s)` + opt.Raw + `\n.*?\n\n`)
 		profile = regRemoveParagraph.ReplaceAllString(profile, "")

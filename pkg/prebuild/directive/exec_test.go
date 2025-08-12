@@ -36,7 +36,7 @@ func TestExec_Apply(t *testing.T) {
 		},
 		{
 			name:          "exec-unconfined",
-			rootApparmord: paths.New("../../../apparmor.d/groups/freedesktop/"),
+			rootApparmord: paths.New("../../../apparmor.d/groups/polkit/"),
 			opt: &Option{
 				Name:    "exec",
 				ArgMap:  map[string]string{"U": "", "polkit-agent-helper": ""},

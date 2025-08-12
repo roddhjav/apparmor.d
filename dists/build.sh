@@ -3,7 +3,7 @@
 # Copyright (C) 2022-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-# Usage: make [ dpkg | pkg | rpm ]
+# Usage: just [ dpkg | pkg | rpm ]
 
 set -eu -o pipefail
 
@@ -20,7 +20,7 @@ main() {
         ;;
 
     dpkg)
-        dch --newversion="$VERSION-1" --urgency=medium --distribution=stable --controlmaint "Release $VERSION-1"
+        dch --newversion="$VERSION-1" --urgency=medium --distribution="$(lsb_release -sc)" --controlmaint "Release $VERSION-1"
         dpkg-buildpackage -b -d --no-sign
         lintian || true
         mv ../"${PKGNAME}_${VERSION}-1"_*.deb "$OUTPUT"

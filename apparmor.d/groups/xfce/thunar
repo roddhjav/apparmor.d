@@ -7,8 +7,10 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{exec_path} = @{bin}/thunar
-profile thunar @{exec_path} {
+profile thunar @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/bus-accessibility>
+  include <abstractions/bus-session>
   include <abstractions/deny-sensitive-home>
   include <abstractions/fontconfig-cache-read>
   include <abstractions/nameservice-strict>
@@ -16,6 +18,10 @@ profile thunar @{exec_path} {
   include <abstractions/xfce>
 
   network netlink raw,
+
+  #aa:dbus own bus=session name=org.xfce.Thunar
+  #aa:dbus own bus=session name=org.xfce.FileManager
+  #aa:dbus own bus=session name=org.freedesktop.FileManager1
 
   @{exec_path} mr,
 
@@ -30,6 +36,7 @@ profile thunar @{exec_path} {
 
   /etc/fstab r,
   /etc/timezone r,
+  /etc/xdg/{,xdg-xubuntu/}Thunar/{,**} r,
 
   # Full access to user's data
   / r,
@@ -43,14 +50,19 @@ profile thunar @{exec_path} {
   owner @{run}/user/@{uid}/{,**} rw,
   owner @{tmp}/{,**} rw,
 
+  @{run}/mount/utab r,
+
+  @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/cpu.max r,
+  @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/session-@{int}.scope/cpu.max r,
+
+  owner @{PROC}/@{pid}/mountinfo r,
+
   # Silence non user's data
-  deny /boot/{,**} r,
+  deny @{efi}/{,**} r,
   deny /opt/{,**} r,
   deny /root/{,**} r,
   deny /tmp/.* rw,
   deny /tmp/.*/{,**} rw,
-
-  owner @{PROC}/@{pid}/mountinfo r,
 
   profile dbus {
     include <abstractions/base>

@@ -18,7 +18,7 @@ var (
 	Tasks = map[string]Task{}
 )
 
-// Main directive interface
+// Task main directive interface
 type Task interface {
 	prebuild.BaseInterface
 	Apply() ([]string, error)

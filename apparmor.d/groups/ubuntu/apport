@@ -17,6 +17,7 @@ profile apport @{exec_path} flags=(attach_disconnected) {
 
   capability chown,
   capability dac_read_search,
+  capability fowner,
   capability fsetid,
   capability setgid,
   capability setuid,
@@ -26,33 +27,49 @@ profile apport @{exec_path} flags=(attach_disconnected) {
 
   @{exec_path} mr,
 
-  @{bin}/gdbus        rix,
   @{bin}/{,e,f}grep   rix,
-  @{bin}/dpkg         rPx -> child-dpkg,
-  @{bin}/dpkg-divert  rPx -> child-dpkg-divert,
+  @{bin}/dpkg         rPx -> &child-dpkg,
+  @{bin}/dpkg-divert  rPx -> &child-dpkg-divert,
+  @{bin}/gdbus        rix,
+  @{bin}/md5sum       rix,
 
   /usr/share/apport/{,**} r,
 
+  @{etc_ro}/login.defs r,
   /etc/apport/report-ignore/{,**} r,
-  /etc/login.defs r,
+  /etc/dpkg/dpkg.cfg r,
+  /etc/dpkg/dpkg.cfg.d/{,**} r,
 
   /var/lib/dpkg/info/ r,
   /var/lib/dpkg/info/*.list r,
+  /var/lib/dpkg/info/*.md5sums r,
 
         /var/crash/ rw,
         /var/crash/*.@{uid}.crash rw,
+  owner /var/cache/apt/pkgcache.bin.@{rand6} rw,
   owner /var/log/apport.log rw,
 
-  @{run}/apport.lock rwk,
+  /{run,var}/log/journal/ r,
+  /{run,var}/log/journal/@{hex32}/ r,
+  /{run,var}/log/journal/@{hex32}/system.journal* r,
+  /{run,var}/log/journal/@{hex32}/system@@{hex}-@{hex}.journal* r,
+  /{run,var}/log/journal/@{hex32}/system@@{hex32}-@{hex16}-@{hex16}.journal* r,
+  /{run,var}/log/journal/@{hex32}/user-@{hex}.journal* r,
+  /{run,var}/log/journal/@{hex32}/user-@{uid}@@{hex}-@{hex}.journal* r,
+  /{run,var}/log/journal/@{hex32}/user-@{uid}@@{hex32}-@{hex16}-@{hex16}.journal* r,
 
+  @{run}/apport.lock rwk,
+  @{run}/log/journal/ r,
+
+        @{PROC}/@{pid}/cgroup r,
         @{PROC}/@{pid}/environ r,
+        @{PROC}/@{pid}/fd/ r,
         @{PROC}/@{pid}/stat r,
         @{PROC}/sys/fs/suid_dumpable w,
         @{PROC}/sys/kernel/core_pattern w,
         @{PROC}/sys/kernel/core_pipe_limit w,
   owner @{PROC}/@{pid}/attr/current r,
   owner @{PROC}/@{pid}/cmdline r,
-  owner @{PROC}/@{pid}/fd/ r,
 
   include if exists <local/apport>
 }

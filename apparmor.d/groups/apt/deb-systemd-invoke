@@ -1,0 +1,29 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/deb-systemd-invoke
+profile deb-systemd-invoke @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/app/systemctl>
+  include <abstractions/perl>
+
+  capability net_admin,
+  capability sys_resource,
+
+  signal send set=(cont term) peer=systemd-tty-ask-password-agent,
+
+  @{exec_path} mr,
+
+  @{sh_path} rix,
+  @{bin}/systemctl  rix, #aa:lint ignore=transition
+  @{bin}/systemd-tty-ask-password-agent Px,
+
+  include if exists <local/deb-systemd-invoke>
+}
+
+# vim:syntax=apparmor

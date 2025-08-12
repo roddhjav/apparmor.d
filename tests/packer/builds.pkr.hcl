@@ -2,70 +2,91 @@
 # Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
+locals {
+  name = "${var.prefix}${var.dist}-${var.flavor}"
+}
+
+source "qemu" "default" {
+  disk_image         = true
+  iso_url            = var.DM[var.dist].img_url
+  iso_checksum       = "file:${var.DM[var.dist].img_checksum}"
+  iso_target_path    = pathexpand("${var.iso_dir}/${basename("${var.DM[var.dist].img_url}")}")
+  cpu_model          = "host"
+  cpus               = var.cpus
+  memory             = var.ram
+  disk_size          = var.disk_size
+  accelerator        = "kvm"
+  headless           = true
+  ssh_username       = var.username
+  ssh_password       = var.password
+  ssh_port           = 22
+  ssh_wait_timeout   = "1000s"
+  disk_compression   = true
+  disk_detect_zeroes = "unmap"
+  disk_discard       = "unmap"
+  output_directory   = pathexpand(var.output_dir)
+  vm_name            = "${local.name}.qcow2"
+  boot_wait          = "10s"
+  firmware           = pathexpand(var.firmware)
+  shutdown_command   = "echo ${var.password} | sudo -S /sbin/shutdown -hP now"
+  cd_label           = "cidata"
+  cd_content = {
+    "meta-data" = ""
+    "user-data" = format("%s\n%s\n%s",
+      templatefile("${path.cwd}/tests/cloud-init/common.yml",
+        {
+          username = "${var.username}"
+          password = "${var.password}"
+          ssh_key  = file("${var.ssh_publickey}")
+          hostname = "${local.name}"
+        }
+      ),
+      file("${path.cwd}/tests/cloud-init/${regex_replace(var.dist, "[0-9]*$", "")}.yml"),
+      file("${path.cwd}/tests/cloud-init/${var.dist}-${var.flavor}.user-data.yml")
+    )
+  }
+}
+
 build {
   sources = [
-    "source.qemu.archlinux",
-    "source.qemu.debian",
-    "source.qemu.fedora",
-    "source.qemu.opensuse",
-    "source.qemu.ubuntu22",
-    "source.qemu.ubuntu24",
+    "source.qemu.default",
   ]
 
-  # Upload local files
+  # Upload artifacts
   provisioner "file" {
-    destination = "/tmp"
-    sources     = ["${path.cwd}/packer/src"]
-  }
-
-  provisioner "file" {
-    only        = ["qemu.archlinux"]
-    destination = "/tmp/src/"
+    destination = "/tmp/"
     sources = [
-      "${path.cwd}/../.pkg/apparmor.d-${var.version}-1-x86_64.pkg.tar.zst",
+      "${path.cwd}/tests/packer/src/",
+      "${path.cwd}/tests/packer/init.sh",
+      "${path.cwd}/tests/packer/clean.sh",
+      "${path.cwd}/.pkg/",
     ]
   }
 
-  provisioner "file" {
-    only        = ["qemu.opensuse"]
-    destination = "/tmp/src/"
-    sources     = ["${path.cwd}/../.pkg/apparmor.d-${var.version}-1.x86_64.rpm"]
-  }
-
-  provisioner "file" {
-    only        = ["qemu.debian", "qemu.ubuntu22", "qemu.ubuntu24"]
-    destination = "/tmp/src/"
-    sources     = ["${path.cwd}/../.pkg/apparmor.d_${var.version}-1_amd64.deb"]
-  }
-
-  # Wait for cloud-init to finish
+  # Full system provisioning
   provisioner "shell" {
     execute_command = "echo '${var.password}' | sudo -S sh -c '{{ .Vars }} {{ .Path }}'"
     inline = [
+      # Wait for cloud-init to finish
       "while [ ! -f /var/lib/cloud/instance/boot-finished ]; do echo 'Waiting for Cloud-Init...'; sleep 20; done",
-      "cloud-init clean", # Remove logs and artifacts so cloud-init can re-run
+
+      # Ensure cloud-init is successful
+      # "cloud-init status",
+
+      # Remove logs and artifacts so cloud-init can re-run
+      # "cloud-init clean",
+
+      # Install local files and config
+      "bash /tmp/init.sh",
+
+      # Minimize the image
+      "bash /tmp/clean.sh",
     ]
-  }
-
-  # Install local files and config
-  provisioner "shell" {
-    script          = "${path.cwd}/packer/init/init.sh"
-    execute_command = "echo '${var.password}' | sudo -S sh -c '{{ .Vars }} {{ .Path }}'"
-  }
-
-  # Minimize the image
-  provisioner "shell" {
-    script          = "${path.cwd}/packer/init/clean.sh"
-    execute_command = "echo '${var.password}' | sudo -S sh -c '{{ .Vars }} {{ .Path }}'"
-  }
-
-  post-processor "vagrant" {
-    output = "${var.base_dir}/packer_${var.prefix}${source.name}-${var.flavor}.box"
   }
 
   post-processor "shell-local" {
     inline = [
-      "vagrant box add --force --name ${var.prefix}${source.name}-${var.flavor} ${var.base_dir}/packer_${var.prefix}${source.name}-${var.flavor}.box"
+      "mv ${var.output_dir}/${local.name}.qcow2 ${var.base_dir}/${local.name}.qcow2",
     ]
   }
 

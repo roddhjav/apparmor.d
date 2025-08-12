@@ -12,6 +12,10 @@ include <tunables/global>
 profile virt-manager @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/audio-client>
+  include <abstractions/bus-accessibility>
+  include <abstractions/bus-session>
+  include <abstractions/bus-system>
+  include <abstractions/bus/org.a11y>
   include <abstractions/dconf-write>
   include <abstractions/desktop>
   include <abstractions/devices-usb>
@@ -28,18 +32,20 @@ profile virt-manager @{exec_path} flags=(attach_disconnected) {
   network inet6 stream,
   network netlink raw,
 
+  #aa:dbus own bus=session name=org.virt-manager.virt-manager
+
   @{exec_path} rix,
 
   @{sh_path}        rix,
-  @{bin}/python3.@{int} r,
-  @{lib}/python3.@{int}/site-packages/__pycache__/guestfs.cpython-@{int}.pyc.@{int} w,
+  @{python_path}    rix,
+  @{lib}/@{python_name}/site-packages/__pycache__/guestfs.cpython-@{int}.pyc.@{int} w,
 
   @{bin}/ r,
   @{bin}/env       rix,
   @{bin}/getfacl   rix,
   @{bin}/setfacl   rix,
 
-  @{bin}/libvirtd                          rPx,
+  @{sbin}/libvirtd                         rPx,
   @{bin}/ssh                               rPx,
   @{lib}/spice-client-glib-usb-acl-helper  rPx,
 
@@ -78,6 +84,7 @@ profile virt-manager @{exec_path} flags=(attach_disconnected) {
   owner @{run}/user/@{uid}/libvirt/libvirtd.lock rwk,
   owner @{run}/user/@{uid}/libvirt/virtqemud.lock rwk,
 
+  @{run}/libvirt/libvirt-sock rw,
   @{run}/mount/utab r,
   @{run}/udev/data/c@{dynamic}:@{int} r,  # For dynamic assignment range 234 to 254, 384 to 511
 
@@ -85,7 +92,7 @@ profile virt-manager @{exec_path} flags=(attach_disconnected) {
   @{sys}/devices/virtual/drm/ttm/uevent r,
   @{sys}/fs/cgroup/user.slice/cpu.max r,
   @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/cpu.max r,
-  @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/session-@{int}.scope/cpu.max r,
+  @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/session-@{word}.scope/cpu.max r,
 
         @{PROC}/@{pids}/net/route r,
   owner @{PROC}/@{pid}/cgroup r,

@@ -1,0 +1,60 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2018-2022 Mikhail Morfikov
+# Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/polkit-[0-9]/polkit-agent-helper-[0-9]
+@{exec_path} += @{lib}/polkit-agent-helper-[0-9]
+profile polkit-agent-helper @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/authentication>
+  include <abstractions/bus-system>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+
+  capability audit_write,
+  capability dac_override,
+  capability net_admin,
+  capability setgid,
+  capability setuid,
+  capability sys_nice,
+
+  network netlink raw,
+
+  signal receive set=(term kill) peer=gnome-shell,
+  signal receive set=(term kill) peer=pkexec,
+  signal receive set=(term kill) peer=pkttyagent,
+  signal receive set=(term kill) peer=polkit-*-authentication-agent,
+
+  unix bind type=stream addr=@@{udbus}/bus/polkit-agent-he/system,
+
+  dbus send bus=system path=/org/freedesktop/PolicyKit1/Authority
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=:*, label="@{p_polkitd}"),
+
+  dbus send bus=system path=/org/freedesktop/PolicyKit1/Authority
+       interface=org.freedesktop.PolicyKit1.Authority
+       member=AuthenticationAgentResponse2
+       peer=(name=:*, label="@{p_polkitd}"),
+
+  @{exec_path} mr,
+
+  owner @{HOME}/.xsession-errors w,
+
+  @{run}/faillock/@{user} rwk,
+
+        @{PROC}/1/cgroup r,
+  owner @{PROC}/@{pid}/cgroup r,
+  owner @{PROC}/@{pid}/loginuid r,
+
+  owner /dev/tty@{int} rw,
+
+  include if exists <local/polkit-agent-helper>
+}
+
+# vim:syntax=apparmor

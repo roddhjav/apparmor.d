@@ -9,11 +9,21 @@ include <tunables/global>
 @{exec_path} = @{bin}/xfce4-panel @{lib}/{,@{multiarch}/}xfce4/panel/wrapper-2.0
 profile xfce-panel @{exec_path} {
   include <abstractions/base>
+  include <abstractions/bus-accessibility>
+  include <abstractions/bus-system>
+  include <abstractions/bus-session>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/thumbnails-cache-read>
   include <abstractions/app-launcher-user>
   include <abstractions/audio-client>
   include <abstractions/dconf-write>
   include <abstractions/nameservice-strict>
   include <abstractions/xfce>
+
+  ptrace (read) peer=xfce-terminal,
+
+  #aa:dbus own bus=session name=org.xfce.Panel
+  #aa:dbus own bus=session name=org.kde.StatusNotifierWatcher
 
   @{exec_path} mr,
 
@@ -26,6 +36,7 @@ profile xfce-panel @{exec_path} {
   @{bin}/sudo rCx -> root,
 
   /usr/share/desktop-directories/{,**} r,
+  /usr/share/firefox{,-esr}/browser/chrome/icons/{,**} r,
   /usr/share/livecheck/** r,
   /usr/share/xfce4/{,**} r,
 
@@ -33,14 +44,19 @@ profile xfce-panel @{exec_path} {
   /etc/machine-id r,
   /etc/timezone r,
   /etc/xdg/menus/{,**} r,
-  /etc/xdg/xfce4/{,**} r,
+  /etc/xdg/{,xdg-xubuntu/}xfce4/{,**} r,
 
   owner @{user_cache_dirs}/xfce4/notifyd/icons/ rw,
+  owner @{user_cache_dirs}/xfce4-indicator-plugin.log w,
   owner @{user_config_dirs}/xfce4/panel/{,**} rw,
+
+  owner @{tmp}/gdkpixbuf-xpm-tmp.@{rand6} w,
 
         @{PROC}/cmdline r,
   owner @{PROC}/@{pid}/cgroup r,
   owner @{PROC}/@{pid}/mountinfo r,
+
+  deny @{user_share_dirs}/gvfs-metadata/{,*} r,
 
   profile root {
     include <abstractions/base>

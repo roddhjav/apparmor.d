@@ -1,0 +1,38 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/sysstat/sa{1,2} @{lib}/sysstat/debian-sa{1,2}
+profile sysstat-sa @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+
+  @{exec_path} mr,
+  @{bin}/ r,
+
+  @{sh_path}          rix,
+  @{bin}/date          ix,
+  @{bin}/find          ix,
+  @{bin}/{,e}grep      ix,
+  @{bin}/rm            ix,
+  @{bin}/sar.sysstat   ix,
+  @{bin}/xargs         ix,
+  @{lib}/sysstat/sadc  Px,
+
+  /etc/sysstat/sysstat r,
+
+  /var/log/sysstat/ r,
+  /var/log/sysstat/** rw,
+
+  @{tmp}/#@{int} rw,
+
+  @{PROC}/@{pid}/fd/ r,
+
+  include if exists <local/sysstat-sa>
+}
+
+# vim:syntax=apparmor

@@ -81,19 +81,19 @@ func (p *Profile) String() string {
 	return renderTemplate(p.Kind(), p)
 }
 
-func (r *Profile) Validate() error {
-	if err := validateValues(r.Kind(), tokFLAGS, r.Flags); err != nil {
-		return fmt.Errorf("profile %s: %w", r.Name, err)
+func (p *Profile) Validate() error {
+	if err := validateValues(p.Kind(), tokFLAGS, p.Flags); err != nil {
+		return fmt.Errorf("profile %s: %w", p.Name, err)
 	}
-	return r.Rules.Validate()
+	return p.Rules.Validate()
 }
 
-func (r *Profile) Compare(other Rule) int {
+func (p *Profile) Compare(other Rule) int {
 	o, _ := other.(*Profile)
-	if res := compare(r.Name, o.Name); res != 0 {
+	if res := compare(p.Name, o.Name); res != 0 {
 		return res
 	}
-	return compare(r.Attachments, o.Attachments)
+	return compare(p.Attachments, o.Attachments)
 }
 
 func (p *Profile) Merge(other Rule) bool {
@@ -103,11 +103,11 @@ func (p *Profile) Merge(other Rule) bool {
 	return false
 }
 
-func (r *Profile) Lengths() []int {
+func (p *Profile) Lengths() []int {
 	return []int{} // No len for profile
 }
 
-func (r *Profile) setPaddings(max []int) {} // No paddings for profile
+func (p *Profile) setPaddings(max []int) {} // No paddings for profile
 
 func (p *Profile) Sort() {
 	p.Rules = p.Rules.Sort()
@@ -140,10 +140,16 @@ func (p *Profile) GetAttachments() string {
 var (
 	newLogMap = map[string]func(log map[string]string) Rule{
 		// class
-		"rlimits":      newRlimitFromLog,
-		"namespace":    newUsernsFromLog,
-		"cap":          newCapabilityFromLog,
-		"net":          newNetworkFromLog,
+		"rlimits":   newRlimitFromLog,
+		"namespace": newUsernsFromLog,
+		"cap":       newCapabilityFromLog,
+		"net": func(log map[string]string) Rule {
+			if log["family"] == "unix" {
+				return newUnixFromLog(log)
+			} else {
+				return newNetworkFromLog(log)
+			}
+		},
 		"posix_mqueue": newMqueueFromLog,
 		"sysv_mqueue":  newMqueueFromLog,
 		"signal":       newSignalFromLog,
@@ -176,6 +182,7 @@ var (
 		"open":        newFileFromLog,
 		"rename_dest": newFileFromLog,
 		"rename_src":  newFileFromLog,
+		"rmdir":       newFileFromLog,
 		"truncate":    newFileFromLog,
 		"unlink":      newFileFromLog,
 	}
@@ -219,7 +226,7 @@ func (p *Profile) AddRule(log map[string]string) {
 		case strings.Contains(log["operation"], "dbus"):
 			p.Rules = append(p.Rules, newDbusFromLog(log))
 		default:
-			fmt.Printf("unknown log type: %s\n", log["operation"])
+			fmt.Printf("unknown log type: %s:%v\n", log["operation"], log)
 		}
 	}
 }

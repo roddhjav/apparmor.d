@@ -1,0 +1,63 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# ExecStartPre=-/usr/bin/savelog -m640 -q -p -n -c 5 /var/log/dmesg
+# ExecStart=/bin/journalctl --boot 0 --dmesg --output short-monotonic --quiet --no-pager --no-hostname
+# ExecStartPost=/bin/chgrp adm /var/log/dmesg
+# ExecStartPost=/bin/chmod 0640 /var/log/dmesg
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+profile dmesg.service flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+
+  capability chown,
+  capability fsetid,
+  capability sys_admin,
+
+  ptrace read peer=@{p_systemd},
+
+  @{sh_path}           r,
+  @{bin}/basename     ix,
+  @{bin}/chgrp       rix,
+  @{bin}/chmod       rix,
+  @{bin}/chown        ix,
+  @{bin}/date         ix,
+  @{bin}/dirname      ix,
+  @{bin}/gzip         ix,
+  @{bin}/gzip         ix,
+  @{bin}/journalctl    r,
+  @{bin}/ln           ix,
+  @{bin}/mv           ix,
+  @{bin}/rm           ix,
+  @{bin}/savelog     rix,
+  @{bin}/touch        ix,
+
+  /etc/machine-id r,
+
+  /var/log/ r,
+  /var/log/dmesg rw,
+  /var/log/dmesg.* rwl -> /var/log/dmesg,
+
+  /{run,var}/log/journal/ r,
+  /{run,var}/log/journal/@{hex32}/ r,
+  /{run,var}/log/journal/@{hex32}/system.journal* r,
+  /{run,var}/log/journal/@{hex32}/system@@{hex}-@{hex}.journal* rw,
+  /{run,var}/log/journal/@{hex32}/system@@{hex32}-@{hex16}-@{hex16}.journal* rw,
+  /{run,var}/log/journal/@{hex32}/user-@{hex}.journal* rw,
+  /{run,var}/log/journal/@{hex32}/user-@{uid}@@{hex}-@{hex}.journal* rw,
+  /{run,var}/log/journal/@{hex32}/user-@{uid}@@{hex32}-@{hex16}-@{hex16}.journal* rw,
+
+  @{PROC}/1/environ r,
+  @{PROC}/cmdline r,
+  @{PROC}/sys/kernel/osrelease r,
+  @{PROC}/sys/kernel/random/boot_id r,
+
+  include if exists <local/dmesg.service>
+}
+
+# vim:syntax=apparmor

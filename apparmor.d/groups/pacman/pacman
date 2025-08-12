@@ -12,6 +12,7 @@ profile pacman @{exec_path} flags=(attach_disconnected) {
   include <abstractions/consoles>
   include <abstractions/disks-read>
   include <abstractions/nameservice-strict>
+  include <abstractions/perl>
   include <abstractions/ssl_certs>
 
   capability audit_write,
@@ -26,6 +27,7 @@ profile pacman @{exec_path} flags=(attach_disconnected) {
   capability setfcap,
   capability setgid,
   capability setuid,
+  capability sys_admin,
   capability sys_chroot,
   capability sys_ptrace,
   capability sys_resource,
@@ -40,7 +42,7 @@ profile pacman @{exec_path} flags=(attach_disconnected) {
   ptrace read,
 
   signal send,
-  signal receive set=winch peer=makepkg//sudo,
+  signal receive set=(term winch) peer=makepkg//sudo,
 
   @{exec_path} mrix,
 
@@ -65,43 +67,44 @@ profile pacman @{exec_path} flags=(attach_disconnected) {
   @{bin}/gdk-pixbuf-query-loaders    rPx,
   @{bin}/getent                      rix,
   @{bin}/gettext                     rix,
-  @{bin}/ghc-pkg-@{version}          rix,
+  @{bin}/ghc-pkg-@{version}          rPx,
   @{bin}/gio-querymodules            rPx,
   @{bin}/glib-compile-schemas        rPx,
-  @{bin}/groupadd                    rPx,
-  @{bin}/gtk-query-immodules-{2,3}.0 rPx,
+  @{sbin}/groupadd                   rPx,
+  @{bin}/gtk-query-immodules-*       rPx,
   @{bin}/gtk{,4}-update-icon-cache   rPx,
-  @{bin}/iconvconfig                 rix,
+  @{sbin}/iconvconfig                rix,
   @{bin}/install-catalog             rPx,
   @{bin}/install-info                rPx,
-  @{bin}/iscsi-iname                 rix,
+  @{sbin}/iscsi-iname                rix,
   @{bin}/journalctl                  rPx,
   @{bin}/killall                     rix,
-  @{bin}/ldconfig                    rix,
-  @{bin}/locale-gen                  rPx,
+  @{sbin}/ldconfig                   rix,
+  @{sbin}/locale-gen                 rPx,
+  @{bin}/limine-install             rPUx,
   @{bin}/mkinitcpio                  rPx,
-  @{bin}/needrestart                 rPx,
+  @{sbin}/needrestart                rPx,
   @{bin}/pacdiff                     rPx,
   @{bin}/pacman-key                  rPx,
-  @{bin}/perl                        rix,
   @{bin}/pkgfile                     rPUx,
   @{bin}/pkill                       rix,
   @{bin}/rsync                       rix,
   @{bin}/sbctl                       rPx,
-  @{bin}/setcap                      rix,
+  @{sbin}/setcap                     rix,
   @{bin}/setfacl                     rix,
-  @{bin}/sysctl                      rPx,
+  @{sbin}/sysctl                     rPx,
   @{bin}/systemctl                   rCx -> systemctl,
   @{bin}/systemd-*                   rPx,
   @{bin}/tput                        rix,
   @{bin}/update-ca-trust             rPx,
   @{bin}/update-desktop-database     rPx,
-  @{bin}/update-grub                 rPx,
+  @{sbin}/update-grub                rPx,
   @{bin}/update-mime-database        rPx,
   @{bin}/vercmp                      rix,
+  @{bin}/which{,.debianutils}        rix,
   @{bin}/xmlcatalog                  rix,
   @{lib}/systemd/systemd-*           rPx,
-  @{lib}/ghc-@{version}/bin/ghc-pkg-@{version} rix,
+  @{lib}/ghc-@{version}/bin/ghc-pkg-@{version} rPx,
   @{lib}/vlc/vlc-cache-gen           rPx,
   /opt/Mullvad*/resources/mullvad-setup  rPx,
   /usr/share/code-features/patch.py      rPx,
@@ -109,10 +112,14 @@ profile pacman @{exec_path} flags=(attach_disconnected) {
   /usr/share/libalpm/scripts/*           rPUx,
   /usr/share/texmf-dist/scripts/texlive/mktexlsr rPUx,
 
+  # For shell pwd, keept as it can annoy users to see error in pacman output
+  /**/ r,
+
   # Install/update packages
+  #aa:lint ignore=too-wide
   / r,
   /*{,/} rw,
-  /boot/** rwl -> /boot/**,
+  @{efi}/** rwl -> @{efi}/**,
   /etc/** rwl -> /etc/**,
   /opt/** rwl -> /opt/**,
   /srv/** rwl -> /srv/**,
@@ -134,8 +141,8 @@ profile pacman @{exec_path} flags=(attach_disconnected) {
         @{PROC}/@{pids}/ r,
         @{PROC}/@{pids}/cgroup r,
         @{PROC}/@{pids}/cmdline r,
+        @{PROC}/@{pids}/environ r,
         @{PROC}/@{pids}/stat r,
-        @{PROC}/1/environ r,
         @{PROC}/sys/kernel/osrelease r,
         @{PROC}/tty/drivers r,
         @{PROC}/uptime r,
@@ -144,11 +151,6 @@ profile pacman @{exec_path} flags=(attach_disconnected) {
 
         /dev/tty@{int} rw,
   owner /dev/pts/@{int} rw,
-
-  # Silencer,
-  deny @{HOME}/ r,
-  deny @{HOME}/**/ r,
-  deny /tmp/ r,
 
   profile gpg {
     include <abstractions/base>
@@ -186,7 +188,7 @@ profile pacman @{exec_path} flags=(attach_disconnected) {
     include if exists <local/pacman_gpg>
   }
 
-  profile systemctl {
+  profile systemctl flags=(attach_disconnected) {
     include <abstractions/base>
     include <abstractions/app/systemctl>
 
@@ -195,9 +197,11 @@ profile pacman @{exec_path} flags=(attach_disconnected) {
     capability sys_resource,
 
     signal send set=cont peer=child-pager,
-    signal receive set=winch peer=makepkg//sudo,
+    signal send set=(cont term) peer=systemd-tty-ask-password-agent,
+    signal receive set=(term winch) peer=makepkg//sudo,
 
     @{pager_path}      rPx -> child-pager,
+    @{bin}/systemd-tty-ask-password-agent rPx,
 
     /etc/machine-id r,
 

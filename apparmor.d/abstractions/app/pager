@@ -1,0 +1,37 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+# LOGPROF-SUGGEST: no
+
+# Minimal set of rules for pagers.
+
+  abi <abi/4.0>,
+
+  include <abstractions/consoles>
+
+  capability dac_override,
+  capability dac_read_search,
+
+  signal receive set=(stop, cont, term, kill),
+
+  @{bin}/       r,
+  @{pager_path} mrix,
+
+  @{system_share_dirs}/terminfo/{,**} r,
+  /usr/share/file/misc/** r,
+  /usr/share/nvim/{,**} r,
+
+  @{HOME}/.lesshst r,
+
+  owner @{HOME}/ r,
+  owner @{HOME}/.lesshs* rw,
+  owner @{HOME}/.terminfo/@{int}/* r,
+  owner @{user_cache_dirs}/lesshs* rw,
+  owner @{user_state_dirs}/ r,
+  owner @{user_state_dirs}/lesshs* rw,
+
+  /dev/tty@{int} rw,
+
+  include if exists <abstractions/app/pager.d>
+
+# vim:syntax=apparmor

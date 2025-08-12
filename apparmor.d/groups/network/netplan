@@ -1,0 +1,51 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = /usr/share/netplan/netplan.script
+profile netplan @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+  include <abstractions/python>
+
+  @{exec_path} mr,
+
+  @{lib}/netplan/generate  rPx,
+  @{bin}/udevadm           rCx -> udevadm,
+  @{bin}/systemctl         rCx -> systemctl,
+
+  /usr/share/netplan/{,**} r,
+
+  @{run}/netplan/ r,
+
+  profile udevadm {
+    include <abstractions/base>
+    include <abstractions/app/udevadm>
+
+    capability net_admin,
+
+    @{att}/@{run}/udev/control rw,
+
+    @{run}/udev/rules.d/90-netplan.rules rw,
+    @{run}/udev/rules.d/90-netplan.rules.@{rand6} rw,
+
+    include if exists <local/netplan_udevadm>
+  }
+
+  profile systemctl {
+    include <abstractions/base>
+    include <abstractions/app/systemctl>
+
+    capability net_admin,
+
+    include if exists <local/netplan_systemctl>
+  }
+
+  include if exists <local/netplan>
+}
+
+# vim:syntax=apparmor

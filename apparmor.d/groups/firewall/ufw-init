@@ -1,0 +1,55 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/ufw/ufw-init
+profile ufw-init @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+
+  capability dac_read_search,
+  capability net_admin,
+
+  network inet dgram,
+  network inet raw,
+  network inet6 dgram,
+  network inet6 raw,
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  @{sh_path}                   rix,
+  @{bin}/echo                  rix,
+  @{sbin}/sysctl               rCx -> sysctl,
+  @{sbin}/xtables-legacy-multi rix,
+  @{sbin}/xtables-nft-multi    rix,
+
+  /etc/default/ufw r,
+  /etc/ufw/* r,
+
+  @{PROC}/@{pid}/net/ip_tables_names r,
+  # @{PROC}/sys/net/ipv{4,6}/** rw,
+
+  profile sysctl {
+    include <abstractions/base>
+    include <abstractions/consoles>
+
+    capability net_admin,
+
+    @{sbin}/sysctl mr,
+
+    /etc/ufw/sysctl.conf r,
+
+    @{PROC}/sys/net/ipv{4,6}/** rw,
+
+    include if exists <local/ufw-init_sysctl>
+  }
+
+  include if exists <local/ufw-init>
+}
+
+# vim:syntax=apparmor

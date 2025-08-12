@@ -1,0 +1,255 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Part of the systemd (as PID 1) profile.
+
+# sd is a profile for SystemD-executor run as root, it is used to run all services
+# files and to encapsulate stacked services profiles (hence the short name).
+# It aims at reducing the size of the systemd profile.
+
+# Only use this profile with a fully configured system. Otherwise it **WILL**
+# break your computer. See https://apparmor.pujol.io/full-system-policy/.
+
+# Distributions and other programs can add rules in the usr/sd.d directory
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/systemd-executor
+profile sd flags=(attach_disconnected,mediate_deleted,complain) {
+  include <abstractions/base>
+  include <abstractions/authentication>
+  include <abstractions/bus-system>
+  include <abstractions/consoles>
+  include <abstractions/devices-usb>
+  include <abstractions/disks-write>
+  include <abstractions/nameservice-strict>
+  include <abstractions/wutmp>
+
+  userns,
+
+  capability audit_control,
+  capability audit_write,
+  capability bpf,
+  capability chown,
+  capability dac_override,
+  capability dac_read_search,
+  capability fowner,
+  capability fsetid,
+  capability kill,
+  capability linux_immutable,
+  capability mknod,
+  capability net_admin,
+  capability net_bind_service,
+  capability net_raw,
+  capability perfmon,
+  capability setfcap,
+  capability setgid,
+  capability setpcap,
+  capability setuid,
+  capability sys_admin,
+  capability sys_nice,
+  capability sys_ptrace,
+  capability sys_rawio,
+  capability sys_resource,
+  capability sys_time,
+  capability sys_tty_config,
+  capability syslog,
+
+  network alg seqpacket,
+  network bluetooth,
+  network inet dgram,
+  network inet stream,
+  network inet6 dgram,
+  network inet6 raw,
+  network inet6 stream,
+  network netlink raw,
+  network packet dgram,
+  network packet raw,
+  network qipcrtr dgram,
+
+  mount                                                                         -> @{run}/systemd/mount-rootfs/{,**},
+  mount                                                                         -> @{run}/systemd/namespace-@{rand6}/{,**},
+  mount              options=(rw move)                                /dev/shm/ -> @{run}/credentials/*/,
+  mount              options=(rw rshared)                                       -> /,
+  mount              options=(rw rslave)                                        -> /,
+  mount              options=(rw rslave)                                        -> /dev/,
+  mount              options=(rw slave)                                         -> @{run}/systemd/incoming/,
+  mount fstype=tmpfs options=(rw nodev noexec nosuid nosymfollow)         tmpfs -> /dev/shm/,
+  mount fstype=tmpfs options=(rw nodev strictatime)                       tmpfs -> @{run}/systemd/unit-private-tmp/,
+
+  remount /dev/shm/,
+  remount @{run}/systemd/mount-rootfs/{,**},
+
+  umount /,
+  umount /dev/shm/,
+  umount @{run}/systemd/mount-rootfs/{,**},
+  umount @{run}/systemd/namespace-@{rand6}/{,**},
+
+  pivot_root oldroot=/run/systemd/mount-rootfs/ @{run}/systemd/mount-rootfs/,
+
+  change_profile,
+
+  mqueue (read getattr) type=posix /,
+
+  signal         peer=sd//&*,
+  signal receive peer=@{p_systemd},
+  signal send,
+
+  ptrace read,
+
+  unix type=dgram peer=(label=@{p_systemd}),
+  unix type=dgram peer=(label=systemd-timesyncd),
+  unix type=stream,
+
+  dbus bus=system,
+
+  @{exec_path} mr,
+
+  @{bin}/**                                       mPx,
+  @{sbin}/**                                      mPx,
+  @{lib}/**                                        Px,
+  /etc/cron.*/*                                    Px,
+  /etc/init.d/*                                    Px,
+  /etc/update-motd.d/*                             Px,
+  /usr/share/*/**                                  Px,
+
+  # Systemd user: systemd --user
+  @{lib}/systemd/systemd                           px -> systemd-user,
+
+  # Mount operations from services and systemd
+  @{bin}/mount                                     Px -> sd-mount,
+  @{bin}/umount                                    Px -> sd-umount,
+
+  # Unit services using systemctl
+  @{bin}/systemctl                                 Cx -> systemctl,
+
+  # Unit services
+  @{bin}/kill                                      Cx -> kill,
+
+  # Used by very basic services, ideally should be replaced by a unit profiles
+  @{sh_path}                                       ix,
+  @{bin}/false                                     ix,
+  @{bin}/true                                      ix,
+
+  # Required due to stacked profiles
+  @{bin}/find                                      ix,
+  @{bin}/gzip                                      ix,
+  @{bin}/install                                   ix,
+  @{bin}/readlink                                  ix,
+  @{lib}/colord-sane                               ix,
+  @{lib}/systemd/systemd-nsresourcework            ix,
+  @{lib}/systemd/systemd-userwork                  ix,
+  @{sbin}/grpck                                    ix,
+  @{sbin}/pwck                                     ix,
+
+  / r,
+  @{att}/ r,
+  @{bin}/{,**} r,
+  @{lib}/{,**} r,
+  @{sbin}/{,*} r,
+  /usr/local/{,**} r,
+  /usr/share/** r,
+  /etc/*/ w,
+  /etc/** rk,
+  /home/ r,
+
+  @{efi}/ r,
+  @{efi}/** rw,
+
+  @{att}/var/lib/systemd/*/ r,
+
+  /var/cache/*/ rw,
+  /var/cache/*/** rwk,
+  /var/lib/*/ rw,
+  /var/lib/*/** rwk,
+  /var/lib/systemd/*/ r,
+  /var/log/ r,
+  /var/log/** rw,
+  /var/log/journal/** rwl -> /var/log/journal/**,
+
+  @{att}/@{desktop_share_dirs}/icc/edid-@{hex32}.icc r,
+  @{att}/@{user_share_dirs}/icc/edid-@{hex32}.icc r,
+
+  @{att}/@{run}/systemd/io.systemd.ManagedOOM rw,
+  @{att}/@{run}/systemd/notify rw,
+  @{att}/@{run}/systemd/userdb/io.systemd.DynamicUser rw,
+  @{att}/@{run}/systemd/userdb/io.systemd.Home rw,
+  @{att}/@{run}/systemd/userdb/io.systemd.Multiplexer rw,
+
+        @{run}/ rw,
+        @{run}/* rw,
+        @{run}/*/ rw,
+        @{run}/*/* rw,
+        @{run}/systemd/{,**} rw,
+  owner @{run}/*/** rw,
+
+  @{run}/udev/**/ r,
+  @{run}/udev/data/+*:* r,                # Identifies all subsystems
+  @{run}/udev/data/c@{int}:@{int} r,      # Identifies all character devices
+
+  @{sys}/** r,
+  @{sys}/fs/bpf/systemd/{,**} w,
+  @{sys}/firmware/efi/efivars/** w,
+  @{sys}/fs/cgroup/{,**} w,
+
+  @{PROC}/@{pid}/attr/apparmor/exec w,
+  @{PROC}/@{pid}/attr/current r,
+  @{PROC}/@{pid}/cgroup r,
+  @{PROC}/@{pid}/cmdline r,
+  @{PROC}/@{pid}/comm r,
+  @{PROC}/@{pid}/environ r,
+  @{PROC}/@{pid}/fd/ r,
+  @{PROC}/@{pid}/fdinfo/@{int} r,
+  @{PROC}/@{pid}/gid_map w,
+  @{PROC}/@{pid}/limits r,
+  @{PROC}/@{pid}/loginuid rw,
+  @{PROC}/@{pid}/mountinfo r,
+  @{PROC}/@{pid}/oom_score_adj rw,
+  @{PROC}/@{pid}/sessionid r,
+  @{PROC}/@{pid}/setgroups r,
+  @{PROC}/@{pid}/setgroups w,
+  @{PROC}/@{pid}/stat r,
+  @{PROC}/@{pid}/uid_map r,
+  @{PROC}/@{pid}/uid_map w,
+  @{PROC}/cmdline r,
+  @{PROC}/interrupts r,
+  @{PROC}/irq/@{int}/node r,
+  @{PROC}/irq/@{int}/smp_affinity r,
+  @{PROC}/kmsg r,
+  @{PROC}/modules r,
+  @{PROC}/pressure/* r,
+  @{PROC}/swaps r,
+  @{PROC}/sys/** r,
+  @{PROC}/sys/kernel/random/write_wakeup_threshold w,
+  @{PROC}/sys/net/ipv{4,6}/** rw,
+  @{PROC}/sysvipc/* r,
+  @{PROC}/version_signature r,
+
+  /dev/** rwk,
+
+  profile systemctl flags=(attach_disconnected,mediate_deleted,complain) {
+    include <abstractions/base>
+    include <abstractions/app/systemctl>
+
+    include if exists <usr/sd_systemctl.d>
+    include if exists <local/sd_systemctl>
+  }
+
+  profile kill flags=(attach_disconnected,mediate_deleted,complain) {
+    include <abstractions/base>
+
+    signal send,
+
+    @{bin}/kill mr,
+
+    include if exists <local/sd_kill>
+  }
+
+  include if exists <usr/sd.d>
+  include if exists <local/sd>
+}
+
+# vim:syntax=apparmor

@@ -31,30 +31,31 @@ profile gdm-session-worker @{exec_path} flags=(attach_disconnected) {
   network netlink raw,
   network unix stream,
 
-  signal (receive) set=term peer=gdm,
-  signal (send) set=(hup term) peer=gdm-session,
-  signal (send) set=hup peer=at-spi*,
-  signal (send) set=hup peer=dbus-accessibility,
-  signal (send) set=hup peer=dbus-session,
-  signal (send) set=hup peer=dconf-service,
-  signal (send) set=hup peer=gjs-console,
-  signal (send) set=hup peer=gnome-*,
-  signal (send) set=hup peer=gsd-*,
-  signal (send) set=hup peer=ibus-*,
-  signal (send) set=hup peer=mutter-x11-frames,
-  signal (send) set=hup peer=tracker-miner,
-  signal (send) set=hup peer=xdg-*,
-  signal (send) set=hup peer=xorg,
-  signal (send) set=hup peer=xwayland,
+  signal receive set=term peer=gdm,
+  signal send set=(hup term) peer=gdm-session,
+  signal send set=hup peer=at-spi*,
+  signal send set=hup peer=dbus-accessibility,
+  signal send set=hup peer=dbus-session,
+  signal send set=hup peer=dconf-service,
+  signal send set=hup peer=gjs-console,
+  signal send set=hup peer=gnome-*,
+  signal send set=hup peer=gsd-*,
+  signal send set=hup peer=ibus-*,
+  signal send set=hup peer=mutter-x11-frames,
+  signal send set=hup peer=tracker-miner,
+  signal send set=hup peer=xdg-*,
+  signal send set=hup peer=xorg,
+  signal send set=hup peer=xwayland,
 
-  unix (bind) type=stream addr=@@{udbus}/bus/gdm-session-wor/system,
+  unix bind type=stream addr=@@{udbus}/bus/gdm-session-wor/system,
 
-  #aa:dbus talk bus=system name=org.freedesktop.Accounts label=accounts-daemon
+  #aa:dbus talk bus=system name=org.freedesktop.Accounts label="@{p_accounts_daemon}"
+  #aa:dbus talk bus=system name=org.freedesktop.home1 interface=org.freedesktop.home1.Manager label="@{p_systemd_homed}"
 
   dbus send bus=system path=/org/freedesktop/login1
        interface=org.freedesktop.login1.Manager
        member={*Session,CreateSessionWithPIDFD}
-       peer=(name=org.freedesktop.login1, label=systemd-logind),
+       peer=(name=org.freedesktop.login1, label="@{p_systemd_logind}"),
 
   @{exec_path} mrix,
 
@@ -98,6 +99,7 @@ profile gdm-session-worker @{exec_path} flags=(attach_disconnected) {
         /.fscrypt/protectors/ r,
   owner /.fscrypt/protectors/@{hex16} r,
 
+  #aa:lint ignore=tunables
         /home/ r,
         /home/.fscrypt/policies/ r,
   owner /home/.fscrypt/policies/@{hex32} r,
@@ -107,6 +109,7 @@ profile gdm-session-worker @{exec_path} flags=(attach_disconnected) {
 
   owner @{user_cache_dirs}/ w,
 
+        @{run}/cockpit/active.issue r,
         @{run}/cockpit/inactive.motd r,
   owner @{run}/systemd/seats/seat@{int} r,
   owner @{run}/user/@{uid}/keyring/control rw,

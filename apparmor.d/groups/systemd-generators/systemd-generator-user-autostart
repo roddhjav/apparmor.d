@@ -1,0 +1,31 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/systemd/user-generators/systemd-xdg-autostart-generator
+profile systemd-generator-user-autostart @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/common/systemd>
+  include <abstractions/nameservice-strict>
+
+  capability net_admin,
+
+  @{exec_path} mr,
+
+  @{system_share_dirs}/applications/*.desktop r,
+
+  @{etc_ro}/xdg/autostart/{,*.desktop} r,
+
+  owner @{user_config_dirs}/autostart/{,*.desktop} r,
+  owner @{run}/user/@{uid}/systemd/generator.late/{,**} rw,
+
+  owner @{PROC}/@{pid}/cgroup r,
+
+  include if exists <local/systemd-generator-user-autostart>
+}
+
+# vim:syntax=apparmor

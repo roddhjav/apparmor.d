@@ -124,7 +124,7 @@ func (r *Unix) Compare(other Rule) int {
 func (r *Unix) Merge(other Rule) bool {
 	o, _ := other.(*Unix)
 
-	if !r.Qualifier.Equal(o.Qualifier) {
+	if !r.Equal(o.Qualifier) {
 		return false
 	}
 	if r.Type == o.Type && r.Protocol == o.Protocol && r.Address == o.Address &&
@@ -139,8 +139,8 @@ func (r *Unix) Merge(other Rule) bool {
 
 func (r *Unix) Lengths() []int {
 	return []int{
-		r.Qualifier.getLenAudit(),
-		r.Qualifier.getLenAccess(),
+		r.getLenAudit(),
+		r.getLenAccess(),
 		length("", r.Access),
 		length("type=", r.Type),
 		length("protocol=", r.Protocol),

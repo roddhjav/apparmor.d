@@ -1,5 +1,5 @@
 # apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2024 Roman Beslik <me@beroal.in.ua>
+# Copyright (C) 2024-2025 Roman Beslik <me@beroal.in.ua>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/4.0>,
@@ -34,6 +34,7 @@ profile briar-desktop @{exec_path} {
   @{system_share_dirs}/java/briar-desktop.jar r,
 
   /etc/java*/{,**} r,
+  /etc/machine-id r,
 
   owner @{HOME}/.briar/desktop/{,**} rw,
   owner @{HOME}/.briar/desktop/db/db.mv.db k,
@@ -57,10 +58,11 @@ profile briar-desktop @{exec_path} {
   owner @{tmp}/jna@{u64}.tmp mrw,
 
   @{sys}/devices/system/cpu/cpu@{int}/microcode/version r,
-  @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/session-@{int}.scope/{cpu,memory}.max r,
+  @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/session-@{word}.scope/{cpu,memory}.max r,
   @{sys}/kernel/mm/{hugepages/,transparent_hugepage/enabled} r,
 
         @{PROC}/cgroups r,
+        @{PROC}/asound/version r,
   owner @{PROC}/@{pid}/cgroup r,
   owner @{PROC}/@{pid}/cmdline r,
   owner @{PROC}/@{pid}/coredump_filter rw,
@@ -78,7 +80,7 @@ profile briar-desktop @{exec_path} {
   profile jspawnhelper flags=(attach_disconnected) {
     include <abstractions/base>
 
-    @{bin}/ldconfig ix,
+    @{sbin}/ldconfig ix,
     owner @{HOME}/.briar/desktop/tor/tor Px -> briar-desktop-tor,
 
     @{system_share_dirs}/java/briar-desktop.jar r,

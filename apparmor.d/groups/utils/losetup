@@ -1,0 +1,34 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{sbin}/losetup
+profile losetup @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/devices-usb>
+
+  capability dac_override,
+  capability dac_read_search,
+
+  unix receive type=stream,
+
+  @{exec_path} mr,
+
+  @{user_img_dirs}/** rw,
+  @{user_vm_dirs}/** rw,
+
+  @{sys}/block/ r,
+  @{sys}/devices/virtual/block/loop@{int}/{,**} r,
+
+  /dev/loop-control rw,
+  /dev/loop@{int} rw,
+
+  include if exists <local/losetup>
+}
+
+# vim:syntax=apparmor

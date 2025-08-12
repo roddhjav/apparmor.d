@@ -7,8 +7,10 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{exec_path} = @{bin}/wg-quick
-profile wg-quick @{exec_path} {
+profile wg-quick @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
 
   capability dac_read_search,
   capability net_admin,
@@ -20,31 +22,39 @@ profile wg-quick @{exec_path} {
   @{sh_path}                rix,
   @{bin}/cat                rix,
   @{bin}/ip                 rPx,
-  @{bin}/nft                rix,
+  @{bin}/mv                 rix,
+  @{sbin}/nft               rix,
   @{bin}/readlink           rix,
-  @{bin}/resolvconf         rPx,
-  @{bin}/resolvectl        rPUx,
+  @{sbin}/resolvconf        rPx,
+  @{bin}/resolvectl         rPx,
+  @{bin}/rm                 rix,
   @{bin}/sort               rix,
   @{bin}/stat               rix,
-  @{bin}/sysctl             rix,
+  @{bin}/sync               rix,
+  @{sbin}/sysctl            rCx -> sysctl,
   @{bin}/wg                 rPx,
-  @{bin}/xtables-nft-multi  rix,
+  @{sbin}/xtables-nft-multi rix,
 
   /usr/share/terminfo/** r,
 
   /etc/iproute2/group  r,
   /etc/iproute2/rt_realms r,
   /etc/resolvconf/interface-order r,
-  /etc/wireguard/*.conf r,
+  /etc/wireguard/{,**} rw,
 
   @{sys}/module/wireguard r,
 
-  @{PROC}/sys/net/ipv4/conf/all/src_valid_mark w,
+  @{PROC}/@{pid}/net/ip_tables_names r,
 
-  /dev/tty rw,
+  profile sysctl flags=(attach_disconnected) {
+    include <abstractions/base>
 
-  # Force the use as root
-  deny @{bin}/sudo x,
+    @{sbin}/sysctl mr,
+
+    @{PROC}/sys/net/ipv4/conf/all/src_valid_mark w,
+
+    include if exists <local/wg-quick_sysctl>
+  }
 
   include if exists <local/wg-quick>
 }

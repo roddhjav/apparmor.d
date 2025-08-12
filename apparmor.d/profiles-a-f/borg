@@ -27,11 +27,11 @@ profile borg @{exec_path} {
   @{exec_path} r,
 
   @{bin}/ r,
-  @{bin}/python3.@{int} r,
+  @{python_path} r,
 
   @{bin}/{,@{multiarch}-}ld.bfd rix,
   @{bin}/cat                    rix,
-  @{bin}/ldconfig               rix,
+  @{sbin}/ldconfig              rix,
   @{bin}/uname                  rix,
 
   @{bin}/ccache                 rCx -> ccache,
@@ -95,10 +95,7 @@ profile borg @{exec_path} {
 
   profile fusermount {
     include <abstractions/base>
-    include <abstractions/consoles>
-    include <abstractions/nameservice-strict>
-
-    capability sys_admin,
+    include <abstractions/app/fusermount>
 
     mount fstype=fuse options=(ro nosuid nodev) borgfs -> @{MOUNTS}/,
     mount fstype=fuse options=(ro nosuid nodev) borgfs -> @{MOUNTS}/*/,
@@ -106,16 +103,8 @@ profile borg @{exec_path} {
     umount @{MOUNTS}/,
     umount @{MOUNTS}/*/,
 
-    @{bin}/fusermount{,3} mr,
-
-    /etc/fuse.conf r,
-
     @{MOUNTS}/ r,
     @{MOUNTS}/*/ r,
-
-    @{PROC}/@{pids}/mounts r,
-
-    /dev/fuse rw,
 
     include if exists <local/borg_fusermount>
   }

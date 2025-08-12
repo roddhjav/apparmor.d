@@ -1,0 +1,38 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{sbin}/update-shells
+profile update-shells @{exec_path} {
+  include <abstractions/base>
+
+  @{exec_path} mr,
+
+  @{sh_path}           r,
+  @{bin}/basename      ix,
+  @{bin}/chmod         ix,
+  @{bin}/chown         ix,
+  @{bin}/dirname       ix,
+  @{bin}/dpkg-realpath rix,
+  @{bin}/mv            ix,
+  @{bin}/sync          ix,
+  @{bin}/readlink      ix,
+
+  /usr/share/debianutils/shells r,
+  /usr/share/debianutils/shells.d/{,**} r,
+  /usr/share/dpkg/sh/dpkg-error.sh r,
+
+  /etc/shells r,
+  /etc/shells.tmp w,
+
+  /var/lib/shells.state r,
+  /var/lib/shells.state.tmp w,
+
+  include if exists <local/update-shells>
+}
+
+# vim:syntax=apparmor

@@ -11,6 +11,7 @@ include <tunables/global>
 profile networkctl @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus-system>
+  include <abstractions/nameservice-strict>
 
   capability net_admin,
   capability sys_module,
@@ -26,7 +27,7 @@ profile networkctl @{exec_path} flags=(attach_disconnected) {
 
   unix (bind) type=stream addr=@@{udbus}/bus/networkctl/system,
 
-  #aa:dbus talk bus=system name=org.freedesktop.network1 label=systemd-networkd
+  #aa:dbus talk bus=system name=org.freedesktop.network1 label="@{p_systemd_networkd}"
   dbus send bus=system path=/org/freedesktop/network1{,/**}
        interface=org.freedesktop.DBus.Properties
        member=Get
@@ -50,17 +51,21 @@ profile networkctl @{exec_path} flags=(attach_disconnected) {
   /{run,var}/log/journal/@{hex32}/system.journal* r,
   /{run,var}/log/journal/@{hex32}/system@@{hex}.journal* r,
 
+  @{att}/@{run}/systemd/netif/io.systemd.Network rw,
+
+  @{run}/systemd/netif/links/ r,
   @{run}/systemd/netif/leases/@{int} r,
   @{run}/systemd/netif/links/@{int} r,
   @{run}/systemd/netif/state r,
   @{run}/systemd/notify w,
 
-  @{run}/udev/data/n@{int} r,
+  @{run}/udev/data/n@{int} r,             # For network interfaces
 
   @{sys}/devices/**/net/**/uevent r,
 
         @{PROC}/1/cgroup r,
         @{PROC}/cmdline r,
+        @{PROC}/sys/fs/nr_open r,
         @{PROC}/sys/kernel/osrelease r,
         @{PROC}/sys/kernel/random/boot_id r,
   owner @{PROC}/@{pid}/cgroup r,

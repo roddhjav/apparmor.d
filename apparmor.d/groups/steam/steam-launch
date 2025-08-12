@@ -1,0 +1,64 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{runtime} = SteamLinuxRuntime_{sniper,soldier}
+@{share_dirs} = @{user_share_dirs}/Steam @{HOME}/.steam/debian-installation
+@{lib_dirs} = @{share_dirs}/ubuntu@{int2}_{32,64} @{share_dirs}/linux{32,64}
+@{runtime_dirs} = @{lib_dirs}/steam-runtime{,-sniper}
+@{app_dirs} = @{share_dirs}/steamapps/common/
+
+@{exec_path} = @{bin}/steam @{bin}/steam-runtime
+profile steam-launch @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/python>
+
+  network unix stream,
+
+  @{exec_path} mr,
+
+  @{sh_path}         rix,
+  @{bin}/cat         rix,
+  @{bin}/cmp         rix,
+  @{bin}/cp          rix,
+  @{bin}/dirname     rix,
+  @{bin}/env         rix,
+  @{bin}/id          rix,
+  @{bin}/readlink    rix,
+  @{bin}/rm          rix,
+  @{bin}/rmdir       rix,
+
+  @{lib}/steam/steam         rix,
+  @{lib}/steam/bin_steam.sh  rix,
+  @{share_dirs}/steam.sh     rPx,
+
+  @{lib_dirs}/**  mr,
+
+  @{runtime_dirs}/@{arch}/@{bin}/steam-runtime-steam-remote     rPx,
+  @{runtime_dirs}/@{lib}/steam-runtime-tools-@{int}/* r,
+  @{runtime_dirs}/@{lib}/steam-runtime-tools-@{int}/srt-logger  rix,
+
+  /usr/ r,
+  /usr/local/ r,
+
+  owner @{share_dirs}/bootstrap.tar.xz rw,
+  owner @{share_dirs}/logs/ r,
+  owner @{share_dirs}/logs/* rwk,
+
+  owner @{run}/user/@{uid}/srt-fifo.@{rand6}/ rw,
+  owner @{run}/user/@{uid}/srt-fifo.@{rand6}/fifo rw,
+
+  owner @{PROC}/@{pid}/fd/@{int} rw,
+
+  /dev/tty rw,
+
+  deny /opt/** r,
+
+  include if exists <local/steam-launch>
+}
+
+# vim:syntax=apparmor

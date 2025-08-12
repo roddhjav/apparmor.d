@@ -1,0 +1,75 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2018-2021 Mikhail Morfikov
+# Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/polkitd @{lib}/polkit-1/polkitd
+profile polkitd @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/bus-system>
+  include <abstractions/bus/org.freedesktop.systemd1>
+  include <abstractions/nameservice-strict>
+
+  capability setgid,
+  capability setuid,
+  capability sys_nice,
+  capability sys_ptrace,
+  audit capability net_admin,
+
+  ptrace read,
+
+  #aa:dbus own bus=system name=org.freedesktop.PolicyKit1
+
+  @{exec_path} mr,
+
+  @{bin}/pkla-check-authorization  rPx,
+  @{bin}/pkla-admin-identities     rPx,
+
+  /etc/machine-id r,
+
+  # System rules
+  /etc/polkit-1/rules.d/ r,
+  /etc/polkit-1/rules.d/@{int2}-*.rules r,
+  /etc/polkit-1/localauthority/{,**} r,
+  /etc/polkit-1/localauthority.conf.d/{,**} r,
+  /etc/polkit-1/actions/{,*.policy} r,
+
+  # Vendor rules
+  /usr/share/polkit-1/rules.d/ r,
+  /usr/share/polkit-1/rules.d/*.rules r,
+
+  # Vendor policies
+  /usr/share/polkit-1/actions/ r,
+  /usr/share/polkit-1/actions/*.policy r,
+  /usr/share/polkit-1/actions/*.policy.choice r,
+
+        /var/lib/polkit{,-1}/localauthority/{,**} r,
+  owner /var/lib/polkit{,-1}/.cache/ rw,
+
+  @{att}/@{run}/systemd/notify w,
+  @{att}/@{run}/systemd/userdb/io.systemd.DynamicUser rw,
+  @{att}/@{run}/systemd/userdb/io.systemd.Home rw,
+  @{att}/@{run}/systemd/userdb/io.systemd.Multiplexer rw,
+
+  @{run}/systemd/sessions/* r,
+  @{run}/systemd/users/@{uid} r,
+
+  @{PROC}/@{pids}/cgroup r,
+  @{PROC}/@{pids}/cmdline r,
+  @{PROC}/@{pid}/fdinfo/@{int} r,
+  @{PROC}/@{pids}/stat r,
+  @{PROC}/@{pids}/task/@{tid}/stat r,
+  @{PROC}/1/environ r,
+  @{PROC}/cmdline r,
+  @{PROC}/sys/kernel/osrelease r,
+
+  owner @{PROC}/@{pid}/fdinfo/@{int} r,
+
+  include if exists <local/polkitd>
+}
+
+# vim:syntax=apparmor

@@ -1,0 +1,33 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/resolvectl
+profile resolvectl @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/bus-system>
+  include <abstractions/common/systemd>
+  include <abstractions/consoles>
+
+  capability net_admin,
+
+  network inet raw,
+  network inet6 raw,
+  network netlink raw,
+
+  signal send set=cont peer=child-pager,
+
+  #aa:dbus talk bus=system name=org.freedesktop.resolve1 label="@{p_systemd_resolved}"
+
+  @{exec_path} mr,
+
+  @{pager_path} rPx -> child-pager,
+
+  include if exists <local/resolvectl>
+}
+
+# vim:syntax=apparmor

@@ -1,0 +1,90 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/{openssh,ssh}/sshd-session
+profile sshd-session @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/authentication>
+  include <abstractions/bus-system>
+  include <abstractions/consoles>
+  include <abstractions/hosts_access>
+  include <abstractions/nameservice-strict>
+  include <abstractions/wutmp>
+  include <mappings/sshd> #aa:only RBAC
+
+  capability audit_write,
+  capability chown,
+  capability dac_override,
+  capability dac_read_search,
+  capability fowner,
+  capability fsetid,
+  capability kill,
+  capability setgid,
+  capability setuid,
+  capability sys_chroot,
+  capability sys_resource,
+
+  # sshd doesn't require net_admin. libpam-systemd tries to
+  # use it if available to set the send/receive buffers size,
+  # but will fall back to a non-privileged version if it fails.
+  deny capability net_admin,
+
+  network inet dgram,
+  network inet stream,
+  network inet6 dgram,
+  network inet6 stream,
+  network netlink raw,
+
+  unix type=stream peer=(label=sshd),
+
+  dbus send bus=system path=/org/freedesktop/login1
+       interface=org.freedesktop.login1.Manager
+       member={CreateSession,ReleaseSession,CreateSessionWithPIDFD}
+       peer=(name=org.freedesktop.login1, label="@{p_systemd_logind}"),
+
+  dbus send bus=system path=/org/freedesktop/home1
+       interface=org.freedesktop.home1.Manager
+       member=GetUserRecordByName
+       peer=(name=org.freedesktop.home1, label="@{p_systemd_homed}"),
+
+  @{exec_path} mr,
+
+  @{bin}/@{shells}                   Ux, #aa:exclude RBAC
+  @{lib}/{openssh,ssh}/sshd-auth     Px,
+
+  @{etc_rw}/motd r,
+  @{etc_rw}/motd.d/{,**} r,
+  /etc/machine-id r,
+  /etc/motd r,
+
+  /var/lib/lastlog/ r,
+  /var/lib/lastlog/lastlog2.db rwk,
+  /var/lib/lastlog/lastlog2.db-journal rw,
+
+  /var/lib/wtmpdb/ w,
+
+  owner @{HOME}/@{XDG_SSH_DIR}/authorized_keys{,.*} r,
+
+  owner @{user_cache_dirs}/{,motd*} rw,
+
+  @{att}/@{run}/systemd/sessions/@{int}.ref w,
+
+        @{run}/motd.d/{,*} r,
+        @{run}/motd.dynamic rw,
+        @{run}/motd.dynamic.new rw,
+
+        @{PROC}/1/limits r,
+  owner @{PROC}/@{pid}/loginuid rw,
+  owner @{PROC}/@{pid}/uid_map r,
+
+  /dev/ptmx rw,
+
+  include if exists <local/sshd-session>
+}
+
+# vim:syntax=apparmor

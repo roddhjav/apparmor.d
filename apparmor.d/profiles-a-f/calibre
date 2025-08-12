@@ -15,9 +15,10 @@ profile calibre @{exec_path} {
   include <abstractions/bus-accessibility>
   include <abstractions/bus-session>
   include <abstractions/bus/org.a11y>
-  include <abstractions/bus/org.gtk.vfs.MountTracker>
   include <abstractions/bus/org.freedesktop.UDisks2>
+  include <abstractions/bus/org.gtk.vfs.MountTracker>
   include <abstractions/bus/org.kde.StatusNotifierWatcher>
+  include <abstractions/dconf-write>
   include <abstractions/desktop>
   include <abstractions/devices-usb>
   include <abstractions/fontconfig-cache-read>
@@ -35,11 +36,13 @@ profile calibre @{exec_path} {
 
   capability sys_ptrace,
 
+  network inet dgram,
   network inet stream,
+  network inet6 dgram,
   network inet6 stream,
   network netlink raw,
 
-  unix (send, receive) type=stream peer=(addr=none, label=xorg),
+  # unix (send, receive) type=stream peer=(addr=none, label=xorg),
   unix (bind, listen)  type=stream addr="@*-calibre-gui.socket",
   unix (bind)          type=stream addr="@calibre-*",
 
@@ -47,9 +50,10 @@ profile calibre @{exec_path} {
 
   @{sh_path}              rix,
   @{python_path}          rix,
+  @{bin}/env                r,
   @{bin}/file             rix,
-  @{bin}/ldconfig{,.real} rix,
   @{bin}/uname            rix,
+  @{sbin}/ldconfig{,.real} rix,
   @{lib}/{,@{multiarch}/}qt{5,6}{,/libexec/}QtWebEngineProcess rix,
 
   @{bin}/pdftoppm        rPUx, # (#FIXME#)
@@ -61,6 +65,7 @@ profile calibre @{exec_path} {
   /usr/share/calibre/{,**} r,
 
   /etc/fstab r,
+  /etc/httpd/conf/mime.types r,
   /etc/inputrc r,
   /etc/magic r,
   /etc/mime.types r,
@@ -68,10 +73,15 @@ profile calibre @{exec_path} {
   owner @{HOME}/ r,
   owner "@{HOME}/Calibre Library/{,**}" rw,
   owner "@{HOME}/Calibre Library/metadata.db" rwk,
-  owner @{user_documents_dirs}/{,**} rwl,
+
   owner @{user_books_dirs}/{,**} rwl,
+  owner @{user_books_dirs}/Calibre/** rwk,
+  owner @{user_documents_dirs}/{,**} rwl,
+  owner @{user_documents_dirs}/Calibre/** rwk,
   owner @{user_torrents_dirs}/{,**} rwl,
+  owner @{user_torrents_dirs}/Calibre/** rwk,
   owner @{user_work_dirs}/{,**} rwl,
+  owner @{user_work_dirs}/Calibre/** rwk,
 
   owner @{user_config_dirs}/calibre/ rw,
   owner @{user_config_dirs}/calibre/** rwk,
@@ -82,10 +92,11 @@ profile calibre @{exec_path} {
   owner @{user_cache_dirs}/calibre/ rw,
   owner @{user_cache_dirs}/calibre/** rwkl -> @{user_cache_dirs}/calibre/**,
 
-  owner @{tmp}/calibre_*_tmp_*/{,**} rw,
-  owner @{tmp}/calibre-*/{,**} rw,
-  owner @{tmp}/@{int}-*/ rw,
-  owner @{tmp}/@{int}-*/** rwl,
+  owner @{tmp}/@{rand8} rw,
+  audit owner @{tmp}/@{int}-*/ rw,
+  audit owner @{tmp}/@{int}-*/** rwl,
+  audit owner @{tmp}/calibre_@{rand8}_tmp_*/{,**} rw,
+  audit owner @{tmp}/calibre-@{rand8}/{,**} rw,
 
   owner /dev/shm/#@{int} rw,
 
@@ -108,6 +119,7 @@ profile calibre @{exec_path} {
   owner @{PROC}/@{pid}/task/@{tid}/comm rw,
   owner @{PROC}/@{pid}/task/@{tid}/status r,
 
+        /dev/tty r,
   owner /dev/tty@{int} rw,
 
   include if exists <local/calibre>

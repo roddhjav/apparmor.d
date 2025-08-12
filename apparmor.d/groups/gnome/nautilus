@@ -28,17 +28,26 @@ profile nautilus @{exec_path} flags=(attach_disconnected) {
 
   mqueue r type=posix /,
 
-  #aa:dbus own bus=session name=org.gnome.Nautilus interface=org.gtk.{Application,Actions}
-  #aa:dbus own bus=session name=org.freedesktop.FileManager1
+  unix type=stream peer=(label=gnome-shell),
 
+  #aa:dbus own bus=session name=org.freedesktop.FileManager1
+  #aa:dbus own bus=session name=org.gnome.Nautilus interface+="org.gtk.{Application,Actions}"
+  #aa:dbus own bus=session name=org.gnome.Nautilus.SearchProvider interface+=org.gnome.Shell.SearchProvider2
+
+  #aa:dbus talk bus=session name=org.gnome.Settings label=gnome-control-center
   #aa:dbus talk bus=session name=org.gtk.MountOperationHandler label=gnome-shell
-  #aa:dbus talk bus=session name=org.gtk.vfs label="gvfsd{,-*}"
   #aa:dbus talk bus=session name=org.gtk.Notifications label=gnome-shell
+  #aa:dbus talk bus=session name=org.gtk.vfs label="gvfsd{,-*}"
+
+  dbus send bus=session path=/org/gnome/Mutter/ServiceChannel
+       interface=org.gnome.Mutter.ServiceChannel
+       member=OpenWaylandServiceConnection
+       peer=(name=@{busname}, label=gnome-shell),
 
   dbus (send, receive) bus=session path=/org/gtk/Application/CommandLine
        interface=org.gtk.private.CommandLine
        member=Print
-       peer=(name=:*, label=nautilus),
+       peer=(name=@{busname}, label=nautilus),
 
   dbus send bus=session path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus
@@ -72,6 +81,7 @@ profile nautilus @{exec_path} flags=(attach_disconnected) {
 
   /var/cache/fontconfig/ rw,
 
+  #aa:lint ignore=too-wide
   # Full access to user's data
   / r,
   /*/ r,
@@ -88,7 +98,7 @@ profile nautilus @{exec_path} flags=(attach_disconnected) {
   owner @{tmp}/** rw,
 
   # Silence non user's data
-  deny /boot/{,**} r,
+  deny @{efi}/{,**} r,
   deny /opt/{,**} r,
   deny /root/{,**} r,
   deny /tmp/.* rw,
@@ -108,6 +118,7 @@ profile nautilus @{exec_path} flags=(attach_disconnected) {
   owner @{PROC}/@{pid}/cmdline r,
   owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/stat r,
   owner @{PROC}/@{pid}/task/@{tid}/comm rw,
 
   /dev/tty rw,

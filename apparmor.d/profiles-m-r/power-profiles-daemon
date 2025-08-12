@@ -12,6 +12,7 @@ profile power-profiles-daemon @{exec_path} flags=(attach_disconnected) {
   include <abstractions/bus-system>
   include <abstractions/bus/org.freedesktop.login1>
   include <abstractions/bus/org.freedesktop.PolicyKit1>
+  include <abstractions/bus/org.freedesktop.UPower>
   include <abstractions/nameservice-strict>
 
   capability dac_read_search,
@@ -27,12 +28,15 @@ profile power-profiles-daemon @{exec_path} flags=(attach_disconnected) {
 
   /var/lib/power-profiles-daemon/{,**} rw,
 
-  @{run}/udev/data/+platform:* r,
-  @{run}/udev/data/+power_supply:* r,
+  @{run}/udev/data/+platform:* r,         # Identifies onboard devices (laptop/board model, power controllers, thermal sensors)
+  @{run}/udev/data/+power_supply:* r,     # For power supply devices (batteries, AC adapters, USB chargers)
+  @{run}/udev/data/+drm:card@{int}-* r,   # For screen outputs
+  @{run}/udev/data/c226:@{int} r,         # For /dev/dri/card[0-9]*
 
   @{sys}/bus/ r,
   @{sys}/bus/platform/devices/ r,
   @{sys}/class/ r,
+  @{sys}/class/drm/ r,
   @{sys}/class/power_supply/ r,
   @{sys}/devices/**/power_supply/*/scope r,
   @{sys}/devices/**/uevent r,

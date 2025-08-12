@@ -1,0 +1,28 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# /bin/mount /run -o remount,exec
+# /bin/mkdir -p /run/initramfs
+# /bin/cp /usr/lib/snapd/system-shutdown /run/initramfs/shutdown
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+profile snapd.system-shutdown.service {
+  include <abstractions/base>
+
+  @{bin}/cp     ix,
+  @{bin}/mkdir  ix,
+  @{bin}/mount  ix,
+
+  @{lib}/snapd/system-shutdown r,
+
+  @{run}/initramfs/ rw,
+  @{run}/initramfs/shutdown rw,
+
+  include if exists <local/snapd.system-shutdown.service>
+}
+
+# vim:syntax=apparmor
