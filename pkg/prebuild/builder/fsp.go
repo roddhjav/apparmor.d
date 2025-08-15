@@ -11,7 +11,7 @@ import (
 
 var (
 	regFullSystemPolicy = util.ToRegexRepl([]string{
-		`r(PU|U)x,`, `rPx,`,
+		`(PU|U)x,`, `Px,`,
 	})
 )
 

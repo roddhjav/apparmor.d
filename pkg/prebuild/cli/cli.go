@@ -139,6 +139,9 @@ func Configure() {
 
 func Prebuild() {
 	logging.Step("Building apparmor.d profiles for %s on ABI%d.", prebuild.Distribution, prebuild.ABI)
+	if full {
+		logging.Success("Full system policy enabled")
+	}
 	if prebuild.Version != nilVer {
 		logging.Success("AppArmor version targeted: %.1f", prebuild.Version)
 	}
