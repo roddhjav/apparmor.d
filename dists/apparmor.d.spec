@@ -32,8 +32,8 @@ just complain
 just destdir="%{buildroot}" install
 
 %posttrans
-rm -f /var/cache/apparmor/* 2>/dev/null
-systemctl is-active -q apparmor && systemctl reload apparmor ||:
+apparmor_parser --purge-cache
+%restart_on_update apparmor
 
 %files
 %license LICENSE
