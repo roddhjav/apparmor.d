@@ -171,6 +171,9 @@ _check_abstractions() {
             _err abstractions "$file:$line_number" "deprecated abstraction '<$ABS/$absname>', use '<$ABS/${ABS_DEPRECATED[$absname]}>' instead"
         fi
     done
+    if [[ "$line" == *"<$ABS/ubuntu-"*">"* ]]; then
+        _err abstractions "$file:$line_number" "deprecated, ubuntu only abstraction '<$ABS/$absname>'"
+    fi
 }
 
 readonly DIRECTORIES=('@{HOME}' '@{MOUNTS}' '@{bin}' '@{sbin}' '@{lib}' '@{tmp}' '_dirs}' '_DIR}')
@@ -222,7 +225,7 @@ readonly TRANSITION_MUST_PC=( # Must transition to 'Px'
     ischroot who
 )
 readonly TRANSITION_MUST_C=( # Must transition to 'Cx'
-    sysctl kmod pgrep pkexec sudo systemctl udevadm
+    sysctl kmod pgrep pkill pkexec sudo systemctl udevadm
     fusermount fusermount3 fusermount{,3}
     nvim vim sensible-editor
 )
