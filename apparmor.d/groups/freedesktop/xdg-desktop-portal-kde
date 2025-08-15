@@ -11,6 +11,7 @@ include <tunables/global>
 profile xdg-desktop-portal-kde @{exec_path} {
   include <abstractions/base>
   include <abstractions/bus-session>
+  include <abstractions/devices-usb-read>
   include <abstractions/graphics>
   include <abstractions/kde-globals-write>
   include <abstractions/kde-strict>
@@ -30,6 +31,12 @@ profile xdg-desktop-portal-kde @{exec_path} {
   #aa:exec kioworker
 
   /usr/share/plasma/look-and-feel/** r,
+  /usr/share/thumbnailers/{,**} r,
+
+  /etc/fstab r,
+  /etc/xdg/dolphinrc r,
+
+  / r,
 
   owner @{HOME}/ r,
 
@@ -39,12 +46,21 @@ profile xdg-desktop-portal-kde @{exec_path} {
 
   owner @{user_config_dirs}/autostart/org.kde.*.desktop r,
   owner @{user_config_dirs}/breezerc r,
+  owner @{user_config_dirs}/kioslaverc r,
+  owner @{user_config_dirs}/kservicemenurc r,
   owner @{user_config_dirs}/xdg-desktop-portal-kderc{,.*} rwlk,
 
+  owner @{user_state_dirs}/#@{int} rw,
+  owner @{user_state_dirs}/xdg-desktop-portal-kdestaterc rw,
+  owner @{user_state_dirs}/xdg-desktop-portal-kdestaterc.@{rand6} rwlk,
+  owner @{user_state_dirs}/xdg-desktop-portal-kdestaterc.lock rwk,
+
+  owner @{run}/user/@{uid}/#@{int} rw,
   owner @{run}/user/@{uid}/xdg-desktop-portal-kde@{rand6}.*.socket rw,
 
   owner @{PROC}/@{pid}/mountinfo r,
 
+  /dev/shm/ r,
   /dev/tty r,
 
   include if exists <local/xdg-desktop-portal-kde>
