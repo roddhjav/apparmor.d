@@ -108,7 +108,16 @@ func Configure() {
 	case 3:
 		builder.Register("abi3") // Convert all profiles from abi 4.0 to abi 3.0
 	case 4:
-		// builder.Register("attach") // Re-attach disconnected path
+		// Re-attach disconnected path, ignored on ubuntu 25.04+ due to a memory leak
+		// that fully prevent profiles compilation with re-attached paths.
+		// See https://bugs.launchpad.net/ubuntu/+source/linux/+bug/2098730
+		if prebuild.Distribution != "ubuntu" {
+			builder.Register("attach")
+			prepare.Register("attach")
+		} else if prebuild.Release["VERSION_CODENAME"] == "noble" {
+			builder.Register("attach")
+			prepare.Register("attach")
+		}
 	default:
 		logging.Fatal("Invalid ABI version: %d", prebuild.ABI)
 	}
