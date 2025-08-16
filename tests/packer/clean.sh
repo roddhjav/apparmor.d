@@ -55,7 +55,6 @@ clean_apt() {
 
 clean_pacman() {
 	_msg "Cleaning pacman cache"
-	pacman -Syu --noconfirm
 	pacman -Scc --noconfirm
 }
 
