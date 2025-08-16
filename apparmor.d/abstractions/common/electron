@@ -7,27 +7,21 @@
 # in the header of the calling profile. Example:
 #
 # @{name} = spotify
-# @{lib_dirs} = /opt/@{name}
+# @{domain} = org.chromium.chromium
+# @{lib_dirs} = /opt/@{name}/ /usr/share/@{name}/
 # @{config_dirs} = @{user_config_dirs}/@{name}
 # @{cache_dirs} = @{user_cache_dirs}/@{name}
 #
 
   abi <abi/4.0>,
 
+  include <abstractions/common/chromium>
   include <abstractions/dconf-write>
   include <abstractions/desktop>
   include <abstractions/fontconfig-cache-read>
   include <abstractions/graphics>
   include <abstractions/nameservice-strict>
   include <abstractions/ssl_certs>
-
-  userns,
-
-  capability setgid, # If kernel.unprivileged_userns_clone = 1
-  capability setuid, # If kernel.unprivileged_userns_clone = 1
-  capability sys_admin,
-  capability sys_chroot,
-  capability sys_ptrace,
 
   @{bin}/electron rix,
   @{bin}/electron@{int} rix,
@@ -48,31 +42,7 @@
   owner @{cache_dirs}/ rw,
   owner @{cache_dirs}/** rwlk -> @{cache_dirs}/**,
 
-  owner @{HOME}/.pki/ rw,
-  owner @{HOME}/.pki/nssdb/ rw,
-  owner @{HOME}/.pki/nssdb/pkcs11.txt rw,
-  owner @{HOME}/.pki/nssdb/{cert9,key4}.db rwk,
-  owner @{HOME}/.pki/nssdb/{cert9,key4}.db-journal rw,
-
   owner @{user_config_dirs}/electron-flags.conf r,
-  owner @{user_share_dirs}/.org.chromium.Chromium.@{rand6} rw,
-
-  owner @{tmp}/.org.chromium.Chromium.@{rand6} rw,
-  owner @{tmp}/.org.chromium.Chromium.@{rand6}/ rw,
-  owner @{tmp}/.org.chromium.Chromium.@{rand6}/SingletonCookie w,
-  owner @{tmp}/.org.chromium.Chromium.@{rand6}/SingletonSocket w,
-  owner @{tmp}/scoped_dir@{rand6}/ rw,
-  owner @{tmp}/scoped_dir@{rand6}/SingletonCookie w,
-  owner @{tmp}/scoped_dir@{rand6}/SingletonSocket w,
-  owner @{tmp}/scoped_dir@{rand6}/SS w,
-
-        /dev/shm/ r,
-  owner /dev/shm/.org.chromium.Chromium.@{rand6} rw,
-
-  @{sys}/devices/system/cpu/kernel_max r,
-  @{sys}/devices/virtual/dmi/id/product_name r,
-  @{sys}/devices/virtual/dmi/id/sys_vendor r,
-  @{sys}/devices/virtual/tty/tty@{int}/active r,
 
         @{sys}/fs/cgroup/user.slice/cpu.max r,
         @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/cpu.max r,
@@ -89,15 +59,12 @@
   owner @{PROC}/@{pid}/cgroup r,
   owner @{PROC}/@{pid}/cmdline r,
   owner @{PROC}/@{pid}/fd/ r,
-  owner @{PROC}/@{pid}/gid_map w, # If kernel.unprivileged_userns_clone = 1
   owner @{PROC}/@{pid}/mountinfo r,
   owner @{PROC}/@{pid}/oom_score_adj rw,
-  owner @{PROC}/@{pid}/setgroups w, # If kernel.unprivileged_userns_clone = 1
   owner @{PROC}/@{pid}/stat r,
   owner @{PROC}/@{pid}/statm r,
   owner @{PROC}/@{pid}/task/ r,
   owner @{PROC}/@{pid}/task/@{tid}/stat r,
-  owner @{PROC}/@{pid}/uid_map w, # If kernel.unprivileged_userns_clone = 1
 
   deny @{user_share_dirs}/gvfs-metadata/* r,
 
