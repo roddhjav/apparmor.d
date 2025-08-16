@@ -64,7 +64,7 @@ var (
 		`/home/[^/]+/`, `@{HOME}/`,
 
 		// Resolve system variables
-		`/att/[^/@]+`, `@{att}/`,
+		`/att/[^/]+/`, `@{att}/`,
 		`/usr/lib(32|64|exec)`, `@{lib}`,
 		`/usr/lib`, `@{lib}`,
 		`/usr/sbin`, `@{sbin}`,
@@ -86,7 +86,6 @@ var (
 		`pci` + strings.Repeat(h, 4) + `:` + strings.Repeat(h, 2), `@{pci_bus}`,
 		`@{pci_bus}/[0-9a-f:*./]*/`, `@{pci}/`,
 		`1000`, `@{uid}`,
-		`@{att}//`, `@{att}/`,
 
 		// Some system glob
 		`:not.active.yet`, `@{busname}`, // dbus unique bus name
