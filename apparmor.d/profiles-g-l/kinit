@@ -1,0 +1,39 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Zane Zakraisek <zakraise@eng.utah.edu>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/kinit
+profile kinit @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  #Config Files
+  /etc/krb5.conf r,
+  /etc/krb5.conf.d/{,**} r,
+
+  #Host keytab file
+  /etc/krb5.keytab r,
+
+  #User keytab file
+  /var/lib/krb5/user/*/client.keytab r,
+
+  #Credentials cache
+  /tmp/krb5cc_* rwk,
+  /tmp/tkt* rwk,
+
+  include if exists <local/kinit>
+}
+
+# vim:syntax=apparmor
