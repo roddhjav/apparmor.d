@@ -3,7 +3,7 @@
 # Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-set -eu
+set -eux
 
 _lsb_release() {
 	# shellcheck source=/dev/null
@@ -31,7 +31,8 @@ main() {
 		;;
 
 	debian | ubuntu)
-		dpkg -i $SRC/*.deb
+		apt install -y apparmor-profiles
+		dpkg -i $SRC/*.deb || true
 		;;
 
 	opensuse*)
