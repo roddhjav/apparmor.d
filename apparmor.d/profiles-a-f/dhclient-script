@@ -46,18 +46,18 @@ profile dhclient-script @{exec_path} {
   @{bin}/rm            rix,
   @{bin}/run-parts     rCx -> run-parts,
   @{bin}/sed           rix,
-  @{sbin}/sysctl       rix,
+  @{sbin}/sysctl       rCx -> sysctl,
   @{bin}/tr            rix,
   @{bin}/xxd           rix,
 
+  @{etc_rw}/resolv.conf rw,
+  @{etc_rw}/resolv.conf.dhclient-new.@{pid} rw,
+  @{etc_rw}/samba/dhcp.conf{,.new} rw,
   /etc/default/ddclient r,
   /etc/dhcp/{,**} r,
   /etc/fstab r,
   /etc/iproute2/rt_tables r,
   /etc/iproute2/rt_tables.d/{,*} r,
-  @{etc_rw}/resolv.conf rw,
-  @{etc_rw}/resolv.conf.dhclient-new.@{pid} rw,
-  @{etc_rw}/samba/dhcp.conf{,.new} rw,
 
   /var/lib/dhcp/dhclient.leases r,
   /var/lib/samba/dhcp.conf{,.new} rw,
@@ -71,7 +71,16 @@ profile dhclient-script @{exec_path} {
   @{sys}/devices/virtual/dmi/id/board_vendor r,
 
   owner @{PROC}/@{pid}/loginuid r,
-        @{PROC}/sys/net/ipv6/conf/*/stable_secret w,
+
+  profile sysctl {
+    include <abstractions/base>
+
+    @{sbin}/sysctl mr,
+
+    @{PROC}/sys/net/ipv6/conf/*/stable_secret w,
+
+    include if exists <local/dhclient-script_sysctl>
+  }
 
   profile run-parts {
     include <abstractions/base>

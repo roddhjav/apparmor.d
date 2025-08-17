@@ -11,11 +11,22 @@ profile cockpit-wsinstance-factory @{exec_path} {
   include <abstractions/base>
   include <abstractions/bus-system>
 
-  unix bind type=stream addr=@@{udbus}/bus/cockpit-wsinsta/system,
-
   capability net_admin,
 
+  unix bind type=stream addr=@@{udbus}/bus/cockpit-wsinsta/system,
+
+  dbus receive bus=system path=/org/freedesktop/systemd1
+       interface=org.freedesktop.systemd1.Manager
+       member=JobRemoved
+       peer=(name=@{busname}, label="@{p_systemd}"),
+  dbus send bus=system path=/org/freedesktop/systemd1
+       interface=org.freedesktop.systemd1.Manager
+       member=StartUnit
+       peer=(name=org.freedesktop.systemd1, label="@{p_systemd}"),
+
   @{exec_path} mr,
+
+  @{run}/cockpit/wsinstance/https-factory.sock w,
 
   include if exists <local/cockpit-wsinstance-factory>
 }
