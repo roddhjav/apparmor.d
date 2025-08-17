@@ -11,6 +11,8 @@ include <tunables/global>
 @{exec_path} += @{lib}/polkit-kde-authentication-agent-[0-9]
 profile polkit-kde-authentication-agent @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/base>
+  include <abstractions/bus-session>
+  include <abstractions/bus-system>
   include <abstractions/consoles>
   include <abstractions/fontconfig-cache-read>
   include <abstractions/graphics>
@@ -25,6 +27,9 @@ profile polkit-kde-authentication-agent @{exec_path} flags=(attach_disconnected,
   network netlink raw,
 
   signal (send) set=(term, kill) peer=polkit-agent-helper,
+
+  #aa:dbus own bus=session name=org.kde.polkit-kde-authentication-agent-@{int}
+  #aa:dbus talk bus=system name=org.freedesktop.PolicyKit1 label=polkitd
 
   @{exec_path} mr,
 

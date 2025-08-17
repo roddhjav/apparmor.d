@@ -23,13 +23,16 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected mediate_deleted) {
   capability sys_nice,
   capability sys_ptrace,
 
-  ptrace (read),
-
-  signal (receive) set=term peer=sddm,
-  signal (receive) set=(kill, term) peer=kwin_wayland_wrapper,
-  signal (send) set=(kill, term) peer=xwayland,
-
   network netlink raw,
+
+  ptrace read,
+
+  signal receive set=term peer=sddm,
+  signal receive set=(kill, term) peer=kwin_wayland_wrapper,
+  signal send set=(kill, term) peer=xwayland,
+
+  unix type=stream peer=(label=xkbcomp),
+  unix type=stream peer=(label=xwayland),
 
   #aa:dbus own bus=session name=org.freedesktop.ScreenSaver
   #aa:dbus own bus=session name=org.kde.kglobalaccel

@@ -18,6 +18,7 @@ profile kded @{exec_path} {
   include <abstractions/bus/org.freedesktop.ModemManager1>
   include <abstractions/bus/org.freedesktop.PolicyKit1>
   include <abstractions/bus/org.freedesktop.UDisks2>
+  include <abstractions/common/apt> #aa:only apt
   include <abstractions/consoles>
   include <abstractions/dconf-write>
   include <abstractions/devices-usb>
@@ -26,16 +27,19 @@ profile kded @{exec_path} {
   include <abstractions/kde-globals-write>
   include <abstractions/kde-strict>
   include <abstractions/nameservice-strict>
+  include <abstractions/ssl_certs>
   include <abstractions/wutmp>
 
   capability sys_ptrace,
 
   network inet dgram,
+  network inet stream,
   network inet6 dgram,
-  network netlink raw,
+  network inet6 stream,
   network netlink dgram,
+  network netlink raw,
 
-  ptrace (read),
+  ptrace read,
 
   signal send set=hup peer=xsettingsd,
   signal send set=term peer=kioworker,
@@ -78,11 +82,13 @@ profile kded @{exec_path} {
 
   @{exec_path} mrix,
 
+  @{python_path}            rix,
+  @{bin}/dpkg               rPx -> child-dpkg,
+  @{bin}/flatpak            rPx,
   @{bin}/kcminit            rPx,
+  @{bin}/lsb_release        rPx,
   @{bin}/pgrep              rCx -> pgrep,
   @{bin}/plasma-welcome    rPUx,
-  @{python_path}            rix,
-  @{bin}/flatpak            rPx,
   @{bin}/setxkbmap          rix,
   @{bin}/xmodmap           rPUx,
   @{bin}/xrdb               rPx,
@@ -94,24 +100,30 @@ profile kded @{exec_path} {
   #aa:exec kconf_update
 
   /usr/share/color-schemes/{,**} r,
+  /usr/share/distro-info/{,**} r,
+  /usr/share/distro-release-notifier/{,**} r,
   /usr/share/kconf_update/ r,
   /usr/share/kded{5,6}/{,**} r,
   /usr/share/kf{5,6}/kcookiejar/* r,
   /usr/share/khotkeys/{,**} r,
   /usr/share/kservices{5,6}/{,**} r,
   /usr/share/kservicetypes5/{,**} r,
+  /usr/share/ubuntu-release-upgrader/{,*} r,
 
   /etc/fstab r,
   /etc/xdg/accept-languages.codes r,
   /etc/xdg/kde* r,
   /etc/xdg/kioslaverc r,
   /etc/xdg/menus/{,**} r,
+  /etc/update-manager/{,**} r,
 
   /etc/machine-id r,
   /var/lib/dbus/machine-id r,
 
   / r,
   @{efi}/ r,
+
+  owner /var/lib/update-manager/meta-release-lts rw,
 
   owner @{HOME}/ r,
   owner @{HOME}/.gtkrc-2.0 rw,
@@ -125,6 +137,7 @@ profile kded @{exec_path} {
         @{user_cache_dirs}/ksycoca{5,6}_* rwlk -> @{user_cache_dirs}/#@{int},
   owner @{user_cache_dirs}/plasmashell/ rw,
   owner @{user_cache_dirs}/plasmashell/** rwlk ->  @{user_cache_dirs}/plasmashell/**,
+  owner @{user_cache_dirs}/update-manager-core/meta-release-lts rw,
 
         @{user_config_dirs}/kcookiejarrc.lock rwk,
         @{user_config_dirs}/kcookiejarrc{,.@{rand6}} rwl -> @{user_config_dirs}/#@{int},
