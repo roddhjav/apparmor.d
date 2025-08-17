@@ -90,6 +90,16 @@ profile sddm-xsession @{exec_path} {
 
   profile dbus {
     include <abstractions/base>
+    include <abstractions/bus-session>
+
+    dbus send bus=session path=/org/freedesktop/DBus
+        interface=org.freedesktop.DBus
+        member=UpdateActivationEnvironment
+        peer=(name=org.freedesktop.DBus, label="@{p_dbus_session}"),
+    dbus send bus=session path=/org/freedesktop/systemd1
+        interface=org.freedesktop.systemd1.Manager
+        member=SetEnvironment
+        peer=(name=org.freedesktop.systemd1, label="@{p_systemd_user}"),
 
     @{bin}/dbus-update-activation-environment mr,
 

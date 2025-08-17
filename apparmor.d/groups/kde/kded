@@ -10,9 +10,14 @@ include <tunables/global>
 profile kded @{exec_path} {
   include <abstractions/base>
   include <abstractions/audio-client>
+  include <abstractions/bus-accessibility>
+  include <abstractions/bus-session>
   include <abstractions/bus-system>
+  include <abstractions/bus/org.a11y>
   include <abstractions/bus/org.bluez>
+  include <abstractions/bus/org.freedesktop.ModemManager1>
   include <abstractions/bus/org.freedesktop.PolicyKit1>
+  include <abstractions/bus/org.freedesktop.UDisks2>
   include <abstractions/consoles>
   include <abstractions/dconf-write>
   include <abstractions/devices-usb>
@@ -35,19 +40,41 @@ profile kded @{exec_path} {
   signal send set=hup peer=xsettingsd,
   signal send set=term peer=kioworker,
 
+  # Owned by KDE
+
   #aa:dbus own bus=system name=com.redhat.NewPrinterNotification
+
+  #aa:dbus own bus=session name=org.gtk.Settings
+  #aa:dbus own bus=session name=org.kde.DistroReleaseNotifier
+  #aa:dbus own bus=session name=org.kde.GtkConfig
+  #aa:dbus own bus=session name=org.kde.kappmenu
+  #aa:dbus own bus=session name=org.kde.kcookiejar5
+  #aa:dbus own bus=session name=org.kde.kded5
+  #aa:dbus own bus=session name=org.kde.keyboard
+  #aa:dbus own bus=session name=org.kde.KeyboardLayouts
+  #aa:dbus own bus=session name=org.kde.plasmanetworkmanagement
+  #aa:dbus own bus=session name=org.kde.plasmashell.accentColor
+  #aa:dbus own bus=session name=org.kde.StatusNotifierWatcher
+  #aa:dbus own bus=session name=org.kde.Wacom
+  #aa:dbus own bus=session name=org.kubuntu.NotificationHelper
+  #aa:dbus own bus=session name=org.kubuntu.restrictedInstall
+
+  # Talk with KDE
+
   #aa:dbus talk bus=system name=org.freedesktop.NetworkManager label=NetworkManager
   #aa:dbus talk bus=system name=org.freedesktop.bolt label=boltd
+
+  #aa:dbus talk bus=session name=org.kde.KGlobalAccel path=/ label="{kglobalacceld,kwin_wayland}"
 
   dbus receive bus=system path=/
        interface=org.kde.kf5auth
        member=remoteSignal
-       peer=(name=:*, label=kauth-kded-smart-helper),
+       peer=(name=@{busname}, label=kauth-kded-smart-helper),
 
   dbus send bus=system path=/
        interface=org.kde.kf5auth
        member=performAction
-       peer=(name="{:*,org.kde.kded.smart}", label=kauth-kded-smart-helper),
+       peer=(name="{@{busname},org.kde.kded.smart}", label=kauth-kded-smart-helper),
 
   @{exec_path} mrix,
 

@@ -50,20 +50,11 @@ profile sddm @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   signal (send) set=(term) peer=startplasma-wayland,
   signal (send) set=(term) peer=startlxqtwayland,
 
-  dbus receive bus=system path=/org/freedesktop/DisplayManager/Seat@{int}
-       interface=org.freedesktop.DBus.Introspectable
-       member=Introspect
-       peer=(name=:*, label=kscreenlocker-greet),
+  unix type=stream addr=@@{udbus}/bus/sddm-helper/system,
 
-  dbus receive bus=system path=/org/freedesktop/DisplayManager/Seat@{int}
-       interface=org.freedesktop.DBus.Properties
-       member=PropertiesChanged
-       peer=(name=:*, label="@{p_systemd_logind}"),
+  #aa:dbus own bus=system name=org.freedesktop.DisplayManager
 
-  dbus send bus=system path=/org/freedesktop/DisplayManager/Seat@{int}
-       interface=org.freedesktop.DBus.Introspectable
-       member=Introspect
-       peer=(name=org.freedesktop.DBus, label=kscreenlocker-greet),
+  #aa:dbus talk bus=system name=org.freedesktop.home1 interface=org.freedesktop.home1.Manager label="@{p_systemd_homed}"
 
   @{exec_path} mr,
 
