@@ -26,7 +26,7 @@ profile apparmor.systemd @{exec_path} {
   @{bin}/sed                  rix,
   @{bin}/cat                  rix,
   @{bin}/sort                 rix,
-  @{sbin}/sysctl              rix,
+  @{sbin}/sysctl              rCx -> sysctl,
   @{bin}/systemd-detect-virt  rPx,
   @{bin}/xargs                rix,
 
@@ -43,9 +43,18 @@ profile apparmor.systemd @{exec_path} {
   @{PROC}/@{pids}/maps r,
   @{PROC}/@{pids}/mounts r,
   @{PROC}/mounts r,
-  @{PROC}/sys/kernel/apparmor_restrict_unprivileged_userns r,
 
   /dev/tty rw,
+
+  profile sysctl {
+    include <abstractions/base>
+
+    @{sbin}/sysctl mr,
+
+    @{PROC}/sys/kernel/apparmor_restrict_unprivileged_userns r,
+
+    include if exists <local/apparmor.systemd_sysctl>
+  }
 
   include if exists <local/apparmor.systemd>
 }
