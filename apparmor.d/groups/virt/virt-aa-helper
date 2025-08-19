@@ -21,14 +21,34 @@ profile virt-aa-helper @{exec_path} {
 
   @{sbin}/apparmor_parser rPx,
 
-  /etc/apparmor.d/libvirt/* r,
+  @{etc_rw}/apparmor.d/libvirt/* r,
   @{etc_rw}/apparmor.d/libvirt/libvirt-@{uuid} rw,
+  @{etc_rw}/apparmor.d/libvirt/libvirt-@{uuid}.files rw,
 
   /etc/libnl{,-3}/classid r,   # Allow reading libnl's classid file
 
   # System VM images
   /var/lib/libvirt/images/{,**} r,
-  /var/lib/nova/instances/_base/* r,
+
+  # Openstack Nova base images & snapshots (LP: #907269 #1244694 #1644507)
+  /var/lib/nova/images/{,**} r,
+  /var/lib/nova/instances/_base/{,**} r,
+  /var/lib/nova/instances/snapshots/{,**} r,
+  /var/snap/nova-hypervisor/common/instances/_base/{,**} r,
+  /var/snap/nova-hypervisor/common/instances/snapshots/{,**} r,
+
+  # Eucalyptus disks & loader (LP: #564914 #637544)
+  /var/lib/eucalyptus/instances/**/disk* r,
+  /var/lib/eucalyptus/instances/**/loader* r,
+
+  # For uvtool
+  /var/lib/uvtool/libvirt/images/{,**} r,
+
+  # For multipass
+  /var/snap/multipass/common/data/multipassd/vault/instances/{,**} r,
+
+  # Common mount directories
+  @{MOUNTDIRS}/{,**} r,
 
   # User VM images
   @{user_share_dirs}/ r,
