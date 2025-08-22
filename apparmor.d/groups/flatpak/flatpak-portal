@@ -10,6 +10,7 @@ include <tunables/global>
 profile flatpak-portal @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus-session>
+  include <abstractions/bus-system>
   include <abstractions/nameservice-strict>
 
   capability sys_ptrace,
@@ -21,6 +22,11 @@ profile flatpak-portal @{exec_path} flags=(attach_disconnected) {
   signal send,
 
   #aa:dbus own bus=session name=org.freedesktop.portal.Flatpak
+
+  dbus receive bus=session
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name=@{busname}, label=gnome-shell),
 
   @{exec_path} mr,
 
