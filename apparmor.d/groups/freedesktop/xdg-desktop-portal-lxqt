@@ -1,0 +1,39 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2025 Besanon  <m231009ts@mailfence.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path}  = @{lib}/xdg-desktop-portal-lxqt
+@{exec_path} += @{lib}/@{multiarch}/{,libexec/}xdg-desktop-portal-lxqt
+profile xdg-desktop-portal-lxqt @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/bus-session>
+  include <abstractions/graphics>
+  include <abstractions/lxqt>
+  include <abstractions/nameservice-strict>
+  include <abstractions/qt5-shader-cache>
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  @{exec_pathxdlx} mr,
+
+  owner @{HOME}/ r,
+
+  owner @{desktop_config_dirs}/user-dirs.dirs r,
+
+  owner @{user_cache_dirs}/xdg-desktop-portal-lxqt/{,**} rw,
+
+  /dev/tty r,
+
+  include if exists <local/xdg-desktop-portal-lxqt>
+}
+
+# vim:syntax=apparmor
