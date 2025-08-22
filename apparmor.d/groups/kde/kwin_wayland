@@ -7,7 +7,7 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{exec_path} = @{bin}/kwin_wayland
-profile kwin_wayland @{exec_path} flags=(attach_disconnected mediate_deleted) {
+profile kwin_wayland @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/base>
   include <abstractions/app-launcher-user>
   include <abstractions/bus-accessibility>
@@ -46,6 +46,7 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected mediate_deleted) {
 
   /etc/xdg/Xwayland-session.d/00-at-spi Cx -> at-spi,
   /etc/xdg/Xwayland-session.d/00-pulseaudio-x11 Cx -> pulseaudio,
+  /etc/xdg/Xwayland-session.d/10-ibus-x11 Cx -> ibus,
   #aa:exec kscreenlocker_greet
 
   /usr/share/color-schemes/*.colors r,
@@ -53,6 +54,7 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected mediate_deleted) {
   /usr/share/kglobalaccel/{,**} r,
   /usr/share/kservices{5,6}/{,**} r,
   /usr/share/kservicetypes5/{,*.desktop} r,
+  /usr/share/kwin-wayland/{,**} r,
   /usr/share/kwin/{,**} r,
   /usr/share/libinput-*/{,**} r,
   /usr/share/libinput/{,**} r,
@@ -177,6 +179,21 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected mediate_deleted) {
     owner @{HOME}/ r,
 
     include if exists <local/kwin_wayland_pulseaudio>
+  }
+
+  profile ibus {
+    include <abstractions/base>
+    include <abstractions/consoles>
+  
+    @{sh_path}    r,
+    @{lib}/{,ibus/}ibus-x11 rPx,
+
+    /etc/xdg/Xwayland-session.d/10-ibus-x11 r,
+
+    /home/ r,
+    owner @{HOME}/ r,
+
+    include if exists <local/kwin_wayland_ibus>
   }
 
   include if exists <local/kwin_wayland>
