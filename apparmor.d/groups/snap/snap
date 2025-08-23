@@ -18,6 +18,8 @@ profile snap @{exec_path} flags=(attach_disconnected) {
   include <abstractions/disks-read>
   include <abstractions/nameservice-strict>
 
+  capability chown,
+  capability dac_override,
   capability dac_read_search,
   capability setuid,
   capability sys_admin,
@@ -70,10 +72,10 @@ profile snap @{exec_path} flags=(attach_disconnected) {
   @{DESKTOP_HOME}/snap/{,**} rw,
   /snap/{,**} rw,
 
-        @{HOME}/snap/{,**} rw,
-  owner @{HOME}/ r,
-  owner @{HOME}/.snap.mkdir-new/ rw,
-  owner @{HOME}/.snap/{,**} rw,
+  @{HOME}/ r,
+  @{HOME}/.snap.mkdir-new/ rw,
+  @{HOME}/.snap/{,**} rw,
+  @{HOME}/snap/{,**} rw,
 
   owner @{tmp}/snapd-auto-import-mount-@{int}/ rw,
 
@@ -102,7 +104,11 @@ profile snap @{exec_path} flags=(attach_disconnected) {
   /dev/tty@{int} rw,
   /dev/ttyS@{int} rw,
 
-  deny @{user_share_dirs}/gvfs-metadata/* r,
+  /apparmor/.null rw,
+
+  # file_inherit, safe to deny
+  deny owner @{user_share_dirs}/gvfs-metadata/* r,
+  deny owner @{user_share_dirs}/gnome-shell/session.gvdb rw,
 
   profile gpg {
     include <abstractions/base>
