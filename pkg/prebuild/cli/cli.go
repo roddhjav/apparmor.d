@@ -108,16 +108,20 @@ func Configure() {
 	case 3:
 		builder.Register("abi3") // Convert all profiles from abi 4.0 to abi 3.0
 	case 4:
-		// Re-attach disconnected path, ignored on ubuntu 25.04+ due to a memory leak
-		// that fully prevent profiles compilation with re-attached paths.
-		// See https://bugs.launchpad.net/ubuntu/+source/linux/+bug/2098730
-		if prebuild.Distribution != "ubuntu" {
-			builder.Register("attach")
-			prepare.Register("attach")
-		} else if prebuild.Release["VERSION_CODENAME"] == "noble" {
+		// Re-attach disconnected path
+		if prebuild.Distribution == "ubuntu" && prebuild.Version >= 4.1 {
+			// Ignored on ubuntu 25.04+ due to a memory leak that fully prevent
+			// profiles compilation with re-attached paths.
+			// See https://bugs.launchpad.net/ubuntu/+source/linux/+bug/2098730
+
+			// Use stacked-dbus builder to resolve dbus rules
+			builder.Register("stacked-dbus")
+
+		} else {
 			builder.Register("attach")
 			prepare.Register("attach")
 		}
+
 	default:
 		logging.Fatal("Invalid ABI version: %d", prebuild.ABI)
 	}
