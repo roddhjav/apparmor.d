@@ -5,11 +5,38 @@
 package aa
 
 import (
+	"strings"
+
 	"github.com/roddhjav/apparmor.d/pkg/paths"
 )
 
 // MagicRoot is the default Apparmor magic directory: /etc/apparmor.d/.
 var MagicRoot = paths.New("/etc/apparmor.d")
+
+// FileKind represents an AppArmor file kind.
+type FileKind uint8
+
+const (
+	ProfileKind FileKind = iota
+	AbstractionKind
+	TunableKind
+)
+
+func KindFromPath(file *paths.Path) FileKind {
+	dirname := file.Parent().String()
+	switch {
+	case strings.Contains(dirname, "abstractions"):
+		return AbstractionKind
+	case strings.Contains(dirname, "tunables"):
+		return TunableKind
+	case strings.Contains(dirname, "local"):
+		return AbstractionKind
+	case strings.Contains(dirname, "mappings"):
+		return AbstractionKind
+	default:
+		return ProfileKind
+	}
+}
 
 // AppArmorProfileFiles represents a full set of apparmor profiles
 type AppArmorProfileFiles map[string]*AppArmorProfileFile
