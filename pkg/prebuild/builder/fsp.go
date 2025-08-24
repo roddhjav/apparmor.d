@@ -23,7 +23,7 @@ func init() {
 	RegisterBuilder(&FullSystemPolicy{
 		Base: prebuild.Base{
 			Keyword: "fsp",
-			Msg:     "Prevent unconfined transitions in profile rules",
+			Msg:     "Feat: prevent unconfined transitions in profile rules",
 		},
 	})
 }
