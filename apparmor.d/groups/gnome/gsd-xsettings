@@ -36,10 +36,20 @@ profile gsd-xsettings @{exec_path} {
 
   #aa:dbus talk bus=session name=org.gnome.Mutter.X11 label=gnome-shell
 
+  dbus send bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member=GetId
+       peer=(name=org.freedesktop.DBus, label="@{p_dbus_session}"),
+
+  dbus receive bus=system path=/org/freedesktop/Accounts
+       interface=org.freedesktop.Accounts
+       member=UserAdded
+       peer=(name=@{busname}, label="@{p_accounts_daemon}"),
+
   dbus send bus=system path=/org/freedesktop/Accounts/User@{uid}
        interface=org.freedesktop.Accounts.User
        member=SetInputSources
-       peer=(name=:*, label="@{p_accounts_daemon}"),
+       peer=(name=@{busname}, label="@{p_accounts_daemon}"),
 
   @{exec_path} mr,
   @{sh_path} mr,

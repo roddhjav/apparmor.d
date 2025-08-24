@@ -21,10 +21,13 @@ profile spotify @{exec_path} flags=(attach_disconnected) {
   include <abstractions/bus-session>
   include <abstractions/bus/org.a11y>
   include <abstractions/bus/org.freedesktop.Notifications>
+  include <abstractions/bus/org.freedesktop.portal.Desktop>
   include <abstractions/bus/org.freedesktop.ScreenSaver>
   include <abstractions/bus/org.freedesktop.secrets>
+  include <abstractions/bus/org.gnome.SettingsDaemon.MediaKeys>
   include <abstractions/bus/org.gtk.vfs.MountTracker>
   include <abstractions/bus/org.kde.StatusNotifierWatcher>
+  include <abstractions/bus/org.mpris.MediaPlayer2.Player>
   include <abstractions/bus/session/org.freedesktop.systemd1>
   include <abstractions/common/electron>
   include <abstractions/devices-usb-read>
@@ -36,8 +39,16 @@ profile spotify @{exec_path} flags=(attach_disconnected) {
   network netlink raw,
 
   #aa:dbus own bus=session name=org.mpris.MediaPlayer2.spotify
+
   #aa:dbus talk bus=session name=org.ayatana.NotificationItem label=gnome-shell
   #aa:dbus talk bus=session name=org.freedesktop.portal.{d,D}esktop label=xdg-desktop-portal
+  #aa:dbus talk bus=session name=org.gnome.SettingsDaemon.MediaKeys label=gsd-media-keys
+
+  dbus send bus=session path=/org/freedesktop/portal/desktop
+       interface=org.freedesktop.portal.Secret
+       member=RetrieveSecret
+       peer=(name=org.freedesktop.portal.Desktop, label=xdg-desktop-portal),
+
 
   @{exec_path} mrix,
 

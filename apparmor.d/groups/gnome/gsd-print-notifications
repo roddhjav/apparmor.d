@@ -30,13 +30,31 @@ profile gsd-print-notifications @{exec_path} flags=(attach_disconnected) {
 
   dbus receive bus=system path=/org/cups/cupsd/Notifier
        interface=org.cups.cupsd.Notifier
-       member=ServerStarted
+       member={ServerStarted,PrinterDeleted,PrinterStopped}
        peer=(name=@{busname}, label=cups-notifier-dbus),
 
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
        peer=(name=@{busname}, label=gnome-shell),
+
+  dbus send bus=system path=/
+       interface=org.freedesktop.Avahi.Server
+       member=RecordBrowserNew
+       peer=(name=org.freedesktop.Avahi, label=avahi-daemon),
+  dbus send bus=system path=/Client@{int}/RecordBrowser@{int}
+       interface=org.freedesktop.Avahi.RecordBrowser
+       member=Free
+       peer=(name=org.freedesktop.Avahi, label=avahi-daemon),
+
+  dbus receive bus=system path=/Client@{int}/RecordBrowser@{int}
+       interface=org.freedesktop.Avahi.RecordBrowser
+       member={CacheExhausted,ItemNew}
+       peer=(name=@{busname}, label=avahi-daemon),
+  dbus receive bus=system path=/Client4/RecordBrowser3
+       interface=org.freedesktop.Avahi.RecordBrowser
+       member=ItemNew
+       peer=(name=@{busname}, label=avahi-daemon),
 
   @{exec_path} mr,
   @{lib}/gsd-printer rPx,
