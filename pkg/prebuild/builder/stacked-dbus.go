@@ -51,7 +51,6 @@ func parse(kind aa.FileKind, profile string) (aa.ParaRules, []string, error) {
 	case aa.AbstractionKind, aa.TunableKind:
 		raw = profile
 	}
-	raw = profile
 
 	r, par, err := aa.ParseRules(raw)
 	if err != nil {
