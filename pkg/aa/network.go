@@ -33,34 +33,54 @@ func init() {
 	}
 }
 
-type AddressExpr struct {
-	Source      string
-	Destination string
-	Port        string
+type LocalAddress struct {
+	IP   string
+	Port string
 }
 
-func newAddressExprFromLog(log map[string]string) AddressExpr {
-	return AddressExpr{
-		Source:      log["laddr"],
-		Destination: log["faddr"],
-		Port:        log["lport"],
+func newLocalAddressFromLog(log map[string]string) LocalAddress {
+	return LocalAddress{
+		IP:   log["laddr"],
+		Port: log["lport"],
 	}
 }
 
-func (r AddressExpr) Compare(other AddressExpr) int {
-	if res := compare(r.Source, other.Source); res != 0 {
-		return res
-	}
-	if res := compare(r.Destination, other.Destination); res != 0 {
+func (r LocalAddress) Compare(other LocalAddress) int {
+	if res := compare(r.IP, other.IP); res != 0 {
 		return res
 	}
 	return compare(r.Port, other.Port)
 }
 
+type PeerAddress struct {
+	IP   string
+	Port string
+	Src  string
+}
+
+func newPeerAddressFromLog(log map[string]string) PeerAddress {
+	return PeerAddress{
+		IP:   log["faddr"],
+		Port: log["fport"],
+		Src:  log["saddr"],
+	}
+}
+
+func (r PeerAddress) Compare(other PeerAddress) int {
+	if res := compare(r.IP, other.IP); res != 0 {
+		return res
+	}
+	if res := compare(r.Port, other.Port); res != 0 {
+		return res
+	}
+	return compare(r.Src, other.Src)
+}
+
 type Network struct {
 	Base
 	Qualifier
-	AddressExpr
+	LocalAddress
+	PeerAddress
 	Domain   string
 	Type     string
 	Protocol string
@@ -90,12 +110,13 @@ func newNetwork(q Qualifier, rule rule) (Rule, error) {
 
 func newNetworkFromLog(log map[string]string) Rule {
 	return &Network{
-		Base:        newBaseFromLog(log),
-		Qualifier:   newQualifierFromLog(log),
-		AddressExpr: newAddressExprFromLog(log),
-		Domain:      log["family"],
-		Type:        log["sock_type"],
-		Protocol:    log["protocol"],
+		Base:         newBaseFromLog(log),
+		Qualifier:    newQualifierFromLog(log),
+		LocalAddress: newLocalAddressFromLog(log),
+		PeerAddress:  newPeerAddressFromLog(log),
+		Domain:       log["family"],
+		Type:         log["sock_type"],
+		Protocol:     log["protocol"],
 	}
 }
 
@@ -135,7 +156,10 @@ func (r *Network) Compare(other Rule) int {
 	if res := compare(r.Protocol, o.Protocol); res != 0 {
 		return res
 	}
-	if res := r.AddressExpr.Compare(o.AddressExpr); res != 0 {
+	if res := r.LocalAddress.Compare(o.LocalAddress); res != 0 {
+		return res
+	}
+	if res := r.PeerAddress.Compare(o.PeerAddress); res != 0 {
 		return res
 	}
 	return r.Qualifier.Compare(o.Qualifier)
