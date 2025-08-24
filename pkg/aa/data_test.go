@@ -65,8 +65,34 @@ var (
 		"denied_mask":    "create",
 		"comm":           "sddm-greeter",
 	}
+	network3Log = map[string]string{
+		"apparmor":  "ALLOWED",
+		"class":     "net",
+		"operation": "sendmsg",
+		"info":      "failed af match",
+		"error":     "-13",
+		"profile":   "unattended-upgrade",
+		"comm":      "unattended-upgr",
+		"laddr":     "127.0.0.1",
+		"lport":     "57007",
+		"faddr":     "127.0.0.53",
+		"saddr":     "127.0.0.1",
+		"src":       "57007",
+		"fport":     "53",
+		"sock_type": "dgram",
+		"protocol":  "17",
+		"requested": "send",
+		"denied":    "send",
+	}
 	network1 = &Network{Domain: "netlink", Type: "raw", Protocol: "15"}
 	network2 = &Network{Domain: "inet", Type: "dgram"}
+	network3 = &Network{
+		Base:         Base{Comment: " failed af match"},
+		LocalAddress: LocalAddress{IP: "127.0.0.1", Port: "57007"},
+		PeerAddress:  PeerAddress{IP: "127.0.0.53", Port: "53", Src: "127.0.0.1"},
+		Type:         "dgram",
+		Protocol:     "17",
+	}
 
 	// Mount
 	mount1Log = map[string]string{
