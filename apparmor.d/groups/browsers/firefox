@@ -21,6 +21,9 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
 
   signal send set=(term, kill) peer=firefox//&keepassxc-proxy,
 
+  unix type=seqpacket addr=@gecko-crash-helper-pipe.@{int},
+  unix type=seqpacket peer=(label=firefox-crashhelper),
+
   #aa:dbus own bus=session name=org.mozilla.firefox
   #aa:dbus own bus=session name=org.mpris.MediaPlayer2.firefox path=/org/mpris/MediaPlayer2
 
@@ -46,9 +49,10 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
   @{open_path}                                       rPx -> child-open,
 
   # Common extensions
+  @{bin}/browserpass                                           rPx,
+  @{bin}/keepassxc-proxy                                       rPx -> firefox//&keepassxc-proxy,
+  @{lib}/browserpass/browserpass-native                        rPx,
   /opt/net.downloadhelper.coapp/bin/net.downloadhelper.coapp*  rPx,
-  @{bin}/browserpass         rPx,
-  @{bin}/keepassxc-proxy     rPx -> firefox//&keepassxc-proxy,
 
   owner @{user_config_dirs}/gtk-{3,4}.0/assets/*.svg r,
   owner @{user_config_dirs}/ibus/bus/ r,
