@@ -19,7 +19,7 @@ func init() {
 	RegisterBuilder(&Enforce{
 		Base: prebuild.Base{
 			Keyword: "enforce",
-			Msg:     "All profiles have been enforced",
+			Msg:     "Build: all profiles have been enforced",
 		},
 	})
 }

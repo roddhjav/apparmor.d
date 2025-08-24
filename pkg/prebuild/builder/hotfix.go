@@ -26,7 +26,7 @@ func init() {
 	RegisterBuilder(&Hotfix{
 		Base: prebuild.Base{
 			Keyword: "hotfix",
-			Msg:     "Temporary fix for #74, #80 & #235",
+			Msg:     "Fix: temporary solution for #74, #80 & #235",
 		},
 	})
 }

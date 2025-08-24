@@ -27,7 +27,7 @@ func init() {
 	RegisterBuilder(&Userspace{
 		Base: prebuild.Base{
 			Keyword: "userspace",
-			Msg:     "Resolve variable in profile attachments",
+			Msg:     "Fix: resolve variable in profile attachments",
 		},
 	})
 }

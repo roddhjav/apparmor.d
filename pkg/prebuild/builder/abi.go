@@ -27,7 +27,7 @@ func init() {
 	RegisterBuilder(&ABI3{
 		Base: prebuild.Base{
 			Keyword: "abi3",
-			Msg:     "Convert all profiles from abi 4.0 to abi 3.0",
+			Msg:     "Build: convert all profiles from abi 4.0 to abi 3.0",
 		},
 	})
 }

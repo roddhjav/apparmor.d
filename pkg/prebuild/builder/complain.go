@@ -25,7 +25,7 @@ func init() {
 	RegisterBuilder(&Complain{
 		Base: prebuild.Base{
 			Keyword: "complain",
-			Msg:     "Set complain flag on all profiles",
+			Msg:     "Build: set complain flag on all profiles",
 		},
 	})
 }
