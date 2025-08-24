@@ -99,6 +99,7 @@ func (r Base) addLine(other Rule) bool {
 }
 
 type Qualifier struct {
+	Priority   string
 	Audit      bool
 	AccessType string
 }
@@ -109,6 +110,9 @@ func newQualifierFromLog(log map[string]string) Qualifier {
 }
 
 func (r Qualifier) Compare(o Qualifier) int {
+	if r := compare(r.Priority, o.Priority); r != 0 {
+		return r
+	}
 	if r := compare(r.Audit, o.Audit); r != 0 {
 		return r
 	}
@@ -116,7 +120,7 @@ func (r Qualifier) Compare(o Qualifier) int {
 }
 
 func (r Qualifier) Equal(o Qualifier) bool {
-	return r.Audit == o.Audit && r.AccessType == o.AccessType
+	return r.Priority == o.Priority && r.Audit == o.Audit && r.AccessType == o.AccessType
 }
 
 func (r Qualifier) getLenAudit() int {

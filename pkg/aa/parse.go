@@ -15,6 +15,8 @@ const (
 	tokALLOW        = "allow"
 	tokAUDIT        = "audit"
 	tokDENY         = "deny"
+	tokPROMPT       = "prompt"
+	tokPRIORITY     = "priority"
 	tokARROW        = "->"
 	tokEQUAL        = "="
 	tokLESS         = "<"
@@ -524,7 +526,11 @@ func newRules(rules []rule) (Rules, error) {
 			rule = rule[1:]
 			goto qualifier
 		// Qualifier
-		case tokALLOW, tokDENY:
+		case tokPRIORITY:
+			q.Priority = rule.GetValues(tokPRIORITY).GetString()
+			rule = rule[1:]
+			goto qualifier
+		case tokALLOW, tokDENY, tokPROMPT:
 			q.AccessType = rule.Get(0)
 			rule = rule[1:]
 			goto qualifier
