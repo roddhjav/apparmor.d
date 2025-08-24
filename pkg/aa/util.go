@@ -148,9 +148,10 @@ func validateValues(kind Kind, key string, values []string) error {
 
 func tokenToSlice(token string) []string {
 	res := []string{}
-	token = strings.Trim(token, "()\n")
+	token = strings.Trim(token, "()\n ")
 	if strings.ContainsAny(token, ", ") {
 		var sep string
+		token = strings.ReplaceAll(token, "  ", " ")
 		switch {
 		case strings.Contains(token, ","):
 			sep = ","
