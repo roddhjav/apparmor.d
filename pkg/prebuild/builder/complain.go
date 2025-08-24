@@ -38,6 +38,9 @@ func (b Complain) Apply(opt *Option, profile string) (string, error) {
 		if slices.Contains(flags, "complain") {
 			return profile, nil
 		}
+		if slices.Contains(flags, "unconfined") {
+			return profile, nil
+		}
 	}
 	flags = append(flags, "complain")
 	strFlags := " flags=(" + strings.Join(flags, ",") + ") {\n"
