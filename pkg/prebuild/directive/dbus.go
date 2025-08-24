@@ -111,7 +111,7 @@ func (d Dbus) own(rules map[string]string) aa.Rules {
 
 	res := aa.Rules{
 		&aa.Include{
-			IsMagic: true, Path: "abstractions/bus/own-" + rules["bus"],
+			IsMagic: true, Path: "abstractions/bus/" + rules["bus"] + "/own",
 		},
 		&aa.Dbus{
 			Access: []string{"bind"}, Bus: rules["bus"], Name: rules["name"],
