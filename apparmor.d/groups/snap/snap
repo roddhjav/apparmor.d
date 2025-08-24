@@ -52,11 +52,14 @@ profile snap @{exec_path} flags=(attach_disconnected) {
 
   @{exec_path} mrix,
 
+  @{sh_path} mr,
   @{bin}/mount rix,
   @{bin}/getent rix,
 
   @{bin}/gpg{,2}          rCx -> gpg,
   @{bin}/systemctl        rCx -> systemctl,
+  @{bin}/systemd-run      rCx -> run, # Start snap from the cli
+  @{bin}/xdg-settings     rCx -> xdg-settings,
 
   @{lib_dirs}/**          mr,
   @{lib_dirs}/snapd/snap-confine     rPx,
@@ -98,7 +101,7 @@ profile snap @{exec_path} flags=(attach_disconnected) {
         @{PROC}/sys/kernel/random/uuid r,
         @{PROC}/sys/kernel/seccomp/actions_avail r,
         @{PROC}/version r,
-  owner @{PROC}/@{pid}/attr/apparmor/current r,
+        @{PROC}/@{pid}/attr/apparmor/current r,
   owner @{PROC}/@{pid}/mounts r,
 
   /dev/tty@{int} rw,
@@ -123,6 +126,49 @@ profile snap @{exec_path} flags=(attach_disconnected) {
     owner @{HOME}/.snap/gnupg/** rwkl,
 
     include if exists <local/snap_gpg>
+  }
+
+  profile xdg-settings {
+    include <abstractions/base>
+    include <abstractions/desktop-files>
+
+    @{bin}/xdg-settings mr,
+
+    @{sh_path}       r,
+    @{bin}/{,e}grep  rix,
+    @{bin}/basename  rix,
+    @{bin}/cat        ix,
+    @{bin}/cut       rix,
+    @{bin}/head       ix,
+    @{bin}/mkdir      ix,
+    @{bin}/mktemp     ix,
+    @{bin}/mv         ix,
+    @{bin}/readlink   ix,
+    @{bin}/realpath  rix,
+    @{bin}/rm         ix,
+    @{bin}/sed        ix,
+    @{bin}/sleep      ix,
+    @{bin}/sort       ix,
+    @{bin}/touch      ix,
+    @{bin}/tr         ix,
+    @{bin}/uname      ix,
+    @{bin}/wc         ix,
+
+    @{bin}/xdg-mime   Px,
+
+    include if exists <local/snap_xdg-settings>
+  }
+
+  profile run {
+    include <abstractions/base>
+
+    unix bind type=stream addr=@@{udbus}/bus/systemd-run/,
+
+    @{bin}/systemd-run mr,
+
+    owner @{run}/user/@{uid}/systemd/private rw,
+
+    include if exists <local/snap_run>
   }
 
   profile systemctl {
