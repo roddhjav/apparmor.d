@@ -1,0 +1,61 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Stoppedpuma <58333920+Stoppedpuma@users.noreply.github.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{domain} = sh.cider.genten org.chromium.Chromium
+@{lib_dirs} = @{lib}/cider
+
+@{exec_path} = @{bin}/cider @{bin}/Cider @{lib_dirs}/Cider
+profile cider @{exec_path} {
+  include <abstractions/base-strict>
+  include <abstractions/gtk>
+  include <abstractions/fonts>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/freedesktop.org>
+  include <abstractions/nameservice-strict>
+  include <abstractions/ssl_certs>
+  include <abstractions/common/chromium>
+  include <abstractions/audio>
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  @{exec_path} mrix,
+
+  @{lib_dirs}/ r,
+  @{lib_dirs}/** r,
+  @{lib_dirs}/libffmpeg.so mr,
+  @{lib_dirs}/chrome-sandbox rpx,
+
+  @{bin}/xdg-settings rpx,
+
+  owner @{user_config_dirs}/sh.cider.genten/ rw,
+  owner @{user_config_dirs}/sh.cider.genten/** rwk,
+  owner @{user_config_dirs}/sh.cider.genten/WidevineCdm/*/_platform_specific/linux_x64/libwidevinecdm.so mr,
+  owner @{user_config_dirs}/sh.cider.genten/WidevineCdm/*/manifest.json r,
+  owner @{user_config_dirs}/sh.cider.genten/WidevineCdm/*/latest-component-updated-widevine-cdm r,
+
+  	@{PROC}/ r,
+        @{PROC}/@{pid}/stat r,
+        @{PROC}/@{pid}/task/ r,
+        @{PROC}/@{pid}/task/@{tid}/status r,
+        @{PROC}/sys/fs/inotify/max_user_watches r,
+  owner @{PROC}/@{pid}/cgroup r,
+  owner @{PROC}/@{pid}/cmdline r,
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/oom_{,score_}adj rw,
+  owner @{PROC}/@{pid}/statm r,
+
+  /usr/share/xkeyboard-config-2/** r,
+
+  include if exists <local/cider>
+}
+
+# vim:syntax=apparmor
