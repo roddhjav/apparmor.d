@@ -36,7 +36,7 @@ title: Workflow
    Here is the bare minimum for the program `foo`:
 ``` sh
 # apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2024 You <your@email>
+# Copyright (C) 2025 You <your@email>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/4.0>,
@@ -130,7 +130,7 @@ For this individual profile installation to work, the full package needs to be i
 
 To discover the access needed by a program, you can use the following tools:
 
-1. Star the program in *complain* mode, let it initialize itself, then close it.
+1. Start the program in *complain* mode, let it initialize itself, then close it.
 
 1. Run **[`aa-log -r`](../usage.md#apparmor-log)**. It will:
     - Convert the logs to AppArmor rules.
