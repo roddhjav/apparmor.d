@@ -6,10 +6,13 @@ abi <abi/4.0>,
 
 include <tunables/global>
 
+@{name} = {C,c}ider sh.cider.genten
 @{domain} = sh.cider.genten org.chromium.Chromium
 @{lib_dirs} = @{lib}/cider
+@{cache_dirs} = @{user_cache_dirs}/@{name}
+@{config_dirs} = @{user_config_dirs}/@{name}
 
-@{exec_path} = @{bin}/cider @{bin}/Cider @{lib_dirs}/Cider
+@{exec_path} = @{bin}/{C,c}ider @{lib_dirs}/Cider
 profile cider @{exec_path} {
   include <abstractions/base-strict>
   include <abstractions/gtk>
@@ -18,8 +21,9 @@ profile cider @{exec_path} {
   include <abstractions/freedesktop.org>
   include <abstractions/nameservice-strict>
   include <abstractions/ssl_certs>
-  include <abstractions/common/chromium>
+  include <abstractions/common/electron>
   include <abstractions/audio>
+  include <abstractions/X-strict>
 
   network inet dgram,
   network inet6 dgram,
@@ -32,15 +36,13 @@ profile cider @{exec_path} {
   @{lib_dirs}/ r,
   @{lib_dirs}/** r,
   @{lib_dirs}/libffmpeg.so mr,
-  @{lib_dirs}/chrome-sandbox rpx,
+  @{lib_dirs}/chrome-sandbox rPx,
 
-  @{bin}/xdg-settings rpx,
+  @{bin}/xdg-settings rPx,
 
   owner @{user_config_dirs}/sh.cider.genten/ rw,
   owner @{user_config_dirs}/sh.cider.genten/** rwk,
-  owner @{user_config_dirs}/sh.cider.genten/WidevineCdm/*/_platform_specific/linux_x64/libwidevinecdm.so mr,
-  owner @{user_config_dirs}/sh.cider.genten/WidevineCdm/*/manifest.json r,
-  owner @{user_config_dirs}/sh.cider.genten/WidevineCdm/*/latest-component-updated-widevine-cdm r,
+  owner @{user_config_dirs}/sh.cider.genten/WidevineCdm/*/_platform_specific/linux_@{arch}/libwidevinecdm.so mr,
 
   @{PROC}/ r,
   @{PROC}/@{pid}/stat r,
@@ -52,8 +54,6 @@ profile cider @{exec_path} {
   owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/oom_{,score_}adj rw,
   owner @{PROC}/@{pid}/statm r,
-
-  /usr/share/xkeyboard-config-2/** r,
 
   include if exists <local/cider>
 }
