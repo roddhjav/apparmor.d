@@ -99,7 +99,8 @@ profile snapd @{exec_path} {
   /usr/share/bash-completion/{,**} r,
   /usr/share/dbus-1/{system,session}.d/{,snapd*} rw,
   /usr/share/dbus-1/services/*snap* r,
-  /usr/share/polkit-1/actions/{,**/} r,
+  /usr/share/polkit-1/actions/{,**} r,
+  /usr/share/polkit-1/actions/snap.*.policy r,
 
   @{etc_ro}/environment r,
   /etc/apparmor.d/*snapd.snap* r,
@@ -147,6 +148,7 @@ profile snapd @{exec_path} {
 
   @{run}/user/ r,
   @{run}/user/@{uid}/ r,
+  @{run}/user/@{uid}/snap.*/{,**} rw,
   @{run}/user/@{uid}/snapd-session-agent.socket rw,
   @{run}/user/snap.*/{,**} rw,
 
@@ -227,6 +229,9 @@ profile snapd @{exec_path} {
     include <abstractions/base>
 
     @{sbin}/runuser mr,
+    @{bin}/tar ix,
+
+    owner @{HOME}/snap/*/common/.cache/{,**} r,
 
     include if exists <local/snapd_runuser>
   }
