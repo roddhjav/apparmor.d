@@ -6,6 +6,7 @@ package prepare
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 )
@@ -92,6 +93,15 @@ func (p Configure) Apply() ([]string, error) {
 		if err := removeFiles(remove); err != nil {
 			return res, err
 		}
+
+		// @{pci_bus} was upstreamed in 5.0
+		path := prebuild.RootApparmord.Join("tunables/multiarch.d/system")
+		out, err := path.ReadFileAsString()
+		if err != nil {
+			return res, err
+		}
+		out = strings.ReplaceAll(out, "@{pci_bus}=pci@{hex4}:@{hex2}", "")
+		return res, path.WriteFile([]byte(out))
 	}
 	return res, nil
 }
