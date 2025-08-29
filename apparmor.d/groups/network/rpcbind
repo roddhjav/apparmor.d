@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2023 Jeroen Rijken
+# Copyright (C) 2025 Jose Maldonado
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/4.0>,
@@ -9,8 +10,17 @@ include <tunables/global>
 @{exec_path} = @{sbin}/rpcbind
 profile rpcbind @{exec_path} flags=(complain) {
   include <abstractions/base>
+  include <abstractions/nameservice-strict>
+
+  capability setgid,
+  capability setuid,
 
   @{exec_path} rm,
+
+  /etc/netconfig r,
+
+  @{run}/rpcbind.lock rwkl,
+  @{run}/rpcbind/*.xdr rwkl,
 
   include if exists <local/rpcbind>
 }
