@@ -23,6 +23,15 @@ func init() {
 	})
 }
 
+func removeFiles(files []string) error {
+	for _, name := range files {
+		if err := prebuild.RootApparmord.Join(name).RemoveAll(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (p Configure) Apply() ([]string, error) {
 	res := []string{}
 
@@ -57,19 +66,31 @@ func (p Configure) Apply() ([]string, error) {
 
 	}
 
-	if prebuild.Version == 4.1 {
-		// Remove files upstreamed in 4.1
+	if prebuild.Version >= 4.1 {
 		remove := []string{
+			// Remove files upstreamed in 4.1
 			"abstractions/devices-usb-read",
 			"abstractions/devices-usb",
 			"abstractions/nameservice-strict",
 			"tunables/multiarch.d/base",
-			"wg", // Upstream version is identical
+
+			// Direct upstream contributed profiles, similar to ours
+			"wg",
 		}
-		for _, name := range remove {
-			if err := prebuild.RootApparmord.Join(name).RemoveAll(); err != nil {
-				return res, err
-			}
+		if err := removeFiles(remove); err != nil {
+			return res, err
+		}
+	}
+	if prebuild.Version >= 5.0 {
+		remove := []string{
+			// Direct upstrem contributed profiles, similar to ours
+			"dig",
+			"free",
+			"nslookup",
+			"who",
+		}
+		if err := removeFiles(remove); err != nil {
+			return res, err
 		}
 	}
 	return res, nil
