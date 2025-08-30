@@ -27,27 +27,21 @@ main() {
 	case "$DISTRIBUTION" in
 	arch)
 		rm -f $SRC/*.sig # Ignore signature files
-		pacman --noconfirm -U $SRC/*.pkg.tar.zst
+		rm -f $SRC/*enforced* # Ignore enforced package
+		pacman --noconfirm -U $SRC/*.pkg.tar.zst || true
 		;;
 
 	debian | ubuntu)
-		apt install -y apparmor-profiles
+		apt-get install -y apparmor-profiles
 		dpkg -i $SRC/*.deb || true
 		;;
 
 	opensuse*)
 		mv "/home/$SUDO_USER/.bash_aliases" "/home/$SUDO_USER/.alias"
-		rpm -i $SRC/*.rpm
+		rpm -i $SRC/*.rpm || true
 		;;
 
 	esac
-
-	verb="start"
-	rm -rf /var/cache/apparmor/* || true
-	if systemctl is-active -q apparmor; then
-		verb="reload"
-	fi
-	systemctl "$verb" apparmor.service || journalctl -xeu apparmor.service
 }
 
 main "$@"
