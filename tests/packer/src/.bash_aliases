@@ -8,7 +8,6 @@ for nb in $(seq "$1"); do
 done
 }
 
-alias sudo='sudo -E'
 alias aa-log='sudo aa-log'
 alias aa-status='sudo aa-status'
 alias c='clear'
