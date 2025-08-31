@@ -2,18 +2,20 @@
 # Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
+# Allow checking status, activating and locking the screensaver (GNOME version)
+
   abi <abi/4.0>,
 
-  dbus send bus=session path=/ScreenSaver
-       interface=org.freedesktop.ScreenSaver
-       member={Inhibit,UnInhibit}
-       peer=(name=org.freedesktop.ScreenSaver),
+  dbus send bus=session path=/{,org/gnome/}ScreenSaver
+       interface=org.gnome.ScreenSaver
+       member={GetActive,GetActiveTime,Lock,SetActive}
+       peer=(name=@{busname}, label=gjs-console),
 
   dbus receive bus=session path=/org/gnome/ScreenSaver
        interface=org.gnome.ScreenSaver
        member={ActiveChanged,WakeUpScreen}
        peer=(name=@{busname}, label=gjs-console),
 
-  include if exists <abstractions/bus/org.freedesktop.ScreenSaver.d>
+  include if exists <abstractions/bus/session/org.gnome.ScreenSaver.d>
 
 # vim:syntax=apparmor

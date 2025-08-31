@@ -1,0 +1,26 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Allow checking status, activating and locking the screensaver
+
+  abi <abi/4.0>,
+
+  dbus send bus=session path=/ScreenSaver
+       interface=org.freedesktop.ScreenSaver
+       member={Inhibit,UnInhibit}
+       peer=(name=org.freedesktop.ScreenSaver),
+
+  dbus send bus=session path=/{,org/freedesktop/}ScreenSaver
+       interface=org.freedesktop.ScreenSaver
+       member={GetActive,GetActiveTime,Lock,SetActive}
+       peer=(name=@{busname}, label="{gsd-screensaver-proxy,ksmserver,kwin_wayland}"),
+
+  dbus receive bus=session path=/org/freedesktop/ScreenSaver
+       interface=org.freedesktop.ScreenSaver
+       member={ActiveChanged,WakeUpScreen}
+       peer=(name=@{busname}, label="{gsd-screensaver-proxy,ksmserver,kwin_wayland}"),
+
+  include if exists <abstractions/bus/session/org.freedesktop.ScreenSaver.d>
+
+# vim:syntax=apparmor
