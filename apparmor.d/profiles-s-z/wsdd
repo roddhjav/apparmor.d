@@ -9,8 +9,13 @@ include <tunables/global>
 @{exec_path} = @{bin}/wsdd
 profile wsdd @{exec_path} {
   include <abstractions/base>
+  include <abstractions/nameservice-strict>
   include <abstractions/python>
   include <abstractions/ssl_certs>
+
+  # wsdd can create its own chroot as a built-in security mechanism.
+  # This is used by default in the systemd wsdd-server service.
+  capability sys_chroot,
 
   network inet dgram,
   network inet stream,
@@ -28,7 +33,8 @@ profile wsdd @{exec_path} {
   owner /var/lib/libuuid/clock.txt rw,
 
         @{run}/uuidd/request rw,
-  owner @{run}/user/@{uid}/gvfsd/wsdd w,
+  owner @{run}/user/@{uid}/wsdd w,
+  owner @{run}/user/@{uid}/*/wsdd w,
 
   include if exists <local/wsdd>
 }

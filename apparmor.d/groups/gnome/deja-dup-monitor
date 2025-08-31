@@ -18,6 +18,8 @@ profile deja-dup-monitor @{exec_path} {
   include <abstractions/bus/org.gtk.vfs.MountTracker>
   include <abstractions/dconf-write>
   include <abstractions/gschemas>
+  include <abstractions/nameservice-strict>
+  include <abstractions/notifications>
 
   network netlink raw,
 
@@ -39,14 +41,25 @@ profile deja-dup-monitor @{exec_path} {
        member=GetAll
        peer=(name=@{busname}, label=power-profiles-daemon),
 
+  dbus receive bus=session
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name=@{busname}, label=gnome-shell),
+
   @{exec_path} mr,
 
   @{bin}/chrt       rix,
   @{bin}/ionice     rix,
   @{bin}/deja-dup    Px,
 
+  /usr/share/gvfs/remote-volume-monitors/{,**} r,
+
   /var/tmp/ r,
   /tmp/ r,
+
+  @{run}/mount/utab r,
+
+  owner @{PROC}/@{pid}/mountinfo r,
 
   include if exists <local/deja-dup-monitor>
 }
