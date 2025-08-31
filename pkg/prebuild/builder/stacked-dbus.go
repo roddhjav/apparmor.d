@@ -19,7 +19,7 @@ var (
 	}
 )
 
-// Fix for https://gitlab.com/apparmor/apparmor/-/issues/537#note_2699570190
+// StackedDbus is a fix for https://gitlab.com/apparmor/apparmor/-/issues/537#note_2699570190
 type StackedDbus struct {
 	prebuild.Base
 }
