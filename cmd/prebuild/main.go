@@ -32,8 +32,9 @@ func init() {
 
 	// Build tasks applied by default
 	builder.Register(
-		"userspace", // Resolve variable in profile attachments
-		"hotfix",    // Temporary fix for #74, #80 & #235
+		"userspace",   // Resolve variable in profile attachments
+		"hotfix",      // Temporary fix for #74, #80 & #235
+		"base-strict", // Use base-strict as base abstraction
 	)
 
 	// Matrix of ABI/Apparmor version to integrate with
