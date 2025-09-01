@@ -32,7 +32,6 @@ func (p ReAttach) Apply() ([]string, error) {
 	if err != nil {
 		return res, err
 	}
-	out = strings.ReplaceAll(out, "@{att}=/", "# @{att}=/")
-	out = strings.ReplaceAll(out, "alias / -> //,", "#alias / -> //,")
+	out = strings.ReplaceAll(out, `@{att}=""`, `# @{att}=""`)
 	return res, path.WriteFile([]byte(out))
 }
