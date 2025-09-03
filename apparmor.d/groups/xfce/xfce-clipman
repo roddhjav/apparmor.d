@@ -1,0 +1,31 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2025 Sighy Brantler <sighy.brantler@mailfence.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/xfce4-clipman
+profile xfce-clipman @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/dconf>
+  include <abstractions/nameservice-strict>
+  include <abstractions/xfce>
+
+  @{exec_path} mr,
+
+  /etc/xdg/xfce4/panel/xfce4-clipman-actions.xml r,
+
+  owner @{user_cache_dirs}/xfce4/clipman/ r,
+  owner @{user_cache_dirs}/xfce4/clipman/* rw,
+
+  owner @{user_config_dirs}/autostart/ r,
+  owner @{user_config_dirs}/autostart/xfce4-clipman-plugin-autostart.desktop rw,
+  owner @{user_config_dirs}/autostart/xfce4-clipman-plugin-autostart.desktop.@{rand6} rw,
+
+  include if exists <local/xfce-clipman>
+}
+
+# vim:syntax=apparmor
