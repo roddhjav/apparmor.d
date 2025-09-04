@@ -17,7 +17,9 @@ profile fwupd @{exec_path} flags=(attach_disconnected,complain) {
   include <abstractions/consoles>
   include <abstractions/disks-write>
   include <abstractions/fonts>
+  include <abstractions/mime>
   include <abstractions/nameservice-strict>
+  include <abstractions/sqlite>
 
   capability dac_override,
   capability dac_read_search,
@@ -56,7 +58,6 @@ profile fwupd @{exec_path} flags=(attach_disconnected,complain) {
   /usr/share/fwupd/{,**} r,
   /usr/share/hwdata/* r,
   /usr/share/libdrm/*.ids r,
-  /usr/share/mime/mime.cache r,
   /usr/share/misc/*.ids r,
 
   /etc/fwupd/{,**} rw,
@@ -76,14 +77,12 @@ profile fwupd @{exec_path} flags=(attach_disconnected,complain) {
   @{MOUNTDIRS}/*/{,@{efi}/} r,
   @{MOUNTDIRS}/*/{,@{efi}/}EFI/{,**} r,
 
-        /var/lib/flatpak/exports/share/mime/mime.cache r,
-        /var/tmp/etilqs_@{sqlhex} rw,
   owner /var/cache/fwupd/ rw,
   owner /var/cache/fwupd/** rwk,
   owner /var/lib/fwupd/ rw,
   owner /var/lib/fwupd/** rwk,
 
-  # In order to get to this file, the attach_disconnected flag has to be set
+        @{att}/@{user_cache_dirs}/gnome-software/fwupd/{,**} r,
   owner @{user_cache_dirs}/fwupd/lvfs-metadata.xml.gz r,
   owner @{user_cache_dirs}/gnome-software/fwupd/{,**} r,
 
@@ -97,6 +96,7 @@ profile fwupd @{exec_path} flags=(attach_disconnected,complain) {
   @{sys}/firmware/efi/** r,
   @{sys}/firmware/efi/efivars/Boot@{hex}-@{uuid} rw,
   @{sys}/firmware/efi/efivars/BootNext-@{uuid} rw,
+  @{sys}/firmware/efi/efivars/dbx-@{uuid} rw,
   @{sys}/firmware/efi/efivars/fwupd-* rw,
   @{sys}/firmware/efi/efivars/KEK-@{uuid} rw,
   @{sys}/kernel/security/lockdown r,
@@ -109,7 +109,9 @@ profile fwupd @{exec_path} flags=(attach_disconnected,complain) {
   @{run}/motd.d/@{int}-fwupd* rw,
   @{run}/motd.d/fwupd/{,**} rw,
   @{run}/mount/utab r,
-  @{run}/udev/data/* r,
+
+  @{run}/udev/data/+*:* r,                # Identifies all subsystems
+  @{run}/udev/data/c@{int}:@{int} r,      # Identifies all character devices
 
   @{PROC}/@{pids}/fd/ r,
   @{PROC}/@{pids}/mountinfo r,

@@ -11,9 +11,13 @@ profile plasmashell @{exec_path} flags=(mediate_deleted) {
   include <abstractions/base>
   include <abstractions/app-launcher-user>
   include <abstractions/audio-client>
+  include <abstractions/bus-accessibility>
   include <abstractions/bus-session>
   include <abstractions/bus-system>
+  include <abstractions/bus/org.a11y>
+  include <abstractions/bus/org.freedesktop.login1>
   include <abstractions/bus/org.freedesktop.NetworkManager>
+  include <abstractions/bus/org.freedesktop.UDisks2>
   include <abstractions/bus/org.freedesktop.UPower>
   include <abstractions/consoles>
   include <abstractions/cups-client>
@@ -43,22 +47,37 @@ profile plasmashell @{exec_path} flags=(mediate_deleted) {
 
   signal send,
 
+  #aa:dbus own bus=session name=com.canonical.Unity
+  #aa:dbus own bus=session name=org.freedesktop.Notifications
+  #aa:dbus own bus=session name=org.kde.JobViewServer
+  #aa:dbus own bus=session name=org.kde.klipper
+  #aa:dbus own bus=session name=org.kde.kuiserver
+  #aa:dbus own bus=session name=org.kde.plasmashell path=/PlasmaShell
+  #aa:dbus own bus=session name=org.kde.StatusNotifierHost-@{int}
+
+  #aa:dbus talk bus=session name=org.kde.kdeconnect path=/ label=kdeconnectd
+  #aa:dbus talk bus=session name=org.kde.KeyboardLayouts path=/Layouts label=kded
+  #aa:dbus talk bus=session name=org.kde.KGlobalAccel path=/kglobalaccel label="{kglobalacceld,kwin_wayland}"
+  #aa:dbus talk bus=session name=org.kde.KSplash path=/KSplash label=ksplashqml
+  #aa:dbus talk bus=session name=org.kde.KWin path=/ label="kwin_{wayland,x11}"
+  #aa:dbus talk bus=session name=org.kde.NightColor path=/ColorCorrect label="kwin_{wayland,x11}"
+  #aa:dbus talk bus=session name=org.kde.Solid.PowerManagement label=kde-powerdevil
+  #aa:dbus talk bus=session name=org.kde.StatusNotifierWatcher path=/StatusNotifierWatcher label=kded
+
   @{exec_path} mr,
 
   @{lib}/libheif/            r,
   @{lib}/libheif/{,**}      mr,
 
   @{bin}/dolphin           rPx,
-  @{bin}/ksysguardd        rix,
+  @{bin}/ksysguardd       rPUx,
   @{bin}/plasma-discover  rPUx,
   @{bin}/xrdb              rPx,
   @{lib}/kf{5,6}/kdesu{,d} rix,
 
   #aa:exec kioworker
 
-  /opt/**/share/icons/{,**} r,
-  /opt/*/**/*.desktop r,
-  /opt/*/**/*.png r,
+  /snap/*/@{uid}/**.@{image_ext} r,
   /usr/share/*/icons/{,**} r,
   /usr/share/akonadi/{,**} r,
   /usr/share/desktop-directories/kf5-*.directory r,
@@ -82,7 +101,6 @@ profile plasmashell @{exec_path} flags=(mediate_deleted) {
 
   /etc/appstream.conf r,
   /etc/fstab r,
-  /etc/ksysguarddrc r,
   /etc/machine-id r,
   /etc/os-release r,
   /etc/sensors.d/ r,
@@ -144,6 +162,7 @@ profile plasmashell @{exec_path} flags=(mediate_deleted) {
   owner @{user_config_dirs}/klaunchrc r,
   owner @{user_config_dirs}/klipperrc r,
   owner @{user_config_dirs}/kmail2.notifyrc r,
+  owner @{user_config_dirs}/knfsshare r,
   owner @{user_config_dirs}/korganizerrc r,
   owner @{user_config_dirs}/krunnerrc r,
   owner @{user_config_dirs}/ksmserverrc r,
@@ -178,9 +197,10 @@ profile plasmashell @{exec_path} flags=(mediate_deleted) {
   owner @{user_share_dirs}/wallpapers/{,**} rw,
 
   owner @{user_state_dirs}/#@{int} rw,
+  owner @{user_state_dirs}/plasma/* r,
   owner @{user_state_dirs}/plasmashellstaterc rw,
-  owner @{user_state_dirs}/plasmashellstaterc.lock rwk,
   owner @{user_state_dirs}/plasmashellstaterc.@{rand6} rwl,
+  owner @{user_state_dirs}/plasmashellstaterc.lock rwk,
 
         /tmp/.mount_nextcl@{rand6}/{,*} r,
   owner @{tmp}/#@{int} rw,

@@ -48,6 +48,10 @@ profile flatpak-app flags=(attach_disconnected,mediate_deleted) {
   signal receive set=(int term) peer=flatpak-portal,
   signal receive set=(int term) peer=flatpak-session-helper,
 
+  unix type=seqpacket peer=(label=dbus-session),
+  # unix type=seqpacket peer=(label=unconfined),
+  unix type=seqpacket peer=(label=xdg-dbus-proxy),
+
   @{bin}/**                            rmix,
   @{lib}/**                            rmix,
   /app/**                              rmix,
@@ -83,7 +87,8 @@ profile flatpak-app flags=(attach_disconnected,mediate_deleted) {
   /var/lib/flatpak/app/{,**} r,
   /var/lib/flatpak/exports/** rw,
 
-        @{run}/.userns r,
+  owner @{att}/@{HOME}/.var/app/** rwlkmix,
+
         @{run}/parent/** r,
         @{run}/parent/app/.ref rk,
         @{run}/parent/usr/.ref rk,
@@ -92,6 +97,8 @@ profile flatpak-app flags=(attach_disconnected,mediate_deleted) {
   owner @{run}/flatpak/doc/** rw,
   owner @{run}/ld-so-cache-dir/* rw,
   owner @{run}/user/ r,
+
+  /dev/ntsync r,
 
   include if exists <usr/flatpak-app.d>
   include if exists <local/flatpak-app>

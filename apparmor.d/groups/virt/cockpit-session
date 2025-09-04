@@ -10,14 +10,17 @@ include <tunables/global>
 profile cockpit-session @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/authentication>
+  include <abstractions/bus-system>
   include <abstractions/nameservice-strict>
   include <abstractions/shells>
 
   capability audit_write,
+  capability chown,
   capability dac_read_search,
   capability net_admin,
   capability setgid,
   capability setuid,
+  capability sys_resource,
 
   network netlink raw,
 
@@ -26,6 +29,8 @@ profile cockpit-session @{exec_path} flags=(attach_disconnected) {
   @{shells_path}         rix,
   @{bin}/cockpit-bridge  rPx,
   @{lib}/cockpit/cockpit-pcp  rPx,
+  @{bin}/ssh-agent       rPx,
+  @{bin}/ssh-add         rix,
 
   @{etc_ro}/environment r,
   @{etc_ro}/security/limits.d/{,*.conf} r,
@@ -46,6 +51,10 @@ profile cockpit-session @{exec_path} flags=(attach_disconnected) {
   /var/log/btmp rw,
   /var/log/lastlog rw,
   /var/log/wtmp rwk,
+
+  /var/lib/lastlog/ r,
+  /var/lib/lastlog/lastlog2.db rwk,
+  /var/lib/lastlog/lastlog2.db-journal rw,
 
   owner @{PROC}/@{pid}/loginuid rw,
   owner @{PROC}/@{pid}/uid_map r,

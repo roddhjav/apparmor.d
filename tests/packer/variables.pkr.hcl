@@ -98,8 +98,8 @@ variable "DM" {
       img_checksum = "https://cdimage.debian.org/images/cloud/bookworm/latest/SHA512SUMS"
     }
     "debian13" : {
-      img_url      = "https://cdimage.debian.org/images/cloud/trixie/daily/latest/debian-13-genericcloud-amd64-daily.qcow2"
-      img_checksum = "https://cdimage.debian.org/images/cloud/trixie/daily/latest/SHA512SUMS"
+      img_url      = "https://cdimage.debian.org/images/cloud/trixie/latest/debian-13-genericcloud-amd64.qcow2"
+      img_checksum = "https://cdimage.debian.org/images/cloud/trixie/latest/SHA512SUMS"
     }
     "ubuntu22" : {
       img_url      = "https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img"

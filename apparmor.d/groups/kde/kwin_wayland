@@ -7,9 +7,13 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{exec_path} = @{bin}/kwin_wayland
-profile kwin_wayland @{exec_path} flags=(attach_disconnected mediate_deleted) {
+profile kwin_wayland @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/base>
   include <abstractions/app-launcher-user>
+  include <abstractions/bus-accessibility>
+  include <abstractions/bus-session>
+  include <abstractions/bus-system>
+  include <abstractions/bus/org.a11y>
   include <abstractions/fontconfig-cache-write>
   include <abstractions/graphics>
   include <abstractions/kde-strict>
@@ -19,18 +23,30 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected mediate_deleted) {
   capability sys_nice,
   capability sys_ptrace,
 
-  ptrace (read),
-
-  signal (receive) set=term peer=sddm,
-  signal (receive) set=(kill, term) peer=kwin_wayland_wrapper,
-  signal (send) set=(kill, term) peer=xwayland,
-
   network netlink raw,
+
+  ptrace read,
+
+  signal receive set=term peer=sddm,
+  signal receive set=(kill, term) peer=kwin_wayland_wrapper,
+  signal send set=(kill, term) peer=xwayland,
+
+  unix type=stream peer=(label=xkbcomp),
+  unix type=stream peer=(label=xwayland),
+
+  #aa:dbus own bus=session name=org.freedesktop.ScreenSaver
+  #aa:dbus own bus=session name=org.kde.kglobalaccel path=/kglobalaccel
+  #aa:dbus own bus=session name=org.kde.KWin
+  #aa:dbus own bus=session name=org.kde.NightColor path=/ColorCorrect
+  #aa:dbus own bus=session name=org.kde.screensaver
+
+  #aa:dbus talk bus=session name=org.kde.ActivityManager path=/ActivityManager label=kactivitymanagerd
 
   @{exec_path} mr,
 
   /etc/xdg/Xwayland-session.d/00-at-spi Cx -> at-spi,
   /etc/xdg/Xwayland-session.d/00-pulseaudio-x11 Cx -> pulseaudio,
+  /etc/xdg/Xwayland-session.d/10-ibus-x11 Cx -> ibus,
   #aa:exec kscreenlocker_greet
 
   /usr/share/color-schemes/*.colors r,
@@ -38,6 +54,7 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected mediate_deleted) {
   /usr/share/kglobalaccel/{,**} r,
   /usr/share/kservices{5,6}/{,**} r,
   /usr/share/kservicetypes5/{,*.desktop} r,
+  /usr/share/kwin-wayland/{,**} r,
   /usr/share/kwin/{,**} r,
   /usr/share/libinput-*/{,**} r,
   /usr/share/libinput/{,**} r,
@@ -110,15 +127,15 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected mediate_deleted) {
   @{sys}/devices/virtual/dmi/id/product_name r,
   @{sys}/devices/virtual/dmi/id/sys_vendor r,
 
-  @{run}/udev/data/+acpi:* r,             # for ACPI
+  @{run}/udev/data/+acpi:* r,             # Exposes ACPI objects (power buttons, batteries, thermal)
   @{run}/udev/data/+dmi:* r,              # for motherboard info
-  @{run}/udev/data/+hid:* r,              # for HID subsystem
+  @{run}/udev/data/+hid:* r,              # For Human Interface Device (mice, controllers, drawing tablets, scanners)
   @{run}/udev/data/+input:input@{int} r,  # for mouse, keyboard, touchpad
   @{run}/udev/data/+pci:* r,              # Identifies all PCI devices (CPU, GPU, Network, Disks, USB, etc.)
-  @{run}/udev/data/+platform:* r,         # for ?
+  @{run}/udev/data/+platform:* r,         # Identifies onboard devices (laptop/board model, power controllers, thermal sensors)
   @{run}/udev/data/+serio:* r,            # for touchpad
   @{run}/udev/data/+sound:card@{int} r,   # for sound card
-  @{run}/udev/data/+usb:* r,
+  @{run}/udev/data/+usb:* r,              # Identifies all USB devices
 
   @{run}/udev/data/c10:@{int} r,          # for non-serial mice, misc features
   @{run}/udev/data/c13:@{int}  r,         # for /dev/input/*
@@ -162,6 +179,21 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected mediate_deleted) {
     owner @{HOME}/ r,
 
     include if exists <local/kwin_wayland_pulseaudio>
+  }
+
+  profile ibus {
+    include <abstractions/base>
+    include <abstractions/consoles>
+
+    @{sh_path}    r,
+    @{lib}/{,ibus/}ibus-x11 rPx,
+
+    /etc/xdg/Xwayland-session.d/10-ibus-x11 r,
+
+    /home/ r,
+    owner @{HOME}/ r,
+
+    include if exists <local/kwin_wayland_ibus>
   }
 
   include if exists <local/kwin_wayland>

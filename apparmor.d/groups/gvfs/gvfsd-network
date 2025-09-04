@@ -14,6 +14,7 @@ profile gvfsd-network @{exec_path} {
   include <abstractions/bus/org.gtk.vfs.Daemon>
   include <abstractions/bus/org.gtk.vfs.MountTracker>
   include <abstractions/dconf-write>
+  include <abstractions/gschemas>
 
   #aa:dbus own bus=session name=org.gtk.vfs.mountpoint_@{int}
 
@@ -32,9 +33,17 @@ profile gvfsd-network @{exec_path} {
        member={MountLocation,LookupMount,RegisterMount}
        peer=(name="@{busname}", label=gvfsd),
 
-  @{exec_path} mr,
+  dbus receive bus=session
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name=@{busname}, label=gnome-shell),
 
-  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+  dbus send bus=session path=/org/gtk/vfs/Daemon
+       interface=org.gtk.vfs.Daemon
+       member=GetConnection
+       peer=(name=@{busname}),
+
+  @{exec_path} mr,
 
   owner @{run}/user/@{uid}/gvfsd/ rw,
   owner @{run}/user/@{uid}/gvfsd/socket-@{rand8} rw,

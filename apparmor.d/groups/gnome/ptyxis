@@ -9,8 +9,14 @@ include <tunables/global>
 @{exec_path} = @{bin}/ptyxis
 profile ptyxis @{exec_path} {
   include <abstractions/base>
+  include <abstractions/bus/org.gtk.vfs.MountTracker>
   include <abstractions/common/gnome>
   include <abstractions/consoles>
+  include <abstractions/notifications>
+
+  unix type=stream peer=(label=ptyxis-agent),
+
+  #aa:dbus own bus=session name=org.gnome.Ptyxis
 
   @{exec_path} mr,
 
@@ -24,11 +30,12 @@ profile ptyxis @{exec_path} {
 
   owner @{user_config_dirs}/org.gnome.Ptyxis/ rw,
   owner @{user_config_dirs}/org.gnome.Ptyxis/** rwlk -> @{user_config_dirs}/org.gnome.Ptyxis/**,
+  owner @{user_config_dirs}/ubuntu-xdg-terminals.list r,
 
   owner @{user_share_dirs}/org.gnome.Ptyxis/ rw,
   owner @{user_share_dirs}/org.gnome.Ptyxis/** rwlk -> @{user_share_dirs}/org.gnome.Ptyxis/**,
 
-  owner /tmp/#@{int} w,
+  owner /tmp/#@{int} rw,
 
   /dev/ptmx rw,
 

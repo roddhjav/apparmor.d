@@ -17,6 +17,7 @@ profile apport-gtk @{exec_path} {
   include <abstractions/common/apt>
   include <abstractions/dconf-write>
   include <abstractions/gnome-strict>
+  include <abstractions/gschemas>
   include <abstractions/nameservice-strict>
   include <abstractions/python>
   include <abstractions/ssl_certs>
@@ -29,10 +30,12 @@ profile apport-gtk @{exec_path} {
   network inet6 stream,
   network inet dgram,
   network inet6 dgram,
+  network netlink raw,
 
   @{exec_path} mr,
 
   @{sh_path}                    rix,
+  @{python_path}                rix,
   @{bin}/{f,}grep               rix,
   @{bin}/apt-cache              rPx,
   @{bin}/cut                    rix,
@@ -43,19 +46,23 @@ profile apport-gtk @{exec_path} {
   @{bin}/gsettings              rPx,
   @{bin}/ischroot               rPx,
   @{bin}/journalctl             rPx,
-  @{sbin}/killall5              rix,
   @{bin}/kmod                   rPx,
   @{bin}/ldd                    rix,
   @{bin}/lsb_release            rPx,
   @{bin}/md5sum                 rix,
   @{bin}/pkexec                 rCx -> pkexec,
+  @{bin}/readlink               rix,
   @{bin}/systemctl              rCx -> systemctl,
   @{bin}/systemd-detect-virt    rPx,
   @{bin}/uname                  rix,
   @{bin}/which{,.debianutils}   rix,
+  @{sbin}/killall5              rix,
   @{lib}/{,colord/}colord-sane  rPx,
   @{lib}/@{multiarch}/ld*.so*   rix,
   /usr/share/apport/root_info_wrapper rix,
+
+  @{bin}/* r,
+  @{sbin}/* r,
 
   /usr/share/apport/{,**} r,
   /usr/share/apport/general-hooks/*.py r,
@@ -79,9 +86,10 @@ profile apport-gtk @{exec_path} {
         /var/crash/ rw,
   owner /var/crash/*.@{uid}.{crash,upload} rw,
 
+  @{run}/cloud-init/cloud.cfg r,
   @{run}/snapd.socket rw,
 
-  owner @{tmp}/@{rand8} rw,
+  owner @{tmp}/@{word8} rw,
   owner @{tmp}/apport_core_@{rand8} rw,
   owner @{tmp}/launchpadlib.cache.@{rand8}/ rw,
   owner @{tmp}/tmp@{rand8}/{,**} rw,
@@ -110,7 +118,6 @@ profile apport-gtk @{exec_path} {
     /usr/share/gdb/python/{,**/}__pycache__/{,**} rw,
 
     /usr/share/gdb/{,**} r,
-    /usr/share/glib-2.0/schemas/gschemas.compiled r,
     /usr/share/gnome-shell/{,**} r,
     /usr/share/terminfo/** r,
     /usr/share/themes/{,**} r,
@@ -134,6 +141,15 @@ profile apport-gtk @{exec_path} {
   profile systemctl {
     include <abstractions/base>
     include <abstractions/app/systemctl>
+
+    dbus send bus=system path=/org/freedesktop/systemd1
+        interface=org.freedesktop.DBus.Properties
+        member=Get
+        peer=(name=org.freedesktop.systemd1, label=unconfined),
+    dbus send bus=system path=/org/freedesktop/systemd1
+        interface=org.freedesktop.systemd1.Manager
+        member=GetUnitFileState
+        peer=(name=org.freedesktop.systemd1, label=unconfined),
 
     include if exists <local/apport-gtk_systemctl>
   }

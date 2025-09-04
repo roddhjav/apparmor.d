@@ -5,7 +5,7 @@
 
 # Dependencies for the bats integration tests
 
-set -eu
+set -eu -o pipefail
 
 # shellcheck source=/dev/null
 _lsb_release() {

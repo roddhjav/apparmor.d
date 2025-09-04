@@ -9,10 +9,15 @@
 
   abi <abi/4.0>,
 
+  include <abstractions/desktop-files>
   include <abstractions/fonts>
-  include <abstractions/freedesktop.org>
+  include <abstractions/gschemas>
   include <abstractions/gtk>
+  include <abstractions/icons>
+  include <abstractions/mime>
   include <abstractions/qt5>
+  include <abstractions/recently-used>
+  include <abstractions/user-dirs>
   include <abstractions/wayland>
   include <abstractions/X-strict>
   include <abstractions/xdg-desktop>
@@ -24,16 +29,11 @@
          member=Introspect
          peer=(name=@{busname}, label=gnome-shell),
 
-    /usr/{local/,}share/ r,
-    /usr/{local/,}share/glib-@{version}/schemas/** r,
-    /usr/{local/,}share/gvfs/remote-volume-monitors/{,*}  r,
+    @{system_share_dirs}/gvfs/remote-volume-monitors/{,*}  r,
 
     /etc/gnome/* r,
-    /etc/xdg/{,*-}mimeapps.list r,
 
-    /var/cache/gio-@{version}/gnome-mimeapps.list r,
-
-    / r, # deny?
+    / r,
 
     owner @{user_share_dirs}/gnome-shell/session.gvdb rw,
 
@@ -63,6 +63,9 @@
     owner @{user_config_dirs}/kdedefaults/kwinrc r,
     owner @{user_config_dirs}/kdeglobals r,
     owner @{user_config_dirs}/kwinrc r,
+    owner @{user_config_dirs}/session/ rw,
+    owner @{user_config_dirs}/session/@{profile_name}* rwlk,
+    owner @{user_config_dirs}/session/#@{int} rw,
     owner @{user_config_dirs}/trashrc r,
 
   # else if @{DE} == xfce
@@ -75,7 +78,7 @@
   # end
 
   /usr/share/desktop-base/{,**} r,
-  /usr/share/hwdata/*.ids r,
+  /usr/share/hwdata/*.ids r, # FIXME: a bit too wide
   /usr/share/icu/@{int}.@{int}/*.dat r,
 
   include if exists <abstractions/desktop.d>

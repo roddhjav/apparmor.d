@@ -8,6 +8,7 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{name} = spotify
+@{domain} = org.chromium.Chromium
 @{lib_dirs} = /opt/@{name}/ /usr/share/@{name}/
 @{config_dirs} = @{user_config_dirs}/@{name}
 @{cache_dirs} = @{user_cache_dirs}/@{name}
@@ -18,14 +19,20 @@ profile spotify @{exec_path} flags=(attach_disconnected) {
   include <abstractions/audio-client>
   include <abstractions/bus-accessibility>
   include <abstractions/bus-session>
+  include <abstractions/bus-system>
   include <abstractions/bus/org.a11y>
-  include <abstractions/bus/org.freedesktop.Notifications>
-  include <abstractions/bus/org.freedesktop.ScreenSaver>
+  include <abstractions/bus/org.bluez>
+  include <abstractions/bus/org.freedesktop.portal.Desktop>
   include <abstractions/bus/org.freedesktop.secrets>
+  include <abstractions/bus/org.gnome.SettingsDaemon.MediaKeys>
   include <abstractions/bus/org.gtk.vfs.MountTracker>
   include <abstractions/bus/org.kde.StatusNotifierWatcher>
+  include <abstractions/bus/org.mpris.MediaPlayer2.Player>
+  include <abstractions/bus/session/org.freedesktop.systemd1>
   include <abstractions/common/electron>
   include <abstractions/devices-usb-read>
+  include <abstractions/notifications>
+  include <abstractions/screensaver>
 
   network inet dgram,
   network inet6 dgram,
@@ -34,7 +41,16 @@ profile spotify @{exec_path} flags=(attach_disconnected) {
   network netlink raw,
 
   #aa:dbus own bus=session name=org.mpris.MediaPlayer2.spotify
+
   #aa:dbus talk bus=session name=org.ayatana.NotificationItem label=gnome-shell
+  #aa:dbus talk bus=session name=org.freedesktop.portal.{d,D}esktop label=xdg-desktop-portal
+  #aa:dbus talk bus=session name=org.gnome.SettingsDaemon.MediaKeys label=gsd-media-keys
+
+  dbus send bus=session path=/org/freedesktop/portal/desktop
+       interface=org.freedesktop.portal.Secret
+       member=RetrieveSecret
+       peer=(name=org.freedesktop.portal.Desktop, label=xdg-desktop-portal),
+
 
   @{exec_path} mrix,
 
@@ -42,6 +58,8 @@ profile spotify @{exec_path} flags=(attach_disconnected) {
   @{bin}/{,e}grep rix,
 
   @{open_path}     rPx -> child-open-strict,
+
+  /usr/local/lib/spotify-adblock.so mr,
 
   /etc/machine-id r,
   /etc/spotify-adblock/* r,
@@ -56,7 +74,7 @@ profile spotify @{exec_path} flags=(attach_disconnected) {
   owner @{cache_dirs}/WidevineCdm/**/libwidevinecdm.so rm,
   owner @{config_dirs}/*/WidevineCdm/**/libwidevinecdm.so rm,
 
-  owner @{tmp}/.org.chromium.Chromium.@{rand6}/** rw,
+  owner @{tmp}/.@{domain}.@{rand6}/{,**} rw,
 
         @{PROC}/@{pid}/net/unix r,
         @{PROC}/pressure/* r,

@@ -217,6 +217,17 @@ var (
 			wString:   "network netlink raw,",
 		},
 		{
+			name:      "network3",
+			fromLog:   newNetworkFromLog,
+			log:       network3Log,
+			rule:      network3,
+			wValidErr: true,
+			other:     network1,
+			wCompare:  -7,
+			wMerge:    false,
+			wString:   "network dgram ip=127.0.0.1 port=57007 peer=(ip=127.0.0.53, port=53), # failed af match",
+		},
+		{
 			name:     "mount",
 			fromLog:  newMountFromLog,
 			log:      mount1Log,

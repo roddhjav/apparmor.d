@@ -11,6 +11,7 @@ profile flatpak-system-helper @{exec_path} {
   include <abstractions/base>
   include <abstractions/bus-system>
   include <abstractions/bus/org.freedesktop.PolicyKit1>
+  include <abstractions/mime>
   include <abstractions/nameservice-strict>
   include <abstractions/p11-kit>
   include <abstractions/ssl_certs>
@@ -27,6 +28,11 @@ profile flatpak-system-helper @{exec_path} {
 
   ptrace read,
 
+  unix type=seqpacket peer=(label=dbus-system),
+  unix type=seqpacket peer=(label=flatpak),
+  unix type=seqpacket peer=(label=flatpak//fusermount),
+  unix type=seqpacket peer=(label=unconfined),
+
   #aa:dbus own bus=system name=org.freedesktop.Flatpak.SystemHelper
 
   @{exec_path} mr,
@@ -42,7 +48,6 @@ profile flatpak-system-helper @{exec_path} {
 
   /usr/share/flatpak/remotes.d/{,**} r,
   /usr/share/flatpak/triggers/ r,
-  /usr/share/mime/mime.cache r,
 
   /var/lib/flatpak/{,**} rwkl,
   /var/tmp/flatpak-cache-*/{,**} rw,
@@ -54,7 +59,8 @@ profile flatpak-system-helper @{exec_path} {
   @{tmp}/remote-summary-sig.@{rand6} r,
   @{tmp}/remote-summary.@{rand6} r,
 
-        @{PROC}/@{pid}/stat r,
+        @{PROC}/@{pids}/stat r,
+        @{PROC}/@{pids}/status r,
   owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/fdinfo/@{int} r,
 

@@ -8,12 +8,13 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{name} = proton-mail "Proton Mail"
+@{domain} = org.chromium.Chromium
 @{lib_dirs} = /opt/@{name}
 @{config_dirs} = @{user_config_dirs}/@{name}
 @{cache_dirs} = @{user_cache_dirs}/@{name}
 
 @{exec_path} = @{bin}/proton-mail /opt/proton-mail/Proton*
-profile protonmail @{exec_path} flags=(complain) {
+profile protonmail @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus-session>
   include <abstractions/bus/org.freedesktop.secrets>
@@ -24,12 +25,13 @@ profile protonmail @{exec_path} flags=(complain) {
   network inet6 dgram,
   network netlink raw,
 
-  ptrace read peer=xdg-settings,
+  ptrace read peer=protonmail//&xdg-settings,
 
   @{exec_path} mrix,
 
-  @{bin}/xdg-settings Px,
-  @{open_path}        Px -> child-open,
+  #aa:stack X xdg-settings
+  @{bin}/xdg-settings  rPx -> protonmail//&xdg-settings,
+  @{open_path}          Px -> child-open,
 
   owner @{user_config_dirs}/ibus/bus/ r,
 
@@ -38,7 +40,6 @@ profile protonmail @{exec_path} flags=(complain) {
   owner @{tmp}/gtkprint_ppd_@{rand6} rw,
 
   include if exists <local/protonmail>
-
 }
 
 # vim:syntax=apparmor

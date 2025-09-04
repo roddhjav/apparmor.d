@@ -11,16 +11,16 @@ include <tunables/global>
 profile systemd-detect-virt @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/consoles>
-  include <abstractions/common/systemd>
 
-  capability net_admin,
+  capability sys_ptrace,
 
-  network netlink raw,
+  ptrace read peer=@{p_systemd},
 
   @{exec_path} mr,
 
   @{run}/cloud-init/ds-identify.log w,
   @{run}/host/container-manager r,
+  @{run}/systemd/container r,
   @{run}/systemd/notify w,
 
   @{sys}/devices/virtual/dmi/id/bios_vendor r,
@@ -29,6 +29,22 @@ profile systemd-detect-virt @{exec_path} flags=(attach_disconnected) {
   @{sys}/devices/virtual/dmi/id/product_version r,
   @{sys}/devices/virtual/dmi/id/sys_vendor r,
   @{sys}/firmware/dmi/entries/*/raw r,
+  @{sys}/firmware/uv/prot_virt_guest r,
+  @{sys}/hypervisor/properties/features r,
+  @{sys}/hypervisor/type r,
+
+  @{PROC}/1/environ r,
+  @{PROC}/device-tree/ r,
+  @{PROC}/device-tree/compatible r,
+  @{PROC}/device-tree/hypervisor/compatible r,
+  @{PROC}/sys/kernel/osrelease r,
+  @{PROC}/sysinfo r,
+  @{PROC}/xen/capabilities r,
+
+  /dev/cpu/@{int}/msr r,
+
+  deny capability net_admin,
+  deny capability perfmon,
 
   include if exists <local/systemd-detect-virt>
 }

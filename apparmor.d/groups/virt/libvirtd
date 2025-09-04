@@ -19,9 +19,11 @@ profile libvirtd @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus-session>
   include <abstractions/bus-system>
+  include <abstractions/bus/org.gtk.vfs.MountTracker>
   include <abstractions/consoles>
   include <abstractions/devices-usb>
   include <abstractions/disks-write>
+  include <abstractions/mime>
   include <abstractions/nameservice-strict>
 
   capability audit_write,
@@ -47,12 +49,12 @@ profile libvirtd @{exec_path} flags=(attach_disconnected) {
   capability sys_pacct,
   capability sys_ptrace,
   capability sys_rawio,
-  capability sys_resource,
+  capability sys_resource,  # Needed for vfio
 
-  network inet stream,
   network inet dgram,
-  network inet6 stream,
+  network inet stream,
   network inet6 dgram,
+  network inet6 stream,
   network netlink raw,
   network packet dgram,
   network packet raw,
@@ -90,6 +92,11 @@ profile libvirtd @{exec_path} flags=(attach_disconnected) {
 
   # Allow changing to our UUID-based named profiles
   change_profile -> libvirt-@{uuid},
+
+  dbus receive bus=session
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name=@{busname}, label=gnome-shell),
 
   @{exec_path} mr,
 
@@ -135,7 +142,6 @@ profile libvirtd @{exec_path} flags=(attach_disconnected) {
   /usr/share/hwdata/* r,
   /usr/share/iproute2/{,**} r,
   /usr/share/libvirt/{,**} r,
-  /usr/share/mime/mime.cache r,
   /usr/share/misc/pci.ids r,
   /usr/share/qemu/{,**} r,
 
@@ -146,7 +152,8 @@ profile libvirtd @{exec_path} flags=(attach_disconnected) {
   /etc/xml/catalog r,
 
   /var/cache/libvirt/{,**} rw,
-  /var/lib/libvirt/{,**} rwk,
+  /var/lib/libvirt/ rw,
+  /var/lib/libvirt/** rwk,
   /var/log/swtpm/libvirt/{,**} rw,
 
   # User VM images and share
@@ -154,6 +161,11 @@ profile libvirtd @{exec_path} flags=(attach_disconnected) {
   @{user_share_dirs}/libvirt/{,**} rwk,
   @{user_vm_dirs}/{,**} rwk,
   @{user_publicshare_dirs}/{,**} rwk,
+
+  owner @{user_config_dirs}/libvirt/{,**} rwk,
+
+  owner @{run}/user/@{uid}/libvirt/ rw,
+  owner @{run}/user/@{uid}/libvirt/** rwk,
 
   @{att}/@{run}/systemd/inhibit/@{int}.ref rw,
 
@@ -164,9 +176,9 @@ profile libvirtd @{exec_path} flags=(attach_disconnected) {
   @{run}/systemd/notify w,
   @{run}/utmp rk,
 
-  @{run}/udev/data/+*:* r,
-  @{run}/udev/data/c@{int}:@{int} r,
-  @{run}/udev/data/n@{int} r,
+  @{run}/udev/data/+*:* r,                # Identifies all subsystems
+  @{run}/udev/data/c@{int}:@{int} r,      # Identifies all character devices
+  @{run}/udev/data/n@{int} r,             # For network interfaces
 
   @{sys}/bus/[a-z]*/devices/ r,
   @{sys}/bus/pci/drivers_probe w,
@@ -223,6 +235,7 @@ profile libvirtd @{exec_path} flags=(attach_disconnected) {
         @{PROC}/devices r,
         @{PROC}/mtrr w,
         @{PROC}/sys/net/ipv{4,6}/** rw,
+        @{PROC}/uptime r,
   owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/mounts r,
   owner @{PROC}/@{pid}/task/@{tid}/comm rw,
@@ -271,7 +284,7 @@ profile libvirtd @{exec_path} flags=(attach_disconnected) {
 
     /etc/qemu/{,**} r,
 
-    owner @{PROC}/@{pids}/status r,
+    @{PROC}/@{pids}/status r,
 
     /dev/net/tun rw,
 

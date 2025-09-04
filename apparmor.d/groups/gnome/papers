@@ -7,13 +7,16 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{exec_path} = @{bin}/papers
-profile papers @{exec_path} {
+profile papers @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/bus/org.freedesktop.portal.Desktop>
   include <abstractions/common/gnome>
   include <abstractions/ssl_certs>
   include <abstractions/user-download-strict>
   include <abstractions/user-read-strict>
   include <abstractions/user-write-strict>
+
+  #aa:dbus own bus=session name=org.gnome.Papers interface+=org.freedesktop.Application
 
   #aa:dbus talk bus=session name=org.gtk.vfs label="gvfsd{,-*}"
 
@@ -24,6 +27,10 @@ profile papers @{exec_path} {
   /usr/share/poppler/{,**} r,
 
   owner @{user_share_dirs}/gvfs-metadata/{,*} r,
+
+  owner @{HOME}/.mozilla/firefox/*/{cert9,key4}.db rwk,
+  owner @{HOME}/.mozilla/firefox/*/pkcs11.txt rw,
+  owner @{HOME}/.mozilla/firefox/*/{cert9,key4}.db-journal rw,
 
   owner @{tmp}/.goutputstream-@{rand6} rw,
   owner @{tmp}/papers-@{int}/{,**} rw,

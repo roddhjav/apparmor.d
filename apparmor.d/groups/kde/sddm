@@ -50,20 +50,12 @@ profile sddm @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   signal (send) set=(term) peer=startplasma-wayland,
   signal (send) set=(term) peer=startlxqtwayland,
 
-  dbus receive bus=system path=/org/freedesktop/DisplayManager/Seat@{int}
-       interface=org.freedesktop.DBus.Introspectable
-       member=Introspect
-       peer=(name=:*, label=kscreenlocker-greet),
+  unix type=stream addr=@@{udbus}/bus/sddm-helper/system,
 
-  dbus receive bus=system path=/org/freedesktop/DisplayManager/Seat@{int}
-       interface=org.freedesktop.DBus.Properties
-       member=PropertiesChanged
-       peer=(name=:*, label="@{p_systemd_logind}"),
+  #aa:dbus own bus=system name=org.freedesktop.DisplayManager
 
-  dbus send bus=system path=/org/freedesktop/DisplayManager/Seat@{int}
-       interface=org.freedesktop.DBus.Introspectable
-       member=Introspect
-       peer=(name=org.freedesktop.DBus, label=kscreenlocker-greet),
+  #aa:dbus talk bus=system name=org.freedesktop.home1 interface=org.freedesktop.home1.Manager label="@{p_systemd_homed}"
+  #aa:dbus talk bus=system name=org.freedesktop.login1 interface=org.freedesktop.login1.Manager label="@{p_systemd_logind}"
 
   @{exec_path} mr,
 
@@ -75,26 +67,33 @@ profile sddm @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   @{lib}/{,sddm/}sddm-helper-start-x11user  rix,
 
   @{shells_path}       rix,
+  @{bin}/{,e}grep      rix,
+  @{bin}/basename      rix,
   @{bin}/cat           rix,
-  @{sbin}/checkproc    rix,
+  @{bin}/date          rix,
+  @{bin}/dirname       rix,
   @{bin}/disable-paste rix,
+  @{bin}/id            rix,
   @{bin}/locale        rix,
   @{bin}/manpath       rix,
   @{bin}/mktemp        rix,
   @{bin}/pidof         rix,
   @{bin}/readlink      rix,
   @{bin}/realpath      rix,
+  @{bin}/sed           rix,
   @{bin}/tr            rix,
   @{bin}/tty           rix,
   @{bin}/uname         rix,
   @{bin}/xdm           r,
   @{bin}/xmodmap       rix,
+  @{sbin}/checkproc    rix,
 
   @{bin}/dbus-run-session     rPx -> dbus-session,
   @{bin}/dbus-update-activation-environment rPx -> dbus-session,
   @{bin}/flatpak              rPx,
   @{bin}/gnome-keyring-daemon rPx,
   @{bin}/Hyprland             rPx,
+  @{bin}/ksecretd            rPUx,
   @{bin}/kwalletd{5,6}        rPx,
   @{bin}/kwin_wayland         rPx,
   @{bin}/labwc                rPx,
@@ -107,6 +106,7 @@ profile sddm @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   @{bin}/systemctl            rCx -> systemctl,
   @{bin}/xauth                rCx -> xauth,
   @{bin}/Xorg                 rPx,
+  @{bin}/xrandr               rPx,
   @{bin}/xrdb                 rPx,
   @{bin}/xset                 rPx,
   @{bin}/xsetroot             rPx,

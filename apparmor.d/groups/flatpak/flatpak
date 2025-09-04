@@ -40,14 +40,12 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted,complain
 
   signal send peer=flatpak-app,
 
-  #aa:dbus talk bus=session name=org.freedesktop.Flatpak.SessionHelper label=flatpak-session-helper
   #aa:dbus talk bus=system name=org.freedesktop.Accounts label="@{p_accounts_daemon}"
+  #aa:dbus talk bus=system name=org.freedesktop.Flatpak.SystemHelper label=flatpak-system-helper
   #aa:dbus talk bus=system name=org.freedesktop.PolicyKit1 label="@{p_polkitd}"
 
-  dbus send bus=session path=/org/freedesktop/portal/documents
-       interface=org.freedesktop.portal.Documents
-       member=GetMountPoint
-       peer=(name=org.freedesktop.portal.Documents, label="{xdg-document-portal,unconfined}"),
+  #aa:dbus talk bus=session name=org.freedesktop.Flatpak.SessionHelper label=flatpak-session-helper
+  #aa:dbus talk bus=session name=org.freedesktop.portal.Documents path=/org/freedesktop/portal/documents label=xdg-document-portal
 
   @{exec_path} mr,
 
@@ -66,7 +64,7 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted,complain
   /etc/flatpak/{,**} r,
   /etc/pulse/client.conf r,
 
-  / r,
+  @{att}/ r,
 
   /var/lib/flatpak/{,**} rwlk,
 
@@ -77,6 +75,8 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted,complain
 
   owner @{HOME}/.var/ w,
   owner @{HOME}/.var/app/{,**} rw,
+  owner @{att}/@{HOME}/.var/app/*/.local/share/*/logs/* rw,
+  owner @{att}/@{HOME}/.var/app/*/.local/share/*/**/usr/.ref rw,
 
   # Can create dotfile directories for any app
   owner @{user_cache_dirs}/*/ w,
@@ -85,6 +85,7 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted,complain
   owner @{user_games_dirs}/{,**/} w,
   owner @{user_documents_dirs}/ w,
 
+        @{user_config_dirs}/dconf/user r,
   owner @{user_cache_dirs}/flatpak/{,**} rw,
   owner @{user_config_dirs}/pulse/client.conf r,
   owner @{user_config_dirs}/user-dirs.dirs r,
@@ -135,6 +136,7 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted,complain
     @{bin}/gpgconf    mr,
     @{bin}/gpgsm      mr,
     @{bin}/gpg-agent  rix,
+    @{lib}/gnupg/scdaemon rix,
 
     @{HOME}/@{XDG_GPG_DIR}/*.conf r,
 
@@ -151,6 +153,9 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted,complain
     include <abstractions/app/fusermount>
 
     capability setuid,
+
+    unix type=seqpacket peer=(label=flatpak-system-helper),
+    unix type=stream    peer=(label=flatpak),
 
     mount fstype=fuse.revokefs-fuse options=(rw, nosuid, nodev) -> /var/tmp/flatpak-cache-*/*/,
     umount /var/tmp/flatpak-cache-*/*/,

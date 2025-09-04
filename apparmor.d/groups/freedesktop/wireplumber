@@ -32,6 +32,11 @@ profile wireplumber @{exec_path} {
        member=Introspect
        peer=(name=:*, label=gnome-shell),
 
+  dbus receive bus=system path=/midi{,server@{int}}
+       interface=org.freedesktop.DBus.ObjectManager
+       member=GetManagedObjects
+       peer=(name=@{busname}, label="@{p_bluetoothd}"),
+
   @{exec_path} mr,
 
   /opt/intel/oneapi/{compiler,lib,mkl}/**/ r,
@@ -42,8 +47,8 @@ profile wireplumber @{exec_path} {
   /usr/share/wireplumber/{,**} r,
 
   owner @{desktop_local_dirs}/ w,
-  owner @{desktop_local_dirs}/state/ w,
-  owner @{desktop_local_dirs}/state/wireplumber/{,**} rw,
+  owner @{desktop_state_dirs}/ w,
+  owner @{desktop_state_dirs}/wireplumber/{,**} rw,
 
   owner @{HOME}/.local/ w,
   owner @{user_state_dirs}/ w,
@@ -77,9 +82,9 @@ profile wireplumber @{exec_path} {
   @{sys}/devices/virtual/dmi/id/sys_vendor r,
 
         @{PROC}/1/cgroup r,
-        @{PROC}/1/cmdline r,
+        @{PROC}/1/status r,
+        @{PROC}/@{pid}/cmdline r,
   owner @{PROC}/@{pid}/cgroup r,
-  owner @{PROC}/@{pid}/cmdline r,
   owner @{PROC}/@{pid}/task/@{tid}/comm rw,
 
   /dev/media@{int} rw,
