@@ -1,0 +1,30 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Zane Zakraisek <zakraise@eng.utah.edu>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/klist
+profile klist @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/kerberosclient>
+
+  #Allow root to list other users' creds cache
+  capability dac_override,
+  capability dac_read_search,
+
+  @{exec_path} mr,
+
+  #User keytab file
+  /var/lib/krb5/user/@{uid}/client.keytab rk,
+
+  #Credentials cache
+  /tmp/krb5cc_* rk,
+  /tmp/tkt* rk,
+
+  include if exists <local/klist>
+}
+
+# vim:syntax=apparmor

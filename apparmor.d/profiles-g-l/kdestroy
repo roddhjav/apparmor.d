@@ -1,0 +1,26 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Zane Zakraisek <zakraise@eng.utah.edu>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/kdestroy
+profile kdestroy @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/kerberosclient>
+
+  #Allow root to destroy other users' creds cache
+  capability dac_override,
+
+  @{exec_path} mr,
+
+  #Credentials cache
+  /tmp/krb5cc_* rwk,
+  /tmp/tkt* rwk,
+
+  include if exists <local/kdestroy>
+}
+
+# vim:syntax=apparmor
