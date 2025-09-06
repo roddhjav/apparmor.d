@@ -25,7 +25,7 @@ readonly VERSION PACKAGER
 
 _start() {
 	local img="$1"
-	docker start "$img"
+	docker start "$img" || return 1
 }
 
 _is_running() {
@@ -65,7 +65,7 @@ build_in_docker_makepkg() {
 			--env PKGDEST="$BUILDIR" --env PACKAGER="$PACKAGER" \
 			--env BUILDDIR=/tmp/build \
 			"$BASEIMAGE/$dist"
-		docker exec "$img" sudo pacman -Syu --noconfirm --noprogressbar
+		docker exec "$img" sudo pacman -Sy --noconfirm --noprogressbar
 	fi
 
 	docker exec --workdir="$BUILDIR/$PKGNAME" "$img" bash dists/build.sh pkg

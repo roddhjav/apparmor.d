@@ -16,7 +16,7 @@ readonly VERSION
 main() {
     case "$COMMAND" in
     pkg)
-        PKGDEST="$OUTPUT" makepkg --syncdeps --force --cleanbuild --noconfirm --noprogressbar
+        PKGDEST="$OUTPUT" BUILDDIR=/tmp/makepkg makepkg --syncdeps --force --cleanbuild --noconfirm --noprogressbar
         ;;
 
     dpkg)
