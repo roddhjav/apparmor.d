@@ -11,9 +11,11 @@ set -eu -o pipefail
 RES=$(mktemp)
 echo "false" >"$RES"
 MAX_JOBS=$(nproc)
+APPARMORD=${CHECK_APPARMORD:-apparmor.d}
+SBIN_LIST=${CHECK_SBIN_LIST:-tests/sbin.list}
 declare WITH_CHECK
 declare _check_is_disabled
-readonly RES MAX_JOBS APPARMORD="apparmor.d"
+readonly APPARMORD SBIN_LIST RES MAX_JOBS
 readonly reset="\033[0m" fgRed="\033[0;31m" fgYellow="\033[0;33m" fgWhite="\033[0;37m" BgWhite="\033[1;37m"
 _msg() { printf '%b%s%b\n' "$BgWhite" "$*" "$reset"; }
 _warn() {
@@ -500,14 +502,14 @@ _check_udev() {
 
 check_sbin() {
     local file name jobs
-    mapfile -t sbin <tests/sbin.list
+    mapfile -t sbin <"$SBIN_LIST"
     _msg "Ensuring '@{bin} and '@{sbin}' are correctly used in profiles"
 
     jobs=0
     for name in "${sbin[@]}"; do
         (
             mapfile -t files < <(
-                grep --line-number --recursive -P "(^|[[:space:]])@{bin}/$name([[:space:]]|$)(?!.*$_IGNORE_LINT=sbin)" apparmor.d |
+                grep --line-number --recursive -P "(^|[[:space:]])@{bin}/$name([[:space:]]|$)(?!.*$_IGNORE_LINT=sbin)" "$APPARMORD" |
                     cut -d: -f1,2
             )
             for file in "${files[@]}"; do
@@ -520,7 +522,7 @@ check_sbin() {
 
     local pattern='[[:alnum:]_.-]+' # Pattern for valid file names
     jobs=0
-    mapfile -t files < <(grep --line-number --recursive -E "(^|[[:space:]])@{sbin}/$pattern([[:space:]]|$)" apparmor.d | cut -d: -f1,2)
+    mapfile -t files < <(grep --line-number --recursive -E "(^|[[:space:]])@{sbin}/$pattern([[:space:]]|$)" "$APPARMORD" | cut -d: -f1,2)
     for file in "${files[@]}"; do
         (
             while read -r match; do
