@@ -60,8 +60,7 @@ clean_pacman() {
 
 clean_zypper() {
 	_msg "Cleaning zypper cache"
-	zypper update -y
-	zypper clean -y
+	zypper clean --all
 }
 
 # Make the image as impersonal as possible.
