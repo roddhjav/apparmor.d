@@ -6,11 +6,18 @@ title: Roadmap
 
 This is the current list of features that must be implemented to get to a stable release
 
-- [x] **Play machine**
+- [x] **[Play machine](https://github.com/roddhjav/play)**
 
-- [ ] **[Sub packages](https://github.com/roddhjav/apparmor.d/issues/464)** 
-    - [x] Move most profiles into groups such that 
-    - [ ] New simplified build system to generate the packages with profile dependencies check
+- [ ] **[Sub packages](https://github.com/roddhjav/apparmor.d/issues/464)**
+    - [x] Move most profiles into groups
+    - [ ] Provide complain/enforced packages version
+    - [ ] normal/FSP/server packages variants
+
+- [ ] **Build system**
+    - [ ] Continuous release on the main branch, ~2 releases per week
+    - [ ] Provide packages repo for ubuntu/debian
+    - [x] Add a `just` target to install the profiles in the right place
+    - [x] Fully drop the Makefile in favor of `just`
 
 - [ ] **Tests**
     - [x] Tests VM for all supported targets (see [tests/vm](vm.md))
@@ -22,14 +29,26 @@ This is the current list of features that must be implemented to get to a stable
 
 - [ ] **General improvements**
     - [ ] Provide a proper fix for [#74](https://github.com/roddhjav/apparmor.d/issues/74), [#80](https://github.com/roddhjav/apparmor.d/issues/80) & [#235](https://github.com/roddhjav/apparmor.d/issues/235)
-    - [x] The apt/dpkg profiles needs to be reworked
 
-- [ ] Build system
-    - [ ] Continuous release on the main branch, ~2 releases per week
-    - [ ] Provide packages repo for ubuntu/debian
-    - [ ] Provide complain/enforced packages version
-    - [x] Add a `just` target to install the profiles in the right place
-    - [x] Fully drop the Makefile in favor of `just`
+- [ ] **Abstractions**
+   - [ ] Document all abstractions
+   - [ ] Split and reorganize some big abs into set of smaller abstractions.
+         Strictly follow the new abstractions guidelines (layer 0, layer 1, etc.)
+   - [ ] Abstraction based profiles:
+         Most of the accesses needed by GUI based application are commons. As such 80-90% of the profile content should be handled by abstractions (internally they will have conditions).
+   - [ ] Test new interface like abstractions
+            - notifications
+            - audio-bluetooth
+            - secrets-service
+            - media-keys
+            - ...
+    - [ ] Rewrite the desktop abstraction to only contains other abs. No direct rules in it.
+    - [ ] Rewrite the DE specific abstraction to be a layer 1 abs
+
+- [ ] **Security improvements**
+    - [ ] Limit the use of `abstractions/common/systemd`
+    - [ ] Ensure systemctl restart/stop/reload is always confined and filtered by unit (dbus only)
+    - [ ] Revisit the usae of `systemd-tty-ask-password-agent`
 
 ## Next features
 
@@ -45,7 +64,15 @@ This is the current list of features that must be implemented to get to a stable
     - [ ] Debug tool to show the profiles transition tree, and ensure no profile is missing
     - [x] Remove the `default` profile
 
+- [ ] **Define roles**
+    - [ ] Unrestricted shell role without FSP enabled
+    - [ ] Define the roles when FSP is enabled
+
 ## Done
+
+**General improvements**
+
+- [x] The apt/dpkg profiles has been rewritten
 
 **Abstractions**
 
