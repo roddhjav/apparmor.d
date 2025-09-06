@@ -1,0 +1,35 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Allows access to all cameras
+
+  abi <abi/4.0>,
+
+  # Allow detection of cameras. Leaks plugged in USB device info
+  @{sys}/bus/usb/devices/ r,
+  @{sys}/devices/@{pci}/usb@{int}/**/busnum r,
+  @{sys}/devices/@{pci}/usb@{int}/**/devnum r,
+  @{sys}/devices/@{pci}/usb@{int}/**/idProduct r,
+  @{sys}/devices/@{pci}/usb@{int}/**/idVendor r,
+  @{sys}/devices/@{pci}/usb@{int}/**/interface r,
+  @{sys}/devices/@{pci}/usb@{int}/**/modalias r,
+  @{sys}/devices/@{pci}/usb@{int}/**/speed r,
+
+  @{sys}/class/video4linux/ r,
+  @{sys}/devices/**/video4linux/** r,
+  @{sys}/devices/**/video4linux/video@{int}/ r,
+  @{sys}/devices/**/video4linux/video@{int}/uevent r,
+
+  @{run}/udev/data/+usb:* r,              # Identifies all USB devices
+  @{run}/udev/data/c81:@{int}  r,         # For video4linux
+
+  # VideoCore cameras (shared device with VideoCore/EGL)
+  /dev/vchiq rw,
+
+  # Access to video /dev devices
+  /dev/video@{int} rw,
+
+  include if exists <abstractions/camera.d>
+
+# vim:syntax=apparmor
