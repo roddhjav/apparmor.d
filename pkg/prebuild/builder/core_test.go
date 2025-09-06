@@ -231,6 +231,30 @@ func TestBuilder_Apply(t *testing.T) {
 			want:    "",
 			wantErr: true,
 		},
+		{
+			name: "stacked-dbus-1",
+			b:    Builders["stacked-dbus"],
+			profile: `
+profile foo {
+  dbus send bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={Hello,AddMatch,RemoveMatch,GetNameOwner,NameHasOwner,StartServiceByName}
+       peer=(name=org.freedesktop.DBus, label="@{p_dbus_session}"),
+
+}`,
+			want: `
+profile foo {
+dbus send bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={Hello,AddMatch,RemoveMatch,GetNameOwner,NameHasOwner,StartServiceByName}
+       peer=(name=org.freedesktop.DBus, label=dbus-session),
+dbus send bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={Hello,AddMatch,RemoveMatch,GetNameOwner,NameHasOwner,StartServiceByName}
+       peer=(name=org.freedesktop.DBus, label=dbus-session//&unconfined),
+
+}`,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

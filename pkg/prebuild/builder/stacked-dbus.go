@@ -72,7 +72,7 @@ func (b StackedDbus) Apply(opt *Option, profile string) (string, error) {
 		toResolve = append(toResolve, k)
 	}
 
-	rulesByParagraph, paragraphs, err := parse(kind, profile) //
+	rulesByParagraph, paragraphs, err := parse(kind, profile)
 	if err != nil {
 		return "", err
 	}
