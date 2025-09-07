@@ -139,8 +139,11 @@ func Configure() {
 			builder.Register("stacked-dbus")
 
 		} else {
+			if !prebuild.DownStream {
+				prepare.Register("attach")
+			}
 			builder.Register("attach")
-			prepare.Register("attach")
+
 		}
 
 	default:

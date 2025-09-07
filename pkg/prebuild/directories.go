@@ -13,6 +13,9 @@ var (
 	// AppArmor version
 	Version = 4.0
 
+	// Tells the build we are a downstream project using apparmor.d as dependency
+	DownStream = false
+
 	// Either or not RBAC is enabled
 	RBAC = false
 
