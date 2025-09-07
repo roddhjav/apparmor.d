@@ -25,7 +25,11 @@ profile dolphin @{exec_path} {
 
   network netlink raw,
 
-  signal (send) set=(term) peer=kioworker,
+  signal send set=hup peer=@{p_systemd},
+  signal send set=term peer=kioworker,
+
+  ptrace read peer=@{p_systemd},
+  ptrace read peer=okular,
 
   @{exec_path} mr,
 
@@ -109,10 +113,11 @@ profile dolphin @{exec_path} {
   owner @{PROC}/@{pid}/cmdline r,
   owner @{PROC}/@{pid}/mountinfo r,
   owner @{PROC}/@{pid}/mounts r,
+  owner @{PROC}/@{pid}/stat r,
 
   @{sys}/devices/virtual/block/dm-@{int}/uevent r,
 
-  /dev/tty r,
+  /dev/tty rw,
 
   include if exists <local/dolphin>
 }
