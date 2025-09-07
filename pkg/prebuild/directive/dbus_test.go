@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-const dbusOwnSystemd1 = `  include <abstractions/bus/own-system>
+const dbusOwnSystemd1 = `  include <abstractions/bus/system/own>
 
   dbus bind bus=system name=org.freedesktop.systemd1{,.*},
   dbus receive bus=system path=/org/freedesktop/systemd1{,/**}
@@ -73,7 +73,7 @@ func TestDbus_Apply(t *testing.T) {
 				Raw:     "  #aa:dbus own bus=session name=com.rastersoft.ding interface+=org.gtk.Actions",
 			},
 			profile: "  #aa:dbus own bus=session name=com.rastersoft.ding interface+=org.gtk.Actions",
-			want: `  include <abstractions/bus/own-session>
+			want: `  include <abstractions/bus/session/own>
 
   dbus bind bus=session name=com.rastersoft.ding{,.*},
   dbus receive bus=session path=/com/rastersoft/ding{,/**}
@@ -120,7 +120,9 @@ func TestDbus_Apply(t *testing.T) {
 				Raw:     "  #aa:dbus talk bus=system name=org.freedesktop.Accounts label=accounts-daemon",
 			},
 			profile: "  #aa:dbus talk bus=system name=org.freedesktop.Accounts label=accounts-daemon",
-			want: `  dbus (send receive) bus=system path=/org/freedesktop/Accounts{,/**}
+			want: `  unix type=stream addr=none peer=(label=accounts-daemon, addr=none),
+
+  dbus (send receive) bus=system path=/org/freedesktop/Accounts{,/**}
        interface=org.freedesktop.Accounts{,.*}
        peer=(name="{@{busname},org.freedesktop.Accounts{,.*}}", label=accounts-daemon),
   dbus (send receive) bus=system path=/org/freedesktop/Accounts{,/**}

@@ -135,7 +135,7 @@ func (d Dbus) own(rules map[string]string) aa.Rules {
 	}
 
 	res = append(res,
-		// DBus.Properties
+		// DBus.Properties: reply to properties request from anyone
 		&aa.Dbus{
 			Access: []string{"send", "receive"}, Bus: rules["bus"], Path: rules["path"],
 			Interface: "org.freedesktop.DBus.Properties",
@@ -143,7 +143,7 @@ func (d Dbus) own(rules map[string]string) aa.Rules {
 			PeerName:  `"{@{busname},org.freedesktop.DBus}"`,
 		},
 
-		// DBus.Introspectable
+		// DBus.Introspectable: allow clients to introspect the service
 		&aa.Dbus{
 			Access: []string{"receive"}, Bus: rules["bus"], Path: rules["path"],
 			Interface: "org.freedesktop.DBus.Introspectable",
@@ -151,7 +151,7 @@ func (d Dbus) own(rules map[string]string) aa.Rules {
 			PeerName:  `"@{busname}"`,
 		},
 
-		// DBus.ObjectManager
+		// DBus.ObjectManager: allow clients to enumerate sources
 		&aa.Dbus{
 			Access: []string{"receive"}, Bus: rules["bus"], Path: rules["path"],
 			Interface: "org.freedesktop.DBus.ObjectManager",
@@ -170,7 +170,14 @@ func (d Dbus) own(rules map[string]string) aa.Rules {
 
 func (d Dbus) talk(rules map[string]string) aa.Rules {
 	interfaces := getInterfaces(rules)
-	res := aa.Rules{}
+	res := aa.Rules{
+		&aa.Unix{
+			Type:      "stream",
+			Address:   "none",
+			PeerLabel: rules["label"],
+			PeerAddr:  "none",
+		},
+	}
 
 	// Interfaces
 	for _, iface := range interfaces {
@@ -198,7 +205,7 @@ func (d Dbus) talk(rules map[string]string) aa.Rules {
 			PeerName:  `"{@{busname},` + rules["name"] + `}"`, PeerLabel: rules["label"],
 		},
 
-		// DBus.ObjectManager
+		// DBus.ObjectManager: allow clients to enumerate sources
 		&aa.Dbus{
 			Access: []string{"send"}, Bus: rules["bus"], Path: rules["path"],
 			Interface: "org.freedesktop.DBus.ObjectManager",
