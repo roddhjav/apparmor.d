@@ -11,8 +11,10 @@ profile ufw-init @{exec_path} {
   include <abstractions/base>
   include <abstractions/nameservice-strict>
 
+  capability dac_override,
   capability dac_read_search,
   capability net_admin,
+  capability net_raw,
 
   network inet dgram,
   network inet raw,
@@ -27,12 +29,29 @@ profile ufw-init @{exec_path} {
   @{sbin}/sysctl               rCx -> sysctl,
   @{sbin}/xtables-legacy-multi rix,
   @{sbin}/xtables-nft-multi    rix,
+  @{bin}/kmod                  rCx -> kmod,
 
   /etc/default/ufw r,
   /etc/ufw/* r,
 
+  @{run}/xtables.lock rwk,
+
   @{PROC}/@{pid}/net/ip_tables_names r,
-  # @{PROC}/sys/net/ipv{4,6}/** rw,
+  @{PROC}/sys/kernel/modprobe r,
+
+  profile kmod {
+    include <abstractions/base>
+    include <abstractions/app/kmod>
+
+    capability sys_module,
+
+    @{run}/xtables.lock r,
+
+    @{sys}/module/compression r,
+    @{sys}/module/x_tables/initstate r,
+
+    include if exists <local/ufw-init_kmod>
+  }
 
   profile sysctl {
     include <abstractions/base>
