@@ -221,6 +221,7 @@ declare -A EQUIVALENTS=(
     ["awk"]="{m,g,}awk"
     ["gawk"]="{m,g,}awk"
     ["grep"]="{,e}grep"
+    ["gs"]="gs{,.bin}"
     ["which"]="which{,.debianutils}"
 )
 _check_equivalent() {
