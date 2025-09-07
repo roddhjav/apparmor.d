@@ -11,6 +11,9 @@ profile ksmserver @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/base>
   include <abstractions/app-launcher-user>
   include <abstractions/audio-client>
+  include <abstractions/bus-accessibility>
+  include <abstractions/bus-session>
+  include <abstractions/bus-system>
   include <abstractions/bus/org.freedesktop.login1.Session>
   include <abstractions/graphics>
   include <abstractions/kde-strict>
@@ -19,6 +22,14 @@ profile ksmserver @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   signal send set=(usr1,term) peer=kscreenlocker_greet,
 
   ptrace (read) peer=kbuildsycoca5,
+
+  #aa:dbus own bus=session name=org.freedesktop.ScreenSaver
+  #aa:dbus own bus=session name=org.kde.ksmserver path=/KSMServer
+  #aa:dbus own bus=session name=org.kde.KSMServerInterface path=/KSMServer
+  #aa:dbus own bus=session name=org.kde.screensaver
+
+  #aa:dbus talk bus=session name=org.kde.KGlobalAccel path=/ label=kglobalacceld
+  #aa:dbus talk bus=session name=org.kde.KWin.Session path=/Session label=kwin_wayland
 
   @{exec_path} mr,
 
@@ -49,9 +60,6 @@ profile ksmserver @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{user_config_dirs}/ksmserverrc rw,
   owner @{user_config_dirs}/ksmserverrc.@{rand6} rwl,
   owner @{user_config_dirs}/ksmserverrc.lock rwk,
-  owner @{user_config_dirs}/menus/ r,
-  owner @{user_config_dirs}/menus/applications-merged/ r,
-  owner @{user_config_dirs}/session/*_[0-9]*_[0-9]*_[0-9]* rw,
 
   owner @{user_share_dirs}/kservices{5,6}/ r,
   owner @{user_share_dirs}/kservices{5,6}/ServiceMenus/ r,

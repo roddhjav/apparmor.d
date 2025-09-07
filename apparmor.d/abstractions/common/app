@@ -16,6 +16,7 @@
   include <abstractions/bus-session>
   include <abstractions/bus-system>
   include <abstractions/bus/org.a11y>
+  include <abstractions/camera>
   include <abstractions/consoles>
   include <abstractions/cups-client>
   include <abstractions/desktop>
@@ -28,8 +29,8 @@
   include <abstractions/nameservice-strict>
   include <abstractions/p11-kit>
   include <abstractions/path>
+  include <abstractions/sqlite>
   include <abstractions/ssl_certs>
-  include <abstractions/video>
 
   dbus bus=accessibility,
   dbus bus=session,
@@ -63,11 +64,10 @@
   owner @{tmp}/** rmwk,
   owner /dev/shm/** rwlk -> /dev/shm/**,
   owner /var/cache/tmp/** rwlk -> /var/cache/tmp/**,
-  owner /var/tmp/etilqs_@{sqlhex} rw,
 
   @{att}/@{run}/systemd/inhibit/@{int}.ref rw,
 
-  @{run}/havahi-daemon/socket rw, # Allow access to avahi-daemon socket.
+  @{run}/avahi-daemon/socket rw, # Allow access to avahi-daemon socket.
   @{run}/host/{,**} r,
   @{run}/pcscd/pcscd.comm rw, # Allow access to pcscd socket.
   @{run}/utmp rk,
@@ -114,6 +114,7 @@
         @{PROC}/sys/kernel/sched_autogroup_enabled r,
         @{PROC}/sys/kernel/yama/ptrace_scope r,
         @{PROC}/sys/net/core/bpf_jit_enable r,
+        @{PROC}/sys/net/core/somaxconn r,
         @{PROC}/uptime r,
         @{PROC}/version r,
         @{PROC}/zoneinfo r,
@@ -131,9 +132,15 @@
   owner @{PROC}/@{pid}/net/if_inet6 r,
   owner @{PROC}/@{pid}/oom_score_adj rw,
   owner @{PROC}/@{pid}/pagemap r,
+  owner @{PROC}/@{pid}/smaps_rollup r,
   owner @{PROC}/@{pid}/statm r,
   owner @{PROC}/@{pid}/task/ r,
   owner @{PROC}/@{pid}/task/@{tid}/comm rw,
+
+        @{att}/dev/dri/card@{int} rw,
+        @{att}/dev/dri/renderD128 rw,
+        @{att}/dev/dri/renderD129 rw,
+  owner @{att}/dev/shm/@{uuid} r,
 
   /dev/hidraw@{int} rw,
   /dev/input/ r,

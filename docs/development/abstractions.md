@@ -217,6 +217,14 @@ Minimal set of rules for sandboxed programs using `bwrap`. A profile using this 
 
 A minimal set of rules for chromium based application. Handle access for internal sandbox.
 
+It works as a *function* and requires some variables to be provided as *arguments* and set in the header of the calling profile:
+
+!!! note ""
+
+    [apparmor.d/profile-s-z/spotify](https://github.com/roddhjav/apparmor.d/blob/main/apparmor.d/groups/steam/steam#L24-L25)
+    ``` sh linenums="24"
+    @{domain} = org.chromium.Chromium
+    ```
 
 ### **`common/electron`**
 
@@ -227,6 +235,7 @@ A minimal set of rules for all electron based UI applications. It works as a *fu
     [apparmor.d/profile-s-z/spotify](https://github.com/roddhjav/apparmor.d/blob/7d1380530aa56f31589ccc6a360a8144f3601731/apparmor.d/profiles-s-z/spotify#L10-L13)
     ``` sh linenums="10"
     @{name} = spotify
+    @{domain} = org.chromium.Chromium
     @{lib_dirs} = /opt/@{name}
     @{config_dirs} = @{user_config_dirs}/@{name}
     @{cache_dirs} = @{user_cache_dirs}/@{name}

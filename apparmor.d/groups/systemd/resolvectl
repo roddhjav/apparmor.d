@@ -21,7 +21,15 @@ profile resolvectl @{exec_path} flags=(attach_disconnected) {
 
   signal send set=cont peer=child-pager,
 
+  unix bind type=stream addr=@@{udbus}/bus/resolvconf/system,
+
   #aa:dbus talk bus=system name=org.freedesktop.resolve1 label="@{p_systemd_resolved}"
+
+  #aa:dbus talk bus=system name=org.freedesktop.network1 label="@{p_systemd_networkd}"
+  dbus send bus=system path=/org/freedesktop/network1
+       interface=org.freedesktop.network1.Manager
+       member=SetLinkDNSEx
+       peer=(name=org.freedesktop.network1),
 
   @{exec_path} mr,
 

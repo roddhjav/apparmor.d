@@ -5,7 +5,7 @@
 # Usage: `just`
 # See https://apparmor.pujol.io/development/ for more information.
 
-# Build setings
+# Build settings
 destdir := "/"
 build := ".build"
 pkgdest := `pwd` / ".pkg"
@@ -49,44 +49,44 @@ c := "--connect=qemu:///system"
 # VM prefix
 prefix := "aa-"
 
-[doc('Show this help message')]
+# Show this help message
 help:
 	@just --list --unsorted
 	@printf "\n%s\n" "See https://apparmor.pujol.io/development/ for more information."
 
+# Build the go programs
 [group('build')]
-[doc('Build the go programs')]
 build:
 	@go build -o {{build}}/ ./cmd/aa-log
 	@go build -o {{build}}/ ./cmd/prebuild
 
+# Prebuild the profiles in enforced mode
 [group('build')]
-[doc('Prebuild the profiles in enforced mode')]
 enforce: build
-	@./{{build}}/prebuild
+	@./{{build}}/prebuild --buildir {{build}}
 
+# Prebuild the profiles in complain mode
 [group('build')]
-[doc('Prebuild the profiles in complain mode')]
 complain: build
-	@./{{build}}/prebuild --complain
+	./{{build}}/prebuild --buildir {{build}} --complain
 
+# Prebuild the profiles in FSP mode
 [group('build')]
-[doc('Prebuild the profiles in FSP mode')]
 fsp: build
-	@./{{build}}/prebuild --full
+	@./{{build}}/prebuild --buildir {{build}} --full
 
+# Prebuild the profiles in FSP mode (complain)
 [group('build')]
-[doc('Prebuild the profiles in FSP mode (complain)')]
 fsp-complain: build
-	@./{{build}}/prebuild --complain --full
+	@./{{build}}/prebuild --buildir {{build}} --complain --full
 
+# Prebuild the profiles in FSP mode (debug)
 [group('build')]
-[doc('Prebuild the profiles in FSP mode (debug)')]
 fsp-debug: build
-	@./{{build}}/prebuild --complain --full --debug
+	@./{{build}}/prebuild --buildir {{build}} --complain --full --debug
 
+# Install prebuild profiles
 [group('install')]
-[doc('Install prebuild profiles')]
 install:
 	#!/usr/bin/env bash
 	set -eu -o pipefail
@@ -113,8 +113,8 @@ install:
 		install -Dm0644 "$file" "{{destdir}}/usr/lib/systemd/user/$service.d/apparmor.conf"
 	done
 
+# Locally install prebuild profiles
 [group('install')]
-[doc('Locally install prebuild profiles')]
 local +names:
 	#!/usr/bin/env bash
 	set -eu -o pipefail
@@ -135,39 +135,39 @@ local +names:
 	done;
 	systemctl restart apparmor || sudo journalctl -xeu apparmor.service
 
+# Prebuild, install, and load a dev profile
 [group('install')]
-[doc('Prebuild, install, and load a dev profile')]
 dev name:
 	go run ./cmd/prebuild --complain --file `find apparmor.d -iname {{name}}`
 	sudo install -Dm644 {{build}}/apparmor.d/{{name}} /etc/apparmor.d/{{name}}
 	sudo systemctl restart apparmor || sudo journalctl -xeu apparmor.service
 
+# Build & install apparmor.d on Arch based systems
 [group('packages')]
-[doc('Build & install apparmor.d on Arch based systems')]
 pkg:
 	@makepkg --syncdeps --install --cleanbuild --force --noconfirm
 
+# Build & install apparmor.d on Debian based systems
 [group('packages')]
-[doc('Build & install apparmor.d on Debian based systems')]
 dpkg:
 	@bash dists/build.sh dpkg
 	@sudo dpkg -i {{pkgdest}}/{{pkgname}}_*.deb
 
+# Build & install apparmor.d on OpenSUSE based systems
 [group('packages')]
-[doc('Build & install apparmor.d on OpenSUSE based systems')]
 rpm:
 	@bash dists/build.sh rpm
 	@sudo rpm -ivh --force {{pkgdest}}/{{pkgname}}-*.rpm
 
+# Run the unit tests
 [group('tests')]
-[doc('Run the unit tests')]
 tests:
 	@go test ./cmd/... -v -cover -coverprofile=coverage.out
 	@go test ./pkg/... -v -cover -coverprofile=coverage.out
 	@go tool cover -func=coverage.out
 
+# Run the linters
 [group('linter')]
-[doc('Run the linters')]
 lint:
 	golangci-lint run
 	packer fmt tests/packer/
@@ -177,34 +177,34 @@ lint:
 		tests/packer/init.sh tests/packer/src/aa-update tests/packer/clean.sh \
 		debian/{{pkgname}}.postinst debian/{{pkgname}}.postrm
 
+# Run style checks on the profiles
 [group('linter')]
-[doc('Run style checks on the profiles')]
 check:
 	@bash tests/check.sh
 
+# Generate the man pages
 [group('docs')]
-[doc('Generate the man pages')]
 man:
 	@pandoc -t man -s -o share/man/man8/aa-log.8 share/man/man8/aa-log.md
 
+# Build the documentation
 [group('docs')]
-[doc('Build the documentation')]
 docs:
 	@ENABLED_GIT_REVISION_DATE=false MKDOCS_OFFLINE=true mkdocs build --strict
 
+# Serve the documentation
 [group('docs')]
-[doc('Serve the documentation')]
 serve:
 	@ENABLED_GIT_REVISION_DATE=false MKDOCS_OFFLINE=false mkdocs serve
 
-[doc('Remove all build artifacts')]
+# Remove all build artifacts
 clean:
 	@rm -rf \
 		debian/.debhelper debian/debhelper* debian/*.debhelper debian/{{pkgname}} \
 		{{pkgdest}}/{{pkgname}}* {{build}} coverage.out
 
+# Build the package in a clean OCI container
 [group('packages')]
-[doc('Build the package in a clean OCI container')]
 package dist:
 	#!/usr/bin/env bash
 	set -eu -o pipefail
@@ -219,8 +219,8 @@ package dist:
 	fi
 	bash dists/docker.sh $dist $version
 
+# Build the VM image
 [group('vm')]
-[doc('Build the VM image')]
 img dist flavor: (package dist)
 	@mkdir -p {{base_dir}}
 	packer build -force \
@@ -237,8 +237,8 @@ img dist flavor: (package dist)
 		-var output_dir={{output_dir}} \
 		tests/packer/
 
+# Create the machine
 [group('vm')]
-[doc('Create the machine')]
 create dist flavor:
 	@cp -f {{base_dir}}/{{prefix}}{{dist}}-{{flavor}}.qcow2 {{vm}}/{{prefix}}{{dist}}-{{flavor}}.qcow2
 	@virt-install {{c}} \
@@ -251,62 +251,63 @@ create dist flavor:
 		--memorybacking source.type=memfd,access.mode=shared \
 		--disk path={{vm}}/{{prefix}}{{dist}}-{{flavor}}.qcow2,format=qcow2,bus=virtio \
 		--filesystem "`pwd`,0a31bc478ef8e2461a4b1cc10a24cc4",accessmode=passthrough,driver.type=virtiofs \
-		--os-variant "`just get_osinfo {{dist}}`" \
+		--os-variant "`just _get_osinfo {{dist}}`" \
 		--graphics spice \
 		--audio id=1,type=spice \
 		--sound model=ich9 \
 		--noautoconsole
 
+# Start a machine
 [group('vm')]
-[doc('Start a machine')]
 up dist flavor:
 	@virsh {{c}} start {{prefix}}{{dist}}-{{flavor}}
 
+# Stops the machine
 [group('vm')]
-[doc('Stops the machine')]
 halt dist flavor:
 	@virsh {{c}} shutdown {{prefix}}{{dist}}-{{flavor}}
 
+# Reboot the machine
 [group('vm')]
-[doc('Reboot the machine')]
 reboot dist flavor:
 	@virsh {{c}} reboot {{prefix}}{{dist}}-{{flavor}}
 
+# Destroy the machine
 [group('vm')]
-[doc('Destroy the machine')]
 destroy dist flavor:
 	@virsh {{c}} destroy {{prefix}}{{dist}}-{{flavor}} || true
 	@virsh {{c}} undefine {{prefix}}{{dist}}-{{flavor}} --nvram
 	@rm -fv {{vm}}/{{prefix}}{{dist}}-{{flavor}}.qcow2
 
+# Connect to the machine
 [group('vm')]
-[doc('Connect to the machine')]
 ssh dist flavor:
-	@ssh {{sshopt}} {{username}}@`just get_ip {{dist}} {{flavor}}`
+	@ssh {{sshopt}} {{username}}@`just _get_ip {{dist}} {{flavor}}`
 
+# Mount the shared directory on the machine
 [group('vm')]
-[doc('Mount the shared directory on the machine')]
 mount dist flavor:
-	@ssh {{sshopt}} {{username}}@`just get_ip {{dist}} {{flavor}}` \
+	@ssh {{sshopt}} {{username}}@`just _get_ip {{dist}} {{flavor}}` \
 		sh -c 'mount | grep 0a31bc478ef8e2461a4b1cc10a24cc4 || sudo mount 0a31bc478ef8e2461a4b1cc10a24cc4'
 
+# Unmout the shared directory on the machine
 [group('vm')]
-[doc('Unmout the shared directory on the machine')]
 umount dist flavor:
-	@ssh {{sshopt}} {{username}}@`just get_ip {{dist}} {{flavor}}` \
+	@ssh {{sshopt}} {{username}}@`just _get_ip {{dist}} {{flavor}}` \
 		sh -c 'true; sudo umount /home/{{username}}/Projects/apparmor.d || true'
 
+# List the machines
 [group('vm')]
-[doc('List the machines')]
 list:
 	@printf "{{BOLD}} %-4s %-22s %s{{NORMAL}}\n" "Id" "Distribution-Flavor" "State"
 	@virsh {{c}} list --all | grep {{prefix}} | sed 's/{{prefix}}//g'
 
+# List the VM images
 [group('vm')]
-[doc('List the VM images')]
 images:
 	#!/usr/bin/env bash
 	set -eu -o pipefail
+	mkdir -p {{base_dir}}
 	ls -lh {{base_dir}} | awk '
 	BEGIN {
 		printf("{{BOLD}}%-18s %-10s %-5s %s{{NORMAL}}\n", "Distribution", "Flavor", "Size", "Date")
@@ -319,8 +320,8 @@ images:
 	}
 	'
 
+# List the VM images that can be created
 [group('vm')]
-[doc('List the VM images that can be created')]
 available:
 	#!/usr/bin/env bash
 	set -eu -o pipefail
@@ -336,49 +337,47 @@ available:
 	}
 	'
 
+# Install dependencies for the integration tests
 [group('tests')]
-[doc('Install dependencies for the integration tests')]
 init:
 	@bash tests/requirements.sh
 
+# Run the integration tests
 [group('tests')]
-[doc('Run the integration tests')]
-integration:
-	bats --recursive --timing --print-output-on-failure tests/integration
+integration name="":
+	bats --recursive --timing --print-output-on-failure tests/integration/{{name}}
 
+# Install dependencies for the integration tests (machine)
 [group('tests')]
-[doc('Install dependencies for the integration tests (machine)')]
 tests-init dist flavor:
-	@ssh {{sshopt}} {{username}}@`just get_ip {{dist}} {{flavor}}` \
+	@ssh {{sshopt}} {{username}}@`just _get_ip {{dist}} {{flavor}}` \
 		just --justfile /home/{{username}}/Projects/apparmor.d/Justfile init
 
+# Synchronize the integration tests (machine)
 [group('tests')]
-[doc('Synchronize the integration tests (machine)')]
 tests-sync dist flavor:
-	@ssh {{sshopt}} {{username}}@`just get_ip {{dist}} {{flavor}}` \
+	@ssh {{sshopt}} {{username}}@`just _get_ip {{dist}} {{flavor}}` \
 		rsync -a --delete /home/{{username}}/Projects/apparmor.d/tests/ /home/{{username}}/Projects/tests/
 
+# Re-synchronize the integration tests (machine)
 [group('tests')]
-[doc('Re-synchronize the integration tests (machine)')]
 tests-resync dist flavor: (mount dist flavor) \
 	(tests-sync dist flavor) \
 	(umount dist flavor)
 
+# Run the integration tests (machine)
 [group('tests')]
-[doc('Run the integration tests (machine)')]
 tests-run dist flavor name="": (tests-resync dist flavor)
-	ssh {{sshopt}} {{username}}@`just get_ip {{dist}} {{flavor}}` \
+	ssh {{sshopt}} {{username}}@`just _get_ip {{dist}} {{flavor}}` \
 		bats --recursive --pretty --timing --print-output-on-failure \
 			/home/{{username}}/Projects/tests/integration/{{name}}
 
-[private]
-get_ip dist flavor:
+_get_ip dist flavor:
 	@virsh --quiet --readonly {{c}} domifaddr {{prefix}}{{dist}}-{{flavor}} | \
 		head -1 | \
 		grep -E -o '([[:digit:]]{1,3}\.){3}[[:digit:]]{1,3}'
 
-[private]
-get_osinfo dist:
+_get_osinfo dist:
 	#!/usr/bin/env python3
 	osinfo = {
 		"archlinux": "archlinux",

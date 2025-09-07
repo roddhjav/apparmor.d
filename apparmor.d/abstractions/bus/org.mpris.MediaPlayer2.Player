@@ -4,27 +4,34 @@
 
   abi <abi/4.0>,
 
-  #aa-dbus common bus=session name=org.mpris.MediaPlayer2.Player label=unconfined
+  # DBus.Properties: read all properties from the interface
+  dbus send bus=system path=/org/mpris/MediaPlayer2
+       interface=org.freedesktop.DBus.Properties
+       member={Get,GetAll}
+       peer=(name=@{busname}),
 
+  # DBus.Properties: receive property changed events
   dbus receive bus=session path=/org/mpris/MediaPlayer2
        interface=org.freedesktop.DBus.Properties
        member=PropertiesChanged
        peer=(name=@{busname}),
 
+  # DBus.Introspectable: allow clients to introspect the service
+  dbus send bus=system path=/org/mpris/MediaPlayer2
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name=@{busname}),
+
   dbus receive bus=session path=/org/mpris/MediaPlayer2
        interface=org.mpris.MediaPlayer2.Player
+       member={Seeked,Next,PlayPause}
+       peer=(name=@{busname}),
+
+  # https://specifications.freedesktop.org/mpris-spec/latest/Player_Interface.html#Signal:Seeked
+  dbus send bus=session path=/org/mpris/MediaPlayer2
+       interface=org.mpris.MediaPlayer2.Player
        member=Seeked
-       peer=(name=@{busname}),
-
-  dbus send bus=session path=/org/mpris/MediaPlayer2
-       interface=org.freedesktop.DBus.Properties
-       member=Get
-       peer=(name=@{busname}),
-
-  dbus send bus=session path=/org/mpris/MediaPlayer2
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=@{busname}),
+       peer=(name=org.freedesktop.DBus),
 
   include if exists <abstractions/bus/org.mpris.MediaPlayer2.Player.d>
 

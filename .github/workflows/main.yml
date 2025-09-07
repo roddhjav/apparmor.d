@@ -47,11 +47,6 @@ jobs:
           if [[ ${{ matrix.mode }} == full-system-policy ]]; then
             sed -e "s/just complain/just fsp-complain/" -i debian/rules
           fi
-          if [[ ${{ matrix.os }} == ubuntu-24.04 ]] && [[ ${{ matrix.mode }} == default ]]; then
-            # Test with Re-attach disconnected path
-            sed -e 's;// builder.Register("attach");builder.Register("attach");' -i pkg/prebuild/cli/cli.go
-            sed -e '/@{att}/d' -i apparmor.d/tunables/multiarch.d/system
-          fi
           bash dists/build.sh dpkg
 
       - name: Install apparmor.d
@@ -83,7 +78,7 @@ jobs:
   tests:
     runs-on: ubuntu-24.04
     needs: build
-    if: github.ref == 'refs/heads/dev'
+    if: github.ref_name == 'dev' || github.event_name == 'workflow_dispatch'
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4

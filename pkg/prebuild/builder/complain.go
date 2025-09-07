@@ -25,7 +25,7 @@ func init() {
 	RegisterBuilder(&Complain{
 		Base: prebuild.Base{
 			Keyword: "complain",
-			Msg:     "Set complain flag on all profiles",
+			Msg:     "Build: set complain flag on all profiles",
 		},
 	})
 }
@@ -36,6 +36,9 @@ func (b Complain) Apply(opt *Option, profile string) (string, error) {
 	if len(matches) != 0 {
 		flags = strings.Split(matches[1], ",")
 		if slices.Contains(flags, "complain") {
+			return profile, nil
+		}
+		if slices.Contains(flags, "unconfined") {
 			return profile, nil
 		}
 	}

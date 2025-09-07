@@ -8,20 +8,22 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{name} = signal-desktop{,-beta}
+@{domain} = org.chromium.Chromium
 @{lib_dirs} = @{lib}/signal-desktop /opt/Signal{,?Beta}
 @{config_dirs} = @{user_config_dirs}/Signal{,?Beta}
 @{cache_dirs} = @{user_cache_dirs}/@{name}
 
 @{exec_path} = @{lib_dirs}/@{name}
-profile signal-desktop @{exec_path} {
+profile signal-desktop @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/audio-client>
   include <abstractions/bus-session>
-  include <abstractions/bus/org.freedesktop.ScreenSaver>
   include <abstractions/bus/org.kde.StatusNotifierWatcher>
+  include <abstractions/camera>
   include <abstractions/common/electron>
   include <abstractions/devices-usb-read>
-  include <abstractions/fontconfig-cache-read>
+  include <abstractions/notifications>
+  include <abstractions/screensaver>
   include <abstractions/user-download-strict>
   include <abstractions/video>
 
@@ -31,30 +33,18 @@ profile signal-desktop @{exec_path} {
   network inet6 stream,
   network netlink raw,
 
+  ptrace read peer=signal-desktop//&xdg-settings,
+
   @{exec_path} mrix,
 
-  @{bin}/getconf       rix,
-  @{open_path}         rPx -> child-open-strict,
+  @{lib_dirs}/chrome_crashpad_handler rix,
+  @{lib_dirs}/chrome-sandbox rPx,
 
   #aa:stack X xdg-settings
   @{bin}/xdg-settings  rPx -> signal-desktop//&xdg-settings,
-
-  audit @{lib_dirs}/chrome-sandbox rPx,
-  @{lib_dirs}/chrome_crashpad_handler rix,
+  @{open_path}         rPx -> child-open-strict,
 
   @{att}/@{run}/systemd/inhibit/@{int}.ref rw,
-
-        @{sys}/fs/cgroup/user.slice/cpu.max r,
-        @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/cpu.max r,
-        @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/session-@{word}.scope/memory.high r,
-        @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/session-@{word}.scope/memory.max r,
-        @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/cpu.max r,
-  owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/cpu.max r,
-
-  @{PROC}/@{pid}/fd/ r,
-  @{PROC}/vmstat r,
-
-  /dev/tty rw,
 
   include if exists <local/signal-desktop>
 }

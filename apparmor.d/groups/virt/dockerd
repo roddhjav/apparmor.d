@@ -6,7 +6,7 @@ abi <abi/4.0>,
 
 include <tunables/global>
 
-@{exec_path} = @{bin}/dockerd
+@{exec_path} = @{bin}/dockerd @{sbin}/dockerd #aa:lint ignore=sbin
 profile dockerd @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus-system>
@@ -69,6 +69,7 @@ profile dockerd @{exec_path} flags=(attach_disconnected) {
   @{bin}/docker-init             rCx -> init,
   @{lib}/docker/docker-init      rCx -> init,
   @{bin}/docker-proxy            rPx,
+  @{bin}/tini-static             rCx -> tini,
   @{bin}/git                     rCx -> git,
   @{bin}/kmod                    rCx -> kmod,
   @{bin}/ps                      rPx,
@@ -170,6 +171,14 @@ profile dockerd @{exec_path} flags=(attach_disconnected) {
     @{sys}/module/*/initstate r,
 
     include if exists <local/dockerd_kmod>
+  }
+
+  profile tini {
+    include <abstractions/base>
+
+    @{bin}/tini-static mr,
+
+    include if exists <local/dockerd_tini>
   }
 
   profile init flags=(attach_disconnected) {

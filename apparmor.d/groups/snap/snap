@@ -6,8 +6,8 @@ abi <abi/4.0>,
 
 include <tunables/global>
 
-@{bin_dirs} = @{bin}/ /snap/{snapd,core}/@{int}@{bin}
-@{lib_dirs} = @{lib}/ /snap/{snapd,core}/@{int}@{lib}
+@{bin_dirs} = @{bin}/ /snap/{snapd,core}/{,x}@{int}@{bin}
+@{lib_dirs} = @{lib}/ /snap/{snapd,core}/{,x}@{int}@{lib}
 
 @{exec_path} = @{bin_dirs}/snap
 profile snap @{exec_path} flags=(attach_disconnected) {
@@ -18,6 +18,8 @@ profile snap @{exec_path} flags=(attach_disconnected) {
   include <abstractions/disks-read>
   include <abstractions/nameservice-strict>
 
+  capability chown,
+  capability dac_override,
   capability dac_read_search,
   capability setuid,
   capability sys_admin,
@@ -50,11 +52,14 @@ profile snap @{exec_path} flags=(attach_disconnected) {
 
   @{exec_path} mrix,
 
+  @{sh_path} mr,
   @{bin}/mount rix,
   @{bin}/getent rix,
 
   @{bin}/gpg{,2}          rCx -> gpg,
   @{bin}/systemctl        rCx -> systemctl,
+  @{bin}/systemd-run      rCx -> run, # Start snap from the cli
+  @{bin}/xdg-settings     rCx -> xdg-settings,
 
   @{lib_dirs}/**          mr,
   @{lib_dirs}/snapd/snap-confine     rPx,
@@ -68,8 +73,12 @@ profile snap @{exec_path} flags=(attach_disconnected) {
   /var/cache/snapd/names r,
 
   @{DESKTOP_HOME}/snap/{,**} rw,
-  @{HOME}/snap/{,**} rw,
   /snap/{,**} rw,
+
+  @{HOME}/ r,
+  @{HOME}/.snap.mkdir-new/ rw,
+  @{HOME}/.snap/{,**} rw,
+  @{HOME}/snap/{,**} rw,
 
   owner @{tmp}/snapd-auto-import-mount-@{int}/ rw,
 
@@ -92,13 +101,17 @@ profile snap @{exec_path} flags=(attach_disconnected) {
         @{PROC}/sys/kernel/random/uuid r,
         @{PROC}/sys/kernel/seccomp/actions_avail r,
         @{PROC}/version r,
-  owner @{PROC}/@{pid}/attr/apparmor/current r,
+        @{PROC}/@{pid}/attr/apparmor/current r,
   owner @{PROC}/@{pid}/mounts r,
 
   /dev/tty@{int} rw,
   /dev/ttyS@{int} rw,
 
-  deny @{user_share_dirs}/gvfs-metadata/* r,
+  /apparmor/.null rw,
+
+  # file_inherit, safe to deny
+  deny owner @{user_share_dirs}/gvfs-metadata/* r,
+  deny owner @{user_share_dirs}/gnome-shell/session.gvdb rw,
 
   profile gpg {
     include <abstractions/base>
@@ -113,6 +126,49 @@ profile snap @{exec_path} flags=(attach_disconnected) {
     owner @{HOME}/.snap/gnupg/** rwkl,
 
     include if exists <local/snap_gpg>
+  }
+
+  profile xdg-settings {
+    include <abstractions/base>
+    include <abstractions/desktop-files>
+
+    @{bin}/xdg-settings mr,
+
+    @{sh_path}       r,
+    @{bin}/{,e}grep  rix,
+    @{bin}/basename  rix,
+    @{bin}/cat        ix,
+    @{bin}/cut       rix,
+    @{bin}/head       ix,
+    @{bin}/mkdir      ix,
+    @{bin}/mktemp     ix,
+    @{bin}/mv         ix,
+    @{bin}/readlink   ix,
+    @{bin}/realpath  rix,
+    @{bin}/rm         ix,
+    @{bin}/sed        ix,
+    @{bin}/sleep      ix,
+    @{bin}/sort       ix,
+    @{bin}/touch      ix,
+    @{bin}/tr         ix,
+    @{bin}/uname      ix,
+    @{bin}/wc         ix,
+
+    @{bin}/xdg-mime   Px,
+
+    include if exists <local/snap_xdg-settings>
+  }
+
+  profile run {
+    include <abstractions/base>
+
+    unix bind type=stream addr=@@{udbus}/bus/systemd-run/,
+
+    @{bin}/systemd-run mr,
+
+    owner @{run}/user/@{uid}/systemd/private rw,
+
+    include if exists <local/snap_run>
   }
 
   profile systemctl {

@@ -9,9 +9,12 @@ include <tunables/global>
 @{exec_path} = @{lib}/ptyxis-agent
 profile ptyxis-agent @{exec_path} {
   include <abstractions/base>
+  include <abstractions/bus-session>
+  include <abstractions/bus/org.gtk.vfs.MountTracker>
   include <abstractions/consoles>
-  include <abstractions/nameservice-strict>
   include <abstractions/dconf-write>
+  include <abstractions/gschemas>
+  include <abstractions/nameservice-strict>
 
   signal send set=hup peer=unconfined,
 
@@ -22,7 +25,9 @@ profile ptyxis-agent @{exec_path} {
   @{bin}/podman       Px,
   @{bin}/systemd-run  Cx -> shell,
 
-  /usr/share/glib-2.0/schemas/gschemas.compiled r,
+  owner @{user_share_dirs}/containers/ w,
+  owner @{user_share_dirs}/containers/storage/ w,
+  owner @{user_share_dirs}/containers/storage/overlay-containers/ w,
 
   @{PROC}/@{pid}/cmdline r,
 
@@ -34,8 +39,12 @@ profile ptyxis-agent @{exec_path} {
 
     signal send,
 
+    unix bind type=stream addr=@@{udbus}/bus/systemd-run/,
+
     @{bin}/systemd-run mr,
     @{bin}/@{shells}   Ux,
+
+    owner @{run}/user/@{uid}/systemd/private rw,
 
     include if exists <local/ptyxis-agent_shell>
   }

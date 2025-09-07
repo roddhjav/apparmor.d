@@ -9,14 +9,23 @@ include <tunables/global>
 
 @{exec_path}  = @{bin}/ksmserver-logout-greeter
 @{exec_path} += @{lib}/@{multiarch}/{,libexec/}ksmserver-logout-greeter
-profile ksmserver-logout-greeter @{exec_path} flags=(attach_disconnected) {
+profile ksmserver-logout-greeter @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/base>
+  include <abstractions/bus-accessibility>
+  include <abstractions/bus-session>
+  include <abstractions/bus-system>
+  include <abstractions/bus/org.a11y>
   include <abstractions/consoles>
   include <abstractions/fontconfig-cache-read>
   include <abstractions/kde-strict>
   include <abstractions/graphics>
   include <abstractions/nameservice-strict>
   include <abstractions/qt5-shader-cache>
+
+  #aa:dbus own bus=session name=org.kde.LogoutPrompt path=/LogoutPrompt
+
+  #aa:dbus talk bus=session name=org.kde.LogoutPrompt path=/Shutdown label=plasma-shutdown
+  #aa:dbus talk bus=session name=org.kde.KWin label=kwin_wayland
 
   @{exec_path} mr,
 

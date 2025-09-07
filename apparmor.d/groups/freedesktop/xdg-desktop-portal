@@ -45,9 +45,15 @@ profile xdg-desktop-portal @{exec_path} flags=(attach_disconnected) {
        interface=org.freedesktop.host.portal.Registry
        member=Register
        peer=(name=@{busname}),
+  dbus receive bus=session path=/org/freedesktop/portal/desktop
+       interface=org.freedesktop.portal.NetworkMonitor
+       member=GetStatus
+       peer=(name=@{busname}, label=snap.*),
 
   #aa:dbus own bus=session name=org.freedesktop.background.Monitor path=/org/freedesktop/background/monitor
 
+  #aa:dbus talk bus=session name=org.freedesktop.FileManager1 label=nautilus
+  #aa:dbus talk bus=session name=org.freedesktop.impl.portal.FileChooser label=xdg-desktop-portal-gnome
   #aa:dbus talk bus=session name=org.freedesktop.portal.Documents path=/org/freedesktop/portal/documents label=xdg-document-portal
 
   dbus receive bus=session
@@ -62,11 +68,11 @@ profile xdg-desktop-portal @{exec_path} flags=(attach_disconnected) {
 
   @{bin}/kreadconfig{,5}                  rPx,
   @{lib}/xdg-desktop-portal-validate-icon rPx,
-  @{open_path}                            rPx -> child-open,
+  @{open_path}                           mrPx -> child-open,
 
-              / r,
-        @{att}/.flatpak-info r,
-  owner @{att}/ r,
+        / r,
+  @{att}/.flatpak-info r,
+  owner /att/**/ r,
 
   /usr/share/dconf/profile/gdm r,
   /usr/share/xdg-desktop-portal/** r,

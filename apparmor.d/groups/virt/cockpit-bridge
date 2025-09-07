@@ -9,7 +9,12 @@ include <tunables/global>
 @{exec_path} = @{bin}/cockpit-bridge
 profile cockpit-bridge @{exec_path} {
   include <abstractions/base>
+  include <abstractions/bus-session>
+  include <abstractions/bus-system>
+  include <abstractions/bus/org.freedesktop.NetworkManager>
+  include <abstractions/bus/org.freedesktop.timedate1>
   include <abstractions/consoles>
+  include <abstractions/icons>
   include <abstractions/nameservice-strict>
   include <abstractions/python>
 
@@ -32,6 +37,11 @@ profile cockpit-bridge @{exec_path} {
   signal send set=term peer=ssh-agent,
   signal send set=term peer=unconfined,
   signal (send receive) set=term peer=cockpit-bridge//sudo,
+
+  #aa:dbus talk bus=session name=org.libvirt label=libvirt-dbus
+  #aa:dbus talk bus=system name=org.freedesktop.PackageKit path=/**  label=packagekitd
+  #aa:dbus talk bus=system name=org.freedesktop.systemd1 label=@{p_systemd}
+  #aa:dbus talk bus=system name=org.libvirt label=libvirt-dbus
 
   @{exec_path} mr,
 
@@ -125,6 +135,8 @@ profile cockpit-bridge @{exec_path} {
   profile udevadm {
     include <abstractions/base>
     include <abstractions/app/udevadm>
+
+    @{run}/udev/data/n@{int} r,             # For network interfaces
 
     include if exists <local/cockpit-bridge_udevadm>
   }

@@ -10,6 +10,10 @@ include <tunables/global>
 @{exec_path} += @{lib}/@{multiarch}/{,libexec/}DiscoverNotifier
 profile DiscoverNotifier @{exec_path} {
   include <abstractions/base>
+  include <abstractions/bus-accessibility>
+  include <abstractions/bus-session>
+  include <abstractions/bus-system>
+  include <abstractions/bus/org.a11y>
   include <abstractions/dconf-write>
   include <abstractions/graphics>
   include <abstractions/kde-strict>
@@ -23,14 +27,20 @@ profile DiscoverNotifier @{exec_path} {
   network netlink dgram,
   network netlink raw,
 
+  #aa:dbus own bus=session name=org.kde.discover.notifier
+
+  #aa:dbus talk bus=system name=org.freedesktop.PackageKit label=packagekitd
+
   @{exec_path} mr,
 
   @{bin}/apt-config          rPx,
+  @{bin}/plasma-discover     rPx,
 
   @{bin}/gpg{,2}             rCx -> gpg,
   @{bin}/gpgconf             rCx -> gpg,
   @{bin}/gpgsm               rCx -> gpg,
 
+  /usr/share/flatpak/remotes.d/{,**} r,
   /usr/share/metainfo/{,**} r,
 
   /etc/machine-id r,

@@ -10,9 +10,15 @@ include <tunables/global>
 profile kded @{exec_path} {
   include <abstractions/base>
   include <abstractions/audio-client>
+  include <abstractions/bus-accessibility>
+  include <abstractions/bus-session>
   include <abstractions/bus-system>
+  include <abstractions/bus/org.a11y>
   include <abstractions/bus/org.bluez>
+  include <abstractions/bus/org.freedesktop.ModemManager1>
   include <abstractions/bus/org.freedesktop.PolicyKit1>
+  include <abstractions/bus/org.freedesktop.UDisks2>
+  include <abstractions/common/apt> #aa:only apt
   include <abstractions/consoles>
   include <abstractions/dconf-write>
   include <abstractions/devices-usb>
@@ -21,41 +27,69 @@ profile kded @{exec_path} {
   include <abstractions/kde-globals-write>
   include <abstractions/kde-strict>
   include <abstractions/nameservice-strict>
+  include <abstractions/ssl_certs>
   include <abstractions/wutmp>
 
   capability sys_ptrace,
 
   network inet dgram,
+  network inet stream,
   network inet6 dgram,
-  network netlink raw,
+  network inet6 stream,
   network netlink dgram,
+  network netlink raw,
 
-  ptrace (read),
+  ptrace read,
 
   signal send set=hup peer=xsettingsd,
   signal send set=term peer=kioworker,
 
+  # Owned by KDE
+
   #aa:dbus own bus=system name=com.redhat.NewPrinterNotification
+
+  #aa:dbus own bus=session name=org.gtk.Settings
+  #aa:dbus own bus=session name=org.kde.DistroReleaseNotifier
+  #aa:dbus own bus=session name=org.kde.GtkConfig
+  #aa:dbus own bus=session name=org.kde.kappmenu
+  #aa:dbus own bus=session name=org.kde.kcookiejar5
+  #aa:dbus own bus=session name=org.kde.kded5
+  #aa:dbus own bus=session name=org.kde.keyboard
+  #aa:dbus own bus=session name=org.kde.KeyboardLayouts
+  #aa:dbus own bus=session name=org.kde.plasmanetworkmanagement
+  #aa:dbus own bus=session name=org.kde.plasmashell.accentColor
+  #aa:dbus own bus=session name=org.kde.StatusNotifierWatcher
+  #aa:dbus own bus=session name=org.kde.Wacom
+  #aa:dbus own bus=session name=org.kubuntu.NotificationHelper
+  #aa:dbus own bus=session name=org.kubuntu.restrictedInstall
+
+  # Talk with KDE
+
   #aa:dbus talk bus=system name=org.freedesktop.NetworkManager label=NetworkManager
   #aa:dbus talk bus=system name=org.freedesktop.bolt label=boltd
+
+  #aa:dbus talk bus=session name=org.kde.NightColor path=/ColorCorrect label="{kwin_wayland,kwin_x11}"
+  #aa:dbus talk bus=session name=org.kde.KGlobalAccel path=/ label="{kglobalacceld,kwin_wayland}"
 
   dbus receive bus=system path=/
        interface=org.kde.kf5auth
        member=remoteSignal
-       peer=(name=:*, label=kauth-kded-smart-helper),
+       peer=(name=@{busname}, label=kauth-kded-smart-helper),
 
   dbus send bus=system path=/
        interface=org.kde.kf5auth
        member=performAction
-       peer=(name="{:*,org.kde.kded.smart}", label=kauth-kded-smart-helper),
+       peer=(name="{@{busname},org.kde.kded.smart}", label=kauth-kded-smart-helper),
 
   @{exec_path} mrix,
 
+  @{python_path}            rix,
+  @{bin}/dpkg               rPx -> child-dpkg,
+  @{bin}/flatpak            rPx,
   @{bin}/kcminit            rPx,
+  @{bin}/lsb_release        rPx,
   @{bin}/pgrep              rCx -> pgrep,
   @{bin}/plasma-welcome    rPUx,
-  @{python_path}            rix,
-  @{bin}/flatpak            rPx,
   @{bin}/setxkbmap          rix,
   @{bin}/xmodmap           rPUx,
   @{bin}/xrdb               rPx,
@@ -67,23 +101,30 @@ profile kded @{exec_path} {
   #aa:exec kconf_update
 
   /usr/share/color-schemes/{,**} r,
+  /usr/share/distro-info/{,**} r,
+  /usr/share/distro-release-notifier/{,**} r,
   /usr/share/kconf_update/ r,
   /usr/share/kded{5,6}/{,**} r,
   /usr/share/kf{5,6}/kcookiejar/* r,
   /usr/share/khotkeys/{,**} r,
   /usr/share/kservices{5,6}/{,**} r,
   /usr/share/kservicetypes5/{,**} r,
+  /usr/share/ubuntu-release-upgrader/{,*} r,
 
   /etc/fstab r,
   /etc/xdg/accept-languages.codes r,
   /etc/xdg/kde* r,
   /etc/xdg/kioslaverc r,
   /etc/xdg/menus/{,**} r,
+  /etc/update-manager/{,**} r,
 
   /etc/machine-id r,
   /var/lib/dbus/machine-id r,
 
   / r,
+  @{efi}/ r,
+
+  owner /var/lib/update-manager/meta-release-lts rw,
 
   owner @{HOME}/ r,
   owner @{HOME}/.gtkrc-2.0 rw,
@@ -97,6 +138,7 @@ profile kded @{exec_path} {
         @{user_cache_dirs}/ksycoca{5,6}_* rwlk -> @{user_cache_dirs}/#@{int},
   owner @{user_cache_dirs}/plasmashell/ rw,
   owner @{user_cache_dirs}/plasmashell/** rwlk ->  @{user_cache_dirs}/plasmashell/**,
+  owner @{user_cache_dirs}/update-manager-core/meta-release-lts rw,
 
         @{user_config_dirs}/kcookiejarrc.lock rwk,
         @{user_config_dirs}/kcookiejarrc{,.@{rand6}} rwl -> @{user_config_dirs}/#@{int},
@@ -141,6 +183,9 @@ profile kded @{exec_path} {
 
   @{sys}/class/leds/ r,
 
+  @{run}/udev/data/b8:@{int} r,       # for /dev/sd*
+  @{run}/udev/data/b259:@{int} r,     # Block Extended Major
+
         @{PROC}/ r,
         @{PROC}/@{pids}/cmdline/ r,
         @{PROC}/@{pids}/fd/ r,
@@ -158,8 +203,6 @@ profile kded @{exec_path} {
   profile pgrep {
     include <abstractions/base>
     include <abstractions/app/pgrep>
-
-    @{PROC}/tty/drivers r,
 
     include if exists <local/kded_pgrep>
   }

@@ -9,7 +9,6 @@ include <tunables/global>
 @{exec_path} = @{lib}/gsd-media-keys
 profile gsd-media-keys @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/consoles>
   include <abstractions/audio-client>
   include <abstractions/bus-accessibility>
   include <abstractions/bus-session>
@@ -21,6 +20,8 @@ profile gsd-media-keys @{exec_path} flags=(attach_disconnected) {
   include <abstractions/bus/org.gnome.Mutter.IdleMonitor>
   include <abstractions/bus/org.gnome.SessionManager>
   include <abstractions/bus/org.gtk.vfs.MountTracker>
+  include <abstractions/bus/org.mpris.MediaPlayer2.Player>
+  include <abstractions/consoles>
   include <abstractions/dconf-write>
   include <abstractions/fontconfig-cache-write>
   include <abstractions/gnome-strict>
@@ -38,7 +39,7 @@ profile gsd-media-keys @{exec_path} flags=(attach_disconnected) {
   dbus send bus=system path=/org/freedesktop/login1
        interface=org.freedesktop.login1.Manager
        member=PowerOff
-       peer=(name=:*, label="@{p_systemd_logind}"),
+       peer=(name=@{busname}, label="@{p_systemd_logind}"),
 
   dbus send bus=session path=/
        interface=org.freedesktop.DBus
@@ -48,17 +49,12 @@ profile gsd-media-keys @{exec_path} flags=(attach_disconnected) {
   dbus send bus=session path=/org/gnome/SettingsDaemon/Power
        interface=org.freedesktop.DBus.Properties
        member=GetAll
-       peer=(name=:*, label=gsd-power),
+       peer=(name=@{busname}, label=gsd-power),
 
   dbus receive bus=session path=/org/gnome/SettingsDaemon/Power
        interface=org.freedesktop.DBus.Properties
        member=PropertiesChanged
-       peer=(name=:*, label=gsd-power),
-
-  dbus send bus=session path=/org/mpris/MediaPlayer2
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=:*),
+       peer=(name=@{busname}, label=gsd-power),
 
   @{exec_path} mr,
 
@@ -70,8 +66,6 @@ profile gsd-media-keys @{exec_path} flags=(attach_disconnected) {
 
   owner @{GDM_HOME}/greeter-dconf-defaults r,
   owner @{gdm_config_dirs}/dconf/user r,
-
-  owner @{user_share_dirs}/recently-used.xbel{,.*} rw,
 
   @{att}/@{run}/systemd/inhibit/@{int}.ref rw,
 

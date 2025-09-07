@@ -10,6 +10,7 @@ include <tunables/global>
 @{exec_path} = @{lib}/{,gvfs/}gvfsd-admin
 profile gvfsd-admin @{exec_path} {
   include <abstractions/base>
+  include <abstractions/mime>
   include <abstractions/nameservice-strict>
 
   capability chown,
@@ -20,16 +21,15 @@ profile gvfsd-admin @{exec_path} {
 
   @{exec_path} mr,
 
-  /usr/share/mime/mime.cache r,
-
-  @{MOUNTS}/{,**} rw,
-
-  @{run}/mount/utab r,
-  @{run}/user/@{uid}/gvfsd/socket-@{rand8} rw,
-
-  @{PROC}/@{pid}/fdinfo/@{int} r,
-  @{PROC}/@{pid}/mountinfo r,
-  @{PROC}/@{pid}/stat r,
+  #aa:lint ignore=too-wide
+  # Full access to system's data, but no write access to sensitive system directories
+  / r,
+  /*/ r,
+  /*/** rw,
+  deny @{sys}/** w,
+  deny @{PROC}/** w,
+  deny @{efi}/** w,
+  deny /dev/** w,
 
   include if exists <local/gvfsd-admin>
 }

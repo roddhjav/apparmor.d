@@ -14,13 +14,16 @@ profile gnome-control-center @{exec_path} flags=(attach_disconnected) {
   include <abstractions/bus-session>
   include <abstractions/bus-system>
   include <abstractions/bus/org.a11y>
+  include <abstractions/bus/org.freedesktop.Avahi>
   include <abstractions/bus/org.freedesktop.portal.Desktop>
   include <abstractions/bus/org.gtk.vfs.MountTracker>
+  include <abstractions/camera>
   include <abstractions/cups-client>
   include <abstractions/dconf-write>
   include <abstractions/gnome-strict>
   include <abstractions/graphics>
   include <abstractions/gstreamer>
+  include <abstractions/media-control>
   include <abstractions/nameservice-strict>
   include <abstractions/p11-kit>
   include <abstractions/ssl_certs>
@@ -42,9 +45,7 @@ profile gnome-control-center @{exec_path} flags=(attach_disconnected) {
   #aa:dbus talk bus=session name=org.freedesktop.impl.portal.PermissionStore label=xdg-permission-store
   #aa:dbus talk bus=session name=org.gnome.Mutter label=gnome-shell
   #aa:dbus talk bus=session name=org.gnome.SessionManager label=gnome-session-binary
-  #aa:dbus talk bus=session name=org.gnome.SettingsDaemon.Color label=gsd-color
-  #aa:dbus talk bus=session name=org.gnome.SettingsDaemon.Power label=gsd-power
-  #aa:dbus talk bus=session name=org.gnome.SettingsDaemon.Rfkill label=gsd-rfkill
+  #aa:dbus talk bus=session name=org.gnome.SettingsDaemon.* label="gsd-*"
   #aa:dbus talk bus=session name=org.gnome.Shell label=gnome-shell
 
   #aa:dbus talk bus=system name=com.ubuntu.WhoopsiePreferences label=whoopsie-preferences
@@ -89,7 +90,6 @@ profile gnome-control-center @{exec_path} flags=(attach_disconnected) {
 
   @{open_path}                                   rPx -> child-open-any,
 
-  /opt/**/share/icons/{,**} r,
   /snap/*/@{int}/**.png r,
   /usr/share/backgrounds/{,**} r,
   /usr/share/cups/data/testprint r,
@@ -132,7 +132,8 @@ profile gnome-control-center @{exec_path} flags=(attach_disconnected) {
   owner @{user_config_dirs}/gnome-control-center/{,**} rw,
   owner @{user_config_dirs}/ibus/bus/ r,
   owner @{user_config_dirs}/ibus/bus/@{hex32}-unix-{,wayland-}@{int} r,
-  owner @{user_config_dirs}/mimeapps.list{,.@{rand6}} rw,
+  owner @{user_config_dirs}/mimeapps.list w,
+  owner @{user_config_dirs}/mimeapps.list.@{rand6} rw,
   owner @{user_config_dirs}/rygel.conf{,.@{rand6}} rw,
 
   owner @{user_games_dirs}/**.png r,
@@ -192,8 +193,6 @@ profile gnome-control-center @{exec_path} flags=(attach_disconnected) {
   owner @{PROC}/@{pid}/task/*/comm rw,
 
   /dev/ r,
-  /dev/media@{int} r,
-  /dev/video@{int} rw,
 
   deny owner @{user_share_dirs}/gvfs-metadata/{,*} r,
 

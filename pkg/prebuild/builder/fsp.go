@@ -11,7 +11,7 @@ import (
 
 var (
 	regFullSystemPolicy = util.ToRegexRepl([]string{
-		`r(PU|U)x,`, `rPx,`,
+		`(PU|U)x,`, `Px,`,
 	})
 )
 
@@ -23,7 +23,7 @@ func init() {
 	RegisterBuilder(&FullSystemPolicy{
 		Base: prebuild.Base{
 			Keyword: "fsp",
-			Msg:     "Prevent unconfined transitions in profile rules",
+			Msg:     "Feat: prevent unconfined transitions in profile rules",
 		},
 	})
 }

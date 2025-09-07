@@ -10,15 +10,16 @@ include <tunables/global>
 profile btop @{exec_path} {
   include <abstractions/base>
   include <abstractions/consoles>
-  include <abstractions/graphics-full>
   include <abstractions/nameservice-strict>
 
+  capability kill,
+  capability perfmon,
   capability sys_ptrace,
 
   network netlink raw,
 
-  signal (send),
-  ptrace (read),
+  signal send,
+  ptrace read,
 
   @{exec_path} mr,
 
@@ -27,33 +28,42 @@ profile btop @{exec_path} {
   /etc/fstab r,
 
   owner @{user_config_dirs}/btop/{,**} rw,
+  owner @{user_state_dirs}/btop.log rw,
 
   @{sys}/bus/pci/devices/ r,
   @{sys}/class/hwmon/ r,
   @{sys}/class/power_supply/ r,
-  @{sys}/devices/@{pci}/**/stat r,
+  @{sys}/devices/@{pci}/ r,
+  @{sys}/devices/@{pci}/{,**}/ r,
   @{sys}/devices/@{pci}/net/*/{,**} r,
+  @{sys}/devices/@{pci}/nvme/nvme@{int}/ r,
+  @{sys}/devices/@{pci}/stat r,
   @{sys}/devices/@{pci}/usb@{int}/**/power_supply/** r,
   @{sys}/devices/**/hwmon@{int}/{,*} r,
   @{sys}/devices/**/power_supply/{AC,BAT@{int}}/{,**} r,
+  @{sys}/devices/*/events/{,*} r,
+  @{sys}/devices/platform/*/ r,
+  @{sys}/devices/power/{,**} r,
   @{sys}/devices/system/cpu/cpufreq/policy@{int}/scaling_{cur,min,max}_freq r,
   @{sys}/devices/system/node/node@{int}/cpumap r,
   @{sys}/devices/virtual/block/dm-@{int}/stat r,
   @{sys}/devices/virtual/net/{,**} r,
-  @{sys}/devices/virtual/thermal/thermal_zone@{int}/{,} r,
+  @{sys}/devices/virtual/thermal/thermal_zone@{int}/{,*} r,
 
-        @{PROC} r,
-        @{PROC}/@{pid}/statm r,
-        @{PROC}/@{pids}/cmdline r,
-        @{PROC}/@{pids}/comm r,
-        @{PROC}/@{pids}/io r,
-        @{PROC}/@{pids}/stat r,
-        @{PROC}/devices r,
-        @{PROC}/driver/nvidia/capabilities/mig/monitor r,
-        @{PROC}/loadavg r,
-        @{PROC}/spl/kstat/zfs/arcstats r,
-        @{PROC}/uptime r,
-  owner @{PROC}/@{pid}/mounts r,
+  @{PROC} r,
+  @{PROC}/@{pids}/cmdline r,
+  @{PROC}/@{pids}/comm r,
+  @{PROC}/@{pids}/io r,
+  @{PROC}/@{pids}/mounts r,
+  @{PROC}/@{pids}/stat r,
+  @{PROC}/@{pids}/statm r,
+  @{PROC}/@{pids}/task/@{tid}/comm rw,
+  @{PROC}/devices r,
+  @{PROC}/driver/nvidia/capabilities/mig/config r,
+  @{PROC}/driver/nvidia/capabilities/mig/monitor r,
+  @{PROC}/loadavg r,
+  @{PROC}/spl/kstat/zfs/arcstats r,
+  @{PROC}/uptime r,
 
   /dev/nvidia-caps/ rw,
   /dev/nvidia-caps/nvidia-cap@{int} rw,

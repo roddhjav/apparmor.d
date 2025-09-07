@@ -16,9 +16,10 @@ profile wireplumber @{exec_path} {
   include <abstractions/bus/org.freedesktop.impl.portal.PermissionStore>
   include <abstractions/bus/org.freedesktop.RealtimeKit1>
   include <abstractions/bus/org.freedesktop.UPower>
+  include <abstractions/camera>
   include <abstractions/devices-usb>
+  include <abstractions/media-control>
   include <abstractions/nameservice-strict>
-  include <abstractions/video>
 
   network bluetooth raw,
   network bluetooth seqpacket,
@@ -32,6 +33,11 @@ profile wireplumber @{exec_path} {
        member=Introspect
        peer=(name=:*, label=gnome-shell),
 
+  dbus receive bus=system path=/midi{,server@{int}}
+       interface=org.freedesktop.DBus.ObjectManager
+       member=GetManagedObjects
+       peer=(name=@{busname}, label="@{p_bluetoothd}"),
+
   @{exec_path} mr,
 
   /opt/intel/oneapi/{compiler,lib,mkl}/**/ r,
@@ -42,8 +48,8 @@ profile wireplumber @{exec_path} {
   /usr/share/wireplumber/{,**} r,
 
   owner @{desktop_local_dirs}/ w,
-  owner @{desktop_local_dirs}/state/ w,
-  owner @{desktop_local_dirs}/state/wireplumber/{,**} rw,
+  owner @{desktop_state_dirs}/ w,
+  owner @{desktop_state_dirs}/wireplumber/{,**} rw,
 
   owner @{HOME}/.local/ w,
   owner @{user_state_dirs}/ w,
@@ -60,13 +66,11 @@ profile wireplumber @{exec_path} {
   @{run}/systemd/users/@{uid} r,
 
   @{run}/udev/data/c14:@{int} r,          # Open Sound System (OSS)
-  @{run}/udev/data/c81:@{int}  r,         # For video4linux
   @{run}/udev/data/c116:@{int} r,         # For ALSA
   @{run}/udev/data/c@{dynamic}:@{int} r,  # For dynamic assignment range 234 to 254, 384 to 511
 
   @{sys}/bus/ r,
   @{sys}/bus/media/devices/ r,
-  @{sys}/devices/@{pci}/video4linux/video@{int}/uevent r,
   @{sys}/devices/**/device:*/{,**/}path r,
   @{sys}/devices/**/sound/**/pcm_class r,
   @{sys}/devices/**/sound/**/uevent r,
@@ -77,12 +81,11 @@ profile wireplumber @{exec_path} {
   @{sys}/devices/virtual/dmi/id/sys_vendor r,
 
         @{PROC}/1/cgroup r,
-        @{PROC}/1/cmdline r,
+        @{PROC}/1/status r,
+        @{PROC}/@{pid}/cmdline r,
   owner @{PROC}/@{pid}/cgroup r,
-  owner @{PROC}/@{pid}/cmdline r,
   owner @{PROC}/@{pid}/task/@{tid}/comm rw,
 
-  /dev/media@{int} rw,
   /dev/udmabuf rw,
 
   include if exists <local/wireplumber>

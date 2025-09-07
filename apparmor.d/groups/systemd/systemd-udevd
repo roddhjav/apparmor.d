@@ -35,6 +35,8 @@ profile systemd-udevd @{exec_path} flags=(attach_disconnected) {
   network inet6 dgram,
   network netlink raw,
 
+  unix type=stream addr=@@{udbus}/bus/udevadm/,
+
   @{exec_path} mrix,
 
   @{sh_path}                               rix,
@@ -96,6 +98,7 @@ profile systemd-udevd @{exec_path} flags=(attach_disconnected) {
   @{run}/systemd/network/ r,
   @{run}/systemd/network/*.link rw,
   @{run}/systemd/notify rw,
+  @{run}/systemd/private rw,
   @{run}/systemd/seats/seat@{int} r,
 
   @{att}/@{run}/systemd/notify w,
@@ -124,6 +127,14 @@ profile systemd-udevd @{exec_path} flags=(attach_disconnected) {
   profile kmod flags=(attach_disconnected,complain) {
     include <abstractions/base>
     include <abstractions/app/kmod>
+
+    capability sys_module,
+
+    @{sh_path} rix,
+    @{bin}/kmod ix,
+
+    @{sys}/module/*/initstate r,
+    @{sys}/module/compression r,
 
     include if exists <local/systemd-udevd_kmod>
   }

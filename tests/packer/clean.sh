@@ -55,14 +55,12 @@ clean_apt() {
 
 clean_pacman() {
 	_msg "Cleaning pacman cache"
-	pacman -Syu --noconfirm
 	pacman -Scc --noconfirm
 }
 
 clean_zypper() {
 	_msg "Cleaning zypper cache"
-	zypper update -y
-	zypper clean -y
+	zypper clean --all
 }
 
 # Make the image as impersonal as possible.

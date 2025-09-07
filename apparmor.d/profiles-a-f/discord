@@ -8,18 +8,19 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{name} = discord
+@{domain} = org.chromium.Chromium
 @{lib_dirs} = /usr/share/@{name} /opt/@{name}
 @{config_dirs} = @{user_config_dirs}/@{name} @{user_config_dirs}/discordptb
 @{cache_dirs} = @{user_cache_dirs}/@{name}
 
 @{exec_path} = @{bin}/discord{,-ptb} @{lib_dirs}/Discord{,PTB}
-profile discord @{exec_path} {
+profile discord @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/audio-client>
   include <abstractions/bus-session>
-  include <abstractions/bus/org.freedesktop.ScreenSaver>
   include <abstractions/bus/org.kde.StatusNotifierWatcher>
   include <abstractions/common/electron>
+  include <abstractions/screensaver>
   include <abstractions/thumbnails-cache-read>
   include <abstractions/user-download-strict>
 
@@ -31,13 +32,15 @@ profile discord @{exec_path} {
 
   @{exec_path} mrix,
   @{sh_path}    rix,
-  @{bin}/lsb_release rPx,
 
   @{lib_dirs}/chrome-sandbox rix,
   @{lib_dirs}/chrome_crashpad_handler rix,
 
+  @{bin}/lsb_release   rPx,
+  @{bin}/xdg-mime      rPx,
   @{open_path}         rPx -> child-open-strict,
 
+  /etc/ r,
   /etc/lsb-release r,
 
   owner @{user_videos_dirs}/{,**} rwl,
@@ -46,13 +49,15 @@ profile discord @{exec_path} {
   owner @{config_dirs}/@{version}/modules/** m,
 
   owner "@{tmp}/Discord Crashes/" rw,
-  owner @{tmp}/.org.chromium.Chromium.@{rand6}/** rw,
   owner @{tmp}/discord.sock rw,
   owner @{tmp}/net-export/ rw,
 
   owner @{run}/user/@{uid}/discord-ipc-@{int} rw,
 
+  owner @{PROC}/@{pid}/mem r,
   owner @{PROC}/@{pid}/task/@{tid}/comm r,
+
+  deny ptrace read,
 
   include if exists <local/discord>
 }

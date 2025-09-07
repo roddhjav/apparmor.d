@@ -31,9 +31,11 @@ profile nautilus @{exec_path} flags=(attach_disconnected) {
   unix type=stream peer=(label=gnome-shell),
 
   #aa:dbus own bus=session name=org.freedesktop.FileManager1
-  #aa:dbus own bus=session name=org.gnome.Nautilus interface+="org.gtk.{Application,Actions}"
+  #aa:dbus own bus=session name=org.gnome.Nautilus interface+=org.gtk.{Application,Actions}
   #aa:dbus own bus=session name=org.gnome.Nautilus.SearchProvider interface+=org.gnome.Shell.SearchProvider2
 
+  #aa:dbus talk bus=session name=org.freedesktop.Application path=/ label="*"
+  #aa:dbus talk bus=session name=org.freedesktop.impl.portal.FileChooser label=xdg-desktop-portal-gnome
   #aa:dbus talk bus=session name=org.gnome.Settings label=gnome-control-center
   #aa:dbus talk bus=session name=org.gtk.MountOperationHandler label=gnome-shell
   #aa:dbus talk bus=session name=org.gtk.Notifications label=gnome-shell
@@ -48,6 +50,11 @@ profile nautilus @{exec_path} flags=(attach_disconnected) {
        interface=org.gtk.private.CommandLine
        member=Print
        peer=(name=@{busname}, label=nautilus),
+
+  dbus send bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=org.freedesktop.DBus, label="@{p_dbus_session}"),
 
   dbus send bus=session path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus
@@ -66,7 +73,9 @@ profile nautilus @{exec_path} flags=(attach_disconnected) {
   @{bin}/file-roller         rPx,
   @{bin}/firejail           rPUx,
   @{bin}/net                rPUx,
-  @{bin}/tracker3           rPUx,
+
+  @{bin}/* r,
+  @{lib}/@{multiarch}/glib-2.0/gio-launch-desktop m,
 
   @{open_path}               rPx -> child-open,
 

@@ -9,9 +9,15 @@ include <tunables/global>
 @{exec_path} = @{bin}/gnome-software
 profile gnome-software @{exec_path} {
   include <abstractions/base>
+  include <abstractions/bus-system>
+  include <abstractions/bus/org.freedesktop.Accounts>
+  include <abstractions/bus/org.freedesktop.NetworkManager>
+  include <abstractions/bus/org.gnome.Shell.SearchProvider2>
+  include <abstractions/bus/org.gtk.vfs.MountTracker>
   include <abstractions/common/gnome>
   include <abstractions/fontconfig-cache-write>
   include <abstractions/nameservice-strict>
+  include <abstractions/notifications>
   include <abstractions/p11-kit>
   include <abstractions/ssl_certs>
 
@@ -23,6 +29,16 @@ profile gnome-software @{exec_path} {
 
   mount fstype=fuse.revokefs-fuse options=(rw, nosuid, nodev) -> /var/tmp/flatpak-cache-*/*/,
   umount /var/tmp/flatpak-cache-*/*/,
+
+  #aa:dbus own bus=session name=org.freedesktop.PackageKit
+  #aa:dbus own bus=session name=org.gnome.Software interface+=org.freedesktop.Application
+
+  #aa:dbus talk bus=system name=org.freedesktop.PackageKit path=/@{int}_@{hex8} label="@{p_packagekitd}"
+
+  dbus receive bus=system path=/org/freedesktop/PolicyKit1/Authority
+       interface=org.freedesktop.PolicyKit1.Authority
+       member=Changed
+       peer=(name=@{busname}, label=polkitd),
 
   @{exec_path} mr,
 
@@ -37,6 +53,7 @@ profile gnome-software @{exec_path} {
 
   /usr/share/app-info/{,**} r,
   /usr/share/appdata/{,**} r,
+  /usr/share/byobu/desktop/{,**} r,
   /usr/share/flatpak/remotes.d/ r,
   /usr/share/metainfo/{,**} r,
   /usr/share/swcatalog/{,**} r,

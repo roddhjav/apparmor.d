@@ -11,9 +11,13 @@ set -eu -o pipefail
 RES=$(mktemp)
 echo "false" >"$RES"
 MAX_JOBS=$(nproc)
+APPARMORD=${CHECK_APPARMORD:-apparmor.d}
+SBIN_LIST=${CHECK_SBIN_LIST:-tests/sbin.list}
 declare WITH_CHECK
 declare _check_is_disabled
-readonly RES MAX_JOBS APPARMORD="apparmor.d"
+declare _check_is_disabled_global
+_FILE_IGNORE_ALL=false
+readonly APPARMORD SBIN_LIST RES MAX_JOBS
 readonly reset="\033[0m" fgRed="\033[0;31m" fgYellow="\033[0;33m" fgWhite="\033[0;37m" BgWhite="\033[1;37m"
 _msg() { printf '%b%s%b\n' "$BgWhite" "$*" "$reset"; }
 _warn() {
@@ -42,6 +46,11 @@ _in_array() {
 _is_enabled() {
     local check="$1"
     if _in_array "$check" "${WITH_CHECK[@]}"; then
+        if [[ -n "${_check_is_disabled_global+x}" && ${#_check_is_disabled_global[@]} -gt 0 ]]; then
+            if _in_array "$check" "${_check_is_disabled_global[@]}"; then
+                return 1
+            fi
+        fi
         if [[ -z "${_check_is_disabled+x}" || ${#_check_is_disabled[@]} -eq 0 ]]; then
             return 0
         fi
@@ -68,10 +77,18 @@ _ignore_lint() {
     local checks line="$1"
 
     if [[ "$line" =~ ^[[:space:]]*$_IGNORE_LINT=.*$ ]]; then
-        # Start of an ignore block
-        _IGNORE_LINT_BLOCK=true
+        # Start of an ignore block (or file-wide if in header)
         checks="${line#*"$_IGNORE_LINT="}"
-        read -ra _check_is_disabled <<<"${checks//,/ }"
+        read -ra _parsed <<<"${checks//,/ }"
+        if (( line_number <= 10 )); then
+            # Treat as file-wide ignore
+            _check_is_disabled_global=("${_parsed[@]}")
+            _FILE_IGNORE_ALL=true
+            _IGNORE_LINT_BLOCK=false
+            return 0
+        fi
+        _IGNORE_LINT_BLOCK=true
+        _check_is_disabled=("${_parsed[@]}")
 
     elif [[ $_IGNORE_LINT_BLOCK == true && "$line" =~ ^[[:space:]]*$ ]]; then
         # New paragraph, end of block
@@ -79,22 +96,33 @@ _ignore_lint() {
         _check_is_disabled=()
 
     elif [[ $_IGNORE_LINT_BLOCK == true ]]; then
-        # Nothing to do, we are in a block
+        # Nothing to do, we are in a block/paragraph
         return 0
 
     elif [[ "$line" == *"$_IGNORE_LINT="* ]]; then
-        # Inline ignore
+        # Inline ignore (or file-wide if in header)
         checks="${line#*"$_IGNORE_LINT="}"
-        read -ra _check_is_disabled <<<"${checks//,/ }"
+        read -ra _parsed <<<"${checks//,/ }"
+        if (( line_number <= 10 )); then
+            _check_is_disabled_global=("${_parsed[@]}")
+            _FILE_IGNORE_ALL=true
+            return 0
+        fi
+        _check_is_disabled=("${_parsed[@]}")
 
     else
-        _check_is_disabled=()
+        # Do not clear if file-wide ignore is set
+        if ! $_FILE_IGNORE_ALL; then
+            _check_is_disabled=()
+        fi
     fi
 }
 
 _check() {
     local file="$1"
-    local line_number=0
+    line_number=0
+    _FILE_IGNORE_ALL=false
+    _check_is_disabled_global=()
 
     while IFS= read -r line; do
         line_number=$((line_number + 1))
@@ -171,6 +199,9 @@ _check_abstractions() {
             _err abstractions "$file:$line_number" "deprecated abstraction '<$ABS/$absname>', use '<$ABS/${ABS_DEPRECATED[$absname]}>' instead"
         fi
     done
+    if [[ "$line" == *"<$ABS/ubuntu-"*">"* ]]; then
+        _err abstractions "$file:$line_number" "deprecated, ubuntu only abstraction '<$ABS/$absname>'"
+    fi
 }
 
 readonly DIRECTORIES=('@{HOME}' '@{MOUNTS}' '@{bin}' '@{sbin}' '@{lib}' '@{tmp}' '_dirs}' '_DIR}')
@@ -190,6 +221,7 @@ declare -A EQUIVALENTS=(
     ["awk"]="{m,g,}awk"
     ["gawk"]="{m,g,}awk"
     ["grep"]="{,e}grep"
+    ["gs"]="gs{,.bin}"
     ["which"]="which{,.debianutils}"
 )
 _check_equivalent() {
@@ -222,7 +254,7 @@ readonly TRANSITION_MUST_PC=( # Must transition to 'Px'
     ischroot who
 )
 readonly TRANSITION_MUST_C=( # Must transition to 'Cx'
-    sysctl kmod pgrep pkexec sudo systemctl udevadm
+    sysctl kmod pgrep pkill pkexec sudo systemctl udevadm
     fusermount fusermount3 fusermount{,3}
     nvim vim sensible-editor
 )
@@ -497,14 +529,14 @@ _check_udev() {
 
 check_sbin() {
     local file name jobs
-    mapfile -t sbin <tests/sbin.list
+    mapfile -t sbin <"$SBIN_LIST"
     _msg "Ensuring '@{bin} and '@{sbin}' are correctly used in profiles"
 
     jobs=0
     for name in "${sbin[@]}"; do
         (
             mapfile -t files < <(
-                grep --line-number --recursive -P "(^|[[:space:]])@{bin}/$name([[:space:]]|$)(?!.*$_IGNORE_LINT=sbin)" apparmor.d |
+                grep --line-number --recursive -P "(^|[[:space:]])@{bin}/$name([[:space:]]|$)(?!.*$_IGNORE_LINT=sbin)" "$APPARMORD" |
                     cut -d: -f1,2
             )
             for file in "${files[@]}"; do
@@ -517,7 +549,7 @@ check_sbin() {
 
     local pattern='[[:alnum:]_.-]+' # Pattern for valid file names
     jobs=0
-    mapfile -t files < <(grep --line-number --recursive -E "(^|[[:space:]])@{sbin}/$pattern([[:space:]]|$)" apparmor.d | cut -d: -f1,2)
+    mapfile -t files < <(grep --line-number --recursive -E "(^|[[:space:]])@{sbin}/$pattern([[:space:]]|$)" "$APPARMORD" | cut -d: -f1,2)
     for file in "${files[@]}"; do
         (
             while read -r match; do

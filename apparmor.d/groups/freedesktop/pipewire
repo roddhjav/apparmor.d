@@ -14,8 +14,9 @@ profile pipewire @{exec_path} flags=(attach_disconnected) {
   include <abstractions/bus-session>
   include <abstractions/bus-system>
   include <abstractions/bus/org.freedesktop.RealtimeKit1>
+  include <abstractions/camera>
+  include <abstractions/media-control>
   include <abstractions/nameservice-strict>
-  include <abstractions/video>
 
   capability sys_ptrace,
 
@@ -40,13 +41,14 @@ profile pipewire @{exec_path} flags=(attach_disconnected) {
   /etc/pipewire/{,**} r,
 
               / r,
-        @{att}/ r,
+        /att/**/ r,
   owner @{att}/.flatpak-info r,
 
   owner @{user_config_dirs}/pipewire/{,**} r,
 
   owner @{tmp}/librnnoise-@{int}.so rm,
 
+        @{run}/snapd.socket rw,
   owner @{run}/user/@{uid}/pipewire-@{int} rw,
   owner @{run}/user/@{uid}/pipewire-@{int}-manager.lock rwk,
   owner @{run}/user/@{uid}/pipewire-@{int}.lock rwk,
@@ -62,9 +64,8 @@ profile pipewire @{exec_path} flags=(attach_disconnected) {
   @{sys}/devices/virtual/dmi/id/{sys_vendor,product_version,product_name,bios_vendor,board_vendor} r,
   @{sys}/module/apparmor/parameters/enabled r,
 
+  owner @{PROC}/@{pid}/attr/apparmor/current r,
   owner @{PROC}/@{pid}/task/@{tid}/comm rw,
-
-  /dev/media@{int} rw,
 
   include if exists <local/pipewire>
 }

@@ -14,13 +14,13 @@ profile gnome-session-binary @{exec_path} flags=(attach_disconnected) {
   include <abstractions/bus-system>
   include <abstractions/bus/org.a11y>
   include <abstractions/bus/org.freedesktop.login1.Session>
-  include <abstractions/bus/org.freedesktop.systemd1-session>
   include <abstractions/bus/org.gnome.Mutter.IdleMonitor>
-  include <abstractions/bus/org.gnome.ScreenSaver>
+  include <abstractions/bus/session/org.freedesktop.systemd1>
   include <abstractions/dconf-write>
   include <abstractions/gnome-strict>
   include <abstractions/graphics>
   include <abstractions/nameservice-strict>
+  include <abstractions/screensaver>
 
   network inet stream,
   network inet6 stream,
@@ -28,8 +28,8 @@ profile gnome-session-binary @{exec_path} flags=(attach_disconnected) {
   network inet6 dgram,
   network netlink raw,
 
-  signal (receive) set=(term, hup) peer=gdm*,
-  signal (send) set=(term) peer=gsd-*,
+  signal receive set=(term, hup) peer=gdm*,
+  signal send set=(term) peer=gsd-*,
 
   #aa:dbus own bus=session name=org.gnome.SessionManager
   #aa:dbus talk bus=system name=org.freedesktop.login1 label="@{p_systemd_logind}"
@@ -67,6 +67,7 @@ profile gnome-session-binary @{exec_path} flags=(attach_disconnected) {
   @{etc_ro}/xdg/autostart/{,*.desktop} r,
 
   owner @{gdm_cache_dirs}/gdm/Xauthority r,
+  owner @{gdm_config_dirs}/ rw,
   owner @{gdm_config_dirs}/dconf/user rw,
   owner @{gdm_config_dirs}/gnome-session/ rw,
   owner @{gdm_config_dirs}/gnome-session/saved-session/ rw,

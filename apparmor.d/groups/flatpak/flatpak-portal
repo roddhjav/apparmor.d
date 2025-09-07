@@ -10,6 +10,8 @@ include <tunables/global>
 profile flatpak-portal @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus-session>
+  include <abstractions/bus-system>
+  include <abstractions/mime>
   include <abstractions/nameservice-strict>
 
   capability sys_ptrace,
@@ -22,23 +24,24 @@ profile flatpak-portal @{exec_path} flags=(attach_disconnected) {
 
   #aa:dbus own bus=session name=org.freedesktop.portal.Flatpak
 
+  dbus receive bus=session
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name=@{busname}, label=gnome-shell),
+
   @{exec_path} mr,
 
   @{bin}/flatpak rPx,
 
-  /usr/share/mime/mime.cache r,
   /usr/share/xdg-desktop-portal/portals/{,*.portal} r,
 
-  /var/lib/flatpak/exports/share/mime/mime.cache r,
-
-  owner @{att}/ r,
+  owner /att/**/ r,
   owner @{att}/.flatpak-info r,
 
-  owner @{HOME}/.var/app/*/**/.ref rw,
-  owner @{HOME}/.var/app/*/**/logs/* rw,
+  owner @{att}/@{HOME}/.var/app/*/.local/share/*/logs/* rw,
+  owner @{att}/@{HOME}/.var/app/*/.local/share/*/**/usr/.ref rw,
 
   owner @{user_config_dirs}/user-dirs.dirs r,
-  owner @{user_share_dirs}/mime/mime.cache r,
 
   owner @{run}/user/@{uid}/.flatpak/@{int}/* r,
   owner @{run}/user/@{uid}/.flatpak/@{int}-private/* r,

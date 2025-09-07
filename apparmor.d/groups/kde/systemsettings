@@ -10,7 +10,9 @@ include <tunables/global>
 profile systemsettings @{exec_path} {
   include <abstractions/base>
   include <abstractions/audio-client>
+  include <abstractions/bus-accessibility>
   include <abstractions/bus-session>
+  include <abstractions/bus/org.a11y>
   include <abstractions/cups-client>
   include <abstractions/dconf-write>
   include <abstractions/graphics>
@@ -22,6 +24,9 @@ profile systemsettings @{exec_path} {
   network netlink raw,
 
   signal send set=term peer=kioworker,
+
+  #aa:dbus own bus=session name=org.kde.internal.KSettingsWidget_kcm_networkmanagement
+  #aa:dbus own bus=session name=org.kde.systemsettings
 
   @{exec_path} mr,
 
@@ -57,7 +62,6 @@ profile systemsettings @{exec_path} {
 
   /etc/fstab r,
   /etc/machine-id r,
-  /etc/xdg/menus/{,applications-merged/} r,
   /etc/xdg/plasmanotifyrc r,
   /etc/xdg/ui/ui_standards.rc r,
   /var/lib/dbus/machine-id r,
@@ -76,6 +80,7 @@ profile systemsettings @{exec_path} {
   owner @{user_cache_dirs}/ksvg-elements.@{rand6} rwlk -> @{user_cache_dirs}/#@{int},
   owner @{user_cache_dirs}/ksvg-elements.lock rwlk,
   owner @{user_cache_dirs}/plasma_theme_*.kcache rw,
+  owner @{user_cache_dirs}/plasma-svgelements r,
   owner @{user_cache_dirs}/systemsettings/ rw,
   owner @{user_cache_dirs}/systemsettings/** rwlk -> @{user_cache_dirs}/systemsettings/**,
 
@@ -90,8 +95,6 @@ profile systemsettings @{exec_path} {
   owner @{user_config_dirs}/kinfocenterrc* rwlk,
   owner @{user_config_dirs}/libaccounts-glib/ rw,
   owner @{user_config_dirs}/libaccounts-glib/accounts.db{,-shm,-wal,-journal} rwk,
-  owner @{user_config_dirs}/menus/ r,
-  owner @{user_config_dirs}/menus/applications-merged/ r,
   owner @{user_config_dirs}/session/ rw,
   owner @{user_config_dirs}/session/** rwlk,
   owner @{user_config_dirs}/systemsettingsrc.lock rwk,

@@ -71,10 +71,10 @@ build {
       "while [ ! -f /var/lib/cloud/instance/boot-finished ]; do echo 'Waiting for Cloud-Init...'; sleep 20; done",
 
       # Ensure cloud-init is successful
-      # "cloud-init status",
+      "cloud-init status || cloud-init collect-logs --tarfile /root/cloud-init.tar.gz",
 
       # Remove logs and artifacts so cloud-init can re-run
-      # "cloud-init clean",
+      "cloud-init clean || true",
 
       # Install local files and config
       "bash /tmp/init.sh",

@@ -18,33 +18,33 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/bus/net.hadess.SwitcherooControl>
   include <abstractions/bus/net.reactivated.Fprint>
   include <abstractions/bus/org.a11y>
+  include <abstractions/bus/org.bluez>
   include <abstractions/bus/org.freedesktop.background.Monitor>
   include <abstractions/bus/org.freedesktop.FileManager1>
   include <abstractions/bus/org.freedesktop.GeoClue2>
   include <abstractions/bus/org.freedesktop.impl.portal.PermissionStore>
   include <abstractions/bus/org.freedesktop.locale1>
   include <abstractions/bus/org.freedesktop.login1.Session>
-  include <abstractions/bus/org.freedesktop.NetworkManager>
-  include <abstractions/bus/org.freedesktop.Notifications>
   include <abstractions/bus/org.freedesktop.PackageKit>
-  include <abstractions/bus/org.freedesktop.PolicyKit1>
   include <abstractions/bus/org.freedesktop.portal.Desktop>
   include <abstractions/bus/org.freedesktop.RealtimeKit1>
   include <abstractions/bus/org.freedesktop.secrets>
   include <abstractions/bus/org.freedesktop.systemd1>
   include <abstractions/bus/org.freedesktop.UPower>
   include <abstractions/bus/org.gtk.Private.RemoteVolumeMonitor>
+  include <abstractions/camera>
   include <abstractions/dconf-write>
   include <abstractions/fontconfig-cache-write>
   include <abstractions/gnome-strict>
   include <abstractions/graphics>
   include <abstractions/gstreamer>
   include <abstractions/ibus>
+  include <abstractions/media-control>
   include <abstractions/nameservice-strict>
+  include <abstractions/notifications>
   include <abstractions/p11-kit>
   include <abstractions/ssl_certs>
   include <abstractions/thumbnails-cache-read>
-  include <abstractions/video>
 
   capability sys_nice,
   capability sys_ptrace,
@@ -86,7 +86,8 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   #aa:dbus talk bus=system name=org.freedesktop.bolt label=boltd
   #aa:dbus talk bus=system name=org.freedesktop.ColorManager label="@{p_colord}"
   #aa:dbus talk bus=system name=org.freedesktop.login1 label="@{p_systemd_logind}"
-  #aa:dbus talk bus=system name=org.freedesktop.UPower.PowerProfiles label=@{p_power_profiles_daemon}
+  #aa:dbus talk bus=system name=org.freedesktop.NetworkManager label=NetworkManager
+  #aa:dbus talk bus=system name=org.freedesktop.UPower.PowerProfiles label="@{p_power_profiles_daemon}"
   #aa:dbus talk bus=system name=org.gnome.DisplayManager label=gdm
 
   #aa:dbus talk bus=session name=com.rastersoft.ding label=gnome-extension-ding
@@ -186,7 +187,6 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   @{user_share_dirs}/gnome-shell/extensions/*/**       rPUx,
   /usr/share/gnome-shell/extensions/*/**               rPUx,
 
-  /opt/**/share/icons/{,**} r,
   /snap/*/@{uid}/**.@{image_ext} r,
   /usr/share/**.@{image_ext} r,
   /usr/share/**/icons/{,**} r,
@@ -293,7 +293,7 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{run}/user/@{uid}/gnome-shell-disable-extensions rw,
   owner @{run}/user/@{uid}/gnome-shell/{,**} rw,
   owner @{run}/user/@{uid}/gvfsd/socket-@{rand8} rw,
-  owner @{run}/user/@{uid}/snap.snap*/wayland-cursor-shared-* rw,
+  owner @{run}/user/@{uid}/snap.*/wayland-cursor-shared-@{rand6} rw,
   owner @{run}/user/@{uid}/systemd/notify rw,
 
   owner /dev/shm/.org.chromium.Chromium.@{rand6} rw,
@@ -302,6 +302,8 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
         /tmp/.X@{int}-lock rw,
         /tmp/dbus-@{rand8} rw,
   owner @{tmp}/.org.chromium.Chromium.@{rand6} r,
+  owner @{tmp}/.org.chromium.Chromium.@{rand6}/ r,
+  owner @{tmp}/.org.chromium.Chromium.@{rand6}/status_icon_@{int}.png r,
   owner @{tmp}/@{rand6}.shell-extension.zip rw,
   owner @{tmp}/gdkpixbuf-xpm-tmp.@{rand6} rw,
 
@@ -320,7 +322,6 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   @{run}/udev/data/+acpi:* r,             # Exposes ACPI objects (power buttons, batteries, thermal)
   @{run}/udev/data/+pci:* r,              # Identifies all PCI devices (CPU, GPU, Network, Disks, USB, etc.)
   @{run}/udev/data/+sound:card@{int} r,   # for sound card
-  @{run}/udev/data/+usb:* r,              # Identifies all USB devices
   @{run}/udev/data/+i2c:* r,              # For Inter-Integrated Circuit, low-speed peripherals (sensors, EEPROMs, etc.)
   @{run}/udev/data/+hid:* r,              # For Human Interface Device (mice, controllers, drawing tablets, scanners)
   @{run}/udev/data/c10:@{int} r,          # for non-serial mice, misc features
@@ -378,7 +379,6 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{PROC}/@{pid}/task/@{tid}/comm rw,
   owner @{PROC}/@{pid}/task/@{tid}/stat r,
 
-        /dev/media@{int} rw,
         /dev/tty@{int} rw,
   @{att}/dev/dri/card@{int} rw,
   @{att}/dev/input/event@{int} rw,
