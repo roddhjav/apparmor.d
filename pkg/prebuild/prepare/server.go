@@ -14,6 +14,9 @@ import (
 
 var (
 	serverIgnorePatterns = []string{
+		"include <abstractions/app/chromium>",
+		"include <abstractions/app/firefox>",
+		"include <abstractions/app/open>",
 		"include <abstractions/common/desktop>",
 		"include <abstractions/common/electron>",
 		"include <abstractions/common/gnome>",
