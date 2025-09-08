@@ -10,18 +10,22 @@ go run ./cmd/prebuild -h
 ```
 
 ```
-aa-prebuild [-h] [--complain | --enforce] [--full] [--abi 3|4]
+aa-prebuild [-h] [--complain | --enforce] [--full] [--server] [--abi 3|4] [--version V] [--file FILE]
 
     Prebuild apparmor.d profiles for a given distribution and apply
     internal built-in directives.
 
 Options:
-    -h, --help      Show this help message and exit.
-    -c, --complain  Set complain flag on all profiles.
-    -e, --enforce   Set enforce flag on all profiles.
-    -a, --abi ABI   Target apparmor ABI.
-    -f, --full      Set AppArmor for full system policy.
-    -F, --file      Only prebuild a given file.
+    -h, --help        Show this help message and exit.
+    -c, --complain    Set complain flag on all profiles.
+    -e, --enforce     Set enforce flag on all profiles.
+    -a, --abi ABI     Target apparmor ABI.
+    -v, --version V   Target apparmor version.
+    -f, --full        Set AppArmor for full system policy.
+    -s, --server      Set AppArmor for server.
+    -b, --buildir DIR Root build directory.
+    -F, --file        Only prebuild a given file.
+        --debug       Enable debug mode.
 
 Prepare tasks:
     configure - Set distribution specificities
@@ -31,21 +35,27 @@ Prepare tasks:
     overwrite - Overwrite dummy upstream profiles
     synchronise - Initialize a new clean apparmor.d build directory
     ignore - Ignore profiles and files from:
+    server - Configure AppArmor for server
     systemd-default - Configure systemd unit drop in files to a profile for some units
     systemd-early - Configure systemd unit drop in files to ensure some service start after apparmor
+    attach - Configure tunable for re-attached path
 
 Build tasks:
-    abi3 - Convert all profiles from abi 4.0 to abi 3.0
-    attach - Re-attach disconnected path
-    complain - Set complain flag on all profiles
-    enforce - All profiles have been enforced
-    fsp - Prevent unconfined transitions in profile rules
-    hotfix - Temporary fix for #74, #80 & #235
-    userspace - Resolve variable in profile attachments
+    userspace - Fix: resolve variable in profile attachments
+    abi3 - Build: convert all profiles from abi 4.0 to abi 3.0
+    attach - Feat: re-attach disconnected path
+    base-strict - Feat: use 'base-strict' as base abstraction
+    complain - Build: set complain flag on all profiles
+    debug - Build: debug mode enabled
+    enforce - Build: all profiles have been enforced
+    fsp - Feat: prevent unconfined transitions in profile rules
+    hotfix - Fix: temporary solution for #74, #80 & #235
+    stacked-dbus - Fix: resolve peer label variable in dbus rules
 
 Directive:
     #aa:dbus own bus=<bus> name=<name> [interface=AARE] [path=AARE]
     #aa:dbus talk bus=<bus> name=<name> label=<profile> [interface=AARE] [path=AARE]
+    #aa:dbus common bus=<bus> name=<name> label=<profile>
     #aa:exec [P|U|p|u|PU|pu|] profiles...
     #aa:only filters...
     #aa:exclude filters...
@@ -65,6 +75,12 @@ Initialize a new clean `apparmor.d` build directory in `.build/`.
 Ignore profiles and files as defined in the `dist/ignore` directory. See [workflow](workflow.md#ignore-profiles).
 
 *Enabled by default. Can be disabled in `cmd/prebuild/main.go`*
+
+### **`server`**
+
+Configure AppArmor for server. Desktop related groups and profiles that use desktop abstraction are not included. [hotfix](#hotfix) is also disabled, as it is only needed on desktop system. It is mostly intended to be used on server with FSP enabled. E.g: [the play machine](https://github.com/roddhjav/play).
+
+*Enable with the `--server` option in the prebuild command.*
 
 ### **`merge`**
 

@@ -1,6 +1,22 @@
 #cloud-config
 
-packages: *core-packages
+packages: *gnome-packages
+
+runcmd:
+  # Replace SELinux by AppArmor in kernel parameters
+  - sed -i 's/security=selinux selinux=1/apparmor=1 apparmor.debug=1/g' /etc/default/grub
+
+  # Regenerate grub.cfg
+  - grub2-mkconfig -o /boot/grub2/grub.cfg
+
+    # Ensure auditd is enabled
+  - systemctl enable systemd-journald-audit.socket
 
 write_files:
   - *shared-directory  # Setup shared directory
+
+  - path: /etc/sysconfig/displaymanager
+    append: true
+    content: |
+      DISPLAYMANAGER="gdm"
+

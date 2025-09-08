@@ -7,6 +7,8 @@ package cli
 import (
 	"flag"
 	"fmt"
+	"os"
+	"slices"
 	"strings"
 
 	"github.com/roddhjav/apparmor.d/pkg/logging"
@@ -20,7 +22,7 @@ import (
 const (
 	nilABI = 0
 	nilVer = 0.0
-	usage  = `aa-prebuild [-h] [--complain | --enforce] [--full] [--abi 3|4] [--version V] [--file FILE]
+	usage  = `aa-prebuild [-h] [--complain | --enforce] [--full] [--server] [--abi 3|4] [--version V] [--file FILE]
 
     Prebuild apparmor.d profiles for a given distribution and apply
     internal built-in directives.
@@ -32,7 +34,8 @@ Options:
     -a, --abi ABI     Target apparmor ABI.
     -v, --version V   Target apparmor version.
     -f, --full        Set AppArmor for full system policy.
-	-b, --buildir DIR Root build directory.
+    -s, --server      Set AppArmor for server.
+    -b, --buildir DIR Root build directory.
     -F, --file        Only prebuild a given file.
         --debug       Enable debug mode.
 `
@@ -43,6 +46,7 @@ var (
 	complain bool
 	enforce  bool
 	full     bool
+	server   bool
 	debug    bool
 	abi      int
 	version  float64
@@ -55,6 +59,8 @@ func init() {
 	flag.BoolVar(&help, "help", false, "Show this help message and exit.")
 	flag.BoolVar(&full, "f", false, "Set AppArmor for full system policy.")
 	flag.BoolVar(&full, "full", false, "Set AppArmor for full system policy.")
+	flag.BoolVar(&server, "s", false, "Set AppArmor for server.")
+	flag.BoolVar(&server, "server", false, "Set AppArmor for server.")
 	flag.BoolVar(&complain, "c", false, "Set complain flag on all profiles.")
 	flag.BoolVar(&complain, "complain", false, "Set complain flag on all profiles.")
 	flag.BoolVar(&enforce, "e", false, "Set enforce flag on all profiles.")
@@ -81,7 +87,22 @@ func Configure() {
 	flag.Parse()
 	if help {
 		flag.Usage()
-		return
+		os.Exit(0)
+	}
+
+	if server {
+		idx := slices.Index(prepare.Prepares, prepare.Tasks["merge"])
+		if idx == -1 {
+			prepare.Register("server")
+		} else {
+			prepare.Prepares = slices.Insert(prepare.Prepares, idx, prepare.Tasks["server"])
+		}
+
+		// Remove hotfix task as it is not needed on server
+		idx = slices.Index(prepare.Prepares, prepare.Tasks["hotfix"])
+		if idx != -1 {
+			prepare.Prepares = slices.Delete(prepare.Prepares, idx, idx+1)
+		}
 	}
 
 	if full && paths.New("apparmor.d/groups/_full").Exist() {
@@ -118,8 +139,11 @@ func Configure() {
 			builder.Register("stacked-dbus")
 
 		} else {
+			if !prebuild.DownStream {
+				prepare.Register("attach")
+			}
 			builder.Register("attach")
-			prepare.Register("attach")
+
 		}
 
 	default:

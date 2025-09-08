@@ -231,10 +231,80 @@ func TestBuilder_Apply(t *testing.T) {
 			want:    "",
 			wantErr: true,
 		},
+		{
+			name: "stacked-dbus-1",
+			b:    Builders["stacked-dbus"],
+			profile: `
+profile foo {
+  dbus send bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={Hello,AddMatch,RemoveMatch,GetNameOwner,NameHasOwner,StartServiceByName}
+       peer=(name=org.freedesktop.DBus, label="@{p_dbus_session}"),
+
+}`,
+			want: `
+profile foo {
+dbus send bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={Hello,AddMatch,RemoveMatch,GetNameOwner,NameHasOwner,StartServiceByName}
+       peer=(name=org.freedesktop.DBus, label=dbus-session),
+dbus send bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member={Hello,AddMatch,RemoveMatch,GetNameOwner,NameHasOwner,StartServiceByName}
+       peer=(name=org.freedesktop.DBus, label=dbus-session//&unconfined),
+
+}`,
+		},
+		{
+			name: "base-strict-1",
+			b:    Builders["base-strict"],
+			profile: `
+profile foo {
+  include <abstractions/base>
+}`,
+			want: `
+profile foo {
+  include <abstractions/base-strict>
+}`,
+		},
+		{
+			name: "attach-1",
+			b:    Builders["attach"],
+			profile: `
+profile attach-1 flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/base-strict>
+  include <abstractions/consoles>
+}`,
+			want: `
+@{att} = /att/attach-1/
+profile attach-1 flags=(attach_disconnected,attach_disconnected.path=@{att}) {
+  include <abstractions/attached/base>
+  include <abstractions/attached/base>
+  include <abstractions/attached/consoles>
+}`,
+		},
+		{
+			name: "attach-2",
+			b:    Builders["attach"],
+			profile: `
+profile attach-2 flags=(complain) {
+  include <abstractions/base>
+  include <abstractions/base-strict>
+  include <abstractions/consoles>
+}`,
+			want: `
+@{att} = ""
+profile attach-2 flags=(complain) {
+  include <abstractions/base>
+  include <abstractions/base-strict>
+  include <abstractions/consoles>
+}`,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			opt := &Option{File: prebuild.RootApparmord.Join(tt.name)}
+			opt := &Option{File: prebuild.RootApparmord.Join(tt.name), Name: tt.name}
 			got, err := tt.b.Apply(opt, tt.profile)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Builder.Apply() error = %v, wantErr %v", err, tt.wantErr)

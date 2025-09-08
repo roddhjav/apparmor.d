@@ -31,6 +31,9 @@ func init() {
 func (b ReAttach) Apply(opt *Option, profile string) (string, error) {
 	var insert string
 	var origin = "profile " + opt.Name
+	if opt.File.HasSuffix("attached/base") {
+		return profile, nil // Do not re-attach twice
+	}
 
 	if strings.Contains(profile, "attach_disconnected") {
 		insert = "@{att} = /att/" + opt.Name + "/\n"
@@ -43,12 +46,16 @@ func (b ReAttach) Apply(opt *Option, profile string) (string, error) {
 			"include <abstractions/attached/base>",
 		)
 		profile = strings.ReplaceAll(profile,
+			"include <abstractions/base-strict>",
+			"include <abstractions/attached/base>",
+		)
+		profile = strings.ReplaceAll(profile,
 			"include <abstractions/consoles>",
 			"include <abstractions/attached/consoles>",
 		)
 
 	} else {
-		insert = "@{att} = /\n"
+		insert = "@{att} = \"\"\n"
 
 	}
 
