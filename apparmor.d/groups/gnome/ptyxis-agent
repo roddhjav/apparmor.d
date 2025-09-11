@@ -16,9 +16,11 @@ profile ptyxis-agent @{exec_path} {
   include <abstractions/gschemas>
   include <abstractions/nameservice-strict>
 
-  signal send set=hup peer=unconfined,
+  signal send set=hup peer=@{p_systemd},
 
   ptrace read,
+
+  unix type=stream peer=(label=ptyxis),
 
   @{exec_path} mr,
 
@@ -42,7 +44,14 @@ profile ptyxis-agent @{exec_path} {
     unix bind type=stream addr=@@{udbus}/bus/systemd-run/,
 
     @{bin}/systemd-run mr,
+
+    # The shell is not confined on purpose.
     @{bin}/@{shells}   Ux,
+
+    # Some CLI program can be launched directly from Gnome Shell
+    @{bin}/htop                 Px,
+    @{bin}/micro               PUx,
+    @{bin}/nvtop                Px,
 
     owner @{run}/user/@{uid}/systemd/private rw,
 
