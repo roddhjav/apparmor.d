@@ -97,10 +97,11 @@ profile snapd @{exec_path} {
   @{lib_dirs}/snapd/snap-update-ns   rPx,
 
   /usr/share/bash-completion/{,**} r,
-  /usr/share/dbus-1/{system,session}.d/{,snapd*} rw,
+  /usr/share/dbus-1/{system,session}.d/ rw,
+  /usr/share/dbus-1/{system,session}.d/snapd* rw,
   /usr/share/dbus-1/services/*snap* r,
   /usr/share/polkit-1/actions/{,**} r,
-  /usr/share/polkit-1/actions/snap.*.policy r,
+  /usr/share/polkit-1/actions/snap.*.policy* rw,
 
   @{etc_ro}/environment r,
   /etc/apparmor.d/*snapd.snap* r,
@@ -190,6 +191,8 @@ profile snapd @{exec_path} {
 
     network netlink raw,
 
+    ptrace read peer=@{p_systemd},
+
     /etc/systemd/system/{,**/} r,
     /etc/systemd/system/snap* rw,
     /etc/systemd/user/{,**/} rw,
@@ -229,9 +232,12 @@ profile snapd @{exec_path} {
     include <abstractions/base>
 
     @{sbin}/runuser mr,
-    @{bin}/tar ix,
 
-    owner @{HOME}/snap/*/common/.cache/{,**} r,
+    @{sh_path}   ix,
+    @{bin}/gzip  ix,
+    @{bin}/tar   ix,
+
+    owner @{HOME}/snap/*/{,**} r,
 
     include if exists <local/snapd_runuser>
   }
