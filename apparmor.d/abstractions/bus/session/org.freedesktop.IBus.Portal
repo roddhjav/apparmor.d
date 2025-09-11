@@ -1,0 +1,24 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Allow access to the IBus portal
+
+  abi <abi/4.0>,
+
+  dbus send bus=session path=/org/freedesktop/IBus
+       interface=org.freedesktop.IBus.Portal
+       member=CreateInputContext
+       peer=(name=org.freedesktop.portal.IBus),
+
+  dbus send bus=session path=/org/freedesktop/IBus/InputContext_@{int}
+       interface=org.freedesktop.IBus.InputContext
+       peer=(label=ibus-daemon),
+
+  dbus receive bus=session path=/org/freedesktop/IBus/InputContext_@{int}
+       interface=org.freedesktop.IBus.InputContext
+       peer=(label=ibus-daemon),
+
+  include if exists <abstractions/bus/session/org.freedesktop.IBus.Portal.d>
+
+# vim:syntax=apparmor
