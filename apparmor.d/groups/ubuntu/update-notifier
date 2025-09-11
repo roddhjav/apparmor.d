@@ -28,6 +28,11 @@ profile update-notifier @{exec_path} {
   #aa:dbus talk bus=system name=org.debian.apt label=apt
   #aa:dbus talk bus=session name=org.ayatana.NotificationItem interface+=org.kde.StatusNotifierItem label=gnome-shell
 
+  dbus receive bus=system path=/com/ubuntu/UnattendedUpgrade/Pending
+       interface=com.ubuntu.UnattendedUpgrade.Pending
+       member=Finished
+       peer=(name=@{busname}, label=unattended-upgrade),
+
   @{exec_path} mr,
 
   @{sh_path}                                     rix,
@@ -49,6 +54,7 @@ profile update-notifier @{exec_path} {
   @{lib}/update-notifier/package-system-locked   rPx,
   /usr/share/apport/apport-checkreports          rPx,
   /usr/share/apport/apport-gtk                   rPx,
+  @{open_path}                                    Cx -> open,
 
   @{lib}/@{python_name}/dist-packages/{apt,gi}/**/__pycache__/{,**} rw,
 
@@ -93,6 +99,13 @@ profile update-notifier @{exec_path} {
          peer=(name=org.freedesktop.systemd1, label="@{p_systemd}"),
 
     include if exists <local/update-notifier_systemctl>
+  }
+
+  profile open {
+    include <abstractions/base>
+    include <abstractions/app/open>
+
+    include if exists <local/update-notifier_open>
   }
 
   include if exists <local/update-notifier>
