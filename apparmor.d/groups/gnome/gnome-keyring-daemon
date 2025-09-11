@@ -19,12 +19,15 @@ profile gnome-keyring-daemon @{exec_path} flags=(attach_disconnected) {
 
   capability ipc_lock,
 
-  signal (receive) set=(term) peer=gdm,
-  signal (send) set=(term) peer=ssh-agent,
+  signal receive set=(term) peer=gdm,
+  signal send set=(term) peer=ssh-agent,
+
+  unix type=stream peer=(label=snap.*),
 
   #aa:dbus own bus=session name=org.gnome.keyring
   #aa:dbus own bus=session name=org.freedesktop.{S,s}ecret{,s}
-  #aa:dbus own bus=session name=org.freedesktop.impl.portal.Secret
+  #aa:dbus own bus=session name=org.freedesktop.impl.portal.Secret path=/org/freedesktop/portal/desktop
+  #aa:dbus talk bus=session name=org.freedesktop.impl.portal.Request path=/org/freedesktop/portal/desktop/ label=xdg-desktop-portal
 
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable

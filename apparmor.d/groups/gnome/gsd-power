@@ -40,16 +40,22 @@ profile gsd-power @{exec_path} flags=(attach_disconnected) {
   #aa:dbus own bus=session name=org.gnome.SettingsDaemon.Power
 
   #aa:dbus talk bus=session name=org.gnome.Mutter.DisplayConfig label=gnome-shell
+  #aa:dbus talk bus=session name=org.gnome.Shell.Brightness label=gnome-shell
 
   dbus send bus=system path=/org/freedesktop/UPower/KbdBacklight
        interface=org.freedesktop.UPower.KbdBacklight
        member=GetBrightness
-       peer=(name=:*, label="@{p_upowerd}"),
+       peer=(name=@{busname}, label="@{p_upowerd}"),
 
   dbus receive bus=session path=/org/gtk/Settings
        interface=org.freedesktop.DBus.Properties
        member=PropertiesChanged
-       peer=(name=:*, label=gsd-xsettings),
+       peer=(name=@{busname}, label=gsd-xsettings),
+
+  dbus send bus=system path=/org/freedesktop/login1
+       interface=org.freedesktop.login1.Manager
+       member=Suspend
+       peer=(name=@{busname}, label="@{p_systemd_logind}"),
 
   @{exec_path} mr,
 

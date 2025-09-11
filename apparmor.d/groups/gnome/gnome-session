@@ -16,6 +16,14 @@ profile gnome-session @{exec_path} {
   include <abstractions/nameservice-strict>
   include <abstractions/shells>
 
+  signal receive set=term peer=gdm,
+  signal receive set=term peer=gdm-session,
+
+  dbus receive bus=session
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name=@{busname}, label=gnome-shell),
+
   @{exec_path} mrix,
 
   @{shells_path}               rix,
@@ -63,6 +71,8 @@ profile gnome-session @{exec_path} {
   /etc/X11/Xsession.d/*im-config_launch r,
 
   owner @{HOME}/ r,
+
+  owner @{run}/user/@{uid}/gnome-session-leader-fifo rw,
 
   owner @{PROC}/@{pid}/cmdline r,
   owner @{PROC}/@{pid}/fd/ r,

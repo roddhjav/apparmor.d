@@ -24,13 +24,13 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/bus/org.freedesktop.GeoClue2>
   include <abstractions/bus/org.freedesktop.impl.portal.PermissionStore>
   include <abstractions/bus/org.freedesktop.locale1>
-  include <abstractions/bus/org.freedesktop.login1.Session>
   include <abstractions/bus/org.freedesktop.PackageKit>
   include <abstractions/bus/org.freedesktop.portal.Desktop>
   include <abstractions/bus/org.freedesktop.RealtimeKit1>
   include <abstractions/bus/org.freedesktop.secrets>
   include <abstractions/bus/org.freedesktop.systemd1>
   include <abstractions/bus/org.freedesktop.UPower>
+  include <abstractions/bus/org.gnome.keyring.internal.Prompter>
   include <abstractions/bus/org.gtk.Private.RemoteVolumeMonitor>
   include <abstractions/camera>
   include <abstractions/dconf-write>
@@ -72,6 +72,7 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   #aa:dbus own bus=session name=org.gnome.Shell
 
   #aa:dbus own bus=session name=com.canonical.{U,u}nity
+  #aa:dbus own bus=session name=com.canonical.dbusmenu path=/{,com/canonical/dbusmenu}
   #aa:dbus own bus=session name=com.rastersoft.dingextension
   #aa:dbus own bus=session name=org.ayatana.NotificationItem
   #aa:dbus own bus=session name=org.freedesktop.a11y.Manager
@@ -79,6 +80,7 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   #aa:dbus own bus=session name=org.gtk.MountOperationHandler
   #aa:dbus own bus=session name=org.gtk.Notifications
   #aa:dbus own bus=session name=org.kde.StatusNotifierWatcher path=/StatusNotifierWatcher
+  #aa:dbus own bus=session name=com.canonical.Shell.PermissionPrompting
 
   # Talk with gnome-shell
 
@@ -87,32 +89,19 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   #aa:dbus talk bus=system name=org.freedesktop.ColorManager label="@{p_colord}"
   #aa:dbus talk bus=system name=org.freedesktop.login1 label="@{p_systemd_logind}"
   #aa:dbus talk bus=system name=org.freedesktop.NetworkManager label=NetworkManager
+  #aa:dbus talk bus=system name=org.freedesktop.PolicyKit1 label="@{p_polkitd}"
   #aa:dbus talk bus=system name=org.freedesktop.UPower.PowerProfiles label="@{p_power_profiles_daemon}"
   #aa:dbus talk bus=system name=org.gnome.DisplayManager label=gdm
 
   #aa:dbus talk bus=session name=com.rastersoft.ding label=gnome-extension-ding
+  #aa:dbus talk bus=session name=org.freedesktop.Notifications label=gjs
   #aa:dbus talk bus=session name=org.gnome.* label=gnome-*
-  #aa:dbus talk bus=session name=org.gnome.*.SearchProvider interface+=org.gnome.Shell.SearchProvider2 label="*"
+  #aa:dbus talk bus=session name=org.gnome.*.SearchProvider interface+=org.gnome.Shell.SearchProvider2 label=*
   #aa:dbus talk bus=session name=org.gnome.Nautilus label=nautilus
   #aa:dbus talk bus=session name=org.gnome.ScreenSaver label=gjs-console
   #aa:dbus talk bus=session name=org.gnome.SettingsDaemon.* label=gsd-*
   #aa:dbus talk bus=session name=org.gtk.vfs label="gvfsd{,-*}"
 
-  # System bus
-
-  dbus send bus=system path=/org/freedesktop/PolicyKit1/Authority
-       interface=org.freedesktop.PolicyKit1.Authority
-       member=RegisterAuthenticationAgent
-       peer=(name=:*, label="@{p_polkitd}"),
-  dbus receive bus=system path=/org/freedesktop/PolicyKit1/AuthenticationAgent
-       interface=org.freedesktop.PolicyKit1.AuthenticationAgent
-       member=BeginAuthentication
-       peer=(name=:*, label="@{p_polkitd}"),
-
-  dbus send bus=system path=/org/freedesktop/NetworkManager/AgentManager
-       interface=org.freedesktop.NetworkManager.AgentManager
-       member={RegisterWithCapabilities,Unregister}
-       peer=(name=:*, label=NetworkManager),
 
   # Session bus
 
@@ -156,7 +145,7 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   dbus send bus=session
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
-       peer=(name=:*),
+       peer=(name=@{busname}),
   dbus send bus=session
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
@@ -181,8 +170,9 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
   @{sh_path}                                              rCx -> shell,
   @{bin}/pkexec                                           rCx -> pkexec,
-  @{lib}/gio-launch-desktop                               rCx -> open,
   @{lib}/@{multiarch}/glib-@{version}/gio-launch-desktop  rCx -> open,
+  @{lib}/gio-launch-desktop                               rCx -> open,
+  @{python_path}                                          rCx -> python,
 
   @{user_share_dirs}/gnome-shell/extensions/*/**       rPUx,
   /usr/share/gnome-shell/extensions/*/**               rPUx,
@@ -278,15 +268,16 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{user_share_dirs}/icc/edid-@{hex32}.icc rw,
   owner @{user_share_dirs}/icons/**/org.gnome.Shell.*.svg{,.@{rand6}} w,
 
-  owner @{user_share_dirs}/applications/org.gnome.Shell.*.desktop{,.@{rand6}} rw,
   owner @{user_cache_dirs}/evolution/addressbook/*/PHOTO-* r,
   owner @{user_cache_dirs}/gnome-boxes/*.png r,
   owner @{user_cache_dirs}/gnome-photos/{,**} r,
   owner @{user_cache_dirs}/gnome-screenshot/{,**} rw,
   owner @{user_cache_dirs}/gnome-software/icons/{,**} r,
+  owner @{user_cache_dirs}/gsconnect/@{hex32} r,
   owner @{user_cache_dirs}/libgweather/{,**} rw,
   owner @{user_cache_dirs}/media-art/{,**} r,
   owner @{user_cache_dirs}/vlc/**/*.jpg r,
+  owner @{user_share_dirs}/applications/org.gnome.Shell.*.desktop{,.@{rand6}} rw,
 
         @{run}/gdm{3,}/dbus/dbus-@{rand8} rw,
   owner @{run}/user/@{uid}/app/*/*.@{rand6} r,
@@ -337,7 +328,9 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   @{sys}/class/net/ r,
   @{sys}/class/power_supply/ r,
   @{sys}/devices/@{pci}/boot_vga r,
+  @{sys}/devices/@{pci}/gpu_busy_percent r,
   @{sys}/devices/@{pci}/input@{int}/{properties,name} r,
+  @{sys}/devices/@{pci}/mem_info_vram_* r,
   @{sys}/devices/@{pci}/net/*/statistics/collisions r,
   @{sys}/devices/@{pci}/net/*/statistics/rx_{bytes,errors,packets} r,
   @{sys}/devices/@{pci}/net/*/statistics/tx_{bytes,errors,packets} r,
@@ -351,6 +344,8 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   @{sys}/devices/**/power_supply/{,**} r,
   @{sys}/devices/platform/**/input@{int}/{properties,name} r,
   @{sys}/devices/virtual/dmi/id/bios_vendor r,
+  @{sys}/devices/virtual/dmi/id/product_name r,
+  @{sys}/devices/virtual/dmi/id/sys_vendor r,
   @{sys}/devices/virtual/net/*/statistics/collisions r,
   @{sys}/devices/virtual/net/*/statistics/rx_{bytes,errors,packets} r,
   @{sys}/devices/virtual/net/*/statistics/tx_{bytes,errors,packets} r,
@@ -429,6 +424,15 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
     @{bin}/batteryhealthchargingctl{,-@{user}} rPx,
 
     include if exists <local/gnome-shell_pkexec>
+  }
+
+  profile python {
+    include <abstractions/base>
+    include <abstractions/python>
+
+    # /usr/share/gnome-shell/extensions/{,**}
+
+    include if exists <local/gnome-shell_python>
   }
 
   profile open flags=(attach_disconnected,mediate_deleted,complain) {
