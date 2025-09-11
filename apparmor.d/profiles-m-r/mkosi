@@ -1,0 +1,25 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# This profile is large on purpose:
+# - It is required to have a profile for mkosi to allow userns.
+# - Mkosi uses a lot of different binaries and scripts inside sandbox.
+# - Using the unconfined flag would Pix everything, we do not want that as the
+#   transitioned profile would have to account for mkosi paths too.
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/mkosi @{user_share_dirs}/pipx/venvs/*/bin/mkosi
+profile mkosi @{exec_path} flags=(attach_disconnected,mediate_deleted) {
+  include <abstractions/base>
+
+  all,
+  userns,
+
+  include if exists <local/mkosi>
+}
+
+# vim:syntax=apparmor
