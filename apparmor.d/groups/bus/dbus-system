@@ -36,8 +36,8 @@ profile dbus-system flags=(attach_disconnected) {
   #aa:dbus own bus=system name=org.freedesktop.DBus path=/{,org/freedesktop/DBus}
   dbus receive bus=system path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus
-       member=Hello
-       peer=(name=@{busname}),
+       member={GetConnectionUnixProcessID,GetConnectionUnixUser,GetConnectionCredentials}
+       peer=(name="{@{busname},org.freedesktop.DBus}"),
 
   dbus receive bus=system path=/org/freedesktop/systemd1
        interface=org.freedesktop.systemd1.Activator
@@ -82,6 +82,7 @@ profile dbus-system flags=(attach_disconnected) {
         @{PROC}/@{pid}/environ r,
         @{PROC}/@{pid}/mounts r,
         @{PROC}/@{pid}/oom_score_adj r,
+        @{PROC}/@{pid}/status r,
         @{PROC}/cmdline r,
         @{PROC}/sys/kernel/osrelease r,
   owner @{PROC}/@{pid}/fd/ r,
@@ -91,6 +92,7 @@ profile dbus-system flags=(attach_disconnected) {
 
   @{att}/dev/dri/card@{int} rw,
   @{att}/dev/input/event@{int} rw,
+  @{att}/dev/pts/ptmx rw,
 
   include if exists <local/dbus-system>
 }
