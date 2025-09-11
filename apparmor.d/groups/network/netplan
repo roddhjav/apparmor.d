@@ -9,8 +9,11 @@ include <tunables/global>
 @{exec_path} = /usr/share/netplan/netplan.script
 profile netplan @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/bus-system>
   include <abstractions/nameservice-strict>
   include <abstractions/python>
+
+  #aa;dbus owb bus=system name=io.netplan.Netplan
 
   @{exec_path} mr,
 
@@ -19,6 +22,8 @@ profile netplan @{exec_path} flags=(attach_disconnected) {
   @{bin}/systemctl         rCx -> systemctl,
 
   /usr/share/netplan/{,**} r,
+
+  /etc/netplan/{,*} r,
 
   @{run}/netplan/ r,
 
@@ -41,6 +46,10 @@ profile netplan @{exec_path} flags=(attach_disconnected) {
     include <abstractions/app/systemctl>
 
     capability net_admin,
+
+    ptrace read peer=@{p_systemd},
+
+    @{run}/udev/control rw,
 
     include if exists <local/netplan_systemctl>
   }

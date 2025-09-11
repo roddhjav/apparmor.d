@@ -48,6 +48,23 @@ profile NetworkManager @{exec_path} flags=(attach_disconnected) {
   #aa:dbus talk bus=system name=org.freedesktop.nm_dispatcher label=nm-dispatcher
   #aa:dbus talk bus=system name=org.freedesktop.resolve1 label="@{p_systemd_resolved}"
 
+
+  dbus receive bus=system path=/org/freedesktop
+       interface=org.freedesktop.DBus.ObjectManager
+       member=GetManagedObjects
+       peer=(name=@{busname}),
+
+  dbus receive bus=system path=/org/freedesktop
+       interface=org.freedesktop.DBus.ObjectManager
+       member=GetManagedObjects
+       peer=(name=@{busname}, label=gnome-control-center),
+
+
+  dbus receive bus=system path=/org/freedesktop
+       interface=org.freedesktop.DBus.ObjectManager
+       member=GetManagedObjects
+       peer=(name=@{busname}, label=nm-online),
+
   dbus send bus=system path=/org/freedesktop/nm_dispatcher
        interface=org.freedesktop.nm_dispatcher
        member=Action2
@@ -62,6 +79,11 @@ profile NetworkManager @{exec_path} flags=(attach_disconnected) {
        interface=org.freedesktop.DBus.ObjectManager
        member={InterfacesAdded,InterfacesRemoved}
        peer=(name=org.freedesktop.DBus),
+
+  dbus receive bus=system path=/
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name=@{busname}, label=cockpit-bridge),
 
   @{exec_path} mr,
 
@@ -84,8 +106,13 @@ profile NetworkManager @{exec_path} flags=(attach_disconnected) {
   @{lib}/{,NetworkManager/}nm-openvpn-service-openvpn-helper rPx,
   /usr/share/netplan/netplan.script                          rPx,
 
+  @{lib}/netplan/@{int2}-network-manager-all.yaml w,
+
   /usr/share/gvfs/remote-volume-monitors/{,*.monitor} r,
   /usr/share/iproute2/{,**} r,
+
+  /etc/netplan/ r,
+  /etc/netplan/90-NM-@{uuid}.yaml r,
 
   @{att}/ r,
 
@@ -110,7 +137,9 @@ profile NetworkManager @{exec_path} flags=(attach_disconnected) {
   @{sys}/class/rfkill/ r,
 
   @{att}/@{run}/systemd/inhibit/@{int}.ref rw,
+  @{run}/systemd/resolve/io.systemd.Resolve rw,
 
+  @{run}/netplan/ r,
   @{run}/network/ifstate r,
   @{run}/NetworkManager/{,**} rw,
   @{run}/nm-*.pid rw,
@@ -135,6 +164,7 @@ profile NetworkManager @{exec_path} flags=(attach_disconnected) {
   owner @{PROC}/@{pid}/cmdline r,
   owner @{PROC}/@{pid}/fd/ r,
 
+  /dev/net/tun rw,
   /dev/rfkill rw,
 
   profile systemctl {
