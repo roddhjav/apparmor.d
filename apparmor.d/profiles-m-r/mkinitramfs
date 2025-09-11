@@ -33,6 +33,7 @@ profile mkinitramfs @{exec_path} {
   @{bin}/cpio       rix,
   @{bin}/dirname    rix,
   @{bin}/env        rix,
+  @{bin}/find       rix,
   @{bin}/getopt     rix,
   @{bin}/gzip       rix,
   @{bin}/id         rix,
@@ -56,10 +57,9 @@ profile mkinitramfs @{exec_path} {
   @{bin}/xargs      rix,
   @{bin}/xz         rix,
   @{bin}/zstd       rix,
-  @{sbin}/blkid     rPx,
   @{lib}/dracut/dracut-install rix,
+  @{sbin}/blkid     rPx,
 
-  @{bin}/find                 rCx -> find,
   @{bin}/kmod                 rCx -> kmod,
   @{sbin}/ldconfig            rCx -> ldconfig,
   @{bin}/ldd                  rCx -> ldd,
@@ -113,11 +113,16 @@ profile mkinitramfs @{exec_path} {
 
   @{sys}/bus/ r,
   @{sys}/bus/*/drivers/ r,
-  @{sys}/devices/platform/ r,
-  @{sys}/devices/platform/**/ r,
-  @{sys}/devices/platform/**/modalias r,
+  @{sys}/devices/ r,
+  @{sys}/devices/**/ r,
+  @{sys}/devices/**/modalias r,
+  @{sys}/devices/**/uevent r,
   @{sys}/module/compression r,
   @{sys}/module/firmware_class/parameters/path r,
+  @{sys}/class/ r,
+  @{sys}/class/*/ r,
+
+  @{sys}/bus/platform/drivers/simple-framebuffer/ r,
 
         @{PROC}/@{pid}/mounts r,
         @{PROC}/cmdline r,
@@ -129,16 +134,13 @@ profile mkinitramfs @{exec_path} {
     include <abstractions/consoles>
     include <abstractions/nameservice-strict>
 
-    @{bin}/ldd mr,
-    @{lib}/@{multiarch}/ld-linux-*so* mr,
-    @{lib}/ld-linux.so* mr,
-
-    @{sh_path}        rix,
-    @{bin}/kmod mr,
-    @{lib}/initramfs-tools/bin/* mr,
-
+    @{sh_path}                    rix,
     @{lib}/@{multiarch}/ld-*.so*  rix,
     @{lib}/ld-*.so{,.2}           rix,
+
+    @{bin}/* mr,
+    @{sbin}/* mr,
+    @{lib}/** mr,
 
     include if exists <local/mkinitramfs_ldd>
   }
@@ -158,26 +160,6 @@ profile mkinitramfs @{exec_path} {
     owner /tmp/tmp.@{rand10}/mkinitramfs_@{rand6}/** rwl -> /tmp/tmp.@{rand10}/mkinitramfs_@{rand6}/**,
 
     include if exists <local/mkinitramfs_ldconfig>
-  }
-
-  profile find {
-    include <abstractions/base>
-    include <abstractions/consoles>
-
-    @{bin}/find mr,
-
-    # pwd dir
-    / r,
-    /etc/ r,
-    /root/ r,
-
-    /usr/share/initramfs-tools/scripts/{,**/} r,
-    /etc/initramfs-tools/scripts/{,**/} r,
-
-    owner /tmp/tmp.@{rand10}/mkinitramfs_@{rand6}/{,**/} r,
-    owner /var/tmp/mkinitramfs_@{rand6}/{,**/} r,
-
-    include if exists <local/mkinitramfs_find>
   }
 
   profile kmod {
