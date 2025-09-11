@@ -16,6 +16,7 @@ profile xdg-desktop-portal-gnome @{exec_path} flags=(attach_disconnected) {
   include <abstractions/bus/org.freedesktop.Accounts>
   include <abstractions/bus/org.freedesktop.portal.Desktop>
   include <abstractions/bus/org.gnome.Shell.Introspect>
+  include <abstractions/bus/org.gtk.vfs.Daemon>
   include <abstractions/bus/org.gtk.vfs.MountTracker>
   include <abstractions/consoles>
   include <abstractions/dconf-write>
@@ -24,6 +25,7 @@ profile xdg-desktop-portal-gnome @{exec_path} flags=(attach_disconnected) {
   include <abstractions/gnome-strict>
   include <abstractions/graphics>
   include <abstractions/nameservice-strict>
+  include <abstractions/notifications>
   include <abstractions/user-download-strict>
 
   network unix stream,
@@ -36,16 +38,12 @@ profile xdg-desktop-portal-gnome @{exec_path} flags=(attach_disconnected) {
   #aa:dbus talk bus=session name=org.gnome.Mutter label=gnome-shell
   #aa:dbus talk bus=session name=org.gnome.Settings.GlobalShortcutsProvider label=gnome-control-center-global-shortcuts-provider
   #aa:dbus talk bus=session name=org.gnome.Shell.Screenshot label=gnome-shell
+  #aa:dbus talk bus=session name=org.gtk.Private.RemoteVolumeMonitor label="gvfs-*-volume-monitor"
 
   dbus send bus=session path=/org/freedesktop/portal/desktop
        interface=org.freedesktop.impl.portal.Background
        member=RunningApplicationsChanged
        peer=(name=org.freedesktop.DBus, label=xdg-desktop-portal),
-
-  dbus send bus=session path=/org/gtk/Notifications
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=:*, label=gnome-shell),
 
   dbus send bus=session path=/org/gnome/Shell
        interface=org.freedesktop.DBus.Properties
@@ -84,6 +82,8 @@ profile xdg-desktop-portal-gnome @{exec_path} flags=(attach_disconnected) {
   owner @{tmp}/gtkprint_ppd_@{rand6} rw,
   owner @{tmp}/gtkprint@{rand6} r,
   owner @{tmp}/xdg-desktop-portal-gnome@{rand6} rw,
+
+  owner @{run}/user/@{uid}/gvfsd/socket-@{rand8} rw,
 
   @{run}/mount/utab r,
 
