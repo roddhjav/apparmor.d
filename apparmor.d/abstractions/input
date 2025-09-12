@@ -1,0 +1,26 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Canonical Ltd
+# Copyright (C) 2022-2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Allow reading and writing to raw input devices
+
+  abi <abi/4.0>,
+
+  # network netlink raw,
+
+  # Allow reading for supported event reports for all input devices. See
+  # https://www.kernel.org/doc/Documentation/input/event-codes.txt
+  @{sys}/devices/**/input@{int}/capabilities/* r,
+
+  @{run}/udev/data/+input:input@{int} r,  # for mouse, keyboard, touchpad
+  @{run}/udev/data/c13:@{int}  r,         # for /dev/input/*
+
+  /dev/input/ r,
+  /dev/input/event@{int} rw,
+  /dev/input/mice rw,
+  /dev/input/mouse@{int} rw,
+
+  include if exists <abstractions/input.d>
+
+# vim:syntax=apparmor
