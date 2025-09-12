@@ -17,9 +17,14 @@
 
   userns,
 
+  # Required for dropping into PID namespace. Keep in mind that until the
+  # process drops this capability it can escape confinement, but once it
+  # drops CAP_SYS_ADMIN we are ok.
+  capability sys_admin,
+
+  # All of these are for sanely dropping from root and chrooting
   capability setgid, # If kernel.unprivileged_userns_clone = 1
   capability setuid, # If kernel.unprivileged_userns_clone = 1
-  capability sys_admin,
   capability sys_chroot,
   capability sys_ptrace,
 
@@ -33,20 +38,22 @@
 
   owner @{tmp}/.@{domain}.@{rand6} rw,
   owner @{tmp}/.@{domain}.@{rand6}/ rw,
-  owner @{tmp}/.@{domain}.@{rand6}/SingletonCookie w,
-  owner @{tmp}/.@{domain}.@{rand6}/SingletonSocket w,
+  owner @{tmp}/.@{domain}.@{rand6}/SingletonCookie rw,
+  owner @{tmp}/.@{domain}.@{rand6}/SingletonSocket rw,
   owner @{tmp}/scoped_dir@{rand6}/ rw,
-  owner @{tmp}/scoped_dir@{rand6}/SingletonCookie w,
-  owner @{tmp}/scoped_dir@{rand6}/SingletonSocket w,
-  owner @{tmp}/scoped_dir@{rand6}/SS w,
+  owner @{tmp}/scoped_dir@{rand6}/SingletonCookie rw,
+  owner @{tmp}/scoped_dir@{rand6}/SingletonSocket rw,
+  owner @{tmp}/scoped_dir@{rand6}/SS rw,
 
         /dev/shm/ r,
   owner /dev/shm/.@{domain}.@{rand6} rw,
 
   @{sys}/devices/system/cpu/kernel_max r,
+  @{sys}/devices/virtual/tty/tty@{int}/active r,
+
+  # Allow getting the manufacturer and model of the computer where chromium is currently running.
   @{sys}/devices/virtual/dmi/id/product_name r,
   @{sys}/devices/virtual/dmi/id/sys_vendor r,
-  @{sys}/devices/virtual/tty/tty@{int}/active r,
 
   # If kernel.unprivileged_userns_clone = 1
   owner @{PROC}/@{pid}/setgroups w,
