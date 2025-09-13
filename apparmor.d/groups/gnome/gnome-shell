@@ -28,7 +28,6 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/bus/org.freedesktop.portal.Desktop>
   include <abstractions/bus/org.freedesktop.RealtimeKit1>
   include <abstractions/bus/org.freedesktop.systemd1>
-  include <abstractions/bus/org.freedesktop.UPower>
   include <abstractions/bus/org.gnome.keyring.internal.Prompter>
   include <abstractions/bus/org.gtk.Private.RemoteVolumeMonitor>
   include <abstractions/camera>
@@ -45,6 +44,7 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/secrets-service>
   include <abstractions/ssl_certs>
   include <abstractions/thumbnails-cache-read>
+  include <abstractions/upower-observe>
 
   capability sys_nice,
   capability sys_ptrace,
@@ -73,16 +73,24 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
   #aa:dbus own bus=session name=com.canonical.{U,u}nity
   #aa:dbus own bus=session name=com.canonical.dbusmenu path=/{,com/canonical/dbusmenu}
+  #aa:dbus own bus=session name=com.canonical.Shell.PermissionPrompting
   #aa:dbus own bus=session name=com.rastersoft.dingextension
   #aa:dbus own bus=session name=org.ayatana.NotificationItem
   #aa:dbus own bus=session name=org.freedesktop.a11y.Manager
+  #aa:dbus own bus=session name=org.gnome.Shell
   #aa:dbus own bus=session name=org.gtk.Actions path=/**
   #aa:dbus own bus=session name=org.gtk.MountOperationHandler
   #aa:dbus own bus=session name=org.gtk.Notifications
+  #aa:dbus own bus=session name=org.kde.StatusNotifierItem path=/
   #aa:dbus own bus=session name=org.kde.StatusNotifierWatcher path=/StatusNotifierWatcher
-  #aa:dbus own bus=session name=com.canonical.Shell.PermissionPrompting
+
 
   # Talk with gnome-shell
+
+  # The strategy with dbus rules in this profile is first to declare all communications
+  # needed on buses and to limit them only to their profiles in apparmor.d. As such,
+  # only dbus directive is used for this. Later, some communications could be
+  # restricted.
 
   #aa:dbus talk bus=system name=org.freedesktop.Accounts label="@{p_accounts_daemon}"
   #aa:dbus talk bus=system name=org.freedesktop.bolt label=boltd
@@ -95,13 +103,13 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
   #aa:dbus talk bus=session name=com.rastersoft.ding label=gnome-extension-ding
   #aa:dbus talk bus=session name=org.freedesktop.Notifications label=gjs
+  #aa:dbus talk bus=session name=org.freedesktop.ScreenSaver label=gsd-screensaver-proxy
   #aa:dbus talk bus=session name=org.gnome.* label=gnome-*
   #aa:dbus talk bus=session name=org.gnome.*.SearchProvider interface+=org.gnome.Shell.SearchProvider2 label=*
   #aa:dbus talk bus=session name=org.gnome.Nautilus label=nautilus
   #aa:dbus talk bus=session name=org.gnome.ScreenSaver label=gjs-console
   #aa:dbus talk bus=session name=org.gnome.SettingsDaemon.* label=gsd-*
   #aa:dbus talk bus=session name=org.gtk.vfs label="gvfsd{,-*}"
-
 
   # Session bus
 
