@@ -10,6 +10,10 @@ include <tunables/global>
 @{exec_path} = @{lib}/{,gvfs/}gvfsd-ftp
 profile gvfsd-ftp @{exec_path} {
   include <abstractions/base>
+  include <abstractions/bus-session>
+  include <abstractions/bus/session/org.gtk.vfs.Daemon>
+  include <abstractions/bus/session/org.gtk.vfs.Mountable>
+  include <abstractions/bus/session/org.gtk.vfs.Spawner>
   include <abstractions/dconf-write>
   include <abstractions/freedesktop.org>
   include <abstractions/nameservice-strict>
@@ -19,6 +23,13 @@ profile gvfsd-ftp @{exec_path} {
   network inet stream,
   network inet6 stream,
   network netlink raw,
+
+  #aa:dbus talk bus=session name=org.gtk.vfs.MountTracker path=/org/gtk/vfs/mounttracker label=gvfsd
+
+  dbus receive bus=session
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name=@{busname}, label=gnome-shell),
 
   @{exec_path} mr,
 

@@ -11,32 +11,16 @@ profile gvfsd-wsdd @{exec_path} {
   include <abstractions/base>
   include <abstractions/bus-session>
   include <abstractions/bus-system>
-  include <abstractions/bus/org.freedesktop.NetworkManager>
-  include <abstractions/bus/org.gtk.vfs.MountTracker>
+  include <abstractions/bus/session/org.gtk.vfs.Daemon>
+  include <abstractions/bus/session/org.gtk.vfs.Mountable>
+  include <abstractions/bus/session/org.gtk.vfs.Spawner>
   include <abstractions/nameservice-strict>
 
   network inet dgram, # ip=127.0.0.1 peer=(ip=127.0.0.*, port=53),
   network netlink raw,
 
   #aa:dbus own bus=session name=org.gtk.vfs.mountpoint_wsdd
-
-  dbus receive bus=session path=/org/gtk/vfs/mountable
-       interface=org.gtk.vfs.Mountable
-       member=Mount
-       peer=(name="@{busname}", label=gvfsd),
-  dbus send bus=session path=/org/gtk/gvfs/exec_spaw/@{int}
-       interface=org.gtk.vfs.Spawner
-       member=Spawned
-       peer=(name="@{busname}", label=gvfsd),
-  dbus send bus=session path=/org/gtk/vfs/mounttracker
-       interface=org.gtk.vfs.MountTracker
-       member=RegisterMount
-       peer=(name="@{busname}", label=gvfsd),
-
-  dbus receive bus=session path=/org/gtk/vfs/Daemon
-       interface=org.gtk.vfs.Daemon
-       member=GetConnection
-       peer=(name=@{busname}, label=gvfsd-network),
+  #aa:dbus talk bus=session name=org.gtk.vfs.MountTracker path=/org/gtk/vfs/mounttracker label=gvfsd
 
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable
