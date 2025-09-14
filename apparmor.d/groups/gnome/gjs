@@ -1,0 +1,133 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021-2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# GNOME JavaScript interpreter. It is used to run some gnome internal app
+# as well as third party extensions.
+#
+# Therefore, by default, some extension are confined under this profile. To fix
+# this, the various programs using gjs must never run gjs as module, they need
+# to run it as executable with a specific script.
+#
+# This currently concerns:
+# - gnome-extension-ding (used to not be started as a module)
+# - org.gnome.ScreenSaver (simple dbus service)
+# - org.gnome.Shell.Extensions (full UI app, requires gnome-strict, graphics, ...)
+# - org.gnome.Shell.Notifications (simple dbus service)
+# - org.gnome.Shell.Screencast (simple dbus service)
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/gjs-console
+profile gjs @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/bus-session>
+  include <abstractions/bus/org.gnome.Shell.Introspect>
+  include <abstractions/consoles>
+  include <abstractions/dconf-write>
+  include <abstractions/fontconfig-cache-read>
+
+  # Only needed by org.gnome.Shell.Extensions
+  include <abstractions/gnome-strict>
+  include <abstractions/nameservice-strict>
+
+  # Only needed by gnome-extension-ding
+  include <abstractions/bus-system>
+  include <abstractions/bus/net.hadess.SwitcherooControl>
+  include <abstractions/bus/org.freedesktop.FileManager1>
+  include <abstractions/bus/session/org.gnome.ArchiveManager1>
+  include <abstractions/bus/session/org.gnome.Nautilus.FileOperations2>
+  include <abstractions/bus/session/org.gtk.Private.RemoteVolumeMonitor>
+  include <abstractions/bus/session/org.gtk.vfs.Daemon>
+  include <abstractions/bus/session/org.gtk.vfs.Metadata>
+
+  unix type=stream peer=(label=gnome-shell),
+
+  signal receive set=(term hup) peer=gdm,
+
+  #aa:dbus own bus=session name=com.rastersoft.ding interface+=org.gtk.Actions
+  #aa:dbus talk bus=session name=com.rastersoft.dingextension label=gnome-shell interface+=org.gtk.Actions
+  dbus send bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name=org.freedesktop.DBus, label="@{p_dbus_session}"),
+  dbus send bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus*
+       peer=(name=org.freedesktop.DBus, label="@{p_dbus_session}"),
+  dbus send bus=system path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus*
+       peer=(name=org.freedesktop.DBus, label="@{p_dbus_system}"),
+
+  #aa:dbus own bus=session name=org.gnome.Shell.Screencast
+  #aa:dbus talk bus=session name=org.gnome.Mutter.ScreenCast label=gnome-shell
+
+  #aa:dbus own bus=session name=org.freedesktop.Notifications
+  #aa:dbus own bus=session name=org.gnome.ScreenSaver
+  #aa:dbus own bus=session name=org.gnome.Shell.Extensions
+  #aa:dbus own bus=session name=org.gnome.Shell.Notifications
+
+  @{exec_path} mrix,
+
+  # gnome-extension-ding
+  @{sh_path}                   rix,
+  @{bin}/env                   rix,
+  @{bin}/gnome-control-center  rPx,
+  @{bin}/nautilus              rPx,
+
+  @{lib}/@{multiarch}/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner  rCx -> gstreamer,
+  @{lib}/@{multiarch}/gstreamer-1.0/gst-plugin-scanner               rCx -> gstreamer,
+  @{lib}/gstreamer-1.0/gst-plugin-scanner                            rCx -> gstreamer,
+
+  /usr/share/gnome-shell/extensions/gsconnect@andyholmes.github.io/{service/daemon.js,gsconnect-preferences} rPx,
+  @{user_share_dirs}/gnome-shell/extensions/gsconnect@andyholmes.github.io/{service/daemon.js,gsconnect-preferences} rPx,
+
+  /usr/share/dconf/profile/gdm r,
+  /usr/share/gdm/greeter-dconf-defaults r,
+  /usr/share/gnome-shell/{,**} r,
+  /usr/share/xkeyboard-config-2/{,**} r,
+  /usr/share/thumbnailers/{,**} r,
+
+  owner @{gdm_cache_dirs}/gstreamer-1.0/registry.@{arch}.bin r,
+  owner @{gdm_config_dirs}/dconf/user r,
+  owner @{GDM_HOME}/greeter-dconf-defaults r,
+
+  owner @{user_cache_dirs}/gstreamer-1.0/ rw,
+  owner @{user_cache_dirs}/gstreamer-1.0/registry.*.bin{,.tmp@{rand6}} rw,
+
+  owner @{user_share_dirs}/gnome-shell/extensions/{,**} r,
+  owner @{user_share_dirs}/nautilus/scripts/ r,
+
+  owner @{user_desktop_dirs}/ r,
+  owner @{user_templates_dirs}/ r,
+
+  owner @{PROC}/@{pid}/mounts r,
+  owner @{PROC}/@{pid}/stat r,
+  owner @{PROC}/@{pid}/task/@{tid}/stat r,
+
+  /dev/ r,
+  /dev/dri/ r,
+
+  deny @{user_share_dirs}/gvfs-metadata/* r,
+
+  profile gstreamer {
+    include <abstractions/base>
+    include <abstractions/graphics>
+    include <abstractions/gstreamer>
+    include <abstractions/wayland-strict>
+    include <abstractions/X-strict>
+
+    network (bind create getattr setopt getopt) netlink raw,
+
+    @{lib}/@{multiarch}/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner mr,
+    @{lib}/@{multiarch}/gstreamer-1.0/gst-plugin-scanner mr,
+    @{lib}/gstreamer-1.0/gst-plugin-scanner mr,
+
+    include if exists <local/gjs_gstreamer>
+  }
+
+  include if exists <local/gjs>
+}
+
+# vim:syntax=apparmor
