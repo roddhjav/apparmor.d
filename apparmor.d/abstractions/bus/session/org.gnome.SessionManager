@@ -1,48 +1,46 @@
 # apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
-
-# FIXME: Too large, restrict it.
 
   abi <abi/4.0>,
 
-  #aa:dbus common bus=session name=org.gnome.SessionManager label=gnome-session-binary
+  #aa:dbus common bus=session name=org.gnome.SessionManager label="{gnome-session-binary,gnome-session-service}"
 
   dbus send bus=session path=/org/gnome/SessionManager
        interface=org.gnome.SessionManager
        member={RegisterClient,IsSessionRunning}
-       peer=(name="@{busname}", label=gnome-session-binary),
+       peer=(name="@{busname}", label="{gnome-session-binary,gnome-session-service}"),
 
   dbus send bus=session path=/org/gnome/SessionManager
        interface=org.gnome.SessionManager
        member={Inhibit,Uninhibit}
-       peer=(name="@{busname}", label=gnome-session-binary),
+       peer=(name="@{busname}", label="{gnome-session-binary,gnome-session-service}"),
 
   dbus send bus=session path=/org/gnome/SessionManager
        interface=org.gnome.SessionManager
        member={Setenv,IsSessionRunning}
-       peer=(name=org.gnome.SessionManager, label=gnome-session-binary),
+       peer=(name=org.gnome.SessionManager, label="{gnome-session-binary,gnome-session-service}"),
 
   dbus receive bus=session path=/org/gnome/SessionManager
        interface=org.gnome.SessionManager
        member={ClientAdded,ClientRemoved,SessionRunning,InhibitorRemoved,InhibitorAdded}
-       peer=(name="@{busname}", label=gnome-session-binary),
+       peer=(name="@{busname}", label="{gnome-session-binary,gnome-session-service}"),
 
   dbus send bus=session path=/org/gnome/SessionManager/Client@{int}
        interface=org.gnome.SessionManager.ClientPrivate
        member=EndSessionResponse
-       peer=(name="@{busname}", label=gnome-session-binary),
+       peer=(name="@{busname}", label="{gnome-session-binary,gnome-session-service}"),
 
   dbus receive bus=session path=/org/gnome/SessionManager/Client@{int}
        interface=org.gnome.SessionManager.ClientPrivate
        member={CancelEndSession,QueryEndSession,EndSession,Stop}
-       peer=(name="@{busname}", label=gnome-session-binary),
+       peer=(name="@{busname}", label="{gnome-session-binary,gnome-session-service}"),
 
   dbus receive bus=session path=/org/gnome/SessionManager/Presence
        interface=org.gnome.SessionManager.Presence
        member=StatusChanged
-       peer=(name="@{busname}", label=gnome-session-binary),
+       peer=(name="@{busname}", label="{gnome-session-binary,gnome-session-service}"),
 
-  include if exists <abstractions/bus/org.gnome.SessionManager.d>
+  include if exists <abstractions/bus/session/org.gnome.SessionManager.d>
 
 # vim:syntax=apparmor
