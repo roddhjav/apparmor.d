@@ -1,0 +1,31 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+  abi <abi/4.0>,
+
+  dbus send bus=system path=/
+       interface=org.freedesktop.DBus.Peer
+       member=Ping
+       peer=(name=org.freedesktop.Avahi, label="@{p_avahi_daemon}"),
+
+  # Allow service introspection
+  dbus send bus=system path=/
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name=@{busname}, label="@{p_avahi_daemon}"),
+
+  # Allow accessing DBus properties and resolving
+  dbus send bus=system path=/
+       interface=org.freedesktop.Avahi.Server
+       member={Get*,Resolve*,IsNSSSupportAvailable}
+       peer=(name=org.freedesktop.Avahi, label="@{p_avahi_daemon}"),
+
+  # Allow receiving anything from the Avahi server
+  dbus receive bus=system
+       interface=org.freedesktop.Avahi.Server
+       peer=(name=@{busname},  label="@{p_avahi_daemon}"),
+
+  include if exists <abstractions/bus/system/org.freedesktop.Avahi.Server.d>
+
+# vim:syntax=apparmor

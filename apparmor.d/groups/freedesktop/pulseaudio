@@ -14,10 +14,12 @@ profile pulseaudio @{exec_path} {
   include <abstractions/audio-server>
   include <abstractions/bus-session>
   include <abstractions/bus-system>
-  include <abstractions/bus/org.bluez>
-  include <abstractions/bus/org.freedesktop.Avahi>
   include <abstractions/bus/org.freedesktop.hostname1>
   include <abstractions/bus/org.freedesktop.RealtimeKit1>
+  include <abstractions/bus/org.bluez>
+  include <abstractions/bus/system/org.freedesktop.Avahi.Server>
+  include <abstractions/bus/system/org.freedesktop.Avahi.ServiceBrowser>
+  include <abstractions/bus/system/org.freedesktop.Avahi.ServiceResolver>
   include <abstractions/camera>
   include <abstractions/consoles>
   include <abstractions/dconf-write>
@@ -49,25 +51,10 @@ profile pulseaudio @{exec_path} {
        member=Introspect
        peer=(name=:*, label=gnome-shell),
 
-  dbus receive bus=system path=/Client@{int}/ServiceResolver@{int}
-       interface=org.freedesktop.Avahi.ServiceResolver
-       member=Found
-       peer=(name=:*, label="@{p_avahi_daemon}"),
-
-  dbus receive bus=system path=/Client@{int}/ServiceBrowser@{int}
-       interface=org.freedesktop.Avahi.ServiceBrowser
-       member=ItemRemove
-       peer=(name=:*, label="@{p_avahi_daemon}"),
-
   dbus send bus=system path=/
        interface=org.freedesktop.DBus.ObjectManager
        member=GetManagedObjects
        peer=(name=org.bluez),
-
-  dbus send bus=system path=/Client@{int}/ServiceResolver@{int}
-       interface=org.freedesktop.Avahi.ServiceResolver
-       member={Found,Free}
-       peer=(name=org.freedesktop.Avahi, label="@{p_avahi_daemon}"),
 
   @{exec_path} mrix,
 
