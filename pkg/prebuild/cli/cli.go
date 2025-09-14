@@ -37,6 +37,7 @@ Options:
     -s, --server      Set AppArmor for server.
     -b, --buildir DIR Root build directory.
     -F, --file        Only prebuild a given file.
+        --test        Enable test mode.
         --debug       Enable debug mode.
 `
 )
@@ -48,6 +49,7 @@ var (
 	full     bool
 	server   bool
 	debug    bool
+	test     bool
 	abi      int
 	version  float64
 	file     string
@@ -74,6 +76,7 @@ func init() {
 	flag.StringVar(&buildir, "b", "", "Root build directory.")
 	flag.StringVar(&buildir, "buildir", "", "Root build directory.")
 	flag.BoolVar(&debug, "debug", false, "Enable debug mode.")
+	flag.BoolVar(&test, "test", false, "Enable test mode.")
 }
 
 func Configure() {
@@ -117,6 +120,9 @@ func Configure() {
 		builder.Register("complain")
 		if debug {
 			builder.Register("debug")
+		}
+		if test {
+			prebuild.Test = true
 		}
 	} else if enforce {
 		builder.Register("enforce")
