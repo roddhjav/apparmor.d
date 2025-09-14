@@ -18,20 +18,22 @@ profile gvfsd @{exec_path} {
   #aa:dbus own bus=session name=org.gtk.vfs.Daemon
   #aa:dbus own bus=session name=org.gtk.vfs.MountTracker path=/org/gtk/vfs/mounttracker
 
+  # The server side of abstractions/bus/session/org.gtk.vfs.Mountable
   dbus send bus=session path=/org/gtk/vfs/mountable
        interface=org.gtk.vfs.Mountable
        member=Mount
-       peer=(name=:*, label=gvfsd-*),
+       peer=(name=@{busname}, label=gvfsd-*),
 
+  # The server side of abstractions/bus/session/org.gtk.vfs.Spawner
   dbus receive bus=session path=/org/gtk/gvfs/exec_spaw/@{int}
        interface=org.gtk.vfs.Spawner
        member=Spawned
-       peer=(name=:*, label=gvfsd-*),
+       peer=(name=@{busname}, label=gvfsd-*),
 
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
-       peer=(name=:*, label=gnome-shell),
+       peer=(name=@{busname}, label=gnome-shell),
 
   @{exec_path} mr,
 
