@@ -19,6 +19,9 @@ var (
 	// Either or not RBAC is enabled
 	RBAC = false
 
+	// Either or not we are in test mode
+	Test = false
+
 	// Pkgname is the name of the package
 	Pkgname = "apparmor.d"
 

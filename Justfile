@@ -65,10 +65,18 @@ build:
 enforce: build
 	@./{{build}}/prebuild --buildir {{build}}
 
+# Prebuild the profiles in enforce mode (test)
+enforce-test: build
+	@./{{build}}/prebuild --buildir {{build}} --test
+
 # Prebuild the profiles in complain mode
 [group('build')]
 complain: build
 	./{{build}}/prebuild --buildir {{build}} --complain
+
+# Prebuild the profiles in complain mode (test)
+complain-test: build
+	@./{{build}}/prebuild --buildir {{build}} --complain --test
 
 # Prebuild the profiles in FSP mode
 [group('build')]

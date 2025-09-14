@@ -43,6 +43,10 @@ func filterRuleForUs(opt *Option) bool {
 		return true
 	}
 
+	if prebuild.Test && slices.Contains(opt.ArgList, "test") {
+		return true
+	}
+
 	abiStr := fmt.Sprintf("abi%d", prebuild.ABI)
 	if slices.Contains(opt.ArgList, abiStr) {
 		return true
