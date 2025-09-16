@@ -7,10 +7,13 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{exec_path} = @{bin}/simple-scan
-profile simple-scan @{exec_path} {
+profile simple-scan @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/avahi-observe>
+  include <abstractions/bus-system>
   include <abstractions/common/gnome>
   include <abstractions/devices-usb>
+  include <abstractions/nameservice-strict>
   include <abstractions/user-download-strict>
 
   network inet dgram,
@@ -21,9 +24,14 @@ profile simple-scan @{exec_path} {
 
   @{open_path}  rPx -> child-open-help,
 
-  /usr/share/snmp/{,**} r,
+  @{system_share_dirs}/snmp/{,**} r,
 
   /etc/sane.d/{,**} r,
+  /etc/snmp/snmp.conf r,
+
+  owner /var/lib/snmp/{mib,cert}_indexes/ rw,
+  owner /var/lib/snmp/mibs/{iana,ietf}/ r,
+  owner /var/lib/snmp/mibs/{iana,ietf}/[A-Z]* r,
 
   @{sys}/bus/scsi/devices/ r,
   @{sys}/devices/virtual/dmi/id/board_name r,
@@ -34,6 +42,9 @@ profile simple-scan @{exec_path} {
   @{sys}/devices/virtual/dmi/id/sys_vendor r,
 
   @{PROC}/scsi/scsi r,
+  @{PROC}/sys/dev/parport/ r,
+  @{PROC}/sys/dev/parport/parport@{int}/base-addr r,
+  @{PROC}/sys/dev/parport/parport@{int}/irq r,
 
   /dev/video@{int} rw,
 
