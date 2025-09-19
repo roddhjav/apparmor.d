@@ -8,7 +8,7 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{exec_path} = @{lib}/systemd/systemd-logind
-profile systemd-logind @{exec_path} flags=(attach_disconnected) {
+profile systemd-logind @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/base>
   include <abstractions/bus-system>
   include <abstractions/bus/org.freedesktop.PolicyKit1>
@@ -94,23 +94,21 @@ profile systemd-logind @{exec_path} flags=(attach_disconnected) {
   @{att}/@{run}/systemd/userdb/io.systemd.Multiplexer rw,
 
   @{run}/systemd/inhibit/ rw,
-  @{run}/systemd/inhibit/.#* rw,
-  @{run}/systemd/inhibit/@{int}{,.ref} rw,
+  @{run}/systemd/inhibit/* rwlk,
   @{run}/systemd/seats/ rw,
-  @{run}/systemd/seats/.#seat* rw,
-  @{run}/systemd/seats/seat@{int} rw,
-  @{run}/systemd/sessions/{,*}  rw,
-  @{run}/systemd/sessions/*.ref rw,
-  @{run}/systemd/shutdown/.#scheduled* rw,
-  @{run}/systemd/shutdown/scheduled rw,
+  @{run}/systemd/seats/* rwlk,
+  @{run}/systemd/sessions/ rw,
+  @{run}/systemd/sessions/* rwlk,
+  @{run}/systemd/shutdown/ rw,
+  @{run}/systemd/shutdown/* rwlk,
   @{run}/systemd/users/ rw,
-  @{run}/systemd/users/.#* rw,
-  @{run}/systemd/users/@{uid} rw,
+  @{run}/systemd/users/* rwlk,
 
   @{sys}/bus/serial-base/drivers/port/uevent r,
   @{sys}/class/drm/ r,
   @{sys}/class/power_supply/ r,
   @{sys}/devices/** r,
+  @{sys}/devices/**/uevent rw,
   @{sys}/devices/**/brightness rw,
   @{sys}/devices/virtual/tty/tty@{int}/active r,
   @{sys}/firmware/efi/efivars/LoaderEntries-@{uuid} r,
