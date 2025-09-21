@@ -9,14 +9,17 @@ include <tunables/global>
 @{exec_path} = @{bin}/flatpak
 profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted,complain) {
   include <abstractions/base>
+  include <abstractions/accessibility>
   include <abstractions/bus-session>
   include <abstractions/bus-system>
   include <abstractions/bus/system/org.freedesktop.locale1>
   include <abstractions/consoles>
   include <abstractions/dconf-write>
-  include <abstractions/desktop>
+  include <abstractions/desktop-files>
+  include <abstractions/mime>
   include <abstractions/nameservice-strict>
   include <abstractions/ssl_certs>
+  include <abstractions/user-dirs>
 
   userns,
 
@@ -24,6 +27,12 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted,complain
   capability dac_read_search,
   capability net_admin,
   capability sys_ptrace,
+
+  # Manage the sandbox
+  capability setgid,
+  capability setuid,
+  capability sys_admin,
+  capability sys_chroot,
 
   network inet dgram,
   network inet6 dgram,
@@ -33,7 +42,9 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted,complain
 
   mount fstype=fuse.revokefs-fuse options=(rw, nosuid, nodev) -> /var/tmp/flatpak-cache-*/*/,
 
-  ptrace (read) peer=flatpak-app,
+  ptrace read peer=flatpak-app,
+  ptrace read peer=flatpak.*,
+  ptrace read peer=bwrap.*,
 
   signal send peer=flatpak-app,
 
@@ -66,6 +77,9 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted,complain
   @{bin}/gpgsm               rCx -> gpg,
   @{lib}/revokefs-fuse       rix,
 
+  # For flatpack enter, the shell is not confined on purpose.
+  @{bin}/@{shells}           rUx,
+
   @{lib}/polkit-[0-9]/polkit-agent-helper-[0-9]  rPx,
   @{lib}/polkit-agent-helper-[0-9]               rPx,
 
@@ -74,6 +88,7 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted,complain
   /etc/flatpak/{,**} r,
   /etc/pulse/client.conf r,
 
+        / r,
   @{att}/ r,
 
   /var/lib/flatpak/{,**} rwlk,
