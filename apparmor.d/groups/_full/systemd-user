@@ -2,6 +2,8 @@
 # Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
+#aa:lint ignore=too-wide
+
 # Profile for 'systemd --user', not PID 1 but the user manager for any UID.
 # It does not specify an attachment path because it is intended to be used only
 # via "px -> systemd-user" exec transitions from the `systemd` profile.
@@ -35,6 +37,11 @@ profile systemd-user flags=(attach_disconnected,mediate_deleted,complain) {
   unix bind type=stream addr=@@{udbus}/bus/systemd/bus-api-user,
 
   #aa:dbus own bus=session name=org.freedesktop.systemd1
+
+  dbus receive bus=session
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name=@{busname}, label=gnome-shell),
 
   @{exec_path} mrix,
 
