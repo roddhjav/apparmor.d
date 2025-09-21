@@ -89,14 +89,14 @@ profile gjs @{exec_path} flags=(attach_disconnected) {
   /usr/share/xkeyboard-config-2/{,**} r,
   /usr/share/thumbnailers/{,**} r,
 
-  owner @{gdm_cache_dirs}/gstreamer-1.0/registry.@{arch}.bin r,
+  owner @{gdm_cache_dirs}/gstreamer-@{int}.@{int}/registry.@{arch}.bin{,.tmp@{rand6}} rw,
   owner @{gdm_config_dirs}/dconf/user r,
   owner @{GDM_HOME}/greeter-dconf-defaults r,
 
   owner @{HOME}/ r,
 
-  owner @{user_cache_dirs}/gstreamer-1.0/ rw,
-  owner @{user_cache_dirs}/gstreamer-1.0/registry.*.bin{,.tmp@{rand6}} rw,
+  owner @{user_cache_dirs}/gstreamer-@{int}.@{int}/ rw,
+  owner @{user_cache_dirs}/gstreamer-@{int}.@{int}/registry.@{arch}.bin{,.tmp@{rand6}} rw,
 
   owner @{user_share_dirs}/gnome-shell/extensions/{,**} r,
   owner @{user_share_dirs}/nautilus/scripts/ r,
@@ -115,8 +115,10 @@ profile gjs @{exec_path} flags=(attach_disconnected) {
 
   profile gstreamer {
     include <abstractions/base>
+    include <abstractions/camera>
     include <abstractions/graphics>
     include <abstractions/gstreamer>
+    include <abstractions/media-control>
     include <abstractions/wayland>
     include <abstractions/X-strict>
 
@@ -125,6 +127,11 @@ profile gjs @{exec_path} flags=(attach_disconnected) {
     @{lib}/@{multiarch}/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner mr,
     @{lib}/@{multiarch}/gstreamer-1.0/gst-plugin-scanner mr,
     @{lib}/gstreamer-1.0/gst-plugin-scanner mr,
+
+    owner @{desktop_cache_dirs}/nvidia/GLCache/ rw,
+    owner @{desktop_cache_dirs}/nvidia/GLCache/** rwk,
+
+    @{run}/udev/data/c@{dynamic}:@{int} r,  # For dynamic assignment range 234 to 254, 384 to 511
 
     include if exists <local/gjs_gstreamer>
   }
