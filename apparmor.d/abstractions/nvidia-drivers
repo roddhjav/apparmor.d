@@ -1,0 +1,30 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Canonical Ltd
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Allow creating nvidia device files to be used by unprivileged user-space programs
+
+  abi <abi/4.0>,
+
+  capability mknod,
+
+  # To read dynamically allocated MAJOR for nvidia-uvm
+  @{PROC}/devices r,
+
+  # Nvidia proprietary modset driver
+  /dev/nvidia-modeset w,
+
+  # Nvidia's Unified Memory driver
+  /dev/nvidia-uvm w,
+  /dev/nvidia-uvm-tools w,
+
+  # Nvidia graphics devices
+  /dev/nvidia@{int} rw,
+
+  # Global control device for driver-wide operations.
+  /dev/nvidiactl rw,
+
+  include if exists <abstractions/nvidia-drivers.d>
+
+# vim:syntax=apparmor

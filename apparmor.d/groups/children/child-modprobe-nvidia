@@ -19,11 +19,10 @@ include <tunables/global>
 @{exec_path} = @{bin}/nvidia-modprobe
 profile child-modprobe-nvidia flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/consoles>
+  include <abstractions/nvidia-drivers>
 
   capability chown,
   capability fsetid,
-  capability mknod,
   capability sys_admin,
   capability syslog,
 
@@ -34,20 +33,13 @@ profile child-modprobe-nvidia flags=(attach_disconnected) {
   @{sys}/bus/pci/devices/ r,
   @{sys}/devices/@{pci}/config r,
 
-  @{PROC}/devices r,
   @{PROC}/driver/nvidia/capabilities/mig/config r,
   @{PROC}/driver/nvidia/capabilities/mig/monitor r,
   @{PROC}/driver/nvidia/params r,
-  @{PROC}/modules r,
 
   owner /dev/char/@{dynamic}:@{int} w,  # For dynamic assignment range 234 to 254, 384 to 511
   owner /dev/char/195:@{u8} w,          # Nvidia graphics devices
 
-        /dev/nvidia-modeset w,
-        /dev/nvidia-uvm w,
-        /dev/nvidia-uvm-tools w,
-        /dev/nvidia@{int} rw,
-        /dev/nvidiactl rw,
   owner /dev/nvidia-caps/ w,
   owner /dev/nvidia-caps/nvidia-cap@{int} w,
 
