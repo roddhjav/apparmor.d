@@ -7,7 +7,7 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{exec_path} = @{lib}/ptyxis-agent
-profile ptyxis-agent @{exec_path} {
+profile ptyxis-agent @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus-session>
   include <abstractions/bus/session/org.gtk.vfs.MountTracker>
@@ -21,6 +21,11 @@ profile ptyxis-agent @{exec_path} {
   ptrace read,
 
   unix type=stream peer=(label=ptyxis),
+
+  dbus receive bus=session
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name=@{busname}, label=gnome-shell),
 
   @{exec_path} mr,
 

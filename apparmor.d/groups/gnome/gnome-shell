@@ -131,7 +131,7 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   dbus receive bus=session path=/org/freedesktop/systemd1
        interface=org.freedesktop.systemd1.Manager
        member=JobRemoved
-       peer=(name=:*, label="@{p_systemd_user}"),
+       peer=(name=@{busname}, label="@{p_systemd_user}"),
 
   dbus send bus=session path=/MenuBar
        interface=com.canonical.dbusmenu
@@ -141,12 +141,12 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   dbus send bus=session path=/StatusNotifierItem
        interface=org.freedesktop.DBus.Properties
        member={Get,GetAll}
-       peer=(name=:*),
+       peer=(name=@{busname}),
 
   dbus send bus=session path=/org/mpris/MediaPlayer2
        interface=org.freedesktop.DBus.Properties
        member={Get,GetAll}
-       peer=(name=:*),
+       peer=(name=@{busname}),
 
   dbus send bus=session
        interface=org.freedesktop.DBus.Introspectable
@@ -314,14 +314,15 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
   @{run}/udev/tags/seat/ r,
 
-  @{run}/udev/data/+input:input@{int} r,  # for mouse, keyboard, touchpad
-  @{run}/udev/data/+platform:* r,         # Identifies onboard devices (laptop/board model, power controllers, thermal sensors)
-  @{run}/udev/data/+dmi:id r,             # for motherboard info
   @{run}/udev/data/+acpi:* r,             # Exposes ACPI objects (power buttons, batteries, thermal)
-  @{run}/udev/data/+pci:* r,              # Identifies all PCI devices (CPU, GPU, Network, Disks, USB, etc.)
-  @{run}/udev/data/+sound:card@{int} r,   # for sound card
-  @{run}/udev/data/+i2c:* r,              # For Inter-Integrated Circuit, low-speed peripherals (sensors, EEPROMs, etc.)
+  @{run}/udev/data/+dmi:id r,             # for motherboard info
+  @{run}/udev/data/+drm:card@{int}-* r,   # For screen outputs
   @{run}/udev/data/+hid:* r,              # For Human Interface Device (mice, controllers, drawing tablets, scanners)
+  @{run}/udev/data/+i2c:* r,              # For Inter-Integrated Circuit, low-speed peripherals (sensors, EEPROMs, etc.)
+  @{run}/udev/data/+input:input@{int} r,  # for mouse, keyboard, touchpad
+  @{run}/udev/data/+pci:* r,              # Identifies all PCI devices (CPU, GPU, Network, Disks, USB, etc.)
+  @{run}/udev/data/+platform:* r,         # Identifies onboard devices (laptop/board model, power controllers, thermal sensors)
+  @{run}/udev/data/+sound:card@{int} r,   # for sound card
   @{run}/udev/data/c10:@{int} r,          # for non-serial mice, misc features
   @{run}/udev/data/c13:@{int} r,          # for /dev/input/*
   @{run}/udev/data/c189:@{int}  r,        # for /dev/bus/usb/**
