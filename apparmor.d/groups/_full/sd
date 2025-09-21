@@ -2,6 +2,8 @@
 # Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
+#aa:lint ignore=too-wide
+
 # Part of the systemd (as PID 1) profile.
 
 # sd is a profile for SystemD-executor run as root, it is used to run all services
@@ -58,7 +60,7 @@ profile sd flags=(attach_disconnected,mediate_deleted,complain) {
   capability sys_tty_config,
   capability syslog,
 
-  network alg seqpacket,
+  network alg seqpacket, # kernel crypto API
   network bluetooth,
   network inet dgram,
   network inet stream,
@@ -94,6 +96,7 @@ profile sd flags=(attach_disconnected,mediate_deleted,complain) {
 
   mqueue (read getattr) type=posix /,
 
+  signal         peer=*//&sd,
   signal         peer=sd//&*,
   signal receive peer=@{p_systemd},
   signal send,
@@ -183,12 +186,14 @@ profile sd flags=(attach_disconnected,mediate_deleted,complain) {
         @{run}/* rw,
         @{run}/*/ rw,
         @{run}/*/* rw,
+        @{run}/*/*/ rw,
         @{run}/systemd/{,**} rw,
   owner @{run}/*/** rw,
 
   @{run}/udev/**/ r,
   @{run}/udev/data/+*:* r,                # Identifies all subsystems
   @{run}/udev/data/c@{int}:@{int} r,      # Identifies all character devices
+  @{run}/udev/data/n@{int} r,             # For network interfaces
 
   @{sys}/** r,
   @{sys}/fs/bpf/systemd/{,**} w,
