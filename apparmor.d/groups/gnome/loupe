@@ -70,13 +70,19 @@ profile loupe @{exec_path} flags=(attach_disconnected) {
     signal receive set=kill peer=loupe,
 
     @{bin}/bwrap mr,
-    @{lib}/glycin-loaders/*/glycin-* rix,
-
-    owner @{PROC}/@{pid}/fd/ r,
-
-    deny @{user_share_dirs}/gvfs-metadata/* r,
+    @{lib}/glycin-loaders/*/glycin-* Px -> loupe//bwrap//&loupe//glycin,
 
     include if exists <local/loupe_bwrap>
+  }
+
+  profile glycin flags=(attach_disconnected) {
+    include <abstractions/base>
+
+    unix type=stream peer=(label=loupe),
+
+    @{lib}/glycin-loaders/*/glycin-* mr,
+
+    include if exists <local/loupe_glycin>
   }
 
   include if exists <local/loupe>
