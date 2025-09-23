@@ -31,6 +31,7 @@ profile gjs @{exec_path} flags=(attach_disconnected) {
 
   # Only needed by org.gnome.Shell.Extensions
   include <abstractions/gnome-strict>
+  include <abstractions/graphics>
   include <abstractions/nameservice-strict>
 
   # Only needed by gnome-extension-ding
@@ -111,7 +112,10 @@ profile gjs @{exec_path} flags=(attach_disconnected) {
 
   profile gstreamer {
     include <abstractions/base>
+    include <abstractions/bus-session>
+    include <abstractions/bus/session/org.gtk.vfs.MountTracker>
     include <abstractions/camera>
+    include <abstractions/fonts>
     include <abstractions/graphics>
     include <abstractions/gstreamer>
     include <abstractions/media-control>
@@ -119,6 +123,11 @@ profile gjs @{exec_path} flags=(attach_disconnected) {
     include <abstractions/X-strict>
 
     network (bind create getattr setopt getopt) netlink raw,
+
+    dbus receive bus=session path=/
+         interface=org.freedesktop.DBus.Introspectable
+         member=Introspect
+         peer=(name=@{busname}, label=gnome-shell),
 
     @{lib}/@{multiarch}/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner mr,
     @{lib}/@{multiarch}/gstreamer-1.0/gst-plugin-scanner mr,
