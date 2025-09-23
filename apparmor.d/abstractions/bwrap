@@ -3,10 +3,16 @@
 # SPDX-License-Identifier: GPL-2.0-only
 # NEEDS-VARIABLE: att
 
-# A minimal set of rules for sandboxed programs using bwrap.
+# Bubblewrap creates isolated environments for applications. It requires the 
+# sys_admin capability to enter a new PID namespace. Until this capability is
+# dropped, the process can potentially escape confinement. For this reason, we
+# typically transition to another application profile, even if it requires 
+# managing a stacked set of profiles since bwrap sets the no_new_privs (nnp) 
+# flag. The resulting profile should take the form: <bwrap>//&<app>
+#
 # A profile using this abstraction still needs to set:
 # - the flag: attach_disconnected
-# - bwrap execution: '@{bin}/bwrap rix,'
+# - bwrap execution: '@{bin}/bwrap ix,' or memory mapping '@{bin}/bwrap mr,'
 
   abi <abi/4.0>,
 
@@ -44,6 +50,7 @@
   owner /tmp/newroot/ w,
   owner /tmp/oldroot/ w,
 
+  owner / r,
   @{att}/ r,
   @{att}/@{run}/.userns r,
 
