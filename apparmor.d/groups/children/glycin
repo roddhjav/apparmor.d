@@ -1,0 +1,44 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Confine glycin-loaders sandboxed with bwrap. It also confines bwrap itself.
+# for this use case.
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+profile glycin flags=(attach_disconnected,complain) {
+  include <abstractions/base>
+  include <abstractions/app/bwrap-glycin>
+
+  signal receive set=kill,
+
+  @{lib}/glycin-loaders/@{d}+/glycin-* Px -> glycin//&glycin//app,
+
+  # Safe deny of inherited files from parent process.
+  deny owner @{user_cache_dirs}/** r,
+  deny owner /tmp/*/** w,
+  deny @{sys}/devices/system/memory/* r,
+  deny /dev/dri/* rw,
+
+  profile app flags=(attach_disconnected,complain) {
+    include <abstractions/base>
+
+    @{lib}/glycin-loaders/@{d}+/glycin-* mr,
+
+    @{att}/usr/share/glycin-loaders/{,**} r,
+
+    @{att}/usr/share/gtksourceview-2.0/{,**} r,
+    @{att}/usr/share/gtksourceview-3.0/{,**} r,
+    @{att}/usr/share/gtksourceview-4/{,**} r,
+    @{att}/usr/share/gtksourceview-5/{,**} r,
+
+    include if exists <local/glycin_app>
+  }
+
+  include if exists <local/glycin>
+}
+
+# vim:syntax=apparmor

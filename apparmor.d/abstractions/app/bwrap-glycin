@@ -1,0 +1,38 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Base set of rules for glycin-loaders sandboxed with bwrap.
+# - It is safe to use when used like in the glycin profile.
+# - It is **not** safe to use when used by a profile stacking glycin
+
+# See https://github.com/roddhjav/apparmor.d/issues/881 for more details.
+
+  abi <abi/4.0>,
+
+  include <abstractions/bwrap>
+  include <abstractions/fonts>
+
+  unix type=stream peer=(label=glycin),
+  unix type=stream peer=(label=glycin//app),
+
+  signal send set=kill peer=*//&glycin,
+
+  ptrace read peer=*//&glycin,
+
+  @{bin}/bwrap mr,
+
+  @{bin}/true ix,
+
+  /usr/share/glycin-loaders/{,**} r,
+
+  /usr/share/gtksourceview-2.0/{,**} r,
+  /usr/share/gtksourceview-3.0/{,**} r,
+  /usr/share/gtksourceview-4/{,**} r,
+  /usr/share/gtksourceview-5/{,**} r,
+
+  owner @{tmp}/gdk-pixbuf-glycin-tmp.@{rand6} rw,
+
+  include if exists <abstractions/app/bwrap-glycin.d>
+
+# vim:syntax=apparmor

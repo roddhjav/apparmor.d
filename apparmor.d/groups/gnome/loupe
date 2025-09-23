@@ -21,9 +21,10 @@ profile loupe @{exec_path} flags=(attach_disconnected) {
   include <abstractions/user-read-strict>
   include <abstractions/user-write-strict>
 
-  unix type=stream peer=(label=loupe//bwrap),
+  unix type=stream peer=(label=glycin),
+  unix type=stream peer=(label=glycin//app),
 
-  signal send set=kill peer=loupe//bwrap,
+  signal send set=kill peer=glycin,
 
   #aa:dbus own bus=session name=org.gnome.Loupe interface+=org.freedesktop.Application
 
@@ -36,7 +37,7 @@ profile loupe @{exec_path} flags=(attach_disconnected) {
 
   @{exec_path} mr,
 
-  @{bin}/bwrap rCx -> bwrap,
+  @{bin}/bwrap rPx -> glycin,
   @{open_path} rPx -> child-open-help,
 
   /usr/share/glycin-loaders/{,**} r,
@@ -60,30 +61,6 @@ profile loupe @{exec_path} flags=(attach_disconnected) {
   owner @{PROC}/@{pid}/task/@{tid}/comm rw,
 
   deny @{user_share_dirs}/gvfs-metadata/* r,
-
-  profile bwrap flags=(attach_disconnected) {
-    include <abstractions/base>
-    include <abstractions/bwrap>
-
-    unix type=stream peer=(label=loupe),
-
-    signal receive set=kill peer=loupe,
-
-    @{bin}/bwrap mr,
-    @{lib}/glycin-loaders/*/glycin-* Px -> loupe//bwrap//&loupe//glycin,
-
-    include if exists <local/loupe_bwrap>
-  }
-
-  profile glycin flags=(attach_disconnected) {
-    include <abstractions/base>
-
-    unix type=stream peer=(label=loupe),
-
-    @{lib}/glycin-loaders/*/glycin-* mr,
-
-    include if exists <local/loupe_glycin>
-  }
 
   include if exists <local/loupe>
 }

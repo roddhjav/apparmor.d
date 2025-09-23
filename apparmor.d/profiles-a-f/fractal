@@ -22,12 +22,16 @@ profile fractal @{exec_path} flags=(attach_disconnected) {
   network inet6 stream,
   network netlink raw,
 
-  signal send set=kill peer=fractal//bwrap,
+  signal send set=kill peer=glycin,
+  unix type=stream peer=(label=glycin),
+  unix type=stream peer=(label=glycin//app),
+
+  #aa:dbus own bus=session name=org.gnome.Fractal
 
   @{exec_path} mr,
 
+  @{bin}/bwrap  rPx -> glycin,
   @{open_path}  rPx -> child-open-help,
-  @{bin}/bwrap  rCx -> bwrap,
 
   /usr/share/glycin-loaders/{,**} r,
   /usr/share/xml/iso-codes/{,**} r,
@@ -43,34 +47,6 @@ profile fractal @{exec_path} flags=(attach_disconnected) {
   owner @{PROC}/@{pid}/mountinfo r,
 
   /dev/ r,
-
-  profile bwrap flags=(attach_disconnected) {
-    include <abstractions/base>
-    include <abstractions/bwrap>
-
-    signal receive set=kill peer=fractal,
-
-    @{bin}/bwrap mr,
-    @{lib}/glycin-loaders/*/glycin-* Px -> fractal//bwrap//&fractal//glycin,
-
-    /usr/share/gtksourceview-@{d}/{,**} r,
-
-    owner @{run}/user/@{uid}/fractal/.tmp@{rand6} r,
-
-    include if exists <local/fractal_bwrap>
-  }
-
-  profile glycin flags=(attach_disconnected) {
-    include <abstractions/base>
-
-    @{lib}/glycin-loaders/*/glycin-* mr,
-
-    @{att}/usr/share/gtksourceview-@{d}/{,**} r,
-
-    owner @{att}/@{run}/user/@{uid}/fractal/.tmp@{rand6} r,
-
-    include if exists <local/fractal_glycin>
-  }
 
   include if exists <local/fractal>
 }
