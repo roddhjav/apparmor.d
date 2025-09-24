@@ -9,11 +9,24 @@ include <tunables/global>
 @{exec_path} = @{lib}/cups/backend/implicitclass
 profile cups-backend-implicitclass @{exec_path} {
   include <abstractions/base>
+  include <abstractions/apache2-common>
+  include <abstractions/mapping/sudo>
+  include <abstractions/ubuntu-browsers.d/plugins-common>
+
+  owner @{run}/cups/cups.sock rw,
+  owner @{run}/dbus/system_bus_socket rw,
+  owner @{bin}/gs mrpx,
+  owner /var/spool/cups/tmp/* rw,
+  @{bin}/ippfind mrix,
+  @{lib}/cups/backend/ipp px,
 
   @{exec_path} mr,
 
+  owner @{etc_ro}/nsswitch.conf r,
   /etc/papersize r,
   /etc/paperspecs r,
+
+  unix (receive, send) type=stream,
 
   include if exists <local/cups-backend-implicitclass>
 }

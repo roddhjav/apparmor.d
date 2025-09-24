@@ -12,20 +12,32 @@ profile netplan @{exec_path} flags=(attach_disconnected) {
   include <abstractions/bus-system>
   include <abstractions/nameservice-strict>
   include <abstractions/python>
+  include <abstractions/user-tmp>
 
   #aa;dbus owb bus=system name=io.netplan.Netplan
 
   @{exec_path} mr,
 
   @{lib}/netplan/generate  rPx,
+  @{bin}/networkctl mr,
   @{bin}/udevadm           rCx -> udevadm,
   @{bin}/systemctl         rCx -> systemctl,
+  @{bin}/ip mrpx,
+  @{bin}/networkctl mrpx,
+  @{bin}/nmcli mrpx,
+  @{bin}/ovs-vsctl mrix,
+  @{sbin}/ethtool mrix,
 
-  /usr/share/netplan/{,**} r,
+  /usr/share/netplan/{,**} rw,
 
   /etc/netplan/{,*} r,
 
+  owner @{etc_ro}/netplan/{,*} r,
+
   @{run}/netplan/ r,
+  @{run}/NetworkManager/devices/{,@{int}} w,
+  owner @{run}/NetworkManager/system-connections/{,*} r,
+  @{run}/systemd/** r,
 
   profile udevadm {
     include <abstractions/base>
@@ -44,12 +56,28 @@ profile netplan @{exec_path} flags=(attach_disconnected) {
   profile systemctl {
     include <abstractions/base>
     include <abstractions/app/systemctl>
+    include <abstractions/bwrap>
+    include <abstractions/nameservice>
 
     capability net_admin,
 
+    @{bin}/systemd-tty-ask-password-agent mrpx,
+
     ptrace read peer=@{p_systemd},
 
+    owner @{etc_ro}/group r,
+    owner @{etc_ro}/modprobe.d/{,*} r,
+    owner @{etc_ro}/nsswitch.conf r,
+    owner @{etc_ro}/systemd/network/ r,
+    owner @{etc_ro}/udev/rules.d/ r,
+
+    owner @{run}/systemd/network/{,*} r,
+    owner @{run}/udev/control rw,
+    owner @{run}/udev/data/n@{int} r,
+    owner @{run}/udev/rules.d/ r,
     @{run}/udev/control rw,
+
+    owner @{sys}/devices/** w,
 
     include if exists <local/netplan_systemctl>
   }

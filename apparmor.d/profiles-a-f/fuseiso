@@ -11,6 +11,7 @@ include <tunables/global>
 profile fuseiso @{exec_path} {
   include <abstractions/base>
   include <abstractions/nameservice-strict>
+  include <abstractions/user-tmp>
 
   # Be able to mount ISO images
   mount fstype=fuse.fuseiso -> @{HOME}/*/,
@@ -32,21 +33,30 @@ profile fuseiso @{exec_path} {
   # Image files to be mounted
   owner @{user_img_dirs}/{,**} rwk,
 
+  mount fstype=(fuse.fuseiso) options=(nodev, nosuid, rw) fuseiso,
+
+  unix (receive, send) type=stream,
+
   /dev/fuse rw,
 
   profile fusermount {
     include <abstractions/base>
     include <abstractions/app/fusermount>
+    include <abstractions/common/chromium>
+    include <abstractions/user-tmp>
 
     mount fstype={fuse,fuse.fuseiso} -> @{HOME}/*/,
     mount fstype={fuse,fuse.fuseiso} -> @{HOME}/*/*/,
     mount fstype={fuse,fuse.fuseiso} -> @{user_cache_dirs}/**/,
+    mount fstype=(fuse.fuseiso) options=(nodev, nosuid, rw) fuseiso,
 
     umount @{HOME}/*/,
     umount @{HOME}/*/*/,
     umount @{user_cache_dirs}/**/,
 
     owner @{user_img_dirs}/{,**} r, # Image files to be mounted
+
+    unix (receive, send) type=stream,
 
     include if exists <local/fuseiso_fusermount>
   }

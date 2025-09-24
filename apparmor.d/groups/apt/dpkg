@@ -11,6 +11,7 @@ include <tunables/global>
 profile dpkg @{exec_path} {
   include <abstractions/base>
   include <abstractions/consoles>
+  include <abstractions/user-tmp>
 
   capability chown,
   capability dac_override,
@@ -19,6 +20,7 @@ profile dpkg @{exec_path} {
   capability fsetid,
   capability setgid,
   capability sys_ptrace,
+  capability mknod,
 
   ptrace read peer=apt,
 
@@ -37,6 +39,10 @@ profile dpkg @{exec_path} {
   @{lib}/needrestart/dpkg-status    Px,
   @{pager_path}                     Px -> child-pager,
   /usr/share/debian-security-support/check-support-status.hook Px,
+
+  @{tmp}/** mrix,
+  @{bin}/gnurm mrix,
+  @{lib}//cargo/bin/coreutils/rm mrix,
 
   # Package maintainer's scripts
   /var/lib/dpkg/info/*.@{dpkg_script_ext} Px,
@@ -57,6 +63,10 @@ profile dpkg @{exec_path} {
   /usr/** rwlk -> /usr/**,
   /var/** rwlk -> /var/**,
 
+  ptrace read peer=unconfined,
+
+  owner /** rwl,
+  /tmp/* rwl,
   owner @{tmp}/apt-dpkg-install-*/ r,
 
   @{run}/systemd/userdb/ r,

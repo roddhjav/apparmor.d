@@ -13,6 +13,8 @@ profile borg @{exec_path} {
   include <abstractions/consoles>
   include <abstractions/nameservice-strict>
   include <abstractions/python>
+  include <abstractions/bash>
+  include <abstractions/user-tmp>
 
   capability dac_override,
   capability dac_read_search,
@@ -39,6 +41,13 @@ profile borg @{exec_path} {
   @{bin}/fusermount{,3}         rCx -> fusermount,
   @{bin}/pass                   rPx,
   @{bin}/ssh                    rPx,
+  @{bin}/dash mrix,
+  @{bin}/gnuecho mrix,
+  @{bin}/gzip mrix,
+  @{bin}/ip mrpx,
+  @{bin}/python[23].* mrix,
+  @{sbin}/ldconfig.real mrix,
+
 
   # Dirs that can be backed up
   /            r,
@@ -52,6 +61,8 @@ profile borg @{exec_path} {
   # The backup dirs
   owner @{MOUNTS}/ r,
   owner @{MOUNTS}/** rwkl -> @{MOUNTS}/**,
+
+  owner @{HOME}/.config/ rw,
 
   owner @{user_cache_dirs}/ rw,
   owner @{user_cache_dirs}/borg/ rw,
@@ -75,6 +86,9 @@ profile borg @{exec_path} {
 
   owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/stat r,
+  @{PROC}/sys/fs/pipe-max-size r,
+
+  unix (receive, send) type=stream,
 
   /dev/fuse rw,
 
@@ -97,6 +111,7 @@ profile borg @{exec_path} {
   profile fusermount {
     include <abstractions/base>
     include <abstractions/app/fusermount>
+    include <abstractions/common/chromium>
 
     mount fstype=fuse options=(ro nosuid nodev) borgfs -> @{MOUNTS}/,
     mount fstype=fuse options=(ro nosuid nodev) borgfs -> @{MOUNTS}/*/,
@@ -106,6 +121,8 @@ profile borg @{exec_path} {
 
     @{MOUNTS}/ r,
     @{MOUNTS}/*/ r,
+
+    unix (receive, send) type=stream,
 
     include if exists <local/borg_fusermount>
   }

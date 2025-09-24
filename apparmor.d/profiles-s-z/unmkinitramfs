@@ -10,10 +10,12 @@ include <tunables/global>
 @{exec_path} = @{bin}/unmkinitramfs
 profile unmkinitramfs @{exec_path} {
   include <abstractions/base>
+  include <abstractions/mapping/sudo>
 
   # To avoid the following error:
   #  cpio: etc/console-setup/null: Cannot mknod: Operation not permitted
   capability mknod,
+  capability dac_override,
 
   @{exec_path} r,
 
@@ -30,6 +32,9 @@ profile unmkinitramfs @{exec_path} {
   @{bin}/mktemp     rix,
   @{bin}/rm         rix,
   @{bin}/xzcat      rix,
+  @{bin}/3cpio mrix,
+  @{bin}/lz4 mrix,
+
 
         @{efi}/ r,
   owner @{efi}/initrd.img-* r,
@@ -39,6 +44,9 @@ profile unmkinitramfs @{exec_path} {
   owner /mnt/initrd.img-* r,
         /mnt/boot/ r,
   owner /mnt/boot/initrd.img-* r,
+
+  owner @{etc_ro}/group r,
+  owner @{etc_ro}/nsswitch.conf r,
 
   # To extract the content of the initrd image
   owner @{tmp}/** rwl -> /tmp/**,

@@ -10,6 +10,7 @@ include <tunables/global>
 @{exec_path} = @{sbin}/mount.nfs
 profile mount-nfs @{exec_path} flags=(complain) {
   include <abstractions/base>
+  include <abstractions/bwrap>
   include <abstractions/nameservice-strict>
 
   # To be able to mount anything
@@ -55,6 +56,7 @@ profile mount-nfs @{exec_path} flags=(complain) {
   @{MOUNTS}/ r,
   @{MOUNTS}/*/ r,
 
+  owner @{run}/mount/utab.act k,
   owner @{run}/mount/utab.lock wk,
   owner @{run}/mount/utab{,.*} rw,
   owner @{run}/rpc.statd.lock wk,
@@ -63,7 +65,10 @@ profile mount-nfs @{exec_path} flags=(complain) {
 
   profile systemctl {
     include <abstractions/base>
+    include <abstractions/bwrap>
     include <abstractions/app/systemctl>
+
+    owner @{run}/rpc.statd.lock w,
 
     include if exists <local/mount-nfs_systemctl>
   }

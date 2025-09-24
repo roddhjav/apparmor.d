@@ -30,6 +30,7 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/bus/system/org.bluez>
   include <abstractions/camera>
   include <abstractions/dconf-write>
+  include <abstractions/dbus-session>
   include <abstractions/fontconfig-cache-write>
   include <abstractions/gnome-strict>
   include <abstractions/graphics>
@@ -43,6 +44,7 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/ssl_certs>
   include <abstractions/thumbnails-cache-read>
   include <abstractions/upower-observe>
+  include <abstractions/user-tmp>
 
   capability sys_nice,
   capability sys_ptrace,
@@ -293,6 +295,7 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{run}/user/@{uid}/gvfsd/socket-@{rand8} rw,
   owner @{run}/user/@{uid}/snap.*/wayland-cursor-shared-@{rand6} rw,
   owner @{run}/user/@{uid}/systemd/notify rw,
+        @{run}/systemd/inhibit/@{int}.ref w,
 
   owner /dev/shm/.org.chromium.Chromium.@{rand6} rw,
   owner /dev/shm/wayland.mozilla.ipc.@{int} rw,
@@ -330,6 +333,7 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
   @{sys}/**/uevent r,
   @{sys}/bus/ r,
+  @{sys}/class/backlight/ r,
   @{sys}/class/hwmon/ r,
   @{sys}/class/input/ r,
   @{sys}/class/net/ r,
@@ -350,6 +354,7 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   @{sys}/devices/**/hwmon/**/{,name,temp*,fan*} r,
   @{sys}/devices/**/power_supply/{,**} r,
   @{sys}/devices/platform/**/input@{int}/{properties,name} r,
+  @{sys}/devices/system/cpu/cpu@{int}/cpu_capacity r,
   @{sys}/devices/virtual/dmi/id/bios_vendor r,
   @{sys}/devices/virtual/dmi/id/product_name r,
   @{sys}/devices/virtual/dmi/id/sys_vendor r,
@@ -406,6 +411,7 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
     owner @{PROC}/@{pid}/stat r,
 
     /dev/tty rw,
+    owner @{run}/gdm3/home/gdm-greeter/.cache/mesa_shader_cache/@{int}/{,*} rwk,
 
     include if exists <local/gnome-shell_shell>
   }

@@ -9,6 +9,8 @@ include <tunables/global>
 @{exec_path} = @{bin}/gamemoded
 profile gamemoded @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/common/game>
+  include <abstractions/dbus-session-strict>
 
   capability sys_ptrace,
 
@@ -19,7 +21,9 @@ profile gamemoded @{exec_path} flags=(attach_disconnected) {
   @{bin}/pkexec Cx -> pkexec,
   @{lib}/gamemode/gpuclockctl Cx -> pkexec,
 
+  @{etc_ro}/ r,
   /etc/gamemode.ini r,
+  /usr/share/gamemode/gamemode.ini r,
 
   owner @{user_config_dirs}/ r,
 
@@ -35,6 +39,8 @@ profile gamemoded @{exec_path} flags=(attach_disconnected) {
   owner @{PROC}/@{pid}/fdinfo/ r,
   owner @{PROC}/@{pid}/fdinfo/@{int} r,
   owner @{PROC}/@{pid}/task/ r,
+
+  unix (bind) type=stream addr=@@{hex}/bus/gamemoded/user,
 
   profile pkexec flags=(attach_disconnected) {
     include <abstractions/base>
@@ -71,6 +77,8 @@ profile gamemoded @{exec_path} flags=(attach_disconnected) {
     @{PROC}/@{pid}/loginuid r,
     @{PROC}/@{pid}/stat r,
     @{PROC}/sys/kernel/split_lock_mitigate rw,
+
+    owner @{run}/dbus/system_bus_socket rw,
 
     include if exists <local/gamemoded_pkexec>
   }

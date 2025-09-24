@@ -13,6 +13,8 @@ profile dconf-service @{exec_path} flags=(attach_disconnected) {
   include <abstractions/consoles>
   include <abstractions/bus-session>
   include <abstractions/dconf-write>
+  include <abstractions/mapping/sudo>
+  include <abstractions/user-tmp>
 
   signal (receive) set=(term kill hup) peer=dbus-session,
   signal (receive) set=(term hup) peer=gdm{,-session-worker},
@@ -26,6 +28,8 @@ profile dconf-service @{exec_path} flags=(attach_disconnected) {
 
   @{exec_path} mr,
 
+  @{etc_ro}/nsswitch.conf r,
+
   owner @{desktop_config_dirs}/dconf/ rw,
   owner @{desktop_config_dirs}/dconf/user rw,
   owner @{desktop_config_dirs}/dconf/user.* rw,
@@ -38,6 +42,8 @@ profile dconf-service @{exec_path} flags=(attach_disconnected) {
   owner @{user_cache_dirs}/dconf/user rw,
 
   @{PROC}/cmdline r,
+
+  owner @{HOME}/.config/ w,
 
   include if exists <local/dconf-service>
 }

@@ -12,11 +12,16 @@ profile apport @{exec_path} flags=(attach_disconnected) {
   include <abstractions/apt>
   include <abstractions/bus-session>
   include <abstractions/bus/session/org.gnome.SessionManager>
+  include <abstractions/bwrap>
+  include <abstractions/libvirt-qemu>
+  include <abstractions/mapping/sshd>
   include <abstractions/nameservice-strict>
   include <abstractions/python>
+  include <abstractions/user-tmp>
 
   capability chown,
   capability dac_read_search,
+  capability dac_override,
   capability fowner,
   capability fsetid,
   capability setgid,
@@ -32,6 +37,7 @@ profile apport @{exec_path} flags=(attach_disconnected) {
   @{bin}/dpkg-divert  rPx -> apport//&child-dpkg-divert,
   @{bin}/gdbus        rix,
   @{bin}/md5sum       rix,
+  @{bin}/gnumd5sum mrix,
 
   /usr/share/apport/{,**} r,
 
@@ -52,8 +58,13 @@ profile apport @{exec_path} flags=(attach_disconnected) {
         /var/crash/ rw,
         /var/crash/*.@{uid}.crash rw,
   owner /var/cache/apt/pkgcache.bin.@{rand6} rw,
+  owner /var/cache/apt/* rw,
   owner /var/log/apport.log rw,
 
+  @{run}/apport.socket rw,
+  owner /usr/share/dpkg/varianttable r,
+
+  /var/log/apport.log w,
   /{run,var}/log/journal/ r,
   /{run,var}/log/journal/@{hex32}/ r,
   /{run,var}/log/journal/@{hex32}/system.journal* r,
@@ -69,6 +80,10 @@ profile apport @{exec_path} flags=(attach_disconnected) {
         @{PROC}/@{pids}/cgroup r,
         @{PROC}/@{pids}/environ r,
         @{PROC}/@{pids}/fd/ r,
+        @{PROC}/*/[gu]id_map r,
+        @{PROC}/*/attr/current r,
+        @{PROC}/*/cmdline r,
+  owner @{PROC}/*/fdinfo/3 r,
         @{PROC}/@{pids}/stat r,
         @{PROC}/@{pids}/status r,
         @{PROC}/sys/fs/suid_dumpable w,

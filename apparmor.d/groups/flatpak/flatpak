@@ -21,6 +21,7 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted,complain
   include <abstractions/nameservice-strict>
   include <abstractions/ssl_certs>
   include <abstractions/user-dirs>
+  include <abstractions/user-tmp>
 
   userns,
 
@@ -75,8 +76,15 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted,complain
   @{bin}/fusermount{,3}      rCx -> fusermount,
   @{bin}/gpg                 rCx -> gpg,
   @{bin}/gpgconf             rCx -> gpg,
-  @{bin}/gpgsm               rCx -> gpg,
+  @{bin}/gpgsm               rCx -> gpgi,
+  @{bin}/desktop-file-validate mrix,
+  @{bin}/flatpak mrpx,
+  @{lib}/flatpak-validate-icon mrpx,
   @{lib}/revokefs-fuse       rix,
+  /usr/libexec/flatpak-validate-icon mr,
+  /usr/libexec/installed-tests/Flatpak/test.filter r,
+
+  /usr/share/ostree/trusted.gpg.d/ r,
 
   # For flatpack enter, the shell is not confined on purpose.
   @{bin}/@{shells}           rUx,
@@ -139,6 +147,9 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted,complain
   owner @{run}/user/@{uid}/app/ w,
   owner @{run}/user/@{uid}/app/*/ w,
   owner @{run}/user/@{uid}/systemd/private rw,
+  @{run}/log/journal/ r,
+
+  /var/log/journal/{,**} r,
 
   @{sys}/module/nvidia/version r,
 
@@ -150,9 +161,15 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted,complain
   /dev/tty rw,
   /dev/tty@{int} rw,
 
+  mount fstype=(fuse.revokefs-fuse) options=(nodev, nosuid, rw) revokefs-fuse,
+
+  unix (receive, send) type=(seqpacket),
+  unix (receive, send) type=(stream),
+
   profile gpg {
     include <abstractions/base>
     include <abstractions/consoles>
+    include <abstractions/user-tmp>
 
     capability dac_read_search,
 
@@ -167,7 +184,9 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted,complain
     owner @{tmp}/ostree-gpg-@{rand6}/ rw,
     owner @{tmp}/ostree-gpg-@{rand6}/** rwkl -> /tmp/ostree-gpg-@{rand6}/**,
 
-    owner @{PROC}/@{pid}/fd/ r,
+    owner @{run}/user/@{int}/gnupg/*/* w,
+
+    @{PROC}/*/fd/ r,
 
     include if exists <local/flatpak_gpg>
   }
@@ -181,8 +200,13 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted,complain
     unix type=seqpacket peer=(label=flatpak-system-helper),
     unix type=stream    peer=(label=flatpak),
 
+    mount fstype=(fuse.revokefs-fuse) options=(nodev, nosuid, rw) revokefs-fuse,
     mount fstype=fuse.revokefs-fuse options=(rw, nosuid, nodev) -> /var/tmp/flatpak-cache-*/*/,
     umount /var/tmp/flatpak-cache-*/*/,
+    umount /tmp/**/,
+
+    unix (receive, send) type=(seqpacket),
+    unix (receive, send) type=(stream),
 
     include if exists <local/flatpak_fusermount>
   }

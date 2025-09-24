@@ -11,6 +11,7 @@ include <tunables/global>
 profile systemd-detect-virt @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/consoles>
+  include <abstractions/user-tmp>
 
   capability sys_ptrace,
 
@@ -43,8 +44,10 @@ profile systemd-detect-virt @{exec_path} flags=(attach_disconnected) {
 
   /dev/cpu/@{int}/msr r,
 
+  owner /tmp/** mr,
+
   deny capability net_admin,
-  deny capability perfmon,
+  deny capability perfmon, # Needed by tests, do we really want to deny this?
   deny network (send receive) netlink raw,
 
   include if exists <local/systemd-detect-virt>

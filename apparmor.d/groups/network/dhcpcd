@@ -10,6 +10,7 @@ include <tunables/global>
 profile dhcpcd @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/nameservice-strict>
+  include <abstractions/bwrap>
 
   capability dac_override,
   capability dac_read_search,
@@ -35,6 +36,11 @@ profile dhcpcd @{exec_path} flags=(attach_disconnected) {
   @{bin}/chmod                    rix,
   @{bin}/cmp                      rix,
   @{bin}/mkdir                    rix,
+  @{bin}/gnucat mrix,
+  @{bin}/gnumkdir mrix,
+  @{bin}/gnurm mrix,
+  @{bin}/resolvectl mrpx,
+  @{bin}/systemctl mrix,
   @{sbin}/resolvconf              rPx,
   @{bin}/rm                       rix,
   @{bin}/sed                      rix,
@@ -51,6 +57,8 @@ profile dhcpcd @{exec_path} flags=(attach_disconnected) {
 
   @{run}/udev/data/n@{int} r,             # For network interfaces
 
+  owner /run/dhcpcd/ w,
+  owner /run/systemd/timesyncd.conf.d/dhcpcd-*.conf w,
   @{sys}/devices/@{pci}/uevent r,
   @{sys}/devices/virtual/dmi/id/product_uuid r,
   @{sys}/devices/virtual/net/**/{tun_flags,uevent} r,
@@ -59,9 +67,11 @@ profile dhcpcd @{exec_path} flags=(attach_disconnected) {
         @{PROC}/sys/net/ipv{4,6}/conf/** r,
         @{PROC}/sys/net/ipv{4,6}/conf/*/accept_ra rw,
         @{PROC}/sys/net/ipv{4,6}/conf/*/hop_limit w,
+        @{PROC}/sys/net/ipv{4,6}/conf/*/autoconf w,
         @{PROC}/sys/net/ipv{4,6}/neigh/*/{base_reachable_time_ms,retrans_time_ms} w,
   owner @{PROC}/@{pid}/net/if_inet6 r,
   owner @{PROC}/@{pid}/stat r,
+  owner @{PROC}/sys/net/** w,
 
   /dev/tty rw,
 

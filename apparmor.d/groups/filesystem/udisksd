@@ -11,6 +11,7 @@ include <tunables/global>
 profile udisksd @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus-system>
+  include <abstractions/desktop>
   include <abstractions/disks-write>
   include <abstractions/nameservice-strict>
 
@@ -94,8 +95,11 @@ profile udisksd @{exec_path} flags=(attach_disconnected) {
   /etc/libblockdev/{,**} r,
   /etc/nvme/* r,
   /etc/udisks2/{,**} r,
+  owner @{etc_rw}/udisks2/{,**} rw,
 
-  /var/lib/udisks2/{,**} r,
+  owner @{HOME}/.cache/ w,
+
+  /var/lib/udisks2/{,**} rw,
   /var/lib/udisks2/mounted-fs{,*} rw,
 
   # Be able to create/delete dirs for removable media
@@ -127,6 +131,7 @@ profile udisksd @{exec_path} flags=(attach_disconnected) {
   @{sys}/class/ r,
   @{sys}/class/nvme-subsystem/ r,
   @{sys}/class/nvme/ r,
+  @{sys}/devices/** w, # Pseudo devices
   @{sys}/devices/@{pci}/{ata,usb,mmc,virtio}@{int}/{,**/}uevent w,
   @{sys}/devices/@{pci}/{ata,usb,mmc}@{int}/{,**/}remove rw,
   @{sys}/devices/@{pci}/uevent rw,
@@ -137,7 +142,9 @@ profile udisksd @{exec_path} flags=(attach_disconnected) {
   @{sys}/devices/virtual/block/loop@{int}/uevent rw,
   @{sys}/devices/virtual/dmi/id/product_uuid r,
   @{sys}/devices/virtual/nvme-subsystem/{,**} r,
+  @{sys}/firmware/dmi/entries/{,**} r,
   @{sys}/fs/ r,
+  @{run}/systemd/inhibit/@{int}.ref w,
 
         @{PROC}/cmdline r,
         @{PROC}/devices r,

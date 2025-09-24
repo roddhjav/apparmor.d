@@ -11,6 +11,7 @@ include <tunables/global>
 profile fusermount @{exec_path} {
   include <abstractions/base>
   include <abstractions/app/fusermount>
+  include <abstractions/common/chromium>
 
   # Be able to mount ISO images
   mount fstype={fuse,fuse.*} -> @{HOME}/*/,
@@ -21,6 +22,8 @@ profile fusermount @{exec_path} {
   mount fstype={fuse,fuse.*} -> @{run}/user/@{uid}/*/,
   mount fstype={fuse,fuse.*} -> /var/tmp/flatpak-cache-*/*/,
   mount fstype={fuse,fuse.*} -> /tmp/.mount_*@{rand6}/,
+  mount fstype=(fuse) options=(nodev, nosuid, ro) borgfs,
+  mount fstype=(fuse.*) options=(nodev, nosuid, rw),
 
   umount @{HOME}/*/,
   umount @{HOME}/*/*/,
@@ -47,6 +50,10 @@ profile fusermount @{exec_path} {
   /tmp/.mount_*@{rand6}/ r,
 
   @{run}/user/@{uid}/doc/ r,
+
+  umount /tmp/**,
+
+  unix (receive, send) type=seqpacket,
 
   include if exists <local/fusermount>
 }

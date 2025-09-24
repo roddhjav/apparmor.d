@@ -15,6 +15,8 @@ profile ModemManager @{exec_path} flags=(attach_disconnected) {
   include <abstractions/consoles>
   include <abstractions/devices-usb>
   include <abstractions/dri>
+  include <abstractions/bwrap>
+  include <abstractions/user-tmp>
 
   capability net_admin,
   capability sys_admin,
@@ -37,9 +39,11 @@ profile ModemManager @{exec_path} flags=(attach_disconnected) {
   @{run}/udev/data/c18[0,8,9]:@{int} r,   # USB devices & USB serial converters
   @{run}/udev/data/c4:@{int} r,           # for /dev/tty[0-9]*
   @{run}/udev/data/c5:@{int} r,           # for /dev/tty, /dev/console, /dev/ptmx
+  @{run}/udev/data/c229:@{int} r,
   @{run}/udev/data/n@{int} r,             # For network interfaces
 
   @{att}/@{run}/systemd/inhibit/@{int}.ref rw,
+  owner @{run}/systemd/inhibit/@{int}.ref w,
 
   @{sys}/bus/ r,
   @{sys}/bus/usb/devices/ r,
@@ -48,9 +52,11 @@ profile ModemManager @{exec_path} flags=(attach_disconnected) {
   @{sys}/class/tty/ r,
   @{sys}/class/wwan/ r,
 
-  @{sys}/devices/**/net/*/ r,
-  @{sys}/devices/**/uevent r,
-  @{sys}/devices/virtual/tty/*/ r,
+  @{sys}/devices/** r,
+
+  owner /{etc,run}/netplan/{,*.yaml} r,
+  owner /{usr/,}lib{,32,64}/** rw,
+  ptrace read peer=unconfined,
 
   include if exists <local/ModemManager>
 }

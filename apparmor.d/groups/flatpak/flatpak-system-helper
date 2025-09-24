@@ -8,6 +8,7 @@ include <tunables/global>
 
 @{exec_path} = @{lib}/flatpak-system-helper
 profile flatpak-system-helper @{exec_path} {
+  include <abstractions/apache2-common>
   include <abstractions/base>
   include <abstractions/bus-system>
   include <abstractions/bus/org.freedesktop.PolicyKit1>
@@ -15,6 +16,7 @@ profile flatpak-system-helper @{exec_path} {
   include <abstractions/nameservice-strict>
   include <abstractions/p11-kit>
   include <abstractions/ssl_certs>
+  include <abstractions/user-tmp>
 
   capability chown,
   capability dac_override,
@@ -47,8 +49,11 @@ profile flatpak-system-helper @{exec_path} {
   /etc/flatpak/{,**} r,
   /etc/machine-id r,
 
+  /usr/libexec/installed-tests/Flatpak/test.filter r,
+
   /usr/share/flatpak/remotes.d/{,**} r,
   /usr/share/flatpak/triggers/ r,
+  /usr/share/ostree/trusted.gpg.d/ r,
 
   /var/lib/flatpak/{,**} rwkl,
   /var/tmp/flatpak-cache-*/{,**} rw,
@@ -65,6 +70,8 @@ profile flatpak-system-helper @{exec_path} {
   owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/fdinfo/@{int} r,
 
+  unix (receive, send) type=seqpacket,
+
   profile gpg {
     include <abstractions/base>
     include <abstractions/nameservice-strict>
@@ -79,8 +86,10 @@ profile flatpak-system-helper @{exec_path} {
     owner @{tmp}/ostree-gpg-@{rand6}/ r,
     owner @{tmp}/ostree-gpg-@{rand6}/** rwkl -> /tmp/ostree-gpg-@{rand6}/**,
 
-    owner @{PROC}/@{pid}/fd/ r,
+    @{PROC}/@{pid}/fd/ r,
     owner @{PROC}/@{pid}/task/@{tid}/comm rw,
+
+    owner @{run}/user/@{int}/gnupg/*/* w,
 
     include if exists <local/flatpak-system-helper_gpg>
   }

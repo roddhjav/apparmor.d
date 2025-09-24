@@ -16,8 +16,10 @@ profile NetworkManager @{exec_path} flags=(attach_disconnected) {
   include <abstractions/bus/org.freedesktop.login1>
   include <abstractions/bus/org.freedesktop.ModemManager1>
   include <abstractions/bus/org.freedesktop.PolicyKit1>
+  include <abstractions/bwrap>
   include <abstractions/nameservice-strict>
   include <abstractions/ssl_certs>
+  include <abstractions/user-tmp>
 
   capability audit_write,
   capability dac_override,
@@ -38,6 +40,8 @@ profile NetworkManager @{exec_path} flags=(attach_disconnected) {
   network inet6 raw,
   network netlink raw,
   network packet dgram,
+
+  ptrace read peer=unconfined,
 
   signal (send) set=(term) peer=dnsmasq,
 
@@ -105,6 +109,7 @@ profile NetworkManager @{exec_path} flags=(attach_disconnected) {
   @{lib}/{,NetworkManager/}nm-openvpn-service                rPx,
   @{lib}/{,NetworkManager/}nm-openvpn-service-openvpn-helper rPx,
   /usr/share/netplan/netplan.script                          rPx,
+  owner /{etc,run}/netplan/{,*.yaml} r,
 
   @{lib}/netplan/@{int2}-network-manager-all.yaml w,
 
@@ -130,6 +135,8 @@ profile NetworkManager @{exec_path} flags=(attach_disconnected) {
   /var/lib/iwd/*open* rw,
   /var/lib/NetworkManager/{,**} rw,
 
+  owner /{usr/,}lib{,32,64}/** rw,
+
   @{sys}/bus/ r,
   @{sys}/class/ r,
   @{sys}/class/net/ r,
@@ -149,12 +156,14 @@ profile NetworkManager @{exec_path} flags=(attach_disconnected) {
   @{run}/udev/data/+platform:* r,         # Identifies onboard devices (laptop/board model, power controllers, thermal sensors)
   @{run}/udev/data/+rfkill:* r,           # Kill switch for wireless devices (Wi-Fi, Bluetooth, NFC) to save power
   @{run}/udev/data/n@{int} r,             # For network interfaces
+  owner @{run}/systemd/inhibit/@{int}.ref w,
 
   @{sys}/devices/@{pci}/net/*/{,**} r,
   @{sys}/devices/@{pci}/usb@{int}/**/net/{,**} r,
   @{sys}/devices/**/@{uuid}/net/*/{,**} r,
   @{sys}/devices/**/uevent r,
-  @{sys}/devices/virtual/net/{,**} r,
+  @{sys}/devices/virtual/*/{,**} r,      # net, mac80211_hwsim, ...
+  owner @{sys}/devices/** r,
 
         @{PROC}/@{pids}/stat r,
         @{PROC}/1/environ r,

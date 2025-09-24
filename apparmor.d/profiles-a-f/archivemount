@@ -10,6 +10,7 @@ include <tunables/global>
 @{exec_path}  = @{bin}/archivemount
 profile archivemount @{exec_path} {
   include <abstractions/base>
+  include <abstractions/user-tmp>
 
   @{exec_path} mr,
 
@@ -24,15 +25,24 @@ profile archivemount @{exec_path} {
   owner @{HOME}/*/ r,
   owner @{HOME}/*/*/ r,
 
+  /dev/fuse rw,
+
+  unix (receive, send) type=stream,
+
+  mount fstype=(fuse.archivemount) options=(nodev, nosuid, rw),
   profile fusermount {
     include <abstractions/base>
     include <abstractions/app/fusermount>
+    include <abstractions/common/chromium>
 
     mount fstype={fuse,fuse.archivemount} -> @{HOME}/*/,
     mount fstype={fuse,fuse.archivemount} -> @{HOME}/*/*/,
+    mount fstype=(fuse.archivemount) options=(nodev, nosuid, rw),
 
     umount @{HOME}/*/,
     umount @{HOME}/*/*/,
+
+    unix (receive, send) type=stream,
 
     /**.{tar,tar.gz,zip} r,
     /**.{TAR,TAR.GZ,ZIP} r,

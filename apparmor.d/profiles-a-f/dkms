@@ -13,6 +13,7 @@ profile dkms @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/consoles>
   include <abstractions/nameservice-strict>
+  include <abstractions/user-tmp>
 
   capability dac_override,
   capability dac_read_search,
@@ -45,9 +46,49 @@ profile dkms @{exec_path} flags=(attach_disconnected) {
   @{bin}/readelf    rix,
   @{bin}/rpm       rPUx,
   @{bin}/strip      rix,
+  owner @{bin}/@{multiarch}-strip mr,
   @{bin}/xz         rix,
   @{bin}/zstd       rix,
   @{sbin}/update-secureboot-policy rPUx,
+
+  @{bin}/gnucat mrix,
+  @{bin}/gnuchmod mrix,
+  @{bin}/gnucp mrix,
+  @{bin}/gnucut mrix,
+  @{bin}/gnudate mrix,
+  @{bin}/gnuecho mrix,
+  @{bin}/gnufalse mrix,
+  @{bin}/gnuhead mrix,
+  @{bin}/gnuid mrix,
+  @{bin}/gnuln mrix,
+  @{bin}/gnuls mrix,
+  @{bin}/gnumkdir mrix,
+  @{bin}/gnumktemp mrix,
+  @{bin}/gnumv mrix,
+  @{bin}/gnunproc mrix,
+  @{bin}/gnureadlink mrix,
+  @{bin}/gnurmdir mrix,
+  @{bin}/gnurm mrix,
+  @{bin}/gnusleep mrix,
+  @{bin}/gnusort mrix,
+  @{bin}/gnutail mrix,
+  @{bin}/gnutouch mrix,
+  @{bin}/gnutr mrix,
+  @{bin}/gnuuname mrix,
+  @{bin}/gnuuniq mrix,
+  @{bin}/gnuwc mrix,
+  @{bin}/kmodsign mrix,
+  @{bin}/openssl mrix,
+  @{bin}/patch mrix,
+  @{bin}/python[23].* mrix,
+  @{bin}/@{multiarch}as mrix,
+  @{bin}/@{multiarch}gcc-15 mrix,
+  @{bin}/@{multiarch}ld.bfd mrix,
+  @{bin}/@{multiarch}nm mrix,
+  @{bin}/@{multiarch}strip mrix,
+  /usr/src/dkms_noisy_test-1.0/script.sh mrix,
+  /usr/src/dkms_scripts_test-1.0/script.sh mrix,
+
 
   @{lib}/gcc/@{multiarch}/@{version}/*         rix,
   @{lib}/linux-kbuild-*/scripts/**             rix,
@@ -70,6 +111,9 @@ profile dkms @{exec_path} flags=(attach_disconnected) {
   @{lib}/modules/*/updates/ rw,
   @{lib}/modules/*/updates/dkms/{,*,*/,**.ko.xz,**.ko.zst} rw,
   @{lib}/modules/*/kernel/drivers/{,*,*/,**.ko.xz,**.ko.zst} rw,
+  owner @{lib}/modules/**/initrd/ rw,
+
+  owner /usr/libexec/coreutils/libstdbuf.so mr,
 
   /etc/lsb-release r,
   /etc/dkms/{,**} r,
@@ -95,6 +139,7 @@ profile dkms @{exec_path} flags=(attach_disconnected) {
   owner /etc/kernel_key/*.crt r,
   owner /etc/kernel_key/*.key r,
   owner /etc/kernel_key/sign-kernel.sh rix,
+  owner @{etc_ro}/os-release r,
 
   owner @{HOME}/ r,
 
@@ -112,6 +157,8 @@ profile dkms @{exec_path} flags=(attach_disconnected) {
   profile kmod {
     include <abstractions/base>
     include <abstractions/app/kmod>
+
+    owner /usr/libexec/coreutils/libstdbuf.so mr,
 
     @{lib}/modules/*/modules.* rw,
     /var/lib/dkms/**/module/*.ko* r,

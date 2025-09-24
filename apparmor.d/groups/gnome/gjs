@@ -25,9 +25,11 @@ profile gjs @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus-session>
   include <abstractions/bus/org.gnome.Shell.Introspect>
+  include <abstractions/dbus-session>
   include <abstractions/consoles>
   include <abstractions/dconf-write>
   include <abstractions/fontconfig-cache-read>
+  include <abstractions/user-tmp>
 
   # Only needed by org.gnome.Shell.Extensions
   include <abstractions/gnome-strict>
@@ -60,6 +62,8 @@ profile gjs @{exec_path} flags=(attach_disconnected) {
        interface=org.freedesktop.DBus*
        peer=(name=org.freedesktop.DBus, label="@{p_dbus_system}"),
 
+  @{tmp}/autopkgtest.*/build.wUG/src/obj-x86_64-linux-gnu/src/run-js-test mrix,
+
   #aa:dbus own bus=session name=org.gnome.Shell.Screencast
   #aa:dbus talk bus=session name=org.gnome.Mutter.ScreenCast label=gnome-shell
 
@@ -89,11 +93,16 @@ profile gjs @{exec_path} flags=(attach_disconnected) {
   /usr/share/xkeyboard-config-2/{,**} r,
   /usr/share/thumbnailers/{,**} r,
 
+  @{sys}/devices/system/cpu/cpu@{int}/cpu_capacity r, ## gjs-console -> gjs
+
+  /usr/libexec/installed-tests/gjs/debugger/*.js r,
+
   owner @{gdm_cache_dirs}/gstreamer-@{int}.@{int}/registry.@{arch}.bin{,.tmp@{rand6}} rw,
   owner @{gdm_config_dirs}/dconf/user r,
   owner @{GDM_HOME}/greeter-dconf-defaults r,
 
   owner @{HOME}/ r,
+  owner @{HOME}/.cache/* rw,
 
   owner @{user_cache_dirs}/gstreamer-@{int}.@{int}/ rw,
   owner @{user_cache_dirs}/gstreamer-@{int}.@{int}/registry.@{arch}.bin{,.tmp@{rand6}} rw,

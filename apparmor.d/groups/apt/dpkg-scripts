@@ -12,9 +12,11 @@ profile dpkg-scripts @{exec_path} {
   include <abstractions/common/debconf>
   include <abstractions/disks-read>
   include <abstractions/python>
+  include <abstractions/user-tmp>
 
   capability chown,
   capability dac_read_search,
+  capability dac_override,
   capability fowner,
   capability fsetid,
   capability setgid,
@@ -47,6 +49,12 @@ profile dpkg-scripts @{exec_path} {
   @{sbin}/ldconfig                                Cx -> ldconfig,
   @{sbin}/ldconfig.real                           Cx -> ldconfig,
   @{sbin}/update-rc.d                             Cx -> rc,
+
+  @{bin}/gnucat mrix,
+  @{bin}/gnumkdir mrix,
+  @{bin}/gnurm mrix,
+  @{bin}/gnusha256sum mrix,
+  @{bin}/@{multiarch}ld.bfd mrix,
 
   #aa:lint ignore=too-wide
   # Maintainer scripts can legitimately start/restart anything
@@ -83,6 +91,10 @@ profile dpkg-scripts @{exec_path} {
   /tmp/sed@{rand6} rw,
   /tmp/tmp.@{rand10} rw,
   /tmp/updateppds.@{rand6} rw,
+  /tmp/debian-security-support.postinst.*/output w,
+
+  owner /{usr/,}lib{,32,64}/** rw,
+  owner @{sys}/class/iscsi_session/ r,
 
   @{PROC}/@{pid}/fd/ r,
   @{PROC}/@{pid}/mountinfo r,
@@ -116,12 +128,14 @@ profile dpkg-scripts @{exec_path} {
   profile systemctl {
     include <abstractions/base>
     include <abstractions/app/systemctl>
+    include <abstractions/mapping/sudo>
 
     capability net_admin,
     capability sys_ptrace,
     capability sys_resource,
 
     signal send set=(cont term) peer=systemd-tty-ask-password-agent,
+    signal send set=(cont term) peer=child-pager,
 
     ptrace read peer=@{p_systemd},
 
@@ -131,6 +145,9 @@ profile dpkg-scripts @{exec_path} {
     /etc/machine-id r,
 
     /var/lib/systemd/catalog/database r,
+
+    owner @{etc_ro}/nsswitch.conf r,
+    owner @{etc_ro}/systemd/system/{,*/} r,
 
     /{run,var}/log/journal/ r,
     /{run,var}/log/journal/@{hex32}/ r,
@@ -154,6 +171,11 @@ profile dpkg-scripts @{exec_path} {
     @{sbin}/update-rc.d     mr,
     @{sbin}/invoke-rc.d     mr,
 
+    /etc/init.d/nginx mrix,
+    @{bin}/dash ix,
+    @{bin}/gnubasename mrix,
+    @{bin}/gnuls mrix,
+
     @{coreutils_path}      rix,
     @{sh_path}             rix,
     @{bin}/systemctl       rPx -> dpkg-scripts//systemctl,
@@ -175,10 +197,16 @@ profile dpkg-scripts @{exec_path} {
     @{sh_path}              rix,
     @{sbin}/ldconfig       mrix,
     @{sbin}/ldconfig.real   rix,
+    owner @{bin}/dpkg-trigger mr,
+
+
+    @{bin}/dpkg-trigger mrpx,
+    owner @{etc_rw}/ld.so.cache{,~} rw,
 
     @{lib}/ r,
     /usr/local/ r,
     /usr/local/lib/ r,
+    owner /usr/libx32/{,*} r,
 
           /var/cache/ldconfig/ rw,
     owner /var/cache/ldconfig/aux-cache* rw,

@@ -26,6 +26,7 @@ include <tunables/global>
 profile openvpn @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/nameservice-strict>
+  include <abstractions/user-tmp>
 
   capability dac_override,
   capability dac_read_search,
@@ -41,12 +42,14 @@ profile openvpn @{exec_path} flags=(attach_disconnected) {
   network netlink raw,
 
   signal (receive) set=(term) peer=nm-openvpn-service,
+  signal receive set=term peer=pgrep,
 
   @{exec_path} mr,
 
   @{lib}/{,NetworkManager/}nm-openvpn-service-openvpn-helper rPx,
 
   /etc/openvpn/{,**} r,
+  owner @{etc_rw}/openvpn/{,**} rw,
 
   @{HOME}/.cert/{,**} r,
 

@@ -15,8 +15,10 @@ include <tunables/global>
 profile git @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/consoles>
+  include <abstractions/python>
   include <abstractions/nameservice-strict>
   include <abstractions/ssl_certs>
+  include <abstractions/user-tmp>
 
   network inet dgram,
   network inet6 dgram,
@@ -63,6 +65,11 @@ profile git @{exec_path} flags=(attach_disconnected) {
   @{bin}/wc          rix,
   @{bin}/whoami      rix,
 
+  @{bin}/gnubasename mrix,
+  @{bin}/gnurm mrix,
+  @{bin}/gnuuname mrix,
+  @{bin}/unix2dos mrix,
+
   @{pager_path}      rPx -> child-pager,
 
   @{bin}/gh         rPUx,
@@ -108,16 +115,22 @@ profile git @{exec_path} flags=(attach_disconnected) {
   profile gpg flags=(attach_disconnected) {
     include <abstractions/base>
     include <abstractions/consoles>
+    include <abstractions/user-tmp>
 
     @{bin}/gpg{,2}     mr,
     @{bin}/gpg-agent  rPx,
+
+    owner @{PROC}/*/fd/ r,
 
     owner @{HOME}/@{XDG_GPG_DIR}/ rw,
     owner @{HOME}/@{XDG_GPG_DIR}/** rwkl -> @{HOME}/@{XDG_GPG_DIR}/**,
 
     owner @{tmp}/.git_vtag_tmp@{rand6} r,
-
+    owner @{run}/user/@{uid}/gnupg/*/* rw,
     owner @{run}/user/@{uid}/gnupg/S.gpg-agent rw,
+    owner @{run}/user/*/gnupg/*/* rw,
+
+    owner @{PROC}/*/fd/ r,
 
     deny @{user_share_dirs}/gvfs-metadata/* r,
 

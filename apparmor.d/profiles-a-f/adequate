@@ -19,16 +19,22 @@ profile adequate @{exec_path} flags=(complain) {
   @{exec_path} r,
 
   @{sbin}/ldconfig       rix,
+  @{sbin}/ldconfig.real mrix,
+
+  @{sbin}/dhcpcd r,
 
   # It wants to ldd all binaries/libs in packages.
   @{bin}/ldd                 rCx -> ldd,
+  owner @{bin}/adequate-** r,
+
+  owner /usr/games/true r,
 
   # Think what to do about this (#FIXME#)
   /usr/share/debconf/frontend     rPx,
   #/usr/share/debconf/frontend    rCx -> frontend,
 
-  @{bin}/pkg-config          rCx -> pkg-config,
-  @{bin}/dpkg                rPx -> child-dpkg,
+  @{bin}/pkg-config          mrCx -> pkg-config,
+  @{bin}/dpkg                mrPx -> child-dpkg,
   # Do not strip env to avoid errors like the following:
   #  ERROR: ld.so: object 'libfakeroot-sysv.so' from LD_PRELOAD cannot be preloaded (cannot open
   #  shared object file): ignored.
@@ -45,6 +51,16 @@ profile adequate @{exec_path} flags=(complain) {
   /usr/share/**/__pycache__/ r,
   /usr/**/*.py r,
 
+  @{etc_ro}/ r,
+  @{etc_ro}/dbus-1/{,session.d,system.d}/ r,
+  @{etc_ro}/init.d/ r,
+  @{etc_ro}/init.d/dhcpcd r,
+  owner @{etc_ro}/init.d/{,sysvinit-script} r,
+
+  owner @{etc_ro}/ r,
+  owner @{etc_ro}/adequate/* r,
+  owner @{etc_ro}/dbus-1/{,**} r,
+
 
   profile ldd flags=(complain) {
     include <abstractions/base>
@@ -58,8 +74,7 @@ profile adequate @{exec_path} flags=(complain) {
     /usr/share/**                r,
 
     /opt/google/chrome{,-beta,-unstable}/google-chrome{,-beta,-unstable} mr,
-
-    @{lib}/@{multiarch}/ld-*.so rix,
+    @{lib}/@{multiarch}/ld-*.so mrix,
 
     include if exists <local/adequate_ldd>
   }

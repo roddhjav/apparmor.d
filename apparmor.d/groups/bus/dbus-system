@@ -64,6 +64,14 @@ profile dbus-system flags=(attach_disconnected) {
   @{att}/@{user_share_dirs}/icc/ r,
   @{att}/@{user_share_dirs}/icc/edid-@{hex32}.icc r,
 
+  # for tests
+  /usr/share/installed-tests/fwupd/fakedevice*.cab r,
+
+  signal (receive, send) set=hup peer=dbus-system//&unconfined,
+
+  unix (receive, send) type=stream,
+  unix (send) type=stream,
+
   # Dbus can receive any user files
   @{HOME}/** r,
 
@@ -72,6 +80,9 @@ profile dbus-system flags=(attach_disconnected) {
 
   @{run}/systemd/notify w,
   @{run}/systemd/users/@{int} r,
+  @{run}/systemd/inhibit/*.ref w,
+  @{run}/systemd/sessions/*.ref w,
+  @{run}/userdb/ r,
 
   @{sys}/kernel/security/apparmor/.access rw,
   @{sys}/kernel/security/apparmor/features/dbus/mask r,

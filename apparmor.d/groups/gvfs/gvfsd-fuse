@@ -15,6 +15,7 @@ profile gvfsd-fuse @{exec_path} {
   include <abstractions/bus/session/org.gtk.vfs.Mountable>
   include <abstractions/bus/session/org.gtk.vfs.Spawner>
   include <abstractions/nameservice-strict>
+  include <abstractions/user-tmp>
 
   capability sys_admin,
 
@@ -40,6 +41,8 @@ profile gvfsd-fuse @{exec_path} {
 
   /dev/fuse rw,
 
+  mount fstype=(fuse.gvfsd-fuse) options=(nodev, nosuid, rw) gvfsd-fuse,
+
   profile fusermount {
     include <abstractions/base>
     include <abstractions/app/fusermount>
@@ -47,7 +50,10 @@ profile gvfsd-fuse @{exec_path} {
     capability setuid,
 
     mount fstype={fuse,fuse.*} -> @{run}/user/@{uid}/gvfs/,
+    mount fstype=(fuse.gvfsd-fuse) options=(nodev, nosuid, rw) gvfsd-fuse,
     umount @{run}/user/@{uid}/**/,
+
+    owner @{etc_rw}/mtab.fuselock rwk,
 
     unix (send,receive) type=stream addr=none peer=(label=gvfsd-fuse),
 

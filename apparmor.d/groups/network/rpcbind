@@ -9,8 +9,12 @@ include <tunables/global>
 
 @{exec_path} = @{sbin}/rpcbind
 profile rpcbind @{exec_path} flags=(complain) {
+  include <abstractions/apache2-common>
   include <abstractions/base>
-  include <abstractions/nameservice-strict>
+  include <abstractions/common/chromium>
+  include <abstractions/hosts_access>
+  include <abstractions/mapping/sudo>
+  include <abstractions/nameservice>
 
   capability setgid,
   capability setuid,
@@ -18,9 +22,14 @@ profile rpcbind @{exec_path} flags=(complain) {
   @{exec_path} rm,
 
   /etc/netconfig r,
+  /etc/services r,
+  @{etc_ro}/nsswitch.conf r,
 
   @{run}/rpcbind.lock rwkl,
   @{run}/rpcbind/*.xdr rwkl,
+  @{run}/rpcbind.sock rw,
+  owner @{run}/rpcbind.lock rwk,
+  @{run}/systemd/notify w,
 
   include if exists <local/rpcbind>
 }

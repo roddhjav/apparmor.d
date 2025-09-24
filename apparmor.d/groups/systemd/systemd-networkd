@@ -12,7 +12,10 @@ profile systemd-networkd @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus-system>
   include <abstractions/bus/org.freedesktop.hostname1>
+  include <abstractions/bwrap>
+  include <abstractions/common/chromium>
   include <abstractions/common/systemd>
+  include <abstractions/mapping/sudo>
 
   capability bpf,
   capability net_admin,
@@ -46,6 +49,7 @@ profile systemd-networkd @{exec_path} flags=(attach_disconnected) {
 
   @{exec_path} mr,
 
+  /var/lib/systemd/network/ r,
   /var/lib/dbus/machine-id r,
   /etc/machine-id r,
 
@@ -53,6 +57,7 @@ profile systemd-networkd @{exec_path} flags=(attach_disconnected) {
   /etc/systemd/network/{,**} r,
   /etc/systemd/networkd.conf r,
   /etc/systemd/networkd.conf.d/{,**} r,
+  owner @{etc_ro}/nsswitch.conf r,
 
   /etc/networkd-dispatcher/carrier.d/{,*} r,
 
@@ -61,6 +66,8 @@ profile systemd-networkd @{exec_path} flags=(attach_disconnected) {
 
   @{run}/mount/utab r,
   @{run}/systemd/resolve/resolv.conf r,
+  @{run}/systemd/network/* r,
+  @{run}/systemd/notify w,
 
   owner @{att}/var/lib/systemd/network/ r,
 
@@ -75,6 +82,7 @@ profile systemd-networkd @{exec_path} flags=(attach_disconnected) {
 
   @{sys}/devices/@{pci}/ r,
   @{sys}/devices/@{pci}/rfkill@{int}/* r,
+  @{sys}/devices/**/ r,
   @{sys}/devices/**/net/** r,
   @{sys}/devices/virtual/dmi/id/{sys,board,bios}_vendor r,
   @{sys}/devices/virtual/dmi/id/product_name r,
@@ -82,6 +90,8 @@ profile systemd-networkd @{exec_path} flags=(attach_disconnected) {
   @{sys}/fs/cgroup/ r,
   @{sys}/kernel/btf/vmlinux r,
 
+  owner @{PROC}/*/setgroups  r,
+        @{PROC}/*/mountinfo r,
         @{PROC}/@{pid}/cgroup r,
         @{PROC}/pressure/* r,
         @{PROC}/sys/net/ipv{4,6}/** rw,

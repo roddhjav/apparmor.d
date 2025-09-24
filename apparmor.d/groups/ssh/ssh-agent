@@ -10,7 +10,9 @@ include <tunables/global>
 @{exec_path} = @{bin}/ssh-agent
 profile ssh-agent @{exec_path} {
   include <abstractions/base>
+  include <abstractions/common/chromium>
   include <abstractions/nameservice-strict>
+  include <abstractions/user-tmp>
 
   signal receive set=term peer=cockpit-bridge,
   signal receive set=term peer=cockpit-session,
@@ -21,6 +23,8 @@ profile ssh-agent @{exec_path} {
   @{sh_path}                   rix,
   @{bin}/gpg-agent             rPx,
   @{bin}/im-launch             rPx,
+  @{bin}/gnusleep mrix,
+  @{lib}/openssh/ssh-sk-helper mrix,
 
   owner @{HOME}/@{XDG_SSH_DIR}/ rw,
   owner @{HOME}/@{XDG_SSH_DIR}/* r,
@@ -37,6 +41,8 @@ profile ssh-agent @{exec_path} {
 
   /dev/tty@{int} rw,
   /dev/tty rw,
+
+  unix (receive, send) type=stream,
 
   include if exists <local/ssh-agent>
 }

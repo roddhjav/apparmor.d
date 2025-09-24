@@ -11,8 +11,10 @@ include <tunables/global>
 profile runuser @{exec_path} {
   include <abstractions/base>
   include <abstractions/authentication>
+  include <abstractions/bwrap>
   include <abstractions/consoles>
-  include <abstractions/nameservice-strict>
+  include <abstractions/nameservice>
+  include <abstractions/user-tmp>
   include <abstractions/wutmp>
 
   capability setuid,
@@ -25,14 +27,24 @@ profile runuser @{exec_path} {
   @{exec_path} mr,
 
   @{bin}/@{shells}    rUx,
+  @{bin}/gnuln mrix,
+  @{bin}/gnumkdir mrix,
+  @{bin}/pamtester mrix,
+  @{bin}/softhsm2-util mrix,
 
   @{etc_ro}/security/limits.d/ r,
   /etc/default/runuser r,
 
+  owner /usr/share/dbconfig-common/data/rsyslog-pgsql/install/pgsql r,
+
   owner @{tmp}/debian-security-support.postinst.*/output w,
+
+  owner @{run}/dbus/system_bus_socket rw,
 
         @{PROC}/1/limits r,
   owner @{PROC}/@{pid}/loginuid r,
+
+  unix (bind) type=stream addr=@@{hex}/bus/runuser/system,
 
   include if exists <local/runuser>
 }

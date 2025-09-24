@@ -12,10 +12,12 @@ profile sshd-session @{exec_path} flags=(attach_disconnected) {
   include <abstractions/authentication>
   include <abstractions/bus-system>
   include <abstractions/consoles>
+  include <abstractions/gvfs-open>
   include <abstractions/hosts_access>
-  include <abstractions/nameservice-strict>
+  include <abstractions/nameservice>
   include <abstractions/wutmp>
   include <mappings/sshd> #aa:only RBAC
+  include <abstractions/user-tmp>
 
   capability audit_write,
   capability chown,
@@ -57,11 +59,20 @@ profile sshd-session @{exec_path} flags=(attach_disconnected) {
   @{bin}/@{shells}                   Ux, #aa:exclude RBAC
   @{bin}/userdbctl                   Px,
   @{lib}/{openssh,ssh}/sshd-auth     Px,
+  /run/keycommand_ubuntu.* mrix,
+  /run/principals_command_ubuntu.* mrix,
+  @{lib}/openssh/ssh-sk-helper mrix,
 
   @{etc_rw}/motd r,
   @{etc_rw}/motd.d/{,**} r,
   /etc/machine-id r,
   /etc/motd r,
+  @{etc_ro}/legal r,
+  @{etc_ro}/ssh/moduli r,
+
+  @{run}/testdata_ubuntu.@{int} r,
+  owner @{run}/systemd/sessions/@{int}.ref w,
+  owner @{run}/userdb/ r,
 
   /var/lib/lastlog/ r,
   /var/lib/lastlog/lastlog2.db rwk,
@@ -70,6 +81,7 @@ profile sshd-session @{exec_path} flags=(attach_disconnected) {
   /var/lib/wtmpdb/ w,
 
   owner @{HOME}/@{XDG_SSH_DIR}/authorized_keys{,.*} r,
+  owner @{HOME}/run/gvfs_test_authorized_keys r,
 
   owner @{user_cache_dirs}/{,motd*} rw,
 
@@ -85,6 +97,8 @@ profile sshd-session @{exec_path} flags=(attach_disconnected) {
   owner @{PROC}/@{pid}/uid_map r,
 
   /dev/ptmx rw,
+
+  unix (receive, send) type=stream,
 
   include if exists <local/sshd-session>
 }

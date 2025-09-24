@@ -8,12 +8,16 @@ include <tunables/global>
 
 @{exec_path} = @{lib}/flatpak-portal
 profile flatpak-portal @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/apache2-common>
   include <abstractions/base>
   include <abstractions/bus-session>
   include <abstractions/bus-system>
   include <abstractions/bus/org.freedesktop.impl.portal.PermissionStore>
+  include <abstractions/common/game>
+  include <abstractions/gio-open>
   include <abstractions/mime>
   include <abstractions/nameservice-strict>
+  include <abstractions/user-tmp>
 
   capability sys_ptrace,
 
@@ -33,6 +37,13 @@ profile flatpak-portal @{exec_path} flags=(attach_disconnected) {
   @{exec_path} mr,
 
   @{bin}/flatpak rPx,
+  @{bin}/gpg mrpx,
+  @{bin}/gpgconf mpxr,
+  @{bin}/gpgsm mrpx,
+  @{lib}/installed-tests/Flatpak/mock-flatpak mrix,
+
+  /usr/libexec/installed-tests/Flatpak/share/xdg-desktop-portal/portals/ r,
+  /usr/libexec/installed-tests/Flatpak/share/xdg-desktop-portal/portals/test.portal r,
 
   /usr/share/xdg-desktop-portal/portals/{,*.portal} r,
 
@@ -46,6 +57,9 @@ profile flatpak-portal @{exec_path} flags=(attach_disconnected) {
 
   owner @{run}/user/@{uid}/.flatpak/@{int}/* r,
   owner @{run}/user/@{uid}/.flatpak/@{int}-private/* r,
+  @{run}/dbus/system_bus_socket rw,
+
+  unix (receive, send) type=stream,
 
   include if exists <local/flatpak-portal>
 }

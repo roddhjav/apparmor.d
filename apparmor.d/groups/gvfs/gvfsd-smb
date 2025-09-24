@@ -14,8 +14,10 @@ profile gvfsd-smb @{exec_path} {
   include <abstractions/bus/session/org.gtk.vfs.Daemon>
   include <abstractions/bus/session/org.gtk.vfs.Mountable>
   include <abstractions/bus/session/org.gtk.vfs.Spawner>
+  include <abstractions/dbus-session-strict>
   include <abstractions/dconf-write>
   include <abstractions/freedesktop.org>
+  include <abstractions/mapping/sudo>
 
   network netlink raw,
   network inet stream,
@@ -33,8 +35,14 @@ profile gvfsd-smb @{exec_path} {
   @{exec_path} mr,
 
   /etc/samba/smb.conf r,
+  @{etc_ro}/hosts r,
+  @{etc_ro}/nsswitch.conf r,
+
+  owner @{HOME}/** rwk,
 
   owner @{run}/user/@{uid}/gvfsd/socket-@{rand8} rw,
+
+  unix (receive, send) type=stream,
 
   include if exists <local/gvfsd-smb>
 }

@@ -13,8 +13,10 @@ profile ssh @{exec_path} {
   include <abstractions/consoles>
   include <abstractions/devices-u2f>
   include <abstractions/devices-usb>
+  include <abstractions/gvfs-open>
   include <abstractions/kerberosclient>
   include <abstractions/nameservice-strict>
+  include <abstractions/user-tmp>
 
   network inet stream,
   network inet6 stream,
@@ -36,11 +38,22 @@ profile ssh @{exec_path} {
   @{etc_ro}/ssh/ssh_config.d/{,*} r,
   @{etc_ro}/ssh/sshd_config r,
   @{etc_ro}/ssh/sshd_config.d/{,*} r,
+
+  owner @{etc_ro}/gss/mech.d/ r,
+
   /etc/machine-id r,
 
   owner @{HOME}/@{XDG_SSH_DIR}/{,*} r,
   owner @{HOME}/@{XDG_SSH_DIR}/known_hosts{,.*} rwl,
   owner @{HOME}/@{XDG_SSH_DIR}/ssh_control_*_*_* wl,
+
+  owner @{HOME}/run/gvfsd-sftp/* rwl,
+  owner @{HOME}/sshtest-key{,.pub} r,
+
+  @{tmp}/autopkgtest.*/autopkgtest_tmp/regress/knownhosts_command mrix,
+  @{bin}/dash ix,
+  @{lib}/openssh/ssh-sk-helper mrix,
+
 
   owner @{user_projects_dirs}/**/ssh/{,*} r,
   owner @{user_projects_dirs}/**/config r,
@@ -54,7 +67,10 @@ profile ssh @{exec_path} {
   owner @{run}/user/@{uid}/keyring/ssh rw,
 
   owner @{PROC}/@{pid}/loginuid r,
+
   owner @{PROC}/@{pid}/fd/ r,
+
+  unix (receive, send) type=stream,
 
   include if exists <local/ssh>
 }
