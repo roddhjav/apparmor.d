@@ -21,10 +21,11 @@ profile gnome-extension-gsconnect @{exec_path} {
   include <abstractions/bus/org.freedesktop.NetworkManager>
   include <abstractions/bus/session/org.gtk.Private.RemoteVolumeMonitor>
   include <abstractions/bus/session/org.gtk.vfs.Daemon>
-  include <abstractions/bus/session/org.mpris.MediaPlayer2.Player>
   include <abstractions/bus/session/org.gtk.vfs.MountOperation>
+  include <abstractions/bus/session/org.mpris.MediaPlayer2.Player>
   include <abstractions/dconf-write>
   include <abstractions/gnome-strict>
+  include <abstractions/mpris>
   include <abstractions/nameservice-strict>
   include <abstractions/notifications>
   include <abstractions/p11-kit>
@@ -37,7 +38,11 @@ profile gnome-extension-gsconnect @{exec_path} {
   network inet6 stream,
   network netlink raw,
 
-  #aa:dbus own bus=session name=org.gnome.Shell.Extensions.GSConnect interface+=org.gtk.{Actions,Menus}
+  unix type=stream addr=none peer=(label=gvfsd-*, addr=none),
+
+  #aa:dbus own bus=session name=org.gnome.Shell.Extensions.GSConnect interface+={org.freedesktop.Application,org.gtk.{Actions,Application,Menus}}
+
+  #aa:dbus own bus=session name=org.mpris.MediaPlayer2.GSConnect.*
 
   dbus eavesdrop bus=session,
 
@@ -49,6 +54,7 @@ profile gnome-extension-gsconnect @{exec_path} {
   @{bin}/openssl      rix,
   @{bin}/ssh-add      rix,
 
+  @{bin}/bwrap            rPx -> glycin,
   @{bin}/dconf            rPx,
   @{bin}/ssh-keygen       rPx,
   @{bin}/xdg-screensaver  rPx,
