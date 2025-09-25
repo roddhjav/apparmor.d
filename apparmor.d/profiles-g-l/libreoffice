@@ -8,7 +8,7 @@ include <tunables/global>
 
 @{exec_path}  = @{bin}/libreoffice @{bin}/soffice
 @{exec_path} += @{lib}/libreoffice/program/soffice
-profile libreoffice @{exec_path} {
+profile libreoffice @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/audio-client>
   include <abstractions/avahi-observe>
@@ -38,6 +38,11 @@ profile libreoffice @{exec_path} {
   network netlink raw,
 
   #aa:dbus own bus=session name=org.libreoffice interface+=org.gtk.Actions
+
+  dbus send bus=system path=/org/freedesktop/hostname1
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=@{busname}, label=systemd-hostnamed),
 
   @{exec_path} mr,
 
