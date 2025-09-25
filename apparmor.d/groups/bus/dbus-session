@@ -25,10 +25,12 @@ profile dbus-session flags=(attach_disconnected) {
 
   unix (send receive) type=stream addr=none peer=(label=gnome-shell, addr=none),
 
-  signal (receive) set=(term hup)      peer=gdm{,-*},
-  signal (send)    set=(term hup kill) peer=dbus-accessibility,
-  signal (send)    set=(term hup kill) peer=dconf-service,
-  signal (send)    set=(term hup kill) peer=xdg-*,
+  signal (send receive) set=kill peer=dbus-session//&unconfined,
+
+  signal receive set=(term hup)      peer=gdm{,-*},
+  signal send    set=(term hup kill) peer=dbus-accessibility,
+  signal send    set=(term hup kill) peer=dconf-service,
+  signal send    set=(term hup kill) peer=xdg-*,
 
   #aa:dbus own bus=session name=org.freedesktop.DBus path=/{,org/freedesktop/{dBus,DBus,dbus}}
   dbus receive bus=session
