@@ -33,7 +33,12 @@ profile dbus-system flags=(attach_disconnected) {
 
   ptrace read peer=@{p_systemd},
 
-  #aa:dbus own bus=system name=org.freedesktop.DBus path=/{,org/freedesktop/DBus}
+  # Internal stack dbus-system//&unconfined
+  signal (send receive) set=kill peer=dbus-system//&unconfined,
+  unix type=stream peer=(label=unconfined),
+
+  #aa:dbus own bus=system name=org.freedesktop.DBus path=/{,org/freedesktop/{dBus,DBus,dbus}}
+
   dbus receive bus=system path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus
        member={GetConnectionUnixProcessID,GetConnectionUnixUser,GetConnectionCredentials}
