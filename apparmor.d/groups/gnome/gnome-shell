@@ -2,6 +2,8 @@
 # Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
+# TODO: some gnome extension run from this profile. It would be better to have a way to separate them.
+
 abi <abi/4.0>,
 
 include <tunables/global>
@@ -18,7 +20,6 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/bus/net.reactivated.Fprint>
   include <abstractions/bus/org.freedesktop.background.Monitor>
   include <abstractions/bus/org.freedesktop.FileManager1>
-  include <abstractions/bus/org.freedesktop.GeoClue2>
   include <abstractions/bus/org.freedesktop.impl.portal.PermissionStore>
   include <abstractions/bus/system/org.freedesktop.locale1>
   include <abstractions/bus/org.freedesktop.PackageKit>
@@ -28,6 +29,7 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/bus/org.gnome.keyring.internal.Prompter>
   include <abstractions/bus/session/org.gtk.Private.RemoteVolumeMonitor>
   include <abstractions/bus/system/org.bluez>
+  include <abstractions/bus/system/org.freedesktop.locale1>
   include <abstractions/camera>
   include <abstractions/dconf-write>
   include <abstractions/fontconfig-cache-write>
@@ -35,6 +37,7 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/graphics>
   include <abstractions/gstreamer>
   include <abstractions/ibus-strict>
+  include <abstractions/localization>
   include <abstractions/media-control>
   include <abstractions/nameservice-strict>
   include <abstractions/notifications>
@@ -82,6 +85,8 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   #aa:dbus own bus=session name=org.kde.StatusNotifierItem path=/
   #aa:dbus own bus=session name=org.kde.StatusNotifierWatcher path=/StatusNotifierWatcher
 
+  # owning not strictly needed, but it simplifies things
+  #aa:dbus own bus=session name=org.mpris.MediaPlayer2
 
   # Talk with gnome-shell
 
@@ -133,11 +138,9 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
        member=JobRemoved
        peer=(name=@{busname}, label="@{p_systemd_user}"),
 
-  dbus send bus=session path=/MenuBar
-       interface=com.canonical.dbusmenu
-       member={AboutToShow,GetLayout,GetGroupProperties}
-       peer=(name=:*),
-
+  # FIXME: I think gnome-shell is the owner of the notifications, it should then be
+  # fully allowed to send/receive to/from anyone.
+  # FIXME: same for dbusmenu; icon things
   dbus send bus=session path=/StatusNotifierItem
        interface=org.freedesktop.DBus.Properties
        member={Get,GetAll}
@@ -147,6 +150,40 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
        interface=org.freedesktop.DBus.Properties
        member={Get,GetAll}
        peer=(name=@{busname}),
+
+  dbus receive bus=session
+       interface=org.gtk.Menus
+       member=Changed
+       peer=(name=@{busname}),
+  dbus send bus=session
+       interface=org.gtk.Menus
+       member=Start
+       peer=(name=@{busname}),
+
+  # Needed as a dbus server to administrate the mpris interface
+  include <abstractions/bus/accessibility/own>
+  dbus send bus=system path=/{,org/freedesktop/DBus}
+       interface=org.freedesktop.DBus
+       member={ListNames,RequestName,ReleaseName}
+       peer=(name=org.freedesktop.DBus, label="@{p_dbus_system}"),
+  dbus send bus=system path=/{,org/freedesktop/DBus}
+       interface=org.freedesktop.DBus
+       member={GetConnectionUnixProcessID,GetConnectionUnixUser,GetConnectionCredentials}
+       peer=(name=org.freedesktop.DBus, label="@{p_dbus_system}"),
+  dbus send bus=session path=/{,org/freedesktop/DBus}
+       interface=org.freedesktop.DBus
+       member={ListNames,RequestName,ReleaseName}
+       peer=(name=org.freedesktop.DBus, label="@{p_dbus_session}"),
+  dbus send bus=session path=/{,org/freedesktop/DBus}
+       interface=org.freedesktop.DBus
+       member={GetConnectionUnixProcessID,GetConnectionUnixUser,GetConnectionCredentials}
+       peer=(name=org.freedesktop.DBus, label="@{p_dbus_session}"),
+
+  dbus receive bus=system path=/org/freedesktop
+       interface=org.freedesktop.DBus.ObjectManager
+       member=InterfacesAdded
+       peer=(name=@{busname}, label=NetworkManager),
+
 
   dbus send bus=session
        interface=org.freedesktop.DBus.Introspectable
@@ -166,10 +203,10 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   @{bin}/gjs-console            rPx -> gnome-extension,
   @{bin}/glib-compile-schemas   rPx,
   @{bin}/ibus-daemon            rPx,
+  @{bin}/nvidia-smi             rPx, # FIXME: for extension only
   @{bin}/sensors                rPx,
   @{bin}/tecla                  rPx,
   @{bin}/Xwayland               rPx,
-  @{bin}/nvidia-smi             rPx, # FIXME; for extension only
   @{lib}/@{multiarch}/glib-2.0/glib-compile-schemas rPx,
   @{lib}/{,NetworkManager/}nm-openvpn-auth-dialog rPx,
   @{lib}/mutter-x11-frames      rPx,
