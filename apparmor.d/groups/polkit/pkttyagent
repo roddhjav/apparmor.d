@@ -21,6 +21,16 @@ profile pkttyagent @{exec_path} {
   ptrace read,
   signal (send, receive),
 
+  dbus receive bus=system path=/org/freedesktop/PolicyKit1/AuthenticationAgent
+       interface=org.freedesktop.PolicyKit1.AuthenticationAgent
+       member=BeginAuthentication
+       peer=(name=@{busname}, label="@{p_polkitd}"),
+
+  dbus send bus=system path=/org/freedesktop/PolicyKit1/Authority
+       interface=org.freedesktop.PolicyKit1.Authority
+       member=RegisterAuthenticationAgentWithOptions
+       peer=(name=@{busname}, label="@{p_polkitd}"),
+
   @{exec_path} mr,
 
   @{lib}/polkit-[0-9]/polkit-agent-helper-[0-9]  rPx,
