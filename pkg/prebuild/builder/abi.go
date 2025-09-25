@@ -17,9 +17,16 @@ var (
 		`  all`, `  # all`,
 		`  deny mqueue`, `  # deny mqueue`,
 	})
+	regApparmor41To40 = util.ToRegexRepl([]string{
+		`priority=[0-9\-]*`, ``,
+	})
 )
 
 type ABI3 struct {
+	prebuild.Base
+}
+
+type APPARMOR40 struct {
 	prebuild.Base
 }
 
@@ -30,8 +37,18 @@ func init() {
 			Msg:     "Build: convert all profiles from abi 4.0 to abi 3.0",
 		},
 	})
+	RegisterBuilder(&APPARMOR40{
+		Base: prebuild.Base{
+			Keyword: "apparmor4.0",
+			Msg:     "Build: convert all profiles from apparmor 4.1 to 4.0 or less",
+		},
+	})
 }
 
 func (b ABI3) Apply(opt *Option, profile string) (string, error) {
 	return regAbi4To3.Replace(profile), nil
+}
+
+func (b APPARMOR40) Apply(opt *Option, profile string) (string, error) {
+	return regApparmor41To40.Replace(profile), nil
 }
