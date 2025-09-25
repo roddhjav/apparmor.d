@@ -1,0 +1,53 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2018-2021 Mikhail Morfikov
+# Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+  # The fontconfig cache can be generated via the following command:
+  #   $ fc-cache -f -v
+  #
+  # There is no need to give apps the ability to create cache for their own.
+  # However, apps can generate the fontconfig cache if some cache files are missing.
+  # Therefore, if this behavior is desirable, you can use
+  #   <abstractions/fontconfig-cache-write>
+  # If not, you can block writing to the cache directories with
+  #   <abstractions/fontconfig-cache-ro>
+
+  abi <abi/4.0>,
+
+  /var/cache/fontconfig/ r,
+  /var/cache/fontconfig/CACHEDIR.TAG r,
+  /var/cache/fontconfig/@{hex32}-le{32,64}{,d4}.cache-@{d} r,
+  /var/cache/fontconfig/@{hex32}-le{32,64}{,d4}.cache-@{d}.TMP-@{rand6} r,
+
+  owner @{gdm_cache_dirs}/fontconfig/ r,
+  owner @{gdm_cache_dirs}/fontconfig/CACHEDIR.TAG r,
+  owner @{gdm_cache_dirs}/fontconfig/CACHEDIR.TAG.LCK r,
+  owner @{gdm_cache_dirs}/fontconfig/CACHEDIR.TAG.NEW r,
+  owner @{gdm_cache_dirs}/fontconfig/CACHEDIR.TAG.TMP-@{rand6} r,
+  owner @{gdm_cache_dirs}/fontconfig/@{hex32}-le{32,64}{,d4}.cache-@{d} r,
+  owner @{gdm_cache_dirs}/fontconfig/@{hex32}-le{32,64}{,d4}.cache-@{d}.TMP-@{rand6} r,
+
+  owner @{HOME}/.fontconfig/ r,
+  owner @{HOME}/.fontconfig/CACHEDIR.TAG r,
+  owner @{HOME}/.fontconfig/@{hex32}-le{32,64}{,d4}.cache-@{d} r,
+  owner @{HOME}/.fontconfig/@{hex32}-le{32,64}{,d4}.cache-@{d}.TMP-@{rand6} r,
+
+  owner @{user_cache_dirs}/fontconfig/ r,
+  owner @{user_cache_dirs}/fontconfig/CACHEDIR.TAG r, # {,.NEW,.LCK,.TMP-*} r,
+  owner @{user_cache_dirs}/fontconfig/@{hex32}-le{32,64}{,d4}.cache-@{d} r, # {,.NEW,.LCK,.TMP-*} r,
+  owner @{user_cache_dirs}/fontconfig/@{hex32}-le{32,64}{,d4}.cache-@{d}.TMP-@{rand6} r,
+
+  # This is to create .uuid file containing an UUID at a font directory. The UUID will be used to
+  # identify the font directory and is used to determine the cache filename if available.
+        /usr/share/**/.uuid  r,
+  owner /usr/local/share/fonts/ r,
+  owner /usr/local/share/fonts/.uuid r,
+  owner @{HOME}/.fonts/ r,
+  owner @{HOME}/.fonts/.uuid r,
+  owner @{user_share_dirs}/fonts/ r,
+  owner @{user_share_dirs}/fonts/**/.uuid r,
+
+  include if exists <abstractions/fontconfig-cache.d>
+
+# vim:syntax=apparmor
