@@ -133,8 +133,15 @@ func Configure() {
 	}
 	switch prebuild.ABI {
 	case 3:
-		builder.Register("abi3") // Convert all profiles from abi 4.0 to abi 3.0
+		builder.Register("abi3")        // Convert all profiles from abi 4.0 to abi 3.0
+		builder.Register("apparmor4.0") // Convert convert all profiles from apparmor 4.1 to 4.0 or less
+
 	case 4:
+		// priority support was added in 4.1
+		if prebuild.Version == 4.0 {
+			builder.Register("apparmor4.0")
+		}
+
 		// Re-attach disconnected path
 		if prebuild.Distribution == "ubuntu" && prebuild.Version >= 4.1 {
 			// Ignored on ubuntu 25.04+ due to a memory leak that fully prevent
