@@ -3,42 +3,67 @@
 # Copyright (C) 2022-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
+# See <abstractions/fontconfig-cache> for documentation.
+
   abi <abi/4.0>,
 
-  owner @{user_cache_dirs}/fontconfig/ rw,
-  owner @{user_cache_dirs}/fontconfig/CACHEDIR.TAG{,.NEW,.LCK,.TMP-*} rw,
-  owner @{user_cache_dirs}/fontconfig/[a-f0-9]*.cache-?{,.NEW,.LCK,.TMP-*} rwk,
-  owner @{user_cache_dirs}/fontconfig/*-le64.cache-@{int} w,
-  owner @{user_cache_dirs}/fontconfig/*-le64.cache-@{int}{,TMP-@{rand6},NEW,LCK} w,
+  include <abstractions/fontconfig-cache>
 
-  owner @{HOME}/.fontconfig/ rw,
-  owner @{HOME}/.fontconfig/CACHEDIR.TAG{,.NEW,.LCK,.TMP-*} rw,
-  owner @{HOME}/.fontconfig/[a-f0-9]*.cache-?{,.NEW,.LCK,.TMP-*} rwk,
+  owner /var/cache/fontconfig/ w,
+  owner /var/cache/fontconfig/CACHEDIR.TAG w,
+  owner /var/cache/fontconfig/CACHEDIR.TAG.LCK wl,
+  owner /var/cache/fontconfig/CACHEDIR.TAG.NEW w,
+  owner /var/cache/fontconfig/CACHEDIR.TAG.TMP-@{rand6} w,
+  owner /var/cache/fontconfig/@{uuid}-le{32,64}{,d4}.cache-@{d} wl,
+  owner /var/cache/fontconfig/@{uuid}-le{32,64}{,d4}.cache-@{d}.LCK wl,
+  owner /var/cache/fontconfig/@{uuid}-le{32,64}{,d4}.cache-@{d}.NEW w,
+  owner /var/cache/fontconfig/@{uuid}-le{32,64}{,d4}.cache-@{d}.TMP-@{rand6} w,
+  owner /var/cache/fontconfig/@{hex32}-le{32,64}{,d4}.cache-@{d} wl,
+  owner /var/cache/fontconfig/@{hex32}-le{32,64}{,d4}.cache-@{d}.LCK wl,
+  owner /var/cache/fontconfig/@{hex32}-le{32,64}{,d4}.cache-@{d}.NEW w,
+  owner /var/cache/fontconfig/@{hex32}-le{32,64}{,d4}.cache-@{d}.TMP-@{rand6} w,
 
-  owner @{HOME}/.fonts/ rw,
-   link @{HOME}/.fonts/.uuid.LCK -> @{HOME}/.fonts/.uuid.TMP-*,
-  owner @{HOME}/.fonts/.uuid{,.NEW,.LCK,.TMP-*}  r,
-  owner @{HOME}/.fonts/.uuid{,.NEW,.LCK,.TMP-*}  w,
+  owner @{gdm_cache_dirs}/fontconfig/ w,
+  owner @{gdm_cache_dirs}/fontconfig/@{hex32}-le{32,64}{,d4}.cache-@{d} wl,
+  owner @{gdm_cache_dirs}/fontconfig/@{hex32}-le{32,64}{,d4}.cache-@{d}.LCK wl,
+  owner @{gdm_cache_dirs}/fontconfig/@{hex32}-le{32,64}{,d4}.cache-@{d}.NEW w,
+  owner @{gdm_cache_dirs}/fontconfig/@{hex32}-le{32,64}{,d4}.cache-@{d}.TMP-@{rand6} w,
+  owner @{gdm_cache_dirs}/fontconfig/@{uuid}-le{32,64}{,d4}.cache-@{d}.NEW w,
+  owner @{gdm_cache_dirs}/fontconfig/@{uuid}-le{32,64}{,d4}.cache-@{d}.TMP-@{rand6} w,
+  owner @{gdm_cache_dirs}/fontconfig/@{uuid}-le{32,64}{,d4}.cache-@{d} wl,
+  owner @{gdm_cache_dirs}/fontconfig/@{uuid}-le{32,64}{,d4}.cache-@{d}.LCK wl,
+  owner @{gdm_cache_dirs}/fontconfig/CACHEDIR.TAG w,
+  owner @{gdm_cache_dirs}/fontconfig/CACHEDIR.TAG.LCK wl,
+  owner @{gdm_cache_dirs}/fontconfig/CACHEDIR.TAG.NEW w,
+  owner @{gdm_cache_dirs}/fontconfig/CACHEDIR.TAG.TMP-@{rand6} w,
 
-  # This is to create .uuid file containing an UUID at a font directory. The UUID will be used to
-  # identify the font directory and is used to determine the cache filename if available.
-  owner /usr/local/share/fonts/ rw,
-  owner /usr/local/share/fonts/.uuid{,.NEW,.LCK,.TMP-*} rw,
-   link /usr/local/share/fonts/.uuid.LCK -> /usr/local/share/fonts/.uuid.TMP-*,
-  # Should writing to these dirs be blocked?
-        /usr/share/**/.uuid{,.NEW,.LCK,.TMP-*}  r,
-  deny  /usr/share/**/.uuid{,.NEW,.LCK,.TMP-*}  w,
+  owner @{HOME}/.fontconfig/ w,
+  owner @{HOME}/.fontconfig/fontconfig/@{hex32}-le{32,64}{,d4}.cache-@{d} wl,
+  owner @{HOME}/.fontconfig/@{hex32}-le{32,64}{,d4}.cache-@{d}.LCK wl,
+  owner @{HOME}/.fontconfig/@{hex32}-le{32,64}{,d4}.cache-@{d}.NEW w,
+  owner @{HOME}/.fontconfig/@{hex32}-le{32,64}{,d4}.cache-@{d}.TMP-@{rand6} w,
+  owner @{HOME}/.fontconfig/@{uuid}-le{32,64}{,d4}.cache-@{d}.NEW w,
+  owner @{HOME}/.fontconfig/@{uuid}-le{32,64}{,d4}.cache-@{d}.TMP-@{rand6} w,
+  owner @{HOME}/.fontconfig/@{uuid}-le{32,64}{,d4}.cache-@{d} wl,
+  owner @{HOME}/.fontconfig/@{uuid}-le{32,64}{,d4}.cache-@{d}.LCK wl,
+  owner @{HOME}/.fontconfig/CACHEDIR.TAG w,
+  owner @{HOME}/.fontconfig/CACHEDIR.TAG.LCK wl,
+  owner @{HOME}/.fontconfig/CACHEDIR.TAG.NEW w,
+  owner @{HOME}/.fontconfig/CACHEDIR.TAG.TMP-@{rand6} w,
 
-        /var/cache/fontconfig/ rw,
-  owner /var/cache/fontconfig/** rw,
-  owner /var/cache/fontconfig/*.cache-@{int} rwk,
-  owner /var/cache/fontconfig/*.cache-@{int}.LCK rwl,
-  owner /var/cache/fontconfig/CACHEDIR.TAG.LCK rwl,
-
-  # For fonts downloaded via font-manager (###FIXME### when they fix resolving of vars)
-  owner @{user_share_dirs}/fonts/ rw,
-  owner @{user_share_dirs}/fonts/**/.uuid{,.NEW,.LCK,.TMP-*} rw,
-   link @{user_share_dirs}/fonts/**/.uuid.LCK -> @{user_share_dirs}/fonts/**/.uuid.TMP-*,
+  owner @{user_cache_dirs}/fontconfig/ w,
+  owner @{user_cache_dirs}/fontconfig/@{hex32}-le{32,64}{,d4}.cache-@{d} wl,
+  owner @{user_cache_dirs}/fontconfig/@{hex32}-le{32,64}{,d4}.cache-@{d}.LCK wl,
+  owner @{user_cache_dirs}/fontconfig/@{hex32}-le{32,64}{,d4}.cache-@{d}.NEW w,
+  owner @{user_cache_dirs}/fontconfig/@{hex32}-le{32,64}{,d4}.cache-@{d}.TMP-@{rand6} w,
+  owner @{user_cache_dirs}/fontconfig/@{uuid}-le{32,64}{,d4}.cache-@{d}.NEW w,
+  owner @{user_cache_dirs}/fontconfig/@{uuid}-le{32,64}{,d4}.cache-@{d}.TMP-@{rand6} w,
+  owner @{user_cache_dirs}/fontconfig/@{uuid}-le{32,64}{,d4}.cache-@{d} wl,
+  owner @{user_cache_dirs}/fontconfig/@{uuid}-le{32,64}{,d4}.cache-@{d}.LCK wl,
+  owner @{user_cache_dirs}/fontconfig/CACHEDIR.TAG w,
+  owner @{user_cache_dirs}/fontconfig/CACHEDIR.TAG.LCK wl,
+  owner @{user_cache_dirs}/fontconfig/CACHEDIR.TAG.NEW w,
+  owner @{user_cache_dirs}/fontconfig/CACHEDIR.TAG.TMP-@{rand6} w,
 
   include if exists <abstractions/fontconfig-cache-write.d>
 
