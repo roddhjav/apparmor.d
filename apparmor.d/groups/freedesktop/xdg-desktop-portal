@@ -20,8 +20,9 @@ profile xdg-desktop-portal @{exec_path} flags=(attach_disconnected) {
   include <abstractions/bus/org.freedesktop.UPower.PowerProfiles>
   include <abstractions/consoles>
   include <abstractions/dconf-write>
+  include <abstractions/desktop-files>
   include <abstractions/devices-usb-read>
-  include <abstractions/freedesktop.org>
+  include <abstractions/mime>
   include <abstractions/nameservice-strict>
   include <abstractions/thumbnails-cache-read>
   include <abstractions/trash-strict>
@@ -36,25 +37,27 @@ profile xdg-desktop-portal @{exec_path} flags=(attach_disconnected) {
   signal receive set=term peer=gdm,
   signal receive set=hup  peer=gdm-session-worker,
 
-  #aa:dbus own bus=session name=org.freedesktop.portal.Desktop path=/org/freedesktop/portal/desktop interface={org.freedesktop.DBus.Properties,org.freedesktop{,.impl}.portal.{Settings,Background}}
-  dbus receive bus=session path=/org/freedesktop/portal/desktop
-       interface=org.freedesktop.portal.Realtime
-       member=MakeThread*
-       peer=(name=@{busname}),
+  unix type=stream peer=(label=snap.*),
+
+  #aa:dbus own bus=session name=org.freedesktop.portal interface+=org.freedesktop.impl.portal
+
+  # Receive registertration of from anyone
   dbus receive bus=session path=/org/freedesktop/portal/desktop
        interface=org.freedesktop.host.portal.Registry
        member=Register
        peer=(name=@{busname}),
-  dbus receive bus=session path=/org/freedesktop/portal/desktop
-       interface=org.freedesktop.portal.NetworkMonitor
-       member=GetStatus
-       peer=(name=@{busname}, label=snap.*),
+
+  dbus send bus=session path=/org/freedesktop/portal/desktop/session/1_125/gtk904232872
+       interface=org.freedesktop.impl.portal.Session
+       member=Close
+       peer=(name=@{busname}, label=xdg-desktop-portal-gtk),
 
   #aa:dbus own bus=session name=org.freedesktop.background.Monitor path=/org/freedesktop/background/monitor
 
-  #aa:dbus talk bus=session name=org.freedesktop.impl.portal.Inhibit label=xdg-desktop-portal-gtk
   #aa:dbus talk bus=session name=org.freedesktop.FileManager1 label=nautilus
   #aa:dbus talk bus=session name=org.freedesktop.impl.portal.FileChooser label=xdg-desktop-portal-gnome
+  #aa:dbus talk bus=session name=org.freedesktop.impl.portal.GlobalShortcuts path=/org/freedesktop/portal/desktop label=xdg-desktop-portal-gnome
+  #aa:dbus talk bus=session name=org.freedesktop.impl.portal.Inhibit label=xdg-desktop-portal-gtk
   #aa:dbus talk bus=session name=org.freedesktop.portal.Documents path=/org/freedesktop/portal/documents label=xdg-document-portal
 
   dbus receive bus=session
@@ -69,6 +72,7 @@ profile xdg-desktop-portal @{exec_path} flags=(attach_disconnected) {
 
   @{bin}/kreadconfig{,5}                  rPx,
   @{lib}/xdg-desktop-portal-validate-icon rPx,
+  @{lib}/browserpass/browserpass-native   rPx,
   @{open_path}                           mrPx -> child-open,
 
         / r,
@@ -93,6 +97,7 @@ profile xdg-desktop-portal @{exec_path} flags=(attach_disconnected) {
 
   owner @{run}/user/@{uid}/.flatpak/{,*/*} r,
 
+  @{sys}/devices/**/uevent r,
   @{sys}/devices/virtual/dmi/id/bios_vendor r,
   @{sys}/devices/virtual/dmi/id/board_vendor r,
   @{sys}/devices/virtual/dmi/id/product_name r,
