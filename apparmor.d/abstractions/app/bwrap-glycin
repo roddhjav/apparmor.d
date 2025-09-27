@@ -1,9 +1,10 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
+# LOGPROF-SUGGEST: no
 
 # Base set of rules for glycin-loaders sandboxed with bwrap.
-# - It is safe to use when used like in the glycin profile.
+# - It is very safe to use when used like in the glycin profile.
 # - It is **not** safe to use when used by a profile stacking glycin
 
 # See https://github.com/roddhjav/apparmor.d/issues/881 for more details.
@@ -16,9 +17,9 @@
   unix type=stream peer=(label=glycin),
   unix type=stream peer=(label=glycin//loaders),
 
-  signal send set=kill peer=@{profile_name},
-  signal send set=kill peer=@{profile_name}//&glycin,
-  signal send set=kill peer=glycin,
+  signal (send receive) set=kill peer=@{profile_name},
+  signal (send receive) set=kill peer=@{profile_name}//&glycin,
+  signal (send receive) set=kill peer=glycin,
 
   ptrace read peer=@{profile_name},
   ptrace read peer=@{profile_name}//&glycin,
