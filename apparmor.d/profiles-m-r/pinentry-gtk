@@ -10,9 +10,20 @@ include <tunables/global>
 @{exec_path} = @{bin}/pinentry-gtk{,-2}
 profile pinentry-gtk @{exec_path} {
   include <abstractions/base>
+  include <abstractions/bus-session>
   include <abstractions/consoles>
   include <abstractions/fontconfig-cache-read>
   include <abstractions/desktop>
+
+  dbus receive bus=session path=/org/gnome/keyring/Prompt/p@{int}
+       interface=org.gnome.keyring.internal.Prompter.Callback
+       member={PromptReady,PromptDone}
+       peer=(name=@{busname}),
+
+  dbus send bus=session path=/org/gnome/keyring/Prompter
+       interface=org.gnome.keyring.internal.Prompter
+       member={BeginPrompting,PerformPrompt,StopPrompting}
+       peer=(name=org.gnome.keyring.SystemPrompter),
 
   @{exec_path} mr,
 
