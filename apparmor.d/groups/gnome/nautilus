@@ -28,6 +28,8 @@ profile nautilus @{exec_path} flags=(attach_disconnected) {
 
   unix type=stream peer=(label=gnome-shell),
 
+  signal send set=kill peer=gnome-desktop-thumbnailers,
+
   #aa:dbus own bus=session name=org.freedesktop.FileManager1
   #aa:dbus own bus=session name=org.gnome.Nautilus interface+=org.gtk.{Application,Actions}
   #aa:dbus own bus=session name=org.gnome.Nautilus.SearchProvider interface+=org.gnome.Shell.SearchProvider2
@@ -128,6 +130,11 @@ profile nautilus @{exec_path} flags=(attach_disconnected) {
   @{sys}/devices/**/hwmon@{int}/**/{,name,temp*,fan*} r,
   @{sys}/devices/**/hwmon/{,name,temp*,fan*} r,
   @{sys}/devices/**/hwmon/**/{,name,temp*,fan*} r,
+
+        @{sys}/fs/cgroup/user.slice/cpu.max r,
+        @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/cpu.max r,
+        @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/cpu.max r,
+  owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/cpu.max r,
 
         @{PROC}/@{pids}/net/wireless r,
         @{PROC}/sys/dev/i915/perf_stream_paranoid r,
