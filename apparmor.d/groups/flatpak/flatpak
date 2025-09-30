@@ -152,6 +152,10 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted,complain
   /dev/tty rw,
   /dev/tty@{int} rw,
 
+  #aa:only test
+  mount fstype=fuse.revokefs-fuse options=(rw, nosuid, nodev) revokefs-fuse -> /tmp/test-flatpak-*/**,
+  /tmp/test-flatpak-@{rand6}/{,**} rw,
+
   profile gpg {
     include <abstractions/base>
     include <abstractions/consoles>
@@ -185,6 +189,11 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted,complain
 
     mount fstype=fuse.revokefs-fuse options=(rw, nosuid, nodev) -> /var/tmp/flatpak-cache-*/*/,
     umount /var/tmp/flatpak-cache-*/*/,
+
+    #aa:only test
+    mount fstype=fuse.revokefs-fuse options=(rw, nosuid, nodev) revokefs-fuse -> /tmp/test-flatpak.*/**,
+    umount /tmp/test-flatpak-@{rand6}/**,
+    /tmp/test-flatpak-@{rand6}/{,**} rw,
 
     include if exists <local/flatpak_fusermount>
   }
