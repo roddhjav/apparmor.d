@@ -73,7 +73,13 @@ variable "prefix" {
 variable "dist" {
   description = "Distribution to target"
   type        = string
-  default     = "ubuntu24"
+  default     = "ubuntu"
+}
+
+variable "version" {
+  description = "Version to target"
+  type        = string
+  default     = "25.10"
 }
 
 variable "flavor" {
@@ -101,17 +107,21 @@ variable "DM" {
       img_url      = "https://cdimage.debian.org/images/cloud/trixie/latest/debian-13-genericcloud-amd64.qcow2"
       img_checksum = "https://cdimage.debian.org/images/cloud/trixie/latest/SHA512SUMS"
     }
-    "ubuntu22" : {
+    "ubuntu22.04" : {
       img_url      = "https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img"
       img_checksum = "https://cloud-images.ubuntu.com/jammy/current/SHA256SUMS"
     },
-    "ubuntu24" : {
+    "ubuntu24.04" : {
       img_url      = "https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img"
       img_checksum = "https://cloud-images.ubuntu.com/noble/current/SHA256SUMS"
     },
-    "ubuntu25" : {
+    "ubuntu25.04" : {
       img_url      = "https://cloud-images.ubuntu.com/plucky/current/plucky-server-cloudimg-amd64.img"
       img_checksum = "https://cloud-images.ubuntu.com/plucky/current/SHA256SUMS"
+    },
+    "ubuntu25.10" : {
+      img_url      = "https://cloud-images.ubuntu.com/questing/current/questing-server-cloudimg-amd64.img"
+      img_checksum = "https://cloud-images.ubuntu.com/questing/current/SHA256SUMS"
     },
     "opensuse" : {
       img_url      = "https://download.opensuse.org/tumbleweed/appliances/openSUSE-Tumbleweed-Minimal-VM.x86_64-Cloud.qcow2"
