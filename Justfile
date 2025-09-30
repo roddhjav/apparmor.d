@@ -194,7 +194,7 @@ local +names:
 dev name:
 	go run ./cmd/prebuild --complain --file `find apparmor.d -iname {{name}}`
 	sudo install -Dm644 {{build}}/apparmor.d/{{name}} /etc/apparmor.d/{{name}}
-	sudo systemctl restart apparmor || sudo journalctl -xeu apparmor.service
+	sudo apparmor_parser --write-cache --replace /etc/apparmor.d/{{name}}
 
 # Build & install apparmor.d on Arch based systems
 [group('packages')]
