@@ -6,10 +6,14 @@
 # See https://apparmor.pujol.io/development/ for more information.
 
 # Build settings
+
 destdir := "/"
 build := ".build"
 pkgdest := `pwd` / ".pkg"
 pkgname := "apparmor.d"
+gpgkey := "06A26D531D56C42D66805049C5469996F0DF68EC"
+
+# The following variables are only  used for the development and test VM
 
 # Admin username
 username := "user"
@@ -49,10 +53,25 @@ c := "--connect=qemu:///system"
 # VM prefix
 prefix := "aa-"
 
+usage := "
+Build variables available:
+    build        " + BLUE + "# Build directory (default: " + build + ")" + NORMAL + "
+    destdir      " + BLUE + "# Installation destination (default: " + destdir + ")" + NORMAL + "
+    pkgdest      " + BLUE + "# Package output directory (default: " + pkgdest + ")" + NORMAL + "
+
+Development variables available:
+    username     " + BLUE + "# VM username (default: " + username + ")" + NORMAL + "
+    password     " + BLUE + "# VM password (default: " + password + ")" + NORMAL + "
+    disk_size    " + BLUE + "# VM disk size (default: " + disk_size + ")" + NORMAL + "
+    vcpus        " + BLUE + "# VM CPU (default: " + vcpus + ")" + NORMAL + "
+    ram          " + BLUE + "# VM RAM (default: " + ram + ")" + NORMAL + "
+
+See https://apparmor.pujol.io/development/ for more information."
+
 # Show this help message
 help:
 	@just --list --unsorted
-	@printf "\n%s\n" "See https://apparmor.pujol.io/development/ for more information."
+	@printf "%s\n" "{{usage}}"
 
 # Build the go programs
 [group('build')]
@@ -66,6 +85,7 @@ enforce: build
 	@./{{build}}/prebuild --buildir {{build}}
 
 # Prebuild the profiles in enforce mode (test)
+[group('build')]
 enforce-test: build
 	@./{{build}}/prebuild --buildir {{build}} --test
 
@@ -75,6 +95,7 @@ complain: build
 	./{{build}}/prebuild --buildir {{build}} --complain
 
 # Prebuild the profiles in complain mode (test)
+[group('build')]
 complain-test: build
 	@./{{build}}/prebuild --buildir {{build}} --complain --test
 
@@ -92,6 +113,31 @@ fsp-complain: build
 [group('build')]
 fsp-debug: build
 	@./{{build}}/prebuild --buildir {{build}} --complain --full --debug
+
+# Prebuild the profiles in server mode
+[group('build')]
+server: build
+	@./{{build}}/prebuild --buildir {{build}} --server
+
+# Prebuild the profiles in server mode (complain)
+[group('build')]
+server-complain: build
+	@./{{build}}/prebuild --buildir {{build}} --server --complain
+
+# Prebuild the profiles in server FSP mode
+[group('build')]
+server-fsp: build
+	@./{{build}}/prebuild --buildir {{build}} --server --full
+
+# Prebuild the profiles in server FSP mode (complain)
+[group('build')]
+server-fsp-complain: build
+	@./{{build}}/prebuild --buildir {{build}} --server --full --complain
+
+# Prebuild the profiles in server FSP mode (debug)
+[group('build')]
+server-fsp-debug: build
+	@./{{build}}/prebuild --buildir {{build}} --server --full --complain --debug
 
 # Install prebuild profiles
 [group('install')]
@@ -379,6 +425,69 @@ tests-run dist flavor name="": (tests-resync dist flavor)
 	ssh {{sshopt}} {{username}}@`just _get_ip {{dist}} {{flavor}}` \
 		bats --recursive --pretty --timing --print-output-on-failure \
 			/home/{{username}}/Projects/tests/integration/{{name}}
+
+# Get the current apparmor.d release version
+[group('version')]
+version:
+	@bash -c 'source PKGBUILD && echo "$pkgver"'
+
+# Create a new version number from the current release
+[group('version')]
+version-new:
+	@bash -c 'source PKGBUILD && echo $(echo "$pkgver" | awk "{print \$1 + 0.0001}")'
+
+# Create a new release
+[group('release')]
+release: tests lint commit archive publish
+
+# Write the new release version to package files & commit
+[group('release')]
+commit:
+	#!/usr/bin/env bash
+	set -eu -o pipefail
+	version=`just version-new`
+	cat > debian/changelog.tmp <<-EOF
+		{{pkgname}} (${version}-1) stable; urgency=medium
+
+		* Release {{pkgname}} v${version}
+
+		-- $(git config user.name) <$(git config user.email)>  $(date -R)
+
+	EOF
+	cat debian/changelog >> debian/changelog.tmp
+	mv debian/changelog.tmp debian/changelog
+	sed -i "s/^pkgver=.*/pkgver=$version/" PKGBUILD
+	sed -i "s/^Version:.*/Version:        $version/" "dists/{{pkgname}}.spec"
+	echo git add PKGBUILD "dists/{{pkgname}}.spec" debian/changelog
+	echo git commit -S -m "Release version $version"
+
+# Create a release archive
+[group('release')]
+archive:
+	#!/usr/bin/env bash
+	set -eu -o pipefail
+	version=`just version`
+	git tag -a "v$version" -m "{{pkgname}} v$version" --local-user={{gpgkey}}
+	git archive \
+		--format=tar.gz \
+		--prefix={{pkgname}}-$version/ \
+		--output={{pkgdest}}/{{pkgname}}-$version.tar.gz \
+		v$version
+	gpg --armor --default-key {{gpgkey}} --detach-sig {{pkgdest}}/{{pkgname}}-$version.tar.gz
+	gpg --verify {{pkgdest}}/{{pkgname}}-$version.tar.gz.asc
+
+# Publish the new release on Github
+[group('release')]
+publish:
+	#!/usr/bin/env bash
+	set -eu -o pipefail
+	owner="roddhjav"
+	version=`just version`
+	git push origin main --tags
+	gh release create "v$version" --notes-from-tag --repo $owner/{{pkgname}}
+	gh release upload "v$version" --repo $owner/{{pkgname}} \
+		{{pkgdest}}/{{pkgname}}-$version.tar.gz \
+		{{pkgdest}}/{{pkgname}}-$version.tar.gz.asc
 
 _get_ip dist flavor:
 	@virsh --quiet --readonly {{c}} domifaddr {{prefix}}{{dist}}-{{flavor}} | \
