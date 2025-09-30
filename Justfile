@@ -255,30 +255,44 @@ serve:
 clean:
 	@rm -rf \
 		debian/.debhelper debian/debhelper* debian/*.debhelper debian/{{pkgname}} \
-		{{pkgdest}}/{{pkgname}}* {{build}} coverage.out
+		{{pkgdest}}/{{pkgname}}* {{pkgdest}}/ubuntu {{pkgdest}}/debian \
+		{{pkgdest}}/archlinux {{pkgdest}}/opensuse {{pkgdest}}/version \
+		{{build}} coverage.out
 
 # Build the package in a clean OCI container
 [group('packages')]
-package dist:
+package dist version="":
+	bash dists/docker.sh {{dist}} {{version}}
+
+# Build all packages in a clean OCI container
+[group('packages')]
+packages:
 	#!/usr/bin/env bash
 	set -eu -o pipefail
-	dist="{{dist}}"
-	version=""
-	if [[ $dist =~ ubuntu([0-9]+) ]]; then
-		version="${BASH_REMATCH[1]}.04"
-		dist="ubuntu"
-	elif [[ $dist == debian* ]]; then
-		version="trixie"
-		dist="debian"
-	fi
-	bash dists/docker.sh $dist $version
+	declare -A matrix=(
+		["archlinux"]="-"
+		["debian"]="12 13"
+		["ubuntu"]="22.04 24.04 25.04 25.10"
+		["opensuse"]="-"
+	)
+	for dist in "${!matrix[@]}"; do
+		IFS=' ' read -r -a versions <<< "${matrix[$dist]}"
+		for version in "${versions[@]}"; do
+			echo bash dists/docker.sh $dist $version
+		done
+	done
 
 # Build the VM image
 [group('vm')]
-img dist flavor: (package dist)
-	@mkdir -p {{base_dir}}
+img dist version flavor: (package dist version)
+	#!/usr/bin/env bash
+	set -eu -o pipefail
+	VERSION="{{version}}"
+	[[ "$VERSION" == "-" ]] && VERSION=""
+	mkdir -p {{base_dir}}
 	packer build -force \
 		-var dist={{dist}} \
+		-var version="$VERSION" \
 		-var flavor={{flavor}} \
 		-var prefix={{prefix}} \
 		-var username={{username}} \
@@ -293,19 +307,19 @@ img dist flavor: (package dist)
 
 # Create the machine
 [group('vm')]
-create dist flavor:
-	@cp -f {{base_dir}}/{{prefix}}{{dist}}-{{flavor}}.qcow2 {{vm}}/{{prefix}}{{dist}}-{{flavor}}.qcow2
+create osinfo flavor:
+	@cp -f {{base_dir}}/{{prefix}}{{osinfo}}-{{flavor}}.qcow2 {{vm}}/{{prefix}}{{osinfo}}-{{flavor}}.qcow2
 	@virt-install {{c}} \
 		--import \
-		--name {{prefix}}{{dist}}-{{flavor}} \
+		--name {{prefix}}{{osinfo}}-{{flavor}} \
 		--vcpus {{vcpus}} \
 		--ram {{ram}} \
 		--machine q35 \
-		{{ if dist == "archlinux" { "" } else { "--boot uefi" } }} \
+		{{ if osinfo == "archlinux" { "" } else { "--boot uefi" } }} \
 		--memorybacking source.type=memfd,access.mode=shared \
-		--disk path={{vm}}/{{prefix}}{{dist}}-{{flavor}}.qcow2,format=qcow2,bus=virtio \
+		--disk path={{vm}}/{{prefix}}{{osinfo}}-{{flavor}}.qcow2,format=qcow2,bus=virtio \
 		--filesystem "`pwd`,0a31bc478ef8e2461a4b1cc10a24cc4",accessmode=passthrough,driver.type=virtiofs \
-		--os-variant "`just _get_osinfo {{dist}}`" \
+		--os-variant "{{ if osinfo == "opensuse" { "opensusetumbleweed" } else { osinfo } }}" \
 		--graphics spice \
 		--audio id=1,type=spice \
 		--sound model=ich9 \
@@ -313,41 +327,41 @@ create dist flavor:
 
 # Start a machine
 [group('vm')]
-up dist flavor:
-	@virsh {{c}} start {{prefix}}{{dist}}-{{flavor}}
+up osinfo flavor:
+	@virsh {{c}} start {{prefix}}{{osinfo}}-{{flavor}}
 
 # Stops the machine
 [group('vm')]
-halt dist flavor:
-	@virsh {{c}} shutdown {{prefix}}{{dist}}-{{flavor}}
+halt osinfo flavor:
+	@virsh {{c}} shutdown {{prefix}}{{osinfo}}-{{flavor}}
 
 # Reboot the machine
 [group('vm')]
-reboot dist flavor:
-	@virsh {{c}} reboot {{prefix}}{{dist}}-{{flavor}}
+reboot osinfo flavor:
+	@virsh {{c}} reboot {{prefix}}{{osinfo}}-{{flavor}}
 
 # Destroy the machine
 [group('vm')]
-destroy dist flavor:
-	@virsh {{c}} destroy {{prefix}}{{dist}}-{{flavor}} || true
-	@virsh {{c}} undefine {{prefix}}{{dist}}-{{flavor}} --nvram
-	@rm -fv {{vm}}/{{prefix}}{{dist}}-{{flavor}}.qcow2
+destroy osinfo flavor:
+	@virsh {{c}} destroy {{prefix}}{{osinfo}}-{{flavor}} || true
+	@virsh {{c}} undefine {{prefix}}{{osinfo}}-{{flavor}} --nvram
+	@rm -fv {{vm}}/{{prefix}}{{osinfo}}-{{flavor}}.qcow2
 
 # Connect to the machine
 [group('vm')]
-ssh dist flavor:
-	@ssh {{sshopt}} {{username}}@`just _get_ip {{dist}} {{flavor}}`
+ssh osinfo flavor:
+	@ssh {{sshopt}} {{username}}@`just _get_ip {{osinfo}} {{flavor}}`
 
 # Mount the shared directory on the machine
 [group('vm')]
-mount dist flavor:
-	@ssh {{sshopt}} {{username}}@`just _get_ip {{dist}} {{flavor}}` \
+mount osinfo flavor:
+	@ssh {{sshopt}} {{username}}@`just _get_ip {{osinfo}} {{flavor}}` \
 		sh -c 'mount | grep 0a31bc478ef8e2461a4b1cc10a24cc4 || sudo mount 0a31bc478ef8e2461a4b1cc10a24cc4'
 
 # Unmout the shared directory on the machine
 [group('vm')]
-umount dist flavor:
-	@ssh {{sshopt}} {{username}}@`just _get_ip {{dist}} {{flavor}}` \
+umount osinfo flavor:
+	@ssh {{sshopt}} {{username}}@`just _get_ip {{osinfo}} {{flavor}}` \
 		sh -c 'true; sudo umount /home/{{username}}/Projects/apparmor.d || true'
 
 # List the machines
@@ -403,26 +417,26 @@ integration name="":
 
 # Install dependencies for the integration tests (machine)
 [group('tests')]
-tests-init dist flavor:
-	@ssh {{sshopt}} {{username}}@`just _get_ip {{dist}} {{flavor}}` \
+tests-init osinfo flavor:
+	@ssh {{sshopt}} {{username}}@`just _get_ip {{osinfo}} {{flavor}}` \
 		just --justfile /home/{{username}}/Projects/apparmor.d/Justfile init
 
 # Synchronize the integration tests (machine)
 [group('tests')]
-tests-sync dist flavor:
-	@ssh {{sshopt}} {{username}}@`just _get_ip {{dist}} {{flavor}}` \
+tests-sync osinfo flavor:
+	@ssh {{sshopt}} {{username}}@`just _get_ip {{osinfo}} {{flavor}}` \
 		rsync -a --delete /home/{{username}}/Projects/apparmor.d/tests/ /home/{{username}}/Projects/tests/
 
 # Re-synchronize the integration tests (machine)
 [group('tests')]
-tests-resync dist flavor: (mount dist flavor) \
-	(tests-sync dist flavor) \
-	(umount dist flavor)
+tests-resync osinfo flavor: (mount osinfo flavor) \
+	(tests-sync osinfo flavor) \
+	(umount osinfo flavor)
 
 # Run the integration tests (machine)
 [group('tests')]
-tests-run dist flavor name="": (tests-resync dist flavor)
-	ssh {{sshopt}} {{username}}@`just _get_ip {{dist}} {{flavor}}` \
+tests-run osinfo flavor name="": (tests-resync osinfo flavor)
+	ssh {{sshopt}} {{username}}@`just _get_ip {{osinfo}} {{flavor}}` \
 		bats --recursive --pretty --timing --print-output-on-failure \
 			/home/{{username}}/Projects/tests/integration/{{name}}
 
@@ -489,20 +503,7 @@ publish:
 		{{pkgdest}}/{{pkgname}}-$version.tar.gz \
 		{{pkgdest}}/{{pkgname}}-$version.tar.gz.asc
 
-_get_ip dist flavor:
-	@virsh --quiet --readonly {{c}} domifaddr {{prefix}}{{dist}}-{{flavor}} | \
+_get_ip osinfo flavor:
+	@virsh --quiet --readonly {{c}} domifaddr {{prefix}}{{osinfo}}-{{flavor}} | \
 		head -1 | \
 		grep -E -o '([[:digit:]]{1,3}\.){3}[[:digit:]]{1,3}'
-
-_get_osinfo dist:
-	#!/usr/bin/env python3
-	osinfo = {
-		"archlinux": "archlinux",
-		"debian12": "debian12",
-		"debian13": "debian13",
-		"ubuntu22": "ubuntu22.04",
-		"ubuntu24": "ubuntu24.04",
-		"ubuntu25": "ubuntu25.04", 
-		"opensuse": "opensusetumbleweed",
-	}
-	print(osinfo.get("{{dist}}", "{{dist}}"))

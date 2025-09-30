@@ -69,8 +69,6 @@ impersonalize() {
 
 	# Remove remaining pkg file, docs and caches
 	dirs=(
-		/usr/share/doc
-		/usr/share/man
 		/var/cache/
 		/var/lib/apt
 		/var/lib/dhcp
@@ -90,11 +88,6 @@ impersonalize() {
 	truncate --size=0 /var/lib/dbus/machine-id
 
 	remove=(
-		# Remove remaining pkg file, docs and caches
-		/usr/share/info/
-		/usr/share/lintian/
-		/usr/share/linda/
-
 		# Remove history & unique ids
 		/etc/adjtime
 		/etc/ansible/
