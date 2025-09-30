@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: GPL-2.0-only
 
 # Usage:
-#  just package ubuntu24
+#  just package ubuntu 24.04
 #  just package archlinux
 #  just package opensuse
 
@@ -16,12 +16,13 @@ readonly PKGNAME=apparmor.d
 readonly VOLUME=/tmp/build
 readonly BUILDIR=/home/build/tmp
 readonly OUTDIR=".pkg"
-readonly OUTPUT="$PWD/$OUTDIR"
 readonly DISTRIBUTION="${1:-}"
-readonly RELEASE="${2:-}"
+RELEASE="${2:-}"
 VERSION="0.$(git rev-list --count HEAD)"
 PACKAGER="$(git config user.name) <$(git config user.email)>"
-readonly VERSION PACKAGER
+[[ "$RELEASE" == "-" ]] && RELEASE=""
+readonly OUTPUT="$PWD/$OUTDIR/$DISTRIBUTION/$RELEASE"
+readonly RELEASE VERSION PACKAGER
 
 _start() {
 	local img="$1"
@@ -76,7 +77,6 @@ build_in_docker_dpkg() {
 	local img dist="$1" target="$1" release="$2"
 
 	[[ "$dist" == whonix ]] && dist=debian
-	[[ "$release" == "13" ]] && release=trixie
 	img="$PREFIX$dist$release"
 	if _exist "$img"; then
 		if ! _is_running "$img"; then

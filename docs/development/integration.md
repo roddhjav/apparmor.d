@@ -16,14 +16,14 @@ Although the integration test suite is intended to be run in a [Development VM](
 
 **Prepare the test environment:**
 ```sh
-just img <dist> <flavor>
-just create <dist> <flavor>
+just img <dist> <version> <flavor>
+just create <osinfo> <flavor>
 ```
 
 Example:
 ```sh
-just img ubuntu25 desktop
-just create ubuntu25 desktop
+just img ubuntu 25.10 desktop
+just create ubuntu25.10 desktop
 ```
 
 **Install dependencies for the integration tests**
@@ -33,7 +33,7 @@ just tests-init <dist> <flavor>
 
 Example:
 ```sh
-just tests-init ubuntu25 desktop
+just tests-init ubuntu25.10 desktop
 ```
 
 **Run the integration tests**
@@ -45,12 +45,12 @@ just tests-run <dist> <flavor>
 
 Example:
 ```sh
-just tests-run ubuntu25 desktop
+just tests-run ubuntu25.10 desktop
 ```
 
 Partial tests can also be run. For example the following command will only run the tests in the `tests/integration/apt` directory on the `ubuntu25` `desktop` machine:
 ```sh
-just tests-run ubuntu25 desktop apt
+just tests-run ubuntu25.10 desktop apt
 ```
 
 ## Create integration tests
