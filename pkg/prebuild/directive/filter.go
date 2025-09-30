@@ -7,7 +7,7 @@ package directive
 import (
 	"fmt"
 	"regexp"
-	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/roddhjav/apparmor.d/pkg/prebuild"
@@ -38,24 +38,83 @@ func init() {
 	})
 }
 
+func cmp[T float64 | int](refValue T, operator string, value T) bool {
+	var res bool
+	switch operator {
+	case "<":
+		res = refValue < value
+	case "<=":
+		res = refValue <= value
+	case ">":
+		res = refValue > value
+	case ">=":
+		res = refValue >= value
+	case "==", "=":
+		res = refValue == value
+	}
+	return res
+}
+
+func compare(refValue any, prefix string, arg string) bool {
+	pattern := fmt.Sprintf(`^%s(==|[<>]=?|=)(.+)$`, prefix)
+	re := regexp.MustCompile(pattern)
+	matches := re.FindStringSubmatch(arg)
+	if len(matches) < 3 {
+		return false
+	}
+	operator := matches[1]
+	targetStr := matches[2]
+
+	var res bool
+	switch refValue := refValue.(type) {
+	case int:
+		targetValue, err := strconv.Atoi(targetStr)
+		if err != nil {
+			panic(err)
+		}
+		res = cmp(refValue, operator, targetValue)
+
+	case float64:
+		targetValue, err := strconv.ParseFloat(targetStr, 64)
+		if err != nil {
+			panic(err)
+		}
+		res = cmp(refValue, operator, targetValue)
+
+	default:
+		panic("unsupported type")
+	}
+
+	return res
+}
+
 func filterRuleForUs(opt *Option) bool {
-	if prebuild.RBAC && slices.Contains(opt.ArgList, "RBAC") {
-		return true
-	}
+	for _, arg := range opt.ArgList {
+		var res bool
+		if prebuild.RBAC && arg == "RBAC" {
+			res = true
+		}
+		if prebuild.Test && arg == "test" {
+			res = true
+		}
+		if arg == prebuild.Distribution {
+			res = true
+		}
+		if arg == prebuild.Family {
+			res = true
+		}
+		if strings.HasPrefix(arg, "abi") {
+			res = compare(prebuild.ABI, "abi", arg)
+		}
+		if strings.HasPrefix(arg, "apparmor") {
+			res = compare(prebuild.Version, "apparmor", arg)
+		}
 
-	if prebuild.Test && slices.Contains(opt.ArgList, "test") {
-		return true
+		if res {
+			return true
+		}
 	}
-
-	abiStr := fmt.Sprintf("abi%d", prebuild.ABI)
-	if slices.Contains(opt.ArgList, abiStr) {
-		return true
-	}
-	versionStr := fmt.Sprintf("apparmor%.1f", prebuild.Version)
-	if slices.Contains(opt.ArgList, versionStr) {
-		return true
-	}
-	return slices.Contains(opt.ArgList, prebuild.Distribution) || slices.Contains(opt.ArgList, prebuild.Family)
+	return false
 }
 
 func filter(only bool, opt *Option, profile string) (string, error) {
