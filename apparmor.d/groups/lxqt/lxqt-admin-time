@@ -1,0 +1,43 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2024 Besanon  <m231009ts@mailfence.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/lxqt-admin-time 
+profile lxqt-admin-time @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/lxqt>
+  include <abstractions/bus-session>
+  include <abstractions/bus-accessibility>
+  include <abstractions/nameservice-strict>
+    
+  @{exec_path}			mr,
+  
+  @{bin}/pkexec                         Cx -> pkexec,
+
+  owner @{user_config_dirs}/lxqt/#@{int} rw,
+  owner @{user_config_dirs}/lxqt/TimeDate.conf rwkl -> @{user_config_dirs}/lxqt/#@[int},
+  owner @{user_config_dirs}/lxqt/TimeDate.conf.lock rwk,
+
+  owner /tmp/@{int}  		       r,
+
+  /dev/tty				rw,
+
+  profile pkexec {
+    include <abstractions/base>
+    include <abstractions/app/pkexec>
+
+    @{PROC}/@{pid}/mounts r,
+
+    include if exists <local/lxqt-admin-time_pkexec>
+  }
+
+
+  include if exists <local/lxqt-admin-time>
+}
+
+# vim:syntax=apparmor
