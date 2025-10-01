@@ -42,10 +42,19 @@ The following desktop environments are supported:
 
 ## Configure AppArmor
 
-As there are a lot of rules (~80k lines), it is recommended to enable fast caching compression of AppArmor profiles. In `/etc/apparmor/parser.conf`, add `write-cache` and `Optimize=compress-fast`:
+As there are a lot of rules (~100k lines), it is recommended to enable fast caching compression of AppArmor profiles. [Early policy](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmorInSystemd#early-policy-loads) load **must** also be enabled.
 
+In `/etc/apparmor/parser.conf` ensure you have:
+```
+write-cache
+cache-loc /etc/apparmor/earlypolicy/
+Optimize=compress-fast
+```
+
+Or run:
 ```sh
 echo 'write-cache' | sudo tee -a /etc/apparmor/parser.conf
+echo 'cache-loc /etc/apparmor/earlypolicy/' | sudo tee -a /etc/apparmor/parser.conf
 echo 'Optimize=compress-fast' | sudo tee -a /etc/apparmor/parser.conf
 ```
 
