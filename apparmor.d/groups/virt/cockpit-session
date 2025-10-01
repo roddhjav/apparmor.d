@@ -30,7 +30,7 @@ profile cockpit-session @{exec_path} flags=(attach_disconnected) {
   @{bin}/cockpit-bridge  rPx,
   @{lib}/cockpit/cockpit-pcp  rPx,
   @{bin}/ssh-agent       rPx,
-  @{bin}/ssh-add         rix,
+  @{bin}/ssh-add         rCx -> ssh-add,
 
   @{etc_ro}/environment r,
   @{etc_ro}/security/limits.d/{,*.conf} r,
@@ -41,13 +41,6 @@ profile cockpit-session @{exec_path} flags=(attach_disconnected) {
   /etc/motd.d/ r,
   /etc/shells r,
 
-  @{att}/@{run}/systemd/sessions/*.ref rw,
-
-  @{run}/cockpit/* r,
-  @{run}/faillock/@{user} rwk,
-  @{run}/motd.d/{,*} r,
-  @{run}/utmp rwk,
-
   /var/log/btmp rw,
   /var/log/lastlog rw,
   /var/log/wtmp rwk,
@@ -56,11 +49,31 @@ profile cockpit-session @{exec_path} flags=(attach_disconnected) {
   /var/lib/lastlog/lastlog2.db rwk,
   /var/lib/lastlog/lastlog2.db-journal rw,
 
+  @{att}@{run}/systemd/sessions/*.ref rw,
+
+  @{run}/cockpit/* r,
+  @{run}/faillock/@{user} rwk,
+  @{run}/motd.d/{,*} r,
+  @{run}/utmp rwk,
+
+        @{PROC}/@{pids}/fd/ r,
   owner @{PROC}/@{pid}/loginuid rw,
   owner @{PROC}/@{pid}/uid_map r,
-        @{PROC}/@{pids}/fd/ r,
 
   /dev/tty rw,
+
+  profile ssh-add flags=(attach_disconnected) {
+    include <abstractions/base>
+
+    @{bin}/ssh-add mr,
+
+    owner @{HOME}/@{XDG_SSH_DIR}/{,*} r,
+
+    owner @{tmp}/ssh-@{rand12}/ rw,
+    owner @{tmp}/ssh-@{rand12}/agent.@{int} rw,
+
+    include if exists <local/cockpit-session_ssh-add>
+  }
 
   include if exists <local/cockpit-session>
 }
