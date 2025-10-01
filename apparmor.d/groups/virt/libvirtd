@@ -98,6 +98,12 @@ profile libvirtd @{exec_path} flags=(attach_disconnected) {
        member=Introspect
        peer=(name=@{busname}, label=gnome-shell),
 
+  # include <abstractions/bus/system/own>
+  dbus send bus=system path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member=ListNames
+       peer=(name=org.freedesktop.DBus, label="@{p_dbus_system}"),
+
   @{exec_path} mr,
 
   @{lib}/libvirt/libvirt_iohelper                   rix,
@@ -185,24 +191,34 @@ profile libvirtd @{exec_path} flags=(attach_disconnected) {
   @{sys}/bus/pci/drivers/*/unbind w,
   @{sys}/class/[a-z]*/ r,
   @{sys}/devices/**/uevent r,
-  @{sys}/devices/@{pci}/{class,revision,subsystem_vendor,subsystem_device} r,
-  @{sys}/devices/@{pci}/{config,numa_node,device,vendor} r,
+  @{sys}/devices/@{pci}/class r,
+  @{sys}/devices/@{pci}/config r,
+  @{sys}/devices/@{pci}/device r,
   @{sys}/devices/@{pci}/driver_override w,
   @{sys}/devices/@{pci}/mdev_supported_types/{,**} r,
   @{sys}/devices/@{pci}/mdev_supported_types/*/create w,
   @{sys}/devices/@{pci}/net/*/{,**} r,
+  @{sys}/devices/@{pci}/numa_node r,
   @{sys}/devices/@{pci}/remove w,
   @{sys}/devices/@{pci}/resource r,
+  @{sys}/devices/@{pci}/revision r,
   @{sys}/devices/@{pci}/sriov_totalvfs r,
+  @{sys}/devices/@{pci}/subsystem_device r,
+  @{sys}/devices/@{pci}/subsystem_vendor r,
+  @{sys}/devices/@{pci}/vendor r,
 
+  @{sys}/devices/@{pci}/distance r,
+  @{sys}/devices/@{pci}/meminfo r,
   @{sys}/devices/system/cpu/cpu@{int}/cache/{,**} r,
   @{sys}/devices/system/cpu/cpu@{int}/topology/{,**} r,
   @{sys}/devices/system/cpu/isolated r,
   @{sys}/devices/system/cpu/present r,
   @{sys}/devices/system/node/ r,
   @{sys}/devices/system/node/node@{int}/ r,
-  @{sys}/devices/system/node/node@{int}/{cpumap,distance,meminfo} r,
+  @{sys}/devices/system/node/node@{int}/cpumap r,
+  @{sys}/devices/system/node/node@{int}/distance r,
   @{sys}/devices/system/node/node@{int}/hugepages/{,**} r,
+  @{sys}/devices/system/node/node@{int}/meminfo r,
   @{sys}/devices/virtual/dmi/id/* r,
   @{sys}/devices/virtual/net/{,**} rw,
 
