@@ -10,14 +10,24 @@ include <tunables/global>
 profile apt-helper @{exec_path} {
   include <abstractions/base>
   include <abstractions/apt>
+  include <abstractions/nameservice-strict>
+
+  capability setgid,
+  capability setuid,
+
+  signal send set=int peer=apt-methods-http,
 
   @{exec_path} mr,
 
   @{bin}/nm-online rPx,
   @{bin}/systemctl rCx -> systemctl,
   @{lib}/systemd/systemd-networkd-wait-online rPx,
+  @{lib}/apt/methods/http Px,
 
   owner @{PROC}/@{pid}/fd/ r,
+
+  /tmp/tmp@{word8}/stampdir/partial/canary-file.txt w,
+  /tmp/tmp@{word8}/partial/canary-file.txt w,
 
   profile systemctl {
     include <abstractions/base>
