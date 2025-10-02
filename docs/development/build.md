@@ -145,6 +145,12 @@ Resolve variables in profile attachments. It fixes issues with the userland AppA
 
 *Enabled by default. Can be disabled in `cmd/prebuild/main.go`*
 
+### **`base-strict`**
+
+This task will use `base-strict` as base abstraction instead of `base`.
+
+*Enabled by default. Can be disabled in `cmd/prebuild/main.go`*
+
 ### **`attach`**
 
 This task reattaches disconnected paths. See the [Re-attached path](internal.md#re-attached-path) page. It will:
