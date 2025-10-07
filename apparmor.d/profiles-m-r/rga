@@ -1,0 +1,36 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 valoq <valoq@mailbox.org>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/rga
+profile rga /{,usr/}bin/rga {
+  include <abstractions/base-strict>
+
+  @{exec_path} mr,
+
+  @{bin}/rg          ix,
+  @{bin}/ffmpeg      ix,
+  @{bin}/ffprobe     ix,
+  @{bin}/pandoc      ix,
+  @{bin}/pdftotext   ix,
+  @{bin}/rga-preproc ix,
+
+  /usr/share/poppler/** r,
+
+  owner @{user_cache_dirs}/ripgrep-all/cache.sqlite3 rwk,
+  owner @{user_cache_dirs}/ripgrep-all/cache.sqlite3-shm rwk,
+  owner @{user_cache_dirs}/ripgrep-all/cache.sqlite3-wal rwk,
+
+  ## Allow reading the entire filesystem to search for strings
+  /{,**} r,
+ 
+  owner @{PROC}/@{pid}/task/@{tid}/comm w,
+
+  include if exists <local/rga>
+}
+
+# vim:syntax=apparmor
