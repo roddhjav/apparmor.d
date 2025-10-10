@@ -6,10 +6,15 @@
 # LOGPROF-SUGGEST: no
 
   # Do not use it manually, It automatically replaces the base abstraction in
-  # profiles when the re-attached mode is enabled.
+  # profiles when the base-strict prebuild feature is enabled (default).
 
-  # For now, it is only a restructuring of the base abstraction with awareness
+  # It is mostly a restructuring of the base abstraction with awareness
   # of the apparmor.d architecture.
+  #
+  # Changes from the base abstraction:
+  # - Removed access to @{run}/uuidd/request
+  # - owner only access to some files in @{PROC}/@{pid}/
+  # - denied lttng
 
   abi <abi/4.0>,
 
@@ -29,7 +34,7 @@
   # Allow unconfined processes to send us signals by default
   signal receive                           peer=unconfined,
 
-  # Systemd: allow to receive any signal from the systemd profiles stack
+  # Systemd: allow to receive any signal from the systemd profiles
   signal receive                           peer=@{p_systemd},
   signal receive                           peer=@{p_systemd_user},
 
@@ -45,7 +50,6 @@
   signal receive                           peer=sudo,
   signal receive set=(cont,term,kill,stop) peer=gnome-shell,
   signal receive set=(cont,term,kill,stop) peer=login,
-  signal receive set=(cont,term,kill,stop) peer=openbox,
   signal receive set=(cont,term,kill,stop) peer=systemd-shutdown,
   signal receive set=(cont,term,kill,stop) peer=xinit,
 
