@@ -213,13 +213,6 @@ rpm:
 	@bash dists/build.sh rpm
 	@sudo rpm -ivh --force {{pkgdest}}/{{pkgname}}-*.rpm
 
-# Run the unit tests
-[group('tests')]
-tests:
-	@go test ./cmd/... -v -cover -coverprofile=coverage.out
-	@go test ./pkg/... -v -cover -coverprofile=coverage.out
-	@go tool cover -func=coverage.out
-
 # Run the linters
 [group('linter')]
 lint:
@@ -376,34 +369,45 @@ images:
 	#!/usr/bin/env bash
 	set -eu -o pipefail
 	mkdir -p {{base_dir}}
-	ls -lh {{base_dir}} | awk '
-	BEGIN {
-		printf("{{BOLD}}%-18s %-10s %-5s %s{{NORMAL}}\n", "Distribution", "Flavor", "Size", "Date")
-	}
-	{
-		if ($9 ~ /^{{prefix}}.*\.qcow2$/) {
-			split($9, arr, "-|\\.")
-			printf("%-18s %-10s %-5s %s %s %s\n", arr[2], arr[3], $5, $6, $7, $8)
-		}
-	}
-	'
+	(
+		printf "{{BOLD}}%s %s %s %s %s{{NORMAL}}\n" "OsInfo" "Flavor" "Size" "Date"
+		find {{base_dir}} -iname '{{prefix}}*' -type f -printf "%f %k %Tb %Td %TH:%TM\n" | sort | awk '
+			{
+				split($1, item, "-")
+				split(item[3], flavor, "\\.")
+				if ($2>=1048576) {
+					printf("%s %s %.1fGB %s %s %s\n", item[2], flavor[1], $2/1048576, $3, $4, $5)
+				} else {
+					printf("%s %s %.fMB %s %s %s\n", item[2], flavor[1], $2/1024, $3, $4, $5)
+				}
+			}
+			'
+	) | column -t
 
 # List the VM images that can be created
 [group('vm')]
 available:
 	#!/usr/bin/env bash
 	set -eu -o pipefail
-	ls -lh tests/cloud-init | awk '
-	BEGIN {
-		printf("{{BOLD}}%-18s %s{{NORMAL}}\n", "Distribution", "Flavor")
-	}
-	{
-		if ($9 ~ /^.*\.user-data.yml$/) {
-			split($9, arr, "-|\\.")
-			printf("%-18s %s\n", arr[1], arr[2])
-		}
-	}
-	'
+	(
+		printf "{{BOLD}}%s %s %s{{NORMAL}}\n" "Distribution" "Release" "Flavor"
+		find tests/cloud-init -iname '*.user-data.yml' -type f -printf "%f\n" | sort | awk '
+			{
+				split($1, item, "-")
+				match(item[1], /^([a-z]+)([0-9.]*?)$/, osinfo)
+				release = (osinfo[2] == "" ? "-" : osinfo[2])
+				split(item[2], flavor, "\\.")
+				printf("%s %s %s\n", osinfo[1], release, flavor[1])
+			}
+			'
+	) | column -t
+
+# Run the unit tests
+[group('tests')]
+tests:
+	@go test ./cmd/... -v -cover -coverprofile=coverage.out
+	@go test ./pkg/... -v -cover -coverprofile=coverage.out
+	@go tool cover -func=coverage.out
 
 # Install dependencies for the integration tests
 [group('tests')]
