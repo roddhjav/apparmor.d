@@ -6,8 +6,10 @@ abi <abi/4.0>,
 
 include <tunables/global>
 
+@{appid} = @{word}.@{word}.@{word}{,.@{word}}
+
 @{exec_path} = @{lib}/flatpak-system-helper
-profile flatpak-system-helper @{exec_path} {
+profile flatpak-system-helper @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/base>
   include <abstractions/bus-system>
   include <abstractions/bus/org.freedesktop.PolicyKit1>
@@ -38,7 +40,7 @@ profile flatpak-system-helper @{exec_path} {
 
   @{exec_path} mr,
 
-  @{bin}/bwrap         rPUx,
+  @{bin}/bwrap          rCx -> bwrap,
   @{bin}/gpg{,2}        rCx -> gpg,
   @{bin}/gpgconf        rCx -> gpg,
   @{bin}/gpgsm          rCx -> gpg,
@@ -64,6 +66,15 @@ profile flatpak-system-helper @{exec_path} {
         @{PROC}/@{pids}/status r,
   owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/fdinfo/@{int} r,
+
+  profile bwrap flags=(attach_disconnected) {
+    include <abstractions/base>
+    include <abstractions/bwrap>
+
+    /tmp/#@{int} rw,
+
+    include if exists <local/flatpak-system-helper_bwrap>
+  }
 
   profile gpg {
     include <abstractions/base>

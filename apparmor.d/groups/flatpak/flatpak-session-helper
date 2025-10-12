@@ -6,8 +6,10 @@ abi <abi/4.0>,
 
 include <tunables/global>
 
+@{appid} = @{word}.@{word}.@{word}{,.@{word}}
+
 @{exec_path} = @{lib}/flatpak-session-helper
-profile flatpak-session-helper @{exec_path} flags=(attach_disconnected) {
+profile flatpak-session-helper @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/base>
   include <abstractions/bus-session>
   include <abstractions/consoles>
@@ -16,8 +18,8 @@ profile flatpak-session-helper @{exec_path} flags=(attach_disconnected) {
   include <abstractions/ssl_certs>
 
   signal send set=(hup int) peer=user_unconfined,
-  signal send set=(int) peer=@{p_systemd},
-  signal send set=(int) peer=flatpak-app,
+  signal send set=int peer=@{p_systemd},
+  signal send set=int peer=flatpak-session-helper-app,
 
   #aa:dbus own bus=session name=org.freedesktop.Flatpak
 
@@ -29,20 +31,19 @@ profile flatpak-session-helper @{exec_path} flags=(attach_disconnected) {
   @{exec_path} mr,
 
   @{shells_path}                       rUx,
+  @{coreutils_path}                    rix,
   @{bin}/dbus-monitor                 rPUx,
-  @{bin}/env                           rix,
   @{bin}/flatpak                       rPx,
   @{bin}/getent                        rix,
   @{bin}/p11-kit                       rix,
   @{bin}/pkexec                        rCx -> pkexec,
   @{bin}/printenv                      rix,
   @{bin}/ps                            rPx,
-  @{bin}/test                          rix,
-  @{bin}/touch                         rix,
   @{lib}/p11-kit/p11-kit-remote        rix,
   @{lib}/p11-kit/p11-kit-server        rix,
-  /var/lib/flatpak/app/*/**/@{bin}/**  rPx -> flatpak-app,
-  /var/lib/flatpak/app/*/**/@{lib}/**  rPx -> flatpak-app,
+
+  /var/lib/flatpak/app/@{appid}/**/@{bin}/**  rPx -> flatpak-session-helper-app,
+  /var/lib/flatpak/app/@{appid}/**/@{lib}/**  rPx -> flatpak-session-helper-app,
 
   owner @{user_config_dirs}/mimeapps.list w,
 
