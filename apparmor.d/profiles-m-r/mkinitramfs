@@ -13,10 +13,13 @@ profile mkinitramfs @{exec_path} {
   include <abstractions/base>
   include <abstractions/consoles>
 
-  capability syslog,
   capability chown,
+  capability dac_read_search,
   capability fowner,
   capability fsetid,
+  capability syslog,
+
+  mqueue getattr type=posix,
 
   @{exec_path} r,
   @{sh_path}   rix,
@@ -111,19 +114,22 @@ profile mkinitramfs @{exec_path} {
 
   @{sys}/bus/ r,
   @{sys}/bus/*/drivers/ r,
+  @{sys}/bus/*/drivers/*/ r,
+  @{sys}/class/ r,
+  @{sys}/class/*/ r,
   @{sys}/devices/ r,
   @{sys}/devices/**/ r,
   @{sys}/devices/**/modalias r,
   @{sys}/devices/**/uevent r,
+  @{sys}/module/ r,
   @{sys}/module/compression r,
   @{sys}/module/firmware_class/parameters/path r,
-  @{sys}/class/ r,
-  @{sys}/class/*/ r,
 
   @{sys}/bus/platform/drivers/simple-framebuffer/ r,
   @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/session-2.scope/cpu.max r,
 
         @{PROC}/@{pid}/cgroup r,
+        @{PROC}/@{pid}/mountinfo r,
         @{PROC}/@{pid}/mounts r,
         @{PROC}/cmdline r,
         @{PROC}/modules r,
@@ -171,7 +177,11 @@ profile mkinitramfs @{exec_path} {
     owner /var/tmp/mkinitramfs_@{rand6}/usr/lib/modules/*/modules.* rw,
     owner /var/tmp/mkinitramfs_@{rand6}/usr/lib/modules/*/updates/{,**} r,
 
-    /tmp/tmp.@{rand10}/mkinitramfs_@{rand6}/@{lib}/modules/{,**} r,
+    /tmp/tmp.@{rand10}/mkinitramfs_@{rand6}/usr/lib/modules/*/ r,
+    /tmp/tmp.@{rand10}/mkinitramfs_@{rand6}/usr/lib/modules/*/kernel/{,**/} r,
+    /tmp/tmp.@{rand10}/mkinitramfs_@{rand6}/usr/lib/modules/*/kernel/**/*.ko* r,
+    /tmp/tmp.@{rand10}/mkinitramfs_@{rand6}/usr/lib/modules/*/modules.* rw,
+    /tmp/tmp.@{rand10}/mkinitramfs_@{rand6}/usr/lib/modules/*/updates/{,**} r,
 
     owner /tmp/tmp.@{rand10}/usr/lib/modules/*/ r,
     owner /tmp/tmp.@{rand10}/usr/lib/modules/*/kernel/{,**/} r,
