@@ -21,7 +21,7 @@ main() {
 
 	case "$ID" in
 	arch)
-		rm -f $SRC/*.sig # Ignore signature files
+		rm -f $SRC/*.sig      # Ignore signature files
 		rm -f $SRC/*enforced* # Ignore enforced package
 		pacman --noconfirm -U $SRC/*.pkg.tar.zst || true
 		;;
@@ -30,7 +30,7 @@ main() {
 		if [[ $VERSION_ID == "24.04" || $VERSION_ID == 12 ]]; then
 			apt-get purge -y just || true
 			sudo -u "$SUDO_USER" pipx install rust-just
-  			sudo -u "$SUDO_USER" pipx ensurepath
+			sudo -u "$SUDO_USER" pipx ensurepath
 		fi
 		dpkg -i $SRC/*.deb || true
 		;;
