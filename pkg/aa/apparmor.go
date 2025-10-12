@@ -79,6 +79,7 @@ func DefaultTunables() *AppArmorProfileFile {
 			&Variable{Name: "user", Values: []string{"[a-zA-Z_]{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}"}, Define: true},
 			&Variable{Name: "version", Values: []string{"@{int}{.@{int},}{.@{int},}{-@{rand},}"}, Define: true},
 			&Variable{Name: "w", Values: []string{"[a-zA-Z0-9_]"}, Define: true},
+			&Variable{Name: "word", Values: []string{"@{w}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}"}, Define: true},
 		},
 	}
 }
