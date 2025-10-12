@@ -71,6 +71,7 @@ profile apt @{exec_path} flags=(attach_disconnected) {
   @{bin}/{,e}grep   rix,
   @{bin}/cat        rix,
   @{bin}/echo       rix,
+  @{bin}/false      rix,
   @{bin}/gdbus      rix,
   @{bin}/id         rix,
   @{bin}/test       rix,
@@ -87,16 +88,17 @@ profile apt @{exec_path} flags=(attach_disconnected) {
   @{bin}/dpkg                            rPx,
   @{bin}/dpkg-source                     rcx -> dpkg-source,
   @{bin}/etckeeper                       rPx,
+  @{bin}/fakeroot-sysv                   rCx -> fakeroot-sysv,
   @{bin}/ischroot                        rPx,
   @{bin}/localepurge                     rPx,
   @{bin}/ps                              rPx,
   @{bin}/snap                            rPx,
   @{bin}/systemctl                       rCx -> systemctl,
   @{bin}/update-command-not-found        rPx,
-  @{sbin}/dpkg-preconfigure              rPx,
   @{lib}/cnf-update-db                   rPx,
   @{lib}/needrestart/apt-pinvoke         rPx,
   @{lib}/zsys-system-autosnapshot        rPx,
+  @{sbin}/dpkg-preconfigure              rPx,
 
   # For building the source after the download process is finished (apt-get source --compile)
   @{bin}/dpkg-buildpackage               rPUx,
@@ -168,6 +170,17 @@ profile apt @{exec_path} flags=(attach_disconnected) {
 
   /dev/ptmx rw,
 
+  profile fakeroot-sysv {
+    include <abstractions/base>
+
+    @{bin}/fakeroot-sysv mr,
+
+    @{bin}/dpkg          Px,
+    @{bin}/faked-sysv   rix,
+
+    include if exists <local/apt_fakeroot-sysv>
+  }
+
   profile editor flags=(complain) {
     include <abstractions/base>
     include <abstractions/app/editor>
@@ -211,6 +224,9 @@ profile apt @{exec_path} flags=(attach_disconnected) {
     audit deny owner @{HOME}/.*     mrwkl,
     audit deny owner @{HOME}/.*/     rw,
     audit deny owner @{HOME}/.*/**  mrwkl,
+
+    #aa:only test
+    /tmp/tmp.@{word10}/** rwlk,
 
     include if exists <local/apt_dpkg-source>
   }
