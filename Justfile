@@ -254,8 +254,8 @@ clean:
 
 # Build the package in a clean OCI container
 [group('packages')]
-package dist version="":
-	bash dists/docker.sh {{dist}} {{version}}
+package dist version="" flavor="":
+	bash dists/docker.sh {{dist}} {{version}} {{flavor}}
 
 # Build all packages in a clean OCI container
 [group('packages')]
@@ -277,7 +277,7 @@ packages:
 
 # Build the VM image
 [group('vm')]
-img dist version flavor: (package dist version)
+img dist version flavor: (package dist version flavor)
 	#!/usr/bin/env bash
 	set -eu -o pipefail
 	VERSION="{{version}}"

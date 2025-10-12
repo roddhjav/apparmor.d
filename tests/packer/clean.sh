@@ -51,6 +51,7 @@ clean_apt() {
 	apt-get -y autoremove --purge
 	apt-get -y autoclean
 	apt-get -y clean
+	apt-get update
 }
 
 clean_pacman() {
@@ -70,8 +71,6 @@ impersonalize() {
 	# Remove remaining pkg file, docs and caches
 	dirs=(
 		/var/cache/
-		/var/lib/apt
-		/var/lib/dhcp
 		/var/tmp
 	)
 	for dir in "${dirs[@]}"; do

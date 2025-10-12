@@ -16,13 +16,14 @@ readonly PKGNAME=apparmor.d
 readonly VOLUME=/tmp/build
 readonly BUILDIR=/home/build/tmp
 readonly OUTDIR=".pkg"
-readonly DISTRIBUTION="${1:-}"
+readonly DISTRIBUTION="$1"
 RELEASE="${2:-}"
+FLAVOR="${3:-}"
 VERSION="0.$(git rev-list --count HEAD)"
 PACKAGER="$(git config user.name) <$(git config user.email)>"
 [[ "$RELEASE" == "-" ]] && RELEASE=""
 readonly OUTPUT="$PWD/$OUTDIR/$DISTRIBUTION/$RELEASE"
-readonly RELEASE VERSION PACKAGER
+readonly RELEASE FLAVOR VERSION PACKAGER
 
 _start() {
 	local img="$1"
@@ -50,6 +51,9 @@ _exist() {
 sync() {
 	mkdir -p "$VOLUME"
 	rsync -ra --delete . "$VOLUME/$PKGNAME"
+	if [[ "$FLAVOR" == "test" ]]; then
+		sed -i -e "s/just complain/just complain-test/" "$VOLUME/$PKGNAME/debian/rules"
+	fi
 }
 
 build_in_docker_makepkg() {
