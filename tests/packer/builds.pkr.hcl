@@ -36,10 +36,10 @@ source "qemu" "default" {
     "user-data" = format("%s\n%s\n%s",
       templatefile("${path.cwd}/tests/cloud-init/common.yml",
         {
-          username = "${var.username}"
-          password = "${var.password}"
-          ssh_key  = file("${var.ssh_publickey}")
-          hostname = "${regex_replace(local.name, ".", "")}"
+          username = var.username
+          password = var.password
+          ssh_key  = file(var.ssh_publickey)
+          hostname = regex_replace(local.name, "\\.", "")
         }
       ),
       file("${path.cwd}/tests/cloud-init/${regex_replace(local.osinfo, "[0-9.]*$", "")}.yml"),
@@ -60,7 +60,7 @@ build {
       "${path.cwd}/tests/packer/src/",
       "${path.cwd}/tests/packer/init.sh",
       "${path.cwd}/tests/packer/clean.sh",
-      "${path.cwd}/.pkg/",
+      "${path.cwd}/.pkg/${var.dist}/${var.version}/",
     ]
   }
 
