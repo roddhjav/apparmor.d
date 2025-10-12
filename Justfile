@@ -222,7 +222,7 @@ lint:
 	shellcheck --shell=bash \
 		PKGBUILD dists/build.sh dists/docker.sh tests/check.sh \
 		tests/packer/init.sh tests/packer/src/aa-update tests/packer/clean.sh \
-		debian/{{pkgname}}.postinst debian/{{pkgname}}.postrm
+		tests/autopkgtest/autopkgtest.sh debian/{{pkgname}}.postinst debian/{{pkgname}}.postrm
 
 # Run style checks on the profiles
 [group('linter')]
@@ -250,7 +250,7 @@ clean:
 		debian/.debhelper debian/debhelper* debian/*.debhelper debian/{{pkgname}} \
 		{{pkgdest}}/{{pkgname}}* {{pkgdest}}/ubuntu {{pkgdest}}/debian \
 		{{pkgdest}}/archlinux {{pkgdest}}/opensuse {{pkgdest}}/version \
-		{{build}} coverage.out
+		{{build}} coverage.out .logs/autopkgtest/
 
 # Build the package in a clean OCI container
 [group('packages')]
@@ -408,6 +408,13 @@ tests:
 	@go test ./cmd/... -v -cover -coverprofile=coverage.out
 	@go test ./pkg/... -v -cover -coverprofile=coverage.out
 	@go tool cover -func=coverage.out
+
+# Run the autopkgtest tests
+[group('tests')]
+autopkgtest osinfo:
+	@PREFIX='{{prefix}}' VM_DIR='{{vm}}' \
+	USER='{{username}}' PASSWORD='{{password}}' SSH_OPT='{{sshopt}}' \
+		bash tests/autopkgtest/autopkgtest.sh run {{osinfo}}
 
 # Install dependencies for the integration tests
 [group('tests')]
