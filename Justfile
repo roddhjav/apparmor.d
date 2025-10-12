@@ -416,6 +416,20 @@ autopkgtest osinfo:
 	USER='{{username}}' PASSWORD='{{password}}' SSH_OPT='{{sshopt}}' \
 		bash tests/autopkgtest/autopkgtest.sh run {{osinfo}}
 
+_autopkgtest-log-merge:
+	@mkdir -p .logs/autopkgtest
+	@cat .logs/autopkgtest/aa-log-* > .logs/autopkgtest/merged.log
+
+# Report all collected logs
+[group('tests')]
+autopkgtest-log: (_autopkgtest-log-merge)
+	@aa-log --file .logs/autopkgtest/merged.log
+
+# Report all generated rules
+[group('tests')]
+autopkgtest-rules: (_autopkgtest-log-merge)
+	@aa-log --rules --file .logs/autopkgtest/merged.log
+
 # Install dependencies for the integration tests
 [group('tests')]
 init:
