@@ -1,0 +1,108 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{appid} = @{word}.@{word}.@{word}{,.@{word}}
+
+@{exec_path}  = /var/lib/flatpak/app/@{appid}/**/@{bin}/**
+@{exec_path} += /var/lib/flatpak/app/@{appid}/**/@{lib}/**
+profile flatpak-session-helper-app {
+  include <abstractions/base>
+  include <abstractions/desktop-files>
+  include <abstractions/graphics>
+
+  capability sys_ptrace,
+
+  network netlink raw,
+
+  signal receive set=int peer=flatpak-session-helper,
+
+  ptrace read,
+
+  @{exec_path} mrk,
+
+  @{bin}/@{shells}                   Ux, #aa:exclude RBAC
+  @{bin}/udevadm                     Cx -> udevadm,
+
+  @{sys}/block/ r,
+  @{sys}/class/hwmon/ r,
+  @{sys}/devices/@{pci}/ r,
+  @{sys}/devices/@{pci}/speed r,
+  @{sys}/devices/@{pci}/stat r,
+  @{sys}/devices/@{pci}/statistics/rx_bytes r,
+  @{sys}/devices/@{pci}/statistics/tx_bytes r,
+  @{sys}/devices/virtual/tty/tty@{int}/active r,
+
+  owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/ r,
+  owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/*.slice/ r,
+  owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/*.slice/*.service/ r,
+  owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/*.slice/{,**/}cgroup.procs r,
+
+  @{PROC}/ r,
+  @{PROC}/@{pids}/cgroup r,
+  @{PROC}/@{pids}/task/ r,
+  @{PROC}/@{pids}/cmdline r,
+
+  # Same than in app/flatpak
+        @{PROC}/ r,
+        @{PROC}/@{pids}/cpuset r,
+        @{PROC}/@{pids}/io r,
+        @{PROC}/@{pids}/maps r,
+        @{PROC}/@{pids}/smaps r,
+        @{PROC}/@{pids}/stat r,
+        @{PROC}/@{pids}/statm r,
+        @{PROC}/@{pids}/status r,
+        @{PROC}/@{pids}/task/@{tid}/status r,
+        @{PROC}/sys/fs/file-max r,
+        @{PROC}/sys/fs/file-nr r,
+        @{PROC}/sys/fs/inotify/max_queued_events r,
+        @{PROC}/sys/fs/inotify/max_user_instances r,
+        @{PROC}/sys/fs/inotify/max_user_watches r,
+        @{PROC}/sys/fs/nr_open r,
+        @{PROC}/sys/fs/pipe-max-size r,
+        @{PROC}/sys/kernel/hostname r,
+        @{PROC}/sys/kernel/osrelease r,
+        @{PROC}/sys/kernel/ostype r,
+        @{PROC}/sys/kernel/pid_max r,
+        @{PROC}/sys/kernel/random/boot_id r,
+        @{PROC}/sys/kernel/random/entropy_avail r,
+        @{PROC}/sys/kernel/random/uuid r,
+        @{PROC}/sys/kernel/shmmax r,
+        @{PROC}/sys/kernel/yama/ptrace_scope r,
+        @{PROC}/version r,
+        @{PROC}/version_signature r,
+  owner @{PROC}/@{pid}/cgroup r,
+  owner @{PROC}/@{pid}/clear_refs w,
+  owner @{PROC}/@{pid}/cmdline r,
+  owner @{PROC}/@{pid}/comm r,
+  owner @{PROC}/@{pid}/environ r,
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/fdinfo/@{int} r,
+  owner @{PROC}/@{pid}/limits r,
+  owner @{PROC}/@{pid}/loginuid r,
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/oom_adj r,
+  owner @{PROC}/@{pid}/oom_score_adj r,
+  owner @{PROC}/@{pid}/sessionid r,
+  owner @{PROC}/@{pid}/smaps_rollup r,
+  owner @{PROC}/@{pid}/task/ r,
+  owner @{PROC}/@{pid}/task/@{tid}/comm rw,
+  owner @{PROC}/@{pid}/task/@{tid}/smaps r,
+  owner @{PROC}/@{pid}/task/@{tid}/stat r,
+  owner @{PROC}/@{pid}/task/@{tid}/statm r,
+
+  profile udevadm {
+    include <abstractions/base>
+    include <abstractions/app/udevadm>
+
+    include if exists <local/flatpak-session-helper-app_udevadm>
+  }
+
+  include if exists <local/flatpak-session-helper-app>
+}
+
+# vim:syntax=apparmor
