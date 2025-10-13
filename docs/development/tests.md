@@ -24,6 +24,9 @@ Misconfigured AppArmor profiles is one of the most effective ways to break someo
     - Uses the [bats](https://github.com/bats-core/bats-core) test system.
     - Run in the Github Action as well as in all local [test VM](vm.md).
 
+- [x] **[Distribution Tests:](autopkgtest.md)** `just autopkgtest <osinfo>`
+    - Run the autopkgtest suite for Ubuntu and Debian.
+
 **Plan**
 
 For more complex software suite, more integration tests need to be done. The plan is to run existing integration suite from these very software in an environment with `apparmor.d` profiles.
