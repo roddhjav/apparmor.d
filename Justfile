@@ -416,6 +416,17 @@ autopkgtest osinfo:
 	USER='{{username}}' PASSWORD='{{password}}' SSH_OPT='{{sshopt}}' \
 		bash tests/autopkgtest/autopkgtest.sh run {{osinfo}}
 
+# Update the apparmor.d package on the test machine
+[group('tests')]
+autopkgtest-update dist version:
+	just up {{dist}}{{version}} test
+	just package {{dist}} {{version}} test
+	scp {{sshopt}} {{pkgdest}}/{{dist}}/{{version}}/{{pkgname}}_*.deb \
+		{{username}}@`just _get_ip {{dist}}{{version}} test`:/home/{{username}}/Projects/
+	ssh {{sshopt}} {{username}}@`just _get_ip {{dist}}{{version}} test` \
+		sudo dpkg -i /home/{{username}}/Projects/{{pkgname}}_*.deb
+	just halt {{dist}}{{version}} test
+
 _autopkgtest-log-merge:
 	@mkdir -p .logs/autopkgtest
 	@cat .logs/autopkgtest/aa-log-* > .logs/autopkgtest/merged.log
