@@ -28,7 +28,6 @@ profile NetworkManager @{exec_path} flags=(attach_disconnected) {
   capability setgid,
   capability setuid,
   capability sys_chroot,
-  capability sys_module,
 
   network inet stream,
   network inet6 stream,
@@ -91,7 +90,7 @@ profile NetworkManager @{exec_path} flags=(attach_disconnected) {
   @{sbin}/nft       rix,
 
   @{sbin}/dnsmasq                                            rPx,
-  @{bin}/kmod                                                rPx,
+  @{bin}/kmod                                                rCx -> kmod,
   @{bin}/netconfig                                          rPUx,
   @{sbin}/resolvconf                                         rPx,
   @{bin}/resolvectl                                          rPx,
@@ -130,12 +129,6 @@ profile NetworkManager @{exec_path} flags=(attach_disconnected) {
   /var/lib/iwd/*open* rw,
   /var/lib/NetworkManager/{,**} rw,
 
-  @{sys}/bus/ r,
-  @{sys}/class/ r,
-  @{sys}/class/net/ r,
-  @{sys}/class/net/rfkill/ r,
-  @{sys}/class/rfkill/ r,
-
   @{att}@{run}/systemd/inhibit/@{int}.ref rw,
   @{run}/systemd/resolve/io.systemd.Resolve rw,
 
@@ -150,10 +143,16 @@ profile NetworkManager @{exec_path} flags=(attach_disconnected) {
   @{run}/udev/data/+rfkill:* r,           # Kill switch for wireless devices (Wi-Fi, Bluetooth, NFC) to save power
   @{run}/udev/data/n@{int} r,             # For network interfaces
 
+  @{sys}/bus/ r,
+  @{sys}/class/ r,
+  @{sys}/class/net/ r,
+  @{sys}/class/net/rfkill/ r,
+  @{sys}/class/rfkill/ r,
   @{sys}/devices/@{pci}/net/*/{,**} r,
   @{sys}/devices/@{pci}/usb@{int}/**/net/{,**} r,
   @{sys}/devices/**/@{uuid}/net/*/{,**} r,
   @{sys}/devices/**/uevent r,
+  @{sys}/devices/virtual/**/net/{,**} r,
   @{sys}/devices/virtual/net/{,**} r,
 
         @{PROC}/@{pids}/stat r,
@@ -170,6 +169,17 @@ profile NetworkManager @{exec_path} flags=(attach_disconnected) {
   #aa:only test
   /etc/netplan/10-test.yaml rw,
 
+  profile kmod {
+    include <abstractions/base>
+    include <abstractions/app/kmod>
+
+    capability sys_module,
+
+    @{sys}/module/compression r,
+    @{sys}/module/nf_*/initstate r,
+
+    include if exists <local/NetworkManager_kmod>
+  }
 
   profile systemctl {
     include <abstractions/base>
