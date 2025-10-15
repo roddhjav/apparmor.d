@@ -1,0 +1,51 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+# LOGPROF-SUGGEST: no
+
+  abi <abi/4.0>,
+
+  include <abstractions/flatpak/baseapp/org.winehq.Win>
+
+  @{lib}/os-release rk,
+
+  owner @{run}/user/@{uid}/ r,
+  owner @{run}/user/@{uid}/srt-fifo.@{rand6}/{,*} rw,
+
+  owner /dev/shm/u@{uid}-ValveIPCSharedObj-Steam rwk,
+
+  @{sys}/devices/system/clocksource/clocksource@{int}/current_clocksource r,
+
+  @{sys}/devices/virtual/dmi/id/bios_date r,
+  @{sys}/devices/virtual/dmi/id/bios_vendor r,
+  @{sys}/devices/virtual/dmi/id/bios_version rk,
+  @{sys}/devices/virtual/dmi/id/board_asset_tag r,
+  @{sys}/devices/virtual/dmi/id/board_name r,
+  @{sys}/devices/virtual/dmi/id/board_vendor r,
+  @{sys}/devices/virtual/dmi/id/board_version r,
+  @{sys}/devices/virtual/dmi/id/chassis_type r,
+  @{sys}/devices/virtual/dmi/id/chassis_vendor r,
+  @{sys}/devices/virtual/dmi/id/chassis_version r,
+  @{sys}/devices/virtual/dmi/id/product_family r,
+  @{sys}/devices/virtual/dmi/id/product_name k,
+  @{sys}/devices/virtual/dmi/id/product_sku r,
+  @{sys}/devices/virtual/dmi/id/product_version r,
+  @{sys}/devices/virtual/dmi/id/sys_vendor k,
+
+        @{PROC}/@{pid}/comm rk,
+        @{PROC}/locks r,
+        @{PROC}/pressure/cpu r,
+        @{PROC}/pressure/io r,
+        @{PROC}/pressure/memory r,
+        @{PROC}/sys/kernel/sched_autogroup_enabled r,
+        @{PROC}/sys/net/core/bpf_jit_enable r,
+  owner @{PROC}/@{pid}/autogroup rw,
+  owner @{PROC}/@{pid}/cmdline rk,
+
+  # NT synchronization driver (performance improvement for games)
+  # https://www.phoronix.com/news/Linux-6.14-NTSYNC-Driver-Ready
+  /dev/ntsync r,
+
+  include if exists <abstractions/flatpak/baseapp/com.valvesoftware.Steam.d>
+
+# vim:syntax=apparmor
