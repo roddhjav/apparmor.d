@@ -1,0 +1,45 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+# LOGPROF-SUGGEST: no
+# NEEDS-VARIABLE: appid
+
+  abi <abi/4.0>,
+
+  include <abstractions/nss>
+
+  # The orcexec.* file is JIT compiled code for various GStreamer elements.
+  owner @{run}/user/@{uid}/orcexec.@{rand6} mrw,
+
+        /dev/shm/ r,
+  owner /dev/shm/.@{appid}.@{rand6} rw,
+  owner /dev/shm/.org.chromium.Chromium.@{rand6} rw,
+
+  @{sys}/bus/ r,
+  @{sys}/devices/**/usb@{int}/{,*/}bConfigurationValue r,
+  @{sys}/devices/**/usb@{int}/{,*/}descriptors r,
+  @{sys}/devices/**/usb@{int}/{,*/}manufacturer r,
+  @{sys}/devices/**/usb@{int}/{,*/}product r,
+  @{sys}/devices/**/usb@{int}/{,*/}serial r,
+  @{sys}/devices/**/usb@{int}/{,*/}vendor r,
+  @{sys}/devices/system/cpu/kernel_max r,
+
+  # Allow getting the manufacturer and model of the computer where chromium is currently running.
+  @{sys}/devices/virtual/dmi/id/product_name r,
+  @{sys}/devices/virtual/dmi/id/sys_vendor r,
+
+  # Chromium content api unfortunately needs these for normal operation
+  owner @{PROC}/@{pid}/fd/@{int} w,
+
+  # This is an information leak but disallowing it leads to developer confusion
+  # when using the chromium content api file chooser due to a (harmless) glib
+  # warning and the noisy AppArmor denial.
+  owner @{PROC}/@{pid}/mounts r,
+  owner @{PROC}/@{pid}/mountinfo r,
+
+  # This allows raising the OOM score of other processes owned by the user.
+  owner @{PROC}/@{pid}/oom_score_adj w,
+
+  include if exists <abstractions/flatpak/baseapp/org.chromium.Chromium.d>
+
+# vim:syntax=apparmor
