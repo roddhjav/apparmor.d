@@ -1,0 +1,18 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Allows listing Bluetooth devices and their properties.
+
+  abi <abi/4.0>,
+
+  #aa:dbus common bus=system name=org.bluez label="@{p_bluetoothd}"
+
+  dbus receive bus=system path=/org/bluez/hci@{int}/dev_@{hex2}_@{hex2}_@{hex2}_@{hex2}_@{hex2}_@{hex2}/service@{hex4}/char@{hex4}
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged
+       peer=(name=@{busname}, label=bluetoothd),
+
+  include if exists <abstractions/bluetooth-observe.d>
+
+# vim:syntax=apparmor
