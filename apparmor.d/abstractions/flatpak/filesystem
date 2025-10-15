@@ -1,0 +1,57 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+# LOGPROF-SUGGEST: no
+
+#aa:lint ignore=too-wide
+
+# Used by the generic flatpak app profile (fapp) to cover the filesystem access
+# as defined in the flatpak doc. Dynamically generated flatpak profiles do
+# not use this abstraction.
+
+# As a generic profile cannot filter filesystem for each app, the flatpak/filesystem
+# abstraction gives full access to the user's home, and read only acccess to
+# host system files. In the limit of what is defined by flatpak.
+
+# https://docs.flatpak.org/en/latest/sandbox-permissions.html#filesystem-access
+
+  abi <abi/4.0>,
+
+  # Access an arbitrary path except any reserved ones
+  owner /etc/{,**} rw,
+  owner @{sys}/ r,
+  owner /usr/{,**} r,
+
+  # host-os
+  @{run}/host/bin/{,**} r,
+  @{run}/host/etc/alternatives r,
+  @{run}/host/etc/ld.so.cache r,
+  @{run}/host/lib{32,64}/{,**} r,
+  @{run}/host/sbin/{,**} r,
+  @{run}/host/usr/{,**} r,
+
+  # host-etc
+  @{run}/host/etc/** r,
+
+  # host
+  /opt/{,**} r,
+  /srv/{,**} r,
+  owner @{MOUNTS}/ r,
+  owner @{MOUNTS}/** rwlk -> @{MOUNTS}/**,
+
+  # home
+  owner /home/ r,
+  owner @{HOME}/ r,
+  owner @{HOME}/** rwlk -> @{HOME}/**,
+
+  # xdg-run
+  owner @{run}/user/@{uid}/ rw,
+  owner @{run}/user/@{uid}/** rwlk -> @{run}/user/@{uid}/**,
+
+        /var/lib/** r,
+  owner /var/ r,
+  owner /var/tmp/ r,
+
+  include if exists <abstractions/flatpak/filesystem.d>
+
+# vim:syntax=apparmor
