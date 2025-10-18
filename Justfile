@@ -254,12 +254,12 @@ clean:
 
 # Build the package in a clean OCI container
 [group('packages')]
-package dist version="" flavor="":
-	bash dists/docker.sh {{dist}} {{version}} {{flavor}}
+package dist release="" flavor="":
+	bash dists/docker.sh {{dist}} {{release}} {{flavor}}
 
 # Build all packages in a clean OCI container
 [group('packages')]
-packages:
+packages: (clean)
 	#!/usr/bin/env bash
 	set -eu -o pipefail
 	declare -A matrix=(
@@ -269,23 +269,23 @@ packages:
 		["opensuse"]="-"
 	)
 	for dist in "${!matrix[@]}"; do
-		IFS=' ' read -r -a versions <<< "${matrix[$dist]}"
-		for version in "${versions[@]}"; do
-			echo bash dists/docker.sh $dist $version
+		IFS=' ' read -r -a releases <<< "${matrix[$dist]}"
+		for release in "${releases[@]}"; do
+			bash dists/docker.sh $dist $release
 		done
 	done
 
 # Build the VM image
 [group('vm')]
-img dist version flavor: (package dist version flavor)
+img dist release flavor: (package dist release flavor)
 	#!/usr/bin/env bash
 	set -eu -o pipefail
-	VERSION="{{version}}"
-	[[ "$VERSION" == "-" ]] && VERSION=""
+	RELEASE="{{release}}"
+	[[ "$RELEASE" == "-" ]] && RELEASE=""
 	mkdir -p {{base_dir}}
 	packer build -force \
 		-var dist={{dist}} \
-		-var version="$VERSION" \
+		-var release="$RELEASE" \
 		-var flavor={{flavor}} \
 		-var prefix={{prefix}} \
 		-var username={{username}} \
@@ -360,7 +360,7 @@ umount osinfo flavor:
 # List the machines
 [group('vm')]
 list:
-	@printf "{{BOLD}} %-4s %-22s %s{{NORMAL}}\n" "Id" "Distribution-Flavor" "State"
+	@printf "{{BOLD}} %-4s %-22s %s{{NORMAL}}\n" "Id" "OsInfo-Flavor" "State"
 	@virsh {{c}} list --all | grep {{prefix}} | sed 's/{{prefix}}//g'
 
 # List the VM images
@@ -418,14 +418,14 @@ autopkgtest osinfo:
 
 # Update the apparmor.d package on the test machine
 [group('tests')]
-autopkgtest-update dist version:
-	just up {{dist}}{{version}} test
-	just package {{dist}} {{version}} test
-	scp {{sshopt}} {{pkgdest}}/{{dist}}/{{version}}/{{pkgname}}_*.deb \
-		{{username}}@`just _get_ip {{dist}}{{version}} test`:/home/{{username}}/Projects/
-	ssh {{sshopt}} {{username}}@`just _get_ip {{dist}}{{version}} test` \
+autopkgtest-update dist release:
+	just up {{dist}}{{release}} test || true
+	just package {{dist}} {{release}} test
+	scp {{sshopt}} {{pkgdest}}/{{dist}}/{{release}}/{{pkgname}}_*.deb \
+		{{username}}@`just _get_ip {{dist}}{{release}} test`:/home/{{username}}/Projects/
+	ssh {{sshopt}} {{username}}@`just _get_ip {{dist}}{{release}} test` \
 		sudo dpkg -i /home/{{username}}/Projects/{{pkgname}}_*.deb
-	just halt {{dist}}{{version}} test
+	just halt {{dist}}{{release}} test
 
 _autopkgtest-log-merge:
 	@mkdir -p .logs/autopkgtest
@@ -508,8 +508,8 @@ commit:
 	mv debian/changelog.tmp debian/changelog
 	sed -i "s/^pkgver=.*/pkgver=$version/" PKGBUILD
 	sed -i "s/^Version:.*/Version:        $version/" "dists/{{pkgname}}.spec"
-	echo git add PKGBUILD "dists/{{pkgname}}.spec" debian/changelog
-	echo git commit -S -m "Release version $version"
+	git add PKGBUILD "dists/{{pkgname}}.spec" debian/changelog
+	git commit -S -m "Release version $version"
 
 # Create a release archive
 [group('release')]
