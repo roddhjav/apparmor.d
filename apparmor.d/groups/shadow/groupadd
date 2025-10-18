@@ -15,6 +15,7 @@ profile groupadd @{exec_path} flags=(attach_disconnected) {
 
   capability audit_write,
   capability chown,
+  capability dac_override,
   capability fsetid,
 
   network netlink raw,
@@ -34,6 +35,16 @@ profile groupadd @{exec_path} flags=(attach_disconnected) {
   # A process first uses lckpwdf() to lock the lock file, thereby gaining exclusive rights to
   # modify the /etc/passwd or /etc/shadow password database.
   /etc/.pwd.lock rwk,
+
+  /var/lib/extrausers/group w,
+  /var/lib/extrausers/group- w,
+  /var/lib/extrausers/group.@{pid} w,
+  /var/lib/extrausers/group.lock wl -> /var/lib/extrausers/group.@{pid}, 
+  /var/lib/extrausers/group+ rw,
+  /var/lib/extrausers/gshadow rw,
+  /var/lib/extrausers/gshadow- w,
+  /var/lib/extrausers/gshadow.lock wl -> /var/lib/extrausers/gshadow.@{pid}, 
+  /var/lib/extrausers/gshadow+ rw,
 
   include if exists <local/groupadd>
 }
