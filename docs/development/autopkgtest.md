@@ -24,9 +24,9 @@ The test VM is a VM as defined in the [Development VM](vm.md) section, with a sp
 You can create the image, then the VM, and shut it down with:
 
 ```sh
-just img <dist> <version> test
-just create <dist><version> test
-just halt <dist><version> test
+just img <dist> <release> test
+just create <dist><release> test
+just halt <dist><release> test
 ```
 
 Example:
@@ -47,7 +47,7 @@ Others VM defined in this project ships with a `aa-update` command that build an
 To update apparmor.d in the VM without creating a new image, use the `autopkgtest-update` command, it will build the package on the host, and install it in the VM:
 
 ```sh
-just autopkgtest-update <dist> <version>
+just autopkgtest-update <dist> <release>
 ```
 
 Example:
@@ -63,13 +63,13 @@ The autopkgtest suite runs the tests for all source packages listed in `tests/au
 To run the full suite for a Debian/Ubuntu system:
 
 ```sh
-just autopkgtest <dist><version>
+just autopkgtest <dist><release>
 ```
 
 Example:
 
 ```sh
-just autopkgtest ubuntu 25.10
+just autopkgtest ubuntu25.10
 ```
 
 ## Log Analysis

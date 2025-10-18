@@ -76,8 +76,8 @@ variable "dist" {
   default     = "ubuntu"
 }
 
-variable "version" {
-  description = "Version to target"
+variable "release" {
+  description = "Release to target"
   type        = string
   default     = "25.10"
 }

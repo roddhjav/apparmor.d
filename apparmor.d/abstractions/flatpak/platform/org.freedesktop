@@ -1,0 +1,58 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+# LOGPROF-SUGGEST: no
+# NEEDS-VARIABLE: appid
+
+  abi <abi/4.0>,
+
+  include <abstractions/bus/session/org.freedesktop.portal.Settings>
+  include <abstractions/desktop-files>
+
+  # Base directories of the flatpak platform
+  /usr/ r,
+  /usr/share/ r,
+  /usr/share/** r,
+
+  # Fonts
+  # We are purposely not using the fonts abstraction as it gives access to
+  # system-wide and user fonts out of the sandbox.
+
+  /usr/share/fonts/{,**} rk,
+  /usr/cache/fontconfig/** r,
+
+  /etc/fonts/{,**} r,
+
+  owner /var/cache/fontconfig/@{hex32}-le{32,64}.cache-@{int} r,
+  owner /var/cache/fontconfig/@{hex32}-le{32,64}.cache-reindex@{int}-@{int} r,
+
+        @{run}/host/fonts/{,**} r,
+        @{run}/host/fonts-cache/{,**} r,
+  owner @{run}/host/user-fonts-cache/@{hex32}-le{32,64}.cache-@{int} r,
+  owner @{run}/host/font-dirs.xml r,
+
+  # Icons
+  # We are purposely not using the icons abstraction as it gives access to
+  # system-wide and user icon out of the sandbox.
+
+  /var/lib/flatpak/app/@{appid}/@{arch}/stable/@{hex64}/export/share/icons/{,**} r,
+  /var/lib/flatpak/exports/share/icons/{,**} r,
+
+  @{run}/host/share/icons/{,**} r,
+  @{run}/host/user-share/icons/{,**} r,
+
+  # Pkcs11
+  # Flatpak only pkcs11 paths
+
+  /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem r,
+  /etc/pki/tls/openssl.cnf r,
+
+  owner /etc/pkcs11/modules/ r,
+  owner /etc/pkcs11/modules/p11-kit-trust.module r,
+  owner /etc/pkcs11/pkcs11.conf r,
+
+  owner @{run}/user/@{uid}/.flatpak-helper/pkcs11-flatpak-@{int} rw,
+
+  include if exists <abstractions/flatpak/platform/org.freedesktop.d>
+
+# vim:syntax=apparmor

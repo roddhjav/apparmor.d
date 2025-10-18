@@ -40,13 +40,22 @@ profile openvpn @{exec_path} flags=(attach_disconnected) {
   network inet6 stream,
   network netlink raw,
 
-  signal (receive) set=(term) peer=nm-openvpn-service,
+  signal receive set=term peer=nm-openvpn-service,
+  signal receive set=term peer=pgrep,
 
   @{exec_path} mr,
 
-  @{lib}/{,NetworkManager/}nm-openvpn-service-openvpn-helper rPx,
+  @{bin}/ip                                rix, # TODO: rCx
+  @{bin}/systemd-ask-password              rPx,
+
+  @{lib}/nm-openvpn-service-openvpn-helper                    rPx,
+  @{lib}/{,NetworkManager/}nm-openvpn-service-openvpn-helper  rPx,
+
+  /etc/openvpn/force-user-traffic-via-vpn.sh    rCx -> force-user-traffic-via-vpn,
+  /etc/openvpn/update-resolv-conf{,.sh}         rCx -> update-resolv,
 
   /etc/openvpn/{,**} r,
+  /etc/openvpn/static.key w,
 
   @{HOME}/.cert/{,**} r,
 
@@ -56,13 +65,8 @@ profile openvpn @{exec_path} flags=(attach_disconnected) {
   @{run}/openvpn/*.{pid,status} rw,
   @{run}/systemd/journal/dev-log r,
 
-  @{bin}/ip                                rix,
-  @{bin}/systemd-ask-password              rPx,
-  @{lib}/nm-openvpn-service-openvpn-helper rPx,
-  /etc/openvpn/force-user-traffic-via-vpn.sh    rCx -> force-user-traffic-via-vpn,
-  /etc/openvpn/update-resolv-conf{,.sh}         rCx -> update-resolv,
-
-  /dev/net/tun rw,
+  owner /tmp/openvpn.log w,
+  owner /tmp/openvpn/{,**} r,
 
   owner @{PROC}/@{pid}/net/route r,
 

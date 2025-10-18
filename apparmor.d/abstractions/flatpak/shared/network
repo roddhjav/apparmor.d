@@ -1,0 +1,47 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+# LOGPROF-SUGGEST: no
+
+  abi <abi/4.0>,
+
+  include <abstractions/ssl_certs>
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+
+  @{run}/systemd/resolve/io.systemd.Resolve rw,
+
+  owner @{run}/host/monitor/gai.conf r,
+  owner @{run}/host/monitor/host.conf r,
+  owner @{run}/host/monitor/hosts r,
+  owner @{run}/host/monitor/resolv.conf r,
+
+  @{sys}/class/net/ r,
+  @{sys}/devices/**/net/*/ r,
+  @{sys}/devices/**/net/*/carrier r,
+
+  # Leaks interface names and stats, but not in a way that is traceable
+  # to the user/device
+  @{PROC}/@{pid}/net/dev r,
+  @{PROC}/@{pid}/net/if_inet6 r,
+  @{PROC}/@{pid}/net/ipv6_route r,
+  @{PROC}/@{pid}/net/packet r,
+  @{PROC}/@{pid}/net/raw r,
+  @{PROC}/@{pid}/net/raw6 r,
+  @{PROC}/@{pid}/net/route r,
+  @{PROC}/@{pid}/net/sockstat r,
+  @{PROC}/@{pid}/net/sockstat6 r,
+  @{PROC}/@{pid}/net/tcp r,
+  @{PROC}/@{pid}/net/tcp6 r,
+  @{PROC}/@{pid}/net/udp r,
+  @{PROC}/@{pid}/net/udp6 r,
+  @{PROC}/@{pid}/net/udplite r,
+  @{PROC}/@{pid}/net/unix r,
+  @{PROC}/net/dev r,
+
+  include if exists <abstractions/flatpak/shared/network.d>
+
+# vim:syntax=apparmor

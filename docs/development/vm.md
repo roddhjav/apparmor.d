@@ -41,7 +41,7 @@ Available recipes:
     pkg name=""                       # Build & install apparmor.d on Arch based systems
     dpkg name=""                      # Build & install apparmor.d on Debian based systems
     rpm name=""                       # Build & install apparmor.d on OpenSUSE based systems
-    package dist version="" flavor="" # Build the package in a clean OCI container
+    package dist release="" flavor="" # Build the package in a clean OCI container
     packages                          # Build all packages in a clean OCI container
 
     [linter]
@@ -54,7 +54,7 @@ Available recipes:
     serve                             # Serve the documentation
 
     [vm]
-    img dist version flavor           # Build the VM image
+    img dist release flavor           # Build the VM image
     create osinfo flavor              # Create the machine
     up osinfo flavor                  # Start a machine
     halt osinfo flavor                # Stops the machine
@@ -70,7 +70,7 @@ Available recipes:
     [tests]
     tests                             # Run the unit tests
     autopkgtest osinfo                # Run the autopkgtest tests
-    autopkgtest-update dist version   # Update the apparmor.d package on the test machine
+    autopkgtest-update dist release   # Update the apparmor.d package on the test machine
     autopkgtest-log                   # Report all collected logs
     autopkgtest-rules                 # Report all generated rules
     init                              # Install dependencies for the integration tests

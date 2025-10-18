@@ -6,6 +6,8 @@ abi <abi/4.0>,
 
 include <tunables/global>
 
+@{appid} = @{word}.@{word}.@{word}{,.@{word}}
+
 @{exec_path} = @{bin}/flatpak
 profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted,complain) {
   include <abstractions/base>
@@ -43,9 +45,9 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted,complain
 
   mount fstype=fuse.revokefs-fuse options=(rw, nosuid, nodev) -> /var/tmp/flatpak-cache-*/*/,
 
-  ptrace read peer=flatpak-app,
+  ptrace read peer=fbwrap,      # Generic bwrap for flatpak app
+  ptrace read peer=flatpak-app, # Deprecated generic profile
   ptrace read peer=flatpak.*,
-  ptrace read peer=bwrap.*,
 
   signal send peer=flatpak-app,
 
@@ -71,7 +73,8 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted,complain
 
   @{exec_path} mr,
 
-  @{bin}/bwrap               rPx -> flatpak-app,
+  @{bin}/bwrap               rPx -> flatpak-app, #aa:only apparmor<4.1
+  @{bin}/bwrap               rPx -> fbwrap,      #aa:only apparmor>=4.1
   @{bin}/fusermount{,3}      rCx -> fusermount,
   @{bin}/gpg                 rCx -> gpg,
   @{bin}/gpgconf             rCx -> gpg,
@@ -102,8 +105,8 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted,complain
 
   owner @{HOME}/.var/ w,
   owner @{HOME}/.var/app/{,**} rw,
-  owner @{att}/@{HOME}/.var/app/*/.local/share/*/logs/* rw,
-  owner @{att}/@{HOME}/.var/app/*/.local/share/*/**/usr/.ref rw,
+  owner @{att}@{HOME}/.var/app/@{appid}/.local/share/*/logs/* rw,
+  owner @{att}@{HOME}/.var/app/@{appid}/.local/share/*/**/usr/.ref rw,
 
   # Can create dotfile directories for any app
   owner @{user_cache_dirs}/*/ w,
