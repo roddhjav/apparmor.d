@@ -29,6 +29,8 @@ profile gnome-software @{exec_path} {
   mount fstype=fuse.revokefs-fuse options=(rw, nosuid, nodev) -> /var/tmp/flatpak-cache-*/*/,
   umount /var/tmp/flatpak-cache-*/*/,
 
+  signal send set=kill peer=fbwrap,
+
   #aa:dbus own bus=session name=org.freedesktop.PackageKit
   #aa:dbus own bus=session name=org.gnome.Software interface+=org.freedesktop.Application
 
@@ -42,7 +44,8 @@ profile gnome-software @{exec_path} {
   @{exec_path} mr,
 
   @{bin}/baobab              rPUx,
-  @{bin}/bwrap               rPx -> flatpak-app,
+  @{bin}/bwrap               rPx -> flatpak-app, #aa:only apparmor<4.1
+  @{bin}/bwrap               rPx -> fbwrap,      #aa:only apparmor>=4.1
   @{bin}/fusermount{,3}      rCx -> fusermount,
   @{bin}/gnome-control-center rPx,
   @{bin}/gpg{,2}             rCx -> gpg,
