@@ -1,0 +1,36 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Can inhibit and uninhibit screen savers in desktop sessions.
+
+  abi <abi/4.0>,
+
+  # Gnome Session, not using bus/session/org.gnome.SessionManager as it allows
+  # full session management
+  dbus send bus=session path=/org/gnome/SessionManager
+       interface=org.gnome.SessionManager
+       member={Inhibit,Uninhibit}
+       peer=(name="@{busname}", label="{gnome-session-binary,gnome-session-service}"),
+
+  dbus send bus=session path=/ScreenSaver
+       interface=org.gnome.ScreenSaver
+       member=SimulateUserActivity
+       peer=(name="@{busname}", label="{gnome-session-binary,gnome-session-service}"),
+
+  # Generic freedesktop, not using bus/session/org.freedesktop.ScreenSaver as
+  # it allows too much
+  dbus send bus=session path=/ScreenSaver
+       interface=org.freedesktop.ScreenSaver
+       member={Inhibit,UnInhibit,SimulateUserActivity}
+       peer=(name=org.freedesktop.ScreenSaver),
+
+  dbus send bus=session path=/org/gnome/ScreenSaver
+       interface=org.{freedesktop,gnome}.ScreenSaver
+       member={Inhibit,UnInhibit,SimulateUserActivity}
+       peer=(name=@{busname}, label=gjs),
+
+  include if exists <abstractions/screen-inhibit.d>
+
+# vim:syntax=apparmor
