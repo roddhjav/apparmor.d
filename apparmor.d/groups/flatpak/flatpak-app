@@ -22,35 +22,25 @@ abi <abi/4.0>,
 
 include <tunables/global>
 
+@{appid} = @{word}.@{word}.@{word}{,.@{word}}
+
+@{exec_path} = @{bin}/bwrap
 profile flatpak-app flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/base>
-  include <abstractions/bus-system>
-  include <abstractions/common/app>
+  include <abstractions/app/flatpak>
   include <abstractions/bwrap>
 
-  capability dac_override,
-  capability dac_read_search,
-  capability setuid,          # Needed when bwrap is setup with setuid privileges.
   capability sys_resource,
-
-  network inet dgram,
-  network inet6 dgram,
-  network inet stream,
-  network inet6 stream,
-  network netlink dgram,
-  network netlink raw,
-  network unix stream,
-
-  ptrace read,
-  ptrace trace peer=flatpak-app,
+  capability setuid,          # Needed when bwrap is setup with setuid privileges.
 
   signal receive peer=flatpak,
   signal receive set=(int term) peer=flatpak-portal,
   signal receive set=(int term) peer=flatpak-session-helper,
 
   unix type=seqpacket peer=(label=dbus-session),
-  # unix type=seqpacket peer=(label=unconfined),
   unix type=seqpacket peer=(label=xdg-dbus-proxy),
+
+  @{exec_path} mr,
 
   @{bin}/**                            rmix,
   @{lib}/**                            rmix,
@@ -58,19 +48,10 @@ profile flatpak-app flags=(attach_disconnected,mediate_deleted) {
   /usr/plugins/**                      rmix,
   /usr/share/flatpak/triggers/*        rix,
   /usr/share/runtime/**                rmix,
-  /var/lib/flatpak/app/*/**/@{bin}/**  rmix,
-  /var/lib/flatpak/app/*/**/@{lib}/**  rmix,
 
-  @{run}/flatpak/app/*/.org.chromium.Chromium.@{rand6} rm,
-  @{run}/flatpak/app/*/**so*           rm,
   @{run}/parent/@{bin}/**              rmix,
   @{run}/parent/@{lib}/**              rmix,
   @{run}/parent/app/**                 rmix,
-
-  @{bin}/gtk{,4}-update-icon-cache     rPx -> flatpak-app//&gtk-update-icon-cache,
-  @{bin}/update-desktop-database       rPx -> flatpak-app//&update-desktop-database,
-  @{bin}/update-mime-database          rPx -> flatpak-app//&update-mime-database,
-  @{bin}/xdg-dbus-proxy                rPx -> flatpak-app//&xdg-dbus-proxy,
 
   @{lib}/kf5/kioslave5                 rPx,
   @{lib}/kf6/kioworker                 rPx,
@@ -79,26 +60,9 @@ profile flatpak-app flags=(attach_disconnected,mediate_deleted) {
   /etc/shells rw,
 
   /app/.ref rk,
-  /app/extra/** rw,
-  /app/lib/** rk,
-  /bindfile@{rand6} rw,
   /usr/.ref rk,
 
-  /var/lib/flatpak/app/{,**} r,
-  /var/lib/flatpak/exports/** rw,
-
-  owner @{att}@{HOME}/.var/app/** rwlkmix,
-
-        @{run}/parent/** r,
-        @{run}/parent/app/.ref rk,
-        @{run}/parent/usr/.ref rk,
-  owner @{run}/flatpak/{,**} rk,
-  owner @{run}/flatpak/app/** rw,
-  owner @{run}/flatpak/doc/** rw,
-  owner @{run}/ld-so-cache-dir/* rw,
-  owner @{run}/user/ r,
-
-  /dev/ntsync r,
+  /bindfile@{rand6} rw,
 
   include if exists <usr/flatpak-app.d>
   include if exists <local/flatpak-app>
