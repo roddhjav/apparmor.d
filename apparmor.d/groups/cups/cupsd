@@ -54,7 +54,7 @@ profile cupsd @{exec_path} flags=(attach_disconnected) {
   @{bin}/chmod               rix,
   @{bin}/cp                  rix,
   @{bin}/{,e}grep            rix,
-  @{bin}/gs{,.bin}           rix,
+  @{bin}/gs{,.bin}           rCx,
   @{bin}/gsc                 rix,
   @{bin}/hostname            rix,
   @{bin}/ippfind             rix,
@@ -75,7 +75,6 @@ profile cupsd @{exec_path} flags=(attach_disconnected) {
   @{lib}/cups/notifier/*     rPx,
 
   /usr/share/cups/{,**} r,
-  /usr/share/ghostscript/{,**} r,
   /usr/share/poppler/{,**} r,
   /usr/share/ppd/{,**} r,
 
@@ -103,6 +102,22 @@ profile cupsd @{exec_path} flags=(attach_disconnected) {
   owner @{tmp}/*_latest_print_info w,
 
   /dev/tty rw,
+
+  profile gs {
+    include <abstractions/base>
+    include <abstractions/fonts>
+
+    @{bin}/gs{,.bin} mr,
+
+    /usr/share/ghostscript/{,**} r,
+    /usr/share/color/icc/ghostscript/{,**} r,
+
+    /var/lib/ghostscript/{,**} r,
+
+    owner /tmp/gs_@{rand6} rw,
+
+    include if exists <local/cupsd_gs>
+  }
 
   include if exists <local/cupsd>
 }
