@@ -88,7 +88,6 @@ func (p Configure) Apply() ([]string, error) {
 			"dig",
 			"free",
 			"nslookup",
-			"who",
 		}
 		if err := removeFiles(remove); err != nil {
 			return res, err
