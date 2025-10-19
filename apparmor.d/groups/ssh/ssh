@@ -37,6 +37,7 @@ profile ssh @{exec_path} {
   @{etc_ro}/ssh/sshd_config r,
   @{etc_ro}/ssh/sshd_config.d/{,*} r,
   /etc/machine-id r,
+  /etc/gss/mech.d/{,*} r,
 
   owner @{HOME}/@{XDG_SSH_DIR}/{,*} r,
   owner @{HOME}/@{XDG_SSH_DIR}/known_hosts{,.*} rwl,
@@ -47,14 +48,16 @@ profile ssh @{exec_path} {
 
   owner @{tmp}/krb5cc_* rwk,
 
-  audit owner @{tmp}/ssh-*/{,agent.@{int}} rwkl,
-
   owner @{run}/user/@{uid}/gvfsd-sftp/@{hex} rwl -> @{run}/user/@{uid}/gvfsd-sftp/@{hex}.@{rand},
   owner @{run}/user/@{uid}/gvfsd-sftp/@{hex}.@{rand} rwl -> @{run}/user/@{uid}/gvfsd-sftp/@{hex}.@{rand},
   owner @{run}/user/@{uid}/keyring/ssh rw,
+  owner @{run}/user/@{uid}/openssh_agent rw,
 
   owner @{PROC}/@{pid}/loginuid r,
   owner @{PROC}/@{pid}/fd/ r,
+
+  #aa:only test
+  owner @{tmp}/ssh-@{rand10}/{,agent.@{int}} rw,
 
   include if exists <local/ssh>
 }
