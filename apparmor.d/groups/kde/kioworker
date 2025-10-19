@@ -41,13 +41,14 @@ profile kioworker @{exec_path} {
   @{lib}/libheif/*.so* rm,
 
   @{bin}/wrestool rPUx,
-  @{bin}/gs{,.bin} rix,
+  @{bin}/gs{,.bin} rCx -> gs,
 
   #aa:exec kio_http_cache_cleaner
 
   /usr/share/kio_desktop/{,**} r,
   /usr/share/kservices{5,6}/{,**} r,
   /usr/share/kservicetypes{5,6}/*.desktop r,
+  /usr/share/org.kde.syntax-highlighting/{,**} r,
   /usr/share/remoteview/* r,
   /usr/share/thumbnailers/{,**} r,
 
@@ -104,6 +105,18 @@ profile kioworker @{exec_path} {
   owner @{PROC}/@{pid}/mounts r,
 
   /dev/tty r,
+
+  profile gs {
+    include <abstractions/base>
+
+    @{bin}/gs{,.bin} mr,
+    @{lib}/ghostscript/**  mr,
+
+    /usr/share/ghostscript/{,**} r,
+    /usr/share/org.kde.syntax-highlighting/{,**} r,
+
+    include if exists <local/cups-backend-pdf_gs>
+  }
 
   include if exists <local/kioworker>
 }
