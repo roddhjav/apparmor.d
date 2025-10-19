@@ -13,12 +13,16 @@ profile systemd-networkd @{exec_path} flags=(attach_disconnected) {
   include <abstractions/bus-system>
   include <abstractions/bus/org.freedesktop.hostname1>
   include <abstractions/common/systemd>
+  include <abstractions/nameservice-strict>
 
   capability bpf,
   capability net_admin,
   capability net_bind_service,
   capability net_broadcast,
   capability net_raw,
+  capability setgid, # FIXME: setgid, setpcap setuid are not needed when used as systemd service
+  capability setpcap,
+  capability setuid,
   capability sys_admin,
 
   network inet dgram,
@@ -88,11 +92,12 @@ profile systemd-networkd @{exec_path} flags=(attach_disconnected) {
   @{sys}/kernel/btf/vmlinux r,
 
         @{PROC}/@{pid}/cgroup r,
+        @{PROC}/@{pid}/mountinfo r,
+        @{PROC}/@{pid}/setgroups r,
         @{PROC}/pressure/* r,
         @{PROC}/sys/net/ipv{4,6}/** rw,
         @{PROC}/version_signature r,
   owner @{PROC}/@{pid}/fdinfo/@{int} r,
-  owner @{PROC}/@{pid}/mountinfo r,
 
   include if exists <local/systemd-networkd>
 }

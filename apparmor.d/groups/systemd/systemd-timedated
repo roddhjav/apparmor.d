@@ -11,6 +11,7 @@ include <tunables/global>
 profile systemd-timedated @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus-system>
+  include <abstractions/bus/org.freedesktop.PolicyKit1>
   include <abstractions/common/systemd>
 
   capability sys_time,
@@ -18,19 +19,6 @@ profile systemd-timedated @{exec_path} flags=(attach_disconnected) {
   unix bind type=stream addr=@@{udbus}/bus/systemd-timedat/system,
 
   #aa:dbus own bus=system name=org.freedesktop.timedate1
-
-  dbus send bus=system path=/org/freedesktop/systemd1/unit/*
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=org.freedesktop.systemd1, label="@{p_systemd}"),
-  dbus send bus=system path=/org/freedesktop/systemd1
-       interface=org.freedesktop.systemd1.Manager
-       member={DisableUnitFiles,EnableUnitFiles}
-       peer=(name=org.freedesktop.systemd1, label="@{p_systemd}"),
-  dbus send bus=system path=/org/freedesktop/systemd1
-       interface=org.freedesktop.systemd1.Manager
-       member={JobRemoved,Reload,StartUnit,StopUnit}
-       peer=(name="{@{busname},org.freedesktop.systemd1}", label="@{p_systemd}"),
 
   @{exec_path} mr,
 
