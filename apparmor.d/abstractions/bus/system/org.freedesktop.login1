@@ -1,0 +1,75 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Allow seting up login session & seat. It grants privileged access to user sessions.
+
+  abi <abi/4.0>,
+
+  #aa:dbus common bus=system name=org.freedesktop.login1 label="@{p_systemd_logind}"
+
+  dbus send bus=system path=/org/freedesktop/login1
+       interface=org.freedesktop.login1.Manager
+       member=Inhibit
+       peer=(name="{@{busname},org.freedesktop.login1}", label="@{p_systemd_logind}"),
+
+ # Check login session observe & login session control
+
+  dbus receive bus=system path=/org/freedesktop/login1
+       interface=org.freedesktop.login1.Manager
+       member={SessionNew,UserNew,SeatNew}
+       peer=(name="{@{busname},org.freedesktop.login1}", label="@{p_systemd_logind}"),
+
+  dbus receive bus=system path=/org/freedesktop/login1
+       interface=org.freedesktop.login1.Manager
+       member={SessionRemoved,UserRemoved,SeatRemoved}
+       peer=(name="{@{busname},org.freedesktop.login1}", label="@{p_systemd_logind}"),
+
+  dbus receive bus=system path=/org/freedesktop/login1
+       interface=org.freedesktop.login1.Manager
+       member={PrepareForShutdow,PrepareForSleep}
+       peer=(name="{@{busname},org.freedesktop.login1}", label="@{p_systemd_logind}"),
+
+  dbus send bus=system path=/org/freedesktop/login1
+       interface=org.freedesktop.login1.Manager
+       member={ListSeats,ListSessions,ListUsers}
+       peer=(name="{@{busname},org.freedesktop.login1}", label="@{p_systemd_logind}"),
+
+  dbus send bus=system path=/org/freedesktop/login1
+       interface=org.freedesktop.login1.Manager
+       member={GetSeat,GetSessions,GetSessionByPID,GetUsers}
+       peer=(name="{@{busname},org.freedesktop.login1}", label="@{p_systemd_logind}"),
+
+  # Receive shutdown & sleep notifications
+
+  dbus receive bus=system path=/org/freedesktop/login1
+       interface=org.freedesktop.login1.Manager
+       member={PrepareForShutdown,PrepareForShutdownWithMetadata}
+       peer=(name="{@{busname},org.freedesktop.login1}", label="@{p_systemd_logind}"),
+
+  dbus send bus=system path=/org/freedesktop/login1
+       interface=org.freedesktop.login1.Manager
+       member={CanHibernate,CanHybridSleep,CanPowerOff,CanReboot,CanSuspend,CreateSession}
+       peer=(name="{@{busname},org.freedesktop.login1}", label="@{p_systemd_logind}"),
+
+  # Sessions
+
+  dbus send bus=system path=/org/freedesktop/login1/session/**
+       interface=org.freedesktop.login1.Session
+       peer=(name="{@{busname},org.freedesktop.login1}", label="@{p_systemd_logind}"),
+  dbus receive bus=system path=/org/freedesktop/login1/session/**
+       interface=org.freedesktop.login1.Session
+       peer=(name="{@{busname},org.freedesktop.login1}", label="@{p_systemd_logind}"),
+
+  # Seats
+
+  dbus send bus=system path=/org/freedesktop/login1/seat/**
+       interface=org.freedesktop.login1.Session
+       peer=(name="{@{busname},org.freedesktop.login1}", label="@{p_systemd_logind}"),
+  dbus receive bus=system path=/org/freedesktop/login1/seat/**
+       interface=org.freedesktop.login1.Session
+       peer=(name="{@{busname},org.freedesktop.login1}", label="@{p_systemd_logind}"),
+
+  include if exists <abstractions/bus/system/org.freedesktop.login1.d>
+
+# vim:syntax=apparmor

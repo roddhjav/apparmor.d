@@ -2,50 +2,50 @@
 # Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-# Allow managing systemd user units services. This allow full control over all services.
+# Allow managing systemd units services. This allow full control over all services.
 # When possible use the systemctl directive instead.
 
   abi <abi/4.0>,
 
-  dbus send bus=session path=/org/freedesktop/systemd1
+  dbus send bus=system path=/org/freedesktop/systemd1
        interface=org.freedesktop.DBus.Properties
        member=Get
-       peer=(name=org.freedesktop.systemd1, label="@{p_systemd_user}"),
+       peer=(name=org.freedesktop.systemd1, label="@{p_systemd}"),
 
-  dbus send bus=session path=/org/freedesktop/systemd1/unit/*
+  dbus send bus=system path=/org/freedesktop/systemd1/unit/*2dservice
        interface=org.freedesktop.DBus.Properties
        member=GetAll
-       peer=(label="@{p_systemd_user}"),
+       peer=(label="@{p_systemd}"),
 
-  dbus receive bus=session path=/org/freedesktop/systemd1/unit/*
+  dbus receive bus=system path=/org/freedesktop/systemd1/unit/*2dservice
        interface=org.freedesktop.DBus.Properties
        member=PropertiesChanged
-       peer=(label="@{p_systemd_user}"),
+       peer=(label="@{p_systemd}"),
 
   # List units
-  dbus send bus=session path=/org/freedesktop/systemd1
+  dbus send bus=system path=/org/freedesktop/systemd1
        interface=org.freedesktop.systemd1.Manager
        member={GetUnit,GetUnitByPIDFD,ListUnitsByPatterns}
-       peer=(label="@{p_systemd_user}"),
+       peer=(label="@{p_systemd}"),
 
   # Start units
-  dbus send bus=session path=/org/freedesktop/systemd1
+  dbus send bus=system path=/org/freedesktop/systemd1
        interface=org.freedesktop.systemd1.Manager
        member={StartUnit,StartTransientUnit,LoadUnit}
-       peer=(label="@{p_systemd_user}"),
+       peer=(label="@{p_systemd}"),
 
   # Stop units
-  dbus send bus=session path=/org/freedesktop/systemd1
+  dbus send bus=system path=/org/freedesktop/systemd1
        interface=org.freedesktop.systemd1.Manager
        member={StopUnit,KillUnit,ResetFailedUnit,Reload,JobRemoved}
-       peer=(label="@{p_systemd_user}"),
+       peer=(label="@{p_systemd}"),
 
   # Enabled/Disable units
-  dbus send bus=session path=/org/freedesktop/systemd1
+  dbus send bus=system path=/org/freedesktop/systemd1
        interface=org.freedesktop.systemd1.Manager
        member={DisableUnitFiles,EnableUnitFiles}
-       peer=(label="@{p_systemd_user}"),
+       peer=(label="@{p_systemd}"),
 
-  include if exists <abstractions/bus/session/org.freedesktop.systemd1.d>
+  include if exists <abstractions/bus/system/org.freedesktop.systemd1.d>
 
 # vim:syntax=apparmor
