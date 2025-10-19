@@ -67,6 +67,16 @@ func (p Configure) Apply() ([]string, error) {
 
 	}
 
+	if prebuild.Version < 4.1 {
+		remove := []string{
+			// Require priority support
+			"fbwrap",
+			"fapp",
+		}
+		if err := removeFiles(remove); err != nil {
+			return res, err
+		}
+	}
 	if prebuild.Version >= 4.1 {
 		remove := []string{
 			// Remove files upstreamed in 4.1
