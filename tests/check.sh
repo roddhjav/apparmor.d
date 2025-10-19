@@ -260,6 +260,9 @@ readonly TRANSITION_MUST_C=( # Must transition to 'Cx'
 )
 _check_transition() {
     _is_enabled transition || return 0
+    if [[ "$line" =~ [pP]ix, ]]; then
+        _err transition "$file:$line_number" "'Pix' transition leads to unmaintainable profile"
+    fi
     for prgmname in "${!TRANSITION_MUST_CI[@]}"; do
         if [[ "$line" =~ "/${TRANSITION_MUST_CI[$prgmname]} ".*([uU]x|[pP][uU]x|[pP]x) ]]; then
             _err transition "$file:$line_number" \
