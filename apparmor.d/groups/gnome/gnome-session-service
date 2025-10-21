@@ -20,6 +20,11 @@ profile gnome-session-service @{exec_path} flags=(attach_disconnected) {
   #aa:dbus own bus=session name=org.gnome.SessionManager
   #aa:dbus talk bus=system name=org.freedesktop.login1 label="@{p_systemd_logind}"
 
+  dbus send bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member=UpdateActivationEnvironment
+       peer=(name=org.freedesktop.DBus label="@{p_dbus_session}"),
+
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
@@ -42,6 +47,7 @@ profile gnome-session-service @{exec_path} flags=(attach_disconnected) {
 
   owner @{user_config_dirs}/autostart/{,*.desktop} r,
 
+        @{run}/systemd/sessions/{,@{l}}@{int}{,.ref} rw,
   @{att}@{run}/systemd/inhibit/@{int}.ref rw,
   @{att}@{run}/systemd/sessions/{,@{l}}@{int}{,.ref} rw,
   @{run}/systemd/users/@{uid} r,
