@@ -15,20 +15,15 @@ profile xdg-dbus-proxy @{exec_path} flags=(attach_disconnected) {
   include <abstractions/bus-system>
   include <abstractions/bus/system/org.freedesktop.Avahi.Server>
   include <abstractions/bus/org.freedesktop.NetworkManager>
-  include <abstractions/bus/org.freedesktop.portal.Desktop>
   include <abstractions/user-download-strict>
 
   network unix stream,
 
   signal receive set=int peer=flatpak-portal,
 
-  #aa:dbus talk bus=session name=org.freedesktop.portal.Flatpak label=flatpak-portal
-  #aa:dbus talk bus=session name=org.freedesktop.portal.Request path=/org/freedesktop/portal/desktop label=xdg-desktop-portal
-
-  dbus send bus=session path=/org/freedesktop/portal/desktop
-       interface=org.freedesktop.portal.Realtime
-       member=MakeThread*
-       peer=(name=org.freedesktop.portal.Desktop, label=xdg-desktop-portal),
+  # By design xdg-dbus-proxy proxies and filters dbus communication from flatpak
+  # apps to the system. Thus, it can manage the full session bus.
+  dbus bus=session,
 
   @{exec_path} mr,
 
