@@ -1,0 +1,19 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+  abi <abi/4.0>,
+
+  dbus send bus=session path=/org/ayatana/NotificationItem/*
+       interface=org.kde.StatusNotifierItem
+       member={NewAttentionIcon,NewIcon,NewIconThemePath,NewOverlayIcon,NewStatus,NewTitle,NewToolTip}
+       peer=(name=@{busname}, label="@{pp_app_indicator}"),
+
+  dbus receive bus=session path=/org/ayatana/NotificationItem/*/Menu
+       interface=com.canonical.dbusmenu
+       member={AboutToShow,Event,GetGroupProperties,GetLayout}
+       peer=(name=@{busname}, label="@{pp_app_indicator}"),
+
+  include if exists <abstractions/bus/session/org.ayatana.NotificationItem.d>
+
+# vim:syntax=apparmor
