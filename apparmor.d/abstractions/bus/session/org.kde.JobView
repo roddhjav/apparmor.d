@@ -1,0 +1,36 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2017 Canonical Ltd
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+  abi <abi/4.0>,
+
+  # Allow to send updates to the desktop session about ongoing jobs
+  # (for KDE Plasma specific details)
+
+  dbus send bus=session path=/JobViewServer
+       interface=org.kde.JobViewServer{,V2}
+       member=requestView
+       peer=(label=plasmashell),
+
+  dbus send bus=session path=/org/kde/notificationmanager/jobs/*
+       interface=org.kde.JobView{,V2,V3}
+       member={update,terminate}
+       peer=(label=plasmashell),
+
+  # Allow to receive updates from applications to the desktop session about ongoing jobs
+  # (for KDE Plasma specific details)
+
+  dbus receive bus=session path=/JobViewServer
+       interface=org.kde.JobViewServer{,V2}
+       member=requestView
+       peer=(label=plasmashell),
+
+  dbus send bus=session path=/org/kde/notificationmanager/jobs/*
+       interface=org.kde.JobView{,V2,V3}
+       member={update,terminate}
+       peer=(label=plasmashell),
+
+  include if exists <abstractions/bus/session/org.kde.JobView.d>
+
+# vim:syntax=apparmor
