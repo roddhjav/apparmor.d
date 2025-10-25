@@ -14,19 +14,9 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/audio-client>
   include <abstractions/bus-session>
   include <abstractions/bus-system>
-  include <abstractions/bus/com.canonical.dbusmenu>
-  include <abstractions/bus/net.hadess.PowerProfiles>
-  include <abstractions/bus/net.hadess.SwitcherooControl>
-  include <abstractions/bus/net.reactivated.Fprint>
-  include <abstractions/bus/org.freedesktop.background.Monitor>
-  include <abstractions/bus/org.freedesktop.FileManager1>
-  include <abstractions/bus/org.freedesktop.impl.portal.PermissionStore>
-  include <abstractions/bus/system/org.freedesktop.locale1>
-  include <abstractions/bus/org.freedesktop.PackageKit>
-  include <abstractions/bus/org.freedesktop.portal.Desktop>
-  include <abstractions/bus/org.freedesktop.RealtimeKit1>
-  include <abstractions/bus/system/org.freedesktop.systemd1>
-  include <abstractions/bus/org.gnome.keyring.internal.Prompter>
+  include <abstractions/bus/session/com.canonical.dbusmenu>
+  include <abstractions/bus/session/org.freedesktop.impl.portal.PermissionStore>
+  include <abstractions/bus/session/org.freedesktop.portal.Desktop>
   include <abstractions/bus/session/org.gtk.Private.RemoteVolumeMonitor>
   include <abstractions/bus/system/org.bluez>
   include <abstractions/bus/system/org.freedesktop.locale1>
@@ -95,17 +85,26 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   # only dbus directive is used for this. Later, some communications could be
   # restricted.
 
+  #aa:dbus talk bus=system name=net.hadess.PowerProfiles label="@{p_power_profiles_daemon}"
+  #aa:dbus talk bus=system name=net.hadess.SwitcherooControl label=switcheroo-control
+  #aa:dbus talk bus=system name=net.reactivated.Fprint label="@{p_fprintd}"
   #aa:dbus talk bus=system name=org.freedesktop.Accounts label="@{p_accounts_daemon}"
   #aa:dbus talk bus=system name=org.freedesktop.bolt label=boltd
   #aa:dbus talk bus=system name=org.freedesktop.ColorManager label="@{p_colord}"
   #aa:dbus talk bus=system name=org.freedesktop.GeoClue2 label=geoclue
   #aa:dbus talk bus=system name=org.freedesktop.login1 label="@{p_systemd_logind}"
+  #aa:dbus talk bus=system name=org.freedesktop.ModemManager1 label=ModemManager
   #aa:dbus talk bus=system name=org.freedesktop.NetworkManager label=NetworkManager
+  #aa:dbus talk bus=system name=org.freedesktop.PackageKit label=packagekitd
   #aa:dbus talk bus=system name=org.freedesktop.PolicyKit1 label="@{p_polkitd}"
+  #aa:dbus talk bus=system name=org.freedesktop.RealtimeKit1 label="@{p_rtkit_daemon}"
+  #aa:dbus talk bus=system name=org.freedesktop.systemd1 label="@{p_systemd}"
   #aa:dbus talk bus=system name=org.freedesktop.UPower.PowerProfiles label="@{p_power_profiles_daemon}"
   #aa:dbus talk bus=system name=org.gnome.DisplayManager label=gdm
 
   #aa:dbus talk bus=session name=com.rastersoft.ding label=gnome-extension-ding
+  #aa:dbus talk bus=session name=org.freedesktop.background.Monitor label=xdg-desktop-portal
+  #aa:dbus talk bus=session name=org.freedesktop.FileManager1 label=nautilus
   #aa:dbus talk bus=session name=org.freedesktop.Notifications label=gjs
   #aa:dbus talk bus=session name=org.freedesktop.ScreenSaver label=gsd-screensaver-proxy
   #aa:dbus talk bus=session name=org.gnome.* label=gnome-*
@@ -134,10 +133,21 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
        member=Embed
        peer=(name=org.a11y.atspi.Registry),
 
-  dbus receive bus=session path=/org/freedesktop/systemd1
-       interface=org.freedesktop.systemd1.Manager
-       member=JobRemoved
-       peer=(name=@{busname}, label="@{p_systemd_user}"),
+  # Server side of abstractions/bus/org.gnome.keyring.internal.Prompter
+  dbus receive bus=session path=/org/gnome/keyring/Prompter
+       interface=org.gnome.keyring.internal.Prompter
+       member={BeginPrompting,PerformPrompt,StopPrompting}
+       peer=(name=@{busname}, label=pinentry-*),
+  dbus send bus=session path=/org/gnome/keyring/Prompt/p@{int}
+       interface=org.gnome.keyring.internal.Prompter.Callback
+       member={PromptReady,PromptDone}
+       peer=(name=@{busname}, label=pinentry-*),
+
+  # Server side of abstractions/bus/session/org.freedesktop.Notifications
+  dbus send bus=session path=/org/freedesktop/Notifications
+       interface=org.freedesktop.Notifications
+       member={ActionInvoked,NotificationClosed,NotificationReplied}
+       peer=(name=org.freedesktop.DBus, label=gjs),
 
   # FIXME: I think gnome-shell is the owner of the notifications, it should then be
   # fully allowed to send/receive to/from anyone.
@@ -184,7 +194,10 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
        interface=org.freedesktop.DBus.ObjectManager
        member=InterfacesAdded
        peer=(name=@{busname}, label=NetworkManager),
-
+  dbus send bus=system path=/org/freedesktop
+       interface=org.freedesktop.DBus.ObjectManager
+       member=GetManagedObjects
+       peer=(name=@{busname}, label=NetworkManager),
 
   dbus send bus=session
        interface=org.freedesktop.DBus.Introspectable
