@@ -1,0 +1,32 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2017 Canonical Ltd
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Dbus menu
+
+  abi <abi/4.0>,
+
+  dbus send bus=session path=/{MenuBar{,/@{hex}},com/canonical/{menu/@{hex},dbusmenu}}
+       interface=com.canonical.dbusmenu
+       member={LayoutUpdated,ItemsPropertiesUpdated}
+       peer=(label="@{pp_dbusmenu}"),
+
+  dbus receive bus=session path=/{MenuBar{,/@{hex}},com/canonical/{menu/@{hex},dbusmenu}}
+       interface=com.canonical.dbusmenu
+       member=Get*
+       peer=(label="@{pp_dbusmenu}"),
+
+  dbus receive bus=session path=/{MenuBar{,/@{hex}},com/canonical/{menu/@{hex},dbusmenu}}
+       interface=com.canonical.dbusmenu
+       member={AboutTo*,Event*}
+       peer=(label="@{pp_dbusmenu}"),
+
+  dbus receive bus=session path=/{MenuBar{,/@{hex}},com/canonical/{menu/@{hex},dbusmenu}}
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(label="@{pp_dbusmenu}"),
+
+  include if exists <abstractions/bus/session/com.canonical.dbusmenu.d>
+
+# vim:syntax=apparmor
