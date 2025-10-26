@@ -12,8 +12,7 @@
 
   include <abstractions/fonts>
 
-  unix type=stream peer=(label=glycin),
-  unix type=stream peer=(label=glycin//loaders),
+  unix type=stream,
 
   signal (send receive) set=kill peer=@{profile_name},
   signal (send receive) set=kill peer=@{profile_name}//&glycin,
@@ -23,8 +22,12 @@
   ptrace read peer=@{profile_name}//&glycin,
   ptrace read peer=glycin,
 
-  ## still required here to avoid crashed, but without execute permissions
+  ## required for fallback as well, but without execute permissions
   @{bin}/bwrap mr,
+
+  # To test sandbox functionalities
+  # See; https://gitlab.gnome.org/GNOME/glycin/-/blob/main/glycin/src/sandbox.rs#L676
+  @{bin}/true ix,
 
   /usr/share/glycin-loaders/{,**} r,
 
@@ -35,8 +38,6 @@
 
   owner @{tmp}/gdk-pixbuf-glycin-tmp.@{rand6} rw,
 
-  ## deny userns, # do not use! This would block userns in stacked parent process as well
-
-  include if exists <abstractions/app/glycin-fallback.d>
+  include if exists <abstractions/app/glycin.d>
 
 # vim:syntax=apparmor
