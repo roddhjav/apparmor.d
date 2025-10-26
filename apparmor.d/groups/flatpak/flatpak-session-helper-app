@@ -10,10 +10,11 @@ include <tunables/global>
 
 @{exec_path}  = /var/lib/flatpak/app/@{appid}/**/@{bin}/**
 @{exec_path} += /var/lib/flatpak/app/@{appid}/**/@{lib}/**
-profile flatpak-session-helper-app {
+profile flatpak-session-helper-app flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/desktop-files>
   include <abstractions/graphics>
+  include <abstractions/hwmon>
 
   capability sys_ptrace,
 
@@ -31,10 +32,10 @@ profile flatpak-session-helper-app {
   @{sys}/block/ r,
   @{sys}/class/hwmon/ r,
   @{sys}/devices/@{pci}/ r,
-  @{sys}/devices/@{pci}/speed r,
   @{sys}/devices/@{pci}/stat r,
-  @{sys}/devices/@{pci}/statistics/rx_bytes r,
-  @{sys}/devices/@{pci}/statistics/tx_bytes r,
+  @{sys}/devices/**/speed r,
+  @{sys}/devices/**/statistics/rx_bytes r,
+  @{sys}/devices/**/statistics/tx_bytes r,
   @{sys}/devices/virtual/tty/tty@{int}/active r,
 
   owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/ r,
@@ -42,13 +43,10 @@ profile flatpak-session-helper-app {
   owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/*.slice/*.service/ r,
   owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/*.slice/{,**/}cgroup.procs r,
 
-  @{PROC}/ r,
-  @{PROC}/@{pids}/cgroup r,
-  @{PROC}/@{pids}/task/ r,
-  @{PROC}/@{pids}/cmdline r,
-
-  # Same than in app/flatpak
         @{PROC}/ r,
+        @{PROC}/@{pids}/ r,
+        @{PROC}/@{pids}/cgroup r,
+        @{PROC}/@{pids}/cmdline r,
         @{PROC}/@{pids}/cpuset r,
         @{PROC}/@{pids}/io r,
         @{PROC}/@{pids}/maps r,
@@ -56,6 +54,7 @@ profile flatpak-session-helper-app {
         @{PROC}/@{pids}/stat r,
         @{PROC}/@{pids}/statm r,
         @{PROC}/@{pids}/status r,
+        @{PROC}/@{pids}/task/ r,
         @{PROC}/@{pids}/task/@{tid}/status r,
         @{PROC}/sys/fs/file-max r,
         @{PROC}/sys/fs/file-nr r,
@@ -81,6 +80,7 @@ profile flatpak-session-helper-app {
   owner @{PROC}/@{pid}/comm r,
   owner @{PROC}/@{pid}/environ r,
   owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/fdinfo/ r,
   owner @{PROC}/@{pid}/fdinfo/@{int} r,
   owner @{PROC}/@{pid}/limits r,
   owner @{PROC}/@{pid}/loginuid r,
