@@ -60,7 +60,7 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   #aa:dbus own bus=session name=org.gnome.Shell
 
   #aa:dbus own bus=session name=com.canonical.{U,u}nity
-  #aa:dbus own bus=session name=com.canonical.dbusmenu path=/{,com/canonical/dbusmenu}
+  #aa:dbus own bus=session name=com.canonical.dbusmenu path=/{,com/canonical/{unity,dbusmenu}}
   #aa:dbus own bus=session name=com.canonical.Shell.PermissionPrompting
   #aa:dbus own bus=session name=com.rastersoft.dingextension
   #aa:dbus own bus=session name=org.ayatana.NotificationItem
@@ -104,6 +104,7 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   #aa:dbus talk bus=session name=org.freedesktop.FileManager1 label=nautilus
   #aa:dbus talk bus=session name=org.freedesktop.Notifications label=gjs
   #aa:dbus talk bus=session name=org.freedesktop.ScreenSaver label=gsd-screensaver-proxy
+  #aa:dbus talk bus=session name=org.freedesktop.systemd1 label="@{p_systemd_user}"
   #aa:dbus talk bus=session name=org.gnome.* label=gnome-*
   #aa:dbus talk bus=session name=org.gnome.*.SearchProvider interface+=org.gnome.Shell.SearchProvider2 label=*
   #aa:dbus talk bus=session name=org.gnome.Nautilus label=nautilus
@@ -113,6 +114,7 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
   # Session bus
 
+  # FIXME: too wide
   dbus send bus=session path=/org/gnome/**
        peer=(name=org.gnome.*),
 
@@ -159,6 +161,7 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
        member={Get,GetAll}
        peer=(name=@{busname}),
 
+  # Server side of abstractions/bus/session/org.gtk.Menus
   dbus receive bus=session
        interface=org.gtk.Menus
        member=Changed
@@ -187,15 +190,18 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
        member={GetConnectionUnixProcessID,GetConnectionUnixUser,GetConnectionCredentials}
        peer=(name=org.freedesktop.DBus, label="@{p_dbus_session}"),
 
-  dbus receive bus=system path=/org/freedesktop
-       interface=org.freedesktop.DBus.ObjectManager
-       member=InterfacesAdded
-       peer=(name=@{busname}, label=NetworkManager),
+  # Missing rules from the directive above as these one are not standard
+  # Part of abstractions/bus/system/org.freedesktop.NetworkManager
   dbus send bus=system path=/org/freedesktop
        interface=org.freedesktop.DBus.ObjectManager
        member=GetManagedObjects
        peer=(name=@{busname}, label=NetworkManager),
+  dbus receive bus=system path=/org/freedesktop
+       interface=org.freedesktop.DBus.ObjectManager
+       member={InterfacesAdded,InterfacesRemoved}
+       peer=(name=@{busname}, label=NetworkManager),
 
+  # Server side of abstractions/gnome-base: introspect everything
   dbus send bus=session
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
