@@ -1,0 +1,26 @@
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{name} = deno
+
+@{exec_path} = @{bin}/deno
+@{att} = ""
+profile deno /{,usr/}bin/deno {
+  include <abstractions/attached/base>
+
+  @{exec_path} mr,
+
+  owner @{user_cache_dirs}/@{name}{,/**} rw,
+  owner @{user_cache_dirs}/@{name}/* k,
+
+        @{sys}/fs/cgroup/user.slice/cpu.max r,
+        @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/cpu.max r,
+        @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/cpu.max r,
+  owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/cpu.max r,
+
+  owner @{PROC}/@{pid}/cgroup r,
+  owner @{PROC}/@{pid}/mountinfo r,
+
+  include if exists <local/deno>
+}
