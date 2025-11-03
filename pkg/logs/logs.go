@@ -175,7 +175,7 @@ func (aaLogs AppArmorLogs) String() string {
 	keys := []string{
 		"profile", "label", // Profile name
 		"operation", "name", "target",
-		"mask", "bus", "path", "interface", "member", // dbus
+		"mask", "bus", "path", "interface", "member", "method", // dbus
 		"info", "comm",
 		"laddr", "lport", "faddr", "fport", "family", "sock_type", "protocol",
 		"requested_mask", "denied_mask", "signal", "peer", "peer_label",
@@ -199,6 +199,7 @@ func (aaLogs AppArmorLogs) String() string {
 		"denied_mask":    "denied_mask=" + boldRed,
 		"interface":      "interface=" + fgWhite,
 		"member":         "member=" + fgGreen,
+		"method":         "method=" + fgGreen,
 	}
 	var res strings.Builder
 
