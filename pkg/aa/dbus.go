@@ -60,6 +60,10 @@ func newDbusFromLog(log map[string]string) Rule {
 	} else {
 		peerName = log["name"]
 	}
+	member, present := log["member"]
+	if !present {
+		member = log["method"]
+	}
 	return &Dbus{
 		Base:      newBaseFromLog(log),
 		Qualifier: newQualifierFromLog(log),
@@ -68,7 +72,7 @@ func newDbusFromLog(log map[string]string) Rule {
 		Name:      name,
 		Path:      log["path"],
 		Interface: log["interface"],
-		Member:    log["member"],
+		Member:    member,
 		PeerName:  peerName,
 		PeerLabel: log["peer_label"],
 	}
