@@ -4,7 +4,36 @@
 
   abi <abi/4.0>,
 
-  #aa:dbus common bus=system name=org.freedesktop.ModemManager1 label="@{p_ModemManager}"
+  # DBus.Properties: read properties from the interface
+
+  dbus send bus=system path=/org/freedesktop/ModemManager1
+       interface=org.freedesktop.DBus.Properties
+       member={Get,GetAll}
+       peer=(name=@{busname}, label="@{p_ModemManager}"),
+
+  dbus send bus=system path=/org/freedesktop/ModemManager1/*/@{int}
+       interface=org.freedesktop.DBus.Properties
+       member={Get,GetAll}
+       peer=(name=@{busname}, label="@{p_ModemManager}"),
+
+  # DBus.Properties: receive property changed events
+
+  dbus receive bus=system path=/org/freedesktop/ModemManager1
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged
+       peer=(name=@{busname}, label="@{p_ModemManager}"),
+
+  dbus receive bus=system path=/org/freedesktop/ModemManager1/*
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged
+       peer=(name=@{busname}, label="@{p_ModemManager}"),
+
+  dbus receive bus=system path=/org/freedesktop/ModemManager1/*/@{int}
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged
+       peer=(name=@{busname}, label="@{p_ModemManager}"),
+
+  # DBus.ObjectManager: allow clients to enumerate sources
 
   dbus send bus=system path=/org/freedesktop/ModemManager1
        interface=org.freedesktop.DBus.ObjectManager

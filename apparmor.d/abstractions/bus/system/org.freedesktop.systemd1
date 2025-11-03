@@ -7,15 +7,29 @@
 
   abi <abi/4.0>,
 
+  # DBus.Properties: read properties from the interface
+
   dbus send bus=system path=/org/freedesktop/systemd1
        interface=org.freedesktop.DBus.Properties
        member=Get
        peer=(name=org.freedesktop.systemd1, label="@{p_systemd}"),
 
+  dbus send bus=session path=/org/freedesktop/systemd1
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=@{busname}, label="@{p_systemd_user}"),
+
   dbus send bus=system path=/org/freedesktop/systemd1/unit/*
        interface=org.freedesktop.DBus.Properties
        member=GetAll
        peer=(label="@{p_systemd}"),
+
+  dbus send bus=system path=/org/freedesktop/systemd1/unit/*
+       interface=org.freedesktop.DBus.Properties
+       member=Get
+       peer=(name=org.freedesktop.systemd1, label="@{p_systemd_user}"),
+
+  # DBus.Properties: receive property changed events
 
   dbus receive bus=system path=/org/freedesktop/systemd1/unit/*
        interface=org.freedesktop.DBus.Properties
