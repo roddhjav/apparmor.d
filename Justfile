@@ -191,10 +191,12 @@ local +names:
 
 # Prebuild, install, and load a dev profile
 [group('install')]
-dev name:
-	go run ./cmd/prebuild --complain --file `find apparmor.d -iname {{name}}`
-	sudo install -Dm644 {{build}}/apparmor.d/{{name}} /etc/apparmor.d/{{name}}
-	sudo apparmor_parser --write-cache --replace /etc/apparmor.d/{{name}}
+dev +names:
+	go run ./cmd/prebuild --complain
+	for file in {{names}}; do \
+		sudo install -Dm644 -v {{build}}/apparmor.d/$file /etc/apparmor.d/$file; \
+	done
+	sudo systemctl restart apparmor.service || sudo journalctl -xeu apparmor.service
 
 # Build & install apparmor.d on Arch based systems
 [group('packages')]
