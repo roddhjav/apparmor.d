@@ -6,12 +6,17 @@
 
   abi <abi/4.0>,
 
-  #aa:dbus common bus=system name=org.bluez label="@{p_bluetoothd}"
+  include <abstractions/bus/system/org.bluez>
 
-  dbus receive bus=system path=/org/bluez/hci@{int}/dev_@{hex2}_@{hex2}_@{hex2}_@{hex2}_@{hex2}_@{hex2}/service@{hex4}/char@{hex4}
-       interface=org.freedesktop.DBus.Properties
-       member=PropertiesChanged
-       peer=(name=@{busname}, label=bluetoothd),
+  include <abstractions/bus/system/org.bluez.MediaEndpoint1>
+  include <abstractions/bus/system/org.bluez.MediaTransport1>
+
+  # Allow quering GATT (Bluetooth Generic Attribute) services
+
+  dbus send bus=system path=/org/bluez/hci@{int}/dev_@{hex2}_@{hex2}_@{hex2}_@{hex2}_@{hex2}_@{hex2}{,/**}
+       interface=org.bluez.GattCharacteristic1
+       member=ReadValue
+       peer=(name=@{busname}, label="@{p_bluetoothd}"),
 
   include if exists <abstractions/bluetooth-observe.d>
 
