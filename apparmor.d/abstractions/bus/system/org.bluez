@@ -4,37 +4,41 @@
 
   abi <abi/4.0>,
 
-  #aa:dbus common bus=system name=org.bluez label="@{p_bluetoothd}"
+  # DBus.Properties: read properties from the interface
 
-  dbus receive bus=system path=/
-       interface=org.freedesktop.DBus.ObjectManager
-       member={InterfacesAdded,InterfacesRemoved}
-       peer=(name="{@{busname},org.bluez}", label="@{p_bluetoothd}"),
+  dbus send bus=system path=/org/bluez/hci@{int}/dev_@{hex2}_@{hex2}_@{hex2}_@{hex2}_@{hex2}_@{hex2}{,/**}
+       interface=org.freedesktop.DBus.Properties
+       member={Get,GetAll}
+       peer=(name=@{busname}, label="@{p_bluetoothd}"),
+
+  # DBus.Properties: receive property changed events
+
+  dbus receive bus=system path=/org/bluez/hci@{int}
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged
+       peer=(name=@{busname}, label="@{p_bluetoothd}"),
+
+  dbus receive bus=system path=/org/bluez/hci@{int}/dev_@{hex2}_@{hex2}_@{hex2}_@{hex2}_@{hex2}_@{hex2}{,/**}
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged
+       peer=(name=@{busname}, label="@{p_bluetoothd}"),
+
+  # DBus.ObjectManager: allow clients to enumerate sources
 
   dbus send bus=system path=/
        interface=org.freedesktop.DBus.ObjectManager
        member=GetManagedObjects
-       peer=(name="{@{busname},org.bluez}", label="@{p_bluetoothd}"),
+       peer=(name=@{busname}, label="@{p_bluetoothd}"),
 
-  dbus send bus=system path=/org/bluez
-       interface=org.bluez.AgentManager@{int}
-       member={RegisterAgent,RequestDefaultAgent,UnregisterAgent}
+  dbus send bus=system path=/
+       interface=org.freedesktop.DBus.ObjectManager
+       member=GetManagedObjects
        peer=(name=org.bluez, label="@{p_bluetoothd}"),
 
-  dbus send bus=system path=/org/bluez
-       interface=org.bluez.ProfileManager@{int}
-       member=RegisterProfile
-       peer=(name=org.bluez, label="@{p_bluetoothd}"),
-
-  dbus send bus=system path=/org/bluez/hci@{int}
-       interface=org.bluez.BatteryProviderManager@{int}
-       member=RegisterProfile
-       peer=(name=org.bluez, label="@{p_bluetoothd}"),
-
-  dbus send bus=system path=/org/bluez/hci@{int}
-       interface=org.bluez.Media@{int}
-       member=RegisterApplication
-       peer=(name=org.bluez, label="@{p_bluetoothd}"),
+  dbus receive bus=system path=/
+       interface=org.freedesktop.DBus.ObjectManager
+       member={InterfacesAdded,InterfacesRemoved}
+       peer=(name=@{busname}, label="@{p_bluetoothd}"),
 
   include if exists <abstractions/bus/system/org.bluez.d>
 
