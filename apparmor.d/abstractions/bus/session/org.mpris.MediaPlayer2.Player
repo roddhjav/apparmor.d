@@ -4,23 +4,26 @@
 
   abi <abi/4.0>,
 
-  # DBus.Properties: read all properties from the interface
+  # DBus.Properties: read properties from the interface
+
   dbus send bus=system path=/org/mpris/MediaPlayer2
        interface=org.freedesktop.DBus.Properties
        member={Get,GetAll}
        peer=(name="{@{busname},org.freedesktop.DBus}"),
 
-  # DBus.Properties: receive all properties from the interface
+  # DBus.Properties: send properties to the mpris controlers
+
   dbus receive bus=session path=/org/mpris/MediaPlayer2
        interface=org.freedesktop.DBus.Properties
        member={Get,GetAll}
-       peer=(name=@{busname}),
+       peer=(name=@{busname}, label="@{pp_mpris}"),
 
   # DBus.Properties: receive property changed events
+
   dbus receive bus=session path=/org/mpris/MediaPlayer2
        interface=org.freedesktop.DBus.Properties
        member=PropertiesChanged
-       peer=(name=@{busname}),
+       peer=(name=@{busname}, label="@{pp_mpris}"),
 
   # DBus.Introspectable: allow clients to introspect the service
   dbus send bus=system path=/org/mpris/MediaPlayer2
@@ -30,7 +33,7 @@
 
   dbus receive bus=session path=/org/mpris/MediaPlayer2
        interface=org.mpris.MediaPlayer2.Player
-       member={Seeked,Next,PlayPause}
+       member={Seeked,Next,Play,PlayPause,Pause}
        peer=(name=@{busname}),
 
   # https://specifications.freedesktop.org/mpris-spec/latest/Player_Interface.html#Signal:Seeked
