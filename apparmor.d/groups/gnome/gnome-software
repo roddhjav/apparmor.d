@@ -110,6 +110,8 @@ profile gnome-software @{exec_path} flags=(attach_disconnected) {
   owner @{user_share_dirs}/flatpak/repo/ rw,
   owner @{user_share_dirs}/flatpak/repo/** rwl,
 
+  owner @{user_share_dirs}/gvfs-metadata/* r,
+
   owner @{tmp}/#@{int} rw,
   owner @{tmp}/ostree-gpg-@{rand6}/ rw,
   owner @{tmp}/ostree-gpg-@{rand6}/** rwkl -> /tmp/ostree-gpg-@{rand6}/**,
@@ -140,8 +142,6 @@ profile gnome-software @{exec_path} flags=(attach_disconnected) {
   owner @{PROC}/@{pid}/fdinfo/@{int} r,
 
   /dev/fuse rw,
-
-  deny owner @{user_share_dirs}/gvfs-metadata/* r,
 
   profile gpg {
     include <abstractions/base>
@@ -178,6 +178,9 @@ profile gnome-software @{exec_path} flags=(attach_disconnected) {
     include <abstractions/app/fusermount>
 
     capability setuid,
+
+    unix (send receive) type=stream    peer=(label=gnome-software),
+    unix (send receive) type=seqpacket peer=(label=flatpak-system-helper),
 
     mount fstype=fuse.revokefs-fuse options=(rw, nosuid, nodev) -> /var/tmp/flatpak-cache-*/*/,
     umount /var/tmp/flatpak-cache-*/*/,
