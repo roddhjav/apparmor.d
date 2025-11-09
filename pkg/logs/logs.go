@@ -51,6 +51,10 @@ var (
 		`(?m)^.*/dev/(null|zero|full|log).*$`, ``,
 	})
 	regResolveLogs = util.ToRegexRepl([]string{
+		// Resolve re-attached paths variable
+		`/att/ns/[^/]+/`, `@{att}/`,
+		`/att/[^/]+/`, `@{att}/`,
+
 		// Resolve user variables
 		`/home/[^/]+/.cache`, `@{user_cache_dirs}`,
 		`/home/[^/]+/.config`, `@{user_config_dirs}`,
@@ -63,7 +67,6 @@ var (
 		`/home/[^/]+/`, `@{HOME}/`,
 
 		// Resolve system variables
-		`/att/[^/]+/`, `@{att}/`,
 		`/usr/bin/gnu`, `@{bin}/`,
 		`/usr/lib/cargo/bin/coreutils/`, `@{bin}/`,
 		`/usr/lib(32|64|exec)`, `@{lib}`,
