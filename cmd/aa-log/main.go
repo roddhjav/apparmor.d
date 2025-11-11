@@ -16,7 +16,7 @@ import (
 	"github.com/roddhjav/apparmor.d/pkg/logs"
 )
 
-const usage = `aa-log [-h] [--systemd] [--file file] [--rules | --raw] [--since] [profile]
+const usage = `aa-log [-h] [--systemd] [--file file] [--load] [--rules | --raw] [--since] [--namespace] [profile]
 
     Review AppArmor generated messages in a colorful way. It supports logs from
     auditd, systemd, syslog as well as dbus session events.
@@ -26,10 +26,13 @@ const usage = `aa-log [-h] [--systemd] [--file file] [--rules | --raw] [--since]
     Default logs are read from '/var/log/audit/audit.log'. Other files in
     '/var/log/audit/' can easily be checked: 'aa-log -f 1' parses 'audit.log.1'
 
+    Logs written with 'aa-log' can be read again with 'aa-log -l'.
+
 Options:
     -h, --help         Show this help message and exit.
     -f, --file FILE    Set a logfile or a suffix to the default log file.
     -s, --systemd      Parse systemd logs from journalctl.
+    -n, --namespace NS Filter the logs to the specified namespace.
     -r, --rules        Convert the log into AppArmor rules.
     -R, --raw          Print the raw log without any formatting.
     -S, --since DATE   Show entries not older than the specified date.
@@ -49,7 +52,7 @@ var (
 	load      bool
 )
 
-func aaLog(logger string, path string, profile string) error {
+func aaLog(logger string, path string, profile string, namespace string) error {
 	var err error
 	var file io.Reader
 
@@ -68,7 +71,7 @@ func aaLog(logger string, path string, profile string) error {
 	endRead := time.Now()
 
 	if raw {
-		fmt.Print(strings.Join(logs.GetApparmorLogs(file, profile), "\n") + "\n")
+		fmt.Print(strings.Join(logs.GetApparmorLogs(file, profile, namespace), "\n") + "\n")
 		return nil
 	}
 
@@ -76,7 +79,7 @@ func aaLog(logger string, path string, profile string) error {
 	if load {
 		aaLogs = logs.Load(file, profile, namespace)
 	} else {
-		aaLogs = logs.New(file, profile)
+		aaLogs = logs.New(file, profile, namespace)
 	}
 	endParse := time.Now()
 	if rules {
@@ -111,6 +114,8 @@ func init() {
 	flag.StringVar(&since, "since", "", "Display logs since the START time.")
 	flag.BoolVar(&load, "l", false, "Load logs from the default aa-log output.")
 	flag.BoolVar(&load, "load", false, "Load logs from the default aa-log output.")
+	flag.StringVar(&namespace, "n", "", "Filter the logs to the specified namespace")
+	flag.StringVar(&namespace, "namespace", "", "Filter the logs to the specified namespace")
 }
 
 func main() {
@@ -132,7 +137,7 @@ func main() {
 	}
 
 	path = logs.SelectLogFile(path)
-	err := aaLog(logger, path, profile)
+	err := aaLog(logger, path, profile, namespace)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
