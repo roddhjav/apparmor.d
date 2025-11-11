@@ -226,6 +226,10 @@ func Load(file io.Reader, profile string, namespace string) AppArmorLogs {
 				aa[key] = strings.Trim(value, `"`)
 			}
 		}
+
+		if _, present := aa["family"]; present {
+			aa["class"] = "net"
+		}
 		aaLogs = append(aaLogs, aa)
 	}
 	return aaLogs

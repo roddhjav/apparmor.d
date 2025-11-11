@@ -88,6 +88,9 @@ func newFile(q Qualifier, rule rule) (Rule, error) {
 }
 
 func newFileFromLog(log map[string]string) Rule {
+	if log["operation"] == "link" {
+		log["requested_mask"] += "l"
+	}
 	accesses, err := toAccess("file-log", log["requested_mask"])
 	if err != nil {
 		panic(fmt.Errorf("newFileFromLog(%v): %w", log, err))

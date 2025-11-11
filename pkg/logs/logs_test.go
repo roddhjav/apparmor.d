@@ -174,7 +174,7 @@ func TestAppArmorEvents(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			file := strings.NewReader(tt.event)
-			if got := New(file, ""); !reflect.DeepEqual(got, tt.want) {
+			if got := New(file, "", ""); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("New() = %v, want %v", got, tt.want)
 			}
 		})
@@ -183,9 +183,10 @@ func TestAppArmorEvents(t *testing.T) {
 
 func TestNew(t *testing.T) {
 	tests := []struct {
-		name string
-		path string
-		want AppArmorLogs
+		name      string
+		namespace string
+		path      string
+		want      AppArmorLogs
 	}{
 		{
 			name: "dnsmasq",
@@ -292,7 +293,7 @@ func TestNew(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			file, _ := os.Open(tt.path)
-			if got := New(file, tt.name); !reflect.DeepEqual(got, tt.want) {
+			if got := New(file, tt.name, tt.namespace); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("New() = %v, want %v", got, tt.want)
 			}
 		})
