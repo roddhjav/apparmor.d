@@ -37,12 +37,14 @@ profile dbus-system flags=(attach_disconnected) {
   signal (send receive) set=kill peer=dbus-system//&unconfined,
   unix type=stream peer=(label=unconfined),
 
+  unix type=seqpacket peer=(label=flatpak-system-helper),
+  unix bind type=stream addr=@@{udbus}/bus/dbus-broker-lau/system,
+
   #aa:dbus own bus=system name=org.freedesktop.DBus path=/{,org/freedesktop/{dBus,DBus,dbus}}
 
-  dbus receive bus=system path=/org/freedesktop/DBus
-       interface=org.freedesktop.DBus
-       member={GetConnectionUnixProcessID,GetConnectionUnixUser,GetConnectionCredentials}
-       peer=(name="{@{busname},org.freedesktop.DBus}"),
+  # Larger than what is allowed in the directive above, needed due to complex
+  # setup with stack and peer names.
+  dbus receive bus=system interface=org.freedesktop.DBus,
 
   dbus receive bus=system path=/org/freedesktop/systemd1
        interface=org.freedesktop.systemd1.Activator
