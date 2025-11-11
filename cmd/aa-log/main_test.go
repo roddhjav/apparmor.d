@@ -62,6 +62,15 @@ func Test_app(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			name:    "Test loading aa-log",
+			logger:  "auditd",
+			path:    filepath.Join(testdata, "aa-log"),
+			rules:   false,
+			raw:     false,
+			load:    true,
+			wantErr: false,
+		},
+		{
 			name:    "Logger not supported",
 			logger:  "raw",
 			path:    filepath.Join(testdata, "audit.log"),
