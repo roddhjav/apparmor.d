@@ -299,6 +299,86 @@ func TestNew(t *testing.T) {
 	}
 }
 
+func TestLoad(t *testing.T) {
+	tests := []struct {
+		name      string
+		namespace string
+		path      string
+		want      AppArmorLogs
+	}{
+		{
+			name: "dnsmasq",
+			path: filepath.Join(testdata, "aa-log"),
+			want: AppArmorLogs{
+				{
+					"apparmor":       "DENIED",
+					"profile":        "dnsmasq",
+					"operation":      "open",
+					"name":           "@{PROC}/sys/kernel/osrelease",
+					"comm":           "dnsmasq",
+					"requested_mask": "r",
+					"denied_mask":    "r",
+				},
+				{
+					"apparmor":       "DENIED",
+					"profile":        "dnsmasq",
+					"operation":      "open",
+					"name":           "@{PROC}/1/environ",
+					"comm":           "dnsmasq",
+					"requested_mask": "r",
+					"denied_mask":    "r",
+				},
+				{
+					"apparmor":       "DENIED",
+					"profile":        "dnsmasq",
+					"operation":      "open",
+					"name":           "@{PROC}/cmdline",
+					"comm":           "dnsmasq",
+					"requested_mask": "r",
+					"denied_mask":    "r",
+				},
+			},
+		},
+		{
+			name: "kmod",
+			path: filepath.Join(testdata, "aa-log"),
+			want: refKmod,
+		},
+		{
+			name: "man",
+			path: filepath.Join(testdata, "aa-log"),
+			want: refMan,
+		},
+		{
+			name: "power-profiles-daemon",
+			path: filepath.Join(testdata, "aa-log"),
+			want: AppArmorLogs{
+				{
+					"addr":       "?",
+					"apparmor":   "ALLOWED",
+					"bus":        "system",
+					"interface":  "org.freedesktop.DBus",
+					"mask":       "send",
+					"member":     "AddMatch",
+					"name":       "org.freedesktop.DBus",
+					"operation":  "dbus_method_call",
+					"path":       "/org/freedesktop/DBus",
+					"peer_label": "dbus-daemon",
+					"profile":    "power-profiles-daemon",
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			file, _ := os.Open(tt.path)
+			if got := Load(file, tt.name, tt.namespace); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Load() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestAppArmorLogs_String(t *testing.T) {
 	tests := []struct {
 		name   string
