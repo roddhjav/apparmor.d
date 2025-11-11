@@ -143,7 +143,6 @@ func (r *Unix) Lengths() []int {
 		r.getLenAccess(),
 		length("", r.Access),
 		length("type=", r.Type),
-		length("protocol=", r.Protocol),
 		length("addr=", r.Address),
 		length("label=", r.Label),
 	}
@@ -151,7 +150,7 @@ func (r *Unix) Lengths() []int {
 
 func (r *Unix) setPaddings(max []int) {
 	r.Paddings = append(r.Qualifier.setPaddings(max[:2]), setPaddings(
-		max[2:], []string{"", "type=", "protocol=", "addr=", "label="},
-		[]any{r.Access, r.Type, r.Protocol, r.Address, r.Label})...,
+		max[2:], []string{"", "type=", "addr=", "label="},
+		[]any{r.Access, r.Type, r.Address, r.Label})...,
 	)
 }

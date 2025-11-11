@@ -81,6 +81,7 @@ type Network struct {
 	Qualifier
 	LocalAddress
 	PeerAddress
+	Access   []string
 	Domain   string
 	Type     string
 	Protocol string
@@ -114,6 +115,7 @@ func newNetworkFromLog(log map[string]string) Rule {
 		Qualifier:    newQualifierFromLog(log),
 		LocalAddress: newLocalAddressFromLog(log),
 		PeerAddress:  newPeerAddressFromLog(log),
+		Access:       Must(toAccess(NETWORK, log["requested"])),
 		Domain:       log["family"],
 		Type:         log["sock_type"],
 		Protocol:     log["protocol"],
@@ -133,6 +135,9 @@ func (r *Network) String() string {
 }
 
 func (r *Network) Validate() error {
+	if err := validateValues(r.Kind(), "access", r.Access); err != nil {
+		return fmt.Errorf("%s: %w", r, err)
+	}
 	if err := validateValues(r.Kind(), "domains", []string{r.Domain}); err != nil {
 		return fmt.Errorf("%s: %w", r, err)
 	}
@@ -148,6 +153,9 @@ func (r *Network) Validate() error {
 func (r *Network) Compare(other Rule) int {
 	o, _ := other.(*Network)
 	if res := compare(r.Domain, o.Domain); res != 0 {
+		return res
+	}
+	if res := compare(r.Access, o.Access); res != 0 {
 		return res
 	}
 	if res := compare(r.Type, o.Type); res != 0 {
