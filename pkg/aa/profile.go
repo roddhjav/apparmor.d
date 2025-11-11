@@ -38,6 +38,7 @@ type Profile struct {
 // Header represents the header of a profile.
 type Header struct {
 	Name        string
+	NameSpace   string
 	Attachments []string
 	Attributes  map[string]string
 	Flags       []string

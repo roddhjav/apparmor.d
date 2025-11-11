@@ -127,8 +127,8 @@ func toQuote(str string) string {
 }
 
 // New returns a new ApparmorLogs list of map from a log file
-func New(file io.Reader, profile string) AppArmorLogs {
-	logs := GetApparmorLogs(file, profile)
+func New(file io.Reader, profile string, namespace string) AppArmorLogs {
+	logs := GetApparmorLogs(file, profile, namespace)
 
 	// Parse log into ApparmorLog struct
 	aaLogs := make(AppArmorLogs, 0)
@@ -255,6 +255,7 @@ func (aaLogs AppArmorLogs) String() string {
 	}
 	// Color template to use
 	template := map[string]string{
+		"namespace":      fgBlue,
 		"profile":        fgBlue,
 		"label":          fgBlue,
 		"operation":      fgYellow,
@@ -275,8 +276,16 @@ func (aaLogs AppArmorLogs) String() string {
 		seen := map[string]bool{"apparmor": true}
 		res.WriteString(state[log["apparmor"]])
 		owner := aa.IsOwner(log)
+		hasNs := false
+		if ns, present := log["namespace"]; present {
+			res.WriteString(" " + fgBlue + ":" + getNameSpace(ns) + ":" + log["profile"] + reset)
+			hasNs = true
+		}
 
 		for _, key := range keys {
+			if hasNs && key == "profile" {
+				continue
+			}
 			if item, present := log[key]; present {
 				if key == "name" && owner {
 					res.WriteString(template[key] + " owner" + reset)
@@ -303,6 +312,10 @@ func (aaLogs AppArmorLogs) String() string {
 	return res.String()
 }
 
+func getNameSpace(rawNamespace string) string {
+	return strings.TrimPrefix(rawNamespace, "root//")
+}
+
 // ParseToProfiles convert the log data into a new AppArmorProfiles
 func (aaLogs AppArmorLogs) ParseToProfiles() map[string]*aa.Profile {
 	profiles := make(map[string]*aa.Profile, 0)
@@ -315,7 +328,10 @@ func (aaLogs AppArmorLogs) ParseToProfiles() map[string]*aa.Profile {
 		}
 
 		if _, ok := profiles[name]; !ok {
-			profile := &aa.Profile{Header: aa.Header{Name: name}}
+			profile := &aa.Profile{Header: aa.Header{
+				Name:      name,
+				NameSpace: getNameSpace(log["namespace"]),
+			}}
 			profile.AddRule(log)
 			profiles[name] = profile
 		} else {
