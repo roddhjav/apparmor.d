@@ -42,6 +42,7 @@ profile gjs @{exec_path} flags=(attach_disconnected) {
   include <abstractions/bus/session/org.gtk.Private.RemoteVolumeMonitor>
   include <abstractions/bus/session/org.gtk.vfs.Daemon>
   include <abstractions/bus/session/org.gtk.vfs.Metadata>
+  include <abstractions/gstreamer-registry>
 
   unix type=stream peer=(label=gnome-shell),
 
@@ -71,14 +72,13 @@ profile gjs @{exec_path} flags=(attach_disconnected) {
   @{exec_path} mrix,
 
   # gnome-extension-ding
-  @{sh_path}                   rix,
-  @{bin}/env                   rix,
-  @{bin}/gnome-control-center  rPx,
-  @{bin}/nautilus              rPx,
+  @{sh_path}                  rix,
+  @{bin}/env                  rix,
+  @{bin}/true                 rix,
+  @{bin}/gnome-control-center  Px,
+  @{bin}/nautilus              Px,
 
-  @{lib}/@{multiarch}/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner  rCx -> gstreamer,
-  @{lib}/@{multiarch}/gstreamer-1.0/gst-plugin-scanner               rCx -> gstreamer,
-  @{lib}/gstreamer-1.0/gst-plugin-scanner                            rCx -> gstreamer,
+  @{gstreamer_path}            Cx -> gstreamer,
 
   /usr/share/gnome-shell/extensions/gsconnect@andyholmes.github.io/{service/daemon.js,gsconnect-preferences} rPx,
   @{user_share_dirs}/gnome-shell/extensions/gsconnect@andyholmes.github.io/{service/daemon.js,gsconnect-preferences} rPx,
@@ -86,10 +86,6 @@ profile gjs @{exec_path} flags=(attach_disconnected) {
   /usr/share/gnome-shell/{,**} r,
   /usr/share/xkeyboard-config-2/{,**} r,
   /usr/share/thumbnailers/{,**} r,
-
-  owner @{gdm_cache_dirs}/gstreamer-1.0/ w,
-  owner @{gdm_cache_dirs}/gstreamer-@{int}.@{int}/ w,
-  owner @{gdm_cache_dirs}/gstreamer-@{int}.@{int}/registry.@{arch}.bin{,.tmp@{rand6}} rw,
 
   owner @{HOME}/ r,
 
@@ -119,7 +115,6 @@ profile gjs @{exec_path} flags=(attach_disconnected) {
   owner @{PROC}/@{pid}/mounts r,
   owner @{PROC}/@{pid}/stat r,
   owner @{PROC}/@{pid}/task/ r,
-  owner @{PROC}/@{pid}/task/@{tid}/comm rw,
   owner @{PROC}/@{pid}/task/@{tid}/stat r,
 
   /dev/ r,
@@ -147,14 +142,15 @@ profile gjs @{exec_path} flags=(attach_disconnected) {
          member=Introspect
          peer=(name=@{busname}, label=gnome-shell),
 
-    @{lib}/@{multiarch}/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner mr,
-    @{lib}/@{multiarch}/gstreamer-1.0/gst-plugin-scanner mr,
-    @{lib}/gstreamer-1.0/gst-plugin-scanner mr,
+    /usr/share/ladspa/rdf/{,**} r,
 
+    owner @{DESKTOP_HOME}/.nv/ w,
+    owner @{DESKTOP_HOME}/.nv/ComputeCache/ w,
     owner @{desktop_cache_dirs}/nvidia/GLCache/ rw,
     owner @{desktop_cache_dirs}/nvidia/GLCache/** rwk,
 
-    @{run}/udev/data/c@{dynamic}:@{int} r,  # For dynamic assignment range 234 to 254, 384 to 511
+    owner @{desktop_cache_dirs}/nvidia/GLCache/ rw,
+    owner @{desktop_cache_dirs}/nvidia/GLCache/** rwk,
 
     @{sys}/devices/**/uevent r,
 
