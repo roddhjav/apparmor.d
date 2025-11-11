@@ -19,6 +19,9 @@ profile xdg-dbus-proxy @{exec_path} flags=(attach_disconnected) {
 
   network unix stream,
 
+  unix (send receive) type=seqpacket peer=(label=fapp),
+  unix (send receive) type=seqpacket peer=(label=fbwrap),
+
   signal receive set=int peer=flatpak-portal,
 
   # By design xdg-dbus-proxy proxies and filters dbus communication from flatpak
@@ -33,6 +36,8 @@ profile xdg-dbus-proxy @{exec_path} flags=(attach_disconnected) {
 
         @{att}@{run}/systemd/inhibit/@{int}.ref rw,
   owner @{att}@{run}/user/@{uid}/at-spi/bus rw,
+  owner @{att}@{run}/user/@{uid}/bus rw,
+
   owner @{run}/firejail/dbus/@{int}/@{int}-{system,user} rw,
   owner @{run}/flatpak/doc/** r,
   owner @{run}/user/@{uid}/.dbus-proxy/{system,session,a11y}-bus-proxy-@{rand6} rw,
