@@ -175,6 +175,7 @@ var (
 		// operation
 		"capable":     newCapabilityFromLog,
 		"chmod":       newFileFromLog,
+		"chown":       newFileFromLog,
 		"exec":        newFileFromLog,
 		"getattr":     newFileFromLog,
 		"link":        newFileFromLog,

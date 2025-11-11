@@ -16,10 +16,11 @@ var (
 
 func TestGetJournalctlLogs(t *testing.T) {
 	tests := []struct {
-		name    string
-		path    string
-		useFile bool
-		want    AppArmorLogs
+		name      string
+		namespace string
+		path      string
+		useFile   bool
+		want      AppArmorLogs
 	}{
 		{
 			name:    "gsd-xsettings",
@@ -50,7 +51,7 @@ func TestGetJournalctlLogs(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			reader, _ := GetJournalctlLogs(tt.path, "", tt.useFile)
-			if got := New(reader, tt.name); !reflect.DeepEqual(got, tt.want) {
+			if got := New(reader, tt.name, tt.namespace); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("New() = %v, want %v", got, tt.want)
 			}
 		})
