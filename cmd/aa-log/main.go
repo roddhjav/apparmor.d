@@ -33,17 +33,20 @@ Options:
     -r, --rules        Convert the log into AppArmor rules.
     -R, --raw          Print the raw log without any formatting.
     -S, --since DATE   Show entries not older than the specified date.
+    -l, --load         Load logs from the default aa-log output.
 
 `
 
 // Command line options
 var (
-	help    bool
-	rules   bool
-	path    string
-	systemd bool
-	raw     bool
-	since   string
+	help      bool
+	rules     bool
+	path      string
+	systemd   bool
+	namespace string
+	raw       bool
+	since     string
+	load      bool
 )
 
 func aaLog(logger string, path string, profile string) error {
@@ -69,7 +72,12 @@ func aaLog(logger string, path string, profile string) error {
 		return nil
 	}
 
-	aaLogs := logs.New(file, profile)
+	var aaLogs logs.AppArmorLogs
+	if load {
+		aaLogs = logs.Load(file, profile, namespace)
+	} else {
+		aaLogs = logs.New(file, profile)
+	}
 	endParse := time.Now()
 	if rules {
 		profiles := aaLogs.ParseToProfiles()
@@ -101,6 +109,8 @@ func init() {
 	flag.BoolVar(&raw, "raw", false, "Print the raw log without any formatting.")
 	flag.StringVar(&since, "S", "", "Display logs since the START time.")
 	flag.StringVar(&since, "since", "", "Display logs since the START time.")
+	flag.BoolVar(&load, "l", false, "Load logs from the default aa-log output.")
+	flag.BoolVar(&load, "load", false, "Load logs from the default aa-log output.")
 }
 
 func main() {

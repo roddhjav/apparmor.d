@@ -5,6 +5,7 @@
 package logs
 
 import (
+	"bufio"
 	"io"
 	"regexp"
 	"slices"
@@ -34,7 +35,6 @@ const (
 )
 
 var (
-	quoted                bool
 	isAppArmorLogTemplate = regexp.MustCompile(`apparmor=("DENIED"|"ALLOWED"|"AUDIT")`)
 	regCleanLogs          = util.ToRegexRepl([]string{
 		// Clean apparmor log file
@@ -119,13 +119,6 @@ type AppArmorLog map[string]string
 // AppArmorLogs describes all apparmor log entries
 type AppArmorLogs []AppArmorLog
 
-func splitQuoted(r rune) bool {
-	if r == '"' {
-		quoted = !quoted
-	}
-	return !quoted && r == ' '
-}
-
 func toQuote(str string) string {
 	if strings.Contains(str, " ") {
 		return `"` + str + `"`
@@ -140,9 +133,15 @@ func New(file io.Reader, profile string) AppArmorLogs {
 	// Parse log into ApparmorLog struct
 	aaLogs := make(AppArmorLogs, 0)
 	toClean := []string{"profile", "name", "target"}
+	var quoted bool
 	for _, log := range logs {
 		quoted = false
-		tmp := strings.FieldsFunc(log, splitQuoted)
+		tmp := strings.FieldsFunc(log, func(r rune) bool {
+			if r == '"' {
+				quoted = !quoted
+			}
+			return !quoted && r == ' '
+		})
 
 		aa := make(AppArmorLog)
 		for _, item := range tmp {
@@ -162,7 +161,73 @@ func New(file io.Reader, profile string) AppArmorLogs {
 		}
 		aaLogs = append(aaLogs, aa)
 	}
+	return aaLogs
+}
 
+// Load reads an ApparmorLogs from file written with AppArmorLogs.String.
+func Load(file io.Reader, profile string, namespace string) AppArmorLogs {
+	var quoted bool
+	scanner := bufio.NewScanner(file)
+	aaLogs := make(AppArmorLogs, 0)
+	for scanner.Scan() {
+		log := scanner.Text()
+		quoted = false
+		tmp := strings.FieldsFunc(log, func(r rune) bool {
+			if r == '"' {
+				quoted = !quoted
+			}
+			return !quoted && r == ' '
+		})
+		if len(tmp) < 3 {
+			continue
+		}
+		if profile != "" && !strings.HasPrefix(tmp[1], profile) {
+			continue
+		}
+		aa := AppArmorLog{
+			"apparmor":  tmp[0],
+			"profile":   tmp[1],
+			"operation": tmp[2],
+		}
+		tmp = slices.Delete(tmp, 0, 3)
+		isDbus := strings.Contains(aa["operation"], "dbus")
+
+		for idx, item := range tmp {
+			if strings.Contains(item, "=") {
+				break
+			}
+
+			switch idx {
+			case 0:
+				if item == "owner" {
+					aa["fsuid"], aa["ouid"] = "1000", "1000"
+					aa["FSUID"], aa["OUID"] = "user", "user"
+					aa["name"] = tmp[idx+1]
+				} else {
+					aa["name"] = item
+				}
+
+			case 1:
+				if isDbus {
+					aa["mask"] = item
+				}
+
+			case 2:
+				if item == "->" {
+					aa["target"] = tmp[idx+1]
+				}
+			}
+		}
+
+		for _, item := range tmp {
+			kv := strings.Split(item, "=")
+			if len(kv) >= 2 {
+				key, value := kv[0], kv[1]
+				aa[key] = strings.Trim(value, `"`)
+			}
+		}
+		aaLogs = append(aaLogs, aa)
+	}
 	return aaLogs
 }
 
