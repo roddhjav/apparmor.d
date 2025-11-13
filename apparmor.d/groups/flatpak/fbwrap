@@ -1,0 +1,93 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{appid} = @{word}.@{word}.@{word}{,.@{word}}
+
+@{exec_path} = @{bin}/bwrap
+profile fbwrap flags=(attach_disconnected,mediate_deleted) {
+  include <abstractions/base>
+  include <abstractions/app/flatpak>
+  include <abstractions/bwrap>
+
+  capability sys_resource,
+
+  unix type=seqpacket peer=(label=fapp),
+  unix type=stream    peer=(label=fapp),
+  unix type=stream    peer=(label=gnome-software),
+
+  signal receive peer=gnome-software,
+  signal receive peer=flatpak,
+
+  dbus send bus=accessibility path=/
+       interface=org.freedesktop.DBus
+       member=ListNames
+       peer=(name=org.freedesktop.DBus, label=dbus-accessibility),
+
+  @{exec_path} mr,
+
+  @{bin}/true ix, # Required by glycin, harmless
+
+             @{sbin}/ldconfig                         Cx -> &fbwrap//ldconfig,
+             @{bin}/xdg-dbus-proxy                    Px -> fbwrap//&xdg-dbus-proxy,
+  priority=2 @{lib}/glycin-loaders/@{d}+/glycin-*     Px -> fbwrap//&glycin//loaders,
+
+  priority=1 /app/bin/**                              Px -> fbwrap//&fapp,
+  priority=1 @{lib}/**                                Px -> fbwrap//&fapp,
+  priority=1 @{HOME}/.var/app/@{appid}/**             Px -> fbwrap//&fapp,
+
+  /usr/share/flatpak/triggers/desktop-database.trigger Px -> flatpak-system-helper//bwrap,
+  /usr/share/flatpak/triggers/gtk-icon-cache.trigger   Px -> flatpak-system-helper//bwrap,
+  /usr/share/flatpak/triggers/mime-database.trigger    Px -> flatpak-system-helper//bwrap,
+
+  /app/.ref rk,
+  /usr/.ref rk,
+
+  /bindfile@{rand6} rw,
+
+  owner @{run}/flatpak/.flatpak/@{int}/.ref rk,
+  owner @{run}/flatpak/ld.so.conf.d/  r,
+  owner @{run}/flatpak/ld.so.conf.d/*.conf r,
+  owner @{run}/flatpak/per-app-dirs-ref rk,
+  owner @{run}/ld-so-cache-dir/@{hex64}.@{rand6}{,~} rw,
+
+  owner @{run}/user/@{uid}/.dbus-proxy/a11y-bus-proxy-@{rand6} w,
+  owner @{run}/user/@{uid}/.dbus-proxy/session-bus-proxy-@{rand6} w,
+  owner @{run}/user/@{uid}/.dbus-proxy/system-bus-proxy-@{rand6} w,
+  owner @{run}/user/@{uid}/.flatpak/@{int}/bwrapinfo.json rw,
+  owner @{run}/user/@{uid}/.flatpak/@{int}/info r,
+
+  owner @{att}@{run}/user/@{uid}/at-spi/bus rw,
+  owner @{att}@{run}/user/@{uid}/bus rw,
+
+        @{PROC}/cgroups r,
+  owner @{PROC}/@{pid}/coredump_filter rw,
+
+  profile ldconfig flags=(attach_disconnected,mediate_deleted) {
+    include <abstractions/base>
+    include <abstractions/consoles>
+
+    @{sbin}/ldconfig mr,
+    @{lib}/ r,
+
+    /app/lib/{,**} r,
+    /app/lib{32,64}/{,**} r,
+
+    owner /var/cache/ldconfig/aux-cache r,
+
+    owner @{run}/flatpak/ld.so.conf.d/ r,
+    owner @{run}/flatpak/ld.so.conf.d/*.conf r,
+    owner @{run}/ld-so-cache-dir/@{hex64}.@{rand6} w,
+    owner @{run}/ld-so-cache-dir/@{hex64}.@{rand6}~ rw,
+
+    include if exists <local/fbwrap_ldconfig>
+  }
+
+  include if exists <local/fbwrap>
+}
+
+# vim:syntax=apparmor

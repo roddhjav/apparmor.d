@@ -1,6 +1,11 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
+# NEEDS-VARIABLE: name
+# NEEDS-VARIABLE: domain
+# NEEDS-VARIABLE: lib_dirs
+# NEEDS-VARIABLE: config_dirs
+# NEEDS-VARIABLE: cache_dirs
 
 # Minimal set of rules for all electron based UI application. It works as a
 # *function* and requires some variables to be provided as *arguments* and set
@@ -49,24 +54,43 @@
         @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/session-@{int}.scope/memory.high r,
         @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/session-@{int}.scope/memory.max r,
         @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/cpu.max r,
+  owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/*-@{int}.scope/memory.high r,
+  owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/*-@{int}.scope/memory.max r,
   owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/cpu.max r,
+
+  # This is an information leak
+  owner @{PROC}/@{pid}/mountinfo r,
+
+  # Allow reading of smaps_rollup, which is a summary of the memory use of a process
+  owner @{PROC}/@{pid}/smaps_rollup r,
+
+  # Reads of oom_adj and oom_score_adj are safe
+  owner @{PROC}/@{pid}/oom_adj r,
+  owner @{PROC}/@{pid}/oom_score_adj r,
+
+  # Per man(5) proc, the kernel enforces that a thread may only modify its comm
+  # value or those in its thread group.
+  owner @{PROC}/@{pid}/task/@{tid}/comm rw,
 
         @{PROC}/ r,
         @{PROC}/@{pid}/stat r,
         @{PROC}/@{pid}/task/@{tid}/status r,
         @{PROC}/sys/fs/inotify/max_user_watches r,
         @{PROC}/sys/kernel/yama/ptrace_scope r,
+        @{PROC}/version r,
+        @{PROC}/version_signature r,
   owner @{PROC}/@{pid}/cgroup r,
   owner @{PROC}/@{pid}/cmdline r,
   owner @{PROC}/@{pid}/fd/ r,
-  owner @{PROC}/@{pid}/mountinfo r,
-  owner @{PROC}/@{pid}/oom_score_adj rw,
-  owner @{PROC}/@{pid}/stat r,
   owner @{PROC}/@{pid}/statm r,
   owner @{PROC}/@{pid}/task/ r,
   owner @{PROC}/@{pid}/task/@{tid}/stat r,
 
+  # gvfs-metadata contains user-specific data that should not be readable by apps
   deny @{user_share_dirs}/gvfs-metadata/* r,
+
+  # This allows raising the OOM score of other processes owned by the user.
+  deny owner @{PROC}/@{pid}/oom_score_adj w,
 
   include if exists <abstractions/common/electron.d>
 

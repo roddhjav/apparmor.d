@@ -9,14 +9,10 @@ include <tunables/global>
 @{exec_path} = @{lib}/xdg-desktop-portal-gnome
 profile xdg-desktop-portal-gnome @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/bus-accessibility>
-  include <abstractions/bus-session>
+  include <abstractions/accounts-observe>
   include <abstractions/bus-system>
-  include <abstractions/bus/org.a11y>
-  include <abstractions/bus/org.freedesktop.Accounts>
-  include <abstractions/bus/org.freedesktop.portal.Desktop>
-  include <abstractions/bus/org.gnome.Shell.Introspect>
-  include <abstractions/bus/org.gtk.vfs.MountTracker>
+  include <abstractions/bus/session/org.gnome.Shell.Introspect>
+  include <abstractions/bus/session/org.gtk.vfs.Daemon>
   include <abstractions/consoles>
   include <abstractions/dconf-write>
   include <abstractions/deny-sensitive-home>
@@ -35,17 +31,14 @@ profile xdg-desktop-portal-gnome @{exec_path} flags=(attach_disconnected) {
   #aa:dbus talk bus=session name=org.freedesktop.impl.portal path=/org/freedesktop/portal/desktop label=xdg-desktop-portal
   #aa:dbus talk bus=session name=org.gnome.Mutter label=gnome-shell
   #aa:dbus talk bus=session name=org.gnome.Settings.GlobalShortcutsProvider label=gnome-control-center-global-shortcuts-provider
+  #aa:dbus talk bus=session name=org.gnome.Shell label=gnome-shell
   #aa:dbus talk bus=session name=org.gnome.Shell.Screenshot label=gnome-shell
+  #aa:dbus talk bus=session name=org.gtk.Private.RemoteVolumeMonitor label="gvfs-*-volume-monitor"
 
   dbus send bus=session path=/org/freedesktop/portal/desktop
        interface=org.freedesktop.impl.portal.Background
        member=RunningApplicationsChanged
        peer=(name=org.freedesktop.DBus, label=xdg-desktop-portal),
-
-  dbus send bus=session path=/org/gtk/Notifications
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=:*, label=gnome-shell),
 
   dbus send bus=session path=/org/gnome/Shell
        interface=org.freedesktop.DBus.Properties
@@ -63,16 +56,11 @@ profile xdg-desktop-portal-gnome @{exec_path} flags=(attach_disconnected) {
   @{bin}/* r,
   /opt/** r,
 
-  /usr/share/dconf/profile/gdm r,
-  /usr/share/gdm/greeter-dconf-defaults r,
   /usr/share/gdm/greeter/applications/{,**} r,
   /usr/share/thumbnailers/{,**} r,
 
-  owner @{desktop_cache_dirs}/dconf/user r,
   owner @{desktop_cache_dirs}/fontconfig/[a-f0-9]*.cache-?{,.NEW,.LCK,.TMP-*} rw,
-  owner @{desktop_config_dirs}/dconf/user r,
   owner @{desktop_share_dirs}/applications/{,**} r,
-  owner @{DESKTOP_HOME}/greeter-dconf-defaults r,
 
   owner @{HOME}/ r,
   owner @{HOME}/* r,
@@ -85,7 +73,11 @@ profile xdg-desktop-portal-gnome @{exec_path} flags=(attach_disconnected) {
   owner @{tmp}/gtkprint@{rand6} r,
   owner @{tmp}/xdg-desktop-portal-gnome@{rand6} rw,
 
+  owner @{run}/user/@{uid}/gvfsd/socket-@{rand8} rw,
+
   @{run}/mount/utab r,
+
+  @{sys}/devices/**/uevent r,
 
   owner @{PROC}/@{pid}/ r,
   owner @{PROC}/@{pid}/cmdline r,

@@ -73,7 +73,7 @@ profile git @{exec_path} flags=(attach_disconnected) {
   /usr/share/aurpublish/*.hook                   rPx,
 
   @{bin}/gpg{,2}         rCx -> gpg,
-  @{bin}/ssh             rCx -> ssh,
+  @{bin}/ssh             rCx -> &git//ssh,
   @{editor_path}         rCx -> editor,
 
   /usr/share/git{,-core}/{,**} r,
@@ -82,6 +82,8 @@ profile git @{exec_path} flags=(attach_disconnected) {
 
   /etc/gitconfig r,
   /etc/mailname r,
+  /etc/ssh/ssh_config r,
+  /etc/ssh/ssh_config.d/{,*} r,
 
   owner @{user_projects_dirs}/   rw,
   owner @{user_projects_dirs}/** rwkl -> @{user_projects_dirs}/**,
@@ -94,9 +96,15 @@ profile git @{exec_path} flags=(attach_disconnected) {
   owner @{HOME}/.netrc r,
   owner @{user_config_dirs}/git/{,*} rw,
 
+  owner @{HOME}/@{XDG_SSH_DIR}/{,*} r,
+  owner @{run}/user/@{uid}/keyring/ssh rw,
+
   owner @{tmp}/.git_vtag_tmp@{rand6} rw,       # For git log --show-signature
   owner @{tmp}/git-commit-msg-.txt rw,         # For android studio
   owner @{tmp}/git-difftool.*/{,**} rw,        # For diffs
+  owner @{tmp}/git-index-private@{int} rw,
+
+  owner @{run}/user/@{uid}/gcr/ssh rw,
 
   deny owner @{code_config_dirs}/** rw,
   deny owner @{user_share_dirs}/gvfs-metadata/* r,
@@ -104,6 +112,9 @@ profile git @{exec_path} flags=(attach_disconnected) {
   deny owner @{user_share_dirs}/zed/**/data.mdb rw,
   deny /usr/share/nvidia/nvidia-application-profiles-* r,
   deny /dev/shm/.org.chromium.Chromium.@{rand6} rw,
+
+  #aa:only test
+  owner /tmp/*tests@{word8}/{,**} rwlk,
 
   profile gpg flags=(attach_disconnected) {
     include <abstractions/base>
@@ -136,6 +147,8 @@ profile git @{exec_path} flags=(attach_disconnected) {
     network netlink raw,
 
     @{bin}/ssh mr,
+    @{bin}/ssh.hmac r,
+
     @{bin}/ksshaskpass ix,
     @{lib}/code/extensions/git/dist/ssh-askpass.sh Px,
 
@@ -150,6 +163,7 @@ profile git @{exec_path} flags=(attach_disconnected) {
     owner @{tmp}/git@*:@{int} rwl -> @{tmp}/git@*:@{int}.*,
     owner @{tmp}/ssh-*/agent.@{int} rw,
     owner @{run}/user/@{uid}/keyring/ssh rw,
+    owner @{run}/user/@{uid}/gcr/ssh rw,
 
     owner @{PROC}/@{pid}/fd/ r,
 

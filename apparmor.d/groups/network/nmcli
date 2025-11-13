@@ -16,10 +16,24 @@ profile nmcli @{exec_path} {
   capability sys_nice,
 
   #aa:dbus talk bus=system name=org.freedesktop.NetworkManager label=NetworkManager
+  dbus receive bus=system path=/org/freedesktop
+       interface=org.freedesktop.DBus.ObjectManager
+       member=InterfacesAdded
+       peer=(name=@{busname}, label=NetworkManager),
+  dbus receive bus=system path=/org/freedesktop
+       interface=org.freedesktop.DBus.ObjectManager
+       member=InterfacesRemoved
+       peer=(name=@{busname}, label=NetworkManager),
+  dbus send bus=system path=/org/freedesktop
+       interface=org.freedesktop.DBus.ObjectManager
+       member=GetManagedObjects
+       peer=(name=@{busname}, label=NetworkManager),
 
   @{exec_path} mr,
 
   @{pager_path}          rPx -> child-pager,
+
+  /etc/netplan/* r,
 
   owner @{HOME}/.nm-vpngate/*.ovpn r,
   owner @{HOME}/.cert/nm-openvpn/*.pem rw,

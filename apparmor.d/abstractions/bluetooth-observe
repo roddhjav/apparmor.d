@@ -1,0 +1,23 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Allows listing Bluetooth devices and their properties.
+
+  abi <abi/4.0>,
+
+  include <abstractions/bus/system/org.bluez>
+
+  include <abstractions/bus/system/org.bluez.MediaEndpoint1>
+  include <abstractions/bus/system/org.bluez.MediaTransport1>
+
+  # Allow quering GATT (Bluetooth Generic Attribute) services
+
+  dbus send bus=system path=/org/bluez/hci@{int}/dev_@{hex2}_@{hex2}_@{hex2}_@{hex2}_@{hex2}_@{hex2}{,/**}
+       interface=org.bluez.GattCharacteristic1
+       member=ReadValue
+       peer=(name=@{busname}, label="@{p_bluetoothd}"),
+
+  include if exists <abstractions/bluetooth-observe.d>
+
+# vim:syntax=apparmor

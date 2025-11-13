@@ -1,0 +1,34 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Plugin registry cache for the multimedia framework GStreamer.
+# It stores metadata about all the GStreamer plugins available on the system,
+# including their types, capabilities, and locations.
+
+# It is usually needed by application calling GStreamer libraries.
+
+  abi <abi/4.0>,
+
+  owner @{desktop_cache_dirs}/gstreamer-1.0/ w,
+  owner @{desktop_cache_dirs}/gstreamer-1.0/registry.@{arch}.bin rw,
+  owner @{desktop_cache_dirs}/gstreamer-1.0/registry.@{arch}.bin.tmp@{rand6} rw,
+
+  owner @{HOME}/.gstreamer-1.0/ rw,
+  owner @{HOME}/.gstreamer-1.0/registry.@{arch}.bin rw,
+  owner @{HOME}/.gstreamer-1.0/registry.@{arch}.bin.tmp@{rand6} rw,
+
+  owner @{user_cache_dirs}/gstreamer-1.0/ rw,
+  owner @{user_cache_dirs}/gstreamer-1.0/registry.@{arch}.bin rw,
+  owner @{user_cache_dirs}/gstreamer-1.0/registry.@{arch}.bin.tmp@{rand6} rw,
+
+  # The orcexec.* file is JIT compiled code for various GStreamer elements.
+  # If one is blocked the next is used instead.
+  # The orcexec file is placed under /home/user/ also when the /tmp/ dir is mounted with the noexec flag.
+       owner @{run}/user/@{uid}/orcexec.@{rand6} mrw,
+  deny owner @{HOME}/orcexec.@{rand6} rw,
+  deny owner @{tmp}/orcexec.@{rand6} mrw,
+
+  include if exists <abstractions/gstreamer-registry.d>
+
+# vim:syntax=apparmor

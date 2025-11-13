@@ -9,11 +9,8 @@ include <tunables/global>
 @{exec_path} = @{lib}/{,ibus/}ibus-x11
 profile ibus-x11 @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/bus-system>
   include <abstractions/consoles>
-  include <abstractions/bus-accessibility>
-  include <abstractions/bus-session>
-  include <abstractions/bus/org.a11y>
-  include <abstractions/bus/org.gtk.vfs.MountTracker>
   include <abstractions/desktop>
   include <abstractions/graphics>
   include <abstractions/nameservice-strict>
@@ -30,7 +27,7 @@ profile ibus-x11 @{exec_path} flags=(attach_disconnected) {
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
-       peer=(name=:*, label=gnome-shell),
+       peer=(name=@{busname}, label=gnome-shell),
 
   @{exec_path} mr,
 
@@ -42,6 +39,8 @@ profile ibus-x11 @{exec_path} flags=(attach_disconnected) {
 
   owner @{user_config_dirs}/ibus/bus/ r,
   owner @{user_config_dirs}/ibus/bus/@{hex32}-unix-{,wayland-}@{int} r,
+
+  owner @{PROC}/@{pids}/stat r,
 
   include if exists <local/ibus-x11>
 }

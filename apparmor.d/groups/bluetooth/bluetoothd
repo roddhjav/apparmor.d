@@ -11,7 +11,8 @@ include <tunables/global>
 profile bluetoothd @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus-system>
-  include <abstractions/bus/org.freedesktop.hostname1>
+  include <abstractions/bus/system/org.freedesktop.hostname1>
+  include <abstractions/uinput>
 
   # Needed for configuring HCI interfaces
   capability net_admin,
@@ -20,20 +21,10 @@ profile bluetoothd @{exec_path} flags=(attach_disconnected) {
   network bluetooth raw,
   network bluetooth seqpacket,
   network bluetooth stream,
-  network alg seqpacket,
+  network alg seqpacket, # kernel crypto API
   network netlink raw,
 
-  #aa:dbus own bus=system name=org.bluez
-
-  dbus send bus=system path=/{,MediaEndpoint}
-       interface=org.freedesktop.DBus.ObjectManager
-       member=GetManagedObjects
-       peer=(name=@{busname}),
-
-  dbus send bus=system path=/
-       interface=org.freedesktop.DBus.ObjectManager
-       member={InterfacesRemoved,InterfacesAdded}
-       peer=(name=org.freedesktop.DBus),
+  #aa:dbus own bus=system name=org.bluez path=/{,**}
 
   @{exec_path} mr,
 
@@ -43,8 +34,7 @@ profile bluetoothd @{exec_path} flags=(attach_disconnected) {
 
   /var/lib/bluetooth/{,**} rw,
 
-        @{run}/sdp rw,
-  owner @{run}/systemd/notify w,
+  @{run}/sdp rw,
 
   @{run}/udev/data/+hid:* r,              # For Human Interface Device (mice, controllers, drawing tablets, scanners)
 
@@ -53,11 +43,11 @@ profile bluetoothd @{exec_path} flags=(attach_disconnected) {
   @{sys}/devices/platform/**/rfkill/**/name r,
   @{sys}/devices/virtual/dmi/id/chassis_type r,
   @{sys}/devices/virtual/misc/uhid/**/uevent r,
+  @{sys}/devices/virtual/vc/*/uevent r,
 
   @{PROC}/sys/kernel/hostname r,
 
   /dev/uhid rw,
-  /dev/uinput rw,
   /dev/rfkill rw,
   /dev/hidraw@{int} rw,
 

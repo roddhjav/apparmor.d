@@ -9,8 +9,9 @@ include <tunables/global>
 @{exec_path} = @{bin}/py{,3}compile @{bin}/py{,3}clean
 profile pycompile @{exec_path} flags=(attach_disconnected,complain) {
   include <abstractions/base>
-  include <abstractions/common/apt>
+  include <abstractions/apt>
   include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
   include <abstractions/python>
 
   capability dac_override,
@@ -21,19 +22,25 @@ profile pycompile @{exec_path} flags=(attach_disconnected,complain) {
 
   @{bin}/dpkg rCx -> dpkg,
 
-  @{lib}/@{python_name}/**/__pycache__/ w,
-  @{lib}/@{python_name}/**/__pycache__/*.pyc w,
-  @{lib}/@{python_name}/**/__pycache__/*.pyc.* w,
+  priority=1 @{lib}/**/__pycache__/ rw,
+  priority=1 @{lib}/**/__pycache__/*.pyc rw,
+  priority=1 @{lib}/**/__pycache__/*.pyc.* rw,
 
-  /usr/share/python3/{,**} r,
+  /usr/share/**/__pycache__/ rw,
+  /usr/share/**/__pycache__/*.pyc rw,
+  /usr/share/**/__pycache__/*.pyc.* rw,
+
+  /usr/share/@{python_name}/{,**} r,
+  /usr/share/**.py r,
 
   / r,
   @{bin}/ r,
+  @{sbin}/ r,
 
   profile dpkg {
     include <abstractions/base>
+    include <abstractions/apt>
     include <abstractions/consoles>
-    include <abstractions/common/apt>
 
     capability dac_read_search,
 

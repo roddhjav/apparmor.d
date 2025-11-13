@@ -5,10 +5,10 @@
   abi <abi/4.0>,
 
   # The unix socket to use to connect to the display
-  unix (connect, receive, send) type=stream peer=(addr="@/tmp/.X11-unix/X[0-9]*"),
-  unix (connect, receive, send) type=stream peer=(addr="@/tmp/.ICE-unix/[0-9]*"),
-  unix type=stream addr="@/tmp/.ICE-unix/[0-9]*",
-  unix type=stream addr="@/tmp/.X11-unix/X[0-9]*",
+  unix (connect, receive, send) type=stream peer=(addr=@/tmp/.ICE-unix/@{int}),
+  unix (connect, receive, send) type=stream peer=(addr=@/tmp/.X11-unix/X@{int}),
+  unix type=stream addr=@/tmp/.ICE-unix/@{int},
+  unix type=stream addr=@/tmp/.X11-unix/X@{int},
 
   /usr/share/X11/{,**} r,
   /usr/share/xsessions/{,*.desktop} r,  # Available Xsessions
@@ -16,13 +16,13 @@
 
   /etc/X11/cursors/{,**} r,
 
-  owner @{HOME}/.ICEauthority rw,  # ICEauthority files required for X authentication, per user
+  owner @{HOME}/.ICEauthority r,  # ICEauthority files required for X authentication, per user
   owner @{HOME}/.Xauthority rw,  # Xauthority files required for X connections, per user
   owner @{HOME}/.xsession-errors rw,
 
-        /tmp/.ICE-unix/* rw,
+        /tmp/.ICE-unix/@{int} rw,
         /tmp/.X@{int}-lock rw,
-        /tmp/.X11-unix/* rw,
+        /tmp/.X11-unix/X@{int}{,_} rw,
   owner @{tmp}/xauth_@{rand6} rl -> @{tmp}/#@{int},
 
   owner @{run}/user/@{uid}/.mutter-Xwaylandauth.@{rand6} rw,  # Xwayland

@@ -15,6 +15,7 @@ include <tunables/global>
 @{exec_path} = @{bin}/@{name} @{lib_dirs}/@{name}
 profile firefox @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/app/bwrap-glycin> #aa:only apparmor>=4.1
   include <abstractions/app/firefox>
   include <abstractions/user-download-strict>
   include <abstractions/user-read-strict>
@@ -23,15 +24,24 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
 
   unix type=seqpacket addr=@gecko-crash-helper-pipe.@{int},
   unix type=seqpacket peer=(label=firefox-crashhelper),
+  unix type=seqpacket peer=(label=firefox-glxtest),
+
+  unix type=seqpacket,
+  unix type=seqpacket peer=(label=firefox-crashreporter),
+  unix type=stream,
 
   #aa:dbus own bus=session name=org.mozilla.firefox
-  #aa:dbus own bus=session name=org.mpris.MediaPlayer2.firefox path=/org/mpris/MediaPlayer2
 
   @{exec_path} mrix,
 
   @{lib_dirs}/crashhelper rPx -> firefox//&firefox-crashhelper,
   @{lib_dirs}/glxtest     rPx -> firefox//&firefox-glxtest,
   @{lib_dirs}/vaapitest   rPx -> firefox//&firefox-vaapitest,
+
+  #aa:only apparmor>=4.1
+  # glycin-loaders sandboxed profile stack
+  @{bin}/bwrap                          Px -> firefox//&glycin,
+  @{lib}/glycin-loaders/@{d}+/glycin-*  Px -> firefox//&glycin//&glycin//loaders,
 
   @{lib}/@{multiarch}/qt5/plugins/kf5/org.kde.kwindowsystem.platforms/KF5WindowSystemKWaylandPlugin.so mr,
   @{lib}/@{multiarch}/qt5/plugins/kf5/org.kde.kwindowsystem.platforms/KF5WindowSystemX11Plugin.so mr,
@@ -52,13 +62,15 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
   @{bin}/browserpass                                           rPx,
   @{bin}/keepassxc-proxy                                       rPx -> firefox//&keepassxc-proxy,
   @{lib}/browserpass/browserpass-native                        rPx,
+  /opt/1Password/1Password-BrowserSupport                      rPUx,
   /opt/net.downloadhelper.coapp/bin/net.downloadhelper.coapp*  rPx,
 
   owner @{user_config_dirs}/gtk-{3,4}.0/assets/*.svg r,
   owner @{user_config_dirs}/ibus/bus/ r,
   owner @{user_config_dirs}/ibus/bus/@{hex32}-unix-{,wayland-}@{int} r,
   owner @{user_config_dirs}/kioslaverc r,
-  owner @{user_config_dirs}/mimeapps.list{,.@{rand6}} rw,
+  owner @{user_config_dirs}/mimeapps.list w,
+  owner @{user_config_dirs}/mimeapps.list.@{rand6} rw,
 
   owner @{user_share_dirs}/applications/userapp-Firefox-@{rand6}.desktop{,.@{rand6}} rw,
   owner @{user_share_dirs}/mime/packages/user-extension-{htm,html,xht,xhtml,shtml}.xml rw,

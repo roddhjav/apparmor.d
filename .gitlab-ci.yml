@@ -25,6 +25,7 @@ bash:
     - shellcheck --shell=bash
         PKGBUILD dists/build.sh dists/docker.sh tests/check.sh
         tests/packer/init.sh tests/packer/src/aa-update tests/packer/clean.sh
+        tests/autopkgtest/autopkgtest.sh
 
 golangci-lint:
   stage: lint
@@ -38,9 +39,8 @@ packer:
     name: hashicorp/packer:latest
     entrypoint: [""]
   script:
-    - cd tests &&
-      packer fmt --check packer/ &&
-      packer validate --syntax-only packer/
+    - packer fmt tests/packer/
+    - packer validate --syntax-only tests/packer/
 
 sast:
   stage: lint
@@ -84,7 +84,7 @@ archlinux:
 
 debian:
   stage: build
-  image: registry.gitlab.com/roddhjav/builders/debian:trixie
+  image: registry.gitlab.com/roddhjav/builders/debian:13
   script:
     - sudo chown -R build:build /builds/
     - git config --global --add safe.directory $CI_PROJECT_DIR
@@ -146,7 +146,7 @@ preprocess-archlinux:
 
 preprocess-debian:
   stage: preprocess
-  image: debian:trixie
+  image: debian:13
   dependencies:
     - debian
   script:

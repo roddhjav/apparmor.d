@@ -6,10 +6,14 @@
 # See https://apparmor.pujol.io/development/ for more information.
 
 # Build settings
+
 destdir := "/"
 build := ".build"
 pkgdest := `pwd` / ".pkg"
 pkgname := "apparmor.d"
+gpgkey := "06A26D531D56C42D66805049C5469996F0DF68EC"
+
+# The following variables are only  used for the development and test VM
 
 # Admin username
 username := "user"
@@ -49,10 +53,25 @@ c := "--connect=qemu:///system"
 # VM prefix
 prefix := "aa-"
 
+usage := "
+Build variables available:
+    build        " + BLUE + "# Build directory (default: " + build + ")" + NORMAL + "
+    destdir      " + BLUE + "# Installation destination (default: " + destdir + ")" + NORMAL + "
+    pkgdest      " + BLUE + "# Package output directory (default: " + pkgdest + ")" + NORMAL + "
+
+Development variables available:
+    username     " + BLUE + "# VM username (default: " + username + ")" + NORMAL + "
+    password     " + BLUE + "# VM password (default: " + password + ")" + NORMAL + "
+    disk_size    " + BLUE + "# VM disk size (default: " + disk_size + ")" + NORMAL + "
+    vcpus        " + BLUE + "# VM CPU (default: " + vcpus + ")" + NORMAL + "
+    ram          " + BLUE + "# VM RAM (default: " + ram + ")" + NORMAL + "
+
+See https://apparmor.pujol.io/development/ for more information."
+
 # Show this help message
 help:
 	@just --list --unsorted
-	@printf "\n%s\n" "See https://apparmor.pujol.io/development/ for more information."
+	@printf "%s\n" "{{usage}}"
 
 # Build the go programs
 [group('build')]
@@ -65,10 +84,20 @@ build:
 enforce: build
 	@./{{build}}/prebuild --buildir {{build}}
 
+# Prebuild the profiles in enforce mode (test)
+[group('build')]
+enforce-test: build
+	@./{{build}}/prebuild --buildir {{build}} --test
+
 # Prebuild the profiles in complain mode
 [group('build')]
 complain: build
 	./{{build}}/prebuild --buildir {{build}} --complain
+
+# Prebuild the profiles in complain mode (test)
+[group('build')]
+complain-test: build
+	@./{{build}}/prebuild --buildir {{build}} --complain --test
 
 # Prebuild the profiles in FSP mode
 [group('build')]
@@ -84,6 +113,31 @@ fsp-complain: build
 [group('build')]
 fsp-debug: build
 	@./{{build}}/prebuild --buildir {{build}} --complain --full --debug
+
+# Prebuild the profiles in server mode
+[group('build')]
+server: build
+	@./{{build}}/prebuild --buildir {{build}} --server
+
+# Prebuild the profiles in server mode (complain)
+[group('build')]
+server-complain: build
+	@./{{build}}/prebuild --buildir {{build}} --server --complain
+
+# Prebuild the profiles in server FSP mode
+[group('build')]
+server-fsp: build
+	@./{{build}}/prebuild --buildir {{build}} --server --full
+
+# Prebuild the profiles in server FSP mode (complain)
+[group('build')]
+server-fsp-complain: build
+	@./{{build}}/prebuild --buildir {{build}} --server --full --complain
+
+# Prebuild the profiles in server FSP mode (debug)
+[group('build')]
+server-fsp-debug: build
+	@./{{build}}/prebuild --buildir {{build}} --server --full --complain --debug
 
 # Install prebuild profiles
 [group('install')]
@@ -137,10 +191,12 @@ local +names:
 
 # Prebuild, install, and load a dev profile
 [group('install')]
-dev name:
-	go run ./cmd/prebuild --complain --file `find apparmor.d -iname {{name}}`
-	sudo install -Dm644 {{build}}/apparmor.d/{{name}} /etc/apparmor.d/{{name}}
-	sudo systemctl restart apparmor || sudo journalctl -xeu apparmor.service
+dev +names:
+	go run ./cmd/prebuild --complain
+	for file in {{names}}; do \
+		sudo install -Dm644 -v {{build}}/apparmor.d/$file /etc/apparmor.d/$file; \
+	done
+	sudo systemctl restart apparmor.service || sudo journalctl -xeu apparmor.service
 
 # Build & install apparmor.d on Arch based systems
 [group('packages')]
@@ -159,13 +215,6 @@ rpm:
 	@bash dists/build.sh rpm
 	@sudo rpm -ivh --force {{pkgdest}}/{{pkgname}}-*.rpm
 
-# Run the unit tests
-[group('tests')]
-tests:
-	@go test ./cmd/... -v -cover -coverprofile=coverage.out
-	@go test ./pkg/... -v -cover -coverprofile=coverage.out
-	@go tool cover -func=coverage.out
-
 # Run the linters
 [group('linter')]
 lint:
@@ -175,7 +224,7 @@ lint:
 	shellcheck --shell=bash \
 		PKGBUILD dists/build.sh dists/docker.sh tests/check.sh \
 		tests/packer/init.sh tests/packer/src/aa-update tests/packer/clean.sh \
-		debian/{{pkgname}}.postinst debian/{{pkgname}}.postrm
+		tests/autopkgtest/autopkgtest.sh debian/{{pkgname}}.postinst debian/{{pkgname}}.postrm
 
 # Run style checks on the profiles
 [group('linter')]
@@ -201,30 +250,44 @@ serve:
 clean:
 	@rm -rf \
 		debian/.debhelper debian/debhelper* debian/*.debhelper debian/{{pkgname}} \
-		{{pkgdest}}/{{pkgname}}* {{build}} coverage.out
+		{{pkgdest}}/{{pkgname}}* {{pkgdest}}/ubuntu {{pkgdest}}/debian \
+		{{pkgdest}}/archlinux {{pkgdest}}/opensuse {{pkgdest}}/version \
+		{{build}} coverage.out .logs/autopkgtest/
 
 # Build the package in a clean OCI container
 [group('packages')]
-package dist:
+package dist release="" flavor="":
+	bash dists/docker.sh {{dist}} {{release}} {{flavor}}
+
+# Build all packages in a clean OCI container
+[group('packages')]
+packages: (clean)
 	#!/usr/bin/env bash
 	set -eu -o pipefail
-	dist="{{dist}}"
-	version=""
-	if [[ $dist =~ ubuntu([0-9]+) ]]; then
-		version="${BASH_REMATCH[1]}.04"
-		dist="ubuntu"
-	elif [[ $dist == debian* ]]; then
-		version="trixie"
-		dist="debian"
-	fi
-	bash dists/docker.sh $dist $version
+	declare -A matrix=(
+		["archlinux"]="-"
+		["debian"]="12 13"
+		["ubuntu"]="22.04 24.04 25.04 25.10"
+		["opensuse"]="-"
+	)
+	for dist in "${!matrix[@]}"; do
+		IFS=' ' read -r -a releases <<< "${matrix[$dist]}"
+		for release in "${releases[@]}"; do
+			bash dists/docker.sh $dist $release
+		done
+	done
 
 # Build the VM image
 [group('vm')]
-img dist flavor: (package dist)
-	@mkdir -p {{base_dir}}
+img dist release flavor: (package dist release flavor)
+	#!/usr/bin/env bash
+	set -eu -o pipefail
+	RELEASE="{{release}}"
+	[[ "$RELEASE" == "-" ]] && RELEASE=""
+	mkdir -p {{base_dir}}
 	packer build -force \
 		-var dist={{dist}} \
+		-var release="$RELEASE" \
 		-var flavor={{flavor}} \
 		-var prefix={{prefix}} \
 		-var username={{username}} \
@@ -239,19 +302,19 @@ img dist flavor: (package dist)
 
 # Create the machine
 [group('vm')]
-create dist flavor:
-	@cp -f {{base_dir}}/{{prefix}}{{dist}}-{{flavor}}.qcow2 {{vm}}/{{prefix}}{{dist}}-{{flavor}}.qcow2
+create osinfo flavor:
+	@cp -f {{base_dir}}/{{prefix}}{{osinfo}}-{{flavor}}.qcow2 {{vm}}/{{prefix}}{{osinfo}}-{{flavor}}.qcow2
 	@virt-install {{c}} \
 		--import \
-		--name {{prefix}}{{dist}}-{{flavor}} \
+		--name {{prefix}}{{osinfo}}-{{flavor}} \
 		--vcpus {{vcpus}} \
 		--ram {{ram}} \
 		--machine q35 \
-		{{ if dist == "archlinux" { "" } else { "--boot uefi" } }} \
+		{{ if osinfo == "archlinux" { "" } else { "--boot uefi" } }} \
 		--memorybacking source.type=memfd,access.mode=shared \
-		--disk path={{vm}}/{{prefix}}{{dist}}-{{flavor}}.qcow2,format=qcow2,bus=virtio \
+		--disk path={{vm}}/{{prefix}}{{osinfo}}-{{flavor}}.qcow2,format=qcow2,bus=virtio \
 		--filesystem "`pwd`,0a31bc478ef8e2461a4b1cc10a24cc4",accessmode=passthrough,driver.type=virtiofs \
-		--os-variant "`just _get_osinfo {{dist}}`" \
+		--os-variant "{{ if osinfo == "opensuse" { "opensusetumbleweed" } else { osinfo } }}" \
 		--graphics spice \
 		--audio id=1,type=spice \
 		--sound model=ich9 \
@@ -259,47 +322,47 @@ create dist flavor:
 
 # Start a machine
 [group('vm')]
-up dist flavor:
-	@virsh {{c}} start {{prefix}}{{dist}}-{{flavor}}
+up osinfo flavor:
+	@virsh {{c}} start {{prefix}}{{osinfo}}-{{flavor}}
 
 # Stops the machine
 [group('vm')]
-halt dist flavor:
-	@virsh {{c}} shutdown {{prefix}}{{dist}}-{{flavor}}
+halt osinfo flavor:
+	@virsh {{c}} shutdown {{prefix}}{{osinfo}}-{{flavor}}
 
 # Reboot the machine
 [group('vm')]
-reboot dist flavor:
-	@virsh {{c}} reboot {{prefix}}{{dist}}-{{flavor}}
+reboot osinfo flavor:
+	@virsh {{c}} reboot {{prefix}}{{osinfo}}-{{flavor}}
 
 # Destroy the machine
 [group('vm')]
-destroy dist flavor:
-	@virsh {{c}} destroy {{prefix}}{{dist}}-{{flavor}} || true
-	@virsh {{c}} undefine {{prefix}}{{dist}}-{{flavor}} --nvram
-	@rm -fv {{vm}}/{{prefix}}{{dist}}-{{flavor}}.qcow2
+destroy osinfo flavor:
+	@virsh {{c}} destroy {{prefix}}{{osinfo}}-{{flavor}} || true
+	@virsh {{c}} undefine {{prefix}}{{osinfo}}-{{flavor}} --nvram
+	@rm -fv {{vm}}/{{prefix}}{{osinfo}}-{{flavor}}.qcow2
 
 # Connect to the machine
 [group('vm')]
-ssh dist flavor:
-	@ssh {{sshopt}} {{username}}@`just _get_ip {{dist}} {{flavor}}`
+ssh osinfo flavor:
+	@ssh {{sshopt}} {{username}}@`just _get_ip {{osinfo}} {{flavor}}`
 
 # Mount the shared directory on the machine
 [group('vm')]
-mount dist flavor:
-	@ssh {{sshopt}} {{username}}@`just _get_ip {{dist}} {{flavor}}` \
+mount osinfo flavor:
+	@ssh {{sshopt}} {{username}}@`just _get_ip {{osinfo}} {{flavor}}` \
 		sh -c 'mount | grep 0a31bc478ef8e2461a4b1cc10a24cc4 || sudo mount 0a31bc478ef8e2461a4b1cc10a24cc4'
 
 # Unmout the shared directory on the machine
 [group('vm')]
-umount dist flavor:
-	@ssh {{sshopt}} {{username}}@`just _get_ip {{dist}} {{flavor}}` \
+umount osinfo flavor:
+	@ssh {{sshopt}} {{username}}@`just _get_ip {{osinfo}} {{flavor}}` \
 		sh -c 'true; sudo umount /home/{{username}}/Projects/apparmor.d || true'
 
 # List the machines
 [group('vm')]
 list:
-	@printf "{{BOLD}} %-4s %-22s %s{{NORMAL}}\n" "Id" "Distribution-Flavor" "State"
+	@printf "{{BOLD}} %-4s %-22s %s{{NORMAL}}\n" "Id" "OsInfo-Flavor" "State"
 	@virsh {{c}} list --all | grep {{prefix}} | sed 's/{{prefix}}//g'
 
 # List the VM images
@@ -308,34 +371,77 @@ images:
 	#!/usr/bin/env bash
 	set -eu -o pipefail
 	mkdir -p {{base_dir}}
-	ls -lh {{base_dir}} | awk '
-	BEGIN {
-		printf("{{BOLD}}%-18s %-10s %-5s %s{{NORMAL}}\n", "Distribution", "Flavor", "Size", "Date")
-	}
-	{
-		if ($9 ~ /^{{prefix}}.*\.qcow2$/) {
-			split($9, arr, "-|\\.")
-			printf("%-18s %-10s %-5s %s %s %s\n", arr[2], arr[3], $5, $6, $7, $8)
-		}
-	}
-	'
+	(
+		printf "{{BOLD}}%s %s %s %s %s{{NORMAL}}\n" "OsInfo" "Flavor" "Size" "Date"
+		find {{base_dir}} -iname '{{prefix}}*' -type f -printf "%f %k %Tb %Td %TH:%TM\n" | sort | awk '
+			{
+				split($1, item, "-")
+				split(item[3], flavor, "\\.")
+				if ($2>=1048576) {
+					printf("%s %s %.1fGB %s %s %s\n", item[2], flavor[1], $2/1048576, $3, $4, $5)
+				} else {
+					printf("%s %s %.fMB %s %s %s\n", item[2], flavor[1], $2/1024, $3, $4, $5)
+				}
+			}
+			'
+	) | column -t
 
 # List the VM images that can be created
 [group('vm')]
 available:
 	#!/usr/bin/env bash
 	set -eu -o pipefail
-	ls -lh tests/cloud-init | awk '
-	BEGIN {
-		printf("{{BOLD}}%-18s %s{{NORMAL}}\n", "Distribution", "Flavor")
-	}
-	{
-		if ($9 ~ /^.*\.user-data.yml$/) {
-			split($9, arr, "-|\\.")
-			printf("%-18s %s\n", arr[1], arr[2])
-		}
-	}
-	'
+	(
+		printf "{{BOLD}}%s %s %s{{NORMAL}}\n" "Distribution" "Release" "Flavor"
+		find tests/cloud-init -iname '*.user-data.yml' -type f -printf "%f\n" | sort | awk '
+			{
+				split($1, item, "-")
+				match(item[1], /^([a-z]+)([0-9.]*?)$/, osinfo)
+				release = (osinfo[2] == "" ? "-" : osinfo[2])
+				split(item[2], flavor, "\\.")
+				printf("%s %s %s\n", osinfo[1], release, flavor[1])
+			}
+			'
+	) | column -t
+
+# Run the unit tests
+[group('tests')]
+tests:
+	@go test ./cmd/... -v -cover -coverprofile=coverage.out
+	@go test ./pkg/... -v -cover -coverprofile=coverage.out
+	@go tool cover -func=coverage.out
+
+# Run the autopkgtest tests
+[group('tests')]
+autopkgtest osinfo:
+	@PREFIX='{{prefix}}' VM_DIR='{{vm}}' \
+	USER='{{username}}' PASSWORD='{{password}}' SSH_OPT='{{sshopt}}' \
+		bash tests/autopkgtest/autopkgtest.sh run {{osinfo}}
+
+# Update the apparmor.d package on the test machine
+[group('tests')]
+autopkgtest-update dist release:
+	just up {{dist}}{{release}} test || true
+	just package {{dist}} {{release}} test
+	scp {{sshopt}} {{pkgdest}}/{{dist}}/{{release}}/{{pkgname}}_*.deb \
+		{{username}}@`just _get_ip {{dist}}{{release}} test`:/home/{{username}}/Projects/
+	ssh {{sshopt}} {{username}}@`just _get_ip {{dist}}{{release}} test` \
+		sudo dpkg -i /home/{{username}}/Projects/{{pkgname}}_*.deb
+	just halt {{dist}}{{release}} test
+
+_autopkgtest-log-merge:
+	@mkdir -p .logs/autopkgtest
+	@cat .logs/autopkgtest/aa-log-* > .logs/autopkgtest/merged.log
+
+# Report all collected logs
+[group('tests')]
+autopkgtest-log: (_autopkgtest-log-merge)
+	@aa-log --file .logs/autopkgtest/merged.log
+
+# Report all generated rules
+[group('tests')]
+autopkgtest-rules: (_autopkgtest-log-merge)
+	@aa-log --rules --file .logs/autopkgtest/merged.log
 
 # Install dependencies for the integration tests
 [group('tests')]
@@ -349,43 +455,93 @@ integration name="":
 
 # Install dependencies for the integration tests (machine)
 [group('tests')]
-tests-init dist flavor:
-	@ssh {{sshopt}} {{username}}@`just _get_ip {{dist}} {{flavor}}` \
+tests-init osinfo flavor:
+	@ssh {{sshopt}} {{username}}@`just _get_ip {{osinfo}} {{flavor}}` \
 		just --justfile /home/{{username}}/Projects/apparmor.d/Justfile init
 
 # Synchronize the integration tests (machine)
 [group('tests')]
-tests-sync dist flavor:
-	@ssh {{sshopt}} {{username}}@`just _get_ip {{dist}} {{flavor}}` \
+tests-sync osinfo flavor:
+	@ssh {{sshopt}} {{username}}@`just _get_ip {{osinfo}} {{flavor}}` \
 		rsync -a --delete /home/{{username}}/Projects/apparmor.d/tests/ /home/{{username}}/Projects/tests/
 
 # Re-synchronize the integration tests (machine)
 [group('tests')]
-tests-resync dist flavor: (mount dist flavor) \
-	(tests-sync dist flavor) \
-	(umount dist flavor)
+tests-resync osinfo flavor: (mount osinfo flavor) \
+	(tests-sync osinfo flavor) \
+	(umount osinfo flavor)
 
 # Run the integration tests (machine)
 [group('tests')]
-tests-run dist flavor name="": (tests-resync dist flavor)
-	ssh {{sshopt}} {{username}}@`just _get_ip {{dist}} {{flavor}}` \
+tests-run osinfo flavor name="": (tests-resync osinfo flavor)
+	ssh {{sshopt}} {{username}}@`just _get_ip {{osinfo}} {{flavor}}` \
 		bats --recursive --pretty --timing --print-output-on-failure \
 			/home/{{username}}/Projects/tests/integration/{{name}}
 
-_get_ip dist flavor:
-	@virsh --quiet --readonly {{c}} domifaddr {{prefix}}{{dist}}-{{flavor}} | \
+# Get the current apparmor.d release version
+[group('version')]
+version:
+	@bash -c 'source PKGBUILD && echo "$pkgver"'
+
+# Create a new version number from the current release
+[group('version')]
+version-new:
+	@bash -c 'source PKGBUILD && echo $(echo "$pkgver" | awk "{print \$1 + 0.0001}")'
+
+# Create a new release
+[group('release')]
+release: tests lint commit archive publish
+
+# Write the new release version to package files & commit
+[group('release')]
+commit:
+	#!/usr/bin/env bash
+	set -eu -o pipefail
+	version=`just version-new`
+	cat > debian/changelog.tmp <<-EOF
+		{{pkgname}} (${version}-1) stable; urgency=medium
+
+		* Release {{pkgname}} v${version}
+
+		-- $(git config user.name) <$(git config user.email)>  $(date -R)
+
+	EOF
+	cat debian/changelog >> debian/changelog.tmp
+	mv debian/changelog.tmp debian/changelog
+	sed -i "s/^pkgver=.*/pkgver=$version/" PKGBUILD
+	sed -i "s/^Version:.*/Version:        $version/" "dists/{{pkgname}}.spec"
+	git add PKGBUILD "dists/{{pkgname}}.spec" debian/changelog
+	git commit -S -m "Release version $version"
+
+# Create a release archive
+[group('release')]
+archive:
+	#!/usr/bin/env bash
+	set -eu -o pipefail
+	version=`just version`
+	git tag -a "v$version" -m "{{pkgname}} v$version" --local-user={{gpgkey}}
+	git archive \
+		--format=tar.gz \
+		--prefix={{pkgname}}-$version/ \
+		--output={{pkgdest}}/{{pkgname}}-$version.tar.gz \
+		v$version
+	gpg --armor --default-key {{gpgkey}} --detach-sig {{pkgdest}}/{{pkgname}}-$version.tar.gz
+	gpg --verify {{pkgdest}}/{{pkgname}}-$version.tar.gz.asc
+
+# Publish the new release on Github
+[group('release')]
+publish:
+	#!/usr/bin/env bash
+	set -eu -o pipefail
+	owner="roddhjav"
+	version=`just version`
+	git push origin main --tags
+	gh release create "v$version" --notes-from-tag --repo $owner/{{pkgname}}
+	gh release upload "v$version" --repo $owner/{{pkgname}} \
+		{{pkgdest}}/{{pkgname}}-$version.tar.gz \
+		{{pkgdest}}/{{pkgname}}-$version.tar.gz.asc
+
+_get_ip osinfo flavor:
+	@virsh --quiet --readonly {{c}} domifaddr {{prefix}}{{osinfo}}-{{flavor}} | \
 		head -1 | \
 		grep -E -o '([[:digit:]]{1,3}\.){3}[[:digit:]]{1,3}'
-
-_get_osinfo dist:
-	#!/usr/bin/env python3
-	osinfo = {
-		"archlinux": "archlinux",
-		"debian12": "debian12",
-		"debian13": "debian13",
-		"ubuntu22": "ubuntu22.04",
-		"ubuntu24": "ubuntu24.04",
-		"ubuntu25": "ubuntu25.04", 
-		"opensuse": "opensusetumbleweed",
-	}
-	print(osinfo.get("{{dist}}", "{{dist}}"))

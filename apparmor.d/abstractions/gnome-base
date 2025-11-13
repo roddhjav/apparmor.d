@@ -1,0 +1,32 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Minimal gnome specific rules.
+
+  abi <abi/4.0>,
+
+  include <abstractions/bus/session/org.gnome.Mutter.IdleMonitor>
+
+  # DBus.Introspectable: allow introspection from gnome-shell
+  dbus receive bus=session
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(label=gnome-shell),
+
+  @{system_share_dirs}/gvfs/remote-volume-monitors/{,*}  r,
+
+  / r,
+
+  # Allow GNOME Shell session state database
+  owner @{user_share_dirs}/gnome-shell/session.gvdb rw,
+
+  # Allow reading CPU limits from cgroup hierarchy for resource monitoring
+        @{sys}/fs/cgroup/user.slice/cpu.max r,
+        @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/cpu.max r,
+        @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/cpu.max r,
+  owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/cpu.max r,
+
+  include if exists <abstractions/gnome-base.d>
+
+# vim:syntax=apparmor

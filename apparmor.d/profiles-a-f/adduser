@@ -8,7 +8,7 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{exec_path} = @{sbin}/adduser
-profile adduser @{exec_path} {
+profile adduser @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/consoles>
   include <abstractions/nameservice-strict>
@@ -32,24 +32,31 @@ profile adduser @{exec_path} {
 
   @{bin}/chage         rPx,
   @{bin}/chfn          rPx,
+  @{bin}/ecryptfs-setup-private rPUx,
   @{bin}/gpasswd       rPx,
+  @{bin}/passwd        rPx,
+  @{bin}/umount        rPx,
   @{sbin}/groupadd     rPx,
   @{sbin}/groupdel     rPx,
-  @{bin}/passwd        rPx,
   @{sbin}/useradd      rPx,
   @{sbin}/userdel      rPx,
   @{sbin}/usermod      rPx,
 
   /etc/{group,passwd,shadow} r,
+  /etc/adduser-*.conf r,
+  /etc/adduser-pool.d/{,**} r,
   /etc/adduser.conf r,
-  /etc/skel/{,.*} r,
+  /etc/skel/{,**} r,
 
   # To create user dirs and copy files from /etc/skel/ to them
   @{HOME}/ rw,
-  @{HOME}/.* w,
-  /var/lib/*/{,*} rw,
+  @{HOME}/* w,
+  @{HOME}/**/.Private/* rw,
+  /var/lib/*/ rw,
+  /var/lib/*/*/ rw,
 
   @{run}/adduser wk,
+  @{run}/userdb/ r,
 
   include if exists <local/adduser>
 }

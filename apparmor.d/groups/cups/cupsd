@@ -10,9 +10,11 @@ include <tunables/global>
 profile cupsd @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/authentication>
+  include <abstractions/avahi-observe>
   include <abstractions/bus-system>
-  include <abstractions/bus/org.freedesktop.Avahi>
-  include <abstractions/bus/org.freedesktop.ColorManager>
+  include <abstractions/bus/system/org.freedesktop.Avahi.Server>
+  include <abstractions/bus/system/org.freedesktop.Avahi.ServiceBrowser>
+  include <abstractions/bus/system/org.freedesktop.ColorManager>
   include <abstractions/nameservice-strict>
   include <abstractions/python>
 
@@ -46,15 +48,6 @@ profile cupsd @{exec_path} flags=(attach_disconnected) {
 
   signal (send) set=(term) peer=cups-notifier-dbus,
 
-  dbus send bus=system path=/org/freedesktop/ColorManager
-       interface=org.freedesktop.ColorManager
-       member=DeleteDevice
-       peer=(name=org.freedesktop.ColorManager, label="@{p_colord}"),
-  dbus send bus=system path=/org/freedesktop/ColorManager
-       interface=org.freedesktop.ColorManager
-       member=FindDeviceById
-       peer=(name=org.freedesktop.ColorManager, label="@{p_colord}"),
-
   @{exec_path} mr,
 
   @{sh_path}                 rix,
@@ -62,7 +55,7 @@ profile cupsd @{exec_path} flags=(attach_disconnected) {
   @{bin}/chmod               rix,
   @{bin}/cp                  rix,
   @{bin}/{,e}grep            rix,
-  @{bin}/gs{,.bin}           rix,
+  @{bin}/gs{,.bin}           rCx -> gs,
   @{bin}/gsc                 rix,
   @{bin}/hostname            rix,
   @{bin}/ippfind             rix,
@@ -83,7 +76,6 @@ profile cupsd @{exec_path} flags=(attach_disconnected) {
   @{lib}/cups/notifier/*     rPx,
 
   /usr/share/cups/{,**} r,
-  /usr/share/ghostscript/{,**} r,
   /usr/share/poppler/{,**} r,
   /usr/share/ppd/{,**} r,
 
@@ -100,8 +92,6 @@ profile cupsd @{exec_path} flags=(attach_disconnected) {
   /var/spool/cups/{,**} rw,
 
   @{run}/cups/{,**} rw,
-  @{run}/systemd/notify w,
-  @{run}/avahi-daemon/socket rw,
 
   @{sys}/module/apparmor/parameters/enabled r,
 
@@ -111,6 +101,26 @@ profile cupsd @{exec_path} flags=(attach_disconnected) {
   owner @{tmp}/*_latest_print_info w,
 
   /dev/tty rw,
+
+  profile gs {
+    include <abstractions/base>
+    include <abstractions/fonts>
+
+    @{bin}/gs{,.bin} mr,
+
+    /usr/share/ghostscript/{,**} r,
+    /usr/share/color/icc/ghostscript/{,**} r,
+
+    /etc/papersize r,
+    /etc/paperspecs r,
+
+          /var/lib/ghostscript/{,**} r,
+    owner /var/spool/cups/tmp/gs_@{rand6} rw,
+
+    owner /tmp/gs_@{rand6} rw,
+
+    include if exists <local/cupsd_gs>
+  }
 
   include if exists <local/cupsd>
 }

@@ -7,7 +7,7 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{exec_path} = @{lib}/systemd/systemd-machined
-profile systemd-machined @{exec_path} flags=(attach_disconnected) {
+profile systemd-machined @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/base>
   include <abstractions/bus-system>
   include <abstractions/consoles>
@@ -35,6 +35,8 @@ profile systemd-machined @{exec_path} flags=(attach_disconnected) {
 
   signal send set=rtmin+6 peer=systemd-nspawn,
 
+  ptrace read peer=@{p_systemd},
+  ptrace read peer=libvirtd,
   ptrace read peer=systemd-nspawn,
 
   unix type=stream addr=@@{udbus}/bus/systemd-machine/system,
@@ -57,21 +59,21 @@ profile systemd-machined @{exec_path} flags=(attach_disconnected) {
   owner @{run}/systemd/nspawn/locks/ w,
   owner @{run}/systemd/nspawn/locks/** rwk,
 
-  @{run}/systemd/machine/{,**} rw,
-  @{run}/systemd/machines/{,**} rw,
-  @{run}/systemd/notify w,
+  @{run}/systemd/machine/{,**} rwl,
+  @{run}/systemd/machines/{,**} rwl,
 
   @{PROC}/@{pid}/cgroup r,
   @{PROC}/@{pid}/fdinfo/@{int} r,
   @{PROC}/@{pid}/gid_map r,
   @{PROC}/@{pid}/setgroups r,
+  @{PROC}/@{pid}/stat r,
   @{PROC}/@{pid}/uid_map r,
   @{PROC}/pressure/cpu r,
   @{PROC}/pressure/io r,
   @{PROC}/pressure/memory r,
 
   /dev/ptmx rw,
-  /dev/pts/@{int} rw,
+  /dev/pts/@{u16} rw,
   /dev/pts/ptmx rw,
   /dev/vsock r,
 

@@ -11,7 +11,7 @@ include <tunables/global>
 profile gvfsd-fuse @{exec_path} {
   include <abstractions/base>
   include <abstractions/bus-session>
-  include <abstractions/bus/org.gtk.vfs.MountTracker>
+  include <abstractions/gvfs-backend>
   include <abstractions/nameservice-strict>
 
   capability sys_admin,
@@ -20,19 +20,12 @@ profile gvfsd-fuse @{exec_path} {
 
   unix (send,receive) type=stream addr=none peer=(label=gvfsd-fuse//fusermount),
 
-  dbus send bus=session path=/org/gtk/vfs/mounttracker
-       interface=org.gtk.vfs.MountTracker
-       member=RegisterFuse
-       peer=(name=:*, label=gvfsd),
-
-  dbus receive bus=session path=/
-       interface=org.freedesktop.DBus.Introspectable
-       member=Introspect
-       peer=(name=:*, label=gnome-shell),
-
   @{exec_path} mr,
 
   @{bin}/fusermount{,3} rCx -> fusermount,
+
+  owner @{run}/user/@{uid}/gvfsd-fuse/ rw,
+  owner @{run}/user/@{uid}/gvfsd/socket-@{rand8} w,
 
   @{PROC}/sys/fs/pipe-max-size r,
 

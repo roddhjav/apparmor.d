@@ -1,0 +1,63 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Canonical Ltd
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Allow communication with accounts-daemon. This is used by gnome-shell's agent
+# implementation to display user information in the authorisation dialog.
+
+  abi <abi/4.0>,
+
+  # DBus.Properties: read properties from the interface
+
+  dbus send bus=system path=/org/freedesktop/Accounts
+       interface=org.freedesktop.DBus.Properties
+       member={Get,GetAll}
+       peer=(name="{@{busname},org.freedesktop.Accounts}", label="@{p_accounts_daemon}"),
+
+  dbus send bus=system path=/org/freedesktop/Accounts/User@{int}
+       interface=org.freedesktop.DBus.Properties
+       member={Get,GetAll}
+       peer=(name="{@{busname},org.freedesktop.Accounts}", label="@{p_accounts_daemon}"),
+
+  # DBus.Properties: receive property changed events
+
+  dbus receive bus=system path=/org/freedesktop/Accounts/User@{int}
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged
+       peer=(name=@{busname}, label="@{p_accounts_daemon}"),
+
+  # DBus.Introspectable: allow clients to introspect the service
+
+  dbus send bus=system  path=/org/freedesktop/Accounts
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(label="@{p_accounts_daemon}"),
+
+  # org.freedesktop.Accounts
+
+  dbus send bus=system path=/org/freedesktop/Accounts
+       interface=org.freedesktop.Accounts
+       member={FindUserById,FindUserByName}
+       peer=(name="{@{busname},org.freedesktop.Accounts}", label="@{p_accounts_daemon}"),
+
+  dbus send bus=system path=/org/freedesktop/Accounts
+       interface=org.freedesktop.Accounts
+       member={ListCachedUsers,GetUsersLanguages}
+       peer=(name=@{busname}, label="@{p_accounts_daemon}"),
+
+  dbus receive bus=system path=/org/freedesktop/Accounts
+       interface=org.freedesktop.Accounts
+       member={UserAdded,UserDeleted}
+       peer=(name=@{busname}, label="@{p_accounts_daemon}"),
+
+  # org.freedesktop.Accounts.User
+
+  dbus receive bus=system path=/org/freedesktop/Accounts/User@{int}
+       interface=org.freedesktop.Accounts.User
+       member=Changed
+       peer=(name=@{busname}, label="@{p_accounts_daemon}"),
+
+  include if exists <abstractions/accounts-observe.d>
+
+# vim:syntax=apparmor

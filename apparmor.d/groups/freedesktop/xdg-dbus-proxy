@@ -9,30 +9,35 @@ include <tunables/global>
 @{exec_path} = @{bin}/xdg-dbus-proxy
 profile xdg-dbus-proxy @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/consoles>
-  include <abstractions/bus-accessibility>
+  include <abstractions/accessibility>
   include <abstractions/bus-session>
   include <abstractions/bus-system>
-  include <abstractions/bus/org.a11y>
-  include <abstractions/bus/org.freedesktop.Avahi>
-  include <abstractions/bus/org.freedesktop.NetworkManager>
-  include <abstractions/bus/org.freedesktop.portal.Desktop>
+  include <abstractions/bus/system/org.freedesktop.Avahi.Server>
+  include <abstractions/consoles>
+  include <abstractions/network-manager-observe>
   include <abstractions/user-download-strict>
 
   network unix stream,
 
-  dbus send bus=session path=/org/freedesktop/portal/desktop
-       interface=org.freedesktop.portal.Realtime
-       member=MakeThread*
-       peer=(name=org.freedesktop.portal.Desktop, label=xdg-desktop-portal),
+  unix (send receive) type=seqpacket peer=(label=fapp),
+  unix (send receive) type=seqpacket peer=(label=fbwrap),
+
+  signal receive set=int peer=flatpak-portal,
+
+  # By design xdg-dbus-proxy proxies and filters dbus communication from flatpak
+  # apps to the system. Thus, it can manage the full session bus.
+  dbus bus=session,
 
   @{exec_path} mr,
 
-  owner @{att}/@{HOME}/.var/app/** r,
-  owner @{att}/@{HOME}/.var/app/*/.local/share/*/logs/* rw,
-  owner @{att}/@{HOME}/.var/app/*/.local/share/*/**/usr/.ref rw,
+  owner @{att}@{HOME}/.var/app/** r,
+  owner @{att}@{HOME}/.var/app/*/.local/share/*/logs/* rw,
+  owner @{att}@{HOME}/.var/app/*/.local/share/*/**/usr/.ref rw,
 
-        @{att}/@{run}/systemd/inhibit/@{int}.ref rw,
+        @{att}@{run}/systemd/inhibit/@{int}.ref rw,
+  owner @{att}@{run}/user/@{uid}/at-spi/bus rw,
+  owner @{att}@{run}/user/@{uid}/bus rw,
+
   owner @{run}/firejail/dbus/@{int}/@{int}-{system,user} rw,
   owner @{run}/flatpak/doc/** r,
   owner @{run}/user/@{uid}/.dbus-proxy/{system,session,a11y}-bus-proxy-@{rand6} rw,

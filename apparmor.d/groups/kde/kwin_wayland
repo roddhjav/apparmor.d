@@ -10,17 +10,17 @@ include <tunables/global>
 profile kwin_wayland @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/base>
   include <abstractions/app-launcher-user>
-  include <abstractions/bus-accessibility>
   include <abstractions/bus-session>
   include <abstractions/bus-system>
-  include <abstractions/bus/org.a11y>
   include <abstractions/fontconfig-cache-write>
   include <abstractions/graphics>
   include <abstractions/kde-strict>
   include <abstractions/nameservice-strict>
   include <abstractions/qt5-shader-cache>
 
+  # See https://community.kde.org/Distributions/Packaging_Recommendations#KWin_package_configuration
   capability sys_nice,
+
   capability sys_ptrace,
 
   network netlink raw,
@@ -100,13 +100,13 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{user_config_dirs}/breezerc r,
   owner @{user_config_dirs}/kdedefaults/* r,
   owner @{user_config_dirs}/kglobalshortcutsrc.lock rwk,
-  owner @{user_config_dirs}/kglobalshortcutsrc{,.@{rand6}} rwl -> @{user_config_dirs}/#@{int},
+  owner @{user_config_dirs}/kglobalshortcutsrc{,.@{rand6}} rwl,
   owner @{user_config_dirs}/khotkeysrc r,
   owner @{user_config_dirs}/klaunchrc r,
   owner @{user_config_dirs}/kscreenlockerrc r,
   owner @{user_config_dirs}/kwinoutputconfig.json rw,
   owner @{user_config_dirs}/kwinrc.lock rwk,
-  owner @{user_config_dirs}/kwinrc{,.@{rand6}} rwl -> @{user_config_dirs}/#@{int},
+  owner @{user_config_dirs}/kwinrc{,.@{rand6}} rwl,
   owner @{user_config_dirs}/kwinrulesrc r,
   owner @{user_config_dirs}/kxkbrc r,
   owner @{user_config_dirs}/lxqt/*.conf r,
@@ -119,7 +119,7 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
   owner /dev/shm/.org.chromium.Chromium.@{rand6} rw,
 
-  @{att}/@{run}/systemd/inhibit/@{int}.ref rw,
+  @{att}@{run}/systemd/inhibit/@{int}.ref rw,
 
   @{sys}/bus/ r,
   @{sys}/class/ r,
@@ -144,7 +144,6 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   @{run}/udev/data/c10:@{int} r,          # for non-serial mice, misc features
   @{run}/udev/data/c13:@{int}  r,         # for /dev/input/*
   @{run}/udev/data/c189:@{int} r,         # for /dev/bus/usb/**
-  @{run}/udev/data/c226:@{int} r,         # for /dev/dri/card*
 
   @{PROC}/@{pid}/task/@{tid}/comm rw,
 
@@ -152,7 +151,7 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   @{att}/dev/dri/card@{int} rw,
 
   /dev/tty r,
-  /dev/tty@{int} rw,
+  /dev/tty@{u8} rw,
 
   profile at-spi {
     include <abstractions/base>

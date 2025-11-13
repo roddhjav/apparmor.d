@@ -20,7 +20,7 @@ profile ollama @{exec_path} flags=(attach_disconnected) {
   network inet6 stream,
   network netlink raw,
 
-  @{exec_path} mr,
+  @{exec_path} mrix,
 
   /tmp/ollama@{int}/runners/*/*                mr,
   /tmp/ollama@{int}/runners/*/ollama_*_server  rix, # TODO: rPx and remove graphics from here.
@@ -29,12 +29,16 @@ profile ollama @{exec_path} flags=(attach_disconnected) {
   /usr/local/ r,
   /usr/local/lib/ r,
 
-  @{lib}/ r,
+  @{lib}/ollama/ r,
+  @{lib}/ollama/*.so mr,
 
   owner /var/lib/ollama/ rw,
   owner /var/lib/ollama/** rwlk,
 
-        /tmp/ r,
+  owner @{HOME}/.ollama/{,*} rw,
+
+        @{tmp}/ r,
+  owner @{tmp}/@{int}.bin rw,
   owner @{tmp}/ollama@{int}/{,**} rw,
   owner @{tmp}/ollama@{int}/runners/{,**} mr,
 
@@ -44,13 +48,13 @@ profile ollama @{exec_path} flags=(attach_disconnected) {
   @{sys}/devices/@{pci}/mem_info_vram_used r,
   @{sys}/devices/@{pci}/numa_node r,
   @{sys}/devices/system/node/node@{int}/cpumap r,
-  @{sys}/devices/virtual/kfd/kfd/topology/nodes/ r,
-  @{sys}/devices/virtual/kfd/kfd/topology/nodes/@{int}/ r,
-  @{sys}/devices/virtual/kfd/kfd/topology/nodes/@{int}/properties r,
+
 
         @{PROC}/devices r,
         @{PROC}/sys/net/core/somaxconn r,
+  owner @{PROC}/@{pid}/cgroup r,
   owner @{PROC}/@{pid}/cmdline r,
+  owner @{PROC}/@{pid}/mountinfo r,
   owner @{PROC}/@{pid}/task/@{tid}/comm w,
 
   include if exists <local/ollama>

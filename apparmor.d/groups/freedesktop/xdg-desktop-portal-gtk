@@ -9,24 +9,18 @@ include <tunables/global>
 @{exec_path} = @{lib}/xdg-desktop-portal-gtk
 profile xdg-desktop-portal-gtk @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/bus-accessibility>
-  include <abstractions/bus-session>
+  include <abstractions/accounts-observe>
   include <abstractions/bus-system>
-  include <abstractions/bus/org.a11y>
-  include <abstractions/bus/org.freedesktop.Accounts>
-  include <abstractions/bus/org.freedesktop.NetworkManager>
-  include <abstractions/bus/org.freedesktop.portal.Desktop>
-  include <abstractions/bus/org.gnome.SessionManager>
-  include <abstractions/bus/org.gnome.Shell.Introspect>
-  include <abstractions/bus/org.gtk.vfs.MountTracker>
+  include <abstractions/bus/session/org.gnome.Shell.Introspect>
   include <abstractions/consoles>
   include <abstractions/dconf-write>
   include <abstractions/fontconfig-cache-write>
   include <abstractions/gnome-strict>
   include <abstractions/graphics>
   include <abstractions/nameservice-strict>
-  include <abstractions/notifications>
+  include <abstractions/network-manager-observe>
   include <abstractions/screensaver>
+  include <abstractions/session-manager>
   include <abstractions/thumbnails-cache-read>
   include <abstractions/user-download-strict>
 
@@ -35,22 +29,23 @@ profile xdg-desktop-portal-gtk @{exec_path} flags=(attach_disconnected) {
 
   #aa:dbus own bus=session name=org.freedesktop.impl.portal.desktop.gtk
 
+  #aa:dbus talk bus=session name=org.gnome.ScreenSaver label=gjs
+  #aa:dbus talk bus=session name=org.freedesktop.impl.portal.Settings label=xdg-desktop-portal
+
   dbus receive bus=session path=/org/freedesktop/portal/desktop
-       interface=org.freedesktop.impl.portal.Settings
-       peer=(name=:*),
+       interface=org.freedesktop.impl.portal.Inhibit
+       member=CreateMonitor
+       peer=(name=@{busname}, label=xdg-desktop-portal),
   dbus send bus=session path=/org/freedesktop/portal/desktop
-       interface=org.freedesktop.impl.portal.Settings
-       member=SettingChanged
+       interface=org.freedesktop.impl.portal.Inhibit
+       member=StateChanged
        peer=(name=org.freedesktop.DBus, label=xdg-desktop-portal),
 
-  dbus send bus=session path=/org/gtk/Notifications
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=:*, label=gnome-shell),
+  dbus receive bus=session path=/org/freedesktop/portal/desktop
+       interface=org.freedesktop.impl.portal.Settings
+       peer=(name=@{busname}),
 
   @{exec_path} mr,
-
-  /usr/share/gdm/greeter-dconf-defaults r,
 
               / r,
   owner /att/**/ r,
@@ -58,8 +53,6 @@ profile xdg-desktop-portal-gtk @{exec_path} flags=(attach_disconnected) {
   owner /var/lib/xkb/server-@{int}.xkm rw,
 
   owner @{gdm_cache_dirs}/fontconfig/@{hex32}-le{32,64}{,d4}.cache-@{d} r,
-  owner @{gdm_config_dirs}/dconf/user r,
-  owner /var/lib/gdm3/greeter-dconf-defaults r,
 
   owner @{tmp}/runtime-*/xauth_@{rand6} r,
 

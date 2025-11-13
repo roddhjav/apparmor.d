@@ -13,10 +13,14 @@ profile mkinitramfs @{exec_path} {
   include <abstractions/base>
   include <abstractions/consoles>
 
-  capability syslog,
   capability chown,
+  capability dac_read_search,
   capability fowner,
   capability fsetid,
+  capability sys_admin, # optional: no audit
+  capability syslog,
+
+  mqueue getattr type=posix,
 
   @{exec_path} r,
   @{sh_path}   rix,
@@ -30,9 +34,10 @@ profile mkinitramfs @{exec_path} {
   @{bin}/cat        rix,
   @{bin}/chmod      rix,
   @{bin}/cp         rix,
-  @{bin}/cpio       rix,
+  @{bin}/{,3}cpio   rix,
   @{bin}/dirname    rix,
   @{bin}/env        rix,
+  @{bin}/find       rix,
   @{bin}/getopt     rix,
   @{bin}/gzip       rix,
   @{bin}/id         rix,
@@ -56,15 +61,12 @@ profile mkinitramfs @{exec_path} {
   @{bin}/xargs      rix,
   @{bin}/xz         rix,
   @{bin}/zstd       rix,
-  @{sbin}/blkid     rPx,
   @{lib}/dracut/dracut-install rix,
+  @{sbin}/blkid     rPx,
 
-  @{bin}/find                 rCx -> find,
   @{bin}/kmod                 rCx -> kmod,
   @{sbin}/ldconfig            rCx -> ldconfig,
-  @{bin}/ldd                  rCx -> ldd,
-  @{lib}/@{multiarch}/ld-linux-*so* rCx -> ldd,
-  @{lib}/ld-linux.so*         rCx -> ldd,
+  @{ldd_path}                 rCx -> ldd,
 
   @{bin}/dpkg          rPx -> child-dpkg,
   @{bin}/linux-version rPx,
@@ -113,12 +115,25 @@ profile mkinitramfs @{exec_path} {
 
   @{sys}/bus/ r,
   @{sys}/bus/*/drivers/ r,
-  @{sys}/devices/platform/ r,
-  @{sys}/devices/platform/**/ r,
-  @{sys}/devices/platform/**/modalias r,
+  @{sys}/bus/*/drivers/*/ r,
+  @{sys}/class/ r,
+  @{sys}/class/*/ r,
+  @{sys}/devices/ r,
+  @{sys}/devices/**/ r,
+  @{sys}/devices/**/modalias r,
+  @{sys}/devices/**/uevent r,
+  @{sys}/module/ r,
   @{sys}/module/compression r,
   @{sys}/module/firmware_class/parameters/path r,
 
+  @{sys}/bus/platform/drivers/simple-framebuffer/ r,
+  @{sys}/fs/cgroup/system.slice/cpu.max r,
+  @{sys}/fs/cgroup/user.slice/cpu.max r,
+  @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/cpu.max r,
+  @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/session-*.scope/cpu.max r,
+
+        @{PROC}/@{pid}/cgroup r,
+        @{PROC}/@{pid}/mountinfo r,
         @{PROC}/@{pid}/mounts r,
         @{PROC}/cmdline r,
         @{PROC}/modules r,
@@ -129,16 +144,12 @@ profile mkinitramfs @{exec_path} {
     include <abstractions/consoles>
     include <abstractions/nameservice-strict>
 
-    @{bin}/ldd mr,
-    @{lib}/@{multiarch}/ld-linux-*so* mr,
-    @{lib}/ld-linux.so* mr,
+    @{ldd_path}  mrix,
+    @{sh_path}    rix,
 
-    @{sh_path}        rix,
-    @{bin}/kmod mr,
-    @{lib}/initramfs-tools/bin/* mr,
-
-    @{lib}/@{multiarch}/ld-*.so*  rix,
-    @{lib}/ld-*.so{,.2}           rix,
+    @{bin}/* mr,
+    @{sbin}/* mr,
+    @{lib}/** mr,
 
     include if exists <local/mkinitramfs_ldd>
   }
@@ -160,41 +171,27 @@ profile mkinitramfs @{exec_path} {
     include if exists <local/mkinitramfs_ldconfig>
   }
 
-  profile find {
-    include <abstractions/base>
-    include <abstractions/consoles>
-
-    @{bin}/find mr,
-
-    # pwd dir
-    / r,
-    /etc/ r,
-    /root/ r,
-
-    /usr/share/initramfs-tools/scripts/{,**/} r,
-    /etc/initramfs-tools/scripts/{,**/} r,
-
-    owner /tmp/tmp.@{rand10}/mkinitramfs_@{rand6}/{,**/} r,
-    owner /var/tmp/mkinitramfs_@{rand6}/{,**/} r,
-
-    include if exists <local/mkinitramfs_find>
-  }
-
   profile kmod {
     include <abstractions/base>
     include <abstractions/app/kmod>
 
     owner /var/tmp/mkinitramfs_@{rand6}/usr/lib/modules/*/ r,
-    owner /var/tmp/mkinitramfs_@{rand6}/usr/lib/modules/*/modules.* rw,
-    owner /var/tmp/mkinitramfs_@{rand6}/usr/lib/modules/*/updates/{,**} r,
     owner /var/tmp/mkinitramfs_@{rand6}/usr/lib/modules/*/kernel/{,**/} r,
     owner /var/tmp/mkinitramfs_@{rand6}/usr/lib/modules/*/kernel/**/*.ko* r,
+    owner /var/tmp/mkinitramfs_@{rand6}/usr/lib/modules/*/modules.* rw,
+    owner /var/tmp/mkinitramfs_@{rand6}/usr/lib/modules/*/updates/{,**} r,
+
+    /tmp/tmp.@{rand10}/mkinitramfs_@{rand6}/usr/lib/modules/*/ r,
+    /tmp/tmp.@{rand10}/mkinitramfs_@{rand6}/usr/lib/modules/*/kernel/{,**/} r,
+    /tmp/tmp.@{rand10}/mkinitramfs_@{rand6}/usr/lib/modules/*/kernel/**/*.ko* r,
+    /tmp/tmp.@{rand10}/mkinitramfs_@{rand6}/usr/lib/modules/*/modules.* rw,
+    /tmp/tmp.@{rand10}/mkinitramfs_@{rand6}/usr/lib/modules/*/updates/{,**} r,
 
     owner /tmp/tmp.@{rand10}/usr/lib/modules/*/ r,
-    owner /tmp/tmp.@{rand10}/usr/lib/modules/*/modules.* rw,
-    owner /tmp/tmp.@{rand10}/usr/lib/modules/*/updates/{,**} r,
     owner /tmp/tmp.@{rand10}/usr/lib/modules/*/kernel/{,**/} r,
     owner /tmp/tmp.@{rand10}/usr/lib/modules/*/kernel/**/*.ko* r,
+    owner /tmp/tmp.@{rand10}/usr/lib/modules/*/modules.* rw,
+    owner /tmp/tmp.@{rand10}/usr/lib/modules/*/updates/{,**} r,
 
     @{sys}/module/compression r,
 

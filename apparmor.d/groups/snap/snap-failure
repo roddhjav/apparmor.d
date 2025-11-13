@@ -15,16 +15,33 @@ profile snap-failure @{exec_path} {
   @{exec_path} mr,
   @{lib_dirs}/**.so* mr,
 
-  @{bin}/systemctl         rCx -> systemctl,
-  @{lib_dirs}/snapd/snapd  rPx,
+  @{bin}/systemctl         Cx -> systemctl,
+  @{bin}/systemd-run       Cx -> run,
+  @{lib_dirs}/snapd/snapd  Px,
 
   /var/lib/snapd/sequence/snapd.json r,
 
+  /snap/snapd/ r,
+  /snap/snapd/current w,
+  /snap/snapd/current.@{rand12}~ rw,
+
   @{PROC}/cmdline r,
+
+  profile run {
+    include <abstractions/base>
+
+    @{bin}/systemd-run mr,
+
+    include if exists <local/snap-failure_run>
+  }
 
   profile systemctl {
     include <abstractions/base>
     include <abstractions/app/systemctl>
+
+    capability net_admin,
+
+    ptrace read peer=@{p_systemd},
 
     include if exists <local/snap-failure_systemctl>
   }

@@ -9,21 +9,16 @@ include <tunables/global>
 @{exec_path} = @{bin}/kded5 @{bin}/kded6
 profile kded @{exec_path} {
   include <abstractions/base>
+  include <abstractions/apt> #aa:only apt
   include <abstractions/audio-client>
-  include <abstractions/bus-accessibility>
   include <abstractions/bus-session>
   include <abstractions/bus-system>
-  include <abstractions/bus/org.a11y>
-  include <abstractions/bus/org.bluez>
-  include <abstractions/bus/org.freedesktop.ModemManager1>
-  include <abstractions/bus/org.freedesktop.PolicyKit1>
-  include <abstractions/bus/org.freedesktop.UDisks2>
-  include <abstractions/common/apt> #aa:only apt
+  include <abstractions/bus/system/org.bluez>
+  include <abstractions/bus/system/org.freedesktop.UDisks2>
   include <abstractions/consoles>
   include <abstractions/dconf-write>
   include <abstractions/devices-usb>
   include <abstractions/graphics>
-  include <abstractions/gtk>
   include <abstractions/kde-globals-write>
   include <abstractions/kde-strict>
   include <abstractions/nameservice-strict>
@@ -65,8 +60,15 @@ profile kded @{exec_path} {
 
   # Talk with KDE
 
-  #aa:dbus talk bus=system name=org.freedesktop.NetworkManager label=NetworkManager
+  # The strategy with dbus rules in this profile is first to declare all communications
+  # needed on buses and to limit them only to their profiles in apparmor.d. As such,
+  # only dbus directive is used for this. Later, some communications could be
+  # restricted.
+
   #aa:dbus talk bus=system name=org.freedesktop.bolt label=boltd
+  #aa:dbus talk bus=system name=org.freedesktop.ModemManager1 label=ModemManager
+  #aa:dbus talk bus=system name=org.freedesktop.NetworkManager label=NetworkManager
+  #aa:dbus talk bus=system name=org.freedesktop.PolicyKit1 label="@{p_polkitd}"
 
   #aa:dbus talk bus=session name=org.kde.NightColor path=/ColorCorrect label="{kwin_wayland,kwin_x11}"
   #aa:dbus talk bus=session name=org.kde.KGlobalAccel path=/ label="{kglobalacceld,kwin_wayland}"
@@ -159,7 +161,7 @@ profile kded @{exec_path} {
   owner @{user_share_dirs}/icc/{,edid-*} r,
   owner @{user_share_dirs}/kcookiejar/#@{int} rw,
   owner @{user_share_dirs}/kcookiejar/cookies.lock rwk,
-  owner @{user_share_dirs}/kcookiejar/cookies{,.@{rand6}} rwkl -> @{user_share_dirs}/kcookiejar/#@{int},
+  owner @{user_share_dirs}/kcookiejar/cookies{,.@{rand6}} rwkl,
   owner @{user_share_dirs}/kded{5,6}/{,**} rw,
   owner @{user_share_dirs}/kscreen/{,**} rwl,
   owner @{user_share_dirs}/kservices{5,6}/{,**} r,
@@ -169,7 +171,7 @@ profile kded @{exec_path} {
   owner @{user_share_dirs}/user-places.xbel r,
 
   owner @{user_state_dirs}/#@{int} rw,
-  owner @{user_state_dirs}/plasmashellstaterc{,*} rwlk -> @{user_state_dirs}/#@{int},
+  owner @{user_state_dirs}/plasmashellstaterc{,*} rwlk,
 
         @{run}/mount/utab r,
         @{run}/udev/data/c189:@{int} r,                # for /dev/bus/usb/**

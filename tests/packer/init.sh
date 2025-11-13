@@ -21,16 +21,18 @@ main() {
 
 	case "$ID" in
 	arch)
-		rm -f $SRC/*.sig # Ignore signature files
+		rm -f $SRC/*.sig      # Ignore signature files
 		rm -f $SRC/*enforced* # Ignore enforced package
 		pacman --noconfirm -U $SRC/*.pkg.tar.zst || true
 		;;
 
 	debian | ubuntu)
-		# Do not install apparmor.d on the current development version
-		if [[ $VERSION_ID != "25.10" ]]; then
-			dpkg -i $SRC/*.deb || true
+		if [[ $VERSION_ID == "24.04" || $VERSION_ID == 12 ]]; then
+			apt-get purge -y just || true
+			sudo -u "$SUDO_USER" pipx install rust-just
+			sudo -u "$SUDO_USER" pipx ensurepath
 		fi
+		dpkg -i $SRC/*.deb || true
 		;;
 
 	opensuse*)

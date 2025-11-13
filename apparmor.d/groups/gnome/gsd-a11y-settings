@@ -10,14 +10,23 @@ include <tunables/global>
 profile gsd-a11y-settings @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus-session>
-  include <abstractions/bus/org.gnome.SessionManager>
   include <abstractions/consoles>
   include <abstractions/dconf-write>
   include <abstractions/gschemas>
+  include <abstractions/session-manager>
 
   signal (receive) set=(term, hup) peer=gdm*,
 
   #aa:dbus own bus=session name=org.gnome.SettingsDaemon.A11ySettings
+
+  dbus send bus=session path=/org/freedesktop/systemd1
+       interface=org.freedesktop.systemd1.Manager
+       member=DisableUnitFilesWithFlags
+       peer=(name=org.freedesktop.systemd1, label="@{p_systemd_user}"),
+  dbus send bus=session path=/org/freedesktop/systemd1
+       interface=org.freedesktop.systemd1.Manager
+       member=StopUnit
+       peer=(name=org.freedesktop.systemd1, label="@{p_systemd_user}"),
 
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable
@@ -25,9 +34,6 @@ profile gsd-a11y-settings @{exec_path} flags=(attach_disconnected) {
        peer=(name=:*, label=gnome-shell),
 
   @{exec_path} mr,
-
-  /usr/share/dconf/profile/gdm r,
-  /usr/share/gdm/greeter-dconf-defaults r,
 
   @{gdm_config_dirs}/dconf/user r,
   @{GDM_HOME}/greeter-dconf-defaults r,

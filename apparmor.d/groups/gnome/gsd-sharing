@@ -11,11 +11,11 @@ profile gsd-sharing @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus-session>
   include <abstractions/bus-system>
-  include <abstractions/bus/org.freedesktop.NetworkManager>
-  include <abstractions/bus/org.gnome.SessionManager>
   include <abstractions/consoles>
   include <abstractions/dconf-write>
   include <abstractions/gschemas>
+  include <abstractions/network-manager-observe>
+  include <abstractions/session-manager>
 
   signal (receive) set=(term, hup) peer=gdm*,
 
@@ -31,13 +31,12 @@ profile gsd-sharing @{exec_path} flags=(attach_disconnected) {
        member=Introspect
        peer=(name=:*, label=gnome-shell),
 
+  dbus receive bus=system path=/org/freedesktop/NetworkManager/ActiveConnection/3
+       interface=org.freedesktop.NetworkManager.VPN.Connection
+       member=VpnStateChanged
+       peer=(name=@{busname}, label=NetworkManager),
+
   @{exec_path} mr,
-
-  /usr/share/dconf/profile/gdm r,
-  /usr/share/gdm/greeter-dconf-defaults r,
-
-  owner @{GDM_HOME}/greeter-dconf-defaults r,
-  owner @{gdm_config_dirs}/dconf/user r,
 
   @{run}/systemd/sessions/* r,
   @{run}/systemd/users/@{uid} r,

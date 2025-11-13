@@ -9,17 +9,13 @@ include <tunables/global>
 @{exec_path} = @{bin}/spice-vdagent
 profile spice-vdagent @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/audio-client>
   include <abstractions/audio-server>
-  include <abstractions/bus-accessibility>
-  include <abstractions/bus-session>
   include <abstractions/bus-system>
-  include <abstractions/bus/org.a11y>
-  include <abstractions/bus/org.freedesktop.portal.Desktop>
-  include <abstractions/bus/org.freedesktop.RealtimeKit1>
-  include <abstractions/bus/org.gnome.Mutter.DisplayConfig>
-  include <abstractions/bus/org.gtk.vfs.MountTracker>
+  include <abstractions/bus/session/org.gnome.Mutter.DisplayConfig>
+  include <abstractions/bus/session/org.gtk.vfs.Daemon>
+  include <abstractions/bus/system/org.freedesktop.RealtimeKit1>
   include <abstractions/consoles>
+  include <abstractions/dconf-write>
   include <abstractions/desktop>
   include <abstractions/fontconfig-cache-write>
   include <abstractions/graphics>
@@ -34,17 +30,19 @@ profile spice-vdagent @{exec_path} flags=(attach_disconnected) {
   dbus receive bus=session path=/
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
-       peer=(name=:*, label=gnome-shell),
+       peer=(name=@{busname}, label=gnome-shell),
 
   @{exec_path} mr,
 
-  owner @{desktop_config_dirs}/user-dirs.dirs r,
+  /etc/fstab r,
 
+  @{run}/mount/utab r,
   @{run}/spice-vdagentd/spice-vdagent-sock rw,
 
   @{sys}/devices/virtual/dmi/id/product_name r,
   @{sys}/devices/virtual/dmi/id/sys_vendor r,
 
+  owner @{PROC}/@{pid}/mountinfo r,
   owner @{PROC}/@{pids}/task/@{tid}/comm rw,
 
   /dev/udmabuf rw,

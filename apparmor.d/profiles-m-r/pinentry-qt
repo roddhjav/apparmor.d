@@ -19,6 +19,16 @@ profile pinentry-qt @{exec_path} {
 
   ptrace read peer=gpg-agent,
 
+  dbus receive bus=session path=/org/gnome/keyring/Prompt/p@{int}
+       interface=org.gnome.keyring.internal.Prompter.Callback
+       member={PromptReady,PromptDone}
+       peer=(name=@{busname}),
+
+  dbus send bus=session path=/org/gnome/keyring/Prompter
+       interface=org.gnome.keyring.internal.Prompter
+       member={BeginPrompting,PerformPrompt,StopPrompting}
+       peer=(name=org.gnome.keyring.SystemPrompter),
+
   @{exec_path} mr,
 
   /etc/machine-id r,

@@ -17,6 +17,7 @@ profile ip @{exec_path} flags=(attach_disconnected) {
   capability net_admin,
   capability sys_admin,
   capability sys_module,
+  capability sys_ptrace,
 
   network netlink raw,
 
@@ -31,11 +32,18 @@ profile ip @{exec_path} flags=(attach_disconnected) {
   umount @{run}/netns/*,
   umount @{sys},
 
+  ptrace read,
+
   @{exec_path} mrix,
 
   # To run command with 'ip netns exec'
-  @{shells_path} rUx,
-  @{bin}/sudo    rPx,
+  @{shells_path}       rUx,
+  @{bin}/sudo          rPx,
+  @{bin}/taskset       rPUx,
+
+  @{bin}/firewall-cmd  rPx,
+  @{sbin}/firewalld    rPx,
+  @{sbin}/nft          rPx,
 
   @{att}/ r,
 
@@ -48,12 +56,13 @@ profile ip @{exec_path} flags=(attach_disconnected) {
         @{run}/netns/* rw,
   owner @{run}/netns/ rwk,
 
+        @{PROC}/ r,
   owner @{PROC}/@{pid}/cgroup r,
   owner @{PROC}/@{pid}/net/dev_mcast r,
   owner @{PROC}/@{pid}/net/igmp{,6} r,
   owner @{PROC}/sys/net/ipv{4,6}/route/flush w,
 
-  /dev/tty@{int} rw,
+  /dev/tty@{u8} rw,
 
   include if exists <local/ip>
 }

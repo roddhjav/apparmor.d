@@ -9,31 +9,25 @@ include <tunables/global>
 @{share_dirs}  = /usr/share/gnome-shell/extensions/ding@rastersoft.com
 @{share_dirs} += @{user_share_dirs}/gnome-shell/extensions/ding@rastersoft.com
 
-@{exec_path} = @{share_dirs}/{,app/}ding.js
+@{exec_path} = @{share_dirs}/app/{ding,createThumbnail}.js
 profile gnome-extension-ding @{exec_path} {
   include <abstractions/base>
   include <abstractions/audio-client>
-  include <abstractions/bus-accessibility>
-  include <abstractions/bus-session>
   include <abstractions/bus-system>
-  include <abstractions/bus/net.hadess.SwitcherooControl>
-  include <abstractions/bus/org.a11y>
-  include <abstractions/bus/org.freedesktop.FileManager1>
-  include <abstractions/bus/org.gnome.ArchiveManager1>
-  include <abstractions/bus/org.gnome.Nautilus.FileOperations2>
-  include <abstractions/bus/org.gtk.Private.RemoteVolumeMonitor>
-  include <abstractions/bus/org.gtk.vfs.Daemon>
-  include <abstractions/bus/org.gtk.vfs.Metadata>
-  include <abstractions/bus/org.gtk.vfs.MountTracker>
+  include <abstractions/bus/session/org.freedesktop.FileManager1>
+  include <abstractions/bus/session/org.gnome.ArchiveManager1>
+  include <abstractions/bus/session/org.gnome.Nautilus.FileOperations2>
+  include <abstractions/bus/session/org.gtk.vfs.Daemon>
+  include <abstractions/bus/session/org.gtk.vfs.Metadata>
   include <abstractions/dconf-write>
   include <abstractions/gnome-strict>
   include <abstractions/nameservice-strict>
-  include <abstractions/notifications>
+  include <abstractions/power-profiles>
 
   unix (send,receive) type=stream addr=none peer=(label=gnome-shell),
 
-  #aa:dbus own bus=session name=com.rastersoft.ding interface+=org.gtk.Actions
-  #aa:dbus talk bus=session name=com.rastersoft.dingextension label=gnome-shell interface+=org.gtk.Actions
+  #aa:dbus own bus=session name=com.rastersoft.ding
+  #aa:dbus talk bus=session name=com.rastersoft.dingextension label=gnome-shell
 
   dbus send bus=session path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus.Introspectable
@@ -58,8 +52,8 @@ profile gnome-extension-ding @{exec_path} {
   @{share_dirs}/{,**} r,
   /usr/share/thumbnailers/{,*.thumbnailer} r,
 
-  owner @{HOME}/@{XDG_TEMPLATES_DIR}/ r,
-  owner @{HOME}/@{XDG_DESKTOP_DIR}/ r,
+  owner @{user_desktop_dirs}/ r,
+  owner @{user_templates_dirs}/ r,
 
   owner @{user_share_dirs}/nautilus/scripts/ r,
 

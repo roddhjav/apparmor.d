@@ -10,16 +10,22 @@ include <tunables/global>
 profile ibus-portal @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus-session>
-  include <abstractions/ibus>
+  include <abstractions/ibus-strict>
 
   signal (receive) set=(term, hup) peer=gdm*,
 
   #aa:dbus own bus=session name=org.freedesktop.portal.IBus
+  #aa:dbus own bus=session name=org.freedesktop.IBus
+
+  dbus receive bus=session path=/org/freedesktop/IBus
+       interface=org.freedesktop.DBus.Peer
+       member=Ping
+       peer=(name=@{busname}, label=ibus-daemon),
 
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
-       peer=(name=:*, label=gnome-shell),
+       peer=(name=@{busname}, label=gnome-shell),
 
   @{exec_path} mr,
 
@@ -27,8 +33,8 @@ profile ibus-portal @{exec_path} flags=(attach_disconnected) {
   owner @{desktop_config_dirs}/ibus/bus/ r,
   owner @{desktop_config_dirs}/ibus/bus/@{hex32}-unix-{,wayland-}@{int} r,
 
-  owner @{att}/dev/tty@{int} rw,
-  owner /dev/tty@{int} rw,
+  owner @{att}/dev/tty@{u8} rw,
+  owner /dev/tty@{u8} rw,
 
   include if exists <local/ibus-portal>
 }

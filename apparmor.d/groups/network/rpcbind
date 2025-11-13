@@ -10,16 +10,24 @@ include <tunables/global>
 @{exec_path} = @{sbin}/rpcbind
 profile rpcbind @{exec_path} flags=(complain) {
   include <abstractions/base>
+  include <abstractions/hosts_access>
   include <abstractions/nameservice-strict>
 
   capability setgid,
   capability setuid,
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
 
   @{exec_path} rm,
 
   /etc/netconfig r,
 
   @{run}/rpcbind.lock rwkl,
+  @{run}/rpcbind.sock rw,
   @{run}/rpcbind/*.xdr rwkl,
 
   include if exists <local/rpcbind>

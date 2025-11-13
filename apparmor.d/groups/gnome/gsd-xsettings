@@ -7,23 +7,19 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{exec_path} = @{lib}/gsd-xsettings
-profile gsd-xsettings @{exec_path} {
+profile gsd-xsettings @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/bus-accessibility>
-  include <abstractions/bus-session>
+  include <abstractions/accounts-observe>
   include <abstractions/bus-system>
-  include <abstractions/bus/org.a11y>
-  include <abstractions/bus/org.freedesktop.Accounts>
-  include <abstractions/bus/org.gnome.Mutter.DisplayConfig>
-  include <abstractions/bus/org.gnome.SessionManager>
-  include <abstractions/bus/org.gnome.Shell.Introspect>
-  include <abstractions/bus/org.gtk.vfs.Daemon>
-  include <abstractions/bus/org.gtk.vfs.MountTracker>
+  include <abstractions/bus/session/org.gnome.Mutter.DisplayConfig>
+  include <abstractions/bus/session/org.gnome.Shell.Introspect>
+  include <abstractions/bus/session/org.gtk.vfs.Daemon>
   include <abstractions/dconf-write>
-  include <abstractions/fontconfig-cache-read>
+  include <abstractions/fontconfig-cache-write>
   include <abstractions/gnome-strict>
   include <abstractions/graphics>
   include <abstractions/nameservice-strict>
+  include <abstractions/session-manager>
 
   network inet stream,
   network inet6 stream,
@@ -65,16 +61,9 @@ profile gsd-xsettings @{exec_path} {
   @{bin}/xrdb           rPx,
   @{lib}/{,ibus/}ibus-x11 rPx,
 
-  /usr/share/dconf/profile/gdm r,
-  /usr/share/gdm/greeter-dconf-defaults r,
-
   /etc/X11/Xsession.options r,
   @{etc_ro}/xdg/Xwayland-session.d/ r,
   @{etc_ro}/xdg/Xwayland-session.d/* rix,
-
-  owner @{GDM_HOME}/greeter-dconf-defaults r,
-  owner @{gdm_cache_dirs}/fontconfig/[a-f0-9]*.cache-?{,.NEW,.LCK,.TMP-*} rw,
-  owner @{gdm_config_dirs}/dconf/user r,
 
   @{run}/systemd/sessions/* r,
   @{run}/systemd/users/@{uid} r,
@@ -82,7 +71,7 @@ profile gsd-xsettings @{exec_path} {
   owner @{PROC}/@{pid}/fd/ r,
 
   /dev/tty rw,
-  /dev/tty@{int} rw,
+  /dev/tty@{u8} rw,
 
   profile run-parts {
     include <abstractions/base>

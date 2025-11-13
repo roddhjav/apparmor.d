@@ -11,34 +11,13 @@ include <tunables/global>
 profile gvfsd-sftp @{exec_path} {
   include <abstractions/base>
   include <abstractions/bus-session>
-  include <abstractions/bus/org.gtk.vfs.MountTracker>
+  include <abstractions/gvfs-backend>
   include <abstractions/consoles>
   include <abstractions/freedesktop.org>
   include <abstractions/nameservice-strict>
+  include <abstractions/secrets-service>
 
   #aa:dbus own bus=session name=org.gtk.vfs.mountpoint_@{int}
-
-  dbus receive bus=session path=/org/gtk/vfs/Daemon
-       interface=org.gtk.vfs.Daemon
-       member=GetConnection
-       peer=(name=@{busname}, label=gnome-extension-gsconnect),
-  dbus receive bus=session path=/org/gtk/vfs/Daemon
-       interface=org.gtk.vfs.Daemon
-       member=GetConnection
-       peer=(name=@{busname}, label=nautilus),
-
-  dbus receive bus=session path=/org/gtk/vfs/mountable
-       interface=org.gtk.vfs.Mountable
-       member=Mount
-       peer=(name=:*, label=gvfsd),
-  dbus send bus=session path=/org/gtk/gvfs/exec_spaw/@{int}
-       interface=org.gtk.vfs.Spawner
-       member=Spawned
-       peer=(name=:*, label=gvfsd),
-  dbus send bus=session path=/org/gtk/vfs/mounttracker
-       interface=org.gtk.vfs.MountTracker
-       member=RegisterMount
-       peer=(name=:*, label=gvfsd),
 
   @{exec_path} mr,
 

@@ -1,0 +1,26 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023-2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Each daemon (main and for mounts) implement this.
+
+  abi <abi/4.0>,
+
+  dbus send bus=session path=/org/gtk/vfs/Daemon
+       interface=org.gtk.vfs.Daemon
+       member=ListMonitorImplementations
+       peer=(name=@{busname}, label=gvfsd),
+
+  dbus send bus=session path=/org/gtk/vfs/Daemon
+       interface=org.gtk.vfs.Daemon
+       member=GetConnection
+       peer=(name=@{busname}, label="gvfsd{,-*}"),
+
+  dbus receive bus=session path=/org/gtk/vfs/Daemon
+       interface=org.gtk.vfs.Daemon
+       member=GetConnection
+       peer=(name=@{busname}),
+
+  include if exists <abstractions/bus/session/org.gtk.vfs.Daemon.d>
+
+# vim:syntax=apparmor

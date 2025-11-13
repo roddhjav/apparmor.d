@@ -10,17 +10,20 @@ include <tunables/global>
 profile initramfs-hooks @{exec_path} {
   include <abstractions/base>
   include <abstractions/consoles>
+  include <abstractions/fonts>
   include <abstractions/nameservice-strict>
+
+  capability sys_admin, # optional: no audit
 
   @{exec_path} mr,
 
   @{sh_path}                               rix,
   @{coreutils_path}                        rix,
-  @{bin}/cpio                               ix,
+  @{bin}/{,3}cpio                           ix,
   @{bin}/dpkg                               Px,
   @{bin}/fc-cache                           ix,
   @{bin}/ischroot                           Px,
-  @{bin}/ldd                                Cx -> ldd,
+  @{ldd_path}                               Cx -> ldd,
   @{bin}/plymouth                           Px,
   @{bin}/update-alternatives                Px,
   @{lib}/dracut/dracut-install              Px,
@@ -37,9 +40,10 @@ profile initramfs-hooks @{exec_path} {
   @{lib}/ r,
   @{lib}/** mr,
 
+  /usr/share/*/ r,
+  /usr/share/*/initramfs/{,**} r,
   /usr/share/initramfs-tools/{,**} r,
   /usr/share/plymouth/{,**} r,
-  /usr/share/cryptsetup/initramfs/{,**} r,
 
   /etc/console-setup/{,**} r,
   /etc/cryptsetup-initramfs/{,**} r,
@@ -47,8 +51,10 @@ profile initramfs-hooks @{exec_path} {
   /etc/default/* r,
   /etc/fstab r,
   /etc/iscsi/*.iscsi r,
+  /etc/kdump/sysctl.conf r,
   /etc/lvm/{,**} r,
   /etc/mdadm/mdadm.conf r,
+  /etc/plymouth/plymouthd.conf r,
   /etc/systemd/network/{,**} r,
   /etc/udev/{,**} r,
 
@@ -62,6 +68,8 @@ profile initramfs-hooks @{exec_path} {
   owner /var/tmp/mkinitramfs_@{rand6}/** rwl -> /var/tmp/mkinitramfs_@{rand6}/**,
   owner /var/tmp/mkinitramfs-@{rand6} rw,
   owner /var/tmp/mkinitramfs-*_@{rand6} rw,
+  owner /var/tmp/mkinitramfs-EFW_@{rand10} rw,
+  owner /var/tmp/mkinitramfs-EFW_@{rand10}/{,**} rwl,
 
   owner /tmp/tmp.@{rand10}/mkinitramfs_@{rand6} rw,
   owner /tmp/tmp.@{rand10}/mkinitramfs_@{rand6}/ rw,
@@ -70,8 +78,21 @@ profile initramfs-hooks @{exec_path} {
   owner /tmp/tmp.@{rand10}/mkinitramfs-*_@{rand6} rw,
   owner /tmp/tmp.@{rand10}/modules_@{rand6} rw,
 
+  @{sys}/class/ r,
+  @{sys}/class/drm/ r,
+  @{sys}/devices/ r,
+  @{sys}/devices/@{pci_bus}/ r,
+  @{sys}/devices/@{pci}/ r,
+  @{sys}/devices/@{pci}/drm/card@{int}/ r,
+  @{sys}/devices/@{pci}/drm/renderD128/ r,
+  @{sys}/devices/@{pci}/drm/renderD129/ r,
+  @{sys}/devices/@{pci}/modalias r,
+  @{sys}/devices/**/block/**/dev r,
+  @{sys}/devices/**/block/**/slaves/ r,
   @{sys}/firmware/efi/efivars/ r,
+  @{sys}/module/firmware_class/parameters/path r,
 
+  @{PROC}/@{pid}/fd/ r,
   @{PROC}/@{pid}/mounts r,
   @{PROC}/cmdline r,
   @{PROC}/swaps r,
@@ -81,10 +102,13 @@ profile initramfs-hooks @{exec_path} {
     include <abstractions/consoles>
     include <abstractions/nameservice-strict>
 
-    @{bin}/ldd mr,
+    @{ldd_path}  mrix,
+
     @{bin}/* mr,
-    @{lib}/@{multiarch}/ld-linux-*so* mrix,
-    @{lib}/ld-linux.so* mr,
+    @{sbin}/* mr,
+    @{lib}/**  mr,
+
+    /usr/share/brltty/initramfs/brltty.sh r,
 
     include if exists <local/initramfs-hooks_ldd>
   }

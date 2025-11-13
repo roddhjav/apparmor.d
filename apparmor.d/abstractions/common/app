@@ -2,50 +2,49 @@
 # Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 # LOGPROF-SUGGEST: no
+# NEEDS-VARIABLE: att
 
-# Common rules for applications sandboxed using bwrap.
+# Common rules for a generic UI application.
 
-# This abstraction is wide on purpose. It is meant to be used by sandbox
-# applications (bwrap) that have no way to restrict access depending on the
-# application being confined.
+# This abstraction is wide on purpose. It is meant to be used by a generic
+# user UI aplications wich no asumption made on the access they need.
 
   abi <abi/4.0>,
 
+  include <abstractions/accessibility>
   include <abstractions/audio-client>
-  include <abstractions/bus-accessibility>
-  include <abstractions/bus-session>
+  include <abstractions/avahi-observe>
+  include <abstractions/bluetooth-observe>
   include <abstractions/bus-system>
-  include <abstractions/bus/org.a11y>
+  include <abstractions/bus/system/org.freedesktop.hostname1>
+  include <abstractions/bus/system/org.freedesktop.UDisks2>
   include <abstractions/camera>
   include <abstractions/consoles>
   include <abstractions/cups-client>
   include <abstractions/desktop>
+  include <abstractions/devices-u2f>
   include <abstractions/devices-usb>
   include <abstractions/disks-read>
   include <abstractions/enchant>
   include <abstractions/fontconfig-cache-write>
   include <abstractions/graphics>
   include <abstractions/gstreamer>
+  include <abstractions/input>
   include <abstractions/nameservice-strict>
+  include <abstractions/network-manager-observe>
+  include <abstractions/nss>
   include <abstractions/p11-kit>
   include <abstractions/path>
+  include <abstractions/pcscd>
+  include <abstractions/screen-inhibit>
+  include <abstractions/screensaver>
+  include <abstractions/secrets-service>
   include <abstractions/sqlite>
   include <abstractions/ssl_certs>
-
-  dbus bus=accessibility,
-  dbus bus=session,
-  dbus bus=system,
+  include <abstractions/uim>
+  include <abstractions/upower-observe>
 
   /usr/** r,
-  /usr/share/** rk,
-
-  /etc/{,**} r,
-
-        /.* r,
-        @{lib}/ r,
-  owner /_@{int}_/ w,
-  owner /@{uuid}/ w,
-  owner /var/cache/ldconfig/{,**} rw,
 
   # Full access to user's data
   / r,
@@ -54,25 +53,18 @@
   @{MOUNTS}/ r,
   @{MOUNTS}/** rwl,
   owner @{HOME}/ r,
-  owner @{HOME}/.var/app/** rmix,
-  owner @{HOME}/** rwmlk -> @{HOME}/**,
+  owner @{HOME}/** mrwlkix -> @{HOME}/**,
   owner @{run}/user/@{uid}/ r,
-  owner @{run}/user/@{uid}/** rwlk -> @{run}/user/@{uid}/**,  #aa:lint ignore=too-wide
-  owner @{user_games_dirs}/** rmix,
+  owner @{run}/user/@{uid}/** mrwlkix -> @{run}/user/@{uid}/**,  #aa:lint ignore=too-wide
+  owner @{user_games_dirs}/** mrwlkix,
 
   #aa:lint ignore=too-wide
-  owner @{tmp}/** rmwk,
-  owner /dev/shm/** rwlk -> /dev/shm/**,
-  owner /var/cache/tmp/** rwlk -> /var/cache/tmp/**,
+  owner @{tmp}/** mrwlkix,
+  owner /dev/shm/** mrwlkix -> /dev/shm/**,
 
-  @{att}/@{run}/systemd/inhibit/@{int}.ref rw,
+  @{att}@{run}/systemd/inhibit/@{int}.ref rw,
 
-  @{run}/avahi-daemon/socket rw, # Allow access to avahi-daemon socket.
-  @{run}/host/{,**} r,
-  @{run}/pcscd/pcscd.comm rw, # Allow access to pcscd socket.
   @{run}/utmp rk,
-
-  @{run}/udev/data/c13:@{int}  r,         # for /dev/input/*
 
   @{sys}/ r,
   @{sys}/block/ r,
@@ -83,72 +75,87 @@
   @{sys}/bus/pci/slots/@{int}/address r,
   @{sys}/class/*/ r,
   @{sys}/devices/** r,
+  @{sys}/devices/virtual/dmi/id/bios_version k,
 
         @{sys}/fs/cgroup/user.slice/* r,
         @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/* r,
         @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/* r,
   owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/* r,
 
+  # Show the list of active tty
+  @{sys}/devices/virtual/tty/tty@{int}/active r,
+
+  # This is an information leak
+  owner @{PROC}/@{pid}/mountinfo r,
+
+  # Reads of oom_adj and oom_score_adj are safe
+  owner @{PROC}/@{pid}/oom_adj r,
+  owner @{PROC}/@{pid}/oom_score_adj r,
+
+  # Per man(5) proc, the kernel enforces that a thread may only modify its comm
+  # value or those in its thread group.
+  owner @{PROC}/@{pid}/task/@{tid}/comm rw,
+
         @{PROC}/ r,
-        @{PROC}/@{pid}/cgroup r,
-        @{PROC}/@{pid}/cmdline r,
-        @{PROC}/@{pid}/comm rk,
+        @{PROC}/@{pid}/cpuset r,
         @{PROC}/@{pid}/fd/ r,
-        @{PROC}/@{pid}/mountinfo r,
-        @{PROC}/@{pid}/net/** r,
+        @{PROC}/@{pid}/io r,
+        @{PROC}/@{pid}/maps r,
         @{PROC}/@{pid}/smaps r,
         @{PROC}/@{pid}/stat r,
         @{PROC}/@{pid}/statm r,
-        @{PROC}/@{pid}/task/@{tid}/stat r,
+        @{PROC}/@{pid}/status r,
         @{PROC}/@{pid}/task/@{tid}/status r,
-        @{PROC}/bus/pci/devices r,
-        @{PROC}/cmdline r,
-        @{PROC}/driver/** r,
-        @{PROC}/locks r,
-        @{PROC}/pressure/cpu r,
-        @{PROC}/pressure/io r,
-        @{PROC}/pressure/memory r,
+        @{PROC}/loadavg r,
+        @{PROC}/sys/fs/file-max r,
+        @{PROC}/sys/fs/file-nr r,
+        @{PROC}/sys/fs/inotify/max_queued_events r,
+        @{PROC}/sys/fs/inotify/max_user_instances r,
         @{PROC}/sys/fs/inotify/max_user_watches r,
+        @{PROC}/sys/fs/nr_open r,
+        @{PROC}/sys/fs/pipe-max-size r,
+        @{PROC}/sys/kernel/hostname r,
         @{PROC}/sys/kernel/osrelease r,
+        @{PROC}/sys/kernel/ostype r,
         @{PROC}/sys/kernel/pid_max r,
-        @{PROC}/sys/kernel/sched_autogroup_enabled r,
+        @{PROC}/sys/kernel/random/boot_id r,
+        @{PROC}/sys/kernel/random/entropy_avail r,
+        @{PROC}/sys/kernel/random/uuid r,
+        @{PROC}/sys/kernel/shmmax r,
         @{PROC}/sys/kernel/yama/ptrace_scope r,
-        @{PROC}/sys/net/core/bpf_jit_enable r,
-        @{PROC}/sys/net/core/somaxconn r,
         @{PROC}/uptime r,
         @{PROC}/version r,
-        @{PROC}/zoneinfo r,
-  owner @{PROC}/@{pid}/autogroup rw,
+        @{PROC}/version_signature r,
+  owner @{PROC}/@{pid}/cgroup r,
   owner @{PROC}/@{pid}/clear_refs w,
-  owner @{PROC}/@{pid}/comm rw,
+  owner @{PROC}/@{pid}/cmdline rk,
+  owner @{PROC}/@{pid}/comm rk,
   owner @{PROC}/@{pid}/environ r,
-  owner @{PROC}/@{pid}/fd/@{int} rw,
+  owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/fdinfo/@{int} r,
-  owner @{PROC}/@{pid}/io r,
   owner @{PROC}/@{pid}/limits r,
   owner @{PROC}/@{pid}/loginuid r,
-  owner @{PROC}/@{pid}/mem r,
-  owner @{PROC}/@{pid}/mounts r,
-  owner @{PROC}/@{pid}/net/if_inet6 r,
-  owner @{PROC}/@{pid}/oom_score_adj rw,
-  owner @{PROC}/@{pid}/pagemap r,
+  owner @{PROC}/@{pid}/sessionid r,
   owner @{PROC}/@{pid}/smaps_rollup r,
-  owner @{PROC}/@{pid}/statm r,
   owner @{PROC}/@{pid}/task/ r,
-  owner @{PROC}/@{pid}/task/@{tid}/comm rw,
+  owner @{PROC}/@{pid}/task/@{tid}/smaps r,
+  owner @{PROC}/@{pid}/task/@{tid}/stat r,
+  owner @{PROC}/@{pid}/task/@{tid}/statm r,
 
         @{att}/dev/dri/card@{int} rw,
         @{att}/dev/dri/renderD128 rw,
         @{att}/dev/dri/renderD129 rw,
   owner @{att}/dev/shm/@{uuid} r,
 
-  /dev/hidraw@{int} rw,
-  /dev/input/ r,
-  /dev/input/event@{int} rw,
   /dev/ptmx rw,
   /dev/pts/ptmx rw,
   /dev/tty rw,
   /dev/udmabuf rw,
+
+  deny @{user_share_dirs}/gvfs-metadata/* r,
+
+  # This allows raising the OOM score of other processes owned by the user.
+  deny owner @{PROC}/@{pid}/oom_score_adj w,
 
   include if exists <abstractions/common/app.d>
 

@@ -8,40 +8,14 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{exec_path} = @{lib}/{,gvfs/}gvfsd-network
-profile gvfsd-network @{exec_path} {
+profile gvfsd-network @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus-session>
-  include <abstractions/bus/org.gtk.vfs.Daemon>
-  include <abstractions/bus/org.gtk.vfs.MountTracker>
+  include <abstractions/gvfs-backend>
   include <abstractions/dconf-write>
   include <abstractions/gschemas>
 
   #aa:dbus own bus=session name=org.gtk.vfs.mountpoint_@{int}
-
-  dbus send bus=session path=/org/gtk/gvfs/exec_spaw/@{int}
-       interface=org.gtk.vfs.Spawner
-       member=Spawned
-       peer=(name="@{busname}", label=gvfsd),
-
-  dbus receive bus=session path=/org/gtk/vfs/mountable
-       interface=org.gtk.vfs.Mountable
-       member=Mount
-       peer=(name="@{busname}", label=gvfsd),
-
-  dbus send bus=session path=/org/gtk/vfs/mounttracker
-       interface=org.gtk.vfs.MountTracker
-       member={MountLocation,LookupMount,RegisterMount}
-       peer=(name="@{busname}", label=gvfsd),
-
-  dbus receive bus=session
-       interface=org.freedesktop.DBus.Introspectable
-       member=Introspect
-       peer=(name=@{busname}, label=gnome-shell),
-
-  dbus send bus=session path=/org/gtk/vfs/Daemon
-       interface=org.gtk.vfs.Daemon
-       member=GetConnection
-       peer=(name=@{busname}),
 
   @{exec_path} mr,
 

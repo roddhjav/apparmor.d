@@ -11,20 +11,21 @@ profile gdm-session @{exec_path} {
   include <abstractions/base>
   include <abstractions/bus-session>
   include <abstractions/bus-system>
-  include <abstractions/bus/org.gnome.DisplayManager>
   include <abstractions/bus/session/org.freedesktop.systemd1>
+  include <abstractions/bus/system/org.gnome.DisplayManager>
 
   signal receive set=(hup term) peer=gdm-session-worker,
-  signal receive set=(term) peer=gdm,
-  signal send    set=(term) peer=dbus-session,
-  signal send    set=(term) peer=gnome-session-binary,
-  signal send    set=(term) peer=xorg,
-  signal send    set=term   peer=gnome-session,
+  signal receive set=term peer=gdm,
+  signal send    set=term peer=dbus-session,
+  signal send    set=term peer=gnome-session-binary,
+  signal send    set=term peer=gnome-session-init-worker,
+  signal send    set=term peer=gnome-session,
+  signal send    set=term peer=xorg,
 
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
-       peer=(name=:*, label=gnome-shell),
+       peer=(name=@{busname}, label=gnome-shell),
 
   @{exec_path} mr,
 
@@ -47,13 +48,13 @@ profile gdm-session @{exec_path} {
   owner @{gdm_cache_dirs}/gdm/ rw,
   owner @{gdm_cache_dirs}/gdm/Xauthority rw,
   owner @{gdm_config_dirs}/dconf/user r,
-  owner @{GDM_HOME}/greeter-dconf-defaults r,
+  owner @{DESKTOP_HOME}/greeter-dconf-defaults r,
 
         @{run}/gdm{3,}/custom.conf r,
   owner @{run}/user/@{uid}/gdm/ w,
   owner @{run}/user/@{uid}/gdm/Xauthority rw,  # only: xorg
 
-  /dev/tty@{int} rw,
+  /dev/tty@{u8} rw,
 
   include if exists <local/gdm-session>
 }

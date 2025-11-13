@@ -7,7 +7,7 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{exec_path} = @{bin}/gnome-session
-profile gnome-session @{exec_path} {
+profile gnome-session @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus-session>
   include <abstractions/consoles>
@@ -15,6 +15,19 @@ profile gnome-session @{exec_path} {
   include <abstractions/gschemas>
   include <abstractions/nameservice-strict>
   include <abstractions/shells>
+
+  signal receive set=term peer=gdm,
+  signal receive set=term peer=gdm-session,
+
+  dbus send bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member=UpdateActivationEnvironment
+       peer=(name=org.freedesktop.DBus label="@{p_dbus_session}"),
+
+  dbus receive bus=session
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name=@{busname}, label=gnome-shell),
 
   @{exec_path} mrix,
 
@@ -43,6 +56,7 @@ profile gnome-session @{exec_path} {
   @{bin}/flatpak               rCx -> flatpak,
   @{bin}/gsettings             rPx,
   @{lib}/gnome-session-binary  rPx,
+  @{lib}/gnome-session-init-worker rPx,
 
   /usr/share/im-config/{,**} r,
   /usr/share/libdebuginfod-common/debuginfod.sh r,
@@ -64,11 +78,13 @@ profile gnome-session @{exec_path} {
 
   owner @{HOME}/ r,
 
+  owner @{run}/user/@{uid}/gnome-session-leader-fifo rw,
+
   owner @{PROC}/@{pid}/cmdline r,
   owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/loginuid r,
 
-  /dev/tty@{int} rw,
+  /dev/tty@{u8} rw,
 
   profile flatpak {
     include <abstractions/base>
@@ -76,7 +92,7 @@ profile gnome-session @{exec_path} {
 
     @{bin}/flatpak mr,
 
-    /dev/tty@{int} rw,
+    /dev/tty@{u8} rw,
 
     include if exists <local/gnome-session_flatpak>
   }

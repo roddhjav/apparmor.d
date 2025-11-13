@@ -3,14 +3,15 @@
 # SPDX-License-Identifier: GPL-2.0-only
 
 locals {
-  name = "${var.prefix}${var.dist}-${var.flavor}"
+  name = "${var.prefix}${var.dist}${var.release}-${var.flavor}"
+  osinfo = "${var.dist}${var.release}"
 }
 
 source "qemu" "default" {
   disk_image         = true
-  iso_url            = var.DM[var.dist].img_url
-  iso_checksum       = "file:${var.DM[var.dist].img_checksum}"
-  iso_target_path    = pathexpand("${var.iso_dir}/${basename("${var.DM[var.dist].img_url}")}")
+  iso_url            = var.DM[local.osinfo].img_url
+  iso_checksum       = "file:${var.DM[local.osinfo].img_checksum}"
+  iso_target_path    = pathexpand("${var.iso_dir}/${basename("${var.DM[local.osinfo].img_url}")}")
   cpu_model          = "host"
   cpus               = var.cpus
   memory             = var.ram
@@ -35,14 +36,14 @@ source "qemu" "default" {
     "user-data" = format("%s\n%s\n%s",
       templatefile("${path.cwd}/tests/cloud-init/common.yml",
         {
-          username = "${var.username}"
-          password = "${var.password}"
-          ssh_key  = file("${var.ssh_publickey}")
-          hostname = "${local.name}"
+          username = var.username
+          password = var.password
+          ssh_key  = file(var.ssh_publickey)
+          hostname = regex_replace(local.name, "\\.", "")
         }
       ),
-      file("${path.cwd}/tests/cloud-init/${regex_replace(var.dist, "[0-9]*$", "")}.yml"),
-      file("${path.cwd}/tests/cloud-init/${var.dist}-${var.flavor}.user-data.yml")
+      file("${path.cwd}/tests/cloud-init/${regex_replace(local.osinfo, "[0-9.]*$", "")}.yml"),
+      file("${path.cwd}/tests/cloud-init/${local.osinfo}-${var.flavor}.user-data.yml")
     )
   }
 }
@@ -59,7 +60,7 @@ build {
       "${path.cwd}/tests/packer/src/",
       "${path.cwd}/tests/packer/init.sh",
       "${path.cwd}/tests/packer/clean.sh",
-      "${path.cwd}/.pkg/",
+      "${path.cwd}/.pkg/${var.dist}/${var.release}/",
     ]
   }
 

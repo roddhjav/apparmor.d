@@ -3,26 +3,37 @@
 # Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-  abi <abi/4.0>,
+# Allow detection of usb devices. Leaks plugged in USB device info
 
-  /dev/ r,
-  /dev/bus/usb/ r,
-  /dev/bus/usb/@{int}/ r,
-  /dev/bus/usb/@{int}/@{int} r,
+  abi <abi/4.0>,
 
   @{sys}/class/ r,
   @{sys}/class/usbmisc/ r,
 
   @{sys}/bus/ r,
   @{sys}/bus/usb/ r,
-  @{sys}/bus/usb/devices/{,**} r,
+  @{sys}/bus/usb/devices/ r,
+  @{sys}/devices/@{pci}/uevent r,
+  @{sys}/devices/@{pci_bus}/uevent r,
+  @{sys}/devices/**/uevent r,
+  @{sys}/devices/**/usb@{int}/ r,
 
-  @{sys}/devices/**/usb@{int}/{,**} r,
+  @{sys}/devices/**/usb@{int}/{,*/}bConfigurationValue r,
+  @{sys}/devices/**/usb@{int}/{,*/}descriptors r,
+  @{sys}/devices/**/usb@{int}/{,*/}manufacturer r,
+  @{sys}/devices/**/usb@{int}/{,*/}product r,
+  @{sys}/devices/**/usb@{int}/{,*/}serial r,
 
   # Udev data about usb devices (~equal to content of lsusb -v)
   @{run}/udev/data/+usb:* r,              # Identifies all USB devices
-  @{run}/udev/data/c16[6,7]:@{int} r,     # USB modems
-  @{run}/udev/data/c18[0,8,9]:@{int} r,   # USB devices & USB serial converters
+  @{run}/udev/data/b180:@{int} r,         # USB block devices
+  @{run}/udev/data/c16{6,7}:@{d} r,       # ACM USB modems
+  @{run}/udev/data/c18{0,8,9}:@{int} r,   # USB character devices
+
+  /dev/ r,
+  /dev/bus/usb/ r,
+  /dev/bus/usb/@{int}/ r,
+  /dev/bus/usb/@{d}@{d}@{d}/@{d}@{d}@{d} r,
 
   include if exists <abstractions/devices-usb-read.d>
 

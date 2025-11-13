@@ -10,12 +10,11 @@ include <tunables/global>
 profile NetworkManager @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus-system>
-  include <abstractions/bus/fi.w1.wpa_supplicant1>
-  include <abstractions/bus/org.bluez>
-  include <abstractions/bus/org.freedesktop.hostname1>
-  include <abstractions/bus/org.freedesktop.login1>
-  include <abstractions/bus/org.freedesktop.ModemManager1>
-  include <abstractions/bus/org.freedesktop.PolicyKit1>
+  include <abstractions/bus/system/org.freedesktop.hostname1>
+  include <abstractions/bus/system/org.freedesktop.login1>
+  include <abstractions/bus/system/org.freedesktop.PolicyKit1>
+  include <abstractions/bus/system/fi.w1.wpa_supplicant1>
+  include <abstractions/bus/system/org.bluez>
   include <abstractions/nameservice-strict>
   include <abstractions/ssl_certs>
 
@@ -28,7 +27,6 @@ profile NetworkManager @{exec_path} flags=(attach_disconnected) {
   capability setgid,
   capability setuid,
   capability sys_chroot,
-  capability sys_module,
 
   network inet stream,
   network inet6 stream,
@@ -45,8 +43,26 @@ profile NetworkManager @{exec_path} flags=(attach_disconnected) {
 
   #aa:dbus talk bus=system name=fi.w1.wpa_supplicant1 label=wpa-supplicant
   #aa:dbus talk bus=system name=org.fedoraproject.FirewallD1 label=firewalld
+  #aa:dbus talk bus=system name=org.freedesktop.ModemManager1 label=ModemManager
   #aa:dbus talk bus=system name=org.freedesktop.nm_dispatcher label=nm-dispatcher
   #aa:dbus talk bus=system name=org.freedesktop.resolve1 label="@{p_systemd_resolved}"
+
+
+  dbus receive bus=system path=/org/freedesktop
+       interface=org.freedesktop.DBus.ObjectManager
+       member=GetManagedObjects
+       peer=(name=@{busname}),
+
+  dbus receive bus=system path=/org/freedesktop
+       interface=org.freedesktop.DBus.ObjectManager
+       member=GetManagedObjects
+       peer=(name=@{busname}, label=gnome-control-center),
+
+
+  dbus receive bus=system path=/org/freedesktop
+       interface=org.freedesktop.DBus.ObjectManager
+       member=GetManagedObjects
+       peer=(name=@{busname}, label=nm-online),
 
   dbus send bus=system path=/org/freedesktop/nm_dispatcher
        interface=org.freedesktop.nm_dispatcher
@@ -58,10 +74,20 @@ profile NetworkManager @{exec_path} flags=(attach_disconnected) {
        member=SetServersEx
        peer=(name=@{busname}, label=dnsmasq),
 
+  # Server side of bus/system/org.freedesktop.NetworkManager not covered by the directive
+  dbus receive bus=system path=/org/freedesktop
+       interface=org.freedesktop.DBus.ObjectManager
+       member=GetManagedObjects
+       peer=(name=@{busname}, label=NetworkManager),
   dbus send bus=system path=/org/freedesktop
        interface=org.freedesktop.DBus.ObjectManager
        member={InterfacesAdded,InterfacesRemoved}
        peer=(name=org.freedesktop.DBus),
+
+  dbus receive bus=system path=/
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name=@{busname}, label=cockpit-bridge),
 
   @{exec_path} mr,
 
@@ -69,7 +95,7 @@ profile NetworkManager @{exec_path} flags=(attach_disconnected) {
   @{sbin}/nft       rix,
 
   @{sbin}/dnsmasq                                            rPx,
-  @{bin}/kmod                                                rPx,
+  @{bin}/kmod                                                rCx -> kmod,
   @{bin}/netconfig                                          rPUx,
   @{sbin}/resolvconf                                         rPx,
   @{bin}/resolvectl                                          rPx,
@@ -84,8 +110,13 @@ profile NetworkManager @{exec_path} flags=(attach_disconnected) {
   @{lib}/{,NetworkManager/}nm-openvpn-service-openvpn-helper rPx,
   /usr/share/netplan/netplan.script                          rPx,
 
+  @{lib}/netplan/@{int2}-network-manager-all.yaml w,
+
   /usr/share/gvfs/remote-volume-monitors/{,*.monitor} r,
   /usr/share/iproute2/{,**} r,
+
+  /etc/netplan/ r,
+  /etc/netplan/90-NM-@{uuid}.yaml r,
 
   @{att}/ r,
 
@@ -103,14 +134,10 @@ profile NetworkManager @{exec_path} flags=(attach_disconnected) {
   /var/lib/iwd/*open* rw,
   /var/lib/NetworkManager/{,**} rw,
 
-  @{sys}/bus/ r,
-  @{sys}/class/ r,
-  @{sys}/class/net/ r,
-  @{sys}/class/net/rfkill/ r,
-  @{sys}/class/rfkill/ r,
+  @{att}@{run}/systemd/inhibit/@{int}.ref rw,
+  @{run}/systemd/resolve/io.systemd.Resolve rw,
 
-  @{att}/@{run}/systemd/inhibit/@{int}.ref rw,
-
+  @{run}/netplan/ r,
   @{run}/network/ifstate r,
   @{run}/NetworkManager/{,**} rw,
   @{run}/nm-*.pid rw,
@@ -121,10 +148,16 @@ profile NetworkManager @{exec_path} flags=(attach_disconnected) {
   @{run}/udev/data/+rfkill:* r,           # Kill switch for wireless devices (Wi-Fi, Bluetooth, NFC) to save power
   @{run}/udev/data/n@{int} r,             # For network interfaces
 
+  @{sys}/bus/ r,
+  @{sys}/class/ r,
+  @{sys}/class/net/ r,
+  @{sys}/class/net/rfkill/ r,
+  @{sys}/class/rfkill/ r,
   @{sys}/devices/@{pci}/net/*/{,**} r,
   @{sys}/devices/@{pci}/usb@{int}/**/net/{,**} r,
   @{sys}/devices/**/@{uuid}/net/*/{,**} r,
   @{sys}/devices/**/uevent r,
+  @{sys}/devices/virtual/**/net/{,**} r,
   @{sys}/devices/virtual/net/{,**} r,
 
         @{PROC}/@{pids}/stat r,
@@ -135,7 +168,24 @@ profile NetworkManager @{exec_path} flags=(attach_disconnected) {
   owner @{PROC}/@{pid}/cmdline r,
   owner @{PROC}/@{pid}/fd/ r,
 
+  /dev/net/tun rw,
   /dev/rfkill rw,
+
+  #aa:only test
+  /etc/netplan/10-test.yaml rw,
+  /tmp/tmp@{word8}/NetworkManager.conf r,
+
+  profile kmod {
+    include <abstractions/base>
+    include <abstractions/app/kmod>
+
+    capability sys_module,
+
+    @{sys}/module/compression r,
+    @{sys}/module/nf_*/initstate r,
+
+    include if exists <local/NetworkManager_kmod>
+  }
 
   profile systemctl {
     include <abstractions/base>

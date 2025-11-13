@@ -4,6 +4,12 @@
 # Copyright (C) 2022 Jeroen Rijken
 # SPDX-License-Identifier: GPL-2.0-only
 
+# TODO: Revisit this profile: all build tasks should take place in a dedicated profile
+# @{lib}/modules/*/build/ Cx.
+# /var/lib/dkms/**/build/ Cx,
+
+# TODO: Also test the future profile with the zfs dkms module
+
 abi <abi/4.0>,
 
 include <tunables/global>
@@ -13,6 +19,7 @@ profile dkms @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/consoles>
   include <abstractions/nameservice-strict>
+  include <abstractions/python>
 
   capability dac_override,
   capability dac_read_search,
@@ -26,12 +33,16 @@ profile dkms @{exec_path} flags=(attach_disconnected) {
 
   @{sh_path}        rix,
   @{coreutils_path} rix,
+  @{archive_path}   rix,
+  @{python_path}    rix,
   @{bin}/as         rix,
   @{bin}/bc         rix,
   @{bin}/clang-@{version} rix,
+  @{bin}/file       rix,
   @{bin}/g++        rix,
   @{bin}/gcc        rix,
   @{bin}/getconf    rix,
+  @{bin}/git        rix,
   @{bin}/hostname   rix,
   @{bin}/kill       rix,
   @{bin}/kmod       rCx -> kmod,
@@ -40,13 +51,17 @@ profile dkms @{exec_path} flags=(attach_disconnected) {
   @{bin}/llvm-objcopy rix,
   @{bin}/lsb_release rPx,
   @{bin}/make       rix,
+  @{bin}/msgfmt     rix,
+  @{bin}/msgmerge   rix,
+  @{bin}/nm         rix,
   @{bin}/objcopy    rix,
+  @{bin}/objdump    rix,
   @{bin}/pahole     rix,
+  @{bin}/pkgconf    rix,
   @{bin}/readelf    rix,
   @{bin}/rpm       rPUx,
   @{bin}/strip      rix,
-  @{bin}/xz         rix,
-  @{bin}/zstd       rix,
+  @{bin}/xgettext   rix,
   @{sbin}/update-secureboot-policy rPUx,
 
   @{lib}/gcc/@{multiarch}/@{version}/*         rix,
@@ -98,16 +113,27 @@ profile dkms @{exec_path} flags=(attach_disconnected) {
 
   owner @{HOME}/ r,
 
-  owner @{tmp}/* rw,
-  owner @{tmp}/cc* rw,
-  owner @{tmp}/dkms.*/ rw,
-  owner @{tmp}/sh-thd.* rw,
-  owner @{tmp}/tmp.* rw,
+  @{sys}/fs/cgroup/system.slice/cpu.max r,
+  @{sys}/fs/cgroup/system.slice/dkms.service/cpu.max r,
+  @{sys}/fs/cgroup/user.slice/cpu.max r,
+  @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/cpu.max r,
+  @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/cpu.max r,
+  @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/session.slice/cpu.max r,
 
+        /tmp/@{word8} rw,
+        /tmp/@{word8}/{,*} rw,
+        /tmp/conftest-@{rand6}.* rw,
+        @{tmp}/GMfifo@{int} rw,
+  owner @{tmp}/cc@{rand6}* rw,
+  owner @{tmp}/tmp.@{rand10} rw,
+  audit owner @{tmp}/dkms.*/ rw,
+  audit owner @{tmp}/sh-thd.* rw,
+
+        @{PROC}/@{pid}/cgroup r,
         @{PROC}/sys/kernel/osrelease r,
   owner @{PROC}/@{pid}/fd/ r,
 
-  /dev/pts/@{int} rw,
+  /dev/pts/@{u16} rw,
 
   profile kmod {
     include <abstractions/base>

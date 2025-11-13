@@ -9,33 +9,31 @@ include <tunables/global>
 @{exec_path} = @{bin}/nautilus
 profile nautilus @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/bus-accessibility>
-  include <abstractions/bus-session>
   include <abstractions/bus-system>
-  include <abstractions/bus/com.canonical.Unity.LauncherEntry>
-  include <abstractions/bus/org.a11y>
-  include <abstractions/bus/org.freedesktop.hostname1>
-  include <abstractions/bus/org.freedesktop.portal.Desktop>
-  include <abstractions/bus/org.freedesktop.Tracker3.Miner.Files>
-  include <abstractions/bus/org.gnome.SessionManager>
-  include <abstractions/bus/org.gtk.Private.RemoteVolumeMonitor>
+  include <abstractions/bus/session/com.canonical.Unity.LauncherEntry>
+  include <abstractions/bus/session/org.freedesktop.Tracker3.Miner.Files>
+  include <abstractions/bus/session/org.gtk.Private.RemoteVolumeMonitor>
+  include <abstractions/bus/system/org.freedesktop.hostname1>
   include <abstractions/dconf-write>
   include <abstractions/deny-sensitive-home>
   include <abstractions/gnome-strict>
   include <abstractions/graphics>
   include <abstractions/nameservice-strict>
+  include <abstractions/screen-inhibit>
   include <abstractions/trash-strict>
 
   mqueue r type=posix /,
 
   unix type=stream peer=(label=gnome-shell),
 
-  #aa:dbus own bus=session name=org.freedesktop.FileManager1
-  #aa:dbus own bus=session name=org.gnome.Nautilus interface+=org.gtk.{Application,Actions}
-  #aa:dbus own bus=session name=org.gnome.Nautilus.SearchProvider interface+=org.gnome.Shell.SearchProvider2
+  signal send set=kill peer=gnome-desktop-thumbnailers,
 
-  #aa:dbus talk bus=session name=org.freedesktop.Application path=/ label="*"
+  #aa:dbus own bus=session name=org.freedesktop.FileManager1
+  #aa:dbus own bus=session name=org.gnome.Nautilus.SearchProvider interface+=org.gnome.Shell.SearchProvider2
+  #aa:dbus own bus=session name=org.gnome.Nautilus
+
   #aa:dbus talk bus=session name=org.freedesktop.impl.portal.FileChooser label=xdg-desktop-portal-gnome
+  #aa:dbus talk bus=session name=org.freedesktop.portal.FileTransfer label=xdg-document-portal
   #aa:dbus talk bus=session name=org.gnome.Settings label=gnome-control-center
   #aa:dbus talk bus=session name=org.gtk.MountOperationHandler label=gnome-shell
   #aa:dbus talk bus=session name=org.gtk.Notifications label=gnome-shell
@@ -66,6 +64,16 @@ profile nautilus @{exec_path} flags=(attach_disconnected) {
        member=NameHasOwner
        peer=(name=org.freedesktop.DBus, label="@{p_dbus_session}"),
 
+  # Server side of abstractions/bus/session/org.freedesktop.Application
+  dbus send bus=session
+       interface=org.freedesktop.Application
+       member=Open,
+
+  dbus send bus=session path=/org/gnome/Nautilus
+       interface=org.gtk.Application
+       member={CommandLine,DescribeAll}
+       peer=(name=org.gnome.Nautilus, label=nautilus),
+
   @{exec_path} mr,
 
   @{sh_path}                 rix,
@@ -77,10 +85,9 @@ profile nautilus @{exec_path} flags=(attach_disconnected) {
   @{bin}/* r,
   @{lib}/@{multiarch}/glib-2.0/gio-launch-desktop m,
 
-  @{open_path}               rPx -> child-open,
+  @{open_path}               rPx -> child-open-any,
 
   /usr/share/nautilus/{,**} r,
-  /usr/share/poppler/{,**} r,
   /usr/share/sounds/freedesktop/stereo/*.oga r,
   /usr/share/terminfo/** r,
   /usr/share/thumbnailers/{,**} r,
@@ -124,6 +131,7 @@ profile nautilus @{exec_path} flags=(attach_disconnected) {
 
         @{PROC}/@{pids}/net/wireless r,
         @{PROC}/sys/dev/i915/perf_stream_paranoid r,
+  owner @{PROC}/@{pid}/cgroup r,
   owner @{PROC}/@{pid}/cmdline r,
   owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/mountinfo r,

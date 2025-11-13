@@ -1,5 +1,6 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2025 Zane Zakraisek <zz@eng.utah.edu>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/4.0>,
@@ -12,27 +13,45 @@ profile mdadm @{exec_path} flags=(attach_disconnected) {
   include <abstractions/consoles>
   include <abstractions/disks-write>
 
+  capability dac_read_search,
   capability sys_admin,
+  capability mknod,
+  capability net_admin,
+
+  network netlink raw,
 
   mqueue (read getattr) type=posix /,
 
   @{exec_path} mr,
 
-  @{run}/initctl r,
+  @{sh_path}       rix,
+  @{sbin}/sendmail rPUx,
 
+  /etc/{,mdadm/}mdadm.conf     r,
+  /etc/{,mdadm/}mdadm.conf.d/* r,
+
+  @{run}/initctl r,
+  @{run}/mdadm/* rwk,
+
+  /tmp/tmp.@{rand10}/mkinitramfs_@{rand6}/etc/mdadm/mdadm.conf.tmp rw,
   /var/tmp/mkinitramfs_@{rand6}/etc/mdadm/mdadm.conf.tmp rw,
 
   @{sys}/bus/pci/drivers/*/ r,
   @{sys}/devices/@{pci}/class r,
   @{sys}/devices/@{pci}/device r,
   @{sys}/devices/@{pci}/vendor r,
+  @{sys}/devices/virtual/block/md*/** rw,
+  @{sys}/module/md_mod/** rw,
 
   @{PROC}/@{pid}/fd/ r,
   @{PROC}/cmdline r,
+  @{PROC}/devices r,
   @{PROC}/kcore r,
+  @{PROC}/mdstat rw,
   @{PROC}/partitions r,
 
   /dev/**/ r,
+  /dev/.tmp.md.* rw,
 
   include if exists <local/mdadm>
 }

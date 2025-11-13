@@ -49,9 +49,12 @@ var (
 		`(?m)^.*/usr/share/locale[^/]?/.*$`, ``,
 		`(?m)^.*/usr/share/zoneinfo[^/]?/.*$`, ``,
 		`(?m)^.*/dev/(null|zero|full|log).*$`, ``,
-		`(?m)^.*/dev/(u|)random.*$`, ``,
 	})
 	regResolveLogs = util.ToRegexRepl([]string{
+		// Resolve re-attached paths variable
+		`/att/ns/[^/]+/`, `@{att}/`,
+		`/att/[^/]+/`, `@{att}/`,
+
 		// Resolve user variables
 		`/home/[^/]+/.cache`, `@{user_cache_dirs}`,
 		`/home/[^/]+/.config`, `@{user_config_dirs}`,
@@ -64,7 +67,8 @@ var (
 		`/home/[^/]+/`, `@{HOME}/`,
 
 		// Resolve system variables
-		`/att/[^/]+/`, `@{att}/`,
+		`/usr/bin/gnu`, `@{bin}/`,
+		`/usr/lib/cargo/bin/coreutils/`, `@{bin}/`,
 		`/usr/lib(32|64|exec)`, `@{lib}`,
 		`/usr/lib`, `@{lib}`,
 		`/usr/sbin`, `@{sbin}`,
@@ -72,6 +76,8 @@ var (
 		`(x86_64|amd64|i386|i686)`, `@{arch}`,
 		`@{arch}-*linux-gnu[^/]?`, `@{multiarch}`,
 		`/usr/etc/`, `@{etc_ro}/`,
+		`/boot/(|efi/)`, `@{efi}/`,
+		`/efi/`, `@{efi}/`,
 		`/var/run/`, `@{run}/`,
 		`/run/`, `@{run}/`,
 		`user/[0-9]*/`, `user/@{uid}/`,
@@ -172,7 +178,7 @@ func (aaLogs AppArmorLogs) String() string {
 	keys := []string{
 		"profile", "label", // Profile name
 		"operation", "name", "target",
-		"mask", "bus", "path", "interface", "member", // dbus
+		"mask", "bus", "path", "interface", "member", "method", // dbus
 		"info", "comm",
 		"laddr", "lport", "faddr", "fport", "family", "sock_type", "protocol",
 		"requested_mask", "denied_mask", "signal", "peer", "peer_label",
@@ -196,6 +202,7 @@ func (aaLogs AppArmorLogs) String() string {
 		"denied_mask":    "denied_mask=" + boldRed,
 		"interface":      "interface=" + fgWhite,
 		"member":         "member=" + fgGreen,
+		"method":         "method=" + fgGreen,
 	}
 	var res strings.Builder
 

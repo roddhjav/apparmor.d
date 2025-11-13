@@ -16,7 +16,9 @@ profile crontab @{exec_path} {
 
   capability audit_write,
   capability chown,
+  capability dac_override,
   capability dac_read_search,
+  capability fsetid,
   capability net_admin,
   capability setgid,
   capability setuid,
@@ -28,6 +30,9 @@ profile crontab @{exec_path} {
   @{sh_path}             rix,
   @{editor_path}         rCx -> editor,
 
+  @{lib}/systemd-cron/crontab_setgid PUx,
+  @{lib}/systemd/system-generators/systemd-crontab-generator PUx,
+
   @{etc_ro}/environment r,
   @{etc_ro}/security/*.conf r,
   /etc/cron.{allow,deny} r,
@@ -38,6 +43,9 @@ profile crontab @{exec_path} {
 
   owner @{user_cache_dirs}/crontab/crontab.bak rw,
 
+  @{run}/crond.reboot w,
+
+  @{tmp}/#@{int} rw,
   @{tmp}/crontab.@{rand6} rw,
   @{tmp}/crontab.@{rand6}/ rw,
   @{tmp}/crontab.@{rand6}/crontab rwl,

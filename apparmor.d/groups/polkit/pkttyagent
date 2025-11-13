@@ -11,7 +11,7 @@ include <tunables/global>
 profile pkttyagent @{exec_path} {
   include <abstractions/base>
   include <abstractions/bus-system>
-  include <abstractions/bus/org.freedesktop.PolicyKit1>
+  include <abstractions/bus/system/org.freedesktop.PolicyKit1>
   include <abstractions/consoles>
   include <abstractions/nameservice-strict>
 
@@ -20,6 +20,16 @@ profile pkttyagent @{exec_path} {
 
   ptrace read,
   signal (send, receive),
+
+  dbus receive bus=system path=/org/freedesktop/PolicyKit1/AuthenticationAgent
+       interface=org.freedesktop.PolicyKit1.AuthenticationAgent
+       member=BeginAuthentication
+       peer=(name=@{busname}, label="@{p_polkitd}"),
+
+  dbus send bus=system path=/org/freedesktop/PolicyKit1/Authority
+       interface=org.freedesktop.PolicyKit1.Authority
+       member=RegisterAuthenticationAgentWithOptions
+       peer=(name=@{busname}, label="@{p_polkitd}"),
 
   @{exec_path} mr,
 

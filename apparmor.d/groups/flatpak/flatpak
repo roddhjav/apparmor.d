@@ -6,27 +6,36 @@ abi <abi/4.0>,
 
 include <tunables/global>
 
+@{appid} = @{word}.@{word}.@{word}{,.@{word}}
+
 @{exec_path} = @{bin}/flatpak
 profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted,complain) {
   include <abstractions/base>
-  include <abstractions/bus-accessibility>
+  include <abstractions/accessibility>
+  include <abstractions/accounts-observe>
   include <abstractions/bus-session>
   include <abstractions/bus-system>
-  include <abstractions/bus/org.a11y>
-  include <abstractions/bus/org.freedesktop.locale1>
-  include <abstractions/bus/org.gtk.vfs.MountTracker>
+  include <abstractions/bus/session/org.gtk.vfs.MountTracker>
+  include <abstractions/bus/system/org.freedesktop.locale1>
   include <abstractions/consoles>
   include <abstractions/dconf-write>
-  include <abstractions/desktop>
+  include <abstractions/desktop-files>
+  include <abstractions/gschemas>
+  include <abstractions/mime>
   include <abstractions/nameservice-strict>
   include <abstractions/ssl_certs>
-
-  userns,
+  include <abstractions/user-dirs>
 
   capability dac_override,
   capability dac_read_search,
   capability net_admin,
   capability sys_ptrace,
+
+  # Manage the sandbox
+  capability setgid,
+  capability setuid,
+  capability sys_admin,
+  capability sys_chroot,
 
   network inet dgram,
   network inet6 dgram,
@@ -36,25 +45,47 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted,complain
 
   mount fstype=fuse.revokefs-fuse options=(rw, nosuid, nodev) -> /var/tmp/flatpak-cache-*/*/,
 
-  ptrace (read) peer=flatpak-app,
+  ptrace read peer=fbwrap,      # Generic bwrap for flatpak app
+  ptrace read peer=flatpak-app, # Deprecated generic profile
+  ptrace read peer=flatpak.*,
 
   signal send peer=flatpak-app,
+  signal send peer=polkit-agent-helper,
 
-  #aa:dbus talk bus=system name=org.freedesktop.Accounts label="@{p_accounts_daemon}"
+  unix type=seqpacket peer=(label=flatpak-system-helper),
+  unix type=stream    peer=(label=flatpak//fusermount),
+  unix (send receive) type=seqpacket peer=(label=fapp, addr=@@{hex}),
+  unix (send receive) type=seqpacket peer=(label=fbwrap, addr=@@{hex}),
+
   #aa:dbus talk bus=system name=org.freedesktop.Flatpak.SystemHelper label=flatpak-system-helper
   #aa:dbus talk bus=system name=org.freedesktop.PolicyKit1 label="@{p_polkitd}"
 
   #aa:dbus talk bus=session name=org.freedesktop.Flatpak.SessionHelper label=flatpak-session-helper
   #aa:dbus talk bus=session name=org.freedesktop.portal.Documents path=/org/freedesktop/portal/documents label=xdg-document-portal
 
+  dbus send bus=system path=/org/freedesktop/Flatpak/SystemHelper
+       interface=org.freedesktop.Flatpak.SystemHelper
+       member=GetRevokefsFd
+       peer=(name=org.freedesktop.Flatpak.SystemHelper),
+
+  dbus send bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member=ReloadConfig
+       peer=(name=org.freedesktop.DBus, label="@{p_systemd_user}"),
+
   @{exec_path} mr,
 
-  @{bin}/bwrap               rPx -> flatpak-app,
+  @{bin}/bwrap               rPx -> flatpak-app, #aa:only apparmor<4.1
+  @{bin}/bwrap               rPx -> fbwrap,      #aa:only apparmor>=4.1
   @{bin}/fusermount{,3}      rCx -> fusermount,
   @{bin}/gpg                 rCx -> gpg,
   @{bin}/gpgconf             rCx -> gpg,
   @{bin}/gpgsm               rCx -> gpg,
   @{lib}/revokefs-fuse       rix,
+  @{lib}/flatpak-validate-icon rPx,
+
+  # For flatpack enter, the shell is not confined on purpose.
+  @{bin}/@{shells}           rUx,
 
   @{lib}/polkit-[0-9]/polkit-agent-helper-[0-9]  rPx,
   @{lib}/polkit-agent-helper-[0-9]               rPx,
@@ -64,6 +95,7 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted,complain
   /etc/flatpak/{,**} r,
   /etc/pulse/client.conf r,
 
+        / r,
   @{att}/ r,
 
   /var/lib/flatpak/{,**} rwlk,
@@ -75,8 +107,8 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted,complain
 
   owner @{HOME}/.var/ w,
   owner @{HOME}/.var/app/{,**} rw,
-  owner @{att}/@{HOME}/.var/app/*/.local/share/*/logs/* rw,
-  owner @{att}/@{HOME}/.var/app/*/.local/share/*/**/usr/.ref rw,
+  owner @{att}@{HOME}/.var/app/@{appid}/.local/share/*/logs/* rw,
+  owner @{att}@{HOME}/.var/app/@{appid}/.local/share/*/**/usr/.ref rw,
 
   # Can create dotfile directories for any app
   owner @{user_cache_dirs}/*/ w,
@@ -101,8 +133,7 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted,complain
   owner @{tmp}/remote-summary.@{rand6} rw,
   owner /dev/shm/flatpak*/{,**} rw,
 
-         @{run}/.userns r,
-  @{att}/@{run}/.userns r,
+  @{att}@{run}/.userns r,
 
         @{run}/user/@{uid}/.dbus-proxy/ w,
         @{run}/user/@{uid}/dconf/user rw,
@@ -110,9 +141,11 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted,complain
   owner @{run}/user/@{uid}/.flatpak-cache rw,
   owner @{run}/user/@{uid}/.flatpak/ rw,
   owner @{run}/user/@{uid}/.flatpak/** rwlk -> @{run}/user/@{uid}/.flatpak/**,
+  owner @{run}/user/@{uid}/.mutter-Xwaylandauth.@{rand6} r,
   owner @{run}/user/@{uid}/app/ w,
   owner @{run}/user/@{uid}/app/*/ w,
   owner @{run}/user/@{uid}/systemd/private rw,
+  owner @{run}/user/@{uid}/wayland-@{int} rw,
 
   @{sys}/module/nvidia/version r,
 
@@ -122,9 +155,10 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted,complain
 
   /dev/fuse rw,
   /dev/tty rw,
-  /dev/tty@{int} rw,
+  /dev/tty@{u8} rw,
 
-  deny owner @{user_share_dirs}/gvfs-metadata/* r,
+  #aa:only test
+  mount fstype=fuse.revokefs-fuse options=(rw, nosuid, nodev) revokefs-fuse -> /tmp/test-flatpak-*/**,
 
   profile gpg {
     include <abstractions/base>
@@ -157,8 +191,12 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted,complain
     unix type=seqpacket peer=(label=flatpak-system-helper),
     unix type=stream    peer=(label=flatpak),
 
-    mount fstype=fuse.revokefs-fuse options=(rw, nosuid, nodev) -> /var/tmp/flatpak-cache-*/*/,
+    mount fstype=fuse.revokefs-fuse options=(rw, nosuid, nodev) revokefs-fuse -> /var/tmp/flatpak-cache-*/*/,
     umount /var/tmp/flatpak-cache-*/*/,
+
+    #aa:only test
+    mount fstype=fuse.revokefs-fuse options=(rw, nosuid, nodev) revokefs-fuse -> /tmp/test-flatpak.*/**,
+    umount /tmp/test-flatpak-@{rand6}/**,
 
     include if exists <local/flatpak_fusermount>
   }

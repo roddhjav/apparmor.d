@@ -8,25 +8,21 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{exec_path} = @{bin}/fusermount{,3}
-profile fusermount @{exec_path} {
+profile fusermount @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/app/fusermount>
 
+  capability setuid,
+
   # Be able to mount ISO images
-  mount fstype={fuse,fuse.*} -> @{HOME}/*/,
-  mount fstype={fuse,fuse.*} -> @{HOME}/*/*/,
-  mount fstype={fuse,fuse.*} -> @{user_cache_dirs}/**/,
-  mount fstype={fuse,fuse.*} -> @{MOUNTS}/*/,
-  mount fstype={fuse,fuse.*} -> @{MOUNTS}/*/*/,
+  mount fstype={fuse,fuse.*} -> @{HOME}/**/,
+  mount fstype={fuse,fuse.*} -> @{MOUNTS}/**/,
   mount fstype={fuse,fuse.*} -> @{run}/user/@{uid}/*/,
   mount fstype={fuse,fuse.*} -> /var/tmp/flatpak-cache-*/*/,
   mount fstype={fuse,fuse.*} -> /tmp/.mount_*@{rand6}/,
 
-  umount @{HOME}/*/,
-  umount @{HOME}/*/*/,
-  umount @{user_cache_dirs}/**/,
-  umount @{MOUNTS}/*/,
-  umount @{MOUNTS}/*/*/,
+  umount @{HOME}/**/,
+  umount @{MOUNTS}/**/,
   umount /tmp/.mount_*/,
   umount @{run}/user/@{uid}/*/,
   umount /var/tmp/flatpak-cache-*/*/,
@@ -40,13 +36,21 @@ profile fusermount @{exec_path} {
 
   # Where to mount ISO files
   owner @{HOME}/*/ rw,
-  owner @{HOME}/*/*/ rw,
+  owner @{HOME}/**/ rw,
 
-  owner @{user_cache_dirs}/**/ rw,
-
-  /tmp/.mount_*@{rand6}/ r,
+  /tmp/.mount_*@{rand6}/ rw,
 
   @{run}/user/@{uid}/doc/ r,
+
+  #aa:only test
+  mount /tmp/tmp@{word8}/,
+  mount fstype=(fuse fuse.*) /tmp/autopkgtest.*/** -> /tmp/autopkgtest.*/**,
+  mount fstype=fuse options=(ro nodev nosuid) borgfs -> /tmp/pytest-of-ubuntu/**,
+  mount fstype=fuse options=(ro nodev nosuid) borgfs -> /tmp/tmp@{word8}/,
+  umount /tmp/tmp@{word8}/,
+  umount /tmp/autopkgtest.*/**,
+  /tmp/tmp@{word8}/ rw,
+  /tmp/tmp@{word8}/mountpoint/ rw,
 
   include if exists <local/fusermount>
 }

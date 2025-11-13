@@ -10,8 +10,8 @@ include <tunables/global>
 profile ibus-daemon @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus-session>
-  include <abstractions/bus/org.gtk.vfs.MountTracker>
-  include <abstractions/ibus>
+  include <abstractions/bus/session/org.gtk.vfs.MountTracker>
+  include <abstractions/ibus-strict>
   include <abstractions/nameservice-strict>
 
   signal (receive) set=(usr1) peer=gnome-shell,
@@ -36,7 +36,7 @@ profile ibus-daemon @{exec_path} flags=(attach_disconnected) {
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
-       peer=(name=:*, label=gnome-shell),
+       peer=(name=@{busname}, label=gnome-shell),
 
   @{exec_path} mrix,
 
@@ -55,8 +55,8 @@ profile ibus-daemon @{exec_path} flags=(attach_disconnected) {
 
   owner @{PROC}/@{pids}/fd/ r,
 
-  owner @{att}/dev/tty@{int} rw,
-  owner /dev/tty@{int} rw,
+  owner @{att}/dev/tty@{u8} rw,
+  owner /dev/tty@{u8} rw,
 
   include if exists <local/ibus-daemon>
 }

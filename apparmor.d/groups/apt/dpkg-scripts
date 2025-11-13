@@ -14,6 +14,7 @@ profile dpkg-scripts @{exec_path} {
   include <abstractions/python>
 
   capability chown,
+  capability dac_override,
   capability dac_read_search,
   capability fowner,
   capability fsetid,
@@ -51,9 +52,9 @@ profile dpkg-scripts @{exec_path} {
   #aa:lint ignore=too-wide
   # Maintainer scripts can legitimately start/restart anything
   # PU is only used as a safety fallback.
-  @{bin}/**                                       PUx,
-  @{sbin}/**                                      PUx,
-  @{lib}/**                                       PUx,
+  @{bin}/**                                     mrPUx,
+  @{sbin}/**                                    mrPUx,
+  @{lib}/**                                     mrPUx,
   /etc/**                                         PUx,
   /usr/share/**                                   PUx,
 
@@ -63,8 +64,10 @@ profile dpkg-scripts @{exec_path} {
   /*/ r,
   @{bin}/ r,
   @{bin}/* w,
-  @{lib}/ r,
-  @{lib}/** w,
+  @{sbin}/ r,
+  @{sbin}/* w,
+  @{lib}/ rw,
+  @{lib}/** wl -> @{lib}/**,
   /opt/*/** rw,
 
   #aa:lint ignore=too-wide
@@ -73,13 +76,17 @@ profile dpkg-scripts @{exec_path} {
   /usr/share/*/{,**} rw,
   /usr/local/share/*/{,**} rw,
   /var/** rw,
-  @{run}/** rw,
+  @{run}/** rwk,
   @{efi}/grub/* rw,
 
+  /tmp/dbconfig-common*.@{rand6} rw,
+  /tmp/dbconfig-common*.@{rand6}/{,**} rw,
+  /tmp/dbconfig-package-config.@{rand6} rw,
   /tmp/fmtutil.@{rand8} rw,
   /tmp/grub.@{rand10} rw,
   /tmp/sed@{rand6} rw,
   /tmp/tmp.@{rand10} rw,
+  /tmp/updateppds.@{rand6} rw,
 
   @{PROC}/@{pid}/fd/ r,
   @{PROC}/@{pid}/mountinfo r,
@@ -103,6 +110,12 @@ profile dpkg-scripts @{exec_path} {
     include <abstractions/base>
     include <abstractions/app/kmod>
 
+    @{efi}/System.map-* r,
+
+    @{lib}/modules/*/modules.* w,
+
+    @{sys}/module/compression r,
+
     include if exists <local/dpkg-scripts_kmod>
   }
 
@@ -114,7 +127,13 @@ profile dpkg-scripts @{exec_path} {
     capability sys_ptrace,
     capability sys_resource,
 
+    signal send set=(cont term) peer=systemd-tty-ask-password-agent,
+    signal send set=cont peer=child-pager,
+
+    ptrace read peer=@{p_systemd},
+
     @{bin}/systemd-tty-ask-password-agent  Px,
+    @{lib}/systemd/systemd-sysv-install   PUx,
     @{pager_path}                          Px -> child-pager,
 
     /etc/machine-id r,
@@ -164,6 +183,8 @@ profile dpkg-scripts @{exec_path} {
     @{sh_path}              rix,
     @{sbin}/ldconfig       mrix,
     @{sbin}/ldconfig.real   rix,
+
+    @{bin}/dpkg-trigger     rPx,
 
     @{lib}/ r,
     /usr/local/ r,

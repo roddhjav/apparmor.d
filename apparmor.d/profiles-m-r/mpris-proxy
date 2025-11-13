@@ -9,12 +9,19 @@ include <tunables/global>
 @{exec_path} = @{bin}/mpris-proxy
 profile mpris-proxy @{exec_path} {
   include <abstractions/base>
+  include <abstractions/bluetooth-observe>
   include <abstractions/bus-session>
   include <abstractions/bus-system>
-  include <abstractions/bus/org.bluez>
-  include <abstractions/bus/org.mpris.MediaPlayer2.Player>
 
   #aa:dbus own bus=session name=org.mpris.MediaPlayer2
+  #aa:dbus own bus=system name=org.mpris.MediaPlayer2.Player path=/{,**}
+
+  dbus send bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member=ListNames
+       peer=(name=org.freedesktop.DBus, label="@{p_dbus_session}"),
+
+  # DBus.Introspectable: allow introspection from gnome-shell
   dbus receive bus=session path=/
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect

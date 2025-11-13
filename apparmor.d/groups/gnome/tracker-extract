@@ -9,10 +9,9 @@ include <tunables/global>
 @{exec_path} = @{lib}/tracker-extract-3
 profile tracker-extract @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/bus-session>
-  include <abstractions/bus/org.gtk.Private.RemoteVolumeMonitor>
-  include <abstractions/bus/org.gtk.vfs.Daemon>
-  include <abstractions/bus/org.gtk.vfs.MountTracker>
+  include <abstractions/bus/session/org.gtk.Private.RemoteVolumeMonitor>
+  include <abstractions/bus/session/org.gtk.vfs.Daemon>
+  include <abstractions/camera>
   include <abstractions/dconf-write>
   include <abstractions/deny-sensitive-home>
   include <abstractions/disks-read>
@@ -20,6 +19,7 @@ profile tracker-extract @{exec_path} flags=(attach_disconnected) {
   include <abstractions/gnome-strict>
   include <abstractions/graphics>
   include <abstractions/gstreamer>
+  include <abstractions/media-control>
   include <abstractions/nameservice-strict>
 
   network netlink raw,
@@ -32,24 +32,20 @@ profile tracker-extract @{exec_path} flags=(attach_disconnected) {
 
   @{exec_path} mr,
 
-  /usr/share/dconf/profile/gdm r,
   /usr/share/gdm/greeter/applications/*.desktop r,
   /usr/share/ladspa/rdf/{,**} r,
   /usr/share/osinfo/{,**} r,
-  /usr/share/poppler/{,**} r,
   /usr/share/tracker3-miners/{,**} r,
   /usr/share/tracker3/{,**} r,
 
   /etc/blkid.conf r,
   /etc/fstab r,
 
-  owner @{GDM_HOME}/greeter-dconf-defaults r,
   owner @{gdm_cache_dirs}/ rw,
   owner @{gdm_cache_dirs}/fontconfig/[a-f0-9]*.cache-?{,.NEW,.LCK,.TMP-*} rw,
   owner @{gdm_cache_dirs}/gstreamer-1.0/ rw,
   owner @{gdm_cache_dirs}/gstreamer-1.0/registry.*.bin{,.tmp@{rand6}} rw,
   owner @{gdm_cache_dirs}/tracker3/{,**} rw,
-  owner @{gdm_config_dirs}/dconf/user r,
 
   # Allow to search user files
   owner @{HOME}/{,**} r,
@@ -73,11 +69,8 @@ profile tracker-extract @{exec_path} flags=(attach_disconnected) {
   owner @{PROC}/@{pid}/mounts r,
   owner @{PROC}/@{pid}/task/@{tid}/comm rw,
 
-  /dev/media@{int} r,
-  /dev/video@{int} rw,
-
   # file_inherit
-  owner /dev/tty@{int} rw,
+  owner /dev/tty@{u8} rw,
 
   include if exists <local/tracker-extract>
 }

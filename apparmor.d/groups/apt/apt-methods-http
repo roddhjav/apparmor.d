@@ -26,6 +26,7 @@ profile apt-methods-http @{exec_path} flags=(attach_disconnected) {
   signal receive peer=@{p_apt_news},
   signal receive peer=@{p_packagekitd},
   signal receive peer=apt-get,
+  signal receive peer=apt-helper,
   signal receive peer=apt,
   signal receive peer=aptitude,
   signal receive peer=role_*,
@@ -67,17 +68,27 @@ profile apt-methods-http @{exec_path} flags=(attach_disconnected) {
   # For package building
   @{user_build_dirs}/** rwkl -> @{user_build_dirs}/**,
 
-        /tmp/ r,
-  owner @{tmp}/aptitude-root.*/aptitude-download-* rw,
-  owner @{tmp}/apt-changelog-*/*.changelog rw,
+  #aa:only ubuntu
+  /tmp/ubuntu-release-upgrader-@{rand8}/*.tar.gz rw,
+  /tmp/ubuntu-release-upgrader-@{rand8}/*.tar.gz.gpg rw,
 
+        /tmp/ r,
+  owner @{tmp}/apt-changelog-*/*.changelog rw,
+  owner @{tmp}/aptitude-root.*/aptitude-download-* rw,
+
+  #aa:only ubuntu
         @{run}/ubuntu-advantage/aptnews.json rw,
   owner @{run}/ubuntu-advantage/apt-news/aptnews.json rw,
+
+  @{run}/systemd/resolve/io.systemd.Resolve rw,
 
   @{PROC}/1/cgroup r,
   @{PROC}/@{pid}/cgroup r,
 
-  owner /dev/tty@{int} rw,
+  owner /dev/tty@{u8} rw,
+
+  #aa;only test
+  owner /tmp/tmp@{word8}/{,**} rwlk,
 
   include if exists <local/apt-methods-http>
 }

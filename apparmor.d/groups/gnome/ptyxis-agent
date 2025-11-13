@@ -7,18 +7,25 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{exec_path} = @{lib}/ptyxis-agent
-profile ptyxis-agent @{exec_path} {
+profile ptyxis-agent @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus-session>
-  include <abstractions/bus/org.gtk.vfs.MountTracker>
+  include <abstractions/bus/session/org.gtk.vfs.MountTracker>
   include <abstractions/consoles>
   include <abstractions/dconf-write>
   include <abstractions/gschemas>
   include <abstractions/nameservice-strict>
 
-  signal send set=hup peer=unconfined,
+  signal send set=hup peer=@{p_systemd},
 
   ptrace read,
+
+  unix type=stream peer=(label=ptyxis),
+
+  dbus receive bus=session
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name=@{busname}, label=gnome-shell),
 
   @{exec_path} mr,
 
@@ -33,7 +40,7 @@ profile ptyxis-agent @{exec_path} {
 
   /dev/ptmx rw,
 
-  profile shell {
+  profile shell flags=(attach_disconnected) {
     include <abstractions/base>
     include <abstractions/consoles>
 
@@ -42,7 +49,18 @@ profile ptyxis-agent @{exec_path} {
     unix bind type=stream addr=@@{udbus}/bus/systemd-run/,
 
     @{bin}/systemd-run mr,
+    @{bin}/env ix,
+
+    # The shell is not confined on purpose.
     @{bin}/@{shells}   Ux,
+
+    # Some CLI program can be launched directly from Gnome Shell
+    @{lib}/**                     PUx,
+    @{bin}/**                     PUx,
+    /opt/*/**                     PUx,
+    /usr/share/*/**               PUx,
+    /usr/local/bin/**             PUx,
+    /usr/games/**                 PUx,
 
     owner @{run}/user/@{uid}/systemd/private rw,
 

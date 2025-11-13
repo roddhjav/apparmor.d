@@ -7,24 +7,19 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{exec_path} = @{bin}/remmina
-profile remmina @{exec_path} {
+profile remmina @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/audio-client>
-  include <abstractions/bus-accessibility>
-  include <abstractions/bus-session>
+  include <abstractions/avahi-observe>
   include <abstractions/bus-system>
-  include <abstractions/bus/org.a11y>
-  include <abstractions/bus/org.freedesktop.Avahi>
-  include <abstractions/bus/org.freedesktop.hostname1>
-  include <abstractions/bus/org.freedesktop.secrets>
-  include <abstractions/bus/org.gtk.Private.RemoteVolumeMonitor>
-  include <abstractions/bus/org.kde.StatusNotifierWatcher>
+  include <abstractions/bus/system/org.freedesktop.hostname1>
   include <abstractions/dconf-write>
   include <abstractions/desktop>
   include <abstractions/fontconfig-cache-read>
-  include <abstractions/ibus>
+  include <abstractions/ibus-strict>
   include <abstractions/nameservice-strict>
-  include <abstractions/notifications>
+  include <abstractions/python>
+  include <abstractions/secrets-service>
   include <abstractions/ssl_certs>
   include <abstractions/thumbnails-cache-read>
   include <abstractions/user-download-strict>
@@ -35,16 +30,17 @@ profile remmina @{exec_path} {
   network inet6 dgram,
   network netlink raw,
 
-  #aa:dbus own bus=session name=org.remmina.Remmina interface+=org.gtk.Actions
+  #aa:dbus own bus=session name=org.remmina.Remmina
   #aa:dbus talk bus=session name=org.ayatana.NotificationItem label=gnome-shell
   #aa:dbus talk bus=session name=org.gtk.vfs label="gvfsd{,-*}"
 
   @{exec_path} rm,
 
+  @{python_path} rix,
   @{open_path} rPx -> child-open-browsers,
+  @{bin}/lsb_release rPx,
 
   /usr/share/remmina/{,**} r,
-  /usr/share/themes/{,**} r,
 
   /etc/fstab r,
   /etc/ssh/ssh_config r,
@@ -61,13 +57,15 @@ profile remmina @{exec_path} {
   owner @{user_config_dirs}/remmina/{,**} rw,
   owner @{user_share_dirs}/remmina/{,**} rw,
 
-  owner @{PROC}/@{pid}/task/@{tid}/comm rw,
-  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{tmp}/remmina_log_file.log rw,
 
   owner @{run}/user/@{uid}/keyring/ssh rw,
 
   @{sys}/devices/system/node/ r,
   @{sys}/devices/system/node/node@{int}/meminfo r,
+
+  owner @{PROC}/@{pid}/task/@{tid}/comm rw,
+  owner @{PROC}/@{pid}/mountinfo r,
 
   include if exists <local/remmina>
 }

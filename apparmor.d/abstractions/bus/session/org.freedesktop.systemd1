@@ -2,24 +2,63 @@
 # Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
+# Allow managing systemd user units services. This allow full control over all services.
+# When possible use the systemctl directive instead.
+
   abi <abi/4.0>,
 
-  #aa:dbus common bus=session name=org.freedesktop.systemd1 label="@{p_systemd_user}"
+  # DBus.Properties: read properties from the interface
 
   dbus send bus=session path=/org/freedesktop/systemd1
-       interface=org.freedesktop.systemd1.Manager
-       member=GetUnit
-       peer=(name="{@{busname},org.freedesktop.systemd1}", label="@{p_systemd_user}"),
+       interface=org.freedesktop.DBus.Properties
+       member=Get
+       peer=(name=org.freedesktop.systemd1, label="@{p_systemd_user}"),
 
-  dbus send bus=session path=/org/freedesktop/systemd1/unit/app_*
+  dbus send bus=session path=/org/freedesktop/systemd1
        interface=org.freedesktop.DBus.Properties
        member=GetAll
+       peer=(name=@{busname}, label="@{p_systemd_user}"),
+
+  dbus send bus=session path=/org/freedesktop/systemd1/unit/*
+       interface=org.freedesktop.DBus.Properties
+       member={Get,GetAll}
+       peer=(label="@{p_systemd_user}"),
+
+  # DBus.Properties: receive property changed events
+
+  dbus receive bus=session path=/org/freedesktop/systemd1/unit/*
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged
+       peer=(label="@{p_systemd_user}"),
+
+  dbus send bus=system path=/org/freedesktop/systemd1
+       interface=org.freedesktop.systemd1.Manager
+       member={SetEnvironment,UnsetAndSetEnvironment,ResetFailed}
        peer=(name=org.freedesktop.systemd1, label="@{p_systemd_user}"),
 
+  # List units
   dbus send bus=session path=/org/freedesktop/systemd1
        interface=org.freedesktop.systemd1.Manager
-       member=StartTransientUnit
-       peer=(name=org.freedesktop.systemd1, label="@{p_systemd_user}"),
+       member={GetUnit,GetUnitByPIDFD,ListUnitsByPatterns}
+       peer=(label="@{p_systemd_user}"),
+
+  # Start units
+  dbus send bus=session path=/org/freedesktop/systemd1
+       interface=org.freedesktop.systemd1.Manager
+       member={StartUnit,StartTransientUnit,LoadUnit}
+       peer=(label="@{p_systemd_user}"),
+
+  # Stop units
+  dbus send bus=session path=/org/freedesktop/systemd1
+       interface=org.freedesktop.systemd1.Manager
+       member={StopUnit,KillUnit,ResetFailedUnit,Reload,JobRemoved}
+       peer=(label="@{p_systemd_user}"),
+
+  # Enabled/Disable units
+  dbus send bus=session path=/org/freedesktop/systemd1
+       interface=org.freedesktop.systemd1.Manager
+       member={DisableUnitFiles,EnableUnitFiles}
+       peer=(label="@{p_systemd_user}"),
 
   include if exists <abstractions/bus/session/org.freedesktop.systemd1.d>
 

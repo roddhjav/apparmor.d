@@ -11,32 +11,13 @@ include <tunables/global>
 profile gvfsd-recent @{exec_path} {
   include <abstractions/base>
   include <abstractions/bus-session>
-  include <abstractions/bus/org.gtk.vfs.Daemon>
-  include <abstractions/bus/org.gtk.vfs.MountTracker>
   include <abstractions/deny-sensitive-home>
   include <abstractions/freedesktop.org>
+  include <abstractions/gvfs-backend>
   include <abstractions/nameservice-strict>
   include <abstractions/thumbnails-cache-read>
 
   #aa:dbus own bus=session name=org.gtk.vfs.mountpoint_@{int}
-
-  dbus receive bus=session path=/org/gtk/vfs/mountable
-       interface=org.gtk.vfs.Mountable
-       member=Mount
-       peer=(name="@{busname}", label=gvfsd),
-  dbus send bus=session path=/org/gtk/gvfs/exec_spaw/@{int}
-       interface=org.gtk.vfs.Spawner
-       member=Spawned
-       peer=(name="@{busname}", label=gvfsd),
-  dbus send bus=session path=/org/gtk/vfs/mounttracker
-       interface=org.gtk.vfs.MountTracker
-       member=RegisterMount
-       peer=(name="@{busname}", label=gvfsd),
-
-  dbus receive bus=session
-       interface=org.freedesktop.DBus.Introspectable
-       member=Introspect
-       peer=(name=@{busname}, label=gnome-shell),
 
   @{exec_path} mr,
 

@@ -231,7 +231,7 @@ func TestAppArmorProfileFile_Integration(t *testing.T) {
 						&Include{IsMagic: true, Path: "abstractions/consoles"},
 						&File{Owner: true, Path: "@{PROC}/@{pid}/mounts", Access: []string{"r"}},
 						&Include{IsMagic: true, Path: "abstractions/base"},
-						&File{Path: "/dev/tty@{int}", Access: []string{"r", "w"}},
+						&File{Path: "/dev/tty@{u8}", Access: []string{"r", "w"}},
 						&Capability{Names: []string{"sys_ptrace"}},
 						&Ptrace{Access: []string{"read"}},
 					},

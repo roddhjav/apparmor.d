@@ -3,9 +3,21 @@
 # SPDX-License-Identifier: GPL-2.0-only
 
   include <abstractions/bus/session/org.gtk.Actions>
+  include <abstractions/bus/session/org.gtk.Menus>
   include <abstractions/bus/session/org.gtk.Settings>
+  include <abstractions/bus/session/org.gtk.vfs.MountTracker>
+
+  unix type=stream peer=(label=glycin),
+  unix type=stream peer=(label=glycin//loaders),
+
+  signal send set=kill peer=glycin,
+
+  #aa:only apparmor>=4.1
+  priority=-1 @{bin}/bwrap  Px -> glycin,
 
   @{lib}/{,@{multiarch}/}gtk*/** mr,
+
+  /usr/share/glycin-loaders/{,**} r,
 
   /etc/gtk-{3,4}.0/settings.ini r,
 
@@ -16,5 +28,7 @@
   owner @{user_config_dirs}/gtk-{3,4}.0/servers r,
   owner @{user_config_dirs}/gtk-{3,4}.0/settings.ini r,
   owner @{user_config_dirs}/gtk-{3,4}.0/window_decorations.css r,
+
+  owner @{tmp}/gdk-pixbuf-glycin-tmp.@{rand6} rw,
 
 # vim:syntax=apparmor

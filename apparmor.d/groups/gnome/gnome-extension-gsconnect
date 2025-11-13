@@ -10,25 +10,20 @@ include <tunables/global>
 @{share_dirs} += @{user_share_dirs}/gnome-shell/extensions/gsconnect@andyholmes.github.io
 
 @{exec_path} = @{share_dirs}/service/daemon.js @{share_dirs}/gsconnect-preferences
-profile gnome-extension-gsconnect @{exec_path} {
+profile gnome-extension-gsconnect @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/audio-client>
-  include <abstractions/bus-accessibility>
-  include <abstractions/bus-session>
   include <abstractions/bus-system>
-  include <abstractions/bus/org.a11y>
-  include <abstractions/bus/org.freedesktop.FileManager1>
-  include <abstractions/bus/org.freedesktop.hostname1>
-  include <abstractions/bus/org.freedesktop.login1.Session>
-  include <abstractions/bus/org.freedesktop.NetworkManager>
-  include <abstractions/bus/org.gtk.Private.RemoteVolumeMonitor>
-  include <abstractions/bus/org.gtk.vfs.Daemon>
-  include <abstractions/bus/org.gtk.vfs.MountTracker>
-  include <abstractions/bus/org.mpris.MediaPlayer2.Player>
+  include <abstractions/bus/session/org.freedesktop.FileManager1>
+  include <abstractions/bus/system/org.freedesktop.hostname1>
+  include <abstractions/bus/system/org.freedesktop.login1>
+  include <abstractions/network-manager-observe>
+  include <abstractions/bus/session/org.gtk.vfs.Daemon>
+  include <abstractions/bus/session/org.gtk.vfs.MountOperation>
   include <abstractions/dconf-write>
   include <abstractions/gnome-strict>
+  include <abstractions/mpris>
   include <abstractions/nameservice-strict>
-  include <abstractions/notifications>
   include <abstractions/p11-kit>
   include <abstractions/ssl_certs>
   include <abstractions/user-download-strict>
@@ -39,7 +34,16 @@ profile gnome-extension-gsconnect @{exec_path} {
   network inet6 stream,
   network netlink raw,
 
-  #aa:dbus own bus=session name=org.gnome.Shell.Extensions.GSConnect interface+=org.gtk.{Actions,Menus}
+  unix type=stream addr=none peer=(label=gvfsd-*, addr=none),
+
+  #aa:dbus own bus=session name=org.gnome.Shell.Extensions.GSConnect
+
+  #aa:dbus own bus=session name=org.mpris.MediaPlayer2.GSConnect.*
+
+  dbus send bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus.Monitoring
+       member=BecomeMonitor
+       peer=(name=org.freedesktop.DBus, label="@{p_dbus_session}"),
 
   dbus eavesdrop bus=session,
 
@@ -73,8 +77,10 @@ profile gnome-extension-gsconnect @{exec_path} {
 
   owner @{tmp}/.org.chromium.Chromium.@{rand6} r,
 
+  owner @{run}/user/@{uid}/app/*/.org.chromium.Chromium.@{rand6} r,
   owner @{run}/user/@{uid}/gsconnect/{,**} rw,
   owner @{run}/user/@{uid}/gvfsd/socket-@{rand8} rw,
+  owner @{run}/user/@{uid}/keyring/ssh rw,
 
   @{sys}/devices/virtual/dmi/id/chassis_type r,
 

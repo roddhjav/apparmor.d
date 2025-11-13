@@ -9,12 +9,9 @@ include <tunables/global>
 @{exec_path} = @{bin}/localsearch @{lib}/localsearch-3
 profile localsearch @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/bus-session>
   include <abstractions/bus-system>
-  include <abstractions/bus/org.freedesktop.UPower>
-  include <abstractions/bus/org.gtk.Private.RemoteVolumeMonitor>
-  include <abstractions/bus/org.gtk.vfs.Daemon>
-  include <abstractions/bus/org.gtk.vfs.MountTracker>
+  include <abstractions/bus/session/org.gtk.Private.RemoteVolumeMonitor>
+  include <abstractions/bus/session/org.gtk.vfs.Daemon>
   include <abstractions/dconf-write>
   include <abstractions/deny-sensitive-home>
   include <abstractions/disks-read>
@@ -24,6 +21,7 @@ profile localsearch @{exec_path} flags=(attach_disconnected) {
   include <abstractions/gstreamer>
   include <abstractions/nameservice-strict>
   include <abstractions/sqlite>
+  include <abstractions/upower-observe>
 
   network netlink raw,
 
@@ -45,7 +43,8 @@ profile localsearch @{exec_path} flags=(attach_disconnected) {
 
   /usr/share/localsearch3/{,**} r,
   /usr/share/osinfo/{,**} r,
-  /usr/share/poppler/{,**} r,
+
+  /etc/fstab r,
 
   # Allow to search user files
   owner @{HOME}/ r,
@@ -57,7 +56,13 @@ profile localsearch @{exec_path} flags=(attach_disconnected) {
   owner @{user_cache_dirs}/tracker3/files/ rw,
   owner @{user_cache_dirs}/tracker3/files/** rwk,
 
-  @{run}/mount/utab r,
+  owner @{GDM_HOME}/ r,
+  owner @{GDM_HOME}/*/ r,
+  owner @{gdm_cache_dirs}/tracker3/{,**} rwk,
+  owner @{gdm_config_dirs}/user-dirs.dirs r,
+
+        @{run}/mount/utab r,
+  owner @{run}/user/@{uid}/systemd/notify w,
 
   @{run}/udev/data/c@{dynamic}:@{int} r,  # For dynamic assignment range 234 to 254, 384 to 511
 

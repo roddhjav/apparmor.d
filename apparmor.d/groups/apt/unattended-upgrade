@@ -10,13 +10,13 @@ include <tunables/global>
 @{exec_path} = @{bin}/unattended-upgrade
 profile unattended-upgrade @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/apt>
   include <abstractions/bus-system>
-  include <abstractions/bus/org.freedesktop.login1>
-  include <abstractions/bus/org.freedesktop.NetworkManager>
-  include <abstractions/bus/org.freedesktop.PackageKit>
-  include <abstractions/common/apt>
+  include <abstractions/bus/system/org.freedesktop.login1>
+  include <abstractions/bus/system/org.freedesktop.PackageKit>
   include <abstractions/consoles>
   include <abstractions/nameservice-strict>
+  include <abstractions/network-manager-observe>
   include <abstractions/perl>
   include <abstractions/python>
 
@@ -37,6 +37,8 @@ profile unattended-upgrade @{exec_path} flags=(attach_disconnected) {
   signal send peer=apt-methods-http,
 
   unix type=stream addr=@@{udbus}/bus/unattended-upgr/system,
+
+  #aa:dbus own bus=system name=com.ubuntu.UnattendedUpgrade
 
   @{exec_path} mr,
 
@@ -70,35 +72,9 @@ profile unattended-upgrade @{exec_path} flags=(attach_disconnected) {
   @{lib}/zsys-system-autosnapshot  Px,
 
   /usr/share/distro-info/* r,
+  /usr/share/dbus-1/interfaces/*UnattendedUpgrade*.xml r,
 
-  @{etc_ro}/login.defs r,
-  @{etc_ro}/security/capability.conf r,
-  /etc/apport/report-ignore/{,**} r,
-  /etc/apt/*.list r,
-  /etc/apt/apt.conf.d/{,**} r,
-  /etc/debian_version r,
-  /etc/default/{,**} r,
-  /etc/dpkg/origins/{,debian,ubuntu} r,
-  /etc/fwupd/{,**} r,
-  /etc/grub.d/* r,
-  /etc/init.d/* r,
-  /etc/issue{.net,} r,
-  /etc/kernel/*.d/*grub* r,
-  /etc/legal r,
-  /etc/lsb-release r,
-  /etc/machine-id r,
-  /etc/pam.d/* r,
-  /etc/pki/fwupd-metadata/{,**} r,
-  /etc/pki/fwupd/{,**} r,
-  /etc/profile.d/* r,
-  /etc/ssh/moduli r,
-  @{etc_ro}/ssh/sshd_config r,
-  @{etc_ro}/ssh/sshd_config.d/{,*} r,
-  /etc/ufw/{,**} r,
-  /etc/update-manager/{,**} r,
-  /etc/update-motd.d/{,**} r,
-  /etc/vim/{,**} r,
-  /etc/vmware-tools/{,**} r,
+  @{etc_ro}/** r,
 
   /var/log/unattended-upgrades/{,**} rw,
   /var/crash/*.crash rw,
@@ -117,7 +93,7 @@ profile unattended-upgrade @{exec_path} flags=(attach_disconnected) {
   /var/lib/apt/periodic/ w,
   /var/log/apt/*.log* rw,
 
-        @{att}/@{run}/systemd/inhibit/@{int}.ref rw,
+        @{att}@{run}/systemd/inhibit/@{int}.ref rw,
   owner @{run}/unattended-upgrades.lock rwk,
   owner @{run}/unattended-upgrades.pid rw,
   owner @{run}/unattended-upgrades.progress rw,
@@ -127,6 +103,7 @@ profile unattended-upgrade @{exec_path} flags=(attach_disconnected) {
         @{PROC}/@{pid}/attr/current r,
         @{PROC}/@{pid}/cmdline r,
         @{PROC}/@{pid}/environ r,
+        @{PROC}/@{pid}/mounts r,
         @{PROC}/@{pids}/mountinfo r,
         @{PROC}/@{pids}/stat r,
   owner @{PROC}/@{pids}/fd/ r,

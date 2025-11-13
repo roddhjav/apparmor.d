@@ -12,36 +12,12 @@ profile gvfsd-dnssd @{exec_path} {
   include <abstractions/base>
   include <abstractions/bus-session>
   include <abstractions/bus-system>
-  include <abstractions/bus/org.freedesktop.Avahi>
-  include <abstractions/bus/org.gtk.vfs.Daemon>
-  include <abstractions/bus/org.gtk.vfs.MountTracker>
+  include <abstractions/gvfs-backend>
+  include <abstractions/bus/system/org.freedesktop.Avahi.Server>
+  include <abstractions/bus/system/org.freedesktop.Avahi.ServiceBrowser>
+  include <abstractions/bus/system/org.freedesktop.Avahi.ServiceResolver>
 
   #aa:dbus own bus=session name=org.gtk.vfs.mountpoint_dnssd
-
-  dbus receive bus=session path=/org/gtk/vfs/mountable
-       interface=org.gtk.vfs.Mountable
-       member=Mount
-       peer=(name=:*, label=gvfsd),
-
-  dbus send bus=session path=/org/gtk/gvfs/exec_spaw/@{int}
-       interface=org.gtk.vfs.Spawner
-       member=Spawned
-       peer=(name=:*, label=gvfsd),
-
-  dbus send bus=session path=/org/gtk/vfs/mounttracker
-       interface=org.gtk.vfs.MountTracker
-       member={MountLocation,LookupMount,RegisterMount}
-       peer=(name="@{busname}", label=gvfsd),
-
-  dbus receive bus=session path=/
-       interface=org.freedesktop.DBus.Introspectable
-       member=Introspect
-       peer=(name=@{busname}, label=gnome-shell),
-
-  dbus receive bus=session
-       interface=org.freedesktop.DBus.Introspectable
-       member=Introspect
-       peer=(name=@{busname}, label=gnome-shell),
 
   @{exec_path} mr,
 

@@ -1,0 +1,27 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/gnome-session-init-worker
+profile gnome-session-init-worker @{exec_path} flags=(attach_disconnected)  {
+  include <abstractions/base>
+  include <abstractions/bus-session>
+  include <abstractions/bus/session/org.freedesktop.systemd1>
+  include <abstractions/consoles>
+  include <abstractions/gnome-base>
+
+  signal receive set=term peer=gdm,
+  signal receive set=term peer=gdm-session,
+
+  @{exec_path} mr,
+
+  owner @{run}/user/@{uid}/gnome-session-leader-fifo w,
+
+  include if exists <local/gnome-session-init-worker>
+}
+
+# vim:syntax=apparmor

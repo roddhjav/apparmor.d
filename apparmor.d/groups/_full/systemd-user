@@ -2,6 +2,8 @@
 # Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
+#aa:lint ignore=too-wide
+
 # Profile for 'systemd --user', not PID 1 but the user manager for any UID.
 # It does not specify an attachment path because it is intended to be used only
 # via "px -> systemd-user" exec transitions from the `systemd` profile.
@@ -36,6 +38,11 @@ profile systemd-user flags=(attach_disconnected,mediate_deleted,complain) {
 
   #aa:dbus own bus=session name=org.freedesktop.systemd1
 
+  dbus receive bus=session
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name=@{busname}, label=gnome-shell),
+
   @{exec_path} mrix,
 
   # Systemd internal service starter and config handler (sandboxing, namespacing, cgroup, etc.)
@@ -56,7 +63,6 @@ profile systemd-user flags=(attach_disconnected,mediate_deleted,complain) {
   owner @{run}/user/@{uid}/** rwkl,
 
   @{run}/mount/utab r,
-  @{run}/systemd/notify w,
   @{run}/systemd/oom/io.systemd.ManagedOOM rw,
 
   @{run}/udev/data/+module:* r,           # Identifies kernel modules loaded by udev
@@ -80,6 +86,7 @@ profile systemd-user flags=(attach_disconnected,mediate_deleted,complain) {
         @{PROC}/@{pid}/cgroup r,
         @{PROC}/@{pid}/comm r,
         @{PROC}/@{pid}/stat r,
+        @{PROC}/1/environ r,
         @{PROC}/cmdline r,
         @{PROC}/pressure/* r,
         @{PROC}/swaps r,

@@ -7,18 +7,21 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{exec_path} = @{sbin}/cups-browsed
-profile cups-browsed @{exec_path} {
+profile cups-browsed @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/avahi-observe>
   include <abstractions/bus-system>
-  include <abstractions/bus/org.freedesktop.Avahi>
-  include <abstractions/bus/org.freedesktop.NetworkManager>
+  include <abstractions/bus/system/org.freedesktop.Avahi.RecordBrowser>
+  include <abstractions/bus/system/org.freedesktop.Avahi.Server>
+  include <abstractions/bus/system/org.freedesktop.Avahi.ServiceBrowser>
+  include <abstractions/bus/system/org.freedesktop.Avahi.ServiceResolver>
   include <abstractions/cups-client>
   include <abstractions/nameservice-strict>
+  include <abstractions/network-manager-observe>
   include <abstractions/p11-kit>
 
-#   capability net_admin,
+  capability net_admin,
   capability net_bind_service,
-#   capability sys_nice,
 
   network inet dgram,
   network inet6 dgram,
@@ -26,20 +29,12 @@ profile cups-browsed @{exec_path} {
   network inet6 stream,
   network netlink raw,
 
-  dbus receive bus=system path=/
-       interface=org.freedesktop.Avahi.Server
-       member=StateChanged
-       peer=(name=:*, label="@{p_avahi_daemon}"),
+  #aa:dbus talk bus=system name=org.cups.cupsd.Notifier  label=cups-notifier-dbus
 
   dbus receive bus=system path=/org/freedesktop/NetworkManager
        interface=org.freedesktop.NetworkManager
        member=CheckPermissions
-       peer=(name=:*, label=NetworkManager),
-
-  dbus receive bus=system path=/org/cups/cupsd/Notifier
-       interface=org.cups.cupsd.Notifier
-       member={PrinterDeleted,PrinterStopped}
-       peer=(name=@{busname}, label=cups-notifier-dbus),
+       peer=(name=@{busname}, label=NetworkManager),
 
   @{exec_path} mr,
 
@@ -57,7 +52,6 @@ profile cups-browsed @{exec_path} {
   owner @{tmp}/@{hex} rw,
 
   @{run}/cups/certs/* r,
-  @{run}/avahi-daemon/socket rw, # TODO: in abs 'avahi' ?
 
   @{PROC}/sys/net/ipv6/conf/all/disable_ipv6 r,
 

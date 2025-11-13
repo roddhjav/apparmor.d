@@ -37,6 +37,7 @@ Options:
     -s, --server      Set AppArmor for server.
     -b, --buildir DIR Root build directory.
     -F, --file        Only prebuild a given file.
+        --test        Enable test mode.
         --debug       Enable debug mode.
 `
 )
@@ -48,6 +49,7 @@ var (
 	full     bool
 	server   bool
 	debug    bool
+	test     bool
 	abi      int
 	version  float64
 	file     string
@@ -74,6 +76,7 @@ func init() {
 	flag.StringVar(&buildir, "b", "", "Root build directory.")
 	flag.StringVar(&buildir, "buildir", "", "Root build directory.")
 	flag.BoolVar(&debug, "debug", false, "Enable debug mode.")
+	flag.BoolVar(&test, "test", false, "Enable test mode.")
 }
 
 func Configure() {
@@ -118,6 +121,9 @@ func Configure() {
 		if debug {
 			builder.Register("debug")
 		}
+		if test {
+			prebuild.Test = true
+		}
 	} else if enforce {
 		builder.Register("enforce")
 	}
@@ -127,8 +133,15 @@ func Configure() {
 	}
 	switch prebuild.ABI {
 	case 3:
-		builder.Register("abi3") // Convert all profiles from abi 4.0 to abi 3.0
+		builder.Register("abi3")        // Convert all profiles from abi 4.0 to abi 3.0
+		builder.Register("apparmor4.0") // Convert convert all profiles from apparmor 4.1 to 4.0 or less
+
 	case 4:
+		// priority support was added in 4.1
+		if prebuild.Version == 4.0 {
+			builder.Register("apparmor4.0")
+		}
+
 		// Re-attach disconnected path
 		if prebuild.Distribution == "ubuntu" && prebuild.Version >= 4.1 {
 			// Ignored on ubuntu 25.04+ due to a memory leak that fully prevent
@@ -139,8 +152,11 @@ func Configure() {
 			builder.Register("stacked-dbus")
 
 		} else {
+			if !prebuild.DownStream {
+				prepare.Register("attach")
+			}
 			builder.Register("attach")
-			prepare.Register("attach")
+
 		}
 
 	default:

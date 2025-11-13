@@ -1,0 +1,42 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+# LOGPROF-SUGGEST: no
+
+# Flatpack 'all' devices gives full access to the system.
+# To limit this, we explicitly list the devices allowed, using the abstractions
+# for common devices.
+#
+# As it may lead to issues, a future implementation will leverage apparmor prompts
+# to request access to devices on demand.
+
+  abi <abi/4.0>,
+
+  include <abstractions/flatpak/devices/dri>
+  include <abstractions/flatpak/devices/input>
+  include <abstractions/flatpak/devices/kvm>
+  include <abstractions/flatpak/devices/usb>
+
+  include <abstractions/audio-server>
+  include <abstractions/camera>
+  include <abstractions/disks-read>
+  include <abstractions/hwmon>
+  include <abstractions/media-control>
+
+  @{sys}/class/*/ r,
+
+  @{sys}/devices/@{pci_bus}/ r,
+  @{sys}/devices/@{pci}/ r,
+  @{sys}/devices/** k,
+
+  owner @{PROC}/@{pid}/mountinfo r,
+
+  # Allow reading info about the physical mapping of virtual pages
+  owner @{PROC}/@{pid}/mem r,
+  owner @{PROC}/@{pids}/pagemap r,
+
+  /dev/udmabuf rw,
+
+  include if exists <abstractions/flatpak/devices/all.d>
+
+# vim:syntax=apparmor

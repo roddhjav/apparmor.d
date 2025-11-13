@@ -11,12 +11,12 @@ profile dbus-accessibility @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus-accessibility>
   include <abstractions/bus-session>
-  include <abstractions/bus/org.a11y>
-  include <abstractions/bus/org.gnome.SessionManager>
+  include <abstractions/bus/session/org.a11y>
   include <abstractions/consoles>
   include <abstractions/dconf-write>
   include <abstractions/gschemas>
   include <abstractions/nameservice-strict>
+  include <abstractions/session-manager>
 
   network inet dgram,
   network inet stream,
@@ -28,9 +28,11 @@ profile dbus-accessibility @{exec_path} flags=(attach_disconnected) {
   signal receive set=(term hup kill) peer=gdm{,-session-worker},
   signal receive set=(term hup kill) peer=gnome-session-binary,
 
+  unix type=stream addr=@@{udbus}/bus/dbus-broker-lau/user,
   unix type=stream addr=none peer=(label=xorg, addr=@/tmp/.X11-unix/X0),
+  unix type=stream addr=@@{udbus}/bus/dbus-broker-lau/user,
 
-  #aa:dbus own bus=accessibility name=org.freedesktop.DBus
+  #aa:dbus own bus=accessibility name=org.freedesktop.DBus path=/{,org/freedesktop/{dBus,DBus,dbus}}
   #aa:dbus own bus=session name=org.a11y.{B,b}us
   dbus receive bus=accessibility path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus
@@ -51,15 +53,10 @@ profile dbus-accessibility @{exec_path} flags=(attach_disconnected) {
   @{lib}/at-spi2{,-core}/at-spi2-registryd     rPx,
 
   /usr/share/dbus-1/accessibility-services/{,**} r,
-  /usr/share/dconf/profile/gdm r,
   /usr/share/defaults/at-spi2/{,**} r,
-  /usr/share/gdm/greeter-dconf-defaults r,
 
   /etc/machine-id r,
   /var/lib/dbus/machine-id r,
-
-  owner @{DESKTOP_HOME}/greeter-dconf-defaults r,
-  owner @{desktop_config_dirs}/dconf/user r,
 
   owner @{HOME}/.Xauthority r,
 

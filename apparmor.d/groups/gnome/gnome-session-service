@@ -1,0 +1,92 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/gnome-session-service
+profile gnome-session-service @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/bus-system>
+  include <abstractions/bus/session/org.freedesktop.systemd1>
+  include <abstractions/dconf-write>
+  include <abstractions/gnome-strict>
+  include <abstractions/nameservice-strict>
+  include <abstractions/screensaver>
+
+  #aa:dbus own bus=session name=org.gnome.SessionManager
+  #aa:dbus talk bus=system name=org.freedesktop.login1 label="@{p_systemd_logind}"
+
+  dbus send bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member=UpdateActivationEnvironment
+       peer=(name=org.freedesktop.DBus label="@{p_dbus_session}"),
+
+  dbus receive bus=session
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name=@{busname}, label=gnome-shell),
+
+  @{exec_path} mr,
+
+  @{bin}/session-migration                       rPx,
+
+  @{lib}/gio-launch-desktop                               rCx -> open,
+  @{lib}/@{multiarch}/glib-@{version}/gio-launch-desktop  rCx -> open,
+
+  /usr/share/gdm/greeter/applications/{,**} r,
+  /usr/share/gdm/greeter/autostart/{,*.desktop} r,
+  /usr/share/gnome-session/hardware-compatibility r,
+  /usr/share/gnome-session/sessions/*.session r,
+  /usr/share/gnome/autostart/{,*.desktop} r,
+
+  @{etc_ro}/xdg/autostart/{,*.desktop} r,
+
+  owner @{user_config_dirs}/autostart/{,*.desktop} r,
+
+        @{run}/systemd/sessions/{,@{l}}@{int}{,.ref} rw,
+  @{att}@{run}/systemd/inhibit/@{int}.ref rw,
+  @{att}@{run}/systemd/sessions/{,@{l}}@{int}{,.ref} rw,
+  @{run}/systemd/users/@{uid} r,
+
+  owner @{run}/user/@{uid}/systemd/notify w,
+
+        @{PROC}/1/cgroup r,
+  owner @{PROC}/@{pid}/cgroup r,
+
+  profile open {
+    include <abstractions/base>
+
+    @{lib}/@{multiarch}/glib-@{version}/gio-launch-desktop  mr,
+    @{lib}/gio-launch-desktop                               mr,
+
+    @{sh_path}                    rPx -> gnome-session-service//shell,
+    @{lib}/**                     PUx,
+    @{bin}/**                     PUx,
+    /opt/*/**                     PUx,
+    /usr/share/*/**               PUx,
+    /usr/local/bin/**             PUx,
+    /usr/games/**                 PUx,
+
+    include if exists <local/gnome-session-service_open>
+  }
+
+  profile shell {
+    include <abstractions/base>
+
+    @{sh_path} mr,
+
+    @{bin}/im-launch Px,
+    @{bin}/input-remapper-control PUx,
+
+    /dev/tty rw,
+
+    include if exists <local/gnome-session-service_shell>
+  }
+
+  include if exists <local/gnome-session-service>
+}
+
+# vim:syntax=apparmor

@@ -11,7 +11,9 @@ include <tunables/global>
 profile ssh @{exec_path} {
   include <abstractions/base>
   include <abstractions/consoles>
+  include <abstractions/devices-u2f>
   include <abstractions/devices-usb>
+  include <abstractions/kerberosclient>
   include <abstractions/nameservice-strict>
 
   network inet stream,
@@ -35,6 +37,7 @@ profile ssh @{exec_path} {
   @{etc_ro}/ssh/sshd_config r,
   @{etc_ro}/ssh/sshd_config.d/{,*} r,
   /etc/machine-id r,
+  /etc/gss/mech.d/{,*} r,
 
   owner @{HOME}/@{XDG_SSH_DIR}/{,*} r,
   owner @{HOME}/@{XDG_SSH_DIR}/known_hosts{,.*} rwl,
@@ -43,22 +46,19 @@ profile ssh @{exec_path} {
   owner @{user_projects_dirs}/**/ssh/{,*} r,
   owner @{user_projects_dirs}/**/config r,
 
-  audit owner @{tmp}/ssh-*/{,agent.@{int}} rwkl,
+  owner @{tmp}/krb5cc_* rwk,
 
+  owner @{run}/user/@{uid}/gcr/ssh rw, #  gcr-ssh-agent socket (i.e. Gnome only)
   owner @{run}/user/@{uid}/gvfsd-sftp/@{hex} rwl -> @{run}/user/@{uid}/gvfsd-sftp/@{hex}.@{rand},
   owner @{run}/user/@{uid}/gvfsd-sftp/@{hex}.@{rand} rwl -> @{run}/user/@{uid}/gvfsd-sftp/@{hex}.@{rand},
   owner @{run}/user/@{uid}/keyring/ssh rw,
-
-  @{sys}/ r,
-  @{sys}/bus/ r,
-  @{sys}/class/ r,
-  @{sys}/class/hidraw/ r,
-  @{sys}/class/hidraw/hidraw@{int} r,
+  owner @{run}/user/@{uid}/openssh_agent rw,
 
   owner @{PROC}/@{pid}/loginuid r,
   owner @{PROC}/@{pid}/fd/ r,
 
-  /dev/hidraw@{int} rwk,
+  #aa:only test
+  owner @{tmp}/ssh-@{rand10}/{,agent.@{int}} rw,
 
   include if exists <local/ssh>
 }

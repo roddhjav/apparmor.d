@@ -1,0 +1,38 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/xdg-terminal-exec
+profile xdg-terminal-exec @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/desktop-files>
+  include <abstractions/nameservice-strict>
+
+  @{exec_path} mr,
+
+  @{sh_path}            rix,
+  @{bin}/{m,g,}awk       ix,
+  @{bin}/find            ix,
+  @{bin}/ls              ix,
+  @{bin}/md5sum          ix,
+  @{bin}/tr              ix,
+
+  @{bin}/gnome-terminal  Px,
+  @{bin}/ptyxis          Px,
+
+  /usr/share/xdg-terminal-exec/{,**} r,
+
+  owner @{HOME}/ r,
+
+  owner @{user_cache_dirs}/xdg-terminal-exec rw,
+  owner @{user_config_dirs}/*-xdg-terminals.list r,
+  owner @{user_config_dirs}/xdg-terminals.list r,
+
+  include if exists <local/xdg-terminal-exec>
+}
+
+# vim:syntax=apparmor

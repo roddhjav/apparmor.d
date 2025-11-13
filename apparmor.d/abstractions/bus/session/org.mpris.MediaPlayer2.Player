@@ -1,0 +1,47 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023-2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+  abi <abi/4.0>,
+
+  # DBus.Properties: read properties from the interface
+
+  dbus send bus=system path=/org/mpris/MediaPlayer2
+       interface=org.freedesktop.DBus.Properties
+       member={Get,GetAll}
+       peer=(name="{@{busname},org.freedesktop.DBus}"),
+
+  # DBus.Properties: send properties to the mpris controlers
+
+  dbus receive bus=session path=/org/mpris/MediaPlayer2
+       interface=org.freedesktop.DBus.Properties
+       member={Get,GetAll}
+       peer=(name=@{busname}, label="@{pp_mpris}"),
+
+  # DBus.Properties: receive property changed events
+
+  dbus receive bus=session path=/org/mpris/MediaPlayer2
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged
+       peer=(name=@{busname}, label="@{pp_mpris}"),
+
+  # DBus.Introspectable: allow clients to introspect the service
+  dbus send bus=system path=/org/mpris/MediaPlayer2
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name=@{busname}),
+
+  dbus receive bus=session path=/org/mpris/MediaPlayer2
+       interface=org.mpris.MediaPlayer2.Player
+       member={Seeked,Next,Play,PlayPause,Pause}
+       peer=(name=@{busname}),
+
+  # https://specifications.freedesktop.org/mpris-spec/latest/Player_Interface.html#Signal:Seeked
+  dbus send bus=session path=/org/mpris/MediaPlayer2
+       interface=org.mpris.MediaPlayer2.Player
+       member=Seeked
+       peer=(name=org.freedesktop.DBus),
+
+  include if exists <abstractions/bus/session/org.mpris.MediaPlayer2.Player.d>
+
+# vim:syntax=apparmor

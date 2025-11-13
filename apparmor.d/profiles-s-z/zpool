@@ -6,17 +6,19 @@ abi <abi/4.0>,
 
 include <tunables/global>
 
-@{exec_path} = /{usr/,}{local/,}{s,}bin/zpool
+@{exec_path} = @{bin}/zpool
 profile zpool @{exec_path} {
   include <abstractions/base>
   include <abstractions/disks-read>
 
   capability sys_admin,
 
+  mount fstype=zfs options=(rw noatime) -> @{MOUNTS}/,
+
   @{exec_path} mr,
 
   @{sh_path}        rix,
-  /{usr/,}{local/,}lib/zfs-linux/zpool.d/* rix,
+  @{lib}/zfs-linux/zpool.d/* rix,
 
   /usr/share/zfs/{,**} r,
 
@@ -38,7 +40,7 @@ profile zpool @{exec_path} {
   @{PROC}/@{pids}/mounts r,
   @{PROC}/sys/kernel/spl/hostid r,
 
-  /dev/pts/@{int} rw,
+  /dev/pts/@{u16} rw,
   /dev/zfs rw,
 
   include if exists <local/zpool>

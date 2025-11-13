@@ -27,6 +27,7 @@ profile gpg @{exec_path} {
   @{bin}/gpgconf           rPx,
   @{bin}/gpgsm             rPx,
   @{lib}/{,gnupg/}scdaemon rPx,
+  @{lib}/{,gnupg/}keyboxd  rPx,
 
   /usr/share/terminfo/** r,
   /usr/share/keyrings/** rw,        #aa:only apt
@@ -68,14 +69,24 @@ profile gpg @{exec_path} {
   owner @{tmp}/ostree-gpg-@{rand6}/ r,
   owner @{tmp}/ostree-gpg-@{rand6}/** rwkl -> /tmp/ostree-gpg-@{rand6}/**,
 
+  #aa:only ubuntu
+  /tmp/ubuntu-release-upgrader-@{rand8}/*.tar.gz rw,
+  /tmp/ubuntu-release-upgrader-@{rand8}/*.tar.gz.gpg rw,
+
   owner /tmp/@{int}@{int} rw,
 
   owner @{run}/user/@{uid}/gnupg/d.*/ rw,
+  owner @{run}/user/@{uid}/gnupg/d.*/S.gpg-agent rw,
   owner @{run}/user/@{uid}/gnupg/S.gpg-agent rw,
 
   owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/task/@{tid}/comm rw,
   owner @{PROC}/@{pid}/task/@{tid}/stat rw,
+
+  #aa:only test
+  /tmp/*-test@{word8}/{,**} rwlk,
+  /tmp/*tests@{word8}/{,**} rwlk,
+  /tmp/gpg.*/{,**} rwlk,
 
   include if exists <local/gpg>
 }

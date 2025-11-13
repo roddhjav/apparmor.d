@@ -33,11 +33,18 @@ profile dbus-system flags=(attach_disconnected) {
 
   ptrace read peer=@{p_systemd},
 
-  #aa:dbus own bus=system name=org.freedesktop.DBus path=/{,org/freedesktop/DBus}
-  dbus receive bus=system path=/org/freedesktop/DBus
-       interface=org.freedesktop.DBus
-       member=Hello
-       peer=(name=@{busname}),
+  # Internal stack dbus-system//&unconfined
+  signal (send receive) set=kill peer=dbus-system//&unconfined,
+  unix type=stream peer=(label=unconfined),
+
+  unix type=seqpacket peer=(label=flatpak-system-helper),
+  unix bind type=stream addr=@@{udbus}/bus/dbus-broker-lau/system,
+
+  #aa:dbus own bus=system name=org.freedesktop.DBus path=/{,org/freedesktop/{dBus,DBus,dbus}}
+
+  # Larger than what is allowed in the directive above, needed due to complex
+  # setup with stack and peer names.
+  dbus receive bus=system interface=org.freedesktop.DBus,
 
   dbus receive bus=system path=/org/freedesktop/systemd1
        interface=org.freedesktop.systemd1.Activator
@@ -59,29 +66,29 @@ profile dbus-system flags=(attach_disconnected) {
   /etc/machine-id r,
   /var/lib/dbus/machine-id r,
 
-  @{att}/@{desktop_share_dirs}/icc/ r,
-  @{att}/@{desktop_share_dirs}/icc/edid-@{hex32}.icc r,
-  @{att}/@{user_share_dirs}/icc/ r,
-  @{att}/@{user_share_dirs}/icc/edid-@{hex32}.icc r,
+  @{att}@{desktop_share_dirs}/icc/ r,
+  @{att}@{desktop_share_dirs}/icc/edid-@{hex32}.icc r,
+  @{att}@{user_share_dirs}/icc/ r,
+  @{att}@{user_share_dirs}/icc/edid-@{hex32}.icc r,
 
   # Dbus can receive any user files
   @{HOME}/** r,
 
-  @{att}/@{run}/systemd/inhibit/@{int}.ref rw,
-  @{att}/@{run}/systemd/sessions/{,@{l}}@{int}.ref rw,
+  @{att}@{run}/systemd/inhibit/@{int}.ref rw,
+  @{att}@{run}/systemd/sessions/{,@{l}}@{int}.ref rw,
 
-  @{run}/systemd/notify w,
   @{run}/systemd/users/@{int} r,
 
   @{sys}/kernel/security/apparmor/.access rw,
   @{sys}/kernel/security/apparmor/features/dbus/mask r,
   @{sys}/module/apparmor/parameters/enabled r,
 
-        @{PROC}/@{pid}/attr/apparmor/current r,
-        @{PROC}/@{pid}/cmdline r,
-        @{PROC}/@{pid}/environ r,
-        @{PROC}/@{pid}/mounts r,
-        @{PROC}/@{pid}/oom_score_adj r,
+        @{PROC}/@{pids}/attr/apparmor/current r,
+        @{PROC}/@{pids}/cmdline r,
+        @{PROC}/@{pids}/environ r,
+        @{PROC}/@{pids}/mounts r,
+        @{PROC}/@{pids}/oom_score_adj r,
+        @{PROC}/@{pids}/status r,
         @{PROC}/cmdline r,
         @{PROC}/sys/kernel/osrelease r,
   owner @{PROC}/@{pid}/fd/ r,
@@ -91,6 +98,7 @@ profile dbus-system flags=(attach_disconnected) {
 
   @{att}/dev/dri/card@{int} rw,
   @{att}/dev/input/event@{int} rw,
+  @{att}/dev/pts/ptmx rw,
 
   include if exists <local/dbus-system>
 }

@@ -8,10 +8,10 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{exec_path} = @{lib}/systemd/systemd-logind
-profile systemd-logind @{exec_path} flags=(attach_disconnected) {
+profile systemd-logind @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/base>
   include <abstractions/bus-system>
-  include <abstractions/bus/org.freedesktop.PolicyKit1>
+  include <abstractions/bus/system/org.freedesktop.PolicyKit1>
   include <abstractions/common/systemd>
   include <abstractions/consoles>
   include <abstractions/devices-usb>
@@ -86,31 +86,28 @@ profile systemd-logind @{exec_path} flags=(attach_disconnected) {
   @{run}/udev/data/c81:@{int}  r,         # For video4linux
   @{run}/udev/data/c89:@{int} r,          # For I2C bus interface
   @{run}/udev/data/c116:@{int} r,         # For ALSA
-  @{run}/udev/data/c226:@{int} r,         # For /dev/dri/card*
+  @{run}/udev/data/c226:@{int} r,         # For DRI card /dev/dri/card@{int}
   @{run}/udev/data/c@{dynamic}:@{int} r,  # For dynamic assignment range 234 to 254, 384 to 511
 
-  @{att}/@{run}/systemd/notify w,
-  @{att}/@{run}/systemd/userdb/io.systemd.DynamicUser rw,
-  @{att}/@{run}/systemd/userdb/io.systemd.Multiplexer rw,
+  @{att}@{run}/systemd/userdb/io.systemd.DynamicUser rw,
+  @{att}@{run}/systemd/userdb/io.systemd.Multiplexer rw,
 
   @{run}/systemd/inhibit/ rw,
-  @{run}/systemd/inhibit/.#* rw,
-  @{run}/systemd/inhibit/@{int}{,.ref} rw,
+  @{run}/systemd/inhibit/* rwlk,
   @{run}/systemd/seats/ rw,
-  @{run}/systemd/seats/.#seat* rw,
-  @{run}/systemd/seats/seat@{int} rw,
-  @{run}/systemd/sessions/{,*}  rw,
-  @{run}/systemd/sessions/*.ref rw,
-  @{run}/systemd/shutdown/.#scheduled* rw,
-  @{run}/systemd/shutdown/scheduled rw,
+  @{run}/systemd/seats/* rwlk,
+  @{run}/systemd/sessions/ rw,
+  @{run}/systemd/sessions/* rwlk,
+  @{run}/systemd/shutdown/ rw,
+  @{run}/systemd/shutdown/* rwlk,
   @{run}/systemd/users/ rw,
-  @{run}/systemd/users/.#* rw,
-  @{run}/systemd/users/@{uid} rw,
+  @{run}/systemd/users/* rwlk,
 
   @{sys}/bus/serial-base/drivers/port/uevent r,
   @{sys}/class/drm/ r,
   @{sys}/class/power_supply/ r,
   @{sys}/devices/** r,
+  @{sys}/devices/**/uevent rw,
   @{sys}/devices/**/brightness rw,
   @{sys}/devices/virtual/tty/tty@{int}/active r,
   @{sys}/firmware/efi/efivars/LoaderEntries-@{uuid} r,
@@ -124,22 +121,25 @@ profile systemd-logind @{exec_path} flags=(attach_disconnected) {
   @{sys}/module/vt/parameters/default_utf8 r,
   @{sys}/power/{state,resume_offset,resume,disk} r,
 
-        @{PROC}/@{pid}/cgroup r,
-        @{PROC}/@{pid}/comm r,
-        @{PROC}/@{pid}/fd/ r,
-        @{PROC}/@{pid}/mountinfo r,
-        @{PROC}/@{pid}/sessionid r,
-        @{PROC}/@{pid}/stat r,
+        @{PROC}/@{pids}/cgroup r,
+        @{PROC}/@{pids}/comm r,
+        @{PROC}/@{pids}/fd/ r,
+        @{PROC}/@{pids}/mountinfo r,
+        @{PROC}/@{pids}/sessionid r,
+        @{PROC}/@{pids}/stat r,
+        @{PROC}/@{pids}/status r,
         @{PROC}/1/cmdline r,
         @{PROC}/pressure/* r,
         @{PROC}/swaps r,
         @{PROC}/sysvipc/{shm,sem,msg} r,
   owner @{PROC}/@{pid}/fdinfo/@{int} r,
 
+        /dev/dri/card@{int} rw,
   @{att}/dev/dri/card@{int} rw,
+
   /dev/input/event@{int} rw,  # Input devices (keyboard, mouse, etc)
   /dev/mqueue/ r,
-  /dev/tty@{int} rw,
+  /dev/tty@{u8} rw,
   /dev/shm/{,**/} rw,
 
   include if exists <local/systemd-logind>

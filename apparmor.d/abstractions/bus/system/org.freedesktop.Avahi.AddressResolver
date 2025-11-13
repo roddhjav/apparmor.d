@@ -1,0 +1,25 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Address resolving
+
+  abi <abi/4.0>,
+
+  dbus send bus=system path=/
+       interface=org.freedesktop.Avahi.Server
+       member=AddressResolverNew
+       peer=(name=org.freedesktop.Avahi, label="@{p_avahi_daemon}"),
+
+  dbus send bus=system path=/Client@{int}/AddressResolver@{int}
+       interface=org.freedesktop.Avahi.AddressResolver
+       member=Free
+       peer=(name=org.freedesktop.Avahi, label="@{p_avahi_daemon}"),
+
+  dbus receive bus=system path=/Client@{int}/AddressResolver@{int}
+       interface=org.freedesktop.Avahi.AddressResolver
+       peer=(name=@{busname}, label="@{p_avahi_daemon}"),
+
+  include if exists <abstractions/bus/system/org.freedesktop.Avahi.AddressResolver.d>
+
+# vim:syntax=apparmor

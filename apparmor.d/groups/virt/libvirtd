@@ -19,7 +19,8 @@ profile libvirtd @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus-session>
   include <abstractions/bus-system>
-  include <abstractions/bus/org.gtk.vfs.MountTracker>
+  include <abstractions/bus/session/org.gtk.vfs.MountTracker>
+  include <abstractions/bus/system/org.freedesktop.login1>
   include <abstractions/consoles>
   include <abstractions/devices-usb>
   include <abstractions/disks-write>
@@ -93,10 +94,18 @@ profile libvirtd @{exec_path} flags=(attach_disconnected) {
   # Allow changing to our UUID-based named profiles
   change_profile -> libvirt-@{uuid},
 
+  #aa:dbus talk bus=system name=org.freedesktop.machine1 label=systemd-machined
+
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
        peer=(name=@{busname}, label=gnome-shell),
+
+  # include <abstractions/bus/system/own>
+  dbus send bus=system path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member=ListNames
+       peer=(name=org.freedesktop.DBus, label="@{p_dbus_system}"),
 
   @{exec_path} mr,
 
@@ -112,16 +121,18 @@ profile libvirtd @{exec_path} flags=(attach_disconnected) {
   @{lib}/xen-common/bin/xen-toolstack              rPUx,
   @{lib}/xen/bin/*                                 rPUx,
 
-  @{sbin}/dmidecode                           rPx,
-  @{sbin}/dnsmasq                             rPx,
   @{bin}/kmod                                 rCx -> kmod,
-  @{sbin}/lvm                                 rPUx,
-  @{bin}/mdevctl                              rPx,
+  @{bin}/mdevctl                              rPx, #aa:lint ignore=sbin
+  @{bin}/ssh                                  rPx,
   @{bin}/swtpm                                rPx,
   @{bin}/swtpm_ioctl                          rPx,
   @{bin}/swtpm_setup                          rPx,
   @{bin}/udevadm                              rPx,
-  @{bin}/virtiofsd                            rux, # TODO: WIP
+  @{bin}/virtiofsd                            rPx, # TODO: WIP
+  @{sbin}/dmidecode                           rPx,
+  @{sbin}/dnsmasq                             rPx,
+  @{sbin}/lvm                                 rPUx,
+  @{sbin}/mdevctl                             rPx,
   @{sbin}/virtlogd                            rPx,
 
   @{sh_path}                    rix,
@@ -143,6 +154,7 @@ profile libvirtd @{exec_path} flags=(attach_disconnected) {
   /usr/share/iproute2/{,**} r,
   /usr/share/libvirt/{,**} r,
   /usr/share/misc/pci.ids r,
+  /usr/share/OVMF/{,**} rk,
   /usr/share/qemu/{,**} r,
 
   @{etc_rw}/apparmor.d/libvirt/libvirt-@{uuid} r,
@@ -162,18 +174,18 @@ profile libvirtd @{exec_path} flags=(attach_disconnected) {
   @{user_vm_dirs}/{,**} rwk,
   @{user_publicshare_dirs}/{,**} rwk,
 
+  owner @{user_cache_dirs}/libvirt/{,**} rwk,
   owner @{user_config_dirs}/libvirt/{,**} rwk,
 
   owner @{run}/user/@{uid}/libvirt/ rw,
   owner @{run}/user/@{uid}/libvirt/** rwk,
 
-  @{att}/@{run}/systemd/inhibit/@{int}.ref rw,
+  @{att}@{run}/systemd/inhibit/@{int}.ref rw,
 
   @{run}/libvirt/ rw,
   @{run}/libvirt/** rwk,
   @{run}/libvirtd.pid wk,
   @{run}/lock/LCK.._pts_@{int} rw,
-  @{run}/systemd/notify w,
   @{run}/utmp rk,
 
   @{run}/udev/data/+*:* r,                # Identifies all subsystems
@@ -181,28 +193,41 @@ profile libvirtd @{exec_path} flags=(attach_disconnected) {
   @{run}/udev/data/n@{int} r,             # For network interfaces
 
   @{sys}/bus/[a-z]*/devices/ r,
+  @{sys}/bus/*/uevent r,
   @{sys}/bus/pci/drivers_probe w,
   @{sys}/bus/pci/drivers/*/unbind w,
+  @{sys}/bus/hid/drivers/*/uevent r,
+  @{sys}/bus/usb/drivers/*/uevent r,
   @{sys}/class/[a-z]*/ r,
   @{sys}/devices/**/uevent r,
-  @{sys}/devices/@{pci}/{class,revision,subsystem_vendor,subsystem_device} r,
-  @{sys}/devices/@{pci}/{config,numa_node,device,vendor} r,
+  @{sys}/devices/@{pci}/class r,
+  @{sys}/devices/@{pci}/config r,
+  @{sys}/devices/@{pci}/device r,
   @{sys}/devices/@{pci}/driver_override w,
   @{sys}/devices/@{pci}/mdev_supported_types/{,**} r,
   @{sys}/devices/@{pci}/mdev_supported_types/*/create w,
   @{sys}/devices/@{pci}/net/*/{,**} r,
+  @{sys}/devices/@{pci}/numa_node r,
   @{sys}/devices/@{pci}/remove w,
   @{sys}/devices/@{pci}/resource r,
+  @{sys}/devices/@{pci}/revision r,
   @{sys}/devices/@{pci}/sriov_totalvfs r,
+  @{sys}/devices/@{pci}/subsystem_device r,
+  @{sys}/devices/@{pci}/subsystem_vendor r,
+  @{sys}/devices/@{pci}/vendor r,
 
+  @{sys}/devices/@{pci}/distance r,
+  @{sys}/devices/@{pci}/meminfo r,
   @{sys}/devices/system/cpu/cpu@{int}/cache/{,**} r,
   @{sys}/devices/system/cpu/cpu@{int}/topology/{,**} r,
   @{sys}/devices/system/cpu/isolated r,
   @{sys}/devices/system/cpu/present r,
   @{sys}/devices/system/node/ r,
   @{sys}/devices/system/node/node@{int}/ r,
-  @{sys}/devices/system/node/node@{int}/{cpumap,distance,meminfo} r,
+  @{sys}/devices/system/node/node@{int}/cpumap r,
+  @{sys}/devices/system/node/node@{int}/distance r,
   @{sys}/devices/system/node/node@{int}/hugepages/{,**} r,
+  @{sys}/devices/system/node/node@{int}/meminfo r,
   @{sys}/devices/virtual/dmi/id/* r,
   @{sys}/devices/virtual/net/{,**} rw,
 
@@ -212,6 +237,7 @@ profile libvirtd @{exec_path} flags=(attach_disconnected) {
   @{sys}/kernel/mm/hugepages/{,**} r,
   @{sys}/kernel/security/apparmor/profiles r,
 
+  @{sys}/module/*/uevent r,
   @{sys}/module/kvm_*/parameters/* r,
   @{sys}/module/vhost/parameters/max_mem_regions r,
 

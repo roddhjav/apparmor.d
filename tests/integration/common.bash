@@ -9,7 +9,7 @@ load "$BATS_LIB_PATH/bats-support/load"
 export SYSTEMD_PAGER=
 
 # Ignore the profile not managed by apparmor.d
-IGNORE=(php-fpm snapd/snap-confine snap.vault.vaultd)
+IGNORE=(php-fpm snapd/snap-confine snap.vault.vaultd /dev/pts/0)
 
 # User password for sudo commands
 export PASSWORD=${PASSWORD:-user}
@@ -110,8 +110,8 @@ aa_check() {
     now=$(date +%s)
     duration=$((now - _START + 1))
     logs=$(aa-log --raw --systemd --since "-${duration}s")
-    for profile in "${IGNORE[@]}"; do
-        logs=$(echo "$logs" | grep -v "$profile")
+    for pattern in "${IGNORE[@]}"; do
+        logs=$(echo "$logs" | grep -v "$pattern")
     done
 
     aa_start

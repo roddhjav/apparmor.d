@@ -8,16 +8,17 @@ include <tunables/global>
 
 profile gnome-desktop-thumbnailers flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/common/bwrap>
+  include <abstractions/bwrap>
   include <abstractions/gnome-strict>
   include <abstractions/gstreamer>
+  include <abstractions/mime>
 
   capability dac_override,
 
   @{bin}/bwrap mr,
   @{bin}/*-thumbnailer rix,
+  @{lib}/glycin-loaders/@{d}+/glycin-* Px -> gnome-desktop-thumbnailers//&glycin//loaders,
 
-  /usr/share/ladspa/rdf/{,**} r,
   /usr/share/poppler/{,**} r,
 
   owner @{user_cache_dirs}/gnome-desktop-thumbnailer/{,**} rw,
@@ -27,8 +28,7 @@ profile gnome-desktop-thumbnailers flags=(attach_disconnected) {
   owner @{tmp}/gnome-desktop-thumbnailer.png w,
   owner @{tmp}/gsf-thumbnailer-@{rand6} rw,
 
-  owner /dev/shm/lttng-ust-wait-@{int}-@{uid} rw,
-  owner /dev/shm/lttng-ust-wait-@{int} rw,
+  owner @{PROC}/@{pid}/mountinfo r,
 
   include if exists <local/gnome-desktop-thumbnailers>
 }

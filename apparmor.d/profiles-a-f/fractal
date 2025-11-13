@@ -10,6 +10,7 @@ include <tunables/global>
 profile fractal @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/audio-client>
+  include <abstractions/bus-system>
   include <abstractions/common/gnome>
   include <abstractions/gstreamer>
   include <abstractions/nameservice-strict>
@@ -22,14 +23,12 @@ profile fractal @{exec_path} flags=(attach_disconnected) {
   network inet6 stream,
   network netlink raw,
 
-  signal send set=kill peer=fractal//bwrap,
+  #aa:dbus own bus=session name=org.gnome.Fractal
 
   @{exec_path} mr,
 
   @{open_path}  rPx -> child-open-help,
-  @{bin}/bwrap  rCx -> bwrap,
 
-  /usr/share/glycin-loaders/{,**} r,
   /usr/share/xml/iso-codes/{,**} r,
 
   owner @{tmp}/.@{rand6} rw,
@@ -43,24 +42,6 @@ profile fractal @{exec_path} flags=(attach_disconnected) {
   owner @{PROC}/@{pid}/mountinfo r,
 
   /dev/ r,
-
-  profile bwrap flags=(attach_disconnected) {
-    include <abstractions/base>
-    include <abstractions/common/bwrap>
-
-    signal receive set=kill peer=fractal,
-
-    @{bin}/bwrap mr,
-    @{lib}/glycin-loaders/*/glycin-* rix,
-
-    owner @{run}/user/@{uid}/fractal/.tmp@{rand6} r,
-
-    owner @{PROC}/@{pid}/fd/ r,
-
-    deny @{user_share_dirs}/gvfs-metadata/* r,
-
-    include if exists <local/fractal_bwrap>
-  }
 
   include if exists <local/fractal>
 }

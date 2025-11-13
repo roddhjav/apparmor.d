@@ -41,6 +41,7 @@ profile sshd-session @{exec_path} flags=(attach_disconnected) {
   network netlink raw,
 
   unix type=stream peer=(label=sshd),
+  unix type=stream peer=(label=sshd-auth),
 
   dbus send bus=system path=/org/freedesktop/login1
        interface=org.freedesktop.login1.Manager
@@ -60,8 +61,10 @@ profile sshd-session @{exec_path} flags=(attach_disconnected) {
 
   @{etc_rw}/motd r,
   @{etc_rw}/motd.d/{,**} r,
+  /etc/legal r,
   /etc/machine-id r,
   /etc/motd r,
+  /etc/ssh/moduli r,
 
   /var/lib/lastlog/ r,
   /var/lib/lastlog/lastlog2.db rwk,
@@ -73,7 +76,7 @@ profile sshd-session @{exec_path} flags=(attach_disconnected) {
 
   owner @{user_cache_dirs}/{,motd*} rw,
 
-  @{att}/@{run}/systemd/sessions/@{int}.ref w,
+  @{att}@{run}/systemd/sessions/@{int}.ref w,
 
         @{run}/cockpit/active.issue r,
         @{run}/motd.d/{,*} r,
@@ -85,6 +88,9 @@ profile sshd-session @{exec_path} flags=(attach_disconnected) {
   owner @{PROC}/@{pid}/uid_map r,
 
   /dev/ptmx rw,
+
+  #aa:only test
+  owner @{tmp}/ssh-@{rand10}/{,agent.@{int}} rw,
 
   include if exists <local/sshd-session>
 }

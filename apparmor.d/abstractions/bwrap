@@ -1,0 +1,73 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+# NEEDS-VARIABLE: att
+
+# Bubblewrap creates isolated environments for applications. It requires the
+# sys_admin capability to enter a new PID namespace. Until this capability is
+# dropped, the process can potentially escape confinement. For this reason, we
+# typically transition to another application profile, even if it requires
+# managing a stacked set of profiles since bwrap sets the no_new_privs (nnp)
+# flag. The resulting profile should take the form: <bwrap>//&<app>
+#
+# A profile using this abstraction still needs to set:
+# - the flag: attach_disconnected
+# - bwrap execution: '@{bin}/bwrap ix,' or memory mapping '@{bin}/bwrap mr,'
+
+  abi <abi/4.0>,
+
+  userns,
+
+  capability net_admin,
+  capability setpcap,
+  capability sys_admin,
+  capability sys_ptrace,
+
+  network netlink raw,
+
+  mount               options=(rw rbind)                               -> /newroot/{,**},
+  mount               options=(rw rbind)                 /tmp/newroot/ -> /tmp/newroot/,
+  mount               options=(rw silent rprivate)                     -> /oldroot/,
+  mount               options=(rw silent rslave)                       -> /,
+  mount fstype=devpts options=(rw nosuid noexec)                devpts -> /newroot/dev/pts/,
+  mount fstype=proc   options=(rw nosuid nodev noexec)            proc -> /newroot/@{PROC}/,
+  mount fstype=tmpfs  options=(rw nosuid nodev)                  tmpfs -> /newroot/{,**},
+  mount fstype=tmpfs  options=(rw nosuid nodev)                  tmpfs -> /tmp/,
+
+  remount /newroot/{,**},
+
+  umount /,
+  umount /oldroot/,
+
+  #aa:only debian whonix
+  mount -> /newroot/{,**}, # Debian does not support the remount rule.
+
+  pivot_root oldroot=/newroot/ /newroot/,
+  pivot_root oldroot=/tmp/oldroot/ /tmp/,
+
+  owner /newroot/{,**} w,
+
+  owner /tmp/newroot/ w,
+  owner /tmp/oldroot/ w,
+
+  owner / r,
+  @{att}/ r,
+  @{att}@{run}/.userns r,
+
+        @{PROC}/sys/kernel/overflowgid r,
+        @{PROC}/sys/kernel/overflowuid r,
+        @{PROC}/sys/user/max_user_namespaces r,
+        @{PROC}/sys/kernel/seccomp/actions_avail r,
+  owner @{PROC}/@{pid}/fd/ r,
+
+        @{att}@{PROC}/sys/user/max_user_namespaces rw,
+  owner @{att}@{PROC}/@{pid}/cgroup r,
+  owner @{att}@{PROC}/@{pid}/fd/ r,
+  owner @{att}@{PROC}/@{pid}/gid_map rw,
+  owner @{att}@{PROC}/@{pid}/mountinfo r,
+  owner @{att}@{PROC}/@{pid}/setgroups rw,
+  owner @{att}@{PROC}/@{pid}/uid_map rw,
+
+  include if exists <abstractions/bwrap.d>
+
+# vim:syntax=apparmor

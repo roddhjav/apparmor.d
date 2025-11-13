@@ -7,23 +7,30 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{exec_path} = @{bin}/gnome-clocks
-profile gnome-clocks @{exec_path} {
+profile gnome-clocks @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/audio-client>
   include <abstractions/bus-system>
-  include <abstractions/bus/org.freedesktop.portal.Desktop>
-  include <abstractions/bus/org.gtk.vfs.MountTracker>
   include <abstractions/common/gnome>
-  include <abstractions/gstreamer>
+  include <abstractions/gstreamer-registry>
+  include <abstractions/localization>
   include <abstractions/nameservice-strict>
 
   network netlink raw,
 
-  #aa:dbus own bus=session name=org.gnome.clocks interface+=org.gtk.Actions
   #aa:dbus own bus=session name=org.gnome.clocks.SearchProvider interface+=org.gnome.Shell.SearchProvider2
+  #aa:dbus own bus=session name=org.gnome.clocks
 
   @{exec_path} mr,
   @{open_path}  rPx -> child-open-help,
+  @{gstreamer_path}  Cx -> gstreamer,
+
+  profile gstreamer {
+    include <abstractions/base>
+    include <abstractions/gstreamer>
+
+    include if exists <local/gnome-clocks_gstreamer>
+  }
 
   include if exists <local/gnome-clocks>
 }

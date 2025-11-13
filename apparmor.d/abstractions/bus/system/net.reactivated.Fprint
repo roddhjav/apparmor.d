@@ -1,0 +1,26 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+  abi <abi/4.0>,
+
+  #aa:dbus common bus=system name=net.reactivated.Fprint label="@{p_fprintd}"
+
+  dbus send bus=system path=/net/reactivated/Fprint/Manager
+       interface=net.reactivated.Fprint.Manager
+       member={GetDevices,GetDefaultDevice}
+       peer=(name="@{busname}", label="@{p_fprintd}"),
+
+  dbus send bus=system path=/net/reactivated/Fprint/Manager
+       interface=net.reactivated.Fprint.Manager
+       member={GetDevices,GetDefaultDevice}
+       peer=(name=net.reactivated.Fprint),
+
+  dbus send bus=system path=/net/reactivated/Fprint/Manager
+       interface=net.reactivated.Fprint.Manager
+       member={GetDevices,GetDefaultDevice}
+       peer=(name=net.reactivated.Fprint, label="@{p_fprintd}"),
+
+  include if exists <abstractions/bus/system/net.reactivated.Fprint.d>
+
+# vim:syntax=apparmor

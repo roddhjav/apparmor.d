@@ -2,6 +2,7 @@
 # Copyright (C) 2022 Mikhail Morfikov
 # Copyright (C) 2022-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
+# NEEDS-VARIABLE: domain
 
 # This abstraction is for chromium based application. Chromium based browsers
 # need to use abstractions/app/chromium instead.
@@ -14,38 +15,48 @@
 
   abi <abi/4.0>,
 
+  include <abstractions/nss>
+
   userns,
 
+  # Required for dropping into PID namespace. Keep in mind that until the
+  # process drops this capability it can escape confinement, but once it
+  # drops CAP_SYS_ADMIN we are ok.
+  capability sys_admin,
+
+  # All of these are for sanely dropping from root and chrooting
   capability setgid, # If kernel.unprivileged_userns_clone = 1
   capability setuid, # If kernel.unprivileged_userns_clone = 1
-  capability sys_admin,
   capability sys_chroot,
   capability sys_ptrace,
 
-  owner @{HOME}/.pki/ rw,
-  owner @{HOME}/.pki/nssdb/ rw,
-  owner @{HOME}/.pki/nssdb/pkcs11.txt rw,
-  owner @{HOME}/.pki/nssdb/{cert9,key4}.db rwk,
-  owner @{HOME}/.pki/nssdb/{cert9,key4}.db-journal rw,
-
   owner @{user_share_dirs}/.@{domain}.@{rand6} rw,
 
+        @{tmp}/ r,
   owner @{tmp}/.@{domain}.@{rand6} rw,
   owner @{tmp}/.@{domain}.@{rand6}/ rw,
-  owner @{tmp}/.@{domain}.@{rand6}/SingletonCookie w,
-  owner @{tmp}/.@{domain}.@{rand6}/SingletonSocket w,
+  owner @{tmp}/.@{domain}.@{rand6}/*.@{image_ext} rw,
+  owner @{tmp}/.@{domain}.@{rand6}/SingletonCookie rw,
+  owner @{tmp}/.@{domain}.@{rand6}/SingletonSocket rw,
+  owner @{tmp}/.@{domain}.scoped_dir.@{rand6}/ rw,
+  owner @{tmp}/.@{domain}.scoped_dir.@{rand6}/SingletonCookie rw,
+  owner @{tmp}/.@{domain}.scoped_dir.@{rand6}/SingletonSocket rw,
   owner @{tmp}/scoped_dir@{rand6}/ rw,
-  owner @{tmp}/scoped_dir@{rand6}/SingletonCookie w,
-  owner @{tmp}/scoped_dir@{rand6}/SingletonSocket w,
-  owner @{tmp}/scoped_dir@{rand6}/SS w,
+  owner @{tmp}/scoped_dir@{rand6}/SingletonCookie rw,
+  owner @{tmp}/scoped_dir@{rand6}/SingletonSocket rw,
+  owner @{tmp}/scoped_dir@{rand6}/SS rw,
 
         /dev/shm/ r,
   owner /dev/shm/.@{domain}.@{rand6} rw,
 
   @{sys}/devices/system/cpu/kernel_max r,
+
+  # Show the list of active tty
+  @{sys}/devices/virtual/tty/tty@{int}/active r,
+
+  # Allow getting the manufacturer and model of the computer where chromium is currently running.
   @{sys}/devices/virtual/dmi/id/product_name r,
   @{sys}/devices/virtual/dmi/id/sys_vendor r,
-  @{sys}/devices/virtual/tty/tty@{int}/active r,
 
   # If kernel.unprivileged_userns_clone = 1
   owner @{PROC}/@{pid}/setgroups w,

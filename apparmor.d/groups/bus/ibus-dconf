@@ -11,7 +11,7 @@ profile ibus-dconf @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus-session>
   include <abstractions/bus-system>
-  include <abstractions/bus/org.gtk.vfs.MountTracker>
+  include <abstractions/bus/session/org.gtk.vfs.MountTracker>
   include <abstractions/dconf-write>
   include <abstractions/nameservice-strict>
 
@@ -21,12 +21,9 @@ profile ibus-dconf @{exec_path} flags=(attach_disconnected) {
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
-       peer=(name=:*, label=gnome-shell),
+       peer=(name=@{busname}, label=gnome-shell),
 
   @{exec_path} mr,
-
-  /usr/share/gdm/greeter-dconf-defaults r,
-  /usr/share/dconf/profile/gdm r,
 
   /etc/dconf/db/ibus r,
   /etc/dconf/profile/ibus r,
@@ -38,14 +35,13 @@ profile ibus-dconf @{exec_path} flags=(attach_disconnected) {
   owner @{desktop_config_dirs}/dconf/user rw,
   owner @{desktop_config_dirs}/ibus/bus/ r,
   owner @{desktop_config_dirs}/ibus/bus/@{hex32}-unix-{,wayland-}@{int} r,
-  owner @{DESKTOP_HOME}/greeter-dconf-defaults r,
 
   owner @{user_cache_dirs}/ibus/dbus-@{rand8} rw,
 
   owner @{user_config_dirs}/ibus/bus/ r,
   owner @{user_config_dirs}/ibus/bus/@{hex32}-unix-{,wayland-}@{int} r,
 
-  owner /dev/tty@{int} rw,
+  owner /dev/tty@{u8} rw,
 
   include if exists <local/ibus-dconf>
 }

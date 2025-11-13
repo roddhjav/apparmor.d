@@ -1,0 +1,41 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# gjs started from gnome-shell should (in theory) only run gnome extensions.
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{share_dirs}  = /usr/share/gnome-shell/extensions/
+@{share_dirs} += @{user_share_dirs}/gnome-shell/extensions/
+
+@{exec_path} = @{bin}/gjs-console
+profile gnome-extension {
+  include <abstractions/base>
+  include <abstractions/accessibility>
+  include <abstractions/bus-session>
+  include <abstractions/bus-system>
+  include <abstractions/desktop-files>
+  include <abstractions/fonts>
+  include <abstractions/mime>
+
+  @{exec_path} mr,
+
+  # Used to track the extensions supported by this profile
+  @{share_dirs}/tilingshell@ferrarodomenico.com/*.js r,
+  @{share_dirs}/ubuntu-dock@ubuntu.com/*.js r,
+
+  /usr/share/xkeyboard-config-2/{,**} r,
+
+  owner @{run}/user/@{uid}/gvfsd/socket-@{rand8} rw,
+
+  owner @{PROC}/@{pid}/mounts r,
+  owner @{PROC}/@{pid}/stat r,
+  owner @{PROC}/@{pid}/task/@{tid}/stat r,
+
+  include if exists <local/gnome-extension>
+}
+
+# vim:syntax=apparmor

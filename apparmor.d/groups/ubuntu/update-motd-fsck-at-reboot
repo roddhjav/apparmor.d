@@ -7,8 +7,10 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{exec_path} = @{lib}/update-notifier/update-motd-fsck-at-reboot
-profile update-motd-fsck-at-reboot @{exec_path} {
+profile update-motd-fsck-at-reboot @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+
+  capability dac_read_search,
 
   @{exec_path} mr,
 
@@ -28,8 +30,9 @@ profile update-motd-fsck-at-reboot @{exec_path} {
   @{run}/motd.dynamic.new w,
 
   @{PROC}/uptime r,
+  @{PROC}/@{pid}/mountinfo r,
 
-  /dev/tty@{int} rw,
+  /dev/tty@{u8} rw,
 
   profile mount {
     include <abstractions/base>
@@ -45,7 +48,7 @@ profile update-motd-fsck-at-reboot @{exec_path} {
 
     @{PROC}/@{pid}/mountinfo r,
 
-    /dev/tty@{int} rw,
+    /dev/tty@{u8} rw,
 
     include if exists <local/update-motd-fsck-at-reboot_mount>
   }

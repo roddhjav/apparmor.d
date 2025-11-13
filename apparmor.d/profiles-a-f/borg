@@ -40,6 +40,8 @@ profile borg @{exec_path} {
   @{bin}/pass                   rPx,
   @{bin}/ssh                    rPx,
 
+  /usr/share/iproute2/group r,
+
   # Dirs that can be backed up
   /            r,
   /etc/{,**}   r,
@@ -73,10 +75,16 @@ profile borg @{exec_path} {
   owner /var/tmp/tmp*/file rw,
   owner /var/tmp/tmp*/idx rw,
 
+        @{PROC}/sys/fs/pipe-max-size r,
   owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/stat r,
 
   /dev/fuse rw,
+
+  #aa:only test
+  mount fstype=fuse options=(ro nosuid nodev) borgfs -> /tmp/autopkgtest.@{rand6}/**,
+  mount fstype=fuse options=(ro nosuid nodev) borgfs -> /tmp/tmp@{word8}/**,
+  owner /tmp/tmp@{word8}/{,**} rwlk,
 
   profile ccache {
     include <abstractions/base>
@@ -98,6 +106,10 @@ profile borg @{exec_path} {
     include <abstractions/base>
     include <abstractions/app/fusermount>
 
+    capability setuid,
+
+    unix type=stream peer=(label=borg),
+
     mount fstype=fuse options=(ro nosuid nodev) borgfs -> @{MOUNTS}/,
     mount fstype=fuse options=(ro nosuid nodev) borgfs -> @{MOUNTS}/*/,
 
@@ -106,6 +118,10 @@ profile borg @{exec_path} {
 
     @{MOUNTS}/ r,
     @{MOUNTS}/*/ r,
+
+    #aa:only test
+    mount fstype=fuse options=(ro nosuid nodev) borgfs -> /tmp/autopkgtest.@{rand6}/**,
+    mount fstype=fuse options=(ro nosuid nodev) borgfs -> /tmp/tmp@{word8}/**,
 
     include if exists <local/borg_fusermount>
   }

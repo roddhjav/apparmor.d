@@ -24,18 +24,30 @@ profile archivemount @{exec_path} {
   owner @{HOME}/*/ r,
   owner @{HOME}/*/*/ r,
 
+  #aa:only test
+  mount fstype=fuse.archivemount options=(rw nodev nosuid) archivemount -> /tmp/tmp.@{rand10}/{,**},
+  /tmp/tmp.@{rand10}/{,**} rw,
+  /dev/fuse rw,
+
   profile fusermount {
     include <abstractions/base>
     include <abstractions/app/fusermount>
 
-    mount fstype={fuse,fuse.archivemount} -> @{HOME}/*/,
-    mount fstype={fuse,fuse.archivemount} -> @{HOME}/*/*/,
+    capability setuid,
+
+    unix type=stream peer=(label=archivemount),
+
+    mount fstype={fuse,fuse.archivemount} options=(rw nodev nosuid) archivemount -> @{HOME}/*/,
+    mount fstype={fuse,fuse.archivemount} options=(rw nodev nosuid) archivemount -> @{HOME}/*/*/,
 
     umount @{HOME}/*/,
     umount @{HOME}/*/*/,
 
     /**.{tar,tar.gz,zip} r,
     /**.{TAR,TAR.GZ,ZIP} r,
+
+    #aa:only test
+    mount fstype=fuse.archivemount options=(rw nodev nosuid) archivemount -> /tmp/tmp.@{rand10}/**,
 
     include if exists <local/archivemount_fusermount>
   }

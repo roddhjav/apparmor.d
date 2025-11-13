@@ -35,7 +35,9 @@ profile systemd-udevd @{exec_path} flags=(attach_disconnected) {
   network inet6 dgram,
   network netlink raw,
 
-  unix type=stream addr=@@{udbus}/bus/udevadm/,
+  unix bind type=dgram  addr=@@{udbus},
+  unix bind type=stream addr=@@{udbus}/bus/udevadm/,
+
 
   @{exec_path} mrix,
 
@@ -45,13 +47,16 @@ profile systemd-udevd @{exec_path} flags=(attach_disconnected) {
   @{bin}/ls                                rix,
   @{bin}/mknod                             rix,
   @{bin}/nfsrahead                         rix,
+  @{sbin}/partx                            rix,
   @{bin}/setfacl                           rix,
   @{bin}/sg_inq                            rix,
   @{bin}/systemd-run                       rix, # TODO: rCx -> run,
   @{bin}/unshare                           rix,
   @{sbin}/ethtool                          rix,
+  @{sbin}/kpartx                           rix,
 
   @{bin}/ddcutil                           rPx,
+  @{bin}/input-remapper-control           rPUx,
   @{bin}/kmod                              rCx -> kmod,
   @{bin}/nvidia-modprobe                   rPx -> child-modprobe-nvidia,
   @{bin}/snap                              rPx,
@@ -64,6 +69,7 @@ profile systemd-udevd @{exec_path} flags=(attach_disconnected) {
   @{sbin}/kdump-config                     rPx,
   @{sbin}/lvm                              rPx,
   @{sbin}/multipath                        rPx,
+  @{sbin}/sysctl                           rPx,
   @{sbin}/u-d-c-print-pci-ids              rPx,
 
   @{lib}/crda/*                            rPUx,
@@ -72,6 +78,7 @@ profile systemd-udevd @{exec_path} flags=(attach_disconnected) {
   @{lib}/open-iscsi/net-interface-handler  rPx,
   @{lib}/pm-utils/power.d/*                rPUx,
   @{lib}/snapd/snap-device-helper          rPx,
+  @{lib}/switcheroo-control-check-discrete-amdgpu rPUx,
   @{lib}/systemd/systemd-*                 rPx,
   @{lib}/udev/*                            rPUx,
   /usr/share/hplip/config_usb_printer.py   rPUx,
@@ -93,16 +100,16 @@ profile systemd-udevd @{exec_path} flags=(attach_disconnected) {
   /etc/systemd/network/ r,
   /etc/systemd/network/@{int2}-*.link r,
 
+  / r,
+
   @{run}/credentials/systemd-udev-load-credentials.service/ r,
   @{run}/modprobe.d/ r,
   @{run}/systemd/network/ r,
   @{run}/systemd/network/*.link rw,
-  @{run}/systemd/notify rw,
   @{run}/systemd/private rw,
   @{run}/systemd/seats/seat@{int} r,
 
-  @{att}/@{run}/systemd/notify w,
-  @{att}/@{run}/udev/control rw,
+  @{att}@{run}/udev/control rw,
 
   @{run}/udev/ rw,
   @{run}/udev/** rwk,
@@ -145,6 +152,8 @@ profile systemd-udevd @{exec_path} flags=(attach_disconnected) {
 
     capability net_admin,
     capability sys_ptrace,
+
+    ptrace read peer=@{p_systemd},
 
     include if exists <local/systemd-udevd_systemctl>
   }

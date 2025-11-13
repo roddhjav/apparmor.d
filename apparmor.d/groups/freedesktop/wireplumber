@@ -7,31 +7,34 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{exec_path} = @{bin}/wireplumber
-profile wireplumber @{exec_path} {
+profile wireplumber @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/audio-server>
+  include <abstractions/bluetooth-control>
   include <abstractions/bus-session>
   include <abstractions/bus-system>
-  include <abstractions/bus/org.bluez>
-  include <abstractions/bus/org.freedesktop.impl.portal.PermissionStore>
-  include <abstractions/bus/org.freedesktop.RealtimeKit1>
-  include <abstractions/bus/org.freedesktop.UPower>
+  include <abstractions/bus/session/org.freedesktop.impl.portal.PermissionStore>
+  include <abstractions/bus/system/org.freedesktop.RealtimeKit1>
   include <abstractions/camera>
   include <abstractions/devices-usb>
   include <abstractions/media-control>
   include <abstractions/nameservice-strict>
+  include <abstractions/upower-observe>
 
   network bluetooth raw,
   network bluetooth seqpacket,
   network bluetooth stream,
   network netlink raw,
 
+  ptrace read,
+
   #aa:dbus own bus=session name=org.freedesktop.ReserveDevice1.Audio@{int}
+  #aa:dbus own bus=session name=org.pipewire.Telephony
 
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
-       peer=(name=:*, label=gnome-shell),
+       peer=(name=@{busname}, label=gnome-shell),
 
   dbus receive bus=system path=/midi{,server@{int}}
        interface=org.freedesktop.DBus.ObjectManager
@@ -47,6 +50,8 @@ profile wireplumber @{exec_path} {
   /usr/share/spa-*/bluez@{int}/{,*} r,
   /usr/share/wireplumber/{,**} r,
 
+  / r,
+
   owner @{desktop_local_dirs}/ w,
   owner @{desktop_state_dirs}/ w,
   owner @{desktop_state_dirs}/wireplumber/{,**} rw,
@@ -59,10 +64,6 @@ profile wireplumber @{exec_path} {
   owner @{run}/user/@{uid}/pipewire-@{int} rw,
   owner @{run}/user/@{uid}/pipewire-@{int}-manager rw,
 
-        /dev/shm/lttng-ust-wait-@{int} rw,
-  owner /dev/shm/lttng-ust-wait-@{int}-@{uid} rw,
-  owner /dev/shm/lttng-ust-wait-@{int}-@{int} rw,
-
   @{run}/systemd/users/@{uid} r,
 
   @{run}/udev/data/c14:@{int} r,          # Open Sound System (OSS)
@@ -74,16 +75,20 @@ profile wireplumber @{exec_path} {
   @{sys}/devices/**/device:*/{,**/}path r,
   @{sys}/devices/**/sound/**/pcm_class r,
   @{sys}/devices/**/sound/**/uevent r,
+  @{sys}/devices/**/uevent r,
   @{sys}/devices/system/node/ r,
   @{sys}/devices/system/node/node@{int}/meminfo r,
   @{sys}/devices/virtual/dmi/id/bios_vendor r,
+  @{sys}/devices/virtual/dmi/id/board_vendor r,
   @{sys}/devices/virtual/dmi/id/product_name r,
   @{sys}/devices/virtual/dmi/id/sys_vendor r,
 
+        @{PROC}/@{pids}/cgroup r,
+        @{PROC}/@{pids}/cmdline r,
+        @{PROC}/@{pids}/status r,
         @{PROC}/1/cgroup r,
         @{PROC}/1/status r,
-        @{PROC}/@{pid}/cmdline r,
-  owner @{PROC}/@{pid}/cgroup r,
+  owner @{PROC}/@{pid}/stat r,
   owner @{PROC}/@{pid}/task/@{tid}/comm rw,
 
   /dev/udmabuf rw,

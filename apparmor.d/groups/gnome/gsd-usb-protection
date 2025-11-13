@@ -7,14 +7,22 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{exec_path} = @{lib}/gsd-usb-protection
-profile gsd-usb-protection @{exec_path} {
+profile gsd-usb-protection @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus-session>
+  include <abstractions/bus-system>
+  include <abstractions/bus/system/org.freedesktop.login1>
   include <abstractions/dconf-write>
   include <abstractions/gschemas>
   include <abstractions/screensaver>
+  include <abstractions/session-manager>
 
   #aa:dbus own bus=session name=org.gnome.SettingsDaemon.UsbProtection
+
+  dbus receive bus=session
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name=@{busname}, label=gnome-shell),
 
   @{exec_path} mr,
 

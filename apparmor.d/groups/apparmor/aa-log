@@ -7,7 +7,7 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{exec_path} = @{bin}/aa-log
-profile aa-log @{exec_path} {
+profile aa-log @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/consoles>
   include <abstractions/nameservice-strict>
@@ -21,7 +21,12 @@ profile aa-log @{exec_path} {
   /var/log/audit/* r,
   /var/log/syslog* r,
 
-  /dev/tty@{int} rw,
+  @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/session-@{int}.scope/cpu.max r,
+
+  owner @{PROC}/@{pid}/cgroup r,
+  owner @{PROC}/@{pid}/mountinfo r,
+
+  /dev/tty@{u8} rw,
 
   profile journalctl {
     include <abstractions/base>

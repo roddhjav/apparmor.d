@@ -6,11 +6,14 @@ abi <abi/4.0>,
 
 include <tunables/global>
 
+@{appid} = @{word}.@{word}.@{word}{,.@{word}}
+
 @{exec_path} = @{lib}/flatpak-system-helper
-profile flatpak-system-helper @{exec_path} {
+profile flatpak-system-helper @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/base>
+  include <abstractions/accounts-observe>
   include <abstractions/bus-system>
-  include <abstractions/bus/org.freedesktop.PolicyKit1>
+  include <abstractions/bus/system/org.freedesktop.PolicyKit1>
   include <abstractions/mime>
   include <abstractions/nameservice-strict>
   include <abstractions/p11-kit>
@@ -31,13 +34,15 @@ profile flatpak-system-helper @{exec_path} {
   unix type=seqpacket peer=(label=dbus-system),
   unix type=seqpacket peer=(label=flatpak),
   unix type=seqpacket peer=(label=flatpak//fusermount),
+  unix type=seqpacket peer=(label=gnome-software),
+  unix type=seqpacket peer=(label=gnome-software//fusermount),
   unix type=seqpacket peer=(label=unconfined),
 
   #aa:dbus own bus=system name=org.freedesktop.Flatpak.SystemHelper
 
   @{exec_path} mr,
 
-  @{bin}/bwrap         rPUx,
+  @{bin}/bwrap          rCx -> bwrap,
   @{bin}/gpg{,2}        rCx -> gpg,
   @{bin}/gpgconf        rCx -> gpg,
   @{bin}/gpgsm          rCx -> gpg,
@@ -63,6 +68,66 @@ profile flatpak-system-helper @{exec_path} {
         @{PROC}/@{pids}/status r,
   owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/fdinfo/@{int} r,
+
+  profile bwrap flags=(attach_disconnected) {
+    include <abstractions/base>
+    include <abstractions/bwrap>
+    include <abstractions/nameservice-strict>
+
+    capability dac_override,
+    capability dac_read_search,
+    capability sys_resource,
+
+    @{bin}/bwrap   mr,
+
+    /app/bin/*    rix,
+
+    @{bin}/bsdtar  ix,
+    @{bin}/cp      ix,
+    @{bin}/install ix,
+    @{bin}/mv      ix,
+    @{bin}/rm      ix,
+    @{bin}/sed     ix,
+    @{bin}/tar     ix,
+    @{bin}/xz      ix,
+
+    @{bin}/gtk{,4}-update-icon-cache  Px -> flatpak-system-helper//bwrap//&gtk-update-icon-cache,
+    @{bin}/update-desktop-database    Px -> flatpak-system-helper//bwrap//&update-desktop-database,
+    @{bin}/update-mime-database       Px -> flatpak-system-helper//bwrap//&update-mime-database,
+
+    /usr/share/flatpak/triggers/desktop-database.trigger ix,
+    /usr/share/flatpak/triggers/gtk-icon-cache.trigger   ix,
+    /usr/share/flatpak/triggers/mime-database.trigger    ix,
+
+    @{system_share_dirs}/** r,
+    @{system_share_dirs}/*ubuntu/applications/.mimeinfo.cache.* rw,
+    @{system_share_dirs}/*ubuntu/applications/mimeinfo.cache w,
+    @{system_share_dirs}/applications/.mimeinfo.cache.* w,
+    @{system_share_dirs}/applications/mimeinfo.cache w,
+    @{system_share_dirs}/icons/**/.icon-theme.cache rw,
+    @{system_share_dirs}/icons/**/icon-theme.cache w,
+    @{system_share_dirs}/icons/hicolor/index.theme w,
+    @{system_share_dirs}/mime/{,**} w,
+
+    @{user_share_dirs}/** r,
+    @{user_share_dirs}/.mimeinfo.cache.* w,
+    @{user_share_dirs}/**/.icon-theme.cache w,
+    @{user_share_dirs}/**/icon-theme.cache w,
+    @{user_share_dirs}/applications/.mimeinfo.cache.* w,
+    @{user_share_dirs}/applications/mimeinfo.cache w,
+    @{user_share_dirs}/mime/{,**} w,
+    @{user_share_dirs}/mimeinfo.cache w,
+
+    /app/extra/** rw,
+    /bindfile@{rand6} rw,
+    /usr/.ref rk,
+
+    /tmp/#@{int} rw,
+
+    /dev/tty rw,
+
+    include if exists <local/flatpak-system-helper_bwrap>
+  }
 
   profile gpg {
     include <abstractions/base>

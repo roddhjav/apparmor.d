@@ -1,0 +1,32 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Zane Zakraisek <zz@eng.utah.edu>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/tickrs
+profile tickrs @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+  include <abstractions/ssl_certs>
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  owner @{user_config_dirs}/tickrs/{,**}  rw,
+
+  @{sys}/fs/cgroup/**/cpu.max         r,
+  owner @{PROC}/@{pid}/cgroup         r,
+
+  include if exists <local/tickrs>
+}
+
+# vim:syntax=apparmor

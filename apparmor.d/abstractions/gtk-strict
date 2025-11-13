@@ -1,0 +1,86 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021-2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+  abi <abi/4.0>,
+
+  include <abstractions/bus/session/org.gtk.Actions>
+  include <abstractions/bus/session/org.gtk.Menus>
+  include <abstractions/bus/session/org.gtk.Settings>
+  include <abstractions/bus/session/org.gtk.vfs.MountTracker>
+
+  unix type=stream peer=(label=glycin),
+  unix type=stream peer=(label=glycin//loaders),
+
+  signal send set=kill peer=glycin,
+
+  #aa:only apparmor>=4.1
+  priority=-1 @{bin}/bwrap  Px -> glycin,
+
+  @{lib}/{,@{multiarch}/}gtk-2.0/{,**} mr,
+  @{lib}/{,@{multiarch}/}gtk-3.0/{,**} mr,
+  @{lib}/{,@{multiarch}/}gtk-4.0/{,**} mr,
+
+  /usr/share/gtksourceview-2.0/{,**} r,
+  /usr/share/gtksourceview-3.0/{,**} r,
+  /usr/share/gtksourceview-4/{,**} r,
+  /usr/share/gtksourceview-5/{,**} r,
+
+  /usr/share/glycin-loaders/{,**} r,
+
+  /usr/share/gtk-2.0/ r,
+  /usr/share/gtk-2.0/gtkrc r,
+
+  /usr/share/gtk-3.0/ r,
+  /usr/share/gtk-3.0/settings.ini r,
+
+  /usr/share/gtk-4.0/ r,
+  /usr/share/gtk-4.0/settings.ini r,
+
+  /etc/gtk/gtkrc r,
+
+  /etc/gtk-2.0/ r,
+  /etc/gtk-2.0/gtkrc r,
+
+  /etc/gtk-3.0/ r,
+  /etc/gtk-3.0/*.conf r,
+  /etc/gtk-3.0/settings.ini r,
+
+  /etc/gtk-4.0/ r,
+  /etc/gtk-4.0/*.conf r,
+  /etc/gtk-4.0/settings.ini r,
+
+  owner @{HOME}/.gtk r,
+  owner @{HOME}/.gtkrc r,
+  owner @{HOME}/.gtkrc-2.0 r,
+  owner @{HOME}/.gtk-bookmarks r,
+
+  owner @{user_cache_dirs}/gtk-4.0/ rw,
+  owner @{user_cache_dirs}/gtk-4.0/vulkan-pipeline-cache/{,*} rw,
+  owner @{user_cache_dirs}/gtkrc r,
+  owner @{user_cache_dirs}/gtkrc-2.0 r,
+
+  owner @{user_config_dirs}/gtk-2.0/ rw,
+  owner @{user_config_dirs}/gtk-2.0/gtkfilechooser.ini* rw,
+
+  owner @{user_config_dirs}/gtk-3.0/ rw,
+  owner @{user_config_dirs}/gtk-3.0/bookmarks r,
+  owner @{user_config_dirs}/gtk-3.0/colors.css r,
+  owner @{user_config_dirs}/gtk-3.0/gtk.css r,
+  owner @{user_config_dirs}/gtk-3.0/servers r,
+  owner @{user_config_dirs}/gtk-3.0/settings.ini r,
+  owner @{user_config_dirs}/gtk-3.0/window_decorations.css r,
+
+  owner @{user_config_dirs}/gtk-4.0/ rw,
+  owner @{user_config_dirs}/gtk-4.0/bookmarks r,
+  owner @{user_config_dirs}/gtk-4.0/colors.css r,
+  owner @{user_config_dirs}/gtk-4.0/gtk.css r,
+  owner @{user_config_dirs}/gtk-4.0/servers r,
+  owner @{user_config_dirs}/gtk-4.0/settings.ini r,
+  owner @{user_config_dirs}/gtk-4.0/window_decorations.css r,
+
+  owner @{tmp}/gdk-pixbuf-glycin-tmp.@{rand6} rw,
+
+  include if exists <abstractions/gtk-strict.d>
+
+# vim:syntax=apparmor

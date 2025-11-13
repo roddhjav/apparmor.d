@@ -15,9 +15,12 @@ include <tunables/global>
 @{exec_path} = @{bin}/@{name} @{lib_dirs}/@{name}
 profile thunderbird @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/app/bwrap-glycin> #aa:only apparmor>=4.1
   include <abstractions/app/firefox>
   include <abstractions/user-download-strict>
   include <abstractions/user-read-strict>
+
+  signal (send receive) set=kill peer=glycin//&thunderbird,
 
   #aa:dbus own bus=session name=org.mozilla.thunderbird
 
@@ -25,6 +28,11 @@ profile thunderbird @{exec_path} flags=(attach_disconnected) {
 
   @{lib_dirs}/glxtest    rPx -> thunderbird//&thunderbird-glxtest,
   @{lib_dirs}/vaapitest  rPx -> thunderbird//&thunderbird-vaapitest,
+
+  #aa:only apparmor>=4.1
+  # glycin-loaders sandboxed profile stack
+  @{bin}/bwrap                          Px -> thunderbird//&glycin,
+  @{lib}/glycin-loaders/@{d}+/glycin-*  Px -> thunderbird//&glycin//&glycin//loaders,
 
   @{lib}/@{multiarch}/qt5/plugins/kf5/org.kde.kwindowsystem.platforms/KF5WindowSystemKWaylandPlugin.so mr,
   @{lib}/@{multiarch}/qt5/plugins/kf5/org.kde.kwindowsystem.platforms/KF5WindowSystemX11Plugin.so mr,
@@ -55,9 +63,10 @@ profile thunderbird @{exec_path} flags=(attach_disconnected) {
 
   owner @{tmp}/MozillaMailnews/ rw,
   owner @{tmp}/MozillaMailnews/*.msf rw,
-  owner @{tmp}/nscopy.tmp rw,
-  owner @{tmp}/nsemail{,-@{int}}.eml rw,
-  owner @{tmp}/nsma{,-@{int}} rw,
+  owner @{tmp}/ns* rw,
+  owner @{tmp}/org.mozilla.thunderbird/ w,
+  owner @{tmp}/org.mozilla.thunderbird/.parentlock wk,
+  owner @{tmp}/org.mozilla.thunderbird/lock w,
   owner @{tmp}/pid-@{pid}/{,**} w,
   owner @{tmp}/remote-settings-startup-bundle- rw,
 

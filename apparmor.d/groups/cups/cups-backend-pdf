@@ -25,9 +25,8 @@ profile cups-backend-pdf @{exec_path} {
 
   @{sh_path}             rix,
   @{bin}/cp              rix,
-  @{bin}/gs{,.bin}       rix,
+  @{bin}/gs{,.bin}       rCx -> gs,
   @{bin}/gsc             rix,
-  @{lib}/ghostscript/**  mr,
 
   /usr/share/ghostscript/{,**} r,
 
@@ -43,6 +42,20 @@ profile cups-backend-pdf @{exec_path} {
   /var/tmp/gs_* rw,
 
   /dev/tty rw,
+
+  profile gs {
+    include <abstractions/base>
+
+    @{bin}/gs{,.bin} mr,
+    @{lib}/ghostscript/**  mr,
+
+    /usr/share/ghostscript/{,**} r,
+    /usr/share/color/icc/ghostscript/{,**} r,
+
+    owner /tmp/gs_@{rand6} rw,
+
+    include if exists <local/cups-backend-pdf_gs>
+  }
 
   include if exists <local/cups-backend-pdf>
 }

@@ -7,10 +7,9 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{exec_path} = @{bin}/file-roller
-profile file-roller @{exec_path} {
+profile file-roller @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/bus/org.freedesktop.portal.Desktop>
-  include <abstractions/bus/org.gtk.vfs.MountTracker>
+  include <abstractions/bus-system>
   include <abstractions/common/gnome>
   include <abstractions/deny-sensitive-home>
   include <abstractions/nameservice-strict>
@@ -20,7 +19,8 @@ profile file-roller @{exec_path} {
 
   @{exec_path} mr,
 
-  @{open_path}  rPx -> child-open-help,
+  @{open_path}    Px -> child-open-help,
+  @{bin}/dpkg-deb Px,
 
   @{bin}/mv            rix,
   @{bin}/rm            rix,
@@ -28,10 +28,12 @@ profile file-roller @{exec_path} {
   # Archivers
   @{archive_path}      rix,
 
+  owner /var/cache/fontconfig/ w,
+
   #aa:lint ignore=too-wide
   # Full access to user's data
-  @{MOUNTS}/** rw,
-  owner @{HOME}/** rw,
+  @{MOUNTS}/** rwl,
+  owner @{HOME}/** rwl,
   owner @{tmp}/** rw,
 
   @{run}/mount/utab r,

@@ -10,10 +10,12 @@ include <tunables/global>
 @{exec_path} = @{lib}/{,gvfs/}gvfsd-http
 profile gvfsd-http @{exec_path} {
   include <abstractions/base>
+  include <abstractions/bus-system>
   include <abstractions/bus-session>
-  include <abstractions/bus/org.gtk.vfs.Daemon>
   include <abstractions/dconf-write>
-  include <abstractions/freedesktop.org>
+  include <abstractions/gschemas>
+  include <abstractions/gvfs-backend>
+  include <abstractions/mime>
   include <abstractions/nameservice-strict>
   include <abstractions/p11-kit>
   include <abstractions/ssl_certs>
@@ -25,25 +27,9 @@ profile gvfsd-http @{exec_path} {
   network netlink raw,
 
   unix type=stream peer=(label=gnome-shell),
+  unix type=stream peer=(label=gnome-extension-gsconnect),
 
   #aa:dbus own bus=session name=org.gtk.vfs.mountpoint_http
-  dbus receive bus=session
-       interface=org.freedesktop.DBus.Introspectable
-       member=Introspect
-       peer=(name=:*, label=gnome-shell),
-
-  dbus receive bus=session path=/org/gtk/vfs/mountable
-       interface=org.gtk.vfs.Mountable
-       member=Mount
-       peer=(name=:*, label=gvfsd),
-  dbus send bus=session path=/org/gtk/gvfs/exec_spaw/@{int}
-       interface=org.gtk.vfs.Spawner
-       member=Spawned
-       peer=(name=:*, label=gvfsd),
-  dbus send bus=session path=/org/gtk/vfs/mounttracker
-       interface=org.gtk.vfs.MountTracker
-       member=RegisterMount
-       peer=(name=:*, label=gvfsd),
 
   @{exec_path} mr,
 

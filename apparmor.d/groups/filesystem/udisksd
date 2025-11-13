@@ -35,8 +35,8 @@ profile udisksd @{exec_path} flags=(attach_disconnected) {
   mount fstype={btrfs,ext*,vfat,exfat,iso9660,udf,ntfs3} /dev/dm-[0-9]*          -> @{MOUNTS}/*/,
 
   # Allow mounting of loop devices (ISO files)
-  mount fstype={btrfs,ext*,vfat,exfat,iso9660,udf,ntfs3} /dev/loop[0-9]*        -> @{MOUNTS}/*/,
-  mount fstype={btrfs,ext*,vfat,exfat,iso9660,udf,ntfs3} /dev/loop[0-9]*p[0-9]* -> @{MOUNTS}/*/,
+  mount fstype={btrfs,ext*,vfat,exfat,iso9660,udf,ntfs3,squashfs} /dev/loop[0-9]*        -> @{MOUNTS}/*/,
+  mount fstype={btrfs,ext*,vfat,exfat,iso9660,udf,ntfs3,squashfs} /dev/loop[0-9]*p[0-9]* -> @{MOUNTS}/*/,
 
   # Allow mounting of cdrom
   mount fstype={btrfs,ext*,vfat,exfat,iso9660,udf,ntfs3} /dev/loop[0-9]* -> @{MOUNTS}/*/,
@@ -89,11 +89,13 @@ profile udisksd @{exec_path} flags=(attach_disconnected) {
   @{bin}/systemd-escape       rPx,
   @{bin}/xfs_*               rPUx,
 
+  /usr/share/gvfs/remote-volume-monitors/{,**} r,
+
+  @{etc_ro}/udisks2/{,**} r,
   /etc/crypttab r,
   /etc/fstab r,
   /etc/libblockdev/{,**} r,
   /etc/nvme/* r,
-  /etc/udisks2/{,**} r,
 
   /var/lib/udisks2/{,**} r,
   /var/lib/udisks2/mounted-fs{,*} rw,
@@ -103,7 +105,7 @@ profile udisksd @{exec_path} flags=(attach_disconnected) {
   @{MOUNTS}/ rw,
   @{MOUNTS}/*/ rw,
 
-  @{att}/@{run}/systemd/inhibit/@{int}.ref rw,
+  @{att}@{run}/systemd/inhibit/@{int}.ref rw,
 
   @{run}/ r,
   @{run}/mount/utab{,.*} rwk,
@@ -137,6 +139,9 @@ profile udisksd @{exec_path} flags=(attach_disconnected) {
   @{sys}/devices/virtual/block/loop@{int}/uevent rw,
   @{sys}/devices/virtual/dmi/id/product_uuid r,
   @{sys}/devices/virtual/nvme-subsystem/{,**} r,
+  @{sys}/firmware/dmi/entries/ r,
+  @{sys}/firmware/dmi/entries/*/raw r,
+  @{sys}/firmware/dmi/entries/*/type r,
   @{sys}/fs/ r,
 
         @{PROC}/cmdline r,

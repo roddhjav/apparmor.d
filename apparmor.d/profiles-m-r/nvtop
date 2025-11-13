@@ -10,7 +10,7 @@ include <tunables/global>
 profile nvtop @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/consoles>
-  include <abstractions/graphics-full>
+  include <abstractions/graphics>
   include <abstractions/nameservice-strict>
 
   capability sys_ptrace,
@@ -23,11 +23,10 @@ profile nvtop @{exec_path} flags=(attach_disconnected) {
 
   owner @{user_config_dirs}/nvtop/{,**} rw,
 
-  @{att}/@{run}/systemd/inhibit/@{int}.ref rw,
+  @{att}@{run}/systemd/inhibit/@{int}.ref rw,
 
   @{run}/udev/data/+drm:card@{int}-* r,   # for screen outputs
   @{run}/udev/data/+pci:* r,              # Identifies all PCI devices (CPU, GPU, Network, Disks, USB, etc.)
-  @{run}/udev/data/c226:@{int} r,         # For /dev/dri/card*
   @{run}/udev/data/c@{dynamic}:@{int} r,  # For dynamic assignment range 234 to 254, 384 to 511
 
   @{sys}/bus/ r,
@@ -41,6 +40,7 @@ profile nvtop @{exec_path} flags=(attach_disconnected) {
   @{sys}/devices/@{pci}/hwmon/hwmon@{int}/temp@{int}_crit r,
   @{sys}/devices/@{pci}/max_link_{speed,width} r,
   @{sys}/devices/@{pci}/pcie_bw r,
+  @{sys}/devices/**/uevent r,
   @{sys}/devices/system/node/node@{int}/cpumap r,
 
         @{PROC}/ r,
@@ -54,7 +54,6 @@ profile nvtop @{exec_path} flags=(attach_disconnected) {
         @{PROC}/driver/nvidia/capabilities/mig/{config,monitor}  r,
   owner @{PROC}/@{pid}/task/@{tid}/comm rw,
 
-  /dev/dri/ r,
   /dev/nvidia-caps/ rw,
   /dev/nvidia-caps/nvidia-cap@{int} rw,
 

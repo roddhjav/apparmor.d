@@ -1,0 +1,33 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Can talk to polkitd's CheckAuthorization API
+
+  abi <abi/4.0>,
+
+  #aa:dbus common bus=system name=org.freedesktop.PolicyKit1 label="@{p_polkitd}"
+
+  dbus receive bus=system path=/org/freedesktop/PolicyKit1/Authority
+       interface=org.freedesktop.PolicyKit1.Authority
+       member=Changed
+       peer=(name="@{busname}", label="@{p_polkitd}"),
+
+  dbus send bus=system path=/org/freedesktop/PolicyKit1/Authority
+       interface=org.freedesktop.PolicyKit1.Authority
+       member=CheckAuthorization
+       peer=(name=org.freedesktop.PolicyKit1),
+
+  dbus send bus=system path=/org/freedesktop/PolicyKit1/Authority
+       interface=org.freedesktop.PolicyKit1.Authority
+       member={CheckAuthorization,CancelCheckAuthorization}
+       peer=(name="{@{busname},org.freedesktop.PolicyKit1}", label="@{p_polkitd}"),
+
+  dbus send bus=system path=/org/freedesktop/PolicyKit1/Authority
+       interface=org.freedesktop.PolicyKit1.Authority
+       member=RegisterAuthenticationAgentWithOptions
+       peer=(name="{@{busname},org.freedesktop.PolicyKit1}", label="@{p_polkitd}"),
+
+  include if exists <abstractions/bus/system/org.freedesktop.PolicyKit1.d>
+
+# vim:syntax=apparmor

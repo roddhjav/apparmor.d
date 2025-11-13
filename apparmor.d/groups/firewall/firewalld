@@ -11,9 +11,9 @@ profile firewalld @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus-session>
   include <abstractions/bus-system>
-  include <abstractions/bus/org.freedesktop.NetworkManager>
-  include <abstractions/bus/org.freedesktop.PolicyKit1>
+  include <abstractions/bus/system/org.freedesktop.PolicyKit1>
   include <abstractions/nameservice-strict>
+  include <abstractions/network-manager-observe>
 
   capability dac_read_search,
   capability mknod,
@@ -35,8 +35,8 @@ profile firewalld @{exec_path} flags=(attach_disconnected) {
   @{bin}/alts                      ix,
   @{bin}/false                     ix,
   @{bin}/kmod                      Cx -> kmod,
-  @{bin}/ebtables-legacy           ix,
-  @{bin}/ebtables-legacy-restore   ix,
+  @{sbin}/ebtables-legacy          ix,
+  @{sbin}/ebtables-legacy-restore  ix,
   @{sbin}/ipset                    ix,
   @{sbin}/xtables-legacy-multi     ix,
   @{sbin}/xtables-nft-multi       mix,
@@ -57,6 +57,7 @@ profile firewalld @{exec_path} flags=(attach_disconnected) {
   @{run}/firewalld/{,*} rw,
   @{run}/xtables.lock rwk,
 
+        @{PROC}/sys/kernel/modprobe r,
         @{PROC}/sys/net/ipv{4,6}/ip_forward rw,
   owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/mounts r,
@@ -68,8 +69,11 @@ profile firewalld @{exec_path} flags=(attach_disconnected) {
 
     capability sys_module,
 
+    @{run}/xtables.lock r,
+
     @{sys}/module/compression r,
     @{sys}/module/nf_*/initstate r,
+    @{sys}/module/x_tables/initstate r,
 
     include if exists <local/firewalld_kmod>
   }

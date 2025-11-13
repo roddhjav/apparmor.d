@@ -8,20 +8,22 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{exec_path} = @{bin}/sddm-greeter{,-qt6}
-profile sddm-greeter @{exec_path} {
+profile sddm-greeter @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/base>
   include <abstractions/bus-session>
   include <abstractions/bus-system>
-  include <abstractions/bus/org.freedesktop.login1>
-  include <abstractions/bus/org.freedesktop.UPower>
+  include <abstractions/bus/system/org.freedesktop.login1>
   include <abstractions/fontconfig-cache-write>
   include <abstractions/graphics>
   include <abstractions/kde-strict>
   include <abstractions/nameservice-strict>
   include <abstractions/qt5-compose-cache-write>
   include <abstractions/qt5-shader-cache>
+  include <abstractions/upower-observe>
 
   network netlink raw,
+
+  signal receive set=term peer=sddm,
 
   dbus send bus=system path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus
@@ -46,6 +48,7 @@ profile sddm-greeter @{exec_path} {
   /etc/sddm.conf r,
   /etc/sddm.conf.d/{,*} r,
   /etc/xdg/plasmarc r,
+
   /var/lib/AccountsService/icons/* r,
   /var/lib/dbus/machine-id r,
 

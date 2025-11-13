@@ -13,16 +13,17 @@ profile xdg-desktop-portal @{exec_path} flags=(attach_disconnected) {
   include <abstractions/audio-client>
   include <abstractions/bus-session>
   include <abstractions/bus-system>
-  include <abstractions/bus/net.hadess.PowerProfiles>
-  include <abstractions/bus/org.freedesktop.impl.portal.PermissionStore>
-  include <abstractions/bus/org.freedesktop.NetworkManager>
-  include <abstractions/bus/org.freedesktop.RealtimeKit1>
-  include <abstractions/bus/org.freedesktop.UPower.PowerProfiles>
+  include <abstractions/bus/session/org.freedesktop.impl.portal.PermissionStore>
+  include <abstractions/bus/system/org.freedesktop.RealtimeKit1>
   include <abstractions/consoles>
   include <abstractions/dconf-write>
+  include <abstractions/desktop-files>
   include <abstractions/devices-usb-read>
-  include <abstractions/freedesktop.org>
+  include <abstractions/gschemas>
+  include <abstractions/mime>
   include <abstractions/nameservice-strict>
+  include <abstractions/network-manager-observe>
+  include <abstractions/power-profiles>
   include <abstractions/thumbnails-cache-read>
   include <abstractions/trash-strict>
   include <abstractions/user-download-strict>
@@ -30,30 +31,37 @@ profile xdg-desktop-portal @{exec_path} flags=(attach_disconnected) {
   capability sys_ptrace,
 
   network netlink raw,
+  network inet dgram,
+  network inet6 dgram,
 
   ptrace read,
 
   signal receive set=term peer=gdm,
   signal receive set=hup  peer=gdm-session-worker,
 
-  #aa:dbus own bus=session name=org.freedesktop.portal.Desktop path=/org/freedesktop/portal/desktop interface={org.freedesktop.DBus.Properties,org.freedesktop{,.impl}.portal.{Settings,Background}}
-  dbus receive bus=session path=/org/freedesktop/portal/desktop
-       interface=org.freedesktop.portal.Realtime
-       member=MakeThread*
-       peer=(name=@{busname}),
+  unix type=stream peer=(label=fapp),
+  unix type=stream peer=(label=fbwrap),
+  unix type=stream peer=(label=snap.*),
+
+  #aa:dbus own bus=session name=org.freedesktop.portal interface+=org.freedesktop.impl.portal
+
+  # Receive registertration of from anyone
   dbus receive bus=session path=/org/freedesktop/portal/desktop
        interface=org.freedesktop.host.portal.Registry
        member=Register
        peer=(name=@{busname}),
-  dbus receive bus=session path=/org/freedesktop/portal/desktop
-       interface=org.freedesktop.portal.NetworkMonitor
-       member=GetStatus
-       peer=(name=@{busname}, label=snap.*),
+
+  dbus send bus=session path=/org/freedesktop/portal/desktop/session/1_125/gtk904232872
+       interface=org.freedesktop.impl.portal.Session
+       member=Close
+       peer=(name=@{busname}, label=xdg-desktop-portal-gtk),
 
   #aa:dbus own bus=session name=org.freedesktop.background.Monitor path=/org/freedesktop/background/monitor
 
   #aa:dbus talk bus=session name=org.freedesktop.FileManager1 label=nautilus
   #aa:dbus talk bus=session name=org.freedesktop.impl.portal.FileChooser label=xdg-desktop-portal-gnome
+  #aa:dbus talk bus=session name=org.freedesktop.impl.portal.GlobalShortcuts path=/org/freedesktop/portal/desktop label=xdg-desktop-portal-gnome
+  #aa:dbus talk bus=session name=org.freedesktop.impl.portal.Inhibit label=xdg-desktop-portal-gtk
   #aa:dbus talk bus=session name=org.freedesktop.portal.Documents path=/org/freedesktop/portal/documents label=xdg-document-portal
 
   dbus receive bus=session
@@ -68,20 +76,19 @@ profile xdg-desktop-portal @{exec_path} flags=(attach_disconnected) {
 
   @{bin}/kreadconfig{,5}                  rPx,
   @{lib}/xdg-desktop-portal-validate-icon rPx,
-  @{open_path}                           mrPx -> child-open,
+  @{lib}/browserpass/browserpass-native   rPx,
+  @{open_path}                           mrPx -> child-open-any,
 
         / r,
+  @{att}/ r,
   @{att}/.flatpak-info r,
-  owner /att/**/ r,
+  /att/**/ r,
 
-  /usr/share/dconf/profile/gdm r,
   /usr/share/xdg-desktop-portal/** r,
-  /usr/share/gdm/greeter-dconf-defaults r,
 
   /etc/sysconfig/proxy r,
 
         @{GDM_HOME}/greeter-dconf-defaults r,
-  owner @{gdm_config_dirs}/dconf/user r,
   owner @{gdm_config_dirs}/user-dirs.dirs r,
 
   # The portal can receive any user file as it is a file chooser for UI app.
@@ -95,12 +102,14 @@ profile xdg-desktop-portal @{exec_path} flags=(attach_disconnected) {
 
   owner @{run}/user/@{uid}/.flatpak/{,*/*} r,
 
+  @{sys}/devices/**/uevent r,
   @{sys}/devices/virtual/dmi/id/bios_vendor r,
   @{sys}/devices/virtual/dmi/id/board_vendor r,
   @{sys}/devices/virtual/dmi/id/product_name r,
   @{sys}/devices/virtual/dmi/id/sys_vendor r,
 
         @{PROC}/ r,
+        @{PROC}/@{pids}/status r,
         @{PROC}/*/ r,
         @{PROC}/1/cgroup r,
         @{PROC}/cmdline r,

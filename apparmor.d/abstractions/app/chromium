@@ -2,6 +2,11 @@
 # Copyright (C) 2022-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 # LOGPROF-SUGGEST: no
+# NEEDS-VARIABLE: name
+# NEEDS-VARIABLE: domain
+# NEEDS-VARIABLE: lib_dirs
+# NEEDS-VARIABLE: config_dirs
+# NEEDS-VARIABLE: cache_dirs
 
 # Full set of rules for all chromium based browsers. It works as a *function*
 # and requires some variables to be provided as *arguments* and set in the
@@ -20,29 +25,30 @@
   abi <abi/4.0>,
 
   include <abstractions/audio-client>
-  include <abstractions/bus-session>
+  include <abstractions/avahi-observe>
+  include <abstractions/bluetooth-observe>
   include <abstractions/bus-system>
-  include <abstractions/bus/org.bluez>
-  include <abstractions/bus/org.freedesktop.Avahi>
-  include <abstractions/bus/org.freedesktop.FileManager1>
-  include <abstractions/bus/org.freedesktop.secrets>
-  include <abstractions/bus/org.freedesktop.UPower>
-  include <abstractions/bus/org.gnome.Mutter.IdleMonitor>
-  include <abstractions/bus/org.gnome.SessionManager>
-  include <abstractions/bus/org.kde.kwalletd>
+  include <abstractions/bus/session/org.freedesktop.FileManager1>
+  include <abstractions/bus/session/org.gnome.SessionManager>
+  include <abstractions/bus/system/org.bluez>
   include <abstractions/camera>
   include <abstractions/common/chromium>
   include <abstractions/dconf-write>
   include <abstractions/desktop>
-  include <abstractions/devices-usb>
+  include <abstractions/devices-u2f>
+  include <abstractions/devices-usb-read>
   include <abstractions/fontconfig-cache-read>
   include <abstractions/graphics>
+  include <abstractions/mpris>
   include <abstractions/nameservice-strict>
-  include <abstractions/notifications>
+  include <abstractions/pcscd>
+  include <abstractions/screen-inhibit>
   include <abstractions/screensaver>
+  include <abstractions/secrets-service>
   include <abstractions/ssl_certs>
   include <abstractions/thumbnails-cache-read>
   include <abstractions/uim>
+  include <abstractions/upower-observe>
   include <abstractions/user-download-strict>
   include <abstractions/user-read-strict>
 
@@ -102,7 +108,6 @@
 
   /etc/@{name}/{,**} r,
   /etc/fstab r,
-  /etc/{,opensc/}opensc.conf r,
 
   / r,
   owner @{HOME}/ r,
@@ -134,7 +139,11 @@
 
         /tmp/ r,
         /var/tmp/ r,
+  owner @{tmp}/.@{domain}.@{rand6}/** rw,
   owner @{tmp}/@{name}-crashlog-@{int}-@{int}.txt rw,
+  owner @{tmp}/cache/Default/ rw,
+  owner @{tmp}/cache/Default/** rwk,
+  owner @{tmp}/scoped_dir@{rand6}/{,**} rw,
   owner @{tmp}/tmp.@{rand10} rw,
   owner @{tmp}/tmp.@{rand6} rw,
   owner @{tmp}/tmp.@{rand6}/ rw,
@@ -150,14 +159,13 @@
   @{sys}/class/**/ r,
   @{sys}/devices/@{pci}/{in_intensity_sampling_frequency,in_intensity_scale,in_illuminance_raw} r,
   @{sys}/devices/@{pci}/boot_vga r,
-  @{sys}/devices/@{pci}/report_descriptor r,
   @{sys}/devices/**/uevent r,
-  @{sys}/devices/virtual/**/report_descriptor r,
 
         @{PROC}/ r,
         @{PROC}/@{pid}/fd/ r,
         @{PROC}/@{pid}/stat r,
         @{PROC}/@{pid}/statm r,
+        @{PROC}/@{pid}/status r,
         @{PROC}/@{pid}/task/@{tid}/status r,
         @{PROC}/pressure/{memory,cpu,io} r,
         @{PROC}/sys/fs/inotify/max_user_watches r,
@@ -177,9 +185,8 @@
   owner @{PROC}/@{pid}/task/@{tid}/stat r,
 
         /dev/ r,
-        /dev/hidraw@{int} rw,
         /dev/tty rw,
-  owner /dev/tty@{int} rw,
+  owner /dev/tty@{u8} rw,
 
   # Silencer
   deny @{lib_dirs}/** w,

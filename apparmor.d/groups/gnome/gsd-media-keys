@@ -10,22 +10,17 @@ include <tunables/global>
 profile gsd-media-keys @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/audio-client>
-  include <abstractions/bus-accessibility>
-  include <abstractions/bus-session>
   include <abstractions/bus-system>
-  include <abstractions/bus/org.a11y>
-  include <abstractions/bus/org.freedesktop.hostname1>
-  include <abstractions/bus/org.freedesktop.login1>
-  include <abstractions/bus/org.freedesktop.UPower>
-  include <abstractions/bus/org.gnome.Mutter.IdleMonitor>
-  include <abstractions/bus/org.gnome.SessionManager>
-  include <abstractions/bus/org.gtk.vfs.MountTracker>
-  include <abstractions/bus/org.mpris.MediaPlayer2.Player>
+  include <abstractions/bus/system/org.freedesktop.hostname1>
+  include <abstractions/bus/system/org.freedesktop.login1>
+  include <abstractions/bus/session/org.mpris.MediaPlayer2.Player>
   include <abstractions/consoles>
   include <abstractions/dconf-write>
   include <abstractions/fontconfig-cache-write>
   include <abstractions/gnome-strict>
   include <abstractions/nameservice-strict>
+  include <abstractions/session-manager>
+  include <abstractions/upower-observe>
 
   signal (receive) set=(term, hup) peer=gdm*,
 
@@ -33,8 +28,14 @@ profile gsd-media-keys @{exec_path} flags=(attach_disconnected) {
   network netlink raw,
 
   #aa:dbus own bus=session name=org.gnome.SettingsDaemon.MediaKeys
+  #aa:dbus talk bus=session name=org.gnome.SettingsDaemon.Power label=gsd-power
   #aa:dbus talk bus=session name=org.gnome.SettingsDaemon.Rfkill label=gsd-rfkill
   #aa:dbus talk bus=session name=org.gnome.Shell label=gnome-shell
+
+  dbus send bus=session path=/org/mpris/MediaPlayer2
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=@{busname}),
 
   dbus send bus=system path=/org/freedesktop/login1
        interface=org.freedesktop.login1.Manager
@@ -46,37 +47,19 @@ profile gsd-media-keys @{exec_path} flags=(attach_disconnected) {
        member=ListNames
        peer=(name=org.freedesktop.DBus, label="@{p_dbus_session}"),
 
-  dbus send bus=session path=/org/gnome/SettingsDaemon/Power
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=@{busname}, label=gsd-power),
-
-  dbus receive bus=session path=/org/gnome/SettingsDaemon/Power
-       interface=org.freedesktop.DBus.Properties
-       member=PropertiesChanged
-       peer=(name=@{busname}, label=gsd-power),
-
   @{exec_path} mr,
 
   @{open_path}         rPx -> child-open,
 
-  /usr/share/dconf/profile/gdm r,
-  /usr/share/gdm/greeter-dconf-defaults r,
   /usr/share/sounds/freedesktop/stereo/*.oga r,
 
-  owner @{GDM_HOME}/greeter-dconf-defaults r,
-  owner @{gdm_config_dirs}/dconf/user r,
-
-  @{att}/@{run}/systemd/inhibit/@{int}.ref rw,
+  @{att}@{run}/systemd/inhibit/@{int}.ref rw,
 
   @{run}/udev/data/+sound:card@{int} r,   # For sound card
   @{run}/udev/data/c13:@{int} r,          # for /dev/input/*
   @{run}/udev/data/c189:@{int} r,         # For /dev/bus/usb/**
 
-  @{sys}/devices/**/usb@{int}/{,**} r,
-  @{sys}/devices/@{pci}/sound/**/uevent r,
-  @{sys}/devices/platform/**/uevent r,
-  @{sys}/devices/virtual/**/uevent r,
+  @{sys}/devices/**/uevent r,
 
         @{PROC}/1/cgroup r,
   owner @{PROC}/@{pid}/cgroup r,

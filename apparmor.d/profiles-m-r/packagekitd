@@ -9,12 +9,12 @@ include <tunables/global>
 @{exec_path} = @{lib}/packagekitd
 profile packagekitd @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/apt> #aa:only apt
   include <abstractions/bus-system>
-  include <abstractions/bus/org.freedesktop.login1>
-  include <abstractions/bus/org.freedesktop.NetworkManager>
-  include <abstractions/bus/org.freedesktop.PolicyKit1>
-  include <abstractions/common/apt> #aa:only apt
+  include <abstractions/bus/system/org.freedesktop.login1>
+  include <abstractions/bus/system/org.freedesktop.PolicyKit1>
   include <abstractions/nameservice-strict>
+  include <abstractions/network-manager-observe>
   include <abstractions/ssl_certs>
 
   capability chown,
@@ -51,6 +51,7 @@ profile packagekitd @{exec_path} flags=(attach_disconnected) {
   @{bin}/echo           rix,
   @{bin}/gdbus          rix,
   @{bin}/gzip           rix,
+  @{bin}/id             rix,
   @{sbin}/ldconfig      rix,
   @{bin}/repo2solv      rix,
   @{bin}/tar            rix,
@@ -61,6 +62,7 @@ profile packagekitd @{exec_path} flags=(attach_disconnected) {
   @{bin}/arch-audit                  rPx, #aa:only arch
   @{bin}/dpkg                        rPx -> child-dpkg, #aa:only apt
   @{bin}/fc-cache                    rPx,
+  @{bin}/systemctl                   rCx -> systemctl,
   @{bin}/glib-compile-schemas        rPx,
   @{bin}/install-info                rPx,
   @{bin}/ischroot                    rPx,
@@ -91,7 +93,7 @@ profile packagekitd @{exec_path} flags=(attach_disconnected) {
   owner @{tmp}/apt-changelog-@{rand6}/.apt-acquire-privs-test.@{rand6} rw,
   owner @{tmp}/packagekit* rw,
 
-  @{att}/@{run}/systemd/inhibit/@{int}.ref rw,
+  @{att}@{run}/systemd/inhibit/@{int}.ref rw,
 
   owner @{run}/systemd/users/@{uid} r,
 
@@ -113,6 +115,7 @@ profile packagekitd @{exec_path} flags=(attach_disconnected) {
   owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/mounts r,
 
+  /dev/ptmx r,
   /dev/tty rw,
 
   profile gpg {
@@ -148,6 +151,15 @@ profile packagekitd @{exec_path} flags=(attach_disconnected) {
     owner @{PROC}/@{pid}/task/@{tid}/comm rw,
 
     include if exists <local/packagekitd_gpg>
+  }
+
+  profile systemctl {
+    include <abstractions/base>
+    include <abstractions/app/systemctl>
+
+    capability net_admin,
+
+    include if exists <local/packagekitd_systemctl>
   }
 
   include if exists <local/packagekitd>

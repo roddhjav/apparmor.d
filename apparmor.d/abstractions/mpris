@@ -1,0 +1,31 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Allow operating as an MPRIS player.
+
+  abi <abi/4.0>,
+
+  include <abstractions/bus/session/org.mpris.MediaPlayer2.Player>
+
+  # Allow binding to the well-known DBus mpris interface based on the app's name
+  # See: https://specifications.freedesktop.org/mpris-spec/latest/
+  #aa:dbus own bus=session name=org.mpris.MediaPlayer2.@{profile_name}
+
+  # DBus.Properties: receive properties from any mpris controller
+
+  dbus receive bus=system path=/org/mpris/MediaPlayer2
+       interface=org.freedesktop.DBus.Properties
+       member={Get,GetAll}
+       peer=(name=@{busname}, label="@{pp_mpris}"),
+
+  # DBus.Properties: send property changed events to any mpris controller
+
+  dbus send bus=session path=/org/mpris/MediaPlayer2
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged
+       peer=(name=org.freedesktop.DBus, label="@{pp_mpris}"),
+
+  include if exists <abstractions/mpris.d>
+
+# vim:syntax=apparmor

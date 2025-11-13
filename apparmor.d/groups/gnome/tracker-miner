@@ -9,19 +9,19 @@ include <tunables/global>
 @{exec_path} = @{lib}/tracker-miner-fs-{,control-,rss-}3
 profile tracker-miner @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/bus-session>
   include <abstractions/bus-system>
-  include <abstractions/bus/org.freedesktop.UPower>
-  include <abstractions/bus/org.gtk.Private.RemoteVolumeMonitor>
-  include <abstractions/bus/org.gtk.vfs.Daemon>
-  include <abstractions/bus/org.gtk.vfs.MountTracker>
+  include <abstractions/bus/session/org.gtk.Private.RemoteVolumeMonitor>
+  include <abstractions/bus/session/org.gtk.vfs.Daemon>
+  include <abstractions/camera>
   include <abstractions/dconf-write>
   include <abstractions/deny-sensitive-home>
   include <abstractions/disks-read>
   include <abstractions/gnome-strict>
   include <abstractions/gstreamer>
+  include <abstractions/media-control>
   include <abstractions/nameservice-strict>
   include <abstractions/sqlite>
+  include <abstractions/upower-observe>
 
   network netlink raw,
 
@@ -44,12 +44,10 @@ profile tracker-miner @{exec_path} flags=(attach_disconnected) {
 
   @{lib}/tracker-extract-3 rix,
 
-  /usr/share/dconf/profile/gdm r,
   /usr/share/gdm/greeter/applications/{,mimeinfo.cache,*.list} r,
   /usr/share/gvfs/remote-volume-monitors/{,*.monitor} r,
   /usr/share/ladspa/rdf/{,**} r,
   /usr/share/osinfo/{,**} r,
-  /usr/share/poppler/{,**} r,
   /usr/share/tracker3-miners/{,**} r,
   /usr/share/tracker3/{,**} r,
 
@@ -58,10 +56,8 @@ profile tracker-miner @{exec_path} flags=(attach_disconnected) {
   /etc/timezone r,
 
   owner @{GDM_HOME}/ r,
-  owner @{GDM_HOME}/greeter-dconf-defaults r,
   owner @{gdm_cache_dirs}/gstreamer-*/registry.*.bin r,
   owner @{gdm_cache_dirs}/tracker3/{,tracker3/}files/{,**} rwk,
-  owner @{gdm_config_dirs}/dconf/user r,
   owner @{gdm_share_dirs}/applications/ r,
 
   # Allow to search user files
@@ -86,9 +82,7 @@ profile tracker-miner @{exec_path} flags=(attach_disconnected) {
   owner @{PROC}/@{pid}/mounts r,
   owner @{PROC}/@{pid}/task/@{tid}/comm rw,
 
-        /dev/media@{int} rw,
-        /dev/video@{int} rw,
-  owner /dev/tty@{int} rw,
+  owner /dev/tty@{u8} rw,
 
   include if exists <local/tracker-miner>
 }

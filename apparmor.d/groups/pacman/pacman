@@ -12,7 +12,6 @@ profile pacman @{exec_path} flags=(attach_disconnected) {
   include <abstractions/consoles>
   include <abstractions/disks-read>
   include <abstractions/nameservice-strict>
-  include <abstractions/perl>
   include <abstractions/ssl_certs>
 
   capability audit_write,
@@ -46,71 +45,49 @@ profile pacman @{exec_path} flags=(attach_disconnected) {
 
   @{exec_path} mrix,
 
-  @{bin}/gpg{,2}      rCx -> gpg,
-  @{bin}/gpgconf      rCx -> gpg,
-  @{bin}/gpgsm        rCx -> gpg,
+  # Pacman's keyring
+  @{bin}/gpg{,2}                                  Cx -> gpg,
+  @{bin}/gpgconf                                  Cx -> gpg,
+  @{bin}/gpgsm                                    Cx -> gpg,
 
-  # Pacman hooks & install scripts
-  @{sh_path}                         rix,
-  @{coreutils_path}                  rix,
-  @{bin}/appstreamcli                rPx,
-  @{bin}/arch-audit                  rPx,
-  @{bin}/archlinux-java              rPx,
-  @{bin}/bootctl                     rPx,
-  @{bin}/cert-sync                   rPx,
-  @{bin}/checkrebuild                rPUx,
-  @{bin}/dconf                       rPx,
-  @{bin}/dot                         rix,
-  @{bin}/fc-cache{,-32}              rPx,
-  @{bin}/filecap                     rix,
-  @{bin}/gdbus                       rix,
-  @{bin}/gdk-pixbuf-query-loaders    rPx,
-  @{bin}/getent                      rix,
-  @{bin}/gettext                     rix,
-  @{bin}/ghc-pkg-@{version}          rPx,
-  @{bin}/gio-querymodules            rPx,
-  @{bin}/glib-compile-schemas        rPx,
-  @{sbin}/groupadd                   rPx,
-  @{bin}/gtk-query-immodules-*       rPx,
-  @{bin}/gtk{,4}-update-icon-cache   rPx,
-  @{sbin}/iconvconfig                rix,
-  @{bin}/install-catalog             rPx,
-  @{bin}/install-info                rPx,
-  @{sbin}/iscsi-iname                rix,
-  @{bin}/journalctl                  rPx,
-  @{bin}/killall                     rix,
-  @{sbin}/ldconfig                   rix,
-  @{sbin}/locale-gen                 rPx,
-  @{bin}/limine-install             rPUx,
-  @{bin}/mkinitcpio                  rPx,
-  @{sbin}/needrestart                rPx,
-  @{bin}/pacdiff                     rPx,
-  @{bin}/pacman-key                  rPx,
-  @{bin}/pkgfile                     rPUx,
-  @{bin}/pkill                       rix,
-  @{bin}/rsync                       rix,
-  @{bin}/sbctl                       rPx,
-  @{sbin}/setcap                     rix,
-  @{bin}/setfacl                     rix,
-  @{sbin}/sysctl                     rPx,
-  @{bin}/systemctl                   rCx -> systemctl,
-  @{bin}/systemd-*                   rPx,
-  @{bin}/tput                        rix,
-  @{bin}/update-ca-trust             rPx,
-  @{bin}/update-desktop-database     rPx,
-  @{sbin}/update-grub                rPx,
-  @{bin}/update-mime-database        rPx,
-  @{bin}/vercmp                      rix,
-  @{bin}/which{,.debianutils}        rix,
-  @{bin}/xmlcatalog                  rix,
-  @{lib}/systemd/systemd-*           rPx,
-  @{lib}/ghc-@{version}/bin/ghc-pkg-@{version} rPx,
-  @{lib}/vlc/vlc-cache-gen           rPx,
-  /opt/Mullvad*/resources/mullvad-setup  rPx,
-  /usr/share/code-features/patch.py      rPx,
-  /usr/share/code-marketplace/patch.py   rPx,
-  /usr/share/libalpm/scripts/*           rPUx,
-  /usr/share/texmf-dist/scripts/texlive/mktexlsr rPUx,
+  # Common program found in hooks & install scripts
+  @{sh_path}                                     rix,
+  @{coreutils_path}                              rix,
+  @{bin}/dot                                      ix,
+  @{bin}/filecap                                  ix,
+  @{bin}/getent                                   ix,
+  @{bin}/gettext                                  ix,
+  @{bin}/gzip                                     ix,
+  @{bin}/rsync                                    ix,
+  @{bin}/setfacl                                  ix,
+  @{bin}/tput                                     ix,
+  @{bin}/vercmp                                   ix,
+  @{bin}/which{,.debianutils}                     ix,
+  @{bin}/xmlcatalog                               ix,
+  @{sbin}/iconvconfig                             ix,
+  @{sbin}/iscsi-iname                             ix,
+  @{sbin}/setcap                                  ix,
+
+  @{bin}/dbus-send                                Cx -> bus,
+  @{bin}/gdbus                                    Cx -> bus,
+  @{bin}/killall                                  Cx -> pkill,
+  @{bin}/kmod                                     Cx -> kmod,
+  @{bin}/pkill                                    Cx -> pkill,
+  @{bin}/systemctl                                Cx -> systemctl,
+  @{sbin}/ldconfig                                Cx -> ldconfig,
+
+  #aa:lint ignore=too-wide
+  # Hooks & install scripts can legitimately start/restart anything
+  # PU is only used as a safety fallback.
+  @{bin}/**                                       PUx,
+  @{sbin}/**                                      PUx,
+  /opt/*/**                                       PUx,
+  /etc/**                                         PUx,
+  /usr/share/**                                   PUx,
+
+  @{lib}/ghc-@{version}/bin/ghc-pkg-@{version}    Px,
+  @{lib}/systemd/systemd-*                        Px,
+  @{lib}/vlc/vlc-cache-gen                        Px,
 
   # For shell pwd, keept as it can annoy users to see error in pacman output
   /**/ r,
@@ -131,8 +108,9 @@ profile pacman @{exec_path} flags=(attach_disconnected) {
 
   owner /var/lib/pacman/{,**} rwl,
   owner @{tmp}/alpm_@{rand6}/{,**} rw,
-  owner @{tmp}/checkup-db-@{int}/sync/{,*.db*} rw,
+  owner @{tmp}/arch-update-@{uid}/checkupdates-@{rand}/sync/** w,
   owner @{tmp}/checkup-db-@{int}/db.lck rw,
+  owner @{tmp}/checkup-db-@{int}/sync/{,*.db*} rw,
 
   @{run}/utmp rk,
 
@@ -149,8 +127,8 @@ profile pacman @{exec_path} flags=(attach_disconnected) {
   owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/mounts r,
 
-        /dev/tty@{int} rw,
-  owner /dev/pts/@{int} rw,
+        /dev/tty@{u8} rw,
+  owner /dev/pts/@{u16} rw,
 
   profile gpg {
     include <abstractions/base>
@@ -180,8 +158,8 @@ profile pacman @{exec_path} flags=(attach_disconnected) {
     @{PROC}/@{pid}/fd/ r,
     @{PROC}/@{pid}/task/@{tid}/comm rw,
 
-          /dev/tty@{int} rw,
-    owner /dev/pts/@{int} rw,
+          /dev/tty@{u8} rw,
+    owner /dev/pts/@{u16} rw,
 
     deny @{user_share_dirs}/sddm/* rw,
 
@@ -191,10 +169,13 @@ profile pacman @{exec_path} flags=(attach_disconnected) {
   profile systemctl flags=(attach_disconnected) {
     include <abstractions/base>
     include <abstractions/app/systemctl>
+    include <abstractions/nameservice-strict>
 
     capability net_admin,
     capability dac_read_search,
     capability sys_resource,
+
+    ptrace read peer=@{p_systemd},
 
     signal send set=cont peer=child-pager,
     signal send set=(cont term) peer=systemd-tty-ask-password-agent,
@@ -207,9 +188,75 @@ profile pacman @{exec_path} flags=(attach_disconnected) {
 
     /{run,var}/log/journal/ r,
     /{run,var}/log/journal/@{hex32}/ r,
-    /{run,var}/log/journal/@{hex32}/*.journal* r,
+    /{run,var}/log/journal/@{hex32}/system.journal* r,
+    /{run,var}/log/journal/@{hex32}/system@@{hex}-@{hex}.journal* r,
+    /{run,var}/log/journal/@{hex32}/system@@{hex32}-@{hex16}-@{hex16}.journal* r,
+    /{run,var}/log/journal/@{hex32}/user-@{hex}.journal* r,
+    /{run,var}/log/journal/@{hex32}/user-@{uid}@@{hex}-@{hex}.journal* r,
+    /{run,var}/log/journal/@{hex32}/user-@{uid}@@{hex32}-@{hex16}-@{hex16}.journal* r,
 
     include if exists <local/pacman_systemctl>
+  }
+
+  profile bus {
+    include <abstractions/base>
+    include <abstractions/app/bus>
+    include <abstractions/bus-system>
+
+    @{bin}/gdbus rix,
+
+    # Inherit Silencer
+    deny unix type=stream peer=(label=pacman),
+
+    include if exists <local/pacman_bus>
+  }
+
+  profile pkill {
+    include <abstractions/base>
+    include <abstractions/app/pgrep>
+
+    capability dac_read_search,
+    capability kill,
+
+    signal send,
+
+    @{bin}/killall mr,
+    @{bin}/pkill mr,
+
+    include if exists <local/pacman_pkill>
+  }
+
+  profile kmod {
+    include <abstractions/base>
+    include <abstractions/app/kmod>
+
+    include if exists <local/pacman_kmod>
+  }
+
+  profile ldconfig {
+    include <abstractions/base>
+    include <abstractions/consoles>
+
+    @{sh_path}              rix,
+    @{sbin}/ldconfig       mrix,
+
+    @{lib}/ r,
+    /usr/local/ r,
+    /usr/local/lib/ r,
+
+    /opt/cuda/**/@{lib}/ r,
+    /opt/cuda/**/@{lib}/@{multiarch}/ r,
+
+    /etc/ld.so.cache rw,
+    /etc/ld.so.cache~ rw,
+
+          /var/cache/ldconfig/ rw,
+    owner /var/cache/ldconfig/aux-cache* rw,
+
+    # Inherit Silencer
+    deny unix type=stream peer=(label=pacman),
+
+    include if exists <local/pacman_ldconfig>
   }
 
   include if exists <usr/pacman.d>

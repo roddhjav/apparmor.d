@@ -2,6 +2,8 @@
 # Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
+#aa:lint ignore=too-wide
+
 # Part of the systemd (as PID 1) profile.
 
 # sd is a profile for SystemD-executor run as root, it is used to run all services
@@ -58,7 +60,7 @@ profile sd flags=(attach_disconnected,mediate_deleted,complain) {
   capability sys_tty_config,
   capability syslog,
 
-  network alg seqpacket,
+  network alg seqpacket, # kernel crypto API
   network bluetooth,
   network inet dgram,
   network inet stream,
@@ -94,9 +96,7 @@ profile sd flags=(attach_disconnected,mediate_deleted,complain) {
 
   mqueue (read getattr) type=posix /,
 
-  signal         peer=sd//&*,
-  signal receive peer=@{p_systemd},
-  signal send,
+  signal (send, receive),
 
   ptrace read,
 
@@ -164,56 +164,61 @@ profile sd flags=(attach_disconnected,mediate_deleted,complain) {
   /var/cache/*/ rw,
   /var/cache/*/** rwk,
   /var/lib/*/ rw,
-  /var/lib/*/** rwk,
+  /var/lib/*/** rwlk,
   /var/lib/systemd/*/ r,
   /var/log/ r,
   /var/log/** rw,
   /var/log/journal/** rwl -> /var/log/journal/**,
+  /var/spool/cron/atjobs/ r,
 
-  @{att}/@{desktop_share_dirs}/icc/edid-@{hex32}.icc r,
-  @{att}/@{user_share_dirs}/icc/edid-@{hex32}.icc r,
+  @{att}@{desktop_share_dirs}/icc/edid-@{hex32}.icc r,
+  @{att}@{user_share_dirs}/icc/edid-@{hex32}.icc r,
 
-  @{att}/@{run}/systemd/io.systemd.ManagedOOM rw,
-  @{att}/@{run}/systemd/notify rw,
-  @{att}/@{run}/systemd/userdb/io.systemd.DynamicUser rw,
-  @{att}/@{run}/systemd/userdb/io.systemd.Home rw,
-  @{att}/@{run}/systemd/userdb/io.systemd.Multiplexer rw,
+  @{att}@{run}/systemd/coredump rw,
+  @{att}@{run}/systemd/io.systemd.ManagedOOM rw,
+  @{att}@{run}/systemd/userdb/io.systemd.DynamicUser rw,
+  @{att}@{run}/systemd/userdb/io.systemd.Home rw,
+  @{att}@{run}/systemd/userdb/io.systemd.Multiplexer rw,
 
         @{run}/ rw,
         @{run}/* rw,
         @{run}/*/ rw,
         @{run}/*/* rw,
+        @{run}/*/*/ rw,
+        @{run}/ubuntu-advantage/** rw, # stacked
         @{run}/systemd/{,**} rw,
   owner @{run}/*/** rw,
 
   @{run}/udev/**/ r,
   @{run}/udev/data/+*:* r,                # Identifies all subsystems
   @{run}/udev/data/c@{int}:@{int} r,      # Identifies all character devices
+  @{run}/udev/data/n@{int} r,             # For network interfaces
 
   @{sys}/** r,
   @{sys}/fs/bpf/systemd/{,**} w,
   @{sys}/firmware/efi/efivars/** w,
   @{sys}/fs/cgroup/{,**} w,
 
-  @{PROC}/@{pid}/attr/apparmor/exec w,
-  @{PROC}/@{pid}/attr/current r,
-  @{PROC}/@{pid}/cgroup r,
-  @{PROC}/@{pid}/cmdline r,
-  @{PROC}/@{pid}/comm r,
-  @{PROC}/@{pid}/environ r,
-  @{PROC}/@{pid}/fd/ r,
-  @{PROC}/@{pid}/fdinfo/@{int} r,
-  @{PROC}/@{pid}/gid_map w,
-  @{PROC}/@{pid}/limits r,
-  @{PROC}/@{pid}/loginuid rw,
-  @{PROC}/@{pid}/mountinfo r,
-  @{PROC}/@{pid}/oom_score_adj rw,
-  @{PROC}/@{pid}/sessionid r,
-  @{PROC}/@{pid}/setgroups r,
-  @{PROC}/@{pid}/setgroups w,
-  @{PROC}/@{pid}/stat r,
-  @{PROC}/@{pid}/uid_map r,
-  @{PROC}/@{pid}/uid_map w,
+  @{PROC}/@{pids}/attr/apparmor/exec w,
+  @{PROC}/@{pids}/attr/current r,
+  @{PROC}/@{pids}/cgroup r,
+  @{PROC}/@{pids}/cmdline r,
+  @{PROC}/@{pids}/comm r,
+  @{PROC}/@{pids}/environ r,
+  @{PROC}/@{pids}/fd/ r,
+  @{PROC}/@{pids}/fdinfo/@{int} r,
+  @{PROC}/@{pids}/gid_map w,
+  @{PROC}/@{pids}/limits r,
+  @{PROC}/@{pids}/loginuid rw,
+  @{PROC}/@{pids}/mountinfo r,
+  @{PROC}/@{pids}/oom_score_adj rw,
+  @{PROC}/@{pids}/sessionid r,
+  @{PROC}/@{pids}/setgroups r,
+  @{PROC}/@{pids}/setgroups w,
+  @{PROC}/@{pids}/stat r,
+  @{PROC}/@{pids}/status r,
+  @{PROC}/@{pids}/uid_map r,
+  @{PROC}/@{pids}/uid_map w,
   @{PROC}/cmdline r,
   @{PROC}/interrupts r,
   @{PROC}/irq/@{int}/node r,
@@ -226,6 +231,7 @@ profile sd flags=(attach_disconnected,mediate_deleted,complain) {
   @{PROC}/sys/kernel/random/write_wakeup_threshold w,
   @{PROC}/sys/net/ipv{4,6}/** rw,
   @{PROC}/sysvipc/* r,
+  @{PROC}/version r,
   @{PROC}/version_signature r,
 
   /dev/** rwk,
