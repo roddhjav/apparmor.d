@@ -13,6 +13,9 @@ pkgdest := `pwd` / ".pkg"
 pkgname := "apparmor.d"
 gpgkey := "06A26D531D56C42D66805049C5469996F0DF68EC"
 
+# Prebuild options, only used for the `dev` install target
+opt := "complain"
+
 # The following variables are only  used for the development and test VM
 
 # Admin username
@@ -192,7 +195,7 @@ local +names:
 # Prebuild, install, and load a dev profile
 [group('install')]
 dev +names:
-	go run ./cmd/prebuild --complain
+	go run ./cmd/prebuild --{{opt}}
 	for file in {{names}}; do \
 		sudo install -Dm644 -v {{build}}/apparmor.d/$file /etc/apparmor.d/$file; \
 	done
