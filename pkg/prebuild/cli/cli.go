@@ -179,12 +179,14 @@ func Configure() {
 }
 
 func Prebuild() {
-	logging.Step("Building apparmor.d profiles for %s on ABI%d.", prebuild.Distribution, prebuild.ABI)
+	logging.Step("Building apparmor.d profiles for %s", prebuild.Distribution)
+	logging.Success("AppArmor ABI targeted: %d", prebuild.ABI)
+	logging.Success("AppArmor version targeted: %.1f", prebuild.Version)
+	if prebuild.Test {
+		logging.Warning("Test mode enabled")
+	}
 	if full {
 		logging.Success("Full system policy enabled")
-	}
-	if prebuild.Version != nilVer {
-		logging.Success("AppArmor version targeted: %.1f", prebuild.Version)
 	}
 	if err := Prepare(); err != nil {
 		logging.Fatal("%s", err.Error())
