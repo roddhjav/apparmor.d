@@ -159,6 +159,29 @@ func Configure() {
 
 		}
 
+	case 5:
+		builder.Register("abi5") // Convert all profiles from abi 4.0 to abi 5.0
+
+		// Re-attach disconnected path
+		if prebuild.Distribution == "ubuntu" {
+			// Ignored on ubuntu 25.04+ due to a memory leak that fully prevent
+			// profiles compilation with re-attached paths.
+			// See https://bugs.launchpad.net/ubuntu/+source/linux/+bug/2098730
+
+			// Use stacked-dbus builder to resolve dbus rules
+			builder.Register("stacked-dbus")
+
+		} else {
+			if !prebuild.DownStream {
+				prepare.Register("attach")
+			}
+			builder.Register("attach")
+
+			// Fix dbus rules for dbus-broker
+			builder.Register("dbus-broker")
+			prebuild.DbusDaemon = false
+		}
+
 	default:
 		logging.Fatal("Invalid ABI version: %d", prebuild.ABI)
 	}
