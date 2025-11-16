@@ -5,6 +5,7 @@
 package builder
 
 import (
+	"regexp"
 	"slices"
 	"strings"
 
@@ -24,11 +25,22 @@ type StackedDbus struct {
 	prebuild.Base
 }
 
+// DbusBroker is a fix for https://gitlab.com/apparmor/apparmor/-/issues/565
+type DbusBroker struct {
+	prebuild.Base
+}
+
 func init() {
 	RegisterBuilder(&StackedDbus{
 		Base: prebuild.Base{
 			Keyword: "stacked-dbus",
 			Msg:     "Fix: resolve peer label variable in dbus rules",
+		},
+	})
+	RegisterBuilder(&DbusBroker{
+		Base: prebuild.Base{
+			Keyword: "dbus-broker",
+			Msg:     "Fix: ignore peer name in dbus rules",
 		},
 	})
 }
@@ -99,5 +111,20 @@ func (b StackedDbus) Apply(opt *Option, profile string) (string, error) {
 			profile = strings.ReplaceAll(profile, paragraphs[idx], newRules.String()+"\n")
 		}
 	}
+	return profile, nil
+}
+
+func (b DbusBroker) Apply(opt *Option, profile string) (string, error) {
+	// Remove peer name in two cases:
+	// 1. peer=(name=..., label=...) -> peer=(label=...)
+	// 2. peer=(name=...),           -> (keep only the comma)
+
+	// First, handle peer name with other attributes (has attribute after comma)
+	rePeerNameWithAttrs := regexp.MustCompile(`peer=\(\s*name\s*=\s*(?:"[^"]*"|'[^']*'|[^,)\s]+)\s*,\s*(\w+\s*=)`)
+	profile = rePeerNameWithAttrs.ReplaceAllString(profile, "peer=($1")
+
+	// Second, handle peer name alone (followed by closing paren and comma)
+	rePeerNameAlone := regexp.MustCompile(`peer=\(\s*name\s*=\s*(?:"[^"]*"|'[^']*'|[^,)\s]+)\s*\)\s*,`)
+	profile = rePeerNameAlone.ReplaceAllString(profile, ",")
 	return profile, nil
 }
