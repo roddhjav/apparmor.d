@@ -7,6 +7,7 @@ package builder
 import (
 	"strings"
 
+	"github.com/roddhjav/apparmor.d/pkg/aa"
 	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 )
 
@@ -36,7 +37,9 @@ func (b ReAttach) Apply(opt *Option, profile string) (string, error) {
 	}
 
 	if strings.Contains(profile, "attach_disconnected") {
-		insert = "@{att} = /att/" + opt.Name + "/\n"
+		if opt.Kind == aa.ProfileKind {
+			insert = "@{att} = /att/" + opt.Name + "/\n"
+		}
 		profile = strings.ReplaceAll(profile,
 			"attach_disconnected",
 			"attach_disconnected,attach_disconnected.path=@{att}",
@@ -55,7 +58,9 @@ func (b ReAttach) Apply(opt *Option, profile string) (string, error) {
 		)
 
 	} else {
-		insert = "@{att} = \"\"\n"
+		if opt.Kind == aa.ProfileKind {
+			insert = "@{att} = \"\"\n"
+		}
 
 	}
 

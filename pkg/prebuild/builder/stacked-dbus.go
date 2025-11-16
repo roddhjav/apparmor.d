@@ -62,8 +62,7 @@ func parse(kind aa.FileKind, profile string) (aa.ParaRules, []string, error) {
 }
 
 func (b StackedDbus) Apply(opt *Option, profile string) (string, error) {
-	kind := aa.KindFromPath(opt.File)
-	if kind == aa.TunableKind {
+	if opt.Kind == aa.TunableKind {
 		return profile, nil
 	}
 
@@ -72,7 +71,7 @@ func (b StackedDbus) Apply(opt *Option, profile string) (string, error) {
 		toResolve = append(toResolve, k)
 	}
 
-	rulesByParagraph, paragraphs, err := parse(kind, profile)
+	rulesByParagraph, paragraphs, err := parse(opt.Kind, profile)
 	if err != nil {
 		return "", err
 	}
