@@ -22,6 +22,9 @@ var (
 	// Either or not we are in test mode
 	Test = false
 
+	// The dbus implementation used
+	DbusDaemon = true
+
 	// Pkgname is the name of the package
 	Pkgname = "apparmor.d"
 
