@@ -5,6 +5,7 @@
 package builder
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/roddhjav/apparmor.d/pkg/aa"
@@ -32,7 +33,12 @@ func init() {
 func (b ReAttach) Apply(opt *Option, profile string) (string, error) {
 	var insert string
 	var origin = "profile " + opt.Name
-	if opt.File.HasSuffix("attached/base") {
+
+	isInside, err := opt.File.IsInsideDir(prebuild.RootApparmord.Join("abstractions/attached"))
+	if err != nil {
+		return profile, fmt.Errorf("attach: %v", err)
+	}
+	if isInside {
 		return profile, nil // Do not re-attach twice
 	}
 
