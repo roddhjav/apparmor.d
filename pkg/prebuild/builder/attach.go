@@ -56,6 +56,10 @@ func (b ReAttach) Apply(opt *Option, profile string) (string, error) {
 			"include <abstractions/consoles>",
 			"include <abstractions/attached/consoles>",
 		)
+		profile = strings.ReplaceAll(profile,
+			"include <abstractions/nameservice-strict>",
+			"include <abstractions/attached/nameservice-strict>",
+		)
 
 	} else {
 		if opt.Kind == aa.ProfileKind {
