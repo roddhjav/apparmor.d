@@ -358,6 +358,26 @@ destroy osinfo flavor:
 	@virsh {{c}} undefine {{prefix}}{{osinfo}}-{{flavor}} --nvram
 	@rm -fv {{vm}}/{{prefix}}{{osinfo}}-{{flavor}}.qcow2
 
+# List all snapshots for a machine
+[group('vm')]
+snapshots osinfo flavor:
+	@virsh {{c}} snapshot-list {{prefix}}{{osinfo}}-{{flavor}}
+
+# Snapshot a machine
+[group('vm')]
+snapshot osinfo flavor snapname:
+    @virsh {{c}} snapshot-create-as {{prefix}}{{osinfo}}-{{flavor}} --name {{snapname}}
+
+# Restore a machine to a specified snapshot
+[group('vm')]
+restore osinfo flavor snapname:
+    @virsh {{c}} snapshot-revert {{prefix}}{{osinfo}}-{{flavor}} {{snapname}}
+
+# Delete a specified snapshot from a machine
+[group('vm')]
+delete osinfo flavor snapname:
+	@virsh {{c}} snapshot-delete {{prefix}}{{osinfo}}-{{flavor}} {{snapname}}
+
 # Connect to the machine
 [group('vm')]
 ssh osinfo flavor:
