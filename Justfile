@@ -72,6 +72,7 @@ Build variables available:
     build        " + BLUE + "# Build directory (default: " + build + ")" + NORMAL + "
     destdir      " + BLUE + "# Installation destination (default: " + destdir + ")" + NORMAL + "
     pkgdest      " + BLUE + "# Package output directory (default: " + pkgdest + ")" + NORMAL + "
+    opt          " + BLUE + "# Prebuild option, only used for the dev install target (default: " + opt + ")" + NORMAL + "
 
 Development variables available:
     username     " + BLUE + "# VM username (default: " + username + ")" + NORMAL + "
@@ -201,7 +202,7 @@ local +names:
 		sed -i -e "s/rPx/rPUx/g" "{{build}}/apparmor.d/$file"
 		install -Dvm0644 "{{build}}/apparmor.d/$file" "{{destdir}}/etc/apparmor.d/$file"
 	done;
-	systemctl restart apparmor || sudo journalctl -xeu apparmor.service
+	systemctl restart apparmor.service || journalctl -xeu apparmor.service
 
 # Prebuild, install, and load a dev profile
 [group('install')]
