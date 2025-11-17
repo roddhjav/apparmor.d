@@ -5,6 +5,10 @@
 # Usage: `just`
 # See https://apparmor.pujol.io/development/ for more information.
 
+# Globally override any variables
+set allow-duplicate-variables
+import? '~/.aa.just'
+
 # Build settings
 
 destdir := "/"
@@ -37,6 +41,13 @@ ram := "4096"
 ssh_keyname := "id_ed25519"
 ssh_privatekey := home_dir() / ".ssh/" + ssh_keyname
 ssh_publickey := ssh_privatekey + ".pub" 
+
+# Path to the UEFI firmware
+firmware := if path_exists("/usr/share/edk2/x64/OVMF.4m.fd") == "true" {
+	"/usr/share/edk2/x64/OVMF.4m.fd"
+} else {
+	"/usr/share/ovmf/OVMF.fd"
+}
 
 # Where the VM are stored
 vm := home_dir() / ".vm"
@@ -299,6 +310,7 @@ img dist release flavor: (package dist release flavor)
 		-var disk_size={{disk_size}} \
 		-var cpus={{vcpus}} \
 		-var ram={{ram}} \
+		-var firmware={{firmware}} \
 		-var base_dir={{base_dir}} \
 		-var output_dir={{output_dir}} \
 		tests/packer/
