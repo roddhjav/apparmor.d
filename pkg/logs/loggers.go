@@ -86,9 +86,12 @@ func GetJournalctlLogs(path string, since string, useFile bool) (io.Reader, erro
 			"--identifier=audit", "--identifier=dbus-daemon",
 			"--output=json", "--output-fields=MESSAGE",
 		}
-		if since == "" {
+		if boot != "" {
+			args = append(args, "--boot="+boot)
+		} else if since == "" {
 			args = append(args, "--boot")
-		} else {
+		}
+		if since != "" {
 			args = append(args, "--since="+since)
 		}
 		cmd := exec.Command("journalctl", args...)
