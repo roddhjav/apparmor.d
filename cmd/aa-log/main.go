@@ -145,8 +145,12 @@ func main() {
 		logger = "systemd"
 	}
 
-	path = logs.SelectLogFile(path)
-	err := aaLog(logger, path, profile, namespace)
+	path, err := logs.SelectLogFile(path)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	err = aaLog(logger, path, profile, namespace)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)

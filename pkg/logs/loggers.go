@@ -67,7 +67,7 @@ func GetAuditLogs(path string) (io.Reader, error) {
 }
 
 // GetJournalctlLogs return a reader with the logs entries from Systemd
-func GetJournalctlLogs(path string, since string, useFile bool) (io.Reader, error) {
+func GetJournalctlLogs(path string, boot string, since string, useFile bool) (io.Reader, error) {
 	var logs []systemdLog
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
@@ -124,21 +124,62 @@ func GetJournalctlLogs(path string, since string, useFile bool) (io.Reader, erro
 	return strings.NewReader(res.String()), nil
 }
 
-// SelectLogFile return the path of the available log file to parse (audit, syslog, .1, .2)
-func SelectLogFile(path string) string {
-	info, err := os.Stat(filepath.Clean(path))
-	if err == nil && !info.IsDir() {
-		return path
+// validateLogFile checks if a file exists, is readable, and is not empty.
+func validateLogFile(filename string) error {
+	info, err := os.Stat(filename)
+	if err != nil {
+		return err
 	}
-	for _, logfile := range LogFiles {
-		if _, err := os.Stat(logfile); err == nil {
-			oldLogfile := filepath.Clean(logfile + "." + path)
-			if _, err := os.Stat(oldLogfile); err == nil {
-				return oldLogfile
-			} else {
-				return logfile
+	if !info.Mode().IsRegular() {
+		return fmt.Errorf("not a regular file: %s", filename)
+	}
+	if info.Size() == 0 {
+		return fmt.Errorf("file is empty: %s", filename)
+	}
+	file, err := os.Open(filename)
+	if err != nil {
+		return fmt.Errorf("unable to read: %s", filename)
+	}
+	file.Close()
+	return nil
+}
+
+// SelectLogFile return the path of the available log file to parse (audit, syslog, .1, .2)
+func SelectLogFile(input string) (string, error) {
+	// If a specific file path is provided
+	if input != "" {
+		path := filepath.Clean(input)
+
+		// Check if it's a full path that exists
+		if _, err := os.Stat(path); err == nil {
+			if err := validateLogFile(path); err != nil {
+				return "", err
+			}
+			return path, nil
+		}
+
+		// Try as a suffix to default log files (e.g., "1" -> audit.log.1)
+		for _, logfile := range LogFiles {
+			suffixedFile := logfile + "." + input
+			if _, err := os.Stat(suffixedFile); err == nil {
+				if err := validateLogFile(suffixedFile); err != nil {
+					return "", err
+				}
+				return suffixedFile, nil
 			}
 		}
+
+		return "", fmt.Errorf("log file not found: %s", input)
 	}
-	return ""
+
+	// No input provided, find first available default log file
+	for _, logfile := range LogFiles {
+		if _, err := os.Stat(logfile); err == nil {
+			if err := validateLogFile(logfile); err != nil {
+				return "", err
+			}
+			return logfile, nil
+		}
+	}
+	return "", fmt.Errorf("no log file found")
 }
