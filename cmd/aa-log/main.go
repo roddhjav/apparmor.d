@@ -35,6 +35,7 @@ Options:
     -n, --namespace NS Filter the logs to the specified namespace.
     -r, --rules        Convert the log into AppArmor rules.
     -R, --raw          Print the raw log without any formatting.
+    -b, --boot NUM     Show entries from the specified boot.
     -S, --since DATE   Show entries not older than the specified date.
     -l, --load         Load logs from the default aa-log output.
 
@@ -48,6 +49,7 @@ var (
 	systemd   bool
 	namespace string
 	raw       bool
+	boot      string
 	since     string
 	load      bool
 )
@@ -61,7 +63,7 @@ func aaLog(logger string, path string, profile string, namespace string) error {
 	case "auditd":
 		file, err = logs.GetAuditLogs(path)
 	case "systemd":
-		file, err = logs.GetJournalctlLogs(path, since, !slices.Contains(logs.LogFiles, path))
+		file, err = logs.GetJournalctlLogs(path, boot, since, !slices.Contains(logs.LogFiles, path))
 	default:
 		err = fmt.Errorf("logger %s not supported", logger)
 	}
@@ -81,6 +83,7 @@ func aaLog(logger string, path string, profile string, namespace string) error {
 	} else {
 		aaLogs = logs.New(file, profile, namespace)
 	}
+
 	endParse := time.Now()
 	if rules {
 		profiles := aaLogs.ParseToProfiles()
@@ -110,6 +113,8 @@ func init() {
 	flag.BoolVar(&rules, "rules", false, "Convert the log into AppArmor rules.")
 	flag.BoolVar(&raw, "R", false, "Print the raw log without any formatting.")
 	flag.BoolVar(&raw, "raw", false, "Print the raw log without any formatting.")
+	flag.StringVar(&boot, "b", "", "Show entries from the specified boot.")
+	flag.StringVar(&boot, "boot", "", "Show entries from the specified boot.")
 	flag.StringVar(&since, "S", "", "Display logs since the START time.")
 	flag.StringVar(&since, "since", "", "Display logs since the START time.")
 	flag.BoolVar(&load, "l", false, "Load logs from the default aa-log output.")
@@ -129,6 +134,10 @@ func main() {
 	profile := ""
 	if len(flag.Args()) >= 1 {
 		profile = flag.Args()[0]
+	}
+
+	if boot != "" {
+		systemd = true
 	}
 
 	logger := "auditd"
