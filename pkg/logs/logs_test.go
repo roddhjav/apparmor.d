@@ -25,6 +25,7 @@ var (
 			"sock_type":      "stream",
 			"protocol":       "0",
 			"requested_mask": "send receive",
+			"class":          "net",
 		},
 	}
 	refMan = AppArmorLogs{
