@@ -103,6 +103,11 @@ profile dpkg-scripts @{exec_path} {
          member=ReloadConfig
          peer=(name=org.freedesktop.DBus, label="@{p_dbus_system}"),
 
+    dbus send bus=system path=/org/freedesktop/PackageKit
+         interface=org.freedesktop.PackageKit
+         member=SuggestDaemonQuit
+         peer=(name=org.freedesktop.PackageKit, label=packagekitd),
+
     include if exists <local/dpkg-scripts_bus>
   }
 
@@ -112,9 +117,11 @@ profile dpkg-scripts @{exec_path} {
 
     @{efi}/System.map-* r,
 
+    /var/lib/dpkg/triggers/* r,
+
     @{lib}/modules/*/modules.* w,
 
-    @{sys}/module/compression r,
+    @{sys}/module/** r,
 
     include if exists <local/dpkg-scripts_kmod>
   }
@@ -122,6 +129,7 @@ profile dpkg-scripts @{exec_path} {
   profile systemctl {
     include <abstractions/base>
     include <abstractions/app/systemctl>
+    include <abstractions/nameservice-strict>
 
     capability net_admin,
     capability sys_ptrace,
