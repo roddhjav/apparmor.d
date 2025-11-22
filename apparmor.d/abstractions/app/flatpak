@@ -39,8 +39,9 @@
   include <abstractions/flatpak/platform/org.freedesktop>
 
   # Base app specific rules, they are all included as it is for a generic profile
-  include <abstractions/flatpak/baseapp/org.chromium.Chromium>
   include <abstractions/flatpak/baseapp/com.valvesoftware.Steam>
+  include <abstractions/flatpak/baseapp/org.chromium.Chromium>
+  include <abstractions/flatpak/baseapp/org.mozilla.firefox>
 
   # Flatpak devices '--device='
   include <abstractions/flatpak/devices/all>
@@ -76,8 +77,8 @@
   include <abstractions/bus/system/org.freedesktop.login1>
   include <abstractions/bus/system/org.freedesktop.systemd1.Manager>
   include <abstractions/bus/system/org.freedesktop.UDisks2>
-  include <abstractions/bus/system/org.freedesktop.UPower>
   include <abstractions/network-manager-observe>
+  include <abstractions/upower-observe>
 
   capability dac_override,
   capability dac_read_search,
@@ -122,6 +123,9 @@
   @{sbin}/       r,
   @{sbin}/**   rix,
 
+  # apply_extra
+  /app/extra/** w,
+
         / r,
   owner /.flatpak-info r,
 
@@ -156,7 +160,7 @@
 
   owner @{att}@{run}/user/@{uid}/.dbus-proxy/a11y-bus-proxy-@{rand6} rw,
   owner @{att}@{run}/user/@{uid}/.dbus-proxy/session-bus-proxy-@{rand6} rw,
-  owner @{att}@{run}/user/@{uid}/.flatpak-helper/pkcs11-flatpak-@{int6} rw,
+  owner @{att}@{run}/user/@{uid}/.dbus-proxy/system-bus-proxy-@{rand6} rw,
 
         @{run}/host/os-release r,
   owner @{run}/host/ r,
@@ -165,8 +169,10 @@
   #aa:lint ignore=too-wide
   # Flatpak creates an app-specific private restricted /tmp. As such, we can
   # simply allow full access to /tmp.
-        /tmp/   r,
+        /tmp/ r,
   owner /tmp/** mrwlkix,
+        @{att}/tmp/ r,
+  owner @{att}/tmp/** mrwlkix,
 
   # Show the list of active tty
   @{sys}/devices/virtual/tty/tty@{int}/active r,
@@ -232,7 +238,7 @@
   owner @{PROC}/@{pid}/task/@{tid}/statm r,
 
   # Allow setting up pseudoterminal via /dev/pts system. This is safe because
-  # the flatpak uses a per-app devpts.
+  # flatpak uses a per-app devpts.
   /dev/ptmx rw,
 
   include if exists <abstractions/app/flatpak.d>
