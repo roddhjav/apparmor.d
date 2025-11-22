@@ -15,7 +15,6 @@ profile flatpak-session-helper @{exec_path} flags=(attach_disconnected,mediate_d
   include <abstractions/consoles>
   include <abstractions/nameservice-strict>
   include <abstractions/p11-kit>
-  include <abstractions/ssl_certs>
 
   signal send set=(hup int) peer=user_unconfined,
   signal send set=int peer=@{p_systemd},
@@ -35,12 +34,10 @@ profile flatpak-session-helper @{exec_path} flags=(attach_disconnected,mediate_d
   @{bin}/dbus-monitor                 rPUx,
   @{bin}/flatpak                       rPx,
   @{bin}/getent                        rix,
-  @{bin}/p11-kit                       rix,
+  @{bin}/p11-kit                       rCx -> p11-kit,
   @{bin}/pkexec                        rCx -> pkexec,
   @{bin}/printenv                      rix,
   @{bin}/ps                            rPx,
-  @{lib}/p11-kit/p11-kit-remote        rix,
-  @{lib}/p11-kit/p11-kit-server        rix,
 
   /var/lib/flatpak/app/@{appid}/**/@{bin}/**  rPx -> flatpak-session-helper-app,
   /var/lib/flatpak/app/@{appid}/**/@{lib}/**  rPx -> flatpak-session-helper-app,
@@ -48,17 +45,32 @@ profile flatpak-session-helper @{exec_path} flags=(attach_disconnected,mediate_d
   owner @{user_config_dirs}/mimeapps.list w,
 
   owner @{run}/user/@{uid}/.flatpak-helper/{,**} rw,
-  owner @{run}/user/@{uid}/.flatpak-helper/pkcs11-flatpak-@{int} rw,
-
-  owner @{PROC}/@{pids}/fd/ r,
 
   /dev/ptmx rw,
 
-  profile pkexec {
+  profile pkexec flags=(attach_disconnected,mediate_deleted) {
     include <abstractions/base>
     include <abstractions/app/pkexec>
 
     include if exists <local/flatpak-session-helper_pkexec>
+  }
+
+  profile p11-kit flags=(attach_disconnected,mediate_deleted) {
+    include <abstractions/base>
+    include <abstractions/ssl_certs>
+
+    signal receive set=term peer=flatpak-session-helper,
+
+    @{bin}/p11-kit mr,
+
+    @{lib}/p11-kit/p11-kit-remote  ix,
+    @{lib}/p11-kit/p11-kit-server  ix,
+
+    owner @{run}/user/@{uid}/.flatpak-helper/pkcs11-flatpak-@{int} rw,
+
+    owner @{PROC}/@{pids}/fd/ r,
+
+    include if exists <local/flatpak-session-helper_p11-kit>
   }
 
   include if exists <local/flatpak-session-helper>
