@@ -11,17 +11,12 @@ include <tunables/global>
 profile smtube @{exec_path} {
   include <abstractions/base>
   include <abstractions/consoles>
-  include <abstractions/opencl-intel>
-  include <abstractions/gtk>
-  include <abstractions/freedesktop.org>
-  include <abstractions/fonts>
-  include <abstractions/fontconfig-cache-read>
-  include <abstractions/mesa>
+  include <abstractions/desktop>
+  include <abstractions/graphics>
+  include <abstractions/gstreamer>
   include <abstractions/nameservice-strict>
-  include <abstractions/qt5>
   include <abstractions/qt5-compose-cache-write>
   include <abstractions/ssl_certs>
-  include <abstractions/gstreamer>
 
   network inet dgram,
   network inet6 dgram,
@@ -31,6 +26,16 @@ profile smtube @{exec_path} {
   network netlink raw,
 
   @{exec_path} mr,
+
+  # Players
+  @{bin}/mpv        rPUx,
+  @{bin}/smplayer   rPUx,
+  @{bin}/vlc        rPUx,
+  @{bin}/cvlc       rPUx,
+  @{bin}/youtube-dl rPUx,
+  @{bin}/yt-dlp     rPUx,
+
+  @{open_path}       rPx -> child-open,
 
   # SMTube config files
   owner @{user_config_dirs}/smtube/ rw,
@@ -49,26 +54,11 @@ profile smtube @{exec_path} {
   owner @{user_cache_dirs}/smtube/ rw,
   owner @{user_cache_dirs}/smtube/* rwk,
 
-  /var/lib/dbus/machine-id r,
-  /etc/machine-id r,
-
-  /usr/share/hwdata/pnp.ids r,
-
   /dev/shm/#@{int} rw,
 
   deny owner @{PROC}/@{pid}/cmdline r,
        owner @{PROC}/@{pid}/fd/ r,
   deny       @{PROC}/sys/kernel/random/boot_id r,
-
-  # Players
-  @{bin}/mpv        rPUx,
-  @{bin}/smplayer   rPUx,
-  @{bin}/vlc        rPUx,
-  @{bin}/cvlc       rPUx,
-  @{bin}/youtube-dl rPUx,
-  @{bin}/yt-dlp     rPUx,
-
-  @{open_path}       rPx -> child-open,
 
   # file_inherit
   owner /dev/tty@{u8} rw,
