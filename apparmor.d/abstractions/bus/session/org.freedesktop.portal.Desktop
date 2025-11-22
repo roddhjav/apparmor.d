@@ -4,17 +4,31 @@
 
   abi <abi/4.0>,
 
-  #aa:dbus common bus=session name=org.freedesktop.portal.{d,D}esktop label=xdg-desktop-portal
+  # DBus.Properties: read properties from the interface
 
   dbus send bus=session path=/org/freedesktop/portal/desktop
        interface=org.freedesktop.DBus.Properties
-       member=Read
-       peer=(name="{@{busname},org.freedesktop.portal.Desktop}", label=xdg-desktop-portal),
+       member=Get
+       peer=(name=org.freedesktop.portal.Desktop, label=xdg-desktop-portal),
 
   dbus send bus=session path=/org/freedesktop/portal/desktop
        interface=org.freedesktop.DBus.Properties
        member=GetAll
        peer=(name=@{busname}, label=xdg-desktop-portal),
+
+  dbus send bus=session path=/org/freedesktop/portal/desktop
+       interface=org.freedesktop.DBus.Properties
+       member=Read
+       peer=(label=xdg-desktop-portal),
+
+  # DBus.Properties: receive property changed events
+
+  dbus receive bus=session path=/org/freedesktop/portal/desktop{,/**}
+       interface=org.freedesktop.DBus.Properties
+       member={Get,GetAll}
+       peer=(name=@{busname}, label=xdg-desktop-portal),
+
+  # portal.Settings
 
   dbus send bus=session path=/org/freedesktop/portal/desktop
        interface=org.freedesktop.portal.Settings
@@ -24,11 +38,6 @@
   dbus receive bus=session path=/org/freedesktop/portal/desktop
        interface=org.freedesktop.portal.Settings
        member=SettingChanged
-       peer=(name=@{busname}, label=xdg-desktop-portal),
-
-  dbus receive bus=session path=/org/freedesktop/portal/desktop{,/**}
-       interface=org.freedesktop.DBus.Properties
-       member={Get,GetAll}
        peer=(name=@{busname}, label=xdg-desktop-portal),
 
   dbus receive bus=session path=/org/freedesktop/portal/desktop
