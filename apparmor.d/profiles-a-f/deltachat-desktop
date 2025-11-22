@@ -7,19 +7,18 @@ abi <abi/4.0>,
 
 include <tunables/global>
 
+@{name} = deltachat-desktop
 @{domain} = org.chromium.Chromium
 @{lib_dirs} = @{lib}/deltachat-desktop @{lib}/deltachat /opt/DeltaChat/
+@{config_dirs} = @{user_config_dirs}/DeltaChat
+@{cache_dirs} = @{user_cache_dirs}/DeltaChat
 
 @{exec_path} = @{bin}/deltachat-desktop @{lib_dirs}/deltachat-desktop
 profile deltachat-desktop @{exec_path} {
   include <abstractions/base>
-  include <abstractions/common/chromium>
   include <abstractions/consoles>
   include <abstractions/dconf-write>
-  include <abstractions/fontconfig-cache-read>
-  include <abstractions/fonts>
-  include <abstractions/freedesktop.org>
-  include <abstractions/gtk>
+  include <abstractions/desktop>
   include <abstractions/nameservice-strict>
   include <abstractions/ssl_certs>
   include <abstractions/user-download-strict>
@@ -32,44 +31,17 @@ profile deltachat-desktop @{exec_path} {
 
   @{exec_path} mrix,
 
-  @{lib_dirs}/ r,
-  @{lib_dirs}/** r,
-  @{lib_dirs}/libffmpeg.so mr,
-  @{lib_dirs}/{swiftshader/,}libGLESv2.so mr,
-  @{lib_dirs}/{swiftshader/,}libEGL.so mr,
-  @{lib_dirs}/resources/app.asar.unpacked/node_modules/**.node mr,
-  @{lib_dirs}/resources/app.asar.unpacked/node_modules/**.so mr,
-  @{lib_dirs}/resources/app.asar.unpacked/node_modules/**.so.[0-9]* mr,
   @{lib_dirs}/chrome-sandbox rPx,
 
   @{bin}/xdg-settings    rPx,
   @{open_path} rPx -> child-open-browsers,
 
-  owner @{user_config_dirs}/DeltaChat/ rw,
-  owner @{user_config_dirs}/DeltaChat/** rwk,
-
   owner @{tmp}/@{hex}/ rw,
-  owner @{tmp}/@{hex}/db.sqlite-blobs/ rw,
   owner @{tmp}/@{hex}/db.sqlite rwk,
+  owner @{tmp}/@{hex}/db.sqlite-blobs/ rw,
   owner @{tmp}/@{hex}/db.sqlite-journal rw,
 
-        @{PROC}/ r,
-        @{PROC}/@{pid}/stat r,
-        @{PROC}/@{pid}/task/ r,
-        @{PROC}/@{pid}/task/@{tid}/status r,
-        @{PROC}/sys/fs/inotify/max_user_watches r,
-        @{PROC}/sys/kernel/yama/ptrace_scope r,
-  owner @{PROC}/@{pid}/cgroup r,
-  owner @{PROC}/@{pid}/cmdline r,
-  owner @{PROC}/@{pid}/fd/ r,
-  owner @{PROC}/@{pid}/oom_{,score_}adj rw,
-  owner @{PROC}/@{pid}/statm r,
-
   /dev/ r,
-
-  # (#FIXME#)
-  deny @{sys}/bus/pci/devices/ r,
-  deny @{sys}/devices/virtual/tty/tty@{int}/active r,
 
   include if exists <local/deltachat-desktop>
 }
