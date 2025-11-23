@@ -80,8 +80,8 @@ profile gjs @{exec_path} flags=(attach_disconnected) {
 
   @{gstreamer_path}            Cx -> gstreamer,
 
-  /usr/share/gnome-shell/extensions/gsconnect@andyholmes.github.io/{service/daemon.js,gsconnect-preferences} rPx,
-  @{user_share_dirs}/gnome-shell/extensions/gsconnect@andyholmes.github.io/{service/daemon.js,gsconnect-preferences} rPx,
+  /usr/share/gnome-shell/extensions/gsconnect@andyholmes.github.io/{service/daemon.js,gsconnect-preferences} Px,
+  @{user_share_dirs}/gnome-shell/extensions/gsconnect@andyholmes.github.io/{service/daemon.js,gsconnect-preferences} Px,
 
   /usr/share/gnome-shell/{,**} r,
   /usr/share/xkeyboard-config-2/{,**} r,
@@ -115,6 +115,7 @@ profile gjs @{exec_path} flags=(attach_disconnected) {
   owner @{PROC}/@{pid}/mounts r,
   owner @{PROC}/@{pid}/stat r,
   owner @{PROC}/@{pid}/task/ r,
+  owner @{PROC}/@{pid}/task/@{tid}/comm rw,
   owner @{PROC}/@{pid}/task/@{tid}/stat r,
 
   /dev/ r,
@@ -124,6 +125,7 @@ profile gjs @{exec_path} flags=(attach_disconnected) {
 
   profile gstreamer {
     include <abstractions/base>
+    include <abstractions/bus-session>
     include <abstractions/bus-system>
     include <abstractions/bus/session/org.gtk.vfs.MountTracker>
     include <abstractions/camera>
@@ -143,14 +145,19 @@ profile gjs @{exec_path} flags=(attach_disconnected) {
          peer=(name=@{busname}, label=gnome-shell),
 
     /usr/share/ladspa/rdf/{,**} r,
+    /usr/share/poppler/{,**} r,
 
     owner @{DESKTOP_HOME}/.nv/ w,
     owner @{DESKTOP_HOME}/.nv/ComputeCache/ w,
+    owner @{DESKTOP_HOME}/.nv/ComputeCache/** rwk,
     owner @{desktop_cache_dirs}/nvidia/GLCache/ rw,
     owner @{desktop_cache_dirs}/nvidia/GLCache/** rwk,
 
     owner @{desktop_cache_dirs}/nvidia/GLCache/ rw,
     owner @{desktop_cache_dirs}/nvidia/GLCache/** rwk,
+
+    /tmp/ r,
+    /var/tmp/ r,
 
     @{sys}/devices/**/uevent r,
 
