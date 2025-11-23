@@ -9,10 +9,17 @@ include <tunables/global>
 @{exec_path} = @{bin}/systemd-stdio-bridge
 profile systemd-stdio-bridge @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/bus-session>
+  include <abstractions/bus/session/org.freedesktop.systemd1>
   include <abstractions/common/systemd>
   include <abstractions/consoles>
 
   signal send set=term peer=@{p_systemd},
+
+  unix bind type=stream addr=@@{udbus}/bus/systemd-stdio-b/,
+  unix bind type=stream addr=@@{udbus}/bus/systemd-stdio-b/session,
+
+  unix type=stream peer=(label=do-release-upgrade//upgrader),
 
   @{exec_path} mr,
 
