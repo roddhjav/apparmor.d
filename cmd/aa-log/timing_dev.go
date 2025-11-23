@@ -1,5 +1,4 @@
 //go:build dev
-// +build dev
 
 package main
 
@@ -9,6 +8,10 @@ import (
 )
 
 const withTime = true
+
+func timeNow() time.Time {
+	return time.Now()
+}
 
 func printTiming(start, endRead, endParse, end time.Time) {
 	printDuration := func(d time.Duration) string {

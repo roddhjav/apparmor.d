@@ -11,7 +11,6 @@ import (
 	"os"
 	"slices"
 	"strings"
-	"time"
 
 	"github.com/roddhjav/apparmor.d/pkg/logs"
 )
@@ -58,7 +57,7 @@ func aaLog(logger string, path string, profile string, namespace string) error {
 	var err error
 	var file io.Reader
 
-	start := time.Now()
+	start := timeNow()
 	switch logger {
 	case "auditd":
 		file, err = logs.GetAuditLogs(path)
@@ -70,7 +69,7 @@ func aaLog(logger string, path string, profile string, namespace string) error {
 	if err != nil {
 		return err
 	}
-	endRead := time.Now()
+	endRead := timeNow()
 
 	if raw {
 		fmt.Print(strings.Join(logs.GetApparmorLogs(file, profile, namespace), "\n") + "\n")
@@ -84,7 +83,7 @@ func aaLog(logger string, path string, profile string, namespace string) error {
 		aaLogs = logs.New(file, profile, namespace)
 	}
 
-	endParse := time.Now()
+	endParse := timeNow()
 	if rules {
 		profiles := aaLogs.ParseToProfiles()
 		for _, p := range profiles {
@@ -97,7 +96,7 @@ func aaLog(logger string, path string, profile string, namespace string) error {
 		fmt.Print(aaLogs.String())
 	}
 	if withTime {
-		printTiming(start, endRead, endParse, time.Now())
+		printTiming(start, endRead, endParse, timeNow())
 	}
 	return nil
 }
