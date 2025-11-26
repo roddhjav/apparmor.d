@@ -44,7 +44,15 @@ func (b ReAttach) Apply(opt *Option, profile string) (string, error) {
 
 	if strings.Contains(profile, "attach_disconnected") {
 		if opt.Kind == aa.ProfileKind {
-			insert = "@{att} = /att/" + opt.Name + "/\n"
+			if strings.Contains(opt.Name, ":") {
+				parts := strings.Split(opt.Name, ":")
+				if len(parts) != 3 {
+					return profile, fmt.Errorf("attach: invalid namespaced profile name: %s", opt.Name)
+				}
+				insert = "@{att} = /att/" + parts[1] + "/\n"
+			} else {
+				insert = "@{att} = /att/" + opt.Name + "/\n"
+			}
 		}
 		profile = strings.ReplaceAll(profile,
 			"attach_disconnected",
