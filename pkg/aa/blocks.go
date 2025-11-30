@@ -5,7 +5,9 @@
 package aa
 
 const (
-	HAT Kind = "hat"
+	HAT  Kind = "hat"
+	IF   Kind = "if"
+	ELSE Kind = "else"
 )
 
 // Hat represents a single AppArmor hat.
@@ -13,6 +15,14 @@ type Hat struct {
 	Base
 	Name  string
 	Rules Rules
+}
+
+func newHat(rule rule) (*Hat, error) {
+	name := ""
+	if len(rule) > 0 {
+		name = rule.Get(0)
+	}
+	return &Hat{Name: name}, nil
 }
 
 func (p *Hat) Kind() Kind {
