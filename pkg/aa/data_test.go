@@ -84,12 +84,18 @@ var (
 		"requested": "send",
 		"denied":    "send",
 	}
-	network1 = &Network{Domain: "netlink", Type: "raw", Protocol: "15"}
+	network1 = &Network{
+		Access:   []string{},
+		Domain:   "netlink",
+		Type:     "raw",
+		Protocol: "15",
+	}
 	network2 = &Network{Domain: "inet", Type: "dgram"}
 	network3 = &Network{
 		Base:         Base{Comment: " failed af match"},
 		LocalAddress: LocalAddress{IP: "127.0.0.1", Port: "57007"},
 		PeerAddress:  PeerAddress{IP: "127.0.0.53", Port: "53", Src: "127.0.0.1"},
+		Access:       []string{"send"},
 		Type:         "dgram",
 		Protocol:     "17",
 	}
