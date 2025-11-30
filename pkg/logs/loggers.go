@@ -140,7 +140,9 @@ func validateLogFile(filename string) error {
 	if err != nil {
 		return fmt.Errorf("unable to read: %s", filename)
 	}
-	file.Close()
+	if cerr := file.Close(); cerr != nil {
+		return fmt.Errorf("unable to close file %s: %w", filename, cerr)
+	}
 	return nil
 }
 
