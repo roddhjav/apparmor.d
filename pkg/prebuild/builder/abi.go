@@ -10,6 +10,9 @@ import (
 )
 
 var (
+	regAbi4To5 = util.ToRegexRepl([]string{
+		`abi/4.0`, `abi/5.0`,
+	})
 	regAbi4To3 = util.ToRegexRepl([]string{
 		`abi/4.0`, `abi/3.0`,
 		`  userns,`, `  # userns,`,
@@ -22,6 +25,10 @@ var (
 	})
 )
 
+type ABI5 struct {
+	prebuild.Base
+}
+
 type ABI3 struct {
 	prebuild.Base
 }
@@ -31,6 +38,12 @@ type APPARMOR40 struct {
 }
 
 func init() {
+	RegisterBuilder(&ABI5{
+		Base: prebuild.Base{
+			Keyword: "abi5",
+			Msg:     "Build: convert all profiles from abi 4.0 to abi 5.0",
+		},
+	})
 	RegisterBuilder(&ABI3{
 		Base: prebuild.Base{
 			Keyword: "abi3",
@@ -43,6 +56,10 @@ func init() {
 			Msg:     "Build: convert all profiles from apparmor 4.1 to 4.0 or less",
 		},
 	})
+}
+
+func (b ABI5) Apply(opt *Option, profile string) (string, error) {
+	return regAbi4To5.Replace(profile), nil
 }
 
 func (b ABI3) Apply(opt *Option, profile string) (string, error) {
