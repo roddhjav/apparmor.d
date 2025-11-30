@@ -216,7 +216,7 @@ dev +names:
 # Build & install apparmor.d on Arch based systems
 [group('packages')]
 pkg:
-	@makepkg --syncdeps --install --cleanbuild --force --noconfirm
+	@bash dists/build.sh pkg
 
 # Build & install apparmor.d on Debian based systems
 [group('packages')]
