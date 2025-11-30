@@ -93,6 +93,7 @@ func (r Rules) Delete(i int) Rules {
 	return append(r[:i], r[i+1:]...)
 }
 
+// DeleteKind removes all rules of the given kind from the slice and returns the new slice.
 func (r Rules) DeleteKind(kind Kind) Rules {
 	res := make(Rules, 0, len(r))
 	for _, rule := range r {
@@ -106,6 +107,7 @@ func (r Rules) DeleteKind(kind Kind) Rules {
 	return res
 }
 
+// FilterOut removes all rules of the given kind from the slice and returns the new slice.
 func (r Rules) FilterOut(filter Kind) Rules {
 	res := make(Rules, 0, len(r))
 	for _, rule := range r {
@@ -119,6 +121,7 @@ func (r Rules) FilterOut(filter Kind) Rules {
 	return res
 }
 
+// Filter returns all rules of the given kind from the slice.
 func (r Rules) Filter(filter Kind) Rules {
 	res := make(Rules, 0, len(r))
 	for _, rule := range r {
@@ -132,6 +135,7 @@ func (r Rules) Filter(filter Kind) Rules {
 	return res
 }
 
+// GetVariables returns all Variable rules from the slice.
 func (r Rules) GetVariables() []*Variable {
 	res := make([]*Variable, 0, len(r))
 	for _, rule := range r {
@@ -143,6 +147,7 @@ func (r Rules) GetVariables() []*Variable {
 	return res
 }
 
+// GetIncludes returns all Include rules from the slice.
 func (r Rules) GetIncludes() []*Include {
 	res := make([]*Include, 0, len(r))
 	for _, rule := range r {
@@ -264,6 +269,7 @@ func (r Rules) Format() Rules {
 // ParaRules is a slice of Rules grouped by paragraph
 type ParaRules []Rules
 
+// Flatten flattens the ParaRules into a single Rules slice
 func (r ParaRules) Flatten() Rules {
 	totalLen := 0
 	for i := range r {
