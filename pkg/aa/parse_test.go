@@ -990,7 +990,6 @@ var (
 						Type:      "stream",
 						Address:   "@/tmp/.ICE-unix/1995",
 						PeerLabel: "gnome-shell",
-						PeerAddr:  "none",
 					},
 				},
 				{

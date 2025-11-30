@@ -345,7 +345,7 @@ var (
 			other:    unix1,
 			wCompare: 0,
 			wMerge:   true,
-			wString:  "unix (send receive) type=stream protocol=0 addr=none peer=(label=dbus-daemon, addr=@/tmp/dbus-AaKMpxzC4k),",
+			wString:  "unix (send receive) type=stream peer=(label=dbus-daemon, addr=@/tmp/dbus-AaKMpxzC4k),",
 		},
 		{
 			name:     "dbus",

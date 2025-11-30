@@ -88,7 +88,6 @@ func TestAppArmorProfileFile_String(t *testing.T) {
 							Type:      "stream",
 							Address:   "@/tmp/.ICE-unix/1995",
 							PeerLabel: "gnome-shell",
-							PeerAddr:  "none",
 						},
 						&Dbus{Access: []string{"bind"}, Bus: "session", Name: "org.gnome.*"},
 						&Dbus{
