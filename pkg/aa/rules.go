@@ -77,6 +77,30 @@ func (r Rules) Index(item Rule) int {
 	return -1
 }
 
+// IndexOf returns the index of the first occurrence of item in r, or -1 if not present.
+func (r Rules) IndexOf(item Rule) int {
+	for idx, rr := range r {
+		if rr.Kind() == item.Kind() && rr.Compare(item) == 0 {
+			return idx
+		}
+	}
+	return -1
+}
+
+// Contains checks if the rule is in the slice
+func (r Rules) Contains(rule Rule) bool {
+	return r.IndexOf(rule) != -1
+}
+
+// Remove removes the first occurrence of rule from the slice and returns the new slice.
+func (r Rules) Remove(rule Rule) Rules {
+	idx := r.IndexOf(rule)
+	if idx == -1 {
+		return r
+	}
+	return append(r[:idx], r[idx+1:]...)
+}
+
 // Replace replaces the elements r[i] by the given rules, and returns the
 // modified slice.
 func (r Rules) Replace(i int, rules ...Rule) Rules {
