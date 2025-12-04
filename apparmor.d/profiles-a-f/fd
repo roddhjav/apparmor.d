@@ -1,0 +1,24 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 valoq <valoq@mailbox.ofd>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/fd
+profile fd @{exec_path}  {
+  include <abstractions/base>
+
+  capability dac_override,
+  capability dac_read_search,
+
+  @{exec_path} mr,
+
+  ## Allow reading the entire filesystem to search for filenames
+  /{,**} r,
+
+  include if exists <local/fd>
+}
+
+# vim:syntax=apparmor
