@@ -8,16 +8,20 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{exec_path} = @{lib}/systemd/systemd-shutdown
-profile systemd-shutdown @{exec_path} {
+profile systemd-shutdown @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/common/systemd>
 
+  capability ipc_lock,
   capability kill,
+  capability sys_admin,
   capability sys_boot,
   capability sys_ptrace,
   capability sys_resource,
 
   mount options=(rw rprivate) -> /,
+
+  ptrace read,
 
   signal (send)    set=(stop, cont, term, kill),
   signal (receive) set=(rtmin+23) peer=plymouthd,
@@ -25,9 +29,12 @@ profile systemd-shutdown @{exec_path} {
   @{exec_path} mr,
 
         @{PROC}/ r,
-        @{PROC}/@{pid}/fd/ r,
-        @{PROC}/@{pid}/fdinfo/@{int} r,
+        @{PROC}/@{pids}/cgroup r,
         @{PROC}/@{pids}/cmdline r,
+        @{PROC}/@{pids}/fd/ r,
+        @{PROC}/@{pids}/fdinfo/@{int} r,
+        @{PROC}/@{pids}/stat r,
+        @{PROC}/@{pids}/status r,
   owner @{PROC}/@{pid}/comm r,
   owner @{PROC}/sys/kernel/core_pattern w,
   owner @{PROC}/sys/kernel/printk rw,

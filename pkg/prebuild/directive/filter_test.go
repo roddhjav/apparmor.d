@@ -251,6 +251,20 @@ func TestFilterExclude_Apply(t *testing.T) {
 			profile: "  @{bin}/dpkg rPx -> child-dpkg, #aa:exclude debian",
 			want:    "  @{bin}/dpkg rPx -> child-dpkg,",
 		},
+		{
+			name:   "inline-exclude",
+			dist:   "ubuntu",
+			family: "apt",
+			opt: &Option{
+				Name:    "exclude",
+				ArgMap:  map[string]string{"ubuntu": ""},
+				ArgList: []string{"ubuntu"},
+				File:    nil,
+				Raw:     "  @{bin}/dpkg rPx -> child-dpkg, #aa:exclude ubuntu",
+			},
+			profile: "  @{bin}/dpkg rPx -> child-dpkg, #aa:exclude ubuntu",
+			want:    "",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

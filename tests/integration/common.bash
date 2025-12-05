@@ -9,7 +9,7 @@ load "$BATS_LIB_PATH/bats-support/load"
 export SYSTEMD_PAGER=
 
 # Ignore the profile not managed by apparmor.d
-IGNORE=(php-fpm snapd/snap-confine snap.vault.vaultd /dev/pts/0)
+IGNORE=(/usr/sbin/mysqld php-fpm snapd/snap-confine snap.vault.vaultd /dev/pts/0)
 
 # User password for sudo commands
 export PASSWORD=${PASSWORD:-user}

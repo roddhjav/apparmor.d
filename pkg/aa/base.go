@@ -61,11 +61,16 @@ func newBaseFromLog(log map[string]string) Base {
 		if strings.Contains(log["info"], "optional:") {
 			optional = true
 			comment = strings.Replace(log["info"], "optional: ", "", 1)
+		} else if strings.Contains(log["info"], "no new privs") {
+			noNewPrivs = true
+			comment = strings.TrimSpace(strings.Replace(log["info"], "no new privs", "", 1))
 		} else {
 			noNewPrivs = true
+			if log["info"] != "" {
+				comment += " " + log["info"]
+			}
 		}
-	}
-	if log["info"] != "" {
+	} else if log["info"] != "" {
 		comment += " " + log["info"]
 	}
 	return Base{

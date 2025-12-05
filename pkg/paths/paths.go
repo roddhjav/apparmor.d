@@ -254,6 +254,14 @@ func (p *Path) MkTempDir(prefix string) (*Path, error) {
 	return MkTempDir(p.path, prefix)
 }
 
+func (p *Path) IsSymlink() (bool, error) {
+	info, err := p.Lstat()
+	if err != nil {
+		return false, err
+	}
+	return info.Mode()&os.ModeSymlink != 0, nil
+}
+
 // FollowSymLink transforms the current path to the path pointed by the
 // symlink if path is a symlink, otherwise it does nothing
 func (p *Path) FollowSymLink() error {
