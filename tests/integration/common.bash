@@ -46,7 +46,7 @@ export XDG_PKG_DIR=".pkg"
 # Define user personal keyrings
 export XDG_GPG_DIR=".gnupg"
 export XDG_SSH_DIR=".ssh"
-export XDG_PASSWORDSTORE_DIR=".password-store"
+export XDG_PASSWORD_STORE_DIR=".password-store"
 
 # Define user personal private directories
 export XDG_PRIVATE_DIR=".private"
@@ -81,7 +81,7 @@ export user_build_dirs=$HOME/$XDG_BUILD_DIR
 export user_pkg_dirs=$HOME/$XDG_PKG_DIR
 export user_gpg_dirs=$HOME/$XDG_GPG_DIR
 export user_ssh_dirs=$HOME/$XDG_SSH_DIR
-export user_passwordstore_dirs=$HOME/$XDG_PASSWORDSTORE_DIR
+export user_passwordstore_dirs=$HOME/$XDG_PASSWORD_STORE_DIR
 export user_private_dirs=$HOME/$XDG_PRIVATE_DIR
 
 _START="$(date +%s)"
