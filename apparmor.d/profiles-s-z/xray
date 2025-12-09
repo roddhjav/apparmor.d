@@ -10,11 +10,15 @@ include <tunables/global>
 profile xray @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/consoles>
+  include <abstractions/ssl_certs>
+  include <abstractions/openssl>
+  include <abstractions/nameservice-strict>
 
   network inet dgram,
-  network inet stream,
-  network inet raw,
   network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network inet raw,
   network inet6 raw,
   network netlink raw,
 
@@ -23,8 +27,14 @@ profile xray @{exec_path} flags=(attach_disconnected) {
   /etc/xray/{,*} r,
   /usr/share/xray/**.dat r,
   /usr/share/v2ray/**.dat r,
+  /var/log/xray/*.log rw,
 
-  @{PROC}/sys/net/core/somaxconn r,
+  @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/session-@{word}.scope/cpu.max r,
+  @{sys}/kernel/mm/transparent_hugepage/hpage_pmd_size r,
+
+        @{PROC}/sys/net/core/somaxconn r,
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/cgroup r,
 
   include if exists <local/xray>
 }
