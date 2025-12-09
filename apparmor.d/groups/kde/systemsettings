@@ -18,6 +18,7 @@ profile systemsettings @{exec_path} {
   include <abstractions/nameservice-strict>
   include <abstractions/qt5-shader-cache>
   include <abstractions/thumbnails-cache-write>
+  include <abstractions/ibus-strict>
 
   network netlink raw,
 
@@ -34,11 +35,14 @@ profile systemsettings @{exec_path} {
   @{bin}/kcminit rPx,
   @{bin}/lspci rPx,
   @{bin}/openssl rix,
+  @{bin}/orca rPUx,
+  @{bin}/rsync rix,
   @{bin}/pactl rPx,
   @{bin}/plasma-discover rPx,
   @{bin}/plasmashell rPx,
   @{bin}/xdpyinfo rPUx,
   @{lib}/qt{5,6}/bin/qdbus rPx,
+  @{lib}/bup/cmd/bup rPUx,
   #aa:exec kioworker
 
   /usr/share/kcm_networkmanagement/{,**} r,
@@ -46,32 +50,36 @@ profile systemsettings @{exec_path} {
   /usr/share/kcmkeys/{,*.kksrc} r,
   /usr/share/kglobalaccel/* r,
   /usr/share/kinfocenter/{,**} r,
-  /usr/share/solid/{,**} r,
   /usr/share/kpackage/{,**} r,
   /usr/share/kservices{5,6}/{,**} r,
   /usr/share/kservicetypes5/{,**} r,
   /usr/share/kwin/{,**} r,
   /usr/share/kxmlgui5/systemsettings/systemsettingsui.rc r,
   /usr/share/plasma/{,**} r,
+  /usr/share/i18n/locales/{,*} r,
+  /usr/share/iso-codes/json/*.json r,
   /usr/share/sddm/themes/{,**} r,
+  /usr/share/solid/{,**} r,
   /usr/share/systemsettings/{,**} r,
   /usr/share/wallpapers/{,**} r,
   /usr/share/thumbnailers/{,**} r,
 
   /etc/fstab r,
   /etc/machine-id r,
+  /etc/xdg/* r,
   /etc/xdg/plasmanotifyrc r,
   /etc/xdg/ui/ui_standards.rc r,
   /var/lib/dbus/machine-id r,
-  /etc/xdg/* r,
 
   /var/cache/cracklib/cracklib_dict.* r,
   /var/cache/samba/ rw,
   /var/lib/AccountsService/icons/* r,
   /var/lib/flatpak/repo/{,**} r,
 
+  owner @{HOME}/.face r,
   owner @{HOME}/@{XDG_WALLPAPERS_DIR}/{,**} r,
 
+  owner @{user_cache_dirs}/#@{int} rwk,
   owner @{user_cache_dirs}/kcrash-metadata/*.ini rw,
   owner @{user_cache_dirs}/kinfocenter/{,**} rwlk,
   owner @{user_cache_dirs}/ksvg-elements rw,
@@ -82,11 +90,19 @@ profile systemsettings @{exec_path} {
   owner @{user_cache_dirs}/systemsettings/ rw,
   owner @{user_cache_dirs}/systemsettings/** rwlk -> @{user_cache_dirs}/systemsettings/**,
 
-  owner @{user_config_dirs}/{P,p}lasma* r,
-  owner @{user_config_dirs}/*rc r,
   owner @{user_config_dirs}/#@{int} rw,
+  owner @{user_config_dirs}/*rc r,
+  owner @{user_config_dirs}/autostart/ r,
+  owner @{user_config_dirs}/{P,p}lasma* r,
+  owner @{user_config_dirs}/plasma-workspace/env/ r,
+  owner @{user_config_dirs}/plasma-workspace/shutdown/ r,
+  owner @{user_config_dirs}/powerdevilrc rw,
+  owner @{user_config_dirs}/powerdevilrc.@{rand6} rwl -> @{user_config_dirs}/#@{int},
+  owner @{user_config_dirs}/powerdevilrc.lock rwk,
   owner @{user_config_dirs}/device_automounter_kcmrc.lock rwk,
   owner @{user_config_dirs}/emaildefaults r,
+  owner @{user_config_dirs}/kcmfonts r,
+  owner @{user_config_dirs}/KDE/UserFeedback.conf r,
   owner @{user_config_dirs}/kde.org/{,**} rwlk,
   owner @{user_config_dirs}/kdedefaults/kscreenlockerrc r,
   owner @{user_config_dirs}/kdedefaults/plasmarc r,
@@ -97,8 +113,8 @@ profile systemsettings @{exec_path} {
   owner @{user_config_dirs}/session/** rwlk,
   owner @{user_config_dirs}/systemsettingsrc.lock rwk,
   owner @{user_config_dirs}/systemsettingsrc{,.@{rand6}} rwl -> @{user_config_dirs}/#@{int},
-  owner @{user_share_dirs}/baloo/index r,
 
+  owner @{user_share_dirs}/baloo/index r,
   owner @{user_share_dirs}/kactivitymanagerd/resources/database rwk,
   owner @{user_share_dirs}/kactivitymanagerd/resources/database-shm rwk,
   owner @{user_share_dirs}/kactivitymanagerd/resources/database-wal rw,
@@ -111,11 +127,12 @@ profile systemsettings @{exec_path} {
   owner @{user_share_dirs}/systemsettings/** rwlk,
   owner @{user_share_dirs}/wallpapers/{,**} r,
 
-  owner @{user_state_dirs}/#@{int} rw,
+  owner @{user_state_dirs}/#@{int} rwk,
   owner @{user_state_dirs}/systemsettingsstaterc rw,
   owner @{user_state_dirs}/systemsettingsstaterc.@{rand6} rwlk,
   owner @{user_state_dirs}/systemsettingsstaterc.lock rwlk,
 
+        @{run}/mount/utab r,
   owner @{run}/user/@{uid}/#@{int} rw,
   owner @{run}/user/@{uid}/systemsettings@{rand6}.@{int}.kioworker.socket rwl -> @{run}/user/@{uid}/#@{int},
 
