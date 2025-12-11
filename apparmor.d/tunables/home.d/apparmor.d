@@ -42,7 +42,7 @@
 # Define user personal keyrings
 @{XDG_GPG_DIR}=".gnupg"
 @{XDG_SSH_DIR}=".ssh"
-@{XDG_PASSWORD_STORE_DIR}=".password-store"
+@{XDG_PASSWORDSTORE_DIR}=".password-store"
 
 # Define user personal private directories
 @{XDG_PRIVATE_DIR}=".{p,P}rivate" "{p,P}rivate"
@@ -69,7 +69,7 @@
 @{user_pkg_dirs}=@{HOME}/@{XDG_PKG_DIR} @{MOUNTS}/@{XDG_PKG_DIR}
 @{user_gpg_dirs}=@{HOME}/@{XDG_GPG_DIR} @{MOUNTS}/@{XDG_GPG_DIR}
 @{user_ssh_dirs}=@{HOME}/@{XDG_SSH_DIR} @{MOUNTS}/@{XDG_SSH_DIR}
-@{user_passwordstore_dirs}=@{HOME}/@{XDG_PASSWORD_STORE_DIR} @{MOUNTS}/@{XDG_PASSWORD_STORE_DIR}
+@{user_passwordstore_dirs}=@{HOME}/@{XDG_PASSWORDSTORE_DIR} @{MOUNTS}/@{XDG_PASSWORDSTORE_DIR}
 @{user_private_dirs}=@{HOME}/@{XDG_PRIVATE_DIR} @{MOUNTS}/@{XDG_PRIVATE_DIR}
 
 # Similar system-wide paths
