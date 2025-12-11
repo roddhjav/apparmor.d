@@ -108,7 +108,7 @@ Please ensure that all personal directories you are using are well-defined XDG d
       | GPG | `@{XDG_GPG_DIR}` | `.gnupg` |
       | SSH | `@{XDG_SSH_DIR}` | `.ssh` |
       | Private | `@{XDG_PRIVATE_DIR}` | `.{p,P}rivate {p,P}rivate` |
-      | Passwords | `@{XDG_PASSWORD_STORE_DIR}` | `.password-store` |
+      | Passwords | `@{XDG_PASSWORDSTORE_DIR}` | `.password-store` |
 
     </figure>
 
@@ -143,7 +143,7 @@ Please ensure that all personal directories you are using are well-defined XDG d
       | Books | `@{user_books_dirs}` | `@{HOME}/@{XDG_BOOKS_DIR} @{MOUNTS}/@{XDG_BOOKS_DIR}` |
       | Games | `@{user_games_dirs}` | `@{HOME}/@{XDG_GAMES_DIR} @{MOUNTS}/@{XDG_GAMES_DIR}` |
       | Private | `@{user_private_dirs}` | `@{HOME}/@{XDG_PRIVATE_DIR} @{MOUNTS}/@{XDG_PRIVATE_DIR}` |
-      | Passwords | `@{user_passwordstore_dirs}` | `@{HOME}/@{XDG_PASSWORD_STORE_DIR} @{MOUNTS}/@{XDG_PASSWORD_STORE_DIR}` |
+      | Passwords | `@{user_passwordstore_dirs}` | `@{HOME}/@{XDG_PASSWORDSTORE_DIR} @{MOUNTS}/@{XDG_PASSWORDSTORE_DIR}` |
       | Work | `@{user_work_dirs}` | `@{HOME}/@{XDG_WORK_DIR} @{MOUNTS}/@{XDG_WORK_DIR}` |
       | Mail | `@{user_mail_dirs}` | `@{HOME}/@{XDG_MAIL_DIR} @{MOUNTS}/@{XDG_MAIL_DIR}` |
       | Projects | `@{user_projects_dirs}` | `@{HOME}/@{XDG_PROJECTS_DIR} @{MOUNTS}/@{XDG_PROJECTS_DIR}` |
@@ -171,9 +171,9 @@ All profiles use the variables defined above. Therefore, you can personalize the
     @{XDG_PROJECTS_DIR}+="go"
     ```
 
-- If you use Keepass, personalize `XDG_PASSWORD_STORE_DIR` with your password directory. Eg:
+- If you use Keepass, personalize `XDG_PASSWORDSTORE_DIR` with your password directory. Eg:
     ```sh
-    @{XDG_PASSWORD_STORE_DIR}+="@{HOME}/.keepass/"
+    @{XDG_PASSWORDSTORE_DIR}+="@{HOME}/.keepass/"
     ```
 
 - Add pacman integration with your AUR helper. Eg for `yay`:
