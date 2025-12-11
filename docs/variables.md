@@ -50,7 +50,7 @@ title: Variables References
 | GPG | `@{XDG_GPG_DIR}` | `.gnupg` |
 | SSH | `@{XDG_SSH_DIR}` | `.ssh` |
 | Private | `@{XDG_PRIVATE_DIR}` | `.{p,P}rivate {p,P}rivate` |
-| Passwords | `@{XDG_PASSWORD_STORE_DIR}` | `.password-store` |
+| Passwords | `@{XDG_PASSWORDSTORE_DIR}` | `.password-store` |
 
 </figure>
 
@@ -85,7 +85,7 @@ title: Variables References
 | Books | `@{user_books_dirs}` | `@{HOME}/@{XDG_BOOKS_DIR} @{MOUNTS}/@{XDG_BOOKS_DIR}` |
 | Games | `@{user_games_dirs}` | `@{HOME}/@{XDG_GAMES_DIR} @{MOUNTS}/@{XDG_GAMES_DIR}` |
 | Private | `@{user_private_dirs}` | `@{HOME}/@{XDG_PRIVATE_DIR} @{MOUNTS}/@{XDG_PRIVATE_DIR}` |
-| Passwords | `@{user_passwordstore_dirs}` | `@{HOME}/@{XDG_PASSWORD_STORE_DIR} @{MOUNTS}/@{XDG_PASSWORD_STORE_DIR}` |
+| Passwords | `@{user_passwordstore_dirs}` | `@{HOME}/@{XDG_PASSWORDSTORE_DIR} @{MOUNTS}/@{XDG_PASSWORDSTORE_DIR}` |
 | Work | `@{user_work_dirs}` | `@{HOME}/@{XDG_WORK_DIR} @{MOUNTS}/@{XDG_WORK_DIR}` |
 | Mail | `@{user_mail_dirs}` | `@{HOME}/@{XDG_MAIL_DIR} @{MOUNTS}/@{XDG_MAIL_DIR}` |
 | Projects | `@{user_projects_dirs}` | `@{HOME}/@{XDG_PROJECTS_DIR} @{MOUNTS}/@{XDG_PROJECTS_DIR}` |
