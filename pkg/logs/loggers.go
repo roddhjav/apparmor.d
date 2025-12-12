@@ -59,6 +59,9 @@ func GetApparmorLogs(file io.Reader, profile string, namespace string) []string 
 
 // GetAuditLogs return a reader with the logs entries from Auditd
 func GetAuditLogs(path string) (io.Reader, error) {
+	if path == "/dev/stdin" || path == "-" {
+		return os.Stdin, nil
+	}
 	file, err := os.Open(filepath.Clean(path))
 	if err != nil {
 		return nil, err
@@ -148,6 +151,10 @@ func validateLogFile(filename string) error {
 
 // SelectLogFile return the path of the available log file to parse (audit, syslog, .1, .2)
 func SelectLogFile(input string) (string, error) {
+	if input == "/dev/stdin" || input == "-" {
+		return input, nil
+	}
+
 	// If a specific file path is provided
 	if input != "" {
 		path := filepath.Clean(input)
