@@ -60,6 +60,9 @@ func (p Merge) Apply() ([]string, error) {
 
 	// Namespaces directory
 	nsRoot := prebuild.RootApparmord.Join("namespaces")
+	if !nsRoot.Exist() {
+		return res, nil
+	}
 	dirs, err := nsRoot.ReadDir(paths.FilterDirectories())
 	if err != nil {
 		return res, err
