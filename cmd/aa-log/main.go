@@ -24,6 +24,7 @@ const usage = `aa-log [-h] [--systemd] [--file file] [--load] [--rules | --raw] 
 
     Default logs are read from '/var/log/audit/audit.log'. Other files in
     '/var/log/audit/' can easily be checked: 'aa-log -f 1' parses 'audit.log.1'
+    Use 'aa-log -f -' to read from standard input.
 
     Logs written with 'aa-log' can be read again with 'aa-log -l'.
 
