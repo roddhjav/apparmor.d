@@ -30,6 +30,14 @@ load common
     flatpak info org.vim.Vim
 }
 
+@test "flatpak: List exported files" {
+    flatpak documents
+}
+
+@test "flatpak: List dynamic permissions" {
+    flatpak permissions
+}
+
 # @test "flatpak: Run an installed application" {
 #     _timeout flatpak run org.vim.Vim
 # }

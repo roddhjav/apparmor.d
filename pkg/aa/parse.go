@@ -62,9 +62,239 @@ var (
 	openBlocks  = []rune{tokOPENPAREN, tokOPENBRACE, tokOPENBRACKET}
 	closeBlocks = []rune{tokCLOSEPAREN, tokCLOSEBRACE, tokCLOSEBRACKET}
 
-	inHeader     = false
-	regParagraph = regexp.MustCompile(`(?s).*?\n\n|$`)
+	inHeader              = false
+	regParagraph          = regexp.MustCompile(`(?s).*?\n\n|$`)
+	regVariableDefinition = regexp.MustCompile(`@{(.*)}\s*[+=]+\s*(.*)`)
 )
+
+const (
+	CONTENT   Kind = "content"
+	RAW       Kind = "raw"
+	QUALIFIER Kind = "qualifier"
+)
+
+// Intermediate token for the representation of apparmor blocks such as
+// profile, subprofile, hat, qualifier and condition.
+type block struct {
+	kind Kind
+	raw  string
+	next *block
+}
+
+// Split a raw input block string into tokens by '{', '}', but ignore
+// variables and second level blocks.
+func tokenizeBlock(input string) ([]*block, error) {
+	if len(input) > 0 && input[0] == tokOPENBRACE {
+		return nil, fmt.Errorf("wrong block format: %s", input)
+	}
+
+	blocks := []*block{}
+	blockCounter := 0
+	blockStack := []rune{}
+	blockRecored := false
+	blockStart := 0
+	blockEnd := 0
+	blockContentStart := 0
+	blockContentStartBkp := 0
+	blockContentEnd := 0
+	for idx, r := range input {
+		switch r {
+		case tokOPENBRACE:
+			blockStack = append(blockStack, r)
+
+			// Block rules starts with ' {', ignore nested blocks and variables
+			if len(blockStack) == 1 {
+				ignore := false
+
+				// Ignore the block if it is inside a variable definition
+				if input[idx-1] == '@' {
+					ignore = true
+				} else {
+					i := idx
+					for i > 0 && input[i] != '\n' {
+						i--
+					}
+					j := idx
+					for j < len(input) && input[j] != '\n' {
+						j++
+					}
+					line := input[i:j]
+					match := regVariableDefinition.FindStringSubmatch(line)
+					if len(match) > 0 {
+						ignore = true
+					} else if input[idx-1] != ' ' {
+						ignore = true
+					}
+				}
+
+				if !ignore {
+					blockStart = idx
+					blockRecored = true
+				}
+			}
+
+		case tokCLOSEBRACE:
+			if len(blockStack) <= 0 {
+				return nil, fmt.Errorf("unbalanced block, missing '{' for '} at: }%s",
+					input[blockContentStart:idx])
+			}
+
+			if len(blockStack) == 1 && blockRecored {
+				blockRecored = false
+				blockEnd = idx
+				blockContentStartBkp = blockContentStart
+				blockContentEnd = blockStart
+				blockContentRaw := input[blockContentStart:blockContentEnd]
+				blockContentStart = blockEnd + 1
+
+				// Collect the block header
+				i := len(blockContentRaw) - 1
+				for i > 0 && blockContentRaw[i] != '\n' {
+					i--
+				}
+				blockHeader := strings.Trim(blockContentRaw[i:], "\n ")
+				blockHeader = strings.Trim(blockHeader, "\n\t ")
+
+				// Ignore commented block, restore previous id values
+				if len(blockHeader) > 0 && blockHeader[0] == '#' {
+					blockContentStart = blockContentStartBkp
+					blockStack = blockStack[:len(blockStack)-1]
+					continue
+				}
+
+				// Collect out of block content (preamble, profile content outside of sub blocks)
+				blockContentRaw = blockContentRaw[:i]
+				if blockContentRaw != "" {
+					blocks = append(blocks, &block{
+						kind: CONTENT,
+						raw:  blockContentRaw,
+					})
+				}
+
+				// Collect the block content
+				blockRaw := input[blockStart+1 : blockEnd]
+				blockRaw = strings.Trim(blockRaw, "\n\t ")
+				var kind Kind
+				switch {
+				case strings.HasPrefix(blockHeader, PROFILE.Tok()), isAARE(blockHeader):
+					kind = PROFILE
+				case strings.HasPrefix(blockHeader, HAT.Tok()),
+					strings.HasPrefix(blockHeader, HAT.String()):
+					kind = HAT
+				case blockHeader == IF.Tok():
+					kind = IF
+				case blockHeader == ELSE.Tok():
+					kind = ELSE
+				default:
+					fmt.Printf("blockRaw: %v\n", blockRaw)
+					return nil, fmt.Errorf("unrecognized block type: %s", blockHeader)
+				}
+				blocks = append(blocks, &block{
+					kind: kind,
+					raw:  blockHeader,
+					next: &block{
+						kind: RAW,
+						raw:  blockRaw,
+					},
+				})
+			}
+			blockStack = blockStack[:len(blockStack)-1]
+		}
+	}
+
+	if blockCounter != 0 {
+		return nil, fmt.Errorf("unbalanced block, missing '{' or '}': %s",
+			input[blockContentEnd:len(input)-1])
+	}
+	if len(blocks) == 0 {
+		// No block found, it can be a tunable/abstraction file.
+		blocks = append(blocks, &block{
+			kind: CONTENT,
+			raw:  input,
+		})
+	}
+	return blocks, nil
+}
+
+func parseBlock(b *block) (Rules, error) {
+	var res Rules
+	var rrr Rules
+	var err error
+
+	switch b.kind {
+	case CONTENT:
+		// Line rules
+		var raw string
+		raw, res, err = parseLineRules(false, b.raw)
+		if err != nil {
+			return nil, err
+		}
+
+		// Comma rules
+		rules, err := parseCommaRules(raw)
+		if err != nil {
+			return nil, err
+		}
+		rrr, err = newRules(rules)
+		if err != nil {
+			return nil, err
+		}
+
+		res = append(res, rrr...)
+		for _, r := range res {
+			if r.Constraint() == PreambleRule {
+				return nil, fmt.Errorf("Rule not allowed in block: %s", r)
+			}
+		}
+
+	case RAW:
+		var blocks []*block
+		blocks, err = tokenizeBlock(b.raw)
+		if err != nil {
+			return nil, err
+		}
+		for _, block := range blocks {
+			rrr, err = parseBlock(block)
+			if err != nil {
+				return nil, err
+			}
+			res = append(res, rrr...)
+		}
+		return res, nil
+
+	case PROFILE:
+		header, err := newHeader(parseRule(b.raw))
+		if err != nil {
+			return nil, err
+		}
+		rules, err := parseBlock(b.next)
+		if err != nil {
+			return nil, err
+		}
+		profile := &Profile{
+			Header: header,
+			Rules:  rules,
+		}
+		res = append(res, profile)
+
+	case HAT:
+		hat, err := newHat(parseRule(b.raw))
+		if err != nil {
+			return nil, err
+		}
+		rules, err := parseBlock(b.next)
+		if err != nil {
+			return nil, err
+		}
+		hat.Rules = rules
+		res = append(res, hat)
+
+	case IF, ELSE:
+		// Not implemented yet
+
+	}
+	return res, nil
+}
 
 // Parse the line rule from a raw string.
 func parseLineRules(isPreamble bool, input string) (string, Rules, error) {
@@ -608,10 +838,10 @@ func (f *AppArmorProfileFile) parsePreamble(preamble string) error {
 
 // Parse an apparmor profile file.
 //
-// Warning: It is purposely an uncomplete basic parser for apparmor profile,
+// Warning: It is purposely an uncomplete parser for apparmor profile,
 // it is only aimed for internal tooling purpose. For "simplicity", it is not
 // using antlr / participle. It is only used for experimental feature in the
-// apparmor.d project.
+// apparmor.d project. Technically, it is more a scanner than a parser.
 //
 // Very basic:
 //   - Only supports parsing of preamble and profile headers.

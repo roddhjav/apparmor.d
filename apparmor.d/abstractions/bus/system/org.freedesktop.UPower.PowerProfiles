@@ -4,9 +4,25 @@
 
   abi <abi/4.0>,
 
+  # DBus.Properties: read properties from the interface
+
   dbus send bus=system path=/org/freedesktop/UPower/PowerProfiles
        interface=org.freedesktop.DBus.Properties
        member=GetAll
+       peer=(name=@{busname}, label=power-profiles-daemon),
+
+  # DBus.Properties: receive property changed events
+
+  dbus receive bus=system path=/org/freedesktop/UPower/PowerProfiles
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged
+       peer=(name=@{busname}, label=power-profiles-daemon),
+
+  # UPower.PowerProfiles
+
+  dbus send bus=system path=/org/freedesktop/UPower/PowerProfiles
+       interface=org.freedesktop.UPower.PowerProfiles
+       member=HoldProfile
        peer=(name=@{busname}, label=power-profiles-daemon),
 
   include if exists <abstractions/bus/system/org.freedesktop.UPower.PowerProfiles.d>

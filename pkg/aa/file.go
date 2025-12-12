@@ -88,6 +88,9 @@ func newFile(q Qualifier, rule rule) (Rule, error) {
 }
 
 func newFileFromLog(log map[string]string) Rule {
+	if log["operation"] == "link" {
+		log["requested_mask"] += "l"
+	}
 	accesses, err := toAccess("file-log", log["requested_mask"])
 	if err != nil {
 		panic(fmt.Errorf("newFileFromLog(%v): %w", log, err))
@@ -159,10 +162,7 @@ func (r *File) Compare(other Rule) int {
 	if res := compare(r.Access, o.Access); res != 0 {
 		return res
 	}
-	if res := compare(r.Target, o.Target); res != 0 {
-		return res
-	}
-	return r.Qualifier.Compare(o.Qualifier)
+	return compare(r.Target, o.Target)
 }
 
 func (r *File) Merge(other Rule) bool {

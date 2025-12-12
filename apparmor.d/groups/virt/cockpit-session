@@ -24,6 +24,18 @@ profile cockpit-session @{exec_path} flags=(attach_disconnected) {
 
   network netlink raw,
 
+  signal send set=term peer=ssh-agent,
+
+  dbus send bus=system path=/org/freedesktop/login1
+       interface=org.freedesktop.login1.Manager
+       member=CreateSessionWithPIDFD
+       peer=(name=org.freedesktop.login1, label=systemd-logind),
+
+  dbus send bus=system path=/org/freedesktop/login1
+       interface=org.freedesktop.login1.Manager
+       member=ReleaseSession
+       peer=(name=org.freedesktop.login1, label=systemd-logind),
+
   @{exec_path} mr,
 
   @{shells_path}         rix,
@@ -64,6 +76,7 @@ profile cockpit-session @{exec_path} flags=(attach_disconnected) {
 
   profile ssh-add flags=(attach_disconnected) {
     include <abstractions/base>
+    include <abstractions/nameservice-strict>
 
     @{bin}/ssh-add mr,
 

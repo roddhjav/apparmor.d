@@ -7,7 +7,7 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{exec_path} = @{bin}/do-release-upgrade
-profile do-release-upgrade @{exec_path} {
+profile do-release-upgrade @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/apt>
   include <abstractions/consoles>
@@ -15,7 +15,14 @@ profile do-release-upgrade @{exec_path} {
   include <abstractions/python>
   include <abstractions/ssl_certs>
 
+  capability chown,
+  capability dac_override,
+  capability dac_read_search,
+  capability fowner,
+  capability fsetid,
   capability net_admin,
+  capability setgid,
+  capability setuid,
 
   network inet dgram,
   network inet6 dgram,
@@ -28,6 +35,8 @@ profile do-release-upgrade @{exec_path} {
   @{bin}/dpkg         rPx -> child-dpkg,
   @{bin}/ischroot     rPx,
   @{bin}/lsb_release  rPx,
+  @{bin}/gpg          rPx,
+  @{lib}/apt/methods/http{,s} rPx,
 
   /usr/share/distro-info/*.csv r,
   /usr/share/ubuntu-release-upgrader/{,**} r,
@@ -44,8 +53,23 @@ profile do-release-upgrade @{exec_path} {
   /var/cache/apt/srcpkgcache.bin rw,
   /var/cache/apt/srcpkgcache.bin.@{rand6} rw,
 
+  /tmp/ubuntu-release-upgrader-@{rand8}/ rw,
+  /tmp/ubuntu-release-upgrader-@{rand8}/** rwlk,
+  /tmp/ubuntu-release-upgrader-@{rand8}/* Cx -> upgrader,
+  /tmp/@{rand8} rw,
+
         @{PROC}/@{pids}/mountinfo r,
   owner @{PROC}/@{pid}/fd/ r,
+
+  profile upgrader flags=(attach_disconnected) {
+    include <abstractions/base>
+
+    # The upgrader process is not confined on purpose. We explicitly allow
+    # everything to avoid transitioning to any other profile.
+    all,
+
+    include if exists <local/do-release-upgrade_upgrader>
+  }
 
   include if exists <local/do-release-upgrade>
 }
