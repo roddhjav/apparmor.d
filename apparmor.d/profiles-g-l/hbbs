@@ -9,11 +9,16 @@ include <tunables/global>
 @{exec_path} = @{bin}/hbbs
 profile hbbs @{exec_path} {
   include <abstractions/base>
+  include <abstractions/bus-session>
+  include <abstractions/nameservice-strict>
+  include <abstractions/openssl>
+  include <abstractions/ssl_certs>
 
   network inet stream,
   network inet6 stream,
   network inet dgram,
   network inet6 dgram,
+  network netlink raw,
 
   @{exec_path} mr,
 
@@ -25,7 +30,14 @@ profile hbbs @{exec_path} {
   owner /var/lib/rustdesk-server/db_v2.sqlite3-wal rw,
   owner /var/lib/rustdesk-server/db_v2.sqlite3-shm rwk,
 
+  owner @{user_config_dirs}/ w,
+  owner @{user_config_dirs}/rustdesk/{,**} rw,
+
+  @{sys}/devices/system/cpu/cpufreq/policy@{int}/scaling_cur_freq r,
+  @{sys}/devices/platform/**/net/*/address r,
+
   owner @{PROC}/@{pid}/cgroup r,
+        @{PROC}/@{pid}/net/route r,
 
   include if exists <local/hbbs>
 }

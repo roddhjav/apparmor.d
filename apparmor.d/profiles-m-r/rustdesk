@@ -6,11 +6,14 @@ abi <abi/4.0>,
 
 include <tunables/global>
 
-@{exec_path} = @{bin}/rustdesk
+@{exec_path} = @{bin}/rustdesk /usr/share/rustdesk/rustdesk
 profile rustdesk @{exec_path} {
-  include <abstractions/base>
+  include <abstractions/base-strict>
   include <abstractions/audio-client>
+  include <abstractions/bus-session>
   include <abstractions/desktop>
+  include <abstractions/graphics>
+  include <abstractions/ssl_certs>
   include <abstractions/fontconfig-cache-read>
   include <abstractions/nameservice-strict>
 
@@ -25,18 +28,21 @@ profile rustdesk @{exec_path} {
 
   @{exec_path} mrix,
 
-  @{bin}/w        rPx,
-  @{bin}/ps       rPx,
-  @{bin}/whoami   rPx,
-  @{bin}/loginctl rPx,
-  @{bin}/curl     rix,
-  @{bin}/ls       rix,
+  @{bin}/loginctl rPx,  # connection popup
+  @{bin}/ls rix,
+  @{bin}/which{,.debianutils} rix,
 
   @{bin}/sudo           rCx -> sudo,
-  @{python_path}        rCx -> python,
-  @{sh_path}            rCx -> shell,
+  @{sh_path}            rPx -> rustdesk_shell,
 
   /etc/gdm{,3}/custom.conf r,
+  /usr/share/rustdesk/{,**} r,
+  /usr/share/rustdesk/lib/*.so mr,
+  /usr/share/terminfo/** r,
+  /usr/share/uim/**.scm r,
+  /var/lib/uim/*.scm r,
+  /tmp/[rR]ust[dD]esk/{,**} rw,
+  owner /tmp/.X@{int}-unix/ r,
 
   owner @{HOME}/ r,  # fails otherwise
   owner @{HOME}/[rR]ust[dD]esk/{,**} rw,
@@ -47,82 +53,75 @@ profile rustdesk @{exec_path} {
   owner @{user_share_dirs}/logs/[rR]ust[dD]esk/{,**} rw,
   owner @{user_config_dirs}/[rR]ust[dD]esk/{,**} rw,
 
-  /tmp/[rR]ust[dD]esk/{,**} rw,
+  owner @{sddm_share_dirs}/logs/ w,
+  owner @{sddm_share_dirs}/logs/[rR]ust[dD]esk/{,**} rw,
+  owner @{sddm_config_dirs}/[rR]ust[dD]esk/{,**} rw,
 
   @{sys}/devices/system/cpu/cpufreq/policy@{int}/scaling_{cur,min,max}_freq r,
+  @{sys}/devices/@{pci}/net/*/address r,
+  @{sys}/fs/cgroup/user.slice/cpu.max r,
+  @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/cpu.max r,
+  @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/cpu.max r,
+  @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/cpu.max r,
+  @{sys}/fs/cgroup/system.slice/cpu.max r,
+  @{sys}/fs/cgroup/system.slice/rustdesk.service/* r,
 
+        @{PROC}/ r,
         @{PROC}/uptime r,
+        @{PROC}/loadavg r,
   owner @{PROC}/@{pid}/cgroup r,
-  owner @{PROC}/@{pid}/cmdline r,
+  owner @{PROC}/@{pid}/mountinfo r,
+
+  signal (receive) set=(kill, term) peer=rustdesk_shell,
 
   profile sudo {
-    include <abstractions/base>
+    include <abstractions/base-strict>
     include <abstractions/app/sudo>
-    include <abstractions/python>
 
-    @{bin}/rustdesk rPx,
-    @{python_path}  rPx -> rustdesk//python,
+    capability kill,
+
+    @{exec_path} rPx,
+
+    signal (receive) set=(kill, term) peer=rustdesk,
 
     include if exists <local/rustdesk_sudo>
   }
-
-  profile python {
-    include <abstractions/base>
-    include <abstractions/python>
-
-    capability dac_read_search,
-    capability dac_override,
-
-    @{python_path} r,
-
-    @{sh_path}   rix,
-    @{bin}/chmod rix,
-    @{bin}/uname rix,
-    /usr/share/rustdesk/files/pynput_service.py rix,
-
-    /usr/share/[rR]ust[dD]esk/files/{,**} r,
-    /tmp/[rR]ust[dD]esk/ w,
-    /tmp/[rR]ust[dD]esk/pynput_service rw,
-
-    @{run}/user/@{uid}/gdm{,3}/Xauthority r,
-
-    owner @{PROC}/@{pid}/fd/ r,
-
-    # X-tiny
-    /tmp/.X11-unix/* rw,
-    owner @{HOME}/.xsession-errors w,
-    owner @{HOME}/.Xauthority r,
-
-    include if exists <local/rustdesk_python>
-  }
-
-  profile shell {
-    include <abstractions/base>
-
-    capability dac_override,
-    capability dac_read_search,
-    capability sys_ptrace,
-
-    ptrace read,
-
-    @{sh_path}        r,
-
-    @{bin}/tr       rix,
-    @{bin}/{,e}grep rix,
-    @{bin}/tail     rix,
-    @{bin}/xargs    rix,
-    @{bin}/sed      rix,
-    @{bin}/cat      rix,
-
-    @{bin}/ps rPx,
-
-          @{PROC}/@{pid}/environ r,
-    owner @{PROC}/@{pid}/fd/ r,
-
-    include if exists <local/rustdesk_shell>
-  }
-
   include if exists <local/rustdesk>
+}
+
+profile rustdesk_shell {
+  include <abstractions/base-strict>
+  include <abstractions/nameservice-strict>
+
+  capability dac_override,
+  capability dac_read_search,
+  capability kill,
+
+  signal (send) set=(kill, term) peer=rustdesk,
+
+  @{sh_path}        r,
+
+  @{bin}/tr         rix,
+  @{bin}/{,f,e}grep rix,
+  @{bin}/tail       rix,
+  @{bin}/xargs      rix,
+  @{bin}/sed        rix,
+  @{bin}/cat        rix,
+  @{bin}/getent     rix,
+  @{bin}/whoami     rix,
+  @{bin}/{,g,m}awk  rix,
+  @{bin}/wc         rix,
+  @{bin}/kill       rix,
+
+  @{bin}/ps     rPx,
+  @{bin}/xrandr rPx,
+
+        @{PROC}/@{pid}/environ r,
+  owner @{PROC}/@{pid}/fd/ r,
+
+  /usr/share/rustdesk/{,**} r,
+
+  include if exists <local/rustdesk_shell>
 }
 
 # vim:syntax=apparmor
