@@ -6,7 +6,6 @@ package aa
 
 import (
 	"reflect"
-	"regexp"
 	"strings"
 	"testing"
 )
@@ -120,7 +119,7 @@ func Test_tokenizeBlock(t *testing.T) {
 				return
 			}
 			if !reflect.DeepEqual(got, tt.blocks) {
-				t.Errorf("tokenizeBlock() = %v, want %v", pp.Sprint(got), tt.blocks)
+				t.Errorf("tokenizeBlock() = %v, want %v", got, tt.blocks)
 			}
 		})
 	}
@@ -145,7 +144,7 @@ func Test_parseBlock(t *testing.T) {
 					return
 				}
 				if !reflect.DeepEqual(got, want) {
-					t.Errorf("parseBlock() = %v, want %v", pp.Sprint(got), want)
+					t.Errorf("parseBlock() = %v, want %v", got, want)
 				}
 			}
 		})
@@ -195,47 +194,31 @@ func Test_AppArmorProfileFile_Parse(t *testing.T) {
 			}
 		})
 	}
-	for _, tt := range testParser {
-		t.Run(tt.name, func(t *testing.T) {
-			got := &AppArmorProfileFile{}
-			if _, err := got.Parse(tt.raw); (err != nil) != tt.wantErr {
-				t.Errorf("AppArmorProfileFile.Parse() error = %v, wantErr %v", err, tt.wantErr)
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("AppArmorProfileFile.Parse() = |%v|, want |%v|", got, tt.want)
-			}
-		})
-	}
 }
 
-func Test_AppArmorProfileFile_ParseAll(t *testing.T) {
+func Test_AppArmorProfileFile_Scan(t *testing.T) {
 	for _, tt := range testBlocks {
-		if tt.apparmorAll == nil {
-			continue // skip test cases without apparmorAll defined
-		}
 		t.Run(tt.name, func(t *testing.T) {
+			if tt.apparmorAll == nil {
+				tt.apparmorAll = tt.apparmor
+			}
 			got := &AppArmorProfileFile{}
-			err := got.ParseAll(tt.raw)
-			if (err != nil) != tt.wParseErr {
-				t.Errorf("AppArmorProfileFile.ParseAll() error = %v, wantErr %v", err, tt.wParseErr)
+			if err := got.Scan(tt.raw); (err != nil) != tt.wParseErr {
+				t.Errorf("AppArmorProfileFile.Scan() error = %v, wantErr %v", err, tt.wParseErr)
 			}
 			if !reflect.DeepEqual(got, tt.apparmorAll) {
-				t.Errorf("AppArmorProfileFile.ParseAll() = |%v|, want |%v|", pp.Sprint(got), pp.Sprint(tt.apparmorAll))
-			}
-			if (err != nil) != tt.wParseRulesErr {
-				t.Errorf("ParseRules() error = %v, wantErr %v", err, tt.wParseRulesErr)
-				return
+				t.Errorf("AppArmorProfileFile.Scan() = %v, want %v", got, tt.apparmorAll)
 			}
 		})
 	}
 	for _, tt := range testParser {
 		t.Run(tt.name, func(t *testing.T) {
 			got := &AppArmorProfileFile{}
-			if _, err := got.Parse(tt.raw); (err != nil) != tt.wantErr {
-				t.Errorf("AppArmorProfileFile.Parse() error = %v, wantErr %v", err, tt.wantErr)
+			if err := got.Scan(tt.raw); (err != nil) != tt.wantErr {
+				t.Errorf("AppArmorProfileFile.Scan() error = %v, wantErr %v", err, tt.wantErr)
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("AppArmorProfileFile.Parse() = |%v|, want |%v|", got, tt.want)
+				t.Errorf("AppArmorProfileFile.Scan() = %v, want %v", got, tt.want)
 			}
 		})
 	}
