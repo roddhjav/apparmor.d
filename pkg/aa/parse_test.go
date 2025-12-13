@@ -1997,7 +1997,8 @@ var (
 		&File{Path: "@{sys}/devices/@{pci}/class", Access: []string{"r"}},
 		&File{Owner: true, Path: "@{PROC}/@{pid}/task/@{tid}/comm", Access: []string{"r", "w"}},
 		&Hat{
-			Name: "^action",
+			Name:  "action",
+			Flags: []string{},
 			Rules: Rules{
 				&Include{IsMagic: true, Path: "abstractions/base"},
 				&Include{IfExists: true, IsMagic: true, Path: "local/foo_action"},
