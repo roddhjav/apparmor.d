@@ -814,8 +814,12 @@ func newRules(rules []rule) (Rules, error) {
 				if err != nil {
 					return nil, err
 				}
-				if owner && r.Kind() == LINK {
-					r.(*Link).Owner = owner
+				if owner {
+					if r.Kind() == LINK {
+						r.(*Link).Owner = owner
+					} else {
+						return nil, fmt.Errorf("owner not allowed in %s rule : %s", r.Kind(), rule)
+					}
 				}
 				res = append(res, r)
 			} else {
@@ -830,8 +834,10 @@ func newRules(rules []rule) (Rules, error) {
 						r.(*File).Owner = owner
 						res = append(res, r)
 					} else {
-						fmt.Printf("Unknown rule: %s", rule)
-						// return nil, fmt.Errorf("Unknown rule: %s", rule)
+						if owner {
+							return nil, fmt.Errorf("owner not allowed in %s rule : %s", r.Kind(), rule)
+						}
+						return nil, fmt.Errorf("unknown rule: %s", rule)
 					}
 				} else {
 					return nil, fmt.Errorf("unrecognized rule: %s", rule)
