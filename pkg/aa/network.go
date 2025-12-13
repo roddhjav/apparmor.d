@@ -6,7 +6,9 @@ package aa
 
 import (
 	"fmt"
+	"net"
 	"slices"
+	"strconv"
 )
 
 const NETWORK Kind = "network"
@@ -38,11 +40,31 @@ type LocalAddress struct {
 	Port string
 }
 
+func newLocalAddress(rule rule) (LocalAddress, error) {
+	return LocalAddress{
+		IP:   rule.GetValuesAsString("ip"),
+		Port: rule.GetValuesAsString("port"),
+	}, nil
+}
+
 func newLocalAddressFromLog(log map[string]string) LocalAddress {
 	return LocalAddress{
 		IP:   log["laddr"],
 		Port: log["lport"],
 	}
+}
+
+func (r LocalAddress) Validate() error {
+	if r.IP != "" && r.IP != "none" && net.ParseIP(r.IP) == nil {
+		return fmt.Errorf("invalid IP address: %s", r.IP)
+	}
+	if r.Port != "" {
+		port, err := strconv.Atoi(r.Port)
+		if err != nil || port < 0 || port > 65535 {
+			return fmt.Errorf("invalid port: %s", r.Port)
+		}
+	}
+	return nil
 }
 
 func (r LocalAddress) Compare(other LocalAddress) int {
@@ -58,12 +80,32 @@ type PeerAddress struct {
 	Src  string
 }
 
+func newPeerAddress(rule rule) (PeerAddress, error) {
+	return PeerAddress{
+		IP:   rule.GetValues("peer").GetValuesAsString("ip"),
+		Port: rule.GetValues("peer").GetValuesAsString("port"),
+	}, nil
+}
+
 func newPeerAddressFromLog(log map[string]string) PeerAddress {
 	return PeerAddress{
 		IP:   log["faddr"],
 		Port: log["fport"],
 		Src:  log["saddr"],
 	}
+}
+
+func (r PeerAddress) Validate() error {
+	if r.IP != "" && r.IP != "none" && net.ParseIP(r.IP) == nil {
+		return fmt.Errorf("invalid IP address: %s", r.IP)
+	}
+	if r.Port != "" {
+		port, err := strconv.Atoi(r.Port)
+		if err != nil || port < 0 || port > 65535 {
+			return fmt.Errorf("invalid port: %s", r.Port)
+		}
+	}
+	return nil
 }
 
 func (r PeerAddress) Compare(other PeerAddress) int {
@@ -88,24 +130,40 @@ type Network struct {
 }
 
 func newNetwork(q Qualifier, rule rule) (Rule, error) {
+	var accesses []string
 	nType, protocol, domain := "", "", ""
-	r := rule.GetSlice()
-	if len(r) > 0 {
-		domain = r[0]
-	}
-	if len(r) >= 2 {
-		if slices.Contains(requirements[NETWORK]["type"], r[1]) {
-			nType = r[1]
-		} else if slices.Contains(requirements[NETWORK]["protocol"], r[1]) {
-			protocol = r[1]
+
+	// Classify each token as access, domain, type, or protocol
+	for _, token := range rule.GetSlice() {
+		switch {
+		case slices.Contains(requirements[NETWORK]["access"], token):
+			accesses = append(accesses, token)
+		case slices.Contains(requirements[NETWORK]["domains"], token):
+			domain = token
+		case slices.Contains(requirements[NETWORK]["type"], token):
+			nType = token
+		case slices.Contains(requirements[NETWORK]["protocol"], token):
+			protocol = token
 		}
 	}
+
+	localAdress, err := newLocalAddress(rule)
+	if err != nil {
+		return nil, err
+	}
+	peerAddress, err := newPeerAddress(rule)
+	if err != nil {
+		return nil, err
+	}
 	return &Network{
-		Base:      newBase(rule),
-		Qualifier: q,
-		Domain:    domain,
-		Type:      nType,
-		Protocol:  protocol,
+		Base:         newBase(rule),
+		Qualifier:    q,
+		LocalAddress: localAdress,
+		PeerAddress:  peerAddress,
+		Access:       accesses,
+		Domain:       domain,
+		Type:         nType,
+		Protocol:     protocol,
 	}, nil
 }
 
@@ -145,6 +203,12 @@ func (r *Network) Validate() error {
 		return fmt.Errorf("%s: %w", r, err)
 	}
 	if err := validateValues(r.Kind(), "protocol", []string{r.Protocol}); err != nil {
+		return fmt.Errorf("%s: %w", r, err)
+	}
+	if err := r.LocalAddress.Validate(); err != nil {
+		return fmt.Errorf("%s: %w", r, err)
+	}
+	if err := r.PeerAddress.Validate(); err != nil {
 		return fmt.Errorf("%s: %w", r, err)
 	}
 	return nil
