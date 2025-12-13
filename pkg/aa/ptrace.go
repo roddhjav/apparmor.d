@@ -4,16 +4,14 @@
 
 package aa
 
-import (
-	"fmt"
-)
+import "fmt"
 
 const PTRACE Kind = "ptrace"
 
 func init() {
 	requirements[PTRACE] = requirement{
 		"access": []string{
-			"r", "w", "rw", "read", "readby", "trace", "tracedby",
+			"r", "w", "rw", "read", "write", "readby", "trace", "tracedby",
 		},
 	}
 }
@@ -30,12 +28,20 @@ func newPtrace(q Qualifier, rule rule) (Rule, error) {
 	if err != nil {
 		return nil, err
 	}
+	peers := rule.GetValuesAsSlice("peer")
+	if len(peers) > 1 {
+		return nil, fmt.Errorf("multiple 'peer' not allowed in rule: %s", rule)
+	}
+	peer := ""
+	if len(peers) == 1 {
+		peer = peers[0]
+	}
 	return &Ptrace{
 		Base:      newBase(rule),
 		Qualifier: q,
 		Access:    accesses,
-		Peer:      rule.GetValuesAsString("peer"),
-	}, nil
+		Peer:      peer,
+	}, rule.ValidateMapKeys([]string{"peer"})
 }
 
 func newPtraceFromLog(log map[string]string) Rule {

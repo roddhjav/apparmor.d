@@ -67,7 +67,7 @@ func newHeader(rule rule) (Header, error) {
 		Attachments: attachments,
 		Attributes:  attributes,
 		Flags:       rule.GetValuesAsSlice(tokFLAGS),
-	}, nil
+	}, rule.ValidateMapKeys([]string{tokATTRIBUTES, tokFLAGS})
 }
 
 func (p *Profile) Kind() Kind {

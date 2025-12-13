@@ -84,7 +84,7 @@ func newFile(q Qualifier, rule rule) (Rule, error) {
 		Path:      path,
 		Access:    accesses,
 		Target:    target,
-	}, nil
+	}, rule.ValidateMapKeys([]string{})
 }
 
 func newFileFromLog(log map[string]string) Rule {
@@ -255,7 +255,7 @@ func newLink(q Qualifier, rule rule) (Rule, error) {
 		Subset:    subset,
 		Path:      path,
 		Target:    target,
-	}, nil
+	}, rule.ValidateMapKeys([]string{})
 }
 
 func newLinkFromLog(log map[string]string) Rule {
