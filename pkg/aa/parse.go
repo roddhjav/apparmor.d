@@ -97,9 +97,20 @@ func tokenizeBlock(input string) ([]*block, error) {
 	blockContentStart := 0
 	blockContentStartBkp := 0
 	blockContentEnd := 0
+	inComment := false
+
 	for idx, r := range input {
 		switch r {
+		case '#':
+			inComment = true
+
+		case '\n':
+			inComment = false
+
 		case tokOPENBRACE:
+			if inComment {
+				continue
+			}
 			blockStack = append(blockStack, r)
 
 			// Block rules starts with ' {', ignore nested blocks and variables
@@ -134,6 +145,9 @@ func tokenizeBlock(input string) ([]*block, error) {
 			}
 
 		case tokCLOSEBRACE:
+			if inComment {
+				continue
+			}
 			if len(blockStack) <= 0 {
 				return nil, fmt.Errorf("unbalanced block, missing '{' for '} at: }%s",
 					input[blockContentStart:idx])
@@ -186,7 +200,6 @@ func tokenizeBlock(input string) ([]*block, error) {
 				case blockHeader == ELSE.Tok():
 					kind = ELSE
 				default:
-					fmt.Printf("blockRaw: %v\n", blockRaw)
 					return nil, fmt.Errorf("unrecognized block type: %s", blockHeader)
 				}
 				blocks = append(blocks, &block{
@@ -301,9 +314,12 @@ func parseLineRules(isPreamble bool, input string) (string, Rules, error) {
 	var res Rules
 	var r Rule
 	var err error
+	var remaining []string
 
 	for _, line := range strings.Split(input, "\n") {
 		tmp := strings.TrimLeft(line, "\t ")
+		processed := false
+
 		switch {
 		case strings.HasPrefix(tmp, COMMENT.Tok()):
 			r, err = newComment(rule{kv{comment: tmp[1:]}})
@@ -311,7 +327,7 @@ func parseLineRules(isPreamble bool, input string) (string, Rules, error) {
 				return "", nil, err
 			}
 			res = append(res, r)
-			input = strings.Replace(input, line, "", 1)
+			processed = true
 
 		case strings.HasPrefix(tmp, INCLUDE.Tok()):
 			r, err = newInclude(parseRule(line)[1:])
@@ -319,7 +335,7 @@ func parseLineRules(isPreamble bool, input string) (string, Rules, error) {
 				return "", nil, err
 			}
 			res = append(res, r)
-			input = strings.Replace(input, line, "", 1)
+			processed = true
 
 		case strings.HasPrefix(tmp, VARIABLE.Tok()) && isPreamble:
 			r, err = newVariable(parseRule(line))
@@ -327,10 +343,16 @@ func parseLineRules(isPreamble bool, input string) (string, Rules, error) {
 				return "", nil, err
 			}
 			res = append(res, r)
-			input = strings.Replace(input, line, "", 1)
+			processed = true
+		}
+
+		if processed {
+			remaining = append(remaining, "")
+		} else {
+			remaining = append(remaining, line)
 		}
 	}
-	return input, res, nil
+	return strings.Join(remaining, "\n"), res, nil
 }
 
 // Parse the comma rules from a raw string. It splits rules string into tokens
@@ -443,7 +465,7 @@ func tokenizeRule(str string) []string {
 
 	blockStack := []rune{}
 	tokens := make([]string, 0, len(str)/2)
-	if inHeader && len(str) > 2 && str[0:2] == VARIABLE.Tok() {
+	if inHeader && len(str) > 2 && str[0:2] == VARIABLE.Tok() && strings.Contains(str, "=") {
 		isVariable = true
 	}
 	for _, r := range str {
