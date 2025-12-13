@@ -276,7 +276,9 @@ func parseBlock(b *block) (Rules, error) {
 		return res, nil
 
 	case PROFILE:
+		inHeader = true
 		header, err := newHeader(parseRule(b.raw))
+		inHeader = false
 		if err != nil {
 			return nil, err
 		}
@@ -291,7 +293,9 @@ func parseBlock(b *block) (Rules, error) {
 		res = append(res, profile)
 
 	case HAT:
+		inHeader = true
 		hat, err := newHat(parseRule(b.raw))
+		inHeader = false
 		if err != nil {
 			return nil, err
 		}
@@ -540,7 +544,7 @@ func parseRule(str string) rule {
 	res := make(rule, 0, len(str)/2)
 	tokens := tokenizeRule(str)
 
-	inAare := len(tokens) > 0 && (isAARE(tokens[0]) || tokens[0] == tokOWNER)
+	inAare := len(tokens) > 0 && (tokens[0] == tokOWNER || (isAARE(tokens[0]) && !inHeader))
 	for idx, token := range tokens {
 		switch {
 		case token == tokEQUAL, token == tokPLUS+tokEQUAL, token == tokLESS+tokEQUAL: // Variable & Rlimit
@@ -1001,7 +1005,9 @@ func (f *AppArmorProfileFile) Scan(input string) error {
 			}
 
 		case PROFILE:
+			inHeader = true
 			header, err := newHeader(parseRule(block.raw))
+			inHeader = false
 			if err != nil {
 				return err
 			}
