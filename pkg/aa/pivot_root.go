@@ -37,7 +37,7 @@ func newPivotRoot(q Qualifier, rule rule) (Rule, error) {
 		OldRoot:       rule.GetValuesAsString("oldroot"),
 		NewRoot:       newroot,
 		TargetProfile: target,
-	}, nil
+	}, rule.ValidateMapKeys([]string{"oldroot"})
 }
 
 func newPivotRootFromLog(log map[string]string) Rule {

@@ -39,6 +39,12 @@ func newUnix(q Qualifier, rule rule) (Rule, error) {
 	if err != nil {
 		return nil, err
 	}
+	if err := rule.ValidateMapKeys([]string{"type", "protocol", "addr", "label", "attr", "opt", "peer"}); err != nil {
+		return nil, err
+	}
+	if err := rule.GetValues("peer").ValidateMapKeys([]string{"label", "addr"}); err != nil {
+		return nil, err
+	}
 	return &Unix{
 		Base:      newBase(rule),
 		Qualifier: q,

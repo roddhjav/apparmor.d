@@ -131,7 +131,7 @@ func newMount(q Qualifier, rule rule) (Rule, error) {
 		MountConditions: conditions,
 		Source:          src,
 		MountPoint:      mount,
-	}, nil
+	}, rule.ValidateMapKeys([]string{"fstype", "options", "flags"})
 }
 
 func newMountFromLog(log map[string]string) Rule {
@@ -232,7 +232,7 @@ func newUmount(q Qualifier, rule rule) (Rule, error) {
 		Qualifier:       q,
 		MountConditions: conditions,
 		MountPoint:      mount,
-	}, nil
+	}, rule.ValidateMapKeys([]string{"fstype", "options", "flags"})
 }
 
 func newUmountFromLog(log map[string]string) Rule {
@@ -328,7 +328,7 @@ func newRemount(q Qualifier, rule rule) (Rule, error) {
 		Qualifier:       q,
 		MountConditions: conditions,
 		MountPoint:      mount,
-	}, nil
+	}, rule.ValidateMapKeys([]string{"fstype", "options", "flags"})
 }
 
 func newRemountFromLog(log map[string]string) Rule {

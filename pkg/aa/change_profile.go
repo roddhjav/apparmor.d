@@ -54,7 +54,7 @@ func newChangeProfile(q Qualifier, rule rule) (Rule, error) {
 		ExecMode:    mode,
 		Exec:        exec,
 		ProfileName: target,
-	}, nil
+	}, rule.ValidateMapKeys([]string{})
 }
 
 func newChangeProfileFromLog(log map[string]string) Rule {
