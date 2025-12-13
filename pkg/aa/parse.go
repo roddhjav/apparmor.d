@@ -1015,6 +1015,20 @@ func (f *AppArmorProfileFile) Scan(input string) error {
 			}
 			f.Profiles = append(f.Profiles, profile)
 
+		case HAT:
+			inHeader = true
+			hat, err := newHat(parseRule(block.raw))
+			inHeader = false
+			if err != nil {
+				return err
+			}
+			rules, err := parseBlock(block.next)
+			if err != nil {
+				return err
+			}
+			hat.Rules = rules
+			f.Hats = append(f.Hats, hat)
+
 		default:
 			return fmt.Errorf("Illegal %s block in profile file", block.kind)
 		}

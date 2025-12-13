@@ -14,15 +14,19 @@ const (
 type Hat struct {
 	Base
 	Name  string
+	Flags []string
 	Rules Rules
 }
 
 func newHat(rule rule) (*Hat, error) {
 	name := ""
 	if len(rule) > 0 {
-		name = rule.Get(0)
+		name = strings.TrimPrefix(rule.Get(0), HAT.Tok())
 	}
-	return &Hat{Name: name}, nil
+	return &Hat{
+		Name:  name,
+		Flags: rule.GetValuesAsSlice(tokFLAGS),
+	}, nil
 }
 
 func (p *Hat) Kind() Kind {
