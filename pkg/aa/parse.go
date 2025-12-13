@@ -448,8 +448,8 @@ func tokenizeRule(str string) []string {
 	}
 	for _, r := range str {
 		switch {
-		case (r == ' ' || r == '\t') && len(blockStack) == 0 && !quoted:
-			// Split on space/tab if not in a block or quoted
+		case (r == ' ' || r == '\t' || r == '\n') && len(blockStack) == 0 && !quoted:
+			// Split on space/tab/newline if not in a block or quoted
 			if currentToken.Len() != 0 {
 				tokens = append(tokens, currentToken.String())
 				currentToken.Reset()
