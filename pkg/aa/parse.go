@@ -925,3 +925,43 @@ func ParseRules(input string) (ParaRules, []string, error) {
 
 	return paragraphRules, paragraphs, nil
 }
+
+// Scan an apparmor profile file with multiple profiles, hats, and nested.
+// Like Parse, but process all profiles and blocks in the file.
+func (f *AppArmorProfileFile) Scan(input string) error {
+	blocks, err := tokenizeBlock(input)
+	if err != nil {
+		return err
+	}
+	if len(blocks) == 0 {
+		fmt.Print("No block found in the file")
+	}
+
+	for _, block := range blocks {
+		switch block.kind {
+		case CONTENT:
+			if err := f.parsePreamble(block.raw); err != nil {
+				return err
+			}
+
+		case PROFILE:
+			header, err := newHeader(parseRule(block.raw))
+			if err != nil {
+				return err
+			}
+			rules, err := parseBlock(block.next)
+			if err != nil {
+				return err
+			}
+			profile := &Profile{
+				Header: header,
+				Rules:  rules,
+			}
+			f.Profiles = append(f.Profiles, profile)
+
+		default:
+			return fmt.Errorf("Illegal %s block in profile file", block.kind)
+		}
+	}
+	return nil
+}
