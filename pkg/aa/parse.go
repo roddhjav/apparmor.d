@@ -829,9 +829,13 @@ func newRules(rules []rule) (Rules, error) {
 func (f *AppArmorProfileFile) parsePreamble(preamble string) error {
 	var err error
 	inHeader = true
+	isPreamble := false
+	if f.Kind == ProfileKind {
+		isPreamble = true
+	}
 
 	// Line rules
-	preamble, lineRules, err := parseLineRules(true, preamble)
+	preamble, lineRules, err := parseLineRules(isPreamble, preamble)
 	if err != nil {
 		return err
 	}
@@ -849,9 +853,17 @@ func (f *AppArmorProfileFile) parsePreamble(preamble string) error {
 	f.Preamble = append(f.Preamble, commaRules...)
 
 	for _, r := range f.Preamble {
-		if r.Constraint() == BlockRule {
-			f.Preamble = nil
-			return fmt.Errorf("Rule not allowed in preamble: %s", r)
+		switch f.Kind {
+		case ProfileKind:
+			if r.Constraint() == BlockRule {
+				f.Preamble = nil
+				return fmt.Errorf("rule not allowed in profile preamble: %s", r)
+			}
+
+		case AbstractionKind, TunableKind:
+
+		default:
+			return fmt.Errorf("unknown profile file kind")
 		}
 	}
 	inHeader = false
