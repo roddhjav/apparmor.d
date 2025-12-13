@@ -84,7 +84,7 @@ func newAbi(q Qualifier, rule rule) (Rule, error) {
 		Base:    newBase(rule),
 		Path:    strings.Trim(path, "\"<>"),
 		IsMagic: magic,
-	}, nil
+	}, rule.ValidateMapKeys([]string{})
 }
 
 func (r *Abi) Kind() Kind {
@@ -138,7 +138,7 @@ func newAlias(q Qualifier, rule rule) (Rule, error) {
 		Base:          newBase(rule),
 		Path:          rule.Get(0),
 		RewrittenPath: rule.Get(2),
-	}, nil
+	}, rule.ValidateMapKeys([]string{})
 }
 
 func (r *Alias) Kind() Kind {
@@ -211,7 +211,7 @@ func newInclude(rule rule) (Rule, error) {
 		IfExists: ifexists,
 		Path:     strings.Trim(path, "\"<>"),
 		IsMagic:  magic,
-	}, nil
+	}, rule.ValidateMapKeys([]string{})
 }
 
 func (r *Include) Kind() Kind {
