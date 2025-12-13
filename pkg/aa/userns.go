@@ -31,7 +31,7 @@ func newUserns(q Qualifier, rule rule) (Rule, error) {
 		Base:      newBase(rule),
 		Qualifier: q,
 		Create:    create,
-	}, nil
+	}, rule.ValidateMapKeys([]string{})
 }
 
 func newUsernsFromLog(log map[string]string) Rule {

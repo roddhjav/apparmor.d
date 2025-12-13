@@ -26,7 +26,7 @@ func newHat(rule rule) (*Hat, error) {
 	return &Hat{
 		Name:  name,
 		Flags: rule.GetValuesAsSlice(tokFLAGS),
-	}, nil
+	}, rule.ValidateMapKeys([]string{"flags"})
 }
 
 func (p *Hat) Kind() Kind {
