@@ -49,6 +49,7 @@ type AppArmorProfileFiles map[string]*AppArmorProfileFile
 type AppArmorProfileFile struct {
 	Preamble Rules
 	Profiles []*Profile
+	Hats     []*Hat
 	Kind     FileKind
 }
 
