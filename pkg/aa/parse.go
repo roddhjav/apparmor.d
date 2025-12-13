@@ -665,7 +665,10 @@ func (r rule) GetAsMap() map[string][]string {
 	res := map[string][]string{}
 	for _, kv := range r {
 		if kv.values != nil {
-			res[kv.key] = kv.values.GetSlice()
+			if res[kv.key] == nil {
+				res[kv.key] = []string{}
+			}
+			res[kv.key] = append(res[kv.key], kv.values.GetSlice()...)
 		}
 	}
 	return res
@@ -685,12 +688,13 @@ func (r rule) GetAsMap() map[string][]string {
 //			{key: "label", values: rule{{Key: "power-profiles-daemon"}}},
 //		}},
 func (r rule) GetValues(key string) rule {
+	var res rule
 	for _, kv := range r {
-		if kv.key == key {
-			return kv.values
+		if kv.key == key && kv.values != nil {
+			res = append(res, kv.values...)
 		}
 	}
-	return nil
+	return res
 }
 
 // GetValuesAsSlice return the values from a key as a slice.
@@ -718,6 +722,18 @@ func (r rule) GetValuesAsSlice(key string) []string {
 //	GetValuesAsString("peer"): "at-spi-bus-launcher"
 func (r rule) GetValuesAsString(key string) string {
 	return r.GetValues(key).GetString()
+}
+
+// ValidateMapKeys validate that all map keys in a rule are in the validKeys slice.
+func (r rule) ValidateMapKeys(validKeys []string) error {
+	for _, kv := range r {
+		if kv.values != nil {
+			if !slices.Contains(validKeys, kv.key) {
+				return fmt.Errorf("invalid modifier '%s' in rule: %s", kv.key, r)
+			}
+		}
+	}
+	return nil
 }
 
 // String return a generic representation of a rule.
