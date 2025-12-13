@@ -38,6 +38,12 @@ func newDbus(q Qualifier, rule rule) (Rule, error) {
 	if err != nil {
 		return nil, err
 	}
+	if err := rule.ValidateMapKeys([]string{"bus", "name", "path", "interface", "member", "peer"}); err != nil {
+		return nil, err
+	}
+	if err := rule.GetValues("peer").ValidateMapKeys([]string{"name", "label"}); err != nil {
+		return nil, err
+	}
 	return &Dbus{
 		Base:      newBase(rule),
 		Qualifier: q,
