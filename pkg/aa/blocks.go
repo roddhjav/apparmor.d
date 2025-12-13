@@ -4,6 +4,8 @@
 
 package aa
 
+import "strings"
+
 const (
 	HAT  Kind = "hat"
 	IF   Kind = "if"
