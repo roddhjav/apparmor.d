@@ -902,10 +902,7 @@ func newRules(rules []rule) (Rules, error) {
 func (f *AppArmorProfileFile) parsePreamble(preamble string) error {
 	var err error
 	inHeader = true
-	isPreamble := false
-	if f.Kind == ProfileKind {
-		isPreamble = true
-	}
+	isPreamble := f.Kind == ProfileKind
 
 	// Line rules
 	preamble, lineRules, err := parseLineRules(isPreamble, preamble)
