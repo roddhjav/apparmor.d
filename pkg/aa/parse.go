@@ -858,33 +858,33 @@ func newRules(rules []rule) (Rules, error) {
 					return nil, err
 				}
 				if owner {
-					if r.Kind() == LINK {
-						r.(*Link).Owner = owner
-					} else {
+					switch r := r.(type) {
+					case *File:
+						r.Owner = owner
+					case *Link:
+						r.Owner = owner
+					default:
 						return nil, fmt.Errorf("owner not allowed in %s rule : %s", r.Kind(), rule)
 					}
 				}
 				res = append(res, r)
+
 			} else {
 				raw := rule.Get(0)
-				if raw != "" {
-					// File
-					if isAARE(raw) || owner {
-						r, err = newFile(q, rule)
-						if err != nil {
-							return nil, err
-						}
-						r.(*File).Owner = owner
-						res = append(res, r)
-					} else {
-						if owner {
-							return nil, fmt.Errorf("owner not allowed in %s rule : %s", r.Kind(), rule)
-						}
-						return nil, fmt.Errorf("unknown rule: %s", rule)
-					}
-				} else {
+				if raw == "" {
 					return nil, fmt.Errorf("unrecognized rule: %s", rule)
 				}
+				testAccess, _ := toAccess(FILE, raw)
+				if !isAARE(raw) && !owner && len(testAccess) == 0 {
+					return nil, fmt.Errorf("unknown rule: %s", rule)
+				}
+				r, err = newFile(q, rule)
+				if err != nil {
+					return nil, err
+				}
+				r.(*File).Owner = owner
+				res = append(res, r)
+
 			}
 		}
 	}
