@@ -139,6 +139,8 @@ func validateValues(kind Kind, key string, values []string) error {
 		if v == "" {
 			continue
 		}
+
+		v = strings.Trim(v, "`\"") // Strip surrounding quotes for validation
 		if !slices.Contains(requirements[kind][key], v) {
 			return fmt.Errorf("invalid mode '%s'", v)
 		}
@@ -175,16 +177,17 @@ func toValues(kind Kind, key string, input string) ([]string, error) {
 		return nil, fmt.Errorf("unrecognized requirement '%s' for rule %s", key, kind)
 	}
 
-	res := tokenToSlice(input)
-	for idx := range res {
-		res[idx] = strings.Trim(res[idx], `" `)
-		if res[idx] == "" {
-			res = slices.Delete(res, idx, idx+1)
+	tokens := tokenToSlice(input)
+	res := make([]string, 0, len(tokens))
+	for _, token := range tokens {
+		token = strings.Trim(token, `" `)
+		if token == "" {
 			continue
 		}
-		if !slices.Contains(req, res[idx]) {
-			return nil, fmt.Errorf("unrecognized %s for rule %s: %s", key, kind, res[idx])
+		if !slices.Contains(req, token) {
+			return nil, fmt.Errorf("unrecognized %s for rule %s: %s", key, kind, token)
 		}
+		res = append(res, token)
 	}
 	slices.SortFunc(res, func(i, j string) int {
 		return requirementsWeights[kind][key][i] - requirementsWeights[kind][key][j]
