@@ -12,6 +12,8 @@ const UNIX Kind = "unix"
 
 func init() {
 	requirements[UNIX] = requirement{
+		"type":     []string{"stream", "dgram", "seqpacket", "rdm", "raw", "packet"},
+		"protocol": []string{"tcp", "udp", "icmp"},
 		"access": []string{
 			"create", "bind", "listen", "accept", "connect", "shutdown",
 			"getattr", "setattr", "getopt", "setopt", "send", "receive",
@@ -90,6 +92,9 @@ func (r *Unix) String() string {
 
 func (r *Unix) Validate() error {
 	if err := validateValues(r.Kind(), "access", r.Access); err != nil {
+		return fmt.Errorf("%s: %w", r, err)
+	}
+	if err := validateValues(r.Kind(), "type", []string{r.Type}); err != nil {
 		return fmt.Errorf("%s: %w", r, err)
 	}
 	return nil
