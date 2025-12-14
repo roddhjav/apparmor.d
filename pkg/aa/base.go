@@ -104,7 +104,7 @@ func (r Base) addLine(other Rule) bool {
 }
 
 type Qualifier struct {
-	Priority   string
+	Priority   int
 	Audit      bool
 	AccessType string
 }
@@ -112,6 +112,13 @@ type Qualifier struct {
 func newQualifierFromLog(log map[string]string) Qualifier {
 	audit := log["apparmor"] == "AUDIT"
 	return Qualifier{Audit: audit}
+}
+
+func (r *Qualifier) Validate() error {
+	if r.Priority < -100 || r.Priority > 100 {
+		return fmt.Errorf("invalid priority: %d", r.Priority)
+	}
+	return nil
 }
 
 func (r Qualifier) Compare(o Qualifier) int {

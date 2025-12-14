@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"regexp"
 	"slices"
+	"strconv"
 	"strings"
 )
 
@@ -830,9 +831,14 @@ func newRules(rules []rule) (Rules, error) {
 			owner = true
 			rule = rule[1:]
 			goto qualifier
+
 		// Qualifier
 		case tokPRIORITY:
-			q.Priority = rule.GetValues(tokPRIORITY).GetString()
+			priority, err := strconv.Atoi(rule.GetValues(tokPRIORITY).GetString())
+			if err != nil {
+				return nil, fmt.Errorf("invalid priority value in rule: %s", rule)
+			}
+			q.Priority = priority
 			rule = rule[1:]
 			goto qualifier
 		case tokALLOW, tokDENY, tokPROMPT:
