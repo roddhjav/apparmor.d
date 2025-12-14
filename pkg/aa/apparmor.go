@@ -47,10 +47,11 @@ type AppArmorProfileFiles map[string]*AppArmorProfileFile
 //   - Some rules are not supported yet (subprofile, hat...)
 //   - The structure is simplified as it only aims at writing profile, not parsing it.
 type AppArmorProfileFile struct {
-	Preamble Rules
-	Profiles []*Profile
-	Hats     []*Hat
-	Kind     FileKind
+	Preamble   Rules
+	Profiles   []*Profile
+	Hats       []*Hat
+	Conditions []*Condition
+	Kind       FileKind
 }
 
 func NewAppArmorProfile() *AppArmorProfileFile {
