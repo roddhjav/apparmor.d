@@ -22,8 +22,19 @@ func init() {
 		tokFLAGS: {
 			"attach_disconneced.path=", "attach_disconnected", "audit",
 			"chroot_relative", "complain", "debug", "default_allow", "enforce",
-			"interruptible", "kill.signal=", "kill", "kill", "mediate_deleted",
-			"prompt", "unconfined",
+			"interruptible", "kill", "mediate_deleted",
+			"prompt", "unconfined", "namespace_relative", "delegate_deleted", "chroot_attach",
+			"chroot_no_attach", "no_attach_disconnected",
+		},
+	}
+	conflicts[PROFILE] = map[string][][]string{
+		tokFLAGS: {
+			{"enforce", "complain"},
+			{"enforce", "unconfined"},
+			{"enforce", "prompt"},
+			{"complain", "unconfined"},
+			{"default_allow", "kill"},
+			{"default_allow", "enforce"},
 		},
 	}
 }
@@ -84,6 +95,9 @@ func (p *Profile) String() string {
 
 func (p *Profile) Validate() error {
 	if err := validateValues(p.Kind(), tokFLAGS, p.Flags); err != nil {
+		return fmt.Errorf("profile %s: %w", p.Name, err)
+	}
+	if err := validateConflicts(p.Kind(), tokFLAGS, p.Flags); err != nil {
 		return fmt.Errorf("profile %s: %w", p.Name, err)
 	}
 	return p.Rules.Validate()
