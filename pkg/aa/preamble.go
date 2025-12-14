@@ -76,14 +76,21 @@ func newAbi(q Qualifier, rule rule) (Rule, error) {
 	switch path[0] {
 	case '"':
 		magic = false
+		if !strings.HasSuffix(path, "\"") || len(path) < 3 {
+			return nil, fmt.Errorf("invalid path %s in rule: %s", path, rule)
+		}
 	case '<':
 		magic = true
+		if !strings.HasSuffix(path, ">") || len(path) < 3 {
+			return nil, fmt.Errorf("invalid path %s in rule: %s", path, rule)
+		}
 	default:
 		return nil, fmt.Errorf("invalid path %s in rule: %s", path, rule)
 	}
+	path = strings.Trim(path, "\"<>")
 	return &Abi{
 		Base:    newBase(rule),
-		Path:    strings.Trim(path, "\"<>"),
+		Path:    path,
 		IsMagic: magic,
 	}, rule.ValidateMapKeys([]string{})
 }
@@ -202,15 +209,22 @@ func newInclude(rule rule) (Rule, error) {
 	switch path[0] {
 	case '"':
 		magic = false
+		if !strings.HasSuffix(path, "\"") || len(path) < 3 {
+			return nil, fmt.Errorf("invalid path %s in rule: %s", path, rule)
+		}
 	case '<':
 		magic = true
+		if !strings.HasSuffix(path, ">") || len(path) < 3 {
+			return nil, fmt.Errorf("invalid path %s in rule: %s", path, rule)
+		}
 	default:
 		return nil, fmt.Errorf("invalid path format: %v", path)
 	}
+	path = strings.Trim(path, "\"<>")
 	return &Include{
 		Base:     newBase(rule),
 		IfExists: ifexists,
-		Path:     strings.Trim(path, "\"<>"),
+		Path:     path,
 		IsMagic:  magic,
 	}, rule.ValidateMapKeys([]string{})
 }
