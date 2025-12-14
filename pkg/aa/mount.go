@@ -21,10 +21,10 @@ func init() {
 			"B", "bind", "R", "rbind",
 
 			// flags change
-			"remount", "unbindable", "shared", "private", "slave", "runbindable",
+			"shared", "slave", "nostrictatime", "lazytime", "nolazytime",
 			"rshared", "rprivate", "rslave", "make-unbindable", "make-shared",
 			"make-private", "make-slave", "make-runbindable", "make-rshared",
-			"make-rprivate", "make-rslave",
+			"make-rprivate", "make-rslave", "symfollow",
 
 			// flags mount
 			"ro", "rw", "w", "acl", "async", "atime", "bind", "dev", "diratime",
