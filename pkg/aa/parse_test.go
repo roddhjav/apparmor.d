@@ -5,9 +5,12 @@
 package aa
 
 import (
+	"os"
 	"reflect"
+	"regexp"
 	"strings"
 	"testing"
+	"github.com/roddhjav/apparmor.d/pkg/paths"
 )
 
 func Test_tokenizeRule(t *testing.T) {
@@ -223,6 +226,84 @@ func Test_AppArmorProfileFile_Scan(t *testing.T) {
 		})
 	}
 }
+
+type testReport struct {
+	Success bool   `csv:"success"`
+	Name    string `csv:"name"`
+	Desc    string `csv:"desc"`
+	Error   string `csv:"error"`
+}
+
+// Test the parser on our own profiles
+func Test_Parser_ApparmorD(t *testing.T) {
+	datadir := paths.New("../../apparmor.d/")
+	files, err := datadir.ReadDirRecursiveFiltered(nil, paths.FilterOutDirectories(), paths.FilterOutNames("README.md"))
+	if err != nil {
+		panic(err)
+	}
+
+	reports := []*testReport{}
+	templateFailure := "\033[0;31m[FAILED]\033[0m(\033[0;37m%s\033[0m): %v"
+	templateSuccess := "\033[0;32m[SUCCESS]\033[0m(\033[0;37m%s\033[0m)"
+	for _, parse := range []bool{true, false} {
+		base := "Parse/"
+		if !parse {
+			base = "Scan/"
+		}
+
+		for _, file := range files {
+			if !file.Exist() {
+				panic(file.String() + " %s not found")
+			}
+			name, err := file.RelFrom(datadir)
+			if err != nil {
+				panic(err)
+			}
+
+			t.Run(base+name.String(), func(t *testing.T) {
+				var err error
+				r := &testReport{Name: name.String()}
+				raw := file.MustReadFileAsString()
+
+				p := &AppArmorProfileFile{}
+				p.Kind = KindFromPath(file)
+				if parse {
+					_, err = p.Parse(raw)
+				} else {
+					err = p.Scan(raw)
+				}
+				if err != nil {
+					r.Error = err.Error()
+					reports = append(reports, r)
+					t.Errorf(templateFailure, name, err)
+					return
+				}
+
+				if err = p.Validate(); err != nil {
+					r.Error = err.Error()
+					reports = append(reports, r)
+					t.Errorf(templateFailure, name, err)
+					return
+				}
+
+				r.Success = true
+				reports = append(reports, r)
+				t.Logf(templateSuccess, name)
+			})
+		}
+
+		success := 0
+		for _, r := range reports {
+			if r.Success {
+				success++
+			}
+		}
+		// [13/12/25]: 4750 tests, success: 4750, fail 0, success rate: 100%
+		t.Logf("[TOTAL]: %d tests, success: %d, fail %d, success rate: %v%%\n",
+			len(reports), success, len(reports)-success, (success*100.0)/len(reports))
+	}
+}
+
 
 var (
 	// Test cases for tokenizeRule, parseRule,rule getters, and newRules
