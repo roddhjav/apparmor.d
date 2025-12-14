@@ -23,6 +23,14 @@ const (
 	TunableKind
 )
 
+var (
+	fileKinds = map[FileKind]string{
+		ProfileKind:     PROFILE.String(),
+		AbstractionKind: "abstraction",
+		TunableKind:     "tunable",
+	}
+)
+
 func KindFromPath(file *paths.Path) FileKind {
 	dirname := file.Parent().String()
 	switch {
@@ -37,6 +45,13 @@ func KindFromPath(file *paths.Path) FileKind {
 	default:
 		return ProfileKind
 	}
+}
+
+func (k FileKind) String() string {
+	if res, ok := fileKinds[k]; ok {
+		return res
+	}
+	return ""
 }
 
 // AppArmorProfileFiles represents a full set of apparmor profiles
