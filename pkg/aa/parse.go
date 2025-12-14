@@ -90,7 +90,6 @@ func tokenizeBlock(input string) ([]*block, error) {
 	}
 
 	blocks := []*block{}
-	blockCounter := 0
 	blockStack := []rune{}
 	blockRecored := false
 	blockStart := 0
@@ -504,6 +503,7 @@ func tokenizeRule(str string) []string {
 	if inHeader && len(str) > 2 && str[0:2] == VARIABLE.Tok() && strings.Contains(str, "=") {
 		isVariable = true
 	}
+
 	for _, r := range str {
 		switch {
 		case (r == ' ' || r == '\t' || r == '\n') && len(blockStack) == 0 && !quoted:
@@ -546,6 +546,7 @@ func tokenizeRule(str string) []string {
 			currentToken.WriteRune(r)
 		}
 	}
+
 	if currentToken.Len() != 0 {
 		tokens = append(tokens, currentToken.String())
 	}
@@ -1025,9 +1026,6 @@ func (f *AppArmorProfileFile) Scan(input string) error {
 	if err != nil {
 		return err
 	}
-	if len(blocks) == 0 {
-		fmt.Print("No block found in the file")
-	}
 
 	for _, block := range blocks {
 		switch block.kind {
@@ -1068,7 +1066,7 @@ func (f *AppArmorProfileFile) Scan(input string) error {
 			f.Hats = append(f.Hats, hat)
 
 		default:
-			return fmt.Errorf("Illegal %s block in profile file", block.kind)
+			return fmt.Errorf("illegal %s block in profile file", block.kind)
 		}
 	}
 	return nil

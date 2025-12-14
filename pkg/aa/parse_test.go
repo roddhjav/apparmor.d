@@ -304,6 +304,115 @@ func Test_Parser_ApparmorD(t *testing.T) {
 	}
 }
 
+func Test_Parser_Upstream(t *testing.T) {
+	// os.Setenv("WITH_UPSTREAM", "true")
+	if os.Getenv("WITH_UPSTREAM") == "" {
+		t.Skip("Skipping test in CI environment")
+	}
+	apparmorDir := os.Getenv("APPARMOR_DIR")
+	if apparmorDir == "" {
+		apparmorDir = "../../../apparmor"
+	}
+
+	regTestDescription := regexp.MustCompile(`(?m)^#=(DESCRIPTION|Description) (.+)$`)
+	regTestResult := regexp.MustCompile(`(?m)^#=EXRESULT (.+)$`)
+	regTestDisabled := regexp.MustCompile(`(?m)^#=DISABLED$`)
+	getSettings := func(profile string) (string, bool, bool) {
+		desc := regTestDescription.FindStringSubmatch(profile)
+		result := regTestResult.FindStringSubmatch(profile)
+		disabled := regTestDisabled.FindStringSubmatch(profile)
+		if len(disabled) == 1 && disabled[0] == "#=DISABLED" {
+			return "", false, true
+		}
+		if len(desc) == 3 && len(result) == 2 {
+			return desc[2], result[1] == "FAIL", false
+		}
+		return "", false, false
+	}
+
+	datadir := paths.New(apparmorDir).Join("parser/tst/simple_tests")
+	files, err := datadir.ReadDirRecursiveFiltered(nil, paths.FilterOutDirectories(),
+		paths.FilterOutNames("readme"))
+	if err != nil {
+		panic(err)
+	}
+
+	reports := []*testReport{}
+	templateFailure := "\033[0;31m[FAILED]\033[0m(\033[0;37m%s\033[0m): %v"
+	templateSuccess := "\033[0;32m[SUCCESS]\033[0m(\033[0;37m%s\033[0m)"
+	for _, file := range files {
+		if !file.Exist() {
+			panic(file.String() + " %s not found")
+		}
+		name, err := file.RelFrom(datadir)
+		if err != nil {
+			panic(err)
+		}
+
+		raw := file.MustReadFileAsString()
+		desc, wantErr, isDisabled := getSettings(raw)
+		if isDisabled {
+			t.Logf("Skipping disabled test: %s", name)
+			continue
+		}
+		t.Run(name.String(), func(t *testing.T) {
+			r := &testReport{Name: name.String()}
+			r.Desc = desc
+
+			p := &AppArmorProfileFile{}
+			err := p.Scan(raw)
+			if err != nil {
+				if wantErr {
+					r.Success = true
+					reports = append(reports, r)
+					t.Logf(templateSuccess, name)
+				} else {
+					r.Error = err.Error()
+					reports = append(reports, r)
+					t.Errorf(templateFailure, name, err)
+				}
+				return
+			}
+
+			err = p.Validate()
+			if err != nil {
+				if wantErr {
+					r.Success = true
+					reports = append(reports, r)
+					t.Logf(templateSuccess, name)
+				} else {
+					r.Error = err.Error()
+					reports = append(reports, r)
+					t.Errorf(templateFailure, name, err)
+				}
+				return
+			}
+
+			// No errors occurred
+			if wantErr {
+				r.Error = "expected error but got none"
+				reports = append(reports, r)
+				t.Errorf(templateFailure, name, "expected error but got none")
+			} else {
+				r.Success = true
+				reports = append(reports, r)
+				t.Logf(templateSuccess, name)
+			}
+		})
+	}
+
+	success := 0
+	for _, r := range reports {
+		if r.Success {
+			success++
+		}
+	}
+
+	// [01/06/24]: 1986 tests, success: 1242, fail 744, success rate: 62%
+	// [13/12/25]: 2148 tests, success: 1722, fail 426, success rate: 80%
+	t.Logf("[TOTAL]: %d tests, success: %d, fail %d, success rate: %v%%\n",
+		len(reports), success, len(reports)-success, (success*100.0)/len(reports))
+}
 
 var (
 	// Test cases for tokenizeRule, parseRule,rule getters, and newRules
