@@ -457,6 +457,7 @@ var (
 			wGetSlice:  []string{"include", "<tunables/global>"},
 			wString:    `include <tunables/global>`,
 			wRule:      &Include{IfExists: false, IsMagic: true, Path: "tunables/global"},
+			wError:     true, // newRules only convert comma rules
 		},
 		{
 			name:   "include-if-exists",
@@ -471,6 +472,7 @@ var (
 			wGetSlice:  []string{"include", "if", "exists", `"/etc/apparmor.d/dummy"`},
 			wString:    `include if exists "/etc/apparmor.d/dummy"`,
 			wRule:      &Include{IfExists: true, IsMagic: false, Path: "/etc/apparmor.d/dummy"},
+			wError:     true, // newRules only convert comma rules
 		},
 		{
 			name:   "rlimit",
@@ -650,6 +652,33 @@ var (
 			},
 		},
 		{
+			name:   "ptrace",
+			raw:    "ptrace peer=/bin/true peer=/sbin/init peer=MY_PROFILE",
+			tokens: []string{"ptrace", "peer=/bin/true", "peer=/sbin/init", "peer=MY_PROFILE"},
+			rule: rule{
+				{key: "ptrace"},
+				{key: "peer", values: rule{{key: "/bin/true"}}},
+				{key: "peer", values: rule{{key: "/sbin/init"}}},
+				{key: "peer", values: rule{{key: "MY_PROFILE"}}},
+			},
+			getIdx:     3,
+			getKey:     "peer",
+			wGet:       "peer",
+			wGetString: "ptrace",
+			wGetSlice:  []string{"ptrace"},
+			wGetAsMap: map[string][]string{
+				"peer": {"/bin/true", "/sbin/init", "MY_PROFILE"},
+			},
+			wGetValues:         rule{{key: "/bin/true"}, {key: "/sbin/init"}, {key: "MY_PROFILE"}},
+			wGetValuesAsSlice:  []string{"/bin/true", "/sbin/init", "MY_PROFILE"},
+			wGetValuesAsString: "/bin/true /sbin/init MY_PROFILE",
+			wString:            "ptrace peer=/bin/true peer=/sbin/init peer=MY_PROFILE",
+			wRule: &Ptrace{
+				Peer: "/bin/true",
+			},
+			wError: true,
+		},
+		{
 			name:   "unix-1",
 			raw:    `unix (send receive) type=stream addr="@/tmp/.ICE[0-9]*-unix/19 5" peer=(label="@{p_systemd}", addr=none)`,
 			tokens: []string{"unix", "(send receive)", "type=stream", "addr=\"@/tmp/.ICE[0-9]*-unix/19 5\"", "peer=(label=\"@{p_systemd}\", addr=none)"},
@@ -694,7 +723,7 @@ var (
 			raw: `  unix (connect, receive, send)
 			type=stream
 			peer=(addr="@/tmp/ibus/dbus-????????")`,
-			tokens: []string{"unix", "(connect, receive, send)\n", "type=stream\n", `peer=(addr="@/tmp/ibus/dbus-????????")`},
+			tokens: []string{"unix", "(connect, receive, send)", "type=stream", `peer=(addr="@/tmp/ibus/dbus-????????")`},
 			rule: rule{
 				{key: "unix"}, {key: "connect"}, {key: "receive"}, {key: "send"},
 				{key: "type", values: rule{{key: "stream"}}},
@@ -2067,7 +2096,6 @@ var (
 	}
 
 	// Indirect test resources
-	// pHeaderStr          = ` apparmor.d - Full set of apparmor profiles`
 	pStringAAContentStr = `include <abstractions/base>
   include <abstractions/nameservice-strict>
 
@@ -2212,6 +2240,7 @@ var (
 				&File{Path: "@{sh_path}", Access: []string{"r", "ix"}},
 			},
 		},
+		&Include{IfExists: true, IsMagic: true, Path: "local/foo"},
 	}
 	profileB = &Profile{
 		Header: Header{
