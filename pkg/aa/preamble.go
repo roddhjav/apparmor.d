@@ -344,28 +344,31 @@ type Boolean struct {
 }
 
 func newBoolean(rule rule) (Rule, error) {
-	name, value := "", false
+	name, value := "", ""
 
 	switch len(rule) {
 	case 1:
 		name = strings.Trim(rule.Get(0), BOOLEAN.Tok()+"{}")
-		value = rule.GetValuesAsString(rule.Get(0)) == "true"
+		value = rule.GetValuesAsString(rule.Get(0))
 
 	case 3:
 		name = strings.Trim(rule.Get(0), BOOLEAN.Tok()+"{}")
 		if rule.Get(1) != tokEQUAL {
 			return nil, fmt.Errorf("invalid boolean format, missing %s in: %s", tokEQUAL, rule)
 		}
-		value = rule.Get(2) == "true"
+		value = rule.Get(2)
 
 	default:
 		return nil, fmt.Errorf("invalid boolean format: %v", rule)
 	}
 
+	if !slices.Contains([]string{"true", "false"}, value) {
+		return nil, fmt.Errorf("invalid boolean value %s in rule: %s", value, rule)
+	}
 	return &Boolean{
 		Base:  newBase(rule),
 		Name:  name,
-		Value: value,
+		Value: value == "true",
 	}, nil
 }
 
