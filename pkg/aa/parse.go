@@ -136,6 +136,13 @@ func tokenizeBlock(input string) ([]*block, error) {
 						ignore = true
 					} else if input[idx-1] != ' ' {
 						ignore = true
+					} else {
+						// Check if this is a brace expansion (e.g., {a,b,c}) vs block delimiter.
+						// A brace expansion has a matching } on the same line.
+						rest := input[idx+1 : j]
+						if strings.Contains(rest, "}") {
+							ignore = true
+						}
 					}
 				}
 
