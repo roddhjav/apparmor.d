@@ -132,7 +132,7 @@ func Test_parseBlock(t *testing.T) {
 				var err error
 				var got Rules
 				want := tt.rules[idx]
-				if b.kind == CONTENT && strings.HasPrefix(b.raw, "# Simple test") {
+				if idx == 0 && b.kind == CONTENT && (strings.HasPrefix(b.raw, "# Simple test") || strings.Contains(b.raw, "$")) {
 					f := &AppArmorProfileFile{}
 					err = f.parsePreamble(b.raw)
 					got = f.Preamble
@@ -1047,6 +1047,115 @@ var (
 			},
 			wParseErr:      false,
 			wRules:         ParaRules{},
+			wParseRulesErr: false,
+		},
+		{
+			name: "condition-1",
+			raw: `
+			$FOO=true
+			$BAR = False
+
+			/bin/true {
+			  /bin/false rix,
+			  if ${FOO} {
+			    /bin/true rix,
+			  }
+			  /bin/true rix,
+			  if ${BAR} {
+			    /etc/shadow rw,
+			  }
+			  /bin/sh rix,
+			}`,
+			blocks: []*block{
+				{
+					kind: CONTENT,
+					raw:  "\n\t\t\t$FOO=true\n\t\t\t$BAR = False\n",
+				},
+				{
+					kind: PROFILE,
+					raw:  "/bin/true",
+					next: &block{
+						kind: RAW,
+						raw:  "/bin/false rix,\n\t\t\t  if ${FOO} {\n\t\t\t    /bin/true rix,\n\t\t\t  }\n\t\t\t  /bin/true rix,\n\t\t\t  if ${BAR} {\n\t\t\t    /etc/shadow rw,\n\t\t\t  }\n\t\t\t  /bin/sh rix,",
+					},
+				},
+			},
+			wTokenizeErr: false,
+			rules: []Rules{
+				{
+					&Boolean{Name: "FOO", Value: true},
+					&Boolean{Name: "BAR", Value: false},
+				},
+				{
+					&Profile{
+						Header: Header{
+							Name:        "/bin/true",
+							Attachments: []string{},
+							Attributes:  map[string]string{},
+							Flags:       []string{},
+						},
+						Rules: Rules{
+							&File{Path: "/bin/false", Access: []string{"r", "ix"}},
+							&Condition{
+								Expression: "${FOO}",
+								IfRules: Rules{
+									&File{Path: "/bin/true", Access: []string{"r", "ix"}},
+								},
+							},
+							&File{Path: "/bin/true", Access: []string{"r", "ix"}},
+							&Condition{
+								Expression: "${BAR}",
+								IfRules: Rules{
+									&File{Path: "/etc/shadow", Access: []string{"r", "w"}},
+								},
+							},
+							&File{Path: "/bin/sh", Access: []string{"r", "ix"}},
+						},
+					},
+				},
+			},
+			wParseBlockErr: false,
+			apparmor: &AppArmorProfileFile{
+				Preamble: Rules{
+					&Boolean{Name: "FOO", Value: true},
+					&Boolean{Name: "BAR", Value: false},
+				},
+			},
+			apparmorAll: &AppArmorProfileFile{
+				Preamble: Rules{
+					&Boolean{Name: "FOO", Value: true},
+					&Boolean{Name: "BAR", Value: false},
+				},
+				Profiles: []*Profile{
+					{
+						Header: Header{
+							Name:        "/bin/true",
+							Attachments: []string{},
+							Attributes:  map[string]string{},
+							Flags:       []string{},
+						},
+						Rules: Rules{
+							&File{Path: "/bin/false", Access: []string{"r", "ix"}},
+							&Condition{
+								Expression: "${FOO}",
+								IfRules: Rules{
+									&File{Path: "/bin/true", Access: []string{"r", "ix"}},
+								},
+							},
+							&File{Path: "/bin/true", Access: []string{"r", "ix"}},
+							&Condition{
+								Expression: "${BAR}",
+								IfRules: Rules{
+									&File{Path: "/etc/shadow", Access: []string{"r", "w"}},
+								},
+							},
+							&File{Path: "/bin/sh", Access: []string{"r", "ix"}},
+						},
+					},
+				},
+			},
+			wParseErr:      false,
+			wRules:         ParaRules{nil},
 			wParseRulesErr: false,
 		},
 		{
