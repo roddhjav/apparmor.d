@@ -9,6 +9,7 @@ import (
 	"net"
 	"slices"
 	"strconv"
+	"strings"
 )
 
 const NETWORK Kind = "network"
@@ -54,17 +55,41 @@ func newLocalAddressFromLog(log map[string]string) LocalAddress {
 	}
 }
 
+// validatePortRange validates a port or port range string.
+func validatePortRange(port string) error {
+	if port == "" {
+		return nil
+	}
+	if strings.Contains(port, "-") {
+		parts := strings.SplitN(port, "-", 2)
+		if len(parts) != 2 {
+			return fmt.Errorf("invalid port range: %s", port)
+		}
+		start, err1 := strconv.Atoi(parts[0])
+		end, err2 := strconv.Atoi(parts[1])
+		if err1 != nil || err2 != nil {
+			return fmt.Errorf("invalid port range: %s", port)
+		}
+		if start < 0 || start > 65535 || end < 0 || end > 65535 {
+			return fmt.Errorf("invalid port range: %s", port)
+		}
+		if start > end {
+			return fmt.Errorf("invalid port range: %s", port)
+		}
+		return nil
+	}
+	p, err := strconv.Atoi(port)
+	if err != nil || p < 0 || p > 65535 {
+		return fmt.Errorf("invalid port: %s", port)
+	}
+	return nil
+}
+
 func (r LocalAddress) Validate() error {
 	if r.IP != "" && r.IP != "none" && net.ParseIP(r.IP) == nil {
 		return fmt.Errorf("invalid IP address: %s", r.IP)
 	}
-	if r.Port != "" {
-		port, err := strconv.Atoi(r.Port)
-		if err != nil || port < 0 || port > 65535 {
-			return fmt.Errorf("invalid port: %s", r.Port)
-		}
-	}
-	return nil
+	return validatePortRange(r.Port)
 }
 
 func (r LocalAddress) Compare(other LocalAddress) int {
@@ -99,13 +124,7 @@ func (r PeerAddress) Validate() error {
 	if r.IP != "" && r.IP != "none" && net.ParseIP(r.IP) == nil {
 		return fmt.Errorf("invalid IP address: %s", r.IP)
 	}
-	if r.Port != "" {
-		port, err := strconv.Atoi(r.Port)
-		if err != nil || port < 0 || port > 65535 {
-			return fmt.Errorf("invalid port: %s", r.Port)
-		}
-	}
-	return nil
+	return validatePortRange(r.Port)
 }
 
 func (r PeerAddress) Compare(other PeerAddress) int {
@@ -164,7 +183,7 @@ func newNetwork(q Qualifier, rule rule) (Rule, error) {
 		Domain:       domain,
 		Type:         nType,
 		Protocol:     protocol,
-	}, nil
+	}, rule.ValidateMapKeys([]string{"ip", "port", "peer", "type"})
 }
 
 func newNetworkFromLog(log map[string]string) Rule {
