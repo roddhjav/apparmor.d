@@ -196,9 +196,9 @@ func tokenizeBlock(input string) ([]*block, error) {
 				case strings.HasPrefix(blockHeader, HAT.Tok()),
 					strings.HasPrefix(blockHeader, HAT.String()):
 					kind = HAT
-				case blockHeader == IF.Tok():
+				case strings.HasPrefix(blockHeader, IF.Tok()):
 					kind = IF
-				case blockHeader == ELSE.Tok():
+				case strings.HasPrefix(blockHeader, ELSE.Tok()):
 					kind = ELSE
 				default:
 					return nil, fmt.Errorf("unrecognized block type: %s", blockHeader)
