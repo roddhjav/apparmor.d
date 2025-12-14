@@ -57,6 +57,7 @@ var (
 	tok = map[Kind]string{
 		COMMENT:  "#",
 		VARIABLE: "@{",
+		BOOLEAN:  "$",
 		HAT:      "^",
 	}
 	openBlocks  = []rune{tokOPENPAREN, tokOPENBRACE, tokOPENBRACKET}
@@ -307,7 +308,20 @@ func parseBlock(b *block) (Rules, error) {
 		res = append(res, hat)
 
 	case IF, ELSE:
-		// Not implemented yet
+		condition, err := newCondition(parseRule(b.raw))
+		if err != nil {
+			return nil, err
+		}
+		rules, err := parseBlock(b.next)
+		if err != nil {
+			return nil, err
+		}
+		if b.kind == IF {
+			condition.IfRules = rules
+		} else {
+			condition.ElseRules = rules
+		}
+		res = append(res, condition)
 
 	}
 	return res, nil
@@ -343,6 +357,14 @@ func parseLineRules(isPreamble bool, input string) (string, Rules, error) {
 
 		case strings.HasPrefix(tmp, VARIABLE.Tok()) && isPreamble:
 			r, err = newVariable(parseRule(line))
+			if err != nil {
+				return "", nil, err
+			}
+			res = append(res, r)
+			processed = true
+
+		case strings.HasPrefix(tmp, BOOLEAN.Tok()) && isPreamble:
+			r, err = newBoolean(parseRule(line))
 			if err != nil {
 				return "", nil, err
 			}

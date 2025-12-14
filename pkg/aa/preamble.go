@@ -14,6 +14,7 @@ const (
 	ALIAS    Kind = "alias"
 	INCLUDE  Kind = "include"
 	VARIABLE Kind = "variable"
+	BOOLEAN  Kind = "boolean"
 	COMMENT  Kind = "comment"
 
 	tokIFEXISTS = "if exists"
@@ -335,3 +336,75 @@ func (r *Variable) Lengths() []int {
 }
 
 func (r *Variable) setPaddings(max []int) {} // No paddings for variable
+
+type Boolean struct {
+	Base
+	Name  string
+	Value bool
+}
+
+func newBoolean(rule rule) (Rule, error) {
+	name, value := "", false
+
+	switch len(rule) {
+	case 1:
+		name = strings.Trim(rule.Get(0), BOOLEAN.Tok()+"{}")
+		value = rule.GetValuesAsString(rule.Get(0)) == "true"
+
+	case 3:
+		name = strings.Trim(rule.Get(0), BOOLEAN.Tok()+"{}")
+		if rule.Get(1) != tokEQUAL {
+			return nil, fmt.Errorf("invalid boolean format, missing %s in: %s", tokEQUAL, rule)
+		}
+		value = rule.Get(2) == "true"
+
+	default:
+		return nil, fmt.Errorf("invalid boolean format: %v", rule)
+	}
+
+	return &Boolean{
+		Base:  newBase(rule),
+		Name:  name,
+		Value: value,
+	}, nil
+}
+
+func (r *Boolean) Kind() Kind {
+	return BOOLEAN
+}
+
+func (r *Boolean) Constraint() Constraint {
+	return PreambleRule
+}
+
+func (r *Boolean) String() string {
+	return renderTemplate(r.Kind(), r)
+}
+
+func (r *Boolean) Validate() error {
+	return nil
+}
+
+func (r *Boolean) Compare(other Rule) int {
+	o, _ := other.(*Boolean)
+	if res := compare(r.Name, o.Name); res != 0 {
+		return res
+	}
+	return compare(r.Value, o.Value)
+}
+
+func (r *Boolean) Merge(other Rule) bool {
+	o, _ := other.(*Boolean)
+
+	if r.Name == o.Name && r.Value == o.Value {
+		b := &r.Base
+		return b.merge(o.Base)
+	}
+	return false
+}
+
+func (r *Boolean) Lengths() []int {
+	return []int{} // No len for boolean
+}
+
+func (r *Boolean) setPaddings(max []int) {} // No paddings for boolean
