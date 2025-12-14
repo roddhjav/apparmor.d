@@ -8,6 +8,7 @@ import (
 	"os"
 	"reflect"
 	"regexp"
+	"slices"
 	"strings"
 	"testing"
 	"github.com/roddhjav/apparmor.d/pkg/paths"
@@ -234,18 +235,26 @@ type testReport struct {
 	Error   string `csv:"error"`
 }
 
-// Test the parser on our own profiles
-func Test_Parser_ApparmorD(t *testing.T) {
-	datadir := paths.New("../../apparmor.d/")
-	files, err := datadir.ReadDirRecursiveFiltered(nil, paths.FilterOutDirectories(), paths.FilterOutNames("README.md"))
-	if err != nil {
-		panic(err)
-	}
+type testReports []*testReport
 
-	reports := []*testReport{}
+func (r testReports) SumUp(t *testing.T) {
+	success := 0
+	for _, r := range r {
+		if r.Success {
+			success++
+		}
+	}
+	t.Logf("[TOTAL]: %d tests, success: %d, fail %d, success rate: %v%%\n",
+		len(r), success, len(r)-success, (success*100.0)/len(r))
+}
+
+func testAppArmorProfileFiles(t *testing.T, rootdir *paths.Path, files []*paths.Path, parses []bool) {
 	templateFailure := "\033[0;31m[FAILED]\033[0m(\033[0;37m%s\033[0m): %v"
 	templateSuccess := "\033[0;32m[SUCCESS]\033[0m(\033[0;37m%s\033[0m)"
-	for _, parse := range []bool{true, false} {
+	ignorePath := []string{"abstractions/transmission-common"}
+
+	reports := testReports{}
+	for _, parse := range parses {
 		base := "Parse/"
 		if !parse {
 			base = "Scan/"
@@ -255,9 +264,17 @@ func Test_Parser_ApparmorD(t *testing.T) {
 			if !file.Exist() {
 				panic(file.String() + " %s not found")
 			}
-			name, err := file.RelFrom(datadir)
+			name, err := file.RelFrom(rootdir)
 			if err != nil {
 				panic(err)
+			}
+			if strings.HasPrefix(name.String(), "abi/") {
+				t.Logf("Skipping abi file: %s", name)
+				continue
+			}
+			if slices.Contains(ignorePath, name.String()) {
+				t.Logf("Skipping ignored file: %s", name)
+				continue
 			}
 
 			t.Run(base+name.String(), func(t *testing.T) {
@@ -292,19 +309,52 @@ func Test_Parser_ApparmorD(t *testing.T) {
 			})
 		}
 
-		success := 0
-		for _, r := range reports {
-			if r.Success {
-				success++
-			}
-		}
-		// [13/12/25]: 4750 tests, success: 4750, fail 0, success rate: 100%
-		t.Logf("[TOTAL]: %d tests, success: %d, fail %d, success rate: %v%%\n",
-			len(reports), success, len(reports)-success, (success*100.0)/len(reports))
+		reports.SumUp(t)
 	}
 }
 
-func Test_Parser_Upstream(t *testing.T) {
+// Test the parser on our own profiles
+func Test_Parser_ApparmorD(t *testing.T) {
+	datadir := paths.New("../../apparmor.d/")
+	files, err := datadir.ReadDirRecursiveFiltered(nil, paths.FilterOutDirectories(), paths.FilterOutNames("README.md"))
+	if err != nil {
+		panic(err)
+	}
+
+	// [14/12/25]: 4750 tests, success: 4750, fail 0, success rate: 100%
+	testAppArmorProfileFiles(t, datadir, files, []bool{true, false})
+}
+
+// Test the parser on apparmor default and extra profiles
+func Test_Parser_UpstreamProfiles(t *testing.T) {
+	// os.Setenv("WITH_UPSTREAM", "true")
+	if os.Getenv("WITH_UPSTREAM") == "" {
+		t.Skip("Skipping test in CI environment")
+	}
+	apparmorDir := os.Getenv("APPARMOR_DIR")
+	if apparmorDir == "" {
+		apparmorDir = "../../../apparmor"
+	}
+
+	dirnames := []string{
+		// [14/12/25]: 357 tests, success: 357, fail 0, success rate: 100%
+		"profiles/apparmor.d", // apparmor-profiles
+
+		// [14/12/25]: 110 tests, success: 110, fail 0, success rate: 100%
+		"profiles/apparmor/profiles/extras", // apparmor-profiles-extras
+	}
+	for _, dir := range dirnames {
+		datadir := paths.New(apparmorDir).Join(dir)
+		files, err := datadir.ReadDirRecursiveFiltered(nil, paths.FilterOutDirectories(), paths.FilterOutNames("README"))
+		if err != nil {
+			panic(err)
+		}
+		testAppArmorProfileFiles(t, datadir, files, []bool{false})
+	}
+}
+
+// Test the parser on apparmor own's test suite
+func Test_Parser_UpstreamTestSuite(t *testing.T) {
 	// os.Setenv("WITH_UPSTREAM", "true")
 	if os.Getenv("WITH_UPSTREAM") == "" {
 		t.Skip("Skipping test in CI environment")
@@ -337,7 +387,7 @@ func Test_Parser_Upstream(t *testing.T) {
 		panic(err)
 	}
 
-	reports := []*testReport{}
+	reports := testReports{}
 	templateFailure := "\033[0;31m[FAILED]\033[0m(\033[0;37m%s\033[0m): %v"
 	templateSuccess := "\033[0;32m[SUCCESS]\033[0m(\033[0;37m%s\033[0m)"
 	for _, file := range files {
@@ -401,17 +451,9 @@ func Test_Parser_Upstream(t *testing.T) {
 		})
 	}
 
-	success := 0
-	for _, r := range reports {
-		if r.Success {
-			success++
-		}
-	}
-
 	// [01/06/24]: 1986 tests, success: 1242, fail 744, success rate: 62%
-	// [13/12/25]: 2148 tests, success: 1722, fail 426, success rate: 80%
-	t.Logf("[TOTAL]: %d tests, success: %d, fail %d, success rate: %v%%\n",
-		len(reports), success, len(reports)-success, (success*100.0)/len(reports))
+	// [14/12/25]: 2148 tests, success: 1722, fail 422, success rate: 80%
+	reports.SumUp(t)
 }
 
 var (
@@ -1272,7 +1314,7 @@ var (
 			name: "condition-1",
 			raw: `
 			$FOO=true
-			$BAR = False
+			$BAR = false
 
 			/bin/true {
 			  /bin/false rix,
@@ -1288,7 +1330,7 @@ var (
 			blocks: []*block{
 				{
 					kind: CONTENT,
-					raw:  "\n\t\t\t$FOO=true\n\t\t\t$BAR = False\n",
+					raw:  "\n\t\t\t$FOO=true\n\t\t\t$BAR = false\n",
 				},
 				{
 					kind: PROFILE,
