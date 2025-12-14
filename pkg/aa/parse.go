@@ -216,9 +216,9 @@ func tokenizeBlock(input string) ([]*block, error) {
 		}
 	}
 
-	if blockCounter != 0 {
-		return nil, fmt.Errorf("unbalanced block, missing '{' or '}': %s",
-			input[blockContentEnd:len(input)-1])
+	if len(blockStack) != 0 {
+		return nil, fmt.Errorf("unbalanced block, missing '}': %s",
+			input[blockContentEnd:])
 	}
 	if len(blocks) == 0 {
 		// No block found, it can be a tunable/abstraction file.
@@ -226,6 +226,16 @@ func tokenizeBlock(input string) ([]*block, error) {
 			kind: CONTENT,
 			raw:  input,
 		})
+	} else if blockContentStart < len(input) {
+		// Capture any remaining content after the last block
+		remaining := input[blockContentStart:]
+		remaining = strings.Trim(remaining, "\n\t ")
+		if remaining != "" {
+			blocks = append(blocks, &block{
+				kind: CONTENT,
+				raw:  remaining,
+			})
+		}
 	}
 	return blocks, nil
 }
