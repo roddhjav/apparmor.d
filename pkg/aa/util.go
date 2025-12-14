@@ -148,6 +148,26 @@ func validateValues(kind Kind, key string, values []string) error {
 	return nil
 }
 
+// validateConflicts checks if any values in the slice conflict with each other.
+// Conflicts are defined in the conflicts map as pairs of mutually exclusive values.
+func validateConflicts(kind Kind, key string, values []string) error {
+	conflictPairs, ok := conflicts[kind][key]
+	if !ok {
+		return nil
+	}
+	for _, pair := range conflictPairs {
+		if len(pair) != 2 {
+			continue
+		}
+		hasFirst := slices.Contains(values, pair[0])
+		hasSecond := slices.Contains(values, pair[1])
+		if hasFirst && hasSecond {
+			return fmt.Errorf("conflicting %s '%s' and '%s'", key, pair[0], pair[1])
+		}
+	}
+	return nil
+}
+
 func tokenToSlice(token string) []string {
 	res := []string{}
 	token = strings.Trim(token, "()\n ")
