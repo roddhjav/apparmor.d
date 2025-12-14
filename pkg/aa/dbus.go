@@ -16,7 +16,7 @@ func init() {
 			"send", "receive", "bind", "eavesdrop", "r", "read",
 			"w", "write", "rw",
 		},
-		"bus": []string{"system", "session", "accessibility"},
+		"bus": []string{"system", "session", "accessibility", "fcitx"},
 	}
 }
 

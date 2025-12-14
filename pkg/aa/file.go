@@ -21,10 +21,11 @@ const (
 
 func init() {
 	requirements[FILE] = requirement{
-		"access": {"m", "r", "w", "l", "k"},
+		"access": {"m", "r", "w", "a", "l", "k"},
 		"transition": {
 			"ix", "ux", "Ux", "px", "Px", "cx", "Cx", "pix", "Pix", "cix",
 			"Cix", "pux", "PUx", "cux", "CUx", "x",
+			"Pux", "pUx",
 		},
 	}
 }
