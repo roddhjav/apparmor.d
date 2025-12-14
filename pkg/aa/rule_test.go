@@ -397,7 +397,7 @@ var (
 			other:    &File{},
 			wCompare: 0,
 			wMerge:   true,
-			wString:  " ,", // FIXME:
+			wString:  "file,",
 		},
 		{
 			name:      "file-equal",
