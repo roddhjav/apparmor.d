@@ -146,9 +146,6 @@ func (r *File) Validate() error {
 			return fmt.Errorf("invalid mode '%s'", v)
 		}
 	}
-	if r.Target != "" && !isAARE(r.Target) {
-		return fmt.Errorf("'%s' is not a valid AARE", r.Target)
-	}
 	return nil
 }
 
@@ -290,9 +287,6 @@ func (r *Link) String() string {
 func (r *Link) Validate() error {
 	if !isAARE(r.Path) {
 		return fmt.Errorf("'%s' is not a valid AARE", r.Path)
-	}
-	if !isAARE(r.Target) {
-		return fmt.Errorf("'%s' is not a valid AARE", r.Target)
 	}
 	return nil
 }
