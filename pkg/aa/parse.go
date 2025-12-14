@@ -10,6 +10,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"unicode"
 )
 
 const (
@@ -134,7 +135,7 @@ func tokenizeBlock(input string) ([]*block, error) {
 					match := regVariableDefinition.FindStringSubmatch(line)
 					if len(match) > 0 {
 						ignore = true
-					} else if input[idx-1] != ' ' {
+					} else if !unicode.IsSpace(rune(input[idx-1])) {
 						ignore = true
 					} else {
 						// Check if this is a brace expansion (e.g., {a,b,c}) vs block delimiter.
@@ -446,7 +447,7 @@ func parseCommaRules(input string) ([]rule, error) {
 
 		case tokCOLON:
 			if blockCounter == 0 && !comment {
-				if idx+1 < size && !strings.ContainsRune(" \n", rune(input[idx+1])) {
+				if idx+1 < size && !strings.ContainsRune(" \t\n", rune(input[idx+1])) {
 					// Colon in AARE, it is valid, not a separator
 					aare = true
 				}
@@ -514,7 +515,7 @@ func tokenizeRule(str string) []string {
 
 	for _, r := range str {
 		switch {
-		case (r == ' ' || r == '\t' || r == '\n') && len(blockStack) == 0 && !quoted:
+		case unicode.IsSpace(r) && len(blockStack) == 0 && !quoted:
 			// Split on space/tab/newline if not in a block or quoted
 			if currentToken.Len() != 0 {
 				tokens = append(tokens, currentToken.String())
