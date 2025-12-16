@@ -13,8 +13,8 @@ import (
 )
 
 var (
-	testData = paths.New("../../tests/testdata/")
-	intData  = paths.New("../../apparmor.d")
+	testData     = paths.New("../../tests/testdata/")
+	apparmorDDir = paths.New("../../apparmor.d")
 )
 
 // mustReadProfileFile read a file and return its content as a slice of string.
@@ -36,7 +36,7 @@ func TestAppArmorProfileFile_String(t *testing.T) {
 			want: ``,
 		},
 		{
-			name: "foo",
+			name: "string.aa",
 			f: &AppArmorProfileFile{
 				Preamble: Rules{
 					&Comment{Base: Base{Comment: " Simple test profile for the AppArmorProfileFile.String() method", IsLineRule: true}},
@@ -106,7 +106,7 @@ func TestAppArmorProfileFile_String(t *testing.T) {
 					},
 				}},
 			},
-			want: testData.Join("string.aa").MustReadFileAsString(),
+			want: mustReadProfileFile(testData.Join("string.aa")),
 		},
 	}
 	for _, tt := range tests {
@@ -236,7 +236,7 @@ func TestAppArmorProfileFile_Integration(t *testing.T) {
 					},
 				}},
 			},
-			want: mustReadProfileFile(intData.Join("groups/apparmor/aa-status")),
+			want: mustReadProfileFile(apparmorDDir.Join("groups/apparmor/aa-status")),
 		},
 	}
 	for _, tt := range tests {
