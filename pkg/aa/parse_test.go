@@ -315,14 +315,13 @@ func testAppArmorProfileFiles(t *testing.T, rootdir *paths.Path, files []*paths.
 
 // Test the parser on our own profiles
 func Test_Parser_ApparmorD(t *testing.T) {
-	datadir := paths.New("../../apparmor.d/")
-	files, err := datadir.ReadDirRecursiveFiltered(nil, paths.FilterOutDirectories(), paths.FilterOutNames("README.md"))
+	files, err := apparmorDDir.ReadDirRecursiveFiltered(nil, paths.FilterOutDirectories(), paths.FilterOutNames("README.md"))
 	if err != nil {
 		panic(err)
 	}
 
 	// [14/12/25]: 4750 tests, success: 4750, fail 0, success rate: 100%
-	testAppArmorProfileFiles(t, datadir, files, []bool{true, false})
+	testAppArmorProfileFiles(t, apparmorDDir, files, []bool{true, false})
 }
 
 // Test the parser on apparmor default and extra profiles

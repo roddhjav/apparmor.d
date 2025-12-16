@@ -22,7 +22,7 @@ func TestStack_Apply(t *testing.T) {
 	}{
 		{
 			name:          "stack",
-			rootApparmord: paths.New("../../../apparmor.d/groups/freedesktop/"),
+			rootApparmord: apparmorDDir.Join("groups/freedesktop/"),
 			opt: &Option{
 				Name:    "stack",
 				ArgMap:  map[string]string{"plymouth": ""},
