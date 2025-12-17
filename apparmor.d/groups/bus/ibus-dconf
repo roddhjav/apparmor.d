@@ -12,6 +12,7 @@ profile ibus-dconf @{exec_path} flags=(attach_disconnected) {
   include <abstractions/bus-session>
   include <abstractions/bus-system>
   include <abstractions/bus/session/org.gtk.vfs.MountTracker>
+  include <abstractions/consoles>
   include <abstractions/dconf-write>
   include <abstractions/nameservice-strict>
 
@@ -22,6 +23,11 @@ profile ibus-dconf @{exec_path} flags=(attach_disconnected) {
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
        peer=(name=@{busname}, label=gnome-shell),
+
+  dbus receive bus=system path=/ca/desrt/dconf/Writer/ibus
+       interface=ca.desrt.dconf.Writer
+       member=WritabilityNotify
+       peer=(name=@{busname}, label=dconf),
 
   @{exec_path} mr,
 
@@ -40,8 +46,6 @@ profile ibus-dconf @{exec_path} flags=(attach_disconnected) {
 
   owner @{user_config_dirs}/ibus/bus/ r,
   owner @{user_config_dirs}/ibus/bus/@{hex32}-unix-{,wayland-}@{int} r,
-
-  owner /dev/tty@{u8} rw,
 
   include if exists <local/ibus-dconf>
 }
