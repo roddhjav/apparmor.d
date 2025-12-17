@@ -1,0 +1,101 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Allows observing NetworkManager settings. It grants access to listing
+# MAC addresses, previous networks, etc but not secrets.
+
+  abi <abi/4.0>,
+
+  # DBus.Properties: read properties from the interface
+
+  dbus send bus=system path=/org/freedesktop/NetworkManager
+       interface=org.freedesktop.DBus.Properties
+       member={Get,GetAll}
+       peer=(name=@{busname}, label=NetworkManager),
+
+  dbus send bus=system path=/org/freedesktop/NetworkManager/*/@{int}
+       interface=org.freedesktop.DBus.Properties
+       member={Get,GetAll}
+       peer=(name=@{busname}, label=NetworkManager),
+
+  # DBus.Properties: receive property changed events
+
+  dbus receive bus=system path=/org/freedesktop/NetworkManager
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged
+       peer=(name=@{busname}, label=NetworkManager),
+
+  dbus receive bus=system path=/org/freedesktop/NetworkManager/*
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged
+       peer=(name=@{busname}, label=NetworkManager),
+
+  dbus receive bus=system path=/org/freedesktop/NetworkManager/*/@{int}
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged
+       peer=(name=@{busname}, label=NetworkManager),
+
+  # DBus.ObjectManager: allow clients to enumerate sources
+
+  dbus send bus=system path=/org/freedesktop
+       interface=org.freedesktop.DBus.ObjectManager
+       member=GetManagedObjects
+       peer=(name=@{busname}, label=NetworkManager),
+
+  dbus receive bus=system path=/org/freedesktop
+       interface=org.freedesktop.DBus.ObjectManager
+       member={InterfacesAdded,InterfacesRemoved}
+       peer=(name=@{busname}, label=NetworkManager),
+
+  # DBus.Introspectable: allow clients to introspect the service
+
+  dbus send bus=system path=/org/freedesktop/NetworkManager
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name=@{busname},  label=NetworkManager),
+
+  # NetworkManager
+
+  dbus send bus=system path=/org/freedesktop/NetworkManager
+       interface=org.freedesktop.NetworkManager
+       member={GetDevices,GetAllDevices,GetDeviceByIpIface}
+       peer=(name=@{busname}, label=NetworkManager),
+
+  dbus send bus=system path=/org/freedesktop/NetworkManager
+       interface=org.freedesktop.NetworkManager
+       member=GetPermissions
+       peer=(name=@{busname}, label=NetworkManager),
+
+  dbus receive bus=system path=/org/freedesktop/NetworkManager
+       interface=org.freedesktop.NetworkManager
+       member={CheckPermissions,DeviceAdded,DeviceRemoved,StateChanged}
+       peer=(name=@{busname}, label=NetworkManager),
+
+  # NetworkManager.Connection
+
+  dbus receive bus=system path=/org/freedesktop/NetworkManager/*/@{int}
+       interface=org.freedesktop.NetworkManager.Connection.Active
+       member=StateChanged
+       peer=(name=@{busname}, label=NetworkManager),
+
+  # NetworkManager.Settings
+
+  dbus send bus=system path=/org/freedesktop/NetworkManager/Settings
+       interface=org.freedesktop.NetworkManager.Settings
+       member=ListConnections
+       peer=(name=@{busname}, label=NetworkManager),
+
+  dbus send bus=system path=/org/freedesktop/NetworkManager/Settings/@{int}
+       interface=org.freedesktop.NetworkManager.Settings.Connection
+       member=GetSettings
+       peer=(name=@{busname}, label=NetworkManager),
+
+  dbus receive bus=system path=/org/freedesktop/NetworkManager/Settings/@{int}
+       interface=org.freedesktop.NetworkManager.Settings.Connection
+       member=Updated
+       peer=(name=@{busname}, label=NetworkManager),
+
+  include if exists <abstractions/bus/system/org.freedesktop.NetworkManager.d>
+
+# vim:syntax=apparmor

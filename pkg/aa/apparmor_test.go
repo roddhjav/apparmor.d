@@ -13,15 +13,15 @@ import (
 )
 
 var (
-	testData = paths.New("../../tests/testdata/")
-	intData  = paths.New("../../apparmor.d")
+	testData     = paths.New("../../tests/testdata/")
+	apparmorDDir = paths.New("../../apparmor.d")
 )
 
 // mustReadProfileFile read a file and return its content as a slice of string.
 // It panics if an error occurs. It removes the last comment line.
 func mustReadProfileFile(path *paths.Path) string {
 	res := strings.Split(path.MustReadFileAsString(), "\n")
-	return strings.Join(res[:len(res)-2], "\n")
+	return strings.Join(res[:len(res)-2], "\n") + "\n"
 }
 
 func TestAppArmorProfileFile_String(t *testing.T) {
@@ -36,7 +36,7 @@ func TestAppArmorProfileFile_String(t *testing.T) {
 			want: ``,
 		},
 		{
-			name: "foo",
+			name: "string.aa",
 			f: &AppArmorProfileFile{
 				Preamble: Rules{
 					&Comment{Base: Base{Comment: " Simple test profile for the AppArmorProfileFile.String() method", IsLineRule: true}},
@@ -88,7 +88,6 @@ func TestAppArmorProfileFile_String(t *testing.T) {
 							Type:      "stream",
 							Address:   "@/tmp/.ICE-unix/1995",
 							PeerLabel: "gnome-shell",
-							PeerAddr:  "none",
 						},
 						&Dbus{Access: []string{"bind"}, Bus: "session", Name: "org.gnome.*"},
 						&Dbus{
@@ -231,13 +230,13 @@ func TestAppArmorProfileFile_Integration(t *testing.T) {
 						&Include{IsMagic: true, Path: "abstractions/consoles"},
 						&File{Owner: true, Path: "@{PROC}/@{pid}/mounts", Access: []string{"r"}},
 						&Include{IsMagic: true, Path: "abstractions/base"},
-						&File{Path: "/dev/tty@{int}", Access: []string{"r", "w"}},
+						&File{Path: "/dev/tty@{u8}", Access: []string{"r", "w"}},
 						&Capability{Names: []string{"sys_ptrace"}},
 						&Ptrace{Access: []string{"read"}},
 					},
 				}},
 			},
-			want: mustReadProfileFile(intData.Join("groups/apparmor/aa-status")),
+			want: mustReadProfileFile(apparmorDDir.Join("groups/apparmor/aa-status")),
 		},
 	}
 	for _, tt := range tests {

@@ -15,7 +15,7 @@ import (
 	"github.com/roddhjav/apparmor.d/pkg/logs"
 )
 
-const usage = `aa-log [-h] [--systemd] [--file file] [--rules | --raw] [--since] [profile]
+const usage = `aa-log [-h] [--systemd] [--file file] [--load] [--rules | --raw] [--since] [--namespace] [profile]
 
     Review AppArmor generated messages in a colorful way. It supports logs from
     auditd, systemd, syslog as well as dbus session events.
@@ -24,49 +24,67 @@ const usage = `aa-log [-h] [--systemd] [--file file] [--rules | --raw] [--since]
 
     Default logs are read from '/var/log/audit/audit.log'. Other files in
     '/var/log/audit/' can easily be checked: 'aa-log -f 1' parses 'audit.log.1'
+    Use 'aa-log -f -' to read from standard input.
+
+    Logs written with 'aa-log' can be read again with 'aa-log -l'.
 
 Options:
     -h, --help         Show this help message and exit.
     -f, --file FILE    Set a logfile or a suffix to the default log file.
     -s, --systemd      Parse systemd logs from journalctl.
+    -n, --namespace NS Filter the logs to the specified namespace.
     -r, --rules        Convert the log into AppArmor rules.
     -R, --raw          Print the raw log without any formatting.
+    -b, --boot NUM     Show entries from the specified boot.
     -S, --since DATE   Show entries not older than the specified date.
+    -l, --load         Load logs from the default aa-log output.
 
 `
 
 // Command line options
 var (
-	help    bool
-	rules   bool
-	path    string
-	systemd bool
-	raw     bool
-	since   string
+	help      bool
+	rules     bool
+	path      string
+	systemd   bool
+	namespace string
+	raw       bool
+	boot      string
+	since     string
+	load      bool
 )
 
-func aaLog(logger string, path string, profile string) error {
+func aaLog(logger string, path string, profile string, namespace string) error {
 	var err error
 	var file io.Reader
 
+	start := timeNow()
 	switch logger {
 	case "auditd":
 		file, err = logs.GetAuditLogs(path)
 	case "systemd":
-		file, err = logs.GetJournalctlLogs(path, since, !slices.Contains(logs.LogFiles, path))
+		file, err = logs.GetJournalctlLogs(path, boot, since, !slices.Contains(logs.LogFiles, path))
 	default:
 		err = fmt.Errorf("logger %s not supported", logger)
 	}
 	if err != nil {
 		return err
 	}
+	endRead := timeNow()
 
 	if raw {
-		fmt.Print(strings.Join(logs.GetApparmorLogs(file, profile), "\n") + "\n")
+		fmt.Print(strings.Join(logs.GetApparmorLogs(file, profile, namespace), "\n") + "\n")
 		return nil
 	}
 
-	aaLogs := logs.New(file, profile)
+	var aaLogs logs.AppArmorLogs
+	if load {
+		aaLogs = logs.Load(file, profile, namespace)
+	} else {
+		aaLogs = logs.New(file, profile, namespace)
+	}
+
+	endParse := timeNow()
 	if rules {
 		profiles := aaLogs.ParseToProfiles()
 		for _, p := range profiles {
@@ -77,6 +95,9 @@ func aaLog(logger string, path string, profile string) error {
 		}
 	} else {
 		fmt.Print(aaLogs.String())
+	}
+	if withTime {
+		printTiming(start, endRead, endParse, timeNow())
 	}
 	return nil
 }
@@ -92,8 +113,14 @@ func init() {
 	flag.BoolVar(&rules, "rules", false, "Convert the log into AppArmor rules.")
 	flag.BoolVar(&raw, "R", false, "Print the raw log without any formatting.")
 	flag.BoolVar(&raw, "raw", false, "Print the raw log without any formatting.")
+	flag.StringVar(&boot, "b", "", "Show entries from the specified boot.")
+	flag.StringVar(&boot, "boot", "", "Show entries from the specified boot.")
 	flag.StringVar(&since, "S", "", "Display logs since the START time.")
 	flag.StringVar(&since, "since", "", "Display logs since the START time.")
+	flag.BoolVar(&load, "l", false, "Load logs from the default aa-log output.")
+	flag.BoolVar(&load, "load", false, "Load logs from the default aa-log output.")
+	flag.StringVar(&namespace, "n", "", "Filter the logs to the specified namespace")
+	flag.StringVar(&namespace, "namespace", "", "Filter the logs to the specified namespace")
 }
 
 func main() {
@@ -109,13 +136,21 @@ func main() {
 		profile = flag.Args()[0]
 	}
 
+	if boot != "" {
+		systemd = true
+	}
+
 	logger := "auditd"
 	if systemd {
 		logger = "systemd"
 	}
 
-	path = logs.SelectLogFile(path)
-	err := aaLog(logger, path, profile)
+	path, err := logs.SelectLogFile(path)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	err = aaLog(logger, path, profile, namespace)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)

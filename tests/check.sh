@@ -178,8 +178,9 @@ declare -A ABS_DEPRECATED=(
     ["nameservice"]="nameservice-strict"
     ["bash"]="shell"
     ["X"]="X-strict"
+    ["gtk"]="gtk-strict"
     ["dbus-accessibility-strict"]="bus-accessibility"
-    ["dbus-network-manager-strict"]="bus/org.freedesktop.NetworkManager"
+    ["dbus-network-manager-strict"]="network-manager-observe"
     ["dbus-session-strict"]="bus-session"
     ["dbus-system-strict"]="bus-system"
     ["gnome"]="gnome-strict"
@@ -261,7 +262,7 @@ readonly TRANSITION_MUST_C=( # Must transition to 'Cx'
 _check_transition() {
     _is_enabled transition || return 0
     if [[ "$line" =~ [pP]ix, ]]; then
-        _err transition "$file:$line_number" "'Pix' transition leads to unmaintainable profile"
+        _err transition "$file:$line_number" "'Pix' transition leads to nondeterministic confinement"
     fi
     for prgmname in "${!TRANSITION_MUST_CI[@]}"; do
         if [[ "$line" =~ "/${TRANSITION_MUST_CI[$prgmname]} ".*([uU]x|[pP][uU]x|[pP]x) ]]; then
@@ -284,7 +285,7 @@ _check_transition() {
 }
 
 readonly USELESS=(
-    'ptrace readby'
+    'ptrace readby' 'ptrace (readby)'
     '/usr/share/locale/'
     '@{sys}/devices/system/cpu/online'
     '@{sys}/devices/system/cpu/possible'
@@ -385,14 +386,28 @@ _res_include() {
 RES_PROFILE=false
 _check_profile() {
     _is_enabled profile || return 0
-    if [[ "$line" =~ ^"profile $name" ]]; then
-        RES_PROFILE=true
+    if [[ "$file" == *"/namespaces/"* ]]; then
+        ns="${file#*namespaces/}"
+        ns="${ns%%/*}"
+        if [[ "$line" =~ ^"profile :$ns:$name" ]]; then
+            RES_PROFILE=true
+        fi
+    else
+        if [[ "$line" =~ ^"profile $name" ]]; then
+            RES_PROFILE=true
+        fi
     fi
 }
 _res_profile() {
     _is_enabled profile || return 0
     if ! $RES_PROFILE; then
-        _err profile "$file" "missing profile name: 'profile $name'"
+        if [[ "$file" == *"/namespaces/"* ]]; then
+            ns="${file#*namespaces/}"
+            ns="${ns%%/*}"
+            _err profile "$file" "missing profile name: 'profile :$ns:$name'"
+        else
+            _err profile "$file" "missing profile name: 'profile $name'"
+        fi
     fi
 }
 
@@ -487,7 +502,13 @@ _check_subprofiles() {
         indentation="${BASH_REMATCH[1]}"
         subprofile="${BASH_REMATCH[2]}"
         subprofile="${subprofile%% *}"
-        include="${indentation}include if exists <local/${name}_${subprofile}>"
+        if [[ "$file" == *"/namespaces/"* ]]; then
+            ns="${file#*namespaces/}"
+            ns="${ns%%/*}"
+            include="${indentation}include if exists <local/ns/$ns/${name}_${subprofile}>"
+        else
+            include="${indentation}include if exists <local/${name}_${subprofile}>"
+        fi
         _RES_SUBPROFILES["$subprofile"]="$name//$subprofile does not contain '$include'"
         _CHEK_IN_SUBPROFILE=true
     elif $_CHEK_IN_SUBPROFILE; then
@@ -582,7 +603,13 @@ check_profiles() {
         (
             name="$(basename "$file")"
             name="${name/.apparmor.d/}"
-            include="include if exists <local/$name>"
+            if [[ "$file" == *"/namespaces/"* ]]; then
+                ns="${file#*namespaces/}"
+                ns="${ns%%/*}"
+                include="include if exists <local/ns/$ns/$name>"
+            else
+                include="include if exists <local/$name>"
+            fi
             _check "$file"
         ) &
         _wait jobs

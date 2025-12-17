@@ -6,7 +6,10 @@ package aa
 
 import (
 	"fmt"
+	"net"
 	"slices"
+	"strconv"
+	"strings"
 )
 
 const NETWORK Kind = "network"
@@ -38,11 +41,55 @@ type LocalAddress struct {
 	Port string
 }
 
+func newLocalAddress(rule rule) (LocalAddress, error) {
+	return LocalAddress{
+		IP:   rule.GetValuesAsString("ip"),
+		Port: rule.GetValuesAsString("port"),
+	}, nil
+}
+
 func newLocalAddressFromLog(log map[string]string) LocalAddress {
 	return LocalAddress{
 		IP:   log["laddr"],
 		Port: log["lport"],
 	}
+}
+
+// validatePortRange validates a port or port range string.
+func validatePortRange(port string) error {
+	if port == "" {
+		return nil
+	}
+	if strings.Contains(port, "-") {
+		parts := strings.SplitN(port, "-", 2)
+		if len(parts) != 2 {
+			return fmt.Errorf("invalid port range: %s", port)
+		}
+		start, err1 := strconv.Atoi(parts[0])
+		end, err2 := strconv.Atoi(parts[1])
+		if err1 != nil || err2 != nil {
+			return fmt.Errorf("invalid port range: %s", port)
+		}
+		if start < 0 || start > 65535 || end < 0 || end > 65535 {
+			return fmt.Errorf("invalid port range: %s", port)
+		}
+		if start > end {
+			return fmt.Errorf("invalid port range: %s", port)
+		}
+		return nil
+	}
+	p, err := strconv.Atoi(port)
+	if err != nil || p < 0 || p > 65535 {
+		return fmt.Errorf("invalid port: %s", port)
+	}
+	return nil
+}
+
+func (r LocalAddress) Validate() error {
+	if r.IP != "" && r.IP != "none" && net.ParseIP(r.IP) == nil {
+		return fmt.Errorf("invalid IP address: %s", r.IP)
+	}
+	return validatePortRange(r.Port)
 }
 
 func (r LocalAddress) Compare(other LocalAddress) int {
@@ -58,12 +105,26 @@ type PeerAddress struct {
 	Src  string
 }
 
+func newPeerAddress(rule rule) (PeerAddress, error) {
+	return PeerAddress{
+		IP:   rule.GetValues("peer").GetValuesAsString("ip"),
+		Port: rule.GetValues("peer").GetValuesAsString("port"),
+	}, nil
+}
+
 func newPeerAddressFromLog(log map[string]string) PeerAddress {
 	return PeerAddress{
 		IP:   log["faddr"],
 		Port: log["fport"],
 		Src:  log["saddr"],
 	}
+}
+
+func (r PeerAddress) Validate() error {
+	if r.IP != "" && r.IP != "none" && net.ParseIP(r.IP) == nil {
+		return fmt.Errorf("invalid IP address: %s", r.IP)
+	}
+	return validatePortRange(r.Port)
 }
 
 func (r PeerAddress) Compare(other PeerAddress) int {
@@ -81,31 +142,48 @@ type Network struct {
 	Qualifier
 	LocalAddress
 	PeerAddress
+	Access   []string
 	Domain   string
 	Type     string
 	Protocol string
 }
 
 func newNetwork(q Qualifier, rule rule) (Rule, error) {
+	var accesses []string
 	nType, protocol, domain := "", "", ""
-	r := rule.GetSlice()
-	if len(r) > 0 {
-		domain = r[0]
-	}
-	if len(r) >= 2 {
-		if slices.Contains(requirements[NETWORK]["type"], r[1]) {
-			nType = r[1]
-		} else if slices.Contains(requirements[NETWORK]["protocol"], r[1]) {
-			protocol = r[1]
+
+	// Classify each token as access, domain, type, or protocol
+	for _, token := range rule.GetSlice() {
+		switch {
+		case slices.Contains(requirements[NETWORK]["access"], token):
+			accesses = append(accesses, token)
+		case slices.Contains(requirements[NETWORK]["domains"], token):
+			domain = token
+		case slices.Contains(requirements[NETWORK]["type"], token):
+			nType = token
+		case slices.Contains(requirements[NETWORK]["protocol"], token):
+			protocol = token
 		}
 	}
+
+	localAdress, err := newLocalAddress(rule)
+	if err != nil {
+		return nil, err
+	}
+	peerAddress, err := newPeerAddress(rule)
+	if err != nil {
+		return nil, err
+	}
 	return &Network{
-		Base:      newBase(rule),
-		Qualifier: q,
-		Domain:    domain,
-		Type:      nType,
-		Protocol:  protocol,
-	}, nil
+		Base:         newBase(rule),
+		Qualifier:    q,
+		LocalAddress: localAdress,
+		PeerAddress:  peerAddress,
+		Access:       accesses,
+		Domain:       domain,
+		Type:         nType,
+		Protocol:     protocol,
+	}, rule.ValidateMapKeys([]string{"ip", "port", "peer", "type"})
 }
 
 func newNetworkFromLog(log map[string]string) Rule {
@@ -114,6 +192,7 @@ func newNetworkFromLog(log map[string]string) Rule {
 		Qualifier:    newQualifierFromLog(log),
 		LocalAddress: newLocalAddressFromLog(log),
 		PeerAddress:  newPeerAddressFromLog(log),
+		Access:       Must(toAccess(NETWORK, log["requested"])),
 		Domain:       log["family"],
 		Type:         log["sock_type"],
 		Protocol:     log["protocol"],
@@ -133,6 +212,9 @@ func (r *Network) String() string {
 }
 
 func (r *Network) Validate() error {
+	if err := validateValues(r.Kind(), "access", r.Access); err != nil {
+		return fmt.Errorf("%s: %w", r, err)
+	}
 	if err := validateValues(r.Kind(), "domains", []string{r.Domain}); err != nil {
 		return fmt.Errorf("%s: %w", r, err)
 	}
@@ -142,12 +224,21 @@ func (r *Network) Validate() error {
 	if err := validateValues(r.Kind(), "protocol", []string{r.Protocol}); err != nil {
 		return fmt.Errorf("%s: %w", r, err)
 	}
+	if err := r.LocalAddress.Validate(); err != nil {
+		return fmt.Errorf("%s: %w", r, err)
+	}
+	if err := r.PeerAddress.Validate(); err != nil {
+		return fmt.Errorf("%s: %w", r, err)
+	}
 	return nil
 }
 
 func (r *Network) Compare(other Rule) int {
 	o, _ := other.(*Network)
 	if res := compare(r.Domain, o.Domain); res != 0 {
+		return res
+	}
+	if res := compare(r.Access, o.Access); res != 0 {
 		return res
 	}
 	if res := compare(r.Type, o.Type); res != 0 {

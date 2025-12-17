@@ -1,0 +1,19 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+  abi <abi/4.0>,
+
+  dbus send bus=session path=/ca/desrt/dconf/Writer/user
+       interface=ca.desrt.dconf.Writer
+       member=Change
+       peer=(name=ca.desrt.dconf), # no peer's labels
+
+  dbus receive bus=session path=/ca/desrt/dconf/Writer/user
+       interface=ca.desrt.dconf.Writer
+       member=Notify
+       peer=(name=@{busname}, label=dconf-service),
+
+  include if exists <abstractions/bus/session/ca.desrt.dconf.Writer.d>
+
+# vim:syntax=apparmor

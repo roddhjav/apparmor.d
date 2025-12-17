@@ -4,15 +4,33 @@
 
 package aa
 
+import (
+	"strings"
+)
+
 const (
-	HAT Kind = "hat"
+	HAT  Kind = "hat"
+	IF   Kind = "if"
+	ELSE Kind = "else"
 )
 
 // Hat represents a single AppArmor hat.
 type Hat struct {
 	Base
 	Name  string
+	Flags []string
 	Rules Rules
+}
+
+func newHat(rule rule) (*Hat, error) {
+	name := ""
+	if len(rule) > 0 {
+		name = strings.TrimPrefix(rule.Get(0), HAT.Tok())
+	}
+	return &Hat{
+		Name:  name,
+		Flags: rule.GetValuesAsSlice(tokFLAGS),
+	}, rule.ValidateMapKeys([]string{"flags"})
 }
 
 func (p *Hat) Kind() Kind {
@@ -45,3 +63,47 @@ func (p *Hat) Lengths() []int {
 }
 
 func (p *Hat) setPaddings(max []int) {} // No paddings for hat
+
+// Condition represents a single AppArmor condition.
+type Condition struct {
+	Base
+	Expression string
+	IfRules    Rules
+	ElseRules  Rules
+}
+
+func newCondition(rule rule) (*Condition, error) {
+	expression := strings.TrimPrefix(rule.GetString(), IF.Tok()+" ")
+	return &Condition{Expression: expression}, nil
+}
+
+func (p *Condition) Kind() Kind {
+	return IF
+}
+
+func (p *Condition) Constraint() Constraint {
+	return BlockRule
+}
+
+func (p *Condition) String() string {
+	return renderTemplate(p.Kind(), p)
+}
+
+func (p *Condition) Validate() error {
+	return nil
+}
+
+func (p *Condition) Compare(other Rule) int {
+	o, _ := other.(*Condition)
+	return compare(p.Expression, o.Expression)
+}
+
+func (p *Condition) Merge(other Rule) bool {
+	return false // Never merge hat blocks
+}
+
+func (p *Condition) Lengths() []int {
+	return []int{} // No len for hat
+}
+
+func (p *Condition) setPaddings(max []int) {} // No paddings for hat

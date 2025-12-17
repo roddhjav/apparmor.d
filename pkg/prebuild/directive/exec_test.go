@@ -22,7 +22,7 @@ func TestExec_Apply(t *testing.T) {
 	}{
 		{
 			name:          "exec",
-			rootApparmord: paths.New("../../../apparmor.d/groups/kde/"),
+			rootApparmord: apparmorDDir.Join("groups/kde/"),
 			opt: &Option{
 				Name:    "exec",
 				ArgMap:  map[string]string{"DiscoverNotifier": ""},
@@ -36,7 +36,7 @@ func TestExec_Apply(t *testing.T) {
 		},
 		{
 			name:          "exec-unconfined",
-			rootApparmord: paths.New("../../../apparmor.d/groups/polkit/"),
+			rootApparmord: apparmorDDir.Join("groups/polkit/"),
 			opt: &Option{
 				Name:    "exec",
 				ArgMap:  map[string]string{"U": "", "polkit-agent-helper": ""},

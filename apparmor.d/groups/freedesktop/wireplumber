@@ -7,14 +7,14 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{exec_path} = @{bin}/wireplumber
-profile wireplumber @{exec_path} {
+profile wireplumber @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/audio-server>
+  include <abstractions/bluetooth-control>
   include <abstractions/bus-session>
   include <abstractions/bus-system>
-  include <abstractions/bus/org.freedesktop.impl.portal.PermissionStore>
-  include <abstractions/bus/org.freedesktop.RealtimeKit1>
-  include <abstractions/bus/system/org.bluez>
+  include <abstractions/bus/session/org.freedesktop.impl.portal.PermissionStore>
+  include <abstractions/bus/system/org.freedesktop.RealtimeKit1>
   include <abstractions/camera>
   include <abstractions/devices-usb>
   include <abstractions/media-control>
@@ -34,7 +34,7 @@ profile wireplumber @{exec_path} {
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
-       peer=(name=:*, label=gnome-shell),
+       peer=(name=@{busname}, label=gnome-shell),
 
   dbus receive bus=system path=/midi{,server@{int}}
        interface=org.freedesktop.DBus.ObjectManager
@@ -50,7 +50,9 @@ profile wireplumber @{exec_path} {
   /usr/share/spa-*/bluez@{int}/{,*} r,
   /usr/share/wireplumber/{,**} r,
 
-  / r,
+        / r,
+        /att/**/ r,
+  owner @{att}/.flatpak-info r,
 
   owner @{desktop_local_dirs}/ w,
   owner @{desktop_state_dirs}/ w,

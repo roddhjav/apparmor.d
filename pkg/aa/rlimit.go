@@ -39,7 +39,7 @@ func newRlimit(q Qualifier, rule rule) (Rule, error) {
 		Key:   rule.Get(1),
 		Op:    rule.Get(2),
 		Value: rule.Get(3),
-	}, nil
+	}, rule.ValidateMapKeys([]string{})
 }
 
 func newRlimitFromLog(log map[string]string) Rule {

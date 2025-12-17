@@ -82,7 +82,7 @@ echo 'Optimize=compress-fast' | sudo tee -a /etc/apparmor/parser.conf
     Build the package from sources:
 
     ```sh
-    sudo apt install apparmor-profiles build-essential config-package-dev debhelper golang-go rsync git
+    sudo apt install apparmor-profiles build-essential config-package-dev debhelper golang-go rsync git just
     git clone https://github.com/roddhjav/apparmor.d.git
     cd apparmor.d
     dpkg-buildpackage -b -d --no-sign
@@ -117,7 +117,7 @@ echo 'Optimize=compress-fast' | sudo tee -a /etc/apparmor/parser.conf
     Build the package from sources:
 
     ```sh
-    sudo apt install apparmor-profiles build-essential config-package-dev debhelper golang-go rsync git
+    sudo apt install apparmor-profiles build-essential config-package-dev debhelper golang-go rsync git just
     git clone https://github.com/roddhjav/apparmor.d.git
     cd apparmor.d
     dpkg-buildpackage -b -d --no-sign

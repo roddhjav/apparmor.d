@@ -54,7 +54,7 @@ func newSignal(q Qualifier, rule rule) (Rule, error) {
 		Access:    accesses,
 		Set:       set,
 		Peer:      rule.GetValuesAsString("peer"),
-	}, nil
+	}, rule.ValidateMapKeys([]string{"set", "peer"})
 }
 
 func newSignalFromLog(log map[string]string) Rule {

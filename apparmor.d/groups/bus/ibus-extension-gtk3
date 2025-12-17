@@ -9,7 +9,7 @@ include <tunables/global>
 @{exec_path} = @{lib}/{,ibus/}ibus-extension-gtk3
 profile ibus-extension-gtk3 @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/bus-session>
+  include <abstractions/consoles>
   include <abstractions/dconf-write>
   include <abstractions/desktop>
   include <abstractions/fontconfig-cache-write>
@@ -26,15 +26,10 @@ profile ibus-extension-gtk3 @{exec_path} flags=(attach_disconnected) {
 
   #aa:dbus own bus=session name=org.freedesktop.IBus.Panel.Extension.Gtk3
 
-  dbus receive bus=session path=/org/gtk/Settings
-       interface=org.freedesktop.DBus.Properties
-       member=PropertiesChanged
-       peer=(name=:*, label=gsd-xsettings),
-
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
-       peer=(name=:*, label=gnome-shell),
+       peer=(name=@{busname}, label=gnome-shell),
 
   @{exec_path} mr,
 
@@ -42,8 +37,6 @@ profile ibus-extension-gtk3 @{exec_path} flags=(attach_disconnected) {
 
   owner @{desktop_config_dirs}/ibus/bus/ r,
   owner @{desktop_config_dirs}/ibus/bus/@{hex32}-unix-{,wayland-}@{int} r,
-
-  /dev/tty@{int} rw,
 
   include if exists <local/ibus-extension-gtk3>
 }

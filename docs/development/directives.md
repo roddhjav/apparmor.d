@@ -146,7 +146,6 @@ The `exec` directive is useful to allow executing transitions to a profile witho
     /etc/systemd/oomd.conf.d/{,**} r,
             @{run}/systemd/io.system.ManagedOOM rw,
             @{run}/systemd/io.systemd.ManagedOOM rw,
-            @{run}/systemd/notify rw,
     @{sys}/fs/cgroup/cgroup.controllers r,
     @{sys}/fs/cgroup/memory.pressure r,
     @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/memory.* r,

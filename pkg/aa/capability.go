@@ -40,7 +40,7 @@ func newCapability(q Qualifier, rule rule) (Rule, error) {
 		Base:      newBase(rule),
 		Qualifier: q,
 		Names:     names,
-	}, nil
+	}, rule.ValidateMapKeys([]string{})
 }
 
 func newCapabilityFromLog(log map[string]string) Rule {

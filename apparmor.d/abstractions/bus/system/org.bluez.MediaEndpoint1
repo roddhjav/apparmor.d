@@ -1,0 +1,19 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+  abi <abi/4.0>,
+
+  dbus receive bus=system path=/MediaEndpoint
+       interface=org.freedesktop.DBus.ObjectManager
+       member=GetManagedObjects
+       peer=(name=@{busname}, label="@{p_bluetoothd}"),
+
+  dbus receive bus=system path=/MediaEndpoint/A2DP{Sink,Source}/*
+       interface=org.bluez.MediaEndpoint1
+       member={SetConfiguration,ClearConfiguration,Release}
+       peer=(name=@{busname}, label="@{p_bluetoothd}"),
+
+  include if exists <abstractions/bus/system/org.bluez.MediaEndpoint1.d>
+
+# vim:syntax=apparmor

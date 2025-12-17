@@ -24,11 +24,11 @@ const dbusOwnSystemd1 = `  include <abstractions/bus/system/own>
   dbus receive bus=system path=/org/freedesktop/systemd1{,/**}
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
-       peer=(name="@{busname}"),
+       peer=(name="{@{busname},org.freedesktop.DBus}"),
   dbus receive bus=system path=/org/freedesktop/systemd1{,/**}
        interface=org.freedesktop.DBus.ObjectManager
        member=GetManagedObjects
-       peer=(name="{@{busname},org.freedesktop.systemd1{,.*}}"),
+       peer=(name="{@{busname},org.freedesktop.DBus}"),
   dbus send bus=system path=/org/freedesktop/systemd1{,/**}
        interface=org.freedesktop.DBus.ObjectManager
        member={InterfacesAdded,InterfacesRemoved}
@@ -95,11 +95,11 @@ func TestDbus_Apply(t *testing.T) {
   dbus receive bus=session path=/com/rastersoft/ding{,/**}
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
-       peer=(name="@{busname}"),
+       peer=(name="{@{busname},org.freedesktop.DBus}"),
   dbus receive bus=session path=/com/rastersoft/ding{,/**}
        interface=org.freedesktop.DBus.ObjectManager
        member=GetManagedObjects
-       peer=(name="{@{busname},com.rastersoft.ding{,.*}}"),
+       peer=(name="{@{busname},org.freedesktop.DBus}"),
   dbus send bus=session path=/com/rastersoft/ding{,/**}
        interface=org.freedesktop.DBus.ObjectManager
        member={InterfacesAdded,InterfacesRemoved}
@@ -120,7 +120,7 @@ func TestDbus_Apply(t *testing.T) {
 				Raw:     "  #aa:dbus talk bus=system name=org.freedesktop.Accounts label=accounts-daemon",
 			},
 			profile: "  #aa:dbus talk bus=system name=org.freedesktop.Accounts label=accounts-daemon",
-			want: `  unix type=stream addr=none peer=(label=accounts-daemon, addr=none),
+			want: `  unix type=stream peer=(label=accounts-daemon),
 
   dbus (send receive) bus=system path=/org/freedesktop/Accounts{,/**}
        interface=org.freedesktop.Accounts{,.*}
@@ -157,7 +157,11 @@ func TestDbus_Apply(t *testing.T) {
 				Raw:     "  #aa:dbus common bus=system name=net.hadess.PowerProfiles label=power-profiles-daemon",
 			},
 			profile: "  #aa:dbus common bus=system name=net.hadess.PowerProfiles label=power-profiles-daemon",
-			want: `  # DBus.Properties: read all properties from the interface
+			want: `  # Unix: allow connection to the profile
+  unix type=stream peer=(label=power-profiles-daemon),
+
+  # DBus.Properties: read all properties from the interface
+
   dbus send bus=system path=/net/hadess/PowerProfiles{,/**}
        interface=org.freedesktop.DBus.Properties
        member={Get,GetAll}
@@ -169,7 +173,7 @@ func TestDbus_Apply(t *testing.T) {
        member=PropertiesChanged
        peer=(name="{@{busname},net.hadess.PowerProfiles{,.*}}", label=power-profiles-daemon),
 
-  # DBus.Introspectable: allow clients to introspect the service
+  # DBus.Introspectable: allow service introspection
   dbus send bus=system path=/net/hadess/PowerProfiles{,/**}
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect

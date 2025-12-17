@@ -12,23 +12,10 @@ include <tunables/global>
 profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/base>
   include <abstractions/audio-client>
-  include <abstractions/bus-session>
+  include <abstractions/bluetooth-observe>
   include <abstractions/bus-system>
-  include <abstractions/bus/com.canonical.dbusmenu>
-  include <abstractions/bus/net.hadess.PowerProfiles>
-  include <abstractions/bus/net.hadess.SwitcherooControl>
-  include <abstractions/bus/net.reactivated.Fprint>
-  include <abstractions/bus/org.freedesktop.background.Monitor>
-  include <abstractions/bus/org.freedesktop.FileManager1>
-  include <abstractions/bus/org.freedesktop.impl.portal.PermissionStore>
-  include <abstractions/bus/system/org.freedesktop.locale1>
-  include <abstractions/bus/org.freedesktop.PackageKit>
-  include <abstractions/bus/org.freedesktop.portal.Desktop>
-  include <abstractions/bus/org.freedesktop.RealtimeKit1>
-  include <abstractions/bus/system/org.freedesktop.systemd1>
-  include <abstractions/bus/org.gnome.keyring.internal.Prompter>
-  include <abstractions/bus/session/org.gtk.Private.RemoteVolumeMonitor>
-  include <abstractions/bus/system/org.bluez>
+  include <abstractions/bus/session/com.canonical.dbusmenu>
+  include <abstractions/bus/session/org.freedesktop.impl.portal.PermissionStore>
   include <abstractions/bus/system/org.freedesktop.locale1>
   include <abstractions/camera>
   include <abstractions/dconf-write>
@@ -40,7 +27,6 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/localization>
   include <abstractions/media-control>
   include <abstractions/nameservice-strict>
-  include <abstractions/notifications>
   include <abstractions/p11-kit>
   include <abstractions/secrets-service>
   include <abstractions/ssl_certs>
@@ -73,7 +59,7 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   #aa:dbus own bus=session name=org.gnome.Shell
 
   #aa:dbus own bus=session name=com.canonical.{U,u}nity
-  #aa:dbus own bus=session name=com.canonical.dbusmenu path=/{,com/canonical/dbusmenu}
+  #aa:dbus own bus=session name=com.canonical.dbusmenu path=/{,com/canonical/{unity,dbusmenu}}
   #aa:dbus own bus=session name=com.canonical.Shell.PermissionPrompting
   #aa:dbus own bus=session name=com.rastersoft.dingextension
   #aa:dbus own bus=session name=org.ayatana.NotificationItem
@@ -95,28 +81,39 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   # only dbus directive is used for this. Later, some communications could be
   # restricted.
 
+  #aa:dbus talk bus=system name=net.hadess.PowerProfiles label="@{p_power_profiles_daemon}"
+  #aa:dbus talk bus=system name=net.hadess.SwitcherooControl label=switcheroo-control
+  #aa:dbus talk bus=system name=net.reactivated.Fprint label="@{p_fprintd}"
   #aa:dbus talk bus=system name=org.freedesktop.Accounts label="@{p_accounts_daemon}"
   #aa:dbus talk bus=system name=org.freedesktop.bolt label=boltd
   #aa:dbus talk bus=system name=org.freedesktop.ColorManager label="@{p_colord}"
   #aa:dbus talk bus=system name=org.freedesktop.GeoClue2 label=geoclue
   #aa:dbus talk bus=system name=org.freedesktop.login1 label="@{p_systemd_logind}"
+  #aa:dbus talk bus=system name=org.freedesktop.ModemManager1 label=ModemManager
   #aa:dbus talk bus=system name=org.freedesktop.NetworkManager label=NetworkManager
+  #aa:dbus talk bus=system name=org.freedesktop.PackageKit label=packagekitd
   #aa:dbus talk bus=system name=org.freedesktop.PolicyKit1 label="@{p_polkitd}"
-  #aa:dbus talk bus=system name=org.freedesktop.UPower.PowerProfiles label="@{p_power_profiles_daemon}"
+  #aa:dbus talk bus=system name=org.freedesktop.RealtimeKit1 label="@{p_rtkit_daemon}"
+  #aa:dbus talk bus=system name=org.freedesktop.systemd1 label="@{p_systemd}"
   #aa:dbus talk bus=system name=org.gnome.DisplayManager label=gdm
 
   #aa:dbus talk bus=session name=com.rastersoft.ding label=gnome-extension-ding
+  #aa:dbus talk bus=session name=org.freedesktop.background.Monitor label=xdg-desktop-portal
+  #aa:dbus talk bus=session name=org.freedesktop.FileManager1 label=nautilus
   #aa:dbus talk bus=session name=org.freedesktop.Notifications label=gjs
   #aa:dbus talk bus=session name=org.freedesktop.ScreenSaver label=gsd-screensaver-proxy
+  #aa:dbus talk bus=session name=org.freedesktop.systemd1 label="@{p_systemd_user}"
   #aa:dbus talk bus=session name=org.gnome.* label=gnome-*
-  #aa:dbus talk bus=session name=org.gnome.*.SearchProvider interface+=org.gnome.Shell.SearchProvider2 label=*
+  #aa:dbus talk bus=session name=org.gnome.*.SearchProvider interface+=org.gnome.Shell.SearchProvider2 label="*"
   #aa:dbus talk bus=session name=org.gnome.Nautilus label=nautilus
   #aa:dbus talk bus=session name=org.gnome.ScreenSaver label=gjs
+  #aa:dbus talk bus=session name=org.gnome.SessionManager label="@{p_gnome_session}"
   #aa:dbus talk bus=session name=org.gnome.SettingsDaemon.* label=gsd-*
   #aa:dbus talk bus=session name=org.gtk.vfs label="gvfsd{,-*}"
 
   # Session bus
 
+  # FIXME: too wide
   dbus send bus=session path=/org/gnome/**
        peer=(name=org.gnome.*),
 
@@ -134,10 +131,21 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
        member=Embed
        peer=(name=org.a11y.atspi.Registry),
 
-  dbus receive bus=session path=/org/freedesktop/systemd1
-       interface=org.freedesktop.systemd1.Manager
-       member=JobRemoved
-       peer=(name=@{busname}, label="@{p_systemd_user}"),
+  # Server side of abstractions/bus/org.gnome.keyring.internal.Prompter
+  dbus receive bus=session path=/org/gnome/keyring/Prompter
+       interface=org.gnome.keyring.internal.Prompter
+       member={BeginPrompting,PerformPrompt,StopPrompting}
+       peer=(name=@{busname}, label=pinentry-*),
+  dbus send bus=session path=/org/gnome/keyring/Prompt/p@{int}
+       interface=org.gnome.keyring.internal.Prompter.Callback
+       member={PromptReady,PromptDone}
+       peer=(name=@{busname}, label=pinentry-*),
+
+  # Server side of abstractions/bus/session/org.freedesktop.Notifications
+  dbus send bus=session path=/org/freedesktop/Notifications
+       interface=org.freedesktop.Notifications
+       member={ActivationToken,ActionInvoked,NotificationClosed,NotificationReplied}
+       peer=(name=org.freedesktop.DBus, label=gjs),
 
   # FIXME: I think gnome-shell is the owner of the notifications, it should then be
   # fully allowed to send/receive to/from anyone.
@@ -152,13 +160,14 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
        member={Get,GetAll}
        peer=(name=@{busname}),
 
+  # Server side of abstractions/bus/session/org.gtk.Menus
   dbus receive bus=session
        interface=org.gtk.Menus
        member=Changed
        peer=(name=@{busname}),
   dbus send bus=session
        interface=org.gtk.Menus
-       member=Start
+       member={Start,End}
        peer=(name=@{busname}),
 
   # Needed as a dbus server to administrate the mpris interface
@@ -180,12 +189,18 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
        member={GetConnectionUnixProcessID,GetConnectionUnixUser,GetConnectionCredentials}
        peer=(name=org.freedesktop.DBus, label="@{p_dbus_session}"),
 
+  # Missing rules from the directive above as these one are not standard
+  # Part of abstractions/bus/system/org.freedesktop.NetworkManager
+  dbus send bus=system path=/org/freedesktop
+       interface=org.freedesktop.DBus.ObjectManager
+       member=GetManagedObjects
+       peer=(name=@{busname}, label=NetworkManager),
   dbus receive bus=system path=/org/freedesktop
        interface=org.freedesktop.DBus.ObjectManager
-       member=InterfacesAdded
+       member={InterfacesAdded,InterfacesRemoved}
        peer=(name=@{busname}, label=NetworkManager),
 
-
+  # Server side of abstractions/gnome-base: introspect everything
   dbus send bus=session
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
@@ -247,6 +262,7 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
   /var/lib/flatpak/app/**/gnome-shell/{,**} r,
   /var/lib/flatpak/appstream/**/icons/** r,
+  /var/lib/swcatalog/icons/{,**} r,
 
   owner @{att}/ r,
   owner @{att}/.flatpak-info r,
@@ -285,6 +301,7 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{HOME}/@{XDG_SCREENSHOTS_DIR}/{,**} rw,
   owner @{HOME}/@{XDG_WALLPAPERS_DIR}/{,**} rw,
 
+        @{system_games_dirs}/**.@{image_ext} r,
   owner @{user_games_dirs}/**.@{image_ext} r,
   owner @{user_music_dirs}/**.@{image_ext} r,
 
@@ -328,6 +345,7 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{run}/user/@{uid}/snap.*/wayland-cursor-shared-@{rand6} rw,
   owner @{run}/user/@{uid}/systemd/notify rw,
 
+  owner @{att}/dev/shm/.org.chromium.Chromium.@{rand6} rw,
   owner /dev/shm/.org.chromium.Chromium.@{rand6} rw,
   owner /dev/shm/wayland.mozilla.ipc.@{int} rw,
 
@@ -349,6 +367,7 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   @{run}/udev/tags/seat/ r,
 
   @{run}/udev/data/+acpi:* r,             # Exposes ACPI objects (power buttons, batteries, thermal)
+  @{run}/udev/data/+backlight:* r,        # For display backlights on laptops, monitors, and other screens.
   @{run}/udev/data/+dmi:id r,             # for motherboard info
   @{run}/udev/data/+drm:card@{int}-* r,   # For screen outputs
   @{run}/udev/data/+hid:* r,              # For Human Interface Device (mice, controllers, drawing tablets, scanners)
@@ -370,6 +389,9 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   @{sys}/class/net/ r,
   @{sys}/class/power_supply/ r,
   @{sys}/devices/@{pci}/boot_vga r,
+  @{sys}/devices/@{pci}/drm/card@{int}/**/{,max_,actual_}brightness r,
+  @{sys}/devices/@{pci}/drm/card@{int}/**/{uevent,type,enabled} r,
+  @{sys}/devices/@{pci}/drm/card@{int}/**/brightness r,
   @{sys}/devices/@{pci}/gpu_busy_percent r,
   @{sys}/devices/@{pci}/input@{int}/{properties,name} r,
   @{sys}/devices/@{pci}/mem_info_vram_* r,
@@ -392,6 +414,7 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   @{sys}/devices/virtual/net/*/statistics/collisions r,
   @{sys}/devices/virtual/net/*/statistics/rx_{bytes,errors,packets} r,
   @{sys}/devices/virtual/net/*/statistics/tx_{bytes,errors,packets} r,
+  @{sys}/devices/@{pci}/hwmon/hwmon@{int}/in@{int}_input r,
 
   owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/session.slice/cpu.max r,
 
@@ -414,7 +437,7 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{PROC}/@{pid}/task/@{tid}/comm rw,
   owner @{PROC}/@{pid}/task/@{tid}/stat r,
 
-        /dev/tty@{int} rw,
+        /dev/tty@{u8} rw,
   @{att}/dev/dri/card@{int} rw,
   @{att}/dev/input/event@{int} rw,
 

@@ -10,12 +10,13 @@ include <tunables/global>
 profile org.gnome.NautilusPreviewer @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/audio-client>
+  include <abstractions/bus-system>
   include <abstractions/camera>
   include <abstractions/dconf-write>
   include <abstractions/deny-sensitive-home>
   include <abstractions/gnome-strict>
   include <abstractions/graphics>
-  include <abstractions/gstreamer>
+  include <abstractions/gstreamer-registry>
   include <abstractions/media-control>
   include <abstractions/nameservice-strict>
   include <abstractions/private-files-strict>
@@ -23,10 +24,10 @@ profile org.gnome.NautilusPreviewer @{exec_path} flags=(attach_disconnected) {
   network netlink raw,
 
   @{exec_path} mr,
-
   @{bin}/gjs-console r,
 
   @{open_path}         rPx -> child-open-any,
+  @{gstreamer_path}     Cx -> gstreamer,
 
   /usr/share/ladspa/rdf/{,**} r,
   /usr/share/sushi/org.gnome.NautilusPreviewer.*.gresource r,
@@ -36,8 +37,6 @@ profile org.gnome.NautilusPreviewer @{exec_path} flags=(attach_disconnected) {
   # Full read access to user's data
   owner @{MOUNTS}/{,**} r,
   owner @{HOME}/{,**} r,
-
-  @{run}/udev/data/c@{dynamic}:@{int} r,  # For dynamic assignment range 234 to 254, 384 to 511
 
   @{sys}/devices/@{pci_bus}/uevent r,
   @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/session-@{int}.scope/memory.* r,
@@ -54,6 +53,13 @@ profile org.gnome.NautilusPreviewer @{exec_path} flags=(attach_disconnected) {
   owner @{PROC}/@{pid}/task/@{tid}/stat r,
 
   /dev/ r,
+
+  profile gstreamer {
+    include <abstractions/base>
+    include <abstractions/gstreamer>
+
+    include if exists <local/org.gnome.NautilusPreviewer_gstreamer>
+  }
 
   include if exists <local/org.gnome.NautilusPreviewer>
 }

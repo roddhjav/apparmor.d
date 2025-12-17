@@ -159,6 +159,29 @@ func Configure() {
 
 		}
 
+	case 5:
+		builder.Register("abi5") // Convert all profiles from abi 4.0 to abi 5.0
+
+		// Re-attach disconnected path
+		if prebuild.Distribution == "ubuntu" {
+			// Ignored on ubuntu 25.04+ due to a memory leak that fully prevent
+			// profiles compilation with re-attached paths.
+			// See https://bugs.launchpad.net/ubuntu/+source/linux/+bug/2098730
+
+			// Use stacked-dbus builder to resolve dbus rules
+			builder.Register("stacked-dbus")
+
+		} else {
+			if !prebuild.DownStream {
+				prepare.Register("attach")
+			}
+			builder.Register("attach")
+
+			// Fix dbus rules for dbus-broker
+			builder.Register("dbus-broker")
+			prebuild.DbusDaemon = false
+		}
+
 	default:
 		logging.Fatal("Invalid ABI version: %d", prebuild.ABI)
 	}
@@ -179,12 +202,14 @@ func Configure() {
 }
 
 func Prebuild() {
-	logging.Step("Building apparmor.d profiles for %s on ABI%d.", prebuild.Distribution, prebuild.ABI)
+	logging.Step("Building apparmor.d profiles for %s", prebuild.Distribution)
+	logging.Success("AppArmor ABI targeted: %d", prebuild.ABI)
+	logging.Success("AppArmor version targeted: %.1f", prebuild.Version)
+	if prebuild.Test {
+		logging.Warning("Test mode enabled")
+	}
 	if full {
 		logging.Success("Full system policy enabled")
-	}
-	if prebuild.Version != nilVer {
-		logging.Success("AppArmor version targeted: %.1f", prebuild.Version)
 	}
 	if err := Prepare(); err != nil {
 		logging.Fatal("%s", err.Error())

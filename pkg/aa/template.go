@@ -138,6 +138,9 @@ var (
 	// The order the rule values (access, type, domains, etc) should be sorted
 	requirements        = map[Kind]requirement{}
 	requirementsWeights map[Kind]map[string]map[string]int
+
+	// Pairs of mutually exclusive values that cannot coexist
+	conflicts = map[Kind]map[string][][]string{}
 )
 
 func init() {
