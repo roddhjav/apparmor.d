@@ -35,6 +35,7 @@ profile apt @{exec_path} flags=(attach_disconnected) {
 
   unix bind type=stream addr=@@{udbus}/bus/apt-get/system,
   unix bind type=stream addr=@@{udbus}/bus/apt/system,
+  unix bind type=stream addr=@@{udbus}/bus/aptd/system,
 
   unix                 type=stream peer=(label=@{p_snap}),
   unix (send, receive) type=stream peer=(label=apt-esm-json-hook),
@@ -66,6 +67,7 @@ profile apt @{exec_path} flags=(attach_disconnected) {
   @{python_path} mr,
 
   @{bin}/ r,
+  @{sbin}/ r,
 
   @{sh_path}        rix,
   @{bin}/{,e}grep   rix,
@@ -151,20 +153,17 @@ profile apt @{exec_path} flags=(attach_disconnected) {
   # For package building
   @{user_build_dirs}/** rwkl -> @{user_build_dirs}/**,
 
-        /tmp/ r,
-        /tmp/apt-changelog-*/ w,
-        /tmp/apt-changelog-*/*.changelog w,
-        /tmp/apt-tmp-index.@{rand6} rw,
-  owner @{tmp}/apt-changelog-*/.apt-acquire-privs-test.* rw,
-  owner @{tmp}/apt-dpkg-install-*/ rw,
-  owner @{tmp}/apt-dpkg-install-*/@{int}-*.deb w,
-  owner @{tmp}/apt.conf.* rw,
-  owner @{tmp}/apt.data.* rw,
+  /tmp/ r,
+  /tmp/@{rand8} rw,
+  @{tmp}/apt* rw,
+  @{tmp}/apt*/{,**} rw,
 
   @{att}@{run}/systemd/inhibit/@{int}.ref rw,
 
         @{PROC}/@{pids}/cmdline r,
         @{PROC}/@{pids}/mountinfo r,
+        @{PROC}/@{pids}/stat r,
+        @{PROC}/@{pids}/status r,
   owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/mounts r,
 
