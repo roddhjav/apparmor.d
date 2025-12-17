@@ -50,6 +50,7 @@ profile gnome-control-center @{exec_path} flags=(attach_disconnected) {
   #aa:dbus talk bus=system name=net.hadess.SwitcherooControl label=switcheroo-control
   #aa:dbus talk bus=system name=net.reactivated.Fprint.Manager label="@{p_fprintd}"
   #aa:dbus talk bus=system name=org.bluez label=bluetoothd
+  #aa:dbus talk bus=system name=org.cups.cupsd.Notifier label=cups-notifier-dbus
   #aa:dbus talk bus=system name=org.freedesktop.Accounts label="@{p_accounts_daemon}"
   #aa:dbus talk bus=system name=org.freedesktop.bolt1 label=boltd
   #aa:dbus talk bus=system name=org.freedesktop.ColorManager label=colord
@@ -62,6 +63,7 @@ profile gnome-control-center @{exec_path} flags=(attach_disconnected) {
   #aa:dbus talk bus=system name=org.freedesktop.UDisks2 label=udisksd
   #aa:dbus talk bus=system name=org.freedesktop.UPower label="@{p_upowerd}"
   #aa:dbus talk bus=system name=org.freedesktop.UPower.PowerProfiles label=@{p_power_profiles_daemon}
+  #aa:dbus talk bus=system name=org.opensuse.CupsPkHelper.Mechanism label=cups-pk-helper-mechanism
 
   dbus send bus=system path=/org/freedesktop
        interface=org.freedesktop.DBus.ObjectManager
@@ -86,10 +88,11 @@ profile gnome-control-center @{exec_path} flags=(attach_disconnected) {
   @{bin}/bwrap                                   rCx -> bwrap,
   @{bin}/gkbd-keyboard-display                   rPx,
   @{bin}/gnome-software                          rPx,
-  @{sbin}/openvpn                                rPx,
   @{bin}/passwd                                  rPx,
   @{bin}/pkexec                                  rCx -> pkexec,
   @{bin}/software-properties-gtk                 rPx,
+  @{bin}/update-manager                          rPx,
+  @{sbin}/openvpn                                rPx,
   @{sbin}/usermod                                rPx,
   @{lib}/{,@{multiarch}/}webkit{2,}gtk-*/WebKitNetworkProcess rix,
   @{lib}/cups/backend/snmp                       rPx,
@@ -208,9 +211,11 @@ profile gnome-control-center @{exec_path} flags=(attach_disconnected) {
 
   profile bwrap flags=(attach_disconnected) {
     include <abstractions/base>
-    include <abstractions/bwrap>
+    include <abstractions/app/bwrap-glycin>
 
-    @{bin}/bwrap mr,
+    signal receive set=kill peer=gnome-control-center,
+
+    @{lib}/glycin-loaders/@{d}+/glycin-* Px -> gnome-control-center//bwrap//&glycin//loaders,
 
     include if exists <local/gnome-control-center_bwrap>
   }
