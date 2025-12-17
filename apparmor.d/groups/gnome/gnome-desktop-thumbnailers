@@ -8,15 +8,15 @@ include <tunables/global>
 
 profile gnome-desktop-thumbnailers flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/bwrap>
-  include <abstractions/gnome-strict>
+  include <abstractions/app/bwrap-glycin>
   include <abstractions/gstreamer>
   include <abstractions/mime>
 
   capability dac_override,
 
-  @{bin}/bwrap mr,
-  @{bin}/*-thumbnailer rix,
+  signal receive set=kill peer=nautilus,
+
+  @{bin}/*-thumbnailer                 Cx -> &gnome-desktop-thumbnailers//thumbnailer,
   @{lib}/glycin-loaders/@{d}+/glycin-* Px -> gnome-desktop-thumbnailers//&glycin//loaders,
 
   /usr/share/poppler/{,**} r,
@@ -29,6 +29,39 @@ profile gnome-desktop-thumbnailers flags=(attach_disconnected) {
   owner @{tmp}/gsf-thumbnailer-@{rand6} rw,
 
   owner @{PROC}/@{pid}/mountinfo r,
+
+  profile thumbnailer flags=(attach_disconnected) {
+    include <abstractions/base>
+    include <abstractions/fonts>
+    include <abstractions/gstreamer>
+    include <abstractions/mime>
+
+    network (bind create getattr getopt setopt) netlink raw,
+
+    unix type=stream peer=(label=gnome-desktop-thumbnailers),
+
+    @{bin}/*-thumbnailer mr,
+    @{lib}/glycin-loaders/@{d}+/glycin-* ix,
+
+    /usr/share/poppler/{,**} r,
+
+    @{att}/usr/share/glycin-loaders/{,**} r,
+
+    @{att}/usr/share/gtksourceview-2.0/{,**} r,
+    @{att}/usr/share/gtksourceview-3.0/{,**} r,
+    @{att}/usr/share/gtksourceview-4/{,**} r,
+    @{att}/usr/share/gtksourceview-5/{,**} r,
+
+    owner @{user_cache_dirs}/gnome-desktop-thumbnailer/{,**} rw,
+
+    owner @{tmp}/gnome-desktop-file-to-thumbnail.* r,
+    owner @{tmp}/gnome-desktop-thumbnailer.png w,
+    owner @{tmp}/gsf-thumbnailer-@{rand6} rw,
+
+    owner @{PROC}/@{pid}/mountinfo r,
+
+    include if exists <local/gnome-desktop-thumbnailers_thumbnailer>
+  }
 
   include if exists <local/gnome-desktop-thumbnailers>
 }
