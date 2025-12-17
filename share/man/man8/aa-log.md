@@ -1,6 +1,6 @@
 % aa-log(8)
 % aa-log was written by Alexandre Pujol (alexandre@pujol.io)
-% September 2024
+% December 2025
 
 # NAME
 
@@ -20,6 +20,10 @@ It can be used to generate AppArmor rules from the logs and it therefore an alte
 
 Default logs are read from `/var/log/audit/audit.log`. Other files in `/var/log/audit/` can easily be checked: **aa-log -f 1** parses `audit.log.1`
 
+Use `aa-log -f -` to read from standard input.
+
+Logs written with `aa-log` can be read again with `aa-log -l`.
+  
 # OPTIONS
 
 **aa-log** [*options…*] [*profile*]
@@ -36,6 +40,10 @@ Default logs are read from `/var/log/audit/audit.log`. Other files in `/var/log/
 
 : Parse systemd logs from journalctl. Provides all AppArmor logs since the last boot.
 
+`--namespace`, `-n`
+
+: Filter the log to the specified AppArmor namespace.
+
 `--rules`, `-r`
 
 : Convert the log into AppArmor rules.
@@ -43,6 +51,18 @@ Default logs are read from `/var/log/audit/audit.log`. Other files in `/var/log/
 `--raw`, `-R`
 
 : Print the raw log without any formatting. Useful for reporting logs.
+
+`--since`, `-S`
+
+: Show entries not older than the specified date. It currently only supports log from journalctl (with `--systemd`)
+
+`--boot`, `-b`
+
+: Show entries from the specified boot ID.
+
+`--load`, `-l`
+
+: Load logs from the default `aa-log` output.
 
 `--help`, `-h`
 
