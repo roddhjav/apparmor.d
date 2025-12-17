@@ -11,6 +11,10 @@ import (
 	"github.com/roddhjav/apparmor.d/pkg/paths"
 )
 
+var (
+	apparmorDDir = paths.New("../../../apparmor.d")
+)
+
 func TestNewOption(t *testing.T) {
 	tests := []struct {
 		name  string

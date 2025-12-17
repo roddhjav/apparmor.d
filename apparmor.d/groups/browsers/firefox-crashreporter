@@ -20,22 +20,25 @@ profile firefox-crashreporter @{exec_path} flags=(attach_disconnected) {
   include <abstractions/fontconfig-cache-read>
   include <abstractions/nameservice-strict>
 
-  signal (receive) set=(term, kill) peer=firefox,
-
   network inet dgram,
   network inet6 dgram,
   network inet stream,
   network inet6 stream,
   network netlink raw,
 
+  unix type=seqpacket peer=(label=firefox),
+  unix type=seqpacket peer=(label=firefox-crashhelper),
+
+  signal receive peer=firefox,
+
   @{exec_path} mrix,
 
   @{bin}/curl rix,
   @{bin}/mv   rix,
 
+  @{firefox_path}               rPx,
   @{lib_dirs}/minidump-analyzer rPx,
 
-  owner "@{config_dirs}/firefox/Crash Reports/{,**}" rw,
   owner @{config_dirs}/firefox/*.*/crashes/{,**} rw,
   owner @{config_dirs}/firefox/*.*/crashes/events/@{uuid} rw,
   owner @{config_dirs}/firefox/*.*/extensions/*.xpi r,
@@ -44,6 +47,8 @@ profile firefox-crashreporter @{exec_path} flags=(attach_disconnected) {
   owner @{config_dirs}/firefox/*.*/prefs.js r,
   owner @{config_dirs}/firefox/*.*/storage-sync-v2.sqlite-shm r,
   owner @{config_dirs}/firefox/*.*/storage/default/* r,
+  owner @{config_dirs}/firefox/Crash?Reports/{,**} rw,
+  owner @{config_dirs}/firefox/Pending?Pings/@{uuid}.json w,
   owner @{config_dirs}/firefox/Profile*/*.sqlite-shm r,
 
   owner @{cache_dirs}/firefox/*.*/** r,
@@ -51,6 +56,7 @@ profile firefox-crashreporter @{exec_path} flags=(attach_disconnected) {
         /tmp/ r,
     /var/tmp/ r,
   owner @{tmp}/@{hex}.{dmp,extra} rw,
+  owner @{tmp}/crashreporter@{int}-request@{int}.json w,
   owner @{tmp}/firefox/.parentlock w,
 
   owner /dev/shm/org.mozilla.ipc.@{int}.@{int} r,

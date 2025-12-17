@@ -96,10 +96,7 @@ profile sd flags=(attach_disconnected,mediate_deleted,complain) {
 
   mqueue (read getattr) type=posix /,
 
-  signal         peer=*//&sd,
-  signal         peer=sd//&*,
-  signal receive peer=@{p_systemd},
-  signal send,
+  signal (send, receive),
 
   ptrace read,
 
@@ -167,17 +164,18 @@ profile sd flags=(attach_disconnected,mediate_deleted,complain) {
   /var/cache/*/ rw,
   /var/cache/*/** rwk,
   /var/lib/*/ rw,
-  /var/lib/*/** rwk,
+  /var/lib/*/** rwlk,
   /var/lib/systemd/*/ r,
   /var/log/ r,
   /var/log/** rw,
   /var/log/journal/** rwl -> /var/log/journal/**,
+  /var/spool/cron/atjobs/ r,
 
   @{att}@{desktop_share_dirs}/icc/edid-@{hex32}.icc r,
   @{att}@{user_share_dirs}/icc/edid-@{hex32}.icc r,
 
+  @{att}@{run}/systemd/coredump rw,
   @{att}@{run}/systemd/io.systemd.ManagedOOM rw,
-  @{att}@{run}/systemd/notify rw,
   @{att}@{run}/systemd/userdb/io.systemd.DynamicUser rw,
   @{att}@{run}/systemd/userdb/io.systemd.Home rw,
   @{att}@{run}/systemd/userdb/io.systemd.Multiplexer rw,
@@ -187,6 +185,7 @@ profile sd flags=(attach_disconnected,mediate_deleted,complain) {
         @{run}/*/ rw,
         @{run}/*/* rw,
         @{run}/*/*/ rw,
+        @{run}/ubuntu-advantage/** rw, # stacked
         @{run}/systemd/{,**} rw,
   owner @{run}/*/** rw,
 
@@ -232,6 +231,7 @@ profile sd flags=(attach_disconnected,mediate_deleted,complain) {
   @{PROC}/sys/kernel/random/write_wakeup_threshold w,
   @{PROC}/sys/net/ipv{4,6}/** rw,
   @{PROC}/sysvipc/* r,
+  @{PROC}/version r,
   @{PROC}/version_signature r,
 
   /dev/** rwk,

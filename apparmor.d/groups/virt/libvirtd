@@ -20,6 +20,7 @@ profile libvirtd @{exec_path} flags=(attach_disconnected) {
   include <abstractions/bus-session>
   include <abstractions/bus-system>
   include <abstractions/bus/session/org.gtk.vfs.MountTracker>
+  include <abstractions/bus/system/org.freedesktop.login1>
   include <abstractions/consoles>
   include <abstractions/devices-usb>
   include <abstractions/disks-write>
@@ -93,6 +94,8 @@ profile libvirtd @{exec_path} flags=(attach_disconnected) {
   # Allow changing to our UUID-based named profiles
   change_profile -> libvirt-@{uuid},
 
+  #aa:dbus talk bus=system name=org.freedesktop.machine1 label=systemd-machined
+
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
@@ -118,16 +121,18 @@ profile libvirtd @{exec_path} flags=(attach_disconnected) {
   @{lib}/xen-common/bin/xen-toolstack              rPUx,
   @{lib}/xen/bin/*                                 rPUx,
 
-  @{sbin}/dmidecode                           rPx,
-  @{sbin}/dnsmasq                             rPx,
   @{bin}/kmod                                 rCx -> kmod,
-  @{sbin}/lvm                                 rPUx,
-  @{sbin}/mdevctl                             rPx,
+  @{bin}/mdevctl                              rPx, #aa:lint ignore=sbin
+  @{bin}/ssh                                  rPx,
   @{bin}/swtpm                                rPx,
   @{bin}/swtpm_ioctl                          rPx,
   @{bin}/swtpm_setup                          rPx,
   @{bin}/udevadm                              rPx,
-  @{bin}/virtiofsd                            rux, # TODO: WIP
+  @{bin}/virtiofsd                            rPx, # TODO: WIP
+  @{sbin}/dmidecode                           rPx,
+  @{sbin}/dnsmasq                             rPx,
+  @{sbin}/lvm                                 rPUx,
+  @{sbin}/mdevctl                             rPx,
   @{sbin}/virtlogd                            rPx,
 
   @{sh_path}                    rix,
@@ -149,6 +154,7 @@ profile libvirtd @{exec_path} flags=(attach_disconnected) {
   /usr/share/iproute2/{,**} r,
   /usr/share/libvirt/{,**} r,
   /usr/share/misc/pci.ids r,
+  /usr/share/OVMF/{,**} rk,
   /usr/share/qemu/{,**} r,
 
   @{etc_rw}/apparmor.d/libvirt/libvirt-@{uuid} r,
@@ -180,7 +186,6 @@ profile libvirtd @{exec_path} flags=(attach_disconnected) {
   @{run}/libvirt/** rwk,
   @{run}/libvirtd.pid wk,
   @{run}/lock/LCK.._pts_@{int} rw,
-  @{run}/systemd/notify w,
   @{run}/utmp rk,
 
   @{run}/udev/data/+*:* r,                # Identifies all subsystems

@@ -35,7 +35,9 @@ profile systemd-udevd @{exec_path} flags=(attach_disconnected) {
   network inet6 dgram,
   network netlink raw,
 
-  unix type=stream addr=@@{udbus}/bus/udevadm/,
+  unix bind type=dgram  addr=@@{udbus},
+  unix bind type=stream addr=@@{udbus}/bus/udevadm/,
+
 
   @{exec_path} mrix,
 
@@ -54,6 +56,7 @@ profile systemd-udevd @{exec_path} flags=(attach_disconnected) {
   @{sbin}/kpartx                           rix,
 
   @{bin}/ddcutil                           rPx,
+  @{bin}/input-remapper-control           rPUx,
   @{bin}/kmod                              rCx -> kmod,
   @{bin}/nvidia-modprobe                   rPx -> child-modprobe-nvidia,
   @{bin}/snap                              rPx,
@@ -103,11 +106,10 @@ profile systemd-udevd @{exec_path} flags=(attach_disconnected) {
   @{run}/modprobe.d/ r,
   @{run}/systemd/network/ r,
   @{run}/systemd/network/*.link rw,
-  @{run}/systemd/notify rw,
   @{run}/systemd/private rw,
   @{run}/systemd/seats/seat@{int} r,
+  @{run}/u-d-c-card@{int}-is-simpledrm w,
 
-  @{att}@{run}/systemd/notify w,
   @{att}@{run}/udev/control rw,
 
   @{run}/udev/ rw,

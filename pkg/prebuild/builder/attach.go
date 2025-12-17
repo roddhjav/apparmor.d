@@ -5,8 +5,10 @@
 package builder
 
 import (
+	"fmt"
 	"strings"
 
+	"github.com/roddhjav/apparmor.d/pkg/aa"
 	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 )
 
@@ -31,12 +33,27 @@ func init() {
 func (b ReAttach) Apply(opt *Option, profile string) (string, error) {
 	var insert string
 	var origin = "profile " + opt.Name
-	if opt.File.HasSuffix("attached/base") {
+
+	isInside, err := opt.File.IsInsideDir(prebuild.RootApparmord.Join("abstractions/attached"))
+	if err != nil {
+		return profile, fmt.Errorf("attach: %v", err)
+	}
+	if isInside {
 		return profile, nil // Do not re-attach twice
 	}
 
 	if strings.Contains(profile, "attach_disconnected") {
-		insert = "@{att} = /att/" + opt.Name + "/\n"
+		if opt.Kind == aa.ProfileKind {
+			if strings.Contains(opt.Name, ":") {
+				parts := strings.Split(opt.Name, ":")
+				if len(parts) != 3 {
+					return profile, fmt.Errorf("attach: invalid namespaced profile name: %s", opt.Name)
+				}
+				insert = "@{att} = /att/" + parts[1] + "/\n"
+			} else {
+				insert = "@{att} = /att/" + opt.Name + "/\n"
+			}
+		}
 		profile = strings.ReplaceAll(profile,
 			"attach_disconnected",
 			"attach_disconnected,attach_disconnected.path=@{att}",
@@ -53,9 +70,15 @@ func (b ReAttach) Apply(opt *Option, profile string) (string, error) {
 			"include <abstractions/consoles>",
 			"include <abstractions/attached/consoles>",
 		)
+		profile = strings.ReplaceAll(profile,
+			"include <abstractions/nameservice-strict>",
+			"include <abstractions/attached/nameservice-strict>",
+		)
 
 	} else {
-		insert = "@{att} = \"\"\n"
+		if opt.Kind == aa.ProfileKind {
+			insert = "@{att} = \"\"\n"
+		}
 
 	}
 

@@ -26,6 +26,10 @@ profile dbus-session flags=(attach_disconnected) {
   unix (send receive) type=stream addr=none peer=(label=gnome-shell, addr=none),
   unix type=stream peer=(label=fapp),
   unix type=stream peer=(label=fbwrap),
+  unix type=stream peer=(label=unconfined),
+
+  unix bind type=stream addr=@@{udbus}/bus/dbus-broker-lau/user,
+  unix (send receive) type=seqpacket,
 
   signal (send receive) set=kill peer=dbus-session//&unconfined,
 
@@ -35,10 +39,15 @@ profile dbus-session flags=(attach_disconnected) {
   signal send    set=(term hup kill) peer=xdg-*,
 
   #aa:dbus own bus=session name=org.freedesktop.DBus path=/{,org/freedesktop/{dBus,DBus,dbus}}
-  dbus receive bus=session
-       interface=org.freedesktop.DBus
-       member={GetConnectionUnixProcessID,GetConnectionUnixUser,GetConnectionCredentials}
-       peer=(name="{@{busname},org.freedesktop.DBus}"),
+
+  # Larger than what is allowed in the directive above, needed due to complex
+  # setup with stack and peer names.
+  dbus receive bus=session interface=org.freedesktop.DBus,
+
+  dbus receive bus=session path=/org/freedesktop/systemd1
+       interface=org.freedesktop.systemd1.Activator
+       member=ActivationFailure
+       peer=(name=@{busname}, label="@{p_systemd_user}"),
 
   @{exec_path} mrix,
 
@@ -64,6 +73,8 @@ profile dbus-session flags=(attach_disconnected) {
 
   owner @{HOME}/.var/app/*/**/.ref rw,
   owner @{HOME}/.var/app/*/**/logs/* rw,
+  owner @{att}@{HOME}/.var/app/*/**/.ref rw,
+  owner @{att}@{HOME}/.var/app/*/**/logs/* rw,
 
   owner @{user_share_dirs}/dbus-1/services/{,**} r,
 
@@ -84,7 +95,7 @@ profile dbus-session flags=(attach_disconnected) {
   owner @{PROC}/@{pid}/oom_score_adj r,
 
   /dev/ptmx rw,
-  /dev/tty@{int} rw,
+  /dev/tty@{u8} rw,
 
   include if exists <local/dbus-session>
 }

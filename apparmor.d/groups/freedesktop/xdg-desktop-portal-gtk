@@ -10,18 +10,15 @@ include <tunables/global>
 profile xdg-desktop-portal-gtk @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/accounts-observe>
-  include <abstractions/bus-session>
   include <abstractions/bus-system>
-  include <abstractions/bus/org.freedesktop.NetworkManager>
-  include <abstractions/bus/org.freedesktop.portal.Desktop>
-  include <abstractions/bus/org.gnome.Shell.Introspect>
+  include <abstractions/bus/session/org.gnome.Shell.Introspect>
   include <abstractions/consoles>
   include <abstractions/dconf-write>
   include <abstractions/fontconfig-cache-write>
   include <abstractions/gnome-strict>
   include <abstractions/graphics>
   include <abstractions/nameservice-strict>
-  include <abstractions/notifications>
+  include <abstractions/network-manager-observe>
   include <abstractions/screensaver>
   include <abstractions/session-manager>
   include <abstractions/thumbnails-cache-read>
@@ -36,8 +33,17 @@ profile xdg-desktop-portal-gtk @{exec_path} flags=(attach_disconnected) {
   #aa:dbus talk bus=session name=org.freedesktop.impl.portal.Settings label=xdg-desktop-portal
 
   dbus receive bus=session path=/org/freedesktop/portal/desktop
+       interface=org.freedesktop.impl.portal.Inhibit
+       member=CreateMonitor
+       peer=(name=@{busname}, label=xdg-desktop-portal),
+  dbus send bus=session path=/org/freedesktop/portal/desktop
+       interface=org.freedesktop.impl.portal.Inhibit
+       member=StateChanged
+       peer=(name=org.freedesktop.DBus, label=xdg-desktop-portal),
+
+  dbus receive bus=session path=/org/freedesktop/portal/desktop
        interface=org.freedesktop.impl.portal.Settings
-       peer=(name=:*),
+       peer=(name=@{busname}),
 
   @{exec_path} mr,
 

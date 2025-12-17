@@ -44,6 +44,14 @@ func (p Configure) Apply() ([]string, error) {
 			return res, err
 		}
 
+		if prebuild.Release["VERSION_CODENAME"] == "noble" {
+			remove := []string{
+				"tunables/multiarch.d/base",
+			}
+			if err := removeFiles(remove); err != nil {
+				return res, err
+			}
+		}
 		if prebuild.Version < 3.0 {
 			if err := prebuild.DistDir.Join("ubuntu").CopyFS(prebuild.RootApparmord); err != nil {
 				return res, err

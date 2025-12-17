@@ -13,7 +13,7 @@ profile flatpak-system-helper @{exec_path} flags=(attach_disconnected,mediate_de
   include <abstractions/base>
   include <abstractions/accounts-observe>
   include <abstractions/bus-system>
-  include <abstractions/bus/org.freedesktop.PolicyKit1>
+  include <abstractions/bus/system/org.freedesktop.PolicyKit1>
   include <abstractions/mime>
   include <abstractions/nameservice-strict>
   include <abstractions/p11-kit>
@@ -34,6 +34,8 @@ profile flatpak-system-helper @{exec_path} flags=(attach_disconnected,mediate_de
   unix type=seqpacket peer=(label=dbus-system),
   unix type=seqpacket peer=(label=flatpak),
   unix type=seqpacket peer=(label=flatpak//fusermount),
+  unix type=seqpacket peer=(label=gnome-software),
+  unix type=seqpacket peer=(label=gnome-software//fusermount),
   unix type=seqpacket peer=(label=unconfined),
 
   #aa:dbus own bus=system name=org.freedesktop.Flatpak.SystemHelper
@@ -78,9 +80,11 @@ profile flatpak-system-helper @{exec_path} flags=(attach_disconnected,mediate_de
 
     @{bin}/bwrap   mr,
 
-    /app/bin/apply_extra ix,
+    /app/bin/*    rix,
 
+    @{bin}/bsdtar  ix,
     @{bin}/cp      ix,
+    @{bin}/install ix,
     @{bin}/mv      ix,
     @{bin}/rm      ix,
     @{bin}/sed     ix,
@@ -102,6 +106,7 @@ profile flatpak-system-helper @{exec_path} flags=(attach_disconnected,mediate_de
     @{system_share_dirs}/applications/mimeinfo.cache w,
     @{system_share_dirs}/icons/**/.icon-theme.cache rw,
     @{system_share_dirs}/icons/**/icon-theme.cache w,
+    @{system_share_dirs}/icons/hicolor/index.theme w,
     @{system_share_dirs}/mime/{,**} w,
 
     @{user_share_dirs}/** r,
@@ -115,8 +120,11 @@ profile flatpak-system-helper @{exec_path} flags=(attach_disconnected,mediate_de
 
     /app/extra/** rw,
     /bindfile@{rand6} rw,
+    /usr/.ref rk,
 
     /tmp/#@{int} rw,
+
+    /dev/tty rw,
 
     include if exists <local/flatpak-system-helper_bwrap>
   }

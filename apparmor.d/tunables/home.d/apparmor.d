@@ -21,8 +21,6 @@
 
 # Define extended user directories not defined in the XDG standard but commonly
 # used in profiles
-@{XDG_SCREENSHOTS_DIR}="Pictures/Screenshots"
-@{XDG_WALLPAPERS_DIR}="Pictures/Wallpapers"
 @{XDG_BOOKS_DIR}="Books"
 @{XDG_GAMES_DIR}="Games"
 @{XDG_PROJECTS_DIR}="Projects"
@@ -73,5 +71,8 @@
 @{user_ssh_dirs}=@{HOME}/@{XDG_SSH_DIR} @{MOUNTS}/@{XDG_SSH_DIR}
 @{user_passwordstore_dirs}=@{HOME}/@{XDG_PASSWORDSTORE_DIR} @{MOUNTS}/@{XDG_PASSWORDSTORE_DIR}
 @{user_private_dirs}=@{HOME}/@{XDG_PRIVATE_DIR} @{MOUNTS}/@{XDG_PRIVATE_DIR}
+
+# Similar system-wide paths
+@{system_games_dirs}=/usr/games /var/lib/games
 
 # vim:syntax=apparmor

@@ -5,6 +5,7 @@
 package aa
 
 import (
+	"slices"
 	"strings"
 
 	"github.com/roddhjav/apparmor.d/pkg/paths"
@@ -20,6 +21,14 @@ const (
 	ProfileKind FileKind = iota
 	AbstractionKind
 	TunableKind
+)
+
+var (
+	fileKinds = map[FileKind]string{
+		ProfileKind:     PROFILE.String(),
+		AbstractionKind: "abstraction",
+		TunableKind:     "tunable",
+	}
 )
 
 func KindFromPath(file *paths.Path) FileKind {
@@ -38,6 +47,13 @@ func KindFromPath(file *paths.Path) FileKind {
 	}
 }
 
+func (k FileKind) String() string {
+	if res, ok := fileKinds[k]; ok {
+		return res
+	}
+	return ""
+}
+
 // AppArmorProfileFiles represents a full set of apparmor profiles
 type AppArmorProfileFiles map[string]*AppArmorProfileFile
 
@@ -46,8 +62,11 @@ type AppArmorProfileFiles map[string]*AppArmorProfileFile
 //   - Some rules are not supported yet (subprofile, hat...)
 //   - The structure is simplified as it only aims at writing profile, not parsing it.
 type AppArmorProfileFile struct {
-	Preamble Rules
-	Profiles []*Profile
+	Preamble   Rules
+	Profiles   []*Profile
+	Hats       []*Hat
+	Conditions []*Condition
+	Kind       FileKind
 }
 
 func NewAppArmorProfile() *AppArmorProfileFile {
@@ -136,5 +155,26 @@ func (f *AppArmorProfileFile) MergeRules() {
 func (f *AppArmorProfileFile) Format() {
 	for _, p := range f.Profiles {
 		p.Format()
+	}
+}
+
+// Merge merges two profiles together.
+func (f *AppArmorProfileFile) Merge(other *AppArmorProfileFile) error {
+	f.Preamble = append(f.Preamble, other.Preamble...)
+	f.Profiles = append(f.Profiles, other.Profiles...)
+	return nil
+}
+
+// Clean the profile file from comments
+func (f *AppArmorProfileFile) Clean() {
+	delete := []int{}
+	for i, r := range f.Preamble {
+		switch r.(type) {
+		case *Comment:
+			delete = append(delete, i)
+		}
+	}
+	for i := len(delete) - 1; i >= 0; i-- {
+		f.Preamble = slices.Delete(f.Preamble, delete[i], delete[i]+1)
 	}
 }

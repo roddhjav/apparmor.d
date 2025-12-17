@@ -8,7 +8,9 @@ import (
 	"fmt"
 	"regexp"
 	"slices"
+	"strconv"
 	"strings"
+	"unicode"
 )
 
 const (
@@ -57,23 +59,303 @@ var (
 	tok = map[Kind]string{
 		COMMENT:  "#",
 		VARIABLE: "@{",
+		BOOLEAN:  "$",
 		HAT:      "^",
 	}
 	openBlocks  = []rune{tokOPENPAREN, tokOPENBRACE, tokOPENBRACKET}
 	closeBlocks = []rune{tokCLOSEPAREN, tokCLOSEBRACE, tokCLOSEBRACKET}
 
-	inHeader     = false
-	regParagraph = regexp.MustCompile(`(?s).*?\n\n|$`)
+	inHeader              = false
+	regParagraph          = regexp.MustCompile(`(?s).*?\n\n|$`)
+	regVariableDefinition = regexp.MustCompile(`@{(.*)}\s*[+=]+\s*(.*)`)
 )
+
+const (
+	CONTENT   Kind = "content"
+	RAW       Kind = "raw"
+	QUALIFIER Kind = "qualifier"
+)
+
+// Intermediate token for the representation of apparmor blocks such as
+// profile, subprofile, hat, qualifier and condition.
+type block struct {
+	kind Kind
+	raw  string
+	next *block
+}
+
+// Split a raw input block string into tokens by '{', '}', but ignore
+// variables and second level blocks.
+func tokenizeBlock(input string) ([]*block, error) {
+	if len(input) > 0 && input[0] == tokOPENBRACE {
+		return nil, fmt.Errorf("wrong block format: %s", input)
+	}
+
+	blocks := []*block{}
+	blockStack := []rune{}
+	blockRecored := false
+	blockStart := 0
+	blockEnd := 0
+	blockContentStart := 0
+	blockContentStartBkp := 0
+	blockContentEnd := 0
+	inComment := false
+
+	for idx, r := range input {
+		switch r {
+		case '#':
+			inComment = true
+
+		case '\n':
+			inComment = false
+
+		case tokOPENBRACE:
+			if inComment {
+				continue
+			}
+			blockStack = append(blockStack, r)
+
+			// Block rules starts with ' {', ignore nested blocks and variables
+			if len(blockStack) == 1 {
+				ignore := false
+
+				// Ignore the block if it is inside a variable definition
+				if input[idx-1] == '@' {
+					ignore = true
+				} else {
+					i := idx
+					for i > 0 && input[i] != '\n' {
+						i--
+					}
+					j := idx
+					for j < len(input) && input[j] != '\n' {
+						j++
+					}
+					line := input[i:j]
+					match := regVariableDefinition.FindStringSubmatch(line)
+					if len(match) > 0 {
+						ignore = true
+					} else if !unicode.IsSpace(rune(input[idx-1])) {
+						ignore = true
+					} else {
+						// Check if this is a brace expansion (e.g., {a,b,c}) vs block delimiter.
+						// A brace expansion has a matching } on the same line.
+						rest := input[idx+1 : j]
+						if strings.Contains(rest, "}") {
+							ignore = true
+						}
+					}
+				}
+
+				if !ignore {
+					blockStart = idx
+					blockRecored = true
+				}
+			}
+
+		case tokCLOSEBRACE:
+			if inComment {
+				continue
+			}
+			if len(blockStack) <= 0 {
+				return nil, fmt.Errorf("unbalanced block, missing '{' for '} at: }%s",
+					input[blockContentStart:idx])
+			}
+
+			if len(blockStack) == 1 && blockRecored {
+				blockRecored = false
+				blockEnd = idx
+				blockContentStartBkp = blockContentStart
+				blockContentEnd = blockStart
+				blockContentRaw := input[blockContentStart:blockContentEnd]
+				blockContentStart = blockEnd + 1
+
+				// Collect the block header
+				i := len(blockContentRaw) - 1
+				for i > 0 && blockContentRaw[i] != '\n' {
+					i--
+				}
+				blockHeader := strings.Trim(blockContentRaw[i:], "\n ")
+				blockHeader = strings.Trim(blockHeader, "\n\t ")
+
+				// Ignore commented block, restore previous id values
+				if len(blockHeader) > 0 && blockHeader[0] == '#' {
+					blockContentStart = blockContentStartBkp
+					blockStack = blockStack[:len(blockStack)-1]
+					continue
+				}
+
+				// Collect out of block content (preamble, profile content outside of sub blocks)
+				blockContentRaw = blockContentRaw[:i]
+				if blockContentRaw != "" {
+					blocks = append(blocks, &block{
+						kind: CONTENT,
+						raw:  blockContentRaw,
+					})
+				}
+
+				// Collect the block content
+				blockRaw := input[blockStart+1 : blockEnd]
+				blockRaw = strings.Trim(blockRaw, "\n\t ")
+				var kind Kind
+				switch {
+				case strings.HasPrefix(blockHeader, PROFILE.Tok()), isAARE(blockHeader):
+					kind = PROFILE
+				case strings.HasPrefix(blockHeader, HAT.Tok()),
+					strings.HasPrefix(blockHeader, HAT.String()):
+					kind = HAT
+				case strings.HasPrefix(blockHeader, IF.Tok()):
+					kind = IF
+				case strings.HasPrefix(blockHeader, ELSE.Tok()):
+					kind = ELSE
+				default:
+					return nil, fmt.Errorf("unrecognized block type: %s", blockHeader)
+				}
+				blocks = append(blocks, &block{
+					kind: kind,
+					raw:  blockHeader,
+					next: &block{
+						kind: RAW,
+						raw:  blockRaw,
+					},
+				})
+			}
+			blockStack = blockStack[:len(blockStack)-1]
+		}
+	}
+
+	if len(blockStack) != 0 {
+		return nil, fmt.Errorf("unbalanced block, missing '}': %s",
+			input[blockContentEnd:])
+	}
+	if len(blocks) == 0 {
+		// No block found, it can be a tunable/abstraction file.
+		blocks = append(blocks, &block{
+			kind: CONTENT,
+			raw:  input,
+		})
+	} else if blockContentStart < len(input) {
+		// Capture any remaining content after the last block
+		remaining := input[blockContentStart:]
+		remaining = strings.Trim(remaining, "\n\t ")
+		if remaining != "" {
+			blocks = append(blocks, &block{
+				kind: CONTENT,
+				raw:  remaining,
+			})
+		}
+	}
+	return blocks, nil
+}
+
+func parseBlock(b *block) (Rules, error) {
+	var res Rules
+	var rrr Rules
+	var err error
+
+	switch b.kind {
+	case CONTENT:
+		// Line rules
+		var raw string
+		raw, res, err = parseLineRules(false, b.raw)
+		if err != nil {
+			return nil, err
+		}
+
+		// Comma rules
+		rules, err := parseCommaRules(raw)
+		if err != nil {
+			return nil, err
+		}
+		rrr, err = newRules(rules)
+		if err != nil {
+			return nil, err
+		}
+
+		res = append(res, rrr...)
+		for _, r := range res {
+			if r.Constraint() == PreambleRule {
+				return nil, fmt.Errorf("Rule not allowed in block: %s", r)
+			}
+		}
+
+	case RAW:
+		var blocks []*block
+		blocks, err = tokenizeBlock(b.raw)
+		if err != nil {
+			return nil, err
+		}
+		for _, block := range blocks {
+			rrr, err = parseBlock(block)
+			if err != nil {
+				return nil, err
+			}
+			res = append(res, rrr...)
+		}
+		return res, nil
+
+	case PROFILE:
+		inHeader = true
+		header, err := newHeader(parseRule(b.raw))
+		inHeader = false
+		if err != nil {
+			return nil, err
+		}
+		rules, err := parseBlock(b.next)
+		if err != nil {
+			return nil, err
+		}
+		profile := &Profile{
+			Header: header,
+			Rules:  rules,
+		}
+		res = append(res, profile)
+
+	case HAT:
+		inHeader = true
+		hat, err := newHat(parseRule(b.raw))
+		inHeader = false
+		if err != nil {
+			return nil, err
+		}
+		rules, err := parseBlock(b.next)
+		if err != nil {
+			return nil, err
+		}
+		hat.Rules = rules
+		res = append(res, hat)
+
+	case IF, ELSE:
+		condition, err := newCondition(parseRule(b.raw))
+		if err != nil {
+			return nil, err
+		}
+		rules, err := parseBlock(b.next)
+		if err != nil {
+			return nil, err
+		}
+		if b.kind == IF {
+			condition.IfRules = rules
+		} else {
+			condition.ElseRules = rules
+		}
+		res = append(res, condition)
+
+	}
+	return res, nil
+}
 
 // Parse the line rule from a raw string.
 func parseLineRules(isPreamble bool, input string) (string, Rules, error) {
 	var res Rules
 	var r Rule
 	var err error
+	var remaining []string
 
 	for _, line := range strings.Split(input, "\n") {
 		tmp := strings.TrimLeft(line, "\t ")
+		processed := false
+
 		switch {
 		case strings.HasPrefix(tmp, COMMENT.Tok()):
 			r, err = newComment(rule{kv{comment: tmp[1:]}})
@@ -81,7 +363,7 @@ func parseLineRules(isPreamble bool, input string) (string, Rules, error) {
 				return "", nil, err
 			}
 			res = append(res, r)
-			input = strings.Replace(input, line, "", 1)
+			processed = true
 
 		case strings.HasPrefix(tmp, INCLUDE.Tok()):
 			r, err = newInclude(parseRule(line)[1:])
@@ -89,7 +371,7 @@ func parseLineRules(isPreamble bool, input string) (string, Rules, error) {
 				return "", nil, err
 			}
 			res = append(res, r)
-			input = strings.Replace(input, line, "", 1)
+			processed = true
 
 		case strings.HasPrefix(tmp, VARIABLE.Tok()) && isPreamble:
 			r, err = newVariable(parseRule(line))
@@ -97,10 +379,24 @@ func parseLineRules(isPreamble bool, input string) (string, Rules, error) {
 				return "", nil, err
 			}
 			res = append(res, r)
-			input = strings.Replace(input, line, "", 1)
+			processed = true
+
+		case strings.HasPrefix(tmp, BOOLEAN.Tok()) && isPreamble:
+			r, err = newBoolean(parseRule(line))
+			if err != nil {
+				return "", nil, err
+			}
+			res = append(res, r)
+			processed = true
+		}
+
+		if processed {
+			remaining = append(remaining, "")
+		} else {
+			remaining = append(remaining, line)
 		}
 	}
-	return input, res, nil
+	return strings.Join(remaining, "\n"), res, nil
 }
 
 // Parse the comma rules from a raw string. It splits rules string into tokens
@@ -151,7 +447,7 @@ func parseCommaRules(input string) ([]rule, error) {
 
 		case tokCOLON:
 			if blockCounter == 0 && !comment {
-				if idx+1 < size && !strings.ContainsRune(" \n", rune(input[idx+1])) {
+				if idx+1 < size && !strings.ContainsRune(" \t\n", rune(input[idx+1])) {
 					// Colon in AARE, it is valid, not a separator
 					aare = true
 				}
@@ -213,13 +509,14 @@ func tokenizeRule(str string) []string {
 
 	blockStack := []rune{}
 	tokens := make([]string, 0, len(str)/2)
-	if inHeader && len(str) > 2 && str[0:2] == VARIABLE.Tok() {
+	if inHeader && len(str) > 2 && str[0:2] == VARIABLE.Tok() && strings.Contains(str, "=") {
 		isVariable = true
 	}
+
 	for _, r := range str {
 		switch {
-		case (r == ' ' || r == '\t') && len(blockStack) == 0 && !quoted:
-			// Split on space/tab if not in a block or quoted
+		case unicode.IsSpace(r) && len(blockStack) == 0 && !quoted:
+			// Split on space/tab/newline if not in a block or quoted
 			if currentToken.Len() != 0 {
 				tokens = append(tokens, currentToken.String())
 				currentToken.Reset()
@@ -258,6 +555,7 @@ func tokenizeRule(str string) []string {
 			currentToken.WriteRune(r)
 		}
 	}
+
 	if currentToken.Len() != 0 {
 		tokens = append(tokens, currentToken.String())
 	}
@@ -288,7 +586,7 @@ func parseRule(str string) rule {
 	res := make(rule, 0, len(str)/2)
 	tokens := tokenizeRule(str)
 
-	inAare := len(tokens) > 0 && (isAARE(tokens[0]) || tokens[0] == tokOWNER)
+	inAare := len(tokens) > 0 && (tokens[0] == tokOWNER || (isAARE(tokens[0]) && !inHeader))
 	for idx, token := range tokens {
 		switch {
 		case token == tokEQUAL, token == tokPLUS+tokEQUAL, token == tokLESS+tokEQUAL: // Variable & Rlimit
@@ -413,7 +711,10 @@ func (r rule) GetAsMap() map[string][]string {
 	res := map[string][]string{}
 	for _, kv := range r {
 		if kv.values != nil {
-			res[kv.key] = kv.values.GetSlice()
+			if res[kv.key] == nil {
+				res[kv.key] = []string{}
+			}
+			res[kv.key] = append(res[kv.key], kv.values.GetSlice()...)
 		}
 	}
 	return res
@@ -433,12 +734,13 @@ func (r rule) GetAsMap() map[string][]string {
 //			{key: "label", values: rule{{Key: "power-profiles-daemon"}}},
 //		}},
 func (r rule) GetValues(key string) rule {
+	var res rule
 	for _, kv := range r {
-		if kv.key == key {
-			return kv.values
+		if kv.key == key && kv.values != nil {
+			res = append(res, kv.values...)
 		}
 	}
-	return nil
+	return res
 }
 
 // GetValuesAsSlice return the values from a key as a slice.
@@ -466,6 +768,18 @@ func (r rule) GetValuesAsSlice(key string) []string {
 //	GetValuesAsString("peer"): "at-spi-bus-launcher"
 func (r rule) GetValuesAsString(key string) string {
 	return r.GetValues(key).GetString()
+}
+
+// ValidateMapKeys validate that all map keys in a rule are in the validKeys slice.
+func (r rule) ValidateMapKeys(validKeys []string) error {
+	for _, kv := range r {
+		if kv.values != nil {
+			if !slices.Contains(validKeys, kv.key) {
+				return fmt.Errorf("invalid modifier '%s' in rule: %s", kv.key, r)
+			}
+		}
+	}
+	return nil
 }
 
 // String return a generic representation of a rule.
@@ -525,9 +839,14 @@ func newRules(rules []rule) (Rules, error) {
 			owner = true
 			rule = rule[1:]
 			goto qualifier
+
 		// Qualifier
 		case tokPRIORITY:
-			q.Priority = rule.GetValues(tokPRIORITY).GetString()
+			priority, err := strconv.Atoi(rule.GetValues(tokPRIORITY).GetString())
+			if err != nil {
+				return nil, fmt.Errorf("invalid priority value in rule: %s", rule)
+			}
+			q.Priority = priority
 			rule = rule[1:]
 			goto qualifier
 		case tokALLOW, tokDENY, tokPROMPT:
@@ -546,28 +865,34 @@ func newRules(rules []rule) (Rules, error) {
 				if err != nil {
 					return nil, err
 				}
-				if owner && r.Kind() == LINK {
-					r.(*Link).Owner = owner
+				if owner {
+					switch r := r.(type) {
+					case *File:
+						r.Owner = owner
+					case *Link:
+						r.Owner = owner
+					default:
+						return nil, fmt.Errorf("owner not allowed in %s rule : %s", r.Kind(), rule)
+					}
 				}
 				res = append(res, r)
+
 			} else {
 				raw := rule.Get(0)
-				if raw != "" {
-					// File
-					if isAARE(raw) || owner {
-						r, err = newFile(q, rule)
-						if err != nil {
-							return nil, err
-						}
-						r.(*File).Owner = owner
-						res = append(res, r)
-					} else {
-						fmt.Printf("Unknown rule: %s", rule)
-						// return nil, fmt.Errorf("Unknown rule: %s", rule)
-					}
-				} else {
+				if raw == "" {
 					return nil, fmt.Errorf("unrecognized rule: %s", rule)
 				}
+				testAccess, _ := toAccess(FILE, raw)
+				if !isAARE(raw) && !owner && len(testAccess) == 0 {
+					return nil, fmt.Errorf("unknown rule: %s", rule)
+				}
+				r, err = newFile(q, rule)
+				if err != nil {
+					return nil, err
+				}
+				r.(*File).Owner = owner
+				res = append(res, r)
+
 			}
 		}
 	}
@@ -577,9 +902,10 @@ func newRules(rules []rule) (Rules, error) {
 func (f *AppArmorProfileFile) parsePreamble(preamble string) error {
 	var err error
 	inHeader = true
+	isPreamble := f.Kind == ProfileKind
 
 	// Line rules
-	preamble, lineRules, err := parseLineRules(true, preamble)
+	preamble, lineRules, err := parseLineRules(isPreamble, preamble)
 	if err != nil {
 		return err
 	}
@@ -597,9 +923,17 @@ func (f *AppArmorProfileFile) parsePreamble(preamble string) error {
 	f.Preamble = append(f.Preamble, commaRules...)
 
 	for _, r := range f.Preamble {
-		if r.Constraint() == BlockRule {
-			f.Preamble = nil
-			return fmt.Errorf("Rule not allowed in preamble: %s", r)
+		switch f.Kind {
+		case ProfileKind:
+			if r.Constraint() == BlockRule {
+				f.Preamble = nil
+				return fmt.Errorf("rule not allowed in profile preamble: %s", r)
+			}
+
+		case AbstractionKind, TunableKind:
+
+		default:
+			return fmt.Errorf("unknown profile file kind")
 		}
 	}
 	inHeader = false
@@ -608,10 +942,10 @@ func (f *AppArmorProfileFile) parsePreamble(preamble string) error {
 
 // Parse an apparmor profile file.
 //
-// Warning: It is purposely an uncomplete basic parser for apparmor profile,
+// Warning: It is purposely an uncomplete parser for apparmor profile,
 // it is only aimed for internal tooling purpose. For "simplicity", it is not
 // using antlr / participle. It is only used for experimental feature in the
-// apparmor.d project.
+// apparmor.d project. Technically, it is more a scanner than a parser.
 //
 // Very basic:
 //   - Only supports parsing of preamble and profile headers.
@@ -694,4 +1028,57 @@ func ParseRules(input string) (ParaRules, []string, error) {
 	}
 
 	return paragraphRules, paragraphs, nil
+}
+
+// Scan an apparmor profile file with multiple profiles, hats, and nested.
+// Like Parse, but process all profiles and blocks in the file.
+func (f *AppArmorProfileFile) Scan(input string) error {
+	blocks, err := tokenizeBlock(input)
+	if err != nil {
+		return err
+	}
+
+	for _, block := range blocks {
+		switch block.kind {
+		case CONTENT:
+			if err := f.parsePreamble(block.raw); err != nil {
+				return err
+			}
+
+		case PROFILE:
+			inHeader = true
+			header, err := newHeader(parseRule(block.raw))
+			inHeader = false
+			if err != nil {
+				return err
+			}
+			rules, err := parseBlock(block.next)
+			if err != nil {
+				return err
+			}
+			profile := &Profile{
+				Header: header,
+				Rules:  rules,
+			}
+			f.Profiles = append(f.Profiles, profile)
+
+		case HAT:
+			inHeader = true
+			hat, err := newHat(parseRule(block.raw))
+			inHeader = false
+			if err != nil {
+				return err
+			}
+			rules, err := parseBlock(block.next)
+			if err != nil {
+				return err
+			}
+			hat.Rules = rules
+			f.Hats = append(f.Hats, hat)
+
+		default:
+			return fmt.Errorf("illegal %s block in profile file", block.kind)
+		}
+	}
+	return nil
 }

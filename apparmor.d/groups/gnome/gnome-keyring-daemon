@@ -12,8 +12,7 @@ profile gnome-keyring-daemon @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus-session>
   include <abstractions/bus-system>
-  include <abstractions/bus/org.freedesktop.login1.Session>
-  include <abstractions/bus/org.freedesktop.portal.Desktop>
+  include <abstractions/bus/system/org.freedesktop.login1>
   include <abstractions/consoles>
   include <abstractions/session-manager>
 
@@ -23,6 +22,8 @@ profile gnome-keyring-daemon @{exec_path} flags=(attach_disconnected) {
   signal send set=(term) peer=ssh-agent,
 
   unix type=stream peer=(label=snap.*),
+  unix type=stream peer=(label=fapp),
+  unix type=stream peer=(label=fbwrap),
 
   #aa:dbus own bus=session name=org.gnome.keyring
   #aa:dbus own bus=session name=org.freedesktop.{S,s}ecret{,s}
@@ -32,7 +33,7 @@ profile gnome-keyring-daemon @{exec_path} flags=(attach_disconnected) {
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
-       peer=(name=:*, label=gnome-shell),
+       peer=(name=@{busname}, label=gnome-shell),
 
   dbus send bus=system path=/org/freedesktop/login1
        interface=org.freedesktop.login1.Manager

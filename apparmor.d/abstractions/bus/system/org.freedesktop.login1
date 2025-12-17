@@ -6,7 +6,28 @@
 
   abi <abi/4.0>,
 
-  #aa:dbus common bus=system name=org.freedesktop.login1 label="@{p_systemd_logind}"
+  # DBus.Properties: read properties from the interface
+
+  dbus send bus=system path=/org/freedesktop/login1{,/session/**}
+       interface=org.freedesktop.DBus.Properties
+       member={Get,GetAll}
+       peer=(name="{@{busname},org.freedesktop.login1}", label="@{p_systemd_logind}"),
+
+  # DBus.Properties: receive property changed events
+
+  dbus receive bus=system path=/org/freedesktop/login1
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged
+       peer=(name=@{busname},  label="@{p_systemd_logind}"),
+
+  # DBus.Introspectable: allow clients to introspect the service
+
+  dbus send bus=system path=/org/freedesktop/login1
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name=@{busname},  label="@{p_systemd_logind}"),
+
+  # Inhibit system actions
 
   dbus send bus=system path=/org/freedesktop/login1
        interface=org.freedesktop.login1.Manager

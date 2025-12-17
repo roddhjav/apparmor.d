@@ -3,6 +3,8 @@
 # Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
+# Generic profile for exo utility. It is an equivalent of child-open-any.
+
 abi <abi/4.0>,
 
 include <tunables/global>
@@ -10,14 +12,9 @@ include <tunables/global>
 @{exec_path} = @{lib}/@{multiarch}/xfce[0-9]/exo-[0-9]/exo-helper-[0-9]
 profile exo-helper @{exec_path} {
   include <abstractions/base>
-  include <abstractions/consoles>
   include <abstractions/app-launcher-user>
-
-  # These are needed when there's no default application set in the ~/.config/xfce4/helpers.rc
-  include <abstractions/gtk>
-  include <abstractions/fonts>
-  include <abstractions/fontconfig-cache-read>
-  include <abstractions/freedesktop.org>
+  include <abstractions/app/open>
+  include <abstractions/path>
 
   @{exec_path} mr,
 
@@ -26,11 +23,14 @@ profile exo-helper @{exec_path} {
   /usr/share/xfce4/helpers/ r,
   /usr/share/xfce4/helpers/*.desktop r,
   /usr/local/share/ r,
+
+  /etc/xdg/{,xdg-*/}xfce4/helpers.rc r,
+
+  /etc/fstab r,
+
   owner @{user_share_dirs}/ r,
   owner @{user_share_dirs}/xfce4/ r,
   owner @{user_share_dirs}/xfce4/helpers/ r,
-
-  /etc/xdg/{,xdg-*/}xfce4/helpers.rc r,
 
   owner @{user_config_dirs}/xfce4/helpers.rc rw,
   owner @{user_config_dirs}/xfce4/helpers.rc.@{pid}.tmp rw,
@@ -39,17 +39,12 @@ profile exo-helper @{exec_path} {
 
   owner @{user_config_dirs}/mimeapps.list{,.@{rand6}} rw,
 
-  # Some missing icons
-  /usr/share/**.png r,
-
   owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/mountinfo r,
   owner @{PROC}/@{pid}/mounts r,
 
-  /etc/fstab r,
-
   # file_inherit
-  owner /dev/tty@{int} rw,
+  owner /dev/tty@{u8} rw,
 
   include if exists <local/exo-helper>
 }

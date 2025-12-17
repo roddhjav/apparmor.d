@@ -13,7 +13,7 @@ type All struct {
 }
 
 func newAll(q Qualifier, rule rule) (Rule, error) {
-	return &All{Base: newBase(rule)}, nil
+	return &All{Base: newBase(rule)}, rule.ValidateMapKeys([]string{})
 }
 
 func (r *All) Kind() Kind {

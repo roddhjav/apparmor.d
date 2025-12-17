@@ -18,9 +18,15 @@ profile fbwrap flags=(attach_disconnected,mediate_deleted) {
 
   unix type=seqpacket peer=(label=fapp),
   unix type=stream    peer=(label=fapp),
+  unix type=stream    peer=(label=gnome-software),
 
   signal receive peer=gnome-software,
   signal receive peer=flatpak,
+
+  dbus send bus=accessibility path=/
+       interface=org.freedesktop.DBus
+       member=ListNames
+       peer=(name=org.freedesktop.DBus, label=dbus-accessibility),
 
   @{exec_path} mr,
 
@@ -33,6 +39,10 @@ profile fbwrap flags=(attach_disconnected,mediate_deleted) {
   priority=1 /app/bin/**                              Px -> fbwrap//&fapp,
   priority=1 @{lib}/**                                Px -> fbwrap//&fapp,
   priority=1 @{HOME}/.var/app/@{appid}/**             Px -> fbwrap//&fapp,
+
+  /usr/share/flatpak/triggers/desktop-database.trigger Px -> flatpak-system-helper//bwrap,
+  /usr/share/flatpak/triggers/gtk-icon-cache.trigger   Px -> flatpak-system-helper//bwrap,
+  /usr/share/flatpak/triggers/mime-database.trigger    Px -> flatpak-system-helper//bwrap,
 
   /app/.ref rk,
   /usr/.ref rk,
@@ -50,6 +60,12 @@ profile fbwrap flags=(attach_disconnected,mediate_deleted) {
   owner @{run}/user/@{uid}/.dbus-proxy/system-bus-proxy-@{rand6} w,
   owner @{run}/user/@{uid}/.flatpak/@{int}/bwrapinfo.json rw,
   owner @{run}/user/@{uid}/.flatpak/@{int}/info r,
+
+  owner @{att}@{run}/user/@{uid}/at-spi/bus rw,
+  owner @{att}@{run}/user/@{uid}/bus rw,
+
+        @{PROC}/cgroups r,
+  owner @{PROC}/@{pid}/coredump_filter rw,
 
   profile ldconfig flags=(attach_disconnected,mediate_deleted) {
     include <abstractions/base>

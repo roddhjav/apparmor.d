@@ -6,6 +6,7 @@ package aa
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 )
 
@@ -14,6 +15,7 @@ const (
 	ALIAS    Kind = "alias"
 	INCLUDE  Kind = "include"
 	VARIABLE Kind = "variable"
+	BOOLEAN  Kind = "boolean"
 	COMMENT  Kind = "comment"
 
 	tokIFEXISTS = "if exists"
@@ -75,16 +77,23 @@ func newAbi(q Qualifier, rule rule) (Rule, error) {
 	switch path[0] {
 	case '"':
 		magic = false
+		if !strings.HasSuffix(path, "\"") || len(path) < 3 {
+			return nil, fmt.Errorf("invalid path %s in rule: %s", path, rule)
+		}
 	case '<':
 		magic = true
+		if !strings.HasSuffix(path, ">") || len(path) < 3 {
+			return nil, fmt.Errorf("invalid path %s in rule: %s", path, rule)
+		}
 	default:
 		return nil, fmt.Errorf("invalid path %s in rule: %s", path, rule)
 	}
+	path = strings.Trim(path, "\"<>")
 	return &Abi{
 		Base:    newBase(rule),
-		Path:    strings.Trim(path, "\"<>"),
+		Path:    path,
 		IsMagic: magic,
-	}, nil
+	}, rule.ValidateMapKeys([]string{})
 }
 
 func (r *Abi) Kind() Kind {
@@ -138,7 +147,7 @@ func newAlias(q Qualifier, rule rule) (Rule, error) {
 		Base:          newBase(rule),
 		Path:          rule.Get(0),
 		RewrittenPath: rule.Get(2),
-	}, nil
+	}, rule.ValidateMapKeys([]string{})
 }
 
 func (r *Alias) Kind() Kind {
@@ -201,17 +210,24 @@ func newInclude(rule rule) (Rule, error) {
 	switch path[0] {
 	case '"':
 		magic = false
+		if !strings.HasSuffix(path, "\"") || len(path) < 3 {
+			return nil, fmt.Errorf("invalid path %s in rule: %s", path, rule)
+		}
 	case '<':
 		magic = true
+		if !strings.HasSuffix(path, ">") || len(path) < 3 {
+			return nil, fmt.Errorf("invalid path %s in rule: %s", path, rule)
+		}
 	default:
 		return nil, fmt.Errorf("invalid path format: %v", path)
 	}
+	path = strings.Trim(path, "\"<>")
 	return &Include{
 		Base:     newBase(rule),
 		IfExists: ifexists,
-		Path:     strings.Trim(path, "\"<>"),
+		Path:     path,
 		IsMagic:  magic,
-	}, nil
+	}, rule.ValidateMapKeys([]string{})
 }
 
 func (r *Include) Kind() Kind {
@@ -335,3 +351,78 @@ func (r *Variable) Lengths() []int {
 }
 
 func (r *Variable) setPaddings(max []int) {} // No paddings for variable
+
+type Boolean struct {
+	Base
+	Name  string
+	Value bool
+}
+
+func newBoolean(rule rule) (Rule, error) {
+	name, value := "", ""
+
+	switch len(rule) {
+	case 1:
+		name = strings.Trim(rule.Get(0), BOOLEAN.Tok()+"{}")
+		value = rule.GetValuesAsString(rule.Get(0))
+
+	case 3:
+		name = strings.Trim(rule.Get(0), BOOLEAN.Tok()+"{}")
+		if rule.Get(1) != tokEQUAL {
+			return nil, fmt.Errorf("invalid boolean format, missing %s in: %s", tokEQUAL, rule)
+		}
+		value = rule.Get(2)
+
+	default:
+		return nil, fmt.Errorf("invalid boolean format: %v", rule)
+	}
+
+	if !slices.Contains([]string{"true", "false"}, value) {
+		return nil, fmt.Errorf("invalid boolean value %s in rule: %s", value, rule)
+	}
+	return &Boolean{
+		Base:  newBase(rule),
+		Name:  name,
+		Value: value == "true",
+	}, nil
+}
+
+func (r *Boolean) Kind() Kind {
+	return BOOLEAN
+}
+
+func (r *Boolean) Constraint() Constraint {
+	return PreambleRule
+}
+
+func (r *Boolean) String() string {
+	return renderTemplate(r.Kind(), r)
+}
+
+func (r *Boolean) Validate() error {
+	return nil
+}
+
+func (r *Boolean) Compare(other Rule) int {
+	o, _ := other.(*Boolean)
+	if res := compare(r.Name, o.Name); res != 0 {
+		return res
+	}
+	return compare(r.Value, o.Value)
+}
+
+func (r *Boolean) Merge(other Rule) bool {
+	o, _ := other.(*Boolean)
+
+	if r.Name == o.Name && r.Value == o.Value {
+		b := &r.Base
+		return b.merge(o.Base)
+	}
+	return false
+}
+
+func (r *Boolean) Lengths() []int {
+	return []int{} // No len for boolean
+}
+
+func (r *Boolean) setPaddings(max []int) {} // No paddings for boolean

@@ -1,0 +1,50 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+  abi <abi/4.0>,
+
+  # DBus.Properties: read properties from the interface
+
+  dbus send bus=system path=/org/freedesktop/ModemManager1
+       interface=org.freedesktop.DBus.Properties
+       member={Get,GetAll}
+       peer=(name=@{busname}, label="@{p_ModemManager}"),
+
+  dbus send bus=system path=/org/freedesktop/ModemManager1/*/@{int}
+       interface=org.freedesktop.DBus.Properties
+       member={Get,GetAll}
+       peer=(name=@{busname}, label="@{p_ModemManager}"),
+
+  # DBus.Properties: receive property changed events
+
+  dbus receive bus=system path=/org/freedesktop/ModemManager1
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged
+       peer=(name=@{busname}, label="@{p_ModemManager}"),
+
+  dbus receive bus=system path=/org/freedesktop/ModemManager1/*
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged
+       peer=(name=@{busname}, label="@{p_ModemManager}"),
+
+  dbus receive bus=system path=/org/freedesktop/ModemManager1/*/@{int}
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged
+       peer=(name=@{busname}, label="@{p_ModemManager}"),
+
+  # DBus.ObjectManager: allow clients to enumerate sources
+
+  dbus send bus=system path=/org/freedesktop/ModemManager1
+       interface=org.freedesktop.DBus.ObjectManager
+       member=GetManagedObjects
+       peer=(name=org.freedesktop.ModemManager1, label="@{p_ModemManager}"),
+
+  dbus send bus=system path=/org/freedesktop/ModemManager1
+       interface=org.freedesktop.DBus.ObjectManager
+       member=GetManagedObjects
+       peer=(name="@{busname}", label="@{p_ModemManager}"),
+
+  include if exists <abstractions/bus/system/org.freedesktop.ModemManager1.d>
+
+# vim:syntax=apparmor

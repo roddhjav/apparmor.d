@@ -16,7 +16,7 @@ func init() {
 			"send", "receive", "bind", "eavesdrop", "r", "read",
 			"w", "write", "rw",
 		},
-		"bus": []string{"system", "session", "accessibility"},
+		"bus": []string{"system", "session", "accessibility", "fcitx"},
 	}
 }
 
@@ -36,6 +36,12 @@ type Dbus struct {
 func newDbus(q Qualifier, rule rule) (Rule, error) {
 	accesses, err := toAccess(DBUS, rule.GetString())
 	if err != nil {
+		return nil, err
+	}
+	if err := rule.ValidateMapKeys([]string{"bus", "name", "path", "interface", "member", "peer"}); err != nil {
+		return nil, err
+	}
+	if err := rule.GetValues("peer").ValidateMapKeys([]string{"name", "label"}); err != nil {
 		return nil, err
 	}
 	return &Dbus{
@@ -60,6 +66,10 @@ func newDbusFromLog(log map[string]string) Rule {
 	} else {
 		peerName = log["name"]
 	}
+	member, present := log["member"]
+	if !present {
+		member = log["method"]
+	}
 	return &Dbus{
 		Base:      newBaseFromLog(log),
 		Qualifier: newQualifierFromLog(log),
@@ -68,7 +78,7 @@ func newDbusFromLog(log map[string]string) Rule {
 		Name:      name,
 		Path:      log["path"],
 		Interface: log["interface"],
-		Member:    log["member"],
+		Member:    member,
 		PeerName:  peerName,
 		PeerLabel: log["peer_label"],
 	}

@@ -1,0 +1,41 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2017 Canonical Ltd
+# Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Access required for connecting to/communicating with the Unity Launcher
+
+  abi <abi/4.0>,
+
+  # Allow to send updates to the desktop session about ongoing jobs
+  # (for progress display in the task list)
+  dbus send bus=session
+       interface=com.canonical.Unity.LauncherEntry
+       member=Update
+       peer=(label=gnome-shell),
+
+  # Allow to receive updates from applications to the desktop session about ongoing jobs
+  # (for progress display in the task list)
+  dbus send bus=session
+       interface=com.canonical.Unity.LauncherEntry
+       member=Update
+       peer=(label=gnome-shell),
+
+  dbus send bus=session path=/com/canonical/unity/launcherentry/@{int}
+       interface=com.canonical.Unity.LauncherEntry
+       member=Update
+       peer=(name=org.freedesktop.DBus, label=gnome-shell),
+
+  dbus receive bus=session path=/com/canonical/unity/launcherentry/@{int}
+       interface=com.canonical.dbusmenu
+       member={GetLayout,GetGroupProperties}
+       peer=(name="@{busname}", label=gnome-shell),
+
+  dbus receive bus=session path=/com/canonical/unity/launcherentry/@{int}
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name="@{busname}", label=gnome-shell),
+
+  include if exists <abstractions/bus/session/com.canonical.Unity.LauncherEntry.d>
+
+# vim:syntax=apparmor

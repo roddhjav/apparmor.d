@@ -21,10 +21,11 @@ const (
 
 func init() {
 	requirements[FILE] = requirement{
-		"access": {"m", "r", "w", "l", "k"},
+		"access": {"m", "r", "w", "a", "l", "k"},
 		"transition": {
 			"ix", "ux", "Ux", "px", "Px", "cx", "Cx", "pix", "Pix", "cix",
 			"Cix", "pux", "PUx", "cux", "CUx", "x",
+			"Pux", "pUx",
 		},
 	}
 }
@@ -65,7 +66,13 @@ func newFile(q Qualifier, rule rule) (Rule, error) {
 			return nil, fmt.Errorf("missing file or access in rule: %s", rule)
 		}
 
-		path, access = r[0], r[1]
+		// Determine format: "path access" vs "access path"
+		// Try parsing first token as access - if valid, use "access path" format
+		if testAccess, _ := toAccess(FILE, r[0]); len(testAccess) > 0 {
+			access, path = r[0], r[1]
+		} else {
+			path, access = r[0], r[1]
+		}
 		if size > 2 {
 			if r[2] != tokARROW {
 				return nil, fmt.Errorf("missing '%s' in rule: %s", tokARROW, rule)
@@ -84,10 +91,13 @@ func newFile(q Qualifier, rule rule) (Rule, error) {
 		Path:      path,
 		Access:    accesses,
 		Target:    target,
-	}, nil
+	}, rule.ValidateMapKeys([]string{})
 }
 
 func newFileFromLog(log map[string]string) Rule {
+	if log["operation"] == "link" {
+		log["requested_mask"] += "l"
+	}
 	accesses, err := toAccess("file-log", log["requested_mask"])
 	if err != nil {
 		panic(fmt.Errorf("newFileFromLog(%v): %w", log, err))
@@ -136,9 +146,6 @@ func (r *File) Validate() error {
 			return fmt.Errorf("invalid mode '%s'", v)
 		}
 	}
-	if r.Target != "" && !isAARE(r.Target) {
-		return fmt.Errorf("'%s' is not a valid AARE", r.Target)
-	}
 	return nil
 }
 
@@ -159,10 +166,7 @@ func (r *File) Compare(other Rule) int {
 	if res := compare(r.Access, o.Access); res != 0 {
 		return res
 	}
-	if res := compare(r.Target, o.Target); res != 0 {
-		return res
-	}
-	return r.Qualifier.Compare(o.Qualifier)
+	return compare(r.Target, o.Target)
 }
 
 func (r *File) Merge(other Rule) bool {
@@ -255,7 +259,7 @@ func newLink(q Qualifier, rule rule) (Rule, error) {
 		Subset:    subset,
 		Path:      path,
 		Target:    target,
-	}, nil
+	}, rule.ValidateMapKeys([]string{})
 }
 
 func newLinkFromLog(log map[string]string) Rule {
@@ -283,9 +287,6 @@ func (r *Link) String() string {
 func (r *Link) Validate() error {
 	if !isAARE(r.Path) {
 		return fmt.Errorf("'%s' is not a valid AARE", r.Path)
-	}
-	if !isAARE(r.Target) {
-		return fmt.Errorf("'%s' is not a valid AARE", r.Target)
 	}
 	return nil
 }

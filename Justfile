@@ -5,6 +5,10 @@
 # Usage: `just`
 # See https://apparmor.pujol.io/development/ for more information.
 
+# Globally override any variables
+set allow-duplicate-variables
+import? '~/.aa.just'
+
 # Build settings
 
 destdir := "/"
@@ -12,6 +16,9 @@ build := ".build"
 pkgdest := `pwd` / ".pkg"
 pkgname := "apparmor.d"
 gpgkey := "06A26D531D56C42D66805049C5469996F0DF68EC"
+
+# Prebuild options, only used for the `dev` install target
+opt := "complain"
 
 # The following variables are only  used for the development and test VM
 
@@ -34,6 +41,13 @@ ram := "4096"
 ssh_keyname := "id_ed25519"
 ssh_privatekey := home_dir() / ".ssh/" + ssh_keyname
 ssh_publickey := ssh_privatekey + ".pub" 
+
+# Path to the UEFI firmware
+firmware := if path_exists("/usr/share/edk2/x64/OVMF.4m.fd") == "true" {
+	"/usr/share/edk2/x64/OVMF.4m.fd"
+} else {
+	"/usr/share/ovmf/OVMF.fd"
+}
 
 # Where the VM are stored
 vm := home_dir() / ".vm"
@@ -58,6 +72,7 @@ Build variables available:
     build        " + BLUE + "# Build directory (default: " + build + ")" + NORMAL + "
     destdir      " + BLUE + "# Installation destination (default: " + destdir + ")" + NORMAL + "
     pkgdest      " + BLUE + "# Package output directory (default: " + pkgdest + ")" + NORMAL + "
+    opt          " + BLUE + "# Prebuild option, only used for the dev install target (default: " + opt + ")" + NORMAL + "
 
 Development variables available:
     username     " + BLUE + "# VM username (default: " + username + ")" + NORMAL + "
@@ -187,19 +202,21 @@ local +names:
 		sed -i -e "s/rPx/rPUx/g" "{{build}}/apparmor.d/$file"
 		install -Dvm0644 "{{build}}/apparmor.d/$file" "{{destdir}}/etc/apparmor.d/$file"
 	done;
-	systemctl restart apparmor || sudo journalctl -xeu apparmor.service
+	systemctl restart apparmor.service || journalctl -xeu apparmor.service
 
 # Prebuild, install, and load a dev profile
 [group('install')]
-dev name:
-	go run ./cmd/prebuild --complain --file `find apparmor.d -iname {{name}}`
-	sudo install -Dm644 {{build}}/apparmor.d/{{name}} /etc/apparmor.d/{{name}}
-	sudo apparmor_parser --write-cache --replace /etc/apparmor.d/{{name}}
+dev +names:
+	go run ./cmd/prebuild --{{opt}}
+	for file in {{names}}; do \
+		sudo install -Dm644 -v {{build}}/apparmor.d/$file /etc/apparmor.d/$file; \
+	done
+	sudo systemctl restart apparmor.service || sudo journalctl -xeu apparmor.service
 
 # Build & install apparmor.d on Arch based systems
 [group('packages')]
 pkg:
-	@makepkg --syncdeps --install --cleanbuild --force --noconfirm
+	@bash dists/build.sh pkg
 
 # Build & install apparmor.d on Debian based systems
 [group('packages')]
@@ -294,6 +311,7 @@ img dist release flavor: (package dist release flavor)
 		-var disk_size={{disk_size}} \
 		-var cpus={{vcpus}} \
 		-var ram={{ram}} \
+		-var firmware={{firmware}} \
 		-var base_dir={{base_dir}} \
 		-var output_dir={{output_dir}} \
 		tests/packer/
@@ -339,6 +357,26 @@ destroy osinfo flavor:
 	@virsh {{c}} destroy {{prefix}}{{osinfo}}-{{flavor}} || true
 	@virsh {{c}} undefine {{prefix}}{{osinfo}}-{{flavor}} --nvram
 	@rm -fv {{vm}}/{{prefix}}{{osinfo}}-{{flavor}}.qcow2
+
+# List all snapshots for a machine
+[group('vm')]
+snapshots osinfo flavor:
+	@virsh {{c}} snapshot-list {{prefix}}{{osinfo}}-{{flavor}}
+
+# Snapshot a machine
+[group('vm')]
+snapshot osinfo flavor snapname:
+    @virsh {{c}} snapshot-create-as {{prefix}}{{osinfo}}-{{flavor}} --name {{snapname}}
+
+# Restore a machine to a specified snapshot
+[group('vm')]
+restore osinfo flavor snapname:
+    @virsh {{c}} snapshot-revert {{prefix}}{{osinfo}}-{{flavor}} {{snapname}}
+
+# Delete a specified snapshot from a machine
+[group('vm')]
+delete osinfo flavor snapname:
+	@virsh {{c}} snapshot-delete {{prefix}}{{osinfo}}-{{flavor}} {{snapname}}
 
 # Connect to the machine
 [group('vm')]

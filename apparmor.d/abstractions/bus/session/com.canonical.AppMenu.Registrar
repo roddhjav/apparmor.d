@@ -1,0 +1,32 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2016-2017 Canonical Ltd
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Allow access for connecting to/communication with the appmenu
+
+  abi <abi/4.0>,
+
+  dbus send bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member=ListNames
+       peer=(name=org.freedesktop.DBus, label="@{p_dbus_session}"),
+
+  dbus send bus=session path=/com/canonical/AppMenu/Registrar
+       interface=com.canonical.AppMenu.Registrar
+       member={RegisterWindow,UnregisterWindow}
+       peer=(name=@{busname}, label="@{pp_dbusmenu}"),
+
+  dbus send bus=session path=/com/canonical/AppMenu/Registrar
+       interface=com.canonical.dbusmenu
+       member=UnregisterWindow
+       peer=(name=@{busname}, label="@{pp_dbusmenu}"),
+
+  dbus receive bus=session path=/com/canonical/menu/@{int}
+       interface={org.freedesktop.DBus.Properties,com.canonical.dbusmenu}
+       member={GetAll,GetLayout}
+       peer=(name=@{busname}, label="@{pp_dbusmenu}"),
+
+  include if exists <abstractions/bus/session/com.canonical.AppMenu.Registrar.d>
+
+# vim:syntax=apparmor

@@ -7,18 +7,20 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{exec_path} = @{bin}/gnome-software
-profile gnome-software @{exec_path} {
+profile gnome-software @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/base>
   include <abstractions/accounts-observe>
   include <abstractions/bus-system>
-  include <abstractions/bus/org.freedesktop.NetworkManager>
-  include <abstractions/bus/org.gnome.Shell.SearchProvider2>
+  include <abstractions/bus/session/org.gnome.Shell.SearchProvider2>
+  include <abstractions/bus/system/org.freedesktop.locale1>
+  include <abstractions/bus/system/org.freedesktop.PolicyKit1>
   include <abstractions/common/gnome>
   include <abstractions/fontconfig-cache-write>
   include <abstractions/nameservice-strict>
-  include <abstractions/notifications>
+  include <abstractions/network-manager-observe>
   include <abstractions/p11-kit>
   include <abstractions/ssl_certs>
+  include <abstractions/upower-observe>
 
   network inet dgram,
   network inet6 dgram,
@@ -32,14 +34,20 @@ profile gnome-software @{exec_path} {
   signal send set=kill peer=fbwrap,
 
   #aa:dbus own bus=session name=org.freedesktop.PackageKit
-  #aa:dbus own bus=session name=org.gnome.Software interface+=org.freedesktop.Application
+  #aa:dbus own bus=session name=org.gnome.Software
 
-  #aa:dbus talk bus=system name=org.freedesktop.PackageKit path=/@{int}_@{hex8} label="@{p_packagekitd}"
+  #aa:dbus talk bus=system name=org.freedesktop.fwupd path=/ label=fwupd
+  #aa:dbus talk bus=system name=org.freedesktop.PackageKit path=/{,**} label="@{p_packagekitd}"
 
   dbus receive bus=system path=/org/freedesktop/PolicyKit1/Authority
        interface=org.freedesktop.PolicyKit1.Authority
        member=Changed
        peer=(name=@{busname}, label=polkitd),
+
+  dbus send bus=system path=/org/freedesktop/Flatpak/SystemHelper
+       interface=org.freedesktop.Flatpak.SystemHelper
+       member=DeployAppstream
+       peer=(label=flatpak-system-helper),
 
   @{exec_path} mr,
 
@@ -109,6 +117,8 @@ profile gnome-software @{exec_path} {
   owner @{user_share_dirs}/flatpak/repo/ rw,
   owner @{user_share_dirs}/flatpak/repo/** rwl,
 
+  owner @{user_share_dirs}/gvfs-metadata/* r,
+
   owner @{tmp}/#@{int} rw,
   owner @{tmp}/ostree-gpg-@{rand6}/ rw,
   owner @{tmp}/ostree-gpg-@{rand6}/** rwkl -> /tmp/ostree-gpg-@{rand6}/**,
@@ -139,8 +149,6 @@ profile gnome-software @{exec_path} {
   owner @{PROC}/@{pid}/fdinfo/@{int} r,
 
   /dev/fuse rw,
-
-  deny owner @{user_share_dirs}/gvfs-metadata/* r,
 
   profile gpg {
     include <abstractions/base>
@@ -177,6 +185,9 @@ profile gnome-software @{exec_path} {
     include <abstractions/app/fusermount>
 
     capability setuid,
+
+    unix (send receive) type=stream    peer=(label=gnome-software),
+    unix (send receive) type=seqpacket peer=(label=flatpak-system-helper),
 
     mount fstype=fuse.revokefs-fuse options=(rw, nosuid, nodev) -> /var/tmp/flatpak-cache-*/*/,
     umount /var/tmp/flatpak-cache-*/*/,

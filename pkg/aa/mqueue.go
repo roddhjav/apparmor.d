@@ -53,7 +53,7 @@ func newMqueue(q Qualifier, rule rule) (Rule, error) {
 		Type:      rule.GetValuesAsString("type"),
 		Label:     rule.GetValuesAsString("label"),
 		Name:      name,
-	}, nil
+	}, rule.ValidateMapKeys([]string{"type", "label"})
 }
 
 func newMqueueFromLog(log map[string]string) Rule {

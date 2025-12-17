@@ -7,17 +7,23 @@
 
   abi <abi/4.0>,
 
+  # Allow listing bus names to check for screen saver presence and implementation
+  dbus send bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member=ListNames
+       peer=(name=org.freedesktop.DBus, label="@{p_dbus_session}"),
+
   # Gnome Session, not using bus/session/org.gnome.SessionManager as it allows
   # full session management
   dbus send bus=session path=/org/gnome/SessionManager
        interface=org.gnome.SessionManager
        member={Inhibit,Uninhibit}
-       peer=(name="@{busname}", label="{gnome-session-binary,gnome-session-service}"),
+       peer=(name=@{busname}, label="@{p_gnome_session}"),
 
   dbus send bus=session path=/ScreenSaver
        interface=org.gnome.ScreenSaver
        member=SimulateUserActivity
-       peer=(name="@{busname}", label="{gnome-session-binary,gnome-session-service}"),
+       peer=(name=@{busname}, label="@{p_gnome_session}"),
 
   # Generic freedesktop, not using bus/session/org.freedesktop.ScreenSaver as
   # it allows too much
@@ -30,6 +36,24 @@
        interface=org.{freedesktop,gnome}.ScreenSaver
        member={Inhibit,UnInhibit,SimulateUserActivity}
        peer=(name=@{busname}, label=gjs),
+
+  dbus send bus=system path=/org/freedesktop/login1
+       interface=org.freedesktop.login1.Manager
+       member=Inhibit
+       peer=(name=org.freedesktop.login1, label=systemd-logind),
+
+  # Login session manager
+  dbus send bus=system path=/org/freedesktop/login1
+       interface=org.freedesktop.login1.Manager
+       member=Inhibit
+       peer=(name=org.freedesktop.login1, label="@{p_systemd_logind}"),
+
+  # Receive shutdown & sleep notifications
+
+  dbus receive bus=system path=/org/freedesktop/login1
+       interface=org.freedesktop.login1.Manager
+       member={PrepareForShutdown,PrepareForShutdownWithMetadata}
+       peer=(name="{@{busname},org.freedesktop.login1}", label="@{p_systemd_logind}"),
 
   include if exists <abstractions/screen-inhibit.d>
 

@@ -4,12 +4,39 @@
 
   abi <abi/4.0>,
 
-  #aa:dbus common bus=system name=fi.w1.wpa_supplicant1 label=wpa-supplicant
+  # DBus.Properties: read properties from the interface
+
+  dbus send bus=system path=/fi/w1/wpa_supplicant1
+       interface=org.freedesktop.DBus.Properties
+       member={Get,GetAll}
+       peer=(name=@{busname}, label=wpa-supplicant),
 
   dbus send bus=system path=/fi/w1/wpa_supplicant1/Interfaces/@{int}
        interface=org.freedesktop.DBus.Properties
-       member=Set
+       member={Get,GetAll}
        peer=(name=@{busname}, label=wpa-supplicant),
+
+
+  # DBus.Properties: receive property changed events
+
+  dbus receive bus=system path=/fi/w1/wpa_supplicant1
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged
+       peer=(name=@{busname}, label=wpa-supplicant),
+
+  dbus receive bus=system path=/fi/w1/wpa_supplicant1/Interfaces/@{int}
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged
+       peer=(name=@{busname}, label=wpa-supplicant),
+
+  # wpa_supplicant1: allow clients to enumerate sources
+
+  dbus receive bus=system path=/fi/w1/wpa_supplicant1
+       interface=fi.w1.wpa_supplicant1
+       member={InterfaceAdded,InterfaceRemoved}
+       peer=(name=@{busname}, label=wpa-supplicant),
+
+  # wpa_supplicant1.interface
 
   dbus send bus=system path=/fi/w1/wpa_supplicant1
        interface=fi.w1.wpa_supplicant1.Interface
@@ -28,12 +55,7 @@
 
   dbus receive bus=system path=/fi/w1/wpa_supplicant1/Interfaces/@{int}
        interface=fi.w1.wpa_supplicant1.Interface
-       member={BSSAdded,BSSRemoved,NetworkAdded,NetworkRemoved,NetworkSelected,ScanDone,PropertiesChanged}
-       peer=(name=@{busname}, label=wpa-supplicant),
-
-  dbus receive bus=system path=/fi/w1/wpa_supplicant1
-       interface=fi.w1.wpa_supplicant1
-       member=InterfaceRemoved
+       member={BSSAdded,BSSRemoved,NetworkAdded,NetworkRemoved,NetworkSelected,ScanDone}
        peer=(name=@{busname}, label=wpa-supplicant),
 
   include if exists <abstractions/bus/system/fi.w1.wpa_supplicant1.d>

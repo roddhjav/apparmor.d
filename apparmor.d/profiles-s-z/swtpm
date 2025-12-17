@@ -9,23 +9,42 @@ include <tunables/global>
 @{exec_path} = @{bin}/swtpm
 profile swtpm @{exec_path} {
   include <abstractions/base>
+  include <abstractions/nameservice-strict>
 
-  signal (receive) set=(term) peer=libvirtd,
+  audit capability chown,
+  audit capability dac_override,
+  audit capability dac_read_search,
+  audit capability fowner,
+  audit capability fsetid,
+  audit capability setgid,
+  audit capability setuid,
+  audit capability sys_admin,
+
+  network inet stream,
+  network inet6 stream,
+
+  signal receive set=term peer=libvirtd,
+
+  unix (send receive) type=stream peer=(label=swtpm_setup),
+  unix (send receive) type=stream peer=(label=libvirt-*),
 
   @{exec_path} mr,
 
-  /var/log/swtpm/libvirt/qemu/*-swtpm.log  w,
+  owner /var/lib/libvirt/swtpm/{,**} rwk,
+  owner /var/lib/swtpm/{,**} rwk,
+  owner /var/log/swtpm/libvirt/qemu/*-swtpm.log rw,
 
-  owner /var/lib/libvirt/swtpm/@{uuid}/tpm2/.lock wk,
-  owner /var/lib/libvirt/swtpm/@{uuid}/tpm2/* rw,
+        @{run}/libvirt/qemu/swtpm/*.pid rwk,
+        @{run}/libvirt/qemu/swtpm/*.sock rwk,
+  owner @{run}/swtpm/sock rw,
+  owner @{run}/user/@{uid}/libvirt/qemu/run/swtpm/*.pid rwk,
+  owner @{run}/user/@{uid}/libvirt/qemu/run/swtpm/*.sock rwk,
 
-  /tmp/.swtpm_setup.pidfile.* rw,
+  /tmp/.swtpm_setup.pidfile.@{rand6} rw,
   /tmp/@{int}/.lock rwk,
-  /tmp/@{int}/TMP* rw,
   /tmp/@{int}/vtpm.sock rw,
 
-  @{run}/libvirt/qemu/swtpm/*.sock w,
-  @{run}/libvirt/qemu/swtpm/*.pid w,
+  owner /dev/vtpmx rw,
 
   include if exists <local/swtpm>
 }

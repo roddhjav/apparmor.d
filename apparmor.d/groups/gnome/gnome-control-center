@@ -11,15 +11,14 @@ profile gnome-control-center @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/audio-client>
   include <abstractions/avahi-observe>
-  include <abstractions/bus-session>
   include <abstractions/bus-system>
-  include <abstractions/bus/org.freedesktop.portal.Desktop>
   include <abstractions/camera>
   include <abstractions/cups-client>
   include <abstractions/dconf-write>
   include <abstractions/gnome-strict>
   include <abstractions/graphics>
-  include <abstractions/gstreamer>
+  include <abstractions/gstreamer-registry>
+  include <abstractions/ibus-strict>
   include <abstractions/media-control>
   include <abstractions/nameservice-strict>
   include <abstractions/p11-kit>
@@ -38,19 +37,19 @@ profile gnome-control-center @{exec_path} flags=(attach_disconnected) {
   #aa:dbus own bus=session name=org.gnome.Settings
   #aa:dbus own bus=session name=org.bluez.obex.Agent1
 
-  #aa:dbus talk bus=session name=org.bluez.AgentManager1 label=bluetoothd
   #aa:dbus talk bus=session name=org.bluez.obex label=obexd
   #aa:dbus talk bus=session name=org.freedesktop.impl.portal.PermissionStore label=xdg-permission-store
   #aa:dbus talk bus=session name=org.gnome.Identity label=goa-identity-service
   #aa:dbus talk bus=session name=org.gnome.Mutter label=gnome-shell
   #aa:dbus talk bus=session name=org.gnome.OnlineAccounts label=goa-daemon
-  #aa:dbus talk bus=session name=org.gnome.SessionManager label="{gnome-session-binary,gnome-session-service}"
+  #aa:dbus talk bus=session name=org.gnome.SessionManager label="@{p_gnome_session}"
   #aa:dbus talk bus=session name=org.gnome.SettingsDaemon.* label="gsd-*"
   #aa:dbus talk bus=session name=org.gnome.Shell label=gnome-shell
 
   #aa:dbus talk bus=system name=com.ubuntu.WhoopsiePreferences label=whoopsie-preferences
   #aa:dbus talk bus=system name=net.hadess.SwitcherooControl label=switcheroo-control
   #aa:dbus talk bus=system name=net.reactivated.Fprint.Manager label="@{p_fprintd}"
+  #aa:dbus talk bus=system name=org.bluez label=bluetoothd
   #aa:dbus talk bus=system name=org.freedesktop.Accounts label="@{p_accounts_daemon}"
   #aa:dbus talk bus=system name=org.freedesktop.bolt1 label=boltd
   #aa:dbus talk bus=system name=org.freedesktop.ColorManager label=colord
@@ -67,6 +66,11 @@ profile gnome-control-center @{exec_path} flags=(attach_disconnected) {
   dbus send bus=system path=/org/freedesktop
        interface=org.freedesktop.DBus.ObjectManager
        member=GetManagedObjects
+       peer=(name=@{busname}, label=NetworkManager),
+
+  dbus receive bus=system path=/org/freedesktop
+       interface=org.freedesktop.DBus.ObjectManager
+       member={InterfacesAdded,InterfacesRemoved}
        peer=(name=@{busname}, label=NetworkManager),
 
   @{exec_path} mr,
@@ -94,9 +98,10 @@ profile gnome-control-center @{exec_path} flags=(attach_disconnected) {
   /usr/share/language-tools/language2locale      rix,
   /usr/share/language-tools/language-options    rPUx,
 
+  @{gstreamer_path}                               Cx -> gstreamer,
   @{open_path}                                   rPx -> child-open-any,
 
-  /snap/*/@{int}/**.png r,
+  /snap/*/@{int}/**.@{icon_ext} r,
   /usr/share/backgrounds/{,**} r,
   /usr/share/cups/data/testprint r,
   /usr/share/firefox{,-esr}/browser/chrome/icons/{,**} r,
@@ -142,7 +147,8 @@ profile gnome-control-center @{exec_path} flags=(attach_disconnected) {
   owner @{user_config_dirs}/mimeapps.list.@{rand6} rw,
   owner @{user_config_dirs}/rygel.conf{,.@{rand6}} rw,
 
-  owner @{user_games_dirs}/**.png r,
+        @{system_games_dirs}/**.@{icon_ext} r,
+  owner @{user_games_dirs}/**.@{icon_ext} r,
 
   owner @{user_share_dirs}/backgrounds/{,**} rw,
   owner @{user_share_dirs}/gnome-remote-desktop/ w,
@@ -214,6 +220,13 @@ profile gnome-control-center @{exec_path} flags=(attach_disconnected) {
     include <abstractions/app/pkexec>
 
     include if exists <local/gnome-control-center_pkexec>
+  }
+
+  profile gstreamer {
+    include <abstractions/base>
+    include <abstractions/gstreamer>
+
+    include if exists <local/gnome-control-center_gstreamer>
   }
 
   include if exists <local/gnome-control-center>
