@@ -21,7 +21,7 @@ var (
 // It panics if an error occurs. It removes the last comment line.
 func mustReadProfileFile(path *paths.Path) string {
 	res := strings.Split(path.MustReadFileAsString(), "\n")
-	return strings.Join(res[:len(res)-2], "\n")
+	return strings.Join(res[:len(res)-2], "\n") + "\n"
 }
 
 func TestAppArmorProfileFile_String(t *testing.T) {
