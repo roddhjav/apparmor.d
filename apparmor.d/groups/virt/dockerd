@@ -76,6 +76,7 @@ profile dockerd @{exec_path} flags=(attach_disconnected) {
   @{sbin}/runc                   rUx,
   @{bin}/runc                    rUx, #aa:lint ignore=sbin
   @{bin}/unpigz                  rix,
+  @{sbin}/nft                    rCx -> nft,
   @{sbin}/xtables-nft-multi      rCx -> nft,
   @{sbin}/xtables-legacy-multi   rCx -> nft,
 
@@ -148,14 +149,17 @@ profile dockerd @{exec_path} flags=(attach_disconnected) {
     network inet6 raw,
     network netlink raw,
 
+    @{sbin}/nft                   rix,
     @{sbin}/xtables-nft-multi     rix,
     @{sbin}/xtables-legacy-multi  rix,
     @{bin}/kmod                   rPx -> dockerd//kmod,
 
-    @{PROC}/@{pid}/net/ip{,6}_tables_names r,
-    @{PROC}/sys/kernel/modprobe r,
+    /usr/share/iproute2/* r,
 
     @{run}/xtables.lock rwk,
+
+    @{PROC}/@{pid}/net/ip{,6}_tables_names r,
+    @{PROC}/sys/kernel/modprobe r,
 
     include if exists <local/dockerd_nft>
   }
