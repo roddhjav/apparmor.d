@@ -1,0 +1,43 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{share_dirs} = @{user_share_dirs}/umu
+@{cache_dirs} = @{user_cache_dirs}/umu
+@{runtime_dirs} = @{share_dirs}/steamrt3/
+@{wineprefix_dirs} = @{HOME}/Games/umu/@{int}
+
+@{steam_share_dirs} = @{user_share_dirs}/Steam @{HOME}/.steam/debian-installation
+@{steam_lib_dirs} = @{steam_share_dirs}/ubuntu@{int2}_{32,64}
+
+@{exec_path} = @{runtime_dirs}/pressure-vessel/@{lib}/steam-runtime-tools-@{int}/srt-bwrap
+profile umu-bwrap flags=(attach_disconnected,mediate_deleted) {
+  include <abstractions/base>
+  include <abstractions/app/umu>
+  include <abstractions/bwrap>
+
+  capability dac_override,
+  capability dac_read_search,
+
+  @{exec_path} mr,
+
+  @{sh_path}   rix,
+  @{bin}/sed    ix,
+  @{bin}/tail   ix,
+  @{bin}/true   ix,
+  @{bin}/uname  ix,
+
+  @{lib}/pressure-vessel/from-host/libexec/steam-runtime-tools-@{d}/pv-adverb Px -> umu-bwrap//&umu-game,
+
+  /bindfile@{rand6} rw,
+
+  owner @{tmp}/#@{int} rw,
+
+  include if exists <local/umu-bwrap>
+}
+
+# vim:syntax=apparmor
