@@ -106,7 +106,7 @@ func TestAppArmorProfileFile_String(t *testing.T) {
 					},
 				}},
 			},
-			want: mustReadProfileFile(testData.Join("string.aa")),
+			want: testData.Join("string.aa").MustReadFileAsString(),
 		},
 	}
 	for _, tt := range tests {
