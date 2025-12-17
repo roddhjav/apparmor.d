@@ -112,7 +112,7 @@ variable "DM" {
       img_checksum = "https://cloud-images.ubuntu.com/questing/current/SHA256SUMS"
     },
     "ubuntu26.04" : {
-      img_url      = "https://cloud-images.ubuntu.com/resolute/current/questing-server-cloudimg-amd64.img"
+      img_url      = "https://cloud-images.ubuntu.com/resolute/current/resolute-server-cloudimg-amd64.img"
       img_checksum = "https://cloud-images.ubuntu.com/resolute/current/SHA256SUMS"
     },
     "opensuse" : {
