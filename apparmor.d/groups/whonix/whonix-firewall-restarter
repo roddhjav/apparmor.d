@@ -10,7 +10,6 @@ include <tunables/global>
 profile whonix-firewall-restarter @{exec_path} {
   include <abstractions/base>
   include <abstractions/consoles>
-  include <abstractions/common/systemd>
   include <abstractions/nameservice-strict>
 
   capability chown,
@@ -27,18 +26,25 @@ profile whonix-firewall-restarter @{exec_path} {
   @{bin}/mkfifo             rix,
   @{bin}/mktemp             rix,
   @{bin}/rm                 rix,
-  @{bin}/systemctl          rix,
+  @{bin}/systemctl          rCx -> systemctl,
 
   /etc/machine-id r,
-
-  /{run,var}/log/journal/ r,
-  /{run,var}/log/journal/@{hex32}/ r,
-  /{run,var}/log/journal/@{hex32}/*.journal* r,
 
   owner /tmp/tmp.@{rand10} rw,
 
         @{run}/sdwdate/{,*} rw,
   owner @{run}/updatesproxycheck/{,*} rw,
+
+  profile systemctl {
+    include <abstractions/base>
+    include <abstractions/app/systemctl>
+
+    /{run,var}/log/journal/ r,
+    /{run,var}/log/journal/@{hex32}/ r,
+    /{run,var}/log/journal/@{hex32}/*.journal* r,
+
+    include if exists <local/whonix-firewall-restarter_systemctl>
+  }
 
   include if exists <local/whonix-firewall-restarter>
 }
