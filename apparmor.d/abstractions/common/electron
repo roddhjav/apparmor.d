@@ -31,6 +31,7 @@
   @{bin}/electron rix,
   @{bin}/electron@{int} rix,
   @{lib}/electron@{int}/{,**} r,
+  @{lib}/electron@{int}/chrome_crashpad_handler Cx -> crashpad_handler,
   @{lib}/electron@{int}/electron  rix,
 
   @{lib_dirs}/{,**} r,
@@ -38,6 +39,7 @@
   @{lib_dirs}/{,resources/}app.asar.unpacked/node_modules/**.node mr,
   @{lib_dirs}/{,resources/}app.asar.unpacked/node_modules/**.so mr,
   @{lib_dirs}/{,resources/}app.asar.unpacked/node_modules/**.so.@{int} mr,
+  @{lib_dirs}/chrome_crashpad_handler Cx -> crashpad_handler,
 
   /etc/@{name}/{,**} r,
 
@@ -48,6 +50,8 @@
   owner @{cache_dirs}/** rwlk -> @{cache_dirs}/**,
 
   owner @{user_config_dirs}/electron-flags.conf r,
+
+  @{att}@{run}/systemd/inhibit/@{int}.ref rw,
 
         @{sys}/fs/cgroup/user.slice/cpu.max r,
         @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/cpu.max r,
@@ -91,6 +95,19 @@
 
   # This allows raising the OOM score of other processes owned by the user.
   deny owner @{PROC}/@{pid}/oom_score_adj w,
+
+  profile crashpad_handler flags=(attach_disconnected) {
+    include <abstractions/base>
+
+    unix (send receive) type=seqpacket peer=(label=@{profile_name}),
+
+    @{lib}/electron@{int}/chrome_crashpad_handler mr,
+    @{lib_dirs}/chrome_crashpad_handler mr,
+
+    owner @{config_dirs}/Crashpad/{,**} rw,
+
+    include if exists <abstractions/common/electron_crashpad_handler.d>
+  }
 
   include if exists <abstractions/common/electron.d>
 
