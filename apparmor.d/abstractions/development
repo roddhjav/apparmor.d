@@ -1,0 +1,73 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+# NEEDS-VARIABLE: devtools
+
+# Allows access to various development tools such as compilers and, build tools etc.
+
+  abi <abi/4.0>,
+
+  include <abstractions/devtools>
+  include <abstractions/golang-strict>
+  include <abstractions/java>
+  include <abstractions/path>
+  include <abstractions/perl>
+  include <abstractions/python>
+
+  @{bin}/**                     ix,
+  @{sbin}/**                    ix,
+  @{HOME}/**                    ix,
+  @{lib}/**                     ix,
+  /opt/*/**                     ix,
+  /usr/local/bin/**             ix,
+  /usr/local/lib/**             ix,
+  /usr/share/**                 ix,
+  @{user_bin_dirs}/**           ix,
+
+  @{pager_path}                 Px -> child-pager,
+  @{bin}/lsb_release            Px,
+
+  / r,
+  /usr/{,**} r,
+  /opt/{,**} r,
+  @{user_bin_dirs}/{,**} r,
+
+  /etc/ r,
+  /etc/*@{devtools}* r,
+  /etc/*@{devtools}*/{,**} r,
+  /etc/debuginfod/{,**} r,
+
+  owner @{HOME}/.local/ r,
+  owner @{user_lib_dirs}/ r,
+
+  owner @{tmp}/.git_vtag_tmp@{rand6} rw,       # For git log --show-signature
+  owner @{tmp}/cc@{rand6}* rw,
+  owner @{tmp}/GMfifo@{int} rw,
+  owner @{tmp}/tmp.@{rand10} rw,
+  owner @{tmp}/*tests*/ rw,
+  owner @{tmp}/*tests*/** rwlk,
+  owner @{tmp}/*tests*/** mix,
+
+  # Allow reading CPU cgroup limits
+        @{sys}/fs/cgroup/user.slice/cpu.max r,
+        @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/cpu.max r,
+        @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/cpu.max r,
+  owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/cpu.max r,
+
+  # Per man(5) proc, the kernel enforces that a thread may only modify its comm
+  # value or those in its thread group.
+  owner @{PROC}/@{pid}/task/@{tid}/comm rw,
+
+  # Provide statistical information about our own processes/threads
+  owner @{PROC}/@{pid}/stat r,
+  owner @{PROC}/@{pid}/task/ r,
+  owner @{PROC}/@{pid}/task/@{tid}/stat r,
+
+  # Allow listing file descriptors for resource monitoring
+  owner @{PROC}/@{pid}/fd/ r,
+
+  owner @{PROC}/@{pid}/fd/@{int} rw,
+
+  include if exists <abstractions/development.d>
+
+# vim:syntax=apparmor
