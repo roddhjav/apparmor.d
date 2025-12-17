@@ -181,6 +181,8 @@ profile pacman @{exec_path} flags=(attach_disconnected) {
     signal send set=(cont term) peer=systemd-tty-ask-password-agent,
     signal receive set=(term winch) peer=makepkg//sudo,
 
+    unix (send receive) type=stream peer=(label=pacman),
+
     @{pager_path}      rPx -> child-pager,
     @{bin}/systemd-tty-ask-password-agent rPx,
 
@@ -204,10 +206,9 @@ profile pacman @{exec_path} flags=(attach_disconnected) {
     include <abstractions/bus-system>
     include <abstractions/bus/system/org.freedesktop.PackageKit>
 
-    @{bin}/gdbus rix,
+    unix (send receive) type=stream peer=(label=pacman),
 
-    # Inherit Silencer
-    deny unix type=stream peer=(label=pacman),
+    @{bin}/gdbus rix,
 
     include if exists <local/pacman_bus>
   }
@@ -220,6 +221,8 @@ profile pacman @{exec_path} flags=(attach_disconnected) {
     capability kill,
 
     signal send,
+
+    unix (send receive) type=stream peer=(label=pacman),
 
     @{bin}/killall mr,
     @{bin}/pkill mr,
@@ -238,6 +241,8 @@ profile pacman @{exec_path} flags=(attach_disconnected) {
     include <abstractions/base>
     include <abstractions/consoles>
 
+    unix (send receive) type=stream peer=(label=pacman),
+
     @{sh_path}              rix,
     @{sbin}/ldconfig       mrix,
 
@@ -253,9 +258,6 @@ profile pacman @{exec_path} flags=(attach_disconnected) {
 
           /var/cache/ldconfig/ rw,
     owner /var/cache/ldconfig/aux-cache* rw,
-
-    # Inherit Silencer
-    deny unix type=stream peer=(label=pacman),
 
     include if exists <local/pacman_ldconfig>
   }
