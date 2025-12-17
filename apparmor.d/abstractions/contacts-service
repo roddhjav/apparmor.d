@@ -1,0 +1,123 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2018 Canonical Ltd
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Allow access to Evolution Data Service for contacts
+
+  abi <abi/4.0>,
+
+  # DBus.Properties: read properties from the interface
+
+  dbus send bus=session path=/org/gnome/evolution/dataserver/SourceManager{,/**}
+       interface=org.freedesktop.DBus.Properties
+       member={Get,GetAll}
+       peer=(label=evolution-source-registry),
+
+  dbus send bus=session path=/org/gnome/evolution/dataserver/AddressBook{,/**}
+       interface=org.freedesktop.DBus.Properties
+       member={Get,GetAll}
+       peer=(label=evolution-addressbook-factory),
+
+  dbus send bus=session path=/org/gnome/evolution/dataserver/AddressBookFactory
+       interface=org.freedesktop.DBus.Properties
+       member={Get,GetAll}
+       peer=(label=evolution-addressbook-factory),
+
+  dbus send bus=session path=/org/gnome/evolution/dataserver/AddressBookCursor{,/**}
+       interface=org.freedesktop.DBus.Properties
+       member={Get,GetAll}
+       peer=(label=evolution-addressbook-factory),
+
+  dbus send bus=session path=/org/gnome/evolution/dataserver/AddressBookView{,/**}
+       interface=org.freedesktop.DBus.Properties
+       member={Get,GetAll}
+       peer=(label=evolution-addressbook-factory),
+
+  dbus send bus=session path=/org/gnome/evolution/dataserver/Subprocess{,/**}
+       interface=org.freedesktop.DBus.Properties
+       member={Get,GetAll}
+       peer=(label=evolution-addressbook-factory),
+
+  # DBus.Properties: receive property changed events
+
+  # DBus.ObjectManager: allow clients to enumerate sources
+
+  dbus send bus=session path=/org/gnome/evolution/dataserver{,/**}
+       interface=org.freedesktop.DBus.ObjectManager
+       member=GetManagedObjects
+       peer=(label=evolution-source-registry),
+  dbus receive bus=session path=/org/gnome/evolution/dataserver{,/**}
+       interface=org.freedesktop.DBus.ObjectManager
+       member={InterfacesAdded,InterfacesRemoved}
+       peer=(label=evolution-source-registry),
+
+  dbus send bus=session path=/org/gnome/evolution/dataserver{,/**}
+       interface=org.freedesktop.DBus.ObjectManager
+       member=GetManagedObjects
+       peer=(label=evolution-addressbook-factory),
+  dbus receive bus=session path=/org/gnome/evolution/dataserver{,/**}
+       interface=org.freedesktop.DBus.ObjectManager
+       member={InterfacesAdded,InterfacesRemoved}
+       peer=(label=evolution-addressbook-factory),
+
+  # DBus.Introspectable: allow clients to introspect the service
+
+  dbus send bus=session path=/org/gnome/evolution/dataserver/SourceManager{,/**}
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(label=evolution-source-registry),
+
+  dbus send bus=session path=/org/gnome/evolution/dataserver/AddressBook{,/**}
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(label=evolution-addressbook-factory),
+
+  dbus send bus=session path=/org/gnome/evolution/dataserver/AddressBookFactory
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(label=evolution-addressbook-factory),
+
+  dbus send bus=session path=/org/gnome/evolution/dataserver/AddressBookCursor{,/**}
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(label=evolution-addressbook-factory),
+
+  dbus send bus=session path=/org/gnome/evolution/dataserver/AddressBookView{,/**}
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(label=evolution-addressbook-factory),
+
+  # Allow access to methods
+
+  dbus (send receive) bus=session path=/org/gnome/evolution/dataserver/SourceManager
+       interface=org.gnome.evolution.dataserver.SourceManager
+       peer=(label=evolution-source-registry),
+
+  dbus (send receive) bus=session path=/org/gnome/evolution/dataserver/SourceManager{,/**}
+       interface=org.gnome.evolution.dataserver.Source
+       peer=(label=evolution-source-registry),
+
+  dbus (send receive) bus=session path=/org/gnome/evolution/dataserver/SourceManager{,/**}
+       interface=org.gnome.evolution.dataserver.Source.Removable
+       peer=(label=evolution-source-registry),
+
+  dbus (send receive) bus=session path=/org/gnome/evolution/dataserver/{Subprocess,AddressBook}{,/**}
+       interface=org.gnome.evolution.dataserver.AddressBook
+       peer=(label=evolution-addressbook-factory),
+
+  dbus (send receive) bus=session path=/org/gnome/evolution/dataserver/AddressBookFactory
+       interface=org.gnome.evolution.dataserver.AddressBookFactory
+       peer=(label=evolution-addressbook-factory),
+
+  dbus (send receive) bus=session path=/org/gnome/evolution/dataserver/AddressBookCursor{,/**}
+       interface=org.gnome.evolution.dataserver.AddressBookCursor
+       peer=(label=evolution-addressbook-factory),
+
+  dbus (send receive) bus=session path=/org/gnome/evolution/dataserver/AddressBookView{,/**}
+       interface=org.gnome.evolution.dataserver.AddressBookView
+       peer=(label=evolution-addressbook-factory),
+
+  include if exists <abstractions/contacts-service.d>
+
+# vim:syntax=apparmor
