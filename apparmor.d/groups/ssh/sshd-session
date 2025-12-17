@@ -72,6 +72,10 @@ profile sshd-session @{exec_path} flags=(attach_disconnected) {
 
   /var/lib/wtmpdb/ w,
 
+  /var/log/ r,
+  /var/log/wtmp.db rwk,
+  /var/log/wtmp.db-journal rw,
+
   owner @{HOME}/@{XDG_SSH_DIR}/authorized_keys{,.*} r,
 
   owner @{user_cache_dirs}/{,motd*} rw,
@@ -82,12 +86,15 @@ profile sshd-session @{exec_path} flags=(attach_disconnected) {
         @{run}/motd.d/{,*} r,
         @{run}/motd.dynamic rw,
         @{run}/motd.dynamic.new rw,
+        @{run}/nologin r,
+        @{run}/systemd/io.systemd.Login rw,
 
         @{PROC}/1/limits r,
   owner @{PROC}/@{pid}/loginuid rw,
   owner @{PROC}/@{pid}/uid_map r,
 
   /dev/ptmx rw,
+  /dev/pts/@{u16} rw,
 
   #aa:only test
   owner @{tmp}/ssh-@{rand10}/{,agent.@{int}} rw,
