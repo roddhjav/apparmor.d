@@ -186,6 +186,16 @@ declare -A ABS_DEPRECATED=(
     ["gnome"]="gnome-strict"
     ["kde"]="kde-strict"
 )
+declare -A ABS_AUTOMATIC=(
+    ["base-strict"]="base"
+    ["attached/base"]="base"
+    ["attached/consoles"]="consoles"
+    ["attached/nameservice-strict"]="nameservice-strict"
+    ["bus/accessibility/own"]=""
+    ["bus/session/own"]=""
+    ["bus/system/own"]=""
+)
+
 _check_abstractions() {
     _is_enabled abstractions || return 0
 
@@ -198,6 +208,17 @@ _check_abstractions() {
     for absname in "${!ABS_DEPRECATED[@]}"; do
         if [[ "$line" == *"<$ABS/$absname>"* ]]; then
             _err abstractions "$file:$line_number" "deprecated abstraction '<$ABS/$absname>', use '<$ABS/${ABS_DEPRECATED[$absname]}>' instead"
+        fi
+    done
+    for absname in "${!ABS_AUTOMATIC[@]}"; do
+        if [[ "$line" == *"<$ABS/$absname>"* ]]; then
+            msg="the '<$ABS/$absname>' abstraction"
+            if [[ -z "${ABS_AUTOMATIC[$absname]}" ]]; then
+                msg+=" is automatically included when needed and does not need to be used"
+            else
+                msg+=" should not be used directly, use '<$ABS/${ABS_AUTOMATIC[$absname]}>' instead"
+            fi
+            _err abstractions "$file:$line_number" "$msg"
         fi
     done
     if [[ "$line" == *"<$ABS/ubuntu-"*">"* ]]; then
