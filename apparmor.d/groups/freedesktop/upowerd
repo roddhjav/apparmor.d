@@ -10,10 +10,10 @@ include <tunables/global>
 @{exec_path} = @{lib}/{,upower/}upowerd
 profile upowerd @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/bluetooth-observe>
   include <abstractions/bus-system>
-  include <abstractions/bus/system/org.bluez>
   include <abstractions/bus/system/org.freedesktop.login1>
-  include <abstractions/bus/org.freedesktop.PolicyKit1>
+  include <abstractions/bus/system/org.freedesktop.PolicyKit1>
   include <abstractions/devices-usb>
 
   capability net_admin,
@@ -25,8 +25,7 @@ profile upowerd @{exec_path} flags=(attach_disconnected) {
 
   @{exec_path} mr,
 
-  /etc/UPower/ r,
-  /etc/UPower/UPower.conf r,
+  /etc/UPower/{,**} r,
 
   /var/lib/upower/ r,
   /var/lib/upower/history-*.dat{,.*} rw,
@@ -41,10 +40,11 @@ profile upowerd @{exec_path} flags=(attach_disconnected) {
   @{run}/udev/data/+hid:* r,              # For Human Interface Device (mice, controllers, drawing tablets, scanners)
   @{run}/udev/data/+i2c:* r,              # For Inter-Integrated Circuit, low-speed peripherals (sensors, EEPROMs, etc.)
   @{run}/udev/data/+input:input@{int} r,  # for mouse, keyboard, touchpad
+  @{run}/udev/data/+leds:* r,             # Identifies all LEDs (keyboard, mouse, etc.)
   @{run}/udev/data/+pci:* r,              # Identifies all PCI devices (CPU, GPU, Network, Disks, USB, etc.)
   @{run}/udev/data/+platform:* r,         # Identifies onboard devices (laptop/board model, power controllers, thermal sensors)
-  @{run}/udev/data/+serio:* r,            # for serial mice
   @{run}/udev/data/+power_supply:* r,     # For power supply devices (batteries, AC adapters, USB chargers)
+  @{run}/udev/data/+serio:* r,            # for serial mice
   @{run}/udev/data/+sound:card@{int} r,   # for sound card
   @{run}/udev/data/c10:@{int} r,          # for non-serial mice, misc features
   @{run}/udev/data/c13:@{int}  r,         # for /dev/input/*

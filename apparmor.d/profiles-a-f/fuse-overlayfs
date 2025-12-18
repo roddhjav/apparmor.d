@@ -18,14 +18,19 @@ profile fuse-overlayfs @{exec_path} {
   capability setuid,
   capability sys_admin,
 
-  mount fstype=fuse.* options=(rw,nodev,noatime) @{user_share_dirs}/containers/storage/overlay/**/merged/ -> **,
+  unix (send receive) type=stream peer=(label=fusermount),
+
   mount fstype=fuse.overlayfs  options=(rw,nodev,noatime) fuse-overlayfs -> @{user_share_dirs}/containers/storage/overlay/**/merged/,
+  mount fstype=fuse.fuse-overlayfs options=(rw noatime nodev nosuid) fuse-overlayfs -> @{HOME}/**/,
 
   @{exec_path} mr,
 
   @{bin}/mount          rix,
   @{bin}/umount         rix,
+  @{bin}/fusermount{,3}  Px,
 
+  owner @{HOME}/{,**} r,
+  owner @{HOME}/**/ rw,
   owner @{user_share_dirs}/containers/storage/overlay/{,**} rwl,
 
   @{PROC}/sys/kernel/overflowgid r,

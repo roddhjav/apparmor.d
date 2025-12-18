@@ -11,35 +11,27 @@ profile deja-dup-monitor @{exec_path} {
   include <abstractions/base>
   include <abstractions/bus-session>
   include <abstractions/bus-system>
-  include <abstractions/bus/net.hadess.PowerProfiles>
-  include <abstractions/bus/org.freedesktop.portal.Desktop>
+  include <abstractions/bus/session/org.freedesktop.portal.Desktop>
   include <abstractions/bus/session/org.gtk.Private.RemoteVolumeMonitor>
   include <abstractions/bus/session/org.gtk.vfs.Daemon>
   include <abstractions/bus/session/org.gtk.vfs.MountTracker>
   include <abstractions/dconf-write>
   include <abstractions/gschemas>
   include <abstractions/nameservice-strict>
+  include <abstractions/network-manager-observe>
   include <abstractions/notifications>
+  include <abstractions/power-profiles>
+  include <abstractions/upower-observe>
 
   network netlink raw,
 
   #aa:dbus own bus=session name=org.gnome.DejaDup.Monitor
-  #aa:dbus talk bus=session name=org.gnome.DejaDup interface+=org.gtk.Actions label=deja-dup
+  #aa:dbus talk bus=session name=org.gnome.DejaDup label=deja-dup
 
   dbus send bus=session path=/org/gnome/DejaDup
        interface=org.gtk.Actions
        member=Activate
        peer=(name=org.gnome.DejaDup),
-
-  dbus send bus=system path=/org/freedesktop/NetworkManager
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=:*, label=NetworkManager),
-
-  dbus send bus=system path=/org/freedesktop/UPower/PowerProfiles
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=@{busname}, label=power-profiles-daemon),
 
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable

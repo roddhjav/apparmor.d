@@ -10,6 +10,7 @@ include <tunables/global>
 profile ptyxis-agent @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus-session>
+  include <abstractions/bus-system>
   include <abstractions/bus/session/org.gtk.vfs.MountTracker>
   include <abstractions/consoles>
   include <abstractions/dconf-write>
@@ -29,8 +30,13 @@ profile ptyxis-agent @{exec_path} flags=(attach_disconnected) {
 
   @{exec_path} mr,
 
-  @{bin}/podman       Px,
+  @{bin}/podman       PUx,
   @{bin}/systemd-run  Cx -> shell,
+
+  owner @{user_config_dirs}/gnome-xdg-terminals.list rw,
+  owner @{user_config_dirs}/gnome-xdg-terminals.list.@{rand6} rw,
+  owner @{user_config_dirs}/xdg-terminals.list rw,
+  owner @{user_config_dirs}/xdg-terminals.list.@{rand6} rw,
 
   owner @{user_share_dirs}/containers/ w,
   owner @{user_share_dirs}/containers/storage/ w,
@@ -49,14 +55,18 @@ profile ptyxis-agent @{exec_path} flags=(attach_disconnected) {
     unix bind type=stream addr=@@{udbus}/bus/systemd-run/,
 
     @{bin}/systemd-run mr,
+    @{bin}/env ix,
 
     # The shell is not confined on purpose.
     @{bin}/@{shells}   Ux,
 
     # Some CLI program can be launched directly from Gnome Shell
-    @{bin}/htop                 Px,
-    @{bin}/micro               PUx,
-    @{bin}/nvtop                Px,
+    @{lib}/**                     PUx,
+    @{bin}/**                     PUx,
+    /opt/*/**                     PUx,
+    /usr/share/*/**               PUx,
+    /usr/local/bin/**             PUx,
+    /usr/games/**                 PUx,
 
     owner @{run}/user/@{uid}/systemd/private rw,
 

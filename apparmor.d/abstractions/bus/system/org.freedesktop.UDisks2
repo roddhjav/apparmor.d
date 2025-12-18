@@ -1,0 +1,59 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+  abi <abi/4.0>,
+
+  # DBus.Properties: read properties from the interface
+
+  dbus send bus=system path=/
+       interface=org.freedesktop.DBus.Properties
+       member=Get
+       peer=(label=udisksd),
+
+  dbus send bus=system path=/org/freedesktop/UDisks2/Manager
+       interface=org.freedesktop.DBus.Properties
+       member={Get,GetAll}
+       peer=(label=udisksd),
+
+  # DBus.Properties: receive property changed events
+
+  dbus receive bus=system path=/org/freedesktop/UDisks2{,/**}
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged
+       peer=(label=udisksd),
+
+  # DBus.ObjectManager: allow clients to enumerate sources
+
+  dbus send bus=system path=/org/freedesktop/UDisks2
+       interface=org.freedesktop.DBus.ObjectManager
+       member=GetManagedObjects
+       peer=(label=udisksd),
+
+  dbus receive bus=system path=/org/freedesktop/UDisks2
+       interface=org.freedesktop.DBus.ObjectManager
+       member={InterfacesAdded,InterfacesRemoved}
+       peer=(label=udisksd),
+
+  # DBus.Introspectable: allow clients to introspect the service
+
+  dbus send bus=system path=/
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(label=udisksd),
+
+  dbus send bus=system path=/org/freedesktop/UDisks2{,/**}
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(label=udisksd),
+
+  # UDisks2.Job
+
+  dbus receive bus=system path=/org/freedesktop/UDisks2/jobs/@{int}
+       interface=org.freedesktop.UDisks2.Job
+       member=Completed
+       peer=(label=udisksd),
+
+  include if exists <abstractions/bus/system/org.freedesktop.UDisks2.d>
+
+# vim:syntax=apparmor

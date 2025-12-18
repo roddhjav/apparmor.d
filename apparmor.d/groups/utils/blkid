@@ -15,6 +15,8 @@ profile blkid @{exec_path} flags=(attach_disconnected) {
 
   capability sys_rawio,
 
+  unix (send receive) type=stream peer=(label=pacman),
+
   @{exec_path} mr,
 
   /etc/blkid.conf r,
@@ -27,6 +29,8 @@ profile blkid @{exec_path} flags=(attach_disconnected) {
 
   # Image files
   @{user_img_dirs}/{,**} r,
+
+  /var/tmp/mkinitramfs_@{rand6}/cryptroot/crypttab w, # file_inherit
 
   # The standard location of the cache file
   # Without owner here if this tool should be used as a regular user
@@ -43,7 +47,7 @@ profile blkid @{exec_path} flags=(attach_disconnected) {
   /dev/.blkid.tab{,-@{rand6}} rw,
   /dev/blkid.tab.old rwl -> /dev/blkid.tab,
 
-  owner /dev/tty@{int} rw,
+  owner /dev/tty@{u8} rw,
 
   # file_inherit
   deny @{run}/cloud-init/ds-identify.log w,

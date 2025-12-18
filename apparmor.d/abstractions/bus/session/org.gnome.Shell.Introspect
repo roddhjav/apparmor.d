@@ -1,0 +1,35 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+  abi <abi/4.0>,
+
+  # DBus.Properties: read properties from the interface
+
+  dbus send bus=session path=/org/gnome/Shell/Introspect
+       interface=org.freedesktop.DBus.Properties
+       member={Get,GetAll}
+       peer=(name="@{busname},org.gnome.Shell.Introspect", label=gnome-shell),
+
+  # DBus.Properties: receive property changed events
+
+  dbus receive bus=session path=/org/gnome/Shell/Introspect
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged
+       peer=(name="@{busname}", label=gnome-shell),
+
+  # Shell.Introspect
+
+  dbus send bus=session path=/org/gnome/Shell/Introspect
+       interface=org.gnome.Shell.Introspect
+       member=GetRunningApplications
+       peer=(name="@{busname}", label=gnome-shell),
+
+  dbus receive bus=session path=/org/gnome/Shell/Introspect
+       interface=org.gnome.Shell.Introspect
+       member={RunningApplicationsChanged,WindowsChanged}
+       peer=(name="@{busname}", label=gnome-shell),
+
+  include if exists <abstractions/bus/session/org.gnome.Shell.Introspect.d>
+
+# vim:syntax=apparmor

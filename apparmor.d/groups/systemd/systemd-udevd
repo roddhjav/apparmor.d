@@ -35,7 +35,9 @@ profile systemd-udevd @{exec_path} flags=(attach_disconnected) {
   network inet6 dgram,
   network netlink raw,
 
-  unix type=stream addr=@@{udbus}/bus/udevadm/,
+  unix bind type=dgram  addr=@@{udbus},
+  unix bind type=stream addr=@@{udbus}/bus/udevadm/,
+
 
   @{exec_path} mrix,
 
@@ -48,12 +50,13 @@ profile systemd-udevd @{exec_path} flags=(attach_disconnected) {
   @{sbin}/partx                            rix,
   @{bin}/setfacl                           rix,
   @{bin}/sg_inq                            rix,
-  @{bin}/systemd-run                       rix, # TODO: rCx -> run,
+  @{bin}/systemd-run                       rCx -> run,
   @{bin}/unshare                           rix,
   @{sbin}/ethtool                          rix,
   @{sbin}/kpartx                           rix,
 
   @{bin}/ddcutil                           rPx,
+  @{bin}/input-remapper-control           rPUx,
   @{bin}/kmod                              rCx -> kmod,
   @{bin}/nvidia-modprobe                   rPx -> child-modprobe-nvidia,
   @{bin}/snap                              rPx,
@@ -103,11 +106,10 @@ profile systemd-udevd @{exec_path} flags=(attach_disconnected) {
   @{run}/modprobe.d/ r,
   @{run}/systemd/network/ r,
   @{run}/systemd/network/*.link rw,
-  @{run}/systemd/notify rw,
   @{run}/systemd/private rw,
   @{run}/systemd/seats/seat@{int} r,
+  @{run}/u-d-c-card@{int}-is-simpledrm w,
 
-  @{att}@{run}/systemd/notify w,
   @{att}@{run}/udev/control rw,
 
   @{run}/udev/ rw,
@@ -155,6 +157,24 @@ profile systemd-udevd @{exec_path} flags=(attach_disconnected) {
     ptrace read peer=@{p_systemd},
 
     include if exists <local/systemd-udevd_systemctl>
+  }
+
+  profile run flags=(attach_disconnected,complain) {
+    include <abstractions/base>
+    include <abstractions/bus-system>
+
+    capability net_admin,
+
+    unix bind type=stream addr=@@{udbus}/bus/systemd-run/,
+
+    @{bin}/systemd-run  mr,
+    @{sbin}/lvm r,
+
+    @{att}@{run}/systemd/private rw,
+
+    @{PROC}/@{pid}/stat r,
+
+    include if exists <local/systemd-udevd_run>
   }
 
   include if exists <local/systemd-udevd>

@@ -12,11 +12,8 @@ profile kded @{exec_path} {
   include <abstractions/apt> #aa:only apt
   include <abstractions/audio-client>
   include <abstractions/bus-session>
-  include <abstractions/bus-system>
-  include <abstractions/bus/org.freedesktop.ModemManager1>
-  include <abstractions/bus/org.freedesktop.PolicyKit1>
-  include <abstractions/bus/org.freedesktop.UDisks2>
   include <abstractions/bus/system/org.bluez>
+  include <abstractions/bus/system/org.freedesktop.UDisks2>
   include <abstractions/consoles>
   include <abstractions/dconf-write>
   include <abstractions/devices-usb>
@@ -62,8 +59,15 @@ profile kded @{exec_path} {
 
   # Talk with KDE
 
-  #aa:dbus talk bus=system name=org.freedesktop.NetworkManager label=NetworkManager
+  # The strategy with dbus rules in this profile is first to declare all communications
+  # needed on buses and to limit them only to their profiles in apparmor.d. As such,
+  # only dbus directive is used for this. Later, some communications could be
+  # restricted.
+
   #aa:dbus talk bus=system name=org.freedesktop.bolt label=boltd
+  #aa:dbus talk bus=system name=org.freedesktop.ModemManager1 label=ModemManager
+  #aa:dbus talk bus=system name=org.freedesktop.NetworkManager label=NetworkManager
+  #aa:dbus talk bus=system name=org.freedesktop.PolicyKit1 label="@{p_polkitd}"
 
   #aa:dbus talk bus=session name=org.kde.NightColor path=/ColorCorrect label="{kwin_wayland,kwin_x11}"
   #aa:dbus talk bus=session name=org.kde.KGlobalAccel path=/ label="{kglobalacceld,kwin_wayland}"

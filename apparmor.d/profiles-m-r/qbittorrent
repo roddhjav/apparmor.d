@@ -10,9 +10,6 @@ include <tunables/global>
 @{exec_path} = @{bin}/qbittorrent
 profile qbittorrent @{exec_path} {
   include <abstractions/base>
-  include <abstractions/bus-session>
-  include <abstractions/bus-system>
-  include <abstractions/bus/org.kde.StatusNotifierWatcher>
   include <abstractions/consoles>
   include <abstractions/dconf-write>
   include <abstractions/desktop>
@@ -35,33 +32,6 @@ profile qbittorrent @{exec_path} {
   network inet6 stream,
   network netlink dgram,
   network netlink raw,
-
-  dbus send bus=session path=/StatusNotifierItem
-       interface=org.kde.StatusNotifierItem
-       member={NewToolTip,NewIcon}
-       peer=(name=org.freedesktop.DBus),
-
-  dbus receive bus=session path=/StatusNotifierItem
-       interface=org.kde.StatusNotifierItem
-       member=Activate
-       peer=(name=:*),
-
-  dbus receive bus=session path=/{StatusNotifierItem,MenuBar}
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=:*),
-
-  dbus send bus=session path=/MenuBar
-       interface=com.canonical.dbusmenu
-       member=ItemsPropertiesUpdated
-       peer=(name=org.freedesktop.DBus),
-
-  dbus receive bus=session path=/MenuBar
-       interface=com.canonical.dbusmenu
-       member={GetLayout,GetGroupProperties,AboutToShow,AboutToShowGroup,EventGroup,Event}
-       peer=(name=:*),
-
-  dbus bind bus=session name=org.kde.StatusNotifierItem-*,
 
   @{exec_path} mr,
 
@@ -111,7 +81,7 @@ profile qbittorrent @{exec_path} {
   owner @{PROC}/@{pids}/mountinfo r,
   owner @{PROC}/@{pids}/mounts r,
 
-  owner /dev/tty@{int} rw,
+  owner /dev/tty@{u8} rw,
 
   profile python {
     include <abstractions/base>

@@ -225,7 +225,7 @@ var (
 			other:     network1,
 			wCompare:  -7,
 			wMerge:    false,
-			wString:   "network dgram ip=127.0.0.1 port=57007 peer=(ip=127.0.0.53, port=53), # failed af match",
+			wString:   "network send dgram ip=127.0.0.1 port=57007 peer=(ip=127.0.0.53, port=53), # failed af match",
 		},
 		{
 			name:     "mount",
@@ -345,7 +345,7 @@ var (
 			other:    unix1,
 			wCompare: 0,
 			wMerge:   true,
-			wString:  "unix (send receive) type=stream protocol=0 addr=none peer=(label=dbus-daemon, addr=@/tmp/dbus-AaKMpxzC4k),",
+			wString:  "unix (send receive) type=stream peer=(label=dbus-daemon, addr=@/tmp/dbus-AaKMpxzC4k),",
 		},
 		{
 			name:     "dbus",
@@ -397,7 +397,7 @@ var (
 			other:    &File{},
 			wCompare: 0,
 			wMerge:   true,
-			wString:  " ,", // FIXME:
+			wString:  "file,",
 		},
 		{
 			name:      "file-equal",
@@ -460,7 +460,7 @@ var (
 			other:    profile2,
 			wCompare: -4,
 			wMerge:   false,
-			wString:  "profile sudo {\n}",
+			wString:  "profile sudo {\n}\n",
 		},
 		{
 			name:     "hat",

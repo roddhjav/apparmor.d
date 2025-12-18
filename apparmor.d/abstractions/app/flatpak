@@ -27,6 +27,8 @@
 # flatpak, and are therefore different to they host equivalents, as flatpak apps
 # do not have access to the full host filesystem.
 
+# attach_disconnected: tweak the build system to replace attached abstractiosn
+
   abi <abi/4.0>,
 
   include <abstractions/accessibility>
@@ -39,8 +41,9 @@
   include <abstractions/flatpak/platform/org.freedesktop>
 
   # Base app specific rules, they are all included as it is for a generic profile
-  include <abstractions/flatpak/baseapp/org.chromium.Chromium>
   include <abstractions/flatpak/baseapp/com.valvesoftware.Steam>
+  include <abstractions/flatpak/baseapp/org.chromium.Chromium>
+  include <abstractions/flatpak/baseapp/org.mozilla.firefox>
 
   # Flatpak devices '--device='
   include <abstractions/flatpak/devices/all>
@@ -72,21 +75,23 @@
   # System bus: all system dbus interfaces a flatpak app can access
   include <abstractions/avahi-observe>
   include <abstractions/bluetooth-observe>
-  include <abstractions/bus/org.freedesktop.hostname1>
-  include <abstractions/bus/org.freedesktop.UDisks2>
+  include <abstractions/bus/system/org.freedesktop.hostname1>
   include <abstractions/bus/system/org.freedesktop.login1>
   include <abstractions/bus/system/org.freedesktop.systemd1.Manager>
-  include <abstractions/bus/system/org.freedesktop.UPower>
+  include <abstractions/bus/system/org.freedesktop.UDisks2>
   include <abstractions/network-manager-observe>
+  include <abstractions/upower-observe>
 
   capability dac_override,
   capability dac_read_search,
 
   unix type=seqpacket peer=(label=dbus-session),
+  unix type=seqpacket peer=(label=fbwrap),
   unix type=seqpacket peer=(label=flatpak-portal),
   unix type=seqpacket peer=(label=flatpak),
   unix type=seqpacket peer=(label=xdg-dbus-proxy),
   unix type=stream    peer=(label=dbus-session),
+  unix type=stream    peer=(label=fbwrap),
   unix type=stream    peer=(label=flatpak),
   unix type=stream    peer=(label=gnome-keyring-daemon),
   unix type=stream    peer=(label=unconfined),
@@ -120,6 +125,9 @@
   @{sbin}/       r,
   @{sbin}/**   rix,
 
+  # apply_extra
+  /app/extra/** w,
+
         / r,
   owner /.flatpak-info r,
 
@@ -138,8 +146,8 @@
   owner @{HOME}/.var/app/@{appid}/** ix,
 
         @{run}/parent/** mrix,
-        @{run}/parent/usr/.ref rk,
-        @{run}/parent/app/.ref rk,
+        @{run}/parent/usr/.ref k,
+        @{run}/parent/app/.ref k,
 
   owner @{run}/flatpak/app/@{appid}/ r,
   owner @{run}/flatpak/app/@{appid}/** mrwlk -> @{run}/flatpak/app/@{appid}/**,
@@ -152,6 +160,10 @@
   owner @{run}/user/@{uid}/app/@{appid}/ r,
   owner @{run}/user/@{uid}/app/@{appid}/** rwlk -> @{run}/user/@{uid}/app/@{appid}/**,
 
+  owner @{att}@{run}/user/@{uid}/.dbus-proxy/a11y-bus-proxy-@{rand6} rw,
+  owner @{att}@{run}/user/@{uid}/.dbus-proxy/session-bus-proxy-@{rand6} rw,
+  owner @{att}@{run}/user/@{uid}/.dbus-proxy/system-bus-proxy-@{rand6} rw,
+
         @{run}/host/os-release r,
   owner @{run}/host/ r,
   owner @{run}/host/container-manager r,
@@ -159,8 +171,10 @@
   #aa:lint ignore=too-wide
   # Flatpak creates an app-specific private restricted /tmp. As such, we can
   # simply allow full access to /tmp.
-        /tmp/   r,
+        /tmp/ r,
   owner /tmp/** mrwlkix,
+        @{att}/tmp/ r,
+  owner @{att}/tmp/** mrwlkix,
 
   # Show the list of active tty
   @{sys}/devices/virtual/tty/tty@{int}/active r,
@@ -171,6 +185,9 @@
   # Reads of oom_adj and oom_score_adj are safe
   owner @{PROC}/@{pid}/oom_adj r,
   owner @{PROC}/@{pid}/oom_score_adj r,
+
+  # Allow reading of smaps_rollup, which is a summary of the memory use of a process
+  owner @{PROC}/@{pid}/smaps_rollup r,
 
   # Per man(5) proc, the kernel enforces that a thread may only modify its comm
   # value or those in its thread group.
@@ -223,7 +240,7 @@
   owner @{PROC}/@{pid}/task/@{tid}/statm r,
 
   # Allow setting up pseudoterminal via /dev/pts system. This is safe because
-  # the flatpak uses a per-app devpts.
+  # flatpak uses a per-app devpts.
   /dev/ptmx rw,
 
   include if exists <abstractions/app/flatpak.d>

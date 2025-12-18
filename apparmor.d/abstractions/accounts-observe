@@ -8,25 +8,50 @@
 
   abi <abi/4.0>,
 
+  # DBus.Properties: read properties from the interface
+
+  dbus send bus=system path=/org/freedesktop/Accounts
+       interface=org.freedesktop.DBus.Properties
+       member={Get,GetAll}
+       peer=(name="{@{busname},org.freedesktop.Accounts}", label="@{p_accounts_daemon}"),
+
   dbus send bus=system path=/org/freedesktop/Accounts/User@{int}
        interface=org.freedesktop.DBus.Properties
        member={Get,GetAll}
        peer=(name="{@{busname},org.freedesktop.Accounts}", label="@{p_accounts_daemon}"),
+
+  # DBus.Properties: receive property changed events
 
   dbus receive bus=system path=/org/freedesktop/Accounts/User@{int}
        interface=org.freedesktop.DBus.Properties
        member=PropertiesChanged
        peer=(name=@{busname}, label="@{p_accounts_daemon}"),
 
+  # DBus.Introspectable: allow clients to introspect the service
+
   dbus send bus=system  path=/org/freedesktop/Accounts
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
        peer=(label="@{p_accounts_daemon}"),
 
+  # org.freedesktop.Accounts
+
   dbus send bus=system path=/org/freedesktop/Accounts
        interface=org.freedesktop.Accounts
        member={FindUserById,FindUserByName}
-       peer=(name=org.freedesktop.Accounts, label="@{p_accounts_daemon}"),
+       peer=(name="{@{busname},org.freedesktop.Accounts}", label="@{p_accounts_daemon}"),
+
+  dbus send bus=system path=/org/freedesktop/Accounts
+       interface=org.freedesktop.Accounts
+       member={ListCachedUsers,GetUsersLanguages}
+       peer=(name=@{busname}, label="@{p_accounts_daemon}"),
+
+  dbus receive bus=system path=/org/freedesktop/Accounts
+       interface=org.freedesktop.Accounts
+       member={UserAdded,UserDeleted}
+       peer=(name=@{busname}, label="@{p_accounts_daemon}"),
+
+  # org.freedesktop.Accounts.User
 
   dbus receive bus=system path=/org/freedesktop/Accounts/User@{int}
        interface=org.freedesktop.Accounts.User

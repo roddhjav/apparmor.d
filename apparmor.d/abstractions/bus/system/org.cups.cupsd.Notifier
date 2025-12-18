@@ -1,0 +1,24 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+  abi <abi/4.0>,
+
+  dbus receive bus=system path=/org/cups/cupsd/Notifier
+       interface=org.cups.cupsd.Notifier
+       member=ServerStarted
+       peer=(name=@{busname}, label=cups-notifier-dbus),
+
+  dbus receive bus=system path=/org/cups/cupsd/Notifier
+       interface=org.cups.cupsd.Notifier
+       member={PrinterDeleted,PrinterStateChanged,PrinterStopped,PrinterAdded,PrinterModified}
+       peer=(name=@{busname}, label=cups-notifier-dbus),
+
+  dbus receive bus=system path=/org/cups/cupsd/Notifier
+       interface=org.cups.cupsd.Notifier
+       member={JobCreated,JobCompleted,JobProgress,JobState}
+       peer=(name=@{busname}, label=cups-notifier-dbus),
+
+  include if exists <abstractions/bus/system/org.cups.cupsd.Notifier.d>
+
+# vim:syntax=apparmor

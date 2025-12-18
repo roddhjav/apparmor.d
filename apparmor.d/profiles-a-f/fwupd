@@ -8,17 +8,18 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{exec_path} = @{lib}/{,fwupd/}fwupd
-profile fwupd @{exec_path} flags=(attach_disconnected,complain) {
+profile fwupd @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/bluetooth-observe>
   include <abstractions/bus-system>
-  include <abstractions/bus/system/org.bluez>
-  include <abstractions/bus/org.freedesktop.ModemManager1>
-  include <abstractions/bus/org.freedesktop.PolicyKit1>
+  include <abstractions/bus/system/org.freedesktop.PolicyKit1>
   include <abstractions/consoles>
   include <abstractions/disks-write>
   include <abstractions/fonts>
   include <abstractions/mime>
+  include <abstractions/modem-manager-observe>
   include <abstractions/nameservice-strict>
+  include <abstractions/network-manager-observe>
   include <abstractions/sqlite>
   include <abstractions/tpm>
 
@@ -57,6 +58,7 @@ profile fwupd @{exec_path} flags=(attach_disconnected,complain) {
   @{bin}/gpgsm       rCx -> gpg,
 
   /usr/share/fwupd/{,**} r,
+  /usr/share/gvfs/remote-volume-monitors/{,**} r,
   /usr/share/hwdata/* r,
   /usr/share/libdrm/*.ids r,
   /usr/share/misc/*.ids r,
@@ -75,8 +77,13 @@ profile fwupd @{exec_path} flags=(attach_disconnected,complain) {
   @{efi}/EFI/*/fwupdx@{int}.efi rw,
   @{lib}/fwupd/efi/fwupdx@{int}.efi{,.signed} r,
 
-  @{MOUNTDIRS}/*/{,@{efi}/} r,
-  @{MOUNTDIRS}/*/{,@{efi}/}EFI/{,**} r,
+  @{MOUNTS}/ r,
+  @{MOUNTS}/@{efi}/{,**} r,
+  @{MOUNTS}/@{efi}/fwupd/efi/fwupdx@{int}.efi{,.signed} r,
+  @{MOUNTS}/**/EFI/**/ r,
+  @{MOUNTS}/**/EFI/*/.goutputstream-@{rand6} rw,
+  @{MOUNTS}/**/EFI/*/fw/fwupd-*.cap{,.*} rw,
+  @{MOUNTS}/**/EFI/*/fwupdx@{int}.efi rw,
 
   owner /var/cache/fwupd/ rw,
   owner /var/cache/fwupd/** rwk,
@@ -98,6 +105,7 @@ profile fwupd @{exec_path} flags=(attach_disconnected,complain) {
   @{sys}/firmware/efi/efivars/Boot@{hex}-@{uuid} rw,
   @{sys}/firmware/efi/efivars/BootNext-@{uuid} rw,
   @{sys}/firmware/efi/efivars/dbx-@{uuid} rw,
+  @{sys}/firmware/efi/efivars/db-@{uuid} rw,
   @{sys}/firmware/efi/efivars/fwupd-* rw,
   @{sys}/firmware/efi/efivars/KEK-@{uuid} rw,
   @{sys}/kernel/security/lockdown r,
@@ -145,6 +153,18 @@ profile fwupd @{exec_path} flags=(attach_disconnected,complain) {
     @{bin}/gpg{,2}    mr,
     @{bin}/gpgconf    mr,
     @{bin}/gpgsm      mr,
+  @{lib}/fwupd/efi/fwupdx@{int}.efi{,.signed} r,
+
+  @{MOUNTS}/ r,
+  @{MOUNTS}/@{efi}/{,**} r,
+  @{MOUNTS}/@{efi}/fwupd/efi/fwupdx@{int}.efi{,.signed} r,
+  @{MOUNTS}/**/EFI/**/ r,
+  @{MOUNTS}/**/EFI/*/.goutputstream-@{rand6} rw,
+  @{MOUNTS}/**/EFI/*/fw/fwupd-*.cap{,.*} rw,
+  @{MOUNTS}/**/EFI/*/fwupdx@{int}.efi rw,
+
+  owner /var/cache/fwupd/ rw,
+  owner /var/cache/fwupd/** rwk,
 
     @{bin}/gpg-agent          rix,
     @{lib}/{,gnupg/}scdaemon  rix,

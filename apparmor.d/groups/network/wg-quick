@@ -18,33 +18,45 @@ profile wg-quick @{exec_path} flags=(attach_disconnected) {
 
   network netlink raw,
 
+  dbus send bus=system path=/org/freedesktop/resolve1
+       interface=org.freedesktop.resolve1.Manager
+       member={SetLinkDNSEx,SetLinkDomains}
+       peer=(name=org.freedesktop.resolve1, label="@{p_systemd_resolved}"),
+
   @{exec_path} mr,
 
   @{sh_path}                rix,
   @{bin}/cat                rix,
   @{bin}/ip                 rPx,
   @{bin}/mv                 rix,
-  @{sbin}/nft               rix,
   @{bin}/readlink           rix,
-  @{sbin}/resolvconf        rPx,
   @{bin}/resolvectl         rPx,
   @{bin}/rm                 rix,
   @{bin}/sort               rix,
   @{bin}/stat               rix,
   @{bin}/sync               rix,
-  @{sbin}/sysctl            rCx -> sysctl,
   @{bin}/wg                 rPx,
+  @{sbin}/nft               rix,
+  @{sbin}/resolvconf        rPx,
+  @{sbin}/sysctl            rCx -> sysctl,
   @{sbin}/xtables-nft-multi rix,
 
+  /usr/share/iproute2/group r,
+  /usr/share/iproute2/rt_realms r,
   /usr/share/terminfo/** r,
 
+  @{etc_rw}/wireguard/{,**} rw,
   /etc/iproute2/group  r,
   /etc/iproute2/rt_realms r,
   /etc/resolvconf/interface-order r,
-  /etc/wireguard/{,**} rw,
 
+  @{sys}/fs/cgroup/user.slice/cpu.max r,
+  @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/cpu.max r,
+  @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/cpu.max r,
+  @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/session.slice/cpu.max r,
   @{sys}/module/wireguard r,
 
+  @{PROC}/@{pid}/cgroup r,
   @{PROC}/@{pid}/net/ip_tables_names r,
 
   profile sysctl flags=(attach_disconnected) {

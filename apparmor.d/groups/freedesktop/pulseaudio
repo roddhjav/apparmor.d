@@ -12,21 +12,19 @@ include <tunables/global>
 profile pulseaudio @{exec_path} {
   include <abstractions/base>
   include <abstractions/audio-server>
-  include <abstractions/bus-session>
-  include <abstractions/bus-system>
-  include <abstractions/bus/org.freedesktop.hostname1>
-  include <abstractions/bus/org.freedesktop.RealtimeKit1>
   include <abstractions/bus/system/org.bluez>
   include <abstractions/bus/system/org.freedesktop.Avahi.Server>
   include <abstractions/bus/system/org.freedesktop.Avahi.ServiceBrowser>
   include <abstractions/bus/system/org.freedesktop.Avahi.ServiceResolver>
+  include <abstractions/bus/system/org.freedesktop.hostname1>
+  include <abstractions/bus/system/org.freedesktop.RealtimeKit1>
   include <abstractions/camera>
   include <abstractions/consoles>
   include <abstractions/dconf-write>
   include <abstractions/desktop>
   include <abstractions/dri>
   include <abstractions/fontconfig-cache-write>
-  include <abstractions/gstreamer>
+  include <abstractions/gstreamer-registry>
   include <abstractions/hosts_access>
   include <abstractions/media-control>
   include <abstractions/nameservice-strict>
@@ -62,6 +60,8 @@ profile pulseaudio @{exec_path} {
   @{lib}/@{multiarch}/pulse/gconf-helper rix,
   @{lib}/pulse-*/modules/*.so mr,
 
+  @{gstreamer_path} Cx -> gstreamer,
+
   /usr/share/ladspa/rdf/{,*} r,
   /usr/share/pulseaudio/{,**} r,
 
@@ -69,16 +69,12 @@ profile pulseaudio @{exec_path} {
 
   / r,
 
-  owner @{desktop_cache_dirs}/gstreamer-1.0/ rw,
-  owner @{desktop_cache_dirs}/gstreamer-1.0/registry.*.bin{,.tmp@{rand6}} rw,
   owner @{desktop_config_dirs}/pulse/{,**} rw,
   owner @{desktop_config_dirs}/pulse/cookie k,
 
   owner @{HOME}/.pulse/{,**} rw,
   owner @{user_config_dirs}/ w,
   owner @{user_config_dirs}/pulse/{,**} rw,
-
-  owner @{user_cache_dirs}/gstreamer-1.0/registry.*.bin r,
 
   owner @{run}/user/@{uid}/ rw,
   owner @{run}/user/@{uid}/pulse/ rw,
@@ -101,7 +97,14 @@ profile pulseaudio @{exec_path} {
   owner @{PROC}/@{pids}/cmdline r,
 
   # file_inherit
-  owner /dev/tty@{int} rw,
+  owner /dev/tty@{u8} rw,
+
+  profile gstreamer {
+    include <abstractions/base>
+    include <abstractions/gstreamer>
+
+    include if exists <local/pulseaudio_gstreamer>
+  }
 
   include if exists <local/pulseaudio>
 }

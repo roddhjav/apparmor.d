@@ -14,6 +14,8 @@ profile pacman-hook-mkinitcpio @{exec_path} flags=(attach_disconnected) {
   capability dac_read_search,
   capability mknod,
 
+  unix (send receive) type=stream peer=(label=pacman),
+
   @{exec_path} mr,
 
   @{sh_path}        rix,
@@ -42,8 +44,15 @@ profile pacman-hook-mkinitcpio @{exec_path} flags=(attach_disconnected) {
   @{efi}/initramfs-*.img rw,
   @{efi}/vmlinuz-* rw,
 
+  @{sys}/fs/cgroup/user.slice/cpu.max r,
+  @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/cpu.max r,
+  @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/cpu.max r,
+  @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/cpu.max r,
+
+  @{PROC}/@{pid}/cgroup r,
+
   /dev/tty rw,
-  owner /dev/pts/@{int} rw,
+  owner /dev/pts/@{u16} rw,
 
   # # Inherit Silencer
   deny network inet6 stream,

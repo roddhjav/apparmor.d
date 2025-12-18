@@ -2,8 +2,13 @@
 # Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
+  # Own a StatusNotifierItem name. It gives ownership on any StatusNotifierItem
+  # names
+
   abi <abi/4.0>,
 
+  #aa:lint ignore=abstractions
+  # Required to own 'org.kde.StatusNotifierItem-@{int}'
   include <abstractions/bus/session/own>
 
   dbus bind bus=session name=org.kde.StatusNotifierItem-@{int},
@@ -27,6 +32,16 @@
        interface=org.kde.StatusNotifierItem
        member={NewAttentionIcon,NewIcon,NewIconThemePath,NewOverlayIcon,NewStatus,NewTitle,NewToolTip}
        peer=(name=org.freedesktop.DBus, label="@{pp_app_indicator}"),
+
+  dbus send bus=session path=/org/ayatana/NotificationItem/*
+       interface=org.kde.StatusNotifierItem
+       member={NewAttentionIcon,NewIcon,NewIconThemePath,NewOverlayIcon,NewStatus,NewTitle,NewToolTip}
+       peer=(name=org.freedesktop.DBus, label="@{pp_app_indicator}"),
+
+  dbus receive bus=session path=/StatusNotifierItem
+       interface=org.kde.StatusNotifierItem
+       member={Activate,ContextMenu,Scroll,SecondaryActivate,ProvideXdgActivationToken,XAyatanaSecondaryActivate}
+       peer=(name=@{busname}, label="@{pp_app_indicator}"),
 
   include if exists <abstractions/bus/session/org.kde.StatusNotifierItem.d>
 

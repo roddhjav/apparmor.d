@@ -85,6 +85,7 @@ profile pacman @{exec_path} flags=(attach_disconnected) {
   /etc/**                                         PUx,
   /usr/share/**                                   PUx,
 
+  priority=-1 @{lib}/**                          PUx,
   @{lib}/ghc-@{version}/bin/ghc-pkg-@{version}    Px,
   @{lib}/systemd/systemd-*                        Px,
   @{lib}/vlc/vlc-cache-gen                        Px,
@@ -108,8 +109,9 @@ profile pacman @{exec_path} flags=(attach_disconnected) {
 
   owner /var/lib/pacman/{,**} rwl,
   owner @{tmp}/alpm_@{rand6}/{,**} rw,
-  owner @{tmp}/checkup-db-@{int}/sync/{,*.db*} rw,
+  owner @{tmp}/arch-update-@{uid}/checkupdates-@{rand}/sync/** w,
   owner @{tmp}/checkup-db-@{int}/db.lck rw,
+  owner @{tmp}/checkup-db-@{int}/sync/{,*.db*} rw,
 
   @{run}/utmp rk,
 
@@ -126,8 +128,8 @@ profile pacman @{exec_path} flags=(attach_disconnected) {
   owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/mounts r,
 
-        /dev/tty@{int} rw,
-  owner /dev/pts/@{int} rw,
+        /dev/tty@{u8} rw,
+  owner /dev/pts/@{u16} rw,
 
   profile gpg {
     include <abstractions/base>
@@ -157,8 +159,8 @@ profile pacman @{exec_path} flags=(attach_disconnected) {
     @{PROC}/@{pid}/fd/ r,
     @{PROC}/@{pid}/task/@{tid}/comm rw,
 
-          /dev/tty@{int} rw,
-    owner /dev/pts/@{int} rw,
+          /dev/tty@{u8} rw,
+    owner /dev/pts/@{u16} rw,
 
     deny @{user_share_dirs}/sddm/* rw,
 
@@ -179,6 +181,8 @@ profile pacman @{exec_path} flags=(attach_disconnected) {
     signal send set=cont peer=child-pager,
     signal send set=(cont term) peer=systemd-tty-ask-password-agent,
     signal receive set=(term winch) peer=makepkg//sudo,
+
+    unix (send receive) type=stream peer=(label=pacman),
 
     @{pager_path}      rPx -> child-pager,
     @{bin}/systemd-tty-ask-password-agent rPx,
@@ -201,6 +205,9 @@ profile pacman @{exec_path} flags=(attach_disconnected) {
     include <abstractions/base>
     include <abstractions/app/bus>
     include <abstractions/bus-system>
+    include <abstractions/bus/system/org.freedesktop.PackageKit>
+
+    unix (send receive) type=stream peer=(label=pacman),
 
     @{bin}/gdbus rix,
 
@@ -212,6 +219,11 @@ profile pacman @{exec_path} flags=(attach_disconnected) {
     include <abstractions/app/pgrep>
 
     capability dac_read_search,
+    capability kill,
+
+    signal send,
+
+    unix (send receive) type=stream peer=(label=pacman),
 
     @{bin}/killall mr,
     @{bin}/pkill mr,
@@ -230,6 +242,10 @@ profile pacman @{exec_path} flags=(attach_disconnected) {
     include <abstractions/base>
     include <abstractions/consoles>
 
+    capability sys_chroot,
+
+    unix (send receive) type=stream peer=(label=pacman),
+
     @{sh_path}              rix,
     @{sbin}/ldconfig       mrix,
 
@@ -239,6 +255,7 @@ profile pacman @{exec_path} flags=(attach_disconnected) {
 
     /opt/cuda/**/@{lib}/ r,
     /opt/cuda/**/@{lib}/@{multiarch}/ r,
+    /opt/cuda/**/@{lib}/**.so* r,
 
     /etc/ld.so.cache rw,
     /etc/ld.so.cache~ rw,

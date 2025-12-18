@@ -20,14 +20,9 @@
   abi <abi/4.0>,
 
   include <abstractions/audio-client>
-  include <abstractions/bus-session>
-  include <abstractions/bus-system>
-  include <abstractions/bus/org.freedesktop.FileManager1>
-  include <abstractions/bus/org.freedesktop.NetworkManager>
-  include <abstractions/bus/org.freedesktop.portal.Desktop>
-  include <abstractions/bus/org.freedesktop.RealtimeKit1>
-  include <abstractions/bus/org.freedesktop.timedate1>
-  include <abstractions/bus/session/org.freedesktop.portal.Settings>
+  include <abstractions/bus/session/org.freedesktop.FileManager1>
+  include <abstractions/bus/system/org.freedesktop.RealtimeKit1>
+  include <abstractions/bus/system/org.freedesktop.timedate1>
   include <abstractions/camera>
   include <abstractions/cups-client>
   include <abstractions/dconf-write>
@@ -36,9 +31,12 @@
   include <abstractions/enchant>
   include <abstractions/fontconfig-cache-read>
   include <abstractions/graphics>
-  include <abstractions/gstreamer>
+  include <abstractions/gstreamer-registry>
+  include <abstractions/mpris>
   include <abstractions/nameservice-strict>
+  include <abstractions/network-manager-observe>
   include <abstractions/pcscd>
+  include <abstractions/power-profiles>
   include <abstractions/screen-inhibit>
   include <abstractions/screensaver>
   include <abstractions/ssl_certs>
@@ -74,6 +72,8 @@
   @{lib_dirs}/minidump-analyzer rPx,
   @{lib_dirs}/pingsender        rPx,
   @{lib_dirs}/plugin-container  rPx,
+
+  @{gstreamer_path}             rCx -> gstreamer,
 
   # Desktop integration
   @{bin}/lsb_release            rPx,
@@ -169,7 +169,7 @@
   owner @{PROC}/@{pid}/uid_map w, # If kernel.unprivileged_userns_clone = 1
 
         /dev/tty rw,
-  owner /dev/tty@{int} rw, # File Inherit
+  owner /dev/tty@{u8} rw, # File Inherit
 
   # Silencer
   deny dbus send bus=system path=/org/freedesktop/hostname1,
@@ -177,6 +177,13 @@
   deny owner @{HOME}/.* r,
   deny owner @{user_share_dirs}/gvfs-metadata/{,*} r,
   deny @{run}/user/@{uid}/gnome-shell-disable-extensions w,
+
+  profile gstreamer {
+    include <abstractions/base>
+    include <abstractions/gstreamer>
+
+    include if exists <local/firefox_gstreamer>
+  }
 
   include if exists <abstractions/app/firefox.d>
 

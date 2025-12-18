@@ -1,0 +1,24 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Allows control over Bluetooth devices such as pairing, connecting,
+# and managing profiles.
+
+  abi <abi/4.0>,
+
+  include <abstractions/bluetooth-observe>
+
+  include <abstractions/bus/system/org.bluez.Device1>
+  include <abstractions/bus/system/org.bluez.GattManager1>
+  include <abstractions/bus/system/org.bluez.Media1>
+  include <abstractions/bus/system/org.bluez.ProfileManager1>
+
+  dbus send bus=system path=/org/bluez/hci@{int}/dev_@{hex2}_@{hex2}_@{hex2}_@{hex2}_@{hex2}_@{hex2}{,/**}
+       interface=org.freedesktop.DBus.Properties
+       member=Set
+       peer=(name=org.bluez, label="@{p_bluetoothd}"),
+
+  include if exists <abstractions/bluetooth-control.d>
+
+# vim:syntax=apparmor

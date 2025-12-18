@@ -1,0 +1,129 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{share_dirs} = @{user_share_dirs}/umu
+@{cache_dirs} = @{user_cache_dirs}/umu
+@{runtime_dirs} = @{share_dirs}/steamrt3/
+@{wineprefix_dirs} = @{HOME}/Games/umu/*/
+
+@{steam_share_dirs} = @{user_share_dirs}/Steam @{HOME}/.steam/debian-installation
+@{steam_lib_dirs} = @{steam_share_dirs}/ubuntu@{int2}_{32,64}
+
+@{exec_path} = @{bin}/umu-run
+profile umu-run @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/audio-client>
+  include <abstractions/bus-session>
+  include <abstractions/consoles>
+  include <abstractions/graphics>
+  include <abstractions/nameservice-strict>
+  include <abstractions/python>
+  include <abstractions/ssl_certs>
+  include <abstractions/vulkan-strict>
+  include <abstractions/wayland>
+
+  network inet dgram,
+  network inet stream,
+  network inet6 dgram,
+  network inet6 stream,
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  @{sh_path}       r,
+  @{bin}/getopt    rix,
+  @{bin}/readlink  rix,
+
+  @{bin}/gcc              rix,
+  @{lib}/gcc/**/collect2  rix,
+
+  @{sbin}/ldconfig             rCx -> &umu-run//ldconfig,
+  @{bin}/bwrap                  Cx -> bwrap,
+  @{ldd_path}                   Cx -> &umu-run//ldd,
+
+             @{runtime_dirs}/umu ix,
+             @{runtime_dirs}/run ix,
+             @{runtime_dirs}/pressure-vessel/bin/** rix,
+             @{runtime_dirs}/pressure-vessel/@{lib}/** rmix,
+  priority=1 @{runtime_dirs}/pressure-vessel/@{lib}/steam-runtime-tools-@{d}/srt-bwrap Px -> umu-bwrap, #aa:only apparmor>=4.1
+
+  /opt/cuda/targets/@{arch}-linux/lib/*.so mr,
+  /opt/cuda/targets/@{arch}-linux/lib/*.so.* mr,
+  /opt/cuda/targets/@{arch}-linux/lib/ r,
+
+              / r,
+        @{lib}/ r,
+  owner @{HOME}/ r,
+
+  owner @{wineprefix_dirs}/ w,
+  owner @{wineprefix_dirs}/** w,
+
+  owner @{steam_lib_dirs}/{,*} rw,
+  owner @{steam_share_dirs}/compatibilitytools.d/{,**} rw,
+
+  owner @{cache_dirs}/ rw,
+  owner @{cache_dirs}/** rwlk -> @{share_dirs}/**,
+
+  owner @{share_dirs}/ rw,
+  owner @{share_dirs}/** rwlk -> @{share_dirs}/**,
+
+  owner @{run}/user/@{uid}/ r,
+
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/mounts r,
+
+  owner /var/tmp/@{word8} rw,
+  owner @{tmp}/@{word8} rw,
+  owner @{tmp}/#@{int} rw,
+  owner @{tmp}/tmp@{word8} rw,
+  owner @{tmp}/tmp@{word8}/ w,
+  owner @{tmp}/tmp@{word8}/* rw,
+  owner @{tmp}/vdpau-drivers-@{rand6}/{,**} rw,
+
+  owner /tmp/cc@{rand6}.* rw,
+
+  @{sys}/module/nvidia/version r,
+
+  /dev/tty rw,
+
+  profile ldconfig flags=(attach_disconnected) {
+    include <abstractions/base>
+    include <abstractions/consoles>
+
+    @{sbin}/ldconfig  mr,
+
+    @{sh_path}               rix,
+    @{sbin}/ldconfig.real    rix,
+
+    include if exists <local/umu-run_ldconfig>
+  }
+
+  profile ldd flags=(attach_disconnected) {
+    include <abstractions/base>
+    include <abstractions/consoles>
+    include <abstractions/nameservice-strict>
+
+    @{ldd_path}  mrix,
+    @{sh_path} r,
+
+    include if exists <local/umu-run_ldd>
+  }
+
+  profile bwrap flags=(attach_disconnected) {
+    include <abstractions/base>
+    include <abstractions/bwrap>
+
+    @{bin}/bwrap mr,
+
+    include if exists <local/umu-run_bwrap>
+  }
+
+  include if exists <local/umu-run>
+}
+
+# vim:syntax=apparmor

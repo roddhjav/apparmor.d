@@ -5,9 +5,13 @@
 package aa
 
 import (
+	"os"
 	"reflect"
+	"regexp"
+	"slices"
 	"strings"
 	"testing"
+	"github.com/roddhjav/apparmor.d/pkg/paths"
 )
 
 func Test_tokenizeRule(t *testing.T) {
@@ -110,6 +114,47 @@ func Test_parseCommaRules(t *testing.T) {
 	}
 }
 
+func Test_tokenizeBlock(t *testing.T) {
+	for _, tt := range testBlocks {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tokenizeBlock(tt.raw)
+			if (err != nil) != tt.wTokenizeErr {
+				t.Errorf("tokenizeBlock() error = %v, wantErr %v", err, tt.wTokenizeErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.blocks) {
+				t.Errorf("tokenizeBlock() = %v, want %v", got, tt.blocks)
+			}
+		})
+	}
+}
+
+func Test_parseBlock(t *testing.T) {
+	for _, tt := range testBlocks {
+		t.Run(tt.name, func(t *testing.T) {
+			for idx, b := range tt.blocks {
+				var err error
+				var got Rules
+				want := tt.rules[idx]
+				if idx == 0 && b.kind == CONTENT && (strings.HasPrefix(b.raw, "# Simple test") || strings.Contains(b.raw, "$")) {
+					f := &AppArmorProfileFile{}
+					err = f.parsePreamble(b.raw)
+					got = f.Preamble
+				} else {
+					got, err = parseBlock(b)
+				}
+				if (err != nil) != tt.wParseBlockErr {
+					t.Errorf("parseBlock() error = %v, wantErr %v", err, tt.wParseBlockErr)
+					return
+				}
+				if !reflect.DeepEqual(got, want) {
+					t.Errorf("parseBlock() = %v, want %v", got, want)
+				}
+			}
+		})
+	}
+}
+
 func Test_newRules(t *testing.T) {
 	for _, tt := range testParseRules {
 		if tt.wRule == nil {
@@ -153,6 +198,261 @@ func Test_AppArmorProfileFile_Parse(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_AppArmorProfileFile_Scan(t *testing.T) {
+	for _, tt := range testBlocks {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.apparmorAll == nil {
+				tt.apparmorAll = tt.apparmor
+			}
+			got := &AppArmorProfileFile{}
+			if err := got.Scan(tt.raw); (err != nil) != tt.wParseErr {
+				t.Errorf("AppArmorProfileFile.Scan() error = %v, wantErr %v", err, tt.wParseErr)
+			}
+			if !reflect.DeepEqual(got, tt.apparmorAll) {
+				t.Errorf("AppArmorProfileFile.Scan() = %v, want %v", got, tt.apparmorAll)
+			}
+		})
+	}
+	for _, tt := range testParser {
+		t.Run(tt.name, func(t *testing.T) {
+			got := &AppArmorProfileFile{}
+			if err := got.Scan(tt.raw); (err != nil) != tt.wantErr {
+				t.Errorf("AppArmorProfileFile.Scan() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("AppArmorProfileFile.Scan() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+type testReport struct {
+	Success bool   `csv:"success"`
+	Name    string `csv:"name"`
+	Desc    string `csv:"desc"`
+	Error   string `csv:"error"`
+}
+
+type testReports []*testReport
+
+func (r testReports) SumUp(t *testing.T) {
+	success := 0
+	for _, r := range r {
+		if r.Success {
+			success++
+		}
+	}
+	t.Logf("[TOTAL]: %d tests, success: %d, fail %d, success rate: %v%%\n",
+		len(r), success, len(r)-success, (success*100.0)/len(r))
+}
+
+func testAppArmorProfileFiles(t *testing.T, rootdir *paths.Path, files []*paths.Path, parses []bool) {
+	templateFailure := "\033[0;31m[FAILED]\033[0m(\033[0;37m%s\033[0m): %v"
+	templateSuccess := "\033[0;32m[SUCCESS]\033[0m(\033[0;37m%s\033[0m)"
+	ignorePath := []string{"abstractions/transmission-common"}
+
+	reports := testReports{}
+	for _, parse := range parses {
+		base := "Parse/"
+		if !parse {
+			base = "Scan/"
+		}
+
+		for _, file := range files {
+			if !file.Exist() {
+				panic(file.String() + " %s not found")
+			}
+			name, err := file.RelFrom(rootdir)
+			if err != nil {
+				panic(err)
+			}
+			if strings.HasPrefix(name.String(), "abi/") {
+				t.Logf("Skipping abi file: %s", name)
+				continue
+			}
+			if slices.Contains(ignorePath, name.String()) {
+				t.Logf("Skipping ignored file: %s", name)
+				continue
+			}
+
+			t.Run(base+name.String(), func(t *testing.T) {
+				var err error
+				r := &testReport{Name: name.String()}
+				raw := file.MustReadFileAsString()
+
+				p := &AppArmorProfileFile{}
+				p.Kind = KindFromPath(file)
+				if parse {
+					_, err = p.Parse(raw)
+				} else {
+					err = p.Scan(raw)
+				}
+				if err != nil {
+					r.Error = err.Error()
+					reports = append(reports, r)
+					t.Errorf(templateFailure, name, err)
+					return
+				}
+
+				if err = p.Validate(); err != nil {
+					r.Error = err.Error()
+					reports = append(reports, r)
+					t.Errorf(templateFailure, name, err)
+					return
+				}
+
+				r.Success = true
+				reports = append(reports, r)
+				t.Logf(templateSuccess, name)
+			})
+		}
+
+		reports.SumUp(t)
+	}
+}
+
+// Test the parser on our own profiles
+func Test_Parser_ApparmorD(t *testing.T) {
+	files, err := apparmorDDir.ReadDirRecursiveFiltered(nil, paths.FilterOutDirectories(), paths.FilterOutNames("README.md"))
+	if err != nil {
+		panic(err)
+	}
+
+	// [14/12/25]: 4750 tests, success: 4750, fail 0, success rate: 100%
+	testAppArmorProfileFiles(t, apparmorDDir, files, []bool{true, false})
+}
+
+// Test the parser on apparmor default and extra profiles
+func Test_Parser_UpstreamProfiles(t *testing.T) {
+	// os.Setenv("WITH_UPSTREAM", "true")
+	if os.Getenv("WITH_UPSTREAM") == "" {
+		t.Skip("Skipping test in CI environment")
+	}
+	apparmorDir := os.Getenv("APPARMOR_DIR")
+	if apparmorDir == "" {
+		apparmorDir = "../../../apparmor"
+	}
+
+	dirnames := []string{
+		// [14/12/25]: 357 tests, success: 357, fail 0, success rate: 100%
+		"profiles/apparmor.d", // apparmor-profiles
+
+		// [14/12/25]: 110 tests, success: 110, fail 0, success rate: 100%
+		"profiles/apparmor/profiles/extras", // apparmor-profiles-extras
+	}
+	for _, dir := range dirnames {
+		datadir := paths.New(apparmorDir).Join(dir)
+		files, err := datadir.ReadDirRecursiveFiltered(nil, paths.FilterOutDirectories(), paths.FilterOutNames("README"))
+		if err != nil {
+			panic(err)
+		}
+		testAppArmorProfileFiles(t, datadir, files, []bool{false})
+	}
+}
+
+// Test the parser on apparmor own's test suite
+func Test_Parser_UpstreamTestSuite(t *testing.T) {
+	// os.Setenv("WITH_UPSTREAM", "true")
+	if os.Getenv("WITH_UPSTREAM") == "" {
+		t.Skip("Skipping test in CI environment")
+	}
+	apparmorDir := os.Getenv("APPARMOR_DIR")
+	if apparmorDir == "" {
+		apparmorDir = "../../../apparmor"
+	}
+
+	regTestDescription := regexp.MustCompile(`(?m)^#=(DESCRIPTION|Description) (.+)$`)
+	regTestResult := regexp.MustCompile(`(?m)^#=EXRESULT (.+)$`)
+	regTestDisabled := regexp.MustCompile(`(?m)^#=DISABLED$`)
+	getSettings := func(profile string) (string, bool, bool) {
+		desc := regTestDescription.FindStringSubmatch(profile)
+		result := regTestResult.FindStringSubmatch(profile)
+		disabled := regTestDisabled.FindStringSubmatch(profile)
+		if len(disabled) == 1 && disabled[0] == "#=DISABLED" {
+			return "", false, true
+		}
+		if len(desc) == 3 && len(result) == 2 {
+			return desc[2], result[1] == "FAIL", false
+		}
+		return "", false, false
+	}
+
+	datadir := paths.New(apparmorDir).Join("parser/tst/simple_tests")
+	files, err := datadir.ReadDirRecursiveFiltered(nil, paths.FilterOutDirectories(),
+		paths.FilterOutNames("readme"))
+	if err != nil {
+		panic(err)
+	}
+
+	reports := testReports{}
+	templateFailure := "\033[0;31m[FAILED]\033[0m(\033[0;37m%s\033[0m): %v"
+	templateSuccess := "\033[0;32m[SUCCESS]\033[0m(\033[0;37m%s\033[0m)"
+	for _, file := range files {
+		if !file.Exist() {
+			panic(file.String() + " %s not found")
+		}
+		name, err := file.RelFrom(datadir)
+		if err != nil {
+			panic(err)
+		}
+
+		raw := file.MustReadFileAsString()
+		desc, wantErr, isDisabled := getSettings(raw)
+		if isDisabled {
+			t.Logf("Skipping disabled test: %s", name)
+			continue
+		}
+		t.Run(name.String(), func(t *testing.T) {
+			r := &testReport{Name: name.String()}
+			r.Desc = desc
+
+			p := &AppArmorProfileFile{}
+			err := p.Scan(raw)
+			if err != nil {
+				if wantErr {
+					r.Success = true
+					reports = append(reports, r)
+					t.Logf(templateSuccess, name)
+				} else {
+					r.Error = err.Error()
+					reports = append(reports, r)
+					t.Errorf(templateFailure, name, err)
+				}
+				return
+			}
+
+			err = p.Validate()
+			if err != nil {
+				if wantErr {
+					r.Success = true
+					reports = append(reports, r)
+					t.Logf(templateSuccess, name)
+				} else {
+					r.Error = err.Error()
+					reports = append(reports, r)
+					t.Errorf(templateFailure, name, err)
+				}
+				return
+			}
+
+			// No errors occurred
+			if wantErr {
+				r.Error = "expected error but got none"
+				reports = append(reports, r)
+				t.Errorf(templateFailure, name, "expected error but got none")
+			} else {
+				r.Success = true
+				reports = append(reports, r)
+				t.Logf(templateSuccess, name)
+			}
+		})
+	}
+
+	// [01/06/24]: 1986 tests, success: 1242, fail 744, success rate: 62%
+	// [14/12/25]: 2148 tests, success: 1722, fail 422, success rate: 80%
+	reports.SumUp(t)
 }
 
 var (
@@ -307,6 +607,7 @@ var (
 			wGetSlice:  []string{"include", "<tunables/global>"},
 			wString:    `include <tunables/global>`,
 			wRule:      &Include{IfExists: false, IsMagic: true, Path: "tunables/global"},
+			wError:     true, // newRules only convert comma rules
 		},
 		{
 			name:   "include-if-exists",
@@ -321,6 +622,7 @@ var (
 			wGetSlice:  []string{"include", "if", "exists", `"/etc/apparmor.d/dummy"`},
 			wString:    `include if exists "/etc/apparmor.d/dummy"`,
 			wRule:      &Include{IfExists: true, IsMagic: false, Path: "/etc/apparmor.d/dummy"},
+			wError:     true, // newRules only convert comma rules
 		},
 		{
 			name:   "rlimit",
@@ -500,6 +802,33 @@ var (
 			},
 		},
 		{
+			name:   "ptrace",
+			raw:    "ptrace peer=/bin/true peer=/sbin/init peer=MY_PROFILE",
+			tokens: []string{"ptrace", "peer=/bin/true", "peer=/sbin/init", "peer=MY_PROFILE"},
+			rule: rule{
+				{key: "ptrace"},
+				{key: "peer", values: rule{{key: "/bin/true"}}},
+				{key: "peer", values: rule{{key: "/sbin/init"}}},
+				{key: "peer", values: rule{{key: "MY_PROFILE"}}},
+			},
+			getIdx:     3,
+			getKey:     "peer",
+			wGet:       "peer",
+			wGetString: "ptrace",
+			wGetSlice:  []string{"ptrace"},
+			wGetAsMap: map[string][]string{
+				"peer": {"/bin/true", "/sbin/init", "MY_PROFILE"},
+			},
+			wGetValues:         rule{{key: "/bin/true"}, {key: "/sbin/init"}, {key: "MY_PROFILE"}},
+			wGetValuesAsSlice:  []string{"/bin/true", "/sbin/init", "MY_PROFILE"},
+			wGetValuesAsString: "/bin/true /sbin/init MY_PROFILE",
+			wString:            "ptrace peer=/bin/true peer=/sbin/init peer=MY_PROFILE",
+			wRule: &Ptrace{
+				Peer: "/bin/true",
+			},
+			wError: true,
+		},
+		{
 			name:   "unix-1",
 			raw:    `unix (send receive) type=stream addr="@/tmp/.ICE[0-9]*-unix/19 5" peer=(label="@{p_systemd}", addr=none)`,
 			tokens: []string{"unix", "(send receive)", "type=stream", "addr=\"@/tmp/.ICE[0-9]*-unix/19 5\"", "peer=(label=\"@{p_systemd}\", addr=none)"},
@@ -544,7 +873,7 @@ var (
 			raw: `  unix (connect, receive, send)
 			type=stream
 			peer=(addr="@/tmp/ibus/dbus-????????")`,
-			tokens: []string{"unix", "(connect, receive, send)\n", "type=stream\n", `peer=(addr="@/tmp/ibus/dbus-????????")`},
+			tokens: []string{"unix", "(connect, receive, send)", "type=stream", `peer=(addr="@/tmp/ibus/dbus-????????")`},
 			rule: rule{
 				{key: "unix"}, {key: "connect"}, {key: "receive"}, {key: "send"},
 				{key: "type", values: rule{{key: "stream"}}},
@@ -835,11 +1164,16 @@ var (
 		},
 	}
 
-	// Test cases for Parse
+	// Test cases for tokenizeBlock, parseBlock, and Parse
 	testBlocks = []struct {
 		name           string
 		raw            string
+		blocks         []*block
+		wTokenizeErr   bool
+		rules          []Rules
+		wParseBlockErr bool
 		apparmor       *AppArmorProfileFile
+		apparmorAll    *AppArmorProfileFile
 		wParseErr      bool
 		wRules         ParaRules
 		wParseRulesErr bool
@@ -847,6 +1181,10 @@ var (
 		{
 			name:           "empty",
 			raw:            "",
+			blocks:         []*block{{kind: CONTENT, raw: ""}},
+			wTokenizeErr:   false,
+			rules:          []Rules{nil},
+			wParseBlockErr: false,
 			apparmor:       &AppArmorProfileFile{},
 			wParseErr:      false,
 			wRules:         ParaRules{},
@@ -858,6 +1196,23 @@ var (
 			# IsLineRule comment
 			include <tunables/global> # comment included
 			@{lib_dirs} = @{lib}/@{name} /opt/@{name} # comment in variable`,
+			blocks: []*block{
+				{
+					kind: "content",
+					raw:  "\n\t\t\t# IsLineRule comment\n\t\t\tinclude <tunables/global> # comment included\n\t\t\t@{lib_dirs} = @{lib}/@{name} /opt/@{name} # comment in variable",
+				},
+			},
+			wTokenizeErr: false,
+			rules: []Rules{
+				{
+					&Comment{Base: Base{IsLineRule: true, Comment: " IsLineRule comment"}},
+					&Include{
+						Base: Base{Comment: " comment included"},
+						Path: "tunables/global", IsMagic: true,
+					},
+				},
+			},
+			wParseBlockErr: false,
 			apparmor: &AppArmorProfileFile{
 				Preamble: Rules{
 					&Comment{Base: Base{IsLineRule: true, Comment: " IsLineRule comment"}},
@@ -888,7 +1243,46 @@ var (
 			alias /mnt/{,usr.sbin.}mount.cifs -> /sbin/mount.cifs,
 			@{coreutils} += gawk {,e,f}grep head
 			profile @{exec_path} {
+			}
 			`,
+			blocks: []*block{
+				{
+					kind: "content",
+					raw:  "# Simple test\n\t\t\tinclude <tunables/global>\n\n\t\t\t# { commented block }\n\t\t\t@{name} = {D,d}ummy\n\t\t\t@{exec_path} = @{bin}/@{name}\n\t\t\t@{exec_path} += @{lib}/@{name}\n\t\t\talias /mnt/{,usr.sbin.}mount.cifs -> /sbin/mount.cifs,\n\t\t\t@{coreutils} += gawk {,e,f}grep head",
+				},
+				{
+					kind: "profile",
+					raw:  "profile @{exec_path}",
+					next: &block{
+						kind: "raw",
+						raw:  "",
+					},
+				},
+			},
+			wTokenizeErr: false,
+			rules: []Rules{
+				{
+					&Comment{Base: Base{IsLineRule: true, Comment: " Simple test"}},
+					&Include{IsMagic: true, Path: "tunables/global"},
+					&Comment{Base: Base{IsLineRule: true, Comment: " { commented block }"}},
+					&Variable{Name: "name", Values: []string{"{D,d}ummy"}, Define: true},
+					&Variable{Name: "exec_path", Values: []string{"@{bin}/@{name}"}, Define: true},
+					&Variable{Name: "exec_path", Values: []string{"@{lib}/@{name}"}, Define: false},
+					&Variable{Name: "coreutils", Values: []string{"gawk", "{,e,f}grep", "head"}, Define: false},
+					&Alias{Path: "/mnt/{,usr.sbin.}mount.cifs", RewrittenPath: "/sbin/mount.cifs"},
+				},
+				{
+					&Profile{
+						Header: Header{
+							Name:        "@{exec_path}",
+							Attachments: []string{},
+							Attributes:  map[string]string{},
+							Flags:       []string{},
+						},
+					},
+				},
+			},
+			wParseBlockErr: false,
 			apparmor: &AppArmorProfileFile{
 				Preamble: Rules{
 					&Comment{Base: Base{IsLineRule: true, Comment: " Simple test"}},
@@ -916,8 +1310,156 @@ var (
 			wParseRulesErr: false,
 		},
 		{
+			name: "condition-1",
+			raw: `
+			$FOO=true
+			$BAR = false
+
+			/bin/true {
+			  /bin/false rix,
+			  if ${FOO} {
+			    /bin/true rix,
+			  }
+			  /bin/true rix,
+			  if ${BAR} {
+			    /etc/shadow rw,
+			  }
+			  /bin/sh rix,
+			}`,
+			blocks: []*block{
+				{
+					kind: CONTENT,
+					raw:  "\n\t\t\t$FOO=true\n\t\t\t$BAR = false\n",
+				},
+				{
+					kind: PROFILE,
+					raw:  "/bin/true",
+					next: &block{
+						kind: RAW,
+						raw:  "/bin/false rix,\n\t\t\t  if ${FOO} {\n\t\t\t    /bin/true rix,\n\t\t\t  }\n\t\t\t  /bin/true rix,\n\t\t\t  if ${BAR} {\n\t\t\t    /etc/shadow rw,\n\t\t\t  }\n\t\t\t  /bin/sh rix,",
+					},
+				},
+			},
+			wTokenizeErr: false,
+			rules: []Rules{
+				{
+					&Boolean{Name: "FOO", Value: true},
+					&Boolean{Name: "BAR", Value: false},
+				},
+				{
+					&Profile{
+						Header: Header{
+							Name:        "/bin/true",
+							Attachments: []string{},
+							Attributes:  map[string]string{},
+							Flags:       []string{},
+						},
+						Rules: Rules{
+							&File{Path: "/bin/false", Access: []string{"r", "ix"}},
+							&Condition{
+								Expression: "${FOO}",
+								IfRules: Rules{
+									&File{Path: "/bin/true", Access: []string{"r", "ix"}},
+								},
+							},
+							&File{Path: "/bin/true", Access: []string{"r", "ix"}},
+							&Condition{
+								Expression: "${BAR}",
+								IfRules: Rules{
+									&File{Path: "/etc/shadow", Access: []string{"r", "w"}},
+								},
+							},
+							&File{Path: "/bin/sh", Access: []string{"r", "ix"}},
+						},
+					},
+				},
+			},
+			wParseBlockErr: false,
+			apparmor: &AppArmorProfileFile{
+				Preamble: Rules{
+					&Boolean{Name: "FOO", Value: true},
+					&Boolean{Name: "BAR", Value: false},
+				},
+			},
+			apparmorAll: &AppArmorProfileFile{
+				Preamble: Rules{
+					&Boolean{Name: "FOO", Value: true},
+					&Boolean{Name: "BAR", Value: false},
+				},
+				Profiles: []*Profile{
+					{
+						Header: Header{
+							Name:        "/bin/true",
+							Attachments: []string{},
+							Attributes:  map[string]string{},
+							Flags:       []string{},
+						},
+						Rules: Rules{
+							&File{Path: "/bin/false", Access: []string{"r", "ix"}},
+							&Condition{
+								Expression: "${FOO}",
+								IfRules: Rules{
+									&File{Path: "/bin/true", Access: []string{"r", "ix"}},
+								},
+							},
+							&File{Path: "/bin/true", Access: []string{"r", "ix"}},
+							&Condition{
+								Expression: "${BAR}",
+								IfRules: Rules{
+									&File{Path: "/etc/shadow", Access: []string{"r", "w"}},
+								},
+							},
+							&File{Path: "/bin/sh", Access: []string{"r", "ix"}},
+						},
+					},
+				},
+			},
+			wParseErr:      false,
+			wRules:         ParaRules{nil},
+			wParseRulesErr: false,
+		},
+		{
 			name: "string.aa",
 			raw:  testData.Join("string.aa").MustReadFileAsString(),
+			blocks: []*block{
+				{
+					kind: CONTENT,
+					raw:  "# Simple test profile for the AppArmorProfileFile.String() method\n\nabi <abi/4.0>,\n\nalias /mnt/usr -> /usr,\n\ninclude <tunables/global>\n\n@{exec_path} = @{bin}/foo @{lib}/foo",
+				},
+				{
+					kind: PROFILE,
+					raw:  "profile foo @{exec_path} xattrs=(security.tagged=allowed) flags=(complain attach_disconnected)",
+					next: &block{
+						kind: RAW,
+						raw:  pStringAAContentStr,
+					},
+				},
+			},
+			wTokenizeErr: false,
+			rules: []Rules{
+				{
+					&Comment{Base: Base{IsLineRule: true, Comment: " Simple test profile for the AppArmorProfileFile.String() method"}},
+					&Include{Path: "tunables/global", IsMagic: true},
+					&Variable{
+						Name: "exec_path", Define: true,
+						Values: []string{"@{bin}/foo", "@{lib}/foo"},
+					},
+					&Abi{IsMagic: true, Path: "abi/4.0"},
+					&Alias{Path: "/mnt/usr", RewrittenPath: "/usr"},
+				},
+				{
+					&Profile{
+						Header: Header{
+							Name:        "foo",
+							Attachments: []string{"@{exec_path}"},
+							Attributes:  map[string]string{"security.tagged": "allowed"},
+							Flags:       []string{"complain", "attach_disconnected"},
+						},
+						Rules: rulesStringAA,
+					},
+				},
+			},
+			wParseBlockErr: false,
 			apparmor: &AppArmorProfileFile{
 				Preamble: Rules{
 					&Comment{Base: Base{Comment: " Simple test profile for the AppArmorProfileFile.String() method", IsLineRule: true}},
@@ -937,6 +1479,29 @@ var (
 							Attributes:  map[string]string{"security.tagged": "allowed"},
 							Flags:       []string{"complain", "attach_disconnected"},
 						},
+					},
+				},
+			},
+			apparmorAll: &AppArmorProfileFile{
+				Preamble: Rules{
+					&Comment{Base: Base{Comment: " Simple test profile for the AppArmorProfileFile.String() method", IsLineRule: true}},
+					&Include{IsMagic: true, Path: "tunables/global"},
+					&Variable{
+						Name: "exec_path", Define: true,
+						Values: []string{"@{bin}/foo", "@{lib}/foo"},
+					},
+					&Abi{IsMagic: true, Path: "abi/4.0"},
+					&Alias{Path: "/mnt/usr", RewrittenPath: "/usr"},
+				},
+				Profiles: []*Profile{
+					{
+						Header: Header{
+							Name:        "foo",
+							Attachments: []string{"@{exec_path}"},
+							Attributes:  map[string]string{"security.tagged": "allowed"},
+							Flags:       []string{"complain", "attach_disconnected"},
+						},
+						Rules: rulesStringAA,
 					},
 				},
 			},
@@ -990,7 +1555,92 @@ var (
 						Type:      "stream",
 						Address:   "@/tmp/.ICE-unix/1995",
 						PeerLabel: "gnome-shell",
-						PeerAddr:  "none",
+					},
+				},
+				{
+					&Dbus{Access: []string{"bind"}, Bus: "session", Name: "org.gnome.*"},
+					&Dbus{
+						Access:    []string{"receive"},
+						Bus:       "system",
+						Path:      "/org/freedesktop/DBus",
+						Interface: "org.freedesktop.DBus",
+						Member:    "AddMatch",
+						PeerName:  ":1.3",
+						PeerLabel: "power-profiles-daemon",
+					},
+				},
+				{
+					&File{Path: "/opt/intel/oneapi/compiler/*/linux/lib/*.so./*", Access: []string{"m", "r"}},
+					&File{Path: "@{PROC}/@{pid}/task/@{tid}/comm", Access: []string{"r", "w"}},
+					&File{Path: "@{sys}/devices/@{pci}/class", Access: []string{"r"}},
+				},
+				{
+					&Include{IfExists: true, IsMagic: true, Path: "local/foo"},
+				},
+			},
+			wParseRulesErr: false,
+		},
+		{
+			name: "string.aa/content",
+			raw:  pStringAAContentStr,
+			blocks: []*block{{
+				kind: CONTENT,
+				raw:  pStringAAContentStr,
+			}},
+			wTokenizeErr:   false,
+			rules:          []Rules{rulesStringAA},
+			wParseBlockErr: false,
+			apparmor:       &AppArmorProfileFile{},
+			wParseErr:      true,
+			wRules: ParaRules{
+				{
+					&Include{IsMagic: true, Path: "abstractions/base"},
+					&Include{IsMagic: true, Path: "abstractions/nameservice-strict"},
+				},
+				{
+					&Rlimit{Key: "nproc", Op: "<=", Value: "200"},
+				},
+				{
+					&Capability{Names: []string{"dac_read_search"}},
+					&Capability{Names: []string{"dac_override"}},
+				},
+				{
+					&Network{Domain: "inet", Type: "stream"},
+					&Network{Domain: "inet6", Type: "stream"},
+				},
+				{
+					&Mount{
+						Base: Base{IsLineRule: false, Comment: " failed perms check"},
+						MountConditions: MountConditions{
+							FsType:  "fuse.portal",
+							Options: []string{"rw", "rbind"},
+						},
+						Source:     "@{run}/user/@{uid}/",
+						MountPoint: "/",
+					},
+				},
+				{
+					&Umount{
+						MountConditions: MountConditions{Options: []string{}},
+						MountPoint:      "@{run}/user/@{uid}/",
+					},
+				},
+				{
+					&Signal{
+						Access: []string{"receive"},
+						Set:    []string{"term"},
+						Peer:   "at-spi-bus-launcher",
+					},
+				},
+				{
+					&Ptrace{Access: []string{"read"}, Peer: "nautilus"},
+				},
+				{
+					&Unix{
+						Access:    []string{"send", "receive"},
+						Type:      "stream",
+						Address:   "@/tmp/.ICE-unix/1995",
+						PeerLabel: "gnome-shell",
 					},
 				},
 				{
@@ -1014,8 +1664,254 @@ var (
 			wParseRulesErr: false,
 		},
 		{
+			name: "profile0.aa",
+			raw:  testData.Join("profile0.aa").MustReadFileAsString(),
+			blocks: []*block{
+				{
+					kind: PROFILE,
+					raw:  "profile A flags=(attach_disconnected)",
+					next: &block{
+						kind: RAW,
+						raw:  "/path/to/A mr,\n\n  profile B {\n    /path/to/B mr,\n  }\n  profile C {\n    /path/to/C mr,\n  }\n  profile D {\n    /path/to/D mr,\n  }",
+					},
+				},
+			},
+			wTokenizeErr: false,
+			rules: []Rules{
+				{&Profile{
+					Header: Header{
+						Name: "A", Attachments: []string{}, Attributes: map[string]string{},
+						Flags: []string{"attach_disconnected"},
+					},
+					Rules: Rules{
+						&File{Path: "/path/to/A", Access: []string{"m", "r"}},
+						profileB,
+						profileC,
+						profileD,
+					},
+				}},
+			},
+			wParseBlockErr: false,
+			apparmor: &AppArmorProfileFile{
+				Profiles: []*Profile{
+					{
+						Header: Header{
+							Name: "A", Attachments: []string{}, Attributes: map[string]string{},
+							Flags: []string{"attach_disconnected"},
+						},
+					},
+				},
+			},
+			apparmorAll: &AppArmorProfileFile{
+				Profiles: []*Profile{
+					{
+						Header: Header{
+							Name: "A", Attachments: []string{}, Attributes: map[string]string{},
+							Flags: []string{"attach_disconnected"},
+						},
+						Rules: Rules{
+							&File{Path: "/path/to/A", Access: []string{"m", "r"}},
+							profileB,
+							profileC,
+							profileD,
+						},
+					},
+				},
+			},
+			wParseErr: false,
+			wRules: ParaRules{
+				{
+					&File{Path: "/path/to/A", Access: []string{"m", "r"}},
+				},
+			},
+			wParseRulesErr: false,
+		},
+		{
+			name: "profile1.aa",
+			raw:  testData.Join("profile1.aa").MustReadFileAsString(),
+			blocks: []*block{
+				{
+					kind: PROFILE,
+					raw:  "profile A flags=(attach_disconnected)",
+					next: &block{
+						kind: RAW,
+						raw:  "/path/to/A mr,\n\n  profile B {\n    /path/to/B mr,\n\n    profile C {\n      /path/to/C mr,\n\n      profile D {\n        /path/to/D mr,\n      }\n    }\n  }",
+					},
+				},
+			},
+			wTokenizeErr: false,
+			rules: []Rules{
+				{&Profile{
+					Header: Header{
+						Name: "A", Attachments: []string{}, Attributes: map[string]string{},
+						Flags: []string{"attach_disconnected"},
+					},
+					Rules: Rules{
+						&File{Path: "/path/to/A", Access: []string{"m", "r"}},
+						&Profile{
+							Header: Header{
+								Name: "B", Attachments: []string{}, Attributes: map[string]string{}, Flags: []string{},
+							},
+							Rules: Rules{
+								&File{Path: "/path/to/B", Access: []string{"m", "r"}},
+								&Profile{
+									Header: Header{
+										Name: "C", Attachments: []string{}, Attributes: map[string]string{}, Flags: []string{},
+									},
+									Rules: Rules{
+										&File{Path: "/path/to/C", Access: []string{"m", "r"}},
+										&Profile{
+											Header: Header{
+												Name: "D", Attachments: []string{}, Attributes: map[string]string{}, Flags: []string{},
+											},
+											Rules: Rules{
+												&File{Path: "/path/to/D", Access: []string{"m", "r"}},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				}},
+			},
+			wParseBlockErr: false,
+			apparmor: &AppArmorProfileFile{
+				Profiles: []*Profile{
+					{
+						Header: Header{
+							Name: "A", Attachments: []string{}, Attributes: map[string]string{},
+							Flags: []string{"attach_disconnected"},
+						},
+					},
+				},
+			},
+			apparmorAll: &AppArmorProfileFile{
+				Profiles: []*Profile{
+					{
+						Header: Header{
+							Name: "A", Attachments: []string{}, Attributes: map[string]string{},
+							Flags: []string{"attach_disconnected"},
+						},
+						Rules: Rules{
+							&File{Path: "/path/to/A", Access: []string{"m", "r"}},
+							&Profile{
+								Header: Header{
+									Name: "B", Attachments: []string{}, Attributes: map[string]string{}, Flags: []string{},
+								},
+								Rules: Rules{
+									&File{Path: "/path/to/B", Access: []string{"m", "r"}},
+									&Profile{
+										Header: Header{
+											Name: "C", Attachments: []string{}, Attributes: map[string]string{}, Flags: []string{},
+										},
+										Rules: Rules{
+											&File{Path: "/path/to/C", Access: []string{"m", "r"}},
+											&Profile{
+												Header: Header{
+													Name: "D", Attachments: []string{}, Attributes: map[string]string{}, Flags: []string{},
+												},
+												Rules: Rules{
+													&File{Path: "/path/to/D", Access: []string{"m", "r"}},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wParseErr: false,
+			wRules: ParaRules{
+				{
+					&File{Path: "/path/to/A", Access: []string{"m", "r"}},
+				},
+				{
+					&File{Path: "/path/to/B", Access: []string{"m", "r"}},
+				},
+				{
+					&File{Path: "/path/to/C", Access: []string{"m", "r"}},
+				},
+			},
+			wParseRulesErr: false,
+		},
+		{
 			name: "full.aa",
 			raw:  testData.Join("full.aa").MustReadFileAsString(),
+			blocks: []*block{
+				{
+					kind: CONTENT,
+					raw:  "# Simple test profile with all rules used\n\nabi <abi/4.0>,\n\nalias /mnt/usr -> /usr,\n\ninclude <tunables/global> # optional: a comment\ninclude if exists \"/etc/apparmor.d/global/dummy space\"\n\n@{name}=torbrowser \"tor browser\" \n@{lib_dirs} = @{lib}/@{name} /opt/@{name} # another comment\n@{config_dirs} = @{HOME}/.mozilla/\n@{cache_dirs}=@{user_cache_dirs}/mozilla/\n\nalias /mnt/{,usr.sbin.}mount.cifs -> /sbin/mount.cifs,\n\n@{exec_path} = @{bin}/@{name} @{lib_dirs}/@{name}",
+				},
+				{
+					kind: PROFILE,
+					raw:  "profile foo @{exec_path} xattrs=(security.tagged=allowed) flags=(complain attach_disconnected)",
+					next: &block{
+						kind: RAW,
+						raw:  "include <abstractions/base>\n  include <abstractions/nameservice-strict>\n  include \"/etc/apparmor.d/abstractions/dummy space\"\n\n  all,\n\n  set rlimit nproc <= 200,\n\n  userns,\n\n  capability dac_read_search,\n  capability dac_override,\n\n  network inet stream,\n  network netlink raw,\n\n  mount /{,**},\n  mount               options=(rw rbind)           /tmp/newroot/ -> /tmp/newroot/,\n  mount               options=(rw silent rprivate)               -> /oldroot/,\n  mount fstype=devpts options=(rw nosuid noexec)          devpts -> /newroot/dev/pts/,\n\n  remount /newroot/{,**},\n\n  umount @{run}/user/@{uid}/,\n\n  pivot_root oldroot=/tmp/oldroot/ /tmp/,\n\n  change_profile -> libvirt-@{uuid},\n\n  mqueue r type=posix /,\n\n  io_uring sqpoll label=foo,\n\n  signal (receive) set=(cont,term,winch) peer=at-spi-bus-launcher,\n\n  ptrace (read) peer=nautilus,\n\n  unix (send receive) type=stream addr=\"@/tmp/.ICE[0-9]-unix/19 5\" peer=(label=gnome-shell, addr=none),\n\n  dbus bind bus=session name=org.gnome.*,\n  dbus receive bus=system path=/org/freedesktop/DBus\n       interface=org.freedesktop.DBus\n       member=AddMatch\n       peer=(name=:1.3, label=power-profiles-daemon),\n\n  # A comment! before a paragraph of rules\n  \"/opt/Mullvad VPN/resources/*.so*\" mr,\n  \"/opt/Mullvad VPN/resources/*\" r,\n  \"/opt/Mullvad VPN/resources/openvpn\" rix,\n  /usr/share/gnome-shell/extensions/ding@rastersoft.com/{,*/}ding.js rPx,\n  /opt/intel/oneapi/compiler/*/linux/lib/*.so./* rm,\n\n  owner @{user_config_dirs}/powerdevilrc{,.@{rand6}} rwl -> @{user_config_dirs}/#@{int},\n  link @{user_config_dirs}/kiorc -> @{user_config_dirs}/#@{int},\n\n  @{run}/udev/data/+pci:* r,\n\n  @{sys}/devices/@{pci}/class r,\n\n  owner @{PROC}/@{pid}/task/@{tid}/comm rw,\n\n  ^action {\n    include <abstractions/base>\n    include if exists <local/foo_action>\n  }\n\n  profile systemctl {\n    include <abstractions/base>\n    include <abstractions/systemctl>\n\n    capability net_admin,\n  \n    include if exists <local/foo_systemctl>\n  }\n\n  profile sudo {\n    include <abstractions/base>\n    include <abstractions/app/sudo>\n\n    @{sh_path} rix,\n\n    include if exists <local/foo_sudo>\n  }\n\n  include if exists <local/foo>",
+					},
+				},
+				{
+					kind: CONTENT,
+					raw:  "\n",
+				},
+				{
+					kind: PROFILE,
+					raw:  "profile foo2",
+					next: &block{
+						kind: RAW,
+						raw:  "include <abstractions/base>\n\n  include if exists <local/foo2>",
+					},
+				},
+			},
+			wTokenizeErr: false,
+			rules: []Rules{
+				// block 0: preamble content (parsed via parsePreamble)
+				{
+					&Comment{Base: Base{IsLineRule: true, Comment: " Simple test profile with all rules used"}},
+					&Include{Base: Base{Comment: " a comment", Optional: true}, IsMagic: true, Path: "tunables/global"},
+					&Include{IfExists: true, Path: "/etc/apparmor.d/global/dummy space"},
+					&Variable{Name: "name", Values: []string{"torbrowser", "\"tor browser\""}, Define: true},
+					&Variable{Base: Base{Comment: " another comment"}, Name: "lib_dirs", Values: []string{"@{lib}/@{name}", "/opt/@{name}"}, Define: true},
+					&Variable{Name: "config_dirs", Values: []string{"@{HOME}/.mozilla/"}, Define: true},
+					&Variable{Name: "cache_dirs", Values: []string{"@{user_cache_dirs}/mozilla/"}, Define: true},
+					&Variable{Name: "exec_path", Values: []string{"@{bin}/@{name}", "@{lib_dirs}/@{name}"}, Define: true},
+					&Abi{IsMagic: true, Path: "abi/4.0"},
+					&Alias{Path: "/mnt/usr", RewrittenPath: "/usr"},
+					&Alias{Path: "/mnt/{,usr.sbin.}mount.cifs", RewrittenPath: "/sbin/mount.cifs"},
+				},
+				// block 1: profile foo (parseBlock returns Rules{&Profile{...}})
+				{
+					&Profile{
+						Header: Header{
+							Name:        "foo",
+							Attachments: []string{"@{exec_path}"},
+							Attributes:  map[string]string{"security.tagged": "allowed"},
+							Flags:       []string{"complain", "attach_disconnected"},
+						},
+						Rules: rulesFullAA,
+					},
+				},
+				// block 2: empty content (newline)
+				nil,
+				// block 3: profile foo2
+				{
+					&Profile{
+						Header: Header{
+							Name:        "foo2",
+							Attachments: []string{},
+							Attributes:  map[string]string{},
+							Flags:       []string{},
+						},
+						Rules: Rules{
+							&Include{IsMagic: true, Path: "abstractions/base"},
+							&Include{IfExists: true, IsMagic: true, Path: "local/foo2"},
+						},
+					},
+				},
+			},
 			apparmor: &AppArmorProfileFile{
 				Preamble: Rules{
 					&Comment{Base: Base{IsLineRule: true, Comment: " Simple test profile with all rules used"}},
@@ -1043,6 +1939,50 @@ var (
 							Attachments: []string{"@{exec_path}"},
 							Attributes:  map[string]string{"security.tagged": "allowed"},
 							Flags:       []string{"complain", "attach_disconnected"},
+						},
+					},
+				},
+			},
+			apparmorAll: &AppArmorProfileFile{
+				Preamble: Rules{
+					&Comment{Base: Base{IsLineRule: true, Comment: " Simple test profile with all rules used"}},
+					&Include{
+						Base:    Base{Comment: " a comment", Optional: true},
+						IsMagic: true, Path: "tunables/global",
+					},
+					&Include{IfExists: true, Path: "/etc/apparmor.d/global/dummy space"},
+					&Variable{Name: "name", Values: []string{"torbrowser", "\"tor browser\""}, Define: true},
+					&Variable{
+						Base: Base{Comment: " another comment"}, Define: true,
+						Name: "lib_dirs", Values: []string{"@{lib}/@{name}", "/opt/@{name}"},
+					},
+					&Variable{Name: "config_dirs", Values: []string{"@{HOME}/.mozilla/"}, Define: true},
+					&Variable{Name: "cache_dirs", Values: []string{"@{user_cache_dirs}/mozilla/"}, Define: true},
+					&Variable{Name: "exec_path", Values: []string{"@{bin}/@{name}", "@{lib_dirs}/@{name}"}, Define: true},
+					&Abi{IsMagic: true, Path: "abi/4.0"},
+					&Alias{Path: "/mnt/usr", RewrittenPath: "/usr"},
+					&Alias{Path: "/mnt/{,usr.sbin.}mount.cifs", RewrittenPath: "/sbin/mount.cifs"},
+				},
+				Profiles: []*Profile{
+					{
+						Header: Header{
+							Name:        "foo",
+							Attachments: []string{"@{exec_path}"},
+							Attributes:  map[string]string{"security.tagged": "allowed"},
+							Flags:       []string{"complain", "attach_disconnected"},
+						},
+						Rules: rulesFullAA,
+					},
+					{
+						Header: Header{
+							Name:        "foo2",
+							Attachments: []string{},
+							Attributes:  map[string]string{},
+							Flags:       []string{},
+						},
+						Rules: Rules{
+							&Include{IsMagic: true, Path: "abstractions/base"},
+							&Include{IfExists: true, IsMagic: true, Path: "local/foo2"},
 						},
 					},
 				},
@@ -1215,6 +2155,265 @@ var (
 				},
 			},
 			wParseRulesErr: false,
+		},
+	}
+
+	// Additional test cases for Scan())
+	testParser = []struct {
+		name    string
+		raw     string
+		want    *AppArmorProfileFile
+		wantErr bool
+	}{
+		{
+			name: "parse.aa",
+			raw:  testData.Join("parse.aa").MustReadFileAsString(),
+			want: &AppArmorProfileFile{
+				Preamble: Rules{
+					&Comment{Base: Base{IsLineRule: true, Comment: " apparmor.d - Full set of apparmor profiles"}},
+					&Comment{Base: Base{IsLineRule: true, Comment: " Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>"}},
+					&Comment{Base: Base{IsLineRule: true, Comment: " SPDX-License-Identifier: GPL-2.0-only"}},
+					&Comment{Base: Base{IsLineRule: true, Comment: " TODO: Test rule with only ','"}},
+					&Include{
+						Base:    Base{Optional: true, Comment: " A nice message"},
+						IsMagic: true, Path: "tunables/global",
+					},
+					&Include{IfExists: true, Path: "/etc/apparmor.d/global/dummy space"},
+					&Variable{
+						Name: "name", Define: true,
+						Values: []string{"torbrowser", "\"tor browser\""},
+					},
+					&Variable{
+						Base: Base{Comment: " This is a comment"},
+						Name: "lib_dirs", Define: true,
+						Values: []string{"@{lib}/@{name}", "/opt/@{name}"},
+					},
+					&Variable{
+						Name: "exec_path", Define: true,
+						Values: []string{"@{bin}/@{name}", "@{lib_dirs}/@{name}"},
+					},
+					&Abi{IsMagic: true, Path: "abi/4.0"},
+					&Alias{Path: "/mnt/usr", RewrittenPath: "/usr"},
+					&Alias{Path: "/mnt/{,usr.sbin.}mount.cifs", RewrittenPath: "/sbin/mount.cifs"},
+				},
+				Profiles: []*Profile{
+					{
+						Header: Header{
+							Name:        "foo",
+							Attachments: []string{"@{exec_path}"},
+							Attributes:  map[string]string{"security.tagged": "allowed"},
+							Flags:       []string{"complain", "attach_disconnected"},
+						},
+						Rules: Rules{
+							&Include{IsMagic: true, Path: "abstractions/base"},
+							&Comment{Base: Base{IsLineRule: true, Comment: " Oh my god, it's a comment! before a paragraph of rules"}},
+							&Include{IfExists: true, IsMagic: true, Path: "local/foo"},
+							&Remount{MountConditions: MountConditions{Options: []string{}}, MountPoint: "/newroot/{,**}"},
+							&Unix{
+								Access:    []string{"send", "receive"},
+								Type:      "stream",
+								Address:   "\"@/tmp/.ICE[0-9]-unix/19 5\"",
+								PeerLabel: "gnome-shell",
+								PeerAddr:  "none",
+							},
+							&Dbus{
+								Base:   Base{Comment: " wfdwde"},
+								Access: []string{"bind"}, Bus: "session", Name: "org.gnome.*",
+							},
+							&Dbus{
+								Access:    []string{"receive"},
+								Bus:       "system",
+								Path:      "/org/freedesktop/DBus",
+								Interface: "org.freedesktop.DBus",
+								Member:    "AddMatch",
+								PeerName:  ":1.3",
+								PeerLabel: "power-profiles-daemon",
+							},
+							&File{
+								Base: Base{Comment: " To be able to read the /proc/ files"},
+								Path: "\"/opt/Mullvad VPN/resources/*.so*\"", Access: []string{"m", "r"},
+							},
+							&File{Path: "/usr/share/gnome-shell/extensions/ding@rastersoft.com/{,*/}ding.js", Access: []string{"r", "Px"}},
+							&File{Path: "@{bin}/zsh", Access: []string{"r", "ix"}},
+							&File{Owner: true, Path: "/{var/,}tmp/#@{int}", Access: []string{"r", "w"}},
+							&File{Owner: true, Path: "@{user_config_dirs}/powerdevilrc{,.@{rand6}}", Access: []string{"r", "w", "l"}, Target: "@{user_config_dirs}/#@{int}"},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+	}
+
+	// Indirect test resources
+	pStringAAContentStr = `include <abstractions/base>
+  include <abstractions/nameservice-strict>
+
+  set rlimit nproc <= 200,
+
+  capability dac_read_search,
+  capability dac_override,
+
+  network inet stream,
+  network inet6 stream,
+
+  mount fstype=fuse.portal options=(rw rbind) @{run}/user/@{uid}/ -> /, # failed perms check
+
+  umount @{run}/user/@{uid}/,
+
+  signal receive set=term peer=at-spi-bus-launcher,
+
+  ptrace read peer=nautilus,
+
+  unix (send receive) type=stream addr=@/tmp/.ICE-unix/1995 peer=(label=gnome-shell),
+
+  dbus bind bus=session name=org.gnome.*,
+  dbus receive bus=system path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member=AddMatch
+       peer=(name=:1.3, label=power-profiles-daemon),
+
+  /opt/intel/oneapi/compiler/*/linux/lib/*.so./* rm,
+  @{PROC}/@{pid}/task/@{tid}/comm rw,
+  @{sys}/devices/@{pci}/class r,
+
+  include if exists <local/foo>`
+	rulesStringAA = Rules{
+		&Include{IsMagic: true, Path: "abstractions/base"},
+		&Include{IsMagic: true, Path: "abstractions/nameservice-strict"},
+		&Include{IfExists: true, IsMagic: true, Path: "local/foo"},
+		&Rlimit{Key: "nproc", Op: "<=", Value: "200"},
+		&Capability{Names: []string{"dac_read_search"}},
+		&Capability{Names: []string{"dac_override"}},
+		&Network{Domain: "inet", Type: "stream"},
+		&Network{Domain: "inet6", Type: "stream"},
+		&Mount{
+			Base: Base{Comment: " failed perms check"},
+			MountConditions: MountConditions{
+				FsType:  "fuse.portal",
+				Options: []string{"rw", "rbind"},
+			},
+			Source:     "@{run}/user/@{uid}/",
+			MountPoint: "/",
+		},
+		&Umount{
+			MountConditions: MountConditions{Options: []string{}},
+			MountPoint:      "@{run}/user/@{uid}/",
+		},
+		&Signal{
+			Access: []string{"receive"},
+			Set:    []string{"term"},
+			Peer:   "at-spi-bus-launcher",
+		},
+		&Ptrace{Access: []string{"read"}, Peer: "nautilus"},
+		&Unix{
+			Access:    []string{"send", "receive"},
+			Type:      "stream",
+			Address:   "@/tmp/.ICE-unix/1995",
+			PeerLabel: "gnome-shell",
+		},
+		&Dbus{Access: []string{"bind"}, Bus: "session", Name: "org.gnome.*"},
+		&Dbus{
+			Access:    []string{"receive"},
+			Bus:       "system",
+			Name:      "",
+			Path:      "/org/freedesktop/DBus",
+			Interface: "org.freedesktop.DBus",
+			Member:    "AddMatch",
+			PeerName:  ":1.3",
+			PeerLabel: "power-profiles-daemon",
+		},
+		&File{Path: "/opt/intel/oneapi/compiler/*/linux/lib/*.so./*", Access: []string{"m", "r"}},
+		&File{Path: "@{PROC}/@{pid}/task/@{tid}/comm", Access: []string{"r", "w"}},
+		&File{Path: "@{sys}/devices/@{pci}/class", Access: []string{"r"}},
+	}
+	rulesFullAA = Rules{
+		&Include{IsMagic: true, Path: "abstractions/base"},
+		&Include{IsMagic: true, Path: "abstractions/nameservice-strict"},
+		&Include{Path: "/etc/apparmor.d/abstractions/dummy space"},
+		&Comment{Base: Base{IsLineRule: true, Comment: " A comment! before a paragraph of rules"}},
+		&All{},
+		&Rlimit{Key: "nproc", Op: "<=", Value: "200"},
+		&Userns{Create: true},
+		&Capability{Names: []string{"dac_read_search"}},
+		&Capability{Names: []string{"dac_override"}},
+		&Network{Domain: "inet", Type: "stream"},
+		&Network{Domain: "netlink", Type: "raw"},
+		&Mount{MountConditions: MountConditions{Options: []string{}}, Source: "/{,**}"},
+		&Mount{MountConditions: MountConditions{Options: []string{"rw", "rbind"}}, Source: "/tmp/newroot/", MountPoint: "/tmp/newroot/"},
+		&Mount{MountConditions: MountConditions{Options: []string{"rw", "rprivate", "silent"}}, MountPoint: "/oldroot/"},
+		&Mount{MountConditions: MountConditions{FsType: "devpts", Options: []string{"rw", "noexec", "nosuid"}}, Source: "devpts", MountPoint: "/newroot/dev/pts/"},
+		&Remount{MountConditions: MountConditions{Options: []string{}}, MountPoint: "/newroot/{,**}"},
+		&Umount{MountConditions: MountConditions{Options: []string{}}, MountPoint: "@{run}/user/@{uid}/"},
+		&PivotRoot{OldRoot: "/tmp/oldroot/", NewRoot: "/tmp/"},
+		&ChangeProfile{ProfileName: "libvirt-@{uuid}"},
+		&Mqueue{Access: []string{"r"}, Type: "posix", Name: "/"},
+		&IOUring{Access: []string{"sqpoll"}, Label: "foo"},
+		&Signal{Access: []string{"receive"}, Set: []string{"cont", "term", "winch"}, Peer: "at-spi-bus-launcher"},
+		&Ptrace{Access: []string{"read"}, Peer: "nautilus"},
+		&Unix{Access: []string{"send", "receive"}, Type: "stream", Address: "\"@/tmp/.ICE[0-9]-unix/19 5\"", PeerLabel: "gnome-shell", PeerAddr: "none"},
+		&Dbus{Access: []string{"bind"}, Bus: "session", Name: "org.gnome.*"},
+		&Dbus{Access: []string{"receive"}, Bus: "system", Path: "/org/freedesktop/DBus", Interface: "org.freedesktop.DBus", Member: "AddMatch", PeerName: ":1.3", PeerLabel: "power-profiles-daemon"},
+		&File{Path: "\"/opt/Mullvad VPN/resources/*.so*\"", Access: []string{"m", "r"}},
+		&File{Path: "\"/opt/Mullvad VPN/resources/*\"", Access: []string{"r"}},
+		&File{Path: "\"/opt/Mullvad VPN/resources/openvpn\"", Access: []string{"r", "ix"}},
+		&File{Path: "/usr/share/gnome-shell/extensions/ding@rastersoft.com/{,*/}ding.js", Access: []string{"r", "Px"}},
+		&File{Path: "/opt/intel/oneapi/compiler/*/linux/lib/*.so./*", Access: []string{"m", "r"}},
+		&File{Owner: true, Path: "@{user_config_dirs}/powerdevilrc{,.@{rand6}}", Access: []string{"r", "w", "l"}, Target: "@{user_config_dirs}/#@{int}"},
+		&Link{Path: "@{user_config_dirs}/kiorc", Target: "@{user_config_dirs}/#@{int}"},
+		&File{Path: "@{run}/udev/data/+pci:*", Access: []string{"r"}},
+		&File{Path: "@{sys}/devices/@{pci}/class", Access: []string{"r"}},
+		&File{Owner: true, Path: "@{PROC}/@{pid}/task/@{tid}/comm", Access: []string{"r", "w"}},
+		&Hat{
+			Name:  "action",
+			Flags: []string{},
+			Rules: Rules{
+				&Include{IsMagic: true, Path: "abstractions/base"},
+				&Include{IfExists: true, IsMagic: true, Path: "local/foo_action"},
+			},
+		},
+		&Profile{
+			Header: Header{Name: "systemctl", Attachments: []string{}, Attributes: map[string]string{}, Flags: []string{}},
+			Rules: Rules{
+				&Include{IsMagic: true, Path: "abstractions/base"},
+				&Include{IsMagic: true, Path: "abstractions/systemctl"},
+				&Include{IfExists: true, IsMagic: true, Path: "local/foo_systemctl"},
+				&Capability{Names: []string{"net_admin"}},
+			},
+		},
+		&Profile{
+			Header: Header{Name: "sudo", Attachments: []string{}, Attributes: map[string]string{}, Flags: []string{}},
+			Rules: Rules{
+				&Include{IsMagic: true, Path: "abstractions/base"},
+				&Include{IsMagic: true, Path: "abstractions/app/sudo"},
+				&Include{IfExists: true, IsMagic: true, Path: "local/foo_sudo"},
+				&File{Path: "@{sh_path}", Access: []string{"r", "ix"}},
+			},
+		},
+		&Include{IfExists: true, IsMagic: true, Path: "local/foo"},
+	}
+	profileB = &Profile{
+		Header: Header{
+			Name: "B", Attachments: []string{}, Attributes: map[string]string{}, Flags: []string{},
+		},
+		Rules: Rules{
+			&File{Path: "/path/to/B", Access: []string{"m", "r"}},
+		},
+	}
+	profileC = &Profile{
+		Header: Header{
+			Name: "C", Attachments: []string{}, Attributes: map[string]string{}, Flags: []string{},
+		},
+		Rules: Rules{
+			&File{Path: "/path/to/C", Access: []string{"m", "r"}},
+		},
+	}
+	profileD = &Profile{
+		Header: Header{
+			Name: "D", Attachments: []string{}, Attributes: map[string]string{}, Flags: []string{},
+		},
+		Rules: Rules{
+			&File{Path: "/path/to/D", Access: []string{"m", "r"}},
 		},
 	}
 )

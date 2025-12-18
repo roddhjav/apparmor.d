@@ -10,6 +10,7 @@ include <tunables/global>
 profile cupsd @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/authentication>
+  include <abstractions/avahi-observe>
   include <abstractions/bus-system>
   include <abstractions/bus/system/org.freedesktop.Avahi.Server>
   include <abstractions/bus/system/org.freedesktop.Avahi.ServiceBrowser>
@@ -45,12 +46,16 @@ profile cupsd @{exec_path} flags=(attach_disconnected) {
   network rose dgram,
   network x25 seqpacket,
 
-  signal (send) set=(term) peer=cups-notifier-dbus,
+  signal send set=term peer=cups-backend-*,
+  signal send set=term peer=cups-notifier-dbus,
+
+  unix type=stream peer=(label=cups-backend-*),
 
   @{exec_path} mr,
 
   @{sh_path}                 rix,
   @{bin}/cat                 rix,
+  @{bin}/echo                 ix,
   @{bin}/chmod               rix,
   @{bin}/cp                  rix,
   @{bin}/{,e}grep            rix,
@@ -91,8 +96,6 @@ profile cupsd @{exec_path} flags=(attach_disconnected) {
   /var/spool/cups/{,**} rw,
 
   @{run}/cups/{,**} rw,
-  @{run}/systemd/notify w,
-  @{run}/avahi-daemon/socket rw,
 
   @{sys}/module/apparmor/parameters/enabled r,
 

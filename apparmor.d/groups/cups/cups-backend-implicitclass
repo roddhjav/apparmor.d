@@ -9,8 +9,26 @@ include <tunables/global>
 @{exec_path} = @{lib}/cups/backend/implicitclass
 profile cups-backend-implicitclass @{exec_path} {
   include <abstractions/base>
+  include <abstractions/cups-client>
+  include <abstractions/nameservice-strict>
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+
+  # TODO:
+  # network (receive,send,setopt) inet dgram peer=(port=53),
+  # network (receive,send,setopt) inet stream peer=(port=631),
+
+  signal receive set=term peer=cupsd,
+
+  unix type=stream peer=(label=cupsd),
 
   @{exec_path} mr,
+
+  @{bin}/ippfind Px,
+  @{lib}/cups/backend/ipp Px,
 
   /etc/papersize r,
   /etc/paperspecs r,

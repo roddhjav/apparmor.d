@@ -15,6 +15,7 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted,complain
   include <abstractions/accounts-observe>
   include <abstractions/bus-session>
   include <abstractions/bus-system>
+  include <abstractions/bus/session/org.freedesktop.impl.portal.PermissionStore>
   include <abstractions/bus/session/org.gtk.vfs.MountTracker>
   include <abstractions/bus/system/org.freedesktop.locale1>
   include <abstractions/consoles>
@@ -25,8 +26,6 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted,complain
   include <abstractions/nameservice-strict>
   include <abstractions/ssl_certs>
   include <abstractions/user-dirs>
-
-  userns,
 
   capability dac_override,
   capability dac_read_search,
@@ -47,6 +46,7 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted,complain
 
   mount fstype=fuse.revokefs-fuse options=(rw, nosuid, nodev) -> /var/tmp/flatpak-cache-*/*/,
 
+  ptrace read peer=bwrap.*,     # bwrap for experimental per app generated profile
   ptrace read peer=fbwrap,      # Generic bwrap for flatpak app
   ptrace read peer=flatpak-app, # Deprecated generic profile
   ptrace read peer=flatpak.*,
@@ -56,6 +56,8 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted,complain
 
   unix type=seqpacket peer=(label=flatpak-system-helper),
   unix type=stream    peer=(label=flatpak//fusermount),
+  unix (send receive) type=seqpacket peer=(label=fapp),
+  unix (send receive) type=seqpacket peer=(label=fbwrap),
 
   #aa:dbus talk bus=system name=org.freedesktop.Flatpak.SystemHelper label=flatpak-system-helper
   #aa:dbus talk bus=system name=org.freedesktop.PolicyKit1 label="@{p_polkitd}"
@@ -67,6 +69,11 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted,complain
        interface=org.freedesktop.Flatpak.SystemHelper
        member=GetRevokefsFd
        peer=(name=org.freedesktop.Flatpak.SystemHelper),
+
+  dbus send bus=session path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member=ReloadConfig
+       peer=(name=org.freedesktop.DBus, label="@{p_systemd_user}"),
 
   @{exec_path} mr,
 
@@ -144,13 +151,14 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted,complain
 
   @{sys}/module/nvidia/version r,
 
+        @{PROC}/modules r,
         @{PROC}/sys/fs/pipe-max-size r,
   owner @{PROC}/@{pid}/fdinfo/@{int} r,
   owner @{PROC}/@{pid}/stat r,
 
   /dev/fuse rw,
   /dev/tty rw,
-  /dev/tty@{int} rw,
+  /dev/tty@{u8} rw,
 
   #aa:only test
   mount fstype=fuse.revokefs-fuse options=(rw, nosuid, nodev) revokefs-fuse -> /tmp/test-flatpak-*/**,

@@ -16,17 +16,18 @@ const (
 
 func init() {
 	requirements[MOUNT] = requirement{
-		"flags_bind": {
+		"flags": {
+			// flags bind
 			"B", "bind", "R", "rbind",
-		},
-		"flags_change": {
-			"remount", "unbindable", "shared", "private", "slave", "runbindable",
+
+			// flags change
+			"shared", "slave", "nostrictatime", "lazytime", "nolazytime",
 			"rshared", "rprivate", "rslave", "make-unbindable", "make-shared",
 			"make-private", "make-slave", "make-runbindable", "make-rshared",
-			"make-rprivate", "make-rslave",
-		},
-		"flags": {
-			"ro", "rw", "acl", "async", "atime", "bind", "dev", "diratime",
+			"make-rprivate", "make-rslave", "symfollow",
+
+			// flags mount
+			"ro", "rw", "w", "acl", "async", "atime", "bind", "dev", "diratime",
 			"dirsync", "exec", "iversion", "loud", "mand", "move", "noacl",
 			"noatime", "nodev", "nodiratime", "noexec", "noiversion", "nomand",
 			"norelatime", "nosuid", "nosymfollow", "nouser", "private", "rbind", "relatime",
@@ -131,7 +132,7 @@ func newMount(q Qualifier, rule rule) (Rule, error) {
 		MountConditions: conditions,
 		Source:          src,
 		MountPoint:      mount,
-	}, nil
+	}, rule.ValidateMapKeys([]string{"fstype", "options", "flags"})
 }
 
 func newMountFromLog(log map[string]string) Rule {
@@ -232,7 +233,7 @@ func newUmount(q Qualifier, rule rule) (Rule, error) {
 		Qualifier:       q,
 		MountConditions: conditions,
 		MountPoint:      mount,
-	}, nil
+	}, rule.ValidateMapKeys([]string{"fstype", "options", "flags"})
 }
 
 func newUmountFromLog(log map[string]string) Rule {
@@ -328,7 +329,7 @@ func newRemount(q Qualifier, rule rule) (Rule, error) {
 		Qualifier:       q,
 		MountConditions: conditions,
 		MountPoint:      mount,
-	}, nil
+	}, rule.ValidateMapKeys([]string{"fstype", "options", "flags"})
 }
 
 func newRemountFromLog(log map[string]string) Rule {

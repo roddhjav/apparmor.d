@@ -10,14 +10,18 @@ include <tunables/global>
 profile xdg-dbus-proxy @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/accessibility>
-  include <abstractions/consoles>
   include <abstractions/bus-session>
   include <abstractions/bus-system>
   include <abstractions/bus/system/org.freedesktop.Avahi.Server>
-  include <abstractions/bus/org.freedesktop.NetworkManager>
+  include <abstractions/consoles>
+  include <abstractions/network-manager-observe>
+  include <abstractions/sys/hwmon-temp>
   include <abstractions/user-download-strict>
 
   network unix stream,
+
+  unix (send receive) type=seqpacket peer=(label=fapp),
+  unix (send receive) type=seqpacket peer=(label=fbwrap),
 
   signal receive set=int peer=flatpak-portal,
 
@@ -32,14 +36,15 @@ profile xdg-dbus-proxy @{exec_path} flags=(attach_disconnected) {
   owner @{att}@{HOME}/.var/app/*/.local/share/*/**/usr/.ref rw,
 
         @{att}@{run}/systemd/inhibit/@{int}.ref rw,
+  owner @{att}@{run}/user/@{uid}/at-spi/bus rw,
+  owner @{att}@{run}/user/@{uid}/bus rw,
+
   owner @{run}/firejail/dbus/@{int}/@{int}-{system,user} rw,
   owner @{run}/flatpak/doc/** r,
   owner @{run}/user/@{uid}/.dbus-proxy/{system,session,a11y}-bus-proxy-@{rand6} rw,
   owner @{run}/user/@{uid}/webkitgtk/a11y-proxy-@{rand6} rw,
   owner @{run}/user/@{uid}/webkitgtk/bus-proxy-@{rand6} rw,
   owner @{run}/user/@{uid}/webkitgtk/dbus-proxy-@{rand6} rw,
-
-  @{sys}/devices/virtual/thermal/thermal_zone@{int}/hwmon@{int}/temp* r,
 
   /dev/dri/card@{int} rw,
 

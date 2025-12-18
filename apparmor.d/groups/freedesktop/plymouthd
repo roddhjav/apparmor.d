@@ -12,6 +12,7 @@ profile plymouthd @{exec_path} {
   include <abstractions/consoles>
   include <abstractions/dri>
   include <abstractions/fonts>
+  include <abstractions/input>
   include <abstractions/X-strict>
 
   capability checkpoint_restore,
@@ -45,7 +46,9 @@ profile plymouthd @{exec_path} {
   /var/lib/plymouth/{,**} rw,
   /var/log/plymouth-*.log w,
 
+  @{run}/initramfs/usr/share/fonts/{,**} r,
   @{run}/plymouth/{,**} rw,
+  @{run}/systemd/fsck.progress w,
 
   @{run}/udev/data/+drm:card@{int}-* r,   # For screen outputs
   @{run}/udev/data/c29:@{int} r,          # For /dev/fb[0-9]*
@@ -61,13 +64,14 @@ profile plymouthd @{exec_path} {
 
         @{PROC}/1/cmdline r,
         @{PROC}/cmdline r,
+        @{PROC}/consoles r,
         @{PROC}/sys/kernel/printk r,
   owner @{PROC}/@{pid}/cmdline r,
   owner @{PROC}/@{pid}/stat r,
 
   /dev/kmsg rw,
   /dev/ptmx rw,
-  /dev/tty@{int} rw,
+  /dev/tty@{u8} rw,
   /dev/ttyS@{int} rw,
 
   include if exists <local/plymouthd>

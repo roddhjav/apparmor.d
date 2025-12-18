@@ -20,6 +20,8 @@ profile libvirtd @{exec_path} flags=(attach_disconnected) {
   include <abstractions/bus-session>
   include <abstractions/bus-system>
   include <abstractions/bus/session/org.gtk.vfs.MountTracker>
+  include <abstractions/bus/system/org.freedesktop.login1>
+  include <abstractions/bus/system/org.freedesktop.PolicyKit1>
   include <abstractions/consoles>
   include <abstractions/devices-usb>
   include <abstractions/disks-write>
@@ -61,13 +63,17 @@ profile libvirtd @{exec_path} flags=(attach_disconnected) {
 
   mount options=(rw, rslave) -> /,
   mount options=(rw, nosuid) -> @{run}/libvirt/qemu/*.dev/,
-  umount @{run}/libvirt/qemu/*.dev/,
 
   # Libvirt provides any mounts under /dev to qemu namespaces
   mount options=(rw, move) /dev/ -> @{run}/libvirt/qemu/*.dev/,
   mount options=(rw, move) /dev/** -> @{run}/libvirt/qemu/*{,/},
   mount options=(rw, move) @{run}/libvirt/qemu/*.dev/ -> /dev/,
   mount options=(rw, move) @{run}/libvirt/qemu/*{,/} -> /dev/**,
+
+  umount @{run}/libvirt/qemu/*.dev/,
+  umount /dev/,
+
+  mqueue getattr type=posix /,
 
   ptrace (read,trace) peer=@{profile_name},
   ptrace (read,trace) peer=dnsmasq,
@@ -93,6 +99,9 @@ profile libvirtd @{exec_path} flags=(attach_disconnected) {
   # Allow changing to our UUID-based named profiles
   change_profile -> libvirt-@{uuid},
 
+  #aa:dbus talk bus=system name=org.fedoraproject.FirewallD1 label=firewalld
+  #aa:dbus talk bus=system name=org.freedesktop.machine1 label=systemd-machined
+
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
@@ -101,7 +110,7 @@ profile libvirtd @{exec_path} flags=(attach_disconnected) {
   # include <abstractions/bus/system/own>
   dbus send bus=system path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus
-       member=ListNames
+       member={ListNames,ListActivatableNames}
        peer=(name=org.freedesktop.DBus, label="@{p_dbus_system}"),
 
   @{exec_path} mr,
@@ -118,16 +127,18 @@ profile libvirtd @{exec_path} flags=(attach_disconnected) {
   @{lib}/xen-common/bin/xen-toolstack              rPUx,
   @{lib}/xen/bin/*                                 rPUx,
 
-  @{sbin}/dmidecode                           rPx,
-  @{sbin}/dnsmasq                             rPx,
   @{bin}/kmod                                 rCx -> kmod,
-  @{sbin}/lvm                                 rPUx,
-  @{sbin}/mdevctl                             rPx,
+  @{bin}/mdevctl                              rPx, #aa:lint ignore=sbin
+  @{bin}/ssh                                  rPx,
   @{bin}/swtpm                                rPx,
   @{bin}/swtpm_ioctl                          rPx,
   @{bin}/swtpm_setup                          rPx,
   @{bin}/udevadm                              rPx,
-  @{bin}/virtiofsd                            rux, # TODO: WIP
+  @{bin}/virtiofsd                            rPx, # TODO: WIP
+  @{sbin}/dmidecode                           rPx,
+  @{sbin}/dnsmasq                             rPx,
+  @{sbin}/lvm                                 rPUx,
+  @{sbin}/mdevctl                             rPx,
   @{sbin}/virtlogd                            rPx,
 
   @{sh_path}                    rix,
@@ -145,10 +156,12 @@ profile libvirtd @{exec_path} flags=(attach_disconnected) {
   /var/lib/libvirt/virtd*  rix,
 
   /usr/share/edk2*/{,**} rk,
+  /usr/share/gvfs/remote-volume-monitors/{,**} r,
   /usr/share/hwdata/* r,
   /usr/share/iproute2/{,**} r,
   /usr/share/libvirt/{,**} r,
   /usr/share/misc/pci.ids r,
+  /usr/share/OVMF/{,**} rk,
   /usr/share/qemu/{,**} r,
 
   @{etc_rw}/apparmor.d/libvirt/libvirt-@{uuid} r,
@@ -156,6 +169,8 @@ profile libvirtd @{exec_path} flags=(attach_disconnected) {
   /etc/mdevctl.d/{,**} r,
   /etc/sasl2/qemu.conf r,
   /etc/xml/catalog r,
+
+  / r,
 
   /var/cache/libvirt/{,**} rw,
   /var/lib/libvirt/ rw,
@@ -176,11 +191,12 @@ profile libvirtd @{exec_path} flags=(attach_disconnected) {
 
   @{att}@{run}/systemd/inhibit/@{int}.ref rw,
 
+  /dev/shm/ w,
+
   @{run}/libvirt/ rw,
   @{run}/libvirt/** rwk,
   @{run}/libvirtd.pid wk,
   @{run}/lock/LCK.._pts_@{int} rw,
-  @{run}/systemd/notify w,
   @{run}/utmp rk,
 
   @{run}/udev/data/+*:* r,                # Identifies all subsystems
@@ -267,9 +283,14 @@ profile libvirtd @{exec_path} flags=(attach_disconnected) {
   /dev/kvm rw,
   /dev/mapper/ r,
   /dev/mapper/control rw,
+  /dev/mqueue/ w,
   /dev/net/tun rw,
   /dev/ptmx rw,
+  /dev/pts/ w,
+  /dev/random rw,
   /dev/shm/libvirt/{,**} rw,
+  /dev/urandom rw,
+  /dev/userfaultfd w,
   /dev/vfio/@{int} rwk,
   /dev/vhost-net rw,
 
