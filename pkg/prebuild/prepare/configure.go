@@ -52,22 +52,10 @@ func (p Configure) Apply() ([]string, error) {
 				return res, err
 			}
 		}
-		if prebuild.Version < 3.0 {
-			if err := prebuild.DistDir.Join("ubuntu").CopyFS(prebuild.RootApparmord); err != nil {
-				return res, err
-			}
-		}
 
 	case "debian", "whonix":
 		if err := prebuild.DebianHide.Init(); err != nil {
 			return res, err
-		}
-
-		if prebuild.Version < 4.1 {
-			// Copy Debian specific abstractions
-			if err := prebuild.DistDir.Join("ubuntu").CopyFS(prebuild.RootApparmord); err != nil {
-				return res, err
-			}
 		}
 
 	default:
