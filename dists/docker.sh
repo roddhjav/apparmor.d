@@ -19,11 +19,10 @@ readonly OUTDIR=".pkg"
 readonly DISTRIBUTION="$1"
 RELEASE="${2:-}"
 FLAVOR="${3:-}"
-VERSION="0.$(git rev-list --count HEAD)"
 PACKAGER="$(git config user.name) <$(git config user.email)>"
 [[ "$RELEASE" == "-" ]] && RELEASE=""
 readonly OUTPUT="$PWD/$OUTDIR/$DISTRIBUTION/$RELEASE"
-readonly RELEASE FLAVOR VERSION PACKAGER
+readonly RELEASE FLAVOR PACKAGER
 
 _start() {
 	local img="$1"
@@ -51,9 +50,6 @@ _exist() {
 sync() {
 	mkdir -p "$VOLUME"
 	rsync -ra --delete . "$VOLUME/$PKGNAME"
-	if [[ "$FLAVOR" == "test" ]]; then
-		sed -i -e "s/just complain/just complain-test/" "$VOLUME/$PKGNAME/debian/rules"
-	fi
 }
 
 build_in_docker_makepkg() {
@@ -79,8 +75,24 @@ build_in_docker_makepkg() {
 build_in_docker_dpkg() {
 	local img dist="$1" target="$1" release="$2"
 
-	[[ "$dist" == whonix ]] && dist=debian
+	if [[ "$dist" == whonix ]]; then
+		dist=debian
+	fi
 	img="$PREFIX$dist$release"
+
+	# Adjustments for test flavor
+	if [[ "$FLAVOR" == "test" ]]; then
+		sed -i -e "s/just complain/just complain-test/" "$VOLUME/$PKGNAME/debian/rules"
+	fi
+
+	# Adjustments for development releases
+	case "$release" in
+	26.04)
+		img="$PREFIX${dist}25.10"
+		  ;;
+	*) ;;
+	esac
+
 	if _exist "$img"; then
 		if ! _is_running "$img"; then
 			_start "$img"
@@ -91,14 +103,14 @@ build_in_docker_dpkg() {
 			--env DISTRIBUTION="$target" "$BASEIMAGE/$dist:$release"
 		docker exec "$img" sudo apt-get update -q
 		docker exec "$img" sudo apt-get install -y config-package-dev lsb-release libdistro-info-perl
-		if [[ "$dist" == debian && "$release" == "12"  ]]; then
+		if [[ "$dist" == debian && "$release" == "12" ]]; then
 			aptopt=(-t bookworm-backports)
 		fi
 		docker exec "$img" sudo apt-get install -y "${aptopt[@]}" golang-go
 	fi
 
 	docker exec --workdir="$BUILDIR/$PKGNAME" "$img" bash dists/build.sh dpkg
-	mv "$VOLUME/$PKGNAME/$OUTDIR/${PKGNAME}_${VERSION}-1"_*.* "$OUTPUT"
+	mv "$VOLUME/$PKGNAME/$OUTDIR/${PKGNAME}"*.deb "$OUTPUT"
 }
 
 build_in_docker_rpm() {
@@ -117,12 +129,13 @@ build_in_docker_rpm() {
 	fi
 
 	docker exec --workdir="$BUILDIR/$PKGNAME" "$img" bash dists/build.sh rpm
-	mv "$VOLUME/$PKGNAME/$OUTDIR/$PKGNAME-$VERSION-"*.rpm "$OUTPUT"
+	mv "$VOLUME/$PKGNAME/$OUTDIR/$PKGNAME-"*.rpm "$OUTPUT"
 }
 
 main() {
 	case "$DISTRIBUTION" in
 	archlinux)
+		sync
 		build_in_docker_makepkg "$DISTRIBUTION"
 		;;
 
