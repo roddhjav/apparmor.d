@@ -68,7 +68,6 @@ build_in_docker_makepkg() {
 		docker pull "$BASEIMAGE/$dist"
 		docker run -tid --name "$img" --volume "$VOLUME:$BUILDIR" \
 			--env PKGDEST="$BUILDIR" --env PACKAGER="$PACKAGER" \
-			--env BUILDDIR=/tmp/build \
 			"$BASEIMAGE/$dist"
 		docker exec "$img" sudo pacman -Sy --noconfirm --noprogressbar
 	fi
