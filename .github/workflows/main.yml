@@ -26,8 +26,6 @@ jobs:
         include:
           - os: ubuntu-24.04
             mode: default
-          - os: ubuntu-24.04
-            mode: full-system-policy
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
@@ -44,106 +42,103 @@ jobs:
 
       - name: Build the apparmor.d package
         run: |
-          if [[ ${{ matrix.mode }} == full-system-policy ]]; then
-            sed -e "s/just complain/just fsp-complain/" -i debian/rules
-          fi
           bash dists/build.sh dpkg
 
-  #     - name: Install apparmor.d
-  #       run: sudo dpkg --install .pkg/apparmor.d_*_amd64.deb || true
+      - name: Install apparmor.d
+        run: sudo dpkg --install .pkg/apparmor.d_*_amd64.deb || true
 
-  #     - name: Reload AppArmor
-  #       run: |
-  #           if ! sudo systemctl restart apparmor.service; then
-  #             sudo journalctl -xeu apparmor.service
-  #             exit 1
-  #           fi
+      - name: Reload AppArmor
+        run: |
+            if ! sudo systemctl restart apparmor.service; then
+              sudo journalctl -xeu apparmor.service
+              exit 1
+            fi
 
-  #     - name: Show AppArmor log and rules
-  #       run: |
-  #         sudo aa-log
-  #         sudo aa-log -s
-  #         sudo aa-log -r
+      - name: Show AppArmor log and rules
+        run: |
+          sudo aa-log
+          sudo aa-log -s
+          sudo aa-log -r
 
-  #     - name: Show Number of loaded profile
-  #       run: sudo aa-status --profiled
+      - name: Show Number of loaded profile
+        run: sudo aa-status --profiled
 
-  #     - name: Cache the build package
-  #       if: matrix.mode == 'default' && matrix.os == 'ubuntu-24.04'
-  #       uses: actions/cache/save@v4
-  #       with:
-  #         path: .pkg/apparmor.d_*_amd64.deb
-  #         key: ${{ matrix.os }}-${{ matrix.mode }}-${{ hashFiles('.pkg/apparmor.d_*_amd64.deb') }}
+      - name: Cache the build package
+        if: matrix.mode == 'default' && matrix.os == 'ubuntu-24.04'
+        uses: actions/cache/save@v4
+        with:
+          path: .pkg/apparmor.d_*_amd64.deb
+          key: ${{ matrix.os }}-${{ matrix.mode }}-${{ hashFiles('.pkg/apparmor.d_*_amd64.deb') }}
 
-  # tests:
-  #   runs-on: ubuntu-24.04
-  #   needs: build
-  #   if: github.ref_name == 'dev' || github.event_name == 'workflow_dispatch'
-  #   steps:
-  #     - name: Check out repository code
-  #       uses: actions/checkout@v4
+  tests:
+    runs-on: ubuntu-24.04
+    needs: build
+    if: github.ref_name == 'dev' || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
 
-  #     - name: Restore the cached build package
-  #       uses: actions/cache/restore@v4
-  #       with:
-  #         fail-on-cache-miss: true
-  #         path: .pkg/apparmor.d_*_amd64.deb
-  #         key: ubuntu-24.04-default-${{ hashFiles('.pkg/apparmor.d_*_amd64.deb') }}
-  #         restore-keys: |
-  #           ubuntu-24.04-default-
+      - name: Restore the cached build package
+        uses: actions/cache/restore@v4
+        with:
+          fail-on-cache-miss: true
+          path: .pkg/apparmor.d_*_amd64.deb
+          key: ubuntu-24.04-default-${{ hashFiles('.pkg/apparmor.d_*_amd64.deb') }}
+          restore-keys: |
+            ubuntu-24.04-default-
 
-  #     - name: Install Tests dependencies
-  #       run: |
-  #         sudo apt-get update -q
-  #         sudo apt-get install -y \
-  #           apparmor-profiles apparmor-utils \
-  #           bats bats-support
-  #         pipx install rust-just
-  #         echo "$HOME/.local/bin" >> $GITHUB_PATH
+      - name: Install Tests dependencies
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y \
+            apparmor-profiles apparmor-utils \
+            bats bats-support
+          pipx install rust-just
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-  #     - name: Install apparmor.d
-  #       run: |
-  #         sudo dpkg --install .pkg/apparmor.d_*_amd64.deb || true
-  #         sudo systemctl restart apparmor.service
-  #         sudo systemctl daemon-reload
-  #         systemctl --user daemon-reload
+      - name: Install apparmor.d
+        run: |
+          sudo dpkg --install .pkg/apparmor.d_*_amd64.deb || true
+          sudo systemctl restart apparmor.service
+          sudo systemctl daemon-reload
+          systemctl --user daemon-reload
 
-  #     - name: Restart some services to ensure they are confined
-  #       run: |
-  #         services=(
-  #           containerd cron
-  #           dbus docker
-  #           ModemManager multipathd
-  #           networkd-dispatcher
-  #           packagekit polkit
-  #           snapd
-  #           systemd-journald systemd-hostnamed systemd-logind systemd-networkd
-  #           systemd-resolved systemd-udevd
-  #           udisks2
-  #         )
-  #         sudo systemctl daemon-reload
-  #         for service in "${services[@]}"; do
-  #           sudo systemctl restart "$service" || systemctl status "$service.service" || true
-  #         done
-  #         systemctl restart --user dbus || systemctl status --user "dbus.service" || true
-  #         sudo ps auxZ | grep -v '\[.*\]'
-  #         sudo aa-log -s --raw
+      - name: Restart some services to ensure they are confined
+        run: |
+          services=(
+            containerd cron
+            dbus docker
+            ModemManager multipathd
+            networkd-dispatcher
+            packagekit polkit
+            snapd
+            systemd-journald systemd-hostnamed systemd-logind systemd-networkd
+            systemd-resolved systemd-udevd
+            udisks2
+          )
+          sudo systemctl daemon-reload
+          for service in "${services[@]}"; do
+            sudo systemctl restart "$service" || systemctl status "$service.service" || true
+          done
+          systemctl restart --user dbus || systemctl status --user "dbus.service" || true
+          sudo ps auxZ | grep -v '\[.*\]'
+          sudo aa-log -s --raw
 
-  #     - name: Install integration dependencies
-  #       run: |
-  #         just init
-  #         find /usr/sbin/ -type f
+      - name: Install integration dependencies
+        run: |
+          just init
+          find /usr/sbin/ -type f
 
-  #     - name: Run the integration tests
-  #       run: |
-  #         just integration
+      - name: Run the integration tests
+        run: |
+          just integration
 
-  #     - name: Show final AppArmor logs
-  #       if: always()
-  #       run: |
-  #         sudo aa-log -s --raw
+      - name: Show final AppArmor logs
+        if: always()
+        run: |
+          sudo aa-log -s --raw
 
-  #     - name: Show final processes security context
-  #       if: always()
-  #       run: |
-  #         sudo ps auxZ | grep -v '\[.*\]'
+      - name: Show final processes security context
+        if: always()
+        run: |
+          sudo ps auxZ | grep -v '\[.*\]'
