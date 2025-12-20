@@ -250,19 +250,19 @@ build-rpm: (_ensure_pkgdest)
 [group('packages')]
 pkg name="": (build-pkg)
 	@sudo pacman -U --noconfirm \
-		{{pkgdest}}/{{pkgname}}{{ if name != "" { "-" + name } else { "" } }}-`just version`*.pkg.tar.zst 
+		{{pkgdest}}/{{pkgname}}{{ if name != "" { "." + name } else { "" } }}-`just version`*.pkg.tar.zst 
 
 # Build & install apparmor.d on Debian based systems
 [group('packages')]
 dpkg name="": (build-dpkg)
 	@sudo dpkg -i  \
-		{{pkgdest}}/{{pkgname}}{{ if name != "" { "-" + name } else { "" } }}_`just version`*.deb
+		{{pkgdest}}/{{pkgname}}{{ if name != "" { "." + name } else { "" } }}_`just version`*.deb
 
 # Build & install apparmor.d on OpenSUSE based systems
 [group('packages')]
 rpm name="": (build-rpm)
 	@sudo rpm -ivh --force \
-		{{pkgdest}}/{{pkgname}}{{ if name != "" { "-" + name } else { "" } }}-`just version`*.rpm
+		{{pkgdest}}/{{pkgname}}{{ if name != "" { "." + name } else { "" } }}-`just version`*.rpm
 
 # Run the linters
 [group('linter')]
