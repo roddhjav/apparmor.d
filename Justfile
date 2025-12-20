@@ -555,7 +555,7 @@ version:
 # Create a new version number from the current release
 [group('version')]
 version-new:
-	@bash -c 'source PKGBUILD && echo $(echo "$pkgver" | awk "{print \$1 + 0.0001}")'
+	@bash -c 'source PKGBUILD && awk -v ver="$pkgver" "BEGIN {printf \"%.4f\n\", ver + 0.0001}"'
 
 # Create a new release
 [group('release')]
