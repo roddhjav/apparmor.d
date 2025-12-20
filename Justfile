@@ -16,6 +16,7 @@ build := ".build"
 pkgdest := `pwd` / ".pkg"
 pkgname := "apparmor.d"
 gpgkey := "06A26D531D56C42D66805049C5469996F0DF68EC"
+sign := "false"
 
 # Prebuild options, only used for the `dev` install target
 opt := "complain"
@@ -298,9 +299,10 @@ serve:
 clean:
 	@rm -rf \
 		debian/.debhelper debian/debhelper* debian/*.debhelper debian/{{pkgname}} \
+		debian/*.substvars debian/*.debhelper debian/files \
 		{{pkgdest}}/{{pkgname}}* {{pkgdest}}/ubuntu {{pkgdest}}/debian \
 		{{pkgdest}}/archlinux {{pkgdest}}/opensuse {{pkgdest}}/version \
-		{{build}} coverage.out .logs/autopkgtest/
+		{{build}} coverage.out .logs/autopkgtest/ site .cache
 
 # Build the package in a clean OCI container
 [group('packages')]
@@ -313,10 +315,10 @@ packages: (clean)
 	#!/usr/bin/env bash
 	set -eu -o pipefail
 	declare -A matrix=(
-		["archlinux"]="-"
-		["debian"]="12 13"
-		["ubuntu"]="22.04 24.04 25.04 25.10"
-		["opensuse"]="-"
+		# ["archlinux"]="-"
+		["debian"]="13"
+		["ubuntu"]="24.04 25.10 26.04"
+		# ["opensuse"]="-"
 	)
 	for dist in "${!matrix[@]}"; do
 		IFS=' ' read -r -a releases <<< "${matrix[$dist]}"
@@ -570,9 +572,9 @@ commit:
 	cat > debian/changelog.tmp <<-EOF
 		{{pkgname}} (${version}-1) stable; urgency=medium
 
-		* Release {{pkgname}} v${version}
+		  * Release {{pkgname}} v${version}
 
-		-- $(git config user.name) <$(git config user.email)>  $(date -R)
+		 -- $(git config user.name) <$(git config user.email)>  $(date -R)
 
 	EOF
 	cat debian/changelog >> debian/changelog.tmp
@@ -581,6 +583,7 @@ commit:
 	sed -i "s/^Version:.*/Version:        $version/" "dists/{{pkgname}}.spec"
 	git add PKGBUILD "dists/{{pkgname}}.spec" debian/changelog
 	git commit -S -m "Release version $version"
+	git tag -a "v$version" -m "{{pkgname}} v$version" --local-user={{gpgkey}}
 
 # Create a release archive
 [group('release')]
@@ -588,14 +591,14 @@ archive:
 	#!/usr/bin/env bash
 	set -eu -o pipefail
 	version=`just version`
-	git tag -a "v$version" -m "{{pkgname}} v$version" --local-user={{gpgkey}}
+	mkdir -p {{pkgdest}}/release/ 
 	git archive \
 		--format=tar.gz \
 		--prefix={{pkgname}}-$version/ \
-		--output={{pkgdest}}/{{pkgname}}-$version.tar.gz \
+		--output={{pkgdest}}/release/{{pkgname}}-$version.tar.gz \
 		v$version
-	gpg --armor --default-key {{gpgkey}} --detach-sig {{pkgdest}}/{{pkgname}}-$version.tar.gz
-	gpg --verify {{pkgdest}}/{{pkgname}}-$version.tar.gz.asc
+	gpg --armor --default-key {{gpgkey}} --detach-sig {{pkgdest}}/release/{{pkgname}}-$version.tar.gz
+	gpg --verify {{pkgdest}}/release/{{pkgname}}-$version.tar.gz.asc
 
 # Publish the new release on Github
 [group('release')]
@@ -609,6 +612,10 @@ publish:
 	gh release upload "v$version" --repo $owner/{{pkgname}} \
 		{{pkgdest}}/{{pkgname}}-$version.tar.gz \
 		{{pkgdest}}/{{pkgname}}-$version.tar.gz.asc
+
+
+_ensure_pkgdest:
+	@mkdir -p {{pkgdest}}
 
 _get_ip osinfo flavor:
 	@virsh --quiet --readonly {{c}} domifaddr {{prefix}}{{osinfo}}-{{flavor}} | \
