@@ -213,22 +213,55 @@ dev +names:
 	done
 	sudo systemctl restart apparmor.service || sudo journalctl -xeu apparmor.service
 
+# Build the package on Arch Linux
+[group('packages')]
+build-pkg: (_ensure_pkgdest)
+	@PKGDEST={{pkgdest}} BUILDDIR=/tmp/makepkg makepkg --syncdeps --force --cleanbuild --noconfirm --noprogressbar
+
+# Build the package on Debian
+[group('packages')]
+build-dpkg: (_ensure_pkgdest)
+	dpkg-buildpackage -b -d {{ if sign == "true" { "--sign-key=" + gpgkey } else { "--no-sign" } }}
+	lintian --color always --display-info --pedantic --tag-display-limit 0 || true
+	mv ../{{pkgname}}*.deb {{pkgdest}}/
+
+# Build the package on OpenSUSE
+[group('packages')]
+build-rpm: (_ensure_pkgdest)
+	#!/usr/bin/env bash
+	set -eu -o pipefail
+	RPMBUILD_ROOT=$(mktemp -d /tmp/$PKGNAME.XXXXXX)
+	ARCH=$(uname -m)
+	VERSION="$(just version)"
+	readonly RPMBUILD_ROOT ARCH VERSION
+
+	mkdir -p "$RPMBUILD_ROOT"/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS/tmp}
+	cp -p "dists/$PKGNAME.spec" "$RPMBUILD_ROOT/SPECS"
+	tar -czf "$RPMBUILD_ROOT/SOURCES/$PKGNAME-$VERSION.tar.gz" --transform "s,^,$PKGNAME-$VERSION/," ./*
+
+	cd "$RPMBUILD_ROOT"
+	rpmbuild -bb --define "_topdir $RPMBUILD_ROOT" "SPECS/$PKGNAME.spec"
+
+	mv "$RPMBUILD_ROOT/RPMS/$ARCH/"*.rpm "{{pkgdest}}/"
+	rm -rf "$RPMBUILD_ROOT"
+
 # Build & install apparmor.d on Arch based systems
 [group('packages')]
-pkg:
-	@bash dists/build.sh pkg
+pkg name="": (build-pkg)
+	@sudo pacman -U --noconfirm \
+		{{pkgdest}}/{{pkgname}}{{ if name != "" { "-" + name } else { "" } }}-`just version`*.pkg.tar.zst 
 
 # Build & install apparmor.d on Debian based systems
 [group('packages')]
-dpkg:
-	@bash dists/build.sh dpkg
-	@sudo dpkg -i {{pkgdest}}/{{pkgname}}_*.deb
+dpkg name="": (build-dpkg)
+	@sudo dpkg -i  \
+		{{pkgdest}}/{{pkgname}}{{ if name != "" { "-" + name } else { "" } }}_`just version`*.deb
 
 # Build & install apparmor.d on OpenSUSE based systems
 [group('packages')]
-rpm:
-	@bash dists/build.sh rpm
-	@sudo rpm -ivh --force {{pkgdest}}/{{pkgname}}-*.rpm
+rpm name="": (build-rpm)
+	@sudo rpm -ivh --force \
+		{{pkgdest}}/{{pkgname}}{{ if name != "" { "-" + name } else { "" } }}-`just version`*.rpm
 
 # Run the linters
 [group('linter')]
@@ -237,7 +270,7 @@ lint:
 	packer fmt tests/packer/
 	packer validate --syntax-only tests/packer/
 	shellcheck --shell=bash \
-		PKGBUILD dists/build.sh dists/docker.sh tests/check.sh \
+		PKGBUILD dists/*.sh tests/check.sh \
 		tests/packer/init.sh tests/packer/src/aa-update tests/packer/clean.sh \
 		tests/autopkgtest/autopkgtest.sh debian/{{pkgname}}.postinst debian/{{pkgname}}.postrm
 

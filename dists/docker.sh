@@ -68,8 +68,8 @@ build_in_docker_makepkg() {
 		docker exec "$img" sudo pacman -Sy --noconfirm --noprogressbar
 	fi
 
-	docker exec --workdir="$BUILDIR/$PKGNAME" "$img" bash dists/build.sh pkg
-	mv "$VOLUME/$PKGNAME/$OUTDIR/$PKGNAME"-*.pkg.* "$OUTPUT"
+	docker exec --workdir="$BUILDIR/$PKGNAME" "$img" just build-pkg
+	mv "$VOLUME/$PKGNAME/$OUTDIR/$PKGNAME"*.pkg.* "$OUTPUT"
 }
 
 build_in_docker_dpkg() {
@@ -109,7 +109,7 @@ build_in_docker_dpkg() {
 		docker exec "$img" sudo apt-get install -y "${aptopt[@]}" golang-go
 	fi
 
-	docker exec --workdir="$BUILDIR/$PKGNAME" "$img" bash dists/build.sh dpkg
+	docker exec --workdir="$BUILDIR/$PKGNAME" "$img" just build-dpkg
 	mv "$VOLUME/$PKGNAME/$OUTDIR/${PKGNAME}"*.deb "$OUTPUT"
 }
 
@@ -128,7 +128,7 @@ build_in_docker_rpm() {
 		docker exec "$img" sudo zypper install -y distribution-release golang-packaging apparmor-profiles
 	fi
 
-	docker exec --workdir="$BUILDIR/$PKGNAME" "$img" bash dists/build.sh rpm
+	docker exec --workdir="$BUILDIR/$PKGNAME" "$img" just build-rpm
 	mv "$VOLUME/$PKGNAME/$OUTDIR/$PKGNAME-"*.rpm "$OUTPUT"
 }
 
