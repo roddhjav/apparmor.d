@@ -15,13 +15,12 @@ readonly PREFIX="builder-"
 readonly PKGNAME=apparmor.d
 readonly VOLUME=/tmp/build
 readonly BUILDIR=/home/build/tmp
-readonly OUTDIR=".pkg"
+readonly OUTPUT=".pkg"
 readonly DISTRIBUTION="$1"
 RELEASE="${2:-}"
 FLAVOR="${3:-}"
 PACKAGER="$(git config user.name) <$(git config user.email)>"
 [[ "$RELEASE" == "-" ]] && RELEASE=""
-readonly OUTPUT="$PWD/$OUTDIR/$DISTRIBUTION/$RELEASE"
 readonly RELEASE FLAVOR PACKAGER
 
 _start() {
@@ -69,7 +68,7 @@ build_in_docker_makepkg() {
 	fi
 
 	docker exec --workdir="$BUILDIR/$PKGNAME" "$img" just build-pkg
-	mv "$VOLUME/$PKGNAME/$OUTDIR/$PKGNAME"*.pkg.* "$OUTPUT"
+	mv "$VOLUME/$PKGNAME/$OUTPUT/$PKGNAME"*.pkg.* "$OUTPUT"
 }
 
 build_in_docker_dpkg() {
@@ -98,7 +97,7 @@ build_in_docker_dpkg() {
 	fi
 
 	docker exec --workdir="$BUILDIR/$PKGNAME" "$img" just build-dpkg
-	mv "$VOLUME/$PKGNAME/$OUTDIR/${PKGNAME}"*.deb "$OUTPUT"
+	mv "$VOLUME/$PKGNAME/$OUTPUT/$PKGNAME"*.deb "$OUTPUT"
 }
 
 build_in_docker_rpm() {
@@ -117,7 +116,7 @@ build_in_docker_rpm() {
 	fi
 
 	docker exec --workdir="$BUILDIR/$PKGNAME" "$img" just build-rpm
-	mv "$VOLUME/$PKGNAME/$OUTDIR/$PKGNAME-"*.rpm "$OUTPUT"
+	mv "$VOLUME/$PKGNAME/$OUTPUT/$PKGNAME"*.rpm "$OUTPUT"
 }
 
 main() {
