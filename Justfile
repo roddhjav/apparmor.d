@@ -298,10 +298,10 @@ serve:
 # Remove all build artifacts
 clean:
 	@rm -rf \
-		debian/.debhelper debian/debhelper* debian/*.debhelper debian/{{pkgname}} \
+		debian/.debhelper debian/debhelper* debian/*.debhelper debian/{{pkgname}}* \
 		debian/*.substvars debian/*.debhelper debian/files \
 		{{pkgdest}}/{{pkgname}}* {{pkgdest}}/ubuntu {{pkgdest}}/debian \
-		{{pkgdest}}/archlinux {{pkgdest}}/opensuse {{pkgdest}}/version \
+		{{pkgdest}}/archlinux {{pkgdest}}/opensuse \
 		{{build}} coverage.out .logs/autopkgtest/ site .cache
 
 # Build the package in a clean OCI container

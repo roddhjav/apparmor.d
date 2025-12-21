@@ -3,18 +3,42 @@
 # Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+export DEB_LDFLAGS_MAINT_APPEND = -Wl,-z,relro,-z,now
+
+# Include hardening flags
+DPKG_EXPORT_BUILDFLAGS = 1
+include /usr/share/dpkg/buildflags.mk
+
+# Pass hardening flags to Go
+export CGO_CFLAGS := $(CFLAGS)
+export CGO_LDFLAGS := $(LDFLAGS)
+export GOFLAGS := -buildmode=pie -trimpath -mod=readonly -tags=dev
+
 %:
 	dh $@ --with=config-package
 
 # golang/1.19 compresses debug symbols itself.
 override_dh_dwz:
 
-override_dh_installdeb:
-	for pkgname in apparmor.d apparmor.d.enforced; do \
-		install -D debian/common.postinst debian/$${pkgname}/DEBIAN/postinst; \
-		install -D debian/common.postrm debian/$${pkgname}/DEBIAN/postrm; \
+# Disable golang buildsystem auto-detection.
+# Debhelper auto-detects Go projects from go.mod and tries to use the golang
+# buildsystem, which creates symlink structures incompatible with //go:embed.
+# We use 'just' for building with manual hardening flags instead.
+override_dh_auto_configure:
+override_dh_auto_test:
+
+override_dh_install:
+	dh_install
+	for pkgname in $(shell dh_listpackages); do \
+		cp debian/common.hide debian/$${pkgname}.hide; \
+		cp debian/common.postinst debian/$${pkgname}.postinst; \
+		cp debian/common.postrm debian/$${pkgname}.postrm; \
 	done
-	dh_installdeb
+
+override_dh_fixperms:
+	dh_fixperms
+	find debian/*/usr/share -type d -empty -delete
 
 override_dh_auto_build:
 	just build=.build/enforce enforce
