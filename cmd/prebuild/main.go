@@ -52,6 +52,9 @@ func init() {
 		case "questing":
 			prebuild.ABI = 4
 			prebuild.Version = 5.0
+		case "resolute":
+			prebuild.ABI = 4
+			prebuild.Version = 5.0
 		}
 
 	case "debian":
