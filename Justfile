@@ -229,7 +229,7 @@ build-dpkg: (_ensure_pkgdest)
 	if dpkg-vendor --is Ubuntu; then
 		suffix="ubuntu1~$(lsb_release -sr)"
 	elif dpkg-vendor --is Debian; then
-		suffix="~deb$(lsb_release -sr)"
+		suffix="1+deb$(lsb_release -sr)"
 	fi
 	dch --urgency=medium --newversion="$version-$suffix" --distribution=`lsb_release -sc` --controlmaint "Release $version-$suffix"
 	dpkg-buildpackage -b -d {{ if sign == "true" { "--sign-key=" + gpgkey } else { "--no-sign" } }}
