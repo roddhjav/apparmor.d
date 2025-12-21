@@ -14,7 +14,7 @@ include /usr/share/dpkg/buildflags.mk
 export CGO_CPPFLAGS := $(CPPFLAGS)
 export CGO_CFLAGS := $(CFLAGS)
 export CGO_LDFLAGS := $(LDFLAGS)
-export GOFLAGS := -buildmode=pie -trimpath -mod=readonly -tags=dev
+export GOFLAGS := -buildmode=pie -trimpath -ldflags=-linkmode=external -mod=readonly -modcacherw
 
 %:
 	dh $@ --with=config-package
@@ -39,10 +39,6 @@ override_dh_install:
 		cp debian/common.postinst debian/$${pkgname}.postinst; \
 		cp debian/common.postrm debian/$${pkgname}.postrm; \
 	done
-
-override_dh_fixperms:
-	dh_fixperms
-	find debian/*/usr/share -type d -empty -delete
 
 override_dh_auto_build:
 	just build=.build/enforce enforce
