@@ -85,14 +85,6 @@ build_in_docker_dpkg() {
 		sed -i -e "s/just complain/just complain-test/" "$VOLUME/$PKGNAME/debian/rules"
 	fi
 
-	# Adjustments for development releases
-	case "$release" in
-	26.04)
-		img="$PREFIX${dist}25.10"
-		  ;;
-	*) ;;
-	esac
-
 	if _exist "$img"; then
 		if ! _is_running "$img"; then
 			_start "$img"
@@ -102,11 +94,7 @@ build_in_docker_dpkg() {
 		docker run -tid --name "$img" --volume "$VOLUME:$BUILDIR" \
 			--env DISTRIBUTION="$target" "$BASEIMAGE/$dist:$release"
 		docker exec "$img" sudo apt-get update -q
-		docker exec "$img" sudo apt-get install -y config-package-dev lsb-release libdistro-info-perl
-		if [[ "$dist" == debian && "$release" == "12" ]]; then
-			aptopt=(-t bookworm-backports)
-		fi
-		docker exec "$img" sudo apt-get install -y "${aptopt[@]}" golang-go
+		docker exec "$img" sudo apt-get install -y config-package-dev lsb-release libdistro-info-perl golang-go
 	fi
 
 	docker exec --workdir="$BUILDIR/$PKGNAME" "$img" just build-dpkg
