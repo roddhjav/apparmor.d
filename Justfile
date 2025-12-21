@@ -272,8 +272,8 @@ lint:
 	packer validate --syntax-only tests/packer/
 	shellcheck --shell=bash \
 		PKGBUILD dists/*.sh tests/check.sh \
-		tests/packer/init.sh tests/packer/src/aa-update tests/packer/clean.sh \
-		tests/autopkgtest/autopkgtest.sh debian/{{pkgname}}.postinst debian/{{pkgname}}.postrm
+		tests/packer/*.sh tests/packer/src/aa-update \
+		tests/autopkgtest/autopkgtest.sh debian/common.postinst debian/common.postrm
 
 # Run style checks on the profiles
 [group('linter')]
