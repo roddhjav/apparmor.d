@@ -241,17 +241,19 @@ build-dpkg: (_ensure_pkgdest)
 build-rpm: (_ensure_pkgdest)
 	#!/usr/bin/env bash
 	set -eu -o pipefail
-	RPMBUILD_ROOT=$(mktemp -d /tmp/$PKGNAME.XXXXXX)
+	RPMBUILD_ROOT=$(mktemp -d /tmp/{{pkgname}}.XXXXXX)
 	ARCH=$(uname -m)
 	VERSION="$(just version)"
+	echo "Building {{pkgname}} version $VERSION for $ARCH architecture"
 	readonly RPMBUILD_ROOT ARCH VERSION
 
 	mkdir -p "$RPMBUILD_ROOT"/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS/tmp}
-	cp -p "dists/$PKGNAME.spec" "$RPMBUILD_ROOT/SPECS"
-	tar -czf "$RPMBUILD_ROOT/SOURCES/$PKGNAME-$VERSION.tar.gz" --transform "s,^,$PKGNAME-$VERSION/," ./*
+	cp -p "dists/{{pkgname}}.spec" "$RPMBUILD_ROOT/SPECS"
+	tar -czf "$RPMBUILD_ROOT/SOURCES/{{pkgname}}-$VERSION.tar.gz" --transform "s,^,{{pkgname}}-$VERSION/," ./*
 
 	cd "$RPMBUILD_ROOT"
-	rpmbuild -bb --define "_topdir $RPMBUILD_ROOT" "SPECS/$PKGNAME.spec"
+	sed -i "s/^Version:.*/Version:        $VERSION/" "SPECS/{{pkgname}}.spec"
+	rpmbuild -bb --define "_topdir $RPMBUILD_ROOT" "SPECS/{{pkgname}}.spec"
 
 	mv "$RPMBUILD_ROOT/RPMS/$ARCH/"*.rpm "{{pkgdest}}/"
 	rm -rf "$RPMBUILD_ROOT"
