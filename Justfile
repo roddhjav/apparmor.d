@@ -222,6 +222,16 @@ build-pkg: (_ensure_pkgdest)
 # Build the package on Debian
 [group('packages')]
 build-dpkg: (_ensure_pkgdest)
+	#!/usr/bin/env bash
+	set -eu -o pipefail
+	version=`just version`
+	suffix=""
+	if dpkg-vendor --is Ubuntu; then
+		suffix="ubuntu1~$(lsb_release -sr)"
+	elif dpkg-vendor --is Debian; then
+		suffix="~deb$(lsb_release -sr)"
+	fi
+	dch --urgency=medium --newversion="$version-$suffix" --distribution=`lsb_release -sc` --controlmaint "Release $version-$suffix"
 	dpkg-buildpackage -b -d {{ if sign == "true" { "--sign-key=" + gpgkey } else { "--no-sign" } }}
 	lintian --color always --display-info --pedantic --tag-display-limit 0 || true
 	mv ../{{pkgname}}*.deb {{pkgdest}}/
