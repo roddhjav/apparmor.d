@@ -625,6 +625,11 @@ publish:
 		{{pkgdest}}/{{pkgname}}-$version.tar.gz \
 		{{pkgdest}}/{{pkgname}}-$version.tar.gz.asc
 
+# Create & upload new release packages to the repositories
+[group('release')]
+repo path="../../Packages":
+	just --justfile {{path}}/pkgbuilds/Justfile publish {{pkgname}} `just version`
+	just --justfile {{path}}/repo.pujol.io/Justfile publish {{pkgname}} `just version`
 
 _ensure_pkgdest:
 	@mkdir -p {{pkgdest}}
