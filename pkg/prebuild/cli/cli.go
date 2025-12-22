@@ -112,8 +112,6 @@ func Configure() {
 		prepare.Register("fsp")
 		builder.Register("fsp")
 		prebuild.RBAC = true
-	} else if prebuild.SystemdDir.Exist() {
-		prepare.Register("systemd-early")
 	}
 
 	if complain {
