@@ -11,7 +11,7 @@ When creating [an issue on Github][newissue], please post a link to the [paste] 
 aa-log -R
 ```
 
-??? question "No logs with `aa-log`?"
+!!! question "No logs with `aa-log`?"
 
     If the log file is empty, check that Auditd is running:
 
@@ -30,7 +30,7 @@ If this command produces nothing, use `-s` to provide all logs since boot time (
 aa-log -s -R
 ```
 
-??? question "No logs with `aa-log -s`?"
+!!! question "No logs with `aa-log -s`?"
 
     On certain distributions/configurations, AppArmor logs in journal could be taken over by *auditd* when it is installed. To overcome this, `systemd-journald-audit.socket` could be enabled:
 
