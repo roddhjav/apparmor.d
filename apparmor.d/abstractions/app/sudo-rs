@@ -1,0 +1,53 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+# LOGPROF-SUGGEST: no
+
+# Minimal set of rules for sudo-rs.
+
+  abi <abi/4.0>,
+
+  include <abstractions/authentication>
+  include <abstractions/bus-system>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+
+  capability audit_write,
+  capability dac_override,
+  capability dac_read_search,
+  capability net_admin,
+  capability setgid,
+  capability setuid,
+
+  network (create receive send) netlink raw,
+
+  unix type=stream addr=@@{udbus}/bus/sudo/system,
+
+  dbus send bus=system path=/org/freedesktop/home1
+       interface=org.freedesktop.home1.Manager
+       member=GetUserRecordByName
+       peer=(name=org.freedesktop.home1, label="@{p_systemd_homed}"),
+
+  @{bin}/sudo        mr,
+  @{bin}/sudo-rs     mr,
+
+  @{etc_ro}/sudo.conf r,
+  @{etc_ro}/sudoers r,
+  @{etc_ro}/sudoers.d/{,*} r,
+
+  /etc/machine-id r,
+
+  owner @{run}/sudo-rs/ w,
+  owner @{run}/sudo-rs/ts/ w,
+  owner @{run}/sudo-rs/ts/@{uid} rwk,
+
+  @{PROC}/@{pid}/loginuid r,
+  @{PROC}/@{pid}/stat r,
+  @{PROC}/sys/kernel/random/boot_id r,
+
+  /dev/ptmx rwk,
+  /dev/tty rwk,
+
+  include if exists <abstractions/app/sudo-rs.d>
+
+# vim:syntax=apparmor

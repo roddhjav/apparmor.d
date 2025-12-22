@@ -1,0 +1,33 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/sudo-rs @{lib}/cargo/bin/sudo
+profile sudo-rs @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/app-launcher-root>
+  include <abstractions/app/sudo-rs>
+
+  capability sys_ptrace, # optional: no audit
+
+  ptrace read,
+
+  signal send set=(winch, hup, term),
+
+  @{exec_path} mr,
+  @{bin}/env ix,
+  @{bin}/tee m,
+
+  @{bin}/@{shells}                  rUx,
+  @{lib}/**                         PUx,
+  /opt/*/**                         PUx,
+  /snap/snapd/@{int}@{bin}/snap    rPUx,
+
+  include if exists <local/sudo-rs>
+}
+
+# vim:syntax=apparmor
