@@ -7,11 +7,12 @@ abi <abi/4.0>,
 
 include <tunables/global>
 
-@{exec_path} = @{bin}/telegram-desktop @{bin}/Telegram
+@{exec_path} = @{bin}/telegram-desktop @{bin}/Telegram /opt/Telegram/Telegram
 profile telegram-desktop @{exec_path} {
   include <abstractions/base>
   include <abstractions/audio-client>
-  include <abstractions/consoles>
+  include <abstractions/bus-session>
+  include <abstractions/bus/org.kde.StatusNotifierWatcher>
   include <abstractions/dconf-write>
   include <abstractions/desktop>
   include <abstractions/enchant>
@@ -42,6 +43,7 @@ profile telegram-desktop @{exec_path} {
   owner @{user_share_dirs}/TelegramDesktop/** rwlk -> @{user_share_dirs}/TelegramDesktop/**,
 
   owner @{user_config_dirs}/autostart/telegramdesktop.desktop rw,
+  owner @{user_config_dirs}/autostart/org.telegram.desktop._@{hex32}.desktop{,.@{rand6}} rw,
 
   owner @{tmp}/@{hex32}-?@{uuid}? rwk,
   audit owner /dev/shm/#@{int} rw,
@@ -53,8 +55,6 @@ profile telegram-desktop @{exec_path} {
   owner @{PROC}/@{pid}/mountinfo r,
   owner @{PROC}/@{pid}/mounts r,
   owner @{PROC}/@{pid}/task/@{tid}/comm rw,
-
-  owner /dev/tty@{u8} rw,
 
   include if exists <local/telegram-desktop>
 }
