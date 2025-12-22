@@ -37,7 +37,6 @@ Prepare tasks:
     ignore - Ignore profiles and files from:
     server - Configure AppArmor for server
     systemd-default - Configure systemd unit drop in files to a profile for some units
-    systemd-early - Configure systemd unit drop in files to ensure some service start after apparmor
     attach - Configure tunable for re-attached path
 
 Build tasks:
@@ -111,12 +110,6 @@ Overwrite (dummy) upstream profiles as defined in `dist/overwrite`.
 Install systemd unit drop in files from `systemd/default`. They configure the various dbus daemon to use specific profiles.
 
 *Enabled by default. Can be disabled in `cmd/prebuild/main.go`*
-
-### **`systemd-early`**
-
-Install systemd unit drop in files from `systemd/early` to ensure some services start after AppArmor. THis task will be removed in the future, as it will not be needed any more.
-
-*Enabled by default. Can be disabled in `pkg/prebuild/cli/cli.go`*
 
 ### **`fsp`**
 

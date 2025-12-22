@@ -13,10 +13,6 @@ type SystemdDefault struct {
 	prebuild.Base
 }
 
-type SystemdEarly struct {
-	prebuild.Base
-}
-
 func init() {
 	RegisterTask(&SystemdDefault{
 		Base: prebuild.Base{
@@ -24,18 +20,8 @@ func init() {
 			Msg:     "Configure systemd unit drop in files to a profile for some units",
 		},
 	})
-	RegisterTask(&SystemdEarly{
-		Base: prebuild.Base{
-			Keyword: "systemd-early",
-			Msg:     "Configure systemd unit drop in files to ensure some service start after apparmor",
-		},
-	})
 }
 
 func (p SystemdDefault) Apply() ([]string, error) {
 	return []string{}, paths.CopyTo(prebuild.SystemdDir.Join("default"), prebuild.Root.Join("systemd"))
-}
-
-func (p SystemdEarly) Apply() ([]string, error) {
-	return []string{}, paths.CopyTo(prebuild.SystemdDir.Join("early"), prebuild.Root.Join("systemd"))
 }
