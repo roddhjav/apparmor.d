@@ -12,6 +12,7 @@ profile mullvad-daemon @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus-system>
   include <abstractions/nameservice-strict>
+  include <abstractions/network-manager-observe>
 
   capability dac_override,
 
@@ -31,6 +32,11 @@ profile mullvad-daemon @{exec_path} flags=(attach_disconnected) {
   network netlink dgram,
 
   mount fstype=cgroup -> @{sys}/fs/cgroup/net_cls/,
+
+  dbus send bus=system path=/org/freedesktop/NetworkManager
+       interface=org.freedesktop.DBus.Properties
+       member=Set
+       peer=(name=@{busname}, label=NetworkManager),
 
   @{exec_path} mr,
 
