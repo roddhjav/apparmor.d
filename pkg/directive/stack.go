@@ -10,6 +10,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/roddhjav/apparmor.d/pkg/paths"
 	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 	"github.com/roddhjav/apparmor.d/pkg/tasks"
 	"github.com/roddhjav/apparmor.d/pkg/util"
@@ -55,8 +56,22 @@ func (s Stack) Apply(opt *Option, profile string) (string, error) {
 	}
 
 	res := ""
+	ignoreDir := paths.FilterNames("tunables", "abstractions", "disable")
 	for name := range opt.ArgMap {
-		stackedProfile, err := prebuild.RootApparmord.Join(name).ReadFileAsString()
+		files, err := prebuild.RootApparmord.ReadDirRecursiveFiltered(
+			paths.NotFilter(ignoreDir), paths.FilterOutDirectories(), paths.FilterNames(name),
+		)
+		if err != nil {
+			return "", err
+		}
+		if len(files) == 0 {
+			return "", fmt.Errorf("no profile found for stack: %s", name)
+		}
+		if len(files) != 1 {
+			return "", fmt.Errorf("multiple profiles found for stack: %s", name)
+		}
+
+		stackedProfile := files[0].MustReadFileAsString()
 		if err != nil {
 			return "", fmt.Errorf("%s need to stack: %w", name, err)
 		}
