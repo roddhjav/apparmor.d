@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/roddhjav/apparmor.d/pkg/aa"
+	"github.com/roddhjav/apparmor.d/pkg/paths"
 	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 	"github.com/roddhjav/apparmor.d/pkg/tasks"
 )
@@ -43,8 +44,22 @@ func (d Exec) Apply(opt *Option, profileRaw string) (string, error) {
 	}
 
 	rules := aa.Rules{}
+	ignoreDir := paths.FilterNames("tunables", "abstractions", "disable")
 	for name := range opt.ArgMap {
-		profiletoTransition := prebuild.RootApparmord.Join(name).MustReadFileAsString()
+		files, err := prebuild.RootApparmord.ReadDirRecursiveFiltered(
+			paths.NotFilter(ignoreDir), paths.FilterOutDirectories(), paths.FilterNames(name),
+		)
+		if err != nil {
+			return "", err
+		}
+		if len(files) == 0 {
+			return "", fmt.Errorf("no profile found for exec: %s", name)
+		}
+		if len(files) != 1 {
+			return "", fmt.Errorf("multiple profiles found for exec: %s", name)
+		}
+
+		profiletoTransition := files[0].MustReadFileAsString()
 		dstProfile := aa.DefaultTunables()
 		if _, err := dstProfile.Parse(profiletoTransition); err != nil {
 			return "", err
