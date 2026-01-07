@@ -8,7 +8,28 @@
 
   abi <abi/4.0>,
 
-  #aa:dbus common bus=session name=org.gnome.SessionManager label="@{p_gnome_session}"
+  # DBus.Properties: read properties from the interface
+
+  dbus send bus=session path=/org/gnome/SessionManager
+       interface=org.freedesktop.DBus.Properties
+       member={Get,GetAll}
+       peer=(name=@{busname}, label="@{p_gnome_session}"),
+
+  dbus send bus=session path=/org/gnome/SessionManager/Client@{int}
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=@{busname}, label="@{p_gnome_session}"),
+
+  # DBus.Properties: receive property changed events
+
+  dbus receive bus=session path=/org/gnome/SessionManager
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged
+       peer=(name=@{busname}, label="@{p_gnome_session}"),
+
+  # DBus.ObjectManager: allow clients to enumerate sources
+
+  # gnome.SessionManager
 
   dbus send bus=session path=/org/gnome/SessionManager
        interface=org.gnome.SessionManager
