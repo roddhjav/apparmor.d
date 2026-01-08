@@ -1,0 +1,36 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/goxray_cli @{bin}/goxray_cli_linux_@{arch}
+profile goxray_cli @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+  include <abstractions/consoles>
+  include <abstractions/openssl>
+  include <abstractions/ssl_certs>
+
+  # Operate TUN interfaces
+  capability net_admin,
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  @{PROC}/@{pid}/net/route r,
+  @{PROC}/sys/net/core/somaxconn r,
+
+  /dev/net/tun rw,
+
+  include if exists <local/goxray_cli>
+}
+
+# vim:syntax=apparmor

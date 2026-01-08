@@ -4,12 +4,24 @@
 
   abi <abi/4.0>,
 
-  #aa:dbus common bus=system name=org.freedesktop.hostname1 label="@{p_systemd_hostnamed}"
+  # DBus.Properties: read properties from the interface
 
   dbus send bus=system path=/org/freedesktop/hostname1
        interface=org.freedesktop.DBus.Properties
-       member=Get
+       member={Get,GetAll}
        peer=(name=org.freedesktop.hostname1),
+
+  dbus send bus=system path=/org/freedesktop/hostname1
+       interface=org.freedesktop.DBus.Properties
+       member={Get,GetAll}
+       peer=(label=systemd-hostnamed),
+
+  # DBus.Properties: receive property changed events
+
+  dbus receive bus=system path=/org/freedesktop/hostname1
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged
+       peer=(name=@{busname}, label=systemd-hostnamed),
 
   include if exists <abstractions/bus/system/org.freedesktop.hostname1.d>
 

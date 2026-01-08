@@ -10,8 +10,9 @@ include <tunables/global>
 profile yelp @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/audio-client>
-  include <abstractions/bus-system>
+  include <abstractions/bwrap> # FIXME: In namespace>
   include <abstractions/common/gnome>
+  include <abstractions/webkit>
 
   network netlink raw,
 
@@ -21,6 +22,7 @@ profile yelp @{exec_path} flags=(attach_disconnected) {
   @{exec_path} mr,
   @{open_path}  rPx -> child-open-help,
 
+  @{bin}/bwrap               rix,
   @{lib}/{,@{multiarch}/}webkit{2,}gtk-*/WebKitNetworkProcess rix,
   @{lib}/{,@{multiarch}/}webkit{2,}gtk-*/WebKitWebProcess rix,
 
@@ -29,6 +31,13 @@ profile yelp @{exec_path} flags=(attach_disconnected) {
   /usr/share/xml/{,**} r,
 
   /etc/xml/{,**} r,
+
+#   owner @{run}/user/@{uid}/.flatpak/ rw,
+#   owner @{run}/user/@{uid}/.flatpak/webkit-@{int}-@{int}/ w,
+#   owner @{run}/user/@{uid}/.flatpak/webkit-@{int}-@{int}/bwrapinfo.json rw,
+#   owner @{run}/user/@{uid}/webkitgtk/ w,
+#   owner @{run}/user/@{uid}/webkitgtk/a11y-proxy-@{rand6} rw,
+#   owner @{run}/user/@{uid}/webkitgtk/bus-proxy-@{rand6} rw,
 
   @{sys}/firmware/acpi/pm_profile r,
   @{sys}/devices/virtual/dmi/id/chassis_type r,

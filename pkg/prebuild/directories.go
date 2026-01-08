@@ -22,6 +22,9 @@ var (
 	// Either or not we are in test mode
 	Test = false
 
+	// The dbus implementation used
+	DbusDaemon = true
+
 	// Pkgname is the name of the package
 	Pkgname = "apparmor.d"
 
@@ -46,8 +49,8 @@ var (
 	// DebianDir is the directory where the debian specific files are stored
 	DebianDir *paths.Path = paths.New("debian")
 
-	// DebianHide is the path to the debian/apparmor.d.hide file
-	DebianHide = DebianHider{path: DebianDir.Join("apparmor.d.hide")}
+	// DebianHide is the path to the debian/common.hide file
+	DebianHide = DebianHider{path: DebianDir.Join("common.hide")}
 
 	Ignore = Ignorer{}
 	Flags  = Flagger{}

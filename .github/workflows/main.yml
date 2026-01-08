@@ -26,8 +26,6 @@ jobs:
         include:
           - os: ubuntu-24.04
             mode: default
-          - os: ubuntu-24.04
-            mode: full-system-policy
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
@@ -44,10 +42,7 @@ jobs:
 
       - name: Build the apparmor.d package
         run: |
-          if [[ ${{ matrix.mode }} == full-system-policy ]]; then
-            sed -e "s/just complain/just fsp-complain/" -i debian/rules
-          fi
-          bash dists/build.sh dpkg
+          just build-dpkg
 
       - name: Install apparmor.d
         run: sudo dpkg --install .pkg/apparmor.d_*_amd64.deb || true

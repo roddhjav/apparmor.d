@@ -9,7 +9,6 @@ include <tunables/global>
 @{exec_path} = @{lib}/gnome-session-service
 profile gnome-session-service @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/bus-system>
   include <abstractions/bus/session/org.freedesktop.systemd1>
   include <abstractions/dconf-write>
   include <abstractions/gnome-strict>
@@ -62,7 +61,8 @@ profile gnome-session-service @{exec_path} flags=(attach_disconnected) {
     @{lib}/@{multiarch}/glib-@{version}/gio-launch-desktop  mr,
     @{lib}/gio-launch-desktop                               mr,
 
-    @{sh_path}                    rPx -> gnome-session-service//shell,
+    @{sh_path}                    rix,
+    @{bin}/env                    rix,
     @{lib}/**                     PUx,
     @{bin}/**                     PUx,
     /opt/*/**                     PUx,
@@ -71,19 +71,6 @@ profile gnome-session-service @{exec_path} flags=(attach_disconnected) {
     /usr/games/**                 PUx,
 
     include if exists <local/gnome-session-service_open>
-  }
-
-  profile shell {
-    include <abstractions/base>
-
-    @{sh_path} mr,
-
-    @{bin}/im-launch Px,
-    @{bin}/input-remapper-control PUx,
-
-    /dev/tty rw,
-
-    include if exists <local/gnome-session-service_shell>
   }
 
   include if exists <local/gnome-session-service>

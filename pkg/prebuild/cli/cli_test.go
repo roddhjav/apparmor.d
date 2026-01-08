@@ -89,8 +89,6 @@ func Test_Prebuild(t *testing.T) {
 			if full {
 				prepare.Register("fsp")
 				builder.Register("fsp")
-			} else {
-				prepare.Register("systemd-early")
 			}
 
 			if complain {

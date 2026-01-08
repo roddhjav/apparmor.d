@@ -3,19 +3,21 @@
 # Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
+# Generic profile for xdg-open utility. It is an equivalent of child-open-any.
+
 abi <abi/4.0>,
 
 include <tunables/global>
 
 @{exec_path} = @{bin}/xdg-open
-profile xdg-open @{exec_path} flags=(attach_disconnected) {
+profile xdg-open @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/base>
-  include <abstractions/app-open>
-  include <abstractions/consoles>
-  include <abstractions/freedesktop.org>
+  include <abstractions/app/open>
+  include <abstractions/path>
 
   @{exec_path} r,
 
+  # xdg-open internal commands
   @{sh_path}       rix,
   @{bin}/{,e}grep   ix,
   @{bin}/basename   ix,
@@ -35,7 +37,14 @@ profile xdg-open @{exec_path} flags=(attach_disconnected) {
   @{bin}/gdbus                Cx -> bus,
   @{bin}/xprop                Px,
   @{bin}/xdg-mime             Px,
-  @{open_path}                Px -> child-open-any,
+
+  # Allow to open everything (equivalent to child-open-any)
+  @{bin}/**                     PUx,
+  @{lib}/**                     PUx,
+  @{user_bin_dirs}/**           PUx,
+  /opt/*/**                     PUx,
+  /usr/local/bin/**             PUx,
+  /usr/share/**                 PUx,
 
   @{PROC}/version r,
 

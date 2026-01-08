@@ -5,6 +5,10 @@
 # Usage: `just`
 # See https://apparmor.pujol.io/development/ for more information.
 
+# Globally override any variables
+set allow-duplicate-variables
+import? '~/.aa.just'
+
 # Build settings
 
 destdir := "/"
@@ -12,6 +16,10 @@ build := ".build"
 pkgdest := `pwd` / ".pkg"
 pkgname := "apparmor.d"
 gpgkey := "06A26D531D56C42D66805049C5469996F0DF68EC"
+sign := "false"
+
+# Prebuild options, only used for the `dev` install target
+opt := "complain"
 
 # The following variables are only  used for the development and test VM
 
@@ -34,6 +42,13 @@ ram := "4096"
 ssh_keyname := "id_ed25519"
 ssh_privatekey := home_dir() / ".ssh/" + ssh_keyname
 ssh_publickey := ssh_privatekey + ".pub" 
+
+# Path to the UEFI firmware
+firmware := if path_exists("/usr/share/edk2/x64/OVMF.4m.fd") == "true" {
+	"/usr/share/edk2/x64/OVMF.4m.fd"
+} else {
+	"/usr/share/ovmf/OVMF.fd"
+}
 
 # Where the VM are stored
 vm := home_dir() / ".vm"
@@ -58,6 +73,7 @@ Build variables available:
     build        " + BLUE + "# Build directory (default: " + build + ")" + NORMAL + "
     destdir      " + BLUE + "# Installation destination (default: " + destdir + ")" + NORMAL + "
     pkgdest      " + BLUE + "# Package output directory (default: " + pkgdest + ")" + NORMAL + "
+    opt          " + BLUE + "# Prebuild option, only used for the dev install target (default: " + opt + ")" + NORMAL + "
 
 Development variables available:
     username     " + BLUE + "# VM username (default: " + username + ")" + NORMAL + "
@@ -187,33 +203,78 @@ local +names:
 		sed -i -e "s/rPx/rPUx/g" "{{build}}/apparmor.d/$file"
 		install -Dvm0644 "{{build}}/apparmor.d/$file" "{{destdir}}/etc/apparmor.d/$file"
 	done;
-	systemctl restart apparmor || sudo journalctl -xeu apparmor.service
+	systemctl restart apparmor.service || journalctl -xeu apparmor.service
 
 # Prebuild, install, and load a dev profile
 [group('install')]
 dev +names:
-	go run ./cmd/prebuild --complain
+	go run ./cmd/prebuild --{{opt}}
 	for file in {{names}}; do \
 		sudo install -Dm644 -v {{build}}/apparmor.d/$file /etc/apparmor.d/$file; \
 	done
 	sudo systemctl restart apparmor.service || sudo journalctl -xeu apparmor.service
 
+# Build the package on Arch Linux
+[group('packages')]
+build-pkg: (_ensure_pkgdest)
+	@PKGDEST={{pkgdest}} BUILDDIR=/tmp/makepkg makepkg --syncdeps --force --cleanbuild --noconfirm --noprogressbar
+
+# Build the package on Debian
+[group('packages')]
+build-dpkg: (_ensure_pkgdest)
+	#!/usr/bin/env bash
+	set -eu -o pipefail
+	version=`just version`
+	suffix=""
+	if dpkg-vendor --is Ubuntu; then
+		suffix="ubuntu1~$(lsb_release -sr)"
+	elif dpkg-vendor --is Debian; then
+		suffix="1+deb$(lsb_release -sr)"
+	fi
+	dch --urgency=medium --newversion="$version-$suffix" --distribution=`lsb_release -sc` --controlmaint "Release $version-$suffix"
+	dpkg-buildpackage -b -d {{ if sign == "true" { "--sign-key=" + gpgkey } else { "--no-sign" } }}
+	lintian --color always --display-info --pedantic --tag-display-limit 0 || true
+	mv ../{{pkgname}}*.deb {{pkgdest}}/
+
+# Build the package on OpenSUSE
+[group('packages')]
+build-rpm: (_ensure_pkgdest)
+	#!/usr/bin/env bash
+	set -eu -o pipefail
+	RPMBUILD_ROOT=$(mktemp -d /tmp/{{pkgname}}.XXXXXX)
+	ARCH=$(uname -m)
+	VERSION="$(just version)"
+	echo "Building {{pkgname}} version $VERSION for $ARCH architecture"
+	readonly RPMBUILD_ROOT ARCH VERSION
+
+	mkdir -p "$RPMBUILD_ROOT"/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS/tmp}
+	cp -p "dists/{{pkgname}}.spec" "$RPMBUILD_ROOT/SPECS"
+	tar -czf "$RPMBUILD_ROOT/SOURCES/{{pkgname}}-$VERSION.tar.gz" --transform "s,^,{{pkgname}}-$VERSION/," ./*
+
+	cd "$RPMBUILD_ROOT"
+	sed -i "s/^Version:.*/Version:        $VERSION/" "SPECS/{{pkgname}}.spec"
+	rpmbuild -bb --define "_topdir $RPMBUILD_ROOT" "SPECS/{{pkgname}}.spec"
+
+	mv "$RPMBUILD_ROOT/RPMS/$ARCH/"*.rpm "{{pkgdest}}/"
+	rm -rf "$RPMBUILD_ROOT"
+
 # Build & install apparmor.d on Arch based systems
 [group('packages')]
-pkg:
-	@makepkg --syncdeps --install --cleanbuild --force --noconfirm
+pkg name="": (build-pkg)
+	@sudo pacman -U --noconfirm \
+		{{pkgdest}}/{{pkgname}}{{ if name != "" { "." + name } else { "" } }}-`just version`*.pkg.tar.zst 
 
 # Build & install apparmor.d on Debian based systems
 [group('packages')]
-dpkg:
-	@bash dists/build.sh dpkg
-	@sudo dpkg -i {{pkgdest}}/{{pkgname}}_*.deb
+dpkg name="": (build-dpkg)
+	@sudo dpkg -i  \
+		{{pkgdest}}/{{pkgname}}{{ if name != "" { "." + name } else { "" } }}_`just version`*.deb
 
 # Build & install apparmor.d on OpenSUSE based systems
 [group('packages')]
-rpm:
-	@bash dists/build.sh rpm
-	@sudo rpm -ivh --force {{pkgdest}}/{{pkgname}}-*.rpm
+rpm name="": (build-rpm)
+	@sudo rpm -ivh --force \
+		{{pkgdest}}/{{pkgname}}{{ if name != "" { "." + name } else { "" } }}-`just version`*.rpm
 
 # Run the linters
 [group('linter')]
@@ -222,9 +283,9 @@ lint:
 	packer fmt tests/packer/
 	packer validate --syntax-only tests/packer/
 	shellcheck --shell=bash \
-		PKGBUILD dists/build.sh dists/docker.sh tests/check.sh \
-		tests/packer/init.sh tests/packer/src/aa-update tests/packer/clean.sh \
-		tests/autopkgtest/autopkgtest.sh debian/{{pkgname}}.postinst debian/{{pkgname}}.postrm
+		PKGBUILD dists/*.sh tests/check.sh \
+		tests/packer/*.sh tests/packer/src/aa-update \
+		tests/autopkgtest/autopkgtest.sh debian/common.postinst debian/common.postrm
 
 # Run style checks on the profiles
 [group('linter')]
@@ -249,10 +310,11 @@ serve:
 # Remove all build artifacts
 clean:
 	@rm -rf \
-		debian/.debhelper debian/debhelper* debian/*.debhelper debian/{{pkgname}} \
+		debian/.debhelper debian/debhelper* debian/*.debhelper debian/{{pkgname}}* \
+		debian/*.substvars debian/*.debhelper debian/files \
 		{{pkgdest}}/{{pkgname}}* {{pkgdest}}/ubuntu {{pkgdest}}/debian \
-		{{pkgdest}}/archlinux {{pkgdest}}/opensuse {{pkgdest}}/version \
-		{{build}} coverage.out .logs/autopkgtest/
+		{{pkgdest}}/archlinux {{pkgdest}}/opensuse \
+		{{build}} coverage.out .logs/autopkgtest/ site .cache
 
 # Build the package in a clean OCI container
 [group('packages')]
@@ -265,10 +327,10 @@ packages: (clean)
 	#!/usr/bin/env bash
 	set -eu -o pipefail
 	declare -A matrix=(
-		["archlinux"]="-"
-		["debian"]="12 13"
-		["ubuntu"]="22.04 24.04 25.04 25.10"
-		["opensuse"]="-"
+		# ["archlinux"]="-"
+		["debian"]="13"
+		["ubuntu"]="24.04 25.10 26.04"
+		# ["opensuse"]="-"
 	)
 	for dist in "${!matrix[@]}"; do
 		IFS=' ' read -r -a releases <<< "${matrix[$dist]}"
@@ -296,6 +358,7 @@ img dist release flavor: (package dist release flavor)
 		-var disk_size={{disk_size}} \
 		-var cpus={{vcpus}} \
 		-var ram={{ram}} \
+		-var firmware={{firmware}} \
 		-var base_dir={{base_dir}} \
 		-var output_dir={{output_dir}} \
 		tests/packer/
@@ -341,6 +404,26 @@ destroy osinfo flavor:
 	@virsh {{c}} destroy {{prefix}}{{osinfo}}-{{flavor}} || true
 	@virsh {{c}} undefine {{prefix}}{{osinfo}}-{{flavor}} --nvram
 	@rm -fv {{vm}}/{{prefix}}{{osinfo}}-{{flavor}}.qcow2
+
+# List all snapshots for a machine
+[group('vm')]
+snapshots osinfo flavor:
+	@virsh {{c}} snapshot-list {{prefix}}{{osinfo}}-{{flavor}}
+
+# Snapshot a machine
+[group('vm')]
+snapshot osinfo flavor snapname:
+    @virsh {{c}} snapshot-create-as {{prefix}}{{osinfo}}-{{flavor}} --name {{snapname}}
+
+# Restore a machine to a specified snapshot
+[group('vm')]
+restore osinfo flavor snapname:
+    @virsh {{c}} snapshot-revert {{prefix}}{{osinfo}}-{{flavor}} {{snapname}}
+
+# Delete a specified snapshot from a machine
+[group('vm')]
+delete osinfo flavor snapname:
+	@virsh {{c}} snapshot-delete {{prefix}}{{osinfo}}-{{flavor}} {{snapname}}
 
 # Connect to the machine
 [group('vm')]
@@ -486,7 +569,7 @@ version:
 # Create a new version number from the current release
 [group('version')]
 version-new:
-	@bash -c 'source PKGBUILD && echo $(echo "$pkgver" | awk "{print \$1 + 0.0001}")'
+	@bash -c 'source PKGBUILD && awk -v ver="$pkgver" "BEGIN {printf \"%.4f\n\", ver + 0.0001}"'
 
 # Create a new release
 [group('release')]
@@ -501,9 +584,9 @@ commit:
 	cat > debian/changelog.tmp <<-EOF
 		{{pkgname}} (${version}-1) stable; urgency=medium
 
-		* Release {{pkgname}} v${version}
+		  * Release {{pkgname}} v${version}
 
-		-- $(git config user.name) <$(git config user.email)>  $(date -R)
+		 -- $(git config user.name) <$(git config user.email)>  $(date -R)
 
 	EOF
 	cat debian/changelog >> debian/changelog.tmp
@@ -512,6 +595,7 @@ commit:
 	sed -i "s/^Version:.*/Version:        $version/" "dists/{{pkgname}}.spec"
 	git add PKGBUILD "dists/{{pkgname}}.spec" debian/changelog
 	git commit -S -m "Release version $version"
+	git tag -a "v$version" -m "{{pkgname}} v$version" --local-user={{gpgkey}}
 
 # Create a release archive
 [group('release')]
@@ -519,14 +603,14 @@ archive:
 	#!/usr/bin/env bash
 	set -eu -o pipefail
 	version=`just version`
-	git tag -a "v$version" -m "{{pkgname}} v$version" --local-user={{gpgkey}}
+	mkdir -p {{pkgdest}}/release/ 
 	git archive \
 		--format=tar.gz \
 		--prefix={{pkgname}}-$version/ \
-		--output={{pkgdest}}/{{pkgname}}-$version.tar.gz \
+		--output={{pkgdest}}/release/{{pkgname}}-$version.tar.gz \
 		v$version
-	gpg --armor --default-key {{gpgkey}} --detach-sig {{pkgdest}}/{{pkgname}}-$version.tar.gz
-	gpg --verify {{pkgdest}}/{{pkgname}}-$version.tar.gz.asc
+	gpg --armor --default-key {{gpgkey}} --detach-sig {{pkgdest}}/release/{{pkgname}}-$version.tar.gz
+	gpg --verify {{pkgdest}}/release/{{pkgname}}-$version.tar.gz.asc
 
 # Publish the new release on Github
 [group('release')]
@@ -540,6 +624,15 @@ publish:
 	gh release upload "v$version" --repo $owner/{{pkgname}} \
 		{{pkgdest}}/{{pkgname}}-$version.tar.gz \
 		{{pkgdest}}/{{pkgname}}-$version.tar.gz.asc
+
+# Create & upload new release packages to the repositories
+[group('release')]
+repo path="../../Packages":
+	just --justfile {{path}}/pkgbuilds/Justfile publish {{pkgname}} `just version`
+	just --justfile {{path}}/repo.pujol.io/Justfile publish {{pkgname}} `just version`
+
+_ensure_pkgdest:
+	@mkdir -p {{pkgdest}}
 
 _get_ip osinfo flavor:
 	@virsh --quiet --readonly {{c}} domifaddr {{prefix}}{{osinfo}}-{{flavor}} | \

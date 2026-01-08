@@ -42,16 +42,23 @@ profile pacman-hook-mkinitcpio @{exec_path} flags=(attach_disconnected) {
   @{efi}/initramfs-*.img rw,
   @{efi}/vmlinuz-* rw,
 
+  @{sys}/fs/cgroup/user.slice/cpu.max r,
+  @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/cpu.max r,
+  @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/cpu.max r,
+  @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/cpu.max r,
+
+  @{PROC}/@{pid}/cgroup r,
+
   /dev/tty rw,
   owner /dev/pts/@{u16} rw,
 
   # # Inherit Silencer
   deny network inet6 stream,
   deny network inet stream,
-  deny unix type=stream peer=(label=pacman),
 
   profile pacman {
     include <abstractions/base>
+    include <abstractions/nameservice-strict>
 
     capability dac_read_search,
 

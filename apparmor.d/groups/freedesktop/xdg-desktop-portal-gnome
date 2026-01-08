@@ -10,7 +10,6 @@ include <tunables/global>
 profile xdg-desktop-portal-gnome @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/accounts-observe>
-  include <abstractions/bus-system>
   include <abstractions/bus/session/org.gnome.Shell.Introspect>
   include <abstractions/bus/session/org.gtk.vfs.Daemon>
   include <abstractions/consoles>
@@ -27,7 +26,9 @@ profile xdg-desktop-portal-gnome @{exec_path} flags=(attach_disconnected) {
   signal receive set=term peer=gdm,
   signal receive set=(hup term) peer=gdm-session-worker,
 
+  #aa:dbus own bus=session name=org.freedesktop.impl.portal.FileChooser
   #aa:dbus own bus=session name=org.freedesktop.impl.portal.desktop.gnome
+
   #aa:dbus talk bus=session name=org.freedesktop.impl.portal path=/org/freedesktop/portal/desktop label=xdg-desktop-portal
   #aa:dbus talk bus=session name=org.gnome.Mutter label=gnome-shell
   #aa:dbus talk bus=session name=org.gnome.Settings.GlobalShortcutsProvider label=gnome-control-center-global-shortcuts-provider
@@ -54,10 +55,17 @@ profile xdg-desktop-portal-gnome @{exec_path} flags=(attach_disconnected) {
   / r,
   @{bin}/ r,
   @{bin}/* r,
+  @{bin}/flatpak rCx -> flatpak,
   /opt/** r,
+
+  @{open_path}     rPx -> child-open-any,
 
   /usr/share/gdm/greeter/applications/{,**} r,
   /usr/share/thumbnailers/{,**} r,
+
+  /var/lib/flatpak/app/*/@{arch}/ r,
+  /var/lib/flatpak/repo/config r,
+  /var/lib/flatpak/runtime/*/@{arch}/ r,
 
   owner @{desktop_cache_dirs}/fontconfig/[a-f0-9]*.cache-?{,.NEW,.LCK,.TMP-*} rw,
   owner @{desktop_share_dirs}/applications/{,**} r,
@@ -67,10 +75,13 @@ profile xdg-desktop-portal-gnome @{exec_path} flags=(attach_disconnected) {
   owner @{HOME}/*/{,**} rw,
   owner @{MOUNTS}/ r,
 
+  owner @{tmp}/.@{rand6} rw,
   owner @{tmp}/.goutputstream-@{rand6} rw,
   owner @{tmp}/@{rand6} rw,
   owner @{tmp}/gtkprint_ppd_@{rand6} rw,
   owner @{tmp}/gtkprint@{rand6} r,
+  owner @{tmp}/settings@{rand6}.ini rw,
+  owner @{tmp}/settings@{rand6}.ini.@{rand6} rw,
   owner @{tmp}/xdg-desktop-portal-gnome@{rand6} rw,
 
   owner @{run}/user/@{uid}/gvfsd/socket-@{rand8} rw,
@@ -86,6 +97,21 @@ profile xdg-desktop-portal-gnome @{exec_path} flags=(attach_disconnected) {
   owner @{PROC}/@{pid}/task/@{tid}/ r,
   owner @{PROC}/@{pid}/task/@{tid}/comm rw,
   owner @{PROC}/@{pid}/task/@{tid}/status r,
+
+  profile flatpak {
+    include <abstractions/base>
+
+    @{bin}/flatpak mr,
+
+    /var/lib/flatpak/app/{,*/} r,
+    /var/lib/flatpak/repo/{,*/} r,
+    /var/lib/flatpak/runtime/{,*/} r,
+
+     owner @{user_cache_dirs}/flatpak/system-cache/ r,
+     owner @{user_share_dirs}/flatpak/repo/** r,
+
+    include if exists <local/xdg-desktop-portal-gnome_flatpak>
+  }
 
   include if exists <local/xdg-desktop-portal-gnome>
 }

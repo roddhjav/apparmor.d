@@ -5,13 +5,13 @@
 
 pkgbase=apparmor.d
 pkgname=(
-  apparmor.d 
-  # apparmor.d.enforced
+  apparmor.d
+  apparmor.d.enforced
   # apparmor.d.fsp apparmor.d.fsp.enforced
   # apparmor.d.server apparmor.d.server.enforced
   # apparmor.d.server.fsp apparmor.d.server.fsp.enforced
 )
-pkgver=0.0001
+pkgver=0.4900
 pkgrel=1
 pkgdesc="Full set of apparmor profiles"
 arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
@@ -36,12 +36,12 @@ build() {
   export CGO_CXXFLAGS="${CXXFLAGS}"
   export CGO_LDFLAGS="${LDFLAGS}"
   export GOPATH="${srcdir}"
-  export GOFLAGS="-buildmode=pie -trimpath -ldflags=-linkmode=external -mod=readonly -modcacherw"
+  export GOFLAGS="-buildmode=pie -trimpath -ldflags=-linkmode=external -mod=readonly -modcacherw -tags=dev"
   export DISTRIBUTION=arch
   local -A modes=(
     # Mapping of modes to just build target.
     [default]=complain
-    # [enforced]=enforce
+    [enforced]=enforce
     # [fsp]=fsp-complain
     # [fsp.enforced]=fsp
     # [server]=server-complain

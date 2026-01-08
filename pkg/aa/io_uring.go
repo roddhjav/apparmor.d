@@ -33,7 +33,7 @@ func newIOUring(q Qualifier, rule rule) (Rule, error) {
 		Qualifier: q,
 		Access:    accesses,
 		Label:     rule.GetValuesAsString("label"),
-	}, nil
+	}, rule.ValidateMapKeys([]string{"label"})
 }
 
 func newIOUringFromLog(log map[string]string) Rule {

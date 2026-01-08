@@ -7,11 +7,11 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{exec_path} = @{bin}/gnome-software
-profile gnome-software @{exec_path} flags=(attach_disconnected) {
+profile gnome-software @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/base>
   include <abstractions/accounts-observe>
-  include <abstractions/bus-system>
   include <abstractions/bus/session/org.gnome.Shell.SearchProvider2>
+  include <abstractions/bus/system/org.freedesktop.locale1>
   include <abstractions/bus/system/org.freedesktop.PolicyKit1>
   include <abstractions/common/gnome>
   include <abstractions/fontconfig-cache-write>
@@ -35,6 +35,8 @@ profile gnome-software @{exec_path} flags=(attach_disconnected) {
   #aa:dbus own bus=session name=org.freedesktop.PackageKit
   #aa:dbus own bus=session name=org.gnome.Software
 
+  #aa:dbus talk bus=system name=org.freedesktop.Flatpak.SystemHelper label=flatpak-system-helper
+  #aa:dbus talk bus=system name=org.freedesktop.fwupd path=/ label=fwupd
   #aa:dbus talk bus=system name=org.freedesktop.PackageKit path=/{,**} label="@{p_packagekitd}"
 
   dbus receive bus=system path=/org/freedesktop/PolicyKit1/Authority

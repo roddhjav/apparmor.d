@@ -1,0 +1,53 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Consider the following structure in order to support MLS:
+# :user:showtime Normal user profile; no MLS
+# :user//media:showtime
+# :user//work:showtime
+# :user//anonymous:showtime
+
+# TODO: have simimar structure than selinux with s0, s0:c0,c1 ...
+# :user:showtime s0
+# :user//media:showtime s0:c0,c1
+# :user//work:showtime s0:c2,c3
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/showtime
+profile showtime @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/audio-client>
+  include <abstractions/common/gnome>
+  include <abstractions/gstreamer-registry>
+  include <abstractions/mpris>
+  include <abstractions/python>
+
+  @{exec_path} mr,
+
+  @{open_path}       Px -> child-open-help,
+  @{gstreamer_path}  Cx -> gstreamer,
+
+  /usr/share/xml/iso-codes/{,**} r,
+
+  owner @{user_music_dirs}/{,**} rw,
+  owner @{user_pictures_dirs}/{,**} rw,
+  owner @{user_torrents_dirs}/{,**} rw,
+  owner @{user_videos_dirs}/{,**} rw,
+
+  owner @{PROC}/@{pid}/mounts r,
+
+  profile gstreamer {
+    include <abstractions/base>
+    include <abstractions/gstreamer>
+
+    include if exists <local/showtime_gstreamer>
+  }
+
+  include if exists <local/showtime>
+}
+
+# vim:syntax=apparmor

@@ -9,7 +9,6 @@ include <tunables/global>
 @{exec_path} = @{bin}/localsearch @{lib}/localsearch-3
 profile localsearch @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/bus-system>
   include <abstractions/bus/session/org.gtk.Private.RemoteVolumeMonitor>
   include <abstractions/bus/session/org.gtk.vfs.Daemon>
   include <abstractions/dconf-write>
@@ -18,7 +17,7 @@ profile localsearch @{exec_path} flags=(attach_disconnected) {
   include <abstractions/freedesktop.org>
   include <abstractions/gnome-strict>
   include <abstractions/graphics>
-  include <abstractions/gstreamer>
+  include <abstractions/gstreamer-registry>
   include <abstractions/nameservice-strict>
   include <abstractions/sqlite>
   include <abstractions/upower-observe>
@@ -38,6 +37,8 @@ profile localsearch @{exec_path} flags=(attach_disconnected) {
        peer=(name=@{busname}, label=nautilus),
 
   @{exec_path} mr,
+
+  @{gstreamer_path}            Cx -> gstreamer,
 
   @{lib}/localsearch-extractor-3 ix, # nnp
 
@@ -72,6 +73,29 @@ profile localsearch @{exec_path} flags=(attach_disconnected) {
   owner @{PROC}/@{pid}/mountinfo r,
   owner @{PROC}/@{pid}/mounts r,
   owner @{PROC}/@{pid}/task/@{tid}/comm rw,
+
+  profile gstreamer {
+    include <abstractions/base>
+    include <abstractions/camera>
+    include <abstractions/fonts-strict>
+    include <abstractions/graphics>
+    include <abstractions/gstreamer>
+    include <abstractions/vulkan-strict>
+    include <abstractions/wayland>
+    include <abstractions/X-strict>
+
+    network (bind create getattr setopt getopt) netlink raw,
+    network receive netlink raw,
+
+    /usr/share/ladspa/rdf/{,**} r,
+    /usr/share/poppler/{,**} r,
+
+    # No access to camera and microphone devices
+    deny /dev/video@{int} rw,
+    deny /dev/media@{int} rw,
+
+    include if exists <local/localsearch_gstreamer>
+  }
 
   include if exists <local/localsearch>
 }

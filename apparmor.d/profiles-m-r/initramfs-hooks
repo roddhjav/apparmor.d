@@ -13,7 +13,10 @@ profile initramfs-hooks @{exec_path} {
   include <abstractions/fonts>
   include <abstractions/nameservice-strict>
 
+  capability dac_read_search,
   capability sys_admin, # optional: no audit
+
+  mqueue getattr type=posix,
 
   @{exec_path} mr,
 
@@ -71,13 +74,12 @@ profile initramfs-hooks @{exec_path} {
   owner /var/tmp/mkinitramfs-EFW_@{rand10} rw,
   owner /var/tmp/mkinitramfs-EFW_@{rand10}/{,**} rwl,
 
-  owner /tmp/tmp.@{rand10}/mkinitramfs_@{rand6} rw,
-  owner /tmp/tmp.@{rand10}/mkinitramfs_@{rand6}/ rw,
-  owner /tmp/tmp.@{rand10}/mkinitramfs_@{rand6}/** rwl -> /tmp/tmp.@{rand10}/mkinitramfs_@{rand6}/**,
-  owner /tmp/tmp.@{rand10}/mkinitramfs-@{rand6} rw,
-  owner /tmp/tmp.@{rand10}/mkinitramfs-*_@{rand6} rw,
-  owner /tmp/tmp.@{rand10}/modules_@{rand6} rw,
+  /tmp/tmp.@{rand10}/mkinitramfs* rw,
+  /tmp/tmp.@{rand10}/mkinitramfs*/ rw,
+  /tmp/tmp.@{rand10}/mkinitramfs*/** rwl -> /tmp/tmp.@{rand10}/mkinitramfs*/**,
+  /tmp/tmp.@{rand10}/modules_@{rand6} rw,
 
+  @{sys}/bus/platform/drivers/simple-framebuffer/ r,
   @{sys}/class/ r,
   @{sys}/class/drm/ r,
   @{sys}/devices/ r,
@@ -93,6 +95,7 @@ profile initramfs-hooks @{exec_path} {
   @{sys}/module/firmware_class/parameters/path r,
 
   @{PROC}/@{pid}/fd/ r,
+  @{PROC}/@{pid}/mountinfo r,
   @{PROC}/@{pid}/mounts r,
   @{PROC}/cmdline r,
   @{PROC}/swaps r,

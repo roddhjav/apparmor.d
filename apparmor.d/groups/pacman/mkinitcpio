@@ -28,11 +28,9 @@ profile mkinitcpio @{exec_path} flags=(attach_disconnected) {
   @{bin}/bsdtar              rix,
   @{bin}/fc-match            rix,
   @{bin}/findmnt             rPx,
-  @{sbin}/fsck               rix,
   @{bin}/getent              rix,
   @{bin}/gzip                rix,
   @{bin}/hexdump             rix,
-  @{sbin}/ldconfig           rix,
   @{bin}/ldd                 rix,
   @{bin}/loadkeys            rix,
   @{bin}/objcopy             rix,
@@ -41,6 +39,9 @@ profile mkinitcpio @{exec_path} flags=(attach_disconnected) {
   @{bin}/xz                  rix,
   @{bin}/zcat                rix,
   @{bin}/zstd                rix,
+  @{bin}/zstdgrep            rix,
+  @{sbin}/fsck               rix,
+  @{sbin}/ldconfig           rix,
 
   @{bin}/kmod                rPx,
   @{bin}/plymouth            rPx,
@@ -75,6 +76,7 @@ profile mkinitcpio @{exec_path} flags=(attach_disconnected) {
   @{bin}/* mr,
   @{bin}/*/ r,
   @{lib}/ r,
+  @{lib}/modules/*/kernel/drivers/{,*,*/,**.ko.xz,**.ko.zst} r,
   @{lib}/plymouth/plymouthd-* mr,
   @{lib}/systemd/{,**} mr,
   @{lib}/udev/* mr,
@@ -106,6 +108,7 @@ profile mkinitcpio @{exec_path} flags=(attach_disconnected) {
   @{sys}/firmware/efi/fw_platform_size r,
   @{sys}/fs/cgroup/user.slice/cpu.max r,
   @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/cpu.max r,
+  @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/cpu.max r,
   @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/cpu.max r,
   @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/session.slice/cpu.max r,
 
@@ -118,7 +121,6 @@ profile mkinitcpio @{exec_path} flags=(attach_disconnected) {
   deny @{HOME}/** r,
   deny network inet stream,
   deny network inet6 stream,
-  deny unix type=stream peer=(label=pacman),
 
   include if exists <local/mkinitcpio>
 }

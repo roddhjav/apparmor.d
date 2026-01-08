@@ -85,6 +85,7 @@ profile pacman @{exec_path} flags=(attach_disconnected) {
   /etc/**                                         PUx,
   /usr/share/**                                   PUx,
 
+  priority=-1 @{lib}/**                          PUx,
   @{lib}/ghc-@{version}/bin/ghc-pkg-@{version}    Px,
   @{lib}/systemd/systemd-*                        Px,
   @{lib}/vlc/vlc-cache-gen                        Px,
@@ -202,11 +203,9 @@ profile pacman @{exec_path} flags=(attach_disconnected) {
     include <abstractions/base>
     include <abstractions/app/bus>
     include <abstractions/bus-system>
+    include <abstractions/bus/system/org.freedesktop.PackageKit>
 
     @{bin}/gdbus rix,
-
-    # Inherit Silencer
-    deny unix type=stream peer=(label=pacman),
 
     include if exists <local/pacman_bus>
   }
@@ -237,6 +236,8 @@ profile pacman @{exec_path} flags=(attach_disconnected) {
     include <abstractions/base>
     include <abstractions/consoles>
 
+    capability sys_chroot,
+
     @{sh_path}              rix,
     @{sbin}/ldconfig       mrix,
 
@@ -246,15 +247,13 @@ profile pacman @{exec_path} flags=(attach_disconnected) {
 
     /opt/cuda/**/@{lib}/ r,
     /opt/cuda/**/@{lib}/@{multiarch}/ r,
+    /opt/cuda/**/@{lib}/**.so* r,
 
     /etc/ld.so.cache rw,
     /etc/ld.so.cache~ rw,
 
           /var/cache/ldconfig/ rw,
     owner /var/cache/ldconfig/aux-cache* rw,
-
-    # Inherit Silencer
-    deny unix type=stream peer=(label=pacman),
 
     include if exists <local/pacman_ldconfig>
   }

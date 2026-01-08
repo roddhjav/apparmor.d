@@ -5,6 +5,7 @@
 package aa
 
 import (
+	"fmt"
 	"strings"
 )
 
@@ -61,11 +62,16 @@ func newBaseFromLog(log map[string]string) Base {
 		if strings.Contains(log["info"], "optional:") {
 			optional = true
 			comment = strings.Replace(log["info"], "optional: ", "", 1)
+		} else if strings.Contains(log["info"], "no new privs") {
+			noNewPrivs = true
+			comment = strings.TrimSpace(strings.Replace(log["info"], "no new privs", "", 1))
 		} else {
 			noNewPrivs = true
+			if log["info"] != "" {
+				comment += " " + log["info"]
+			}
 		}
-	}
-	if log["info"] != "" {
+	} else if log["info"] != "" {
 		comment += " " + log["info"]
 	}
 	return Base{
@@ -99,7 +105,7 @@ func (r Base) addLine(other Rule) bool {
 }
 
 type Qualifier struct {
-	Priority   string
+	Priority   int
 	Audit      bool
 	AccessType string
 }
@@ -107,6 +113,13 @@ type Qualifier struct {
 func newQualifierFromLog(log map[string]string) Qualifier {
 	audit := log["apparmor"] == "AUDIT"
 	return Qualifier{Audit: audit}
+}
+
+func (r *Qualifier) Validate() error {
+	if r.Priority < -100 || r.Priority > 100 {
+		return fmt.Errorf("invalid priority: %d", r.Priority)
+	}
+	return nil
 }
 
 func (r Qualifier) Compare(o Qualifier) int {

@@ -1,0 +1,45 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+# TODO: Test rule with only ','
+
+abi <abi/4.0>,
+
+alias /mnt/usr -> /usr,
+
+include <tunables/global> # optional: A nice message
+include if exists "/etc/apparmor.d/global/dummy space"
+
+@{name} = torbrowser "tor browser" 
+@{lib_dirs} = @{lib}/@{name} /opt/@{name} # This is a comment
+
+alias /mnt/{,usr.sbin.}mount.cifs
+      ->
+      /sbin/mount.cifs,
+
+@{exec_path} = @{bin}/@{name} @{lib_dirs}/@{name}
+profile foo @{exec_path} xattrs=(security.tagged=allowed) flags=(complain attach_disconnected) {
+  include <abstractions/base>
+
+  remount /newroot/{,**},
+
+  unix (send receive) type=stream addr="@/tmp/.ICE[0-9]-unix/19 5" peer=(label=gnome-shell, addr=none),
+
+  dbus bind bus=session name=org.gnome.*, # wfdwde
+  dbus receive bus=system path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member=AddMatch
+       peer=(name=:1.3, label=power-profiles-daemon),
+
+  # Oh my god, it's a comment! before a paragraph of rules
+  "/opt/Mullvad VPN/resources/*.so*" mr, # To be able to read the /proc/ files
+  /usr/share/gnome-shell/extensions/ding@rastersoft.com/{,*/}ding.js rPx,
+
+  @{bin}/zsh rix,
+
+  owner /{var/,}tmp/#@{int} rw,
+
+  owner @{user_config_dirs}/powerdevilrc{,.@{rand6}} rwl -> @{user_config_dirs}/#@{int},
+
+  include if exists <local/foo>
+}

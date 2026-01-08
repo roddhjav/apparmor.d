@@ -1,0 +1,24 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Container-aware GOMAXPROCS
+
+  abi <abi/4.0>,
+
+  audit @{sys}/fs/cgroup/**/cpu.cfs_period_us r,
+  audit @{sys}/fs/cgroup/**/cpu.cfs_quota_us r,
+
+        @{sys}/fs/cgroup/user.slice/cpu.max r,
+        @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/cpu.max r,
+        @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/session-@{int}.scope/cpu.max r,
+        @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/*.scope/cpu.max r,
+        @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/cpu.max r,
+  owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/cpu.max r,
+
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/cgroup r,
+
+  include if exists <abstractions/golang-strict.d>
+
+# vim:syntax=apparmor

@@ -1,6 +1,10 @@
 # apparmor.d - Full set of apparmor profiles
 # Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
+# NEEDS-VARIABLE: att
+# NEEDS-VARIABLE: user_games_dirs
+# NEEDS-VARIABLE: system_games_dirs
+# NEEDS-VARIABLE: XDG_GAMESSTUDIO_DIR
 
 # Core set of resources for any games on Linux. Runtimes such as sandboxing,
 # wine, proton, game launchers should use this abstraction.
@@ -12,38 +16,41 @@
 
   abi <abi/4.0>,
 
-  include <abstractions/accessibility>
   include <abstractions/audio-client>
+  include <abstractions/avahi-observe>
+  include <abstractions/bus/system/org.freedesktop.UDisks2>
+  include <abstractions/consoles>
   include <abstractions/desktop>
+  include <abstractions/devices-u2f>
   include <abstractions/devices-usb>
   include <abstractions/fontconfig-cache-write>
   include <abstractions/graphics>
+  include <abstractions/hwmon>
   include <abstractions/input>
   include <abstractions/nameservice-strict>
+  include <abstractions/network-manager-observe>
   include <abstractions/ssl_certs>
+  include <abstractions/sys/gpumon>
   include <abstractions/uinput>
+  include <abstractions/upower-observe>
 
-  @{bin}/uname          rix,
-  @{bin}/xdg-settings   rPx,
-  @{browsers_path}      rPx,
+  /var/ r,
+  /var/lib/ r,
+  @{system_games_dirs}/ r,
+  @{system_games_dirs}/*/ r,
+  @{system_games_dirs}/*/** mrix,
+  @{system_games_dirs}/*/**cache* w,
 
-  @{bin}/env r,
-
-  @{lib}/ r,
-  / r,
-  /home/ r,
-  /usr/ r,
-  /usr/local/ r,
-  /usr/local/lib/ r,
-
-  /etc/machine-id r,
-  /var/lib/dbus/machine-id r,
-
+        /mnt/ r,
+        @{run}/media/ r,
   owner @{HOME}/ r,
 
   owner @{user_games_dirs}/ r,
   owner @{user_games_dirs}/*/ r,
-  owner @{user_games_dirs}/*/** rwlk,
+  owner @{user_games_dirs}/*/** mrix,
+  owner @{user_games_dirs}/*/**cache* w,
+
+  owner @{user_config_dirs}/MangoHud/MangoHud.conf r,
 
   owner @{user_config_dirs}/@{XDG_GAMESSTUDIO_DIR}/ rw,
   owner @{user_config_dirs}/@{XDG_GAMESSTUDIO_DIR}/** rwlk,
@@ -51,63 +58,95 @@
   owner @{user_share_dirs}/@{XDG_GAMESSTUDIO_DIR}/ rw,
   owner @{user_share_dirs}/@{XDG_GAMESSTUDIO_DIR}/** rwlk,
 
-        @{tmp}/ r,
-  owner @{tmp}/@{XDG_GAMESSTUDIO_DIR}/ rw,
-  owner @{tmp}/@{XDG_GAMESSTUDIO_DIR}/** rwlk,
-  owner @{tmp}/#@{int} rw,
-  owner @{tmp}/AsyncGPUReadbackPlugin_*.log w,
   owner @{tmp}/CASESENSITIVETEST@{hex32} rw,
-  owner @{tmp}/crashes/ rw,
-  owner @{tmp}/crashes/** rwk,
-  owner @{tmp}/miles_image_@{rand6} mrw,
-  owner @{tmp}/runtime-info.txt.@{rand6} rw,
-  owner @{tmp}/tmp@{rand6}.tmp rw,
-  owner @{tmp}/tmp@{rand6}@{h}.tmp rw,
-  owner @{tmp}/tmp@{rand8}.tmp rw,
   owner @{tmp}/vdpau-drivers-@{rand6}/{,**} rw,
 
   owner /dev/shm/mono.@{int} rw,
   owner /dev/shm/softbuffer-x11-@{rand6}@{c} rw,
 
-  @{sys}/ r,
-  @{sys}/bus/ r,
-  @{sys}/class/ r,
-  @{sys}/class/hidraw/ r,
-  @{sys}/class/input/ r,
-  @{sys}/devices/ r,
-  @{sys}/devices/@{pci}/boot_vga r,
-  @{sys}/devices/@{pci}/net/*/carrier r,
-  @{sys}/devices/**/input@{int}/ r,
-  @{sys}/devices/**/input@{int}/**/{vendor,product} r,
-  @{sys}/devices/**/input/input@{int}/ r,
-  @{sys}/devices/**/uevent r,
-  @{sys}/devices/system/ r,
-  @{sys}/devices/system/clocksource/clocksource@{int}/current_clocksource r,
-  @{sys}/devices/system/cpu/cpu@{int}/ r,
-  @{sys}/devices/virtual/dmi/id/* r,
-  @{sys}/devices/virtual/net/*/carrier r,
-  @{sys}/kernel/ r,
+  # The orcexec.* file is JIT compiled code for various GStreamer elements.
+  owner @{run}/user/@{uid}/orcexec.@{rand6} mrw,
 
+  @{sys}/ r,
+  @{sys}/class/power_supply/ r,
+  @{sys}/devices/ r,
+  @{sys}/devices/**/power_supply/{AC,BAT@{int}}/ r,
+  @{sys}/devices/**/power_supply/{AC,BAT@{int}}/{type,online} r,
+  @{sys}/devices/**/uevent r,
+  @{sys}/devices/system/clocksource/clocksource@{int}/current_clocksource r,
+  @{sys}/devices/system/cpu/cpufreq/policy@{int}/scaling_governor r,
+
+  @{sys}/devices/virtual/dmi/id/bios_date r,
+  @{sys}/devices/virtual/dmi/id/bios_vendor r,
+  @{sys}/devices/virtual/dmi/id/bios_version r,
+  @{sys}/devices/virtual/dmi/id/board_asset_tag r,
+  @{sys}/devices/virtual/dmi/id/board_name r,
+  @{sys}/devices/virtual/dmi/id/board_vendor r,
+  @{sys}/devices/virtual/dmi/id/board_version r,
+  @{sys}/devices/virtual/dmi/id/chassis_type r,
+  @{sys}/devices/virtual/dmi/id/chassis_vendor r,
+  @{sys}/devices/virtual/dmi/id/chassis_version r,
+  @{sys}/devices/virtual/dmi/id/product_family r,
+  @{sys}/devices/virtual/dmi/id/product_name r,
+  @{sys}/devices/virtual/dmi/id/product_sku r,
+  @{sys}/devices/virtual/dmi/id/product_version r,
+  @{sys}/devices/virtual/dmi/id/sys_vendor r,
+
+  # Allow reading CPU cgroup limits
         @{sys}/fs/cgroup/user.slice/cpu.max r,
         @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/cpu.max r,
         @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/cpu.max r,
   owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/cpu.max  r,
 
-        @{PROC}/uptime r,
-        @{PROC}/version r,
-  owner @{PROC}/@{pid}/cgroup r,
-  owner @{PROC}/@{pid}/cmdline r,
-  owner @{PROC}/@{pid}/fd/ r,
-  owner @{PROC}/@{pid}/mounts r,
-  owner @{PROC}/@{pid}/pagemap r,
+  @{PROC}/driver/nvidia/capabilities/mig/config r,
+
+  # Allow to check check if BPF JIT is enabled
+  @{PROC}/sys/net/core/bpf_jit_enable r,
+
+  # Allow to read the maximum number of file handles that can be allocated system-wide.
+  @{PROC}/sys/fs/file-max r,
+
+  # Allow to read various device information
+  @{PROC}/devices r,
+
+  # Allow to read system uptime
+  @{PROC}/uptime r,
+
+  # Per man(5) proc, the kernel enforces that a thread may only modify its comm
+  # value or those in its thread group.
+  owner @{PROC}/@{pid}/task/@{tid}/comm rw,
+
+  # Provide statistical information about our own processes/threads
   owner @{PROC}/@{pid}/stat r,
   owner @{PROC}/@{pid}/task/ r,
-  owner @{PROC}/@{pid}/task/@{tid}/comm rw,
   owner @{PROC}/@{pid}/task/@{tid}/stat r,
 
-  /dev/ r,
-  /dev/hidraw@{int} rw,
+  # Allow reading cgroup membership information for process introspection
+  owner @{PROC}/@{pid}/cgroup r,
+
+  # Allow reading command line arguments for process identification
+  owner @{PROC}/@{pid}/cmdline r,
+
+  # Allow listing file descriptors for resource monitoring
+  owner @{PROC}/@{pid}/fd/ r,
+
+  # Allow reading mount points for filesystem awareness
+  owner @{PROC}/@{pid}/mounts r,
+  owner @{PROC}/@{pid}/mountinfo r,
+
+  # Allow reading page mapping information for memory profiling
+  owner @{PROC}/@{pid}/pagemap r,
+
+  # Allow reading file descriptor info
+  owner @{PROC}/@{pid}/fdinfo/ r,
+  owner @{PROC}/@{pid}/fdinfo/@{int} r,
+
   /dev/tty rw,
+
+  @{att}/dev/dri/renderD128 rw,
+  @{att}/dev/dri/renderD129 rw,
+  /dev/nvidia-caps/ rw,
+  /dev/nvidia-caps/nvidia-cap@{int} rw,
 
   include if exists <abstractions/common/game.d>
 

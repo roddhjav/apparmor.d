@@ -49,6 +49,11 @@ profile fwupd @{exec_path} flags=(attach_disconnected) {
        member=InterfacesAdded
        peer=(name=@{busname}, label=bluetoothd),
 
+  dbus receive bus=system path=/org/bluez/hci0/dev_*
+       interface=org.bluez.Device1
+       member=Disconnected
+       peer=(name=@{busname}, label=bluetoothd),
+
   @{exec_path} mr,
 
   @{lib}/fwupd/fwupd-detect-cet rix,
@@ -58,6 +63,7 @@ profile fwupd @{exec_path} flags=(attach_disconnected) {
   @{bin}/gpgsm       rCx -> gpg,
 
   /usr/share/fwupd/{,**} r,
+  /usr/share/gvfs/remote-volume-monitors/{,**} r,
   /usr/share/hwdata/* r,
   /usr/share/libdrm/*.ids r,
   /usr/share/misc/*.ids r,
@@ -76,8 +82,14 @@ profile fwupd @{exec_path} flags=(attach_disconnected) {
   @{efi}/EFI/*/fwupdx@{int}.efi rw,
   @{lib}/fwupd/efi/fwupdx@{int}.efi{,.signed} r,
 
-  @{MOUNTDIRS}/*/{,@{efi}/} r,
-  @{MOUNTDIRS}/*/{,@{efi}/}EFI/{,**} r,
+  @{MOUNTS}/ r,
+  @{MOUNTS}/@{efi}/{,**} r,
+  @{MOUNTS}/@{efi}/fwupd/efi/fwupdx@{int}.efi{,.signed} r,
+  @{MOUNTS}/**/EFI/ r,
+  @{MOUNTS}/**/EFI/**/ r,
+  @{MOUNTS}/**/EFI/*/.goutputstream-@{rand6} rw,
+  @{MOUNTS}/**/EFI/*/fw/fwupd-*.cap{,.*} rw,
+  @{MOUNTS}/**/EFI/*/fwupdx@{int}.efi rw,
 
   owner /var/cache/fwupd/ rw,
   owner /var/cache/fwupd/** rwk,
@@ -99,6 +111,7 @@ profile fwupd @{exec_path} flags=(attach_disconnected) {
   @{sys}/firmware/efi/efivars/Boot@{hex}-@{uuid} rw,
   @{sys}/firmware/efi/efivars/BootNext-@{uuid} rw,
   @{sys}/firmware/efi/efivars/dbx-@{uuid} rw,
+  @{sys}/firmware/efi/efivars/db-@{uuid} rw,
   @{sys}/firmware/efi/efivars/fwupd-* rw,
   @{sys}/firmware/efi/efivars/KEK-@{uuid} rw,
   @{sys}/kernel/security/lockdown r,
@@ -146,6 +159,18 @@ profile fwupd @{exec_path} flags=(attach_disconnected) {
     @{bin}/gpg{,2}    mr,
     @{bin}/gpgconf    mr,
     @{bin}/gpgsm      mr,
+  @{lib}/fwupd/efi/fwupdx@{int}.efi{,.signed} r,
+
+  @{MOUNTS}/ r,
+  @{MOUNTS}/@{efi}/{,**} r,
+  @{MOUNTS}/@{efi}/fwupd/efi/fwupdx@{int}.efi{,.signed} r,
+  @{MOUNTS}/**/EFI/**/ r,
+  @{MOUNTS}/**/EFI/*/.goutputstream-@{rand6} rw,
+  @{MOUNTS}/**/EFI/*/fw/fwupd-*.cap{,.*} rw,
+  @{MOUNTS}/**/EFI/*/fwupdx@{int}.efi rw,
+
+  owner /var/cache/fwupd/ rw,
+  owner /var/cache/fwupd/** rwk,
 
     @{bin}/gpg-agent          rix,
     @{lib}/{,gnupg/}scdaemon  rix,

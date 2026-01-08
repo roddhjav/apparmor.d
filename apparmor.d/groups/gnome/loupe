@@ -9,7 +9,7 @@ include <tunables/global>
 @{exec_path} = @{bin}/loupe
 profile loupe @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/bus-system>
+  include <abstractions/bus/system/org.freedesktop.hostname1>
   include <abstractions/dconf-write>
   include <abstractions/gnome-strict>
   include <abstractions/graphics>
@@ -22,11 +22,6 @@ profile loupe @{exec_path} flags=(attach_disconnected) {
   #aa:dbus own bus=session name=org.gnome.Loupe
 
   #aa:dbus talk bus=session name=org.gtk.vfs label="gvfsd{,-*}"
-
-  dbus send bus=system path=/org/freedesktop/hostname1
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=@{busname}, label=@{p_systemd_hostnamed}),
 
   @{exec_path} mr,
 
@@ -41,6 +36,7 @@ profile loupe @{exec_path} flags=(attach_disconnected) {
   @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/cpu.max r,
   @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/cpu.max r,
   @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/cpu.max r,
+  owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/session.slice/cpu.max r,
 
   owner @{PROC}/@{pid}/cgroup r,
   owner @{PROC}/@{pid}/cmdline r,

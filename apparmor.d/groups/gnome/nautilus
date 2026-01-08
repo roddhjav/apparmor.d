@@ -9,7 +9,6 @@ include <tunables/global>
 @{exec_path} = @{bin}/nautilus
 profile nautilus @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/bus-system>
   include <abstractions/bus/session/com.canonical.Unity.LauncherEntry>
   include <abstractions/bus/session/org.freedesktop.Tracker3.Miner.Files>
   include <abstractions/bus/session/org.gtk.Private.RemoteVolumeMonitor>
@@ -20,6 +19,8 @@ profile nautilus @{exec_path} flags=(attach_disconnected) {
   include <abstractions/graphics>
   include <abstractions/nameservice-strict>
   include <abstractions/screen-inhibit>
+  include <abstractions/sys/hwmon-fan>
+  include <abstractions/sys/hwmon-temp>
   include <abstractions/trash-strict>
 
   mqueue r type=posix /,
@@ -83,9 +84,8 @@ profile nautilus @{exec_path} flags=(attach_disconnected) {
   @{bin}/net                rPUx,
 
   @{bin}/* r,
-  @{lib}/@{multiarch}/glib-2.0/gio-launch-desktop m,
 
-  @{open_path}               rPx -> child-open-any,
+  @{open_path}              mrPx -> child-open-any,
 
   /usr/share/nautilus/{,**} r,
   /usr/share/sounds/freedesktop/stereo/*.oga r,
@@ -123,11 +123,6 @@ profile nautilus @{exec_path} flags=(attach_disconnected) {
   owner @{user_share_dirs}/nautilus/{,**} rwk,
 
   @{run}/mount/utab r,
-
-  @{sys}/devices/**/hwmon@{int}/{,name,temp*,fan*} r,
-  @{sys}/devices/**/hwmon@{int}/**/{,name,temp*,fan*} r,
-  @{sys}/devices/**/hwmon/{,name,temp*,fan*} r,
-  @{sys}/devices/**/hwmon/**/{,name,temp*,fan*} r,
 
         @{PROC}/@{pids}/net/wireless r,
         @{PROC}/sys/dev/i915/perf_stream_paranoid r,

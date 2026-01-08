@@ -21,22 +21,21 @@ profile dbus-session flags=(attach_disconnected) {
   include <abstractions/deny-sensitive-home>
   include <abstractions/nameservice-strict>
 
-  network unix stream,
+  signal receive set=(term hup)      peer=gdm{,-*},
 
-  unix (send receive) type=stream addr=none peer=(label=gnome-shell, addr=none),
-  unix type=stream peer=(label=fapp),
-  unix type=stream peer=(label=fbwrap),
+  ptrace read,
+
+  # Internal stack dbus-session//&unconfined
+  signal (send receive) set=kill peer=dbus-system//&unconfined,
   unix type=stream peer=(label=unconfined),
 
+  # Dbus socket
   unix bind type=stream addr=@@{udbus}/bus/dbus-broker-lau/user,
-  unix (send receive) type=seqpacket,
 
-  signal (send receive) set=kill peer=dbus-session//&unconfined,
-
-  signal receive set=(term hup)      peer=gdm{,-*},
-  signal send    set=(term hup kill) peer=dbus-accessibility,
-  signal send    set=(term hup kill) peer=dconf-service,
-  signal send    set=(term hup kill) peer=xdg-*,
+  unix                type=stream    peer=(label=snap.*),
+  unix (send receive) type=seqpacket peer=(label=fapp),
+  unix (send receive) type=seqpacket peer=(label=fbwrap),
+  unix (send receive) type=stream    peer=(label=gnome-shell),
 
   #aa:dbus own bus=session name=org.freedesktop.DBus path=/{,org/freedesktop/{dBus,DBus,dbus}}
 
@@ -77,6 +76,8 @@ profile dbus-session flags=(attach_disconnected) {
   owner @{att}@{HOME}/.var/app/*/**/logs/* rw,
 
   owner @{user_share_dirs}/dbus-1/services/{,**} r,
+
+  owner @{tmp}/gtkprint@{rand6} r,
 
         @{run}/systemd/users/@{uid} r,
   owner @{run}/user/@{uid}/dbus-1/ rw,

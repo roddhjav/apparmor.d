@@ -12,7 +12,6 @@ include <tunables/global>
 profile virt-manager @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/audio-client>
-  include <abstractions/bus-system>
   include <abstractions/bus/session/org.gtk.vfs.Daemon>
   include <abstractions/camera>
   include <abstractions/dconf-write>
@@ -21,16 +20,21 @@ profile virt-manager @{exec_path} flags=(attach_disconnected) {
   include <abstractions/fontconfig-cache-read>
   include <abstractions/graphics>
   include <abstractions/gstreamer>
+  include <abstractions/gvfs-metadata>
   include <abstractions/media-control>
   include <abstractions/nameservice-strict>
   include <abstractions/python>
   include <abstractions/ssl_certs>
+  include <abstractions/sys/hwmon-fan>
+  include <abstractions/sys/hwmon-temp>
   include <abstractions/thumbnails-cache-read>
   include <abstractions/user-download-strict>
 
   network inet stream,
   network inet6 stream,
   network netlink raw,
+
+  unix type=stream peer=(label=libvirtd),
 
   #aa:dbus own bus=session name=org.virt-manager.virt-manager
 
@@ -87,7 +91,7 @@ profile virt-manager @{exec_path} flags=(attach_disconnected) {
   @{run}/mount/utab r,
   @{run}/udev/data/c@{dynamic}:@{int} r,  # For dynamic assignment range 234 to 254, 384 to 511
 
-  @{sys}/devices/**/hwmon/**/{,name,temp*,fan*} r,
+  @{sys}/devices/@{pci_bus}/uevent r,
   @{sys}/devices/virtual/drm/ttm/uevent r,
   @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/session-@{word}.scope/cpu.max r,
 
@@ -101,7 +105,6 @@ profile virt-manager @{exec_path} flags=(attach_disconnected) {
 
   # Silence the noise
   deny /usr/share/virt-manager/{,**} w,
-  deny owner @{user_share_dirs}/gvfs-metadata/{,*} r,
 
   include if exists <local/virt-manager>
 }

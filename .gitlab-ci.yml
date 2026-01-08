@@ -1,9 +1,7 @@
 ---
 
-include:
-  - template: Security/SAST.gitlab-ci.yml
-
 variables:
+  PKGNAME: apparmor.d
   PKGDEST: $CI_PROJECT_DIR/.pkg
   PACKAGER: 'Alexandre Pujol <alexandre@pujol.io>'
 
@@ -23,9 +21,9 @@ bash:
   image: koalaman/shellcheck-alpine
   script:
     - shellcheck --shell=bash
-        PKGBUILD dists/build.sh dists/docker.sh tests/check.sh
-        tests/packer/init.sh tests/packer/src/aa-update tests/packer/clean.sh
-        tests/autopkgtest/autopkgtest.sh
+        PKGBUILD dists/*.sh tests/check.sh
+        tests/packer/*.sh tests/packer/src/aa-update
+        tests/autopkgtest/autopkgtest.sh debian/common.postinst debian/common.postrm
 
 golangci-lint:
   stage: lint
@@ -41,9 +39,6 @@ packer:
   script:
     - packer fmt tests/packer/
     - packer validate --syntax-only tests/packer/
-
-sast:
-  stage: lint
 
 
 # Code test
@@ -90,7 +85,7 @@ debian:
     - git config --global --add safe.directory $CI_PROJECT_DIR
     - mkdir -p "$PKGDEST"
     - sudo apt-get update -q && sudo apt-get install -y config-package-dev golang-go lsb-release libdistro-info-perl
-    - bash dists/build.sh dpkg
+    - just build-dpkg
   artifacts:
     expire_in: 1 day
     paths:
@@ -105,7 +100,7 @@ ubuntu:
     - git config --global --add safe.directory $CI_PROJECT_DIR
     - mkdir -p "$PKGDEST"
     - sudo apt-get update -q && sudo apt-get install -y config-package-dev golang-go lsb-release libdistro-info-perl
-    - bash dists/build.sh dpkg
+    - just build-dpkg
   artifacts:
     expire_in: 1 day
     paths:
@@ -124,7 +119,7 @@ opensuse:
   script:
     - mkdir -p "$PKGDEST"
     - sudo zypper install -y distribution-release golang-packaging apparmor-profiles
-    - bash dists/build.sh rpm
+    - just build-rpm
   artifacts:
     expire_in: 1 day
     paths:
@@ -141,7 +136,7 @@ preprocess-archlinux:
     - archlinux
   script:
     - pacman -Syu --noconfirm --noprogressbar apparmor
-    - pacman -U --noconfirm --noprogressbar $PKGDEST/*
+    - pacman -U --noconfirm --noprogressbar $PKGDEST/${PKGNAME}-*
     - apparmor_parser --preprocess /etc/apparmor.d 1> /dev/null
 
 preprocess-debian:
@@ -152,7 +147,7 @@ preprocess-debian:
   script:
     - apt-get update -q
     - apt-get install -y apparmor apparmor-profiles
-    - dpkg --install $PKGDEST/*
+    - dpkg --install $PKGDEST/${PKGNAME}_*
     - apparmor_parser --preprocess /etc/apparmor.d 1> /dev/null
 
 preprocess-ubuntu:
@@ -163,7 +158,7 @@ preprocess-ubuntu:
   script:
     - apt-get update -q
     - apt-get install -y apparmor apparmor-profiles
-    - dpkg --install $PKGDEST/*
+    - dpkg --install $PKGDEST/${PKGNAME}_*
     - apparmor_parser --preprocess /etc/apparmor.d 1> /dev/null
 
 .preprocess-whonix:

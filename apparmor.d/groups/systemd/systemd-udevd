@@ -50,7 +50,7 @@ profile systemd-udevd @{exec_path} flags=(attach_disconnected) {
   @{sbin}/partx                            rix,
   @{bin}/setfacl                           rix,
   @{bin}/sg_inq                            rix,
-  @{bin}/systemd-run                       rix, # TODO: rCx -> run,
+  @{bin}/systemd-run                       rCx -> run,
   @{bin}/unshare                           rix,
   @{sbin}/ethtool                          rix,
   @{sbin}/kpartx                           rix,
@@ -108,6 +108,7 @@ profile systemd-udevd @{exec_path} flags=(attach_disconnected) {
   @{run}/systemd/network/*.link rw,
   @{run}/systemd/private rw,
   @{run}/systemd/seats/seat@{int} r,
+  @{run}/u-d-c-card@{int}-is-simpledrm w,
 
   @{att}@{run}/udev/control rw,
 
@@ -156,6 +157,27 @@ profile systemd-udevd @{exec_path} flags=(attach_disconnected) {
     ptrace read peer=@{p_systemd},
 
     include if exists <local/systemd-udevd_systemctl>
+  }
+
+  profile run flags=(attach_disconnected,complain) {
+    include <abstractions/base>
+    include <abstractions/bus-system>
+
+    capability net_admin,
+    capability sys_ptrace,
+
+    ptrace read peer=@{p_systemd},
+
+    unix bind type=stream addr=@@{udbus}/bus/systemd-run/,
+
+    @{bin}/systemd-run  mr,
+    @{sbin}/lvm r,
+
+    @{att}@{run}/systemd/private rw,
+
+    @{PROC}/@{pid}/stat r,
+
+    include if exists <local/systemd-udevd_run>
   }
 
   include if exists <local/systemd-udevd>
