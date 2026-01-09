@@ -2,128 +2,108 @@
 // Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
 // SPDX-License-Identifier: GPL-2.0-only
 
+// Package cli provides the command line interface for prebuilding apparmor.d profiles.
+// It is separated from the main package as it is also used by downstream projects.
+
 package cli
 
 import (
 	"flag"
 	"fmt"
 	"os"
-	"slices"
-	"strings"
 
+	"github.com/roddhjav/apparmor.d/pkg/builder"
+	"github.com/roddhjav/apparmor.d/pkg/configure"
+	"github.com/roddhjav/apparmor.d/pkg/directive"
 	"github.com/roddhjav/apparmor.d/pkg/logging"
 	"github.com/roddhjav/apparmor.d/pkg/paths"
 	"github.com/roddhjav/apparmor.d/pkg/prebuild"
-	"github.com/roddhjav/apparmor.d/pkg/prebuild/builder"
-	"github.com/roddhjav/apparmor.d/pkg/prebuild/directive"
-	"github.com/roddhjav/apparmor.d/pkg/prebuild/prepare"
+	"github.com/roddhjav/apparmor.d/pkg/run"
 )
 
 const (
-	nilABI = 0
-	nilVer = 0.0
-	usage  = `aa-prebuild [-h] [--complain | --enforce] [--full] [--server] [--abi 3|4] [--version V] [--file FILE]
+	nilABI   = 0
+	nilVer   = 0.0
+	nilBuild = ""
+	nilSrc   = ""
+	usage    = `aa-prebuild [-h] [--status] [--abi 3|4|5] [--version V] [--fsp] [--src DIR] [--buildir DIR]
 
     Prebuild apparmor.d profiles for a given distribution and apply
     internal built-in directives.
 
 Options:
     -h, --help        Show this help message and exit.
-    -c, --complain    Set complain flag on all profiles.
-    -e, --enforce     Set enforce flag on all profiles.
+    -s, --status      Show the status of enabled build tasks.
     -a, --abi ABI     Target apparmor ABI.
     -v, --version V   Target apparmor version.
-    -f, --full        Set AppArmor for full system policy.
-    -s, --server      Set AppArmor for server.
-    -b, --buildir DIR Root build directory.
-    -F, --file        Only prebuild a given file.
+    -f, --fsp         Configure AppArmor for full system policy and RBAC.
+    -S, --src DIR     Profile source directory (default: apparmor.d/).
+    -b, --buildir DIR Destination root build directory (default: .build/).
         --test        Enable test mode.
         --debug       Enable debug mode.
 `
 )
 
 var (
-	help     bool
-	complain bool
-	enforce  bool
-	full     bool
-	server   bool
-	debug    bool
-	test     bool
-	abi      int
-	version  float64
-	file     string
-	buildir  string
+	help    bool
+	status  bool
+	fsp     bool
+	debug   bool
+	test    bool
+	abi     int
+	version float64
+	src     string
+	buildir string
 )
 
 func init() {
 	flag.BoolVar(&help, "h", false, "Show this help message and exit.")
 	flag.BoolVar(&help, "help", false, "Show this help message and exit.")
-	flag.BoolVar(&full, "f", false, "Set AppArmor for full system policy.")
-	flag.BoolVar(&full, "full", false, "Set AppArmor for full system policy.")
-	flag.BoolVar(&server, "s", false, "Set AppArmor for server.")
-	flag.BoolVar(&server, "server", false, "Set AppArmor for server.")
-	flag.BoolVar(&complain, "c", false, "Set complain flag on all profiles.")
-	flag.BoolVar(&complain, "complain", false, "Set complain flag on all profiles.")
-	flag.BoolVar(&enforce, "e", false, "Set enforce flag on all profiles.")
-	flag.BoolVar(&enforce, "enforce", false, "Set enforce flag on all profiles.")
+	flag.BoolVar(&status, "s", false, "Show the status of enabled build tasks.")
+	flag.BoolVar(&status, "status", false, "Show the status of enabled build tasks.")
+	flag.BoolVar(&fsp, "f", false, "Configure AppArmor for full system policy and RBAC.")
+	flag.BoolVar(&fsp, "fsp", false, "Configure AppArmor for full system policy and RBAC.")
 	flag.IntVar(&abi, "a", nilABI, "Target apparmor ABI.")
 	flag.IntVar(&abi, "abi", nilABI, "Target apparmor ABI.")
 	flag.Float64Var(&version, "v", nilVer, "Target apparmor version.")
 	flag.Float64Var(&version, "version", nilVer, "Target apparmor version.")
-	flag.StringVar(&file, "F", "", "Only prebuild a given file.")
-	flag.StringVar(&file, "file", "", "Only prebuild a given file.")
-	flag.StringVar(&buildir, "b", "", "Root build directory.")
-	flag.StringVar(&buildir, "buildir", "", "Root build directory.")
+	flag.StringVar(&src, "S", nilSrc, "Profile source directory.")
+	flag.StringVar(&src, "src", nilSrc, "Profile source directory.")
+	flag.StringVar(&buildir, "b", nilBuild, "Destination root build directory.")
+	flag.StringVar(&buildir, "buildir", nilBuild, "Destination root build directory.")
 	flag.BoolVar(&debug, "debug", false, "Enable debug mode.")
 	flag.BoolVar(&test, "test", false, "Enable test mode.")
 }
 
-func Configure() {
-	flag.Usage = func() {
-		fmt.Printf("%s\n%s\n%s\n%s", usage,
-			prebuild.Help("Prepare", prepare.Tasks),
-			prebuild.Help("Build", builder.Builders),
-			directive.Usage(),
-		)
+func GetPrebuildRoot() *paths.Path {
+	if buildir != nilBuild {
+		return paths.New(buildir)
 	}
+	return paths.New(".build")
+}
+
+func Configure(r *run.Runners) *run.Runners {
+	flag.Usage = func() { fmt.Print(usage) }
 	flag.Parse()
 	if help {
 		flag.Usage()
 		os.Exit(0)
 	}
 
-	if server {
-		idx := slices.Index(prepare.Prepares, prepare.Tasks["merge"])
-		if idx == -1 {
-			prepare.Register("server")
-		} else {
-			prepare.Prepares = slices.Insert(prepare.Prepares, idx, prepare.Tasks["server"])
-		}
+	// Register all directives (always available)
+	r.Directives.
+		Register(directive.NewDbus()).
+		Register(directive.NewExec()).
+		Register(directive.NewFilterOnly()).
+		Register(directive.NewFilterExclude()).
+		Register(directive.NewProfile()).
+		Register(directive.NewRestart()).
+		Register(directive.NewStack())
 
-		// Remove hotfix task as it is not needed on server
-		idx = slices.Index(prepare.Prepares, prepare.Tasks["hotfix"])
-		if idx != -1 {
-			prepare.Prepares = slices.Delete(prepare.Prepares, idx, idx+1)
-		}
-	}
-
-	if full && paths.New("apparmor.d/groups/_full").Exist() {
-		prepare.Register("fsp")
-		builder.Register("fsp")
+	if fsp && paths.New("apparmor.d/groups/_full").Exist() {
+		r.Configures.Add(configure.NewFullSystemPolicy())
+		r.Builders.Add(builder.NewFSP())
 		prebuild.RBAC = true
-	}
-
-	if complain {
-		builder.Register("complain")
-		if debug {
-			builder.Register("debug")
-		}
-		if test {
-			prebuild.Test = true
-		}
-	} else if enforce {
-		builder.Register("enforce")
 	}
 
 	if abi != nilABI {
@@ -131,13 +111,14 @@ func Configure() {
 	}
 	switch prebuild.ABI {
 	case 3:
-		builder.Register("abi3")        // Convert all profiles from abi 4.0 to abi 3.0
-		builder.Register("apparmor4.0") // Convert convert all profiles from apparmor 4.1 to 4.0 or less
+		r.Builders.
+			Add(builder.NewABI3()).      // Convert all profiles from abi 4.0 to abi 3.0
+			Add(builder.NewAPPARMOR40()) // Convert all profiles from apparmor 4.1 to 4.0 or less
 
 	case 4:
 		// priority support was added in 4.1
 		if prebuild.Version == 4.0 {
-			builder.Register("apparmor4.0")
+			r.Builders.Add(builder.NewAPPARMOR40())
 		}
 
 		// Re-attach disconnected path
@@ -147,18 +128,17 @@ func Configure() {
 			// See https://bugs.launchpad.net/ubuntu/+source/linux/+bug/2098730
 
 			// Use stacked-dbus builder to resolve dbus rules
-			builder.Register("stacked-dbus")
+			r.Builders.Add(builder.NewStackedDbus())
 
 		} else {
 			if !prebuild.DownStream {
-				prepare.Register("attach")
+				r.Configures.Add(configure.NewAttach())
 			}
-			builder.Register("attach")
-
+			r.Builders.Add(builder.NewAttach())
 		}
 
 	case 5:
-		builder.Register("abi5") // Convert all profiles from abi 4.0 to abi 5.0
+		r.Builders.Add(builder.NewABI5()) // Convert all profiles from abi 4.0 to abi 5.0
 
 		// Re-attach disconnected path
 		if prebuild.Distribution == "ubuntu" {
@@ -167,16 +147,16 @@ func Configure() {
 			// See https://bugs.launchpad.net/ubuntu/+source/linux/+bug/2098730
 
 			// Use stacked-dbus builder to resolve dbus rules
-			builder.Register("stacked-dbus")
+			r.Builders.Add(builder.NewStackedDbus())
 
 		} else {
 			if !prebuild.DownStream {
-				prepare.Register("attach")
+				r.Configures.Add(configure.NewAttach())
 			}
-			builder.Register("attach")
+			r.Builders.Add(builder.NewAttach())
 
 			// Fix dbus rules for dbus-broker
-			builder.Register("dbus-broker")
+			r.Builders.Add(builder.NewDbusBroker())
 			prebuild.DbusDaemon = false
 		}
 
@@ -187,32 +167,32 @@ func Configure() {
 	if version != nilVer {
 		prebuild.Version = version
 	}
-	if buildir != "" {
-		prebuild.Root = paths.New(buildir)
-		prebuild.RootApparmord = prebuild.Root.Join("apparmor.d")
+
+	if status {
+		fmt.Printf("%s\n%s\n%s",
+			r.Configures.Help("Enabled configure"),
+			r.Builders.Help("Enabled build"),
+			r.Directives.Usage(),
+		)
+		os.Exit(0)
 	}
-	if file != "" {
-		sync, _ := prepare.Tasks["synchronise"].(*prepare.Synchronise)
-		sync.Paths = []string{file}
-		overwrite, _ := prepare.Tasks["overwrite"].(*prepare.Overwrite)
-		overwrite.Optional = true
-	}
+	return r
 }
 
-func Prebuild() {
+func Prebuild(r *run.Runners) {
 	logging.Step("Building apparmor.d profiles for %s", prebuild.Distribution)
 	logging.Success("AppArmor ABI targeted: %d", prebuild.ABI)
 	logging.Success("AppArmor version targeted: %.1f", prebuild.Version)
 	if prebuild.Test {
 		logging.Warning("Test mode enabled")
 	}
-	if full {
+	if fsp {
 		logging.Success("Full system policy enabled")
 	}
-	if err := Prepare(); err != nil {
+	if err := r.Configure(); err != nil {
 		logging.Fatal("%s", err.Error())
 	}
-	if err := Build(); err != nil {
+	if err := r.Build(); err != nil {
 		logging.Fatal("%s", err.Error())
 	}
 }
