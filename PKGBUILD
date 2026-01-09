@@ -20,11 +20,6 @@ license=('GPL-2.0-only')
 depends=('apparmor>=4.1.0' 'apparmor<5.0.0')
 makedepends=('go' 'git' 'rsync' 'just')
 
-pkgver() {
-  cd "$srcdir/$pkgbase"
-  echo "0.$(git rev-list --count HEAD)"
-}
-
 prepare() {
   rsync -a --delete "$startdir" "$srcdir"
 }

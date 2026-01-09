@@ -620,10 +620,10 @@ publish:
 	owner="roddhjav"
 	version=`just version`
 	git push origin main --tags
-	gh release create "v$version" --notes-from-tag --repo $owner/{{pkgname}}
+	gh release create "v$version" --notes "" --repo $owner/{{pkgname}}
 	gh release upload "v$version" --repo $owner/{{pkgname}} \
-		{{pkgdest}}/{{pkgname}}-$version.tar.gz \
-		{{pkgdest}}/{{pkgname}}-$version.tar.gz.asc
+		{{pkgdest}}/release/{{pkgname}}-$version.tar.gz \
+		{{pkgdest}}/release/{{pkgname}}-$version.tar.gz.asc
 
 # Create & upload new release packages to the repositories
 [group('release')]
