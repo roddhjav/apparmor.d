@@ -6,37 +6,29 @@ package configure
 
 import (
 	"github.com/roddhjav/apparmor.d/pkg/paths"
-	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 	"github.com/roddhjav/apparmor.d/pkg/tasks"
 )
 
 type Synchronise struct {
-	tasks.Base
-	Paths []string // File or directory to sync into the build directory.
+	tasks.BaseTask
+	Sources []*paths.Path // Files or directories to sync into the build directory.
 }
 
-func init() {
-	RegisterTask(&Synchronise{
-		Base: tasks.Base{
+// NewSynchronise creates a new Synchronise task.
+func NewSynchronise(sources []*paths.Path) *Synchronise {
+	return &Synchronise{
+		BaseTask: tasks.BaseTask{
 			Keyword: "synchronise",
-			Msg:     "Initialize a new clean apparmor.d build directory",
+			Msg:     "Initialize a new clean apparmor.d directory",
 		},
-		Paths: []string{"apparmor.d", "share"},
-	})
+		Sources: sources,
+	}
 }
 
 func (p Synchronise) Apply() ([]string, error) {
 	res := []string{}
-	if err := prebuild.Root.Join("systemd").RemoveAll(); err != nil {
-		return res, err
-	}
-	if err := prebuild.RootApparmord.RemoveAll(); err != nil {
-		return res, err
-	}
-
-	for _, name := range p.Paths {
-		src := paths.New(name)
-		dst := prebuild.Root.Join(name)
+	for _, src := range p.Sources {
+		dst := p.Root.Join(src.Base())
 		if err := dst.RemoveAll(); err != nil {
 			return res, err
 		}

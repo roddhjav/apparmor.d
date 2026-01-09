@@ -26,36 +26,45 @@ var (
 )
 
 type ABI5 struct {
-	tasks.Base
+	tasks.BaseTask
 }
 
 type ABI3 struct {
-	tasks.Base
+	tasks.BaseTask
 }
 
 type APPARMOR40 struct {
-	tasks.Base
+	tasks.BaseTask
 }
 
-func init() {
-	RegisterBuilder(&ABI5{
-		Base: tasks.Base{
-			Keyword: "abi5",
-			Msg:     "Build: convert all profiles from abi 4.0 to abi 5.0",
-		},
-	})
-	RegisterBuilder(&ABI3{
-		Base: tasks.Base{
+// NewABI3 creates a new ABI3 builder.
+func NewABI3() *ABI3 {
+	return &ABI3{
+		BaseTask: tasks.BaseTask{
 			Keyword: "abi3",
 			Msg:     "Build: convert all profiles from abi 4.0 to abi 3.0",
 		},
-	})
-	RegisterBuilder(&APPARMOR40{
-		Base: tasks.Base{
+	}
+}
+
+// NewABI5 creates a new ABI5 builder.
+func NewABI5() *ABI5 {
+	return &ABI5{
+		BaseTask: tasks.BaseTask{
+			Keyword: "abi5",
+			Msg:     "Build: convert all profiles from abi 4.0 to abi 5.0",
+		},
+	}
+}
+
+// NewAPPARMOR40 creates a new APPARMOR40 builder.
+func NewAPPARMOR40() *APPARMOR40 {
+	return &APPARMOR40{
+		BaseTask: tasks.BaseTask{
 			Keyword: "apparmor4.0",
 			Msg:     "Build: convert all profiles from apparmor 4.1 to 4.0 or less",
 		},
-	})
+	}
 }
 
 func (b ABI5) Apply(opt *Option, profile string) (string, error) {

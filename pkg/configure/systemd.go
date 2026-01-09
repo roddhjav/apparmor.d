@@ -11,18 +11,19 @@ import (
 )
 
 type SystemdDefault struct {
-	tasks.Base
+	tasks.BaseTask
 }
 
-func init() {
-	RegisterTask(&SystemdDefault{
-		Base: tasks.Base{
+// NewSystemd creates a new SystemdDefault task.
+func NewSystemd() *SystemdDefault {
+	return &SystemdDefault{
+		BaseTask: tasks.BaseTask{
 			Keyword: "systemd-default",
 			Msg:     "Configure systemd unit drop in files to a profile for some units",
 		},
-	})
+	}
 }
 
 func (p SystemdDefault) Apply() ([]string, error) {
-	return []string{}, paths.CopyTo(prebuild.SystemdDir.Join("default"), prebuild.Root.Join("systemd"))
+	return []string{}, paths.CopyTo(prebuild.SystemdDir.Join("default"), p.Root.Join("systemd"))
 }

@@ -7,33 +7,45 @@ package configure
 import (
 	"fmt"
 
+	"github.com/roddhjav/apparmor.d/pkg/logging"
 	"github.com/roddhjav/apparmor.d/pkg/tasks"
-)
-
-var (
-	// Prepare the build directory with the following tasks
-	Prepares = []Task{}
-
-	// Available prepare tasks
-	Tasks = map[string]Task{}
 )
 
 // Task main directive interface
 type Task interface {
-	tasks.BaseInterface
+	tasks.BaseTaskInterface
 	Apply() ([]string, error)
 }
 
-func Register(names ...string) {
-	for _, name := range names {
-		if b, present := Tasks[name]; present {
-			Prepares = append(Prepares, b)
-		} else {
-			panic(fmt.Sprintf("Unknown task: %s", name))
-		}
+// Configures executes configure tasks in a pipeline.
+type Configures struct {
+	*tasks.BaseRunner[Task]
+}
+
+// NewRunner creates a new Configures instance.
+func NewRunner(t tasks.TaskConfig) *Configures {
+	return &Configures{
+		BaseRunner: tasks.NewBaseRunner[Task](t),
 	}
 }
 
-func RegisterTask(t Task) {
-	Tasks[t.Name()] = t
+// Run executes all tasks in the pipeline, logging their output.
+func (r *Configures) Run() error {
+	for _, task := range r.Tasks {
+		msg, err := task.Apply()
+		if err != nil {
+			return fmt.Errorf("%s: %w", task.Name(), err)
+		}
+		logging.Success("%s", task.Message())
+		for _, m := range msg {
+			logging.Bullet("%s", m)
+		}
+	}
+	return nil
+}
+
+// Add appends a task to the pipeline with fluent interface.
+func (r *Configures) Add(task Task) *Configures {
+	r.BaseRunner.Add(task)
+	return r
 }

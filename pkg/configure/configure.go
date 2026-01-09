@@ -13,21 +13,22 @@ import (
 )
 
 type Configure struct {
-	tasks.Base
+	tasks.BaseTask
 }
 
-func init() {
-	RegisterTask(&Configure{
-		Base: tasks.Base{
+// NewConfigure creates a new Configure task.
+func NewConfigure() *Configure {
+	return &Configure{
+		BaseTask: tasks.BaseTask{
 			Keyword: "configure",
 			Msg:     "Set distribution specificities",
 		},
-	})
+	}
 }
 
-func removeFiles(files []string) error {
+func (p Configure) removeFiles(files []string) error {
 	for _, name := range files {
-		if err := prebuild.RootApparmord.Join(name).RemoveAll(); err != nil {
+		if err := p.RootApparmor.Join(name).RemoveAll(); err != nil {
 			return err
 		}
 	}
@@ -49,7 +50,7 @@ func (p Configure) Apply() ([]string, error) {
 			remove := []string{
 				"tunables/multiarch.d/base",
 			}
-			if err := removeFiles(remove); err != nil {
+			if err := p.removeFiles(remove); err != nil {
 				return res, err
 			}
 		}
@@ -70,7 +71,7 @@ func (p Configure) Apply() ([]string, error) {
 			"fbwrap",
 			"fapp",
 		}
-		if err := removeFiles(remove); err != nil {
+		if err := p.removeFiles(remove); err != nil {
 			return res, err
 		}
 	}
@@ -85,7 +86,7 @@ func (p Configure) Apply() ([]string, error) {
 			// Direct upstream contributed profiles, similar to ours
 			"wg",
 		}
-		if err := removeFiles(remove); err != nil {
+		if err := p.removeFiles(remove); err != nil {
 			return res, err
 		}
 	}
@@ -96,12 +97,12 @@ func (p Configure) Apply() ([]string, error) {
 			"free",
 			"nslookup",
 		}
-		if err := removeFiles(remove); err != nil {
+		if err := p.removeFiles(remove); err != nil {
 			return res, err
 		}
 
 		// @{pci_bus} was upstreamed in 5.0
-		path := prebuild.RootApparmord.Join("tunables/multiarch.d/system")
+		path := p.RootApparmor.Join("tunables/multiarch.d/system")
 		out, err := path.ReadFileAsString()
 		if err != nil {
 			return res, err

@@ -13,17 +13,9 @@ import (
 	"github.com/roddhjav/apparmor.d/pkg/tasks"
 )
 
-var (
-	// Build the profiles with the following directive applied
-	Builds = []Builder{}
-
-	// Available builders
-	Builders = map[string]Builder{}
-)
-
 // Builder main directive interface
 type Builder interface {
-	tasks.BaseInterface
+	tasks.BaseTaskInterface
 	Apply(opt *Option, profile string) (string, error)
 }
 
@@ -42,28 +34,34 @@ func NewOption(file *paths.Path) *Option {
 	}
 }
 
-func Register(names ...string) {
-	for _, name := range names {
-		if b, present := Builders[name]; present {
-			Builds = append(Builds, b)
-		} else {
-			panic(fmt.Sprintf("Unknown builder: %s", name))
-		}
+// Builders executes builders on profile strings in a pipeline.
+type Builders struct {
+	*tasks.BaseRunner[Builder]
+}
+
+// NewRunner creates a new Builders instance.
+func NewRunner(t tasks.TaskConfig) *Builders {
+	return &Builders{
+		BaseRunner: tasks.NewBaseRunner[Builder](t),
 	}
 }
 
-func RegisterBuilder(d Builder) {
-	Builders[d.Name()] = d
-}
-
-func Run(file *paths.Path, profile string) (string, error) {
-	var err error
+// Run executes all builders on a profile string.
+func (r *Builders) Run(file *paths.Path, profile string) (string, error) {
 	opt := NewOption(file)
-	for _, b := range Builds {
+	var err error
+
+	for _, b := range r.Tasks {
 		profile, err = b.Apply(opt, profile)
 		if err != nil {
 			return "", fmt.Errorf("%s %s: %w", b.Name(), opt.File, err)
 		}
 	}
 	return profile, nil
+}
+
+// Add appends a builder to the pipeline with fluent interface.
+func (r *Builders) Add(builder Builder) *Builders {
+	r.BaseRunner.Add(builder)
+	return r
 }

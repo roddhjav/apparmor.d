@@ -21,21 +21,22 @@ var (
 )
 
 type Userspace struct {
-	tasks.Base
+	tasks.BaseTask
 }
 
-func init() {
-	RegisterBuilder(&Userspace{
-		Base: tasks.Base{
+// NewUserspace creates a new Userspace builder.
+func NewUserspace() *Userspace {
+	return &Userspace{
+		BaseTask: tasks.BaseTask{
 			Keyword: "userspace",
 			Msg:     "Fix: resolve variable in profile attachments",
 		},
-	})
+	}
 }
 
 func (b Userspace) Apply(opt *Option, profile string) (string, error) {
 	for _, dir := range []string{"abstractions", "tunables", "local", "mappings"} {
-		if ok, _ := opt.File.IsInsideDir(prebuild.RootApparmord.Join(dir)); ok {
+		if ok, _ := opt.File.IsInsideDir(b.RootApparmor.Join(dir)); ok {
 			return profile, nil
 		}
 	}

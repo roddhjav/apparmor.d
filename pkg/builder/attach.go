@@ -9,21 +9,21 @@ import (
 	"strings"
 
 	"github.com/roddhjav/apparmor.d/pkg/aa"
-	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 	"github.com/roddhjav/apparmor.d/pkg/tasks"
 )
 
 type ReAttach struct {
-	tasks.Base
+	tasks.BaseTask
 }
 
-func init() {
-	RegisterBuilder(&ReAttach{
-		Base: tasks.Base{
+// NewAttach creates a new ReAttach builder.
+func NewAttach() *ReAttach {
+	return &ReAttach{
+		BaseTask: tasks.BaseTask{
 			Keyword: "attach",
 			Msg:     "Feat: re-attach disconnected path",
 		},
-	})
+	}
 }
 
 // Apply will re-attach the disconnected path
@@ -35,7 +35,7 @@ func (b ReAttach) Apply(opt *Option, profile string) (string, error) {
 	var insert string
 	var origin = "profile " + opt.Name
 
-	isInside, err := opt.File.IsInsideDir(prebuild.RootApparmord.Join("abstractions/attached"))
+	isInside, err := opt.File.IsInsideDir(b.RootApparmor.Join("abstractions/attached"))
 	if err != nil {
 		return profile, fmt.Errorf("attach: %v", err)
 	}

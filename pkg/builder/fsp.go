@@ -16,16 +16,17 @@ var (
 )
 
 type FullSystemPolicy struct {
-	tasks.Base
+	tasks.BaseTask
 }
 
-func init() {
-	RegisterBuilder(&FullSystemPolicy{
-		Base: tasks.Base{
+// NewFSP creates a new FullSystemPolicy builder.
+func NewFSP() *FullSystemPolicy {
+	return &FullSystemPolicy{
+		BaseTask: tasks.BaseTask{
 			Keyword: "fsp",
 			Msg:     "Feat: prevent unconfined transitions in profile rules",
 		},
-	})
+	}
 }
 
 func (b FullSystemPolicy) Apply(opt *Option, profile string) (string, error) {

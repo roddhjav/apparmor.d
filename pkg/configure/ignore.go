@@ -11,25 +11,26 @@ import (
 )
 
 type Ignore struct {
-	tasks.Base
+	tasks.BaseTask
 }
 
-func init() {
-	RegisterTask(&Ignore{
-		Base: tasks.Base{
+// NewIgnore creates a new Ignore task.
+func NewIgnore() *Ignore {
+	return &Ignore{
+		BaseTask: tasks.BaseTask{
 			Keyword: "ignore",
 			Msg:     "Ignore profiles and files from:",
 		},
-	})
+	}
 }
 
 func (p Ignore) Apply() ([]string, error) {
 	res := []string{}
 	for _, name := range []string{"main", prebuild.Distribution} {
 		for _, ignore := range prebuild.Ignore.Read(name) {
-			profile := prebuild.Root.Join(ignore)
+			profile := p.Root.Join(ignore)
 			if profile.NotExist() {
-				files, err := prebuild.RootApparmord.ReadDirRecursiveFiltered(nil, paths.FilterNames(ignore))
+				files, err := p.RootApparmor.ReadDirRecursiveFiltered(nil, paths.FilterNames(ignore))
 				if err != nil {
 					return res, err
 				}
