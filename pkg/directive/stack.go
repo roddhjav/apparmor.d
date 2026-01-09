@@ -58,7 +58,7 @@ func (s Stack) Apply(opt *Option, profile string) (string, error) {
 	res := ""
 	ignoreDir := paths.FilterNames("tunables", "abstractions", "disable")
 	for name := range opt.ArgMap {
-		files, err := prebuild.RootApparmord.ReadDirRecursiveFiltered(
+		files, err := s.RootApparmor.ReadDirRecursiveFiltered(
 			paths.NotFilter(ignoreDir), paths.FilterOutDirectories(), paths.FilterNames(name),
 		)
 		if err != nil {

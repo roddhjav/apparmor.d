@@ -26,7 +26,7 @@ func NewIgnore() *Ignore {
 
 func (p Ignore) Apply() ([]string, error) {
 	res := []string{}
-	for _, name := range []string{"main", prebuild.Distribution} {
+	for _, name := range []string{"main", tasks.Distribution} {
 		for _, ignore := range prebuild.Ignore.Read(name) {
 			profile := p.Root.Join(ignore)
 			if profile.NotExist() {

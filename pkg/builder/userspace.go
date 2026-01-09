@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/roddhjav/apparmor.d/pkg/aa"
-	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 	"github.com/roddhjav/apparmor.d/pkg/tasks"
 )
 
@@ -42,7 +41,7 @@ func (b Userspace) Apply(opt *Option, profile string) (string, error) {
 	}
 
 	f := aa.DefaultTunables()
-	if prebuild.Distribution == "arch" {
+	if tasks.Distribution == "arch" {
 		f.Preamble = append(f.Preamble, &aa.Variable{
 			Name: "sbin", Values: []string{"/{,usr/}{,s}bin"}, Define: true,
 		})

@@ -34,7 +34,7 @@ func NewSetFlags() *SetFlags {
 
 func (p SetFlags) Apply() ([]string, error) {
 	res := []string{}
-	for _, name := range []string{"main", prebuild.Distribution} {
+	for _, name := range []string{"main", tasks.Distribution} {
 		for profile, flags := range prebuild.Flags.Read(name) {
 			file := p.RootApparmor.Join(profile)
 			if !file.Exist() {

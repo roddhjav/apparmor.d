@@ -1,8 +1,8 @@
 // apparmor.d - Full set of apparmor profiles
-// Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
+// Copyright (C) 2021-2026 Alexandre Pujol <alexandre@pujol.io>
 // SPDX-License-Identifier: GPL-2.0-only
 
-package prebuild
+package tasks
 
 import (
 	"reflect"
