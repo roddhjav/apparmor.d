@@ -103,10 +103,10 @@ func filterRuleForUs(opt *Option) bool {
 		if prebuild.Test && arg == "test" {
 			res = true
 		}
-		if arg == prebuild.Distribution {
+		if arg == tasks.Distribution {
 			res = true
 		}
-		if arg == prebuild.Family {
+		if arg == tasks.Family {
 			res = true
 		}
 		if strings.HasPrefix(arg, "abi") {

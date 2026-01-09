@@ -1,5 +1,5 @@
 // apparmor.d - Full set of apparmor profiles
-// Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
+// Copyright (C) 2021-2026 Alexandre Pujol <alexandre@pujol.io>
 // SPDX-License-Identifier: GPL-2.0-only
 
 package prebuild
@@ -27,12 +27,6 @@ var (
 
 	// Pkgname is the name of the package
 	Pkgname = "apparmor.d"
-
-	// Root is the root directory for the build (default: .build)
-	Root *paths.Path = paths.New(".build")
-
-	// RootApparmord is the final built apparmor.d directory (default: .build/apparmor.d)
-	RootApparmord *paths.Path = Root.Join("apparmor.d")
 
 	// DistDir is the directory where the distribution specific files are stored
 	DistDir *paths.Path = paths.New("dists")

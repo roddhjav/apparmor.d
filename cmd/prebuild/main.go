@@ -23,11 +23,11 @@ func init() {
 	prebuild.Version = 4.1
 
 	// Matrix of ABI/Apparmor version to integrate with
-	switch prebuild.Distribution {
+	switch run.Distribution {
 	case "arch":
 
 	case "ubuntu":
-		switch prebuild.Release["VERSION_CODENAME"] {
+		switch run.Release["VERSION_CODENAME"] {
 		case "jammy":
 			prebuild.ABI = 3
 			prebuild.Version = 3.0
@@ -43,7 +43,7 @@ func init() {
 		}
 
 	case "debian":
-		switch prebuild.Release["VERSION_CODENAME"] {
+		switch run.Release["VERSION_CODENAME"] {
 		case "bullseye", "bookworm":
 			prebuild.ABI = 3
 			prebuild.Version = 3.0

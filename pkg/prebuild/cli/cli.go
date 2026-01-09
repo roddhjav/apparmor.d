@@ -18,7 +18,8 @@ import (
 	"github.com/roddhjav/apparmor.d/pkg/logging"
 	"github.com/roddhjav/apparmor.d/pkg/paths"
 	"github.com/roddhjav/apparmor.d/pkg/prebuild"
-	"github.com/roddhjav/apparmor.d/pkg/run"
+	"github.com/roddhjav/apparmor.d/pkg/runtime"
+	"github.com/roddhjav/apparmor.d/pkg/tasks"
 )
 
 const (
@@ -82,7 +83,7 @@ func GetPrebuildRoot() *paths.Path {
 	return paths.New(".build")
 }
 
-func Configure(r *run.Runners) *run.Runners {
+func Configure(r *runtime.Runners) *runtime.Runners {
 	flag.Usage = func() { fmt.Print(usage) }
 	flag.Parse()
 	if help {
@@ -122,7 +123,7 @@ func Configure(r *run.Runners) *run.Runners {
 		}
 
 		// Re-attach disconnected path
-		if prebuild.Distribution == "ubuntu" && prebuild.Version >= 4.1 {
+		if tasks.Distribution == "ubuntu" && prebuild.Version >= 4.1 {
 			// Ignored on ubuntu 25.04+ due to a memory leak that fully prevent
 			// profiles compilation with re-attached paths.
 			// See https://bugs.launchpad.net/ubuntu/+source/linux/+bug/2098730
@@ -141,7 +142,7 @@ func Configure(r *run.Runners) *run.Runners {
 		r.Builders.Add(builder.NewABI5()) // Convert all profiles from abi 4.0 to abi 5.0
 
 		// Re-attach disconnected path
-		if prebuild.Distribution == "ubuntu" {
+		if tasks.Distribution == "ubuntu" {
 			// Ignored on ubuntu 25.04+ due to a memory leak that fully prevent
 			// profiles compilation with re-attached paths.
 			// See https://bugs.launchpad.net/ubuntu/+source/linux/+bug/2098730
@@ -179,8 +180,8 @@ func Configure(r *run.Runners) *run.Runners {
 	return r
 }
 
-func Prebuild(r *run.Runners) {
-	logging.Step("Building apparmor.d profiles for %s", prebuild.Distribution)
+func Prebuild(r *runtime.Runners) {
+	logging.Step("Building apparmor.d profiles for %s", tasks.Distribution)
 	logging.Success("AppArmor ABI targeted: %d", prebuild.ABI)
 	logging.Success("AppArmor version targeted: %.1f", prebuild.Version)
 	if prebuild.Test {
@@ -195,65 +196,4 @@ func Prebuild(r *run.Runners) {
 	if err := r.Build(); err != nil {
 		logging.Fatal("%s", err.Error())
 	}
-}
-
-func Prepare() error {
-	for _, task := range prepare.Prepares {
-		msg, err := task.Apply()
-		if err != nil {
-			return err
-		}
-		if file != "" && task.Name() == "setflags" {
-			continue
-		}
-		logging.Success("%s", task.Message())
-		logging.Indent = "   "
-		for _, line := range msg {
-			if strings.Contains(line, "not found") {
-				logging.Warning("%s", line)
-			} else {
-				logging.Bullet("%s", line)
-			}
-		}
-		logging.Indent = ""
-	}
-	return nil
-}
-
-func Build() error {
-	files, _ := prebuild.RootApparmord.ReadDirRecursiveFiltered(nil, paths.FilterOutDirectories())
-	for _, file := range files {
-		if !file.Exist() {
-			continue
-		}
-		profile, err := file.ReadFileAsString()
-		if err != nil {
-			return err
-		}
-		profile, err = builder.Run(file, profile)
-		if err != nil {
-			return err
-		}
-		profile, err = directive.Run(file, profile)
-		if err != nil {
-			return err
-		}
-		if err := file.WriteFile([]byte(profile)); err != nil {
-			return err
-		}
-	}
-
-	logging.Success("Build tasks:")
-	logging.Indent = "   "
-	for _, task := range builder.Builds {
-		logging.Bullet("%s", task.Message())
-	}
-	logging.Indent = ""
-	logging.Success("Directives processed:")
-	logging.Indent = "   "
-	for _, dir := range directive.Directives {
-		logging.Bullet("%s%s", directive.Keyword, dir.Name())
-	}
-	logging.Indent = ""
-	return nil
 }

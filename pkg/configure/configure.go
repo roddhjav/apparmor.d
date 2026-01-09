@@ -38,7 +38,7 @@ func (p Configure) removeFiles(files []string) error {
 func (p Configure) Apply() ([]string, error) {
 	res := []string{}
 
-	switch prebuild.Distribution {
+	switch tasks.Distribution {
 	case "arch", "opensuse":
 
 	case "ubuntu":
@@ -46,7 +46,7 @@ func (p Configure) Apply() ([]string, error) {
 			return res, err
 		}
 
-		if prebuild.Release["VERSION_CODENAME"] == "noble" {
+		if tasks.Release["VERSION_CODENAME"] == "noble" {
 			remove := []string{
 				"tunables/multiarch.d/base",
 			}
@@ -61,7 +61,7 @@ func (p Configure) Apply() ([]string, error) {
 		}
 
 	default:
-		return []string{}, fmt.Errorf("%s is not a supported distribution", prebuild.Distribution)
+		return []string{}, fmt.Errorf("%s is not a supported distribution", tasks.Distribution)
 
 	}
 
