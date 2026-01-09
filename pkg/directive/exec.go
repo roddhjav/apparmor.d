@@ -13,22 +13,22 @@ import (
 
 	"github.com/roddhjav/apparmor.d/pkg/aa"
 	"github.com/roddhjav/apparmor.d/pkg/paths"
-	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 	"github.com/roddhjav/apparmor.d/pkg/tasks"
 )
 
 type Exec struct {
-	tasks.Base
+	tasks.BaseTask
 }
 
-func init() {
-	RegisterDirective(&Exec{
-		Base: tasks.Base{
+// NewExec creates a new Exec directive.
+func NewExec() *Exec {
+	return &Exec{
+		BaseTask: tasks.BaseTask{
 			Keyword: "exec",
 			Msg:     "Exec directive applied",
 			Help:    []string{"[P|U|p|u|PU|pu|] profiles..."},
 		},
-	})
+	}
 }
 
 func (d Exec) Apply(opt *Option, profileRaw string) (string, error) {
@@ -46,7 +46,7 @@ func (d Exec) Apply(opt *Option, profileRaw string) (string, error) {
 	rules := aa.Rules{}
 	ignoreDir := paths.FilterNames("tunables", "abstractions", "disable")
 	for name := range opt.ArgMap {
-		files, err := prebuild.RootApparmord.ReadDirRecursiveFiltered(
+		files, err := d.RootApparmor.ReadDirRecursiveFiltered(
 			paths.NotFilter(ignoreDir), paths.FilterOutDirectories(), paths.FilterNames(name),
 		)
 		if err != nil {

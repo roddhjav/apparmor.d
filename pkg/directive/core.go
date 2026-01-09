@@ -17,26 +17,65 @@ var (
 	// Define the directive keyword globally
 	Keyword = "#aa:"
 
-	// Build the profiles with the following directive applied
-	Directives = map[string]Directive{}
-
 	regDirective = regexp.MustCompile(`(?m).*` + Keyword + `([a-z]*)( .*)?`)
 )
 
 // Directive main interface
 type Directive interface {
-	tasks.BaseInterface
+	tasks.BaseTaskInterface
 	Apply(opt *Option, profile string) (string, error)
 }
 
-func Usage() string {
+// Directives handles directive registration and execution.
+type Directives struct {
+	*tasks.BaseRunner[Directive]
+	Directives map[string]Directive
+}
+
+// NewRunner creates a new Directives instance.
+func NewRunner(c tasks.TaskConfig) *Directives {
+	return &Directives{
+		BaseRunner: tasks.NewBaseRunner[Directive](c),
+		Directives: make(map[string]Directive),
+	}
+}
+
+// Register adds a directive to the runner.
+func (r *Directives) Register(d Directive) *Directives {
+	r.BaseRunner.Add(d)
+	r.Directives[d.Name()] = d
+	return r
+}
+
+// Usage returns usage information for all registered directives.
+func (r *Directives) Usage() string {
 	res := "Directive:\n"
-	for _, d := range Directives {
+	for _, d := range r.Directives {
 		for _, h := range d.Usage() {
 			res += fmt.Sprintf("    %s%s %s\n", Keyword, d.Name(), h)
 		}
 	}
 	return res
+}
+
+// Run executes all directives found in the profile via regex.
+func (r *Directives) Run(file *paths.Path, profile string) (string, error) {
+	var err error
+	for _, match := range regDirective.FindAllStringSubmatch(profile, -1) {
+		opt := NewOption(file, match)
+		drtv, ok := r.Directives[opt.Name]
+		if !ok {
+			if opt.Name == "lint" {
+				continue
+			}
+			return "", fmt.Errorf("unknown directive '%s' in %s", opt.Name, opt.File)
+		}
+		profile, err = drtv.Apply(opt, profile)
+		if err != nil {
+			return "", fmt.Errorf("%s %s: %w", drtv.Name(), opt.File, err)
+		}
+	}
+	return profile, nil
 }
 
 // Option for the directive
@@ -94,27 +133,4 @@ func (o *Option) IsInline() bool {
 		}
 	}
 	return inline
-}
-
-func RegisterDirective(d Directive) {
-	Directives[d.Name()] = d
-}
-
-func Run(file *paths.Path, profile string) (string, error) {
-	var err error
-	for _, match := range regDirective.FindAllStringSubmatch(profile, -1) {
-		opt := NewOption(file, match)
-		drtv, ok := Directives[opt.Name]
-		if !ok {
-			if opt.Name == "lint" {
-				continue
-			}
-			return "", fmt.Errorf("unknown directive '%s' in %s", opt.Name, opt.File)
-		}
-		profile, err = drtv.Apply(opt, profile)
-		if err != nil {
-			return "", fmt.Errorf("%s %s: %w", drtv.Name(), opt.File, err)
-		}
-	}
-	return profile, nil
 }

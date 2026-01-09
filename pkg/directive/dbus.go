@@ -23,12 +23,13 @@ import (
 )
 
 type Dbus struct {
-	tasks.Base
+	tasks.BaseTask
 }
 
-func init() {
-	RegisterDirective(&Dbus{
-		Base: tasks.Base{
+// NewDbus creates a new Dbus directive.
+func NewDbus() *Dbus {
+	return &Dbus{
+		BaseTask: tasks.BaseTask{
 			Keyword: "dbus",
 			Msg:     "Dbus directive applied",
 			Help: []string{
@@ -36,8 +37,8 @@ func init() {
 				"talk bus=<bus> name=<name> label=<profile> [interface=AARE] [path=AARE]",
 				"see bus=<bus> name=<name> label=<profile>",
 			},
-		}},
-	)
+		},
+	}
 }
 
 func (d Dbus) Apply(opt *Option, profile string) (string, error) {
