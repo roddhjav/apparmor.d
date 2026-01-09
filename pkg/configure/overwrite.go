@@ -15,18 +15,19 @@ import (
 var ext = "." + prebuild.Pkgname
 
 type Overwrite struct {
-	tasks.Base
+	tasks.BaseTask
 	Optional bool
 }
 
-func init() {
-	RegisterTask(&Overwrite{
-		Base: tasks.Base{
+// NewOverwrite creates a new Overwrite task with optional configuration.
+func NewOverwrite(optional bool) *Overwrite {
+	return &Overwrite{
+		BaseTask: tasks.BaseTask{
 			Keyword: "overwrite",
 			Msg:     "Overwrite dummy upstream profiles",
 		},
-		Optional: false,
-	})
+		Optional: optional,
+	}
 }
 
 func (p Overwrite) Apply() ([]string, error) {
@@ -35,7 +36,7 @@ func (p Overwrite) Apply() ([]string, error) {
 		return res, nil
 	}
 
-	disableDir := prebuild.RootApparmord.Join("disable")
+	disableDir := p.RootApparmor.Join("disable")
 	if err := disableDir.Mkdir(); err != nil {
 		return res, err
 	}
@@ -45,8 +46,8 @@ func (p Overwrite) Apply() ([]string, error) {
 		return res, fmt.Errorf("%s not found", path)
 	}
 	for _, name := range path.MustReadFilteredFileAsLines() {
-		origin := prebuild.RootApparmord.Join(name)
-		dest := prebuild.RootApparmord.Join(name + ext)
+		origin := p.RootApparmor.Join(name)
+		dest := p.RootApparmor.Join(name + ext)
 		if !dest.Exist() && p.Optional {
 			continue
 		}

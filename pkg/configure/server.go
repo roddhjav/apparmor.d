@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/roddhjav/apparmor.d/pkg/paths"
-	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 	"github.com/roddhjav/apparmor.d/pkg/tasks"
 )
 
@@ -52,16 +51,17 @@ var (
 )
 
 type Server struct {
-	tasks.Base
+	tasks.BaseTask
 }
 
-func init() {
-	RegisterTask(&Server{
-		Base: tasks.Base{
+// NewServer creates a new Server task.
+func NewServer() *Server {
+	return &Server{
+		BaseTask: tasks.BaseTask{
 			Keyword: "server",
 			Msg:     "Configure AppArmor for server",
 		},
-	})
+	}
 }
 
 func (p Server) Apply() ([]string, error) {
@@ -70,7 +70,7 @@ func (p Server) Apply() ([]string, error) {
 	// Ignore desktop related groups
 	groupNb := 0
 	for _, group := range serverIgnoreGroups {
-		path := prebuild.RootApparmord.Join("groups", group)
+		path := p.RootApparmor.Join("groups", group)
 		if path.IsDir() {
 			if err := path.RemoveAll(); err != nil {
 				return res, err
@@ -83,7 +83,7 @@ func (p Server) Apply() ([]string, error) {
 
 	// Ignore profiles using a desktop related abstraction
 	fileNb := 0
-	files, _ := prebuild.RootApparmord.ReadDirRecursiveFiltered(nil, paths.FilterOutDirectories())
+	files, _ := p.RootApparmor.ReadDirRecursiveFiltered(nil, paths.FilterOutDirectories())
 	for _, file := range files {
 		if !file.Exist() {
 			continue

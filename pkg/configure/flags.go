@@ -19,23 +19,24 @@ var (
 )
 
 type SetFlags struct {
-	tasks.Base
+	tasks.BaseTask
 }
 
-func init() {
-	RegisterTask(&SetFlags{
-		Base: tasks.Base{
+// NewSetFlags creates a new SetFlags task.
+func NewSetFlags() *SetFlags {
+	return &SetFlags{
+		BaseTask: tasks.BaseTask{
 			Keyword: "setflags",
-			Msg:     "Set flags on some profiles",
+			Msg:     "Set flags as definied in dist/flags",
 		},
-	})
+	}
 }
 
 func (p SetFlags) Apply() ([]string, error) {
 	res := []string{}
 	for _, name := range []string{"main", prebuild.Distribution} {
 		for profile, flags := range prebuild.Flags.Read(name) {
-			file := prebuild.RootApparmord.Join(profile)
+			file := p.RootApparmor.Join(profile)
 			if !file.Exist() {
 				res = append(res, fmt.Sprintf("Profile %s not found, ignoring", profile))
 				continue

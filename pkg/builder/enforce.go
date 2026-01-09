@@ -12,16 +12,17 @@ import (
 )
 
 type Enforce struct {
-	tasks.Base
+	tasks.BaseTask
 }
 
-func init() {
-	RegisterBuilder(&Enforce{
-		Base: tasks.Base{
+// NewEnforce creates a new Enforce builder.
+func NewEnforce() *Enforce {
+	return &Enforce{
+		BaseTask: tasks.BaseTask{
 			Keyword: "enforce",
 			Msg:     "Build: all profiles have been enforced",
 		},
-	})
+	}
 }
 
 func (b Enforce) Apply(opt *Option, profile string) (string, error) {

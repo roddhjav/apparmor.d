@@ -11,16 +11,17 @@ import (
 )
 
 type BaseStrict struct {
-	tasks.Base
+	tasks.BaseTask
 }
 
-func init() {
-	RegisterBuilder(&BaseStrict{
-		Base: tasks.Base{
+// NewBaseStrict creates a new BaseStrict builder.
+func NewBaseStrict() *BaseStrict {
+	return &BaseStrict{
+		BaseTask: tasks.BaseTask{
 			Keyword: "base-strict",
 			Msg:     "Feat: use 'base-strict' as base abstraction",
 		},
-	})
+	}
 }
 
 func (b BaseStrict) Apply(opt *Option, profile string) (string, error) {

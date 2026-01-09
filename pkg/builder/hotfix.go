@@ -19,16 +19,17 @@ var (
 )
 
 type Hotfix struct {
-	tasks.Base
+	tasks.BaseTask
 }
 
-func init() {
-	RegisterBuilder(&Hotfix{
-		Base: tasks.Base{
+// NewHotFix creates a new Hotfix builder.
+func NewHotFix() *Hotfix {
+	return &Hotfix{
+		BaseTask: tasks.BaseTask{
 			Keyword: "hotfix",
 			Msg:     "Fix: temporary solution for #74, #80 & #235",
 		},
-	})
+	}
 }
 
 func (b Hotfix) Apply(opt *Option, profile string) (string, error) {

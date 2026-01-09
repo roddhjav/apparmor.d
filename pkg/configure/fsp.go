@@ -63,28 +63,29 @@ var (
 )
 
 type FullSystemPolicy struct {
-	tasks.Base
+	tasks.BaseTask
 }
 
-func init() {
-	RegisterTask(&FullSystemPolicy{
-		Base: tasks.Base{
+// NewFullSystemPolicy creates a new FullSystemPolicy task.
+func NewFullSystemPolicy() *FullSystemPolicy {
+	return &FullSystemPolicy{
+		BaseTask: tasks.BaseTask{
 			Keyword: "fsp",
 			Msg:     "Configure AppArmor for full system policy",
 		},
-	})
+	}
 }
 
 func (p FullSystemPolicy) Apply() ([]string, error) {
 	res := []string{}
 
 	// Install full system policy profiles
-	if err := paths.New("apparmor.d/groups/_full/").CopyFS(prebuild.Root.Join("apparmor.d")); err != nil {
+	if err := paths.New("apparmor.d/groups/_full/").CopyFS(p.RootApparmor); err != nil {
 		return res, err
 	}
 
 	// Set profile name for FSP
-	path := prebuild.RootApparmord.Join("tunables/multiarch.d/profiles")
+	path := p.RootApparmor.Join("tunables/multiarch.d/profiles")
 	out, err := path.ReadFileAsString()
 	if err != nil {
 		return res, err
@@ -102,5 +103,5 @@ func (p FullSystemPolicy) Apply() ([]string, error) {
 	}
 
 	// Set systemd unit drop-in files
-	return res, paths.CopyTo(prebuild.SystemdDir.Join("full"), prebuild.Root.Join("systemd"))
+	return res, paths.CopyTo(prebuild.SystemdDir.Join("full"), p.Root.Join("systemd"))
 }

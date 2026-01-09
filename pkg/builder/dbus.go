@@ -22,27 +22,32 @@ var (
 
 // StackedDbus is a fix for https://gitlab.com/apparmor/apparmor/-/issues/537#note_2699570190
 type StackedDbus struct {
-	tasks.Base
+	tasks.BaseTask
 }
 
 // DbusBroker is a fix for https://gitlab.com/apparmor/apparmor/-/issues/565
 type DbusBroker struct {
-	tasks.Base
+	tasks.BaseTask
 }
 
-func init() {
-	RegisterBuilder(&StackedDbus{
-		Base: tasks.Base{
+// NewStackedDbus creates a new StackedDbus builder.
+func NewStackedDbus() *StackedDbus {
+	return &StackedDbus{
+		BaseTask: tasks.BaseTask{
 			Keyword: "stacked-dbus",
 			Msg:     "Fix: resolve peer label variable in dbus rules",
 		},
-	})
-	RegisterBuilder(&DbusBroker{
-		Base: tasks.Base{
+	}
+}
+
+// NewDbusBroker creates a new DbusBroker builder.
+func NewDbusBroker() *DbusBroker {
+	return &DbusBroker{
+		BaseTask: tasks.BaseTask{
 			Keyword: "dbus-broker",
 			Msg:     "Fix: ignore peer name in dbus rules",
 		},
-	})
+	}
 }
 
 func parse(kind aa.FileKind, profile string) (aa.ParaRules, []string, error) {

@@ -18,16 +18,17 @@ var (
 )
 
 type Complain struct {
-	tasks.Base
+	tasks.BaseTask
 }
 
-func init() {
-	RegisterBuilder(&Complain{
-		Base: tasks.Base{
+// NewComplain creates a new Complain builder.
+func NewComplain() *Complain {
+	return &Complain{
+		BaseTask: tasks.BaseTask{
 			Keyword: "complain",
 			Msg:     "Build: set complain flag on all profiles",
 		},
-	})
+	}
 }
 
 func (b Complain) Apply(opt *Option, profile string) (string, error) {
