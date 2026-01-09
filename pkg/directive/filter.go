@@ -15,28 +15,33 @@ import (
 )
 
 type FilterOnly struct {
-	tasks.Base
+	tasks.BaseTask
 }
 
 type FilterExclude struct {
-	tasks.Base
+	tasks.BaseTask
 }
 
-func init() {
-	RegisterDirective(&FilterOnly{
-		Base: tasks.Base{
+// NewFilterOnly creates a new FilterOnly directive.
+func NewFilterOnly() *FilterOnly {
+	return &FilterOnly{
+		BaseTask: tasks.BaseTask{
 			Keyword: "only",
 			Msg:     "Only directive applied",
 			Help:    []string{"filters..."},
 		},
-	})
-	RegisterDirective(&FilterExclude{
-		Base: tasks.Base{
+	}
+}
+
+// NewFilterExclude creates a new FilterExclude directive.
+func NewFilterExclude() *FilterExclude {
+	return &FilterExclude{
+		BaseTask: tasks.BaseTask{
 			Keyword: "exclude",
 			Msg:     "Exclude directive applied",
 			Help:    []string{"filters..."},
 		},
-	})
+	}
 }
 
 func cmp[T float64 | int](refValue T, operator string, value T) bool {

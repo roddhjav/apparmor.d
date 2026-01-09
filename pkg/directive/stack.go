@@ -11,7 +11,6 @@ import (
 	"strings"
 
 	"github.com/roddhjav/apparmor.d/pkg/paths"
-	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 	"github.com/roddhjav/apparmor.d/pkg/tasks"
 	"github.com/roddhjav/apparmor.d/pkg/util"
 )
@@ -27,17 +26,18 @@ var (
 )
 
 type Stack struct {
-	tasks.Base
+	tasks.BaseTask
 }
 
-func init() {
-	RegisterDirective(&Stack{
-		Base: tasks.Base{
+// NewStack creates a new Stack directive.
+func NewStack() *Stack {
+	return &Stack{
+		BaseTask: tasks.BaseTask{
 			Keyword: "stack",
 			Msg:     "Stack directive applied",
 			Help:    []string{"[X] profiles..."},
 		},
-	})
+	}
 }
 
 func (s Stack) Apply(opt *Option, profile string) (string, error) {
