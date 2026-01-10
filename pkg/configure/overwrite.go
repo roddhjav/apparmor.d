@@ -12,8 +12,6 @@ import (
 	"github.com/roddhjav/apparmor.d/pkg/tasks"
 )
 
-var ext = "." + prebuild.Pkgname
-
 type Overwrite struct {
 	tasks.BaseTask
 	Optional bool
@@ -32,7 +30,7 @@ func NewOverwrite(optional bool) *Overwrite {
 
 func (p Overwrite) Apply() ([]string, error) {
 	res := []string{}
-	if prebuild.ABI == 3 {
+	if p.ABI == 3 {
 		return res, nil
 	}
 
@@ -41,6 +39,7 @@ func (p Overwrite) Apply() ([]string, error) {
 		return res, err
 	}
 
+	ext := "." + p.Pkgname
 	path := prebuild.DistDir.Join("overwrite")
 	if !path.Exist() {
 		return res, fmt.Errorf("%s not found", path)

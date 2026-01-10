@@ -18,7 +18,6 @@ import (
 	"strings"
 
 	"github.com/roddhjav/apparmor.d/pkg/aa"
-	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 	"github.com/roddhjav/apparmor.d/pkg/tasks"
 )
 
@@ -123,7 +122,7 @@ func (d Dbus) own(rules map[string]string) aa.Rules {
 	// Interfaces
 	for _, iface := range interfaces {
 		var peerNames = make([]string, 2)
-		if prebuild.DbusDaemon {
+		if d.DbusDaemon {
 			peerNames[0] = `"@{busname}"`
 			peerNames[1] = `"{@{busname},org.freedesktop.DBus}"`
 		}
@@ -142,7 +141,7 @@ func (d Dbus) own(rules map[string]string) aa.Rules {
 	}
 
 	var peerNames = make([]string, 4)
-	if prebuild.DbusDaemon {
+	if d.DbusDaemon {
 		peerNames[0] = `"{@{busname},org.freedesktop.DBus}"`
 		peerNames[1] = `"@{busname}"`
 		peerNames[2] = `"{@{busname},` + rules["name"] + `}"`
@@ -194,7 +193,7 @@ func (d Dbus) talk(rules map[string]string) aa.Rules {
 	}
 
 	peerName := ``
-	if prebuild.DbusDaemon {
+	if d.DbusDaemon {
 		peerName = `"{@{busname},` + rules["name"] + `}"`
 	}
 
@@ -243,7 +242,7 @@ func (d Dbus) talk(rules map[string]string) aa.Rules {
 
 func (d Dbus) see(rules map[string]string) aa.Rules {
 	peerName := ``
-	if prebuild.DbusDaemon {
+	if d.DbusDaemon {
 		peerName = `"{@{busname},` + rules["name"] + `}"`
 	}
 

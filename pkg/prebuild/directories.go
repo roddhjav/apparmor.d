@@ -7,27 +7,6 @@ package prebuild
 import "github.com/roddhjav/apparmor.d/pkg/paths"
 
 var (
-	// AppArmor ABI version
-	ABI = 0
-
-	// AppArmor version
-	Version = 4.0
-
-	// Tells the build we are a downstream project using apparmor.d as dependency
-	DownStream = false
-
-	// Either or not RBAC is enabled
-	RBAC = false
-
-	// Either or not we are in test mode
-	Test = false
-
-	// The dbus implementation used
-	DbusDaemon = true
-
-	// Pkgname is the name of the package
-	Pkgname = "apparmor.d"
-
 	// DistDir is the directory where the distribution specific files are stored
 	DistDir *paths.Path = paths.New("dists")
 

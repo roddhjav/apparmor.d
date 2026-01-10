@@ -10,7 +10,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 	"github.com/roddhjav/apparmor.d/pkg/tasks"
 )
 
@@ -94,13 +93,13 @@ func compare(refValue any, prefix string, arg string) bool {
 	return res
 }
 
-func filterRuleForUs(opt *Option) bool {
+func filterRuleForUs(c *tasks.TaskConfig, opt *Option) bool {
 	for _, arg := range opt.ArgList {
 		var res bool
-		if prebuild.RBAC && arg == "RBAC" {
+		if c.RBAC && arg == "RBAC" {
 			res = true
 		}
-		if prebuild.Test && arg == "test" {
+		if c.Test && arg == "test" {
 			res = true
 		}
 		if arg == tasks.Distribution {
@@ -110,10 +109,10 @@ func filterRuleForUs(opt *Option) bool {
 			res = true
 		}
 		if strings.HasPrefix(arg, "abi") {
-			res = compare(prebuild.ABI, "abi", arg)
+			res = compare(c.ABI, "abi", arg)
 		}
 		if strings.HasPrefix(arg, "apparmor") {
-			res = compare(prebuild.Version, "apparmor", arg)
+			res = compare(c.Version, "apparmor", arg)
 		}
 
 		if res {
@@ -123,11 +122,11 @@ func filterRuleForUs(opt *Option) bool {
 	return false
 }
 
-func filter(only bool, opt *Option, profile string) (string, error) {
-	if only && filterRuleForUs(opt) {
+func filter(c *tasks.TaskConfig, only bool, opt *Option, profile string) (string, error) {
+	if only && filterRuleForUs(c, opt) {
 		return opt.Clean(profile), nil
 	}
-	if !only && !filterRuleForUs(opt) {
+	if !only && !filterRuleForUs(c, opt) {
 		return opt.Clean(profile), nil
 	}
 
@@ -141,9 +140,9 @@ func filter(only bool, opt *Option, profile string) (string, error) {
 }
 
 func (d FilterOnly) Apply(opt *Option, profile string) (string, error) {
-	return filter(true, opt, profile)
+	return filter(d.TaskConfig, true, opt, profile)
 }
 
 func (d FilterExclude) Apply(opt *Option, profile string) (string, error) {
-	return filter(false, opt, profile)
+	return filter(d.TaskConfig, false, opt, profile)
 }

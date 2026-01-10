@@ -40,7 +40,7 @@ type Builders struct {
 }
 
 // NewRunner creates a new Builders instance.
-func NewRunner(t tasks.TaskConfig) *Builders {
+func NewRunner(t *tasks.TaskConfig) *Builders {
 	return &Builders{
 		BaseRunner: tasks.NewBaseRunner[Builder](t),
 	}

@@ -17,7 +17,6 @@ import (
 	"github.com/roddhjav/apparmor.d/pkg/directive"
 	"github.com/roddhjav/apparmor.d/pkg/logging"
 	"github.com/roddhjav/apparmor.d/pkg/paths"
-	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 	"github.com/roddhjav/apparmor.d/pkg/runtime"
 	"github.com/roddhjav/apparmor.d/pkg/tasks"
 )
@@ -104,13 +103,13 @@ func Configure(r *runtime.Runners) *runtime.Runners {
 	if fsp && paths.New("apparmor.d/groups/_full").Exist() {
 		r.Configures.Add(configure.NewFullSystemPolicy())
 		r.Builders.Add(builder.NewFSP())
-		prebuild.RBAC = true
+		r.RBAC = true
 	}
 
 	if abi != nilABI {
-		prebuild.ABI = abi
+		r.ABI = abi
 	}
-	switch prebuild.ABI {
+	switch r.ABI {
 	case 3:
 		r.Builders.
 			Add(builder.NewABI3()).      // Convert all profiles from abi 4.0 to abi 3.0
@@ -118,12 +117,12 @@ func Configure(r *runtime.Runners) *runtime.Runners {
 
 	case 4:
 		// priority support was added in 4.1
-		if prebuild.Version == 4.0 {
+		if r.Version == 4.0 {
 			r.Builders.Add(builder.NewAPPARMOR40())
 		}
 
 		// Re-attach disconnected path
-		if tasks.Distribution == "ubuntu" && prebuild.Version >= 4.1 {
+		if tasks.Distribution == "ubuntu" && r.Version >= 4.1 {
 			// Ignored on ubuntu 25.04+ due to a memory leak that fully prevent
 			// profiles compilation with re-attached paths.
 			// See https://bugs.launchpad.net/ubuntu/+source/linux/+bug/2098730
@@ -132,7 +131,7 @@ func Configure(r *runtime.Runners) *runtime.Runners {
 			r.Builders.Add(builder.NewStackedDbus())
 
 		} else {
-			if !prebuild.DownStream {
+			if !r.DownStream {
 				r.Configures.Add(configure.NewAttach())
 			}
 			r.Builders.Add(builder.NewAttach())
@@ -151,22 +150,22 @@ func Configure(r *runtime.Runners) *runtime.Runners {
 			r.Builders.Add(builder.NewStackedDbus())
 
 		} else {
-			if !prebuild.DownStream {
+			if !r.DownStream {
 				r.Configures.Add(configure.NewAttach())
 			}
 			r.Builders.Add(builder.NewAttach())
 
 			// Fix dbus rules for dbus-broker
 			r.Builders.Add(builder.NewDbusBroker())
-			prebuild.DbusDaemon = false
+			r.DbusDaemon = false
 		}
 
 	default:
-		logging.Fatal("Invalid ABI version: %d", prebuild.ABI)
+		logging.Fatal("Invalid ABI version: %d", r.ABI)
 	}
 
 	if version != nilVer {
-		prebuild.Version = version
+		r.Version = version
 	}
 
 	if status {
@@ -182,9 +181,9 @@ func Configure(r *runtime.Runners) *runtime.Runners {
 
 func Prebuild(r *runtime.Runners) {
 	logging.Step("Building apparmor.d profiles for %s", tasks.Distribution)
-	logging.Success("AppArmor ABI targeted: %d", prebuild.ABI)
-	logging.Success("AppArmor version targeted: %.1f", prebuild.Version)
-	if prebuild.Test {
+	logging.Success("AppArmor ABI targeted: %d", r.ABI)
+	logging.Success("AppArmor version targeted: %.1f", r.Version)
+	if r.Test {
 		logging.Warning("Test mode enabled")
 	}
 	if fsp {

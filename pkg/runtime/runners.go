@@ -17,17 +17,19 @@ import (
 
 // Runners groups all runners used during install or prebuild jobs.
 type Runners struct {
+	*tasks.TaskConfig
 	Configures *configure.Configures
 	Builders   *builder.Builders
 	Directives *directive.Directives
 }
 
 // NewRunners groups all runners used during install.
-func NewRunners(c tasks.TaskConfig) *Runners {
+func NewRunners(config *tasks.TaskConfig) *Runners {
 	return &Runners{
-		Configures: configure.NewRunner(c),
-		Builders:   builder.NewRunner(c),
-		Directives: directive.NewRunner(c),
+		TaskConfig: config,
+		Configures: configure.NewRunner(config),
+		Builders:   builder.NewRunner(config),
+		Directives: directive.NewRunner(config),
 	}
 }
 

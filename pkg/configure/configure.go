@@ -65,7 +65,7 @@ func (p Configure) Apply() ([]string, error) {
 
 	}
 
-	if prebuild.Version < 4.1 {
+	if p.Version < 4.1 {
 		remove := []string{
 			// Require priority support
 			"fbwrap",
@@ -75,7 +75,7 @@ func (p Configure) Apply() ([]string, error) {
 			return res, err
 		}
 	}
-	if prebuild.Version >= 4.1 {
+	if p.Version >= 4.1 {
 		remove := []string{
 			// Remove files upstreamed in 4.1
 			"abstractions/devices-usb-read",
@@ -90,7 +90,7 @@ func (p Configure) Apply() ([]string, error) {
 			return res, err
 		}
 	}
-	if prebuild.Version >= 5.0 {
+	if p.Version >= 5.0 {
 		remove := []string{
 			// Direct upstream contributed profiles, similar to ours
 			"dig",
