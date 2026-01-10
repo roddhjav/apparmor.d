@@ -23,7 +23,7 @@ type Configures struct {
 }
 
 // NewRunner creates a new Configures instance.
-func NewRunner(t tasks.TaskConfig) *Configures {
+func NewRunner(t *tasks.TaskConfig) *Configures {
 	return &Configures{
 		BaseRunner: tasks.NewBaseRunner[Task](t),
 	}

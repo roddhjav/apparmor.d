@@ -10,48 +10,52 @@ import (
 	"github.com/roddhjav/apparmor.d/pkg/paths"
 	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 	"github.com/roddhjav/apparmor.d/pkg/prebuild/cli"
-	"github.com/roddhjav/apparmor.d/pkg/run"
+	"github.com/roddhjav/apparmor.d/pkg/runtime"
 	"github.com/roddhjav/apparmor.d/pkg/tasks"
 )
 
 // Cli arguments have priority over the settings entered here
-func init() {
+func configInit() *tasks.TaskConfig {
+	c := tasks.NewTaskConfig(cli.GetPrebuildRoot())
+
 	// Define the default ABI
-	prebuild.ABI = 4
+	c.ABI = 4
 
 	// Define the default version
-	prebuild.Version = 4.1
+	c.Version = 4.1
 
 	// Matrix of ABI/Apparmor version to integrate with
-	switch run.Distribution {
+	switch tasks.Distribution {
 	case "arch":
+		c.ABI = 5
+		c.Version = 5.0
 
 	case "ubuntu":
-		switch run.Release["VERSION_CODENAME"] {
+		switch tasks.Release["VERSION_CODENAME"] {
 		case "jammy":
-			prebuild.ABI = 3
-			prebuild.Version = 3.0
+			c.ABI = 3
+			c.Version = 3.0
 		case "noble":
-			prebuild.ABI = 4
-			prebuild.Version = 4.0
+			c.ABI = 4
+			c.Version = 4.0
 		case "questing":
-			prebuild.ABI = 4
-			prebuild.Version = 5.0
+			c.ABI = 4
+			c.Version = 5.0
 		case "resolute":
-			prebuild.ABI = 4
-			prebuild.Version = 5.0
+			c.ABI = 4
+			c.Version = 5.0
 		}
 
 	case "debian":
-		switch run.Release["VERSION_CODENAME"] {
+		switch tasks.Release["VERSION_CODENAME"] {
 		case "bullseye", "bookworm":
-			prebuild.ABI = 3
-			prebuild.Version = 3.0
+			c.ABI = 3
+			c.Version = 3.0
 		}
 
 	case "whonix":
-		prebuild.ABI = 3
-		prebuild.Version = 3.0
+		c.ABI = 3
+		c.Version = 3.0
 
 		// Hide rewritten Whonix profiles
 		prebuild.Hide += `/etc/apparmor.d/abstractions/base.d/kicksecure
@@ -67,11 +71,12 @@ func init() {
 		/etc/apparmor.d/whonix-firewall
 		`
 	}
+	return c
 }
 
 func main() {
-	c := tasks.NewTaskConfig(cli.GetPrebuildRoot())
-	r := run.NewRunners(c)
+	c := configInit()
+	r := runtime.NewRunners(c)
 
 	// Add default configure tasks
 	r.Configures.

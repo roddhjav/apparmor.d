@@ -22,12 +22,12 @@ type Runner[T BaseTaskInterface] interface {
 
 // BaseRunner provides common runner implementation for task pipelines.
 type BaseRunner[T BaseTaskInterface] struct {
-	TaskConfig
+	*TaskConfig
 	Tasks []T
 }
 
 // NewBaseRunner creates a new BaseRunner instance.
-func NewBaseRunner[T BaseTaskInterface](config TaskConfig) *BaseRunner[T] {
+func NewBaseRunner[T BaseTaskInterface](config *TaskConfig) *BaseRunner[T] {
 	r := &BaseRunner[T]{
 		TaskConfig: config,
 		Tasks:      make([]T, 0),

@@ -33,7 +33,7 @@ type Directives struct {
 }
 
 // NewRunner creates a new Directives instance.
-func NewRunner(c tasks.TaskConfig) *Directives {
+func NewRunner(c *tasks.TaskConfig) *Directives {
 	return &Directives{
 		BaseRunner: tasks.NewBaseRunner[Directive](c),
 		Directives: make(map[string]Directive),

@@ -4,31 +4,15 @@
 
 package tasks
 
-import (
-	"github.com/roddhjav/apparmor.d/pkg/paths"
-)
-
-type TaskConfig struct {
-	Root         *paths.Path // Root is the root directory for the runner (e.g. .build)
-	RootApparmor *paths.Path // RootApparmor is the source apparmor.d directory (e.g. .build/apparmor.d)
-}
-
-func NewTaskConfig(root *paths.Path) TaskConfig {
-	return TaskConfig{
-		Root:         root,
-		RootApparmor: root.Join("apparmor.d"),
-	}
-}
-
 type BaseTaskInterface interface {
 	Message() string
 	Name() string
 	Usage() []string
-	SetConfig(c TaskConfig)
+	SetConfig(c *TaskConfig)
 }
 
 type BaseTask struct {
-	TaskConfig
+	*TaskConfig
 	Msg     string
 	Keyword string
 	Help    []string
@@ -38,7 +22,7 @@ func (b BaseTask) Name() string {
 	return b.Keyword
 }
 
-func (b *BaseTask) SetConfig(c TaskConfig) {
+func (b *BaseTask) SetConfig(c *TaskConfig) {
 	b.TaskConfig = c
 }
 
