@@ -11,7 +11,7 @@ pkgname=(
   # apparmor.d.server apparmor.d.server.enforced
   # apparmor.d.server.fsp apparmor.d.server.fsp.enforced
 )
-pkgver=0.4901
+pkgver=0.4902
 pkgrel=1
 pkgdesc="Full set of apparmor profiles"
 arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
