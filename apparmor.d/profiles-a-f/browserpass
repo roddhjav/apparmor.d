@@ -9,6 +9,7 @@ include <tunables/global>
 @{exec_path} = @{bin}/browserpass @{lib}/browserpass/browserpass-native
 profile browserpass @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/golang-strict>
   include <abstractions/nameservice-strict>
 
   network netlink raw,
@@ -18,20 +19,18 @@ profile browserpass @{exec_path} flags=(attach_disconnected) {
   @{bin}/gpg{2,} rCx -> gpg,
 
   owner @{HOME}/.password-store/{,**} r,
-  owner @{HOME}/.mozilla/firefox/@{rand8}.*/.parentlock rw,
-  owner @{HOME}/.mozilla/firefox/@{rand8}.*/extensions/* r,
+  owner @{HOME}/.mozilla/firefox{,-esr}/@{rand8}.*/.parentlock rw,
+  owner @{HOME}/.mozilla/firefox{,-esr}/@{rand8}.*/extensions/* r,
   owner @{user_cache_dirs}/mozilla/firefox/@{rand8}.*/startupCache/scriptCache-*.bin r,
   owner @{user_cache_dirs}/mozilla/firefox/@{rand8}.*/startupCache/startupCache.*.little r,
   owner @{user_cache_dirs}/mozilla/firefox/@{rand8}.*/safebrowsing-updating/google@{d}/goog-phish-proto-@{int}.vlpset rw,
   owner @{tmp}/mozilla-temp-@{int} r,
 
-  owner @{PROC}/@{pid}/mountinfo r,
-
   # Inherit Silencer
   deny network inet6,
   deny network inet,
-  deny owner @{HOME}/.mozilla/firefox/@{rand8}.*/features/*/*.xpi r,
-  deny owner @{HOME}/.mozilla/firefox/@{rand8}.*/storage/default/{,**} rw,
+  deny owner @{HOME}/.mozilla/firefox{,-esr}/@{rand8}.*/features/*/*.xpi r,
+  deny owner @{HOME}/.mozilla/firefox{,-esr}/@{rand8}.*/storage/default/{,**} rw,
   deny owner @{user_download_dirs}/{,**} rw,
   deny owner @{run}/user/@{uid}/gnome-shell-disable-extensions w,
   deny owner @{user_share_dirs}/gvfs-metadata/{,**} r,

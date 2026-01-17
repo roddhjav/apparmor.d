@@ -7,7 +7,7 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{exec_path} = /usr/share/aurpublish/*.hook
-profile aurpublish @{exec_path} {
+profile aurpublish @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/nameservice-strict>
   include <abstractions/ssl_certs>
@@ -23,6 +23,7 @@ profile aurpublish @{exec_path} {
   @{exec_path} mr,
 
   @{sh_path}         rix,
+  @{bin}/{,e}grep    rix,
   @{bin}/cat         rix,
   @{bin}/chmod       rix,
   @{bin}/curl        rix,
@@ -30,7 +31,6 @@ profile aurpublish @{exec_path} {
   @{bin}/gettext     rix,
   @{bin}/git         rPx,
   @{bin}/gpg{,2}     rCx -> gpg,
-  @{bin}/{,e}grep    rix,
   @{bin}/makepkg     rix,
   @{bin}/mkdir       rix,
   @{bin}/mktemp      rix,
@@ -38,6 +38,7 @@ profile aurpublish @{exec_path} {
   @{bin}/nproc       rix,
   @{bin}/rm          rix,
   @{bin}/sha*sum     rix,
+  @{bin}/sort        rix,
   @{bin}/tput        rix,
   @{bin}/wc          rix,
 
@@ -55,6 +56,7 @@ profile aurpublish @{exec_path} {
   owner @{user_cache_dirs}/makepkg/src/** rw,
   owner @{user_config_dirs}/pacman/makepkg.conf r,
 
+  owner /tmp/*/ rw,
   owner /tmp/*/src/ w,
   owner @{tmp}/tmp.@{rand10} rw,
 
@@ -80,10 +82,12 @@ profile aurpublish @{exec_path} {
     owner @{run}/user/@{uid}/gnupg/d.@{rand}/S.gpg-agent.browser w,
     owner @{run}/user/@{uid}/gnupg/d.@{rand}/S.gpg-agent.extra w,
     owner @{run}/user/@{uid}/gnupg/d.@{rand}/S.gpg-agent.ssh w,
+    owner @{run}/user/@{uid}/gnupg/d.@{rand}/S.scdaemon w,
 
     owner @{tmp}/tmp.@{rand10} rw,
 
     owner @{PROC}/@{pid}/fd/ r,
+    owner @{PROC}/@{pid}/task/@{tid}/comm rw,
 
     include if exists <local/aurpublish_gpg>
   }

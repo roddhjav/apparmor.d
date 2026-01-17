@@ -1,0 +1,26 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# GPU Power/Thermal Controls and Monitoring
+#
+# See:
+# - https://www.kernel.org/doc/html/latest/gpu/amdgpu/thermal.html
+# - https://www.kernel.org/doc/html/latest/gpu/amdgpu/driver-misc.html#gpu-memory-usage-information
+
+  abi <abi/4.0>,
+
+  @{sys}/devices/@{pci}/gpu_busy_percent r,
+  @{sys}/devices/@{pci}/mem_info_gtt_total r,
+  @{sys}/devices/@{pci}/mem_info_gtt_used r,
+  @{sys}/devices/@{pci}/mem_info_vis_vram_total r,
+  @{sys}/devices/@{pci}/mem_info_vis_vram_used r,
+  @{sys}/devices/@{pci}/mem_info_vram_total r,
+  @{sys}/devices/@{pci}/mem_info_vram_used r,
+
+  # hwmon interfaces for GPU clocks:
+  @{sys}/devices/**/hwmon@{int}/freq@{int}_input r,
+
+  include if exists <abstractions/sys/gpumon.d>
+
+# vim:syntax=apparmor

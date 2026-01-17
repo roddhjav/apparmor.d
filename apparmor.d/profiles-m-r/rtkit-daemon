@@ -14,6 +14,10 @@ profile rtkit-daemon @{exec_path} flags=(attach_disconnected) {
   include <abstractions/bus/system/org.freedesktop.PolicyKit1>
   include <abstractions/nameservice-strict>
 
+  # As abstractions/bus-session is not set, only the bus=system part of the
+  # abstraction will be allowed. i.e. org.freedesktop.login1.Manager
+  include <abstractions/screen-inhibit>
+
   capability dac_read_search,
   capability setgid,
   capability setuid,
@@ -24,6 +28,8 @@ profile rtkit-daemon @{exec_path} flags=(attach_disconnected) {
   #aa:dbus own bus=system name=org.freedesktop.RealtimeKit1
 
   @{exec_path} mr,
+
+  @{att}@{run}/systemd/inhibit/@{int}.ref rw,
 
   # When applying policies to processes
   @{PROC}/@{pids}/stat r,

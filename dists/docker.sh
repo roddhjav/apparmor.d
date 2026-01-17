@@ -15,15 +15,13 @@ readonly PREFIX="builder-"
 readonly PKGNAME=apparmor.d
 readonly VOLUME=/tmp/build
 readonly BUILDIR=/home/build/tmp
-readonly OUTDIR=".pkg"
+readonly OUTPUT=".pkg"
 readonly DISTRIBUTION="$1"
 RELEASE="${2:-}"
 FLAVOR="${3:-}"
-VERSION="0.$(git rev-list --count HEAD)"
 PACKAGER="$(git config user.name) <$(git config user.email)>"
 [[ "$RELEASE" == "-" ]] && RELEASE=""
-readonly OUTPUT="$PWD/$OUTDIR/$DISTRIBUTION/$RELEASE"
-readonly RELEASE FLAVOR VERSION PACKAGER
+readonly RELEASE FLAVOR PACKAGER
 
 _start() {
 	local img="$1"
@@ -51,9 +49,6 @@ _exist() {
 sync() {
 	mkdir -p "$VOLUME"
 	rsync -ra --delete . "$VOLUME/$PKGNAME"
-	if [[ "$FLAVOR" == "test" ]]; then
-		sed -i -e "s/just complain/just complain-test/" "$VOLUME/$PKGNAME/debian/rules"
-	fi
 }
 
 build_in_docker_makepkg() {
@@ -68,20 +63,27 @@ build_in_docker_makepkg() {
 		docker pull "$BASEIMAGE/$dist"
 		docker run -tid --name "$img" --volume "$VOLUME:$BUILDIR" \
 			--env PKGDEST="$BUILDIR" --env PACKAGER="$PACKAGER" \
-			--env BUILDDIR=/tmp/build \
 			"$BASEIMAGE/$dist"
 		docker exec "$img" sudo pacman -Sy --noconfirm --noprogressbar
 	fi
 
-	docker exec --workdir="$BUILDIR/$PKGNAME" "$img" bash dists/build.sh pkg
-	mv "$VOLUME/$PKGNAME/$OUTDIR/$PKGNAME"-*.pkg.* "$OUTPUT"
+	docker exec --workdir="$BUILDIR/$PKGNAME" "$img" just build-pkg
+	mv "$VOLUME/$PKGNAME/$OUTPUT/$PKGNAME"*.pkg.* "$OUTPUT"
 }
 
 build_in_docker_dpkg() {
 	local img dist="$1" target="$1" release="$2"
 
-	[[ "$dist" == whonix ]] && dist=debian
+	if [[ "$dist" == whonix ]]; then
+		dist=debian
+	fi
 	img="$PREFIX$dist$release"
+
+	# Adjustments for test flavor
+	if [[ "$FLAVOR" == "test" ]]; then
+		sed -i -e "s/just complain/just complain-test/" "$VOLUME/$PKGNAME/debian/rules"
+	fi
+
 	if _exist "$img"; then
 		if ! _is_running "$img"; then
 			_start "$img"
@@ -91,15 +93,11 @@ build_in_docker_dpkg() {
 		docker run -tid --name "$img" --volume "$VOLUME:$BUILDIR" \
 			--env DISTRIBUTION="$target" "$BASEIMAGE/$dist:$release"
 		docker exec "$img" sudo apt-get update -q
-		docker exec "$img" sudo apt-get install -y config-package-dev lsb-release libdistro-info-perl
-		if [[ "$dist" == debian && "$release" == "12"  ]]; then
-			aptopt=(-t bookworm-backports)
-		fi
-		docker exec "$img" sudo apt-get install -y "${aptopt[@]}" golang-go
+		docker exec "$img" sudo apt-get install -y config-package-dev lsb-release libdistro-info-perl golang-go
 	fi
 
-	docker exec --workdir="$BUILDIR/$PKGNAME" "$img" bash dists/build.sh dpkg
-	mv "$VOLUME/$PKGNAME/$OUTDIR/${PKGNAME}_${VERSION}-1"_*.* "$OUTPUT"
+	docker exec --workdir="$BUILDIR/$PKGNAME" "$img" just build-dpkg
+	mv "$VOLUME/$PKGNAME/$OUTPUT/$PKGNAME"*.deb "$OUTPUT"
 }
 
 build_in_docker_rpm() {
@@ -117,13 +115,14 @@ build_in_docker_rpm() {
 		docker exec "$img" sudo zypper install -y distribution-release golang-packaging apparmor-profiles
 	fi
 
-	docker exec --workdir="$BUILDIR/$PKGNAME" "$img" bash dists/build.sh rpm
-	mv "$VOLUME/$PKGNAME/$OUTDIR/$PKGNAME-$VERSION-"*.rpm "$OUTPUT"
+	docker exec --workdir="$BUILDIR/$PKGNAME" "$img" just build-rpm
+	mv "$VOLUME/$PKGNAME/$OUTPUT/$PKGNAME"*.rpm "$OUTPUT"
 }
 
 main() {
 	case "$DISTRIBUTION" in
 	archlinux)
+		sync
 		build_in_docker_makepkg "$DISTRIBUTION"
 		;;
 

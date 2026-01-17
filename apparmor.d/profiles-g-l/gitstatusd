@@ -8,12 +8,15 @@ include <tunables/global>
 
 @{exec_path}  = @{user_cache_dirs}/gitstatus/gitstatusd{,-*}
 @{exec_path} += /usr/share/zsh-theme-powerlevel{9,10}k/gitstatus/usrbin/gitstatusd{,-*}
-profile gitstatusd @{exec_path} {
+profile gitstatusd @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/consoles>
 
   signal receive set=term peer=*//shell,
   signal receive set=term peer={,vs}code,
+  signal receive set=term peer=code-shells,
+
+  unix (send receive) type=stream peer=(label=code),
 
   @{exec_path} mr,
 
@@ -28,8 +31,11 @@ profile gitstatusd @{exec_path} {
   # Silencer
   deny capability dac_read_search,
   deny capability dac_override,
+  deny network netlink raw,
+  deny /usr/share/{,**} r,
   deny owner @{HOME}/.*-store/{,**} r,
-  deny owner @{user_share_dirs}/zed/**/data.mdb rw,
+  deny owner @{user_config_dirs}/*/logs/{,**} rw,
+  deny owner @{user_share_dirs}/**/data.mdb rw,
 
   include if exists <local/gitstatusd>
 }

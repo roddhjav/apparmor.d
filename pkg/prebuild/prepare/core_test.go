@@ -77,12 +77,6 @@ func TestTask_Apply(t *testing.T) {
 			wantFiles: paths.PathList{prebuild.Root.Join("systemd/system/dbus.service")},
 		},
 		{
-			name:      "systemd-early",
-			task:      Tasks["systemd-early"],
-			wantErr:   false,
-			wantFiles: paths.PathList{prebuild.Root.Join("systemd/system/pcscd.service")},
-		},
-		{
 			name:      "fsp",
 			task:      Tasks["fsp"],
 			wantErr:   false,

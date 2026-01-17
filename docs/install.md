@@ -63,97 +63,69 @@ echo 'Optimize=compress-fast' | sudo tee -a /etc/apparmor/parser.conf
 
 === ":material-arch: Archlinux"
 
-    `apparmor.d-git` is available in the [Arch User Repository][aur]:
+    `apparmor.d` is available in the [Arch User Repository][aur]:
 
     ```sh
-    yay -S apparmor.d-git  # or your preferred AUR install method
-    ```
-
-    Or without an AUR helper:
-
-    ```sh
-    git clone https://aur.archlinux.org/apparmor.d-git.git
-    cd apparmor.d-git
-    makepkg -si
+    yay -S apparmor.d  # or your preferred AUR install method
     ```
 
 === ":material-ubuntu: Ubuntu"
 
-    Build the package from sources:
+    `apparmor.d` is available under the [pkg.pujol.io][repo] debian repository.
+    The repository is signed with my [GPG key][keys]. Configure it as follows:
 
     ```sh
-    sudo apt install apparmor-profiles build-essential config-package-dev debhelper golang-go rsync git just
-    git clone https://github.com/roddhjav/apparmor.d.git
-    cd apparmor.d
-    dpkg-buildpackage -b -d --no-sign
-    sudo dpkg -i ../apparmor.d_*.deb
+    sudo apt-get install wget gnupg
+    wget -qO - https://pkg.pujol.io/debian/gpgkey \
+        | gpg --dearmor \
+        | sudo tee /usr/share/keyrings/roddhjav.gpg >/dev/null
+    cat <<-EOF | sudo tee /etc/apt/sources.list.d/roddhjav.sources
+    Types: deb
+    URIs: https://pkg.pujol.io/debian/repo
+    Suites: $(lsb_release -cs)
+    Components: main
+    Signed-By: /usr/share/keyrings/roddhjav.gpg
+    EOF
+    sudo apt-get update
     ```
 
-    !!! tip
-
-        If you have `devscripts` installed, you can use the one liner:
-
-        ```sh
-        just dpkg
-        ```
-
-    !!! note
-
-        **Ubuntu 24.04 user will need to:**
-
-        Install [just](https://github.com/casey/just). E.g:
-        ```sh
-        pipx install rust-just
-        ```
+    Install the package:
+    ```sh
+    sudo apt install apparmor.d
+    ```
 
     !!! warning
 
-        **Beware**: do not install a `.deb` made for Debian on Ubuntu as the packages are different.
-
-        If your distribution is based on Ubuntu, you may want to manually set the target distribution by exporting `DISTRIBUTION=ubuntu`.
+        Only Ubuntu `24.04`, `25.10`, and `26.04` are currently supported.
 
 === ":material-debian: Debian"
 
-    Build the package from sources:
+    `apparmor.d` is available under the [pkg.pujol.io][repo] debian repository.
+    The repository is signed with my [GPG key][keys]. Configure it as follows:
 
     ```sh
-    sudo apt install apparmor-profiles build-essential config-package-dev debhelper golang-go rsync git just
-    git clone https://github.com/roddhjav/apparmor.d.git
-    cd apparmor.d
-    dpkg-buildpackage -b -d --no-sign
-    sudo dpkg -i ../apparmor.d_*.deb
+    sudo apt-get install wget gnupg
+    wget -qO - https://pkg.pujol.io/debian/gpgkey \
+        | gpg --dearmor \
+        | sudo tee /usr/share/keyrings/roddhjav.gpg >/dev/null
+    cat <<-EOF | sudo tee /etc/apt/sources.list.d/roddhjav.sources
+    Types: deb
+    URIs: https://pkg.pujol.io/debian/repo
+    Suites: $(lsb_release -cs)
+    Components: main
+    Signed-By: /usr/share/keyrings/roddhjav.gpg
+    EOF
+    sudo apt-get update
     ```
 
-    !!! tip
-
-        If you have `devscripts` installed, you can use the one liner:
-
-        ```sh
-        just dpkg
-        ```
-
-    !!! note
-
-        **Debian 12 user will need to:**
-
-        1. Install Golang from the backports repository:
-        ```sh
-        echo 'deb http://deb.debian.org/debian bookworm-backports main contrib non-free' | sudo tee -a /etc/apt/sources.list
-        sudo apt update
-        sudo apt install -t bookworm-backports golang-go
-        ```
-
-        2. Install [just](https://github.com/casey/just) locally, and ignore the dependence. E.g:
-        ```sh
-        pipx install rust-just
-        sed '/just/d' -i debian/control
-        ```
+    Install the package:
+    ```sh
+    sudo apt install apparmor.d
+    ```
 
     !!! warning
 
-        **Beware**: do not install a `.deb` made for Ubuntu on Debian as the packages are different.
-
-        If your distribution is based on Debian, you may want to manually set the target distribution by exporting `DISTRIBUTION=debian`.
+        Only `trixie` is currently supported.
 
 === ":simple-suse: openSUSE"
 
@@ -220,3 +192,5 @@ echo 'Optimize=compress-fast' | sudo tee -a /etc/apparmor/parser.conf
     ```
 
 [aur]: https://aur.archlinux.org/packages/apparmor.d-git
+[keys]: https://pujol.io/keys
+[repo]: https://pkg.pujol.io

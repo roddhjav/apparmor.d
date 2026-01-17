@@ -11,11 +11,23 @@ profile needrestart-restart @{exec_path} {
   include <abstractions/base>
 
   @{exec_path} mr,
-
-  @{bin}/systemctl Cx -> systemctl,
   @{sh_path} r,
 
+  @{bin}/env       mix,
+  @{bin}/kill       Cx -> kill,
+  @{bin}/systemctl  Cx -> systemctl,
+
   /var/log/unattended-upgrades/unattended-upgrades-dpkg.log rw,
+
+  profile kill {
+    include <abstractions/base>
+
+    capability kill,
+
+    @{bin}/kill mr,
+
+    include if exists <local/needrestart-restart_kill>
+  }
 
   profile systemctl {
     include <abstractions/base>

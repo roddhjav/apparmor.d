@@ -5,13 +5,13 @@
 
 pkgbase=apparmor.d
 pkgname=(
-  apparmor.d 
-  # apparmor.d.enforced
+  apparmor.d
+  apparmor.d.enforced
   # apparmor.d.fsp apparmor.d.fsp.enforced
   # apparmor.d.server apparmor.d.server.enforced
   # apparmor.d.server.fsp apparmor.d.server.fsp.enforced
 )
-pkgver=0.0001
+pkgver=0.4902
 pkgrel=1
 pkgdesc="Full set of apparmor profiles"
 arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
@@ -19,11 +19,6 @@ url="https://github.com/roddhjav/apparmor.d"
 license=('GPL-2.0-only')
 depends=('apparmor>=4.1.0' 'apparmor<5.0.0')
 makedepends=('go' 'git' 'rsync' 'just')
-
-pkgver() {
-  cd "$srcdir/$pkgbase"
-  echo "0.$(git rev-list --count HEAD)"
-}
 
 prepare() {
   rsync -a --delete "$startdir" "$srcdir"
@@ -41,7 +36,7 @@ build() {
   local -A modes=(
     # Mapping of modes to just build target.
     [default]=complain
-    # [enforced]=enforce
+    [enforced]=enforce
     # [fsp]=fsp-complain
     # [fsp.enforced]=fsp
     # [server]=server-complain
