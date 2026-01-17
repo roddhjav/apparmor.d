@@ -1,0 +1,29 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 valoq <valoq@mailbox.org>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/magick
+profile magick @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/fonts>
+
+  @{exec_path} mr,
+
+  /etc/ImageMagick-@{int}/** r,
+
+  /usr/share/ImageMagick-@{int}/** r,
+
+  # Allow access to all image files in user directories
+  @{user_dirs}/@{image_files} rw,
+
+  # Allow access to pdf files
+  @{user_dirs}/[^.]*.[pP][dD][fF] rw,
+
+  include if exists <local/magick>
+}
+
+# vim:syntax=apparmor
