@@ -182,7 +182,9 @@ func TestDbus_Apply(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := Directives["dbus"].Apply(tt.opt, tt.profile)
+			drctv := NewDbus()
+			drctv.SetConfig(cfg)
+			got, err := drctv.Apply(tt.opt, tt.profile)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Dbus.Apply() error = %v, wantErr %v", err, tt.wantErr)
 				return

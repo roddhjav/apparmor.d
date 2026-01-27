@@ -8,10 +8,11 @@ import (
 	"testing"
 
 	"github.com/roddhjav/apparmor.d/pkg/paths"
-	"github.com/roddhjav/apparmor.d/pkg/prebuild"
+	"github.com/roddhjav/apparmor.d/pkg/tasks"
 )
 
 func TestStack_Apply(t *testing.T) {
+	cfg := tasks.NewTaskConfig(paths.New(".build"))
 	tests := []struct {
 		name          string
 		rootApparmord *paths.Path
@@ -68,8 +69,10 @@ profile parent @{exec_path} {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			prebuild.RootApparmord = tt.rootApparmord
-			got, err := Directives["stack"].Apply(tt.opt, tt.profile)
+			drctv := NewStack()
+			drctv.SetConfig(cfg)
+			drctv.RootApparmor = tt.rootApparmord
+			got, err := drctv.Apply(tt.opt, tt.profile)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Stack.Apply() error = %v, wantErr %v", err, tt.wantErr)
 				return
