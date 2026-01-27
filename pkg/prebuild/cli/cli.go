@@ -33,6 +33,8 @@ const (
 
 Options:
     -h, --help        Show this help message and exit.
+    -c, --complain    Set complain flag on all profiles.
+    -e, --enforce     Set enforce flag on all profiles.
     -s, --status      Show the status of enabled build tasks.
     -a, --abi ABI     Target apparmor ABI.
     -v, --version V   Target apparmor version.
@@ -45,20 +47,26 @@ Options:
 )
 
 var (
-	help    bool
-	status  bool
-	fsp     bool
-	debug   bool
-	test    bool
-	abi     int
-	version float64
-	src     string
-	buildir string
+	help     bool
+	complain bool
+	enforce  bool
+	status   bool
+	fsp      bool
+	debug    bool
+	test     bool
+	abi      int
+	version  float64
+	src      string
+	buildir  string
 )
 
 func init() {
 	flag.BoolVar(&help, "h", false, "Show this help message and exit.")
 	flag.BoolVar(&help, "help", false, "Show this help message and exit.")
+	flag.BoolVar(&complain, "c", false, "Set complain flag on all profiles.")
+	flag.BoolVar(&complain, "complain", false, "Set complain flag on all profiles.")
+	flag.BoolVar(&enforce, "e", false, "Set enforce flag on all profiles.")
+	flag.BoolVar(&enforce, "enforce", false, "Set enforce flag on all profiles.")
 	flag.BoolVar(&status, "s", false, "Show the status of enabled build tasks.")
 	flag.BoolVar(&status, "status", false, "Show the status of enabled build tasks.")
 	flag.BoolVar(&fsp, "f", false, "Configure AppArmor for full system policy and RBAC.")
@@ -96,9 +104,17 @@ func Configure(r *runtime.Runners) *runtime.Runners {
 		Register(directive.NewExec()).
 		Register(directive.NewFilterOnly()).
 		Register(directive.NewFilterExclude()).
-		Register(directive.NewProfile()).
-		Register(directive.NewRestart()).
 		Register(directive.NewStack())
+
+	if complain {
+		r.Builders.Add(builder.NewComplain())
+		if debug {
+			r.Builders.Add(builder.NewDebug())
+		}
+		r.Test = test
+	} else if enforce {
+		r.Builders.Add(builder.NewEnforce())
+	}
 
 	if fsp && paths.New("apparmor.d/groups/_full").Exist() {
 		r.Configures.Add(configure.NewFullSystemPolicy())

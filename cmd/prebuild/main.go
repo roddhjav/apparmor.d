@@ -86,17 +86,22 @@ func main() {
 		)).
 
 		// Ignore profiles and files from dist/ignore
-		Add(configure.NewIgnore()). // TODO: Keep it here, have one in aa-install, as well as a Include
+		Add(configure.NewIgnore()).
+
+		// Merge profiles (from group/, profiles-*-*/) to a unified apparmor.d directory
+		Add(configure.NewMerge()).
 
 		// Set distribution specificities
 		Add(configure.NewConfigure()).
-		// Add(configure.NewSetFlags()). // Set flags as definied in dist/flags
+
+		// Set flags as definied in dist/flags
+		Add(configure.NewSetFlags()).
 
 		// Overwrite dummy upstream profile
-		Add(configure.NewOverwrite(false)). // TODO: Move in aa-install
+		Add(configure.NewOverwrite(false)).
 
 		// Set systemd unit drop in files for dbus profiles
-		Add(configure.NewSystemd())
+		Add(configure.NewSystemdDefault())
 
 	// Default build tasks
 	r.Builders.
