@@ -564,7 +564,7 @@ tests-run osinfo flavor name="": (tests-resync osinfo flavor)
 # Get the current apparmor.d release version
 [group('version')]
 version:
-	@bash -c 'source PKGBUILD && echo "$pkgver"'
+	@bash -c 'source PKGBUILD && echo "${pkgver%~dev}"'
 
 # Create a new version number from the current release
 [group('version')]
