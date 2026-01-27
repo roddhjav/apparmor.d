@@ -11,7 +11,11 @@ import (
 	"testing"
 
 	"github.com/roddhjav/apparmor.d/pkg/paths"
-	"github.com/roddhjav/apparmor.d/pkg/prebuild"
+	"github.com/roddhjav/apparmor.d/pkg/tasks"
+)
+
+var (
+	cfg = tasks.NewTaskConfig(paths.New(".build"))
 )
 
 func chdirGitRoot() {
@@ -37,56 +41,57 @@ func TestTask_Apply(t *testing.T) {
 	}{
 		{
 			name:      "synchronise",
-			task:      Tasks["synchronise"],
+			task:      NewSynchronise([]*paths.Path{paths.New("apparmor.d"), paths.New("share")}),
 			wantErr:   false,
-			wantFiles: paths.PathList{prebuild.RootApparmord.Join("/groups/_full/systemd")},
+			wantFiles: paths.PathList{cfg.RootApparmor.Join("/groups/_full/systemd")},
 		},
 		{
 			name:    "ignore",
-			task:    Tasks["ignore"],
+			task:    NewIgnore(),
 			wantErr: false,
 			want:    "dists/ignore/main.ignore",
 		},
 		{
 			name:      "merge",
-			task:      Tasks["merge"],
+			task:      NewMerge(),
 			wantErr:   false,
-			wantFiles: paths.PathList{prebuild.RootApparmord.Join("aa-log")},
+			wantFiles: paths.PathList{cfg.RootApparmor.Join("aa-log")},
 		},
 		{
 			name:    "configure",
-			task:    Tasks["configure"],
+			task:    NewConfigure(),
 			wantErr: false,
 		},
 		{
 			name:    "setflags",
-			task:    Tasks["setflags"],
+			task:    NewSetFlags(),
 			wantErr: false,
 			want:    "dists/flags/main.flags",
 		},
 		{
 			name:      "overwrite",
-			task:      Tasks["overwrite"],
+			task:      NewOverwrite(false),
 			wantErr:   false,
-			wantFiles: paths.PathList{prebuild.RootApparmord.Join("flatpak.apparmor.d")},
+			wantFiles: paths.PathList{cfg.RootApparmor.Join("flatpak.apparmor.d")},
 		},
 		{
 			name:      "systemd-default",
-			task:      Tasks["systemd-default"],
+			task:      NewSystemdDefault(),
 			wantErr:   false,
-			wantFiles: paths.PathList{prebuild.Root.Join("systemd/system/dbus.service")},
+			wantFiles: paths.PathList{cfg.Root.Join("systemd/system/dbus.service")},
 		},
 		{
 			name:      "fsp",
-			task:      Tasks["fsp"],
+			task:      NewFullSystemPolicy(),
 			wantErr:   false,
-			wantFiles: paths.PathList{prebuild.RootApparmord.Join("systemd")},
+			wantFiles: paths.PathList{cfg.RootApparmor.Join("systemd")},
 		},
 	}
 	chdirGitRoot()
-	_ = prebuild.Root.RemoveAll()
+	_ = cfg.Root.RemoveAll()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			tt.task.SetConfig(cfg)
 			got, err := tt.task.Apply()
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Task.Apply() error = %v, wantErr %v", err, tt.wantErr)
@@ -104,26 +109,32 @@ func TestTask_Apply(t *testing.T) {
 	}
 }
 
-func TestRegister(t *testing.T) {
+func TestConfigures_Add(t *testing.T) {
 	tests := []struct {
-		name        string
-		names       []string
-		wantSuccess bool
+		name  string
+		tasks []Task
+		want  []string
 	}{
 		{
-			name:        "test",
-			names:       []string{"synchronise", "ignore"},
-			wantSuccess: true,
+			name:  "add-tasks",
+			tasks: []Task{NewSynchronise(nil), NewIgnore()},
+			want:  []string{"synchronise", "ignore"},
 		},
 	}
+	c := tasks.NewTaskConfig(paths.New(".build"))
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			Register(tt.names...)
-			for _, name := range tt.names {
-				if got := slices.Contains(Prepares, Tasks[name]); got != tt.wantSuccess {
-					t.Errorf("Register() = %v, want %v", got, tt.wantSuccess)
+			r := NewRunner(c)
+			for _, task := range tt.tasks {
+				r.Add(task)
+			}
+			if len(r.Tasks) != len(tt.want) {
+				t.Errorf("Configures.Add() len = %v, want %v", len(r.Tasks), len(tt.want))
+			}
+			for i, name := range tt.want {
+				if r.Tasks[i].Name() != name {
+					t.Errorf("Configures.Add() name = %v, want %v", r.Tasks[i].Name(), name)
 				}
-
 			}
 		})
 	}

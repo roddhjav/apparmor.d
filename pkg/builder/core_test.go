@@ -5,10 +5,14 @@
 package builder
 
 import (
-	"slices"
 	"testing"
 
-	"github.com/roddhjav/apparmor.d/pkg/prebuild"
+	"github.com/roddhjav/apparmor.d/pkg/paths"
+	"github.com/roddhjav/apparmor.d/pkg/tasks"
+)
+
+var (
+	cfg = tasks.NewTaskConfig(paths.New(".build"))
 )
 
 func TestBuilder_Apply(t *testing.T) {
@@ -21,7 +25,7 @@ func TestBuilder_Apply(t *testing.T) {
 	}{
 		{
 			name: "abi3",
-			b:    Builders["abi3"],
+			b:    NewABI3(),
 			profile: `
 			  abi <abi/4.0>,
 			  profile test {
@@ -37,7 +41,7 @@ func TestBuilder_Apply(t *testing.T) {
 		},
 		{
 			name: "complain-1",
-			b:    Builders["complain"],
+			b:    NewComplain(),
 			profile: `
 			  @{exec_path} = @{bin}/foo
 			  profile foo @{exec_path} {
@@ -59,7 +63,7 @@ func TestBuilder_Apply(t *testing.T) {
 		},
 		{
 			name: "complain-2",
-			b:    Builders["complain"],
+			b:    NewComplain(),
 			profile: `
 			  @{exec_path} = @{bin}/foo
 			  profile foo @{exec_path} flags=(complain) {
@@ -81,7 +85,7 @@ func TestBuilder_Apply(t *testing.T) {
 		},
 		{
 			name: "complain-3",
-			b:    Builders["complain"],
+			b:    NewComplain(),
 			profile: `
 			  @{exec_path} = @{bin}/foo
 			  profile foo @{exec_path} flags=(attach_disconnected) {
@@ -103,7 +107,7 @@ func TestBuilder_Apply(t *testing.T) {
 		},
 		{
 			name: "enforce-1",
-			b:    Builders["enforce"],
+			b:    NewEnforce(),
 			profile: `
 			  @{exec_path} = @{bin}/foo
 			  profile foo @{exec_path} {
@@ -125,7 +129,7 @@ func TestBuilder_Apply(t *testing.T) {
 		},
 		{
 			name: "enforce-2",
-			b:    Builders["enforce"],
+			b:    NewEnforce(),
 			profile: `
 			  @{exec_path} = @{bin}/foo
 			  profile foo @{exec_path} flags=(complain) {
@@ -146,8 +150,8 @@ func TestBuilder_Apply(t *testing.T) {
 			  }`,
 		},
 		{
-			name: "complain-3",
-			b:    Builders["enforce"],
+			name: "enforce-3",
+			b:    NewEnforce(),
 			profile: `
 			  @{exec_path} = @{bin}/foo
 			  profile foo @{exec_path} flags=(attach_disconnected,complain) {
@@ -169,7 +173,7 @@ func TestBuilder_Apply(t *testing.T) {
 		},
 		{
 			name: "fsp",
-			b:    Builders["fsp"],
+			b:    NewFSP(),
 			profile: `
 			  @{exec_path} = @{bin}/foo
 			  profile foo @{exec_path} {
@@ -195,7 +199,7 @@ func TestBuilder_Apply(t *testing.T) {
 		},
 		{
 			name: "userspace-1",
-			b:    Builders["userspace"],
+			b:    NewUserspace(),
 			profile: `
 			  @{exec_path}  = @{bin}/baloo_file @{lib}/{,kf6/}baloo_file
 			  @{exec_path} += @{lib}/@{multiarch}/{,libexec/}baloo_file
@@ -219,7 +223,7 @@ func TestBuilder_Apply(t *testing.T) {
 		},
 		{
 			name: "userspace-2",
-			b:    Builders["userspace"],
+			b:    NewUserspace(),
 			profile: `
 			  profile foo /usr/bin/foo {
 			    include <abstractions/base>
@@ -233,7 +237,7 @@ func TestBuilder_Apply(t *testing.T) {
 		},
 		{
 			name: "stacked-dbus-1",
-			b:    Builders["stacked-dbus"],
+			b:    NewStackedDbus(),
 			profile: `
 profile foo {
   dbus send bus=session path=/org/freedesktop/DBus
@@ -257,7 +261,7 @@ dbus send bus=session path=/org/freedesktop/DBus
 		},
 		{
 			name: "base-strict-1",
-			b:    Builders["base-strict"],
+			b:    NewBaseStrict(),
 			profile: `
 profile foo {
   include <abstractions/base>
@@ -269,7 +273,7 @@ profile foo {
 		},
 		{
 			name: "attach-1",
-			b:    Builders["attach"],
+			b:    NewAttach(),
 			profile: `
 profile attach-1 flags=(attach_disconnected) {
   include <abstractions/base>
@@ -286,7 +290,7 @@ profile attach-1 flags=(attach_disconnected,attach_disconnected.path=@{att}) {
 		},
 		{
 			name: "attach-2",
-			b:    Builders["attach"],
+			b:    NewAttach(),
 			profile: `
 profile attach-2 flags=(complain) {
   include <abstractions/base>
@@ -304,7 +308,8 @@ profile attach-2 flags=(complain) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			opt := &Option{File: prebuild.RootApparmord.Join(tt.name), Name: tt.name}
+			opt := &Option{File: cfg.RootApparmor.Join(tt.name), Name: tt.name}
+			tt.b.SetConfig(cfg)
 			got, err := tt.b.Apply(opt, tt.profile)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Builder.Apply() error = %v, wantErr %v", err, tt.wantErr)
@@ -317,26 +322,31 @@ profile attach-2 flags=(complain) {
 	}
 }
 
-func TestRegister(t *testing.T) {
+func TestBuilders_Add(t *testing.T) {
 	tests := []struct {
-		name        string
-		names       []string
-		wantSuccess bool
+		name     string
+		builders []Builder
+		want     []string
 	}{
 		{
-			name:        "test",
-			names:       []string{"complain", "enforce"},
-			wantSuccess: true,
+			name:     "add-builders",
+			builders: []Builder{NewComplain(), NewEnforce()},
+			want:     []string{"complain", "enforce"},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			Register(tt.names...)
-			for _, name := range tt.names {
-				if got := slices.Contains(Builds, Builders[name]); got != tt.wantSuccess {
-					t.Errorf("Register() = %v, want %v", got, tt.wantSuccess)
+			r := NewRunner(cfg)
+			for _, b := range tt.builders {
+				r.Add(b)
+			}
+			if len(r.Tasks) != len(tt.want) {
+				t.Errorf("Builders.Add() len = %v, want %v", len(r.Tasks), len(tt.want))
+			}
+			for i, name := range tt.want {
+				if r.Tasks[i].Name() != name {
+					t.Errorf("Builders.Add() name = %v, want %v", r.Tasks[i].Name(), name)
 				}
-
 			}
 		})
 	}

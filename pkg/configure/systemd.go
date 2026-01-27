@@ -14,8 +14,8 @@ type SystemdDefault struct {
 	tasks.BaseTask
 }
 
-// NewSystemd creates a new SystemdDefault task.
-func NewSystemd() *SystemdDefault {
+// NewSystemdDefault creates a new SystemdDefault task.
+func NewSystemdDefault() *SystemdDefault {
 	return &SystemdDefault{
 		BaseTask: tasks.BaseTask{
 			Keyword: "systemd-default",

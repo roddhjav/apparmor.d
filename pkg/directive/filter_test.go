@@ -7,7 +7,7 @@ package directive
 import (
 	"testing"
 
-	"github.com/roddhjav/apparmor.d/pkg/prebuild"
+	"github.com/roddhjav/apparmor.d/pkg/tasks"
 )
 
 func Test_cmp(t *testing.T) {
@@ -197,11 +197,14 @@ func TestFilterOnly_Apply(t *testing.T) {
   owner /dev/shm/ r,`,
 		},
 	}
+	// c := tasks.NewTaskConfig(paths.New(".build"))
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			prebuild.Distribution = tt.dist
-			prebuild.Family = tt.family
-			got, err := Directives["only"].Apply(tt.opt, tt.profile)
+			tasks.Distribution = tt.dist
+			tasks.Family = tt.family
+			drctv := NewFilterOnly()
+			drctv.SetConfig(cfg)
+			got, err := drctv.Apply(tt.opt, tt.profile)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("FilterOnly.Apply() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -268,9 +271,11 @@ func TestFilterExclude_Apply(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			prebuild.Distribution = tt.dist
-			prebuild.Family = tt.family
-			got, err := Directives["exclude"].Apply(tt.opt, tt.profile)
+			tasks.Distribution = tt.dist
+			tasks.Family = tt.family
+			drctv := NewFilterExclude()
+			drctv.SetConfig(cfg)
+			got, err := drctv.Apply(tt.opt, tt.profile)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("FilterExclude.Apply() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -378,9 +383,11 @@ func TestFilterCmp_Apply(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			prebuild.Version = tt.version
-			prebuild.ABI = tt.abi
-			got, err := Directives["only"].Apply(tt.opt, tt.opt.Raw)
+			cfg.Version = tt.version
+			cfg.ABI = tt.abi
+			drctv := NewFilterOnly()
+			drctv.SetConfig(cfg)
+			got, err := drctv.Apply(tt.opt, tt.opt.Raw)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("FilterOnly.Apply() error = %v, wantErr %v", err, tt.wantErr)
 				return

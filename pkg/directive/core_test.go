@@ -9,10 +9,12 @@ import (
 	"testing"
 
 	"github.com/roddhjav/apparmor.d/pkg/paths"
+	"github.com/roddhjav/apparmor.d/pkg/tasks"
 )
 
 var (
-	apparmorDDir = paths.New("../../../apparmor.d")
+	apparmorDDir = paths.New("../../apparmor.d")
+	cfg          = tasks.NewTaskConfig(paths.New(".build"))
 )
 
 func TestNewOption(t *testing.T) {
@@ -68,7 +70,7 @@ func TestNewOption(t *testing.T) {
 	}
 }
 
-func TestRun(t *testing.T) {
+func TestDirectives_Run(t *testing.T) {
 	tests := []struct {
 		name    string
 		file    *paths.Path
@@ -91,13 +93,14 @@ func TestRun(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := Run(tt.file, tt.profile)
+			r := NewRunner(cfg).Register(NewDbus())
+			got, err := r.Run(tt.file, tt.profile)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("Run() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("Directives.Run() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if got != tt.want {
-				t.Errorf("Run() = %v, want %v", got, tt.want)
+				t.Errorf("Directives.Run() = %v, want %v", got, tt.want)
 			}
 		})
 	}
