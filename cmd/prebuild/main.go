@@ -75,6 +75,7 @@ func configInit() *tasks.TaskConfig {
 }
 
 func main() {
+	cli.ParseFlags()
 	c := configInit()
 	r := runtime.NewRunners(c)
 
