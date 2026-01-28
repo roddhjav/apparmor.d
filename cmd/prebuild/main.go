@@ -27,8 +27,6 @@ func configInit() *tasks.TaskConfig {
 	// Matrix of ABI/Apparmor version to integrate with
 	switch tasks.Distribution {
 	case "arch":
-		c.ABI = 5
-		c.Version = 5.0
 
 	case "ubuntu":
 		switch tasks.Release["VERSION_CODENAME"] {
