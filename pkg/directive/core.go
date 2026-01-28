@@ -42,7 +42,7 @@ func NewRunner(c *tasks.TaskConfig) *Directives {
 
 // Register adds a directive to the runner.
 func (r *Directives) Register(d Directive) *Directives {
-	r.BaseRunner.Add(d)
+	r.Add(d)
 	r.Directives[d.Name()] = d
 	return r
 }
