@@ -1,5 +1,5 @@
 // apparmor.d - Full set of apparmor profiles
-// Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
+// Copyright (C) 2021-2026 Alexandre Pujol <alexandre@pujol.io>
 // SPDX-License-Identifier: GPL-2.0-only
 
 package prebuild
@@ -7,33 +7,6 @@ package prebuild
 import "github.com/roddhjav/apparmor.d/pkg/paths"
 
 var (
-	// AppArmor ABI version
-	ABI = 0
-
-	// AppArmor version
-	Version = 4.0
-
-	// Tells the build we are a downstream project using apparmor.d as dependency
-	DownStream = false
-
-	// Either or not RBAC is enabled
-	RBAC = false
-
-	// Either or not we are in test mode
-	Test = false
-
-	// The dbus implementation used
-	DbusDaemon = true
-
-	// Pkgname is the name of the package
-	Pkgname = "apparmor.d"
-
-	// Root is the root directory for the build (default: .build)
-	Root *paths.Path = paths.New(".build")
-
-	// RootApparmord is the final built apparmor.d directory (default: .build/apparmor.d)
-	RootApparmord *paths.Path = Root.Join("apparmor.d")
-
 	// DistDir is the directory where the distribution specific files are stored
 	DistDir *paths.Path = paths.New("dists")
 
