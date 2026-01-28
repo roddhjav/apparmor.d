@@ -83,6 +83,16 @@ func init() {
 	flag.BoolVar(&test, "test", false, "Enable test mode.")
 }
 
+// ParseFlags parses command line flags. Must be called before GetPrebuildRoot().
+func ParseFlags() {
+	flag.Usage = func() { fmt.Print(usage) }
+	flag.Parse()
+	if help {
+		flag.Usage()
+		os.Exit(0)
+	}
+}
+
 func GetPrebuildRoot() *paths.Path {
 	if buildir != nilBuild {
 		return paths.New(buildir)
@@ -91,13 +101,6 @@ func GetPrebuildRoot() *paths.Path {
 }
 
 func Configure(r *runtime.Runners) *runtime.Runners {
-	flag.Usage = func() { fmt.Print(usage) }
-	flag.Parse()
-	if help {
-		flag.Usage()
-		os.Exit(0)
-	}
-
 	// Register all directives (always available)
 	r.Directives.
 		Register(directive.NewDbus()).
