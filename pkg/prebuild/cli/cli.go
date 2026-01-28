@@ -2,27 +2,31 @@
 // Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
 // SPDX-License-Identifier: GPL-2.0-only
 
+// Package cli provides the command line interface for prebuilding apparmor.d profiles.
+// It is separated from the main package as it is also used by downstream projects.
+
 package cli
 
 import (
 	"flag"
 	"fmt"
 	"os"
-	"slices"
-	"strings"
 
+	"github.com/roddhjav/apparmor.d/pkg/builder"
+	"github.com/roddhjav/apparmor.d/pkg/configure"
+	"github.com/roddhjav/apparmor.d/pkg/directive"
 	"github.com/roddhjav/apparmor.d/pkg/logging"
 	"github.com/roddhjav/apparmor.d/pkg/paths"
-	"github.com/roddhjav/apparmor.d/pkg/prebuild"
-	"github.com/roddhjav/apparmor.d/pkg/prebuild/builder"
-	"github.com/roddhjav/apparmor.d/pkg/prebuild/directive"
-	"github.com/roddhjav/apparmor.d/pkg/prebuild/prepare"
+	"github.com/roddhjav/apparmor.d/pkg/runtime"
+	"github.com/roddhjav/apparmor.d/pkg/tasks"
 )
 
 const (
-	nilABI = 0
-	nilVer = 0.0
-	usage  = `aa-prebuild [-h] [--complain | --enforce] [--full] [--server] [--abi 3|4] [--version V] [--file FILE]
+	nilABI   = 0
+	nilVer   = 0.0
+	nilBuild = ""
+	nilSrc   = ""
+	usage    = `aa-prebuild [-h] [--status] [--abi 3|4|5] [--version V] [--fsp] [--src DIR] [--buildir DIR]
 
     Prebuild apparmor.d profiles for a given distribution and apply
     internal built-in directives.
@@ -31,12 +35,12 @@ Options:
     -h, --help        Show this help message and exit.
     -c, --complain    Set complain flag on all profiles.
     -e, --enforce     Set enforce flag on all profiles.
+    -s, --status      Show the status of enabled build tasks.
     -a, --abi ABI     Target apparmor ABI.
     -v, --version V   Target apparmor version.
-    -f, --full        Set AppArmor for full system policy.
-    -s, --server      Set AppArmor for server.
-    -b, --buildir DIR Root build directory.
-    -F, --file        Only prebuild a given file.
+    -f, --fsp         Configure AppArmor for full system policy and RBAC.
+    -S, --src DIR     Profile source directory (default: apparmor.d/).
+    -b, --buildir DIR Destination root build directory (default: .build/).
         --test        Enable test mode.
         --debug       Enable debug mode.
 `
@@ -46,234 +50,168 @@ var (
 	help     bool
 	complain bool
 	enforce  bool
-	full     bool
-	server   bool
+	status   bool
+	fsp      bool
 	debug    bool
 	test     bool
 	abi      int
 	version  float64
-	file     string
+	src      string
 	buildir  string
 )
 
 func init() {
 	flag.BoolVar(&help, "h", false, "Show this help message and exit.")
 	flag.BoolVar(&help, "help", false, "Show this help message and exit.")
-	flag.BoolVar(&full, "f", false, "Set AppArmor for full system policy.")
-	flag.BoolVar(&full, "full", false, "Set AppArmor for full system policy.")
-	flag.BoolVar(&server, "s", false, "Set AppArmor for server.")
-	flag.BoolVar(&server, "server", false, "Set AppArmor for server.")
 	flag.BoolVar(&complain, "c", false, "Set complain flag on all profiles.")
 	flag.BoolVar(&complain, "complain", false, "Set complain flag on all profiles.")
 	flag.BoolVar(&enforce, "e", false, "Set enforce flag on all profiles.")
 	flag.BoolVar(&enforce, "enforce", false, "Set enforce flag on all profiles.")
+	flag.BoolVar(&status, "s", false, "Show the status of enabled build tasks.")
+	flag.BoolVar(&status, "status", false, "Show the status of enabled build tasks.")
+	flag.BoolVar(&fsp, "f", false, "Configure AppArmor for full system policy and RBAC.")
+	flag.BoolVar(&fsp, "fsp", false, "Configure AppArmor for full system policy and RBAC.")
 	flag.IntVar(&abi, "a", nilABI, "Target apparmor ABI.")
 	flag.IntVar(&abi, "abi", nilABI, "Target apparmor ABI.")
 	flag.Float64Var(&version, "v", nilVer, "Target apparmor version.")
 	flag.Float64Var(&version, "version", nilVer, "Target apparmor version.")
-	flag.StringVar(&file, "F", "", "Only prebuild a given file.")
-	flag.StringVar(&file, "file", "", "Only prebuild a given file.")
-	flag.StringVar(&buildir, "b", "", "Root build directory.")
-	flag.StringVar(&buildir, "buildir", "", "Root build directory.")
+	flag.StringVar(&src, "S", nilSrc, "Profile source directory.")
+	flag.StringVar(&src, "src", nilSrc, "Profile source directory.")
+	flag.StringVar(&buildir, "b", nilBuild, "Destination root build directory.")
+	flag.StringVar(&buildir, "buildir", nilBuild, "Destination root build directory.")
 	flag.BoolVar(&debug, "debug", false, "Enable debug mode.")
 	flag.BoolVar(&test, "test", false, "Enable test mode.")
 }
 
-func Configure() {
-	flag.Usage = func() {
-		fmt.Printf("%s\n%s\n%s\n%s", usage,
-			prebuild.Help("Prepare", prepare.Tasks),
-			prebuild.Help("Build", builder.Builders),
-			directive.Usage(),
-		)
-	}
+// ParseFlags parses command line flags. Must be called before GetPrebuildRoot().
+func ParseFlags() {
+	flag.Usage = func() { fmt.Print(usage) }
 	flag.Parse()
 	if help {
 		flag.Usage()
 		os.Exit(0)
 	}
+}
 
-	if server {
-		idx := slices.Index(prepare.Prepares, prepare.Tasks["merge"])
-		if idx == -1 {
-			prepare.Register("server")
-		} else {
-			prepare.Prepares = slices.Insert(prepare.Prepares, idx, prepare.Tasks["server"])
-		}
-
-		// Remove hotfix task as it is not needed on server
-		idx = slices.Index(prepare.Prepares, prepare.Tasks["hotfix"])
-		if idx != -1 {
-			prepare.Prepares = slices.Delete(prepare.Prepares, idx, idx+1)
-		}
+func GetPrebuildRoot() *paths.Path {
+	if buildir != nilBuild {
+		return paths.New(buildir)
 	}
+	return paths.New(".build")
+}
 
-	if full && paths.New("apparmor.d/groups/_full").Exist() {
-		prepare.Register("fsp")
-		builder.Register("fsp")
-		prebuild.RBAC = true
-	}
+func Configure(r *runtime.Runners) *runtime.Runners {
+	// Register all directives (always available)
+	r.Directives.
+		Register(directive.NewDbus()).
+		Register(directive.NewExec()).
+		Register(directive.NewFilterOnly()).
+		Register(directive.NewFilterExclude()).
+		Register(directive.NewStack())
 
 	if complain {
-		builder.Register("complain")
+		r.Builders.Add(builder.NewComplain())
 		if debug {
-			builder.Register("debug")
+			r.Builders.Add(builder.NewDebug())
 		}
-		if test {
-			prebuild.Test = true
-		}
+		r.Test = test
 	} else if enforce {
-		builder.Register("enforce")
+		r.Builders.Add(builder.NewEnforce())
+	}
+
+	if fsp && paths.New("apparmor.d/groups/_full").Exist() {
+		r.Configures.Add(configure.NewFullSystemPolicy())
+		r.Builders.Add(builder.NewFSP())
+		r.RBAC = true
 	}
 
 	if abi != nilABI {
-		prebuild.ABI = abi
+		r.ABI = abi
 	}
-	switch prebuild.ABI {
+	switch r.ABI {
 	case 3:
-		builder.Register("abi3")        // Convert all profiles from abi 4.0 to abi 3.0
-		builder.Register("apparmor4.0") // Convert convert all profiles from apparmor 4.1 to 4.0 or less
+		r.Builders.
+			Add(builder.NewABI3()).      // Convert all profiles from abi 4.0 to abi 3.0
+			Add(builder.NewAPPARMOR40()) // Convert all profiles from apparmor 4.1 to 4.0 or less
 
 	case 4:
 		// priority support was added in 4.1
-		if prebuild.Version == 4.0 {
-			builder.Register("apparmor4.0")
+		if r.Version == 4.0 {
+			r.Builders.Add(builder.NewAPPARMOR40())
 		}
 
 		// Re-attach disconnected path
-		if prebuild.Distribution == "ubuntu" && prebuild.Version >= 4.1 {
+		if tasks.Distribution == "ubuntu" && r.Version >= 4.1 {
 			// Ignored on ubuntu 25.04+ due to a memory leak that fully prevent
 			// profiles compilation with re-attached paths.
 			// See https://bugs.launchpad.net/ubuntu/+source/linux/+bug/2098730
 
 			// Use stacked-dbus builder to resolve dbus rules
-			builder.Register("stacked-dbus")
+			r.Builders.Add(builder.NewStackedDbus())
 
 		} else {
-			if !prebuild.DownStream {
-				prepare.Register("attach")
+			if !r.DownStream {
+				r.Configures.Add(configure.NewAttach())
 			}
-			builder.Register("attach")
-
+			r.Builders.Add(builder.NewAttach())
 		}
 
 	case 5:
-		builder.Register("abi5") // Convert all profiles from abi 4.0 to abi 5.0
+		r.Builders.Add(builder.NewABI5()) // Convert all profiles from abi 4.0 to abi 5.0
 
 		// Re-attach disconnected path
-		if prebuild.Distribution == "ubuntu" {
+		if tasks.Distribution == "ubuntu" {
 			// Ignored on ubuntu 25.04+ due to a memory leak that fully prevent
 			// profiles compilation with re-attached paths.
 			// See https://bugs.launchpad.net/ubuntu/+source/linux/+bug/2098730
 
 			// Use stacked-dbus builder to resolve dbus rules
-			builder.Register("stacked-dbus")
+			r.Builders.Add(builder.NewStackedDbus())
 
 		} else {
-			if !prebuild.DownStream {
-				prepare.Register("attach")
+			if !r.DownStream {
+				r.Configures.Add(configure.NewAttach())
 			}
-			builder.Register("attach")
+			r.Builders.Add(builder.NewAttach())
 
 			// Fix dbus rules for dbus-broker
-			builder.Register("dbus-broker")
-			prebuild.DbusDaemon = false
+			r.Builders.Add(builder.NewDbusBroker())
+			r.DbusDaemon = false
 		}
 
 	default:
-		logging.Fatal("Invalid ABI version: %d", prebuild.ABI)
+		logging.Fatal("Invalid ABI version: %d", r.ABI)
 	}
 
 	if version != nilVer {
-		prebuild.Version = version
+		r.Version = version
 	}
-	if buildir != "" {
-		prebuild.Root = paths.New(buildir)
-		prebuild.RootApparmord = prebuild.Root.Join("apparmor.d")
+
+	if status {
+		fmt.Printf("%s\n%s\n%s",
+			r.Configures.Help("Enabled configure"),
+			r.Builders.Help("Enabled build"),
+			r.Directives.Usage(),
+		)
+		os.Exit(0)
 	}
-	if file != "" {
-		sync, _ := prepare.Tasks["synchronise"].(*prepare.Synchronise)
-		sync.Paths = []string{file}
-		overwrite, _ := prepare.Tasks["overwrite"].(*prepare.Overwrite)
-		overwrite.Optional = true
-	}
+	return r
 }
 
-func Prebuild() {
-	logging.Step("Building apparmor.d profiles for %s", prebuild.Distribution)
-	logging.Success("AppArmor ABI targeted: %d", prebuild.ABI)
-	logging.Success("AppArmor version targeted: %.1f", prebuild.Version)
-	if prebuild.Test {
+func Prebuild(r *runtime.Runners) {
+	logging.Step("Building apparmor.d profiles for %s", tasks.Distribution)
+	logging.Success("AppArmor ABI targeted: %d", r.ABI)
+	logging.Success("AppArmor version targeted: %.1f", r.Version)
+	if r.Test {
 		logging.Warning("Test mode enabled")
 	}
-	if full {
+	if fsp {
 		logging.Success("Full system policy enabled")
 	}
-	if err := Prepare(); err != nil {
+	if err := r.Configure(); err != nil {
 		logging.Fatal("%s", err.Error())
 	}
-	if err := Build(); err != nil {
+	if err := r.Build(); err != nil {
 		logging.Fatal("%s", err.Error())
 	}
-}
-
-func Prepare() error {
-	for _, task := range prepare.Prepares {
-		msg, err := task.Apply()
-		if err != nil {
-			return err
-		}
-		if file != "" && task.Name() == "setflags" {
-			continue
-		}
-		logging.Success("%s", task.Message())
-		logging.Indent = "   "
-		for _, line := range msg {
-			if strings.Contains(line, "not found") {
-				logging.Warning("%s", line)
-			} else {
-				logging.Bullet("%s", line)
-			}
-		}
-		logging.Indent = ""
-	}
-	return nil
-}
-
-func Build() error {
-	files, _ := prebuild.RootApparmord.ReadDirRecursiveFiltered(nil, paths.FilterOutDirectories())
-	for _, file := range files {
-		if !file.Exist() {
-			continue
-		}
-		profile, err := file.ReadFileAsString()
-		if err != nil {
-			return err
-		}
-		profile, err = builder.Run(file, profile)
-		if err != nil {
-			return err
-		}
-		profile, err = directive.Run(file, profile)
-		if err != nil {
-			return err
-		}
-		if err := file.WriteFile([]byte(profile)); err != nil {
-			return err
-		}
-	}
-
-	logging.Success("Build tasks:")
-	logging.Indent = "   "
-	for _, task := range builder.Builds {
-		logging.Bullet("%s", task.Message())
-	}
-	logging.Indent = ""
-	logging.Success("Directives processed:")
-	logging.Indent = "   "
-	for _, dir := range directive.Directives {
-		logging.Bullet("%s%s", directive.Keyword, dir.Name())
-	}
-	logging.Indent = ""
-	return nil
 }
