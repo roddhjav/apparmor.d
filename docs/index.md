@@ -39,7 +39,7 @@ hide:
   }
 
   .tx-hero p {
-    color: var(--md-primary-bg-color--light);
+    color: var(--md-default-fg-color);
     font-weight: 400;
     font-size: 20px;
     line-height: 32px;

@@ -116,7 +116,7 @@ profile dnsmasq {
 ### Help
 
 ```
-aa-log [-h] [--systemd] [--file file] [--rules | --raw] [--since] [profile]
+aa-log [-h] [--systemd] [--file file] [--load] [--rules | --raw] [--since] [--namespace] [profile]
 
     Review AppArmor generated messages in a colorful way. It supports logs from
     auditd, systemd, syslog as well as dbus session events.
@@ -125,12 +125,18 @@ aa-log [-h] [--systemd] [--file file] [--rules | --raw] [--since] [profile]
 
     Default logs are read from '/var/log/audit/audit.log'. Other files in
     '/var/log/audit/' can easily be checked: 'aa-log -f 1' parses 'audit.log.1'
+    Use 'aa-log -f -' to read from standard input.
+
+    Logs written with 'aa-log' can be read again with 'aa-log -l'.
 
 Options:
     -h, --help         Show this help message and exit.
     -f, --file FILE    Set a logfile or a suffix to the default log file.
     -s, --systemd      Parse systemd logs from journalctl.
+    -n, --namespace NS Filter the logs to the specified namespace.
     -r, --rules        Convert the log into AppArmor rules.
     -R, --raw          Print the raw log without any formatting.
+    -b, --boot NUM     Show entries from the specified boot.
     -S, --since DATE   Show entries not older than the specified date.
+    -l, --load         Load logs from the default aa-log output.
 ```

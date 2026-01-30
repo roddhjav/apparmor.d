@@ -43,6 +43,7 @@ You can get older logs with:
 ```sh
 aa-log -R -f <nb>
 ```
+
 Where `<nb>` is `1`, `2`, `3` and `4` (the rotated audit log file).
 
 [newissue]: https://github.com/roddhjav/apparmor.d/issues/new

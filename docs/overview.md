@@ -23,7 +23,7 @@ See the [Concepts](concepts.md)' page for more detail on the architecture.
 - Target both desktops and servers
 - Support for all distributions that support AppArmor:
     * [:material-arch: Arch Linux](install.md#archlinux)
-    * [:material-ubuntu: Ubuntu 24.04/22.04](install.md#ubuntu)
+    * [:material-ubuntu: Ubuntu 24.04/25.10](install.md#ubuntu)
     * [:material-debian: Debian 12/13](install.md#debian)
     * [:simple-suse: openSUSE Tumbleweed](install.md#opensuse)
 - Support for all major desktop environments:

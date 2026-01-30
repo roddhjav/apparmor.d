@@ -209,8 +209,8 @@ The possible solutions are:
     ```
 
 ## Udev rules
-
-See the **[kernel docs](https://raw.githubusercontent.com/torvalds/linux/master/Documentation/admin-guide/devices.txt)** to check the major block and char numbers used in `/run/udev/data/`.
+c
+See the **[kernel docs](https://www.kernel.org/doc/html/latest/admin-guide/devices.html)** to check the major block and char numbers used in `/run/udev/data/`.
 
 Special care must be given as sometimes udev numbers are allocated dynamically by the kernel. Therefore, the full range must be allowed:
 
