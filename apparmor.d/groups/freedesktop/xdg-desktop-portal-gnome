@@ -11,7 +11,7 @@ profile xdg-desktop-portal-gnome @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/accounts-observe>
   include <abstractions/bus/session/org.gnome.Shell.Introspect>
-  include <abstractions/bus/session/org.gtk.vfs.Daemon>
+  include <abstractions/bus/session/org.openprinting.PrintBackend>
   include <abstractions/consoles>
   include <abstractions/dconf-write>
   include <abstractions/deny-sensitive-home>
@@ -26,8 +26,8 @@ profile xdg-desktop-portal-gnome @{exec_path} flags=(attach_disconnected) {
   signal receive set=term peer=gdm,
   signal receive set=(hup term) peer=gdm-session-worker,
 
-  #aa:dbus own bus=session name=org.freedesktop.impl.portal.FileChooser
   #aa:dbus own bus=session name=org.freedesktop.impl.portal.desktop.gnome
+  #aa:dbus own bus=session name=org.freedesktop.impl.portal.FileChooser path=/org/freedesktop/portal/desktop
 
   #aa:dbus talk bus=session name=org.freedesktop.impl.portal path=/org/freedesktop/portal/desktop label=xdg-desktop-portal
   #aa:dbus talk bus=session name=org.gnome.Mutter label=gnome-shell
@@ -100,15 +100,19 @@ profile xdg-desktop-portal-gnome @{exec_path} flags=(attach_disconnected) {
 
   profile flatpak {
     include <abstractions/base>
+    include <abstractions/bus-system>
 
     @{bin}/flatpak mr,
 
     /var/lib/flatpak/app/{,*/} r,
+    /var/lib/flatpak/app/*/@{arch}/ r,
     /var/lib/flatpak/repo/{,*/} r,
+    /var/lib/flatpak/repo/config r,
     /var/lib/flatpak/runtime/{,*/} r,
+    /var/lib/flatpak/runtime/*/@{arch}/ r,
 
      owner @{user_cache_dirs}/flatpak/system-cache/ r,
-     owner @{user_share_dirs}/flatpak/repo/** r,
+     owner @{user_share_dirs}/flatpak/repo/{,**} r,
 
     include if exists <local/xdg-desktop-portal-gnome_flatpak>
   }

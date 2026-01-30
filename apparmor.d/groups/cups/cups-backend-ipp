@@ -10,6 +10,7 @@ include <tunables/global>
 profile cups-backend-ipp @{exec_path} {
   include <abstractions/base>
   include <abstractions/avahi-observe>
+  include <abstractions/bus-system>
   include <abstractions/cups-client>
   include <abstractions/nameservice-strict>
 
@@ -22,10 +23,16 @@ profile cups-backend-ipp @{exec_path} {
   # network (receive,send,setopt) inet dgram peer=(port=53),
   # network (receive,send,setopt) inet stream peer=(port=631),
 
+  signal receive set=term peer=cups-backend-implicitclass,
+  signal receive set=term peer=cupsd,  
+
   unix type=stream peer=(label=cups-backend-implicitclass),
 
   @{exec_path} mr,
 
+  /etc/cups/ppd/*.ppd r,
+  /etc/cups/snmp.conf r,
+  /etc/cups/ssl/* r,
   /etc/papersize r,
   /etc/paperspecs r,
 
