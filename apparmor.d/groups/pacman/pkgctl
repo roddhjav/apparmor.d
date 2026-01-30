@@ -1,0 +1,24 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# This profile is large on purpose:
+# - Pkgctl uses a lot of different binaries and scripts inside sandbox.
+# - Using the unconfined flag would Pix everything, we do not want that as the
+#   transitioned profile would have to account for pkgctl paths too.
+# - It could be restricted latter using a namsepace approach.
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/pkgctl
+profile pkgctl @{exec_path} flags=(attach_disconnected,mediate_deleted) {
+  include <abstractions/base>
+
+  all,
+
+  include if exists <local/pkgctl>
+}
+
+# vim:syntax=apparmor
