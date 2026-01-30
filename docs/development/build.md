@@ -154,6 +154,16 @@ This task reattaches disconnected paths. See the [Re-attached path](internal.md#
 
 *Enabled when abi >= 4.0*
 
+### **`stacked-dbus`**
+
+Stacked profile name is under the form `A//&B`. The resulting stacked name can be used in peer label rules. However, in dbus rules, 
+
+Resolve peer label variable in dbus rules. It transforms peer label rules set from `label="@{p_dbus_session}"` to `label="A//&B"`.
+
+See: https://gitlab.com/apparmor/apparmor/-/issues/537#note_2699570190
+
+*Enabled for Ubuntu 25.04+*
+
 ### **`hotfix`**
 
 Temporary fix for #74, #80 & #235. Only an issue on Gnome, can be disabled on server.

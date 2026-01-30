@@ -17,41 +17,7 @@ Available recipes:
     help                              # Show this help message
     clean                             # Remove all build artifacts
 
-    [build]
-    build                             # Build the go programs
-    enforce                           # Prebuild the profiles in enforced mode
-    enforce-test                      # Prebuild the profiles in enforce mode (test)
-    complain                          # Prebuild the profiles in complain mode
-    complain-test                     # Prebuild the profiles in complain mode (test)
-    fsp                               # Prebuild the profiles in FSP mode
-    fsp-complain                      # Prebuild the profiles in FSP mode (complain)
-    fsp-debug                         # Prebuild the profiles in FSP mode (debug)
-    server                            # Prebuild the profiles in server mode
-    server-complain                   # Prebuild the profiles in server mode (complain)
-    server-fsp                        # Prebuild the profiles in server FSP mode
-    server-fsp-complain               # Prebuild the profiles in server FSP mode (complain)
-    server-fsp-debug                  # Prebuild the profiles in server FSP mode (debug)
-
-    [install]
-    install                           # Install prebuild profiles
-    local +names                      # Locally install prebuild profiles
-    dev name                          # Prebuild, install, and load a dev profile
-
-    [packages]
-    pkg name=""                       # Build & install apparmor.d on Arch based systems
-    dpkg name=""                      # Build & install apparmor.d on Debian based systems
-    rpm name=""                       # Build & install apparmor.d on OpenSUSE based systems
-    package dist release="" flavor="" # Build the package in a clean OCI container
-    packages                          # Build all packages in a clean OCI container
-
-    [linter]
-    lint                              # Run the linters
-    check                             # Run style checks on the profiles
-
-    [docs]
-    man                               # Generate the man pages
-    docs                              # Build the documentation
-    serve                             # Serve the documentation
+    ...
 
     [vm]
     img dist release flavor           # Build the VM image
@@ -60,6 +26,10 @@ Available recipes:
     halt osinfo flavor                # Stops the machine
     reboot osinfo flavor              # Reboot the machine
     destroy osinfo flavor             # Destroy the machine
+    snapshots osinfo flavor           # List all snapshots for a machine
+    snapshot osinfo flavor snapname   # Snapshot a machine
+    restore osinfo flavor snapname    # Restore a machine to a specified snapshot
+    delete osinfo flavor snapname     # Delete a specified snapshot from a machine
     ssh osinfo flavor                 # Connect to the machine
     mount osinfo flavor               # Mount the shared directory on the machine
     umount osinfo flavor              # Unmout the shared directory on the machine
@@ -67,41 +37,20 @@ Available recipes:
     images                            # List the VM images
     available                         # List the VM images that can be created
 
-    [tests]
-    tests                             # Run the unit tests
-    autopkgtest osinfo                # Run the autopkgtest tests
-    autopkgtest-update dist release   # Update the apparmor.d package on the test machine
-    autopkgtest-log                   # Report all collected logs
-    autopkgtest-rules                 # Report all generated rules
-    init                              # Install dependencies for the integration tests
-    integration name=""               # Run the integration tests
-    tests-init osinfo flavor          # Install dependencies for the integration tests (machine)
-    tests-sync osinfo flavor          # Synchronize the integration tests (machine)
-    tests-resync osinfo flavor        # Re-synchronize the integration tests (machine)
-    tests-run osinfo flavor name=""   # Run the integration tests (machine)
-
-    [version]
-    version                           # Get the current apparmor.d release version
-    version-new                       # Create a new version number from the current release
-
-    [release]
-    release                           # Create a new release
-    commit                            # Write the new release version to package files & commit
-    archive                           # Create a release archive
-    publish                           # Publish the new release on Github
-    repo                              # Create & upload new release packages to the repositories
+    ...
 
 Build variables available:
     build        # Build directory (default: .build)
     destdir      # Installation destination (default: /)
-    pkgdest      # Package output directory (default/ .pkg)
+    pkgdest      # Package output directory (default: /home/alex/06_Projects/Security/apparmor.d/.pkg)
+    opt          # Prebuild option, only used for the dev install target (default: complain)
 
 Development variables available:
     username     # VM username (default: user)
     password     # VM password (default: user)
     disk_size    # VM disk size (default: 40G)
-    vcpus        # VM CPU (default: 12)
-    ram          # VM RAM (default: 8192)
+    vcpus        # VM CPU (default: 6)
+    ram          # VM RAM (default: 4096)
 
 See https://apparmor.pujol.io/development/ for more information.
 ```

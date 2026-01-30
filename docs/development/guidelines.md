@@ -13,7 +13,7 @@ For example, if a program needs to run executable binaries then the rules allowi
 * A profile has access to a given resource 
 * A profile enforces a strict [write xor execute](https://en.wikipedia.org/wiki/W%5EX) (W^X) policy. 
 
-It also improves compatibilities and makes personalization easier thanks to the use of more variables.
+It also improves compatibility and makes personalization easier thanks to the use of more variables.
 
 ## Guidelines
 
@@ -132,3 +132,6 @@ If there is no predictable label it can be omitted.
     ```
     Does not help, and if generalized it would add a lot of complexity to any profiles.
 
+#### :material-numeric-7-circle: Clarity over cleverness
+
+:   Always prefer clarity to cleverness. E.g., if a rule is more explicit but longer, prefer it over a shorter but less explicit one.

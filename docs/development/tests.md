@@ -6,28 +6,48 @@ Misconfigured AppArmor profiles is one of the most effective ways to break someo
 
 **Current**
 
-- [x] **[Build:](https://gitlab.com/roddhjav/apparmor.d/-/pipelines)** `just complain`
-    - Build the profiles for all supported distributions.
-    - All CI jobs validate the profiles syntax and ensure they can be safely loaded into a kernel.
-    - Ensure the profile entry point (`@{exec_path}`) is defined.
+<div class="grid cards" markdown>
 
-- [x] **[Checks:](https://github.com/roddhjav/apparmor.d/blob/main/tests/check.sh)** `just check` checks basic style of profiles:
-    - Ensure apparmor.d header & licence
-    - Ensure 2 spaces indentation
-    - Ensure local include for profile and subprofiles
-    - Ensure abi 4 is used
-    - Ensure modern profile naming
-    - Ensure `vim:syntax=apparmor`
+-   :material-github: &nbsp; **[Build](build.md)** `just complain`
 
-- [x] **[Integration Tests:](integration.md)** `just test-run <dist> <flavor>`
-    - Run simple CLI commands to ensure no logs are raised.
-    - Uses the [bats](https://github.com/bats-core/bats-core) test system.
-    - Run in the Github Action as well as in all local [test VM](vm.md).
+    ---
 
-- [x] **[Distribution Tests:](autopkgtest.md)** `just autopkgtest <osinfo>`
-    - Run the autopkgtest suite for Ubuntu and Debian.
+    Build the profiles for all supported distributions.
 
-**Plan**
+    - [x] All CI jobs validate the profiles syntax and,
+    - [x] ensure they can be safely loaded into a kernel.
+
+-   :octicons-check-24: &nbsp; **[Checks](check.md)** `just check`
+
+    ---
+
+    Checks for common style and security issues:
+
+    - [x] Security checks
+    - [x] Style and maintainability checks
+
+-   :material-package: &nbsp; **[Integration Tests](integration.md)** `just test-run`
+
+    Run commands to ensure no logs are raised.
+
+    ---
+
+    - [x] Uses the [bats](https://github.com/bats-core/bats-core) test system.
+    - [x] Run in the Github Action as well as in all local [test VM](vm.md).
+
+-   :material-test-tube: &nbsp; **[Distribution Tests](autopkgtest.md)** `just autopkgtest`
+
+    Run the autopkgtest suite for Ubuntu and Debian.
+
+    ---
+
+    - [x] Setup autopkgtest for Ubuntu.
+    - [x] Validate profiles on Ubuntu.
+
+</div>
+
+
+**Future**
 
 For more complex software suite, more integration tests need to be done. The plan is to run existing integration suite from these very software in an environment with `apparmor.d` profiles.
 

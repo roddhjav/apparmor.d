@@ -68,6 +68,8 @@ This is the current list of features that must be implemented to get to a stable
     - [ ] Unrestricted shell role without FSP enabled
     - [ ] Define the roles when FSP is enabled
 
+________________________________________________________________________________
+
 ## Done
 
 **General improvements**
