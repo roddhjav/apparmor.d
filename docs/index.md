@@ -24,19 +24,6 @@ hide:
     display: none;
   }
 
-  /* Get started button */
-  .md-typeset .md-button--primary {
-    color: var(--md-primary-fg-color);
-    background-color: var(--md-primary-bg-color);
-    border-color: var(--md-primary-bg-color);
-  }
-
-  .md-typeset .md-button--primary:hover {
-    color: var(--md-primary-bg-color);
-    background-color: var(--md-primary-fg-color);
-    border-color: var(--md-primary-bg-color);
-  }
-
   .tx-hero {
     max-width: 700px;
     display: flex;

@@ -305,12 +305,12 @@ docstring:
 # Build the documentation
 [group('docs')]
 docs:
-	@ENABLED_GIT_REVISION_DATE=false MKDOCS_OFFLINE=true mkdocs build --strict
+	@ENABLED_GIT_REVISION_DATE=false MKDOCS_OFFLINE=true zensical build --strict
 
 # Serve the documentation
 [group('docs')]
 serve:
-	@ENABLED_GIT_REVISION_DATE=false MKDOCS_OFFLINE=false mkdocs serve
+	@ENABLED_GIT_REVISION_DATE=false MKDOCS_OFFLINE=false zensical serve --open
 
 # Remove all build artifacts
 clean:
