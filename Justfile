@@ -297,6 +297,11 @@ check:
 man:
 	@pandoc -t man -s -o share/man/man8/aa-log.8 share/man/man8/aa-log.md
 
+# Generate abstractions and tunable documentation from the source
+[group('docs')]
+docstring:
+	@bash dists/docstring.sh
+
 # Build the documentation
 [group('docs')]
 docs:
