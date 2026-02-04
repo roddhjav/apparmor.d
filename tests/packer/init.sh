@@ -32,7 +32,12 @@ main() {
 			sudo -u "$SUDO_USER" pipx install rust-just
 			sudo -u "$SUDO_USER" pipx ensurepath
 		fi
-		dpkg -i $SRC/*.deb || true
+		if dpkg-vendor --is Ubuntu; then
+			suffix="ubuntu1~$(lsb_release -sr)"
+		elif dpkg-vendor --is Debian; then
+			suffix="1+deb$(lsb_release -sr)"
+		fi
+		dpkg -i $SRC/*-"${suffix}"*.deb || true
 		;;
 
 	opensuse*)

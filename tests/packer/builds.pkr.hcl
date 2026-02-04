@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: GPL-2.0-only
 
 locals {
-  name = "${var.prefix}${var.dist}${var.release}-${var.flavor}"
+  name   = "${var.prefix}${var.dist}${var.release}-${var.flavor}"
   osinfo = "${var.dist}${var.release}"
 }
 
@@ -60,7 +60,7 @@ build {
       "${path.cwd}/tests/packer/src/",
       "${path.cwd}/tests/packer/init.sh",
       "${path.cwd}/tests/packer/clean.sh",
-      "${path.cwd}/.pkg/${var.dist}/${var.release}/",
+      "${path.cwd}/.pkg/",
     ]
   }
 

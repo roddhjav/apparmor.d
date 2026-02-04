@@ -103,6 +103,10 @@ variable "DM" {
       img_url      = "https://cdimage.debian.org/images/cloud/trixie/latest/debian-13-genericcloud-amd64.qcow2"
       img_checksum = "https://cdimage.debian.org/images/cloud/trixie/latest/SHA512SUMS"
     }
+    "debian14" : {
+      img_url      = "https://cdimage.debian.org/images/cloud/forky/daily/latest/debian-14-genericcloud-amd64-daily.qcow2"
+      img_checksum = "https://cdimage.debian.org/images/cloud/forky/daily/latest/SHA512SUMS"
+    }
     "ubuntu24.04" : {
       img_url      = "https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img"
       img_checksum = "https://cloud-images.ubuntu.com/noble/current/SHA256SUMS"
