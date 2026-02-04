@@ -243,7 +243,7 @@ A minimal set of rules for all electron based UI applications. It works as a *fu
 
 ### **`common/game`**
 
-Core set of resources for any games on Linux. Runtimes such as sandboxing, wine, proton, game launchers should use this abstraction. 
+Core set of resources for any games on Linux. Runtimes such as sandboxing, wine, proton, game launchers should use this abstraction.
 
 This abstraction uses the following tunables:
 
