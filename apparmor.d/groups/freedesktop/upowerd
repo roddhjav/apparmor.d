@@ -11,10 +11,12 @@ include <tunables/global>
 profile upowerd @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bluetooth-observe>
+  include <abstractions/backlight>
   include <abstractions/bus-system>
   include <abstractions/bus/system/org.freedesktop.login1>
   include <abstractions/bus/system/org.freedesktop.PolicyKit1>
   include <abstractions/devices-usb>
+  include <abstractions/input>
 
   capability net_admin,
   capability sys_admin,
@@ -39,35 +41,23 @@ profile upowerd @{exec_path} flags=(attach_disconnected) {
   @{run}/udev/data/+acpi:* r,             # Exposes ACPI objects (power buttons, batteries, thermal)
   @{run}/udev/data/+hid:* r,              # For Human Interface Device (mice, controllers, drawing tablets, scanners)
   @{run}/udev/data/+i2c:* r,              # For Inter-Integrated Circuit, low-speed peripherals (sensors, EEPROMs, etc.)
-  @{run}/udev/data/+input:input@{int} r,  # for mouse, keyboard, touchpad
-  @{run}/udev/data/+leds:* r,             # Identifies all LEDs (keyboard, mouse, etc.)
   @{run}/udev/data/+pci:* r,              # Identifies all PCI devices (CPU, GPU, Network, Disks, USB, etc.)
   @{run}/udev/data/+platform:* r,         # Identifies onboard devices (laptop/board model, power controllers, thermal sensors)
   @{run}/udev/data/+power_supply:* r,     # For power supply devices (batteries, AC adapters, USB chargers)
   @{run}/udev/data/+serio:* r,            # for serial mice
   @{run}/udev/data/+sound:card@{int} r,   # for sound card
   @{run}/udev/data/c10:@{int} r,          # for non-serial mice, misc features
-  @{run}/udev/data/c13:@{int}  r,         # for /dev/input/*
   @{run}/udev/data/c116:@{int} r,         # for ALSA
 
   @{att}@{run}/systemd/inhibit/@{int}.ref rw,
 
   @{sys}/bus/hid/devices/ r,
-  @{sys}/class/input/ r,
-  @{sys}/class/leds/ r,
   @{sys}/class/power_supply/ r,
   @{sys}/class/sound/ r,
   @{sys}/devices/ r,
-  @{sys}/devices/**/capabilities/* r,
-  @{sys}/devices/**/leds/**/brightness rw,
-  @{sys}/devices/**/leds/**/brightness_hw_changed r,
-  @{sys}/devices/**/leds/**/max_brightness r,
   @{sys}/devices/**/power_supply/**/* r,
   @{sys}/devices/**/uevent r,
   @{sys}/devices/virtual/dmi/id/product_name r,
-  @{sys}/devices/virtual/misc/uhid/*/input/input@{int}/name r,
-
-  /dev/input/event* r,
 
   include if exists <local/upowerd>
 }

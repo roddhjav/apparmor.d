@@ -10,6 +10,7 @@ include <tunables/global>
 @{exec_path} = @{lib}/systemd/systemd-backlight
 profile systemd-backlight @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/backlight>
   include <abstractions/common/systemd>
 
   ptrace read peer=@{p_systemd},
@@ -20,29 +21,13 @@ profile systemd-backlight @{exec_path} flags=(attach_disconnected) {
 
   /var/lib/systemd/backlight/*backlight* rw,
 
-  @{run}/udev/data/+backlight:* r,        # For display backlights on laptops, monitors, and other screens.
-  @{run}/udev/data/+leds:*backlight* r,   # For keyboard backlights, mouse LEDs, etc.
   @{run}/udev/data/+pci:* r,              # Identifies all PCI devices (CPU, GPU, Network, Disks, USB, etc.)
 
   @{sys}/bus/ r,
   @{sys}/bus/pci/devices/ r,
-  @{sys}/class/ r,
-  @{sys}/class/backlight/ r,
 
   @{sys}/devices/@{pci}/ r,
-  @{sys}/devices/@{pci}/*_backlight/{,max_,actual_}brightness rw,
-  @{sys}/devices/@{pci}/*_backlight/{uevent,type,enabled} r,
-  @{sys}/devices/@{pci}/backlight/**/{,max_,actual_}brightness rw,
-  @{sys}/devices/@{pci}/backlight/**/{uevent,type,enabled} r,
-  @{sys}/devices/@{pci}/backlight/**/brightness rw,
   @{sys}/devices/@{pci}/class r,
-  @{sys}/devices/@{pci}/drm/card@{int}/**/{,max_,actual_}brightness rw,
-  @{sys}/devices/@{pci}/drm/card@{int}/**/{uevent,type,enabled} r,
-  @{sys}/devices/@{pci}/drm/card@{int}/**/brightness rw,
-  @{sys}/devices/@{pci}/uevent r,
-  @{sys}/devices/**/leds/**/{,max_,actual_}brightness rw,
-  @{sys}/devices/**/leds/**/{uevent,type,enabled} r,
-  @{sys}/devices/**/leds/**/brightness_hw_changed r,
 
   include if exists <local/systemd-backlight>
 }
