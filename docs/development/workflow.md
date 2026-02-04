@@ -119,9 +119,6 @@ just dev <profile-name>
     - Install the profile to `/etc/apparmor.d/`
     - Load the profile by restarting the AppArmor service.
 
-
-More advanced development, like editing the abstractions or working over multiple profiles at the same time requires installing the full development package.
-
 For this individual profile installation to work, the full package needs to be installed, regardless of the installation method ([dev](#development-package) or [stable](../install.md)).
 
 ## Program Profiling
