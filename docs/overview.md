@@ -16,7 +16,7 @@ title: Overview
 - Confine some *"special"* user applications: web browsers, file managers, etc
 - Should not break a normal usage of the confined software
 
-See the [Concepts](concepts.md)' page for more detail on the architecture.
+See the **[Security Model](security/index.md)** pages for more detail on the architecture.
 
 ### Goals
 
