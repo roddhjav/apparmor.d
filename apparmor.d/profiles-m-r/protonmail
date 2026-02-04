@@ -24,19 +24,12 @@ profile protonmail @{exec_path} flags=(attach_disconnected) {
   network inet6 dgram,
   network netlink raw,
 
-  ptrace read peer=protonmail//&xdg-settings,
+  # I need a proof for this, it is not common for such a program
+  # io_uring sqpoll,
 
   @{exec_path} mrix,
 
-  #aa:stack X xdg-settings
-  @{bin}/xdg-settings  rPx -> protonmail//&xdg-settings,
-  @{open_path}          Px -> child-open,
-
-  owner @{user_config_dirs}/ibus/bus/ r,
-
-  @{sys}/devices/@{pci}/boot_vga r,
-
-  owner @{tmp}/gtkprint_ppd_@{rand6} rw,
+  @{open_path}         rPx -> child-open-strict,
 
   include if exists <local/protonmail>
 }
