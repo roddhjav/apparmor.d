@@ -11,10 +11,11 @@ profile software-properties-dbus @{exec_path} {
   include <abstractions/base>
   include <abstractions/apt>
   include <abstractions/bus-system>
+  include <abstractions/bus/system/org.freedesktop.PolicyKit1>
   include <abstractions/nameservice-strict>
   include <abstractions/python>
 
-  #aa:dbus own bus=system name=com.ubuntu.SoftwareProperties
+  #aa:dbus own bus=system name=com.ubuntu.SoftwareProperties path=/
 
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable
@@ -25,11 +26,6 @@ profile software-properties-dbus @{exec_path} {
        member=Introspect
        peer=(name=@{busname}, label=software-properties-gtk),
 
-  dbus receive bus=system path=/
-       interface=com.ubuntu.SoftwareProperties
-       member=Reload
-       peer=(name=@{busname}, label=software-properties-gtk),
-
   @{exec_path} mr,
 
   @{python_path}         rix,
@@ -38,6 +34,7 @@ profile software-properties-dbus @{exec_path} {
   @{bin}/lsb_release     rPx,
 
   /etc/apt/apt.conf.d/10periodic w,
+  /etc/apt/sources.list.d/{,*} rw,
   /etc/apt/sources.list{,.save} rw,
 
   /usr/share/python-apt/{,**} r,
