@@ -87,6 +87,8 @@
   capability dac_override,
   capability dac_read_search,
 
+  unix (bind listen) type=seqpacket addr=@@{hex},
+
   unix type=seqpacket peer=(label=dbus-session),
   unix type=seqpacket peer=(label=fbwrap),
   unix type=seqpacket peer=(label=flatpak-portal),
@@ -195,6 +197,10 @@
   # value or those in its thread group.
   owner @{PROC}/@{pid}/task/@{tid}/comm rw,
 
+  # Allow reading file descriptor info
+  owner @{PROC}/@{pid}/fdinfo/ r,
+  owner @{PROC}/@{pid}/fdinfo/@{int} r,
+
         @{PROC}/ r,
         @{PROC}/@{pid}/cpuset r,
         @{PROC}/@{pid}/fd/ r,
@@ -231,7 +237,6 @@
   owner @{PROC}/@{pid}/comm rk,
   owner @{PROC}/@{pid}/environ r,
   owner @{PROC}/@{pid}/fd/ r,
-  owner @{PROC}/@{pid}/fdinfo/@{int} r,
   owner @{PROC}/@{pid}/limits r,
   owner @{PROC}/@{pid}/loginuid r,
   owner @{PROC}/@{pid}/sessionid r,
