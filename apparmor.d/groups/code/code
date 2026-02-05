@@ -1,0 +1,194 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# !!! warning
+#
+#     This profile is **not** installed by default as it breaks the POLA principle
+#     in the way to **will** cause some extension to not work: all extension
+#     that require privilege access to the system, like docker, kubernetes, 
+#     remote ssh, VM, etc... will not work with this profile.
+#
+# **Architecture**
+#
+# The `code` profile stack define a "world" with generic rules of what should be
+# allowed in an IDE and what is not:
+#
+# - **Allowed:** compilation, running code, debugging, git, ssh, network access, etc...
+#   in `@{user_projects_dirs}`
+# - **Not allowed:** access to hardware, access to other users data, etc...
+#
+# We also ensure vscode can start a shell and we **confine** this shell to limit
+# it to the same development related tasks. **Therefore, tasks such as installing
+# system dependencies will not work.**
+#
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{name} = code{,-oss} vscode{,-oss}
+@{config} = Code Code?-?OSS Code?-?Insiders
+@{domain} = org.chromium.Chromium
+@{lib_dirs} = @{lib}/@{name} /usr/share/@{name}
+@{config_dirs} = @{HOME}/.@{name} @{user_config_dirs}/@{config}
+@{ext_dirs} = @{config_dirs}/extensions
+@{cache_dirs} = @{user_cache_dirs}/@{name}
+
+@{exec_path} = @{bin}/@{name} @{lib_dirs}/@{name}
+profile code @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/audio-client>
+  include <abstractions/common/electron>
+  include <abstractions/consoles>
+  include <abstractions/devtools>
+  include <abstractions/ibus-strict>
+  include <abstractions/login-observe>
+  include <abstractions/path>
+  include <abstractions/python>
+  include <abstractions/screen-inhibit>
+  include <abstractions/secrets-service>
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  ptrace read,
+
+  signal send peer=claude,
+  signal send peer=code-extension-*,
+  signal send peer=code-extensions,
+  signal send peer=code-shells,
+  signal send peer=git,
+  signal send peer=gitstatusd,
+
+  @{exec_path} mrix,
+
+  @{bin}/rg      rix,
+  @{bin}/env      mr,
+  @{ldd_path}   mrix,
+  @{lib_dirs}/**  mr,
+  @{sh_path}       r,
+
+  # Extensions
+  priority=-10 /**                                  Px -> code-extensions,
+  # # TODO: owner /** Px
+
+  @{bin}/git                                        Px,
+  @{open_path}                                      Cx -> open,
+
+             @{lib_dirs}/{,resources/}app/node_modules/** ix,
+  priority=1 @{lib_dirs}/{,resources/}app/node_modules/**/vsce-sign rCx -> sign,
+
+  owner @{ext_dirs}/*/**                            mr,
+  owner @{ext_dirs}/anthropic.claude-code-*/**      Px -> claude,
+  owner @{ext_dirs}/valentjn.vscode-ltex-*/**       Px -> code-extension-ltex,
+
+  # Terminal
+  # Some extension may need to run shells command directly. These command would also
+  # run trhough this shell profile, and may be limited by it. It is a feature.
+  @{shells_path}                                    Px -> code-shells,
+
+  /opt/ r,
+
+  /etc/shells r,
+  /etc/lsb-release r,
+
+  owner @{HOME}/ r,
+  owner @{HOME}/.claude/{,**} rw,
+  owner @{HOME}/@{XDG_SSH_DIR}/config r,
+
+  owner @{user_config_dirs}/git/config r,
+  owner @{user_config_dirs}/git/ignore r,
+
+  owner @{user_projects_dirs}/ r,
+  owner @{user_projects_dirs}/** rwkl,
+
+  owner @{user_cache_dirs}/Microsoft/ rw,
+  owner @{user_cache_dirs}/Microsoft/** rwlk,
+  owner @{user_cache_dirs}/typescript/ rw,
+  owner @{user_cache_dirs}/typescript/** rwlk,
+
+  owner @{run}/user/@{uid}/@{name}-*.sock w,
+  owner @{run}/user/@{uid}/git-graph-askpass-@{rand32}.sock w,
+
+  /var/tmp/ r,
+
+  owner @{tmp}/@{name}-*/ rw,
+  owner @{tmp}/@{name}-*/** rwlk,
+  owner @{tmp}/@{user}-code-*/{,**} rw,
+  owner @{tmp}/exthost-@{hex6}.cpuprofile w,
+  owner @{tmp}/mcp-@{rand6}/{,**} rw,
+  owner @{tmp}/node-compile-cache/{,**} rw,
+  owner @{tmp}/ovsx-@{rand6}/{,**} rw,
+  owner @{tmp}/tmp-@{int}-@{rand12}/ w,
+
+        @{PROC}/loadavg r,
+        @{PROC}/sys/kernel/osrelease r,
+  owner @{PROC}/@{pid}/clear_refs w,
+  owner @{PROC}/@{pid}/comm w,
+
+  /dev/ptmx rw,
+
+  deny dbus send bus=system path=/
+       interface=org.freedesktop.DBus.ObjectManager
+       member=GetManagedObjects
+       peer=(label=bluetoothd),
+
+  profile sign {
+    include <abstractions/base>
+    include <abstractions/nameservice-strict>
+    include <abstractions/ssl_certs>
+
+    network inet dgram,
+    network inet6 dgram,
+    network inet stream,
+    network inet6 stream,
+    network netlink raw,
+
+    unix type=stream peer=(label=code),
+
+    @{lib_dirs}/**  mr,
+
+    owner @{HOME}/.dotnet/corefx/cryptography/{,**} rw,
+
+    owner @{config_dirs}/CachedExtensionVSIXs/* rk,
+
+    owner @{tmp}/.@{domain}.@{rand6} rw,
+    owner @{tmp}/cdotnet-diagnostic-*-socket rw,
+    owner @{tmp}/clr-debug-pipe-* rw,
+
+    owner @{PROC}/@{pid}/cgroup r,
+    owner @{PROC}/@{pid}/mountinfo r,
+    owner @{PROC}/@{pid}/stat r,
+    owner @{PROC}/@{pid}/task/@{tid}/comm rw,
+
+    include if exists <local/code_sign>
+  }
+
+  profile open {
+    include <abstractions/base>
+    include <abstractions/app/open>
+    include <abstractions/trash-strict>
+
+    @{browsers_path}              Px,
+    @{file_explorers_path}        Px,
+    @{bin}/snap                   Px,
+    @{bin}/flatpak                Px,
+
+    @{lib}/@{multiarch}/glib-@{version}/gio-launch-desktop mrix,
+
+    owner @{user_projects_dirs}/** rw,
+
+    include <abstractions/bus/session/org.gtk.vfs.Metadata>
+    owner @{user_share_dirs}/gvfs-metadata/* r,
+
+    include if exists <local/code_open>
+  }
+
+  include if exists <local/code>
+}
+
+# vim:syntax=apparmor
