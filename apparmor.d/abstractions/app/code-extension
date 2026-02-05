@@ -1,0 +1,27 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+# LOGPROF-SUGGEST: no
+# NEEDS-VARIABLE: lib_dirs
+# NEEDS-VARIABLE: config_dirs
+
+  abi <abi/4.0>,
+
+  network netlink raw,
+
+  signal receive peer=code,
+
+  unix (send receive) type=stream peer=(label=code),
+
+  @{lib_dirs}/** mr,
+
+  # Allow writting logs to vscode
+  owner @{config_dirs}/logs/{,**} w,
+
+  # file_inherit
+  deny /usr/share/code/*.bin r,
+  deny owner /dev/shm/.org.chromium.Chromium.@{rand6} rw,
+
+  include if exists <abstractions/app/code-extension.d>
+
+# vim:syntax=apparmor

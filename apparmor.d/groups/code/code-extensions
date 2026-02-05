@@ -1,0 +1,82 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{devtools} += rust-analyzer harper-ls proc-macro-srv
+
+@{name} = code{,-oss} vscode{,-oss}
+@{config} = Code Code?-?OSS Code?-?Insiders
+@{config_dirs} = @{HOME}/.@{name} @{user_config_dirs}/@{config}
+@{ext_dirs} = @{config_dirs}/extensions
+@{lib_dirs} = @{ext_dirs}/
+
+@{exec_path} = @{lib_dirs}/**
+profile code-extensions @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/app/code-extension>
+  include <abstractions/bus-session>
+  include <abstractions/development>
+  include <abstractions/nameservice-strict>
+  include <abstractions/ssl_certs>
+
+  network inet dgram,
+  network inet stream,
+  network inet6 dgram,
+  network inet6 stream,
+
+  ptrace trace peer=code-extensions,
+
+  unix type=stream peer=(label=code-shells),
+  unix type=stream peer=(label=git),
+
+  dbus send bus=session path=/org/freedesktop/systemd1
+       interface=org.freedesktop.systemd1.Manager
+       member=GetUnitFileState
+       peer=(name=org.freedesktop.systemd1, label=unconfined),
+
+  @{exec_path} mrix,
+  @{sh_path} rix,
+
+  @{bin}/* r,
+
+  @{bin}/aa-log                  Px,
+  @{bin}/git                     Px,
+  @{bin}/htop                    Px,
+  @{bin}/journalctl              Px,
+  @{bin}/lscpu                   Px,
+  @{bin}/ps                      Px,
+
+  owner @{lib_dirs}/{,**/}__pycache__/ w,
+  owner @{lib_dirs}/{,**/}__pycache__/**.pyc{,*} w,
+
+  owner @{user_config_dirs}/git/* r,
+
+  owner @{user_projects_dirs}/ r,
+  owner @{user_projects_dirs}/** rwkl -> @{user_projects_dirs}/**,
+
+  @{sys}/devices/system/node/ r,
+
+        @{PROC}/@{pid}/net/if_inet6 r,
+        @{PROC}/@{pid}/net/ipv6_route r,
+        @{PROC}/@{pid}/net/tcp r,
+        @{PROC}/sys/net/core/somaxconn r,
+  owner @{PROC}/@{pid}/cmdline r,
+  owner @{PROC}/@{pid}/comm r,
+  owner @{PROC}/@{pid}/coredump_filter rw,
+  owner @{PROC}/@{pid}/statm r,
+
+        /tmp/ r,
+  owner @{tmp}/hsperfdata_@{user}/ rw,
+  owner @{tmp}/hsperfdata_@{user}/@{int} rwk,
+  owner @{tmp}/jansi-*-libjansi.so rwm,
+  owner @{tmp}/jansi-*-libjansi.so.lck rw,
+  owner @{tmp}/proc-macro-*/ w,
+
+  include if exists <local/code-extensions>
+}
+
+# vim:syntax=apparmor
