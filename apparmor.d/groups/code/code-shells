@@ -1,0 +1,73 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{devtools} += rust-analyzer harper-ls proc-macro-srv
+
+@{name} = code{,-oss} vscode{,-oss}
+@{config} = Code Code?-?OSS Code?-?Insiders
+@{config_dirs} = @{HOME}/.@{name} @{user_config_dirs}/@{config}
+@{ext_dirs} = @{config_dirs}/extensions
+@{lib_dirs} = @{ext_dirs}/
+
+profile code-shells flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/app/code-extension>
+  include <abstractions/bus-system>
+  include <abstractions/consoles>
+  include <abstractions/development>
+  include <abstractions/gtk-strict>
+  include <abstractions/shells>
+  include <abstractions/ssl_certs>
+
+  network inet dgram,
+  network inet stream,
+  network inet6 dgram,
+  network inet6 stream,
+  network netlink raw,
+
+  signal send set=term peer=gitstatusd,
+
+  ptrace read peer=git,
+  ptrace read peer=child-pager,
+
+  @{shells_path} mrix,
+
+  # TODO: Work in progress. This will be restricted later.
+  file,
+
+  # Handle shell prompts, out of scope, thus unconfined
+  @{bin}/starship                Cx -> helper,
+
+  # Give glycin higher priority than `@{bin}/bwrap ix` got in the development abs
+  priority=10 @{bin}/bwrap       Px -> :glycin:bwrap,
+
+  # Well known programs used in shells, when we also have specific profiles for them
+  @{bin}/claude                  Px,
+  @{bin}/git                     Px,
+  @{bin}/htop                    Px,
+  @{bin}/ps                      Px,
+  @{bin}/aa-log                  Px,
+  /opt/claude-code/bin/claude    Px,
+
+  # Well known shells tools
+  priority=1 @{user_cache_dirs}/gitstatus/gitstatusd{,-*} Px,
+  priority=1 /usr/share/zsh-theme-powerlevel{9,10}k/gitstatus/usrbin/gitstatusd{,-*} Px,
+
+  owner @{user_projects_dirs}/ r,
+  owner @{user_projects_dirs}/** rwkl -> @{user_projects_dirs}/**,
+
+  profile helper {
+    include <abstractions/base>
+
+    include if exists <local/code-shells_helper>
+  }
+
+  include if exists <local/code-shells>
+}
+
+# vim:syntax=apparmor

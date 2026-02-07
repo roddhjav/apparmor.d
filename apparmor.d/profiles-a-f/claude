@@ -1,0 +1,241 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# !!! warning
+#
+#     This profile is **not** installed by default as it breaks the POLA principle
+#     in the way it **will** break some cappabilities of claude.
+#
+# **Architecture**
+#
+# Similar to `code` and `code-extensions`, the `claude` profile stack define a "world"
+# with generic rules of what should be allowed for an AI assistant and what is not.
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{code_name} = code{,-oss} vscode{,-oss}
+@{code_config} = Code Code?-?OSS Code?-?Insiders
+@{code_config_dirs} = @{HOME}/.@{code_name} @{user_config_dirs}/@{code_config}
+@{code_ext_dirs} = @{code_config_dirs}/extensions
+
+@{exec_path}  = @{bin}/claude /opt/claude-code/bin/claude
+@{exec_path} += @{user_share_dirs}/claude/versions/@{version}
+@{exec_path} += @{code_ext_dirs}/anthropic.claude-code-*/resources/native-binary/claude
+profile claude @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+  include <abstractions/ssl_certs>
+
+  network inet dgram,
+  network inet stream,
+  network inet6 dgram,
+  network inet6 stream,
+  network netlink raw,
+
+  signal send set=term peer=git,
+  signal receive set=term peer=code,
+
+  unix (send receive) type=stream peer=(label=code),
+  unix (send receive) type=stream peer=(label=git),
+
+  @{exec_path} mrix,
+
+  @{bin}/git      Px,
+  @{open_path}    Px -> child-open-strict,
+  @{shells_path}  Cx -> shell,
+
+  @{bin}/env                    m,
+  @{bin}/rg                    ix,
+  @{bin}/uname                 ix,
+  @{bin}/which{,.debianutils} rix,
+
+  # Nodes
+  @{bin}/node                             rix,
+  @{lib}/node_modules/npm/bin/npm-cli.js  rix,
+  @{lib}/node_modules/npm/bin/npx-cli.js  rix,
+  /usr/share/nodejs/npm/bin/npm-cli.js    rix,
+
+  # TODO: should transition to a dev/plugin profile, not the shell one
+  priority=-1 /** Cx -> shell,
+
+  owner @{HOME}/ r,
+  owner @{HOME}/.claude.* rw,
+  owner @{HOME}/.claude.*/{,**} rw,
+  owner @{HOME}/.claude/ rw,
+  owner @{HOME}/.claude/** rwkl -> @{HOME}/.claude/**,
+  owner @{HOME}/.npm/_cacache/{,**} rw,
+  owner @{HOME}/.npm/_logs/{,**} rw,
+  owner @{HOME}/.npm/_npx/{,**} rw,
+
+  # TODO: deny this as self update is an abberation
+  owner @{user_bin_dirs}/claude w,
+  owner @{user_bin_dirs}/claude.tmp.* rw,
+
+  owner @{user_lib_dirs}/node_modules/{,**} r,
+
+  owner @{user_projects_dirs}/ r,
+  owner @{user_projects_dirs}/** rwkl -> @{user_projects_dirs}/**,
+
+  owner @{user_cache_dirs}/claude/{,**} rw,
+  owner @{user_cache_dirs}/claude-cli-nodejs/ rw,
+  owner @{user_cache_dirs}/claude-cli-nodejs/** rwkl,
+
+  owner @{user_state_dirs}/claude/{,**} rw,
+
+  owner @{user_config_dirs}/git/ignore r,
+  owner @{user_config_dirs}/git/config r,
+
+  owner @{user_share_dirs}/claude/{,**} rw,
+
+        /tmp/ r,
+  owner @{tmp}/.@{hex16}-@{int8}.node mrw,
+  owner @{tmp}/claude{,-*} rw,
+  owner @{tmp}/claude{,-*}/{,**} rw,
+  owner @{tmp}/node-compile-cache/** rwlk,
+  owner @{tmp}/playwright-artifacts-@{rand6}/{,**} rw,
+
+        @{sys}/fs/cgroup/user.slice/cpu.max r,
+        @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/cpu.max r,
+        @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/session-@{int}.scope/cpu.max r,
+        @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/session-@{int}.scope/memory.high r,
+        @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/session-@{int}.scope/memory.max r,
+        @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/cpu.max r,
+  owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/app-*-@{int}.scope/memory.high r,
+  owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/app-*-@{int}.scope/memory.max r,
+  owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/cpu.max r,
+
+        @{PROC}/version r,
+  owner @{PROC}/@{pid}/cgroup r,
+  owner @{PROC}/@{pid}/statm r,
+
+  # Safety mechanisms
+  deny @{bin}/ssh x,
+  deny /etc/machine-id r,
+  deny / r,
+  deny /home/ r,
+
+  # file_inherit
+  deny owner @{code_config_dirs}/logs/{,**} w,
+  deny owner /dev/shm/.org.chromium.Chromium.@{rand6} rw,
+
+  profile shell flags=(attach_disconnected) {
+    include <abstractions/base>
+    include <abstractions/consoles>
+    include <abstractions/development>
+    include <abstractions/nameservice-strict>
+    include <abstractions/shells>
+    include <abstractions/ssl_certs>
+
+    capability sys_ptrace,
+
+    # network inet6 stream port=1024-66666, # failed af match, MPC only
+
+    network netlink raw,
+
+    ptrace read,
+
+    unix (send receive) type=stream peer=(label=claude),
+
+    signal receive set=int peer=claude,
+
+    priority=1 @{bin}/dpkg-query  Px,
+    priority=1 @{bin}/flatpak     Px -> claude//flatpak,
+    priority=1 @{bin}/git         Px,
+    priority=1 @{bin}/journalctl  Px,
+    priority=1 @{ldd_path}        Px -> claude//ldd,
+
+    owner @{HOME}/.claude/projects/*/@{uuid}.jsonl r,
+    owner @{HOME}/.claude/shell-snapshots/* rw,
+
+    owner @{code_config_dirs}/logs/{,**} w,
+
+    owner @{user_projects_dirs}/ r,
+    owner @{user_projects_dirs}/** rwk,
+
+    owner @{tmp}/claude-* w,
+    owner @{tmp}/claude-shell/ rw,
+    owner @{tmp}/claude-shell/** mix,
+    owner @{tmp}/claude-shell/** rwlk -> @{tmp}/claude/**,
+    owner @{tmp}/claude{,-code}/ r,
+    owner @{tmp}/claude{,-code}/** mix,
+    owner @{tmp}/claude{,-code}/** rwlk -> @{tmp}/claude/**,
+
+          @{PROC}/ r,
+          @{PROC}/@{pids}/cmdline r,
+          @{PROC}/@{pids}/stat r,
+          @{PROC}/sys/kernel/pid_max r,
+          @{PROC}/tty/drivers r,
+    owner @{PROC}/@{pid}/environ r, # This raise the sys_ptrace capability requirement, only allowed on user processes
+    owner @{PROC}/@{pid}/loginuid r,
+
+    # Safety mechanisms
+    deny @{bin}/poweroff x,
+    deny @{bin}/reboot x,
+    deny @{bin}/rm x,
+    deny @{bin}/rmdir x,
+    deny @{bin}/shutdown x,
+    deny @{bin}/ssh x,
+    deny /home/ r,
+    deny owner @{HOME}/ r,
+
+    # file_inherit
+    deny /etc/debuginfod/ r,
+    deny owner @{code_config_dirs}/logs/{,**} w,
+    deny owner /dev/shm/.org.chromium.Chromium.@{rand6} rw,
+
+    include if exists <local/claude_shell>
+  }
+
+  profile flatpak {
+    include <abstractions/base>
+
+    unix (send receive) type=stream peer=(label=claude),
+
+    # Only runs: `flatpak --installations`
+    @{bin}/flatpak mr,
+
+    # file_inherit
+    deny network netlink raw,
+    deny owner @{HOME}/.claude/** r,
+    deny owner @{code_config_dirs}/logs/** w,
+    deny owner @{user_projects_dirs}/** r,
+    deny owner @{user_config_dirs}/** r,
+    deny owner @{code_config_dirs}/logs/{,**} w,
+    deny owner /dev/shm/.org.chromium.Chromium.@{rand6} rw,
+
+    include if exists <local/claude_flatpak>
+  }
+
+  profile ldd {
+    include <abstractions/base>
+    include <abstractions/consoles>
+    include <abstractions/nameservice-strict>
+
+    unix (send receive) type=stream peer=(label=claude),
+
+    @{ldd_path} mrix,
+
+    @{bin}/*               mr,
+    @{sbin}/*              mr,
+    @{lib}/**              mr,
+
+    # file_inherit
+    deny network netlink raw,
+    deny owner @{HOME}/.claude/** r,
+    deny owner @{code_config_dirs}/logs/** w,
+    deny owner @{user_projects_dirs}/** r,
+    deny owner @{user_config_dirs}/** r,
+    deny owner @{code_config_dirs}/logs/{,**} w,
+    deny owner /dev/shm/.org.chromium.Chromium.@{rand6} rw,
+
+    include if exists <local/claude_ldd>
+  }
+
+  include if exists <local/claude>
+}
+
+# vim:syntax=apparmor

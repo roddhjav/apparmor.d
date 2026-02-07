@@ -10,6 +10,7 @@
 # to run it as executable with a specific script.
 #
 # This currently concerns:
+#
 # - gnome-extension-ding (used to not be started as a module)
 # - org.gnome.ScreenSaver (simple dbus service)
 # - org.gnome.Shell.Extensions (full UI app, requires gnome-strict, graphics, ...)
@@ -41,7 +42,7 @@ profile gjs @{exec_path} flags=(attach_disconnected) {
   include <abstractions/bus/session/org.gtk.Private.RemoteVolumeMonitor>
   include <abstractions/bus/session/org.gtk.vfs.Daemon>
   include <abstractions/bus/session/org.gtk.vfs.Metadata>
-  include <abstractions/gstreamer-registry>
+  include <abstractions/gstreamer>
 
   unix type=stream peer=(label=gnome-shell),
 
@@ -76,8 +77,6 @@ profile gjs @{exec_path} flags=(attach_disconnected) {
   @{bin}/true                 rix,
   @{bin}/gnome-control-center  Px,
   @{bin}/nautilus              Px,
-
-  @{gstreamer_path}            Cx -> gstreamer,
 
   /usr/share/gnome-shell/extensions/gsconnect@andyholmes.github.io/{service/daemon.js,gsconnect-preferences} Px,
   @{user_share_dirs}/gnome-shell/extensions/gsconnect@andyholmes.github.io/{service/daemon.js,gsconnect-preferences} Px,
@@ -121,54 +120,6 @@ profile gjs @{exec_path} flags=(attach_disconnected) {
   /dev/dri/ r,
 
   deny @{user_share_dirs}/gvfs-metadata/* r,
-
-  profile gstreamer {
-    include <abstractions/base>
-    include <abstractions/bus-session>
-    include <abstractions/bus-system>
-    include <abstractions/bus/session/org.gtk.vfs.MountTracker>
-    include <abstractions/camera>
-    include <abstractions/consoles>
-    include <abstractions/fonts-strict>
-    include <abstractions/graphics>
-    include <abstractions/gstreamer>
-    include <abstractions/media-control>
-    include <abstractions/nameservice-strict>
-    include <abstractions/wayland>
-    include <abstractions/X-strict>
-
-    network (bind create getattr setopt getopt) netlink raw,
-    network receive netlink raw,
-
-    unix (bind listen) type=seqpacket addr=@@{hex},
-
-    dbus receive bus=session path=/
-         interface=org.freedesktop.DBus.Introspectable
-         member=Introspect
-         peer=(name=@{busname}, label=gnome-shell),
-
-    /usr/share/ladspa/rdf/{,**} r,
-    /usr/share/poppler/{,**} r,
-
-    owner @{DESKTOP_HOME}/.nv/ w,
-    owner @{DESKTOP_HOME}/.nv/ComputeCache/ w,
-    owner @{DESKTOP_HOME}/.nv/ComputeCache/** rwk,
-    owner @{desktop_cache_dirs}/nvidia/GLCache/ rw,
-    owner @{desktop_cache_dirs}/nvidia/GLCache/** rwk,
-
-    owner @{desktop_cache_dirs}/nvidia/GLCache/ rw,
-    owner @{desktop_cache_dirs}/nvidia/GLCache/** rwk,
-
-    /tmp/ r,
-    /var/tmp/ r,
-
-    @{sys}/devices/**/uevent r,
-
-          @{PROC}/devices r,
-    owner @{PROC}/@{pid}/task/@{tid}/comm rw,
-
-    include if exists <local/gjs_gstreamer>
-  }
 
   include if exists <local/gjs>
 }
