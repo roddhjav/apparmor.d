@@ -5,13 +5,19 @@
 
 # Profile for systemd (PID 1), it does not specify an attachment path because
 # it is directly loaded by systemd.
-
-# Only use this profile with a fully configured system. Otherwise it **WILL**
-# break your computer. See https://apparmor.pujol.io/full-system-policy/.
-
-# Distributions and other programs can add rules in the usr/systemd.d directory
-
+#
+# !!! danger
+#
+#     Only use this profile with a fully configured system. Otherwise it **WILL**
+#     break your computer. See https://apparmor.pujol.io/full-system-policy/.
+#
+# !!! info
+#
+#     Distributions and other programs can add rules in the `usr/systemd.d` directory
+#
 # Overall architecture of the systemd profiles:
+#
+# ```
 # systemd                                # PID 1, entrypoint, requires "Early policy"
 # ├── systemd                            # To restart itself
 # ├── systemd-generators-*               # Systemd system and environment generators
@@ -29,21 +35,26 @@
 #             ├── Px ->                  # Any user service without profile defined in the unit file (see systemd/full/systemd)
 #             ├── &*                     # Stacked user service as defined in the unit file (see systemd/full/systemd)
 #             └── sdu//systemctl         # Internal user systemctl
-
+# ```
+#
 # Advantages:
+#
 # - Differentiate systemd (PID 1) and `system --user`
 # - Keep `systemd` and systemd-user as mininal as possible, and transition to less privileged profiles.
 # - Allow the executor profiles to handle stacked profiles.
 # - Most additions need to be done in the `sd`/`sdu` profile, not in `systemd`/`systemd-user`.
 # - Dedicated `sd-mount` profile for most mount from the unit services.
-
-
-# TODO: rework this to get a controlled environment:
-# - No global allow anymore: in high security environments, we must manage the list
-#   of program/service that can be started by systemd and ensure that they are all
-#   listed and confined. Programs not listed will not be able to start.
-# - Outside common systemd service, the list may have to be automatically
-#   generated at install time, in `/etc/apparmor.d/usr/systemd.d/exec`
+#
+# !!! warning "Work in Progress"
+#
+#     This profile stack can be changed to provide a more controlled environment:
+#
+#     - No global allow anymore: in high security environments, we must manage the list
+#       of program/service that can be started by systemd and ensure that they are all
+#       listed and confined. Programs not listed will not be able to start.
+#     - Outside common systemd service, the list may have to be automatically
+#       generated at install time, in `/etc/apparmor.d/usr/systemd.d/exec`
+#
 
 abi <abi/4.0>,
 
