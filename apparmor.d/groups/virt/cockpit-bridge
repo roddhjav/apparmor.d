@@ -11,6 +11,7 @@ profile cockpit-bridge @{exec_path} {
   include <abstractions/base>
   include <abstractions/bus-session>
   include <abstractions/bus-system>
+  include <abstractions/bus/system/org.freedesktop.hostname1>
   include <abstractions/bus/system/org.freedesktop.timedate1>
   include <abstractions/bus/system/org.freedesktop.UDisks2>
   include <abstractions/consoles>
@@ -33,6 +34,8 @@ profile cockpit-bridge @{exec_path} {
 
   ptrace read,
 
+  unix (send receive) type=stream peer=(label=cockpit-askpass),
+
   signal send set=term peer=cockpit-pcp,
   signal send set=term peer=dbus-daemon,
   signal send set=term peer=journalctl,
@@ -41,21 +44,23 @@ profile cockpit-bridge @{exec_path} {
   signal (send receive) set=term peer=cockpit-bridge//sudo,
 
   #aa:dbus talk bus=session name=org.libvirt label=libvirt-dbus
-  #aa:dbus talk bus=system name=org.freedesktop.PackageKit path=/**  label=packagekitd
+  #aa:dbus talk bus=system name=org.fedoraproject.FirewallD1 label=firewalld
+  #aa:dbus talk bus=system name=org.freedesktop.PackageKit path=/** label=packagekitd
   #aa:dbus talk bus=system name=org.freedesktop.systemd1 label=@{p_systemd}
   #aa:dbus talk bus=system name=org.libvirt label=libvirt-dbus
 
   @{exec_path} mr,
 
+  @{python_path}              ix,
   @{bin}/cat                  ix,
   @{bin}/date                 ix,
+  @{bin}/file                 ix,
   @{bin}/find                 ix,
   @{bin}/ip                   ix,
-  @{python_path}              ix,
   @{bin}/test                 ix,
-  @{bin}/file                 ix,
 
-  @{bin}/virt-xml-validate PUx,
+  @{bin}/virt-xml            PUx,
+  @{bin}/virt-xml-validate   PUx,
 
   @{bin}/chage                Px,
   @{sbin}/dmidecode           Px,
@@ -121,9 +126,11 @@ profile cockpit-bridge @{exec_path} {
 
   /dev/ptmx rw,
 
-  profile sudo {
+  profile sudo flags=(attach_disconnected) {
     include <abstractions/base>
     include <abstractions/app/sudo>
+
+    unix (send receive) type=stream peer=(label=cockpit-bridge),
 
     signal (send receive) set=(cont hup term) peer=cockpit-bridge,
 
