@@ -125,6 +125,9 @@ func Configure(r *runtime.Runners) *runtime.Runners {
 		r.RBAC = true
 	}
 
+	// Set modes (complain, enforce...) as definied in dist/flags
+	r.Builders.Add(builder.NewProfileMode())
+
 	if abi != nilABI {
 		r.ABI = abi
 	}
