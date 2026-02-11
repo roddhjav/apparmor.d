@@ -9,10 +9,11 @@ include <tunables/global>
 @{exec_path} = @{lib}/systemd/systemd-machined
 profile systemd-machined @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/base>
+  include <abstractions/bus-session>
   include <abstractions/bus-system>
+  include <abstractions/common/systemd>
   include <abstractions/consoles>
   include <abstractions/nameservice-strict>
-  include <abstractions/common/systemd>
 
   capability chown,
   capability dac_override,
@@ -37,17 +38,17 @@ profile systemd-machined @{exec_path} flags=(attach_disconnected,mediate_deleted
 
   ptrace read peer=@{p_systemd},
   ptrace read peer=libvirtd,
+  ptrace read peer=mkosi,
   ptrace read peer=systemd-nspawn,
 
   unix type=stream addr=@@{udbus}/bus/systemd-machine/system,
+  unix type=stream addr=@@{udbus}/bus/systemd-machine/user,
 
   #aa:dbus own bus=system name=org.freedesktop.machine1
 
   #aa:dbus talk bus=system name=org.freedesktop.systemd1 label="@{p_systemd}"
 
   @{exec_path} mr,
-
-  /etc/machine-id r,
 
   / r,
   @{att}/ r,
@@ -59,9 +60,14 @@ profile systemd-machined @{exec_path} flags=(attach_disconnected,mediate_deleted
   owner @{run}/systemd/nspawn/locks/ w,
   owner @{run}/systemd/nspawn/locks/** rwk,
 
+  owner @{run}/user/@{uid}/systemd/machines/{,**} rwl,
+  owner @{run}/user/@{uid}/systemd/notify w,
+
   @{run}/systemd/machine/{,**} rwl,
   @{run}/systemd/machines/{,**} rwl,
   @{run}/systemd/resolve.hook/{,**} rwl,
+
+  owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/systemd-machined.service/memory.pressure rw,
 
   @{PROC}/@{pid}/cgroup r,
   @{PROC}/@{pid}/fdinfo/@{int} r,
