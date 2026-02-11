@@ -93,9 +93,6 @@ func main() {
 		// Set distribution specificities
 		Add(configure.NewConfigure()).
 
-		// Set flags as definied in dist/flags
-		Add(configure.NewSetFlags()).
-
 		// Overwrite dummy upstream profile
 		Add(configure.NewOverwrite(false)).
 
