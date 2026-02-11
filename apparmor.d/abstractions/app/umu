@@ -6,8 +6,9 @@
   abi <abi/4.0>,
 
   include <abstractions/common/game>
-  include <abstractions/wine>
+  include <abstractions/dconf-write>
   include <abstractions/deny-sensitive-home>
+  include <abstractions/wine>
 
   network inet dgram,
   network inet stream,
@@ -18,6 +19,7 @@
   signal (send receive) peer=umu-bwrap,
   signal (send receive) peer=umu-bwrap//&umu-game,
   signal (send receive) peer=umu-game,
+  signal (send receive) peer=umu-run,
 
   unix type=seqpacket peer=(label=umu-bwrap),
   unix type=stream    peer=(label=umu-bwrap),
@@ -52,6 +54,7 @@
   @{bin}/steam-runtime-launcher-interface-@{int}         ix,
   @{bin}/steam-runtime-system-info                       ix,
   @{bin}/steam-runtime-urlopen                           ix,
+  @{bin}/zenity                                          ix,
   @{python_path}                                        rix,
   @{run}/host/@{bin}/localedef                           ix,
   @{run}/host/@{sbin}/ldconfig                           ix,
@@ -65,6 +68,7 @@
   @{steam_share_dirs}/compatibilitytools.d/ r,
   @{steam_share_dirs}/compatibilitytools.d/*/ r,
   @{steam_share_dirs}/compatibilitytools.d/*/** mrix, # TODO: -> &wine ?, with namespace
+  @{steam_share_dirs}/compatibilitytools.d/*/**.msi k,
 
   @{runtime_dirs}/pressure-vessel/@{bin}/** ix,
   @{runtime_dirs}/pressure-vessel/@{lib}/** mr,
@@ -72,6 +76,8 @@
 
   @{run}/host/@{lib}/**.dll m,
   @{run}/host/@{lib}/**.so* m,
+
+  /usr/share/zenity/{,**} r,
 
   owner @{lib}/ r,
   owner /usr/local/lib/ r,
@@ -85,15 +91,22 @@
   owner /var/cache/fontconfig/** rwl,
 
   owner @{HOME}/.steam/steam.pid r,
+  owner @{HOME}/steam-@{int}.log rw,
 
   owner @{att}@{run}/user/@{uid}/bus rw,
   owner @{att}@{run}/user/@{uid}/pulse/native rw,
+  owner @{att}@{run}/user/@{uid}/wayland-@{int} rw,
+
+  owner @{steam_share_dirs}/ r,
+  owner @{steam_share_dirs}/compatibilitytools.d/{,**/}__pycache__/ w,
+  owner @{steam_share_dirs}/compatibilitytools.d/{,**/}__pycache__/**.pyc.@{u64} w,
 
   owner @{runtime_dirs}/pressure-vessel/lib/@{multiarch}/steam-runtime-tools-0/libcap.so.2 mr,
   owner @{runtime_dirs}/var/tmp-@{rand6}/.ref rw,
   owner @{att}@{runtime_dirs}/var/tmp-@{rand6}/.ref rw,
 
   # file_inherit
+        @{user_share_dirs}/umu/steamrt3/VERSIONS.txt r,
         @{user_share_dirs}/umu/steamrt3/var/tmp-@{rand6}/usr/.ref rw,
   @{att}@{user_share_dirs}/umu/steamrt3/var/tmp-@{rand6}/usr/.ref rw,
 
@@ -104,8 +117,10 @@
   owner @{wineprefix_dirs}/ rw,
   owner @{wineprefix_dirs}/** rwk,
 
+        /tmp/ r,
   owner @{tmp}/pressure-vessel-libs-@{rand6}/{,**} rwlk,
   owner @{tmp}/pressure-vessel-locales-@{rand6}/{,**} rwlk,
+  owner @{tmp}/umu_crashreports/{,**} rw,
 
         @{run}/host/fonts-cache/{,**} r,
         @{run}/host/fonts/{,**} r,
