@@ -172,20 +172,14 @@ After 2 or 3 iterations, you should have a working profile.
 
 ## Development Settings
 
-### Profile flags
+### Profile mode
 
-Flags for all profiles in this project are tracked under the [`dists/flags`](https://github.com/roddhjav/apparmor.d/tree/main/dists/flags) directory. It is used for profile that are not considered stable. Files in this directory should respect the following format: `<profile> <flags>`, flags should be comma separated.
+Mode for all profiles (`complain`, `enforce`...) in this project are tracked under the [`dists/flags`](https://github.com/roddhjav/apparmor.d/tree/main/dists/flags) directory. It is used for profile that are not considered stable. Files in this directory should respect the following format: `<profile> <mode>`.
 
 For instance, to move `adb` in *complain* mode, edit **[`dists/flags/main.flags`](https://github.com/roddhjav/apparmor.d/blob/main/dists/flags/main.flags)** and add the following line:
 ```sh
 adb complain
 ```
-
-Beware, flags defined in this file overwrite flags in the profile. So you may need to add other flags. Example for `gnome-shell`:
-```sh
-gnome-shell attach_disconnected,mediate_deleted,complain
-```
-
 
 ### Ignore profiles
 
