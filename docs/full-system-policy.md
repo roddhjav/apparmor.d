@@ -159,7 +159,7 @@ In an even more secure environment, it can also be used to strictly limit the li
 
 !!! note "Profile requirement"
 
-    To work as intended, all privileged services **must** have a profile For a given distribution, the list of these services can be found under:
+    To work as intended, all privileged services **must** have a profile. For a given distribution, the list of these services can be found under:
     ```
     /usr/lib/systemd/system/*.service
     /usr/lib/systemd/system-environment-generators/*
