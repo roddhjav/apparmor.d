@@ -1,0 +1,71 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2024 Besanon  <m231009ts@mailfence.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/lxqt-config-input
+profile lxqt-config-input @{exec_path} {
+  include <abstractions/audio-client>
+  include <abstractions/base>
+  include <abstractions/bus-system>
+  include <abstractions/bus/system/org.bluez>
+  include <abstractions/bus/system/org.freedesktop.login1>
+  include <abstractions/devices-usb>
+  include <abstractions/bus-session>
+  include <abstractions/bus-accessibility>
+  include <abstractions/graphics>
+  include <abstractions/lxqt>
+  include <abstractions/nameservice-strict>
+
+  signal (read) set=(kill,term) peer=lxqt-session,
+
+  @{exec_path} mr,
+
+  @{bin}/setxkbmap rix,
+
+  /etc/udev/udev.conf r,
+
+  owner @{user_config_dirs}/lxqt/lxqt.conf.@{rand6} l -> @{user_config_dirs}/lxqt/#@{int},
+  owner @{user_config_dirs}/lxqt/lxqt.conf.@{rand6} rw,
+  owner @{user_config_dirs}/lxqt/session.conf.@{rand6} l -> @{user_config_dirs}/lxqt/#@{int},
+  owner @{user_config_dirs}/lxqt/session.conf.@{rand6} rw,
+  owner @{user_config_dirs}/lxqt/lxqt.conf.lock rwk,
+  owner @{user_config_dirs}/lxqt/lxqt-config-input.conf.lock rwk,
+  owner @{user_config_dirs}/lxqt/lxqt-config-input.conf.@{rand6}  rwkl -> @{user_config_dirs}/lxqt/#@{int},
+  owner @{user_config_dirs}/lxqt/#@{int}  rwk,
+  owner @{user_config_dirs}/lxqt/session.conf.lock rwk,
+  owner @{user_config_dirs}/lxqt/lxqt-config-input.conf rwl -> @{user_config_dirs}/lxqt/#@{int},
+
+  owner /tmp/@{int} r,
+
+  @{run}/udev/data/c@{int}:* r,  # for /dev/input/*
+  @{run}/udev/data/+sound:card@{int} r,   # for Soundcards
+  @{run}/udev/data/+bluetooth:* r, # For bluetooth adapters, controllers, and active connections.
+  @{run}/udev/data/+platform:* r,  # Identifies onboard devices (laptop/board model, power controllers, thermal sensors)
+  @{run}/udev/data/+acpi:* r,  # Exposes ACPI objects (power buttons, batteries, thermal)
+  @{run}/udev/data/+i2c:* r,  # For Inter-Integrated Circuit, low-speed peripherals (sensors, EEPROMs, etc.)
+  @{run}/udev/data/+backlight:* r,  # For background light Display
+  @{run}/udev/data/+leds:* r,  # for state of LEDs
+  @{run}/udev/data/n@{int} r,  # For network interface
+  @{run}/udev/data/+input:* r,  # for mouse, keyboard, touchpad
+  @{run}/udev/data/+dmi:* r,  # for motherboard info
+  @{run}/udev/data/+drm:* r,  # For screen outputs
+  @{run}/udev/data/+pci:* r,  # Identifies all PCI devices (CPU, GPU, Network, Disks, USB, etc.)
+  @{run}/udev/data/+rfkill:* r,  # Kill switch for wireless devices (Wi-Fi, Bluetooth, NFC) to save power
+
+  @{sys}/bus/**/devices/ r,   # ALL under /sys/bus/* is asked for read
+  @{sys}/class/**/ r, # ALL but usbmisc under /sys/class is being read
+  @{sys}/devices/**/uevent r,
+
+  /dev/tty rw,
+
+  deny @{sys}/class/usbmisc/ r,
+
+  include if exists <local/lxqt-config-input>
+}
+
+# vim:syntax=apparmor
