@@ -6,7 +6,7 @@ title: Workflow
 
 <div class="grid cards" markdown>
 
--   :material-file-document: &nbsp; **[Write a blanck profile](#add-a-blank-profile)**
+-   :material-file-document: &nbsp; **[Write a blank profile](#add-a-blank-profile)**
 
 </div>
 <div class="grid cards" markdown>
