@@ -38,6 +38,7 @@ profile vlc @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
   @{open_path}           rPx -> child-open-help,
   @{bin}/xdg-screensaver rPx,
+  @{bin}/proxy            Cx -> proxy,
 
   /usr/share/vlc/{,**} r,
 
@@ -85,6 +86,15 @@ profile vlc @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   # Silencer
   deny @{lib}/@{multiarch}/vlc/{,**} w,
   deny @{user_share_dirs}/gvfs-metadata/{*,} r,
+
+  profile proxy {
+    include <abstractions/base>
+    include <abstractions/dconf-write>
+
+    @{bin}/proxy mr,
+
+    include if exists <local/vlc_proxy>
+  }
 
   include if exists <local/vlc>
 }

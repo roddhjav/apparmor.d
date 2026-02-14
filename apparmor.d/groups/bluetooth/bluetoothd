@@ -25,6 +25,18 @@ profile bluetoothd @{exec_path} flags=(attach_disconnected) {
   network netlink raw,
 
   #aa:dbus own bus=system name=org.bluez path=/{,**}
+  #aa:dbus talk bus=system name=org.mpris.MediaPlayer2.Player path=/{,**} label=mpris-proxy
+
+  # Missing rules from the directive above as these one are not standard
+  # Part of abstractions/bus/system/org.bluez
+  dbus send bus=system path=/
+       interface=org.freedesktop.DBus.ObjectManager
+       member=GetManagedObjects
+       peer=(name=org.bluez, label="@{p_bluetoothd}"),
+  dbus receive bus=system path=/
+       interface=org.freedesktop.DBus.ObjectManager
+       member={InterfacesAdded,InterfacesRemoved}
+       peer=(name=@{busname}, label="@{p_bluetoothd}"),
 
   @{exec_path} mr,
 

@@ -19,7 +19,7 @@ profile systemd-dissect @{exec_path} flags=(attach_disconnected) {
 
   mount                                             -> /tmp/dissect-@{rand6}/,
   mount fstype=tmpfs options=(rw nodev)      rootfs -> @{run}/systemd/dissect-root/,
-  mount options=(ro nodev)               /dev/loop* -> @{run}/systemd/dissect-root/{,**/},
+  mount options=(ro nodev)         @{att}/dev/loop* -> @{run}/systemd/dissect-root/{,**/},
   mount options=(rw nodev)                          -> /mnt/*/,
   mount options=(rw rshared rslave)                 -> /,
 
@@ -51,9 +51,11 @@ profile systemd-dissect @{exec_path} flags=(attach_disconnected) {
   @{PROC}/@{pid}/cgroup r,
   @{PROC}/@{pid}/mountinfo r,
 
+        /dev/loop* rwk,
+  @{att}/dev/loop* wk,
+
   /dev/btrfs-control rw,
   /dev/loop-control rwk,
-  /dev/loop* rwk,
   /dev/mapper/control w,
 
   include if exists <local/systemd-dissect>

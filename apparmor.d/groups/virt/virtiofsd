@@ -29,15 +29,18 @@ profile virtiofsd @{exec_path} flags=(attach_disconnected) {
   mount options=(rw, nosuid, nodev, noexec, relatime) -> @{PROC},
   mount options=(rw, rslave) -> /,
 
-  mount options=(rw, rbind) -> @{user_publicshare_dirs}/,
-  mount options=(rw, rbind) -> @{user_vm_dirs}/,
-  mount options=(rw, rbind) -> @{user_vmshare_dirs}/,
+  mount options=(rw, rbind) -> @{user_projects_dirs}/{,**/},
+  mount options=(rw, rbind) -> @{user_publicshare_dirs}/{,**/},
+  mount options=(rw, rbind) -> @{user_vm_dirs}/{,**/},
+  mount options=(rw, rbind) -> @{user_vmshare_dirs}/{,**/},
 
   umount /,
 
-  pivot_root @{user_publicshare_dirs}/, # TODO: -> pivoted,
-  pivot_root @{user_vm_dirs}/,
-  pivot_root @{user_vmshare_dirs}/,
+  # TODO: -> pivoted
+  pivot_root oldroot=@{user_projects_dirs}/{,**/}    @{user_projects_dirs}/{,**/},
+  pivot_root oldroot=@{user_publicshare_dirs}/{,**/} @{user_publicshare_dirs}/{,**/},
+  pivot_root oldroot=@{user_vm_dirs}/{,**/}          @{user_vm_dirs}/{,**/},
+  pivot_root oldroot=@{user_vmshare_dirs}/{,**/}     @{user_vmshare_dirs}/{,**/},
 
   signal (receive) set=term peer=libvirtd,
 
@@ -48,6 +51,7 @@ profile virtiofsd @{exec_path} flags=(attach_disconnected) {
   / r,
   /var/lib/libvirt/qemu/*/fs@{int}-fs.sock rw,
 
+  @{user_projects_dirs}/{,**} r,
   @{user_publicshare_dirs}/{,**} r,
   @{user_vm_dirs}/{,**} r,
   @{user_vmshare_dirs}/{,**} r,
