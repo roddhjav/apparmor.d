@@ -1,0 +1,40 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{name} = code{,-oss} vscode{,-oss}
+@{config} = Code Code?-?OSS Code?-?Insiders
+@{config_dirs} = @{HOME}/.@{name} @{user_config_dirs}/@{config}
+@{ext_dirs} = @{config_dirs}/extensions
+@{lib_dirs} = @{lib}/code/extensions/git
+
+@{exec_path} = @{lib}/code/extensions/git/dist/askpass.sh @{lib}/code/extensions/git/dist/ssh-askpass.sh
+profile code-extension-git-askpass @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/app/code-extension>
+
+  network inet dgram,
+  network inet6 dgram,
+
+  @{exec_path} mr,
+
+  @{sh_path}                      rix,
+  @{bin}/cat                      rix,
+  @{bin}/mktemp                   rix,
+  @{bin}/rm                       rix,
+  @{lib}/electron@{int}/electron  rix,
+
+  /usr/share/terminfo/** r,
+
+  owner @{tmp}/tmp.@{rand10} rw,
+
+  /dev/tty rw,
+
+  include if exists <local/code-extension-git-askpass>
+}
+
+# vim:syntax=apparmor

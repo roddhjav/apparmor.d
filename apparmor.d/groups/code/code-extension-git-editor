@@ -1,0 +1,34 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{name} = code{,-oss} vscode{,-oss}
+@{config} = Code Code?-?OSS Code?-?Insiders
+@{config_dirs} = @{HOME}/.@{name} @{user_config_dirs}/@{config}
+@{ext_dirs} = @{config_dirs}/extensions
+@{lib_dirs} = @{lib}/code/extensions/git
+
+@{exec_path} = @{lib}/code/extensions/git/dist/git-editor.sh
+profile code-extension-git-editor @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/app/code-extension>
+
+  @{exec_path} mr,
+
+  @{sh_path}                      rix,
+  @{lib}/electron@{int}/electron  rix,
+
+  owner @{run}/user/@{uid}/vscode-git-@{hex}.sock rw,
+
+  @{sys}/devices/system/cpu/cpufreq/policy@{int}/cpuinfo_max_freq r,
+
+  /dev/tty rw,
+
+  include if exists <local/code-extension-git-editor>
+}
+
+# vim:syntax=apparmor
