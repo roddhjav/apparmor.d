@@ -1,0 +1,24 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Allow reading CPU and memory limits from cgroup hierarchy
+
+  abi <abi/4.0>,
+
+        @{sys}/fs/cgroup/user.slice/memory.max r,
+        @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/memory.max r,
+        @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/memory.max r,
+  owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/memory.max r,
+
+        @{sys}/fs/cgroup/cpu.max r,
+        @{sys}/fs/cgroup/user.slice/cpu.max r,
+        @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/cpu.max r,
+        @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/cpu.max r,
+  owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/cpu.max r,
+
+  owner @{PROC}/@{pid}/cgroup r,
+
+  include if exists <abstractions/cgroup-limits.d>
+
+# vim:syntax=apparmor
