@@ -11,6 +11,7 @@ include <tunables/global>
 profile containerd-shim-runc-v2 @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/consoles>
+  include <abstractions/graphics>
 
   capability dac_override,
   capability dac_read_search,
@@ -18,6 +19,7 @@ profile containerd-shim-runc-v2 @{exec_path} flags=(attach_disconnected) {
   capability sys_admin,
   capability sys_ptrace,
   capability sys_resource,
+  capability perfmon,
 
   ptrace (read) peer=containerd,
   ptrace (read) peer=unconfined,
@@ -31,6 +33,10 @@ profile containerd-shim-runc-v2 @{exec_path} flags=(attach_disconnected) {
   @{exec_path} mrix,
 
   @{sbin}/runc rPx,
+  @{bin}/nvidia-container-runtime ix,
+
+  /etc/nvidia-container-runtime/config.toml r,
+  /etc/os-release r,
 
   /tmp/runc-process@{int} rw,
   /tmp/pty@{int}/ rw,
@@ -54,9 +60,12 @@ profile containerd-shim-runc-v2 @{exec_path} flags=(attach_disconnected) {
   @{PROC}/@{pids}/cgroup r,
   @{PROC}/@{pids}/mountinfo r,
   @{PROC}/@{pids}/oom_score_adj rw,
+  @{PROC}/@{pid}/task/@{tid}/comm w,
   @{PROC}/sys/net/core/somaxconn r,
 
   @{att}/dev/pts/ptmx rw,
+
+  /dev/nvidia-caps/nvidia-cap@{int} r,
 
   include if exists <local/containerd-shim-runc-v2>
 }
