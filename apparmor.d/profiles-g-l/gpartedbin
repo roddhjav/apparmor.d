@@ -7,7 +7,7 @@ abi <abi/4.0>,
 
 include <tunables/global>
 
-@{exec_path} = @{sbin}/gpartedbin
+@{exec_path} = @{sbin}/gpartedbin @{lib}/{,gparted/}gpartedbin
 profile gpartedbin @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/dconf-write>
@@ -35,9 +35,10 @@ profile gpartedbin @{exec_path} flags=(attach_disconnected) {
   @{sbin}/hdparm    rPx,
   @{bin}/kmod       rPx,
 
-  @{bin}/mount      rCx -> mount,
-  @{bin}/udevadm    rCx -> udevadm,
-  @{bin}/umount     rCx -> umount,
+  @{bin}/dbus-launch   rCx -> bus,
+  @{bin}/mount         rCx -> mount,
+  @{bin}/udevadm       rCx -> udevadm,
+  @{bin}/umount        rCx -> umount,
 
   @{sbin}/btrfs     rPx,
   @{sbin}/btrfstune rPx,
@@ -46,13 +47,18 @@ profile gpartedbin @{exec_path} flags=(attach_disconnected) {
   @{sbin}/dumpe2fs  rPx,
   @{sbin}/e2fsck    rPx,
   @{sbin}/e2image   rPx,
+  @{sbin}/e2label   rPx,
+  @{bin}/exfatfsck  rix,
+  @{sbin}/fatlabel  rPx,
   @{sbin}/fsck.*    rPUx,
   @{sbin}/lvm       rPUx,
   @{sbin}/mdadm     rPUx,
   @{sbin}/mke2fs    rPx,
   @{sbin}/mkfs.*    rPUx,
+  @{bin}/mkexfatfs  rix,
   @{sbin}/mkntfs    rPx,
   @{sbin}/mkswap    rPx,
+  @{bin}/mkudffs    rix,
   @{bin}/mtools     rPx,
   @{bin}/ntfsinfo   rPx,
   @{sbin}/ntfslabel rPx,
@@ -74,15 +80,28 @@ profile gpartedbin @{exec_path} flags=(attach_disconnected) {
 
   owner @{tmp}/gparted-*/ rw,
 
+  @{run}/blkid/blkid.tab r,
   @{run}/mount/utab r,
+  @{run}/user/@{uid}/xauth_@{rand6} r,
+
+  @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/app-gparted@@{hex32}.service/cpu.max r,
+  @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/cpu.max r,
 
         @{PROC}/devices r,
         @{PROC}/partitions r,
         @{PROC}/swaps r,
         @{PROC}/version r,
+        @{PROC}/@{pid}/cgroup r,
   owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/mountinfo r,
   owner @{PROC}/@{pid}/mounts r,
+
+  profile bus {
+    include <abstractions/attached/base>
+    include <abstractions/app/bus>
+    
+    include if exists <local/gpartedbin_bus>
+  }
 
   profile mount {
     include <abstractions/base>
