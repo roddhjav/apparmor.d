@@ -66,12 +66,14 @@ gnome-shell (complain)          user        /usr/bin/gnome-shell
 ps (complain)                   user        ps auxZ
 ```
 
-??? info "Hide the kernel thread in `ps`"
-
-    To hide the kernel thread in `ps` use `ps auxZ | grep -v '\[.*\]'`. You can
+??? info "Display the process hierarchy and hide the kernel thread in `ps`"
+ 
+    In order to list above processes with displaying the process hierarchy you can, alternatively, use `ps auxfZ`. 
+    
+    To hide the kernel thread in `ps` use `LIBPROC_HIDE_KERNEL=1 ps auxfZ`. You can
     add an alias in your shell:
     ```sh
-    alias p="ps auxZ | grep -v '\[.*\]'"
+    alias p="LIBPROC_HIDE_KERNEL=1 ps auxfZ"
     ```
 
 
