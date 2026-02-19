@@ -1,0 +1,91 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2024 Besanon  <m231009ts@mailfence.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/startlxqtwayland
+profile startlxqtwayland @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/lxqt>
+
+  signal (receive) set=(term) peer=sddm,
+
+  @{exec_path} mr,
+
+  @{bin}/cat rix,
+  @{bin}/cut rix,
+  @{bin}/cp  rix,
+  @{bin}/dirname rix,
+  @{bin}/labwc  rpx,
+  @{bin}/{,e}grep rix,
+  @{bin}/{m,g,}awk rix,
+  @{bin}/mkdir rix,
+  @{sh_path} rix,
+  @{bin}/lxqt-session rPx,
+  @{bin}/systemd-detect-virt rPx,
+  @{bin}/systemctl                           rCx -> systemctl,
+  @{bin}/dbus-update-activation-environment  rCx -> dbus,
+
+  /usr/share/color-schemes/{,**} r,
+  /usr/share/desktop-directories/{,**} r,
+  /usr/share/icu/@{int}.@{int}/*.dat r,
+  /usr/share/kservices5/{,**} r,
+  /usr/share/mime/{,**} r,
+
+  /etc/locale.alias r,
+  /etc/machine-id r,
+  /etc/xdg/menus/{,**} r,
+
+  @{HOME}/ r,
+  owner @{HOME}/.Xauthority r,
+
+  owner @{user_cache_dirs}/ rw,
+  owner @{user_cache_dirs}/#@{int} rw,
+        @{user_cache_dirs}/ksycoca5_* rwkl -> @{user_cache_dirs}/#@{int},
+
+  owner @{user_config_dirs}/#@{int} rw,
+  owner @{user_config_dirs}/labwc/ rw,
+  owner @{user_config_dirs}/labwc/** rw,
+  owner @{user_config_dirs}/lxqt/ rw,
+  owner @{user_config_dirs}/menus/{,**} r,
+  owner @{user_config_dirs}/lxqt/wayland/ rw,
+
+  owner @{user_share_dirs}/kservices5/{,**} r,
+  owner @{user_share_dirs}/sddm/wayland-session.log rw,
+  owner @{user_share_dirs}/sddm/xorg-session.log rw,
+
+  owner /tmp/#@{int} rw,
+  owner /tmp/startlxqt.@{rand6} rwl -> /tmp/#@{int},
+
+  owner @{run}/user/@{uid}/ r,
+        @{PROC}/sys/kernel/core_pattern r,
+
+  /dev/tty rw,
+  /dev/tty@{int} rw,
+
+  include if exists <local/startlxqtwayland>
+
+  profile systemctl flags=(attach_disconnected) {
+    include <abstractions/base>
+    include <abstractions/app/systemctl>
+
+    include if exists <local/startlxqtwayland_systemctl>
+  }
+
+  profile dbus {
+    include <abstractions/base>
+
+    @{bin}/dbus-update-activation-environment mr,
+
+    owner @{HOME}/.xsession-errors w,
+
+    include if exists <local/startlxqtwayland_dbus>
+  }
+}
+
+# vim:syntax=apparmor
