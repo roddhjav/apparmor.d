@@ -36,7 +36,7 @@ include <tunables/global>
 @{cache_dirs} = @{user_cache_dirs}/@{name}
 
 @{exec_path} = @{bin}/@{name} @{lib_dirs}/@{name}
-profile code @{exec_path} flags=(attach_disconnected) {
+profile code @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/base>
   include <abstractions/audio-client>
   include <abstractions/common/electron>
@@ -127,6 +127,8 @@ profile code @{exec_path} flags=(attach_disconnected) {
   owner @{tmp}/ovsx-@{rand6}/{,**} rw,
   owner @{tmp}/tmp-@{int}-@{rand12}/ w,
 
+  @{sys}/kernel/mm/transparent_hugepage/enabled r,
+
         @{PROC}/loadavg r,
         @{PROC}/sys/kernel/osrelease r,
   owner @{PROC}/@{pid}/clear_refs w,
@@ -158,9 +160,20 @@ profile code @{exec_path} flags=(attach_disconnected) {
 
     owner @{config_dirs}/CachedExtensionVSIXs/* rk,
 
+    owner /dev/shm/.org.chromium.Chromium.@{rand6} rw, # file_inherit
+
     owner @{tmp}/.@{domain}.@{rand6} rw,
-    owner @{tmp}/cdotnet-diagnostic-*-socket rw,
+    owner @{tmp}/{,c}dotnet-diagnostic-*-socket rw,
     owner @{tmp}/clr-debug-pipe-* rw,
+
+          @{sys}/devices/system/cpu/cpu@{int}/cache/index@{int}/level r,
+          @{sys}/devices/system/cpu/cpu@{int}/cache/index@{int}/size r,
+          @{sys}/devices/system/node/ r,
+          @{sys}/fs/cgroup/user.slice/memory.max r,
+          @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/memory.max r,
+          @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/memory.max r,
+    owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/app-gnome-code-*.scope/memory.max r,
+    owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/memory.max r,
 
     owner @{PROC}/@{pid}/cgroup r,
     owner @{PROC}/@{pid}/mountinfo r,

@@ -21,8 +21,10 @@ profile code-shells flags=(attach_disconnected) {
   include <abstractions/consoles>
   include <abstractions/development>
   include <abstractions/gtk-strict>
+  include <abstractions/nameservice-strict>
   include <abstractions/shells>
   include <abstractions/ssl_certs>
+  include <abstractions/wutmp>
 
   network inet dgram,
   network inet stream,
@@ -30,41 +32,69 @@ profile code-shells flags=(attach_disconnected) {
   network inet6 stream,
   network netlink raw,
 
-  signal send set=term peer=gitstatusd,
+  signal send peer=gitstatusd,
+  signal send peer=git,
 
   ptrace read peer=git,
   ptrace read peer=child-pager,
 
   @{shells_path} mrix,
 
-  # TODO: Work in progress. This will be restricted later.
-  file,
-
-  # Handle shell prompts, out of scope, thus unconfined
-  @{bin}/starship                Cx -> helper,
-
   # Give glycin higher priority than `@{bin}/bwrap ix` got in the development abs
   priority=10 @{bin}/bwrap       Px -> :glycin:bwrap,
 
-  # Well known programs used in shells, when we also have specific profiles for them
+  # Well known programs used in shells, when we also have specific profiles for
+  # them and want to allow them, event if they need more/different permissions
+  # than what is allowed in this profile.
+  @{bin}/aa-log                  Px,
   @{bin}/claude                  Px,
+  @{bin}/docker                  Ux, # TODO Px,
+  @{bin}/dpkg-query              Px,
   @{bin}/git                     Px,
   @{bin}/htop                    Px,
+  @{bin}/ip                      Px,
+  @{bin}/journalctl              Px,
+  @{bin}/man                     Px,
+  @{bin}/nproc                   Px,
   @{bin}/ps                      Px,
-  @{bin}/aa-log                  Px,
+  @{bin}/ssh                     Px,
+  @{bin}/top                     Px,
+  @{bin}/uptime                  Px,
+  @{bin}/w                       Px,
   /opt/claude-code/bin/claude    Px,
+
+  # Handle shell prompts, out of scope, thus unconfined
+  @{bin}/starship                Cx -> starship,
 
   # Well known shells tools
   priority=1 @{user_cache_dirs}/gitstatus/gitstatusd{,-*} Px,
   priority=1 /usr/share/zsh-theme-powerlevel{9,10}k/gitstatus/usrbin/gitstatusd{,-*} Px,
 
+  owner @{config_dirs}/User/globalStorage/**/ r,
+
   owner @{user_projects_dirs}/ r,
   owner @{user_projects_dirs}/** rwkl -> @{user_projects_dirs}/**,
 
-  profile helper {
-    include <abstractions/base>
+  owner @{user_config_dirs}/git/*config r,
 
-    include if exists <local/code-shells_helper>
+  profile starship {
+    include <abstractions/base>
+    include <abstractions/consoles>
+    include <abstractions/nameservice-strict>
+
+    @{bin}/starship mr,
+
+    owner @{user_cache_dirs}/starship/ rw,
+    owner @{user_cache_dirs}/starship/** rw,
+    owner @{user_config_dirs}/starship.toml r,
+
+    owner @{user_projects_dirs}/**/.git/{,**} r,
+
+    @{sys}/class/power_supply/ r,
+
+    owner @{PROC}/@{pid}/cgroup r,
+
+    include if exists <local/code-shells_starship>
   }
 
   include if exists <local/code-shells>
