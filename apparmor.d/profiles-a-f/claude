@@ -28,6 +28,7 @@ include <tunables/global>
 profile claude @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/consoles>
+  include <abstractions/devtools>
   include <abstractions/nameservice-strict>
   include <abstractions/ssl_certs>
 
@@ -42,6 +43,7 @@ profile claude @{exec_path} flags=(attach_disconnected) {
 
   unix (send receive) type=stream peer=(label=code),
   unix (send receive) type=stream peer=(label=git),
+  deny unix (send receive) type=stream peer=(label=ssh),
 
   @{exec_path} mrix,
 
@@ -97,20 +99,23 @@ profile claude @{exec_path} flags=(attach_disconnected) {
   owner @{tmp}/node-compile-cache/** rwlk,
   owner @{tmp}/playwright-artifacts-@{rand6}/{,**} rw,
 
+  @{sys}/devices/system/cpu/cpufreq/policy@{int}/scaling_cur_freq r,
+  @{sys}/devices/system/cpu/cpufreq/policy@{int}/scaling_max_freq r,
+
         @{sys}/fs/cgroup/user.slice/cpu.max r,
         @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/cpu.max r,
         @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/session-@{int}.scope/cpu.max r,
         @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/session-@{int}.scope/memory.high r,
         @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/session-@{int}.scope/memory.max r,
         @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/cpu.max r,
-  owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/*-@{uuid}.scope/memory.high r,
-  owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/app-*-@{int}.scope/memory.high r,
-  owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/app-*-@{int}.scope/memory.max r,
+  owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/*-@{uuid}.scope/memory.* r,
+  owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/app-*-@{int}.scope/memory.* r,
   owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/cpu.max r,
 
         @{PROC}/sys/vm/mmap_min_addr r,
         @{PROC}/version r,
   owner @{PROC}/@{pid}/cgroup r,
+  owner @{PROC}/@{pid}/stat r,
   owner @{PROC}/@{pid}/statm r,
 
   # Safety mechanisms
@@ -134,7 +139,10 @@ profile claude @{exec_path} flags=(attach_disconnected) {
     capability sys_ptrace,
 
     # network inet6 stream port=1024-66666, # failed af match, MPC only
-
+    network inet dgram,
+    network inet stream,
+    network inet6 dgram,
+    network inet6 stream,
     network netlink raw,
 
     ptrace read,
@@ -143,23 +151,29 @@ profile claude @{exec_path} flags=(attach_disconnected) {
 
     signal receive peer=claude,
 
-    priority=1 @{bin}/man         Px,
     priority=1 @{bin}/dpkg-query  Px,
     priority=1 @{bin}/flatpak     Px -> claude//flatpak,
     priority=1 @{bin}/git         Px,
     priority=1 @{bin}/journalctl  Px,
+    priority=1 @{bin}/man         PUx,
     priority=1 @{bin}/ps          Px,
-    priority=1 @{ldd_path}        Px -> claude//ldd,
+    priority=1 @{bin}/ssh         Px -> claude//ssh,
+    priority=1 @{ldd_path}       rPx -> claude//ldd,
 
-    owner @{HOME}/.claude/projects/*/@{uuid}.jsonl r,
+    owner @{HOME}/.claude/ r,
+    owner @{HOME}/.claude/projects/{,**} r,
     owner @{HOME}/.claude/shell-snapshots/* rw,
 
     owner @{code_config_dirs}/logs/{,**} w,
+    owner @{user_config_dirs}/gh/*.yml r,
+    owner @{user_config_dirs}/git/*config r,
 
     owner @{user_projects_dirs}/ r,
-    owner @{user_projects_dirs}/** rwk,
+    owner @{user_projects_dirs}/** rwlk,
 
+    /var/tmp/@{word8} rw,
     owner @{tmp}/*/{,**} rwlk,
+    owner @{tmp}/@{word8} rw,
     owner @{tmp}/claude-* w,
     owner @{tmp}/claude-shell/ rw,
     owner @{tmp}/claude-shell/** mix,
@@ -168,17 +182,20 @@ profile claude @{exec_path} flags=(attach_disconnected) {
     owner @{tmp}/claude{,-code}/** mix,
     owner @{tmp}/claude{,-code}/** rwlk -> @{tmp}/claude/**,
 
-    @{sys}/devices/system/cpu/cpufreq/policy@{int}/scaling_cur_freq r,
-    @{sys}/devices/system/cpu/cpufreq/policy@{int}/scaling_max_freq r,
+          @{sys}/devices/system/cpu/cpufreq/policy@{int}/scaling_cur_freq r,
+          @{sys}/devices/system/cpu/cpufreq/policy@{int}/scaling_max_freq r,
+    owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/app-gnome-code-@{int}.scope/memory.* r,
+    owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/vte-spawn-@{uuid}.scope/memory.* r,
 
           @{PROC}/ r,
-          @{PROC}/version_signature r,
           @{PROC}/@{pids}/cmdline r,
           @{PROC}/@{pids}/stat r,
           @{PROC}/sys/kernel/pid_max r,
           @{PROC}/tty/drivers r,
+          @{PROC}/version_signature r,
     owner @{PROC}/@{pid}/environ r, # This raise the sys_ptrace capability requirement, only allowed on user processes
     owner @{PROC}/@{pid}/loginuid r,
+    owner @{PROC}/@{pid}/stat r,
 
     # Safety mechanisms
     deny @{bin}/poweroff x,
@@ -186,7 +203,6 @@ profile claude @{exec_path} flags=(attach_disconnected) {
     deny @{bin}/rm x,
     deny @{bin}/rmdir x,
     deny @{bin}/shutdown x,
-    deny @{bin}/ssh x,
     deny /etc/dpkg/dpkg.cfg r,
     deny /etc/dpkg/dpkg.cfg.d/{,**} r,
     deny /etc/pacman.conf r,
@@ -206,6 +222,15 @@ profile claude @{exec_path} flags=(attach_disconnected) {
     include if exists <local/claude_shell>
   }
 
+  profile ssh {
+    include <abstractions/base>
+    include <abstractions/consoles>
+
+    @{bin}/ssh mr,
+
+    include if exists <local/claude_ssh>
+  }
+
   profile flatpak {
     include <abstractions/base>
 
@@ -222,6 +247,7 @@ profile claude @{exec_path} flags=(attach_disconnected) {
     deny owner @{user_config_dirs}/** r,
     deny owner @{code_config_dirs}/logs/{,**} w,
     deny owner /dev/shm/.org.chromium.Chromium.@{rand6} rw,
+    deny owner /tmp/claude-@{uid}/*/tasks/* rw,
 
     include if exists <local/claude_flatpak>
   }
