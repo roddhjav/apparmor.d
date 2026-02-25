@@ -60,10 +60,25 @@ profile xdg-desktop-portal @{exec_path} flags=(attach_disconnected) {
 
   #aa:dbus talk bus=session name=org.freedesktop.FileManager1 label=nautilus
   #aa:dbus talk bus=session name=org.freedesktop.impl.portal.Background path=/org/freedesktop/portal/desktop label=xdg-desktop-portal-gnome
-  #aa:dbus talk bus=session name=org.freedesktop.impl.portal.FileChooser label=xdg-desktop-portal-gnome
+  #aa:dbus talk bus=session name=org.freedesktop.impl.portal.FileChooser path=/org/freedesktop/portal/desktop label=xdg-desktop-portal-gnome
   #aa:dbus talk bus=session name=org.freedesktop.impl.portal.GlobalShortcuts path=/org/freedesktop/portal/desktop label=xdg-desktop-portal-gnome
   #aa:dbus talk bus=session name=org.freedesktop.impl.portal.Inhibit path=/org/freedesktop/portal/desktop label=xdg-desktop-portal-gtk
   #aa:dbus talk bus=session name=org.freedesktop.portal.Documents path=/org/freedesktop/portal/documents label=xdg-document-portal
+
+  dbus send bus=session path=/org/freedesktop/portal/desktop
+       interface=org.freedesktop.impl.portal.Settings
+       member={Read,ReadAll}
+       peer=(name=@{busname}, label=xdg-desktop-portal-*),
+
+  dbus send bus=session path=/org/freedesktop/portal/desktop/request/**
+       interface=org.freedesktop.impl.portal.Request
+       member=Close
+       peer=(name=@{busname}),
+
+  dbus send bus=session path=/org/freedesktop/portal/desktop
+       interface=org.freedesktop.impl.portal.Secret
+       member=RetrieveSecret
+       peer=(name=@{busname}, label=gnome-keyring-daemon),
 
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable
