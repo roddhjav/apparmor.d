@@ -1,0 +1,25 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Domain browsing
+
+  abi <abi/4.0>,
+
+  dbus send bus=system path=/
+       interface=org.freedesktop.Avahi.Server2
+       member=EntryGroupNew
+       peer=(name=org.freedesktop.Avahi, label="@{p_avahi_daemon}"),
+
+  dbus send bus=system path=/Client@{int}/EntryGroup@{int}
+       interface=org.freedesktop.Avahi.EntryGroup
+       member=Free
+       peer=(name=org.freedesktop.Avahi, label="@{p_avahi_daemon}"),
+
+  dbus receive bus=system path=/Client4/EntryGroup@{int}
+       interface=org.freedesktop.Avahi.EntryGroup
+       peer=(name=@{busname}, label="@{p_avahi_daemon}"),
+
+  include if exists <abstractions/bus/system/org.freedesktop.Avahi.EntryGroup.d>
+
+# vim:syntax=apparmor
