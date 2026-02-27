@@ -18,8 +18,8 @@ var (
 	// The current indentation level
 	IndentationLevel = 0
 
-	//go:embed templates/*.j2
-	//go:embed templates/rule/*.j2
+	//go:embed templates/*.gotmpl
+	//go:embed templates/rule/*.gotmpl
 	tmplFiles embed.FS
 
 	// The functions available in the template
@@ -151,7 +151,7 @@ func generateTemplates(names []Kind) map[Kind]*template.Template {
 	res := make(map[Kind]*template.Template, len(names))
 	base := template.New("").Funcs(tmplFunctionMap)
 	base = template.Must(base.ParseFS(tmplFiles,
-		"templates/*.j2", "templates/rule/*.j2",
+		"templates/*.gotmpl", "templates/rule/*.gotmpl",
 	))
 	for _, name := range names {
 		t := template.Must(base.Clone())
