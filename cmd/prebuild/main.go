@@ -38,9 +38,9 @@ func configInit() *tasks.TaskConfig {
 			c.Version = 4.0
 		case "questing":
 			c.ABI = 4
-			c.Version = 5.0
+			c.Version = 4.0
 		case "resolute":
-			c.ABI = 4
+			c.ABI = 5
 			c.Version = 5.0
 		}
 

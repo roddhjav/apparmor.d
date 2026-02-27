@@ -1,0 +1,26 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/su-rs @{lib}/cargo/bin/su
+ #aa:only ubuntu
+@{exec_path} += @{bin}/su
+
+profile su-rs @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/app-launcher-root>
+  include <abstractions/app/sudo-rs>
+
+  @{exec_path} mr,
+
+  @{bin}/@{shells}     Ux, #aa:exclude RBAC
+  @{sbin}/nologin      Px,
+
+  include if exists <local/su-rs>
+}
+
+# vim:syntax=apparmor
