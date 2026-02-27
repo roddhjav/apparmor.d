@@ -179,6 +179,7 @@ profile sddm @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{tmp}/#@{int} rw,
   owner @{tmp}/sddm-auth* rw,
 
+        @{run}/systemd/io.systemd.Login rw,
   @{att}@{run}/systemd/sessions/{,@{l}}@{int}.ref rw,
 
         @{run}/faillock/@{user} rwk,
@@ -203,6 +204,64 @@ profile sddm @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
   /dev/tty@{u8} rw,
   /dev/tty rw,
+
+  profile shell {
+    include <abstractions/base>
+    include <abstractions/consoles>
+    include <abstractions/shells>
+
+    ptrace read,
+
+    @{shells_path} mrix,
+
+    @{bin}/{,e}grep      rix,
+    @{bin}/basename      rix,
+    @{bin}/cat           rix,
+    @{bin}/date          rix,
+    @{bin}/dirname       rix,
+    @{bin}/disable-paste rix,
+    @{bin}/find          rix,
+    @{bin}/id            rix,
+    @{bin}/locale        rix,
+    @{bin}/manpath       rix,
+    @{bin}/mktemp        rix,
+    @{bin}/pidof         rix,
+    @{bin}/readlink      rix,
+    @{bin}/realpath      rix,
+    @{bin}/sed           rix,
+    @{bin}/tr            rix,
+    @{bin}/tty           rix,
+    @{bin}/uname         rix,
+    @{bin}/xargs         rix,
+    @{bin}/xdm           r,
+    @{bin}/xmodmap       rix,
+    @{bin}/zoxide        rix,
+    @{sbin}/checkproc    rix,
+
+    @{bin}/flatpak        Px,
+    @{bin}/pacman         Px -> sddm//pacman,
+
+    @{bin}/startplasma-wayland  rPx,
+    @{bin}/startplasma-x11      rPx,
+
+    @{lib}/plasma-dbus-run-session-if-needed  rix,
+    @{lib}/@{multiarch}/libexec/plasma-dbus-run-session-if-needed  rix,
+
+    /usr/share/sddm/scripts/{,**} r,
+
+    /etc/debuginfod/{,*} r,
+
+    owner @{user_share_dirs}/sddm/wayland-session.log w,
+    owner @{user_share_dirs}/sddm/xorg-session.log w,
+
+          @{PROC}/ r,
+          @{PROC}/@{pids}/ r,
+          @{PROC}/@{pids}/cmdline r,
+          @{PROC}/@{pids}/stat r,
+    owner @{PROC}/@{pid}/fd/ r,
+
+    include if exists <local/sddm_shell>
+  }
 
   profile systemctl {
     include <abstractions/base>
@@ -229,6 +288,16 @@ profile sddm @{exec_path} flags=(attach_disconnected,mediate_deleted) {
     owner @{run}/sddm/\{@{uuid}\}   rwl -> @{run}/sddm/\{@{uuid}\}-n,
 
     include if exists <local/sddm_xauth>
+  }
+
+  profile pacman {
+    include <abstractions/base>
+
+    @{bin}/pacman mr,
+
+    /var/lib/pacman/local/{,**} r,
+
+    include if exists <local/sddm_pacman>
   }
 
   include if exists <local/sddm>
