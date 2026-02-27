@@ -14,9 +14,9 @@ alias c='clear'
 alias du='du -hs'
 alias l='ll -h'
 alias ll='ls -alFh'
-alias p="ps auxZ | grep -v '\[.*\]'"
-alias pf="ps auxfZ | grep -v '\[.*\]'"
-alias pu="ps auxZ | grep -v '\[.*\]' | grep unconfined"
+alias p="LIBPROC_HIDE_KERNEL=1 ps auxZ"
+alias pf="LIBPROC_HIDE_KERNEL=1 ps auxfZ"
+alias pu="LIBPROC_HIDE_KERNEL=1 ps auxZ | grep unconfined"
 alias u='up 1'
 alias uu='up 2'
 alias uuu='up 3'
