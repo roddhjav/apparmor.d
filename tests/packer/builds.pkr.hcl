@@ -5,6 +5,7 @@
 locals {
   name   = "${var.prefix}${var.dist}${var.release}-${var.flavor}"
   osinfo = "${var.dist}${var.release}"
+  group  = contains(["debian", "ubuntu"], var.dist) ? "sudo" : "wheel"
 }
 
 source "qemu" "default" {
@@ -40,6 +41,7 @@ source "qemu" "default" {
           password = var.password
           ssh_key  = file(var.ssh_publickey)
           hostname = regex_replace(local.name, "\\.", "")
+          group    = local.group
         }
       ),
       file("${path.cwd}/tests/cloud-init/${regex_replace(local.osinfo, "[0-9.]*$", "")}.yml"),

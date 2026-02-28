@@ -82,7 +82,7 @@ build_in_docker_dpkg() {
 
 	# Adjustments for test flavor
 	if [[ "$FLAVOR" == "test" ]]; then
-		sed -i -e "s/just complain/just complain-test/" "$VOLUME/$PKGNAME/debian/rules"
+		sed -i -e "s;just build=.build/complain complain;just build=.build/complain complain-test;" "$VOLUME/$PKGNAME/debian/rules"
 	fi
 
 	if _exist "$img"; then

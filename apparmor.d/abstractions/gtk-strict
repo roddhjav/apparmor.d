@@ -9,13 +9,22 @@
   include <abstractions/bus/session/org.gtk.Settings>
   include <abstractions/bus/session/org.gtk.vfs.MountTracker>
 
+  #aa:only apparmor>=4.1
+  #aa:only apparmor<5.0
   unix type=stream peer=(label=glycin),
   unix type=stream peer=(label=glycin//loaders),
-
   signal send set=kill peer=glycin,
-
-  #aa:only apparmor>=4.1
   priority=-1 @{bin}/bwrap  Px -> glycin,
+
+  #aa:only apparmor>=5.0
+  # Need to be allowed for all peer because from the host namespace we do not
+  # see the glycin namespace. This is showned by 'peer=(label=---)' in the logs.
+  #
+  # As of today, we cannot specify the ns scope and view of the peer.
+  # See: https://gitlab.com/apparmor/apparmor/-/wikis/AppArmorPolicyView
+  unix (send receive) type=seqpacket, # peer=(label=---), # file_inherit
+  unix (send receive) type=stream, # peer=(label=---), # file_inherit
+  priority=-10 @{bin}/bwrap  Px -> :glycin:bwrap,
 
   @{lib}/{,@{multiarch}/}gtk-2.0/{,**} mr,
   @{lib}/{,@{multiarch}/}gtk-3.0/{,**} mr,
@@ -59,6 +68,14 @@
   owner @{user_cache_dirs}/gtk-4.0/vulkan-pipeline-cache/{,*} rw,
   owner @{user_cache_dirs}/gtkrc r,
   owner @{user_cache_dirs}/gtkrc-2.0 r,
+
+  owner @{user_cache_dirs}/glycin/ w,
+  owner @{user_cache_dirs}/glycin/usr/ w,
+  owner @{user_cache_dirs}/glycin/usr/lib/ w,
+  owner @{user_cache_dirs}/glycin/usr/lib/glycin-loaders/ w,
+  owner @{user_cache_dirs}/glycin/usr/lib/glycin-loaders/@{d}+/ w,
+  owner @{user_cache_dirs}/glycin/usr/lib/glycin-loaders/@{d}+/glycin-svg/ w,
+  owner @{user_cache_dirs}/glycin/usr/lib/glycin-loaders/@{d}+/glycin-svg/fontconfig/ w,
 
   owner @{user_config_dirs}/gtk-2.0/ rw,
   owner @{user_config_dirs}/gtk-2.0/gtkfilechooser.ini* rw,

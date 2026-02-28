@@ -1,0 +1,151 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/resources
+profile resources @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/dconf-write>
+  include <abstractions/desktop>
+  include <abstractions/graphics-full>
+  include <abstractions/hwmon>
+
+  #aa:dbus own bus=session name=net.nokyan.Resources
+
+  @{exec_path} mr,
+
+  @{bin}/lscpu                          Px,
+  @{bin}/pkexec                         Cx -> pkexec,
+  @{bin}/udevadm                        Cx -> udevadm,
+  @{lib}/resources/resources-adjust     Cx -> adjust,
+  @{lib}/resources/resources-kill       Cx -> kill,
+  @{lib}/resources/resources-processes  Cx -> processes,
+
+  /snap/*/@{uid}/**.@{icon_ext} r,
+  /usr/share/misc/*.ids r,
+  /usr/share/resources/{,**} r,
+
+  owner @{user_cache_dirs}/flatpak/system-cache/ r,
+
+  @{sys}/block/ r,
+  @{sys}/class/*/ r,
+  @{sys}/devices/@{pci}/ata@{int}/ r,
+  @{sys}/devices/@{pci}/ata@{int}/**/model r,
+  @{sys}/devices/@{pci}/ata@{int}/**/sata_spd r,
+  @{sys}/devices/@{pci}/current_link_speed r,
+  @{sys}/devices/@{pci}/current_link_width r,
+  @{sys}/devices/@{pci}/ip_discovery/**/major r,
+  @{sys}/devices/@{pci}/max_link_speed r,
+  @{sys}/devices/@{pci}/max_link_width r,
+  @{sys}/devices/**/block/**/address r,
+  @{sys}/devices/**/block/**/model r,
+  @{sys}/devices/**/block/**/queue/rotational r,
+  @{sys}/devices/**/block/**/removable r,
+  @{sys}/devices/**/block/**/ro r,
+  @{sys}/devices/**/block/**/size r,
+  @{sys}/devices/**/block/**/stat r,
+  @{sys}/devices/**/net/*/address r,
+  @{sys}/devices/**/net/*/speed r,
+  @{sys}/devices/**/statistics/rx_bytes r,
+  @{sys}/devices/**/statistics/tx_bytes r,
+
+  @{PROC}/devices r,
+  @{PROC}/uptime r,
+
+  owner @{PROC}/@{pid}/cgroup r,
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/task/@{tid}/comm rw,
+
+  /dev/nvidia-caps/nvidia-cap@{int} r,
+
+  profile processes {
+    include <abstractions/base>
+    include <abstractions/graphics-full>
+    include <abstractions/nameservice-strict>
+
+    capability sys_ptrace,
+
+    ptrace read,
+
+    @{lib}/resources/resources-processes mr,
+
+          @{PROC}/ r,
+          @{PROC}/@{pids}/cgroup r,
+          @{PROC}/@{pids}/cmdline r,
+          @{PROC}/@{pids}/comm r,
+          @{PROC}/@{pids}/fdinfo/@{int} r,
+          @{PROC}/@{pids}/stat r,
+          @{PROC}/@{pids}/statm r,
+          @{PROC}/@{pids}/status r,
+          @{PROC}/@{pids}/status r,
+    owner @{PROC}/@{pid}/environ r,
+    owner @{PROC}/@{pid}/fdinfo/ r,
+    owner @{PROC}/@{pid}/io r,
+    owner @{PROC}/@{pid}/mountinfo r,
+    owner @{PROC}/@{pid}/stat r,
+    owner @{PROC}/@{pid}/statm r,
+    owner @{PROC}/@{pid}/task/@{tid}/comm w,
+
+    /dev/nvidia-caps/nvidia-cap@{int} r,
+
+    include if exists <local/resources_processes>
+  }
+
+  profile adjust {
+    include <abstractions/base>
+
+    capability sys_nice,
+
+    @{lib}/resources/resources-adjust mr,
+
+    owner @{PROC}/@{pid}/task/ r,
+
+    include if exists <local/resources_adjust>
+  }
+
+  profile kill {
+    include <abstractions/base>
+
+    capability kill,
+
+    signal send,
+
+    @{lib}/resources/resources-kill mr,
+
+    include if exists <local/resources_kill>
+  }
+
+  profile udevadm {
+    include <abstractions/base>
+
+    @{bin}/udevadm mr,
+
+    /etc/udev/udev.conf r,
+
+    @{run}/udev/data/+dmi:* r,              # for motherboard info
+
+    @{sys}/devices/virtual/dmi/id/uevent r,
+
+    include if exists <local/resources_udevadm>
+  }
+
+  profile pkexec {
+    include <abstractions/base>
+    include <abstractions/app/pkexec>
+
+    ptrace read peer=resources,
+
+    @{lib}/resources/resources-adjust     Px -> resources//adjust,
+    @{lib}/resources/resources-kill       Px -> resources//kill,
+
+    include if exists <local/resources_pkexec>
+  }
+
+  include if exists <local/resources>
+}
+
+# vim:syntax=apparmor

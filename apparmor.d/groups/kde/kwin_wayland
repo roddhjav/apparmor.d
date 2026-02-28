@@ -63,9 +63,6 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   /etc/pipewire/client.conf.d/ r,
   /etc/xdg/** r,
 
-  /etc/machine-id r,
-  /var/lib/dbus/machine-id r,
-
   / r,
   owner @{HOME}/ r,
 
@@ -112,6 +109,8 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{user_share_dirs}/kscreen/* r,
   owner @{user_share_dirs}/kwin/scripts/{,**} r,
 
+  owner @{run}/user/@{uid}/pipewire-@{int} rw,
+
   owner /dev/shm/.org.chromium.Chromium.@{rand6} rw,
 
   @{att}@{run}/systemd/inhibit/@{int}.ref rw,
@@ -150,7 +149,10 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
   profile at-spi {
     include <abstractions/base>
+    include <abstractions/bus-session>
     include <abstractions/consoles>
+
+    unix bind type=stream addr=@@{udbus}/bus/busctl/busctl,
 
     @{sh_path}    r,
     @{bin}/busctl rix,

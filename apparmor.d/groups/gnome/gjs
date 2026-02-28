@@ -37,13 +37,13 @@ profile gjs @{exec_path} flags=(attach_disconnected) {
   include <abstractions/nameservice-strict>
 
   # Only needed by gnome-extension-ding
-  include <abstractions/bus/system/net.hadess.SwitcherooControl>
   include <abstractions/bus/session/org.freedesktop.FileManager1>
   include <abstractions/bus/session/org.gnome.ArchiveManager1>
   include <abstractions/bus/session/org.gnome.Nautilus.FileOperations2>
   include <abstractions/bus/session/org.gtk.Private.RemoteVolumeMonitor>
   include <abstractions/bus/session/org.gtk.vfs.Daemon>
   include <abstractions/bus/session/org.gtk.vfs.Metadata>
+  include <abstractions/bus/system/net.hadess.SwitcherooControl>
 
   network netlink raw,
 
@@ -64,13 +64,22 @@ profile gjs @{exec_path} flags=(attach_disconnected) {
        interface=org.freedesktop.DBus*
        peer=(name=org.freedesktop.DBus, label="@{p_dbus_system}"),
 
-  #aa:dbus own bus=session name=org.gnome.Shell.Screencast
-  #aa:dbus talk bus=session name=org.gnome.Mutter.ScreenCast label=gnome-shell
-
   #aa:dbus own bus=session name=org.freedesktop.Notifications
+
+  #aa:dbus talk bus=session name=org.gnome.Mutter.ScreenCast label=gnome-shell
+  #aa:dbus talk bus=session name=org.gnome.ArchiveManager1 label=file-roller
+
+  # Only needed by org.gnome.ScreenSaver
   #aa:dbus own bus=session name=org.gnome.ScreenSaver
+
+  # Only needed by org.gnome.Shell.Extensions
   #aa:dbus own bus=session name=org.gnome.Shell.Extensions
+
+  # Only needed by org.gnome.Shell.Notifications
   #aa:dbus own bus=session name=org.gnome.Shell.Notifications
+
+  # Only needed by org.gnome.Shell.Screencast
+  #aa:dbus own bus=session name=org.gnome.Shell.Screencast
 
   @{exec_path} mrix,
 
@@ -115,11 +124,10 @@ profile gjs @{exec_path} flags=(attach_disconnected) {
 
   owner @{PROC}/@{pid}/mounts r,
   owner @{PROC}/@{pid}/stat r,
+  owner @{PROC}/@{pid}/statm r,
   owner @{PROC}/@{pid}/task/ r,
   owner @{PROC}/@{pid}/task/@{tid}/comm rw,
   owner @{PROC}/@{pid}/task/@{tid}/stat r,
-
-  deny @{user_share_dirs}/gvfs-metadata/* r,
 
   include if exists <local/gjs>
 }

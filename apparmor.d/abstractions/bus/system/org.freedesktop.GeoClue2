@@ -4,7 +4,43 @@
 
   abi <abi/4.0>,
 
-  #aa:dbus common bus=system name=org.freedesktop.GeoClue2 label="@{p_geoclue}"
+  # DBus.Properties: read properties from the interface
+
+  dbus send bus=system path=/org/freedesktop/GeoClue2/Manager
+       interface=org.freedesktop.DBus.Properties
+       member={Get,GetAll}
+       peer=(name=@{busname}, label="@{p_geoclue}"),
+
+  dbus send bus=system path=/org/freedesktop/GeoClue2/Client/@{int}
+       interface=org.freedesktop.DBus.Properties
+       member={Get,GetAll}
+       peer=(name=@{busname}, label="@{p_geoclue}"),
+
+  # DBus.Properties: receive property changed events
+
+  dbus receive bus=system path=/org/freedesktop/GeoClue2
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged
+       peer=(name=@{busname}, label="@{p_geoclue}"),
+
+  dbus receive bus=system path=/org/freedesktop/GeoClue2/Client/@{int}
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged
+       peer=(name=@{busname}, label="@{p_geoclue}"),
+
+  dbus receive bus=system path=/org/freedesktop/GeoClue2/Manager
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged
+       peer=(name=@{busname}, label="@{p_geoclue}"),
+
+  # DBus.Properties: allow clients to set properties
+
+  dbus send bus=system path=/org/freedesktop/GeoClue2/Client/@{int}
+       interface=org.freedesktop.DBus.Properties
+       member=Set
+       peer=(name=@{busname}, label="@{p_geoclue}"),
+
+  # GeoClue2
 
   dbus send bus=system path=/org/freedesktop/GeoClue2/Manager
        interface=org.freedesktop.GeoClue2.Manager
@@ -12,19 +48,14 @@
        peer=(name="@{busname}", label="@{p_geoclue}"),
 
   dbus send bus=system path=/org/freedesktop/GeoClue2/Client/@{int}
-       interface=org.freedesktop.DBus.Properties
-       member=Set
-       peer=(name=@{busname}, label=geoclue),
-
-  dbus send bus=system path=/org/freedesktop/GeoClue2/Client/@{int}
        interface=org.freedesktop.GeoClue2.Client
        member=Start
-       peer=(name=@{busname}, label=geoclue),
+       peer=(name=@{busname}, label="@{p_geoclue}"),
 
   dbus send bus=system path=/org/freedesktop/GeoClue2/Manager
        interface=org.freedesktop.GeoClue2.Manager
        member={GetClient,DeleteClient}
-       peer=(name=@{busname}, label=geoclue),
+       peer=(name=@{busname}, label="@{p_geoclue}"),
 
   include if exists <abstractions/bus/system/org.freedesktop.GeoClue2.d>
 
