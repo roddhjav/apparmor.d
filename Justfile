@@ -515,7 +515,7 @@ autopkgtest osinfo:
 autopkgtest-update dist release:
 	just up {{dist}}{{release}} test || true
 	just package {{dist}} {{release}} test
-	scp {{sshopt}} {{pkgdest}}/{{dist}}/{{release}}/{{pkgname}}_*.deb \
+	scp {{sshopt}} {{pkgdest}}/{{pkgname}}_*.deb \
 		{{username}}@`just _get_ip {{dist}}{{release}} test`:/home/{{username}}/Projects/
 	ssh {{sshopt}} {{username}}@`just _get_ip {{dist}}{{release}} test` \
 		sudo dpkg -i /home/{{username}}/Projects/{{pkgname}}_*.deb

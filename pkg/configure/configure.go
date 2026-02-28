@@ -97,6 +97,13 @@ func (p Configure) Apply() ([]string, error) {
 			"free",
 			"nslookup",
 		}
+		// Ubuntu uses sudo-rs as sudo implementation.
+		if tasks.Distribution == "ubuntu" {
+			remove = append(remove,
+				"su",   // su-rs is the new su
+				"sudo", // sudo-rs is the new sudo
+			)
+		}
 		if err := p.removeFiles(remove); err != nil {
 			return res, err
 		}

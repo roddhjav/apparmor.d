@@ -203,11 +203,11 @@ func Configure(r *runtime.Runners) *runtime.Runners {
 
 func Prebuild(r *runtime.Runners) {
 	logging.Step("Building apparmor.d profiles for %s", tasks.Distribution)
-	logging.Success("AppArmor ABI targeted: %d", r.ABI)
-	logging.Success("AppArmor version targeted: %.1f", r.Version)
 	if r.Test {
 		logging.Warning("Test mode enabled")
 	}
+	logging.Success("AppArmor ABI targeted: %d", r.ABI)
+	logging.Success("AppArmor version targeted: %.1f", r.Version)
 	if fsp {
 		logging.Success("Full system policy enabled")
 	}

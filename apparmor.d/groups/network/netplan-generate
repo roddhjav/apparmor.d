@@ -6,7 +6,7 @@ abi <abi/4.0>,
 
 include <tunables/global>
 
-@{exec_path} = @{lib}/netplan/generate
+@{exec_path} = @{lib}/netplan/generate @{lib}/netplan/configure
 profile netplan-generate @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/consoles>
@@ -31,6 +31,11 @@ profile netplan-generate @{exec_path} flags=(attach_disconnected) {
   @{run}/NetworkManager/system-connections/ rw,
   @{run}/NetworkManager/system-connections/* rw,
 
+  @{run}/systemd/generator.late/*.service.d/ w,
+  @{run}/systemd/generator.late/*.service.d/*netplan.conf* rw,
+  @{run}/systemd/generator.late/netplan-* rw,
+  @{run}/systemd/generator.late/systemd-networkd.service.wants/ w,
+  @{run}/systemd/generator.late/systemd-networkd.service.wants/netplan-*.service rw,
   @{run}/systemd/generator/multi-user.target.wants/ w,
   @{run}/systemd/generator/multi-user.target.wants/systemd-networkd.service w,
   @{run}/systemd/generator/netplan.stamp w,

@@ -115,6 +115,7 @@ profile claude @{exec_path} flags=(attach_disconnected) {
         @{PROC}/sys/vm/mmap_min_addr r,
         @{PROC}/version r,
   owner @{PROC}/@{pid}/cgroup r,
+  owner @{PROC}/@{pid}/mountinfo r,
   owner @{PROC}/@{pid}/stat r,
   owner @{PROC}/@{pid}/statm r,
 
@@ -225,8 +226,16 @@ profile claude @{exec_path} flags=(attach_disconnected) {
   profile ssh {
     include <abstractions/base>
     include <abstractions/consoles>
+    include <abstractions/nameservice-strict>
 
     @{bin}/ssh mr,
+
+    owner @{user_projects_dirs}/**/ssh/{,*} r,
+    owner @{user_projects_dirs}/**/config r,
+
+    owner @{PROC}/@{pid}/fd/ r,
+
+    deny owner @{HOME}/@{XDG_SSH_DIR}/{,**} rwlk,
 
     include if exists <local/claude_ssh>
   }

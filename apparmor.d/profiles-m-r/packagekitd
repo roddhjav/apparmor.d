@@ -42,9 +42,9 @@ profile packagekitd @{exec_path} flags=(attach_disconnected) {
 
   @{exec_path} mr,
 
-  @{bin}/gpg{,2}  rCx -> gpg,
-  @{bin}/gpgconf  rCx -> gpg,
-  @{bin}/gpgsm    rCx -> gpg,
+  @{bin}/gpg{,2}         Cx -> gpg,
+  @{bin}/gpgconf         Cx -> gpg,
+  @{bin}/gpgsm           Cx -> gpg,
 
   @{sh_path}            rix,
   @{bin}/cp             rix,
@@ -52,37 +52,40 @@ profile packagekitd @{exec_path} flags=(attach_disconnected) {
   @{bin}/gdbus          rix,
   @{bin}/gzip           rix,
   @{bin}/id             rix,
-  @{sbin}/ldconfig      rix,
+  @{sbin}/ldconfig      rix, # TODO: rCx
   @{bin}/repo2solv      rix,
   @{bin}/tar            rix,
   @{bin}/test           rix,
   @{bin}/touch          rix,
 
-  @{bin}/appstreamcli                rPx,
-  @{bin}/fc-cache                    rPx,
-  @{bin}/glib-compile-schemas        rPx,
-  @{bin}/install-info                rPx,
-  @{bin}/ischroot                    rPx,
-  @{bin}/systemctl                   rCx -> systemctl,
-  @{bin}/systemd-inhibit             rPx,
-  @{bin}/update-desktop-database     rPx,
-  @{lib}/cnf-update-db               rPx,
+  @{bin}/appstreamcli                Px,
+  @{bin}/fc-cache                    Px,
+  @{bin}/glib-compile-schemas        Px,
+  @{bin}/install-info                Px,
+  @{bin}/ischroot                    Px,
+  @{bin}/systemctl                   Cx -> systemctl,
+  @{bin}/systemd-inhibit             Px,
+  @{bin}/update-desktop-database     Px,
+  @{lib}/cnf-update-db               Px,
 
   #aa:only pacman
-  @{bin}/arch-audit                  rPx,
-  /usr/share/libalpm/scripts/*       rPx,
+  @{bin}/arch-audit                  Px,
+  /usr/share/libalpm/scripts/*       Px,
 
   #aa:only apt
-  @{bin}/dpkg                        rPx -> child-dpkg,
-  @{lib}/apt/methods/*               rPx,
+  @{bin}/apt-listchanges             Px,
+  @{bin}/dpkg                        Px,
+  @{lib}/apt/methods/*               Px,
+  @{lib}/needrestart/apt-pinvoke     Px,
+  @{sbin}/dpkg-preconfigure          Px,
 
   #aa:only opensuse
-  @{lib}/zypp/plugins/appdata/InstallAppdata rPUx, # TODO: write the profile
-  @{bin}/rpm                        rPUx,
-  @{bin}/rpmdb2solv                 rPUx,
+  @{lib}/zypp/plugins/appdata/InstallAppdata PUx, # TODO: write the profile
+  @{bin}/rpm                         PUx,
+  @{bin}/rpmdb2solv                  PUx,
 
   #aa:only ubuntu
-  @{lib}/update-notifier/update-motd-updates-available  rPx,
+  @{lib}/update-notifier/update-motd-updates-available  Px,
 
   #aa:lint ignore=too-wide
   # Install/update packages
@@ -95,11 +98,16 @@ profile packagekitd @{exec_path} flags=(attach_disconnected) {
   /usr/** rwlk -> /usr/**,
   /var/** rwlk -> /var/**,
 
+  owner @{tmp}/packagekit* rw,
+
+  #aa:only arch
+  owner @{tmp}/alpm_*/{,**} rw,
+
+  #aa:only apt
         /tmp/apt-changelog-@{rand6}/ w,
         /tmp/apt-changelog-@{rand6}/*.changelog rw,
-  owner @{tmp}/alpm_*/{,**} rw,
+        /tmp/apt-dpkg-install-@{rand6}/ rw,
   owner @{tmp}/apt-changelog-@{rand6}/.apt-acquire-privs-test.@{rand6} rw,
-  owner @{tmp}/packagekit* rw,
 
   @{att}@{run}/systemd/inhibit/@{int}.ref rw,
 
