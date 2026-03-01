@@ -1,0 +1,42 @@
+#vim:syntax=apparmor
+#AppArmor policy abstraction for child profiles of vim
+#Copyright (C) 2023 Andy Ramos <public@gracelesslady.art>
+#SPDX-License-Identifier: GPL-2.0-only
+
+    include <abstractions/base>
+    include <abstractions/nameservice-strict>
+	
+    @{bin}/@{unix_shell} rix,
+    @{bin}/nvim mrix,
+    @{bin}/vi mrix,
+    @{bin}/vim{,.{basic,tiny}} mrix,
+
+    @{bin}/xclip rPx,
+
+    /etc/vim/{,**}                       r,
+    /etc/vimrc                           r,
+    /usr/share/terminfo/x/xterm-256color r,
+    /usr/share/{,n}vim/{,**}             r,
+
+    owner @{HOME}/.fzf/plugin/           r,
+    owner @{HOME}/.fzf/plugin/{,fzf.vim} r,
+    owner @{HOME}/.viminf{o,z}{,.tmp}    rw,
+    owner @{HOME}/{,.}{,n}vim*/{,**}     rw,
+
+    owner @{HOME}/.local/share/nvim/shada/main.shada rw,
+    owner @{HOME}/.local/share/nvim/shada/main.shada.tmp.a rw,
+    owner @{user_cache_dirs}/{,n}vim/{,**}        rw,
+    owner @{user_config_dirs}/{,n}vim/{,**} r,
+
+    /tmp/                                r,
+    /tmp/{,n}vim*/{,**}                  rw,
+
+    deny owner @{HOME}/ r,
+
+    /dev/tty rw,
+    # if you don't want to deny pts, then remove the line above and below, and:
+    # include <abstractions/consoles>
+    deny /dev/pts/[0-9] rw,
+
+    # Needed?
+    deny network inet stream,
