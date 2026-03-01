@@ -1,0 +1,51 @@
+#AppArmor policy for easytag
+#Copyright (C) 2023 Andy Ramos <public@gracelesslady.art>
+#SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/3.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/easytag
+profile easytag @{exec_path} {
+
+  include <abstractions/base>
+  include <abstractions/dconf-write>
+  include <abstractions/gnome>
+  include <abstractions/gtk>
+  include <abstractions/private-files-strict>
+  include <abstractions/ibus>
+  
+  @{exec_path} mr,
+  
+  @{bin}/@{unix_shell} rix,
+  @{bin}/totem rPx,
+  @{bin}/mpv rPx,
+  
+  /etc/machine-id r,
+  
+  owner @{HOME}/{,**} r,
+  
+  owner @{user_documents_dirs}/{,**} rw,
+  owner @{user_download_dirs}/{,**} rw,
+  owner @{user_music_dirs}/{,**} rw,
+  owner @{user_publicshare_dirs}/{,**} rw,
+  owner @{user_torrents_dirs}/{,**} rw,
+  owner @{user_work_dirs}/{,**} rw,
+  
+  owner @{user_cache_dirs}/easytag/ r,
+  owner @{user_cache_dirs}/easytag/** rwk,
+  owner @{user_config_dirs}/easytag/ r,
+  owner @{user_config_dirs}/easytag/** rwk,
+  
+  / r,
+  /home/ r,
+  @{MOUNTS}/ r,
+  
+  owner @{PROC}/@{pid}/mountinfo r,
+  
+  deny /{bin,dev,lib32,libx32,proc,root,sbin,sys,usr,boot,etc,lib,lib64,opt,recovery,srv,tmp,var}/{,*/} r,
+  
+  include if exists <local/easytag>
+
+}
