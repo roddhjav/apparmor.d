@@ -258,13 +258,15 @@ _check_equivalent() {
     done
 }
 
-readonly TOOWIDE=('/**' '/tmp/**' '/var/tmp/**' '@{tmp}/**' '/etc/**' '/dev/shm/**' '@{run}/user/@{uid}/**')
+readonly TOOWIDE=('/' '/tmp/' '/var/tmp/' '@{tmp}/' '/etc/' '/dev/shm/' '@{run}/user/@{uid}/')
 _check_too_wide() {
     _is_enabled too-wide || return 0
-    for pattern in "${TOOWIDE[@]}"; do
-        if [[ "$line" == *" $pattern "* ]]; then
-            _warn too-wide "$file:$line_number" "rule too wide: '$pattern'"
-        fi
+    for path in "${TOOWIDE[@]}"; do
+        for pattern in "$path/**" "$path/*" "$path/{,**}"; do
+            if [[ "$line" == *" $pattern "* ]]; then
+                _warn too-wide "$file:$line_number" "rule too wide: '$pattern'"
+            fi
+        done
     done
 }
 
