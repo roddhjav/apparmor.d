@@ -1,0 +1,23 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/lsmem
+profile lsmem @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+
+  @{exec_path} mr,
+
+  @{sys}/devices/system/memory/ r,
+  @{sys}/devices/system/memory/block_size_bytes r,
+  @{sys}/devices/system/memory/memory@{int}/{,*} r,
+
+  include if exists <local/lsmem>
+}
+
+# vim:syntax=apparmor
