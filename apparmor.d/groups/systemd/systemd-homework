@@ -16,20 +16,25 @@ profile systemd-homework @{exec_path} flags=(attach_disconnected) {
   userns,
 
   capability chown,
+  capability dac_read_search,
   capability fowner,
   capability fsetid,
   capability setfcap,
   capability setgid,
   capability setuid,
   capability sys_admin,
+  capability sys_ptrace,
   capability sys_resource,
 
   network netlink raw,
 
-  mount options=(rw rslave) -> @{run}/,
-  mount                     -> @{run}/systemd/user-home-mount/,
+  mount                                                           -> @{run}/systemd/user-home-mount/,
+  mount options=(rw bind) @{run}/systemd/user-home-mount/@{user}/ -> @{HOME}/,
+  mount options=(rw make-rslave)                                     @{run}/,
+  mount options=(rw move)                                         -> @{run}/systemd/user-home-mount/@{user}/,
 
   umount @{run}/systemd/user-home-mount/,
+  umount @{run}/systemd/user-home-mount/@{user}/,
 
   signal (send receive) set=kill peer=systemd-homed//&systemd-homework,
 
@@ -37,18 +42,23 @@ profile systemd-homework @{exec_path} flags=(attach_disconnected) {
 
   @{exec_path} mr,
 
+  @{sbin}/fsck       rix, # no new privs
+  @{sbin}/mke2fs     rPx,
   @{sbin}/mkfs.btrfs rPx,
   @{sbin}/mkfs.fat   rPx,
-  @{sbin}/mke2fs     rPx,
 
   /etc/machine-id r,
   /etc/skel/{,**} r,
+  /etc/fstab r,
 
   /var/cache/systemd/home/{,**} rw,
 
   @{HOMEDIRS}/ r,
   @{HOMEDIRS}/.#homework@{user}.* rw,
-  @{HOMEDIRS}/@{user}.home rw,
+  @{HOMEDIRS}/@{user}.home rwk,
+
+  @{HOME}/ r,
+  @{HOME}/.identity r,
 
   @{run}/ r,
   @{run}/cryptsetup/ r,
@@ -57,7 +67,10 @@ profile systemd-homework @{exec_path} flags=(attach_disconnected) {
   @{run}/systemd/user-home-mount/@{user}/{,**} rw,
 
   @{sys}/fs/ r,
+  @{sys}/devices/**/b24[0-9]:@{int}/read_ahead_kb r, # for dynamic assignment range 240
+  @{sys}/devices/**/b25[0-4]:@{int}/read_ahead_kb r, #                           to 254
 
+        @{PROC}/@{pid}/setgroups w,
         @{PROC}/devices r,
         @{PROC}/swaps r,
         @{PROC}/sys/fs/nr_open r,
