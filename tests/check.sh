@@ -360,6 +360,7 @@ declare -A TUNABLES=(
     # Some system glob
     [":not.active.yet"]="@{busname}"
     [":1.[0-9]*"]="@{busname}"
+    ["peer=\([^)]*:\*[^)]*\)"]="@{busname}"
     ["(@\{bin\}|/usr/bin)/(|ba|da)sh "]="@{sh_path}"
     ["@\{lib\}/modules/[^/*]+/"]="@{lib}/modules/*/"
 )
