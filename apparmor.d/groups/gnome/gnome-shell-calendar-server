@@ -7,7 +7,7 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{exec_path} = @{lib}/{,gnome-shell/}gnome-shell-calendar-server
-profile gnome-shell-calendar-server @{exec_path} {
+profile gnome-shell-calendar-server @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus-session>
   include <abstractions/dconf-write>
@@ -18,21 +18,21 @@ profile gnome-shell-calendar-server @{exec_path} {
 
   dbus (send receive) bus=session path=/org/gnome/evolution/dataserver/{,**}
        interface=org.freedesktop.DBus.Properties
-       peer=(name=:*, label=evolution-*),
+       peer=(name=@{busname}, label=evolution-*),
 
   dbus (send receive) bus=session path=/org/gnome/evolution/dataserver/{,**}
        interface=org.gnome.evolution.dataserver.Calendar*
-       peer=(name=:*, label=evolution-*),
+       peer=(name=@{busname}, label=evolution-*),
 
   dbus send bus=session path=/org/gnome/evolution/dataserver/SourceManager
        interface=org.freedesktop.DBus.ObjectManager
        member=GetManagedObjects
-       peer=(name=:*, label=evolution-source-registry),
+       peer=(name=@{busname}, label=evolution-source-registry),
 
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
-       peer=(name=:*, label=gnome-shell),
+       peer=(name=@{busname}, label=gnome-shell),
 
   @{exec_path} mr,
 

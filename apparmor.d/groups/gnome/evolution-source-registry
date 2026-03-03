@@ -10,6 +10,7 @@ include <tunables/global>
 profile evolution-source-registry @{exec_path} {
   include <abstractions/base>
   include <abstractions/bus-session>
+  include <abstractions/bus-system>
   include <abstractions/bus/session/org.gtk.vfs.MountTracker>
   include <abstractions/dconf-write>
   include <abstractions/gschemas>
@@ -28,10 +29,10 @@ profile evolution-source-registry @{exec_path} {
 
   dbus receive bus=session path=/org/gnome/evolution/dataserver/SourceManager{,/**}
        interface={org.freedesktop.DBus.ObjectManager,org.freedesktop.DBus.Properties}
-       peer=(name=:*),
+       peer=(name=@{busname}),
   dbus receive bus=session path=/org/gnome/evolution/dataserver/SourceManager{,/**}
        interface=org.gnome.evolution.dataserver.Source{,.*}
-       peer=(name=:*),
+       peer=(name=@{busname}),
   dbus send bus=session path=/org/gnome/evolution/dataserver/SourceManager{,/**}
        interface=org.freedesktop.DBus.Properties
        peer=(name=org.freedesktop.DBus),
@@ -39,22 +40,24 @@ profile evolution-source-registry @{exec_path} {
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
-       peer=(name=:*, label=gnome-shell),
+       peer=(name=@{busname}, label=gnome-shell),
 
   dbus send bus=session path=/org/gnome/OnlineAccounts
        interface=org.freedesktop.DBus.ObjectManager
        member=GetManagedObjects
-       peer=(name=:*, label=goa-daemon),
+       peer=(name=@{busname}, label=goa-daemon),
 
   @{exec_path} mr,
 
+  owner @{desktop_cache_dirs}/evolution/{,**} rwk,
+  owner @{desktop_share_dirs}/evolution/{,**} rwk,
+
   owner @{user_cache_dirs}/evolution/{,**} rwk,
+  owner @{user_config_dirs}/evolution/{,**/} w,
   owner @{user_config_dirs}/evolution/sources/{,*} rw,
   owner @{user_share_dirs}/evolution/{,**} r,
-  owner @{user_share_dirs}/gvfs-metadata/{,*} r,
-
-  owner @{user_config_dirs}/evolution/{,**/} w,
   owner @{user_share_dirs}/evolution/{,**/} w,
+  owner @{user_share_dirs}/gvfs-metadata/{,*} r,
 
   @{PROC}/sys/kernel/osrelease r,
   @{PROC}/cmdline r,
