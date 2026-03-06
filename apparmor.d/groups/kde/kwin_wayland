@@ -29,6 +29,7 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   signal receive set=term peer=sddm,
   signal receive set=(kill, term) peer=kwin_wayland_wrapper,
   signal send set=(kill, term) peer=xwayland,
+  signal send set=term peer=unconfined,
 
   unix type=stream peer=(label=xkbcomp),
   unix type=stream peer=(label=xwayland),
@@ -62,6 +63,10 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
   /etc/pipewire/client.conf.d/ r,
   /etc/xdg/** r,
+
+  owner /var/lib/plasmalogin/.cache/{,**} rw,
+  owner /var/lib/plasmalogin/.config/{,**} rwk,
+  owner /var/lib/plasmalogin/.config/breezerc.@{rand6} rwl -> /var/lib/plasmalogin/.config/#@{int},
 
   / r,
   owner @{HOME}/ r,
@@ -105,9 +110,17 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{user_config_dirs}/menus/** r,
   owner @{user_config_dirs}/plasmarc r,
   owner @{user_config_dirs}/session/* r,
+  owner @{user_config_dirs}/breezerc w,
+  owner @{user_config_dirs}/breezerc.@{rand6} rw,
+  owner @{user_config_dirs}/breezerc.lock rwk,
+  owner @{user_config_dirs}/Kvantum/{,**} r,
+  owner @{user_config_dirs}/breezerc.@{rand6} rwl -> @{user_config_dirs}/#@{int},
 
   owner @{user_share_dirs}/kscreen/* r,
   owner @{user_share_dirs}/kwin/scripts/{,**} r,
+  owner @{user_share_dirs}/kwin/effects/{,**} r,
+  owner @{user_share_dirs}/aurorae/themes/{,**} r,
+  owner @{user_share_dirs}/plasma/desktoptheme/{,**} r,
 
   owner @{run}/user/@{uid}/pipewire-@{int} rw,
 
