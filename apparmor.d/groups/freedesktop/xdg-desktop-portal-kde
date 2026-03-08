@@ -8,7 +8,7 @@ include <tunables/global>
 
 @{exec_path}  = @{lib}/xdg-desktop-portal-kde
 @{exec_path} += @{lib}/@{multiarch}/{,libexec/}xdg-desktop-portal-kde
-profile xdg-desktop-portal-kde @{exec_path} flags=(attach_disconnected) {
+profile xdg-desktop-portal-kde @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/base>
   include <abstractions/devices-usb-read>
   include <abstractions/graphics>
@@ -44,12 +44,14 @@ profile xdg-desktop-portal-kde @{exec_path} flags=(attach_disconnected) {
 
   owner @{user_cache_dirs}/xdg-desktop-portal-kde/{,**} rwl,
 
+  owner @{user_config_dirs}/#@{int8} rw,
   owner @{user_config_dirs}/autostart/org.kde.*.desktop r,
   owner @{user_config_dirs}/breezerc r,
   owner @{user_config_dirs}/kbookmarkrc r,
   owner @{user_config_dirs}/kioslaverc r,
   owner @{user_config_dirs}/kservicemenurc r,
   owner @{user_config_dirs}/xdg-desktop-portal-kderc{,.*} rwlk,
+  owner @{user_config_dirs}/kdeglobals.@{rand6} rwl,
   owner @{user_config_dirs}/Kvantum/{,**} r,
 
   owner @{user_share_dirs}/user-places.xbel r,
@@ -60,7 +62,8 @@ profile xdg-desktop-portal-kde @{exec_path} flags=(attach_disconnected) {
   owner @{user_state_dirs}/xdg-desktop-portal-kdestaterc.lock rwk,
 
   owner @{run}/user/@{uid}/#@{int} rw,
-  owner @{run}/user/@{uid}/xdg-desktop-portal-kde@{rand6}.*.socket rwl,
+  owner @{run}/user/@{uid}/xdg-desktop-portal-kde@{rand6}.@{int}.socket rwl,
+  owner @{run}/user/@{uid}/xdg-desktop-portal-kde@{rand6}.@{int}.kioworker.socket rwl,
 
   owner @{PROC}/@{pid}/mountinfo r,
 
