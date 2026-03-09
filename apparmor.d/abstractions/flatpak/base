@@ -1,0 +1,241 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+# LOGPROF-SUGGEST: no
+# NEEDS-VARIABLE: appid
+# NEEDS-VARIABLE: att
+# NEEDS-VARIABLE: profile_dbus
+
+  abi <abi/4.0>,
+
+  include <abstractions/accessibility>
+  include <abstractions/attached/consoles>  #aa:lint ignore=abstractions
+  include <abstractions/bus-session>
+  include <abstractions/bus-system>
+  include <abstractions/nameservice-strict>
+
+  capability dac_override,
+  capability dac_read_search,
+
+  signal receive set=int peer=flatpak-portal,
+
+  unix (send receive) type=seqpacket peer=(label=@{profile_dbus}),
+  unix (send receive) type=seqpacket peer=(label=dbus-session),
+  unix (send receive) type=seqpacket peer=(label=flatpak-portal),
+  unix (send receive) type=seqpacket peer=(label=flatpak),
+  unix (send receive) type=seqpacket peer=(label=flatpak//bwrap),
+  unix (send receive) type=stream peer=(label=@{profile_dbus}),
+  unix (send receive) type=stream peer=(label=dbus-session),
+  unix (send receive) type=stream peer=(label=flatpak-portal),
+  unix (send receive) type=stream peer=(label=flatpak),
+  unix (send receive) type=stream peer=(label=flatpak//bwrap),
+
+  # Run in the flatpak sandbox, the app
+  /app/         rk,
+  /app/**    mrkix,
+
+  # Run in the flatpak sandbox, the app runtime
+  @{bin}/        r,
+  @{bin}/**    rix,
+  @{lib}/        r,
+  @{lib}/**    rix,
+  @{sbin}/       r,
+  @{sbin}/**   rix,
+
+  # Core directory of the flatpak platform runtime
+  / r,
+  /usr/ r,
+
+  /etc/timezone r,
+
+  owner /.flatpak-info r,
+
+  # In the sandbox, they are the same than ~/.var/app/@{appid}/{cache,config,data,cache/tmp}
+  #aa:lint ignore=too-wide
+  owner /var/ r,
+  owner /var/cache/** rwlk,
+  owner /var/config/** rwlk,
+  owner /var/data/** rwlk,
+  owner /var/tmp/** rwlk,
+
+  owner /home/ r,
+
+  owner @{att}@{HOME}/ r,
+  owner @{att}@{HOME}/.var/app/@{appid}/ r,
+  owner @{att}@{HOME}/.var/app/@{appid}/** mrwlk,
+
+  owner @{HOME}/.var/ w,
+  owner @{HOME}/.var/app/ w,
+  owner @{HOME}/.var/app/@{appid}/ rw,
+  owner @{HOME}/.var/app/@{appid}/** mrwlk -> @{HOME}/.var/app/@{appid}/**,
+  owner @{HOME}/.var/app/@{appid}/** ix,
+
+        @{run}/parent/** mrix,
+        @{run}/parent/usr/.ref rk,
+        @{run}/parent/app/.ref rk,
+
+  owner @{run}/flatpak/app/@{appid}/ r,
+  owner @{run}/flatpak/app/@{appid}/** mrwlk -> @{run}/flatpak/app/@{appid}/**,
+
+  owner @{run}/flatpak/doc/ r,
+  owner @{run}/flatpak/doc/** mrw,
+  owner @{run}/flatpak/ld.so.conf.d/ r,
+  owner @{run}/flatpak/ld.so.conf.d/*.conf r,
+
+  owner @{run}/user/@{uid}/app/@{appid}/ r,
+  owner @{run}/user/@{uid}/app/@{appid}/** rwlk -> @{run}/user/@{uid}/app/@{appid}/**,
+
+  owner @{att}@{run}/user/@{uid}/.dbus-proxy/a11y-bus-proxy-@{rand6} rw,
+  owner @{att}@{run}/user/@{uid}/.dbus-proxy/session-bus-proxy-@{rand6} rw,
+  owner @{att}@{run}/user/@{uid}/.dbus-proxy/system-bus-proxy-@{rand6} rw,
+
+        @{run}/host/os-release r,
+  owner @{run}/host/ r,
+  owner @{run}/host/container-manager r,
+
+  #aa:lint ignore=too-wide
+  # Flatpak creates an app-specific private restricted /tmp. As such, we can
+  # simply allow full access to /tmp.
+        /tmp/ r,
+  owner /tmp/** mrwlkix,
+        @{att}/tmp/ r,
+  owner @{att}/tmp/** mrwlkix,
+
+  # Show the list of active tty
+  @{sys}/devices/virtual/tty/tty@{int}/active r,
+
+  # List processes in /proc
+  @{PROC}/ r,
+
+  # Which CPUs/memory nodes the process is assigned to
+  @{PROC}/@{pid}/cpuset r,
+
+  # I/O statistics (bytes read/written)
+  @{PROC}/@{pid}/io r,
+
+  # Memory mappings (addresses, permissions, mapped files)
+  @{PROC}/@{pid}/maps r,
+
+  # Process status in one line (pid, state, ppid, CPU time, threads, etc.)
+  @{PROC}/@{pid}/stat r,
+
+  # Memory usage in pages (total, resident, shared, text, data)
+  @{PROC}/@{pid}/statm r,
+
+  # Human-readable process status (name, state, UIDs, memory, capabilities)
+  @{PROC}/@{pid}/status r,
+
+  # Human-readable thread status
+  @{PROC}/@{pid}/task/@{tid}/status r,
+
+  # Uptime
+  @{PROC}/uptime r,
+  @{PROC}/loadavg r,
+
+  # Allow to read the maximum number of file handles that can be allocated system-wide.
+  @{PROC}/sys/fs/file-max r,
+  @{PROC}/sys/fs/file-nr r,
+  @{PROC}/sys/fs/nr_open r,
+
+  # Limits for how many inotify instances, watches, and pending events a user can have.
+  @{PROC}/sys/fs/inotify/max_queued_events r,
+  @{PROC}/sys/fs/inotify/max_user_instances r,
+  @{PROC}/sys/fs/inotify/max_user_watches r,
+
+  # Maximum size that an unprivileged process can set for a pipe buffer
+  @{PROC}/sys/fs/pipe-max-size r,
+
+  # Get the system hostname
+  @{PROC}/sys/kernel/hostname r,
+
+  # Get kernel version string
+  @{PROC}/sys/kernel/osrelease r,
+
+  # Get OS type (always Linux)
+  @{PROC}/sys/kernel/ostype r,
+
+  # Maximum PID value the kernel will assign
+  @{PROC}/sys/kernel/pid_max r,
+
+  # Unique UUID generated each boot, used to identify the current boot session
+  @{PROC}/sys/kernel/random/boot_id r,
+
+  # Get the amount of available entropy in the kernel's random pool
+  @{PROC}/sys/kernel/random/entropy_avail r,
+
+  # Generates a fresh random UUID each time it's read
+  @{PROC}/sys/kernel/random/uuid r,
+
+  # Maximum size of a single shared memory segment
+  @{PROC}/sys/kernel/shmmax r,
+
+  # Get the ptrace restrictions level
+  @{PROC}/sys/kernel/yama/ptrace_scope r,
+
+  # Kernel version
+  @{PROC}/version r,
+  @{PROC}/version_signature r,
+
+  # Information about memory zones (DMA, Normal, HighMem) including free pages,
+  # watermarks, and per-CPU page counts.
+  @{PROC}/zoneinfo r,
+
+  # Allow reading cgroup membership information for process introspection
+  owner @{PROC}/@{pid}/cgroup r,
+
+  # Clearing the referenced bits in a process's page table entries provides a method to
+  # measure approximately how much memory a process is using.
+  owner @{PROC}/@{pid}/clear_refs w,
+
+  # Allow reading command line arguments for process identification
+  owner @{PROC}/@{pid}/cmdline rk,
+  owner @{PROC}/@{pid}/comm rk,
+
+  # Allow reading our own environment variables
+  owner @{PROC}/@{pid}/environ r,
+
+  # Allow listing file descriptors
+        @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/fd/ r,
+
+  # Allow reading file descriptor info
+  owner @{PROC}/@{pid}/fdinfo/ r,
+  owner @{PROC}/@{pid}/fdinfo/@{int} r,
+
+  # Shows the process's current resource limits (soft/hard), the ulimit value.
+  owner @{PROC}/@{pid}/limits r,
+
+  # Show the loginuid and sessionid of the process, which can be used for auditing and debugging.
+  owner @{PROC}/@{pid}/loginuid r,
+  owner @{PROC}/@{pid}/sessionid r,
+
+  # Allow reading mount points for filesystem awareness. This is an information leak
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/mounts r,
+
+  # Reads of oom_adj and oom_score_adj are safe
+  owner @{PROC}/@{pid}/oom_adj r,
+  owner @{PROC}/@{pid}/oom_score_adj r,
+
+  # Allow reading of smaps_rollup, which is a summary of the memory use of a process
+        @{PROC}/@{pid}/smaps r,
+  owner @{PROC}/@{pid}/smaps_rollup r,
+
+  # Per man(5) proc, the kernel enforces that a thread may only modify its comm
+  # value or those in its thread group.
+  owner @{PROC}/@{pid}/task/@{tid}/comm rw,
+
+  # Provide statistical information about our own processes/threads
+  owner @{PROC}/@{pid}/task/ r,
+  owner @{PROC}/@{pid}/task/@{tid}/smaps r,
+  owner @{PROC}/@{pid}/task/@{tid}/stat r,
+  owner @{PROC}/@{pid}/task/@{tid}/statm r,
+  owner @{PROC}/@{pid}/task/@{tid}/status r,
+
+  # Allow setting up pseudoterminal via /dev/pts system. This is safe because
+  # flatpak uses a per-app devpts.
+  /dev/ptmx rw,
+
+  include if exists <abstractions/flatpak/base.d>
+
+# vim:syntax=apparmor
