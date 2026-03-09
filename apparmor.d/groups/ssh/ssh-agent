@@ -7,10 +7,13 @@ abi <abi/4.0>,
 
 include <tunables/global>
 
-@{exec_path} = @{bin}/ssh-agent
+@{exec_path} = @{bin}/ssh-agent @{lib}/{,ssh/ssh-sk-helper}
 profile ssh-agent @{exec_path} {
   include <abstractions/base>
   include <abstractions/nameservice-strict>
+  include <abstractions/devices-usb>
+  include <abstractions/devices-u2f>
+
 
   signal receive set=term peer=cockpit-bridge,
   signal receive set=term peer=cockpit-session,
@@ -21,6 +24,8 @@ profile ssh-agent @{exec_path} {
   @{sh_path}                   rix,
   @{bin}/gpg-agent             rPx,
   @{bin}/im-launch             rPx,
+
+  @{lib}/ssh/ssh-sk-helper     rPx,
 
   owner @{HOME}/@{XDG_SSH_DIR}/ rw,
   owner @{HOME}/@{XDG_SSH_DIR}/* r,
@@ -37,6 +42,8 @@ profile ssh-agent @{exec_path} {
   owner @{run}/user/@{uid}/openssh_agent rw,
   owner @{run}/user/@{uid}/ssh-agent.@{rand6} w,
   owner @{run}/user/@{uid}/gcr/.ssh rw,
+
+  @{sys}/devices/**/uevent r,
 
   /dev/tty@{u8} rw,
   /dev/tty rw,
