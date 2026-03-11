@@ -7,15 +7,31 @@
 
   include <abstractions/graphics-full>
 
+  unix (bind listen) type=seqpacket addr=@@{hex},
+
+  # The orcexec.* file is JIT compiled code for various GStreamer elements.
+  # If one is blocked the next is used instead.
+  # The orcexec file is placed under /home/user/ also when the /tmp/ dir is mounted with the noexec flag.
+       owner @{run}/user/@{uid}/orcexec.@{rand6} mrw,
+  deny owner @{HOME}/orcexec.@{rand6} mrw,
+  deny owner @{tmp}/orcexec.@{rand6} mrw,
+
+  @{sys}/bus/ r,
+  @{sys}/devices/@{pci_bus}/uevent r,
+  @{sys}/devices/virtual/dmi/id/bios_vendor r,
+  @{sys}/devices/virtual/dmi/id/board_vendor r,
+  @{sys}/devices/virtual/dmi/id/product_name r,
+  @{sys}/devices/virtual/dmi/id/sys_vendor r,
+
   @{PROC}/devices r,
   @{PROC}/driver/nvidia/capabilities/mig/config r,
-
-  /dev/ r,
+  @{PROC}/sys/vm/nr_hugepages r,
 
   # Video Acceleration API
   @{att}/dev/dri/renderD128 rw,
   @{att}/dev/dri/renderD129 rw,
 
+  /dev/ r,
   /dev/nvidia-caps/nvidia-cap@{int} rw,
 
   include if exists <abstractions/flatpak/devices/dri.d>
