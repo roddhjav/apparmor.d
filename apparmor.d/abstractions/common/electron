@@ -98,6 +98,9 @@
   owner @{PROC}/@{pid}/oom_adj r,
   owner @{PROC}/@{pid}/oom_score_adj r,
 
+  # This allows raising the OOM score of other processes owned by the user.
+  owner @{PROC}/@{pid}/oom_score_adj w,
+
   # Per man(5) proc, the kernel enforces that a thread may only modify its comm
   # value or those in its thread group.
   owner @{PROC}/@{pid}/task/@{tid}/comm rw,
@@ -109,12 +112,6 @@
         @{PROC}/version_signature r,
   owner @{PROC}/@{pid}/cgroup r,
   owner @{PROC}/@{pid}/cmdline r,
-
-  # gvfs-metadata contains user-specific data that should not be readable by apps
-  deny @{user_share_dirs}/gvfs-metadata/* r,
-
-  # This allows raising the OOM score of other processes owned by the user.
-  deny owner @{PROC}/@{pid}/oom_score_adj w,
 
   profile crashpad_handler flags=(attach_disconnected) {
     include <abstractions/base>
