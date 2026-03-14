@@ -5,7 +5,6 @@
 package builder
 
 import (
-	"regexp"
 	"slices"
 	"strings"
 
