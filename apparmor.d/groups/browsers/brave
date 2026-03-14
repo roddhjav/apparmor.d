@@ -10,17 +10,13 @@ include <tunables/global>
 @{name} = brave{,-beta,-dev,-bin}
 @{domain} = com.brave.Brave org.chromium.Chromium
 @{lib_dirs} = /opt/brave{-bin,.com}{,/@{name}}
-@{config_dirs} = @{user_config_dirs}/BraveSoftware/Brave-Browser{,-Beta,-Dev}
-@{cache_dirs} = @{user_cache_dirs}/BraveSoftware/Brave-Browser{,-Beta,-Dev}
+@{config_dirs} = @{user_config_dirs}/BraveSoftware/
+@{cache_dirs} = @{user_cache_dirs}/BraveSoftware/
 
 @{exec_path} = @{lib_dirs}/@{name}
 profile brave @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/app/chromium>
-
-  # unix (send, receive) type=stream peer=(label=brave//&brave-crashpad-handler),
-
-  signal receive peer=brave//&brave-crashpad-handler,
 
   #aa:dbus own bus=session name=org.mpris.MediaPlayer2.brave path=/org/mpris/MediaPlayer2
 
@@ -30,17 +26,14 @@ profile brave @{exec_path} flags=(attach_disconnected) {
 
   @{bin}/man  rPUx, #  For "brave --help"
 
-  @{lib_dirs}/chrome_crashpad_handler  rPx -> brave//&brave-crashpad-handler,
+  @{lib_dirs}/chrome_crashpad_handler  Px -> brave//&brave//crashpad_handler,
 
   /usr/share/chromium/extensions/ r,
 
   /etc/opt/chrome/ r,
   /etc/opt/chrome/native-messaging-hosts/* r,
 
-  owner @{user_config_dirs}/BraveSoftware/ rw,
-
   owner @{config_dirs}/WidevineCdm/libwidevinecdm.so mrw,
-  owner @{cache_dirs}/BraveSoftware/ rw,
 
   owner @{tmp}/net-export/ rw,  # For brave://net-export/
 
