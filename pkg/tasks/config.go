@@ -22,9 +22,6 @@ type TaskConfig struct {
 	// Either or not we are in test mode
 	Test bool
 
-	// The dbus implementation used (true for dbus-daemon, false for dbus-broker)
-	DbusDaemon bool
-
 	// Pkgname is the name of the package
 	Pkgname string
 
@@ -42,7 +39,6 @@ func NewTaskConfig(root *paths.Path) *TaskConfig {
 		DownStream:   false,
 		RBAC:         false,
 		Test:         false,
-		DbusDaemon:   true,
 		Pkgname:      "apparmor.d",
 		Root:         root,
 		RootApparmor: root.Join("apparmor.d"),
