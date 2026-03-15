@@ -24,11 +24,11 @@ const dbusOwnSystemd1 = `  include <abstractions/bus/system/own>
   dbus receive bus=system path=/org/freedesktop/systemd1{,/**}
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
-       peer=(name="{@{busname},org.freedesktop.DBus}"),
+       peer=(name="@{busname}"),
   dbus receive bus=system path=/org/freedesktop/systemd1{,/**}
        interface=org.freedesktop.DBus.ObjectManager
        member=GetManagedObjects
-       peer=(name="{@{busname},org.freedesktop.DBus}"),
+       peer=(name="{@{busname},org.freedesktop.systemd1{,.*}}"),
   dbus send bus=system path=/org/freedesktop/systemd1{,/**}
        interface=org.freedesktop.DBus.ObjectManager
        member={InterfacesAdded,InterfacesRemoved}
@@ -95,11 +95,11 @@ func TestDbus_Apply(t *testing.T) {
   dbus receive bus=session path=/com/rastersoft/ding{,/**}
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
-       peer=(name="{@{busname},org.freedesktop.DBus}"),
+       peer=(name="@{busname}"),
   dbus receive bus=session path=/com/rastersoft/ding{,/**}
        interface=org.freedesktop.DBus.ObjectManager
        member=GetManagedObjects
-       peer=(name="{@{busname},org.freedesktop.DBus}"),
+       peer=(name="{@{busname},com.rastersoft.ding{,.*}}"),
   dbus send bus=session path=/com/rastersoft/ding{,/**}
        interface=org.freedesktop.DBus.ObjectManager
        member={InterfacesAdded,InterfacesRemoved}
@@ -124,23 +124,23 @@ func TestDbus_Apply(t *testing.T) {
 
   dbus (send receive) bus=system path=/org/freedesktop/Accounts{,/**}
        interface=org.freedesktop.Accounts{,.*}
-       peer=(name="{@{busname},org.freedesktop.Accounts{,.*}}", label=accounts-daemon),
+       peer=(name="{@{busname},org.freedesktop.Accounts{,.*},org.freedesktop.DBus}", label=accounts-daemon),
   dbus (send receive) bus=system path=/org/freedesktop/Accounts{,/**}
        interface=org.freedesktop.DBus.Properties
        member={Get,GetAll,Set,PropertiesChanged}
-       peer=(name="{@{busname},org.freedesktop.Accounts{,.*}}", label=accounts-daemon),
+       peer=(name="{@{busname},org.freedesktop.Accounts{,.*},org.freedesktop.DBus}", label=accounts-daemon),
   dbus send bus=system path=/org/freedesktop/Accounts{,/**}
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
-       peer=(name="{@{busname},org.freedesktop.Accounts{,.*}}", label=accounts-daemon),
+       peer=(name="{@{busname},org.freedesktop.Accounts{,.*},org.freedesktop.DBus}", label=accounts-daemon),
   dbus send bus=system path=/org/freedesktop/Accounts{,/**}
        interface=org.freedesktop.DBus.ObjectManager
        member=GetManagedObjects
-       peer=(name="{@{busname},org.freedesktop.Accounts{,.*}}", label=accounts-daemon),
+       peer=(name="{@{busname},org.freedesktop.Accounts{,.*},org.freedesktop.DBus}", label=accounts-daemon),
   dbus receive bus=system path=/org/freedesktop/Accounts{,/**}
        interface=org.freedesktop.DBus.ObjectManager
        member={InterfacesAdded,InterfacesRemoved}
-       peer=(name="{@{busname},org.freedesktop.Accounts{,.*}}", label=accounts-daemon),`,
+       peer=(name="{@{busname},org.freedesktop.Accounts{,.*},org.freedesktop.DBus}", label=accounts-daemon),`,
 		},
 		{
 			name: "common",
