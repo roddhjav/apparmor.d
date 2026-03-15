@@ -44,9 +44,10 @@ func (s Stack) Apply(opt *Option, profile string) (string, error) {
 	if len(opt.ArgList) == 0 {
 		return "", fmt.Errorf("no profile to stack")
 	}
+	cleanRules := regCleanStakedRules
 	t := opt.ArgList[0]
 	if t != "X" {
-		regCleanStakedRules = slices.Insert(regCleanStakedRules, 0,
+		cleanRules = slices.Insert(slices.Clone(regCleanStakedRules), 0,
 			util.ToRegexRepl([]string{
 				`(?m)^.*(|P|p)(|U|u)(|i)x,.*$`, ``, // Remove X transition rules
 			})...,
@@ -55,7 +56,7 @@ func (s Stack) Apply(opt *Option, profile string) (string, error) {
 		delete(opt.ArgMap, t)
 	}
 
-	res := ""
+	var res strings.Builder
 	ignoreDir := paths.FilterNames("tunables", "abstractions", "disable")
 	for name := range opt.ArgMap {
 		files, err := s.RootApparmor.ReadDirRecursiveFiltered(
@@ -72,16 +73,16 @@ func (s Stack) Apply(opt *Option, profile string) (string, error) {
 		}
 
 		stackedProfile := files[0].MustReadFileAsString()
-		if err != nil {
-			return "", fmt.Errorf("%s need to stack: %w", name, err)
-		}
 		m := regRules.FindStringSubmatch(stackedProfile)
 		if len(m) < 2 {
 			return "", fmt.Errorf("no profile found in %s", name)
 		}
-		stackedRules := m[1]
-		stackedRules = regCleanStakedRules.Replace(stackedRules)
-		res += "  # Stacked profile: " + name + "\n" + stackedRules + "\n"
+		stackedRules := cleanRules.Replace(m[1])
+		res.WriteString("  # Stacked profile: ")
+		res.WriteString(name)
+		res.WriteString("\n")
+		res.WriteString(stackedRules)
+		res.WriteString("\n")
 	}
 
 	// Insert the stacked profile at the end of the current profile, remove the stack directive
@@ -89,7 +90,7 @@ func (s Stack) Apply(opt *Option, profile string) (string, error) {
 	if len(m) <= 1 {
 		return "", fmt.Errorf("no end of rules found in %s", opt.File)
 	}
-	profile = strings.ReplaceAll(profile, m[0], res+m[0])
+	profile = strings.ReplaceAll(profile, m[0], res.String()+m[0])
 	profile = strings.ReplaceAll(profile, opt.Raw, "")
 	return profile, nil
 }
