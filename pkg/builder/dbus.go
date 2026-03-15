@@ -5,7 +5,6 @@
 package builder
 
 import (
-	"slices"
 	"strings"
 
 	"github.com/roddhjav/apparmor.d/pkg/aa"
@@ -67,11 +66,6 @@ func (b StackedDbus) Apply(opt *Option, profile string) (string, error) {
 		return profile, nil
 	}
 
-	toResolve := []string{}
-	for k := range resolve {
-		toResolve = append(toResolve, k)
-	}
-
 	rulesByParagraph, paragraphs, err := parse(opt.Kind, profile)
 	if err != nil {
 		return "", err
@@ -82,9 +76,9 @@ func (b StackedDbus) Apply(opt *Option, profile string) (string, error) {
 		for _, rule := range rules {
 			switch rule := rule.(type) {
 			case *aa.Dbus:
-				if slices.Contains(toResolve, rule.PeerLabel) {
+				if labels, ok := resolve[rule.PeerLabel]; ok {
 					changed = true
-					for _, label := range resolve[rule.PeerLabel] {
+					for _, label := range labels {
 						newRule := *rule
 						newRule.PeerLabel = label
 						newRules = append(newRules, &newRule)
