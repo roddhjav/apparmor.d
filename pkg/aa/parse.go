@@ -62,9 +62,6 @@ var (
 		BOOLEAN:  "$",
 		HAT:      "^",
 	}
-	openBlocks  = []rune{tokOPENPAREN, tokOPENBRACE, tokOPENBRACKET}
-	closeBlocks = []rune{tokCLOSEPAREN, tokCLOSEBRACE, tokCLOSEBRACKET}
-
 	inHeader              = false
 	regParagraph          = regexp.MustCompile(`(?s).*?\n\n|$`)
 	regVariableDefinition = regexp.MustCompile(`@{(.*)}\s*[+=]+\s*(.*)`)
@@ -93,7 +90,7 @@ func tokenizeBlock(input string) ([]*block, error) {
 
 	blocks := []*block{}
 	blockStack := []rune{}
-	blockRecored := false
+	blockRecorded := false
 	blockStart := 0
 	blockEnd := 0
 	blockContentStart := 0
@@ -149,7 +146,7 @@ func tokenizeBlock(input string) ([]*block, error) {
 
 				if !ignore {
 					blockStart = idx
-					blockRecored = true
+					blockRecorded = true
 				}
 			}
 
@@ -162,8 +159,8 @@ func tokenizeBlock(input string) ([]*block, error) {
 					input[blockContentStart:idx])
 			}
 
-			if len(blockStack) == 1 && blockRecored {
-				blockRecored = false
+			if len(blockStack) == 1 && blockRecorded {
+				blockRecorded = false
 				blockEnd = idx
 				blockContentStartBkp = blockContentStart
 				blockContentEnd = blockStart
