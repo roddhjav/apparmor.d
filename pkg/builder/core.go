@@ -6,11 +6,17 @@ package builder
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/roddhjav/apparmor.d/pkg/aa"
 	"github.com/roddhjav/apparmor.d/pkg/paths"
 	"github.com/roddhjav/apparmor.d/pkg/tasks"
+)
+
+var (
+	regFlags         = regexp.MustCompile(`flags=\(([^)]+)\)`)
+	regProfileHeader = regexp.MustCompile(` {\n`)
 )
 
 // Builder main directive interface
@@ -64,4 +70,25 @@ func (r *Builders) Run(file *paths.Path, profile string) (string, error) {
 func (r *Builders) Add(builder Builder) *Builders {
 	r.BaseRunner.Add(builder)
 	return r
+}
+
+// extractFlags parses the flags from a profile string.
+func extractFlags(profile string) []string {
+	matches := regFlags.FindStringSubmatch(profile)
+	if len(matches) == 0 {
+		return nil
+	}
+	return strings.Split(matches[1], ",")
+}
+
+// setFlags replaces flags in a profile string. If flags is empty, removes the flags clause.
+func setFlags(profile string, flags []string) string {
+	profile = regFlags.ReplaceAllLiteralString(profile, "")
+	if len(flags) == 0 {
+		// Clean up any extra space left after removing flags
+		profile = strings.ReplaceAll(profile, "  {\n", " {\n")
+		return profile
+	}
+	flagsStr := " flags=(" + strings.Join(flags, ",") + ") {\n"
+	return regProfileHeader.ReplaceAllLiteralString(profile, flagsStr)
 }
