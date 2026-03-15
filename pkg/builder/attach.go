@@ -27,7 +27,7 @@ func NewAttach() *ReAttach {
 }
 
 // Apply will re-attach the disconnected path
-//   - Add the attach_disconnected.path flag on all frofile with the attach_disconnected flag
+//   - Add the attach_disconnected.path flag on all profile with the attach_disconnected flag
 //   - Replace the base abstraction by attached/base
 //   - Replace the consoles abstraction by attached/consoles
 //   - For compatibility, non disconnected profile will have the @{att} variable set to /
@@ -55,26 +55,14 @@ func (b ReAttach) Apply(opt *Option, profile string) (string, error) {
 				insert = "@{att} = /att/" + opt.Name + "/\n"
 			}
 		}
-		profile = strings.ReplaceAll(profile,
-			"attach_disconnected",
-			"attach_disconnected,attach_disconnected.path=@{att}",
+		replacer := strings.NewReplacer(
+			"attach_disconnected", "attach_disconnected,attach_disconnected.path=@{att}",
+			"include <abstractions/base-strict>", "include <abstractions/attached/base>",
+			"include <abstractions/base>", "include <abstractions/attached/base>",
+			"include <abstractions/consoles>", "include <abstractions/attached/consoles>",
+			"include <abstractions/nameservice-strict>", "include <abstractions/attached/nameservice-strict>",
 		)
-		profile = strings.ReplaceAll(profile,
-			"include <abstractions/base>",
-			"include <abstractions/attached/base>",
-		)
-		profile = strings.ReplaceAll(profile,
-			"include <abstractions/base-strict>",
-			"include <abstractions/attached/base>",
-		)
-		profile = strings.ReplaceAll(profile,
-			"include <abstractions/consoles>",
-			"include <abstractions/attached/consoles>",
-		)
-		profile = strings.ReplaceAll(profile,
-			"include <abstractions/nameservice-strict>",
-			"include <abstractions/attached/nameservice-strict>",
-		)
+		profile = replacer.Replace(profile)
 
 	} else {
 		if opt.Kind == aa.ProfileKind {
