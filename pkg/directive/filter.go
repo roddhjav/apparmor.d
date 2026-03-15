@@ -95,38 +95,31 @@ func compare(refValue any, prefix string, arg string) bool {
 
 func filterRuleForUs(c *tasks.TaskConfig, opt *Option) bool {
 	for _, arg := range opt.ArgList {
-		var res bool
-		if c.RBAC && arg == "RBAC" {
-			res = true
-		}
-		if c.Test && arg == "test" {
-			res = true
-		}
-		if arg == tasks.Distribution {
-			res = true
-		}
-		if arg == tasks.Family {
-			res = true
-		}
-		if strings.HasPrefix(arg, "abi") {
-			res = compare(c.ABI, "abi", arg)
-		}
-		if strings.HasPrefix(arg, "apparmor") {
-			res = compare(c.Version, "apparmor", arg)
-		}
-
-		if res {
+		switch {
+		case c.RBAC && arg == "RBAC":
 			return true
+		case c.Test && arg == "test":
+			return true
+		case arg == tasks.Distribution:
+			return true
+		case arg == tasks.Family:
+			return true
+		case strings.HasPrefix(arg, "abi"):
+			if compare(c.ABI, "abi", arg) {
+				return true
+			}
+		case strings.HasPrefix(arg, "apparmor"):
+			if compare(c.Version, "apparmor", arg) {
+				return true
+			}
 		}
 	}
 	return false
 }
 
 func filter(c *tasks.TaskConfig, only bool, opt *Option, profile string) (string, error) {
-	if only && filterRuleForUs(c, opt) {
-		return opt.Clean(profile), nil
-	}
-	if !only && !filterRuleForUs(c, opt) {
+	forUs := filterRuleForUs(c, opt)
+	if only == forUs {
 		return opt.Clean(profile), nil
 	}
 
