@@ -43,17 +43,17 @@ func NewDbus() *Dbus {
 func (d Dbus) Apply(opt *Option, profile string) (string, error) {
 	var r aa.Rules
 
-	action, err := d.sanityCheck(opt)
+	action, err := d.SanityCheck(opt)
 	if err != nil {
 		return "", err
 	}
 	switch action {
 	case "own":
-		r = d.own(opt.ArgMap)
+		r = d.Own(opt.ArgMap)
 	case "talk":
-		r = d.talk(opt.ArgMap)
+		r = d.Talk(opt.ArgMap)
 	case "common", "see":
-		r = d.see(opt.ArgMap)
+		r = d.See(opt.ArgMap)
 	}
 
 	aa.IndentationLevel = strings.Count(
@@ -66,7 +66,7 @@ func (d Dbus) Apply(opt *Option, profile string) (string, error) {
 	return profile, nil
 }
 
-func (d Dbus) sanityCheck(opt *Option) (string, error) {
+func (d Dbus) SanityCheck(opt *Option) (string, error) {
 	if len(opt.ArgList) < 1 {
 		return "", fmt.Errorf("unknown dbus action: %s in %s", opt.Name, opt.File)
 	}
@@ -107,7 +107,7 @@ func getInterfaces(rules map[string]string) []string {
 	return interfaces
 }
 
-func (d Dbus) own(rules map[string]string) aa.Rules {
+func (d Dbus) Own(rules map[string]string) aa.Rules {
 	interfaces := getInterfaces(rules)
 
 	res := aa.Rules{
@@ -169,7 +169,7 @@ func (d Dbus) own(rules map[string]string) aa.Rules {
 	return res
 }
 
-func (d Dbus) talk(rules map[string]string) aa.Rules {
+func (d Dbus) Talk(rules map[string]string) aa.Rules {
 	interfaces := getInterfaces(rules)
 	peerName := `"{@{busname},` + rules["name"] + `,org.freedesktop.DBus}"`
 	res := aa.Rules{
@@ -224,7 +224,7 @@ func (d Dbus) talk(rules map[string]string) aa.Rules {
 	return res
 }
 
-func (d Dbus) see(rules map[string]string) aa.Rules {
+func (d Dbus) See(rules map[string]string) aa.Rules {
 	peerName := `"{@{busname},` + rules["name"] + `}"`
 	res := aa.Rules{
 
