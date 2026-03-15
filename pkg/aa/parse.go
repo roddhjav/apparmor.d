@@ -246,29 +246,14 @@ func tokenizeBlock(input string) ([]*block, error) {
 
 func parseBlock(b *block) (Rules, error) {
 	var res Rules
-	var rrr Rules
-	var err error
 
 	switch b.kind {
 	case CONTENT:
-		// Line rules
-		var raw string
-		raw, res, err = parseLineRules(false, b.raw)
+		var err error
+		res, err = parseContentRules(b.raw)
 		if err != nil {
 			return nil, err
 		}
-
-		// Comma rules
-		rules, err := parseCommaRules(raw)
-		if err != nil {
-			return nil, err
-		}
-		rrr, err = newRules(rules)
-		if err != nil {
-			return nil, err
-		}
-
-		res = append(res, rrr...)
 		for _, r := range res {
 			if r.Constraint() == PreambleRule {
 				return nil, fmt.Errorf("Rule not allowed in block: %s", r)
@@ -276,17 +261,16 @@ func parseBlock(b *block) (Rules, error) {
 		}
 
 	case RAW:
-		var blocks []*block
-		blocks, err = tokenizeBlock(b.raw)
+		blocks, err := tokenizeBlock(b.raw)
 		if err != nil {
 			return nil, err
 		}
 		for _, block := range blocks {
-			rrr, err = parseBlock(block)
+			rules, err := parseBlock(block)
 			if err != nil {
 				return nil, err
 			}
-			res = append(res, rrr...)
+			res = append(res, rules...)
 		}
 		return res, nil
 
@@ -462,15 +446,13 @@ func parseCommaRules(input string) ([]rule, error) {
 	return rules, nil
 }
 
-func parseParagraph(input string) (Rules, error) {
-	// Line rules
-	var raw string
+// parseContentRules parses line and comma rules from a raw string.
+func parseContentRules(input string) (Rules, error) {
 	raw, res, err := parseLineRules(false, input)
 	if err != nil {
 		return nil, err
 	}
 
-	// Comma rules
 	rules, err := parseCommaRules(raw)
 	if err != nil {
 		return nil, err
@@ -480,13 +462,7 @@ func parseParagraph(input string) (Rules, error) {
 		return nil, err
 	}
 
-	res = append(res, rrr...)
-	// for _, r := range res {
-	// 	if r.Constraint() == PreambleRule {
-	// 		return nil, fmt.Errorf("Rule not allowed in block: %s", r)
-	// 	}
-	// }
-	return res, nil
+	return append(res, rrr...), nil
 }
 
 // Split a raw input rule string into tokens by space or =, but ignore spaces
@@ -1016,7 +992,7 @@ func ParseRules(input string) (ParaRules, []string, error) {
 		}
 
 		paragraphs = append(paragraphs, paragraph)
-		rules, err := parseParagraph(paragraph)
+		rules, err := parseContentRules(input)
 		if err != nil {
 			return nil, nil, err
 		}
