@@ -256,9 +256,10 @@ func (aaLogs AppArmorLogs) String() string {
 		"requested_mask", "denied_mask", "signal", "peer", "peer_label",
 	}
 	// Key to not print
-	ignore := []string{
-		"fsuid", "ouid", "FSUID", "OUID", "exe", "SAUID", "sauid", "terminal",
-		"UID", "AUID", "hostname", "class",
+	ignore := map[string]bool{
+		"fsuid": true, "ouid": true, "FSUID": true, "OUID": true,
+		"exe": true, "SAUID": true, "sauid": true, "terminal": true,
+		"UID": true, "AUID": true, "hostname": true, "class": true,
 	}
 	// Color template to use
 	template := map[string]string{
@@ -307,7 +308,7 @@ func (aaLogs AppArmorLogs) String() string {
 		}
 
 		for key, value := range log {
-			if slices.Contains(ignore, key) {
+			if ignore[key] {
 				continue
 			}
 			if _, present := seen[key]; !present && value != "" {
