@@ -137,13 +137,6 @@ func validateLogFile(filename string) error {
 	if info.Size() == 0 {
 		return fmt.Errorf("file is empty: %s", filename)
 	}
-	file, err := os.Open(filename)
-	if err != nil {
-		return fmt.Errorf("unable to read: %s", filename)
-	}
-	if cerr := file.Close(); cerr != nil {
-		return fmt.Errorf("unable to close file %s: %w", filename, cerr)
-	}
 	return nil
 }
 
