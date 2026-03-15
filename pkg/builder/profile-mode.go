@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"regexp"
 	"slices"
-	"strings"
 
 	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 	"github.com/roddhjav/apparmor.d/pkg/tasks"
@@ -64,11 +63,7 @@ func (b ProfileMode) Apply(opt *Option, profile string) (string, error) {
 }
 
 func setMode(profile string, mode string) (string, error) {
-	flags := []string{}
-	matches := regFlags.FindStringSubmatch(profile)
-	if len(matches) != 0 {
-		flags = strings.Split(matches[1], ",")
-	}
+	flags := extractFlags(profile)
 
 	// Remove all conflicting mode flags
 	flags = slices.DeleteFunc(flags, func(f string) bool {
@@ -80,11 +75,5 @@ func setMode(profile string, mode string) (string, error) {
 		flags = append(flags, mode)
 	}
 
-	// Remove all flags definition, then set the new flags
-	profile = regFlags.ReplaceAllLiteralString(profile, "")
-	if len(flags) > 0 {
-		flagsStr := " flags=(" + strings.Join(flags, ",") + ") {\n"
-		profile = regProfileHeader.ReplaceAllLiteralString(profile, flagsStr)
-	}
-	return profile, nil
+	return setFlags(profile, flags), nil
 }

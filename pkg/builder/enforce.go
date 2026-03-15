@@ -6,7 +6,6 @@ package builder
 
 import (
 	"slices"
-	"strings"
 
 	"github.com/roddhjav/apparmor.d/pkg/tasks"
 )
@@ -26,23 +25,11 @@ func NewEnforce() *Enforce {
 }
 
 func (b Enforce) Apply(opt *Option, profile string) (string, error) {
-	matches := regFlags.FindStringSubmatch(profile)
-	if len(matches) == 0 {
-		return profile, nil
-	}
-
-	flags := strings.Split(matches[1], ",")
+	flags := extractFlags(profile)
 	idx := slices.Index(flags, "complain")
 	if idx == -1 {
 		return profile, nil
 	}
 	flags = slices.Delete(flags, idx, idx+1)
-	strFlags := "{\n"
-	if len(flags) >= 1 {
-		strFlags = " flags=(" + strings.Join(flags, ",") + ") {\n"
-	}
-
-	// Remove all flags definition, then set new flags
-	profile = regFlags.ReplaceAllLiteralString(profile, "")
-	return regProfileHeader.ReplaceAllLiteralString(profile, strFlags), nil
+	return setFlags(profile, flags), nil
 }
