@@ -172,8 +172,7 @@ func tokenizeBlock(input string) ([]*block, error) {
 				for i > 0 && blockContentRaw[i] != '\n' {
 					i--
 				}
-				blockHeader := strings.Trim(blockContentRaw[i:], "\n ")
-				blockHeader = strings.Trim(blockHeader, "\n\t ")
+				blockHeader := strings.Trim(blockContentRaw[i:], "\n\t ")
 
 				// Ignore commented block, restore previous id values
 				if len(blockHeader) > 0 && blockHeader[0] == '#' {
@@ -536,11 +535,11 @@ func tokenizeRule(str string) []string {
 			quoted = !quoted
 			currentToken.WriteRune(r)
 
-		case slices.Contains(openBlocks, r):
+		case r == tokOPENPAREN || r == tokOPENBRACE || r == tokOPENBRACKET:
 			blockStack = append(blockStack, r)
 			currentToken.WriteRune(r)
 
-		case slices.Contains(closeBlocks, r):
+		case r == tokCLOSEPAREN || r == tokCLOSEBRACE || r == tokCLOSEBRACKET:
 			if len(blockStack) > 0 {
 				blockStack = blockStack[:len(blockStack)-1]
 			} else {
