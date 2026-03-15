@@ -35,8 +35,7 @@ const (
 )
 
 var (
-	isAppArmorLogTemplate = regexp.MustCompile(`apparmor=("DENIED"|"ALLOWED"|"AUDIT")`)
-	regCleanLogs          = util.ToRegexRepl([]string{
+	regCleanLogs = util.ToRegexRepl([]string{
 		// Clean apparmor log file
 		`.*apparmor="`, `apparmor="`,
 		`(peer_|)pid=[0-9]*\s`, " ",

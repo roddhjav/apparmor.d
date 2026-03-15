@@ -34,16 +34,14 @@ type systemdLog struct {
 func GetApparmorLogs(file io.Reader, profile string, namespace string) []string {
 	var logs []string
 
-	isAppArmorLog := isAppArmorLogTemplate.Copy()
 	exp := `apparmor=("DENIED"|"ALLOWED"|"AUDIT")`
 	if profile != "" {
-		exp = fmt.Sprintf(exp+`.* (profile="%s.*"|label="%s.*")`, profile, profile)
-		isAppArmorLog = regexp.MustCompile(exp)
+		exp += fmt.Sprintf(`.* (profile="%s.*"|label="%s.*")`, profile, profile)
 	}
 	if namespace != "" {
-		exp = fmt.Sprintf(exp+`.* namespace="root//%s.*"`, namespace)
-		isAppArmorLog = regexp.MustCompile(exp)
+		exp += fmt.Sprintf(`.* namespace="root//%s.*"`, namespace)
 	}
+	isAppArmorLog := regexp.MustCompile(exp)
 
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
