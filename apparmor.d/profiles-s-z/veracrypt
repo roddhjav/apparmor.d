@@ -7,15 +7,15 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{exec_path} = @{bin}/veracrypt
-profile veracrypt @{exec_path} {
+profile veracrypt @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/app/kmod>
-  include <abstractions/app/sudo>
+  include <abstractions/audio-client>
   include <abstractions/consoles>
   include <abstractions/dconf-write>
   include <abstractions/desktop>
   include <abstractions/disks-write>
   include <abstractions/nameservice-strict>
+  include <abstractions/pcscd>
 
   capability chown,
   capability dac_read_search,
@@ -27,25 +27,25 @@ profile veracrypt @{exec_path} {
 
   @{exec_path} mrix,
 
-  @{sh_path}       rix,
-  @{open_path}     rPx -> child-open-help,
+  @{sh_path}        rix,
+  @{open_path}      rPx -> child-open-help,
   @{sbin}/dmsetup   rPx,
-  @{bin}/{,e}grep  rix,
-  @{bin}/kmod      rix,
+  @{bin}/{,e}grep   rix,
+  @{bin}/kmod       rCx -> kmod,
   @{sbin}/ldconfig  rix,
+  @{sbin}/ldconfig.real ix,
   @{sbin}/losetup   rCx -> losetup,
-  @{bin}/mount     rPx,
-  @{bin}/sudo      rix,
-  @{bin}/umount    rCx -> umount,
-  @{bin}/wc        rix,
+  @{bin}/mount      rPx,
+  @{bin}/sudo       rCx -> sudo,
+  @{bin}/umount     rCx -> umount,
+  @{bin}/wc         rix,
   @{file_explorers_path} rPx,
-
-  /home/ r,
 
   # Mount points
   @{MOUNTS}/ rw,
   @{MOUNTS}/*/ rw,
 
+  /home/ r,
   owner @{HOME}/ r,
   owner @{HOME}/.VeraCrypt-lock-@{user} rwk,
 
@@ -55,10 +55,10 @@ profile veracrypt @{exec_path} {
   /tmp/.veracrypt_*/ rw,
   /tmp/.veracrypt_*/** rwk,
 
-  @{sys}/module/compression r,
-  @{sys}/module/dm_mod/initstate r,
+  /dev/shm/ r,
 
         @{PROC}/partitions r,
+  owner @{PROC}/@{pid}/cgroup r,
   owner @{PROC}/@{pid}/mounts r,
 
   /dev/fuse rw,
@@ -88,6 +88,32 @@ profile veracrypt @{exec_path} {
     @{sbin}/losetup mr,
 
     include if exists <local/veracrypt_losetup>
+  }
+
+  profile kmod {
+    include <abstractions/base>
+    include <abstractions/app/kmod>
+
+    @{sys}/module/compression r,
+    @{sys}/module/dm_mod/initstate r,
+
+    include if exists <local/veracrypt_kmod>
+  }
+
+  profile sudo {
+    include <abstractions/base>
+    include <abstractions/app/sudo>
+
+    capability sys_ptrace,
+
+    ptrace read peer=veracrypt,
+
+    @{bin}/veracrypt Px,
+
+    @{HOME}/.VeraCrypt-lock-@{user} w,
+    @{user_config_dirs}/VeraCrypt/.show-request-queue r,
+
+    include if exists <local/veracrypt_sudo>
   }
 
   include if exists <local/veracrypt>
