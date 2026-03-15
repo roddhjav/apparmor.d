@@ -15,10 +15,10 @@
   include <abstractions/perl>
   include <abstractions/python>
 
-  @{bin}/**                     ix,
-  @{sbin}/**                    ix,
+  @{bin}/**                    rix,
+  @{sbin}/**                   rix,
   @{HOME}/**                    ix,
-  @{lib}/**                     ix,
+  @{lib}/**                    rix,
   /opt/*/**                     ix,
   /usr/local/bin/**             ix,
   /usr/local/lib/**             ix,
@@ -55,6 +55,31 @@
 
   @{sys}/kernel/mm/transparent_hugepage/enabled r,
 
+  # Memory usage in pages (total, resident, shared, text, data)
+  @{PROC}/@{pid}/statm r,
+
+  # Get kernel version string
+  @{PROC}/sys/kernel/osrelease r,
+
+  # Kernel version
+  @{PROC}/version r,
+  @{PROC}/version_signature r,
+
+  # Allow reading command line arguments for process identification
+  owner @{PROC}/@{pid}/cmdline r,
+  owner @{PROC}/@{pid}/comm r,
+
+  # Allow reading our own environment variables
+  owner @{PROC}/@{pid}/environ r,
+
+  # Allow listing file descriptors for resource monitoring
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/fd/@{int} rw,
+
+  # Allow reading mount points for filesystem awareness. This is an information leak
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/mounts r,
+
   # Per man(5) proc, the kernel enforces that a thread may only modify its comm
   # value or those in its thread group.
   owner @{PROC}/@{pid}/task/@{tid}/comm rw,
@@ -63,16 +88,7 @@
   owner @{PROC}/@{pid}/stat r,
   owner @{PROC}/@{pid}/task/ r,
   owner @{PROC}/@{pid}/task/@{tid}/stat r,
-
-  # Allow listing file descriptors for resource monitoring
-  owner @{PROC}/@{pid}/fd/ r,
-  owner @{PROC}/@{pid}/fd/@{int} rw,
-
-        @{PROC}/@{pid}/statm r,
-        @{PROC}/sys/kernel/osrelease r,
-        @{PROC}/version_signature r,
-  owner @{PROC}/@{pid}/cmdline r,
-  owner @{PROC}/@{pid}/environ r,
+  owner @{PROC}/@{pid}/task/@{tid}/statm r,
 
   include if exists <abstractions/development.d>
 
