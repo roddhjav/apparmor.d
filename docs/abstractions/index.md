@@ -20,12 +20,6 @@ This project and the official apparmor-profiles project provide a large selectio
     include <abstractions/user-download-strict>
     ```
 
-!!! warning
-
-    https://snapcraft.io/docs/supported-interfaces
-
-find apparmor.d/abstractions/ -maxdepth 1 -type f  | wc -l
-
 ## Architecture
 
 Abstraction are structured in layers as follows:
