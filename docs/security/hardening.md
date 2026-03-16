@@ -21,7 +21,7 @@ Hardening a system usually means installing a set of security tools and configur
 
 **Example**
 
-- Instead of disabling some kernel modules, it is better to build the kernel without the module at all in such a way that even if an attacker manage to load the module, it would not be possible.
+- Instead of disabling some kernel modules, it is better to build the kernel without the module at all and to lock it down. In such a way, even if an attacker get root access to the system, it would not be possible for them to load anything in the kernel.
 
 - Instead of disabling USB storage devices because they could be used to exfiltrate data, it would be way better to design the system in such a way that even if a USB storage device is connected, it cannot be used to exfiltrate data.
 
