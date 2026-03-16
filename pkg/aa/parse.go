@@ -992,7 +992,7 @@ func ParseRules(input string) (ParaRules, []string, error) {
 		}
 
 		paragraphs = append(paragraphs, paragraph)
-		rules, err := parseContentRules(input)
+		rules, err := parseContentRules(paragraph)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -1004,7 +1004,13 @@ func ParseRules(input string) (ParaRules, []string, error) {
 
 // Scan an apparmor profile file with multiple profiles, hats, and nested.
 // Like Parse, but process all profiles and blocks in the file.
-func (f *AppArmorProfileFile) Scan(input string) error {
+func (f *AppArmorProfileFile) Scan(input string) (retErr error) {
+	defer func() {
+		if r := recover(); r != nil {
+			retErr = fmt.Errorf("%v", r)
+		}
+	}()
+
 	blocks, err := tokenizeBlock(input)
 	if err != nil {
 		return err
