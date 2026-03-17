@@ -245,6 +245,8 @@ declare -A EQUIVALENTS=(
     ["grep"]="{,e}grep"
     ["gs"]="gs{,.bin}"
     ["which"]="which{,.debianutils}"
+    ["xtables-legacy-multi"]="xtables-{nft,legacy}-multi"
+    ["xtables-nft-multi"]="xtables-{nft,legacy}-multi"
 )
 _check_equivalent() {
     _is_enabled equivalent || return 0
