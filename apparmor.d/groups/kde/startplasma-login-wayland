@@ -1,0 +1,50 @@
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/startplasma-login-wayland
+
+profile startplasma-login-wayland @{exec_path} flags=(complain) {
+  include <abstractions/base>
+  include <abstractions/mime>
+
+  @{exec_path} r,
+
+  /dev/tty@{u8} rw,
+  /dev/tty rw,
+
+  signal receive set=term peer=plasmalogin-helper,
+
+  /usr/share/color-schemes/ r,
+  /usr/share/color-schemes/*.colors r,
+  /usr/share/plasma/look-and-feel/** r,
+  /etc/xdg/menus/ r,
+
+  owner /var/lib/plasmalogin/.cache/ rw,
+  owner /var/lib/plasmalogin/.cache/#@{int6} rw,
+  owner /var/lib/plasmalogin/.cache/ksycoca6* rwl,
+  owner /var/lib/plasmalogin/.cache/ksycoca6*.lock rwk,
+
+  owner /var/lib/plasmalogin/.config/plasma-localerc r,
+  owner /var/lib/plasmalogin/.config/kdeglobals r,
+  owner /var/lib/plasmalogin/.config/plasmarc r,
+  owner /var/lib/plasmalogin/.config/kcminputrc r,
+  owner /var/lib/plasmalogin/.config/kwinrc r,
+  owner /var/lib/plasmalogin/.config/kdedefaults/#@{int6} rw,
+  owner /var/lib/plasmalogin/.config/kdedefaults/package rw,
+  owner /var/lib/plasmalogin/.config/kdedefaults/kwinrc r,
+  owner /var/lib/plasmalogin/.config/kdedefaults/plasmarc r,
+  owner /var/lib/plasmalogin/.config/kdedefaults/kcminputrc r,
+  owner /var/lib/plasmalogin/.config/kdedefaults/ksplashrc rw,
+  owner /var/lib/plasmalogin/.config/kdedefaults/ksplashrc.lock rwk,
+  owner /var/lib/plasmalogin/.config/kdedefaults/ksplashrc.@{rand6} rwl,
+  owner /var/lib/plasmalogin/.config/kdedefaults/kdeglobals rw,
+  owner /var/lib/plasmalogin/.config/kdedefaults/kdeglobals.@{rand6} rwl,
+  owner /var/lib/plasmalogin/.config/kdedefaults/kdeglobals.lock rwk,
+
+  @{PROC}/sys/kernel/random/boot_id r,
+
+  /etc/machine-id r,
+
+  include if exists <local/startplasma-login-wayland>
+}
