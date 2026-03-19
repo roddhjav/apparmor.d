@@ -46,6 +46,17 @@ func (p Configure) Apply() ([]string, error) {
 			return res, err
 		}
 
+		// @{pci_bus} was upstreamed in 5.0, and backported to 4.1, and in Ubuntu 24.04
+		path := p.RootApparmor.Join("tunables/multiarch.d/system")
+		out, err := path.ReadFileAsString()
+		if err != nil {
+			return res, err
+		}
+		out = strings.ReplaceAll(out, "@{pci_bus}=pci@{hex4}:@{hex2}", "")
+		if path.WriteFile([]byte(out)); err != nil {
+			return res, err
+		}
+
 		if tasks.Release["VERSION_CODENAME"] == "noble" {
 			remove := []string{
 				"tunables/multiarch.d/base",
@@ -89,6 +100,17 @@ func (p Configure) Apply() ([]string, error) {
 		if err := p.removeFiles(remove); err != nil {
 			return res, err
 		}
+
+		// @{pci_bus} was upstreamed in 5.0, and backported to 4.1
+		path := p.RootApparmor.Join("tunables/multiarch.d/system")
+		out, err := path.ReadFileAsString()
+		if err != nil {
+			return res, err
+		}
+		out = strings.ReplaceAll(out, "@{pci_bus}=pci@{hex4}:@{hex2}", "")
+		if err := path.WriteFile([]byte(out)); err != nil {
+			return res, err
+		}
 	}
 	if p.Version >= 5.0 {
 		remove := []string{
@@ -108,14 +130,6 @@ func (p Configure) Apply() ([]string, error) {
 			return res, err
 		}
 
-		// @{pci_bus} was upstreamed in 5.0
-		path := p.RootApparmor.Join("tunables/multiarch.d/system")
-		out, err := path.ReadFileAsString()
-		if err != nil {
-			return res, err
-		}
-		out = strings.ReplaceAll(out, "@{pci_bus}=pci@{hex4}:@{hex2}", "")
-		return res, path.WriteFile([]byte(out))
 	}
 	return res, nil
 }

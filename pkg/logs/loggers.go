@@ -34,16 +34,14 @@ type systemdLog struct {
 func GetApparmorLogs(file io.Reader, profile string, namespace string) []string {
 	var logs []string
 
-	isAppArmorLog := isAppArmorLogTemplate.Copy()
 	exp := `apparmor=("DENIED"|"ALLOWED"|"AUDIT")`
 	if profile != "" {
-		exp = fmt.Sprintf(exp+`.* (profile="%s.*"|label="%s.*")`, profile, profile)
-		isAppArmorLog = regexp.MustCompile(exp)
+		exp += fmt.Sprintf(`.* (profile="%s.*"|label="%s.*")`, profile, profile)
 	}
 	if namespace != "" {
-		exp = fmt.Sprintf(exp+`.* namespace="root//%s.*"`, namespace)
-		isAppArmorLog = regexp.MustCompile(exp)
+		exp += fmt.Sprintf(`.* namespace="root//%s.*"`, namespace)
 	}
+	isAppArmorLog := regexp.MustCompile(exp)
 
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
@@ -138,13 +136,6 @@ func validateLogFile(filename string) error {
 	}
 	if info.Size() == 0 {
 		return fmt.Errorf("file is empty: %s", filename)
-	}
-	file, err := os.Open(filename)
-	if err != nil {
-		return fmt.Errorf("unable to read: %s", filename)
-	}
-	if cerr := file.Close(); cerr != nil {
-		return fmt.Errorf("unable to close file %s: %w", filename, cerr)
 	}
 	return nil
 }

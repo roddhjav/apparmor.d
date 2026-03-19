@@ -27,8 +27,10 @@ profile git @{exec_path} flags=(attach_disconnected) {
   signal send peer=aurpublish,
   signal receive set=term peer=code,
 
-  unix (send receive) type=stream peer=(label=claude),
+  # unix (send receive) type=stream peer=(label=claude),
   unix (send receive) type=stream peer=(label=code),
+  unix type=seqpacket peer=(label=code-shells),
+  unix type=seqpacket peer=(label=code),
 
   @{exec_path} mrix,
 
@@ -86,8 +88,8 @@ profile git @{exec_path} flags=(attach_disconnected) {
 
   /etc/gitconfig r,
   /etc/mailname r,
-  /etc/ssh/ssh_config r,
-  /etc/ssh/ssh_config.d/{,*} r,
+  @{etc_ro}/ssh/ssh_config r,
+  @{etc_ro}/ssh/ssh_config.d/{,*} r,
 
   owner @{user_projects_dirs}/   rw,
   owner @{user_projects_dirs}/** rwkl -> @{user_projects_dirs}/**,
@@ -98,7 +100,6 @@ profile git @{exec_path} flags=(attach_disconnected) {
 
   owner @{HOME}/.gitconfig* rw,
   owner @{HOME}/.netrc r,
-  owner @{HOME}/.claude/plugins/marketplaces/** rwlk,
   owner @{user_config_dirs}/git/{,*} rw,
 
   # GPG

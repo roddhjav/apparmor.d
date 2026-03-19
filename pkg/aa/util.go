@@ -120,15 +120,19 @@ func compare(a, b any) int {
 // compareFileAccess compares two access strings for file rules.
 // It is aimed to be used in slices.SortFunc.
 func compareFileAccess(i, j string) int {
-	if slices.Contains(requirements[FILE]["access"], i) &&
-		slices.Contains(requirements[FILE]["access"], j) {
-		return requirementsWeights[FILE]["access"][i] - requirementsWeights[FILE]["access"][j]
+	accessWeights := requirementsWeights[FILE]["access"]
+	transitionWeights := requirementsWeights[FILE]["transition"]
+	wi, iIsAccess := accessWeights[i]
+	wj, jIsAccess := accessWeights[j]
+	if iIsAccess && jIsAccess {
+		return wi - wj
 	}
-	if slices.Contains(requirements[FILE]["transition"], i) &&
-		slices.Contains(requirements[FILE]["transition"], j) {
-		return requirementsWeights[FILE]["transition"][i] - requirementsWeights[FILE]["transition"][j]
+	wi, iIsTransition := transitionWeights[i]
+	wj, jIsTransition := transitionWeights[j]
+	if iIsTransition && jIsTransition {
+		return wi - wj
 	}
-	if slices.Contains(requirements[FILE]["access"], i) {
+	if iIsAccess {
 		return -1
 	}
 	return 1
@@ -216,16 +220,18 @@ func toValues(kind Kind, key string, input string) ([]string, error) {
 }
 
 // Helper function to convert an access string to a slice of access according to
-// the rule requirements as defined in the requirements map.
+// the rule requirements as defined in the requirements matrix.
 func toAccess(kind Kind, input string) ([]string, error) {
 	var res []string
 
 	switch kind {
 	case FILE:
+		accessWeights := requirementsWeights[FILE]["access"]
+		transitionWeights := requirementsWeights[FILE]["transition"]
 		raw := strings.Split(input, "")
 		trans := []string{}
 		for _, access := range raw {
-			if slices.Contains(requirements[FILE]["access"], access) {
+			if _, ok := accessWeights[access]; ok {
 				res = append(res, access)
 			} else {
 				trans = append(trans, access)
@@ -234,7 +240,7 @@ func toAccess(kind Kind, input string) ([]string, error) {
 
 		transition := strings.Join(trans, "")
 		if len(transition) > 0 {
-			if slices.Contains(requirements[FILE]["transition"], transition) {
+			if _, ok := transitionWeights[transition]; ok {
 				res = append(res, transition)
 			} else {
 				return nil, fmt.Errorf("unrecognized transition: %s", transition)
@@ -242,9 +248,10 @@ func toAccess(kind Kind, input string) ([]string, error) {
 		}
 
 	case FILE + "-log":
+		accessWeights := requirementsWeights[FILE]["access"]
 		raw := strings.Split(input, "")
 		for _, access := range raw {
-			if slices.Contains(requirements[FILE]["access"], access) {
+			if _, ok := accessWeights[access]; ok {
 				res = append(res, access)
 			} else if maskToAccess[access] != "" {
 				res = append(res, maskToAccess[access])

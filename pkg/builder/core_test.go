@@ -305,6 +305,28 @@ profile attach-2 flags=(complain) {
   include <abstractions/consoles>
 }`,
 		},
+		{
+			name: "debug-1",
+			b:    NewDebug(),
+			profile: `
+profile debug-1 {
+  include <abstractions/base>
+  # @{exec_path} mr,
+  audit @{bin}/ls Px,
+  @{exec_path} mr,
+  @{bin}/foo Px,
+  @{bin}/bar ix,
+}`,
+			want: `
+profile debug-1 {
+  include <abstractions/base>
+  # @{exec_path} mr,
+  audit @{bin}/ls Px,
+  @{exec_path} mr,
+  audit @{bin}/foo Px,
+  @{bin}/bar ix,
+}`,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

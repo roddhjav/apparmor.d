@@ -177,9 +177,6 @@ func Configure(r *runtime.Runners) *runtime.Runners {
 			}
 			r.Builders.Add(builder.NewAttach())
 
-			// Fix dbus rules for dbus-broker
-			r.Builders.Add(builder.NewDbusBroker())
-			r.DbusDaemon = false
 		}
 
 	default:
