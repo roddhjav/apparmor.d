@@ -62,9 +62,6 @@ var (
 		BOOLEAN:  "$",
 		HAT:      "^",
 	}
-	openBlocks  = []rune{tokOPENPAREN, tokOPENBRACE, tokOPENBRACKET}
-	closeBlocks = []rune{tokCLOSEPAREN, tokCLOSEBRACE, tokCLOSEBRACKET}
-
 	inHeader              = false
 	regParagraph          = regexp.MustCompile(`(?s).*?\n\n|$`)
 	regVariableDefinition = regexp.MustCompile(`@{(.*)}\s*[+=]+\s*(.*)`)
@@ -93,7 +90,7 @@ func tokenizeBlock(input string) ([]*block, error) {
 
 	blocks := []*block{}
 	blockStack := []rune{}
-	blockRecored := false
+	blockRecorded := false
 	blockStart := 0
 	blockEnd := 0
 	blockContentStart := 0
@@ -149,7 +146,7 @@ func tokenizeBlock(input string) ([]*block, error) {
 
 				if !ignore {
 					blockStart = idx
-					blockRecored = true
+					blockRecorded = true
 				}
 			}
 
@@ -162,8 +159,8 @@ func tokenizeBlock(input string) ([]*block, error) {
 					input[blockContentStart:idx])
 			}
 
-			if len(blockStack) == 1 && blockRecored {
-				blockRecored = false
+			if len(blockStack) == 1 && blockRecorded {
+				blockRecorded = false
 				blockEnd = idx
 				blockContentStartBkp = blockContentStart
 				blockContentEnd = blockStart
@@ -175,8 +172,7 @@ func tokenizeBlock(input string) ([]*block, error) {
 				for i > 0 && blockContentRaw[i] != '\n' {
 					i--
 				}
-				blockHeader := strings.Trim(blockContentRaw[i:], "\n ")
-				blockHeader = strings.Trim(blockHeader, "\n\t ")
+				blockHeader := strings.Trim(blockContentRaw[i:], "\n\t ")
 
 				// Ignore commented block, restore previous id values
 				if len(blockHeader) > 0 && blockHeader[0] == '#' {
@@ -250,29 +246,14 @@ func tokenizeBlock(input string) ([]*block, error) {
 
 func parseBlock(b *block) (Rules, error) {
 	var res Rules
-	var rrr Rules
-	var err error
 
 	switch b.kind {
 	case CONTENT:
-		// Line rules
-		var raw string
-		raw, res, err = parseLineRules(false, b.raw)
+		var err error
+		res, err = parseContentRules(b.raw)
 		if err != nil {
 			return nil, err
 		}
-
-		// Comma rules
-		rules, err := parseCommaRules(raw)
-		if err != nil {
-			return nil, err
-		}
-		rrr, err = newRules(rules)
-		if err != nil {
-			return nil, err
-		}
-
-		res = append(res, rrr...)
 		for _, r := range res {
 			if r.Constraint() == PreambleRule {
 				return nil, fmt.Errorf("Rule not allowed in block: %s", r)
@@ -280,17 +261,16 @@ func parseBlock(b *block) (Rules, error) {
 		}
 
 	case RAW:
-		var blocks []*block
-		blocks, err = tokenizeBlock(b.raw)
+		blocks, err := tokenizeBlock(b.raw)
 		if err != nil {
 			return nil, err
 		}
 		for _, block := range blocks {
-			rrr, err = parseBlock(block)
+			rules, err := parseBlock(block)
 			if err != nil {
 				return nil, err
 			}
-			res = append(res, rrr...)
+			res = append(res, rules...)
 		}
 		return res, nil
 
@@ -466,15 +446,13 @@ func parseCommaRules(input string) ([]rule, error) {
 	return rules, nil
 }
 
-func parseParagraph(input string) (Rules, error) {
-	// Line rules
-	var raw string
+// parseContentRules parses line and comma rules from a raw string.
+func parseContentRules(input string) (Rules, error) {
 	raw, res, err := parseLineRules(false, input)
 	if err != nil {
 		return nil, err
 	}
 
-	// Comma rules
 	rules, err := parseCommaRules(raw)
 	if err != nil {
 		return nil, err
@@ -484,13 +462,7 @@ func parseParagraph(input string) (Rules, error) {
 		return nil, err
 	}
 
-	res = append(res, rrr...)
-	// for _, r := range res {
-	// 	if r.Constraint() == PreambleRule {
-	// 		return nil, fmt.Errorf("Rule not allowed in block: %s", r)
-	// 	}
-	// }
-	return res, nil
+	return append(res, rrr...), nil
 }
 
 // Split a raw input rule string into tokens by space or =, but ignore spaces
@@ -539,11 +511,11 @@ func tokenizeRule(str string) []string {
 			quoted = !quoted
 			currentToken.WriteRune(r)
 
-		case slices.Contains(openBlocks, r):
+		case r == tokOPENPAREN || r == tokOPENBRACE || r == tokOPENBRACKET:
 			blockStack = append(blockStack, r)
 			currentToken.WriteRune(r)
 
-		case slices.Contains(closeBlocks, r):
+		case r == tokCLOSEPAREN || r == tokCLOSEBRACE || r == tokCLOSEBRACKET:
 			if len(blockStack) > 0 {
 				blockStack = blockStack[:len(blockStack)-1]
 			} else {
@@ -1020,7 +992,7 @@ func ParseRules(input string) (ParaRules, []string, error) {
 		}
 
 		paragraphs = append(paragraphs, paragraph)
-		rules, err := parseParagraph(paragraph)
+		rules, err := parseContentRules(paragraph)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -1032,7 +1004,13 @@ func ParseRules(input string) (ParaRules, []string, error) {
 
 // Scan an apparmor profile file with multiple profiles, hats, and nested.
 // Like Parse, but process all profiles and blocks in the file.
-func (f *AppArmorProfileFile) Scan(input string) error {
+func (f *AppArmorProfileFile) Scan(input string) (retErr error) {
+	defer func() {
+		if r := recover(); r != nil {
+			retErr = fmt.Errorf("%v", r)
+		}
+	}()
+
 	blocks, err := tokenizeBlock(input)
 	if err != nil {
 		return err

@@ -116,7 +116,7 @@ func (o *Option) Clean(input string) string {
 	return strings.Replace(input, o.Raw, o.cleanKeyword(o.Raw), 1)
 }
 
-// cleanKeyword removes the dirextive keywork (#aa:...) from the input string
+// cleanKeyword removes the directive keyword (#aa:...) from the input string
 func (o *Option) cleanKeyword(input string) string {
 	reg := regexp.MustCompile(`\s*` + Keyword + o.Name + `( .*)?$`)
 	return reg.ReplaceAllString(input, "")

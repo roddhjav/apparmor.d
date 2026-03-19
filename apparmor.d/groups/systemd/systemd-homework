@@ -36,6 +36,8 @@ profile systemd-homework @{exec_path} flags=(attach_disconnected) {
   umount @{run}/systemd/user-home-mount/,
   umount @{run}/systemd/user-home-mount/@{user}/,
 
+  unix send type=dgram peer=(label=systemd-homed),
+
   signal (send receive) set=kill peer=systemd-homed//&systemd-homework,
 
   ptrace read peer=systemd-homed//&systemd-homework,
@@ -43,6 +45,7 @@ profile systemd-homework @{exec_path} flags=(attach_disconnected) {
   @{exec_path} mr,
 
   @{sbin}/fsck       rix, # no new privs
+  @{sbin}/fsck.*     rix,
   @{sbin}/mke2fs     rPx,
   @{sbin}/mkfs.btrfs rPx,
   @{sbin}/mkfs.fat   rPx,
@@ -67,8 +70,7 @@ profile systemd-homework @{exec_path} flags=(attach_disconnected) {
   @{run}/systemd/user-home-mount/@{user}/{,**} rw,
 
   @{sys}/fs/ r,
-  @{sys}/devices/**/b24[0-9]:@{int}/read_ahead_kb r, # for dynamic assignment range 240
-  @{sys}/devices/**/b25[0-4]:@{int}/read_ahead_kb r, #                           to 254
+  @{sys}/devices/**/read_ahead_kb r,
 
         @{PROC}/@{pid}/setgroups w,
         @{PROC}/devices r,

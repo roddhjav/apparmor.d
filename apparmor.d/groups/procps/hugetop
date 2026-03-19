@@ -1,0 +1,36 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/hugetop
+profile hugetop @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+
+  capability sys_ptrace,
+
+  ptrace read,
+
+  @{exec_path} mr,
+
+  /usr/share/terminfo/** r,
+
+  @{sys}/devices/system/node/ r,
+  @{sys}/devices/system/node/node@{int}/hugepages/ r,
+  @{sys}/devices/system/node/node@{int}/hugepages/hugepages-*/*_hugepages r,
+  @{sys}/kernel/mm/hugepages/ r,
+  @{sys}/kernel/mm/hugepages/hugepages-*/*_hugepages r,
+
+  @{PROC}/ r,
+  @{PROC}/@{pids}/smaps_rollup r,
+  @{PROC}/@{pids}/stat r,
+  @{PROC}/@{pids}/ r,
+
+  include if exists <local/hugetop>
+}
+
+# vim:syntax=apparmor

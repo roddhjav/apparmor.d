@@ -43,17 +43,17 @@ func NewDbus() *Dbus {
 func (d Dbus) Apply(opt *Option, profile string) (string, error) {
 	var r aa.Rules
 
-	action, err := d.sanityCheck(opt)
+	action, err := d.SanityCheck(opt)
 	if err != nil {
 		return "", err
 	}
 	switch action {
 	case "own":
-		r = d.own(opt.ArgMap)
+		r = d.Own(opt.ArgMap)
 	case "talk":
-		r = d.talk(opt.ArgMap)
+		r = d.Talk(opt.ArgMap)
 	case "common", "see":
-		r = d.see(opt.ArgMap)
+		r = d.See(opt.ArgMap)
 	}
 
 	aa.IndentationLevel = strings.Count(
@@ -66,7 +66,7 @@ func (d Dbus) Apply(opt *Option, profile string) (string, error) {
 	return profile, nil
 }
 
-func (d Dbus) sanityCheck(opt *Option) (string, error) {
+func (d Dbus) SanityCheck(opt *Option) (string, error) {
 	if len(opt.ArgList) < 1 {
 		return "", fmt.Errorf("unknown dbus action: %s in %s", opt.Name, opt.File)
 	}
@@ -107,7 +107,7 @@ func getInterfaces(rules map[string]string) []string {
 	return interfaces
 }
 
-func (d Dbus) own(rules map[string]string) aa.Rules {
+func (d Dbus) Own(rules map[string]string) aa.Rules {
 	interfaces := getInterfaces(rules)
 
 	res := aa.Rules{
@@ -121,39 +121,27 @@ func (d Dbus) own(rules map[string]string) aa.Rules {
 
 	// Interfaces
 	for _, iface := range interfaces {
-		var peerNames = make([]string, 2)
-		if d.DbusDaemon {
-			peerNames[0] = `"@{busname}"`
-			peerNames[1] = `"{@{busname},org.freedesktop.DBus}"`
-		}
 		res = append(res,
 			&aa.Dbus{
 				Access: []string{"receive"}, Bus: rules["bus"], Path: rules["path"],
 				Interface: iface,
-				PeerName:  peerNames[0],
+				PeerName:  `"@{busname}"`,
 			},
 			&aa.Dbus{
 				Access: []string{"send"}, Bus: rules["bus"], Path: rules["path"],
 				Interface: iface,
-				PeerName:  peerNames[1],
+				PeerName:  `"{@{busname},org.freedesktop.DBus}"`,
 			},
 		)
 	}
 
-	var peerNames = make([]string, 4)
-	if d.DbusDaemon {
-		peerNames[0] = `"{@{busname},org.freedesktop.DBus}"`
-		peerNames[1] = `"@{busname}"`
-		peerNames[2] = `"{@{busname},` + rules["name"] + `}"`
-		peerNames[3] = `"{@{busname},org.freedesktop.DBus}"`
-	}
 	res = append(res,
 		// DBus.Properties: reply to properties request from anyone
 		&aa.Dbus{
 			Access: []string{"send", "receive"}, Bus: rules["bus"], Path: rules["path"],
 			Interface: "org.freedesktop.DBus.Properties",
 			Member:    "{Get,GetAll,Set,PropertiesChanged}",
-			PeerName:  peerNames[0],
+			PeerName:  `"{@{busname},org.freedesktop.DBus}"`,
 		},
 
 		// DBus.Introspectable: allow clients to introspect the service
@@ -161,7 +149,7 @@ func (d Dbus) own(rules map[string]string) aa.Rules {
 			Access: []string{"receive"}, Bus: rules["bus"], Path: rules["path"],
 			Interface: "org.freedesktop.DBus.Introspectable",
 			Member:    "Introspect",
-			PeerName:  peerNames[0],
+			PeerName:  `"@{busname}"`,
 		},
 
 		// DBus.ObjectManager: allow clients to enumerate sources
@@ -169,20 +157,21 @@ func (d Dbus) own(rules map[string]string) aa.Rules {
 			Access: []string{"receive"}, Bus: rules["bus"], Path: rules["path"],
 			Interface: "org.freedesktop.DBus.ObjectManager",
 			Member:    "GetManagedObjects",
-			PeerName:  peerNames[0],
+			PeerName:  `"{@{busname},` + rules["name"] + `}"`,
 		},
 		&aa.Dbus{
 			Access: []string{"send"}, Bus: rules["bus"], Path: rules["path"],
 			Interface: "org.freedesktop.DBus.ObjectManager",
 			Member:    "{InterfacesAdded,InterfacesRemoved}",
-			PeerName:  peerNames[0],
+			PeerName:  `"{@{busname},org.freedesktop.DBus}"`,
 		},
 	)
 	return res
 }
 
-func (d Dbus) talk(rules map[string]string) aa.Rules {
+func (d Dbus) Talk(rules map[string]string) aa.Rules {
 	interfaces := getInterfaces(rules)
+	peerName := `"{@{busname},` + rules["name"] + `,org.freedesktop.DBus}"`
 	res := aa.Rules{
 		&aa.Unix{
 			Type:      "stream",
@@ -190,11 +179,6 @@ func (d Dbus) talk(rules map[string]string) aa.Rules {
 			PeerLabel: rules["label"],
 			PeerAddr:  "none",
 		},
-	}
-
-	peerName := ``
-	if d.DbusDaemon {
-		peerName = `"{@{busname},` + rules["name"] + `}"`
 	}
 
 	// Interfaces
@@ -240,12 +224,8 @@ func (d Dbus) talk(rules map[string]string) aa.Rules {
 	return res
 }
 
-func (d Dbus) see(rules map[string]string) aa.Rules {
-	peerName := ``
-	if d.DbusDaemon {
-		peerName = `"{@{busname},` + rules["name"] + `}"`
-	}
-
+func (d Dbus) See(rules map[string]string) aa.Rules {
+	peerName := `"{@{busname},` + rules["name"] + `}"`
 	res := aa.Rules{
 
 		// Unix: allow connection to the profile

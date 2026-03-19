@@ -9,6 +9,7 @@ include <tunables/global>
 @{exec_path} = @{bin}/transmission-{gtk,qt}
 profile transmission @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/bus/session/org.gtk.Private.RemoteVolumeMonitor>
   include <abstractions/dconf-write>
   include <abstractions/desktop>
   include <abstractions/graphics>
@@ -23,6 +24,11 @@ profile transmission @{exec_path} flags=(attach_disconnected) {
   network inet stream,
   network inet6 stream,
   network netlink raw,
+
+  dbus send bus=system path=/org/freedesktop/hostname1
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=@{busname}, label=systemd-hostnamed),
 
   #aa:dbus own bus=session name=com.transmissionbt.Transmission
   #aa:dbus own bus=session name=com.transmissionbt.transmission_*
