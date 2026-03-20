@@ -11,6 +11,7 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/base>
   include <abstractions/app-launcher-user>
   include <abstractions/bus-session>
+  include <abstractions/bus/system/org.freedesktop.locale1>
   include <abstractions/fontconfig-cache-write>
   include <abstractions/graphics>
   include <abstractions/kde-strict>
@@ -30,6 +31,7 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   signal receive set=(kill, term) peer=kwin_wayland_wrapper,
   signal send set=(kill, term) peer=xwayland,
   signal send set=term peer=unconfined,
+  signal send set=term peer=plasma-keyboard,
 
   unix type=stream peer=(label=xkbcomp),
   unix type=stream peer=(label=xwayland),
@@ -40,6 +42,7 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   #aa:dbus own bus=session name=org.kde.NightColor path=/ColorCorrect
   #aa:dbus own bus=session name=org.kde.screensaver
 
+  #aa:dbus talk bus=system name=org.freedesktop.login1 label=systemd-logind
   #aa:dbus talk bus=session name=org.kde.ActivityManager path=/ActivityManager label=kactivitymanagerd
 
   @{exec_path} mr,
@@ -64,17 +67,10 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   /etc/pipewire/client.conf.d/ r,
   /etc/xdg/** r,
 
-  owner /var/lib/plasmalogin/.cache/{,**} rw,
-  owner /var/lib/plasmalogin/.config/{,**} rwk,
-  owner /var/lib/plasmalogin/.config/breezerc.@{rand6} rwl -> /var/lib/plasmalogin/.config/#@{int},
-
   / r,
   owner @{HOME}/ r,
 
   owner @{sddm_cache_dirs}/#@{int} rwk,
-  owner @{sddm_cache_dirs}/fontconfig/* rwk,
-  owner @{sddm_cache_dirs}/fontconfig/*-le64.cache-@{int}.LCK l -> @{sddm_cache_dirs}/fontconfig/*-le64.cache-@{int}.TMP-@{rand6},
-  owner @{sddm_cache_dirs}/fontconfig/*-le64.cache-@{int}{,TMP-@{rand6},NEW,LCK} w,
   owner @{sddm_cache_dirs}/ksycoca{5,6}_* rwkl  -> @{sddm_cache_dirs}/#@{int},
 
   owner @{sddm_config_dirs}/#@{int} rw,
@@ -116,11 +112,12 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{user_config_dirs}/Kvantum/{,**} r,
   owner @{user_config_dirs}/breezerc.@{rand6} rwl -> @{user_config_dirs}/#@{int},
 
-  owner @{user_share_dirs}/kscreen/* r,
-  owner @{user_share_dirs}/kwin/scripts/{,**} r,
-  owner @{user_share_dirs}/kwin/effects/{,**} r,
   owner @{user_share_dirs}/aurorae/themes/{,**} r,
+  owner @{user_share_dirs}/kscreen/* r,
+  owner @{user_share_dirs}/kwin/effects/{,**} r,
+  owner @{user_share_dirs}/kwin/scripts/{,**} r,
   owner @{user_share_dirs}/plasma/desktoptheme/{,**} r,
+  owner @{user_share_dirs}/smod/decorations/{,**} r,
 
   owner @{run}/user/@{uid}/pipewire-@{int} rw,
 
@@ -152,7 +149,7 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   @{run}/udev/data/c13:@{int}  r,         # for /dev/input/*
   @{run}/udev/data/c189:@{int} r,         # for /dev/bus/usb/**
 
-  @{PROC}/@{pid}/task/@{tid}/comm rw,
+  owner @{PROC}/@{pid}/task/@{tid}/comm rw,
 
   @{att}/dev/input/event@{int} rw,
   @{att}/dev/dri/card@{int} rw,
