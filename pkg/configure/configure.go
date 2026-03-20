@@ -53,7 +53,7 @@ func (p Configure) Apply() ([]string, error) {
 			return res, err
 		}
 		out = strings.ReplaceAll(out, "@{pci_bus}=pci@{hex4}:@{hex2}", "")
-		if path.WriteFile([]byte(out)); err != nil {
+		if err := path.WriteFile([]byte(out)); err != nil {
 			return res, err
 		}
 
