@@ -9,13 +9,13 @@ pkgname=(
   # apparmor.d-base
   # apparmor.d-tools
 )
-pkgver=0.4905
+pkgver=0.4906
 pkgrel=1
 pkgdesc="Full set of apparmor profiles"
 arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
 url="https://github.com/roddhjav/apparmor.d"
 license=('GPL-2.0-only')
-depends=('apparmor>=4.1.6')
+depends=('apparmor')
 makedepends=('go' 'rsync' 'just')
 
 prepare() {
