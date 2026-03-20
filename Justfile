@@ -582,14 +582,15 @@ version-new:
 
 # Create a new release
 [group('release')]
-release: tests lint commit archive publish
+release: clean commit archive publish repo
 
-# Write the new release version to package files & commit
+# Write the new release version to package files, commit and tag it
 [group('release')]
 commit:
 	#!/usr/bin/env bash
 	set -eu -o pipefail
 	version=`just version-new`
+	git restore debian/changelog
 	cat > debian/changelog.tmp <<-EOF
 		{{pkgname}} (${version}-1) stable; urgency=medium
 
@@ -603,7 +604,7 @@ commit:
 	sed -i "s/^pkgver=.*/pkgver=$version/" PKGBUILD
 	sed -i "s/^Version:.*/Version:        $version/" "dists/{{pkgname}}.spec"
 	git add PKGBUILD "dists/{{pkgname}}.spec" debian/changelog
-	git commit -S -m "Release version $version"
+	git commit -S -m "Release {{pkgname}} v$version"
 	git tag -a "v$version" -m "{{pkgname}} v$version" --local-user={{gpgkey}}
 
 # Create a release archive
@@ -636,7 +637,7 @@ publish:
 
 # Create & upload new release packages to the repositories
 [group('release')]
-repo path="../../Packages":
+repo path="../../../Packages":
 	just --justfile {{path}}/pkgbuilds/Justfile publish {{pkgname}} `just version`
 	just --justfile {{path}}/repo.pujol.io/Justfile publish {{pkgname}} `just version`
 
