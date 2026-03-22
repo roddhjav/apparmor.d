@@ -1,5 +1,5 @@
 # apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/4.0>,
@@ -7,10 +7,12 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{exec_path} = @{lib}/plasmalogin-helper
-
-profile plasmalogin-helper @{exec_path} flags=(complain) {
+profile plasmalogin-helper @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/authentication>
+  include <abstractions/bus-system>
+  include <abstractions/bus/system/org.freedesktop.login1>
+  include <abstractions/nameservice-strict>
 
   capability audit_write,
   capability chown,
@@ -22,81 +24,69 @@ profile plasmalogin-helper @{exec_path} flags=(complain) {
   capability setuid,
   capability sys_tty_config,
 
+  network netlink raw,
+
+  unix bind type=stream addr=@@{udbus}/bus/plasmalogin-hel/system,
+
   signal receive set=term peer=plasmalogin,
   signal send set=term peer=startplasma-login-wayland,
   signal send set=term peer=startplasma,
 
-  ptrace read peer=unconfined,
-  ptrace read peer=dbus-session,
-  ptrace read peer=pipewire,
-  ptrace read peer=wireplumber,
-  ptrace read peer=obexd,
+  @{exec_path} mr,
 
-  @{shells_path} rix,
-  @{bin}/pidof   rix,
-  @{bin}/tty     rix,
-  @{bin}/xargs   rix,
-  @{bin}/cat     rix,
-  @{bin}/find    rix,
-  @{bin}/tr      rix,
+  @{bin}/startplasma-login-wayland Px,
+  @{shells_path}                   Px -> plasmalogin-shell,
+  @{bin}/ksecretd                 PUx,
 
-  @{bin}/startplasma-wayland       rpx,
-  @{bin}/startplasma-login-wayland rpx,
+  @{bin}/cat           rix,
+  @{bin}/find          rix,
+  @{bin}/tr            rix,
+  @{bin}/tty           rix,
+  @{bin}/xargs         rix,
 
-  @{bin}/ksecretd             rpux,
-  @{bin}/kwalletd{5,6}        rpx,
+  @{bin}/pidof          Px,
+  @{bin}/flatpak        Cx -> flatpak,
 
   /usr/share/plasmalogin/scripts/wayland-session rix,
-  @{lib}/plasma-dbus-run-session-if-needed rix,
+  /usr/share/plasmalogin/scripts/Xsession rix,
+  /usr/share/plasmalogin/scripts/Xsetup rix,
+  /usr/share/plasmalogin/scripts/Xstop rix,
+
+  @{etc_ro}/profile.d/{,*} r,
+  /etc/debuginfod/{,*} r,
+  /etc/machine-id r,
+  /etc/profile r,
+  /etc/shells r,
+
+  /var/lib/lastlog/ r,
+  /var/lib/lastlog/* rwk,
+
+  owner @{SDDM_HOME}/ rw,
+
+  owner @{user_share_dirs}/kwalletd/ rw,
+  owner @{user_share_dirs}/kwalletd/kdewallet.salt rw,
+  owner @{user_share_dirs}/plasmalogin/wayland-session.log w,
+
+  /tmp/plasmalogin-auth-@{uuid} rw,
+
+        @{run}/faillock/@{user} rwk,
+        @{run}/systemd/io.systemd.Login rw,
+  owner @{run}/user/@{uid}/kwallet5.socket w,
+
+        @{PROC}/@{pid}/loginuid w,
+        @{PROC}/@{pid}/uid_map r,
+  owner @{PROC}/@{pid}/fd/ r,
 
   /dev/tty@{u8} rw,
   /dev/tty rw,
 
-  owner @{user_share_dirs}/plasmalogin/wayland-session.log rw,
-  owner @{user_share_dirs}/kwalletd/kdewallet.kwl rw,
-  owner @{user_share_dirs}/kwalletd/kdewallet.kwl.@{rand6} rwl,
-  owner @{user_share_dirs}/kwalletd/kdewallet.salt r,
+  profile flatpak {
+    include <abstractions/base>
 
-  @{bin}/site_perl/ r,
-  @{bin}/vendor_perl/ r,
-  @{bin}/core_perl/ r,
+    @{bin}/flatpak mr,
 
-  /etc/plasmalogin.conf r,
-  /etc/debuginfod/ r,
-  /etc/debuginfod/*.urls r,
-  /etc/profile r,
-  /etc/profile.d/ r,
-  /etc/profile.d/*.sh r,
-  /etc/shells r,
-  /etc/nsswitch.conf r,
-  /etc/passwd r,
-  /etc/machine-id r,
-  /etc/group r,
-
-        /var/lib/lastlog/ rw,
-        /var/lib/lastlog/lastlog@{int}.db-journal rw,
-        /var/lib/lastlog/lastlog@{int}.db rwk,
-  owner /var/lib/plasmalogin/ r,
-
-        /home/ r,
-  owner @{HOME}/ r,
-  owner @{HOME}/.bash_profile r,
-  owner @{HOME}/.bashrc r,
-
-        @{PROC}/ r,
-        @{PROC}/@{pid}/ r,
-        @{PROC}/@{pid}/cmdline r,
-        @{PROC}/@{pid}/stat r,
-        @{PROC}/@{pid}/loginuid rw,
-        @{PROC}/@{pid}/uid_map r,
-        @{PROC}/sys/kernel/random/boot_id r,
-  owner @{PROC}/@{pid}/fd/ r,
-
-        @{run}/faillock/@{user} rwk,
-        @{run}/systemd/userdb/ r,
-  owner @{run}/user/@{uid}/kwallet5.socket rw,
-
-  @{sys}/devices/system/node/ r,
+    include if exists <local/plasmalogin-helper_flatpak>
+  }
 
   include if exists <local/plasmalogin-helper>
 }
