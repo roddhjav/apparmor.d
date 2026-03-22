@@ -1,0 +1,31 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/plasma-keyboard
+profile plasma-keyboard @{exec_path} flags=(attach_disconnected,mediate_deleted) {
+  include <abstractions/base>
+  include <abstractions/graphics>
+  include <abstractions/kde-strict>
+
+  signal receive set=term peer=kwin_wayland,
+
+  @{exec_path} mr,
+
+  /usr/share/plasma/keyboard/{,**} r,
+
+  owner @{sddm_cache_dirs}/plasma-keyboard/ rw,
+  owner @{sddm_cache_dirs}/plasma-keyboard/** rwkl,
+  owner @{sddm_config_dirs}/kdedefaults/* r,
+  owner @{sddm_config_dirs}/kdeglobals r,
+
+  @{PROC}/sys/kernel/random/boot_id r,
+
+  include if exists <local/plasma-keyboard>
+}
+
+# vim:syntax=apparmor
