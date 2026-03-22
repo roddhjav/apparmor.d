@@ -74,6 +74,7 @@ var (
 		`(x86_64|amd64|i386|i686)`, `@{arch}`,
 		`@{arch}-*linux-gnu[^/]?`, `@{multiarch}`,
 		`/usr/etc/`, `@{etc_ro}/`,
+		`/var/etc/`, `@{etc_rw}/`,
 		`/boot/(|efi/)`, `@{efi}/`,
 		`/efi/`, `@{efi}/`,
 		`/var/run/`, `@{run}/`,

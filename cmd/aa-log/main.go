@@ -54,7 +54,28 @@ var (
 	load      bool
 )
 
-func aaLog(logger string, path string, profile string, namespace string) error {
+func init() {
+	flag.BoolVar(&help, "h", false, "Show this help message and exit.")
+	flag.BoolVar(&help, "help", false, "Show this help message and exit.")
+	flag.StringVar(&path, "f", "", "Set a logfile or a suffix to the default log file.")
+	flag.StringVar(&path, "file", "", "Set a logfile or a suffix to the default log file.")
+	flag.BoolVar(&systemd, "s", false, "Parse systemd logs from journalctl.")
+	flag.BoolVar(&systemd, "systemd", false, "Parse systemd logs from journalctl.")
+	flag.BoolVar(&rules, "r", false, "Convert the log into AppArmor rules.")
+	flag.BoolVar(&rules, "rules", false, "Convert the log into AppArmor rules.")
+	flag.BoolVar(&raw, "R", false, "Print the raw log without any formatting.")
+	flag.BoolVar(&raw, "raw", false, "Print the raw log without any formatting.")
+	flag.StringVar(&boot, "b", "", "Show entries from the specified boot.")
+	flag.StringVar(&boot, "boot", "", "Show entries from the specified boot.")
+	flag.StringVar(&since, "S", "", "Display logs since the START time.")
+	flag.StringVar(&since, "since", "", "Display logs since the START time.")
+	flag.BoolVar(&load, "l", false, "Load logs from the default aa-log output.")
+	flag.BoolVar(&load, "load", false, "Load logs from the default aa-log output.")
+	flag.StringVar(&namespace, "n", "", "Filter the logs to the specified namespace")
+	flag.StringVar(&namespace, "namespace", "", "Filter the logs to the specified namespace")
+}
+
+func aaLog(logger string, path string, profile string, namespace string, rules bool, raw bool, load bool) error {
 	var err error
 	var file io.Reader
 
@@ -102,27 +123,6 @@ func aaLog(logger string, path string, profile string, namespace string) error {
 	return nil
 }
 
-func init() {
-	flag.BoolVar(&help, "h", false, "Show this help message and exit.")
-	flag.BoolVar(&help, "help", false, "Show this help message and exit.")
-	flag.StringVar(&path, "f", "", "Set a logfile or a suffix to the default log file.")
-	flag.StringVar(&path, "file", "", "Set a logfile or a suffix to the default log file.")
-	flag.BoolVar(&systemd, "s", false, "Parse systemd logs from journalctl.")
-	flag.BoolVar(&systemd, "systemd", false, "Parse systemd logs from journalctl.")
-	flag.BoolVar(&rules, "r", false, "Convert the log into AppArmor rules.")
-	flag.BoolVar(&rules, "rules", false, "Convert the log into AppArmor rules.")
-	flag.BoolVar(&raw, "R", false, "Print the raw log without any formatting.")
-	flag.BoolVar(&raw, "raw", false, "Print the raw log without any formatting.")
-	flag.StringVar(&boot, "b", "", "Show entries from the specified boot.")
-	flag.StringVar(&boot, "boot", "", "Show entries from the specified boot.")
-	flag.StringVar(&since, "S", "", "Display logs since the START time.")
-	flag.StringVar(&since, "since", "", "Display logs since the START time.")
-	flag.BoolVar(&load, "l", false, "Load logs from the default aa-log output.")
-	flag.BoolVar(&load, "load", false, "Load logs from the default aa-log output.")
-	flag.StringVar(&namespace, "n", "", "Filter the logs to the specified namespace")
-	flag.StringVar(&namespace, "namespace", "", "Filter the logs to the specified namespace")
-}
-
 func main() {
 	flag.Usage = func() { fmt.Print(usage) }
 	flag.Parse()
@@ -131,10 +131,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	profile := ""
-	if len(flag.Args()) >= 1 {
-		profile = flag.Args()[0]
-	}
+	profile := flag.Arg(0)
 
 	if boot != "" {
 		systemd = true
@@ -150,8 +147,7 @@ func main() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	err = aaLog(logger, path, profile, namespace)
-	if err != nil {
+	if err = aaLog(logger, path, profile, namespace, rules, raw, load); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
