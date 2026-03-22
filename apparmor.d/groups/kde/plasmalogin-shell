@@ -1,0 +1,52 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/plasmalogin-shell
+profile plasmalogin-shell @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/shells>
+
+  @{shells_path} mr,
+
+  @{bin}/cat           rix,
+  @{bin}/find          rix,
+  @{bin}/tr            rix,
+  @{bin}/tty           rix,
+  @{bin}/xargs         rix,
+
+  @{bin}/pidof          Px,
+  @{bin}/flatpak        Cx -> flatpak,
+
+  @{bin}/startplasma-wayland  Px,
+  @{bin}/startplasma-x11      Px,
+
+  @{lib}/plasma-dbus-run-session-if-needed  rix,
+  @{lib}/@{multiarch}/libexec/plasma-dbus-run-session-if-needed  rix,
+
+  /usr/share/plasmalogin/scripts/{,**} r,
+
+  /etc/debuginfod/{,*} r,
+
+  owner @{user_share_dirs}/plasmalogin/wayland-session.log w,
+
+  owner @{PROC}/@{pid}/fd/ r,
+
+  profile flatpak {
+    include <abstractions/base>
+    include <abstractions/consoles>
+
+    @{bin}/flatpak mr,
+
+    include if exists <local/plasmalogin-shell_flatpak>
+  }
+
+  include if exists <local/plasmalogin-shell>
+}
+
+# vim:syntax=apparmor
