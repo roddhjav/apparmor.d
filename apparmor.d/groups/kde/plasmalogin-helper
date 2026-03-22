@@ -1,0 +1,104 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/plasmalogin-helper
+
+profile plasmalogin-helper @{exec_path} flags=(complain) {
+  include <abstractions/base>
+  include <abstractions/authentication>
+
+  capability audit_write,
+  capability chown,
+  capability dac_read_search,
+  capability fowner,
+  capability kill,
+  capability net_admin,
+  capability setgid,
+  capability setuid,
+  capability sys_tty_config,
+
+  signal receive set=term peer=plasmalogin,
+  signal send set=term peer=startplasma-login-wayland,
+  signal send set=term peer=startplasma,
+
+  ptrace read peer=unconfined,
+  ptrace read peer=dbus-session,
+  ptrace read peer=pipewire,
+  ptrace read peer=wireplumber,
+  ptrace read peer=obexd,
+
+  @{shells_path} rix,
+  @{bin}/pidof   rix,
+  @{bin}/tty     rix,
+  @{bin}/xargs   rix,
+  @{bin}/cat     rix,
+  @{bin}/find    rix,
+  @{bin}/tr      rix,
+
+  @{bin}/startplasma-wayland       rpx,
+  @{bin}/startplasma-login-wayland rpx,
+
+  @{bin}/ksecretd             rpux,
+  @{bin}/kwalletd{5,6}        rpx,
+
+  /usr/share/plasmalogin/scripts/wayland-session rix,
+  @{lib}/plasma-dbus-run-session-if-needed rix,
+
+  /dev/tty@{u8} rw,
+  /dev/tty rw,
+
+  owner @{user_share_dirs}/plasmalogin/wayland-session.log rw,
+  owner @{user_share_dirs}/kwalletd/kdewallet.kwl rw,
+  owner @{user_share_dirs}/kwalletd/kdewallet.kwl.@{rand6} rwl,
+  owner @{user_share_dirs}/kwalletd/kdewallet.salt r,
+
+  @{bin}/site_perl/ r,
+  @{bin}/vendor_perl/ r,
+  @{bin}/core_perl/ r,
+
+  /etc/plasmalogin.conf r,
+  /etc/debuginfod/ r,
+  /etc/debuginfod/*.urls r,
+  /etc/profile r,
+  /etc/profile.d/ r,
+  /etc/profile.d/*.sh r,
+  /etc/shells r,
+  /etc/nsswitch.conf r,
+  /etc/passwd r,
+  /etc/machine-id r,
+  /etc/group r,
+
+        /var/lib/lastlog/ rw,
+        /var/lib/lastlog/lastlog@{int}.db-journal rw,
+        /var/lib/lastlog/lastlog@{int}.db rwk,
+  owner /var/lib/plasmalogin/ r,
+
+        /home/ r,
+  owner @{HOME}/ r,
+  owner @{HOME}/.bash_profile r,
+  owner @{HOME}/.bashrc r,
+
+        @{PROC}/ r,
+        @{PROC}/@{pid}/ r,
+        @{PROC}/@{pid}/cmdline r,
+        @{PROC}/@{pid}/stat r,
+        @{PROC}/@{pid}/loginuid rw,
+        @{PROC}/@{pid}/uid_map r,
+        @{PROC}/sys/kernel/random/boot_id r,
+  owner @{PROC}/@{pid}/fd/ r,
+
+        @{run}/faillock/@{user} rwk,
+        @{run}/systemd/userdb/ r,
+  owner @{run}/user/@{uid}/kwallet5.socket rw,
+
+  @{sys}/devices/system/node/ r,
+
+  include if exists <local/plasmalogin-helper>
+}
+
+# vim:syntax=apparmor

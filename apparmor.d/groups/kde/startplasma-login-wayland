@@ -1,0 +1,43 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/startplasma-login-wayland
+
+profile startplasma-login-wayland @{exec_path} flags=(complain) {
+  include <abstractions/base>
+  include <abstractions/mime>
+
+  @{exec_path} r,
+  @{bin}/xrdb rpx,
+
+  /dev/tty@{u8} rw,
+  /dev/tty rw,
+
+  signal receive set=term peer=plasmalogin-helper,
+
+  /usr/share/color-schemes/ r,
+  /usr/share/color-schemes/*.colors r,
+  /usr/share/plasma/look-and-feel/** r,
+  /etc/xdg/menus/ r,
+
+  owner /var/lib/plasmalogin/.cache/ rw,
+  owner /var/lib/plasmalogin/.cache/** rwlk,
+  owner /var/lib/plasmalogin/.config/ rw,
+  owner /var/lib/plasmalogin/.config/** rwlk,
+
+  owner /tmp/startplasma-login-wayland.@{rand6} rwl,
+  owner @{tmp}/#@{int} rw,
+
+  @{PROC}/sys/kernel/random/boot_id r,
+
+  /etc/machine-id r,
+
+  include if exists <local/startplasma-login-wayland>
+}
+
+# vim:syntax=apparmor
