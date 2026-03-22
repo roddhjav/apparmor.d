@@ -8,6 +8,7 @@ import (
 	"slices"
 
 	"github.com/roddhjav/apparmor.d/pkg/tasks"
+	"github.com/roddhjav/apparmor.d/pkg/util"
 )
 
 type Enforce struct {
@@ -25,11 +26,11 @@ func NewEnforce() *Enforce {
 }
 
 func (b Enforce) Apply(opt *Option, profile string) (string, error) {
-	flags := extractFlags(profile)
+	flags := util.GetFlags(profile)
 	idx := slices.Index(flags, "complain")
 	if idx == -1 {
 		return profile, nil
 	}
 	flags = slices.Delete(flags, idx, idx+1)
-	return setFlags(profile, flags), nil
+	return util.SetFlags(profile, flags), nil
 }

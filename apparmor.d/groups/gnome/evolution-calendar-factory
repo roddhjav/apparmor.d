@@ -26,38 +26,12 @@ profile evolution-calendar-factory @{exec_path} {
   network inet6 dgram,
   network netlink raw,
 
-  #aa:dbus own bus=session name=org.gnome.evolution.dataserver.Calendar8
+  #aa:dbus own bus=session name=org.gnome.evolution.dataserver.Calendar{,@{u8},View,Factory} path=/org/gnome/evolution/dataserver/Subprocess{,/**}
+  #aa:dbus own bus=session name=org.gnome.evolution.dataserver.Calendar{,@{u8},View,Factory}
 
-  dbus (send, receive) bus=session path=/org/gnome/evolution/dataserver/**
-       interface=org.gnome.evolution.dataserver.*
-       peer=(name=@{busname}),
-
-  dbus send bus=session path=/org/gnome/evolution/dataserver/**
-       interface=org.gnome.evolution.dataserver.*
-       peer=(name=org.freedesktop.DBus, label="{evolution-*,gnome-shell-*-server}"),
-
-  dbus (send, receive) bus=session path=/org/gnome/evolution/dataserver/**
-       interface=org.freedesktop.DBus.Properties
-       peer=(name=@{busname}),
-
-  dbus send bus=session path=/org/gnome/evolution/dataserver/**
-       interface=org.freedesktop.DBus.Properties
-       peer=(name=org.freedesktop.DBus, label=evolution-*),
-
-  dbus send bus=session path=/org/gnome/evolution/dataserver/SourceManager
-       interface=org.freedesktop.DBus.ObjectManager
-       member=GetManagedObjects
-       peer=(name=@{busname}, label=evolution-source-registry),
-
-  dbus send bus=session path=/org/gnome/evolution/dataserver/**
-       interface=org.freedesktop.DBus.Properties
-       member=PropertiesChanged
-       peer=(name=org.freedesktop.DBus, label=gnome-shell-calendar-server),
-
-  dbus send bus=session path=/org/gnome/evolution/dataserver/CalendarView/**
-       interface=org.gnome.evolution.dataserver.CalendarView
-       member=Complete
-       peer=(name=org.freedesktop.DBus, label=gnome-calendar),
+  #aa:dbus talk bus=session name=org.gnome.evolution.dataserver.{Source,Sources@{int}} path=/org/gnome/evolution/dataserver/SourceManager{,/**} label=evolution-source-registry
+  #aa:dbus talk bus=session name=org.gnome.evolution.dataserver.AddressBook{,Cursor,View,Factory} path=/org/gnome/evolution/dataserver/Subprocess{,**} label=evolution-addressbook-factory
+  #aa:dbus talk bus=session name=org.gnome.evolution.dataserver.AddressBook{,Cursor,View,Factory} label=evolution-addressbook-factory
 
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable
