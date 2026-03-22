@@ -8,6 +8,7 @@ import (
 	"slices"
 
 	"github.com/roddhjav/apparmor.d/pkg/tasks"
+	"github.com/roddhjav/apparmor.d/pkg/util"
 )
 
 type Complain struct {
@@ -25,10 +26,10 @@ func NewComplain() *Complain {
 }
 
 func (b Complain) Apply(opt *Option, profile string) (string, error) {
-	flags := extractFlags(profile)
+	flags := util.GetFlags(profile)
 	if slices.Contains(flags, "complain") || slices.Contains(flags, "unconfined") {
 		return profile, nil
 	}
 	flags = append(flags, "complain")
-	return setFlags(profile, flags), nil
+	return util.SetFlags(profile, flags), nil
 }

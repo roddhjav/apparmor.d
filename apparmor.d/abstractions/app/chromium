@@ -62,6 +62,9 @@
   network netlink raw,
 
   signal send set=(term, kill) peer=keepassxc-proxy,
+  signal receive peer=@{profile_name}//&@{profile_name}//crashpad_handler,
+
+  ptrace trace peer=@{profile_name},
 
   ptrace read peer=browserpass,
   ptrace read peer=chrome-gnome-shell,
@@ -158,12 +161,13 @@
   @{sys}/bus/ r,
   @{sys}/bus/**/devices/ r,
   @{sys}/class/**/ r,
-  @{sys}/devices/@{pci}/{in_intensity_sampling_frequency,in_intensity_scale,in_illuminance_raw} r,
-  @{sys}/devices/@{pci}/boot_vga r,
   @{sys}/devices/**/uevent r,
 
   # List processes in /proc
   @{PROC}/ r,
+
+  # Allow reading the memory map of any processes for introspection and debugging
+  @{PROC}/@{pid}/maps r,
 
   # Process status in one line (pid, state, ppid, CPU time, threads, etc.)
   @{PROC}/@{pid}/stat r,
@@ -257,16 +261,16 @@
 
     capability sys_ptrace,
 
-    ptrace (read trace) peer=@{name},
+    signal send peer=@{name},
+
+    ptrace trace peer=@{name},
 
     unix (send receive) type=seqpacket peer=(label=@{name}),
-
-    signal send peer=@{name},
 
     @{lib_dirs}/chrome_crashpad_handler mrix,
     @{lib_dirs}/@{name}_crashpad_handler mrix,
 
-    owner "@{config_dirs}/Crash Reports/**" rwk,
+    owner "@{config_dirs}/{,*/}Crash Reports/**" rwk,
 
     @{sys}/devices/system/cpu/cpufreq/policy@{int}/scaling_cur_freq r,
     @{sys}/devices/system/cpu/cpufreq/policy@{int}/scaling_max_freq r,

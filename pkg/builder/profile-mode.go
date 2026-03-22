@@ -5,19 +5,15 @@
 package builder
 
 import (
-	"fmt"
 	"regexp"
-	"slices"
 
 	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 	"github.com/roddhjav/apparmor.d/pkg/tasks"
+	"github.com/roddhjav/apparmor.d/pkg/util"
 )
 
 var (
 	regProfileName = regexp.MustCompile(`(?m)^profile\s+(\S+)\s+`)
-	profileModes   = []string{
-		"enforce", "complain", "kill", "default_allow", "unconfined", "prompt",
-	}
 )
 
 type ProfileMode struct {
@@ -55,25 +51,6 @@ func (b ProfileMode) Apply(opt *Option, profile string) (string, error) {
 	if !present {
 		return profile, nil
 	}
-	if !slices.Contains(profileModes, mode) {
-		return profile, fmt.Errorf("unknown profile mode: %s", mode)
-	}
 
-	return setMode(profile, mode)
-}
-
-func setMode(profile string, mode string) (string, error) {
-	flags := extractFlags(profile)
-
-	// Remove all conflicting mode flags
-	flags = slices.DeleteFunc(flags, func(f string) bool {
-		return slices.Contains(profileModes, f)
-	})
-
-	// "enforce" is the default (no mode flag needed), otherwise add the mode
-	if mode != "enforce" {
-		flags = append(flags, mode)
-	}
-
-	return setFlags(profile, flags), nil
+	return util.SetMode(profile, mode)
 }
