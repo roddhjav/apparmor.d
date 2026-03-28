@@ -580,7 +580,7 @@ _check_udev() {
 check_sbin() {
     local file name jobs
     mapfile -t sbin <"$SBIN_LIST"
-    _msg "Ensuring '@{bin} and '@{sbin}' are correctly used in profiles"
+    _msg "Ensuring '@{bin}' and '@{sbin}' are correctly used in profiles"
 
     jobs=0
     for name in "${sbin[@]}"; do

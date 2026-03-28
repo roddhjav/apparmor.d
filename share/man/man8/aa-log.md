@@ -4,7 +4,7 @@
 
 # NAME
 
-aa-log — Review AppArmor generated messages in a colorful way.
+aa-log - Review AppArmor generated messages in a colorful way.
 
 # SYNOPSIS
 
