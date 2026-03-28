@@ -143,7 +143,7 @@ func TestDbus_Apply(t *testing.T) {
        peer=(name="{@{busname},org.freedesktop.Accounts{,.*},org.freedesktop.DBus}", label=accounts-daemon),`,
 		},
 		{
-			name: "common",
+			name: "see",
 			opt: &Option{
 				Name: "dbus",
 				ArgMap: map[string]string{
@@ -152,11 +152,11 @@ func TestDbus_Apply(t *testing.T) {
 					"label": "power-profiles-daemon",
 					"talk":  "",
 				},
-				ArgList: []string{"common", "bus=system", "name=net.hadess.PowerProfiles", "power-profiles-daemon"},
+				ArgList: []string{"see", "bus=system", "name=net.hadess.PowerProfiles", "power-profiles-daemon"},
 				File:    nil,
-				Raw:     "  #aa:dbus common bus=system name=net.hadess.PowerProfiles label=power-profiles-daemon",
+				Raw:     "  #aa:dbus see bus=system name=net.hadess.PowerProfiles label=power-profiles-daemon",
 			},
-			profile: "  #aa:dbus common bus=system name=net.hadess.PowerProfiles label=power-profiles-daemon",
+			profile: "  #aa:dbus see bus=system name=net.hadess.PowerProfiles label=power-profiles-daemon",
 			want: `  # Unix: allow connection to the profile
   unix type=stream peer=(label=power-profiles-daemon),
 
