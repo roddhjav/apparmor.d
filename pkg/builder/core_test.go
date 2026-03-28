@@ -97,7 +97,7 @@ func TestBuilder_Apply(t *testing.T) {
 			  }`,
 			want: `
 			  @{exec_path} = @{bin}/foo
-			  profile foo @{exec_path}  flags=(attach_disconnected,complain) {
+			  profile foo @{exec_path} flags=(attach_disconnected,complain) {
 			    include <abstractions/base>
 
 			    @{exec_path} mr,
@@ -163,7 +163,7 @@ func TestBuilder_Apply(t *testing.T) {
 			  }`,
 			want: `
 			  @{exec_path} = @{bin}/foo
-			  profile foo @{exec_path}  flags=(attach_disconnected) {
+			  profile foo @{exec_path} flags=(attach_disconnected) {
 			    include <abstractions/base>
 
 			    @{exec_path} mr,
