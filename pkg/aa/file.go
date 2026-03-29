@@ -150,6 +150,15 @@ func (r *File) Validate() error {
 			return fmt.Errorf("invalid mode '%s'", v)
 		}
 	}
+	if err := validateAAREPattern(r.Path); err != nil {
+		return err
+	}
+	// Conflicting access: write (w) and append (a) cannot coexist
+	hasW := slices.Contains(r.Access, "w")
+	hasA := slices.Contains(r.Access, "a")
+	if hasW && hasA {
+		return fmt.Errorf("conflicting file access: 'w' and 'a' cannot coexist")
+	}
 	return nil
 }
 
