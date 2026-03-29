@@ -1,0 +1,41 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/gnome-control-center-global-shortcuts-provider
+profile gnome-control-center-global-shortcuts-provider @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/dconf-write>
+  include <abstractions/fontconfig-cache-write>
+  include <abstractions/gnome-strict>
+  include <abstractions/graphics>
+
+  signal receive set=term peer=gdm,
+  signal receive set=hup peer=gdm-session-worker,
+
+  unix type=stream peer=(label=gnome-shell),
+
+  #aa:dbus own bus=session name=org.gnome.Settings.GlobalShortcutsProvider
+
+  dbus send bus=session path=/org/gnome/Mutter/ServiceChannel
+       interface=org.gnome.Mutter.ServiceChannel
+       member=OpenWaylandServiceConnection
+       peer=(name=@{busname}, label=gnome-shell),
+
+  @{exec_path} mr,
+
+  /usr/share/gnome-control-center/keybindings/{,**} r,
+
+  owner @{gdm_cache_dirs}/fontconfig/* r,
+
+  owner @{PROC}/@{pid}/task/@{tid}/comm w,
+
+  include if exists <local/gnome-control-center-global-shortcuts-provider>
+}
+
+# vim:syntax=apparmor
