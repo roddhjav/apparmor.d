@@ -452,6 +452,7 @@ func Test_Parser_UpstreamTestSuite(t *testing.T) {
 
 	// [01/06/24]: 1986 tests, success: 1242, fail 744, success rate: 62%
 	// [14/12/25]: 2148 tests, success: 1722, fail 422, success rate: 80%
+	// [23/03/26]: 2222 tests, success: 2035, fail 187, success rate: 91%
 	reports.SumUp(t)
 }
 
