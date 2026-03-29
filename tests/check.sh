@@ -179,6 +179,7 @@ declare -A ABS_DEPRECATED=(
     ["bash"]="shells"
     ["X"]="X-strict"
     ["gtk"]="gtk-strict"
+    ["wayland"]="wayland-strict"
     ["dbus-accessibility-strict"]="bus-accessibility"
     ["dbus-network-manager-strict"]="network-manager-observe"
     ["dbus-session-strict"]="bus-session"
