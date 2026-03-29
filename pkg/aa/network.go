@@ -238,7 +238,7 @@ func (r *Network) Validate() error {
 	if err := r.PeerAddress.Validate(); err != nil {
 		return fmt.Errorf("%s: %w", r, err)
 	}
-	if r.PeerAddress.IP != "" || r.PeerAddress.Port != "" || r.PeerAddress.Src != "" {
+	if r.PeerAddress.IP != "" || r.PeerAddress.Port != "" || r.Src != "" {
 		if len(r.Access) > 0 && allLocalOnly(r.Access, requirements[NETWORK]["local-only"]) {
 			return fmt.Errorf("peer modifier not allowed with local-only access types in network rule")
 		}

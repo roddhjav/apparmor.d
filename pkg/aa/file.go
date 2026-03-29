@@ -164,7 +164,7 @@ func (r *File) Validate() error {
 
 func (r *File) Compare(other Rule) int {
 	o, _ := other.(*File)
-	if o.Qualifier.AccessType == "deny" {
+	if o.AccessType == "deny" {
 		return -1 // Deny file rules always come last
 	}
 
@@ -214,7 +214,7 @@ func (r *File) Merge(other Rule) bool {
 
 func (r *File) Lengths() []int {
 	// Deny rules don't participate in padding alignment
-	if r.Qualifier.AccessType == "deny" {
+	if r.AccessType == "deny" {
 		return []int{0, 0, 0, 0}
 	}
 
@@ -248,7 +248,7 @@ func (r *File) addLine(other Rule) bool {
 	o := other.(*File)
 
 	// Deny rules are all grouped together without blank lines
-	if r.Qualifier.AccessType == "deny" && o.Qualifier.AccessType == "deny" {
+	if r.AccessType == "deny" && o.AccessType == "deny" {
 		return false
 	}
 
@@ -338,7 +338,7 @@ func (r *Link) Validate() error {
 
 func (r *Link) Compare(other Rule) int {
 	o, _ := other.(*Link)
-	if o.Qualifier.AccessType == "deny" {
+	if o.AccessType == "deny" {
 		return -1 // Deny file rules always come last
 	}
 
