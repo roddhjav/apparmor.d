@@ -754,6 +754,18 @@ func (r rule) ValidateMapKeys(validKeys []string) error {
 	return nil
 }
 
+// ValidateNonEmptyValues validates that keys which are present have non-empty values.
+func (r rule) ValidateNonEmptyValues(keys []string) error {
+	for _, kv := range r {
+		if kv.values != nil && slices.Contains(keys, kv.key) {
+			if len(kv.values) == 0 {
+				return fmt.Errorf("empty value for '%s' in rule: %s", kv.key, r)
+			}
+		}
+	}
+	return nil
+}
+
 // String return a generic representation of a rule.
 func (r rule) String() string {
 	var res strings.Builder

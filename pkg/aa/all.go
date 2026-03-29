@@ -4,6 +4,8 @@
 
 package aa
 
+import "fmt"
+
 const (
 	ALL Kind = "all"
 )
@@ -13,6 +15,9 @@ type All struct {
 }
 
 func newAll(q Qualifier, rule rule) (Rule, error) {
+	if len(rule.GetSlice()) > 0 {
+		return nil, fmt.Errorf("'all' rule cannot have additional arguments")
+	}
 	return &All{Base: newBase(rule)}, rule.ValidateMapKeys([]string{})
 }
 

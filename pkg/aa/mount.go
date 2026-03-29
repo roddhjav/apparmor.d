@@ -18,7 +18,7 @@ func init() {
 	requirements[MOUNT] = requirement{
 		"flags": {
 			// flags bind
-			"B", "bind", "R", "rbind",
+			"B", "bind", "M", "R", "rbind",
 
 			// flags change
 			"shared", "slave", "nostrictatime", "lazytime", "nolazytime",
@@ -27,7 +27,8 @@ func init() {
 			"make-rprivate", "make-rslave", "symfollow",
 
 			// flags mount
-			"ro", "rw", "w", "acl", "async", "atime", "bind", "dev", "diratime",
+			"r", "read-only", "ro", "rw", "w",
+			"acl", "async", "atime", "bind", "dev", "diratime",
 			"dirsync", "exec", "iversion", "loud", "mand", "move", "noacl",
 			"noatime", "nodev", "nodiratime", "noexec", "noiversion", "nomand",
 			"norelatime", "nosuid", "nosymfollow", "nouser", "private", "rbind", "relatime",

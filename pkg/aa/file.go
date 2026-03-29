@@ -59,6 +59,10 @@ func newFile(q Qualifier, rule rule) (Rule, error) {
 		if rule.Get(0) == FILE.Tok() {
 			rule = rule[1:]
 		}
+		// Skip safe/unsafe modifiers (handled at exec time)
+		if rule.Get(0) == "unsafe" || rule.Get(0) == "safe" {
+			rule = rule[1:]
+		}
 
 		r := rule.GetSlice()
 		size := len(r)
