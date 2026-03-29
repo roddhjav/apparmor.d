@@ -272,11 +272,13 @@ var (
 			if strings.Contains(log["flags"], "remount") {
 				return newRemountFromLog(log)
 			}
-			newRule := newLogMountMap[log["operation"]]
-			return newRule(log)
+			if newRule, ok := newLogMountMap[log["operation"]]; ok {
+				return newRule(log)
+			}
+			return newMountFromLog(log)
 		},
 		"file": func(log map[string]string) Rule {
-			if log["operation"] == "change_onexec" {
+			if log["operation"] == "change_onexec" || log["operation"] == "change_profile" {
 				return newChangeProfileFromLog(log)
 			} else {
 				return newFileFromLog(log)
@@ -307,6 +309,10 @@ var (
 )
 
 func (p *Profile) AddRule(log map[string]string) {
+	if len(log) == 0 {
+		return
+	}
+
 	// Generate profile flags and extra rules
 	switch log["error"] {
 	case "-2":
