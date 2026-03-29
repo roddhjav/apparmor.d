@@ -14,15 +14,7 @@ include <tunables/global>
 @{exec_path} += @{lib_dirs}/git @{lib_dirs}/git-* @{lib_dirs}/mergetools/*
 profile git @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/consoles>
-  include <abstractions/nameservice-strict>
-  include <abstractions/ssl_certs>
-
-  network inet dgram,
-  network inet6 dgram,
-  network inet stream,
-  network inet6 stream,
-  network netlink raw,
+  include <abstractions/app/git>
 
   signal send peer=aurpublish,
   signal receive set=term peer=code,
@@ -34,59 +26,22 @@ profile git @{exec_path} flags=(attach_disconnected) {
 
   @{exec_path} mrix,
 
-  # When you mistype a command, git checks the $PATH variable and search its exec dirs to give you
-  # the most similar commands, which it thinks can be used instead. Git binaries are all under
-  # /usr/bin/ , so allow only this location.
-  @{bin}/ r,
-  deny @{bin}/*/ r,
-  deny /usr/games/ r,
-  deny /usr/local/{s,}bin/ r,
-  deny /usr/local/games/ r,
-  deny /var/lib/flatpak/exports/bin/ r,
-  deny owner @{HOME}/.go/bin/ r,
-  deny owner @{HOME}/bin/ r,
-  deny owner @{user_bin_dirs}/ r,
+  @{pager_path}      Px -> child-pager,
 
-  # These are needed for "git submodule update"
-  @{sh_path}         rix,
-  @{bin}/{,e}grep    rix,
-  @{bin}/alts        rix,
-  @{bin}/basename    rix,
-  @{bin}/cat         rix,
-  @{bin}/date        rix,
-  @{bin}/dirname     rix,
-  @{bin}/envsubst    rix,
-  @{bin}/gettext     rix,
-  @{bin}/gettext.sh  rix,
-  @{bin}/hostname    rix,
-  @{bin}/mkdir       rix,
-  @{bin}/mv          rix,
-  @{bin}/rm          rix,
-  @{bin}/sed         rix,
-  @{bin}/tar         rix,
-  @{bin}/true        rix,
-  @{bin}/uname       rix,
-  @{bin}/wc          rix,
-  @{bin}/whoami      rix,
+  @{bin}/gh          Px,
+  @{bin}/man         Px,
+  @{bin}/meld       PUx,
+  @{lib}/code/extensions/git/dist/askpass.sh     Px,
+  @{lib}/code/extensions/git/dist/git-editor.sh  Px,
+  /usr/share/aurpublish/*.hook                   Px,
 
-  @{pager_path}      rPx -> child-pager,
+  @{bin}/gpg{,2}         Cx -> &gpg,
+  @{bin}/ssh             Cx -> &ssh,
+  @{editor_path}         Cx -> editor,
 
-  @{bin}/gh         rPUx,
-  @{bin}/man         rPx,
-  @{bin}/meld       rPUx,
-  @{lib}/code/extensions/git/dist/askpass.sh     rPx,
-  @{lib}/code/extensions/git/dist/git-editor.sh  rPx,
-  /usr/share/aurpublish/*.hook                   rPx,
-
-  @{bin}/gpg{,2}         rCx -> &gpg,
-  @{bin}/ssh             rCx -> &ssh,
-  @{editor_path}         rCx -> editor,
-
-  /usr/share/git{,-core}/{,**} r,
   /usr/share/libalternatives/{,**} r,
   /usr/share/terminfo/** r,
 
-  /etc/gitconfig r,
   /etc/mailname r,
   @{etc_ro}/ssh/ssh_config r,
   @{etc_ro}/ssh/ssh_config.d/{,*} r,
@@ -109,11 +64,6 @@ profile git @{exec_path} flags=(attach_disconnected) {
   owner @{HOME}/@{XDG_GPG_DIR}/** rwkl -> @{HOME}/@{XDG_GPG_DIR}/**,
   owner @{tmp}/.git_vtag_tmp@{rand6} r,
   owner @{run}/user/@{uid}/gnupg/S.gpg-agent rw,
-
-  owner @{tmp}/.git_vtag_tmp@{rand6} rw,       # For git log --show-signature
-  owner @{tmp}/git-commit-msg-.txt rw,         # For android studio
-  owner @{tmp}/git-difftool.*/{,**} rw,        # For diffs
-  owner @{tmp}/git-index-private@{int} rw,
 
   owner @{run}/user/@{uid}/gcr/ssh rw,
 
