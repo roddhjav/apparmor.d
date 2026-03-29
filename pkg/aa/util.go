@@ -267,3 +267,13 @@ func toAccess(kind Kind, input string) ([]string, error) {
 	slices.SortFunc(res, compareFileAccess)
 	return slices.Compact(res), nil
 }
+
+// allLocalOnly returns true if all access types are in the local-only list.
+func allLocalOnly(access, localOnly []string) bool {
+	for _, a := range access {
+		if !slices.Contains(localOnly, a) {
+			return false
+		}
+	}
+	return true
+}
