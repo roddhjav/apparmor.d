@@ -11,7 +11,6 @@ include <tunables/global>
 @{exec_path} += @{lib}/@{multiarch}/{,libexec/}kscreenlocker_greet
 profile kscreenlocker_greet @{exec_path} {
   include <abstractions/base>
-  include <abstractions/bus-session>
   include <abstractions/bus/system/org.freedesktop.login1>
   include <abstractions/fontconfig-cache-read>
   include <abstractions/graphics>
@@ -28,6 +27,8 @@ profile kscreenlocker_greet @{exec_path} {
   signal (receive) set=(term) peer=kwin_wayland,
   signal (receive) set=(usr1, term) peer=ksmserver,
   signal (send) peer=kcheckpass,
+
+  unix bind type=stream addr=@@{udbus}/bus/QThread/system,
 
   dbus send bus=system path=/org/freedesktop/DisplayManager/Seat@{int}
        interface=org.freedesktop.DBus.Introspectable

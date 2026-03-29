@@ -26,7 +26,7 @@ profile gnome-session-service @{exec_path} flags=(attach_disconnected) {
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
-       peer=(name=@{busname}, label=gnome-shell),
+       peer=(name=@{busname}, label="{gnome-shell,gnome-extension}"),
 
   @{exec_path} mr,
 
@@ -45,6 +45,8 @@ profile gnome-session-service @{exec_path} flags=(attach_disconnected) {
 
   owner @{user_config_dirs}/autostart/{,*.desktop} r,
 
+  owner @{user_state_dirs}/gnome-session@*.state r,
+
         @{run}/systemd/sessions/{,@{l}}@{int}{,.ref} rw,
   @{att}@{run}/systemd/inhibit/@{int}.ref rw,
   @{att}@{run}/systemd/sessions/{,@{l}}@{int}{,.ref} rw,
@@ -55,7 +57,7 @@ profile gnome-session-service @{exec_path} flags=(attach_disconnected) {
         @{PROC}/1/cgroup r,
   owner @{PROC}/@{pid}/cgroup r,
 
-  profile open {
+  profile open flags=(attach_disconnected) {
     include <abstractions/base>
     include <abstractions/consoles>
 

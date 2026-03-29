@@ -1,0 +1,80 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+# LOGPROF-SUGGEST: no
+
+# Minimal set of rules for git subprofiles. Path to projects should
+# be defined in the calling profile.
+
+  abi <abi/4.0>,
+
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+  include <abstractions/ssl_certs>
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  @{bin}/git mrix,
+  @{bin}/git-* mrix,
+  @{lib}/git-core/git mrix,
+  @{lib}/git-core/git-* mrix,
+  @{lib}/git-core/mergetools/* mrix,
+  @{lib}/git/git mrix,
+  @{lib}/git/git-* mrix,
+  @{lib}/git/mergetools/* mrix,
+
+  # These are needed for "git submodule update"
+  @{sh_path}         rix,
+  @{bin}/{,e}grep    rix,
+  @{bin}/alts        rix,
+  @{bin}/basename    rix,
+  @{bin}/cat         rix,
+  @{bin}/date        rix,
+  @{bin}/dirname     rix,
+  @{bin}/envsubst    rix,
+  @{bin}/gettext     rix,
+  @{bin}/gettext.sh  rix,
+  @{bin}/hostname    rix,
+  @{bin}/mkdir       rix,
+  @{bin}/mv          rix,
+  @{bin}/rm          rix,
+  @{bin}/sed         rix,
+  @{bin}/tar         rix,
+  @{bin}/true        rix,
+  @{bin}/uname       rix,
+  @{bin}/wc          rix,
+  @{bin}/whoami      rix,
+
+  /usr/share/git{,-core}/{,**} r,
+
+  /etc/gitconfig r,
+
+  owner @{HOME}/.gitconfig* r,
+
+  owner @{user_config_dirs}/git/{,*} r,
+
+  owner @{tmp}/.git_vtag_tmp@{rand6} rw,       # For git log --show-signature
+  owner @{tmp}/git-commit-msg-.txt rw,         # For android studio
+  owner @{tmp}/git-difftool.*/{,**} rw,        # For diffs
+  owner @{tmp}/git-index-private@{int} rw,
+
+  # When you mistype a command, git checks the $PATH variable and search its exec dirs to give you
+  # the most similar commands, which it thinks can be used instead. Git binaries are all under
+  # /usr/bin/ , so allow only this location.
+  @{bin}/ r,
+  deny @{bin}/*/ r,
+  deny /usr/games/ r,
+  deny /usr/local/{s,}bin/ r,
+  deny /usr/local/games/ r,
+  deny /var/lib/flatpak/exports/bin/ r,
+  deny owner @{HOME}/.go/bin/ r,
+  deny owner @{HOME}/bin/ r,
+  deny owner @{user_bin_dirs}/ r,
+
+  include if exists <abstractions/app/git.d>
+
+# vim:syntax=apparmor

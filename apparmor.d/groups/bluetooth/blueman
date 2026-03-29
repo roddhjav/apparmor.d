@@ -13,9 +13,11 @@ profile blueman @{exec_path} flags=(attach_disconnected) {
   include <abstractions/audio-client>
   include <abstractions/bluetooth-control>
   include <abstractions/bus/system/org.bluez.AgentManager1>
+  include <abstractions/bus/system/org.freedesktop.hostname1>
   include <abstractions/dconf-write>
   include <abstractions/desktop>
   include <abstractions/fontconfig-cache-read>
+  include <abstractions/gvfs>
   include <abstractions/nameservice-strict>
   include <abstractions/python>
   include <abstractions/thumbnails-cache-read>
@@ -32,6 +34,11 @@ profile blueman @{exec_path} flags=(attach_disconnected) {
   #aa:dbus own bus=session name=org.blueman.Manager
 
   #aa:dbus talk bus=system name=org.blueman.{m,M}echanism label=blueman-mechanism
+
+  dbus receive bus=system path=/org/bluez/agent/blueman
+       interface=org.bluez.Agent1
+       member=Release
+       peer=(name=@{busname}, label=bluetoothd),
 
   @{exec_path} mrix,
 
@@ -56,6 +63,7 @@ profile blueman @{exec_path} flags=(attach_disconnected) {
   owner @{user_cache_dirs}/obexd/* rw,
 
         @{PROC}/@{pids}/cmdline r,
+  owner @{PROC}/@{pid}/cgroup r,
   owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/mounts r,
 
@@ -63,8 +71,6 @@ profile blueman @{exec_path} flags=(attach_disconnected) {
   /dev/rfkill r,
   /dev/shm/ r,
   /dev/tty rw,
-
-  deny owner @{user_share_dirs}/gvfs-metadata/{,*} r,
 
   include if exists <local/blueman>
 }

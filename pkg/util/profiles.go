@@ -31,9 +31,8 @@ func GetFlags(profile string) []string {
 // SetFlags replaces flags in a profile string. If flags is empty, removes the flags clause.
 func SetFlags(profile string, flags []string) string {
 	profile = regFlags.ReplaceAllLiteralString(profile, "")
+	profile = strings.ReplaceAll(profile, "  {\n", " {\n")
 	if len(flags) == 0 {
-		// Clean up any extra space left after removing flags
-		profile = strings.ReplaceAll(profile, "  {\n", " {\n")
 		return profile
 	}
 	flagsStr := " flags=(" + strings.Join(flags, ",") + ") {\n"
