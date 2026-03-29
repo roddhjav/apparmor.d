@@ -835,6 +835,57 @@ func isAARE(str string) bool {
 	}
 }
 
+// isProfileBlockHeader checks if a block header represents a profile
+// that starts with a qualifier prefix or namespace.
+func isProfileBlockHeader(header string) bool {
+	// Handle qualifier prefixes: "audit /path", "allow /path"
+	prefixes := []string{"audit ", "allow ", "deny "}
+	for _, p := range prefixes {
+		if strings.HasPrefix(header, p) {
+			rest := strings.TrimPrefix(header, p)
+			if isAARE(rest) || strings.HasPrefix(rest, PROFILE.Tok()) || isProfileBlockHeader(rest) {
+				return true
+			}
+		}
+	}
+
+	// Handle namespace prefix: ":ns:path" or ":ns:name"
+	if len(header) > 2 && header[0] == ':' {
+		// Must have a second colon after the namespace name
+		if idx := strings.Index(header[1:], ":"); idx > 0 {
+			return true
+		}
+	}
+	return false
+}
+
+// isRuleBlockHeader checks if a block header is a rule modifier block
+// like "owner { ... }" or "audit { ... }" that applies to all rules inside.
+func isRuleBlockHeader(header string) bool {
+	modifiers := []string{"owner", "audit", "deny", "allow"}
+	for _, m := range modifiers {
+		if header == m {
+			return true
+		}
+	}
+	return false
+}
+
+// prependToRules prepends a modifier to each rule line in a block.
+func prependToRules(modifier, blockContent string) string {
+	lines := strings.Split(blockContent, "\n")
+	var result []string
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if trimmed == "" || strings.HasPrefix(trimmed, "#") {
+			result = append(result, line)
+		} else {
+			result = append(result, modifier+" "+trimmed)
+		}
+	}
+	return strings.Join(result, "\n")
+}
+
 // Convert a slice of internal rules to a slice of ApparmorRule.
 func newRules(rules []rule) (Rules, error) {
 	var err error
