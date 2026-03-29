@@ -6,6 +6,7 @@ package aa
 
 import (
 	"fmt"
+	"slices"
 )
 
 const (
@@ -15,7 +16,22 @@ const (
 )
 
 func init() {
+	conflicts[MOUNT] = map[string][][]string{
+		"flags": {
+			{"rw", "ro"},
+			{"strictatime", "nostrictatime"},
+			{"lazytime", "nolazytime"},
+			{"symfollow", "nosymfollow"},
+		},
+	}
 	requirements[MOUNT] = requirement{
+		"fstype": {
+			"auto", "btrfs", "cgroup", "cgroup2", "configfs", "debugfs",
+			"devpts", "devtmpfs", "efivarfs", "ext2", "ext3", "ext4", "fuse.*",
+			"fuseblk", "fusectl", "hugetlbfs", "iso9660", "mqueue", "nfs",
+			"nfs4", "proc", "pstore", "ramfs", "rootfs", "securityfs",
+			"selinuxfs", "squashfs", "sysfs", "tmpfs", "tracefs",
+		},
 		"flags": {
 			// flags bind
 			"B", "bind", "M", "R", "rbind",
