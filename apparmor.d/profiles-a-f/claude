@@ -47,7 +47,7 @@ profile claude @{exec_path} flags=(attach_disconnected) {
 
   @{exec_path} mrix,
 
-  @{bin}/git      Px,
+  @{bin}/git      Cx -> git,
   @{open_path}    Px -> child-open-strict,
   @{shells_path}  Cx -> shell,
 
@@ -114,6 +114,7 @@ profile claude @{exec_path} flags=(attach_disconnected) {
 
         @{PROC}/sys/vm/mmap_min_addr r,
         @{PROC}/version r,
+        @{PROC}/version_signature r,
   owner @{PROC}/@{pid}/cgroup r,
   owner @{PROC}/@{pid}/mountinfo r,
   owner @{PROC}/@{pid}/stat r,
@@ -225,12 +226,27 @@ profile claude @{exec_path} flags=(attach_disconnected) {
     include if exists <local/claude_shell>
   }
 
+  profile git flags=(attach_disconnected,complain) {
+    include <abstractions/base>
+    include <abstractions/app/git>
+
+    owner @{HOME}/.claude/ r,
+    owner @{HOME}/.claude/** rwlk,
+
+    owner @{user_projects_dirs}/** rw,
+
+    include if exists <local/claude_git>
+  }
+
   profile ssh {
     include <abstractions/base>
     include <abstractions/consoles>
     include <abstractions/nameservice-strict>
 
     @{bin}/ssh mr,
+
+    @{etc_ro}/ssh/ssh_config r,
+    @{etc_ro}/ssh/ssh_config.d/{,*} r,
 
     owner @{user_projects_dirs}/**/ssh/{,*} r,
     owner @{user_projects_dirs}/**/config r,
