@@ -6,6 +6,7 @@ package aa
 
 import (
 	"fmt"
+	"regexp"
 	"slices"
 	"strings"
 )
@@ -19,6 +20,12 @@ const (
 	COMMENT  Kind = "comment"
 
 	tokIFEXISTS = "if exists"
+)
+
+var (
+	// reValidVarName matches valid variable names: must start with a letter,
+	// followed by letters, digits, or underscores.
+	reValidVarName = regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9_]*$`)
 )
 
 type Comment struct {
@@ -69,11 +76,12 @@ type Abi struct {
 
 func newAbi(q Qualifier, rule rule) (Rule, error) {
 	var magic bool
-	if len(rule) != 1 {
+
+	// Rejoin tokens that were split by spaces (e.g., "< includes/path >")
+	path := strings.Join(rule.GetSlice(), " ")
+	if path == "" {
 		return nil, fmt.Errorf("invalid abi format: %s", rule)
 	}
-
-	path := rule.Get(0)
 	switch path[0] {
 	case '"':
 		magic = false
@@ -89,6 +97,8 @@ func newAbi(q Qualifier, rule rule) (Rule, error) {
 		return nil, fmt.Errorf("invalid path %s in rule: %s", path, rule)
 	}
 	path = strings.Trim(path, "\"<>")
+	path = strings.Trim(path, " \t")
+	path = strings.Trim(path, "\"")
 	return &Abi{
 		Base:    newBase(rule),
 		Path:    path,
@@ -206,22 +216,25 @@ func newInclude(rule rule) (Rule, error) {
 		r = r[2:]
 	}
 
-	path := r[0]
+	path := strings.Join(r, " ") // Rejoin in case of spaces in path
 	switch path[0] {
 	case '"':
 		magic = false
 		if !strings.HasSuffix(path, "\"") || len(path) < 3 {
 			return nil, fmt.Errorf("invalid path %s in rule: %s", path, rule)
 		}
+		path = strings.Trim(path, "\"")
 	case '<':
 		magic = true
 		if !strings.HasSuffix(path, ">") || len(path) < 3 {
 			return nil, fmt.Errorf("invalid path %s in rule: %s", path, rule)
 		}
+		path = strings.Trim(path, "<>")
+		path = strings.Trim(path, " \t")
 	default:
-		return nil, fmt.Errorf("invalid path format: %v", path)
+		// Allow bare/relative paths (e.g., simple_tests/includes/...)
+		magic = false
 	}
-	path = strings.Trim(path, "\"<>")
 	return &Include{
 		Base:     newBase(rule),
 		IfExists: ifexists,
@@ -290,8 +303,12 @@ func newVariable(rule rule) (Rule, error) {
 
 	r := rule.GetSlice()
 	name := strings.Trim(rule.Get(0), VARIABLE.Tok()+"}")
+	if !reValidVarName.MatchString(name) {
+		return nil, fmt.Errorf("invalid variable name '%s': must start with a letter", name)
+	}
+
 	switch rule.Get(1) {
-	case tokEQUAL:
+	case tokEQUAL, "?=", ":=":
 		define = true
 		values = r[2:]
 	case tokPLUS + tokEQUAL:
@@ -300,6 +317,21 @@ func newVariable(rule rule) (Rule, error) {
 	default:
 		return nil, fmt.Errorf("invalid operator in variable: %v", rule)
 	}
+
+	// Validate variable values
+	for _, v := range values {
+		if strings.HasSuffix(v, ",") {
+			return nil, fmt.Errorf("trailing comma in variable value: %s", v)
+		}
+		quoteCount := strings.Count(v, "\"")
+		if quoteCount%2 != 0 {
+			return nil, fmt.Errorf("unbalanced quotes in variable value: %s", v)
+		}
+		if strings.Contains(v, "!") {
+			return nil, fmt.Errorf("invalid character '!' in variable value: %s", v)
+		}
+	}
+
 	return &Variable{
 		Base:   newBase(rule),
 		Name:   name,
@@ -368,22 +400,34 @@ func newBoolean(rule rule) (Rule, error) {
 
 	case 3:
 		name = strings.Trim(rule.Get(0), BOOLEAN.Tok()+"{}")
-		if rule.Get(1) != tokEQUAL {
+		op := rule.Get(1)
+		if op != tokEQUAL && op != "?=" && op != ":=" {
 			return nil, fmt.Errorf("invalid boolean format, missing %s in: %s", tokEQUAL, rule)
 		}
 		value = rule.Get(2)
+
+	case 4:
+		// Handle ?= and := operators: "$VAR ? = value" or "$VAR : = value"
+		name = strings.Trim(rule.Get(0), BOOLEAN.Tok()+"{}")
+		op := rule.Get(1)
+		if (op == "?" || op == ":") && rule.Get(2) == tokEQUAL {
+			value = rule.Get(3)
+		} else {
+			return nil, fmt.Errorf("invalid boolean format: %v", rule)
+		}
 
 	default:
 		return nil, fmt.Errorf("invalid boolean format: %v", rule)
 	}
 
-	if !slices.Contains([]string{"true", "false"}, value) {
+	valueLower := strings.ToLower(value)
+	if !slices.Contains([]string{"true", "false"}, valueLower) {
 		return nil, fmt.Errorf("invalid boolean value %s in rule: %s", value, rule)
 	}
 	return &Boolean{
 		Base:  newBase(rule),
 		Name:  name,
-		Value: value == "true",
+		Value: valueLower == "true",
 	}, nil
 }
 
