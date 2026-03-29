@@ -36,6 +36,14 @@ func init() {
 			"silent", "slave", "strictatime", "suid", "sync", "unbindable",
 			"user", "verbose",
 		},
+		"change": {
+			// Change flags are mount flags that indicate a change operation
+			// and cannot have a source path.
+			"private", "rprivate", "slave", "rslave", "shared", "rshared",
+			"unbindable", "runbindable", "remount",
+			"make-unbindable", "make-private", "make-slave", "make-shared",
+			"make-runbindable", "make-rprivate", "make-rslave", "make-rshared",
+		},
 	}
 }
 
@@ -66,7 +74,10 @@ func newMountConditionsFromLog(log map[string]string) MountConditions {
 }
 
 func (m MountConditions) Validate() error {
-	return validateValues(MOUNT, "flags", m.Options)
+	if err := validateValues(MOUNT, "flags", m.Options); err != nil {
+		return err
+	}
+	return validateConflicts(MOUNT, "flags", m.Options)
 }
 
 func (m MountConditions) Compare(other MountConditions) int {
@@ -162,18 +173,35 @@ func (r *Mount) Validate() error {
 	if err := r.MountConditions.Validate(); err != nil {
 		return fmt.Errorf("%s: %w", r, err)
 	}
+	if r.Source != "" && r.MountPoint != "" {
+		for _, opt := range r.Options {
+			if slices.Contains(requirements[MOUNT]["change"], opt) {
+				return fmt.Errorf("mount option '%s' cannot be used with a source path", opt)
+			}
+		}
+	}
 	return nil
 }
 
 func (r *Mount) Compare(other Rule) int {
 	o, _ := other.(*Mount)
-	if res := compare(r.Source, o.Source); res != 0 {
+	// Order: no fstype before fstype, then by options, then by source presence, then by mountpoint
+	if res := compare(r.FsType, o.FsType); res != 0 {
+		return res
+	}
+	if res := compare(len(r.Options) > 0, len(o.Options) > 0); res != 0 {
+		return res
+	}
+	if res := compare(r.Options, o.Options); res != 0 {
+		return res
+	}
+	if res := compare(r.Source != "", o.Source != ""); res != 0 {
 		return res
 	}
 	if res := compare(r.MountPoint, o.MountPoint); res != 0 {
 		return res
 	}
-	if res := r.MountConditions.Compare(o.MountConditions); res != 0 {
+	if res := compare(r.Source, o.Source); res != 0 {
 		return res
 	}
 	return r.Qualifier.Compare(o.Qualifier)
