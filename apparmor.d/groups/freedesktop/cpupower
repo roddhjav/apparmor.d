@@ -10,28 +10,28 @@ include <tunables/global>
 @{exec_path} = @{bin}/cpupower
 profile cpupower @{exec_path} {
   include <abstractions/base>
+  include <abstractions/consoles>
 
-  # Needed to read the /dev/cpu/@{int}/msr device, and hence remove the following error:
-  #  Could not read perf-bias value[-1]
-  capability sys_rawio,
-
-  # Needed to operate on CPU IDLE states
   capability sys_admin,
+  capability sys_rawio,
 
   @{exec_path} mr,
 
   @{sh_path}        rix,
+  @{bin}/basename   rix,
   @{bin}/kmod       rCx -> kmod,
   @{bin}/man        rPx,
+  @{bin}/uname      rix,
 
-  @{sys}/devices/system/cpu/{cpufreq,cpuidle}/ r,
-  @{sys}/devices/system/cpu/{cpufreq,cpuidle}/** r,
-  @{sys}/devices/system/cpu/cpu@{int}/{cpufreq,cpuidle}/ r,
-  @{sys}/devices/system/cpu/cpu@{int}/{cpufreq,cpuidle}/** r,
+  @{lib}/linux-tools-*/cpupower rix,
+
   @{sys}/devices/system/cpu/cpu@{int}/cpuidle/state@{int}/disable rw,
   @{sys}/devices/system/cpu/cpu@{int}/online r,
-  @{sys}/devices/system/cpu/cpu@{int}/topology/{physical_package_id,core_id} r,
+  @{sys}/devices/system/cpu/cpu@{int}/topology/{,**} r,
+  @{sys}/devices/system/cpu/cpufreq/{,**} r,
   @{sys}/devices/system/cpu/cpufreq/policy@{int}/* rw,
+  @{sys}/devices/system/cpu/cpuidle/{,**} r,
+  @{sys}/devices/virtual/powercap/{,**} r,
 
   /dev/cpu/@{int}/msr r,
 
