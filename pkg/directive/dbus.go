@@ -34,7 +34,7 @@ func NewDbus() *Dbus {
 			Help: []string{
 				"own bus=<bus> name=<name> [interface=AARE] [path=AARE]",
 				"talk bus=<bus> name=<name> label=<profile> [interface=AARE] [path=AARE]",
-				"see bus=<bus> name=<name> label=<profile>",
+				"see bus=<bus> name=<name> label=<profile> [interface=AARE] [path=AARE]",
 			},
 		},
 	}
@@ -52,7 +52,7 @@ func (d Dbus) Apply(opt *Option, profile string) (string, error) {
 		r = d.Own(opt.ArgMap)
 	case "talk":
 		r = d.Talk(opt.ArgMap)
-	case "common", "see":
+	case "see":
 		r = d.See(opt.ArgMap)
 	}
 
@@ -71,7 +71,7 @@ func (d Dbus) SanityCheck(opt *Option) (string, error) {
 		return "", fmt.Errorf("unknown dbus action: %s in %s", opt.Name, opt.File)
 	}
 	action := opt.ArgList[0]
-	if action != "own" && action != "talk" && action != "common" {
+	if action != "own" && action != "talk" && action != "see" {
 		return "", fmt.Errorf("unknown dbus action: %s in %s", opt.Name, opt.File)
 	}
 

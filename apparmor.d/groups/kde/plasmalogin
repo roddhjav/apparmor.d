@@ -1,0 +1,39 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/plasmalogin
+profile plasmalogin @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/bus-system>
+  include <abstractions/bus/system/org.freedesktop.login1>
+  include <abstractions/nameservice-strict>
+
+  capability chown,
+  capability net_admin,
+  capability sys_tty_config,
+
+  signal send set=term peer=plasmalogin-helper,
+
+  @{exec_path} mr,
+
+  @{lib}/plasmalogin-helper Px,
+
+  /usr/share/wayland-sessions/plasma.desktop r,
+
+  /tmp/.@{rand6}/ rw,
+  /tmp/.@{rand6}/** rw,
+  /tmp/plasmalogin--@{rand6} rw,
+  /tmp/plasmalogin-auth-@{uuid} rw,
+
+  /dev/tty rw,
+  /dev/tty@{u8} rw,
+
+  include if exists <local/plasmalogin>
+}
+
+# vim:syntax=apparmor

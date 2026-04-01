@@ -1,0 +1,23 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+  abi <abi/4.0>,
+
+  include <abstractions/bus/system/org.freedesktop.GeoClue2>
+
+  # GeoClue2
+
+  dbus send bus=system path=/org/freedesktop/GeoClue2/Client/@{int}
+       interface=org.freedesktop.DBus.Properties
+       member=Set
+       peer=(name=@{busname}, label="@{p_geoclue}"),
+
+  dbus send bus=system path=/org/freedesktop/GeoClue2/Client/@{int}
+       interface=org.freedesktop.GeoClue2.Client
+       member={Start,Stop}
+       peer=(name=@{busname}, label="@{p_geoclue}"),
+
+  include if exists <abstractions/localization-control.d>
+
+# vim:syntax=apparmor

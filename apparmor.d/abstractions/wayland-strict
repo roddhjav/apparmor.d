@@ -1,0 +1,34 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2016 intrigeri <intrigeri@boum.org>
+# Copyright (C) 2021-2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+  abi <abi/4.0>,
+
+  # Needed when using QT_QPA_PLATFORM=wayland-egl (MESA dri config)
+  /etc/drirc r,
+
+  # Allow access to the Wayland compositor server socket
+  owner @{run}/user/@{uid}/wayland-@{int} rw,
+  owner @{run}/user/@{uid}/wayland-@{int}.lock rwk,
+  owner @{run}/user/@{uid}/wayland-cursor-shared-@{int} rw,
+  owner @{run}/user/@{uid}/wayland-proxy-@{int} rw,
+
+  # Compositors specific socket path
+  owner @{run}/user/@{uid}/.mutter-Xwaylandauth.@{rand6} r,
+  owner @{run}/user/@{uid}/mesa-shared-@{int} rw,
+  owner @{run}/user/@{uid}/mutter-shared-@{int} rw,
+  owner @{run}/user/@{uid}/sdl-shared-@{int} rw,
+  owner @{run}/user/@{uid}/weston-shared-@{int} rw,
+  owner @{run}/user/@{uid}/xwayland-shared-@{int} rw,
+
+  # Compositors based on wlroots
+  owner /dev/shm/@{uuid} rw,
+  owner /dev/shm/dunst-@{rand6} rw,
+  owner /dev/shm/grim-@{rand6} rw,
+  owner /dev/shm/sway* rw,
+  owner /dev/shm/wlroots-@{rand6} rw,
+
+  include if exists <abstractions/wayland-strict.d>
+
+# vim:syntax=apparmor

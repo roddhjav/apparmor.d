@@ -45,10 +45,11 @@ We use a special [directive](directives.md) to generate more advanced dbus acces
 
 **`<access>`**
 
-:    Access type. Can be `own` or `talk`:
+:    Access type. Can be `own`, `talk`, or `see`:
 
      - `own` means the profile owns the dbus interface. It is allowed to send and receive from anyone on this interface. It should only be used for profile owning the dbus interface.
      - `talk` means the profile can talk on a given interface to the profile that owns it (a label must be given under the `label` option). It should only be used when full access to an interface is required.
+     - `see` means the profile can see a given interface, but cannot talk to it. It is mostly used for desktop integration, as it allows the profile to be seen by the desktop environment without giving it more access.
 
 **`<bus>`**
 

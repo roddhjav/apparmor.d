@@ -70,7 +70,6 @@ impersonalize() {
 
 	# Remove remaining pkg file, docs and caches
 	dirs=(
-		/var/cache/
 		/var/tmp
 	)
 	for dir in "${dirs[@]}"; do

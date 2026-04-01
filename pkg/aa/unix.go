@@ -19,6 +19,9 @@ func init() {
 			"getattr", "setattr", "getopt", "setopt", "send", "receive",
 			"r", "w", "rw",
 		},
+		"local-only": []string{
+			"create", "bind", "listen", "getattr", "setattr", "getopt", "setopt", "shutdown",
+		},
 	}
 }
 
@@ -97,6 +100,11 @@ func (r *Unix) Validate() error {
 	if err := validateValues(r.Kind(), "type", []string{r.Type}); err != nil {
 		return fmt.Errorf("%s: %w", r, err)
 	}
+	if r.PeerLabel != "" || r.PeerAddr != "" {
+		if len(r.Access) > 0 && allLocalOnly(r.Access, requirements[UNIX]["local-only"]) {
+			return fmt.Errorf("peer modifier not allowed with local-only access types in unix rule")
+		}
+	}
 	return nil
 }
 
@@ -109,6 +117,9 @@ func (r *Unix) Compare(other Rule) int {
 		return res
 	}
 	if res := compare(r.Protocol, o.Protocol); res != 0 {
+		return res
+	}
+	if res := compare(r.Address == "", o.Address == ""); res != 0 {
 		return res
 	}
 	if res := compare(r.Address, o.Address); res != 0 {

@@ -27,12 +27,15 @@ func init() {
 			"netlink", "packet", "ash", "econet", "atmsvc", "rds", "sna", "irda",
 			"pppox", "wanpipe", "llc", "ib", "mpls", "can", "tipc", "bluetooth",
 			"iucv", "rxrpc", "isdn", "phonet", "ieee802154", "caif", "alg",
-			"nfc", "vsock", "kcm", "qipcrtr", "smc", "xdp", "mctp",
+			"nfc", "vsock", "kcm", "qipcrtr", "smc", "xdp", "mctp", "unspec",
 		},
 		"type": []string{
 			"stream", "dgram", "seqpacket", "rdm", "raw", "packet",
 		},
 		"protocol": []string{"tcp", "udp", "icmp"},
+		"local-only": []string{
+			"create", "bind", "listen", "getattr", "setattr", "getopt", "setopt", "shutdown",
+		},
 	}
 }
 
@@ -153,6 +156,7 @@ func newNetwork(q Qualifier, rule rule) (Rule, error) {
 	nType, protocol, domain := "", "", ""
 
 	// Classify each token as access, domain, type, or protocol
+	allowedMapKeys := map[string]bool{"ip": true, "port": true, "peer": true, "type": true}
 	for _, token := range rule.GetSlice() {
 		switch {
 		case slices.Contains(requirements[NETWORK]["access"], token):
@@ -163,6 +167,10 @@ func newNetwork(q Qualifier, rule rule) (Rule, error) {
 			nType = token
 		case slices.Contains(requirements[NETWORK]["protocol"], token):
 			protocol = token
+		case allowedMapKeys[token]:
+			// Map key tokens (ip, port, peer, type) are handled separately
+		default:
+			return nil, fmt.Errorf("unrecognized network token: %s", token)
 		}
 	}
 
@@ -229,6 +237,11 @@ func (r *Network) Validate() error {
 	}
 	if err := r.PeerAddress.Validate(); err != nil {
 		return fmt.Errorf("%s: %w", r, err)
+	}
+	if r.PeerAddress.IP != "" || r.PeerAddress.Port != "" || r.Src != "" {
+		if len(r.Access) > 0 && allLocalOnly(r.Access, requirements[NETWORK]["local-only"]) {
+			return fmt.Errorf("peer modifier not allowed with local-only access types in network rule")
+		}
 	}
 	return nil
 }

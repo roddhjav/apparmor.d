@@ -17,8 +17,11 @@ const (
 	tokALLOW        = "allow"
 	tokAUDIT        = "audit"
 	tokDENY         = "deny"
+	tokOTHER        = "other"
 	tokPROMPT       = "prompt"
 	tokPRIORITY     = "priority"
+	tokSAFE         = "safe"
+	tokUNSAFE       = "unsafe"
 	tokARROW        = "->"
 	tokEQUAL        = "="
 	tokLESS         = "<"
@@ -202,8 +205,16 @@ func tokenizeBlock(input string) ([]*block, error) {
 					kind = HAT
 				case strings.HasPrefix(blockHeader, IF.Tok()):
 					kind = IF
-				case strings.HasPrefix(blockHeader, ELSE.Tok()):
+				case strings.HasPrefix(blockHeader, ELSE.Tok()),
+					blockHeader == "":
 					kind = ELSE
+				case isProfileBlockHeader(blockHeader):
+					kind = PROFILE
+				case isRuleBlockHeader(blockHeader):
+					// Rule block modifiers: "owner { ... }", "audit { ... }"
+					// Wrap the block content with the modifier prefix on each rule
+					blockRaw = prependToRules(blockHeader, blockRaw)
+					kind = CONTENT
 				default:
 					return nil, fmt.Errorf("unrecognized block type: %s", blockHeader)
 				}
@@ -477,15 +488,29 @@ func parseContentRules(input string) (Rules, error) {
 //	[]string{"owner", "@{user_config_dirs}/powerdevilrc{,.@{rand6}}", "rwl", "->", "@{user_config_dirs}/#@{int}"}
 func tokenizeRule(str string) []string {
 	var currentToken strings.Builder
-	isVariable, wasTokPLUS, quoted := false, false, false
+	isVariable, wasTokPLUS, wasTokQM, wasTokCOLON, quoted := false, false, false, false, false
 
 	blockStack := []rune{}
 	tokens := make([]string, 0, len(str)/2)
-	if inHeader && len(str) > 2 && str[0:2] == VARIABLE.Tok() && strings.Contains(str, "=") {
-		isVariable = true
+	trimmed := strings.TrimLeft(str, " \t")
+	if inHeader && len(trimmed) > 1 && strings.Contains(trimmed, "=") {
+		if trimmed[0:2] == VARIABLE.Tok() || trimmed[0] == '$' {
+			isVariable = true
+		}
 	}
 
+	escaped := false
 	for _, r := range str {
+		if escaped {
+			currentToken.WriteRune(r)
+			escaped = false
+			continue
+		}
+		if r == '\\' {
+			currentToken.WriteRune(r)
+			escaped = true
+			continue
+		}
 		switch {
 		case unicode.IsSpace(r) && len(blockStack) == 0 && !quoted:
 			// Split on space/tab/newline if not in a block or quoted
@@ -494,18 +519,24 @@ func tokenizeRule(str string) []string {
 				currentToken.Reset()
 			}
 
-		case (r == '+' || r == '=') && len(blockStack) == 0 && !quoted && isVariable:
-			// Handle variable assignment
+		case (r == '+' || r == '?' || r == ':' || r == '=') && len(blockStack) == 0 && !quoted && isVariable:
+			// Handle variable assignment operators: =, +=, ?=, :=
 			if currentToken.Len() != 0 {
 				tokens = append(tokens, currentToken.String())
 				currentToken.Reset()
 			}
 			if wasTokPLUS {
 				tokens[len(tokens)-1] = tokPLUS + tokEQUAL
+			} else if wasTokQM {
+				tokens[len(tokens)-1] = "?="
+			} else if wasTokCOLON {
+				tokens[len(tokens)-1] = ":="
 			} else {
 				tokens = append(tokens, string(r))
 			}
 			wasTokPLUS = (r == '+')
+			wasTokQM = (r == '?')
+			wasTokCOLON = (r == ':')
 
 		case r == '"' && len(blockStack) == 0:
 			quoted = !quoted
@@ -561,10 +592,11 @@ func parseRule(str string) rule {
 	inAare := len(tokens) > 0 && (tokens[0] == tokOWNER || (isAARE(tokens[0]) && !inHeader))
 	for idx, token := range tokens {
 		switch {
-		case token == tokEQUAL, token == tokPLUS+tokEQUAL, token == tokLESS+tokEQUAL: // Variable & Rlimit
+		case token == tokEQUAL, token == tokPLUS+tokEQUAL, token == tokLESS+tokEQUAL,
+			token == "?=", token == ":=": // Variable, Boolean & Rlimit
 			res = append(res, kv{key: token})
 
-		case strings.Contains(token, "=") && !inAare: // Map
+		case strings.Contains(token, "=") && !inAare && !isAARE(token): // Map
 			items := strings.SplitN(token, "=", 2)
 			key := items[0]
 			if len(items) > 1 {
@@ -754,6 +786,18 @@ func (r rule) ValidateMapKeys(validKeys []string) error {
 	return nil
 }
 
+// ValidateNonEmptyValues validates that keys which are present have non-empty values.
+func (r rule) ValidateNonEmptyValues(keys []string) error {
+	for _, kv := range r {
+		if kv.values != nil && slices.Contains(keys, kv.key) {
+			if len(kv.values) == 0 {
+				return fmt.Errorf("empty value for '%s' in rule: %s", kv.key, r)
+			}
+		}
+	}
+	return nil
+}
+
 // String return a generic representation of a rule.
 func (r rule) String() string {
 	var res strings.Builder
@@ -791,6 +835,57 @@ func isAARE(str string) bool {
 	}
 }
 
+// isProfileBlockHeader checks if a block header represents a profile
+// that starts with a qualifier prefix or namespace.
+func isProfileBlockHeader(header string) bool {
+	// Handle qualifier prefixes: "audit /path", "allow /path"
+	prefixes := []string{"audit ", "allow ", "deny "}
+	for _, p := range prefixes {
+		if strings.HasPrefix(header, p) {
+			rest := strings.TrimPrefix(header, p)
+			if isAARE(rest) || strings.HasPrefix(rest, PROFILE.Tok()) || isProfileBlockHeader(rest) {
+				return true
+			}
+		}
+	}
+
+	// Handle namespace prefix: ":ns:path" or ":ns:name"
+	if len(header) > 2 && header[0] == ':' {
+		// Must have a second colon after the namespace name
+		if idx := strings.Index(header[1:], ":"); idx > 0 {
+			return true
+		}
+	}
+	return false
+}
+
+// isRuleBlockHeader checks if a block header is a rule modifier block
+// like "owner { ... }" or "audit { ... }" that applies to all rules inside.
+func isRuleBlockHeader(header string) bool {
+	modifiers := []string{"owner", "audit", "deny", "allow"}
+	for _, m := range modifiers {
+		if header == m {
+			return true
+		}
+	}
+	return false
+}
+
+// prependToRules prepends a modifier to each rule line in a block.
+func prependToRules(modifier, blockContent string) string {
+	lines := strings.Split(blockContent, "\n")
+	var result []string
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if trimmed == "" || strings.HasPrefix(trimmed, "#") {
+			result = append(result, line)
+		} else {
+			result = append(result, modifier+" "+trimmed)
+		}
+	}
+	return strings.Join(result, "\n")
+}
+
 // Convert a slice of internal rules to a slice of ApparmorRule.
 func newRules(rules []rule) (Rules, error) {
 	var err error
@@ -804,11 +899,19 @@ func newRules(rules []rule) (Rules, error) {
 
 		owner := false
 		q := Qualifier{}
+		hasAccessType := false // track if allow/deny/prompt was seen
 	qualifier:
 		switch rule.Get(0) {
 		// File & Link prefix
 		case tokOWNER:
 			owner = true
+			rule = rule[1:]
+			goto qualifier
+
+		// File exec modifiers and "other" prefix - these are only valid
+		// before file rules, not before other rule types like change_profile.
+		// We peek at the next token to decide.
+		case tokUNSAFE, tokSAFE, tokOTHER:
 			rule = rule[1:]
 			goto qualifier
 
@@ -818,14 +921,24 @@ func newRules(rules []rule) (Rules, error) {
 			if err != nil {
 				return nil, fmt.Errorf("invalid priority value in rule: %s", rule)
 			}
+			if priority < -1000 || priority > 1000 {
+				return nil, fmt.Errorf("priority value %d out of range [-1000, 1000]", priority)
+			}
 			q.Priority = priority
 			rule = rule[1:]
 			goto qualifier
 		case tokALLOW, tokDENY, tokPROMPT:
+			if hasAccessType {
+				return nil, fmt.Errorf("conflicting access types '%s' and '%s' in rule: %s", q.AccessType, rule.Get(0), rule)
+			}
+			hasAccessType = true
 			q.AccessType = rule.Get(0)
 			rule = rule[1:]
 			goto qualifier
 		case tokAUDIT:
+			if hasAccessType {
+				return nil, fmt.Errorf("'audit' must appear before '%s' in rule: %s", q.AccessType, rule)
+			}
 			q.Audit = true
 			rule = rule[1:]
 			goto qualifier
@@ -1015,6 +1128,16 @@ func (f *AppArmorProfileFile) Scan(input string) (retErr error) {
 	if err != nil {
 		return err
 	}
+
+	// Check if the file has any profile/hat blocks
+	hasProfileBlocks := false
+	for _, block := range blocks {
+		if block.kind == PROFILE || block.kind == HAT {
+			hasProfileBlocks = true
+			break
+		}
+	}
+	_ = hasProfileBlocks
 
 	for _, block := range blocks {
 		switch block.kind {

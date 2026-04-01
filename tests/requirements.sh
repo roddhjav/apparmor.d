@@ -21,8 +21,8 @@ arch)
 		pacman-contrib tlp flatpak networkmanager
 	;;
 debian | ubuntu | whonix)
-	sudo apt update -y
-	sudo apt install -y \
+	sudo apt-get update -y
+	sudo apt-get install -y \
 		bats bats-support \
 		cpuid dfc systemd-boot systemd-userdbd systemd-homed systemd-container tlp \
 		network-manager systemd-container flatpak util-linux-extra

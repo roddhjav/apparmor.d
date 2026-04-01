@@ -60,6 +60,7 @@ func (r Rules) Validate() error {
 	return nil
 }
 
+// String renders all rules as a string
 func (r Rules) String() string {
 	return renderTemplate("rules", r)
 }
@@ -79,12 +80,7 @@ func (r Rules) Index(item Rule) int {
 
 // IndexOf returns the index of the first occurrence of item in r, or -1 if not present.
 func (r Rules) IndexOf(item Rule) int {
-	for idx, rr := range r {
-		if rr.Kind() == item.Kind() && rr.Compare(item) == 0 {
-			return idx
-		}
-	}
-	return -1
+	return r.Index(item)
 }
 
 // Contains checks if the rule is in the slice
@@ -125,20 +121,6 @@ func (r Rules) DeleteKind(kind Kind) Rules {
 			continue
 		}
 		if rule.Kind() != kind {
-			res = append(res, rule)
-		}
-	}
-	return res
-}
-
-// FilterOut removes all rules of the given kind from the slice and returns the new slice.
-func (r Rules) FilterOut(filter Kind) Rules {
-	res := make(Rules, 0, len(r))
-	for _, rule := range r {
-		if rule == nil {
-			continue
-		}
-		if rule.Kind() != filter {
 			res = append(res, rule)
 		}
 	}
@@ -203,8 +185,15 @@ func (r Rules) Merge() Rules {
 				continue
 			}
 
-			// If rules are identical, merge them. Ignore comments
+			// If rules are identical, try to merge them to combine Base fields (NoNewPrivs, FileInherit, etc.)
 			if r[i].Kind() != COMMENT && r[i].Compare(r[j]) == 0 {
+				// Attempt merge to combine metadata like NoNewPrivs, FileInherit
+				if r[i].Merge(r[j]) {
+					r = r.Delete(j)
+					j--
+					continue
+				}
+				// If merge returns false but they're identical, delete duplicate
 				r = r.Delete(j)
 				j--
 				continue
@@ -222,6 +211,7 @@ func (r Rules) Merge() Rules {
 // Sort the rules according to the guidelines:
 // https://apparmor.pujol.io/development/guidelines/#guidelines
 func (r Rules) Sort() Rules {
+	// r = slices.DeleteFunc(r, func(a Rule) bool { return a == nil })
 	slices.SortFunc(r, func(a, b Rule) int {
 		kindOfA := a.Kind()
 		kindOfB := b.Kind()
@@ -232,7 +222,16 @@ func (r Rules) Sort() Rules {
 			if kindOfB == INCLUDE && b.(*Include).IfExists {
 				kindOfB = "include_if_exists"
 			}
-			return ruleWeights[kindOfA] - ruleWeights[kindOfB]
+			if kindOfA == LINK {
+				kindOfA = FILE
+			}
+			if kindOfB == LINK {
+				kindOfB = FILE
+			}
+			if res := ruleWeights[kindOfA] - ruleWeights[kindOfB]; res != 0 {
+				return res
+			}
+			return compareFileLink(a, b)
 		}
 		return a.Compare(b)
 	})

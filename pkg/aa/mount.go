@@ -6,6 +6,7 @@ package aa
 
 import (
 	"fmt"
+	"slices"
 )
 
 const (
@@ -15,10 +16,25 @@ const (
 )
 
 func init() {
+	conflicts[MOUNT] = map[string][][]string{
+		"flags": {
+			{"rw", "ro"},
+			{"strictatime", "nostrictatime"},
+			{"lazytime", "nolazytime"},
+			{"symfollow", "nosymfollow"},
+		},
+	}
 	requirements[MOUNT] = requirement{
+		"fstype": {
+			"auto", "btrfs", "cgroup", "cgroup2", "configfs", "debugfs",
+			"devpts", "devtmpfs", "efivarfs", "ext2", "ext3", "ext4", "fuse.*",
+			"fuseblk", "fusectl", "hugetlbfs", "iso9660", "mqueue", "nfs",
+			"nfs4", "proc", "pstore", "ramfs", "rootfs", "securityfs",
+			"selinuxfs", "squashfs", "sysfs", "tmpfs", "tracefs",
+		},
 		"flags": {
 			// flags bind
-			"B", "bind", "R", "rbind",
+			"B", "bind", "M", "R", "rbind",
 
 			// flags change
 			"shared", "slave", "nostrictatime", "lazytime", "nolazytime",
@@ -27,13 +43,22 @@ func init() {
 			"make-rprivate", "make-rslave", "symfollow",
 
 			// flags mount
-			"ro", "rw", "w", "acl", "async", "atime", "bind", "dev", "diratime",
+			"r", "read-only", "ro", "rw", "w",
+			"acl", "async", "atime", "bind", "dev", "diratime",
 			"dirsync", "exec", "iversion", "loud", "mand", "move", "noacl",
 			"noatime", "nodev", "nodiratime", "noexec", "noiversion", "nomand",
 			"norelatime", "nosuid", "nosymfollow", "nouser", "private", "rbind", "relatime",
 			"remount", "rprivate", "rshared", "rslave", "runbindable", "shared",
 			"silent", "slave", "strictatime", "suid", "sync", "unbindable",
 			"user", "verbose",
+		},
+		"change": {
+			// Change flags are mount flags that indicate a change operation
+			// and cannot have a source path.
+			"private", "rprivate", "slave", "rslave", "shared", "rshared",
+			"unbindable", "runbindable", "remount",
+			"make-unbindable", "make-private", "make-slave", "make-shared",
+			"make-runbindable", "make-rprivate", "make-rslave", "make-rshared",
 		},
 	}
 }
@@ -65,7 +90,10 @@ func newMountConditionsFromLog(log map[string]string) MountConditions {
 }
 
 func (m MountConditions) Validate() error {
-	return validateValues(MOUNT, "flags", m.Options)
+	if err := validateValues(MOUNT, "flags", m.Options); err != nil {
+		return err
+	}
+	return validateConflicts(MOUNT, "flags", m.Options)
 }
 
 func (m MountConditions) Compare(other MountConditions) int {
@@ -161,18 +189,35 @@ func (r *Mount) Validate() error {
 	if err := r.MountConditions.Validate(); err != nil {
 		return fmt.Errorf("%s: %w", r, err)
 	}
+	if r.Source != "" && r.MountPoint != "" {
+		for _, opt := range r.Options {
+			if slices.Contains(requirements[MOUNT]["change"], opt) {
+				return fmt.Errorf("mount option '%s' cannot be used with a source path", opt)
+			}
+		}
+	}
 	return nil
 }
 
 func (r *Mount) Compare(other Rule) int {
 	o, _ := other.(*Mount)
-	if res := compare(r.Source, o.Source); res != 0 {
+	// Order: no fstype before fstype, then by options, then by source presence, then by mountpoint
+	if res := compare(r.FsType, o.FsType); res != 0 {
+		return res
+	}
+	if res := compare(len(r.Options) > 0, len(o.Options) > 0); res != 0 {
+		return res
+	}
+	if res := compare(r.Options, o.Options); res != 0 {
+		return res
+	}
+	if res := compare(r.Source != "", o.Source != ""); res != 0 {
 		return res
 	}
 	if res := compare(r.MountPoint, o.MountPoint); res != 0 {
 		return res
 	}
-	if res := r.MountConditions.Compare(o.MountConditions); res != 0 {
+	if res := compare(r.Source, o.Source); res != 0 {
 		return res
 	}
 	return r.Qualifier.Compare(o.Qualifier)

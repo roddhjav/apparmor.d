@@ -95,6 +95,8 @@ func DefaultTunables() *AppArmorProfileFile {
 			&Variable{Name: "user_cache_dirs", Values: []string{"/home/*/.cache"}, Define: true},
 			&Variable{Name: "user_config_dirs", Values: []string{"/home/*/.config"}, Define: true},
 			&Variable{Name: "user_share_dirs", Values: []string{"/home/*/.local/share"}, Define: true},
+			&Variable{Name: "user_bin_dirs", Values: []string{"/home/*/.local/bin"}, Define: true},
+			&Variable{Name: "user_lib_dirs", Values: []string{"/home/*/.local/lib"}, Define: true},
 			&Variable{Name: "user", Values: []string{"[a-zA-Z_]{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}{@{w},}"}, Define: true},
 			&Variable{Name: "version", Values: []string{"@{int}{.@{int},}{.@{int},}{-@{rand},}"}, Define: true},
 			&Variable{Name: "w", Values: []string{"[a-zA-Z0-9_]"}, Define: true},
