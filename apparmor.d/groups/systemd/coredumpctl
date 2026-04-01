@@ -46,23 +46,32 @@ profile coredumpctl @{exec_path} {
 
   profile gdb {
     include <abstractions/base>
+    include <abstractions/consoles>
     include <abstractions/python>
 
-    ptrace (trace),
+    ptrace trace,
+
+    signal receive peer=coredumpctl,
 
     @{bin}/gdb    mr,
     @{bin}/iconv  rix,
 
     @{bin}/* r,
 
+    @{lib}/sysimage/rpm/*.db rk,
+
     /usr/share/gcc-[0-9]*/python/{,**} r,
     /usr/share/gcc/** r,
     /usr/share/gdb/{,**} r,
+    /usr/share/gdb/python/{,**/}__pycache__/ w,
+    /usr/share/gdb/python/{,**/}__pycache__/**.pyc w,
+    /usr/share/gdb/python/{,**/}__pycache__/**.pyc.@{u64} w,
     /usr/share/glib-2.0/gdb/{,**} r,
     /usr/share/terminfo/** r,
 
-    /etc/inputrc r,
     /etc/gdb/** r,
+    /etc/gdbinit r,
+    /etc/inputrc r,
 
     owner /var/tmp/coredump-* rw,
 
