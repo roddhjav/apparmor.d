@@ -9,7 +9,7 @@ pkgname=(
   # apparmor.d-base
   # apparmor.d-tools
 )
-pkgver=0.4906.0
+pkgver=0.4907.0
 pkgrel=1
 pkgdesc="Full set of apparmor profiles"
 arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
@@ -32,14 +32,18 @@ build() {
   export GOFLAGS="-buildmode=pie -trimpath -ldflags=-linkmode=external -mod=readonly -modcacherw -tags=dev"
   export DISTRIBUTION=arch
   just complain
+#   just prebuild
 }
 
 package_apparmor.d() {
   # depends+=('apparmor.d-base' 'apparmor.d-tools')
   cd "$srcdir/$pkgbase"
   just destdir="$pkgdir" install
+#   just destdir="$pkgdir" install-tools
+#   just destdir="$pkgdir" install-base
+#   just destdir="$pkgdir" install-prebuilt
 }
- 
+
 # package_apparmor.d-base() {
 #   pkgdesc="$pkgdesc (base abstractions, tunables, and booleans)"
 #   cd "$srcdir/$pkgbase"
