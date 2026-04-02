@@ -48,30 +48,7 @@ profile code-shells flags=(attach_disconnected) {
   # Well known programs used in shells, when we also have specific profiles for
   # them and want to allow them, event if they need more/different permissions
   # than what is allowed in this profile.
-  @{bin}/aa-log                  Px,
-  @{bin}/claude                  Px,
-  @{bin}/docker                  Ux, # TODO Px,
-  @{bin}/dpkg-query              Px,
-  @{bin}/git                     Px,
-  @{bin}/htop                    Px,
-  @{bin}/ip                      Px,
-  @{bin}/journalctl              Px,
-  @{bin}/man                     Px,
-  @{bin}/nproc                   Px,
-  @{bin}/podman                  Px,
-  @{bin}/ps                      Px,
-  @{bin}/ssh                     Px,
-  @{bin}/top                     Px,
-  @{bin}/uptime                  Px,
-  @{bin}/w                       Px,
   /opt/claude-code/bin/claude    Px,
-
-  # Handle shell prompts, out of scope, thus unconfined
-  @{bin}/starship                Cx -> starship,
-
-  # Well known shells tools
-  priority=1 @{user_cache_dirs}/gitstatus/gitstatusd{,-*} Px,
-  priority=1 /usr/share/zsh-theme-powerlevel{9,10}k/gitstatus/usrbin/gitstatusd{,-*} Px,
 
   owner @{config_dirs}/User/globalStorage/**/ r,
 
@@ -85,26 +62,6 @@ profile code-shells flags=(attach_disconnected) {
 
   # file_inherit
   priority=-1 deny owner @{user_config_dirs}/Code/** rw,
-
-  profile starship {
-    include <abstractions/base>
-    include <abstractions/consoles>
-    include <abstractions/nameservice-strict>
-
-    @{bin}/starship mr,
-
-    owner @{user_cache_dirs}/starship/ rw,
-    owner @{user_cache_dirs}/starship/** rw,
-    owner @{user_config_dirs}/starship.toml r,
-
-    owner @{user_projects_dirs}/**/.git/{,**} r,
-
-    @{sys}/class/power_supply/ r,
-
-    owner @{PROC}/@{pid}/cgroup r,
-
-    include if exists <local/code-shells_starship>
-  }
 
   include if exists <local/code-shells>
 }
