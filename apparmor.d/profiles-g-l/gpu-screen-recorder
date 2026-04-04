@@ -1,0 +1,43 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/gpu-screen-recorder
+
+profile gpu-screen-recorder @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/graphics>
+  include <abstractions/audio-client>
+  include <abstractions/nameservice-strict>
+
+  @{exec_path} r,
+  @{bin}/gsr-kms-server rPx,
+
+  signal receive set=int peer=gsr-ui,
+  signal send set=kill peer=gsr-kms-server,
+
+  #owner @{user_record_dirs}/{,**} rw,
+
+  owner @{user_config_dirs}/gpu-screen-recorder/restore_token rw,
+
+  owner @{PROC}/@{pid}/task/@{tid}/comm w,
+
+  owner @{tmp}/.gsr-kms-socket-* rw,
+
+  /usr/share/gsr-ui/fonts/{,**} r,
+
+  @{sys}/devices/virtual/dmi/id/product_name r,
+  @{sys}/devices/virtual/dmi/id/sys_vendor r,
+  @{sys}/devices/virtual/dmi/id/board_vendor r,
+  @{sys}/devices/virtual/dmi/id/bios_vendor r,
+
+  #silencer deny /etc/machine-id r,
+
+  include if exists <local/gpu-screen-recorder>
+}
+
+# vim:syntax=apparmor
