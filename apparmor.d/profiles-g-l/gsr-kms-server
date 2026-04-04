@@ -1,0 +1,31 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+@{exec_path} = @{bin}/gsr-kms-server
+
+profile gsr-kms-server @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/dri>
+
+  @{exec_path} mr,
+
+  capability sys_admin,
+
+  network unix stream,
+  network unix dgram,
+
+  ptrace readby peer=systemd-journald,
+
+  signal receive set=kill peer=gpu-screen-recorder,
+
+  /usr/share/gsr-ui/fonts/{,**} r,
+
+  /tmp/.gsr-kms-socket-* rw,
+
+  include if exists <local/gsr-kms-server>
+}
+
+# vim:syntax=apparmor
