@@ -117,13 +117,32 @@
   profile crashpad_handler flags=(attach_disconnected) {
     include <abstractions/base>
 
+    signal send peer=@{name},
+
+    ptrace read peer=@{name},
+    ptrace trace peer=@{name},
+
     unix (send receive) type=seqpacket peer=(label=@{name}),
     unix (send receive) type=seqpacket, # peer=(label=---),
 
     @{lib}/electron@{int}/chrome_crashpad_handler mr,
     @{lib_dirs}/chrome_crashpad_handler mr,
 
-    owner @{config_dirs}/Crashpad/{,**} rw,
+    owner @{config_dirs}/Crashpad/{,**} rwk,
+
+          @{PROC}/@{pid}/maps r,
+          @{PROC}/@{pid}/status r,
+          @{PROC}/sys/kernel/yama/ptrace_scope r,
+    owner @{PROC}/@{pid}/fd/ r,
+    owner @{PROC}/@{pid}/mem r,
+    owner @{PROC}/@{pid}/stat r,
+    owner @{PROC}/@{pid}/task/ r,
+    owner @{PROC}/@{pid}/task/@{tid}/comm r,
+
+    deny network inet dgram,
+    deny network inet stream,
+    deny network inet6 dgram,
+    deny network inet6 stream,
 
     include if exists <abstractions/common/electron_crashpad_handler.d>
   }
