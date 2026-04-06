@@ -1,0 +1,32 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/updatectl
+profile updatectl @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/bus-system>
+  include <abstractions/consoles>
+
+  signal send set=(cont term winch) peer=child-pager,
+  signal send set=(cont term winch) peer=pkttyagent,
+
+  #aa:dbus talk bus=system name=org.freedesktop.sysupdate1 label=systemd-sysupdated
+
+  @{exec_path} mr,
+
+  @{bin}/pkttyagent rPx,
+
+        @{PROC}/1/cgroup r,
+        @{PROC}/sys/kernel/random/boot_id r,
+  owner @{PROC}/@{pid}/cgroup r,
+  owner @{PROC}/@{pid}/stat r,
+
+  include if exists <local/updatectl>
+}
+
+# vim:syntax=apparmor

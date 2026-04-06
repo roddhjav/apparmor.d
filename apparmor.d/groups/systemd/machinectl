@@ -1,0 +1,48 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/machinectl
+profile machinectl @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/bus-system>
+  include <abstractions/common/systemd>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+
+  capability net_admin,
+  capability sys_ptrace,
+  capability sys_resource,
+
+  signal send set=(cont term winch) peer=child-pager,
+  signal send set=(cont term winch) peer=pkttyagent,
+  signal send set=(cont term winch) peer=systemd-tty-ask-password-agent,
+
+  #aa:dbus talk bus=system name=org.freedesktop.machine1 label=systemd-machined
+
+  @{exec_path} mr,
+
+  @{bin}/pkttyagent                      Px,
+  @{bin}/systemd-tty-ask-password-agent  Px,
+  @{pager_path}                          Px -> child-pager,
+
+  /{run,var}/log/journal/ r,
+  /{run,var}/log/journal/@{hex32}/{,*} r,
+
+  @{run}/systemd/machines/{,**} r,
+
+  @{PROC}/@{pid}/comm r,
+
+        @{PROC}/sys/fs/nr_open r,
+  owner @{PROC}/@{pid}/cgroup r,
+
+  /dev/pts/ptmx rw,
+
+  include if exists <local/machinectl>
+}
+
+# vim:syntax=apparmor
