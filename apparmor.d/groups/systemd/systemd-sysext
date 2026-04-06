@@ -1,0 +1,77 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/systemd-sysext @{bin}/systemd-confext
+profile systemd-sysext @{exec_path} flags=(attach_disconnected,mediate_deleted)  {
+  include <abstractions/base>
+
+  capability chown,
+  capability dac_override,
+  capability dac_read_search,
+  capability fsetid,
+  capability net_admin,
+  capability sys_admin,
+  capability sys_resource,
+
+  mount                options=(rw bind)                        @{lib}/confexts/core-config/ -> @{run}/systemd/sysext/confexts/core-config/,
+  mount                options=(rw bind)                        @{run}/systemd/sysext/overlay/etc/.systemd-confext/ -> @{run}/systemd/sysext/overlay/etc/.systemd-confext/,
+  mount                options=(rw make-rslave)                 @{run}/,
+  mount                options=(rw rbind)                       @{run}/systemd/sysext/overlay/etc/ -> /etc/,
+  mount fstype=overlay options=(ro nodev noexec nosuid)         confext -> @{run}/systemd/sysext/overlay/etc/,
+  mount fstype=overlay options=(rw noatime nodev noexec nosuid) confext -> @{run}/systemd/sysext/overlay/etc/,
+  mount fstype=tmpfs                                            confext -> @{run}/systemd/sysext/,
+
+  umount /etc/,
+  umount /etc/.systemd-confext/,
+
+  ptrace read peer=@{p_systemd},
+
+  signal send set=(cont term winch) peer=child-pager,
+
+  @{exec_path} mr,
+
+  @{pager_path}                Px -> child-pager,
+
+  @{att}/etc/ r,
+  @{att}/lib/confexts/{,**} r,
+  @{att}/meta/etc/ r,
+  @{att}/meta/etc/.systemd-confext/* r,
+  @{att}/var/lib/extensions.mutable/{,**} rw,
+
+  /etc/ r,
+  /etc/.systemd-confext/confexts r,
+  /etc/.systemd-confext/dev r,
+  /etc/extension-release.d/extension-release.* r,
+
+  @{run}/systemd/ r,
+  @{run}/systemd/nspawn/ r,
+  @{run}/systemd/nspawn/locks/* rwk,
+  @{run}/systemd/sysext/confexts/ rw,
+  @{run}/systemd/sysext/confexts/{,**/} rw,
+  @{run}/systemd/sysext/meta/ w,
+  @{run}/systemd/sysext/meta/etc/ rw,
+  @{run}/systemd/sysext/meta/etc/.systemd-confext/ rw,
+  @{run}/systemd/sysext/meta/etc/.systemd-confext/* w,
+  @{run}/systemd/sysext/overlay/{,**/} w,
+
+  # /usr/lib/confexts/{,**} r,
+  # /usr/local/lib/confexts/{,**} r,
+  # /var/lib/confexts/{,**} r,
+  # @{run}/confexts/{,**} r,
+
+        @{PROC}/@{pid}/mountinfo r,
+        @{PROC}/1/cgroup r,
+        @{PROC}/1/environ r,
+        @{PROC}/cmdline r,
+        @{PROC}/sys/kernel/osrelease r,
+  owner @{PROC}/@{pid}/cgroup r,
+
+  include if exists <local/systemd-sysext>
+}
+
+# vim:syntax=apparmor

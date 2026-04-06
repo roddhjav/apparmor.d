@@ -1,0 +1,28 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/oomctl
+profile oomctl @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/bus-system>
+  include <abstractions/common/systemd>
+
+  signal send set=cont peer=child-pager,
+
+  #aa:dbus talk bus=system name=org.freedesktop.oom1 label="@{p_systemd_oomd}"
+
+  @{exec_path} mr,
+
+  @{pager_path} rPx -> child-pager,
+
+  owner @{PROC}/@{pid}/cgroup r,
+
+  include if exists <local/oomctl>
+}
+
+# vim:syntax=apparmor
