@@ -25,10 +25,18 @@ profile mullvad-gui @{exec_path} flags=(attach_disconnected) {
   network inet6 dgram,
   network netlink raw,
 
-  @{exec_path} mrix,
-  @{bin}/gsettings rPx,
+  unix (send receive) type=stream peer=(label=gsettings),
 
-  @{open_path} rPx -> child-open-browsers,
+  dbus send bus=system path=/org/freedesktop/login1
+       interface=org.freedesktop.login1.Manager
+       member=Inhibit
+       peer=(name=org.freedesktop.login1, label=systemd-logind),
+
+  @{exec_path} mrix,
+  @{bin}/gsettings Px,
+  @{bin}/mullvad-exclude Px,
+
+  @{open_path} Px -> child-open-browsers,
 
   owner @{user_config_dirs}/autostart/mullvad-vpn.desktop rw,
 
