@@ -1,0 +1,90 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/lact
+
+profile lact @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/dconf-write>
+  include <abstractions/desktop>
+  include <abstractions/graphics-full>
+  include <abstractions/hwmon>
+  include <abstractions/nameservice-strict>
+  include <abstractions/sys/gpumon>
+  include <abstractions/sys/hwmon-power:w>
+  include <abstractions/sys/hwmon-pwm:w>
+
+  capability sys_admin,
+  capability chown,
+
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  @{bin}/clinfo      cx -> clinfo,
+  @{bin}/uname       rPx,
+  @{bin}/vulkaninfo  cx -> vulkaninfo,
+  deny @{bin}/mkinitcpio rx, #I dont know why does it need this
+
+  /etc/lact/ r,
+  /etc/lact/config.yaml rw,
+
+  owner @{user_config_dirs}/lact/ui.yaml rw,
+
+  @{PROC}/cmdline r,
+  @{PROC}/sys/kernel/random/boot_id r,
+  @{PROC}/uptime r,
+
+  @{run}/lactd.sock rw,
+  @{run}/systemd/userdb/ r,
+
+  @{sys}/devices/@{pci}/current_link_speed r,
+  @{sys}/devices/@{pci}/current_link_width r,
+  @{sys}/devices/@{pci}/hwmon/hwmon@{int}/pwm@{int}_max r,
+  @{sys}/devices/@{pci}/hwmon/hwmon@{int}/pwm@{int}_min r,
+  @{sys}/devices/@{pci}/max_link_speed r,
+  @{sys}/devices/@{pci}/max_link_width r,
+  @{sys}/devices/@{pci}/mem_info_vram_vendor r,
+  @{sys}/devices/@{pci}/power_dpm_force_performance_level rw,
+  @{sys}/devices/@{pci}/pp_dpm_sclk r,
+  @{sys}/devices/@{pci}/pp_dpm_mclk r,
+  @{sys}/devices/@{pci}/pp_dpm_pcie r,
+  @{sys}/devices/@{pci}/pp_od_clk_voltage rw,
+  @{sys}/module/amdgpu/parameters/ppfeaturemask r,
+  @{sys}/devices/virtual/kfd/kfd/topology/nodes/@{int}/caches/ r,
+
+  /tmp/VP_VULKANINFO*.json rw,
+
+profile clinfo flags=(complain) {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+
+  @{bin}/clinfo r,
+  network netlink raw,
+}
+
+profile vulkaninfo flags=(complain) {
+  include <abstractions/base>
+  include <abstractions/graphics>
+  include <abstractions/nameservice-strict>
+
+  #silencer deny capability sys_admin
+  #silencer deny capability dac_read_search
+  #silencer deny capability dac_override
+
+  network netlink raw,
+
+  @{bin}/vulkaninfo mr,
+
+  /tmp/VP_VULKANINFO*.json rw,
+}
+
+include if exists <local/lact>
+}
+
+# vim:syntax=apparmor
