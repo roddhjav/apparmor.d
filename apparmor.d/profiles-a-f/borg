@@ -8,7 +8,7 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{exec_path} = @{bin}/borg
-profile borg @{exec_path} flags=(attach_disconnected,mediate_deleted) {
+profile borg @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/consoles>
   include <abstractions/nameservice-strict>
@@ -16,6 +16,8 @@ profile borg @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
   capability dac_override,
   capability dac_read_search,
+  capability fowner,
+  capability sys_admin,
 
   network inet dgram,
   network inet6 dgram,
@@ -45,12 +47,15 @@ profile borg @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
   # Dirs that can be backed up
   /            r,
+  /tmp/borg/   r,
   /etc/{,**}   r,
   /home/{,**}  r,
   @{MOUNTS}/{,**} r,
   /root/{,**}  r,
   /srv/{,**}   r,
   /var/{,**}   r,
+  
+  @{att}/var/lib/docker/overlay2/@{hex64}/{,**} r,
 
   # The backup dirs
   owner @{MOUNTS}/ r,
@@ -85,6 +90,7 @@ profile borg @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   #aa:only test
   mount fstype=fuse options=(ro nosuid nodev) borgfs -> /tmp/autopkgtest.@{rand6}/**,
   mount fstype=fuse options=(ro nosuid nodev) borgfs -> /tmp/tmp@{word8}/**,
+  mount fstype=fuse options=(ro nodev nosuid) borgfs -> /tmp/borg/,
   owner /tmp/tmp@{word8}/{,**} rwlk,
 
   profile ccache {
