@@ -8,7 +8,7 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{exec_path} = @{bin}/borg
-profile borg @{exec_path} {
+profile borg @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/consoles>
   include <abstractions/nameservice-strict>
@@ -16,6 +16,8 @@ profile borg @{exec_path} {
 
   capability dac_override,
   capability dac_read_search,
+  capability fowner,
+  capability sys_admin,
 
   network inet dgram,
   network inet6 dgram,
@@ -23,6 +25,7 @@ profile borg @{exec_path} {
 
   mount fstype=fuse options=(ro nosuid nodev) borgfs -> @{MOUNTS}/,
   mount fstype=fuse options=(ro nosuid nodev) borgfs -> @{MOUNTS}/*/,
+  mount fstype=fuse options=(ro nodev nosuid) borgfs -> /tmp/borg/,
 
   @{exec_path} r,
 
@@ -52,6 +55,8 @@ profile borg @{exec_path} {
   /srv/{,**}   r,
   /var/{,**}   r,
 
+  @{att}/var/{,**} r,
+
   # The backup dirs
   owner @{MOUNTS}/ r,
   owner @{MOUNTS}/** rwkl -> @{MOUNTS}/**,
@@ -64,6 +69,7 @@ profile borg @{exec_path} {
   owner @{user_config_dirs}/borg/** rw,
 
   # If /tmp/ isn't accessible, then /var/tmp/ is used.
+        /tmp/borg/   r,
   owner @{tmp}/* rw,
   owner @{tmp}/borg-cache-*/ rw,
   owner @{tmp}/borg-cache-*/* rw,
