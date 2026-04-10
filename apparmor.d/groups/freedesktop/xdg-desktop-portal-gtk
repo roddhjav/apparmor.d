@@ -13,6 +13,7 @@ profile xdg-desktop-portal-gtk @{exec_path} flags=(attach_disconnected) {
   include <abstractions/bus/session/org.gnome.Shell.Introspect>
   include <abstractions/consoles>
   include <abstractions/dconf-write>
+  include <abstractions/deny-sensitive-home>
   include <abstractions/fontconfig-cache-write>
   include <abstractions/gnome-strict>
   include <abstractions/graphics>
@@ -43,6 +44,8 @@ profile xdg-desktop-portal-gtk @{exec_path} flags=(attach_disconnected) {
               / r,
   owner /att/**/ r,
 
+  owner @{HOME}/{,**} r,
+
   owner /var/lib/xkb/server-@{int}.xkm rw,
 
   owner @{gdm_cache_dirs}/fontconfig/@{hex32}-le{32,64}{,d4}.cache-@{d} r,
@@ -51,7 +54,15 @@ profile xdg-desktop-portal-gtk @{exec_path} flags=(attach_disconnected) {
 
   @{run}/mount/utab r,
 
+  @{sys}/devices/virtual/dmi/id/bios_vendor r,
+  @{sys}/devices/virtual/dmi/id/board_vendor r,
+  @{sys}/devices/virtual/dmi/id/product_name r,
+  @{sys}/devices/virtual/dmi/id/sys_vendor r,
+  
+  owner @{sys}/fs/cgroup/user.slice/user-1001.slice/user@1001.service/app.slice/xdg-desktop-portal-gtk.service/cpu.max r,
+
   owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/cgroup r,
 
   include if exists <local/xdg-desktop-portal-gtk>
 }
