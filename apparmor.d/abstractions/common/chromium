@@ -28,11 +28,14 @@
   # drops CAP_SYS_ADMIN we are ok.
   capability sys_admin,
 
-  # All of these are for sanely dropping from root and chrooting
-  capability setgid, # If kernel.unprivileged_userns_clone = 1
-  capability setuid, # If kernel.unprivileged_userns_clone = 1
+  # Needed for sanely dropping from root and chrooting
+  capability sys_admin,
   capability sys_chroot,
   capability sys_ptrace,
+
+  # Needed with sysctl_kernel_unprivileged_userns_clone = 1
+  audit capability setgid,
+  audit capability setuid,
 
   owner @{user_share_dirs}/.@{domain}.@{rand6} rw,
 
@@ -62,7 +65,7 @@
   @{sys}/devices/virtual/dmi/id/product_name r,
   @{sys}/devices/virtual/dmi/id/sys_vendor r,
 
-  # If kernel.unprivileged_userns_clone = 1
+  # Needed with sysctl_kernel_unprivileged_userns_clone = 1
   owner @{PROC}/@{pid}/setgroups w,
   owner @{PROC}/@{pid}/gid_map w,
   owner @{PROC}/@{pid}/uid_map w,
