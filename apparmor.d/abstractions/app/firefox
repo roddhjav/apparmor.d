@@ -135,6 +135,8 @@
   @{run}/udev/data/+input:input@{int} r,  # for mouse, keyboard, touchpad
   @{run}/udev/data/c13:@{int}  r,         # for /dev/input/*
 
+  @{sys}/devices/virtual/dmi/id/product_sku r,
+
         @{sys}/bus/ r,
         @{sys}/cgroup/cpu,cpuacct/user.slice/cpu.cfs_quota_us r,
         @{sys}/class/ r,
@@ -155,6 +157,11 @@
   @{PROC}/@{pid}/net/arp r,
   @{PROC}/@{pid}/net/if_inet6 r,
   @{PROC}/@{pid}/net/route r,
+
+  # Pressure Stall Information interface
+  @{PROC}/pressure/cpu r,
+  @{PROC}/pressure/io r,
+  @{PROC}/pressure/memory r,
 
   # Allow reading cgroup membership information for process introspection
   owner @{PROC}/@{pid}/cgroup r,
@@ -203,12 +210,11 @@
   owner /dev/tty@{u8} rw, # File Inherit
 
   # Silencer
-  deny dbus send bus=system path=/org/freedesktop/hostname1,
-  deny dbus send bus=system path=/org/freedesktop/login1,
+  deny dbus bus=system path=/org/freedesktop/hostname1,
+  deny dbus bus=system path=/org/freedesktop/login1,
   deny /tmp/MozillaUpdateLock-* w,
   deny owner @{HOME}/.* r,
   deny @{run}/user/@{uid}/gnome-shell-disable-extensions w,
-  deny @{PROC}/pressure/* r,
 
   include if exists <abstractions/app/firefox.d>
 
