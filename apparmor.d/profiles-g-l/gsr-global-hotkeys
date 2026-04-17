@@ -1,0 +1,33 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/gsr-global-hotkeys
+@{att} = ""
+profile gsr-global-hotkeys @{exec_path} {
+  include <abstractions/base>
+
+  @{exec_path} r,
+
+  capability setuid,
+
+  network netlink dgram,
+
+  ptrace readby peer=systedm-journald,
+
+  /dev/input/ r,
+  /dev/input/event@{int} rw,
+  /dev/uinput rw,
+
+  @{PROC}/bus/input/devices r,
+
+  @{sys}/devices/virtual/input/ r,
+
+  include if exists <local/gsr-global-hotkeys>
+}
+
+# vim:syntax=apparmor
