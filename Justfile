@@ -155,9 +155,23 @@ server-fsp-complain: build
 server-fsp-debug: build
 	@./{{build}}/prebuild --buildir {{build}} --server --full --complain --debug
 
-# Install prebuild profiles
+# Install base abstraction, tunable and booleans
 [group('install')]
-install:
+install-base:
+	#!/usr/bin/env bash
+	set -eu -o pipefail
+	mapfile -t files < <(find "{{build}}/apparmor.d/abstractions" -type f -printf "%P\n")
+	for file in "${files[@]}"; do
+		install -Dm0644 "{{build}}/apparmor.d/abstractions/$file" "{{destdir}}/etc/apparmor.d/abstractions/$file"
+	done
+	mapfile -t files < <(find "{{build}}/apparmor.d/tunables" -type f -printf "%P\n")
+	for file in "${files[@]}"; do
+		install -Dm0644 "{{build}}/apparmor.d/tunables/$file" "{{destdir}}/etc/apparmor.d/tunables/$file"
+	done
+
+# Install apparmor.d tools
+[group('install')]
+install-tools:
 	#!/usr/bin/env bash
 	set -eu -o pipefail
 	install -Dm0755 {{build}}/aa-log {{destdir}}/usr/bin/aa-log
@@ -165,6 +179,36 @@ install:
 	for file in "${share[@]}"; do
 		install -Dm0644 "{{build}}/share/$file" "{{destdir}}/usr/share/$file"
 	done
+
+# Install prebuilt profiles
+[group('install')]
+install-prebuilt:
+	#!/usr/bin/env bash
+	set -eu -o pipefail
+	mapfile -t aa < <(find "{{build}}/apparmor.d" -type f -not -path "*/abstractions/*" -not -path "*/tunables/*" -printf "%P\n")
+	for file in "${aa[@]}"; do
+		#install -Dm0644 "{{build}}/apparmor.d/$file" "{{destdir}}/usr/share/apparmor.d/$file"
+		install -Dm0644 "{{build}}/apparmor.d/$file" "{{destdir}}/etc/apparmor.d/$file"
+	done
+	mapfile -t links < <(find "{{build}}/apparmor.d" -type l -printf "%P\n")
+	for file in "${links[@]}"; do
+		mkdir -p "{{destdir}}/etc/apparmor.d/disable"
+		cp -d "{{build}}/apparmor.d/$file" "{{destdir}}/etc/apparmor.d/$file"
+	done
+	for file in "{{build}}/systemd/system/"*; do
+		service="$(basename "$file")"
+		install -Dm0644 "$file" "{{destdir}}/usr/lib/systemd/system/$service.d/apparmor.conf"
+	done
+	for file in "{{build}}/systemd/user/"*; do
+		service="$(basename "$file")"
+		install -Dm0644 "$file" "{{destdir}}/usr/lib/systemd/user/$service.d/apparmor.conf"
+	done
+
+# Install prebuild profiles
+[group('install')]
+install: install-tools
+	#!/usr/bin/env bash
+	set -eu -o pipefail
 	mapfile -t aa < <(find "{{build}}/apparmor.d" -type f -printf "%P\n")
 	for file in "${aa[@]}"; do
 		install -Dm0644 "{{build}}/apparmor.d/$file" "{{destdir}}/etc/apparmor.d/$file"
@@ -264,21 +308,23 @@ build-rpm: (_ensure_pkgdest)
 
 # Build & install apparmor.d on Arch based systems
 [group('packages')]
-pkg name="": (build-pkg)
+pkg: build-pkg
 	@sudo pacman -U --noconfirm \
-		{{pkgdest}}/{{pkgname}}{{ if name != "" { "." + name } else { "" } }}-`just version`*.pkg.tar.zst 
+		{{pkgdest}}/{{pkgname}}-`just version`*.pkg.tar.zst \
+		{{pkgdest}}/{{pkgname}}-base-`just version`*.pkg.tar.zst \
+		{{pkgdest}}/{{pkgname}}-tools-`just version`*.pkg.tar.zst
 
 # Build & install apparmor.d on Debian based systems
 [group('packages')]
-dpkg name="": (build-dpkg)
+dpkg name="": build-dpkg
 	@sudo dpkg -i  \
 		{{pkgdest}}/{{pkgname}}{{ if name != "" { "." + name } else { "" } }}_`just version`*.deb
 
 # Build & install apparmor.d on OpenSUSE based systems
 [group('packages')]
-rpm name="": (build-rpm)
+rpm: build-rpm
 	@sudo rpm -ivh --force \
-		{{pkgdest}}/{{pkgname}}{{ if name != "" { "." + name } else { "" } }}-`just version`*.rpm
+		{{pkgdest}}/{{pkgname}}-`just version`*.rpm
 
 # Run the linters
 [group('linter')]
