@@ -10,11 +10,6 @@ import (
 )
 
 var (
-	Comment   = `#`
-	regFilter = ToRegexRepl([]string{
-		`\s*` + Comment + `.*`, ``,
-		`(?m)^(?:[\t\s]*(?:\r?\n|\r))+`, ``,
-	})
 	regHex = map[string]*regexp.Regexp{
 		"name":    regexp.MustCompile(`name=[0-9A-F]+`),
 		"comm":    regexp.MustCompile(`comm=[0-9A-F]+`),
@@ -63,7 +58,3 @@ func DecodeHexInString(str string) string {
 	return str
 }
 
-// Filter out comments and empty line from a string
-func Filter(src string) string {
-	return regFilter.Replace(src)
-}

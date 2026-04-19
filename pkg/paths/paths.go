@@ -35,13 +35,28 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"regexp"
 	"slices"
 	"strings"
 	"syscall"
 	"time"
-
-	"github.com/roddhjav/apparmor.d/pkg/util"
 )
+
+var (
+	Comment   = `#`
+	regFilter = []*regexp.Regexp{
+		regexp.MustCompile(`\s*` + Comment + `.*`),
+		regexp.MustCompile(`(?m)^(?:[\t\s]*(?:\r?\n|\r))+`),
+	}
+)
+
+// Filter out comments and empty lines from a string.
+func Filter(src string) string {
+	for _, re := range regFilter {
+		src = re.ReplaceAllLiteralString(src, "")
+	}
+	return src
+}
 
 // Path represents a path
 type Path struct {
@@ -208,6 +223,17 @@ func (p *Path) IsInsideDir(dir *Path) (bool, error) {
 	return !strings.Contains(rel, ".."+string(os.PathSeparator)) &&
 		rel != ".." &&
 		rel != ".", nil
+}
+
+// IsInsideAnyDir returns true if the current path is inside any of the
+// provided dirs.
+func (p *Path) IsInsideAnyDir(dirs []*Path) bool {
+	for _, d := range dirs {
+		if inside, _ := p.IsInsideDir(d); inside {
+			return true
+		}
+	}
+	return false
 }
 
 // Parent returns all but the last element of path, typically the path's
@@ -555,7 +581,7 @@ func (p *Path) MustReadFilteredFileAsLines() []string {
 	}
 	txt := string(data)
 	txt = strings.ReplaceAll(txt, "\r\n", "\n")
-	txt = util.Filter(txt)
+	txt = Filter(txt)
 	res := strings.Split(txt, "\n")
 	if slices.Contains(res, "") {
 		idx := slices.Index(res, "")
