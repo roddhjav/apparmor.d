@@ -36,10 +36,6 @@ import (
 	"syscall"
 )
 
-func tellCommandNotToSpawnShell(_ *exec.Cmd) {
-	// no op
-}
-
 func tellCommandToStartOnNewProcessGroup(oscmd *exec.Cmd) {
 	// https://groups.google.com/g/golang-nuts/c/XoQ3RhFBJl8
 

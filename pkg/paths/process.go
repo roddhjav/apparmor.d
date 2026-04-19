@@ -55,20 +55,13 @@ func NewProcess(extraEnv []string, args ...string) (*Process, error) {
 		cmd: exec.Command(args[0], args[1:]...),
 	}
 	p.cmd.Env = append(os.Environ(), extraEnv...)
-	tellCommandNotToSpawnShell(p.cmd)          // windows specific
-	tellCommandToStartOnNewProcessGroup(p.cmd) // linux specific
+	tellCommandToStartOnNewProcessGroup(p.cmd) // linux and macosx specific
 
 	// This is required because some tools detects if the program is running
 	// from terminal by looking at the stdin/out bindings.
 	// https://github.com/arduino/arduino-cli/issues/844
 	p.cmd.Stdin = nullReaderInstance
 	return p, nil
-}
-
-// TellCommandNotToSpawnShell avoids that the specified Cmd display a small
-// command prompt while runnning on Windows. It has no effects on other OS.
-func (p *Process) TellCommandNotToSpawnShell() {
-	tellCommandNotToSpawnShell(p.cmd)
 }
 
 // NewProcessFromPath creates a command from the provided executable path,
