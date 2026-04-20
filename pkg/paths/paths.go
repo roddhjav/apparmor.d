@@ -11,28 +11,11 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-	"regexp"
 	"slices"
 	"strings"
 	"syscall"
 	"time"
 )
-
-var (
-	Comment   = `#`
-	regFilter = []*regexp.Regexp{
-		regexp.MustCompile(`\s*` + Comment + `.*`),
-		regexp.MustCompile(`(?m)^(?:[\t\s]*(?:\r?\n|\r))+`),
-	}
-)
-
-// Filter out comments and empty lines from a string.
-func Filter(src string) string {
-	for _, re := range regFilter {
-		src = re.ReplaceAllLiteralString(src, "")
-	}
-	return src
-}
 
 // Path represents a path
 type Path struct {

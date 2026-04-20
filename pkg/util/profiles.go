@@ -14,7 +14,7 @@ import (
 var (
 	regFlags         = regexp.MustCompile(`flags=\(([^)]+)\)`)
 	regProfileHeader = regexp.MustCompile(` {\n`)
-	profileModes     = []string{
+	ProfileModes     = []string{
 		"enforce", "complain", "kill", "default_allow", "unconfined", "prompt",
 	}
 )
@@ -41,7 +41,7 @@ func SetFlags(profile string, flags []string) string {
 
 // SetMode sets the given mode in the profile string, removing any conflicting mode flags.
 func SetMode(profile string, mode string) (string, error) {
-	if !slices.Contains(profileModes, mode) {
+	if !slices.Contains(ProfileModes, mode) {
 		return profile, fmt.Errorf("unknown profile mode: %s", mode)
 	}
 
@@ -49,7 +49,7 @@ func SetMode(profile string, mode string) (string, error) {
 
 	// Remove all conflicting mode flags
 	flags = slices.DeleteFunc(flags, func(f string) bool {
-		return slices.Contains(profileModes, f)
+		return slices.Contains(ProfileModes, f)
 	})
 
 	// "enforce" is the default (no mode flag needed), otherwise add the mode
