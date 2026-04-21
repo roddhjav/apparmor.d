@@ -489,6 +489,7 @@ func parseContentRules(input string) (Rules, error) {
 func tokenizeRule(str string) []string {
 	var currentToken strings.Builder
 	isVariable, wasTokPLUS, wasTokQM, wasTokCOLON, quoted := false, false, false, false, false
+	sawAssignment := false
 
 	blockStack := []rune{}
 	tokens := make([]string, 0, len(str)/2)
@@ -519,7 +520,7 @@ func tokenizeRule(str string) []string {
 				currentToken.Reset()
 			}
 
-		case (r == '+' || r == '?' || r == ':' || r == '=') && len(blockStack) == 0 && !quoted && isVariable:
+		case (r == '+' || r == '?' || r == ':' || r == '=') && len(blockStack) == 0 && !quoted && isVariable && !sawAssignment:
 			// Handle variable assignment operators: =, +=, ?=, :=
 			if currentToken.Len() != 0 {
 				tokens = append(tokens, currentToken.String())
@@ -537,6 +538,9 @@ func tokenizeRule(str string) []string {
 			wasTokPLUS = (r == '+')
 			wasTokQM = (r == '?')
 			wasTokCOLON = (r == ':')
+			if r == '=' {
+				sawAssignment = true
+			}
 
 		case r == '"' && len(blockStack) == 0:
 			quoted = !quoted

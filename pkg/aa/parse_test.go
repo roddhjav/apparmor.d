@@ -566,6 +566,19 @@ var (
 			wString:    `@{XDG_PROJECTS_DIR} += "Git"`,
 		},
 		{
+			name:   "variable-5",
+			raw:    `@{name} = super{p,P}roductivity Super?Productivity`,
+			tokens: []string{"@{name}", "=", "super{p,P}roductivity", "Super?Productivity"},
+			rule: rule{
+				{key: "@{name}"}, {key: "="}, {key: "super{p,P}roductivity"}, {key: "Super?Productivity"},
+			},
+			getIdx:     3,
+			wGet:       "Super?Productivity",
+			wGetString: `@{name} = super{p,P}roductivity Super?Productivity`,
+			wGetSlice:  []string{"@{name}", "=", "super{p,P}roductivity", "Super?Productivity"},
+			wString:    `@{name} = super{p,P}roductivity Super?Productivity`,
+		},
+		{
 			name:   "header",
 			raw:    `profile foo @{exec_path} xattrs=(security.tagged=allowed) flags=(complain attach_disconnected)`,
 			tokens: []string{"profile", "foo", "@{exec_path}", "xattrs=(security.tagged=allowed)", "flags=(complain attach_disconnected)"},
