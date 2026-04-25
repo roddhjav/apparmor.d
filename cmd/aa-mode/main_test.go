@@ -122,6 +122,18 @@ func TestAaSetMode(t *testing.T) {
 			mode:    "bogus",
 			wantErr: true,
 		},
+		{
+			name:    "unconfined profile is never modified",
+			profile: "profile foo /usr/bin/foo flags=(unconfined) {\n}\n",
+			mode:    "complain",
+			want:    "profile foo /usr/bin/foo flags=(unconfined) {\n}\n",
+		},
+		{
+			name:    "unconfined profile preserved even when setting unconfined",
+			profile: "profile foo /usr/bin/foo flags=(attach_disconnected, unconfined) {\n}\n",
+			mode:    "unconfined",
+			want:    "profile foo /usr/bin/foo flags=(attach_disconnected, unconfined) {\n}\n",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

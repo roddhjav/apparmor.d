@@ -89,10 +89,15 @@ func selectedMode() (string, error) {
 }
 
 func aaSetMode(files paths.PathList, mode string) error {
+	modified := paths.PathList{}
 	for _, file := range files {
 		profile, err := file.ReadFileAsString()
 		if err != nil {
 			return err
+		}
+		if util.IsUnconfined(profile) {
+			logging.Warning("skipping %s: profile is in unconfined mode", file)
+			continue
 		}
 		profile, err = util.SetMode(profile, mode)
 		if err != nil {
@@ -101,11 +106,12 @@ func aaSetMode(files paths.PathList, mode string) error {
 		if err = file.WriteFile([]byte(profile)); err != nil {
 			return err
 		}
+		modified = append(modified, file)
 	}
 	if noReload {
 		return nil
 	}
-	return util.ReloadProfiles(files)
+	return util.ReloadProfiles(modified)
 }
 
 func main() {
