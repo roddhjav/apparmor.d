@@ -93,7 +93,23 @@ help:
 [group('build')]
 build:
 	@go build -o {{build}}/ ./cmd/aa-log
+	@go build -o {{build}}/ ./cmd/aa-mode
 	@go build -o {{build}}/ ./cmd/prebuild
+
+# Build aa-flatpak
+[group('build')]
+build-aa-flatpak:
+	@go build -o {{build}}/ ./cmd/aa-flatpak
+
+# Prebuild the profiles
+[group('build')]
+prebuild: build
+	./{{build}}/prebuild --buildir {{build}} --future
+
+# Prebuild the profiles in FSP mode
+[group('build')]
+prebuild-fsp: build
+	@./{{build}}/prebuild --buildir {{build}} --future --full
 
 # Prebuild the profiles in enforced mode
 [group('build')]
@@ -115,46 +131,6 @@ complain: build
 complain-test: build
 	@./{{build}}/prebuild --buildir {{build}} --complain --test
 
-# Prebuild the profiles in FSP mode
-[group('build')]
-fsp: build
-	@./{{build}}/prebuild --buildir {{build}} --full
-
-# Prebuild the profiles in FSP mode (complain)
-[group('build')]
-fsp-complain: build
-	@./{{build}}/prebuild --buildir {{build}} --complain --full
-
-# Prebuild the profiles in FSP mode (debug)
-[group('build')]
-fsp-debug: build
-	@./{{build}}/prebuild --buildir {{build}} --complain --full --debug
-
-# Prebuild the profiles in server mode
-[group('build')]
-server: build
-	@./{{build}}/prebuild --buildir {{build}} --server
-
-# Prebuild the profiles in server mode (complain)
-[group('build')]
-server-complain: build
-	@./{{build}}/prebuild --buildir {{build}} --server --complain
-
-# Prebuild the profiles in server FSP mode
-[group('build')]
-server-fsp: build
-	@./{{build}}/prebuild --buildir {{build}} --server --full
-
-# Prebuild the profiles in server FSP mode (complain)
-[group('build')]
-server-fsp-complain: build
-	@./{{build}}/prebuild --buildir {{build}} --server --full --complain
-
-# Prebuild the profiles in server FSP mode (debug)
-[group('build')]
-server-fsp-debug: build
-	@./{{build}}/prebuild --buildir {{build}} --server --full --complain --debug
-
 # Install base abstraction, tunable and booleans
 [group('install')]
 install-base:
@@ -175,10 +151,20 @@ install-tools:
 	#!/usr/bin/env bash
 	set -eu -o pipefail
 	install -Dm0755 {{build}}/aa-log {{destdir}}/usr/bin/aa-log
-	mapfile -t share < <(find "{{build}}/share" -type f -not -name "*.md" -printf "%P\n")
+	install -Dm0755 {{build}}/aa-mode {{destdir}}/usr/bin/aa-mode
+	mapfile -t share < <(find "{{build}}/share" -type f -not -name "*.md" -not -name "*aa-flatpak*" -printf "%P\n")
 	for file in "${share[@]}"; do
 		install -Dm0644 "{{build}}/share/$file" "{{destdir}}/usr/share/$file"
 	done
+
+# Install aa-flatpak
+[group('install')]
+install-aa-flatpak:
+	@install -Dm0755 {{build}}/aa-flatpak {{destdir}}/usr/bin/aa-flatpak
+	@install -Dm0644 systemd/aa-flatpak.service {{destdir}}/usr/lib/systemd/system/aa-flatpak.service
+	@install -Dm0644 share/bash-completion/completions/aa-flatpak {{destdir}}/usr/share/bash-completion/completions/aa-flatpak
+	@install -Dm0644 share/man/man1/aa-flatpak.1 {{destdir}}/usr/share/man/man1/aa-flatpak.1
+	@install -Dm0644 share/zsh/site-functions/_aa-flatpak.zsh {{destdir}}/usr/share/zsh/site-functions/_aa-flatpak.zsh
 
 # Install prebuilt profiles
 [group('install')]
@@ -303,7 +289,7 @@ build-rpm: (_ensure_pkgdest)
 	sed -i "s/^Version:.*/Version:        $VERSION/" "SPECS/{{pkgname}}.spec"
 	rpmbuild -bb --define "_topdir $RPMBUILD_ROOT" "SPECS/{{pkgname}}.spec"
 
-	mv "$RPMBUILD_ROOT/RPMS/$ARCH/"*.rpm "{{pkgdest}}/"
+	find "$RPMBUILD_ROOT/RPMS" -name '*.rpm' -exec mv -t "{{pkgdest}}/" {} +
 	rm -rf "$RPMBUILD_ROOT"
 
 # Build & install apparmor.d on Arch based systems
@@ -390,6 +376,7 @@ packages: (clean)
 	for dist in "${!matrix[@]}"; do
 		IFS=' ' read -r -a releases <<< "${matrix[$dist]}"
 		for release in "${releases[@]}"; do
+			echo "{{ RED + BOLD }}Building package for $dist $release{{ NORMAL }}"
 			bash dists/docker.sh $dist $release
 		done
 	done
