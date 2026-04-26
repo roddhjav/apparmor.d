@@ -15,7 +15,6 @@ pkgdesc="Full set of apparmor profiles"
 arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
 url="https://github.com/roddhjav/apparmor.d"
 license=('GPL-2.0-only')
-depends=('apparmor')
 makedepends=('go' 'rsync' 'just')
 
 prepare() {
@@ -36,7 +35,7 @@ build() {
 }
 
 package_apparmor.d() {
-  depends+=('apparmor.d-base' 'apparmor.d-tools')
+  depends=('apparmor' 'apparmor.d-base' 'apparmor.d-tools')
   arch=("any")
   cd "$srcdir/$pkgbase"
   just destdir="$pkgdir" install-prebuilt
