@@ -34,7 +34,7 @@ func TestProcess_RunWithinContext(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error")
 	}
-	if elapsed := time.Since(start); !(elapsed < 500*time.Millisecond) {
+	if elapsed := time.Since(start); elapsed >= 500*time.Millisecond {
 		t.Errorf("%v not less than %v", elapsed, 500*time.Millisecond)
 	}
 	cancel()
@@ -58,7 +58,7 @@ func TestProcess_KillProcessGroupOnLinux(t *testing.T) {
 		t.Fatalf("got %v, want signal: killed", err)
 	}
 	// Assert that the process was killed within the timeout
-	if elapsed := time.Since(start); !(elapsed < 2*time.Second) {
+	if elapsed := time.Since(start); elapsed >= 2*time.Second {
 		t.Errorf("%v not less than %v", elapsed, 2*time.Second)
 	}
 }

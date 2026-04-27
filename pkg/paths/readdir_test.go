@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
-	"runtime"
 	"testing"
 	"time"
 )
@@ -425,36 +424,35 @@ func TestPath_ReadDirRecursiveLoopDetection(t *testing.T) {
 		})
 	}
 
-	if runtime.GOOS != "windows" {
-		t.Run("regular_4_with_permission_error", func(t *testing.T) {
-			dir1 := loopsPath.Join("regular_4_with_permission_error", "dir1")
+	t.Run("regular_4_with_permission_error", func(t *testing.T) {
+		dir1 := loopsPath.Join("regular_4_with_permission_error", "dir1")
 
-			l, err := unbuondedReaddir("regular_4_with_permission_error")
-			if err != nil {
-				t.Fatal(err)
-			}
-			if len(l) == 0 {
-				t.Error("expected non-empty list")
-			}
+		l, err := unbuondedReaddir("regular_4_with_permission_error")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(l) == 0 {
+			t.Error("expected non-empty list")
+		}
 
-			dir1Stat, err := dir1.Stat()
-			if err != nil {
-				t.Fatal(err)
-			}
-			if err := dir1.Chmod(fs.FileMode(0)); err != nil {
-				t.Fatal(err)
-			}
-			t.Cleanup(func() {
-				dir1.Chmod(dir1Stat.Mode())
-			})
-
-			l, err = unbuondedReaddir("regular_4_with_permission_error")
-			if err == nil {
-				t.Fatal("expected error")
-			}
-			if l != nil {
-				t.Errorf("expected nil, got %v", l)
-			}
+		dir1Stat, err := dir1.Stat()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := dir1.Chmod(fs.FileMode(0)); err != nil {
+			t.Fatal(err)
+		}
+		t.Cleanup(func() {
+			dir1.Chmod(dir1Stat.Mode())
 		})
-	}
+
+		l, err = unbuondedReaddir("regular_4_with_permission_error")
+		if err == nil {
+			t.Fatal("expected error")
+		}
+		if l != nil {
+			t.Errorf("expected nil, got %v", l)
+		}
+	})
+
 }
