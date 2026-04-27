@@ -2,6 +2,8 @@
 // Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
 // SPDX-License-Identifier: GPL-2.0-only
 
+// Package logging provides coloured, prefixed output helpers for the
+// interactive command-line tools (success, warning, error, ...).
 package logging
 
 import (

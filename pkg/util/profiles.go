@@ -2,6 +2,9 @@
 // Copyright (C) 2023-2026 Alexandre Pujol <alexandre@pujol.io>
 // SPDX-License-Identifier: GPL-2.0-only
 
+// Package util gathers small, dependency-free helpers shared across the
+// codebase: profile flag manipulation, and AppArmor userspace utilities
+// such as profile reload.
 package util
 
 import (

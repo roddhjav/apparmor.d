@@ -2,6 +2,8 @@
 // Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
 // SPDX-License-Identifier: GPL-2.0-only
 
+// Package runtime wires the configure, builder, and directive runners into
+// a single pipeline executed by prebuild and aa-install.
 package runtime
 
 import (

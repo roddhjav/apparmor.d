@@ -2,6 +2,9 @@
 // Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
 // SPDX-License-Identifier: GPL-2.0-only
 
+// Package logs parses AppArmor denial events from auditd, the systemd
+// journal, dmesg, and plain kernel log files (/var/log/kern.log,
+// /var/log/messages), and exposes a unified stream consumable by aa-log.
 package logs
 
 import (

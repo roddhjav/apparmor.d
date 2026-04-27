@@ -2,6 +2,9 @@
 // Copyright (C) 2021-2026 Alexandre Pujol <alexandre@pujol.io>
 // SPDX-License-Identifier: GPL-2.0-only
 
+// Package tasks defines the generic Task and Runner abstractions reused by
+// the configure, builder, and directive pipelines, and exposes the
+// distribution detection used to drive distribution-specific behaviour.
 package tasks
 
 import (
