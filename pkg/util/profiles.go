@@ -13,7 +13,7 @@ import (
 
 var (
 	regFlags         = regexp.MustCompile(`flags=\(([^)]+)\)`)
-	regProfileHeader = regexp.MustCompile(` {\n`)
+	regProfileHeader = regexp.MustCompile(`(?m)^([ \t]*profile [^\n]*?) \{\n`)
 	ProfileModes     = []string{
 		"enforce", "complain", "kill", "default_allow", "unconfined", "prompt",
 	}
@@ -35,8 +35,8 @@ func SetFlags(profile string, flags []string) string {
 	if len(flags) == 0 {
 		return profile
 	}
-	flagsStr := " flags=(" + strings.Join(flags, ",") + ") {\n"
-	return regProfileHeader.ReplaceAllLiteralString(profile, flagsStr)
+	flagsStr := "${1} flags=(" + strings.Join(flags, ",") + ") {\n"
+	return regProfileHeader.ReplaceAllString(profile, flagsStr)
 }
 
 // SetMode sets the given mode in the profile string, removing any conflicting mode flags.

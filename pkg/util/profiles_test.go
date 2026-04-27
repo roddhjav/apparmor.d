@@ -59,6 +59,12 @@ func TestSetFlags(t *testing.T) {
 			want:    "profile foo /usr/bin/foo flags=(complain) {\n",
 		},
 		{
+			name:    "add flags to profile with if statement",
+			profile: "profile foo /usr/bin/foo {\n  if true {\n    /bin/true rix,\n  }\n}\n",
+			flags:   []string{"complain"},
+			want:    "profile foo /usr/bin/foo flags=(complain) {\n  if true {\n    /bin/true rix,\n  }\n}\n",
+		},
+		{
 			name:    "add multiple flags",
 			profile: "profile foo /usr/bin/foo {\n",
 			flags:   []string{"attach_disconnected", "complain"},
