@@ -179,13 +179,17 @@ func Test_newRules(t *testing.T) {
 func Test_AppArmorProfileFile_Parse(t *testing.T) {
 	for _, tt := range testBlocks {
 		t.Run(tt.name, func(t *testing.T) {
+			expected := tt.apparmorAll
+			if expected == nil {
+				expected = tt.apparmor
+			}
 			got := &AppArmorProfileFile{}
 			nb, err := got.Parse(tt.raw)
 			if (err != nil) != tt.wParseErr {
 				t.Errorf("AppArmorProfileFile.Parse() error = %v, wantErr %v", err, tt.wParseErr)
 			}
-			if !reflect.DeepEqual(got, tt.apparmor) {
-				t.Errorf("AppArmorProfileFile.Parse() = |%v|, want |%v|", got, tt.apparmor)
+			if !reflect.DeepEqual(got, expected) {
+				t.Errorf("AppArmorProfileFile.Parse() = |%v|, want |%v|", got, expected)
 			}
 			raw := strings.Join(strings.Split(tt.raw, "\n")[nb:], "\n")
 			gotRules, _, err := ParseRules(raw)

@@ -1036,51 +1036,27 @@ func (f *AppArmorProfileFile) parsePreamble(preamble string) error {
 // using antlr / participle. It is only used for experimental feature in the
 // apparmor.d project. Technically, it is more a scanner than a parser.
 //
-// Very basic:
-//   - Only supports parsing of preamble and profile headers.
-//   - Stop at the first profile header.
-//   - Does not support multiline coma rules.
-//   - Does not support multiple profiles by file.
-//
 // Current use case:
 //   - Parse include and tunables
 //   - Parse variable in profile preamble and in tunable files
 //   - Parse (sub) profiles header to edit flags
 func (f *AppArmorProfileFile) Parse(input string) (int, error) {
-	var raw strings.Builder
-	rawHeader := ""
-	nb := 0
+	if err := f.Scan(input); err != nil {
+		return 0, err
+	}
 
-done:
+	// nb is the line index of the first profile or hat header. Callers
+	// rely on it to split the input into preamble (lines[:nb]) and
+	// body (lines[nb:]).
 	for i, line := range strings.Split(input, "\n") {
 		tmp := strings.TrimLeft(line, "\t ")
-		switch {
-		case tmp == "":
-			continue
-		case strings.HasPrefix(tmp, PROFILE.Tok()):
-			rawHeader = strings.TrimRight(tmp, "{")
-			nb = i
-			break done
-		case strings.HasPrefix(tmp, HAT.String()), strings.HasPrefix(tmp, HAT.Tok()):
-			nb = i
-			break done
-		default:
-			raw.WriteString(tmp + "\n")
+		if strings.HasPrefix(tmp, PROFILE.Tok()) ||
+			strings.HasPrefix(tmp, HAT.String()) ||
+			strings.HasPrefix(tmp, HAT.Tok()) {
+			return i, nil
 		}
 	}
-
-	if err := f.parsePreamble(raw.String()); err != nil {
-		return nb, err
-	}
-	if rawHeader != "" {
-		header, err := newHeader(parseRule(rawHeader))
-		if err != nil {
-			return nb, err
-		}
-		profile := &Profile{Header: header}
-		f.Profiles = append(f.Profiles, profile)
-	}
-	return nb, nil
+	return 0, nil
 }
 
 // ParseRules parses apparmor profile rules by paragraphs
