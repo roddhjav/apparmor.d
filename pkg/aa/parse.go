@@ -1157,6 +1157,22 @@ func (f *AppArmorProfileFile) Scan(input string) (retErr error) {
 			hat.Rules = rules
 			f.Hats = append(f.Hats, hat)
 
+		case IF, ELSE:
+			condition, err := newCondition(parseRule(block.raw))
+			if err != nil {
+				return err
+			}
+			rules, err := parseBlock(block.next)
+			if err != nil {
+				return err
+			}
+			if block.kind == IF {
+				condition.IfRules = rules
+			} else {
+				condition.ElseRules = rules
+			}
+			f.Conditions = append(f.Conditions, condition)
+
 		default:
 			return fmt.Errorf("illegal %s block in profile file", block.kind)
 		}
