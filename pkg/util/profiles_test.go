@@ -98,6 +98,52 @@ func TestSetFlags(t *testing.T) {
 	}
 }
 
+func TestIsUnconfined(t *testing.T) {
+	tests := []struct {
+		name    string
+		profile string
+		want    bool
+	}{
+		{
+			name:    "no flags",
+			profile: "profile foo /usr/bin/foo {\n}\n",
+			want:    false,
+		},
+		{
+			name:    "unconfined only",
+			profile: "profile foo /usr/bin/foo flags=(unconfined) {\n}\n",
+			want:    true,
+		},
+		{
+			name:    "unconfined with other flags",
+			profile: "profile foo /usr/bin/foo flags=(attach_disconnected, unconfined) {\n}\n",
+			want:    true,
+		},
+		{
+			name:    "complain only",
+			profile: "profile foo /usr/bin/foo flags=(complain) {\n}\n",
+			want:    false,
+		},
+		{
+			name:    "substring should not match",
+			profile: "profile foo /usr/bin/foo flags=(unconfinedx) {\n}\n",
+			want:    false,
+		},
+		{
+			name:    "second profile is unconfined",
+			profile: "profile a /usr/bin/a {\n}\nprofile b /usr/bin/b flags=(unconfined) {\n}\n",
+			want:    true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := IsUnconfined(tt.profile); got != tt.want {
+				t.Errorf("IsUnconfined() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestSetMode(t *testing.T) {
 	tests := []struct {
 		name    string

@@ -39,6 +39,18 @@ func SetFlags(profile string, flags []string) string {
 	return regProfileHeader.ReplaceAllString(profile, flagsStr)
 }
 
+// IsUnconfined reports whether any profile in the given content has the unconfined mode flag set.
+func IsUnconfined(profile string) bool {
+	for _, match := range regFlags.FindAllStringSubmatch(profile, -1) {
+		for f := range strings.SplitSeq(match[1], ",") {
+			if strings.TrimSpace(f) == "unconfined" {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // SetMode sets the given mode in the profile string, removing any conflicting mode flags.
 func SetMode(profile string, mode string) (string, error) {
 	if !slices.Contains(ProfileModes, mode) {
