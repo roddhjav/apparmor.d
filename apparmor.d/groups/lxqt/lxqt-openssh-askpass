@@ -7,23 +7,27 @@ abi <abi/4.0>,
 
 include <tunables/global>
 
-@{exec_path} = @{bin}/lxqt-about
-profile lxqt-about @{exec_path} {
+@{exec_path} = @{bin}/lxqt-openssh-askpass
+profile lxqt-openssh-askpass @{exec_path} {
   include <abstractions/base>
+  include <abstractions/bus-session>
+  include <abstractions/bus-accessibility>
   include <abstractions/lxqt>
 
   @{exec_path} mr,
 
-  /usr/share/desktop-directories/{,**} r,
+  @{bin}/ssh-agent rPx,
+  @{bin}/ssh-add rix,
 
-  /etc/xdg/menus/lxqt-applications.menu r,
+  owner @{HOME}/@{XDG_SSH_DIR}/{,*} r,
+
+  owner @{run}/user/@{uid}/ssh-askpass.@{rand6}/{,*} rw,
 
   owner /tmp/@{int} r,
 
   /dev/tty rw,
-  owner /dev/pts/@{int} rw,
 
-  include if exists <local/lxqt-about>
+  include if exists <local/lxqt-openssh-askpass>
 }
 
 # vim:syntax=apparmor

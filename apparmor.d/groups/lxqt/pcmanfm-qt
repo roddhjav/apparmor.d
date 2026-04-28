@@ -1,0 +1,85 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2020-2021 Mikhail Morfikov
+# Copyright (C) 2024 Besanon  <m231009ts@mailfence.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/pcmanfm-qt
+profile pcmanfm-qt @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/bus-session>
+  include <abstractions/bus-system>
+  include <abstractions/bus/system/org.freedesktop.UDisks2>
+  include <abstractions/deny-sensitive-home>
+  include <abstractions/devices-usb>
+  include <abstractions/fontconfig-cache-read>
+  include <abstractions/graphics>
+  include <abstractions/lxqt>
+  include <abstractions/nameservice-strict>
+  include <abstractions/recent-documents-write>
+  include <abstractions/thumbnails-cache-write>
+
+  signal (send) set=(term, kill),
+  signal (receive) set=(term, kill) peer=lxqt-session,
+
+  network netlink raw,
+
+  #aa:exec kioworker
+  #aa:dbus own bus=session name=org.pcmanfm.PCManFM
+
+  @{exec_path} mr,
+
+  @{lib}/menu-cache/menu-cached rix,
+  @{lib}/exec/menu-cache/menu-cache-gen rix,
+
+  #aa:lint ignore=too-wide
+  # Full access to user's data
+  / r,
+  /*/ r,
+  @{bin}/ r,
+  @{lib}/ r,
+  @{MOUNTDIRS}/ r,
+  @{MOUNTS}/ r,
+  @{MOUNTS}/** rw,
+  owner @{HOME}/ r,
+  owner @{HOME}/** rw,
+  owner @{run}/user/@{uid}/ r,
+  owner @{run}/user/@{uid}/** rw,
+  owner @{tmp}/ r,
+  owner @{tmp}/** rw,
+
+  /usr/share/libfm-qt6/{,**} r,
+  /usr/share/pcmanfm-qt/translations/pcmanfm-qt_de.qm r,
+  /usr/share/thumbnailers/{,**} r,
+
+  owner @{user_cache_dirs}/pcmanfm-qt/{,**} rw,
+  owner @{user_config_dirs}/pcmanfm-qt/ rw,
+  owner @{user_config_dirs}/pcmanfm-qt/** rwlk ->  @{user_config_dirs}/pcmanfm-qt/**,
+
+  @{sys}/bus/ r,
+  @{sys}/class/ r,
+  @{sys}/devices/system/node/ r,
+  @{sys}/devices/system/node/node@{int}/meminfo r,
+  @{sys}/fs/cgroup/{,**} r,
+
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/mounts r,
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/cgroup r,
+
+  # Silence non user's data
+  deny @{efi}/{,**} r,
+  deny /opt/{,**} r,
+  deny /root/{,**} r,
+  deny /tmp/.* rw,
+  deny /tmp/.*/{,**} rw,
+
+  /dev/tty r,
+
+  include if exists <local/pcmanfm-qt>
+}
+
+# vim:syntax=apparmor

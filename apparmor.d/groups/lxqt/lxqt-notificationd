@@ -1,0 +1,38 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2024 Besanon  <m231009ts@mailfence.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/lxqt-notificationd
+profile lxqt-notificationd @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/bus-accessibility>
+  include <abstractions/lxqt>
+  include <abstractions/nameservice-strict>
+
+  #aa:dbus own bus=session name=org.freedesktop.Notifications
+
+  @{exec_path} mr,
+
+  @{bin}/lxqt-config-notificationd rPx,
+
+  /etc/machine-id r,
+
+  owner @{user_cache_dirs}/lxqt-notificationd/ r,
+  owner @{user_cache_dirs}/lxqt-notificationd/#@{int} rwk,
+  owner @{user_cache_dirs}/lxqt-notificationd/unattended.list rw,
+  owner @{user_cache_dirs}/lxqt-notificationd/unattended.list l -> @{user_cache_dirs}/lxqt-notificationd/#@{int},
+  owner @{user_cache_dirs}/lxqt-notificationd/unattended.list.lock  rwk,
+  owner @{user_cache_dirs}/lxqt-notificationd/unattended.list.@{rand6} rwkl -> @{user_cache_dirs}/lxqt-notificationd/#@{int},
+
+  owner /tmp/@{int} r,
+
+  include if exists <local/lxqt-notificationd>
+}
+
+# vim:syntax=apparmor

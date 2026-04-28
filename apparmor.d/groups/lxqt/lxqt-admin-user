@@ -1,0 +1,42 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2024 Besanon  <m231009ts@mailfence.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/lxqt-admin-user
+profile lxqt-admin-user @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/lxqt>
+  include <abstractions/bus-session>
+  include <abstractions/bus-accessibility>
+  include <abstractions/nameservice-strict>
+
+  @{exec_path} mr,
+
+  @{bin}/pkexec Cx -> pkexec,
+
+  /etc/shells r,
+
+  owner /tmp/@{int} r,
+
+  /dev/tty rw,
+
+  profile pkexec {
+    include <abstractions/base>
+    include <abstractions/app/pkexec>
+
+    ptrace read peer=lxqt-admin-user,
+
+    @{bin}/lxqt-admin-user-helper rPx,
+
+    include if exists <local/lxqt-admin-user_pkexec>
+  }
+
+  include if exists <local/lxqt-admin-user>
+}
+
+# vim:syntax=apparmor
