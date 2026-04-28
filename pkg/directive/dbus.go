@@ -89,6 +89,7 @@ func (d Dbus) SanityCheck(opt *Option) (string, error) {
 	if _, present := opt.ArgMap["path"]; !present {
 		opt.ArgMap["path"] = "/" + strings.ReplaceAll(opt.ArgMap["name"], ".", "/") + "{,/**}"
 	}
+	opt.ArgMap["name-original"] = opt.ArgMap["name"]
 	opt.ArgMap["name"] += "{,.*}"
 	return action, nil
 }
@@ -183,15 +184,35 @@ func (d Dbus) Talk(rules map[string]string) aa.Rules {
 
 	// Interfaces
 	for _, iface := range interfaces {
-		res = append(res, &aa.Dbus{
-			Access: []string{"send", "receive"}, Bus: rules["bus"], Path: rules["path"],
-			Interface: iface,
-			PeerName:  peerName, PeerLabel: rules["label"],
-		})
+		res = append(res,
+			// Interface: send and receive anything to the interface on the specific peer label
+			&aa.Comment{
+				Base: aa.Base{
+					Comment:    " " + rules["name-original"] + ": send and receive anything to the interface on the specific peer label",
+					IsLineRule: true,
+				},
+			},
+			&aa.Dbus{
+				Access: []string{"send", "receive"}, Bus: rules["bus"], Path: rules["path"],
+				Interface: iface,
+				PeerName:  peerName, PeerLabel: rules["label"],
+			},
+			&aa.Dbus{
+				Access: []string{"send"}, Bus: rules["bus"], Path: rules["path"],
+				Interface: iface,
+				PeerName:  `"` + rules["name"] + `"`,
+			},
+		)
 	}
 
 	res = append(res,
-		// DBus.Properties
+		// DBus.Properties: read and send properties
+		&aa.Comment{
+			Base: aa.Base{
+				Comment:    " DBus.Properties: read and send properties",
+				IsLineRule: true,
+			},
+		},
 		&aa.Dbus{
 			Access: []string{"send", "receive"}, Bus: rules["bus"], Path: rules["path"],
 			Interface: "org.freedesktop.DBus.Properties",
@@ -199,7 +220,13 @@ func (d Dbus) Talk(rules map[string]string) aa.Rules {
 			PeerName:  peerName, PeerLabel: rules["label"],
 		},
 
-		// DBus.Introspectable
+		// DBus.Introspectable: allow service introspection
+		&aa.Comment{
+			Base: aa.Base{
+				Comment:    " DBus.Introspectable: allow service introspection",
+				IsLineRule: true,
+			},
+		},
 		&aa.Dbus{
 			Access: []string{"send"}, Bus: rules["bus"], Path: rules["path"],
 			Interface: "org.freedesktop.DBus.Introspectable",
@@ -208,6 +235,12 @@ func (d Dbus) Talk(rules map[string]string) aa.Rules {
 		},
 
 		// DBus.ObjectManager: allow clients to enumerate sources
+		&aa.Comment{
+			Base: aa.Base{
+				Comment:    " DBus.ObjectManager: allow clients to enumerate sources",
+				IsLineRule: true,
+			},
+		},
 		&aa.Dbus{
 			Access: []string{"send"}, Bus: rules["bus"], Path: rules["path"],
 			Interface: "org.freedesktop.DBus.ObjectManager",
