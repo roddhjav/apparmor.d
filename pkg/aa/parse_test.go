@@ -11,6 +11,7 @@ import (
 	"slices"
 	"strings"
 	"testing"
+
 	"github.com/roddhjav/apparmor.d/pkg/paths"
 )
 
