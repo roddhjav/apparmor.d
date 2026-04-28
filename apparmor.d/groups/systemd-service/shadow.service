@@ -2,6 +2,12 @@
 # Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
+# systemd service: `shadow.service`
+#
+# ```sh
+# /bin/sh -c '/usr/bin/pwck -qr || r=1; /usr/bin/grpck -r && exit $r'
+# ```
+
 abi <abi/4.0>,
 
 include <tunables/global>
@@ -12,8 +18,8 @@ profile shadow.service flags=(attach_disconnected) {
   include <abstractions/nameservice-strict>
 
   @{sh_path}    rix,
-  @{sbin}/grpck  Px -> &grpck,
-  @{sbin}/pwck   Px -> &pwck,
+  @{sbin}/grpck rPx -> shadow.service//&grpck,
+  @{sbin}/pwck  rPx -> shadow.service//&pwck,
 
   /etc/machine-id r,
   /etc/shadow r,
