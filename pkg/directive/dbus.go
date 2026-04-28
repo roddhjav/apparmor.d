@@ -150,6 +150,12 @@ func (d Dbus) Own(rules map[string]string) aa.Rules {
 
 	res = append(res,
 		// DBus.Properties: reply to properties request from anyone
+		&aa.Comment{
+			Base: aa.Base{
+				Comment:    " DBus.Properties: reply to properties request from anyone",
+				IsLineRule: true,
+			},
+		},
 		&aa.Dbus{
 			Access: []string{"send", "receive"}, Bus: rules["bus"], Path: rules["path"],
 			Interface: "org.freedesktop.DBus.Properties",
@@ -158,6 +164,12 @@ func (d Dbus) Own(rules map[string]string) aa.Rules {
 		},
 
 		// DBus.Introspectable: allow clients to introspect the service
+		&aa.Comment{
+			Base: aa.Base{
+				Comment:    " DBus.Introspectable: allow clients to introspect the service",
+				IsLineRule: true,
+			},
+		},
 		&aa.Dbus{
 			Access: []string{"receive"}, Bus: rules["bus"], Path: rules["path"],
 			Interface: "org.freedesktop.DBus.Introspectable",
@@ -166,6 +178,12 @@ func (d Dbus) Own(rules map[string]string) aa.Rules {
 		},
 
 		// DBus.ObjectManager: allow clients to enumerate sources
+		&aa.Comment{
+			Base: aa.Base{
+				Comment:    " DBus.ObjectManager: allow clients to enumerate sources",
+				IsLineRule: true,
+			},
+		},
 		&aa.Dbus{
 			Access: []string{"receive"}, Bus: rules["bus"], Path: rules["path"],
 			Interface: "org.freedesktop.DBus.ObjectManager",
@@ -186,6 +204,13 @@ func (d Dbus) Talk(rules map[string]string) aa.Rules {
 	interfaces := getInterfaces(rules)
 	peerName := `"{@{busname},` + rules["name"] + `,org.freedesktop.DBus}"`
 	res := aa.Rules{
+		// Unix: allow connection to the profile
+		&aa.Comment{
+			Base: aa.Base{
+				Comment:    " Unix: allow connection to the profile",
+				IsLineRule: true,
+			},
+		},
 		&aa.Unix{
 			Type:      "stream",
 			Address:   "none",
@@ -286,7 +311,6 @@ func (d Dbus) See(rules map[string]string) aa.Rules {
 			PeerLabel: rules["label"],
 			PeerAddr:  "none",
 		},
-		nil,
 
 		// DBus.Properties: read all properties from the interface
 		&aa.Comment{
@@ -301,7 +325,6 @@ func (d Dbus) See(rules map[string]string) aa.Rules {
 			Member:    "{Get,GetAll}",
 			PeerName:  peerName, PeerLabel: rules["label"],
 		},
-		nil,
 
 		// DBus.Properties: receive property changed events
 		&aa.Comment{
@@ -316,7 +339,6 @@ func (d Dbus) See(rules map[string]string) aa.Rules {
 			Member:    "PropertiesChanged",
 			PeerName:  peerName, PeerLabel: rules["label"],
 		},
-		nil,
 
 		// DBus.Introspectable: allow service introspection
 		&aa.Comment{
