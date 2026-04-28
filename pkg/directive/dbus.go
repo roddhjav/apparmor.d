@@ -56,13 +56,25 @@ func (d Dbus) Apply(opt *Option, profile string) (string, error) {
 		r = d.See(opt.ArgMap)
 	}
 
+	bus := opt.ArgMap["bus"]
+	if strings.Contains(profile, "include <abstractions/bus/"+bus+"/own>") {
+		for i, rule := range r {
+			inc, ok := rule.(*aa.Include)
+			if !ok || !inc.IsMagic || inc.Path != "abstractions/bus/"+bus+"/own" {
+				continue
+			}
+			r = append(r[:i], r[i+1:]...)
+			break
+		}
+	}
+
+	header := strings.ReplaceAll(opt.Raw, Keyword, "#aa/") + "\n"
 	aa.IndentationLevel = strings.Count(
 		strings.SplitN(opt.Raw, Keyword, 1)[0], aa.Indentation,
 	)
 	generatedDbus := r.String()
-	lenDbus := len(generatedDbus)
-	generatedDbus = generatedDbus[:lenDbus-1]
-	profile = strings.ReplaceAll(profile, opt.Raw, generatedDbus)
+	generatedDbus = strings.ReplaceAll(generatedDbus, "\n\n", "\n")
+	profile = strings.ReplaceAll(profile, opt.Raw, header+generatedDbus)
 	return profile, nil
 }
 
