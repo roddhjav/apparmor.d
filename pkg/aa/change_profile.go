@@ -83,6 +83,9 @@ func (r *ChangeProfile) Validate() error {
 	if err := validateValues(r.Kind(), "mode", []string{r.ExecMode}); err != nil {
 		return fmt.Errorf("%s: %w", r, err)
 	}
+	if r.ExecMode != "" && r.Exec == "" {
+		return fmt.Errorf("change_profile: '%s' requires an exec condition", r.ExecMode)
+	}
 	return nil
 }
 

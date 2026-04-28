@@ -7,7 +7,6 @@ package logs
 import (
 	"bufio"
 	"io"
-	"regexp"
 	"slices"
 	"strings"
 
@@ -35,8 +34,7 @@ const (
 )
 
 var (
-	isAppArmorLogTemplate = regexp.MustCompile(`apparmor=("DENIED"|"ALLOWED"|"AUDIT")`)
-	regCleanLogs          = util.ToRegexRepl([]string{
+	regCleanLogs = util.ToRegexRepl([]string{
 		// Clean apparmor log file
 		`.*apparmor="`, `apparmor="`,
 		`(peer_|)pid=[0-9]*\s`, " ",
@@ -76,6 +74,7 @@ var (
 		`(x86_64|amd64|i386|i686)`, `@{arch}`,
 		`@{arch}-*linux-gnu[^/]?`, `@{multiarch}`,
 		`/usr/etc/`, `@{etc_ro}/`,
+		`/var/etc/`, `@{etc_rw}/`,
 		`/boot/(|efi/)`, `@{efi}/`,
 		`/efi/`, `@{efi}/`,
 		`/var/run/`, `@{run}/`,
@@ -119,6 +118,17 @@ type AppArmorLog map[string]string
 // AppArmorLogs describes all apparmor log entries
 type AppArmorLogs []AppArmorLog
 
+// splitFields splits a string by separator while respecting quoted sections.
+func splitFields(s string, sep rune) []string {
+	var quoted bool
+	return strings.FieldsFunc(s, func(r rune) bool {
+		if r == '"' {
+			quoted = !quoted
+		}
+		return !quoted && r == sep
+	})
+}
+
 func toQuote(str string) string {
 	if strings.Contains(str, " ") {
 		return `"` + str + `"`
@@ -131,26 +141,14 @@ func New(file io.Reader, profile string, namespace string) AppArmorLogs {
 	logs := GetApparmorLogs(file, profile, namespace)
 
 	// Parse log into ApparmorLog struct
-	aaLogs := make(AppArmorLogs, 0)
+	aaLogs := make(AppArmorLogs, 0, len(logs))
 	toClean := []string{"profile", "name", "target"}
-	var quoted bool
 	for _, log := range logs {
-		quoted = false
-		tmp := strings.FieldsFunc(log, func(r rune) bool {
-			if r == '"' {
-				quoted = !quoted
-			}
-			return !quoted && r == ' '
-		})
+		tmp := splitFields(log, ' ')
 
 		aa := make(AppArmorLog)
 		for _, item := range tmp {
-			kv := strings.FieldsFunc(item, func(r rune) bool {
-				if r == '"' {
-					quoted = !quoted
-				}
-				return !quoted && r == '='
-			})
+			kv := splitFields(item, '=')
 			if len(kv) >= 2 {
 				key, value := kv[0], kv[1]
 				if slices.Contains(toClean, key) {
@@ -170,18 +168,11 @@ func New(file io.Reader, profile string, namespace string) AppArmorLogs {
 
 // Load reads an ApparmorLogs from file written with AppArmorLogs.String.
 func Load(file io.Reader, profile string, namespace string) AppArmorLogs {
-	var quoted bool
 	scanner := bufio.NewScanner(file)
 	aaLogs := make(AppArmorLogs, 0)
 	for scanner.Scan() {
 		log := scanner.Text()
-		quoted = false
-		tmp := strings.FieldsFunc(log, func(r rune) bool {
-			if r == '"' {
-				quoted = !quoted
-			}
-			return !quoted && r == ' '
-		})
+		tmp := splitFields(log, ' ')
 		if len(tmp) < 3 {
 			continue
 		}
@@ -224,10 +215,9 @@ func Load(file io.Reader, profile string, namespace string) AppArmorLogs {
 		}
 
 		for _, item := range tmp {
-			kv := strings.Split(item, "=")
-			if len(kv) >= 2 {
-				key, value := kv[0], kv[1]
-				aa[key] = strings.Trim(value, `"`)
+			kv := strings.SplitN(item, "=", 2)
+			if len(kv) == 2 {
+				aa[kv[0]] = strings.Trim(kv[1], `"`)
 			}
 		}
 
@@ -257,9 +247,10 @@ func (aaLogs AppArmorLogs) String() string {
 		"requested_mask", "denied_mask", "signal", "peer", "peer_label",
 	}
 	// Key to not print
-	ignore := []string{
-		"fsuid", "ouid", "FSUID", "OUID", "exe", "SAUID", "sauid", "terminal",
-		"UID", "AUID", "hostname", "class",
+	ignore := map[string]bool{
+		"fsuid": true, "ouid": true, "FSUID": true, "OUID": true,
+		"exe": true, "SAUID": true, "sauid": true, "terminal": true,
+		"UID": true, "AUID": true, "hostname": true, "class": true,
 	}
 	// Color template to use
 	template := map[string]string{
@@ -308,7 +299,7 @@ func (aaLogs AppArmorLogs) String() string {
 		}
 
 		for key, value := range log {
-			if slices.Contains(ignore, key) {
+			if ignore[key] {
 				continue
 			}
 			if _, present := seen[key]; !present && value != "" {

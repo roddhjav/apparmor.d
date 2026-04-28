@@ -7,25 +7,30 @@
 
   abi <abi/4.0>,
 
+  include <abstractions/cgroup-limits>
   include <abstractions/devtools>
   include <abstractions/golang-strict>
   include <abstractions/java>
+  include <abstractions/mime>
   include <abstractions/path>
   include <abstractions/perl>
   include <abstractions/python>
 
-  @{bin}/**                     ix,
-  @{sbin}/**                    ix,
+  @{bin}/**                    rix,
+  @{sbin}/**                   rix,
   @{HOME}/**                    ix,
-  @{lib}/**                     ix,
+  @{lib}/**                    rix,
   /opt/*/**                     ix,
   /usr/local/bin/**             ix,
   /usr/local/lib/**             ix,
   /usr/share/**                 ix,
   @{user_bin_dirs}/**           ix,
 
-  @{pager_path}                 Px -> child-pager,
   @{bin}/lsb_release            Px,
+  @{bin}/nproc                  Px,
+  @{bin}/uptime                 Px,
+  @{bin}/w                      Px,
+  @{pager_path}                 Px -> child-pager,
 
   / r,
   /usr/{,**} r,
@@ -33,28 +38,63 @@
   @{user_bin_dirs}/{,**} r,
 
   /etc/ r,
-  /etc/*@{devtools}* r,
-  /etc/*@{devtools}*/{,**} r,
   /etc/debuginfod/{,**} r,
+  /etc/gitconfig r,
+  /etc/inputrc r,
+  /etc/magic r,
+  /etc/shells r,
+
+  owner @{HOME}/.gitconfig* r,
 
   owner @{HOME}/.local/ r,
   owner @{user_lib_dirs}/ r,
 
-  owner @{tmp}/.git_vtag_tmp@{rand6} rw,       # For git log --show-signature
+  owner /dev/shm/sem.* rwl,
+
+  owner @{tmp}/@{word8} rw,
+  owner @{tmp}/*tests*/ rw,
+  owner @{tmp}/*tests*/** mix,
+  owner @{tmp}/*tests*/** rwlk,
   owner @{tmp}/cc@{rand6}* rw,
   owner @{tmp}/GMfifo@{int} rw,
   owner @{tmp}/tmp.@{rand10} rw,
-  owner @{tmp}/*tests*/ rw,
-  owner @{tmp}/*tests*/** rwlk,
-  owner @{tmp}/*tests*/** mix,
+  owner @{tmp}/tmp@{word8}/ rw,
+  owner @{tmp}/tmp@{word8}/** rwlk,
+  owner /var/tmp/@{word8} rw,
 
+  # Git
+  owner @{tmp}/.git_vtag_tmp@{rand6} rw,       # For git log --show-signature
+  owner @{tmp}/git-commit-msg-.txt rw,         # For android studio
+  owner @{tmp}/git-difftool.*/{,**} rw,        # For diffs
+  owner @{tmp}/git-index-private@{int} rw,
+
+  @{sys}/devices/system/cpu/cpufreq/policy@{int}/scaling_cur_freq r,
+  @{sys}/devices/system/cpu/cpufreq/policy@{int}/scaling_max_freq r,
+
+  # Memory usage in pages (total, resident, shared, text, data)
+  @{PROC}/@{pid}/statm r,
+
+  # Get kernel version string
   @{PROC}/sys/kernel/osrelease r,
 
-  # Allow reading CPU cgroup limits
-        @{sys}/fs/cgroup/user.slice/cpu.max r,
-        @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/cpu.max r,
-        @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/cpu.max r,
-  owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/cpu.max r,
+  # Kernel version
+  @{PROC}/version r,
+  @{PROC}/version_signature r,
+
+  # Allow reading command line arguments for process identification
+  owner @{PROC}/@{pid}/cmdline r,
+  owner @{PROC}/@{pid}/comm r,
+
+  # Allow reading our own environment variables
+  owner @{PROC}/@{pid}/environ r,
+
+  # Allow listing file descriptors for resource monitoring
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/fd/@{int} rw,
+
+  # Allow reading mount points for filesystem awareness. This is an information leak
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/mounts r,
 
   # Per man(5) proc, the kernel enforces that a thread may only modify its comm
   # value or those in its thread group.
@@ -64,11 +104,7 @@
   owner @{PROC}/@{pid}/stat r,
   owner @{PROC}/@{pid}/task/ r,
   owner @{PROC}/@{pid}/task/@{tid}/stat r,
-
-  # Allow listing file descriptors for resource monitoring
-  owner @{PROC}/@{pid}/fd/ r,
-
-  owner @{PROC}/@{pid}/fd/@{int} rw,
+  owner @{PROC}/@{pid}/task/@{tid}/statm r,
 
   include if exists <abstractions/development.d>
 

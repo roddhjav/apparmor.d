@@ -43,6 +43,8 @@ profile dbus-system flags=(attach_disconnected) {
 
   unix (send receive ) type=seqpacket peer=(label=flatpak-system-helper),
 
+  unix type=stream peer=(label=deb-systemd-invoke),
+
   #aa:dbus own bus=system name=org.freedesktop.DBus path=/{,org/freedesktop/{dBus,DBus,dbus}}
 
   # Larger than what is allowed in the directive above, needed due to complex
@@ -52,11 +54,12 @@ profile dbus-system flags=(attach_disconnected) {
   dbus receive bus=system path=/org/freedesktop/systemd1
        interface=org.freedesktop.systemd1.Activator
        member=ActivationFailure
-       peer=(name=@{busname}, label="@{p_systemd}"),
+       peer=(label="@{p_systemd}"),
+
   dbus send bus=system path=/org/freedesktop/systemd1
        interface=org.freedesktop.systemd1.Manager
        member=Subscribe
-       peer=(name=@{busname}, label="@{p_systemd}"),
+       peer=(label="@{p_systemd}"),
 
   @{exec_path} mrix,
 

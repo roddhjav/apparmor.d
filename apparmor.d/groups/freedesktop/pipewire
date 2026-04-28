@@ -17,19 +17,20 @@ profile pipewire @{exec_path} flags=(attach_disconnected) {
   include <abstractions/camera>
   include <abstractions/media-control>
   include <abstractions/nameservice-strict>
+  include <abstractions/sys/dmi>
 
   capability sys_ptrace,
 
   network netlink raw,
 
-  ptrace (read),
+  ptrace read,
 
   #aa:dbus own bus=session name=org.pulseaudio.Server
 
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
-       peer=(name=@{busname}, label=gnome-shell),
+       peer=(name=@{busname}, label="{gnome-shell,gnome-extension}"),
 
   @{exec_path} mrix,
 
@@ -50,9 +51,11 @@ profile pipewire @{exec_path} flags=(attach_disconnected) {
 
         @{run}/snapd.socket rw,
   owner @{run}/user/@{uid}/pipewire-@{int} rw,
+  owner @{run}/user/@{uid}/pipewire-@{int}-manager rw,
   owner @{run}/user/@{uid}/pipewire-@{int}-manager.lock rwk,
   owner @{run}/user/@{uid}/pipewire-@{int}.lock rwk,
   owner @{run}/user/@{uid}/pulse/pid rw,
+  owner @{run}/user/@{uid}/xauth_@{rand6} r,
 
   @{run}/udev/data/c@{dynamic}:@{int} r,  # For dynamic assignment range 234 to 254, 384 to 511
 
@@ -61,7 +64,6 @@ profile pipewire @{exec_path} flags=(attach_disconnected) {
   @{sys}/class/ r,
   @{sys}/devices/@{pci}/usb@{int}/**/{idVendor,idProduct,removable,uevent} r,
   @{sys}/devices/**/device:*/**/path r,
-  @{sys}/devices/virtual/dmi/id/{sys_vendor,product_version,product_name,bios_vendor,board_vendor} r,
   @{sys}/module/apparmor/parameters/enabled r,
 
   owner @{PROC}/@{pid}/attr/apparmor/current r,

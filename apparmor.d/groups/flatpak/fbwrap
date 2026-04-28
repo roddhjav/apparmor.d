@@ -7,6 +7,7 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{appid} = @{word}.@{word}.@{word}{,.@{word}}
+@{profile_dbus} = xdg-dbus-proxy
 
 @{exec_path} = @{bin}/bwrap
 profile fbwrap flags=(attach_disconnected,mediate_deleted) {
@@ -23,6 +24,12 @@ profile fbwrap flags=(attach_disconnected,mediate_deleted) {
   signal receive peer=gnome-software,
   signal receive peer=flatpak,
 
+  # Required by the xdg-dbus-proxy stack
+  # By design xdg-dbus-proxy proxies and filters dbus communication from flatpak
+  # apps to the system. Thus, it can manage the full system and session buses.
+  dbus bus=session,
+  dbus bus=system,
+
   dbus send bus=accessibility path=/
        interface=org.freedesktop.DBus
        member=ListNames
@@ -34,7 +41,13 @@ profile fbwrap flags=(attach_disconnected,mediate_deleted) {
 
              @{sbin}/ldconfig                         Cx -> &fbwrap//ldconfig,
              @{bin}/xdg-dbus-proxy                    Px -> fbwrap//&xdg-dbus-proxy,
+
+  #aa:only apparmor>=4.1
+  #aa:only apparmor<5.0
   priority=2 @{lib}/glycin-loaders/@{d}+/glycin-*     Px -> fbwrap//&glycin//loaders,
+
+  #aa:only apparmor>=5.0
+  priority=2 @{lib}/glycin-loaders/@{d}+/glycin-*     Px -> fbwrap//&:glycin:loaders,
 
   priority=1 /app/bin/**                              Px -> fbwrap//&fapp,
   priority=1 @{lib}/**                                Px -> fbwrap//&fapp,

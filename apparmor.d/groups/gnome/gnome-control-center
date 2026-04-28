@@ -11,12 +11,14 @@ profile gnome-control-center @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/audio-client>
   include <abstractions/avahi-observe>
+  include <abstractions/bus/session/org.gtk.vfs.Daemon>
   include <abstractions/camera>
   include <abstractions/cups-client>
   include <abstractions/dconf-write>
+  include <abstractions/fontconfig-cache-write>
   include <abstractions/gnome-strict>
   include <abstractions/graphics>
-  include <abstractions/gstreamer-registry>
+  include <abstractions/gstreamer>
   include <abstractions/ibus-strict>
   include <abstractions/media-control>
   include <abstractions/nameservice-strict>
@@ -44,6 +46,7 @@ profile gnome-control-center @{exec_path} flags=(attach_disconnected) {
   #aa:dbus talk bus=session name=org.gnome.SessionManager label="@{p_gnome_session}"
   #aa:dbus talk bus=session name=org.gnome.SettingsDaemon.* label="gsd-*"
   #aa:dbus talk bus=session name=org.gnome.Shell label=gnome-shell
+  #aa:dbus talk bus=session name=org.gnome.Shell.Extensions label=gjs
 
   #aa:dbus talk bus=system name=com.ubuntu.WhoopsiePreferences label=whoopsie-preferences
   #aa:dbus talk bus=system name=net.hadess.SwitcherooControl label=switcheroo-control
@@ -51,28 +54,35 @@ profile gnome-control-center @{exec_path} flags=(attach_disconnected) {
   #aa:dbus talk bus=system name=org.bluez label=bluetoothd
   #aa:dbus talk bus=system name=org.cups.cupsd.Notifier label=cups-notifier-dbus
   #aa:dbus talk bus=system name=org.freedesktop.Accounts label="@{p_accounts_daemon}"
-  #aa:dbus talk bus=system name=org.freedesktop.bolt1 label=boltd
+  #aa:dbus talk bus=system name=org.freedesktop.bolt1 path=/org/freedesktop/bolt{,/**} label=boltd
   #aa:dbus talk bus=system name=org.freedesktop.ColorManager label=colord
+  #aa:dbus talk bus=system name=org.freedesktop.fwupd path=/ label=fwupd
   #aa:dbus talk bus=system name=org.freedesktop.hostname1 label="@{p_systemd_hostnamed}"
   #aa:dbus talk bus=system name=org.freedesktop.login1 label="@{p_systemd_logind}"
   #aa:dbus talk bus=system name=org.freedesktop.ModemManager1 label="@{p_ModemManager}"
   #aa:dbus talk bus=system name=org.freedesktop.NetworkManager label=NetworkManager
   #aa:dbus talk bus=system name=org.freedesktop.PolicyKit1 label="@{p_polkitd}"
   #aa:dbus talk bus=system name=org.freedesktop.systemd1 label="@{p_systemd}"
+  #aa:dbus talk bus=system name=org.freedesktop.timedate1 label=systemd-timedated
   #aa:dbus talk bus=system name=org.freedesktop.UDisks2 label=udisksd
   #aa:dbus talk bus=system name=org.freedesktop.UPower label="@{p_upowerd}"
   #aa:dbus talk bus=system name=org.freedesktop.UPower.PowerProfiles label=@{p_power_profiles_daemon}
   #aa:dbus talk bus=system name=org.opensuse.CupsPkHelper.Mechanism label=cups-pk-helper-mechanism
 
-  dbus send bus=system path=/org/freedesktop
+  # Get new/old interfaces signals from any other services
+  dbus send bus=system path=/{,org/freedesktop}
        interface=org.freedesktop.DBus.ObjectManager
        member=GetManagedObjects
-       peer=(name=@{busname}, label=NetworkManager),
-
-  dbus receive bus=system path=/org/freedesktop
+       peer=(name=@{busname}),
+  dbus receive bus=system path=/{,org/freedesktop}
        interface=org.freedesktop.DBus.ObjectManager
        member={InterfacesAdded,InterfacesRemoved}
-       peer=(name=@{busname}, label=NetworkManager),
+       peer=(name=@{busname}),
+
+  dbus receive bus=system path=/org/gnome/bluetooth/settings
+       interface=org.bluez.Agent1
+       member=Release
+       peer=(name=@{busname}, label=bluetoothd),
 
   @{exec_path} mr,
 
@@ -84,23 +94,23 @@ profile gnome-control-center @{exec_path} flags=(attach_disconnected) {
   @{bin}/sed           rix,
   @{bin}/tecla         rPx,
 
-  @{bin}/bwrap                                   rCx -> bwrap,
+  # glycin
   @{bin}/gkbd-keyboard-display                   rPx,
   @{bin}/gnome-software                          rPx,
+  @{bin}/lscpu                                   rPx,
   @{bin}/passwd                                  rPx,
   @{bin}/pkexec                                  rCx -> pkexec,
   @{bin}/software-properties-gtk                 rPx,
   @{bin}/update-manager                          rPx,
-  @{sbin}/openvpn                                rPx,
-  @{sbin}/usermod                                rPx,
   @{lib}/{,@{multiarch}/}webkit{2,}gtk-*/WebKitNetworkProcess rix,
   @{lib}/cups/backend/snmp                       rPx,
   @{lib}/gnome-control-center-goa-helper         rPx,
   @{lib}/gnome-control-center-print-renderer     rPx,
+  @{sbin}/openvpn                                rPx,
+  @{sbin}/usermod                                rPx,
   /usr/share/language-tools/language2locale      rix,
   /usr/share/language-tools/language-options    rPUx,
 
-  @{gstreamer_path}                               Cx -> gstreamer,
   @{open_path}                                   rPx -> child-open-any,
 
   /snap/*/@{int}/**.@{icon_ext} r,
@@ -114,6 +124,7 @@ profile gnome-control-center @{exec_path} flags=(attach_disconnected) {
   /usr/share/gnome-shell/search-providers/{,**} r,
   /usr/share/gnome/gnome-version.xml r,
   /usr/share/language-tools/main-countries r,
+  /usr/share/publicsuffix/{,**} r,
   /usr/share/thumbnailers/{,*} r,
   /usr/share/wallpapers/{,**} r,
   /usr/share/xml/iso-codes/{,**} r,
@@ -122,14 +133,16 @@ profile gnome-control-center @{exec_path} flags=(attach_disconnected) {
   @{etc_ro}/security/pwquality.conf.d/{,**} r,
   /etc/machine-info r,
   /etc/rygel.conf r,
+  /etc/xdg/autostart/ r,
+  /etc/xdg/autostart/*.desktop r,
 
   /etc/fstab r,
-  /etc/machine-id r,
-  /var/lib/dbus/machine-id r,
 
   /var/cache/cracklib/cracklib_dict.* r,
   /var/cache/samba/ rw,
   /var/lib/AccountsService/icons/* r,
+
+  /usr/share/snapd/*.svg r,
 
   / r,
 
@@ -206,31 +219,11 @@ profile gnome-control-center @{exec_path} flags=(attach_disconnected) {
 
   /dev/ r,
 
-  deny owner @{user_share_dirs}/gvfs-metadata/{,*} r,
-
-  profile bwrap flags=(attach_disconnected) {
-    include <abstractions/base>
-    include <abstractions/app/bwrap-glycin>
-
-    signal receive set=kill peer=gnome-control-center,
-
-    @{lib}/glycin-loaders/@{d}+/glycin-* Px -> gnome-control-center//bwrap//&glycin//loaders,
-
-    include if exists <local/gnome-control-center_bwrap>
-  }
-
   profile pkexec {
     include <abstractions/base>
     include <abstractions/app/pkexec>
 
     include if exists <local/gnome-control-center_pkexec>
-  }
-
-  profile gstreamer {
-    include <abstractions/base>
-    include <abstractions/gstreamer>
-
-    include if exists <local/gnome-control-center_gstreamer>
   }
 
   include if exists <local/gnome-control-center>

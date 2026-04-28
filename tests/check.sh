@@ -176,9 +176,10 @@ readonly ABS="abstractions"
 readonly ABS_DANGEROUS=(dbus dbus-session dbus-system dbus-accessibility user-tmp)
 declare -A ABS_DEPRECATED=(
     ["nameservice"]="nameservice-strict"
-    ["bash"]="shell"
+    ["bash"]="shells"
     ["X"]="X-strict"
     ["gtk"]="gtk-strict"
+    ["wayland"]="wayland-strict"
     ["dbus-accessibility-strict"]="bus-accessibility"
     ["dbus-network-manager-strict"]="network-manager-observe"
     ["dbus-session-strict"]="bus-session"
@@ -245,6 +246,8 @@ declare -A EQUIVALENTS=(
     ["grep"]="{,e}grep"
     ["gs"]="gs{,.bin}"
     ["which"]="which{,.debianutils}"
+    ["xtables-legacy-multi"]="xtables-{nft,legacy}-multi"
+    ["xtables-nft-multi"]="xtables-{nft,legacy}-multi"
 )
 _check_equivalent() {
     _is_enabled equivalent || return 0
@@ -258,13 +261,15 @@ _check_equivalent() {
     done
 }
 
-readonly TOOWIDE=('/**' '/tmp/**' '/var/tmp/**' '@{tmp}/**' '/etc/**' '/dev/shm/**' '@{run}/user/@{uid}/**')
+readonly TOOWIDE=('/' '/tmp/' '/var/tmp/' '@{tmp}/' '/etc/' '/dev/shm/' '@{run}/user/@{uid}/')
 _check_too_wide() {
     _is_enabled too-wide || return 0
-    for pattern in "${TOOWIDE[@]}"; do
-        if [[ "$line" == *" $pattern "* ]]; then
-            _warn too-wide "$file:$line_number" "rule too wide: '$pattern'"
-        fi
+    for path in "${TOOWIDE[@]}"; do
+        for pattern in "$path/**" "$path/*" "$path/{,**}"; do
+            if [[ "$line" == *" $pattern "* ]]; then
+                _warn too-wide "$file:$line_number" "rule too wide: '$pattern'"
+            fi
+        done
     done
 }
 
@@ -358,6 +363,7 @@ declare -A TUNABLES=(
     # Some system glob
     [":not.active.yet"]="@{busname}"
     [":1.[0-9]*"]="@{busname}"
+    ["peer=\([^)]*:\*[^)]*\)"]="@{busname}"
     ["(@\{bin\}|/usr/bin)/(|ba|da)sh "]="@{sh_path}"
     ["@\{lib\}/modules/[^/*]+/"]="@{lib}/modules/*/"
 )
@@ -575,7 +581,7 @@ _check_udev() {
 check_sbin() {
     local file name jobs
     mapfile -t sbin <"$SBIN_LIST"
-    _msg "Ensuring '@{bin} and '@{sbin}' are correctly used in profiles"
+    _msg "Ensuring '@{bin}' and '@{sbin}' are correctly used in profiles"
 
     jobs=0
     for name in "${sbin[@]}"; do

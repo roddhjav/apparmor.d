@@ -13,6 +13,7 @@ include <tunables/global>
 @{exec_path} += @{lib}/xorg/Xorg{,.wrap}
 profile xorg @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/backlight>
   include <abstractions/bus/system/org.freedesktop.login1>
   include <abstractions/desktop>
   include <abstractions/fontconfig-cache-read>
@@ -31,6 +32,7 @@ profile xorg @{exec_path} flags=(attach_disconnected) {
   capability setuid,
   capability sys_admin,
   capability sys_rawio,
+  capability sys_nice,
 
   signal (send) set=(usr1),
 
@@ -116,15 +118,13 @@ profile xorg @{exec_path} flags=(attach_disconnected) {
   @{sys}/class/{tty,input,drm}/ r,
   @{sys}/class/power_supply/ r,
   @{sys}/devices/@{pci}/ r,
-  @{sys}/devices/@{pci}/backlight/**/{,max_,actual_}brightness r,
-  @{sys}/devices/@{pci}/backlight/**/{uevent,type,enabled} r,
-  @{sys}/devices/@{pci}/backlight/**/brightness rw,
   @{sys}/devices/@{pci}/boot_vga r,
   @{sys}/devices/@{pci}/resource@{int} rw,
   @{sys}/devices/**/{uevent,name,id,config} r,
   @{sys}/devices/**/hid r,
   @{sys}/devices/**/power_supply/**/{type,online} r,
   @{sys}/devices/platform/ r,
+  @{sys}/devices/platform/*/serio@{int}/id/ r,
   @{sys}/module/i915/{,**} r,
 
   @{PROC}/@{pids}/cmdline r,

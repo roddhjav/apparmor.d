@@ -18,6 +18,15 @@ type Base struct {
 	Paddings    []string
 }
 
+func extractFlag(comment, flag string) (string, bool) {
+	if !strings.Contains(comment, flag) {
+		return comment, false
+	}
+	comment = strings.ReplaceAll(comment, flag+" ", "")
+	comment = strings.ReplaceAll(comment, flag, "")
+	return comment, true
+}
+
 func newBase(rule rule) Base {
 	comment := ""
 	fileInherit, noNewPrivs, optional := false, false, false
@@ -32,19 +41,11 @@ func newBase(rule rule) Base {
 			comment = rule[len(rule)-1].comment
 		}
 	}
-	switch {
-	case strings.Contains(comment, "file_inherit"):
-		fileInherit = true
-		comment = strings.Replace(comment, "file_inherit ", "", 1)
-	case strings.HasPrefix(comment, "no new privs"):
-		noNewPrivs = true
-		comment = strings.Replace(comment, "no new privs ", "", 1)
-	case strings.Contains(comment, "optional:"):
-		optional = true
-		comment = strings.Replace(comment, "optional: ", "", 1)
-	}
+	comment, fileInherit = extractFlag(comment, "file_inherit")
+	comment, noNewPrivs = extractFlag(comment, "no new privs")
+	comment, optional = extractFlag(comment, "optional:")
 	return Base{
-		Comment:     comment,
+		Comment:     strings.TrimRight(comment, " "),
 		NoNewPrivs:  noNewPrivs,
 		FileInherit: fileInherit,
 		Optional:    optional,
@@ -94,7 +95,7 @@ func (r *Base) merge(other Base) bool {
 	r.NoNewPrivs = r.NoNewPrivs || other.NoNewPrivs
 	r.FileInherit = r.FileInherit || other.FileInherit
 	r.Optional = r.Optional || other.Optional
-	if other.Comment != "" {
+	if other.Comment != "" && other.Comment != r.Comment {
 		r.Comment += " " + other.Comment
 	}
 	return true

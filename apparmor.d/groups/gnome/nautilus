@@ -10,6 +10,7 @@ include <tunables/global>
 profile nautilus @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus/session/com.canonical.Unity.LauncherEntry>
+  include <abstractions/bus/session/org.freedesktop.portal.Inhibit>
   include <abstractions/bus/session/org.freedesktop.Tracker3.Miner.Files>
   include <abstractions/bus/session/org.gtk.Private.RemoteVolumeMonitor>
   include <abstractions/bus/system/org.freedesktop.hostname1>
@@ -33,8 +34,8 @@ profile nautilus @{exec_path} flags=(attach_disconnected) {
   #aa:dbus own bus=session name=org.gnome.Nautilus.SearchProvider interface+=org.gnome.Shell.SearchProvider2
   #aa:dbus own bus=session name=org.gnome.Nautilus
 
-  #aa:dbus talk bus=session name=org.freedesktop.impl.portal.FileChooser label=xdg-desktop-portal-gnome
-  #aa:dbus talk bus=session name=org.freedesktop.portal.FileTransfer label=xdg-document-portal
+  #aa:dbus talk bus=session name=org.freedesktop.impl.portal.FileChooser path=/org/freedesktop/portal/desktop label=xdg-desktop-portal-gnome
+  #aa:dbus talk bus=session name=org.freedesktop.portal.FileTransfer path=/org/freedesktop/portal/documents label=xdg-document-portal
   #aa:dbus talk bus=session name=org.gnome.Settings label=gnome-control-center
   #aa:dbus talk bus=session name=org.gtk.MountOperationHandler label=gnome-shell
   #aa:dbus talk bus=session name=org.gtk.Notifications label=gnome-shell
@@ -70,11 +71,6 @@ profile nautilus @{exec_path} flags=(attach_disconnected) {
        interface=org.freedesktop.Application
        member=Open,
 
-  dbus send bus=session path=/org/gnome/Nautilus
-       interface=org.gtk.Application
-       member={CommandLine,DescribeAll}
-       peer=(name=org.gnome.Nautilus, label=nautilus),
-
   @{exec_path} mr,
 
   @{sh_path}                 rix,
@@ -87,6 +83,8 @@ profile nautilus @{exec_path} flags=(attach_disconnected) {
 
   @{open_path}              mrPx -> child-open-any,
 
+  /snap/*/@{uid}/**.@{icon_ext} r,
+  /usr/share/**.@{icon_ext} r,
   /usr/share/nautilus/{,**} r,
   /usr/share/sounds/freedesktop/stereo/*.oga r,
   /usr/share/terminfo/** r,

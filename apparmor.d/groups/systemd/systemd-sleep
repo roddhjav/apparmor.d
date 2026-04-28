@@ -12,10 +12,12 @@ profile systemd-sleep @{exec_path} flags=(attach_disconnected) {
   include <abstractions/bus-system>
   include <abstractions/nameservice-strict>
   include <abstractions/common/systemd>
+  include <abstractions/disks-read>
 
   capability net_admin,
   capability sys_admin,
   capability sys_resource,
+  capability perfmon,
 
   unix bind type=stream addr=@@{udbus}/bus/systemd-sleep/,
   unix bind type=stream addr=@@{udbus}/bus/systemd-sleep/system,
@@ -23,6 +25,8 @@ profile systemd-sleep @{exec_path} flags=(attach_disconnected) {
   @{exec_path} mr,
 
   @{sh_path} mr,
+
+  /var/tmp/#@{int} rw,
 
   @{lib}/systemd/system-sleep/grub2.sleep          rPx,
   @{lib}/systemd/system-sleep/hdparm               rPx,
@@ -33,10 +37,20 @@ profile systemd-sleep @{exec_path} flags=(attach_disconnected) {
 
   /etc/systemd/sleep.conf r,
   /etc/systemd/sleep.conf.d/{,*} r,
+  /etc/os-release r,
+
+  /swap/* r,
 
   @{run}/systemd/private rw,
 
   @{sys}/power/state rw,
+  @{sys}/power/disk w,
+  @{sys}/power/resume rw,
+  @{sys}/power/resume_offset rw,
+  @{sys}/firmware@{efi}/efivars/HibernateLocation-@{uuid} w,
+
+  @{PROC}/sys/fs/nr_open r,
+  @{PROC}/swaps r,
 
   include if exists <local/systemd-sleep>
 }

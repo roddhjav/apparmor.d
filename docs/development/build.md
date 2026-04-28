@@ -54,7 +54,7 @@ Build tasks:
 Directive:
     #aa:dbus own bus=<bus> name=<name> [interface=AARE] [path=AARE]
     #aa:dbus talk bus=<bus> name=<name> label=<profile> [interface=AARE] [path=AARE]
-    #aa:dbus common bus=<bus> name=<name> label=<profile>
+    #aa:dbus see bus=<bus> name=<name> label=<profile>
     #aa:exec [P|U|p|u|PU|pu|] profiles...
     #aa:only filters...
     #aa:exclude filters...
@@ -153,6 +153,16 @@ This task reattaches disconnected paths. See the [Re-attached path](internal.md#
 - For compatibility, non-disconnected profile will have the `@{att}` variable set to `/`
 
 *Enabled when abi >= 4.0*
+
+### **`stacked-dbus`**
+
+Stacked profile name is under the form `A//&B`. The resulting stacked name can be used in peer label rules. However, in dbus rules, 
+
+Resolve peer label variable in dbus rules. It transforms peer label rules set from `label="@{p_dbus_session}"` to `label="A//&B"`.
+
+See: https://gitlab.com/apparmor/apparmor/-/issues/537#note_2699570190
+
+*Enabled for Ubuntu 25.04+*
 
 ### **`hotfix`**
 

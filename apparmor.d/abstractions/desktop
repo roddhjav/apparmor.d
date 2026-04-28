@@ -3,9 +3,12 @@
 # SPDX-License-Identifier: GPL-2.0-only
 
 # Unified minimal abstraction for all UI application regardless of the desktop environment.
-
-# When supported in apparmor, condition will be used in this abstraction to filter
-# resources specific for supported DE.
+#
+# !!! note
+#
+#     When supported in apparmor, condition will be used in this abstraction to filter
+#     resources specific for supported DE.
+#
 
   abi <abi/4.0>,
 
@@ -13,7 +16,9 @@
   include <abstractions/app-indicator>
   include <abstractions/bus-session>
   include <abstractions/bus-system>
+  include <abstractions/bus/session/com.canonical.dbusmenu> #aa:only ubuntu
   include <abstractions/bus/session/org.freedesktop.Application>
+  include <abstractions/bus/session/org.freedesktop.FileManager1>
   include <abstractions/bus/session/org.freedesktop.portal.Desktop>
   include <abstractions/bus/session/org.freedesktop.portal.Settings>
   include <abstractions/desktop-files>
@@ -27,23 +32,21 @@
   include <abstractions/recently-used>
   include <abstractions/themes>
   include <abstractions/user-dirs>
-  include <abstractions/wayland>
+  include <abstractions/wayland-strict>
   include <abstractions/X-strict>
   include <abstractions/xdg-desktop>
+  # include <abstractions/cgroup>
 
-  # if @{DE} == gnome
-
+  # if "gnome" in @{DE} {
     include if exists <abstractions/gnome-base>
 
-  # else if @{DE} == kde
+  # } else if "kde" in @{DE} {
+    include if exists <abstractions/kde-base>
 
-    include <abstractions/kde-base>
+  # } else if "xfce" in @{DE} {
+    include if exists <abstractions/xfce-base>
 
-  # else if @{DE} == xfce
-
-    include <abstractions/xfce-base>
-
-  # end
+  # }
 
   /usr/share/desktop-base/{,**} r,
   /usr/share/hwdata/*.ids r, # FIXME: a bit too wide

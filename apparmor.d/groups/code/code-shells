@@ -1,0 +1,70 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{devtools} += rust-analyzer harper-ls proc-macro-srv
+
+@{name} = code{,-oss} vscode{,-oss}
+@{config} = Code Code?-?OSS Code?-?Insiders
+@{config_dirs} = @{HOME}/.@{name} @{user_config_dirs}/@{config}
+@{ext_dirs} = @{config_dirs}/extensions
+@{lib_dirs} = @{ext_dirs}/
+
+profile code-shells flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/app/code-extension>
+  include <abstractions/bus-system>
+  include <abstractions/consoles>
+  include <abstractions/development>
+  include <abstractions/devrun>
+  include <abstractions/gtk-strict>
+  include <abstractions/nameservice-strict>
+  include <abstractions/shells>
+  include <abstractions/ssl_certs>
+  include <abstractions/wutmp>
+
+  network inet dgram,
+  network inet stream,
+  network inet6 dgram,
+  network inet6 stream,
+  network netlink raw,
+
+  signal send peer=gitstatusd,
+  signal send peer=git,
+
+  ptrace read peer=git,
+  ptrace read peer=child-pager,
+
+  unix type=seqpacket peer=(label=git),
+
+  @{shells_path} mrix,
+
+  # Give glycin higher priority than `@{bin}/bwrap ix` got in the development abs
+  priority=10 @{bin}/bwrap       Px -> :glycin:bwrap,
+
+  # Well known programs used in shells, when we also have specific profiles for
+  # them and want to allow them, event if they need more/different permissions
+  # than what is allowed in this profile.
+  /opt/claude-code/bin/claude    Px,
+
+  owner @{config_dirs}/User/globalStorage/**/ r,
+
+  owner @{user_projects_dirs}/ r,
+  owner @{user_projects_dirs}/** rwkl -> @{user_projects_dirs}/**,
+
+  owner @{user_config_dirs}/git/*config r,
+  owner @{user_config_dirs}/git/ignore r,
+
+  /dev/ptmx rw,
+
+  # file_inherit
+  priority=-1 deny owner @{user_config_dirs}/Code/** rw,
+
+  include if exists <local/code-shells>
+}
+
+# vim:syntax=apparmor

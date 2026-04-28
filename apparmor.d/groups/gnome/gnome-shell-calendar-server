@@ -7,32 +7,24 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{exec_path} = @{lib}/{,gnome-shell/}gnome-shell-calendar-server
-profile gnome-shell-calendar-server @{exec_path} {
+profile gnome-shell-calendar-server @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus-session>
+  include <abstractions/bus-system>
   include <abstractions/dconf-write>
   include <abstractions/gschemas>
   include <abstractions/nameservice-strict>
 
   #aa:dbus own bus=session name=org.gnome.Shell.CalendarServer
 
-  dbus (send receive) bus=session path=/org/gnome/evolution/dataserver/{,**}
-       interface=org.freedesktop.DBus.Properties
-       peer=(name=:*, label=evolution-*),
-
-  dbus (send receive) bus=session path=/org/gnome/evolution/dataserver/{,**}
-       interface=org.gnome.evolution.dataserver.Calendar*
-       peer=(name=:*, label=evolution-*),
-
-  dbus send bus=session path=/org/gnome/evolution/dataserver/SourceManager
-       interface=org.freedesktop.DBus.ObjectManager
-       member=GetManagedObjects
-       peer=(name=:*, label=evolution-source-registry),
+  #aa:dbus talk bus=session name=org.gnome.evolution.dataserver.{Source,Sources@{int}} path=/org/gnome/evolution/dataserver/SourceManager{,/**} label=evolution-source-registry
+  #aa:dbus talk bus=session name=org.gnome.evolution.dataserver.Calendar{,View,Factory} label=evolution-calendar-factory
+  #aa:dbus talk bus=session name=org.gnome.evolution.dataserver.Calendar{,View,Factory} path=/org/gnome/evolution/dataserver/Subprocess{,**} label=evolution-calendar-factory
 
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
-       peer=(name=:*, label=gnome-shell),
+       peer=(name=@{busname}, label="{gnome-shell,gnome-extension}"),
 
   @{exec_path} mr,
 

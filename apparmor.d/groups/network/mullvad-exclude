@@ -1,0 +1,34 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/mullvad-exclude
+profile mullvad-exclude @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/path>
+
+  capability setuid,
+
+  unix (send receive) type=stream peer=(label=mullvad-gui),
+
+  @{exec_path} mr,
+
+  @{bin}/**                     PUx,
+  @{lib}/**                     PUx,
+  @{user_bin_dirs}/**           PUx,
+  /opt/*/**                     PUx,
+  /usr/local/bin/**             PUx,
+  /usr/share/**                 PUx,
+
+  @{sys}/fs/cgroup/net_cls/mullvad-exclusions/cgroup.procs rw,
+
+  @{PROC}/@{pid}/mounts r,
+
+  include if exists <local/mullvad-exclude>
+}
+
+# vim:syntax=apparmor

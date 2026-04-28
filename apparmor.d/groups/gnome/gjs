@@ -10,6 +10,7 @@
 # to run it as executable with a specific script.
 #
 # This currently concerns:
+#
 # - gnome-extension-ding (used to not be started as a module)
 # - org.gnome.ScreenSaver (simple dbus service)
 # - org.gnome.Shell.Extensions (full UI app, requires gnome-strict, graphics, ...)
@@ -29,19 +30,22 @@ profile gjs @{exec_path} flags=(attach_disconnected) {
   include <abstractions/fontconfig-cache-read>
 
   # Only needed by org.gnome.Shell.Extensions
+  include <abstractions/camera>
   include <abstractions/gnome-strict>
   include <abstractions/graphics>
+  include <abstractions/gstreamer>
   include <abstractions/nameservice-strict>
 
   # Only needed by gnome-extension-ding
-  include <abstractions/bus/system/net.hadess.SwitcherooControl>
   include <abstractions/bus/session/org.freedesktop.FileManager1>
   include <abstractions/bus/session/org.gnome.ArchiveManager1>
   include <abstractions/bus/session/org.gnome.Nautilus.FileOperations2>
   include <abstractions/bus/session/org.gtk.Private.RemoteVolumeMonitor>
   include <abstractions/bus/session/org.gtk.vfs.Daemon>
   include <abstractions/bus/session/org.gtk.vfs.Metadata>
-  include <abstractions/gstreamer-registry>
+  include <abstractions/bus/system/net.hadess.SwitcherooControl>
+
+  network netlink raw,
 
   unix type=stream peer=(label=gnome-shell),
 
@@ -60,13 +64,22 @@ profile gjs @{exec_path} flags=(attach_disconnected) {
        interface=org.freedesktop.DBus*
        peer=(name=org.freedesktop.DBus, label="@{p_dbus_system}"),
 
-  #aa:dbus own bus=session name=org.gnome.Shell.Screencast
-  #aa:dbus talk bus=session name=org.gnome.Mutter.ScreenCast label=gnome-shell
-
   #aa:dbus own bus=session name=org.freedesktop.Notifications
+
+  #aa:dbus talk bus=session name=org.gnome.Mutter.ScreenCast label=gnome-shell
+  #aa:dbus talk bus=session name=org.gnome.ArchiveManager1 label=file-roller
+
+  # Only needed by org.gnome.ScreenSaver
   #aa:dbus own bus=session name=org.gnome.ScreenSaver
-  #aa:dbus own bus=session name=org.gnome.Shell.Extensions
+
+  # Only needed by org.gnome.Shell.Extensions
+  #aa:dbus own bus=session name=org.gnome.Shell.Extensions path=/org/gnome/Shell
+
+  # Only needed by org.gnome.Shell.Notifications
   #aa:dbus own bus=session name=org.gnome.Shell.Notifications
+
+  # Only needed by org.gnome.Shell.Screencast
+  #aa:dbus own bus=session name=org.gnome.Shell.Screencast
 
   @{exec_path} mrix,
 
@@ -77,16 +90,19 @@ profile gjs @{exec_path} flags=(attach_disconnected) {
   @{bin}/gnome-control-center  Px,
   @{bin}/nautilus              Px,
 
-  @{gstreamer_path}            Cx -> gstreamer,
-
   /usr/share/gnome-shell/extensions/gsconnect@andyholmes.github.io/{service/daemon.js,gsconnect-preferences} Px,
   @{user_share_dirs}/gnome-shell/extensions/gsconnect@andyholmes.github.io/{service/daemon.js,gsconnect-preferences} Px,
 
   /usr/share/gnome-shell/{,**} r,
-  /usr/share/xkeyboard-config-2/{,**} r,
   /usr/share/thumbnailers/{,**} r,
+  /usr/share/xkeyboard-config-2/{,**} r,
+
+  owner @{desktop_cache_dirs}/nvidia/ w,
+  owner @{desktop_cache_dirs}/nvidia/GLCache/ rw,
+  owner @{desktop_cache_dirs}/nvidia/GLCache/** rwk,
 
   owner @{HOME}/ r,
+  owner @{user_videos_dirs}/{,**} r, # TODO: ScreenCast only
 
   owner @{user_cache_dirs}/gjs_repl_history rw,
   owner @{user_cache_dirs}/gjs_repl_history-@{int}.tmp rw,
@@ -111,64 +127,14 @@ profile gjs @{exec_path} flags=(attach_disconnected) {
   owner @{user_desktop_dirs}/ r,
   owner @{user_templates_dirs}/ r,
 
+  @{sys}/devices/**/uevent r,
+
   owner @{PROC}/@{pid}/mounts r,
   owner @{PROC}/@{pid}/stat r,
+  owner @{PROC}/@{pid}/statm r,
   owner @{PROC}/@{pid}/task/ r,
   owner @{PROC}/@{pid}/task/@{tid}/comm rw,
   owner @{PROC}/@{pid}/task/@{tid}/stat r,
-
-  /dev/ r,
-  /dev/dri/ r,
-
-  deny @{user_share_dirs}/gvfs-metadata/* r,
-
-  profile gstreamer {
-    include <abstractions/base>
-    include <abstractions/bus-session>
-    include <abstractions/bus-system>
-    include <abstractions/bus/session/org.gtk.vfs.MountTracker>
-    include <abstractions/camera>
-    include <abstractions/consoles>
-    include <abstractions/fonts-strict>
-    include <abstractions/graphics>
-    include <abstractions/gstreamer>
-    include <abstractions/media-control>
-    include <abstractions/nameservice-strict>
-    include <abstractions/wayland>
-    include <abstractions/X-strict>
-
-    network (bind create getattr setopt getopt) netlink raw,
-    network receive netlink raw,
-
-    unix (bind listen) type=seqpacket addr=@@{hex},
-
-    dbus receive bus=session path=/
-         interface=org.freedesktop.DBus.Introspectable
-         member=Introspect
-         peer=(name=@{busname}, label=gnome-shell),
-
-    /usr/share/ladspa/rdf/{,**} r,
-    /usr/share/poppler/{,**} r,
-
-    owner @{DESKTOP_HOME}/.nv/ w,
-    owner @{DESKTOP_HOME}/.nv/ComputeCache/ w,
-    owner @{DESKTOP_HOME}/.nv/ComputeCache/** rwk,
-    owner @{desktop_cache_dirs}/nvidia/GLCache/ rw,
-    owner @{desktop_cache_dirs}/nvidia/GLCache/** rwk,
-
-    owner @{desktop_cache_dirs}/nvidia/GLCache/ rw,
-    owner @{desktop_cache_dirs}/nvidia/GLCache/** rwk,
-
-    /tmp/ r,
-    /var/tmp/ r,
-
-    @{sys}/devices/**/uevent r,
-
-          @{PROC}/devices r,
-    owner @{PROC}/@{pid}/task/@{tid}/comm rw,
-
-    include if exists <local/gjs_gstreamer>
-  }
 
   include if exists <local/gjs>
 }

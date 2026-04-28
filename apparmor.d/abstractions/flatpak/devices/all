@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: GPL-2.0-only
 # LOGPROF-SUGGEST: no
 
-# Flatpack 'all' devices gives full access to the system.
+# Flatpack `all` devices gives full access to the system.
 # To limit this, we explicitly list the devices allowed, using the abstractions
 # for common devices.
 #
@@ -20,16 +20,22 @@
   include <abstractions/audio-server>
   include <abstractions/camera>
   include <abstractions/disks-read>
-  include <abstractions/hwmon>
   include <abstractions/media-control>
 
-  @{sys}/class/*/ r,
+  include <abstractions/sys/dmi-full>
 
+  @{sys}/class/*/ r,
+  @{sys}/bus/*/devices/ r,
+
+  @{sys}/devices/ r,
   @{sys}/devices/@{pci_bus}/ r,
   @{sys}/devices/@{pci}/ r,
   @{sys}/devices/** k,
 
-  owner @{PROC}/@{pid}/mountinfo r,
+  @{sys}/devices/system/cpu/cpufreq/ r,
+  @{sys}/devices/system/cpu/cpufreq/policy@{int}/scaling_governor rw,
+
+  owner @{PROC}/@{pid}/uid_map r,
 
   # Allow reading info about the physical mapping of virtual pages
   owner @{PROC}/@{pid}/mem r,

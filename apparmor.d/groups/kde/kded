@@ -7,12 +7,12 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{exec_path} = @{bin}/kded5 @{bin}/kded6
-profile kded @{exec_path} {
+profile kded @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/base>
   include <abstractions/apt> #aa:only apt
   include <abstractions/audio-client>
-  include <abstractions/bus-session>
   include <abstractions/bus/system/org.bluez>
+  include <abstractions/bus/system/org.freedesktop.login1>
   include <abstractions/bus/system/org.freedesktop.UDisks2>
   include <abstractions/consoles>
   include <abstractions/dconf-write>
@@ -73,12 +73,12 @@ profile kded @{exec_path} {
   #aa:dbus talk bus=session name=org.kde.KGlobalAccel path=/ label="{kglobalacceld,kwin_wayland}"
 
   dbus receive bus=system path=/
-       interface=org.kde.kf5auth
+       interface=org.kde.kf{5,6}auth
        member=remoteSignal
        peer=(name=@{busname}, label=kauth-kded-smart-helper),
 
   dbus send bus=system path=/
-       interface=org.kde.kf5auth
+       interface=org.kde.kf{5,6}auth
        member=performAction
        peer=(name="{@{busname},org.kde.kded.smart}", label=kauth-kded-smart-helper),
 
@@ -124,9 +124,11 @@ profile kded @{exec_path} {
 
   / r,
   @{efi}/ r,
+  /home/ r,
 
   owner /var/lib/update-manager/meta-release-lts rw,
 
+  owner @{MOUNTS}/ r,
   owner @{HOME}/ r,
   owner @{HOME}/.gtkrc-2.0 rw,
 
@@ -156,6 +158,8 @@ profile kded @{exec_path} {
   owner @{user_config_dirs}/Trolltech.conf.lock rwk,
   owner @{user_config_dirs}/Trolltech.conf{,.@{rand6}} rwl,
   owner @{user_config_dirs}/xsettingsd/{,**} rw,
+  owner @{user_config_dirs}/kcmfonts r,
+  owner @{user_config_dirs}/Kvantum/{,**} r,
 
   owner @{user_share_dirs}/icc/{,edid-*} r,
   owner @{user_share_dirs}/kcookiejar/#@{int} rw,
@@ -168,12 +172,12 @@ profile kded @{exec_path} {
   owner @{user_share_dirs}/remoteview/ r,
   owner @{user_share_dirs}/services5/{,**} r,
   owner @{user_share_dirs}/user-places.xbel r,
+  owner @{user_share_dirs}/aurorae/themes/Layan/* r,
 
   owner @{user_state_dirs}/#@{int} rw,
   owner @{user_state_dirs}/plasmashellstaterc{,*} rwlk,
 
         @{run}/mount/utab r,
-        @{run}/udev/data/c189:@{int} r,                # for /dev/bus/usb/**
         @{run}/user/@{uid}/gvfs/ r,
   owner @{run}/user/@{uid}/#@{int} rw,
   owner @{run}/user/@{uid}/kded{5,6}*kioworker.socket rwl,
@@ -183,9 +187,11 @@ profile kded @{exec_path} {
   owner @{tmp}/plasma-csd-generator.@{rand6}/{,**} rw,
 
   @{sys}/class/leds/ r,
+  @{sys}/devices/**/input@{int}/{,**/}uevent r,
 
-  @{run}/udev/data/b8:@{int} r,       # for /dev/sd*
-  @{run}/udev/data/b259:@{int} r,     # Block Extended Major
+  @{run}/udev/data/b8:@{int} r,           # for /dev/sd*
+  @{run}/udev/data/b254:@{int} r,         # for /dev/zram*
+  @{run}/udev/data/b259:@{int} r,         # Block Extended Major
 
         @{PROC}/ r,
         @{PROC}/@{pids}/cmdline/ r,

@@ -25,6 +25,7 @@ profile vlc @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/screensaver>
   include <abstractions/secrets-service>
   include <abstractions/ssl_certs>
+  include <abstractions/thumbnails-cache-read>
   include <abstractions/user-download-strict>
 
   network inet dgram,
@@ -37,6 +38,7 @@ profile vlc @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
   @{open_path}           rPx -> child-open-help,
   @{bin}/xdg-screensaver rPx,
+  @{bin}/proxy            Cx -> proxy,
 
   /usr/share/vlc/{,**} r,
 
@@ -69,13 +71,6 @@ profile vlc @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
   @{run}/mount/utab r,
 
-  @{sys}/devices/virtual/dmi/id/board_name r,
-  @{sys}/devices/virtual/dmi/id/board_vendor r,
-  @{sys}/devices/virtual/dmi/id/board_version r,
-  @{sys}/devices/virtual/dmi/id/product_name r,
-  @{sys}/devices/virtual/dmi/id/product_version r,
-  @{sys}/devices/virtual/dmi/id/sys_vendor r,
-
         /dev/shm/#@{int} rw,
         /dev/snd/ r,
         /dev/tty r,
@@ -84,6 +79,15 @@ profile vlc @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   # Silencer
   deny @{lib}/@{multiarch}/vlc/{,**} w,
   deny @{user_share_dirs}/gvfs-metadata/{*,} r,
+
+  profile proxy {
+    include <abstractions/base>
+    include <abstractions/dconf-write>
+
+    @{bin}/proxy mr,
+
+    include if exists <local/vlc_proxy>
+  }
 
   include if exists <local/vlc>
 }

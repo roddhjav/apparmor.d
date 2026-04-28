@@ -1,0 +1,51 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/plasma-login-greeter
+profile plasma-login-greeter @{exec_path} flags=(attach_disconnected,mediate_deleted) {
+  include <abstractions/base>
+  include <abstractions/bus/system/org.freedesktop.login1>
+  include <abstractions/bus/system/org.freedesktop.UDisks2>
+  include <abstractions/graphics>
+  include <abstractions/kde-strict>
+  include <abstractions/nameservice-strict>
+  include <abstractions/upower-observe>
+
+  network netlink raw,
+
+  dbus send bus=system path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member=ListActivatableNames
+       peer=(name=org.freedesktop.DBus, label="@{p_dbus_system}"),
+
+  @{exec_path} mr,
+
+  /usr/share/plasma/{,**} r,
+  /usr/share/wayland-sessions/{,*.desktop} r,
+
+  @{etc_ro}/login.defs r,
+  @{etc_ro}/login.defs.d/{,*} r,
+  /etc/fstab r,
+
+  /var/lib/AccountsService/icons/@{user} r,
+
+  / r,
+
+  owner @{SDDM_HOME}/** rw,
+  owner @{sddm_cache_dirs}/** mrwkl -> @{sddm_cache_dirs}/**,
+
+  owner @{tmp}/plasmalogin--@{rand6} rw,
+
+  @{sys}/devices/**/uevent r,
+
+  owner @{PROC}/@{pid}/mountinfo r,
+
+  include if exists <local/plasma-login-greeter>
+}
+
+# vim:syntax=apparmor

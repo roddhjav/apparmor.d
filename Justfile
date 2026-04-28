@@ -229,7 +229,11 @@ build-dpkg: (_ensure_pkgdest)
 	if dpkg-vendor --is Ubuntu; then
 		suffix="ubuntu1~$(lsb_release -sr)"
 	elif dpkg-vendor --is Debian; then
-		suffix="1+deb$(lsb_release -sr)"
+		if [[ "$(lsb_release -sc)" == "forky" ]]; then
+			suffix="1+deb14"
+		else
+			suffix="1+deb$(lsb_release -sr)"
+		fi
 	fi
 	dch --urgency=medium --newversion="$version-$suffix" --distribution=`lsb_release -sc` --controlmaint "Release $version-$suffix"
 	dpkg-buildpackage -b -d {{ if sign == "true" { "--sign-key=" + gpgkey } else { "--no-sign" } }}
@@ -297,15 +301,20 @@ check:
 man:
 	@pandoc -t man -s -o share/man/man8/aa-log.8 share/man/man8/aa-log.md
 
+# Generate abstractions and tunable documentation from the source
+[group('docs')]
+docstring:
+	@bash dists/docstring.sh
+
 # Build the documentation
 [group('docs')]
 docs:
-	@ENABLED_GIT_REVISION_DATE=false MKDOCS_OFFLINE=true mkdocs build --strict
+	@ENABLED_GIT_REVISION_DATE=false MKDOCS_OFFLINE=true zensical build --strict
 
 # Serve the documentation
 [group('docs')]
 serve:
-	@ENABLED_GIT_REVISION_DATE=false MKDOCS_OFFLINE=false mkdocs serve
+	@ENABLED_GIT_REVISION_DATE=false MKDOCS_OFFLINE=false zensical serve --open
 
 # Remove all build artifacts
 clean:
@@ -506,7 +515,7 @@ autopkgtest osinfo:
 autopkgtest-update dist release:
 	just up {{dist}}{{release}} test || true
 	just package {{dist}} {{release}} test
-	scp {{sshopt}} {{pkgdest}}/{{dist}}/{{release}}/{{pkgname}}_*.deb \
+	scp {{sshopt}} {{pkgdest}}/{{pkgname}}_*.deb \
 		{{username}}@`just _get_ip {{dist}}{{release}} test`:/home/{{username}}/Projects/
 	ssh {{sshopt}} {{username}}@`just _get_ip {{dist}}{{release}} test` \
 		sudo dpkg -i /home/{{username}}/Projects/{{pkgname}}_*.deb
@@ -564,23 +573,24 @@ tests-run osinfo flavor name="": (tests-resync osinfo flavor)
 # Get the current apparmor.d release version
 [group('version')]
 version:
-	@bash -c 'source PKGBUILD && echo "$pkgver"'
+	@bash -c 'source PKGBUILD && echo "${pkgver%~dev}"'
 
 # Create a new version number from the current release
 [group('version')]
 version-new:
-	@bash -c 'source PKGBUILD && awk -v ver="$pkgver" "BEGIN {printf \"%.4f\n\", ver + 0.0001}"'
+	@bash -c 'source PKGBUILD && IFS="." read -r major minor patch <<< "$pkgver" && echo "${major}.$(( minor + 1 )).0"'
 
 # Create a new release
 [group('release')]
-release: tests lint commit archive publish
+release: clean commit archive publish repo
 
-# Write the new release version to package files & commit
+# Write the new release version to package files, commit and tag it
 [group('release')]
 commit:
 	#!/usr/bin/env bash
 	set -eu -o pipefail
 	version=`just version-new`
+	git restore debian/changelog
 	cat > debian/changelog.tmp <<-EOF
 		{{pkgname}} (${version}-1) stable; urgency=medium
 
@@ -594,7 +604,7 @@ commit:
 	sed -i "s/^pkgver=.*/pkgver=$version/" PKGBUILD
 	sed -i "s/^Version:.*/Version:        $version/" "dists/{{pkgname}}.spec"
 	git add PKGBUILD "dists/{{pkgname}}.spec" debian/changelog
-	git commit -S -m "Release version $version"
+	git commit -S -m "Release {{pkgname}} v$version"
 	git tag -a "v$version" -m "{{pkgname}} v$version" --local-user={{gpgkey}}
 
 # Create a release archive
@@ -620,14 +630,14 @@ publish:
 	owner="roddhjav"
 	version=`just version`
 	git push origin main --tags
-	gh release create "v$version" --notes-from-tag --repo $owner/{{pkgname}}
+	gh release create "v$version" --notes "" --repo $owner/{{pkgname}}
 	gh release upload "v$version" --repo $owner/{{pkgname}} \
-		{{pkgdest}}/{{pkgname}}-$version.tar.gz \
-		{{pkgdest}}/{{pkgname}}-$version.tar.gz.asc
+		{{pkgdest}}/release/{{pkgname}}-$version.tar.gz \
+		{{pkgdest}}/release/{{pkgname}}-$version.tar.gz.asc
 
 # Create & upload new release packages to the repositories
 [group('release')]
-repo path="../../Packages":
+repo path="../../../Packages":
 	just --justfile {{path}}/pkgbuilds/Justfile publish {{pkgname}} `just version`
 	just --justfile {{path}}/repo.pujol.io/Justfile publish {{pkgname}} `just version`
 

@@ -6,11 +6,15 @@
 
 # This abstraction is for chromium based application. Chromium based browsers
 # need to use abstractions/app/chromium instead.
-
+#
 # It works as a *function* and requires a variable to be provided as *arguments*
 # and set in the header of the calling profile. Example:
 #
-# @{domain} = org.chromium.Chromium
+# !!! quote ""
+#
+#     ```
+#     @{domain} = org.chromium.Chromium
+#     ```
 #
 
   abi <abi/4.0>,
@@ -24,23 +28,26 @@
   # drops CAP_SYS_ADMIN we are ok.
   capability sys_admin,
 
-  # All of these are for sanely dropping from root and chrooting
-  capability setgid, # If kernel.unprivileged_userns_clone = 1
-  capability setuid, # If kernel.unprivileged_userns_clone = 1
+  # Needed for sanely dropping from root and chrooting
+  capability sys_admin,
   capability sys_chroot,
   capability sys_ptrace,
+
+  # Needed with sysctl_kernel_unprivileged_userns_clone = 1
+  audit capability setgid,
+  audit capability setuid,
 
   owner @{user_share_dirs}/.@{domain}.@{rand6} rw,
 
         @{tmp}/ r,
-  owner @{tmp}/.@{domain}.@{rand6} rw,
-  owner @{tmp}/.@{domain}.@{rand6}/ rw,
-  owner @{tmp}/.@{domain}.@{rand6}/*.@{image_ext} rw,
-  owner @{tmp}/.@{domain}.@{rand6}/SingletonCookie rw,
-  owner @{tmp}/.@{domain}.@{rand6}/SingletonSocket rw,
-  owner @{tmp}/.@{domain}.scoped_dir.@{rand6}/ rw,
-  owner @{tmp}/.@{domain}.scoped_dir.@{rand6}/SingletonCookie rw,
-  owner @{tmp}/.@{domain}.scoped_dir.@{rand6}/SingletonSocket rw,
+  owner @{tmp}/{,.}@{domain}.@{rand6} rw,
+  owner @{tmp}/{,.}@{domain}.@{rand6}/ rw,
+  owner @{tmp}/{,.}@{domain}.@{rand6}/*.@{image_ext} rw,
+  owner @{tmp}/{,.}@{domain}.@{rand6}/SingletonCookie rw,
+  owner @{tmp}/{,.}@{domain}.@{rand6}/SingletonSocket rw,
+  owner @{tmp}/{,.}@{domain}.scoped_dir.@{rand6}/ rw,
+  owner @{tmp}/{,.}@{domain}.scoped_dir.@{rand6}/SingletonCookie rw,
+  owner @{tmp}/{,.}@{domain}.scoped_dir.@{rand6}/SingletonSocket rw,
   owner @{tmp}/scoped_dir@{rand6}/ rw,
   owner @{tmp}/scoped_dir@{rand6}/SingletonCookie rw,
   owner @{tmp}/scoped_dir@{rand6}/SingletonSocket rw,
@@ -58,7 +65,7 @@
   @{sys}/devices/virtual/dmi/id/product_name r,
   @{sys}/devices/virtual/dmi/id/sys_vendor r,
 
-  # If kernel.unprivileged_userns_clone = 1
+  # Needed with sysctl_kernel_unprivileged_userns_clone = 1
   owner @{PROC}/@{pid}/setgroups w,
   owner @{PROC}/@{pid}/gid_map w,
   owner @{PROC}/@{pid}/uid_map w,

@@ -17,6 +17,7 @@ profile xdg-desktop-portal @{exec_path} flags=(attach_disconnected) {
   include <abstractions/bus/system/org.freedesktop.RealtimeKit1>
   include <abstractions/consoles>
   include <abstractions/dconf-write>
+  include <abstractions/deny-sensitive-home>
   include <abstractions/desktop-files>
   include <abstractions/devices-usb-read>
   include <abstractions/gschemas>
@@ -24,6 +25,7 @@ profile xdg-desktop-portal @{exec_path} flags=(attach_disconnected) {
   include <abstractions/nameservice-strict>
   include <abstractions/network-manager-observe>
   include <abstractions/power-profiles>
+  include <abstractions/sys/dmi>
   include <abstractions/thumbnails-cache-read>
   include <abstractions/trash-strict>
   include <abstractions/user-download-strict>
@@ -33,6 +35,7 @@ profile xdg-desktop-portal @{exec_path} flags=(attach_disconnected) {
   network netlink raw,
   network inet dgram,
   network inet6 dgram,
+  network inet dgram,
 
   ptrace read,
 
@@ -45,54 +48,73 @@ profile xdg-desktop-portal @{exec_path} flags=(attach_disconnected) {
 
   #aa:dbus own bus=session name=org.freedesktop.portal interface+=org.freedesktop.impl.portal
 
+  dbus receive bus=session path=/org/freedesktop/portal/desktop
+       interface=org.freedesktop.impl.portal.Settings
+       member=SettingChanged
+       peer=(name=@{busname}),
+
   # Receive registertration of from anyone
   dbus receive bus=session path=/org/freedesktop/portal/desktop
        interface=org.freedesktop.host.portal.Registry
        member=Register
        peer=(name=@{busname}),
 
-  dbus send bus=session path=/org/freedesktop/portal/desktop/session/1_125/gtk904232872
-       interface=org.freedesktop.impl.portal.Session
-       member=Close
-       peer=(name=@{busname}, label=xdg-desktop-portal-gtk),
-
   #aa:dbus own bus=session name=org.freedesktop.background.Monitor path=/org/freedesktop/background/monitor
+  #aa:dbus own bus=session name=org.freedesktop.impl.portal path=/org/freedesktop/portal/desktop{,/**}
 
   #aa:dbus talk bus=session name=org.freedesktop.FileManager1 label=nautilus
-  #aa:dbus talk bus=session name=org.freedesktop.impl.portal.FileChooser label=xdg-desktop-portal-gnome
-  #aa:dbus talk bus=session name=org.freedesktop.impl.portal.GlobalShortcuts path=/org/freedesktop/portal/desktop label=xdg-desktop-portal-gnome
-  #aa:dbus talk bus=session name=org.freedesktop.impl.portal.Inhibit label=xdg-desktop-portal-gtk
   #aa:dbus talk bus=session name=org.freedesktop.portal.Documents path=/org/freedesktop/portal/documents label=xdg-document-portal
+
+  dbus send bus=session path=/org/freedesktop/portal/desktop
+       interface=org.freedesktop.impl.portal.Secret
+       member=RetrieveSecret
+       peer=(name=@{busname}, label=gnome-keyring-daemon),
 
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
-       peer=(name=:*, label=gnome-shell),
+       peer=(name=@{busname}, label="{gnome-shell,gnome-extension}"),
+
+  # FIXME: This should have been included in the talk directive
+  dbus send bus=session path=/org/freedesktop/FileManager1
+       interface=org.freedesktop.FileManager1
+       member=ShowItems
+       peer=(name=org.freedesktop.FileManager1),
+
+  dbus send bus=session path=/org/gnome/Nautilus
+       interface=org.freedesktop.Application
+       member=Open
+       peer=(name=org.gnome.Nautilus),
 
   @{exec_path} mr,
 
   @{sh_path}         rix,
   @{bin}/nautilus    rPx,
 
-  @{bin}/kreadconfig{,5}                  rPx,
-  @{lib}/xdg-desktop-portal-validate-icon rPx,
+  @{bin}/browserpass                      rPx,
+  @{bin}/kreadconfig{,5,6}                rPx,
   @{lib}/browserpass/browserpass-native   rPx,
+  @{lib}/xdg-desktop-portal-validate-icon rPx,
   @{open_path}                           mrPx -> child-open-any,
-
-        / r,
-  @{att}/ r,
-  @{att}/.flatpak-info r,
-  /att/**/ r,
 
   /usr/share/xdg-desktop-portal/** r,
 
   /etc/sysconfig/proxy r,
+
+        / r,
+  /att/**/ r,
+  @{att}/ r,
+  @{att}/.flatpak-info r,
+
+  owner /var/lib/gdm/seat@{int}/config/evolution/sources/ r,
+  owner /var/lib/gdm/seat@{int}/config/evolution/sources/system-proxy.source r,
 
         @{GDM_HOME}/greeter-dconf-defaults r,
   owner @{gdm_config_dirs}/user-dirs.dirs r,
 
   # The portal can receive any user file as it is a file chooser for UI app.
   owner @{HOME}/** r,
+  owner @{HOME}/.var/app/*/{,**} rw,
 
         @{user_config_dirs}/kioslaverc r,
   owner @{user_config_dirs}/xdg-desktop-portal/* r,
@@ -101,13 +123,10 @@ profile xdg-desktop-portal @{exec_path} flags=(attach_disconnected) {
   owner @{tmp}/gtkprint@{rand6} r,
   owner @{tmp}/icon@{rand6} rw,
 
+  owner @{att}@{run}/flatpak/doc/** r,
   owner @{run}/user/@{uid}/.flatpak/{,*/*} r,
 
   @{sys}/devices/**/uevent r,
-  @{sys}/devices/virtual/dmi/id/bios_vendor r,
-  @{sys}/devices/virtual/dmi/id/board_vendor r,
-  @{sys}/devices/virtual/dmi/id/product_name r,
-  @{sys}/devices/virtual/dmi/id/sys_vendor r,
 
         @{PROC}/ r,
         @{PROC}/@{pids}/status r,

@@ -12,14 +12,18 @@ profile boltd @{exec_path} flags=(attach_disconnected) {
   include <abstractions/bus-system>
   include <abstractions/bus/system/org.freedesktop.PolicyKit1>
   include <abstractions/nameservice-strict>
+  include <abstractions/sys/dmi>
 
   capability net_admin,
 
   network netlink raw,
 
+  #aa:dbus own bus=system name=org.freedesktop.bolt1 path=/org/freedesktop/bolt
   #aa:dbus own bus=system name=org.freedesktop.bolt
 
   @{exec_path} mr,
+
+  / r,
 
   /var/lib/boltd/{,**} rw,
 
@@ -50,9 +54,10 @@ profile boltd @{exec_path} flags=(attach_disconnected) {
   @{sys}/devices/@{pci}/domain@{int}/security r,
   @{sys}/devices/platform/**/uevent r,
   @{sys}/devices/platform/*/wmi_bus/wmi_bus-*/@{uuid}/force_power rw,
-  @{sys}/devices/virtual/dmi/id/product_name r,
-  @{sys}/devices/virtual/dmi/id/product_version r,
-  @{sys}/devices/virtual/dmi/id/sys_vendor r,
+
+  #aa:only test
+  owner /tmp/tmp@{rand8}/{,**} rw,
+  owner /tmp/umockdev.@{rand6}/{,**} rw,
 
   include if exists <local/boltd>
 }

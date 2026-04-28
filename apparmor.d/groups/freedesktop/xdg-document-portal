@@ -13,7 +13,8 @@ profile xdg-document-portal @{exec_path} flags=(attach_disconnected) {
   include <abstractions/bus/session/org.freedesktop.impl.portal.PermissionStore>
   include <abstractions/consoles>
   include <abstractions/deny-sensitive-home>
-  include <abstractions/freedesktop.org>
+  include <abstractions/desktop-files>
+  include <abstractions/mime>
   include <abstractions/nameservice-strict>
 
   capability sys_admin,
@@ -36,7 +37,7 @@ profile xdg-document-portal @{exec_path} flags=(attach_disconnected) {
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
-       peer=(name=@{busname}, label=gnome-shell),
+       peer=(name=@{busname}, label="{gnome-shell,gnome-extension}"),
 
   @{exec_path} mr,
 
@@ -49,16 +50,20 @@ profile xdg-document-portal @{exec_path} flags=(attach_disconnected) {
   owner @{att}/.flatpak-info r,
 
   owner @{HOME}/ r,
-  owner @{HOME}/*/{,**} rw,
+  owner @{HOME}/** rw,
   owner @{MOUNTS}/ r,
+  owner @{MOUNTS}/** rw,
 
   owner @{user_share_dirs}/flatpak/db/documents r,
   owner @{user_share_dirs}/Trash/files/** r,
 
+  owner @{run}/user/@{uid}/.flatpak/@{int}/bwrapinfo.json r,
   owner @{run}/user/@{uid}/doc/ rw,
 
+        @{PROC}/ r,
         @{PROC}/1/cgroup r,
         @{PROC}/sys/fs/pipe-max-size r,
+  owner @{PROC}/@{pid}/ r,
   owner @{PROC}/@{pid}/cgroup r,
   owner @{PROC}/@{pid}/fd/ r,
 
@@ -73,7 +78,7 @@ profile xdg-document-portal @{exec_path} flags=(attach_disconnected) {
     capability dac_override,
     capability setuid,
 
-    mount options=(rw, rprivate) -> /,
+    mount options=(rw, make-rprivate) /,
     mount options=(rw, rbind) @{run}/user/@{uid}/ -> /,
     mount fstype=fuse.portal -> @{run}/user/@{uid}/doc/,
 

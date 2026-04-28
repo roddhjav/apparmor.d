@@ -12,11 +12,11 @@ profile kde-powerdevil @{exec_path} flags=(attach_disconnected mediate_deleted) 
   include <abstractions/base>
   include <abstractions/audio-client>
   include <abstractions/bus-session>
-  include <abstractions/bus/system/org.freedesktop.login1>
+  include <abstractions/bus/system/org.freedesktop.PolicyKit1>
   include <abstractions/fontconfig-cache-read>
   include <abstractions/graphics>
-  include <abstractions/kde-strict>
   include <abstractions/ibus-strict>
+  include <abstractions/kde-strict>
   include <abstractions/nameservice-strict>
   include <abstractions/network-manager-observe>
   include <abstractions/upower-observe>
@@ -26,13 +26,14 @@ profile kde-powerdevil @{exec_path} flags=(attach_disconnected mediate_deleted) 
   network netlink raw,
 
   #aa:dbus own bus=system name=org.freedesktop.Policy.Power
-  #aa:dbus own bus=system name=org.kde.kf5auth path=/
+  #aa:dbus own bus=system name=org.kde.kf[56]auth path=/
 
   #aa:dbus own bus=session name=local.org_kde_powerdevil
   #aa:dbus own bus=session name=org.freedesktop.PowerManagement
   #aa:dbus own bus=session name=org.kde.Solid.PowerManagement
 
   #aa:dbus talk bus=session name=org.kde.KWin path=/ label="kwin_{wayland,x11}"
+  #aa:dbus talk bus=system name=org.freedesktop.login1 label="@{p_systemd_logind}"
 
   @{exec_path} mrix,
 
@@ -48,6 +49,7 @@ profile kde-powerdevil @{exec_path} flags=(attach_disconnected mediate_deleted) 
   /etc/fstab r,
   /etc/machine-id r,
 
+  / r,
   owner @{HOME}/ r,
 
   owner @{user_cache_dirs}/ddcutil/* rw,
@@ -87,6 +89,7 @@ profile kde-powerdevil @{exec_path} flags=(attach_disconnected mediate_deleted) 
   @{sys}/devices/@{pci}/i2c-*/{,**/}name r,
   @{sys}/devices/@{pci}/i2c-*/**/dev r,
   @{sys}/devices/**/ r,
+  @{sys}/devices/**/uevent r,
   @{sys}/devices/i2c-*/name r,
   @{sys}/devices/platform/**/i2c-*/**/name r,
   @{sys}/devices/platform/*/i2c-*/name r,

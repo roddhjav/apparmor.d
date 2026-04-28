@@ -11,22 +11,30 @@
 # *function* and requires some variables to be provided as *arguments* and set
 # in the header of the calling profile. Example:
 #
-# @{name} = spotify
-# @{domain} = org.chromium.chromium
-# @{lib_dirs} = /opt/@{name}/ /usr/share/@{name}/
-# @{config_dirs} = @{user_config_dirs}/@{name}
-# @{cache_dirs} = @{user_cache_dirs}/@{name}
+# !!! quote ""
+#
+#     ```
+#     @{name} = spotify
+#     @{domain} = org.chromium.chromium
+#     @{lib_dirs} = /opt/@{name}/ /usr/share/@{name}/
+#     @{config_dirs} = @{user_config_dirs}/@{name}
+#     @{cache_dirs} = @{user_cache_dirs}/@{name}
+#     ```
 #
 
   abi <abi/4.0>,
 
   include <abstractions/common/chromium>
+  include <abstractions/common/xdg>
   include <abstractions/dconf-write>
   include <abstractions/desktop>
   include <abstractions/fontconfig-cache-read>
   include <abstractions/graphics>
   include <abstractions/nameservice-strict>
   include <abstractions/ssl_certs>
+
+  @{bin}/xdg-mime rix,
+  @{bin}/xdg-settings rix,
 
   @{bin}/electron rix,
   @{bin}/electron@{int} rix,
@@ -44,14 +52,20 @@
   /etc/@{name}/{,**} r,
 
   owner @{config_dirs}/ rw,
-  owner @{config_dirs}/** rwlk -> @{config_dirs}/**,
+  owner @{config_dirs}/** rwlk,
 
   owner @{cache_dirs}/ rw,
-  owner @{cache_dirs}/** rwlk -> @{cache_dirs}/**,
+  owner @{cache_dirs}/** rwlk,
+
+  # For direct integration with xdg-mime and xdg-settings
+  owner @{user_config_dirs}/mimeapps.list{,.new} rw,
+  owner @{user_config_dirs}/xfce4/helpers.rc{,.@{rand6}} rw,
+  owner @{user_share_dirs}/applications/{,**} rw,
 
   owner @{user_config_dirs}/electron-flags.conf r,
+  owner @{user_config_dirs}/electron@{u8}-flags.conf r,
 
-  owner @{tmp}/.@{domain}.chrome_*.@{rand6}/{,**} rw,
+  owner @{tmp}/.@{domain}.*/{,**} rw,
 
   @{att}@{run}/systemd/inhibit/@{int}.ref rw,
 
@@ -63,9 +77,20 @@
   owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/*-@{int}.scope/memory.high r,
   owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/*-@{int}.scope/memory.max r,
   owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/cpu.max r,
+  owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/session.slice/cpu.max r,
 
   # This is an information leak
   owner @{PROC}/@{pid}/mountinfo r,
+
+  # Provide statistical information about our own and other processes/threads
+        @{PROC}/@{pid}/stat r,
+        @{PROC}/@{pid}/task/@{tid}/status r,
+  owner @{PROC}/@{pid}/statm r,
+  owner @{PROC}/@{pid}/task/ r,
+  owner @{PROC}/@{pid}/task/@{tid}/stat r,
+
+  # Allow listing file descriptors for resource monitoring
+  owner @{PROC}/@{pid}/fd/ r,
 
   # Allow reading of smaps_rollup, which is a summary of the memory use of a process
   owner @{PROC}/@{pid}/smaps_rollup r,
@@ -74,39 +99,54 @@
   owner @{PROC}/@{pid}/oom_adj r,
   owner @{PROC}/@{pid}/oom_score_adj r,
 
+  # This allows raising the OOM score of other processes owned by the user.
+  owner @{PROC}/@{pid}/oom_score_adj w,
+
   # Per man(5) proc, the kernel enforces that a thread may only modify its comm
   # value or those in its thread group.
   owner @{PROC}/@{pid}/task/@{tid}/comm rw,
 
         @{PROC}/ r,
-        @{PROC}/@{pid}/stat r,
-        @{PROC}/@{pid}/task/@{tid}/status r,
         @{PROC}/sys/fs/inotify/max_user_watches r,
         @{PROC}/sys/kernel/yama/ptrace_scope r,
         @{PROC}/version r,
         @{PROC}/version_signature r,
   owner @{PROC}/@{pid}/cgroup r,
   owner @{PROC}/@{pid}/cmdline r,
-  owner @{PROC}/@{pid}/fd/ r,
-  owner @{PROC}/@{pid}/statm r,
-  owner @{PROC}/@{pid}/task/ r,
-  owner @{PROC}/@{pid}/task/@{tid}/stat r,
-
-  # gvfs-metadata contains user-specific data that should not be readable by apps
-  deny @{user_share_dirs}/gvfs-metadata/* r,
-
-  # This allows raising the OOM score of other processes owned by the user.
-  deny owner @{PROC}/@{pid}/oom_score_adj w,
 
   profile crashpad_handler flags=(attach_disconnected) {
     include <abstractions/base>
+    include <abstractions/nameservice-strict>
+
+    signal send peer=@{name},
+
+    ptrace read peer=@{name},
+    ptrace trace peer=@{name},
 
     unix (send receive) type=seqpacket peer=(label=@{name}),
+    unix (send receive) type=seqpacket, # peer=(label=---),
 
     @{lib}/electron@{int}/chrome_crashpad_handler mr,
     @{lib_dirs}/chrome_crashpad_handler mr,
 
-    owner @{config_dirs}/Crashpad/{,**} rw,
+    owner @{config_dirs}/Crashpad/{,**} rwk,
+
+    @{sys}/devices/system/cpu/cpufreq/policy@{int}/scaling_cur_freq r,
+    @{sys}/devices/system/cpu/cpufreq/policy@{int}/scaling_max_freq r,
+
+          @{PROC}/@{pid}/maps r,
+          @{PROC}/@{pid}/status r,
+          @{PROC}/sys/kernel/yama/ptrace_scope r,
+    owner @{PROC}/@{pid}/fd/ r,
+    owner @{PROC}/@{pid}/mem r,
+    owner @{PROC}/@{pid}/stat r,
+    owner @{PROC}/@{pid}/task/ r,
+    owner @{PROC}/@{pid}/task/@{tid}/comm r,
+
+    deny network inet dgram,
+    deny network inet stream,
+    deny network inet6 dgram,
+    deny network inet6 stream,
 
     include if exists <abstractions/common/electron_crashpad_handler.d>
   }

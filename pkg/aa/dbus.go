@@ -100,7 +100,28 @@ func (r *Dbus) Validate() error {
 	if err := validateValues(r.Kind(), "access", r.Access); err != nil {
 		return fmt.Errorf("%s: %w", r, err)
 	}
-	return validateValues(r.Kind(), "bus", []string{r.Bus})
+	if err := validateValues(r.Kind(), "bus", []string{r.Bus}); err != nil {
+		return fmt.Errorf("%s: %w", r, err)
+	}
+
+	// Bind access cannot have member, interface, or path modifiers
+	if len(r.Access) == 1 && r.Access[0] == "bind" {
+		if r.Member != "" {
+			return fmt.Errorf("dbus bind cannot have member modifier")
+		}
+		if r.Interface != "" {
+			return fmt.Errorf("dbus bind cannot have interface modifier")
+		}
+	}
+
+	// Eavesdrop access cannot have non-bus modifiers
+	if len(r.Access) == 1 && r.Access[0] == "eavesdrop" {
+		if r.Name != "" || r.Path != "" || r.Interface != "" || r.Member != "" ||
+			r.PeerName != "" || r.PeerLabel != "" {
+			return fmt.Errorf("dbus eavesdrop cannot have non-bus modifiers")
+		}
+	}
+	return nil
 }
 
 func (r *Dbus) Compare(other Rule) int {

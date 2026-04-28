@@ -7,8 +7,11 @@ package aa
 import (
 	"embed"
 	"fmt"
+	"regexp"
 	"strings"
 	"text/template"
+
+	"github.com/roddhjav/apparmor.d/pkg/util"
 )
 
 var (
@@ -18,8 +21,8 @@ var (
 	// The current indentation level
 	IndentationLevel = 0
 
-	//go:embed templates/*.j2
-	//go:embed templates/rule/*.j2
+	//go:embed templates/*.gotmpl
+	//go:embed templates/rule/*.gotmpl
 	tmplFiles embed.FS
 
 	// The functions available in the template
@@ -83,51 +86,98 @@ var (
 	}
 	ruleWeights = generateWeights(ruleAlphabet)
 
-	// The order the apparmor file rules should be sorted
-	fileAlphabet = []string{
-		"@{exec_path}",        // 1. entry point
-		"@{sh_path}",          // 2.1 shells
-		"@{coreutils_path}",   // 2.2 coreutils
-		"@{open_path}",        // 2.3 binaries paths
-		"@{bin}",              // 2.3 binaries
-		"@{lib}",              // 2.4 libraries
-		"/opt",                // 2.5 opt binaries & libraries
-		"/usr/share",          // 3. shared data
-		"/etc",                // 4. system configuration
-		"/var",                // 5.1 system read/write data
-		"/boot",               // 5.2 boot files
-		"/home",               // 6.1 user data
-		"@{HOME}",             // 6.2 home files
-		"@{user_cache_dirs}",  // 7.1 user caches
-		"@{user_config_dirs}", // 7.2 user config
-		"@{user_share_dirs}",  // 7.3 user shared
-		"/tmp",                // 8.1 Temporary data
-		"@{tmp}",              // 8.1. User temporary data
-		"/dev/shm",            // 8.2 Shared memory
-		"@{run}",              // 8.3 Runtime data
-		"@{sys}",              // 9. Sys files
-		"@{PROC}",             // 10. Proc files
-		"/dev",                // 11. Dev files
-		"deny",                // 12. Deny rules
-		"profile",             // 13. Subprofiles
+	// The order the apparmor file rules should be sorted. Some rules are sorted
+	// in the same group and their order is determined by fileWeights.
+	fileGroups = map[string][]string{
+		// 1. entry point
+		"attachment": {
+			`@{exec_path}`,
+		},
+		// 2 Binaries
+		"bin": {
+			`@{sh_path}`,        // Shells
+			`@{coreutils_path}`, // Coreutils
+			`@{open_path}`,      // Binaries paths
+			`@{bin}`,            // Binaries
+		},
+		// 3 Libraries
+		"lib": {
+			`@{lib}`,      // Libraries
+			`@{lib_dirs}`, // Profile libraries
+			`/opt`,        // opt binaries & libraries
+		},
+		// 4. System shared data
+		"share": {
+			`@{system_share_dirs}`,
+			`/usr/share`,
+		},
+		// 5. System configuration
+		"etc": {
+			`/etc`, `@{etc_ro}`, `@{etc_rw}`,
+			`/etc/machine-id$`,
+			`/var/lib/dbus/machine-id`,
+		},
+		// 6. Boot files
+		"boot": {
+			`/boot`,
+		},
+		// 7. System read/write data
+		"system-data": {
+			`/$`,
+			`/usr/`,
+			`/usr/local/`,
+			`/home`,
+			`/var`,
+		},
+		// 8. System user data
+		"system-user": {
+			`@{(DESKTOP|GDM|SSDM|LIGHTDM)_HOME}`,
+			`@{(desktop|gdm|ssdm|lightdm)_[a-z]*_dirs}`,
+		},
+		// 9. User data
+		"user-data": {
+			`@{MOUNTDIRS}`,
+			`@{MOUNTS}`,
+			`@{HOME}`,
+			`@{[a-z]*_dirs}`,
+			`@{user_[a-z]*_dirs}`,
+		},
+		// 10 Temporary data
+		"tmp": {
+			`/tmp`, `@{tmp}`, // Temporary data
+			`/dev/shm`, // Shared memory
+		},
+		// 11 Runtime data
+		"runtime": {
+			`@{run}/user/@{uid}`,
+			`@{run}/gdm`,
+			`@{run}`,
+		},
+		// 12 Udev data
+		"udev": {"@{run}/udev"},
+		// 13. Sys files
+		"sys": {"@{sys}"},
+		// 14. Proc files
+		"proc": {"@{PROC}"},
+		// 15. Dev files
+		"dev": {"/dev"},
 	}
-	fileWeights = generateWeights(fileAlphabet)
+	fileAlphabetGroups = util.InvertFlatten(fileGroups)
 
-	// Some file rule should be sorted in the same group
-	fileAlphabetGroups = map[string]string{
-		"@{exec_path}":      "exec",
-		"@{sh_path}":        "exec",
-		"@{coreutils_path}": "exec",
-		"@{open_path}":      "exec",
-		"@{bin}":            "exec",
-		"@{lib}":            "exec",
-		"/opt":              "exec",
-		"/home":             "home",
-		"@{HOME}":           "home",
-		"/tmp":              "tmp",
-		"@{tmp}":            "tmp",
-		"/dev/shm":          "tmp",
+	// The order the apparmor file group rules should be sorted
+	fileAlphabetGroup = []string{
+		"attachment", "bin", "lib", "share", "etc", "boot",
+		"system-data", "system-user", "user-data",
+		"tmp", "runtime", "udev", "sys", "proc", "dev",
 	}
+
+	fileWeights = generateFileWeights(fileAlphabetGroup, fileGroups)
+
+	// Compiled regexps for matching file paths to their sort group
+	fileReg = generateRegexp(fileWeights)
+
+	// Memoization cache for file path to group label lookups
+	groupCache = map[string]string{}
 
 	// The order AARE should be sorted
 	stringAlphabet = []byte(
@@ -147,11 +197,12 @@ func init() {
 	requirementsWeights = generateRequirementsWeights(requirements)
 }
 
+// generateTemplates parses and clones the embedded gotmpl files for each rule kind.
 func generateTemplates(names []Kind) map[Kind]*template.Template {
 	res := make(map[Kind]*template.Template, len(names))
 	base := template.New("").Funcs(tmplFunctionMap)
 	base = template.Must(base.ParseFS(tmplFiles,
-		"templates/*.j2", "templates/rule/*.j2",
+		"templates/*.gotmpl", "templates/rule/*.gotmpl",
 	))
 	for _, name := range names {
 		t := template.Must(base.Clone())
@@ -163,6 +214,7 @@ func generateTemplates(names []Kind) map[Kind]*template.Template {
 	return res
 }
 
+// renderTemplate render the template for the given kind and data
 func renderTemplate(name Kind, data any) string {
 	var res strings.Builder
 	template, ok := tmpl[name]
@@ -173,9 +225,19 @@ func renderTemplate(name Kind, data any) string {
 	if err != nil {
 		panic(err)
 	}
-	return res.String()
+	return trimTrailingWhitespace(res.String())
 }
 
+// trimTrailingWhitespace removes trailing spaces and tabs from each line.
+func trimTrailingWhitespace(s string) string {
+	lines := strings.Split(s, "\n")
+	for i, line := range lines {
+		lines[i] = strings.TrimRight(line, " \t")
+	}
+	return strings.Join(lines, "\n")
+}
+
+// generateWeights assigns a sort weight to each element based on its position in the alphabet.
 func generateWeights[T comparable](alphabet []T) map[T]int {
 	res := make(map[T]int, len(alphabet))
 	for i, r := range alphabet {
@@ -184,6 +246,25 @@ func generateWeights[T comparable](alphabet []T) map[T]int {
 	return res
 }
 
+// generateFileWeights assigns sort weights to file patterns based on their group order.
+func generateFileWeights[T comparable](groupOrder []T, groups map[T][]T) map[T]int {
+	totalLen := 0
+	for i := range groups {
+		totalLen += len(groups[i])
+	}
+
+	idx := 0
+	res := make(map[T]int, totalLen)
+	for _, group := range groupOrder {
+		for _, r := range groups[group] {
+			res[r] = idx
+			idx++
+		}
+	}
+	return res
+}
+
+// generateRequirementsWeights builds per-kind, per-key weight maps for sorting rule values.
 func generateRequirementsWeights(requirements map[Kind]requirement) map[Kind]map[string]map[string]int {
 	res := make(map[Kind]map[string]map[string]int, len(requirements))
 	for rule, req := range requirements {
@@ -195,6 +276,48 @@ func generateRequirementsWeights(requirements map[Kind]requirement) map[Kind]map
 	return res
 }
 
+// generateRegexp compiles AARE file patterns into anchored regular expressions.
+func generateRegexp(weights map[string]int) map[string]*regexp.Regexp {
+	res := make(map[string]*regexp.Regexp, len(weights))
+	for w := range weights {
+		// Escape special regex chars that appear in AARE patterns
+		// Note: $ at end of pattern is kept as regex end anchor for exact matching
+		pattern := w
+		pattern = strings.ReplaceAll(pattern, "{", `\{`)
+		pattern = strings.ReplaceAll(pattern, "}", `\}`)
+		// Only escape $ if not at end of pattern (end anchor)
+		if !strings.HasSuffix(pattern, "$") {
+			pattern = strings.ReplaceAll(pattern, "$", `\$`)
+		}
+		res[w] = regexp.MustCompile(`(?m)^` + pattern)
+	}
+	return res
+}
+
+// getGroup returns the file sort group label for the given path, using cached results.
+func getGroup(weights map[string]int, in string) string {
+	if result, ok := groupCache[in]; ok {
+		return result
+	}
+
+	// Find the best (most specific) matching pattern
+	// More specific patterns have higher weights within their group
+	bestLabel := ""
+	bestWeight := -1
+	for w := range weights {
+		if fileReg[w].MatchString(in) {
+			// Choose the pattern with the highest weight (most specific)
+			if weights[w] > bestWeight {
+				bestWeight = weights[w]
+				bestLabel = w
+			}
+		}
+	}
+	groupCache[in] = bestLabel
+	return bestLabel
+}
+
+// join is a template function that joins slices with spaces or maps as key=value pairs.
 func join(i any) string {
 	switch i := i.(type) {
 	case []string:
@@ -210,6 +333,7 @@ func join(i any) string {
 	}
 }
 
+// cjoin is a template function that joins values with parentheses when there are multiple items.
 func cjoin(i any) string {
 	switch i := i.(type) {
 	case []string:
@@ -228,6 +352,7 @@ func cjoin(i any) string {
 	}
 }
 
+// kindOf is a template function that returns the kind string of a rule.
 func kindOf(i Rule) string {
 	if i == nil {
 		return ""
@@ -235,6 +360,7 @@ func kindOf(i Rule) string {
 	return i.Kind().String()
 }
 
+// setindent is a template function that increments or decrements the indentation level.
 func setindent(i string) string {
 	switch i {
 	case "++":
@@ -245,19 +371,12 @@ func setindent(i string) string {
 	return ""
 }
 
+// indent is a template function that prepends the current indentation to a string.
 func indent(s string) string {
 	return strings.Repeat(Indentation, IndentationLevel) + s
 }
 
+// indentDbus is a template function that indents dbus rule continuation lines with extra padding.
 func indentDbus(s string) string {
 	return strings.Join([]string{Indentation, s}, "     ")
-}
-
-func getLetterIn(alphabet []string, in string) string {
-	for _, letter := range alphabet {
-		if strings.HasPrefix(in, letter) {
-			return letter
-		}
-	}
-	return ""
 }

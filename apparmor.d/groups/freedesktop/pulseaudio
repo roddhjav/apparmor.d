@@ -24,10 +24,11 @@ profile pulseaudio @{exec_path} {
   include <abstractions/desktop>
   include <abstractions/dri>
   include <abstractions/fontconfig-cache-write>
-  include <abstractions/gstreamer-registry>
+  include <abstractions/gstreamer>
   include <abstractions/hosts_access>
   include <abstractions/media-control>
   include <abstractions/nameservice-strict>
+  include <abstractions/sys/dmi>
 
   ptrace trace peer=@{profile_name},
 
@@ -47,7 +48,7 @@ profile pulseaudio @{exec_path} {
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
-       peer=(name=:*, label=gnome-shell),
+       peer=(name=@{busname}, label="{gnome-shell,gnome-extension}"),
 
   dbus send bus=system path=/
        interface=org.freedesktop.DBus.ObjectManager
@@ -59,8 +60,6 @@ profile pulseaudio @{exec_path} {
   @{lib}/pulse/gsettings-helper rix,
   @{lib}/@{multiarch}/pulse/gconf-helper rix,
   @{lib}/pulse-*/modules/*.so mr,
-
-  @{gstreamer_path} Cx -> gstreamer,
 
   /usr/share/ladspa/rdf/{,*} r,
   /usr/share/pulseaudio/{,**} r,
@@ -88,7 +87,6 @@ profile pulseaudio @{exec_path} {
   @{run}/udev/data/c@{dynamic}:@{int} r,  # For dynamic assignment range 234 to 254, 384 to 511
 
   @{sys}/devices/**/sound/**/{uevent,pcm_class} r,
-  @{sys}/devices/virtual/dmi/id/{bios_vendor,board_vendor,sys_vendor} r,
 
   deny @{sys}/module/apparmor/parameters/enabled r,
 
@@ -98,13 +96,6 @@ profile pulseaudio @{exec_path} {
 
   # file_inherit
   owner /dev/tty@{u8} rw,
-
-  profile gstreamer {
-    include <abstractions/base>
-    include <abstractions/gstreamer>
-
-    include if exists <local/pulseaudio_gstreamer>
-  }
 
   include if exists <local/pulseaudio>
 }

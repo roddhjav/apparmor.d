@@ -1,0 +1,54 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{name} = code{,-oss} vscode{,-oss}
+@{config} = Code Code?-?OSS Code?-?Insiders
+@{config_dirs} = @{HOME}/.@{name} @{user_config_dirs}/@{config}
+@{ext_dirs} = @{config_dirs}/extensions
+@{lib_dirs} = @{ext_dirs}/valentjn.vscode-ltex-*/
+
+@{exec_path} = @{lib_dirs}/**
+profile code-extension-ltex @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/app/code-extension>
+  include <abstractions/nameservice-strict>
+
+  network inet stream,
+  network inet6 stream,
+
+  @{exec_path} mix,
+
+  @{sh_path}      ix,
+  @{bin}/dirname  ix,
+  @{bin}/env       r,
+  @{bin}/uname    ix,
+
+  owner @{HOME}/ r,
+  owner @{HOME}/.languagetool/{,**} r,
+
+  owner @{user_projects_dirs}/ r,
+  owner @{user_projects_dirs}/**/ r,
+
+        /tmp/ r,
+  owner @{tmp}/hsperfdata_@{user}/ rw,
+  owner @{tmp}/hsperfdata_@{user}/@{int} rwk,
+  owner @{tmp}/jansi-*-libjansi.so rwm,
+  owner @{tmp}/jansi-*-libjansi.so.lck rw,
+
+        @{PROC}/cgroups r,
+        @{PROC}/@{pid}/net/if_inet6 r,
+        @{PROC}/@{pid}/net/ipv6_route r,
+  owner @{PROC}/@{pid}/coredump_filter rw,
+  owner @{PROC}/@{pid}/mountinfo r,
+
+  /dev/tty rw,
+
+  include if exists <local/code-extension-ltex>
+}
+
+# vim:syntax=apparmor

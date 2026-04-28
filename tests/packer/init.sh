@@ -27,12 +27,12 @@ main() {
 		;;
 
 	debian | ubuntu)
-		if [[ $VERSION_ID == "24.04" || $VERSION_ID == 12 ]]; then
-			apt-get purge -y just || true
-			sudo -u "$SUDO_USER" pipx install rust-just
-			sudo -u "$SUDO_USER" pipx ensurepath
+		if dpkg-vendor --is Ubuntu; then
+			suffix="ubuntu1~$(lsb_release -sr)"
+		elif dpkg-vendor --is Debian; then
+			suffix="1+deb$(lsb_release -sr)"
 		fi
-		dpkg -i $SRC/*.deb || true
+		dpkg -i $SRC/*-"${suffix}"*.deb || true
 		;;
 
 	opensuse*)

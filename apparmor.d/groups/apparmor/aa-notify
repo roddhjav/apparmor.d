@@ -6,13 +6,14 @@ abi <abi/4.0>,
 
 include <tunables/global>
 
-@{exec_path} = @{sbin}/aa-notify
+@{exec_path} = @{bin}/aa-notify
 profile aa-notify @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/consoles>
   include <abstractions/dconf-write>
   include <abstractions/desktop>
   include <abstractions/nameservice-strict>
+  include <abstractions/notifications>
   include <abstractions/python>
 
   capability setgid,
@@ -32,6 +33,7 @@ profile aa-notify @{exec_path} flags=(attach_disconnected) {
   @{sbin}/ r,
 
   /usr/share/apparmor/** r,
+  /usr/share/tcltk/** r,
   /usr/share/terminfo/** r,
 
   @{etc_ro}/inputrc r,
@@ -39,7 +41,12 @@ profile aa-notify @{exec_path} flags=(attach_disconnected) {
   /etc/apparmor.d/{,**} r,
   /etc/apparmor/*.conf r,
 
-  /var/log/audit/audit.log r,
+  /var/lib/snapd/apparmor/snap-confine/ r,
+  /var/lib/snapd/apparmor/snap-confine/cap-bpf r,
+
+  /var/log/audit/* r,
+  /var/log/syslog* r,
+  /var/log/kern.log r,
 
   owner @{HOME}/.inputrc r,
   owner @{HOME}/.terminfo/@{int}/dumb r,
@@ -47,9 +54,10 @@ profile aa-notify @{exec_path} flags=(attach_disconnected) {
   owner @{tmp}/@{word8} rw,
   owner @{tmp}/apparmor-bugreport-@{word8}.txt rw,
 
-  @{PROC}/ r,
-  @{PROC}/@{pid}/stat r,
-  @{PROC}/@{pid}/cmdline r,
+        @{PROC}/ r,
+        @{PROC}/@{pid}/stat r,
+        @{PROC}/@{pid}/cmdline r,
+  owner @{PROC}/@{pid}/mounts r,
 
   profile open {
     include <abstractions/base>

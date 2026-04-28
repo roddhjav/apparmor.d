@@ -17,6 +17,8 @@ profile gnome-initial-setup @{exec_path} {
   include <abstractions/nameservice-strict>
   include <abstractions/network-manager-observe>
   include <abstractions/ssl_certs>
+  include <abstractions/sys/dmi>
+  include <abstractions/webkit>
 
   network inet dgram,
   network inet6 dgram,
@@ -26,6 +28,12 @@ profile gnome-initial-setup @{exec_path} {
 
   #aa:dbus own bus=session name=org.gnome.InitialSetup
 
+  #aa:dbus talk bus=session name=org.gnome.Shell label=gnome-shell
+
+  #aa:only ubuntu
+  #aa:dbus talk bus=system name=com.ubuntu.WhoopsiePreferences label=whoopsie-preferences
+
+  #aa:only ubuntu
   dbus send bus=system path=/com/canonical/UbuntuAdvantage/Manager
        interface=org.freedesktop.DBus.Properties
        member=Get
@@ -33,20 +41,23 @@ profile gnome-initial-setup @{exec_path} {
 
   @{exec_path} mr,
 
-  @{bin}/df      rPx,
-  @{bin}/dpkg    rPx -> child-dpkg,
-  @{bin}/locale  rix,
-  @{bin}/lsb_release rPx,
-  @{bin}/lscpu   rPx,
-  @{bin}/lspci   rPx,
-  @{bin}/systemd-detect-virt rPx,
-  @{bin}/ubuntu-advantage rPx,
-  @{bin}/xrandr  rPx,
+  @{bin}/df                   Px,
+  @{bin}/dpkg                 Px -> child-dpkg, #aa:only apt
+  @{bin}/locale              rix,
+  @{bin}/lsb_release          Px,
+  @{bin}/lsblk                Px,
+  @{bin}/lscpu                Px,
+  @{bin}/lspci                Px,
+  @{bin}/systemd-detect-virt  Px,
+  @{bin}/ubuntu-advantage     Px, #aa:only ubuntu
+  @{bin}/xrandr               Px,
+  @{open_path}                Px -> child-open-browsers,
 
   @{lib}/gnome-initial-setup-goa-helper rix,
   @{ldd_path} rix,
 
   /usr/share/gnome-initial-setup/{,**} r,
+  /usr/share/thumbnailers/{,**} r,
   /usr/share/xml/iso-codes/{,**} r,
 
   @{etc_ro}/security/pwquality.conf r,
@@ -58,11 +69,12 @@ profile gnome-initial-setup @{exec_path} {
   /var/log/installer/telemetry r, #aa:only ubuntu
 
   #aa:only ubuntu
-  owner @{user_cache_dirs}/ubuntu-report/ rw,
-  owner @{user_cache_dirs}/ubuntu-report/* rw,
+  owner @{user_cache_dirs}/ubuntu-report/{,**} rw,
+  owner @{user_cache_dirs}/ubuntu-insights/{,**} rw,
 
   owner @{user_config_dirs}/gnome-initial-setup-done w,
   owner @{user_config_dirs}/gnome-initial-setup-done.@{rand6} rw,
+  owner @{user_config_dirs}/gnome-initial-setup/{,**} rw,
   owner @{user_config_dirs}/ubuntu-insights/{,**} rw, #aa:only ubuntu
 
   owner @{user_config_dirs}/ibus/bus/ r,
@@ -77,14 +89,9 @@ profile gnome-initial-setup @{exec_path} {
 
   owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/gnome-initial-setup-first-login.service/memory.* r,
 
-  @{sys}/devices/virtual/dmi/id/bios_vendor r,
-  @{sys}/devices/virtual/dmi/id/bios_version r,
-  @{sys}/devices/virtual/dmi/id/product_family r,
-  @{sys}/devices/virtual/dmi/id/product_name r,
-  @{sys}/devices/virtual/dmi/id/sys_vendor r,
-
         @{PROC}/zoneinfo r,
   owner @{PROC}/@{pid}/cgroup r,
+  owner @{PROC}/@{pid}/mountinfo r,
 
   include if exists <local/gnome-initial-setup>
 }

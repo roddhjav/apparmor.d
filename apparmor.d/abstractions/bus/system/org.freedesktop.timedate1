@@ -4,20 +4,26 @@
 
   abi <abi/4.0>,
 
+  # DBus.Properties: read properties from the interface
+
   dbus send bus=system path=/org/freedesktop/timedate1
        interface=org.freedesktop.DBus.Properties
-       member=GetAll
+       member={Get,GetAll}
        peer=(name=@{busname}, label=systemd-timedated),
+
+  # DBus.Introspectable: allow clients to introspect the service
+
+  dbus send bus=system path=/org/freedesktop/timedate1
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name=@{busname}, label=systemd-timedated),
+
+  # org.freedesktop.timedate1
 
   dbus send bus=system path=/org/freedesktop/timedate1
        interface=org.freedesktop.timedate1
        member=SetTimezone
        peer=(name=org.freedesktop.timedate1, label=systemd-timedated),
-
-  dbus receive bus=system path=/org/freedesktop/login1
-       interface=org.freedesktop.login1.Manager
-       member=PrepareForSleep
-       peer=(name=@{busname}, label=systemd-logind),
 
   include if exists <abstractions/bus/system/org.freedesktop.timedate1.d>
 

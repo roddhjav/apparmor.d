@@ -12,11 +12,14 @@ profile remmina @{exec_path} flags=(attach_disconnected) {
   include <abstractions/audio-client>
   include <abstractions/avahi-observe>
   include <abstractions/bus/system/org.freedesktop.hostname1>
+  include <abstractions/cgroup-limits>
   include <abstractions/dconf-write>
   include <abstractions/desktop>
   include <abstractions/fontconfig-cache-read>
+  include <abstractions/gvfs>
   include <abstractions/ibus-strict>
   include <abstractions/nameservice-strict>
+  include <abstractions/network-manager-observe>
   include <abstractions/python>
   include <abstractions/secrets-service>
   include <abstractions/ssl_certs>
@@ -31,7 +34,6 @@ profile remmina @{exec_path} flags=(attach_disconnected) {
 
   #aa:dbus own bus=session name=org.remmina.Remmina
   #aa:dbus talk bus=session name=org.ayatana.NotificationItem label=gnome-shell
-  #aa:dbus talk bus=session name=org.gtk.vfs label="gvfsd{,-*}"
 
   @{exec_path} rm,
 
@@ -41,18 +43,20 @@ profile remmina @{exec_path} flags=(attach_disconnected) {
 
   /usr/share/remmina/{,**} r,
 
+  /etc/debian_version r,
   /etc/fstab r,
+  /etc/lsb-release r,
   /etc/ssh/ssh_config r,
   /etc/ssh/ssh_config.d/{,*} r,
   /etc/timezone r,
 
   owner @{HOME}/@{XDG_SSH_DIR}/config r,
-  owner @{HOME}/@{XDG_SSH_DIR}/known_hosts r,
+  owner @{HOME}/@{XDG_SSH_DIR}/known_hosts* r,
 
   owner @{user_cache_dirs}/org.remmina.Remmina/{,**} rw,
   owner @{user_cache_dirs}/remmina/{,**} rw,
   owner @{user_config_dirs}/autostart/remmina-applet.desktop r,
-  owner @{user_config_dirs}/freerdp/known_hosts2 rwk,
+  owner @{user_config_dirs}/freerdp/known_hosts* rwk,
   owner @{user_config_dirs}/remmina/{,**} rw,
   owner @{user_share_dirs}/remmina/{,**} rw,
 

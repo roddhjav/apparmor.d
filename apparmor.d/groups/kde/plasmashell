@@ -7,7 +7,7 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{exec_path} = @{bin}/plasmashell
-profile plasmashell @{exec_path} flags=(mediate_deleted) {
+profile plasmashell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/base>
   include <abstractions/app-launcher-user>
   include <abstractions/audio-client>
@@ -22,11 +22,11 @@ profile plasmashell @{exec_path} flags=(mediate_deleted) {
   include <abstractions/graphics>
   include <abstractions/kde-strict>
   include <abstractions/nameservice-strict>
-  include <abstractions/network-manager-observe>
   include <abstractions/qt5-shader-cache>
   include <abstractions/recent-documents-write>
   include <abstractions/ssl_certs>
-  include <abstractions/thumbnails-cache-read>
+  include <abstractions/sys/dmi>
+  include <abstractions/thumbnails-cache-write>
   include <abstractions/upower-observe>
 
   userns,
@@ -44,6 +44,8 @@ profile plasmashell @{exec_path} flags=(mediate_deleted) {
 
   signal send,
 
+  # Owned by plasmashell
+
   #aa:dbus own bus=session name=com.canonical.Unity
   #aa:dbus own bus=session name=org.freedesktop.Notifications
   #aa:dbus own bus=session name=org.kde.JobViewServer
@@ -51,6 +53,10 @@ profile plasmashell @{exec_path} flags=(mediate_deleted) {
   #aa:dbus own bus=session name=org.kde.kuiserver
   #aa:dbus own bus=session name=org.kde.plasmashell path=/PlasmaShell
   #aa:dbus own bus=session name=org.kde.StatusNotifierHost-@{int}
+
+  # Talk with plasmashell
+
+  #aa:dbus talk bus=system name=org.freedesktop.NetworkManager label=NetworkManager
 
   #aa:dbus talk bus=session name=org.kde.kdeconnect path=/ label=kdeconnectd
   #aa:dbus talk bus=session name=org.kde.KeyboardLayouts path=/Layouts label=kded
@@ -172,6 +178,10 @@ profile plasmashell @{exec_path} flags=(mediate_deleted) {
   owner @{user_config_dirs}/networkmanagement.notifyrc r,
   owner @{user_config_dirs}/PlasmaUserFeedback r,
   owner @{user_config_dirs}/plasma* rwlk,
+  owner @{user_config_dirs}/kscreenlockerrc r,
+  owner @{user_config_dirs}/Kvantum/{,**} r,
+
+  @{user_share_dirs}/plasma/** rPUx,
 
   owner @{user_share_dirs}/*/sessions/ r,
   owner @{user_share_dirs}/#@{int} rw,
@@ -197,12 +207,17 @@ profile plasmashell @{exec_path} flags=(mediate_deleted) {
   owner @{user_share_dirs}/qalculate/{,**} r,
   owner @{user_share_dirs}/user-places.xbel{,*} rwl,
   owner @{user_share_dirs}/wallpapers/{,**} rw,
+  owner @{user_share_dirs}/knotifications6/apdatifier.notifyrc r,
 
   owner @{user_state_dirs}/#@{int} rw,
+  owner @{user_state_dirs}/kickerstaterc r,
   owner @{user_state_dirs}/plasma/* r,
   owner @{user_state_dirs}/plasmashellstaterc rw,
   owner @{user_state_dirs}/plasmashellstaterc.@{rand6} rwl,
   owner @{user_state_dirs}/plasmashellstaterc.lock rwk,
+  owner @{user_state_dirs}/UserFeedback.org.kde.plasmashell rw,
+  owner @{user_state_dirs}/UserFeedback.org.kde.plasmashell.@{rand6} rwl,
+  owner @{user_state_dirs}/UserFeedback.org.kde.plasmashell.lock rwk,
 
         /tmp/.mount_nextcl@{rand6}/{,*} r,
   owner @{tmp}/#@{int} rw,
@@ -221,11 +236,6 @@ profile plasmashell @{exec_path} flags=(mediate_deleted) {
   @{sys}/devices/platform/** r,
 
   @{sys}/devices/@{pci}/name r,
-  @{sys}/devices/system/cpu/cpufreq/policy@{int}/scaling_cur_freq r,
-  @{sys}/devices/virtual/dmi/id/bios_vendor r,
-  @{sys}/devices/virtual/dmi/id/board_vendor r,
-  @{sys}/devices/virtual/dmi/id/product_name r,
-  @{sys}/devices/virtual/dmi/id/sys_vendor r,
   @{sys}/devices/virtual/thermal/**/{name,type} r,
   @{sys}/devices/virtual/thermal/thermal_zone@{int}/hwmon@{int}/ r,
 

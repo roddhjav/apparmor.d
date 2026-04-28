@@ -26,50 +26,26 @@ profile evolution-addressbook-factory @{exec_path} {
   network inet6 dgram,
   network netlink raw,
 
-  #aa:dbus own bus=session name=org.gnome.evolution.dataserver.AddressBook@{int}
-  #aa:dbus own bus=session name=org.gnome.evolution.dataserver.AddressBookCursor
-  #aa:dbus own bus=session name=org.gnome.evolution.dataserver.AddressBookFactory
-  #aa:dbus own bus=session name=org.gnome.evolution.dataserver.AddressBookView
+  #aa:dbus own bus=session name=org.gnome.evolution.dataserver.AddressBook{,@{u8},Cursor,View,Factory} path=/org/gnome/evolution/dataserver/Subprocess{,/**}
+  #aa:dbus own bus=session name=org.gnome.evolution.dataserver.AddressBook{,@{u8},Cursor,View,Factory}
 
-  dbus (send, receive) bus=session path=/org/gnome/evolution/dataserver/**
-       interface=org.gnome.evolution.dataserver.*
-       peer=(name=@{busname}),
-
-  dbus send bus=session path=/org/gnome/evolution/dataserver/**
-       interface=org.gnome.evolution.dataserver.*
-       peer=(name=org.freedesktop.DBus, label=evolution-*),
-
-  dbus (send, receive) bus=session path=/org/gnome/evolution/dataserver/**
-       interface=org.freedesktop.DBus.Properties
-       peer=(name=@{busname}, label=evolution-*),
-
-  dbus send bus=session path=/org/gnome/evolution/dataserver/SourceManager
-       interface=org.freedesktop.DBus.ObjectManager
-       member=GetManagedObjects
-       peer=(name=@{busname}, label=evolution-source-registry),
-
-  dbus send bus=session path=/org/gnome/evolution/dataserver/**
-       interface=org.freedesktop.DBus.Properties
-       member=PropertiesChanged
-       peer=(name=org.freedesktop.DBus, label=evolution-calendar-factory),
+  #aa:dbus talk bus=session name=org.gnome.evolution.dataserver.{Source,Sources@{int}} path=/org/gnome/evolution/dataserver/SourceManager{,/**} label=evolution-source-registry
 
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
-       peer=(name=@{busname}, label=gnome-shell),
-
-  dbus receive bus=session path=/org/gnome/evolution/dataserver/**
-       interface=org.freedesktop.DBus.Properties
-       member=GetAll
-       peer=(name=@{busname}, label=obexd),
+       peer=(name=@{busname}, label="{gnome-shell,gnome-extension}"),
 
   @{exec_path} mr,
   @{exec_path}-subprocess rix,
 
   /usr/share/icu/@{int}.@{int}/*.dat r,
 
-  owner @{user_share_dirs}/evolution/{,**} rwk,
+  owner @{desktop_cache_dirs}/evolution/addressbook/{,**} rwk,
+  owner @{desktop_share_dirs}/evolution/{,**} rwk,
+
   owner @{user_cache_dirs}/evolution/addressbook/{,**} rwk,
+  owner @{user_share_dirs}/evolution/{,**} rwk,
 
   @{PROC}/sys/kernel/osrelease r,
   @{PROC}/cmdline r,

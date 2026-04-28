@@ -1,0 +1,57 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/systemd/systemd-sysupdate
+profile systemd-sysupdate @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+  include <abstractions/disks-read>
+
+  capability chown,
+  capability dac_override,
+  capability fowner,
+  capability fsetid,
+  capability linux_immutable,
+  capability mknod,
+  capability setfcap,
+  capability setpcap,
+  capability sys_admin,
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  unix send type=dgram peer=(label=unconfined, addr=@@{int}@{int}),
+
+  @{exec_path} mr,
+
+  @{bin}/gpg{,2}              ix,
+  @{lib}/systemd/systemd-pull ix,
+
+  @{etc_rw}/sysupdate.d/{,**} r,
+
+  @{efi}/EFI/Linux/ r,
+  @{lib}/ r,
+  @{run}/ r,
+  /etc/ r,
+  /usr/ r,
+  /usr/local/lib/ r,
+
+  /tmp/gpghome@{rand6}/ w,
+  /tmp/sig@{rand6} rw,
+
+  @{PROC}/1/environ r,
+  @{PROC}/cmdline r,
+  @{PROC}/sys/kernel/osrelease r,
+
+  include if exists <local/systemd-sysupdate>
+}
+
+# vim:syntax=apparmor

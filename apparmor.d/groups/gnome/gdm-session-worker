@@ -57,6 +57,11 @@ profile gdm-session-worker @{exec_path} flags=(attach_disconnected) {
        member={*Session,CreateSessionWithPIDFD}
        peer=(name=org.freedesktop.login1, label="@{p_systemd_logind}"),
 
+  dbus send bus=system path=/org/freedesktop/home1
+       interface=org.freedesktop.home1.Manager
+       member=GetUserRecordByName
+       peer=(name=org.freedesktop.home1, label="@{p_systemd_homed}"),
+
   @{exec_path} mrix,
 
   @{bin}/gnome-keyring-daemon             rPx,
@@ -75,8 +80,6 @@ profile gdm-session-worker @{exec_path} flags=(attach_disconnected) {
   /etc/nshadow rw,
   /etc/shadow w,
 
-  @{etc_ro}/environment r,
-  @{etc_ro}/security/limits.d/{,*.conf} r,
   /etc/default/locale r,
   /etc/fscrypt.conf r,
   /etc/gdm{3,}/custom.conf r,
@@ -109,6 +112,7 @@ profile gdm-session-worker @{exec_path} flags=(attach_disconnected) {
 
   owner @{user_cache_dirs}/ w,
 
+  @{run}/systemd/home/@{user}.dont-suspend w,
   @{run}/systemd/io.systemd.Login rw,
 
         @{run}/cockpit/active.issue r,

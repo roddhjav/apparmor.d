@@ -7,7 +7,7 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{exec_path} = @{bin}/gnome-boxes
-profile gnome-boxes @{exec_path} {
+profile gnome-boxes @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/audio-client>
   include <abstractions/bus/system/org.freedesktop.timedate1>
@@ -15,9 +15,10 @@ profile gnome-boxes @{exec_path} {
   include <abstractions/dconf-write>
   include <abstractions/gnome-strict>
   include <abstractions/graphics>
-  include <abstractions/gstreamer-registry>
+  include <abstractions/gstreamer>
   include <abstractions/media-control>
   include <abstractions/nameservice-strict>
+  include <abstractions/network-manager-observe>
   include <abstractions/p11-kit>
   include <abstractions/ssl_certs>
   include <abstractions/user-download-strict>
@@ -35,7 +36,6 @@ profile gnome-boxes @{exec_path} {
   @{bin}/qemu-img   rix,
   @{bin}/virsh      rCx -> virsh,
   @{bin}/virtqemud  rPUx,
-  @{gstreamer_path}  Cx -> gstreamer,
 
   /usr/share/ladspa/rdf/{,*} r,
   /usr/share/osinfo/{,**} r,
@@ -60,12 +60,14 @@ profile gnome-boxes @{exec_path} {
   owner @{user_share_dirs}/gnome-boxes/ rw,
   owner @{user_share_dirs}/gnome-boxes/** rwk,
 
+  owner /var/tmp/*.svg-@{rand6} rw,
   owner @{tmp}/.goutputstream-@{rand6} rw,
   owner @{tmp}/*.iso-@{rand6} rw,
   owner @{tmp}/*.svg-@{rand6} rw,
 
   owner @{run}/user/@{uid}/libvirt/ rw,
   owner @{run}/user/@{uid}/libvirt/virtqemud.lock rwk,
+  owner @{run}/user/@{uid}/libvirt/virtqemud-sock rw,
 
   @{run}/mount/utab r,
 
@@ -96,13 +98,6 @@ profile gnome-boxes @{exec_path} {
     @{sys}/devices/system/node/ r,
 
     include if exists <local/gnome-boxes_virsh>
-  }
-
-  profile gstreamer {
-    include <abstractions/base>
-    include <abstractions/gstreamer>
-
-    include if exists <local/gnome-boxes_gstreamer>
   }
 
   include if exists <local/gnome-boxes>

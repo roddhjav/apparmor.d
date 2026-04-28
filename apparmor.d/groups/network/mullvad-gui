@@ -6,13 +6,13 @@ abi <abi/4.0>,
 
 include <tunables/global>
 
-@{name} = Mullvad?VPN
+@{name} = Mullvad?VPN mullvad-vpn
 @{domain} = org.chromium.Chromium
-@{lib_dirs} = /opt/@{name}
+@{lib_dirs} = /opt/@{name} @{lib}/@{name}
 @{config_dirs} = @{user_config_dirs}/@{name}
 @{cache_dirs} = @{user_cache_dirs}/@{name}
 
-@{exec_path} = @{lib_dirs}/mullvad-gui
+@{exec_path} = @{lib_dirs}/mullvad-gui @{bin}/mullvad-vpn
 profile mullvad-gui @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus-system>
@@ -25,21 +25,24 @@ profile mullvad-gui @{exec_path} flags=(attach_disconnected) {
   network inet6 dgram,
   network netlink raw,
 
+  unix (send receive) type=stream peer=(label=gsettings),
+
+  dbus send bus=system path=/org/freedesktop/login1
+       interface=org.freedesktop.login1.Manager
+       member=Inhibit
+       peer=(name=org.freedesktop.login1, label=systemd-logind),
+
   @{exec_path} mrix,
-  @{sh_path} rix,
+  @{bin}/gsettings Px,
+  @{bin}/mullvad-exclude Px,
 
-  @{bin}/gsettings     rPx,
-  @{open_path}         rPx -> child-open-browsers,
+  @{open_path} Px -> child-open-browsers,
 
-  @{att}@{run}/systemd/inhibit/@{int}.ref rw,
+  owner @{user_config_dirs}/autostart/mullvad-vpn.desktop rw,
 
   @{run}/mullvad-vpn rw,
 
   /dev/tty rw,
-
-  deny @{user_share_dirs}/gvfs-metadata/* r,
-  deny /etc/machine-id r,
-  deny /var/lib/dbus/machine-id r,
 
   include if exists <local/mullvad-gui>
 }

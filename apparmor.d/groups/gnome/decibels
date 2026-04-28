@@ -7,11 +7,12 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{exec_path} = @{bin}/decibels @{bin}/org.gnome.Decibels
-profile decibels @{exec_path} {
+profile decibels @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/audio-client>
   include <abstractions/common/gnome>
-  include <abstractions/gstreamer-registry>
+  include <abstractions/gstreamer>
+  include <abstractions/gvfs>
   include <abstractions/user-download-strict>
 
   @{exec_path} mr,
@@ -19,7 +20,6 @@ profile decibels @{exec_path} {
   @{bin}/gjs-console rix,
 
   @{open_path}  rPx -> child-open-help,
-  @{gstreamer_path}  Cx -> gstreamer,
 
   /usr/share/org.gnome.Decibels/{,**} r,
 
@@ -30,13 +30,6 @@ profile decibels @{exec_path} {
 
   owner @{PROC}/@{pid}/mounts r,
   owner @{PROC}/@{pid}/task/@{tid}/stat r,
-
-  profile gstreamer {
-    include <abstractions/base>
-    include <abstractions/gstreamer>
-
-    include if exists <local/decibels_gstreamer>
-  }
 
   include if exists <local/decibels>
 }

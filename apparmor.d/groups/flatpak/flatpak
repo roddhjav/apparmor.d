@@ -9,7 +9,7 @@ include <tunables/global>
 @{appid} = @{word}.@{word}.@{word}{,.@{word}}
 
 @{exec_path} = @{bin}/flatpak
-profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted,complain) {
+profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/base>
   include <abstractions/accessibility>
   include <abstractions/accounts-observe>
@@ -31,6 +31,7 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted,complain
   capability dac_read_search,
   capability net_admin,
   capability sys_ptrace,
+  capability syslog, # optional: no audit
 
   # Manage the sandbox
   capability setgid,
@@ -136,6 +137,7 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted,complain
   owner /dev/shm/flatpak*/{,**} rw,
 
   @{att}@{run}/.userns r,
+  @{run}/polkit/agent-helper.socket rw,
 
         @{run}/user/@{uid}/.dbus-proxy/ w,
         @{run}/user/@{uid}/dconf/user rw,
@@ -153,6 +155,7 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted,complain
 
         @{PROC}/modules r,
         @{PROC}/sys/fs/pipe-max-size r,
+  owner @{PROC}/@{pid}/cgroup r,
   owner @{PROC}/@{pid}/fdinfo/@{int} r,
   owner @{PROC}/@{pid}/stat r,
 

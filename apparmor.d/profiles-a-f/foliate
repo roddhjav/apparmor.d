@@ -29,11 +29,16 @@ profile foliate @{exec_path} flags=(attach_disconnected) {
 
   @{exec_path} mr,
 
-  @{bin}/bwrap           rix,
-  @{bin}/gjs-console     rix,
-  @{bin}/speech-dispatcher rPx,
-  @{open_path}             rPx -> child-open-help,
+  @{bin}/bwrap             rix,
+  @{bin}/gjs-console       rix,
+  @{bin}/speech-dispatcher  Px,
+  @{open_path}              Px -> child-open-help,
+
+  #aa:only apparmor<5.0
   @{lib}/glycin-loaders/@{d}+/glycin-* Cx -> foliate//&glycin//loaders,
+
+  #aa:only apparmor>=5.0
+  @{lib}/glycin-loaders/@{d}+/glycin-* Px -> foliate//&:glycin:loaders,
 
   /usr/share/com.github.johnfactotum.Foliate/{,**} r,
 
@@ -43,7 +48,6 @@ profile foliate @{exec_path} flags=(attach_disconnected) {
   owner @{user_cache_dirs}/com.github.johnfactotum.Foliate/{,**} rwlk,
   owner @{user_share_dirs}/com.github.johnfactotum.Foliate/{,**} rwlk,
 
-  @{sys}/devices/virtual/dmi/id/chassis_type r,
   @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/app-dbus*org.gnome.Nautilus.slice/dbus*org.gnome.Nautilus@*.service/memory.* r,
   @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/app-gnome-com.github.johnfactotum.Foliate-@{int}.scope/memory.* r,
 

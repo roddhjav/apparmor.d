@@ -12,13 +12,11 @@ profile mullvad-daemon @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus-system>
   include <abstractions/nameservice-strict>
-  include <abstractions/network-manager-observe>
 
   capability dac_override,
-
-  capability net_admin,
   capability fowner,
   capability fsetid,
+  capability net_admin,
   capability net_raw,
   capability sys_admin,
 
@@ -33,10 +31,13 @@ profile mullvad-daemon @{exec_path} flags=(attach_disconnected) {
 
   mount fstype=cgroup -> @{sys}/fs/cgroup/net_cls/,
 
-  dbus send bus=system path=/org/freedesktop/NetworkManager
+  #aa:dbus talk bus=system name=org.freedesktop.NetworkManager label=NetworkManager
+  #aa:dbus talk bus=system name=org.freedesktop.resolve1 label=systemd-resolved
+
+  dbus send bus=system path=/org/freedesktop/systemd1
        interface=org.freedesktop.DBus.Properties
-       member=Set
-       peer=(name=@{busname}, label=NetworkManager),
+       member=Get
+       peer=(name=org.freedesktop.systemd1, label="@{p_systemd}"),
 
   @{exec_path} mr,
 
@@ -64,7 +65,9 @@ profile mullvad-daemon @{exec_path} flags=(attach_disconnected) {
   owner @{run}/mullvad-vpn rw,
 
   @{sys}/fs/cgroup/net_cls/ w,
+  @{sys}/fs/cgroup/net_cls/cgroup.procs rw,
   @{sys}/fs/cgroup/net_cls/mullvad-exclusions/ w,
+  @{sys}/fs/cgroup/net_cls/mullvad-exclusions/cgroup.procs rw,
   @{sys}/fs/cgroup/net_cls/mullvad-exclusions/net_cls.classid rw,
   @{sys}/fs/cgroup/system.slice/cpu.max r,
   @{sys}/fs/cgroup/system.slice/mullvad-daemon.service/cpu.max r,

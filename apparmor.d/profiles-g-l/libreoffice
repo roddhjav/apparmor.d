@@ -13,6 +13,7 @@ profile libreoffice @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/audio-client>
   include <abstractions/avahi-observe>
   include <abstractions/bus/session/org.gtk.vfs.Daemon>
+  include <abstractions/cgroup-limits>
   include <abstractions/cups-client>
   include <abstractions/dconf-write>
   include <abstractions/desktop>
@@ -90,6 +91,10 @@ profile libreoffice @{exec_path} flags=(attach_disconnected,mediate_deleted) {
         /var/tmp/ r,
   owner /var/spool/libreoffice/uno_packages/cache/stamp.sys w,
 
+  owner @{lib}/@{python_name}/{,**/}__pycache__/ w,
+  owner @{lib}/@{python_name}/{,**/}__pycache__/uno**.pyc w,
+  owner @{lib}/@{python_name}/{,**/}__pycache__/uno**.pyc.@{u64} w,
+
   owner @{user_cache_dirs}/libreoffice/{,**} rw,
 
   owner @{user_config_dirs}/kservicemenurc r,
@@ -113,20 +118,17 @@ profile libreoffice @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{tmp}/OSL_PIPE_@{uid}_SingleOfficeIPC_@{hex} rw,
 
   owner @{run}/user/@{uid}/#@{int} rw,
-  owner @{run}/user/@{uid}/soffice.bin??????.{4,6}.kioworker.socket l -> @{run}/user/@{uid}/#@{int},
+  owner @{run}/user/@{uid}/soffice.bin@{rand6}.@{d}.kioworker.socket l -> @{run}/user/@{uid}/#@{int},
   owner @{run}/user/@{uid}/gvfsd/socket-@{rand8} rw,
 
         @{sys}/devices/system/cpu/cpu@{int}/microcode/version r,
         @{sys}/devices/virtual/block/**/queue/rotational r,
         @{sys}/kernel/mm/hugepages/ r,
-        @{sys}/kernel/mm/transparent_hugepage/enabled r,
         @{sys}/kernel/mm/transparent_hugepage/shmem_enabled r,
-        @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/session-@{word}.scope/{cpu,memory}.max r,
-  owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/**/memory.max r,
-  owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/session.slice/org.gnome.Shell@wayland.service/memory.max r,
 
+        @{PROC}/@{pid}/net/if_inet6 r,
         @{PROC}/cgroups r,
-  owner @{PROC}/@{pid}/cgroup r,
+        @{PROC}/version r,
   owner @{PROC}/@{pid}/coredump_filter rw,
   owner @{PROC}/@{pid}/mountinfo r,
   owner @{PROC}/@{pid}/mounts r,

@@ -35,11 +35,15 @@ profile systemd-homed @{exec_path} flags=(attach_disconnected) {
   network inet6 raw,
   network netlink raw,
 
-  mount                      -> @{run}/systemd/user-home-mount/,
-  mount options=(rw private) -> @{run}/systemd/user-home-mount/,
-  mount options=(rw rslave)  -> @{run}/,
+  mount                                                           -> @{run}/systemd/user-home-mount/,
+  mount options=(rw bind) @{run}/systemd/user-home-mount/@{user}/ -> @{HOME}/,
+  mount options=(rw make-rslave)                                     @{run}/,
+  mount options=(rw move)                                         -> @{run}/systemd/user-home-mount/@{user}/,
+  mount options=(rw private)                                      -> @{run}/systemd/user-home-mount/,
 
+  umount @{HOME}/,
   umount @{run}/systemd/user-home-mount/,
+  umount @{run}/systemd/user-home-mount/@{user}/,
 
   signal (send receive) set=kill peer=systemd-homed//&systemd-homework,
 
@@ -47,28 +51,46 @@ profile systemd-homed @{exec_path} flags=(attach_disconnected) {
 
   unix bind type=dgram  addr=@@{udbus},
   unix bind type=stream addr=@@{udbus}/bus/systemd-homed/system,
+  unix receive type=dgram addr=@@{int}@{int} peer=(label=systemd-homework),
 
   #aa:dbus own bus=system name=org.freedesktop.home1
   #aa:dbus talk bus=system name=org.freedesktop.PolicyKit1 label=polkitd
 
   @{exec_path} mr,
 
-  @{lib}/systemd/systemd-homework rPx -> &systemd-homework,
-  @{sbin}/mkfs.btrfs rPx,
-  @{sbin}/mkfs.fat   rPx,
-  @{sbin}/mke2fs     rPx,
+  @{lib}/systemd/systemd-homework  Px -> systemd-homed//&systemd-homework,
+  @{sbin}/mkfs.fat                 Px,
+  @{sbin}/mke2fs                   Px,
 
+  # nnp
+  @{sbin}/fsck    ix,
+  @{sbin}/fsck.* rix,
+  @{bin}/mkfs.*   ix,
+
+  /etc/fstab r,
   /etc/machine-id r,
-  /etc/systemd/homed.conf r,
+  /etc/security/pwquality.conf r,
+  /etc/security/pwquality.conf.d/{,**} r,
   /etc/skel/{,**} r,
+  /etc/systemd/homed.conf r,
 
   /var/cache/systemd/home/{,**} rw,
   /var/lib/systemd/home/{,**} rw,
+
+  @{att}/ r,
+  @{att}/@{HOMEDIRS}/@{user}.home rw,
 
   / r,
   @{HOMEDIRS}/ r,
   @{HOMEDIRS}/* rw,
   @{HOMEDIRS}/*.homedir/ rw,
+  @{HOMEDIRS}/@{user}.home k,
+
+  @{HOME}/ rw,
+  @{HOME}/.#.identity-blob@{hex16}/ rw,
+  @{HOME}/.#.identity@{hex16} rw,
+  @{HOME}/.identity rw,
+  @{HOME}/.identity-blob/ w,
 
   @{run}/ r,
   @{run}/cryptsetup/{,*} rwk,
@@ -84,6 +106,7 @@ profile systemd-homed @{exec_path} flags=(attach_disconnected) {
   @{sys}/kernel/uevent_seqnum r,
 
         @{PROC}/@{pid}/cgroup r,
+        @{PROC}/@{pid}/setgroups w,
         @{PROC}/devices r,
         @{PROC}/pressure/* r,
         @{PROC}/swaps r,
@@ -94,11 +117,13 @@ profile systemd-homed @{exec_path} flags=(attach_disconnected) {
   owner @{PROC}/@{pid}/mounts r,
   owner @{PROC}/@{pid}/uid_map w,
 
+  @{att}/dev/loop@{int} rw,
+  /dev/btrfs-control rw,
   /dev/loop-control rwk,
-  /dev/loop@{int} rw,
   /dev/mapper/control rw,
   /dev/mqueue/ r,
   /dev/shm/ r,
+  /dev/tty rw,
 
   include if exists <local/systemd-homed>
 }

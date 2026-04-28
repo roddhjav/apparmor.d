@@ -10,10 +10,13 @@ include <tunables/global>
 profile evolution-source-registry @{exec_path} {
   include <abstractions/base>
   include <abstractions/bus-session>
+  include <abstractions/bus-system>
+  include <abstractions/bus/session/org.gtk.vfs.Metadata>
   include <abstractions/bus/session/org.gtk.vfs.MountTracker>
   include <abstractions/dconf-write>
   include <abstractions/gschemas>
   include <abstractions/nameservice-strict>
+  include <abstractions/network-manager-observe>
   include <abstractions/p11-kit>
   include <abstractions/secrets-service>
   include <abstractions/ssl_certs>
@@ -24,37 +27,34 @@ profile evolution-source-registry @{exec_path} {
   network inet6 dgram,
   network netlink raw,
 
-  #aa:dbus own bus=session name=org.gnome.evolution.dataserver.Sources@{int}
+  #aa:dbus own bus=session name=org.gnome.evolution.dataserver.{Source,Sources@{int}} path=/org/gnome/evolution/dataserver/SourceManager{,/**}
 
-  dbus receive bus=session path=/org/gnome/evolution/dataserver/SourceManager{,/**}
-       interface={org.freedesktop.DBus.ObjectManager,org.freedesktop.DBus.Properties}
-       peer=(name=:*),
-  dbus receive bus=session path=/org/gnome/evolution/dataserver/SourceManager{,/**}
-       interface=org.gnome.evolution.dataserver.Source{,.*}
-       peer=(name=:*),
-  dbus send bus=session path=/org/gnome/evolution/dataserver/SourceManager{,/**}
-       interface=org.freedesktop.DBus.Properties
-       peer=(name=org.freedesktop.DBus),
+  #aa:dbus talk bus=session name=org.gnome.OnlineAccounts label=goa-daemon
 
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
-       peer=(name=:*, label=gnome-shell),
+       peer=(name=@{busname}, label="{gnome-shell,gnome-extension}"),
 
   dbus send bus=session path=/org/gnome/OnlineAccounts
        interface=org.freedesktop.DBus.ObjectManager
        member=GetManagedObjects
-       peer=(name=:*, label=goa-daemon),
+       peer=(name=@{busname}, label=goa-daemon),
 
   @{exec_path} mr,
 
+  owner /var/lib/gdm/seat@{int}/config/evolution/sources/ r,
+  owner /var/lib/gdm/seat@{int}/config/evolution/sources/system-proxy.source r,
+
+  owner @{desktop_cache_dirs}/evolution/{,**} rwk,
+  owner @{desktop_share_dirs}/evolution/{,**} rwk,
+
   owner @{user_cache_dirs}/evolution/{,**} rwk,
+  owner @{user_config_dirs}/evolution/{,**/} w,
   owner @{user_config_dirs}/evolution/sources/{,*} rw,
   owner @{user_share_dirs}/evolution/{,**} r,
-  owner @{user_share_dirs}/gvfs-metadata/{,*} r,
-
-  owner @{user_config_dirs}/evolution/{,**/} w,
   owner @{user_share_dirs}/evolution/{,**/} w,
+  owner @{user_share_dirs}/gvfs-metadata/{,*} r,
 
   @{PROC}/sys/kernel/osrelease r,
   @{PROC}/cmdline r,

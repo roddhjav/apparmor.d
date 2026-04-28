@@ -39,8 +39,8 @@ profile dockerd @{exec_path} flags=(attach_disconnected) {
   mount                        /tmp/containerd-mount@{int}/,
   mount                        /var/lib/docker/**/,
   mount options=(rw bind)                                   -> @{run}/docker/netns/*,
-  mount options=(rw rprivate)                               -> /.pivot_root@{int}/,
-  mount options=(rw rslave)                                 -> /,
+  mount options=(rw make-rprivate)                             /.pivot_root@{int}/,
+  mount options=(rw make-rslave)                               /,
 
   remount /tmp/containerd-mount@{int10}/,
   remount /var/lib/docker/**/,
@@ -67,10 +67,11 @@ profile dockerd @{exec_path} flags=(attach_disconnected) {
   @{exec_path} mrix,
 
   @{sbin}/apparmor_parser        rPx,
+  @{sbin}/docker-proxy           rPx,
   @{bin}/containerd              rPx,
   @{bin}/docker-init             rCx -> init,
   @{lib}/docker/docker-init      rCx -> init,
-  @{bin}/docker-proxy            rPx,
+  @{bin}/docker-proxy            rPx, #aa:lint ignore=sbin
   @{bin}/tini-static             rCx -> tini,
   @{bin}/git                     rCx -> git,
   @{bin}/kmod                    rCx -> kmod,
@@ -79,17 +80,20 @@ profile dockerd @{exec_path} flags=(attach_disconnected) {
   @{bin}/runc                    rUx, #aa:lint ignore=sbin
   @{bin}/unpigz                  rix,
   @{sbin}/nft                    rCx -> nft,
-  @{sbin}/xtables-nft-multi      rCx -> nft,
-  @{sbin}/xtables-legacy-multi   rCx -> nft,
+  @{sbin}/xtables-{nft,legacy}-multi rCx -> nft,
 
   # Docker needs full access of the containers it manages.
   # TODO: should be in a sub profile started with pivot_root, not supported yet.
   /{,**} rwl, #aa:only apt
 
   @{att}@{lib}/containerd/** rw,
+  @{att}/var/lib/containerd/** rw,
   @{att}/var/lib/docker/{,**} rwk,
+  @{att}/@/var/lib/docker/{,**} rwk,
 
+  /etc/cdi/{,**} r,
   /etc/docker/{,**} r,
+  /etc/os-release r,
 
   @{att}/ r,
 
@@ -112,6 +116,7 @@ profile dockerd @{exec_path} flags=(attach_disconnected) {
   @{sys}/fs/cgroup/cpuset.cpus.effective r,
   @{sys}/fs/cgroup/cpuset.mems.effective r,
   @{sys}/fs/cgroup/system.slice/docker.service/cpu.max r,
+  @{sys}/kernel/mm/hugepages/ r,
   @{sys}/kernel/security/apparmor/profiles r,
   @{sys}/module/apparmor/parameters/enabled r,
 
@@ -127,6 +132,7 @@ profile dockerd @{exec_path} flags=(attach_disconnected) {
         @{PROC}/sys/net/bridge/bridge-nf-call-ip*tables r,
         @{PROC}/sys/net/core/somaxconn r,
         @{PROC}/sys/net/ipv{4,6}/conf/*/disable_ipv{4,6} rw,
+        @{PROC}/sys/net/ipv{4,6}/conf/br-*/accept_ra w,
         @{PROC}/sys/net/ipv{4,6}/conf/docker@{int}/accept_ra rw,
         @{PROC}/sys/net/ipv{4,6}/ip_forward rw,
         @{PROC}/sys/net/ipv{4,6}/ip_local_port_range r,
@@ -148,12 +154,12 @@ profile dockerd @{exec_path} flags=(attach_disconnected) {
     capability net_raw,
 
     network inet raw,
+    network inet6 dgram,
     network inet6 raw,
     network netlink raw,
 
     @{sbin}/nft                   rix,
-    @{sbin}/xtables-nft-multi     rix,
-    @{sbin}/xtables-legacy-multi  rix,
+    @{sbin}/xtables-{nft,legacy}-multi  rix,
     @{bin}/kmod                   rPx -> dockerd//kmod,
 
     /usr/share/iproute2/* r,

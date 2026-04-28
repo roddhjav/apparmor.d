@@ -18,10 +18,13 @@ profile xdg-desktop-portal-gtk @{exec_path} flags=(attach_disconnected) {
   include <abstractions/graphics>
   include <abstractions/nameservice-strict>
   include <abstractions/network-manager-observe>
+  include <abstractions/screen-inhibit>
   include <abstractions/screensaver>
   include <abstractions/session-manager>
+  include <abstractions/sys/dmi>
   include <abstractions/thumbnails-cache-read>
-  include <abstractions/user-download-strict>
+
+  network inet stream,
 
   signal receive set=term peer=gdm,
   signal receive set=hup  peer=gdm-session-worker,
@@ -29,20 +32,12 @@ profile xdg-desktop-portal-gtk @{exec_path} flags=(attach_disconnected) {
   #aa:dbus own bus=session name=org.freedesktop.impl.portal.desktop.gtk
 
   #aa:dbus talk bus=session name=org.gnome.ScreenSaver label=gjs
-  #aa:dbus talk bus=session name=org.freedesktop.impl.portal.Settings label=xdg-desktop-portal
+  #aa:dbus talk bus=session name=org.freedesktop.impl.portal{,.*} path=/org/freedesktop/portal/desktop label=xdg-desktop-portal
 
-  dbus receive bus=session path=/org/freedesktop/portal/desktop
-       interface=org.freedesktop.impl.portal.Inhibit
-       member=CreateMonitor
+  dbus receive bus=session path=/org/freedesktop/portal/desktop/request/**
+       interface=org.freedesktop.impl.portal.Request
+       member=Close
        peer=(name=@{busname}, label=xdg-desktop-portal),
-  dbus send bus=session path=/org/freedesktop/portal/desktop
-       interface=org.freedesktop.impl.portal.Inhibit
-       member=StateChanged
-       peer=(name=org.freedesktop.DBus, label=xdg-desktop-portal),
-
-  dbus receive bus=session path=/org/freedesktop/portal/desktop
-       interface=org.freedesktop.impl.portal.Settings
-       peer=(name=@{busname}),
 
   @{exec_path} mr,
 
@@ -56,11 +51,6 @@ profile xdg-desktop-portal-gtk @{exec_path} flags=(attach_disconnected) {
   owner @{tmp}/runtime-*/xauth_@{rand6} r,
 
   @{run}/mount/utab r,
-
-  @{sys}/devices/virtual/dmi/id/bios_vendor r,
-  @{sys}/devices/virtual/dmi/id/board_vendor r,
-  @{sys}/devices/virtual/dmi/id/product_name r,
-  @{sys}/devices/virtual/dmi/id/sys_vendor r,
 
   owner @{PROC}/@{pid}/mountinfo r,
 

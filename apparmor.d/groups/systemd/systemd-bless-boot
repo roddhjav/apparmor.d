@@ -1,0 +1,28 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/systemd/systemd-bless-boot
+profile systemd-bless-boot @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/common/systemd>
+  include <abstractions/disks-read>
+
+  capability net_admin,
+
+  @{exec_path} mr,
+
+  @{efi}/ r,
+  @{efi}/EFI/Linux/ r,
+  @{efi}/EFI/Linux/*.efi rw,
+
+  @{sys}/firmware@{efi}/efivars/LoaderBootCountPath-@{uuid} r,
+
+  include if exists <local/systemd-bless-boot>
+}
+
+# vim:syntax=apparmor

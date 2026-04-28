@@ -19,6 +19,7 @@ profile wireplumber @{exec_path} flags=(attach_disconnected) {
   include <abstractions/devices-usb>
   include <abstractions/media-control>
   include <abstractions/nameservice-strict>
+  include <abstractions/sys/dmi>
   include <abstractions/upower-observe>
 
   capability sys_ptrace,
@@ -36,7 +37,7 @@ profile wireplumber @{exec_path} flags=(attach_disconnected) {
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
-       peer=(name=@{busname}, label=gnome-shell),
+       peer=(name=@{busname}, label="{gnome-shell,gnome-extension}"),
 
   dbus receive bus=system path=/midi{,server@{int}}
        interface=org.freedesktop.DBus.ObjectManager
@@ -68,6 +69,8 @@ profile wireplumber @{exec_path} flags=(attach_disconnected) {
   owner @{run}/user/@{uid}/pipewire-@{int} rw,
   owner @{run}/user/@{uid}/pipewire-@{int}-manager rw,
 
+  @{run}/snapd.socket rw,
+
   @{run}/systemd/users/@{uid} r,
 
   @{run}/udev/data/c14:@{int} r,          # Open Sound System (OSS)
@@ -82,10 +85,6 @@ profile wireplumber @{exec_path} flags=(attach_disconnected) {
   @{sys}/devices/**/uevent r,
   @{sys}/devices/system/node/ r,
   @{sys}/devices/system/node/node@{int}/meminfo r,
-  @{sys}/devices/virtual/dmi/id/bios_vendor r,
-  @{sys}/devices/virtual/dmi/id/board_vendor r,
-  @{sys}/devices/virtual/dmi/id/product_name r,
-  @{sys}/devices/virtual/dmi/id/sys_vendor r,
 
         @{PROC}/@{pids}/ r,
         @{PROC}/@{pids}/cgroup r,

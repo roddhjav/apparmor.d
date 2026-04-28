@@ -1,0 +1,75 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/systemd/systemd-importd
+profile systemd-importd @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/bus-system>
+  include <abstractions/nameservice-strict>
+  include <abstractions/ssl_certs>
+
+  capability chown,
+  capability fowner,
+  capability fsetid,
+  capability mknod,
+  capability setfcap,
+  capability sys_admin,
+  capability setpcap,
+  capability dac_override,
+  capability linux_immutable,
+
+  network inet stream,
+  network inet6 stream,
+  network inet dgram,
+  network inet6 dgram,
+  network netlink raw,
+
+  #aa:dbus own bus=system name=org.freedesktop.import1
+
+  @{exec_path} mr,
+
+  @{bin}/gpg                     ix,
+  @{bin}/tar                     ix,
+  @{lib}/systemd/systemd-import  ix,
+  @{lib}/systemd/systemd-pull    ix,
+
+  @{lib}/systemd/import-pubring.gpg r,
+  /etc/systemd/import-pubring.gpg r,
+
+  /var/lib/ r,
+  /var/lib/confexts/ rw,
+  /var/lib/confexts/** rwlk -> /var/lib/confexts/**,
+  /var/lib/extensions/ rw,
+  /var/lib/extensions/** rwlk -> /var/lib/extensions/**,
+  /var/lib/machines/ rw,
+  /var/lib/machines/** rwlk -> /var/lib/machines/**,
+  /var/lib/portables/ rw,
+  /var/lib/portables/** rwlk -> /var/lib/portables/**,
+
+  owner @{run}/systemd/import/ w,
+  owner @{run}/systemd/import/notify w,
+
+  /tmp/gpghome@{rand6}/ rw,
+  /tmp/sig@{rand6} rw,
+
+  @{run}/dbus/system_bus_socket rw,
+  @{run}/systemd/import/notify r,
+
+  @{sys}/fs/cgroup/system.slice/systemd-importd.service/memory.pressure rw,
+
+  @{PROC}/@{pid}/fd/ r,
+  @{PROC}/@{pid}/fdinfo/@{int} r,
+  @{PROC}/1/environ r,
+  @{PROC}/cmdline r,
+  @{PROC}/sys/kernel/osrelease r,
+  @{PROC}/sys/kernel/random/boot_id r,
+
+  include if exists <local/systemd-importd>
+}
+
+# vim:syntax=apparmor

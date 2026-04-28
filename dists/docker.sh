@@ -74,6 +74,7 @@ build_in_docker_makepkg() {
 build_in_docker_dpkg() {
 	local img dist="$1" target="$1" release="$2"
 
+	[[ "$release" == 14 ]] && release="forky"
 	if [[ "$dist" == whonix ]]; then
 		dist=debian
 	fi
@@ -81,7 +82,7 @@ build_in_docker_dpkg() {
 
 	# Adjustments for test flavor
 	if [[ "$FLAVOR" == "test" ]]; then
-		sed -i -e "s/just complain/just complain-test/" "$VOLUME/$PKGNAME/debian/rules"
+		sed -i -e "s;just build=.build/complain complain;just build=.build/complain complain-test;" "$VOLUME/$PKGNAME/debian/rules"
 	fi
 
 	if _exist "$img"; then

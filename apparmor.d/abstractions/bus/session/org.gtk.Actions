@@ -4,23 +4,63 @@
 
   abi <abi/4.0>,
 
+  # DBus.Properties: read properties from the interface
+
   dbus receive bus=session
        interface=org.freedesktop.DBus.Properties
        member=GetAll
        peer=(name=@{busname}, label=gnome-shell),
 
-  dbus receive bus=session
-       interface=org.gtk.Actions
-       member={Activate,DescribeAll,SetState},
+  # org.gtk.Actions
 
   dbus send bus=session
        interface=org.gtk.Actions
        member=DescribeAll
-       peer=(name=org.gnome.Nautilus),
+       peer=(label=@{profile_name}),
+
+  dbus receive bus=session
+       interface=org.gtk.Actions
+       member=Changed
+       peer=(name=@{busname}),
+
+  # org.gtk.Application
+
+  dbus send bus=session
+       interface=org.gtk.Application
+       member={CommandLine,DescribeAll}
+       peer=(label=@{profile_name}),
+
+  dbus receive bus=session
+       interface=org.gtk.Actions
+       member={Activate,DescribeAll,SetState},
+
+  dbus receive bus=session
+       interface=org.gtk.Actions
+       member=CommandLine
+       peer=(label=@{profile_name}),
 
   dbus send bus=session
        interface=org.gtk.Actions
        member=Changed,
+
+  dbus receive bus=session
+       interface=org.gtk.Actions
+       member=Changed
+       peer=(label=@{profile_name}),
+
+  dbus receive bus=session
+       interface=org.gtk.Application
+       member=Open
+       peer=(name=@{busname}, label=@{profile_name}),
+
+  dbus send bus=session
+       interface=org.gtk.Application
+       member=Open
+       peer=(label=@{profile_name}),
+
+  dbus send bus=session
+       interface=org.gtk.Actions
+       member=Activate,
 
   include if exists <abstractions/bus/session/org.gtk.Actions.d>
 
