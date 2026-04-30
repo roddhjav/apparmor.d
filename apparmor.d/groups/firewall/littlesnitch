@@ -1,0 +1,51 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 curiosityseeker
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/littlesnitch
+profile littlesnitch @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/cgroup-limits>
+
+  capability bpf,
+  capability dac_read_search,
+  capability perfmon,
+  capability sys_admin,
+  capability sys_resource,
+   
+  network inet stream,
+  
+  @{exec_path} mr,
+
+  @{open_path}  rPx -> child-open-browsers,
+
+  @{lib}/ r,
+
+  /etc/shells r,
+
+  /var/lib/littlesnitch/ r,
+  /var/lib/littlesnitch/** rw,
+  /var/lib/littlesnitch/rules.sqlite rwk,
+  /var/lib/littlesnitch/connections.sqlite rwk,
+
+  @{sys}/fs/cgroup/ r,
+  @{sys}/fs/cgroup/system.slice/cpu.max r,
+  @{sys}/kernel/btf/vmlinux r,
+  @{sys}/kernel/tracing/ r,
+  @{sys}/kernel/tracing/events/sched/sched_process_exec/id r,
+  @{sys}/kernel/tracing/events/sched/sched_process_exit/id r,
+  @{sys}/kernel/tracing/events/sched/sched_process_fork/id r,
+
+  @{PROC}/@{pid}/mounts r,
+  @{PROC}/sys/kernel/osrelease r,
+  @{PROC}/version r,
+
+  include if exists <local/littlesnitch>
+}
+
+# vim:syntax=apparmor
