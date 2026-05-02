@@ -144,11 +144,11 @@ func main() {
 
 	path, err := logs.SelectLogFile(path)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 	if err = aaLog(logger, path, profile, namespace, rules, raw, load); err != nil {
-		fmt.Println(err)
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 }
