@@ -470,6 +470,58 @@ func TestAppArmorLogs_ParseToProfiles(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "namespace-separated",
+			aaLogs: AppArmorLogs{
+				{
+					"apparmor":       "ALLOWED",
+					"profile":        "podman",
+					"operation":      "file_inherit",
+					"comm":           "podman",
+					"family":         "unix",
+					"sock_type":      "stream",
+					"protocol":       "0",
+					"requested_mask": "send receive",
+					"class":          "net",
+				},
+				{
+					"apparmor":       "ALLOWED",
+					"namespace":      "root//podman",
+					"profile":        "podman",
+					"operation":      "file_inherit",
+					"comm":           "exe",
+					"family":         "unix",
+					"sock_type":      "dgram",
+					"protocol":       "0",
+					"requested_mask": "send receive",
+					"class":          "net",
+				},
+			},
+			want: map[string]*aa.Profile{
+				"podman": {
+					Header: aa.Header{Name: "podman"},
+					Rules: aa.Rules{
+						&aa.Unix{
+							Base:     aa.Base{FileInherit: true},
+							Access:   []string{"send", "receive"},
+							Type:     "stream",
+							Protocol: "0",
+						},
+					},
+				},
+				":podman:podman": {
+					Header: aa.Header{Name: "podman", NameSpace: "podman"},
+					Rules: aa.Rules{
+						&aa.Unix{
+							Base:     aa.Base{FileInherit: true},
+							Access:   []string{"send", "receive"},
+							Type:     "dgram",
+							Protocol: "0",
+						},
+					},
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

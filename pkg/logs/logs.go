@@ -328,16 +328,18 @@ func (aaLogs AppArmorLogs) ParseToProfiles() map[string]*aa.Profile {
 		} else {
 			name = log["profile"]
 		}
+		ns := getNameSpace(log["namespace"])
+		key := profileKey(name, ns)
 
-		if _, ok := profiles[name]; !ok {
+		if _, ok := profiles[key]; !ok {
 			profile := &aa.Profile{Header: aa.Header{
 				Name:      name,
-				NameSpace: getNameSpace(log["namespace"]),
+				NameSpace: ns,
 			}}
 			profile.AddRule(log)
-			profiles[name] = profile
+			profiles[key] = profile
 		} else {
-			profiles[name].AddRule(log)
+			profiles[key].AddRule(log)
 		}
 	}
 	return profiles
