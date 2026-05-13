@@ -318,6 +318,13 @@ func getNameSpace(rawNamespace string) string {
 	return strings.TrimPrefix(rawNamespace, "root//")
 }
 
+func profileKey(name, namespace string) string {
+	if namespace == "" {
+		return name
+	}
+	return ":" + namespace + ":" + name
+}
+
 // ParseToProfiles convert the log data into a new AppArmorProfiles
 func (aaLogs AppArmorLogs) ParseToProfiles() map[string]*aa.Profile {
 	profiles := make(map[string]*aa.Profile, 0)
