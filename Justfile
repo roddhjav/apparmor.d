@@ -331,6 +331,7 @@ check:
 # Generate the man pages
 [group('docs')]
 man:
+	@pandoc -t man -s -o share/man/man1/aa-mode.1 share/man/man1/aa-mode.md
 	@pandoc -t man -s -o share/man/man8/aa-log.8 share/man/man8/aa-log.md
 
 # Generate abstractions and tunable documentation from the source

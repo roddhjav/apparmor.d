@@ -1,0 +1,24 @@
+# aa-mode completion
+
+_aa-mode() {
+	COMPREPLY=()
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+	local args=(
+		-e --enforce
+		-c --complain
+		-k --kill
+		-a --default-allow
+		-u --unconfined
+		-p --prompt
+		--no-reload
+		-h --help
+	)
+	COMPREPLY+=($(compgen -W "${args[*]}" -- ${cur}))
+	COMPREPLY+=($(compgen -W "$(__aa_profiles)" -- ${cur}))
+}
+
+__aa_profiles() {
+	find -L /etc/apparmor.d -maxdepth 1 -type f -printf '%P\n' | sort
+}
+
+complete -F _aa-mode aa-mode
