@@ -10,14 +10,43 @@ include <tunables/global>
 profile dracut-install @{exec_path} {
   include <abstractions/base>
   include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+
+  capability syslog,
 
   @{exec_path} mr,
 
   @{bin}/cp rix,
 
+  /usr/share/btrfsprogs/dracut* r,
+  /usr/share/kbd/{,**} r,
+
+  /etc/ r,
+  /etc/depmod.d/{,**} r,
+  /etc/hostname r,
+  /etc/hosts r,  /etc/machine-id r,
+  /etc/modules-load.d/{,**} r,
+  /etc/sysctl.d/{,**} r,
+  /etc/systemd/journald.conf.d/{,**} r,
+  /etc/systemd/system.conf.d/{,**} r,
+  /etc/udev/rules.d/{,**} r,
+  /etc/udev/udev.conf.d/{,**} r,
+  /etc/vconsole.conf r,
+
   /etc/modprobe.d/{,**} r,
+  @{lib}/modprobe.d/{,**} r,
+  @{run}/modprobe.d/{,**} r,
+
+  # Can copy any program to the initframs
+  @{bin}/* r,
+  @{lib}/ r,
+  @{sbin}/* r,
+  /{usr/,}{local/,}{s,}bin/ r,
+  /{usr/,}{local/,}lib{,32,64}/ r,
 
   / r,
+
+  /var/tmp/dracut.@{rand6}@{c}/{,**} rwl,
 
   /var/tmp/mkinitramfs_@{rand6}/usr/lib/modules/*/ r,
   /var/tmp/mkinitramfs_@{rand6}/usr/lib/modules/*/kernel/{,**/} rw,
@@ -25,11 +54,11 @@ profile dracut-install @{exec_path} {
   /var/tmp/mkinitramfs_@{rand6}/usr/lib/modules/*/modules.* rw,
   /var/tmp/mkinitramfs_@{rand6}/usr/lib/modules/*/updates/{,**} r,
 
-  @{sys}/devices/platform/{,**/} r,
-  @{sys}/devices/platform/**/modalias r,
+  @{sys}/devices/{,**} r,
   @{sys}/module/compression r,
 
   @{PROC}/cmdline r,
+  @{PROC}/modules r,
 
   include if exists <local/dracut-install>
 }
