@@ -73,7 +73,11 @@ func (d Dbus) Apply(opt *Option, profile string) (string, error) {
 		strings.SplitN(opt.Raw, Keyword, 1)[0], aa.Indentation,
 	)
 	generatedDbus := r.String()
-	generatedDbus = strings.ReplaceAll(generatedDbus, "\n\n", "\n")
+	if action == "see" {
+		generatedDbus = generatedDbus[:len(generatedDbus)-1] // Remove trailing newlines
+	} else {
+		generatedDbus = strings.ReplaceAll(generatedDbus, "\n\n", "\n")
+	}
 	profile = strings.ReplaceAll(profile, opt.Raw, header+generatedDbus)
 	return profile, nil
 }
@@ -297,6 +301,7 @@ func (d Dbus) Talk(rules map[string]string) aa.Rules {
 func (d Dbus) See(rules map[string]string) aa.Rules {
 	peerName := `"{@{busname},` + rules["name"] + `}"`
 	res := aa.Rules{
+		nil,
 
 		// Unix: allow connection to the profile
 		&aa.Comment{
@@ -311,6 +316,7 @@ func (d Dbus) See(rules map[string]string) aa.Rules {
 			PeerLabel: rules["label"],
 			PeerAddr:  "none",
 		},
+		nil,
 
 		// DBus.Properties: read all properties from the interface
 		&aa.Comment{
@@ -325,6 +331,7 @@ func (d Dbus) See(rules map[string]string) aa.Rules {
 			Member:    "{Get,GetAll}",
 			PeerName:  peerName, PeerLabel: rules["label"],
 		},
+		nil,
 
 		// DBus.Properties: receive property changed events
 		&aa.Comment{
@@ -333,12 +340,14 @@ func (d Dbus) See(rules map[string]string) aa.Rules {
 				IsLineRule: true,
 			},
 		},
+		nil,
 		&aa.Dbus{
 			Access: []string{"receive"}, Bus: rules["bus"], Path: rules["path"],
 			Interface: "org.freedesktop.DBus.Properties",
 			Member:    "PropertiesChanged",
 			PeerName:  peerName, PeerLabel: rules["label"],
 		},
+		nil,
 
 		// DBus.Introspectable: allow service introspection
 		&aa.Comment{
@@ -347,6 +356,7 @@ func (d Dbus) See(rules map[string]string) aa.Rules {
 				IsLineRule: true,
 			},
 		},
+		nil,
 		&aa.Dbus{
 			Access: []string{"send"}, Bus: rules["bus"], Path: rules["path"],
 			Interface: "org.freedesktop.DBus.Introspectable",

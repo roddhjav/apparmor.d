@@ -107,24 +107,30 @@ const (
 `
 
 	dbusSeePowerProfiles = `  #aa/dbus see bus=system name=net.hadess.PowerProfiles label=power-profiles-daemon
+
   # Unix: allow connection to the profile
   unix type=stream peer=(label=power-profiles-daemon),
+
   # DBus.Properties: read all properties from the interface
+
   dbus send bus=system path=/net/hadess/PowerProfiles{,/**}
        interface=org.freedesktop.DBus.Properties
        member={Get,GetAll}
        peer=(name="{@{busname},net.hadess.PowerProfiles{,.*}}", label=power-profiles-daemon),
+
   # DBus.Properties: receive property changed events
+
   dbus receive bus=system path=/net/hadess/PowerProfiles{,/**}
        interface=org.freedesktop.DBus.Properties
        member=PropertiesChanged
        peer=(name="{@{busname},net.hadess.PowerProfiles{,.*}}", label=power-profiles-daemon),
+
   # DBus.Introspectable: allow service introspection
+
   dbus send bus=system path=/net/hadess/PowerProfiles{,/**}
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
-       peer=(name="{@{busname},net.hadess.PowerProfiles{,.*}}", label=power-profiles-daemon),
-`
+       peer=(name="{@{busname},net.hadess.PowerProfiles{,.*}}", label=power-profiles-daemon),`
 )
 
 func TestDbus_Apply(t *testing.T) {
