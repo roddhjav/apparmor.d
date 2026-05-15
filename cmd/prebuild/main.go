@@ -26,6 +26,10 @@ func configInit() *tasks.TaskConfig {
 
 	// Matrix of ABI/Apparmor version to integrate with
 	switch tasks.Distribution {
+	case "opensuse":
+		c.ABI = 5
+		c.Version = 5.0
+
 	case "arch":
 
 	case "ubuntu":
