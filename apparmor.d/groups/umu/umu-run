@@ -2,6 +2,19 @@
 # Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
+# Security objectives of the steam profiles:
+# - Ensure no user data is accessed by either umu or umu games
+# - Limit what steam/games can access to the host
+#
+# Overall architecture of the steam profiles:
+# umu-run
+# ├── umu-runtime           # Pressure-vessel, steam runtime, create the game sandbox
+# │   └── steam-bwrap        # Native games
+# │       └── steam-game     # Proton games (sandboxed)
+# ├── umu-run//bwrap
+# ├── umu-run//ldd
+# └── umu-run//ldconfig
+
 abi <abi/4.0>,
 
 include <tunables/global>
@@ -9,10 +22,7 @@ include <tunables/global>
 @{share_dirs} = @{user_share_dirs}/umu
 @{cache_dirs} = @{user_cache_dirs}/umu
 @{runtime_dirs} = @{share_dirs}/steamrt3/
-@{wineprefix_dirs} = @{HOME}/Games/umu/*/
-
-@{steam_share_dirs} = @{user_share_dirs}/Steam @{HOME}/.steam/debian-installation
-@{steam_lib_dirs} = @{steam_share_dirs}/ubuntu@{int2}_{32,64}
+@{wineprefix_dirs} = @{HOME}/Games/umu/*/ @{HOME}/Games/Heroic/*/ @{HOME}/Games/steam/*/
 
 @{exec_path} = @{bin}/umu-run
 profile umu-run @{exec_path} flags=(attach_disconnected) {
@@ -47,9 +57,9 @@ profile umu-run @{exec_path} flags=(attach_disconnected) {
   @{bin}/gcc              rix,
   @{lib}/gcc/**/collect2  rix,
 
-  @{sbin}/ldconfig             rCx -> &umu-run//ldconfig,
-  @{bin}/bwrap                  Cx -> bwrap,
-  @{ldd_path}                   Cx -> &umu-run//ldd,
+  @{bin}/bwrap             Cx -> bwrap,
+  @{ldd_path}              Cx -> &umu-run//ldd,
+  @{sbin}/ldconfig         Cx -> &umu-run//ldconfig,
 
              @{runtime_dirs}/umu ix,
              @{runtime_dirs}/run ix,
@@ -72,6 +82,8 @@ profile umu-run @{exec_path} flags=(attach_disconnected) {
   owner @{steam_lib_dirs}/{,*} rw,
   owner @{steam_share_dirs}/compatibilitytools.d/{,**} rwm,
 
+  owner @{user_config_dirs}/heroic/tools/proton/** r,
+
   owner @{cache_dirs}/ rw,
   owner @{cache_dirs}/** rwlk -> @{share_dirs}/**,
 
@@ -80,6 +92,8 @@ profile umu-run @{exec_path} flags=(attach_disconnected) {
 
   owner @{run}/user/@{uid}/ r,
 
+        @{PROC}/ r,
+        @{PROC}/@{pids}/status r,
   owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/mounts r,
 

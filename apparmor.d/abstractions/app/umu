@@ -2,19 +2,14 @@
 # Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 # LOGPROF-SUGGEST: no
+# NEEDS-VARIABLE: att
+# NEEDS-VARIABLE: steam_share_dirs
+# NEEDS-VARIABLE: runtime_dirs
 
   abi <abi/4.0>,
 
-  include <abstractions/common/game>
-  include <abstractions/dconf-write>
+  include <abstractions/common/pressure-vessel>
   include <abstractions/deny-sensitive-home>
-  include <abstractions/wine>
-
-  network inet dgram,
-  network inet stream,
-  network inet6 dgram,
-  network inet6 stream,
-  network netlink raw,
 
   signal (send receive) peer=umu-bwrap,
   signal (send receive) peer=umu-bwrap//&umu-game,
@@ -23,87 +18,19 @@
 
   unix type=seqpacket peer=(label=umu-bwrap),
   unix type=stream    peer=(label=umu-bwrap),
-  unix (bind listen) type=seqpacket addr=@@{hex},
-  unix bind type=seqpacket addr=@@{hex},
-  unix bind type=seqpacket,
-  network unix seqpacket,
+  unix type=stream    peer=(label=umu-game),
 
   ptrace (read trace) peer=umu-bwrap,
   ptrace (read trace) peer=umu-bwrap//&umu-game,
   ptrace (read trace) peer=umu-game,
 
-  # DBus.Properties: receive property changed events
-
-  dbus receive bus=system path=/org/freedesktop/systemd1/job/@{int}
-       interface=org.freedesktop.DBus.Properties
-       member=PropertiesChanged
-       peer=(label="@{p_systemd}"),
-
-  dbus receive bus=system path=/org/freedesktop/systemd1/unit/*
-       interface=org.freedesktop.DBus.Properties
-       member=PropertiesChanged
-       peer=(label="@{p_systemd}"),
-
-  # Common to all @{lib}/pressure-vessel/from-host/libexec/steam-runtime-tools-@{int}/pv-adverb
-  # Meaning umu, and steam
-  @{sh_path}                                            rix,
-  @{coreutils_path}                                      ix,
-  @{bin}/getopt                                          ix,
-  @{bin}/gzip                                            ix,
-  @{bin}/localedef                                       ix,
-  @{bin}/steam-runtime-launcher-interface-@{int}         ix,
-  @{bin}/steam-runtime-system-info                       ix,
-  @{bin}/steam-runtime-urlopen                           ix,
-  @{bin}/zenity                                          ix,
-  @{python_path}                                        rix,
-  @{run}/host/@{bin}/localedef                           ix,
-  @{run}/host/@{sbin}/ldconfig                           ix,
-  @{sbin}/ldconfig                                       ix,
-
-  @{lib}/pressure-vessel/from-host/libexec/steam-runtime-tools-@{d}/** ix,
-
-  @{att}@{steam_share_dirs}/compatibilitytools.d/ r,
-  @{att}@{steam_share_dirs}/compatibilitytools.d/*/ r,
-  @{att}@{steam_share_dirs}/compatibilitytools.d/*/** mrix, # TODO: -> &wine ?, with namespace
-  @{steam_share_dirs}/compatibilitytools.d/ r,
-  @{steam_share_dirs}/compatibilitytools.d/*/ r,
-  @{steam_share_dirs}/compatibilitytools.d/*/** mrix, # TODO: -> &wine ?, with namespace
-  @{steam_share_dirs}/compatibilitytools.d/*/**.msi k,
-
-  @{runtime_dirs}/pressure-vessel/@{bin}/** ix,
-  @{runtime_dirs}/pressure-vessel/@{lib}/** mr,
   @{runtime_dirs}/umu-shim rix,
 
-  @{run}/host/@{lib}/**.dll m,
-  @{run}/host/@{lib}/**.so* m,
-
-  /usr/share/zenity/{,**} r,
-
-  owner @{lib}/ r,
-  owner /usr/local/lib/ r,
-  owner /usr/local/lib/**/ r,
-
-  # owner /var/pressure-vessel/** rw,
-  owner /var/pressure-vessel/ldso/* rw,
-  owner /var/cache/ldconfig/aux-cache* rw,
-
-  # This is the fontconfig cache of the sandboxed runtime, not the host
-  owner /var/cache/fontconfig/** rwl,
-
-  owner @{HOME}/.steam/steam.pid r,
-  owner @{HOME}/steam-@{int}.log rw,
-
-  owner @{att}@{run}/user/@{uid}/bus rw,
-  owner @{att}@{run}/user/@{uid}/pulse/native rw,
-  owner @{att}@{run}/user/@{uid}/wayland-@{int} rw,
-
-  owner @{steam_share_dirs}/ r,
-  owner @{steam_share_dirs}/compatibilitytools.d/{,**/}__pycache__/ w,
-  owner @{steam_share_dirs}/compatibilitytools.d/{,**/}__pycache__/**.pyc.@{u64} w,
-
-  owner @{runtime_dirs}/pressure-vessel/lib/@{multiarch}/steam-runtime-tools-0/libcap.so.2 mr,
-  owner @{runtime_dirs}/var/tmp-@{rand6}/.ref rw,
-  owner @{att}@{runtime_dirs}/var/tmp-@{rand6}/.ref rw,
+  @{wineprefix_dirs}/ r,
+  @{wineprefix_dirs}/** mrix,
+  @{user_config_dirs}/heroic/tools/proton/ r,
+  @{user_config_dirs}/heroic/tools/proton/*/ r,
+  @{user_config_dirs}/heroic/tools/proton/*/** mrix,
 
   # file_inherit
         @{user_share_dirs}/umu/steamrt3/VERSIONS.txt r,
@@ -117,28 +44,7 @@
   owner @{wineprefix_dirs}/ rw,
   owner @{wineprefix_dirs}/** rwk,
 
-        /tmp/ r,
-  owner @{tmp}/pressure-vessel-libs-@{rand6}/{,**} rwlk,
-  owner @{tmp}/pressure-vessel-locales-@{rand6}/{,**} rwlk,
   owner @{tmp}/umu_crashreports/{,**} rw,
-
-        @{run}/host/fonts-cache/{,**} r,
-        @{run}/host/fonts/{,**} r,
-        @{run}/host/local-fonts/{,**} r,
-        @{run}/host/share/{,**} r,
-        @{run}/host/share/icons/{,**} r,
-        @{run}/host/user-share/icons/{,**} r,
-        @{run}/host/usr/{,**} r,
-  owner @{run}/host/font-dirs.xml r,
-  owner @{run}/host/user-fonts-cache/@{hex32}-le{32,64}.cache-@{int} r,
-  owner @{run}/host/user-fonts/{,**} r,
-  owner @{run}/pressure-vessel/{,**} r,
-
-  @{sys}/devices/**/net/*/carrier r,
-
-  @{PROC}/@{pid}/net/* r,
-  @{PROC}/sys/net/ipv4/conf/default/forwarding r,
-  @{PROC}/sys/net/ipv4/ip_default_ttl r,
 
   owner @{PROC}/@{pid}/uid_map r,
 
