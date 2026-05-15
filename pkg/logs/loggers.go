@@ -131,7 +131,11 @@ func validateLogFile(filename string) error {
 	if err != nil {
 		return err
 	}
-	if !info.Mode().IsRegular() {
+	mode := info.Mode()
+	if mode&(os.ModeNamedPipe|os.ModeCharDevice) != 0 {
+		return nil
+	}
+	if !mode.IsRegular() {
 		return fmt.Errorf("not a regular file: %s", filename)
 	}
 	if info.Size() == 0 {

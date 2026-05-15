@@ -2,9 +2,13 @@
 # Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-# ExecStartPre=/bin/sh -c '[ -s /boot/grub/grubenv ] || rm -f /boot/grub/grubenv; mkdir -p /boot/grub'
-# ExecStart=grub-editenv /boot/grub/grubenv unset recordfail
-# ExecStartPost=/bin/sh -c 'if grub-editenv /boot/grub/grubenv list | grep -q initrdless_boot_fallback_triggered=1; then echo "grub: GRUB_FORCE_PARTUUID set, initrdless boot paniced, fallback triggered."; fi'
+# systemd service: `grub-common.service`
+#
+# ```sh
+# /bin/sh -c '[ -s /boot/grub/grubenv ] || rm -f /boot/grub/grubenv; mkdir -p /boot/grub'
+# grub-editenv /boot/grub/grubenv unset recordfail
+# /bin/sh -c 'if grub-editenv /boot/grub/grubenv list | grep -q initrdless_boot_fallback_triggered=1; then echo "grub: GRUB_FORCE_PARTUUID set, initrdless boot paniced, fallback triggered."; fi'
+# ```
 
 abi <abi/4.0>,
 
@@ -17,10 +21,25 @@ profile grub-common.service {
   @{bin}/{,e}grep       ix,
   @{bin}/grub-editenv  rix,
   @{bin}/mkdir          ix,
+  @{bin}/plymouth       Px,
   @{bin}/rm             ix,
+  @{bin}/systemctl      Cx -> systemctl,
+
+  /etc/init.d/grub-common r,
 
   @{efi}/grub/ w,
   @{efi}/grub/grubenv rw,
+
+  profile systemctl {
+    include <abstractions/base>
+    include <abstractions/app/systemctl>
+
+    capability net_admin,
+
+    ptrace read peer=@{p_systemd},
+
+    include if exists <local/grub-common.service_systemctl>
+  }
 
   include if exists <local/grub-common.service>
 }

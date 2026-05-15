@@ -1,0 +1,181 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+# LOGPROF-SUGGEST: no
+# NEEDS-VARIABLE: att
+# NEEDS-VARIABLE: steam_share_dirs
+# NEEDS-VARIABLE: runtime_dirs
+
+# Pressure vessel abstraction, for games that are sandboxed in a similar way to
+# Flatpak. It is used by steam and umu.
+#
+# It is assumed that profile including this abstraction wants to confine a game
+# running sandboxed with bwrap.
+#
+# As Pressure vessel is architecturally very close to Flatpak, it is possible to
+# use flatpak only abstractions (`abstractions/flatpak/...`) here.
+
+  abi <abi/4.0>,
+
+  # Base abstractions
+  include <abstractions/audio-client>
+  include <abstractions/common/game>
+  include <abstractions/dconf-write>
+  include <abstractions/nameservice-strict>
+  include <abstractions/sys/dmi-full>
+  include <abstractions/sys/power-supply>
+
+  # The app base platform, similar to our desktop abstraction, but with flatpak paths
+  include <abstractions/flatpak/platform/org.freedesktop>
+
+  # Base app specific rules
+  include <abstractions/flatpak/baseapp/org.winehq.Wine>
+
+  # Flatpak devices
+  include <abstractions/flatpak/devices/dri>
+  include <abstractions/flatpak/devices/input>
+  include <abstractions/flatpak/devices/usb>
+
+  # Flatpack share (IPC, network)
+  include <abstractions/flatpak/shared/ipc>
+  include <abstractions/flatpak/shared/network>
+
+  # Flatpack sockets
+  include <abstractions/flatpak/sockets/wayland>
+  include <abstractions/flatpak/sockets/x11>
+
+  # Dbus: all dbus interfaces a pressure vessel app can access
+  # While close to flatpak, pressure-vessel does not use dbux-proxy.
+  include <abstractions/avahi-observe>
+  include <abstractions/bus-session>
+  include <abstractions/bus-system>
+  include <abstractions/bus/system/org.freedesktop.UDisks2>
+
+  # Common to all @{lib}/pressure-vessel/from-host/libexec/steam-runtime-tools-@{int}/pv-adverb
+  @{sh_path}                                            rix,
+  @{coreutils_path}                                      ix,
+  @{bin}/getopt                                          ix,
+  @{bin}/gzip                                            ix,
+  @{bin}/localedef                                       ix,
+  @{bin}/steam-runtime-launcher-interface-@{int}         ix,
+  @{bin}/steam-runtime-system-info                       ix,
+  @{bin}/steam-runtime-urlopen                           ix,
+  @{bin}/xrandr                                          ix,
+  @{bin}/zenity                                          ix,
+  @{python_path}                                        rix,
+  @{run}/host/@{bin}/localedef                           ix,
+  @{run}/host/@{sbin}/ldconfig                           ix,
+  @{sbin}/ldconfig                                       ix,
+
+  @{lib}/pressure-vessel/from-host/libexec/steam-runtime-tools-@{d}/** ix,
+
+  @{att}@{steam_share_dirs}/compatibilitytools.d/ r,
+  @{att}@{steam_share_dirs}/compatibilitytools.d/*/ r,
+  @{att}@{steam_share_dirs}/compatibilitytools.d/*/** mrix,
+  @{steam_share_dirs}/compatibilitytools.d/ r,
+  @{steam_share_dirs}/compatibilitytools.d/*/ r,
+  @{steam_share_dirs}/compatibilitytools.d/*/** mrix,
+  @{steam_share_dirs}/compatibilitytools.d/*/**.msi k,
+
+  @{runtime_dirs}/pressure-vessel/@{bin}/** ix,
+  @{runtime_dirs}/pressure-vessel/@{lib}/** mr,
+
+  @{run}/host/@{lib}/**.dll m,
+  @{run}/host/@{lib}/**.so* m,
+
+  /usr/share/zenity/{,**} r,
+
+        @{run}/media/ r,
+        /mnt/ r,
+  owner / r,
+  owner @{lib}/ r,
+  owner /usr/local/lib/ r,
+  owner /usr/local/lib/**/ r,
+  owner @{HOME}/ r,
+  owner @{HOME}/.local/ r,
+  owner @{user_share_dirs}/ r,
+
+  owner /var/cache/fontconfig/ rw,
+  owner /var/cache/fontconfig/** rwl,
+  owner /var/cache/ldconfig/aux-cache* rw,
+  owner /var/pressure-vessel/ldso/* rw,
+
+  owner @{HOME}/.steam/steam.pid r,
+  owner @{HOME}/steam-@{int}.log rw,
+
+  owner @{steam_share_dirs}/ r,
+  owner @{steam_share_dirs}/compatibilitytools.d/{,**/}__pycache__/ w,
+  owner @{steam_share_dirs}/compatibilitytools.d/{,**/}__pycache__/**.pyc.@{u64} w,
+
+  owner @{runtime_dirs}/pressure-vessel/lib/@{multiarch}/steam-runtime-tools-0/libcap.so.2 mr,
+  owner @{runtime_dirs}/var/tmp-@{rand6}/.ref rw,
+  owner @{att}@{runtime_dirs}/var/tmp-@{rand6}/.ref rw,
+
+        /tmp/ r,
+  owner /tmp/pressure-vessel-libs-@{rand6}/ rw,
+  owner /tmp/pressure-vessel-libs-@{rand6}/** rwlk,
+  owner /tmp/pressure-vessel-locales-@{rand6}/ rw,
+  owner /tmp/pressure-vessel-locales-@{rand6}/** rwlk,
+
+  owner @{att}@{run}/user/@{uid}/bus rw,
+  owner @{att}@{run}/user/@{uid}/pulse/native rw,
+
+        @{run}/host/usr/{,**} r,
+  owner @{run}/pressure-vessel/{,**} r,
+
+  # The active clock source used by the kernel for timekeeping (e.g., tsc, hpet, acpi_pm)
+  @{sys}/devices/system/clocksource/clocksource@{int}/current_clocksource r,
+
+  # The active CPU frequency scaling governor (e.g., performance, powersave, schedutil, ondemand)
+  @{sys}/devices/system/cpu/cpufreq/ r,
+  @{sys}/devices/system/cpu/cpufreq/policy@{int}/scaling_governor r,
+
+  # Allow to check check if BPF JIT is enabled
+  @{PROC}/sys/net/core/bpf_jit_enable r,
+
+  # Allow to read system uptime
+  @{PROC}/uptime r,
+
+  # Allow to read the maximum number of file handles that can be allocated system-wide.
+  @{PROC}/sys/fs/file-max r,
+  @{PROC}/sys/fs/file-nr r,
+  @{PROC}/sys/fs/nr_open r,
+
+  # Allow reading cgroup membership information for process introspection
+  owner @{PROC}/@{pid}/cgroup r,
+
+  # Allow reading command line arguments for process identification
+  owner @{PROC}/@{pid}/cmdline rk,
+  owner @{PROC}/@{pid}/comm rk,
+
+  # Allow listing file descriptors
+  owner @{PROC}/@{pid}/fd/ r,
+
+  # Allow reading file descriptor info
+  owner @{PROC}/@{pid}/fdinfo/ r,
+  owner @{PROC}/@{pid}/fdinfo/@{int} r,
+
+  # Allow reading mount points for filesystem awareness. This is an information leak
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/mounts r,
+
+  # Allow reading page mapping information for memory profiling
+  owner @{PROC}/@{pid}/pagemap r,
+
+  # Per man(5) proc, the kernel enforces that a thread may only modify its comm
+  # value or those in its thread group.
+  owner @{PROC}/@{pid}/task/@{tid}/comm rw,
+
+  # Provide statistical information about our own processes/threads
+  owner @{PROC}/@{pid}/stat r,
+  owner @{PROC}/@{pid}/task/ r,
+  owner @{PROC}/@{pid}/task/@{tid}/stat r,
+
+  # Remain from `abstractions/flatpak/platform/org.freedesktop` not used outside flatpak.
+  deny /var/lib/flatpak/app/*/@{arch}/stable/@{hex64}/export/share/icons/{,**} r,
+  deny /var/lib/flatpak/exports/share/icons/{,**} r,
+  deny @{att}@{run}/user/@{uid}/.flatpak-helper/pkcs11-flatpak-@{int} rw,
+
+  include if exists <abstractions/common/pressure-vessel.d>
+
+# vim:syntax=apparmor

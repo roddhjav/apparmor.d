@@ -7,6 +7,7 @@ package logs
 import (
 	"path/filepath"
 	"reflect"
+	"syscall"
 	"testing"
 )
 
@@ -71,6 +72,12 @@ func TestSelectLogFile(t *testing.T) {
 	// 	return false
 	// }
 
+	t.Setenv("TMPDIR", "/tmp/tests")
+	fifo := filepath.Join(t.TempDir(), "logs.fifo")
+	if err := syscall.Mkfifo(fifo, 0o600); err != nil {
+		t.Fatalf("mkfifo: %v", err)
+	}
+
 	tests := []struct {
 		name    string
 		path    string
@@ -95,6 +102,12 @@ func TestSelectLogFile(t *testing.T) {
 		// 	want:    "/var/log/audit/audit.log",
 		// 	wantErr: !canReadPath("/var/log/audit/audit.log.1"),
 		// },
+		{
+			name:    "Named pipe (process substitution)",
+			path:    fifo,
+			want:    fifo,
+			wantErr: false,
+		},
 		{
 			name:    "File not found",
 			path:    "/nonexistent/file",

@@ -2,6 +2,9 @@
 // Copyright (C) 2021-2026 Alexandre Pujol <alexandre@pujol.io>
 // SPDX-License-Identifier: GPL-2.0-only
 
+// Package prebuild defines the directory layout, manifest readers, and
+// shared state used by the prebuild pipeline that turns the source profiles
+// into a distribution-ready tree.
 package prebuild
 
 import "github.com/roddhjav/apparmor.d/pkg/paths"

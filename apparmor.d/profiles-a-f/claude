@@ -62,6 +62,7 @@ profile claude @{exec_path} flags=(attach_disconnected) {
   @{lib}/node_modules/npm/bin/npx-cli.js  rix,
   /usr/share/nodejs/npm/bin/npm-cli.js    rix,
 
+  #aa:lint ignore=too-wide
   # TODO: should transition to a dev/plugin profile, not the shell one
   priority=-1 /** Cx -> shell,
 
@@ -157,8 +158,10 @@ profile claude @{exec_path} flags=(attach_disconnected) {
     signal receive peer=claude,
 
     priority=1 @{bin}/flatpak     Px -> claude//flatpak,
+    priority=1 @{bin}/git         Px -> claude//git,
+    priority=1 @{bin}/scp         PUx -> claude//ssh,
     priority=1 @{bin}/ssh         Px -> claude//ssh,
-    priority=1 @{ldd_path}       rPx -> claude//ldd,
+    priority=1 @{ldd_path}        Px -> claude//ldd,
 
     owner @{HOME}/.claude/{,**} r,
     owner @{HOME}/.claude/shell-snapshots/* rw,
@@ -172,7 +175,7 @@ profile claude @{exec_path} flags=(attach_disconnected) {
     owner @{user_projects_dirs}/** rwlk,
 
     /var/tmp/@{word8} rw,
-    owner @{tmp}/* rwlk,
+    owner @{tmp}/* rwlk, #aa:lint ignore=too-wide
     owner @{tmp}/claude-@{uid}/ rw,
     owner @{tmp}/claude-@{uid}/** rwlk,
     owner @{tmp}/claude-shell/ rw,
@@ -233,6 +236,9 @@ profile claude @{exec_path} flags=(attach_disconnected) {
     owner @{HOME}/.claude/** rwlk,
 
     owner @{user_projects_dirs}/** rw,
+
+    owner @{tmp}/claude{,-*}/ rw,
+    owner @{tmp}/claude{,-*}/** rwlk,
 
     include if exists <local/claude_git>
   }

@@ -489,6 +489,7 @@ func parseContentRules(input string) (Rules, error) {
 func tokenizeRule(str string) []string {
 	var currentToken strings.Builder
 	isVariable, wasTokPLUS, wasTokQM, wasTokCOLON, quoted := false, false, false, false, false
+	sawAssignment := false
 
 	blockStack := []rune{}
 	tokens := make([]string, 0, len(str)/2)
@@ -519,7 +520,7 @@ func tokenizeRule(str string) []string {
 				currentToken.Reset()
 			}
 
-		case (r == '+' || r == '?' || r == ':' || r == '=') && len(blockStack) == 0 && !quoted && isVariable:
+		case (r == '+' || r == '?' || r == ':' || r == '=') && len(blockStack) == 0 && !quoted && isVariable && !sawAssignment:
 			// Handle variable assignment operators: =, +=, ?=, :=
 			if currentToken.Len() != 0 {
 				tokens = append(tokens, currentToken.String())
@@ -537,6 +538,9 @@ func tokenizeRule(str string) []string {
 			wasTokPLUS = (r == '+')
 			wasTokQM = (r == '?')
 			wasTokCOLON = (r == ':')
+			if r == '=' {
+				sawAssignment = true
+			}
 
 		case r == '"' && len(blockStack) == 0:
 			quoted = !quoted
@@ -1032,51 +1036,27 @@ func (f *AppArmorProfileFile) parsePreamble(preamble string) error {
 // using antlr / participle. It is only used for experimental feature in the
 // apparmor.d project. Technically, it is more a scanner than a parser.
 //
-// Very basic:
-//   - Only supports parsing of preamble and profile headers.
-//   - Stop at the first profile header.
-//   - Does not support multiline coma rules.
-//   - Does not support multiple profiles by file.
-//
 // Current use case:
 //   - Parse include and tunables
 //   - Parse variable in profile preamble and in tunable files
 //   - Parse (sub) profiles header to edit flags
 func (f *AppArmorProfileFile) Parse(input string) (int, error) {
-	var raw strings.Builder
-	rawHeader := ""
-	nb := 0
+	if err := f.Scan(input); err != nil {
+		return 0, err
+	}
 
-done:
+	// nb is the line index of the first profile or hat header. Callers
+	// rely on it to split the input into preamble (lines[:nb]) and
+	// body (lines[nb:]).
 	for i, line := range strings.Split(input, "\n") {
 		tmp := strings.TrimLeft(line, "\t ")
-		switch {
-		case tmp == "":
-			continue
-		case strings.HasPrefix(tmp, PROFILE.Tok()):
-			rawHeader = strings.TrimRight(tmp, "{")
-			nb = i
-			break done
-		case strings.HasPrefix(tmp, HAT.String()), strings.HasPrefix(tmp, HAT.Tok()):
-			nb = i
-			break done
-		default:
-			raw.WriteString(tmp + "\n")
+		if strings.HasPrefix(tmp, PROFILE.Tok()) ||
+			strings.HasPrefix(tmp, HAT.String()) ||
+			strings.HasPrefix(tmp, HAT.Tok()) {
+			return i, nil
 		}
 	}
-
-	if err := f.parsePreamble(raw.String()); err != nil {
-		return nb, err
-	}
-	if rawHeader != "" {
-		header, err := newHeader(parseRule(rawHeader))
-		if err != nil {
-			return nb, err
-		}
-		profile := &Profile{Header: header}
-		f.Profiles = append(f.Profiles, profile)
-	}
-	return nb, nil
+	return 0, nil
 }
 
 // ParseRules parses apparmor profile rules by paragraphs
@@ -1176,6 +1156,22 @@ func (f *AppArmorProfileFile) Scan(input string) (retErr error) {
 			}
 			hat.Rules = rules
 			f.Hats = append(f.Hats, hat)
+
+		case IF, ELSE:
+			condition, err := newCondition(parseRule(block.raw))
+			if err != nil {
+				return err
+			}
+			rules, err := parseBlock(block.next)
+			if err != nil {
+				return err
+			}
+			if block.kind == IF {
+				condition.IfRules = rules
+			} else {
+				condition.ElseRules = rules
+			}
+			f.Conditions = append(f.Conditions, condition)
 
 		default:
 			return fmt.Errorf("illegal %s block in profile file", block.kind)

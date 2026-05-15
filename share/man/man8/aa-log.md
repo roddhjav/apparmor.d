@@ -8,7 +8,7 @@ aa-log - Review AppArmor generated messages in a colorful way.
 
 # SYNOPSIS
 
-**aa-log** [*options…*] [*profile*]
+**aa-log** [*options...*] [*profile*]
 
 # DESCRIPTION
 

@@ -36,7 +36,7 @@ var (
 		"opensuse": {"suse", "opensuse-tumbleweed"},
 		"whonix":   {},
 	}
-	famillyDists = map[string][]string{
+	familyDists = map[string][]string{
 		"apt":    {"debian", "ubuntu", "whonix"},
 		"pacman": {"arch"},
 		"zypper": {"opensuse"},
@@ -90,9 +90,9 @@ func getDistribution() string {
 }
 
 func getFamily() string {
-	for familly, dist := range famillyDists {
+	for family, dist := range familyDists {
 		if slices.Contains(dist, Distribution) {
-			return familly
+			return family
 		}
 	}
 	return ""

@@ -59,6 +59,12 @@ func TestSetFlags(t *testing.T) {
 			want:    "profile foo /usr/bin/foo flags=(complain) {\n",
 		},
 		{
+			name:    "add flags to profile with if statement",
+			profile: "profile foo /usr/bin/foo {\n  if true {\n    /bin/true rix,\n  }\n}\n",
+			flags:   []string{"complain"},
+			want:    "profile foo /usr/bin/foo flags=(complain) {\n  if true {\n    /bin/true rix,\n  }\n}\n",
+		},
+		{
 			name:    "add multiple flags",
 			profile: "profile foo /usr/bin/foo {\n",
 			flags:   []string{"attach_disconnected", "complain"},
@@ -87,6 +93,52 @@ func TestSetFlags(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := SetFlags(tt.profile, tt.flags); got != tt.want {
 				t.Errorf("SetFlags() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestIsUnconfined(t *testing.T) {
+	tests := []struct {
+		name    string
+		profile string
+		want    bool
+	}{
+		{
+			name:    "no flags",
+			profile: "profile foo /usr/bin/foo {\n}\n",
+			want:    false,
+		},
+		{
+			name:    "unconfined only",
+			profile: "profile foo /usr/bin/foo flags=(unconfined) {\n}\n",
+			want:    true,
+		},
+		{
+			name:    "unconfined with other flags",
+			profile: "profile foo /usr/bin/foo flags=(attach_disconnected, unconfined) {\n}\n",
+			want:    true,
+		},
+		{
+			name:    "complain only",
+			profile: "profile foo /usr/bin/foo flags=(complain) {\n}\n",
+			want:    false,
+		},
+		{
+			name:    "substring should not match",
+			profile: "profile foo /usr/bin/foo flags=(unconfinedx) {\n}\n",
+			want:    false,
+		},
+		{
+			name:    "second profile is unconfined",
+			profile: "profile a /usr/bin/a {\n}\nprofile b /usr/bin/b flags=(unconfined) {\n}\n",
+			want:    true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := IsUnconfined(tt.profile); got != tt.want {
+				t.Errorf("IsUnconfined() = %v, want %v", got, tt.want)
 			}
 		})
 	}

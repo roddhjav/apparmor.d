@@ -56,13 +56,29 @@ func (d Dbus) Apply(opt *Option, profile string) (string, error) {
 		r = d.See(opt.ArgMap)
 	}
 
+	bus := opt.ArgMap["bus"]
+	if strings.Contains(profile, "include <abstractions/bus/"+bus+"/own>") {
+		for i, rule := range r {
+			inc, ok := rule.(*aa.Include)
+			if !ok || !inc.IsMagic || inc.Path != "abstractions/bus/"+bus+"/own" {
+				continue
+			}
+			r = append(r[:i], r[i+1:]...)
+			break
+		}
+	}
+
+	header := strings.ReplaceAll(opt.Raw, Keyword, "#aa/") + "\n"
 	aa.IndentationLevel = strings.Count(
 		strings.SplitN(opt.Raw, Keyword, 1)[0], aa.Indentation,
 	)
 	generatedDbus := r.String()
-	lenDbus := len(generatedDbus)
-	generatedDbus = generatedDbus[:lenDbus-1]
-	profile = strings.ReplaceAll(profile, opt.Raw, generatedDbus)
+	if action == "see" {
+		generatedDbus = generatedDbus[:len(generatedDbus)-1] // Remove trailing newlines
+	} else {
+		generatedDbus = strings.ReplaceAll(generatedDbus, "\n\n", "\n")
+	}
+	profile = strings.ReplaceAll(profile, opt.Raw, header+generatedDbus)
 	return profile, nil
 }
 
@@ -89,6 +105,7 @@ func (d Dbus) SanityCheck(opt *Option) (string, error) {
 	if _, present := opt.ArgMap["path"]; !present {
 		opt.ArgMap["path"] = "/" + strings.ReplaceAll(opt.ArgMap["name"], ".", "/") + "{,/**}"
 	}
+	opt.ArgMap["name-original"] = opt.ArgMap["name"]
 	opt.ArgMap["name"] += "{,.*}"
 	return action, nil
 }
@@ -137,6 +154,12 @@ func (d Dbus) Own(rules map[string]string) aa.Rules {
 
 	res = append(res,
 		// DBus.Properties: reply to properties request from anyone
+		&aa.Comment{
+			Base: aa.Base{
+				Comment:    " DBus.Properties: reply to properties request from anyone",
+				IsLineRule: true,
+			},
+		},
 		&aa.Dbus{
 			Access: []string{"send", "receive"}, Bus: rules["bus"], Path: rules["path"],
 			Interface: "org.freedesktop.DBus.Properties",
@@ -145,6 +168,12 @@ func (d Dbus) Own(rules map[string]string) aa.Rules {
 		},
 
 		// DBus.Introspectable: allow clients to introspect the service
+		&aa.Comment{
+			Base: aa.Base{
+				Comment:    " DBus.Introspectable: allow clients to introspect the service",
+				IsLineRule: true,
+			},
+		},
 		&aa.Dbus{
 			Access: []string{"receive"}, Bus: rules["bus"], Path: rules["path"],
 			Interface: "org.freedesktop.DBus.Introspectable",
@@ -153,6 +182,12 @@ func (d Dbus) Own(rules map[string]string) aa.Rules {
 		},
 
 		// DBus.ObjectManager: allow clients to enumerate sources
+		&aa.Comment{
+			Base: aa.Base{
+				Comment:    " DBus.ObjectManager: allow clients to enumerate sources",
+				IsLineRule: true,
+			},
+		},
 		&aa.Dbus{
 			Access: []string{"receive"}, Bus: rules["bus"], Path: rules["path"],
 			Interface: "org.freedesktop.DBus.ObjectManager",
@@ -173,6 +208,13 @@ func (d Dbus) Talk(rules map[string]string) aa.Rules {
 	interfaces := getInterfaces(rules)
 	peerName := `"{@{busname},` + rules["name"] + `,org.freedesktop.DBus}"`
 	res := aa.Rules{
+		// Unix: allow connection to the profile
+		&aa.Comment{
+			Base: aa.Base{
+				Comment:    " Unix: allow connection to the profile",
+				IsLineRule: true,
+			},
+		},
 		&aa.Unix{
 			Type:      "stream",
 			Address:   "none",
@@ -183,15 +225,35 @@ func (d Dbus) Talk(rules map[string]string) aa.Rules {
 
 	// Interfaces
 	for _, iface := range interfaces {
-		res = append(res, &aa.Dbus{
-			Access: []string{"send", "receive"}, Bus: rules["bus"], Path: rules["path"],
-			Interface: iface,
-			PeerName:  peerName, PeerLabel: rules["label"],
-		})
+		res = append(res,
+			// Interface: send and receive anything to the interface on the specific peer label
+			&aa.Comment{
+				Base: aa.Base{
+					Comment:    " " + rules["name-original"] + ": send and receive anything to the interface on the specific peer label",
+					IsLineRule: true,
+				},
+			},
+			&aa.Dbus{
+				Access: []string{"send", "receive"}, Bus: rules["bus"], Path: rules["path"],
+				Interface: iface,
+				PeerName:  peerName, PeerLabel: rules["label"],
+			},
+			&aa.Dbus{
+				Access: []string{"send"}, Bus: rules["bus"], Path: rules["path"],
+				Interface: iface,
+				PeerName:  `"` + rules["name"] + `"`,
+			},
+		)
 	}
 
 	res = append(res,
-		// DBus.Properties
+		// DBus.Properties: read and send properties
+		&aa.Comment{
+			Base: aa.Base{
+				Comment:    " DBus.Properties: read and send properties",
+				IsLineRule: true,
+			},
+		},
 		&aa.Dbus{
 			Access: []string{"send", "receive"}, Bus: rules["bus"], Path: rules["path"],
 			Interface: "org.freedesktop.DBus.Properties",
@@ -199,7 +261,13 @@ func (d Dbus) Talk(rules map[string]string) aa.Rules {
 			PeerName:  peerName, PeerLabel: rules["label"],
 		},
 
-		// DBus.Introspectable
+		// DBus.Introspectable: allow service introspection
+		&aa.Comment{
+			Base: aa.Base{
+				Comment:    " DBus.Introspectable: allow service introspection",
+				IsLineRule: true,
+			},
+		},
 		&aa.Dbus{
 			Access: []string{"send"}, Bus: rules["bus"], Path: rules["path"],
 			Interface: "org.freedesktop.DBus.Introspectable",
@@ -208,6 +276,12 @@ func (d Dbus) Talk(rules map[string]string) aa.Rules {
 		},
 
 		// DBus.ObjectManager: allow clients to enumerate sources
+		&aa.Comment{
+			Base: aa.Base{
+				Comment:    " DBus.ObjectManager: allow clients to enumerate sources",
+				IsLineRule: true,
+			},
+		},
 		&aa.Dbus{
 			Access: []string{"send"}, Bus: rules["bus"], Path: rules["path"],
 			Interface: "org.freedesktop.DBus.ObjectManager",
@@ -227,6 +301,7 @@ func (d Dbus) Talk(rules map[string]string) aa.Rules {
 func (d Dbus) See(rules map[string]string) aa.Rules {
 	peerName := `"{@{busname},` + rules["name"] + `}"`
 	res := aa.Rules{
+		nil,
 
 		// Unix: allow connection to the profile
 		&aa.Comment{
@@ -265,6 +340,7 @@ func (d Dbus) See(rules map[string]string) aa.Rules {
 				IsLineRule: true,
 			},
 		},
+		nil,
 		&aa.Dbus{
 			Access: []string{"receive"}, Bus: rules["bus"], Path: rules["path"],
 			Interface: "org.freedesktop.DBus.Properties",
@@ -280,6 +356,7 @@ func (d Dbus) See(rules map[string]string) aa.Rules {
 				IsLineRule: true,
 			},
 		},
+		nil,
 		&aa.Dbus{
 			Access: []string{"send"}, Bus: rules["bus"], Path: rules["path"],
 			Interface: "org.freedesktop.DBus.Introspectable",

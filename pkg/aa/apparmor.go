@@ -2,6 +2,13 @@
 // Copyright (C) 2021-2023 Alexandre Pujol <alexandre@pujol.io>
 // SPDX-License-Identifier: GPL-2.0-only
 
+// Package aa parses, formats, and manipulates AppArmor policy: profiles,
+// rules, includes, variables, and abstractions. It is the core data model
+// shared by the prebuild pipeline and the command-line tools.
+//
+// Each rule and profile element implements [fmt.Stringer]; serialisation
+// is delegated to per-kind Go templates under templates/ that are loaded
+// at build time via go:embed and rendered by [renderTemplate].
 package aa
 
 import (

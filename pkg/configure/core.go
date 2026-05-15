@@ -2,6 +2,9 @@
 // Copyright (C) 2021-2026 Alexandre Pujol <alexandre@pujol.io>
 // SPDX-License-Identifier: GPL-2.0-only
 
+// Package configure provides prebuild tasks that prepare the apparmor.d
+// build tree: synchronising directories, ignoring profiles, merging groups,
+// applying distribution-specific flags, and resolving systemd defaults.
 package configure
 
 import (

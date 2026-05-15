@@ -2,6 +2,9 @@
 // Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
 // SPDX-License-Identifier: GPL-2.0-only
 
+// Package logs parses AppArmor denial events from auditd, the systemd
+// journal, dmesg, and plain kernel log files (/var/log/kern.log,
+// /var/log/messages), and exposes a unified stream consumable by aa-log.
 package logs
 
 import (
@@ -315,6 +318,13 @@ func getNameSpace(rawNamespace string) string {
 	return strings.TrimPrefix(rawNamespace, "root//")
 }
 
+func profileKey(name, namespace string) string {
+	if namespace == "" {
+		return name
+	}
+	return ":" + namespace + ":" + name
+}
+
 // ParseToProfiles convert the log data into a new AppArmorProfiles
 func (aaLogs AppArmorLogs) ParseToProfiles() map[string]*aa.Profile {
 	profiles := make(map[string]*aa.Profile, 0)
@@ -325,16 +335,18 @@ func (aaLogs AppArmorLogs) ParseToProfiles() map[string]*aa.Profile {
 		} else {
 			name = log["profile"]
 		}
+		ns := getNameSpace(log["namespace"])
+		key := profileKey(name, ns)
 
-		if _, ok := profiles[name]; !ok {
+		if _, ok := profiles[key]; !ok {
 			profile := &aa.Profile{Header: aa.Header{
 				Name:      name,
-				NameSpace: getNameSpace(log["namespace"]),
+				NameSpace: ns,
 			}}
 			profile.AddRule(log)
-			profiles[name] = profile
+			profiles[key] = profile
 		} else {
-			profiles[name].AddRule(log)
+			profiles[key].AddRule(log)
 		}
 	}
 	return profiles

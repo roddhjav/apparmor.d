@@ -40,18 +40,18 @@ apparmor_parser --purge-cache
 %doc README.md
 %config /etc/apparmor.d/
 /usr/bin/aa-log
+/usr/bin/aa-mode
 
 %dir /usr/lib/systemd/system/*.service.d
 /usr/lib/systemd/system/*.service.d/apparmor.conf
 %dir /usr/lib/systemd/user/*.service.d
 /usr/lib/systemd/user/*.service.d/apparmor.conf
 
-/usr/share/bash-completion/completions/aa-log
-
 %dir /usr/share/zsh
 %dir /usr/share/zsh/site-functions
-/usr/share/zsh/site-functions/_aa-log.zsh
-
-%doc %{_mandir}/man8/aa-log.8.gz
+/usr/share/zsh/site-functions/_aa-*.zsh
+/usr/share/bash-completion/completions/aa-*
+%doc %{_mandir}/man1/aa-*.1.gz
+%doc %{_mandir}/man8/aa-*.8.gz
 
 %changelog

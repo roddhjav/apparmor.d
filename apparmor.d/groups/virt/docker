@@ -10,10 +10,18 @@ include <tunables/global>
 profile docker @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
 
   capability dac_read_search,
 
+  network inet dgram,
+  network inet stream,
+  network inet6 dgram,
+  network inet6 stream,
   network netlink raw,
+
+  unix (bind listen) type=stream addr=@docker_cli_@{hex32},
+  unix (accept send receive) type=stream addr=@docker_cli_@{hex32} peer=(label=docker-buildx),
 
   @{exec_path} mr,
 
@@ -21,6 +29,7 @@ profile docker @{exec_path} flags=(attach_disconnected) {
 
   @{run}/docker.sock rw,
 
+        @{PROC}/sys/net/core/somaxconn r,
   owner @{PROC}/@{pid}/cgroup r,
   owner @{PROC}/@{pid}/mountinfo r,
 

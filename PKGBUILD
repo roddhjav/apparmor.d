@@ -6,8 +6,8 @@
 pkgbase=apparmor.d
 pkgname=(
   apparmor.d
-  # apparmor.d-base
-  # apparmor.d-tools
+  apparmor.d-base
+  apparmor.d-tools
 )
 pkgver=0.4907.0
 pkgrel=1
@@ -15,7 +15,6 @@ pkgdesc="Full set of apparmor profiles"
 arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
 url="https://github.com/roddhjav/apparmor.d"
 license=('GPL-2.0-only')
-depends=('apparmor')
 makedepends=('go' 'rsync' 'just')
 
 prepare() {
@@ -36,22 +35,21 @@ build() {
 }
 
 package_apparmor.d() {
-  # depends+=('apparmor.d-base' 'apparmor.d-tools')
+  depends=('apparmor' 'apparmor.d-base' 'apparmor.d-tools')
+  arch=("any")
   cd "$srcdir/$pkgbase"
-  just destdir="$pkgdir" install
-#   just destdir="$pkgdir" install-tools
-#   just destdir="$pkgdir" install-base
-#   just destdir="$pkgdir" install-prebuilt
+  just destdir="$pkgdir" install-prebuilt
 }
 
-# package_apparmor.d-base() {
-#   pkgdesc="$pkgdesc (base abstractions, tunables, and booleans)"
-#   cd "$srcdir/$pkgbase"
-#   just destdir="$pkgdir" install-base
-# }
+package_apparmor.d-base() {
+  pkgdesc="$pkgdesc (base abstractions, tunables, and booleans)"
+  arch=("any")
+  cd "$srcdir/$pkgbase"
+  just destdir="$pkgdir" install-base
+}
 
-# package_apparmor.d-tools() {
-#   pkgdesc="$pkgdesc (userland toolings)"
-#   cd "$srcdir/$pkgbase"
-#   just destdir="$pkgdir" install-tools
-# }
+package_apparmor.d-tools() {
+  pkgdesc="$pkgdesc (userland toolings)"
+  cd "$srcdir/$pkgbase"
+  just destdir="$pkgdir" install-tools
+}

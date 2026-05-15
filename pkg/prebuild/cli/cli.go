@@ -4,7 +4,6 @@
 
 // Package cli provides the command line interface for prebuilding apparmor.d profiles.
 // It is separated from the main package as it is also used by downstream projects.
-
 package cli
 
 import (

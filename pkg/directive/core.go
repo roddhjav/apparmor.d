@@ -2,6 +2,8 @@
 // Copyright (C) 2021-2026 Alexandre Pujol <alexandre@pujol.io>
 // SPDX-License-Identifier: GPL-2.0-only
 
+// Package directive parses and expands "#aa:" comments embedded in profiles
+// (dbus, exec, only, exclude, ...) into the corresponding AppArmor rules.
 package directive
 
 import (
