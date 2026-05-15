@@ -21,12 +21,16 @@ profile systemd-shutdown @{exec_path} flags=(attach_disconnected) {
 
   mount options=(rw make-rprivate) /,
 
+  umount,
+
   ptrace read,
 
   signal (send)    set=(stop, cont, term, kill),
   signal (receive) set=(rtmin+23) peer=plymouthd,
 
   @{exec_path} mr,
+
+  @{run}/initramfs/{,**} r,
 
         @{PROC}/ r,
         @{PROC}/@{pids}/cgroup r,
@@ -36,6 +40,8 @@ profile systemd-shutdown @{exec_path} flags=(attach_disconnected) {
         @{PROC}/@{pids}/stat r,
         @{PROC}/@{pids}/status r,
   owner @{PROC}/@{pid}/comm r,
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/mounts r,
   owner @{PROC}/sys/kernel/core_pattern w,
   owner @{PROC}/sys/kernel/printk rw,
 
