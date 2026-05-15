@@ -35,9 +35,13 @@ profile git @{exec_path} flags=(attach_disconnected) {
   @{lib}/code/extensions/git/dist/git-editor.sh  Px,
   /usr/share/aurpublish/*.hook                   Px,
 
-  @{bin}/gpg{,2}         Cx -> &gpg,
-  @{bin}/ssh             Cx -> &ssh,
   @{editor_path}         Cx -> editor,
+
+  # TODO: revisit the stacking. Profile with nnp flag that use git should
+  # not use this git profile but a more specific one.
+  @{bin}/gpg{,2}         Cx -> &gpg,
+  @{bin}/ssh            rCx -> &ssh,
+  @{bin}/ssh.hmac         r,
 
   /usr/share/libalternatives/{,**} r,
   /usr/share/terminfo/** r,
@@ -61,8 +65,9 @@ profile git @{exec_path} flags=(attach_disconnected) {
 
   owner @{HOME}/.ansible/tmp{,**} rwlk,
 
-  # GPG
-  owner @{HOME}/@{XDG_SSH_DIR}/{,*} r,
+  # GPG / SSH
+  owner @{HOME}/@{XDG_SSH_DIR}/ rw,
+  owner @{HOME}/@{XDG_SSH_DIR}/** rwl -> @{HOME}/@{XDG_SSH_DIR}/**,
   owner @{run}/user/@{uid}/keyring/ssh rw,
   owner @{HOME}/@{XDG_GPG_DIR}/ rw,
   owner @{HOME}/@{XDG_GPG_DIR}/** rwkl -> @{HOME}/@{XDG_GPG_DIR}/**,
