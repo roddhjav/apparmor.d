@@ -17,10 +17,10 @@ import (
 
 const usage = `aa-mode [-h] (-e|-c|-k|-a|-u|-p) [profiles...]
 
-	Switch the given program to an AppArmor mode.
+    Switch the given program to an AppArmor mode.
 
-	If a profile name is given without a path, it is looked up in '/etc/apparmor.d/'.
-	If a directory is given, all profiles in it are processed recursively.
+    If a profile name is given without a path, it is looked up in '/etc/apparmor.d/'.
+    If a directory is given, all profiles in it are processed recursively.
 
 Options:
     -h, --help             Show this help message and exit.
