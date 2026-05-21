@@ -23,10 +23,10 @@ profile gsr-ui @{exec_path} {
   @{sh_path}                 rix,
   #TODO? @{sh_path}           Px -> gsr-ui-shell,
   @{bin}/cat                 rix,
-  @{bin}/gsr-game-tracker     cx -> gsr-game-tracker,
+  @{bin}/gsr-game-tracker    rPx,
   @{bin}/gsr-global-hotkeys  rPx,
   @{bin}/gsr-kwin-helper     rPx,
-  @{bin}/gsr-notify           cx -> gsr-notify,
+  @{bin}/gsr-notify          rix,
   @{bin}/gpu-screen-recorder rPx,
   @{bin}/systemctl           rPx -> child-systemctl,
 
@@ -35,46 +35,13 @@ profile gsr-ui @{exec_path} {
   owner @{user_config_dirs}/gpu-screen-recorder/{,**} rw,
   owner @{user_config_dirs}/user-dirs.dirs r,
 
+  /usr/share/gsr-notify/{,**} r,
   /usr/share/gsr-ui/** r,
 
   owner @{run}/user/@{uid}/gsr-ui rw,
   owner @{run}/user/@{uid}/xauth_@{rand6} r,
 
   @{PROC}/ r,
-
-  profile gsr-notify flags=(complain) {
-    include <abstractions/base>
-    include <abstractions/graphics>
-    include <abstractions/gschemas>
-    include <abstractions/icons>
-
-    @{bin}/gsr-notify r,
-
-    signal (receive) set=(int) peer=gsr-ui,
-
-    /usr/share/gsr-notify/{,**} r,
-    /usr/share/gsr-ui/{,**} r,
-
-    owner @{run}/user/@{uid}/xauth_@{rand6} r,
-
-    include if exists <local/gsr-ui_gsr-notify>
-  }
-
-  profile gsr-game-tracker flags=(complain) {
-    include <abstractions/base>
-
-    @{bin}/gsr-game-tracker r,
-
-    signal (receive) set=(int) peer=gsr-ui,
-
-    ptrace (read) peer=gsr-ui,
-
-          @{PROC}/ r,
-          @{PROC}/@{pid}/cmdline r,
-    owner @{PROC}/@{pid}/environ
-
-    include if exists <local/gsr-ui_gsr-game-tracker>
-  }
 
   include if exists <local/gsr-ui>
 }
