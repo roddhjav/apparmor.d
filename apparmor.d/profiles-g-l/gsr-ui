@@ -7,43 +7,74 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{exec_path} = @{bin}/gsr-ui
-
 profile gsr-ui @{exec_path} {
   include <abstractions/base>
+  include <abstractions/dconf>
+  include <abstractions/fontconfig-cache-write>
+  include <abstractions/fonts-strict>
   include <abstractions/graphics>
+  include <abstractions/gschemas>
   include <abstractions/icons>
 
   signal (send) set=(int) peer=gpu-screen-recorder,
+  signal (send) set=(kill) peer=gsr-kwin-helper,
+  signal (send) set=(int) peer=gsr-game-tracker,
 
   @{sh_path}                 rix,
   #TODO? @{sh_path}           Px -> gsr-ui-shell,
-  @{bin}/gpu-screen-recorder rPx,
+  @{bin}/cat                 rix,
+  @{bin}/gsr-game-tracker     cx -> gsr-game-tracker,
   @{bin}/gsr-global-hotkeys  rPx,
   @{bin}/gsr-kwin-helper     rPx,
   @{bin}/gsr-notify           cx -> gsr-notify,
+  @{bin}/gpu-screen-recorder rPx,
   @{bin}/systemctl           rPx -> child-systemctl,
+
+  /dev/tty rw,
 
   owner @{user_config_dirs}/gpu-screen-recorder/{,**} rw,
   owner @{user_config_dirs}/user-dirs.dirs r,
 
-  @{PROC}/ r,
+  /usr/share/gsr-ui/** r,
 
   owner @{run}/user/@{uid}/gsr-ui rw,
+  owner @{run}/user/@{uid}/xauth_@{rand6} r,
 
-profile gsr-notify {
-  include <abstractions/base>
-  include <abstractions/graphics>
-  include <abstractions/icons>
+  @{PROC}/ r,
 
-  @{bin}/gsr-notify r,
+  profile gsr-notify flags=(complain) {
+    include <abstractions/base>
+    include <abstractions/graphics>
+    include <abstractions/gschemas>
+    include <abstractions/icons>
 
-  signal receive set=int peer=gsr-ui,
+    @{bin}/gsr-notify r,
 
-  /usr/share/gsr-notify/{,**} r,
-  /usr/share/gsr-ui/{,**} r,
+    signal (receive) set=(int) peer=gsr-ui,
 
-  include if exists <local/gsr-ui_gsr-notify>
-}
+    /usr/share/gsr-notify/{,**} r,
+    /usr/share/gsr-ui/{,**} r,
+
+    owner @{run}/user/@{uid}/xauth_@{rand6} r,
+
+    include if exists <local/gsr-ui_gsr-notify>
+  }
+
+  profile gsr-game-tracker flags=(complain) {
+    include <abstractions/base>
+
+    @{bin}/gsr-game-tracker r,
+
+    signal (receive) set=(int) peer=gsr-ui,
+
+    ptrace (read) peer=gsr-ui,
+
+          @{PROC}/ r,
+          @{PROC}/@{pid}/cmdline r,
+    owner @{PROC}/@{pid}/environ
+
+    include if exists <local/gsr-ui_gsr-game-tracker>
+  }
 
   include if exists <local/gsr-ui>
 }
