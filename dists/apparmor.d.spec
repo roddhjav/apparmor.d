@@ -7,7 +7,7 @@
 # Warning: for development only, use https://build.opensuse.org/package/show/home:cboltz/apparmor.d for production use.
 
 Name:           apparmor.d
-Version:        0.4907.0
+Version:        0.4908.0
 Release:        1%{?dist}
 Summary:        Full set of AppArmor policies
 License:        GPL-2.0-only
@@ -41,6 +41,9 @@ apparmor_parser --purge-cache
 %license LICENSE
 %doc README.md
 %config /etc/apparmor.d/
+/usr/bin/aa
+/usr/bin/aa-config
+/usr/bin/aa-install
 /usr/bin/aa-log
 /usr/bin/aa-mode
 

@@ -9,7 +9,7 @@ pkgname=(
   apparmor.d-base
   apparmor.d-tools
 )
-pkgver=0.4907.0
+pkgver=0.4908.0
 pkgrel=1
 pkgdesc="Full set of apparmor profiles"
 arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')
@@ -32,6 +32,7 @@ build() {
   export DISTRIBUTION=arch
   just complain
 #   just prebuild
+  just build-aa-flatpak
 }
 
 package_apparmor.d() {
@@ -52,4 +53,5 @@ package_apparmor.d-tools() {
   pkgdesc="$pkgdesc (userland toolings)"
   cd "$srcdir/$pkgbase"
   just destdir="$pkgdir" install-tools
+  just destdir="$pkgdir" install-aa-flatpak
 }
