@@ -32,6 +32,7 @@ build() {
   export DISTRIBUTION=arch
   just complain
 #   just prebuild
+  # just build-aa-flatpak
 }
 
 package_apparmor.d() {
@@ -52,5 +53,5 @@ package_apparmor.d-tools() {
   pkgdesc="$pkgdesc (userland toolings)"
   cd "$srcdir/$pkgbase"
   just destdir="$pkgdir" install-tools
-  just destdir="$pkgdir" install-aa-flatpak
+  # just destdir="$pkgdir" install-aa-flatpak
 }
