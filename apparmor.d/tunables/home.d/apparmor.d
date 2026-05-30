@@ -22,7 +22,7 @@
 # Define extended user directories not defined in the XDG standard but commonly
 # used in profiles
 @{XDG_BOOKS_DIR}="Books"
-@{XDG_GAMES_DIR}="Games"
+@{XDG_GAMES_DIR}="Games" @{XDG_DATA_DIR}/games
 @{XDG_PROJECTS_DIR}="Projects"
 @{XDG_WORK_DIR}="Work"
 @{XDG_MAIL_DIR}="Mail" ".{m,M}ail"
