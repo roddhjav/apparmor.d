@@ -46,7 +46,7 @@ Abstraction are structured in layers as follows:
 
     *This program needs this resource.* `nameservice-strict`, `authentication`, ...
 
--   **[Layer 2](kind.md)**
+-   **[Layer 2](common.md)**
 
     ---
 

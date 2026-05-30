@@ -95,7 +95,7 @@ Set distribution specificities as defined in [`pkg/prebuild/prepare/configure.go
 
 ### **`setflags`**
 
-Set flags on profiles as defined in the [flags manifest](workflow.md#profile-flags).
+Set flags on profiles as defined in the [flags manifest](workflow.md#profile-mode).
 
 *Enabled by default. Can be disabled in `cmd/prebuild/main.go`*
 
@@ -128,7 +128,7 @@ This task will convert all profiles from `abi/4.0` to `abi/3.0`. The rules not s
 
 ### **`complain | enforce`**
 
-Set or remove the complain flag on all profiles. The `complain` task is enabled by default. When building in enforce mode, it is disabled. Enabling the `enforce` task will enforce **all** profiles including the one set in the [flags manifest](workflow.md#profile-flags). It is intended to be used in specialized system such as a CTF challenge or in (very) high security VM. 
+Set or remove the complain flag on all profiles. The `complain` task is enabled by default. When building in enforce mode, it is disabled. Enabling the `enforce` task will enforce **all** profiles including the one set in the [flags manifest](workflow.md#profile-mode). It is intended to be used in specialized system such as a CTF challenge or in (very) high security VM. 
 
 *Enable with the `--complain` or `--enforce` option in the prebuild command.*
 

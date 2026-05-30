@@ -28,11 +28,10 @@ Example of current Linux distribution implementing something similar with variou
 - :material-atom: &nbsp; **[Particle OS](https://github.com/systemd/particleos)**
 - :material-train-car-flatbed-car: &nbsp; **[Flatcar OS](https://www.flatcar.org/)**
 - :simple-opensuse: &nbsp; **[openSUSE MicroOS](https://get.opensuse.org/microos/)**
-- :simple-opensuse: &nbsp; **[](https://)**
 
 </div>
 
-A careful reader would have noticed that the common ground among these distributions is to be constituted of a fully immutable core system. If such a construction is probably the future of Linux, as of today it can raise some usability concerns (cf [rule :material-numeric-6-circle:](#user-freedom "User freedom.")). Therefore, the current project propose a pragmatic long term solution:
+A careful reader would have noticed that the common ground among these distributions is to be constituted of a fully immutable core system. If such a construction is probably the future of Linux, as of today it can raise some usability concerns (cf [rule :material-numeric-6-circle:](model.md#user-freedom "User freedom.")). Therefore, the current project propose a pragmatic long term solution:
 
 1. We acknowledge the end goal need to be fully compatible with system that respect 100% of the security model presented here.
 2. We stay compatible with a *"classic"* Linux construction (i.e. without immutable core), and try to implement as mush as we can on classic distribution. It is considered as a transitional state.
@@ -42,7 +41,7 @@ A careful reader would have noticed that the common ground among these distribut
 As attacker usually comes from the top (a high level application) and goes down to the core system, we present the security architecture similarly.
 
 1. **In application sandboxing:** separation of privilege, least privilege principle, within different process of the application itself. It can be implemented using tools such as: Landlock, bwrap, and Apparmor.
-The purpose is to separate highly privileged code from the rest of the application.
+The purpose is to separate highly privileged code from the rest of the application. Eg: pacman, VLC, Chrome sandboxing, loupe.
 
 1. **Application sandboxing:** Isolate the application from the rest of the system with tools such as. In this context, "sandboxing" does not refer to a special technology, but to the general concept. It can be implemented in various ways: trough VM (Qemu/KVM, Firecracker, Cloudhypervisor, Kata Containers), or container (Docker, gVisor, Flatpak, Snap) with different level of isolation and integration with the rest of the system.
 

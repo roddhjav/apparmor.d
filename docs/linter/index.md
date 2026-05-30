@@ -40,7 +40,7 @@ The profiles are checked for common style and security issues with `just check`.
 
 ## Directive
 
-We use a special [directive](directives.md) to ignore specific checks:
+We use a special [directive](../development/directives.md) to ignore specific checks:
 
 - Inline directive is supported
 - Directive before a paragraph applies to all rules in the paragraph

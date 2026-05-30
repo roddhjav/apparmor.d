@@ -6,8 +6,7 @@ title: Internal
 
 These are context helper to be used for in sub profile, they aim at providing a minimal set of rules for a given program. The calling profile only needs to add rules dependant of its use case.
 
-See [abstractions/app](abstractions.md#context-helper) for more information.
-
+See [abstractions/app](abstractions.md#application-helper) for more information.
 
 ## Open Resources
 
@@ -149,7 +148,7 @@ It can be as follows in a profile:
 
 Common `systemctl` action. Do not use it too much as most of the time you will need more privilege than what this profile is giving you.
 
-It is recommended to transition [in a subprofile](abstractions.md#appsystemctl) everything that is not generic and that may require some access (so restart, enable...), while `child-systemctl` can handle the more basic tasks.
+It is recommended to transition [in a subprofile](abstractions.md#application-helper) everything that is not generic and that may require some access (so restart, enable...), while `child-systemctl` can handle the more basic tasks.
 
 
 ## Labelled programs

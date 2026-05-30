@@ -38,7 +38,7 @@ This section presents the security model considered for the profiles in `apparmo
 
     Given the <span class="pg-red">:material-numeric-1-circle-outline: Ecosystem</span> and the <span class="pg-green">:material-numeric-2-circle-outline: Threat model</span>, what are the rules that should be enforced?
 
--   :material-source-commit-local: &nbsp; **[:material-numeric-4-circle-outline: Security Implementation](architectureimplementation.md)**
+-   :material-source-commit-local: &nbsp; **[:material-numeric-4-circle-outline: Security Implementation](implementation.md)**
 
     ---
 
