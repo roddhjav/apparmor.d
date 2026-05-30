@@ -9,7 +9,7 @@
 Name:           apparmor.d
 Version:        0.4907.0
 Release:        1%{?dist}
-Summary:        Set of over 1500 AppArmor profiles
+Summary:        Full set of AppArmor policies
 License:        GPL-2.0-only
 URL:            https://github.com/roddhjav/apparmor.d
 Source0:        %{name}-%{version}.tar.gz
@@ -29,7 +29,9 @@ AppArmor.d is a set of over 1500 AppArmor profiles whose aim is to confine most 
 just complain
 
 %install
-just destdir="%{buildroot}" install
+just destdir="%{buildroot}" install-prebuilt
+just destdir="%{buildroot}" install-base
+just destdir="%{buildroot}" install-tools
 
 %posttrans
 apparmor_parser --purge-cache
