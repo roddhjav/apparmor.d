@@ -17,7 +17,7 @@ Misconfigured AppArmor profiles is one of the most effective ways to break someo
     - [x] All CI jobs validate the profiles syntax and,
     - [x] ensure they can be safely loaded into a kernel.
 
--   :octicons-check-24: &nbsp; **[Checks](check.md)** `just check`
+-   :octicons-check-24: &nbsp; **[Checks](../linter/index.md)** `just check`
 
     ---
 
@@ -56,5 +56,9 @@ For more complex software suite, more integration tests need to be done. The pla
     - See https://www.codethink.co.uk/articles/2024/systemd-integration-testing-part-1/
 
 - [ ] Gnome
-    - They use openQA to run their integration tests. 
+    - They use openQA to run their integration tests.
     - See https://gitlab.gnome.org/GNOME/openqa-tests/
+
+- [ ] KDE
+    - They use openQA to run their integration tests.
+    - See https://invent.kde.org/ommi/openqa-kde-linux
