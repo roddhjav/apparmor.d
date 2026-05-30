@@ -32,7 +32,6 @@ build() {
   export DISTRIBUTION=arch
   just complain
 #   just prebuild
-  just build-aa-flatpak
 }
 
 package_apparmor.d() {

@@ -41,9 +41,6 @@ apparmor_parser --purge-cache
 %license LICENSE
 %doc README.md
 %config /etc/apparmor.d/
-/usr/bin/aa
-/usr/bin/aa-config
-/usr/bin/aa-install
 /usr/bin/aa-log
 /usr/bin/aa-mode
 
