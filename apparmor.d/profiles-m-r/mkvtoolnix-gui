@@ -8,9 +8,10 @@ abi <abi/4.0>,
 include <tunables/global>
 
 @{exec_path} = @{bin}/mkvtoolnix-gui
-profile mkvtoolnix-gui @{exec_path} {
+profile mkvtoolnix-gui @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/base>
   include <abstractions/desktop>
+  include <abstractions/sys/dmi>
   include <abstractions/fontconfig-cache-read>
   include <abstractions/graphics>
   include <abstractions/nameservice-strict>
@@ -28,6 +29,7 @@ profile mkvtoolnix-gui @{exec_path} {
   @{bin}/mediainfo-gui rPx,
 
   /usr/share/hwdata/pnp.ids r,
+  /usr/share/mkvtoolnix/{,**} r,
 
   /etc/fstab r,
   /etc/machine-id r,
@@ -53,10 +55,13 @@ profile mkvtoolnix-gui @{exec_path} {
   owner @{tmp}/MKVToolNix-GUI-Instance-Communicator-* rw,
   owner /dev/shm/#@{int} rw,
 
+  @{att}@{run}/systemd/inhibit/@{int}.ref w,
+
   deny owner @{PROC}/@{pid}/cmdline r,
   deny       @{PROC}/sys/kernel/random/boot_id r,
              @{PROC}/@{pid}/mountinfo r,
              @{PROC}/@{pid}/mounts r,
+       owner @{PROC}/@{pid}/task/@{tid}/comm w,
 
   owner /dev/tty@{u8} rw,
 
