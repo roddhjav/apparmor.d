@@ -19,7 +19,8 @@ profile gpu-screen-recorder @{exec_path} {
 
   @{exec_path} r,
 
-  @{bin}/gsr-kms-server rPx,
+  @{bin}/gsr-kms-server rPx, #should be removed after version 5.13.9
+  @{bin}/pkexec          cx -> pkexec,
 
   owner @{HOME}/.nv/nvidia-application-profiles-rc.d/ rw,
   owner @{HOME}/.nv/nvidia-application-profiles-rc.d/10-gsr-cuda-no-stable-perf-limit rw,
@@ -40,6 +41,17 @@ profile gpu-screen-recorder @{exec_path} {
   /usr/share/gsr-ui/fonts/{,**} r,
 
   #silencer deny /etc/machine-id r,
+
+  profile pkexec {
+    include <abstractions/base>
+    include <abstractions/app/pkexec>
+
+    ptrace (read) peer=gpu-screen-recorder,
+
+    @{bin}/gsr-kms-server rPx,
+
+    include if exists <local/gpu-screen-recorder_pkexec>
+  }
 
   include if exists <local/gpu-screen-recorder>
 }
