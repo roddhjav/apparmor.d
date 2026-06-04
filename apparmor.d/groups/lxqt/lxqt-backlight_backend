@@ -1,0 +1,35 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2024 Besanon  <m231009ts@mailfence.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/lxqt-backlight_backend
+profile lxqt-backlight_backend @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/bus-session>
+  include <abstractions/bus-accessibility>
+  include <abstractions/lxqt>
+
+  @{exec_path} mr,
+
+  @{user_share_dirs}/sddm/xorg-session.log w,
+
+  @{sys}/class/backlight/ r,
+  @{sys}/devices/@{pci}/*_backlight/{,max_,actual_}brightness rw,
+  @{sys}/devices/@{pci}/*_backlight/{uevent,type,enabled} r,
+  @{sys}/devices/@{pci}/backlight/**/{,max_,actual_}brightness rw,
+  @{sys}/devices/@{pci}/backlight/**/{uevent,type,enabled} r,
+  @{sys}/devices/@{pci}/backlight/**/brightness rw,
+
+  owner /tmp/@{int} r,
+
+  /dev/tty rw,
+
+  include if exists <local/lxqt-backlight_backend>
+}
+
+# vim:syntax=apparmor

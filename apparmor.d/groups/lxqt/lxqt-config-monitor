@@ -1,0 +1,41 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2024 Besanon  <m231009ts@mailfence.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/lxqt-config-monitor
+profile lxqt-config-monitor @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/bus-session>
+  include <abstractions/bus-accessibility>
+  include <abstractions/fontconfig-cache-write>
+  include <abstractions/lxqt>
+  include <abstractions/graphics>
+
+  signal (read) set=(kill,term) peer=lxqt-session,
+
+  @{exec_path} mr,
+
+  owner @{user_config_dirs}/autostart/lxqt-config-monitor-autostart.desktop     rw,
+  owner @{user_config_dirs}/lxqt/ r,
+  owner @{user_config_dirs}/lxqt/#@{int} rwk,
+  owner @{user_config_dirs}/lxqt/lxqt.conf.lock rwk,
+  owner @{user_config_dirs}/lxqt/lxqt.conf.@{rand6} rw,
+  owner @{user_config_dirs}/lxqt/lxqt.conf.@{rand6}  l -> @{user_config_dirs}/lxqt/#@{int},
+  owner @{user_config_dirs}/lxqt/lxqt-config-monitor.conf.lock rwk,
+  owner @{user_config_dirs}/lxqt/lxqt-config-monitor.conf.@{rand6} rw,
+  owner @{user_config_dirs}/lxqt/lxqt-config-monitor.conf.@{rand6} l -> @{user_config_dirs}/lxqt/#@{int},
+  owner @{user_config_dirs}/lxqt/lxqt-config-monitor.conf l -> @{user_config_dirs}/lxqt/#@{int},
+
+  owner /tmp/@{int} r,
+
+  /dev/tty rw,
+
+  include if exists <local/lxqt-config-monitor>
+}
+
+# vim:syntax=apparmor

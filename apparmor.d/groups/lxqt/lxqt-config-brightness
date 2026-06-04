@@ -1,0 +1,56 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2024 Besanon  <m231009ts@mailfence.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/lxqt-config-brightness
+profile lxqt-config-brightness @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/lxqt>
+
+  @{exec_path} mr,
+
+  @{bin}/pkexec Cx -> pkexec,
+
+  @{sh_path} rix,
+
+  owner @{HOME}/ r,
+
+  owner /tmp/@{int} r,
+
+  @{sys}/class/backlight/ r,
+  @{sys}/devices/@{pci}/*_backlight/{,max_,actual_}brightness rw,
+  @{sys}/devices/@{pci}/*_backlight/{uevent,type,enabled} r,
+  @{sys}/devices/@{pci}/backlight/**/{,max_,actual_}brightness rw,
+  @{sys}/devices/@{pci}/backlight/**/{uevent,type,enabled} r,
+  @{sys}/devices/@{pci}/backlight/**/brightness rw,
+
+  /dev/tty rw,
+
+  profile pkexec {
+    include <abstractions/base>
+    include <abstractions/app/pkexec>
+
+    @{bin}/@{bin}/lxqt-config-brightness Px,
+
+    @{etc_ro}/inputrc r,
+    @{etc_ro}/inputrc.keys r,
+
+    @{sys}/class/backlight/ r,
+    @{sys}/devices/@{pci}/*_backlight/{,max_,actual_}brightness rw,
+    @{sys}/devices/@{pci}/*_backlight/{uevent,type,enabled} r,
+    @{sys}/devices/@{pci}/backlight/**/{,max_,actual_}brightness rw,
+    @{sys}/devices/@{pci}/backlight/**/{uevent,type,enabled} r,
+    @{sys}/devices/@{pci}/backlight/**/brightness rw,
+
+    include if exists <local/lxqt-config-brightness_pkexec>
+  }
+
+  include if exists <local/lxqt-config-brightness>
+}
+
+# vim:syntax=apparmor

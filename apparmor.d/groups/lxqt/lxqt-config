@@ -1,0 +1,63 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2024 Besanon  <m231009ts@mailfence.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/lxqt-config
+profile lxqt-config @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/bus-session>
+  include <abstractions/bus-accessibility>
+  include <abstractions/graphics>
+  include <abstractions/lxqt>
+  include <abstractions/nameservice-strict>
+
+  @{exec_path} mr,
+  @{open_path} rpx -> child-open,
+
+  @{bin}/lxqt-admin-user rPx,
+  @{bin}/ibus-setup rPx,
+  @{bin}/lxqt-config-monitor rPx,
+  @{bin}/pcmanfm-qt rPx,
+  @{bin}/lxqt-admin-time rPx,
+  @{bin}/lxqt-config-input rPx,
+  @{bin}/lxqt-config-locale rPx,
+  @{bin}/lxqt-config-brightness rPx,
+  @{bin}/lxqt-config-session rPx,
+  @{bin}/lxqt-config-file-associations rPx,
+  @{bin}/lxqt-config-powermanagement rPx,
+  @{bin}/lxqt-config-appearance rPx,
+  @{bin}/lxqt-config-globalkeyshortcuts rPx,
+  @{bin}/lxqt-config-notificationd rPx,
+  @{bin}/obconf-qt rPx,
+  @{bin}/nm-connection-editor rPx,
+  @{bin}/pavucontrol rPx,
+  @{bin}/pavucontrol-qt rPx,
+  @{bin}/system-config-printer rPx,
+
+  /usr/share/desktop-directories/lxqt-* r,
+
+  /etc/xdg/menus/lxqt-config.menu r,
+
+  owner @{user_config_dirs}/lxqt/ r,
+  owner @{user_config_dirs}/lxqt/#@{int} rw,
+  owner @{user_config_dirs}/lxqt/lxqt-config.conf.lock rwk,
+  owner @{user_config_dirs}/lxqt/lxqt-config.conf.@{rand6} rwl -> @{user_config_dirs}/lxqt/#@{int},
+  owner @{user_config_dirs}/lxqt/lxqt-config.conf.@{rand6} rwl -> @{user_config_dirs}/lxqt/#@{int},
+  owner @{user_config_dirs}/qt6ct/qt6ct.conf.@{rand6} rwl -> @{user_config_dirs}/qt6ct/#@{int},
+  owner @{user_config_dirs}/qt6ct/qt6ct.conf.lock rwk,
+  owner @{user_config_dirs}/qt6ct/#@{int} rw,
+  owner @{user_config_dirs}/qt6ct/qt6ct.conf    rw,
+
+  owner /tmp/@{int} r,
+
+  /dev/tty rw,
+
+  include if exists <local/lxqt-config>
+}
+
+# vim:syntax=apparmor

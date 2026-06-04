@@ -1,0 +1,57 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2024 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2024 Besanon  <m231009ts@mailfence.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/lxqt-config-session
+profile lxqt-config-session @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/bus-session>
+  include <abstractions/bus-accessibility>
+  include <abstractions/graphics>
+  include <abstractions/lxqt>
+  include <abstractions/thumbnails-cache-read>
+  include <abstractions/thumbnails-cache-write>
+  include <abstractions/nameservice-strict>
+
+  @{exec_path} mr,
+
+  /usr/share/libfm-qt6/translations/libfm-qt_de.qm  r,
+  /usr/share/gvfs/remote-volume-monitors/ r,
+  /usr/share/gvfs/remote-volume-monitors/udisks2.monitor r,
+  /usr/share/thumbnailers/ r,
+
+  /etc/fstab r,
+  /etc/xdg/autostart/ r,
+  /etc/xdg/autostart/** r,
+
+  owner @{user_config_dirs}/#@{int} rw,
+  owner @{user_config_dirs}/autostart/ rw,
+  owner @{user_config_dirs}/QtProject.conf rw,
+  owner @{user_config_dirs}/QtProject.conf.@{rand6} rwkl,
+  owner @{user_config_dirs}/QtProject.conf.lock rwk,
+  owner @{user_config_dirs}/autostart/*.desktop rw,
+  owner @{user_config_dirs}/lxqt/  r,
+  owner @{user_config_dirs}/lxqt/#@{int} rwk,
+  owner @{user_config_dirs}/lxqt/lxqt.conf.lock rwk,
+  owner @{user_config_dirs}/lxqt/lxqt-config-session.conf.lock rwk,
+  owner @{user_config_dirs}/lxqt/session.conf.lock rwk,
+  owner @{user_config_dirs}/lxqt/session.conf.@{rand6} rwkl -> @{user_config_dirs}/lxqt/#@{int},
+  owner @{user_config_dirs}/user-dirs.dirs rw,
+  owner @{user_config_dirs}/lxqt/waylandwindowmanagers.conf.lock rwk,
+  owner @{user_config_dirs}/lxqt/waylandwindowmanagers.conf rwkl -> @{user_config_dirs}/lxqt/#@{int},
+
+  owner /tmp/@{int} r,
+
+  owner @{PROC}/@{pid}/mountinfo r,
+
+  /dev/tty rw,
+
+  include if exists <local/lxqt-config-session>
+}
+
+# vim:syntax=apparmor
