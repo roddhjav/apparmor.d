@@ -21,8 +21,7 @@ profile gsr-ui @{exec_path} {
   signal (send) set=(kill) peer=gsr-kwin-helper,
   signal (send) set=(int) peer=gsr-game-tracker,
 
-  @{sh_path}                 rix,
-  #TODO? @{sh_path}           Px -> gsr-ui-shell,
+  @{sh_path}                  cx -> shell,
   @{bin}/cat                 rix,
   @{bin}/gsr-game-tracker    rPx,
   @{bin}/gsr-global-hotkeys  rPx,
@@ -30,8 +29,6 @@ profile gsr-ui @{exec_path} {
   @{bin}/gsr-notify          rix,
   @{bin}/gpu-screen-recorder rPx,
   @{bin}/systemctl           rPx -> child-systemctl,
-
-  /dev/tty rw,
 
   owner @{user_config_dirs}/gpu-screen-recorder/{,**} rw,
 
@@ -42,6 +39,23 @@ profile gsr-ui @{exec_path} {
   owner @{run}/user/@{uid}/xauth_@{rand6} r,
 
   @{PROC}/ r,
+
+  profile shell flags=(complain) {
+    include <abstractions/base>
+
+    @{sh_path}      r,
+    @{bin}/cat     ix,
+    @{bin}/mkdir   ix,
+    @{bin}/dirname ix,
+
+    /dev/tty rw,
+
+    owner @{user_config_dirs}/autostart/gpu-screen-recorder-ui.desktop rw,
+
+    deny /dev/dri/card@{int} r, # file_inherit
+
+    include if exists <local/gsr-ui_shell>
+  }
 
   include if exists <local/gsr-ui>
 }
