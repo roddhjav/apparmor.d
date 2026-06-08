@@ -44,7 +44,7 @@ As the `enforced` version of the package conficts with the default `apparmor.d` 
 
 === ":material-arch: Archlinux"
 
-    `apparmor.d.enforced` is available in the [Arch User Repository][aur]:
+    `apparmor.d.enforced` is available in the [Arch User Repository](https://aur.archlinux.org/packages/apparmor.d-git):
 
     ```sh
     yay -S apparmor.d.enforced  # or your preferred AUR install method
@@ -52,7 +52,7 @@ As the `enforced` version of the package conficts with the default `apparmor.d` 
 
 === ":material-ubuntu: Ubuntu"
 
-    Using the [pkg.pujol.io][repo] debian repository, install the package:
+    Using the [pkg.pujol.io](https://pkg.pujol.io) debian repository, install the package:
     ```sh
     sudo apt install apparmor.d.enforced
     ```
@@ -60,7 +60,7 @@ As the `enforced` version of the package conficts with the default `apparmor.d` 
 
 === ":material-debian: Debian"
 
-    Using the [pkg.pujol.io][repo] debian repository, install the package:
+    Using the [pkg.pujol.io](https://pkg.pujol.io) debian repository, install the package:
     ```sh
     sudo apt install apparmor.d.enforced
     ```
@@ -76,6 +76,3 @@ As the `enforced` version of the package conficts with the default `apparmor.d` 
 === ":material-home: Partial Install"
 
     Use the `just enforce` command to build instead of `just complain`
-
-[aur]: https://aur.archlinux.org/packages/apparmor.d-git
-[repo]: https://pkg.pujol.io

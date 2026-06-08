@@ -15,7 +15,7 @@ title: Full system policy (FSP)
 
     AppArmor is also capable of being used for full system policy where processes are by default not running under the `unconfined` profile. This might be useful for high security environments or embedded systems.
 
-    *Source: [AppArmor Wiki][apparmor-wiki]*
+    *Source: [AppArmor Wiki](https://gitlab.com/apparmor/apparmor/-/wikis/FullSystemPolicy)*
 
 
 ## Overview
@@ -208,7 +208,5 @@ The profiles dedicated for the roles definition are maintained in the **[`_roles
 
     The roles provided are only examples. It is recommended to create your own roles based on your needs.
     For example, the play machine provides three roles: `root`, `play`, and `deploy`. See the [play machine](play.md) page for more details.
-
-[apparmor-wiki]: https://gitlab.com/apparmor/apparmor/-/wikis/FullSystemPolicy
 [full]: https://github.com/roddhjav/apparmor.d/blob/main/apparmor.d/groups/_full
 [role]: https://github.com/roddhjav/apparmor.d/blob/main/apparmor.d/groups/_roles

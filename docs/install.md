@@ -63,7 +63,7 @@ echo 'Optimize=compress-fast' | sudo tee -a /etc/apparmor/parser.conf
 
 === ":material-arch: Archlinux"
 
-    `apparmor.d` is available in the [Arch User Repository][aur]:
+    `apparmor.d` is available in the [Arch User Repository](https://aur.archlinux.org/packages/apparmor.d-git):
 
     ```sh
     yay -S apparmor.d  # or your preferred AUR install method
@@ -71,8 +71,8 @@ echo 'Optimize=compress-fast' | sudo tee -a /etc/apparmor/parser.conf
 
 === ":material-ubuntu: Ubuntu"
 
-    `apparmor.d` is available under the [pkg.pujol.io][repo] debian repository.
-    The repository is signed with my [GPG key][keys]. Configure it as follows:
+    `apparmor.d` is available under the [pkg.pujol.io](https://pkg.pujol.io) debian repository.
+    The repository is signed with my [GPG key](https://pujol.io/keys). Configure it as follows:
 
     ```sh
     sudo apt-get install wget gnupg
@@ -100,8 +100,8 @@ echo 'Optimize=compress-fast' | sudo tee -a /etc/apparmor/parser.conf
 
 === ":material-debian: Debian"
 
-    `apparmor.d` is available under the [pkg.pujol.io][repo] debian repository.
-    The repository is signed with my [GPG key][keys]. Configure it as follows:
+    `apparmor.d` is available under the [pkg.pujol.io](https://pkg.pujol.io) debian repository.
+    The repository is signed with my [GPG key](https://pujol.io/keys). Configure it as follows:
 
     ```sh
     sudo apt-get install wget gnupg
@@ -190,7 +190,3 @@ echo 'Optimize=compress-fast' | sudo tee -a /etc/apparmor/parser.conf
     ```sh
     sudo zypper remove apparmor.d
     ```
-
-[aur]: https://aur.archlinux.org/packages/apparmor.d-git
-[keys]: https://pujol.io/keys
-[repo]: https://pkg.pujol.io
