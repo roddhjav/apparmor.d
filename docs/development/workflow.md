@@ -136,7 +136,7 @@ To discover the access needed by a program, you can use the following tools:
 
 1. From `aa-log` output, you can:
     - Copy the rules to the profile.
-    - Replace some rules with **[abstractions](abstractions.md)** as 80% of the rules should already be covered by an abstraction.
+    - Replace some rules with **[abstractions](../abstractions/index.md)** as 80% of the rules should already be covered by an abstraction.
 
 1. Then, [update the profile](#individual-profile) and start the program again. Use the program as you would normally do, but also try to run all the features of the program, e.g.: open the help, settings, etc.
 
@@ -148,7 +148,7 @@ After 2 or 3 iterations, you should have a working profile.
 
 <div class="grid cards" markdown>
 
--   :material-function: &nbsp; **[Use the abstractions](abstractions.md)**
+-   :material-function: &nbsp; **[Use the abstractions](../abstractions/index.md)**
 -   :simple-files: &nbsp; **[Learn how to open resources](internal.md#open-resources)**
 -   :fontawesome-solid-bus-simple: &nbsp; **[Learn how Dbus rules are handled](dbus.md)**
 -   :material-sign-direction: &nbsp; **[Learn about directives `#aa:`](directives.md)**

@@ -81,7 +81,7 @@ ________________________________________________________________________________
 - [x] New `audio-client` and `audio-server` abstractions
 - [x] New desktop agnostic `desktop` abstraction for all common access for any GUI app. 
 - [x] New `graphics` abstraction, hardware-agnostic. Fully replace and restrict the old `opencl` abstractions
-- [x] All new abstractions are documented in the [abstractions](abstractions.md) page
+- [x] All new abstractions are documented in the [abstractions](../abstractions/index.md) page
 
 **Dbus**
 
