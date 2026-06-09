@@ -15,11 +15,12 @@ profile systemd-dissect @{exec_path} flags=(attach_disconnected) {
 
   capability dac_read_search,
   capability sys_admin,
+  capability sys_rawio,
   capability sys_resource,
 
   mount                                             -> /tmp/dissect-@{rand6}/,
   mount fstype=tmpfs options=(rw nodev)      rootfs -> @{run}/systemd/dissect-root/,
-  mount options=(ro nodev)         @{att}/dev/loop* -> @{run}/systemd/dissect-root/{,**/},
+  mount options=(ro nodev)             @{att}/dev/* -> @{run}/systemd/dissect-root/{,**/},
   mount options=(rw nodev)                          -> /mnt/*/,
   mount options=(rw rshared make-rslave)               /,
 
@@ -40,16 +41,20 @@ profile systemd-dissect @{exec_path} flags=(attach_disconnected) {
   @{user_projects_dirs}/{,**} r,
   @{user_vm_dirs}/{,**} r,
 
+  /etc/verity.d/{,**} r,
+
   owner @{tmp}/dissect-@{rand6}/{,**} rw,
 
   @{run}/systemd/dissect-root/ rw,
   @{run}/systemd/dissect-root/** rwlk,
 
+  @{sys}/devices/virtual/bdi/**/read_ahead_kb r,
   @{sys}/devices/virtual/block/loop@{int}/{,**} r,
   @{sys}/kernel/uevent_seqnum r,
 
   @{PROC}/@{pid}/cgroup r,
   @{PROC}/@{pid}/mountinfo r,
+  @{PROC}/devices r,
 
         /dev/loop* rwk,
   @{att}/dev/loop* wk,
