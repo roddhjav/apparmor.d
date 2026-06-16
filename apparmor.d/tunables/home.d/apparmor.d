@@ -71,6 +71,7 @@
 @{user_ssh_dirs}=@{HOME}/@{XDG_SSH_DIR} @{MOUNTS}/@{XDG_SSH_DIR}
 @{user_passwordstore_dirs}=@{HOME}/@{XDG_PASSWORDSTORE_DIR} @{MOUNTS}/@{XDG_PASSWORDSTORE_DIR}
 @{user_private_dirs}=@{HOME}/@{XDG_PRIVATE_DIR} @{MOUNTS}/@{XDG_PRIVATE_DIR}
+@{user_git_dirs}=""
 
 # Similar system-wide paths
 @{system_games_dirs}=/usr/games /var/lib/games
