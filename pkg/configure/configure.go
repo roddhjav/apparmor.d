@@ -66,7 +66,7 @@ func (p Configure) Apply() ([]string, error) {
 			}
 		}
 
-	case "debian", "whonix":
+	case "debian":
 		if err := prebuild.DebianHide.Init(); err != nil {
 			return res, err
 		}

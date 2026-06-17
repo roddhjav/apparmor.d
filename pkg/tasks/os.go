@@ -34,10 +34,9 @@ var (
 		"debian":   {},
 		"ubuntu":   {"neon"},
 		"opensuse": {"suse", "opensuse-tumbleweed"},
-		"whonix":   {},
 	}
 	familyDists = map[string][]string{
-		"apt":    {"debian", "ubuntu", "whonix"},
+		"apt":    {"debian", "ubuntu"},
 		"pacman": {"arch"},
 		"zypper": {"opensuse"},
 	}

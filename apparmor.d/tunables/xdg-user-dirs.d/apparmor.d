@@ -10,9 +10,6 @@
 
 # Second part. First part in /etc/apparmor.d/tunables/home.d/apparmor.d
 
-#aa:only whonix
-@{XDG_DOWNLOAD_DIR}+=".tb/tor-browser/Browser/Downloads"
-
 # Define more extended user directories not defined in the XDG standard but commonly
 # used in profiles
 @{XDG_SCREENSHOTS_DIR}=@{XDG_PICTURES_DIR}/Screenshots

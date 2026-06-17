@@ -29,6 +29,16 @@ profile mpris-proxy @{exec_path} {
        member=Introspect
        peer=(name=@{busname}, label="{gnome-shell,gnome-extension}"),
 
+  # TODO: required, maybe in abs, maybe not
+  dbus receive bus=session path=/
+       interface=org.freedesktop.DBus.ObjectManager
+       member={InterfacesAdded,InterfacesRemoved}
+       peer=(name=@{busname}, label=obexd),
+  dbus send bus=session path=/
+       interface=org.freedesktop.DBus.ObjectManager
+       member=GetManagedObjects
+       peer=(name=org.bluez.obex, label=obexd),
+
   @{exec_path} mr,
 
   include if exists <local/mpris-proxy>

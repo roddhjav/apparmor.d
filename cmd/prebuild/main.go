@@ -8,7 +8,6 @@ import (
 	"github.com/roddhjav/apparmor.d/pkg/builder"
 	"github.com/roddhjav/apparmor.d/pkg/configure"
 	"github.com/roddhjav/apparmor.d/pkg/paths"
-	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 	"github.com/roddhjav/apparmor.d/pkg/prebuild/cli"
 	"github.com/roddhjav/apparmor.d/pkg/runtime"
 	"github.com/roddhjav/apparmor.d/pkg/tasks"
@@ -55,23 +54,6 @@ func configInit() *tasks.TaskConfig {
 			c.Version = 3.0
 		}
 
-	case "whonix":
-		c.ABI = 3
-		c.Version = 3.0
-
-		// Hide rewritten Whonix profiles
-		prebuild.Hide += `/etc/apparmor.d/abstractions/base.d/kicksecure
-		/etc/apparmor.d/home.tor-browser.firefox
-		/etc/apparmor.d/tunables/homsanitycheck
-		/etc/apparmor.d/usr.bin.url_e.d/anondist
-		/etc/apparmor.d/tunables/home.d/live-mode
-		/etc/apparmor.d/tunables/home.d/qubes-whonix-anondist
-		/etc/apparmor.d/usr.bin.hexchat
-		/etc/apparmor.d/usr.bin.sdwdate
-		/etc/apparmor.d/usr.bin.systemcheck
-		/etc/apparmor.d/usr.bin.timeto_unixtime
-		/etc/apparmor.d/whonix-firewall
-		`
 	}
 	return c
 }
