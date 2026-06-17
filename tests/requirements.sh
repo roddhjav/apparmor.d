@@ -20,7 +20,7 @@ arch)
 		bats bats-support \
 		pacman-contrib tlp flatpak networkmanager
 	;;
-debian | ubuntu | whonix)
+debian | ubuntu)
 	sudo apt-get update -y
 	sudo apt-get install -y \
 		bats bats-support \

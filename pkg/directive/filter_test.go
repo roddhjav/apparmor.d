@@ -241,20 +241,6 @@ func TestFilterExclude_Apply(t *testing.T) {
 			want:    "",
 		},
 		{
-			name:   "inline-keep",
-			dist:   "whonix",
-			family: "apt",
-			opt: &Option{
-				Name:    "exclude",
-				ArgMap:  map[string]string{"debian": ""},
-				ArgList: []string{"debian"},
-				File:    nil,
-				Raw:     "  @{bin}/dpkg rPx -> child-dpkg, #aa:exclude debian",
-			},
-			profile: "  @{bin}/dpkg rPx -> child-dpkg, #aa:exclude debian",
-			want:    "  @{bin}/dpkg rPx -> child-dpkg,",
-		},
-		{
 			name:   "inline-exclude",
 			dist:   "ubuntu",
 			family: "apt",

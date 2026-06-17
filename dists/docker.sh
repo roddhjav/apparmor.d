@@ -75,9 +75,6 @@ build_in_docker_dpkg() {
 	local img dist="$1" target="$1" release="$2"
 
 	[[ "$release" == 14 ]] && release="forky"
-	if [[ "$dist" == whonix ]]; then
-		dist=debian
-	fi
 	img="$PREFIX$dist$release"
 
 	# Adjustments for test flavor
@@ -127,7 +124,7 @@ main() {
 		build_in_docker_makepkg "$DISTRIBUTION"
 		;;
 
-	debian | ubuntu | whonix)
+	debian | ubuntu)
 		sync
 		build_in_docker_dpkg "$DISTRIBUTION" "$RELEASE"
 		;;
