@@ -13,7 +13,6 @@ profile virtnodedevd @{exec_path} flags=(attach_disconnected) {
   include <abstractions/bus-system>
   include <abstractions/devices-usb>
   include <abstractions/disks-read>
-  include <abstractions/freedesktop.org>
   include <abstractions/nameservice-strict>
   include <abstractions/sys/dmi-full>
 
@@ -22,8 +21,13 @@ profile virtnodedevd @{exec_path} flags=(attach_disconnected) {
 
   network netlink raw,
 
-  ptrace (read) peer=virtqemud,
-  ptrace (read) peer=unconfined,
+  ptrace read peer=virtqemud,
+  ptrace read peer=unconfined,
+
+  dbus receive bus=system path=/org/freedesktop/login1
+       interface=org.freedesktop.login1.Manager
+       member=PrepareForShutdown
+       peer=(name=@{busname}, label=systemd-logind),
 
   @{exec_path} mr,
 
