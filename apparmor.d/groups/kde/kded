@@ -11,10 +11,11 @@ profile kded @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/base>
   include <abstractions/apt> #aa:only apt
   include <abstractions/audio-client>
-  include <abstractions/bus/system/org.bluez>
+  include <abstractions/bluetooth-observe>
   include <abstractions/bus/system/org.freedesktop.login1>
   include <abstractions/bus/system/org.freedesktop.UDisks2>
   include <abstractions/consoles>
+  include <abstractions/cups-client>
   include <abstractions/dconf-write>
   include <abstractions/devices-usb>
   include <abstractions/graphics>
@@ -48,11 +49,13 @@ profile kded @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   #aa:dbus own bus=session name=org.kde.kappmenu
   #aa:dbus own bus=session name=org.kde.kcookiejar5
   #aa:dbus own bus=session name=org.kde.kded5
+  #aa:dbus own bus=session name=org.kde.kded6
   #aa:dbus own bus=session name=org.kde.keyboard
   #aa:dbus own bus=session name=org.kde.KeyboardLayouts
+  #aa:dbus own bus=session name=org.kde.plasma.browser.integration
   #aa:dbus own bus=session name=org.kde.plasmanetworkmanagement
   #aa:dbus own bus=session name=org.kde.plasmashell.accentColor
-  #aa:dbus own bus=session name=org.kde.StatusNotifierWatcher
+  #aa:dbus own bus=session name=org.kde.StatusNotifierWatcher path=/StatusNotifierWatcher{,**}
   #aa:dbus own bus=session name=org.kde.Wacom
   #aa:dbus own bus=session name=org.kubuntu.NotificationHelper
   #aa:dbus own bus=session name=org.kubuntu.restrictedInstall
@@ -67,10 +70,14 @@ profile kded @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   #aa:dbus talk bus=system name=org.freedesktop.bolt label=boltd
   #aa:dbus talk bus=system name=org.freedesktop.ModemManager1 label=ModemManager
   #aa:dbus talk bus=system name=org.freedesktop.NetworkManager label=NetworkManager
+  #aa:dbus talk bus=system name=org.freedesktop.PackageKit label=packagekitd
   #aa:dbus talk bus=system name=org.freedesktop.PolicyKit1 label="@{p_polkitd}"
 
+  #aa:dbus talk bus=session name=org.freedesktop.systemd1 label="@{p_systemd_user}"
+  #aa:dbus talk bus=session name=org.kde.ActivityManager path=/ActivityManager{,**} label=kactivitymanagerd
+  #aa:dbus talk bus=session name=org.kde.KDirNotify path=/ label="{dolphin,kioworker,plasmashell}"
+  #aa:dbus talk bus=session name=org.kde.KGlobalAccel path=/{,**} label="{kglobalacceld,kwin_wayland}"
   #aa:dbus talk bus=session name=org.kde.NightColor path=/ColorCorrect label="{kwin_wayland,kwin_x11}"
-  #aa:dbus talk bus=session name=org.kde.KGlobalAccel path=/ label="{kglobalacceld,kwin_wayland}"
 
   dbus receive bus=system path=/
        interface=org.kde.kf{5,6}auth
@@ -119,14 +126,12 @@ profile kded @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   /etc/xdg/menus/{,**} r,
   /etc/update-manager/{,**} r,
 
-  /etc/machine-id r,
-  /var/lib/dbus/machine-id r,
-
   / r,
   @{efi}/ r,
   /home/ r,
 
-  owner /var/lib/update-manager/meta-release-lts rw,
+        /var/lib/update-notifier/user.d/ r,
+  owner /var/lib/update-manager/meta-release* rw,
 
   owner @{MOUNTS}/ r,
   owner @{HOME}/ r,
@@ -141,7 +146,7 @@ profile kded @{exec_path} flags=(attach_disconnected,mediate_deleted) {
         @{user_cache_dirs}/ksycoca{5,6}_* rwlk -> @{user_cache_dirs}/#@{int},
   owner @{user_cache_dirs}/plasmashell/ rw,
   owner @{user_cache_dirs}/plasmashell/** rwlk ->  @{user_cache_dirs}/plasmashell/**,
-  owner @{user_cache_dirs}/update-manager-core/meta-release-lts rw,
+  owner @{user_cache_dirs}/update-manager-core/meta-release* rw,
 
         @{user_config_dirs}/kcookiejarrc.lock rwk,
         @{user_config_dirs}/kcookiejarrc{,.@{rand6}} rwl -> @{user_config_dirs}/#@{int},
