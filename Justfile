@@ -637,7 +637,17 @@ commit:
 	mv debian/changelog.tmp debian/changelog
 	sed -i "s/^pkgver=.*/pkgver=$version/" PKGBUILD
 	sed -i "s/^Version:.*/Version:        $version/" "dists/{{pkgname}}.spec"
-	git add PKGBUILD "dists/{{pkgname}}.spec" debian/changelog
+	# Stage only the version-bump line, rebuilt from HEAD, so any other
+	# working-tree changes in these files never leak into the release commit.
+	stage_bump() {
+		local file="$1" expr="$2" mode blob
+		mode=$(git ls-tree HEAD -- "$file" | awk '{print $1}')
+		blob=$(git cat-file -p "HEAD:$file" | sed "$expr" | git hash-object -w --stdin)
+		git update-index --cacheinfo "$mode,$blob,$file"
+	}
+	stage_bump PKGBUILD "s/^pkgver=.*/pkgver=$version/"
+	stage_bump "dists/{{pkgname}}.spec" "s/^Version:.*/Version:        $version/"
+	git add debian/changelog
 	git commit -S -m "Release {{pkgname}} v$version"
 	git tag -a "v$version" -m "{{pkgname}} v$version" --local-user={{gpgkey}}
 
