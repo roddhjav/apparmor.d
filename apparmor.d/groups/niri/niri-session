@@ -1,0 +1,36 @@
+# Last Modified: Thu Jun 11 12:32:52 2026
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 You <your@email>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/niri-session
+@{att} = /att/niri-session/
+
+/usr/bin/niri-session {
+  include <abstractions/base-strict>
+
+  /etc/shells r,
+  /dev/tty rw,
+  /dev/tty@{int} rw,
+
+  @{exec_path} mrix,
+  @{sh_path} rix,
+  @{shells_path} rix,
+  @{bin}/dbus-update-activation-environment rix,
+  @{bin}/niri rpx,
+  @{bin}/grep rix,
+  @{bin}/systemctl            rcx -> systemctl,
+
+  owner /dev/tty@{u8} rw,
+
+  profile systemctl flags=(attach_disconnected,attach_disconnected.path=@{att},mediate_deleted,complain) {
+    include <abstractions/attached/base>
+    include <abstractions/app/systemctl>
+
+    include if exists <local/sddm_systemctl>
+  }
+}
