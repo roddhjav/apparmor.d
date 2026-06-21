@@ -1,0 +1,63 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 You <your@email>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/niri
+@{att} = /att/niri/
+
+profile niri /{,usr}/bin/niri flags=(attach_disconnected, attach_disconnected.path=@{att}) {
+  include <abstractions/attached/base>
+  include <abstractions/desktop>
+  include <abstractions/graphics>
+  include <abstractions/app-launcher-user>
+
+  @{exec_path} mr,
+
+  network netlink raw,
+
+  @{bin}/* rpux,
+  @{lib}/* rpux,
+
+  /usr/share/libinput/ r,
+  /usr/share/libinput/*.quirks r,
+
+  owner @{user_config_dirs}/niri/{,**} r,
+  owner @{run}/user/@{uid}/niri.**.sock rw,
+
+  @{run}/systemd/sessions/@{int} r,
+
+  @{run}/udev/data/+acpi:* r,             # Exposes ACPI objects (power buttons, batteries, thermal)
+  @{run}/udev/data/+dmi:id r,             # for motherboard info
+  @{run}/udev/data/+drm:card@{int}-* r,   # For screen outputs
+  @{run}/udev/data/+hid:* r,              # For Human Interface Device (mice, controllers, drawing tablets, scanners)
+  @{run}/udev/data/+input:input@{int} r,  # for mouse, keyboard, touchpad
+  @{run}/udev/data/+pci:* r,              # Identifies all PCI devices (CPU, GPU, Network, Disks, USB, etc.)
+  @{run}/udev/data/+platform:* r,         # Identifies onboard devices (laptop/board model, power controllers, thermal sensors)
+  @{run}/udev/data/+sound:card@{int} r,   # for sound card
+  @{run}/udev/data/+usb:* r,              # Identifies all USB devices
+  @{run}/udev/data/c13:@{int} r,          # for /dev/input/*
+  @{run}/udev/data/c189:@{int} r,
+
+  @{sys}/bus/ r,
+  @{sys}/class/input/ r,
+  @{sys}/devices/@{pci}/boot_vga r,
+  @{sys}/devices/**/uevent r,
+  @{run}/udev/data/c13:@{int} r,          # for /dev/input/*
+  @{run}/udev/data/+drm:card@{int}-* r,   # For screen outputs
+
+  @{att}/dev/input/event@{int} rw,
+  /dev/input/event@{int} rw,
+
+  /dev/tty r,
+  /dev/tty@{u8} rw,
+  @{att}run/systemd/inhibit/@{int}.ref rw,
+  @{att}/dev/dri/card@{int} rw,
+  /dev/dri/card@{int} rw,
+
+  /var/cache/fontconfig/@{hex32}-le64.cache-11 r,
+  owner @{user_cache_dirs}/fontconfig/@{hex32}-le64.cache-11 rw,
+}
