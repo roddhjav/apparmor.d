@@ -21,9 +21,12 @@ profile gnome-desktop-thumbnailers flags=(attach_disconnected) {
   @{bin}/*-thumbnailer                 Cx -> &gnome-desktop-thumbnailers//thumbnailer,
 
   #aa:only apparmor<5.0
-  @{lib}/glycin-loaders/@{d}+/glycin-* Cx -> gnome-desktop-thumbnailers//&glycin//loaders,
+  # glycin-loaders sandboxed profile stack
+  @{bin}/bwrap                         Px -> gnome-desktop-thumbnailers//&glycin,
+  @{lib}/glycin-loaders/@{d}+/glycin-* Px -> gnome-desktop-thumbnailers//&glycin//&glycin//loaders,
 
   #aa:only apparmor>=5.0
+  @{bin}/bwrap                         Px -> :glycin:bwrap,
   @{lib}/glycin-loaders/@{d}+/glycin-* Px -> gnome-desktop-thumbnailers//&:glycin:loaders,
 
   /usr/share/poppler/{,**} r,
@@ -42,6 +45,7 @@ profile gnome-desktop-thumbnailers flags=(attach_disconnected) {
 
   profile thumbnailer flags=(attach_disconnected) {
     include <abstractions/base>
+    include <abstractions/app/bwrap-glycin>
     include <abstractions/fonts>
     include <abstractions/gstreamer>
     include <abstractions/mime>
@@ -51,7 +55,15 @@ profile gnome-desktop-thumbnailers flags=(attach_disconnected) {
     unix type=stream peer=(label=gnome-desktop-thumbnailers),
 
     @{bin}/*-thumbnailer mr,
-    @{lib}/glycin-loaders/@{d}+/glycin-* ix,
+
+    #aa:only apparmor<5.0
+    # glycin-loaders sandboxed profile stack
+    @{bin}/bwrap                         Px -> gnome-desktop-thumbnailers//thumbnailer//&glycin,
+    @{lib}/glycin-loaders/@{d}+/glycin-* Px -> gnome-desktop-thumbnailers//thumbnailer//&glycin//&glycin//loaders,
+
+    #aa:only apparmor>=5.0
+    @{bin}/bwrap                         Px -> :glycin:bwrap,
+    @{lib}/glycin-loaders/@{d}+/glycin-* Px -> gnome-desktop-thumbnailers//thumbnailer//&:glycin:loaders,
 
     /usr/share/poppler/{,**} r,
 
