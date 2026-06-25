@@ -137,6 +137,8 @@ func Configure(r *runtime.Runners) *runtime.Runners {
 			Add(builder.NewAPPARMOR40()) // Convert all profiles from apparmor 4.1 to 4.0 or less
 
 	case 4:
+		r.Builders.Add(builder.NewABI4()) // Convert all profiles from abi 5.0 to abi 4.0
+
 		// priority support was added in 4.1
 		if r.Version == 4.0 {
 			r.Builders.Add(builder.NewAPPARMOR40())

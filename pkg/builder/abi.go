@@ -10,6 +10,12 @@ import (
 )
 
 var (
+	regAbi5To4 = util.ToRegexRepl([]string{
+		`abi/5.0`, `abi/4.0`,
+		`(?m)^([ \t]*)if (.+\S)\s*\{[ \t]*$([\s\S]*?)^([ \t]*)\}[ \t]*$`, `${1}# if ${2}${3}${4}# }`,
+		`(?m)^([ \t]*)\} else if (.+\S)\s*\{[ \t]*$`, `${1}# } else if ${2}`,
+		`(?m)^([ \t]*)\} else\s*\{[ \t]*$`, `${1}# } else`,
+	})
 	regAbi4To5 = util.ToRegexRepl([]string{
 		`abi/4.0`, `abi/5.0`,
 	})
@@ -29,6 +35,10 @@ type ABI5 struct {
 	tasks.BaseTask
 }
 
+type ABI4 struct {
+	tasks.BaseTask
+}
+
 type ABI3 struct {
 	tasks.BaseTask
 }
@@ -43,6 +53,16 @@ func NewABI3() *ABI3 {
 		BaseTask: tasks.BaseTask{
 			Keyword: "abi3",
 			Msg:     "Build: convert all profiles from abi 4.0 to abi 3.0",
+		},
+	}
+}
+
+// NewABI4 creates a new ABI4 builder.
+func NewABI4() *ABI4 {
+	return &ABI4{
+		BaseTask: tasks.BaseTask{
+			Keyword: "abi4",
+			Msg:     "Build: convert all profiles from abi 5.0 to abi 4.0",
 		},
 	}
 }
@@ -69,6 +89,10 @@ func NewAPPARMOR40() *APPARMOR40 {
 
 func (b ABI5) Apply(opt *Option, profile string) (string, error) {
 	return regAbi4To5.Replace(profile), nil
+}
+
+func (b ABI4) Apply(opt *Option, profile string) (string, error) {
+	return regAbi5To4.Replace(profile), nil
 }
 
 func (b ABI3) Apply(opt *Option, profile string) (string, error) {
