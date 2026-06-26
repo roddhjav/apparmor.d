@@ -1,0 +1,54 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{lib_dirs} = @{lib}/postgresql/@{version}/
+@{bin_dirs} = @{lib_dirs}/bin
+
+@{exec_path} = @{bin}/pg_ctlcluster
+profile pg_ctlcluster @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+  include <abstractions/perl>
+
+  capability dac_read_search,
+  capability setgid,
+  capability setuid,
+  capability sys_resource,
+
+  @{exec_path} mr,
+
+  @{sh_path}         rix,
+  @{bin}/id           Px,
+  @{bin_dirs}/pg_ctl  Px,
+  @{bin_dirs}/psql    Px,
+  @{bin}/systemctl    Px -> postgres-systemctl,
+
+  /etc/postgresql/{,**} r,
+  /etc/shadow r,
+
+  /var/lib/postgresql/** r,
+
+  owner /var/log/postgresql/* rw,
+
+  @{run}/postgresql/*.pid r,
+
+  # This allows raising the OOM score of the postgres processes.
+  @{PROC}/@{pid}/oom_score_adj w,
+
+  @{PROC}/@{pid}/cgroup r,
+  @{PROC}/@{pid}/cmdline r,
+
+  #aa:only test
+  # Throw-away PostgreSQL environment for running regression tests
+  owner /tmp/pg_virtualenv.@{rand6}/{,**} rw,
+  owner /tmp/tmp.@{rand10}/{,**} rw,
+
+  include if exists <local/pg_ctlcluster>
+}
+
+# vim:syntax=apparmor

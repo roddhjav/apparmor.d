@@ -1,0 +1,34 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{lib_dirs} = @{lib}/postgresql/@{version}/
+@{bin_dirs} = @{lib_dirs}/bin
+
+@{exec_path} = @{bin_dirs}/pg_ctl
+profile pg_ctl @{exec_path} {
+  include <abstractions/base>
+
+  signal send peer=postgres,
+
+  @{exec_path} mr,
+
+  @{sh_path}           rix,
+  @{bin_dirs}/postgres  Px,
+
+  owner /var/lib/postgresql/**.pid r,
+  owner /var/log/postgresql/*.log w,
+
+  #aa:only test
+  # Throw-away PostgreSQL environment for running regression tests
+  owner /tmp/pg_virtualenv.@{rand6}/{,**} rw,
+  owner /tmp/tmp.@{rand10}/{,**} rw,
+
+  include if exists <local/pg_ctl>
+}
+
+# vim:syntax=apparmor

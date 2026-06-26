@@ -1,0 +1,58 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{lib_dirs} = @{lib}/postgresql/@{version}/
+@{bin_dirs} = @{lib_dirs}/bin
+
+@{exec_path} = @{bin}/pg_createcluster
+profile pg_createcluster @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+  include <abstractions/perl>
+
+  capability chown,
+  capability dac_override,
+  capability dac_read_search,
+  capability fowner,
+  capability fsetid,
+  capability setgid,
+  capability setuid,
+
+  network inet stream port=5432,
+  network inet6 stream port=5432,
+
+  @{exec_path} mr,
+
+  @{bin}/chattr  rix,
+  @{bin}/id       Px,
+  @{bin}/install rix,
+  @{sh_path}     rix,
+
+  @{bin_dirs}/initdb     Px,
+  @{bin}/pg_ctlcluster   Px,
+  @{bin}/pg_dropcluster  Px,
+  @{bin}/pg_lsclusters   Px,
+  @{bin}/systemctl       Px -> postgres-systemctl,
+  /usr/share/postgresql-common/pg_updateaptconfig Px,
+
+  /etc/postgresql-common/{,**} r,
+  /etc/postgresql/{,**} rw,
+  /etc/shadow r,
+
+  /var/lib/postgresql/** rw,
+  /var/log/postgresql/*.log w,
+
+  #aa:only test
+  # Throw-away PostgreSQL environment for running regression tests
+  owner /tmp/pg_virtualenv.@{rand6}/{,**} rw,
+  owner /tmp/tmp.@{rand10}/{,**} rw,
+
+  include if exists <local/pg_createcluster>
+}
+
+# vim:syntax=apparmor

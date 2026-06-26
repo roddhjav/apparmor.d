@@ -1,0 +1,23 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+profile postgres-systemctl flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/app/systemctl>
+
+  capability net_admin,
+  capability sys_resource,
+
+  signal send set=term peer=systemd-tty-ask-password-agent,
+
+  @{bin}/systemd-tty-ask-password-agent Px,
+
+  include if exists <local/postgres-systemctl>
+}
+
+# vim:syntax=apparmor

@@ -1,0 +1,39 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = /usr/share/postgresql-common/pg_updateaptconfig
+profile pg_updateaptconfig @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+
+  capability dac_override,
+
+  @{exec_path} mr,
+
+  @{sh_path}            r,
+  @{bin}/cat          rix,
+  @{bin}/chmod        rix,
+  @{bin}/cmp          rix,
+  @{bin}/cp           rix,
+  @{bin}/cut          rix,
+  @{bin}/mktemp       rix,
+  @{bin}/pg_lsclusters Px,
+  @{bin}/rm           rix,
+  @{bin}/uniq         rix,
+
+  /usr/share/postgresql-common/{,**} r,
+
+  /etc/apt/apt.conf.d/ r,
+  /etc/apt/apt.conf.d/*postgresql rw,
+
+  /tmp/pg_updateaptconfig.@{rand6} rw,
+
+  include if exists <local/pg_updateaptconfig>
+}
+
+# vim:syntax=apparmor
