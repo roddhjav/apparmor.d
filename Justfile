@@ -539,20 +539,21 @@ tests:
 
 # Run the autopkgtest tests
 [group('tests')]
-autopkgtest osinfo:
+autopkgtest osinfo start_from='' end_at='':
 	@PREFIX='{{prefix}}' VM_DIR='{{vm}}' \
 	USER='{{username}}' PASSWORD='{{password}}' SSH_OPT='{{sshopt}}' \
+	START_FROM='{{start_from}}' END_AT='{{end_at}}' \
 		bash tests/autopkgtest/autopkgtest.sh run {{osinfo}}
 
 # Update the apparmor.d package on the test machine
 [group('tests')]
-autopkgtest-update dist release:
+autopkgtest-update dist release: clean
 	just up {{dist}}{{release}} test || true
 	just package {{dist}} {{release}} test
-	scp {{sshopt}} {{pkgdest}}/{{pkgname}}_*.deb \
+	scp {{sshopt}} {{pkgdest}}/{{pkgname}}*.deb \
 		{{username}}@`just _get_ip {{dist}}{{release}} test`:/home/{{username}}/Projects/
 	ssh {{sshopt}} {{username}}@`just _get_ip {{dist}}{{release}} test` \
-		sudo dpkg -i /home/{{username}}/Projects/{{pkgname}}_*.deb
+		sudo dpkg -i /home/{{username}}/Projects/{{pkgname}}*.deb
 	just halt {{dist}}{{release}} test
 
 _autopkgtest-log-merge:

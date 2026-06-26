@@ -69,13 +69,13 @@ _run() {
 }
 
 _autopkgtest() {
-	local start_from="openvpn"
-	local end_at="xfsprogs"
+	local start_from="${START_FROM:-}"
+	local end_at="${END_AT:-$start_from}"
 	mapfile -t packages <"$PACKAGES_FILE"
 
 	for pkg in "${packages[@]}"; do
-		[[ "$pkg" < "$start_from" ]] && continue
-		[[ "$pkg" > "$end_at" ]] && break
+		[[ -n "$start_from" && "$pkg" < "$start_from" ]] && continue
+		[[ -n "$end_at" && "$pkg" > "$end_at" ]] && break
 		_message ">>>> Testing package $pkg <<<<"
 		autopkgtest "$pkg" --shell --timeout=$TIMEOUT --timeout-factor=4.0 \
 			-- qemu --cpus=$CPUS --ram-size=$RAM \
