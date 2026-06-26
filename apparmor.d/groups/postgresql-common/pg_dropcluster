@@ -1,0 +1,50 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{lib_dirs} = @{lib}/postgresql/@{version}/
+@{bin_dirs} = @{lib_dirs}/bin
+
+@{exec_path} = @{bin}/pg_dropcluster
+profile pg_dropcluster @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+  include <abstractions/perl>
+
+  capability dac_override,
+  capability dac_read_search,
+
+  @{exec_path} mr,
+
+  @{bin}/pg_ctlcluster        Px,
+  @{bin}/rm                  rix,
+  @{bin}/systemctl            Px -> postgres-systemctl,
+  @{bin_dirs}/pg_controldata  Px,
+  /usr/share/postgresql-common/pg_updateaptconfig Px,
+
+  /usr/share/postgresql-common/{,**} r,
+
+  /etc/postgresql/{,**} rw,
+
+  /var/lib/postgresql/{,**} rw,
+  /var/log/postgresql/ r,
+  /var/log/postgresql/*.log w,
+
+  @{run}/postgresql/*.pid r,
+
+  @{PROC}/@{pid}/cgroup r,
+  @{PROC}/@{pid}/cmdline r,
+
+  #aa:only test
+  # Throw-away PostgreSQL environment for running regression tests
+  owner /tmp/pg_virtualenv.@{rand6}/{,**} rw,
+  owner /tmp/tmp.@{rand10}/{,**} rw,
+
+  include if exists <local/pg_dropcluster>
+}
+
+# vim:syntax=apparmor

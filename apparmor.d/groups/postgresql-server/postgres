@@ -1,0 +1,60 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{lib_dirs} = @{lib}/postgresql/@{version}/
+@{bin_dirs} = @{lib_dirs}/bin
+
+@{exec_path} = @{bin_dirs}/postgres
+profile postgres @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+  include <abstractions/perl>
+  include <abstractions/ssl_keys>
+
+  network inet dgram peer=(port=5432),
+  network inet stream port=5432,
+  network inet6 dgram peer=(port=5432),
+  network inet6 stream port=5432,
+  network netlink raw,
+
+  signal receive peer=pg_ctl,
+
+  @{exec_path} mr,
+
+  @{sh_path}     rix,
+  @{bin}/locale  rix,
+
+  /usr/share/postgresql/{,**} r,
+  /usr/share/tcltk/{,**} r,
+
+  /etc/postgresql/{,**} r,
+
+  owner @{att}/ rw,
+
+  owner /var/lib/postgresql/** rw,
+  owner /var/log/postgresql/* w,
+
+  owner @{run}/postgresql/** rwk,
+
+  owner /tmp/.s.PGSQL.@{int} rw,
+  owner /tmp/.s.PGSQL.@{int}.lock rw,
+
+  owner /dev/shm/PostgreSQL.@{int} rw,
+
+  # This allows raising the OOM score of other processes owned by the user.
+  owner @{PROC}/@{pid}/oom_score_adj w,
+
+  #aa:only test
+  # Throw-away PostgreSQL environment for running regression tests
+  owner /tmp/pg_virtualenv.@{rand6}/{,**} rw,
+  owner /tmp/tmp.@{rand10}/{,**} rw,
+
+  include if exists <local/postgres>
+}
+
+# vim:syntax=apparmor

@@ -1,0 +1,31 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{lib_dirs} = @{lib}/postgresql/@{version}/
+@{bin_dirs} = @{lib_dirs}/bin
+
+@{exec_path} = @{bin_dirs}/psql
+profile psql @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+
+  network inet dgram peer=(port=5433),
+  network inet stream peer=(port=5433),
+  network inet6 dgram peer=(port=5433),
+  network inet6 stream peer=(port=5433),
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  /etc/gss/mech.d/{,*} r,
+
+  include if exists <local/psql>
+}
+
+# vim:syntax=apparmor

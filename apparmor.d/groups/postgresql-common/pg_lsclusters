@@ -1,0 +1,38 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{lib_dirs} = @{lib}/postgresql/@{version}/
+@{bin_dirs} = @{lib_dirs}/bin
+
+@{exec_path} = @{bin}/pg_lsclusters
+profile pg_lsclusters @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+  include <abstractions/perl>
+
+  capability dac_read_search,
+
+  @{exec_path} mr,
+
+  /etc/postgresql/{,**} r,
+  /etc/shadow r,
+
+  /var/lib/postgresql/{,**} r,
+
+  @{run}/postgresql/*.pid r,
+
+  @{PROC}/@{pid}/cgroup r,
+  @{PROC}/@{pid}/cmdline r,
+
+  #aa:only test
+  owner /tmp/tmp.@{rand10}/{,**} rw,
+
+  include if exists <local/pg_lsclusters>
+}
+
+# vim:syntax=apparmor
