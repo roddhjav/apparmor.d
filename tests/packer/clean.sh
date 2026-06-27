@@ -70,6 +70,7 @@ impersonalize() {
 
 	# Remove remaining pkg file, docs and caches
 	dirs=(
+		/var/cache
 		/var/tmp
 	)
 	for dir in "${dirs[@]}"; do
@@ -149,9 +150,9 @@ main() {
 
 	end="$(_diskused)"
 	((res = begin - end))
-	echo "Inital used space: $(numfmt --to=iec "$begin")"
-	echo "Final space: $(numfmt --to=iec "$end")"
-	echo "Saved space: $(numfmt --to=iec "$res")"
+	echo "Inital used space: $(numfmt --to=iec -- "$begin")"
+	echo "Final space: $(numfmt --to=iec -- "$end")"
+	echo "Saved space: $(numfmt --to=iec -- "$res")"
 }
 
 main "$@"
