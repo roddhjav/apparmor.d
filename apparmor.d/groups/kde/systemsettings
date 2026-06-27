@@ -19,6 +19,7 @@ profile systemsettings @{exec_path} flags=(attach_disconnected,mediate_deleted) 
   include <abstractions/kde-strict>
   include <abstractions/nameservice-strict>
   include <abstractions/qt5-shader-cache>
+  include <abstractions/sys/input>
   include <abstractions/thumbnails-cache-write>
 
   network netlink raw,
@@ -68,9 +69,15 @@ profile systemsettings @{exec_path} flags=(attach_disconnected,mediate_deleted) 
 
   @{etc_ro}/login.defs r,
   /etc/fstab r,
+  /etc/sddm.conf.d/{,**} r,
+  /etc/sysconfig/displaymanager r,
   /etc/xdg/* r,
   /etc/xdg/plasmanotifyrc r,
   /etc/xdg/ui/ui_standards.rc r,
+
+  / r,
+  @{bin}/ r,
+  @{sbin}/ r,
 
   /var/cache/cracklib/cracklib_dict.* r,
   /var/cache/samba/ rw,
@@ -127,11 +134,23 @@ profile systemsettings @{exec_path} flags=(attach_disconnected,mediate_deleted) 
   owner @{run}/user/@{uid}/systemsettings@{rand6}.@{int}.kioworker.socket rwl -> @{run}/user/@{uid}/#@{int},
 
   @{run}/udev/data/+drm:card@{int}-* r,   # For screen outputs
+  @{run}/udev/data/c13:@{int} r,          # for /dev/input/*
+  @{run}/udev/data/+dmi:* r,              # for motherboard info
+  @{run}/udev/data/+input:input@{int} r,  # for mouse, keyboard, touchpad
+  @{run}/udev/data/+pci:* r,              # Identifies all PCI devices (CPU, GPU, Network, Disks, USB, etc.)
+  @{run}/udev/data/c13:@{int} r,          # for /dev/input/*
+  @{run}/udev/data/c@{dynamic}:@{int} r,  # For dynamic assignment range 234 to 254, 384 to 511
+  @{run}/udev/data/n@{int} r,             # For network interfaces
 
   @{sys}/bus/ r,
   @{sys}/bus/acpi/devices/ r,
   @{sys}/bus/cpu/devices/ r,
   @{sys}/class/ r,
+  @{sys}/class/hidraw/ r,
+  @{sys}/class/input/ r,
+  @{sys}/class/video4linux/ r,
+  @{sys}/devices/**/uevent r,
+  @{sys}/devices/**/report_descriptor r,
   @{sys}/firmware/acpi/pm_profile r,
 
         @{PROC}/interrupts r,

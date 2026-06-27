@@ -17,6 +17,7 @@ profile libreoffice @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/cups-client>
   include <abstractions/dconf-write>
   include <abstractions/desktop>
+  include <abstractions/devices-usb-read>
   include <abstractions/enchant>
   include <abstractions/fontconfig-cache-read>
   include <abstractions/graphics>
@@ -34,6 +35,8 @@ profile libreoffice @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   network inet stream,
   network inet6 stream,
   network netlink raw,
+
+  signal send set=term peer=kioworker,
 
   #aa:dbus own bus=session name=org.libreoffice
 
@@ -81,10 +84,15 @@ profile libreoffice @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   /usr/share/mythes/{,**} r,
   /usr/share/thumbnailers/{,**} r,
 
+  @{etc_ro}/krb5.conf r,
   /etc/cups/ppd/*.ppd r,
+  /etc/exports r,
+  /etc/fstab r,
+  /etc/krb5.conf.d/{,**} r,
   /etc/libreoffice/{,**} r,
   /etc/papersize r,
   /etc/paperspecs r,
+  /etc/samba/smb.conf r,
   /etc/xdg/* r,
 
         /var/tmp/ r,
@@ -96,6 +104,12 @@ profile libreoffice @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
   owner @{user_cache_dirs}/libreoffice/{,**} rw,
 
+  owner @{user_config_dirs}/kbookmarkrc r,
+  owner @{user_config_dirs}/kdeglobals w,
+  owner @{user_config_dirs}/kdeglobals.@{rand6} rwl,
+  owner @{user_config_dirs}/kdeglobals.lock rwk,
+  owner @{user_config_dirs}/kioslaverc r,
+  owner @{user_config_dirs}/knfsshare r,
   owner @{user_config_dirs}/kservicemenurc r,
   owner @{user_config_dirs}/libreoffice/ rw,
   owner @{user_config_dirs}/libreoffice/** rwk,
@@ -103,8 +117,11 @@ profile libreoffice @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{user_config_dirs}/soffice.*.lock rwk,
   owner @{user_config_dirs}/soffice.binrc r,
 
-  owner @{user_share_dirs}/#@{int} rw,
   owner @{user_share_dirs}/user-places.xbel r,
+
+  owner @{user_state_dirs}/soffice.binstaterc rw,
+  owner @{user_state_dirs}/soffice.binstaterc.@{rand6} rwl,
+  owner @{user_state_dirs}/soffice.binstaterc.lock rwk,
 
         @{tmp}/ r,
   owner @{tmp}/.java_pid@{int}{,.tmp} rw,
@@ -117,7 +134,7 @@ profile libreoffice @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{tmp}/OSL_PIPE_@{uid}_SingleOfficeIPC_@{hex} rw,
 
   owner @{run}/user/@{uid}/#@{int} rw,
-  owner @{run}/user/@{uid}/soffice.bin@{rand6}.@{d}.kioworker.socket l -> @{run}/user/@{uid}/#@{int},
+  owner @{run}/user/@{uid}/soffice.*.socket rwl -> @{run}/user/@{uid}/#@{int},
   owner @{run}/user/@{uid}/gvfsd/socket-@{rand8} rw,
 
         @{sys}/devices/system/cpu/cpu@{int}/microcode/version r,

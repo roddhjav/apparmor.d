@@ -27,8 +27,13 @@ profile okular @{exec_path} {
 
   signal send set=term peer=kioworker,
 
+  #aa:dbus own bus=session name=org.kde.okular-@{int}
+  #aa:dbus own bus=session name=org.kde.okular.Instance_@{hex32}
+
   @{exec_path} mr,
 
+  @{bin}/testparm  rix,
+  @{bin}/net       rix,
   @{bin}/ps2pdf   rPUx,
 
   @{bin}/gpg{,2}  rCx -> gpg,
@@ -40,7 +45,9 @@ profile okular @{exec_path} {
 
   /usr/share/color-schemes/{,**} r,
   /usr/share/okular/{,**} r,
+  /usr/share/thumbnailers/{,**} r,
 
+  /etc/exports r,
   /etc/fstab r,
   /etc/xdg/dolphinrc r,
 
@@ -50,16 +57,17 @@ profile okular @{exec_path} {
   owner @{user_cache_dirs}/kcrash-metadata/okular.*.ini w,
   owner @{user_cache_dirs}/okular/{,**} rw,
 
-  owner @{user_config_dirs}/#@{int} rw,
+  owner @{user_config_dirs}/kbookmarkrc r,
   owner @{user_config_dirs}/KDE/*.conf r,
   owner @{user_config_dirs}/kioslaverc r,
+  owner @{user_config_dirs}/knfsshare r,
   owner @{user_config_dirs}/kservicemenurc r,
   owner @{user_config_dirs}/kwalletrc r,
   owner @{user_config_dirs}/okular-generator-popplerrc r,
   owner @{user_config_dirs}/okularpartrc rw,
   owner @{user_config_dirs}/okularpartrc.@{rand6} rwl,
   owner @{user_config_dirs}/okularpartrc.lock rwk,
-  owner @{user_config_dirs}/okularrc rw,
+  owner @{user_config_dirs}/okularrc rwl,
   owner @{user_config_dirs}/okularrc.@{rand6} rwl,
   owner @{user_config_dirs}/okularrc.lock rwk,
 
@@ -69,14 +77,13 @@ profile okular @{exec_path} {
   owner @{user_share_dirs}/okular/** rwlk,
   owner @{user_share_dirs}/user-places.xbel r,
 
-  owner @{user_state_dirs}/#@{int} rw,
-  owner @{user_state_dirs}/okularstaterc rw,
+  owner @{user_state_dirs}/okularstaterc rwl,
   owner @{user_state_dirs}/okularstaterc.@{rand6} rwlk,
   owner @{user_state_dirs}/okularstaterc.lock rwk,
 
   owner @{tmp}/@{hex12}@{h} w, # when opening pdf files as attchments in Thunderbird
   owner @{tmp}/#@{int} rw,
-  owner @{tmp}/kmail_messageviewer_attachment_@{rand6}/** r,
+  owner @{tmp}/kmail_messageviewer_attachment_@{rand6}/{,**} r,
   owner @{tmp}/kmail2.@{rand6} r,
   owner @{tmp}/messageviewer_attachment_@{rand6}/{,*} r, # files opened from KMail as mail attachment,
   owner @{tmp}/okular_@{rand6}.ps rwl -> /tmp/#@{int},
@@ -84,6 +91,8 @@ profile okular @{exec_path} {
 
   owner @{run}/user/@{uid}/#@{int} rw,
   owner @{run}/user/@{uid}/okular@{rand6}.@{int}.kioworker.socket rwl,
+
+  @{run}/udev/data/b259:@{int} r,     # Block Extended Major
 
   owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/mountinfo r,
