@@ -31,7 +31,7 @@ Example of current Linux distribution implementing something similar with variou
 
 </div>
 
-A careful reader would have noticed that the common ground among these distributions is to be constituted of a fully immutable core system. If such a construction is probably the future of Linux, as of today it can raise some usability concerns. Therefore, the current project propose a pragmatic long term solution:
+A careful reader would have noticed that the common ground among these distributions is to be constituted of a fully immutable core system. If such a construction is probably the future of Linux, as of today it can raise some usability concerns (cf [rule :material-numeric-6-circle:](model.md#user-freedom "User freedom.")). Therefore, the current project propose a pragmatic long term solution:
 
 1. We acknowledge the end goal need to be fully compatible with system that respect 100% of the security model presented here.
 2. We stay compatible with a *"classic"* Linux construction (i.e. without immutable core), and try to implement as mush as we can on classic distribution. It is considered as a transitional state.
@@ -59,6 +59,8 @@ The purpose is to separate highly privileged code from the rest of the applicati
 
 As `apparmor.d` can be used in multiple security model, it provides different mode to fit into the following **proposed** security target.
 
+### Targets
+
 **`default`**
 
 This confinement level can be summarized as *the most we can do without requiring user configuration*. It provides a good level of security for most use cases while requiring minimal configuration from the user. It is suitable for general purpose use. The goal with this level is that the end user should not be aware of AppArmor and its configuration.
@@ -78,3 +80,16 @@ Full System Policy confinement for applications. Suitable for very high security
 
 Maximum confinement for applications. Suitable for the most extreme security use cases. This level may break some applications and require significant user and application configuration as well as patching some applications to work properly.
 The goal is to provide a kind of Multi Category Security (MCS) using apparmor on top of the FSP model.
+This mode is only tested/supported on immutable systems.
+
+### Ecosystem Requirements
+
+**[Ecosystem Requirements](ecosystem.md#requirements)** are applied regardless of the selected security mode. However, they may be implemented differently depending on the mode. For example:
+
+- In `default` mode a user shall install any app (including privileged), they will run (even unconfined).
+- In `fsp` mode, a user shall:
+
+    - Install any user app, they will be confined (with a default UI profile if no specific profile exists).
+    - Install privileged app/service. They will have to provide a corresponding profile or the service won't be able to run.
+
+- In `extreme` mode, only pre-approved apps (user or system) are allowed to run. All apps must have a corresponding profile. Personalization, is possible but for each app or service an apparmor rule must be defined to allow the service to start.
