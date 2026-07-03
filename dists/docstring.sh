@@ -296,42 +296,51 @@ _generate_default_tunables_docs() {
     local outdir="$TUNABLES_DOCS_DIR/default"
     local -a entries=()
 
-    # Drop previous output so pages for removed upstream tunables don't linger.
-    rm -rf "$outdir" "$TUNABLES_DOCS_DIR/default.md" || true
+    # Always drop the stray default.md copied from the template; it is never a
+    # real page (the real pages live under default/).
+    rm -f "$TUNABLES_DOCS_DIR/default.md" || true
 
-    if [[ -d "$TUNABLES_DEFAULT_DIR" ]]; then
-        echo "Generating default (upstream) tunable documentation..."
-        mkdir -p "$outdir"
-        # Pin to the parsed upstream commit so #L anchors match (see REPO_COMMIT).
-        local upstream_commit
-        upstream_commit="$(git -C "$TUNABLES_DEFAULT_DIR" rev-parse HEAD 2>/dev/null || echo "$UPSTREAM_BRANCH")"
-        local -A seen=()
-        while IFS= read -r -d '' file; do
-            local name="${file#"$TUNABLES_DEFAULT_DIR"/}"
-            # Skip site-local stubs in .d directories
-            [[ "$name" == *.d/* ]] && continue
-            # Only files that actually define variables
-            grep -q '^@{' "$file" || continue
-            local vars
-            vars="$(_get_tunable_variables "$file" "$UPSTREAM_URL/-/blob/$upstream_commit/profiles/apparmor.d/tunables/$name")"
-            [[ -z "$vars" ]] && continue
-
-            local category
-            category="$(_default_tunable_category "$name")"
-            local out="$outdir/$category.md"
-            if [[ -z "${seen[$category]:-}" ]]; then
-                printf -- '---\ntitle: %s\ntags:\n  - tunables\n  - default\n---\n' "${category^}" > "$out"
-                seen[$category]=1
-            fi
-            printf '\n## %s\n%s\n' "$name" "$vars" >> "$out"
-        done < <(find "$TUNABLES_DEFAULT_DIR" -type f -print0 | sort -z)
-
-        # Fixed nav order; only categories that got content.
-        local category
-        for category in base system user programs; do
-            [[ -f "$outdir/$category.md" ]] && entries+=("tunables/default/$category.md")
-        done
+    # Without the upstream checkout we cannot regenerate the default/ pages. They
+    # are committed, so leave them (and the nav) untouched rather than wiping them
+    # and dangling the index.md "Default" link.
+    if [[ ! -d "$TUNABLES_DEFAULT_DIR" ]]; then
+        return
     fi
+
+    # Drop previous output so pages for removed upstream tunables don't linger.
+    rm -rf "$outdir" || true
+
+    echo "Generating default (upstream) tunable documentation..."
+    mkdir -p "$outdir"
+    # Pin to the parsed upstream commit so #L anchors match (see REPO_COMMIT).
+    local upstream_commit
+    upstream_commit="$(git -C "$TUNABLES_DEFAULT_DIR" rev-parse HEAD 2>/dev/null || echo "$UPSTREAM_BRANCH")"
+    local -A seen=()
+    while IFS= read -r -d '' file; do
+        local name="${file#"$TUNABLES_DEFAULT_DIR"/}"
+        # Skip site-local stubs in .d directories
+        [[ "$name" == *.d/* ]] && continue
+        # Only files that actually define variables
+        grep -q '^@{' "$file" || continue
+        local vars
+        vars="$(_get_tunable_variables "$file" "$UPSTREAM_URL/-/blob/$upstream_commit/profiles/apparmor.d/tunables/$name")"
+        [[ -z "$vars" ]] && continue
+
+        local category
+        category="$(_default_tunable_category "$name")"
+        local out="$outdir/$category.md"
+        if [[ -z "${seen[$category]:-}" ]]; then
+            printf -- '---\ntitle: %s\ntags:\n  - tunables\n  - default\n---\n' "${category^}" > "$out"
+            seen[$category]=1
+        fi
+        printf '\n## %s\n%s\n' "$name" "$vars" >> "$out"
+    done < <(find "$TUNABLES_DEFAULT_DIR" -type f -print0 | sort -z)
+
+    # Fixed nav order; only categories that got content.
+    local category
+    for category in base system user programs; do
+        [[ -f "$outdir/$category.md" ]] && entries+=("tunables/default/$category.md")
+    done
 
     _update_zensical_tunables_nav "${entries[@]}"
 }
