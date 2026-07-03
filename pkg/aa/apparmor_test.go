@@ -99,7 +99,7 @@ func TestAppArmorProfileFile_String(t *testing.T) {
 							PeerName:  ":1.3",
 							PeerLabel: "power-profiles-daemon",
 						},
-						&File{Path: "/opt/intel/oneapi/compiler/*/linux/lib/*.so./*", Access: []string{"r", "m"}},
+						&File{Path: "/opt/intel/oneapi/compiler/*/linux/lib/*.so./*", Access: []string{"m", "r"}},
 						&File{Path: "@{PROC}/@{pid}/task/@{tid}/comm", Access: []string{"r", "w"}},
 						&File{Path: "@{sys}/devices/@{pci}/class", Access: []string{"r"}},
 						includeLocal1,
