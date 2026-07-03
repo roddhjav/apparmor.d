@@ -357,6 +357,10 @@ clean:
 		{{pkgdest}}/{{pkgname}}* {{pkgdest}}/ubuntu {{pkgdest}}/debian \
 		{{pkgdest}}/archlinux {{pkgdest}}/opensuse \
 		{{build}} coverage.out .logs/autopkgtest/ site .cache
+	@find docs/abstractions -maxdepth 1 -name '*.md' ! -name index.md -delete
+	@find docs/profiles -maxdepth 1 -name '*.md' ! -name index.md -delete
+	@find docs/tunables -maxdepth 1 -name '*.md' ! -name index.md -delete
+	@rm -rf docs/tunables/default/
 
 # Build the package in a clean OCI container
 [group('packages')]
