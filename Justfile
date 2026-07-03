@@ -360,7 +360,6 @@ clean:
 	@find docs/abstractions -maxdepth 1 -name '*.md' ! -name index.md -delete
 	@find docs/profiles -maxdepth 1 -name '*.md' ! -name index.md -delete
 	@find docs/tunables -maxdepth 1 -name '*.md' ! -name index.md -delete
-	@rm -rf docs/tunables/default/
 
 # Build the package in a clean OCI container
 [group('packages')]
