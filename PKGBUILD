@@ -9,7 +9,7 @@ pkgname=(
   apparmor.d-base
   apparmor.d-tools
 )
-pkgver=0.4908.0
+pkgver=0.4909.0
 pkgrel=1
 pkgdesc="Full set of apparmor profiles"
 arch=('x86_64' 'armv6h' 'armv7h' 'aarch64')

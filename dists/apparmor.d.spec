@@ -7,7 +7,7 @@
 # Warning: for development only, use https://build.opensuse.org/package/show/home:cboltz/apparmor.d for production use.
 
 Name:           apparmor.d
-Version:        0.4908.0
+Version:        0.4909.0
 Release:        1%{?dist}
 Summary:        Full set of AppArmor policies
 License:        GPL-2.0-only
