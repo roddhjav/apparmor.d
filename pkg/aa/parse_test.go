@@ -2292,7 +2292,7 @@ var (
        member=AddMatch
        peer=(name=:1.3, label=power-profiles-daemon),
 
-  /opt/intel/oneapi/compiler/*/linux/lib/*.so./* rm,
+  /opt/intel/oneapi/compiler/*/linux/lib/*.so./* mr,
   @{PROC}/@{pid}/task/@{tid}/comm rw,
   @{sys}/devices/@{pci}/class r,
 
