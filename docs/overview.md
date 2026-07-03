@@ -25,7 +25,7 @@ See the **[Security Model](security/index.md)** pages for more detail on the arc
     * [:material-arch: Arch Linux](install.md#archlinux)
     * [:material-ubuntu: Ubuntu 24.04/25.10](install.md#ubuntu)
     * [:material-debian: Debian 12/13](install.md#debian)
-    * [:simple-suse: openSUSE Tumbleweed](install.md#opensuse)
+    * [:simple-suse: openSUSE Tumbleweed](install.md#suse-opensuse)
 - Support for all major desktop environments:
     - [x] :material-gnome: Gnome (GDM)
     - [x] :simple-kde: KDE (SDDM)
