@@ -11,6 +11,7 @@ include <tunables/global>
 profile grub-mkconfig @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
 
   capability dac_override,
   capability dac_read_search,
@@ -21,21 +22,16 @@ profile grub-mkconfig @{exec_path} flags=(attach_disconnected) {
   @{bin}/{e,f,}grep           rix,
   @{bin}/{m,g,}awk            rix,
   @{bin}/basename             rix,
-  @{sbin}/btrfs               rPx,
   @{bin}/cat                  rix,
   @{bin}/chmod                rix,
   @{bin}/cut                  rix,
   @{bin}/date                 rix,
   @{bin}/dirname              rix,
-  @{sbin}/dmsetup             rPx,
   @{bin}/dpkg                 rPx,
+  @{bin}/expr                 rix,
   @{bin}/find                 rix,
   @{bin}/findmnt              rPx,
   @{bin}/gettext              rix,
-  @{bin}/grub-editenv         rPx,
-  @{bin}/grub-mkrelpath       rPx,
-  @{sbin}/grub-probe          rPx,
-  @{bin}/grub-script-check    rPx,
   @{bin}/head                 rix,
   @{bin}/id                   rPx,
   @{bin}/ls                   rix,
@@ -59,19 +55,33 @@ profile grub-mkconfig @{exec_path} flags=(attach_disconnected) {
   @{bin}/which{,.debianutils} rix,
   @{bin}/zfs                  rPx,
   @{bin}/zpool                rPx,
+  @{sbin}/btrfs               rPx,
+  @{sbin}/dmsetup             rPx,
   /etc/grub.d/{,**}           rix,
 
+  @{bin}/grub{,2}-editenv        Px,
+  @{bin}/grub{,2}-mkrelpath      Px,
+  @{bin}/grub{,2}-script-check   Px,
   @{lib}/grub-customizer/*      rix,
-  @{lib}/grub/grub-sort-version rPx,
+  @{lib}/grub/grub-sort-version  Px,
+  @{sbin}/grub-check-default    PUx,
+  @{sbin}/grub-probe             Px,
+  @{sbin}/grub2-check-default   PUx,
+  @{sbin}/grub2-check-default   PUx,
+  @{sbin}/grub2-probe            Px,
+
+  @{lib}/rpm/rpmsort         rPUx,
   @{lib}/libostree/grub[0-9]-@{int}_ostree rix,
 
   /usr/share/desktop-base/*/grub/* r,
-  /usr/share/grub/{,**} r,
+  /usr/share/grub{,2}/{,**} r,
   /usr/share/terminfo/** r,
 
   /etc/default/grub r,
   /etc/default/grub-btrfs/config r,
   /etc/default/grub.d/{,*} r,
+  /etc/crypttab r,
+  /etc/tuned/bootcmdline r,
 
   / r,
 
@@ -82,12 +92,13 @@ profile grub-mkconfig @{exec_path} flags=(attach_disconnected) {
   /.zfs/snapshot/*/etc/machine-id r,
 
   @{efi}/{,**} r,
-  @{efi}/grub/{,**} rw,
+  @{efi}/grub{,2}/{,**} rw,
 
   /tmp/grub-*.@{rand10}/{,**} rw,
 
   @{sys}/firmware/efi/efivars/OsIndicationsSupported-@{uuid} r,
 
+  @{PROC}/@{pids}/cgroup r,
   @{PROC}/@{pids}/mountinfo r,
   @{PROC}/@{pids}/mounts r,
 
