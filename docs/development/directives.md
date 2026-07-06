@@ -16,7 +16,7 @@ The directives follow the format:
 
 **`[options]`**
 
-:   A (possibly empty) list or map of arguments. Exact format depend on the directive.
+:   A (possibly empty) list or map of arguments. Exact format depends on the directive.
 
 ## Dbus
 
@@ -114,7 +114,7 @@ The `exec` directive is useful to allow executing transitions to a profile witho
 
 **`profiles...`**
 
-:   List a profile **files** to stack at the end of the current profile.
+:   List of profile **files** to stack at the end of the current profile.
 
 **`[X]`**
 

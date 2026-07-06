@@ -4,7 +4,7 @@ title: Known issues
 
 !!! info
 
-    Known bugs are tracked on the meta issue **[#75](https://github.com/roddhjav/apparmor.d/issues/74)**.
+    Known bugs are tracked on the meta issue **[#74](https://github.com/roddhjav/apparmor.d/issues/74)**.
 
 ## Ubuntu
 
@@ -16,7 +16,7 @@ Note: Ubuntu server has been more tested and will work without issues with enfor
 
 ### Snap
 
-Apparmor.d needs to be fully integrated with snap, otherwise your snap applications may not work properly. As of today, it is a work in progress.
+AppArmor.d needs to be fully integrated with snap, otherwise your snap applications may not work properly. As of today, it is a work in progress.
 
 
 ## Complain mode

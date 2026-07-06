@@ -28,7 +28,7 @@ Particularly:
 - Any non-standard system app need to be explicitly profiled and allowed to run. For instance, if you want to use your own proxy or VPN software, you need to ensure it is correctly profiled and allowed to run in the `systemd` profile.
 - Desktop environment must be explicitly supported, your UI will not start otherwise. Again, it is a **feature**.
 - In FSP mode, all sandbox managers **must** have a profile. Then user sandboxed applications (flatpak, snap, etc) will work as expected.
-- PID 1 is the last program that should be confined. It does not make sense to confine only PID. All other programs must be confined first.
+- PID 1 is the last program that should be confined. It does not make sense to confine only PID 1. All other programs must be confined first.
 - User interactive shell must be confined. This is done through PAM and Role Based Access Control (RBAC).
 
 ## Installation
@@ -43,7 +43,7 @@ cache-loc /etc/apparmor/earlypolicy/
 Optimize=compress-fast
 ```
 
-=== ":material-arch: Archlinux"
+=== ":material-arch: Arch Linux"
 
     In `PKGBUILD`, replace `just complain` by `just fsp-complain`:
 
@@ -130,8 +130,8 @@ systemd                                # PID 1, entrypoint, requires "Early poli
 The systemd profiles design aims at providing a flexible and secure confinement for systemd and its services while addressing several challenges:
 
 - Differentiate systemd (PID 1) and `system --user`
-- Keep `systemd` and `systemd-user` as mininal as possible, and transition to less privileged profiles.
-- Allow the executor profiles to handled stacked profiles.
+- Keep `systemd` and `systemd-user` as minimal as possible, and transition to less privileged profiles.
+- Allow the executor profiles to handle stacked profiles.
 - Most additions need to be done in the `sd`/`sdu` profile, not in `systemd`/`systemd-user`.
 - Dedicated `sd-mount` / `sd-umount` profiles for most mount from the unit services.
 
@@ -192,7 +192,7 @@ Similarly to `systemd`, it only allows transition to two kinds of profiles:
 
 !!! note "Profile requirement"
 
-    To work as intended, all userland services **must** have a profile For a given distribution. If it is to complex to ensure all services are profiled, you can add rules in a local addition file under `/etc/apparmor.d/usr/sdu.d`.
+    To work as intended, all userland services **must** have a profile For a given distribution. If it is too complex to ensure that all services are profiled, you can add rules in a local addition file under `/etc/apparmor.d/usr/sdu.d`.
 
 ## Role Based Access Control (RBAC)
 

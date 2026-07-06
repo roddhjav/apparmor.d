@@ -5,13 +5,13 @@ icon: simple/linux
 
 ## Use cases & users
 
-Linux's user can be anyone from novices that does not know they are running Linux and that have no idea that AppArmor exist to the most advanced power user that want full control over their devices.
+Linux users can be anyone from novices that do not know they are running Linux and that have no idea that AppArmor exists to the most advanced power users that want full control over their devices.
 
-In opposition of other operating system such as Windows or macOS, Linux can be used in a wide variety of application and use case such as: an OS for embedded device, a mobile OS, a workstation, a gaming console, a server, a global fleet of servers.
+In opposition to other operating systems such as Windows or macOS, Linux can be used in a wide variety of applications and use cases such as: an OS for embedded devices, a mobile OS, a workstation, a gaming console, a server, a global fleet of servers.
 
-The ecosystem is so open that there is no compatibility requirements that define Linux in any way. Particularity in terms of:
+The ecosystem is so open that there is no compatibility requirement that defines Linux in any way. Particularly in terms of:
 
-1. **Diversity:** They are a wide range of package managers, sandboxing & virtualization tools, init system, display server, Desktop environment.
+1. **Diversity:** There is a wide range of package managers, sandboxing & virtualization tools, init systems, display servers, desktop environments.
 3. **Users:** *everyone*
 2. **Use case:** *everything*
 4. **Location:** *everywhere*
@@ -22,16 +22,16 @@ This diversity is a strength of Linux but also a challenge when trying to define
 
 **Architecture**
 
-Despite its diversity, only two major system architecture exists in the Linux ecosystem:
+Despite its diversity, only two major system architectures exist in the Linux ecosystem:
 
-1. **Purposed built systems** such as embedded systems or servers that are designed to run a limited set of tasks and thus that can *easily* support strict and limited security policies.
+1. **Purpose-built systems** such as embedded systems or servers that are designed to run a limited set of tasks and thus that can *easily* support strict and limited security policies.
 2. **General purpose systems** such as desktops Linux that are designed to run anything, anyhow.
 
-We note there is trend in the Linux world toward purposed built systems even for desktop usage.
+We note there is a trend in the Linux world toward purpose-built systems even for desktop usage.
 
 **Security consideration**
 
-Due to the diversity of use case and users in the Linux ecosystem, no particular security requirements/ minimum standard can be assumed for applications or users. However, some general hypothesis can be made:
+Due to the diversity of use cases and users in the Linux ecosystem, no particular security requirements/ minimum standard can be assumed for applications or users. However, some general hypotheses can be made:
 
 - Open ecosystem, immense, enforced by package maintainer and distributions
 - Any language present, secure or not, past and future
@@ -58,22 +58,22 @@ These stakeholders may have different requirements and objectives regarding the 
 
 From the above, we can derive the following requirements to apply on our security model.
 
-#### Rqr :material-numeric-1-circle: - User Freedom.
+#### Req :material-numeric-1-circle: - User Freedom.
 
 :   Explicitly supports extreme personalization[^1]
 
 [^1]: It does not mean the personalization has to be easy to do, just that it must be possible.
 
-#### Rqr :material-numeric-2-circle: - User Privacy
+#### Req :material-numeric-2-circle: - User Privacy
 
 :   The system should be at the service of the end user in its goal to protect its privacy. The system should not be at the service of the developer, the distributor or a third party application.
 
-#### Rqr :material-numeric-3-circle: - Principle Of Least Astonishment (POLA)
+#### Req :material-numeric-3-circle: - Principle Of Least Astonishment (POLA)
 
 :   A component of a system should behave in a way that most users will expect it to behave, and therefore not astonish or surprise users.
 
-#### Rqr :material-numeric-4-circle: - No strict compatibility
+#### Req :material-numeric-4-circle: - No strict compatibility
 
 :   Whatever application you have, the system should find a way to run it. Native, containerized, virtualized, emulated, etc.[^2]
 
-[^2]: Some way may be explicitly blocked, but other way should be available.
+[^2]: Some ways may be explicitly blocked, but another way should be available.

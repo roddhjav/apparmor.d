@@ -22,7 +22,7 @@ This project and the official apparmor-profiles project provide a large selectio
 
 ## Architecture
 
-Abstraction are structured in layers as follows:
+Abstractions are structured in layers as follows:
 
 <div class="grid cards" markdown>
 

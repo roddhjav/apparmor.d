@@ -2,7 +2,7 @@
 title: Overview
 ---
 
-Misconfigured AppArmor profiles is one of the most effective ways to break someone's system. This section present the various tests applied to the profiles as well as their current stage of deployment.
+Misconfigured AppArmor profiles are one of the most effective ways to break someone's system. This section presents the various tests applied to the profiles as well as their current stage of deployment.
 
 **Current**
 

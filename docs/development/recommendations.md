@@ -4,7 +4,7 @@ title: Recommendations
 
 ## Renaming of profiles
 
-For security reason, once loaded into the kernel, a profile cannot get fully removed. Therefore, by renaming a profile, you create a second profile with the same attachment. AppArmor will not be able to determine witch one to use leading to breakage.
+For security reasons, once loaded into the kernel, a profile cannot get fully removed. Therefore, by renaming a profile, you create a second profile with the same attachment. AppArmor will not be able to determine which one to use, leading to breakage.
 
 A reboot is required to fully remove the profile from the kernel.
 
@@ -13,7 +13,7 @@ A reboot is required to fully remove the profile from the kernel.
 
 Some programs should not be confined by themselves. For example, tools such as `ls`, `rm`, `diff` or `cat` do not have profiles in this project. Let's see why.
 
-These are general tools that in a general context can legitimately access any file in the system. Therefore, the confinement of such tools by a global profile would at best be minimal at worst be a security theatre.
+These are general tools that in a general context can legitimately access any file in the system. Therefore, the confinement of such tools by a global profile would at best be minimal, at worst be security theatre.
 
 It gets even worse. Let's say, we write a profile for `cat`. Such a profile would need access to `/etc/`. We will add the following rule:
 ```sh

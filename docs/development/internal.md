@@ -4,7 +4,7 @@ title: Internal
 
 ## Profile Context
 
-These are context helper to be used for in sub profile, they aim at providing a minimal set of rules for a given program. The calling profile only needs to add rules dependant of its use case.
+These are context helpers to be used in a subprofile, they aim at providing a minimal set of rules for a given program. The calling profile only needs to add rules dependent on its use case.
 
 See [abstractions/app](../abstractions/app.md) for more information.
 
@@ -26,7 +26,7 @@ Directly using any of the following:
 - `include <abstractions/app-launcher-user>`
 - `include <abstractions/app-launcher-root>`
 
-Allow every installed program to be started from the current program with or without profile. This is a very permissive rule and should be avoided if possible. They are however legitimately needed for program launcher.
+Allow every installed program to be started from the current program with or without a profile. This is a very permissive rule and should be avoided if possible. They are however legitimately needed for program launchers.
 
 ### **`child-open`**
 
@@ -117,7 +117,7 @@ This version of child-open only allow to open browsers & folders:
 
 !!! warning
 
-    Although needed to not break a program, wrongly used these profiles can lead to confinment escape.
+    These profiles are needed to avoid breaking a program, but if used incorrectly, they can lead to confinement escape.
 
 
 ## Children profiles
@@ -160,10 +160,10 @@ All common programs are tracked and labelled in the [`apparmor.d/tunables/multia
 
 **[<span class="pg-red">:material-tag-heart-outline: abi/4.0</span>]("Minimum version")**
 
-The flag `attach_disconnect` control how disconnected paths are handled. It determines if pathnames resolved to be outside the namespace are attached to the root (ie. have the `/` character prepended). 
+The flag `attach_disconnect` controls how disconnected paths are handled. It determines if pathnames resolved to be outside the namespace are attached to the root (i.e., have the `/` character prepended). 
 It is a security issue as it allows disconnected paths to alias to other files that exist in the file name. Therefore, it is only provided to work around problems that can arise with sandboxed programs.
 
-AppAmor 4.0 provides the `attach_disconnect.path` flag allowing to reattach this path to a prefix that is not `/`. When used it provides an important security improvement from AppArmor 3.0.
+AppArmor 4.0 provides the `attach_disconnect.path` flag allowing to reattach this path to a prefix that is not `/`. When used, it provides an important security improvement over AppArmor 3.0.
 
 **`apparmor.d`** uses `attach_disconnect.path` by **default and automatically** on all profiles with the `attach_disconnect` flag. The attached path is set to `@{att}` a new dynamically generated variable set at build time in the preamble of all profile to be:
 
@@ -190,7 +190,7 @@ The possible solutions are:
 
 ## Stacking
 
-[Stacking](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmorStacking) of two or more profile is the strict intersection them. It is a way to ensure that a profile never becomes more permissive than the intersection of all profiles in the stack. It provides several abilities to the policy author: 
+[Stacking](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmorStacking) of two or more profiles is the strict intersection of them. It is a way to ensure that a profile never becomes more permissive than the intersection of all profiles in the stack. It provides several abilities to the policy author: 
 
 - It can be used to ensure that confinement never becomes more permissive.
 - To reduce the permissions of a generic profile on a specific task.
@@ -208,7 +208,7 @@ The possible solutions are:
     ```
 
 ## Udev rules
-c
+
 See the **[kernel docs](https://www.kernel.org/doc/html/latest/admin-guide/devices.html)** to check the major block and char numbers used in `/run/udev/data/`.
 
 Special care must be given as sometimes udev numbers are allocated dynamically by the kernel. Therefore, the full range must be allowed:

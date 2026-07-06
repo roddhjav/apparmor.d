@@ -13,7 +13,7 @@ title: Overview
 - Confine all root processes such as all `systemd` tools, `bluetooth`, `dbus`, `polkit`, `NetworkManager`, `OpenVPN`, `GDM`, `rtkit`, `colord`
 - Confine all Desktop environments
 - Confine all user services such as `Pipewire`, `Gvfsd`, `dbus`, `xdg`, `xwayland`
-- Confine some *"special"* user applications: web browsers, file managers, etc
+- Confine some *"special"* user applications: web browsers, file managers, etc.
 - Should not break a normal usage of the confined software
 
 See the **[Security Model](security/index.md)** pages for more detail on the architecture.
@@ -29,7 +29,7 @@ See the **[Security Model](security/index.md)** pages for more detail on the arc
 - Support for all major desktop environments:
     - [x] :material-gnome: Gnome (GDM)
     - [x] :simple-kde: KDE (SDDM)
-    - [ ] :simple-xfce: XFCE (Lightdm) *(work in progress)*
+    - [ ] :simple-xfce: XFCE (LightDM) *(work in progress)*
 - [Fully tested](development/tests.md)
 
 ### Demo

@@ -28,7 +28,7 @@ Access to common dbus interfaces is done using the abstractions under **[`abstra
 
 For more access, simply use the [`aa:dbus talk`](#dbus-directive) directive.
 
-There is a trade of between security and maintenance to make:
+There is a trade-off between security and maintenance to make:
 
 - `aa:dbus talk` will generate less issue as it gives full talk access
 - `abstractions/bus/*` will provide more restriction, and possibly more issue. In the future, these rules will be automatically generated from the interface documentation.

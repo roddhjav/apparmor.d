@@ -8,7 +8,7 @@ title: Installation
 
     Do **not** expect this project to work correctly on your desktop if your Desktop Environment (DE) and Display Manager (DM) are not supported. Your DE/DM might not load, and that would be a **feature**.
 
-Due to the development stage of this project, the default package configuration installs all profiles in **complain** mode. The recommended installation workflow is as-follow:
+Due to the development stage of this project, the default package configuration installs all profiles in **complain** mode. The recommended installation workflow is as follows:
 
 1. **[Configure AppArmor](#configure-apparmor)** AppArmor for *apparmor.d*.
 1. **[Install](#installation)** *apparmor.d* in the (default) complain mode.
@@ -32,7 +32,7 @@ The following desktop environments are supported:
 
 - [x] :material-gnome: Gnome (GDM)
 - [x] :simple-kde: KDE (SDDM)
-- [ ] :simple-xfce: XFCE (Lightdm) *(work in progress)*
+- [ ] :simple-xfce: XFCE (LightDM) *(work in progress)*
 
 **Build dependency**
 
@@ -61,7 +61,7 @@ echo 'Optimize=compress-fast' | sudo tee -a /etc/apparmor/parser.conf
 
 ## Installation
 
-=== ":material-arch: Archlinux"
+=== ":material-arch: Arch Linux"
 
     `apparmor.d` is available in the [Arch User Repository](https://aur.archlinux.org/packages/apparmor.d-git):
 
@@ -167,7 +167,7 @@ echo 'Optimize=compress-fast' | sudo tee -a /etc/apparmor/parser.conf
 
 ## Uninstallation
 
-=== ":material-arch: Archlinux"
+=== ":material-arch: Arch Linux"
 
     ```sh
     sudo pacman -R apparmor.d

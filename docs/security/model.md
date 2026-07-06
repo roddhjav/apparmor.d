@@ -9,4 +9,4 @@ It covers the basic principles, rules and objectives to consider when building a
 
 !!! warning "Work in progress"
 
-    This security model is not yet properlly defined. Comments and feedbacks are welcome. [Discuss it on Github](https://github.com/roddhjav/apparmor.d/discussions/1013)
+    This security model is not yet properly defined. Comments and feedback are welcome. [Discuss it on Github](https://github.com/roddhjav/apparmor.d/discussions/1013)

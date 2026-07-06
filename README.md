@@ -10,7 +10,7 @@
 > This project is still in its early development. Help is very welcome; see the [documentation website](https://apparmor.pujol.io/) including its [development](https://apparmor.pujol.io/development) section.
 
 
-## Description 
+## Description
 
 **AppArmor.d** is a set of over 1500 AppArmor profiles whose aim is to confine most Linux based applications and processes.
 
@@ -20,7 +20,7 @@
   `polkit`, `NetworkManager`, `OpenVPN`, `GDM`, `rtkit`, `colord`
 - Confine all Desktop environments
 - Confine all user services such as `Pipewire`, `Gvfsd`, `dbus`, `xdg`, `xwayland`
-- Confine some *"special"* user applications: web browsers, file managers, etc
+- Confine some *"special"* user applications: web browsers, file managers, etc.
 - Should not break a normal usage of the confined software
 
 **Goals**
@@ -39,7 +39,7 @@
 
 **Demo**
 
-You want to try this project, or you are curious about the advanced usage and security it can provide without installing it on your machine. You can try it online on my AppArmor play machine at https://play.pujol.io/
+If you want to try this project, or are curious about the advanced usage and security it can provide without installing it on your machine, you can try it online on my AppArmor play machine at https://play.pujol.io/
 
 > This project is originally based on the work from [Morfikov][upstream] and aims to extend it to more Linux distributions and desktop environments.
 
@@ -49,7 +49,7 @@ There are over 50000 Linux packages and even more applications. It is simply not
 
 **What to confine and why?**
 
-We take inspiration from the [Android/ChromeOS Security Model][android_model], and we apply it to the Linux world. Modern [Linux security distributions][clipos] usually consider an immutable core base image with a carefully selected set of applications. Everything else should be sandboxed. Therefore, this project tries to confine all the *core* applications you will usually find in a Linux system: all systemd services, xwayland, network, Bluetooth, your desktop environment... Non-core user applications are out of scope as they should be sandboxed using a dedicated tool (minijail, bubblewrap, toolbox...).
+We take inspiration from the [Android/ChromeOS Security Model][android_model], and we apply it to the Linux world. Modern [Linux security distributions][clipos] usually consider an immutable core base image with a carefully selected set of applications. Everything else should be sandboxed. Therefore, this project tries to confine all the *core* applications you will usually find in a Linux system: all systemd services, Xwayland, network, Bluetooth, your desktop environment... Non-core user applications are out of scope as they should be sandboxed using a dedicated tool (minijail, bubblewrap, toolbox...).
 
 This is fundamentally different from how AppArmor is usually used on Linux servers as it is common to only confine the applications that face the internet and/or the users.
 
@@ -78,7 +78,7 @@ Please see [apparmor.pujol.io/usage](https://apparmor.pujol.io/usage)
 
 ## Contribution
 
-Feedbacks, contributors, pull requests are all very welcome. Please read
+Feedback, contributors, pull requests are all very welcome. Please read
 [apparmor.pujol.io/development](https://apparmor.pujol.io/development) 
 for more details on the contribution process.
 
@@ -86,7 +86,7 @@ Development chat available on https://matrix.to/#/#apparmor.d:matrix.org
 
 ## License
 
-This Project was initially based on Mikhail Morfikov's [apparmor profiles project][upstream]
+This project was initially based on Mikhail Morfikov's [apparmor profiles project][upstream]
 and thus has the same license (GPL2).
 
 [upstream]: https://gitlab.com/morfikov/apparmemall

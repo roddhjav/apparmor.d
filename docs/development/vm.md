@@ -32,7 +32,7 @@ Available recipes:
     delete osinfo flavor snapname     # Delete a specified snapshot from a machine
     ssh osinfo flavor                 # Connect to the machine
     mount osinfo flavor               # Mount the shared directory on the machine
-    umount osinfo flavor              # Unmout the shared directory on the machine
+    umount osinfo flavor              # Unmount the shared directory on the machine
     list                              # List the machines
     images                            # List the VM images
     available                         # List the VM images that can be created
@@ -42,7 +42,7 @@ Available recipes:
 Build variables available:
     build        # Build directory (default: .build)
     destdir      # Installation destination (default: /)
-    pkgdest      # Package output directory (default: /home/alex/06_Projects/Security/apparmor.d/.pkg)
+    pkgdest      # Package output directory (default: .pkg)
     opt          # Prebuild option, only used for the dev install target (default: complain)
 
 Development variables available:

@@ -29,7 +29,7 @@ The profiles are checked for common style and security issues with `just check`.
 | <span class="pg-red">**:fontawesome-solid-ban:**</span> | `tabs` | Tabs are not allowed |
 | <span class="pg-red">**:fontawesome-solid-ban:**</span> | `trailing` | Line has trailing whitespace |
 | <span class="pg-red">**:fontawesome-solid-ban:**</span> | `transition` | `Pix` transition leads to unmaintainable profile |
-| <span class="pg-red">**:fontawesome-solid-ban:**</span> | `transition` | Executable should be should be used inherited: `ix` or `Cx` |
+| <span class="pg-red">**:fontawesome-solid-ban:**</span> | `transition` | Executable should be used inherited: `ix` or `Cx` |
 | <span class="pg-red">**:fontawesome-solid-ban:**</span> | `transition` | Executable should transition to another (sub)profile with `Px` or `Cx` |
 | <span class="pg-red">**:fontawesome-solid-ban:**</span> | `tunables` | Variables must be used |
 | <span class="pg-red">**:fontawesome-solid-ban:**</span> | `udev` | Udev data path without a description comment |

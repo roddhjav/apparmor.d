@@ -36,4 +36,4 @@ The list of known path in `/usr/sbin` is maintained under the `sbin.list` file.
 
 ## Exceptions
 
-Some binaries may be installed in both @{bin} and @{sbin} depending on the package it is installed from. For instance, upstream docker package installs `dockerd` in `/usr/bin/` while the distribution package installs it in `/usr/sbin/`. In such cases, both paths is required.
+Some binaries may be installed in both @{bin} and @{sbin} depending on the package it is installed from. For instance, the upstream docker package installs `dockerd` in `/usr/bin/` while the distribution package installs it in `/usr/sbin/`. In such cases, both paths are required.

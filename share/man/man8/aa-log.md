@@ -12,11 +12,11 @@ aa-log - Review AppArmor generated messages in a colorful way.
 
 # DESCRIPTION
 
-Review AppArmor generated messages in a colourful way. Support logs from *auditd*, *systemd*, *syslog* as well as *dbus session* events.
+Review AppArmor generated messages in a colorful way. Support logs from *auditd*, *systemd*, *syslog* as well as *dbus session* events.
 
 It can be given an optional profile name to filter the output with.
 
-It can be used to generate AppArmor rules from the logs and it therefore an alternative to `aa-logprof(8)`. The generated rules should be manually reviewed and inserted into the profile.
+It can be used to generate AppArmor rules from the logs and it is therefore an alternative to `aa-logprof(8)`. The generated rules should be manually reviewed and inserted into the profile.
 
 Default logs are read from `/var/log/audit/audit.log`. Other files in `/var/log/audit/` can easily be checked: **aa-log -f 1** parses `audit.log.1`
 

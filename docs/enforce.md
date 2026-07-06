@@ -13,9 +13,9 @@ The default package configuration installs all profiles in *complain* mode. This
 
 **Prerequisite**
 
-As the `enforced` version of the package conficts with the default `apparmor.d` package, you need to uninstall it first:
+As the `enforced` version of the package conflicts with the default `apparmor.d` package, you need to uninstall it first:
 
-=== ":material-arch: Archlinux"
+=== ":material-arch: Arch Linux"
 
     ```sh
     sudo pacman -R apparmor.d
@@ -42,7 +42,7 @@ As the `enforced` version of the package conficts with the default `apparmor.d` 
 
 **Installation**
 
-=== ":material-arch: Archlinux"
+=== ":material-arch: Arch Linux"
 
     `apparmor.d.enforced` is available in the [Arch User Repository](https://aur.archlinux.org/packages/apparmor.d-git):
 
