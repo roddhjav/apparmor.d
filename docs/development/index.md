@@ -8,7 +8,7 @@ If you're looking to contribute to `apparmor.d` you can get started by going to 
 
     1. If you don't have git on your machine, [install it](https://help.github.com/articles/set-up-git/).
     1. Fork this repo by clicking on the fork button on the top of the [project GitHub](https://github.com/roddhjav/apparmor.d) page.
-    1. [Generate a new SSH key](    https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent) and add it to your GitHub account.
+    1. [Generate a new SSH key](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent) and add it to your GitHub account.
     1. Clone the forked repository and go to the directory:
     ```sh
     git clone git@github.com:your-github-username/apparmor.d.git 
@@ -47,7 +47,7 @@ If you're looking to contribute to `apparmor.d` you can get started by going to 
 
 #### Rule :material-numeric-2-circle: - Do not break a program
 
-:   A profile **should not break a normal usage of the confined software**. this can
+:   A profile **should not break a normal usage of the confined software**. This can
     be complex as simply running the program for your own use case is not always
     exhaustive of the program features and required permissions.
 

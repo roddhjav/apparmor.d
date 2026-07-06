@@ -33,7 +33,7 @@ It is **also** a security risk when used alongside a wildcard (`@{bin}/* Pix`) a
 
 ## Exceptions
 
-It can be used in profile for an interactive shell environments. In this case, as long as profiles like `apt` or `apparmor_parser` it may be equivalent to giving full admin access to the user.
+It can be used in a profile for an interactive shell environment. In this case, as long as profiles like `apt` or `apparmor_parser` exist, it may be equivalent to giving full admin access to the user.
 
 ## Related Resources
 

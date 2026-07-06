@@ -10,15 +10,15 @@ title: Play Machine
 
 !!! info
 
-    A Play Machine is what a system with root as the guest account with only Apparmor to restrict access is called.
+    A Play Machine is a system where root is the guest account with only AppArmor to restrict access.
 
-## Free root access on an Apparmor machine!
+## Free root access on an AppArmor machine!
 
 To access my Ubuntu 24.04 play machine ssh to `play.pujol.io` as root, the password is `apparmor`: `ssh root@play.pujol.io`
 
 The aim of this is to:
 
-- Demonstrate that necessary security can be provided by Apparmor without any Unix permissions (however it is still recommended that you use Unix permissions as well for real servers).
+- Demonstrate that necessary security can be provided by AppArmor without any Unix permissions (however it is still recommended that you use Unix permissions as well for real servers).
 - Show that root is not everything in modern security.
 - Give a demo machine with [apparmor.d](https://github.com/roddhjav/apparmor.d) fully integrated.
 
@@ -32,5 +32,5 @@ This server is running the [apparmor.d](https://github.com/roddhjav/apparmor.d) 
 
 !!! success "Acknowledgement"
 
-    It is a 2025 and Apparmor version of [Russell Coker's SELinux play machine](https://doc.coker.com.au/computers/se-linux-play-machine/).
+    This is a 2025 and AppArmor version of [Russell Coker's SELinux play machine](https://doc.coker.com.au/computers/se-linux-play-machine/).
 

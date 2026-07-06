@@ -63,7 +63,7 @@ Instead, install an individual profile or the development package, the following
 
 ### Development package
 
-=== ":material-arch: Archlinux"
+=== ":material-arch: Arch Linux"
 
     ```sh
     just pkg
@@ -105,7 +105,7 @@ Instead, install an individual profile or the development package, the following
 just dev <profile-name>
 ```
 
-**Exampe**
+**Example**
 
 :   Testing the profile `pass`
 

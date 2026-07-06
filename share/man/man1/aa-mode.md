@@ -75,5 +75,5 @@ aa-mode --complain --no-reload /etc/apparmor.d/
 
 # SEE ALSO
 
-`apparmor_parser(8)`, `apparmor(7)`, `apparmor.d(5)`,`aa-log(1)`, `aa-enforce(1)`, `aa-complain(1)`, and
+`apparmor_parser(8)`, `apparmor(7)`, `apparmor.d(5)`, `aa-log(1)`, `aa-enforce(1)`, `aa-complain(1)`, and
 https://apparmor.pujol.io.

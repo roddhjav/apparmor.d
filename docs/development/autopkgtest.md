@@ -19,7 +19,7 @@ title: Autopkgtest
 
 **Create the test VM**
 
-The test VM is a VM as defined in the [Development VM](vm.md) section, with a specific cloud-init configuration for autopkgtest. We use the same `setup-testbed` script to prepare the VM as `autopkgtest-build-qemu`. In addition, we ensure the VM is built with the lastest `apparmor.d` profiles in test mode.
+The test VM is a VM as defined in the [Development VM](vm.md) section, with a specific cloud-init configuration for autopkgtest. We use the same `setup-testbed` script to prepare the VM as `autopkgtest-build-qemu`. In addition, we ensure the VM is built with the latest `apparmor.d` profiles in test mode.
 
 You can create the image, then the VM, and shut it down with:
 
@@ -39,7 +39,7 @@ just halt ubuntu25.10 test
 
 **Update `apparmor.d` in the VM**
 
-Others VM defined in this project ships with a `aa-update` command that build and update the package. This does not apply to the `test` flavor because:
+The other VMs defined in this project ship with an `aa-update` command that builds and installs the package. This does not apply to the `test` flavor because:
 
 1. We do not want to mount this project to a VM where the tests can be destructive
 2. The `setup-testbed` script gets rid of most build dependencies for `apparmor.d`

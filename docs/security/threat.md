@@ -8,13 +8,13 @@ However, these remain valid anyway.
 
 ## Modularity
 
-Across the linux ecosystem, treats can varies. As such not all threats are relevant to all users and some threats only matter for some security models. As such the underlying implementation should be modular enough to allow selection of the relevant threats and to enforce a given security model even if it lead to a trade off in terms of usability.
+Across the linux ecosystem, threats can vary. As such, not all threats are relevant to all users and some threats only matter for some security models. As such, the underlying implementation should be modular enough to allow selection of the relevant threats and to enforce a given security model even if it leads to a trade-off in terms of usability.
 
 ## Threats
 
 !!! warning "Work in progress"
 
-    This threats are not yet properlly defined. Comments and feedbacks are welcome. [Discuss it on Github](https://github.com/roddhjav/apparmor.d/discussions/1013)
+    These threats are not yet properly defined. Comments and feedback are welcome. [Discuss it on Github](https://github.com/roddhjav/apparmor.d/discussions/1013)
 
 ### `PA` Physical access
 
@@ -22,7 +22,7 @@ Adversaries can get physical access to the devices.
 
 ### `C` Communication
 
-Network communication is untrusted
+Network communication is untrusted.
 
 ### `P` Platform
 

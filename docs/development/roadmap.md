@@ -48,7 +48,7 @@ This is the current list of features that must be implemented to get to a stable
 - [ ] **Security improvements**
     - [ ] Limit the use of `abstractions/common/systemd`
     - [ ] Ensure systemctl restart/stop/reload is always confined and filtered by unit (dbus only)
-    - [ ] Revisit the usae of `systemd-tty-ask-password-agent`
+    - [ ] Revisit the use of `systemd-tty-ask-password-agent`
 
 ## Next features
 

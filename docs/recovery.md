@@ -5,7 +5,7 @@ title: System Recovery
 An issue in some core profiles like the systemd suite, or the desktop environment can prevent your system from starting correctly. This is rare, but if it does happen this is the process to recover your system on an Arch Linux system **without subvolumes**:
 
 1. Boot from an Arch Linux live USB
-1. If you root partition is encrypted, decrypt it: `cryptsetup open /dev/<your-disk-id> vg0`
+1. If your root partition is encrypted, decrypt it: `cryptsetup open /dev/<your-disk-id> vg0`
 1. Mount your root partition: `mount /dev/<your-plain-disk-id> /mnt`
 1. Chroot into your system: `arch-chroot /mnt`
 1. Check the AppArmor logs to see which profile is faulty: `aa-log`

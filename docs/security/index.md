@@ -10,13 +10,13 @@ There are over 50000 Linux packages and even more applications. It is simply not
 
 </figure>
 
-The security model presented here help us to scope the security policies within the broader context of system security and privacy.
+The security model presented here helps us to scope the security policies within the broader context of system security and privacy.
 
 This section presents the security model considered for the profiles in `apparmor.d`. Despite that this security model looks at Linux security in general, we are only focusing on the threats, model, and implementation within the scope of AppArmor.
 
 !!! warning
 
-    This security model is still a work in progress. Comments and feedbacks are welcome. [Discuss it on Github](https://github.com/roddhjav/apparmor.d/discussions/1013)
+    This security model is still a work in progress. Comments and feedback are welcome. [Discuss it on Github](https://github.com/roddhjav/apparmor.d/discussions/1013)
 
 <div class="grid cards" markdown>
 

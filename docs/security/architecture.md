@@ -5,7 +5,7 @@ icon: material/wallpaper
 
 !!! warning
 
-    This security architecture is still a work in progress. Comments and feedbacks are welcome. [Discuss it on Github](https://github.com/roddhjav/apparmor.d/discussions/1013)
+    This security architecture is still a work in progress. Comments and feedback are welcome. [Discuss it on Github](https://github.com/roddhjav/apparmor.d/discussions/1013)
 
 ## Preliminaries
 
@@ -17,7 +17,7 @@ icon: material/wallpaper
 
 The architecture presented here can be seen as a general overview of what any modern Linux security construction may want to achieve.
 
-Example of current Linux distribution implementing something similar with various use case in mind are:
+Examples of current Linux distributions implementing something similar with various use cases in mind are:
 
 <div class="grid cards" markdown>
 
@@ -31,16 +31,16 @@ Example of current Linux distribution implementing something similar with variou
 
 </div>
 
-A careful reader would have noticed that the common ground among these distributions is to be constituted of a fully immutable core system. If such a construction is probably the future of Linux, as of today it can raise some usability concerns (cf [Rqr :material-numeric-2-circle:](ecosystem.md#rqr-no-strict-compatibility "User freedom.")). Therefore, the current project propose a pragmatic long term solution:
+A careful reader would have noticed that the common ground among these distributions is to be constituted of a fully immutable core system. If such a construction is probably the future of Linux, as of today it can raise some usability concerns (cf [Rqr :material-numeric-2-circle:](ecosystem.md#rqr-no-strict-compatibility "User freedom.")). Therefore, the current project proposes a pragmatic long term solution:
 
-1. We acknowledge the end goal need to be fully compatible with system that respect 100% of the security model presented here.
-2. We stay compatible with a *"classic"* Linux construction (i.e. without immutable core), and try to implement as mush as we can on classic distribution. It is considered as a transitional state.
+1. We acknowledge the end goal needs to be fully compatible with systems that respect 100% of the security model presented here.
+2. We stay compatible with a *"classic"* Linux construction (i.e. without immutable core), and try to implement as much as we can on classic distributions. It is considered a transitional state.
 
 ## Security Architecture
 
-As attacker usually comes from the top (a high level application) and goes down to the core system, we present the security architecture similarly.
+As attackers usually come from the top (a high level application) and go down to the core system, we present the security architecture similarly.
 
-1. **In application sandboxing:** separation of privilege, least privilege principle, within different process of the application itself. It can be implemented using tools such as: Landlock, bwrap, and Apparmor.
+1. **In application sandboxing:** separation of privilege, least privilege principle, within different processes of the application itself. It can be implemented using tools such as: Landlock, bwrap, and AppArmor.
 The purpose is to separate highly privileged code from the rest of the application. Eg: pacman, VLC, Chrome sandboxing, loupe.
 
 1. **Application sandboxing:** Isolate the application from the rest of the system with tools such as. In this context, "sandboxing" does not refer to a special technology, but to the general concept. It can be implemented in various ways: trough VM (Qemu/KVM, Firecracker, Cloudhypervisor, Kata Containers), or container (Docker, gVisor, Flatpak, Snap) with different level of isolation and integration with the rest of the system.
