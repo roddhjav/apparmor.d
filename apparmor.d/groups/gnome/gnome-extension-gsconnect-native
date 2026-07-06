@@ -1,0 +1,43 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{share_dirs}  = /usr/share/gnome-shell/extensions/gsconnect@andyholmes.github.io
+@{share_dirs} += @{user_share_dirs}/gnome-shell/extensions/gsconnect@andyholmes.github.io
+
+@{exec_path} = @{share_dirs}/service/nativeMessagingHost.js
+profile gnome-extension-gsconnect-native @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+
+  # Bridge the browser's stdio native-messaging pipe to the running GSConnect
+  # daemon over the session bus.
+  #aa:dbus talk bus=session name=org.gnome.Shell.Extensions.GSConnect label=gnome-extension-gsconnect
+
+  @{exec_path} r,
+
+  @{sh_path}          rix,
+  @{bin}/env          rix,
+  @{bin}/gjs-console  rix,
+
+  @{lib}/gio/modules/*.so* rm,
+  @{lib}/girepository-1.0/* r,
+
+  @{share_dirs}/{,**} r,
+
+  owner @{user_config_dirs}/gsconnect/{,**} r,
+
+  owner @{run}/user/@{uid}/gsconnect/{,**} rw,
+
+  owner @{PROC}/@{pid}/cgroup r,
+  owner @{PROC}/@{pid}/stat r,
+  owner @{PROC}/@{pid}/statm r,
+
+  include if exists <local/gnome-extension-gsconnect-native>
+}
+
+# vim:syntax=apparmor
