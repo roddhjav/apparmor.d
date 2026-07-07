@@ -19,7 +19,7 @@ title: Variables References
 | Screenshots | `@{XDG_SCREENSHOTS_DIR}` | `@{XDG_PICTURES_DIR}/Screenshots` |
 | Wallpapers | `@{XDG_WALLPAPERS_DIR}` | `@{XDG_PICTURES_DIR}/Wallpapers` |
 | Books | `@{XDG_BOOKS_DIR}` | `Books` |
-| Games | `@{XDG_GAMES_DIR}` | `.games` |
+| Games | `@{XDG_GAMES_DIR}` | `Games @{XDG_DATA_DIR}/games` |
 | Templates | `@{XDG_TEMPLATES_DIR}` | `Templates` |
 | Public | `@{XDG_PUBLICSHARE_DIR}` | `Public` |
 | Projects | `@{XDG_PROJECTS_DIR}` | `Projects` |
@@ -29,9 +29,11 @@ title: Variables References
 | Sync | `@{XDG_SYNC_DIR}` | `Sync` |
 | Torrents | `@{XDG_TORRENTS_DIR}` | `Torrents` |
 | VM | `@{XDG_VM_DIR}` | `.vm` |
-| VM Shares | `@{XDG_VMSHARE_DIR}` | `VM_Shares` |
-| Disk images | `@{XDG_IMG_DIR}` | `images` |
-| Games Studio | `@{XDG_GAMESSTUDIO_DIR}` | `.unity3d` |
+| VM Shares | `@{XDG_VMSHARE_DIR}` | `.vmshare` |
+| Disk images | `@{XDG_IMG_DIR}` | `.img` |
+| Build | `@{XDG_BUILD_DIR}` | `.build` |
+| Packages | `@{XDG_PKG_DIR}` | `.pkg` |
+| Games Studio | `@{XDG_GAMESSTUDIO_DIR}` | `unity3d` |
 
 </figure>
 
@@ -66,8 +68,8 @@ title: Variables References
 | Lib | `@{user_lib_dirs}` | `@{HOME}/@{XDG_LIB_DIR}` |
 | Share | `@{user_share_dirs}` | `@{HOME}/@{XDG_DATA_DIR}` |
 | State | `@{user_state_dirs}` | `@{HOME}/@{XDG_STATE_DIR}` |
-| Build | `@{user_build_dirs}` | `/tmp/build/` |
-| Packages | `@{user_pkg_dirs}` | `/tmp/pkg/` |
+| Build | `@{user_build_dirs}` | `@{HOME}/@{XDG_BUILD_DIR}` |
+| Packages | `@{user_pkg_dirs}` | `@{HOME}/@{XDG_PKG_DIR}` |
 
 </figure>
 
