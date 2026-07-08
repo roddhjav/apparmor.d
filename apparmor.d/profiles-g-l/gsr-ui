@@ -17,6 +17,8 @@ profile gsr-ui @{exec_path} {
   include <abstractions/icons>
   include <abstractions/user-dirs>
 
+  network netlink dgram, # controller hotkeys
+
   signal (send) set=(int, rtmin+5, usr1, usr2) peer=gpu-screen-recorder,
   signal (send) set=(kill) peer=gsr-kwin-helper,
   signal (send) set=(int) peer=gsr-game-tracker,
@@ -28,9 +30,12 @@ profile gsr-ui @{exec_path} {
   @{bin}/gsr-kwin-helper     rPx,
   @{bin}/gsr-notify          rix,
   @{bin}/gpu-screen-recorder rPx,
-  @{bin}/systemctl           rPx -> child-systemctl,
+  @{bin}/systemctl            cx -> systemctl,
 
   owner @{user_config_dirs}/gpu-screen-recorder/{,**} rw,
+
+  /dev/input/ r,
+  /dev/input/event@{int} r, # controller hotkeys
 
   /usr/share/gsr-notify/{,**} r,
   /usr/share/gsr-ui/** r,
@@ -50,11 +55,24 @@ profile gsr-ui @{exec_path} {
 
     /dev/tty rw,
 
+    owner @{user_config_dirs}/autostart/ w,
     owner @{user_config_dirs}/autostart/gpu-screen-recorder-ui.desktop rw,
 
     deny /dev/dri/card@{int} r, # file_inherit
+    deny /dev/input/event@{int} r, # file_inherit
 
     include if exists <local/gsr-ui_shell>
+  }
+
+  profile systemctl flags=(complain) {
+    include <abstractions/base>
+
+    @{bin}/systemctl r,
+
+    deny /dev/dri/card@{int} r, # file_inherit
+    deny /dev/input/event@{int} r, # file_inherit
+
+    include if exists <local/gsr-ui_systemctl>
   }
 
   include if exists <local/gsr-ui>
