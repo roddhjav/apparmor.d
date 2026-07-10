@@ -36,16 +36,27 @@ profile plasmalogin-helper @{exec_path} flags=(attach_disconnected) {
 
   @{bin}/startplasma-login-wayland Px,
   @{shells_path}                   Px -> plasmalogin-shell,
+  @{bin}/startplasma-wayland       Px -> startplasma,
   @{bin}/ksecretd                 PUx,
 
   @{bin}/cat           rix,
   @{bin}/find          rix,
+  @{bin}/mktemp        rix,
+  @{bin}/rm            rix,
   @{bin}/tr            rix,
   @{bin}/tty           rix,
+  @{bin}/vapoursynth   rix,
   @{bin}/xargs         rix,
 
   @{bin}/pidof          Px,
   @{bin}/flatpak        Cx -> flatpak,
+
+  @{lib}/plasma-dbus-run-session-if-needed rix,
+  @{lib}/@{multiarch}/libexec/plasma-dbus-run-session-if-needed  rix,
+
+  @{bin}/ r,
+
+  owner @{HOME}/ r,
 
   /usr/share/plasmalogin/scripts/wayland-session rix,
   /usr/share/plasmalogin/scripts/Xsession rix,
@@ -55,6 +66,7 @@ profile plasmalogin-helper @{exec_path} flags=(attach_disconnected) {
   @{etc_ro}/profile.d/{,*} r,
   /etc/debuginfod/{,*} r,
   /etc/machine-id r,
+  /etc/plasmalogin.conf r,
   /etc/profile r,
   /etc/shells r,
 
@@ -68,6 +80,7 @@ profile plasmalogin-helper @{exec_path} flags=(attach_disconnected) {
   owner @{user_share_dirs}/plasmalogin/wayland-session.log w,
 
   /tmp/plasmalogin-auth-@{uuid} rw,
+  owner @{tmp}/xsess-env-@{rand6} rw,
 
         @{run}/faillock/@{user} rwk,
         @{run}/systemd/io.systemd.Login rw,
@@ -76,6 +89,7 @@ profile plasmalogin-helper @{exec_path} flags=(attach_disconnected) {
         @{PROC}/@{pid}/loginuid w,
         @{PROC}/@{pid}/uid_map r,
   owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/mounts r,
 
   /dev/tty@{u8} rw,
   /dev/tty rw,
@@ -84,6 +98,10 @@ profile plasmalogin-helper @{exec_path} flags=(attach_disconnected) {
     include <abstractions/base>
 
     @{bin}/flatpak mr,
+
+    /dev/tty@{u8} rw,
+
+    owner @{user_share_dirs}/plasmalogin/wayland-session.log w,
 
     include if exists <local/plasmalogin-helper_flatpak>
   }
