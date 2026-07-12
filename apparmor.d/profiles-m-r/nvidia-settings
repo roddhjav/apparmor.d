@@ -12,6 +12,7 @@ profile nvidia-settings @{exec_path} flags=(attach_disconnected) {
   include <abstractions/dconf-write>
   include <abstractions/desktop>
   include <abstractions/gstreamer>
+  include <abstractions/nameservice-strict>
   include <abstractions/nvidia-strict>
 
   @{exec_path} mr,
@@ -20,11 +21,13 @@ profile nvidia-settings @{exec_path} flags=(attach_disconnected) {
 
   owner @{HOME}/.nvidia-settings-rc rw,
 
-  @{sys}/bus/pci/devices/ r,
-  @{sys}/devices/@{pci}/config r,
-  @{sys}/devices/system/node/ r,
-  @{sys}/devices/system/node/node@{int}/cpumap r,
+        @{sys}/bus/pci/devices/ r,
+        @{sys}/devices/@{pci}/config r,
+        @{sys}/devices/system/node/ r,
+        @{sys}/devices/system/node/node@{int}/cpumap r,
+  owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/app-nvidia**.service/cpu.max r,
 
+  owner @{PROC}/@{pid}/cgroup r,
   owner @{PROC}/@{pid}/cmdline r,
   owner @{PROC}/@{pid}/task/@{tid}/comm rw,
 

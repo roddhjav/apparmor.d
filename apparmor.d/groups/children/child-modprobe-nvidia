@@ -38,6 +38,7 @@ profile child-modprobe-nvidia flags=(attach_disconnected) {
   @{PROC}/driver/nvidia/capabilities/mig/config r,
   @{PROC}/driver/nvidia/capabilities/mig/monitor r,
   @{PROC}/driver/nvidia/params r,
+  @{PROC}/sys/kernel/modprobe r,
 
   owner /dev/char/@{dynamic}:@{int} w,  # For dynamic assignment range 234 to 254, 384 to 511
   owner /dev/char/195:@{u8} w,          # Nvidia graphics devices
@@ -52,9 +53,11 @@ profile child-modprobe-nvidia flags=(attach_disconnected) {
     include <abstractions/app/kmod>
 
     capability mknod,
+    capability sys_module,
 
     /etc/nvidia/{current,legacy*,tesla*}/*.conf r,
 
+    @{sys}/module/aead/initstate r,
     @{sys}/module/compression r,
 
     deny @{HOME}/.steam/** r,
