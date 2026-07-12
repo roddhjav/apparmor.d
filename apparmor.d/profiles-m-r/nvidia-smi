@@ -9,12 +9,19 @@ include <tunables/global>
 @{exec_path} = @{bin}/nvidia-smi
 profile nvidia-smi @{exec_path} {
   include <abstractions/base>
+  include <abstractions/cgroup-limits>
   include <abstractions/consoles>
   include <abstractions/graphics>
+
+  capability perfmon,
+  capability sys_admin, # theoretically perfmon should be enough
+  capability sys_nice,
 
   signal receive set=int peer=gnome-shell, # FIXME: shell extension only
 
   @{exec_path} mr,
+
+        @{sys}/fs/cgroup/user.slice/dmem.max r,
 
         @{PROC}/devices r,
         @{PROC}/driver/nvidia/capabilities/mig/config r,
