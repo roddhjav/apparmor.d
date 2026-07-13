@@ -33,6 +33,7 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   signal send set=(kill, term) peer=xwayland,
   signal send set=term peer=unconfined,
   signal send set=term peer=plasma-keyboard,
+  signal send set=(usr1, term) peer=kscreenlocker_greet,
 
   unix type=stream peer=(label=xkbcomp),
   unix type=stream peer=(label=xwayland),
@@ -67,32 +68,55 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   /usr/share/libinput/{,**} r,
   /usr/share/pipewire/client.conf r,
   /usr/share/plasma/desktoptheme/** r,
+  /usr/share/sounds/**/*.oga r,
 
   /etc/pipewire/client.conf.d/ r,
+  /etc/pulse/client.conf r,
   /etc/xdg/** r,
 
   / r,
   owner @{HOME}/ r,
 
   owner @{sddm_cache_dirs}/#@{int} rwk,
-  owner @{sddm_cache_dirs}/ksycoca{5,6}_* rwkl  -> @{sddm_cache_dirs}/#@{int},
+  owner @{sddm_cache_dirs}/ksycoca{5,6}_* rwk  -> @{sddm_cache_dirs}/#@{int},
+  owner link @{sddm_cache_dirs}/ksycoca{5,6}_* -> @{sddm_cache_dirs}/#@{int},
   owner @{sddm_cache_dirs}/kwin/ rw,
   owner @{sddm_cache_dirs}/kwin/** rwlk,
+  owner @{sddm_cache_dirs}/kwinsession.kcache rw,
+  owner @{sddm_cache_dirs}/nvidia/ rw,
+  owner @{sddm_cache_dirs}/nvidia/GLCache/ rw,
+  owner @{sddm_cache_dirs}/nvidia/GLCache/** rwk,
 
   owner @{sddm_config_dirs}/#@{int} rw,
+  owner @{sddm_config_dirs}/fontconfig/fonts.conf r,
   owner @{sddm_config_dirs}/kcminputrc r,
   owner @{sddm_config_dirs}/kdedefaults/* r,
   owner @{sddm_config_dirs}/kdeglobals r,
   owner @{sddm_config_dirs}/kglobalshortcutsrc.lock rwk,
   owner @{sddm_config_dirs}/kglobalshortcutsrc{,.@{rand6}} rwl,
+  owner @{sddm_config_dirs}/kwinrulesrc r,
   owner @{sddm_config_dirs}/kwinoutputconfig.json rw,
   owner @{sddm_config_dirs}/kwinrc.lock rwk,
   owner @{sddm_config_dirs}/kwinrc{,.@{rand6}} rwl,
+  owner @{sddm_config_dirs}/kxkbrc r,
+  owner @{sddm_config_dirs}/plasmarc r,
+
+  owner @{sddm_state_dirs}/#@{int} rw,
+  owner @{sddm_state_dirs}/kglobalshortcutsstaterc rw,
+  owner @{sddm_state_dirs}/kglobalshortcutsstaterc.@{rand6} rw,
+  owner link @{sddm_state_dirs}/kglobalshortcutsstaterc.@{rand6} -> @{sddm_state_dirs}/#@{int},
+  owner @{sddm_state_dirs}/kglobalshortcutsstaterc.lock rwk,
 
   owner @{user_cache_dirs}/ r,
-  owner @{user_cache_dirs}/ksvg-elements r,
+  owner @{user_cache_dirs}/#@{int} rw,
+  owner @{user_cache_dirs}/ksvg-elements rw,
+  owner @{user_cache_dirs}/ksvg-elements.@{rand6} rwl -> @{user_cache_dirs}/#@{int},
+  owner @{user_cache_dirs}/ksvg-elements.lock rwk,
   owner @{user_cache_dirs}/kwin/ rw,
   owner @{user_cache_dirs}/kwin/** rwkl -> @{user_cache_dirs}/kwin/**,
+  owner @{user_cache_dirs}/ksycoca{5,6}_* rwlk,
+  owner link @{user_cache_dirs}/ksycoca{5,6}_* -> @{user_cache_dirs}/#@{int6},
+  owner @{user_cache_dirs}/kwinsession.kcache rw,
   owner @{user_cache_dirs}/plasma_theme_*.kcache rw,
   owner @{user_cache_dirs}/plasma-svgelements rw,
   owner @{user_cache_dirs}/plasma-svgelements.@{rand6} rwl -> @{user_cache_dirs}/#@{int},
@@ -119,6 +143,7 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{user_config_dirs}/breezerc.lock rwk,
   owner @{user_config_dirs}/Kvantum/{,**} r,
   owner @{user_config_dirs}/breezerc.@{rand6} rwl -> @{user_config_dirs}/#@{int},
+  owner @{user_config_dirs}/pulse/cookie rk,
 
   owner @{user_share_dirs}/aurorae/themes/{,**} r,
   owner @{user_share_dirs}/kscreen/* r,
@@ -126,6 +151,15 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{user_share_dirs}/kwin/scripts/{,**} r,
   owner @{user_share_dirs}/plasma/desktoptheme/{,**} r,
   owner @{user_share_dirs}/smod/decorations/{,**} r,
+
+  owner @{user_state_dirs}/kglobalshortcutsstaterc rw,
+  owner @{user_state_dirs}/kglobalshortcutsstaterc.@{rand6} rwl,
+  owner link @{user_state_dirs}/kglobalshortcutsstaterc.@{rand6} -> @{user_state_dirs}/#@{int},
+  owner @{user_state_dirs}/kglobalshortcutsstaterc.lock rwk,
+  owner @{user_state_dirs}/kwinstaterc rw,
+  owner @{user_state_dirs}/kwinstaterc.lock rwk,
+  owner @{user_state_dirs}/kwinstaterc.@{rand6} rwl -> @{user_state_dirs}/#@{int},
+  owner @{user_state_dirs}/#@{int} rw,
 
   owner @{run}/user/@{uid}/pipewire-@{int} rw,
 
@@ -153,11 +187,23 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   @{run}/udev/data/c13:@{int}  r,         # for /dev/input/*
   @{run}/udev/data/c189:@{int} r,         # for /dev/bus/usb/**
 
-  owner @{PROC}/@{pid}/task/@{tid}/comm rw,
+  owner @{run}/user/@{uid}/kwin-xwayland-eis-socket.@{int4} w,
+  owner @{run}/user/@{uid}/kwin-xwayland-eis-socket.@{int4}.lock rwk,
+  owner @{run}/user/@{uid}/pulse/ r,
+
+        /dev/shm/ r,
+  owner /dev/shm/pulse-shm-@{int} r,
+
+  #aa:lint ignore=useless
+  @{PROC}/@{pid}/maps r,
+  @{PROC}/@{pid}/mountinfo r,
+  @{PROC}/@{pid}/task/@{tid}/comm rw,
 
   @{att}/dev/input/event@{int} rw,
   @{att}/dev/dri/card@{int} rw,
 
+  /dev/input/ r,
+  /dev/input/event@{u8} r,
   /dev/tty r,
   /dev/tty@{u8} rw,
 
