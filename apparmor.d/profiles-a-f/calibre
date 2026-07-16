@@ -7,14 +7,18 @@ abi <abi/4.0>,
 
 include <tunables/global>
 
-@{exec_path}  = @{bin}/calibre{,-*} @{bin}/calibredb @{bin}/ebook{,-*}
-@{exec_path} += @{bin}/fetch-ebook-metadata
-@{exec_path} += @{bin}/lrs2lrf @{bin}/lrf2lrs @{bin}/lrfviewer @{bin}/web2disk
-@{exec_path} += /opt/calibre{,-*}{,/bin}/calibre{,-*}
+@{domain} = org.chromium.Chromium
+
+@{bin_dirs} = @{bin} /opt/calibre{,/bin}
+
+@{exec_path}  = @{bin_dirs}/calibre{,-*} @{bin_dirs}/calibredb @{bin_dirs}/ebook{,-*}
+@{exec_path} += @{bin_dirs}/fetch-ebook-metadata
+@{exec_path} += @{bin_dirs}/lrs2lrf @{bin_dirs}/lrf2lrs @{bin_dirs}/lrfviewer @{bin_dirs}/web2disk
 profile calibre @{exec_path} {
   include <abstractions/base>
   include <abstractions/bus/session/org.kde.StatusNotifierWatcher>
   include <abstractions/bus/system/org.freedesktop.UDisks2>
+  include <abstractions/common/chromium>
   include <abstractions/dconf-write>
   include <abstractions/desktop>
   include <abstractions/devices-usb>
@@ -52,21 +56,35 @@ profile calibre @{exec_path} {
   @{bin}/jpegtran         rix,
   @{bin}/uname            rix,
   @{sbin}/ldconfig{,.real} rix,
-  @{lib}/{,@{multiarch}/}qt{5,6}{,/libexec/}QtWebEngineProcess rix,
 
-  @{bin}/pdftoppm        rPUx, # (#FIXME#)
-  @{bin}/pdfinfo         rPUx,
-  @{bin}/pdftohtml       rPUx,
+  #aa:exec kioworker
+
+  # both are run with no new privileges flag
+  # changing to child profile is impossible without include chromium abstraction in the parent profile
+  @{lib}/{,@{multiarch}/}qt{5,6}/{,libexec/}QtWebEngineProcess rix,
+  /opt/calibre/libexec/QtWebEngineProcess   rix,
+
+  @{bin_dirs}/pdftoppm        Cx -> poppler,
+  @{bin_dirs}/pdfinfo         Cx -> poppler,
+  @{bin_dirs}/pdftohtml       Cx -> poppler,
 
   @{open_path}            rPx -> child-open,
 
-  /opt/calibre/{,**} rm,
+  /opt/calibre/{lib,plugins}/**.so{,.*} rm,
 
   /usr/share/calibre/{,**} r,
+  /usr/share/qt6/resources/**  r,
+
+  # required for access to resources normally in /usr/share/calibre
+  /opt/calibre/**/{,*} r,
 
   /etc/fstab r,
   /etc/inputrc r,
   /etc/magic r,
+
+  @{MOUNTDIRS} r,
+  owner @{MOUNTS}/ r,
+  owner @{MOUNTS}/** rw,
 
   owner @{HOME}/ r,
   owner "@{HOME}/Calibre Library/{,**}" rw,
@@ -81,6 +99,14 @@ profile calibre @{exec_path} {
   owner @{user_work_dirs}/{,**} rwl,
   owner @{user_work_dirs}/Calibre/** rwk,
 
+  owner @{user_config_dirs}/#@{int}               rw,
+  owner @{user_config_dirs}/calibrerc.lock        rwk,
+  owner @{user_config_dirs}/kdeglobals            w,
+  owner @{user_config_dirs}/kdeglobals.@{rand6}   rw,
+  owner link @{user_config_dirs}/kdeglobals.@{rand6} -> @{user_config_dirs}/#@{int},
+  owner @{user_config_dirs}/kdeglobals.lock          rwk,
+  owner @{user_config_dirs}/kioslaverc               r,
+
   owner @{user_config_dirs}/calibre/ rw,
   owner @{user_config_dirs}/calibre/** rwk,
 
@@ -90,13 +116,18 @@ profile calibre @{exec_path} {
   owner @{user_cache_dirs}/calibre/ rw,
   owner @{user_cache_dirs}/calibre/** rwkl -> @{user_cache_dirs}/calibre/**,
 
-  owner @{tmp}/@{word8} wl,
+  owner @{tmp}/@{word8} rwl,
   audit owner @{tmp}/@{int}-*/ rw,
   audit owner @{tmp}/@{int}-*/** rwl,
   owner @{tmp}/calibre-@{word8}/{,**} rw,
 
   owner /dev/shm/#@{int} rw,
+  owner /dev/shm/sem.@{rand6} rw,
+  owner /dev/shm/sem.mp-@{word8} w,
+  owner link /dev/shm/sem.mp-@{word8} -> /dev/shm/sem.@{rand6},
 
+  @{sys}/devices/ r,
+  @{sys}/devices/**/ r,        # ToDo: probably should be checked in calibre source what is really needed
   @{sys}/devices/@{pci}/irq r,
 
         @{PROC}/ r,
@@ -118,6 +149,27 @@ profile calibre @{exec_path} {
 
         /dev/tty r,
   owner /dev/tty@{u8} rw,
+
+  profile poppler {
+    include <abstractions/base>
+    include <abstractions/consoles>
+    include <abstractions/fonts>
+
+    @{bin_dirs}/pdfinfo r,
+    @{bin_dirs}/pdftohtml r,
+    @{bin_dirs}/pdftoppm r,
+
+    /opt/calibre/lib/*.so{,.*} rm,
+
+    /usr/share/poppler/{,**} r,
+
+    owner @{tmp}/calibre-@{word8}/**.{jpg,png} w,
+    owner @{tmp}/calibre-@{word8}/**log rw,
+    owner @{tmp}/calibre-@{word8}/*/src.pdf r,
+    owner @{tmp}/calibre-@{word8}/*/index.xml w,
+
+    include if exists <local/calibre_poppler>
+  }
 
   include if exists <local/calibre>
 }
