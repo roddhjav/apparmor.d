@@ -296,9 +296,9 @@ build-rpm: (_ensure_pkgdest)
 [group('packages')]
 pkg: build-pkg
 	@sudo pacman -U --noconfirm \
-		{{pkgdest}}/{{pkgname}}-`just version`*.pkg.tar.zst \
-		{{pkgdest}}/{{pkgname}}-base-`just version`*.pkg.tar.zst \
-		{{pkgdest}}/{{pkgname}}-tools-`just version`*.pkg.tar.zst
+		{{pkgdest}}/{{pkgname}}-`just version`*.pkg.tar* \
+		{{pkgdest}}/{{pkgname}}-base-`just version`*.pkg.tar* \
+		{{pkgdest}}/{{pkgname}}-tools-`just version`*.pkg.tar*
 
 # Build & install apparmor.d on Debian based systems
 [group('packages')]
