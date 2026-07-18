@@ -1,0 +1,36 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Ryan Putrama Yahya <punkofthedeath@gmail.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/niri-session
+profile niri-session @{exec_path} {
+  include <abstractions/base>
+
+  /etc/shells r,
+  /dev/tty rw,
+  /dev/tty@{int} rw,
+
+  @{exec_path} mrix,
+  @{shells_path} rix,
+  @{bin}/dbus-update-activation-environment rix,
+  @{bin}/niri rpx,
+  @{bin}/{,e}grep rix,
+  @{bin}/systemctl            rcx -> systemctl,
+
+  owner /dev/tty@{u8} rw,
+
+  profile systemctl flags=(attach_disconnected,mediate_deleted,complain) {
+    include <abstractions/base>
+    include <abstractions/app/systemctl>
+
+    include if exists <local/niri-session_systemctl>
+  }
+
+  include if exists <local/niri-session>
+}
+
+# vim:syntax=apparmor
