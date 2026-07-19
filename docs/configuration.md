@@ -175,7 +175,7 @@ All profiles use the variables defined above. Therefore, you can personalize the
 
 - If you use Keepass, personalize `XDG_PASSWORDSTORE_DIR` with your password directory. Eg:
     ```sh
-    @{XDG_PASSWORDSTORE_DIR}+="@{HOME}/.keepass/"
+    @{XDG_PASSWORDSTORE_DIR}+=".keepass/"
     ```
 
 - Add pacman integration with your AUR helper. Eg for `yay`:
