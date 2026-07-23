@@ -1,0 +1,42 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Łukasz Kozak <lakis.kozak@gmail.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+@{name} = firefox{,-esr,-beta,-devedition,-nightly,.sh}
+@{lib_dirs} = @{lib}/@{name} /opt/@{name}
+@{config_dirs} = @{HOME}/.mozilla/
+@{config_dirs} += @{user_config_dirs}/mozilla/
+@{cache_dirs} = @{user_cache_dirs}/mozilla/
+
+@{exec_path} = @{lib_dirs}/gfxtest
+profile firefox-gfxtest @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/graphics>
+
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  / r,
+
+  owner @{cache_dirs}/firefox/*/startupCache/scriptCache-* r,
+  owner @{cache_dirs}/firefox/*/startupCache/startupCache* r,
+
+  owner @{config_dirs}/firefox/*/.parentlock rw,
+
+  owner @{tmp}/@{name}/.parentlock rw,
+
+  owner @{run}/user/@{uid}/xauth_@{rand6} r,
+
+  owner /dev/pts/@{u8} rw,
+
+  audit deny @{user_share_dirs}/gnome-shell/session.gvdb rw,
+
+  include if exists <local/firefox-gfxtest>
+}
+
+# vim:syntax=apparmor
