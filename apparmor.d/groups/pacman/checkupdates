@@ -1,0 +1,79 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Łukasz Kozak <lakis.kozak@gmail.com>
+
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/checkupdates
+profile checkupdates @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+
+  capability dac_read_search,
+
+  @{sh_path}             r,
+  @{bin}/cat             rix,
+  @{bin}/diff            rix,
+  @{bin}/fakeroot        Cx -> fakeroot,
+  @{bin}/gettext         rix,
+  @{bin}/{,e}grep        rix,
+  @{bin}/ln              rix,
+  @{bin}/mkdir           rix,
+  @{bin}/mv              rix,
+  @{bin}/pacman          Px,
+  @{bin}/pacman-conf     Px,
+  @{bin}/rm              rix,
+  @{bin}/sudo            Cx -> sudo,
+  @{bin}/tput            rix,
+
+  @{exec_path}   r,
+
+  /usr/share/makepkg/util/*.sh r,
+  /usr/share/terminfo/{,**} r,
+
+  owner @{user_state_dirs}/checkupdates/ w,
+  owner @{user_state_dirs}/checkupdates/current_check rw,
+  owner @{user_state_dirs}/checkupdates/last_check rw,
+
+  owner @{tmp}/checkup-db-@{uid}/ w,
+  owner @{tmp}/checkup-db-@{uid}/local w,
+
+  owner /dev/pts/@{u8} rw,
+
+  profile fakeroot {
+    include <abstractions/base>
+    include <abstractions/consoles>
+
+    capability dac_read_search,
+
+    @{sh_path}        r,
+    @{bin}/cut        rix,
+    @{bin}/faked      rix,
+    @{bin}/fakeroot   r,
+    @{bin}/getopt     rix,
+    @{bin}/pacman     Px,
+    @{bin}/sed        rix,
+
+    include if exists <local/checkupdates_fakeroot>
+  }
+
+  profile sudo {
+    include <abstractions/base>
+    include <abstractions/app/sudo>
+
+    capability sys_ptrace,
+
+    ptrace read,
+
+    @{bin}/pacman Px,
+
+    include if exists <local/checkupdates_sudo>
+  }
+
+  include if exists <local/checkupdates>
+}
+
+# vim:syntax=apparmor
