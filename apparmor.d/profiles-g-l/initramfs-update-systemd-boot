@@ -1,0 +1,22 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = /etc/initramfs/post-update.d/systemd-boot
+profile initramfs-update-systemd-boot @{exec_path} {
+  include <abstractions/base>
+
+  @{exec_path} mr,
+
+  @{sh_path}                    r,
+  @{bin}/kernel-install         Px,
+  @{bin}/bootctl                Px,
+
+  include if exists <local/initramfs-update-systemd-boot>
+}
+
+# vim:syntax=apparmor

@@ -1,0 +1,37 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/rsyslog/rsyslog-rotate
+profile rsyslog-rotate @{exec_path} {
+  include <abstractions/base>
+
+  @{exec_path} mr,
+
+  @{sh_path} r,
+  @{bin}/systemctl rCx -> systemctl,
+
+  /var/lib/logrotate/status r,
+
+  profile systemctl flags=(attach_disconnected) {
+    include <abstractions/base>
+    include <abstractions/app/systemctl>
+
+    capability net_admin,
+    capability sys_ptrace,
+
+    ptrace read peer=@{p_systemd},
+
+    /var/lib/logrotate/status rw,
+
+    include if exists <local/rsyslog-rotate_systemctl>
+  }
+
+  include if exists <local/rsyslog-rotate>
+}
+
+# vim:syntax=apparmor
