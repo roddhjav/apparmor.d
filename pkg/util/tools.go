@@ -41,7 +41,7 @@ func ToRegexRepl(in []string) RegexReplList {
 
 func (rr RegexReplList) Replace(str string) string {
 	for _, aa := range rr {
-		str = aa.Regex.ReplaceAllLiteralString(str, aa.Repl)
+		str = aa.Regex.ReplaceAllString(str, aa.Repl)
 	}
 	return str
 }
