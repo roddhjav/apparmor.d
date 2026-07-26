@@ -17,6 +17,7 @@ The profiles are checked for common style and security issues with `just check`.
 | <span class="pg-red">**:fontawesome-solid-ban:**</span> | `abstractions` | Use of dangerous abstraction |
 | <span class="pg-red">**:fontawesome-solid-ban:**</span> | `abstractions` | Use of deprecated abstraction |
 | <span class="pg-red">**:fontawesome-solid-ban:**</span> | `abstractions` | Use of deprecated, ubuntu only abstraction |
+| <span class="pg-red">**:fontawesome-solid-ban:**</span> | `access` | file access should be written as `rwlk` instead of `rwkl` |
 | <span class="pg-red">**:fontawesome-solid-ban:**</span> | `bin` | Use of `@{sbin}` instead of `@{bin}` |
 | <span class="pg-red">**:fontawesome-solid-ban:**</span> | `directory-mark` | Missing directory mark |
 | <span class="pg-red">**:fontawesome-solid-ban:**</span> | `equivalent` | Missing equivalent program |
