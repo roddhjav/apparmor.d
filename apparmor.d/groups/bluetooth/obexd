@@ -27,8 +27,17 @@ profile obexd @{exec_path} flags=(attach_disconnected) {
 
   dbus receive bus=system path=/org/bluez/obex/@{uuid}
        interface=org.bluez.Profile1
-       member=Release
+       member={NewConnection,Release}
        peer=(name=@{busname}, label="@{p_bluetoothd}"),
+
+  dbus receive bus=system
+       interface=org.freedesktop.DBus.ObjectManager
+       member=GetManagedObjects
+       peer=(name=@{busname}),
+  dbus send bus=system
+       interface=org.freedesktop.DBus.ObjectManager
+       member={InterfacesAdded,InterfacesRemoved}
+       peer=(name=@{busname}),
 
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable
