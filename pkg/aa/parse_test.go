@@ -492,17 +492,17 @@ var (
 		},
 		{
 			name:   "abi",
-			raw:    `abi <abi/4.0>`,
-			tokens: []string{"abi", "<abi/4.0>"},
+			raw:    `abi <abi/5.0>`,
+			tokens: []string{"abi", "<abi/5.0>"},
 			rule: rule{
-				{key: "abi"}, {key: "<abi/4.0>"},
+				{key: "abi"}, {key: "<abi/5.0>"},
 			},
 			getIdx:     1,
-			wGet:       "<abi/4.0>",
-			wGetString: "abi <abi/4.0>",
-			wGetSlice:  []string{"abi", "<abi/4.0>"},
-			wString:    "abi <abi/4.0>",
-			wRule:      &Abi{IsMagic: true, Path: "abi/4.0"},
+			wGet:       "<abi/5.0>",
+			wGetString: "abi <abi/5.0>",
+			wGetSlice:  []string{"abi", "<abi/5.0>"},
+			wString:    "abi <abi/5.0>",
+			wRule:      &Abi{IsMagic: true, Path: "abi/5.0"},
 		},
 		{
 			name:   "alias",
@@ -1443,7 +1443,7 @@ var (
 			blocks: []*block{
 				{
 					kind: CONTENT,
-					raw:  "# Simple test profile for the AppArmorProfileFile.String() method\n\nabi <abi/4.0>,\n\nalias /mnt/usr -> /usr,\n\ninclude <tunables/global>\n\n@{exec_path} = @{bin}/foo @{lib}/foo",
+					raw:  "# Simple test profile for the AppArmorProfileFile.String() method\n\nabi <abi/5.0>,\n\nalias /mnt/usr -> /usr,\n\ninclude <tunables/global>\n\n@{exec_path} = @{bin}/foo @{lib}/foo",
 				},
 				{
 					kind: PROFILE,
@@ -1463,7 +1463,7 @@ var (
 						Name: "exec_path", Define: true,
 						Values: []string{"@{bin}/foo", "@{lib}/foo"},
 					},
-					&Abi{IsMagic: true, Path: "abi/4.0"},
+					&Abi{IsMagic: true, Path: "abi/5.0"},
 					&Alias{Path: "/mnt/usr", RewrittenPath: "/usr"},
 				},
 				{
@@ -1487,7 +1487,7 @@ var (
 						Name: "exec_path", Define: true,
 						Values: []string{"@{bin}/foo", "@{lib}/foo"},
 					},
-					&Abi{IsMagic: true, Path: "abi/4.0"},
+					&Abi{IsMagic: true, Path: "abi/5.0"},
 					&Alias{Path: "/mnt/usr", RewrittenPath: "/usr"},
 				},
 				Profiles: []*Profile{
@@ -1509,7 +1509,7 @@ var (
 						Name: "exec_path", Define: true,
 						Values: []string{"@{bin}/foo", "@{lib}/foo"},
 					},
-					&Abi{IsMagic: true, Path: "abi/4.0"},
+					&Abi{IsMagic: true, Path: "abi/5.0"},
 					&Alias{Path: "/mnt/usr", RewrittenPath: "/usr"},
 				},
 				Profiles: []*Profile{
@@ -1862,7 +1862,7 @@ var (
 			blocks: []*block{
 				{
 					kind: CONTENT,
-					raw:  "# Simple test profile with all rules used\n\nabi <abi/4.0>,\n\nalias /mnt/usr -> /usr,\n\ninclude <tunables/global> # optional: a comment\ninclude if exists \"/etc/apparmor.d/global/dummy space\"\n\n@{name}=torbrowser \"tor browser\" \n@{lib_dirs} = @{lib}/@{name} /opt/@{name} # another comment\n@{config_dirs} = @{HOME}/.mozilla/\n@{cache_dirs}=@{user_cache_dirs}/mozilla/\n\nalias /mnt/{,usr.sbin.}mount.cifs -> /sbin/mount.cifs,\n\n@{exec_path} = @{bin}/@{name} @{lib_dirs}/@{name}",
+					raw:  "# Simple test profile with all rules used\n\nabi <abi/5.0>,\n\nalias /mnt/usr -> /usr,\n\ninclude <tunables/global> # optional: a comment\ninclude if exists \"/etc/apparmor.d/global/dummy space\"\n\n@{name}=torbrowser \"tor browser\" \n@{lib_dirs} = @{lib}/@{name} /opt/@{name} # another comment\n@{config_dirs} = @{HOME}/.mozilla/\n@{cache_dirs}=@{user_cache_dirs}/mozilla/\n\nalias /mnt/{,usr.sbin.}mount.cifs -> /sbin/mount.cifs,\n\n@{exec_path} = @{bin}/@{name} @{lib_dirs}/@{name}",
 				},
 				{
 					kind: PROFILE,
@@ -1897,7 +1897,7 @@ var (
 					&Variable{Name: "config_dirs", Values: []string{"@{HOME}/.mozilla/"}, Define: true},
 					&Variable{Name: "cache_dirs", Values: []string{"@{user_cache_dirs}/mozilla/"}, Define: true},
 					&Variable{Name: "exec_path", Values: []string{"@{bin}/@{name}", "@{lib_dirs}/@{name}"}, Define: true},
-					&Abi{IsMagic: true, Path: "abi/4.0"},
+					&Abi{IsMagic: true, Path: "abi/5.0"},
 					&Alias{Path: "/mnt/usr", RewrittenPath: "/usr"},
 					&Alias{Path: "/mnt/{,usr.sbin.}mount.cifs", RewrittenPath: "/sbin/mount.cifs"},
 				},
@@ -1947,7 +1947,7 @@ var (
 					&Variable{Name: "config_dirs", Values: []string{"@{HOME}/.mozilla/"}, Define: true},
 					&Variable{Name: "cache_dirs", Values: []string{"@{user_cache_dirs}/mozilla/"}, Define: true},
 					&Variable{Name: "exec_path", Values: []string{"@{bin}/@{name}", "@{lib_dirs}/@{name}"}, Define: true},
-					&Abi{IsMagic: true, Path: "abi/4.0"},
+					&Abi{IsMagic: true, Path: "abi/5.0"},
 					&Alias{Path: "/mnt/usr", RewrittenPath: "/usr"},
 					&Alias{Path: "/mnt/{,usr.sbin.}mount.cifs", RewrittenPath: "/sbin/mount.cifs"},
 				},
@@ -1978,7 +1978,7 @@ var (
 					&Variable{Name: "config_dirs", Values: []string{"@{HOME}/.mozilla/"}, Define: true},
 					&Variable{Name: "cache_dirs", Values: []string{"@{user_cache_dirs}/mozilla/"}, Define: true},
 					&Variable{Name: "exec_path", Values: []string{"@{bin}/@{name}", "@{lib_dirs}/@{name}"}, Define: true},
-					&Abi{IsMagic: true, Path: "abi/4.0"},
+					&Abi{IsMagic: true, Path: "abi/5.0"},
 					&Alias{Path: "/mnt/usr", RewrittenPath: "/usr"},
 					&Alias{Path: "/mnt/{,usr.sbin.}mount.cifs", RewrittenPath: "/sbin/mount.cifs"},
 				},
@@ -2211,7 +2211,7 @@ var (
 						Name: "exec_path", Define: true,
 						Values: []string{"@{bin}/@{name}", "@{lib_dirs}/@{name}"},
 					},
-					&Abi{IsMagic: true, Path: "abi/4.0"},
+					&Abi{IsMagic: true, Path: "abi/5.0"},
 					&Alias{Path: "/mnt/usr", RewrittenPath: "/usr"},
 					&Alias{Path: "/mnt/{,usr.sbin.}mount.cifs", RewrittenPath: "/sbin/mount.cifs"},
 				},

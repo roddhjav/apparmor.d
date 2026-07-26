@@ -41,7 +41,7 @@ func TestAppArmorProfileFile_String(t *testing.T) {
 				Preamble: Rules{
 					&Comment{Base: Base{Comment: " Simple test profile for the AppArmorProfileFile.String() method", IsLineRule: true}},
 					nil,
-					&Abi{IsMagic: true, Path: "abi/4.0"},
+					&Abi{IsMagic: true, Path: "abi/5.0"},
 					&Alias{Path: "/mnt/usr", RewrittenPath: "/usr"},
 					&Include{IsMagic: true, Path: "tunables/global"},
 					&Variable{
@@ -206,7 +206,7 @@ func TestAppArmorProfileFile_Integration(t *testing.T) {
 					&Comment{Base: Base{Comment: " Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>", IsLineRule: true}},
 					&Comment{Base: Base{Comment: " SPDX-License-Identifier: GPL-2.0-only", IsLineRule: true}},
 					nil,
-					&Abi{IsMagic: true, Path: "abi/4.0"},
+					&Abi{IsMagic: true, Path: "abi/5.0"},
 					&Include{IsMagic: true, Path: "tunables/global"},
 					&Variable{
 						Name: "exec_path", Define: true,

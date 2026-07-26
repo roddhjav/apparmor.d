@@ -10,7 +10,7 @@ var (
 	comment2 = &Comment{Base: Base{Comment: "another comment", IsLineRule: true}}
 
 	// Abi
-	abi1 = &Abi{IsMagic: true, Path: "abi/4.0"}
+	abi1 = &Abi{IsMagic: true, Path: "abi/5.0"}
 	abi2 = &Abi{IsMagic: true, Path: "abi/3.0"}
 
 	// Alias

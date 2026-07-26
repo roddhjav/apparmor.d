@@ -126,6 +126,12 @@ This task will convert all profiles from `abi/4.0` to `abi/3.0`. The rules not s
 
 *Enable with the `--abi 3` option in the prebuild command.*
 
+### **`abi4`**
+
+This task will convert all profiles from `abi/5.0` to `abi/4.0`. The rules not supported by `abi/4.0` are commented in the build profiles.
+
+*Enable with the `--abi 4` option in the prebuild command.*
+
 ### **`complain | enforce`**
 
 Set or remove the complain flag on all profiles. The `complain` task is enabled by default. When building in enforce mode, it is disabled. Enabling the `enforce` task will enforce **all** profiles including the one set in the [flags manifest](workflow.md#profile-mode). It is intended to be used in specialized system such as a CTF challenge or in (very) high security VM. 

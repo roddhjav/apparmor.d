@@ -119,7 +119,7 @@ var (
 			other:    abi2,
 			wCompare: 1,
 			wMerge:   false,
-			wString:  "abi <abi/4.0>,",
+			wString:  "abi <abi/5.0>,",
 		},
 		{
 			name:     "alias",

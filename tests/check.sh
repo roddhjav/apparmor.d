@@ -392,7 +392,7 @@ _check_tunables() {
 # Guidelines check: https://apparmor.pujol.io/development/guidelines/
 
 RES_ABI=false
-readonly ABI_SYNTAX='abi <abi/4.0>,'
+readonly ABI_SYNTAX='abi <abi/5.0>,'
 _check_abi() {
     _is_enabled abi || return 0
     if [[ "$line" == *"$ABI_SYNTAX" ]]; then
@@ -402,7 +402,7 @@ _check_abi() {
 _res_abi() {
     _is_enabled abi || return 0
     if ! $RES_ABI; then
-        _err abi "$file" "missing 'abi <abi/4.0>,'"
+        _err abi "$file" "missing 'abi <abi/5.0>,'"
     fi
 }
 

@@ -15,13 +15,13 @@ abi <abi/3.0>,
 
 ```sh
 # WRONG
-# missing 'abi <abi/4.0>,'
+# missing 'abi <abi/5.0>,'
 ```
 
 ## Correct rule
 
 ```sh
-abi <abi/4.0>,
+abi <abi/5.0>,
 ```
 
 ## Rationale

@@ -303,7 +303,7 @@ def readApparmorFile(fullpath):
 
     # Ensure ABI is present
     changeAbi = False
-    abi = 'abi <abi/4.0>,'
+    abi = 'abi <abi/5.0>,'
     if gotAbi:
         if gotAbi.strip() != abi:
             changeAbi = True
