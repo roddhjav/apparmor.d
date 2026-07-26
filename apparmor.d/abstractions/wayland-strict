@@ -10,24 +10,33 @@
 
   # Allow access to the Wayland compositor server socket
   owner @{run}/user/@{uid}/wayland-@{int} rw,
-  owner @{run}/user/@{uid}/wayland-@{int}.lock rwk,
   owner @{run}/user/@{uid}/wayland-cursor-shared-@{int} rw,
   owner @{run}/user/@{uid}/wayland-proxy-@{int} rw,
 
-  # Compositors specific socket path
-  owner @{run}/user/@{uid}/.mutter-Xwaylandauth.@{rand6} r,
   owner @{run}/user/@{uid}/mesa-shared-@{int} rw,
-  owner @{run}/user/@{uid}/mutter-shared-@{int} rw,
   owner @{run}/user/@{uid}/sdl-shared-@{int} rw,
-  owner @{run}/user/@{uid}/weston-shared-@{int} rw,
   owner @{run}/user/@{uid}/xwayland-shared-@{int} rw,
 
-  # Compositors based on wlroots
-  owner /dev/shm/@{uuid} rw,
-  owner /dev/shm/dunst-@{rand6} rw,
-  owner /dev/shm/grim-@{rand6} rw,
-  owner /dev/shm/sway* rw,
-  owner /dev/shm/wlroots-@{rand6} rw,
+  # Compositors specific socket path
+  if "gnome" in @{DE} {
+    owner @{run}/user/@{uid}/.mutter-Xwaylandauth.@{rand6} r,
+    owner @{run}/user/@{uid}/mutter-shared-@{int} rw,
+
+  } else if "kde" in @{DE} {
+    owner @{run}/user/@{uid}/weston-shared-@{int} rw,
+
+  } else if "none" in @{DE} {
+    # Nothing
+
+  } else {
+    # Compositors based on wlroots
+    owner /dev/shm/@{uuid} rw,
+    owner /dev/shm/dunst-@{rand6} rw,
+    owner /dev/shm/grim-@{rand6} rw,
+    owner /dev/shm/sway* rw,
+    owner /dev/shm/wlroots-@{rand6} rw,
+
+  }
 
   include if exists <abstractions/wayland-strict.d>
 
