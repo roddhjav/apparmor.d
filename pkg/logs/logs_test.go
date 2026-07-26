@@ -442,13 +442,13 @@ func TestAppArmorLogs_ParseToProfiles(t *testing.T) {
 					Rules: aa.Rules{
 						&aa.Unix{
 							Base:     aa.Base{FileInherit: true},
-							Access:   []string{"send", "receive"},
+							Access:   aa.MustAccess(aa.UNIX, "send", "receive"),
 							Type:     "stream",
 							Protocol: "0",
 						},
 						&aa.Unix{
 							Base:     aa.Base{FileInherit: true},
-							Access:   []string{"send", "receive"},
+							Access:   aa.MustAccess(aa.UNIX, "send", "receive"),
 							Type:     "stream",
 							Protocol: "0",
 						},
@@ -458,7 +458,7 @@ func TestAppArmorLogs_ParseToProfiles(t *testing.T) {
 					Header: aa.Header{Name: "power-profiles-daemon"},
 					Rules: aa.Rules{
 						&aa.Dbus{
-							Access:    []string{"send"},
+							Access:    aa.MustAccess(aa.DBUS, "send"),
 							Bus:       "system",
 							Path:      "/org/freedesktop/DBus",
 							Interface: "org.freedesktop.DBus",
@@ -503,7 +503,7 @@ func TestAppArmorLogs_ParseToProfiles(t *testing.T) {
 					Rules: aa.Rules{
 						&aa.Unix{
 							Base:     aa.Base{FileInherit: true},
-							Access:   []string{"send", "receive"},
+							Access:   aa.MustAccess(aa.UNIX, "send", "receive"),
 							Type:     "stream",
 							Protocol: "0",
 						},
@@ -514,7 +514,7 @@ func TestAppArmorLogs_ParseToProfiles(t *testing.T) {
 					Rules: aa.Rules{
 						&aa.Unix{
 							Base:     aa.Base{FileInherit: true},
-							Access:   []string{"send", "receive"},
+							Access:   aa.MustAccess(aa.UNIX, "send", "receive"),
 							Type:     "dgram",
 							Protocol: "0",
 						},

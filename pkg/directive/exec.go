@@ -72,7 +72,7 @@ func (d Exec) Apply(opt *Option, profileRaw string) (string, error) {
 				for _, v := range variable.Values {
 					rules = append(rules, &aa.File{
 						Path:   v,
-						Access: []string{transition},
+						Access: aa.MustAccess(aa.FILE, transition),
 					})
 				}
 				break

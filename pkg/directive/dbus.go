@@ -132,7 +132,7 @@ func (d Dbus) Own(rules map[string]string) aa.Rules {
 			IsMagic: true, Path: "abstractions/bus/" + rules["bus"] + "/own",
 		},
 		&aa.Dbus{
-			Access: []string{"bind"}, Bus: rules["bus"], Name: rules["name"],
+			Access: aa.MustAccess(aa.DBUS, "bind"), Bus: rules["bus"], Name: rules["name"],
 		},
 	}
 
@@ -140,12 +140,12 @@ func (d Dbus) Own(rules map[string]string) aa.Rules {
 	for _, iface := range interfaces {
 		res = append(res,
 			&aa.Dbus{
-				Access: []string{"receive"}, Bus: rules["bus"], Path: rules["path"],
+				Access: aa.MustAccess(aa.DBUS, "receive"), Bus: rules["bus"], Path: rules["path"],
 				Interface: iface,
 				PeerName:  `"@{busname}"`,
 			},
 			&aa.Dbus{
-				Access: []string{"send"}, Bus: rules["bus"], Path: rules["path"],
+				Access: aa.MustAccess(aa.DBUS, "send"), Bus: rules["bus"], Path: rules["path"],
 				Interface: iface,
 				PeerName:  `"{@{busname},org.freedesktop.DBus}"`,
 			},
@@ -161,7 +161,7 @@ func (d Dbus) Own(rules map[string]string) aa.Rules {
 			},
 		},
 		&aa.Dbus{
-			Access: []string{"send", "receive"}, Bus: rules["bus"], Path: rules["path"],
+			Access: aa.MustAccess(aa.DBUS, "send", "receive"), Bus: rules["bus"], Path: rules["path"],
 			Interface: "org.freedesktop.DBus.Properties",
 			Member:    "{Get,GetAll,Set,PropertiesChanged}",
 			PeerName:  `"{@{busname},org.freedesktop.DBus}"`,
@@ -175,7 +175,7 @@ func (d Dbus) Own(rules map[string]string) aa.Rules {
 			},
 		},
 		&aa.Dbus{
-			Access: []string{"receive"}, Bus: rules["bus"], Path: rules["path"],
+			Access: aa.MustAccess(aa.DBUS, "receive"), Bus: rules["bus"], Path: rules["path"],
 			Interface: "org.freedesktop.DBus.Introspectable",
 			Member:    "Introspect",
 			PeerName:  `"@{busname}"`,
@@ -189,13 +189,13 @@ func (d Dbus) Own(rules map[string]string) aa.Rules {
 			},
 		},
 		&aa.Dbus{
-			Access: []string{"receive"}, Bus: rules["bus"], Path: rules["path"],
+			Access: aa.MustAccess(aa.DBUS, "receive"), Bus: rules["bus"], Path: rules["path"],
 			Interface: "org.freedesktop.DBus.ObjectManager",
 			Member:    "GetManagedObjects",
 			PeerName:  `"{@{busname},` + rules["name"] + `}"`,
 		},
 		&aa.Dbus{
-			Access: []string{"send"}, Bus: rules["bus"], Path: rules["path"],
+			Access: aa.MustAccess(aa.DBUS, "send"), Bus: rules["bus"], Path: rules["path"],
 			Interface: "org.freedesktop.DBus.ObjectManager",
 			Member:    "{InterfacesAdded,InterfacesRemoved}",
 			PeerName:  `"{@{busname},org.freedesktop.DBus}"`,
@@ -234,12 +234,12 @@ func (d Dbus) Talk(rules map[string]string) aa.Rules {
 				},
 			},
 			&aa.Dbus{
-				Access: []string{"send", "receive"}, Bus: rules["bus"], Path: rules["path"],
+				Access: aa.MustAccess(aa.DBUS, "send", "receive"), Bus: rules["bus"], Path: rules["path"],
 				Interface: iface,
 				PeerName:  peerName, PeerLabel: rules["label"],
 			},
 			&aa.Dbus{
-				Access: []string{"send"}, Bus: rules["bus"], Path: rules["path"],
+				Access: aa.MustAccess(aa.DBUS, "send"), Bus: rules["bus"], Path: rules["path"],
 				Interface: iface,
 				PeerName:  `"` + rules["name"] + `"`,
 			},
@@ -255,7 +255,7 @@ func (d Dbus) Talk(rules map[string]string) aa.Rules {
 			},
 		},
 		&aa.Dbus{
-			Access: []string{"send", "receive"}, Bus: rules["bus"], Path: rules["path"],
+			Access: aa.MustAccess(aa.DBUS, "send", "receive"), Bus: rules["bus"], Path: rules["path"],
 			Interface: "org.freedesktop.DBus.Properties",
 			Member:    "{Get,GetAll,Set,PropertiesChanged}",
 			PeerName:  peerName, PeerLabel: rules["label"],
@@ -269,7 +269,7 @@ func (d Dbus) Talk(rules map[string]string) aa.Rules {
 			},
 		},
 		&aa.Dbus{
-			Access: []string{"send"}, Bus: rules["bus"], Path: rules["path"],
+			Access: aa.MustAccess(aa.DBUS, "send"), Bus: rules["bus"], Path: rules["path"],
 			Interface: "org.freedesktop.DBus.Introspectable",
 			Member:    "Introspect",
 			PeerName:  peerName, PeerLabel: rules["label"],
@@ -283,13 +283,13 @@ func (d Dbus) Talk(rules map[string]string) aa.Rules {
 			},
 		},
 		&aa.Dbus{
-			Access: []string{"send"}, Bus: rules["bus"], Path: rules["path"],
+			Access: aa.MustAccess(aa.DBUS, "send"), Bus: rules["bus"], Path: rules["path"],
 			Interface: "org.freedesktop.DBus.ObjectManager",
 			Member:    "GetManagedObjects",
 			PeerName:  peerName, PeerLabel: rules["label"],
 		},
 		&aa.Dbus{
-			Access: []string{"receive"}, Bus: rules["bus"], Path: rules["path"],
+			Access: aa.MustAccess(aa.DBUS, "receive"), Bus: rules["bus"], Path: rules["path"],
 			Interface: "org.freedesktop.DBus.ObjectManager",
 			Member:    "{InterfacesAdded,InterfacesRemoved}",
 			PeerName:  peerName, PeerLabel: rules["label"],
@@ -326,7 +326,7 @@ func (d Dbus) See(rules map[string]string) aa.Rules {
 			},
 		},
 		&aa.Dbus{
-			Access: []string{"send"}, Bus: rules["bus"], Path: rules["path"],
+			Access: aa.MustAccess(aa.DBUS, "send"), Bus: rules["bus"], Path: rules["path"],
 			Interface: "org.freedesktop.DBus.Properties",
 			Member:    "{Get,GetAll}",
 			PeerName:  peerName, PeerLabel: rules["label"],
@@ -342,7 +342,7 @@ func (d Dbus) See(rules map[string]string) aa.Rules {
 		},
 		nil,
 		&aa.Dbus{
-			Access: []string{"receive"}, Bus: rules["bus"], Path: rules["path"],
+			Access: aa.MustAccess(aa.DBUS, "receive"), Bus: rules["bus"], Path: rules["path"],
 			Interface: "org.freedesktop.DBus.Properties",
 			Member:    "PropertiesChanged",
 			PeerName:  peerName, PeerLabel: rules["label"],
@@ -358,7 +358,7 @@ func (d Dbus) See(rules map[string]string) aa.Rules {
 		},
 		nil,
 		&aa.Dbus{
-			Access: []string{"send"}, Bus: rules["bus"], Path: rules["path"],
+			Access: aa.MustAccess(aa.DBUS, "send"), Bus: rules["bus"], Path: rules["path"],
 			Interface: "org.freedesktop.DBus.Introspectable",
 			Member:    "Introspect",
 			PeerName:  peerName, PeerLabel: rules["label"],
