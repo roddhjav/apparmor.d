@@ -6,6 +6,7 @@ package aa
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -154,21 +155,4 @@ func (r Qualifier) setPaddings(max []int) []string {
 		[]string{"audit", ""},
 		[]any{r.Audit, r.AccessType},
 	)
-}
-
-// writeQualifierKey serializes a Qualifier into a rule's merge bucket key.
-func writeQualifierKey(b *strings.Builder, q Qualifier) {
-	b.WriteString(strconv.Itoa(q.Priority))
-	b.WriteByte(0)
-	writeBool(b, q.Audit)
-	b.WriteString(q.AccessType)
-	b.WriteByte(0)
-}
-
-// writeBool writes a NUL-terminated bool field into a merge bucket key.
-func writeBool(b *strings.Builder, v bool) {
-	if v {
-		b.WriteByte('1')
-	}
-	b.WriteByte(0)
 }

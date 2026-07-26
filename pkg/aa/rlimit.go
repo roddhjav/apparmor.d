@@ -4,7 +4,10 @@
 
 package aa
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 const (
 	RLIMIT Kind = "rlimit"
@@ -49,6 +52,14 @@ func newRlimitFromLog(log map[string]string) Rule {
 		Op:    "<=",
 		Value: log["value"],
 	}
+}
+
+func (r *Rlimit) mergeKey(b *strings.Builder) {
+	b.WriteString(r.Key)
+	b.WriteByte(0)
+	b.WriteString(r.Op)
+	b.WriteByte(0)
+	b.WriteString(r.Value)
 }
 
 func (r *Rlimit) Kind() Kind {

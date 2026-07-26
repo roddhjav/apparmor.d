@@ -38,6 +38,8 @@ func newComment(rule rule) (Rule, error) {
 	return &Comment{Base: base}, nil
 }
 
+func (r *Comment) mergeKey(*strings.Builder) {} // comments are never merged
+
 func (r *Comment) Kind() Kind {
 	return COMMENT
 }
@@ -106,6 +108,11 @@ func newAbi(q Qualifier, rule rule) (Rule, error) {
 	}, rule.ValidateMapKeys([]string{})
 }
 
+func (r *Abi) mergeKey(b *strings.Builder) {
+	b.WriteString(r.Path)
+	writeBool(b, r.IsMagic)
+}
+
 func (r *Abi) Kind() Kind {
 	return ABI
 }
@@ -158,6 +165,12 @@ func newAlias(q Qualifier, rule rule) (Rule, error) {
 		Path:          rule.Get(0),
 		RewrittenPath: rule.Get(2),
 	}, rule.ValidateMapKeys([]string{})
+}
+
+func (r *Alias) mergeKey(b *strings.Builder) {
+	b.WriteString(r.Path)
+	b.WriteByte(0)
+	b.WriteString(r.RewrittenPath)
 }
 
 func (r *Alias) Kind() Kind {
@@ -241,6 +254,12 @@ func newInclude(rule rule) (Rule, error) {
 		Path:     path,
 		IsMagic:  magic,
 	}, rule.ValidateMapKeys([]string{})
+}
+
+func (r *Include) mergeKey(b *strings.Builder) {
+	writeBool(b, r.IfExists)
+	b.WriteString(r.Path)
+	writeBool(b, r.IsMagic)
 }
 
 func (r *Include) Kind() Kind {
@@ -340,6 +359,11 @@ func newVariable(rule rule) (Rule, error) {
 	}, nil
 }
 
+func (r *Variable) mergeKey(b *strings.Builder) {
+	b.WriteString(r.Name)
+	writeBool(b, r.Define)
+}
+
 func (r *Variable) Kind() Kind {
 	return VARIABLE
 }
@@ -429,6 +453,11 @@ func newBoolean(rule rule) (Rule, error) {
 		Name:  name,
 		Value: valueLower == "true",
 	}, nil
+}
+
+func (r *Boolean) mergeKey(b *strings.Builder) {
+	b.WriteString(r.Name)
+	writeBool(b, r.Value)
 }
 
 func (r *Boolean) Kind() Kind {

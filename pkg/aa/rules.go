@@ -6,6 +6,8 @@ package aa
 
 import (
 	"slices"
+	"strconv"
+	"strings"
 )
 
 type requirement map[string][]string
@@ -34,20 +36,22 @@ func (k Kind) Tok() string {
 
 // Rule generic interface for all AppArmor rules
 type Rule interface {
-	Kind() Kind              // Kind of the rule
-	Constraint() Constraint  // Where the rule can be found (preamble, profile, any)
-	String() string          // Render the rule as a string
-	Validate() error         // Validate the rule. Return an error if the rule is invalid
-	Compare(other Rule) int  // Compare two rules. Return 0 if they are identical
-	Merge(other Rule) bool   // Merge rules of same kind together. Return true if merged
-	Padding(i int) string    // Padding for rule items at index i
-	Lengths() []int          // Length of each item in the rule
-	setPaddings(max []int)   // Set paddings for each item in the rule
-	addLine(other Rule) bool // Check either a new line should be added before the rule
+	Kind() Kind                  // Kind of the rule
+	Constraint() Constraint      // Where the rule can be found (preamble, profile, any)
+	String() string              // Render the rule as a string
+	Validate() error             // Validate the rule. Return an error if the rule is invalid
+	Compare(other Rule) int      // Compare two rules. Return 0 if they are identical
+	Merge(other Rule) bool       // Merge rules of same kind together. Return true if merged
+	mergeKey(b *strings.Builder) // Bucket key body for Merge; upholds the Rules.Merge invariant
+	Padding(i int) string        // Padding for rule items at index i
+	Lengths() []int              // Length of each item in the rule
+	setPaddings(max []int)       // Set paddings for each item in the rule
+	addLine(other Rule) bool     // Check either a new line should be added before the rule
 }
 
 type Rules []Rule
 
+// Validate all rules in the slice
 func (r Rules) Validate() error {
 	for _, rule := range r {
 		if rule == nil {
@@ -170,48 +174,78 @@ func (r Rules) GetIncludes() []*Include {
 //   - Merge rule access. Eg: for same path, 'r' and 'w' becomes 'rw'
 //
 // Note: logs.regCleanLogs helps a lot to do a first cleaning
+//
+// Rules sharing a bucket key (kind + Rule.mergeKey) are merge-candidates,
+// tried pairwise via Rule.Merge; different keys never merge.
+//
+// Invariant every mergeKey must uphold: if a.Merge(b) can return true, or
+// a.Compare(b) == 0, then a and b must produce the same mergeKey. Put another
+// way, mergeKey may only read fields that Merge/Compare require to be equal. A
+// mergeKey that is too specific (keys on a field Merge ignores) splits
+// mergeable rules into different buckets and silently drops the merge.
+// TestRule_MergeKeyInvariant guards this.
 func (r Rules) Merge() Rules {
-	for i := 0; i < len(r); i++ {
-		for j := i + 1; j < len(r); j++ {
-			if r[i] == nil && r[j] == nil {
-				r = r.Delete(j)
-				j--
-				continue
-			}
-			if r[i] == nil || r[j] == nil {
-				continue
-			}
-			if r[i].Kind() != r[j].Kind() {
-				continue
-			}
+	type bucket struct{ survivors []int }
+	buckets := make(map[string]*bucket, len(r))
 
-			// If rules are identical, try to merge them to combine Base fields (NoNewPrivs, FileInherit, etc.)
-			if r[i].Kind() != COMMENT && r[i].Compare(r[j]) == 0 {
-				// Attempt merge to combine metadata like NoNewPrivs, FileInherit
-				if r[i].Merge(r[j]) {
-					r = r.Delete(j)
-					j--
-					continue
-				}
-				// If merge returns false but they're identical, delete duplicate
-				r = r.Delete(j)
-				j--
-				continue
+	for i, rule := range r {
+		if rule == nil || rule.Kind() == COMMENT {
+			continue
+		}
+		var kb strings.Builder
+		kb.WriteString(string(rule.Kind()))
+		kb.WriteByte(0)
+		rule.mergeKey(&kb)
+		key := kb.String()
+		b := buckets[key]
+		if b == nil {
+			b = &bucket{}
+			buckets[key] = b
+		}
+		merged := false
+		for _, s := range b.survivors {
+			if r[s].Merge(rule) {
+				merged = true
+				break
 			}
-
-			if r[i].Merge(r[j]) {
-				r = r.Delete(j)
-				j--
+			// Never-merge kinds (Capability, Rlimit, Network, ...) keep
+			// Merge() returning false; their key already covers the full
+			// identity, so a Compare hit means an exact duplicate to drop.
+			if r[s].Compare(rule) == 0 {
+				merged = true
+				break
 			}
 		}
+		if merged {
+			r[i] = nil
+			continue
+		}
+		b.survivors = append(b.survivors, i)
 	}
-	return r
+	return slices.DeleteFunc(r, func(a Rule) bool { return a == nil })
+}
+
+// writeQualifierKey serializes a Qualifier into a rule's merge bucket key.
+func writeQualifierKey(b *strings.Builder, q Qualifier) {
+	b.WriteString(strconv.Itoa(q.Priority))
+	b.WriteByte(0)
+	writeBool(b, q.Audit)
+	b.WriteString(q.AccessType)
+	b.WriteByte(0)
+}
+
+// writeBool writes a NUL-terminated bool field into a merge bucket key.
+func writeBool(b *strings.Builder, v bool) {
+	if v {
+		b.WriteByte('1')
+	}
+	b.WriteByte(0)
 }
 
 // Sort the rules according to the guidelines:
 // https://apparmor.pujol.io/development/guidelines/#guidelines
 func (r Rules) Sort() Rules {
-	// r = slices.DeleteFunc(r, func(a Rule) bool { return a == nil })
+	r = slices.DeleteFunc(r, func(a Rule) bool { return a == nil })
 	slices.SortFunc(r, func(a, b Rule) int {
 		kindOfA := a.Kind()
 		kindOfB := b.Kind()

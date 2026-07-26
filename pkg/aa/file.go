@@ -145,6 +145,14 @@ func newFileFromLog(log map[string]string) Rule {
 	}
 }
 
+func (r *File) mergeKey(b *strings.Builder) {
+	writeQualifierKey(b, r.Qualifier)
+	writeBool(b, r.Owner)
+	b.WriteString(r.Path)
+	b.WriteByte(0)
+	b.WriteString(r.Target)
+}
+
 func (r *File) Kind() Kind {
 	return FILE
 }
@@ -337,6 +345,15 @@ func newLinkFromLog(log map[string]string) Rule {
 		Path:      log["name"],
 		Target:    log["target"],
 	}
+}
+
+func (r *Link) mergeKey(b *strings.Builder) {
+	writeQualifierKey(b, r.Qualifier)
+	writeBool(b, r.Owner)
+	writeBool(b, r.Subset)
+	b.WriteString(r.Path)
+	b.WriteByte(0)
+	b.WriteString(r.Target)
 }
 
 func (r *Link) Kind() Kind {

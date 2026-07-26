@@ -4,7 +4,10 @@
 
 package aa
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 const PIVOTROOT Kind = "pivot_root"
 
@@ -48,6 +51,15 @@ func newPivotRootFromLog(log map[string]string) Rule {
 		NewRoot:       log["name"],
 		TargetProfile: "",
 	}
+}
+
+func (r *PivotRoot) mergeKey(b *strings.Builder) {
+	writeQualifierKey(b, r.Qualifier)
+	b.WriteString(r.OldRoot)
+	b.WriteByte(0)
+	b.WriteString(r.NewRoot)
+	b.WriteByte(0)
+	b.WriteString(r.TargetProfile)
 }
 
 func (r *PivotRoot) Kind() Kind {

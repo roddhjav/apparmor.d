@@ -86,6 +86,15 @@ func newMqueueFromLog(log map[string]string) Rule {
 	}
 }
 
+func (r *Mqueue) mergeKey(b *strings.Builder) {
+	writeQualifierKey(b, r.Qualifier)
+	b.WriteString(r.Type)
+	b.WriteByte(0)
+	b.WriteString(r.Label)
+	b.WriteByte(0)
+	b.WriteString(r.Name)
+}
+
 func (r *Mqueue) Kind() Kind {
 	return MQUEUE
 }

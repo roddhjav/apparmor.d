@@ -7,6 +7,7 @@ package aa
 import (
 	"fmt"
 	"slices"
+	"strings"
 )
 
 const CHANGEPROFILE Kind = "change_profile"
@@ -65,6 +66,15 @@ func newChangeProfileFromLog(log map[string]string) Rule {
 		Exec:        log["exec"],
 		ProfileName: log["target"],
 	}
+}
+
+func (r *ChangeProfile) mergeKey(b *strings.Builder) {
+	writeQualifierKey(b, r.Qualifier)
+	b.WriteString(r.ExecMode)
+	b.WriteByte(0)
+	b.WriteString(r.Exec)
+	b.WriteByte(0)
+	b.WriteString(r.ProfileName)
 }
 
 func (r *ChangeProfile) Kind() Kind {

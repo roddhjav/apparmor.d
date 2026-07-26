@@ -6,6 +6,7 @@ package aa
 
 import (
 	"fmt"
+	"strings"
 )
 
 const IOURING Kind = "io_uring"
@@ -51,6 +52,11 @@ func newIOUringFromLog(log map[string]string) Rule {
 		Access:    Must(toAccess(IOURING, log["requested"])),
 		Label:     log["label"],
 	}
+}
+
+func (r *IOUring) mergeKey(b *strings.Builder) {
+	writeQualifierKey(b, r.Qualifier)
+	b.WriteString(r.Label)
 }
 
 func (r *IOUring) Kind() Kind {

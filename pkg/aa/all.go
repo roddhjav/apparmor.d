@@ -4,7 +4,10 @@
 
 package aa
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 const (
 	ALL Kind = "all"
@@ -20,6 +23,8 @@ func newAll(q Qualifier, rule rule) (Rule, error) {
 	}
 	return &All{Base: newBase(rule)}, rule.ValidateMapKeys([]string{})
 }
+
+func (r *All) mergeKey(*strings.Builder) {} // kind-only bucket
 
 func (r *All) Kind() Kind {
 	return ALL

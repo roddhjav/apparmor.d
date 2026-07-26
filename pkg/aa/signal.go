@@ -147,6 +147,11 @@ func (r *Signal) Merge(other Rule) bool {
 	return false
 }
 
+func (r *Signal) mergeKey(b *strings.Builder) {
+	writeQualifierKey(b, r.Qualifier)
+	b.WriteString(r.Peer)
+}
+
 func (r *Signal) Lengths() []int {
 	return []int{
 		r.getLenAudit(),

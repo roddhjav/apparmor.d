@@ -4,7 +4,10 @@
 
 package aa
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 const PTRACE Kind = "ptrace"
 
@@ -62,6 +65,11 @@ func newPtraceFromLog(log map[string]string) Rule {
 		Access:    Must(toAccess(PTRACE, log["requested_mask"])),
 		Peer:      log["peer"],
 	}
+}
+
+func (r *Ptrace) mergeKey(b *strings.Builder) {
+	writeQualifierKey(b, r.Qualifier)
+	b.WriteString(r.Peer)
 }
 
 func (r *Ptrace) Kind() Kind {

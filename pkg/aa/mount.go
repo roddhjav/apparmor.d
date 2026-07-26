@@ -7,6 +7,7 @@ package aa
 import (
 	"fmt"
 	"slices"
+	"strings"
 )
 
 const (
@@ -173,6 +174,13 @@ func newMountFromLog(log map[string]string) Rule {
 	}
 }
 
+func (r *Mount) mergeKey(b *strings.Builder) {
+	writeQualifierKey(b, r.Qualifier)
+	b.WriteString(r.Source)
+	b.WriteByte(0)
+	b.WriteString(r.MountPoint)
+}
+
 func (r *Mount) Kind() Kind {
 	return MOUNT
 }
@@ -290,6 +298,11 @@ func newUmountFromLog(log map[string]string) Rule {
 	}
 }
 
+func (r *Umount) mergeKey(b *strings.Builder) {
+	writeQualifierKey(b, r.Qualifier)
+	b.WriteString(r.MountPoint)
+}
+
 func (r *Umount) Kind() Kind {
 	return UMOUNT
 }
@@ -384,6 +397,11 @@ func newRemountFromLog(log map[string]string) Rule {
 		MountConditions: newMountConditionsFromLog(log),
 		MountPoint:      log["name"],
 	}
+}
+
+func (r *Remount) mergeKey(b *strings.Builder) {
+	writeQualifierKey(b, r.Qualifier)
+	b.WriteString(r.MountPoint)
 }
 
 func (r *Remount) Kind() Kind {

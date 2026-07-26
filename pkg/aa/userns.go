@@ -4,7 +4,10 @@
 
 package aa
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 const USERNS Kind = "userns"
 
@@ -41,6 +44,8 @@ func newUsernsFromLog(log map[string]string) Rule {
 		Create:    true,
 	}
 }
+
+func (r *Userns) mergeKey(*strings.Builder) {} // kind-only bucket
 
 func (r *Userns) Kind() Kind {
 	return USERNS

@@ -229,6 +229,15 @@ func newNetworkFromLog(log map[string]string) Rule {
 	}
 }
 
+func (r *Network) mergeKey(b *strings.Builder) {
+	writeQualifierKey(b, r.Qualifier)
+	b.WriteString(r.Domain)
+	b.WriteByte(0)
+	b.WriteString(r.Type)
+	b.WriteByte(0)
+	b.WriteString(r.Protocol)
+}
+
 func (r *Network) Kind() Kind {
 	return NETWORK
 }

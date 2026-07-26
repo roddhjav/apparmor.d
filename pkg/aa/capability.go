@@ -6,6 +6,7 @@ package aa
 
 import (
 	"fmt"
+	"strings"
 )
 
 const CAPABILITY Kind = "capability"
@@ -48,6 +49,16 @@ func newCapabilityFromLog(log map[string]string) Rule {
 		Base:      newBaseFromLog(log),
 		Qualifier: newQualifierFromLog(log),
 		Names:     Must(toValues(CAPABILITY, "name", log["capname"])),
+	}
+}
+
+func (r *Capability) mergeKey(b *strings.Builder) {
+	writeQualifierKey(b, r.Qualifier)
+	for i, n := range r.Names {
+		if i > 0 {
+			b.WriteByte(',')
+		}
+		b.WriteString(n)
 	}
 }
 

@@ -119,6 +119,17 @@ func newHeader(rule rule) (Header, error) {
 	}, rule.ValidateMapKeys([]string{tokATTRIBUTES, tokFLAGS, "identities"})
 }
 
+func (p *Profile) mergeKey(b *strings.Builder) {
+	b.WriteString(p.Name)
+	b.WriteByte(0)
+	for i, a := range p.Attachments {
+		if i > 0 {
+			b.WriteByte(',')
+		}
+		b.WriteString(a)
+	}
+}
+
 func (p *Profile) Kind() Kind {
 	return PROFILE
 }

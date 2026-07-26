@@ -6,6 +6,7 @@ package aa
 
 import (
 	"fmt"
+	"strings"
 )
 
 const UNIX Kind = "unix"
@@ -97,6 +98,25 @@ func newUnixFromLog(log map[string]string) Rule {
 		PeerLabel: log["peer"],
 		PeerAddr:  log["peer_addr"],
 	}
+}
+
+func (r *Unix) mergeKey(b *strings.Builder) {
+	writeQualifierKey(b, r.Qualifier)
+	b.WriteString(r.Type)
+	b.WriteByte(0)
+	b.WriteString(r.Protocol)
+	b.WriteByte(0)
+	b.WriteString(r.Address)
+	b.WriteByte(0)
+	b.WriteString(r.Label)
+	b.WriteByte(0)
+	b.WriteString(r.Attr)
+	b.WriteByte(0)
+	b.WriteString(r.Opt)
+	b.WriteByte(0)
+	b.WriteString(r.PeerLabel)
+	b.WriteByte(0)
+	b.WriteString(r.PeerAddr)
 }
 
 func (r *Unix) Kind() Kind {

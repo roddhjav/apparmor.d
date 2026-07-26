@@ -6,6 +6,7 @@ package aa
 
 import (
 	"fmt"
+	"strings"
 )
 
 const DBUS Kind = "dbus"
@@ -94,6 +95,23 @@ func newDbusFromLog(log map[string]string) Rule {
 		PeerName:  peerName,
 		PeerLabel: log["peer_label"],
 	}
+}
+
+func (r *Dbus) mergeKey(b *strings.Builder) {
+	writeQualifierKey(b, r.Qualifier)
+	b.WriteString(r.Bus)
+	b.WriteByte(0)
+	b.WriteString(r.Name)
+	b.WriteByte(0)
+	b.WriteString(r.Path)
+	b.WriteByte(0)
+	b.WriteString(r.Interface)
+	b.WriteByte(0)
+	b.WriteString(r.Member)
+	b.WriteByte(0)
+	b.WriteString(r.PeerName)
+	b.WriteByte(0)
+	b.WriteString(r.PeerLabel)
 }
 
 func (r *Dbus) Kind() Kind {

@@ -33,6 +33,10 @@ func newHat(rule rule) (*Hat, error) {
 	}, rule.ValidateMapKeys([]string{"flags"})
 }
 
+func (p *Hat) mergeKey(b *strings.Builder) {
+	b.WriteString(p.Name)
+}
+
 func (p *Hat) Kind() Kind {
 	return HAT
 }
@@ -75,6 +79,10 @@ type Condition struct {
 func newCondition(rule rule) (*Condition, error) {
 	expression := strings.TrimPrefix(rule.GetString(), IF.Tok()+" ")
 	return &Condition{Expression: expression}, nil
+}
+
+func (p *Condition) mergeKey(b *strings.Builder) {
+	b.WriteString(p.Expression)
 }
 
 func (p *Condition) Kind() Kind {
