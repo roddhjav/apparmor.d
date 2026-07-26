@@ -133,6 +133,7 @@ func Configure(r *runtime.Runners) *runtime.Runners {
 	switch r.ABI {
 	case 3:
 		r.Builders.
+			Add(builder.NewABI4()).      // Convert all profiles from abi 5.0 to abi 4.0
 			Add(builder.NewABI3()).      // Convert all profiles from abi 4.0 to abi 3.0
 			Add(builder.NewAPPARMOR40()) // Convert all profiles from apparmor 4.1 to 4.0 or less
 
@@ -161,8 +162,6 @@ func Configure(r *runtime.Runners) *runtime.Runners {
 		}
 
 	case 5:
-		r.Builders.Add(builder.NewABI5()) // Convert all profiles from abi 4.0 to abi 5.0
-
 		// Re-attach disconnected path
 		if tasks.Distribution == "ubuntu" {
 			// Ignored on ubuntu 25.04+ due to a memory leak that fully prevent

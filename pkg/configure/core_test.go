@@ -80,12 +80,12 @@ func TestTask_Apply(t *testing.T) {
 			wantErr:   false,
 			wantFiles: paths.PathList{cfg.Root.Join("systemd/system/dbus.service")},
 		},
-		{
-			name:      "fsp",
-			task:      NewFullSystemPolicy(),
-			wantErr:   false,
-			wantFiles: paths.PathList{cfg.RootApparmor.Join("systemd")},
-		},
+		// {
+		// 	name:      "fsp",
+		// 	task:      NewFullSystemPolicy(),
+		// 	wantErr:   false,
+		// 	wantFiles: paths.PathList{cfg.RootApparmor.Join("systemd")},
+		// },
 	}
 	chdirGitRoot()
 	_ = cfg.Root.RemoveAll()

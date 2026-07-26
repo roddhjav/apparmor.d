@@ -27,7 +27,7 @@ func TestBuilder_Apply(t *testing.T) {
 			name: "abi3",
 			b:    NewABI3(),
 			profile: `
-			  abi <abi/5.0>,
+			  abi <abi/4.0>,
 			  profile test {
 			    userns,
 			    mqueue r type=posix /,

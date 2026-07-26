@@ -16,9 +16,6 @@ var (
 		`(?m)^([ \t]*)\} else if (.+\S)\s*\{[ \t]*$`, `${1}# } else if ${2}`,
 		`(?m)^([ \t]*)\} else\s*\{[ \t]*$`, `${1}# } else`,
 	})
-	regAbi4To5 = util.ToRegexRepl([]string{
-		`abi/4.0`, `abi/5.0`,
-	})
 	regAbi4To3 = util.ToRegexRepl([]string{
 		`abi/4.0`, `abi/3.0`,
 		`  userns,`, `  # userns,`,
@@ -30,10 +27,6 @@ var (
 		`priority=[0-9\-]*`, ``,
 	})
 )
-
-type ABI5 struct {
-	tasks.BaseTask
-}
 
 type ABI4 struct {
 	tasks.BaseTask
@@ -67,16 +60,6 @@ func NewABI4() *ABI4 {
 	}
 }
 
-// NewABI5 creates a new ABI5 builder.
-func NewABI5() *ABI5 {
-	return &ABI5{
-		BaseTask: tasks.BaseTask{
-			Keyword: "abi5",
-			Msg:     "Build: convert all profiles from abi 4.0 to abi 5.0",
-		},
-	}
-}
-
 // NewAPPARMOR40 creates a new APPARMOR40 builder.
 func NewAPPARMOR40() *APPARMOR40 {
 	return &APPARMOR40{
@@ -85,10 +68,6 @@ func NewAPPARMOR40() *APPARMOR40 {
 			Msg:     "Build: convert all profiles from apparmor 4.1 to 4.0 or less",
 		},
 	}
-}
-
-func (b ABI5) Apply(opt *Option, profile string) (string, error) {
-	return regAbi4To5.Replace(profile), nil
 }
 
 func (b ABI4) Apply(opt *Option, profile string) (string, error) {

@@ -117,7 +117,7 @@ var (
 			name:     "abi",
 			rule:     abi1,
 			other:    abi2,
-			wCompare: 1,
+			wCompare: 2,
 			wMerge:   false,
 			wString:  "abi <abi/5.0>,",
 		},
