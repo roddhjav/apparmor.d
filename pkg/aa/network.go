@@ -14,6 +14,24 @@ import (
 
 const NETWORK Kind = "network"
 
+var networkAccessBits = map[string]AccessMask{
+	"create":   1 << 0,
+	"bind":     1 << 1,
+	"listen":   1 << 2,
+	"accept":   1 << 3,
+	"connect":  1 << 4,
+	"shutdown": 1 << 5,
+	"getattr":  1 << 6,
+	"setattr":  1 << 7,
+	"getopt":   1 << 8,
+	"setopt":   1 << 9,
+	"send":     1 << 10,
+	"receive":  1 << 11,
+	"r":        1 << 12,
+	"w":        1 << 13,
+	"rw":       1 << 14,
+}
+
 func init() {
 	requirements[NETWORK] = requirement{
 		"access": []string{
@@ -145,7 +163,7 @@ type Network struct {
 	Qualifier
 	LocalAddress
 	PeerAddress
-	Access   []string
+	Access   AccessMask
 	Domain   string
 	Type     string
 	Protocol string
@@ -182,12 +200,16 @@ func newNetwork(q Qualifier, rule rule) (Rule, error) {
 	if err != nil {
 		return nil, err
 	}
+	accessMask, err := toAccessMask(NETWORK, accesses)
+	if err != nil {
+		return nil, err
+	}
 	return &Network{
 		Base:         newBase(rule),
 		Qualifier:    q,
 		LocalAddress: localAdress,
 		PeerAddress:  peerAddress,
-		Access:       accesses,
+		Access:       accessMask,
 		Domain:       domain,
 		Type:         nType,
 		Protocol:     protocol,
@@ -211,6 +233,10 @@ func (r *Network) Kind() Kind {
 	return NETWORK
 }
 
+func (r *Network) AccessStrings() []string {
+	return r.Access.Strings(NETWORK)
+}
+
 func (r *Network) Constraint() Constraint {
 	return BlockRule
 }
@@ -220,7 +246,7 @@ func (r *Network) String() string {
 }
 
 func (r *Network) Validate() error {
-	if err := validateValues(r.Kind(), "access", r.Access); err != nil {
+	if err := validateAccess(r.Kind(), r.Access); err != nil {
 		return fmt.Errorf("%s: %w", r, err)
 	}
 	if err := validateValues(r.Kind(), "domains", []string{r.Domain}); err != nil {
@@ -239,7 +265,7 @@ func (r *Network) Validate() error {
 		return fmt.Errorf("%s: %w", r, err)
 	}
 	if r.PeerAddress.IP != "" || r.PeerAddress.Port != "" || r.Src != "" {
-		if len(r.Access) > 0 && allLocalOnly(r.Access, requirements[NETWORK]["local-only"]) {
+		if r.Access != 0 && allLocalOnly(r.Access, NETWORK) {
 			return fmt.Errorf("peer modifier not allowed with local-only access types in network rule")
 		}
 	}
@@ -251,7 +277,7 @@ func (r *Network) Compare(other Rule) int {
 	if res := compare(r.Domain, o.Domain); res != 0 {
 		return res
 	}
-	if res := compare(r.Access, o.Access); res != 0 {
+	if res := compareAccessMask(r.Access, o.Access, NETWORK); res != 0 {
 		return res
 	}
 	if res := compare(r.Type, o.Type); res != 0 {

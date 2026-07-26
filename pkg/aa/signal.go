@@ -12,6 +12,16 @@ import (
 
 const SIGNAL Kind = "signal"
 
+var signalAccessBits = map[string]AccessMask{
+	"r":       1 << 0,
+	"w":       1 << 1,
+	"rw":      1 << 2,
+	"read":    1 << 3,
+	"write":   1 << 4,
+	"send":    1 << 5,
+	"receive": 1 << 6,
+}
+
 func init() {
 	requirements[SIGNAL] = requirement{
 		"access": {
@@ -36,7 +46,7 @@ func init() {
 type Signal struct {
 	Base
 	Qualifier
-	Access []string
+	Access AccessMask
 	Set    []string
 	Peer   string
 }
@@ -73,6 +83,10 @@ func (r *Signal) Kind() Kind {
 	return SIGNAL
 }
 
+func (r *Signal) AccessStrings() []string {
+	return r.Access.Strings(SIGNAL)
+}
+
 func (r *Signal) Constraint() Constraint {
 	return BlockRule
 }
@@ -82,7 +96,7 @@ func (r *Signal) String() string {
 }
 
 func (r *Signal) Validate() error {
-	if err := validateValues(r.Kind(), "access", r.Access); err != nil {
+	if err := validateAccess(r.Kind(), r.Access); err != nil {
 		return fmt.Errorf("%s: %w", r, err)
 	}
 	// Normalize signal set names (strip leading zeros from rtmin+NNN)
@@ -102,7 +116,7 @@ func (r *Signal) Validate() error {
 
 func (r *Signal) Compare(other Rule) int {
 	o, _ := other.(*Signal)
-	if res := compare(r.Access, o.Access); res != 0 {
+	if res := compareAccessMask(r.Access, o.Access, SIGNAL); res != 0 {
 		return res
 	}
 	if res := compare(r.Set, o.Set); res != 0 {
@@ -122,10 +136,10 @@ func (r *Signal) Merge(other Rule) bool {
 	}
 	switch {
 	case r.Peer == o.Peer && compare(r.Set, o.Set) == 0:
-		r.Access = merge(r.Kind(), "access", r.Access, o.Access)
+		r.Access |= o.Access
 		b := &r.Base
 		return b.merge(o.Base)
-	case r.Peer == o.Peer && compare(r.Access, o.Access) == 0:
+	case r.Peer == o.Peer && compareAccessMask(r.Access, o.Access, SIGNAL) == 0:
 		r.Set = merge(r.Kind(), "set", r.Set, o.Set)
 		b := &r.Base
 		return b.merge(o.Base)
@@ -137,7 +151,7 @@ func (r *Signal) Lengths() []int {
 	return []int{
 		r.getLenAudit(),
 		r.getLenAccess(),
-		length("", r.Access),
+		length("", r.Access.Strings(r.Kind())),
 		length("set=", r.Set),
 		length("peer=", r.Peer),
 	}
@@ -146,6 +160,6 @@ func (r *Signal) Lengths() []int {
 func (r *Signal) setPaddings(max []int) {
 	r.Paddings = append(r.Qualifier.setPaddings(max[:2]), setPaddings(
 		max[2:], []string{"", "set=", "peer="},
-		[]any{r.Access, r.Set, r.Peer})...,
+		[]any{r.Access.Strings(r.Kind()), r.Set, r.Peer})...,
 	)
 }

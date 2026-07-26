@@ -6,10 +6,7 @@ package aa
 
 import (
 	"fmt"
-	"slices"
 	"strings"
-
-	"github.com/roddhjav/apparmor.d/pkg/util"
 )
 
 const (
@@ -18,6 +15,35 @@ const (
 	tokOWNER       = "owner"
 	tokSUBSET      = "subset"
 )
+
+var fileAccessBits = map[string]AccessMask{
+	// access
+	"m": 1 << 0,
+	"r": 1 << 1,
+	"w": 1 << 2,
+	"a": 1 << 3,
+	"l": 1 << 4,
+	"k": 1 << 5,
+	// transitions
+	"ix":  1 << 6,
+	"ux":  1 << 7,
+	"Ux":  1 << 8,
+	"px":  1 << 9,
+	"Px":  1 << 10,
+	"cx":  1 << 11,
+	"Cx":  1 << 12,
+	"pix": 1 << 13,
+	"Pix": 1 << 14,
+	"cix": 1 << 15,
+	"Cix": 1 << 16,
+	"pux": 1 << 17,
+	"PUx": 1 << 18,
+	"cux": 1 << 19,
+	"CUx": 1 << 20,
+	"x":   1 << 21,
+	"Pux": 1 << 22,
+	"pUx": 1 << 23,
+}
 
 func init() {
 	requirements[FILE] = requirement{
@@ -45,7 +71,7 @@ type File struct {
 	Qualifier
 	Owner  bool
 	Path   string
-	Access []string
+	Access AccessMask
 	Target string
 }
 
@@ -72,7 +98,7 @@ func newFile(q Qualifier, rule rule) (Rule, error) {
 
 		// Determine format: "path access" vs "access path"
 		// Try parsing first token as access - if valid, use "access path" format
-		if testAccess, _ := toAccess(FILE, r[0]); len(testAccess) > 0 {
+		if testAccess, _ := toAccess(FILE, r[0]); testAccess != 0 {
 			access, path = r[0], r[1]
 		} else {
 			path, access = r[0], r[1]
@@ -106,7 +132,7 @@ func newFileFromLog(log map[string]string) Rule {
 	if err != nil {
 		panic(fmt.Errorf("newFileFromLog(%v): %w", log, err))
 	}
-	if slices.Compare(accesses, []string{"l"}) == 0 {
+	if accesses == accessBits[FILE]["l"] {
 		return newLinkFromLog(log)
 	}
 	return &File{
@@ -123,6 +149,10 @@ func (r *File) Kind() Kind {
 	return FILE
 }
 
+func (r *File) AccessStrings() []string {
+	return r.Access.Strings(FILE)
+}
+
 func (r *File) Constraint() Constraint {
 	return BlockRule
 }
@@ -132,30 +162,24 @@ func (r *File) String() string {
 }
 
 func (r *File) Validate() error {
-	if r.Path == "" && r.Target == "" && len(r.Access) == 0 {
+	if r.Path == "" && r.Target == "" && r.Access == 0 {
 		return nil // rule: `file` or `owner file`
 	}
 	if !isAARE(r.Path) {
 		return fmt.Errorf("'%s' is not a valid AARE", r.Path)
 	}
-	if len(r.Access) == 0 {
+	if r.Access == 0 {
 		return fmt.Errorf("missing file access")
 	}
-	for _, v := range r.Access {
-		if v == "" {
-			continue
-		}
-		if !slices.Contains(requirements[r.Kind()]["access"], v) &&
-			!slices.Contains(requirements[r.Kind()]["transition"], v) {
-			return fmt.Errorf("invalid mode '%s'", v)
-		}
+	if err := validateAccess(r.Kind(), r.Access); err != nil {
+		return err
 	}
 	if err := validateAAREPattern(r.Path); err != nil {
 		return err
 	}
 	// Conflicting access: write (w) and append (a) cannot coexist
-	hasW := slices.Contains(r.Access, "w")
-	hasA := slices.Contains(r.Access, "a")
+	hasW := r.Access.Has(accessBits[FILE]["w"])
+	hasA := r.Access.Has(accessBits[FILE]["a"])
 	if hasW && hasA {
 		return fmt.Errorf("conflicting file access: 'w' and 'a' cannot coexist")
 	}
@@ -192,7 +216,7 @@ func (r *File) Compare(other Rule) int {
 	if res := compare(r.Path, o.Path); res != 0 {
 		return res
 	}
-	if res := compare(r.Access, o.Access); res != 0 {
+	if res := compareAccessMask(r.Access, o.Access, FILE); res != 0 {
 		return res
 	}
 	return compare(r.Target, o.Target)
@@ -205,7 +229,7 @@ func (r *File) Merge(other Rule) bool {
 		return false
 	}
 	if r.Owner == o.Owner && r.Path == o.Path && r.Target == o.Target {
-		r.Access = merge(r.Kind(), "access", r.Access, o.Access)
+		r.Access |= o.Access
 		b := &r.Base
 		return b.merge(o.Base)
 	}
@@ -220,10 +244,8 @@ func (r *File) Lengths() []int {
 
 	// Add padding to align with other transition rule
 	lenPath := 0
-	isTransition := util.Intersect(
-		append(requirements[FILE]["transition"], "m"), r.Access,
-	)
-	if len(isTransition) > 0 {
+	ensureAccessMasks()
+	if r.Access.ContainsAny(fileTransitionMask) {
 		lenPath = length("", r.Path)
 	}
 	return []int{

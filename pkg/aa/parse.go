@@ -972,7 +972,7 @@ func newRules(rules []rule) (Rules, error) {
 					return nil, fmt.Errorf("unrecognized rule: %s", rule)
 				}
 				testAccess, _ := toAccess(FILE, raw)
-				if !isAARE(raw) && !owner && len(testAccess) == 0 {
+				if !isAARE(raw) && !owner && testAccess == 0 {
 					return nil, fmt.Errorf("unknown rule: %s", rule)
 				}
 				r, err = newFile(q, rule)

@@ -319,9 +319,9 @@ func toValues(kind Kind, key string, input string) ([]string, error) {
 	return slices.Compact(res), nil
 }
 
-// Helper function to convert an access string to a slice of access according to
+// Helper function to convert an access string to an access bitmask according to
 // the rule requirements as defined in the requirements matrix.
-func toAccess(kind Kind, input string) ([]string, error) {
+func toAccess(kind Kind, input string) (AccessMask, error) {
 	var res []string
 
 	switch kind {
@@ -343,8 +343,8 @@ func toAccess(kind Kind, input string) ([]string, error) {
 				_ = i
 				if firstAccessAfterTrans {
 					// Transition char after access char that was after a transition char
-					// e.g., "prx" → p(trans) r(access) x(trans) — invalid interleaving
-					return nil, fmt.Errorf("invalid access mode: access and transition chars interleaved in '%s'", input)
+					// e.g., "prx" → p(trans) r(access) x(trans), invalid interleaving
+					return 0, fmt.Errorf("invalid access mode: access and transition chars interleaved in '%s'", input)
 				}
 				trans = append(trans, access)
 				lastTransPos = i
@@ -357,9 +357,10 @@ func toAccess(kind Kind, input string) ([]string, error) {
 			if resolved != "" {
 				res = append(res, resolved)
 			} else {
-				return nil, fmt.Errorf("unrecognized transition: %s", transition)
+				return 0, fmt.Errorf("unrecognized transition: %s", transition)
 			}
 		}
+		return toAccessMask(FILE, res)
 
 	case FILE + "-log":
 		accessWeights := requirementsWeights[FILE]["access"]
@@ -370,15 +371,18 @@ func toAccess(kind Kind, input string) ([]string, error) {
 			} else if maskToAccess[access] != "" {
 				res = append(res, maskToAccess[access])
 			} else {
-				return nil, fmt.Errorf("toAccess: unrecognized file access '%s' for %s", input, kind)
+				return 0, fmt.Errorf("toAccess: unrecognized file access '%s' for %s", input, kind)
 			}
 		}
+		return toAccessMask(FILE, res)
 
 	default:
-		return toValues(kind, "access", input)
+		values, err := toValues(kind, "access", input)
+		if err != nil {
+			return 0, err
+		}
+		return toAccessMask(kind, values)
 	}
-	slices.SortFunc(res, compareFileAccess)
-	return slices.Compact(res), nil
 }
 
 // resolveTransition tries to match a transition string against known transitions.
@@ -404,14 +408,4 @@ func resolveTransition(transition string, weights map[string]int) string {
 		}
 	}
 	return ""
-}
-
-// allLocalOnly returns true if all access types are in the local-only list.
-func allLocalOnly(access, localOnly []string) bool {
-	for _, a := range access {
-		if !slices.Contains(localOnly, a) {
-			return false
-		}
-	}
-	return true
 }

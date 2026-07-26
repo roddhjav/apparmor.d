@@ -12,6 +12,19 @@ import (
 
 const MQUEUE Kind = "mqueue"
 
+var mqueueAccessBits = map[string]AccessMask{
+	"r":       1 << 0,
+	"w":       1 << 1,
+	"rw":      1 << 2,
+	"read":    1 << 3,
+	"write":   1 << 4,
+	"create":  1 << 5,
+	"open":    1 << 6,
+	"delete":  1 << 7,
+	"getattr": 1 << 8,
+	"setattr": 1 << 9,
+}
+
 func init() {
 	requirements[MQUEUE] = requirement{
 		"access": []string{
@@ -25,7 +38,7 @@ func init() {
 type Mqueue struct {
 	Base
 	Qualifier
-	Access []string
+	Access AccessMask
 	Type   string
 	Label  string
 	Name   string
@@ -77,6 +90,10 @@ func (r *Mqueue) Kind() Kind {
 	return MQUEUE
 }
 
+func (r *Mqueue) AccessStrings() []string {
+	return r.Access.Strings(MQUEUE)
+}
+
 func (r *Mqueue) Constraint() Constraint {
 	return BlockRule
 }
@@ -86,7 +103,7 @@ func (r *Mqueue) String() string {
 }
 
 func (r *Mqueue) Validate() error {
-	if err := validateValues(r.Kind(), "access", r.Access); err != nil {
+	if err := validateAccess(r.Kind(), r.Access); err != nil {
 		return fmt.Errorf("%s: %w", r, err)
 	}
 	if err := validateValues(r.Kind(), "type", []string{r.Type}); err != nil {
@@ -109,7 +126,7 @@ func (r *Mqueue) Validate() error {
 
 func (r *Mqueue) Compare(other Rule) int {
 	o, _ := other.(*Mqueue)
-	if res := compare(r.Access, o.Access); res != 0 {
+	if res := compareAccessMask(r.Access, o.Access, MQUEUE); res != 0 {
 		return res
 	}
 	if res := compare(r.Type, o.Type); res != 0 {
@@ -128,7 +145,7 @@ func (r *Mqueue) Merge(other Rule) bool {
 		return false
 	}
 	if r.Type == o.Type && r.Label == o.Label && r.Name == o.Name {
-		r.Access = merge(r.Kind(), "access", r.Access, o.Access)
+		r.Access |= o.Access
 		b := &r.Base
 		return b.merge(o.Base)
 	}
@@ -139,7 +156,7 @@ func (r *Mqueue) Lengths() []int {
 	return []int{
 		r.getLenAudit(),
 		r.getLenAccess(),
-		length("", r.Access),
+		length("", r.Access.Strings(r.Kind())),
 		length("type=", r.Type),
 		length("label=", r.Label),
 		length("", r.Name),
@@ -149,6 +166,6 @@ func (r *Mqueue) Lengths() []int {
 func (r *Mqueue) setPaddings(max []int) {
 	r.Paddings = append(r.Qualifier.setPaddings(max[:2]), setPaddings(
 		max[2:], []string{"", "type=", "label=", ""},
-		[]any{r.Access, r.Type, r.Label, r.Name})...,
+		[]any{r.Access.Strings(r.Kind()), r.Type, r.Label, r.Name})...,
 	)
 }

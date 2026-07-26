@@ -85,7 +85,7 @@ var (
 		"denied":    "send",
 	}
 	network1 = &Network{
-		Access:   []string{},
+		Access:   0,
 		Domain:   "netlink",
 		Type:     "raw",
 		Protocol: "15",
@@ -95,7 +95,7 @@ var (
 		Base:         Base{Comment: " failed af match"},
 		LocalAddress: LocalAddress{IP: "127.0.0.1", Port: "57007"},
 		PeerAddress:  PeerAddress{IP: "127.0.0.53", Port: "53", Src: "127.0.0.1"},
-		Access:       []string{"send"},
+		Access:       MustAccess(NETWORK, "send"),
 		Type:         "dgram",
 		Protocol:     "17",
 	}
@@ -192,12 +192,12 @@ var (
 	changeprofile3 = &ChangeProfile{ExecMode: "safe", Exec: "/bin/bash", ProfileName: "brwap//default"}
 
 	// Mqueue
-	mqueue1 = &Mqueue{Access: []string{"r"}, Type: "posix", Name: "/"}
-	mqueue2 = &Mqueue{Access: []string{"r"}, Type: "sysv", Name: "/"}
+	mqueue1 = &Mqueue{Access: MustAccess(MQUEUE, "r"), Type: "posix", Name: "/"}
+	mqueue2 = &Mqueue{Access: MustAccess(MQUEUE, "r"), Type: "sysv", Name: "/"}
 
 	// IO Uring
-	iouring1 = &IOUring{Access: []string{"sqpoll"}, Label: "foo"}
-	iouring2 = &IOUring{Access: []string{"override_creds"}}
+	iouring1 = &IOUring{Access: MustAccess(IOURING, "sqpoll"), Label: "foo"}
+	iouring2 = &IOUring{Access: MustAccess(IOURING, "override_creds")}
 
 	// Signal
 	signal1Log = map[string]string{
@@ -212,12 +212,12 @@ var (
 		"peer":           "firefox//&firejail-default",
 	}
 	signal1 = &Signal{
-		Access: []string{"receive"},
+		Access: MustAccess(SIGNAL, "receive"),
 		Set:    []string{"kill"},
 		Peer:   "firefox//&firejail-default",
 	}
 	signal2 = &Signal{
-		Access: []string{"receive"},
+		Access: MustAccess(SIGNAL, "receive"),
 		Set:    []string{"up"},
 		Peer:   "firefox//&firejail-default",
 	}
@@ -242,8 +242,8 @@ var (
 		"denied_mask":    "readby",
 		"peer":           "systemd-journald",
 	}
-	ptrace1 = &Ptrace{Access: []string{"read"}, Peer: "nautilus"}
-	ptrace2 = &Ptrace{Access: []string{"readby"}, Peer: "systemd-journald"}
+	ptrace1 = &Ptrace{Access: MustAccess(PTRACE, "read"), Peer: "nautilus"}
+	ptrace2 = &Ptrace{Access: MustAccess(PTRACE, "readby"), Peer: "systemd-journald"}
 
 	// Unix
 	unix1Log = map[string]string{
@@ -262,7 +262,7 @@ var (
 		"protocol":       "0",
 	}
 	unix1 = &Unix{
-		Access:    []string{"send", "receive"},
+		Access:    MustAccess(UNIX, "send", "receive"),
 		Type:      "stream",
 		Protocol:  "0",
 		Address:   "none",
@@ -271,7 +271,7 @@ var (
 	}
 	unix2 = &Unix{
 		Base:   Base{FileInherit: true},
-		Access: []string{"receive"},
+		Access: MustAccess(UNIX, "receive"),
 		Type:   "stream",
 	}
 
@@ -299,7 +299,7 @@ var (
 		"label":     "evolution-source-registry",
 	}
 	dbus1 = &Dbus{
-		Access:    []string{"receive"},
+		Access:    MustAccess(DBUS, "receive"),
 		Bus:       "session",
 		Path:      "/org/gtk/vfs/metadata",
 		Interface: "org.gtk.vfs.Metadata",
@@ -308,12 +308,12 @@ var (
 		PeerLabel: "tracker-extract",
 	}
 	dbus2 = &Dbus{
-		Access: []string{"bind"},
+		Access: MustAccess(DBUS, "bind"),
 		Bus:    "session",
 		Name:   "org.gnome.evolution.dataserver.Sources5",
 	}
 	dbus3 = &Dbus{
-		Access: []string{"bind"},
+		Access: MustAccess(DBUS, "bind"),
 		Bus:    "session",
 		Name:   "org.gnome.evolution.dataserver",
 	}
@@ -348,12 +348,12 @@ var (
 		"OUID":           "user",
 		"error":          "-1",
 	}
-	file1 = &File{Path: "/usr/share/poppler/cMap/Identity-H", Access: []string{"r"}}
+	file1 = &File{Path: "/usr/share/poppler/cMap/Identity-H", Access: MustAccess(FILE, "r")}
 	file2 = &File{
 		Base:   Base{NoNewPrivs: true},
 		Owner:  true,
 		Path:   "@{PROC}/4163/cgroup",
-		Access: []string{"r"},
+		Access: MustAccess(FILE, "r"),
 	}
 
 	// Link

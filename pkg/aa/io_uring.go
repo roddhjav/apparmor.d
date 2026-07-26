@@ -10,6 +10,11 @@ import (
 
 const IOURING Kind = "io_uring"
 
+var ioUringAccessBits = map[string]AccessMask{
+	"sqpoll":         1 << 0,
+	"override_creds": 1 << 1,
+}
+
 func init() {
 	requirements[IOURING] = requirement{
 		"access": []string{"sqpoll", "override_creds"},
@@ -19,7 +24,7 @@ func init() {
 type IOUring struct {
 	Base
 	Qualifier
-	Access []string
+	Access AccessMask
 	Label  string
 }
 
@@ -52,6 +57,10 @@ func (r *IOUring) Kind() Kind {
 	return IOURING
 }
 
+func (r *IOUring) AccessStrings() []string {
+	return r.Access.Strings(IOURING)
+}
+
 func (r *IOUring) Constraint() Constraint {
 	return BlockRule
 }
@@ -61,7 +70,7 @@ func (r *IOUring) String() string {
 }
 
 func (r *IOUring) Validate() error {
-	if err := validateValues(r.Kind(), "access", r.Access); err != nil {
+	if err := validateAccess(r.Kind(), r.Access); err != nil {
 		return fmt.Errorf("%s: %w", r, err)
 	}
 	return nil
@@ -69,7 +78,7 @@ func (r *IOUring) Validate() error {
 
 func (r *IOUring) Compare(other Rule) int {
 	o, _ := other.(*IOUring)
-	if res := compare(r.Access, o.Access); res != 0 {
+	if res := compareAccessMask(r.Access, o.Access, IOURING); res != 0 {
 		return res
 	}
 	if res := compare(r.Label, o.Label); res != 0 {
@@ -85,7 +94,7 @@ func (r *IOUring) Merge(other Rule) bool {
 		return false
 	}
 	if r.Label == o.Label {
-		r.Access = merge(r.Kind(), "access", r.Access, o.Access)
+		r.Access |= o.Access
 		b := &r.Base
 		return b.merge(o.Base)
 	}
@@ -96,7 +105,7 @@ func (r *IOUring) Lengths() []int {
 	return []int{
 		r.getLenAudit(),
 		r.getLenAccess(),
-		length("", r.Access),
+		length("", r.Access.Strings(r.Kind())),
 		length("label=", r.Label),
 	}
 }
@@ -104,6 +113,6 @@ func (r *IOUring) Lengths() []int {
 func (r *IOUring) setPaddings(max []int) {
 	r.Paddings = append(r.Qualifier.setPaddings(max[:2]), setPaddings(
 		max[2:], []string{"", "label="},
-		[]any{r.Access, r.Label})...,
+		[]any{r.Access.Strings(r.Kind()), r.Label})...,
 	)
 }

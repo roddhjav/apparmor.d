@@ -75,14 +75,22 @@ func Test_toAccess(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			canonical := tt.kind
+			if canonical == FILE+"-log" {
+				canonical = FILE
+			}
 			for i, input := range tt.inputs {
 				got, err := toAccess(tt.kind, input)
 				if (err != nil) != tt.wantsErr[i] {
 					t.Errorf("toAccess() error = %v, wantErr %v", err, tt.wantsErr[i])
 					return
 				}
-				if !reflect.DeepEqual(got, tt.wants[i]) {
-					t.Errorf("toAccess() = %v, want %v", got, tt.wants[i])
+				gotTokens := got.Strings(canonical)
+				if len(gotTokens) == 0 && len(tt.wants[i]) == 0 {
+					continue
+				}
+				if !reflect.DeepEqual(gotTokens, tt.wants[i]) {
+					t.Errorf("toAccess() = %v, want %v", gotTokens, tt.wants[i])
 				}
 			}
 		})

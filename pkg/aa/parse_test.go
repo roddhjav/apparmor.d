@@ -815,7 +815,7 @@ var (
 			wGetValuesAsString: "at-spi-bus-launcher",
 			wString:            "signal receive set=(cont term winch) peer=at-spi-bus-launcher",
 			wRule: &Signal{
-				Access: []string{"receive"},
+				Access: MustAccess(SIGNAL, "receive"),
 				Set:    []string{"cont", "term", "winch"},
 				Peer:   "at-spi-bus-launcher",
 			},
@@ -880,7 +880,7 @@ var (
 			wGetValuesAsString: "",
 			wString:            `unix send receive type=stream addr=("@/tmp/.ICE[0-9]*-unix/19 5") peer=(label="@{p_systemd}" addr=none)`,
 			wRule: &Unix{
-				Access:    []string{"send", "receive"},
+				Access:    MustAccess(UNIX, "send", "receive"),
 				Type:      "stream",
 				Address:   `"@/tmp/.ICE[0-9]*-unix/19 5"`,
 				PeerLabel: `"@{p_systemd}"`,
@@ -914,7 +914,7 @@ var (
 			wGetValuesAsString: "stream",
 			wString:            `unix connect receive send type=stream peer=(addr="@/tmp/ibus/dbus-????????")`,
 			wRule: &Unix{
-				Access:   []string{"connect", "receive", "send"},
+				Access:   MustAccess(UNIX, "connect", "receive", "send"),
 				Type:     "stream",
 				PeerAddr: `"@/tmp/ibus/dbus-????????"`,
 			},
@@ -955,7 +955,7 @@ var (
 			wGetValuesAsString: "/org/freedesktop/DBus",
 			wString:            `dbus receive bus=system path=/org/freedesktop/DBus interface=org.freedesktop.DBus member=AddMatch peer=(name=:1.3 label=power-profiles-daemon)`,
 			wRule: &Dbus{
-				Access:    []string{"receive"},
+				Access:    MustAccess(DBUS, "receive"),
 				Bus:       "system",
 				Path:      "/org/freedesktop/DBus",
 				Interface: "org.freedesktop.DBus",
@@ -983,7 +983,7 @@ var (
 			wRule: &File{
 				Owner:  true,
 				Path:   "@{user_config_dirs}/powerdevilrc{,.@{rand6}}",
-				Access: []string{"r", "w", "l"},
+				Access: MustAccess(FILE, "r", "w", "l"),
 				Target: "@{user_config_dirs}/#@{int}",
 			},
 		},
@@ -999,7 +999,7 @@ var (
 			wGetString: `@{sys}/devices/@{pci}/class r`,
 			wGetSlice:  []string{"@{sys}/devices/@{pci}/class", "r"},
 			wString:    `@{sys}/devices/@{pci}/class r`,
-			wRule:      &File{Path: "@{sys}/devices/@{pci}/class", Access: []string{"r"}},
+			wRule:      &File{Path: "@{sys}/devices/@{pci}/class", Access: MustAccess(FILE, "r")},
 		},
 		{
 			name:   "file-3",
@@ -1016,7 +1016,7 @@ var (
 			wRule: &File{
 				Owner:  true,
 				Path:   "@{PROC}/@{pid}/task/@{tid}/comm",
-				Access: []string{"r", "w"},
+				Access: MustAccess(FILE, "r", "w"),
 			},
 		},
 		{
@@ -1034,7 +1034,7 @@ var (
 			wRule: &File{
 				Owner:  true,
 				Path:   "/{var/,}tmp/#@{int}",
-				Access: []string{"r", "w"},
+				Access: MustAccess(FILE, "r", "w"),
 			},
 		},
 		{
@@ -1054,7 +1054,7 @@ var (
 			wRule: &File{
 				Owner:  true,
 				Path:   "@{run}/user/@{uid}/gvfs/smb-share:server=*,share=**/",
-				Access: []string{"r"},
+				Access: MustAccess(FILE, "r"),
 			},
 		},
 	}
@@ -1374,21 +1374,21 @@ var (
 							Flags:       []string{},
 						},
 						Rules: Rules{
-							&File{Path: "/bin/false", Access: []string{"r", "ix"}},
+							&File{Path: "/bin/false", Access: MustAccess(FILE, "r", "ix")},
 							&Condition{
 								Expression: "${FOO}",
 								IfRules: Rules{
-									&File{Path: "/bin/true", Access: []string{"r", "ix"}},
+									&File{Path: "/bin/true", Access: MustAccess(FILE, "r", "ix")},
 								},
 							},
-							&File{Path: "/bin/true", Access: []string{"r", "ix"}},
+							&File{Path: "/bin/true", Access: MustAccess(FILE, "r", "ix")},
 							&Condition{
 								Expression: "${BAR}",
 								IfRules: Rules{
-									&File{Path: "/etc/shadow", Access: []string{"r", "w"}},
+									&File{Path: "/etc/shadow", Access: MustAccess(FILE, "r", "w")},
 								},
 							},
-							&File{Path: "/bin/sh", Access: []string{"r", "ix"}},
+							&File{Path: "/bin/sh", Access: MustAccess(FILE, "r", "ix")},
 						},
 					},
 				},
@@ -1414,21 +1414,21 @@ var (
 							Flags:       []string{},
 						},
 						Rules: Rules{
-							&File{Path: "/bin/false", Access: []string{"r", "ix"}},
+							&File{Path: "/bin/false", Access: MustAccess(FILE, "r", "ix")},
 							&Condition{
 								Expression: "${FOO}",
 								IfRules: Rules{
-									&File{Path: "/bin/true", Access: []string{"r", "ix"}},
+									&File{Path: "/bin/true", Access: MustAccess(FILE, "r", "ix")},
 								},
 							},
-							&File{Path: "/bin/true", Access: []string{"r", "ix"}},
+							&File{Path: "/bin/true", Access: MustAccess(FILE, "r", "ix")},
 							&Condition{
 								Expression: "${BAR}",
 								IfRules: Rules{
-									&File{Path: "/etc/shadow", Access: []string{"r", "w"}},
+									&File{Path: "/etc/shadow", Access: MustAccess(FILE, "r", "w")},
 								},
 							},
-							&File{Path: "/bin/sh", Access: []string{"r", "ix"}},
+							&File{Path: "/bin/sh", Access: MustAccess(FILE, "r", "ix")},
 						},
 					},
 				},
@@ -1560,26 +1560,26 @@ var (
 				},
 				{
 					&Signal{
-						Access: []string{"receive"},
+						Access: MustAccess(SIGNAL, "receive"),
 						Set:    []string{"term"},
 						Peer:   "at-spi-bus-launcher",
 					},
 				},
 				{
-					&Ptrace{Access: []string{"read"}, Peer: "nautilus"},
+					&Ptrace{Access: MustAccess(PTRACE, "read"), Peer: "nautilus"},
 				},
 				{
 					&Unix{
-						Access:    []string{"send", "receive"},
+						Access:    MustAccess(UNIX, "send", "receive"),
 						Type:      "stream",
 						Address:   "@/tmp/.ICE-unix/1995",
 						PeerLabel: "gnome-shell",
 					},
 				},
 				{
-					&Dbus{Access: []string{"bind"}, Bus: "session", Name: "org.gnome.*"},
+					&Dbus{Access: MustAccess(DBUS, "bind"), Bus: "session", Name: "org.gnome.*"},
 					&Dbus{
-						Access:    []string{"receive"},
+						Access:    MustAccess(DBUS, "receive"),
 						Bus:       "system",
 						Path:      "/org/freedesktop/DBus",
 						Interface: "org.freedesktop.DBus",
@@ -1589,9 +1589,9 @@ var (
 					},
 				},
 				{
-					&File{Path: "/opt/intel/oneapi/compiler/*/linux/lib/*.so./*", Access: []string{"m", "r"}},
-					&File{Path: "@{PROC}/@{pid}/task/@{tid}/comm", Access: []string{"r", "w"}},
-					&File{Path: "@{sys}/devices/@{pci}/class", Access: []string{"r"}},
+					&File{Path: "/opt/intel/oneapi/compiler/*/linux/lib/*.so./*", Access: MustAccess(FILE, "m", "r")},
+					&File{Path: "@{PROC}/@{pid}/task/@{tid}/comm", Access: MustAccess(FILE, "r", "w")},
+					&File{Path: "@{sys}/devices/@{pci}/class", Access: MustAccess(FILE, "r")},
 				},
 				{
 					&Include{IfExists: true, IsMagic: true, Path: "local/foo"},
@@ -1646,26 +1646,26 @@ var (
 				},
 				{
 					&Signal{
-						Access: []string{"receive"},
+						Access: MustAccess(SIGNAL, "receive"),
 						Set:    []string{"term"},
 						Peer:   "at-spi-bus-launcher",
 					},
 				},
 				{
-					&Ptrace{Access: []string{"read"}, Peer: "nautilus"},
+					&Ptrace{Access: MustAccess(PTRACE, "read"), Peer: "nautilus"},
 				},
 				{
 					&Unix{
-						Access:    []string{"send", "receive"},
+						Access:    MustAccess(UNIX, "send", "receive"),
 						Type:      "stream",
 						Address:   "@/tmp/.ICE-unix/1995",
 						PeerLabel: "gnome-shell",
 					},
 				},
 				{
-					&Dbus{Access: []string{"bind"}, Bus: "session", Name: "org.gnome.*"},
+					&Dbus{Access: MustAccess(DBUS, "bind"), Bus: "session", Name: "org.gnome.*"},
 					&Dbus{
-						Access:    []string{"receive"},
+						Access:    MustAccess(DBUS, "receive"),
 						Bus:       "system",
 						Path:      "/org/freedesktop/DBus",
 						Interface: "org.freedesktop.DBus",
@@ -1675,9 +1675,9 @@ var (
 					},
 				},
 				{
-					&File{Path: "/opt/intel/oneapi/compiler/*/linux/lib/*.so./*", Access: []string{"m", "r"}},
-					&File{Path: "@{PROC}/@{pid}/task/@{tid}/comm", Access: []string{"r", "w"}},
-					&File{Path: "@{sys}/devices/@{pci}/class", Access: []string{"r"}},
+					&File{Path: "/opt/intel/oneapi/compiler/*/linux/lib/*.so./*", Access: MustAccess(FILE, "m", "r")},
+					&File{Path: "@{PROC}/@{pid}/task/@{tid}/comm", Access: MustAccess(FILE, "r", "w")},
+					&File{Path: "@{sys}/devices/@{pci}/class", Access: MustAccess(FILE, "r")},
 				},
 			},
 			wParseRulesErr: false,
@@ -1703,7 +1703,7 @@ var (
 						Flags: []string{"attach_disconnected"},
 					},
 					Rules: Rules{
-						&File{Path: "/path/to/A", Access: []string{"m", "r"}},
+						&File{Path: "/path/to/A", Access: MustAccess(FILE, "m", "r")},
 						profileB,
 						profileC,
 						profileD,
@@ -1729,7 +1729,7 @@ var (
 							Flags: []string{"attach_disconnected"},
 						},
 						Rules: Rules{
-							&File{Path: "/path/to/A", Access: []string{"m", "r"}},
+							&File{Path: "/path/to/A", Access: MustAccess(FILE, "m", "r")},
 							profileB,
 							profileC,
 							profileD,
@@ -1740,7 +1740,7 @@ var (
 			wParseErr: false,
 			wRules: ParaRules{
 				{
-					&File{Path: "/path/to/A", Access: []string{"m", "r"}},
+					&File{Path: "/path/to/A", Access: MustAccess(FILE, "m", "r")},
 				},
 			},
 			wParseRulesErr: false,
@@ -1766,25 +1766,25 @@ var (
 						Flags: []string{"attach_disconnected"},
 					},
 					Rules: Rules{
-						&File{Path: "/path/to/A", Access: []string{"m", "r"}},
+						&File{Path: "/path/to/A", Access: MustAccess(FILE, "m", "r")},
 						&Profile{
 							Header: Header{
 								Name: "B", Attachments: []string{}, Attributes: map[string]string{}, Flags: []string{},
 							},
 							Rules: Rules{
-								&File{Path: "/path/to/B", Access: []string{"m", "r"}},
+								&File{Path: "/path/to/B", Access: MustAccess(FILE, "m", "r")},
 								&Profile{
 									Header: Header{
 										Name: "C", Attachments: []string{}, Attributes: map[string]string{}, Flags: []string{},
 									},
 									Rules: Rules{
-										&File{Path: "/path/to/C", Access: []string{"m", "r"}},
+										&File{Path: "/path/to/C", Access: MustAccess(FILE, "m", "r")},
 										&Profile{
 											Header: Header{
 												Name: "D", Attachments: []string{}, Attributes: map[string]string{}, Flags: []string{},
 											},
 											Rules: Rules{
-												&File{Path: "/path/to/D", Access: []string{"m", "r"}},
+												&File{Path: "/path/to/D", Access: MustAccess(FILE, "m", "r")},
 											},
 										},
 									},
@@ -1813,25 +1813,25 @@ var (
 							Flags: []string{"attach_disconnected"},
 						},
 						Rules: Rules{
-							&File{Path: "/path/to/A", Access: []string{"m", "r"}},
+							&File{Path: "/path/to/A", Access: MustAccess(FILE, "m", "r")},
 							&Profile{
 								Header: Header{
 									Name: "B", Attachments: []string{}, Attributes: map[string]string{}, Flags: []string{},
 								},
 								Rules: Rules{
-									&File{Path: "/path/to/B", Access: []string{"m", "r"}},
+									&File{Path: "/path/to/B", Access: MustAccess(FILE, "m", "r")},
 									&Profile{
 										Header: Header{
 											Name: "C", Attachments: []string{}, Attributes: map[string]string{}, Flags: []string{},
 										},
 										Rules: Rules{
-											&File{Path: "/path/to/C", Access: []string{"m", "r"}},
+											&File{Path: "/path/to/C", Access: MustAccess(FILE, "m", "r")},
 											&Profile{
 												Header: Header{
 													Name: "D", Attachments: []string{}, Attributes: map[string]string{}, Flags: []string{},
 												},
 												Rules: Rules{
-													&File{Path: "/path/to/D", Access: []string{"m", "r"}},
+													&File{Path: "/path/to/D", Access: MustAccess(FILE, "m", "r")},
 												},
 											},
 										},
@@ -1845,13 +1845,13 @@ var (
 			wParseErr: false,
 			wRules: ParaRules{
 				{
-					&File{Path: "/path/to/A", Access: []string{"m", "r"}},
+					&File{Path: "/path/to/A", Access: MustAccess(FILE, "m", "r")},
 				},
 				{
-					&File{Path: "/path/to/B", Access: []string{"m", "r"}},
+					&File{Path: "/path/to/B", Access: MustAccess(FILE, "m", "r")},
 				},
 				{
-					&File{Path: "/path/to/C", Access: []string{"m", "r"}},
+					&File{Path: "/path/to/C", Access: MustAccess(FILE, "m", "r")},
 				},
 			},
 			wParseRulesErr: false,
@@ -2072,24 +2072,24 @@ var (
 					&ChangeProfile{ProfileName: "libvirt-@{uuid}"},
 				},
 				{
-					&Mqueue{Access: []string{"r"}, Type: "posix", Name: "/"},
+					&Mqueue{Access: MustAccess(MQUEUE, "r"), Type: "posix", Name: "/"},
 				},
 				{
-					&IOUring{Access: []string{"sqpoll"}, Label: "foo"},
+					&IOUring{Access: MustAccess(IOURING, "sqpoll"), Label: "foo"},
 				},
 				{
 					&Signal{
-						Access: []string{"receive"},
+						Access: MustAccess(SIGNAL, "receive"),
 						Set:    []string{"cont", "term", "winch"},
 						Peer:   "at-spi-bus-launcher",
 					},
 				},
 				{
-					&Ptrace{Access: []string{"read"}, Peer: "nautilus"},
+					&Ptrace{Access: MustAccess(PTRACE, "read"), Peer: "nautilus"},
 				},
 				{
 					&Unix{
-						Access:    []string{"send", "receive"},
+						Access:    MustAccess(UNIX, "send", "receive"),
 						Type:      "stream",
 						Address:   "\"@/tmp/.ICE[0-9]-unix/19 5\"",
 						PeerLabel: "gnome-shell",
@@ -2097,9 +2097,9 @@ var (
 					},
 				},
 				{
-					&Dbus{Access: []string{"bind"}, Bus: "session", Name: "org.gnome.*"},
+					&Dbus{Access: MustAccess(DBUS, "bind"), Bus: "session", Name: "org.gnome.*"},
 					&Dbus{
-						Access:    []string{"receive"},
+						Access:    MustAccess(DBUS, "receive"),
 						Bus:       "system",
 						Path:      "/org/freedesktop/DBus",
 						Interface: "org.freedesktop.DBus",
@@ -2112,37 +2112,37 @@ var (
 					&Comment{Base: Base{IsLineRule: true, Comment: " A comment! before a paragraph of rules"}},
 					&File{
 						Path:   "\"/opt/Mullvad VPN/resources/*.so*\"",
-						Access: []string{"m", "r"},
+						Access: MustAccess(FILE, "m", "r"),
 					},
-					&File{Path: "\"/opt/Mullvad VPN/resources/*\"", Access: []string{"r"}},
+					&File{Path: "\"/opt/Mullvad VPN/resources/*\"", Access: MustAccess(FILE, "r")},
 					&File{
 						Path:   "\"/opt/Mullvad VPN/resources/openvpn\"",
-						Access: []string{"r", "ix"},
+						Access: MustAccess(FILE, "r", "ix"),
 					},
 					&File{
 						Path:   "/usr/share/gnome-shell/extensions/ding@rastersoft.com/{,*/}ding.js",
-						Access: []string{"r", "Px"},
+						Access: MustAccess(FILE, "r", "Px"),
 					},
 					&File{
 						Path:   "/opt/intel/oneapi/compiler/*/linux/lib/*.so./*",
-						Access: []string{"m", "r"},
+						Access: MustAccess(FILE, "m", "r"),
 					},
 				},
 				{
 					&File{
 						Owner: true, Path: "@{user_config_dirs}/powerdevilrc{,.@{rand6}}",
-						Access: []string{"r", "w", "l"}, Target: "@{user_config_dirs}/#@{int}",
+						Access: MustAccess(FILE, "r", "w", "l"), Target: "@{user_config_dirs}/#@{int}",
 					},
 					&Link{Path: "@{user_config_dirs}/kiorc", Target: "@{user_config_dirs}/#@{int}"},
 				},
 				{
-					&File{Path: "@{run}/udev/data/+pci:*", Access: []string{"r"}},
+					&File{Path: "@{run}/udev/data/+pci:*", Access: MustAccess(FILE, "r")},
 				},
 				{
-					&File{Path: "@{sys}/devices/@{pci}/class", Access: []string{"r"}},
+					&File{Path: "@{sys}/devices/@{pci}/class", Access: MustAccess(FILE, "r")},
 				},
 				{
-					&File{Owner: true, Path: "@{PROC}/@{pid}/task/@{tid}/comm", Access: []string{"r", "w"}},
+					&File{Owner: true, Path: "@{PROC}/@{pid}/task/@{tid}/comm", Access: MustAccess(FILE, "r", "w")},
 				},
 				{
 					&Include{IsMagic: true, Path: "abstractions/base"},
@@ -2161,7 +2161,7 @@ var (
 					&Include{IsMagic: true, Path: "abstractions/app/sudo"},
 				},
 				{
-					&File{Path: "@{sh_path}", Access: []string{"r", "ix"}},
+					&File{Path: "@{sh_path}", Access: MustAccess(FILE, "r", "ix")},
 				},
 				{
 					&Include{IfExists: true, IsMagic: true, Path: "local/foo_sudo"},
@@ -2229,7 +2229,7 @@ var (
 							&Include{IfExists: true, IsMagic: true, Path: "local/foo"},
 							&Remount{MountConditions: MountConditions{Options: []string{}}, MountPoint: "/newroot/{,**}"},
 							&Unix{
-								Access:    []string{"send", "receive"},
+								Access:    MustAccess(UNIX, "send", "receive"),
 								Type:      "stream",
 								Address:   "\"@/tmp/.ICE[0-9]-unix/19 5\"",
 								PeerLabel: "gnome-shell",
@@ -2237,10 +2237,10 @@ var (
 							},
 							&Dbus{
 								Base:   Base{Comment: " wfdwde"},
-								Access: []string{"bind"}, Bus: "session", Name: "org.gnome.*",
+								Access: MustAccess(DBUS, "bind"), Bus: "session", Name: "org.gnome.*",
 							},
 							&Dbus{
-								Access:    []string{"receive"},
+								Access:    MustAccess(DBUS, "receive"),
 								Bus:       "system",
 								Path:      "/org/freedesktop/DBus",
 								Interface: "org.freedesktop.DBus",
@@ -2250,12 +2250,12 @@ var (
 							},
 							&File{
 								Base: Base{Comment: " To be able to read the /proc/ files"},
-								Path: "\"/opt/Mullvad VPN/resources/*.so*\"", Access: []string{"m", "r"},
+								Path: "\"/opt/Mullvad VPN/resources/*.so*\"", Access: MustAccess(FILE, "m", "r"),
 							},
-							&File{Path: "/usr/share/gnome-shell/extensions/ding@rastersoft.com/{,*/}ding.js", Access: []string{"r", "Px"}},
-							&File{Path: "@{bin}/zsh", Access: []string{"r", "ix"}},
-							&File{Owner: true, Path: "/{var/,}tmp/#@{int}", Access: []string{"r", "w"}},
-							&File{Owner: true, Path: "@{user_config_dirs}/powerdevilrc{,.@{rand6}}", Access: []string{"r", "w", "l"}, Target: "@{user_config_dirs}/#@{int}"},
+							&File{Path: "/usr/share/gnome-shell/extensions/ding@rastersoft.com/{,*/}ding.js", Access: MustAccess(FILE, "r", "Px")},
+							&File{Path: "@{bin}/zsh", Access: MustAccess(FILE, "r", "ix")},
+							&File{Owner: true, Path: "/{var/,}tmp/#@{int}", Access: MustAccess(FILE, "r", "w")},
+							&File{Owner: true, Path: "@{user_config_dirs}/powerdevilrc{,.@{rand6}}", Access: MustAccess(FILE, "r", "w", "l"), Target: "@{user_config_dirs}/#@{int}"},
 						},
 					},
 				},
@@ -2320,20 +2320,20 @@ var (
 			MountPoint:      "@{run}/user/@{uid}/",
 		},
 		&Signal{
-			Access: []string{"receive"},
+			Access: MustAccess(SIGNAL, "receive"),
 			Set:    []string{"term"},
 			Peer:   "at-spi-bus-launcher",
 		},
-		&Ptrace{Access: []string{"read"}, Peer: "nautilus"},
+		&Ptrace{Access: MustAccess(PTRACE, "read"), Peer: "nautilus"},
 		&Unix{
-			Access:    []string{"send", "receive"},
+			Access:    MustAccess(UNIX, "send", "receive"),
 			Type:      "stream",
 			Address:   "@/tmp/.ICE-unix/1995",
 			PeerLabel: "gnome-shell",
 		},
-		&Dbus{Access: []string{"bind"}, Bus: "session", Name: "org.gnome.*"},
+		&Dbus{Access: MustAccess(DBUS, "bind"), Bus: "session", Name: "org.gnome.*"},
 		&Dbus{
-			Access:    []string{"receive"},
+			Access:    MustAccess(DBUS, "receive"),
 			Bus:       "system",
 			Name:      "",
 			Path:      "/org/freedesktop/DBus",
@@ -2342,9 +2342,9 @@ var (
 			PeerName:  ":1.3",
 			PeerLabel: "power-profiles-daemon",
 		},
-		&File{Path: "/opt/intel/oneapi/compiler/*/linux/lib/*.so./*", Access: []string{"m", "r"}},
-		&File{Path: "@{PROC}/@{pid}/task/@{tid}/comm", Access: []string{"r", "w"}},
-		&File{Path: "@{sys}/devices/@{pci}/class", Access: []string{"r"}},
+		&File{Path: "/opt/intel/oneapi/compiler/*/linux/lib/*.so./*", Access: MustAccess(FILE, "m", "r")},
+		&File{Path: "@{PROC}/@{pid}/task/@{tid}/comm", Access: MustAccess(FILE, "r", "w")},
+		&File{Path: "@{sys}/devices/@{pci}/class", Access: MustAccess(FILE, "r")},
 	}
 	rulesFullAA = Rules{
 		&Include{IsMagic: true, Path: "abstractions/base"},
@@ -2366,23 +2366,23 @@ var (
 		&Umount{MountConditions: MountConditions{Options: []string{}}, MountPoint: "@{run}/user/@{uid}/"},
 		&PivotRoot{OldRoot: "/tmp/oldroot/", NewRoot: "/tmp/"},
 		&ChangeProfile{ProfileName: "libvirt-@{uuid}"},
-		&Mqueue{Access: []string{"r"}, Type: "posix", Name: "/"},
-		&IOUring{Access: []string{"sqpoll"}, Label: "foo"},
-		&Signal{Access: []string{"receive"}, Set: []string{"cont", "term", "winch"}, Peer: "at-spi-bus-launcher"},
-		&Ptrace{Access: []string{"read"}, Peer: "nautilus"},
-		&Unix{Access: []string{"send", "receive"}, Type: "stream", Address: "\"@/tmp/.ICE[0-9]-unix/19 5\"", PeerLabel: "gnome-shell", PeerAddr: "none"},
-		&Dbus{Access: []string{"bind"}, Bus: "session", Name: "org.gnome.*"},
-		&Dbus{Access: []string{"receive"}, Bus: "system", Path: "/org/freedesktop/DBus", Interface: "org.freedesktop.DBus", Member: "AddMatch", PeerName: ":1.3", PeerLabel: "power-profiles-daemon"},
-		&File{Path: "\"/opt/Mullvad VPN/resources/*.so*\"", Access: []string{"m", "r"}},
-		&File{Path: "\"/opt/Mullvad VPN/resources/*\"", Access: []string{"r"}},
-		&File{Path: "\"/opt/Mullvad VPN/resources/openvpn\"", Access: []string{"r", "ix"}},
-		&File{Path: "/usr/share/gnome-shell/extensions/ding@rastersoft.com/{,*/}ding.js", Access: []string{"r", "Px"}},
-		&File{Path: "/opt/intel/oneapi/compiler/*/linux/lib/*.so./*", Access: []string{"m", "r"}},
-		&File{Owner: true, Path: "@{user_config_dirs}/powerdevilrc{,.@{rand6}}", Access: []string{"r", "w", "l"}, Target: "@{user_config_dirs}/#@{int}"},
+		&Mqueue{Access: MustAccess(MQUEUE, "r"), Type: "posix", Name: "/"},
+		&IOUring{Access: MustAccess(IOURING, "sqpoll"), Label: "foo"},
+		&Signal{Access: MustAccess(SIGNAL, "receive"), Set: []string{"cont", "term", "winch"}, Peer: "at-spi-bus-launcher"},
+		&Ptrace{Access: MustAccess(PTRACE, "read"), Peer: "nautilus"},
+		&Unix{Access: MustAccess(UNIX, "send", "receive"), Type: "stream", Address: "\"@/tmp/.ICE[0-9]-unix/19 5\"", PeerLabel: "gnome-shell", PeerAddr: "none"},
+		&Dbus{Access: MustAccess(DBUS, "bind"), Bus: "session", Name: "org.gnome.*"},
+		&Dbus{Access: MustAccess(DBUS, "receive"), Bus: "system", Path: "/org/freedesktop/DBus", Interface: "org.freedesktop.DBus", Member: "AddMatch", PeerName: ":1.3", PeerLabel: "power-profiles-daemon"},
+		&File{Path: "\"/opt/Mullvad VPN/resources/*.so*\"", Access: MustAccess(FILE, "m", "r")},
+		&File{Path: "\"/opt/Mullvad VPN/resources/*\"", Access: MustAccess(FILE, "r")},
+		&File{Path: "\"/opt/Mullvad VPN/resources/openvpn\"", Access: MustAccess(FILE, "r", "ix")},
+		&File{Path: "/usr/share/gnome-shell/extensions/ding@rastersoft.com/{,*/}ding.js", Access: MustAccess(FILE, "r", "Px")},
+		&File{Path: "/opt/intel/oneapi/compiler/*/linux/lib/*.so./*", Access: MustAccess(FILE, "m", "r")},
+		&File{Owner: true, Path: "@{user_config_dirs}/powerdevilrc{,.@{rand6}}", Access: MustAccess(FILE, "r", "w", "l"), Target: "@{user_config_dirs}/#@{int}"},
 		&Link{Path: "@{user_config_dirs}/kiorc", Target: "@{user_config_dirs}/#@{int}"},
-		&File{Path: "@{run}/udev/data/+pci:*", Access: []string{"r"}},
-		&File{Path: "@{sys}/devices/@{pci}/class", Access: []string{"r"}},
-		&File{Owner: true, Path: "@{PROC}/@{pid}/task/@{tid}/comm", Access: []string{"r", "w"}},
+		&File{Path: "@{run}/udev/data/+pci:*", Access: MustAccess(FILE, "r")},
+		&File{Path: "@{sys}/devices/@{pci}/class", Access: MustAccess(FILE, "r")},
+		&File{Owner: true, Path: "@{PROC}/@{pid}/task/@{tid}/comm", Access: MustAccess(FILE, "r", "w")},
 		&Hat{
 			Name:  "action",
 			Flags: []string{},
@@ -2406,7 +2406,7 @@ var (
 				&Include{IsMagic: true, Path: "abstractions/base"},
 				&Include{IsMagic: true, Path: "abstractions/app/sudo"},
 				&Include{IfExists: true, IsMagic: true, Path: "local/foo_sudo"},
-				&File{Path: "@{sh_path}", Access: []string{"r", "ix"}},
+				&File{Path: "@{sh_path}", Access: MustAccess(FILE, "r", "ix")},
 			},
 		},
 		&Include{IfExists: true, IsMagic: true, Path: "local/foo"},
@@ -2416,7 +2416,7 @@ var (
 			Name: "B", Attachments: []string{}, Attributes: map[string]string{}, Flags: []string{},
 		},
 		Rules: Rules{
-			&File{Path: "/path/to/B", Access: []string{"m", "r"}},
+			&File{Path: "/path/to/B", Access: MustAccess(FILE, "m", "r")},
 		},
 	}
 	profileC = &Profile{
@@ -2424,7 +2424,7 @@ var (
 			Name: "C", Attachments: []string{}, Attributes: map[string]string{}, Flags: []string{},
 		},
 		Rules: Rules{
-			&File{Path: "/path/to/C", Access: []string{"m", "r"}},
+			&File{Path: "/path/to/C", Access: MustAccess(FILE, "m", "r")},
 		},
 	}
 	profileD = &Profile{
@@ -2432,7 +2432,7 @@ var (
 			Name: "D", Attachments: []string{}, Attributes: map[string]string{}, Flags: []string{},
 		},
 		Rules: Rules{
-			&File{Path: "/path/to/D", Access: []string{"m", "r"}},
+			&File{Path: "/path/to/D", Access: MustAccess(FILE, "m", "r")},
 		},
 	}
 )

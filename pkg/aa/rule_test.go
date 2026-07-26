@@ -367,7 +367,7 @@ var (
 		},
 		{
 			name:     "dbus-bind",
-			rule:     &Dbus{Access: []string{"bind"}, Bus: "session", Name: "org.gnome.*"},
+			rule:     &Dbus{Access: MustAccess(DBUS, "bind"), Bus: "session", Name: "org.gnome.*"},
 			other:    dbus2,
 			wCompare: -39,
 			wMerge:   false,
@@ -419,8 +419,8 @@ var (
 		},
 		{
 			name:     "file-access",
-			rule:     &File{Path: "/usr/share/poppler/cMap/Identity-H", Access: []string{"r"}},
-			other:    &File{Path: "/usr/share/poppler/cMap/Identity-H", Access: []string{"w"}},
+			rule:     &File{Path: "/usr/share/poppler/cMap/Identity-H", Access: MustAccess(FILE, "r")},
+			other:    &File{Path: "/usr/share/poppler/cMap/Identity-H", Access: MustAccess(FILE, "w")},
 			wCompare: -5,
 			wMerge:   true,
 			wString:  "/usr/share/poppler/cMap/Identity-H r,",

@@ -10,6 +10,18 @@ import (
 
 const DBUS Kind = "dbus"
 
+var dbusAccessBits = map[string]AccessMask{
+	"send":      1 << 0,
+	"receive":   1 << 1,
+	"bind":      1 << 2,
+	"eavesdrop": 1 << 3,
+	"r":         1 << 4,
+	"read":      1 << 5,
+	"w":         1 << 6,
+	"write":     1 << 7,
+	"rw":        1 << 8,
+}
+
 func init() {
 	requirements[DBUS] = requirement{
 		"access": []string{
@@ -23,7 +35,7 @@ func init() {
 type Dbus struct {
 	Base
 	Qualifier
-	Access    []string
+	Access    AccessMask
 	Bus       string
 	Name      string
 	Path      string
@@ -73,7 +85,7 @@ func newDbusFromLog(log map[string]string) Rule {
 	return &Dbus{
 		Base:      newBaseFromLog(log),
 		Qualifier: newQualifierFromLog(log),
-		Access:    []string{log["mask"]},
+		Access:    Must(toAccess(DBUS, log["mask"])),
 		Bus:       log["bus"],
 		Name:      name,
 		Path:      log["path"],
@@ -88,6 +100,10 @@ func (r *Dbus) Kind() Kind {
 	return DBUS
 }
 
+func (r *Dbus) AccessStrings() []string {
+	return r.Access.Strings(DBUS)
+}
+
 func (r *Dbus) Constraint() Constraint {
 	return BlockRule
 }
@@ -97,7 +113,7 @@ func (r *Dbus) String() string {
 }
 
 func (r *Dbus) Validate() error {
-	if err := validateValues(r.Kind(), "access", r.Access); err != nil {
+	if err := validateAccess(r.Kind(), r.Access); err != nil {
 		return fmt.Errorf("%s: %w", r, err)
 	}
 	if err := validateValues(r.Kind(), "bus", []string{r.Bus}); err != nil {
@@ -105,7 +121,7 @@ func (r *Dbus) Validate() error {
 	}
 
 	// Bind access cannot have member, interface, or path modifiers
-	if len(r.Access) == 1 && r.Access[0] == "bind" {
+	if r.Access == accessBits[DBUS]["bind"] {
 		if r.Member != "" {
 			return fmt.Errorf("dbus bind cannot have member modifier")
 		}
@@ -115,7 +131,7 @@ func (r *Dbus) Validate() error {
 	}
 
 	// Eavesdrop access cannot have non-bus modifiers
-	if len(r.Access) == 1 && r.Access[0] == "eavesdrop" {
+	if r.Access == accessBits[DBUS]["eavesdrop"] {
 		if r.Name != "" || r.Path != "" || r.Interface != "" || r.Member != "" ||
 			r.PeerName != "" || r.PeerLabel != "" {
 			return fmt.Errorf("dbus eavesdrop cannot have non-bus modifiers")
@@ -126,7 +142,7 @@ func (r *Dbus) Validate() error {
 
 func (r *Dbus) Compare(other Rule) int {
 	o, _ := other.(*Dbus)
-	if res := compare(r.Access, o.Access); res != 0 {
+	if res := compareAccessMask(r.Access, o.Access, DBUS); res != 0 {
 		return res
 	}
 	if res := compare(r.Bus, o.Bus); res != 0 {
@@ -162,7 +178,7 @@ func (r *Dbus) Merge(other Rule) bool {
 	if r.Bus == o.Bus && r.Name == o.Name && r.Path == o.Path &&
 		r.Interface == o.Interface && r.Member == o.Member &&
 		r.PeerName == o.PeerName && r.PeerLabel == o.PeerLabel {
-		r.Access = merge(r.Kind(), "access", r.Access, o.Access)
+		r.Access |= o.Access
 		b := &r.Base
 		return b.merge(o.Base)
 	}

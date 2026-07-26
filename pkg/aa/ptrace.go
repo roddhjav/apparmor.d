@@ -8,6 +8,17 @@ import "fmt"
 
 const PTRACE Kind = "ptrace"
 
+var ptraceAccessBits = map[string]AccessMask{
+	"r":        1 << 0,
+	"w":        1 << 1,
+	"rw":       1 << 2,
+	"read":     1 << 3,
+	"write":    1 << 4,
+	"readby":   1 << 5,
+	"trace":    1 << 6,
+	"tracedby": 1 << 7,
+}
+
 func init() {
 	requirements[PTRACE] = requirement{
 		"access": []string{
@@ -19,7 +30,7 @@ func init() {
 type Ptrace struct {
 	Base
 	Qualifier
-	Access []string
+	Access AccessMask
 	Peer   string
 }
 
@@ -57,6 +68,10 @@ func (r *Ptrace) Kind() Kind {
 	return PTRACE
 }
 
+func (r *Ptrace) AccessStrings() []string {
+	return r.Access.Strings(PTRACE)
+}
+
 func (r *Ptrace) Constraint() Constraint {
 	return BlockRule
 }
@@ -66,7 +81,7 @@ func (r *Ptrace) String() string {
 }
 
 func (r *Ptrace) Validate() error {
-	if err := validateValues(r.Kind(), "access", r.Access); err != nil {
+	if err := validateAccess(r.Kind(), r.Access); err != nil {
 		return fmt.Errorf("%s: %w", r, err)
 	}
 	return nil
@@ -74,7 +89,7 @@ func (r *Ptrace) Validate() error {
 
 func (r *Ptrace) Compare(other Rule) int {
 	o, _ := other.(*Ptrace)
-	if res := compare(r.Access, o.Access); res != 0 {
+	if res := compareAccessMask(r.Access, o.Access, PTRACE); res != 0 {
 		return res
 	}
 	if res := compare(r.Peer, o.Peer); res != 0 {
@@ -90,7 +105,7 @@ func (r *Ptrace) Merge(other Rule) bool {
 		return false
 	}
 	if r.Peer == o.Peer {
-		r.Access = merge(r.Kind(), "access", r.Access, o.Access)
+		r.Access |= o.Access
 		b := &r.Base
 		return b.merge(o.Base)
 	}
@@ -101,7 +116,7 @@ func (r *Ptrace) Lengths() []int {
 	return []int{
 		r.getLenAudit(),
 		r.getLenAccess(),
-		length("", r.Access),
+		length("", r.Access.Strings(r.Kind())),
 		length("peer=", r.Peer),
 	}
 }
@@ -109,6 +124,6 @@ func (r *Ptrace) Lengths() []int {
 func (r *Ptrace) setPaddings(max []int) {
 	r.Paddings = append(r.Qualifier.setPaddings(max[:2]), setPaddings(
 		max[2:], []string{"", "peer="},
-		[]any{r.Access, r.Peer})...,
+		[]any{r.Access.Strings(r.Kind()), r.Peer})...,
 	)
 }

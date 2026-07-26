@@ -10,6 +10,24 @@ import (
 
 const UNIX Kind = "unix"
 
+var unixAccessBits = map[string]AccessMask{
+	"create":   1 << 0,
+	"bind":     1 << 1,
+	"listen":   1 << 2,
+	"accept":   1 << 3,
+	"connect":  1 << 4,
+	"shutdown": 1 << 5,
+	"getattr":  1 << 6,
+	"setattr":  1 << 7,
+	"getopt":   1 << 8,
+	"setopt":   1 << 9,
+	"send":     1 << 10,
+	"receive":  1 << 11,
+	"r":        1 << 12,
+	"w":        1 << 13,
+	"rw":       1 << 14,
+}
+
 func init() {
 	requirements[UNIX] = requirement{
 		"type":     []string{"stream", "dgram", "seqpacket", "rdm", "raw", "packet"},
@@ -28,7 +46,7 @@ func init() {
 type Unix struct {
 	Base
 	Qualifier
-	Access    []string
+	Access    AccessMask
 	Type      string
 	Protocol  string
 	Address   string
@@ -85,6 +103,10 @@ func (r *Unix) Kind() Kind {
 	return UNIX
 }
 
+func (r *Unix) AccessStrings() []string {
+	return r.Access.Strings(UNIX)
+}
+
 func (r *Unix) Constraint() Constraint {
 	return BlockRule
 }
@@ -94,14 +116,14 @@ func (r *Unix) String() string {
 }
 
 func (r *Unix) Validate() error {
-	if err := validateValues(r.Kind(), "access", r.Access); err != nil {
+	if err := validateAccess(r.Kind(), r.Access); err != nil {
 		return fmt.Errorf("%s: %w", r, err)
 	}
 	if err := validateValues(r.Kind(), "type", []string{r.Type}); err != nil {
 		return fmt.Errorf("%s: %w", r, err)
 	}
 	if r.PeerLabel != "" || r.PeerAddr != "" {
-		if len(r.Access) > 0 && allLocalOnly(r.Access, requirements[UNIX]["local-only"]) {
+		if r.Access != 0 && allLocalOnly(r.Access, UNIX) {
 			return fmt.Errorf("peer modifier not allowed with local-only access types in unix rule")
 		}
 	}
@@ -110,7 +132,7 @@ func (r *Unix) Validate() error {
 
 func (r *Unix) Compare(other Rule) int {
 	o, _ := other.(*Unix)
-	if res := compare(r.Access, o.Access); res != 0 {
+	if res := compareAccessMask(r.Access, o.Access, UNIX); res != 0 {
 		return res
 	}
 	if res := compare(r.Type, o.Type); res != 0 {
@@ -152,7 +174,7 @@ func (r *Unix) Merge(other Rule) bool {
 	if r.Type == o.Type && r.Protocol == o.Protocol && r.Address == o.Address &&
 		r.Label == o.Label && r.Attr == o.Attr && r.Opt == o.Opt &&
 		r.PeerLabel == o.PeerLabel && r.PeerAddr == o.PeerAddr {
-		r.Access = merge(r.Kind(), "access", r.Access, o.Access)
+		r.Access |= o.Access
 		b := &r.Base
 		return b.merge(o.Base)
 	}
@@ -163,7 +185,7 @@ func (r *Unix) Lengths() []int {
 	return []int{
 		r.getLenAudit(),
 		r.getLenAccess(),
-		length("", r.Access),
+		length("", r.Access.Strings(r.Kind())),
 		length("type=", r.Type),
 		length("addr=", r.Address),
 		length("label=", r.Label),
@@ -173,6 +195,6 @@ func (r *Unix) Lengths() []int {
 func (r *Unix) setPaddings(max []int) {
 	r.Paddings = append(r.Qualifier.setPaddings(max[:2]), setPaddings(
 		max[2:], []string{"", "type=", "addr=", "label="},
-		[]any{r.Access, r.Type, r.Address, r.Label})...,
+		[]any{r.Access.Strings(r.Kind()), r.Type, r.Address, r.Label})...,
 	)
 }
