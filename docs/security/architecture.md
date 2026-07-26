@@ -31,7 +31,7 @@ Examples of current Linux distributions implementing something similar with vari
 
 </div>
 
-A careful reader would have noticed that the common ground among these distributions is to be constituted of a fully immutable core system. If such a construction is probably the future of Linux, as of today it can raise some usability concerns (cf [Rqr :material-numeric-2-circle:](ecosystem.md#rqr-no-strict-compatibility "User freedom.")). Therefore, the current project proposes a pragmatic long term solution:
+A careful reader would have noticed that the common ground among these distributions is to be constituted of a fully immutable core system. If such a construction is probably the future of Linux, as of today it can raise some usability concerns (cf [Rqr :material-numeric-2-circle:](ecosystem.md#req-no-strict-compatibility "User freedom.")). Therefore, the current project proposes a pragmatic long term solution:
 
 1. We acknowledge the end goal needs to be fully compatible with systems that respect 100% of the security model presented here.
 2. We stay compatible with a *"classic"* Linux construction (i.e. without immutable core), and try to implement as much as we can on classic distributions. It is considered a transitional state.

@@ -22,7 +22,7 @@ See the **[Security Model](security/index.md)** pages for more detail on the arc
 
 - Target both desktops and servers
 - Support for all distributions that support AppArmor:
-    * [:material-arch: Arch Linux](install.md#archlinux)
+    * [:material-arch: Arch Linux](install.md#arch-linux)
     * [:material-ubuntu: Ubuntu 24.04/25.10](install.md#ubuntu)
     * [:material-debian: Debian 12/13](install.md#debian)
     * [:simple-suse: openSUSE Tumbleweed](install.md#suse-opensuse)
