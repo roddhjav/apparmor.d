@@ -1,0 +1,27 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Allow access to the safe members of the systemd-resolved D-Bus API:
+#
+# <figure markdown>
+#   https://www.freedesktop.org/wiki/Software/systemd/resolved/
+# </figure>
+#
+# This API may be used directly over the D-Bus system bus or it may be used
+# indirectly via the nss-resolve plugin:
+#
+# <figure markdown>
+#   https://www.freedesktop.org/software/systemd/man/nss-resolve.html
+# </figure>
+
+  abi <abi/4.0>,
+
+  dbus send bus=system path=/org/freedesktop/resolve1
+       interface=org.freedesktop.resolve1.Manager
+       member={ResolveAddress,ResolveHostname,ResolveRecord,ResolveService}
+       peer=(name=org.freedesktop.resolve1, label="@{p_systemd_resolved}"),
+
+  include if exists <abstractions/bus/system/org.freedesktop.resolve1.Manager.d>
+
+# vim:syntax=apparmor
