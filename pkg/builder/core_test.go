@@ -40,6 +40,28 @@ func TestBuilder_Apply(t *testing.T) {
 			  }`,
 		},
 		{
+			name: "abi4",
+			b:    NewABI4(),
+			profile: `
+			  abi <abi/5.0>,
+			  profile test {
+			    if "gnome" in @{DE} {
+			      /gnome r,
+			    } else if "kde" in @{DE} {
+			      /kde r,
+			    } else {
+			      /other r,
+			    }
+			  }`,
+			want: `
+			  abi <abi/4.0>,
+			  profile test {
+			      /gnome r,
+			      /kde r,
+			      /other r,
+			  }`,
+		},
+		{
 			name: "complain-1",
 			b:    NewComplain(),
 			profile: `

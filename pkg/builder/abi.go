@@ -12,9 +12,9 @@ import (
 var (
 	regAbi5To4 = util.ToRegexRepl([]string{
 		`abi/5.0`, `abi/4.0`,
-		`(?m)^([ \t]*)if (.+\S)\s*\{[ \t]*$([\s\S]*?)^([ \t]*)\}[ \t]*$`, `${1}# if ${2}${3}${4}# }`,
-		`(?m)^([ \t]*)\} else if (.+\S)\s*\{[ \t]*$`, `${1}# } else if ${2}`,
-		`(?m)^([ \t]*)\} else\s*\{[ \t]*$`, `${1}# } else`,
+		`(?m)^[ \t]*if .+\{[ \t]*\n([\s\S]*?)^[ \t]*\}[ \t]*$\n?`, `${1}`,
+		`(?m)^[ \t]*\} else if .+\{[ \t]*\n`, ``,
+		`(?m)^[ \t]*\} else[ \t]*\{[ \t]*\n`, ``,
 	})
 	regAbi4To3 = util.ToRegexRepl([]string{
 		`abi/4.0`, `abi/3.0`,
