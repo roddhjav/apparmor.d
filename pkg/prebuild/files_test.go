@@ -108,20 +108,3 @@ code
 		})
 	}
 }
-
-func TestDebianHider_Init(t *testing.T) {
-	t.Chdir(t.TempDir())
-	if err := paths.New("debian").Mkdir(); err != nil {
-		t.Fatalf("mkdir debian: %v", err)
-	}
-	if err := DebianHide.Init(); err != nil {
-		t.Fatalf("Init() error = %v", err)
-	}
-	got, err := DebianHide.path.ReadFileAsString()
-	if err != nil {
-		t.Fatalf("read %s: %v", DebianHide.path, err)
-	}
-	if got != Hide {
-		t.Errorf("Init() content = %q, want %q", got, Hide)
-	}
-}

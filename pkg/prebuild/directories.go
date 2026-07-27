@@ -24,12 +24,6 @@ var (
 	// SystemdDir is the directory where the systemd drop-in files are stored
 	SystemdDir *paths.Path = paths.New("systemd")
 
-	// DebianDir is the directory where the debian specific files are stored
-	DebianDir *paths.Path = paths.New("debian")
-
-	// DebianHide is the path to the debian/common.hide file
-	DebianHide = DebianHider{path: DebianDir.Join("apparmor.d.hide")}
-
 	Ignore = Ignorer{}
 	Flags  = Flagger{}
 )

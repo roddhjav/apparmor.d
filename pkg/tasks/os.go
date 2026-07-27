@@ -13,15 +13,14 @@ import (
 )
 
 var (
+	// Distribution is the name of the distribution, such as "debian", "ubuntu", "arch", "opensuse", etc.
 	Distribution = getDistribution()
-	Release      = getOSRelease()
-	Family       = getFamily()
 
-	// DebianDir is the directory where the debian specific files are stored
-	// DebianDir *paths.Path = paths.New("debian")
+	// Release is the content of the /etc/os-release file as a map of key-value pairs
+	Release = getOSRelease()
 
-	// // DebianHide is the path to the debian/common.hide file
-	// DebianHide = DebianHider{path: DebianDir.Join("common.hide")}
+	// Family is the family of the distribution, such as "apt", "pacman", "zypper", etc.
+	Family = getFamily()
 
 	// Ignore = Ignorer{}
 	// Flags  = Flagger{}

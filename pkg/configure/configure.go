@@ -42,10 +42,6 @@ func (p Configure) Apply() ([]string, error) {
 	case "arch", "opensuse":
 
 	case "ubuntu":
-		if err := prebuild.DebianHide.Init(); err != nil {
-			return res, err
-		}
-
 		// @{pci_bus} was upstreamed in 5.0, and backported to 4.1, and in Ubuntu 24.04
 		path := p.RootApparmor.Join("tunables/multiarch.d/system")
 		out, err := path.ReadFileAsString()
@@ -67,9 +63,6 @@ func (p Configure) Apply() ([]string, error) {
 		}
 
 	case "debian":
-		if err := prebuild.DebianHide.Init(); err != nil {
-			return res, err
-		}
 
 	default:
 		return []string{}, fmt.Errorf("%s is not a supported distribution", tasks.Distribution)
