@@ -28,7 +28,7 @@ var (
 	DebianDir *paths.Path = paths.New("debian")
 
 	// DebianHide is the path to the debian/common.hide file
-	DebianHide = DebianHider{path: DebianDir.Join("common.hide")}
+	DebianHide = DebianHider{path: DebianDir.Join("apparmor.d.hide")}
 
 	Ignore = Ignorer{}
 	Flags  = Flagger{}
