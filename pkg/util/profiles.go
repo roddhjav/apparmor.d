@@ -54,6 +54,30 @@ func IsUnconfined(profile string) bool {
 	return false
 }
 
+// ApplyFlags merges flags into a profile, mode-aware: non-mode flags are
+// added to the ones the profile already has (e.g. attach_disconnected is
+// preserved), and a mode flag (enforce, complain, ...) is applied via SetMode
+// so modes never stack into an invalid combo such as (enforce,complain). The
+// last mode listed wins.
+func ApplyFlags(profile string, flags []string) (string, error) {
+	current := GetFlags(profile)
+	var mode string
+	for _, f := range flags {
+		if slices.Contains(ProfileModes, f) {
+			mode = f
+			continue
+		}
+		if !slices.Contains(current, f) {
+			current = append(current, f)
+		}
+	}
+	profile = SetFlags(profile, current)
+	if mode == "" {
+		return profile, nil
+	}
+	return SetMode(profile, mode)
+}
+
 // SetMode sets the given mode in the profile string, removing any conflicting mode flags.
 func SetMode(profile string, mode string) (string, error) {
 	if !slices.Contains(ProfileModes, mode) {
@@ -61,6 +85,12 @@ func SetMode(profile string, mode string) (string, error) {
 	}
 
 	flags := GetFlags(profile)
+
+	// An explicitly unconfined profile stays unconfined: never replace it.
+	// unconfined is never a target mode, but it can already exist in a profile.
+	if slices.Contains(flags, "unconfined") {
+		return profile, nil
+	}
 
 	// Remove all conflicting mode flags
 	flags = slices.DeleteFunc(flags, func(f string) bool {
