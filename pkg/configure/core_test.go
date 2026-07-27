@@ -31,6 +31,15 @@ func chdirGitRoot() {
 }
 
 func TestTask_Apply(t *testing.T) {
+	if err := os.MkdirAll("/tmp/tests", 0o755); err != nil {
+		t.Fatalf("mkdir /tmp/tests: %v", err)
+	}
+	t.Setenv("TMPDIR", "/tmp/tests")
+	userFlagDir := paths.New(t.TempDir())
+	if err := userFlagDir.Join("user.conf").WriteFile([]byte("systemd complain\n")); err != nil {
+		t.Fatalf("write user flags: %v", err)
+	}
+
 	tests := []struct {
 		name        string
 		task        Task
@@ -49,7 +58,7 @@ func TestTask_Apply(t *testing.T) {
 			name:    "ignore",
 			task:    NewIgnore(),
 			wantErr: false,
-			want:    "dists/ignore/main.ignore",
+			want:    "dists/ignore.d/main.conf",
 		},
 		{
 			name:      "merge",
@@ -64,9 +73,9 @@ func TestTask_Apply(t *testing.T) {
 		},
 		{
 			name:    "setflags",
-			task:    NewSetFlags(),
+			task:    NewSetFlags(paths.PathList{userFlagDir}),
 			wantErr: false,
-			want:    "dists/flags/main.flags",
+			want:    userFlagDir.String(),
 		},
 		{
 			name:      "overwrite",

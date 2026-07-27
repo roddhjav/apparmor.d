@@ -48,7 +48,7 @@ gnome-disks complain
 	FlagDir = paths.New("/tmp/")
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := FlagDir.Join(tt.name + ".flags").WriteFile([]byte(tt.content))
+			err := FlagDir.Join(tt.name + ".conf").WriteFile([]byte(tt.content))
 			if err != nil {
 				return
 			}
@@ -62,7 +62,7 @@ gnome-disks complain
 func TestIgnore_Read(t *testing.T) {
 	tests := []struct {
 		name    string
-		content string
+		content string // "" means the file is not created
 		want    []string
 	}{
 		{
@@ -70,6 +70,10 @@ func TestIgnore_Read(t *testing.T) {
 			content: `
 
 `,
+			want: []string{},
+		},
+		{
+			name: "missing",
 			want: []string{},
 		},
 		{
@@ -92,13 +96,32 @@ code
 	IgnoreDir = paths.New("/tmp/")
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := IgnoreDir.Join(tt.name + ".ignore").WriteFile([]byte(tt.content))
-			if err != nil {
-				return
+			if tt.content != "" {
+				err := IgnoreDir.Join(tt.name + ".conf").WriteFile([]byte(tt.content))
+				if err != nil {
+					return
+				}
 			}
 			if got := Ignore.Read(tt.name); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Ignore.Read() = %v, want %v", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestDebianHider_Init(t *testing.T) {
+	t.Chdir(t.TempDir())
+	if err := paths.New("debian").Mkdir(); err != nil {
+		t.Fatalf("mkdir debian: %v", err)
+	}
+	if err := DebianHide.Init(); err != nil {
+		t.Fatalf("Init() error = %v", err)
+	}
+	got, err := DebianHide.path.ReadFileAsString()
+	if err != nil {
+		t.Fatalf("read %s: %v", DebianHide.path, err)
+	}
+	if got != Hide {
+		t.Errorf("Init() content = %q, want %q", got, Hide)
 	}
 }
