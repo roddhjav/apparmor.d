@@ -71,11 +71,14 @@ func main() {
 		)).
 
 		// Ignore profiles and files from dist/ignore
-		Add(configure.NewIgnore()).
+		Add(configure.NewIgnore())
 
+	if !cli.Future() {
 		// Merge profiles (from group/, profiles-*-*/) to a unified apparmor.d directory
-		Add(configure.NewMerge()).
+		r.Configures.Add(configure.NewMerge())
+	}
 
+	r.Configures.
 		// Set distribution specificities
 		Add(configure.NewConfigure()).
 
