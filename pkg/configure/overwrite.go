@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/roddhjav/apparmor.d/pkg/paths"
 	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 	"github.com/roddhjav/apparmor.d/pkg/tasks"
 )
@@ -64,5 +65,44 @@ func (p Overwrite) Apply() ([]string, error) {
 		}
 	}
 
+	return res, nil
+}
+
+// OverwriteFromLinks completes the overwrite mechanism at install time. It uses
+// the disabled symlinks as source of upstream profile to disable.
+type OverwriteFromLinks struct {
+	tasks.BaseTask
+}
+
+// NewOverwriteFromLinks creates a new OverwriteFromLinks task.
+func NewOverwriteFromLinks() *OverwriteFromLinks {
+	return &OverwriteFromLinks{
+		BaseTask: tasks.BaseTask{
+			Keyword: "overwrite",
+			Msg:     "Overwrite dummy upstream profiles",
+		},
+	}
+}
+
+func (p OverwriteFromLinks) Apply() ([]string, error) {
+	disableDir := p.RootApparmor.Join("disable")
+	if !disableDir.Exist() {
+		return nil, nil
+	}
+	entries, err := disableDir.ReadDir(paths.FilterOutDirectories())
+	if err != nil {
+		return nil, err
+	}
+	var res []string
+	for _, e := range entries {
+		origin := p.RootApparmor.Join(e.Base())
+		if !origin.Exist() {
+			continue
+		}
+		if err := origin.Rename(p.RootApparmor.Join(e.Base() + "." + p.Pkgname)); err != nil {
+			return res, err
+		}
+		res = append(res, e.Base())
+	}
 	return res, nil
 }
