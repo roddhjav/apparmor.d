@@ -1,0 +1,96 @@
+// apparmor.d - Full set of apparmor profiles
+// Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+// SPDX-License-Identifier: GPL-2.0-only
+
+package main
+
+import (
+	"fmt"
+	"slices"
+	"strings"
+
+	"github.com/roddhjav/apparmor.d/pkg/paths"
+	"github.com/roddhjav/apparmor.d/pkg/util"
+)
+
+var (
+	// deployModes are the modes accepted as a default deploy mode.
+	deployModes = []string{"enforce", "complain"}
+
+	// vendorConfigDir holds the vendor configuration defaults
+	vendorConfigDir = paths.New("/usr/share/apparmor")
+)
+
+type conf struct {
+	mode        string
+	flagDirs    paths.PathList
+	ignoreDirs  paths.PathList
+	includeDirs paths.PathList
+}
+
+// configTier returns the drop-in directories for name, vendor tier first so
+// entries in configDir override it.
+func configTier(configDir *paths.Path, name string) paths.PathList {
+	return paths.PathList{vendorConfigDir.Join(name), configDir.Join(name)}
+}
+
+// loadConfig resolves the configuration from vendorConfigDir and configDir.
+// The deploy mode is the "default" key of the modes files, overridden by
+// cli arguments.
+func loadConfig(configDir *paths.Path) (*conf, error) {
+	res := &conf{
+		flagDirs:    configTier(configDir, "flags.d"),
+		ignoreDirs:  configTier(configDir, "ignore.d"),
+		includeDirs: configTier(configDir, "include.d"),
+	}
+
+	res.mode = readModeConfig(vendorConfigDir.Join("modes"), configDir.Join("modes"))["default"]
+	if res.mode == "" {
+		res.mode = "complain"
+	}
+	switch {
+	case complain:
+		res.mode = "complain"
+	case enforce:
+		res.mode = "enforce"
+	}
+	if !slices.Contains(deployModes, res.mode) {
+		return nil, fmt.Errorf("invalid default mode %q in %s", res.mode, configDir.Join("modes"))
+	}
+	return res, nil
+}
+
+// readModeConfig parses a general aa-install config file (one "key value"
+// per line, # comments filtered). Only the last existing file is read: a
+// later file fully replaces an earlier one. Only the "default" key (the
+// default deploy mode) is used for now.
+func readModeConfig(files ...*paths.Path) map[string]string {
+	res := map[string]string{}
+	for i := len(files) - 1; i >= 0; i-- {
+		if !files[i].Exist() {
+			continue
+		}
+		for _, line := range files[i].MustReadFilteredFileAsLines() {
+			if key, value, ok := strings.Cut(line, " "); ok {
+				res[strings.TrimSpace(key)] = strings.TrimSpace(value)
+			}
+		}
+		break
+	}
+	return res
+}
+
+// userModeOverrides returns the set of profiles a flags.d drop-in assigns a
+// mode to; the default deploy mode must not override these.
+func userModeOverrides(dirs paths.PathList) map[string]bool {
+	res := map[string]bool{}
+	for profile, flags := range util.ReadFlagDirs(dirs...) {
+		for _, f := range flags {
+			if slices.Contains(util.ProfileModes, f) {
+				res[profile] = true
+				break
+			}
+		}
+	}
+	return res
+}

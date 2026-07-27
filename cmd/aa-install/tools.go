@@ -1,0 +1,190 @@
+// apparmor.d - Full set of apparmor profiles
+// Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+// SPDX-License-Identifier: GPL-2.0-only
+
+package main
+
+import (
+	"crypto/sha256"
+	"encoding/hex"
+	"fmt"
+	"os"
+	"slices"
+	"strings"
+
+	"github.com/roddhjav/apparmor.d/pkg/logging"
+	"github.com/roddhjav/apparmor.d/pkg/paths"
+)
+
+const (
+	// manifestFile is the name of the manifest file that tracks installed profiles.
+	manifestFile = "install.db"
+
+	// symlinkPrefix marks a manifest entry as a symlink; the remainder is the
+	// link target. Disable links (disable/<name> -> ../<name>) must be installed
+	// as symlinks, not dereferenced. The upstream profile they disable only
+	// exists on the target, so the link is dangling in the build directory.
+	symlinkPrefix = "symlink:"
+)
+
+// hashFile returns the hex-encoded SHA-256 hash of a file's contents.
+func hashFile(path *paths.Path) (string, error) {
+	data, err := path.ReadFile()
+	if err != nil {
+		return "", err
+	}
+	sum := sha256.Sum256(data)
+	return hex.EncodeToString(sum[:]), nil
+}
+
+// fileIdentity returns a change-detection identity for a build/target entry:
+// the (prefixed) link target for a symlink, otherwise the content hash.
+func fileIdentity(path *paths.Path) (string, error) {
+	isLink, err := path.IsSymlink()
+	if err != nil {
+		return "", err
+	}
+	if isLink {
+		target, err := os.Readlink(path.String())
+		if err != nil {
+			return "", err
+		}
+		return symlinkPrefix + target, nil
+	}
+	return hashFile(path)
+}
+
+// copyEntry writes the build entry to dst, recreating symlinks as symlinks.
+func copyEntry(file, dst *paths.Path, ident string) error {
+	if target, ok := strings.CutPrefix(ident, symlinkPrefix); ok {
+		return os.Symlink(target, dst.String())
+	}
+	return file.CopyTo(dst)
+}
+
+// readManifest reads the manifest as a map of relative path → hash.
+func readManifest(stateDir *paths.Path) map[string]string {
+	res := map[string]string{}
+	path := stateDir.Join(manifestFile)
+	if !path.Exist() {
+		return res
+	}
+	data, err := path.ReadFile()
+	if err != nil {
+		logging.Warning("Cannot read manifest %s: %s", path, err)
+		return res
+	}
+	for line := range strings.SplitSeq(strings.TrimSpace(string(data)), "\n") {
+		if fields := strings.SplitN(line, " ", 2); len(fields) == 2 {
+			res[fields[1]] = fields[0]
+		}
+	}
+	return res
+}
+
+// writeManifest writes the manifest as "hash path" lines, sorted by path.
+func writeManifest(stateDir *paths.Path, entries map[string]string) error {
+	if err := stateDir.MkdirAll(); err != nil {
+		return err
+	}
+	keys := make([]string, 0, len(entries))
+	for k := range entries {
+		keys = append(keys, k)
+	}
+	slices.Sort(keys)
+	var buf strings.Builder
+	for _, k := range keys {
+		fmt.Fprintf(&buf, "%s %s\n", entries[k], k)
+	}
+	return stateDir.Join(manifestFile).WriteFile([]byte(buf.String()))
+}
+
+// install copies files from the build directory to the install target
+// and removes files that were previously installed but are no longer present.
+// It uses a manifest file in stateDir to track installed files.
+// Returns whether any file was added, updated, or removed.
+func installProfiles(buildDir *paths.Path, targetDir *paths.Path, stateDir *paths.Path) (bool, error) {
+	previous := readManifest(stateDir)
+
+	files, err := buildDir.ReadDirRecursiveFiltered(nil, paths.FilterOutDirectories())
+	if err != nil {
+		return false, err
+	}
+
+	newManifest := make(map[string]string, len(files))
+	var added, updated, unchanged int
+	for _, file := range files {
+		rel, err := file.RelFrom(buildDir)
+		if err != nil {
+			return false, err
+		}
+		relStr := rel.String()
+
+		ident, err := fileIdentity(file)
+		if err != nil {
+			return false, err
+		}
+		newManifest[relStr] = ident
+
+		delete(previous, relStr)
+
+		// Compare against the target itself, not the manifest, so that
+		// drifted or missing files are repaired on reinstall. Lstat so a
+		// symlink (possibly dangling) counts as present.
+		dst := targetDir.JoinPath(rel)
+		_, lerr := dst.Lstat()
+		existed := lerr == nil
+		if existed {
+			current, err := fileIdentity(dst)
+			if err != nil {
+				return false, err
+			}
+			if current == ident {
+				unchanged++
+				continue
+			}
+			// Remove first: the entry type (file vs symlink) may change.
+			if err := dst.RemoveAll(); err != nil {
+				return false, err
+			}
+		}
+
+		if err := dst.Parent().MkdirAll(); err != nil {
+			return false, err
+		}
+		if err := copyEntry(file, dst, ident); err != nil {
+			return false, err
+		}
+
+		if existed {
+			updated++
+		} else {
+			added++
+		}
+	}
+
+	removed := 0
+	for old := range previous {
+		target := targetDir.Join(old)
+		if _, err := target.Lstat(); err == nil {
+			if err := target.RemoveAll(); err != nil {
+				return false, err
+			}
+			removed++
+		}
+	}
+
+	if err := writeManifest(stateDir, newManifest); err != nil {
+		return false, err
+	}
+
+	logging.Indent = ""
+	logging.Success("Installed %d profiles to %s", len(newManifest), targetDir)
+	logging.Indent = "   "
+	logging.Bullet("%d added, %d updated, %d unchanged", added, updated, unchanged)
+	if removed > 0 {
+		logging.Bullet("Removed %d stale files", removed)
+	}
+	logging.Indent = ""
+	return added+updated+removed > 0, nil
+}
