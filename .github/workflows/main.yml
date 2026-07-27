@@ -45,7 +45,12 @@ jobs:
           just build-dpkg
 
       - name: Install apparmor.d
-        run: sudo dpkg --install .pkg/apparmor.d_*_amd64.deb || true
+        run: |
+            sudo dpkg --install .pkg/apparmor.d*.deb || true
+            sudo aa-install --install --all
+
+      - name: Show the installation status
+        run: sudo aa-install --status
 
       - name: Reload AppArmor
         run: |
@@ -63,12 +68,12 @@ jobs:
       - name: Show Number of loaded profile
         run: sudo aa-status --profiled
 
-      - name: Cache the build package
+      - name: Cache the build packages
         if: matrix.mode == 'default' && matrix.os == 'ubuntu-24.04'
         uses: actions/cache/save@v4
         with:
-          path: .pkg/apparmor.d_*_amd64.deb
-          key: ${{ matrix.os }}-${{ matrix.mode }}-${{ hashFiles('.pkg/apparmor.d_*_amd64.deb') }}
+          path: .pkg/apparmor.d*.deb
+          key: ${{ matrix.os }}-${{ matrix.mode }}-${{ hashFiles('.pkg/apparmor.d*.deb') }}
 
   tests:
     runs-on: ubuntu-24.04
@@ -78,12 +83,12 @@ jobs:
       - name: Check out repository code
         uses: actions/checkout@v4
 
-      - name: Restore the cached build package
+      - name: Restore the cached build packages
         uses: actions/cache/restore@v4
         with:
           fail-on-cache-miss: true
-          path: .pkg/apparmor.d_*_amd64.deb
-          key: ubuntu-24.04-default-${{ hashFiles('.pkg/apparmor.d_*_amd64.deb') }}
+          path: .pkg/apparmor.d*.deb
+          key: ubuntu-24.04-default-${{ hashFiles('.pkg/apparmor.d*.deb') }}
           restore-keys: |
             ubuntu-24.04-default-
 
@@ -98,7 +103,8 @@ jobs:
 
       - name: Install apparmor.d
         run: |
-          sudo dpkg --install .pkg/apparmor.d_*_amd64.deb || true
+          sudo dpkg --install .pkg/apparmor.d*.deb || true
+          sudo aa-install --install --all
           sudo systemctl restart apparmor.service
           sudo systemctl daemon-reload
           systemctl --user daemon-reload
