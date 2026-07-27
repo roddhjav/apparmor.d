@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/roddhjav/apparmor.d/pkg/prebuild"
 	"github.com/roddhjav/apparmor.d/pkg/tasks"
 )
 
