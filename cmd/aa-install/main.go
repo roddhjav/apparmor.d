@@ -24,7 +24,7 @@ const (
 	nilConfig = ""
 	nilMagic  = ""
 	nilSrc    = ""
-	usage     = `aa-install [-h] [--config DIR] [--src DIR] [--magic DIR] [ -i | -u | -s | -l ] [-e|-c]
+	usage     = `aa-install [-h] [--config DIR] [--src DIR] [--magic DIR] [ -i | -u | -s | -l ] [-a] [-e|-c]
 
     Install and manage apparmor profiles from apparmor.d.
 
@@ -35,6 +35,7 @@ Options:
     -s, --status       Show the installation status summary (default).
     -l, --list         List installed profile paths from the manifest.
     -i, --install      Install the profiles.
+    -a, --all          Install all profiles.
     -c, --complain     Set complain flag on all the profiles.
     -e, --enforce      Set enforce flag on all the profiles.
     -u, --uninstall    Remove all profiles installed.
@@ -62,6 +63,7 @@ See man aa-install(1) for more information.
 var (
 	help      bool
 	install   bool
+	all       bool
 	complain  bool
 	enforce   bool
 	uninstall bool
@@ -81,6 +83,8 @@ func init() {
 	flag.BoolVar(&help, "help", false, "Show this help message and exit.")
 	flag.BoolVar(&install, "i", false, "Install the profiles.")
 	flag.BoolVar(&install, "install", false, "Install the profiles.")
+	flag.BoolVar(&all, "a", false, "Install all profiles.")
+	flag.BoolVar(&all, "all", false, "Install all profiles,.")
 	flag.BoolVar(&complain, "c", false, "Set complain flag on all the profiles.")
 	flag.BoolVar(&complain, "complain", false, "Set complain flag on all the profiles.")
 	flag.BoolVar(&enforce, "e", false, "Set enforce flag on all the profiles.")
@@ -188,13 +192,15 @@ func aaInstall(configDir *paths.Path, srcDir *paths.Path, cfg *conf) (bool, erro
 		Add(configure.NewOverwriteFromLinks()).
 
 		// Set user-defined flags from the flags.d dirs
-		Add(configure.NewSetFlags(cfg.flagDirs)).
+		Add(configure.NewSetFlags(cfg.flagDirs))
 
 		// Set detected system state in tunables/multiarch.d/state
 		// Add(configure.NewSetState()).
 
-		// Only keep profiles for installed programs
-		Add(configure.NewSelectInstalled())
+	// Only keep profiles for installed programs, unless all are requested
+	if !all {
+		r.Configures.Add(configure.NewSelectInstalled())
+	}
 
 	// Apply the default deploy mode to every profile, except those a user
 	// flags.d drop-in already assigns a mode to (SetFlags handled those).
@@ -268,7 +274,7 @@ func run() error {
 	case list:
 		return aaList(configDir, aa.MagicRoot)
 
-	case install || complain || enforce:
+	case install:
 		changed, err = aaInstall(configDir, srcRoot, cfg)
 
 	case uninstall:

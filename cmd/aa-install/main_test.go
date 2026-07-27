@@ -122,6 +122,19 @@ func TestRun(t *testing.T) {
 			},
 		},
 		{
+			name:        "install all keeps profiles of missing programs",
+			flags:       func() { all = true },
+			wantReloads: 1,
+			check: func(t *testing.T, env *runEnv) {
+				if !env.targetDir.Join("aa_test_kept").Exist() {
+					t.Error("kept profile was not installed")
+				}
+				if !env.targetDir.Join("aa_test_dropped").Exist() {
+					t.Error("profile for a missing program was not installed")
+				}
+			},
+		},
+		{
 			name:        "install complain",
 			flags:       func() { complain = true },
 			wantReloads: 1,

@@ -8,7 +8,7 @@ aa-install - Install and manage AppArmor profiles from apparmor.d.
 
 # SYNOPSIS
 
-**aa-install** [*options...*] [**-s**|**-l**|**-i**|**-u**] [**-e**|**-c**]
+**aa-install** [*options...*] [**-s**|**-l**|**-i**|**-u**] [**-a**] [**-e**|**-c**]
 
 # DESCRIPTION
 
@@ -37,6 +37,11 @@ With no action flag, print the installation status summary.
 `--install`, `-i`
 
 : Build and install the profiles, then reload them.
+
+`--all`, `-a`
+
+: Install all the profiles, including the ones of programs not installed on
+  the system.
 
 `--complain`, `-c`
 

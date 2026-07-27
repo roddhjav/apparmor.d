@@ -7,6 +7,7 @@ _aa-install() {
 		{-s,--status}'[show the installation status summary]' \
 		{-l,--list}'[list installed profile paths from the manifest]' \
 		{-i,--install}'[install the profiles]' \
+		{-a,--all}'[install all profiles, even for programs not installed]' \
 		{-c,--complain}'[set complain flag on all the profiles]' \
 		{-e,--enforce}'[set enforce flag on all the profiles]' \
 		{-u,--uninstall}'[remove all profiles installed]' \
