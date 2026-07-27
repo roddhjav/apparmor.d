@@ -41,6 +41,11 @@ func (p Merge) Apply() ([]string, error) {
 			return res, err
 		}
 		for _, file := range files {
+			// Record group membership before the groups/ tree is flattened:
+			// groups/<group>/<profile> -> Groups[<profile>] = <group>.
+			if dirMoved == "groups/*/*" {
+				p.Groups[filepath.Base(file)] = filepath.Base(filepath.Dir(file))
+			}
 			err := os.Rename(file, p.RootApparmor.Join(filepath.Base(file)).String())
 			if err != nil {
 				return res, err
