@@ -328,6 +328,19 @@ profile attach-2 flags=(complain) {
 }`,
 		},
 		{
+			name: "attach-namespace",
+			b:    NewAttach(),
+			profile: `
+profile :glycin:bwrap flags=(attach_disconnected) {
+  include <abstractions/base>
+}`,
+			want: `
+@{att} = /att/glycin/
+profile :glycin:bwrap flags=(attach_disconnected,attach_disconnected.path=@{att}) {
+  include <abstractions/attached/base>
+}`,
+		},
+		{
 			name: "debug-1",
 			b:    NewDebug(),
 			profile: `
