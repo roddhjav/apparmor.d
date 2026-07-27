@@ -109,6 +109,51 @@ func TestTask_Apply(t *testing.T) {
 	}
 }
 
+// fakeTask is a minimal Task used to exercise the runner pipeline.
+type fakeTask struct {
+	tasks.BaseTask
+	msgs []string
+	err  error
+}
+
+func (f *fakeTask) Apply() ([]string, error) { return f.msgs, f.err }
+
+func TestConfigures_Run(t *testing.T) {
+	tests := []struct {
+		name    string
+		tasks   []Task
+		wantErr bool
+	}{
+		{
+			name: "all tasks succeed",
+			tasks: []Task{
+				&fakeTask{BaseTask: tasks.BaseTask{Keyword: "one", Msg: "task one"}, msgs: []string{"detail"}},
+				&fakeTask{BaseTask: tasks.BaseTask{Keyword: "two", Msg: "task two"}},
+			},
+			wantErr: false,
+		},
+		{
+			name: "failing task aborts the pipeline",
+			tasks: []Task{
+				&fakeTask{BaseTask: tasks.BaseTask{Keyword: "boom", Msg: "task boom"}, err: os.ErrPermission},
+			},
+			wantErr: true,
+		},
+	}
+	c := tasks.NewTaskConfig(paths.New(".build"))
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := NewRunner(c)
+			for _, task := range tt.tasks {
+				r.Add(task)
+			}
+			if err := r.Run(); (err != nil) != tt.wantErr {
+				t.Errorf("Configures.Run() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
 func TestConfigures_Add(t *testing.T) {
 	tests := []struct {
 		name  string
