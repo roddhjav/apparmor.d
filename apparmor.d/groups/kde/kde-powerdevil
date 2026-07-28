@@ -21,12 +21,9 @@ profile kde-powerdevil @{exec_path} flags=(attach_disconnected mediate_deleted) 
   include <abstractions/network-manager-observe>
   include <abstractions/upower-observe>
 
-  capability sys_ptrace,
   capability wake_alarm,
 
   network netlink raw,
-
-  ptrace read,
 
   #aa:dbus own bus=system name=org.freedesktop.Policy.Power
   #aa:dbus own bus=system name=org.kde.kf[56]auth path=/
@@ -50,7 +47,7 @@ profile kde-powerdevil @{exec_path} flags=(attach_disconnected mediate_deleted) 
   @{bin}/{,e}grep     rix,
   @{bin}/getfacl      rix,
   @{bin}/kcminit      rPx,
-  @{bin}/lsof         rix,
+  @{bin}/lsof         Cx -> lsof,
   @{bin}/sed          rix,
   @{bin}/uname        rPx,
   @{bin}/xargs        rix,
@@ -100,24 +97,39 @@ profile kde-powerdevil @{exec_path} flags=(attach_disconnected mediate_deleted) 
   @{sys}/devices/@{pci}/i2c-*/**/dev r,
   @{sys}/devices/**/ r,
   @{sys}/devices/**/uevent r,
-  @{sys}/devices/**/name r,
-  @{sys}/devices/**/wakeup_count r,
+  @{sys}/devices/**wakeup/wakeup@{u8}/{name,wakeup_count} r,
 
-  @{PROC}/ r,
-  @{PROC}/locks r,
   @{PROC}/@{pid}/fd/ r,
-  #aa:lint ignore=useless
-  @{PROC}/@{pid}/maps r,
   @{PROC}/@{pid}/mountinfo r,
   @{PROC}/@{pid}/mounts r,
-  @{PROC}/@{pid}/net/* r,
-  @{PROC}/@{pid}/stat r,
-
-  owner @{PROC}/@{pid}/fdinfo/@{int} r,
 
   /dev/i2c-@{int} rwk,
   /dev/rfkill r,
   /dev/tty rw,
+
+  # related to usage of ddcutil
+  profile lsof {
+    include <abstractions/base>
+
+    capability sys_ptrace,
+
+    ptrace read,
+
+    @{bin}/lsof r,
+
+    / r,
+
+          @{PROC}/ r,
+          @{PROC}/locks r,
+          @{PROC}/@{pids}/maps r,
+          @{PROC}/@{pid}/net/* r,
+          @{PROC}/@{pid}/stat r,
+    owner @{PROC}/@{pid}/fd/ r,
+    owner @{PROC}/@{pid}/fdinfo/@{int} r,
+    owner @{PROC}/@{pid}/mounts r,
+
+    include if exists <local/kde-powerdevil_lsof>
+  }
 
   include if exists <local/kde-powerdevil>
 }
