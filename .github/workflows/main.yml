@@ -4,7 +4,7 @@ on: [push, pull_request, workflow_dispatch]
 
 jobs:
   check:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
@@ -24,7 +24,7 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: ubuntu-24.04
+          - os: ubuntu-26.04
             mode: default
     steps:
       - name: Check out repository code
@@ -38,7 +38,7 @@ jobs:
             auditd apparmor-profiles apparmor-utils
           pipx install rust-just
           echo "$HOME/.local/bin" >> $GITHUB_PATH
-          sudo rm /etc/apparmor.d/usr.lib.snapd.snap-confine.real
+          sudo rm -f /etc/apparmor.d/usr.lib.snapd.snap-confine.real
 
       - name: Build the apparmor.d package
         run: |
@@ -69,14 +69,14 @@ jobs:
         run: sudo aa-status --profiled
 
       - name: Cache the build packages
-        if: matrix.mode == 'default' && matrix.os == 'ubuntu-24.04'
+        if: matrix.mode == 'default' && matrix.os == 'ubuntu-26.04'
         uses: actions/cache/save@v4
         with:
           path: .pkg/apparmor.d*.deb
           key: ${{ matrix.os }}-${{ matrix.mode }}-${{ hashFiles('.pkg/apparmor.d*.deb') }}
 
   tests:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     needs: build
     if: github.ref_name == 'dev' || github.event_name == 'workflow_dispatch'
     steps:
@@ -88,9 +88,9 @@ jobs:
         with:
           fail-on-cache-miss: true
           path: .pkg/apparmor.d*.deb
-          key: ubuntu-24.04-default-${{ hashFiles('.pkg/apparmor.d*.deb') }}
+          key: ubuntu-26.04-default-${{ hashFiles('.pkg/apparmor.d*.deb') }}
           restore-keys: |
-            ubuntu-24.04-default-
+            ubuntu-26.04-default-
 
       - name: Install Tests dependencies
         run: |
