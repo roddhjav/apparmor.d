@@ -1,0 +1,21 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/cosmic-randr
+profile cosmic-randr @{exec_path} flags=(attach_disconnected,mediate_deleted) {
+  include <abstractions/base>
+  include <abstractions/bus-session>
+
+  @{exec_path} mr,
+
+  owner @{run}/user/@{uid}/wayland-* rw,
+
+  include if exists <local/cosmic-randr>
+}
+
+# vim:syntax=apparmor

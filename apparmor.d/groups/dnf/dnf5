@@ -1,0 +1,92 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/dnf5
+profile dnf5 @{exec_path} flags=(attach_disconnected,mediate_deleted) {
+  include <abstractions/base>
+  include <abstractions/bash-strict>
+  include <abstractions/nameservice-strict>
+  include <abstractions/openssl>
+  include <abstractions/ssl_certs>
+
+  capability chown,
+  capability dac_override,
+  capability dac_read_search,
+  capability fowner,
+  capability fsetid,
+  capability mknod,
+  capability net_admin,
+  capability setgid,
+  capability setuid,
+  capability sys_admin,
+  capability sys_chroot,
+  capability sys_ptrace,
+
+  network inet stream,
+  network inet6 stream,
+  network inet dgram,
+  network inet6 dgram,
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  @{sh_path} rix,
+  @{bin}/dnf{,-3}          rPx,
+  @{bin}/rpm               rPx,
+  @{bin}/rpmkeys           rPx,
+  @{bin}/gpg{,2}           rPx,
+  @{bin}/gpgv{,2}          rPx,
+  @{bin}/ostree            rPx,
+  @{bin}/bootc             rPx,
+
+  @{lib}/dnf5/{,**} rmix,
+  @{lib}/dnf5-plugins/{,**} rmix,
+  @{lib}/libdnf5/{,**} rm,
+
+  /etc/dnf/{,**} r,
+  /etc/yum.repos.d/{,**} r,
+  /etc/yum.conf r,
+  /etc/rpm/{,**} r,
+  /etc/pki/rpm-gpg/{,**} r,
+  /etc/os-release r,
+  /etc/system-release{,-cpe} r,
+  /etc/redhat-release r,
+  /etc/rhsm/{,**} r,
+  /etc/pki/ca-trust/{,**} r,
+  /etc/ca-certificates/{,**} r,
+  /usr/share/crypto-policies/{,**} r,
+
+  /var/lib/dnf/{,**} rwk,
+  /var/lib/rpm/{,**} rwk,
+  /usr/share/rpm/{,**} rwk,
+  /var/lib/rpmstate/{,**} rwk,
+  /var/cache/libdnf5/{,**} rwk,
+  @{lib}/sysimage/libdnf5/{,**} rwk,
+  /var/log/dnf5{,.log} rw,
+  /var/log/dnf5.rpm.log rw,
+  /var/log/hawkey.log rw,
+
+  /var/tmp/ rw,
+  /var/tmp/dnf5-*/{,**} rwk,
+  /var/tmp/rpm-tmp.@{rand6} rwk,
+  owner /tmp/dnf5-*/{,**} rwk,
+  owner /tmp/tmp.@{rand10}/{,**} rwk,
+  owner /tmp/librepo-tmp-* rwk,
+
+  @{efi}/{,**} r,
+  @{lib}/modules/{,**} r,
+
+  @{PROC}/@{pid}/mounts r,
+  @{PROC}/sys/kernel/random/uuid r,
+  @{PROC}/sys/kernel/osrelease r,
+  @{sys}/fs/cgroup/{,**} r,
+
+  include if exists <local/dnf5>
+}
+
+# vim:syntax=apparmor

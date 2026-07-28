@@ -1,0 +1,33 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/gwenview @{bin}/gwenview_importer
+profile gwenview @{exec_path} flags=(attach_disconnected,mediate_deleted) {
+  include <abstractions/base>
+  include <abstractions/bus-session>
+  include <abstractions/graphics>
+  include <abstractions/kde-strict>
+
+  @{exec_path} mr,
+
+  /usr/share/gwenview/{,**} r,
+  /usr/share/icons/{,**} r,
+  /usr/share/mime/{,**} r,
+  /usr/share/kf6/{,**} r,
+
+  owner @{HOME}/{,**} rw,
+  owner @{user_share_dirs}/gwenview/{,**} rw,
+  owner @{run}/user/@{uid}/wayland-* rw,
+
+  /media/{,**} r,
+  @{run}/media/{,**} r,
+
+  include if exists <local/gwenview>
+}
+
+# vim:syntax=apparmor

@@ -1,0 +1,65 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2019-2021 Mikhail Morfikov
+# Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+# abstractions/app/chromium's crashpad_handler subprofile uses peer=@{name}
+# to scope ptrace/signal to the real parent - profile name here is
+# "helium-bin", not "helium", so both must be listed
+@{name} = helium helium-bin
+@{domain} = com.imput.helium org.chromium.Chromium
+@{lib_dirs} = /opt/helium
+@{config_dirs} = @{user_config_dirs}/net.imput.helium{,-beta} @{user_config_dirs}/Helium{,-Beta}
+@{cache_dirs} = @{user_cache_dirs}/net.imput.helium{,-beta} @{user_cache_dirs}/Helium{,-Beta}
+
+@{exec_path} = @{lib_dirs}/helium @{lib_dirs}/chrome
+profile helium-bin @{exec_path} flags=(complain,attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/app/chromium>
+
+  userns,
+
+  #aa:dbus own bus=session name=org.mpris.MediaPlayer2.helium path=/org/mpris/MediaPlayer2
+
+  ptrace trace peer=helium-bin,
+
+  @{exec_path} mrix,
+
+  @{bin}/man  rPUx, # For "helium --help"
+
+  @{lib_dirs}/helium_crashpad_handler  Px -> helium-bin//&helium-bin//crashpad_handler,
+
+  @{sh_path}                   rix, # For helium-wrapper
+  @{bin}/dirname                rix,
+  @{bin}/readlink               rix,
+
+  /usr/share/chromium/extensions/ r,
+
+  #aa:only fedora
+  /etc/crypto-policies/back-ends/gnutls.config r,
+
+  /opt/helium/{,**} r,
+  /opt/helium/helium mr,
+  /opt/helium/helium_crashpad_handler mr,
+  /opt/helium/chromedriver mr,
+  /opt/helium/*.so* mr,
+  /opt/helium/locales/{,*} r,
+  /opt/helium/WidevineCdm/{,**} r,
+
+  owner @{config_dirs}/WidevineCdm/libwidevinecdm.so mrw,
+
+  owner @{tmp}/net-export/ rw,
+
+  # Silencer
+  deny /etc/opt/ w,
+  deny /dev/disk/by-uuid/ r,
+  deny @{user_share_dirs}/gvfs-metadata/* r,
+
+  include if exists <local/helium-bin>
+}
+
+# vim:syntax=apparmor

@@ -9,31 +9,108 @@ include <tunables/global>
 @{exec_path} = @{bin}/nvidia-settings
 profile nvidia-settings @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/cgroup-limits>
   include <abstractions/dconf-write>
   include <abstractions/desktop>
   include <abstractions/gstreamer>
+  include <abstractions/nameservice-strict>
   include <abstractions/nvidia-strict>
+  include <abstractions/thumbnails-cache-read>
+  include <abstractions/app/bus>
+
+  capability dac_override,
+  capability dac_read_search,
+  capability mknod,
+  capability sys_admin,
+  capability sys_nice,
+  capability perfmon,
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
 
   @{exec_path} mr,
+
+  @{bin}/kmod         rPx,
 
   /usr/share/pixmaps/{,**} r,
 
   owner @{HOME}/.nvidia-settings-rc rw,
 
+  # Not owner-scoped: run via sudo, this process's fsuid (root) won't match
+  # the file's owning uid, but the cookie itself is meant to be read by
+  # whoever needs to authenticate to this specific display.
+  @{run}/user/@{uid}/xauth_@{rand6} r,
+
+  /etc/glvnd/egl_vendor.d/{,*.json} r,
+  /usr/share/glvnd/egl_vendor.d/{,*.json} r,
+  /etc/egl/egl_external_platform.d/{,*.json} r,
+  /usr/share/egl/egl_external_platform.d/{,*.json} r,
+
+  /etc/vulkan/explicit_layer.d/{,*.json} r,
+  /etc/vulkan/icd.d/{,*.json} r,
+  /etc/vulkan/implicit_layer.d/{,*.json} r,
+  /usr/share/vulkan/explicit_layer.d/{,*.json} r,
+  /usr/share/vulkan/icd.d/{,*.json} r,
+  /usr/share/vulkan/implicit_layer.d/{,*.json} r,
+  owner @{user_share_dirs}/vulkan/implicit_layer.d/{,*.json} r,
+
+  /usr/share/drirc.d/{,*} r,
+
+  /dev/dri/ r,
+  /dev/dri/renderD@{int} rw,
+
   @{sys}/bus/pci/devices/ r,
   @{sys}/devices/@{pci}/config r,
+  @{sys}/devices/@{pci}/boot_vga r,
+  @{sys}/devices/@{pci}/uevent r,
+  @{sys}/devices/@{pci}/vendor r,
+  @{sys}/devices/@{pci}/device r,
+  @{sys}/devices/@{pci}/subsystem_vendor r,
+  @{sys}/devices/@{pci}/subsystem_device r,
+  @{sys}/devices/@{pci}/revision r,
   @{sys}/devices/system/node/ r,
   @{sys}/devices/system/node/node@{int}/cpumap r,
+  @{sys}/devices/system/cpu/cpu@{int}/cpu_capacity r,
+  @{sys}/devices/system/cpu/cpu@{int}/cache/index@{int}/level r,
+  @{sys}/devices/system/cpu/cpu@{int}/cache/index@{int}/id r,
+  @{sys}/devices/system/cpu/cpu@{int}/topology/physical_package_id r,
+  @{sys}/devices/system/cpu/cpu@{int}/topology/core_cpus r,
+  @{sys}/devices/system/cpu/cpu@{int}/topology/thread_siblings r,
 
         @{PROC}/devices r,
+        @{PROC}/sys/kernel/modprobe r,
+        @{PROC}/sys/dev/i915/perf_stream_paranoid r,
         @{PROC}/driver/nvidia/capabilities/mig/config r,
         @{PROC}/driver/nvidia/capabilities/mig/monitor r,
   owner @{PROC}/@{pid}/cmdline r,
   owner @{PROC}/@{pid}/task/@{tid}/comm rw,
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/mounts r,
+  @{PROC}/[0-9]*/stat r,
+
+  /etc/fstab r,
+
+  # GTK save/open dialog defaults to $HOME and mime-sniffs visible entries,
+  # and also supports rename/delete from within the dialog
+  owner @{HOME}/{,**} rw,
+  owner @{HOME}/.steam/steam.pid r,
+
+  @{MOUNTDIRS}/ r,
+  @{MOUNTS}/{,**} rw,
+
+  @{run}/mount/utab r,
+
+  owner @{user_cache_dirs}/mesa_shader_cache/index rwk,
+  owner @{user_config_dirs}/lsfg-vk/conf.toml r,
+
+  /dev/pts/[0-9]* rw,
 
   /dev/char/@{dynamic}:@{int} w,          # For dynamic assignment range 234 to 254, 384 to 511
   /dev/nvidia-caps/ rw,
-  /dev/nvidia-caps/nvidia-cap@{int} r,
+  /dev/nvidia-caps/nvidia-cap@{int} rw,
 
   include if exists <local/nvidia-settings>
 }

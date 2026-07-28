@@ -1,0 +1,45 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/doas
+profile doas @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/app-launcher-root>
+  include <abstractions/authentication>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+
+  capability audit_write,
+  capability dac_override,
+  capability dac_read_search,
+  capability setgid,
+  capability setuid,
+  capability sys_resource,
+
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  @{bin}/@{shells}  rUx,
+  @{lib}/**         PUx,
+  /opt/*/**         PUx,
+
+  @{etc_ro}/doas.conf r,
+  @{etc_ro}/login.defs r,
+  /etc/passwd r,
+
+  @{PROC}/@{pid}/loginuid r,
+  @{PROC}/@{pid}/stat r,
+
+  /dev/ptmx rwk,
+  /dev/tty rwk,
+
+  include if exists <local/doas>
+}
+
+# vim:syntax=apparmor

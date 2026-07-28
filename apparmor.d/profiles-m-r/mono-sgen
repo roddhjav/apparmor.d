@@ -10,10 +10,13 @@ include <tunables/global>
 profile mono-sgen @{exec_path} {
   include <abstractions/base>
   include <abstractions/audio-client>
+  include <abstractions/cgroup-limits>
   include <abstractions/desktop>
   include <abstractions/graphics>
+  include <abstractions/ibus-strict>
   include <abstractions/nameservice-strict>
   include <abstractions/ssl_certs>
+  include <abstractions/thumbnails-cache-read>
 
   network inet dgram,
   network inet6 dgram,
@@ -30,15 +33,33 @@ profile mono-sgen @{exec_path} {
   /usr/share/.mono/{,**} rw,
 
   /etc/mono/{,**} r,
+  /etc/fstab r,
+  /.profile r,
+
+  # Pinta's Open/Save dialogs browse, mime-sniff and save anywhere under $HOME
+  owner @{HOME}/{,**} rw,
+
+  @{MOUNTDIRS}/ r,
+  owner @{MOUNTS}/ r,
+  owner @{MOUNTS}/** r,
+
+  @{run}/mount/utab r,
 
   owner @{user_config_dirs}/openra/{,**} rw,
   owner @{user_config_dirs}/.mono/{,**} r,
+  owner @{user_config_dirs}/Pinta/{,**} rw,
+  owner @{user_config_dirs}/mono.addins/{,**} rw,
+  owner @{user_config_dirs}/mono.addins/addin-db-002/fdb-lock rwk,
 
   owner @{tmp}/*.* rw,
   owner @{tmp}/CASESENSITIVETEST* rw,
   owner /dev/shm/mono.@{int} rw,
 
   owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/statm r,
+
+  signal (send) set=kill peer=unconfined,
 
   include if exists <local/mono-sgen>
 }

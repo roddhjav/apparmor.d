@@ -1,0 +1,37 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{sbin}/visudo @{bin}/visudo-rs
+profile visudo @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+
+  capability dac_override,
+  capability dac_read_search,
+  capability setuid,
+  capability setgid,
+
+  @{exec_path} mr,
+
+  @{bin}/vi          rPUx,
+  @{bin}/vim         rPUx,
+  @{bin}/nano        rPUx,
+  @{bin}/emacs       rPUx,
+
+  @{etc_ro}/sudoers r,
+  @{etc_ro}/sudoers.d/{,*} r,
+  /etc/sudoers.tmp rw,
+  /etc/sudoers.d/ rw,
+
+  owner @{tmp}/visudo-* rw,
+
+  include if exists <local/visudo>
+}
+
+# vim:syntax=apparmor

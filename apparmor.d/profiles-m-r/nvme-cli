@@ -1,0 +1,27 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{sbin}/nvme
+profile nvme-cli @{exec_path} flags=(attach_disconnected,mediate_deleted) {
+  include <abstractions/base>
+
+  capability sys_admin sys_rawio,
+
+  @{exec_path} mr,
+
+  /dev/nvme{,*} rw,
+
+  @{sys}/class/nvme/{,**} r,
+  @{sys}/devices/**/nvme/{,**} r,
+
+  @{PROC}/mounts r,
+
+  include if exists <local/nvme-cli>
+}
+
+# vim:syntax=apparmor

@@ -1,0 +1,38 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/cosmic-ext-storage
+profile cosmic-ext-storage @{exec_path} flags=(attach_disconnected,mediate_deleted) {
+  include <abstractions/base>
+  include <abstractions/bus-session>
+  include <abstractions/bus-system>
+  include <abstractions/graphics>
+
+  @{exec_path} mr,
+
+  @{bin}/cosmic-ext-storage-daemon Px,
+
+  /usr/share/cosmic/{,**} r,
+  /usr/share/icons/{,**} r,
+
+  owner @{HOME}/{,**} r,
+  owner @{user_config_dirs}/cosmic/{,**} rw,
+  owner @{user_share_dirs}/cosmic/{,**} rw,
+  owner @{run}/user/@{uid}/wayland-* rw,
+
+  /media/{,**} r,
+  @{run}/media/{,**} r,
+
+  @{sys}/block/ r,
+  @{sys}/class/block/{,**} r,
+  @{sys}/devices/**/block/{,**} r,
+
+  include if exists <local/cosmic-ext-storage>
+}
+
+# vim:syntax=apparmor

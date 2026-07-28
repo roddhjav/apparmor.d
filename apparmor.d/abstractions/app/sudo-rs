@@ -18,8 +18,9 @@
   capability net_admin,
   capability setgid,
   capability setuid,
+  capability sys_resource,
 
-  network (create receive send) netlink raw,
+  network (create receive send bind) netlink raw,
 
   unix type=stream addr=@@{udbus}/bus/sudo/system,
 
@@ -30,6 +31,12 @@
 
   @{bin}/sudo        mr,
   @{bin}/sudo-rs     mr,
+
+  # pam_unix execs this setuid helper to verify the password (/etc/shadow
+  # isn't directly readable). Ux needs no transition-table entry or
+  # target-profile lookup, sidestepping the Px/px merge issue seen in the
+  # sudo profile - see profiles-s-z/sudo for the full explanation.
+  priority=1 @{sbin}/unix_chkpwd rUx,
 
   @{etc_ro}/sudo.conf r,
   @{etc_ro}/sudoers r,
@@ -43,6 +50,7 @@
   owner @{run}/sudo-rs/ts/ w,
   owner @{run}/sudo-rs/ts/@{uid} rwk,
 
+  @{PROC}/@{pid}/cgroup r,
   @{PROC}/@{pid}/loginuid r,
   @{PROC}/@{pid}/stat r,
   @{PROC}/sys/kernel/random/boot_id r,

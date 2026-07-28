@@ -1,0 +1,51 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/cosmic-comp
+profile cosmic-comp @{exec_path} flags=(attach_disconnected,mediate_deleted) {
+  include <abstractions/base>
+  include <abstractions/bus-session>
+  include <abstractions/bus-system>
+  include <abstractions/graphics>
+  include <abstractions/nameservice-strict>
+
+  capability sys_ptrace,
+
+  network netlink raw,
+  network unix stream,
+
+  @{exec_path} mr,
+
+  /usr/share/cosmic/{,**} r,
+  /usr/share/wayland-sessions/{,*.desktop} r,
+  /usr/share/xkb/{,**} r,
+  /usr/share/X11/xkb/{,**} r,
+  /usr/share/libinput/{,**} r,
+
+  @{etc_ro}/xdg/{,**} r,
+
+  owner @{user_config_dirs}/cosmic/{,**} rw,
+  owner @{user_share_dirs}/cosmic/{,**} rw,
+  owner @{run}/user/@{uid}/ rw,
+  owner @{run}/user/@{uid}/wayland-* rw,
+
+  /dev/dri/{,*} rw,
+  /dev/input/{,*} rw,
+  /dev/uinput rw,
+
+  @{sys}/devices/**/uevent r,
+  @{sys}/class/input/ r,
+  @{sys}/class/drm/ r,
+
+  owner @{PROC}/@{pid}/mountinfo r,
+  @{PROC}/1/environ r,
+
+  include if exists <local/cosmic-comp>
+}
+
+# vim:syntax=apparmor

@@ -34,13 +34,16 @@ profile flatpak-session-helper @{exec_path} flags=(attach_disconnected,mediate_d
   @{bin}/dbus-monitor                 rPUx,
   @{bin}/flatpak                       rPx,
   @{bin}/getent                        rix,
+  @{bin}/git                           rPx,
   @{bin}/p11-kit                       rCx -> p11-kit,
   @{bin}/pkexec                        rCx -> pkexec,
   @{bin}/printenv                      rix,
   @{bin}/ps                            rPx,
+  @{bin}/update-desktop-database       rPx,
 
-  /var/lib/flatpak/app/@{appid}/**/@{bin}/**  rPx -> flatpak-session-helper-app,
-  /var/lib/flatpak/app/@{appid}/**/@{lib}/**  rPx -> flatpak-session-helper-app,
+  /var/lib/flatpak/app/@{appid}/**/@{bin}/**      rPx -> flatpak-session-helper-app,
+  /var/lib/flatpak/app/@{appid}/**/@{lib}/**      rPx -> flatpak-session-helper-app,
+  /var/lib/flatpak/runtime/**/files/@{lib}/**     rPx -> flatpak-session-helper-app,
 
   owner @{user_cache_dirs}/.flatpak-helper/{,**} rw,
 
@@ -53,6 +56,14 @@ profile flatpak-session-helper @{exec_path} flags=(attach_disconnected,mediate_d
   profile pkexec flags=(attach_disconnected,mediate_deleted) {
     include <abstractions/base>
     include <abstractions/app/pkexec>
+
+    # abstractions/app/pkexec's own ptrace rule only covers self (@{profile_name});
+    # pkexec here ptraces its own parent to check its confinement
+    ptrace read peer=flatpak-session-helper,
+
+    # env (rix'd from abstractions/app/pkexec) execs straight into a flatpak
+    # runtime's dynamic linker, mirroring the parent profile's own transition
+    /var/lib/flatpak/runtime/**/files/@{lib}/** rPx -> flatpak-session-helper-app,
 
     include if exists <local/flatpak-session-helper_pkexec>
   }

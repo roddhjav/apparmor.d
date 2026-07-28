@@ -1,0 +1,29 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/ykman
+profile yubikey-manager @{exec_path} flags=(attach_disconnected,mediate_deleted) {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+
+  @{exec_path} mr,
+
+  /dev/bus/usb/{,**} rw,
+  /dev/hidraw* rw,
+  /dev/ttyUSB* rw,
+
+  @{sys}/bus/usb/{,**} r,
+  @{sys}/class/hidraw/{,**} r,
+  @{sys}/devices/**/usb*/{,**} r,
+
+  /usr/share/yubikey-manager/{,**} r,
+
+  include if exists <local/yubikey-manager>
+}
+
+# vim:syntax=apparmor

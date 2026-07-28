@@ -1,0 +1,26 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/tasks
+profile cosmic-ext-tasks @{exec_path} flags=(attach_disconnected,mediate_deleted) {
+  include <abstractions/base>
+  include <abstractions/bus-session>
+  include <abstractions/graphics>
+
+  @{exec_path} mr,
+
+  /usr/share/cosmic/{,**} r,
+
+  owner @{user_config_dirs}/cosmic/{,**} rw,
+  owner @{user_share_dirs}/cosmic/{,**} rw,
+  owner @{run}/user/@{uid}/wayland-* rw,
+
+  include if exists <local/cosmic-ext-tasks>
+}
+
+# vim:syntax=apparmor

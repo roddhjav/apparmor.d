@@ -1,0 +1,39 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/cosmic-term
+profile cosmic-term @{exec_path} flags=(attach_disconnected,mediate_deleted) {
+  include <abstractions/base>
+  include <abstractions/bus-session>
+  include <abstractions/graphics>
+  include <abstractions/nameservice-strict>
+
+  @{exec_path} mr,
+
+  # Terminal needs to exec arbitrary user-typed programs unconfined
+  @{bin}/* Ux,
+
+  /usr/share/cosmic/{,**} r,
+  /usr/share/fonts/{,**} r,
+  /usr/share/terminfo/{,**} r,
+
+  owner @{HOME}/{,**} rw,
+  owner @{user_config_dirs}/cosmic/{,**} rw,
+  owner @{user_share_dirs}/cosmic/{,**} rw,
+  owner @{run}/user/@{uid}/wayland-* rw,
+
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/mountinfo r,
+
+  /dev/ptmx rw,
+  /dev/pts/* rw,
+
+  include if exists <local/cosmic-term>
+}
+
+# vim:syntax=apparmor

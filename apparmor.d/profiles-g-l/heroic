@@ -1,0 +1,75 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+@{name} = heroic
+@{domain} = org.chromium.Chromium
+@{lib_dirs} = /opt/@{name}/ @{lib}/@{name}/
+@{config_dirs} = @{user_config_dirs}/@{name}
+@{cache_dirs} = @{user_cache_dirs}/@{name}
+@{wineprefix_dirs} = @{HOME}/Games/Heroic/Prefixes/*/
+
+@{exec_path} = @{bin}/heroic @{lib_dirs}/heroic
+profile heroic @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/audio-client>
+  include <abstractions/common/electron>
+  include <abstractions/graphics>
+  include <abstractions/nameservice-strict>
+  include <abstractions/screensaver>
+  include <abstractions/ssl_certs>
+  include <abstractions/user-download-strict>
+  include <abstractions/vulkan-strict>
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  @{exec_path} mrix,
+  @{sh_path}    rix,
+
+  @{lib_dirs}/chrome-sandbox rix,
+
+  # Bundled backend CLIs (legendary/gogdl/nile), vendored inside heroic's own
+  # resources dir rather than separately packaged, so rix instead of a transition
+  @{lib_dirs}/resources/app.asar.unpacked/**/legendary{,.exe} rix,
+  @{lib_dirs}/resources/app.asar.unpacked/**/gogdl{,.exe} rix,
+  @{lib_dirs}/resources/app.asar.unpacked/**/nile{,.exe} rix,
+  @{lib_dirs}/resources/app.asar.unpacked/**/comet{,.exe} rix,
+  @{lib_dirs}/resources/app.asar.unpacked/**/vulkan-helper rix,
+
+  # Launching games goes through umu-run (Proton/Wine) or native binaries.
+  @{bin}/umu-run                    Px,
+  owner @{wineprefix_dirs}/ rw,
+  owner @{wineprefix_dirs}/** rwlk,
+
+  @{open_path} rPx -> child-open-strict,
+
+  /etc/ r,
+
+  owner @{HOME}/Games/{,**} rw,
+
+  owner @{config_dirs}/{,**} rwk,
+  owner @{cache_dirs}/{,**} rwk,
+
+  owner @{user_config_dirs}/autostart/heroic.desktop rw,
+
+  owner "@{tmp}/Heroic Crashes/" rw,
+  owner @{tmp}/heroic.sock rw,
+
+  owner @{run}/user/@{uid}/heroic-ipc-@{int} rw,
+
+  owner @{PROC}/@{pid}/mem r,
+
+  deny ptrace read,
+
+  include if exists <local/heroic>
+}
+
+# vim:syntax=apparmor

@@ -21,6 +21,7 @@ profile packagekitd @{exec_path} flags=(attach_disconnected) {
   capability dac_override,
   capability dac_read_search,
   capability fowner,
+  capability fsetid,
   capability kill,
   capability mknod,
   capability net_admin,
@@ -42,9 +43,11 @@ profile packagekitd @{exec_path} flags=(attach_disconnected) {
 
   @{exec_path} mr,
 
-  @{bin}/gpg{,2}         Cx -> gpg,
-  @{bin}/gpgconf         Cx -> gpg,
-  @{bin}/gpgsm           Cx -> gpg,
+  # &packagekitd//gpg, not bare gpg: a bare name is ambiguous with the
+  # unrelated top-level groups/gpg/gpg profile of the same name
+  @{bin}/gpg{,2}         Cx -> &packagekitd//gpg,
+  @{bin}/gpgconf         Cx -> &packagekitd//gpg,
+  @{bin}/gpgsm           Cx -> &packagekitd//gpg,
 
   @{sh_path}            rix,
   @{bin}/cp             rix,
@@ -109,6 +112,18 @@ profile packagekitd @{exec_path} flags=(attach_disconnected) {
         /tmp/apt-dpkg-install-@{rand6}/ rw,
   owner @{tmp}/apt-changelog-@{rand6}/.apt-acquire-privs-test.@{rand6} rw,
 
+  # rwlk, not rw: gnupg's dotlock protocol under libdnf5's tmp gnupg home
+  # creates/hardlinks lock files (.#lk0x*, .#lk0x*x, pubring.kbx.lock,
+  # trustdb.gpg.lock) inside this dir - needs the l/k bits too.
+  #aa:only fedora
+  owner @{tmp}/libdnf5.@{rand6}/{,**} rwlk,
+  #aa:only fedora
+  owner @{tmp}/key.@{rand6} rw,
+  #aa:only fedora
+  owner @{tmp}/tmpdir.@{rand6}/{,**} rw,
+  #aa:only fedora
+  owner @{tmp}/librepo-tmp-@{rand6} rw,
+
   @{att}@{run}/systemd/inhibit/@{int}.ref rw,
 
   owner @{run}/systemd/users/@{uid} r,
@@ -139,6 +154,7 @@ profile packagekitd @{exec_path} flags=(attach_disconnected) {
     include <abstractions/nameservice-strict>
 
     capability dac_read_search,
+    capability mknod,
 
     @{bin}/gpg{,2}  mr,
     @{bin}/gpgconf  mr,
@@ -159,6 +175,17 @@ profile packagekitd @{exec_path} flags=(attach_disconnected) {
     #aa:only opensuse
     owner /var/tmp/zypp.*/*/ r,
     owner /var/tmp/zypp.*/*/** rwlk -> /var/tmp/zypp.*/*/**,
+
+    #aa:only fedora
+    owner @{tmp}/key.@{rand6} rw,
+    #aa:only fedora
+    owner @{tmp}/libdnf5.@{rand6}/{,**} rwlk,
+    #aa:only fedora
+    owner @{tmp}/librepo-tmp-@{rand6} rw, # file_inherit
+    #aa:only fedora
+    @{lib}/sysimage/rpm/.rpm.lock w,
+    #aa:only fedora
+    /var/cache/PackageKit/@{int}/metadata/*/{,tmpdir.@{rand6}/}repodata/* rw, # file_inherit
 
     owner @{run}/user/@{uid}/gnupg/ r,
     owner @{run}/user/@{uid}/gnupg/ rwlk -> @{run}/user/@{uid}/gnupg/**,

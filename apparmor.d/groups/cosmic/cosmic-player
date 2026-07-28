@@ -1,0 +1,34 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/cosmic-player
+profile cosmic-player @{exec_path} flags=(attach_disconnected,mediate_deleted) {
+  include <abstractions/base>
+  include <abstractions/bus-session>
+  include <abstractions/graphics>
+
+  @{exec_path} mr,
+
+  /usr/share/cosmic/{,**} r,
+  /usr/share/icons/{,**} r,
+  /usr/share/gstreamer-1.0/{,**} r,
+
+  owner @{HOME}/{,**} r,
+  owner @{user_config_dirs}/cosmic/{,**} rw,
+  owner @{user_share_dirs}/cosmic/{,**} rw,
+  owner @{run}/user/@{uid}/wayland-* rw,
+  owner @{run}/user/@{uid}/pulse/ r,
+  owner @{run}/user/@{uid}/pulse/native rw,
+
+  /media/{,**} r,
+  @{run}/media/{,**} r,
+
+  include if exists <local/cosmic-player>
+}
+
+# vim:syntax=apparmor

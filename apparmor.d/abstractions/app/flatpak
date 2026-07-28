@@ -96,6 +96,56 @@
   # apply_extra
   /app/extra/** w,
 
+  # Qt runtime translations, remapped inside the flatpak sandbox
+  /usr/translations/{,**} r,
+
+  /etc/issue r,
+  /etc/os-release r,
+
+  # Self-introspection within the sandbox's own low-pid namespace
+  @{PROC}/[0-9]*/ r,
+  @{PROC}/[0-9]*/mountinfo r,
+  @{PROC}/[0-9]*/mounts r,
+  @{PROC}/[0-9]*/net/arp r,
+  @{PROC}/[0-9]*/oom_score r,
+  @{PROC}/[0-9]*/task/[0-9]*/comm rw,
+  @{PROC}/[0-9]*/statm r,
+
+  # Some apps blindly open() with O_CREAT even for files that already
+  # exist, e.g. AnyDesk's /proc/cpuinfo probe
+  @{PROC}/cpuinfo rw,
+
+  # Hardware/platform device identification (e.g. Electron gamepad enumeration)
+  @{sys}/devices/platform/uevent r,
+  @{sys}/devices/platform/**/uevent r,
+
+  # Network interface / PCI device enumeration (e.g. lspci, network client
+  # apps reading a MAC address for machine identification)
+  @{sys}/bus/pci/slots/ r,
+  @{sys}/bus/pci/slots/*/address r,
+  @{sys}/devices/@{pci}/label r,
+  @{sys}/devices/@{pci}/net/*/address r,
+  @{PROC}/bus/pci/devices r,
+
+  # CPU topology/capability enumeration
+  @{sys}/devices/system/cpu/cpu@{int}/cache/index@{int}/number_of_sets r,
+  @{sys}/devices/system/cpu/cpu@{int}/hotplug/state r,
+  @{sys}/devices/system/cpu/cpu@{int}/topology/core_id r,
+  @{sys}/devices/system/cpu/cpu@{int}/topology/core_siblings r,
+  @{sys}/devices/system/cpu/hotplug/states r,
+  @{sys}/devices/system/cpu/vulnerabilities/ r,
+  @{sys}/devices/system/cpu/vulnerabilities/* r,
+
+  /dev/urandom rw,
+
+  # Gamepad/joystick enumeration (e.g. browser Gamepad API implementations)
+  /dev/input/by-id/ r,
+  /dev/input/by-path/ r,
+
+  # Qt platform theme engine plugin, present in the shared freedesktop
+  # runtime any Qt-based flatpak app pulls in
+  /usr/share/runtime/lib/plugins/Kvantum/styles/*.so m,
+
   include if exists <abstractions/app/flatpak.d>
 
 # vim:syntax=apparmor

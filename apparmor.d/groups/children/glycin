@@ -26,6 +26,9 @@ profile glycin flags=(attach_disconnected) {
 
   @{lib}/glycin-loaders/@{d}+/glycin-* Cx -> &glycin//loaders,
 
+  # Inherited fd from the parent bwrap process
+  /dev/udmabuf rw,
+
   #aa:lint ignore=too-wide
   # Safe deny of inherited files from parent process.
   deny network inet dgram,
@@ -40,6 +43,7 @@ profile glycin flags=(attach_disconnected) {
   deny /dev/shm/** rw,
   deny /dev/dri/* rw,
   deny @{att}/dev/tty@{u8} rw,
+  deny /tmp/.org.chromium.Chromium.@{rand6} rw,
 
   profile loaders flags=(attach_disconnected) {
     include <abstractions/base>
@@ -47,7 +51,13 @@ profile glycin flags=(attach_disconnected) {
 
     unix type=stream,
 
+    # flatpak-portal sends SIGINT to cancel an in-flight thumbnail/preview load
+    signal receive set=int peer=flatpak-portal,
+
     @{lib}/glycin-loaders/@{d}+/glycin-* mr,
+
+    # zbus resolving peer credentials over the session bus (arbitrary pid)
+    @{PROC}/[0-9]*/cgroup r,
 
     @{att}/usr/share/glycin-loaders/{,**} r,
 

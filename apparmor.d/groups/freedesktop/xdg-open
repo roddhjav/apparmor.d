@@ -14,7 +14,11 @@ profile xdg-open @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/base>
   include <abstractions/app/open>
   include <abstractions/common/xdg>
+  include <abstractions/kde-base>
   include <abstractions/path>
+
+  capability dac_override,
+  capability dac_read_search,
 
   @{exec_path} r,
 
@@ -32,12 +36,16 @@ profile xdg-open @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   /usr/share/**                 PUx,
 
   @{PROC}/version r,
+  @{PROC}/@{pid}/mountinfo r,
+  @{PROC}/@{pid}/mounts r,
 
   profile bus flags=(attach_disconnected) {
     include <abstractions/base>
     include <abstractions/app/bus>
     include <abstractions/bus-session>
     include <abstractions/consoles>
+
+    owner @{tmp}/xauth.@{rand10} r, # file_inherit
 
     include if exists <local/xdg-open_bus>
   }

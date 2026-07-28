@@ -20,6 +20,7 @@ profile xorg @{exec_path} flags=(attach_disconnected) {
   include <abstractions/graphics-full>
   include <abstractions/input>
   include <abstractions/nameservice-strict>
+  include <abstractions/openssl>
 
   capability chown,
   capability dac_override,
@@ -70,6 +71,14 @@ profile xorg @{exec_path} flags=(attach_disconnected) {
   /usr/share/libinput*/{,**} r,
 
   /etc/X11/{,**} r,
+  /etc/egl/egl_external_platform.d/ r,
+
+  @{run}/udev/data/+auxiliary:* r,        # Auxiliary bus devices, e.g. acpi.video_bus
+
+  @{PROC}/[0-9]*/stat r,
+
+  # PCI ROM sysfs interface requires a write (echo 1) to unlock read access
+  @{sys}/devices/@{pci}/rom rw,
 
   owner @{HOME}/ r,
 

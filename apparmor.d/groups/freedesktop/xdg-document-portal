@@ -17,12 +17,20 @@ profile xdg-document-portal @{exec_path} flags=(attach_disconnected) {
   include <abstractions/mime>
   include <abstractions/nameservice-strict>
 
+  capability dac_override,
+  capability setuid,
   capability sys_admin,
   capability sys_nice,
   capability sys_ptrace,
   capability sys_resource,
 
+  # Root-run instance (e.g. system-level portal) mounts/unmounts its fuse.portal
+  # directly via a "fuse mainloop" thread instead of transitioning through the
+  # setuid fusermount helper below, since it's already privileged
+  @{bin}/mount rix,
+
   mount fstype=fuse.portal -> @{run}/user/@{uid}/doc/,
+  umount @{run}/user/@{uid}/doc/,
 
   signal receive set=term peer=gdm,
   signal receive set=hup  peer=gdm-session-worker,
@@ -56,6 +64,14 @@ profile xdg-document-portal @{exec_path} flags=(attach_disconnected) {
 
   owner @{user_share_dirs}/flatpak/db/documents r,
   owner @{user_share_dirs}/Trash/files/** r,
+
+  # Portal receives fds for arbitrary user-picked files, including temp
+  # files apps generate under /tmp (e.g. Spectacle screenshots)
+  #aa:lint ignore=too-wide
+  owner @{tmp}/** r,
+
+  #aa:only fedora
+  /usr/share/kde-settings/kde-profile/default/xdg/kde-mimeapps.list r,
 
   owner @{run}/user/@{uid}/.flatpak/@{int}/bwrapinfo.json r,
   owner @{run}/user/@{uid}/doc/ rw,

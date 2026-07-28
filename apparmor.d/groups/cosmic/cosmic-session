@@ -1,0 +1,49 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/cosmic-session @{bin}/start-cosmic
+profile cosmic-session @{exec_path} flags=(attach_disconnected,mediate_deleted) {
+  include <abstractions/base>
+  include <abstractions/bus-session>
+  include <abstractions/bus-system>
+  include <abstractions/nameservice-strict>
+
+  @{exec_path} mr,
+
+  @{bin}/cosmic-comp              Px,
+  @{bin}/cosmic-panel             Px,
+  @{bin}/cosmic-bg                Px,
+  @{bin}/cosmic-settings-daemon   Px,
+  @{bin}/cosmic-launcher          Px,
+  @{bin}/cosmic-notifications     Px,
+  @{bin}/cosmic-workspaces        Px,
+  @{bin}/dbus-run-session         Px,
+  @{bin}/dbus-daemon              Px,
+  @{bin}/dconf                    Px,
+  @{bin}/systemctl                Px,
+
+  /usr/share/cosmic/{,**} r,
+  /usr/share/wayland-sessions/{,*.desktop} r,
+  /usr/share/dconf/{,**} r,
+  /usr/share/applications/{,**} r,
+
+  @{etc_ro}/xdg/{,**} r,
+  /etc/environment r,
+
+  owner @{user_config_dirs}/cosmic/{,**} rw,
+  owner @{user_share_dirs}/cosmic/{,**} rw,
+  owner @{run}/user/@{uid}/ rw,
+  owner @{run}/user/@{uid}/wayland-* rw,
+
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/environ r,
+
+  include if exists <local/cosmic-session>
+}
+
+# vim:syntax=apparmor

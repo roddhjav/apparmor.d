@@ -1,0 +1,50 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2019-2021 Mikhail Morfikov
+# Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+@{name} = brave-origin{,-beta,-dev}
+@{domain} = com.brave.Brave org.chromium.Chromium
+@{lib_dirs} = /opt/brave.com/brave-origin
+@{config_dirs} = @{user_config_dirs}/BraveSoftware/ @{user_config_dirs}/Brave-Origin{,-Beta}/
+@{cache_dirs} = @{user_cache_dirs}/BraveSoftware/ @{user_cache_dirs}/Brave-Origin{,-Beta}/
+
+@{exec_path} = @{lib_dirs}/brave-origin @{lib_dirs}/brave
+profile brave-origin @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/app/chromium>
+
+  #aa:dbus own bus=session name=org.mpris.MediaPlayer2.brave-origin path=/org/mpris/MediaPlayer2
+
+  ptrace trace peer=brave-origin,
+
+  @{exec_path} mrix,
+
+  @{bin}/man  rPUx, # For "brave-origin --help"
+
+  @{lib_dirs}/chrome_crashpad_handler  Px -> brave-origin//&brave-origin//crashpad_handler,
+
+  /usr/share/chromium/extensions/ r,
+
+  /etc/opt/brave-origin/ r,
+  /etc/opt/brave-origin/native-messaging-hosts/* r,
+  /etc/opt/chrome/ r,
+  /etc/opt/chrome/native-messaging-hosts/* r,
+
+  owner @{config_dirs}/WidevineCdm/libwidevinecdm.so mrw,
+
+  owner @{tmp}/net-export/ rw,
+
+  # Silencer
+  deny /etc/opt/ w,
+  deny /dev/disk/by-uuid/ r,
+
+  include if exists <local/brave-origin>
+}
+
+# vim:syntax=apparmor

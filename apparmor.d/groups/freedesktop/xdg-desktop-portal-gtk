@@ -25,6 +25,9 @@ profile xdg-desktop-portal-gtk @{exec_path} flags=(attach_disconnected) {
   include <abstractions/sys/dmi>
   include <abstractions/thumbnails-cache-read>
 
+  capability dac_override,
+  capability dac_read_search,
+
   network inet stream,
 
   signal receive set=term peer=gdm,
@@ -54,6 +57,10 @@ profile xdg-desktop-portal-gtk @{exec_path} flags=(attach_disconnected) {
   owner @{user_config_dirs}/autostart/ w,
 
   owner @{tmp}/runtime-*/xauth_@{rand6} r,
+
+  # Not owner-scoped: this root-run instance's fsuid won't match the
+  # cookie's owning uid, same as nvidia-settings' equivalent rule
+  @{run}/user/@{uid}/xauth_@{rand6} r,
 
   @{run}/mount/utab r,
 

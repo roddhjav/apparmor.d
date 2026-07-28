@@ -1,0 +1,35 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/kate
+profile kate @{exec_path} flags=(attach_disconnected,mediate_deleted) {
+  include <abstractions/base>
+  include <abstractions/bus-session>
+  include <abstractions/graphics>
+  include <abstractions/kde-strict>
+  include <abstractions/nameservice-strict>
+
+  @{exec_path} mr,
+
+  /usr/share/kate/{,**} r,
+  /usr/share/icons/{,**} r,
+  /usr/share/kf6/{,**} r,
+  /usr/share/ktexteditor/{,**} r,
+  /usr/share/mime/{,**} r,
+
+  @{etc_ro}/xdg/{,**} r,
+
+  owner @{HOME}/{,**} rw,
+  owner @{user_config_dirs}/katerc r,
+  owner @{user_share_dirs}/kate/{,**} rw,
+  owner @{run}/user/@{uid}/wayland-* rw,
+
+  include if exists <local/kate>
+}
+
+# vim:syntax=apparmor

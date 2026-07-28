@@ -1,0 +1,28 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/ksshaskpass
+profile ksshaskpass @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/common/xdg>
+  include <abstractions/consoles>
+  include <abstractions/kde-strict>
+  include <abstractions/nameservice-strict>
+  include <abstractions/qt5-compose-cache-write>
+
+  @{exec_path} mr,
+
+  owner @{tmp}/xauth_@{rand6} r,
+  owner /dev/shm/#@{int} rw,
+
+  owner @{PROC}/@{pid}/cmdline r,
+
+  include if exists <local/ksshaskpass>
+}
+
+# vim:syntax=apparmor

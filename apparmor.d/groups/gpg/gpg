@@ -16,6 +16,8 @@ profile gpg @{exec_path} flags=(attach_disconnected) {
   include <abstractions/user-read-strict>
 
   capability dac_read_search,
+  #aa:only fedora
+  capability mknod,
 
   network netlink raw,
 
@@ -46,6 +48,20 @@ profile gpg @{exec_path} flags=(attach_disconnected) {
 
   owner /var/lib/*/{,.}gnupg/ rw,
   owner /var/lib/*/{,.}gnupg/** rwlk -> /var/lib/*/{,.}gnupg/**,
+
+  # dnf5/libdnf5 repo signature verification: key material and repo cache
+  # files opened by the caller and inherited across the exec, plus dnf5's
+  # own tmp gnupg homedir (gnupg dotlock protocol needs the l/k bits).
+  #aa:only fedora
+  owner @{tmp}/key.@{rand6} rw,
+  #aa:only fedora
+  owner @{tmp}/librepo-tmp-@{rand6} rw,
+  #aa:only fedora
+  owner @{tmp}/libdnf5.@{rand6}/{,**} rwlk,
+  #aa:only fedora
+  /var/cache/libdnf5/**/repodata/* rw,
+  #aa:only fedora
+  @{lib}/sysimage/rpm/.rpm.lock w,
 
   # TODO: Remove after zypper profile is created
   #aa:only zypper

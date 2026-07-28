@@ -1,0 +1,36 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/cosmic-panel
+profile cosmic-panel @{exec_path} flags=(attach_disconnected,mediate_deleted) {
+  include <abstractions/base>
+  include <abstractions/bus-session>
+  include <abstractions/graphics>
+  include <abstractions/nameservice-strict>
+
+  @{exec_path} mr,
+
+  @{bin}/cosmic-app-list          Px,
+  @{bin}/cosmic-applet-*          Px,
+  @{bin}/cosmic-panel-button      Px,
+  @{bin}/cosmic-applet-clippy-land Px,
+  @{bin}/cosmic-ext-applet-*     Px,
+  @{bin}/cosmic-files-applet      Px,
+
+  /usr/share/cosmic/{,**} r,
+  /usr/share/applications/{,**.desktop} r,
+  /usr/share/icons/{,**} r,
+
+  owner @{user_config_dirs}/cosmic/{,**} rw,
+  owner @{user_share_dirs}/cosmic/{,**} rw,
+  owner @{run}/user/@{uid}/wayland-* rw,
+
+  include if exists <local/cosmic-panel>
+}
+
+# vim:syntax=apparmor

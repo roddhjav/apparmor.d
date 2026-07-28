@@ -16,6 +16,20 @@ profile uname @{exec_path} flags=(attach_disconnected) {
 
   @{att}/dev/tty@{u8} rw,
 
+  /dev/pts/[0-9]* rwk,
+
+  # Steam's pressure-vessel container runtime
+  /var/pressure-vessel/ldso/ld.so.cache r,
+
+  # Steam LD_PRELOADs its overlay into every child it spawns, including
+  # trivial uname invocations made by game launchers/wrappers
+  owner @{steam_share_dirs}/**/gameoverlayrenderer.so r,
+
+  # Flatpak's host-compat runtime layer bind-mounts host libs under /run/host;
+  # /usr/lib64 is the RPM multilib convention, shared by Fedora and openSUSE
+  #aa:only fedora opensuse
+  @{run}/host/usr/lib64/libc.so.6 mr,
+
   # File Inherit
   deny network,
   deny owner @{user_share_dirs}/gvfs-metadata/* r,

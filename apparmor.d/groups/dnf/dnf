@@ -1,0 +1,80 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/dnf
+profile dnf @{exec_path} flags=(attach_disconnected,mediate_deleted) {
+  include <abstractions/base>
+  include <abstractions/bash-strict>
+  include <abstractions/nameservice-strict>
+  include <abstractions/openssl>
+  include <abstractions/ssl_certs>
+  include <abstractions/python>
+
+  capability chown,
+  capability dac_override,
+  capability dac_read_search,
+  capability fowner,
+  capability fsetid,
+  capability mknod,
+  capability net_admin,
+  capability setgid,
+  capability setuid,
+  capability sys_admin,
+  capability sys_chroot,
+  capability sys_ptrace,
+
+  network inet stream,
+  network inet6 stream,
+  network inet dgram,
+  network inet6 dgram,
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  @{sh_path} rix,
+  @{bin}/dnf5 rPx,
+  @{bin}/rpm            rPx,
+  @{bin}/rpmkeys        rPx,
+  @{bin}/gpg{,2}        rPx,
+  @{bin}/gpgv{,2}       rPx,
+
+  # Legacy dnf4 plugin/module machinery (python).
+  @{lib}/python3.*/site-packages/dnf{,-plugins}/{,**} r,
+  @{lib}/python3.*/site-packages/dnf-plugins/**/*.py r,
+  @{lib}/python3.*/site-packages/dnf/{,**} r,
+
+  /etc/dnf/{,**} r,
+  /etc/yum.repos.d/{,**} r,
+  /etc/yum.conf r,
+  /etc/rpm/{,**} r,
+  /etc/pki/rpm-gpg/{,**} r,
+  /etc/os-release r,
+  /etc/system-release{,-cpe} r,
+  /etc/redhat-release r,
+
+  /var/lib/dnf/{,**} rwk,
+  /var/lib/rpm/{,**} rwk,
+  /usr/share/rpm/{,**} rwk,
+  /var/cache/libdnf5/{,**} rwk,
+  /var/cache/dnf/{,**} rwk,
+  /var/log/dnf{,5}{,.log} rw,
+  /var/log/dnf5.rpm.log rw,
+  /var/log/hawkey.log rw,
+
+  /var/tmp/ rw,
+  /var/tmp/dnf-*/{,**} rwk,
+  owner /tmp/dnf-*/{,**} rwk,
+
+  @{PROC}/@{pid}/mounts r,
+  @{PROC}/sys/kernel/random/uuid r,
+  @{sys}/fs/cgroup/{,**} r,
+
+  include if exists <local/dnf>
+}
+
+# vim:syntax=apparmor

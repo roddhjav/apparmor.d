@@ -12,12 +12,16 @@ profile smplayer @{exec_path} {
   include <abstractions/base>
   include <abstractions/audio-client>
   include <abstractions/consoles>
+  include <abstractions/devices-usb-read>
+  include <abstractions/disks-read>
   include <abstractions/graphics>
   include <abstractions/fontconfig-cache-read>
   include <abstractions/desktop>
   include <abstractions/nameservice-strict>
   include <abstractions/qt5-compose-cache-write>
   include <abstractions/qt5-settings-write>
+  include <abstractions/thumbnails-cache-read>
+  include <abstractions/thumbnails-cache-write>
   include <abstractions/user-download-strict>
 
   signal (send) set=(term, kill),
@@ -28,30 +32,73 @@ profile smplayer @{exec_path} {
   network inet stream,
   network inet6 stream,
   network netlink dgram,
+  network netlink raw,
 
   @{exec_path} mrix,
 
   @{bin}/mpv        rPx,
   @{bin}/pacmd      rPx,
+  @{bin}/pgrep      rix,
+
+  #aa:exec kioworker
+
+  @{PROC}/ r,
+  @{PROC}/@{pids}/ r,
+  @{PROC}/@{pids}/cgroup r,
+  @{PROC}/@{pids}/stat r,
+  @{PROC}/@{pids}/status r,
+  @{PROC}/tty/drivers r,
   @{bin}/smtube     rPx,
   @{bin}/youtube-dl rPx,
   @{bin}/{y,}t-dlp  rPx,
 
   /usr/share/hwdata/pnp.ids r,
+  /usr/share/kservices5/{,**} r,
+  /usr/share/kservicetypes5/{,*} r,
+  /usr/share/smplayer/{,**} r,
+  /usr/share/templates/ r,
 
   /etc/fstab r,
 
   /etc/machine-id r,
   /var/lib/dbus/machine-id r,
 
-  owner @{HOME}/ r,
+  #aa:lint ignore=too-wide
+  / r,
+  /*/ r,
+  # PATH-style probing of mpv/youtube-dl/yt-dlp across bin/lib dirs, including
+  # arbitrary third-party install dirs under /opt
+  /*/*/ r,
+
+  owner @{HOME}/{,**} rw,
+  @{MOUNTDIRS}/ r,
+  @{MOUNTS}/ rw,
+  @{MOUNTS}/** rw,
+  @{run}/mount/utab r,
+  owner @{run}/user/@{uid}/filehelper* rw,
+
   owner @{user_music_dirs}/{,**} rw,
   owner @{user_pictures_dirs}/{,**} rw,
   owner @{user_torrents_dirs}/{,**} rw,
   owner @{user_videos_dirs}/{,**} rw,
 
+  owner @{user_config_dirs}/menus/applications-kmenuedit.menu r,
+
+  owner @{user_share_dirs}/user-places.xbel{,*} rwl,
+  owner @{user_share_dirs}/RecentDocuments/ r,
+  owner @{user_share_dirs}/RecentDocuments/#@{int} rw,
+  owner @{user_share_dirs}/RecentDocuments/*.desktop rw,
+  owner @{user_share_dirs}/RecentDocuments/*.desktop.lock rwk,
+
   owner @{user_config_dirs}/smplayer/ rw,
   owner @{user_config_dirs}/smplayer/* rwlk -> @{user_config_dirs}/smplayer/#@{int},
+  owner @{user_config_dirs}/smplayer/file_settings/**.ini rw,
+  owner @{user_config_dirs}/smplayer/file_settings/**.ini.lock rwk,
+  owner @{user_config_dirs}/smplayer/file_settings/*/*.ini.@{rand6} rwl -> @{user_config_dirs}/smplayer/file_settings/*/#@{int},
+  owner @{user_config_dirs}/smplayer/file_settings/*/#@{int} rw,
+  owner @{user_config_dirs}/smplayerrc rw,
+  owner @{user_config_dirs}/smplayerrc.lock rwk,
+  owner @{user_config_dirs}/smplayerrc.@{rand6} rwl -> @{user_config_dirs}/#@{int},
 
   owner @{tmp}/qtsingleapp-smplay-* rw,
   owner @{tmp}/qtsingleapp-smplay-*-lockfile rwk,
@@ -61,8 +108,13 @@ profile smplayer @{exec_path} {
 
   owner @{run}/user/@{uid}/gvfs/smb-share:server=*,share=**/ r,
   owner @{run}/user/@{uid}/gvfs/smb-share:server=*,share=** r,
+  owner @{run}/user/@{uid}/#@{int} rw,
+  owner @{run}/user/@{uid}/smplayer@{rand6}.@{int}.kioworker.socket rwl -> @{run}/user/@{uid}/#@{int},
 
   owner /dev/shm/#@{int} rw,
+
+  deny capability sys_ptrace,
+  deny ptrace (trace, read),
 
   deny owner @{PROC}/@{pid}/stat r,
   deny owner @{PROC}/@{pid}/cmdline r,

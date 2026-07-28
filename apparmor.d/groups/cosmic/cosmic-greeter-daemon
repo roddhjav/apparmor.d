@@ -1,0 +1,33 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/cosmic-greeter-daemon
+profile cosmic-greeter-daemon @{exec_path} flags=(attach_disconnected,mediate_deleted) {
+  include <abstractions/base>
+  include <abstractions/bus/system/org.freedesktop.login1>
+  include <abstractions/nameservice-strict>
+
+  capability setuid setgid dac_override,
+
+  @{exec_path} mr,
+
+  /etc/greetd/{,*} r,
+  /etc/pam.d/cosmic-greeter r,
+  @{etc_ro}/login.defs r,
+  @{etc_ro}/login.defs.d/{,*} r,
+  /etc/security/{,*} r,
+
+  /var/lib/AccountsService/users/{,*} r,
+
+  owner @{PROC}/@{pid}/mountinfo r,
+  @{PROC}/1/environ r,
+
+  include if exists <local/cosmic-greeter-daemon>
+}
+
+# vim:syntax=apparmor

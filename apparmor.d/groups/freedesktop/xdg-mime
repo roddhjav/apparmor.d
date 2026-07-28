@@ -11,7 +11,10 @@ include <tunables/global>
 profile xdg-mime @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/common/xdg>
+  include <abstractions/kde-base>
   include <abstractions/mime>
+
+  capability mknod,
 
   @{exec_path} r,
 
@@ -25,6 +28,20 @@ profile xdg-mime @{exec_path} flags=(attach_disconnected) {
   owner @{user_config_dirs}/mimeapps.list{,.new} rw,
 
   owner @{tmp}/wl-copy-buffer-@{rand6}/stdin r,
+
+  # AppImage's own squashfuse-mounted runtime bundles its own glibc gconv
+  /tmp/.mount_*/shared/lib/gconv/gconv-modules r,
+
+  # AppImage's own bundled kbuildsycoca6 (a different binary path than
+  # groups/kde/kbuildsycoca) rebuilds the desktop/mime db from the mount
+  /tmp/.mount_*/share/mime/ r,
+  /tmp/.mount_*/share/mime/*/ r,
+  /tmp/.mount_*/share/mime/mime.cache r,
+  /tmp/.mount_*/share/mime/types r,
+  /etc/machine-id r,
+  @{PROC}/sys/kernel/random/boot_id r,
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/mounts r,
 
   # file_inherit
   deny /opt/*/** r,

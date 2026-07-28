@@ -13,6 +13,7 @@ profile qbittorrent @{exec_path} {
   include <abstractions/consoles>
   include <abstractions/dconf-write>
   include <abstractions/desktop>
+  include <abstractions/disks-read>
   include <abstractions/fontconfig-cache-read>
   include <abstractions/graphics>
   include <abstractions/ibus-strict>
@@ -26,6 +27,9 @@ profile qbittorrent @{exec_path} {
 
   signal send set=(term, kill) peer=qbittorrent//python,
 
+  # Qt/KDE session shutdown broadcasts TERM to the whole user session on exit
+  signal (send) set=term,
+
   network inet dgram,
   network inet6 dgram,
   network inet stream,
@@ -37,6 +41,8 @@ profile qbittorrent @{exec_path} {
 
   @{open_path}           rPx -> child-open,
   @{python_path}         rCx -> python, # For "search engine"
+
+  #aa:exec kioworker
 
   # Allowed apps to open
   @{bin}/ebook-viewer    rPx,
@@ -52,19 +58,44 @@ profile qbittorrent @{exec_path} {
 
   /usr/share/GeoIP/GeoIP.dat r,
   /usr/share/gvfs/remote-volume-monitors/{,*} r,
+  /usr/share/templates/ r,
+  /usr/share/thumbnailers/{,*} r,
+
+  /etc/fstab r,
+  /etc/pulse/client.conf r,
+
+  @{sys}/bus/usb/devices/ r,
+
+  #aa:lint ignore=too-wide
+  / r,
+  /*/ r,
+
+  owner @{HOME}/{,**} rw,
+  @{MOUNTDIRS}/ r,
+  @{MOUNTS}/ rw,
+  @{MOUNTS}/** rw,
+  @{run}/mount/utab r,
+  owner @{run}/user/@{uid}/filehelper* rw,
 
   owner @{user_cache_dirs}/qBittorrent/{,**} rw,
+  owner @{user_cache_dirs}/event-sound-cache.tdb.* r,
 
   owner @{user_config_dirs}/qBittorrent/ rw,
   owner @{user_config_dirs}/qBittorrent/** rwlk -> @{user_config_dirs}/qBittorrent/#@{int},
+  owner @{user_config_dirs}/qBittorrentrc.lock rwk,
 
   owner @{user_share_dirs}/{,data/}qBittorrent/ rw,
   owner @{user_share_dirs}/{,data/}qBittorrent/** rwl -> @{user_share_dirs}/{,data/}qBittorrent/**/#@{int},
+  owner @{user_share_dirs}/{,data/}qBittorrent/** rwl -> @{user_share_dirs}/{,data/}qBittorrent/#@{int},
   owner @{user_share_dirs}/data/ rw,
+  owner @{user_share_dirs}/sounds/{,**} r,
 
-  owner @{user_torrents_dirs}/ r,
-  owner @{user_torrents_dirs}/** rw,
+  owner @{user_share_dirs}/user-places.xbel r,
+  owner @{user_share_dirs}/user-places.xbel.bak rw,
+  owner @{user_share_dirs}/user-places.xbel.@{rand6} rwl -> @{user_share_dirs}/user-places.xbel,
+  owner @{user_share_dirs}/user-places.xbel.tbcache.@{rand6} rwl -> @{user_share_dirs}/user-places.xbel,
 
+  /dev/shm/ r,
   owner /dev/shm/#@{int} rw,
   owner @{tmp}/.*/{,s} rw,
   owner @{tmp}/.qBittorrent/ rw,
@@ -82,6 +113,13 @@ profile qbittorrent @{exec_path} {
   owner @{PROC}/@{pids}/mounts r,
 
   owner /dev/tty@{u8} rw,
+
+  owner @{run}/user/@{uid}/#@{int} rw,
+  owner @{run}/user/@{uid}/pulse/ rw,
+  owner @{run}/user/@{uid}/qBittorrent@{rand6}.@{int}.kioworker.socket rwl -> @{run}/user/@{uid}/#@{int},
+
+  owner @{user_config_dirs}/pulse/ rw,
+  owner @{user_config_dirs}/pulse/cookie r,
 
   profile python {
     include <abstractions/base>

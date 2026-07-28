@@ -1,0 +1,56 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/cosmic-greeter
+profile cosmic-greeter @{exec_path} flags=(attach_disconnected,mediate_deleted) {
+  include <abstractions/base>
+  include <abstractions/bus/system/org.freedesktop.login1>
+  include <abstractions/graphics>
+  include <abstractions/nameservice-strict>
+  include <abstractions/upower-observe>
+
+  network netlink raw,
+
+  dbus send bus=system path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member=ListActivatableNames
+       peer=(name=org.freedesktop.DBus, label="@{p_dbus_system}"),
+
+  @{exec_path} mr,
+
+  @{bin}/cosmic-greeter-daemon  Px,
+  @{bin}/cosmic-greeter-start   Px,
+
+  /usr/share/cosmic/{,**} r,
+  /usr/share/wayland-sessions/{,*.desktop} r,
+  /usr/share/xsessions/{,*.desktop} r,
+
+  /etc/greetd/{,*} r,
+  @{etc_ro}/login.defs r,
+  @{etc_ro}/login.defs.d/{,*} r,
+  /etc/fstab r,
+  /etc/pam.d/cosmic-greeter r,
+
+  /var/lib/AccountsService/icons/@{user} r,
+  /var/lib/AccountsService/users/@{user} r,
+
+  / r,
+
+  owner @{user_config_dirs}/cosmic/{,**} rw,
+  owner @{run}/user/@{uid}/ rw,
+
+  owner @{tmp}/cosmic-greeter-* rw,
+
+  @{sys}/devices/**/uevent r,
+
+  owner @{PROC}/@{pid}/mountinfo r,
+
+  include if exists <local/cosmic-greeter>
+}
+
+# vim:syntax=apparmor

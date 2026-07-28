@@ -1,0 +1,56 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/podman
+profile podman @{exec_path} flags=(attach_disconnected,mediate_deleted) {
+  include <abstractions/base>
+  include <abstractions/bus-session>
+  include <abstractions/bus-system>
+  include <abstractions/nameservice-strict>
+
+  capability chown dac_override dac_read_search fowner fsetid kill mknod net_admin net_bind_service setgid setuid sys_admin sys_chroot sys_ptrace,
+
+  network,
+
+  @{exec_path} mr,
+
+  @{bin}/newuidmap       Px,
+  @{bin}/newgidmap       Px,
+  @{bin}/conmon          Px,
+  @{bin}/crun            Px,
+  @{sbin}/runc            Px,
+  @{bin}/fuse-overlayfs  Px,
+  @{bin}/slirp4netns     Px,
+  @{bin}/pasta           Px,
+
+  /usr/share/containers/{,**} r,
+  @{lib}/podman/{,**} mr,
+
+  @{etc_ro}/containers/{,**} r,
+  @{etc_ro}/subuid r,
+  @{etc_ro}/subgid r,
+
+  owner @{user_config_dirs}/containers/{,**} rw,
+  owner @{user_share_dirs}/containers/{,**} rw,
+  owner @{run}/user/@{uid}/containers/{,**} rw,
+  owner @{run}/user/@{uid}/libpod/{,**} rw,
+
+  /var/lib/containers/{,**} rw,
+  @{run}/containers/{,**} rw,
+
+  owner @{PROC}/@{pids}/status r,
+  owner @{PROC}/@{pids}/ns/ r,
+  owner @{PROC}/@{pids}/ns/* r,
+  @{PROC}/sys/user/max_user_namespaces r,
+
+  @{sys}/fs/cgroup/{,**} r,
+
+  include if exists <local/podman>
+}
+
+# vim:syntax=apparmor

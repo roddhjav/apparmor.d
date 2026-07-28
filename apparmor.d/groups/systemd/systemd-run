@@ -1,0 +1,46 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+# run0 is a symlink to systemd-run; both use this profile
+@{exec_path} = @{bin}/systemd-run @{bin}/run0
+profile systemd-run @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/app-launcher-root>
+  include <abstractions/bus-system>
+  include <abstractions/nameservice-strict>
+
+  capability setuid,
+  capability setgid,
+  capability sys_ptrace,
+
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  @{bin}/@{shells}  rUx,
+  @{bin}/**         PUx,
+  @{lib}/**         PUx,
+
+  @{etc_ro}/login.defs r,
+  /etc/passwd r,
+  /etc/machine-id r,
+
+  @{run}/systemd/private/ r,
+  @{run}/systemd/transient/ rw,
+
+  @{PROC}/@{pid}/loginuid r,
+  @{PROC}/@{pid}/stat r,
+  @{PROC}/sys/kernel/osrelease r,
+
+  /dev/ptmx rwk,
+  /dev/tty rwk,
+
+  include if exists <local/systemd-run>
+}
+
+# vim:syntax=apparmor

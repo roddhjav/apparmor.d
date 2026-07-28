@@ -1,0 +1,49 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# MangoHud itself is a Vulkan/OpenGL layer (mangohud.so) preloaded into the
+# game's own process via LD_PRELOAD - it runs inside whatever profile confines
+# the game, not a profile of its own. mangoapp is the standalone overlay
+# window process (used under gamescope) that the preloaded layer talks to
+# over a local socket, and is the only independently-exec'd MangoHud binary.
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+@{config_dirs} = @{user_config_dirs}/MangoHud
+@{cache_dirs} = @{user_cache_dirs}/mangoapp
+
+@{exec_path} = @{bin}/mangoapp
+profile mangoapp @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/graphics>
+  include <abstractions/nameservice-strict>
+  include <abstractions/vulkan-strict>
+  include <abstractions/wayland-strict>
+
+  @{exec_path} mr,
+
+  /etc/ r,
+  /etc/xdg/MangoHud/{,**} r,
+
+  owner @{config_dirs}/{,**} r,
+  owner @{cache_dirs}/{,**} rw,
+
+  owner @{user_share_dirs}/fonts/{,**} r,
+  /usr/share/fonts/{,**} r,
+
+  owner @{tmp}/mangoapp*.sock rw,
+  owner @{run}/user/@{uid}/mangoapp*.sock rw,
+
+  @{sys}/devices/@{pci}/**  r,
+  @{sys}/class/drm/{,**} r,
+
+  owner @{PROC}/@{pid}/stat r,
+  owner @{PROC}/@{pid}/statm r,
+
+  include if exists <local/mangoapp>
+}
+
+# vim:syntax=apparmor

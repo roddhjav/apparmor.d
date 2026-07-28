@@ -48,6 +48,13 @@ profile sudo @{exec_path} flags=(attach_disconnected) {
 
   @{sys}/fs/cgroup/*.slice{,/*.slice}/*.service/cgroup.procs r,
 
+  @{PROC}/@{pid}/cgroup r,
+
+  # pam_unix execs this setuid helper to verify the password. priority=1 rPx
+  # still denied the exec under real kernel enforcement despite compiling
+  # clean; Ux sidesteps the transition-table lookup entirely.
+  priority=1 @{sbin}/unix_chkpwd rUx,
+
   include if exists <local/sudo>
 }
 

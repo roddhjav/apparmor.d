@@ -1,0 +1,33 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/kmenuedit
+profile kmenuedit @{exec_path} flags=(attach_disconnected,mediate_deleted) {
+  include <abstractions/base>
+  include <abstractions/bus-session>
+  include <abstractions/graphics>
+  include <abstractions/kde-strict>
+
+  @{exec_path} mr,
+
+  /usr/share/applications/{,**.desktop} r,
+  /usr/share/icons/{,**} r,
+  /usr/share/kf6/{,**} r,
+  /usr/share/kmenuedit/{,**} r,
+
+  @{etc_ro}/xdg/{,**} r,
+
+  owner @{user_config_dirs}/menus/{,**} rw,
+  owner @{user_share_dirs}/applications/{,**.desktop} rw,
+  owner @{user_share_dirs}/desktop-directories/{,**} rw,
+  owner @{run}/user/@{uid}/wayland-* rw,
+
+  include if exists <local/kmenuedit>
+}
+
+# vim:syntax=apparmor

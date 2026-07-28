@@ -11,16 +11,35 @@ include <tunables/global>
 profile xdg-settings @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/common/xdg>
+  include <abstractions/mime>
+
+  capability mknod,
 
   @{exec_path} r,
 
   @{bin}/dbus-send            Cx -> bus,
   @{bin}/kreadconfig{,5}      Px,
-  @{bin}/xdg-mime             Px,
   @{bin}/xprop                Px,
 
+  # Invoked under contexts that set no_new_privs (e.g. portal-spawned), which
+  # blocks the usual Px transition to the dedicated xdg-mime profile - see
+  # docs/development/internal.md "No New Privileges". Inherit instead, so
+  # bring in the rules xdg-mime itself needs (abstractions/mime, mknod,
+  # mimeapps.list) since they no longer come from the xdg-mime profile.
+  @{bin}/xdg-mime             rix,
+
+  owner @{user_config_dirs}/mimeapps.list{,.new} rw,
   owner @{user_config_dirs}/xfce4/helpers.rc{,.@{rand6}} rw,
   owner @{user_share_dirs}/applications/{,**} rw,
+
+  # kbuildsycoca6 inherits this profile for the same no_new_privs reason as
+  # xdg-mime above (portal-spawned context blocks the usual Px transition)
+  /etc/machine-id r,
+  owner @{user_cache_dirs}/#@{int} rw,
+
+  @{PROC}/@{pid}/mountinfo r,
+  @{PROC}/@{pid}/mounts r,
+  @{PROC}/sys/kernel/random/boot_id r,
 
   profile bus flags=(attach_disconnected) {
     include <abstractions/base>

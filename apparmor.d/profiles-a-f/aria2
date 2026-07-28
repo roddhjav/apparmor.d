@@ -1,0 +1,32 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/aria2c
+profile aria2 @{exec_path} flags=(attach_disconnected,mediate_deleted) {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+
+  network inet stream,
+  network inet6 stream,
+  network inet dgram,
+  network inet6 dgram,
+
+  @{exec_path} mr,
+
+  @{etc_ro}/aria2/{,*} r,
+
+  owner @{HOME}/Downloads/{,**} rw,
+  owner @{HOME}/.aria2/{,**} rw,
+  owner @{user_config_dirs}/aria2/{,**} rw,
+
+  owner @{tmp}/aria2-* rw,
+
+  include if exists <local/aria2>
+}
+
+# vim:syntax=apparmor
