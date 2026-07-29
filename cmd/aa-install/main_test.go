@@ -124,7 +124,7 @@ func TestRun(t *testing.T) {
 		},
 		{
 			name:        "install all keeps profiles of missing programs",
-			flags:       func() { all = true },
+			flags:       func() { install, all = true, true },
 			wantReloads: 1,
 			check: func(t *testing.T, env *runEnv) {
 				if !env.targetDir.Join("aa_test_kept").Exist() {
@@ -137,7 +137,7 @@ func TestRun(t *testing.T) {
 		},
 		{
 			name:        "install complain",
-			flags:       func() { complain = true },
+			flags:       func() { install, complain = true, true },
 			wantReloads: 1,
 			check: func(t *testing.T, env *runEnv) {
 				got, err := env.targetDir.Join("aa_test_kept").ReadFileAsString()
@@ -151,7 +151,7 @@ func TestRun(t *testing.T) {
 		},
 		{
 			name:        "install enforce",
-			flags:       func() { enforce = true },
+			flags:       func() { install, enforce = true, true },
 			wantReloads: 1,
 			check: func(t *testing.T, env *runEnv) {
 				got, err := env.targetDir.Join("aa_test_kept").ReadFileAsString()

@@ -205,10 +205,10 @@ func aaInstall(configDir *paths.Path, srcDir *paths.Path, cfg *conf) (bool, erro
 		Add(configure.NewOverwriteFromLinks()).
 
 		// Set user-defined flags from the flags.d dirs
-		Add(configure.NewSetFlags(cfg.flagDirs))
+		Add(configure.NewSetFlags(cfg.flagDirs)).
 
 		// Set detected system state in tunables/multiarch.d/state
-		// Add(configure.NewSetState()).
+		Add(configure.NewSetState())
 
 	// Only keep profiles for installed programs, unless all are requested.
 	// Included profiles are installed even when their program is not.
