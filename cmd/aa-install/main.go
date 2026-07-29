@@ -49,6 +49,7 @@ Configuration files:
     flags.d/*.conf     Set per-profile flags.
     ignore.d/*.conf    Set (group of) profiles to ignore.
     include.d/*.conf   Set (group of) profiles to install.
+    overwrite.d/*.conf Set upstream profiles to disable and replace.
 
 Configuration directories:
 
@@ -201,8 +202,8 @@ func aaInstall(configDir *paths.Path, srcDir *paths.Path, cfg *conf) (bool, erro
 		// Merge profiles (from group/, profiles-*-*/) to a unified apparmor.d directory
 		Add(configure.NewMerge()).
 
-		// Rename profiles that replace an upstream one (shipped disable/ links)
-		Add(configure.NewOverwriteFromLinks()).
+		// Disable and replace upstream profiles from the overwrite.d dirs
+		Add(configure.NewOverwrite(util.ReadConfDirs(cfg.overwriteDirs...))).
 
 		// Set user-defined flags from the flags.d dirs
 		Add(configure.NewSetFlags(cfg.flagDirs)).

@@ -78,12 +78,6 @@ func TestTask_Apply(t *testing.T) {
 			want:    userFlagDir.String(),
 		},
 		{
-			name:      "overwrite",
-			task:      NewOverwrite(false),
-			wantErr:   false,
-			wantFiles: paths.PathList{cfg.RootApparmor.Join("flatpak.apparmor.d")},
-		},
-		{
 			name:      "systemd-default",
 			task:      NewSystemdDefault(),
 			wantErr:   false,

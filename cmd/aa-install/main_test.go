@@ -314,7 +314,7 @@ profile aa_test_bad @{bin}/true {
 			flags: func() { install = true },
 			setup: func(t *testing.T, env *runEnv) {
 				writeFile(t, env.srcDir.Join("profiles-m-r/aa_test_over"), overwriteProfile)
-				writeLinks(t, env.srcDir, map[string]string{"disable/aa_test_over": "../aa_test_over"})
+				writeFile(t, env.configDir.Join("overwrite.d/user.conf"), "aa_test_over\n")
 				writeFile(t, env.targetDir.Join("aa_test_over"), upstreamProfile)
 			},
 			wantReloads: 1,
@@ -339,7 +339,7 @@ profile aa_test_bad @{bin}/true {
 			flags: func() { uninstall = true },
 			setup: func(t *testing.T, env *runEnv) {
 				writeFile(t, env.srcDir.Join("profiles-m-r/aa_test_over"), overwriteProfile)
-				writeLinks(t, env.srcDir, map[string]string{"disable/aa_test_over": "../aa_test_over"})
+				writeFile(t, env.configDir.Join("overwrite.d/user.conf"), "aa_test_over\n")
 				writeFile(t, env.targetDir.Join("aa_test_over"), upstreamProfile)
 				install = true
 				if err := run(); err != nil {
@@ -369,7 +369,7 @@ profile aa_test_bad @{bin}/true {
 			flags: func() { uninstall = true },
 			setup: func(t *testing.T, env *runEnv) {
 				writeFile(t, env.srcDir.Join("profiles-m-r/aa_test_over"), overwriteProfile)
-				writeLinks(t, env.srcDir, map[string]string{"disable/aa_test_over": "../aa_test_over"})
+				writeFile(t, env.configDir.Join("overwrite.d/user.conf"), "aa_test_over\n")
 				install = true
 				if err := run(); err != nil {
 					t.Fatalf("run(install): %v", err)

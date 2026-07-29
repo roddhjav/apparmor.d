@@ -82,9 +82,6 @@ func main() {
 		// Set distribution specificities
 		Add(configure.NewConfigure()).
 
-		// Overwrite dummy upstream profile
-		Add(configure.NewOverwrite(false)).
-
 		// Set systemd unit drop in files for dbus profiles
 		Add(configure.NewSystemdDefault())
 

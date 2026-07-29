@@ -162,37 +162,11 @@ func (p SelectInstalled) Apply() ([]string, error) {
 		keptNames = append(keptNames, st.file.Base())
 	}
 
-	if err := p.reconcileDisableLinks(); err != nil {
-		return res, err
-	}
-
 	res = append(res,
 		fmt.Sprintf("Kept %d profiles", len(keptNames)),
 		fmt.Sprintf("Ignored %d", len(removedNames)),
 	)
 	return res, nil
-}
-
-// reconcileDisableLinks removes every disable/<name> link whose upstream
-// profile <name> does not exist on the install target.
-func (p SelectInstalled) reconcileDisableLinks() error {
-	disableDir := p.RootApparmor.Join("disable")
-	if !disableDir.Exist() {
-		return nil
-	}
-	entries, err := disableDir.ReadDir(paths.FilterOutDirectories())
-	if err != nil {
-		return err
-	}
-	for _, e := range entries {
-		if aa.MagicRoot.Join(e.Base()).Exist() {
-			continue // upstream profile present on the target: keep it disabled
-		}
-		if err := e.Remove(); err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 // getAttachments returns the resolved attachment paths from a

@@ -9,7 +9,6 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/roddhjav/apparmor.d/pkg/aa"
 	"github.com/roddhjav/apparmor.d/pkg/paths"
 	"github.com/roddhjav/apparmor.d/pkg/tasks"
 )
@@ -361,21 +360,17 @@ func TestPathIsInstalled(t *testing.T) {
 
 func TestSelectInstalled_Apply(t *testing.T) {
 	tests := []struct {
-		name            string
-		profiles        map[string]string // apparmor.d relative file -> content
-		groups          map[string]string // profile basename -> group (as Merge records)
-		disableLinks    []string          // disable/<name> symlinks to create (target ../<name>)
-		include         []string          // include entries passed to NewSelectInstalled
-		targetProfiles  []string          // upstream profiles present on the install target (aa.MagicRoot)
-		noReadProfiles  []string          // apparmor.d relative files made unreadable
-		roDirs          []string          // apparmor.d relative dirs made read-only
-		missingRoot     bool              // build root does not exist
-		wantErr         bool
-		wantResult      []string // entries expected in the result
-		wantKept        []string // apparmor.d relative files expected to remain
-		wantRemoved     []string // apparmor.d relative files expected to be removed
-		wantDisableKept []string // disable/<name> entries expected to survive as symlinks
-		wantDisableGone []string // disable/<name> entries expected to be removed
+		name           string
+		profiles       map[string]string // apparmor.d relative file -> content
+		groups         map[string]string // profile basename -> group (as Merge records)
+		include        []string          // include entries passed to NewSelectInstalled
+		noReadProfiles []string          // apparmor.d relative files made unreadable
+		roDirs         []string          // apparmor.d relative dirs made read-only
+		missingRoot    bool              // build root does not exist
+		wantErr        bool
+		wantResult     []string // entries expected in the result
+		wantKept       []string // apparmor.d relative files expected to remain
+		wantRemoved    []string // apparmor.d relative files expected to be removed
 	}{
 		{
 			name: "keep installed remove missing",
@@ -447,25 +442,13 @@ func TestSelectInstalled_Apply(t *testing.T) {
 			wantKept: []string{":podman:podman"},
 		},
 		{
-			name: "keep disable link when upstream profile on target",
-			profiles: map[string]string{
-				"systemd-detect-virt.apparmor.d": "profile systemd-detect-virt @{bin}/true {\n}\n",
-			},
-			disableLinks:    []string{"systemd-detect-virt", "usr.lib.libreoffice.program.soffice.bin"},
-			targetProfiles:  []string{"systemd-detect-virt", "usr.lib.libreoffice.program.soffice.bin"},
-			wantKept:        []string{"systemd-detect-virt.apparmor.d"},
-			wantDisableKept: []string{"systemd-detect-virt", "usr.lib.libreoffice.program.soffice.bin"},
-		},
-		{
-			name: "drop disable link when upstream profile absent on target",
+			name: "overwriting profile kept when installed",
 			profiles: map[string]string{
 				"systemd-detect-virt.apparmor.d": "profile systemd-detect-virt @{bin}/true {\n}\n",
 				"absent.apparmor.d":              "profile absent /usr/bin/no-such-program-zz {\n}\n",
 			},
-			disableLinks:    []string{"systemd-detect-virt", "absent"},
-			wantKept:        []string{"systemd-detect-virt.apparmor.d"},
-			wantRemoved:     []string{"absent.apparmor.d"},
-			wantDisableGone: []string{"systemd-detect-virt", "absent"},
+			wantKept:    []string{"systemd-detect-virt.apparmor.d"},
+			wantRemoved: []string{"absent.apparmor.d"},
 		},
 		{
 			name:        "read profiles error",
@@ -494,24 +477,6 @@ func TestSelectInstalled_Apply(t *testing.T) {
 			seedFiles(t, c.RootApparmor, tt.profiles)
 			if tt.groups != nil {
 				c.Groups = tt.groups
-			}
-			target := paths.New(t.TempDir())
-			for _, name := range tt.targetProfiles {
-				if err := target.Join(name).WriteFile([]byte("profile x {\n}\n")); err != nil {
-					t.Fatalf("seed target: %v", err)
-				}
-			}
-			oldRoot := aa.MagicRoot
-			aa.MagicRoot = target
-			t.Cleanup(func() { aa.MagicRoot = oldRoot })
-			for _, name := range tt.disableLinks {
-				disable := c.RootApparmor.Join("disable")
-				if err := disable.MkdirAll(); err != nil {
-					t.Fatalf("mkdir disable: %v", err)
-				}
-				if err := os.Symlink("../"+name, disable.Join(name).String()); err != nil {
-					t.Fatalf("symlink: %v", err)
-				}
 			}
 			for _, rel := range tt.noReadProfiles {
 				chmodNoAccess(t, c.RootApparmor.Join(rel))
@@ -543,22 +508,6 @@ func TestSelectInstalled_Apply(t *testing.T) {
 			for _, rel := range tt.wantRemoved {
 				if c.RootApparmor.Join(rel).Exist() {
 					t.Errorf("Apply() removed %s = %v, want %v", rel, "exists", "removed")
-				}
-			}
-			for _, name := range tt.wantDisableKept {
-				entry := c.RootApparmor.Join("disable", name)
-				isLink, err := entry.IsSymlink()
-				if err != nil {
-					t.Errorf("disable/%s: %v", name, err)
-					continue
-				}
-				if !isLink {
-					t.Errorf("reconcileDisableLinks() disable/%s = %v, want %v", name, "removed", "symlink")
-				}
-			}
-			for _, name := range tt.wantDisableGone {
-				if _, err := c.RootApparmor.Join("disable", name).Lstat(); err == nil {
-					t.Errorf("reconcileDisableLinks() disable/%s = %v, want %v", name, "symlink", "removed")
 				}
 			}
 		})

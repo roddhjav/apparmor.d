@@ -25,11 +25,12 @@ var (
 )
 
 type conf struct {
-	mode        string
-	include     string
-	flagDirs    paths.PathList
-	ignoreDirs  paths.PathList
-	includeDirs paths.PathList
+	mode          string
+	include       string
+	flagDirs      paths.PathList
+	ignoreDirs    paths.PathList
+	includeDirs   paths.PathList
+	overwriteDirs paths.PathList
 }
 
 // configTier returns the drop-in directories for name, vendor tier first so
@@ -43,9 +44,10 @@ func configTier(configDir *paths.Path, name string) paths.PathList {
 // cli arguments.
 func loadConfig(configDir *paths.Path) (*conf, error) {
 	res := &conf{
-		flagDirs:    configTier(configDir, "flags.d"),
-		ignoreDirs:  configTier(configDir, "ignore.d"),
-		includeDirs: configTier(configDir, "include.d"),
+		flagDirs:      configTier(configDir, "flags.d"),
+		ignoreDirs:    configTier(configDir, "ignore.d"),
+		includeDirs:   configTier(configDir, "include.d"),
+		overwriteDirs: configTier(configDir, "overwrite.d"),
 	}
 
 	modes := readModeConfig(vendorConfigDir.Join("modes"), configDir.Join("modes"))

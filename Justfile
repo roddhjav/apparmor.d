@@ -177,11 +177,6 @@ install-prebuilt: _install-fixup
 	for file in "${aa[@]}"; do
 		install -Dm0644 "{{build}}/apparmor.d/$file" "{{destdir}}/usr/share/apparmor.d/$file"
 	done
-	mapfile -t links < <(find "{{build}}/apparmor.d" -type l -printf "%P\n")
-	for file in "${links[@]}"; do
-		mkdir -p "{{destdir}}/usr/share/apparmor.d/disable"
-		cp -d "{{build}}/apparmor.d/$file" "{{destdir}}/usr/share/apparmor.d/$file"
-	done
 	for file in "{{build}}/systemd/system/"*; do
 		service="$(basename "$file")"
 		install -Dm0644 "$file" "{{destdir}}/usr/lib/systemd/system/$service.d/apparmor.conf"
@@ -196,21 +191,16 @@ install-prebuilt: _install-fixup
 _install-fixup:
 	# The hostname profile fully conflicts with apparmor.d and must be disabled
 	@mkdir -p "{{destdir}}/etc/apparmor.d/disable"
-	@cp -d "{{build}}/apparmor.d/disable/hostname" "{{destdir}}/etc/apparmor.d/disable/hostname"
+	@ln -sf ../hostname "{{destdir}}/etc/apparmor.d/disable/hostname"
 
 # Install prebuild profiles
 [group('install')]
-install: install-tools
+install: install-tools _install-fixup
 	#!/usr/bin/env bash
 	set -eu -o pipefail
 	mapfile -t aa < <(find "{{build}}/apparmor.d" -type f -printf "%P\n")
 	for file in "${aa[@]}"; do
 		install -Dm0644 "{{build}}/apparmor.d/$file" "{{destdir}}/etc/apparmor.d/$file"
-	done
-	mapfile -t links < <(find "{{build}}/apparmor.d" -type l -printf "%P\n")
-	for file in "${links[@]}"; do
-		mkdir -p "{{destdir}}/etc/apparmor.d/disable"
-		cp -d "{{build}}/apparmor.d/$file" "{{destdir}}/etc/apparmor.d/$file"
 	done
 	for file in "{{build}}/systemd/system/"*; do
 		service="$(basename "$file")"

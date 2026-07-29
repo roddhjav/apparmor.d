@@ -109,6 +109,14 @@ Each tier may contain:
   profiles are excluded; the profiles always required by apparmor.d are
   installed in both modes.
 
+*overwrite.d/\*.conf*
+
+: List of upstream profiles to disable and replace. For each listed profile
+  present on the target, the upstream profile is disabled with a
+  *disable/* link and the apparmor.d profile (if any) is installed under
+  the *\<profile\>.apparmor.d* name. Profiles the target does not ship are
+  left untouched.
+
 # USAGE
 
 To install all profiles in the default (complain) mode:
