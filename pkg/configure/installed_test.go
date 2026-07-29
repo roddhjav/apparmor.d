@@ -9,6 +9,7 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/roddhjav/apparmor.d/pkg/aa"
 	"github.com/roddhjav/apparmor.d/pkg/paths"
 	"github.com/roddhjav/apparmor.d/pkg/tasks"
 )
@@ -364,6 +365,7 @@ func TestSelectInstalled_Apply(t *testing.T) {
 		profiles        map[string]string // apparmor.d relative file -> content
 		groups          map[string]string // profile basename -> group (as Merge records)
 		disableLinks    []string          // disable/<name> symlinks to create (target ../<name>)
+		targetProfiles  []string          // upstream profiles present on the install target (aa.MagicRoot)
 		noReadProfiles  []string          // apparmor.d relative files made unreadable
 		roDirs          []string          // apparmor.d relative dirs made read-only
 		missingRoot     bool              // build root does not exist
@@ -432,22 +434,25 @@ func TestSelectInstalled_Apply(t *testing.T) {
 			wantKept: []string{":podman:podman"},
 		},
 		{
-			name: "keep disable link when overwrite kept",
+			name: "keep disable link when upstream profile on target",
 			profiles: map[string]string{
 				"systemd-detect-virt.apparmor.d": "profile systemd-detect-virt @{bin}/true {\n}\n",
 			},
-			disableLinks:    []string{"systemd-detect-virt"},
+			disableLinks:    []string{"systemd-detect-virt", "usr.lib.libreoffice.program.soffice.bin"},
+			targetProfiles:  []string{"systemd-detect-virt", "usr.lib.libreoffice.program.soffice.bin"},
 			wantKept:        []string{"systemd-detect-virt.apparmor.d"},
-			wantDisableKept: []string{"systemd-detect-virt"},
+			wantDisableKept: []string{"systemd-detect-virt", "usr.lib.libreoffice.program.soffice.bin"},
 		},
 		{
-			name: "drop disable link when overwrite removed",
+			name: "drop disable link when upstream profile absent on target",
 			profiles: map[string]string{
-				"absent.apparmor.d": "profile absent /usr/bin/no-such-program-zz {\n}\n",
+				"systemd-detect-virt.apparmor.d": "profile systemd-detect-virt @{bin}/true {\n}\n",
+				"absent.apparmor.d":              "profile absent /usr/bin/no-such-program-zz {\n}\n",
 			},
-			disableLinks:    []string{"absent"},
+			disableLinks:    []string{"systemd-detect-virt", "absent"},
+			wantKept:        []string{"systemd-detect-virt.apparmor.d"},
 			wantRemoved:     []string{"absent.apparmor.d"},
-			wantDisableGone: []string{"absent"},
+			wantDisableGone: []string{"systemd-detect-virt", "absent"},
 		},
 		{
 			name:        "read profiles error",
@@ -477,6 +482,15 @@ func TestSelectInstalled_Apply(t *testing.T) {
 			if tt.groups != nil {
 				c.Groups = tt.groups
 			}
+			target := paths.New(t.TempDir())
+			for _, name := range tt.targetProfiles {
+				if err := target.Join(name).WriteFile([]byte("profile x {\n}\n")); err != nil {
+					t.Fatalf("seed target: %v", err)
+				}
+			}
+			oldRoot := aa.MagicRoot
+			aa.MagicRoot = target
+			t.Cleanup(func() { aa.MagicRoot = oldRoot })
 			for _, name := range tt.disableLinks {
 				disable := c.RootApparmor.Join("disable")
 				if err := disable.MkdirAll(); err != nil {

@@ -152,7 +152,7 @@ func (p SelectInstalled) Apply() ([]string, error) {
 		keptNames = append(keptNames, st.file.Base())
 	}
 
-	if err := p.reconcileDisableLinks(keptNames); err != nil {
+	if err := p.reconcileDisableLinks(); err != nil {
 		return res, err
 	}
 
@@ -163,27 +163,24 @@ func (p SelectInstalled) Apply() ([]string, error) {
 	return res, nil
 }
 
-// reconcileDisableLinks keeps a disable/<name> overwrite link only when its
-// overwriting profile (<name>.<pkgname>) was kept. i.e. the program is
-// installed and we are actually overwriting its profile. When the program is
-// absent the profile is dropped, so the link has nothing to shadow and is
-// removed too. Kept links stay symlinks; install() copies them verbatim.
-func (p SelectInstalled) reconcileDisableLinks(kept []string) error {
+// reconcileDisableLinks keeps a disable/<name> overwrite link only when the
+// upstream profile <name> it disables actually exists on the install target
+// (e.g. Debian's usr.lib.libreoffice.program.soffice.bin, replaced by our
+// libreoffice profile). Otherwise there is nothing to disable and the link
+// would be dangling, so it is removed. Kept links stay symlinks; install()
+// copies them verbatim.
+func (p SelectInstalled) reconcileDisableLinks() error {
 	disableDir := p.RootApparmor.Join("disable")
 	if !disableDir.Exist() {
 		return nil
-	}
-	keptSet := make(map[string]struct{}, len(kept))
-	for _, name := range kept {
-		keptSet[name] = struct{}{}
 	}
 	entries, err := disableDir.ReadDir(paths.FilterOutDirectories())
 	if err != nil {
 		return err
 	}
 	for _, e := range entries {
-		if _, ok := keptSet[e.Base()+"."+p.Pkgname]; ok {
-			continue // overwriting profile kept: keep the disable symlink
+		if aa.MagicRoot.Join(e.Base()).Exist() {
+			continue // upstream profile present on the target: keep it disabled
 		}
 		if err := e.Remove(); err != nil {
 			return err
