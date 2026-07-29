@@ -22,7 +22,7 @@ import (
 var (
 	// skipSystemDirs filters out the top-level directories that are not
 	// per-program profiles (shared building blocks, compiled out, mapping data).
-	skipSystemDirs = paths.FilterOutNames("tunables", "abstractions", "disable", "mappings")
+	skipSystemDirs = paths.FilterOutNames("tunables", "abstractions", "disable", "mappings", "namespaces")
 
 	// alwaysKeep lists profile-name globs installed even when they have no
 	// attachment and their group is not otherwise installed.
