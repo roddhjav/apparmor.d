@@ -365,6 +365,7 @@ func TestSelectInstalled_Apply(t *testing.T) {
 		profiles        map[string]string // apparmor.d relative file -> content
 		groups          map[string]string // profile basename -> group (as Merge records)
 		disableLinks    []string          // disable/<name> symlinks to create (target ../<name>)
+		include         []string          // include entries passed to NewSelectInstalled
 		targetProfiles  []string          // upstream profiles present on the install target (aa.MagicRoot)
 		noReadProfiles  []string          // apparmor.d relative files made unreadable
 		roDirs          []string          // apparmor.d relative dirs made read-only
@@ -425,6 +426,18 @@ func TestSelectInstalled_Apply(t *testing.T) {
 			},
 			wantKept:    []string{"child-pager", "dbus-session"},
 			wantRemoved: []string{"steam", "steam-runtime"},
+		},
+		{
+			name: "included profiles kept despite uninstalled attachment",
+			profiles: map[string]string{
+				"steam":         "profile steam /usr/bin/no-such-program-zz {\n}\n",
+				"steam-runtime": "profile steam-runtime flags=(attach_disconnected) {\n}\n",
+				"other":         "profile other /usr/bin/no-such-program-zz {\n}\n",
+			},
+			groups:      map[string]string{"steam": "steam", "steam-runtime": "steam"},
+			include:     []string{"steam"},
+			wantKept:    []string{"steam", "steam-runtime"},
+			wantRemoved: []string{"other"},
 		},
 		{
 			name: "namespaced profile kept despite uninstalled attachment",
@@ -507,7 +520,7 @@ func TestSelectInstalled_Apply(t *testing.T) {
 				chmodRO(t, c.RootApparmor.Join(rel))
 			}
 
-			task := NewSelectInstalled()
+			task := NewSelectInstalled(tt.include...)
 			task.SetConfig(c)
 			got, err := task.Apply()
 			if (err != nil) != tt.wantErr {

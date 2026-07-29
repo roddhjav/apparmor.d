@@ -17,12 +17,16 @@ var (
 	// deployModes are the modes accepted as a default deploy mode.
 	deployModes = []string{"enforce", "complain"}
 
+	// includeModes are the modes accepted for the include key.
+	includeModes = []string{"default", "full"}
+
 	// vendorConfigDir holds the vendor configuration defaults
 	vendorConfigDir = paths.New("/usr/share/apparmor")
 )
 
 type conf struct {
 	mode        string
+	include     string
 	flagDirs    paths.PathList
 	ignoreDirs  paths.PathList
 	includeDirs paths.PathList
@@ -44,7 +48,8 @@ func loadConfig(configDir *paths.Path) (*conf, error) {
 		includeDirs: configTier(configDir, "include.d"),
 	}
 
-	res.mode = readModeConfig(vendorConfigDir.Join("modes"), configDir.Join("modes"))["default"]
+	modes := readModeConfig(vendorConfigDir.Join("modes"), configDir.Join("modes"))
+	res.mode = modes["default"]
 	if res.mode == "" {
 		res.mode = "complain"
 	}
@@ -56,6 +61,13 @@ func loadConfig(configDir *paths.Path) (*conf, error) {
 	}
 	if !slices.Contains(deployModes, res.mode) {
 		return nil, fmt.Errorf("invalid default mode %q in %s", res.mode, configDir.Join("modes"))
+	}
+	res.include = modes["include"]
+	if res.include == "" {
+		res.include = "default"
+	}
+	if !slices.Contains(includeModes, res.include) {
+		return nil, fmt.Errorf("invalid include mode %q in %s", res.include, configDir.Join("modes"))
 	}
 	return res, nil
 }

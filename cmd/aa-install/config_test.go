@@ -27,6 +27,7 @@ func TestLoadConfig(t *testing.T) {
 		modes       string // content of the config modes file, "" means not created
 		flags       func() // set the -c/-e option globals
 		want        string
+		wantInclude string // expected include mode, "" means default
 		wantErr     bool
 	}{
 		{
@@ -71,6 +72,19 @@ func TestLoadConfig(t *testing.T) {
 			flags:   func() {},
 			wantErr: true,
 		},
+		{
+			name:        "include mode from config",
+			modes:       "include full\n",
+			flags:       func() {},
+			want:        "complain",
+			wantInclude: "full",
+		},
+		{
+			name:    "invalid include mode",
+			modes:   "include bogus\n",
+			flags:   func() {},
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -94,6 +108,13 @@ func TestLoadConfig(t *testing.T) {
 			}
 			if cfg.mode != tt.want {
 				t.Errorf("loadConfig() mode = %q, want %q", cfg.mode, tt.want)
+			}
+			wantInclude := tt.wantInclude
+			if wantInclude == "" {
+				wantInclude = "default"
+			}
+			if cfg.include != wantInclude {
+				t.Errorf("loadConfig() include = %q, want %q", cfg.include, wantInclude)
 			}
 			wantFlagDirs := paths.PathList{vendorDir.Join("flags.d"), configDir.Join("flags.d")}
 			for i, dir := range wantFlagDirs {
@@ -198,10 +219,16 @@ func TestUserModeOverrides(t *testing.T) {
 		},
 		{
 			name:        "vendor mode entry overrides",
-			vendorFiles: map[string]string{"core.conf": "ps complain\n"},
-			flagFiles:   map[string]string{"core.conf": "gjs attach_disconnected\n"},
+			vendorFiles: map[string]string{"00-core.conf": "ps complain\n"},
+			flagFiles:   map[string]string{"10-user.conf": "gjs attach_disconnected\n"},
 			want:        []string{"ps"},
 			wantNot:     []string{"gjs"},
+		},
+		{
+			name:        "same name user file replaces vendor file",
+			vendorFiles: map[string]string{"core.conf": "ps complain\n"},
+			flagFiles:   map[string]string{"core.conf": "gjs attach_disconnected\n"},
+			wantNot:     []string{"ps", "gjs"},
 		},
 	}
 	for _, tt := range tests {

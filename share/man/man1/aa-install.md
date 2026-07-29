@@ -87,9 +87,10 @@ Each tier may contain:
 
 *modes*
 
-: Modes of enforcement for all profiles. The `default` key sets the default
-  deploy mode (**enforce** or **complain**). Overridden by **--enforce** or
-  **--complain**. Defaults to **complain**.
+: General installation settings, one `key value` per line. The `default` key
+  sets the default deploy mode (**enforce** or **complain**). Overridden by
+  **--enforce** or **--complain**. Defaults to **complain**. The `include`
+  key sets how the *include.d* files are applied: **default** or **full**.
 
 *flags.d/\*.conf*
 
@@ -101,8 +102,12 @@ Each tier may contain:
 
 *include.d/\*.conf*
 
-: Only install the given (groups of) profiles. When non-empty, all other
-  profiles are excluded.
+: List of (groups of) profiles to install. With `include default`, the list
+  is applied after *ignore.d*: it re-applies ignored profiles, and installs
+  the listed profiles even when their program is not installed. With
+  `include full`, only the listed profiles are installed and all other
+  profiles are excluded; the profiles always required by apparmor.d are
+  installed in both modes.
 
 # USAGE
 

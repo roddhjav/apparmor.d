@@ -48,7 +48,7 @@ Configuration files:
     modes              Modes of enforcement for all profiles.
     flags.d/*.conf     Set per-profile flags.
     ignore.d/*.conf    Set (group of) profiles to ignore.
-    include.d/*.conf   Only install the given (group of) profiles.
+    include.d/*.conf   Set (group of) profiles to install.
 
 Configuration directories:
 
@@ -173,9 +173,9 @@ func aaInstall(configDir *paths.Path, srcDir *paths.Path, cfg *conf) (bool, erro
 		// Initialize a new clean apparmor.d build directory
 		Add(configure.NewSynchronise([]*paths.Path{srcDir}))
 
-	// If not empty, only include profiles defined from the include.d dirs
+	// Full define include: only install the profiles from the include.d dirs
 	include := configure.NewInclude(cfg.includeDirs)
-	if include.Active() {
+	if cfg.include == "full" && include.Active() {
 		r.Configures.Add(include)
 	}
 
@@ -183,7 +183,20 @@ func aaInstall(configDir *paths.Path, srcDir *paths.Path, cfg *conf) (bool, erro
 	r.Configures.
 
 		// Ignore profiles and files from the ignore.d dirs
-		Add(configure.NewUserIgnore(cfg.ignoreDirs)).
+		Add(configure.NewUserIgnore(cfg.ignoreDirs))
+
+	// Default include: re-apply ignored profiles from the include.d dirs
+	var includeEntries []string
+	if cfg.include == "default" {
+		restore := configure.NewRestoreInclude(cfg.includeDirs, srcDir)
+		if restore.Active() {
+			r.Configures.Add(restore)
+			includeEntries = util.ReadConfDirs(cfg.includeDirs...)
+		}
+	}
+
+	// Continue adding default configure tasks
+	r.Configures.
 
 		// Merge profiles (from group/, profiles-*-*/) to a unified apparmor.d directory
 		Add(configure.NewMerge()).
@@ -197,9 +210,10 @@ func aaInstall(configDir *paths.Path, srcDir *paths.Path, cfg *conf) (bool, erro
 		// Set detected system state in tunables/multiarch.d/state
 		// Add(configure.NewSetState()).
 
-	// Only keep profiles for installed programs, unless all are requested
+	// Only keep profiles for installed programs, unless all are requested.
+	// Included profiles are installed even when their program is not.
 	if !all {
-		r.Configures.Add(configure.NewSelectInstalled())
+		r.Configures.Add(configure.NewSelectInstalled(includeEntries...))
 	}
 
 	// Apply the default deploy mode to every profile, except those a user

@@ -81,7 +81,8 @@ func setupRunEnv(t *testing.T) *runEnv {
 		return "", errors.New("stubbed")
 	}
 	t.Cleanup(func() {
-		install, complain, enforce, uninstall, status, list = false, false, false, false, false, false
+		install, all, complain, enforce = false, false, false, false
+		uninstall, status, list = false, false, false
 		config, magic, src = nilConfig, nilMagic, nilSrc
 		aa.MagicRoot = oldMagic
 		reloadAppArmor = oldReload
@@ -185,9 +186,10 @@ func TestRun(t *testing.T) {
 			},
 		},
 		{
-			name:  "install with include.d",
+			name:  "install with include.d full mode",
 			flags: func() { install = true },
 			setup: func(t *testing.T, env *runEnv) {
+				writeFile(t, env.configDir.Join("modes"), "include full\n")
 				writeFile(t, env.srcDir.Join("profiles-a-f/aa_test_extra"),
 					strings.ReplaceAll(keptProfile, "aa_test_kept", "aa_test_extra"))
 				writeFile(t, env.configDir.Join("include.d/user.conf"), "aa_test_kept\n")
@@ -201,6 +203,32 @@ func TestRun(t *testing.T) {
 					t.Error("profile not listed in include.d was installed")
 				}
 			},
+		},
+		{
+			name:  "install with include.d default mode",
+			flags: func() { install = true },
+			setup: func(t *testing.T, env *runEnv) {
+				writeFile(t, env.configDir.Join("ignore.d/user.conf"), "aa_test_kept\n")
+				writeFile(t, env.configDir.Join("include.d/user.conf"),
+					"aa_test_kept\naa_test_dropped\n")
+			},
+			wantReloads: 1,
+			check: func(t *testing.T, env *runEnv) {
+				if !env.targetDir.Join("aa_test_kept").Exist() {
+					t.Error("ignored included profile was not re-applied")
+				}
+				if !env.targetDir.Join("aa_test_dropped").Exist() {
+					t.Error("included profile of a missing program was not installed")
+				}
+			},
+		},
+		{
+			name:  "install invalid include mode config",
+			flags: func() { install = true },
+			setup: func(t *testing.T, env *runEnv) {
+				writeFile(t, env.configDir.Join("modes"), "include bogus\n")
+			},
+			wantErr: true,
 		},
 		{
 			name:  "install invalid mode config",
@@ -432,7 +460,8 @@ func TestRun_Lifecycle(t *testing.T) {
 		},
 	}
 	for _, step := range steps {
-		install, complain, enforce, uninstall, status, list = false, false, false, false, false, false
+		install, all, complain, enforce = false, false, false, false
+		uninstall, status, list = false, false, false
 		step.flags()
 		if err := run(); err != nil {
 			t.Fatalf("run(%s) error = %v", step.name, err)

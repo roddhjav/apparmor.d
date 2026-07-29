@@ -61,6 +61,7 @@ func TestInclude_Apply(t *testing.T) {
 		vendorFiles  map[string]string // vendor include filename -> content
 		includeFiles map[string]string // user include filename -> content
 		profiles     []string          // apparmor.d/<path> files to seed
+		srcFiles     []string          // source <path> files to seed (restore mode)
 		missingRoot  bool              // build root does not exist
 		roDirs       []string          // apparmor.d relative dirs made read-only
 		wantErr      bool
@@ -129,6 +130,42 @@ func TestInclude_Apply(t *testing.T) {
 			wantRemoved: []string{"bar"},
 		},
 		{
+			name: "always kept profiles survive",
+			includeFiles: map[string]string{
+				"user.conf": "foo\n",
+			},
+			profiles:    []string{"foo", "bar", "child-open", "dbus-session", "namespaces/makepkg/gpg"},
+			wantKept:    []string{"foo", "child-open", "dbus-session", "namespaces/makepkg/gpg"},
+			wantRemoved: []string{"bar"},
+		},
+		{
+			name: "restore ignored profile by name",
+			includeFiles: map[string]string{
+				"user.conf": "foo\n",
+			},
+			srcFiles: []string{"groups/a/foo", "bar"},
+			profiles: []string{"bar"},
+			wantKept: []string{"groups/a/foo", "bar"},
+		},
+		{
+			name: "restore ignored directory",
+			includeFiles: map[string]string{
+				"user.conf": "groups/a\n",
+			},
+			srcFiles: []string{"groups/a/x", "groups/a/y", "bar"},
+			profiles: []string{},
+			wantKept: []string{"groups/a/x", "groups/a/y"},
+		},
+		{
+			name: "restore keeps existing profiles untouched",
+			includeFiles: map[string]string{
+				"user.conf": "foo\n",
+			},
+			srcFiles: []string{"foo"},
+			profiles: []string{"foo", "bar"},
+			wantKept: []string{"foo", "bar"},
+		},
+		{
 			name: "read dir error",
 			includeFiles: map[string]string{
 				"user.conf": "foo\n",
@@ -182,6 +219,19 @@ func TestInclude_Apply(t *testing.T) {
 			}
 
 			task := NewInclude(paths.PathList{vendorDir, userDir})
+			if tt.srcFiles != nil {
+				src := paths.New(t.TempDir())
+				for _, rel := range tt.srcFiles {
+					f := src.Join(rel)
+					if err := f.Parent().MkdirAll(); err != nil {
+						t.Fatalf("mkdir: %v", err)
+					}
+					if err := f.WriteFile([]byte("profile\n")); err != nil {
+						t.Fatalf("write source profile: %v", err)
+					}
+				}
+				task = NewRestoreInclude(paths.PathList{vendorDir, userDir}, src)
+			}
 			task.SetConfig(c)
 			got, err := task.Apply()
 			if (err != nil) != tt.wantErr {

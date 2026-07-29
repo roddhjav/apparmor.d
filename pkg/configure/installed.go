@@ -74,14 +74,22 @@ func sbinGlob() string {
 
 type SelectInstalled struct {
 	tasks.BaseTask
+	include map[string]bool // profiles or groups kept even when not installed
 }
 
-func NewSelectInstalled() *SelectInstalled {
+// NewSelectInstalled creates a SelectInstalled task. The include entries
+// (profile or group names) are kept even when their program is not installed.
+func NewSelectInstalled(include ...string) *SelectInstalled {
+	set := make(map[string]bool, len(include))
+	for _, entry := range include {
+		set[filepath.Base(entry)] = true
+	}
 	return &SelectInstalled{
 		BaseTask: tasks.BaseTask{
 			Keyword: "installed",
 			Msg:     "Only keep profiles for installed programs",
 		},
+		include: set,
 	}
 }
 
@@ -137,7 +145,9 @@ func (p SelectInstalled) Apply() ([]string, error) {
 	// are standalone or whose group is installed, drop the rest.
 	var keptNames, removedNames []string
 	for _, st := range states {
-		keep := st.force || st.installed || isAlwaysKept(st.file.Base())
+		base := st.file.Base()
+		keep := st.force || st.installed || isAlwaysKept(base) ||
+			p.include[base] || p.include[p.Groups[base]]
 		if !keep && !st.hasAtt {
 			group := p.Groups[st.file.Base()]
 			keep = group == "" || installedGroups[group]
