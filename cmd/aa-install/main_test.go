@@ -11,7 +11,7 @@ import (
 
 	"github.com/roddhjav/apparmor.d/pkg/aa"
 	"github.com/roddhjav/apparmor.d/pkg/paths"
-	"github.com/roddhjav/apparmor.d/pkg/state"
+	"github.com/roddhjav/apparmor.d/pkg/state/detector"
 )
 
 const keptProfile = `abi <abi/5.0>,
@@ -58,6 +58,7 @@ func setupRunEnv(t *testing.T) *runEnv {
 	writeFile(t, env.srcDir.Join("profiles-a-f/aa_test_dropped"), droppedProfile)
 	writeFile(t, env.srcDir.Join("tunables/multiarch.d/state"),
 		"@{VERSION} = 5\n\ninclude if exists <tunables/multiarch.d/state.d>\n")
+	writeFile(t, env.srcDir.Join("abstractions/base-strict"), "abi <abi/5.0>,\n")
 
 	env.configDir = paths.New(t.TempDir())
 	env.targetDir = paths.New(t.TempDir())
@@ -75,9 +76,9 @@ func setupRunEnv(t *testing.T) *runEnv {
 	}
 	// Keep the state detectors off the real host: fake filesystem root,
 	// no command execution.
-	oldRoot, oldRun := state.Root, state.Run
-	state.Root = paths.New(t.TempDir())
-	state.Run = func(name string, arg ...string) (string, error) {
+	oldRoot, oldRun := detector.Root, detector.Run
+	detector.Root = paths.New(t.TempDir())
+	detector.Run = func(name string, arg ...string) (string, error) {
 		return "", errors.New("stubbed")
 	}
 	t.Cleanup(func() {
@@ -86,7 +87,7 @@ func setupRunEnv(t *testing.T) *runEnv {
 		config, magic, src = nilConfig, nilMagic, nilSrc
 		aa.MagicRoot = oldMagic
 		reloadAppArmor = oldReload
-		state.Root, state.Run = oldRoot, oldRun
+		detector.Root, detector.Run = oldRoot, oldRun
 	})
 
 	// The build directory is created with os.MkdirTemp and deliberately
@@ -167,7 +168,7 @@ func TestRun(t *testing.T) {
 			name:  "install writes detected state",
 			flags: func() { install = true },
 			setup: func(t *testing.T, env *runEnv) {
-				state.Run = func(name string, arg ...string) (string, error) {
+				detector.Run = func(name string, arg ...string) (string, error) {
 					if name == "apparmor_parser" {
 						return "AppArmor parser version 4.0.2\n", nil
 					}
@@ -176,12 +177,12 @@ func TestRun(t *testing.T) {
 			},
 			wantReloads: 1,
 			check: func(t *testing.T, env *runEnv) {
-				got, err := env.targetDir.Join("tunables/multiarch.d/state").ReadFileAsString()
+				got, err := env.targetDir.Join("tunables/multiarch.d/state.d/aa-install").ReadFileAsString()
 				if err != nil {
-					t.Fatalf("read installed state: %v", err)
+					t.Fatalf("read installed state dropin: %v", err)
 				}
 				if !strings.Contains(got, "@{VERSION} = 4") {
-					t.Errorf("installed state = %q, want @{VERSION} = 4", got)
+					t.Errorf("installed state dropin = %q, want @{VERSION} = 4", got)
 				}
 			},
 		},
