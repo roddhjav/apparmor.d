@@ -74,13 +74,13 @@ fi
 %config /etc/apparmor.d/tunables
 
 %files tools
-/usr/bin/aa
 /usr/bin/aa-*
 
 %dir /usr/share/apparmor
 /usr/share/apparmor/modes
 /usr/share/apparmor/flags.d
 /usr/share/apparmor/ignore.d
+/usr/share/apparmor/overwrite.d/
 
 %dir /usr/share/zsh
 %dir /usr/share/zsh/site-functions
