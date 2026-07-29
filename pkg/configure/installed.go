@@ -163,12 +163,8 @@ func (p SelectInstalled) Apply() ([]string, error) {
 	return res, nil
 }
 
-// reconcileDisableLinks keeps a disable/<name> overwrite link only when the
-// upstream profile <name> it disables actually exists on the install target
-// (e.g. Debian's usr.lib.libreoffice.program.soffice.bin, replaced by our
-// libreoffice profile). Otherwise there is nothing to disable and the link
-// would be dangling, so it is removed. Kept links stay symlinks; install()
-// copies them verbatim.
+// reconcileDisableLinks removes every disable/<name> link whose upstream
+// profile <name> does not exist on the install target.
 func (p SelectInstalled) reconcileDisableLinks() error {
 	disableDir := p.RootApparmor.Join("disable")
 	if !disableDir.Exist() {

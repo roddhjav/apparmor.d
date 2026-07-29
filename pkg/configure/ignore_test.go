@@ -30,12 +30,12 @@ func setIgnoreDir(t *testing.T, mainContent string) {
 
 // userIgnoreDir returns a temporary directory seeded with a user.conf
 // drop-in holding content.
-func userIgnoreDir(t *testing.T, content string) *paths.Path {
+func userIgnoreDir(t *testing.T, name string, content string) *paths.Path {
 	t.Helper()
 	dir := paths.New(t.TempDir())
 	if content != "" {
-		if err := dir.Join("user.conf").WriteFile([]byte(content)); err != nil {
-			t.Fatalf("write user.conf: %v", err)
+		if err := dir.Join(name).WriteFile([]byte(content)); err != nil {
+			t.Fatalf("write %s: %v", name, err)
 		}
 	}
 	return dir
@@ -43,18 +43,19 @@ func userIgnoreDir(t *testing.T, content string) *paths.Path {
 
 func TestIgnore_Apply(t *testing.T) {
 	tests := []struct {
-		name         string
-		userOnly     bool              // apply NewUserIgnore instead of NewIgnore
-		profiles     map[string]string // apparmor.d relative file -> content
-		mainIgnore   string            // content of dists ignore.d main.conf
-		vendorIgnore string            // content of vendor drop-in user.conf
-		userIgnore   string            // content of user drop-in user.conf
-		missingRoot  bool              // build root does not exist
-		roDirs       []string          // apparmor.d relative dirs made read-only
-		wantErr      bool
-		wantEmpty    bool     // Apply is expected to return no result
-		wantKept     []string // apparmor.d relative paths expected to remain
-		wantRemoved  []string // apparmor.d relative paths expected to be removed
+		name           string
+		userOnly       bool              // apply NewUserIgnore instead of NewIgnore
+		profiles       map[string]string // apparmor.d relative file -> content
+		mainIgnore     string            // content of dists ignore.d main.conf
+		vendorIgnore   string            // content of vendor drop-in 00-main.conf
+		userIgnore     string            // content of the user drop-in file
+		userIgnoreName string            // basename of the user drop-in, default 10-user.conf
+		missingRoot    bool              // build root does not exist
+		roDirs         []string          // apparmor.d relative dirs made read-only
+		wantErr        bool
+		wantEmpty      bool     // Apply is expected to return no result
+		wantKept       []string // apparmor.d relative paths expected to remain
+		wantRemoved    []string // apparmor.d relative paths expected to be removed
 	}{
 		{
 			name:     "no user entries is noop",
@@ -101,6 +102,19 @@ func TestIgnore_Apply(t *testing.T) {
 			wantRemoved:  []string{"foo", "bar"},
 		},
 		{
+			name:     "same name user file replaces vendor file",
+			userOnly: true,
+			profiles: map[string]string{
+				"foo": "profile foo {\n}\n",
+				"bar": "profile bar {\n}\n",
+			},
+			vendorIgnore:   "apparmor.d/foo\n",
+			userIgnore:     "apparmor.d/bar\n",
+			userIgnoreName: "00-main.conf",
+			wantKept:       []string{"foo"},
+			wantRemoved:    []string{"bar"},
+		},
+		{
 			name:        "recursive read error",
 			mainIgnore:  "does-not-exist\n",
 			missingRoot: true,
@@ -144,8 +158,12 @@ func TestIgnore_Apply(t *testing.T) {
 			}
 			seedFiles(t, c.RootApparmor, tt.profiles)
 			setIgnoreDir(t, tt.mainIgnore)
-			vendorDir := userIgnoreDir(t, tt.vendorIgnore)
-			userDir := userIgnoreDir(t, tt.userIgnore)
+			userName := tt.userIgnoreName
+			if userName == "" {
+				userName = "10-user.conf"
+			}
+			vendorDir := userIgnoreDir(t, "00-main.conf", tt.vendorIgnore)
+			userDir := userIgnoreDir(t, userName, tt.userIgnore)
 			for _, dir := range tt.roDirs {
 				if dir == "." {
 					chmodRO(t, c.RootApparmor)

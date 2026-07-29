@@ -201,12 +201,29 @@ func TestSetFlags_Apply(t *testing.T) {
 			},
 		},
 		{
-			name: "user dir overrides vendor dir",
+			name: "same name user file replaces vendor file",
 			vendorFiles: map[string]string{
 				"user.conf": "foo complain\nbar complain\n",
 			},
 			flagFiles: map[string]string{
 				"user.conf": "foo attach_disconnected\n",
+			},
+			profiles: map[string]string{
+				"foo": "profile foo /usr/bin/foo {\n}\n",
+				"bar": "profile bar /usr/bin/bar {\n}\n",
+			},
+			wantContent: map[string]string{
+				"foo": "profile foo /usr/bin/foo flags=(attach_disconnected) {\n}\n",
+				"bar": "profile bar /usr/bin/bar {\n}\n",
+			},
+		},
+		{
+			name: "different names merge per profile",
+			vendorFiles: map[string]string{
+				"00-main.conf": "foo complain\nbar complain\n",
+			},
+			flagFiles: map[string]string{
+				"10-user.conf": "foo attach_disconnected\n",
 			},
 			profiles: map[string]string{
 				"foo": "profile foo /usr/bin/foo {\n}\n",

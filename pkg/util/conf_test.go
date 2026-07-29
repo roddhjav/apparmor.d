@@ -99,9 +99,15 @@ func TestReadFlagDirs(t *testing.T) {
 			want:   map[string][]string{"foo": {"complain"}},
 		},
 		{
-			name:   "admin overrides vendor",
+			name:   "same name admin file replaces vendor file",
 			vendor: map[string]string{"a.conf": "foo complain\nbar complain\n"},
 			admin:  map[string]string{"a.conf": "foo enforce\n"},
+			want:   map[string][]string{"foo": {"enforce"}},
+		},
+		{
+			name:   "different names merge per profile",
+			vendor: map[string]string{"00-main.conf": "foo complain\nbar complain\n"},
+			admin:  map[string]string{"10-user.conf": "foo enforce\n"},
 			want:   map[string][]string{"foo": {"enforce"}, "bar": {"complain"}},
 		},
 		{
@@ -155,9 +161,15 @@ func TestReadConfDirs(t *testing.T) {
 			want: nil,
 		},
 		{
-			name:   "dirs concatenated in order",
+			name:   "same name admin file replaces vendor file",
 			vendor: map[string]string{"a.conf": "# vendor\nfoo\n"},
 			admin:  map[string]string{"a.conf": "bar\n"},
+			want:   []string{"bar"},
+		},
+		{
+			name:   "different names concatenated",
+			vendor: map[string]string{"00-main.conf": "foo\n"},
+			admin:  map[string]string{"10-user.conf": "bar\n"},
 			want:   []string{"foo", "bar"},
 		},
 		{

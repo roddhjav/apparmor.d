@@ -30,47 +30,56 @@ func ReadFlagsFile(path *paths.Path) map[string][]string {
 	return res
 }
 
-// ReadFlagDirs merges every flags manifest found in sources. A source is
-// either a flags file, read as is, or a directory whose *.conf files are
-// read in alphabetical order. Sources are read in the given order, so a
-// later source overrides an earlier one on per-profile collision.
-func ReadFlagDirs(sources ...*paths.Path) map[string][]string {
-	res := map[string][]string{}
+// effectiveConfFiles returns the *.conf files of the given files or
+// directories, in order. A same-named file from a later source fully
+// replaces an earlier one (admin config overrides vendor config).
+func effectiveConfFiles(sources ...*paths.Path) paths.PathList {
+	var order []string
+	byName := map[string]*paths.Path{}
+	add := func(file *paths.Path) {
+		if _, seen := byName[file.Base()]; !seen {
+			order = append(order, file.Base())
+		}
+		byName[file.Base()] = file
+	}
 	for _, src := range sources {
 		if src == nil {
 			continue
 		}
-		files := paths.PathList{src}
 		if src.IsDir() {
-			var err error
-			files, err = src.ReadDir(paths.FilterOutDirectories(), paths.FilterSuffixes(".conf"))
+			files, err := src.ReadDir(paths.FilterOutDirectories(), paths.FilterSuffixes(".conf"))
 			if err != nil {
 				continue
 			}
+			for _, file := range files {
+				add(file)
+			}
+		} else if src.Exist() {
+			add(src)
 		}
-		for _, file := range files {
-			maps.Copy(res, ReadFlagsFile(file))
-		}
+	}
+	res := make(paths.PathList, 0, len(order))
+	for _, name := range order {
+		res = append(res, byName[name])
 	}
 	return res
 }
 
-// ReadConfDirs returns the concatenated filtered lines of every *.conf file
-// in dirs. Directories are read in the given order, files within a directory
-// in alphabetical order.
+// ReadFlagDirs merges the flags manifests from the effective files of
+// sources; a later file overrides an earlier one per profile.
+func ReadFlagDirs(sources ...*paths.Path) map[string][]string {
+	res := map[string][]string{}
+	for _, file := range effectiveConfFiles(sources...) {
+		maps.Copy(res, ReadFlagsFile(file))
+	}
+	return res
+}
+
+// ReadConfDirs returns the filtered lines of the effective *.conf files in dirs.
 func ReadConfDirs(dirs ...*paths.Path) []string {
 	var res []string
-	for _, dir := range dirs {
-		if dir == nil || !dir.IsDir() {
-			continue
-		}
-		files, err := dir.ReadDir(paths.FilterOutDirectories(), paths.FilterSuffixes(".conf"))
-		if err != nil {
-			continue
-		}
-		for _, file := range files {
-			res = append(res, file.MustReadFilteredFileAsLines()...)
-		}
+	for _, file := range effectiveConfFiles(dirs...) {
+		res = append(res, file.MustReadFilteredFileAsLines()...)
 	}
 	return res
 }
