@@ -1,0 +1,65 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/aa-install
+profile aa-install @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/golang-strict>
+
+  capability dac_read_search,
+
+  @{exec_path} mr,
+
+  @{bin}/journalctl        Cx -> journalctl,
+  @{bin}/systemctl         Cx -> systemctl,
+  @{sbin}/apparmor_parser  Px,
+
+  /usr/share/apparmor.d/** r,
+  /usr/share/apparmor/** r,
+
+  /etc/apparmor.d/** rw,
+  /etc/apparmor/exclude.d/** r,
+  /etc/apparmor/flags.d/** r,
+  /etc/apparmor/ignore.d/** r,
+  /etc/apparmor/install.db rw,
+  /etc/apparmor/modes r,
+
+  / r,
+  /**/ r,
+
+  owner /tmp/aa-install@{int}/{,**} rw,
+
+  profile systemctl {
+    include <abstractions/base>
+    include <abstractions/app/systemctl>
+
+    capability net_admin,
+    capability sys_resource,
+
+    signal send set=term peer=systemd-tty-ask-password-agent,
+
+    @{bin}/systemd-tty-ask-password-agent Px,
+
+    include if exists <local/aa-install_systemctl>
+  }
+
+  profile journalctl {
+    include <abstractions/base>
+    include <abstractions/consoles>
+    include <abstractions/journal-read>
+
+    @{bin}/journalctl mr,
+
+    include if exists <local/aa-install_journalctl>
+  }
+
+  include if exists <local/aa-install>
+}
+
+# vim:syntax=apparmor
