@@ -118,3 +118,24 @@ func TestInvert(t *testing.T) {
 		})
 	}
 }
+
+func TestInvertFlatten(t *testing.T) {
+	tests := []struct {
+		name  string
+		input map[string][]string
+		want  map[string]string
+	}{
+		{
+			name:  "1",
+			input: map[string][]string{"g1": {"a", "b"}, "g2": {"c"}},
+			want:  map[string]string{"a": "g1", "b": "g1", "c": "g2"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := InvertFlatten(tt.input); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("InvertFlatten() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
