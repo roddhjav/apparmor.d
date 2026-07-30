@@ -164,7 +164,7 @@ func validateValues(kind Kind, key string, values []string) error {
 			continue
 		}
 
-		// Skip variable references — they will be expanded at runtime
+		// Skip variable references, they will be expanded at runtime
 		if strings.Contains(v, "@{") {
 			continue
 		}

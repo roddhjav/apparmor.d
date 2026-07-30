@@ -91,7 +91,12 @@ build_in_docker_dpkg() {
 		docker run -tid --name "$img" --volume "$VOLUME:$BUILDIR" \
 			--env DISTRIBUTION="$target" "$BASEIMAGE/$dist:$release"
 		docker exec "$img" sudo apt-get update -q
-		docker exec "$img" sudo apt-get install -y config-package-dev lsb-release libdistro-info-perl golang-go
+		docker exec "$img" sudo apt-get install -y lsb-release libdistro-info-perl
+		local aptopt=()
+		if [[ "$dist" == debian && "$release" == "13" ]]; then
+			aptopt=(-t trixie-backports)
+		fi
+		docker exec "$img" sudo apt-get install -y "${aptopt[@]}" golang-go
 	fi
 
 	docker exec --workdir="$BUILDIR/$PKGNAME" "$img" just build-dpkg

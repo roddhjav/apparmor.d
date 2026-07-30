@@ -30,6 +30,9 @@ type TaskConfig struct {
 
 	// RootApparmor is the source apparmor.d directory (e.g. .build/apparmor.d)
 	RootApparmor *paths.Path
+
+	// Groups maps a profile basename to the groups/ subdirectory it came from
+	Groups map[string]string
 }
 
 func NewTaskConfig(root *paths.Path) *TaskConfig {
@@ -42,5 +45,6 @@ func NewTaskConfig(root *paths.Path) *TaskConfig {
 		Pkgname:      "apparmor.d",
 		Root:         root,
 		RootApparmor: root.Join("apparmor.d"),
+		Groups:       map[string]string{},
 	}
 }

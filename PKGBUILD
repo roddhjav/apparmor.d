@@ -30,8 +30,7 @@ build() {
   export GOPATH="${srcdir}"
   export GOFLAGS="-buildmode=pie -trimpath -ldflags=-linkmode=external -mod=readonly -modcacherw -tags=dev"
   export DISTRIBUTION=arch
-  just complain
-#   just prebuild
+  just prebuild
   # just build-aa-flatpak
 }
 

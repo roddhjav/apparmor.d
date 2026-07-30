@@ -17,7 +17,7 @@ export CGO_LDFLAGS := $(LDFLAGS)
 export GOFLAGS := -buildmode=pie -trimpath -ldflags=-linkmode=external -mod=readonly -modcacherw
 
 %:
-	dh $@ --with=config-package
+	dh $@
 
 # golang/1.19 compresses debug symbols itself.
 override_dh_dwz:
@@ -32,23 +32,10 @@ override_dh_auto_test:
 override_dh_strip:
 	dh_strip --no-automatic-dbgsym
 
-override_dh_install:
-	dh_install
-	for pkgname in $(shell dh_listpackages); do \
-		cp debian/common.hide debian/$${pkgname}.hide; \
-		cp debian/common.postinst debian/$${pkgname}.postinst; \
-		cp debian/common.postrm debian/$${pkgname}.postrm; \
-	done
-
 override_dh_auto_build:
-	just build=.build/enforce enforce
-	just build=.build/complain complain
+	just build=.build prebuild
 
 override_dh_auto_install:
-	just build=.build/complain destdir="${CURDIR}/debian/apparmor.d" install-prebuilt
-	just build=.build/complain destdir="${CURDIR}/debian/apparmor.d" install-base
-	just build=.build/complain destdir="${CURDIR}/debian/apparmor.d" install-tools
-	just build=.build/enforce destdir="${CURDIR}/debian/apparmor.d.enforced" install-prebuilt
-	just build=.build/enforce destdir="${CURDIR}/debian/apparmor.d.enforced" install-base
-	just build=.build/enforce destdir="${CURDIR}/debian/apparmor.d.enforced" install-tools
-
+	just build=.build destdir="${CURDIR}/debian/apparmor.d" install-prebuilt
+	just build=.build destdir="${CURDIR}/debian/apparmor.d-base" install-base
+	just build=.build destdir="${CURDIR}/debian/apparmor.d-tools" install-tools

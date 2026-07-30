@@ -14,6 +14,8 @@ License:        GPL-2.0-only
 URL:            https://github.com/roddhjav/apparmor.d
 Source0:        %{name}-%{version}.tar.gz
 Requires:       apparmor-profiles
+Requires:       %{name}-base = %{version}-%{release}
+Requires:       %{name}-tools = %{version}-%{release}
 BuildRequires:  distribution-release
 BuildRequires:  just
 BuildRequires:  golang-packaging
@@ -22,32 +24,63 @@ BuildRequires:  apparmor-profiles
 %description
 AppArmor.d is a set of over 1500 AppArmor profiles whose aim is to confine most Linux based applications and processes.
 
+%package base
+Summary:        Full set of AppArmor policies (base abstractions, tunables, and booleans)
+BuildArch:      noarch
+
+%description base
+apparmor.d-base is a set of base abstractions, tunables, and booleans defined by apparmor.d.
+
+%package tools
+Summary:        Full set of AppArmor policies (userland toolings)
+
+%description tools
+apparmor.d-tools is a set of userland toolings to help manage AppArmor profiles defined in apparmor.d.
+
 %prep
 %autosetup
 
 %build
-just complain
+just prebuild
 
 %install
 just destdir="%{buildroot}" install-prebuilt
 just destdir="%{buildroot}" install-base
 just destdir="%{buildroot}" install-tools
 
-%posttrans
-apparmor_parser --purge-cache
-%restart_on_update apparmor
+%transfiletriggerin -- /usr /opt
+if command -v aa-install >/dev/null 2>&1; then
+    aa-install --install || true
+fi
+
+%transfiletriggerpostun -- /usr /opt
+if command -v aa-install >/dev/null 2>&1; then
+    aa-install --install || true
+fi
 
 %files
 %license LICENSE
 %doc README.md
-%config /etc/apparmor.d/
-/usr/bin/aa-log
-/usr/bin/aa-mode
+/usr/share/apparmor.d/
+%config /etc/apparmor.d/disable/hostname
 
 %dir /usr/lib/systemd/system/*.service.d
 /usr/lib/systemd/system/*.service.d/apparmor.conf
 %dir /usr/lib/systemd/user/*.service.d
 /usr/lib/systemd/user/*.service.d/apparmor.conf
+
+%files base
+%config /etc/apparmor.d/abstractions
+%config /etc/apparmor.d/tunables
+
+%files tools
+/usr/bin/aa-*
+
+%dir /usr/share/apparmor
+/usr/share/apparmor/modes
+/usr/share/apparmor/flags.d
+/usr/share/apparmor/ignore.d
+/usr/share/apparmor/overwrite.d/
 
 %dir /usr/share/zsh
 %dir /usr/share/zsh/site-functions

@@ -2,12 +2,15 @@ name: Ubuntu
 
 on: [push, pull_request, workflow_dispatch]
 
+permissions:
+  contents: read
+
 jobs:
   check:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       - name: Check out repository code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install linter dependencies
         run: |
@@ -24,28 +27,33 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: ubuntu-24.04
+          - os: ubuntu-26.04
             mode: default
     steps:
       - name: Check out repository code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install Build dependencies
         run: |
           sudo apt-get update -q
           sudo apt-get install -y \
-            devscripts debhelper config-package-dev \
+            devscripts debhelper \
             auditd apparmor-profiles apparmor-utils
           pipx install rust-just
           echo "$HOME/.local/bin" >> $GITHUB_PATH
-          sudo rm /etc/apparmor.d/usr.lib.snapd.snap-confine.real
+          sudo rm -f /etc/apparmor.d/usr.lib.snapd.snap-confine.real
 
       - name: Build the apparmor.d package
         run: |
           just build-dpkg
 
       - name: Install apparmor.d
-        run: sudo dpkg --install .pkg/apparmor.d_*_amd64.deb || true
+        run: |
+            sudo dpkg --install .pkg/apparmor.d*.deb || true
+            sudo aa-install --install --all
+
+      - name: Show the installation status
+        run: sudo aa-install --status
 
       - name: Reload AppArmor
         run: |
@@ -63,29 +71,29 @@ jobs:
       - name: Show Number of loaded profile
         run: sudo aa-status --profiled
 
-      - name: Cache the build package
-        if: matrix.mode == 'default' && matrix.os == 'ubuntu-24.04'
-        uses: actions/cache/save@v4
+      - name: Cache the build packages
+        if: matrix.mode == 'default' && matrix.os == 'ubuntu-26.04'
+        uses: actions/cache/save@v6
         with:
-          path: .pkg/apparmor.d_*_amd64.deb
-          key: ${{ matrix.os }}-${{ matrix.mode }}-${{ hashFiles('.pkg/apparmor.d_*_amd64.deb') }}
+          path: .pkg/apparmor.d*.deb
+          key: ${{ matrix.os }}-${{ matrix.mode }}-${{ hashFiles('.pkg/apparmor.d*.deb') }}
 
   tests:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     needs: build
     if: github.ref_name == 'dev' || github.event_name == 'workflow_dispatch'
     steps:
       - name: Check out repository code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
-      - name: Restore the cached build package
-        uses: actions/cache/restore@v4
+      - name: Restore the cached build packages
+        uses: actions/cache/restore@v6
         with:
           fail-on-cache-miss: true
-          path: .pkg/apparmor.d_*_amd64.deb
-          key: ubuntu-24.04-default-${{ hashFiles('.pkg/apparmor.d_*_amd64.deb') }}
+          path: .pkg/apparmor.d*.deb
+          key: ubuntu-26.04-default-${{ hashFiles('.pkg/apparmor.d*.deb') }}
           restore-keys: |
-            ubuntu-24.04-default-
+            ubuntu-26.04-default-
 
       - name: Install Tests dependencies
         run: |
@@ -98,7 +106,8 @@ jobs:
 
       - name: Install apparmor.d
         run: |
-          sudo dpkg --install .pkg/apparmor.d_*_amd64.deb || true
+          sudo dpkg --install .pkg/apparmor.d*.deb || true
+          sudo aa-install --install --all
           sudo systemctl restart apparmor.service
           sudo systemctl daemon-reload
           systemctl --user daemon-reload

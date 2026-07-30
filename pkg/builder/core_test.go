@@ -5,8 +5,10 @@
 package builder
 
 import (
+	"strings"
 	"testing"
 
+	"github.com/roddhjav/apparmor.d/pkg/aa"
 	"github.com/roddhjav/apparmor.d/pkg/paths"
 	"github.com/roddhjav/apparmor.d/pkg/tasks"
 )
@@ -128,6 +130,28 @@ func TestBuilder_Apply(t *testing.T) {
 			  }`,
 		},
 		{
+			name: "complain-4",
+			b:    NewComplain(),
+			profile: `
+			  @{exec_path} = @{bin}/foo
+			  profile foo @{exec_path} flags=(unconfined) {
+			    include <abstractions/base>
+
+			    @{exec_path} mr,
+
+				include if exists <local/foo>
+			  }`,
+			want: `
+			  @{exec_path} = @{bin}/foo
+			  profile foo @{exec_path} flags=(unconfined) {
+			    include <abstractions/base>
+
+			    @{exec_path} mr,
+
+				include if exists <local/foo>
+			  }`,
+		},
+		{
 			name: "enforce-1",
 			b:    NewEnforce(),
 			profile: `
@@ -192,6 +216,30 @@ func TestBuilder_Apply(t *testing.T) {
 
 				include if exists <local/foo>
 			  }`,
+		},
+		{
+			name:    "deploy-mode complain",
+			b:       NewDeployMode("complain", nil),
+			profile: "\nprofile foo /{,usr/}bin/foo {\n  include <abstractions/base>\n}",
+			want:    "\nprofile foo /{,usr/}bin/foo flags=(complain) {\n  include <abstractions/base>\n}",
+		},
+		{
+			name:    "deploy-mode enforce clears complain",
+			b:       NewDeployMode("enforce", nil),
+			profile: "\nprofile foo /{,usr/}bin/foo flags=(complain) {\n  include <abstractions/base>\n}",
+			want:    "\nprofile foo /{,usr/}bin/foo {\n  include <abstractions/base>\n}",
+		},
+		{
+			name:    "deploy-mode override wins",
+			b:       NewDeployMode("complain", map[string]bool{"foo": true}),
+			profile: "\nprofile foo /{,usr/}bin/foo {\n  include <abstractions/base>\n}",
+			want:    "\nprofile foo /{,usr/}bin/foo {\n  include <abstractions/base>\n}",
+		},
+		{
+			name:    "deploy-mode empty is noop",
+			b:       NewDeployMode("", nil),
+			profile: "\nprofile foo /{,usr/}bin/foo flags=(complain) {\n  include <abstractions/base>\n}",
+			want:    "\nprofile foo /{,usr/}bin/foo flags=(complain) {\n  include <abstractions/base>\n}",
 		},
 		{
 			name: "fsp",
@@ -328,6 +376,19 @@ profile attach-2 flags=(complain) {
 }`,
 		},
 		{
+			name: "attach-namespace",
+			b:    NewAttach(),
+			profile: `
+profile :glycin:bwrap flags=(attach_disconnected) {
+  include <abstractions/base>
+}`,
+			want: `
+@{att} = /att/glycin/
+profile :glycin:bwrap flags=(attach_disconnected,attach_disconnected.path=@{att}) {
+  include <abstractions/attached/base>
+}`,
+		},
+		{
 			name: "debug-1",
 			b:    NewDebug(),
 			profile: `
@@ -361,6 +422,112 @@ profile debug-1 {
 			}
 			if got != tt.want {
 				t.Errorf("Builder.Apply() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestNewOption(t *testing.T) {
+	tests := []struct {
+		name     string
+		file     *paths.Path
+		wantName string
+		wantKind aa.FileKind
+	}{
+		{
+			name:     "profile",
+			file:     cfg.RootApparmor.Join("foo"),
+			wantName: "foo",
+			wantKind: aa.ProfileKind,
+		},
+		{
+			name:     "profile-with-suffix",
+			file:     cfg.RootApparmor.Join("bar.apparmor.d"),
+			wantName: "bar",
+			wantKind: aa.ProfileKind,
+		},
+		{
+			name:     "abstraction",
+			file:     cfg.RootApparmor.Join("abstractions", "app", "foo"),
+			wantName: "foo",
+			wantKind: aa.AbstractionKind,
+		},
+		{
+			name:     "tunable",
+			file:     cfg.RootApparmor.Join("tunables", "global"),
+			wantName: "global",
+			wantKind: aa.TunableKind,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := NewOption(tt.file)
+			if got.Name != tt.wantName {
+				t.Errorf("NewOption() Name = %v, want %v", got.Name, tt.wantName)
+			}
+			if got.Kind != tt.wantKind {
+				t.Errorf("NewOption() Kind = %v, want %v", got.Kind, tt.wantKind)
+			}
+			if got.File != tt.file {
+				t.Errorf("NewOption() File = %v, want %v", got.File, tt.file)
+			}
+		})
+	}
+}
+
+func TestBuilders_Run(t *testing.T) {
+	tests := []struct {
+		name     string
+		builders []Builder
+		profile  string
+		want     string
+		wantErr  bool
+	}{
+		{
+			name:     "no-builder",
+			builders: []Builder{},
+			profile:  "profile foo /usr/bin/foo {\n}\n",
+			want:     "profile foo /usr/bin/foo {\n}\n",
+			wantErr:  false,
+		},
+		{
+			name:     "complain-then-enforce",
+			builders: []Builder{NewComplain(), NewEnforce()},
+			profile:  "profile foo /usr/bin/foo {\n}\n",
+			want:     "profile foo /usr/bin/foo {\n}\n",
+			wantErr:  false,
+		},
+		{
+			name:     "complain",
+			builders: []Builder{NewComplain()},
+			profile:  "profile foo /usr/bin/foo {\n}\n",
+			want:     "profile foo /usr/bin/foo flags=(complain) {\n}\n",
+			wantErr:  false,
+		},
+		{
+			name:     "error",
+			builders: []Builder{NewUserspace()},
+			profile:  "profile foo /usr/bin/foo {\n}\n",
+			want:     "",
+			wantErr:  true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := NewRunner(cfg)
+			for _, b := range tt.builders {
+				r.Add(b)
+			}
+			got, err := r.Run(cfg.RootApparmor.Join("foo"), tt.profile)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Builders.Run() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if tt.wantErr && !strings.Contains(err.Error(), "userspace") {
+				t.Errorf("Builders.Run() error = %v, want it to contain the builder name", err)
+			}
+			if got != tt.want {
+				t.Errorf("Builders.Run() = %v, want %v", got, tt.want)
 			}
 		})
 	}

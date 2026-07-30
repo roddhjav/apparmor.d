@@ -48,7 +48,7 @@ gnome-disks complain
 	FlagDir = paths.New("/tmp/")
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := FlagDir.Join(tt.name + ".flags").WriteFile([]byte(tt.content))
+			err := FlagDir.Join(tt.name + ".conf").WriteFile([]byte(tt.content))
 			if err != nil {
 				return
 			}
@@ -62,7 +62,7 @@ gnome-disks complain
 func TestIgnore_Read(t *testing.T) {
 	tests := []struct {
 		name    string
-		content string
+		content string // "" means the file is not created
 		want    []string
 	}{
 		{
@@ -70,6 +70,10 @@ func TestIgnore_Read(t *testing.T) {
 			content: `
 
 `,
+			want: []string{},
+		},
+		{
+			name: "missing",
 			want: []string{},
 		},
 		{
@@ -92,9 +96,11 @@ code
 	IgnoreDir = paths.New("/tmp/")
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := IgnoreDir.Join(tt.name + ".ignore").WriteFile([]byte(tt.content))
-			if err != nil {
-				return
+			if tt.content != "" {
+				err := IgnoreDir.Join(tt.name + ".conf").WriteFile([]byte(tt.content))
+				if err != nil {
+					return
+				}
 			}
 			if got := Ignore.Read(tt.name); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Ignore.Read() = %v, want %v", got, tt.want)

@@ -11,6 +11,7 @@ import (
 	"fmt"
 
 	"github.com/roddhjav/apparmor.d/pkg/logging"
+	"github.com/roddhjav/apparmor.d/pkg/paths"
 	"github.com/roddhjav/apparmor.d/pkg/tasks"
 )
 
@@ -51,4 +52,16 @@ func (r *Configures) Run() error {
 func (r *Configures) Add(task Task) *Configures {
 	r.BaseRunner.Add(task)
 	return r
+}
+
+// existingPaths returns the string form of every member of sources that
+// exists, for task result messages.
+func existingPaths(sources paths.PathList) []string {
+	var res []string
+	for _, src := range sources {
+		if src.Exist() {
+			res = append(res, src.String())
+		}
+	}
+	return res
 }

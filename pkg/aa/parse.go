@@ -66,7 +66,6 @@ var (
 		HAT:      "^",
 	}
 	inHeader              = false
-	regParagraph          = regexp.MustCompile(`(?s).*?\n\n|$`)
 	regVariableDefinition = regexp.MustCompile(`@{(.*)}\s*[+=]+\s*(.*)`)
 )
 
@@ -1059,29 +1058,73 @@ func (f *AppArmorProfileFile) Parse(input string) (int, error) {
 	return 0, nil
 }
 
+// splitParagraphs splits input into paragraphs ending with a blank line
+// (`\n\n`). Trailing content without a terminating blank line is discarded,
+// matching the long-standing behavior of the previous regexp-based splitter.
+//
+// Adjacent paragraphs are merged when the next one continues an
+// `if`/`else if`/`else` chain started by the previous (i.e. its first
+// non-blank line begins with `}`). Without this, a chain like
+//
+//	if "gnome" in @{DE} { ... }    else if "kde" in @{DE} { ... }    else { ... }
+//
+// separated by blank lines would emit paragraphs with a leading `}` whose
+// matching `{` lives in the previous paragraph, and the rule tokenizer would
+// see unbalanced braces.
+func splitParagraphs(input string) []string {
+	var paragraphs []string
+	start := 0
+	for i := 0; i+1 < len(input); i++ {
+		if input[i] == '\n' && input[i+1] == '\n' {
+			chunk := input[start : i+2]
+			if len(paragraphs) > 0 && startsWithClosingBrace(chunk) {
+				paragraphs[len(paragraphs)-1] += chunk
+			} else {
+				paragraphs = append(paragraphs, chunk)
+			}
+			start = i + 2
+			i++ // skip the second \n
+		}
+	}
+	return paragraphs
+}
+
+// startsWithClosingBrace reports whether the first non-whitespace,
+// non-comment line of s starts with `}`.
+func startsWithClosingBrace(s string) bool {
+	for _, line := range strings.Split(s, "\n") {
+		trimmed := strings.TrimLeft(line, " \t")
+		if trimmed == "" || strings.HasPrefix(trimmed, "#") {
+			continue
+		}
+		return strings.HasPrefix(trimmed, "}")
+	}
+	return false
+}
+
 // ParseRules parses apparmor profile rules by paragraphs
 func ParseRules(input string) (ParaRules, []string, error) {
 	paragraphRules := ParaRules{}
 	paragraphs := []string{}
 
-	for _, match := range regParagraph.FindAllStringSubmatch(input, -1) {
-		if len(match[0]) == 0 {
+	for _, raw := range splitParagraphs(input) {
+		if len(raw) == 0 {
 			continue
 		}
 
 		// Ignore blocks header
-		tmp := strings.TrimLeft(match[0], "\t ")
+		tmp := strings.TrimLeft(raw, "\t ")
 		tmp = strings.TrimRight(tmp, "\n")
 		var paragraph string
 		switch {
 		case strings.HasPrefix(tmp, PROFILE.Tok()):
-			_, paragraph, _ = strings.Cut(match[0], "\n")
+			_, paragraph, _ = strings.Cut(raw, "\n")
 		case strings.HasPrefix(tmp, HAT.String()), strings.HasPrefix(tmp, HAT.Tok()):
-			_, paragraph, _ = strings.Cut(match[0], "\n")
+			_, paragraph, _ = strings.Cut(raw, "\n")
 		case strings.HasSuffix(tmp, "}"):
-			paragraph = strings.Replace(match[0], "}\n", "\n", 1)
+			paragraph = strings.Replace(raw, "}\n", "\n", 1)
 		default:
-			paragraph = match[0]
+			paragraph = raw
 		}
 
 		paragraphs = append(paragraphs, paragraph)

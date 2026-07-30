@@ -31,6 +31,15 @@ func chdirGitRoot() {
 }
 
 func TestTask_Apply(t *testing.T) {
+	if err := os.MkdirAll("/tmp/tests", 0o755); err != nil {
+		t.Fatalf("mkdir /tmp/tests: %v", err)
+	}
+	t.Setenv("TMPDIR", "/tmp/tests")
+	userFlagDir := paths.New(t.TempDir())
+	if err := userFlagDir.Join("user.conf").WriteFile([]byte("systemd complain\n")); err != nil {
+		t.Fatalf("write user flags: %v", err)
+	}
+
 	tests := []struct {
 		name        string
 		task        Task
@@ -49,7 +58,7 @@ func TestTask_Apply(t *testing.T) {
 			name:    "ignore",
 			task:    NewIgnore(),
 			wantErr: false,
-			want:    "dists/ignore/main.ignore",
+			want:    "dists/ignore.d/main.conf",
 		},
 		{
 			name:      "merge",
@@ -64,15 +73,9 @@ func TestTask_Apply(t *testing.T) {
 		},
 		{
 			name:    "setflags",
-			task:    NewSetFlags(),
+			task:    NewSetFlags(paths.PathList{userFlagDir}),
 			wantErr: false,
-			want:    "dists/flags/main.flags",
-		},
-		{
-			name:      "overwrite",
-			task:      NewOverwrite(false),
-			wantErr:   false,
-			wantFiles: paths.PathList{cfg.RootApparmor.Join("flatpak.apparmor.d")},
+			want:    userFlagDir.String(),
 		},
 		{
 			name:      "systemd-default",
@@ -104,6 +107,51 @@ func TestTask_Apply(t *testing.T) {
 				if file.NotExist() {
 					t.Errorf("Task.Apply() = %v, want %v", file, "exist")
 				}
+			}
+		})
+	}
+}
+
+// fakeTask is a minimal Task used to exercise the runner pipeline.
+type fakeTask struct {
+	tasks.BaseTask
+	msgs []string
+	err  error
+}
+
+func (f *fakeTask) Apply() ([]string, error) { return f.msgs, f.err }
+
+func TestConfigures_Run(t *testing.T) {
+	tests := []struct {
+		name    string
+		tasks   []Task
+		wantErr bool
+	}{
+		{
+			name: "all tasks succeed",
+			tasks: []Task{
+				&fakeTask{BaseTask: tasks.BaseTask{Keyword: "one", Msg: "task one"}, msgs: []string{"detail"}},
+				&fakeTask{BaseTask: tasks.BaseTask{Keyword: "two", Msg: "task two"}},
+			},
+			wantErr: false,
+		},
+		{
+			name: "failing task aborts the pipeline",
+			tasks: []Task{
+				&fakeTask{BaseTask: tasks.BaseTask{Keyword: "boom", Msg: "task boom"}, err: os.ErrPermission},
+			},
+			wantErr: true,
+		},
+	}
+	c := tasks.NewTaskConfig(paths.New(".build"))
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := NewRunner(c)
+			for _, task := range tt.tasks {
+				r.Add(task)
+			}
+			if err := r.Run(); (err != nil) != tt.wantErr {
+				t.Errorf("Configures.Run() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}

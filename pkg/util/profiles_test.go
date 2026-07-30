@@ -183,6 +183,12 @@ func TestSetMode(t *testing.T) {
 			want:    "profile foo /usr/bin/foo flags=(attach_disconnected,kill) {\n",
 		},
 		{
+			name:    "unconfined profile stays unconfined",
+			profile: "profile foo /usr/bin/foo flags=(unconfined) {\n",
+			mode:    "complain",
+			want:    "profile foo /usr/bin/foo flags=(unconfined) {\n",
+		},
+		{
 			name:    "unknown mode returns error",
 			profile: "profile foo /usr/bin/foo {\n",
 			mode:    "invalid",
@@ -199,6 +205,77 @@ func TestSetMode(t *testing.T) {
 			}
 			if got != tt.want {
 				t.Errorf("SetMode() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestApplyFlags(t *testing.T) {
+	tests := []struct {
+		name    string
+		profile string
+		flags   []string
+		want    string
+		wantErr bool
+	}{
+		{
+			name:    "mode flag applied via SetMode",
+			profile: "profile foo /usr/bin/foo {\n",
+			flags:   []string{"complain"},
+			want:    "profile foo /usr/bin/foo flags=(complain) {\n",
+		},
+		{
+			name:    "enforce is the default, no flags clause",
+			profile: "profile foo /usr/bin/foo {\n",
+			flags:   []string{"enforce"},
+			want:    "profile foo /usr/bin/foo {\n",
+		},
+		{
+			name:    "enforce clears a pre-existing complain",
+			profile: "profile foo /usr/bin/foo flags=(complain) {\n",
+			flags:   []string{"enforce"},
+			want:    "profile foo /usr/bin/foo {\n",
+		},
+		{
+			name:    "mode never stacks with itself",
+			profile: "profile foo /usr/bin/foo flags=(enforce) {\n",
+			flags:   []string{"complain"},
+			want:    "profile foo /usr/bin/foo flags=(complain) {\n",
+		},
+		{
+			name:    "enforce preserves an existing attach_disconnected",
+			profile: "profile foo /usr/bin/foo flags=(attach_disconnected) {\n",
+			flags:   []string{"enforce"},
+			want:    "profile foo /usr/bin/foo flags=(attach_disconnected) {\n",
+		},
+		{
+			name:    "complain keeps an existing attach_disconnected",
+			profile: "profile foo /usr/bin/foo flags=(attach_disconnected) {\n",
+			flags:   []string{"complain"},
+			want:    "profile foo /usr/bin/foo flags=(attach_disconnected,complain) {\n",
+		},
+		{
+			name:    "non-mode flag combined with mode",
+			profile: "profile foo /usr/bin/foo {\n",
+			flags:   []string{"attach_disconnected", "complain"},
+			want:    "profile foo /usr/bin/foo flags=(attach_disconnected,complain) {\n",
+		},
+		{
+			name:    "only non-mode flags",
+			profile: "profile foo /usr/bin/foo {\n",
+			flags:   []string{"attach_disconnected"},
+			want:    "profile foo /usr/bin/foo flags=(attach_disconnected) {\n",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := ApplyFlags(tt.profile, tt.flags)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ApplyFlags() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("ApplyFlags() = %v, want %v", got, tt.want)
 			}
 		})
 	}

@@ -114,23 +114,26 @@ func aaSetMode(files paths.PathList, mode string) error {
 	return util.ReloadProfiles(modified)
 }
 
-func main() {
-	flag.Usage = func() { fmt.Print(usage) }
-	flag.Parse()
-	if help || flag.NArg() < 1 {
-		flag.Usage()
-		os.Exit(0)
-	}
-
+func run() error {
 	mode, err := selectedMode()
 	if err != nil {
-		logging.Fatal("%s", err.Error())
+		return err
 	}
 	files, err := paths.PathListFromArgs(flag.Args(), aa.MagicRoot)
 	if err != nil {
-		logging.Fatal("%s", err.Error())
+		return err
 	}
-	if err = aaSetMode(files, mode); err != nil {
+	return aaSetMode(files, mode)
+}
+
+func main() {
+	flag.Usage = func() { fmt.Print(usage) }
+	flag.Parse()
+	if help {
+		flag.Usage()
+		os.Exit(0)
+	}
+	if err := run(); err != nil {
 		logging.Fatal("%s", err.Error())
 	}
 }

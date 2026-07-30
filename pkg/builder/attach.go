@@ -33,7 +33,6 @@ func NewAttach() *ReAttach {
 //   - For compatibility, non disconnected profile will have the @{att} variable set to /
 func (b ReAttach) Apply(opt *Option, profile string) (string, error) {
 	var insert string
-	var origin = "profile " + opt.Name
 
 	isInside, err := opt.File.IsInsideDir(b.RootApparmor.Join("abstractions/attached"))
 	if err != nil {
@@ -43,16 +42,24 @@ func (b ReAttach) Apply(opt *Option, profile string) (string, error) {
 		return profile, nil // Do not re-attach twice
 	}
 
+	// The header name is authoritative: for namespaced profiles the filename
+	// (opt.Name) is e.g. "bwrap" while the header is ":glycin:bwrap".
+	name := opt.Name
+	if matches := regProfileName.FindStringSubmatch(profile); matches != nil {
+		name = matches[1]
+	}
+	origin := "profile " + name
+
 	if strings.Contains(profile, "attach_disconnected") {
 		if opt.Kind == aa.ProfileKind {
-			if strings.Contains(opt.Name, ":") {
-				parts := strings.Split(opt.Name, ":")
+			if strings.Contains(name, ":") {
+				parts := strings.Split(name, ":")
 				if len(parts) != 3 {
-					return profile, fmt.Errorf("attach: invalid namespaced profile name: %s", opt.Name)
+					return profile, fmt.Errorf("attach: invalid namespaced profile name: %s", name)
 				}
 				insert = "@{att} = /att/" + parts[1] + "/\n"
 			} else {
-				insert = "@{att} = /att/" + opt.Name + "/\n"
+				insert = "@{att} = /att/" + name + "/\n"
 			}
 		}
 		replacer := strings.NewReplacer(

@@ -6,59 +6,70 @@ package configure
 
 import (
 	"fmt"
-	"regexp"
-	"strings"
 
-	"github.com/roddhjav/apparmor.d/pkg/prebuild"
+	"github.com/roddhjav/apparmor.d/pkg/paths"
 	"github.com/roddhjav/apparmor.d/pkg/tasks"
-)
-
-var (
-	regFlags         = regexp.MustCompile(`flags=\(([^)]+)\)`)
-	regProfileHeader = regexp.MustCompile(` {\n`)
+	"github.com/roddhjav/apparmor.d/pkg/util"
 )
 
 type SetFlags struct {
 	tasks.BaseTask
+	sources paths.PathList
 }
 
-// NewSetFlags creates a new SetFlags task.
-func NewSetFlags() *SetFlags {
+// NewSetFlags creates a SetFlags task that applies flags from the given
+// sources, each a flags file or a directory of *.conf files, read in order
+// so a later source overrides an earlier one. aa-install passes the
+// flags.d config dirs; prebuild can pass the dists/flags.d files of the
+// target distribution.
+func NewSetFlags(sources paths.PathList) *SetFlags {
 	return &SetFlags{
 		BaseTask: tasks.BaseTask{
 			Keyword: "setflags",
-			Msg:     "Set flags as definied in dist/flags",
+			Msg:     "Set flags as defined in:",
 		},
+		sources: sources,
 	}
 }
 
 func (p SetFlags) Apply() ([]string, error) {
-	res := []string{}
-	for _, name := range []string{"main", tasks.Distribution} {
-		for profile, flags := range prebuild.Flags.Read(name) {
-			file := p.RootApparmor.Join(profile)
-			if !file.Exist() {
+	entries := util.ReadFlagDirs(p.sources...)
+	if len(entries) == 0 {
+		return nil, nil
+	}
+	res, err := p.applyFlags(entries)
+	if err != nil {
+		return res, err
+	}
+	return append(res, existingPaths(p.sources)...), nil
+}
+
+func (p SetFlags) applyFlags(entries map[string][]string) ([]string, error) {
+	var res []string
+	for profile, flags := range entries {
+		file := p.RootApparmor.Join(profile)
+		if !file.Exist() {
+			if renamed := p.RootApparmor.Join(profile + "." + p.Pkgname); renamed.Exist() {
+				file = renamed
+			} else {
 				res = append(res, fmt.Sprintf("Profile %s not found, ignoring", profile))
 				continue
 			}
-
-			// Overwrite profile flags
-			if len(flags) > 0 {
-				flagsStr := " flags=(" + strings.Join(flags, ",") + ") {\n"
-				out, err := file.ReadFileAsString()
-				if err != nil {
-					return res, err
-				}
-
-				// Remove all flags definition, then set manifest' flags
-				out = regFlags.ReplaceAllLiteralString(out, "")
-				out = regProfileHeader.ReplaceAllLiteralString(out, flagsStr)
-				if err := file.WriteFile([]byte(out)); err != nil {
-					return res, err
-				}
-			}
 		}
-		res = append(res, prebuild.FlagDir.Join(name+".flags").String())
+		if len(flags) == 0 {
+			continue
+		}
+		out, err := file.ReadFileAsString()
+		if err != nil {
+			return res, err
+		}
+		out, err = util.ApplyFlags(out, flags)
+		if err != nil {
+			return res, err
+		}
+		if err := file.WriteFile([]byte(out)); err != nil {
+			return res, err
+		}
 	}
 	return res, nil
 }

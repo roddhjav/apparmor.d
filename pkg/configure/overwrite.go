@@ -5,64 +5,51 @@
 package configure
 
 import (
-	"fmt"
 	"os"
 
-	"github.com/roddhjav/apparmor.d/pkg/prebuild"
+	"github.com/roddhjav/apparmor.d/pkg/aa"
 	"github.com/roddhjav/apparmor.d/pkg/tasks"
 )
 
+// Overwrite replaces upstream profiles by our own at install time. For each
+// listed profile present on the install target, the upstream profile is
+// disabled with a disable/<name> link and our profile (if any) is renamed
+// <name>.<pkgname>. Profiles the target does not ship are left untouched.
 type Overwrite struct {
 	tasks.BaseTask
-	Optional bool
+	entries []string
 }
 
-// NewOverwrite creates a new Overwrite task with optional configuration.
-func NewOverwrite(optional bool) *Overwrite {
+// NewOverwrite creates an Overwrite task from the overwrite.d config entries.
+func NewOverwrite(entries []string) *Overwrite {
 	return &Overwrite{
 		BaseTask: tasks.BaseTask{
 			Keyword: "overwrite",
 			Msg:     "Overwrite dummy upstream profiles",
 		},
-		Optional: optional,
+		entries: entries,
 	}
 }
 
 func (p Overwrite) Apply() ([]string, error) {
 	res := []string{}
-	if p.ABI == 3 {
-		return res, nil
-	}
-
 	disableDir := p.RootApparmor.Join("disable")
-	if err := disableDir.Mkdir(); err != nil {
-		return res, err
-	}
-
-	ext := "." + p.Pkgname
-	path := prebuild.DistDir.Join("overwrite")
-	if !path.Exist() {
-		return res, fmt.Errorf("%s not found", path)
-	}
-	for _, name := range path.MustReadFilteredFileAsLines() {
-		origin := p.RootApparmor.Join(name)
-		dest := p.RootApparmor.Join(name + ext)
-		if !dest.Exist() && p.Optional {
+	for _, name := range p.entries {
+		if !aa.MagicRoot.Join(name).Exist() {
 			continue
 		}
-		if origin.Exist() {
-			if err := origin.Rename(dest); err != nil {
+		if origin := p.RootApparmor.Join(name); origin.Exist() {
+			if err := origin.Rename(p.RootApparmor.Join(name + "." + p.Pkgname)); err != nil {
 				return res, err
 			}
 		}
-		originRel, err := origin.RelFrom(dest)
-		if err != nil {
+		if err := disableDir.MkdirAll(); err != nil {
 			return res, err
 		}
-		if err := os.Symlink(originRel.String(), disableDir.Join(name).String()); err != nil {
+		if err := os.Symlink("../"+name, disableDir.Join(name).String()); err != nil {
 			return res, err
 		}
+		res = append(res, name)
 	}
-
 	return res, nil
 }
