@@ -9,8 +9,10 @@ include <tunables/global>
 @{exec_path} = @{bin}/etckeeper
 profile etckeeper @{exec_path} {
   include <abstractions/base>
+  include <abstractions/cgroup-limits>
   include <abstractions/consoles>
   include <abstractions/nameservice-strict>
+  include <abstractions/perl>
 
   capability dac_read_search,
   capability dac_override,
@@ -30,10 +32,12 @@ profile etckeeper @{exec_path} {
   @{bin}/git*           rix,
   @{bin}/gpg{,2}        rCx -> gpg,
   @{bin}/hostname       rix,
+  @{bin}/man            rPx,
   @{bin}/mkdir          rix,
   @{bin}/mktemp         rix,
-  @{bin}/perl           rix,
+  @{bin}/pacman          Cx -> pacman,
   @{bin}/ps             rPx,
+  @{bin}/rev            rix,
   @{bin}/rm             rix,
   @{bin}/sed            rix,
   @{bin}/sort           rix,
@@ -54,7 +58,7 @@ profile etckeeper @{exec_path} {
 
   /var/cache/etckeeper/{,**} rw,
 
-  owner @{HOME}/.gitconfig* r,
+        @{HOME}/.gitconfig* r,
   owner @{HOME}/.netrc r,
   owner @{user_config_dirs}/git/{,*} rw,
 
@@ -75,6 +79,36 @@ profile etckeeper @{exec_path} {
     owner @{PROC}/@{pid}/fd/ r,
 
     include if exists <local/etckeeper_gpg>
+  }
+
+  profile pacman {
+    include <abstractions/base>
+    include <abstractions/consoles>
+    include <abstractions/nameservice-strict>
+
+    unix (send receive) type=stream,
+
+    @{bin}/pacman  r,
+
+    @{bin}/gpg     rix,
+    @{bin}/gpgconf rix,
+    @{bin}/gpgsm   rix,
+
+    /etc/pacman.conf r,
+    /etc/pacman.d/gnupg/gpg.conf r,
+    /etc/pacman.d/gnupg/pubring.gpg r,
+    /etc/pacman.d/gnupg/trustdb.gpg rw,
+    /etc/pacman.d/*mirrorlist r,
+
+    / r,
+
+    /var/cache/etckeeper/packagelist.pre-install rw,
+    /var/lib/pacman/{,**} r,
+
+    deny network inet dgram,
+    deny network inet6 dgram,
+
+    include if exists <local/etckeeper_pacman>
   }
 
   include if exists <local/etckeeper>

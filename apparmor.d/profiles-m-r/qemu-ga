@@ -10,6 +10,8 @@ include <tunables/global>
 profile qemu-ga @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
 
+  capability sys_time,
+
   network inet stream,
   network inet6 stream,
 
@@ -17,6 +19,7 @@ profile qemu-ga @{exec_path} flags=(attach_disconnected) {
 
   @{exec_path} mr,
 
+  @{sbin}/hwclock  Px,
   @{bin}/systemctl Cx -> systemctl,
 
   /etc/qemu/qemu-ga.conf r,
@@ -43,6 +46,8 @@ profile qemu-ga @{exec_path} flags=(attach_disconnected) {
     unix type=stream addr=@@{udbus}/bus/shutdown/system,
 
     #aa:dbus talk bus=system name=org.freedesktop.login1 label="@{p_systemd_logind}"
+
+    @{sys}/kernel/kexec_loaded r,
 
     include if exists <local/qemu-ga_systemctl>
   }
