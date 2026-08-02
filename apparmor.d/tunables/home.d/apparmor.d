@@ -3,6 +3,14 @@
 # Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
+# ostree/bootc-based Fedora Atomic variants (Silverblue, Kinoite, IoT, CoreOS)
+# keep real user home directories at /var/home/<user>/, with /home a symlink
+# to /var/home - AppArmor matches the resolved path, not through the symlink,
+# so without this, @{HOME} (and everything derived from it: user_config_dirs,
+# user_cache_dirs, etc.) never matches on those variants.
+#aa:only fedora
+@{HOMEDIRS}+=/var/home/
+
 # To allow extended personalisation by the user without breaking everything.
 # All apparmor profiles should always use the variables defined here.
 
