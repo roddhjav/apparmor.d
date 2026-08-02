@@ -41,7 +41,7 @@ func (b Userspace) Apply(opt *Option, profile string) (string, error) {
 	}
 
 	f := aa.DefaultTunables()
-	if tasks.Distribution == "arch" {
+	if tasks.Distribution == "arch" || tasks.Distribution == "fedora" {
 		f.Preamble = append(f.Preamble, &aa.Variable{
 			Name: "sbin", Values: []string{"/{,usr/}{,s}bin"}, Define: true,
 		})

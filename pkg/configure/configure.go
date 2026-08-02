@@ -71,6 +71,8 @@ func (p Configure) Apply() ([]string, error) {
 			return res, err
 		}
 
+	case "fedora":
+
 	default:
 		return []string{}, fmt.Errorf("%s is not a supported distribution", tasks.Distribution)
 
