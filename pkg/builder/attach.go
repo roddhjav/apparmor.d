@@ -26,6 +26,20 @@ func NewAttach() *ReAttach {
 	}
 }
 
+// reAttachExclude lists profiles that must keep their plain attach_disconnected
+// flag without the attach_disconnected.path=@{att} extension or the attached/*
+// abstraction swap. These profiles Px-transition into small setuid PAM helpers
+// (unix_chkpwd) to authenticate the user, and the disconnected-path reattachment
+// mechanism breaks that exec transition under real kernel enforcement even though
+// it compiles and merges cleanly.
+var reAttachExclude = map[string]bool{
+	"sudo":        true,
+	"sudo-rs":     true,
+	"su":          true,
+	"su-rs":       true,
+	"unix-chkpwd": true,
+}
+
 // Apply will re-attach the disconnected path
 //   - Add the attach_disconnected.path flag on all profile with the attach_disconnected flag
 //   - Replace the base abstraction by attached/base
@@ -43,7 +57,7 @@ func (b ReAttach) Apply(opt *Option, profile string) (string, error) {
 		return profile, nil // Do not re-attach twice
 	}
 
-	if strings.Contains(profile, "attach_disconnected") {
+	if strings.Contains(profile, "attach_disconnected") && !reAttachExclude[opt.Name] {
 		if opt.Kind == aa.ProfileKind {
 			if strings.Contains(opt.Name, ":") {
 				parts := strings.Split(opt.Name, ":")
