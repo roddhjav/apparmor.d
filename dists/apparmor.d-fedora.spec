@@ -49,10 +49,8 @@ just destdir="%{buildroot}" install-prebuilt
 just destdir="%{buildroot}" install-base
 just destdir="%{buildroot}" install-tools
 
-# Do not force dbus(-broker).service under AppArmorProfile= via systemd
-# drop-in. dbus underlies PAM's session bus, kwallet registration, and
-# polkit, so a boot-time dbus confinement race cascades into hard-to-diagnose
-# auth/wallet breakage on Fedora Atomic variants.
+# Don't force dbus(-broker).service under AppArmorProfile= - causes boot-time
+# auth/wallet breakage (PAM session bus, kwallet, polkit) on Fedora Atomic.
 rm -rf %{buildroot}/usr/lib/systemd/system/*.service.d
 rm -rf %{buildroot}/usr/lib/systemd/user/*.service.d
 
