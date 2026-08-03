@@ -3,9 +3,9 @@
 # Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
+#aa:only fedora
 # ostree/bootc Fedora Atomic variants keep homes at /var/home/<user>, /home a
 # symlink; AppArmor matches the resolved path, not through the symlink.
-#aa:only fedora
 @{HOMEDIRS}+=/var/home/
 
 # To allow extended personalisation by the user without breaking everything.
