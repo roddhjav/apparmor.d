@@ -1,0 +1,83 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Łukasz Kozak <lakis.kozak@gmail.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+@{exec_path}  = @{lib}/kf6/kpackagehandlers/knshandler
+@{exec_path} += @{lib}/@{multiarch}/libexec/kf6/kpackagehandlers/knshandler
+profile knshandler @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/desktop-base>
+  include <abstractions/kde-base>
+  include <abstractions/mime>
+  include <abstractions/nameservice-strict>
+  include <abstractions/qt>
+  include <abstractions/ssl_certs>
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  signal receive set=kill peer=plasma-discover,
+  signal receive set=kill peer=systemsettings,
+
+  @{exec_path} mrix,
+
+  @{bin}/sddmthemeinstaller Px,
+
+  /usr/share/knsrcfiles/{,*} r,
+  /usr/share/plasma/look-and-feel/** r,
+
+  @{etc_ro}/xdg/ r,
+  /etc/sysconfig/proxy r,
+
+  / r,
+  @{HOMEDIRS}/ r,
+
+  owner @{HOME}/ r,
+  owner @{HOME}/.icons/{,**} rw,
+
+  owner @{user_cache_dirs}/kpackage-knshandler/ rw,
+  owner @{user_cache_dirs}/kpackage-knshandler/** rwlk -> @{user_cache_dirs}/kpackage-knshandler/**,
+
+  owner @{user_config_dirs}/ r,
+  owner @{user_config_dirs}/kioslaverc r,
+  owner @{user_config_dirs}/libaccounts-glib/ r,
+  owner @{user_config_dirs}/libaccounts-glib/accounts.db* rw,
+  owner @{user_config_dirs}/libaccounts-glib/accounts.db{,-shm} k,
+
+  owner @{user_share_dirs}/aurorae/ w,
+  owner @{user_share_dirs}/aurorae/themes/{,**} rw,
+  owner @{user_share_dirs}/color-schemes/ rw,
+  owner @{user_share_dirs}/color-schemes/** rwl -> @{user_share_dirs}/color-schemes/**,
+  owner @{user_share_dirs}/icons/{,**} rw,
+  owner @{user_share_dirs}/knewstuff3/ rw,
+  owner @{user_share_dirs}/knewstuff3/*.knsregistry rw,
+  owner @{user_share_dirs}/plasma/*/ rw,
+  owner @{user_share_dirs}/plasma/desktoptheme/** rwl -> @{user_share_dirs}/plasma/desktoptheme/**,
+  owner @{user_share_dirs}/plasma/look-and-feel/** rwl -> @{user_share_dirs}/plasma/look-and-feel/**,
+  owner @{user_share_dirs}/plasma/plasmoids/** rwl -> @{user_share_dirs}/plasma/plasmoids/**,
+  owner @{user_share_dirs}/plasma/wallpapers/** rwl -> @{user_share_dirs}/plasma/wallpapers/**,
+  owner @{user_share_dirs}/wallpapers/ rw,
+  owner @{user_share_dirs}/wallpapers/** rwl -> @{user_share_dirs}/wallpapers/**,
+
+        @{tmp}/ r,
+  owner @{tmp}/#@{int} rw,
+  owner @{tmp}/kpackage-knshandler-@{rand6}/{,**} rw,
+  owner @{tmp}/*.@{archive_ext} w, # special case for sddm themes
+  owner @{tmp}/@{rand6}-*.@{archive_ext} rwl -> @{tmp}/#@{int},
+  owner @{tmp}/@{rand6}-*.plasmoid rwl -> @{tmp}/#@{int},
+
+  owner @{PROC}/@{pid}/mountinfo r,
+
+  /dev/tty r,
+
+  include if exists <local/knshandler>
+}
+
+# vim:syntax=apparmor

@@ -1,0 +1,60 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Łukasz Kozak <lakis.kozak@gmail.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/krunner-plugininstaller
+profile krunner-plugininstaller @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/audio-client>
+  include <abstractions/graphics>
+  include <abstractions/kde-strict>
+  include <abstractions/nameservice-strict>
+
+  ptrace read peer=kded,
+  ptrace read peer=plasma-discover,
+
+  @{exec_path} mr,
+
+  @{open_path} Cx -> open,
+
+  @{bin}/rpm PUx, #aa:only opensuse fedora
+
+  /var/lib/flatpak/exports/share/icons/*/index.theme r,
+
+  owner @{user_share_dirs}/baloo/index r,
+  owner @{user_share_dirs}/dbus-1/services/org.kde.*.service w,
+  owner @{user_share_dirs}/krunner/{,dbusplugins/} w,
+  owner @{user_share_dirs}/krunner/dbusplugins/#@{int} rw,
+  owner @{user_share_dirs}/krunner/dbusplugins/*.desktop rwl -> @{user_share_dirs}/krunner/dbusplugins/#@{int},
+  owner @{user_share_dirs}/krunner-sources/{,**} r,
+
+  /dev/tty r,
+
+  profile open {
+    include <abstractions/base>
+    include <abstractions/app/open>
+
+    @{bin}/basename rix,
+    @{bin}/cat      rix,
+    @{bin}/printenv rix,
+    @{bin}/sed      rix,
+    @{bin}/tr       rix,
+
+    owner @{user_share_dirs}/krunner-sources/** r,
+
+    @{run}/mount/utab r,
+
+    owner @{PROC}/@{pid}/mountinfo r,
+
+    include if exists <local/krunner-plugininstaller_open>
+  }
+
+  include if exists <local/krunner-plugininstaller>
+}
+
+# vim:syntax=apparmor
+
