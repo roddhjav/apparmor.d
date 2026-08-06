@@ -76,4 +76,13 @@ fi
 %doc %{_mandir}/man1/aa-*.1.gz
 %doc %{_mandir}/man8/aa-*.8.gz
 
+%dir %{_unitdir}/dbus.service.d
+%{_unitdir}/dbus.service.d/apparmor.conf
+%dir %{_unitdir}/dbus-broker.service.d
+%{_unitdir}/dbus-broker.service.d/apparmor.conf
+%dir %{_userunitdir}/dbus.service.d
+%{_userunitdir}/dbus.service.d/apparmor.conf
+%dir %{_userunitdir}/dbus-broker.service.d
+%{_userunitdir}/dbus-broker.service.d/apparmor.conf
+
 %changelog
