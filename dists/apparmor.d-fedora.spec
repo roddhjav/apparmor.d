@@ -49,11 +49,6 @@ just destdir="%{buildroot}" install-prebuilt
 just destdir="%{buildroot}" install-base
 just destdir="%{buildroot}" install-tools
 
-# Don't force dbus(-broker).service under AppArmorProfile= - causes boot-time
-# auth/wallet breakage (PAM session bus, kwallet, polkit) on Fedora Atomic.
-rm -rf %{buildroot}/usr/lib/systemd/system/*.service.d
-rm -rf %{buildroot}/usr/lib/systemd/user/*.service.d
-
 %posttrans
 apparmor_parser --purge-cache || :
 systemctl daemon-reload || :
