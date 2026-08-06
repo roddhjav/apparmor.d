@@ -34,7 +34,7 @@ profile calibre @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/qt5-settings-write>
   include <abstractions/qt5-shader-cache>
   include <abstractions/ssl_certs>
-  include <abstractions/thumbnails-cache-read>
+  include <abstractions/thumbnails-cache-write>
   include <abstractions/trash-strict>
   include <abstractions/user-download-strict>
 
@@ -53,6 +53,7 @@ profile calibre @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   # unix (send, receive) type=stream peer=(addr=none, label=xorg),
   unix (bind, listen)  type=stream addr="@*-calibre-gui.socket",
   unix (bind)          type=stream addr="@calibre-*",
+  unix type=seqpacket  peer=(label=calibre//webengine),
 
   @{exec_path} mrix,
 
@@ -61,18 +62,22 @@ profile calibre @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   @{bin}/env               r,
   @{bin}/file              rix,
   @{bin}/jpegtran          rix,
+  @{bin}/kdialog           rix, # used on KDE, if available
   @{bin}/net               rix,
+  @{bin}/speech-dispatcher Px,
+  @{bin}/testparm          rix,
   @{bin}/uname             rix,
+  @{bin}/zenity            mrix, # used on Gnome, if available
   @{sbin}/ldconfig{,.real} rix,
 
   #aa:exec kioworker
 
-  @{lib}/{,@{multiarch}/}qt{5,6}/{,libexec/}QtWebEngineProcess rPx -> calibre//&calibre//webengine,
-  /opt/calibre/libexec/QtWebEngineProcess                      rPx -> calibre//&calibre//webengine,
+  @{lib}/{,@{multiarch}/}qt{5,6}/{,libexec/}QtWebEngineProcess mrPx -> calibre//&calibre//webengine,
+  /opt/calibre/libexec/QtWebEngineProcess                      mrPx -> calibre//&calibre//webengine,
 
-  @{bin_dirs}/pdftoppm        Cx -> poppler,
-  @{bin_dirs}/pdfinfo         Cx -> poppler,
-  @{bin_dirs}/pdftohtml       Cx -> poppler,
+  @{bin_dirs}/pdftoppm        mrCx -> poppler,
+  @{bin_dirs}/pdfinfo         mrCx -> poppler,
+  @{bin_dirs}/pdftohtml       mrCx -> poppler,
 
   @{open_path}            rPx -> child-open,
 
@@ -87,12 +92,21 @@ profile calibre @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   # required for access to resources normally in /usr/share/calibre
   /opt/calibre/{,**} r,
 
+  /etc/exports r,
   /etc/fstab r,
   /etc/inputrc r,
   /etc/krb5.conf r,
+  /etc/krb5.conf.d/ r,
   /etc/magic r,
+  /etc/samba/smb.conf r,
+  /etc/xdg/dolphinrc r,
+  @{etc_ro}/krb5.conf r,
+  @{etc_ro}/vdpau_wrapper.cfg r,
 
   owner /var/cache/samba/ w,
+
+  @{lib}/ r,
+  /usr/local/lib{,64}/ r,
 
   @{MOUNTDIRS} r,
   owner @{MOUNTS}/ r,
@@ -100,9 +114,10 @@ profile calibre @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
         /home/ r,
   owner @{HOME}/ r,
-  owner @{HOME}/*.{pdf,@{image_ext}} rw, # for printing pdfs and images in the viewer
-  owner "@{HOME}/Calibre Library/{,**}" rw,
+  owner @{HOME}/*.{pdf,@{image_ext}} w,              # for printing pdfs and images in the viewer
+  owner "@{HOME}/Calibre Library/{,**}" rwl,
   owner "@{HOME}/Calibre Library/**.{db,sqlite}" k,
+  owner @{HOME}/*{,/} r,                             # ToDo: no idea how to silence uneccesery access by using deny, left this way
 
   owner @{user_books_dirs}/{,**} rwl,
   owner @{user_books_dirs}/Calibre/** rwk,
@@ -121,9 +136,11 @@ profile calibre @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{user_config_dirs}/calibre/ rw,
   owner @{user_config_dirs}/calibre/** rwk,
   owner @{user_config_dirs}/calibrerc.lock        rwk,
+  owner @{user_config_dirs}/ibus/bus/@{hex32}-unix-wayland-0 r,
   owner @{user_config_dirs}/kdeglobals*           rw,
   owner link @{user_config_dirs}/kdeglobals.@{rand6} -> @{user_config_dirs}/#@{int},
   owner @{user_config_dirs}/kdeglobals.lock k,
+  owner @{user_config_dirs}/kdialogrc.lock rwk,
   owner @{user_config_dirs}/kservicemenurc r,
   owner @{user_config_dirs}/kioslaverc r,
   owner link @{user_config_dirs}/QtProject.conf.@{rand6} -> @{user_config_dirs}/#@{int},
@@ -131,8 +148,11 @@ profile calibre @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{user_share_dirs}/calibre-ebook.com/ rw,
   owner @{user_share_dirs}/calibre-ebook.com/** rwk,
   owner @{user_state_dirs}/calibrestaterc* rw,
-  owner link @{user_state_dirs}/calibrestaterc.@{rand6} -> @{user_state_dirs}/#@{int},
+  owner link @{user_state_dirs}/calibrestaterc{,.@{rand6}} -> @{user_state_dirs}/#@{int},
   owner @{user_state_dirs}/calibrestaterc.lock k,
+  owner @{user_state_dirs}/kdialogstaterc* rw,
+  owner link @{user_state_dirs}/kdialogstaterc.@{rand6} -> @{user_state_dirs}/#@{int},
+  owner @{user_state_dirs}/kdialogstaterc.lock k,
   owner @{user_share_dirs}/user-places.xbel r,
 
   owner @{tmp}/@{word8} rwl,
@@ -141,11 +161,17 @@ profile calibre @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{tmp}/calibre-@{word8}/{,**} rw,
   owner @{tmp}/calibre-@{rand6}/{,**} rw,
 
-        @{run}/udev/data/b8:@{int} r,  # for /dev/sd*
+        @{run}/udev/data/b8:@{int} r,      # for /dev/sd*
+        @{run}/udev/data/b254:@{int} r,    # for /dev/zram*4
 
+        @{run}/mount/utab r,
         @{run}/user/@{uid}/gvfs/ r,
   owner @{run}/user/@{uid}/calibre@{rand6}.@{int}.kioworker.socket w,
+  owner @{run}/user/@{uid}/kdialog@{rand6}.@{int}.kioworker.socket w,
   owner link @{run}/user/@{uid}/calibre@{rand6}.@{int}.kioworker.socket -> @{run}/user/@{uid}/#@{int},
+  owner link @{run}/user/@{uid}/kdialog@{rand6}.@{int}.kioworker.socket -> @{run}/user/@{uid}/#@{int},
+  owner @{run}/user/@{uid}/gvfsd/socket-@{word8} rw,                       # needed at least on ubuntu
+  owner @{run}/user/@{uid}/speech-dispatcher/speechd.sock rw,              # needed at least on ubuntu
 
   owner /dev/shm/#@{int} rw,
   owner /dev/shm/sem.@{rand6} rw,
@@ -153,7 +179,7 @@ profile calibre @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner link /dev/shm/sem.mp-@{word8} -> /dev/shm/sem.@{rand6},
 
         @{sys}/class/accel/ r,
-        @{sys}/devices/{,**/} r, # all of it is required for calibre's DeviceManager to work
+        @{sys}/devices/{,**/} r,            # all of it is required for calibre's DeviceManager to work
 
         @{PROC}/ r,
         @{PROC}/@{pids}/stat r,
@@ -179,8 +205,9 @@ profile calibre @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner /dev/tty@{u8} rw,
 
   # Silencer
-  deny owner @{HOME}/.bash* r,
+  #deny owner @{HOME}/.bash* r,          # ToDo: extending it to all hidden files in user's directory causes sometimes problems with viewer operations
   deny owner /usr/share/qt6/resources/locales/ w,
+  deny owner @{lib}/**/__pycache__/{,**} w,
 
   profile poppler {
     include <abstractions/base>
@@ -206,16 +233,20 @@ profile calibre @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   # only to be used stacked
   profile webengine {
     include <abstractions/base>
-    include <abstractions/gstreamer>  # needed on Gnome (to directly access glycin)
+    include <abstractions/gstreamer>        # needed on Gnome (to directly access glycin)
     include <abstractions/common/chromium>
 
     signal receive set=term peer=calibre,
     signal (send receive) set=kill peer=calibre//&calibre//webengine,
 
-    @{lib}/{,@{multiarch}/}qt{5,6}/{,libexec/}QtWebEngineProcess r,
-    /opt/calibre/libexec/QtWebEngineProcess                      r,
+    unix type=seqpacket peer=(label=calibre),
+    unix type=stream    peer=(label=calibre),
+
+    @{lib}/{,@{multiarch}/}qt{5,6}/{,libexec/}QtWebEngineProcess mr,
+    /opt/calibre/libexec/QtWebEngineProcess                      mr,
 
     /usr/share/fonts/** r,
+    /usr/share/icu/** r,
     /usr/share/qt6/** r,
 
     /opt/calibre/{lib,resources,translations}/** r,
