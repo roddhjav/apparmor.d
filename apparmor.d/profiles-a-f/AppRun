@@ -1,0 +1,42 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022-2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = /tmp/.mount*@{rand6}/AppRun
+profile AppRun @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/desktop>
+  include <abstractions/graphics>
+  include <abstractions/nameservice-strict>
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  @{exec_path} r,
+
+  @{sh_path}       r,
+  @{bin}/dirname   rix,
+  @{sbin}/ldconfig rix,
+  @{bin}/{,e}grep  rix,
+  @{bin}/readlink  rix,
+
+  /tmp/.mount_*@{rand6}/usr/bin/** ix, # Can we get the name of the executable to transition to existing profiles?
+  /tmp/.mount_*@{rand6}/freetype_probe rix,
+
+  /dev/tty rw,
+
+  /tmp/.mount_*@{rand6}/{,**} r,
+  /tmp/.mount_*@{rand6}/usr/lib/**.so* m,
+  /tmp/.mount_*@{rand6}/usr/local/**.so* m,
+
+  include if exists <local/AppRun>
+}
+
+# vim:syntax=apparmor
