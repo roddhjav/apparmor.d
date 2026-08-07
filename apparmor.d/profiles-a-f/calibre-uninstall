@@ -1,0 +1,66 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Łukasz Kozak <lakis.kozak@gmail.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# An uninstaller shared with the official binary release
+# https://calibre-ebook.com/download_linux (The third point in the notes)
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+@{name} = calibre{,db} calibre-{customize,debug,parallel,server,smtp}
+@{name} += ebook-{convert,device,edit,meta,polish,viewer}
+@{name} += fetch-ebook-metadata lrf2lrs lrfviewer lrs2lrf markdown-calibre web2disk
+
+@{exec_path} = @{bin}/calibre-uninstall
+profile calibre-uninstall @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/icons>
+  include <abstractions/mime>
+  include <abstractions/nameservice-strict>
+  include <abstractions/python>
+  include <abstractions/common/xdg>
+
+  capability dac_read_search,
+  #aa:only opensuse
+  capability dac_override, # required on OpenSUSE
+
+  @{exec_path} mr,
+  @{sh_path} r,
+
+  @{python_path}                   rix,
+  @{bin}/id                        rPx,
+  @{bin}/gtk{,4}-update-icon-cache Px,
+  @{bin}/update-desktop-database   Px,
+  @{bin}/update-mime-database      Px,
+  @{bin}/xdg-desktop-menu          rix,
+  @{bin}/xdg-icon-resource         rix,
+  @{bin}/xdg-mime                  rix,
+
+  # binaries and symlinks to be deleted
+  @{bin}/@{name} w,
+  @{bin}/calibre-uninstall w,
+
+  /usr/share/applications/calibre-*.desktop w,
+  /usr/share/bash-completion/completions/@{name} w,
+  /usr/share/icons/hicolor/.xdg-icon-resource-dummy w,
+  /usr/share/icons/hicolor/**.png w,
+  /usr/share/metainfo/calibre-*.metainfo.xml w,
+  /usr/share/zsh/site-functions/_calibre w,
+  /usr/share/zsh/vendor-completions/_calibre w,
+
+  /opt/calibre/{,**}    rw,
+
+  @{tmp}/@{word8} rw,
+  @{tmp}/mime-hack.@{word8}/ rw,
+  @{tmp}/mime-hack.@{word8}/calibre-mimetypes.xml rw,
+
+  # Silencer
+  deny @{HOME}/{,**} rw,
+
+  include if exists <local/calibre-uninstall>
+}
+
+# vim:syntax=apparmor
