@@ -45,7 +45,9 @@ profile kde-powerdevil @{exec_path} flags=(attach_disconnected mediate_deleted) 
   @{sh_path}          rix,
   @{bin}/find         rix,
   @{bin}/{,e}grep     rix,
+  @{bin}/getfacl      rix,
   @{bin}/kcminit      rPx,
+  @{bin}/lsof         Cx -> lsof,
   @{bin}/sed          rix,
   @{bin}/uname        rPx,
   @{bin}/xargs        rix,
@@ -79,6 +81,7 @@ profile kde-powerdevil @{exec_path} flags=(attach_disconnected mediate_deleted) 
   @{sys}/class/drm/ r,
   @{sys}/class/i2c-dev/ r,
   @{sys}/class/usbmisc/ r,
+  @{sys}/class/wakeup/ r,
   @{sys}/devices/ r,
   @{sys}/devices/@{pci}/*_backlight/{,max_,actual_}brightness r,
   @{sys}/devices/@{pci}/card@{int}/*/dpms r,
@@ -94,9 +97,7 @@ profile kde-powerdevil @{exec_path} flags=(attach_disconnected mediate_deleted) 
   @{sys}/devices/@{pci}/i2c-*/**/dev r,
   @{sys}/devices/**/ r,
   @{sys}/devices/**/uevent r,
-  @{sys}/devices/i2c-*/name r,
-  @{sys}/devices/platform/**/i2c-*/**/name r,
-  @{sys}/devices/platform/*/i2c-*/name r,
+  @{sys}/devices/**wakeup/wakeup@{u8}/{name,wakeup_count} r,
 
   @{PROC}/@{pid}/fd/ r,
   @{PROC}/@{pid}/mountinfo r,
@@ -105,6 +106,30 @@ profile kde-powerdevil @{exec_path} flags=(attach_disconnected mediate_deleted) 
   /dev/i2c-@{int} rwk,
   /dev/rfkill r,
   /dev/tty rw,
+
+  # related to usage of ddcutil
+  profile lsof {
+    include <abstractions/base>
+
+    capability sys_ptrace,
+
+    ptrace read,
+
+    @{bin}/lsof r,
+
+    / r,
+
+          @{PROC}/ r,
+          @{PROC}/locks r,
+          @{PROC}/@{pids}/maps r,
+          @{PROC}/@{pid}/net/* r,
+          @{PROC}/@{pid}/stat r,
+    owner @{PROC}/@{pid}/fd/ r,
+    owner @{PROC}/@{pid}/fdinfo/@{int} r,
+    owner @{PROC}/@{pid}/mounts r,
+
+    include if exists <local/kde-powerdevil_lsof>
+  }
 
   include if exists <local/kde-powerdevil>
 }
