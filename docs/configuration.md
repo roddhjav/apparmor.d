@@ -156,6 +156,7 @@ Please ensure that all personal directories you are using are well-defined XDG d
       | VM | `@{user_vm_dirs}` | `@{HOME}/@{XDG_VM_DIR} @{MOUNTS}/@{XDG_VM_DIR}` |
       | VM Shares | `@{user_vmshare_dirs}` | `@{HOME}/@{XDG_VMSHARE_DIR} @{MOUNTS}/@{XDG_VMSHARE_DIR}` |
       | Disk images | `@{user_img_dirs}` | `@{HOME}/@{XDG_IMG_DIR} @{MOUNTS}/@{XDG_IMG_DIR}` |
+      | Git paths outside of projects | `@{user_git_dirs}` | |
 
     </figure>
 
