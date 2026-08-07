@@ -66,11 +66,7 @@ build {
     ]
   }
 
-  # Wait for cloud-init to finish. Some distros (Fedora, to switch onto
-  # kernel-p03) reboot as part of their user-data's own power_state: right
-  # as boot-finished appears, killing this SSH session - expect_disconnect
-  # lets that through instead of failing the build; distros that don't
-  # reboot here just finish this step normally.
+  # Wait for cloud-init to finish.
   provisioner "shell" {
     execute_command   = "echo '${var.password}' | sudo -S sh -c '{{ .Vars }} {{ .Path }}'"
     expect_disconnect = true
