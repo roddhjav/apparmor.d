@@ -1,0 +1,65 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/qutebrowser
+profile qutebrowser @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+  include <abstractions/fonts>
+  include <abstractions/python>
+  include <abstractions/qt6>
+  include <abstractions/desktop>
+  include <abstractions/ssl_certs>
+  include <abstractions/vulkan>
+  include <abstractions/opengl>
+  include <abstractions/user-download-strict>
+
+  userns,
+  capability sys_admin,
+  capability sys_chroot,
+  capability sys_ptrace,
+
+  network inet stream,
+  network inet dgram,
+  network inet6 stream,
+  network inet6 dgram,
+  network netlink raw,
+
+  signal (send receive) set=term peer=qutebrowser,
+  ptrace (read readby) peer=qutebrowser,
+
+  unix (bind listen) type=stream addr=@{run}/user/@{uid}/qutebrowser/ipc-*,
+
+  @{exec_path} ixr,
+  @{lib}/qt6/QtWebEngineProcess ix,
+
+  owner @{user_config_dirs}/qutebrowser/ w,
+  owner @{user_config_dirs}/qutebrowser/** rw,
+  owner @{user_config_dirs}/chromium/WidevineCdm/** mr,
+  owner @{user_config_dirs}/user-dirs.dirs r,
+  owner link @{user_config_dirs}/qutebrowser/bookmarks/urls -> @{user_config_dirs}/qutebrowser/bookmarks/#{int8},
+  owner link @{user_config_dirs}/qutebrowser/quickmarks -> @{user_config_dirs}/qutebrowser/#{int8},
+
+  owner @{user_cache_dirs}/qutebrowser/ w,
+  owner @{user_cache_dirs}/qutebrowser/** rw,
+
+  owner @{user_share_dirs}/qutebrowser/ w,
+  owner @{user_share_dirs}/qutebrowser/** rwk,
+  owner link @{user_share_dirs}/qutebrowser/sessions/_autosave.yml -> @{user_share_dirs}/qutebrowser/sessions/#*,
+
+  owner @{HOME}/.pki/nssdb/** r,
+
+  owner /tmp/.org.chromium.Chromium.* rw,
+  owner /dev/shm/.org.chromium.Chromium.* rw,
+  owner @{run}/user/@{uid}/qutebrowser/ w,
+  owner @{run}/user/@{uid}/qutebrowser/ipc-* w,
+
+  include if exists <local/qutebrowser>
+}
+
+# vim:syntax=apparmor
