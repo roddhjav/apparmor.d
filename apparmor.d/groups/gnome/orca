@@ -1,0 +1,52 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Łukasz Kozak <lakis.kozak@gmail.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/orca
+profile orca @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/cgroup-limits>
+  include <abstractions/consoles>
+  include <abstractions/dconf-write>
+  include <abstractions/gnome-strict>
+  include <abstractions/graphics>
+  include <abstractions/gstreamer>
+  include <abstractions/nameservice-strict>
+  include <abstractions/python>
+
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  @{sh_path}              rix,
+  @{bin}/dconf             Px,
+  @{bin}/pgrep             Cx -> pgrep,
+  @{bin}/speech-dispatcher Px,
+  @{bin}/xkbcomp           Px,
+
+  /usr/share/liblouis/tables/{,*} r,
+  /usr/share/mathcat/Rules/** r,
+
+  owner @{user_share_dirs}/orca/{,**} rw,
+
+  owner @{run}/user/@{uid}/speech-dispatcher/speechd.sock rw,
+
+  owner @{PROC}/@{pid}/mounts r,
+
+  profile pgrep {
+    include <abstractions/base>
+    include <abstractions/app/pgrep>
+
+    include if exists <local/orca_pgrep>
+  }
+
+  include if exists <local/orca>
+}
+
+# vim:syntax=apparmor
