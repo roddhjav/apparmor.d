@@ -40,6 +40,10 @@ main() {
 		rpm -i $SRC/*.rpm || true
 		;;
 
+	fedora)
+		dnf5 -y install --nogpgcheck $SRC/*.rpm || true
+		;;
+
 	esac
 }
 
