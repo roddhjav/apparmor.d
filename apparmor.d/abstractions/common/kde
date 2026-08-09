@@ -1,0 +1,39 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Łukasz Kozak <lakis.kozak@gmail.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Minimal set of rules for KDE based UI application.
+
+# !!! warning
+#
+#     In the future, this abstraction could be generalized and renamed to `gui`
+#
+
+  abi <abi/5.0>,
+
+  include <abstractions/graphics>
+  include <abstractions/kde-strict>
+  include <abstractions/qt-shader-cache>
+
+  /usr/share/@{profile_name}{,5,6}/{,**} r,
+  /usr/share/color-schemes/{,**} r,
+  /usr/share/kxmlgui{,5,6}/@{profile_name}/{,*} r,
+
+  owner @{user_cache_dirs}/@{profile_name}{,5,6}/ rw,
+  owner @{user_cache_dirs}/@{profile_name}{,5,6}/** rwlk,
+  owner @{user_cache_dirs}/kcrash-metadata/@{profile_name}{,5,6}.@{hex32}.@{int4}.ini w,
+
+  owner @{user_config_dirs}/@{profile_name}{,5,6}rc@{atomic} rwlk,
+  owner @{user_config_dirs}/{kde.org,KDE}/#@{int} rwk,
+  owner @{user_config_dirs}/{kde.org,KDE}/UserFeedback.org.kde.@{profile_name}{,5,6}.conf@{atomic} rwlk,
+
+  owner @{user_share_dirs}/@{profile_name}{,5,6}/ rw,
+  owner @{user_share_dirs}/@{profile_name}{,5,6}/** rwlk,
+  owner @{user_share_dirs}/color-schemes/{,**} r,
+  owner @{user_share_dirs}/kxmlgui{,5,6}/@{profile_name}/{,**} rw,
+
+  owner @{user_state_dirs}/@{profile_name}{,5,6}staterc@{atomic} rwlk,
+
+  include if exists <abstractions/common/kde.d>
+
+# vim:syntax=apparmor
