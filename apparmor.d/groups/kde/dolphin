@@ -12,6 +12,7 @@ include <tunables/global>
 profile dolphin @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/base>
   include <abstractions/app-launcher-user>
+  include <abstractions/audio-client>
   include <abstractions/bus/system/org.freedesktop.UDisks2>
   include <abstractions/common/kde>
   include <abstractions/consoles>
@@ -22,6 +23,7 @@ profile dolphin @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/kde-export-settings>
   include <abstractions/nameservice-strict>
   include <abstractions/recent-documents-write>
+  include <abstractions/ssl_certs>
   include <abstractions/thumbnails-cache-write>
 
   network netlink raw,
@@ -45,12 +47,13 @@ profile dolphin @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   priority=1 @{ldd_path} rix,
 
   @{bin}/lsb_release    rPx,
-  @{lib}/{,@{multiarch}/}utempter/utempter rPx,
   @{thunderbird_path}   rPx,
 
   #aa:exec kioworker
+  #aa:exec utempter
 
   /usr/share/kf5/kmoretools/{,**} r,
+  /usr/share/kf6/purpose/{,*} r,
   /usr/share/kio/{,**} r,
   /usr/share/konsole/{,**} r,
   /usr/share/kservices{5,6}/{,**} r,
@@ -87,23 +90,22 @@ profile dolphin @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   deny /tmp/.* rw,
   deny /tmp/.*/{,**} rw,
 
-  owner @{user_cache_dirs}/ksplash/qmlcache/*.qmlc rwl -> @{user_cache_dirs}/dolphin/qmlcache/#@{int},
-  owner @{user_cache_dirs}/ksplash/qmlcache/*.qmlc.@{rand6} rwl -> @{user_cache_dirs}/dolphin/qmlcache/#@{int},
+  owner @{user_cache_dirs}/ksplash/qmlcache/* rwl -> @{user_cache_dirs}/dolphin/qmlcache/#@{int},
 
-  owner @{user_config_dirs}/kdeglobals.@{rand6} l -> @{user_config_dirs}/#@{int},
-  owner @{user_config_dirs}/kdeglobals.lock k,
-  owner @{user_config_dirs}/kiorc l -> @{user_config_dirs}/#@{int},
-  owner @{user_config_dirs}/kiorc.lock k,
-  owner @{user_config_dirs}/kservicemenurc l -> @{user_config_dirs}/#@{int},
-  owner @{user_config_dirs}/kservicemenurc.lock k,
-  owner @{user_config_dirs}/ktrashrc l -> @{user_config_dirs}/#@{int},
-  owner @{user_config_dirs}/ktrashrc.lock k,
+  owner @{user_config_dirs}/baloofileinformationrc@{atomic} lk -> @{user_config_dirs}/#@{int},
+  owner @{user_config_dirs}/kiorc@{atomic} lk -> @{user_config_dirs}/#@{int},
+  owner @{user_config_dirs}/kservicemenurc@{atomic} lk -> @{user_config_dirs}/#@{int},
+  owner @{user_config_dirs}/ktrashrc@{atomic} lk -> @{user_config_dirs}/#@{int},
   owner @{user_config_dirs}/knfsshare@{atomic} rwk,
+  owner @{user_config_dirs}/libaccounts-glib/accounts.db* k,
   owner @{user_config_dirs}/session/#@{int} rwk,
   owner @{user_config_dirs}/session/dolphin_dolphin_dolphin.@{rand6} rwl -> @{user_config_dirs}/session/#@{int},
 
-  owner @{user_state_dirs}/UserFeedback.org.kde.dolphin.lock k,
-  owner @{user_state_dirs}/UserFeedback.org.kde.dolphin.@{rand6} l -> @{user_state_dirs}/#@{int},
+  owner @{user_share_dirs}/baloo/index-lock k,
+  owner @{user_share_dirs}/kactivitymanagerd/resources/database{,-shm} k,
+  owner link @{user_share_dirs}/user-places.xbel* -> @{user_share_dirs}/#@{int},
+
+  owner @{user_state_dirs}/UserFeedback.org.kde.dolphin@{atomic} lk -> @{user_state_dirs}/#@{int},
 
   owner @{tmp}/#@{int} rwk,
   owner @{tmp}/dolphin.@{rand6} rwl -> @{tmp}/#@{int},
@@ -130,15 +132,13 @@ profile dolphin @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/app-org.kde.dolphin-@{int}.scope/tab(@{int}).scope/ w,
   owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/app-org.kde.dolphin-@{int}.scope/tab(@{int}).scope/cgroup.procs w,
 
-        @{PROC}/@{pid}/task/@{tid}/children r,
+        @{PROC}/@{pids}/task/@{tid}/children r,
   owner @{PROC}/@{pid}/cgroup r,
   owner @{PROC}/@{pid}/cmdline r,
   owner @{PROC}/@{pid}/fdinfo/@{int} r,
   owner @{PROC}/@{pid}/mountinfo r,
   owner @{PROC}/@{pid}/mounts r,
   owner @{PROC}/@{pid}/stat r,
-
-  @{sys}/devices/virtual/block/dm-@{int}/uevent r,
 
   /dev/ptmx rw,
 

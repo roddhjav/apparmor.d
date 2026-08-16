@@ -42,6 +42,9 @@ profile konsole @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   @{bin}/nvtop                Px,
   @{bin}/vim                  Ux,
 
+  #aa:exec kioworker
+
+  /usr/share/desktop-directories/kf5-*.directory r,
   /usr/share/kf6/{,**} r,
 
   /etc/xdg/konsolerc r,
@@ -54,7 +57,7 @@ profile konsole @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{user_config_dirs}/kbookmarkrc r,
   owner @{user_config_dirs}/kio_httprc r,
   owner @{user_config_dirs}/kioslaverc r,
-  owner @{user_config_dirs}/konsole.notifyrc r,
+  owner @{user_config_dirs}/konsole.notifyrc@{atomic} rwlk,
   owner @{user_config_dirs}/konsolesshconfig@{atomic} rwlk,
   owner @{user_config_dirs}/kservicemenurc r,
   owner @{user_config_dirs}/kuriikwsfilterrc r,
@@ -65,9 +68,14 @@ profile konsole @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{tmp}/#@{int} rw,
   owner @{tmp}/konsole.@{rand6} rw,
 
+        @{run}/mount/utab r,
+
+  owner @{run}/user/@{uid}/#@{int} rw,
+  owner @{run}/user/@{uid}/konsole@{rand6}.@{int}.kioworker.socket rwl -> @{run}/user/@{uid}/#@{int},
+
   owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/app-org.kde.konsole-@{int}.scope/** rw,
 
-        @{PROC}/@{pid}/task/@{tid}/children r,
+        @{PROC}/@{pids}/task/@{tid}/children r,
         @{PROC}/@{pids}/cmdline r,
         @{PROC}/@{pids}/stat r,
         @{PROC}/@{pids}/status r,
