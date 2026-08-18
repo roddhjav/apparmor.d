@@ -34,7 +34,7 @@ just destdir="%{buildroot}" install-base
 just destdir="%{buildroot}" install-tools
 
 %posttrans
-apparmor_parser --purge-cache
+apparmor_parser --purge-cache || :
 %restart_on_update apparmor
 
 %files

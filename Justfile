@@ -272,7 +272,7 @@ build-dpkg: (_ensure_pkgdest)
 
 # Build the package on OpenSUSE
 [group('packages')]
-build-rpm: (_ensure_pkgdest)
+build-rpm dist="opensuse": (_ensure_pkgdest)
 	#!/usr/bin/env bash
 	set -eu -o pipefail
 	RPMBUILD_ROOT=$(mktemp -d /tmp/{{pkgname}}.XXXXXX)
@@ -282,7 +282,7 @@ build-rpm: (_ensure_pkgdest)
 	readonly RPMBUILD_ROOT ARCH VERSION
 
 	mkdir -p "$RPMBUILD_ROOT"/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS/tmp}
-	cp -p "dists/{{pkgname}}.spec" "$RPMBUILD_ROOT/SPECS"
+	cp -p "dists/{{pkgname}}-{{dist}}.spec" "$RPMBUILD_ROOT/SPECS/{{pkgname}}.spec"
 	tar -czf "$RPMBUILD_ROOT/SOURCES/{{pkgname}}-$VERSION.tar.gz" --transform "s,^,{{pkgname}}-$VERSION/," ./*
 
 	cd "$RPMBUILD_ROOT"
@@ -419,11 +419,11 @@ create osinfo flavor:
 		--vcpus {{vcpus}} \
 		--ram {{ram}} \
 		--machine q35 \
-		{{ if osinfo == "archlinux" { "" } else { "--boot uefi" } }} \
+		{{ if osinfo == "archlinux" { "" } else if osinfo == "fedora44" { "" } else { "--boot uefi" } }} \
 		--memorybacking source.type=memfd,access.mode=shared \
 		--disk path={{vm}}/{{prefix}}{{osinfo}}-{{flavor}}.qcow2,format=qcow2,bus=virtio \
 		--filesystem "`pwd`,0a31bc478ef8e2461a4b1cc10a24cc4",accessmode=passthrough,driver.type=virtiofs \
-		--os-variant "{{ if osinfo == "opensuse" { "opensusetumbleweed" } else { osinfo } }}" \
+		--os-variant "{{ if osinfo == "opensuse" { "opensusetumbleweed" } else if osinfo == "fedora44" { "fedora42" } else { osinfo } }}" \
 		--graphics spice \
 		--audio id=1,type=spice \
 		--sound model=ich9 \
@@ -640,7 +640,7 @@ commit:
 	cat debian/changelog >> debian/changelog.tmp
 	mv debian/changelog.tmp debian/changelog
 	sed -i "s/^pkgver=.*/pkgver=$version/" PKGBUILD
-	sed -i "s/^Version:.*/Version:        $version/" "dists/{{pkgname}}.spec"
+	sed -i "s/^Version:.*/Version:        $version/" "dists/{{pkgname}}-opensuse.spec"
 	# Stage only the version-bump line, rebuilt from HEAD, so any other
 	# working-tree changes in these files never leak into the release commit.
 	stage_bump() {
@@ -650,7 +650,7 @@ commit:
 		git update-index --cacheinfo "$mode,$blob,$file"
 	}
 	stage_bump PKGBUILD "s/^pkgver=.*/pkgver=$version/"
-	stage_bump "dists/{{pkgname}}.spec" "s/^Version:.*/Version:        $version/"
+	stage_bump "dists/{{pkgname}}-opensuse.spec" "s/^Version:.*/Version:        $version/"
 	git add debian/changelog
 	git commit -S -m "Release {{pkgname}} v$version"
 	git tag -a "v$version" -m "{{pkgname}} v$version" --local-user={{gpgkey}}
