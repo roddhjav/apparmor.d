@@ -7,6 +7,7 @@
 #  just package ubuntu 24.04
 #  just package archlinux
 #  just package opensuse
+#  just package fedora 44
 
 set -eu -o pipefail
 
