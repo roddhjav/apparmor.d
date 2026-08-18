@@ -1,0 +1,35 @@
+#cloud-config
+
+packages: *core-packages
+
+runcmd:
+  # AppArmor userspace tools from Terra (no official Fedora package)
+  - dnf5 -y --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' install terra-release
+  - dnf5 -y install apparmor-libs apparmor-parser apparmor-utils apparmor-profiles python3-LibAppArmor python3-apparmor
+  # Rakuos systemd is built with AppArmor support, Fedora's stock one is not
+  - dnf5 -y config-manager addrepo --from-repofile=https://repo.rakuos.org/rakuos.repo
+  - dnf5 -y --repo rakuos distro-sync "systemd*"
+
+  # kernel-p03: stock Fedora kernel has no AppArmor LSM built in
+  - dnf5 -y copr enable catpieleaf/kernel-p03
+  - dnf5 -y install kernel-p03
+
+  # Add AppArmor to the kernel command line (BLS, not a regenerated grub.cfg)
+  - grubby --update-kernel=ALL --args="lsm=landlock,lockdown,yama,integrity,apparmor,bpf apparmor.debug=1"
+
+  # Enable core services
+  - systemctl enable auditd
+  - systemctl enable rngd
+  - systemctl enable chronyd
+
+# Reboot into kernel-p03 so later apparmor_parser/aa-log checks run
+# against a kernel that actually has the AppArmor LSM
+power_state:
+  mode: reboot
+  delay: 1
+  condition: true
+
+write_files:
+  - *shared-directory          # Setup shared directory
+  - *systemd-netword           # Network configuration for server
+  - *disable-printk-ratelimit  # Disable printk rate limiting

@@ -84,7 +84,7 @@ impersonalize() {
 
 	# Truncate the machine-id
 	truncate --size=0 /etc/machine-id
-	truncate --size=0 /var/lib/dbus/machine-id
+	[[ -e /var/lib/dbus/machine-id ]] && truncate --size=0 /var/lib/dbus/machine-id
 
 	remove=(
 		# Remove history & unique ids

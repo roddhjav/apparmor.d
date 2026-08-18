@@ -117,6 +117,26 @@ build_in_docker_rpm() {
 	mv "$VOLUME/$PKGNAME/$OUTPUT/$PKGNAME"*.rpm "$OUTPUT"
 }
 
+build_in_docker_fedora() {
+	local img dist="$1" release="$2"
+	local img="$PREFIX$dist"
+
+	if _exist "$img"; then
+		if ! _is_running "$img"; then
+			_start "$img"
+		fi
+	else
+		docker pull "$BASEIMAGE/$dist:$release"
+		docker run -tid --name "$img" --volume "$VOLUME:$BUILDIR" \
+			"$BASEIMAGE/$dist:$release"
+		docker exec "$img" dnf5 install -y rpm-build golang just systemd-rpm-macros curl jq
+	fi
+
+	docker exec --workdir="$BUILDIR/$PKGNAME" "$img" \
+		sh -c "cp dists/$PKGNAME-fedora.spec dists/$PKGNAME.spec && just build-rpm"
+	mv "$VOLUME/$PKGNAME/$OUTPUT/$PKGNAME"*.rpm "$OUTPUT"
+}
+
 main() {
 	case "$DISTRIBUTION" in
 	archlinux)
@@ -132,6 +152,11 @@ main() {
 	opensuse)
 		sync
 		build_in_docker_rpm "$DISTRIBUTION"
+		;;
+
+	fedora)
+		sync
+		build_in_docker_fedora "$DISTRIBUTION" "44"
 		;;
 
 	*) ;;
