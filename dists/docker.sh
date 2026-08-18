@@ -118,16 +118,17 @@ build_in_docker_rpm() {
 }
 
 build_in_docker_fedora() {
-	local img="$PREFIX""fedora"
+	local img dist="$1" release="$2"
+	local img="$PREFIX$dist"
 
 	if _exist "$img"; then
 		if ! _is_running "$img"; then
 			_start "$img"
 		fi
 	else
-		docker pull registry.fedoraproject.org/fedora:latest
+		docker pull "$BASEIMAGE/$dist:$release"
 		docker run -tid --name "$img" --volume "$VOLUME:$BUILDIR" \
-			registry.fedoraproject.org/fedora:latest
+			"$BASEIMAGE/$dist:$release"
 		docker exec "$img" dnf5 install -y rpm-build golang just systemd-rpm-macros curl jq
 	fi
 
@@ -155,7 +156,7 @@ main() {
 
 	fedora)
 		sync
-		build_in_docker_fedora
+		build_in_docker_fedora "$DISTRIBUTION" "44"
 		;;
 
 	*) ;;

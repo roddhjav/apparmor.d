@@ -35,13 +35,9 @@ main() {
 		dpkg -i $SRC/*-"${suffix}"*.deb || true
 		;;
 
-	opensuse*)
+	opensuse* | fedora)
 		mv "/home/$SUDO_USER/.bash_aliases" "/home/$SUDO_USER/.alias"
 		rpm -i $SRC/*.rpm || true
-		;;
-
-	fedora)
-		dnf5 -y install --nogpgcheck $SRC/*.rpm || true
 		;;
 
 	esac
