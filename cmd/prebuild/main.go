@@ -80,7 +80,7 @@ func main() {
 
 	r.Configures.
 		// Set distribution specificities
-		Add(configure.NewConfigure()).
+		Add(NewConfigure()).
 
 		// Set systemd unit drop in files for dbus profiles
 		Add(configure.NewSystemdDefault())

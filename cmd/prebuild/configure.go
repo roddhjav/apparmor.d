@@ -2,7 +2,7 @@
 // Copyright (C) 2021-2026 Alexandre Pujol <alexandre@pujol.io>
 // SPDX-License-Identifier: GPL-2.0-only
 
-package configure
+package main
 
 import (
 	"fmt"

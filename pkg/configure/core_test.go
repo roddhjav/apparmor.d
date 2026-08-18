@@ -67,11 +67,6 @@ func TestTask_Apply(t *testing.T) {
 			wantFiles: paths.PathList{cfg.RootApparmor.Join("aa-log")},
 		},
 		{
-			name:    "configure",
-			task:    NewConfigure(),
-			wantErr: false,
-		},
-		{
 			name:    "setflags",
 			task:    NewSetFlags(paths.PathList{userFlagDir}),
 			wantErr: false,
