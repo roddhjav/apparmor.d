@@ -48,15 +48,9 @@ just destdir="%{buildroot}" install-prebuilt
 just destdir="%{buildroot}" install-base
 just destdir="%{buildroot}" install-tools
 
-%transfiletriggerin -- /usr /opt
-if command -v aa-install >/dev/null 2>&1; then
-    aa-install --install || true
-fi
-
-%transfiletriggerpostun -- /usr /opt
-if command -v aa-install >/dev/null 2>&1; then
-    aa-install --install || true
-fi
+%posttrans
+apparmor_parser --purge-cache || :
+%restart_on_update apparmor
 
 %files
 %license LICENSE

@@ -1,0 +1,85 @@
+#cloud-config
+
+# Core packages for Fedora
+core-packages: &core-packages
+  - auditd
+  - moby-engine
+  - git
+  - golang
+  - htop
+  - just
+  - qemu-guest-agent
+  - rng-tools
+  - rpm-build
+  - rpmdevtools
+  - rsync
+  - spice-vdagent
+  - vim
+  - wget
+
+gnome-packages: &gnome-packages
+  # Core packages for Fedora
+  - auditd
+  - moby-engine
+  - git
+  - golang
+  - htop
+  - just
+  - qemu-guest-agent
+  - rng-tools
+  - rpm-build
+  - rpmdevtools
+  - rsync
+  - spice-vdagent
+  - vim
+  - wget
+
+  # Desktop packages for Fedora
+  - firefox
+  - terminator
+
+  # Install Graphical Interface
+  - "@workstation-product-environment"
+
+kde-packages: &kde-packages
+  # Core packages for Fedora
+  - auditd
+  - moby-engine
+  - git
+  - golang
+  - htop
+  - just
+  - qemu-guest-agent
+  - rng-tools
+  - rpm-build
+  - rpmdevtools
+  - rsync
+  - spice-vdagent
+  - vim
+  - wget
+
+  # Desktop packages for Fedora
+  - firefox
+  - terminator
+
+  # Install Graphical Interface
+  - "@kde-desktop-environment"
+
+# NOTE: none of this can go in a shared runcmd anchor here, since cloud-init's
+# packages: config module runs before runcmd's final stage, and a YAML
+# sequence-alias can't be spliced into another sequence without becoming an
+# invalid nested list - so each *-user-data.yml below repeats it. It:
+#  - installs the AppArmor userspace stack (apparmor-libs, apparmor-parser,
+#    apparmor-utils, apparmor-profiles, python3-LibAppArmor, python3-apparmor)
+#    from Terra (repos.fyralabs.com) - Fedora ships no official apparmor
+#    package at all (SELinux is the default LSM);
+#  - swaps in Rakuos's systemd (systemd, systemd-udev, systemd-libs) - it's
+#    built with AppArmor support, Fedora's stock systemd is not;
+#  - installs kernel-p03 from catpieleaf/kernel-p03 (COPR) - the stock
+#    Fedora kernel has no AppArmor LSM built in at all, this custom kernel
+#    does;
+#  - sets the AppArmor kernel command line via grubby (applies to all
+#    installed kernels, including kernel-p03);
+#  - reboots into kernel-p03 at the end (power_state:, see each
+#    *-user-data.yml) so later apparmor_parser/aa-log checks run against a
+#    kernel that actually has the LSM.

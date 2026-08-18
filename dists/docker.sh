@@ -104,21 +104,29 @@ build_in_docker_dpkg() {
 }
 
 build_in_docker_rpm() {
-	local dist="$1"
-	local img="$PREFIX$dist"
+	local dist="$1" release="${2:-}"
+	local img="$PREFIX$dist$release"
+	local tag="${release:-latest}"
 
 	if _exist "$img"; then
 		if ! _is_running "$img"; then
 			_start "$img"
 		fi
 	else
-		docker pull "$BASEIMAGE/$dist"
+		docker pull "$BASEIMAGE/$dist:$tag"
 		docker run -tid --name "$img" --volume "$VOLUME:$BUILDIR" \
-			"$BASEIMAGE/$dist"
-		docker exec "$img" sudo zypper install -y distribution-release golang-packaging apparmor-profiles
+			"$BASEIMAGE/$dist:$tag"
+		case "$dist" in
+		opensuse)
+			docker exec "$img" sudo zypper install -y distribution-release golang-packaging apparmor-profiles
+			;;
+		fedora)
+			docker exec "$img" sudo dnf -y install golang go-rpm-macros
+			;;
+		esac
 	fi
 
-	docker exec --workdir="$BUILDIR/$PKGNAME" "$img" just build-rpm
+	docker exec --workdir="$BUILDIR/$PKGNAME" "$img" just build-rpm "$dist"
 	mv "$VOLUME/$PKGNAME/$OUTPUT/$PKGNAME"*.rpm "$OUTPUT"
 }
 
@@ -134,9 +142,9 @@ main() {
 		build_in_docker_dpkg "$DISTRIBUTION" "$RELEASE"
 		;;
 
-	opensuse)
+	opensuse | fedora)
 		sync
-		build_in_docker_rpm "$DISTRIBUTION"
+		build_in_docker_rpm "$DISTRIBUTION" "$RELEASE"
 		;;
 
 	*) ;;

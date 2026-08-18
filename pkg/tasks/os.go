@@ -38,6 +38,7 @@ var (
 		"apt":    {"debian", "ubuntu"},
 		"pacman": {"arch"},
 		"zypper": {"opensuse"},
+		"dnf":    {"fedora"},
 	}
 )
 

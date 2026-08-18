@@ -66,13 +66,20 @@ build {
     ]
   }
 
+  # Wait for cloud-init to finish.
+  provisioner "shell" {
+    execute_command   = "echo '${var.password}' | sudo -S sh -c '{{ .Vars }} {{ .Path }}'"
+    expect_disconnect = true
+    inline = [
+      "while [ ! -f /var/lib/cloud/instance/boot-finished ]; do echo 'Waiting for Cloud-Init...'; sleep 20; done",
+    ]
+  }
+
   # Full system provisioning
   provisioner "shell" {
     execute_command = "echo '${var.password}' | sudo -S sh -c '{{ .Vars }} {{ .Path }}'"
+    pause_before    = "30s"
     inline = [
-      # Wait for cloud-init to finish
-      "while [ ! -f /var/lib/cloud/instance/boot-finished ]; do echo 'Waiting for Cloud-Init...'; sleep 20; done",
-
       # Ensure cloud-init is successful
       "cloud-init status || cloud-init collect-logs --tarfile /root/cloud-init.tar.gz",
 
