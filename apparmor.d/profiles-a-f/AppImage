@@ -1,0 +1,54 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2022-2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/4.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{HOME}/**.{a,A}pp{i,I}mage
+profile AppImage @{exec_path} {
+  include <abstractions/base>
+
+  mount fstype=fuse.*.{a,A}pp{i,I}mage options=(ro nodev nosuid),
+
+  @{exec_path} r,
+
+  @{bin}/fusermount Cx -> fusermount,
+  /tmp/.mount*@{rand6}/AppRun rPx -> AppRun,
+
+  /dev/fuse rw,
+
+  /tmp/.mount_*@{rand6}/ rw,
+
+  owner @{PROC}/@{pid}/cgroup r,
+
+  profile fusermount {
+    include <abstractions/base>
+    include <abstractions/nameservice-strict>
+
+    capability dac_read_search,
+    capability dac_override,
+    capability sys_admin,
+
+    mount fstype=fuse options=(ro nodev nosuid),
+    mount fstype=fuse.*.{a,A}pp{i,I}mage options=(ro nodev nosuid),
+    umount /tmp/.mount_*@{rand6}/,
+
+    @{bin}/fusermount r,
+
+    /dev/fuse rw,
+
+    /etc/fuse.conf r,
+
+    @{PROC}/@{pid}/mounts r,
+
+    /tmp/.mount_*@{rand6}/ rw,
+
+    include if exists <local/AppImage_fusermount>
+    }
+
+  include if exists <local/AppImage>
+}
+
+# vim:syntax=apparmor
