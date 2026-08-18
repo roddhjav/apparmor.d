@@ -31,16 +31,26 @@ const (
 
 var Indent = ""
 
+// Quiet suppresses the informational output (print, bullet, step, success).
+// Warnings and errors are always printed.
+var Quiet = false
+
+func print(msg string) int {
+	n, _ := fmt.Fprint(os.Stdout, msg)
+	return n
+}
+
 // Print prints a formatted message. Arguments are handled in the manner of fmt.Print.
 func Print(msg string, a ...interface{}) int {
-	n, _ := fmt.Fprintf(os.Stdout, msg, a...)
-	return n
+	if Quiet {
+		return 0
+	}
+	return print(fmt.Sprintf(msg, a...))
 }
 
 // Println prints a formatted message. Arguments are handled in the manner of fmt.Println.
 func Println(msg string) int {
-	n, _ := fmt.Fprintf(os.Stdout, "%s\n", msg)
-	return n
+	return Print("%s\n", msg)
 }
 
 // Bulletf returns a formatted bullet point string
@@ -80,12 +90,12 @@ func Warningf(msg string, a ...interface{}) string {
 
 // Warning prints a formatted warning message to stdout
 func Warning(msg string, a ...interface{}) int {
-	return Print("%s", Warningf(msg, a...))
+	return print(Warningf(msg, a...))
 }
 
 // Error returns a formatted error message
 func Error(msg string, a ...interface{}) int {
-	return Print("%s", fmt.Sprintf("%s%s%s\n", Indent, errorText, fmt.Sprintf(msg, a...)))
+	return print(fmt.Sprintf("%s%s%s\n", Indent, errorText, fmt.Sprintf(msg, a...)))
 }
 
 // Fatalf returns a formatted error message

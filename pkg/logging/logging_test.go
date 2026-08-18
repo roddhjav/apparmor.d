@@ -25,6 +25,33 @@ func TestPrintln(t *testing.T) {
 	}
 }
 
+func TestQuiet(t *testing.T) {
+	Quiet = true
+	t.Cleanup(func() { Quiet = false })
+
+	if got := Print("%s", "message"); got != 0 {
+		t.Errorf("Print() = %v, want %v", got, 0)
+	}
+	if got := Println("message"); got != 0 {
+		t.Errorf("Println() = %v, want %v", got, 0)
+	}
+	if got := Bullet("%s", "message"); got != 0 {
+		t.Errorf("Bullet() = %v, want %v", got, 0)
+	}
+	if got := Step("%s", "message"); got != 0 {
+		t.Errorf("Step() = %v, want %v", got, 0)
+	}
+	if got := Success("%s", "message"); got != 0 {
+		t.Errorf("Success() = %v, want %v", got, 0)
+	}
+	if got := Warning("%s", "message"); got == 0 {
+		t.Errorf("Warning() = %v, want > %v", got, 0)
+	}
+	if got := Error("%s", "message"); got == 0 {
+		t.Errorf("Error() = %v, want > %v", got, 0)
+	}
+}
+
 func TestBulletf(t *testing.T) {
 	msg := "Bullet message"
 	want := "\033[1m ⋅ \033[0mBullet message\n"

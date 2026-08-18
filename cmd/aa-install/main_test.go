@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/roddhjav/apparmor.d/pkg/aa"
+	"github.com/roddhjav/apparmor.d/pkg/logging"
 	"github.com/roddhjav/apparmor.d/pkg/paths"
 	"github.com/roddhjav/apparmor.d/pkg/state/detector"
 )
@@ -85,6 +86,7 @@ func setupRunEnv(t *testing.T) *runEnv {
 		install, all, complain, enforce = false, false, false, false
 		uninstall, status, list = false, false, false
 		config, magic, src = nilConfig, nilMagic, nilSrc
+		verbose, logging.Quiet = false, false
 		aa.MagicRoot = oldMagic
 		reloadAppArmor = oldReload
 		detector.Root, detector.Run = oldRoot, oldRun

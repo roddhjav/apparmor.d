@@ -39,6 +39,7 @@ Options:
     -c, --complain     Set complain flag on all the profiles.
     -e, --enforce      Set enforce flag on all the profiles.
     -u, --uninstall    Remove all profiles installed.
+    -v, --verbose      Print the build details when installing.
         --no-reload    Do not reload the profiles after modifying them.
         --config DIR   Select an alternate configuration directory (default: /etc/apparmor/).
         --magic DIR    Select an alternate apparmor.d directory (default: /etc/apparmor.d).
@@ -70,6 +71,7 @@ var (
 	uninstall bool
 	status    bool
 	list      bool
+	verbose   bool
 	noReload  bool
 	config    string
 	magic     string
@@ -96,6 +98,8 @@ func init() {
 	flag.BoolVar(&status, "status", false, "Show the installation status summary.")
 	flag.BoolVar(&list, "l", false, "List installed profile paths from the manifest.")
 	flag.BoolVar(&list, "list", false, "List installed profile paths from the manifest.")
+	flag.BoolVar(&verbose, "v", false, "Print the build details when installing.")
+	flag.BoolVar(&verbose, "verbose", false, "Print the build details when installing.")
 	flag.BoolVar(&noReload, "no-reload", false, "Do not reload the profiles after modifying them.")
 	flag.StringVar(&config, "config", nilConfig, "Select an alternate configuration directory (default: /etc/apparmor/).")
 	flag.StringVar(&magic, "magic", nilMagic, "Select an alternate apparmor.d directory (default: /etc/apparmor.d).")
@@ -268,6 +272,7 @@ func run() error {
 		return fmt.Errorf("--complain and --enforce are mutually exclusive")
 	}
 
+	logging.Quiet = !verbose
 	configDir := paths.New("/etc/apparmor/")
 	if config != nilConfig {
 		configDir = paths.New(config)
@@ -287,6 +292,7 @@ func run() error {
 	var changed bool
 	switch {
 	case list:
+		logging.Quiet = false
 		return aaList(configDir, aa.MagicRoot)
 
 	case install:
@@ -296,6 +302,7 @@ func run() error {
 		changed, err = aaUninstall(configDir, aa.MagicRoot)
 
 	default:
+		logging.Quiet = false
 		return aaStatus(configDir, aa.MagicRoot)
 
 	}
