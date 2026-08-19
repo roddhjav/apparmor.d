@@ -155,21 +155,16 @@ func Configure(r *runtime.Runners) *runtime.Runners {
 			r.Builders.Add(builder.NewAPPARMOR40())
 		}
 
-		// Re-attach disconnected path
 		if tasks.Distribution == "ubuntu" && r.Version >= 4.1 {
-			// Ignored on ubuntu 25.04+ due to a memory leak that fully prevent
-			// profiles compilation with re-attached paths.
-			// See https://bugs.launchpad.net/ubuntu/+source/linux/+bug/2098730
-
 			// Use stacked-dbus builder to resolve dbus rules
 			r.Builders.Add(builder.NewStackedDbus())
 
-		} else {
-			if !r.DownStream {
-				r.Configures.Add(configure.NewAttach())
-			}
-			r.Builders.Add(builder.NewAttach())
 		}
+
+		if !r.DownStream {
+			r.Configures.Add(configure.NewAttach())
+		}
+		r.Builders.Add(builder.NewAttach())
 
 	case 5:
 		if tasks.Distribution == "ubuntu" {
