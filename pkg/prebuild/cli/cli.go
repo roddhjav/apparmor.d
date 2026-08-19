@@ -172,22 +172,15 @@ func Configure(r *runtime.Runners) *runtime.Runners {
 		}
 
 	case 5:
-		// Re-attach disconnected path
 		if tasks.Distribution == "ubuntu" {
-			// Ignored on ubuntu 25.04+ due to a memory leak that fully prevent
-			// profiles compilation with re-attached paths.
-			// See https://bugs.launchpad.net/ubuntu/+source/linux/+bug/2098730
-
 			// Use stacked-dbus builder to resolve dbus rules
 			r.Builders.Add(builder.NewStackedDbus())
-
-		} else {
-			if !r.DownStream {
-				r.Configures.Add(configure.NewAttach())
-			}
-			r.Builders.Add(builder.NewAttach())
-
 		}
+
+		if !r.DownStream {
+			r.Configures.Add(configure.NewAttach())
+		}
+		r.Builders.Add(builder.NewAttach())
 
 	default:
 		logging.Fatal("Invalid ABI version: %d", r.ABI)
