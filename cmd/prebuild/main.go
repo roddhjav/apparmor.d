@@ -36,7 +36,6 @@ func configInit() *tasks.TaskConfig {
 		case "resolute":
 			c.ABI = 4
 			c.Version = 5.0
-
 		default:
 			panic("Unsupported Ubuntu version: " + tasks.Release["VERSION_CODENAME"])
 		}
@@ -46,6 +45,9 @@ func configInit() *tasks.TaskConfig {
 		case "trixie":
 			c.ABI = 4
 			c.Version = 4.1
+		case "forky":
+			c.ABI = 5
+			c.Version = 5.0
 		default:
 			panic("Unsupported Debian version: " + tasks.Release["VERSION_CODENAME"])
 		}
