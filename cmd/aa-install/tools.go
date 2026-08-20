@@ -140,7 +140,12 @@ func installProfiles(buildDir *paths.Path, targetDir *paths.Path, stateDir *path
 		// target belongs to the admin or another package. Leave it alone
 		// and keep it out of the manifest so uninstall does not remove it.
 		if existed && !tracked {
-			skipped = append(skipped, relStr)
+			// An existing disable/<name> link, whatever it points to, means
+			// the profile is already disabled: our link is redundant, not in
+			// conflict. Keep theirs and stay quiet about it.
+			if !strings.HasPrefix(relStr, "disable/") {
+				skipped = append(skipped, relStr)
+			}
 			continue
 		}
 		newManifest[relStr] = ident
