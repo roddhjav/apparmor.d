@@ -35,11 +35,12 @@ func TestOverwrite_Apply(t *testing.T) {
 			wantNoFiles: []string{"hostname"},
 		},
 		{
-			name:        "upstream absent keeps profile name and skips link",
+			name:        "upstream absent still renames profile but skips link",
 			files:       map[string]string{"hostname": "profile hostname {}\n"},
 			entries:     []string{"hostname"},
-			wantFiles:   []string{"hostname"},
-			wantNoFiles: []string{"hostname.apparmor.d", "disable/hostname"},
+			want:        []string{"hostname"},
+			wantFiles:   []string{"hostname.apparmor.d"},
+			wantNoFiles: []string{"hostname", "disable/hostname"},
 		},
 		{
 			name:      "upstream without our profile only gets the link",

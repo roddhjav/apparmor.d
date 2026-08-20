@@ -179,16 +179,17 @@ func installProfiles(buildDir *paths.Path, targetDir *paths.Path, stateDir *path
 		}
 	}
 
-	removed := 0
+	var removed []string
 	for old := range previous {
 		target := targetDir.Join(old)
 		if _, err := target.Lstat(); err == nil {
 			if err := target.RemoveAll(); err != nil {
 				return false, err
 			}
-			removed++
+			removed = append(removed, old)
 		}
 	}
+	slices.Sort(removed)
 
 	if err := writeManifest(stateDir, newManifest); err != nil {
 		return false, err
@@ -198,8 +199,13 @@ func installProfiles(buildDir *paths.Path, targetDir *paths.Path, stateDir *path
 	logging.Success("Installed %d profiles to %s", len(newManifest), targetDir)
 	logging.Indent = "   "
 	logging.Bullet("%d added, %d updated, %d unchanged", added, updated, unchanged)
-	if removed > 0 {
-		logging.Bullet("Removed %d stale files", removed)
+	if len(removed) > 0 {
+		logging.Bullet("Removed %d stale files:", len(removed))
+		logging.Indent = "      "
+		for _, rel := range removed {
+			logging.Bullet("%s", rel)
+		}
+		logging.Indent = "   "
 	}
 	logging.Indent = ""
 	if len(skipped) > 0 {
@@ -211,5 +217,5 @@ func installProfiles(buildDir *paths.Path, targetDir *paths.Path, stateDir *path
 		}
 		logging.Indent = ""
 	}
-	return added+updated+removed > 0, nil
+	return added+updated+len(removed) > 0, nil
 }

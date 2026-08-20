@@ -11,10 +11,11 @@ import (
 	"github.com/roddhjav/apparmor.d/pkg/tasks"
 )
 
-// Overwrite replaces upstream profiles by our own at install time. For each
-// listed profile present on the install target, the upstream profile is
-// disabled with a disable/<name> link and our profile (if any) is renamed
-// <name>.<pkgname>. Profiles the target does not ship are left untouched.
+// Overwrite replaces upstream profiles by our own at install time. A listed
+// name is a path reserved by an upstream project, which distributions ship or
+// not: our profile (if any) is always renamed <name>.<pkgname> so it never
+// conflicts, and the upstream profile is disabled with a disable/<name> link
+// when the target ships it.
 type Overwrite struct {
 	tasks.BaseTask
 	entries []string
@@ -35,21 +36,32 @@ func (p Overwrite) Apply() ([]string, error) {
 	res := []string{}
 	disableDir := p.RootApparmor.Join("disable")
 	for _, name := range p.entries {
-		if !aa.MagicRoot.Join(name).Exist() {
-			continue
-		}
+		done := false
+
+		// The <name> path is reserved for the upstream profile, whether or
+		// not the distribution ships it today. Always install ours under
+		// <name>.<pkgname> so it never conflicts with the upstream file.
 		if origin := p.RootApparmor.Join(name); origin.Exist() {
 			if err := origin.Rename(p.RootApparmor.Join(name + "." + p.Pkgname)); err != nil {
 				return res, err
 			}
+			done = true
 		}
-		if err := disableDir.MkdirAll(); err != nil {
-			return res, err
+
+		// Nothing to disable on the distributions that do not ship it.
+		if aa.MagicRoot.Join(name).Exist() {
+			if err := disableDir.MkdirAll(); err != nil {
+				return res, err
+			}
+			if err := os.Symlink("../"+name, disableDir.Join(name).String()); err != nil {
+				return res, err
+			}
+			done = true
 		}
-		if err := os.Symlink("../"+name, disableDir.Join(name).String()); err != nil {
-			return res, err
+
+		if done {
+			res = append(res, name)
 		}
-		res = append(res, name)
 	}
 	return res, nil
 }
