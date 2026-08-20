@@ -22,13 +22,14 @@ func setVendorConfigDir(t *testing.T) *paths.Path {
 
 func TestLoadConfig(t *testing.T) {
 	tests := []struct {
-		name        string
-		vendorModes string // content of the vendor modes file, "" means not created
-		modes       string // content of the config modes file, "" means not created
-		flags       func() // set the -c/-e option globals
-		want        string
-		wantInclude string // expected include mode, "" means default
-		wantErr     bool
+		name         string
+		vendorModes  string // content of the vendor modes file, "" means not created
+		modes        string // content of the config modes file, "" means not created
+		flags        func() // set the -c/-e option globals
+		want         string
+		wantInclude  string // expected include mode, "" means default
+		wantNoReload bool   // reload is expected unless set
+		wantErr      bool
 	}{
 		{
 			name:  "default mode",
@@ -85,6 +86,26 @@ func TestLoadConfig(t *testing.T) {
 			flags:   func() {},
 			wantErr: true,
 		},
+		{
+			name:         "reload disabled from config",
+			modes:        "reload no\n",
+			flags:        func() {},
+			want:         "complain",
+			wantNoReload: true,
+		},
+		{
+			name:         "no-reload overrides config",
+			modes:        "reload yes\n",
+			flags:        func() { noReload = true },
+			want:         "complain",
+			wantNoReload: true,
+		},
+		{
+			name:    "invalid reload mode",
+			modes:   "reload maybe\n",
+			flags:   func() {},
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -96,7 +117,7 @@ func TestLoadConfig(t *testing.T) {
 			if tt.modes != "" {
 				writeFile(t, configDir.Join("modes"), tt.modes)
 			}
-			t.Cleanup(func() { complain, enforce = false, false })
+			t.Cleanup(func() { complain, enforce, noReload = false, false, false })
 			tt.flags()
 
 			cfg, err := loadConfig(configDir)
@@ -115,6 +136,9 @@ func TestLoadConfig(t *testing.T) {
 			}
 			if cfg.include != wantInclude {
 				t.Errorf("loadConfig() include = %q, want %q", cfg.include, wantInclude)
+			}
+			if cfg.reload == tt.wantNoReload {
+				t.Errorf("loadConfig() reload = %v, want %v", cfg.reload, !tt.wantNoReload)
 			}
 			wantFlagDirs := paths.PathList{vendorDir.Join("flags.d"), configDir.Join("flags.d")}
 			for i, dir := range wantFlagDirs {

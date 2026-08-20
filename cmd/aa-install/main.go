@@ -309,7 +309,7 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	if changed && !noReload {
+	if changed && cfg.reload {
 		return reloadAppArmor()
 	}
 	return nil
