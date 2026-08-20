@@ -238,6 +238,7 @@ func TestInstall(t *testing.T) {
 		name         string
 		build        map[string]string // build dir files for the first install
 		buildLinks   map[string]string // build dir symlinks: relative path -> link target
+		target       map[string]string // target dir files present before the first install
 		twice        bool              // run install a second time after mutate
 		mutate       func(t *testing.T, buildDir, targetDir *paths.Path)
 		wantChanged  bool              // changed result of the last install run
@@ -253,6 +254,38 @@ func TestInstall(t *testing.T) {
 			wantFiles:   map[string]string{"profile.a": "content-a", "sub/profile.b": "content-b"},
 			wantManifest: []string{
 				"profile.a", "sub/profile.b",
+			},
+		},
+		{
+			name: "skips untracked target file",
+			build: map[string]string{
+				"foreign": "ours",
+			},
+			target: map[string]string{
+				"foreign": "theirs",
+			},
+			wantChanged: false,
+			wantFiles: map[string]string{
+				"foreign": "theirs",
+			},
+			wantManifest: []string{},
+		},
+		{
+			name: "installs alongside untracked target file",
+			build: map[string]string{
+				"foreign": "ours",
+				"mine":    "m",
+			},
+			target: map[string]string{
+				"foreign": "theirs",
+			},
+			wantChanged: true,
+			wantFiles: map[string]string{
+				"foreign": "theirs",
+				"mine":    "m",
+			},
+			wantManifest: []string{
+				"mine",
 			},
 		},
 		{
@@ -335,6 +368,7 @@ func TestInstall(t *testing.T) {
 			stateDir := paths.New(t.TempDir())
 			writeFiles(t, buildDir, tt.build)
 			writeLinks(t, buildDir, tt.buildLinks)
+			writeFiles(t, targetDir, tt.target)
 
 			changed, err := installProfiles(buildDir, targetDir, stateDir)
 			if err != nil {

@@ -113,6 +113,7 @@ func installProfiles(buildDir *paths.Path, targetDir *paths.Path, stateDir *path
 
 	newManifest := make(map[string]string, len(files))
 	var added, updated, unchanged int
+	var skipped []string
 	for _, file := range files {
 		rel, err := file.RelFrom(buildDir)
 		if err != nil {
@@ -124,8 +125,8 @@ func installProfiles(buildDir *paths.Path, targetDir *paths.Path, stateDir *path
 		if err != nil {
 			return false, err
 		}
-		newManifest[relStr] = ident
 
+		_, tracked := previous[relStr]
 		delete(previous, relStr)
 
 		// Compare against the target itself, not the manifest, so that
@@ -134,6 +135,16 @@ func installProfiles(buildDir *paths.Path, targetDir *paths.Path, stateDir *path
 		dst := targetDir.JoinPath(rel)
 		_, lerr := dst.Lstat()
 		existed := lerr == nil
+
+		// Never take over a file we do not own: an untracked file on the
+		// target belongs to the admin or another package. Leave it alone
+		// and keep it out of the manifest so uninstall does not remove it.
+		if existed && !tracked {
+			skipped = append(skipped, relStr)
+			continue
+		}
+		newManifest[relStr] = ident
+
 		if existed {
 			current, err := fileIdentity(dst)
 			if err != nil {
@@ -186,5 +197,14 @@ func installProfiles(buildDir *paths.Path, targetDir *paths.Path, stateDir *path
 		logging.Bullet("Removed %d stale files", removed)
 	}
 	logging.Indent = ""
+	if len(skipped) > 0 {
+		slices.Sort(skipped)
+		logging.Warning("Skipped %d untracked files already present in %s:", len(skipped), targetDir)
+		logging.Indent = "   "
+		for _, rel := range skipped {
+			logging.Bullet("%s", rel)
+		}
+		logging.Indent = ""
+	}
 	return added+updated+removed > 0, nil
 }
