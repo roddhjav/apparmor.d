@@ -26,22 +26,6 @@ func TestBuilder_Apply(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "abi3",
-			b:    NewABI3(),
-			profile: `
-			  abi <abi/4.0>,
-			  profile test {
-			    userns,
-			    mqueue r type=posix /,
-			  }`,
-			want: `
-			  abi <abi/3.0>,
-			  profile test {
-			    # userns,
-			    # mqueue r type=posix /,
-			  }`,
-		},
-		{
 			name: "abi4",
 			b:    NewABI4(),
 			profile: `
@@ -62,6 +46,18 @@ func TestBuilder_Apply(t *testing.T) {
 			      /kde r,
 			      /other r,
 			  }`,
+		},
+		{
+			name: "abi4 boolean variables",
+			b:    NewABI4(),
+			profile: `@{ABI} = 4
+${FLATPAK_APPS} = true
+#${RBAC} = false
+`,
+			want: `@{ABI} = 4
+#${FLATPAK_APPS} = true
+#${RBAC} = false
+`,
 		},
 		{
 			name: "complain-1",

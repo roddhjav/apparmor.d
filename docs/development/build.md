@@ -120,15 +120,9 @@ Configure AppArmor for full system policy.
 
 ## Build Tasks
 
-### **`abi3`**
-
-This task will convert all profiles from `abi/4.0` to `abi/3.0`. The rules not supported by `abi/3.0` are commented in the build profiles.
-
-*Enable with the `--abi 3` option in the prebuild command.*
-
 ### **`abi4`**
 
-This task will convert all profiles from `abi/5.0` to `abi/4.0`. The rules not supported by `abi/4.0` are commented in the build profiles.
+This task convert all profiles from `abi/5.0` to `abi/4.0`. The rules not supported by `abi/4.0` are commented in the build profiles.
 
 *Enable with the `--abi 4` option in the prebuild command.*
 
