@@ -96,7 +96,7 @@ echo 'Optimize=compress-fast' | sudo tee -a /etc/apparmor/parser.conf
 
     !!! warning
 
-        Only Ubuntu `24.04`, `25.10`, and `26.04` are currently supported.
+        Only Ubuntu `26.04` is currently supported.
 
 === ":material-debian: Debian"
 

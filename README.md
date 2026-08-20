@@ -28,8 +28,8 @@
 - Target both desktops and servers
 - Support all distributions that support AppArmor:
     * [Arch Linux](https://apparmor.pujol.io/install#archlinux)
-    * [Ubuntu 24.04/22.04](https://apparmor.pujol.io/install#ubuntu)
-    * [Debian 12](https://apparmor.pujol.io/install#debian)
+    * [Ubuntu 26.04](https://apparmor.pujol.io/install#ubuntu)
+    * [Debian 13](https://apparmor.pujol.io/install#debian)
     * [OpenSUSE Tumbleweed](https://apparmor.pujol.io/install#opensuse)
 - Support for all major desktop environments:
     * Gnome (GDM)

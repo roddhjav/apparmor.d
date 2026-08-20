@@ -141,25 +141,8 @@ func Configure(r *runtime.Runners) *runtime.Runners {
 		r.ABI = abi
 	}
 	switch r.ABI {
-	case 3:
-		r.Builders.
-			Add(builder.NewABI4()).      // Convert all profiles from abi 5.0 to abi 4.0
-			Add(builder.NewABI3()).      // Convert all profiles from abi 4.0 to abi 3.0
-			Add(builder.NewAPPARMOR40()) // Convert all profiles from apparmor 4.1 to 4.0 or less
-
 	case 4:
 		r.Builders.Add(builder.NewABI4()) // Convert all profiles from abi 5.0 to abi 4.0
-
-		// priority support was added in 4.1
-		if r.Version == 4.0 {
-			r.Builders.Add(builder.NewAPPARMOR40())
-		}
-
-		if tasks.Distribution == "ubuntu" && r.Version >= 4.1 {
-			// Use stacked-dbus builder to resolve dbus rules
-			r.Builders.Add(builder.NewStackedDbus())
-
-		}
 
 		if !r.DownStream {
 			r.Configures.Add(configure.NewAttach())

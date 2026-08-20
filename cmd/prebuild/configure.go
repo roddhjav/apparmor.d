@@ -110,7 +110,7 @@ func (p Configure) Apply() ([]string, error) {
 	}
 	if p.Version >= 5.0 {
 		remove := []string{
-			// Direct upstream contributed profiles, similar to ours
+			// Direct upstream contributed profiles, similar to ours, so we drop ours
 			"dig",
 			"free",
 			"nslookup",

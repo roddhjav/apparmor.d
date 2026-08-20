@@ -33,25 +33,21 @@ func configInit() *tasks.TaskConfig {
 
 	case "ubuntu":
 		switch tasks.Release["VERSION_CODENAME"] {
-		case "jammy":
-			c.ABI = 3
-			c.Version = 3.0
-		case "noble":
-			c.ABI = 4
-			c.Version = 4.0
-		case "questing":
-			c.ABI = 4
-			c.Version = 4.0
 		case "resolute":
 			c.ABI = 4
 			c.Version = 5.0
+
+		default:
+			panic("Unsupported Ubuntu version: " + tasks.Release["VERSION_CODENAME"])
 		}
 
 	case "debian":
 		switch tasks.Release["VERSION_CODENAME"] {
-		case "bullseye", "bookworm":
-			c.ABI = 3
-			c.Version = 3.0
+		case "trixie":
+			c.ABI = 4
+			c.Version = 4.1
+		default:
+			panic("Unsupported Debian version: " + tasks.Release["VERSION_CODENAME"])
 		}
 
 	}
