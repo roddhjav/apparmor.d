@@ -645,6 +645,7 @@ commit:
 	mv debian/changelog.tmp debian/changelog
 	sed -i "s/^pkgver=.*/pkgver=$version/" PKGBUILD
 	sed -i "s/^Version:.*/Version:        $version/" "dists/{{pkgname}}-opensuse.spec"
+	sed -i "s/^Version:.*/Version:        $version/" "dists/{{pkgname}}-fedora.spec"
 	# Stage only the version-bump line, rebuilt from HEAD, so any other
 	# working-tree changes in these files never leak into the release commit.
 	stage_bump() {
@@ -655,6 +656,7 @@ commit:
 	}
 	stage_bump PKGBUILD "s/^pkgver=.*/pkgver=$version/"
 	stage_bump "dists/{{pkgname}}-opensuse.spec" "s/^Version:.*/Version:        $version/"
+	stage_bump "dists/{{pkgname}}-fedora.spec" "s/^Version:.*/Version:        $version/"
 	git add debian/changelog
 	git commit -S -m "Release {{pkgname}} v$version"
 	git tag -a "v$version" -m "{{pkgname}} v$version" --local-user={{gpgkey}}
