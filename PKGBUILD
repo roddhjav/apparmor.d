@@ -38,7 +38,7 @@ package_apparmor.d() {
   depends=('apparmor' 'apparmor.d-base' 'apparmor.d-tools')
   arch=("any")
   cd "$srcdir/$pkgbase"
-  just destdir="$pkgdir" install-prebuilt
+  just destdir="$pkgdir" install-profiles
 }
 
 package_apparmor.d-base() {

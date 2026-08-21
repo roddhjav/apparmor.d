@@ -40,10 +40,10 @@ apparmor.d-tools is a set of userland toolings to help manage AppArmor profiles 
 %autosetup
 
 %build
-just complain
+just prebuild
 
 %install
-just destdir="%{buildroot}" install-prebuilt
+just destdir="%{buildroot}" install-profiles
 just destdir="%{buildroot}" install-base
 just destdir="%{buildroot}" install-tools
 

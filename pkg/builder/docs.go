@@ -16,13 +16,13 @@
 //
 //	r := builder.NewRunner(cfg).
 //		Add(builder.NewABI3()).
-//		Add(builder.NewComplain()).
+//		Add(builder.NewDeployMode("complain", nil)).
 //		Add(builder.NewUserspace())
 //
 //	out, err := r.Run(file, content)
 //
 // Order matters: each builder sees the output of the previous one, so a
 // builder that rewrites attachments must run before one that depends on the
-// resolved form, and mode-changing builders (complain, enforce) should run
-// after content-shaping ones.
+// resolved form, and mode-changing builders should run after content-shaping
+// ones.
 package builder
