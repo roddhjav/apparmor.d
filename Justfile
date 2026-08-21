@@ -18,9 +18,6 @@ pkgname := "apparmor.d"
 gpgkey := "06A26D531D56C42D66805049C5469996F0DF68EC"
 sign := "false"
 
-# Prebuild options, only used for the `dev` install target
-opt := "complain"
-
 # The following variables are only  used for the development and test VM
 
 # Admin username
@@ -73,7 +70,6 @@ Build variables available:
     build        " + BLUE + "# Build directory (default: " + build + ")" + NORMAL + "
     destdir      " + BLUE + "# Installation destination (default: " + destdir + ")" + NORMAL + "
     pkgdest      " + BLUE + "# Package output directory (default: " + pkgdest + ")" + NORMAL + "
-    opt          " + BLUE + "# Prebuild option, only used for the dev install target (default: " + opt + ")" + NORMAL + "
 
 Development variables available:
     username     " + BLUE + "# VM username (default: " + username + ")" + NORMAL + "
@@ -168,6 +164,19 @@ _install-fixup:
 	@mkdir -p "{{destdir}}/etc/apparmor.d/disable"
 	@ln -sf ../hostname "{{destdir}}/etc/apparmor.d/disable/hostname"
 
+# Resolve a file name, or a partial path, to its path in the build directory
+_resolve name:
+	#!/usr/bin/env bash
+	set -eu -o pipefail
+	root="{{build}}/apparmor.d"
+	mapfile -t found < <(find "$root" -type f -path "*/{{name}}")
+	case ${#found[@]} in
+		1) echo "${found[0]#"$root/"}" ;;
+		0) echo "error: no file matching '{{name}}' in $root" >&2; exit 1 ;;
+		*) echo "error: '{{name}}' is ambiguous, give a longer path:" >&2
+		   printf '  %s\n' "${found[@]#"$root/"}" >&2; exit 1 ;;
+	esac
+
 # Locally install prebuild profiles
 [group('install')]
 local +names:
@@ -183,21 +192,29 @@ local +names:
 		install -Dm0644 "{{build}}/apparmor.d/tunables/$file" "{{destdir}}/etc/apparmor.d/tunables/$file"
 	done;
 	echo "Warning: profile dependencies fallback to unconfined."
-	for file in {{names}}; do
-		grep -Ei 'rPx|rpx' "{{build}}/apparmor.d/$file" || true
-		sed -i -e "s/rPx/rPUx/g" "{{build}}/apparmor.d/$file"
-		install -Dvm0644 "{{build}}/apparmor.d/$file" "{{destdir}}/etc/apparmor.d/$file"
+	for name in {{names}}; do
+		rel="$(just _resolve "$name")"
+		src="{{build}}/apparmor.d/$rel"
+		case "$rel" in groups/*|profiles-*) rel="${rel##*/}" ;; esac
+		grep -Ei 'rPx|rpx' "$src" || true
+		sed -i -e "s/rPx/rPUx/g" "$src"
+		install -Dvm0644 "$src" "{{destdir}}/etc/apparmor.d/$rel"
 	done;
 	systemctl restart apparmor.service || journalctl -xeu apparmor.service
 
 # Prebuild, install, and load a dev profile
 [group('install')]
 dev +names:
-	go run ./cmd/prebuild --{{opt}}
-	for file in {{names}}; do \
-		sudo install -Dm644 -v {{build}}/apparmor.d/$file /etc/apparmor.d/$file; \
+	#!/usr/bin/env bash
+	set -eu -o pipefail
+	go run ./cmd/prebuild --buildir {{build}}
+	for name in {{names}}; do
+		rel="$(just _resolve "$name")"
+		src="{{build}}/apparmor.d/$rel"
+		case "$rel" in groups/*|profiles-*) rel="${rel##*/}" ;; esac
+		sudo install -Dm644 -v "$src" "/etc/apparmor.d/$rel"
+		sudo aa-mode -c "/etc/apparmor.d/$rel"
 	done
-	sudo systemctl restart apparmor.service || sudo journalctl -xeu apparmor.service
 
 # Build the package on Arch Linux
 [group('packages')]
