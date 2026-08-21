@@ -49,7 +49,7 @@ profile hw-probe @{exec_path} flags=(attach_disconnected) {
   @{bin}/hciconfig       rPx,
   @{bin}/i2cdetect       rPx,
   @{bin}/inxi            rPx,
-  @{bin}/journalctl      rCx -> journalctl,
+  @{bin}/journalctl      rPx -> child-journalctl-read,
   @{bin}/killall         rCx -> killall,
   @{bin}/kmod            rCx -> kmod,
   @{bin}/lsb_release     rPx,
@@ -161,37 +161,15 @@ profile hw-probe @{exec_path} flags=(attach_disconnected) {
     include if exists <local/hw-probe_rpm>
   }
 
-  profile journalctl flags=(attach_disconnected) {
-    include <abstractions/base>
-
-    @{bin}/journalctl mr,
-
-    /var/lib/dbus/machine-id r,
-    /etc/machine-id r,
-
-    @{run}/log/ rw,
-    /{run,var}/log/journal/ r,
-    /{run,var}/log/journal/@{hex32}/ r,
-    /{run,var}/log/journal/@{hex32}/system.journal* r,
-    /{run,var}/log/journal/@{hex32}/system@@{hex}-@{hex}.journal* r,
-    /{run,var}/log/journal/@{hex32}/system@@{hex32}-@{hex16}-@{hex16}.journal* r,
-    /{run,var}/log/journal/@{hex32}/user-@{hex}.journal* r,
-    /{run,var}/log/journal/@{hex32}/user-@{uid}@@{hex}-@{hex}.journal* r,
-    /{run,var}/log/journal/@{hex32}/user-@{uid}@@{hex32}-@{hex16}-@{hex16}.journal* r,
-
-    owner @{PROC}/@{pid}/stat r,
-
-    include if exists <local/hw-probe_journalctl>
-  }
 
   profile killall flags=(attach_disconnected) {
     include <abstractions/base>
 
     capability sys_ptrace,
 
-    ptrace (read),
+    ptrace read,
 
-    signal (send) set=(int, term, kill),
+    signal send set=(int, term, kill),
 
     @{bin}/killall mr,
 
