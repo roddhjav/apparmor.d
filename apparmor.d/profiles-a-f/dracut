@@ -10,6 +10,7 @@ include <tunables/global>
 profile dracut @{exec_path} {
   include <abstractions/base>
   include <abstractions/consoles>
+  include <abstractions/disks-read>
 
   @{exec_path} mrix,
 
@@ -17,7 +18,9 @@ profile dracut @{exec_path} {
   @{archive_path}             rix,
   @{coreutils_path}           rix,
   @{ldd_path}                  Cx -> ldd,
+  @{bin}/3cpio                rix,
   @{bin}/findmnt               Px,
+  @{bin}/getopt               rix, 
   @{bin}/hardlink             rix,
   @{bin}/kmod                  Cx -> kmod,
   @{bin}/sync                 rix,
@@ -27,12 +30,15 @@ profile dracut @{exec_path} {
   @{bin}/udevadm               Px,
   @{sbin}/blkid                Px,
   @{sbin}/ldconfig            rix,
+  @{lib}/plymouth/plymouth-populate-initrd PUx,
 
   @{lib}/dracut/dracut-util    rix,
   @{lib}/dracut/dracut-install Px,
 
   @{lib}/dracut/{,**} r,
 
+  /etc/depmod.d/ r,
+  /etc/depmod.d/*.conf r,
   /etc/dracut.conf r,
   /etc/dracut.conf.d/{,**} r,
   /etc/machine-id r,
@@ -41,7 +47,7 @@ profile dracut @{exec_path} {
 
   owner /var/tmp/dracut.@{rand6}/{,**} rwl,
 
-  @{sys}/devices/{,**} r,
+  @{PROC}/@{pid}/fd/ r,
 
   profile systemctl {
     include <abstractions/base>
@@ -53,6 +59,8 @@ profile dracut @{exec_path} {
   profile kmod {
     include <abstractions/base>
     include <abstractions/app/kmod>
+
+    @{sys}/module/compression r,
 
     include if exists <local/dracut_kmod>
   }
