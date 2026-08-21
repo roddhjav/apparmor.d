@@ -75,8 +75,6 @@ func TestConfigure_Apply(t *testing.T) {
 			wantFiles: []string{
 				"groups/utils/su",
 				"profiles-s-z/sudo",
-				"abstractions/devices-usb",
-				"abstractions/devices-usb-read",
 			},
 			wantNoFiles: []string{
 				"groups/network/wg",
