@@ -7,15 +7,17 @@ abi <abi/5.0>,
 
 include <tunables/global>
 
+@{name} = calibre{,db} calibre-{customize,debug,parallel,server,smtp}
+@{name} += ebook-{convert,device,edit,meta,polish,viewer}
+@{name} += fetch-ebook-metadata lrf2lrs lrfviewer lrs2lrf markdown-calibre web2disk
 @{domain} = org.chromium.Chromium
+@{lib_dirs} =  /opt/calibre/
+@{bin_dirs} = @{bin}/ @{lib_dirs}/bin/
 
-@{bin_dirs} = @{bin} /opt/calibre{,/bin}
-
-@{exec_path}  = @{bin_dirs}/calibre{,-*} @{bin_dirs}/calibredb @{bin_dirs}/ebook{,-*}
-@{exec_path} += @{bin_dirs}/fetch-ebook-metadata
-@{exec_path} += @{bin_dirs}/lrs2lrf @{bin_dirs}/lrf2lrs @{bin_dirs}/lrfviewer @{bin_dirs}/web2disk
-profile calibre @{exec_path} {
+@{exec_path} = @{bin_dirs}/@{name}
+profile calibre @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/base>
+  include <abstractions/audio-client>
   include <abstractions/bus/session/org.kde.StatusNotifierWatcher>
   include <abstractions/bus/system/org.freedesktop.UDisks2>
   include <abstractions/common/chromium>
@@ -25,13 +27,15 @@ profile calibre @{exec_path} {
   include <abstractions/fontconfig-cache-read>
   include <abstractions/graphics>
   include <abstractions/gstreamer>
+  include <abstractions/gvfs>
+  include <abstractions/ibus-strict>
   include <abstractions/nameservice-strict>
   include <abstractions/python>
   include <abstractions/qt5-compose-cache-write>
   include <abstractions/qt5-settings-write>
   include <abstractions/qt5-shader-cache>
   include <abstractions/ssl_certs>
-  include <abstractions/thumbnails-cache-read>
+  include <abstractions/thumbnails-cache-write>
   include <abstractions/trash-strict>
   include <abstractions/user-download-strict>
 
@@ -43,52 +47,75 @@ profile calibre @{exec_path} {
   network inet6 stream,
   network netlink raw,
 
-  # unix (send, receive) type=stream peer=(addr=none, label=xorg),
+  ptrace read peer=calibre//&calibre//webengine,
+
+  signal send set=term peer=kioworker,
+
   unix (bind, listen)  type=stream addr="@*-calibre-gui.socket",
   unix (bind)          type=stream addr="@calibre-*",
+  unix type=seqpacket  peer=(label=calibre//webengine),
 
   @{exec_path} mrix,
 
-  @{sh_path}              rix,
-  @{python_path}          rix,
-  @{bin}/env                r,
-  @{bin}/file             rix,
-  @{bin}/jpegtran         rix,
-  @{bin}/uname            rix,
+  @{sh_path}               rix,
+  @{python_path}           rix,
+  @{bin}/env               r,
+  @{bin}/file              rix,
+  @{bin}/jpegtran          rix,
+  @{bin}/kdialog           rix, # used on KDE, if available
+  @{bin}/net               rix,
+  @{bin}/speech-dispatcher Px,
+  @{bin}/testparm          rix,
+  @{bin}/uname             rix,
+  @{bin}/zenity            mrix, # used on Gnome, if available
   @{sbin}/ldconfig{,.real} rix,
 
   #aa:exec kioworker
 
-  # both are run with no new privileges flag
-  # changing to child profile is impossible without include chromium abstraction in the parent profile
-  @{lib}/{,@{multiarch}/}qt{5,6}/{,libexec/}QtWebEngineProcess rix,
-  /opt/calibre/libexec/QtWebEngineProcess   rix,
+  @{lib}/{,@{multiarch}/}qt{5,6}/{,libexec/}QtWebEngineProcess Px -> calibre//&calibre//webengine,
+  @{lib_dirs}/libexec/QtWebEngineProcess                       Px -> calibre//&calibre//webengine,
 
-  @{bin_dirs}/pdftoppm        Cx -> poppler,
-  @{bin_dirs}/pdfinfo         Cx -> poppler,
-  @{bin_dirs}/pdftohtml       Cx -> poppler,
+  @{open_path}             Px -> child-open,
 
-  @{open_path}            rPx -> child-open,
+  @{bin_dirs}/pdftoppm     Cx -> poppler,
+  @{bin_dirs}/pdfinfo      Cx -> poppler,
+  @{bin_dirs}/pdftohtml    Cx -> poppler,
 
-  /opt/calibre/{lib,plugins}/**.so{,.*} rm,
+  @{lib_dirs}/{,**} r,
+  @{lib_dirs}/{lib,plugins}/**.so{,.*} rm,
 
   /usr/share/calibre/{,**} r,
-  /usr/share/qt6/resources/**  r,
+  /usr/share/espeak-ng-data/{,**} r,
+  /usr/share/file/misc/magic.mgc r,
+  /usr/share/qt{,5,6}/resources/*.bin  r,
+  /usr/share/thumbnailers/{,**} r,
 
-  # required for access to resources normally in /usr/share/calibre
-  /opt/calibre/**/{,*} r,
-
+  /etc/exports r,
   /etc/fstab r,
   /etc/inputrc r,
+  /etc/krb5.conf r,
+  /etc/krb5.conf.d/ r,
   /etc/magic r,
+  /etc/samba/smb.conf r,
+  /etc/xdg/dolphinrc r,
+  @{etc_ro}/krb5.conf r,
+  @{etc_ro}/vdpau_wrapper.cfg r,
 
-  @{MOUNTDIRS} r,
+  owner /var/cache/samba/ w,
+
+  @{lib}/ r,
+  /usr/local/lib{,32,64}/ r,
+
+        @{MOUNTDIRS} r,
   owner @{MOUNTS}/ r,
   owner @{MOUNTS}/** rw,
 
+        /home/ r,
   owner @{HOME}/ r,
-  owner "@{HOME}/Calibre Library/{,**}" rw,
-  owner "@{HOME}/Calibre Library/metadata.db" rwk,
+  owner @{HOME}/*.{pdf,@{image_ext}} w,              # for printing pdfs and images in the viewer
+  owner "@{HOME}/Calibre Library/{,**}" rwl,
+  owner "@{HOME}/Calibre Library/**.{db,sqlite}" k,
+  owner @{HOME}/*{,/} r,                             # ToDo: no idea how to silence uneccesery access by using deny, left this way
 
   owner @{user_books_dirs}/{,**} rwl,
   owner @{user_books_dirs}/Calibre/** rwk,
@@ -99,44 +126,57 @@ profile calibre @{exec_path} {
   owner @{user_work_dirs}/{,**} rwl,
   owner @{user_work_dirs}/Calibre/** rwk,
 
-  owner @{user_config_dirs}/#@{int}               rw,
-  owner @{user_config_dirs}/calibrerc.lock        rwk,
-  owner @{user_config_dirs}/kdeglobals            w,
-  owner @{user_config_dirs}/kdeglobals.@{rand6}   rw,
-  owner link @{user_config_dirs}/kdeglobals.@{rand6} -> @{user_config_dirs}/#@{int},
-  owner @{user_config_dirs}/kdeglobals.lock          rwk,
-  owner @{user_config_dirs}/kioslaverc               r,
+  owner @{user_cache_dirs}/calibre/ rw,
+  owner @{user_cache_dirs}/calibre/** rwlk -> @{user_cache_dirs}/calibre/**,
+  owner @{user_cache_dirs}/calibre-ebook.com/{,**} rw,
 
   owner @{user_config_dirs}/calibre/ rw,
   owner @{user_config_dirs}/calibre/** rwk,
+  owner @{user_config_dirs}/calibrerc.lock rwk,
+  owner @{user_config_dirs}/kdeglobals* rwlk,
+  owner @{user_config_dirs}/kdialogrc.lock rwk,
+  owner @{user_config_dirs}/kservicemenurc r,
+  owner @{user_config_dirs}/kioslaverc r,
 
   owner @{user_share_dirs}/calibre-ebook.com/ rw,
   owner @{user_share_dirs}/calibre-ebook.com/** rwk,
-
-  owner @{user_cache_dirs}/calibre/ rw,
-  owner @{user_cache_dirs}/calibre/** rwlk -> @{user_cache_dirs}/calibre/**,
+  owner @{user_state_dirs}/calibrestaterc* rwl,
+  owner @{user_state_dirs}/calibrestaterc.lock rwk,
+  owner @{user_state_dirs}/kdialogstaterc* rwl,
+  owner @{user_state_dirs}/kdialogstaterc.lock rwk,
+  owner @{user_share_dirs}/user-places.xbel r,
 
   owner @{tmp}/@{word8} rwl,
   audit owner @{tmp}/@{int}-*/ rw,
   audit owner @{tmp}/@{int}-*/** rwl,
   owner @{tmp}/calibre-@{word8}/{,**} rw,
+  owner @{tmp}/calibre-@{rand6}/{,**} rw,
+
+        @{run}/mount/utab r,
+        @{run}/user/@{uid}/gvfs/ r,
+  owner @{run}/user/@{uid}/calibre@{rand6}.@{int}.kioworker.socket wl,
+  owner @{run}/user/@{uid}/kdialog@{rand6}.@{int}.kioworker.socket wl,
+  owner @{run}/user/@{uid}/speech-dispatcher/speechd.sock rw,
 
   owner /dev/shm/#@{int} rw,
-  owner /dev/shm/sem.@{rand6} rw,
-  owner /dev/shm/sem.mp-@{word8} w,
-  owner link /dev/shm/sem.mp-@{word8} -> /dev/shm/sem.@{rand6},
+  owner /dev/shm/sem.@{rand6} rwl -> /dev/shm/sem.@{rand6},
+  owner /dev/shm/sem.mp-@{word8} rwl -> /dev/shm/sem.@{rand6},
 
-  @{sys}/devices/ r,
-  @{sys}/devices/**/ r,        # ToDo: probably should be checked in calibre source what is really needed
-  @{sys}/devices/@{pci}/irq r,
+        @{run}/udev/data/b8:@{int} r,      # for /dev/sd*
+        @{run}/udev/data/b254:@{int} r,    # for /dev/zram*4
+
+        @{sys}/class/accel/ r,
+        @{sys}/devices/{,**/} r,            # all of it is required for calibre's DeviceManager to work
 
         @{PROC}/ r,
+        @{PROC}/@{pids}/stat r,
         @{PROC}/@{pids}/net/route r,
         @{PROC}/sys/fs/inotify/max_user_watches r,
         @{PROC}/sys/kernel/random/boot_id r,
         @{PROC}/sys/kernel/yama/ptrace_scope r,
         @{PROC}/vmstat r,
   owner @{PROC}/@{pid}/cmdline r,
+  owner @{PROC}/@{pid}/cgroup r,
   owner @{PROC}/@{pid}/comm r,
   owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/mountinfo r,
@@ -147,8 +187,14 @@ profile calibre @{exec_path} {
   owner @{PROC}/@{pid}/task/@{tid}/comm rw,
   owner @{PROC}/@{pid}/task/@{tid}/status r,
 
+        /dev/disk/by-label/ r,
         /dev/tty r,
   owner /dev/tty@{u8} rw,
+
+  # Silencer
+  #deny owner @{HOME}/.bash* r,          # ToDo: extending it to all hidden files in user's directory causes sometimes problems with viewer operations
+  deny owner /usr/share/qt6/resources/locales/ w,
+  deny owner @{lib}/**/__pycache__/{,**} w,
 
   profile poppler {
     include <abstractions/base>
@@ -159,16 +205,53 @@ profile calibre @{exec_path} {
     @{bin_dirs}/pdftohtml r,
     @{bin_dirs}/pdftoppm r,
 
-    /opt/calibre/lib/*.so{,.*} rm,
+    @{lib_dirs}/lib/*.so{,.*} rm,
 
     /usr/share/poppler/{,**} r,
 
-    owner @{tmp}/calibre-@{word8}/**.{jpg,png} w,
+    owner @{tmp}/calibre-@{word8}/**.@{image_ext} w,
     owner @{tmp}/calibre-@{word8}/**log rw,
     owner @{tmp}/calibre-@{word8}/*/src.pdf r,
     owner @{tmp}/calibre-@{word8}/*/index.xml w,
 
     include if exists <local/calibre_poppler>
+  }
+
+  # only to be used stacked
+  profile webengine {
+    include <abstractions/base>
+    include <abstractions/common/chromium>
+    include <abstractions/graphics>
+    include <abstractions/gstreamer>        # needed on Gnome (to directly access glycin)
+
+    signal receive set=term peer=calibre,
+    signal (send receive) set=kill peer=calibre//&calibre//webengine,
+
+    unix type=seqpacket peer=(label=calibre),
+    unix type=stream    peer=(label=calibre),
+
+    @{lib}/{,@{multiarch}/}qt{5,6}/{,libexec/}QtWebEngineProcess mr,
+    @{lib_dirs}/libexec/QtWebEngineProcess                       mr,
+
+    /usr/share/fonts/** r,
+    /usr/share/icu/** r,
+    /usr/share/qt6/** r,
+
+    @{lib_dirs}/** r,
+    @{lib_dirs}/**.so* mr,
+
+    owner @{tmp}/calibre-@{word8}/*  rw,
+
+          @{PROC}/ r,
+    owner @{PROC}/@{pid}/cmdline r,
+    owner @{PROC}/@{pid}/fd/ r,
+    owner @{PROC}/@{pid}/statm r,
+
+    # Silencer
+    deny @{HOME}/{,**} rw,
+    deny owner /usr/share/qt6/resources/locales/ w,
+
+    include if exists <local/calibre_webengine>
   }
 
   include if exists <local/calibre>
