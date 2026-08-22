@@ -28,9 +28,9 @@ main() {
 
 	debian | ubuntu)
 		if dpkg-vendor --is Ubuntu; then
-			suffix="ubuntu1~$(lsb_release -sr)"
-		elif dpkg-vendor --is Debian; then
-			suffix="1+deb$(lsb_release -sr)"
+			suffix="ubuntu1~"
+		else
+			suffix="1+deb"
 		fi
 		dpkg -i $SRC/*-"${suffix}"*.deb || true
 		;;
