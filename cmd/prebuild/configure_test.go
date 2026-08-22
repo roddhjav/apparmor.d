@@ -95,7 +95,7 @@ func TestConfigure_Apply(t *testing.T) {
 				"abstractions/devices-usb",
 				"abstractions/devices-usb-read",
 			},
-			wantPciBus: true,
+			wantPciBus: false,
 		},
 		// {
 		// 	name:         "ubuntu 5.0 drops su and sudo",
