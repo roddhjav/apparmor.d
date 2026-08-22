@@ -97,3 +97,23 @@ desktop-runcmd: &desktop-runcmd
     apt remove -y --purge linux-image-$(uname -r)
     apt autoremove -y --purge
     update-grub
+
+# Debian experimental repository, for the development version of apparmor
+apt-experimental: &apt-experimental
+  path: /etc/apt/sources.list.d/experimental.sources
+  permissions: "0644"
+  content: |
+    Types: deb
+    URIs: http://deb.debian.org/debian
+    Suites: experimental
+    Components: main
+    Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
+
+# Only get the apparmor packages from experimental
+pin-experimental: &pin-experimental
+  path: /etc/apt/preferences.d/experimental
+  permissions: "0644"
+  content: |
+    Package: apparmor* libapparmor* python3-apparmor dh-apparmor
+    Pin: release a=experimental
+    Pin-Priority: 990
