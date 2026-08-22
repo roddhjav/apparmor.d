@@ -7,13 +7,12 @@ abi <abi/5.0>,
 
 include <tunables/global>
 
-@{domain} = org.chromium.Chromium
-
-@{bin_dirs} = @{bin} /opt/calibre{,/bin}
-
 @{name} = calibre{,db} calibre-{customize,debug,parallel,server,smtp}
 @{name} += ebook-{convert,device,edit,meta,polish,viewer}
 @{name} += fetch-ebook-metadata lrf2lrs lrfviewer lrs2lrf markdown-calibre web2disk
+@{domain} = org.chromium.Chromium
+@{lib_dirs} =  /opt/calibre/
+@{bin_dirs} = @{bin}/ @{lib_dirs}/bin/
 
 @{exec_path} = @{bin_dirs}/@{name}
 profile calibre @{exec_path} flags=(attach_disconnected,mediate_deleted) {
@@ -28,6 +27,8 @@ profile calibre @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/fontconfig-cache-read>
   include <abstractions/graphics>
   include <abstractions/gstreamer>
+  include <abstractions/gvfs>
+  include <abstractions/ibus-strict>
   include <abstractions/nameservice-strict>
   include <abstractions/python>
   include <abstractions/qt5-compose-cache-write>
@@ -50,7 +51,6 @@ profile calibre @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
   signal send set=term peer=kioworker,
 
-  # unix (send, receive) type=stream peer=(addr=none, label=xorg),
   unix (bind, listen)  type=stream addr="@*-calibre-gui.socket",
   unix (bind)          type=stream addr="@calibre-*",
   unix type=seqpacket  peer=(label=calibre//webengine),
@@ -72,25 +72,23 @@ profile calibre @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
   #aa:exec kioworker
 
-  @{lib}/{,@{multiarch}/}qt{5,6}/{,libexec/}QtWebEngineProcess mrPx -> calibre//&calibre//webengine,
-  /opt/calibre/libexec/QtWebEngineProcess                      mrPx -> calibre//&calibre//webengine,
+  @{lib}/{,@{multiarch}/}qt{5,6}/{,libexec/}QtWebEngineProcess Px -> calibre//&calibre//webengine,
+  @{lib_dirs}/libexec/QtWebEngineProcess                       Px -> calibre//&calibre//webengine,
 
-  @{bin_dirs}/pdftoppm        mrCx -> poppler,
-  @{bin_dirs}/pdfinfo         mrCx -> poppler,
-  @{bin_dirs}/pdftohtml       mrCx -> poppler,
+  @{open_path}             Px -> child-open,
 
-  @{open_path}            rPx -> child-open,
+  @{bin_dirs}/pdftoppm     Cx -> poppler,
+  @{bin_dirs}/pdfinfo      Cx -> poppler,
+  @{bin_dirs}/pdftohtml    Cx -> poppler,
 
-  /opt/calibre/{lib,plugins}/**.so{,.*} rm,
+  @{lib_dirs}/{,**} r,
+  @{lib_dirs}/{lib,plugins}/**.so{,.*} rm,
 
   /usr/share/calibre/{,**} r,
   /usr/share/espeak-ng-data/{,**} r,
   /usr/share/file/misc/magic.mgc r,
-  /usr/share/qt6/resources/**  r,
-  /usr/share/thumbnailers/{,*.thumbnailer} r,
-
-  # required for access to resources normally in /usr/share/calibre
-  /opt/calibre/{,**} r,
+  /usr/share/qt{,5,6}/resources/*.bin  r,
+  /usr/share/thumbnailers/{,**} r,
 
   /etc/exports r,
   /etc/fstab r,
@@ -106,9 +104,9 @@ profile calibre @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner /var/cache/samba/ w,
 
   @{lib}/ r,
-  /usr/local/lib{,64}/ r,
+  /usr/local/lib{,32,64}/ r,
 
-  @{MOUNTDIRS} r,
+        @{MOUNTDIRS} r,
   owner @{MOUNTS}/ r,
   owner @{MOUNTS}/** rw,
 
@@ -132,27 +130,20 @@ profile calibre @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{user_cache_dirs}/calibre/** rwlk -> @{user_cache_dirs}/calibre/**,
   owner @{user_cache_dirs}/calibre-ebook.com/{,**} rw,
 
-  owner @{user_config_dirs}/#@{int}               rw,
   owner @{user_config_dirs}/calibre/ rw,
   owner @{user_config_dirs}/calibre/** rwk,
-  owner @{user_config_dirs}/calibrerc.lock        rwk,
-  owner @{user_config_dirs}/ibus/bus/@{hex32}-unix-wayland-0 r,
-  owner @{user_config_dirs}/kdeglobals*           rw,
-  owner link @{user_config_dirs}/kdeglobals.@{rand6} -> @{user_config_dirs}/#@{int},
-  owner @{user_config_dirs}/kdeglobals.lock k,
+  owner @{user_config_dirs}/calibrerc.lock rwk,
+  owner @{user_config_dirs}/kdeglobals* rwlk,
   owner @{user_config_dirs}/kdialogrc.lock rwk,
   owner @{user_config_dirs}/kservicemenurc r,
   owner @{user_config_dirs}/kioslaverc r,
-  owner link @{user_config_dirs}/QtProject.conf.@{rand6} -> @{user_config_dirs}/#@{int},
 
   owner @{user_share_dirs}/calibre-ebook.com/ rw,
   owner @{user_share_dirs}/calibre-ebook.com/** rwk,
-  owner @{user_state_dirs}/calibrestaterc* rw,
-  owner link @{user_state_dirs}/calibrestaterc{,.@{rand6}} -> @{user_state_dirs}/#@{int},
-  owner @{user_state_dirs}/calibrestaterc.lock k,
-  owner @{user_state_dirs}/kdialogstaterc* rw,
-  owner link @{user_state_dirs}/kdialogstaterc.@{rand6} -> @{user_state_dirs}/#@{int},
-  owner @{user_state_dirs}/kdialogstaterc.lock k,
+  owner @{user_state_dirs}/calibrestaterc* rwl,
+  owner @{user_state_dirs}/calibrestaterc.lock rwk,
+  owner @{user_state_dirs}/kdialogstaterc* rwl,
+  owner @{user_state_dirs}/kdialogstaterc.lock rwk,
   owner @{user_share_dirs}/user-places.xbel r,
 
   owner @{tmp}/@{word8} rwl,
@@ -161,22 +152,18 @@ profile calibre @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{tmp}/calibre-@{word8}/{,**} rw,
   owner @{tmp}/calibre-@{rand6}/{,**} rw,
 
-        @{run}/udev/data/b8:@{int} r,      # for /dev/sd*
-        @{run}/udev/data/b254:@{int} r,    # for /dev/zram*4
-
         @{run}/mount/utab r,
         @{run}/user/@{uid}/gvfs/ r,
-  owner @{run}/user/@{uid}/calibre@{rand6}.@{int}.kioworker.socket w,
-  owner @{run}/user/@{uid}/kdialog@{rand6}.@{int}.kioworker.socket w,
-  owner link @{run}/user/@{uid}/calibre@{rand6}.@{int}.kioworker.socket -> @{run}/user/@{uid}/#@{int},
-  owner link @{run}/user/@{uid}/kdialog@{rand6}.@{int}.kioworker.socket -> @{run}/user/@{uid}/#@{int},
-  owner @{run}/user/@{uid}/gvfsd/socket-@{word8} rw,                       # needed at least on ubuntu
-  owner @{run}/user/@{uid}/speech-dispatcher/speechd.sock rw,              # needed at least on ubuntu
+  owner @{run}/user/@{uid}/calibre@{rand6}.@{int}.kioworker.socket wl,
+  owner @{run}/user/@{uid}/kdialog@{rand6}.@{int}.kioworker.socket wl,
+  owner @{run}/user/@{uid}/speech-dispatcher/speechd.sock rw,
 
   owner /dev/shm/#@{int} rw,
-  owner /dev/shm/sem.@{rand6} rw,
-  owner /dev/shm/sem.mp-@{word8} w,
-  owner link /dev/shm/sem.mp-@{word8} -> /dev/shm/sem.@{rand6},
+  owner /dev/shm/sem.@{rand6} rwl -> /dev/shm/sem.@{rand6},
+  owner /dev/shm/sem.mp-@{word8} rwl -> /dev/shm/sem.@{rand6},
+
+        @{run}/udev/data/b8:@{int} r,      # for /dev/sd*
+        @{run}/udev/data/b254:@{int} r,    # for /dev/zram*4
 
         @{sys}/class/accel/ r,
         @{sys}/devices/{,**/} r,            # all of it is required for calibre's DeviceManager to work
@@ -218,7 +205,7 @@ profile calibre @{exec_path} flags=(attach_disconnected,mediate_deleted) {
     @{bin_dirs}/pdftohtml r,
     @{bin_dirs}/pdftoppm r,
 
-    /opt/calibre/lib/*.so{,.*} rm,
+    @{lib_dirs}/lib/*.so{,.*} rm,
 
     /usr/share/poppler/{,**} r,
 
@@ -233,8 +220,9 @@ profile calibre @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   # only to be used stacked
   profile webengine {
     include <abstractions/base>
-    include <abstractions/gstreamer>        # needed on Gnome (to directly access glycin)
     include <abstractions/common/chromium>
+    include <abstractions/graphics>
+    include <abstractions/gstreamer>        # needed on Gnome (to directly access glycin)
 
     signal receive set=term peer=calibre,
     signal (send receive) set=kill peer=calibre//&calibre//webengine,
@@ -243,23 +231,18 @@ profile calibre @{exec_path} flags=(attach_disconnected,mediate_deleted) {
     unix type=stream    peer=(label=calibre),
 
     @{lib}/{,@{multiarch}/}qt{5,6}/{,libexec/}QtWebEngineProcess mr,
-    /opt/calibre/libexec/QtWebEngineProcess                      mr,
+    @{lib_dirs}/libexec/QtWebEngineProcess                       mr,
 
     /usr/share/fonts/** r,
     /usr/share/icu/** r,
     /usr/share/qt6/** r,
 
-    /opt/calibre/{lib,resources,translations}/** r,
-    /opt/calibre/lib/*.so*   m,
+    @{lib_dirs}/** r,
+    @{lib_dirs}/**.so* mr,
 
     owner @{tmp}/calibre-@{word8}/*  rw,
 
-    @{sys}/devices/system/cpu/present r,
-    @{sys}/devices/system/cpu/cpufreq/policy@{u8}/cpuinfo_max_freq r,
-
           @{PROC}/ r,
-          @{PROC}/sys/fs/inotify/max_user_watches r,
-          @{PROC}/sys/kernel/yama/ptrace_scope r,
     owner @{PROC}/@{pid}/cmdline r,
     owner @{PROC}/@{pid}/fd/ r,
     owner @{PROC}/@{pid}/statm r,
