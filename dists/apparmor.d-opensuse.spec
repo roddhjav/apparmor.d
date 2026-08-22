@@ -48,9 +48,8 @@ just destdir="%{buildroot}" install-profiles
 just destdir="%{buildroot}" install-base
 just destdir="%{buildroot}" install-tools
 
-%posttrans
-apparmor_parser --purge-cache || :
-%restart_on_update apparmor
+%transfiletriggerin tools -- /usr /etc /opt
+/usr/bin/aa-install --install || :
 
 %files
 %license LICENSE

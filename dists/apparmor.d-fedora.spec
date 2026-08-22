@@ -51,6 +51,9 @@ just destdir="%{buildroot}" install-tools
 apparmor_parser --purge-cache || :
 %restart_on_update apparmor
 
+%transfiletriggerin tools -- /usr /etc /opt
+/usr/bin/aa-install --install || :
+
 %files
 %license LICENSE
 %doc README.md
