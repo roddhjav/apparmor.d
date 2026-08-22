@@ -685,4 +685,4 @@ _get_osinfo osinfo:
 		"opensuse": "opensusetumbleweed",
 		"ubuntu26.04": "ubuntu25.10",
 	}
-	print(osinfo.get("{{osinfo}}", ""))
+	print(osinfo.get("{{osinfo}}", "{{osinfo}}"))

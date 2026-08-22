@@ -21,18 +21,19 @@ main() {
 
 	case "$ID" in
 	arch)
-		rm -f $SRC/*.sig      # Ignore signature files
-		rm -f $SRC/*enforced* # Ignore enforced package
-		pacman --noconfirm -U $SRC/*.pkg.tar.zst || true
+		rm -f $SRC/*.sig # Ignore signature files
+		pacman -Rdd --noconfirm dbus-broker dbus-broker-units dbus-units || true
+		pacman -U --noconfirm --overwrite '*' $SRC/*.pkg.tar.zst || true
+		systemctl enable aa-flatpak || true
 		;;
 
 	debian | ubuntu)
-		if dpkg-vendor --is Ubuntu; then
+		if [ "$ID" = ubuntu ]; then
 			suffix="ubuntu1~"
 		else
 			suffix="1+deb"
 		fi
-		dpkg -i $SRC/*-"${suffix}"*.deb || true
+		apt-get install -y --no-install-recommends $SRC/*-"${suffix}"*.deb
 		;;
 
 	opensuse*)
