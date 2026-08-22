@@ -282,7 +282,7 @@ dpkg: build-dpkg
 
 # Build & install apparmor.d on OpenSUSE based systems
 [group('packages')]
-rpm: build-rpm
+rpm dist="opensuse": (build-rpm dist)
 	@sudo rpm -ivh --force \
 		{{pkgdest}}/{{pkgname}}-`just version`-*.rpm \
 		{{pkgdest}}/{{pkgname}}-base-`just version`-*.rpm \
@@ -401,7 +401,7 @@ create osinfo flavor:
 		--memorybacking source.type=memfd,access.mode=shared \
 		--disk path={{vm}}/{{prefix}}{{osinfo}}-{{flavor}}.qcow2,format=qcow2,bus=virtio \
 		--filesystem "`pwd`,0a31bc478ef8e2461a4b1cc10a24cc4",accessmode=passthrough,driver.type=virtiofs \
-		--os-variant "{{ if osinfo == "opensuse" { "opensusetumbleweed" } else if osinfo == "fedora44" { "fedora42" } else { osinfo } }}" \
+		--os-variant "`just _get_osinfo {{osinfo}}`" \
 		--graphics spice \
 		--audio id=1,type=spice \
 		--sound model=ich9 \
@@ -676,3 +676,13 @@ _get_ip osinfo flavor:
 	@virsh --quiet --readonly {{c}} domifaddr {{prefix}}{{osinfo}}-{{flavor}} | \
 		head -1 | \
 		grep -E -o '([[:digit:]]{1,3}\.){3}[[:digit:]]{1,3}'
+
+_get_osinfo osinfo:
+	#!/usr/bin/env python3
+	osinfo = {
+		"debian14": "debian13",
+		"fedora44": "fedora42",
+		"opensuse": "opensusetumbleweed",
+		"ubuntu26.04": "ubuntu25.10",
+	}
+	print(osinfo.get("{{osinfo}}", ""))

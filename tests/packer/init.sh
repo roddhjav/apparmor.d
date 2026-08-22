@@ -35,8 +35,15 @@ main() {
 		dpkg -i $SRC/*-"${suffix}"*.deb || true
 		;;
 
-	opensuse* | fedora)
+	opensuse*)
 		mv "/home/$SUDO_USER/.bash_aliases" "/home/$SUDO_USER/.alias"
+		rpm -i $SRC/*.rpm || true
+		;;
+
+	fedora)
+		mkdir -p "/home/$SUDO_USER/.bashrc.d"
+		chown -R "$SUDO_USER:$SUDO_USER" "/home/$SUDO_USER/.bashrc.d"
+		mv "/home/$SUDO_USER/.bash_aliases" "/home/$SUDO_USER/.bashrc.d/aliases"
 		rpm -i $SRC/*.rpm || true
 		;;
 
