@@ -19,6 +19,20 @@ import (
 	"github.com/roddhjav/apparmor.d/pkg/util"
 )
 
+const (
+	// dbusBrokerFields is the list of dbus-broker journal fields needed to rebuild
+	// an apparmor log entry.
+	dbusBrokerFields = "DBUS_BROKER_POLICY_TYPE,DBUS_BROKER_TRANSMIT_ACTION," +
+		"DBUS_BROKER_SENDER_SECURITY_LABEL,DBUS_BROKER_RECEIVER_SECURITY_LABEL," +
+		"DBUS_BROKER_MESSAGE_TYPE,DBUS_BROKER_MESSAGE_DESTINATION," +
+		"DBUS_BROKER_MESSAGE_PATH,DBUS_BROKER_MESSAGE_INTERFACE,DBUS_BROKER_MESSAGE_MEMBER"
+
+	// ownNameDenied is the error returned to a client when the apparmor policy
+	// denies it a dbus name. The bus does not log anything on such denial: the
+	// client message is the only trace of it.
+	ownNameDenied = "Request to own name refused by policy"
+)
+
 // LogFiles is the list of default path to query
 var LogFiles = []string{
 	"/var/log/audit/audit.log",
@@ -26,8 +40,63 @@ var LogFiles = []string{
 }
 
 // SystemdLog is a simplified systemd json log representation.
+//
+// dbus-broker mediates the dbus apparmor policy itself: its denials are only
+// reported in the journal, in its own format, and never reach the audit
+// subsystem. They are rebuilt as regular apparmor log entries.
 type systemdLog struct {
-	Message string `json:"MESSAGE"`
+	Message     string `json:"MESSAGE"`
+	Identifier  string `json:"SYSLOG_IDENTIFIER"`
+	UID         string `json:"_UID"`
+	PolicyType  string `json:"DBUS_BROKER_POLICY_TYPE"`
+	Action      string `json:"DBUS_BROKER_TRANSMIT_ACTION"`
+	Sender      string `json:"DBUS_BROKER_SENDER_SECURITY_LABEL"`
+	Receiver    string `json:"DBUS_BROKER_RECEIVER_SECURITY_LABEL"`
+	Type        string `json:"DBUS_BROKER_MESSAGE_TYPE"`
+	Destination string `json:"DBUS_BROKER_MESSAGE_DESTINATION"`
+	Path        string `json:"DBUS_BROKER_MESSAGE_PATH"`
+	Interface   string `json:"DBUS_BROKER_MESSAGE_INTERFACE"`
+	Member      string `json:"DBUS_BROKER_MESSAGE_MEMBER"`
+}
+
+// String returns the log entry as an apparmor log line. Only the dbus denials
+// reported by the bus or its clients are rebuilt, all other entries are left
+// untouched.
+func (l systemdLog) String() string {
+	switch {
+	case l.PolicyType == "apparmor":
+		return fmt.Sprintf(
+			`apparmor="DENIED" operation="dbus_%s" bus="%s" path="%s" interface="%s" member="%s" mask="%s" name="%s" label="%s" peer_label="%s"`,
+			l.Type, l.bus(), l.Path, l.Interface, l.Member, l.Action, l.Destination,
+			securityLabel(l.Sender), securityLabel(l.Receiver),
+		)
+
+	case strings.Contains(l.Message, ownNameDenied):
+		// Neither the profile nor the requested name are reported. The syslog
+		// identifier is the application id when it is dbus activated, its
+		// binary name otherwise: both are only a guess.
+		return fmt.Sprintf(
+			`apparmor="DENIED" operation="dbus_bind" bus="%s" mask="bind" name="%s" label="%s" info="%s"`,
+			l.bus(), l.Identifier, l.Identifier, l.Message,
+		)
+	}
+	return l.Message
+}
+
+// bus returns the dbus bus the log entry comes from. The bus is not reported,
+// only the system bus runs as root.
+func (l systemdLog) bus() string {
+	if l.UID == "0" {
+		return "system"
+	}
+	return "session"
+}
+
+// securityLabel returns the profile name of a dbus-broker security label:
+// 'gnome-clocks (enforce)' -> 'gnome-clocks'
+func securityLabel(label string) string {
+	name, _, _ := strings.Cut(label, " ")
+	return name
 }
 
 // GetApparmorLogs return a list of cleaned apparmor logs from a file
@@ -81,11 +150,17 @@ func GetJournalctlLogs(path string, boot string, since string, useFile bool) (io
 		}
 		scanner = bufio.NewScanner(file)
 	} else {
-		// journalctl -b -o json -g apparmor -t kernel -t audit -t dbus-daemon --output-fields=MESSAGE > systemd.log
+		// The tests logs are generated with the same arguments:
+		// journalctl -b --grep=… --output=json --output-fields=… > systemd.log
+		//
+		// Dbus denials are reported by the bus, but also by the clients
+		// themselves, under their own identifier: the logs cannot be filtered
+		// on a list of identifiers. A single grep is also faster than one
+		// indexed query per identifier.
 		args := []string{
-			"--grep=apparmor", "--identifier=kernel",
-			"--identifier=audit", "--identifier=dbus-daemon",
-			"--output=json", "--output-fields=MESSAGE",
+			"--grep=apparmor|security policy denied|" + ownNameDenied,
+			"--output=json",
+			"--output-fields=MESSAGE,SYSLOG_IDENTIFIER,_UID," + dbusBrokerFields,
 		}
 		if boot != "" {
 			args = append(args, "--boot="+boot)
@@ -107,7 +182,7 @@ func GetJournalctlLogs(path string, boot string, since string, useFile bool) (io
 	var jctlRaw []string
 	for scanner.Scan() {
 		line := scanner.Text()
-		if strings.Contains(line, "apparmor") {
+		if strings.Contains(line, "apparmor") || strings.Contains(line, ownNameDenied) {
 			jctlRaw = append(jctlRaw, line)
 		}
 	}
@@ -119,7 +194,7 @@ func GetJournalctlLogs(path string, boot string, since string, useFile bool) (io
 
 	var res strings.Builder
 	for _, log := range logs {
-		res.WriteString(log.Message)
+		res.WriteString(log.String())
 		res.WriteString("\n")
 	}
 	return strings.NewReader(res.String()), nil

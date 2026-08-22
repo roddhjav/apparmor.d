@@ -1,0 +1,85 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/dracut
+profile dracut @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/disks-read>
+
+  @{exec_path} mrix,
+
+  @{sh_path}                  rix,
+  @{archive_path}             rix,
+  @{coreutils_path}           rix,
+  @{ldd_path}                  Cx -> ldd,
+  @{bin}/3cpio                rix,
+  @{bin}/findmnt               Px,
+  @{bin}/getopt               rix,
+  @{bin}/hardlink             rix,
+  @{bin}/kmod                  Cx -> kmod,
+  @{bin}/sync                 rix,
+  @{bin}/systemctl             Cx -> systemctl,
+  @{bin}/systemd-detect-virt   Px,
+  @{bin}/systemd-escape        Px,
+  @{bin}/udevadm               Px,
+  @{sbin}/blkid                Px,
+  @{sbin}/ldconfig            rix,
+  @{lib}/plymouth/plymouth-populate-initrd PUx,
+
+  @{lib}/dracut/dracut-util    rix,
+  @{lib}/dracut/dracut-install Px,
+
+  @{lib}/dracut/{,**} r,
+
+  /etc/depmod.d/ r,
+  /etc/depmod.d/*.conf r,
+  /etc/dracut.conf r,
+  /etc/dracut.conf.d/{,**} r,
+  /etc/machine-id r,
+  /etc/modprobe.d/{,**} r,
+  @{lib}/modprobe.d/{,**} r,
+
+  owner /var/tmp/dracut.@{rand6}/{,**} rwl,
+
+  @{PROC}/@{pid}/fd/ r,
+
+  profile systemctl {
+    include <abstractions/base>
+    include <abstractions/app/systemctl>
+
+    include if exists <local/dracut_systemctl>
+  }
+
+  profile kmod {
+    include <abstractions/base>
+    include <abstractions/app/kmod>
+
+    @{sys}/module/compression r,
+
+    include if exists <local/dracut_kmod>
+  }
+
+  profile ldd {
+    include <abstractions/base>
+    include <abstractions/consoles>
+    include <abstractions/nameservice-strict>
+
+    @{ldd_path}  mrix,
+
+    @{bin}/* mr,
+    @{sbin}/* mr,
+    @{lib}/**  mr,
+
+    include if exists <local/dracut_ldd>
+  }
+
+  include if exists <local/dracut>
+}
+
+# vim:syntax=apparmor

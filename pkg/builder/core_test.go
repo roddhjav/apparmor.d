@@ -26,22 +26,6 @@ func TestBuilder_Apply(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "abi3",
-			b:    NewABI3(),
-			profile: `
-			  abi <abi/4.0>,
-			  profile test {
-			    userns,
-			    mqueue r type=posix /,
-			  }`,
-			want: `
-			  abi <abi/3.0>,
-			  profile test {
-			    # userns,
-			    # mqueue r type=posix /,
-			  }`,
-		},
-		{
 			name: "abi4",
 			b:    NewABI4(),
 			profile: `
@@ -64,8 +48,20 @@ func TestBuilder_Apply(t *testing.T) {
 			  }`,
 		},
 		{
+			name: "abi4 boolean variables",
+			b:    NewABI4(),
+			profile: `@{ABI} = 4
+${FLATPAK_APPS} = true
+#${RBAC} = false
+`,
+			want: `@{ABI} = 4
+#${FLATPAK_APPS} = true
+#${RBAC} = false
+`,
+		},
+		{
 			name: "complain-1",
-			b:    NewComplain(),
+			b:    NewDeployMode("complain", nil),
 			profile: `
 			  @{exec_path} = @{bin}/foo
 			  profile foo @{exec_path} {
@@ -87,7 +83,7 @@ func TestBuilder_Apply(t *testing.T) {
 		},
 		{
 			name: "complain-2",
-			b:    NewComplain(),
+			b:    NewDeployMode("complain", nil),
 			profile: `
 			  @{exec_path} = @{bin}/foo
 			  profile foo @{exec_path} flags=(complain) {
@@ -109,7 +105,7 @@ func TestBuilder_Apply(t *testing.T) {
 		},
 		{
 			name: "complain-3",
-			b:    NewComplain(),
+			b:    NewDeployMode("complain", nil),
 			profile: `
 			  @{exec_path} = @{bin}/foo
 			  profile foo @{exec_path} flags=(attach_disconnected) {
@@ -131,7 +127,7 @@ func TestBuilder_Apply(t *testing.T) {
 		},
 		{
 			name: "complain-4",
-			b:    NewComplain(),
+			b:    NewDeployMode("complain", nil),
 			profile: `
 			  @{exec_path} = @{bin}/foo
 			  profile foo @{exec_path} flags=(unconfined) {
@@ -153,7 +149,7 @@ func TestBuilder_Apply(t *testing.T) {
 		},
 		{
 			name: "enforce-1",
-			b:    NewEnforce(),
+			b:    NewDeployMode("enforce", nil),
 			profile: `
 			  @{exec_path} = @{bin}/foo
 			  profile foo @{exec_path} {
@@ -175,7 +171,7 @@ func TestBuilder_Apply(t *testing.T) {
 		},
 		{
 			name: "enforce-2",
-			b:    NewEnforce(),
+			b:    NewDeployMode("enforce", nil),
 			profile: `
 			  @{exec_path} = @{bin}/foo
 			  profile foo @{exec_path} flags=(complain) {
@@ -197,7 +193,7 @@ func TestBuilder_Apply(t *testing.T) {
 		},
 		{
 			name: "enforce-3",
-			b:    NewEnforce(),
+			b:    NewDeployMode("enforce", nil),
 			profile: `
 			  @{exec_path} = @{bin}/foo
 			  profile foo @{exec_path} flags=(attach_disconnected,complain) {
@@ -492,14 +488,14 @@ func TestBuilders_Run(t *testing.T) {
 		},
 		{
 			name:     "complain-then-enforce",
-			builders: []Builder{NewComplain(), NewEnforce()},
+			builders: []Builder{NewDeployMode("complain", nil), NewDeployMode("enforce", nil)},
 			profile:  "profile foo /usr/bin/foo {\n}\n",
 			want:     "profile foo /usr/bin/foo {\n}\n",
 			wantErr:  false,
 		},
 		{
 			name:     "complain",
-			builders: []Builder{NewComplain()},
+			builders: []Builder{NewDeployMode("complain", nil)},
 			profile:  "profile foo /usr/bin/foo {\n}\n",
 			want:     "profile foo /usr/bin/foo flags=(complain) {\n}\n",
 			wantErr:  false,
@@ -541,8 +537,8 @@ func TestBuilders_Add(t *testing.T) {
 	}{
 		{
 			name:     "add-builders",
-			builders: []Builder{NewComplain(), NewEnforce()},
-			want:     []string{"complain", "enforce"},
+			builders: []Builder{NewDeployMode("complain", nil), NewUserspace()},
+			want:     []string{"deploy-mode", "userspace"},
 		},
 	}
 	for _, tt := range tests {

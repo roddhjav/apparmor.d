@@ -40,16 +40,19 @@ apparmor.d-tools is a set of userland toolings to help manage AppArmor profiles 
 %autosetup
 
 %build
-just complain
+just prebuild
 
 %install
-just destdir="%{buildroot}" install-prebuilt
+just destdir="%{buildroot}" install-profiles
 just destdir="%{buildroot}" install-base
 just destdir="%{buildroot}" install-tools
 
 %posttrans
 apparmor_parser --purge-cache || :
 %restart_on_update apparmor
+
+%transfiletriggerin tools -- /usr /etc /opt
+/usr/bin/aa-install --install || :
 
 %files
 %license LICENSE

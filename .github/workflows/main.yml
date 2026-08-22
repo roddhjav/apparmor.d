@@ -47,9 +47,18 @@ jobs:
         run: |
           just build-dpkg
 
+      - name: Configure aa-install
+        run: |
+          sudo mkdir -p /etc/apparmor
+          sudo tee /etc/apparmor/modes > /dev/null <<EOF
+          default complain
+          include default
+          reload no
+          EOF
+
       - name: Install apparmor.d
         run: |
-            sudo dpkg --install .pkg/apparmor.d*.deb || true
+            sudo dpkg --install .pkg/apparmor.d*.deb
             sudo aa-install --install --all
 
       - name: Show the installation status
@@ -104,9 +113,18 @@ jobs:
           pipx install rust-just
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
+      - name: Configure aa-install
+        run: |
+          sudo mkdir -p /etc/apparmor
+          sudo tee /etc/apparmor/modes > /dev/null <<EOF
+          default complain
+          include default
+          reload no
+          EOF
+
       - name: Install apparmor.d
         run: |
-          sudo dpkg --install .pkg/apparmor.d*.deb || true
+          sudo dpkg --install .pkg/apparmor.d*.deb
           sudo aa-install --install --all
           sudo systemctl restart apparmor.service
           sudo systemctl daemon-reload

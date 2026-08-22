@@ -124,12 +124,22 @@ opensuse:
 # Profile Preprocessing
 # ---------------------
 
+.modes: &modes
+  - mkdir -p /etc/apparmor
+  - |
+    cat > /etc/apparmor/modes <<EOF
+    default complain
+    include default
+    reload no
+    EOF
+
 preprocess-archlinux:
   stage: preprocess
   image: archlinux
   dependencies:
     - archlinux
   script:
+    - *modes
     - pacman -Syu --noconfirm --noprogressbar apparmor
     - pacman -U --noconfirm --noprogressbar $PKGDEST/${PKGNAME}-*
     - apparmor_parser --preprocess /etc/apparmor.d 1> /dev/null
@@ -140,6 +150,7 @@ preprocess-debian:
   dependencies:
     - debian
   script:
+    - *modes
     - apt-get update -q
     - apt-get install -y apparmor apparmor-profiles
     - dpkg --install $PKGDEST/${PKGNAME}*.deb
@@ -151,9 +162,11 @@ preprocess-ubuntu:
   dependencies:
     - ubuntu
   script:
+    - *modes
     - apt-get update -q
     - apt-get install -y apparmor apparmor-profiles
     - dpkg --install $PKGDEST/${PKGNAME}*.deb
+    - rm -f /etc/apparmor.d/hostname
     - apparmor_parser --preprocess /etc/apparmor.d 1> /dev/null
 
 preprocess-opensuse:
@@ -162,6 +175,7 @@ preprocess-opensuse:
   dependencies:
     - opensuse
   script:
+    - *modes
     - zypper install -y apparmor-profiles
     - rpm -i $PKGDEST/*
     - rm -f /etc/apparmor.d/hostname

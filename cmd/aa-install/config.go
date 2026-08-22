@@ -20,6 +20,9 @@ var (
 	// includeModes are the modes accepted for the include key.
 	includeModes = []string{"default", "full"}
 
+	// reloadModes are the modes accepted for the reload key.
+	reloadModes = []string{"yes", "no"}
+
 	// vendorConfigDir holds the vendor configuration defaults
 	vendorConfigDir = paths.New("/usr/share/apparmor")
 )
@@ -27,6 +30,7 @@ var (
 type conf struct {
 	mode          string
 	include       string
+	reload        bool
 	flagDirs      paths.PathList
 	ignoreDirs    paths.PathList
 	includeDirs   paths.PathList
@@ -71,13 +75,20 @@ func loadConfig(configDir *paths.Path) (*conf, error) {
 	if !slices.Contains(includeModes, res.include) {
 		return nil, fmt.Errorf("invalid include mode %q in %s", res.include, configDir.Join("modes"))
 	}
+	reload := modes["reload"]
+	if reload == "" {
+		reload = "yes"
+	}
+	if !slices.Contains(reloadModes, reload) {
+		return nil, fmt.Errorf("invalid reload mode %q in %s", reload, configDir.Join("modes"))
+	}
+	res.reload = reload == "yes" && !noReload
 	return res, nil
 }
 
 // readModeConfig parses a general aa-install config file (one "key value"
 // per line, # comments filtered). Only the last existing file is read: a
-// later file fully replaces an earlier one. Only the "default" key (the
-// default deploy mode) is used for now.
+// later file fully replaces an earlier one.
 func readModeConfig(files ...*paths.Path) map[string]string {
 	res := map[string]string{}
 	for i := len(files) - 1; i >= 0; i-- {

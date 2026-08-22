@@ -113,6 +113,7 @@ func installProfiles(buildDir *paths.Path, targetDir *paths.Path, stateDir *path
 
 	newManifest := make(map[string]string, len(files))
 	var added, updated, unchanged int
+	var skipped []string
 	for _, file := range files {
 		rel, err := file.RelFrom(buildDir)
 		if err != nil {
@@ -124,8 +125,8 @@ func installProfiles(buildDir *paths.Path, targetDir *paths.Path, stateDir *path
 		if err != nil {
 			return false, err
 		}
-		newManifest[relStr] = ident
 
+		_, tracked := previous[relStr]
 		delete(previous, relStr)
 
 		// Compare against the target itself, not the manifest, so that
@@ -134,6 +135,21 @@ func installProfiles(buildDir *paths.Path, targetDir *paths.Path, stateDir *path
 		dst := targetDir.JoinPath(rel)
 		_, lerr := dst.Lstat()
 		existed := lerr == nil
+
+		// Never take over a file we do not own: an untracked file on the
+		// target belongs to the admin or another package. Leave it alone
+		// and keep it out of the manifest so uninstall does not remove it.
+		if existed && !tracked {
+			// An existing disable/<name> link, whatever it points to, means
+			// the profile is already disabled: our link is redundant, not in
+			// conflict. Keep theirs and stay quiet about it.
+			if !strings.HasPrefix(relStr, "disable/") {
+				skipped = append(skipped, relStr)
+			}
+			continue
+		}
+		newManifest[relStr] = ident
+
 		if existed {
 			current, err := fileIdentity(dst)
 			if err != nil {
@@ -163,16 +179,17 @@ func installProfiles(buildDir *paths.Path, targetDir *paths.Path, stateDir *path
 		}
 	}
 
-	removed := 0
+	var removed []string
 	for old := range previous {
 		target := targetDir.Join(old)
 		if _, err := target.Lstat(); err == nil {
 			if err := target.RemoveAll(); err != nil {
 				return false, err
 			}
-			removed++
+			removed = append(removed, old)
 		}
 	}
+	slices.Sort(removed)
 
 	if err := writeManifest(stateDir, newManifest); err != nil {
 		return false, err
@@ -182,9 +199,23 @@ func installProfiles(buildDir *paths.Path, targetDir *paths.Path, stateDir *path
 	logging.Success("Installed %d profiles to %s", len(newManifest), targetDir)
 	logging.Indent = "   "
 	logging.Bullet("%d added, %d updated, %d unchanged", added, updated, unchanged)
-	if removed > 0 {
-		logging.Bullet("Removed %d stale files", removed)
+	if len(removed) > 0 {
+		logging.Bullet("Removed %d stale files:", len(removed))
+		logging.Indent = "      "
+		for _, rel := range removed {
+			logging.Bullet("%s", rel)
+		}
+		logging.Indent = "   "
 	}
 	logging.Indent = ""
-	return added+updated+removed > 0, nil
+	if len(skipped) > 0 {
+		slices.Sort(skipped)
+		logging.Warning("Skipped %d untracked files already present in %s:", len(skipped), targetDir)
+		logging.Indent = "   "
+		for _, rel := range skipped {
+			logging.Bullet("%s", rel)
+		}
+		logging.Indent = ""
+	}
+	return added+updated+len(removed) > 0, nil
 }

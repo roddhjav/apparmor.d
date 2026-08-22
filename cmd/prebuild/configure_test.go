@@ -38,7 +38,8 @@ func setupConfigure(t *testing.T, distribution string, version float64) *Configu
 	cfg := tasks.NewTaskConfig(paths.New(t.TempDir()))
 	cfg.Version = version
 	files := []string{
-		"fapp", "fbwrap", "wg", "dig", "free", "nslookup", "su", "sudo",
+		"groups/network/wg", "profiles-a-f/dig", "groups/procps/free",
+		"profiles-m-r/nslookup", "groups/utils/su", "profiles-s-z/sudo",
 		"tunables/multiarch.d/base", "abstractions/devices-usb",
 		"abstractions/devices-usb-read", "abstractions/nameservice-strict",
 	}
@@ -71,9 +72,30 @@ func TestConfigure_Apply(t *testing.T) {
 			distribution: "arch",
 			version:      5.0,
 			wantErr:      false,
-			wantFiles:    []string{"fapp", "fbwrap", "su", "sudo"},
-			wantNoFiles:  []string{"wg", "dig", "free", "nslookup", "tunables/multiarch.d/base"},
-			wantPciBus:   false,
+			wantFiles: []string{
+				"groups/utils/su",
+				"profiles-s-z/sudo",
+			},
+			wantNoFiles: []string{
+				"groups/network/wg",
+				"profiles-a-f/dig",
+				"groups/procps/free",
+				"profiles-m-r/nslookup",
+				"tunables/multiarch.d/base",
+				"abstractions/nameservice-strict",
+			},
+			wantPciBus: false,
+		},
+		{
+			name:         "debian 5.0 drops the usb abstractions",
+			distribution: "debian",
+			version:      5.0,
+			wantErr:      false,
+			wantNoFiles: []string{
+				"abstractions/devices-usb",
+				"abstractions/devices-usb-read",
+			},
+			wantPciBus: true,
 		},
 		// {
 		// 	name:         "ubuntu 5.0 drops su and sudo",
@@ -89,9 +111,13 @@ func TestConfigure_Apply(t *testing.T) {
 			distribution: "debian",
 			version:      4.0,
 			wantErr:      false,
-			wantFiles:    []string{"wg", "dig", "tunables/multiarch.d/base"},
-			wantNoFiles:  []string{"fapp", "fbwrap"},
-			wantPciBus:   true,
+			wantFiles: []string{
+				"groups/network/wg",
+				"profiles-a-f/dig",
+				"tunables/multiarch.d/base",
+				"abstractions/devices-usb",
+			},
+			wantPciBus: true,
 		},
 		{
 			name:         "unsupported distribution",

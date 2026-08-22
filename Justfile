@@ -18,9 +18,6 @@ pkgname := "apparmor.d"
 gpgkey := "06A26D531D56C42D66805049C5469996F0DF68EC"
 sign := "false"
 
-# Prebuild options, only used for the `dev` install target
-opt := "complain"
-
 # The following variables are only  used for the development and test VM
 
 # Admin username
@@ -73,7 +70,6 @@ Build variables available:
     build        " + BLUE + "# Build directory (default: " + build + ")" + NORMAL + "
     destdir      " + BLUE + "# Installation destination (default: " + destdir + ")" + NORMAL + "
     pkgdest      " + BLUE + "# Package output directory (default: " + pkgdest + ")" + NORMAL + "
-    opt          " + BLUE + "# Prebuild option, only used for the dev install target (default: " + opt + ")" + NORMAL + "
 
 Development variables available:
     username     " + BLUE + "# VM username (default: " + username + ")" + NORMAL + "
@@ -105,32 +101,7 @@ build-aa-flatpak:
 # Prebuild the profiles
 [group('build')]
 prebuild: build
-	./{{build}}/prebuild --buildir {{build}} --future
-
-# Prebuild the profiles in FSP mode
-[group('build')]
-prebuild-fsp: build
-	@./{{build}}/prebuild --buildir {{build}} --future --full
-
-# Prebuild the profiles in enforced mode
-[group('build')]
-enforce: build
-	@./{{build}}/prebuild --buildir {{build}}
-
-# Prebuild the profiles in enforce mode (test)
-[group('build')]
-enforce-test: build
-	@./{{build}}/prebuild --buildir {{build}} --test
-
-# Prebuild the profiles in complain mode
-[group('build')]
-complain: build
-	./{{build}}/prebuild --buildir {{build}} --complain
-
-# Prebuild the profiles in complain mode (test)
-[group('build')]
-complain-test: build
-	@./{{build}}/prebuild --buildir {{build}} --complain --test
+	./{{build}}/prebuild --buildir {{build}}
 
 # Install base abstraction, tunable and booleans
 [group('install')]
@@ -170,7 +141,7 @@ install-aa-flatpak:
 
 # Install prebuilt profiles
 [group('install')]
-install-prebuilt: _install-fixup
+install-profiles: _install-fixup
 	#!/usr/bin/env bash
 	set -eu -o pipefail
 	mapfile -t aa < <(find "{{build}}/apparmor.d" -type f -not -path "*/abstractions/*" -not -path "*/tunables/*" -printf "%P\n")
@@ -193,23 +164,18 @@ _install-fixup:
 	@mkdir -p "{{destdir}}/etc/apparmor.d/disable"
 	@ln -sf ../hostname "{{destdir}}/etc/apparmor.d/disable/hostname"
 
-# Install prebuild profiles
-[group('install')]
-install: install-tools _install-fixup
+# Resolve a file name, or a partial path, to its path in the build directory
+_resolve name:
 	#!/usr/bin/env bash
 	set -eu -o pipefail
-	mapfile -t aa < <(find "{{build}}/apparmor.d" -type f -printf "%P\n")
-	for file in "${aa[@]}"; do
-		install -Dm0644 "{{build}}/apparmor.d/$file" "{{destdir}}/etc/apparmor.d/$file"
-	done
-	for file in "{{build}}/systemd/system/"*; do
-		service="$(basename "$file")"
-		install -Dm0644 "$file" "{{destdir}}/usr/lib/systemd/system/$service.d/apparmor.conf"
-	done
-	for file in "{{build}}/systemd/user/"*; do
-		service="$(basename "$file")"
-		install -Dm0644 "$file" "{{destdir}}/usr/lib/systemd/user/$service.d/apparmor.conf"
-	done
+	root="{{build}}/apparmor.d"
+	mapfile -t found < <(find "$root" -type f -path "*/{{name}}")
+	case ${#found[@]} in
+		1) echo "${found[0]#"$root/"}" ;;
+		0) echo "error: no file matching '{{name}}' in $root" >&2; exit 1 ;;
+		*) echo "error: '{{name}}' is ambiguous, give a longer path:" >&2
+		   printf '  %s\n' "${found[@]#"$root/"}" >&2; exit 1 ;;
+	esac
 
 # Locally install prebuild profiles
 [group('install')]
@@ -226,21 +192,29 @@ local +names:
 		install -Dm0644 "{{build}}/apparmor.d/tunables/$file" "{{destdir}}/etc/apparmor.d/tunables/$file"
 	done;
 	echo "Warning: profile dependencies fallback to unconfined."
-	for file in {{names}}; do
-		grep -Ei 'rPx|rpx' "{{build}}/apparmor.d/$file" || true
-		sed -i -e "s/rPx/rPUx/g" "{{build}}/apparmor.d/$file"
-		install -Dvm0644 "{{build}}/apparmor.d/$file" "{{destdir}}/etc/apparmor.d/$file"
+	for name in {{names}}; do
+		rel="$(just _resolve "$name")"
+		src="{{build}}/apparmor.d/$rel"
+		case "$rel" in groups/*|profiles-*) rel="${rel##*/}" ;; esac
+		grep -Ei 'rPx|rpx' "$src" || true
+		sed -i -e "s/rPx/rPUx/g" "$src"
+		install -Dvm0644 "$src" "{{destdir}}/etc/apparmor.d/$rel"
 	done;
 	systemctl restart apparmor.service || journalctl -xeu apparmor.service
 
 # Prebuild, install, and load a dev profile
 [group('install')]
 dev +names:
-	go run ./cmd/prebuild --{{opt}}
-	for file in {{names}}; do \
-		sudo install -Dm644 -v {{build}}/apparmor.d/$file /etc/apparmor.d/$file; \
+	#!/usr/bin/env bash
+	set -eu -o pipefail
+	go run ./cmd/prebuild --buildir {{build}}
+	for name in {{names}}; do
+		rel="$(just _resolve "$name")"
+		src="{{build}}/apparmor.d/$rel"
+		case "$rel" in groups/*|profiles-*) rel="${rel##*/}" ;; esac
+		sudo install -Dm644 -v "$src" "/etc/apparmor.d/$rel"
+		sudo aa-mode -c "/etc/apparmor.d/$rel"
 	done
-	sudo systemctl restart apparmor.service || sudo journalctl -xeu apparmor.service
 
 # Build the package on Arch Linux
 [group('packages')]
@@ -308,7 +282,7 @@ dpkg: build-dpkg
 
 # Build & install apparmor.d on OpenSUSE based systems
 [group('packages')]
-rpm: build-rpm
+rpm dist="opensuse": (build-rpm dist)
 	@sudo rpm -ivh --force \
 		{{pkgdest}}/{{pkgname}}-`just version`-*.rpm \
 		{{pkgdest}}/{{pkgname}}-base-`just version`-*.rpm \
@@ -427,7 +401,7 @@ create osinfo flavor:
 		--memorybacking source.type=memfd,access.mode=shared \
 		--disk path={{vm}}/{{prefix}}{{osinfo}}-{{flavor}}.qcow2,format=qcow2,bus=virtio \
 		--filesystem "`pwd`,0a31bc478ef8e2461a4b1cc10a24cc4",accessmode=passthrough,driver.type=virtiofs \
-		--os-variant "{{ if osinfo == "opensuse" { "opensusetumbleweed" } else if osinfo == "fedora44" { "fedora42" } else { osinfo } }}" \
+		--os-variant "`just _get_osinfo {{osinfo}}`" \
 		--graphics spice \
 		--audio id=1,type=spice \
 		--sound model=ich9 \
@@ -645,6 +619,7 @@ commit:
 	mv debian/changelog.tmp debian/changelog
 	sed -i "s/^pkgver=.*/pkgver=$version/" PKGBUILD
 	sed -i "s/^Version:.*/Version:        $version/" "dists/{{pkgname}}-opensuse.spec"
+	sed -i "s/^Version:.*/Version:        $version/" "dists/{{pkgname}}-fedora.spec"
 	# Stage only the version-bump line, rebuilt from HEAD, so any other
 	# working-tree changes in these files never leak into the release commit.
 	stage_bump() {
@@ -655,6 +630,7 @@ commit:
 	}
 	stage_bump PKGBUILD "s/^pkgver=.*/pkgver=$version/"
 	stage_bump "dists/{{pkgname}}-opensuse.spec" "s/^Version:.*/Version:        $version/"
+	stage_bump "dists/{{pkgname}}-fedora.spec" "s/^Version:.*/Version:        $version/"
 	git add debian/changelog
 	git commit -S -m "Release {{pkgname}} v$version"
 	git tag -a "v$version" -m "{{pkgname}} v$version" --local-user={{gpgkey}}
@@ -700,3 +676,13 @@ _get_ip osinfo flavor:
 	@virsh --quiet --readonly {{c}} domifaddr {{prefix}}{{osinfo}}-{{flavor}} | \
 		head -1 | \
 		grep -E -o '([[:digit:]]{1,3}\.){3}[[:digit:]]{1,3}'
+
+_get_osinfo osinfo:
+	#!/usr/bin/env python3
+	osinfo = {
+		"debian14": "debian13",
+		"fedora44": "fedora42",
+		"opensuse": "opensusetumbleweed",
+		"ubuntu26.04": "ubuntu25.10",
+	}
+	print(osinfo.get("{{osinfo}}", ""))

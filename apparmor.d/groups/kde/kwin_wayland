@@ -10,6 +10,7 @@ include <tunables/global>
 profile kwin_wayland @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/base>
   include <abstractions/app-launcher-user>
+  include <abstractions/audio-client>
   include <abstractions/bus-session>
   include <abstractions/bus/system/org.freedesktop.locale1>
   include <abstractions/fontconfig-cache-write>
@@ -128,7 +129,12 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{user_share_dirs}/plasma/desktoptheme/{,**} r,
   owner @{user_share_dirs}/smod/decorations/{,**} r,
 
-  owner @{run}/user/@{uid}/pipewire-@{int} rw,
+  owner @{user_state_dirs}/kglobalshortcutsstaterc rw,
+  owner @{user_state_dirs}/kglobalshortcutsstaterc.@{rand6} rwl,
+  owner @{user_state_dirs}/kglobalshortcutsstaterc.lock rwlk,
+
+  owner @{run}/user/@{uid}/kwin-xwayland-eis-socket.@{int} rw,
+  owner @{run}/user/@{uid}/kwin-xwayland-eis-socket.@{int}.lock rwk,
 
   owner /dev/shm/.org.chromium.Chromium.@{rand6} rw,
 
@@ -143,6 +149,7 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   @{run}/udev/data/+acpi:* r,             # Exposes ACPI objects (power buttons, batteries, thermal)
   @{run}/udev/data/+dmi:* r,              # for motherboard info
   @{run}/udev/data/+hid:* r,              # For Human Interface Device (mice, controllers, drawing tablets, scanners)
+  @{run}/udev/data/+i2c:* r,              # For Inter-Integrated Circuit, low-speed peripherals (sensors, EEPROMs, etc.)
   @{run}/udev/data/+input:input@{int} r,  # for mouse, keyboard, touchpad
   @{run}/udev/data/+pci:* r,              # Identifies all PCI devices (CPU, GPU, Network, Disks, USB, etc.)
   @{run}/udev/data/+platform:* r,         # Identifies onboard devices (laptop/board model, power controllers, thermal sensors)
@@ -154,6 +161,7 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   @{run}/udev/data/c13:@{int}  r,         # for /dev/input/*
   @{run}/udev/data/c189:@{int} r,         # for /dev/bus/usb/**
 
+        @{PROC}/@{pid}/mountinfo r,
   owner @{PROC}/@{pid}/task/@{tid}/comm rw,
 
   @{att}/dev/input/event@{int} rw,

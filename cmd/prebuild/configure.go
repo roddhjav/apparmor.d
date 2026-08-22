@@ -70,16 +70,6 @@ func (p Configure) Apply() ([]string, error) {
 
 	}
 
-	if p.Version < 4.1 {
-		remove := []string{
-			// Require priority support
-			"fbwrap",
-			"fapp",
-		}
-		if err := p.removeFiles(remove); err != nil {
-			return res, err
-		}
-	}
 	if p.Version >= 4.1 {
 		remove := []string{
 			// Remove files upstreamed in 4.1
@@ -89,7 +79,7 @@ func (p Configure) Apply() ([]string, error) {
 			"tunables/multiarch.d/base",
 
 			// Direct upstream contributed profiles, similar to ours
-			"wg",
+			"groups/network/wg",
 		}
 		if err := p.removeFiles(remove); err != nil {
 			return res, err
@@ -108,24 +98,26 @@ func (p Configure) Apply() ([]string, error) {
 			}
 		}
 	}
+
 	if p.Version >= 5.0 {
 		remove := []string{
-			// Direct upstream contributed profiles, similar to ours
-			"dig",
-			"free",
-			"nslookup",
+			// Direct upstream contributed profiles, similar to ours, so we drop ours
+			"profiles-a-f/dig",
+			"groups/procps/free",
+			"profiles-m-r/nslookup",
 		}
+
 		// Ubuntu uses sudo-rs as sudo implementation.
-		// if tasks.Distribution == "ubuntu" {
-		// 	remove = append(remove,
-		// 		"su",   // su-rs is the new su
-		// 		"sudo", // sudo-rs is the new sudo
-		// 	)
-		// }
+		if tasks.Distribution == "ubuntu" {
+			remove = append(remove,
+				"groups/utils/su",   // su-rs is the new su
+				"profiles-s-z/sudo", // sudo-rs is the new sudo
+			)
+		}
 		if err := p.removeFiles(remove); err != nil {
 			return res, err
 		}
-
 	}
+
 	return res, nil
 }

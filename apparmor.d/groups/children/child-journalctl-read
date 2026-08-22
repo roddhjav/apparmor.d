@@ -1,0 +1,23 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+profile child-journalctl-read flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/journal-read>
+
+  capability sys_resource,
+
+  @{bin}/journalctl mr,
+
+  @{PROC}/sys/kernel/random/boot_id r,
+
+  include if exists <local/child-journalctl-read>
+}
+
+# vim:syntax=apparmor

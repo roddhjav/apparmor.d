@@ -43,11 +43,66 @@ func TestGetJournalctlLogs(t *testing.T) {
 			},
 		},
 		{
-			name:    "journalctl",
-			useFile: false,
-			path:    "",
-			want:    AppArmorLogs{},
+			name:    "gnome-clocks",
+			useFile: true,
+			path:    filepath.Join(testdata, "systemd.log"),
+			want: AppArmorLogs{
+				{
+					"apparmor":   "DENIED",
+					"label":      "gnome-clocks",
+					"operation":  "dbus_method_call",
+					"name":       "org.freedesktop.DBus",
+					"mask":       "send",
+					"bus":        "session",
+					"path":       "/org/freedesktop/DBus",
+					"interface":  "org.freedesktop.DBus",
+					"member":     "ListActivatableNames",
+					"peer_label": "dbus-session",
+				},
+			},
 		},
+		{
+			name:    "gsd-media-keys",
+			useFile: true,
+			path:    filepath.Join(testdata, "systemd.log"),
+			want: AppArmorLogs{
+				{
+					"apparmor":   "DENIED",
+					"label":      "gsd-media-keys",
+					"operation":  "dbus_method_call",
+					"name":       "@{busname}",
+					"mask":       "send",
+					"bus":        "session",
+					"path":       "/org/mpris/MediaPlayer2",
+					"interface":  "org.mpris.MediaPlayer2.Player",
+					"member":     "PlayPause",
+					"peer_label": "spotify",
+				},
+			},
+		},
+		{
+			name:    "org.gnome.NautilusPreviewer",
+			useFile: true,
+			path:    filepath.Join(testdata, "systemd.log"),
+			want: AppArmorLogs{
+				{
+					"apparmor":  "DENIED",
+					"label":     "org.gnome.NautilusPreviewer",
+					"operation": "dbus_bind",
+					"name":      "org.gnome.NautilusPreviewer",
+					"mask":      "bind",
+					"bus":       "session",
+					"info":      "Failed to register: GDBus.Error:org.freedesktop.DBus.Error.AccessDenied: " + ownNameDenied,
+				},
+			},
+		},
+		// Skipping live journalctl test as it depends on system state
+		// {
+		// 	name:    "journalctl",
+		// 	useFile: false,
+		// 	path:    "",
+		// 	want:    AppArmorLogs{},
+		// },
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

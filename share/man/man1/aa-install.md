@@ -57,6 +57,12 @@ With no action flag, print the installation status summary.
 
 : Remove all profiles recorded in the manifest, then remove the manifest.
 
+`--verbose`, `-v`
+
+: Print the build details when installing. By default **aa-install** only
+  reports warnings and errors, so that it stays quiet when run from a package
+  manager hook.
+
 `--no-reload`
 
 : Do not reload the profiles after modifying them.
@@ -91,6 +97,9 @@ Each tier may contain:
   sets the default deploy mode (**enforce** or **complain**). Overridden by
   **--enforce** or **--complain**. Defaults to **complain**. The `include`
   key sets how the *include.d* files are applied: **default** or **full**.
+  The `reload` key sets whether the profiles are reloaded after being
+  modified: **yes** or **no**. Overridden by **--no-reload**. Defaults to
+  **yes**.
 
 *flags.d/\*.conf*
 

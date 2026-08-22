@@ -166,7 +166,7 @@ func TestRunners_BuildBranches(t *testing.T) {
 				if err := os.Symlink(r.RootApparmor.Join("missing").String(), dangling.String()); err != nil {
 					t.Fatal(err)
 				}
-				r.Builders.Add(builder.NewComplain())
+				r.Builders.Add(builder.NewDeployMode("complain", nil))
 				r.Directives.Register(directive.NewDbus())
 			},
 			want:    "profile foo /usr/bin/foo flags=(complain) {\n}\n",

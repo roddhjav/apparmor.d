@@ -87,7 +87,7 @@ func NewSelectInstalled(include ...string) *SelectInstalled {
 	return &SelectInstalled{
 		BaseTask: tasks.BaseTask{
 			Keyword: "installed",
-			Msg:     "Only keep profiles for installed programs",
+			Msg:     "Keep profiles for installed programs",
 		},
 		include: set,
 	}

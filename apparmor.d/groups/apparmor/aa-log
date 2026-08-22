@@ -17,7 +17,7 @@ profile aa-log @{exec_path} flags=(attach_disconnected) {
 
   @{exec_path} mr,
 
-  @{bin}/journalctl  Cx -> journalctl,
+  @{bin}/journalctl  Px -> child-journalctl-read,
 
   /usr/share/tcltk/{,**} r,
 
@@ -27,26 +27,6 @@ profile aa-log @{exec_path} flags=(attach_disconnected) {
   @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/*.scope/cpu.max r,
 
   /dev/tty@{u8} rw,
-
-  profile journalctl {
-    include <abstractions/base>
-    include <abstractions/consoles>
-
-    capability mknod,
-    capability sys_resource,
-
-    @{bin}/journalctl mr,
-
-    /etc/machine-id r,
-    /var/lib/dbus/machine-id r,
-
-    /{run,var}/log/journal/ r,
-    /{run,var}/log/journal/@{hex32}/{,*} r,
-
-    @{PROC}/sys/kernel/random/boot_id r,
-
-    include if exists <local/aa-log_journalctl>
-  }
 
   include if exists <local/aa-log>
 }
