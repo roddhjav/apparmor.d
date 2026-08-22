@@ -86,7 +86,7 @@ func (p Configure) Apply() ([]string, error) {
 		}
 
 		// @{pci_bus} was upstreamed in 5.0, backported to 4.1, but debian is slower.
-		if tasks.Distribution != "debian" {
+		if tasks.Distribution != "debian" || p.Version >= 5.0 {
 			path := p.RootApparmor.Join("tunables/multiarch.d/system")
 			out, err := path.ReadFileAsString()
 			if err != nil {
