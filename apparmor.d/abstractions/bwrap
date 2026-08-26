@@ -27,6 +27,7 @@
   network netlink raw,
 
   mount               options=(rw rbind)                              -> /newroot/{,**},
+  mount               options=(rw rbind)                /oldroot/proc/ -> @{PROC}/,
   mount               options=(rw rbind)                /tmp/newroot/ -> /tmp/newroot/,
   mount fstype=devpts options=(rw nosuid noexec)               devpts -> /newroot/dev/pts/,
   mount fstype=proc   options=(rw nosuid nodev noexec)           proc -> /newroot/@{PROC}/,
@@ -49,7 +50,9 @@
 
   @{bin}/bwrap mr,
 
-  owner /newroot/{,**} w,
+  /newroot/{,**} r,
+
+  owner /newroot/{,**} rw,
 
   owner /tmp/newroot/ w,
   owner /tmp/oldroot/ w,
@@ -62,6 +65,7 @@
         @{PROC}/sys/kernel/overflowuid r,
         @{PROC}/sys/user/max_user_namespaces r,
         @{PROC}/sys/kernel/seccomp/actions_avail r,
+  owner @{PROC}/ w,      
   owner @{PROC}/@{pid}/fd/ r,
 
         @{att}@{PROC}/sys/user/max_user_namespaces rw,
