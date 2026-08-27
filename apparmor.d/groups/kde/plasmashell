@@ -12,6 +12,7 @@ profile plasmashell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/app-launcher-user>
   include <abstractions/audio-client>
   include <abstractions/bus-session>
+  include <abstractions/bus/session/com.canonical.Unity.LauncherEntry>
   include <abstractions/bus/system/org.freedesktop.login1>
   include <abstractions/bus/system/org.freedesktop.UDisks2>
   include <abstractions/consoles>
@@ -58,16 +59,25 @@ profile plasmashell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   # Talk with plasmashell
 
   #aa:dbus talk bus=system name=org.freedesktop.NetworkManager label=NetworkManager
+  #aa:dbus talk bus=system name=org.freedesktop.RealtimeKit1 label=rtkit-daemon
 
+  #aa:dbus talk bus=session name=org.freedesktop.PowerManagement label=kde-powerdevil
+  #aa:dbus talk bus=session name=org.freedesktop.systemd1 label="@{p_systemd_user}"
   #aa:dbus talk bus=session name=org.kde.ActivityManager path=/ActivityManager{,**} label=kactivitymanagerd
   #aa:dbus talk bus=session name=org.kde.kdeconnect path=/ label=kdeconnectd
-  #aa:dbus talk bus=session name=org.kde.KeyboardLayouts path=/Layouts label=kded
-  #aa:dbus talk bus=session name=org.kde.KGlobalAccel path=/kglobalaccel label="{kglobalacceld,kwin_wayland}"
+  #aa:dbus talk bus=session name=org.kde.KeyboardLayouts path=/Layouts label=kwin_wayland
+  #aa:dbus talk bus=session name=org.kde.K[gG]lobalAccel path=/kglobalaccel label="{kglobalacceld,kwin_wayland}"
   #aa:dbus talk bus=session name=org.kde.KSplash path=/KSplash label=ksplashqml
   #aa:dbus talk bus=session name=org.kde.KWin path=/{,**} label="kwin_{wayland,x11}"
   #aa:dbus talk bus=session name=org.kde.NightColor path=/ColorCorrect label="kwin_{wayland,x11}"
+  #aa:dbus talk bus=session name=org.kde.ScreenBrightness label=kde-powerdevil
   #aa:dbus talk bus=session name=org.kde.Solid.PowerManagement label=kde-powerdevil
   #aa:dbus talk bus=session name=org.kde.StatusNotifierWatcher path=/StatusNotifierWatcher label=kded
+
+  dbus send bus=session path=/modules/kdeconnect
+       interface=org.kde.kdeconnect.daemon
+       member=devices
+       peer=(name=org.kde.kdeconnect, label=unconfined),
 
   @{exec_path} mr,
 
