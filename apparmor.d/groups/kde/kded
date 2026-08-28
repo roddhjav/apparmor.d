@@ -68,6 +68,7 @@ profile kded @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   # only dbus directive is used for this. Later, some communications could be
   # restricted.
 
+  #aa:dbus talk bus=system name=org.kde.kameleon.qmk.helper label=kameleon-qmk-helper
   #aa:dbus talk bus=system name=org.freedesktop.bolt label=boltd
   #aa:dbus talk bus=system name=org.freedesktop.ModemManager1 label=ModemManager
   #aa:dbus talk bus=system name=org.freedesktop.NetworkManager label=NetworkManager
@@ -146,17 +147,16 @@ profile kded @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
   owner @{HOME}/.var/ w,
   owner @{HOME}/.var/app/ w,
+  owner @{HOME}/.var/app/**/ w,
   owner @{HOME}/.var/app/**/org.kde.plasma.browser_integration.json w,
   owner @{HOME}/.var/app/**/plasma-browser-integration-host w,
-  owner @{HOME}/.var/app/org.mozilla.firefox/**/ w,
 
-        @{user_cache_dirs}/ksycoca{5,6}_* rwlk -> @{user_cache_dirs}/#@{int},
+        @{user_cache_dirs}/ksycoca[56]_* rwlk -> @{user_cache_dirs}/#@{int},
   owner @{user_cache_dirs}/plasmashell/ rw,
   owner @{user_cache_dirs}/plasmashell/** rwlk ->  @{user_cache_dirs}/plasmashell/**,
   owner @{user_cache_dirs}/update-manager-core/meta-release* rw,
 
-        @{user_config_dirs}/kcookiejarrc.lock rwk,
-        @{user_config_dirs}/kcookiejarrc{,.@{rand6}} rwl -> @{user_config_dirs}/#@{int},
+        @{user_config_dirs}/kcookiejarrc@{atomic} rwlk,
   owner @{user_config_dirs}/*rc rwl -> @{user_config_dirs}/#@{int},
   owner @{user_config_dirs}/*rc.@{rand6} rwl -> @{user_config_dirs}/#@{int},
   owner @{user_config_dirs}/*rc.lock rwk,
@@ -167,16 +167,15 @@ profile kded @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{user_config_dirs}/libaccounts-glib/accounts.db{,-shm,-wal,-journal} rwk,
   owner @{user_config_dirs}/menus/{,**} r,
   owner @{user_config_dirs}/plasma* r,
-  owner @{user_config_dirs}/Trolltech.conf.lock rwk,
-  owner @{user_config_dirs}/Trolltech.conf{,.@{rand6}} rwl,
+  owner @{user_config_dirs}/Trolltech.conf@{atomic} rwlk,
   owner @{user_config_dirs}/xsettingsd/{,**} rw,
   owner @{user_config_dirs}/kcmfonts r,
   owner @{user_config_dirs}/Kvantum/{,**} r,
 
-  owner @{user_share_dirs}/icc/{,edid-*} r,
+  owner @{user_share_dirs}/icc/ r,
+  owner @{user_share_dirs}/icc/edid-@{hex32}.icc r,
   owner @{user_share_dirs}/kcookiejar/#@{int} rw,
-  owner @{user_share_dirs}/kcookiejar/cookies.lock rwk,
-  owner @{user_share_dirs}/kcookiejar/cookies{,.@{rand6}} rwlk,
+  owner @{user_share_dirs}/kcookiejar/cookies@{atomic} rwlk,
   owner @{user_share_dirs}/kded{5,6}/{,**} rw,
   owner @{user_share_dirs}/kscreen/{,**} rwl,
   owner @{user_share_dirs}/kservices{5,6}/{,**} r,
@@ -186,12 +185,12 @@ profile kded @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{user_share_dirs}/user-places.xbel r,
   owner @{user_share_dirs}/aurorae/themes/Layan/* r,
 
-  owner @{user_state_dirs}/plasmashellstaterc{,*} rwlk,
+  owner @{user_state_dirs}/plasmashellstaterc@{atomic} rwlk,
 
         @{run}/mount/utab r,
         @{run}/user/@{uid}/gvfs/ r,
   owner @{run}/user/@{uid}/#@{int} rw,
-  owner @{run}/user/@{uid}/kded{5,6}*kioworker.socket rwl,
+  owner @{run}/user/@{uid}/kded[56]*kioworker.socket rwl,
 
   owner @{tmp}/#@{int} rw,
   owner @{tmp}/kded6.@{rand6} rwl -> /tmp/#@{int},
