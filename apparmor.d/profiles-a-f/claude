@@ -23,6 +23,7 @@ include <tunables/global>
 
 @{exec_path}  = @{bin}/claude /opt/claude-code/bin/claude
 @{exec_path} += @{user_bin_dirs}/claude
+@{exec_path} +=  @{user_config_dirs}/Claude/claude-code/@{version}/claude
 @{exec_path} += @{user_share_dirs}/claude/versions/@{version}
 @{exec_path} += @{code_ext_dirs}/anthropic.claude-code-*/resources/native-binary/claude
 profile claude @{exec_path} flags=(attach_disconnected) {
@@ -38,12 +39,12 @@ profile claude @{exec_path} flags=(attach_disconnected) {
   network inet6 stream,
   network netlink raw,
 
+  ptrace read peer=claude//*,
+
   signal send set=term peer=git,
   signal receive set=term peer=code,
 
   unix (send receive) type=stream peer=(label=code),
-  unix (send receive) type=stream peer=(label=git),
-  deny unix (send receive) type=stream peer=(label=ssh),
 
   @{exec_path} mrix,
 
@@ -95,6 +96,9 @@ profile claude @{exec_path} flags=(attach_disconnected) {
 
   owner @{user_share_dirs}/claude/{,**} rw,
 
+  owner @{run}/user/@{uid}/cc-socks/ w,
+  owner @{run}/user/@{uid}/cc-socks/@{int}.sock w,
+
         /tmp/ r,
   owner @{tmp}/.@{hex16}-@{int8}.node mrw,
   owner @{tmp}/claude{,-*} rw,
@@ -125,12 +129,18 @@ profile claude @{exec_path} flags=(attach_disconnected) {
   owner @{PROC}/@{pid}/mountinfo r,
   owner @{PROC}/@{pid}/stat r,
   owner @{PROC}/@{pid}/statm r,
+  owner @{PROC}/@{pid}/uid_map r,
 
   # Safety mechanisms
   deny @{bin}/ssh x,
   deny /etc/machine-id r,
   deny / r,
   deny /home/ r,
+
+  # Dark patterns: if you want integration with browsers, install it explicitly.
+  # https://www.thatprivacyguy.com/blog/anthropic-spyware/
+  deny owner @{user_config_dirs}/google-chrome/{,**} rw,
+  deny owner @{user_config_dirs}/microsoft-edge/{,**} rw,
 
   # file_inherit
   deny owner @{code_config_dirs}/logs/{,**} w,
@@ -156,6 +166,7 @@ profile claude @{exec_path} flags=(attach_disconnected) {
     ptrace read,
 
     unix (send receive) type=stream peer=(label=claude),
+    unix (send receive) type=stream peer=(label=claude-desktop),
 
     signal receive peer=claude,
 
@@ -166,8 +177,9 @@ profile claude @{exec_path} flags=(attach_disconnected) {
     priority=1 @{ldd_path}        Px -> claude//ldd,
 
     owner @{HOME}/.claude/{,**} r,
-    owner @{HOME}/.claude/shell-snapshots/* rw,
+    owner @{HOME}/.claude/* w,
     owner @{HOME}/.claude/plugins/{,**} rwlk,
+    owner @{HOME}/.claude/shell-snapshots/* rw,
 
     owner @{code_config_dirs}/logs/{,**} w,
     owner @{user_config_dirs}/gh/*.yml r,
@@ -229,8 +241,14 @@ profile claude @{exec_path} flags=(attach_disconnected) {
     include <abstractions/base>
     include <abstractions/app/git>
 
+    signal receive set=term peer=claude,
+
+    unix (send receive) type=stream peer=(label=claude),
+
     owner @{HOME}/.claude/ r,
     owner @{HOME}/.claude/** rwlk,
+
+    owner @{user_config_dirs}/Claude/** rw,
 
     owner @{user_projects_dirs}/** rw,
 
@@ -260,6 +278,9 @@ profile claude @{exec_path} flags=(attach_disconnected) {
 
     deny owner @{HOME}/@{XDG_SSH_DIR}/{,**} rwlk,
 
+    # file_inherit
+    deny owner /dev/shm/.org.chromium.Chromium.@{rand6} rw,
+
     include if exists <local/claude_ssh>
   }
 
@@ -267,6 +288,7 @@ profile claude @{exec_path} flags=(attach_disconnected) {
     include <abstractions/base>
 
     unix (send receive) type=stream peer=(label=claude),
+    unix (send receive) type=stream peer=(label=claude-desktop),
 
     # Only runs: `flatpak --installations`
     @{bin}/flatpak mr,
