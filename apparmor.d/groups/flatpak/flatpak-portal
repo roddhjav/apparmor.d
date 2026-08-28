@@ -1,5 +1,5 @@
 # apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2022-2024 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2022-2026 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/5.0>,
@@ -7,11 +7,12 @@ abi <abi/5.0>,
 include <tunables/global>
 
 @{exec_path} = @{lib}/flatpak-portal
-profile flatpak-portal @{exec_path} flags=(attach_disconnected) {
+profile flatpak-portal @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/base>
   include <abstractions/bus-session>
   include <abstractions/bus-system>
   include <abstractions/bus/session/org.freedesktop.impl.portal.PermissionStore>
+  include <abstractions/consoles>
   include <abstractions/mime>
   include <abstractions/nameservice-strict>
   include <abstractions/network-manager-observe>
@@ -36,7 +37,7 @@ profile flatpak-portal @{exec_path} flags=(attach_disconnected) {
 
   @{exec_path} mr,
 
-  @{bin}/flatpak rPx,
+  @{bin}/flatpak Px,
 
   /usr/share/xdg-desktop-portal/portals/{,*.portal} r,
 
@@ -46,6 +47,7 @@ profile flatpak-portal @{exec_path} flags=(attach_disconnected) {
 
   owner @{att}@{HOME}/.var/app/*/.local/share/*/logs/* rw,
   owner @{att}@{HOME}/.var/app/*/.local/share/*/**/usr/.ref rw,
+  owner @{HOME}/.var/app/*/sandbox/ w,
 
   owner @{user_config_dirs}/user-dirs.dirs r,
 
