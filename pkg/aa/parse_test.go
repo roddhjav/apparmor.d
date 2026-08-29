@@ -115,6 +115,48 @@ func Test_parseCommaRules(t *testing.T) {
 	}
 }
 
+func Test_splitParagraphs(t *testing.T) {
+	tests := []struct {
+		name string
+		raw  string
+		want []string
+	}{
+		{
+			name: "simple",
+			raw:  "  /a r,\n\n  /b r,\n\n",
+			want: []string{"  /a r,\n\n", "  /b r,\n\n"},
+		},
+		{
+			name: "chain-split-before-else",
+			raw:  "  if \"gnome\" in @{DE} {\n    /a r,\n  }\n\n  } else {\n    /b r,\n  }\n\n",
+			want: []string{"  if \"gnome\" in @{DE} {\n    /a r,\n  }\n\n  } else {\n    /b r,\n  }\n\n"},
+		},
+		{
+			name: "blank-lines-inside-if-block",
+			raw:  "  if \"wayland\" in @{DS} {\n    /a r,\n\n    /b r,\n\n  } else if \"x11\" in @{DS} {\n    /c r,\n\n  }\n\n  /d r,\n\n",
+			want: []string{
+				"  if \"wayland\" in @{DS} {\n    /a r,\n\n    /b r,\n\n  } else if \"x11\" in @{DS} {\n    /c r,\n\n  }\n\n",
+				"  /d r,\n\n",
+			},
+		},
+		{
+			name: "nested-if-with-blank-lines",
+			raw:  "  if \"kde\" in @{DE} {\n    if \"wayland\" in @{DS} {\n      /a r,\n\n    } else {\n      /b r,\n\n    }\n\n  }\n\n  /c r,\n\n",
+			want: []string{
+				"  if \"kde\" in @{DE} {\n    if \"wayland\" in @{DS} {\n      /a r,\n\n    } else {\n      /b r,\n\n    }\n\n  }\n\n",
+				"  /c r,\n\n",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := splitParagraphs(tt.raw); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("splitParagraphs() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
 func Test_tokenizeBlock(t *testing.T) {
 	for _, tt := range testBlocks {
 		t.Run(tt.name, func(t *testing.T) {

@@ -1074,19 +1074,36 @@ func (f *AppArmorProfileFile) Parse(input string) (int, error) {
 func splitParagraphs(input string) []string {
 	var paragraphs []string
 	start := 0
+	depth := 0
 	for i := 0; i+1 < len(input); i++ {
 		if input[i] == '\n' && input[i+1] == '\n' {
 			chunk := input[start : i+2]
-			if len(paragraphs) > 0 && startsWithClosingBrace(chunk) {
+			if len(paragraphs) > 0 && (depth > 0 || startsWithClosingBrace(chunk)) {
 				paragraphs[len(paragraphs)-1] += chunk
 			} else {
 				paragraphs = append(paragraphs, chunk)
 			}
+			depth = conditionDepth(depth, chunk)
 			start = i + 2
 			i++ // skip the second \n
 		}
 	}
 	return paragraphs
+}
+
+// conditionDepth returns the `if`/`else` block nesting depth after chunk,
+// given the depth before it.
+func conditionDepth(depth int, chunk string) int {
+	for _, line := range strings.Split(chunk, "\n") {
+		line = strings.TrimSpace(line)
+		switch {
+		case strings.HasPrefix(line, IF.Tok()+" ") && strings.HasSuffix(line, "{"):
+			depth++
+		case line == "}" && depth > 0:
+			depth--
+		}
+	}
+	return depth
 }
 
 // startsWithClosingBrace reports whether the first non-whitespace,
