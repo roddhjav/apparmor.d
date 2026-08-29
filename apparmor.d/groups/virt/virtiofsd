@@ -26,14 +26,19 @@ profile virtiofsd @{exec_path} flags=(attach_disconnected) {
   capability sys_admin,
   capability sys_resource,
 
-  mount options=(rw, bind) @{PROC}/1/fd/ -> @{PROC},
-  mount options=(rw, nosuid, nodev, noexec, relatime) -> @{PROC},
-  mount options=(rw, make-rslave) /,
+  mount options=(rw bind) @{PROC}/1/fd/ -> @{PROC},
+  mount options=(rw nosuid nodev noexec relatime) -> @{PROC},
+  mount options=(rw make-rslave) /,
 
-  mount options=(rw, rbind) -> @{user_projects_dirs}/{,**/},
-  mount options=(rw, rbind) -> @{user_publicshare_dirs}/{,**/},
-  mount options=(rw, rbind) -> @{user_vm_dirs}/{,**/},
-  mount options=(rw, rbind) -> @{user_vmshare_dirs}/{,**/},
+  mount options=(rw rbind) -> @{user_projects_dirs}/{,**/},
+  mount options=(rw rbind) -> @{user_publicshare_dirs}/{,**/},
+  mount options=(rw rbind) -> @{user_vm_dirs}/{,**/},
+  mount options=(rw rbind) -> @{user_vmshare_dirs}/{,**/},
+
+  mount options=(rw move) -> @{user_projects_dirs}/{,**/},
+  mount options=(rw move) -> @{user_publicshare_dirs}/{,**/},
+  mount options=(rw move) -> @{user_vm_dirs}/{,**/},
+  mount options=(rw move) -> @{user_vmshare_dirs}/{,**/},
 
   umount /,
 
@@ -61,6 +66,8 @@ profile virtiofsd @{exec_path} flags=(attach_disconnected) {
   @{user_vmshare_dirs}/{,**} r,
 
   owner @{run}/libvirt/qemu/*.pid rw,
+
+  owner @{run}/user/@{uid}/cowork-vm-@{int}/virtiofsd-@{int}.sock.pid rwk,
 
   @{att}/@{pid}/mountinfo r,
 

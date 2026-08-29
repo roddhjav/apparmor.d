@@ -1,0 +1,48 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+@{name} = claude-desktop
+@{domain} = org.chromium.Chromium
+@{lib_dirs} = @{lib}/@{name}/
+@{config_dirs} = @{user_config_dirs}/Claude
+@{cache_dirs} = @{user_cache_dirs}/Claude
+
+profile claude-cowork-vm {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  unix (send receive) type=stream peer=(label=virtiofsd),
+
+  @{bin}/qemu-system* mr,
+
+  @{lib_dirs}/resources/smol-bin.x64.img k,
+
+  /usr/share/qemu/{,**} r,
+
+  owner @{config_dirs}/ r,
+  owner @{config_dirs}/** rwk,
+
+  owner @{run}/user/@{uid}/cowork-vm-@{int10}/qmp.sock w,
+  owner @{run}/user/@{uid}/cowork-vm-@{int10}/virtiofsd-0.sock rw,
+
+  /dev/kvm rw,
+  /dev/vhost-vsock rw,
+
+  # file_inherit
+  deny owner /dev/shm/.@{domain}.@{rand6} rw,
+
+  include if exists <local/claude-cowork-vm>
+}
+
+# vim:syntax=apparmor

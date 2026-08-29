@@ -82,7 +82,7 @@ echo 'Optimize=compress-fast' | sudo tee -a /etc/apparmor/parser.conf
     cat <<-EOF | sudo tee /etc/apt/sources.list.d/roddhjav.sources
     Types: deb
     URIs: https://pkg.pujol.io/debian/repo
-    Suites: $(lsb_release -cs)
+    Suites: $(. /etc/os-release && echo "$VERSION_CODENAME")
     Components: main
     Signed-By: /usr/share/keyrings/roddhjav.gpg
     EOF
@@ -111,7 +111,7 @@ echo 'Optimize=compress-fast' | sudo tee -a /etc/apparmor/parser.conf
     cat <<-EOF | sudo tee /etc/apt/sources.list.d/roddhjav.sources
     Types: deb
     URIs: https://pkg.pujol.io/debian/repo
-    Suites: $(lsb_release -cs)
+    Suites: $(. /etc/os-release && echo "$VERSION_CODENAME")
     Components: main
     Signed-By: /usr/share/keyrings/roddhjav.gpg
     EOF

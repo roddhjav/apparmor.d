@@ -11,6 +11,7 @@ include <tunables/global>
 profile drkonqi-coredump-processor @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/consoles>
+  include <abstractions/journal-read>
   include <abstractions/qt>
 
   capability dac_override,
@@ -18,18 +19,9 @@ profile drkonqi-coredump-processor @{exec_path} flags=(attach_disconnected) {
 
   @{exec_path} mr,
 
-  /etc/machine-id r,
-
   /usr/share/icu/@{int}.@{int}/*.dat r,
 
-  /{run,var}/log/journal/ r,
-  /{run,var}/log/journal/@{hex32}/ r,
-  /{run,var}/log/journal/@{hex32}/system.journal r,
-  /{run,var}/log/journal/@{hex32}/system@*.journal* r,
-  /{run,var}/log/journal/@{hex32}/user-@{uid}.journal r,
-  /{run,var}/log/journal/@{hex32}/user-@{uid}@*.journal* r,
-  /{run,var}/log/journal/remote/ r,
-
+  @{att}@{run}/user/@{uid}/drkonqi-coredump-launcher rw,
   owner @{run}/user/@{uid}/drkonqi-coredump-launcher rw,
 
   include if exists <local/drkonqi-coredump-processor>

@@ -1,0 +1,56 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+@{name} = claude-desktop
+@{domain} = org.chromium.Chromium
+@{lib_dirs} = @{lib}/@{name}/
+@{config_dirs} = @{user_config_dirs}/Claude
+@{cache_dirs} = @{user_cache_dirs}/Claude
+
+@{exec_path} = @{lib_dirs}/resources/cowork-linux-helper
+profile claude-cowork-linux-helper @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/ssl_certs>
+
+  network vsock stream,
+  network netlink raw,
+
+  unix (send receive) type=seqpacket peer=(label=claude-desktop),
+  unix (send receive) type=seqpacket peer=(label=claude-desktop//busctl),
+  unix (send receive) type=seqpacket peer=(label=claude-desktop//crashpad_handler),
+  unix (send receive) type=seqpacket peer=(label=ps),
+  unix (send receive) type=stream peer=(label=claude-desktop),
+
+  @{exec_path} mr,
+
+  @{lib}/virtiofsd Px,
+  @{bin}/qemu-system* Px -> claude-cowork-vm,
+
+  @{lib_dirs}/{,**} r,
+  @{lib_dirs}/*.so* mr,
+
+  owner @{config_dirs}/ rw,
+  owner @{config_dirs}/** rwlk,
+
+  owner @{run}/user/@{uid}/ r,
+  owner @{run}/user/@{uid}/claude-cowork-vm.sock rw,
+  owner @{run}/user/@{uid}/cowork-vm-@{int}/{,**} rwlk,
+
+  @{sys}/class/virtio-ports/ r,
+
+        @{PROC}/sys/net/core/somaxconn r,
+  owner @{PROC}/@{pid}/cgroup r,
+  owner @{PROC}/@{pid}/mountinfo r,
+
+  # file_inherit
+  deny owner /dev/shm/.@{domain}.@{rand6} rw,
+
+  include if exists <local/claude-cowork-linux-helper>
+}
+
+# vim:syntax=apparmor

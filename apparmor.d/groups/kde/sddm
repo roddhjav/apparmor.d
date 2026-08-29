@@ -44,39 +44,49 @@ profile sddm @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
   @{exec_path} mr,
 
-  @{bin}/ksecretd                           Px,
-  @{bin}/sddm-greeter{,-qt6}                Px,
-  @{bin}/Xorg                               Px,
-  @{lib}/{,sddm/}sddm-helper               rix,
-  @{lib}/@{multiarch}/sddm/sddm-helper     rix,
+  @{bin}/ksecretd                             Px,
+  @{bin}/kwalletd[56]                         Px,
+  @{bin}/sddm-greeter{,-qt6}                  Px,
+  @{bin}/Xorg                                 Px,
+  @{lib}/{,sddm/}sddm-helper                 rix,
+  @{lib}/@{multiarch}/sddm/sddm-helper       rix,
 
   # Hanlde all sddm/scripts
-  @{shells_path}                            Cx -> shell,
-  @{etc_ro}/sddm/wayland-session            Px,
-  @{etc_ro}/sddm/Xsession                   Px,
-  @{etc_ro}/X11/xdm/Xsession                Px,
-  @{etc_ro}/X11/xdm/Xsetup                 rix,
-  /usr/share/sddm/scripts/wayland-session  rix,
-  /usr/share/sddm/scripts/Xsession         rix,
-  /usr/share/sddm/scripts/Xsetup           rix,
-  /usr/share/sddm/scripts/Xstop            rix,
+  @{shells_path}                              Cx -> shell,
+  /usr/share/sddm/scripts/Xsetup             rix,
+  /usr/share/sddm/scripts/Xstop              rix,
+  /usr/share/sddm/scripts/Xsession           rix,
 
-  if "x11" in @{DS} {
-    @{bin}/xmodmap                         PUx,
-    @{bin}/xrdb                             Px,
-    @{bin}/xset                             Px,
-    @{bin}/xsetroot                         Px,
-    @{sbin}/checkproc                      rix,
+  if "wayland" in @{DS} {
+    @{lib}/{,sddm/}sddm-helper-start-wayland rix,
+    /usr/share/sddm/scripts/wayland-session  rix,
+    @{etc_ro}/sddm/wayland-session            Px,
+
+    /usr/share/wayland-sessions/{,*.desktop} r,
+
+    owner @{user_share_dirs}/sddm/wayland-session.log w,
+
+  } else if "x11" in @{DS} {
+    @{bin}/xmodmap                           PUx,
+    @{bin}/xrdb                               Px,
+    @{bin}/xset                               Px,
+    @{bin}/xsetroot                           Px,
+    @{sbin}/checkproc                        rix,
+    @{lib}/{,sddm/}sddm-helper-start-x11user rix,
+
+    @{etc_ro}/sddm/Xsession                   Px,
+    @{etc_ro}/X11/xdm/Xsession                Px,
+    @{etc_ro}/X11/xdm/Xsetup                 rix,
+    @{etc_ro}/X11/Xmodmap r,
+
+    owner @{user_share_dirs}/sddm/xorg-session.log w,
   }
 
   /usr/share/sddm/themes/** r,
-  /usr/share/wayland-sessions/{,*.desktop} r,
 
-  @{etc_ro}/X11/Xmodmap r,
   /etc/manpath.config r,
   /etc/default/locale r,
   /etc/locale.conf r,
-  /etc/machine-id r,
   /etc/sddm.conf r,
   /etc/sddm.conf.d/{,*} r,
   /etc/shells r,
@@ -110,14 +120,12 @@ profile sddm @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{user_share_dirs}/kwalletd/ rw,
   owner @{user_share_dirs}/kwalletd/kdewallet.salt rw,
   owner @{user_share_dirs}/sddm/ w,
-  owner @{user_share_dirs}/sddm/wayland-session.log w,
-  owner @{user_share_dirs}/sddm/xorg-session.log w,
 
-        /tmp/sddm-* rw,
+        /tmp/sddm-:@{u8}-@{rand6} rw,
         /tmp/xauth_@{rand6} rwl -> /tmp/#@{int},
-  owner @{tmp}/.@{rand6}/{,s} rw,
-  owner @{tmp}/#@{int} rw,
-  owner @{tmp}/sddm-auth* rw,
+  owner /tmp/.@{rand6}/{,s} rw,
+  owner /tmp/#@{int} rw,
+  owner /tmp/sddm-auth-@{uuid} rw,
 
         @{run}/systemd/io.systemd.Login rw,
   @{att}@{run}/systemd/sessions/{,@{l}}@{int}.ref rw,
@@ -151,26 +159,10 @@ profile sddm @{exec_path} flags=(attach_disconnected,mediate_deleted) {
     ptrace read,
 
     @{shells_path} mrix,
-
-    @{bin}/{,e}grep      rix,
-    @{bin}/basename      rix,
-    @{bin}/cat           rix,
-    @{bin}/date          rix,
-    @{bin}/dirname       rix,
+    @{coreutils_path}    rix,
     @{bin}/disable-paste rix,
-    @{bin}/find          rix,
-    @{bin}/id            rix,
     @{bin}/locale        rix,
     @{bin}/manpath       rix,
-    @{bin}/mktemp        rix,
-    @{bin}/pidof         rix,
-    @{bin}/readlink      rix,
-    @{bin}/realpath      rix,
-    @{bin}/sed           rix,
-    @{bin}/tr            rix,
-    @{bin}/tty           rix,
-    @{bin}/uname         rix,
-    @{bin}/xargs         rix,
     @{bin}/xdm           r,
     @{bin}/xmodmap       rix,
     @{bin}/zoxide        rix,
@@ -178,25 +170,50 @@ profile sddm @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
     @{bin}/flatpak        Px,
     @{bin}/pacman         Px -> sddm//pacman,
+    @{bin}/pidof          Px,
+    @{bin}/systemctl      Px -> sddm//systemctl,
     @{bin}/vapoursynth    Px,
 
-    @{bin}/startplasma-wayland  Px,
-    @{bin}/startplasma-x11      Px,
-
+    @{bin}/dbus-run-session                    Px -> dbus-session,
+    @{bin}/dbus-update-activation-environment  Px -> dbus-session,
     @{lib}/plasma-dbus-run-session-if-needed  rix,
     @{lib}/@{multiarch}/libexec/plasma-dbus-run-session-if-needed  rix,
+
+    if "kde" in @{DE} {
+      if "wayland" in @{DS} {
+        @{bin}/startplasma-wayland  Px,
+
+        owner @{user_share_dirs}/sddm/wayland-session.log w,
+
+      } else if "x11" in @{DS} {
+        @{bin}/startplasma-x11      Px,
+
+        owner @{user_share_dirs}/sddm/xorg-session.log w,
+
+      }
+    }
+
+    # Note: the condition are useless, this is experimental.
+    if ${WITH_HYPRLAND} {
+      @{bin}/Hyprland             Px,
+      @{bin}/start-hyprland       Px,
+    }
+    if ${WITH_STARTLXQT} {
+      @{bin}/startlxqt            Px,
+      @{bin}/startlxqtwayland     Px,
+    }
+    if ${WITH_SWAY} {
+      @{bin}/sway                PUx,
+    }
+    if ${WITH_OPENBOX} {
+      @{bin}/openbox-session     PUx,
+    }
 
     /usr/share/sddm/scripts/{,**} r,
 
     /etc/debuginfod/{,*} r,
+    /etc/X11/xinit/xinitrc.d/{,*} r,
 
-    owner @{user_share_dirs}/sddm/wayland-session.log w,
-    owner @{user_share_dirs}/sddm/xorg-session.log w,
-
-          @{PROC}/ r,
-          @{PROC}/@{pids}/ r,
-          @{PROC}/@{pids}/cmdline r,
-          @{PROC}/@{pids}/stat r,
     owner @{PROC}/@{pid}/fd/ r,
 
     include if exists <local/sddm_shell>

@@ -10,7 +10,6 @@ include <tunables/global>
 @{exec_path} += @{lib}/@{multiarch}/{,libexec/}kactivitymanagerd
 profile kactivitymanagerd @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/base>
-  include <abstractions/bus-session>
   include <abstractions/devices-usb>
   include <abstractions/graphics>
   include <abstractions/kde-strict>
@@ -23,20 +22,19 @@ profile kactivitymanagerd @{exec_path} flags=(attach_disconnected,mediate_delete
   #aa:dbus own bus=session name=org.kde.ActivityManager path=/ActivityManager
   #aa:dbus own bus=session name=org.kde.runners.activities
 
+  #aa:dbus talk bus=session name=org.kde.kglobalaccel path=/kglobalaccel label=kwin_wayland
+
   @{exec_path} mr,
 
   /etc/xdg/menus/{,*/} r,
   /usr/share/kf{5,6}/kactivitymanagerd/{,**} r,
   /usr/share/kservices{5,6}/{,**} r,
 
-  /etc/machine-id r,
-
-  owner @{HOME}/@{XDG_DESKTOP_DIR}/ r,
-  owner @{HOME}/@{XDG_DESKTOP_DIR}/*.desktop r,
+  owner @{user_desktop_dirs}/ r,
+  owner @{user_desktop_dirs}/*.desktop r,
 
   owner @{user_config_dirs}/breezerc r,
-  owner @{user_config_dirs}/kactivitymanagerdrc.lock rwk,
-  owner @{user_config_dirs}/kactivitymanagerdrc{,.@{rand6}} rwl -> @{user_config_dirs}/#@{int},
+  owner @{user_config_dirs}/kactivitymanagerdrc@{atomic} rwlk,
   owner @{user_config_dirs}/libreoffice/**.xcu r,
   owner @{user_config_dirs}/menus/{,**} r,
 
@@ -44,7 +42,7 @@ profile kactivitymanagerd @{exec_path} flags=(attach_disconnected,mediate_delete
   owner @{user_share_dirs}/kservices{5,6}/{,**} r,
   owner @{user_share_dirs}/user-places.xbel r,
 
-  owner @{user_state_dirs}/kactivitymanagerdstaterc r,
+  owner @{user_state_dirs}/kactivitymanagerdstaterc@{atomic} rwlk,
 
   owner @{tmp}/kmail2.@{rand6} r,
 

@@ -10,10 +10,12 @@ include <tunables/global>
 profile hyprland @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/app-launcher-user>
+  include <abstractions/consoles>
   include <abstractions/dconf-write>
   include <abstractions/desktop>
   include <abstractions/glfw>
   include <abstractions/graphics>
+  include <abstractions/input>
   include <abstractions/wine>
 
   capability sys_ptrace,
@@ -24,6 +26,10 @@ profile hyprland @{exec_path} flags=(attach_disconnected) {
   signal receive set=term peer=start-hyprland,
 
   ptrace read,
+
+  unix bind type=stream addr=@@{udbus}/bus/Hyprland/system,
+
+  #aa:dbus talk bus=system name=org.freedesktop.login1 label=systemd-logind
 
   @{exec_path} mr,
 
@@ -36,9 +42,11 @@ profile hyprland @{exec_path} flags=(attach_disconnected) {
   /var/cache/hyprpm/juan/split-monitor-workspaces/split-monitor-workspaces.so mr,
 
   owner @{user_cache_dirs}/hyprland/{,**} rw,
+  owner @{user_config_dirs}/hypr/ rw,
   owner @{user_config_dirs}/hypr/** r,
+  owner @{user_config_dirs}/hypr/hyprland.lua w,
+  owner @{user_share_dirs}/hyprland/{,**} rw,
   owner @{user_share_dirs}/hyprpm/** mr,
-  owner @{user_share_dirs}/hyprland/** rw,
 
   owner @{run}/user/@{uid}/gamescope-* rw,
   owner @{run}/user/@{uid}/.hyprpaper_* rw,

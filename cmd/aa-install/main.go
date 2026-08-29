@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 	"slices"
+	"strings"
 
 	"github.com/roddhjav/apparmor.d/pkg/aa"
 	"github.com/roddhjav/apparmor.d/pkg/builder"
@@ -106,10 +107,41 @@ func init() {
 	flag.StringVar(&src, "src", nilSrc, "Select an alternate source directory (default: /usr/share/apparmor.d).")
 }
 
+// aaConfig prints the effective configuration: the resolved general
+// settings and the *.conf files each drop-in directory contributes once
+// the vendor and admin tiers are merged.
+func aaConfig(cfg *conf) {
+	logging.Indent = ""
+	logging.Success("Configuration")
+	logging.Indent = "   "
+	logging.Bullet("mode: %s", cfg.mode)
+	logging.Bullet("include: %s", cfg.include)
+	logging.Bullet("reload: %t", cfg.reload)
+	for _, d := range []struct {
+		name string
+		dirs paths.PathList
+	}{
+		{"flags.d", cfg.flagDirs},
+		{"ignore.d", cfg.ignoreDirs},
+		{"include.d", cfg.includeDirs},
+		{"overwrite.d", cfg.overwriteDirs},
+	} {
+		files := util.EffectiveConfFiles(d.dirs...)
+		if len(files) == 0 {
+			continue
+		}
+		logging.Bullet("%s: %d entries from %s", d.name,
+			len(util.ReadConfDirs(d.dirs...)), strings.Join(files.AsStrings(), ", "))
+	}
+	logging.Indent = ""
+}
+
 // aaStatus prints a summary of the installation state: the number of
 // profiles recorded in the manifest, and how many are missing or drifted
 // (hash mismatch) from the install target.
-func aaStatus(stateDir *paths.Path, targetDir *paths.Path) error {
+func aaStatus(stateDir *paths.Path, targetDir *paths.Path, cfg *conf) error {
+	aaConfig(cfg)
+
 	manifest := readManifest(stateDir)
 	if len(manifest) == 0 {
 		logging.Warning("No profiles installed")
@@ -225,6 +257,7 @@ func aaInstall(configDir *paths.Path, srcDir *paths.Path, cfg *conf) (bool, erro
 	// flags.d drop-in already assigns a mode to (SetFlags handled those).
 	r.Builders.Add(builder.NewDeployMode(cfg.mode, userModeOverrides(cfg.flagDirs)))
 
+	logging.Quiet = !verbose
 	if err := r.Configure(); err != nil {
 		return false, err
 	}
@@ -232,6 +265,7 @@ func aaInstall(configDir *paths.Path, srcDir *paths.Path, cfg *conf) (bool, erro
 	if err := r.Build(); err != nil {
 		return false, err
 	}
+	logging.Quiet = false
 	return installProfiles(c.RootApparmor, aa.MagicRoot, configDir)
 }
 
@@ -272,7 +306,7 @@ func run() error {
 		return fmt.Errorf("--complain and --enforce are mutually exclusive")
 	}
 
-	logging.Quiet = !verbose
+	logging.Quiet = false
 	configDir := paths.New("/etc/apparmor/")
 	if config != nilConfig {
 		configDir = paths.New(config)
@@ -303,7 +337,7 @@ func run() error {
 
 	default:
 		logging.Quiet = false
-		return aaStatus(configDir, aa.MagicRoot)
+		return aaStatus(configDir, aa.MagicRoot, cfg)
 
 	}
 	if err != nil {

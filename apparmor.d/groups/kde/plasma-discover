@@ -7,8 +7,9 @@ abi <abi/5.0>,
 include <tunables/global>
 
 @{exec_path} = @{bin}/plasma-discover
-profile plasma-discover @{exec_path} {
+profile plasma-discover @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/accounts-observe>
   include <abstractions/audio-client>
   include <abstractions/dconf-write>
   include <abstractions/graphics>
@@ -16,6 +17,8 @@ profile plasma-discover @{exec_path} {
   include <abstractions/nameservice-strict>
   include <abstractions/qt-shader-cache>
   include <abstractions/ssl_certs>
+  include <abstractions/bus/system/org.freedesktop.locale1>
+  include <abstractions/network-manager-observe>
 
   network inet dgram,
   network inet6 dgram,
@@ -26,22 +29,29 @@ profile plasma-discover @{exec_path} {
 
   signal (send) set=(term) peer=kioworker,
 
+  #aa:dbus talk bus=system name=org.freedesktop.Flatpak.SystemHelper label=flatpak-system-helper
+
   @{exec_path} mr,
 
   @{sh_path}                        rix,
-  @{bin}/kreadconfig{,5}            rPx,
+  @{bin}/kreadconfig{,5}             Px,
 
-  @{bin}/gpg                        rCx -> gpg,
-  @{bin}/gpgconf                    rCx -> gpg,
-  @{bin}/gpgsm                      rCx -> gpg,
+  @{bin}/gpg                         Cx -> gpg,
+  @{bin}/gpgconf                     Cx -> gpg,
+  @{bin}/gpgsm                       Cx -> gpg,
+  @{lib}/revokefs-fuse               Cx -> revokefs-fuse,
+  @{bin}/fusermount{,3}              Cx -> fusermount,
 
   #aa:exec kio_http_cache_cleaner
   #aa:exec kioworker
 
+  /usr/share/color-schemes/{,**} r,
   /usr/share/knsrcfiles/{,*} r,
   /usr/share/kservices{5,6}/{,*} r,
   /usr/share/kservicetypes5/{,*} r,
   /usr/share/libdiscover/** r,
+  /usr/share/metainfo/{,**} r,
+  /usr/share/flatpak/remotes.d/{,**} r,
 
   /etc/appstream.conf r,
   /etc/flatpak/remotes.d/{,**} r,
@@ -55,13 +65,16 @@ profile plasma-discover @{exec_path} {
 
   /var/cache/swcatalog/ rw,
 
-  /var/lib/flatpak/repo/{,**} r,
+  /var/lib/flatpak/app/{,**} r,
   /var/lib/flatpak/appstream/{,**} r,
+  /var/lib/flatpak/repo/{,**} r,
+  /var/lib/flatpak/runtime/{,**} r,
 
   /var/log/pacman.log r,
 
   owner @{user_cache_dirs}/appstream/ r,
   owner @{user_cache_dirs}/appstream/*.xb rw,
+  owner @{user_cache_dirs}/appstream/.goutputstream-@{rand6} rw,
   owner @{user_cache_dirs}/discover/{,**} rwlk,
   owner @{user_cache_dirs}/flatpak/system-cache/{,**} rw,
   owner @{user_cache_dirs}/kio_http/ w,
@@ -80,12 +93,15 @@ profile plasma-discover @{exec_path} {
   owner @{user_share_dirs}/knewstuff3/{,*} rw,
   owner @{user_share_dirs}/kwin/ rw,
   owner @{user_share_dirs}/kwin/** rwlk -> @{user_share_dirs}/kwin/**,
+  owner @{user_state_dirs}/discoverstaterc r,
+  owner @{user_state_dirs}/UserFeedback.org.kde.discover@{atomic} rwlk,
 
   owner @{tmp}/*.kwinscript rwl -> /tmp/#@{int},
   owner @{tmp}/#@{int} rw,
   owner @{tmp}/discover-@{rand6}/{,**} rw,
   owner @{tmp}/ostree-gpg-@{rand6}/ rw,
   owner @{tmp}/ostree-gpg-@{rand6}/** rwlk -> /tmp/ostree-gpg-@{rand6}/**,
+  owner @{tmp}/discover.@{rand6} rwl,
 
   owner @{run}/user/@{uid}/.flatpak-cache rw,
   owner @{run}/user/@{uid}/.flatpak/{,**} rw,
@@ -110,6 +126,42 @@ profile plasma-discover @{exec_path} {
     owner @{tmp}/ostree-gpg-@{rand6}/** rwlk -> /tmp/ostree-gpg-@{rand6}/**,
 
     include if exists <local/plasma-discover_gpg>
+  }
+
+  profile revokefs-fuse {
+    include <abstractions/base>
+
+    mount fstype=fuse.revokefs-fuse options=(rw nodev nosuid) revokefs-fuse -> /var/tmp/flatpak-cache-@{rand6}/*/,
+
+    unix (send receive) type=seqpacket peer=(label=flatpak-system-helper),
+    unix (send receive) type=stream peer=(label=bazaar//fusermount),
+    unix (send receive) type=stream peer=(label=fusermount//mount),
+
+    @{bin}/fusermount3 Px -> plasma-discover//fusermount,
+
+    /var/lib/flatpak/repo/tmp/flatpak-cache-@{rand6}/{,**} r,
+
+    /var/tmp/flatpak-cache-@{rand6}/*/ r,
+    /var/tmp/flatpak-cache-@{rand6}/*/** r,
+
+    /dev/fuse rw,
+
+    include if exists <local/plasma-discover_revokefs-fuse>
+  }
+
+  profile fusermount {
+    include <abstractions/base>
+    include <abstractions/app/fusermount>
+
+    capability setuid,
+
+    unix (send receive) type=stream    peer=(label=gnome-software),
+    unix (send receive) type=seqpacket peer=(label=flatpak-system-helper),
+
+    mount fstype=fuse.revokefs-fuse options=(rw, nosuid, nodev) -> /var/tmp/flatpak-cache-*/*/,
+    umount /var/tmp/flatpak-cache-@{rand6}/*/,
+
+    include if exists <local/plasma-discover_fusermount>
   }
 
   include if exists <local/plasma-discover>

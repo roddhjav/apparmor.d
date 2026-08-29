@@ -1,5 +1,5 @@
 # apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2023-2024 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2023-2026 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/5.0>,
@@ -88,10 +88,10 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   @{lib}/flatpak-validate-icon rPx,
 
   # For flatpack enter, the shell is not confined on purpose.
-  @{bin}/@{shells}           rUx,
+  @{bin}/@{shells}              Cx -> enter,
 
-  @{lib}/polkit-[0-9]/polkit-agent-helper-[0-9]  rPx,
-  @{lib}/polkit-agent-helper-[0-9]               rPx,
+  @{lib}/polkit-[0-9]/polkit-agent-helper-[0-9]  Px,
+  @{lib}/polkit-agent-helper-[0-9]               Px,
 
   /usr/share/flatpak/{,**} r,
 
@@ -167,6 +167,16 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
   #aa:only test
   mount fstype=fuse.revokefs-fuse options=(rw, nosuid, nodev) revokefs-fuse -> /tmp/test-flatpak-*/**,
+
+  profile enter {
+    include <abstractions/base>
+
+    # Used for flatpak enter, the shell is not confined on purpose.
+    # We also avoid conflicts with hosts programs / profiles.
+    all,
+
+    include if exists <local/flatpak_enter>
+  }
 
   profile gpg {
     include <abstractions/base>

@@ -1,0 +1,77 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+@{name} = claude-desktop
+@{domain} = org.chromium.Chromium
+@{lib_dirs} = @{lib}/@{name}/
+@{config_dirs} = @{user_config_dirs}/Claude
+@{cache_dirs} = @{user_cache_dirs}/Claude
+
+@{exec_path} = @{bin}/@{name} @{lib_dirs}/@{name}
+profile claude-desktop @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/audio-client>
+  include <abstractions/common/electron>
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  @{exec_path} mrix,
+
+  @{bin}/ps       Px,
+  @{bin}/busctl   Cx -> busctl,
+  @{shells_path}  Px -> claude//shell,
+  @{bin}/ssh      Px -> claude//ssh,
+  @{bin}/git      Px -> claude//git,
+
+  @{config_dirs}/claude-code/@{version}/claude Px,
+  @{lib_dirs}/resources/cowork-linux-helper    Px,
+
+  @{open_path}    Px -> child-open-strict,
+
+  /etc/ r,
+  /etc/lsb-release r,
+
+  owner @{HOME}/.claude/settings.json r,
+
+  owner @{user_config_dirs}/mimeapps.list.@{rand6} rw,
+
+  owner @{tmp}/download-*-@{rand12}.zip rw,
+
+  owner @{run}/user/@{uid}/claude-cowork-vm.sock rw,
+
+  # Dark patterns: if you want integration with browsers, install it explicitly.
+  # https://www.thatprivacyguy.com/blog/anthropic-spyware/
+  deny owner @{user_config_dirs}/google-chrome/{,**} rw,
+  deny owner @{user_config_dirs}/microsoft-edge/{,**} rw,
+
+  profile busctl {
+    include <abstractions/base>
+    include <abstractions/bus-session>
+    include <abstractions/bus-system>
+
+    unix (send receive) type=seqpacket peer=(label=claude-desktop),
+    unix (send receive) type=seqpacket peer=(label=claude-desktop//busctl),
+    unix (send receive) type=seqpacket peer=(label=claude-desktop//crashpad_handler),
+    unix (send receive) type=seqpacket peer=(label=ps),
+    unix (send receive) type=stream peer=(label=claude-desktop),
+
+    unix bind type=stream addr=@@{udbus}/bus/busctl/busctl,
+
+    @{bin}/busctl mr,
+
+    include if exists <local/claude-desktop_busctl>
+  }
+
+  include if exists <local/claude-desktop>
+}
+
+# vim:syntax=apparmor

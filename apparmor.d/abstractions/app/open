@@ -15,31 +15,24 @@
        member=Open
        peer=(name=org.gnome.Nautilus, label=nautilus),
 
-  # We cannot use `@{open_path} mrix,` here because it includes:
-  #     @{lib}/@{multiarch}/glib-@{version}/gio-launch-desktop
-  # And `@{multiarch}` has a wildcard that cannot be merged and that will generate
-  # "has merged rule with conflicting x modifiers" error when used with other
-  # wilcard over PUx transition.
-  @{bin}/exo-open            mrix,
-  @{bin}/xdg-open            mrix,
-  @{bin}/gio                 mrix,
-  @{bin}/kde-open            mrix,
-  @{bin}/gio-launch-desktop  mrix,
-  @{lib}/gio-launch-desktop  mrix,
-
-  #aa:only apparmor>=4.1
-  priority=1 @{lib}/@{multiarch}/glib-@{version}/gio-launch-desktop mrix,
-
   @{bin}/env rix,
   @{sh_path} r,
 
-  /dev/tty rw,
+  if "gnome" in @{DE} {
+    @{bin}/gio                 mrix,
+    @{bin}/gio-launch-desktop  mrix,
+    @{bin}/xdg-open            mrix,
+    @{lib}/gio-launch-desktop  mrix,
 
-  # if @{DE} == kde
+    priority=1 @{lib}/@{multiarch}/glib-@{version}/gio-launch-desktop mrix,
+
+  } else if "kde" in @{DE} {
 
     include <abstractions/audio-client>
     include <abstractions/graphics>
     include <abstractions/nameservice-strict>
+
+    @{bin}/kde-open            mrix,
 
     /etc/xdg/menus/*.menu r,
 
@@ -52,7 +45,9 @@
 
     @{PROC}/sys/kernel/random/boot_id r,
 
-  # fi
+  }
+
+  /dev/tty rw,
 
   include if exists <abstractions/app/open.d>
 

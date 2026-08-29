@@ -10,6 +10,8 @@ include <tunables/global>
 @{exec_path} += @{lib}/@{multiarch}/{,libexec/}DiscoverNotifier
 profile DiscoverNotifier @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/base>
+  include <abstractions/accounts-observe>
+  include <abstractions/bus/system/org.freedesktop.locale1>
   include <abstractions/dconf-write>
   include <abstractions/graphics>
   include <abstractions/kde-strict>
@@ -26,21 +28,21 @@ profile DiscoverNotifier @{exec_path} flags=(attach_disconnected,mediate_deleted
 
   #aa:dbus own bus=session name=org.kde.discover.notifier
 
+  #aa:dbus talk bus=system name=org.freedesktop.Flatpak.SystemHelper label=flatpak-system-helper
   #aa:dbus talk bus=system name=org.freedesktop.PackageKit path=/{,**} label=packagekitd
 
   @{exec_path} mr,
 
-  @{bin}/apt-config          rPx,
-  @{bin}/plasma-discover     rPx,
+  @{bin}/apt-config          Px,
+  @{bin}/plasma-discover     Px,
 
-  @{bin}/gpg{,2}             rCx -> gpg,
-  @{bin}/gpgconf             rCx -> gpg,
-  @{bin}/gpgsm               rCx -> gpg,
+  @{bin}/gpg{,2}             Cx -> gpg,
+  @{bin}/gpgconf             Cx -> gpg,
+  @{bin}/gpgsm               Cx -> gpg,
 
   /usr/share/flatpak/remotes.d/{,**} r,
   /usr/share/metainfo/{,**} r,
 
-  /etc/machine-id r,
   /etc/flatpak/remotes.d/{,**} r,
 
   /var/lib/apt/lists/* r,
@@ -58,7 +60,7 @@ profile DiscoverNotifier @{exec_path} flags=(attach_disconnected,mediate_deleted
   owner @{user_config_dirs}/PlasmaDiscoverUpdates.@{rand6} rwl -> @{user_config_dirs}/#@{int},
   owner @{user_config_dirs}/PlasmaDiscoverUpdates.lock rwk,
 
-  owner @{user_share_dirs}/flatpak/{,**} rw,
+  owner @{user_share_dirs}/flatpak/{,**} rwl,
 
   owner @{user_state_dirs}/discovernotifierstaterc rw,
   owner @{user_state_dirs}/discovernotifierstaterc.@{rand6} rwlk,
@@ -67,6 +69,8 @@ profile DiscoverNotifier @{exec_path} flags=(attach_disconnected,mediate_deleted
   owner @{tmp}/ostree-gpg-@{rand6}/ rw,
   owner @{tmp}/ostree-gpg-@{rand6}/pubring.gpg rw,
   owner @{tmp}/ostree-gpg-@{rand6}/trustdb.gpg rw,
+
+  @{PROC}/modules r,
 
   /dev/tty r,
 

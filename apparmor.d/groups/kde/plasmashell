@@ -12,6 +12,7 @@ profile plasmashell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/app-launcher-user>
   include <abstractions/audio-client>
   include <abstractions/bus-session>
+  include <abstractions/bus/session/com.canonical.Unity.LauncherEntry>
   include <abstractions/bus/system/org.freedesktop.login1>
   include <abstractions/bus/system/org.freedesktop.UDisks2>
   include <abstractions/consoles>
@@ -58,16 +59,25 @@ profile plasmashell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   # Talk with plasmashell
 
   #aa:dbus talk bus=system name=org.freedesktop.NetworkManager label=NetworkManager
+  #aa:dbus talk bus=system name=org.freedesktop.RealtimeKit1 label=rtkit-daemon
 
+  #aa:dbus talk bus=session name=org.freedesktop.PowerManagement label=kde-powerdevil
+  #aa:dbus talk bus=session name=org.freedesktop.systemd1 label="@{p_systemd_user}"
   #aa:dbus talk bus=session name=org.kde.ActivityManager path=/ActivityManager{,**} label=kactivitymanagerd
   #aa:dbus talk bus=session name=org.kde.kdeconnect path=/ label=kdeconnectd
-  #aa:dbus talk bus=session name=org.kde.KeyboardLayouts path=/Layouts label=kded
-  #aa:dbus talk bus=session name=org.kde.KGlobalAccel path=/kglobalaccel label="{kglobalacceld,kwin_wayland}"
+  #aa:dbus talk bus=session name=org.kde.KeyboardLayouts path=/Layouts label=kwin_wayland
+  #aa:dbus talk bus=session name=org.kde.K[gG]lobalAccel path=/kglobalaccel label="{kglobalacceld,kwin_wayland}"
   #aa:dbus talk bus=session name=org.kde.KSplash path=/KSplash label=ksplashqml
   #aa:dbus talk bus=session name=org.kde.KWin path=/{,**} label="kwin_{wayland,x11}"
   #aa:dbus talk bus=session name=org.kde.NightColor path=/ColorCorrect label="kwin_{wayland,x11}"
+  #aa:dbus talk bus=session name=org.kde.ScreenBrightness label=kde-powerdevil
   #aa:dbus talk bus=session name=org.kde.Solid.PowerManagement label=kde-powerdevil
   #aa:dbus talk bus=session name=org.kde.StatusNotifierWatcher path=/StatusNotifierWatcher label=kded
+
+  dbus send bus=session path=/modules/kdeconnect
+       interface=org.kde.kdeconnect.daemon
+       member=devices
+       peer=(name=org.kde.kdeconnect, label=unconfined),
 
   @{exec_path} mr,
 
@@ -108,7 +118,6 @@ profile plasmashell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
   /etc/appstream.conf r,
   /etc/fstab r,
-  /etc/machine-id r,
   /etc/os-release r,
   /etc/sensors.d/ r,
   /etc/sensors3.conf r,
@@ -139,15 +148,11 @@ profile plasmashell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{user_cache_dirs}/bookmarksrunner/ rw,
   owner @{user_cache_dirs}/bookmarksrunner/** rwlk -> @{user_cache_dirs}/bookmarksrunner/#@{int},
   owner @{user_cache_dirs}/kcrash-metadata/plasmashell.*.ini w,
-  owner @{user_cache_dirs}/ksvg-elements rw,
-  owner @{user_cache_dirs}/ksvg-elements.@{rand6} rwlk -> @{user_cache_dirs}/#@{int},
-  owner @{user_cache_dirs}/ksvg-elements.lock rwlk,
+  owner @{user_cache_dirs}/ksvg-elements@{atomic} rwlk,
   owner @{user_cache_dirs}/org.kde.dirmodel-qml.kcache rw,
   owner @{user_cache_dirs}/plasma_engine_potd/{,**} rw,
   owner @{user_cache_dirs}/plasma_theme_*.kcache rw,
-  owner @{user_cache_dirs}/plasma-svgelements rw,
-  owner @{user_cache_dirs}/plasma-svgelements.@{rand6} rwl -> @{user_cache_dirs}/#@{int},
-  owner @{user_cache_dirs}/plasma-svgelements.lock rwk,
+  owner @{user_cache_dirs}/plasma-svgelements@{atomic} rwlk,
   owner @{user_cache_dirs}/plasmashell/ rw,
   owner @{user_cache_dirs}/plasmashell/** rwlk -> @{user_cache_dirs}/plasmashell/**,
   owner @{user_cache_dirs}/org.kde.*/ rw,
@@ -156,36 +161,17 @@ profile plasmashell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{user_config_dirs}/{KDE,kde.org}/ rw,
   owner @{user_config_dirs}/{KDE,kde.org}/** rwlk -> @{user_config_dirs}/{KDE,kde.org}/#@{int},
   owner @{user_config_dirs}/*kde*.desktop* r,
+  owner @{user_config_dirs}/*rc r,
   owner @{user_config_dirs}/#@{int} rwk,
   owner @{user_config_dirs}/akonadi* r,
   owner @{user_config_dirs}/akonadi/akonadi*rc r,
-  owner @{user_config_dirs}/arkrc r,
-  owner @{user_config_dirs}/baloofileinformationrc r,
-  owner @{user_config_dirs}/breezerc r,
-  owner @{user_config_dirs}/eventviewsrc r,
-  owner @{user_config_dirs}/kactivitymanagerd* rwlk -> @{user_config_dirs}/#@{int},
-  owner @{user_config_dirs}/kcookiejarrc r,
+  owner @{user_config_dirs}/kactivitymanagerd@{atomic} rwlk,
   owner @{user_config_dirs}/kdedefaults/plasmarc r,
-  owner @{user_config_dirs}/kdiff3fileitemactionrc r,
-  owner @{user_config_dirs}/kiorc r,
-  owner @{user_config_dirs}/kioslaverc r,
-  owner @{user_config_dirs}/klaunchrc r,
-  owner @{user_config_dirs}/klipperrc r,
-  owner @{user_config_dirs}/kmail2.notifyrc r,
   owner @{user_config_dirs}/knfsshare r,
-  owner @{user_config_dirs}/konsole.notifyrc r,
-  owner @{user_config_dirs}/korganizerrc r,
-  owner @{user_config_dirs}/krunnerrc r,
-  owner @{user_config_dirs}/ksmserverrc r,
-  owner @{user_config_dirs}/kwalletrc r,
-  owner @{user_config_dirs}/menus/{,**} r,
-  owner @{user_config_dirs}/networkmanagement.notifyrc r,
-  owner @{user_config_dirs}/PlasmaUserFeedback r,
-  owner @{user_config_dirs}/plasma* rwlk,
-  owner @{user_config_dirs}/kscreenlockerrc r,
   owner @{user_config_dirs}/Kvantum/{,**} r,
-
-  @{user_share_dirs}/plasma/** rPUx,
+  owner @{user_config_dirs}/menus/{,**} r,
+  owner @{user_config_dirs}/plasma* rwlk,
+  owner @{user_config_dirs}/PlasmaUserFeedback r,
 
   owner @{user_share_dirs}/*/sessions/ r,
   owner @{user_share_dirs}/akonadi/search_db/{,**} r,
@@ -197,9 +183,7 @@ profile plasmashell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{user_share_dirs}/konsole/ r,
   owner @{user_share_dirs}/kpeople/persondb rwk,
   owner @{user_share_dirs}/kpeoplevcard/ r,
-  owner @{user_share_dirs}/krunnerstaterc rwl,
-  owner @{user_share_dirs}/krunnerstaterc.@{rand6} rwl,
-  owner @{user_share_dirs}/krunnerstaterc.lock rwk,
+  owner @{user_share_dirs}/krunnerstaterc@{atomic} rwlk,
   owner @{user_share_dirs}/kservices{5,6}/{,**} r,
   owner @{user_share_dirs}/ktp/cache.db rwk,
   owner @{user_share_dirs}/libkunitconversion/ rw,
@@ -212,16 +196,10 @@ profile plasmashell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{user_share_dirs}/wallpapers/{,**} rw,
   owner @{user_share_dirs}/knotifications6/apdatifier.notifyrc r,
 
-  owner @{user_state_dirs}/kickerstaterc rw,
-  owner @{user_state_dirs}/kickerstaterc.@{rand6} rwl,
-  owner @{user_state_dirs}/kickerstaterc.lock rwk,
+  owner @{user_state_dirs}/kickerstaterc@{atomic} rwlk,
   owner @{user_state_dirs}/plasma/* r,
-  owner @{user_state_dirs}/plasmashellstaterc rw,
-  owner @{user_state_dirs}/plasmashellstaterc.@{rand6} rwl,
-  owner @{user_state_dirs}/plasmashellstaterc.lock rwk,
-  owner @{user_state_dirs}/UserFeedback.org.kde.plasmashell rw,
-  owner @{user_state_dirs}/UserFeedback.org.kde.plasmashell.@{rand6} rwl,
-  owner @{user_state_dirs}/UserFeedback.org.kde.plasmashell.lock rwk,
+  owner @{user_state_dirs}/plasmashellstaterc@{atomic} rwlk,
+  owner @{user_state_dirs}/UserFeedback.org.kde.plasmashell@{atomic} rwlk,
   owner @{user_state_dirs}/UserFeedback.org.kde.plasmashell.lock.rmlock rwk,
 
         /tmp/.mount_nextcl@{rand6}/{,*} r,
@@ -253,11 +231,12 @@ profile plasmashell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
         @{PROC}/loadavg r,
         @{PROC}/uptime r,
         @{PROC}/vmstat r,
-  owner @{PROC}/@{pid}/{cgroup,cmdline,stat,statm} r,
   owner @{PROC}/@{pid}/attr/current r,
+  owner @{PROC}/@{pid}/cgroup r,
   owner @{PROC}/@{pid}/environ r,
   owner @{PROC}/@{pid}/mountinfo r,
   owner @{PROC}/@{pid}/mounts r,
+  owner @{PROC}/@{pid}/statm r,
   owner @{PROC}/@{pid}/task/@{tid}/comm rw,
 
   /dev/ptmx rw,
