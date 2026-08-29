@@ -4,6 +4,30 @@
 
   abi <abi/5.0>,
 
+  #aa:dbus see bus=session name=org.kde.KWallet path=/modules/kwalletd{,[56]} label=kwalletd
+
+  # org.kde.KWallet
+  
+  dbus send bus=session path=/modules/kwalletd{,[56]}
+       interface=org.kde.KWallet
+       member={hasEntry,hasFolder}
+       peer=(name=org.kde.kwalletd6, label=kwalletd),
+
+  dbus send bus=session path=/modules/kwalletd{,[56]}
+       interface=org.kde.KWallet
+       member={openAsync,close,readPassword,networkWallet,isEnabled}
+       peer=(name=org.kde.kwalletd6, label=kwalletd),
+
+  dbus receive bus=session path=/modules/kwalletd{,[56]}
+       interface=org.kde.KWallet
+       member={folderListUpdated,folderUpdated}
+       peer=(name=@{busname}, label=kwalletd),
+
+  dbus receive bus=session path=/modules/kwalletd{,[56]}
+       interface=org.kde.KWallet
+       member={walletAsyncOpened,walletOpened}
+       peer=(name=@{busname}, label=kwalletd),
+
   include if exists <abstractions/bus/session/org.kde.kwalletd.d>
 
 # vim:syntax=apparmor
