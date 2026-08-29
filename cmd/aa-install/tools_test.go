@@ -586,7 +586,7 @@ func TestAaStatus(t *testing.T) {
 			for _, rel := range tt.unreadable {
 				chmod(t, targetDir.Join(rel), 0o000)
 			}
-			err := aaStatus(stateDir, targetDir)
+			err := aaStatus(stateDir, targetDir, &conf{mode: "complain", include: "default"})
 			if (err != nil) != tt.wantErr {
 				t.Errorf("aaStatus() error = %v, wantErr %v", err, tt.wantErr)
 			}

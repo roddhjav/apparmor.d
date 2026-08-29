@@ -20,6 +20,10 @@ const (
 	// manifestFile is the name of the manifest file that tracks installed profiles.
 	manifestFile = "install.db"
 
+	// maxDetailedFiles is the number of changed files below which they are
+	// listed one by one instead of only counted.
+	maxDetailedFiles = 20
+
 	// symlinkPrefix marks a manifest entry as a symlink; the remainder is the
 	// link target. Disable links (disable/<name> -> ../<name>) must be installed
 	// as symlinks, not dereferenced. The upstream profile they disable only
@@ -112,8 +116,8 @@ func installProfiles(buildDir *paths.Path, targetDir *paths.Path, stateDir *path
 	}
 
 	newManifest := make(map[string]string, len(files))
-	var added, updated, unchanged int
-	var skipped []string
+	var added, updated, skipped []string
+	var unchanged int
 	for _, file := range files {
 		rel, err := file.RelFrom(buildDir)
 		if err != nil {
@@ -173,9 +177,9 @@ func installProfiles(buildDir *paths.Path, targetDir *paths.Path, stateDir *path
 		}
 
 		if existed {
-			updated++
+			updated = append(updated, relStr)
 		} else {
-			added++
+			added = append(added, relStr)
 		}
 	}
 
@@ -198,15 +202,12 @@ func installProfiles(buildDir *paths.Path, targetDir *paths.Path, stateDir *path
 	logging.Indent = ""
 	logging.Success("Installed %d profiles to %s", len(newManifest), targetDir)
 	logging.Indent = "   "
-	logging.Bullet("%d added, %d updated, %d unchanged", added, updated, unchanged)
-	if len(removed) > 0 {
-		logging.Bullet("Removed %d stale files:", len(removed))
-		logging.Indent = "      "
-		for _, rel := range removed {
-			logging.Bullet("%s", rel)
-		}
-		logging.Indent = "   "
+	logging.Bullet("%d added, %d updated, %d unchanged", len(added), len(updated), unchanged)
+	if len(added)+len(updated) < maxDetailedFiles {
+		bulletList("Added", added)
+		bulletList("Updated", updated)
 	}
+	bulletList(fmt.Sprintf("Removed %d stale files", len(removed)), removed)
 	logging.Indent = ""
 	if len(skipped) > 0 {
 		slices.Sort(skipped)
@@ -217,5 +218,19 @@ func installProfiles(buildDir *paths.Path, targetDir *paths.Path, stateDir *path
 		}
 		logging.Indent = ""
 	}
-	return added+updated+len(removed) > 0, nil
+	return len(added)+len(updated)+len(removed) > 0, nil
+}
+
+// bulletList prints the sorted files under title, indented one level deeper.
+func bulletList(title string, files []string) {
+	if len(files) == 0 {
+		return
+	}
+	slices.Sort(files)
+	logging.Bullet("%s:", title)
+	logging.Indent = "      "
+	for _, rel := range files {
+		logging.Bullet("%s", rel)
+	}
+	logging.Indent = "   "
 }
