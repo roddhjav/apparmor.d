@@ -30,10 +30,10 @@ func ReadFlagsFile(path *paths.Path) map[string][]string {
 	return res
 }
 
-// effectiveConfFiles returns the *.conf files of the given files or
+// EffectiveConfFiles returns the *.conf files of the given files or
 // directories, in order. A same-named file from a later source fully
 // replaces an earlier one (admin config overrides vendor config).
-func effectiveConfFiles(sources ...*paths.Path) paths.PathList {
+func EffectiveConfFiles(sources ...*paths.Path) paths.PathList {
 	var order []string
 	byName := map[string]*paths.Path{}
 	add := func(file *paths.Path) {
@@ -69,7 +69,7 @@ func effectiveConfFiles(sources ...*paths.Path) paths.PathList {
 // sources; a later file overrides an earlier one per profile.
 func ReadFlagDirs(sources ...*paths.Path) map[string][]string {
 	res := map[string][]string{}
-	for _, file := range effectiveConfFiles(sources...) {
+	for _, file := range EffectiveConfFiles(sources...) {
 		maps.Copy(res, ReadFlagsFile(file))
 	}
 	return res
@@ -78,7 +78,7 @@ func ReadFlagDirs(sources ...*paths.Path) map[string][]string {
 // ReadConfDirs returns the filtered lines of the effective *.conf files in dirs.
 func ReadConfDirs(dirs ...*paths.Path) []string {
 	var res []string
-	for _, file := range effectiveConfFiles(dirs...) {
+	for _, file := range EffectiveConfFiles(dirs...) {
 		res = append(res, file.MustReadFilteredFileAsLines()...)
 	}
 	return res

@@ -42,6 +42,9 @@ func (r *Runners) Configure() error {
 		if err != nil {
 			return err
 		}
+		if logging.Quiet {
+			continue
+		}
 		logging.Success("%s", task.Message())
 		logging.Indent = "   "
 		for _, line := range msg {
