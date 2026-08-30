@@ -81,6 +81,20 @@ func TestLoadConfig(t *testing.T) {
 			wantInclude: "full",
 		},
 		{
+			name:        "include all from config",
+			modes:       "include all\n",
+			flags:       func() {},
+			want:        "complain",
+			wantInclude: "all",
+		},
+		{
+			name:        "all overrides include config",
+			modes:       "include full\n",
+			flags:       func() { all = true },
+			want:        "complain",
+			wantInclude: "all",
+		},
+		{
 			name:    "invalid include mode",
 			modes:   "include bogus\n",
 			flags:   func() {},
@@ -117,7 +131,7 @@ func TestLoadConfig(t *testing.T) {
 			if tt.modes != "" {
 				writeFile(t, configDir.Join("modes"), tt.modes)
 			}
-			t.Cleanup(func() { complain, enforce, noReload = false, false, false })
+			t.Cleanup(func() { complain, enforce, noReload, all = false, false, false, false })
 			tt.flags()
 
 			cfg, err := loadConfig(configDir)

@@ -224,7 +224,7 @@ func aaInstall(configDir *paths.Path, srcDir *paths.Path, cfg *conf) (bool, erro
 
 	// Default include: re-apply ignored profiles from the include.d dirs
 	var includeEntries []string
-	if cfg.include == "default" {
+	if cfg.include != "full" {
 		restore := configure.NewRestoreInclude(cfg.includeDirs, srcDir)
 		if restore.Active() {
 			r.Configures.Add(restore)
@@ -249,7 +249,7 @@ func aaInstall(configDir *paths.Path, srcDir *paths.Path, cfg *conf) (bool, erro
 
 	// Only keep profiles for installed programs, unless all are requested.
 	// Included profiles are installed even when their program is not.
-	if !all {
+	if cfg.include != "all" {
 		r.Configures.Add(configure.NewSelectInstalled(includeEntries...))
 	}
 

@@ -18,7 +18,7 @@ var (
 	deployModes = []string{"enforce", "complain"}
 
 	// includeModes are the modes accepted for the include key.
-	includeModes = []string{"default", "full"}
+	includeModes = []string{"default", "full", "all"}
 
 	// reloadModes are the modes accepted for the reload key.
 	reloadModes = []string{"yes", "no"}
@@ -71,6 +71,9 @@ func loadConfig(configDir *paths.Path) (*conf, error) {
 	res.include = modes["include"]
 	if res.include == "" {
 		res.include = "default"
+	}
+	if all {
+		res.include = "all"
 	}
 	if !slices.Contains(includeModes, res.include) {
 		return nil, fmt.Errorf("invalid include mode %q in %s", res.include, configDir.Join("modes"))

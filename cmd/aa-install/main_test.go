@@ -139,6 +139,19 @@ func TestRun(t *testing.T) {
 			},
 		},
 		{
+			name:  "install with include.d all mode",
+			flags: func() { install = true },
+			setup: func(t *testing.T, env *runEnv) {
+				writeFile(t, env.configDir.Join("modes"), "include all\n")
+			},
+			wantReloads: 1,
+			check: func(t *testing.T, env *runEnv) {
+				if !env.targetDir.Join("aa_test_dropped").Exist() {
+					t.Error("profile for a missing program was not installed")
+				}
+			},
+		},
+		{
 			name:        "install complain",
 			flags:       func() { install, complain = true, true },
 			wantReloads: 1,
