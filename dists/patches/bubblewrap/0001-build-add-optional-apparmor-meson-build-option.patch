@@ -1,0 +1,94 @@
+From f543364f1478864a4a6b16fcac7547645191c816 Mon Sep 17 00:00:00 2001
+From: Alexandre Pujol <alexandre@pujol.io>
+Date: Mon, 9 Mar 2026 22:08:02 +0100
+Subject: [PATCH 1/2] build: add optional apparmor meson build option.
+
+Add apparmor meson feature  ption (default auto) for optional libapparmor support, following the same pattern as the existing SELinux option.
+
+When found, HAVE_APPARMOR is set and libapparmor is linked.
+
+Document --apparmor-profile in the man page.
+---
+ bwrap.xml         | 10 ++++++++++
+ meson.build       | 12 +++++++++++-
+ meson_options.txt |  6 ++++++
+ 3 files changed, 27 insertions(+), 1 deletion(-)
+
+diff --git a/bwrap.xml b/bwrap.xml
+index ca717ab..8e2f03a 100644
+--- a/bwrap.xml
++++ b/bwrap.xml
+@@ -523,6 +523,16 @@
+ 	the SELinux context for the sandbox content.
+       </para></listitem>
+     </varlistentry>
++    <varlistentry>
++      <term><option>--apparmor-profile <arg choice="plain">PROFILE</arg></option></term>
++      <listitem><para>
++	Use the specified AppArmor profile to confine the sandbox. The profile
++	transition is applied immediately via
++	<citerefentry><refentrytitle>aa_change_profile</refentrytitle><manvolnum>2</manvolnum></citerefentry>
++	before the sandboxed command is executed. The profile must already be
++	loaded into the kernel. Requires a kernel with AppArmor support.
++      </para></listitem>
++    </varlistentry>
+     <varlistentry>
+       <term><option>--block-fd <arg choice="plain">FD</arg></option></term>
+       <listitem><para>
+diff --git a/meson.build b/meson.build
+index feb3a78..2d487fd 100644
+--- a/meson.build
++++ b/meson.build
+@@ -74,6 +74,12 @@ selinux_dep = dependency(
+   required : get_option('selinux'),
+ )
+ 
++apparmor_dep = dependency(
++  'libapparmor',
++  # if disabled, Meson will behave as though libapparmor was not found
++  required : get_option('apparmor'),
++)
++
+ cdata = configuration_data()
+ cdata.set_quoted(
+   'PACKAGE_STRING',
+@@ -87,6 +93,10 @@ if selinux_dep.found()
+   endif
+ endif
+ 
++if apparmor_dep.found()
++  cdata.set('HAVE_APPARMOR', 1)
++endif
++
+ assume_kernel = get_option('assume_kernel')
+ if assume_kernel != ''
+   kernel_parts = assume_kernel.split('.')
+@@ -130,7 +140,7 @@ bwrap = executable(
+   install : true,
+   install_dir : bwrapdir,
+   install_rpath : get_option('install_rpath'),
+-  dependencies : [selinux_dep, libcap_dep],
++  dependencies : [selinux_dep, libcap_dep, apparmor_dep],
+ )
+ 
+ manpages_xsl = 'http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl'
+diff --git a/meson_options.txt b/meson_options.txt
+index d2ad767..095ff89 100644
+--- a/meson_options.txt
++++ b/meson_options.txt
+@@ -47,6 +47,12 @@ option(
+   description : 'enable optional SELINUX support',
+   value : 'auto',
+ )
++option(
++  'apparmor',
++  type : 'feature',
++  description : 'enable optional AppArmor support',
++  value : 'auto',
++)
+ option(
+   'tests',
+   type : 'boolean',
+-- 
+2.55.0
+

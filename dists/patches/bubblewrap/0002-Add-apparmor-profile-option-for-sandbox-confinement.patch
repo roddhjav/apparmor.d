@@ -1,0 +1,188 @@
+From e23e05c71db276dde7592a3a5a9291635d0bf126 Mon Sep 17 00:00:00 2001
+From: Alexandre Pujol <alexandre@pujol.io>
+Date: Mon, 9 Mar 2026 22:23:01 +0100
+Subject: [PATCH 2/2] Add --apparmor-profile option for sandbox confinement
+
+Add --apparmor-profile option to confine the sandboxed program with an
+AppArmor profile via aa_change_profile(2), applied late (right before
+seccomp and execve) so that confinement targets the sandbox, not bwrap.
+
+When HAVE_APPARMOR is defined, NNP is deferred past parse_args() since
+aa_change_profile() requires NNP to not be set:
+
+- Without --apparmor-profile: NNP is set after parse_args()
+- With --apparmor-profile: NNP is set after aa_change_profile() in the
+  child, and separately in the init process (PID 1)
+
+Without HAVE_APPARMOR, NNP remains in its original position immediately
+after acquire_privs().
+---
+ bubblewrap.c | 59 ++++++++++++++++++++++++++++++++++++++++++++++++++++
+ utils.c      | 16 ++++++++++++++
+ utils.h      |  1 +
+ 3 files changed, 76 insertions(+)
+
+diff --git a/bubblewrap.c b/bubblewrap.c
+index 9192550..e4831b3 100644
+--- a/bubblewrap.c
++++ b/bubblewrap.c
+@@ -59,6 +59,9 @@ static const char *argv0;
+ static const char *host_tty_dev;
+ static const char *opt_exec_label = NULL;
+ static const char *opt_file_label = NULL;
++#ifdef HAVE_APPARMOR
++static const char *opt_apparmor_profile = NULL;
++#endif
+ static bool opt_as_pid_1;
+ 
+ static const char *opt_argv0 = NULL;
+@@ -357,6 +360,9 @@ usage (int ecode, FILE *out)
+            "    --perms OCTAL                Set permissions of next argument (--bind-data, --file, etc.)\n"
+            "    --size BYTES                 Set size of next argument (only for --tmpfs)\n"
+            "    --chmod OCTAL PATH           Change permissions of PATH (must already exist)\n"
++#ifdef HAVE_APPARMOR
++           "    --apparmor-profile PROFILE   AppArmor profile for the sandbox\n"
++#endif
+            "    --not-a-security-boundary    Do not fail hard when some sandbox setup steps fail;\n"
+            "                                 use only when the sandbox is not a security boundary\n"
+           );
+@@ -609,6 +615,16 @@ do_init (int event_fd, pid_t initial_pid)
+   /* Optionally bind our lifecycle to that of the caller */
+   handle_die_with_parent ();
+ 
++#ifdef HAVE_APPARMOR
++  /* When --apparmor-profile is used, NNP was deferred in the parent.
++   * PID 1 doesn't need aa_change_profile, so set NNP here for seccomp. */
++  if (opt_apparmor_profile != NULL)
++    {
++      if (prctl (PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) < 0)
++        die_with_error ("prctl(PR_SET_NO_NEW_PRIVS) failed");
++    }
++#endif
++
+   seccomp_programs_apply ();
+ 
+   while (true)
+@@ -2097,6 +2113,21 @@ parse_args_recurse (int          *argcp,
+           argv += 1;
+           argc -= 1;
+         }
++#ifdef HAVE_APPARMOR
++      else if (strcmp (arg, "--apparmor-profile") == 0)
++        {
++          if (argc < 2)
++            die ("--apparmor-profile takes an argument");
++
++          if (opt_apparmor_profile != NULL)
++            warn_only_last_option ("--apparmor-profile");
++
++          opt_apparmor_profile = argv[1];
++
++          argv += 1;
++          argc -= 1;
++        }
++#endif
+       else if (strcmp (arg, "--dev") == 0)
+         {
+           if (argc < 2)
+@@ -2884,9 +2915,11 @@ main (int    argc,
+   /* Get the (optional) privileges we need */
+   acquire_privs ();
+ 
++#ifndef HAVE_APPARMOR
+   /* Never gain any more privs during exec */
+   if (prctl (PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) < 0)
+     die_with_error ("prctl(PR_SET_NO_NEW_PRIVS) failed");
++#endif
+ 
+   /* The initial code is run with high permissions
+      (i.e. CAP_SYS_ADMIN), so take lots of care. */
+@@ -2906,6 +2939,16 @@ main (int    argc,
+ 
+   parse_args (&argc, (const char ***) &argv);
+ 
++#ifdef HAVE_APPARMOR
++  /* When --apparmor-profile is used, NNP is deferred to the child
++   * after aa_change_profile(). Otherwise set it now. */
++  if (opt_apparmor_profile == NULL)
++    {
++      if (prctl (PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) < 0)
++        die_with_error ("prctl(PR_SET_NO_NEW_PRIVS) failed");
++    }
++#endif
++
+   /* suck the args into a cleanup_free variable to control their lifecycle */
+   args_data = opt_args_data;
+   opt_args_data = NULL;
+@@ -3493,6 +3536,22 @@ main (int    argc,
+ 
+   set_ambient_capabilities ();
+ 
++#ifdef HAVE_APPARMOR
++  /* Apply the AppArmor profile late, right before seccomp and execve(), so that
++   * the confinement targets the sandboxed program, not bwrap itself.
++   * aa_change_profile() requires NNP to not be set yet, so we set NNP
++   * immediately after. NNP must be set before seccomp_programs_apply() because
++   * SECCOMP_MODE_FILTER requires either NNP or CAP_SYS_ADMIN. */
++  if (opt_apparmor_profile != NULL)
++    {
++      if (apparmor_change_profile (opt_apparmor_profile) != 0)
++        die_with_error ("apparmor_change_profile %s", opt_apparmor_profile);
++
++      if (prctl (PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) < 0)
++        die_with_error ("prctl(PR_SET_NO_NEW_PRIVS) failed");
++    }
++#endif
++
+   /* Should be the last thing before execve() so that filters don't
+    * need to handle anything above */
+   seccomp_programs_apply ();
+diff --git a/utils.c b/utils.c
+index 5525255..eb00330 100644
+--- a/utils.c
++++ b/utils.c
+@@ -27,6 +27,9 @@
+ #ifdef HAVE_SELINUX
+ #include <selinux/selinux.h>
+ #endif
++#ifdef HAVE_APPARMOR
++#include <sys/apparmor.h>
++#endif
+ 
+ #ifndef HAVE_SELINUX_2_3
+ /* libselinux older than 2.3 weren't const-correct */
+@@ -945,6 +948,19 @@ label_exec (UNUSED const char *exec_label)
+   return 0;
+ }
+ 
++int
++apparmor_change_profile (UNUSED const char *profile)
++{
++#ifdef HAVE_APPARMOR
++  if (profile == NULL)
++    return 0;
++
++  return aa_change_profile (profile);
++#else
++  return 0;
++#endif
++}
++
+ /*
+  * Like strerror(), but specialized for a failed mount(2) call.
+  */
+diff --git a/utils.h b/utils.h
+index 88d9787..385a042 100644
+--- a/utils.h
++++ b/utils.h
+@@ -156,6 +156,7 @@ char *label_mount (const char *opt,
+                    const char *mount_label);
+ int   label_exec (const char *exec_label);
+ int   label_create_file (const char *file_label);
++int   apparmor_change_profile (const char *profile);
+ 
+ extern bool opt_force_openat_fallback;
+ 
+-- 
+2.55.0
+
