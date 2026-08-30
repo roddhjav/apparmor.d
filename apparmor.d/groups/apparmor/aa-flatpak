@@ -1,0 +1,36 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/aa-flatpak
+profile aa-flatpak @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/golang-strict>
+
+  capability dac_read_search,
+
+  @{exec_path} mr,
+
+  @{sbin}/apparmor_parser Px,
+
+  /etc/apparmor.d/{,**} r,
+  /etc/apparmor.d/flatpak-apps/{,**} rw,
+
+  /var/lib/flatpak/app/{,**} r,
+
+  @{HOMEDIRS}/ r,
+  @{user_share_dirs}/flatpak/overrides/{,**} r,
+
+  @{sys}/fs/cgroup/system.slice/aa-flatpak.service/cpu.max r,
+
+  @{PROC}/@{pid}/cgroup r,
+
+  include if exists <local/aa-flatpak>
+}
+
+# vim:syntax=apparmor
