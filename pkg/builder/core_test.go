@@ -48,6 +48,25 @@ func TestBuilder_Apply(t *testing.T) {
 			  }`,
 		},
 		{
+			name: "abi4 nested conditions",
+			b:    NewABI4(),
+			profile: `
+			  profile test {
+			    if "kde" in @{DE} {
+			      if "wayland" in @{DS} {
+			        /wayland r,
+			      } else if "x11" in @{DS} {
+			        /x11 r,
+			      }
+			    }
+			  }`,
+			want: `
+			  profile test {
+			        /wayland r,
+			        /x11 r,
+			  }`,
+		},
+		{
 			name: "abi4 boolean variables",
 			b:    NewABI4(),
 			profile: `@{ABI} = 4
