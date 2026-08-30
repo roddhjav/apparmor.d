@@ -11,6 +11,7 @@ include <tunables/global>
 profile networkctl @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus-system>
+  include <abstractions/journal-read>
   include <abstractions/nameservice-strict>
 
   capability net_admin,
@@ -43,14 +44,6 @@ profile networkctl @{exec_path} flags=(attach_disconnected) {
 
   owner /var/lib/systemd/network/ r,
 
-  # To be able to read logs
-  @{run}/log/ r,
-  /{run,var}/log/journal/ r,
-  /{run,var}/log/journal/@{hex32}/ r,
-  /{run,var}/log/journal/@{hex32}/user-@{hex}.journal* r,
-  /{run,var}/log/journal/@{hex32}/system.journal* r,
-  /{run,var}/log/journal/@{hex32}/system@@{hex}.journal* r,
-
         @{run}/systemd/netif/io.systemd.Network rw,
   @{att}@{run}/systemd/netif/io.systemd.Network rw,
 
@@ -67,7 +60,6 @@ profile networkctl @{exec_path} flags=(attach_disconnected) {
         @{PROC}/cmdline r,
         @{PROC}/sys/fs/nr_open r,
         @{PROC}/sys/kernel/osrelease r,
-        @{PROC}/sys/kernel/random/boot_id r,
   owner @{PROC}/@{pid}/cgroup r,
   owner @{PROC}/@{pid}/stat r,
 

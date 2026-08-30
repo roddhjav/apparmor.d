@@ -5,10 +5,10 @@
 # systemd service: `dmesg.service`
 #
 # ```sh
-# /usr/bin/savelog -m640 -q -p -n -c 5 /var/log/dmesg
+# /usr/bin/savelog -m640 -q -p -n -c 5 @{log}/dmesg
 # /bin/journalctl --boot 0 --dmesg --output short-monotonic --quiet --no-pager --no-hostname
-# /bin/chgrp adm /var/log/dmesg
-# /bin/chmod 0640 /var/log/dmesg
+# /bin/chgrp adm @{log}/dmesg
+# /bin/chmod 0640 @{log}/dmesg
 # ```
 #
 
@@ -18,6 +18,7 @@ include <tunables/global>
 
 profile dmesg.service flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/journal-write>
   include <abstractions/nameservice-strict>
 
   capability chown,
@@ -44,18 +45,9 @@ profile dmesg.service flags=(attach_disconnected) {
 
   /etc/machine-id r,
 
-  /var/log/ r,
-  /var/log/dmesg rw,
-  /var/log/dmesg.* rwl -> /var/log/dmesg,
-
-  /{run,var}/log/journal/ r,
-  /{run,var}/log/journal/@{hex32}/ r,
-  /{run,var}/log/journal/@{hex32}/system.journal* r,
-  /{run,var}/log/journal/@{hex32}/system@@{hex}-@{hex}.journal* rw,
-  /{run,var}/log/journal/@{hex32}/system@@{hex32}-@{hex16}-@{hex16}.journal* rw,
-  /{run,var}/log/journal/@{hex32}/user-@{hex}.journal* rw,
-  /{run,var}/log/journal/@{hex32}/user-@{uid}@@{hex}-@{hex}.journal* rw,
-  /{run,var}/log/journal/@{hex32}/user-@{uid}@@{hex32}-@{hex16}-@{hex16}.journal* rw,
+  @{log}/ r,
+  @{log}/dmesg rw,
+  @{log}/dmesg.* rwl -> @{log}/dmesg,
 
   @{PROC}/1/environ r,
   @{PROC}/cmdline r,

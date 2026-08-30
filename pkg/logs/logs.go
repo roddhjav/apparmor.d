@@ -81,6 +81,8 @@ var (
 		`/boot/(|efi/)`, `@{efi}/`,
 		`/efi/`, `@{efi}/`,
 		`/var/run/`, `@{run}/`,
+		`/var/log/`, `@{log}/`,
+		`/run/log/`, `@{log}/`,
 		`/run/`, `@{run}/`,
 		`user/[0-9]*/`, `user/@{uid}/`,
 		`/tmp/user/@{uid}/`, `@{tmp}/`,
