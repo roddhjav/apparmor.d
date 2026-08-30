@@ -1,0 +1,70 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+# LOGPROF-SUGGEST: no
+# NEEDS-VARIABLE: appid
+# NEEDS-VARIABLE: profile_app
+
+# Base rules for `xdg-dbus-proxy` launcher used by Flatpak
+
+# xdg-dbus-proxy is used to filter and forward D-Bus messages between the
+# sandboxed application and the host system. As we know the exact D-Bus
+# interfaces used by the application, we can restrict the proxy to only those
+# interfaces.
+
+# All dbus rules needed by the application must be allowed in this profile.
+
+  abi <abi/5.0>,
+
+  include <abstractions/accessibility>
+  include <abstractions/bus-session>
+  include <abstractions/bus-system>
+  include <abstractions/bus/session/org.freedesktop.portal.Settings>
+
+  # gtk-strict
+  include <abstractions/bus/session/org.gtk.Actions>
+  include <abstractions/bus/session/org.gtk.Menus>
+  include <abstractions/bus/session/org.gtk.Settings>
+  include <abstractions/bus/session/org.gtk.vfs.Metadata>
+  include <abstractions/bus/session/org.gtk.vfs.MountTracker>
+
+  signal receive peer=flatpak-portal,
+
+  unix (send receive) type=seqpacket peer=(label=@{profile_app}),
+  unix (send receive) type=stream    peer=(label=@{profile_app}),
+
+  dbus receive bus=system path=/org/freedesktop/systemd1/unit/*
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged
+       peer=(name=@{busname}, label="@{p_systemd}"),
+
+  dbus send bus=system path=/org/freedesktop/DBus
+       interface=org.freedesktop.DBus
+       member=ListNames
+       peer=(name=org.freedesktop.DBus, label=dbus-system),
+
+  dbus receive bus=system path=/org/freedesktop/login1
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged
+       peer=(name=@{busname}, label=systemd-logind),
+
+  @{bin}/xdg-dbus-proxy ix,
+
+  owner @{att}@{HOME}/.var/app/@{appid}/**/usr/.ref rw,
+
+  owner @{att}@{tmp}/* r,
+
+        @{att}@{run}/systemd/inhibit/@{int}.ref w,
+  owner @{att}@{run}/flatpak/doc/** r,
+  owner @{att}@{run}/user/@{uid}/at-spi/bus rw,
+  owner @{att}@{run}/user/@{uid}/bus rw,
+
+  owner @{run}/user/@{uid}/.dbus-proxy/a11y-bus-proxy-@{rand6} w,
+  owner @{run}/user/@{uid}/.dbus-proxy/session-bus-proxy-@{rand6} w,
+  owner @{run}/user/@{uid}/.dbus-proxy/system-bus-proxy-@{rand6} w,
+
+  owner @{att}/dev/pts/@{int} w,
+
+  include if exists <abstractions/flatpak/dbus-proxy.d>
+
+# vim:syntax=apparmor
