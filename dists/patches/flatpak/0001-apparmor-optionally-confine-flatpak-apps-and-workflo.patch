@@ -1,0 +1,247 @@
+From b4cd2188260ae0c737a48367a477cc34bf97a64f Mon Sep 17 00:00:00 2001
+From: Alexandre Pujol <alexandre@pujol.io>
+Date: Mon, 9 Mar 2026 23:04:49 +0100
+Subject: [PATCH] apparmor: optionally confine flatpak apps and workflows with
+ AppArmor.
+
+Add optional apparmor confinement for flatpak applications and internal
+workflows. When enabled, each bwrap sandbox is launched with an
+--apparmor-profile argument, confining it under a named AppArmor profile.
+
+Confined sandboxes and their expected profiles:
+- flatpak.<appid> - app run sandbox
+- flatpak.dbus.<appid> - per-app D-Bus proxy sandbox
+- flatpak.build - flatpak build sandbox
+- flatpak.install - apply_extra install sandbox
+- flatpak.trigger - sandboxed trigger execution
+- flatpak.ldconfig - ld.so cache regeneration
+- flatpak.icon-validator - icon validation
+
+The D-Bus proxy sandbox also bind-mounts
+/proc/self/attr/apparmor/current writable so bubblewrap can perform the
+profile transition. The app_id parameter is threaded through to
+flatpak_run_maybe_start_dbus_proxy() for per-application profile naming.
+
+These profiles are not shipped by flatpak and must be generated and
+loaded by an external tool before the sandboxes are launched.
+---
+ app/flatpak-builtins-build.c      |  6 ++++++
+ common/flatpak-dir.c              | 13 +++++++++++++
+ common/flatpak-run-dbus-private.h |  1 +
+ common/flatpak-run-dbus.c         | 15 ++++++++++++++-
+ common/flatpak-run.c              | 13 ++++++++++++-
+ icon-validator/validate-icon.c    |  3 +++
+ meson.build                       |  6 ++++++
+ meson_options.txt                 |  6 ++++++
+ 8 files changed, 61 insertions(+), 2 deletions(-)
+
+diff --git a/app/flatpak-builtins-build.c b/app/flatpak-builtins-build.c
+index e94523bb..ffb40adc 100644
+--- a/app/flatpak-builtins-build.c
++++ b/app/flatpak-builtins-build.c
+@@ -654,6 +654,12 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError
+ 
+   flatpak_bwrap_populate_runtime_dir (bwrap, NULL);
+ 
++#ifdef ENABLE_APPARMOR
++  {
++    flatpak_bwrap_add_args (bwrap, "--apparmor-profile", "flatpak.build", NULL);
++  }
++#endif
++
+   flatpak_bwrap_envp_to_args (bwrap);
+ 
+   if (!flatpak_bwrap_bundle_args (bwrap, 1, -1, FALSE, error))
+diff --git a/common/flatpak-dir.c b/common/flatpak-dir.c
+index b071b1fa..10353f08 100644
+--- a/common/flatpak-dir.c
++++ b/common/flatpak-dir.c
+@@ -8139,6 +8139,9 @@ flatpak_dir_run_triggers (FlatpakDir   *self,
+                                   "--proc", "/proc",
+                                   "--dev", "/dev",
+                                   "--bind", basedir, basedir,
++#ifdef ENABLE_APPARMOR
++                                  "--apparmor-profile", "flatpak.trigger",
++#endif
+                                   "--",
+                                   NULL);
+ #endif
+@@ -9420,6 +9423,16 @@ apply_extra_data (FlatpakDir   *self,
+ 
+   flatpak_bwrap_populate_runtime_dir (bwrap, NULL);
+ 
++#ifdef ENABLE_APPARMOR
++  /* Confine the install sandbox with an AppArmor profile named flatpak.install.
++   * Mount /proc so aa_change_profile() can write to /proc/self/attr/apparmor/current.
++   * /proc was disabled by NO_PROC above, but bwrap needs it for the profile transition. */
++  flatpak_bwrap_add_args (bwrap,
++                          "--proc", "/proc",
++                          "--apparmor-profile", "flatpak.install",
++                          NULL);
++#endif
++
+   flatpak_bwrap_envp_to_args (bwrap);
+ 
+   flatpak_bwrap_add_args (bwrap, "--", "/app/bin/apply_extra", NULL);
+diff --git a/common/flatpak-run-dbus-private.h b/common/flatpak-run-dbus-private.h
+index 83690378..1d64becc 100644
+--- a/common/flatpak-run-dbus-private.h
++++ b/common/flatpak-run-dbus-private.h
+@@ -50,6 +50,7 @@ gboolean flatpak_run_add_a11y_dbus_args (FlatpakBwrap    *app_bwrap,
+ gboolean flatpak_run_maybe_start_dbus_proxy (FlatpakBwrap *app_bwrap,
+                                              FlatpakBwrap *proxy_arg_bwrap,
+                                              const char   *app_info_path,
++                                             const char   *app_id,
+                                              GError      **error);
+ 
+ G_END_DECLS
+diff --git a/common/flatpak-run-dbus.c b/common/flatpak-run-dbus.c
+index 5d3c963e..e385179f 100644
+--- a/common/flatpak-run-dbus.c
++++ b/common/flatpak-run-dbus.c
+@@ -33,6 +33,7 @@
+ static gboolean
+ add_bwrap_wrapper (FlatpakBwrap *bwrap,
+                    const char   *app_info_path,
++                   const char   *app_id,
+                    GError      **error)
+ {
+   glnx_autofd int app_info_fd = -1;
+@@ -101,6 +102,17 @@ add_bwrap_wrapper (FlatpakBwrap *bwrap,
+   flatpak_bwrap_add_args (bwrap, "--perms", "0600", NULL);
+   flatpak_bwrap_add_args_data_fd (bwrap, "--file", g_steal_fd (&app_info_fd), "/.flatpak-info");
+ 
++#ifdef ENABLE_APPARMOR
++  /* Bind-mount the AppArmor attr file writable since /proc is ro-bind in this context. */
++  {
++    g_autofree char *aa_profile = g_strdup_printf ("flatpak.dbus.%s", app_id);
++    flatpak_bwrap_add_args (bwrap,
++                            "--bind", "/proc/self/attr/apparmor/current", "/proc/self/attr/apparmor/current",
++                            "--apparmor-profile", aa_profile,
++                            NULL);
++  }
++#endif
++
+   if (!flatpak_bwrap_bundle_args (bwrap, 1, -1, FALSE, error))
+     return FALSE;
+ 
+@@ -114,6 +126,7 @@ gboolean
+ flatpak_run_maybe_start_dbus_proxy (FlatpakBwrap *app_bwrap,
+                                     FlatpakBwrap *proxy_arg_bwrap,
+                                     const char   *app_info_path,
++                                    const char   *app_id,
+                                     GError      **error)
+ {
+   char x = 'x';
+@@ -131,7 +144,7 @@ flatpak_run_maybe_start_dbus_proxy (FlatpakBwrap *app_bwrap,
+ 
+   proxy_bwrap = flatpak_bwrap_new (NULL);
+ 
+-  if (!add_bwrap_wrapper (proxy_bwrap, app_info_path, error))
++  if (!add_bwrap_wrapper (proxy_bwrap, app_info_path, app_id, error))
+     return FALSE;
+ 
+   proxy = g_getenv ("FLATPAK_DBUSPROXY");
+diff --git a/common/flatpak-run.c b/common/flatpak-run.c
+index 62982f14..f1119d4b 100644
+--- a/common/flatpak-run.c
++++ b/common/flatpak-run.c
+@@ -645,7 +645,7 @@ flatpak_run_add_environment_args (FlatpakBwrap           *bwrap,
+     }
+ 
+   if (!flatpak_run_maybe_start_dbus_proxy (bwrap, proxy_arg_bwrap,
+-                                           app_info_path, error))
++                                           app_info_path, app_id, error))
+     return FALSE;
+ 
+   if (exports_out)
+@@ -2981,6 +2981,9 @@ regenerate_ld_cache (GPtrArray    *base_argv_array,
+                           "--unshare-net",
+                           "--proc", "/proc",
+                           "--dev", "/dev",
++#ifdef ENABLE_APPARMOR
++                          "--apparmor-profile", "flatpak.ldconfig",
++#endif
+                           NULL);
+ 
+   if (!flatpak_bwrap_add_args_data_fd_dup (bwrap, "--bind-fd",
+@@ -3960,6 +3963,14 @@ flatpak_run_app (FlatpakDecomposed   *app_ref,
+       command = default_command;
+     }
+ 
++#ifdef ENABLE_APPARMOR
++  /* Confine the sandbox with an AppArmor profile named flatpak.<appid> */
++  {
++    g_autofree char *aa_profile = g_strdup_printf ("flatpak.%s", app_id);
++    flatpak_bwrap_add_args (bwrap, "--apparmor-profile", aa_profile, NULL);
++  }
++#endif
++
+   flatpak_bwrap_sort_envp (bwrap);
+   flatpak_bwrap_envp_to_args (bwrap);
+ 
+diff --git a/icon-validator/validate-icon.c b/icon-validator/validate-icon.c
+index 7d29f0ec..7da4710d 100644
+--- a/icon-validator/validate-icon.c
++++ b/icon-validator/validate-icon.c
+@@ -221,6 +221,9 @@ rerun_in_sandbox (const char *arg_width,
+             "--unsetenv", "TMPDIR",
+             "--die-with-parent",
+             "--ro-bind", filename, filename,
++#ifdef ENABLE_APPARMOR
++            "--apparmor-profile", "flatpak.icon-validator",
++#endif
+             NULL);
+ 
+   if (g_getenv ("G_MESSAGES_DEBUG"))
+diff --git a/meson.build b/meson.build
+index cf74a71d..19169771 100644
+--- a/meson.build
++++ b/meson.build
+@@ -207,6 +207,7 @@ libostree_dep = dependency('ostree-1', version : '>=' + required_libostree)
+ json_glib_dep = dependency('json-glib-1.0')
+ appstream_dep = dependency('appstream', version : '>=0.12.0')
+ gdk_pixbuf_dep = dependency('gdk-pixbuf-2.0')
++libapparmor_dep = dependency('libapparmor', required : get_option('apparmor'))
+ libseccomp_dep = dependency('libseccomp', required : get_option('seccomp'))
+ gir_dep = dependency('gobject-introspection-1.0', version : '>=1.40.0', required : get_option('gir'))
+ gtkdoc_dep = dependency('gtk-doc', required : get_option('gtkdoc'), native : true)
+@@ -379,6 +380,10 @@ if dconf_dep.found()
+   cdata.set('HAVE_DCONF', 1)
+ endif
+ 
++if libapparmor_dep.found()
++  cdata.set('ENABLE_APPARMOR', 1)
++endif
++
+ if libseccomp_dep.found()
+   cdata.set('ENABLE_SECCOMP', 1)
+ endif
+@@ -434,6 +439,7 @@ summary(
+     'Build dbus-proxy' : (get_option('system_dbus_proxy') == ''),
+     'fusermount executable' : fusermount,
+     'Use sandboxed triggers' : get_option('sandboxed_triggers'),
++    'Use AppArmor' : libapparmor_dep.found(),
+     'Use seccomp' : libseccomp_dep.found(),
+     'Privileged group' : get_option('privileged_group'),
+     'Use dconf' : dconf_dep.found(),
+diff --git a/meson_options.txt b/meson_options.txt
+index 7f6e475d..3f81e54e 100644
+--- a/meson_options.txt
++++ b/meson_options.txt
+@@ -1,6 +1,12 @@
+ # Copyright 2022 Collabora Ltd.
+ # SPDX-License-Identifier: LGPL-2.1-or-later
+ 
++option(
++  'apparmor',
++  type : 'feature',
++  description : 'enable AppArmor confinement for sandboxes',
++  value : 'auto',
++)
+ option(
+   'auto_sideloading',
+   type : 'boolean',
+-- 
+2.55.0
+
