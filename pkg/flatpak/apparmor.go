@@ -56,12 +56,17 @@ type FlatpakAppArmorProfile struct {
 	FileName string
 }
 
+// ProfileName returns the name of the profile generated for an application.
+func ProfileName(appID string) string {
+	return "flatpak." + appID
+}
+
 func NewFlatpakAppArmorProfile(meta *FlatpakMetadata, mode string) *FlatpakAppArmorProfile {
 	appID := meta.Name
 	tld, vendor, product, name := meta.Parts()
 
 	// Define profile names
-	profileName := "flatpak." + appID
+	profileName := ProfileName(appID)
 	profileDbusProxyName := "flatpak.dbus." + appID
 
 	att := "/att/" + profileName
