@@ -1,0 +1,28 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{sbin}/ldconfig
+profile flatpak.ldconfig flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/consoles>
+
+  @{exec_path} ix,
+
+  @{lib}/ r,
+  /app/{,**} r,
+  /usr/share/runtime/{,**} r,
+
+  owner @{run}/flatpak/ld.so.conf.d/ r,
+  owner @{run}/flatpak/ld.so.conf.d/*.conf r,
+  owner @{run}/ld-so-cache-dir/@{hex64}.@{rand6} w,
+  owner @{run}/ld-so-cache-dir/@{hex64}.@{rand6}~ rw,
+
+  include if exists <local/flatpak.ldconfig>
+}
+
+# vim:syntax=apparmor

@@ -2,6 +2,58 @@
 # Copyright (C) 2023-2026 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
+# Profile for Flatpak. Two modes of operation are supported:
+#
+# 1. `${WITH_FLATPAKAPPS} == false` *(default)*
+#    Any Flatpak apps are confined using the same profile. This profile (`fapp`)
+#    is therefore large and identicall to any app.
+#    Flatpak and flatpak apps are separated, bwrap is *somewhat* sperated.
+# 2. `${WITH_FLATPAKAPPS} == true` *require `aa-flatpak` and a few patches*
+#    A profile is generated for all flatpak apps using flatpak metadata.
+#    Protection is unique for each apps and more strict than was is allowed by
+#    the flatpak sandbox allow by default.
+#
+# Overall architecture of the flatpak profiles:
+# ```
+# aa-flatpak                         # Generate the app profiles (`${WITH_FLATPAKAPPS} == true`)
+#
+# flatpak                            # Manage the applications, the runtimes and the remotes
+# ├── fbwrap                         # Create the sandbox, start the app (`${WITH_FLATPAKAPPS} == false`)
+# │   ├── fbwrap//&fapp              # Generic profile for all applications
+# │   ├── fbwrap//&glycin//loaders   # Image loaders (`&:glycin:loaders` on apparmor >= 5.0)
+# │   ├── fbwrap//&xdg-dbus-proxy    # Filter the app access to the session bus (allow any dbus)
+# │   └── fbwrap//&ldconfig          # Build the app library cache in the sandbox
+# ├── bwrap                          # Create the sandbox, start the app (`${WITH_FLATPAKAPPS} == true`)
+# │   ├── flatpak.dbus.<appid>       # Dbus proxy profile for each applications
+# │   ├── flatpak.<appid>            # Application specific profile
+# │   ├── flatpak.build              # Run a command in a build sandbox (`flatpak build`)
+# │   ├── flatpak.icon-validator     # Validate the icons exported by the app
+# │   ├── flatpak.install            # Run the install script shipped by the app
+# │   ├── flatpak.ldconfig           # Build the app library cache
+# │   └── flatpak.trigger            # Run the scripts in /usr/share/flatpak/triggers
+# │       ├── &gtk-update-icon-cache # Refresh the icon cache
+# │       └── &update-mime-database  # Refresh the mime database
+# ├── flatpak//&enter                # `flatpak enter`, not confined on purpose
+# ├── flatpak//fusermount            # Mount the revokefs-fuse install cache
+# └── flatpak//gpg                   # Check the ostree repository signatures
+#
+# flatpak-validate-icon              # Validate an icon before it is exported
+# flatpak-oci-authenticator          # Authenticate on OCI remotes (`org.flatpak.Authenticator.Oci`)
+# flatpak-portal                     # Spawn commands on the host (`org.freedesktop.portal.Flatpak`)
+# flatpak-session-helper             # Session services for the sandbox (`org.freedesktop.Flatpak`)
+# ├── flatpak-session-helper-app     # App binary run on the host by the helper
+# │   └── udevadm                    # Query the host devices
+# ├── p11-kit                        # Forward the host PKCS#11 modules to the sandbox
+# └── pkexec                         # Ask for privileges through polkit
+# flatpak-system-helper              # System wide install (`org.freedesktop.Flatpak.SystemHelper`)
+# ├── bwrap                          # Sandbox running the deploy triggers
+# │   ├── &gtk-update-icon-cache     # Refresh the icon cache
+# │   ├── &update-desktop-database   # Refresh the desktop file database
+# │   └── &update-mime-database      # Refresh the mime database
+# ├── bwrap_apps                     # Sandbox running the app install script
+# └── gpg                            # Check the ostree repository signatures
+# ```
+
 abi <abi/5.0>,
 
 include <tunables/global>
@@ -25,19 +77,8 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/mime>
   include <abstractions/nameservice-strict>
   include <abstractions/ssl_certs>
-  include <abstractions/user-dirs>
 
-  capability dac_override,
-  capability dac_read_search,
-  capability net_admin,
   capability sys_ptrace,
-  capability syslog, # optional: no audit
-
-  # Manage the sandbox
-  capability setgid,
-  capability setuid,
-  capability sys_admin,
-  capability sys_chroot,
 
   network inet dgram,
   network inet6 dgram,
@@ -47,18 +88,14 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
   mount fstype=fuse.revokefs-fuse options=(rw, nosuid, nodev) -> /var/tmp/flatpak-cache-*/*/,
 
-  ptrace read peer=bwrap.*,     # bwrap for experimental per app generated profile
-  ptrace read peer=fbwrap,      # Generic bwrap for flatpak app
-  ptrace read peer=flatpak-app, # Deprecated generic profile
-  ptrace read peer=flatpak.*,
+  ptrace read peer=flatpak//bwrap,
+  ptrace read peer=gnome-software//bwrap,
 
-  signal send peer=flatpak-app,
   signal send peer=polkit-agent-helper,
 
-  unix type=seqpacket peer=(label=flatpak-system-helper),
-  unix type=stream    peer=(label=flatpak//fusermount),
-  unix (send receive) type=seqpacket peer=(label=fapp),
-  unix (send receive) type=seqpacket peer=(label=fbwrap),
+  unix (send receive) type=seqpacket peer=(label=flatpak-system-helper),
+  unix (send receive) type=seqpacket peer=(label=flatpak.*),
+  unix (send receive) type=stream    peer=(label=flatpak.*),
 
   #aa:dbus talk bus=system name=org.freedesktop.Flatpak.SystemHelper label=flatpak-system-helper
   #aa:dbus talk bus=system name=org.freedesktop.PolicyKit1 label="@{p_polkitd}"
@@ -78,14 +115,24 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
   @{exec_path} mr,
 
-  @{bin}/bwrap               rPx -> flatpak-app, #aa:only apparmor<4.1
-  @{bin}/bwrap               rPx -> fbwrap,      #aa:only apparmor>=4.1
-  @{bin}/fusermount{,3}      rCx -> fusermount,
-  @{bin}/gpg                 rCx -> gpg,
-  @{bin}/gpgconf             rCx -> gpg,
-  @{bin}/gpgsm               rCx -> gpg,
-  @{lib}/revokefs-fuse       rix,
-  @{lib}/flatpak-validate-icon rPx,
+  if ${WITH_FLATPAKAPPS} {
+    #aa:only abi>=5
+    # Patched flatpak: bwrap allow transition to generated profiles for each app.
+    # This require a patched version of both bwrap and flatpak.
+    @{bin}/bwrap                Cx -> bwrap,
+
+  } else {
+    # Default flatpak: bwrap stacks a default profile for all apps.
+    @{bin}/bwrap                Px -> fbwrap,
+
+  }
+
+  @{bin}/fusermount{,3}         Cx -> fusermount,
+  @{bin}/gpg                    Cx -> gpg,
+  @{bin}/gpgconf                Cx -> gpg,
+  @{bin}/gpgsm                  Cx -> gpg,
+  @{lib}/revokefs-fuse         rix,
+  @{lib}/flatpak-validate-icon  Px,
 
   # For flatpack enter, the shell is not confined on purpose.
   @{bin}/@{shells}              Cx -> enter,
@@ -167,6 +214,47 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
   #aa:only test
   mount fstype=fuse.revokefs-fuse options=(rw, nosuid, nodev) revokefs-fuse -> /tmp/test-flatpak-*/**,
+
+  profile bwrap flags=(attach_disconnected,mediate_deleted) {
+    include <abstractions/base>
+    include <abstractions/bwrap>
+    include <abstractions/consoles>
+
+    capability dac_override,
+    capability dac_read_search,
+    capability sys_resource,
+
+    change_profile -> flatpak.*,
+
+    signal receive peer=flatpak-portal,
+    signal receive peer=flatpak,
+
+    unix (send receive) type=seqpacket peer=(label=flatpak.*),
+    unix (send receive) type=stream    peer=(label=flatpak.*),
+
+    /app/.ref rk,
+    /usr/.ref rk,
+
+    owner /bindfile@{rand6} rw,
+
+    owner @{HOME}/.var/app/@{appid}/ r,
+    owner @{HOME}/.var/app/@{appid}/.ld.so/@{hex64} r,
+    owner @{att}@{HOME}/.var/app/@{appid}/**/usr/.ref rw,
+
+    owner @{user_cache_dirs}/flatpak/ld.so/@{hex64}.@{rand6} r,
+
+    owner @{run}/user/@{uid}/.flatpak/@{int}/bwrapinfo.json rw,
+    owner @{run}/user/@{uid}/.flatpak/@{int}/info r,
+
+          @{run}/parent/app/.ref rk,
+          @{run}/parent/usr/.ref rk,
+    owner @{run}/flatpak/.flatpak/@{int}/.ref rk,
+    owner @{run}/flatpak/per-app-dirs-ref rk,
+
+    owner /tmp/#@{int} rw,
+
+    include if exists <local/flatpak_bwrap>
+  }
 
   profile enter {
     include <abstractions/base>

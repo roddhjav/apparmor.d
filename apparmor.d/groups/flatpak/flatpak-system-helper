@@ -1,5 +1,5 @@
 # apparmor.d - Full set of apparmor profiles
-# Copyright (C) 2022-2024 Alexandre Pujol <alexandre@pujol.io>
+# Copyright (C) 2022-2026 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
 abi <abi/5.0>,
@@ -33,25 +33,34 @@ profile flatpak-system-helper @{exec_path} flags=(attach_disconnected,mediate_de
 
   ptrace read,
 
-  unix type=seqpacket peer=(label=bazaar),
-  unix type=seqpacket peer=(label=bazaar//fusermount),
-  unix type=seqpacket peer=(label=bazaar//revokefs-fuse),
-  unix type=seqpacket peer=(label=dbus-system),
-  unix type=seqpacket peer=(label=flatpak),
-  unix type=seqpacket peer=(label=flatpak//fusermount),
-  unix type=seqpacket peer=(label=gnome-software),
-  unix type=seqpacket peer=(label=gnome-software//fusermount),
-  unix type=seqpacket peer=(label=unconfined),
+  unix (send receive) type=seqpacket peer=(label=dbus-system),
+  unix (send receive) type=seqpacket peer=(label=bazaar),
+  unix (send receive) type=seqpacket peer=(label=bazaar//fusermount),
+  unix (send receive) type=seqpacket peer=(label=bazaar//revokefs-fuse),
+  unix (send receive) type=seqpacket peer=(label=flatpak),
+  unix (send receive) type=seqpacket peer=(label=flatpak//fusermount),
+  unix (send receive) type=seqpacket peer=(label=gnome-software),
+  unix (send receive) type=seqpacket peer=(label=gnome-software//fusermount),
 
   #aa:dbus own bus=system name=org.freedesktop.Flatpak.SystemHelper
 
   @{exec_path} mr,
 
-  @{bin}/bwrap          rCx -> bwrap,
-  @{bin}/gpg{,2}        rCx -> gpg,
-  @{bin}/gpgconf        rCx -> gpg,
-  @{bin}/gpgsm          rCx -> gpg,
-  @{lib}/revokefs-fuse  rix,
+  if ${WITH_FLATPAKAPPS} {
+    #aa:only abi>=5
+    # Patched flatpak: transition to the flatpak.install and flatpak.trigger
+    @{bin}/bwrap           Cx -> bwrap_apps,
+
+  } else {
+    # Default flatpak: bwrap handle flatpak install and trigger commands.
+    @{bin}/bwrap           Cx -> bwrap,
+
+  }
+
+  @{bin}/gpg{,2}           Cx -> gpg,
+  @{bin}/gpgconf           Cx -> gpg,
+  @{bin}/gpgsm             Cx -> gpg,
+  @{lib}/revokefs-fuse    rix,
 
   /etc/flatpak/{,**} r,
   /etc/machine-id r,
@@ -74,6 +83,30 @@ profile flatpak-system-helper @{exec_path} flags=(attach_disconnected,mediate_de
         @{PROC}/@{pids}/status r,
   owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/fdinfo/@{int} r,
+
+  profile bwrap_apps flags=(attach_disconnected) {
+    include <abstractions/base>
+    include <abstractions/bwrap>
+    include <abstractions/consoles>
+
+    capability dac_override,
+    capability dac_read_search,
+    capability sys_resource,
+
+    change_profile -> flatpak.install,
+    change_profile -> flatpak.trigger,
+
+    @{bin}/bwrap mr,
+
+    /app/.ref rk,
+    /usr/.ref rk,
+
+    owner /bindfile@{rand6} rw,
+
+    owner /tmp/#@{int} rw,
+
+    include if exists <local/flatpak-system-helper_bwrap_apps>
+  }
 
   profile bwrap flags=(attach_disconnected) {
     include <abstractions/base>

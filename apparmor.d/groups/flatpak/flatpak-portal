@@ -21,12 +21,16 @@ profile flatpak-portal @{exec_path} flags=(attach_disconnected,mediate_deleted) 
 
   network netlink raw,
 
+  ptrace read peer=flatpak.dbus.*,
+  ptrace read peer=unconfined,
+
+  signal send set=int peer=flatpak.*,
+  signal send set=int peer=flatpak//bwrap,
+
   unix (send receive) type=seqpacket peer=(label=fapp),
   unix (send receive) type=seqpacket peer=(label=fbwrap),
-
-  ptrace read,
-
-  signal send,
+  unix (send receive) type=seqpacket peer=(label=flatpak.*),
+  unix (send receive) type=stream    peer=(label=flatpak.*),
 
   #aa:dbus own bus=session name=org.freedesktop.portal.Flatpak
 
