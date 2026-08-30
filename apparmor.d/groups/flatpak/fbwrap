@@ -37,33 +37,27 @@ profile fbwrap flags=(attach_disconnected,mediate_deleted) {
 
   @{exec_path} mr,
 
-  @{bin}/true ix, # Required by glycin, harmless
-
              @{sbin}/ldconfig                         Cx -> &fbwrap//ldconfig,
              @{bin}/xdg-dbus-proxy                    Px -> fbwrap//&xdg-dbus-proxy,
 
   #aa:only apparmor<5.0
-  priority=2 @{lib}/glycin-loaders/@{d}+/glycin-*     Px -> fbwrap//&glycin//loaders,
+  priority=4 @{lib}/glycin-loaders/@{d}+/glycin-*     Px -> fbwrap//&glycin//loaders,
 
   #aa:only apparmor>=5.0
-  priority=2 @{lib}/glycin-loaders/@{d}+/glycin-*     Px -> fbwrap//&:glycin:loaders,
+  priority=4 @{lib}/glycin-loaders/@{d}+/glycin-*     Px -> fbwrap//&:glycin:loaders,
 
-  priority=1 /app/bin/**                              Px -> fbwrap//&fapp,
-  priority=1 @{lib}/**                                Px -> fbwrap//&fapp,
-  priority=1 @{HOME}/.var/app/@{appid}/**             Px -> fbwrap//&fapp,
-
-  priority=1 /usr/share/flatpak/triggers/desktop-database.trigger Px -> fbwrap//&flatpak-system-helper//bwrap,
-  priority=1 /usr/share/flatpak/triggers/gtk-icon-cache.trigger   Px -> fbwrap//&flatpak-system-helper//bwrap,
-  priority=1 /usr/share/flatpak/triggers/mime-database.trigger    Px -> fbwrap//&flatpak-system-helper//bwrap,
+  priority=3 /app/bin/**                              Px -> fbwrap//&fapp,
+  priority=3 @{lib}/**                                Px -> fbwrap//&fapp,
+  priority=3 @{HOME}/.var/app/@{appid}/**             Px -> fbwrap//&fapp,
 
   /app/.ref rk,
   /usr/.ref rk,
 
   /bindfile@{rand6} rw,
 
+  @{system_share_dirs}/mime/{,**} rw,
+
   owner @{run}/flatpak/.flatpak/@{int}/.ref rk,
-  owner @{run}/flatpak/ld.so.conf.d/  r,
-  owner @{run}/flatpak/ld.so.conf.d/*.conf r,
   owner @{run}/flatpak/per-app-dirs-ref rk,
   owner @{run}/ld-so-cache-dir/@{hex64}.@{rand6}{,~} rw,
 
@@ -75,9 +69,6 @@ profile fbwrap flags=(attach_disconnected,mediate_deleted) {
 
   owner @{att}@{run}/user/@{uid}/at-spi/bus rw,
   owner @{att}@{run}/user/@{uid}/bus rw,
-
-        @{PROC}/cgroups r,
-  owner @{PROC}/@{pid}/coredump_filter rw,
 
   profile ldconfig flags=(attach_disconnected,mediate_deleted) {
     include <abstractions/base>
