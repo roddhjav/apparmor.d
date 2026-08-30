@@ -351,8 +351,8 @@ packages: (clean)
 	set -eu -o pipefail
 	declare -A matrix=(
 		# ["archlinux"]="-"
-		["debian"]="13"
-		["ubuntu"]="24.04 25.10 26.04"
+		["debian"]="13 14"
+		["ubuntu"]="26.04"
 		# ["opensuse"]="-"
 	)
 	for dist in "${!matrix[@]}"; do
