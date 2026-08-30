@@ -1,0 +1,28 @@
+# aa-flatpak - Confine flatpak applications with apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+[Unit]
+Description=Generate AppArmor profiles for flatpak applications
+DefaultDependencies=no
+Before=sysinit.target
+After=apparmor.service
+AssertPathIsReadWrite=/sys/kernel/security/apparmor/.load
+ConditionSecurity=apparmor
+Documentation=man:aa-flatpak(1)
+Documentation=https://gitlab.com/roddhjav/apparmor.d
+
+# Don't start this unit on the Ubuntu Live CD
+ConditionPathExists=!/rofs/etc/apparmor.d
+
+# Don't start this unit on the Debian Live CD when using overlayfs
+ConditionPathExists=!/run/live/overlay/work
+
+# Only start when flatpak is installed
+ConditionPathExists=/usr/bin/flatpak
+
+[Service]
+ExecStart=/usr/bin/aa-flatpak --daemon
+
+[Install]
+WantedBy=sysinit.target
