@@ -2,18 +2,56 @@
 # Copyright (C) 2023-2026 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-# Profile for Flatpak. Two modes of operation are supported:
+# Profile for Flatpak. Multiple modes of operation are supported, depending on
+# the [security goals](https://apparmor.pujol.io/security/architecture/#targets).
 #
-# 1. `${WITH_FLATPAKAPPS} == false` *(default)*
-#    Any Flatpak apps are confined using the same profile. This profile (`fapp`)
-#    is therefore large and identicall to any app.
-#    Flatpak and flatpak apps are separated, bwrap is *somewhat* sperated.
-# 2. `${WITH_FLATPAKAPPS} == true` *require `aa-flatpak` and a few patches*
-#    A profile is generated for all flatpak apps using flatpak metadata.
-#    Protection is unique for each apps and more strict than was is allowed by
-#    the flatpak sandbox allow by default.
+# **Security objectives**
 #
-# Overall architecture of the flatpak profiles:
+# There are multiple ways to confine Flatpak (and Flatpak applications):
+#
+# 1. **`default`** *(wip)*: You trust Flatpak for application sandboxing. Flatpak
+#    (and bwrap) are confined as much as possible. However, application separation
+#    is left entirely to Flatpak. The apps are confined, but the profile purposely
+#    allows everything.
+#
+#     AppArmor does not restrict anything on the application side.
+#
+# 2. **`strict`**: You trust Flatpak for application sandboxing, but you would
+#    like it to be somewhat stricter in terms of access. You still want most of
+#    your applications to run without issue. AppArmor confinement goes a bit
+#    further than Flatpak:
+#     - System D-Bus communications are more limited than a plain `dbus talk`
+#     - Flatpak helpers such as `flatpak-spawn --host` are controlled: apps such
+#       as an IDE or htop will work, nothing more.
+#    
+#     Flatpak is confined as in `default` mode, but apps are confined with a
+#     generic profile (`fapp`), shared with all apps, that limits access to well
+#     known safe activities.
+#
+#     Enabled with `${WITH_FLATPAKAPPS} == false` *(default)*
+#
+# 3. **`extreme`** *(wip)*: Flatpak application sandboxing is a good base, but by
+#    design (usability) it is limited. You want to restrict it as much as
+#    possible, such that:
+#     - All D-Bus communications are more limited than a plain `dbus talk`
+#     - Flatpak helpers such as `flatpak-spawn --host` are blocked (apps such as
+#       an IDE or htop will not work).
+#     - The profile supports many more separations than default Flatpak (in terms
+#       of devices, shares, sockets and features), such that the use of broad
+#       access modes (e.g. `devices/all`) can be extremely limited *`[wip]`*
+#     - User files are controlled by AppArmor, not by the application developer *`[planned]`*
+#
+#     For each app, a dedicated AppArmor profile is created. Separation between
+#     Flatpak, bwrap and apps is also cleaner and stricter (no profile stacking
+#     is required). This requires `aa-flatpak` to be installed, as well as
+#     [a patch for both `bwrap` and `flatpak`](https://github.com/roddhjav/apparmor.d/tree/main/dists/patches).
+#
+#     Enabled with `${WITH_FLATPAKAPPS} == true`
+#
+# **All of these security levels are valid (including Flatpak without AppArmor at all).** It is only a tradeoff between
+# usability and security.
+#
+# **Overall architecture of the flatpak profiles:**
 # ```
 # aa-flatpak                         # Generate the app profiles (`${WITH_FLATPAKAPPS} == true`)
 #
