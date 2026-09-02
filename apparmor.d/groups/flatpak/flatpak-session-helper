@@ -16,8 +16,9 @@ profile flatpak-session-helper @{exec_path} flags=(attach_disconnected,mediate_d
   include <abstractions/nameservice-strict>
   include <abstractions/p11-kit>
 
-  signal send set=int peer=@{p_systemd},
-  signal send set=int peer=flatpak-session-helper-app,
+  signal send set=int  peer=@{p_systemd},
+  signal send set=int  peer=flatpak-session-helper-app,
+  signal send set=term peer=flatpak,
 
   #aa:dbus own bus=session name=org.freedesktop.Flatpak
 
@@ -35,6 +36,7 @@ profile flatpak-session-helper @{exec_path} flags=(attach_disconnected,mediate_d
   @{bin}/getent                        rix,
   @{bin}/p11-kit                       rCx -> p11-kit,
   @{bin}/pkexec                        rCx -> pkexec,
+  @{bin}/plasmashell                   rPx,
   @{bin}/printenv                      rix,
   @{bin}/ps                            rPx,
 
@@ -42,6 +44,8 @@ profile flatpak-session-helper @{exec_path} flags=(attach_disconnected,mediate_d
   /var/lib/flatpak/app/@{appid}/**/@{lib}/**  rPx -> flatpak-session-helper-app,
   # deny /var/lib/flatpak/app/@{appid}/**/@{bin}/** x,
   # deny /var/lib/flatpak/app/@{appid}/**/@{lib}/** x,
+
+  owner @{att}@{HOME}/.var/app/@{appid}/.local/state/**.log w,
 
   owner @{user_cache_dirs}/.flatpak-helper/{,**} rwk,
 
