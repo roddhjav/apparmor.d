@@ -10,10 +10,11 @@ include <tunables/global>
 @{exec_path} += @{lib}/@{multiarch}/{,libexec/}drkonqi
 profile drkonqi @{exec_path} {
   include <abstractions/base>
-  include <abstractions/graphics>
+  include <abstractions/common/kde>
   include <abstractions/journal-read>
-  include <abstractions/kde-strict>
+  include <abstractions/kde-globals-write>
   include <abstractions/nameservice-strict>
+  include <abstractions/qt-settings-write>
   include <abstractions/ssl_certs>
 
   network inet dgram,
@@ -23,35 +24,109 @@ profile drkonqi @{exec_path} {
   network netlink raw,
 
   signal send set=(cont, stop) peer=@{bin}/akonadiserver,
+  signal send set=kill peer=drkonqi//gdb,
+  signal send set=term peer=kioworker,
 
   ptrace read peer=@{p_systemd_user},
   ptrace read peer=@{bin}/akonadiserver,
 
   @{exec_path} mr,
 
+  @{open_path}       rPx -> child-open-browsers,
+  @{bin}/coredumpctl rPx,
+  @{bin}/gdb         rCx -> gdb,
   @{bin}/lsb_release Px,
 
-  /usr/share/drkonqi/{,**} r,
+  #aa:exec kioworker
+
+  /usr/share/org.kde.syntax-highlighting/syntax-bundled/* r,
 
   /etc/sysconfig/proxy r,
 
   / r,
+  @{lib}/ r,
+
   @{bin}/* r,
   @{sbin}/* r,
 
-  owner @{user_cache_dirs}/drkonqi/ rw,
-  owner @{user_cache_dirs}/drkonqi/** rwlk -> @{user_cache_dirs}/drkonqi/**,
   owner @{user_cache_dirs}/kcrash-metadata/* w,
 
-  owner @{user_config_dirs}/breezerc r,
-  owner @{user_config_dirs}/drkonqirc r,
   owner @{user_config_dirs}/kioslaverc r,
+
+  owner @{user_share_dirs}/user-places.xbel r,
+
+  owner @{tmp}/#@{int} rw,
+  owner @{tmp}/drkonqi-@{rand6}/{,*} rw,
+  owner @{tmp}/drkonqi.@{rand6} rwl -> @{tmp}/#@{int},
+
+  owner @{run}/user/@{uid}/#@{int} rw,
+  owner @{run}/user/@{uid}/drkonqi@{rand6}.@{int}.kioworker.socket rwl -> @{run}/user/@{uid}/#@{int},
+
+  owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/app.slice/drkonqi-coredump-launcher@*.service/memory.pressure rw,
 
   owner @{PROC}/@{pid}/cmdline r,
   owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/oom_score_adj w,
   owner @{PROC}/@{pid}/stat r,
 
   /dev/tty r,
+
+  profile gdb {
+    include <abstractions/base>
+    include <abstractions/fonts>
+    include <abstractions/mime>
+    include <abstractions/nameservice-strict>
+    include <abstractions/python>
+    include <abstractions/qt>
+    include <abstractions/ssl_certs>
+
+    network inet dgram,
+    network inet6 dgram,
+    network inet stream,
+    network inet6 stream,
+
+    @{bin}/gdb r,
+
+    @{bin}/drkonqi-sentry-data rix,
+    @{bin}/eu-unstrip          rix,
+    @{bin}/iconv               rix,
+
+    /etc/gdb/** r,
+
+    /usr/ r,
+    /usr/share/drkonqi/gdb/** r,
+    /usr/share/gdb/{,**} r,
+    /usr/share/guile/{,**} r,
+    /usr/share/mime/mime.cache r,
+    /usr/share/qt6/translations/* r,
+    /usr/share/terminfo/{,**} r,
+
+    @{bin}/* r,
+    @{sbin}/* r,
+
+    owner @{user_cache_dirs}/debuginfod_client/@{hex}/{,*} rw,
+    owner @{user_cache_dirs}/debuginfod_client/cache_*_s rw,
+    owner @{user_cache_dirs}/drkonqi/cores/@{int4}-@{int2}-@{int}T@{int2}:@{int2}:@{int2}.@{int}-@{rand6}/core r,
+    owner @{user_cache_dirs}/ksycoca{5,6}_??_* r,
+    owner @{user_cache_dirs}/kwin/qmlcache/@{hex}.qmlc r,
+    owner @{user_cache_dirs}/kwinsession.kcache r,
+    owner @{user_cache_dirs}/mesa_shader_cache/index r,
+
+    owner @{tmp}/drkonqi-@{rand6}/sentry_payload.json rw,
+    owner @{tmp}/drkonqi.@{rand6} r,
+
+    owner @{PROC}/@{pid}/fd/ r,
+    owner @{PROC}/@{pid}/io r,
+    owner @{PROC}/@{pid}/smaps r,
+    owner @{PROC}/@{pid}/smaps_rollup r,
+
+    /dev/dri/card@{u8} r,
+
+    # Silencer
+    deny owner /usr/share/gdb/python/gdb/**__pycache__/ w,
+
+    include if exists <local/drkonqi_gdb>
+  }
 
   include if exists <local/drkonqi>
 }
