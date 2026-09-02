@@ -10,12 +10,30 @@ include <tunables/global>
 @{exec_path} = @{bin}/kbuildsycoca{,5,6}
 profile kbuildsycoca @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/base>
-  include <abstractions/freedesktop.org>
+  include <abstractions/bus-session>
+  include <abstractions/consoles>
+  include <abstractions/desktop-files>
+  include <abstractions/kde-base>
+  include <abstractions/mime>
   include <abstractions/nameservice-strict>
+  include <abstractions/qt>
+
+  ptrace read peer=plasmashell,
+  ptrace read peer=unconfined,
 
   @{exec_path} mr,
 
-  /dev/tty r,
+  /etc/xdg/menus/{,*} r,
+
+  /usr/share/desktop-directories/{,*} r,
+
+  owner @{HOME}/.qttest/{,cache/} w,
+  owner @{HOME}/.qttest/cache/#@{int} rwk,
+  owner @{HOME}/.qttest/cache/ksycoca[56]_??_* rwlk -> @{HOME}/.qttest/cache/#@{int},
+
+  owner @{user_config_dirs}/menus/{,**} r,
+
+  owner @{PROC}/@{pid}/mountinfo r,
 
   include if exists <local/kbuildsycoca>
 }

@@ -39,6 +39,7 @@ profile kioworker @{exec_path} {
   @{bin}/wrestool rPUx,
   @{bin}/kcmshell6 rPUx,
   @{bin}/alts ix,
+  @{bin}/ddjvu     rCx -> ddjvu,
   @{bin}/gs{,.bin} rCx -> gs,
 
   #aa:exec kio_http_cache_cleaner
@@ -125,15 +126,33 @@ profile kioworker @{exec_path} {
 
   /dev/tty r,
 
+  profile ddjvu {
+    include <abstractions/base>
+
+    @{bin}/ r,
+    @{bin}/ddjvu r,
+    @{bin}/pl r,
+
+    /usr/share/djvu/osi/** r,
+
+    #aa:lint ignore=too-wide
+    @{MOUNTS}/** r,
+    owner @{HOME}/** r,
+
+    include if exists <local/kioworker_ddjvu>
+  }
+
   profile gs {
     include <abstractions/base>
-    include <abstractions/fonts>
+    include <abstractions/fonts-strict>
 
     @{bin}/gs{,.bin} mr,
     @{lib}/ghostscript/**  mr,
 
+    /usr/share/color/icc/ghostscript/{,*} r,
     /usr/share/ghostscript/{,**} r,
     /usr/share/org.kde.syntax-highlighting/{,**} r,
+    /usr/share/poppler/{,**} r,
 
     /etc/paperspecs r,
 

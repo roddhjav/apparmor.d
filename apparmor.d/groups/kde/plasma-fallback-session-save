@@ -6,11 +6,24 @@ abi <abi/5.0>,
 
 include <tunables/global>
 
-@{exec_path} = @{lib}/plasma-fallback-session-save
+@{exec_path} = @{lib}/{,@{multiarch}/libexec/}plasma-fallback-session-save
 profile plasma-fallback-session-save @{exec_path} {
   include <abstractions/base>
+  include <abstractions/graphics>
+  include <abstractions/kde-strict>
 
   @{exec_path} mr,
+
+  /etc/machine-id r,
+  /etc/xdg/menus/{,**} r,
+
+  owner @{user_config_dirs}/ksmserverrc r,
+  owner @{user_config_dirs}/menus/{,**} r,
+
+  owner @{user_state_dirs}/plasmasessionrestorestaterc@{atomic} rwlk -> @{user_state_dirs}/#@{int},
+
+        @{PROC}/sys/kernel/random/boot_id r,
+  owner @{PROC}/@{pid}/mountinfo r,
 
   include if exists <local/plasma-fallback-session-save>
 }
