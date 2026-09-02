@@ -11,6 +11,7 @@ include <tunables/global>
 profile sddm @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/base>
   include <abstractions/authentication>
+  include <abstractions/bus-system>
   include <abstractions/bus/system/org.freedesktop.login1>
   include <abstractions/fontconfig-cache-read>
   include <abstractions/graphics>
@@ -32,6 +33,7 @@ profile sddm @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
   network netlink raw,
 
+  signal (send) set=(kill, term) peer=sddm-greeter,
   signal (send) set=(kill, term) peer=startplasma,
   signal (send) set=(kill, term) peer=xorg,
 
@@ -58,7 +60,7 @@ profile sddm @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   /usr/share/sddm/scripts/Xsession           rix,
 
   if "wayland" in @{DS} {
-    @{lib}/{,sddm/}sddm-helper-start-wayland rix,
+    @{lib}/{,@{multiarch}/}{,sddm/}sddm-helper-start-wayland rix,
     /usr/share/sddm/scripts/wayland-session  rix,
     @{etc_ro}/sddm/wayland-session            Px,
 
@@ -83,10 +85,13 @@ profile sddm @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   }
 
   /usr/share/sddm/themes/** r,
+  /usr/share/wayland-sessions/{,*.desktop} r,
 
   /etc/manpath.config r,
+  /etc/debuginfod/{,**} r,
   /etc/default/locale r,
   /etc/locale.conf r,
+  /etc/machine-id r,
   /etc/sddm.conf r,
   /etc/sddm.conf.d/{,*} r,
   /etc/shells r,
@@ -121,11 +126,12 @@ profile sddm @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{user_share_dirs}/kwalletd/kdewallet.salt rw,
   owner @{user_share_dirs}/sddm/ w,
 
-        /tmp/sddm-:@{u8}-@{rand6} rw,
+        /tmp/sddm-{,:@{u8}}-@{rand6} rw,
         /tmp/xauth_@{rand6} rwl -> /tmp/#@{int},
-  owner /tmp/.@{rand6}/{,s} rw,
-  owner /tmp/#@{int} rw,
-  owner /tmp/sddm-auth-@{uuid} rw,
+  owner @{tmp}/.@{rand6}/{,s} rw,
+  owner @{tmp}/#@{int} rw,
+  owner @{tmp}/sddm-auth-@{uuid} rw,
+  owner @{tmp}/xsess-env-@{rand6} rw,
 
         @{run}/systemd/io.systemd.Login rw,
   @{att}@{run}/systemd/sessions/{,@{l}}@{int}.ref rw,
@@ -160,9 +166,12 @@ profile sddm @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
     @{shells_path} mrix,
     @{coreutils_path}    rix,
+
+    @{bin}/alts          rix,
     @{bin}/disable-paste rix,
     @{bin}/locale        rix,
     @{bin}/manpath       rix,
+    @{bin}/tput          rix,
     @{bin}/xdm           r,
     @{bin}/xmodmap       rix,
     @{bin}/zoxide        rix,
@@ -209,11 +218,17 @@ profile sddm @{exec_path} flags=(attach_disconnected,mediate_deleted) {
       @{bin}/openbox-session     PUx,
     }
 
+    /usr/share/libalternatives/{,**} r,
     /usr/share/sddm/scripts/{,**} r,
 
     /etc/debuginfod/{,*} r,
+    /etc/manpath.config r,
+    /etc/sysconfig/console r,
+    /etc/sysconfig/proxy r,
+    /etc/sysconfig/windowmanager r,
     /etc/X11/xinit/xinitrc.d/{,*} r,
 
+    owner @{PROC}/@{pid}/cmdline r,
     owner @{PROC}/@{pid}/fd/ r,
 
     include if exists <local/sddm_shell>
@@ -222,6 +237,8 @@ profile sddm @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   profile systemctl {
     include <abstractions/base>
     include <abstractions/app/systemctl>
+
+    owner @{user_share_dirs}/sddm/xorg-session.log w, # file_inherit
 
     include if exists <local/sddm_systemctl>
   }
