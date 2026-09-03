@@ -11,12 +11,10 @@ include <tunables/global>
 profile sddm-greeter @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/base>
   include <abstractions/bus/system/org.freedesktop.login1>
+  include <abstractions/common/kde>
   include <abstractions/fontconfig-cache-write>
-  include <abstractions/graphics>
-  include <abstractions/kde-strict>
   include <abstractions/nameservice-strict>
   include <abstractions/qt-compose-cache-write>
-  include <abstractions/qt-shader-cache>
   include <abstractions/upower-observe>
 
   network netlink raw,
@@ -50,7 +48,6 @@ profile sddm-greeter @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   /etc/os-release r,
   /etc/sddm.conf r,
   /etc/sddm.conf.d/{,*} r,
-  /etc/xdg/plasmarc r,
 
   / r,
 
@@ -59,18 +56,18 @@ profile sddm-greeter @{exec_path} flags=(attach_disconnected,mediate_deleted) {
         @{SDDM_HOME}/state.conf r,
   owner @{SDDM_HOME}/** rw,
   owner @{SDDM_HOME}/#@{int} mrw,
-  owner @{sddm_cache_dirs}/** mrwkl -> @{sddm_cache_dirs}/**,
+
+  owner @{sddm_cache_dirs}/ksvg-elements@{atomic} rwlk,
 
   @{HOME}/.face.icon r,
 
   owner @{user_cache_dirs}/ rw,
+  owner @{user_cache_dirs}/ksvg-elements@{atomic} rwlk,
   owner @{user_cache_dirs}/plasma_theme_*.kcache rw,
   owner @{user_cache_dirs}/plasma-svgelements rw,
   owner @{user_cache_dirs}/plasma-svgelements.@{rand6} rw,
   owner @{user_cache_dirs}/plasma-svgelements.lock rwk,
-  owner @{user_cache_dirs}/sddm-greeter/{,**} rwl,
-
-  owner @{user_config_dirs}/plasmarc r,
+  owner @{user_cache_dirs}/sddm-greeter{,-qt6}/{,**} rwl,
 
   # If one is blocked, the others are probed.
   deny owner @{HOME}/#@{int} mrw,
