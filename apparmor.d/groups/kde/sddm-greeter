@@ -10,16 +10,19 @@ include <tunables/global>
 @{exec_path} = @{bin}/sddm-greeter{,-qt6}
 profile sddm-greeter @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/base>
+  include <abstractions/audio-client>
   include <abstractions/bus/system/org.freedesktop.login1>
+  include <abstractions/common/kde>
+  include <abstractions/consoles>
   include <abstractions/fontconfig-cache-write>
-  include <abstractions/graphics>
-  include <abstractions/kde-strict>
   include <abstractions/nameservice-strict>
   include <abstractions/qt-compose-cache-write>
-  include <abstractions/qt-shader-cache>
   include <abstractions/upower-observe>
+  include <abstractions/sys/dmi>
 
   network netlink raw,
+
+  ptrace read peer=plasmashell, # used for theme preview
 
   signal receive set=term peer=sddm,
 
@@ -50,27 +53,28 @@ profile sddm-greeter @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   /etc/os-release r,
   /etc/sddm.conf r,
   /etc/sddm.conf.d/{,*} r,
-  /etc/xdg/plasmarc r,
+  @{etc_ro}/vdpau_wrapper.cfg r,
 
   / r,
+  @{bin}/ r,
 
   /var/lib/AccountsService/icons/* r,
 
         @{SDDM_HOME}/state.conf r,
   owner @{SDDM_HOME}/** rw,
   owner @{SDDM_HOME}/#@{int} mrw,
-  owner @{sddm_cache_dirs}/** mrwkl -> @{sddm_cache_dirs}/**,
+
+  owner @{sddm_cache_dirs}/ksvg-elements@{atomic} rwlk,
 
   @{HOME}/.face.icon r,
 
   owner @{user_cache_dirs}/ rw,
+  owner @{user_cache_dirs}/ksvg-elements@{atomic} rwlk,
   owner @{user_cache_dirs}/plasma_theme_*.kcache rw,
-  owner @{user_cache_dirs}/plasma-svgelements rw,
-  owner @{user_cache_dirs}/plasma-svgelements.@{rand6} rw,
-  owner @{user_cache_dirs}/plasma-svgelements.lock rwk,
-  owner @{user_cache_dirs}/sddm-greeter/{,**} rwl,
+  owner @{user_cache_dirs}/plasma-svgelements@{atomic} rw,
+  owner @{user_cache_dirs}/sddm-greeter{,-qt6}/{,**} rwl,
 
-  owner @{user_config_dirs}/plasmarc r,
+  owner @{user_config_dirs}/qtvirtualkeyboard/ w,
 
   # If one is blocked, the others are probed.
   deny owner @{HOME}/#@{int} mrw,
@@ -85,6 +89,7 @@ profile sddm-greeter @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{PROC}/@{pid}/cmdline r,
   owner @{PROC}/@{pid}/mountinfo r,
   owner @{PROC}/@{pid}/mounts r,
+  owner @{PROC}/@{pid}/task/@{tid}/comm w,
 
   include if exists <local/sddm-greeter>
 }

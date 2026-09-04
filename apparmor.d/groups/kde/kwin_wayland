@@ -13,11 +13,10 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/audio-client>
   include <abstractions/bus-session>
   include <abstractions/bus/system/org.freedesktop.locale1>
+  include <abstractions/common/kde>
   include <abstractions/fontconfig-cache-write>
-  include <abstractions/graphics>
-  include <abstractions/kde-strict>
+  include <abstractions/input>
   include <abstractions/nameservice-strict>
-  include <abstractions/qt-shader-cache>
   include <abstractions/sys/dmi>
 
   # See https://community.kde.org/Distributions/Packaging_Recommendations#KWin_package_configuration
@@ -27,14 +26,12 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
   network netlink raw,
 
-  ptrace read,
-
   signal receive set=term peer=sddm,
   signal receive set=(kill, term) peer=kwin_wayland_wrapper,
-  signal send set=(kill, term) peer=xwayland,
-  signal send set=term peer=unconfined,
-  signal send set=term peer=plasma-keyboard,
-  signal send set=(usr1, term) peer=kscreenlocker_greet,
+  signal send set=usr1 peer=kscreenlocker_greet,
+  signal send set=(abrt kill term),
+
+  ptrace read,
 
   unix type=stream peer=(label=xkbcomp),
   unix type=stream peer=(label=xwayland),
@@ -56,100 +53,76 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
   @{exec_path} mr,
 
+  @{lib}/kwin_killer_helper rix,
+
   /etc/xdg/Xwayland-session.d/00-at-spi Cx -> at-spi,
   /etc/xdg/Xwayland-session.d/00-pulseaudio-x11 Cx -> pulseaudio,
   /etc/xdg/Xwayland-session.d/10-ibus-x11 Cx -> ibus,
   #aa:exec kscreenlocker_greet
 
-  /usr/share/color-schemes/*.colors r,
   /usr/share/color/icc/{,**} r,
   /usr/share/desktop-directories/*.directory r,
   /usr/share/kglobalaccel/{,**} r,
   /usr/share/kservices{5,6}/{,**} r,
   /usr/share/kservicetypes5/{,*.desktop} r,
-  /usr/share/kwin-wayland/{,**} r,
   /usr/share/kwin/{,**} r,
+  /usr/share/kwin-wayland/{,**} r,
   /usr/share/libinput-*/{,**} r,
   /usr/share/libinput/{,**} r,
-  /usr/share/pipewire/client.conf r,
   /usr/share/plasma/desktoptheme/** r,
 
-  /etc/pipewire/client.conf.d/ r,
+  /etc/machine-id r,
   /etc/xdg/** r,
 
   / r,
   owner @{HOME}/ r,
 
-  owner @{sddm_cache_dirs}/#@{int} rwk,
-  owner @{sddm_cache_dirs}/ksycoca{5,6}_* rwlk -> @{sddm_cache_dirs}/#@{int},
+  owner @{sddm_local_dirs}/ w,
+  owner @{sddm_share_dirs}/ w,
+  owner @{sddm_state_dirs}/ w,
+
   owner @{sddm_cache_dirs}/kwin/ rw,
   owner @{sddm_cache_dirs}/kwin/** rwlk,
   owner @{sddm_cache_dirs}/kcrash-metadata/ w,
   owner @{sddm_cache_dirs}/kwinsession.kcache rw,
-  owner @{sddm_cache_dirs}/nvidia/ rw,
-  owner @{sddm_cache_dirs}/nvidia/GLCache/ rw,
-  owner @{sddm_cache_dirs}/nvidia/GLCache/** rwk,
-  owner @{sddm_cache_dirs}/fontconfig/* r,
 
-  owner @{sddm_config_dirs}/#@{int} rw,
-  owner @{sddm_config_dirs}/fontconfig/fonts.conf r,
-  owner @{user_config_dirs}/kaccessrc r,
-  owner @{sddm_config_dirs}/kcminputrc r,
-  owner @{sddm_config_dirs}/kdedefaults/* r,
-  owner @{sddm_config_dirs}/kdeglobals r,
-  owner @{sddm_config_dirs}/kglobalshortcutsrc.lock rwk,
-  owner @{sddm_config_dirs}/kglobalshortcutsrc{,.@{rand6}} rwl,
-  owner @{sddm_config_dirs}/kwinrulesrc rw,
-  owner link @{sddm_config_dirs}/kwinrulesrc -> @{sddm_config_dirs}/#@{int},
-  owner @{sddm_config_dirs}/kwinrulesrc.lock rwk,
+  owner @{sddm_config_dirs}/kglobalshortcutsrc@{atomic} rwlk,
+  owner @{sddm_config_dirs}/kwinrulesrc@{atomic} rwlk,
   owner @{sddm_config_dirs}/kwinoutputconfig.json rw,
-  owner @{sddm_config_dirs}/kwinrc.lock rwk,
-  owner @{sddm_config_dirs}/kwinrc{,.@{rand6}} rwl,
+  owner @{sddm_config_dirs}/kwinrc@{atomic} rwlk,
   owner @{sddm_config_dirs}/kxkbrc r,
-  owner @{sddm_config_dirs}/plasmarc r,
 
-  owner @{sddm_state_dirs}/#@{int} rw,
-  owner @{sddm_state_dirs}/kglobalshortcutsstaterc rw,
-  owner @{sddm_state_dirs}/kglobalshortcutsstaterc.@{rand6} rw,
-  owner link @{sddm_state_dirs}/kglobalshortcutsstaterc -> @{sddm_state_dirs}/#@{int},
-  owner link @{sddm_state_dirs}/kglobalshortcutsstaterc.@{rand6} -> @{sddm_state_dirs}/#@{int},
-  owner @{sddm_state_dirs}/kglobalshortcutsstaterc.lock rwk,
+  owner @{sddm_state_dirs}/kglobalshortcutsstaterc@{atomic} rwlk,
 
   owner @{user_cache_dirs}/ r,
-  owner @{user_cache_dirs}/ksvg-elements rw,
-  audit owner @{user_cache_dirs}/ksvg-elements.@{rand6} rwl -> @{user_cache_dirs}/#@{int},
-  audit owner @{user_cache_dirs}/ksvg-elements.lock rwk,
+  owner @{user_cache_dirs}/drkonqi/{,application-not-responding/} w,
+  owner @{user_cache_dirs}/drkonqi/application-not-responding/*.@{hex32}.*.json w,
+  owner @{user_cache_dirs}/ksvg-elements@{atomic} rwlk,
   owner @{user_cache_dirs}/kwin/ rw,
   owner @{user_cache_dirs}/kwin/** rwlk -> @{user_cache_dirs}/kwin/**,
   owner @{user_cache_dirs}/kwinsession.kcache rw,
   owner @{user_cache_dirs}/plasma_theme_*.kcache rw,
-  owner @{user_cache_dirs}/plasma-svgelements rw,
-  owner @{user_cache_dirs}/plasma-svgelements.@{rand6} rwl -> @{user_cache_dirs}/#@{int},
-  owner @{user_cache_dirs}/plasma-svgelements.lock rwk,
+  owner @{user_cache_dirs}/plasma-svgelements@{atomic} rwlk,
 
-  owner @{user_config_dirs}/#@{int} rwl,
-  owner @{user_config_dirs}/breezerc r,
+  owner @{user_config_dirs}/auroraerc r,
+  owner @{user_config_dirs}/breezerc@{atomic} rwlk,
+  owner @{user_config_dirs}/oxygenrc@{atomic} rwlk,
+  owner @{user_config_dirs}/kaccessrc r,
+  owner @{user_config_dirs}/kaccess.notifyrc r,
+  owner @{user_config_dirs}/kcminputrc@{atomic} rwlk,
+  owner @{user_config_dirs}/kde.org/ w,
+  owner @{user_config_dirs}/kde.org/kwin.conf@{atomic} rwlk,
   owner @{user_config_dirs}/kdedefaults/* r,
-  owner @{user_config_dirs}/kglobalshortcutsrc.lock rwk,
-  owner @{user_config_dirs}/kglobalshortcutsrc{,.@{rand6}} rwl,
+  owner @{user_config_dirs}/kglobalshortcutsrc@{atomic} rwlk,
   owner @{user_config_dirs}/khotkeysrc r,
   owner @{user_config_dirs}/klaunchrc r,
   owner @{user_config_dirs}/kscreenlockerrc r,
   owner @{user_config_dirs}/kwinoutputconfig.json rw,
-  owner @{user_config_dirs}/kwinrc.lock rwk,
-  owner @{user_config_dirs}/kwinrc{,.@{rand6}} rwl,
-  owner @{user_config_dirs}/kwinrulesrc rwl,
-  owner @{user_config_dirs}/kwinrulesrc.@{rand6} rwl,
-  owner @{user_config_dirs}/kwinrulesrc.lock rwk,
+  owner @{user_config_dirs}/kwinrc@{atomic} rwlk,
+  owner @{user_config_dirs}/kwinrulesrc@{atomic} rwlk,
   owner @{user_config_dirs}/kxkbrc r,
-  owner @{user_config_dirs}/menus/** r,
-  owner @{user_config_dirs}/plasmarc r,
-  owner @{user_config_dirs}/session/* r,
-  owner @{user_config_dirs}/breezerc w,
-  owner @{user_config_dirs}/breezerc.@{rand6} rw,
-  owner @{user_config_dirs}/breezerc.lock rwk,
   owner @{user_config_dirs}/Kvantum/{,**} r,
-  owner @{user_config_dirs}/breezerc.@{rand6} rwl -> @{user_config_dirs}/#@{int},
+  owner @{user_config_dirs}/menus/** r,
 
   owner @{user_share_dirs}/aurorae/themes/{,**} r,
   owner @{user_share_dirs}/kscreen/* r,
@@ -158,32 +131,23 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{user_share_dirs}/plasma/desktoptheme/{,**} r,
   owner @{user_share_dirs}/smod/decorations/{,**} r,
 
-  owner @{user_state_dirs}/kglobalshortcutsstaterc rwl,
-  owner @{user_state_dirs}/kglobalshortcutsstaterc.@{rand6} rwl,
-  owner link @{user_state_dirs}/kglobalshortcutsstaterc.@{rand6} -> @{user_state_dirs}/#@{int},
-  owner @{user_state_dirs}/kglobalshortcutsstaterc.lock rwlk,
-  owner @{user_state_dirs}/kwinstaterc rw,
-  owner @{user_state_dirs}/kwinstaterc.lock rwlk,
-  owner @{user_state_dirs}/kwinstaterc.@{rand6} rwl -> @{user_state_dirs}/#@{int},
-  owner @{user_state_dirs}/#@{int} rw,
-
-  owner @{run}/user/@{uid}/pipewire-@{int} rw,
+  owner @{user_state_dirs}/ w,
+  owner @{user_state_dirs}/kglobalshortcutsstaterc@{atomic} rwlk,
+  owner @{user_state_dirs}/kwinstaterc@{atomic} rwlk,
 
   owner /dev/shm/.org.chromium.Chromium.@{rand6} rw,
-
-  @{att}@{run}/systemd/inhibit/@{int}.ref rw,
 
   @{sys}/bus/ r,
   @{sys}/class/ r,
   @{sys}/class/drm/ r,
-  @{sys}/class/input/ r,
   @{sys}/devices/**/uevent r,
+
+  @{run}/mount/utab r,
 
   @{run}/udev/data/+acpi:* r,             # Exposes ACPI objects (power buttons, batteries, thermal)
   @{run}/udev/data/+dmi:* r,              # for motherboard info
   @{run}/udev/data/+hid:* r,              # For Human Interface Device (mice, controllers, drawing tablets, scanners)
   @{run}/udev/data/+i2c:* r,              # For Inter-Integrated Circuit, low-speed peripherals (sensors, EEPROMs, etc.)
-  @{run}/udev/data/+input:input@{int} r,  # for mouse, keyboard, touchpad
   @{run}/udev/data/+pci:* r,              # Identifies all PCI devices (CPU, GPU, Network, Disks, USB, etc.)
   @{run}/udev/data/+platform:* r,         # Identifies onboard devices (laptop/board model, power controllers, thermal sensors)
   @{run}/udev/data/+serio:* r,            # for touchpad
@@ -191,22 +155,22 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   @{run}/udev/data/+usb:* r,              # Identifies all USB devices
 
   @{run}/udev/data/c10:@{int} r,          # for non-serial mice, misc features
-  @{run}/udev/data/c13:@{int}  r,         # for /dev/input/*
   @{run}/udev/data/c189:@{int} r,         # for /dev/bus/usb/**
 
   owner @{run}/user/@{uid}/kwin-xwayland-eis-socket.@{int} w,
   owner @{run}/user/@{uid}/kwin-xwayland-eis-socket.@{int}.lock rwk,
-  owner @{run}/user/@{uid}/wayland-0.lock rwk,
+  owner @{run}/user/@{uid}/wayland-@{int}.lock rwk,
+
+  @{att}@{run}/systemd/inhibit/@{int}.ref rw,
 
   @{PROC}/@{pids}/maps r,
-  @{PROC}/@{pid}/mountinfo r,
-  @{PROC}/@{pid}/task/@{tid}/comm rw,
+  @{PROC}/@{pids}/mountinfo r,
+  @{PROC}/@{pids}/task/@{tid}/comm rw,
+  @{PROC}/sys/kernel/random/boot_id r,
 
   @{att}/dev/input/event@{int} rw,
   @{att}/dev/dri/card@{int} rw,
 
-  /dev/input/ r,
-  /dev/input/event@{u8} r,
   /dev/tty r,
   /dev/tty@{u8} rw,
 

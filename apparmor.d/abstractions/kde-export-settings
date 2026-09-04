@@ -1,0 +1,38 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Łukasz Kozak <lakis.kozak@gmail.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Additional access for KDE apps allowing printing and exporting settings
+# To be used as an extension of abstractions/common/kde
+#
+# It works as a *function* and requires a variable to be provided as *arguments*
+# and set in the header of the calling profile. Example:
+#
+# !!! quote ""
+#
+#     ```
+#     @{export_ext} = shortcuts pdf
+#     ```
+#
+
+  abi <abi/5.0>,
+
+  include <abstractions/kde-globals-write>
+  include <abstractions/qt-settings-write>
+
+  owner @{HOME}/[^.]*{,/} r,
+  owner @{HOME}/#@{int} rwk,
+  owner @{HOME}/*.@{export_ext}@{atomic} rwlk,
+
+  owner @{user_documents_dirs}/#@{int} rwk,
+  owner @{user_documents_dirs}/{,**/} r,
+  owner @{user_documents_dirs}/**.@{export_ext}@{atomic} rwlk,
+
+  owner @{user_download_dirs}/**/ r,
+  owner @{user_download_dirs}/**.@{export_ext} r,
+
+  owner @{user_config_dirs}/klanguageoverridesrc@{atomic} rwlk,
+
+  include if exists <abstractions/kde-export-settings.d>
+
+# vim:syntax=apparmor
