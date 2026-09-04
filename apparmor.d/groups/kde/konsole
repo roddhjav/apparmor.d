@@ -16,6 +16,7 @@ profile konsole @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/bus-session>
   include <abstractions/common/kde>
   include <abstractions/consoles>
+  include <abstractions/deny-home-dotfiles>
   include <abstractions/kde-export-settings>
   include <abstractions/nameservice-strict>
 
@@ -47,6 +48,7 @@ profile konsole @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   /usr/share/desktop-directories/kf5-*.directory r,
   /usr/share/kf6/{,**} r,
 
+  /etc/cups/client.conf r,
   /etc/xdg/konsolerc r,
   /etc/xdg/kshorturifilterrc r,
   /etc/xdg/menus/{,**} r,
@@ -66,6 +68,7 @@ profile konsole @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{user_config_dirs}/session/** rwlk,
 
   owner @{tmp}/#@{int} rw,
+  owner @{tmp}/@{hex12}@{h} rw,
   owner @{tmp}/konsole.@{rand6} rw,
 
         @{run}/mount/utab r,
@@ -84,6 +87,10 @@ profile konsole @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{PROC}/@{pid}/mountinfo r,
 
   /dev/ptmx rw,
+
+  # Silencing requests for printing
+  deny network inet stream,
+  deny network inet6 stream,
 
   include if exists <local/konsole>
 }
