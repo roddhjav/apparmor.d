@@ -10,69 +10,20 @@ The default package configuration installs all profiles in *complain* mode. This
     - You **must** regularly check AppArmor log with [`aa-log`](usage.md#apparmor-log) and [report](report.md) issues first.
     - When reporting an issue, you **must** ensure the affected profiles are in complain mode.
 
+**Configuration**
 
-**Prerequisite**
+Set the default mode of `aa-install` to enforce in `/etc/apparmor/modes`
 
-As the `enforced` version of the package conflicts with the default `apparmor.d` package, you need to uninstall it first:
-
-=== ":material-arch: Arch Linux"
-
-    ```sh
-    sudo pacman -R apparmor.d
-    ```
-
-=== ":material-ubuntu: Ubuntu"
-
-    ```sh
-    sudo apt purge apparmor.d
-    ```
-
-=== ":material-debian: Debian"
-
-    ```sh
-    sudo apt purge apparmor.d
-    ```
-
-=== ":simple-suse: openSUSE"
-
-    ```sh
-    sudo zypper remove apparmor.d
-    ```
-
+```sh
+cat <<-EOF | sudo tee /etc/apparmor/modes
+default enforce
+EOF
+```
 
 **Installation**
 
-=== ":material-arch: Arch Linux"
+To apply the change, start aa-install manually:
 
-    `apparmor.d.enforced` is available in the [Arch User Repository](https://aur.archlinux.org/packages/apparmor.d-git):
-
-    ```sh
-    yay -S apparmor.d.enforced  # or your preferred AUR install method
-    ```
-
-=== ":material-ubuntu: Ubuntu"
-
-    Using the [pkg.pujol.io](https://pkg.pujol.io) debian repository, install the package:
-    ```sh
-    sudo apt install apparmor.d.enforced
-    ```
-
-
-=== ":material-debian: Debian"
-
-    Using the [pkg.pujol.io](https://pkg.pujol.io) debian repository, install the package:
-    ```sh
-    sudo apt install apparmor.d.enforced
-    ```
-
-=== ":simple-suse: openSUSE"
-
-    openSUSE users need to add [cboltz](https://en.opensuse.org/User:Cboltz) repo on OBS:
-
-    ```sh
-    zypper install apparmor.d.enforced
-    ```
-
-=== ":material-home: Partial Install"
-
-    Use the `just enforce` command to build instead of `just complain`
+```sh
+sudo aa-install
+```
