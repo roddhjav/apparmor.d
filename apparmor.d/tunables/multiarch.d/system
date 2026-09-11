@@ -2,8 +2,8 @@
 # Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-# System Paths
-# ------------
+# ## System Paths
+# ---------------
 
 # @{MOUNTDIRS} is a space-separated list of where user mount directories
 # are stored, for programs that must enumerate all mount directories on a
@@ -20,28 +20,59 @@
 @{lib}=/{,usr/}lib{,exec,32,64}
 
 # Common places for temporary files
-# Used by libpam-tmpdir (default on Debian), then the
+# Used by libpam-tmpdir (default on Debian)
 @{tmp}=/tmp/ /tmp/user/@{uid}/
 
-# Common places for EFI
+# Common places for EFI partition
 @{efi}=/boot/ /efi/ /boot/efi/
 
 # Common places for logs
 @{log} = /var/log/ /run/log
 
-# System Variables
-# ----------------
+# ## System Variables
+# -------------------
 
 # Common architecture names
 @{arch}=x86[-_]64 x64 amd64 i386 i686
 
 # Dbus unique name
+#
+# On connection, the message bus assigns a unique name to every client. It is
+# what dbus rules match in the peer name. The expected rule is:
+#
+# ```
+#   dbus send bus=<bus> path=<path>
+#        interface=<interface>
+#        member=<member>
+#        peer=(name=":1.<serial>", label=<label>),
+# ```
+#
+# Where:
+#
+# - `1` identifies the bus instance, always 1 in practice
+# - `<serial>` a counter incremented for each new connection, matched up to 65535
+#
+# A peer that has not completed the `Hello` handshake yet has no unique name, the
+# bus reports it as `:not.active.yet`. Both forms are in `@{busname}`.
 @{busname}=:1.@{u16} :not.active.yet
 
 # Unix dbus address prefix
+#
+# Each dbus client connection binds its own end of the socket to an abstract unix
+# address. The expected rule is:
+#
+# ```
+#   unix bind type=stream addr=@<unix-random-address>/bus/<comm>/<description>,`
+# ```
+#
+# Where:
+#
+# - `<unix-random-address>` one to sixteen random hexadecimal digits, matches `@{udbus}`
+# - `<comm>` the client process name as seen by the kernel (truncated to 15 characters)
+# - `<description>` the connection description (system, session, user)
+# 
+# dbus-broker uses the same layout, but with a decimal random part.
 @{udbus}=@{h}{@{h},}{@{h},}{@{h},}{@{h},}{@{h},}{@{h},}{@{h},}{@{h},}{@{h},}{@{h},}{@{h},}{@{h},}{@{h},}{@{h},}{@{h},}
-
-# dbus-broker special addresses
 @{udbus}+=@{int12}@{int}
 
 # Universally unique identifier
@@ -69,17 +100,60 @@
 @{atomic}={,.lock,.lock.rmlock,.@{rand6}}
 
 
-# System Internal
-# ---------------
+# ## System Internal
+# ------------------
 
+# PCI devices
+#
+# The kernel exposes PCI devices in sysfs under the root bus they hang from,
+# with one directory level per bridge on the way. The expected path is:
+#
+# ```
+#   @{sys}/devices/pci<domain>:<bus>/<domain>:<bus>:<slot>.<function>/[...]/<attribute>
+# ```
+#
+# Where:
+#
+# - `pci<domain>:<bus>` the root bus, matches `@{pci_bus}`
+# - `<domain>:<bus>:<slot>.<function>` a device address, matches `@{pci_id}`
+# - `@{pci}` matches the root bus followed by any depth of bridges and devices
+#
+# !!! warning
+#
+#     Only use these variables when the rule must be restricted to PCI devices.
+#     A device may as well be on USB, on a virtual bus, or behind more bridges.
+#     Prefer to filter on the device class (block, input, sound, ...) regardless
+#     of the bus it is attached to. For instance:
+#
+#     ```
+#       @{sys}/devices/**/sound/**/uevent r,
+#     ```
+#
 @{pci_bus}=pci@{hex4}:@{hex2}
-
-# Shortcut for PCI device
 @{pci_id}=@{hex4}:@{hex2}:@{hex2}.@{h}
 @{pci}=@{pci_bus}/**/
 
-# Udev data dynamic assignment ranges
+# Dynamically assigned character device majors
+#
+# Character drivers that do not have a major number reserved in the kernel device
+# list get one at load time from the dynamic ranges: 234 to 254 and 384 to 511.
 # See https://raw.githubusercontent.com/torvalds/linux/master/Documentation/admin-guide/devices.txt
+#
+# Udev keeps its per-device data and symlinks under the device major:minor:
+#
+# ```
+#   @{run}/udev/data/c<major>:<minor>
+#   /dev/char/<major>:<minor>
+# ```
+#
+# Where `<major>` is in the dynamic ranges, matches `@{dynamic}`.
+#
+# It is to be used as follows in profiles and abstractions:
+#
+# ```
+#   @{run}/udev/data/c@{dynamic}:@{int} r,  # For dynamic assignment range 234 to 254, 384 to 511
+# ```
+#
 @{dynamic}=23[4-9] 24[0-9] 25[0-4]                       # range 234 to 254
 @{dynamic}+=38[4-9] 39[0-9] 4[0-9][0-9] 50[0-9] 51[0-1]  # range 384 to 511
 
