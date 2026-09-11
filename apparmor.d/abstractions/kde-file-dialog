@@ -2,66 +2,63 @@
 # Copyright (C) 2026 Łukasz Kozak <lakis.kozak@gmail.com>
 # SPDX-License-Identifier: GPL-2.0-only
 
-# abstraction for file dialog in QT applications
-# if applicable, deny-home-dotfiles should be used as well
+# Abstraction for the file dialog in KDE/QT applications
+# if applicable, deny-home-dotfiles could be used as well
 #
 
   abi <abi/5.0>,
 
-  # to be removed?
-  include <abstractions/disks-read>
+  include <abstractions/bus/system/org.freedesktop.UDisks2>
+  include <abstractions/kde-file-dialog-settings>
   include <abstractions/kde-globals-write>
+  include <abstractions/network/netlink>
   include <abstractions/thumbnails-cache-read>
+  include <abstractions/user-dirs-read-strict>
 
-  /usr/share/templates/{,**} r,
+  # Udev and sys access to all possible mounted devices
+  # include <abstractions/sys/cdrom> # checked, not detected
+  include <abstractions/sys/floppy>
+  include <abstractions/sys/md>
+  # include <abstractions/sys/usb> # checked, not detected
+  include <abstractions/udev/floppy>
+  include <abstractions/udev/cdrom>
+  # include <abstractions/udev/loop> # checked, not detected
+  include <abstractions/udev/md>
+  # include <abstractions/udev/nbd> # not checked, but similar to loop, so possibly not needed
+  include <abstractions/udev/sd>
+  include <abstractions/udev/usb>
+  # include <abstractions/udev/zfs> # checked, not detected, openZFS
+
+  signal send set=term peer=kioworker,
+
+  @{bin}/baloo_filemetadata_temp_extractor rix, # needed for proper functioning of baloo indexer
+  @{bin}/keditfiletype PUx,  # needed, if user is to be allowed to change programs connected to a given mime type
+  @{bin}/net           Px, # needed for smb shares
+  @{bin}/testparm      Px,
+
+  #aa:exec kioworker
+
+  /usr/share/templates/{,*.desktop} r,
   /usr/share/thumbnailers/{,*} r,
 
+  /etc/exports r,
+  /etc/fstab r,
+
   / r,
-  /home/ r,
 
-  owner @{HOME}/ r,
-  owner @{HOME}/*/{,*/} r,
-  owner @{HOME}/*/.directory r,
+  @{run}/udev/data/b24[0-9]:@{int} r, # for dynamic assignment range 240
+  @{run}/udev/data/b25[0-4]:@{int} r, #                           to 254
+  @{run}/udev/data/b259:@{int} r,     # Block Extended Major
 
-  owner @{MOUNTS}/ r,
-  owner @{MOUNTS}/*/{,*/} r,
-  owner @{MOUNTS}/*/.directory r,
+  owner @{run}/user/@{uid}/#@{int} rw,
 
-  owner @{user_config_dirs}/baloofileinformationrc r,
-  owner @{user_config_dirs}/kioslaverc r,
-  owner @{user_config_dirs}/kiorc r,
-
-  owner @{user_share_dirs}/#@{int} rw,
-  owner @{user_share_dirs}/baloo/index r,
-  owner @{user_share_dirs}/baloo/index-lock rwk,
-  owner @{user_share_dirs}/kfile/ w,
-  owner @{user_share_dirs}/kfile/#@{int} rw,
-  owner @{user_share_dirs}/kfile/bookmarks.xml{,.bak,.tbcache}{,.@{rand6}} rwl, #-> @{user_share_dirs}/kfile/#@{int},
-  owner @{user_share_dirs}/user-places.xbel{,.bak,.tbcache}{,.@{rand6}} rwl, #-> @{user_share_dirs}/#@{int},
-
-  owner @{user_state_dirs}/kiostaterc@{atomic} rwlk, #-> @{user_state_dirs}/#@{int},
-
-  # to be removed?
   @{sys}/bus/ r,
   @{sys}/bus/usb/devices/ r,
 
-  #ToDo: remove all below
-  # Needed almost always, but tbd by profile creator
-  #network netlink raw,
+  /dev/disk/by-label/ r,
 
-  #signal send set=term peer=kioworker,
-
-  #@{bin}/baloo_filemetadata_temp_extractor rix,
-  #@{bin}/net      Px,
-  #@{bin}/testparm Px,
-
-  #aa\:exec kioworker
-
-  #/etc/exports r,
-  #/etc/fstab r,
-
-  #owner @{run}/user/@{uid}/#@{int} rw,
-  #owner @{run}/user/@{uid}/@{profile_name}@{rand6}.@{int}.kioworker.socket rwl -> @{run}/user/@{uid}/#@{int},
+  # Needed almost always, but tbd by the profile creator
+  # owner @{run}/user/@{uid}/@{profile_name}@{rand6}.@{int}.kioworker.socket rwl -> @{run}/user/@{uid}/#@{int},
 
   include if exists <abstractions/kde-file-dialog.d>
 
