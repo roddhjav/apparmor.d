@@ -7,7 +7,7 @@ abi <abi/5.0>,
 
 include <tunables/global>
 
-@{export_ext} = shortcuts pdf
+@{export_ext} = shortcuts pdf txt
 
 @{exec_path} = @{bin}/konsole
 profile konsole @{exec_path} flags=(attach_disconnected,mediate_deleted) {
@@ -20,6 +20,18 @@ profile konsole @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/kde-export-settings>
   include <abstractions/nameservice-strict>
 
+  if "kde" in @{DE} {
+    include <abstractions/kde-file-dialog>
+  }
+
+  if "gnome" in @{DE} {
+    include <abstractions/gnome-file-dialog>
+  }
+
+  network inet dgram,
+  network inet6 dgram,
+  network netlink raw,
+
   ptrace read,
 
   signal send,
@@ -27,6 +39,9 @@ profile konsole @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   #aa:dbus own bus=session name=org.kde.konsole-@{int}
 
   @{exec_path} mr,
+
+  @{bin}/net      Px,
+  @{bin}/testparm Px,
 
   @{lib}/libheif/                            r,
   @{lib}/libheif/**                         mr,
@@ -49,6 +64,9 @@ profile konsole @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   /usr/share/kf6/{,**} r,
 
   /etc/cups/client.conf r,
+  /etc/exports r,
+  /etc/fstab r,
+  /etc/xdg/dolphinrc r,
   /etc/xdg/konsolerc r,
   /etc/xdg/kshorturifilterrc r,
   /etc/xdg/menus/{,**} r,
@@ -58,7 +76,6 @@ profile konsole @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
   owner @{user_config_dirs}/kbookmarkrc r,
   owner @{user_config_dirs}/kio_httprc r,
-  owner @{user_config_dirs}/kioslaverc r,
   owner @{user_config_dirs}/konsole.notifyrc@{atomic} rwlk,
   owner @{user_config_dirs}/konsolesshconfig@{atomic} rwlk,
   owner @{user_config_dirs}/kservicemenurc r,
@@ -66,6 +83,8 @@ profile konsole @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{user_config_dirs}/Kvantum/{,**} r,
   owner @{user_config_dirs}/menus/{,**} r,
   owner @{user_config_dirs}/session/** rwlk,
+
+  owner @{user_share_dirs}/user-places.xbel r,
 
   owner @{tmp}/#@{int} rw,
   owner @{tmp}/@{hex12}@{h} rw,
