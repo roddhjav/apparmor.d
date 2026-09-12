@@ -26,6 +26,16 @@ profile dolphin @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/ssl_certs>
   include <abstractions/thumbnails-cache-write>
 
+  if "kde" in @{DE} {
+    include <abstractions/kde-file-dialog>
+  }
+
+  if "gnome" in @{DE} {
+    include <abstractions/gnome-file-dialog>
+  }
+
+  network inet dgram,
+  network inet6 dgram,
   network netlink raw,
 
   signal send set=hup peer=@{p_systemd},
@@ -46,8 +56,10 @@ profile dolphin @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
   priority=1 @{ldd_path} rix,
 
-  @{bin}/lsb_release    rPx,
-  @{thunderbird_path}   rPx,
+  @{bin}/lsb_release  rPx,
+  @{bin}/net          Px,
+  @{bin}/testparm     Px,
+  @{thunderbird_path} rPx,
 
   #aa:exec kioworker
   #aa:exec utempter
@@ -62,8 +74,8 @@ profile dolphin @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   /usr/share/templates/{,*.desktop} r,
   /usr/share/thumbnailers/{,**} r,
 
-  /etc/fstab r,
   /etc/exports r,
+  /etc/fstab r,
   /etc/xdg/arkrc r,
   /etc/xdg/dolphinrc r,
   /etc/xdg/ui/ui_standards.rc r,
@@ -105,8 +117,6 @@ profile dolphin @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{user_share_dirs}/kactivitymanagerd/resources/database{,-shm} k,
   owner link @{user_share_dirs}/user-places.xbel* -> @{user_share_dirs}/#@{int},
 
-  owner @{user_state_dirs}/UserFeedback.org.kde.dolphin@{atomic} lk -> @{user_state_dirs}/#@{int},
-
   owner @{tmp}/#@{int} rwk,
   owner @{tmp}/dolphin.@{rand6} rwl -> @{tmp}/#@{int},
   owner @{tmp}/dolphin.@{rand6}.@{rand6} l -> @{tmp}/#@{int},
@@ -141,6 +151,10 @@ profile dolphin @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{PROC}/@{pid}/stat r,
 
   /dev/ptmx rw,
+
+  # Silencing requests for printing
+  deny network inet stream,
+  deny network inet6 stream,
 
   include if exists <local/dolphin>
 }

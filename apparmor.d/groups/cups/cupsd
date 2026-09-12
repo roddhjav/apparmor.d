@@ -107,12 +107,16 @@ profile cupsd @{exec_path} flags=(attach_disconnected) {
   owner @{PROC}/@{pid}/mounts r,
 
   owner @{tmp}/*_latest_print_info w,
+  owner @{tmp}/pdf-file-@{rand6} rw,
+  owner @{tmp}/tempfile@{rand6} rw,
 
   /dev/tty rw,
 
   profile gs {
     include <abstractions/base>
-    include <abstractions/fonts>
+    include <abstractions/fontconfig-cache-read>
+    include <abstractions/fonts-strict>
+    include <abstractions/nameservice-strict>
 
     @{bin}/gs{,.bin} mr,
 
@@ -126,6 +130,8 @@ profile cupsd @{exec_path} flags=(attach_disconnected) {
     owner /var/spool/cups/tmp/gs_@{rand6} rw,
 
     owner /tmp/gs_@{rand6} rw,
+
+    deny /var/spool/cups/tmp/@{hex} r,
 
     include if exists <local/cupsd_gs>
   }

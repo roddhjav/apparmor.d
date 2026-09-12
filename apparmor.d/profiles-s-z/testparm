@@ -1,0 +1,34 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Łukasz Kozak <lakis.kozak@gmail.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/testparm
+profile testparm @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  /etc/samba/smb.conf r,
+
+  /var/lib/samba/ r,
+  /var/lib/samba/lock/ r,
+
+  @{run}/samba/ r,
+
+  @{PROC}/sys/crypto/fips_enabled r,
+
+  include if exists <local/testparm>
+}
+
+# vim:syntax=apparmor
