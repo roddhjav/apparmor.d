@@ -18,6 +18,7 @@ profile wayland-session @{exec_path} {
   @{shells_path}       rix,
   @{bin}/cat            ix,
   @{bin}/dpkg-query     px,
+  @{bin}/flatpak        Cx -> flatpak,
   @{bin}/gettext        ix,
   @{bin}/gettext.sh     r,
   @{bin}/id             ix,
@@ -42,10 +43,22 @@ profile wayland-session @{exec_path} {
 
   owner @{user_share_dirs}/sddm/wayland-session.log rw,
 
+  profile flatpak flags=(attach_disconnected) {
+    include <abstractions/base>
+    include <abstractions/consoles>
+
+    @{bin}/flatpak mr,
+
+    include if exists <local/wayland-session_flatpak>
+  }
+
   profile run-parts {
     include <abstractions/base>
+    include <abstractions/consoles>
 
     @{bin}/run-parts mr,
+
+    /etc/profile.d/{,**} r,
 
     include if exists <local/wayland-session_run-parts>
   }
