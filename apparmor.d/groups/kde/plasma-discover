@@ -12,6 +12,7 @@ profile plasma-discover @{exec_path} flags=(attach_disconnected,mediate_deleted)
   include <abstractions/accounts-observe>
   include <abstractions/audio-client>
   include <abstractions/bus/system/org.freedesktop.locale1>
+  include <abstractions/bus/system/org.freedesktop.PackageKit>
   include <abstractions/common/kde>
   include <abstractions/dconf-write>
   include <abstractions/fontconfig-cache-write>
@@ -36,7 +37,11 @@ profile plasma-discover @{exec_path} flags=(attach_disconnected,mediate_deleted)
 
   ptrace (read) peer=systemsettings,
 
+  unix (send receive) type=seqpacket peer=(label=flatpak-system-helper),
+
   #aa:dbus talk bus=system name=org.freedesktop.Flatpak.SystemHelper label=flatpak-system-helper
+  #aa:dbus talk bus=system name=org.freedesktop.fwupd path=/ label=fwupd
+  #aa:dbus talk bus=system name=org.freedesktop.PackageKit path=/** label=packagekitd
 
   @{exec_path} mr,
 
@@ -59,7 +64,7 @@ profile plasma-discover @{exec_path} flags=(attach_disconnected,mediate_deleted)
   #aa:exec kwin-applywindowdecoration
   #aa:exec plasma-apply
 
-  @{lib}/revokefs-fuse rix,
+  @{lib}/revokefs-fuse mrix,
 
   # We have to override usage of glycin child profile, as Discover manages flatpaks
   priority=1 @{bin}/bwrap Px -> fbwrap,
@@ -75,6 +80,7 @@ profile plasma-discover @{exec_path} flags=(attach_disconnected,mediate_deleted)
   /usr/share/libdiscover/** r,
   /usr/share/metainfo/{,**} r,
   /usr/share/plasma/look-and-feel/{,**} r,
+  /usr/share/publicsuffix/{,*} r,
   /usr/share/swcatalog/{,**} r,
 
   /etc/appstream.conf r,
@@ -100,6 +106,8 @@ profile plasma-discover @{exec_path} flags=(attach_disconnected,mediate_deleted)
   /var/tmp/#@{int} rw,
   /var/tmp/flatpak-cache-*/ rw,
   /var/tmp/flatpak-cache-*/** rwlk,
+
+  /snap/**.@{icon_ext} r,
 
   @{log}/pacman.log r,
 
@@ -147,6 +155,7 @@ profile plasma-discover @{exec_path} flags=(attach_disconnected,mediate_deleted)
   owner @{user_share_dirs}/flatpak/runtime/** l, # -> @{user_share_dirs}/flatpak/app/**#@{int},
   owner @{user_share_dirs}/flatpak/{app{,stream},runtime}/*/@{arch}/** l, # -> @{user_share_dirs}/flatpak/repo/objects/*/@{hex}.file,
   owner @{user_share_dirs}/icons/{,**} rw,
+  owner @{user_share_dirs}/kfontinst/{,*} rw,
   owner @{user_share_dirs}/knewstuff3/{,*} rw,
   owner @{user_share_dirs}/konversation/{,**} rw,
   owner @{user_share_dirs}/korganizer/{,*} rw,
@@ -202,6 +211,7 @@ profile plasma-discover @{exec_path} flags=(attach_disconnected,mediate_deleted)
   owner @{tmp}/@{rand6}-*.plasmoid rwl -> @{tmp}/#@{int},
   audit owner @{tmp}/@{rand6}-*.sh rwl -> @{tmp}/#@{int}, # krunner plugins' installation scripts
 
+        @{run}/snapd.socket rw,
   owner @{run}/user/@{uid}/#@{int} rw,
   owner @{run}/user/@{uid}/.flatpak-cache rw,
   owner @{run}/user/@{uid}/.flatpak/{,**} rw,
