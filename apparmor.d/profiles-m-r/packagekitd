@@ -41,7 +41,18 @@ profile packagekitd @{exec_path} flags=(attach_disconnected) {
   signal send set=int peer=apt-methods-*,
   signal send set=term peer=systemd-inhibit,
 
+  unix type=stream addr=@@{hex}/bus/PK-Backend/system,
+
   #aa:dbus own bus=system name=org.freedesktop.PackageKit path=/**
+
+  dbus send bus=system path=/org/freedesktop/PackageKit
+       interface=org.freedesktop.DBus.Introspectable
+       member=Introspect
+       peer=(name=org.freedesktop.PackageKit, label="@{p_packagekitd}"),
+  dbus send bus=system path=/org/freedesktop/PackageKit
+       interface=org.freedesktop.PackageKit
+       member=StateHasChanged
+       peer=(name=org.freedesktop.PackageKit, label="@{p_packagekitd}"),
 
   @{exec_path} mr,
 
@@ -96,6 +107,7 @@ profile packagekitd @{exec_path} flags=(attach_disconnected) {
   @{bin}/rpmdb2solv                  PUx,
 
   #aa:only ubuntu
+  @{bin}/apt_hook_ubuntu_virt PUx,
   @{lib}/update-notifier/update-motd-updates-available  Px,
 
   #aa:lint ignore=too-wide
@@ -117,6 +129,7 @@ profile packagekitd @{exec_path} flags=(attach_disconnected) {
         /tmp/apt-changelog-@{rand6}/ w,
         /tmp/apt-changelog-@{rand6}/*.changelog rw,
         /tmp/apt-dpkg-install-@{rand6}/ rw,
+        /tmp/apt-dpkg-install-@{rand6}/@{int}-*.deb w,
   owner @{tmp}/apt-changelog-@{rand6}/.apt-acquire-privs-test.@{rand6} rw,
 
   @{att}@{run}/systemd/inhibit/@{int}.ref rw,
@@ -156,8 +169,6 @@ profile packagekitd @{exec_path} flags=(attach_disconnected) {
     @{bin}/gpg-agent rix,
     @{bin}/scdaemon  rix,
     @{lib}/{,gnupg/}scdaemon rix,
-
-    /etc/gcrypt/hwf.deny r,
 
     @{user_gpg_dirs}/*.conf r,
 
