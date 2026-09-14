@@ -1,0 +1,31 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Łukasz Kozak <lakis.kozak@gmail.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/net
+profile net @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/nameservice-strict>
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  @{etc_ro}/krb5.conf r,
+  @{etc_ro}/krb5.conf.d/{,**} r,
+  /etc/samba/smb.conf r,
+
+  owner /var/cache/samba/ w, # ToDo: what to do?
+
+  include if exists <local/net>
+}
+
+# vim:syntax=apparmor
