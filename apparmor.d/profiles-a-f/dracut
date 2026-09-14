@@ -7,10 +7,18 @@ abi <abi/5.0>,
 include <tunables/global>
 
 @{exec_path} = @{bin}/dracut
-profile dracut @{exec_path} {
+profile dracut @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/consoles>
   include <abstractions/disks-read>
+  include <abstractions/nameservice-strict>
+  include <abstractions/path>
+
+  capability dac_override,
+  capability mknod,
+  capability sys_chroot,
+
+  network alg seqpacket, # kernel crypto API
 
   @{exec_path} mrix,
 
@@ -18,17 +26,25 @@ profile dracut @{exec_path} {
   @{archive_path}             rix,
   @{coreutils_path}           rix,
   @{ldd_path}                  Cx -> ldd,
+  @{bin}/@{multiarch}-pkg-config ix,
   @{bin}/3cpio                rix,
+  @{bin}/eu-strip             rix,
+  @{bin}/logger rix,
   @{bin}/findmnt               Px,
   @{bin}/getopt               rix,
   @{bin}/hardlink             rix,
   @{bin}/kmod                  Cx -> kmod,
+  @{bin}/mountpoint           rPx,
+  @{bin}/pkgconf              rix,
   @{bin}/sync                 rix,
   @{bin}/systemctl             Cx -> systemctl,
+  @{bin}/systemd-cat           Px,
   @{bin}/systemd-detect-virt   Px,
   @{bin}/systemd-escape        Px,
   @{bin}/udevadm               Px,
+  @{bin}/zgrep                rix,
   @{sbin}/blkid                Px,
+  @{sbin}/btrfs                Px,
   @{sbin}/ldconfig            rix,
   @{lib}/plymouth/plymouth-populate-initrd PUx,
 
@@ -37,8 +53,9 @@ profile dracut @{exec_path} {
 
   @{lib}/dracut/{,**} r,
 
-  @{bin}/ r,
-  @{sbin}/ r,
+  /usr/share/kbd/{,**} r,
+  /usr/share/plymouth/{,**} r,
+  /usr/share/terminfo/{,**} r,
 
   /etc/depmod.d/ r,
   /etc/depmod.d/*.conf r,
@@ -48,15 +65,44 @@ profile dracut @{exec_path} {
   /etc/modprobe.d/{,**} r,
   @{lib}/modprobe.d/{,**} r,
 
-  /var/tmp/dracut.@{rand6}/{,**} rwl,
+  /etc/crypttab r,
+  /etc/fstab r,
+  /etc/modules-load.d/{,**} r,
+  /etc/plymouth/plymouthd.conf r,
+  /etc/shadow r,
+  /etc/sysconfig/{,**} r,
+  /etc/systemd/{,**} r,
+  /etc/vconsole.conf r,
 
+  / r,
+
+  @{efi}/initrd* rw,
+
+  /var/lib/bluetooth/{,**/} r,
+
+  /var/tmp/dracut.@{rand6}/{,**} rwl,
+  /var/tmp/dracut.@{rand6}@{w}/{,**} rwl,
+
+  @{run}/modprobe.d/ r,
+  @{run}/modprobe.d/*.conf r,
+
+  @{sys}/bus/*/devices/ r,
+  @{sys}/devices/**/modalias r,
   @{sys}/module/firmware_class/parameters/path r,
 
+  @{PROC}/@{pid}/cgroup r,
   @{PROC}/@{pid}/fd/ r,
+  @{PROC}/@{pid}/mountinfo r,
+  @{PROC}/cmdline r,
+  @{PROC}/swaps r,
 
   profile systemctl {
     include <abstractions/base>
     include <abstractions/app/systemctl>
+
+    capability net_admin,
+
+    /var/tmp/dracut.@{rand6}/initramfs/{,**} r,
 
     include if exists <local/dracut_systemctl>
   }
@@ -65,7 +111,11 @@ profile dracut @{exec_path} {
     include <abstractions/base>
     include <abstractions/app/kmod>
 
+    /var/tmp/dracut.@{rand6}/modules/*/ r,
+    /var/tmp/dracut.@{rand6}/modules/*/kernel/{,**} r,
+
     @{sys}/module/compression r,
+    @{sys}/module/**/initstate r,
 
     include if exists <local/dracut_kmod>
   }
