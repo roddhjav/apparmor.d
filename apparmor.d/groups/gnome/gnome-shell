@@ -223,6 +223,7 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   @{bin}/flatpak                rPx,
   @{bin}/gjs-console            rPx -> gnome-extension,
   @{bin}/glib-compile-schemas   rPx,
+  @{bin}/gnome-extensions       rPx,
   @{bin}/ibus-daemon            rPx,
   @{bin}/nvidia-smi             rPx, # FIXME: for extension only
   @{bin}/sensors                rPx,
@@ -361,6 +362,7 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{tmp}/.org.chromium.Chromium.@{rand6} r,
   owner @{tmp}/.org.chromium.Chromium.@{rand6}/ r,
   owner @{tmp}/.org.chromium.Chromium.@{rand6}/*.@{icon_ext} r,
+  owner @{tmp}/.org.chromium.Chromium.scoped_dir.@{rand6}/*.@{icon_ext} r,
   owner @{tmp}/@{rand6}.shell-extension.zip rw,
   owner @{tmp}/gdkpixbuf-xpm-tmp.@{rand6} rw,
 
@@ -378,26 +380,21 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   @{run}/udev/data/+acpi:* r,             # Exposes ACPI objects (power buttons, batteries, thermal)
   @{run}/udev/data/+backlight:* r,        # For display backlights on laptops, monitors, and other screens.
   @{run}/udev/data/+dmi:id r,             # for motherboard info
-  @{run}/udev/data/+drm:card@{int}-* r,   # For screen outputs
   @{run}/udev/data/+hid:* r,              # For Human Interface Device (mice, controllers, drawing tablets, scanners)
   @{run}/udev/data/+i2c:* r,              # For Inter-Integrated Circuit, low-speed peripherals (sensors, EEPROMs, etc.)
   @{run}/udev/data/+input:input@{int} r,  # for mouse, keyboard, touchpad
   @{run}/udev/data/+pci:* r,              # Identifies all PCI devices (CPU, GPU, Network, Disks, USB, etc.)
   @{run}/udev/data/+platform:* r,         # Identifies onboard devices (laptop/board model, power controllers, thermal sensors)
-  @{run}/udev/data/+sound:card@{int} r,   # for sound card
   @{run}/udev/data/c10:@{int} r,          # for non-serial mice, misc features
   @{run}/udev/data/c13:@{int} r,          # for /dev/input/*
-  @{run}/udev/data/c189:@{int}  r,        # for /dev/bus/usb/**
   @{run}/udev/data/n@{int} r,             # For network interfaces
 
   @{sys}/**/uevent r,
-  @{sys}/bus/ r,
   @{sys}/class/backlight/ r,
   @{sys}/class/input/ r,
   @{sys}/class/net/ r,
   @{sys}/class/power_supply/ r,
-  @{sys}/devices/@{pci}/boot_vga r,
-  @{sys}/devices/@{pci}/drm/card@{int}/**/{,max_,actual_}brightness r,
+  @{sys}/devices/@{pci}/drm/card@{int}/**/{max_,actual_}brightness r,
   @{sys}/devices/@{pci}/drm/card@{int}/**/{uevent,type,enabled} r,
   @{sys}/devices/@{pci}/drm/card@{int}/**/brightness r,
   @{sys}/devices/@{pci}/gpu_busy_percent r,
@@ -423,7 +420,6 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
         @{PROC}/@{pid}/cgroup r,
         @{PROC}/@{pid}/cmdline r,
         @{PROC}/@{pid}/net/* r,
-        @{PROC}/1/cgroup r,
         @{PROC}/cmdline r,
         @{PROC}/sys/kernel/osrelease r,
         @{PROC}/sys/net/ipv{4,6}/conf/all/disable_ipv{4,6} r,
