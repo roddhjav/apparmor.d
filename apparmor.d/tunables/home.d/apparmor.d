@@ -30,7 +30,7 @@
 @{XDG_GAMES_DIR}="Games" @{XDG_DATA_DIR}/games
 @{XDG_PROJECTS_DIR}="Projects"
 @{XDG_WORK_DIR}="Work"
-@{XDG_MAIL_DIR}="Mail" ".{m,M}ail"
+@{XDG_MAIL_DIR}="[mM]ail" ".[mM]ail"
 @{XDG_SYNC_DIR}="Sync"
 @{XDG_TORRENTS_DIR}="Torrents"
 @{XDG_GAMESSTUDIO_DIR}="unity3d"
@@ -50,7 +50,7 @@
 @{XDG_PASSWORDSTORE_DIR}=".password-store"
 
 # Define user personal private directories
-@{XDG_PRIVATE_DIR}=".{p,P}rivate" "{p,P}rivate"
+@{XDG_PRIVATE_DIR}=".[pP]rivate" "[pP]rivate"
 
 # Full path of the XDG Base Directory 
 @{user_cache_dirs}=@{HOME}/@{XDG_CACHE_DIR}
