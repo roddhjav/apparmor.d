@@ -172,7 +172,6 @@ profile claude @{exec_path} flags=(attach_disconnected) {
     priority=2 @{bin}/git         Px -> claude//git,
     priority=2 @{bin}/scp         Px -> claude//ssh,
     priority=2 @{bin}/ssh         Px -> claude//ssh,
-    priority=2 @{ldd_path}        Px -> claude//ldd,
 
     owner @{HOME}/.claude/{,**} r,
     owner @{HOME}/.claude/* w,
@@ -190,6 +189,7 @@ profile claude @{exec_path} flags=(attach_disconnected) {
 
     #aa:lint ignore=too-wide
     # It is not good, but claude / dev proccess use any files in /tmp.
+    owner @{tmp}/** mix,
     owner @{tmp}/** rwlk -> @{tmp}/**,
 
     # Required to copy result to clipboard
@@ -299,31 +299,6 @@ profile claude @{exec_path} flags=(attach_disconnected) {
     deny owner /tmp/claude-@{uid}/*/tasks/* rw,
 
     include if exists <local/claude_flatpak>
-  }
-
-  profile ldd {
-    include <abstractions/base>
-    include <abstractions/consoles>
-    include <abstractions/nameservice-strict>
-
-    unix (send receive) type=stream peer=(label=claude),
-
-    @{ldd_path} mrix,
-
-    @{bin}/*               mr,
-    @{sbin}/*              mr,
-    @{lib}/**              mr,
-
-    # file_inherit
-    deny network netlink raw,
-    deny owner @{HOME}/.claude/** r,
-    deny owner @{code_config_dirs}/logs/** w,
-    deny owner @{user_projects_dirs}/** r,
-    deny owner @{user_config_dirs}/** r,
-    deny owner @{code_config_dirs}/logs/{,**} w,
-    deny owner /dev/shm/.org.chromium.Chromium.@{rand6} rw,
-
-    include if exists <local/claude_ldd>
   }
 
   include if exists <local/claude>
