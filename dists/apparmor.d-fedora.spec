@@ -6,7 +6,7 @@
 # SPDX-License-Identifier: GPL-2.0-only
 
 Name:           apparmor.d
-Version:        0.4913.0
+Version:        0.4914.0
 Release:        1%{?dist}
 Summary:        Full set of AppArmor policies
 License:        GPL-2.0-only
