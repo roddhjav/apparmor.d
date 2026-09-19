@@ -1,0 +1,33 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+@{name} = thunderbird{,-bin}
+@{lib_dirs} = @{lib}/@{name}
+@{config_dirs} = @{HOME}/.@{name}/
+
+@{exec_path} = @{lib_dirs}/gfxtest
+profile thunderbird-gfxtest @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/graphics>
+
+  network netlink raw,
+
+  @{exec_path} mr,
+
+  / r,
+
+  owner @{config_dirs}/*/.parentlock rw,
+
+  owner @{tmp}/@{name}/.parentlock rw,
+
+  owner @{tmp}/org.mozilla.thunderbird/.parentlock rw,
+
+  include if exists <local/thunderbird-gfxtest>
+}
+
+# vim:syntax=apparmor
