@@ -127,11 +127,6 @@ func Configure(r *runtime.Runners) *runtime.Runners {
 		r.Builders.Add(builder.NewAttach())
 
 	case 5:
-		if tasks.Distribution == "ubuntu" {
-			// Use stacked-dbus builder to resolve dbus rules
-			r.Builders.Add(builder.NewStackedDbus())
-		}
-
 		if !r.DownStream {
 			r.Configures.Add(configure.NewAttach())
 		}
@@ -139,6 +134,11 @@ func Configure(r *runtime.Runners) *runtime.Runners {
 
 	default:
 		logging.Fatal("Invalid ABI version: %d", r.ABI)
+	}
+
+	if tasks.Distribution == "ubuntu" {
+		// Use stacked-dbus builder to resolve dbus rules
+		r.Builders.Add(builder.NewStackedDbus())
 	}
 
 	if version != nilVer {
