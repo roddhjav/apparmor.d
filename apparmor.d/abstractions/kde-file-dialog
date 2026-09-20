@@ -1,0 +1,68 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Łukasz Kozak <lakis.kozak@gmail.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# abstraction for file dialog in QT applications
+# if applicable, deny-home-dotfiles should be used as well
+#
+
+  abi <abi/5.0>,
+
+  # to be removed?
+  include <abstractions/disks-read>
+  include <abstractions/kde-globals-write>
+  include <abstractions/thumbnails-cache-read>
+
+  /usr/share/templates/{,**} r,
+  /usr/share/thumbnailers/{,*} r,
+
+  / r,
+  /home/ r,
+
+  owner @{HOME}/ r,
+  owner @{HOME}/*/{,*/} r,
+  owner @{HOME}/*/.directory r,
+
+  owner @{MOUNTS}/ r,
+  owner @{MOUNTS}/*/{,*/} r,
+  owner @{MOUNTS}/*/.directory r,
+
+  owner @{user_config_dirs}/baloofileinformationrc r,
+  owner @{user_config_dirs}/kioslaverc r,
+  owner @{user_config_dirs}/kiorc r,
+
+  owner @{user_share_dirs}/#@{int} rw,
+  owner @{user_share_dirs}/baloo/index r,
+  owner @{user_share_dirs}/baloo/index-lock rwk,
+  owner @{user_share_dirs}/kfile/ w,
+  owner @{user_share_dirs}/kfile/#@{int} rw,
+  owner @{user_share_dirs}/kfile/bookmarks.xml{,.bak,.tbcache}{,.@{rand6}} rwl, #-> @{user_share_dirs}/kfile/#@{int},
+  owner @{user_share_dirs}/user-places.xbel{,.bak,.tbcache}{,.@{rand6}} rwl, #-> @{user_share_dirs}/#@{int},
+
+  owner @{user_state_dirs}/kiostaterc@{atomic} rwlk, #-> @{user_state_dirs}/#@{int},
+
+  # to be removed?
+  @{sys}/bus/ r,
+  @{sys}/bus/usb/devices/ r,
+
+  #ToDo: remove all below
+  # Needed almost always, but tbd by profile creator
+  #network netlink raw,
+
+  #signal send set=term peer=kioworker,
+
+  #@{bin}/baloo_filemetadata_temp_extractor rix,
+  #@{bin}/net      Px,
+  #@{bin}/testparm Px,
+
+  #aa\:exec kioworker
+
+  #/etc/exports r,
+  #/etc/fstab r,
+
+  #owner @{run}/user/@{uid}/#@{int} rw,
+  #owner @{run}/user/@{uid}/@{profile_name}@{rand6}.@{int}.kioworker.socket rwl -> @{run}/user/@{uid}/#@{int},
+
+  include if exists <abstractions/kde-file-dialog.d>
+
+# vim:syntax=apparmor
