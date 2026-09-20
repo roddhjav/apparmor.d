@@ -22,7 +22,6 @@ main() {
 	case "$ID" in
 	arch)
 		rm -f $SRC/*.sig # Ignore signature files
-		pacman -Rdd --noconfirm dbus-broker dbus-broker-units dbus-units || true
 		pacman -U --noconfirm --overwrite '*' $SRC/*.pkg.tar.zst || true
 		systemctl enable aa-flatpak || true
 		;;
