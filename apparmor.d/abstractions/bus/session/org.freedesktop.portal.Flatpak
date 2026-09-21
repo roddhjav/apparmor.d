@@ -1,0 +1,26 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+  abi <abi/5.0>,
+
+  #aa:dbus see bus=session name=org.freedesktop.portal.Flatpak label=flatpak-portal
+
+  dbus receive bus=session path=/org/freedesktop/portal/Flatpak
+       interface=org.freedesktop.portal.Flatpak
+       member=SpawnExited
+       peer=(name=@{busname}, label=flatpak-portal),
+
+  dbus send bus=session path=/
+       interface=org.freedesktop.DBus.Peer
+       member=Ping
+       peer=(name=org.freedesktop.portal.Flatpak, label=flatpak-portal),
+
+  dbus send bus=session path=/org/freedesktop/portal/Flatpak
+       interface=org.freedesktop.portal.Flatpak
+       member=Spawn
+       peer=(name=org.freedesktop.portal.Flatpak, label=flatpak-portal),
+
+  include if exists <abstractions/bus/session/org.freedesktop.portal.Flatpak.d>
+
+# vim:syntax=apparmor
