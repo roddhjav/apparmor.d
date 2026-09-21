@@ -1,0 +1,25 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+  abi <abi/5.0>,
+
+  owner /tmp/.X@{int}-lock rw,
+
+  if "kde" in @{DE} {
+    unix (bind listen) type=stream addr=@/tmp/.X11-unix/X@{u8},
+    unix (accept send receive) type=stream addr=@/tmp/.X11-unix/X@{u8},
+
+    owner @{run}/user/@{uid}/#@{int} rw,
+    owner @{run}/user/@{uid}/xauth_@{rand6} rwl -> @{run}/user/@{uid}/#@{int},
+
+    /tmp/.X11-unix/X@{u8} w,
+  }
+
+  if ${WITH_HYPRLAND} {
+    /tmp/.X11-unix/X@{u8} w,
+  }
+
+  include if exists <abstractions/X-server.d>
+
+# vim:syntax=apparmor
