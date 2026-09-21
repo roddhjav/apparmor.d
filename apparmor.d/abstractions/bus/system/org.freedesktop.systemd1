@@ -19,7 +19,7 @@
   dbus send bus=system path=/org/freedesktop/systemd1
        interface=org.freedesktop.DBus.Properties
        member={Get,GetAll}
-       peer=(name=org.freedesktop.systemd1),
+       peer=(name=org.freedesktop.systemd1, label="@{p_systemd}"),
 
   dbus send bus=system path=/org/freedesktop/systemd1
        interface=org.freedesktop.DBus.Properties
@@ -30,11 +30,6 @@
        interface=org.freedesktop.DBus.Properties
        member={Get,GetAll}
        peer=(label="@{p_systemd}"),
-
-  dbus send bus=system path=/org/freedesktop/systemd1/unit/*
-       interface=org.freedesktop.DBus.Properties
-       member=Get
-       peer=(name=org.freedesktop.systemd1, label="@{p_systemd}"),
 
   # DBus.Properties: receive property changed events
 
@@ -68,7 +63,7 @@
   # Stop units
   dbus send bus=system path=/org/freedesktop/systemd1
        interface=org.freedesktop.systemd1.Manager
-       member={StopUnit,KillUnit,ResetFailedUnit,Reload,JobRemoved}
+       member={StopUnit,KillUnit,ResetFailedUnit,Reload}
        peer=(label="@{p_systemd}"),
 
   dbus receive bus=system path=/org/freedesktop/systemd1
@@ -76,10 +71,22 @@
        member={JobNew,JobRemoved}
        peer=(label="@{p_systemd}"),
 
+  # Restart
+  dbus receive bus=system path=/org/freedesktop/systemd1
+       interface=org.freedesktop.systemd1.Manager
+       member=Reloading
+       peer=(label="@{p_systemd}"),
+
   # Enabled/Disable units
   dbus send bus=system path=/org/freedesktop/systemd1
        interface=org.freedesktop.systemd1.Manager
        member={DisableUnitFiles,EnableUnitFiles}
+       peer=(label="@{p_systemd}"),
+
+  # Activator
+  dbus receive bus=system path=/org/freedesktop/systemd1
+       interface=org.freedesktop.systemd1.Activator
+       member=ActivationFailure
        peer=(label="@{p_systemd}"),
 
   include if exists <abstractions/bus/system/org.freedesktop.systemd1.d>
