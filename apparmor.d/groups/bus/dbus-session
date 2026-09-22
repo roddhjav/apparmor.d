@@ -20,6 +20,7 @@ include <tunables/global>
 profile dbus-session flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus-session>
+  include <abstractions/bus/session/org.freedesktop.systemd1>
   include <abstractions/consoles>
   include <abstractions/deny-sensitive-home>
   include <abstractions/nameservice-strict>
@@ -48,11 +49,6 @@ profile dbus-session flags=(attach_disconnected) {
   # setup with stack and peer names.
   dbus receive bus=session interface=org.freedesktop.DBus,
 
-  dbus receive bus=session path=/org/freedesktop/systemd1
-       interface=org.freedesktop.systemd1.Activator
-       member=ActivationFailure
-       peer=(name=@{busname}, label="@{p_systemd_user}"),
-
   @{exec_path} mrix,
 
   @{bin}/{true,false}                            rix,
@@ -68,9 +64,6 @@ profile dbus-session flags=(attach_disconnected) {
   /usr/share/dbus-1/{,**} r,
   /var/lib/snapd/dbus-1/{,**} r,
   @{system_share_dirs}/dbus-1/{,**} r,
-
-  /etc/machine-id r,
-  /var/lib/dbus/machine-id r,
 
   # Dbus can receive any user files
   owner @{HOME}/** r,
