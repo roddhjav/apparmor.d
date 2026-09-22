@@ -6,6 +6,8 @@ abi <abi/5.0>,
 
 include <tunables/global>
 
+@{path} = /org/gnome/Terminal
+
 @{exec_path} = @{lib}/gnome-terminal-server
 profile gnome-terminal-server @{exec_path} {
   include <abstractions/base>
@@ -14,6 +16,7 @@ profile gnome-terminal-server @{exec_path} {
   include <abstractions/dconf-write>
   include <abstractions/gnome-strict>
   include <abstractions/nameservice-strict>
+  include <abstractions/search-provider>
 
   signal send set=(hup) peer=htop,
   signal send set=(term hup kill) peer=unconfined,
@@ -22,10 +25,6 @@ profile gnome-terminal-server @{exec_path} {
   ptrace read peer=unconfined,
 
   #aa:dbus own bus=session name=org.gnome.Terminal
-
-  dbus receive bus=session path=/org/gnome/Terminal/SearchProvider
-       interface=org.gnome.Shell.SearchProvider2
-       peer=(name=@{busname}, label=gnome-shell),
 
   dbus send bus=session path=/org/freedesktop/systemd1
        interface=org.freedesktop.systemd1.Manager
