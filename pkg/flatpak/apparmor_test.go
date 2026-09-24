@@ -276,6 +276,69 @@ func TestFlatpakAppArmorProfile_addBaseApp(t *testing.T) {
 	}
 }
 
+func TestFlatpakAppArmorProfile_addCrashpadHandler(t *testing.T) {
+	tests := []struct {
+		name  string
+		files []string
+		want  []string
+	}{
+		{
+			name: "chrome handler",
+			files: []string{
+				"extra/chrome",
+				"extra/chrome_crashpad_handler",
+			},
+			want: []string{
+				"priority=2 /app/extra/chrome_crashpad_handler Cx -> &flatpak.com.example.App//crashpad_handler,",
+			},
+		},
+		{
+			name: "electron handler",
+			files: []string{
+				"bin/app",
+				"app/Chrome_Crashpad_Handler",
+			},
+			want: []string{
+				"priority=2 /app/app/Chrome_Crashpad_Handler Cx -> &flatpak.com.example.App//crashpad_handler,",
+			},
+		},
+		{
+			name: "no handler",
+			files: []string{
+				"bin/app",
+			},
+			want: nil,
+		},
+	}
+
+	setupTmp(t)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			root := paths.New(t.TempDir())
+			for _, f := range tt.files {
+				file := root.Join(f)
+				if err := file.Parent().MkdirAll(); err != nil {
+					t.Fatalf("MkdirAll() error = %v", err)
+				}
+				if err := file.WriteFile(nil); err != nil {
+					t.Fatalf("WriteFile() error = %v", err)
+				}
+			}
+			p := NewFlatpakAppArmorProfile(&FlatpakMetadata{
+				Application: Application{Name: "com.example.App"},
+				rootdir:     root,
+			}, "enforce")
+			var got []string
+			for _, r := range p.addCrashpadHandler() {
+				got = append(got, strings.TrimSpace(r.String()))
+			}
+			if !slices.Equal(got, tt.want) {
+				t.Errorf("addCrashpadHandler() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestFlatpakAppArmorProfile_Generate(t *testing.T) {
 	tests := []struct {
 		name         string

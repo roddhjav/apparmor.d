@@ -177,9 +177,27 @@ func (p *FlatpakAppArmorProfile) addBaseApp() aa.Rules {
 	}
 	baseapp := strings.Split(p.Metadata.Base, "/")[1]
 	baseapp = strings.TrimSuffix(baseapp, ".BaseApp")
-	return aa.Rules{
+	rules := aa.Rules{
 		&aa.Include{IsMagic: true, Path: "abstractions/flatpak/baseapp/" + baseapp},
 	}
+	if baseapp == "org.chromium.Chromium" || baseapp == "org.electronjs.Electron2" {
+		rules = append(rules, p.addCrashpadHandler()...)
+	}
+	return rules
+}
+
+func (p *FlatpakAppArmorProfile) addCrashpadHandler() aa.Rules {
+	rules := aa.Rules{}
+	app := p.Profiles[pApp].Name
+	for _, handler := range p.Metadata.CrashpadHandlers() {
+		rules = append(rules, &aa.File{
+			Qualifier: aa.Qualifier{Priority: 2},
+			Path:      handler,
+			Access:    aa.MustAccess(aa.FILE, "Cx"),
+			Target:    "&" + app + "//crashpad_handler",
+		})
+	}
+	return rules
 }
 
 func (p *FlatpakAppArmorProfile) addAbstractions() aa.Rules {

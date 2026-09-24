@@ -223,6 +223,27 @@ func (f *FlatpakMetadata) AppBin() []string {
 	return res
 }
 
+// CrashpadHandlers retrieves the crashpad handler binaries shipped by the
+// application, as seen from within the sandbox.
+func (f *FlatpakMetadata) CrashpadHandlers() []string {
+	res := []string{}
+	if f.rootdir == nil {
+		return res
+	}
+	root := f.rootdir.String()
+	_ = filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+		if err != nil || d.IsDir() {
+			return nil
+		}
+		if strings.Contains(strings.ToLower(d.Name()), "crashpad_handler") {
+			rel, _ := filepath.Rel(root, path)
+			res = append(res, "/app/"+rel)
+		}
+		return nil
+	})
+	return res
+}
+
 // Requirements retrieves additional requirements (baseapp, sockets, devices...)
 // based on information it can collect in installation files
 func (f *FlatpakMetadata) Requirements() {

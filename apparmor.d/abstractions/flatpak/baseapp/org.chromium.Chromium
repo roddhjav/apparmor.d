@@ -3,10 +3,13 @@
 # SPDX-License-Identifier: GPL-2.0-only
 # LOGPROF-SUGGEST: no
 # NEEDS-VARIABLE: appid
+# NEEDS-VARIABLE: profile_app
 
   abi <abi/5.0>,
 
   include <abstractions/nss>
+
+  unix (send receive) type=seqpacket peer=(label=@{profile_app}//crashpad_handler),
 
         /dev/shm/ r,
   owner /dev/shm/.@{appid}.@{rand6} rw,
@@ -33,6 +36,41 @@
 
   # Chromium content api unfortunately needs these for normal operation
   owner @{PROC}/@{pid}/fd/@{int} w,
+
+        @{PROC}/ r,
+        @{PROC}/@{pid}/maps r,
+        @{PROC}/@{pid}/stat r,
+        @{PROC}/@{pid}/statm r,
+        @{PROC}/@{pid}/status r,
+  owner @{PROC}/@{pid}/stat r,
+
+  profile crashpad_handler flags=(attach_disconnected,mediate_deleted,complain) {
+    include <abstractions/base>
+    include <abstractions/nameservice-strict>
+
+    signal (send receive) set=cont peer=@{profile_app}//&@{profile_app}//crashpad_handler,
+
+    unix (send receive) type=seqpacket peer=(label=@{profile_app}),
+    unix (send receive) type=stream peer=(label=@{profile_app}),
+
+    /**/*_crashpad_handler mrix,
+
+    owner "@{HOME}/.var/app/@{appid}/**/Crash Reports/**" rwk,
+
+    @{sys}/devices/system/cpu/cpufreq/policy@{int}/scaling_cur_freq r,
+    @{sys}/devices/system/cpu/cpufreq/policy@{int}/scaling_max_freq r,
+
+    # Get the ptrace restrictions level
+    @{PROC}/sys/kernel/yama/ptrace_scope r,
+
+    owner @{PROC}/@{pid}/fd/ r,
+    owner @{PROC}/@{pid}/mem r,
+    owner @{PROC}/@{pid}/stat r,
+    owner @{PROC}/@{pid}/task/ r,
+    owner @{PROC}/@{pid}/task/@{tid}/comm r,
+
+    include if exists <abstractions/flatpak/baseapp/org.chromium.Chromium_crashpad_handler.d>
+  }
 
   include if exists <abstractions/flatpak/baseapp/org.chromium.Chromium.d>
 
