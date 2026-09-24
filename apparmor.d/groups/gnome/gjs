@@ -91,6 +91,9 @@ profile gjs @{exec_path} flags=(attach_disconnected) {
   @{bin}/gnome-control-center  Px,
   @{bin}/nautilus              Px,
 
+  @{lib}/@{multiarch}/glib-@{version}/gio-launch-desktop  rCx -> open,
+  @{lib}/gio-launch-desktop                               rCx -> open,
+  
   /usr/share/gnome-shell/extensions/gsconnect@andyholmes.github.io/{service/daemon.js,gsconnect-preferences} Px,
   @{user_share_dirs}/gnome-shell/extensions/gsconnect@andyholmes.github.io/{service/daemon.js,gsconnect-preferences} Px,
 
@@ -134,6 +137,18 @@ profile gjs @{exec_path} flags=(attach_disconnected) {
   owner @{PROC}/@{pid}/task/ r,
   owner @{PROC}/@{pid}/task/@{tid}/comm rw,
   owner @{PROC}/@{pid}/task/@{tid}/stat r,
+
+  profile open flags=(attach_disconnected) {
+    include <abstractions/base>
+    include <abstractions/app/open>
+
+    # gnome-extension-ding
+    @{bin}/true                 rix,
+    @{bin}/gnome-control-center  Px,
+    @{bin}/nautilus              Px,
+
+    include if exists <local/gjs_open>
+  }
 
   include if exists <local/gjs>
 }
