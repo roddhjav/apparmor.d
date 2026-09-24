@@ -1,7 +1,7 @@
-From e23e05c71db276dde7592a3a5a9291635d0bf126 Mon Sep 17 00:00:00 2001
+From 058ea404af47286fabe8e78f99ac89b53eaedd6f Mon Sep 17 00:00:00 2001
 From: Alexandre Pujol <alexandre@pujol.io>
 Date: Mon, 9 Mar 2026 22:23:01 +0100
-Subject: [PATCH 2/2] Add --apparmor-profile option for sandbox confinement
+Subject: [PATCH 2/3] Add --apparmor-profile option for sandbox confinement
 
 Add --apparmor-profile option to confine the sandboxed program with an
 AppArmor profile via aa_change_profile(2), applied late (right before
@@ -23,10 +23,10 @@ after acquire_privs().
  3 files changed, 76 insertions(+)
 
 diff --git a/bubblewrap.c b/bubblewrap.c
-index 9192550..e4831b3 100644
+index 87da230..fe43c57 100644
 --- a/bubblewrap.c
 +++ b/bubblewrap.c
-@@ -59,6 +59,9 @@ static const char *argv0;
+@@ -60,6 +60,9 @@ static const char *argv0;
  static const char *host_tty_dev;
  static const char *opt_exec_label = NULL;
  static const char *opt_file_label = NULL;
@@ -36,7 +36,7 @@ index 9192550..e4831b3 100644
  static bool opt_as_pid_1;
  
  static const char *opt_argv0 = NULL;
-@@ -357,6 +360,9 @@ usage (int ecode, FILE *out)
+@@ -358,6 +361,9 @@ usage (int ecode, FILE *out)
             "    --perms OCTAL                Set permissions of next argument (--bind-data, --file, etc.)\n"
             "    --size BYTES                 Set size of next argument (only for --tmpfs)\n"
             "    --chmod OCTAL PATH           Change permissions of PATH (must already exist)\n"
@@ -46,7 +46,7 @@ index 9192550..e4831b3 100644
             "    --not-a-security-boundary    Do not fail hard when some sandbox setup steps fail;\n"
             "                                 use only when the sandbox is not a security boundary\n"
            );
-@@ -609,6 +615,16 @@ do_init (int event_fd, pid_t initial_pid)
+@@ -610,6 +616,16 @@ do_init (int event_fd, pid_t initial_pid)
    /* Optionally bind our lifecycle to that of the caller */
    handle_die_with_parent ();
  
@@ -63,7 +63,7 @@ index 9192550..e4831b3 100644
    seccomp_programs_apply ();
  
    while (true)
-@@ -2097,6 +2113,21 @@ parse_args_recurse (int          *argcp,
+@@ -2112,6 +2128,21 @@ parse_args_recurse (int          *argcp,
            argv += 1;
            argc -= 1;
          }
@@ -85,9 +85,9 @@ index 9192550..e4831b3 100644
        else if (strcmp (arg, "--dev") == 0)
          {
            if (argc < 2)
-@@ -2884,9 +2915,11 @@ main (int    argc,
-   /* Get the (optional) privileges we need */
-   acquire_privs ();
+@@ -2925,9 +2956,11 @@ main (int    argc,
+     bwrap_is_debugging = true;
+ #endif
  
 +#ifndef HAVE_APPARMOR
    /* Never gain any more privs during exec */
@@ -97,7 +97,7 @@ index 9192550..e4831b3 100644
  
    /* The initial code is run with high permissions
       (i.e. CAP_SYS_ADMIN), so take lots of care. */
-@@ -2906,6 +2939,16 @@ main (int    argc,
+@@ -2947,6 +2980,16 @@ main (int    argc,
  
    parse_args (&argc, (const char ***) &argv);
  
@@ -114,7 +114,7 @@ index 9192550..e4831b3 100644
    /* suck the args into a cleanup_free variable to control their lifecycle */
    args_data = opt_args_data;
    opt_args_data = NULL;
-@@ -3493,6 +3536,22 @@ main (int    argc,
+@@ -3534,6 +3577,22 @@ main (int    argc,
  
    set_ambient_capabilities ();
  
@@ -138,7 +138,7 @@ index 9192550..e4831b3 100644
     * need to handle anything above */
    seccomp_programs_apply ();
 diff --git a/utils.c b/utils.c
-index 5525255..eb00330 100644
+index 5865cdb..a57a187 100644
 --- a/utils.c
 +++ b/utils.c
 @@ -27,6 +27,9 @@
@@ -149,9 +149,9 @@ index 5525255..eb00330 100644
 +#include <sys/apparmor.h>
 +#endif
  
- #ifndef HAVE_SELINUX_2_3
- /* libselinux older than 2.3 weren't const-correct */
-@@ -945,6 +948,19 @@ label_exec (UNUSED const char *exec_label)
+ #ifndef __NR_pivot_root
+ #error Linux kernel headers with __NR_pivot_root are required
+@@ -953,6 +956,19 @@ label_exec (UNUSED const char *exec_label)
    return 0;
  }
  
@@ -172,17 +172,17 @@ index 5525255..eb00330 100644
   * Like strerror(), but specialized for a failed mount(2) call.
   */
 diff --git a/utils.h b/utils.h
-index 88d9787..385a042 100644
+index 0872223..e5de8c1 100644
 --- a/utils.h
 +++ b/utils.h
-@@ -156,6 +156,7 @@ char *label_mount (const char *opt,
+@@ -157,6 +157,7 @@ char *label_mount (const char *opt,
                     const char *mount_label);
  int   label_exec (const char *exec_label);
  int   label_create_file (const char *file_label);
 +int   apparmor_change_profile (const char *profile);
  
  extern bool opt_force_openat_fallback;
- 
+ extern bool opt_force_mount_setattr_fallback;
 -- 
 2.55.0
 

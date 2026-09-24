@@ -1,0 +1,136 @@
+From 1cb56a70e38299865dbc0d84194cbeacf2b95033 Mon Sep 17 00:00:00 2001
+From: Alexandre Pujol <alexandre@pujol.io>
+Date: Tue, 15 Sep 2026 22:50:57 +0200
+Subject: [PATCH 3/3] Confine the sandbox automatically with the PARENT//app
+ profile
+
+When --apparmor-profile is not given, a bwrap confined as PARENT//bwrap
+confines the sandbox with PARENT//app, so policy can confine sandboxed
+programs by convention without patching the calling program. The profile
+is derived before NNP is set, and ENOENT is not fatal for it: a caller
+with no PARENT//app profile keeps the one it already has.
+
+(cherry picked from commit b850634804e5e05cbb7ce774c2d40a096207f668)
+---
+ bubblewrap.c | 25 +++++++++++++++++++++++--
+ utils.c      | 34 ++++++++++++++++++++++++++++++++++
+ utils.h      |  1 +
+ 3 files changed, 58 insertions(+), 2 deletions(-)
+
+diff --git a/bubblewrap.c b/bubblewrap.c
+index fe43c57..92fbdb3 100644
+--- a/bubblewrap.c
++++ b/bubblewrap.c
+@@ -62,6 +62,9 @@ static const char *opt_exec_label = NULL;
+ static const char *opt_file_label = NULL;
+ #ifdef HAVE_APPARMOR
+ static const char *opt_apparmor_profile = NULL;
++/* True when opt_apparmor_profile was derived from our own confinement
++ * rather than given on the command line. */
++static bool opt_apparmor_profile_auto = false;
+ #endif
+ static bool opt_as_pid_1;
+ 
+@@ -363,6 +366,8 @@ usage (int ecode, FILE *out)
+            "    --chmod OCTAL PATH           Change permissions of PATH (must already exist)\n"
+ #ifdef HAVE_APPARMOR
+            "    --apparmor-profile PROFILE   AppArmor profile for the sandbox\n"
++           "                                 (defaults to PARENT//app when bwrap itself\n"
++           "                                 runs confined as PARENT//bwrap)\n"
+ #endif
+            "    --not-a-security-boundary    Do not fail hard when some sandbox setup steps fail;\n"
+            "                                 use only when the sandbox is not a security boundary\n"
+@@ -2981,7 +2986,16 @@ main (int    argc,
+   parse_args (&argc, (const char ***) &argv);
+ 
+ #ifdef HAVE_APPARMOR
+-  /* When --apparmor-profile is used, NNP is deferred to the child
++  /* Without --apparmor-profile, confine the sandbox automatically when policy
++   * uses the PARENT//bwrap naming convention. This must happen before NNP is
++   * set below, as AppArmor denies a profile change once NNP is in effect. */
++  if (opt_apparmor_profile == NULL)
++    {
++      opt_apparmor_profile = apparmor_auto_profile ();
++      opt_apparmor_profile_auto = (opt_apparmor_profile != NULL);
++    }
++
++  /* When a profile is used, NNP is deferred to the child
+    * after aa_change_profile(). Otherwise set it now. */
+   if (opt_apparmor_profile == NULL)
+     {
+@@ -3586,7 +3600,14 @@ main (int    argc,
+   if (opt_apparmor_profile != NULL)
+     {
+       if (apparmor_change_profile (opt_apparmor_profile) != 0)
+-        die_with_error ("apparmor_change_profile %s", opt_apparmor_profile);
++        {
++          /* An auto-detected profile is a convention, not a request: ENOENT
++           * only means this program has no profile of its own, so keep the
++           * one we already run under. Any other error, and any failure of an
++           * explicitly requested profile, is fatal. */
++          if (!opt_apparmor_profile_auto || errno != ENOENT)
++            die_with_error ("apparmor_change_profile %s", opt_apparmor_profile);
++        }
+ 
+       if (prctl (PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) < 0)
+         die_with_error ("prctl(PR_SET_NO_NEW_PRIVS) failed");
+diff --git a/utils.c b/utils.c
+index a57a187..4729f3a 100644
+--- a/utils.c
++++ b/utils.c
+@@ -969,6 +969,40 @@ apparmor_change_profile (UNUSED const char *profile)
+ #endif
+ }
+ 
++/*
++ * If we are confined by a child profile named PARENT//bwrap, return the
++ * sibling profile PARENT//app, which is the profile the sandboxed program
++ * is meant to run under. Returns NULL when unconfined, when the profile
++ * is not a child profile, or when that child is not named "bwrap", so that
++ * only policy which opts into the naming convention is affected.
++ *
++ * The caller frees the result.
++ */
++char *
++apparmor_auto_profile (void)
++{
++#ifdef HAVE_APPARMOR
++  cleanup_free char *label = NULL;
++  char *mode = NULL;
++  char *sep;
++
++  /* Note that mode points into label, and must not be freed. */
++  if (aa_getcon (&label, &mode) < 0 || mode == NULL)
++    return NULL;
++
++  sep = strrchr (label, '/');
++  if (sep == NULL || sep == label || sep[-1] != '/')
++    return NULL;
++
++  if (strcmp (sep + 1, "bwrap") != 0)
++    return NULL;
++
++  return xasprintf ("%.*s//app", (int) (sep - 1 - label), label);
++#else
++  return NULL;
++#endif
++}
++
+ /*
+  * Like strerror(), but specialized for a failed mount(2) call.
+  */
+diff --git a/utils.h b/utils.h
+index e5de8c1..29037df 100644
+--- a/utils.h
++++ b/utils.h
+@@ -158,6 +158,7 @@ char *label_mount (const char *opt,
+ int   label_exec (const char *exec_label);
+ int   label_create_file (const char *file_label);
+ int   apparmor_change_profile (const char *profile);
++char *apparmor_auto_profile (void);
+ 
+ extern bool opt_force_openat_fallback;
+ extern bool opt_force_mount_setattr_fallback;
+-- 
+2.55.0
+
