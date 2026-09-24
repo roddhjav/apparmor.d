@@ -5,10 +5,12 @@
 package flatpak
 
 import (
+	"slices"
 	"strings"
 	"testing"
 
 	"github.com/roddhjav/apparmor.d/pkg/aa"
+	"github.com/roddhjav/apparmor.d/pkg/paths"
 )
 
 // stubDbusLabels installs known dbus labels and marks the lazy scan as done so
@@ -238,38 +240,46 @@ func TestFlatpakAppArmorProfile_addBaseApp(t *testing.T) {
 	tests := []struct {
 		name string
 		base string
-		want string // "" means no rule is expected
+		want []string
 	}{
 		{
 			name: "chromium base app",
 			base: "app/org.chromium.Chromium.BaseApp/x86_64/25.08",
-			want: "abstractions/flatpak/baseapp/org.chromium.Chromium",
+			want: []string{
+				"include <abstractions/flatpak/baseapp/org.chromium.Chromium>",
+			},
+		},
+		{
+			name: "electron base app",
+			base: "app/org.electronjs.Electron2.BaseApp/x86_64/25.08",
+			want: []string{
+				"include <abstractions/flatpak/baseapp/org.electronjs.Electron2>",
+			},
+		},
+		{
+			name: "steam base app",
+			base: "app/com.valvesoftware.Steam.BaseApp/x86_64/25.08",
+			want: []string{
+				"include <abstractions/flatpak/baseapp/com.valvesoftware.Steam>",
+			},
 		},
 		{
 			name: "no base app",
 			base: "",
-			want: "",
+			want: nil,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			p := &FlatpakAppArmorProfile{
-				Metadata: &FlatpakMetadata{
-					Application: Application{Base: tt.base},
-				},
+			p := NewFlatpakAppArmorProfile(&FlatpakMetadata{
+				Application: Application{Name: "com.example.App", Base: tt.base},
+			}, "enforce")
+			var got []string
+			for _, r := range p.addBaseApp() {
+				got = append(got, strings.TrimSpace(r.String()))
 			}
-			rules := p.addBaseApp()
-			if tt.want == "" {
-				if len(rules) != 0 {
-					t.Fatalf("addBaseApp() = %v, want no rule", rules)
-				}
-				return
-			}
-			if len(rules) != 1 {
-				t.Fatalf("addBaseApp() = %v, want 1 rule", rules)
-			}
-			if got := rules[0].(*aa.Include).Path; got != tt.want {
+			if !slices.Equal(got, tt.want) {
 				t.Errorf("addBaseApp() = %v, want %v", got, tt.want)
 			}
 		})

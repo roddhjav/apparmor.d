@@ -63,6 +63,7 @@ var (
 		"org.gnome.SettingsDaemon":                    "mediakeys",
 		"org.gtk.vfs.*":                               "gvfs",
 		"org.gtk.vfs":                                 "gvfs",
+		"org.mpris":                                   "flatpak/mpris",
 	}
 )
 

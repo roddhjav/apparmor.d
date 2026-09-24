@@ -64,6 +64,7 @@ func ProfileName(appID string) string {
 func NewFlatpakAppArmorProfile(meta *FlatpakMetadata, mode string) *FlatpakAppArmorProfile {
 	appID := meta.Name
 	tld, vendor, product, name := meta.Parts()
+	path := "/" + strings.ReplaceAll(appID, ".", "/")
 
 	// Define profile names
 	profileName := ProfileName(appID)
@@ -97,6 +98,7 @@ func NewFlatpakAppArmorProfile(meta *FlatpakMetadata, mode string) *FlatpakAppAr
 				&aa.Variable{Name: "product", Values: []string{product}, Define: true},
 				&aa.Variable{Name: "name", Values: []string{name}, Define: true},
 				&aa.Variable{Name: "appid", Values: []string{appID}, Define: true},
+				&aa.Variable{Name: "path", Values: []string{path}, Define: true},
 				&aa.Variable{Name: "command", Values: []string{meta.Command}, Define: true},
 				&aa.Variable{Name: "profile_app", Values: []string{profileName}, Define: true},
 				&aa.Variable{Name: "profile_dbus", Values: []string{profileDbusProxyName}, Define: true},
