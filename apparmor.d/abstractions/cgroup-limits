@@ -2,20 +2,32 @@
 # Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
-# Allow reading CPU and memory limits from cgroup hierarchy
+# Allow reading the cgroup v2 resource limits applied to the current process.
+#
+# Runtimes (Go, Java, .NET, Node.js, glibc malloc, ...) and tools that size
+# their thread pools or heaps from the available resources read these files to
+# detect the CPU and memory limits set by systemd on the user and session slices.
+#
+# See https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/Documentation/admin-guide/cgroup-v2.rst
 
   abi <abi/5.0>,
 
-  #https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/Documentation/admin-guide/cgroup-v2.rst
-
+  # Controllers enabled on the hierarchy
   @{sys}/fs/cgroup/cgroup.controllers r,
 
+  # Walk the hierarchy down to the process's own cgroup
         @{sys}/fs/cgroup/ r,
         @{sys}/fs/cgroup/user.slice/ r,
         @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/ r,
         @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/ r,
   owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/**/ r,
 
+  # Device memory (GPU VRAM) usage and limits
+        @{sys}/fs/cgroup/user.slice/dmem.current r,
+        @{sys}/fs/cgroup/user.slice/dmem.max r,
+        @{sys}/fs/cgroup/user.slice/dmem.min r,
+
+  # Memory limits: throttling (high), protection (low) and hard limit (max)
         @{sys}/fs/cgroup/user.slice/memory.high r,
         @{sys}/fs/cgroup/user.slice/memory.low r,
         @{sys}/fs/cgroup/user.slice/memory.max r,
@@ -29,6 +41,7 @@
   owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/**/memory.low r,
   owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/**/memory.max r,
 
+  # CPU bandwidth limit ("$MAX $PERIOD"), used to compute the available CPU count
         @{sys}/fs/cgroup/cpu.max r,
         @{sys}/fs/cgroup/user.slice/cpu.max r,
         @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/cpu.max r,
@@ -36,7 +49,7 @@
         @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/cpu.max r,
         @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/**/cpu.max r,
 
-  # Allow reading cgroup membership information
+  # Cgroup of the process, used to locate its limits in the hierarchy
   owner @{PROC}/@{pid}/cgroup r,
 
   include if exists <abstractions/cgroup-limits.d>
