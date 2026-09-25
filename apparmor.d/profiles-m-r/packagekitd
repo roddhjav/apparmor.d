@@ -13,6 +13,7 @@ profile packagekitd @{exec_path} flags=(attach_disconnected) {
   include <abstractions/bus-system>
   include <abstractions/bus/system/org.freedesktop.login1>
   include <abstractions/bus/system/org.freedesktop.PolicyKit1>
+  include <abstractions/consoles>
   include <abstractions/nameservice-strict>
   include <abstractions/network-manager-observe>
   include <abstractions/ssl_certs>
@@ -21,9 +22,11 @@ profile packagekitd @{exec_path} flags=(attach_disconnected) {
   capability dac_override,
   capability dac_read_search,
   capability fowner,
+  capability fsetid,
   capability kill,
   capability mknod,
   capability net_admin,
+  capability setfcap,
   capability setgid,
   capability setuid,
   capability sys_chroot,
@@ -49,6 +52,7 @@ profile packagekitd @{exec_path} flags=(attach_disconnected) {
   @{sh_path}            rix,
   @{bin}/cp             rix,
   @{bin}/echo           rix,
+  @{bin}/env            rix,
   @{bin}/gdbus          rix,
   @{bin}/gzip           rix,
   @{bin}/id             rix,
@@ -66,10 +70,17 @@ profile packagekitd @{exec_path} flags=(attach_disconnected) {
   @{bin}/systemctl                   Cx -> systemctl,
   @{bin}/systemd-inhibit             Px,
   @{bin}/update-desktop-database     Px,
+  @{bin}/update-mime-database        Px,
   @{lib}/cnf-update-db               Px,
 
   #aa:only pacman
+  @{bin}/aa-install                  Px,
   @{bin}/arch-audit                  Px,
+  @{bin}/{,e}grep                    rix,
+  @{bin}/pacman-key                  Px,
+  @{sbin}/setcap                     rix,
+  @{bin}/vercmp                      rix,
+  @{lib}/vlc/vlc-cache-gen           Px,
   /usr/share/libalpm/scripts/*       Px,
 
   #aa:only apt
@@ -130,8 +141,7 @@ profile packagekitd @{exec_path} flags=(attach_disconnected) {
   owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/mounts r,
 
-  /dev/ptmx r,
-  /dev/tty rw,
+  /dev/ptmx rw,
 
   profile gpg {
     include <abstractions/base>

@@ -127,10 +127,13 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
   mount fstype=fuse.revokefs-fuse options=(rw, nosuid, nodev) -> /var/tmp/flatpak-cache-*/*/,
 
+  signal receive set=int peer=flatpak-portal,
+  signal receive set=term peer=flatpak-session-helper,
+  signal send peer=polkit-agent-helper,
+
+  ptrace read peer=fbwrap,
   ptrace read peer=flatpak//bwrap,
   ptrace read peer=gnome-software//bwrap,
-
-  signal send peer=polkit-agent-helper,
 
   unix (send receive) type=seqpacket peer=(label=flatpak-system-helper),
   unix (send receive) type=seqpacket peer=(label=flatpak.*),
@@ -181,6 +184,7 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
   /usr/share/flatpak/{,**} r,
 
+  /etc/cups/client.conf r,
   /etc/flatpak/{,**} r,
   /etc/pulse/client.conf r,
 
@@ -199,6 +203,7 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{att}@{HOME}/.var/app/@{appid}/.local/share/**/var/tmp-@{rand6}/{,**} r,
   owner @{att}@{HOME}/.var/app/@{appid}/.local/share/*/**/usr/.ref rw,
   owner @{att}@{HOME}/.var/app/@{appid}/.local/share/*/logs/* rw,
+  owner @{att}@{HOME}/.var/app/@{appid}/.local/state/**.log w,
 
   # Can create dotfile directories for any app
   owner @{user_cache_dirs}/*/ w,
@@ -239,6 +244,7 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{run}/user/@{uid}/app/*/ w,
   owner @{run}/user/@{uid}/systemd/private rw,
   owner @{run}/user/@{uid}/wayland-@{int} rw,
+  owner @{run}/user/@{uid}/xauth_@{rand6} r,
 
   @{sys}/module/nvidia/version r,
 
@@ -323,6 +329,10 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted) {
           @{tmp}/ r,
     owner @{tmp}/ostree-gpg-@{rand6}/ rw,
     owner @{tmp}/ostree-gpg-@{rand6}/** rwlk -> /tmp/ostree-gpg-@{rand6}/**,
+
+    owner @{run}/user/@{uid}/gnupg/ w,
+    owner @{run}/user/@{uid}/gnupg/d.@{rand}/ w,
+    owner @{run}/user/@{uid}/gnupg/d.@{rand}/S.{gpg-agent*,scdaemon} rw,
 
     owner @{PROC}/@{pid}/fd/ r,
     owner @{PROC}/@{pid}/task/@{tid}/comm rw,
