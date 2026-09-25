@@ -1,0 +1,68 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/systemd-repart
+profile systemd-repart @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/disks-write>
+
+  capability chown,
+  capability fowner,
+  capability fsetid,
+  capability net_admin,
+  capability sys_admin,
+  capability sys_resource,
+
+  mount             options=(rw make-rslave)                 /,
+  mount fstype=vfat options=(rw noatime nodev noexec nosuid) /dev/loop0 -> @{run}/systemd/mount-root/,
+
+  signal send set=cont peer=child-pager,
+
+  ptrace read peer=@{p_systemd},
+
+  @{exec_path} mr,
+
+  @{bin}/mksquashfs           PUx,
+  @{pager_path}                Px -> child-pager,
+  @{sbin}/mkfs.*               Px,
+
+  /etc/machine-id r,
+  /etc/os-release r,
+
+  / r,
+  @{efi}/{,**} r,
+
+  # TODO: Disk image location eg:   @{HOME}/06_Projects/ArchLex/mkosi/mkosi.output/* r,
+
+  /buildroot/**/ r,
+  /usr/ r,
+
+  owner /var/tmp/.#repart@{hex16} rw,
+  owner /var/tmp/.#repart@{hex16}/ rw,
+  owner /var/tmp/.#repart@{hex16}/** rw,
+  owner /work/tmp/tmp@{rand8}/** r,
+  owner /work/var/tmp/** rw,
+
+  @{run}/systemd/mount-root/{,**} rw,
+
+  @{sys}/devices/virtual/block/loop0/queue/discard_max_bytes w,
+
+  @{PROC}/@{pid}/cgroup r,
+
+  /dev/loop-control rwk,
+
+  @{PROC}/1/environ r,
+  @{PROC}/cmdline r,
+  @{PROC}/sys/kernel/osrelease r,
+
+  include if exists <local/systemd-repart>
+}
+
+# vim:syntax=apparmor
+

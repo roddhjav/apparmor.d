@@ -1,0 +1,81 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/systemd-run
+profile systemd-run @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/bus-system>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+
+  # capability dac_read_search,
+  capability net_admin,
+
+  # unix bind type=stream addr=@@{udbus}/bus/systemd-run/,
+  unix bind type=stream addr=@@{udbus}/bus/run0/system,
+
+  signal receive set=(cont term),
+  signal send    set=(cont term) peer=systemd-run//run,
+  signal send    set=(cont term winch) peer=systemd-tty-ask-password-agent,
+
+  dbus send bus=system path=/org/freedesktop/systemd1/unit/run_*service
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=org.freedesktop.systemd1, label="@{p_systemd}"),
+
+  dbus receive bus=system path=/org/freedesktop/systemd1/unit/run_*service
+       interface=org.freedesktop.DBus.Properties
+       member=PropertiesChanged
+       peer=(name=@{busname}, label="@{p_systemd}"),
+
+  dbus send bus=system path=/org/freedesktop/systemd1
+       interface=org.freedesktop.systemd1.Manager
+       member=StartTransientUnit
+       peer=(name=org.freedesktop.systemd1, label="@{p_systemd}"),
+
+  @{exec_path} mr,
+
+  @{bin}/pkttyagent  rCx -> run,
+  @{bin}/systemd-tty-ask-password-agent Px,
+
+  @{run}/systemd/private rw,
+
+  owner @{PROC}/@{pid}/stat r,
+
+        /dev/ptmx rw,
+  owner /dev/pts/@{u16} rw,
+
+  profile run {
+    include <abstractions/base>
+    include <abstractions/bus-system>
+    include <abstractions/bus/system/org.freedesktop.PolicyKit1>
+    include <abstractions/consoles>
+    include <abstractions/nameservice-strict>
+
+    signal receive set=(term cont) peer=systemd-run,
+
+    ptrace read peer=systemd-run,
+
+    @{bin}/pkttyagent mr,
+
+    #aa:exec polkit-agent-helper
+
+    @{run}/polkit/agent-helper.socket rw,
+
+    owner @{PROC}/@{pid}/cgroup r,
+    owner @{PROC}/@{pid}/fdinfo/@{int} r,
+    owner @{PROC}/@{pid}/stat r,
+
+    include if exists <local/systemd-run_run>
+  }
+
+  include if exists <local/systemd-run>
+}
+
+# vim:syntax=apparmor
+

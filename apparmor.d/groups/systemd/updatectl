@@ -12,13 +12,24 @@ profile updatectl @{exec_path} flags=(attach_disconnected) {
   include <abstractions/bus-system>
   include <abstractions/consoles>
 
+  capability net_admin,
+  capability sys_resource,
+
+  ptrace read peer=@{p_systemd},
+
   signal send set=(cont term winch) peer=child-pager,
   signal send set=(cont term winch) peer=pkttyagent,
 
   #aa:dbus talk bus=system name=org.freedesktop.sysupdate1 label=systemd-sysupdated
 
+  dbus send bus=system path=/org/freedesktop/login1
+       interface=org.freedesktop.login1.Manager
+       member=RebootWithFlags
+       peer=(name=org.freedesktop.login1, label=systemd-logind),
+
   @{exec_path} mr,
 
+  @{pager_path}     rPx -> child-pager,
   @{bin}/pkttyagent rPx,
 
         @{PROC}/1/cgroup r,

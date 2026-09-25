@@ -1,0 +1,32 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2021 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/systemd/systemd-growfs
+profile systemd-growfs @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/disks-write>
+  include <abstractions/common/systemd>
+
+  capability net_admin,
+  capability sys_admin,
+  capability sys_resource,
+
+  @{exec_path} mr,
+
+  /home/ r,
+
+  @{run}/ r,
+  @{run}/cryptsetup/ r,
+  @{run}/cryptsetup/L_254:@{int} rwk,         # for /dev/zram*
+
+  @{PROC}/devices r,
+
+  include if exists <local/systemd-growfs>
+}
+
+# vim:syntax=apparmor

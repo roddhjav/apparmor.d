@@ -9,6 +9,7 @@ include <tunables/global>
 @{exec_path} = @{bin}/systemd-sysext @{bin}/systemd-confext
 profile systemd-sysext @{exec_path} flags=(attach_disconnected,mediate_deleted)  {
   include <abstractions/base>
+  include <abstractions/disks-write>
 
   capability chown,
   capability dac_override,
@@ -16,6 +17,7 @@ profile systemd-sysext @{exec_path} flags=(attach_disconnected,mediate_deleted) 
   capability fsetid,
   capability net_admin,
   capability sys_admin,
+  capability sys_rawio,
   capability sys_resource,
 
   mount                options=(rw bind)                        @{lib}/confexts/core-config/ -> @{run}/systemd/sysext/confexts/core-config/,
@@ -26,8 +28,23 @@ profile systemd-sysext @{exec_path} flags=(attach_disconnected,mediate_deleted) 
   mount fstype=overlay options=(rw noatime nodev noexec nosuid) confext -> @{run}/systemd/sysext/overlay/etc/,
   mount fstype=tmpfs                                            confext -> @{run}/systemd/sysext/,
 
+  mount                options=(rw move)                                            -> @{run}/systemd/sysext/overlay/etc/machine-id,
+  mount                options=(rw move)                                            -> @{run}/systemd/sysext/submounts/etc/machine-id,
+  mount                options=(rw rbind)          /run/systemd/sysext/overlay/usr/ -> /usr/,
+  mount fstype=erofs   options=(ro nodev)          @{att}/dev/dm-@{int}             -> @{run}/systemd/dissect-root/,
+  mount fstype=erofs   options=(ro nodev)          /att/systemd-sysext/dev/dm-2     -> @{run}/systemd/dissect-root/,
+  mount fstype=erofs   options=(ro nodev)          /dev/dm-@{int}                   -> @{run}/systemd/sysext/confexts/*/,
+  mount fstype=erofs   options=(ro nodev)          /dev/dm-@{int}                   -> @{run}/systemd/sysext/extensions/*/,
+  mount fstype=overlay options=(ro nodev)          sysext                           -> @{run}/systemd/sysext/overlay/usr/,
+  mount fstype=tmpfs                               sysext                           -> @{run}/systemd/sysext/,
+  mount options=(rw make-rshared make-rslave) /,
+  mount options=(rw rshared rslave) -> /,
+
+  umount @{run}/systemd/sysext/submounts/etc/machine-id,
   umount /etc/,
   umount /etc/.systemd-confext/,
+  umount /etc/machine-id,
+  umount /usr/,
 
   ptrace read peer=@{p_systemd},
 
@@ -37,38 +54,55 @@ profile systemd-sysext @{exec_path} flags=(attach_disconnected,mediate_deleted) 
 
   @{pager_path}                Px -> child-pager,
 
+  /usr/ r,
+  /usr/.systemd-sysext/dev r,
+  /usr/.systemd-sysext/extensions r,
+  /usr/.systemd-sysext/origin r,
+
   @{att}/etc/ r,
-  @{att}/lib/confexts/{,**} r,
+  @{att}/etc/{,**} r,
+  @{att}/etc/extension-release.d/{,**} r,
+  @{att}/etc/systemd/{,**} r,
   @{att}/meta/etc/ r,
   @{att}/meta/etc/.systemd-confext/* r,
+  @{att}/meta/usr/ r,
+  @{att}/meta/usr/.systemd-sysext/dev r,
+  @{att}/meta/usr/.systemd-sysext/extensions r,
+  @{att}/usr/{,**} r,
+  @{att}/usr/share/** r,
   @{att}/var/lib/extensions.mutable/{,**} rw,
 
   /etc/ r,
   /etc/.systemd-confext/confexts r,
   /etc/.systemd-confext/dev r,
+  /etc/.systemd-confext/origin r,
   /etc/extension-release.d/extension-release.* r,
+  /etc/os-release r,
+
+  /var/lib/confexts/ rw,
+  /var/lib/confexts/** rwk,
+  /var/lib/extensions/ rw,
+  /var/lib/extensions/** rwk,
 
   @{run}/systemd/ r,
-  @{run}/systemd/nspawn/ r,
+  @{run}/systemd/dissect-root/** r,
+  @{run}/systemd/nspawn/ rw,
+  @{run}/systemd/nspawn/locks/ w,
   @{run}/systemd/nspawn/locks/* rwk,
-  @{run}/systemd/sysext/confexts/{,**/} rw,
-  @{run}/systemd/sysext/meta/ w,
-  @{run}/systemd/sysext/meta/etc/ rw,
-  @{run}/systemd/sysext/meta/etc/.systemd-confext/ rw,
-  @{run}/systemd/sysext/meta/etc/.systemd-confext/* w,
-  @{run}/systemd/sysext/overlay/{,**/} w,
+  @{run}/systemd/sysext/{,**} rw,
 
-  # /usr/lib/confexts/{,**} r,
-  # /usr/local/lib/confexts/{,**} r,
-  # /var/lib/confexts/{,**} r,
-  # @{run}/confexts/{,**} r,
+  @{sys}/devices/virtual/bdi/*/read_ahead_kb r,
 
         @{PROC}/@{pid}/mountinfo r,
         @{PROC}/1/cgroup r,
         @{PROC}/1/environ r,
         @{PROC}/cmdline r,
+        @{PROC}/devices r,
         @{PROC}/sys/kernel/osrelease r,
   owner @{PROC}/@{pid}/cgroup r,
+
+  /dev/btrfs-control rw,
+  /dev/loop-control rwk,
 
   include if exists <local/systemd-sysext>
 }

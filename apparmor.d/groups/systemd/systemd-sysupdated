@@ -6,8 +6,8 @@ abi <abi/5.0>,
 
 include <tunables/global>
 
-@{exec_path} = @{lib}/systemd/systemd-sysupdate
-profile systemd-sysupdate @{exec_path} flags=(attach_disconnected) {
+@{exec_path} = @{lib}/systemd/systemd-sysupdated
+profile systemd-sysupdated @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus-system>
   include <abstractions/disks-write>
@@ -25,29 +25,46 @@ profile systemd-sysupdate @{exec_path} flags=(attach_disconnected) {
   capability sys_admin,
 
   network inet dgram,
-  network inet6 dgram,
   network inet stream,
+  network inet6 dgram,
   network inet6 stream,
   network netlink raw,
 
-  unix send type=dgram peer=(label=unconfined, addr=@@{int}@{int}),
+  mount              options=(rw rshared rslave)                                  -> /,
+  mount fstype=erofs options=(ro nodev)          /att/systemd-sysupdated/dev/dm-@{int} -> @{run}/systemd/mount-rootfs/,
+
+  umount @{run}/systemd/mount-rootfs/,
+
+  unix bind type=dgram addr=@auto,
+  unix bind type=stream addr=@@{udbus}/bus/systemd-sysupda/system,
+
+  #aa:dbus own bus=system name=org.freedesktop.sysupdate1
 
   @{exec_path} mr,
 
-  @{bin}/gpg{,2}              ix,
-  @{lib}/systemd/systemd-pull ix,
+  @{lib}/ r,
+  @{bin}/gpg{,2}                   ix,
+  @{lib}/systemd/systemd-pull      ix, # TODO: nnp stack
+  @{lib}/systemd/systemd-sysupdate ix, # TODO: nnp stack
 
-  @{etc_rw}/sysupdate.d/{,**} r,
+  @{etc_rw}/sysupdate.d/{,**} rw,
   /etc/os-release r,
+
+  /usr/.systemd-sysext/ r,
+  /usr/.systemd-sysext/backing r,
 
   @{att}/usr/** r,
   @{efi}/EFI/Linux/ r,
+  @{efi}/EFI/Linux/* rw,
   @{lib}/ r,
   @{run}/ r,
   /etc/ r,
   /usr/ r,
   /usr/local/lib/ r,
 
+  / r,
+  /var/lib/machines/{,**} rw,
+  /var/lib/portables/{,**} rw,
   /var/lib/confexts/{,**} rw,
   /var/lib/extensions/{,**} rw,
   /var/lib/systemd/sysupdate/{,**} rw,
@@ -55,16 +72,24 @@ profile systemd-sysupdate @{exec_path} flags=(attach_disconnected) {
   owner /tmp/gpghome@{rand6}/{,*} rw,
   owner /tmp/sig@{rand6} rw,
 
+  @{run}/ r,
   @{run}/systemd/sysupdate/notify/ r,
   @{run}/systemd/sysupdate/notify/io.systemd.BootControl rw,
   @{run}/systemd/sysupdate/notify/io.systemd.sysext rw,
+  @{run}/systemd/mount-rootfs/{,**/} w,
+
+  @{sys}/fs/cgroup/system.slice/systemd-sysupdated.service/memory.pressure rw,
+  @{sys}/devices/virtual/bdi/**/read_ahead_kb r,
 
   @{PROC}/1/environ r,
   @{PROC}/cmdline r,
   @{PROC}/devices r,
   @{PROC}/sys/kernel/osrelease r,
+  @{PROC}/@{pid}/mountinfo r,
 
-  include if exists <local/systemd-sysupdate>
+  /dev/loop-control rwk,
+
+  include if exists <local/systemd-sysupdated>
 }
 
 # vim:syntax=apparmor

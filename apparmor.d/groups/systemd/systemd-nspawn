@@ -1,0 +1,22 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2025 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# TODO: ensure we use apparmor namespace here
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/systemd-nspawn
+profile systemd-nspawn @{exec_path} flags=(attach_disconnected,mediate_deleted,complain) {
+  include <abstractions/base>
+
+  all,
+
+  @{exec_path} mr,
+
+  include if exists <local/systemd-nspawn>
+}
+
+# vim:syntax=apparmor
