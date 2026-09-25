@@ -25,7 +25,7 @@ const (
 	nilConfig = ""
 	nilMagic  = ""
 	nilSrc    = ""
-	usage     = `aa-install [-h] [--config DIR] [--src DIR] [--magic DIR] [ -i | -u | -s | -l ] [-a] [-e|-c]
+	usage     = `aa-install [-h] [--config DIR] [--src DIR] [--magic DIR] [ -i | -u | -s | -l ] [-a] [-f] [-e|-c]
 
     Install and manage apparmor profiles from apparmor.d.
 
@@ -37,6 +37,7 @@ Options:
     -l, --list         List installed profile paths from the manifest.
     -i, --install      Install the profiles.
     -a, --all          Install all profiles.
+    -f, --fsp          Install the full system policy.
     -c, --complain     Set complain flag on all the profiles.
     -e, --enforce      Set enforce flag on all the profiles.
     -u, --uninstall    Remove all profiles installed.
@@ -64,19 +65,20 @@ See man aa-install(1) for more information.
 
 // Command line options
 var (
-	help      bool
-	install   bool
-	all       bool
-	complain  bool
-	enforce   bool
-	uninstall bool
-	status    bool
-	list      bool
-	verbose   bool
-	noReload  bool
-	config    string
-	magic     string
-	src       string
+	help             bool
+	install          bool
+	all              bool
+	fullSystemPolicy bool
+	complain         bool
+	enforce          bool
+	uninstall        bool
+	status           bool
+	list             bool
+	verbose          bool
+	noReload         bool
+	config           string
+	magic            string
+	src              string
 )
 
 // reloadAppArmor is swappable so tests can skip the system reload.
@@ -89,6 +91,8 @@ func init() {
 	flag.BoolVar(&install, "install", false, "Install the profiles.")
 	flag.BoolVar(&all, "a", false, "Install all profiles.")
 	flag.BoolVar(&all, "all", false, "Install all profiles,.")
+	flag.BoolVar(&fullSystemPolicy, "f", false, "Install the full system policy.")
+	flag.BoolVar(&fullSystemPolicy, "fsp", false, "Install the full system policy.")
 	flag.BoolVar(&complain, "c", false, "Set complain flag on all the profiles.")
 	flag.BoolVar(&complain, "complain", false, "Set complain flag on all the profiles.")
 	flag.BoolVar(&enforce, "e", false, "Set enforce flag on all the profiles.")
@@ -117,6 +121,7 @@ func aaConfig(cfg *conf) {
 	logging.Bullet("mode: %s", cfg.mode)
 	logging.Bullet("include: %s", cfg.include)
 	logging.Bullet("reload: %t", cfg.reload)
+	logging.Bullet("fsp: %t", cfg.fsp)
 	for _, d := range []struct {
 		name string
 		dirs paths.PathList
@@ -251,6 +256,11 @@ func aaInstall(configDir *paths.Path, srcDir *paths.Path, cfg *conf) (bool, erro
 	// Included profiles are installed even when their program is not.
 	if cfg.include != "all" {
 		r.Configures.Add(configure.NewSelectInstalled(includeEntries...))
+	}
+
+	// Prevent unconfined transitions in full system policy
+	if cfg.fsp {
+		r.Builders.Add(builder.NewFSP())
 	}
 
 	// Apply the default deploy mode to every profile, except those a user

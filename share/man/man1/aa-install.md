@@ -8,7 +8,7 @@ aa-install - Install and manage AppArmor profiles from apparmor.d.
 
 # SYNOPSIS
 
-**aa-install** [*options...*] [**-s**|**-l**|**-i**|**-u**] [**-a**] [**-e**|**-c**]
+**aa-install** [*options...*] [**-s**|**-l**|**-i**|**-u**] [**-a**] [**-f**] [**-e**|**-c**]
 
 # DESCRIPTION
 
@@ -18,7 +18,10 @@ configuration, then deployed to the AppArmor policy directory and apparmor is
 reloaded.
 
 Installed profiles are recorded in a manifest so that later runs can report the
-installation status, list the deployed profiles, or uninstall them.
+installation status, list the deployed profiles, or uninstall them. Only the
+files it records are managed; any other profile in the policy directory is left
+untouched and reported as skipped, or as an orphan when the source no longer
+ships it.
 
 With no action flag, print the installation status summary.
 
@@ -42,6 +45,12 @@ With no action flag, print the installation status summary.
 
 : Install all the profiles, including the ones of programs not installed on
   the system.
+
+`--fsp`, `-f`
+
+: Install the full system policy: the *_full* group profiles, with unconfined
+  transitions (**PUx**, **Ux**) turned into confined ones (**Px**) and the
+  profile names overridden in *tunables/multiarch.d/profiles.d/fsp*.
 
 `--complain`, `-c`
 
@@ -96,10 +105,13 @@ Each tier may contain:
 : General installation settings, one `key value` per line. The `default` key
   sets the default deploy mode (**enforce** or **complain**). Overridden by
   **--enforce** or **--complain**. Defaults to **complain**. The `include`
-  key sets how the *include.d* files are applied: **default** or **full**.
+  key sets how the *include.d* files are applied: **default**, **full** or
+  **all**. Overridden by **--all**.
   The `reload` key sets whether the profiles are reloaded after being
   modified: **yes** or **no**. Overridden by **--no-reload**. Defaults to
   **yes**.
+  The `fsp` key sets whether the full system policy is installed: **yes** or
+  **no**. Overridden by **--fsp**. Defaults to **no**.
 
 *flags.d/\*.conf*
 
@@ -116,7 +128,8 @@ Each tier may contain:
   the listed profiles even when their program is not installed. With
   `include full`, only the listed profiles are installed and all other
   profiles are excluded; the profiles always required by apparmor.d are
-  installed in both modes.
+  installed in both modes. With `include all`, all profiles are installed,
+  even the ones whose program is not installed.
 
 *overwrite.d/\*.conf*
 

@@ -25,5 +25,14 @@ func NewSystemdDefault() *SystemdDefault {
 }
 
 func (p SystemdDefault) Apply() ([]string, error) {
-	return []string{}, paths.CopyTo(prebuild.SystemdDir.Join("default"), p.Root.Join("systemd"))
+	// Regenerate the systemd drop-in dir from scratch: p.Root is reused
+	// across builds (only apparmor.d/ and share/ are re-synchronised), so a
+	// leftover full-system-policy drop-in from a prior --fsp run would
+	// otherwise survive into a non-fsp build. This runs before the FSP task,
+	// which layers its own drop-ins on top.
+	dst := p.Root.Join("systemd")
+	if err := dst.RemoveAll(); err != nil {
+		return []string{}, err
+	}
+	return []string{}, paths.CopyTo(prebuild.SystemdDir.Join("default"), dst)
 }

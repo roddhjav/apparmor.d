@@ -20,8 +20,8 @@ var (
 	// includeModes are the modes accepted for the include key.
 	includeModes = []string{"default", "full", "all"}
 
-	// reloadModes are the modes accepted for the reload key.
-	reloadModes = []string{"yes", "no"}
+	// yesNo are the values accepted for the reload and fsp keys.
+	yesNo = []string{"yes", "no"}
 
 	// vendorConfigDir holds the vendor configuration defaults
 	vendorConfigDir = paths.New("/usr/share/apparmor")
@@ -31,6 +31,7 @@ type conf struct {
 	mode          string
 	include       string
 	reload        bool
+	fsp           bool
 	flagDirs      paths.PathList
 	ignoreDirs    paths.PathList
 	includeDirs   paths.PathList
@@ -82,10 +83,18 @@ func loadConfig(configDir *paths.Path) (*conf, error) {
 	if reload == "" {
 		reload = "yes"
 	}
-	if !slices.Contains(reloadModes, reload) {
+	if !slices.Contains(yesNo, reload) {
 		return nil, fmt.Errorf("invalid reload mode %q in %s", reload, configDir.Join("modes"))
 	}
 	res.reload = reload == "yes" && !noReload
+	fsp := modes["fsp"]
+	if fsp == "" {
+		fsp = "no"
+	}
+	if !slices.Contains(yesNo, fsp) {
+		return nil, fmt.Errorf("invalid fsp mode %q in %s", fsp, configDir.Join("modes"))
+	}
+	res.fsp = fsp == "yes" || fullSystemPolicy
 	return res, nil
 }
 

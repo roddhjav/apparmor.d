@@ -29,6 +29,7 @@ func TestLoadConfig(t *testing.T) {
 		want         string
 		wantInclude  string // expected include mode, "" means default
 		wantNoReload bool   // reload is expected unless set
+		wantFsp      bool
 		wantErr      bool
 	}{
 		{
@@ -120,6 +121,26 @@ func TestLoadConfig(t *testing.T) {
 			flags:   func() {},
 			wantErr: true,
 		},
+		{
+			name:    "fsp enabled from config",
+			modes:   "fsp yes\n",
+			flags:   func() {},
+			want:    "complain",
+			wantFsp: true,
+		},
+		{
+			name:    "fsp overrides config",
+			modes:   "fsp no\n",
+			flags:   func() { fullSystemPolicy = true },
+			want:    "complain",
+			wantFsp: true,
+		},
+		{
+			name:    "invalid fsp mode",
+			modes:   "fsp maybe\n",
+			flags:   func() {},
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -131,7 +152,7 @@ func TestLoadConfig(t *testing.T) {
 			if tt.modes != "" {
 				writeFile(t, configDir.Join("modes"), tt.modes)
 			}
-			t.Cleanup(func() { complain, enforce, noReload, all = false, false, false, false })
+			t.Cleanup(func() { complain, enforce, noReload, all, fullSystemPolicy = false, false, false, false, false })
 			tt.flags()
 
 			cfg, err := loadConfig(configDir)
@@ -153,6 +174,9 @@ func TestLoadConfig(t *testing.T) {
 			}
 			if cfg.reload == tt.wantNoReload {
 				t.Errorf("loadConfig() reload = %v, want %v", cfg.reload, !tt.wantNoReload)
+			}
+			if cfg.fsp != tt.wantFsp {
+				t.Errorf("loadConfig() fsp = %v, want %v", cfg.fsp, tt.wantFsp)
 			}
 			wantFlagDirs := paths.PathList{vendorDir.Join("flags.d"), configDir.Join("flags.d")}
 			for i, dir := range wantFlagDirs {

@@ -25,7 +25,7 @@ const (
 	nilVer   = 0.0
 	nilBuild = ""
 	nilSrc   = ""
-	usage    = `aa-prebuild [-h] [--status] [--abi 4|5] [--version V] [--fsp] [--src DIR] [--buildir DIR]
+	usage    = `aa-prebuild [-h] [--status] [--abi 4|5] [--version V] [--src DIR] [--buildir DIR]
 
     Prebuild apparmor.d profiles for a given distribution and apply
     internal built-in directives.
@@ -35,7 +35,6 @@ Options:
     -s, --status      Show the status of enabled build tasks.
     -a, --abi ABI     Target apparmor ABI.
     -v, --version V   Target apparmor version.
-    -f, --fsp         Configure AppArmor for full system policy and RBAC.
     -S, --src DIR     Profile source directory (default: apparmor.d/).
     -b, --buildir DIR Destination root build directory (default: .build/).
         --test        Enable test mode.
@@ -46,7 +45,6 @@ Options:
 var (
 	help    bool
 	status  bool
-	fsp     bool
 	debug   bool
 	test    bool
 	abi     int
@@ -60,8 +58,6 @@ func init() {
 	flag.BoolVar(&help, "help", false, "Show this help message and exit.")
 	flag.BoolVar(&status, "s", false, "Show the status of enabled build tasks.")
 	flag.BoolVar(&status, "status", false, "Show the status of enabled build tasks.")
-	flag.BoolVar(&fsp, "f", false, "Configure AppArmor for full system policy and RBAC.")
-	flag.BoolVar(&fsp, "fsp", false, "Configure AppArmor for full system policy and RBAC.")
 	flag.IntVar(&abi, "a", nilABI, "Target apparmor ABI.")
 	flag.IntVar(&abi, "abi", nilABI, "Target apparmor ABI.")
 	flag.Float64Var(&version, "v", nilVer, "Target apparmor version.")
@@ -104,12 +100,6 @@ func Configure(r *runtime.Runners) *runtime.Runners {
 		r.Builders.Add(builder.NewDebug())
 	}
 	r.Test = test
-
-	if fsp && paths.New("apparmor.d/groups/_full").Exist() {
-		r.Configures.Add(configure.NewFullSystemPolicy())
-		r.Builders.Add(builder.NewFSP())
-		r.RBAC = true
-	}
 
 	// Set modes (complain, enforce...) as definied in dist/flags
 	r.Builders.Add(builder.NewProfileMode())
@@ -163,9 +153,6 @@ func Prebuild(r *runtime.Runners) {
 	}
 	logging.Success("AppArmor ABI targeted: %d", r.ABI)
 	logging.Success("AppArmor version targeted: %.1f", r.Version)
-	if fsp {
-		logging.Success("Full system policy enabled")
-	}
 	if err := r.Configure(); err != nil {
 		logging.Fatal("%s", err.Error())
 	}
