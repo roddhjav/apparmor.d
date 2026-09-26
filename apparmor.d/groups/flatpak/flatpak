@@ -127,6 +127,7 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
   mount fstype=fuse.revokefs-fuse options=(rw, nosuid, nodev) -> /var/tmp/flatpak-cache-*/*/,
 
+  ptrace read peer=bazaar//bwrap,
   ptrace read peer=flatpak//bwrap,
   ptrace read peer=gnome-software//bwrap,
 
@@ -176,8 +177,8 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   # For flatpack enter, the shell is not confined on purpose.
   @{bin}/@{shells}              Cx -> enter,
 
-  @{lib}/polkit-[0-9]/polkit-agent-helper-[0-9]  Px,
-  @{lib}/polkit-agent-helper-[0-9]               Px,
+  @{lib}/polkit-@{d}/polkit-agent-helper-@{d}  Px,
+  @{lib}/polkit-agent-helper-@{d}              Px,
 
   /usr/share/flatpak/{,**} r,
 
@@ -264,10 +265,13 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
     change_profile -> flatpak.*,
 
+    signal receive peer=bazaar,
     signal receive peer=flatpak-portal,
     signal receive peer=flatpak,
+    signal receive peer=gnome-software,
 
     unix (send receive) type=seqpacket peer=(label=flatpak.*),
+    unix (send receive) type=stream    peer=(label=bazaar),
     unix (send receive) type=stream    peer=(label=flatpak.*),
 
     /app/.ref rk,
