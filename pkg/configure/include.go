@@ -62,7 +62,8 @@ func (p Include) Apply() ([]string, error) {
 func (p Include) only(entries []string) ([]string, error) {
 	res := []string{}
 	keep := map[string]bool{}
-	var keepDirs []*paths.Path
+	// The full system policy group is kept, the fsp task removes it when disabled
+	keepDirs := []*paths.Path{p.RootApparmor.Join(fspRel)}
 	for _, entry := range entries {
 		dir := p.RootApparmor.Join(entry)
 		if dir.IsDir() {

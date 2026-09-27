@@ -130,6 +130,15 @@ func TestInclude_Apply(t *testing.T) {
 			wantRemoved: []string{"bar"},
 		},
 		{
+			name: "full system policy group survives",
+			includeFiles: map[string]string{
+				"user.conf": "foo\n",
+			},
+			profiles:    []string{"foo", "bar", "groups/_full/sd"},
+			wantKept:    []string{"foo", "groups/_full/sd"},
+			wantRemoved: []string{"bar"},
+		},
+		{
 			name: "always kept profiles survive",
 			includeFiles: map[string]string{
 				"user.conf": "foo\n",

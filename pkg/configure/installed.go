@@ -146,8 +146,10 @@ func (p SelectInstalled) Apply() ([]string, error) {
 	var keptNames, removedNames []string
 	for _, st := range states {
 		base := st.file.Base()
+		// The full system policy group is kept, the fsp task removes it when disabled
 		keep := st.force || st.installed || isAlwaysKept(base) ||
-			p.include[base] || p.include[p.Groups[base]]
+			p.include[base] || p.include[p.Groups[base]] ||
+			p.Groups[base] == filepath.Base(fspRel)
 		if !keep && !st.hasAtt {
 			group := p.Groups[st.file.Base()]
 			keep = group == "" || installedGroups[group]

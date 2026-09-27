@@ -435,6 +435,16 @@ func TestSelectInstalled_Apply(t *testing.T) {
 			wantRemoved: []string{"other"},
 		},
 		{
+			name: "full system policy group kept",
+			profiles: map[string]string{
+				"sd":    "profile sd flags=(attach_disconnected) {\n}\n",
+				"other": "profile other flags=(attach_disconnected) {\n}\n",
+			},
+			groups:      map[string]string{"sd": "_full", "other": "other"},
+			wantKept:    []string{"sd"},
+			wantRemoved: []string{"other"},
+		},
+		{
 			name: "namespaced profile kept despite uninstalled attachment",
 			profiles: map[string]string{
 				":podman:podman": "profile :podman:podman /usr/bin/no-such-program-zz {\n}\n",
