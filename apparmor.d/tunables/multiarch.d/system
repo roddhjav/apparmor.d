@@ -157,6 +157,36 @@
 @{dynamic}=23[4-9] 24[0-9] 25[0-4]                       # range 234 to 254
 @{dynamic}+=38[4-9] 39[0-9] 4[0-9][0-9] 50[0-9] 51[0-1]  # range 384 to 511
 
+# Whole disk name in the letter scheme used by SCSI/SATA/USB (sd) and virtio (vd)
+# block devices: sda, sdb, ..., sdz, sdaa, ..., sdzzzzz.
+#
+# The kernel allows up to 5 letters for sd (SD_MAX_DISKS) and 4 letters for vd
+# (2^16 disks). Partitions are numbered 1 to 255 (DISK_MAX_PARTS), use @{u8}.
+#
+# It is to be used as follows in profiles and abstractions:
+#
+# ```
+#   /dev/@{sd} rk,
+#   /dev/@{sd}@{u8} rk,
+#   @{sys}/devices/@{pci}/block/@{sd}/** r,
+# ```
+#
+@{sd}=[sv]d[a-z]{[a-z],}{[a-z],}{[a-z],}{[a-z],}
+
+# NVMe namespace block device name: nvme<controller>n<namespace> (nvme0n1).
+# Controller and namespace ids are unbounded kernel ida integers. Partitions are
+# numbered 1 to 255 (DISK_MAX_PARTS), use p@{u8}.
+#
+# It is to be used as follows in profiles and abstractions:
+#
+# ```
+#   /dev/@{nvme} rk,
+#   /dev/@{nvme}p@{u8} rk,
+#   @{sys}/devices/@{pci}/nvme/nvme@{int}/@{nvme}/** r,
+# ```
+#
+@{nvme}=nvme@{int}n@{int}
+
 # Default attachment path when re-attached path disconnected path is ignored.
 # Disabled on abi3 and Ubuntu 25.04+
 # See https://apparmor.pujol.io/development/internal/#re-attached-path
