@@ -23,6 +23,7 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
   include <abstractions/user-read-strict>
 
   signal send set=(term, kill) peer=firefox//&keepassxc-proxy,
+  signal send set=term         peer=plasma-browser-integration-host,
 
   unix type=seqpacket addr=@gecko-crash-helper-pipe.@{int},
   unix type=seqpacket peer=(label=firefox-crashhelper),
@@ -89,12 +90,15 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
   owner @{tmp}/.xfsm-ICE-@{rand6} rw,
   owner @{tmp}/@{rand8}.* rw,  # file downloads (to anywhere)
   owner @{tmp}/@{uuid}.zip{,.tmp} rw,
-  owner @{tmp}/crashreporter@{int}-request@{int}.json r,
+  owner @{tmp}/crashreporter@{int}-request@{int}.json rw,
+  owner @{tmp}/tmpaddon-@{int} w,
   owner @{tmp}/Mozilla@{uuid}-cachePurge-{@{hex15},@{hex16}} rwk,
   owner @{tmp}/Mozilla\{@{uuid}\}-cachePurge-{@{hex15},@{hex16}} rwk,
   owner @{tmp}/MozillaBackgroundTask-*/.parentlock k,
   owner @{tmp}/MozillaBackgroundTask-*/{**,} rw,
   owner @{tmp}/Mozillato-be-removed-cachePurge-{@{hex15},@{hex16}} rwk,
+
+  owner /var/tmp/dbTemp.@{rand6}/ rw,
 
   owner @{run}/user/@{uid}/app/ w,
   owner @{run}/user/@{uid}/app/org.keepassxc.KeePassXC/ w,
