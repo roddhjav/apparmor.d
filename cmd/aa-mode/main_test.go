@@ -23,7 +23,7 @@ func tempDir(t *testing.T) *paths.Path {
 func resetFlags(t *testing.T) {
 	t.Helper()
 	enforce, complain, kill = false, false, false
-	defaultAllow, unconfined, prompt = false, false, false
+	defaultAllow, unconfined, prompt, all, restrict = false, false, false, false, false
 	noReload = true
 }
 
@@ -65,6 +65,16 @@ func TestSelectedMode(t *testing.T) {
 			want:  "prompt",
 		},
 		{
+			name:  "all",
+			setup: func() { all = true },
+			want:  "all",
+		},
+		{
+			name:  "restrict",
+			setup: func() { restrict = true },
+			want:  "restrict",
+		},
+		{
 			name:    "no mode set",
 			setup:   func() {},
 			wantErr: true,
@@ -94,6 +104,7 @@ func TestAaSetMode(t *testing.T) {
 	tests := []struct {
 		name    string
 		profile string
+		sub     string
 		mode    string
 		want    string
 		wantErr bool
@@ -134,6 +145,57 @@ func TestAaSetMode(t *testing.T) {
 			mode:    "unconfined",
 			want:    "profile foo /usr/bin/foo flags=(attach_disconnected, unconfined) {\n}\n",
 		},
+		{
+			name:    "main profile applies to subprofiles",
+			profile: "profile foo /usr/bin/foo {\n  profile bar {\n  }\n}\n",
+			mode:    "complain",
+			want:    "profile foo /usr/bin/foo flags=(complain) {\n  profile bar flags=(complain) {\n  }\n}\n",
+		},
+		{
+			name:    "subprofile only",
+			profile: "profile foo /usr/bin/foo {\n  profile bar {\n  }\n}\n",
+			sub:     "bar",
+			mode:    "complain",
+			want:    "profile foo /usr/bin/foo {\n  profile bar flags=(complain) {\n  }\n}\n",
+		},
+		{
+			name:    "unknown subprofile errors",
+			profile: "profile foo /usr/bin/foo {\n  profile bar {\n  }\n}\n",
+			sub:     "baz",
+			mode:    "complain",
+			wantErr: true,
+		},
+		{
+			name:    "all inserts the all rule",
+			profile: "profile foo /usr/bin/foo flags=(complain) {\n  include <abstractions/base>\n}\n",
+			mode:    "all",
+			want:    "profile foo /usr/bin/foo flags=(complain) {\n  all,\n  include <abstractions/base>\n}\n",
+		},
+		{
+			name:    "all is idempotent",
+			profile: "profile foo /usr/bin/foo {\n  all,\n}\n",
+			mode:    "all",
+			want:    "profile foo /usr/bin/foo {\n  all,\n}\n",
+		},
+		{
+			name:    "all on subprofile only",
+			profile: "profile foo /usr/bin/foo {\n  profile bar {\n    capability,\n  }\n}\n",
+			sub:     "bar",
+			mode:    "all",
+			want:    "profile foo /usr/bin/foo {\n  profile bar {\n    all,\n    capability,\n  }\n}\n",
+		},
+		{
+			name:    "restrict removes the all rule",
+			profile: "profile foo /usr/bin/foo {\n  all,\n  include <abstractions/base>\n}\n",
+			mode:    "restrict",
+			want:    "profile foo /usr/bin/foo {\n  include <abstractions/base>\n}\n",
+		},
+		{
+			name:    "restrict without all rule is a no-op",
+			profile: "profile foo /usr/bin/foo {\n  include <abstractions/base>\n}\n",
+			mode:    "restrict",
+			want:    "profile foo /usr/bin/foo {\n  include <abstractions/base>\n}\n",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -142,7 +204,7 @@ func TestAaSetMode(t *testing.T) {
 			if err := path.WriteFile([]byte(tt.profile)); err != nil {
 				t.Fatalf("write profile: %v", err)
 			}
-			err := aaSetMode(paths.PathList{path}, tt.mode)
+			err := aaSetMode([]target{{file: path, sub: tt.sub}}, tt.mode)
 			if (err != nil) != tt.wantErr {
 				t.Fatalf("aaSetMode() error = %v, wantErr %v", err, tt.wantErr)
 			}
@@ -159,4 +221,3 @@ func TestAaSetMode(t *testing.T) {
 		})
 	}
 }
-
