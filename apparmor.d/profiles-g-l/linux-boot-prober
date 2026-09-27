@@ -1,0 +1,62 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Łukasz Kozak <lakis.kozak@gmail.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/linux-boot-prober
+profile linux-boot-prober @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+
+  capability dac_read_search,
+  capability sys_admin,
+
+  umount /var/lib/os-prober/mount/,
+  umount /var/lib/os-prober/mount@{efi}/,
+
+  @{exec_path} mrix,
+
+  @{sh_path}             r,
+  @{sbin}/blkid          rPx,
+  @{bin}/cut             rix,
+  @{bin}/{,e}grep        rix,
+  @{bin}/grub{,2}-mount  rPx,
+  @{sbin}/grub-probe     rPx,
+  @{bin}/head            rix,
+  @{bin}/logger          rix,
+  @{bin}/ls              rix,
+  @{bin}/lsblk           rPx,
+  @{bin}/mkdir           rix,
+  @{bin}/mktemp          rix,
+  @{bin}/readlink        rix,
+  @{bin}/rm              rix,
+  @{bin}/rmdir           rix,
+  @{bin}/sed             rix,
+  @{bin}/umount          rix,
+
+  @{lib}/linux-boot-probes/** rix,
+  @{lib}/os-prober/newns      rix,
+
+  /usr/share/os-prober/{,**} r,
+
+  /var/lib/os-prober/mount/ rw,
+  /var/lib/os-prober/mount/etc/fstab r,
+  /var/lib/os-prober/mount@{efi}/ r,
+  /var/lib/os-prober/mount@{efi}/grub{,2}/grub.cfg r,
+  /var/lib/os-prober/mount@{efi}/mt86+* r,
+  /var/lib/os-prober/mount@{efi}/vmlinuz-* r,
+
+  @{MOUNTS}/etc/fstab r,
+  @{MOUNTDIRS}/*@{efi}/grub{,2}/grub.cfg r,
+
+  /tmp/os-prober.@{rand6}/{,mounted-map} rw,
+
+  @{PROC}/@{pid}/mounts r,
+
+  include if exists <local/linux-boot-prober>
+}
+
+# vim:syntax=apparmor
