@@ -38,12 +38,23 @@ profile aa_test_over @{bin}/true {
 
 const upstreamProfile = "# upstream dummy profile\n"
 
+// fspDropin is the systemd drop-in installed for the fsp.d test entry.
+const fspDropin = "system/apt-news.service.d/apparmor.conf"
+
+// installFSPTunables installs the profile name tunable the full system
+// policy task reads from the install target.
+func installFSPTunables(t *testing.T, env *runEnv) {
+	t.Helper()
+	writeFile(t, env.targetDir.Join("tunables/multiarch.d/profiles"), "@{p_apt_news}=apt_news\n")
+}
+
 // runEnv holds the directories and reload counter a run() test operates on.
 type runEnv struct {
 	configDir *paths.Path
 	vendorDir *paths.Path
 	srcDir    *paths.Path
 	targetDir *paths.Path
+	systemd   *paths.Path
 	reloads   int
 }
 
@@ -63,7 +74,9 @@ func setupRunEnv(t *testing.T) *runEnv {
 
 	env.configDir = paths.New(t.TempDir())
 	env.targetDir = paths.New(t.TempDir())
+	env.systemd = paths.New(t.TempDir())
 	env.vendorDir = setVendorConfigDir(t)
+	writeFile(t, env.vendorDir.Join("fsp.d/00-main.conf"), "apt-news &apt_news\n")
 
 	config = env.configDir.String()
 	magic = env.targetDir.String()
@@ -71,6 +84,8 @@ func setupRunEnv(t *testing.T) *runEnv {
 
 	oldMagic := aa.MagicRoot
 	oldReload := reloadAppArmor
+	oldSystemd := systemdRoot
+	systemdRoot = env.systemd
 	reloadAppArmor = func() error {
 		env.reloads++
 		return nil
@@ -84,11 +99,12 @@ func setupRunEnv(t *testing.T) *runEnv {
 	}
 	t.Cleanup(func() {
 		install, all, complain, enforce = false, false, false, false
-		uninstall, status, list = false, false, false
+		uninstall, status, list, fullSystemPolicy = false, false, false, false
 		config, magic, src = nilConfig, nilMagic, nilSrc
 		verbose, logging.Quiet = false, false
 		aa.MagicRoot = oldMagic
 		reloadAppArmor = oldReload
+		systemdRoot = oldSystemd
 		detector.Root, detector.Run = oldRoot, oldRun
 	})
 
@@ -395,6 +411,64 @@ profile aa_test_bad @{bin}/true {
 			check: func(t *testing.T, env *runEnv) {
 				if _, err := env.targetDir.Join("disable/aa_test_over").Lstat(); err == nil {
 					t.Error("dangling disable link still installed after uninstall")
+				}
+			},
+		},
+		{
+			name:        "install fsp",
+			flags:       func() { install, fullSystemPolicy = true, true },
+			setup:       func(t *testing.T, env *runEnv) { installFSPTunables(t, env) },
+			wantReloads: 1,
+			check: func(t *testing.T, env *runEnv) {
+				got, err := env.systemd.Join(fspDropin).ReadFileAsString()
+				if err != nil {
+					t.Fatalf("read systemd drop-in: %v", err)
+				}
+				if want := "[Service]\nAppArmorProfile=&apt_news\n"; got != want {
+					t.Errorf("systemd drop-in = %q, want %q", got, want)
+				}
+				profile, err := env.targetDir.Join("aa_test_kept").ReadFileAsString()
+				if err != nil {
+					t.Fatalf("read installed profile: %v", err)
+				}
+				if !strings.Contains(profile, "attach_disconnected,attach_disconnected.path=@{att}") {
+					t.Errorf("installed profile = %q, want re-attached disconnected path", profile)
+				}
+			},
+		},
+		{
+			name:  "install without fsp removes systemd drop-ins",
+			flags: func() { install = true },
+			setup: func(t *testing.T, env *runEnv) {
+				installFSPTunables(t, env)
+				install, fullSystemPolicy = true, true
+				if err := run(); err != nil {
+					t.Fatalf("run(install fsp): %v", err)
+				}
+				install, fullSystemPolicy = false, false
+			},
+			wantReloads: 2,
+			check: func(t *testing.T, env *runEnv) {
+				if env.systemd.Join(fspDropin).Exist() {
+					t.Error("systemd drop-in still installed without fsp")
+				}
+			},
+		},
+		{
+			name:  "uninstall removes systemd drop-ins",
+			flags: func() { uninstall = true },
+			setup: func(t *testing.T, env *runEnv) {
+				installFSPTunables(t, env)
+				install, fullSystemPolicy = true, true
+				if err := run(); err != nil {
+					t.Fatalf("run(install fsp): %v", err)
+				}
+				install, fullSystemPolicy = false, false
+			},
+			wantReloads: 2,
+			check: func(t *testing.T, env *runEnv) {
+				if env.systemd.Join(fspDropin).Exist() {
+					t.Error("systemd drop-in still installed after uninstall")
 				}
 			},
 		},

@@ -49,8 +49,11 @@ With no action flag, print the installation status summary.
 `--fsp`, `-f`
 
 : Install the full system policy: the *_full* group profiles, with unconfined
-  transitions (**PUx**, **Ux**) turned into confined ones (**Px**) and the
-  profile names overridden in *tunables/multiarch.d/profiles.d/fsp*.
+  transitions (**PUx**, **Ux**) turned into confined ones (**Px**), the
+  **attach_disconnected** flag set and re-attached on all profiles, and the
+  profile names overridden in *tunables/multiarch.d/profiles.d/fsp*. The
+  systemd services listed in *fsp.d* get their profile set by a drop-in in
+  */etc/systemd/system/*.
 
 `--complain`, `-c`
 
@@ -116,6 +119,14 @@ Each tier may contain:
 *flags.d/\*.conf*
 
 : Set per-profile flags.
+
+*fsp.d/\*.conf*
+
+: List of systemd services and their profile (**\<unit\> \<profile\>**) in
+  full system policy. Each one gets a
+  */etc/systemd/system/\<unit\>.service.d/apparmor.conf* drop-in setting its
+  **AppArmorProfile=**. The drop-ins are removed when the full system policy
+  is disabled or on uninstall.
 
 *ignore.d/\*.conf*
 

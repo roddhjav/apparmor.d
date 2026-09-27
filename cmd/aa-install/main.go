@@ -50,6 +50,7 @@ Options:
 Configuration files:
     modes              Modes of enforcement for all profiles.
     flags.d/*.conf     Set per-profile flags.
+    fsp.d/*.conf       Set the profile of systemd units in full system policy.
     ignore.d/*.conf    Set (group of) profiles to ignore.
     include.d/*.conf   Set (group of) profiles to install.
     overwrite.d/*.conf Set upstream profiles to disable and replace.
@@ -83,6 +84,14 @@ var (
 
 // reloadAppArmor is swappable so tests can skip the system reload.
 var reloadAppArmor = util.ReloadAppArmor
+
+// systemdRoot is where the full system policy systemd drop-ins are
+// installed, swappable so tests do not write to the host.
+var systemdRoot = paths.New("/etc/systemd")
+
+// systemdStateRel is the state directory of the systemd drop-ins manifest,
+// relative to the config directory.
+const systemdStateRel = "systemd"
 
 func init() {
 	flag.BoolVar(&help, "h", false, "Show this help message and exit.")
@@ -127,6 +136,7 @@ func aaConfig(cfg *conf) {
 		dirs paths.PathList
 	}{
 		{"flags.d", cfg.flagDirs},
+		{"fsp.d", cfg.fspDirs},
 		{"ignore.d", cfg.ignoreDirs},
 		{"include.d", cfg.includeDirs},
 		{"overwrite.d", cfg.overwriteDirs},
@@ -230,6 +240,11 @@ func aaInstall(configDir *paths.Path, srcDir *paths.Path, cfg *conf) (bool, erro
 		// Keep or remove the full system policy group
 		Add(configure.NewFullSystemPolicy(cfg.fsp, aa.MagicRoot.Join(configure.ProfilesRel)))
 
+	// Generate the full system policy systemd unit drop-ins from the fsp.d dirs
+	if cfg.fsp {
+		r.Configures.Add(configure.NewSystemdFSP(cfg.fspDirs))
+	}
+
 	// Default include: re-apply ignored profiles from the include.d dirs
 	var includeEntries []string
 	if cfg.include != "full" {
@@ -261,9 +276,13 @@ func aaInstall(configDir *paths.Path, srcDir *paths.Path, cfg *conf) (bool, erro
 		r.Configures.Add(configure.NewSelectInstalled(includeEntries...))
 	}
 
-	// Prevent unconfined transitions in full system policy
+	// Prevent unconfined transitions in full system policy, and disconnect
+	// then re-attach the path of all profiles
 	if cfg.fsp {
-		r.Builders.Add(builder.NewFSP())
+		r.Builders.
+			Add(builder.NewFSP()).
+			Add(builder.NewDisconnected()).
+			Add(builder.NewAttach())
 	}
 
 	// Apply the default deploy mode to every profile, except those a user
@@ -279,7 +298,24 @@ func aaInstall(configDir *paths.Path, srcDir *paths.Path, cfg *conf) (bool, erro
 		return false, err
 	}
 	logging.Quiet = false
-	return installProfiles(c.RootApparmor, aa.MagicRoot, configDir)
+	changed, err := installProfiles(c.RootApparmor, aa.MagicRoot, configDir)
+	if err != nil {
+		return false, err
+	}
+
+	// Install the systemd drop-ins, or remove the ones of a previous full
+	// system policy install. They do not require an AppArmor reload.
+	stateDir := configDir.Join(systemdStateRel)
+	if cfg.fsp || stateDir.Join(manifestFile).Exist() {
+		dropins := c.Root.Join(configure.SystemdFSPRel)
+		if err := dropins.MkdirAll(); err != nil {
+			return false, err
+		}
+		if _, err := installProfiles(dropins, systemdRoot, stateDir); err != nil {
+			return false, err
+		}
+	}
+	return changed, nil
 }
 
 // aaUninstall removes all files recorded in the manifest, then the manifest
@@ -347,6 +383,10 @@ func run() error {
 
 	case uninstall:
 		changed, err = aaUninstall(configDir, aa.MagicRoot)
+		stateDir := configDir.Join(systemdStateRel)
+		if err == nil && stateDir.Join(manifestFile).Exist() {
+			_, err = aaUninstall(stateDir, systemdRoot)
+		}
 
 	default:
 		logging.Quiet = false

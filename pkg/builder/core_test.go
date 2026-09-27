@@ -404,6 +404,74 @@ profile :glycin:bwrap flags=(attach_disconnected,attach_disconnected.path=@{att}
 }`,
 		},
 		{
+			name: "attach-already-attached",
+			b:    NewAttach(),
+			profile: `
+@{att} = /att/attach-already-attached/
+profile attach-already-attached flags=(attach_disconnected,attach_disconnected.path=@{att},complain) {
+  include <abstractions/attached/base>
+}`,
+			want: `
+@{att} = /att/attach-already-attached/
+profile attach-already-attached flags=(attach_disconnected,attach_disconnected.path=@{att},complain) {
+  include <abstractions/attached/base>
+}`,
+		},
+		{
+			name: "attach-newly-disconnected",
+			b:    NewAttach(),
+			profile: `
+@{att} = ""
+profile attach-newly-disconnected flags=(complain,attach_disconnected) {
+  include <abstractions/base>
+}`,
+			want: `
+@{att} = /att/attach-newly-disconnected/
+profile attach-newly-disconnected flags=(complain,attach_disconnected,attach_disconnected.path=@{att}) {
+  include <abstractions/attached/base>
+}`,
+		},
+		{
+			name: "disconnected-no-flags",
+			b:    NewDisconnected(),
+			profile: `
+profile foo {
+  profile bar {
+  }
+}
+`,
+			want: `
+profile foo flags=(attach_disconnected) {
+  profile bar flags=(attach_disconnected) {
+  }
+}
+`,
+		},
+		{
+			name: "disconnected-with-flags",
+			b:    NewDisconnected(),
+			profile: `
+profile foo flags=(complain) {
+}
+`,
+			want: `
+profile foo flags=(complain,attach_disconnected) {
+}
+`,
+		},
+		{
+			name: "disconnected-already-set",
+			b:    NewDisconnected(),
+			profile: `
+profile foo flags=(attach_disconnected,attach_disconnected.path=@{att}) {
+}
+`,
+			want: `
+profile foo flags=(attach_disconnected,attach_disconnected.path=@{att}) {
+}
+`,
+		},
+		{
 			name: "debug-1",
 			b:    NewDebug(),
 			profile: `

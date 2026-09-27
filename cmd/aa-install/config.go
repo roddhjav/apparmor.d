@@ -33,6 +33,7 @@ type conf struct {
 	reload        bool
 	fsp           bool
 	flagDirs      paths.PathList
+	fspDirs       paths.PathList
 	ignoreDirs    paths.PathList
 	includeDirs   paths.PathList
 	overwriteDirs paths.PathList
@@ -50,6 +51,7 @@ func configTier(configDir *paths.Path, name string) paths.PathList {
 func loadConfig(configDir *paths.Path) (*conf, error) {
 	res := &conf{
 		flagDirs:      configTier(configDir, "flags.d"),
+		fspDirs:       configTier(configDir, "fsp.d"),
 		ignoreDirs:    configTier(configDir, "ignore.d"),
 		includeDirs:   configTier(configDir, "include.d"),
 		overwriteDirs: configTier(configDir, "overwrite.d"),
