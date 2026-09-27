@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: GPL-2.0-only
 # LOGPROF-SUGGEST: no
 # NEEDS-VARIABLE: appid
+# NEEDS-VARIABLE: path
 # NEEDS-VARIABLE: profile_app
 
 # Base rules for `xdg-dbus-proxy` launcher used by Flatpak
@@ -13,6 +14,9 @@
 # interfaces.
 
 # All dbus rules needed by the application must be allowed in this profile.
+
+# See https://docs.flatpak.org/en/latest/sandbox-permissions.html#d-bus-access
+# for the list of dbus access allowed by default.
 
   abi <abi/5.0>,
 
@@ -27,27 +31,24 @@
   include <abstractions/bus/session/org.freedesktop.portal.Session>
   include <abstractions/bus/session/org.freedesktop.portal.Settings>
 
-  # gtk-strict
-  include <abstractions/bus/session/org.gtk.Actions>
-  include <abstractions/bus/session/org.gtk.Menus>
-  include <abstractions/bus/session/org.gtk.Settings>
-  include <abstractions/bus/session/org.gtk.vfs.Metadata>
-  include <abstractions/bus/session/org.gtk.vfs.MountTracker>
+  include <abstractions/flatpak/mpris>
+
+  # Scoped version of abstractions/bus/session/org.gtk.Actions to our specific program
+  # DBus.Properties: read properties from the interface
+  dbus receive bus=session path=@{path}
+       interface=org.freedesktop.DBus.Properties
+       member=GetAll
+       peer=(name=@{busname}, label=gnome-shell),
+  # org.gtk.Actions
+  dbus receive bus=session path=@{path}{,/**}
+       interface=org.gtk.Actions
+       member=DescribeAll
+       peer=(name=@{busname}, label=gnome-shell),
 
   signal receive peer=flatpak-portal,
 
   unix (send receive) type=seqpacket peer=(label=@{profile_app}),
   unix (send receive) type=stream    peer=(label=@{profile_app}),
-
-  dbus receive bus=system path=/org/freedesktop/systemd1/unit/*
-       interface=org.freedesktop.DBus.Properties
-       member=PropertiesChanged
-       peer=(name=@{busname}, label="@{p_systemd}"),
-
-  dbus send bus=system path=/org/freedesktop/DBus
-       interface=org.freedesktop.DBus
-       member=ListNames
-       peer=(name=org.freedesktop.DBus, label=dbus-system),
 
   dbus receive bus=system path=/org/freedesktop/login1
        interface=org.freedesktop.DBus.Properties
@@ -58,7 +59,7 @@
 
   owner @{att}@{HOME}/.var/app/@{appid}/**/usr/.ref rw,
 
-  owner @{att}@{tmp}/* r,
+  audit owner @{att}@{tmp}/* r,
 
         @{att}@{run}/systemd/inhibit/@{int}.ref w,
   owner @{att}@{run}/flatpak/doc/** r,
