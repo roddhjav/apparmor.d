@@ -16,6 +16,7 @@ include <tunables/global>
 @{exec_path} = @{lib_dirs}/crashreporter
 profile firefox-crashreporter @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
+  include <abstractions/cgroup-limits>
   include <abstractions/dconf-write>
   include <abstractions/desktop>
   include <abstractions/fontconfig-cache-read>
@@ -40,6 +41,7 @@ profile firefox-crashreporter @{exec_path} flags=(attach_disconnected) {
   @{firefox_path}               rPx,
   @{lib_dirs}/minidump-analyzer rPx,
 
+  owner @{config_dirs}/firefox/*.*/breach-alerts.db-shm r,
   owner @{config_dirs}/firefox/*.*/crashes/{,**} rw,
   owner @{config_dirs}/firefox/*.*/crashes/events/@{uuid} rw,
   owner @{config_dirs}/firefox/*.*/extensions/*.xpi r,
@@ -53,6 +55,7 @@ profile firefox-crashreporter @{exec_path} flags=(attach_disconnected) {
   owner @{config_dirs}/firefox/Profile*/*.sqlite-shm r,
 
   owner @{cache_dirs}/firefox/*.*/** r,
+  owner @{cache_dirs}/firefox/*.*/cache2/entries/@{hex} w,
 
         /tmp/ r,
     /var/tmp/ r,
@@ -62,8 +65,8 @@ profile firefox-crashreporter @{exec_path} flags=(attach_disconnected) {
 
   owner /dev/shm/org.mozilla.ipc.@{int}.@{int} r,
 
-  owner @{PROC}/@{pid}/cgroup r,
   owner @{PROC}/@{pid}/cmdline r,
+  owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/mountinfo r,
 
   /dev/dri/card@{int} rw,
