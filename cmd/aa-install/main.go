@@ -282,7 +282,7 @@ func aaInstall(configDir *paths.Path, srcDir *paths.Path, cfg *conf) (bool, erro
 		r.Builders.
 			Add(builder.NewFSP()).
 			Add(builder.NewDisconnected()).
-			Add(builder.NewAttach())
+			Add(builder.NewAttachTo("/")) // ponytail: all profiles attached to /, per profile /att/<name>/ later
 	}
 
 	// Apply the default deploy mode to every profile, except those a user

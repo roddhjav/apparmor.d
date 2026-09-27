@@ -432,6 +432,20 @@ profile attach-newly-disconnected flags=(complain,attach_disconnected,attach_dis
 }`,
 		},
 		{
+			name: "attach-to-root",
+			b:    NewAttachTo("/"),
+			profile: `
+@{att} = /att/attach-to-root/
+profile attach-to-root flags=(attach_disconnected,attach_disconnected.path=@{att}) {
+  include <abstractions/attached/base>
+}`,
+			want: `
+@{att} = /
+profile attach-to-root flags=(attach_disconnected,attach_disconnected.path=@{att}) {
+  include <abstractions/attached/base>
+}`,
+		},
+		{
 			name: "disconnected-no-flags",
 			b:    NewDisconnected(),
 			profile: `

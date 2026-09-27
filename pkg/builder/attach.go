@@ -21,6 +21,7 @@ var (
 
 type ReAttach struct {
 	tasks.BaseTask
+	path string // fixed attached path, empty means /att/<profile>/
 }
 
 type Disconnected struct {
@@ -35,6 +36,14 @@ func NewAttach() *ReAttach {
 			Msg:     "Feat: re-attach disconnected path",
 		},
 	}
+}
+
+// NewAttachTo creates a new ReAttach builder that re-attaches the
+// disconnected path of all profiles to the given path.
+func NewAttachTo(path string) *ReAttach {
+	b := NewAttach()
+	b.path = path
+	return b
 }
 
 // Apply will re-attach the disconnected path
@@ -71,7 +80,9 @@ func (b ReAttach) Apply(opt *Option, profile string) (string, error) {
 
 	if strings.Contains(profile, "attach_disconnected") {
 		if opt.Kind == aa.ProfileKind {
-			if strings.Contains(name, ":") {
+			if b.path != "" {
+				insert = "@{att} = " + b.path + "\n"
+			} else if strings.Contains(name, ":") {
 				parts := strings.Split(name, ":")
 				if len(parts) != 3 {
 					return profile, fmt.Errorf("attach: invalid namespaced profile name: %s", name)
