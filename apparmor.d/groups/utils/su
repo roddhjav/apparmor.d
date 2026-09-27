@@ -12,7 +12,10 @@ profile su @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/app-launcher-root>
   include <abstractions/app/sudo>
-  include <mappings/sudo>  #aa:only RBAC
+
+  if ${RBAC} {
+    include <mappings/sudo>
+  }
 
   capability chown,  # pseudo-terminal
 
@@ -22,7 +25,9 @@ profile su @{exec_path} flags=(attach_disconnected) {
 
   @{exec_path} mr,
 
-  @{bin}/@{shells}     Ux, #aa:exclude RBAC
+  if not ${RBAC} {
+    @{shells_path}       Ux,
+  }
   @{sbin}/nologin      Px,
 
   @{etc_ro}/default/su r,

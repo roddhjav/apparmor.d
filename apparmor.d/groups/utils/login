@@ -16,7 +16,10 @@ profile login @{exec_path} flags=(attach_disconnected) {
   include <abstractions/devices-usb>
   include <abstractions/nameservice-strict>
   include <abstractions/wutmp>
-  include <mappings/login>  #aa:only RBAC
+
+  if ${RBAC} {
+    include <mappings/login>
+  }
 
   capability audit_write,
   capability chown,
@@ -41,7 +44,9 @@ profile login @{exec_path} flags=(attach_disconnected) {
 
   @{exec_path} mr,
 
-  @{shells_path}     Ux, #aa:exclude RBAC
+  if not ${RBAC} {
+    @{shells_path}                 Ux,
+  }
 
   /etc/default/locale r,
   /etc/legal r,
