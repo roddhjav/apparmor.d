@@ -69,8 +69,8 @@ const (
 	// fspRel is the full system policy group, relative to aa.Magic.
 	fspRel = "groups/_full"
 
-	// profilesRel is the profile name tunable, relative to aa.Magic.
-	profilesRel = "tunables/multiarch.d/profiles"
+	// ProfilesRel is the profile name tunable, relative to aa.Magic.
+	ProfilesRel = "tunables/multiarch.d/profiles"
 
 	// fspDropinRel is the generated profile name overrides, relative to aa.Magic.
 	fspDropinRel = "tunables/multiarch.d/profiles.d/fsp"

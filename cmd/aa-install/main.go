@@ -225,7 +225,10 @@ func aaInstall(configDir *paths.Path, srcDir *paths.Path, cfg *conf) (bool, erro
 	r.Configures.
 
 		// Ignore profiles and files from the ignore.d dirs
-		Add(configure.NewUserIgnore(cfg.ignoreDirs))
+		Add(configure.NewUserIgnore(cfg.ignoreDirs)).
+
+		// Keep or remove the full system policy group
+		Add(configure.NewFullSystemPolicy(cfg.fsp, aa.MagicRoot.Join(configure.ProfilesRel)))
 
 	// Default include: re-apply ignored profiles from the include.d dirs
 	var includeEntries []string
