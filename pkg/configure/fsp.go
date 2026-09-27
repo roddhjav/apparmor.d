@@ -119,7 +119,7 @@ func (p FullSystemPolicy) Apply() ([]string, error) {
 			}
 			profile = "{" + m[1] + ",sd//&" + m[1] + "," + m[1] + "//&sd}"
 		}
-		fmt.Fprintf(&out, "@{p_%s}:=%s\n", varname, profile)
+		fmt.Fprintf(&out, "@{p_%s} := %s\n", varname, profile)
 	}
 	dropin := p.RootApparmor.Join(fspDropinRel)
 	if err := dropin.Parent().MkdirAll(); err != nil {

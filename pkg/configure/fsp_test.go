@@ -33,8 +33,8 @@ func TestFullSystemPolicy_Apply(t *testing.T) {
 			enabled:   true,
 			wantGroup: true,
 			wantContains: []string{
-				"@{p_sd}:=sd\n",
-				"@{p_colord}:={colord,sd//&colord,colord//&sd}\n",
+				"@{p_sd} := sd\n",
+				"@{p_colord} := {colord,sd//&colord,colord//&sd}\n",
 			},
 		},
 	}
