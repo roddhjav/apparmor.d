@@ -14,7 +14,23 @@ include /usr/share/dpkg/buildflags.mk
 export CGO_CPPFLAGS := $(CPPFLAGS)
 export CGO_CFLAGS := $(CFLAGS)
 export CGO_LDFLAGS := $(LDFLAGS)
-export GOFLAGS := -buildmode=pie -trimpath -ldflags=-linkmode=external -mod=readonly -modcacherw
+
+# Build against the Go libraries packaged in /usr/share/gocode instead of
+# fetching the modules from the network. This is GOPATH mode, the same layout
+# dh-golang and go-rpm-macros both set up, with the source tree symlinked into
+# the first GOPATH component.
+export GO111MODULE := off
+export GOPATH := $(CURDIR)/_build:/usr/share/gocode
+GOSRC := _build/src/github.com/roddhjav/apparmor.d
+
+# Cross build (dpkg-buildpackage --host-arch=arm64): dpkg and Go share the
+# amd64/arm64 names. The external linker is the cross gcc.
+include /usr/share/dpkg/architecture.mk
+ifneq ($(DEB_BUILD_ARCH),$(DEB_HOST_ARCH))
+export GOARCH := $(DEB_HOST_ARCH)
+export CGO_ENABLED := 1
+export CC := $(DEB_HOST_GNU_TYPE)-gcc
+endif
 
 %:
 	dh $@
@@ -33,7 +49,14 @@ override_dh_strip:
 	dh_strip --no-automatic-dbgsym
 
 override_dh_auto_build:
-	just build=.build prebuild
+	mkdir -p $(dir $(GOSRC))
+	ln -sfnT $(CURDIR) $(GOSRC)
+	just build=.build build
+	# prebuild runs here, at build time: build it for the build machine. It
+	# is not shipped: no cgo, no hardening (the flags target the host arch).
+	GOARCH=$(DEB_BUILD_ARCH) CGO_ENABLED=0 GOFLAGS='-trimpath -mod=readonly -modcacherw -tags=dev' \
+		go build -o .build/ ./cmd/prebuild
+	./.build/prebuild --buildir .build
 
 override_dh_auto_install:
 	just build=.build destdir="${CURDIR}/debian/apparmor.d" install-profiles

@@ -20,9 +20,10 @@ readonly OUTPUT=".pkg"
 readonly DISTRIBUTION="$1"
 RELEASE="${2:-}"
 FLAVOR="${3:-}"
+ARCH="${ARCH:-}" # Debian only: cross build for this architecture
 PACKAGER="$(git config user.name) <$(git config user.email)>"
 [[ "$RELEASE" == "-" ]] && RELEASE=""
-readonly RELEASE FLAVOR PACKAGER
+readonly RELEASE FLAVOR ARCH PACKAGER
 
 _start() {
 	local img="$1"
@@ -100,7 +101,13 @@ build_in_docker_dpkg() {
 		docker exec "$img" sudo apt-get install -y "${aptopt[@]}" golang-go
 	fi
 
-	docker exec --workdir="$BUILDIR/$PKGNAME" "$img" just build-dpkg
+	if [[ -n "$ARCH" ]]; then
+		docker exec "$img" sudo dpkg --add-architecture "$ARCH"
+		docker exec "$img" sudo apt-get update -q
+		docker exec "$img" sudo apt-get install -y "crossbuild-essential-$ARCH" "libc6-dev:$ARCH"
+	fi
+
+	docker exec --workdir="$BUILDIR/$PKGNAME" "$img" just build-dpkg "$ARCH"
 	mv "$VOLUME/$PKGNAME/$OUTPUT/$PKGNAME"*.deb "$OUTPUT"
 }
 

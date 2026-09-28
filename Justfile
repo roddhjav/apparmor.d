@@ -223,7 +223,7 @@ build-pkg: (_ensure_pkgdest)
 
 # Build the package on Debian
 [group('packages')]
-build-dpkg: (_ensure_pkgdest)
+build-dpkg arch="": (_ensure_pkgdest)
 	#!/usr/bin/env bash
 	set -eu -o pipefail
 	version=`just version`
@@ -238,7 +238,7 @@ build-dpkg: (_ensure_pkgdest)
 		fi
 	fi
 	dch --urgency=medium --newversion="$version-$suffix" --distribution=`lsb_release -sc` --controlmaint "Release $version-$suffix"
-	dpkg-buildpackage -b -d {{ if sign == "true" { "--sign-key=" + gpgkey } else { "--no-sign" } }}
+	dpkg-buildpackage -b -d {{ if arch != "" { "--host-arch=" + arch } else { "" } }} {{ if sign == "true" { "--sign-key=" + gpgkey } else { "--no-sign" } }}
 	lintian --color always --display-info --pedantic --tag-display-limit 0 || true
 	mv ../{{pkgname}}*.deb {{pkgdest}}/
 
