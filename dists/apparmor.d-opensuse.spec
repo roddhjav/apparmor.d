@@ -72,6 +72,7 @@ just destdir="%{buildroot}" install-tools
 %dir /usr/share/apparmor
 /usr/share/apparmor/modes
 /usr/share/apparmor/flags.d
+/usr/share/apparmor/fsp.d/
 /usr/share/apparmor/ignore.d
 /usr/share/apparmor/overwrite.d/
 
