@@ -1,0 +1,28 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{sbin}/aa-load
+profile aa-load @{exec_path} {
+  include <abstractions/base>
+
+  capability mac_admin,
+
+  @{exec_path} mr,
+
+  /etc/apparmor/earlypolicy/{,**} r,
+
+  @{sys}/kernel/security/apparmor/ r,
+  @{sys}/kernel/security/apparmor/.replace w,
+  @{sys}/kernel/security/apparmor/features/{,**} r,
+
+  @{PROC}/@{pid}/mounts r,
+
+  include if exists <local/aa-load>
+}
+
+# vim:syntax=apparmor

@@ -22,7 +22,7 @@ abi <abi/5.0>,
 include <tunables/global>
 
 @{exec_path} = @{bin}/systemd-executor
-profile sd flags=(attach_disconnected,mediate_deleted,complain) {
+profile sd flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/base>
   include <abstractions/authentication>
   include <abstractions/bus-system>
@@ -32,84 +32,7 @@ profile sd flags=(attach_disconnected,mediate_deleted,complain) {
   include <abstractions/nameservice-strict>
   include <abstractions/wutmp>
 
-  userns,
-
-  capability audit_control,
-  capability audit_write,
-  capability bpf,
-  capability chown,
-  capability dac_override,
-  capability dac_read_search,
-  capability fowner,
-  capability fsetid,
-  capability kill,
-  capability linux_immutable,
-  capability mknod,
-  capability net_admin,
-  capability net_bind_service,
-  capability net_raw,
-  capability perfmon,
-  capability setfcap,
-  capability setgid,
-  capability setpcap,
-  capability setuid,
-  capability sys_admin,
-  capability sys_nice,
-  capability sys_ptrace,
-  capability sys_rawio,
-  capability sys_resource,
-  capability sys_time,
-  capability sys_tty_config,
-  capability syslog,
-
-  network alg seqpacket, # kernel crypto API
-  network bluetooth,
-  network inet dgram,
-  network inet stream,
-  network inet6 dgram,
-  network inet6 raw,
-  network inet6 stream,
-  network netlink raw,
-  network packet dgram,
-  network packet raw,
-  network qipcrtr dgram,
-
-  mount,
-  remount,
-  umount,
-  # mount                                                                         -> @{run}/systemd/mount-rootfs/{,**},
-  # mount                                                                         -> @{run}/systemd/namespace-@{rand6}/{,**},
-  # mount              options=(rw move)                                /dev/shm/ -> @{run}/credentials/*/,
-  # mount              options=(rw rshared)                                       -> /,
-  # mount              options=(rw make-rslave)                                      /,
-  # mount              options=(rw make-rslave)                                      /dev/,
-  # mount              options=(rw slave)                                         -> @{run}/systemd/incoming/,
-  # mount fstype=tmpfs options=(rw nodev noexec nosuid nosymfollow)         tmpfs -> /dev/shm/,
-  # mount fstype=tmpfs options=(rw nodev strictatime)                       tmpfs -> @{run}/systemd/unit-private-tmp/,
-
-  # remount /dev/shm/,
-  # remount @{run}/systemd/mount-rootfs/{,**},
-
-  # umount /,
-  # umount /dev/shm/,
-  # umount @{run}/systemd/mount-rootfs/{,**},
-  # umount @{run}/systemd/namespace-@{rand6}/{,**},
-
-  pivot_root oldroot=@{run}/systemd/mount-rootfs/ @{run}/systemd/mount-rootfs/,
-
-  change_profile,
-
-  mqueue (read getattr) type=posix /,
-
-  signal (send, receive),
-
-  ptrace read,
-
-  unix type=dgram peer=(label=@{p_systemd}),
-  unix type=dgram peer=(label=systemd-timesyncd),
-  unix type=stream,
-
-  dbus bus=system,
+  all, # FIXME: this is temporary
 
   @{exec_path} mr,
 
@@ -133,111 +56,6 @@ profile sd flags=(attach_disconnected,mediate_deleted,complain) {
 
   # Unit services
   @{bin}/kill                                      Cx -> kill,
-
-  # Used by very basic services, ideally should be replaced by a unit profiles
-  @{sh_path}                                       ix,
-  @{bin}/false                                     ix,
-  @{bin}/true                                      ix,
-
-  # Required due to stacked profiles
-  @{bin}/find                                      ix,
-  @{bin}/gzip                                      ix,
-  @{bin}/install                                   ix,
-  @{bin}/readlink                                  ix,
-  @{lib}/colord-sane                               ix,
-  @{lib}/systemd/systemd-nsresourcework            ix,
-  @{lib}/systemd/systemd-userwork                  ix,
-  @{sbin}/grpck                                    ix,
-  @{sbin}/pwck                                     ix,
-
-  / r,
-  @{att}/ r,
-  @{bin}/{,**} r,
-  @{lib}/{,**} r,
-  @{sbin}/{,*} r,
-  /usr/local/{,**} r,
-  /usr/share/** r,
-  /etc/*/ w,
-  /etc/** rk,
-  /home/ r,
-
-  @{efi}/ r,
-  @{efi}/** rw,
-
-  @{att}/var/lib/systemd/*/ r,
-
-  /var/cache/*/ rw,
-  /var/cache/*/** rwk,
-  /var/lib/*/ rw,
-  /var/lib/*/** rwlk,
-  @{log}/** rw,
-  @{log}/journal/** rwl -> @{log}/journal/**,
-  /var/spool/cron/atjobs/ r,
-
-  @{att}@{desktop_share_dirs}/icc/edid-@{hex32}.icc r,
-  @{att}@{user_share_dirs}/icc/edid-@{hex32}.icc r,
-
-  @{att}@{run}/systemd/coredump rw,
-  @{att}@{run}/systemd/io.systemd.ManagedOOM rw,
-  @{att}@{run}/systemd/userdb/io.systemd.DynamicUser rw,
-  @{att}@{run}/systemd/userdb/io.systemd.Home rw,
-  @{att}@{run}/systemd/userdb/io.systemd.Multiplexer rw,
-
-        @{run}/ rw,
-        @{run}/* rw,
-        @{run}/*/ rw,
-        @{run}/*/* rw,
-        @{run}/*/*/ rw,
-        @{run}/ubuntu-advantage/** rw, # stacked
-        @{run}/systemd/{,**} rwlk -> @{run}/systemd/**,
-  owner @{run}/*/** rw,
-
-  @{run}/udev/**/ r,
-  @{run}/udev/data/+*:* r,                # Identifies all subsystems
-  @{run}/udev/data/c@{int}:@{int} r,      # Identifies all character devices
-  @{run}/udev/data/n@{int} r,             # For network interfaces
-
-  @{sys}/** r,
-  @{sys}/fs/bpf/systemd/{,**} w,
-  @{sys}/firmware/efi/efivars/** w,
-  @{sys}/fs/cgroup/{,**} w,
-
-  @{PROC}/@{pids}/attr/apparmor/exec w,
-  @{PROC}/@{pids}/attr/current r,
-  @{PROC}/@{pids}/cgroup r,
-  @{PROC}/@{pids}/cmdline r,
-  @{PROC}/@{pids}/comm r,
-  @{PROC}/@{pids}/environ r,
-  @{PROC}/@{pids}/fd/ r,
-  @{PROC}/@{pids}/fdinfo/@{int} r,
-  @{PROC}/@{pids}/gid_map rw,
-  @{PROC}/@{pids}/limits r,
-  @{PROC}/@{pids}/loginuid rw,
-  @{PROC}/@{pids}/mountinfo r,
-  @{PROC}/@{pids}/oom_score_adj rw,
-  @{PROC}/@{pids}/sessionid r,
-  @{PROC}/@{pids}/setgroups r,
-  @{PROC}/@{pids}/setgroups w,
-  @{PROC}/@{pids}/stat r,
-  @{PROC}/@{pids}/status r,
-  @{PROC}/@{pids}/uid_map r,
-  @{PROC}/@{pids}/uid_map w,
-  @{PROC}/cmdline r,
-  @{PROC}/interrupts r,
-  @{PROC}/irq/@{int}/node r,
-  @{PROC}/irq/@{int}/smp_affinity r,
-  @{PROC}/kmsg r,
-  @{PROC}/modules r,
-  @{PROC}/pressure/* r,
-  @{PROC}/swaps r,
-  @{PROC}/sys/** r,
-  @{PROC}/sys/kernel/random/write_wakeup_threshold w,
-  @{PROC}/sys/net/ipv{4,6}/** rw,
-  @{PROC}/sysvipc/* r,
-  @{PROC}/version r,
-  @{PROC}/version_signature r,
-
-  /dev/** rwk,
 
   profile systemctl flags=(attach_disconnected,mediate_deleted,complain) {
     include <abstractions/base>

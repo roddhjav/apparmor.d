@@ -35,8 +35,11 @@ profile systemd-sysupdated @{exec_path} flags=(attach_disconnected) {
 
   umount @{run}/systemd/mount-rootfs/,
 
+  signal (send receive) set=kill peer=sd//&systemd-sysupdated,
+
   unix bind type=dgram addr=@auto,
   unix bind type=stream addr=@@{udbus}/bus/systemd-sysupda/system,
+  unix, # TODO: improve me.
 
   #aa:dbus own bus=system name=org.freedesktop.sysupdate1
 
@@ -46,6 +49,7 @@ profile systemd-sysupdated @{exec_path} flags=(attach_disconnected) {
   @{bin}/gpg{,2}                   ix,
   @{lib}/systemd/systemd-pull      ix, # TODO: nnp stack
   @{lib}/systemd/systemd-sysupdate ix, # TODO: nnp stack
+  @{bin}/gpg                       ix, # TODO: nnp stack
 
   @{etc_rw}/sysupdate.d/{,**} rw,
   /etc/os-release r,
@@ -56,8 +60,6 @@ profile systemd-sysupdated @{exec_path} flags=(attach_disconnected) {
   @{att}/usr/** r,
   @{efi}/EFI/Linux/ r,
   @{efi}/EFI/Linux/* rw,
-  @{lib}/ r,
-  @{run}/ r,
   /etc/ r,
   /usr/ r,
   /usr/local/lib/ r,
@@ -78,16 +80,20 @@ profile systemd-sysupdated @{exec_path} flags=(attach_disconnected) {
   @{run}/systemd/sysupdate/notify/ r,
   @{run}/systemd/sysupdate/notify/io.systemd.BootControl rw,
   @{run}/systemd/sysupdate/notify/io.systemd.sysext rw,
-  @{run}/systemd/mount-rootfs/{,**/} w,
+  @{run}/systemd/mount-rootfs/{,**/} rw,
 
   @{sys}/fs/cgroup/system.slice/systemd-sysupdated.service/memory.pressure rw,
   @{sys}/devices/virtual/bdi/**/read_ahead_kb r,
 
+  @{PROC}/@{pid}/cgroup r,
+  @{PROC}/@{pid}/mountinfo r,
   @{PROC}/1/environ r,
   @{PROC}/cmdline r,
   @{PROC}/devices r,
+  @{PROC}/pressure/cpu r,
+  @{PROC}/pressure/io r,
+  @{PROC}/pressure/memory r,
   @{PROC}/sys/kernel/osrelease r,
-  @{PROC}/@{pid}/mountinfo r,
 
   /dev/loop-control rwk,
 
