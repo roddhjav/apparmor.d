@@ -1173,6 +1173,13 @@ var (
 		wantErr bool
 	}{
 		{
+			name: "if-block-followed-by-rule",
+			raw:  "  if not ${RBAC} {\n    @{shells_path} Ux,\n  }\n  @{bin}/udevadm Cx -> udevadm,\n",
+			rule: []rule{
+				{kv{key: "@{bin}/udevadm"}, kv{key: "Cx"}, kv{key: "->"}, kv{key: "udevadm"}},
+			},
+		},
+		{
 			name: "string.aa",
 			raw: `alias /mnt/{,usr.sbin.}mount.cifs
 			->
@@ -1182,13 +1189,6 @@ var (
 			owner @{user_config_dirs}/powerdevilrc{,.@{rand6}} rwl -> @{user_config_dirs}/#@{int},
 			@{sys}/class/ r,
 			@{run}/udev/data/+pci:*  r,`,
-		{
-			name: "if-block-followed-by-rule",
-			raw:  "  if not ${RBAC} {\n    @{shells_path} Ux,\n  }\n  @{bin}/udevadm Cx -> udevadm,\n",
-			rule: []rule{
-				{kv{key: "@{bin}/udevadm"}, kv{key: "Cx"}, kv{key: "->"}, kv{key: "udevadm"}},
-			},
-		},
 			rule: []rule{
 				{
 					kv{key: "alias"},
