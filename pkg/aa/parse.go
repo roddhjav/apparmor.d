@@ -411,6 +411,12 @@ func parseCommaRules(input string) ([]rule, error) {
 		case tokCLOSEBRACE, tokCLOSEBRACKET, tokCLOSEPAREN:
 			if !comment {
 				blockCounter--
+				// A `}` starting its line that closes a top level block (if/else)
+				// ends it: the next rule starts after it.
+				if r == tokCLOSEBRACE && blockCounter == 0 &&
+					strings.TrimLeft(input[strings.LastIndexByte(input[:idx], '\n')+1:idx], " \t") == "" {
+					blockStart = idx + 1
+				}
 			}
 
 		case '#':
