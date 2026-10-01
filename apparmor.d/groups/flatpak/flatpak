@@ -74,10 +74,11 @@
 # │   └── flatpak.trigger            # Run the scripts in /usr/share/flatpak/triggers
 # │       ├── &gtk-update-icon-cache # Refresh the icon cache
 # │       └── &update-mime-database  # Refresh the mime database
-# ├── flatpak//&enter                # `flatpak enter`, not confined on purpose
-# ├── flatpak//fusermount            # Mount the revokefs-fuse install cache
-# └── flatpak//gpg                   # Check the ostree repository signatures
+# └── flatpak//&enter                # `flatpak enter`, not confined on purpose
 #
+# flatpak-gpg                        # Check the ostree repository signatures
+# flatpak-fusermount                 # Mount the revokefs-fuse install cache
+# flatpak-revokefs-fuse              # Manage the revokefs-fuse install cache
 # flatpak-validate-icon              # Validate an icon before it is exported
 # flatpak-oci-authenticator          # Authenticate on OCI remotes (`org.flatpak.Authenticator.Oci`)
 # flatpak-portal                     # Spawn commands on the host (`org.freedesktop.portal.Flatpak`)
@@ -91,8 +92,7 @@
 # │   ├── &gtk-update-icon-cache     # Refresh the icon cache
 # │   ├── &update-desktop-database   # Refresh the desktop file database
 # │   └── &update-mime-database      # Refresh the mime database
-# ├── bwrap_apps                     # Sandbox running the app install script
-# └── gpg                            # Check the ostree repository signatures
+# └── bwrap_apps                     # Sandbox running the app install script
 # ```
 
 abi <abi/5.0>,
@@ -128,8 +128,6 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   network inet stream,
   network inet6 stream,
   network netlink raw,
-
-  mount fstype=fuse.revokefs-fuse options=(rw, nosuid, nodev) -> /var/tmp/flatpak-cache-*/*/,
 
   signal receive set=int peer=flatpak-portal,
   signal receive set=term peer=flatpak-session-helper,
@@ -174,11 +172,11 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
   }
 
-  @{bin}/fusermount{,3}         Cx -> fusermount,
-  @{bin}/gpg                    Cx -> gpg,
-  @{bin}/gpgconf                Cx -> gpg,
-  @{bin}/gpgsm                  Cx -> gpg,
-  @{lib}/revokefs-fuse         rix,
+  @{bin}/fusermount{,3}         Px -> flatpak-fusermount,
+  @{bin}/gpg{,2}                Px -> flatpak-gpg,
+  @{bin}/gpgconf                Px -> flatpak-gpg,
+  @{bin}/gpgsm                  Px -> flatpak-gpg,
+  @{lib}/revokefs-fuse         mPx -> flatpak-revokefs-fuse,
   @{lib}/flatpak-validate-icon  Px,
 
   # For flatpack enter, the shell is not confined on purpose.
@@ -196,7 +194,7 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted) {
         / r,
   @{att}/ r,
 
-  /var/lib/flatpak/{,**} rwlk,
+  /var/lib/flatpak/{,**} r,
 
         /var/tmp/#@{int} rw,
         /var/tmp/flatpak-cache-@{rand6}/{,**/} r,
@@ -259,11 +257,6 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{PROC}/@{pid}/fdinfo/@{int} r,
   owner @{PROC}/@{pid}/stat r,
 
-  /dev/fuse rw,
-
-  #aa:only test
-  mount fstype=fuse.revokefs-fuse options=(rw, nosuid, nodev) revokefs-fuse -> /tmp/test-flatpak-*/**,
-
   profile bwrap flags=(attach_disconnected,mediate_deleted) {
     include <abstractions/base>
     include <abstractions/bwrap>
@@ -316,78 +309,6 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted) {
     all,
 
     include if exists <local/flatpak_enter>
-  }
-
-  profile gpg {
-    include <abstractions/base>
-    include <abstractions/consoles>
-
-    capability dac_read_search,
-
-    @{bin}/gpg{,2}  mr,
-    @{bin}/gpgconf  mr,
-    @{bin}/gpgsm    mr,
-
-    @{bin}/gpg-agent         rix,
-    @{bin}/gpg-connect-agent rix,
-    @{lib}/{,gnupg/}scdaemon rix,
-
-    @{user_gpg_dirs}/*.conf r,
-
-          @{tmp}/ r,
-    owner @{tmp}/ostree-gpg-@{rand6}/ rw,
-    owner @{tmp}/ostree-gpg-@{rand6}/** rwlk -> /tmp/ostree-gpg-@{rand6}/**,
-
-    owner @{run}/user/@{uid}/gnupg/ w,
-    owner @{run}/user/@{uid}/gnupg/d.@{rand}/ w,
-    owner @{run}/user/@{uid}/gnupg/d.@{rand}/S.{gpg-agent*,scdaemon} rw,
-
-    owner @{PROC}/@{pid}/fd/ r,
-    owner @{PROC}/@{pid}/task/@{tid}/comm rw,
-
-    include if exists <local/flatpak_gpg>
-  }
-
-  profile fusermount {
-    include <abstractions/base>
-    include <abstractions/app/fusermount>
-
-    capability setuid,
-
-    unix type=seqpacket peer=(label=flatpak-system-helper),
-    unix type=stream    peer=(label=flatpak),
-
-    mount fstype=fuse.revokefs-fuse options=(rw, nosuid, nodev) revokefs-fuse -> /var/tmp/flatpak-cache-*/*/,
-    umount /var/tmp/flatpak-cache-*/*/,
-
-    #aa:only test
-    mount fstype=fuse.revokefs-fuse options=(rw, nosuid, nodev) revokefs-fuse -> /tmp/test-flatpak.*/**,
-    umount /tmp/test-flatpak-@{rand6}/**,
-
-    include if exists <local/flatpak_fusermount>
-  }
-
-  profile revokefs-fuse {
-    include <abstractions/base>
-
-    mount fstype=fuse.revokefs-fuse options=(rw nodev nosuid) revokefs-fuse -> /var/tmp/flatpak-cache-@{rand6}/*/,
-
-    unix (send receive) type=seqpacket peer=(label=flatpak-system-helper),
-    unix (send receive) type=stream peer=(label=flatpak//fusermount),
-    unix (send receive) type=stream peer=(label=fusermount//mount),
-
-    @{bin}/fusermount3 Px -> flatpak//fusermount,
-
-    /var/lib/flatpak/repo/tmp/flatpak-cache-@{rand6}/{,**} r,
-
-    /var/tmp/flatpak-cache-@{rand6}/*/ r,
-    /var/tmp/flatpak-cache-@{rand6}/*/** r,
-
-    @{sys}/devices/system/node/ r,
-
-    /dev/fuse rw,
-
-    include if exists <local/flatpak_revokefs-fuse>
   }
 
   include if exists <local/flatpak>

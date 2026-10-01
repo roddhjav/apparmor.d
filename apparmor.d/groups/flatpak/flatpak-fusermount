@@ -1,0 +1,29 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Łukasz Kozak <lakis.kozak@gmail.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+profile flatpak-fusermount {
+  include <abstractions/base>
+  include <abstractions/app/fusermount>
+
+  capability setuid,
+
+  mount fstype=fuse.revokefs-fuse options=(rw, nosuid, nodev) -> /var/tmp/flatpak-cache-@{rand6}/*/,
+  umount /var/tmp/flatpak-cache-@{rand6}/*/,
+
+  unix (send receive) type=seqpacket peer=(label=flatpak-system-helper),
+  unix (send receive) type=stream    peer=(label=flatpak),
+  unix (send receive) type=stream    peer=(label=flatpak-revokefs-fuse),
+
+  #aa:only test
+  mount fstype=fuse.revokefs-fuse options=(rw, nosuid, nodev) revokefs-fuse -> /tmp/test-flatpak.*/**,
+  umount /tmp/test-flatpak-@{rand6}/**,
+
+  include if exists <local/flatpak-fusermount>
+}
+
+# vim:syntax=apparmor

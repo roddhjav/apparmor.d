@@ -34,16 +34,14 @@ profile flatpak-system-helper @{exec_path} flags=(attach_disconnected,mediate_de
   ptrace read,
 
   unix (send receive) type=seqpacket peer=(label=dbus-system),
-  unix (send receive) type=seqpacket peer=(label=bazaar),
-  unix (send receive) type=seqpacket peer=(label=bazaar//fusermount),
-  unix (send receive) type=seqpacket peer=(label=bazaar//revokefs-fuse),
   unix (send receive) type=seqpacket peer=(label=flatpak),
-  unix (send receive) type=seqpacket peer=(label=flatpak//fusermount),
-  unix (send receive) type=seqpacket peer=(label=gnome-software),
-  unix (send receive) type=seqpacket peer=(label=gnome-software//fusermount),
-  unix (send receive) type=seqpacket peer=(label=plasma-discover),
-  unix (send receive) type=seqpacket peer=(label=plasma-discover//fusermount),
+  unix (send receive) type=seqpacket peer=(label=flatpak-fusermount),
+  unix (send receive) type=seqpacket peer=(label=flatpak-revokefs-fuse),
   unix (send receive) type=seqpacket peer=(label=unconfined),
+  # Stores
+  unix (send receive) type=seqpacket peer=(label=bazaar),
+  unix (send receive) type=seqpacket peer=(label=gnome-software),
+  unix (send receive) type=seqpacket peer=(label=plasma-discover),
 
   #aa:dbus own bus=system name=org.freedesktop.Flatpak.SystemHelper
 
@@ -60,9 +58,9 @@ profile flatpak-system-helper @{exec_path} flags=(attach_disconnected,mediate_de
 
   }
 
-  @{bin}/gpg{,2}           Cx -> gpg,
-  @{bin}/gpgconf           Cx -> gpg,
-  @{bin}/gpgsm             Cx -> gpg,
+  @{bin}/gpg{,2}           Px -> flatpak-gpg,
+  @{bin}/gpgconf           Px -> flatpak-gpg,
+  @{bin}/gpgsm             Px -> flatpak-gpg,
   @{lib}/revokefs-fuse    rix,
 
   /etc/flatpak/{,**} r,
@@ -175,32 +173,6 @@ profile flatpak-system-helper @{exec_path} flags=(attach_disconnected,mediate_de
     /dev/tty rw,
 
     include if exists <local/flatpak-system-helper_bwrap>
-  }
-
-  profile gpg {
-    include <abstractions/base>
-    include <abstractions/nameservice-strict>
-
-    @{bin}/gpg{,2}  mr,
-    @{bin}/gpgconf  mr,
-    @{bin}/gpgsm    mr,
-
-    @{lib}/{,gnupg/}scdaemon rix,
-    @{bin}/gpg-agent rix,
-
-    owner @{tmp}/ostree-gpg-@{rand6}/ r,
-    owner @{tmp}/ostree-gpg-@{rand6}/** rwlk -> /tmp/ostree-gpg-@{rand6}/**,
-
-    @{run}/user/@{uid}/gnupg/ rw,
-    @{run}/user/@{uid}/gnupg/d.@{rand}/ rw,
-    @{run}/user/@{uid}/gnupg/d.@{rand}/S.gpg-agent{,.ssh,.browser,.extra} rw,
-    @{run}/user/@{uid}/gnupg/d.@{rand}/S.scdaemon rw,
-    @{run}/user/@{uid}/gnupg/S.scdaemon rw,
-
-    owner @{PROC}/@{pid}/fd/ r,
-    owner @{PROC}/@{pid}/task/@{tid}/comm rw,
-
-    include if exists <local/flatpak-system-helper_gpg>
   }
 
   include if exists <local/flatpak-system-helper>
