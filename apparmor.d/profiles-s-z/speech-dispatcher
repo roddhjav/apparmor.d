@@ -13,6 +13,7 @@ profile speech-dispatcher @{exec_path} {
   include <abstractions/bus-session>
   include <abstractions/consoles>
   include <abstractions/nameservice-strict>
+  include <abstractions/sys/dmi>
 
   network inet stream,
   network inet6 stream,
@@ -24,7 +25,10 @@ profile speech-dispatcher @{exec_path} {
   @{lib}/speech-dispatcher/** r,
   @{lib}/speech-dispatcher/speech-dispatcher-modules/* ix,
 
-  /usr/share/espeak-ng-data/{,**} r,
+  @{bin}/aplay rix,
+  @{bin}/pacat rix,
+
+  /usr/share/espeak-ng-data{,-@{version}}/{,**} r,
 
   /etc/speech-dispatcher/{,**} r,
 
@@ -35,6 +39,11 @@ profile speech-dispatcher @{exec_path} {
 
   owner /dev/shm/sem.@{rand6} rw,
   owner /dev/shm/sem.speechd-modules-dummy-@{int} rwl -> /dev/shm/sem.@{rand6},
+
+  owner @{PROC}/@{pid}/task/@{tid}/comm w,
+
+  # Silencer
+  deny /opt/calibre/lib/** mr,
 
   include if exists <local/speech-dispatcher>
 }
