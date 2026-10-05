@@ -12,6 +12,7 @@ profile yt-dlp @{exec_path} {
   include <abstractions/base>
   include <abstractions/consoles>
   include <abstractions/nameservice-strict>
+  include <abstractions/cgroup-limits>
   include <abstractions/python>
   include <abstractions/ssl_certs>
   include <abstractions/user-download-strict>
@@ -35,7 +36,11 @@ profile yt-dlp @{exec_path} {
 
   @{bin}/deno rPx,
 
+  /usr/share/file/misc/magic.mgc r,
+
   /etc/magic r,
+
+  owner /var/lib/libuuid/clock.txt w,
 
   owner @{user_music_dirs}/{,**} rwk,
   owner @{user_videos_dirs}/{,**} rwk,
@@ -43,11 +48,13 @@ profile yt-dlp @{exec_path} {
   owner @{user_cache_dirs}/yt-dlp/{,**} rw,
 
   owner @{user_config_dirs}/yt-dlp/{,**} rw,
+  owner @{user_config_dirs}/user-dirs.dirs r, # file_inherit
 
   owner @{tmp}/yt_dlp*/ rw,
   owner @{tmp}/yt_dlp*/** rwk,
 
   owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/mounts r,
 
   include if exists <local/yt-dlp>
 }
