@@ -11,6 +11,8 @@ profile tailscaled @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus-system>
   include <abstractions/nameservice-strict>
+  include <abstractions/cgroup-limits>
+  include <abstractions/consoles>
   include <abstractions/ssl_certs>
   include <abstractions/sys/dmi>
 
@@ -39,12 +41,14 @@ profile tailscaled @{exec_path} flags=(attach_disconnected) {
   @{bin}/ip                 rix, #aa:lint ignore=sbin
   @{sbin}/ip                rix,
   @{bin}/resolvectl         rPx,
+  @{bin}/resolvconf         rix,
   @{sbin}/xtables-{nft,legacy}-multi  rix,
 
   @{bin}/systemctl  rCx -> systemctl,
 
   /etc/iproute2/rt_tables r,
   /etc/apt/sources.list.d/tailscale.list r,
+  /etc/os-release r,
 
   @{etc_rw}/resolv.*.conf rw,
   @{etc_rw}/resolv.conf rw,
@@ -59,6 +63,7 @@ profile tailscaled @{exec_path} flags=(attach_disconnected) {
 
   @{PROC}/ r,
   @{PROC}/@{pid}/mounts r,
+  @{PROC}/@{pid}/mountinfo r,
   @{PROC}/@{pid}/net/{,**} r,
   @{PROC}/@{pids}/cmdline r,
   @{PROC}/@{pids}/fd/ r,
@@ -68,7 +73,7 @@ profile tailscaled @{exec_path} flags=(attach_disconnected) {
   @{PROC}/1/stat r,
   @{PROC}/cmdline r,
   @{PROC}/sys/kernel/osrelease r,
-  @{PROC}/sys/net/{,**} r,
+  @{PROC}/sys/net/{,**} rw,
 
   /dev/net/tun rw,
 
