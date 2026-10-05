@@ -10,16 +10,11 @@ include <tunables/global>
 profile systemsettings @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/base>
   include <abstractions/audio-client>
-  include <abstractions/bus-session>
-  include <abstractions/bus/system/org.freedesktop.PolicyKit1>
-  include <abstractions/bus/system/org.freedesktop.systemd1>
+  include <abstractions/common/kde>
   include <abstractions/cups-client>
   include <abstractions/dconf-write>
-  include <abstractions/graphics>
   include <abstractions/ibus-strict>
-  include <abstractions/kde-strict>
   include <abstractions/nameservice-strict>
-  include <abstractions/qt-shader-cache>
   include <abstractions/sys/input>
   include <abstractions/thumbnails-cache-write>
   include <abstractions/udev/input>
@@ -30,6 +25,9 @@ profile systemsettings @{exec_path} flags=(attach_disconnected,mediate_deleted) 
 
   #aa:dbus own bus=session name=org.kde.internal.KSettingsWidget_kcm_networkmanagement
   #aa:dbus own bus=session name=org.kde.systemsettings
+
+  #aa:dbus talk bus=system name=org.freedesktop.PolicyKit1 label="@{p_polkitd}"
+  #aa:dbus talk bus=system name=org.freedesktop.systemd1 label="@{p_systemd}"
 
   @{exec_path} mrix,
 
@@ -62,13 +60,12 @@ profile systemsettings @{exec_path} flags=(attach_disconnected,mediate_deleted) 
   /usr/share/kpackage/{,**} r,
   /usr/share/kservices{5,6}/{,**} r,
   /usr/share/kservicetypes5/{,**} r,
+  /usr/share/kwin-wayland/{,**} r,
   /usr/share/kwin/{,**} r,
-  /usr/share/kxmlgui5/systemsettings/systemsettingsui.rc r,
   /usr/share/libwacom/{,**} r,
   /usr/share/plasma/{,**} r,
   /usr/share/sddm/themes/{,**} r,
   /usr/share/solid/{,**} r,
-  /usr/share/systemsettings/{,**} r,
   /usr/share/thumbnailers/{,**} r,
   /usr/share/wallpapers/{,**} r,
 
@@ -96,8 +93,6 @@ profile systemsettings @{exec_path} flags=(attach_disconnected,mediate_deleted) 
   owner @{user_cache_dirs}/[kK]*/** rwlk -> @{user_cache_dirs}/[kK]*/**,
   owner @{user_cache_dirs}/plasma*/{,**} r,
   owner @{user_cache_dirs}/plasma* rw,
-  owner @{user_cache_dirs}/systemsettings/ rw,
-  owner @{user_cache_dirs}/systemsettings/** rwlk -> @{user_cache_dirs}/systemsettings/**,
 
   owner @{user_config_dirs}/[kK]* rwlk -> @{user_config_dirs}/#@{int},
   owner @{user_config_dirs}/[kK]*/ rw,
@@ -118,12 +113,8 @@ profile systemsettings @{exec_path} flags=(attach_disconnected,mediate_deleted) 
   owner @{user_share_dirs}/[kK]*/ rw,
   owner @{user_share_dirs}/[kK]*/** rwlk -> @{user_share_dirs}/[kK]*/**,
   owner @{user_share_dirs}/baloo/index r,
-  owner @{user_share_dirs}/systemsettings/ rw,
-  owner @{user_share_dirs}/systemsettings/** rwlk -> @{user_share_dirs}/systemsettings/**,
   owner @{user_share_dirs}/user-places.xbel r,
   owner @{user_share_dirs}/wallpapers/{,**} r,
-
-  owner @{user_state_dirs}/systemsettingsstaterc@{atomic} rwlk,
 
         @{run}/mount/utab r,
   owner @{run}/user/@{uid}/#@{int} rwl,
@@ -132,6 +123,7 @@ profile systemsettings @{exec_path} flags=(attach_disconnected,mediate_deleted) 
   @{run}/udev/data/+drm:card@{int}-* r,   # For screen outputs
   @{run}/udev/data/+dmi:* r,              # for motherboard info
   @{run}/udev/data/+pci:* r,              # Identifies all PCI devices (CPU, GPU, Network, Disks, USB, etc.)
+  @{run}/udev/data/c81:@{int}  r,         # For video4linux
   @{run}/udev/data/c@{dynamic}:@{int} r,  # For dynamic assignment range 234 to 254, 384 to 511
   @{run}/udev/data/n@{int} r,             # For network interfaces
 
@@ -150,7 +142,6 @@ profile systemsettings @{exec_path} flags=(attach_disconnected,mediate_deleted) 
   owner @{PROC}/@{pid}/mountinfo r,
   owner @{PROC}/@{pid}/mounts r,
 
-  /dev/ r,
   /dev/bus/usb/ r,
   /dev/input/ r,
   /dev/rfkill r,
