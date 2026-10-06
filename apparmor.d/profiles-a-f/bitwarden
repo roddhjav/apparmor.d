@@ -19,6 +19,8 @@ profile bitwarden @{exec_path} flags=(attach_disconnected) {
   include <abstractions/devices-u2f>
   include <abstractions/user-download-strict>
 
+  capability dac_override,
+
   network inet stream,
   network inet6 stream,
   network inet dgram,
@@ -27,10 +29,18 @@ profile bitwarden @{exec_path} flags=(attach_disconnected) {
 
   @{exec_path} mrix,
 
+  @{bin}/dbus-send rix,
+  @{bin}/xprop     rix,
+
   @{open_path}                          Px -> child-open-browsers,
   @{lib}/glycin-loaders/@{d}+/glycin-*  Px -> :glycin:loaders,
 
   owner @{HOME}/.bitwarden-ssh-agent.sock w,
+
+        @{PROC}/@{pid}/ r,
+        @{PROC}/@{pid}/cgroup r,
+        @{PROC}/@{pid}/fd/ r,
+        @{PROC}/@{pid}/statm r,
 
   include if exists <local/bitwarden>
 }
