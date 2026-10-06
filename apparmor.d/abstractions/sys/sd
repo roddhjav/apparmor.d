@@ -1,0 +1,47 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Solid disks
+#
+# Pattern such as `@{sys}/devices/@{pci}/block/@{sd}` is **not** used as it limits
+# the rule to disk over pci devices. Here we also cover disk attached to USB devices.
+
+  abi <abi/5.0>,
+
+  @{sys}/devices/**/block/@{sd}/ r,
+  @{sys}/devices/**/block/@{sd}/@{sd}@{u8}/ r,
+  @{sys}/devices/**/block/@{sd}/@{sd}@{u8}/dev r,
+  @{sys}/devices/**/block/@{sd}/@{sd}@{u8}/holders/ r,
+  @{sys}/devices/**/block/@{sd}/@{sd}@{u8}/ro r,
+  @{sys}/devices/**/block/@{sd}/@{sd}@{u8}/size r,
+  @{sys}/devices/**/block/@{sd}/@{sd}@{u8}/start r,
+  @{sys}/devices/**/block/@{sd}/alignment_offset r,
+  @{sys}/devices/**/block/@{sd}/dev r,
+  @{sys}/devices/**/block/@{sd}/diskseq r,
+  @{sys}/devices/**/block/@{sd}/ext_range r,
+  @{sys}/devices/**/block/@{sd}/hidden r,
+  @{sys}/devices/**/block/@{sd}/holders/ r,
+  @{sys}/devices/**/block/@{sd}/queue/dax r,
+  @{sys}/devices/**/block/@{sd}/queue/logical_block_size r,
+  @{sys}/devices/**/block/@{sd}/queue/minimum_io_size r,
+  @{sys}/devices/**/block/@{sd}/queue/optimal_io_size r,
+  @{sys}/devices/**/block/@{sd}/queue/physical_block_size r,
+  @{sys}/devices/**/block/@{sd}/queue/rotational r,
+  @{sys}/devices/**/block/@{sd}/removable r,
+  @{sys}/devices/**/block/@{sd}/ro r,
+  @{sys}/devices/**/block/@{sd}/size r,
+  @{sys}/devices/**/block/@{sd}/slaves/ r,
+
+  # USB specific paths
+  @{sys}/devices/@{pci}/usb@{u8}/ r,
+  @{sys}/devices/@{pci}/usb@{u8}/@{u8}-@{u8}/ r,
+  @{sys}/devices/@{pci}/usb@{u8}/@{u8}-@{u8}/**/ r,
+  @{sys}/devices/@{pci}/usb@{u8}/@{u8}-@{u8}/**/uevent r,
+  @{sys}/devices/@{pci}/usb@{u8}/@{u8}-@{u8}/*/host@{int}/**/model r,
+  @{sys}/devices/@{pci}/usb@{u8}/@{u8}-@{u8}/*/host@{int}/**/type r,
+  @{sys}/devices/@{pci}/usb@{u8}/@{u8}-@{u8}/*/host@{int}/**/vendor r,
+
+  include if exists <abstractions/sys/sd.d>
+
+# vim:syntax=apparmor
