@@ -148,7 +148,12 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
        member=Embed
        peer=(name=org.a11y.atspi.Registry),
 
-  # Server side of abstractions/bus/org.gnome.keyring.internal.Prompter
+  # Start Gnome programs
+  dbus send bus=session
+       interface=org.freedesktop.Application
+       member=Activate,
+
+       # Server side of abstractions/bus/org.gnome.keyring.internal.Prompter
   dbus receive bus=session path=/org/gnome/keyring/Prompter
        interface=org.gnome.keyring.internal.Prompter
        member={BeginPrompting,PerformPrompt,StopPrompting}
@@ -163,6 +168,15 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
        interface=org.freedesktop.Notifications
        member={ActivationToken,ActionInvoked,NotificationClosed,NotificationReplied}
        peer=(name=org.freedesktop.DBus, label=gjs),
+
+  # Server side of abstractions/bus/session/org.gnome.Shell.SearchProvider2
+  dbus send bus=session path=/**/SearchProvider
+       interface=org.gnome.Shell.SearchProvider2
+       member={GetInitialResultSet,GetSubsearchResultSet,GetResultMetas},
+
+  dbus send bus=session path=/**/Application
+       interface=org.gnome.Shell.SearchProvider2
+       member={GetInitialResultSet,GetSubsearchResultSet,GetResultMetas},
 
   # FIXME: I think gnome-shell is the owner of the notifications, it should then be
   # fully allowed to send/receive to/from anyone.
