@@ -1,0 +1,61 @@
+# apparmor-profiles - apparmor reference profiles
+# Copyright (C) 2023-2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Define some name, libdir and paths for some commonly used programs. It is
+# meant to label programs to easily provide access in profiles.
+
+# Naming scheme:
+# - Variables that refer to a path must have the `_path` suffix.
+# - Variables that refer to a program name must have the `_name` or `_names` suffix.
+# - Variables that refer to a directory must have the `_dirs` suffix.
+
+# Default distribution shells
+@{sh_name} = sh bash dash
+@{sh_path} = @{bin}/@{sh_name}
+
+# All interactive shells users may want to use
+@{shells_name} = sh zsh bash dash fish rbash ksh tcsh csh
+@{shells_path} = @{bin}/@{shells_name}
+
+# Coreutils programs that should not have dedicated profile. Also includes findutils and diffutils.
+# The remaining coreutils programs should have profile present in the utils group.
+@{coreutils_name}  = \[ {,g,m}awk b2sum base32 base64 basename basenc cat chcon chgrp chmod chown
+@{coreutils_name} += cksum cmp comm cp csplit cut date dd df dir dircolors dirname diff diff3 du echo env expand
+@{coreutils_name} += expr factor false find fmt fold {,e,f}grep head hostid id install join link
+@{coreutils_name} += ln locate logname ls md5sum mkdir mkfifo mknod mktemp mv nice nl nohup nproc numfmt
+@{coreutils_name} += od paste pathchk pinky pr printenv printf ptx pwd readlink realpath rm rmdir
+@{coreutils_name} += runcon sdiff sed seq sha1sum sha224sum sha256sum sha384sum sha512sum shred shuf sleep
+@{coreutils_name} += sort split stat stdbuf stty sum tac tail tee test timeout touch tr true
+@{coreutils_name} += truncate tsort tty uname unexpand uniq unlink updatedb vdir wc who whoami xargs yes
+@{coreutils_name} += which{,.debianutils}
+
+@{coreutils_path} = @{bin}/@{coreutils_name}
+@{coreutils_path} += @{bin}/gnu@{coreutils} #aa:only ubuntu
+@{coreutils_path} += @{lib}/cargo/bin/coreutils/@{coreutils} #aa:only ubuntu
+
+# Python interpreters
+@{python_version} = 3 3.[0-9] 3.1[0-9]
+@{python_name} = python python@{python_version}
+@{python_path} = @{bin}/@{python_name}
+
+# ldd (List Dynamic Dependencies) and dynamic linker/loader
+@{ldd_path} = @{bin}/ldd @{bin}/ld
+@{ldd_path} += @{lib}/ld-linux-@{arch}.so{,.*} @{lib}/ld-linux.so{,.*}
+@{ldd_path} += @{lib}/@{multiarch}/ld-linux-@{arch}.so{,.*}
+
+# Editors
+@{editor_names} = nano nvim sensible-editor vim*
+@{editor_path} = @{bin}/@{editor_names}
+
+# Pager
+@{pager_names} = sensible-pager pager less more nvimpager
+@{pager_path} = @{bin}/@{pager_names}
+
+# Archives
+@{archive_names} = 7z 7zz ar bunzip2 bzip2 cpio gunzip gzip lzip rar tar unrar unrar-nonfree unzip xz zip zstd
+@{archive_path} = @{bin}/@{archive_names} @{lib}/p7zip/7z @{lib}/7zip/7z
+
+include if exists <tunables/path/core.d>
+
+# vim:syntax=apparmor
