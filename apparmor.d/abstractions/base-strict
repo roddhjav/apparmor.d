@@ -27,6 +27,7 @@
   include <abstractions/ld>
   include <abstractions/locale>
   include <abstractions/lttng>
+  include <abstractions/systemd>
   include <abstractions/tests>  #aa:only test
 
   # Allow us to signal ourselves
@@ -38,10 +39,6 @@
   #aa:exclude RBAC
   # Allow unconfined processes to send us signals by default
   signal receive                           peer=unconfined,
-
-  # Systemd: allow to receive any signal from the systemd profiles
-  signal receive                           peer=@{p_systemd},
-  signal receive                           peer=@{p_systemd_user},
 
   # Htop like programs can send any signals to any processes
   signal receive                           peer=btop,
@@ -101,25 +98,11 @@
   # Allow all programs to use common libraries
   @{lib}/** r,
   @{lib}/**.so* m,
-  @{lib}/@{multiarch}/**.so* m,
   @{lib}/@{multiarch}/** r,
+  @{lib}/@{multiarch}/**.so* m,
 
   # Some applications will display license information
   /usr/share/common-licenses/** r,
-
-  # Systemd's notification write only socket
-  @{run}/systemd/notify w,
-
-  # Systemd's equivalent of /dev/log
-  @{run}/systemd/journal/dev-log w,
-
-  # Systemd native journal API (see sd_journal_print(4))
-  @{run}/systemd/journal/socket w,
-
-  # Nested containers and anything using systemd-cat need this. 'r' shouldn't
-  # be required but applications fail without it. journald doesn't leak
-  # anything when reading so this is ok.
-  @{run}/systemd/journal/stdout rw,
 
   # Transparent hugepage support
   @{sys}/kernel/mm/transparent_hugepage/enabled r,
