@@ -12,7 +12,7 @@ include <tunables/global>
 @{name} += fetch-ebook-metadata lrf2lrs lrfviewer lrs2lrf markdown-calibre web2disk
 @{domain} = org.chromium.Chromium
 @{lib_dirs} =  /opt/calibre/
-@{bin_dirs} = @{bin}/ @{lib_dirs}/bin/
+@{bin_dirs} = @{bin}/ @{lib_dirs}/{,bin/}
 
 @{exec_path} = @{bin_dirs}/@{name}
 profile calibre @{exec_path} flags=(attach_disconnected,mediate_deleted) {
@@ -20,20 +20,23 @@ profile calibre @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/audio-client>
   include <abstractions/bus/session/org.kde.StatusNotifierWatcher>
   include <abstractions/bus/system/org.freedesktop.UDisks2>
-  include <abstractions/common/chromium>
+  include <abstractions/common/qt-webengine>
   include <abstractions/dconf-write>
   include <abstractions/desktop>
   include <abstractions/devices-usb>
+  include <abstractions/disks-read>
   include <abstractions/fontconfig-cache-read>
   include <abstractions/graphics>
   include <abstractions/gstreamer>
   include <abstractions/gvfs>
   include <abstractions/ibus-strict>
+  include <abstractions/kde-globals-write>
   include <abstractions/nameservice-strict>
   include <abstractions/python>
   include <abstractions/qt-compose-cache-write>
   include <abstractions/qt-settings-write>
   include <abstractions/qt-shader-cache>
+  include <abstractions/recently-used>
   include <abstractions/ssl_certs>
   include <abstractions/thumbnails-cache-write>
   include <abstractions/trash-strict>
@@ -61,11 +64,11 @@ profile calibre @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   @{bin}/file              rix,
   @{bin}/jpegtran          rix,
   @{bin}/kdialog           rix, # used on KDE, if available
-  @{bin}/net               rix,
-  @{bin}/speech-dispatcher Px,
-  @{bin}/testparm          rix,
+  @{bin}/net                PUx,
+  @{bin}/speech-dispatcher  Px,
+  @{bin}/testparm           PUx,
   @{bin}/uname             rix,
-  @{bin}/zenity            mrix, # used on Gnome, if available
+  @{bin}/zenity           mrix, # used on Gnome, if available
   @{sbin}/ldconfig{,.real} rix,
 
   #aa:exec kioworker
@@ -85,20 +88,14 @@ profile calibre @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   /usr/share/calibre/{,**} r,
   /usr/share/espeak-ng-data/{,**} r,
   /usr/share/file/misc/magic.mgc r,
-  /usr/share/qt{,5,6}/resources/*.bin  r,
   /usr/share/thumbnailers/{,**} r,
 
-  @{etc_ro}/krb5.conf r,
   @{etc_ro}/vdpau_wrapper.cfg r,
   /etc/exports r,
   /etc/fstab r,
   /etc/inputrc r,
-  /etc/krb5.conf.d/ r,
   /etc/magic r,
-  /etc/samba/smb.conf r,
   /etc/xdg/dolphinrc r,
-
-  owner /var/cache/samba/ w,
 
   @{lib}/ r,
   /usr/local/lib{,32,64}/ r,
@@ -112,7 +109,7 @@ profile calibre @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner "@{HOME}/Calibre Library/{,**}" rwl,
   owner "@{HOME}/Calibre Library/**.{db,sqlite}" k,
   owner @{HOME}/*.{pdf,@{image_ext}} w,              # for printing pdfs and images in the viewer
-  owner @{HOME}/*{,/} r,                             # ToDo: no idea how to silence uneccesery access by using deny, left this way
+  owner @{HOME}/*{,/} r,
 
   owner @{user_books_dirs}/{,**} rwl,
   owner @{user_books_dirs}/Calibre/** rwk,
@@ -125,12 +122,12 @@ profile calibre @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
   owner @{user_cache_dirs}/calibre/ rw,
   owner @{user_cache_dirs}/calibre/** rwlk -> @{user_cache_dirs}/calibre/**,
-  owner @{user_cache_dirs}/calibre-ebook.com/{,**} rw,
+  owner @{user_cache_dirs}/calibre-ebook.com/ rw,
+  owner @{user_cache_dirs}/calibre-ebook.com/** rwl -> @{user_cache_dirs}/calibre-ebook.com/**,
 
   owner @{user_config_dirs}/calibre/ rw,
   owner @{user_config_dirs}/calibre/** rwk,
   owner @{user_config_dirs}/calibrerc.lock rwk,
-  owner @{user_config_dirs}/kdeglobals* rwlk,
   owner @{user_config_dirs}/kdialogrc.lock rwk,
   owner @{user_config_dirs}/kservicemenurc r,
   owner @{user_config_dirs}/kioslaverc r,
@@ -150,7 +147,6 @@ profile calibre @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{tmp}/calibre-@{rand6}/{,**} rw,
 
         @{run}/mount/utab r,
-        @{run}/user/@{uid}/gvfs/ r,
   owner @{run}/user/@{uid}/calibre@{rand6}.@{int}.kioworker.socket wl,
   owner @{run}/user/@{uid}/kdialog@{rand6}.@{int}.kioworker.socket wl,
   owner @{run}/user/@{uid}/speech-dispatcher/speechd.sock rw,
@@ -159,43 +155,34 @@ profile calibre @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner /dev/shm/sem.@{rand6} rwl -> /dev/shm/sem.@{rand6},
   owner /dev/shm/sem.mp-@{word8} rwl -> /dev/shm/sem.@{rand6},
 
-        @{run}/udev/data/b8:@{int} r,      # for /dev/sd*
-        @{run}/udev/data/b254:@{int} r,    # for /dev/zram*4
-
         @{sys}/class/accel/ r,
         @{sys}/devices/{,**/} r,            # all of it is required for calibre's DeviceManager to work
 
-        @{PROC}/ r,
         @{PROC}/@{pids}/stat r,
         @{PROC}/@{pids}/net/route r,
-        @{PROC}/sys/fs/inotify/max_user_watches r,
-        @{PROC}/sys/kernel/yama/ptrace_scope r,
         @{PROC}/vmstat r,
-  owner @{PROC}/@{pid}/cmdline r,
   owner @{PROC}/@{pid}/cgroup r,
   owner @{PROC}/@{pid}/comm r,
-  owner @{PROC}/@{pid}/fd/ r,
   owner @{PROC}/@{pid}/mountinfo r,
   owner @{PROC}/@{pid}/mounts r,
-  owner @{PROC}/@{pid}/oom_{,score_}adj rw,
-  owner @{PROC}/@{pid}/stat{,m} r,
+  owner @{PROC}/@{pid}/oom_adj rw,
+  owner @{PROC}/@{pid}/oom_score_adj rw,
+  owner @{PROC}/@{pid}/stat r,
   owner @{PROC}/@{pid}/task/ r,
   owner @{PROC}/@{pid}/task/@{tid}/comm rw,
   owner @{PROC}/@{pid}/task/@{tid}/status r,
 
-        /dev/disk/by-label/ r,
         /dev/tty r,
   owner /dev/tty@{u8} rw,
 
   # Silencer
-  #deny owner @{HOME}/.bash* r,          # ToDo: extending it to all hidden files in user's directory causes sometimes problems with viewer operations
-  deny owner /usr/share/qt6/resources/locales/ w,
-  deny owner @{lib}/**/__pycache__/{,**} w,
+              deny @{lib}/**/__pycache__/{,**} w,
+  priority=-1 deny @{HOME}/.* r,
 
   profile poppler {
     include <abstractions/base>
     include <abstractions/consoles>
-    include <abstractions/fonts>
+    include <abstractions/fonts-strict>
 
     @{bin_dirs}/pdfinfo r,
     @{bin_dirs}/pdftohtml r,
@@ -207,18 +194,16 @@ profile calibre @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
     owner @{tmp}/calibre-@{word8}/**.@{image_ext} w,
     owner @{tmp}/calibre-@{word8}/**log rw,
-    owner @{tmp}/calibre-@{word8}/*/src.pdf r,
+    owner @{tmp}/calibre-@{word8}/*/*.pdf r,
     owner @{tmp}/calibre-@{word8}/*/index.xml w,
 
     include if exists <local/calibre_poppler>
   }
 
-  # only to be used stacked
   profile webengine {
     include <abstractions/base>
-    include <abstractions/common/chromium>
+    include <abstractions/common/qt-webengine>
     include <abstractions/graphics>
-    include <abstractions/gstreamer>        # needed on Gnome (to directly access glycin)
 
     signal receive set=term peer=calibre,
     signal (send receive) set=kill peer=calibre//&calibre//webengine,
@@ -226,26 +211,15 @@ profile calibre @{exec_path} flags=(attach_disconnected,mediate_deleted) {
     unix type=seqpacket peer=(label=calibre),
     unix type=stream    peer=(label=calibre),
 
-    @{lib}/{,@{multiarch}/}qt{5,6}/{,libexec/}QtWebEngineProcess mr,
-    @{lib_dirs}/libexec/QtWebEngineProcess                       mr,
-
-    /usr/share/fonts/** r,
-    /usr/share/icu/** r,
-    /usr/share/qt6/** r,
+    @{lib_dirs}/libexec/QtWebEngineProcess mr,
 
     @{lib_dirs}/** r,
     @{lib_dirs}/**.so* mr,
 
     owner @{tmp}/calibre-@{word8}/*  rw,
 
-          @{PROC}/ r,
-    owner @{PROC}/@{pid}/cmdline r,
-    owner @{PROC}/@{pid}/fd/ r,
-    owner @{PROC}/@{pid}/statm r,
-
     # Silencer
     deny @{HOME}/{,**} rw,
-    deny owner /usr/share/qt6/resources/locales/ w,
 
     include if exists <local/calibre_webengine>
   }

@@ -14,14 +14,22 @@ profile systemd-analyze @{exec_path} flags=(attach_disconnected) {
   include <abstractions/bus/system/org.freedesktop.hostname1>
   include <abstractions/common/systemd>
   include <abstractions/consoles>
+  include <abstractions/sys/dmi-full>
+  include <abstractions/sys/firmware>
+  include <abstractions/tpm>
 
-  capability sys_resource,
   capability net_admin,
+  capability sys_admin,
+  capability sys_chroot,
+  capability sys_ptrace,
+  capability sys_resource,
 
   network inet dgram,
   network netlink raw,
 
   signal (send) peer=child-pager,
+
+  ptrace read,
 
   unix bind type=stream addr=@@{udbus}/bus/systemd-analyze/,
   unix bind type=stream addr=@@{udbus}/bus/systemd-analyze/system,
@@ -33,11 +41,21 @@ profile systemd-analyze @{exec_path} flags=(attach_disconnected) {
   @{lib}/systemd/system-environment-generators/* rix,
 
   @{pager_path} rPx -> child-pager,
-  @{bin}/man       rPx,
+  @{sh_path}   mrCx -> shell,
+  @{bin}/gdb     Cx -> gdb,
+  @{bin}/man    rPx,
 
   /usr/ r,
   @{lib}/systemd/** r,
 
+  /usr/share/misc/termcap r,
+
+  # Needed for cat-config command
+  #aa:lint ignore=too-wide
+  /etc/* r,
+  /etc/*.d/{,*} r,
+  /etc/console-setup/vtrgb r,
+  /etc/default/keyboard r,
   /etc/default/locale r,
   /etc/systemd/** r,
 
@@ -45,29 +63,110 @@ profile systemd-analyze @{exec_path} flags=(attach_disconnected) {
 
   @{att}@{run}/systemd/private rw,
 
+  @{run}/modprobe.d/{,*} r,
+  @{run}/motd.d/{,*} r,
   @{run}/systemd/generator/ r,
+  @{run}/systemd/private rw,
+  @{run}/systemd/resolve/stub-resolv.conf r,
   @{run}/systemd/system/ r,
   @{run}/systemd/transient/ r,
   @{run}/systemd/userdb/io.systemd.DynamicUser w,
   @{run}/udev/data/+*:* r,                # Identifies all subsystems
   @{run}/udev/data/c@{int}:@{int} r,      # Identifies all character devices
   @{run}/udev/tags/systemd/ r,
+  @{run}/tmpfiles.d/{,*} r,
 
+  @{sys}/bus/ r,
+  @{sys}/class/ r,
+  @{sys}/class/drm/ r,
   @{sys}/devices/**/uevent r,
+  @{sys}/devices/@{pci}/drm/card@{int}/*/edid r,
   @{sys}/firmware/acpi/tables/FPDT r,
   @{sys}/fs/cgroup/{,**} r,
   @{sys}/fs/cgroup/{systemd,unified}/**/cgroup.procs rw,
   @{sys}/fs/cgroup/unified/**/init.scope/ rw,
   @{sys}/module/**/uevent r,
 
+  @{sys}/devices/virtual/dmi/id/ r,
   @{sys}/firmware/efi/efivars/LoaderTimeInitUSec-@{uuid} r,
   @{sys}/firmware/efi/efivars/LoaderTimeExecUSec-@{uuid} r,
 
+        @{PROC}/@{pids}/gid_map r,
+        @{PROC}/@{pids}/setgroups r,
         @{PROC}/swaps r,
         @{PROC}/sys/fs/nr_open r,
   owner @{PROC}/@{pid}/cgroup r,
   owner @{PROC}/@{pid}/comm r,
   owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/mounts r,
+
+  profile gdb flags=(attach_disconnected) {
+    include <abstractions/base>
+    include <abstractions/python>
+
+    capability dac_read_search,
+    capability sys_ptrace,
+
+    ptrace (read trace),
+
+    @{bin}/iconv rix,
+
+    @{bin}/** r,
+    @{lib}/** r,
+
+    /usr/share/gcc-@{int2}/python/{,**} r,
+    /usr/share/gcc/** r,
+    /usr/share/gdb/** r,
+    /usr/share/gdb/python/{,**/}__pycache__/ w,
+    /usr/share/gdb/python/{,**/}__pycache__/**.pyc w,
+    /usr/share/gdb/python/{,**/}__pycache__/**.pyc.@{u64} w,
+    /usr/share/glib-2.0/gdb/{,**} r,
+    /usr/share/glib-2.0/gdb/__pycache__/ w,
+    /usr/share/glib-2.0/gdb/__pycache__/**.pyc w,
+    /usr/share/glib-2.0/gdb/__pycache__/**.pyc.@{u64} w,
+    /usr/share/terminfo/** r,
+
+    /etc/gdb/gdbinit r,
+    /etc/inputrc r,
+
+    @{PROC}/@{pids}/fd/ r,
+    @{PROC}/@{pids}/mem rw,
+    @{PROC}/@{pids}/task/ r,
+    @{PROC}/@{pids}/task/@{tid}/maps r,
+    @{PROC}/@{pids}/task/@{tid}/mem rw,
+    @{PROC}/@{pids}/task/@{tid}/stat r,
+
+    include if exists <local/systemd-analyze_gdb>
+  }
+
+  # unit-shell command
+  profile shell flags=(attach_disconnected) {
+    include <abstractions/base>
+    include <abstractions/nameservice-strict>
+    include <abstractions/shells>
+
+    capability dac_read_search,
+
+    @{sh_path} r,
+
+    # ToDo: Possibly could be limited to binaries used by all systemd unit files
+    @{bin}/** PUx,
+    @{lib}/** PUx,
+
+    /usr/share/im-config/{,**} r,
+    /usr/share/libdebuginfod-common/debuginfod.sh r,
+
+    /etc/init.d/{,*} r,
+    /etc/machine-id r,
+    /etc/profile r,
+    /etc/profile.d/{,*.sh} r,
+
+    @{PROC}/sys/kernel/random/uuid r,
+
+    /dev/tty rw,
+
+    include if exists <local/systemd-analyze_shell>
+  }
 
   include if exists <local/systemd-analyze>
 }
