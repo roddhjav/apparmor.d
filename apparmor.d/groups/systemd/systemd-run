@@ -13,14 +13,17 @@ profile systemd-run @{exec_path} {
   include <abstractions/consoles>
   include <abstractions/nameservice-strict>
 
-  # capability dac_read_search,
+  capability dac_read_search,
   capability net_admin,
+  capability sys_resource,
 
-  # unix bind type=stream addr=@@{udbus}/bus/systemd-run/,
+  ptrace read peer=@{p_systemd},
+
   unix bind type=stream addr=@@{udbus}/bus/run0/system,
+  unix bind type=stream addr=@@{udbus}/bus/systemd-run/,
 
   signal receive set=(cont term),
-  signal send    set=(cont term) peer=systemd-run//run,
+  signal send    set=(cont term)       peer=systemd-run//run,
   signal send    set=(cont term winch) peer=systemd-tty-ask-password-agent,
 
   dbus send bus=system path=/org/freedesktop/systemd1/unit/run_*service
