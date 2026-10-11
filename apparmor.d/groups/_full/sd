@@ -6,40 +6,29 @@
 
 # *Part of the `systemd` (as PID 1) profile.*
 #
-# `sd` is a profile for **S**ystem**D**-executor run as root, it is used to run
-# all services files and to encapsulate stacked services profiles (hence the
-# short name).
+# `sd` is a profile for **s**ystem**d**-executor run as root. It is used to
+# run all service files and to encapsulate stacked service profiles (hence the
+# short name). By design, this profile must be as broad as all the profiles it
+# runs combined.
 #
-# It aims at reducing the size of the `systemd` profile.
+# It aims to reduce the size of the `systemd` profile.
 #
-# !!! info
+# !!! note
 #
-#     Distributions and other programs can add rules in the `usr/sd.d` directory
+#     To reduce the number of artificially stacked profiles, this profile is
+#     currently **not used** in FSP mode, as `systemd` purposely runs
+#     systemd-executor unconfined.
 #
 
 abi <abi/5.0>,
 
 include <tunables/global>
 
-@{exec_path} = @{bin}/systemd-executor
-profile sd flags=(attach_disconnected,mediate_deleted) {
+@{exec_path} = @{lib}/systemd/systemd-executor
+profile sd flags=(unconfined,attach_disconnected,mediate_deleted) {
   include <abstractions/base>
-  include <abstractions/authentication>
-  include <abstractions/bus-system>
-  include <abstractions/consoles>
-  include <abstractions/devices-usb>
-  include <abstractions/disks-write>
-  include <abstractions/nameservice-strict>
-  include <abstractions/wutmp>
-
-  all, # FIXME: this is temporary
-
-  change_profile,
 
   @{exec_path} mr,
-
-  priority=10 @{bin}/env rix,
-  priority=10 @{bin}/readlink rix,
 
   #aa:lint ignore=transition
   @{bin}/**                                      mpix,
@@ -52,10 +41,6 @@ profile sd flags=(attach_disconnected,mediate_deleted) {
 
   # Systemd user: systemd --user
   @{lib}/systemd/systemd                           px -> systemd-user,
-
-  # Mount operations from services and systemd
-  @{bin}/mount                                     Px -> sd-mount,
-  @{bin}/umount                                    Px -> sd-umount,
 
   # Unit services using systemctl
   @{bin}/systemctl                                 Cx -> systemctl,

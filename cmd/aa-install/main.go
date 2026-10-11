@@ -240,11 +240,6 @@ func aaInstall(configDir *paths.Path, srcDir *paths.Path, cfg *conf) (bool, erro
 		// Keep or remove the full system policy group
 		Add(configure.NewFullSystemPolicy(cfg.fsp, aa.MagicRoot.Join(configure.ProfilesRel)))
 
-	// Generate the full system policy systemd unit drop-ins from the fsp.d dirs
-	if cfg.fsp {
-		r.Configures.Add(configure.NewSystemdFSP(cfg.fspDirs))
-	}
-
 	// Default include: re-apply ignored profiles from the include.d dirs
 	var includeEntries []string
 	if cfg.include != "full" {

@@ -21,19 +21,14 @@
 # systemd                                # PID 1, entrypoint, requires "Early policy"
 # ├── systemd                            # To restart itself
 # ├── systemd-generators-*               # Systemd system and environment generators
-# └── sd                                 # Internal service starter and config handler, handles all services
-#     ├── Px or px,                      # Any service with profile
-#     ├── Px ->                          # Any service without profile defined in the unit file (see systemd/full/systemd)
-#     ├── &*                             # Stacked service as defined in the unit file (see systemd/full/systemd)
-#     ├── sd-mount                       # Handles all mounts from services
+# └── sd (unconfined)                    # Internal service starter and config handler, handles all services
+#     ├── pix,                           # Any service with profile
 #     ├── sd//systemctl                  # Internal system systemctl
 #     └── systemd-user                   # Profile for 'systemd --user'
 #         ├── systemd-user               # To restart itself
 #         ├── systemd-user-generators-*  # Systemd user and environment generators
-#         └── sdu                        # Handles all user services
-#             ├── Px or px,              # Any user service with profile
-#             ├── Px ->                  # Any user service without profile defined in the unit file (see systemd/full/systemd)
-#             ├── &*                     # Stacked user service as defined in the unit file (see systemd/full/systemd)
+#         └── sdu (unconfined)           # Handles all user services
+#             ├── pix,                   # Any user service with profile
 #             └── sdu//systemctl         # Internal user systemctl
 # ```
 #
@@ -131,6 +126,7 @@ profile systemd flags=(attach_disconnected,mediate_deleted,complain) {
 
   @{etc_ro}/environment r,
   @{etc_ro}/environment.d/{,**} r,
+  @{etc_rw}/hostname r,
   @{etc_rw}/locale.conf r,
   /etc/acpi/events/{,**} r,
   /etc/binfmt.d/{,**} r,
