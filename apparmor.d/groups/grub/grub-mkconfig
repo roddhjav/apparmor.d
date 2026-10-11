@@ -17,6 +17,7 @@ profile grub-mkconfig @{exec_path} flags=(attach_disconnected) {
 
   capability dac_override,
   capability dac_read_search,
+  capability sys_admin,
 
   @{exec_path}                 mr,
 
@@ -32,7 +33,6 @@ profile grub-mkconfig @{exec_path} flags=(attach_disconnected) {
   @{bin}/dpkg                 rPx,
   @{bin}/expr                 rix,
   @{bin}/find                 rix,
-  @{sbin}/findfs              rix,
   @{bin}/findmnt              rPx,
   @{bin}/gettext              rix,
   @{bin}/head                 rix,
@@ -57,10 +57,13 @@ profile grub-mkconfig @{exec_path} flags=(attach_disconnected) {
   @{bin}/umount               rPx,
   @{bin}/uname                rix,
   @{bin}/which{,.debianutils} rix,
-  @{bin}/zfs                  rPx,
   @{bin}/zpool                rPx,
+  @{bin}/zfs                 mrPx,
+  @{sbin}/efibootmgr          rix,
+  @{sbin}/findfs              rix,
   @{sbin}/btrfs               rPx,
   @{sbin}/dmsetup             rPx,
+  @{sbin}/fsfreeze            rix,
   /etc/grub.d/{,**}           rix,
 
   @{bin}/grub{,2}-editenv        Px,
@@ -68,22 +71,25 @@ profile grub-mkconfig @{exec_path} flags=(attach_disconnected) {
   @{bin}/grub{,2}-script-check   Px,
   @{lib}/grub-customizer/*      rix,
   @{lib}/grub/grub-sort-version  Px,
-  @{sbin}/grub-check-default    PUx,
+  @{sbin}/grub-check-default     Px,
   @{sbin}/grub-probe             Px,
-  @{sbin}/grub2-check-default   PUx,
+  @{sbin}/grub2-check-default    Px,
   @{sbin}/grub2-probe            Px,
 
   @{lib}/rpm/rpmsort         rPUx,
-  @{lib}/libostree/grub[0-9]-@{int}_ostree rix,
+  @{lib}/libostree/grub@{d}-@{int}_ostree rix,
 
   /usr/share/desktop-base/*/grub/* r,
   /usr/share/grub{,2}/{,**} r,
+  /usr/share/plymouth/themes/**.grub r,
   /usr/share/terminfo/** r,
 
+  @{etc_ro}/blkid.conf r,
+  /etc/blkid.conf.d/{,*.conf} r,
+  /etc/crypttab r,
   /etc/default/grub r,
   /etc/default/grub-btrfs/config r,
   /etc/default/grub.d/{,*} r,
-  /etc/crypttab r,
   /etc/tuned/bootcmdline r,
 
   / r,
@@ -98,7 +104,14 @@ profile grub-mkconfig @{exec_path} flags=(attach_disconnected) {
   @{efi}/grub{,2}/{,**} rw,
 
   /tmp/grub-*.@{rand10}/{,**} rw,
+  /tmp/zfsmnt.@{rand6}/ rw,
+  /tmp/zfstmp.@{rand6}/ rw,
 
+  @{sys}/firmware/efi/efivars/ r,
+  @{sys}/firmware/efi/efivars/Boot@{d}@{d}@{d}@{d}-@{uuid} r,
+  @{sys}/firmware/efi/efivars/BootCurrent-@{uuid} r,
+  @{sys}/firmware/efi/efivars/BootOrder-@{uuid} r,
+  @{sys}/firmware/efi/efivars/Timeout-@{uuid} r,
   @{sys}/firmware/efi/efivars/OsIndicationsSupported-@{uuid} r,
 
   @{PROC}/@{pids}/mountinfo r,
