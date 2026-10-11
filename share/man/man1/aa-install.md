@@ -120,14 +120,6 @@ Each tier may contain:
 
 : Set per-profile flags.
 
-*fsp.d/\*.conf*
-
-: List of systemd services and their profile (**\<unit\> \<profile\>**) in
-  full system policy. Each one gets a
-  */etc/systemd/system/\<unit\>.service.d/apparmor.conf* drop-in setting its
-  **AppArmorProfile=**. The drop-ins are removed when the full system policy
-  is disabled or on uninstall.
-
 *ignore.d/\*.conf*
 
 : Set the (groups of) profiles to ignore.
