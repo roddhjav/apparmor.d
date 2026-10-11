@@ -6,18 +6,19 @@
 
 # *Part of the `systemd` (as PID 1) profile.*
 #
-# `sd` is a profile for **s**ystem**d**-executor run as root. It is used to
-# run all service files and to encapsulate stacked service profiles (hence the
-# short name). By design, this profile must be as broad as all the profiles it
-# runs combined.
+# `sd` is a profile for **s**ystem**d**-executor run as root. It is used to run 
+# all service files and to encapsulate stacked service profiles (hence the short
+# name, to keep the security attribute easy to read). By design, this profile 
+# must be as broad as all the profiles it runs combined, so it uses the
+#  `unconfined` flag.
+#
+# The `unconfined` flag also avoids the AppArmor *No New Privileges* (NNP) 
+# restriction. Many services run with `NoNewPrivileges=yes`, and under NNP a
+# confined task can only transition to a profile stacked on its current one
+# (`sd//&<service>`). An unconfined profile is exempt from this restriction, 
+# so services can transition to their own profile without being stacked with `sd`.
 #
 # It aims to reduce the size of the `systemd` profile.
-#
-# !!! note
-#
-#     To reduce the number of artificially stacked profiles, this profile is
-#     currently **not used** in FSP mode, as `systemd` purposely runs
-#     systemd-executor unconfined.
 #
 
 abi <abi/5.0>,
@@ -25,19 +26,10 @@ abi <abi/5.0>,
 include <tunables/global>
 
 @{exec_path} = @{lib}/systemd/systemd-executor
-profile sd flags=(unconfined,attach_disconnected,mediate_deleted) {
+profile sd flags=(unconfined) {
   include <abstractions/base>
 
   @{exec_path} mr,
-
-  #aa:lint ignore=transition
-  @{bin}/**                                      mpix,
-  @{sbin}/**                                     mpix,
-  @{lib}/**                                       pix,
-  /etc/cron.*/*                                   pix,
-  /etc/init.d/*                                   pix,
-  /etc/update-motd.d/*                            pix,
-  /usr/share/*/**                                 pix,
 
   # Systemd user: systemd --user
   @{lib}/systemd/systemd                           px -> systemd-user,
@@ -48,7 +40,7 @@ profile sd flags=(unconfined,attach_disconnected,mediate_deleted) {
   # Unit services
   @{bin}/kill                                      Cx -> kill,
 
-  profile systemctl flags=(attach_disconnected,mediate_deleted,complain) {
+  profile systemctl flags=(attach_disconnected,mediate_deleted) {
     include <abstractions/base>
     include <abstractions/app/systemctl>
 
@@ -58,7 +50,7 @@ profile sd flags=(unconfined,attach_disconnected,mediate_deleted) {
     include if exists <local/sd_systemctl>
   }
 
-  profile kill flags=(attach_disconnected,mediate_deleted,complain) {
+  profile kill flags=(attach_disconnected,mediate_deleted) {
     include <abstractions/base>
 
     signal send,
