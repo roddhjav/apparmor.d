@@ -282,7 +282,13 @@ func (aaLogs AppArmorLogs) String() string {
 		owner := aa.IsOwner(log)
 		hasNs := false
 		if ns, present := log["namespace"]; present {
-			res.WriteString(" " + fgBlue + ":" + getNameSpace(ns) + ":" + log["profile"] + reset)
+			res.WriteString(" ")
+			res.WriteString(fgBlue)
+			res.WriteString(":")
+			res.WriteString(getNameSpace(ns))
+			res.WriteString(":")
+			res.WriteString(log["profile"])
+			res.WriteString(reset)
 			hasNs = true
 		}
 
