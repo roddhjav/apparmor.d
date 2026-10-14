@@ -12,6 +12,7 @@ profile systemd-rfkill @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/common/systemd>
 
+  capability dac_read_search,
   capability net_admin,
   capability sys_admin,
   capability sys_ptrace,
@@ -26,12 +27,15 @@ profile systemd-rfkill @{exec_path} flags=(attach_disconnected) {
 
   @{run}/udev/data/+rfkill:* r,           # Kill switch for wireless devices (Wi-Fi, Bluetooth, NFC) to save power
 
+  @{sys}/bus/*/drivers/*/uevent r,
+  @{sys}/devices/@{pci}/i2c-@{int}/**/uevent r,
   @{sys}/devices/@{pci}/nvme/nvme@{int}/uevent r,
   @{sys}/devices/@{pci}/usb@{int}/** r,
   @{sys}/devices/**/rfkill@{int}/{uevent,name} r,
   @{sys}/devices/system/machinecheck/machinecheck@{int}/uevent r,
   @{sys}/devices/virtual/cpuid/cpu@{int}/uevent r,
   @{sys}/devices/virtual/msr/msr@{int}/uevent r,
+  @{sys}/module/*/uevent r,
 
   /dev/rfkill rw,
 
