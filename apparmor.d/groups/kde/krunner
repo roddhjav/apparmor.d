@@ -1,0 +1,114 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Łukasz Kozak <lakis.kozak@gmail.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/krunner
+profile krunner @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/bus/system/org.freedesktop.login1>
+  include <abstractions/bus/system/org.freedesktop.UDisks2>
+  include <abstractions/common/kde>
+  include <abstractions/disks-read>
+  include <abstractions/kde-sonnet>
+  include <abstractions/nameservice-strict>
+  include <abstractions/network-manager-observe>
+  include <abstractions/ssl_certs>
+  include <abstractions/sys/input>
+
+  network inet dgram,
+  network inet6 dgram,
+  network inet stream,
+  network inet6 stream,
+  network netlink dgram,
+  network netlink raw,
+
+  signal send set=term peer=kioworker,
+
+  ptrace read,
+
+  @{exec_path} mr,
+
+  @{bin}/kill mrCx -> kill,
+
+  #aa:exec kioworker
+
+  /usr/share/kf6/searchproviders/{,*} r,
+  /usr/share/kglobalaccel/{,*} r,
+  /usr/share/konsole/{,*} r,
+  /usr/share/metainfo/{,*} r,
+  /usr/share/plasma/desktoptheme/{,**} r,
+  /usr/share/qalculate/*.xml r,
+  /usr/share/swcatalog/icons/** r,
+
+  /etc/fstab r,
+  /etc/xdg/kshorturifilterrc r,
+
+  /var/cache/swcatalog/cache/*-os-catalog.xb r,
+  /var/lib/flatpak/appstream/{,**/} r,
+  /var/lib/flatpak/appstream/*/@{arch}/@{hex64}/appstream.xml.gz r,
+  /var/lib/flatpak/appstream/*/@{arch}/@{hex64}/icons/**.@{icon_ext} r,
+  /var/lib/swcatalog/icons/** r,
+
+  /snap/*/@{uid}/**.@{icon_ext} r,
+
+  @{bin}/ r,
+
+  owner @{user_cache_dirs}/appstream/ r,
+  owner @{user_cache_dirs}/appstream/.goutputstream-@{rand6} rw,
+  owner @{user_cache_dirs}/appstream/*-local-metainfo.xb rw,
+  owner @{user_cache_dirs}/appstream/*-os-catalog.xb r,
+  owner @{user_cache_dirs}/appstream/*-flatpak-*-@{arch}.xb rw,
+  owner @{user_cache_dirs}/ksvg-elements@{atomic} rwlk -> @{user_cache_dirs}/#@{int},
+  owner @{user_cache_dirs}/org.kde.unitconversion/hsts/** rwlk -> @{user_cache_dirs}/org.kde.unitconversion/hsts/**,
+  owner @{user_cache_dirs}/plasma_theme_*.kcache rw,
+
+  owner @{user_config_dirs}/kioslaverc r,
+  owner @{user_config_dirs}/ksmserverrc r,
+  owner @{user_config_dirs}/kuriikwsfilterrc r,
+
+  owner @{user_share_dirs}/kactivitymanagerd/resources/database* rwk,
+  owner @{user_share_dirs}/kate/sessions/{,*} r,
+  owner @{user_share_dirs}/konsole/{,*} r,
+  owner @{user_share_dirs}/krunnerstaterc@{atomic} rwlk -> @{user_share_dirs}/#@{int},
+  owner @{user_share_dirs}/libkunitconversion/** rwlk -> @{user_share_dirs}/libkunitconversion/**,
+  owner @{user_share_dirs}/user-places.xbel r,
+
+        @{run}/mount/utab r,
+  owner @{run}/user/@{uid}/#@{int} rw,
+  owner @{run}/user/@{uid}/krunner@{rand6}.@{int}.kioworker.socket rwl -> @{run}/user/@{uid}/#@{int},
+
+  @{sys}/bus/ r,
+  @{sys}/bus/usb/devices/ r,
+  @{sys}/devices/virtual/net/*/uevent r,
+
+        @{PROC}/ r,
+        @{PROC}/@{pids}/cgroup r,
+        @{PROC}/@{pids}/stat r,
+        @{PROC}/@{pids}/statm r,
+        @{PROC}/@{pids}/status r,
+  owner @{PROC}/@{pid}/mountinfo r,
+  owner @{PROC}/@{pid}/task/@{tid}/comm w,
+
+  /dev/tty r,
+
+  # Silencer
+  deny /var/cache/swcatalog/ w,
+
+  profile kill {
+    include <abstractions/base>
+
+    signal send set=kill,
+
+    @{bin}/kill r,
+
+    include if exists <local/krunner_kill>
+  }
+
+  include if exists <local/krunner>
+}
+
+# vim:syntax=apparmor
