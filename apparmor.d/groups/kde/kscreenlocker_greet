@@ -24,7 +24,8 @@ profile kscreenlocker_greet @{exec_path} {
 
   signal (receive) set=(usr1, term) peer=kwin_wayland,
   signal (receive) set=(usr1, term) peer=ksmserver,
-  signal (send) peer=kcheckpass,
+  signal (send)                     peer=kcheckpass,
+  signal (send)    set=(kill,term)  peer=kscreenlocker_greet//worker,
 
   unix bind type=stream addr=@@{udbus}/bus/QThread/system,
 
@@ -34,6 +35,8 @@ profile kscreenlocker_greet @{exec_path} {
        peer=(name=@{busname}, label=sddm),
 
   @{exec_path} mr,
+
+  @{lib}/kscreenlocker_worker Cx -> worker,
 
   /usr/share/color/icc/{,**} r,
 
@@ -48,7 +51,6 @@ profile kscreenlocker_greet @{exec_path} {
   /usr/share/wallpapers/{,**} r,
   /usr/share/wallpapers/Path/contents/images/*.{jpg,png} r,
   /usr/share/wayland-sessions/{,*.desktop} r,
-  /usr/share/xsessions/{,*.desktop} r,
   /usr/share/hunspell/* r,
 
   @{etc_ro}/environment r,
@@ -77,12 +79,14 @@ profile kscreenlocker_greet @{exec_path} {
   owner @{user_cache_dirs}/plasma-svgelements@{atomic} rwlk -> @{user_cache_dirs}/#@{int},
   owner @{user_cache_dirs}/plasma-svgelements-default_v* r,
 
+  owner @{user_config_dirs}/kaccessrc r,
   owner @{user_config_dirs}/kdedefaults/kscreenlockerrc r,
   owner @{user_config_dirs}/kscreenlockerrc r,
   owner @{user_config_dirs}/kscreenlockerrc.lock rwk,
   owner @{user_config_dirs}/ksmserverrc r,
   owner @{user_config_dirs}/plasmashellrc r,
 
+  owner @{user_state_dirs}/kscreenlockerrc@{atomic} rwlk -> @{user_state_dirs}/#@{int},
   owner @{user_share_dirs}/plasma/desktoptheme/** r,
   owner @{user_share_dirs}/plasma/look-and-feel/*/contents/defaults r,
   owner @{user_share_dirs}/plasma/look-and-feel/*/metadata.json r,
@@ -119,6 +123,37 @@ profile kscreenlocker_greet @{exec_path} {
   owner @{PROC}/@{pid}/loginuid r,
 
   /dev/tty r,
+
+  # ToDo: introduced with Plasma 6.8 - the be checked if parent profile could be simplified,
+  # when the last distribution migrates to this version
+  # nameservice-strict seems the only neccessery line to be left
+  profile worker {
+    include <abstractions/base>
+    include <abstractions/nameservice-strict>
+
+    network netlink raw,
+
+    signal receive set=(kill,term) peer=kscreenlocker_greet,
+
+    @{sbin}/unix_chkpwd rPx,
+
+    @{etc_ro}/environment r,
+    @{etc_ro}/login.defs r,
+    @{etc_ro}/login.defs.d/{,*} r,
+    @{etc_ro}/security/*.conf r,
+    /etc/pam.d/* r,
+    /etc/shells r,
+
+    owner @{run}/faillock/@{user} rwk,
+
+    @{PROC}/@{pids}/status r,
+
+    # Inherit Silencer
+    deny /dev/dri/renderD12[89] rw,
+    deny /dev/udmabuf rw,
+
+    include if exists <local/kscreenlocker_greet_worker>
+  }
 
   include if exists <local/kscreenlocker_greet>
 }

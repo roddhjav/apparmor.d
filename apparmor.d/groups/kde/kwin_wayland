@@ -18,6 +18,7 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/input>
   include <abstractions/nameservice-strict>
   include <abstractions/sys/dmi>
+  include <abstractions/udev/sd>
 
   # See https://community.kde.org/Distributions/Packaging_Recommendations#KWin_package_configuration
   capability sys_nice,
@@ -64,7 +65,9 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
   /usr/share/color/icc/{,**} r,
   /usr/share/desktop-directories/*.directory r,
+  /usr/share/kf6/searchproviders/{,*} r,
   /usr/share/kglobalaccel/{,**} r,
+  /usr/share/krunner/dbusplugins/{,*} r,
   /usr/share/kservices{5,6}/{,**} r,
   /usr/share/kservicetypes5/{,*.desktop} r,
   /usr/share/kwin/{,**} r,
@@ -73,6 +76,7 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   /usr/share/libinput/{,**} r,
   /usr/share/plasma/desktoptheme/** r,
 
+  /etc/fstab r,
   /etc/xdg/** r,
 
   owner @{HOME}/ r,
@@ -115,7 +119,10 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{user_config_dirs}/kglobalshortcutsrc@{atomic} rwlk,
   owner @{user_config_dirs}/khotkeysrc r,
   owner @{user_config_dirs}/klaunchrc r,
+  owner @{user_config_dirs}/krunnerrc r,
   owner @{user_config_dirs}/kscreenlockerrc r,
+  owner @{user_config_dirs}/ksmserverrc r,
+  owner @{user_config_dirs}/kuriikwsfilterrc r,
   owner @{user_config_dirs}/kwinoutputconfig.json rw,
   owner @{user_config_dirs}/kwinrc@{atomic} rwlk,
   owner @{user_config_dirs}/kwinrulesrc@{atomic} rwlk,
@@ -124,11 +131,15 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{user_config_dirs}/menus/** r,
 
   owner @{user_share_dirs}/aurorae/themes/{,**} r,
+  owner @{user_share_dirs}/kate/sessions/{,*} r,
+  owner @{user_share_dirs}/konsole/{,*} r,
+  owner @{user_share_dirs}/krunnerstaterc r,
   owner @{user_share_dirs}/kscreen/* r,
   owner @{user_share_dirs}/kwin/effects/{,**} r,
   owner @{user_share_dirs}/kwin/scripts/{,**} r,
   owner @{user_share_dirs}/plasma/desktoptheme/{,**} r,
   owner @{user_share_dirs}/smod/decorations/{,**} r,
+  owner @{user_share_dirs}/user-places.xbel r,
 
   owner @{user_state_dirs}/ w,
   owner @{user_state_dirs}/kglobalshortcutsstaterc@{atomic} rwlk,
@@ -159,6 +170,8 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
   @{att}@{run}/systemd/inhibit/@{int}.ref rw,
 
+  @{PROC}/ r,
+  @{PROC}/@{pids}/cgroup r,
   @{PROC}/@{pids}/maps r,
   @{PROC}/@{pids}/mountinfo r,
   @{PROC}/@{pids}/task/@{tid}/comm rw,
@@ -185,7 +198,7 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected,mediate_deleted) {
     /etc/xdg/Xwayland-session.d/00-at-spi r,
     /usr/share/color/icc/{,**} r,
 
-    /home/ r,
+          @{HOMEDIRS}/ r,
     owner @{HOME}/ r,
 
     /dev/udmabuf rw,
@@ -216,7 +229,7 @@ profile kwin_wayland @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
     /etc/xdg/Xwayland-session.d/10-ibus-x11 r,
 
-    /home/ r,
+          @{HOMEDIRS}/ r,
     owner @{HOME}/ r,
 
     include if exists <local/kwin_wayland_ibus>
