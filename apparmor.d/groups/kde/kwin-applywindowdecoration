@@ -1,0 +1,34 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Łukasz Kozak <lakis.kozak@gmail.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+@{exec_path}  = @{lib}/kwin-applywindowdecoration
+@{exec_path} += @{lib}/@{multiarch}/libexec/kwin-applywindowdecoration
+profile kwin-applywindowdecoration @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/desktop-base>
+  include <abstractions/bus-session>
+  include <abstractions/kde-base>
+  include <abstractions/qt>
+
+  @{exec_path} mr,
+
+  /usr/share/kwin/decorations/{,**} r,
+
+  owner @{user_config_dirs}/ r,
+  owner @{user_config_dirs}/kwinrc@{atomic} rwlk -> @{user_config_dirs}/#@{int},
+
+  owner @{user_share_dirs}/aurorae/themes/{,**} r,
+
+  @{PROC}/sys/kernel/random/boot_id r,
+
+  /dev/tty r,
+
+  include if exists <local/kwin-applywindowdecoration>
+}
+
+# vim:syntax=apparmor
