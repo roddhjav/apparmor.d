@@ -139,7 +139,6 @@
   @{sys}/devices/virtual/dmi/id/product_sku r,
 
         @{sys}/bus/ r,
-        @{sys}/cgroup/cpu,cpuacct/user.slice/cpu.cfs_quota_us r,
         @{sys}/class/ r,
         @{sys}/class/**/ r,
         @{sys}/devices/@{pci}/ r,
@@ -149,7 +148,6 @@
         @{sys}/devices/**/uevent r,
         @{sys}/devices/power/events/energy-* r,
         @{sys}/devices/power/type r,
-        @{sys}/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us r,
         @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/cpu.max r,
         @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/session-@{word}.scope/cpu.max r,
   owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/**/cpu.max r,
@@ -199,9 +197,11 @@
   # value or those in its thread group.
   owner @{PROC}/@{pid}/task/@{tid}/comm rw,
 
-  # Provide statistical information about our own processes/threads
+  # Allow reading of a summary of the memory use of a process
   owner @{PROC}/@{pid}/smaps r,
   owner @{PROC}/@{pid}/smaps_rollup r,
+
+  # Provide statistical information about our own processes/threads
   owner @{PROC}/@{pid}/stat r,
   owner @{PROC}/@{pid}/statm r,
   owner @{PROC}/@{pid}/task/ r,
@@ -217,6 +217,133 @@
   deny /tmp/MozillaUpdateLock-* w,
   deny owner @{HOME}/.* r,
   deny @{run}/user/@{uid}/gnome-shell-disable-extensions w,
+
+  profile crashhelper flags=(attach_disconnected,complain) {
+    include <abstractions/base>
+
+    unix (send receive) type=seqpacket, # peer=(label=---),
+    unix (send receive) type=seqpacket peer=(label=@{name}),
+    unix (send receive) type=seqpacket peer=(label=@{name}//gxtest),
+
+    @{lib_dirs}/crashhelper mr,
+
+    owner "@{config_dirs}/" w,
+    owner "@{config_dirs}/@{name}/" rw,
+    owner "@{config_dirs}/@{name}/Crash Reports/" rw,
+    owner "@{config_dirs}/@{name}/Crash Reports/crash_helper_server.log" rw,
+
+    include if exists <abstractions/app/firefox_crashhelper.d>
+  }
+
+  profile crashreporter flags=(attach_disconnected,complain) {
+    include <abstractions/base>
+    include <abstractions/dconf-write>
+    include <abstractions/desktop>
+    include <abstractions/fontconfig-cache-read>
+    include <abstractions/graphics>
+    include <abstractions/nameservice-strict>
+
+    network inet dgram,
+    network inet6 dgram,
+    network inet stream,
+    network inet6 stream,
+    network netlink raw,
+
+    unix (send receive) type=seqpacket peer=(label=@{name}),
+    unix (send receive) type=seqpacket peer=(label=@{name}//gxtest),
+
+    signal receive peer=@{name},
+
+    @{lib_dirs}/crashreporter mrix,
+
+    @{bin}/curl rix,
+    @{bin}/mv   rix,
+
+    @{firefox_path}               rPx,
+    @{lib_dirs}/minidump-analyzer rPx,
+
+    owner @{config_dirs}/@{name}/*.*/crashes/{,**} rw,
+    owner @{config_dirs}/@{name}/*.*/crashes/events/@{uuid} rw,
+    owner @{config_dirs}/@{name}/*.*/extensions/*.xpi r,
+    owner @{config_dirs}/@{name}/*.*/minidumps/{,**} rw,
+    owner @{config_dirs}/@{name}/*.*/minidumps//@{uuid}.{dmp,extra} r,
+    owner @{config_dirs}/@{name}/*.*/prefs.js r,
+    owner @{config_dirs}/@{name}/*.*/storage-sync-v2.sqlite-shm r,
+    owner @{config_dirs}/@{name}/*.*/storage/default/* r,
+    owner @{config_dirs}/@{name}/Crash?Reports/{,**} rwk,
+    owner @{config_dirs}/@{name}/Pending?Pings/@{uuid}.json w,
+    owner @{config_dirs}/@{name}/Profile*/*.sqlite-shm r,
+
+    owner @{cache_dirs}/@{name}/*.*/** r,
+
+          /tmp/ r,
+      /var/tmp/ r,
+    owner @{tmp}/@{hex}.{dmp,extra} rw,
+    owner @{tmp}/@{name}/.parentlock w,
+    owner @{tmp}/crashreporter@{int}-request@{int}.json rw,
+
+    owner /dev/shm/org.mozilla.ipc.@{int}.@{int} r,
+
+    owner @{PROC}/@{pid}/cgroup r,
+    owner @{PROC}/@{pid}/cmdline r,
+    owner @{PROC}/@{pid}/mountinfo r,
+
+    include if exists <abstractions/app/firefox_crashreporter.d>
+  }
+
+  profile gxtest flags=(attach_disconnected,complain) {
+    include <abstractions/base>
+    include <abstractions/bus-system>
+    include <abstractions/graphics>
+    include <abstractions/nameservice-strict>
+    include <abstractions/wayland-strict>
+    include <abstractions/X-strict>
+
+    network netlink raw,
+
+    unix (send receive) type=seqpacket peer=(label=@{name}),
+    unix (send receive) type=seqpacket peer=(label=@{name}//crashhelper),
+
+    @{lib_dirs}/glxtest mr,
+    @{lib_dirs}/gfxtest mr,
+
+    / r,
+
+    owner @{cache_dirs}/@{name}/*/startupCache/scriptCache-* r,
+    owner @{cache_dirs}/@{name}/*/startupCache/startupCache* r,
+
+    owner @{config_dirs}/@{name}/*/.parentlock rw,
+    owner @{config_dirs}/*/.parentlock rw,
+
+    owner @{tmp}/@{name}/.parentlock rw,
+    owner @{tmp}/org.mozilla.@{name}/.parentlock rw,
+
+    owner @{PROC}/@{pid}/cmdline r,
+
+    include if exists <abstractions/app/firefox_gxtest.d>
+  }
+
+  profile vaapitest flags=(attach_disconnected,complain) {
+    include <abstractions/base>
+    include <abstractions/graphics>
+    include <abstractions/nameservice-strict>
+
+    network netlink raw,
+
+    @{lib_dirs}/vaapitest mr,
+
+    owner @{tmp}/@{name}/.parentlock rw,
+
+          @{PROC}/version r,
+    owner @{PROC}/@{pid}/task/@{tid}/comm w,
+
+    deny @{config_dirs}/@{name}/*/.parentlock rw,
+    deny @{config_dirs}/@{name}/*/startupCache/** r,
+    deny @{user_cache_dirs}/mozilla/@{name}/*/startupCache/* r,
+    deny @{user_share_dirs}/gnome-shell/session.gvdb rw,
+
+    include if exists <abstractions/app/firefox_vaapitest.d>
+  }
 
   include if exists <abstractions/app/firefox.d>
 
