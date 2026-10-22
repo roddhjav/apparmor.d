@@ -125,33 +125,20 @@ profile kscreenlocker_greet @{exec_path} {
 
   /dev/tty r,
 
-  # ToDo: introduced with Plasma 6.8 - the be checked if parent profile could be simplified,
-  # when the last distribution migrates to this version
-  # nameservice-strict seems the only neccessery line to be left
   profile worker {
     include <abstractions/base>
+    include <abstractions/authentication>
     include <abstractions/nameservice-strict>
 
     network netlink raw,
 
     signal receive set=(kill,term) peer=kscreenlocker_greet,
 
-    @{sbin}/unix_chkpwd rPx,
-
-    @{etc_ro}/environment r,
-    @{etc_ro}/login.defs r,
-    @{etc_ro}/login.defs.d/{,*} r,
-    @{etc_ro}/security/*.conf r,
-    /etc/pam.d/* r,
     /etc/shells r,
 
     owner @{run}/faillock/@{user} rwk,
 
     @{PROC}/@{pids}/status r,
-
-    # Inherit Silencer
-    deny /dev/dri/renderD12[89] rw,
-    deny /dev/udmabuf rw,
 
     include if exists <local/kscreenlocker_greet_worker>
   }
