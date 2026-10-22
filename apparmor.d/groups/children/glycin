@@ -33,6 +33,7 @@ profile glycin flags=(attach_disconnected) {
   deny network inet stream,
   deny network inet6 stream,
   deny /usr/share/nvidia/** r,
+  deny /usr/share/qt6/** r,
   deny owner @{HOME}/.*/** rw,
   deny owner /tmp/*/** w,
   deny /opt/*/** rw,
@@ -45,6 +46,8 @@ profile glycin flags=(attach_disconnected) {
     include <abstractions/base>
     include <abstractions/fonts>
 
+    signal receive set=int peer=flatpak-portal,
+
     unix type=stream,
 
     @{lib}/glycin-loaders/@{d}+/glycin-* mr,
@@ -55,6 +58,10 @@ profile glycin flags=(attach_disconnected) {
     @{att}/usr/share/gtksourceview-3.0/{,**} r,
     @{att}/usr/share/gtksourceview-4/{,**} r,
     @{att}/usr/share/gtksourceview-5/{,**} r,
+
+    owner @{user_cache_dirs}/glycin@{lib}/glycin-loaders/@{d}+/glycin-*/fontconfig/@{hex32}-le{32,64}{,d4}.cache-@{u8}.TMP-@{rand6} w,
+
+    owner @{PROC}/@{pid}/cgroup r,
 
     include if exists <local/glycin_loaders>
   }

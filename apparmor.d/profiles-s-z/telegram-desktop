@@ -13,6 +13,7 @@ profile telegram-desktop @{exec_path} {
   include <abstractions/audio-client>
   include <abstractions/bus-session>
   include <abstractions/bus/session/org.kde.StatusNotifierWatcher>
+  include <abstractions/cgroup-limits>
   include <abstractions/dconf-write>
   include <abstractions/desktop>
   include <abstractions/enchant>
@@ -33,6 +34,8 @@ profile telegram-desktop @{exec_path} {
   network netlink dgram,
   network netlink raw,
 
+  unix (listen bind) type=stream addr=("@@{hex32}-TelegramDesktop"),
+
   @{exec_path} mrix,
 
   @{sh_path}   rix,
@@ -42,11 +45,19 @@ profile telegram-desktop @{exec_path} {
   owner @{user_share_dirs}/TelegramDesktop/ rw,
   owner @{user_share_dirs}/TelegramDesktop/** rwlk -> @{user_share_dirs}/TelegramDesktop/**,
 
+  owner @{user_cache_dirs}/TelegramDesktop/ rw,
+  owner @{user_cache_dirs}/TelegramDesktop/** rwl,
+
   owner @{user_config_dirs}/autostart/telegramdesktop.desktop rw,
   owner @{user_config_dirs}/autostart/org.telegram.desktop._@{hex32}.desktop{,.@{rand6}} rw,
 
   owner @{tmp}/@{hex32}-?@{uuid}? rwk,
+  owner @{tmp}/*-TD-webview-@{pid} rw,
   audit owner /dev/shm/#@{int} rw,
+
+  owner @{run}/user/@{uid}/*-TD-webview-@{pid}-wayland rw,
+  owner @{run}/user/@{uid}/*-TD-webview-@{pid}-wayland.lock rwk,
+  owner @{run}/user/@{uid}/qtwayland-@{rand6} rw,
 
   owner @{PROC}/@{pid}/cmdline r,
   owner @{PROC}/@{pid}/fd/ r,
