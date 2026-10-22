@@ -21,6 +21,10 @@ abi <abi/5.0>,
 
 include <tunables/global>
 
+@{domain}  = org.gnome.ScreenSaver.slice org.gnome.Shell.Extensions
+@{domain} += org.gnome.Shell.Notifications org.gnome.Shell.Screencast
+@{path} = /org/gnome/Shell/Extensions
+
 @{exec_path} = @{bin}/gjs-console
 profile gjs @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
@@ -28,6 +32,11 @@ profile gjs @{exec_path} flags=(attach_disconnected) {
   include <abstractions/consoles>
   include <abstractions/dconf-write>
   include <abstractions/fontconfig-cache-read>
+  include <abstractions/sys/dmi>
+  include <abstractions/sys/hwmon-fan>
+  include <abstractions/sys/hwmon-temp>
+  include <abstractions/sys/hwmon-voltages>
+  include <abstractions/sys/statistics>
 
   # Only needed by org.gnome.Shell.Extensions
   include <abstractions/camera>
@@ -91,6 +100,9 @@ profile gjs @{exec_path} flags=(attach_disconnected) {
   @{bin}/gnome-control-center  Px,
   @{bin}/nautilus              Px,
 
+  # Vitals
+  @{bin}/nvidia-smi            Px,
+
   @{lib}/@{multiarch}/glib-@{version}/gio-launch-desktop  rCx -> open,
   @{lib}/gio-launch-desktop                               rCx -> open,
 
@@ -131,6 +143,7 @@ profile gjs @{exec_path} flags=(attach_disconnected) {
 
   @{sys}/devices/**/uevent r,
 
+        @{PROC}/@{pid}/net/* r,
   owner @{PROC}/@{pid}/mounts r,
   owner @{PROC}/@{pid}/stat r,
   owner @{PROC}/@{pid}/statm r,
