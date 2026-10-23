@@ -26,12 +26,14 @@ profile mdadm @{exec_path} flags=(attach_disconnected) {
   @{exec_path} mr,
 
   @{sh_path}       rix,
+  @{bin}/kmod       Cx -> kmod,
   @{sbin}/sendmail rPUx,
 
   /etc/{,mdadm/}mdadm.conf     r,
   /etc/{,mdadm/}mdadm.conf.d/* r,
 
   @{run}/initctl r,
+  @{run}/mdadm/ w,
   @{run}/mdadm/* rwk,
 
   /tmp/tmp.@{rand10}/mkinitramfs_@{rand6}/etc/mdadm/mdadm.conf.tmp rw,
@@ -53,6 +55,19 @@ profile mdadm @{exec_path} flags=(attach_disconnected) {
 
   /dev/**/ r,
   /dev/.tmp.md.* rw,
+
+  profile kmod {
+    include <abstractions/base>
+    include <abstractions/app/kmod>
+
+    capability sys_module,
+
+    @{run}/mdadm/map.lock rw, # file_inherit
+
+    @{sys}/module/compression r,
+
+    include if exists <local/mdadm_kmod>
+  }
 
   include if exists <local/mdadm>
 }
