@@ -2,16 +2,13 @@
 # Copyright (C) 2019-2021 Mikhail Morfikov
 # Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
 # Copyright (C) 2022 Jeroen Rijken
+# Copyright (C) 2026 Łukasz Kozak <lakis.kozak@gmail.com>
 # SPDX-License-Identifier: GPL-2.0-only
 
-# !!! warning "TODO"
-#
-#     1. Revisit this profile: all build tasks should take place in a dedicated profile:
-#     ```
-#     @{lib}/modules/*/build/ Cx,
-#     /var/lib/dkms/**/build/ Cx,
-#     ```
-#     2. Needs to be tested with the zfs dkms module
+# ToDo:
+# 1) decide on 'sign' profile - leave as is, change to 'build', inherit (to limit named profile transitions)
+# 2) @{bin}/* rix, - should all used binaries be named or is this good enough for 'build' subprofile
+# 3) what to leave from audited rules
 
 abi <abi/5.0>,
 
@@ -23,129 +20,221 @@ profile dkms @{exec_path} flags=(attach_disconnected) {
   include <abstractions/cgroup-limits>
   include <abstractions/consoles>
   include <abstractions/nameservice-strict>
-  include <abstractions/python>
 
-  capability dac_override,
+  audit capability dac_override,
   capability dac_read_search,
-  capability mknod,
-  capability setgid,
-  capability setuid,
-  capability sys_admin, # optional: no audit
+  audit capability mknod,
+  audit capability setgid,
+  audit capability setuid,
 
   ptrace read peer=@{p_systemd},
 
-  unix (receive) type=stream,
+  audit unix (receive) type=stream,
 
   @{exec_path} rm,
 
-  @{sh_path}        rix,
+  @{sh_path}       mr,
   @{coreutils_path} rix,
-  @{archive_path}   rix,
-  @{ldd_path}       rix,
-  @{python_path}    rix,
-  @{bin}/as         rix,
-  @{bin}/bc         rix,
-  @{bin}/clang-@{version} rix,
-  @{bin}/file       rix,
-  @{bin}/g++        rix,
-  @{bin}/gcc        rix,
-  @{bin}/getconf    rix,
-  @{bin}/git        rix,
-  @{bin}/hostname   rix,
-  @{bin}/kill       rix,
-  @{bin}/kmod       rCx -> kmod,
-  @{bin}/llvm-objcopy rix,
-  @{bin}/lsb_release rPx,
-  @{bin}/make       rix,
-  @{bin}/msgfmt     rix,
-  @{bin}/msgmerge   rix,
-  @{bin}/nm         rix,
-  @{bin}/objcopy    rix,
-  @{bin}/objdump    rix,
-  @{bin}/openssl    rix,
-  @{bin}/pahole     rix,
-  @{bin}/pkgconf    rix,
-  @{bin}/readelf    rix,
-  @{bin}/rpm       rPUx,
-  @{bin}/strip      rix,
-  @{bin}/xgettext   rix,
-  @{sbin}/update-secureboot-policy rPUx,
 
-  @{lib}/gcc/@{multiarch}/@{version}/*         rix,
-  @{lib}/linux-kbuild-*/scripts/**             rix,
-  @{lib}/linux-kbuild-*/tools/objtool/objtool  rix,
-  @{lib}/llvm-@{d}*/bin/clang                  rix,
-  @{lib}/modules/*/build/arch/x86/**           rix,
-  @{lib}/modules/*/build/include/**            rix,
-  @{lib}/modules/*/build/scripts/**            rix,
-  @{lib}/modules/*/build/tools/**              rix,
-  @{lib}/os-release rix,
+  audit @{bin}/kill       rix,
+  @{bin}/getopt      rix,
+  @{bin}/kmod        rCx -> kmod,
+  @{bin}/kmodsign   mrCx -> sign,
+  @{bin}/llvm-objcopy Cx -> build,
+  audit @{bin}/lsb_release rPx,
+  @{bin}/make         Cx -> build,
+  @{bin}/openssl     rix,
+  @{bin}/patch      mrCx -> build,
+  @{bin}/rpm          PUx,
+  @{bin}/xz          rix,
+  @{bin}/zstd        rix,
 
-  /var/lib/dkms/**/build/** rix,
-  /var/lib/dkms/**/build/** rwk,
-  /var/lib/dkms/**/configure rix,
-  /var/lib/dkms/**/dkms.postbuild rix,
+  @{bin}/{,@{multiarch}}readelf rix,
+  @{bin}/{,@{multiarch}}strip   rix,
+  #aa:only apt
+  @{sbin}/update-secureboot-policy rPx,
 
-  /var/lib/shim-signed/mok/** r,
+  #aa:only opensuse
+  @{bin}/systemctl Cx -> systemctl, # updating on openSUSE via dkms.service
 
-  / r,
-  /opt/ r,
+  @{lib}/module-init-tools/weak-modules2  rix,
+  @{lib}/modules/*/build/scripts/sign-file Cx -> sign,
+
+  /var/lib/dkms/*/*/build/** Cx -> build,
+  /usr/src/linux-*/*/*/scripts/sign-file Cx -> sign,
+  /usr/src/*/dkms.@{word} Cx -> build,
+
+  @{lib}/modules/*/build/** r,
+  @{lib}/modules/*/initrd/ w,
+  @{lib}/modules/*/kernel/drivers/{,*,*/,**.ko.xz,**.ko.zst} r,
   @{lib}/modules/*/updates/ rw,
-  @{lib}/modules/*/updates/dkms/{,*,*/,**.ko.xz,**.ko.zst} rw,
-  @{lib}/modules/*/kernel/drivers/{,*,*/,**.ko.xz,**.ko.zst} rw,
+  @{lib}/modules/*/updates/{,dkms/}{,*,*/,**.ko.xz,**.ko.zst} rw,
+  #aa:only ubuntu
+  @{lib}/modules/*/ubuntu/dkms/**.ko.zst rw,
 
-  /etc/lsb-release r,
   /etc/dkms/{,**} r,
+  audit /etc/lsb-release r,
+  /etc/sysconfig/bootloader r,
 
-  /var/ r,
-  /var/lib/ r,
+  /var/{,lib/} r,
+  /var/lib/dkms/{,*} r,
+  /var/lib/dkms/* w,
+  /var/lib/dkms/*/{,**} rw,
 
-  /var/lib/dkms/ r,
-  /var/lib/dkms/** rwk,
+  audit /var/lib/rpm/ r,
+  audit /var/lib/rpm/** rw,
 
-  /var/lib/rpm/ r,
-  /var/lib/rpm/** rw,
-
-  # For building module in /usr/src/ subdirs
-  /usr/include/**.h r,
-  /usr/src/ r,
-  /usr/src/** rw,
-  /usr/src/linux-headers-*/scripts/**              rix,
-  /usr/src/linux-headers-*/scripts/gcc-plugins/*.so mr,
-  /usr/src/linux-headers-*/tools/**                rix,
-
-  /usr/share/file/misc/magic.mgc r,
-  /usr/share/gettext{,-1.0}/its/{,**.loc} r,
+  /var/tmp/weak-modules2.@{rand6}/ rw,
 
   # For autosign modules
-  owner /etc/kernel_key/*.crt r,
-  owner /etc/kernel_key/*.key r,
-  owner /etc/kernel_key/sign-kernel.sh rix,
+  audit owner /etc/kernel_key/sign-kernel.sh Cx -> sign,
+  audit owner /etc/kernel_key/*.crt r,
+  audit owner /etc/kernel_key/*.key r,
 
-  owner @{HOME}/ r,
+  / r,
 
+  /usr/src/{,**} r,
+
+  @{sys}/devices/{,**/} r,
+  @{sys}/devices/**/modalias r,
   @{sys}/fs/cgroup/system.slice/cpu.max r,
   @{sys}/fs/cgroup/system.slice/dkms.service/cpu.max r,
 
-        /tmp/@{word8} rw,
-        /tmp/@{word8}/{,*} rw,
-        /tmp/conftest-@{rand6}.* rw,
-        @{tmp}/GMfifo@{int} rw,
-  owner @{tmp}/cc@{rand6}* rw,
   owner @{tmp}/tmp.@{rand10} rw,
   audit owner @{tmp}/dkms.*/ rw,
   audit owner @{tmp}/sh-thd.* rw,
-  @{tmp}/conftest-*.o.tmp rw,
 
-        @{PROC}/@{pid}/cgroup r,
-        @{PROC}/@{pid}/mountinfo r,
-        @{PROC}/sys/kernel/osrelease r,
-  owner @{PROC}/@{pid}/fd/ r,
+  @{PROC}/@{pid}/cgroup r,
+  @{PROC}/@{pid}/fd/ r,
+  @{PROC}/@{pid}/mountinfo r,
+  audit @{PROC}/sys/kernel/osrelease r,
 
   /dev/pts/@{u16} rw,
 
   # Silencers
   deny @{HOME}/{,**} r,
+
+  profile build {
+    include <abstractions/base>
+    include <abstractions/cgroup-limits>
+    include <abstractions/consoles>
+    include <abstractions/nameservice-strict>
+    include <abstractions/perl>
+    include <abstractions/python>
+
+    capability dac_read_search,
+    capability sys_admin, # optional: no audit
+
+    @{sh_path}        rix,
+    @{archive_path}   rix,
+    @{coreutils_path} rix,
+    @{ldd_path}       rix,
+    @{python_path}    rix,
+
+    # ToDo: change to @{bin}/* rix, ?
+    @{bin}/alts        rix,
+    @{bin}/arch       mrix,
+    audit @{bin}/bc          rix,
+    @{bin}/bindgen     rix,
+    @{bin}/g++         rix,
+    @{bin}/file        rix,
+    @{bin}/getconf     rix,
+    @{bin}/git         rix,
+    @{bin}/hostname    rix,
+    @{bin}/llvm-config rix,
+    @{bin}/llvm-objcopy rix,
+    audit @{bin}/lsb_release rPx,
+    @{bin}/make        rix,
+    @{bin}/msgfmt      rix,
+    @{bin}/msgmerge    rix,
+    @{bin}/mt-gnu      rix,
+    @{bin}/pahole      rix,
+    @{bin}/pkgconf     rix,
+    @{bin}/rustc       rix,
+    @{bin}/rustfmt     rix,
+    @{bin}/xgettext    rix,
+    #aa:only apt
+    # perl app, inheriting it would include:
+    # /etc/dpkg/origins/ubuntu r,
+    @{bin}/dpkg-parsechangelog PUx,
+
+    @{bin}/@{multiarch}ar                rix,
+    @{bin}/{,@{multiarch}}as             rix,
+    @{bin}/clang-@{version}              rix,
+    @{bin}/{,@{multiarch}}gcc{,-@{int}}  rix,
+    @{bin}/{,@{multiarch}}nm             rix,
+    @{bin}/{,@{multiarch}}objcopy        rix,
+    @{bin}/{,@{multiarch}}objdump        rix,
+    @{bin}/{,@{multiarch}}strip          rix,
+    @{bin}/@{multiarch}-gnu-pkg-config   rix,
+    @{lib}/gcc/@{multiarch}/@{version}/* rix,
+    @{lib}/getconf/getconf               rix,
+    @{lib}/llvm-@{d}*/bin/clang          rix,
+
+    # Execs included with the kernel headers
+    #aa:only debian
+    @{lib}/linux-kbuild-*/scripts/** rix,
+    @{lib}/linux-kbuild-*/tools/**   rix,
+
+    #aa:only arch
+    @{lib}/modules/*/build/scripts/** rix,
+    @{lib}/modules/*/build/tools/**   rix,
+
+    #aa:only opensuse
+    /usr/src/linux-*/*/*/scripts/** rix,
+    /usr/src/linux-*/*/*/tools/**   rix,
+
+    #aa:only ubuntu
+    /usr/src/linux-*/scripts/** mrix,
+    /usr/src/linux-*/tools/**   mrix,
+
+    # Execs included with the dkms modules
+    /var/lib/dkms/*/*/build/** rix,
+
+    /usr/ r,
+    /usr/share/doc/go/ r,
+    /usr/share/file/misc/magic.mgc r,
+    /usr/share/gettext{,-@{version}}/its/{,**.loc} r,
+    /usr/share/libalternatives/{,**} r,
+    /usr/share/pkgconfig/{,*} r,
+    /usr/share/terminfo/{,**} r,
+
+    /etc/magic r,
+
+    / r,
+    /opt/ r,
+    /usr/local/{,lib/} r,
+    @{lib}/ r,
+    @{lib}/os-release r,
+
+    /var/lib/dkms/*/*/build/ r,
+    /var/lib/dkms/*/*/build/** rwk,
+    # ZFS specific
+    # /var/lib/dkms/zfs/{,v}@{version}/*/@{arch}/
+    /var/lib/dkms/*/*/*/@{arch}/* w,
+
+    /usr/{,local/}include/ r,
+    /usr/{,local/}include/**.h r,
+    /usr/src/linux-*/{,**}  r,
+    /usr/src/*/dkms.@{word} r,
+
+    @{tmp}/@{word8}{,/} rw,
+    @{tmp}/@{word8}/dummy.c rw,
+    @{tmp}/cc@{rand6}* rw,
+    @{tmp}/GMfifo@{int} rw,
+
+    @{PROC}/@{pids}/cgroup r,
+    @{PROC}/@{pids}/fd/ r,
+    @{PROC}/@{pids}/maps r,
+    @{PROC}/@{pids}/statm r,
+
+    # Silencers
+    deny network inet dgram,
+    deny network inet6 dgram,
+    deny @{HOME}/{,**} r,
+
+    include if exists <local/dkms_build>
+  }
 
   profile kmod {
     include <abstractions/base>
@@ -159,8 +248,44 @@ profile dkms @{exec_path} flags=(attach_disconnected) {
     owner @{tmp}/tmp.@{rand10} r,
 
     @{sys}/module/compression r,
+    @{sys}/module/*/initstate r,
 
     include if exists <local/dkms_kmod>
+  }
+
+  profile sign {
+    include <abstractions/base>
+    include <abstractions/consoles>
+
+    @{bin}/kmodsign r,
+    @{lib}/modules/*/build/scripts/sign-file r,
+    /usr/src/linux-*/*/*/scripts/sign-file r,
+
+    audit owner /etc/kernel_key/*.crt r,
+    audit owner /etc/kernel_key/*.key r,
+
+    /var/lib/dkms/mok.key r,
+    /var/lib/dkms/mok.pub r,
+    /var/lib/shim-signed/mok/* r,
+
+    /var/lib/dkms/*/*/build/**.ko rw,
+    /var/lib/dkms/*/*/build/**.ko.~signed~ rw,
+
+    include if exists <local/dkms_sign>
+  }
+
+  profile systemctl {
+    include <abstractions/base>
+    include <abstractions/app/systemctl>
+
+    capability net_admin,
+    capability sys_resource,
+
+    signal send set=term peer=systemd-tty-ask-password-agent,
+
+    @{bin}/systemd-tty-ask-password-agent Px,
+
+    include if exists <local/dkms_systemctl>
   }
 
   include if exists <local/dkms>
