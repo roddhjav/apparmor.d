@@ -1,0 +1,39 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/magick
+profile magick @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/fonts>
+  include <abstractions/icons>
+  include <abstractions/nameservice-strict>
+  include <abstractions/user-read-strict>
+  include <abstractions/user-write-strict>
+  include <abstractions/X-strict>
+
+  @{exec_path} mr,
+
+  @{sh_path}       rix,
+  @{bin}/gs{,.bin} rix,
+
+  /usr/share/color/icc/ghostscript/* r,
+  /usr/share/ghostscript/{,**} r,
+  /usr/share/ImageMagick-@{int}/** r,
+
+  /etc/ImageMagick-@{int}/** r,
+  /etc/paperspecs r,
+
+  owner @{user_cache_dirs}/ImageMagick/{,**} rw,
+
+  owner @{tmp}/magick-* rw,
+
+  include if exists <local/magick>
+}
+
+# vim:syntax=apparmor
