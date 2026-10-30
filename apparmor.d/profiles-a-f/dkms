@@ -5,11 +5,6 @@
 # Copyright (C) 2026 Łukasz Kozak <lakis.kozak@gmail.com>
 # SPDX-License-Identifier: GPL-2.0-only
 
-# ToDo:
-# 1) decide on 'sign' profile - leave as is, change to 'build', inherit (to limit named profile transitions)
-# 2) @{bin}/* rix, - should all used binaries be named or is this good enough for 'build' subprofile
-# 3) what to leave from audited rules
-
 abi <abi/5.0>,
 
 include <tunables/global>
@@ -21,27 +16,23 @@ profile dkms @{exec_path} flags=(attach_disconnected) {
   include <abstractions/consoles>
   include <abstractions/nameservice-strict>
 
-  audit capability dac_override,
+  capability dac_override,
   capability dac_read_search,
-  audit capability mknod,
-  audit capability setgid,
-  audit capability setuid,
+  capability mknod,
+  capability setgid,
+  capability setuid,
 
   ptrace read peer=@{p_systemd},
-
-  audit unix (receive) type=stream,
 
   @{exec_path} rm,
 
   @{sh_path}       mr,
   @{coreutils_path} rix,
 
-  audit @{bin}/kill       rix,
   @{bin}/getopt      rix,
   @{bin}/kmod        rCx -> kmod,
-  @{bin}/kmodsign   mrCx -> sign,
+  @{bin}/kmodsign   mrix,
   @{bin}/llvm-objcopy Cx -> build,
-  audit @{bin}/lsb_release rPx,
   @{bin}/make         Cx -> build,
   @{bin}/openssl     rix,
   @{bin}/patch      mrCx -> build,
@@ -57,11 +48,11 @@ profile dkms @{exec_path} flags=(attach_disconnected) {
   #aa:only opensuse
   @{bin}/systemctl Cx -> systemctl, # updating on openSUSE via dkms.service
 
-  @{lib}/module-init-tools/weak-modules2  rix,
-  @{lib}/modules/*/build/scripts/sign-file Cx -> sign,
+  @{lib}/module-init-tools/weak-modules2   rix,
+  @{lib}/modules/*/build/scripts/sign-file rix,
 
   /var/lib/dkms/*/*/build/** Cx -> build,
-  /usr/src/linux-*/*/*/scripts/sign-file Cx -> sign,
+  /usr/src/linux-*/*/*/scripts/sign-file rix,
   /usr/src/*/dkms.@{word} Cx -> build,
 
   @{lib}/modules/*/build/** r,
@@ -73,23 +64,20 @@ profile dkms @{exec_path} flags=(attach_disconnected) {
   @{lib}/modules/*/ubuntu/dkms/**.ko.zst rw,
 
   /etc/dkms/{,**} r,
-  audit /etc/lsb-release r,
+  /etc/lsb-release r,
   /etc/sysconfig/bootloader r,
 
   /var/{,lib/} r,
-  /var/lib/dkms/{,*} r,
-  /var/lib/dkms/* w,
+  /var/lib/dkms/ r,
   /var/lib/dkms/*/{,**} rw,
+  /var/lib/dkms/mok.key rw,
+  /var/lib/dkms/mok.pub rw,
+  /var/lib/shim-signed/mok/* r,
 
   audit /var/lib/rpm/ r,
   audit /var/lib/rpm/** rw,
 
   /var/tmp/weak-modules2.@{rand6}/ rw,
-
-  # For autosign modules
-  audit owner /etc/kernel_key/sign-kernel.sh Cx -> sign,
-  audit owner /etc/kernel_key/*.crt r,
-  audit owner /etc/kernel_key/*.key r,
 
   / r,
 
@@ -131,42 +119,7 @@ profile dkms @{exec_path} flags=(attach_disconnected) {
     @{ldd_path}       rix,
     @{python_path}    rix,
 
-    # ToDo: change to @{bin}/* rix, ?
-    @{bin}/alts        rix,
-    @{bin}/arch       mrix,
-    audit @{bin}/bc          rix,
-    @{bin}/bindgen     rix,
-    @{bin}/g++         rix,
-    @{bin}/file        rix,
-    @{bin}/getconf     rix,
-    @{bin}/git         rix,
-    @{bin}/hostname    rix,
-    @{bin}/llvm-config rix,
-    @{bin}/llvm-objcopy rix,
-    audit @{bin}/lsb_release rPx,
-    @{bin}/make        rix,
-    @{bin}/msgfmt      rix,
-    @{bin}/msgmerge    rix,
-    @{bin}/mt-gnu      rix,
-    @{bin}/pahole      rix,
-    @{bin}/pkgconf     rix,
-    @{bin}/rustc       rix,
-    @{bin}/rustfmt     rix,
-    @{bin}/xgettext    rix,
-    #aa:only apt
-    # perl app, inheriting it would include:
-    # /etc/dpkg/origins/ubuntu r,
-    @{bin}/dpkg-parsechangelog PUx,
-
-    @{bin}/@{multiarch}ar                rix,
-    @{bin}/{,@{multiarch}}as             rix,
-    @{bin}/clang-@{version}              rix,
-    @{bin}/{,@{multiarch}}gcc{,-@{int}}  rix,
-    @{bin}/{,@{multiarch}}nm             rix,
-    @{bin}/{,@{multiarch}}objcopy        rix,
-    @{bin}/{,@{multiarch}}objdump        rix,
-    @{bin}/{,@{multiarch}}strip          rix,
-    @{bin}/@{multiarch}-gnu-pkg-config   rix,
+    @{bin}/* mrix,
     @{lib}/gcc/@{multiarch}/@{version}/* rix,
     @{lib}/getconf/getconf               rix,
     @{lib}/llvm-@{d}*/bin/clang          rix,
@@ -200,6 +153,8 @@ profile dkms @{exec_path} flags=(attach_disconnected) {
     /usr/share/terminfo/{,**} r,
 
     /etc/magic r,
+    #aa:only ubuntu
+    /etc/dpkg/origins/ubuntu r,
 
     / r,
     /opt/ r,
@@ -210,7 +165,6 @@ profile dkms @{exec_path} flags=(attach_disconnected) {
     /var/lib/dkms/*/*/build/ r,
     /var/lib/dkms/*/*/build/** rwk,
     # ZFS specific
-    # /var/lib/dkms/zfs/{,v}@{version}/*/@{arch}/
     /var/lib/dkms/*/*/*/@{arch}/* w,
 
     /usr/{,local/}include/ r,
@@ -251,27 +205,6 @@ profile dkms @{exec_path} flags=(attach_disconnected) {
     @{sys}/module/*/initstate r,
 
     include if exists <local/dkms_kmod>
-  }
-
-  profile sign {
-    include <abstractions/base>
-    include <abstractions/consoles>
-
-    @{bin}/kmodsign r,
-    @{lib}/modules/*/build/scripts/sign-file r,
-    /usr/src/linux-*/*/*/scripts/sign-file r,
-
-    audit owner /etc/kernel_key/*.crt r,
-    audit owner /etc/kernel_key/*.key r,
-
-    /var/lib/dkms/mok.key r,
-    /var/lib/dkms/mok.pub r,
-    /var/lib/shim-signed/mok/* r,
-
-    /var/lib/dkms/*/*/build/**.ko rw,
-    /var/lib/dkms/*/*/build/**.ko.~signed~ rw,
-
-    include if exists <local/dkms_sign>
   }
 
   profile systemctl {
