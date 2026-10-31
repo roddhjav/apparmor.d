@@ -363,6 +363,29 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted) {
     include if exists <local/flatpak_fusermount>
   }
 
+  profile revokefs-fuse {
+    include <abstractions/base>
+
+    mount fstype=fuse.revokefs-fuse options=(rw nodev nosuid) revokefs-fuse -> /var/tmp/flatpak-cache-@{rand6}/*/,
+
+    unix (send receive) type=seqpacket peer=(label=flatpak-system-helper),
+    unix (send receive) type=stream peer=(label=flatpak//fusermount),
+    unix (send receive) type=stream peer=(label=fusermount//mount),
+
+    @{bin}/fusermount3 Px -> flatpak//fusermount,
+
+    /var/lib/flatpak/repo/tmp/flatpak-cache-@{rand6}/{,**} r,
+
+    /var/tmp/flatpak-cache-@{rand6}/*/ r,
+    /var/tmp/flatpak-cache-@{rand6}/*/** r,
+
+    @{sys}/devices/system/node/ r,
+
+    /dev/fuse rw,
+
+    include if exists <local/flatpak_revokefs-fuse>
+  }
+
   include if exists <local/flatpak>
 }
 
