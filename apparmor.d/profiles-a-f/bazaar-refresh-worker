@@ -1,0 +1,56 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/bazaar-refresh-worker
+profile bazaar-refresh-worker @{exec_path} flags=(attach_disconnected,mediate_deleted) {
+  include <abstractions/base>
+  include <abstractions/bus-session>
+  include <abstractions/bus-system>
+  include <abstractions/mime>
+  include <abstractions/nameservice-strict>
+  include <abstractions/ssl_certs>
+
+  network inet dgram,
+  network inet stream,
+  network inet6 dgram,
+  network inet6 stream,
+  network netlink raw,
+
+  #aa:dbus talk bus=system name=org.freedesktop.Flatpak.SystemHelper label=flatpak-system-helper
+
+  @{exec_path} mr,
+
+  @{bin}/gpg{,2}             Px -> bazaar//gpg,
+  @{bin}/gpgconf             Px -> bazaar//gpg,
+  @{bin}/gpgsm               Px -> bazaar//gpg,
+
+  /usr/share/flatpak/remotes.d/{,**} r,
+
+  /var/lib/flatpak/app/{,**} r,
+  /var/lib/flatpak/appstream/{,**} r,
+  /var/lib/flatpak/repo/{,**} r,
+  /var/lib/flatpak/runtime/{,**} r,
+
+  owner /var/tmp/#@{int} rw,
+  owner /var/tmp/flatpak-cache-@{rand6}/ rw,
+  owner /var/tmp/flatpak-cache-@{rand6}/** rwlk -> /var/tmp/flatpak-cache-@{rand6}/**,
+
+  owner @{user_cache_dirs}/flatpak/system-cache/{,**} rw,
+  owner @{user_cache_dirs}/io.github.kolunmi.Bazaar/** rw,
+
+  owner @{user_share_dirs}/flatpak/repo/{,**} r,
+
+  owner @{tmp}/ostree-gpg-@{rand6}/ rw,
+  owner @{tmp}/ostree-gpg-@{rand6}/** rwlk -> /tmp/ostree-gpg-@{rand6}/**,
+
+  owner @{run}/user/@{uid}/.flatpak-cache w,
+
+  include if exists <local/bazaar-refresh-worker>
+}
+
+# vim:syntax=apparmor
