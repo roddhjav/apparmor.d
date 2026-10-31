@@ -56,7 +56,7 @@ profile parent @{exec_path} {
   @{PROC}/cmdline r,
 
   # Stacked profile: plymouth
-  include <abstractions/fonts>
+  include <abstractions/fonts-strict>
   include <abstractions/fontconfig-cache-read>
   include <abstractions/consoles>
   unix (send, receive, connect) type=stream peer=(addr="@/org/freedesktop/plymouthd"),
