@@ -1,0 +1,35 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Łukasz Kozak <lakis.kozak@gmail.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/kf6/kauth/{,libexec/}plymouthhelper
+profile kauth-plymouthhelper @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/bus-system>
+  include <abstractions/bus/system/org.freedesktop.PolicyKit1>
+  include <abstractions/mime>
+  include <abstractions/nameservice-strict>
+  include <abstractions/qt>
+
+  capability dac_read_search,
+
+  #aa:dbus own bus=system name=org.kde.kcontrol.kcmplymouth path=/ interface+=org.kde.kf[56]auth
+
+  @{exec_path} mr,
+
+  @{bin}/update-alternatives Px, #aa:only apt
+
+  /usr/share/plymouth/themes/** rw,
+
+  @{user_share_dirs}/kplymouththemeinstaller/*.@{archive_ext} r,
+
+  @{tmp}/#@{int} rw,
+
+  include if exists <local/kauth-plymouthhelper>
+}
+
+# vim:syntax=apparmor
