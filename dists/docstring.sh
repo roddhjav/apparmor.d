@@ -126,11 +126,13 @@ _get_abstraction_type() {
 declare -A TUNABLE_TYPES=(
     [multiarch.d/base]=base
     [multiarch.d/extensions]=extensions
+    [multiarch.d/files]=extensions
     [multiarch.d/paths]=paths
     [multiarch.d/profiles]=profiles
     [multiarch.d/programs]=programs
     [multiarch.d/system]=system
     [multiarch.d/system-users]=system-users
+    [multiarch.d/user-dirs]=home
     [home.d/apparmor.d]=home
     [xdg-user-dirs.d/apparmor.d]=home
 )
