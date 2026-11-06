@@ -37,6 +37,7 @@ profile dkms @{exec_path} flags=(attach_disconnected) {
   @{bin}/openssl     rix,
   @{bin}/patch      mrCx -> build,
   @{bin}/rpm          PUx,
+  @{bin}/tar        mrix,
   @{bin}/xz          rix,
   @{bin}/zstd        rix,
 
@@ -48,6 +49,7 @@ profile dkms @{exec_path} flags=(attach_disconnected) {
   #aa:only opensuse
   @{bin}/systemctl Cx -> systemctl, # updating on openSUSE via dkms.service
 
+  @{lib}/linux-kbuild-*/scripts/sign-file  rix,
   @{lib}/module-init-tools/weak-modules2   rix,
   @{lib}/modules/*/build/scripts/sign-file rix,
 
@@ -74,9 +76,6 @@ profile dkms @{exec_path} flags=(attach_disconnected) {
   /var/lib/dkms/mok.pub rw,
   /var/lib/shim-signed/mok/* r,
 
-  audit /var/lib/rpm/ r,
-  audit /var/lib/rpm/** rw,
-
   /var/tmp/weak-modules2.@{rand6}/ rw,
 
   / r,
@@ -88,8 +87,8 @@ profile dkms @{exec_path} flags=(attach_disconnected) {
   @{sys}/fs/cgroup/system.slice/cpu.max r,
   @{sys}/fs/cgroup/system.slice/dkms.service/cpu.max r,
 
+  owner @{tmp}/dkms.@{rand6}/{,**} rw, # Building tarballs
   owner @{tmp}/tmp.@{rand10} rw,
-  audit owner @{tmp}/dkms.*/ rw,
   audit owner @{tmp}/sh-thd.* rw,
 
   @{PROC}/@{pid}/cgroup r,
@@ -152,9 +151,10 @@ profile dkms @{exec_path} flags=(attach_disconnected) {
     /usr/share/pkgconfig/{,*} r,
     /usr/share/terminfo/{,**} r,
 
+    /etc/mailcap r,
     /etc/magic r,
-    #aa:only ubuntu
-    /etc/dpkg/origins/ubuntu r,
+    #aa:only apt
+    /etc/dpkg/origins/* r,
 
     / r,
     /opt/ r,
@@ -173,9 +173,12 @@ profile dkms @{exec_path} flags=(attach_disconnected) {
     /usr/src/*/dkms.@{word} r,
 
     @{tmp}/@{word8}{,/} rw,
-    @{tmp}/@{word8}/dummy.c rw,
+    @{tmp}/@{word8}/** rwlk -> @{tmp}/@{word8}/**,
     @{tmp}/cc@{rand6}* rw,
     @{tmp}/GMfifo@{int} rw,
+    # Introduced from abstractions/development, not seen
+    audit @{tmp}/tmp.@{rand10} rw,
+    audit /var/tmp/@{word8} rw,
 
     @{PROC}/@{pids}/cgroup r,
     @{PROC}/@{pids}/fd/ r,
