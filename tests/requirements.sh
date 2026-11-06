@@ -14,18 +14,23 @@ _lsb_release() {
 }
 DISTRIBUTION="$(_lsb_release)"
 
+# special preparations for DKMS's tests
+tests/dkms.sh
+
 case "$DISTRIBUTION" in
 arch)
 	sudo pacman -Syu --noconfirm \
 		bats bats-support \
-		pacman-contrib tlp flatpak networkmanager
+		pacman-contrib tlp flatpak networkmanager \
+		linux-headers zfs-dkms
 	;;
 debian | ubuntu)
 	sudo apt-get update -y
 	sudo apt-get install -y \
 		bats bats-support \
 		cpuid dfc systemd-boot systemd-userdbd systemd-homed systemd-container tlp \
-		network-manager systemd-container flatpak util-linux-extra
+		network-manager systemd-container flatpak util-linux-extra \
+		dkms zfs-dkms
 	;;
 opensuse*)
 	;;
