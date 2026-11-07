@@ -12,6 +12,7 @@ include <tunables/global>
 profile polkit-kde-authentication-agent @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/base>
   include <abstractions/audio-client>
+  include <abstractions/bus/system/org.freedesktop.PolicyKit1>
   include <abstractions/consoles>
   include <abstractions/fontconfig-cache-read>
   include <abstractions/graphics>
@@ -29,14 +30,14 @@ profile polkit-kde-authentication-agent @{exec_path} flags=(attach_disconnected,
   signal (send) set=(term, kill) peer=polkit-agent-helper,
 
   #aa:dbus own bus=session name=org.kde.polkit-kde-authentication-agent-@{int}
-  #aa:dbus talk bus=system name=org.freedesktop.PolicyKit1 label=polkitd
+  #aa:dbus talk bus=system name=org.freedesktop.PolicyKit1 label="@{p_polkitd}"
 
   @{exec_path} mr,
 
   @{bin}/xdg-open Px -> child-open-browsers,
 
   @{lib}/ r,
-  @{lib}/polkit-[0-9]/polkit-agent-helper-[0-9] rPx,
+  @{lib}/polkit-@{d}/polkit-agent-helper-@{d} rPx,
 
   owner @{user_cache_dirs}/polkit-kde-authentication-agent-@{int}/ rw,
   owner @{user_cache_dirs}/polkit-kde-authentication-agent-@{int}/** rwlk -> @{user_cache_dirs}/polkit-kde-authentication-agent-@{int}/**,
