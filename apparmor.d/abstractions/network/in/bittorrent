@@ -1,0 +1,23 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Allow ingress BitTorrent connection on the peer port (seed)
+# Transmission uses 51413, other clients 6881-6889
+
+  abi <abi/5.0>,
+
+  include <abstractions/network/tcp>
+  include <abstractions/network/udp>
+
+  network bind tcp port=6881-6889,
+  network (accept listen send receive) tcp port=6881-6889,
+  network (bind send receive) udp port=6881-6889,
+
+  network bind tcp port=51413,
+  network (accept listen send receive) tcp port=51413,
+  network (bind send receive) udp port=51413,
+
+  include if exists <abstractions/network/in/bittorrent.d>
+
+# vim:syntax=apparmor
