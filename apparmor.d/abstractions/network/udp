@@ -1,0 +1,17 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Local UDP socket operations, shared by the in/ and out/ abstractions.
+# Grants neither send nor receive, so it allows no traffic by itself.
+# A UDP connect sends no packet: it only sets, or resets, the default peer.
+# Binding to port 0 only selects an automatic local port.
+
+  abi <abi/5.0>,
+
+  network (create connect getattr getopt setattr setopt shutdown) udp,
+  network bind udp port=0,
+
+  include if exists <abstractions/network/udp.d>
+
+# vim:syntax=apparmor
