@@ -111,6 +111,11 @@ func (m AccessMask) ContainsAny(other AccessMask) bool {
 	return m&other != 0
 }
 
+// Within reports whether every bit of m is in allowed.
+func (m AccessMask) Within(allowed AccessMask) bool {
+	return m&^allowed == 0
+}
+
 // validateAccess checks that m only has bits defined for kind.
 func validateAccess(kind Kind, m AccessMask) error {
 	ensureAccessMasks()
