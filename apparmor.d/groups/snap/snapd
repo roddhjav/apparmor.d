@@ -13,9 +13,12 @@ include <tunables/global>
 profile snapd @{exec_path} {
   include <abstractions/base>
   include <abstractions/authentication>
+  include <abstractions/bus-session>
   include <abstractions/bus-system>
+  include <abstractions/bus/session/org.freedesktop.portal.Documents>
   include <abstractions/bus/system/org.freedesktop.PolicyKit1>
   include <abstractions/bus/system/org.freedesktop.timedate1>
+  include <abstractions/consoles>
   include <abstractions/disks-write>
   include <abstractions/fontconfig-cache-write>
   include <abstractions/fonts-strict>
@@ -89,11 +92,12 @@ profile snapd @{exec_path} {
   @{sbin}/useradd                 rPx,
 
   @{bin_dirs}/fc-cache-*              mr,
-  @{bin_dirs}/snap                  rPUx,
+  @{bin_dirs}/snap                   rPx,
   @{bin_dirs}/xdelta3                rix,
   @{lib_dirs}/@{multiarch}/**         mr,
   @{lib_dirs}/@{multiarch}/ld-*.so   rix,
   @{lib_dirs}/snapd/apparmor_parser  rPx,
+  @{lib_dirs}/snapd/snap-confine     rPx,
   @{lib_dirs}/snapd/snap-discard-ns  rPx,
   @{lib_dirs}/snapd/snap-seccomp     rPx,
   @{lib_dirs}/snapd/snap-update-ns   rPx,
@@ -143,6 +147,8 @@ profile snapd @{exec_path} {
   @{HOME}/snap/{,**} rw,
   @{HOME}/.snap*/{,**} rw,
 
+  owner @{DESKTOP_HOME}/snap/{,**} rw,
+
   owner @{run}/mount/ rw,
   owner @{run}/mount/utab{,.*} rw,
   owner @{run}/mount/utab.lock wk,
@@ -165,6 +171,7 @@ profile snapd @{exec_path} {
   @{sys}/fs/cgroup/*.slice/**/cgroup.procs r,
   @{sys}/fs/cgroup/cgroup.controllers r,
   @{sys}/fs/cgroup/net_cls/*/ r,
+  @{sys}/fs/cgroup/system.slice/snapd.seeded.service/cpu.max r,
   @{sys}/fs/cgroup/system.slice/snapd.service/cpu.max r,
   @{sys}/kernel/kexec_loaded r,
   @{sys}/kernel/security/apparmor/.notify r,

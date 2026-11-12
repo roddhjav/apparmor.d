@@ -15,10 +15,13 @@ profile dracut @{exec_path} flags=(attach_disconnected) {
   include <abstractions/path>
 
   capability dac_override,
+  capability dac_read_search,
   capability mknod,
   capability sys_chroot,
 
   network alg seqpacket, # kernel crypto API
+
+  mqueue getattr type=posix /att/dracut/,
 
   @{exec_path} mrix,
 
@@ -29,22 +32,26 @@ profile dracut @{exec_path} flags=(attach_disconnected) {
   @{bin}/@{multiarch}-pkg-config rix,
   @{bin}/3cpio                rix,
   @{bin}/eu-strip             rix,
-  @{bin}/logger rix,
   @{bin}/findmnt               Px,
   @{bin}/getopt               rix,
   @{bin}/hardlink             rix,
   @{bin}/kmod                  Cx -> kmod,
+  @{bin}/logger               rix,
   @{bin}/mountpoint           rix,
   @{bin}/pkgconf              rix,
+  @{bin}/setupcon             rix,
+  @{bin}/strip                rix,
   @{bin}/sync                 rix,
   @{bin}/systemctl             Cx -> systemctl,
   @{bin}/systemd-cat           Px,
   @{bin}/systemd-detect-virt   Px,
   @{bin}/systemd-escape        Px,
+  @{bin}/systemd-sysusers      ix,
   @{bin}/udevadm               Px,
   @{bin}/zgrep                rix,
   @{sbin}/blkid                Px,
   @{sbin}/btrfs                Px,
+  @{sbin}/fsfreeze             Px,
   @{sbin}/ldconfig            rix,
   @{lib}/plymouth/plymouth-populate-initrd PUx,
 
@@ -58,6 +65,7 @@ profile dracut @{exec_path} flags=(attach_disconnected) {
   /usr/share/pkgconfig/{,**} r,
   /usr/share/plymouth/{,**} r,
   /usr/share/terminfo/{,**} r,
+  /usr/src/*/.config r,
 
   /etc/depmod.d/ r,
   /etc/depmod.d/*.conf r,
@@ -68,17 +76,23 @@ profile dracut @{exec_path} flags=(attach_disconnected) {
   @{lib}/modprobe.d/{,**} r,
 
   /etc/crypttab r,
+  /etc/default/keyboard r,
   /etc/fstab r,
+  /etc/modules r,
   /etc/modules-load.d/{,**} r,
-  /etc/plymouth/plymouthd.conf r,
+  /etc/plymouth/{,**} r,
   /etc/shadow r,
   /etc/sysconfig/{,**} r,
+  /etc/sysctl.d/{,**} r,
   /etc/systemd/{,**} r,
+  /etc/udev/{,**} r,
   /etc/vconsole.conf r,
 
+  @{efi}/ r,
   @{efi}/initrd* rw,
 
   /var/lib/bluetooth/{,**/} r,
+  /var/lib/dracut/{,**} rw,
 
   /var/tmp/dracut.@{rand6}/{,**} rwl,
   /var/tmp/dracut.@{rand6}@{w}/{,**} rwl,
@@ -114,15 +128,15 @@ profile dracut @{exec_path} flags=(attach_disconnected) {
     include <abstractions/app/kmod>
 
     /var/tmp/dracut.@{rand6}/initramfs/@{lib}/modules/*/ r,
-    /var/tmp/dracut.@{rand6}/initramfs/@{lib}/modules/*/kernel/{,**} r,
+    /var/tmp/dracut.@{rand6}/initramfs/@{lib}/modules/*/kernel/{,**} rw,
     /var/tmp/dracut.@{rand6}/modules/*/ r,
-    /var/tmp/dracut.@{rand6}/modules/*/kernel/{,**} r,
+    /var/tmp/dracut.@{rand6}/modules/*/kernel/{,**} rw,
     /var/tmp/dracut.@{rand6}/modules/*/modules.* rw,
 
     /var/tmp/dracut.@{rand6}@{w}/initramfs/@{lib}/modules/*/ r,
-    /var/tmp/dracut.@{rand6}@{w}/initramfs/@{lib}/modules/*/kernel/{,**} r,
+    /var/tmp/dracut.@{rand6}@{w}/initramfs/@{lib}/modules/*/kernel/{,**} rw,
     /var/tmp/dracut.@{rand6}@{w}/modules/*/ r,
-    /var/tmp/dracut.@{rand6}@{w}/modules/*/kernel/{,**} r,
+    /var/tmp/dracut.@{rand6}@{w}/modules/*/kernel/{,**} rw,
     /var/tmp/dracut.@{rand6}@{w}/modules/*/modules.* rw,
 
     @{sys}/module/compression r,
