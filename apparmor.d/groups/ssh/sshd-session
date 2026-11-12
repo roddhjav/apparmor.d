@@ -14,6 +14,8 @@ profile sshd-session @{exec_path} flags=(attach_disconnected) {
   include <abstractions/consoles>
   include <abstractions/hosts_access>
   include <abstractions/nameservice-strict>
+  include <abstractions/network/netlink>
+  include <abstractions/network/udp>
   include <abstractions/wutmp>
 
   if ${RBAC} {
@@ -38,12 +40,8 @@ profile sshd-session @{exec_path} flags=(attach_disconnected) {
   # but will fall back to a non-privileged version if it fails.
   deny capability net_admin,
 
-  #aa:lint ignore=tunables
-  network tcp port=22,
-  network netlink raw,
-  network inet6 dgram peer=(ip=::1),
-  network inet6 dgram ip=::1 peer=(ip=::1, port=22),
-  network inet6 dgram ip=::ffff:127.0.0.1 peer=(ip=::ffff:127.0.0.1, port=22),
+  # Connected socket inherited from sshd, and TCP forwarding on any port
+  network tcp,
 
   unix type=stream peer=(label=sshd),
   unix type=stream peer=(label=sshd-auth),

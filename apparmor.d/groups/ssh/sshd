@@ -25,6 +25,9 @@ profile sshd @{exec_path} flags=(attach_disconnected) {
   include <abstractions/consoles>
   include <abstractions/hosts_access>
   include <abstractions/nameservice-strict>
+  include <abstractions/network/in/ssh>
+  include <abstractions/network/netlink>
+  include <abstractions/network/udp>
   include <abstractions/ssl_certs>
   include <abstractions/wutmp>
 
@@ -44,13 +47,6 @@ profile sshd @{exec_path} flags=(attach_disconnected) {
   # use it if available to set the send/receive buffers size,
   # but will fall back to a non-privileged version if it fails.
   deny capability net_admin,
-
-  #aa:lint ignore=tunables
-  network tcp port=22,
-  network netlink raw,
-  network inet6 dgram peer=(ip=::1),
-  network inet6 dgram ip=::1 peer=(ip=::1, port=22),
-  network inet6 dgram ip=::ffff:127.0.0.1 peer=(ip=::ffff:127.0.0.1, port=22),
 
   unix type=stream peer=(label=sshd-session),
 
