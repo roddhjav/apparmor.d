@@ -58,6 +58,31 @@ func TestProfile_AddRule(t *testing.T) {
 			},
 		},
 		{
+			name: "unix-file-inherit-no-mask",
+			log: map[string]string{
+				"apparmor":  "ALLOWED",
+				"operation": "file_inherit",
+				"class":     "net",
+				"profile":   "thunderbird",
+				"comm":      "gio-launch-desk",
+				"family":    "unix",
+				"sock_type": "stream",
+				"protocol":  "0",
+				"addr":      "none",
+			},
+			want: &Profile{
+				Rules: Rules{
+					&Unix{
+						Base:     Base{FileInherit: true},
+						Access:   MustAccess(UNIX, "send", "receive"),
+						Type:     "stream",
+						Protocol: "0",
+						Address:  "none",
+					},
+				},
+			},
+		},
+		{
 			name: "dbus",
 			log:  dbus2Log,
 			want: &Profile{
