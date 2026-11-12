@@ -222,7 +222,7 @@ func newNetworkFromLog(log map[string]string) Rule {
 		Qualifier:    newQualifierFromLog(log),
 		LocalAddress: newLocalAddressFromLog(log),
 		PeerAddress:  newPeerAddressFromLog(log),
-		Access:       Must(toAccess(NETWORK, log["requested"])),
+		Access:       Must(toAccess(NETWORK, requestedFromLog(log))),
 		Domain:       log["family"],
 		Type:         log["sock_type"],
 		Protocol:     log["protocol"],

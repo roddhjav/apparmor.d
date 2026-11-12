@@ -79,7 +79,7 @@ func newMqueueFromLog(log map[string]string) Rule {
 	return &Mqueue{
 		Base:      newBaseFromLog(log),
 		Qualifier: newQualifierFromLog(log),
-		Access:    Must(toAccess(MQUEUE, log["requested"])),
+		Access:    Must(toAccess(MQUEUE, requestedFromLog(log))),
 		Type:      mqueueType,
 		Label:     log["label"],
 		Name:      log["name"],
