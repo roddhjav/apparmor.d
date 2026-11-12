@@ -73,7 +73,7 @@ func newSignalFromLog(log map[string]string) Rule {
 	return &Signal{
 		Base:      newBaseFromLog(log),
 		Qualifier: newQualifierFromLog(log),
-		Access:    Must(toAccess(SIGNAL, log["requested_mask"])),
+		Access:    Must(toAccess(SIGNAL, requestedFromLog(log))),
 		Set:       []string{log["signal"]},
 		Peer:      log["peer"],
 	}

@@ -244,7 +244,7 @@ var (
 			other:     network2,
 			wCompare:  5,
 			wMerge:    false,
-			wString:   "network netlink raw,",
+			wString:   "network create netlink raw,",
 		},
 		{
 			name:      "network3",
@@ -375,7 +375,7 @@ var (
 			other:    unix1,
 			wCompare: 0,
 			wMerge:   true,
-			wString:  "unix (send receive) type=stream peer=(label=dbus-daemon, addr=@/tmp/dbus-AaKMpxzC4k),",
+			wString:  "unix (send receive) type=stream addr=none peer=(label=dbus-daemon, addr=@/tmp/dbus-AaKMpxzC4k),",
 		},
 		{
 			name:     "dbus",

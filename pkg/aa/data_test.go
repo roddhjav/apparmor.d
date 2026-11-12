@@ -85,7 +85,7 @@ var (
 		"denied":    "send",
 	}
 	network1 = &Network{
-		Access:   0,
+		Access:   MustAccess(NETWORK, "create"),
 		Domain:   "netlink",
 		Type:     "raw",
 		Protocol: "15",

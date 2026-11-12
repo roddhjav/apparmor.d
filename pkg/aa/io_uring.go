@@ -49,7 +49,7 @@ func newIOUringFromLog(log map[string]string) Rule {
 	return &IOUring{
 		Base:      newBaseFromLog(log),
 		Qualifier: newQualifierFromLog(log),
-		Access:    Must(toAccess(IOURING, log["requested"])),
+		Access:    Must(toAccess(IOURING, requestedFromLog(log))),
 		Label:     log["label"],
 	}
 }
