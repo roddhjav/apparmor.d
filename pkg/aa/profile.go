@@ -239,6 +239,11 @@ func (p *Profile) Format() {
 	p.Rules = p.Rules.Format()
 }
 
+// Factorize replaces the profile rules by the abstractions providing them.
+func (p *Profile) Factorize() {
+	p.Rules = p.Rules.Factorize()
+}
+
 // GetAttachments return a nested attachment string
 func (p *Profile) GetAttachments() string {
 	switch len(p.Attachments) {
