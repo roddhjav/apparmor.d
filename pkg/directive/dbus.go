@@ -217,7 +217,6 @@ func (d Dbus) Talk(rules map[string]string) aa.Rules {
 		},
 		&aa.Unix{
 			Type:      "stream",
-			Address:   "none",
 			PeerLabel: rules["label"],
 			PeerAddr:  "none",
 		},
@@ -312,7 +311,6 @@ func (d Dbus) See(rules map[string]string) aa.Rules {
 		},
 		&aa.Unix{
 			Type:      "stream",
-			Address:   "none",
 			PeerLabel: rules["label"],
 			PeerAddr:  "none",
 		},
