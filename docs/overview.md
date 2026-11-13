@@ -54,3 +54,17 @@ Immutable, Fully-Confined Debian Server Images, Even on a Raspberry Pi 3:
 ### Chat
 
 A development chat is available on https://matrix.to/#/#apparmor.d:matrix.org
+
+## Funding
+
+<div style="display: flex; align-items: center; gap: 1.5em" markdown>
+<div style="flex: 1" markdown>
+
+This project is funded through [NGI0 Commons Fund](https://nlnet.nl/commonsfund), a fund established by [NLnet](https://nlnet.nl) with financial support from the European Commission's [Next Generation Internet](https://ngi.eu) program. Learn more at the [NLnet project page](https://nlnet.nl/project/apparmor.d).
+
+</div>
+<div style="display: flex; align-items: center; gap: 1em">
+<a href="https://nlnet.nl"><img src="https://nlnet.nl/logo/banner.png" alt="NLnet foundation logo" style="height: 3.8em; width: auto"/></a>
+<a href="https://nlnet.nl/commonsfund"><img src="https://nlnet.nl/image/logos/NGI0_tag.svg" alt="NGI Zero Logo" style="height: 3.8em; width: auto"/></a>
+</div>
+</div>
