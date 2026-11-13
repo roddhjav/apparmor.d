@@ -47,6 +47,10 @@ Lessons learned while making an AppArmor Play machine:
 
 - [Linux Security Summit North America (LSS-NA 2025)](https://events.linuxfoundation.org/linux-security-summit-north-america/) *([Slide](https://lssna2025.sched.com/event/1zalf/lessons-learned-while-making-an-apparmor-play-machine-alexandre-pujol-linagora), [Video](https://www.youtube.com/watch?v=zCSl8honRI0))*
 
+Immutable, Fully-Confined Debian Server Images, Even on a Raspberry Pi 3:
+
+- [All Systems Go! (ASG 2026)](https://all-systems-go.io) *([Slide](https://cfp.all-systems-go.io/all-systems-go-2026/talk/KJNYQ8/), [Video](https://www.youtube.com/watch?v=5Kft4nlDKR8&list=PLY5ESsVXvwlg))*
+
 ### Chat
 
 A development chat is available on https://matrix.to/#/#apparmor.d:matrix.org
