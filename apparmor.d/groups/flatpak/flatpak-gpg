@@ -1,0 +1,42 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Łukasz Kozak <lakis.kozak@gmail.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+profile flatpak-gpg {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+
+  audit capability dac_read_search,
+
+  @{bin}/gpg{,2}  mr,
+  @{bin}/gpgconf  mr,
+  @{bin}/gpgsm    mr,
+
+  @{bin}/gpg-agent         rix,
+  @{bin}/gpg-connect-agent rix,
+  @{lib}/{,gnupg/}scdaemon rix,
+
+  @{user_gpg_dirs}/*.conf r,
+
+        @{tmp}/ r,
+  owner @{tmp}/ostree-gpg-@{rand6}/ rw,
+  owner @{tmp}/ostree-gpg-@{rand6}/** rwlk -> /tmp/ostree-gpg-@{rand6}/**,
+
+  owner @{run}/user/@{uid}/gnupg/ rw,
+  owner @{run}/user/@{uid}/gnupg/d.@{rand}/ rw,
+  owner @{run}/user/@{uid}/gnupg/d.@{rand}/S.gpg-agent{,.ssh,.browser,.extra} rw,
+  owner @{run}/user/@{uid}/gnupg/d.@{rand}/S.scdaemon rw,
+  owner @{run}/user/@{uid}/gnupg/S.scdaemon rw,
+
+  @{PROC}/@{pid}/fd/ r,
+  @{PROC}/@{pid}/task/@{tid}/comm rw,
+
+  include if exists <local/flatpak-gpg>
+}
+
+# vim:syntax=apparmor

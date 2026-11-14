@@ -13,11 +13,13 @@ include <tunables/global>
 profile gnome-software @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/base>
   include <abstractions/accounts-observe>
+  include <abstractions/appstream>
   include <abstractions/bus/session/org.freedesktop.portal.Documents>
   include <abstractions/bus/system/org.freedesktop.locale1>
   include <abstractions/bus/system/org.freedesktop.PolicyKit1>
   include <abstractions/bus/system/org.freedesktop.RealtimeKit1>
   include <abstractions/common/gnome>
+  include <abstractions/flatpak/store>
   include <abstractions/fontconfig-cache-write>
   include <abstractions/nameservice-strict>
   include <abstractions/network-manager-observe>
@@ -32,17 +34,16 @@ profile gnome-software @{exec_path} flags=(attach_disconnected,mediate_deleted) 
   network inet6 stream,
   network netlink raw,
 
-  mount fstype=fuse.revokefs-fuse options=(rw, nosuid, nodev) -> /var/tmp/flatpak-cache-*/*/,
-  umount /var/tmp/flatpak-cache-*/*/,
-
   signal send set=kill peer=fbwrap,
   signal send set=kill peer=flatpak//bwrap,
   signal send set=kill peer=flatpak//apps,
 
+  unix type=stream, # peer=(label=---),
+  unix type=stream peer=(label=fbwrap),
+
   #aa:dbus own bus=session name=org.freedesktop.PackageKit
   #aa:dbus own bus=session name=org.gnome.Software
 
-  #aa:dbus talk bus=system name=org.freedesktop.Flatpak.SystemHelper label=flatpak-system-helper
   #aa:dbus talk bus=system name=org.freedesktop.fwupd path=/ label=fwupd
   #aa:dbus talk bus=system name=org.freedesktop.PackageKit path=/{,**} label="@{p_packagekitd}"
   #aa:dbus talk bus=system name=org.freedesktop.sysupdate1 label=systemd-sysupdate
@@ -50,94 +51,47 @@ profile gnome-software @{exec_path} flags=(attach_disconnected,mediate_deleted) 
   #aa:dbus talk bus=session name=org.freedesktop.Flatpak.SystemHelper label=flatpak-session-helper
   #aa:dbus talk bus=session name=org.gnome.Epiphany.WebAppProvider label=epiphany-webapp-provider
 
-  dbus receive bus=system path=/org/freedesktop/PolicyKit1/Authority
-       interface=org.freedesktop.PolicyKit1.Authority
-       member=Changed
-       peer=(name=@{busname}, label=polkitd),
-
   dbus send bus=session path=/org/freedesktop/DBus
        interface=org.freedesktop.DBus
        member=ReloadConfig
        peer=(name=org.freedesktop.DBus, label="@{p_systemd_user}"),
 
-  @{exec_path} mr,
+  @{exec_path} mrix,
 
-  @{bin}/baobab              rPUx,
-  @{bin}/bwrap               rPx -> flatpak-app, #aa:only apparmor<4.1
-  @{bin}/bwrap               rPx -> fbwrap,      #aa:only apparmor>=4.1
-  @{bin}/fusermount{,3}      rCx -> fusermount,
+  @{open_path}                rPx -> child-open,
+  @{bin}/baobab               rPx,
   @{bin}/gnome-control-center rPx,
-  @{bin}/gpg{,2}             rCx -> gpg,
-  @{bin}/gpgconf             rCx -> gpg,
-  @{bin}/gpgsm               rCx -> gpg,
-  @{lib}/revokefs-fuse       rix,
-  @{open_path}               rPx -> child-open,
+
+  @{lib}/gnome-software-restarter rix,
 
   /usr/share/app-info/{,**} r,
   /usr/share/appdata/{,**} r,
   /usr/share/byobu/desktop/{,**} r,
-  /usr/share/flatpak/remotes.d/{,**} r,
-  /usr/share/metainfo/{,**} r,
-  /usr/share/swcatalog/{,**} r,
   /usr/share/xml/iso-codes/{,**} r,
 
-  /etc/appstream.conf r,
-  /etc/flatpak/remotes.d/{,**} r,
   /etc/PackageKit/Vendor.conf r,
   /etc/pulse/client.conf r,
 
   /var/cache/app-info/icons/**.png r,
   /var/cache/app-info/xmls/{,**} r,
-  /var/cache/swcatalog/xml/{,**} r,
 
   /var/lib/apt/lists/*.yml.gz r,
 
-  /var/lib/flatpak/app/{,**} r,
-  /var/lib/flatpak/appstream/{,**} r,
-  /var/lib/flatpak/repo/{,**} r,
-  /var/lib/flatpak/runtime/{,**} r,
-
   /var/lib/PackageKit/offline-update-competed r,
   /var/lib/PackageKit/prepared-update r,
-  /var/lib/swcatalog/** r,
-
-  /var/tmp/#@{int} rw,
-  /var/tmp/flatpak-cache-@{rand6}/ rw,
-  /var/tmp/flatpak-cache-@{rand6}/** rwlk,
-
-  owner @{HOME}/.var/ rw,
-  owner @{HOME}/.var/app/{,**} rw,
 
   owner @{user_download_dirs}/*.flatpakref r,
 
-  owner @{user_cache_dirs}/flatpak/{,**} rwl,
-
-  owner @{user_config_dirs}/flatpak/{,**} r,
   owner @{user_config_dirs}/pulse/*.conf r,
 
   owner @{user_share_dirs}/ r,
-  owner @{user_share_dirs}/flatpak/.changed w,
-  owner @{user_share_dirs}/flatpak/{app,runtime}/ r,
-  owner @{user_share_dirs}/flatpak/{app,runtime}/*/ r,
-  owner @{user_share_dirs}/flatpak/{app,runtime}/*/**/@{hex64}/deploy r,
-  owner @{user_share_dirs}/flatpak/{app,runtime}/*/**/@{hex64}/metadata r,
-  owner @{user_share_dirs}/flatpak/{app,runtime}/*/*/ r,
-  owner @{user_share_dirs}/flatpak/overrides/ rw,
-  owner @{user_share_dirs}/flatpak/overrides/* r,
-  owner @{user_share_dirs}/flatpak/repo/ rw,
-  owner @{user_share_dirs}/flatpak/repo/** rwl,
 
   owner @{tmp}/#@{int} rw,
-  owner @{tmp}/ostree-gpg-@{rand6}/ rw,
-  owner @{tmp}/ostree-gpg-@{rand6}/** rwlk -> /tmp/ostree-gpg-@{rand6}/**,
 
   owner @{run}/user/@{uid}/.dbus-proxy/ rw,
   owner @{run}/user/@{uid}/.dbus-proxy/a11y-bus-proxy-@{rand6} rw,
   owner @{run}/user/@{uid}/.dbus-proxy/session-bus-proxy-@{rand6} rw,
   owner @{run}/user/@{uid}/.dbus-proxy/system-bus-proxy-@{rand6} rw,
-  owner @{run}/user/@{uid}/.flatpak-cache rw,
-  owner @{run}/user/@{uid}/.flatpak/ rw,
-  owner @{run}/user/@{uid}/.flatpak/** rwlk,
   owner @{run}/user/@{uid}/app/{,*/} rw,
   owner @{run}/user/@{uid}/systemd/private rw,
 
@@ -148,60 +102,11 @@ profile gnome-software @{exec_path} flags=(attach_disconnected,mediate_deleted) 
   @{run}/systemd/sessions/@{int} r,
   @{run}/systemd/users/@{uid} r,
 
-  @{sys}/module/nvidia/version r,
-
         @{PROC}/@{pids}/mounts r,
         @{PROC}/1/cgroup r,
         @{PROC}/modules r,
         @{PROC}/sys/fs/pipe-max-size r,
   owner @{PROC}/@{pid}/fdinfo/@{int} r,
-
-  /dev/fuse rw,
-
-  profile gpg {
-    include <abstractions/base>
-
-    @{bin}/gpg{,2}  mr,
-    @{bin}/gpgconf  mr,
-    @{bin}/gpgsm    mr,
-
-    @{bin}/gpg-agent         rix,
-    @{bin}/gpg-connect-agent rix,
-    @{lib}/{,gnupg/}scdaemon rix,
-
-    @{user_gpg_dirs}/*.conf r,
-
-          @{tmp}/ r,
-    owner @{tmp}/ostree-gpg-@{rand6}/ r,
-    owner @{tmp}/ostree-gpg-@{rand6}/** rwlk -> /tmp/ostree-gpg-@{rand6}/**,
-
-    owner @{run}/user/@{uid}/ r,
-    owner @{run}/user/@{uid}/gnupg/ rw,
-    owner @{run}/user/@{uid}/gnupg/d.@{rand}/ rw,
-    owner @{run}/user/@{uid}/gnupg/d.@{rand}/S.gpg-agent{,.ssh,.browser,.extra} rw,
-    owner @{run}/user/@{uid}/gnupg/d.@{rand}/S.scdaemon rw,
-    owner @{run}/user/@{uid}/gnupg/S.scdaemon rw,
-
-    owner @{PROC}/@{pid}/fd/ r,
-    owner @{PROC}/@{pid}/task/@{tid}/comm rw,
-
-    include if exists <local/gnome-software_gpg>
-  }
-
-  profile fusermount {
-    include <abstractions/base>
-    include <abstractions/app/fusermount>
-
-    capability setuid,
-
-    unix (send receive) type=stream    peer=(label=gnome-software),
-    unix (send receive) type=seqpacket peer=(label=flatpak-system-helper),
-
-    mount fstype=fuse.revokefs-fuse options=(rw, nosuid, nodev) -> /var/tmp/flatpak-cache-*/*/,
-    umount /var/tmp/flatpak-cache-@{rand6}/*/,
-
-    include if exists <local/gnome-software_fusermount>
-  }
 
   include if exists <local/gnome-software>
 }

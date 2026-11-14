@@ -1,0 +1,65 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Łukasz Kozak <lakis.kozak@gmail.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Abstractions for stores managing flatpaks
+# Requires adding corresponding entry among unix sockets in groups/flatpak/flatpak-system-helper
+
+  abi <abi/5.0>,
+
+  unix (send receive) type=seqpacket peer=(label=flatpak-system-helper),
+
+  #aa:dbus talk bus=system name=org.freedesktop.Flatpak.SystemHelper label=flatpak-system-helper
+
+  if ${WITH_FLATPAKAPPS} {
+    #aa:only abi>=5
+    # Patched flatpak: bwrap allow transition to generated profiles for each app.
+    # This require a patched version of both bwrap and flatpak.
+    @{bin}/bwrap                Px -> flatpak//bwrap,
+
+  } else {
+    # Default flatpak: bwrap stacks a default profile for all apps.
+    @{bin}/bwrap                Px -> fbwrap,
+
+  }
+
+  priority=-1 @{bin}/fusermount{,3} rPx -> flatpak-fusermount,
+  priority=-1 @{bin}/gpg{,2}        rPx -> flatpak-gpg,
+  priority=-1 @{bin}/gpgconf        rPx -> flatpak-gpg,
+  priority=-1 @{bin}/gpgsm          rPx -> flatpak-gpg,
+  priority=-1 @{lib}/revokefs-fuse mrPx -> flatpak-revokefs-fuse,
+
+  /usr/share/flatpak/remotes.d/{,**} r,
+  /usr/share/flatpak/triggers/{,*} r,
+
+  /etc/flatpak/remotes.d/{,**} r,
+
+  /var/cache/swcatalog/cache/*-flatpak-*-@{arch}.xb r,
+
+  /var/lib/flatpak/app/{,**} r,
+  /var/lib/flatpak/appstream/{,**} r,
+  /var/lib/flatpak/repo/{,**} r,
+  /var/lib/flatpak/runtime/{,**} r,
+
+  /var/tmp/#@{int} rw,
+  /var/tmp/flatpak-cache-@{rand6}/ rw,
+  /var/tmp/flatpak-cache-@{rand6}/** rwlk, # -> /var/tmp/flatpak-cache-@{rand6}/**/#@{int},
+
+  owner @{HOME}/.var/{,app/} rw,
+  owner @{HOME}/.var/app/@{word}.@{word}.@{word}{,.@{word}}/{,**} rw,
+
+  owner @{user_cache_dirs}/flatpak/{,**} rw,
+
+  owner @{user_share_dirs}/flatpak/ rw,
+  owner @{user_share_dirs}/flatpak/** rwlk, # -> @{user_share_dirs}/flatpak/**,
+
+  owner @{tmp}/ostree-gpg-@{rand6}/ rw,
+  owner @{tmp}/ostree-gpg-@{rand6}/** rwlk, # -> @{tmp}/ostree-gpg-@{rand6}/**,
+
+  owner @{run}/user/@{uid}/.flatpak-cache rw,
+  owner @{run}/user/@{uid}/.flatpak/ rw,
+  owner @{run}/user/@{uid}/.flatpak/** rwlk, # -> @{run}/user/@{uid}/.flatpak/**/#@{int},
+
+  include if exists <abstractions/flatpak/store.d>
+
+# vim:syntax=apparmor

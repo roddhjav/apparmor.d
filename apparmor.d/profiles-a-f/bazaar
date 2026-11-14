@@ -13,6 +13,7 @@ profile bazaar @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/accounts-observe>
   include <abstractions/bus/system/org.freedesktop.locale1>
   include <abstractions/dconf-write>
+  include <abstractions/flatpak/store>
   include <abstractions/gnome-strict>
   include <abstractions/graphics>
   include <abstractions/nameservice-strict>
@@ -32,67 +33,28 @@ profile bazaar @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   #aa:dbus own bus=session name=io.github.kolunmi.Bazaar
 
   #aa:dbus talk bus=session name=org.freedesktop.Flatpak.SystemHelper label=flatpak-session-helper
-  #aa:dbus talk bus=system name=org.freedesktop.Flatpak.SystemHelper label=flatpak-system-helper
 
   @{exec_path} mrix,
-
-  # Bwrap stacks a default profile for all apps.
-  @{bin}/bwrap                Px -> fbwrap,
 
   @{open_path}                           Px -> child-open,
   @{bin}/bazaar-dl-worker                Px,
   @{bin}/bazaar-refresh-worker           Px,
-  @{bin}/fusermount{,3}                  Px -> flatpak//fusermount,
-  @{bin}/gpg{,2}                         Cx -> gpg,
-  @{bin}/gpgconf                         Cx -> gpg,
-  @{bin}/gpgsm                           Cx -> gpg,
   @{lib}/glycin-loaders/@{d}+/glycin-*   Px -> flatpak//app,
-  audit @{lib}/revokefs-fuse                   Px -> flatpak//revokefs-fuse,
-
-  /usr/share/flatpak/remotes.d/{,**} r,
-
-  /var/lib/flatpak/app/{,**} r,
-  /var/lib/flatpak/appstream/{,**} r,
-  /var/lib/flatpak/repo/{,**} r,
-  /var/lib/flatpak/runtime/{,**} r,
-
-        /var/tmp/flatpak-cache-@{rand6}/ rw,
-        /var/tmp/flatpak-cache-@{rand6}/** rwlk,
-  owner /var/tmp/#@{int} rw,
-
-  owner @{HOME}/.var/ rw,
-  owner @{HOME}/.var/app/{,**} rw,
 
   owner @{user_download_dirs}/*.flatpakref r,
 
-  owner @{user_cache_dirs}/flatpak/{,**} rwl,
   owner @{user_cache_dirs}/io.github.kolunmi.Bazaar/{,**} rw,
 
   owner @{user_share_dirs}/ r,
-  owner @{user_share_dirs}/flatpak/.changed w,
-  owner @{user_share_dirs}/flatpak/{app,runtime}/ r,
-  owner @{user_share_dirs}/flatpak/{app,runtime}/*/ r,
-  owner @{user_share_dirs}/flatpak/{app,runtime}/*/**/@{hex64}/deploy r,
-  owner @{user_share_dirs}/flatpak/{app,runtime}/*/**/@{hex64}/metadata r,
-  owner @{user_share_dirs}/flatpak/{app,runtime}/*/*/ r,
-  owner @{user_share_dirs}/flatpak/overrides/ rw,
-  owner @{user_share_dirs}/flatpak/overrides/* r,
-  owner @{user_share_dirs}/flatpak/repo/ rw,
-  owner @{user_share_dirs}/flatpak/repo/** rwl,
 
   owner @{run}/user/@{uid}/.dbus-proxy/ rw,
   owner @{run}/user/@{uid}/.dbus-proxy/a11y-bus-proxy-@{rand6} rw,
   owner @{run}/user/@{uid}/.dbus-proxy/session-bus-proxy-@{rand6} rw,
   owner @{run}/user/@{uid}/.dbus-proxy/system-bus-proxy-@{rand6} rw,
-  owner @{run}/user/@{uid}/.flatpak-cache w,
-  owner @{run}/user/@{uid}/.flatpak/ rw,
-  owner @{run}/user/@{uid}/.flatpak/** rwlk,
   owner @{run}/user/@{uid}/app/{,*/} rw,
   owner @{run}/user/@{uid}/systemd/private rw,
 
   owner @{tmp}/#@{int} rw,
-  owner @{tmp}/ostree-gpg-@{rand6}/ rw,
-  owner @{tmp}/ostree-gpg-@{rand6}/** rwlk -> /tmp/ostree-gpg-@{rand6}/**,
 
   # Per man(5) proc, the kernel enforces that a thread may only modify its comm
   # value or those in its thread group.
