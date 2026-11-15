@@ -39,12 +39,7 @@ profile bazaar @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   @{open_path}                           Px -> child-open,
   @{bin}/bazaar-dl-worker                Px,
   @{bin}/bazaar-refresh-worker           Px,
-  @{bin}/fusermount{,3}                  Px -> flatpak//fusermount,
-  @{bin}/gpg{,2}                         Cx -> gpg,
-  @{bin}/gpgconf                         Cx -> gpg,
-  @{bin}/gpgsm                           Cx -> gpg,
   @{lib}/glycin-loaders/@{d}+/glycin-*   Px -> flatpak//app,
-  audit @{lib}/revokefs-fuse                   Px -> flatpak//revokefs-fuse,
 
   owner @{user_download_dirs}/*.flatpakref r,
 
@@ -64,36 +59,6 @@ profile bazaar @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   # Per man(5) proc, the kernel enforces that a thread may only modify its comm
   # value or those in its thread group.
   owner @{PROC}/@{pid}/task/@{tid}/comm rw,
-
-  profile gpg {
-    include <abstractions/base>
-
-    @{bin}/gpg{,2}  mr,
-    @{bin}/gpgconf  mr,
-    @{bin}/gpgsm    mr,
-
-    @{bin}/gpg-agent         rix,
-    @{bin}/gpg-connect-agent rix,
-    @{lib}/{,gnupg/}scdaemon rix,
-
-    @{user_gpg_dirs}/*.conf r,
-
-          @{tmp}/ r,
-    owner @{tmp}/ostree-gpg-@{rand6}/ r,
-    owner @{tmp}/ostree-gpg-@{rand6}/** rwlk -> /tmp/ostree-gpg-@{rand6}/**,
-
-    owner @{run}/user/@{uid}/ r,
-    owner @{run}/user/@{uid}/gnupg/ rw,
-    owner @{run}/user/@{uid}/gnupg/d.@{rand}/ rw,
-    owner @{run}/user/@{uid}/gnupg/d.@{rand}/S.gpg-agent{,.ssh,.browser,.extra} rw,
-    owner @{run}/user/@{uid}/gnupg/d.@{rand}/S.scdaemon rw,
-    owner @{run}/user/@{uid}/gnupg/S.scdaemon rw,
-
-    owner @{PROC}/@{pid}/fd/ r,
-    owner @{PROC}/@{pid}/task/@{tid}/comm rw,
-
-    include if exists <local/bazaar_gpg>
-  }
 
   include if exists <local/bazaar>
 }

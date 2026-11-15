@@ -29,8 +29,6 @@ profile plasma-discover @{exec_path} flags=(attach_disconnected,mediate_deleted)
   network netlink dgram,
   network netlink raw,
 
-  mount fstype=fuse.revokefs-fuse options=(rw nodev nosuid) revokefs-fuse -> /var/tmp/flatpak-cache-@{rand6}/*/,
-
   signal (receive) set=(kill) peer=systemsettings,
   signal (send)    set=(kill) peer=knshandler,
   signal (send)    set=(kill) peer=servicemenuinstaller,
@@ -47,10 +45,6 @@ profile plasma-discover @{exec_path} flags=(attach_disconnected,mediate_deleted)
   @{sh_path}      rix,
   @{open_path}    Px -> child-open-browsers,
 
-  @{bin}/fusermount{,3}           Cx -> fusermount,
-  @{bin}/gpg                     rCx -> gpg,
-  @{bin}/gpgconf                 rCx -> gpg,
-  @{bin}/gpgsm                   rCx -> gpg,
   @{bin}/kplymouththemeinstaller rPx,
   @{bin}/kreadconfig{,5}         rPx,
   @{bin}/krunner-plugininstaller rPx,
@@ -62,8 +56,6 @@ profile plasma-discover @{exec_path} flags=(attach_disconnected,mediate_deleted)
   #aa:exec knshandler
   #aa:exec kwin-applywindowdecoration
   #aa:exec plasma-apply
-
-  @{lib}/revokefs-fuse mrix,
 
   /usr/ r,
   /usr/share/kf6/purpose/{,*.qml} r,
@@ -192,47 +184,10 @@ profile plasma-discover @{exec_path} flags=(attach_disconnected,mediate_deleted)
   owner @{PROC}/@{pid}/stat r,
   owner @{PROC}/@{pid}/task/@{tid}/comm w,
 
-  /dev/fuse rw,
   /dev/tty r,
 
   # Silencer
   deny /usr/share/icons/** w,
-
-  profile fusermount {
-    include <abstractions/base>
-    include <abstractions/app/fusermount>
-
-    capability setuid,
-
-    mount fstype=fuse.revokefs-fuse options=(rw, nosuid, nodev) -> /var/tmp/flatpak-cache-@{rand6}/*/,
-    umount /var/tmp/flatpak-cache-@{rand6}/*/,
-
-    unix (send receive) type=seqpacket peer=(label=flatpak-system-helper),
-
-    include if exists <local/plasma-discover_fusermount>
-  }
-
-  profile gpg {
-    include <abstractions/base>
-
-    @{bin}/gpg{,2} mr,
-    @{bin}/gpgconf mr,
-    @{bin}/gpgsm   mr,
-
-    @{bin}/gpg-agent rPx,
-
-    @{user_gpg_dirs}/*.conf r,
-
-    owner @{tmp}/ostree-gpg-@{rand6}/ r,
-    owner @{tmp}/ostree-gpg-@{rand6}/** rwlk -> /tmp/ostree-gpg-@{rand6}/**,
-
-    owner @{run}/user/@{uid}/gnupg/ w,
-    owner @{run}/user/@{uid}/gnupg/d.@{rand}/ w,
-
-    owner @{PROC}/@{pid}/fd/ r,
-
-    include if exists <local/plasma-discover_gpg>
-  }
 
   include if exists <local/plasma-discover>
 }

@@ -33,12 +33,12 @@ profile gnome-software @{exec_path} flags=(attach_disconnected,mediate_deleted) 
   network inet6 stream,
   network netlink raw,
 
-  mount fstype=fuse.revokefs-fuse options=(rw, nosuid, nodev) -> /var/tmp/flatpak-cache-*/*/,
-  umount /var/tmp/flatpak-cache-*/*/,
-
   signal send set=kill peer=fbwrap,
   signal send set=kill peer=flatpak//bwrap,
   signal send set=kill peer=flatpak//apps,
+
+  unix type=stream, # peer=(label=---),
+  unix type=stream peer=(label=fbwrap),
 
   #aa:dbus own bus=session name=org.freedesktop.PackageKit
   #aa:dbus own bus=session name=org.gnome.Software
@@ -59,13 +59,8 @@ profile gnome-software @{exec_path} flags=(attach_disconnected,mediate_deleted) 
 
   @{open_path}                rPx -> child-open,
   @{bin}/baobab               rPx,
-  @{bin}/fusermount{,3}       rCx -> fusermount,
   @{bin}/gnome-control-center rPx,
-  @{bin}/gpg{,2}              rCx -> gpg,
-  @{bin}/gpgconf              rCx -> gpg,
-  @{bin}/gpgsm                rCx -> gpg,
 
-  @{lib}/revokefs-fuse            rix,
   @{lib}/gnome-software-restarter rix,
 
   /usr/share/app-info/{,**} r,
@@ -117,53 +112,6 @@ profile gnome-software @{exec_path} flags=(attach_disconnected,mediate_deleted) 
         @{PROC}/modules r,
         @{PROC}/sys/fs/pipe-max-size r,
   owner @{PROC}/@{pid}/fdinfo/@{int} r,
-
-  /dev/fuse rw,
-
-  profile gpg {
-    include <abstractions/base>
-
-    @{bin}/gpg{,2}  mr,
-    @{bin}/gpgconf  mr,
-    @{bin}/gpgsm    mr,
-
-    @{bin}/gpg-agent         rix,
-    @{bin}/gpg-connect-agent rix,
-    @{lib}/{,gnupg/}scdaemon rix,
-
-    @{user_gpg_dirs}/*.conf r,
-
-          @{tmp}/ r,
-    owner @{tmp}/ostree-gpg-@{rand6}/ r,
-    owner @{tmp}/ostree-gpg-@{rand6}/** rwlk -> /tmp/ostree-gpg-@{rand6}/**,
-
-    owner @{run}/user/@{uid}/ r,
-    owner @{run}/user/@{uid}/gnupg/ rw,
-    owner @{run}/user/@{uid}/gnupg/d.@{rand}/ rw,
-    owner @{run}/user/@{uid}/gnupg/d.@{rand}/S.gpg-agent{,.ssh,.browser,.extra} rw,
-    owner @{run}/user/@{uid}/gnupg/d.@{rand}/S.scdaemon rw,
-    owner @{run}/user/@{uid}/gnupg/S.scdaemon rw,
-
-    owner @{PROC}/@{pid}/fd/ r,
-    owner @{PROC}/@{pid}/task/@{tid}/comm rw,
-
-    include if exists <local/gnome-software_gpg>
-  }
-
-  profile fusermount {
-    include <abstractions/base>
-    include <abstractions/app/fusermount>
-
-    capability setuid,
-
-    unix (send receive) type=stream    peer=(label=gnome-software),
-    unix (send receive) type=seqpacket peer=(label=flatpak-system-helper),
-
-    mount fstype=fuse.revokefs-fuse options=(rw, nosuid, nodev) -> /var/tmp/flatpak-cache-*/*/,
-    umount /var/tmp/flatpak-cache-@{rand6}/*/,
-
-    include if exists <local/gnome-software_fusermount>
-  }
 
   include if exists <local/gnome-software>
 }
