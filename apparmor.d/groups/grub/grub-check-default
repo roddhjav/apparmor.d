@@ -1,0 +1,27 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Łukasz Kozak <lakis.kozak@gmail.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+@{exec_path}  = @{sbin}/grub-check-default
+@{exec_path} += @{sbin}/grub2-check-default
+profile grub-check-default @{exec_path} {
+  include <abstractions/base>
+
+  capability dac_read_search,
+
+  @{exec_path} mr,
+
+  @{sh_path}             r,
+  @{bin}/grub{,2}-editenv Px,
+  @{bin}/sed             rix,
+
+  /dev/tty rw,
+
+  include if exists <local/grub-check-default>
+}
+
+# vim:syntax=apparmor
