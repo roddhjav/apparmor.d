@@ -1,0 +1,48 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+# ueberzugpp is a symlink to the ueberzug binary
+@{exec_path} = @{bin}/ueberzug
+profile ueberzugpp @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/fonts>
+  include <abstractions/user-read-strict>
+  include <abstractions/wayland-strict>
+  include <abstractions/X-strict>
+
+  ptrace read,
+
+  @{exec_path} mr,
+
+  @{sh_path}  rix,
+  @{bin}/tmux rix,
+
+  @{lib}/ r,
+
+  owner @{user_cache_dirs}/ueberzugpp/{,**} rw,
+  owner @{user_config_dirs}/ueberzugpp/config.json r,
+
+  owner @{tmp}/.@{uuid} w,
+  owner @{tmp}/ueberzugpp-@{pid}.socket rw,
+  owner @{tmp}/ueberzugpp-@{user}.log rw,
+  owner @{tmp}/tmux-@{uid}/* rw,
+
+  owner @{run}/user/@{uid}/hypr/*/.socket.sock rw,
+  owner @{run}/user/@{uid}/niri.wayland-@{int}.@{pid}.sock rw,
+  owner @{run}/user/@{uid}/sway-ipc.@{uid}.@{pid}.sock rw,
+  owner @{run}/user/@{uid}/wayfire-wayland-@{int}-.socket rw,
+
+        @{PROC}/@{pid}/stat r,
+        @{PROC}/sys/vm/nr_hugepages r,
+  owner @{PROC}/@{pid}/cgroup r,
+
+  include if exists <local/ueberzugpp>
+}
+
+# vim:syntax=apparmor
