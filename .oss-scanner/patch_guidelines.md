@@ -31,9 +31,11 @@
 
 ## Tests
 
-- The patched profile must compile:
-  `just prebuild && apparmor_parser -Q -K -I .build/apparmor.d .build/apparmor.d/<profile>`
-  (or `just parser` for all of them).
+- The patched profile must compile. `just prebuild` rebuilds
+  `.build/apparmor.d/`, which keeps the subfolders of the sources: a profile
+  is at `.build/apparmor.d/groups/<group>/<profile>` or
+  `.build/apparmor.d/profiles-*/<profile>`, not at the root. For example:
+  `just prebuild && apparmor_parser -Q -K -I .build/apparmor.d "$(find .build/apparmor.d/groups .build/apparmor.d/profiles-* -type f -name <profile>)"`.
 - `just check` must pass.
 - If Go code is changed, add a case to the existing table-driven test of the
   package (see `pkg/configure/flags_test.go` for the style).

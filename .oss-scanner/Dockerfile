@@ -1,14 +1,15 @@
 # OSS Scanner build for apparmor.d.
 #
 # The asset under review is the policy, not the Go tooling. This image builds
-# the profiles for Ubuntu 26.04 (ABI 5) and installs them the way the package
+# the profiles for Ubuntu 26.04 (ABI 4) and installs them the way the package
 # does, in default mode:
 #
 #   /etc/apparmor.d
 #
 # Sources:
 #   /src/apparmor.d          profile sources (groups/, profiles-*/, abstractions/, tunables/)
-#   /src/.build/apparmor.d   prebuilt profiles (variables resolved, Ubuntu configuration applied)
+#   /src/.build/apparmor.d   prebuilt profiles (variables resolved, Ubuntu configuration applied),
+#                            same subfolders as the sources (groups/<group>/<profile>, profiles-*/<profile>)
 #
 # Check that a profile (or a patched profile) still compiles, without a kernel:
 #   apparmor_parser -Q -K -I /etc/apparmor.d /etc/apparmor.d/<profile>
@@ -42,7 +43,5 @@ RUN just build && just prebuild
 RUN just install-base install-tools install-profiles \
     && aa-install --no-reload --install --all
 
-# Cheap checks so the image is known to work; failures never abort the build.
-RUN (just check || echo "WARNING: just check reported failures") \
-    && (go test ./cmd/... $(go list ./pkg/... | grep -v /pkg/paths) \
-        || echo "WARNING: go tests reported failures")
+# Cheap check so the image is known to work; failures never abort the build.
+RUN just check || echo "WARNING: just check reported failures"

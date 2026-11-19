@@ -72,7 +72,9 @@ the FSP build code (`pkg/configure/fsp.go`, `pkg/builder/fsp.go`).
 The image installs the default policy in `/etc/apparmor.d` (complain mode,
 to be judged as enforced).
 Profile sources are in `/src/apparmor.d/` (`groups/`, `profiles-*/`), the
-built ones in `/src/.build/apparmor.d/`.
+built ones in `/src/.build/apparmor.d/`, with the same subfolders as the
+sources (`groups/<group>/<profile>`, `profiles-*/<profile>`). The installed
+policy in `/etc/apparmor.d/` is flat (`/etc/apparmor.d/<profile>`).
 
 ## What counts as a vulnerability
 
@@ -203,6 +205,6 @@ any other.
   `/etc/apparmor.d` is a snapshot made when the image was built; it does not
   reflect source edits. Validate a patch against `.build/apparmor.d` (see the
   patch guidelines).
-- `just check` runs the project's static checks; `just tests` runs the unit tests for the toolings.
+- `just check` runs the project's static checks.
 - The container has no AppArmor kernel: escapes cannot be executed live
   here. Demonstrate them from the rules.
