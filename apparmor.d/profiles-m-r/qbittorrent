@@ -24,8 +24,6 @@ profile qbittorrent @{exec_path} {
   include <abstractions/ssl_certs>
   include <abstractions/user-download-strict>
 
-  signal send set=(term, kill) peer=qbittorrent//python,
-
   network inet dgram,
   network inet6 dgram,
   network inet stream,
@@ -97,17 +95,20 @@ profile qbittorrent @{exec_path} {
     network inet6 stream,
     network netlink raw,
 
-    @{python_path} r,
+    @{python_path} rix,
 
     owner @{user_share_dirs}/{,data/}qBittorrent/nova@{int}/{,**} rw,
 
     owner @{user_torrents_dirs}/** r,
 
-    owner /dev/shm/sem.mp-@{word8} rwl -> /dev/shm/@{int},
-    owner /dev/shm/* rw,
+    owner /dev/shm/sem.@{rand6} rw,
+    owner /dev/shm/sem.mp-@{word8} rwl -> /dev/shm/sem.@{rand6},
 
     owner @{tmp}/@{int} rw,
     owner @{tmp}/tmp* rw,
+
+    owner @{PROC}/@{pid}/stat r,
+    owner @{PROC}/@{pid}/fd/ r,
 
     deny /dev/dri/card@{int} rw,
 

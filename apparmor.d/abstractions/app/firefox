@@ -31,6 +31,7 @@
   include <abstractions/bus/system/org.freedesktop.RealtimeKit1>
   include <abstractions/bus/system/org.freedesktop.timedate1>
   include <abstractions/camera>
+  include <abstractions/cgroup-limits>
   include <abstractions/cups-client>
   include <abstractions/dconf-write>
   include <abstractions/desktop>
@@ -83,7 +84,6 @@
 
   @{lib_dirs}/{,**}             r,
   @{lib_dirs}/*.so              mr,
-  @{lib_dirs}/crashreporter     rPx,
   @{lib_dirs}/minidump-analyzer rPx,
   @{lib_dirs}/pingsender        rPx,
   @{lib_dirs}/plugin-container  rPx,
@@ -141,19 +141,16 @@
 
   @{sys}/devices/virtual/dmi/id/product_sku r,
 
-        @{sys}/bus/ r,
-        @{sys}/class/ r,
-        @{sys}/class/**/ r,
-        @{sys}/devices/@{pci}/ r,
-        @{sys}/devices/@{pci}/drm/card@{int}/ r,
-        @{sys}/devices/@{pci}/drm/renderD128/ r,
-        @{sys}/devices/@{pci}/drm/renderD129/ r,
-        @{sys}/devices/**/uevent r,
-        @{sys}/devices/power/events/energy-* r,
-        @{sys}/devices/power/type r,
-        @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/cpu.max r,
-        @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/session-@{word}.scope/cpu.max r,
-  owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/**/cpu.max r,
+  @{sys}/bus/ r,
+  @{sys}/class/ r,
+  @{sys}/class/**/ r,
+  @{sys}/devices/@{pci}/ r,
+  @{sys}/devices/@{pci}/drm/card@{int}/ r,
+  @{sys}/devices/@{pci}/drm/renderD128/ r,
+  @{sys}/devices/@{pci}/drm/renderD129/ r,
+  @{sys}/devices/**/uevent r,
+  @{sys}/devices/power/events/energy-* r,
+  @{sys}/devices/power/type r,
 
   # Network interface information
   @{PROC}/@{pid}/net/arp r,
@@ -164,6 +161,9 @@
   @{PROC}/pressure/cpu r,
   @{PROC}/pressure/io r,
   @{PROC}/pressure/memory r,
+
+  # Stacking of gxtest
+  @{PROC}/version r,
 
   # Allow reading cgroup membership information for process introspection
   owner @{PROC}/@{pid}/cgroup r,
@@ -224,6 +224,12 @@
   profile crashhelper flags=(attach_disconnected,complain) {
     include <abstractions/base>
 
+    capability sys_ptrace,
+
+    signal send set=(cont stop) peer=@{name},
+
+    ptrace (read,trace) peer=@{name},
+
     unix (send receive) type=seqpacket, # peer=(label=---),
     unix (send receive) type=seqpacket peer=(label=@{name}),
     unix (send receive) type=seqpacket peer=(label=@{name}//gxtest),
@@ -233,13 +239,18 @@
     owner "@{config_dirs}/" w,
     owner "@{config_dirs}/@{name}/" rw,
     owner "@{config_dirs}/@{name}/Crash Reports/" rw,
-    owner "@{config_dirs}/@{name}/Crash Reports/crash_helper_server.log" rw,
+    owner "@{config_dirs}/@{name}/Crash Reports/crash_helper_server{,-*}.log" rw,
+    owner @{config_dirs}/@{name}/*.*/minidumps/@{uuid}.dmp w,
+    owner @{config_dirs}/@{name}/*.*/minidumps/@{uuid}.extra w,
+
+    owner @{PROC}/@{pid}/task/ r,
 
     include if exists <abstractions/app/firefox_crashhelper.d>
   }
 
   profile crashreporter flags=(attach_disconnected,complain) {
     include <abstractions/base>
+    include <abstractions/cgroup-limits>
     include <abstractions/dconf-write>
     include <abstractions/desktop>
     include <abstractions/fontconfig-cache-read>
@@ -255,7 +266,9 @@
     unix (send receive) type=seqpacket peer=(label=@{name}),
     unix (send receive) type=seqpacket peer=(label=@{name}//gxtest),
 
-    signal receive peer=@{name},
+    signal receive                 peer=@{name},
+    signal send           set=kill peer=@{name}//&glycin,
+    signal (receive send) set=kill peer=@{name}//&@{name}//crashreporter,
 
     @{lib_dirs}/crashreporter mrix,
 
@@ -265,6 +278,7 @@
     @{firefox_path}               rPx,
     @{lib_dirs}/minidump-analyzer rPx,
 
+    owner @{config_dirs}/@{name}/*.*/breach-alerts.db-shm r,
     owner @{config_dirs}/@{name}/*.*/crashes/{,**} rw,
     owner @{config_dirs}/@{name}/*.*/crashes/events/@{uuid} rw,
     owner @{config_dirs}/@{name}/*.*/extensions/*.xpi r,
@@ -273,11 +287,13 @@
     owner @{config_dirs}/@{name}/*.*/prefs.js r,
     owner @{config_dirs}/@{name}/*.*/storage-sync-v2.sqlite-shm r,
     owner @{config_dirs}/@{name}/*.*/storage/default/* r,
+    owner @{config_dirs}/@{name}/*.*/suggest.sqlite-shm r,
     owner @{config_dirs}/@{name}/Crash?Reports/{,**} rwk,
     owner @{config_dirs}/@{name}/Pending?Pings/@{uuid}.json w,
     owner @{config_dirs}/@{name}/Profile*/*.sqlite-shm r,
 
     owner @{cache_dirs}/@{name}/*.*/** r,
+    owner @{cache_dirs}/@{name}/*.*/cache2/entries/@{hex} w,
 
           /tmp/ r,
       /var/tmp/ r,
@@ -287,8 +303,8 @@
 
     owner /dev/shm/org.mozilla.ipc.@{int}.@{int} r,
 
-    owner @{PROC}/@{pid}/cgroup r,
     owner @{PROC}/@{pid}/cmdline r,
+    owner @{PROC}/@{pid}/fd/ r,
     owner @{PROC}/@{pid}/mountinfo r,
 
     include if exists <abstractions/app/firefox_crashreporter.d>
@@ -297,6 +313,7 @@
   profile gxtest flags=(attach_disconnected,complain) {
     include <abstractions/base>
     include <abstractions/bus-system>
+    include <abstractions/cgroup-limits>
     include <abstractions/graphics>
     include <abstractions/nameservice-strict>
     include <abstractions/wayland-strict>
@@ -322,7 +339,15 @@
     owner @{tmp}/@{name}/.parentlock rw,
     owner @{tmp}/org.mozilla.@{name}/.parentlock rw,
 
+          @{PROC}/version r,
     owner @{PROC}/@{pid}/cmdline r,
+    owner @{PROC}/@{pid}/task/@{tid}/comm w,
+
+    # Inherit Silencer
+    deny network inet stream,
+    deny network inet6 stream,
+    deny @{cache_dirs}/@{name}/*/cache2/** rw,
+    deny @{config_dirs}/@{name}/*/[^.]** r,
 
     include if exists <abstractions/app/firefox_gxtest.d>
   }
