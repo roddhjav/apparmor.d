@@ -10,18 +10,10 @@ import (
 	"strings"
 )
 
-var (
-	regHex = map[string]*regexp.Regexp{
-		"name":    regexp.MustCompile(`name=[0-9A-F]+`),
-		"comm":    regexp.MustCompile(`comm=[0-9A-F]+`),
-		"profile": regexp.MustCompile(`profile=[0-9A-F]+`),
-
-		// Unix socket address, abstract ones are logged as "@<hex>". Short
-		// values are ignored as they are most likely a plain name.
-		"addr":      regexp.MustCompile(`\baddr=(?:"@[0-9A-F]{5,}"|@?[0-9A-F]{5,}\b)`),
-		"peer_addr": regexp.MustCompile(`\bpeer_addr=(?:"@[0-9A-F]{5,}"|@?[0-9A-F]{5,}\b)`),
-	}
-)
+// regHex matches the fields the kernel may log as hex. Quoted values are
+// matched first so they are skipped, and a key must start a field: a key
+// inside a value (fsname=, a decoded text) is never decoded.
+var regHex = regexp.MustCompile(`"[^"]*"|(^|\s)(name|srcname|comm|profile|addr|peer_addr)=("@[0-9A-F]+"|@?[0-9A-F]+\b)`)
 
 type RegexReplList []RegexRepl
 
@@ -54,26 +46,31 @@ func (rr RegexReplList) Replace(str string) string {
 
 // DecodeHexInString decode and replace all hex value in a given string of "key=value" format.
 func DecodeHexInString(str string) string {
-	for name, re := range regHex {
-		str = re.ReplaceAllStringFunc(str, func(s string) string {
-			hexa := strings.Trim(s[len(name)+1:], `"`)
-			prefix := ""
-			if strings.HasPrefix(hexa, "@") {
-				prefix, hexa = "@", hexa[1:]
-			}
-			bs, err := hex.DecodeString(hexa)
-			if err != nil || !isUntrusted(bs) {
-				return s
-			}
-			// Abstract unix addresses may end with NUL bytes, each one is
-			// matched by a ? in unix rules.
-			value := string(bs)
-			trimmed := strings.TrimRight(value, "\x00")
-			value = trimmed + strings.Repeat("?", len(value)-len(trimmed))
-			return name + "=\"" + prefix + value + "\""
-		})
-	}
-	return str
+	return regHex.ReplaceAllStringFunc(str, func(s string) string {
+		m := regHex.FindStringSubmatch(s)
+		if m[2] == "" { // Quoted value
+			return s
+		}
+		lead, name, hexa := m[1], m[2], strings.Trim(m[3], `"`)
+		prefix := ""
+		if strings.HasPrefix(hexa, "@") {
+			prefix, hexa = "@", hexa[1:]
+		}
+		// Short addr values are most likely a plain name.
+		if strings.HasSuffix(name, "addr") && len(hexa) < 5 {
+			return s
+		}
+		bs, err := hex.DecodeString(hexa)
+		if err != nil || !isUntrusted(bs) {
+			return s
+		}
+		// Abstract unix addresses may end with NUL bytes, each one is
+		// matched by a ? in unix rules.
+		value := string(bs)
+		trimmed := strings.TrimRight(value, "\x00")
+		value = trimmed + strings.Repeat("?", len(value)-len(trimmed))
+		return lead + name + "=\"" + prefix + value + "\""
+	})
 }
 
 // isUntrusted reports whether the kernel audit would have hex encoded bs: it
