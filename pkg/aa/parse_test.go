@@ -1183,6 +1183,24 @@ var (
 			},
 			wantErr: false,
 		},
+		{
+			name:       "include-map-only",
+			isPreamble: true,
+			raw:        "include ={}",
+			wantErr:    true,
+		},
+		{
+			name:       "include-if-exists-map-only",
+			isPreamble: true,
+			raw:        "include if exists x=y",
+			wantErr:    true,
+		},
+		{
+			name:       "include-maps-only",
+			isPreamble: true,
+			raw:        "include a=b c=d e=f",
+			wantErr:    true,
+		},
 	}
 
 	// Test cases for parseCommaRules
