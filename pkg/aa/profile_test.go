@@ -96,6 +96,48 @@ func TestProfile_AddRule(t *testing.T) {
 				Rules: Rules{file2},
 			},
 		},
+		{
+			name: "unix-unknown-access",
+			log: map[string]string{
+				"apparmor":       "DENIED",
+				"profile":        "foo",
+				"family":         "unix",
+				"requested_mask": "tracedby",
+			},
+			want: &Profile{},
+		},
+		{
+			name: "signal-unknown-access",
+			log: map[string]string{
+				"apparmor":       "DENIED",
+				"profile":        "foo",
+				"operation":      "signal",
+				"signal":         "term",
+				"requested_mask": "tracedby",
+			},
+			want: &Profile{},
+		},
+		{
+			name: "mqueue-unknown-access",
+			log: map[string]string{
+				"apparmor":       "DENIED",
+				"profile":        "foo",
+				"class":          "posix_mqueue",
+				"requested_mask": "tracedby",
+			},
+			want: &Profile{},
+		},
+		{
+			name: "file-unknown-access",
+			log: map[string]string{
+				"apparmor":       "DENIED",
+				"profile":        "foo",
+				"operation":      "getattr",
+				"name":           "/tmp/b",
+				"requested_mask": "tracedby",
+			},
+			want: &Profile{},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

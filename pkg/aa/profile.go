@@ -329,6 +329,15 @@ func (p *Profile) AddRule(log map[string]string) {
 		return
 	}
 
+	// ponytail: the log constructors panic on values they cannot convert (e.g.
+	// an unknown requested_mask), skip such an entry instead of the whole run.
+	// Make the constructors return an error if this is ever used outside aa-log.
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Printf("invalid log: %v: %v\n", r, log)
+		}
+	}()
+
 	// Generate profile flags and extra rules
 	switch log["error"] {
 	case "-2":
