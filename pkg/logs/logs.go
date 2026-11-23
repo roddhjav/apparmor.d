@@ -134,6 +134,15 @@ func splitFields(s string, sep rune) []string {
 	})
 }
 
+// unquote removes the quotes around a value, a doubled quote within it is a
+// literal quote.
+func unquote(str string) string {
+	if len(str) >= 2 && str[0] == '"' && str[len(str)-1] == '"' {
+		str = strings.ReplaceAll(str[1:len(str)-1], `""`, `"`)
+	}
+	return str
+}
+
 func toQuote(str string) string {
 	if strings.Contains(str, " ") {
 		return `"` + str + `"`
@@ -159,7 +168,7 @@ func New(file io.Reader, profile string, namespace string) AppArmorLogs {
 				if slices.Contains(toClean, key) {
 					value = regResolveLogs.Replace(kv[1])
 				}
-				aa[key] = strings.Trim(value, `"`)
+				aa[key] = unquote(value)
 			}
 		}
 

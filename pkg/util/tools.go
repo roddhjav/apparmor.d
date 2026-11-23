@@ -69,6 +69,8 @@ func DecodeHexInString(str string) string {
 		value := string(bs)
 		trimmed := strings.TrimRight(value, "\x00")
 		value = trimmed + strings.Repeat("?", len(value)-len(trimmed))
+		// A quote is doubled to stay inside the quoted value.
+		value = strings.ReplaceAll(value, `"`, `""`)
 		return lead + name + "=\"" + prefix + value + "\""
 	})
 }
