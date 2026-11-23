@@ -201,6 +201,20 @@ func TestAppArmorEvents(t *testing.T) {
 			},
 		},
 		{
+			name:  "resolve_at_closing_quote",
+			event: `apparmor="DENIED" operation="open" profile="foo" name="/usr/lib/x86_64-linux-gnu" comm="foo" requested_mask="r"`,
+			want: AppArmorLogs{
+				{
+					"apparmor":       "DENIED",
+					"profile":        "foo",
+					"operation":      "open",
+					"name":           "@{lib}/@{multiarch}",
+					"comm":           "foo",
+					"requested_mask": "r",
+				},
+			},
+		},
+		{
 			name:  "hex_apparmor_key_in_value",
 			event: `type=AVC msg=audit(1111111111.111:1111): apparmor="DENIED" operation="open" profile=61707061726D6F723D2244454E49454422 name="/tmp/a" pid=1234 comm="foo" requested_mask="r"`,
 			want: AppArmorLogs{
