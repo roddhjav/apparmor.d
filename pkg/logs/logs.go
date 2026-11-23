@@ -211,7 +211,9 @@ func Load(file io.Reader, profile string, namespace string) AppArmorLogs {
 				if item == "owner" {
 					aa["fsuid"], aa["ouid"] = "1000", "1000"
 					aa["FSUID"], aa["OUID"] = "user", "user"
-					aa["name"] = tmp[idx+1]
+					if idx+1 < len(tmp) {
+						aa["name"] = tmp[idx+1]
+					}
 				} else {
 					aa["name"] = item
 				}
@@ -222,7 +224,7 @@ func Load(file io.Reader, profile string, namespace string) AppArmorLogs {
 				}
 
 			case 2:
-				if item == "->" {
+				if item == "->" && idx+1 < len(tmp) {
 					aa["target"] = tmp[idx+1]
 				}
 			}

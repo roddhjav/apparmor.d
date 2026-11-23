@@ -413,6 +413,37 @@ func TestLoad(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "trailing-owner",
+			path: filepath.Join(testdata, "aa-log"),
+			want: AppArmorLogs{
+				{
+					"apparmor":  "DENIED",
+					"profile":   "trailing-owner",
+					"operation": "open",
+					"fsuid":     "1000",
+					"ouid":      "1000",
+					"FSUID":     "user",
+					"OUID":      "user",
+				},
+			},
+		},
+		{
+			name: "trailing-arrow",
+			path: filepath.Join(testdata, "aa-log"),
+			want: AppArmorLogs{
+				{
+					"apparmor":  "DENIED",
+					"profile":   "trailing-arrow",
+					"operation": "link",
+					"name":      "/tmp/a",
+					"fsuid":     "1000",
+					"ouid":      "1000",
+					"FSUID":     "user",
+					"OUID":      "user",
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
