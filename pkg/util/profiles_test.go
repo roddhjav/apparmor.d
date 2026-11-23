@@ -31,6 +31,11 @@ func TestGetFlags(t *testing.T) {
 			want:    []string{"attach_disconnected", "complain"},
 		},
 		{
+			name:    "space after comma",
+			profile: "profile foo /usr/bin/foo flags=(attach_disconnected, complain) {\n",
+			want:    []string{"attach_disconnected", "complain"},
+		},
+		{
 			name:    "empty profile",
 			profile: "",
 			want:    nil,
@@ -183,10 +188,28 @@ func TestSetMode(t *testing.T) {
 			want:    "profile foo /usr/bin/foo flags=(attach_disconnected,kill) {\n",
 		},
 		{
+			name:    "space after comma does not stack modes",
+			profile: "profile foo /usr/bin/foo flags=(attach_disconnected, complain) {\n",
+			mode:    "complain",
+			want:    "profile foo /usr/bin/foo flags=(attach_disconnected,complain) {\n",
+		},
+		{
+			name:    "space after comma enforce removes mode",
+			profile: "profile foo /usr/bin/foo flags=(attach_disconnected, complain) {\n",
+			mode:    "enforce",
+			want:    "profile foo /usr/bin/foo flags=(attach_disconnected) {\n",
+		},
+		{
 			name:    "unconfined profile stays unconfined",
 			profile: "profile foo /usr/bin/foo flags=(unconfined) {\n",
 			mode:    "complain",
 			want:    "profile foo /usr/bin/foo flags=(unconfined) {\n",
+		},
+		{
+			name:    "unconfined after space stays unconfined",
+			profile: "profile foo /usr/bin/foo flags=(attach_disconnected, unconfined) {\n",
+			mode:    "complain",
+			want:    "profile foo /usr/bin/foo flags=(attach_disconnected, unconfined) {\n",
 		},
 		{
 			name:    "unknown mode returns error",
