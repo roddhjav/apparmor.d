@@ -44,6 +44,9 @@ func newBase(rule rule) Base {
 	comment, fileInherit = extractFlag(comment, "file_inherit")
 	comment, noNewPrivs = extractFlag(comment, "no new privs")
 	comment, optional = extractFlag(comment, "optional:")
+	if fileInherit || noNewPrivs || optional {
+		comment = strings.TrimLeft(comment, " ") // The template adds the space after the flag
+	}
 	return Base{
 		Comment:     strings.TrimRight(comment, " "),
 		NoNewPrivs:  noNewPrivs,
