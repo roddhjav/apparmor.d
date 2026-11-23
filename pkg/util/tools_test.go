@@ -46,6 +46,21 @@ func TestDecodeHexInString(t *testing.T) {
 			str:  `type=AVC msg=audit(1424425690.883:716630): apparmor="ALLOWED" operation="file_mmap" info="Failed name lookup - disconnected path" error=-13 profile="/sbin/klogd" name="var/run/nscd/passwd" pid=25333 comm="id" requested_mask="r" denied_mask="r" fsuid=1002 ouid=0`,
 			want: `type=AVC msg=audit(1424425690.883:716630): apparmor="ALLOWED" operation="file_mmap" info="Failed name lookup - disconnected path" error=-13 profile="/sbin/klogd" name="var/run/nscd/passwd" pid=25333 comm="id" requested_mask="r" denied_mask="r" fsuid=1002 ouid=0`,
 		},
+		{
+			name: "Hexa key inside quoted value",
+			str:  `profile="fsname=20412041204122" name=""`,
+			want: `profile="fsname=20412041204122" name=""`,
+		},
+		{
+			name: "Hexa key inside decoded value",
+			str:  `profile=66736E616D653D32303431323034312020 name=""`,
+			want: `profile="fsname=20412041  " name=""`,
+		},
+		{
+			name: "Hexa srcname",
+			str:  `operation="mount" srcname=2F746D702F6120622F`,
+			want: `operation="mount" srcname="/tmp/a b/"`,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
