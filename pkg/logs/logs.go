@@ -164,11 +164,11 @@ func New(file io.Reader, profile string, namespace string) AppArmorLogs {
 		for _, item := range tmp {
 			kv := splitFields(item, '=')
 			if len(kv) >= 2 {
-				key, value := kv[0], kv[1]
+				key, value := kv[0], unquote(kv[1])
 				if slices.Contains(toClean, key) {
-					value = regResolveLogs.Replace(kv[1])
+					value = regResolveLogs.Replace(value)
 				}
-				aa[key] = unquote(value)
+				aa[key] = value
 			}
 		}
 
