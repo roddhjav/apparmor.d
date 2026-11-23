@@ -219,6 +219,48 @@ func Test_newRules(t *testing.T) {
 	}
 }
 
+func Test_newHat(t *testing.T) {
+	tests := []struct {
+		name    string
+		raw     string
+		want    *Hat
+		wantErr bool
+	}{
+		{
+			name: "caret",
+			raw:  "^DEFAULT",
+			want: &Hat{Name: "DEFAULT", Flags: []string{}},
+		},
+		{
+			name: "keyword",
+			raw:  "hat DEFAULT",
+			want: &Hat{Name: "DEFAULT", Flags: []string{}},
+		},
+		{
+			name: "keyword-flags",
+			raw:  "hat action flags=(complain)",
+			want: &Hat{Name: "action", Flags: []string{"complain"}},
+		},
+		{
+			name: "caret-named-hat",
+			raw:  "^hat",
+			want: &Hat{Name: "hat", Flags: []string{}},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := newHat(parseRule(tt.raw))
+			if (err != nil) != tt.wantErr {
+				t.Errorf("newHat() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("newHat() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func Test_AppArmorProfileFile_Parse(t *testing.T) {
 	for _, tt := range testBlocks {
 		t.Run(tt.name, func(t *testing.T) {
