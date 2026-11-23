@@ -10,11 +10,17 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
 	"slices"
 	"strings"
 
 	"github.com/roddhjav/apparmor.d/pkg/paths"
 	"gopkg.in/ini.v1"
+)
+
+var (
+	regAppID  = regexp.MustCompile(`^[A-Za-z0-9_-]+(\.[A-Za-z0-9_-]+){2,}$`)
+	regUnsafe = regexp.MustCompile(`[\s,#{}"]`)
 )
 
 type FlatpakMetadata struct {
@@ -275,10 +281,31 @@ func (f *FlatpakMetadata) Requirements() {
 	})
 }
 
+// Validate rejects an invalid application ID and the metadata values holding
+// AppArmor syntax characters that would break the generated profile.
+func (f *FlatpakMetadata) Validate() error {
+	if !regAppID.MatchString(f.Name) {
+		return fmt.Errorf("invalid application ID: %q", f.Name)
+	}
+	values := slices.Concat([]string{f.Runtime, f.Base, f.Command}, f.Filesystems, f.Persistent)
+	for _, dbus := range slices.Concat(f.DbusSession, f.DbusSystem) {
+		values = append(values, dbus.Interface)
+	}
+	for _, value := range values {
+		if regUnsafe.MatchString(value) {
+			return fmt.Errorf("invalid metadata value for %s: %q", f.Name, value)
+		}
+	}
+	return nil
+}
+
 // Parts retrieves the different parts of the application ID (TLD, Vendor, Product, Name)
 func (f *FlatpakMetadata) Parts() (string, string, string, string) {
 	var name string
 	parts := strings.Split(f.Name, ".")
+	for len(parts) < 3 { // invalid ID, rejected by Validate
+		parts = append(parts, "")
+	}
 	if len(parts) < 4 {
 		name = strings.ToLower(parts[2])
 	} else {

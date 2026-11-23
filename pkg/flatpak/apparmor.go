@@ -131,6 +131,10 @@ func NewFlatpakAppArmorProfile(meta *FlatpakMetadata, mode string) *FlatpakAppAr
 }
 
 func (p *FlatpakAppArmorProfile) Generate() error {
+	if err := p.Metadata.Validate(); err != nil {
+		return err
+	}
+
 	// Profile App
 	app := p.Profiles[pApp]
 	app.Rules = slices.Concat(app.Rules,
