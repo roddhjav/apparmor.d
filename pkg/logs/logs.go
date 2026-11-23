@@ -144,8 +144,8 @@ func unquote(str string) string {
 }
 
 func toQuote(str string) string {
-	if strings.Contains(str, " ") {
-		return `"` + str + `"`
+	if strings.ContainsAny(str, ` "`) {
+		return `"` + strings.ReplaceAll(str, `"`, `""`) + `"`
 	}
 	return str
 }
@@ -212,10 +212,10 @@ func Load(file io.Reader, profile string, namespace string) AppArmorLogs {
 					aa["fsuid"], aa["ouid"] = "1000", "1000"
 					aa["FSUID"], aa["OUID"] = "user", "user"
 					if idx+1 < len(tmp) {
-						aa["name"] = tmp[idx+1]
+						aa["name"] = unquote(tmp[idx+1])
 					}
 				} else {
-					aa["name"] = item
+					aa["name"] = unquote(item)
 				}
 
 			case 1:
@@ -225,7 +225,7 @@ func Load(file io.Reader, profile string, namespace string) AppArmorLogs {
 
 			case 2:
 				if item == "->" && idx+1 < len(tmp) {
-					aa["target"] = tmp[idx+1]
+					aa["target"] = unquote(tmp[idx+1])
 				}
 			}
 		}
@@ -233,7 +233,7 @@ func Load(file io.Reader, profile string, namespace string) AppArmorLogs {
 		for _, item := range tmp {
 			kv := strings.SplitN(item, "=", 2)
 			if len(kv) == 2 {
-				aa[kv[0]] = strings.Trim(kv[1], `"`)
+				aa[kv[0]] = unquote(kv[1])
 			}
 		}
 
