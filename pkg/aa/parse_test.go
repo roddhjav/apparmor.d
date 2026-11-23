@@ -2072,7 +2072,7 @@ var (
 				// block 0: preamble content (parsed via parsePreamble)
 				{
 					&Comment{Base: Base{IsLineRule: true, Comment: " Simple test profile with all rules used"}},
-					&Include{Base: Base{Comment: " a comment", Optional: true}, IsMagic: true, Path: "tunables/global"},
+					&Include{Base: Base{Comment: "a comment", Optional: true}, IsMagic: true, Path: "tunables/global"},
 					&Include{IfExists: true, Path: "/etc/apparmor.d/global/dummy space"},
 					&Variable{Name: "name", Values: []string{"torbrowser", "\"tor browser\""}, Define: true},
 					&Variable{Base: Base{Comment: " another comment"}, Name: "lib_dirs", Values: []string{"@{lib}/@{name}", "/opt/@{name}"}, Define: true},
@@ -2117,7 +2117,7 @@ var (
 				Preamble: Rules{
 					&Comment{Base: Base{IsLineRule: true, Comment: " Simple test profile with all rules used"}},
 					&Include{
-						Base:    Base{Comment: " a comment", Optional: true},
+						Base:    Base{Comment: "a comment", Optional: true},
 						IsMagic: true, Path: "tunables/global",
 					},
 					&Include{IfExists: true, Path: "/etc/apparmor.d/global/dummy space"},
@@ -2148,7 +2148,7 @@ var (
 				Preamble: Rules{
 					&Comment{Base: Base{IsLineRule: true, Comment: " Simple test profile with all rules used"}},
 					&Include{
-						Base:    Base{Comment: " a comment", Optional: true},
+						Base:    Base{Comment: "a comment", Optional: true},
 						IsMagic: true, Path: "tunables/global",
 					},
 					&Include{IfExists: true, Path: "/etc/apparmor.d/global/dummy space"},
@@ -2376,7 +2376,7 @@ var (
 					&Comment{Base: Base{IsLineRule: true, Comment: " SPDX-License-Identifier: GPL-2.0-only"}},
 					&Comment{Base: Base{IsLineRule: true, Comment: " TODO: Test rule with only ','"}},
 					&Include{
-						Base:    Base{Optional: true, Comment: " A nice message"},
+						Base:    Base{Optional: true, Comment: "A nice message"},
 						IsMagic: true, Path: "tunables/global",
 					},
 					&Include{IfExists: true, Path: "/etc/apparmor.d/global/dummy space"},
