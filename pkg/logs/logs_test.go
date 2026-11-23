@@ -171,6 +171,20 @@ func TestAppArmorEvents(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:  "hex_quote_in_value",
+			event: `type=AVC msg=audit(1111111111.111:1111): apparmor="DENIED" operation="open" profile="foo" name=2F746D702F78222070726F66696C653D226F74686572 pid=1234 comm=7265717565737465645F6D61736B3D227722 requested_mask="r"`,
+			want: AppArmorLogs{
+				{
+					"apparmor":       "DENIED",
+					"profile":        "foo",
+					"operation":      "open",
+					"name":           `/tmp/x" profile="other`,
+					"comm":           `requested_mask="w"`,
+					"requested_mask": "r",
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

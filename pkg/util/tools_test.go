@@ -57,6 +57,11 @@ func TestDecodeHexInString(t *testing.T) {
 			want: `profile="fsname=20412041  " name=""`,
 		},
 		{
+			name: "Hexa with quote",
+			str:  `comm=7265717565737465645F6D61736B3D227722 requested_mask="r"`,
+			want: `comm="requested_mask=""w""" requested_mask="r"`,
+		},
+		{
 			name: "Hexa srcname",
 			str:  `operation="mount" srcname=2F746D702F6120622F`,
 			want: `operation="mount" srcname="/tmp/a b/"`,
