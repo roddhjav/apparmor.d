@@ -432,8 +432,9 @@ func parseCommaRules(input string) ([]rule, error) {
 					commentRaw := input[blockStart:idx]
 
 					// Inline comments belong to the previous rule (in the same line)
-					lastRule := rules[len(rules)-1]
-					lastRule[len(lastRule)-1].comment = commentRaw
+					if lastRule := rules[len(rules)-1]; len(lastRule) > 0 {
+						lastRule[len(lastRule)-1].comment = commentRaw
+					}
 
 					// Ignore the collected comment for the next rule
 					blockStart = idx
