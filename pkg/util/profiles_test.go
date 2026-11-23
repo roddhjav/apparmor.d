@@ -191,7 +191,7 @@ func TestSetMode(t *testing.T) {
 			name:    "space after comma does not stack modes",
 			profile: "profile foo /usr/bin/foo flags=(attach_disconnected, complain) {\n",
 			mode:    "complain",
-			want:    "profile foo /usr/bin/foo flags=(attach_disconnected,complain) {\n",
+			want:    "profile foo /usr/bin/foo flags=(attach_disconnected, complain) {\n",
 		},
 		{
 			name:    "space after comma enforce removes mode",
@@ -210,6 +210,18 @@ func TestSetMode(t *testing.T) {
 			profile: "profile foo /usr/bin/foo flags=(attach_disconnected, unconfined) {\n",
 			mode:    "complain",
 			want:    "profile foo /usr/bin/foo flags=(attach_disconnected, unconfined) {\n",
+		},
+		{
+			name:    "subprofiles keep their own flags in enforce",
+			profile: "profile a flags=(attach_disconnected) {\n  profile foo /usr/bin/foo {\n  }\n  profile bar flags=(complain) {\n  }\n}\n",
+			mode:    "enforce",
+			want:    "profile a flags=(attach_disconnected) {\n  profile foo /usr/bin/foo {\n  }\n  profile bar {\n  }\n}\n",
+		},
+		{
+			name:    "subprofiles keep their own flags in complain",
+			profile: "profile a flags=(attach_disconnected) {\n  profile foo /usr/bin/foo {\n  }\n  profile bar flags=(complain) {\n  }\n}\n",
+			mode:    "complain",
+			want:    "profile a flags=(attach_disconnected,complain) {\n  profile foo /usr/bin/foo flags=(complain) {\n  }\n  profile bar flags=(complain) {\n  }\n}\n",
 		},
 		{
 			name:    "unknown mode returns error",
@@ -288,6 +300,12 @@ func TestApplyFlags(t *testing.T) {
 			profile: "profile foo /usr/bin/foo {\n",
 			flags:   []string{"attach_disconnected"},
 			want:    "profile foo /usr/bin/foo flags=(attach_disconnected) {\n",
+		},
+		{
+			name:    "subprofiles keep their own flags",
+			profile: "profile a flags=(attach_disconnected) {\n  profile bar flags=(complain) {\n  }\n}\n",
+			flags:   []string{"mediate_deleted"},
+			want:    "profile a flags=(attach_disconnected,mediate_deleted) {\n  profile bar flags=(complain,mediate_deleted) {\n  }\n}\n",
 		},
 	}
 	for _, tt := range tests {
