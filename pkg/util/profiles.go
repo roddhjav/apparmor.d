@@ -12,6 +12,7 @@ import (
 	"regexp"
 	"slices"
 	"strings"
+	"unicode"
 )
 
 var (
@@ -28,7 +29,9 @@ func GetFlags(profile string) []string {
 	if len(matches) == 0 {
 		return nil
 	}
-	return strings.Split(matches[1], ",")
+	return strings.FieldsFunc(matches[1], func(r rune) bool {
+		return r == ',' || unicode.IsSpace(r)
+	})
 }
 
 // SetFlags replaces flags in a profile string. If flags is empty, removes the flags clause.
