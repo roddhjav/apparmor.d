@@ -247,6 +247,37 @@ func Test_AppArmorProfileFile_Parse(t *testing.T) {
 	}
 }
 
+func Test_ParseRules(t *testing.T) {
+	tests := []struct {
+		name    string
+		raw     string
+		wantErr bool
+	}{
+		{
+			name:    "unbalanced-close-paren",
+			raw:     ")(,\n\n",
+			wantErr: true,
+		},
+		{
+			name:    "unbalanced-close-brace",
+			raw:     "}{,\n\n",
+			wantErr: true,
+		},
+		{
+			name:    "include-unbalanced-close-paren",
+			raw:     "  include )0000\n\n",
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if _, _, err := ParseRules(tt.raw); (err != nil) != tt.wantErr {
+				t.Errorf("ParseRules() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
 func Test_AppArmorProfileFile_Scan(t *testing.T) {
 	for _, tt := range testBlocks {
 		t.Run(tt.name, func(t *testing.T) {

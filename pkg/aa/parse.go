@@ -1138,7 +1138,13 @@ func startsWithClosingBrace(s string) bool {
 }
 
 // ParseRules parses apparmor profile rules by paragraphs
-func ParseRules(input string) (ParaRules, []string, error) {
+func ParseRules(input string) (_ ParaRules, _ []string, retErr error) {
+	defer func() {
+		if r := recover(); r != nil {
+			retErr = fmt.Errorf("%v", r)
+		}
+	}()
+
 	paragraphRules := ParaRules{}
 	paragraphs := []string{}
 
