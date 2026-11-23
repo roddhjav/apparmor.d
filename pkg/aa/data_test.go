@@ -399,6 +399,21 @@ var (
 		Path:   "@{user_config_dirs}/kiorc",
 		Target: "@{user_config_dirs}/#3954",
 	}
+	linkAudit1 = &Link{
+		Qualifier: Qualifier{Audit: true},
+		Path:      "/a",
+		Target:    "/b",
+	}
+	linkDeny1 = &Link{
+		Qualifier: Qualifier{AccessType: "deny"},
+		Path:      "/a",
+		Target:    "/b",
+	}
+	fileDeny1 = &File{
+		Qualifier: Qualifier{AccessType: "deny"},
+		Path:      "/c",
+		Access:    MustAccess(FILE, "w"),
+	}
 
 	// Profile
 	profile1 = &Profile{

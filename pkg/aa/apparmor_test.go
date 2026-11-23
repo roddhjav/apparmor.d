@@ -149,6 +149,32 @@ func TestAppArmorProfileFile_Sort(t *testing.T) {
 				}},
 			},
 		},
+		{
+			name: "deny-link-last",
+			origin: &AppArmorProfileFile{
+				Profiles: []*Profile{{
+					Rules: []Rule{fileDeny1, linkDeny1, linkAudit1, file1},
+				}},
+			},
+			want: &AppArmorProfileFile{
+				Profiles: []*Profile{{
+					Rules: []Rule{file1, linkAudit1, linkDeny1, fileDeny1},
+				}},
+			},
+		},
+		{
+			name: "deny-link-last-reversed",
+			origin: &AppArmorProfileFile{
+				Profiles: []*Profile{{
+					Rules: []Rule{file1, linkAudit1, linkDeny1, fileDeny1},
+				}},
+			},
+			want: &AppArmorProfileFile{
+				Profiles: []*Profile{{
+					Rules: []Rule{file1, linkAudit1, linkDeny1, fileDeny1},
+				}},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
