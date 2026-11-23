@@ -60,12 +60,12 @@ func cmp[T float64 | int](refValue T, operator string, value T) bool {
 	return res
 }
 
-func compare(refValue any, prefix string, arg string) bool {
+func compare(refValue any, prefix string, arg string) (bool, error) {
 	pattern := fmt.Sprintf(`^%s(==|[<>]=?|=)(.+)$`, prefix)
 	re := regexp.MustCompile(pattern)
 	matches := re.FindStringSubmatch(arg)
 	if len(matches) < 3 {
-		return false
+		return false, nil
 	}
 	operator := matches[1]
 	targetStr := matches[2]
@@ -75,14 +75,14 @@ func compare(refValue any, prefix string, arg string) bool {
 	case int:
 		targetValue, err := strconv.Atoi(targetStr)
 		if err != nil {
-			panic(err)
+			return false, fmt.Errorf("invalid %s comparison %q: %w", prefix, arg, err)
 		}
 		res = cmp(refValue, operator, targetValue)
 
 	case float64:
 		targetValue, err := strconv.ParseFloat(targetStr, 64)
 		if err != nil {
-			panic(err)
+			return false, fmt.Errorf("invalid %s comparison %q: %w", prefix, arg, err)
 		}
 		res = cmp(refValue, operator, targetValue)
 
@@ -90,35 +90,38 @@ func compare(refValue any, prefix string, arg string) bool {
 		panic("unsupported type")
 	}
 
-	return res
+	return res, nil
 }
 
-func filterRuleForUs(c *tasks.TaskConfig, opt *Option) bool {
+func filterRuleForUs(c *tasks.TaskConfig, opt *Option) (bool, error) {
 	for _, arg := range opt.ArgList {
 		switch {
 		case c.RBAC && arg == "RBAC":
-			return true
+			return true, nil
 		case c.Test && arg == "test":
-			return true
+			return true, nil
 		case arg == tasks.Distribution:
-			return true
+			return true, nil
 		case arg == tasks.Family:
-			return true
+			return true, nil
 		case strings.HasPrefix(arg, "abi"):
-			if compare(c.ABI, "abi", arg) {
-				return true
+			if ok, err := compare(c.ABI, "abi", arg); ok || err != nil {
+				return ok, err
 			}
 		case strings.HasPrefix(arg, "apparmor"):
-			if compare(c.Version, "apparmor", arg) {
-				return true
+			if ok, err := compare(c.Version, "apparmor", arg); ok || err != nil {
+				return ok, err
 			}
 		}
 	}
-	return false
+	return false, nil
 }
 
 func filter(c *tasks.TaskConfig, only bool, opt *Option, profile string) (string, error) {
-	forUs := filterRuleForUs(c, opt)
+	forUs, err := filterRuleForUs(c, opt)
+	if err != nil {
+		return "", err
+	}
 	if only == forUs {
 		return opt.Clean(profile), nil
 	}
