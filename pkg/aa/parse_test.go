@@ -1275,6 +1275,12 @@ var (
 			wantErr: false,
 		},
 		{
+			name:    "unbalanced-paren",
+			raw:     "/(aaaaa r,\n/etc/shadow r,",
+			rule:    nil,
+			wantErr: true,
+		},
+		{
 			name: "#-in-aare",
 			raw:  `owner @{user_config_dirs}/#** rw,`,
 			rule: []rule{

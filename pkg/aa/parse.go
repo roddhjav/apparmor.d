@@ -397,6 +397,9 @@ func parseCommaRules(input string) ([]rule, error) {
 	rules := []rule{}
 	blockStart := 0
 	blockCounter := 0
+	// Like blockCounter, for '(' only: an unclosed '[' is valid (/usr/bin/[),
+	// and a paragraph given by ParseRules can hold an unclosed block header.
+	parenCounter := 0
 	comment := false
 	aare := false
 	canHaveInlineComment := false
@@ -406,11 +409,17 @@ func parseCommaRules(input string) ([]rule, error) {
 		case tokOPENBRACE, tokOPENBRACKET, tokOPENPAREN:
 			if !comment {
 				blockCounter++
+				if r == tokOPENPAREN {
+					parenCounter++
+				}
 			}
 
 		case tokCLOSEBRACE, tokCLOSEBRACKET, tokCLOSEPAREN:
 			if !comment {
 				blockCounter--
+				if r == tokCLOSEPAREN {
+					parenCounter--
+				}
 				// A `}` starting its line that closes a top level block (if/else)
 				// ends it: the next rule starts after it.
 				if r == tokCLOSEBRACE && blockCounter == 0 &&
@@ -459,6 +468,9 @@ func parseCommaRules(input string) ([]rule, error) {
 
 			}
 		}
+	}
+	if parenCounter > 0 {
+		return nil, fmt.Errorf("unbalanced block in: %s", strings.TrimSpace(input[blockStart:]))
 	}
 	return rules, nil
 }
