@@ -70,7 +70,14 @@ func (b StackedDbus) Apply(opt *Option, profile string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	cursor := 0 // paragraphs are in document order, replace each at its own position
 	for idx, rules := range rulesByParagraph {
+		start := strings.Index(profile[cursor:], paragraphs[idx])
+		if start < 0 {
+			continue
+		}
+		start += cursor
+		cursor = start + len(paragraphs[idx])
 		changed := false
 		newRules := aa.Rules{}
 		for _, rule := range rules {
@@ -91,7 +98,9 @@ func (b StackedDbus) Apply(opt *Option, profile string) (string, error) {
 			}
 		}
 		if changed {
-			profile = strings.ReplaceAll(profile, paragraphs[idx], newRules.String()+"\n")
+			replacement := newRules.String() + "\n"
+			profile = profile[:start] + replacement + profile[cursor:]
+			cursor = start + len(replacement)
 		}
 	}
 	return profile, nil
