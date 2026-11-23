@@ -362,6 +362,47 @@ dbus send bus=session path=/org/freedesktop/DBus
 }`,
 		},
 		{
+			name: "stacked-dbus-substring-paragraph",
+			b:    NewStackedDbus(),
+			profile: `
+profile foo {
+  dbus receive bus=session path=/a
+       interface=org.a
+       peer=(label="@{p_dbus_system}"),
+
+  dbus send bus=system path=/b
+       interface=org.b
+       peer=(label="@{p_dbus_system}"),
+  dbus receive bus=session path=/a
+       interface=org.a
+       peer=(label="@{p_dbus_system}"),
+
+}`,
+			want: `
+profile foo {
+dbus receive bus=session path=/a
+       interface=org.a
+       peer=(label=dbus-system),
+dbus receive bus=session path=/a
+       interface=org.a
+       peer=(label=dbus-system//&unconfined),
+
+dbus send bus=system path=/b
+       interface=org.b
+       peer=(label=dbus-system),
+dbus send bus=system path=/b
+       interface=org.b
+       peer=(label=dbus-system//&unconfined),
+dbus receive bus=session path=/a
+       interface=org.a
+       peer=(label=dbus-system),
+dbus receive bus=session path=/a
+       interface=org.a
+       peer=(label=dbus-system//&unconfined),
+
+}`,
+		},
+		{
 			name: "base-strict-1",
 			b:    NewBaseStrict(),
 			profile: `
