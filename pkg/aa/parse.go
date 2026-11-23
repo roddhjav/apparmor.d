@@ -902,14 +902,13 @@ func newRules(rules []rule) (Rules, error) {
 	res := make(Rules, 0, len(rules))
 
 	for _, rule := range rules {
-		if len(rule) == 0 {
-			return nil, fmt.Errorf("empty rule")
-		}
-
 		owner := false
 		q := Qualifier{}
 		hasAccessType := false // track if allow/deny/prompt was seen
 	qualifier:
+		if len(rule) == 0 {
+			return nil, fmt.Errorf("empty rule")
+		}
 		switch rule.Get(0) {
 		// File & Link prefix
 		case tokOWNER:
