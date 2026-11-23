@@ -1266,6 +1266,15 @@ var (
 			wantErr: false,
 		},
 		{
+			name: "inline-comment-after-empty-rule",
+			raw:  ", # c\n/a r,",
+			rule: []rule{
+				{},
+				{kv{key: "/a"}, kv{key: "r"}},
+			},
+			wantErr: false,
+		},
+		{
 			name: "#-in-aare",
 			raw:  `owner @{user_config_dirs}/#** rw,`,
 			rule: []rule{
