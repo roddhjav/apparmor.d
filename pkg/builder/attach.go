@@ -16,7 +16,8 @@ import (
 )
 
 var (
-	regAttDefinition = regexp.MustCompile(`(?m)^@\{att\} = .*\n`)
+	regAttDefinition      = regexp.MustCompile(`(?m)^@\{att\} = .*\n`)
+	regAttachDisconnected = regexp.MustCompile(`(flags=\((?:[^)]*[,\s])?)attach_disconnected([,\s)])`)
 )
 
 type ReAttach struct {
@@ -78,7 +79,8 @@ func (b ReAttach) Apply(opt *Option, profile string) (string, error) {
 	}
 	origin := "profile " + name
 
-	if strings.Contains(profile, "attach_disconnected") {
+	// Abstractions opt in with a "# attach_disconnected:" comment
+	if regAttachDisconnected.MatchString(profile) || strings.Contains(profile, "# attach_disconnected:") {
 		if opt.Kind == aa.ProfileKind {
 			if b.path != "" {
 				insert = "@{att} = " + b.path + "\n"
@@ -92,8 +94,8 @@ func (b ReAttach) Apply(opt *Option, profile string) (string, error) {
 				insert = "@{att} = /att/" + name + "/\n"
 			}
 		}
+		profile = regAttachDisconnected.ReplaceAllString(profile, "${1}attach_disconnected,attach_disconnected.path=@{att}${2}")
 		replacer := strings.NewReplacer(
-			"attach_disconnected", "attach_disconnected,attach_disconnected.path=@{att}",
 			"include <abstractions/base-strict>", "include <abstractions/attached/base>",
 			"include <abstractions/base>", "include <abstractions/attached/base>",
 			"include <abstractions/consoles>", "include <abstractions/attached/consoles>",

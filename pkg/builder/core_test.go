@@ -449,6 +449,46 @@ profile attach-2 flags=(complain) {
 }`,
 		},
 		{
+			name: "attach-no-attach-disconnected",
+			b:    NewAttach(),
+			profile: `
+profile attach-no-attach-disconnected flags=(no_attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/consoles>
+}`,
+			want: `
+@{att} = ""
+profile attach-no-attach-disconnected flags=(no_attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/consoles>
+}`,
+		},
+		{
+			name: "attach-abstraction-marker",
+			b:    NewAttach(),
+			profile: `
+# attach_disconnected: tweak the build system to replace attached abstractions
+  include <abstractions/consoles>
+`,
+			want: `
+# attach_disconnected: tweak the build system to replace attached abstractions
+  include <abstractions/attached/consoles>
+`,
+		},
+		{
+			name: "attach-disconnected-ipc",
+			b:    NewAttach(),
+			profile: `
+profile attach-disconnected-ipc flags=(complain, attach_disconnected.ipc) {
+  include <abstractions/base>
+}`,
+			want: `
+@{att} = ""
+profile attach-disconnected-ipc flags=(complain, attach_disconnected.ipc) {
+  include <abstractions/base>
+}`,
+		},
+		{
 			name: "attach-namespace",
 			b:    NewAttach(),
 			profile: `
