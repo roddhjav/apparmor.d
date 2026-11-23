@@ -46,6 +46,21 @@ var (
 			"OUID":           "user",
 		},
 	}
+	refQuote = AppArmorLogs{
+		{
+			"apparmor":       "DENIED",
+			"profile":        "quote-name",
+			"operation":      "mknod",
+			"name":           `/a"b`,
+			"target":         "/tmp/b",
+			"comm":           "foo",
+			"requested_mask": "r",
+			"fsuid":          "1000",
+			"ouid":           "1000",
+			"FSUID":          "user",
+			"OUID":           "user",
+		},
+	}
 	refPowerProfiles = AppArmorLogs{
 		{
 			"apparmor":   "ALLOWED",
@@ -414,6 +429,11 @@ func TestLoad(t *testing.T) {
 			},
 		},
 		{
+			name: "quote-name",
+			path: filepath.Join(testdata, "aa-log"),
+			want: refQuote,
+		},
+		{
 			name: "trailing-owner",
 			path: filepath.Join(testdata, "aa-log"),
 			want: AppArmorLogs{
@@ -475,6 +495,11 @@ func TestAppArmorLogs_String(t *testing.T) {
 			name:   "power-profiles-daemon",
 			aaLogs: refPowerProfiles,
 			want:   "\033[1;32mALLOWED\033[0m \033[34mpower-profiles-daemon\033[0m \033[33mdbus_method_call\033[0m \033[35morg.freedesktop.DBus\033[0m \033[1;31msend\033[0m \033[36mbus=system\033[0m path=\033[37m/org/freedesktop/DBus\033[0m interface=\033[37morg.freedesktop.DBus\033[0m member=\033[32mAddMatch\033[0m peer_label=dbus-daemon addr=?\n",
+		},
+		{
+			name:   "quote-name",
+			aaLogs: refQuote,
+			want:   "\033[1;31mDENIED \033[0m \033[34mquote-name\033[0m \033[33mmknod\033[0m\033[35m owner\033[0m \033[35m\"/a\"\"b\"\033[0m -> \033[35m/tmp/b\033[0m comm=foo requested_mask=\033[1;31mr\033[0m\n",
 		},
 	}
 	for _, tt := range tests {
