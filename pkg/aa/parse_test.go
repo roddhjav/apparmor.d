@@ -200,7 +200,7 @@ func Test_parseBlock(t *testing.T) {
 
 func Test_newRules(t *testing.T) {
 	for _, tt := range testParseRules {
-		if tt.wRule == nil {
+		if tt.wRule == nil && !tt.wError {
 			continue
 		}
 		t.Run(tt.name, func(t *testing.T) {
@@ -538,6 +538,26 @@ var (
 			rule:    rule{},
 			wString: "",
 			wError:  true,
+		},
+		{
+			name:       "qualifier-only",
+			raw:        "owner",
+			tokens:     []string{"owner"},
+			rule:       rule{{key: "owner"}},
+			wGetString: "owner",
+			wGetSlice:  []string{"owner"},
+			wString:    "owner",
+			wError:     true,
+		},
+		{
+			name:       "qualifiers-only",
+			raw:        "audit deny",
+			tokens:     []string{"audit", "deny"},
+			rule:       rule{{key: "audit"}, {key: "deny"}},
+			wGetString: "audit deny",
+			wGetSlice:  []string{"audit", "deny"},
+			wString:    "audit deny",
+			wError:     true,
 		},
 		{
 			name:   "abi",
