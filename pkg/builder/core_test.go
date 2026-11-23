@@ -67,6 +67,23 @@ func TestBuilder_Apply(t *testing.T) {
 			  }`,
 		},
 		{
+			name: "abi4 comment with a brace in a condition",
+			b:    NewABI4(),
+			profile: `
+			  profile test {
+			    if "gnome" in @{DE} {
+			      # a comment with a brace {
+			    } else {
+			      /etc/foo r,
+			    }
+			  }`,
+			want: `
+			  profile test {
+			      # a comment with a brace {
+			      /etc/foo r,
+			  }`,
+		},
+		{
 			name: "abi4 boolean variables",
 			b:    NewABI4(),
 			profile: `@{ABI} = 4

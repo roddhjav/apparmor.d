@@ -25,6 +25,10 @@ func stripConditions(profile string) string {
 	stack := []bool{} // for each open block, whether it is a condition
 	for _, line := range lines {
 		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmed, "#") {
+			res = append(res, line)
+			continue
+		}
 		closes := strings.HasPrefix(trimmed, "}")
 		opens := strings.HasSuffix(trimmed, "{")
 		drop := false
