@@ -39,7 +39,7 @@ const (
 var (
 	regCleanLogs = util.ToRegexRepl([]string{
 		// Clean apparmor log file
-		`.*apparmor="`, `apparmor="`,
+		`^.*?apparmor="`, `apparmor="`,
 		`(peer_|)pid=[0-9]*\s`, " ",
 		`\x1d`, " ",
 
