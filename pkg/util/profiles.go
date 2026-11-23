@@ -63,18 +63,20 @@ func IsUnconfined(profile string) bool {
 // so modes never stack into an invalid combo such as (enforce,complain). The
 // last mode listed wins.
 func ApplyFlags(profile string, flags []string) (string, error) {
-	current := GetFlags(profile)
 	var mode string
 	for _, f := range flags {
 		if slices.Contains(ProfileModes, f) {
 			mode = f
-			continue
-		}
-		if !slices.Contains(current, f) {
-			current = append(current, f)
 		}
 	}
-	profile = SetFlags(profile, current)
+	profile = editHeaderFlags(profile, func(current []string) []string {
+		for _, f := range flags {
+			if !slices.Contains(ProfileModes, f) && !slices.Contains(current, f) {
+				current = append(current, f)
+			}
+		}
+		return current
+	})
 	if mode == "" {
 		return profile, nil
 	}
@@ -87,23 +89,35 @@ func SetMode(profile string, mode string) (string, error) {
 		return profile, fmt.Errorf("unknown profile mode: %s", mode)
 	}
 
-	flags := GetFlags(profile)
+	return editHeaderFlags(profile, func(flags []string) []string {
+		// An explicitly unconfined profile stays unconfined: never replace it.
+		// unconfined is never a target mode, but it can already exist in a profile.
+		if slices.Contains(flags, "unconfined") {
+			return flags
+		}
 
-	// An explicitly unconfined profile stays unconfined: never replace it.
-	// unconfined is never a target mode, but it can already exist in a profile.
-	if slices.Contains(flags, "unconfined") {
-		return profile, nil
-	}
+		// Remove all conflicting mode flags
+		flags = slices.DeleteFunc(flags, func(f string) bool {
+			return slices.Contains(ProfileModes, f)
+		})
 
-	// Remove all conflicting mode flags
-	flags = slices.DeleteFunc(flags, func(f string) bool {
-		return slices.Contains(ProfileModes, f)
+		// "enforce" is the default (no mode flag needed), otherwise add the mode
+		if mode != "enforce" {
+			flags = append(flags, mode)
+		}
+		return flags
+	}), nil
+}
+
+// editHeaderFlags rewrites the flags of every profile header with edit, each
+// header from its own flags. A header whose flags do not change is kept as is.
+func editHeaderFlags(profile string, edit func([]string) []string) string {
+	return regProfileHeader.ReplaceAllStringFunc(profile, func(header string) string {
+		flags := GetFlags(header)
+		newFlags := edit(slices.Clone(flags))
+		if slices.Equal(flags, newFlags) {
+			return header
+		}
+		return SetFlags(header, newFlags)
 	})
-
-	// "enforce" is the default (no mode flag needed), otherwise add the mode
-	if mode != "enforce" {
-		flags = append(flags, mode)
-	}
-
-	return SetFlags(profile, flags), nil
 }
