@@ -1,0 +1,46 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Łukasz Kozak <lakis.kozak@gmail.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+@{exec_path}  = @{lib}/kf6/smbnotifier
+@{exec_path} += @{lib}/@{multiarch}/libexec/kf6/smbnotifier
+profile smbnotifier @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/bus-session>
+  include <abstractions/nameservice-strict>
+  include <abstractions/network/netlink>
+  include <abstractions/network/out/domain>
+  include <abstractions/network/out/microsoft-ds>
+  include <abstractions/qt>
+
+  signal receive set=term peer=kded,
+
+  @{exec_path} mr,
+
+  @{etc_ro}/krb5.conf r,
+  /etc/krb5.conf.d/{,**} r,
+  /etc/samba/smb.conf r,
+
+  /var/cache/samba/ r,
+
+  / r,
+
+  owner @{HOME}/ r,
+  owner @{user_cache_dirs}/samba/ rw,
+  owner @{user_cache_dirs}/samba/gencache.tdb rwk,
+  owner @{user_config_dirs}/ r,
+
+        @{run}/avahi-daemon/socket rw,
+  owner @{run}/samba/ w,
+
+  /dev/tty r,
+  /dev/urandom w,
+
+  include if exists <local/smbnotifier>
+}
+
+# vim:syntax=apparmor

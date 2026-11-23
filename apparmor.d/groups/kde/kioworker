@@ -10,6 +10,7 @@ include <tunables/global>
 @{exec_path} += @{lib}/kf5/kioslave5 @{lib}/@{multiarch}/{,libexec/}kf5/kioslave5
 profile kioworker @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/base>
+  include <abstractions/avahi-observe>
   include <abstractions/deny-sensitive-home>
   include <abstractions/devices-usb>
   include <abstractions/fontconfig-cache-write>
@@ -17,6 +18,9 @@ profile kioworker @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/kde-strict>
   include <abstractions/nameservice-strict>
   include <abstractions/network-manager-observe>
+  include <abstractions/network/netlink>
+  include <abstractions/network/out/microsoft-ds>
+  include <abstractions/network/out/netbios-ssn>
   include <abstractions/ssl_certs>
   include <abstractions/thumbnails-cache-write>
   include <abstractions/trash-strict>
@@ -25,7 +29,6 @@ profile kioworker @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   network inet6 dgram,
   network inet stream,
   network inet6 stream,
-  network netlink raw,
   network netlink dgram,
 
   mqueue getattr type=posix,
@@ -60,7 +63,10 @@ profile kioworker @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   @{etc_ro}/ssh/ssh_config.d/{,*} r,
   /etc/ssh/ssh_known_hosts r,
 
+  @{etc_ro}/krb5.conf r,
   /etc/fstab r,
+  /etc/krb5.conf.d/{,**} r,
+  /etc/samba/smb.conf r,
   /etc/sysconfig/proxy r,
   /etc/xdg/kioslaverc r,
   /etc/xdg/menus/{,**} r,
@@ -118,6 +124,7 @@ profile kioworker @{exec_path} flags=(attach_disconnected,mediate_deleted) {
         @{run}/mount/utab r,
         @{run}/sshd.pid r,
         @{run}/utmp r,
+  owner @{run}/samba/ w,
   owner @{run}/user/@{uid}/kio_*.socket rwl -> @{run}/user/@{uid}/#@{int},
   owner @{run}/user/@{uid}/kioworker*.kioworker.socket rwl -> @{run}/user/@{uid}/#@{int},
 
@@ -127,6 +134,7 @@ profile kioworker @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{PROC}/@{pid}/mounts r,
 
   /dev/tty r,
+  /dev/urandom w,
 
   profile ddjvu {
     include <abstractions/base>
