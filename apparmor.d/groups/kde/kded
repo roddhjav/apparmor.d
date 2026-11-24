@@ -25,6 +25,8 @@ profile kded @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/kde-strict>
   include <abstractions/nameservice-strict>
   include <abstractions/network-manager-observe>
+  include <abstractions/network/netlink>
+  include <abstractions/network/out/ipp>
   include <abstractions/ssl_certs>
   include <abstractions/trash-strict>
   include <abstractions/wutmp>
@@ -36,12 +38,12 @@ profile kded @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   network inet6 dgram,
   network inet6 stream,
   network netlink dgram,
-  network netlink raw,
 
   ptrace read,
 
   signal send set=hup peer=xsettingsd,
   signal send set=term peer=kioworker,
+  signal send set=term peer=smbnotifier,
 
   # Owned by KDE
 
@@ -111,9 +113,10 @@ profile kded @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   @{bin}/xsettingsd         rPx,
   @{lib}/drkonqi            rPx,
 
-  @{lib}/{,@{multiarch}/}utempter/utempter rPx,
   #aa:exec kconf_update
   #aa:exec kioworker
+  #aa:exec smbnotifier
+  #aa:exec utempter
 
   /usr/share/color-schemes/{,**} r,
   /usr/share/desktop-directories/kf5-*.directory r,
