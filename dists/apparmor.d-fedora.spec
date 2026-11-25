@@ -6,7 +6,7 @@
 # SPDX-License-Identifier: GPL-2.0-only
 
 Name:           apparmor.d
-Version:        0.4914.0
+Version:        0.4916.0
 Release:        1%{?dist}
 Summary:        Full set of AppArmor policies
 License:        GPL-2.0-only
@@ -75,7 +75,6 @@ apparmor_parser --purge-cache || :
 %dir /usr/share/apparmor
 /usr/share/apparmor/modes
 /usr/share/apparmor/flags.d
-/usr/share/apparmor/fsp.d/
 /usr/share/apparmor/ignore.d
 /usr/share/apparmor/overwrite.d/
 

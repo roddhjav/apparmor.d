@@ -200,7 +200,7 @@ func Test_parseBlock(t *testing.T) {
 
 func Test_newRules(t *testing.T) {
 	for _, tt := range testParseRules {
-		if tt.wRule == nil {
+		if tt.wRule == nil && !tt.wError {
 			continue
 		}
 		t.Run(tt.name, func(t *testing.T) {
@@ -214,6 +214,48 @@ func Test_newRules(t *testing.T) {
 			}
 			if !reflect.DeepEqual(got[0], tt.wRule) {
 				t.Errorf("newRules() = %v, want %v", got[0], tt.wRule)
+			}
+		})
+	}
+}
+
+func Test_newHat(t *testing.T) {
+	tests := []struct {
+		name    string
+		raw     string
+		want    *Hat
+		wantErr bool
+	}{
+		{
+			name: "caret",
+			raw:  "^DEFAULT",
+			want: &Hat{Name: "DEFAULT", Flags: []string{}},
+		},
+		{
+			name: "keyword",
+			raw:  "hat DEFAULT",
+			want: &Hat{Name: "DEFAULT", Flags: []string{}},
+		},
+		{
+			name: "keyword-flags",
+			raw:  "hat action flags=(complain)",
+			want: &Hat{Name: "action", Flags: []string{"complain"}},
+		},
+		{
+			name: "caret-named-hat",
+			raw:  "^hat",
+			want: &Hat{Name: "hat", Flags: []string{}},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := newHat(parseRule(tt.raw))
+			if (err != nil) != tt.wantErr {
+				t.Errorf("newHat() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("newHat() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -242,6 +284,37 @@ func Test_AppArmorProfileFile_Parse(t *testing.T) {
 			}
 			if !reflect.DeepEqual(gotRules, tt.wRules) {
 				t.Errorf("ParseRules() got = %v, want %v", gotRules, tt.wRules)
+			}
+		})
+	}
+}
+
+func Test_ParseRules(t *testing.T) {
+	tests := []struct {
+		name    string
+		raw     string
+		wantErr bool
+	}{
+		{
+			name:    "unbalanced-close-paren",
+			raw:     ")(,\n\n",
+			wantErr: true,
+		},
+		{
+			name:    "unbalanced-close-brace",
+			raw:     "}{,\n\n",
+			wantErr: true,
+		},
+		{
+			name:    "include-unbalanced-close-paren",
+			raw:     "  include )0000\n\n",
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if _, _, err := ParseRules(tt.raw); (err != nil) != tt.wantErr {
+				t.Errorf("ParseRules() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
@@ -538,6 +611,26 @@ var (
 			rule:    rule{},
 			wString: "",
 			wError:  true,
+		},
+		{
+			name:       "qualifier-only",
+			raw:        "owner",
+			tokens:     []string{"owner"},
+			rule:       rule{{key: "owner"}},
+			wGetString: "owner",
+			wGetSlice:  []string{"owner"},
+			wString:    "owner",
+			wError:     true,
+		},
+		{
+			name:       "qualifiers-only",
+			raw:        "audit deny",
+			tokens:     []string{"audit", "deny"},
+			rule:       rule{{key: "audit"}, {key: "deny"}},
+			wGetString: "audit deny",
+			wGetSlice:  []string{"audit", "deny"},
+			wString:    "audit deny",
+			wError:     true,
 		},
 		{
 			name:   "abi",
@@ -1163,6 +1256,24 @@ var (
 			},
 			wantErr: false,
 		},
+		{
+			name:       "include-map-only",
+			isPreamble: true,
+			raw:        "include ={}",
+			wantErr:    true,
+		},
+		{
+			name:       "include-if-exists-map-only",
+			isPreamble: true,
+			raw:        "include if exists x=y",
+			wantErr:    true,
+		},
+		{
+			name:       "include-maps-only",
+			isPreamble: true,
+			raw:        "include a=b c=d e=f",
+			wantErr:    true,
+		},
 	}
 
 	// Test cases for parseCommaRules
@@ -1226,6 +1337,21 @@ var (
 				},
 			},
 			wantErr: false,
+		},
+		{
+			name: "inline-comment-after-empty-rule",
+			raw:  ", # c\n/a r,",
+			rule: []rule{
+				{},
+				{kv{key: "/a"}, kv{key: "r"}},
+			},
+			wantErr: false,
+		},
+		{
+			name:    "unbalanced-paren",
+			raw:     "/(aaaaa r,\n/etc/shadow r,",
+			rule:    nil,
+			wantErr: true,
 		},
 		{
 			name: "#-in-aare",
@@ -1946,7 +2072,7 @@ var (
 				// block 0: preamble content (parsed via parsePreamble)
 				{
 					&Comment{Base: Base{IsLineRule: true, Comment: " Simple test profile with all rules used"}},
-					&Include{Base: Base{Comment: " a comment", Optional: true}, IsMagic: true, Path: "tunables/global"},
+					&Include{Base: Base{Comment: "a comment", Optional: true}, IsMagic: true, Path: "tunables/global"},
 					&Include{IfExists: true, Path: "/etc/apparmor.d/global/dummy space"},
 					&Variable{Name: "name", Values: []string{"torbrowser", "\"tor browser\""}, Define: true},
 					&Variable{Base: Base{Comment: " another comment"}, Name: "lib_dirs", Values: []string{"@{lib}/@{name}", "/opt/@{name}"}, Define: true},
@@ -1991,7 +2117,7 @@ var (
 				Preamble: Rules{
 					&Comment{Base: Base{IsLineRule: true, Comment: " Simple test profile with all rules used"}},
 					&Include{
-						Base:    Base{Comment: " a comment", Optional: true},
+						Base:    Base{Comment: "a comment", Optional: true},
 						IsMagic: true, Path: "tunables/global",
 					},
 					&Include{IfExists: true, Path: "/etc/apparmor.d/global/dummy space"},
@@ -2022,7 +2148,7 @@ var (
 				Preamble: Rules{
 					&Comment{Base: Base{IsLineRule: true, Comment: " Simple test profile with all rules used"}},
 					&Include{
-						Base:    Base{Comment: " a comment", Optional: true},
+						Base:    Base{Comment: "a comment", Optional: true},
 						IsMagic: true, Path: "tunables/global",
 					},
 					&Include{IfExists: true, Path: "/etc/apparmor.d/global/dummy space"},
@@ -2250,7 +2376,7 @@ var (
 					&Comment{Base: Base{IsLineRule: true, Comment: " SPDX-License-Identifier: GPL-2.0-only"}},
 					&Comment{Base: Base{IsLineRule: true, Comment: " TODO: Test rule with only ','"}},
 					&Include{
-						Base:    Base{Optional: true, Comment: " A nice message"},
+						Base:    Base{Optional: true, Comment: "A nice message"},
 						IsMagic: true, Path: "tunables/global",
 					},
 					&Include{IfExists: true, Path: "/etc/apparmor.d/global/dummy space"},

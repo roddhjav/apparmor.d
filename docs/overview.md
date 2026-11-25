@@ -47,6 +47,24 @@ Lessons learned while making an AppArmor Play machine:
 
 - [Linux Security Summit North America (LSS-NA 2025)](https://events.linuxfoundation.org/linux-security-summit-north-america/) *([Slide](https://lssna2025.sched.com/event/1zalf/lessons-learned-while-making-an-apparmor-play-machine-alexandre-pujol-linagora), [Video](https://www.youtube.com/watch?v=zCSl8honRI0))*
 
+Immutable, Fully-Confined Debian Server Images, Even on a Raspberry Pi 3:
+
+- [All Systems Go! (ASG 2026)](https://all-systems-go.io) *([Slide](https://cfp.all-systems-go.io/all-systems-go-2026/talk/KJNYQ8/), [Video](https://www.youtube.com/watch?v=5Kft4nlDKR8&list=PLY5ESsVXvwlg))*
+
 ### Chat
 
 A development chat is available on https://matrix.to/#/#apparmor.d:matrix.org
+
+## Funding
+
+<div style="display: flex; align-items: center; gap: 1.5em" markdown>
+<div style="flex: 1" markdown>
+
+This project is funded through [NGI0 Commons Fund](https://nlnet.nl/commonsfund), a fund established by [NLnet](https://nlnet.nl) with financial support from the European Commission's [Next Generation Internet](https://ngi.eu) program. Learn more at the [NLnet project page](https://nlnet.nl/project/apparmor.d).
+
+</div>
+<div style="display: flex; align-items: center; gap: 1em">
+<a href="https://nlnet.nl"><img src="https://nlnet.nl/logo/banner.png" alt="NLnet foundation logo" style="height: 3.8em; width: auto"/></a>
+<a href="https://nlnet.nl/commonsfund"><img src="https://nlnet.nl/image/logos/NGI0_tag.svg" alt="NGI Zero Logo" style="height: 3.8em; width: auto"/></a>
+</div>
+</div>

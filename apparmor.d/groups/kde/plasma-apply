@@ -1,0 +1,52 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Łukasz Kozak <lakis.kozak@gmail.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+@{exec_path}  = @{bin}/plasma-apply-{colorscheme,cursortheme,desktoptheme,lookandfeel,wallpaperimage}
+@{exec_path} += @{lib}/plasma-apply-aurorae @{lib}/@{multiarch}/libexec/plasma-apply-aurorae
+@{exec_path} += @{lib}/plasma-changeicons @{lib}/@{multiarch}/libexec/plasma-changeicons
+profile plasma-apply @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/common/kde>
+  include <abstractions/kde-globals-write>
+
+  @{exec_path} mrix,
+
+  @{bin}/kbuildsycoca{,5,6} Px,
+  @{bin}/xrdb              rPx,
+
+  #aa:exec kwin-applywindowdecoration
+
+  @{sh_path} r,
+
+  /usr/share/plasma/look-and-feel/{,**} r,
+  /usr/share/plasma/desktoptheme/{,**} r,
+
+        @{HOMEDIRS}/ r,
+  owner @{HOME}/ r,
+
+  owner @{user_config_dirs}/gtkrc@{atomic} rwlk -> @{user_config_dirs}/#@{int},
+  owner @{user_config_dirs}/gtkrc-2.0@{atomic} rwlk -> @{user_config_dirs}/#@{int},
+  owner @{user_config_dirs}/kcminputrc@{atomic} rwlk -> @{user_config_dirs}/#@{int},
+  owner @{user_config_dirs}/plasmarc@{atomic} rwlk -> @{user_config_dirs}/#@{int},
+  owner @{user_config_dirs}/Trolltech.conf@{atomic} rwlk -> @{user_config_dirs}/#@{int},
+
+  owner @{user_share_dirs}/plasma/look-and-feel/{,**} r,
+  owner @{user_share_dirs}/plasma/desktoptheme/{,**} r,
+  owner @{user_share_dirs}/wallpapers/{,**} r,
+
+  owner @{tmp}/#@{int} rw,
+  owner @{tmp}/plasma-apply-*.@{rand6} rwl -> @{tmp}/#@{int},
+
+  @{PROC}/sys/kernel/random/boot_id r,
+
+  /dev/tty rw,
+
+  include if exists <local/plasma-apply>
+}
+
+# vim:syntax=apparmor

@@ -1,0 +1,48 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Łukasz Kozak <lakis.kozak@gmail.com>
+# SPDX-License-Identifier: GPL-2.0-only
+# NEEDS-VARIABLE: domain
+
+# This abstraction is for binaries using QT WebEngine. Seperate browsers and/or web applications
+# need to use abstractions/app/chromium or abstractions/common/electron instead.
+#
+# Applications should always use stacked profiles, as WebEngine is run with No New Privileges flag
+#
+# It works as a *function* and requires a variable to be provided as *arguments*
+# and set in the header of the calling profile. Example:
+#
+# !!! quote ""
+#
+#     ```
+#     @{domain} = org.chromium.Chromium
+#     ```
+#
+
+  abi <abi/5.0>,
+
+  include <abstractions/common/chromium>
+  include <abstractions/fonts-strict>
+
+  @{lib}/{,@{multiarch}/}qt{5,6}/{,libexec/}QtWebEngineProcess mr,
+
+  /usr/share/icu/@{int}.@{int}/*.dat r,
+  /usr/share/qt6/resources/v8_context_snapshot.bin r,
+  /usr/share/qt6/resources/qtwebengine_* r,
+  /usr/share/qt6/translations/qtwebengine_locales/* r,
+
+  # mapping access to Widevine library should be given only when really needed
+  owner @{user_config_dirs}/chromium/WidevineCdm/{,**} r,
+
+        @{PROC}/ r,
+        @{PROC}/sys/fs/inotify/max_user_watches r,
+        @{PROC}/sys/kernel/yama/ptrace_scope r,
+  owner @{PROC}/@{pid}/cmdline r,
+  owner @{PROC}/@{pid}/fd/ r,
+  owner @{PROC}/@{pid}/statm r,
+
+  # Silencer
+  deny /usr/share/qt6/resources/locales/ w,
+
+  include if exists <abstractions/common/qt-webengine.d>
+
+# vim:syntax=apparmor

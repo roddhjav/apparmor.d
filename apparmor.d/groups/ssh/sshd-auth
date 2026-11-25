@@ -10,17 +10,16 @@ include <tunables/global>
 profile sshd-auth @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/nameservice-strict>
+  include <abstractions/network/netlink>
+  include <abstractions/network/udp>
 
   capability dac_override,
   capability setgid,
   capability setuid,
   capability sys_chroot,
 
-  network inet dgram,
-  network inet stream,
-  network inet6 dgram,
-  network inet6 stream,
-  network netlink raw,
+  # Pre-auth phase: only use the connected socket inherited from sshd-session
+  network (getattr getopt setopt send receive shutdown) tcp port=22,
 
   unix type=stream peer=(label=sshd-session),
 

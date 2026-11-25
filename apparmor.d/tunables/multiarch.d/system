@@ -2,6 +2,8 @@
 # Copyright (C) 2021-2024 Alexandre Pujol <alexandre@pujol.io>
 # SPDX-License-Identifier: GPL-2.0-only
 
+include <tunables/multiarch.d/path>
+
 # ## System Paths
 # ---------------
 
@@ -27,7 +29,10 @@
 @{efi}=/boot/ /efi/ /boot/efi/
 
 # Common places for logs
-@{log} = /var/log/ /run/log
+@{log}=/var/log/ /run/log
+
+# Paths integrating both possible snap packages' localizations
+@{snap}=/snap/ /var/lib/snapd/snap/
 
 # ## System Variables
 # -------------------
@@ -75,6 +80,22 @@
 @{udbus}=@{h}{@{h},}{@{h},}{@{h},}{@{h},}{@{h},}{@{h},}{@{h},}{@{h},}{@{h},}{@{h},}{@{h},}{@{h},}{@{h},}{@{h},}{@{h},}
 @{udbus}+=@{int12}@{int}
 
+# X11 display number
+#
+# Each X server listens on an abstract and a filesystem unix socket named after
+# its display number. The expected rules are:
+#
+# ```
+#   unix (connect send receive) type=stream peer=(label=<label>, addr=@/tmp/.X11-unix/X<display>),
+#   owner /tmp/.X11-unix/X<display> rw,
+# ```
+#
+# Where `<display>` matches `@{xdisplay}`:
+#
+# - 0 to 99: kwin (first free display under 100), mutter (first free display from 0)
+# - 1020 to 1079: mutter under GDM (greeter, first free display from 1024)
+@{xdisplay}=@{d} @{d}@{d} 10[2-7]@{d}
+
 # Universally unique identifier
 @{uuid}=@{hex8}[-_]@{hex4}[-_]@{hex4}[-_]@{hex4}[-_]@{hex12}
 
@@ -97,7 +118,7 @@
 @{multiarch}+=*-redhat-linux*
 
 # Suffix for QSaveFile / KConfig atomic-write triplet (atomic replace-by-rename),
-@{atomic}={,.lock,.lock.rmlock,.@{rand6}}
+@{atomic}="" .lock .lock.rmlock .@{rand6}
 
 
 # ## System Internal
@@ -116,7 +137,7 @@
 #
 # - `pci<domain>:<bus>` the root bus, matches `@{pci_bus}`
 # - `<domain>:<bus>:<slot>.<function>` a device address, matches `@{pci_id}`
-# - `@{pci}` matches the root bus followed by any depth of bridges and devices
+# - `@{pci}` matches the root bus followed by up to 8 levels of bridges and devices
 #
 # !!! warning
 #
@@ -131,7 +152,7 @@
 #
 @{pci_bus}=pci@{hex4}:@{hex2}
 @{pci_id}=@{hex4}:@{hex2}:@{hex2}.@{h}
-@{pci}=@{pci_bus}/**/
+@{pci}=@{pci_bus}{/@{pci_id},}{/@{pci_id},}{/@{pci_id},}{/@{pci_id},}{/@{pci_id},}{/@{pci_id},}{/@{pci_id},}{/@{pci_id},}
 
 # Dynamically assigned character device majors
 #

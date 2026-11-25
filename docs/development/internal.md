@@ -190,11 +190,20 @@ The possible solutions are:
 
 ## Stacking
 
-[Stacking](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmorStacking) of two or more profiles is the strict intersection of them. It is a way to ensure that a profile never becomes more permissive than the intersection of all profiles in the stack. It provides several abilities to the policy author: 
+A [stack](https://gitlab.com/apparmor/apparmor/-/wikis/AppArmorStacking) is a set of profiles that confine a process at the same time. The confinement of a stack is the strict intersection of its profiles: an access is allowed only if every profile in the stack allows it, so a deny from any one of them wins. Nothing is applied "first" or "then", so the order does not matter: `firefox//&global` and `global//&firefox` confine the process the same way.
 
-- It can be used to ensure that confinement never becomes more permissive.
-- To reduce the permissions of a generic profile on a specific task.
-- To provide both system level and container and user level policy (when combined with policy namespaces).
+Stacking ensures that a profile never becomes more permissive than the intersection of all profiles in the stack. It gives the policy author several abilities:
+
+- Ensure that confinement never becomes more permissive.
+- Reduce the permissions of a generic profile on a specific task.
+- Provide system level, container level, and user level policy at the same time (when combined with policy namespaces).
+
+A stack is created in a transition rule with `&`. Where the `&` sits only changes which profiles end up in the stack:
+
+- A leading `&` (`-> &X`) keeps the current confinement and adds `X`. From `plasmashell`, `cx -> &plasma-welcome//QtWebEngineProcess` gives `plasmashell` AND `plasma-welcome//QtWebEngineProcess` (`//` refers to the child profile `QtWebEngineProcess` of `plasma-welcome`).
+- With no leading `&`, the rule spells out the full stack: `-> gnome-desktop-thumbnailers//&glycin//loaders` gives `gnome-desktop-thumbnailers` AND `glycin//loaders`.
+
+When the rule sits inside the profile it names, both forms do the same thing: one names the current profile, the other leaves it implicit. The explicit form is preferred, as it is clearer and less prone to issues in AppArmor.
 
 !!! note ""
 
@@ -206,6 +215,10 @@ The possible solutions are:
       ...
     }
     ```
+
+When a stacked process executes another program, each profile in the stack must allow the exec with its own rules, and the new stack combines what each one decides.
+
+This is also why stacking works under [No New Privileges](#no-new-privileges): "current AND X" can never allow more than "current", which is exactly what `no_new_privs` requires.
 
 ## Udev rules
 

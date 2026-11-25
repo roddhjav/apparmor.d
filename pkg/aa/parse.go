@@ -397,6 +397,9 @@ func parseCommaRules(input string) ([]rule, error) {
 	rules := []rule{}
 	blockStart := 0
 	blockCounter := 0
+	// Like blockCounter, for '(' only: an unclosed '[' is valid (/usr/bin/[),
+	// and a paragraph given by ParseRules can hold an unclosed block header.
+	parenCounter := 0
 	comment := false
 	aare := false
 	canHaveInlineComment := false
@@ -406,11 +409,17 @@ func parseCommaRules(input string) ([]rule, error) {
 		case tokOPENBRACE, tokOPENBRACKET, tokOPENPAREN:
 			if !comment {
 				blockCounter++
+				if r == tokOPENPAREN {
+					parenCounter++
+				}
 			}
 
 		case tokCLOSEBRACE, tokCLOSEBRACKET, tokCLOSEPAREN:
 			if !comment {
 				blockCounter--
+				if r == tokCLOSEPAREN {
+					parenCounter--
+				}
 				// A `}` starting its line that closes a top level block (if/else)
 				// ends it: the next rule starts after it.
 				if r == tokCLOSEBRACE && blockCounter == 0 &&
@@ -432,8 +441,9 @@ func parseCommaRules(input string) ([]rule, error) {
 					commentRaw := input[blockStart:idx]
 
 					// Inline comments belong to the previous rule (in the same line)
-					lastRule := rules[len(rules)-1]
-					lastRule[len(lastRule)-1].comment = commentRaw
+					if lastRule := rules[len(rules)-1]; len(lastRule) > 0 {
+						lastRule[len(lastRule)-1].comment = commentRaw
+					}
 
 					// Ignore the collected comment for the next rule
 					blockStart = idx
@@ -458,6 +468,9 @@ func parseCommaRules(input string) ([]rule, error) {
 
 			}
 		}
+	}
+	if parenCounter > 0 {
+		return nil, fmt.Errorf("unbalanced block in: %s", strings.TrimSpace(input[blockStart:]))
 	}
 	return rules, nil
 }
@@ -902,14 +915,13 @@ func newRules(rules []rule) (Rules, error) {
 	res := make(Rules, 0, len(rules))
 
 	for _, rule := range rules {
-		if len(rule) == 0 {
-			return nil, fmt.Errorf("empty rule")
-		}
-
 		owner := false
 		q := Qualifier{}
 		hasAccessType := false // track if allow/deny/prompt was seen
 	qualifier:
+		if len(rule) == 0 {
+			return nil, fmt.Errorf("empty rule")
+		}
 		switch rule.Get(0) {
 		// File & Link prefix
 		case tokOWNER:
@@ -1126,7 +1138,13 @@ func startsWithClosingBrace(s string) bool {
 }
 
 // ParseRules parses apparmor profile rules by paragraphs
-func ParseRules(input string) (ParaRules, []string, error) {
+func ParseRules(input string) (_ ParaRules, _ []string, retErr error) {
+	defer func() {
+		if r := recover(); r != nil {
+			retErr = fmt.Errorf("%v", r)
+		}
+	}()
+
 	paragraphRules := ParaRules{}
 	paragraphs := []string{}
 

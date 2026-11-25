@@ -13,8 +13,12 @@ profile userdbctl @{exec_path} flags=(attach_disconnected) {
   include <abstractions/consoles>
   include <abstractions/nameservice-strict>
 
-  capability net_admin,
+  capability chown,
+  capability dac_override,
   capability dac_read_search,
+  capability fowner,
+  capability fsetid,
+  capability net_admin,
   capability sys_resource,
 
   signal send set=cont peer=child-pager,
@@ -23,14 +27,21 @@ profile userdbctl @{exec_path} flags=(attach_disconnected) {
 
   @{pager_path} rPx -> child-pager,
 
+  @{etc_rw}/userdb/{,**} rw,
   /etc/gshadow r,
   /etc/shadow r,
-  /etc/userdb/ rw,
+  /etc/skel/{,**} r,
 
   /etc/machine-id r,
+  /var/lib/dbus/machine-id r,
 
-  @{run}/userdb/ rw,
-  @{run}/credentials/systemd-userdb-load-credentials.service/ r,
+  @{HOME}/ rw,
+  @{HOME}/.bash_logout w,
+  @{HOME}/.bashrc w,
+  @{HOME}/.profile w,
+
+  @{run}/userdb/{,**} rw,
+  @{run}/credentials/systemd-userdb-load-credentials.service/{,*} r,
 
   owner @{PROC}/@{pid}/cgroup r,
   owner @{PROC}/@{pid}/gid_map r,

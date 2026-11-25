@@ -7,15 +7,17 @@ abi <abi/5.0>,
 include <tunables/global>
 
 @{exec_path} = @{bin}/linux-boot-prober
-profile linux-boot-prober @{exec_path} {
+profile linux-boot-prober @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/consoles>
 
   capability dac_read_search,
   capability sys_admin,
 
+  mount options=(rw rprivate) -> /,
+
   umount /var/lib/os-prober/mount/,
-  umount /var/lib/os-prober/mount@{efi}/,
+  umount /var/lib/os-prober/mount/@{efi}/,
 
   @{exec_path} mrix,
 
@@ -28,14 +30,16 @@ profile linux-boot-prober @{exec_path} {
   @{bin}/head            rix,
   @{bin}/logger          rix,
   @{bin}/ls              rix,
-  @{bin}/lsblk           rPx,
+  @{bin}/lsblk          mrPx,
   @{bin}/mkdir           rix,
   @{bin}/mktemp          rix,
   @{bin}/readlink        rix,
   @{bin}/rm              rix,
   @{bin}/rmdir           rix,
   @{bin}/sed             rix,
+  @{bin}/true           mrix,
   @{bin}/umount          rix,
+  @{bin}/unshare         rix,
 
   @{lib}/linux-boot-probes/** rix,
   @{lib}/os-prober/newns      rix,
@@ -44,15 +48,17 @@ profile linux-boot-prober @{exec_path} {
 
   /var/lib/os-prober/mount/ rw,
   /var/lib/os-prober/mount/etc/fstab r,
-  /var/lib/os-prober/mount@{efi}/ r,
-  /var/lib/os-prober/mount@{efi}/grub{,2}/grub.cfg r,
-  /var/lib/os-prober/mount@{efi}/mt86+* r,
-  /var/lib/os-prober/mount@{efi}/vmlinuz-* r,
+  /var/lib/os-prober/mount/@{efi}/ r,
+  /var/lib/os-prober/mount/@{efi}/grub{,2}/grub.cfg r,
+  /var/lib/os-prober/mount/@{efi}/mt86+* r,
+  /var/lib/os-prober/mount/@{efi}/vmlinuz-* r,
 
   @{MOUNTS}/etc/fstab r,
-  @{MOUNTDIRS}/*@{efi}/grub{,2}/grub.cfg r,
+  @{MOUNTS}/@{efi}/grub{,2}/grub.cfg r,
 
   /tmp/os-prober.@{rand6}/{,mounted-map} rw,
+
+  @{run}/mount/utab r,
 
   @{PROC}/@{pid}/mounts r,
 

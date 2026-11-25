@@ -63,12 +63,14 @@ type systemdLog struct {
 // reported by the bus or its clients are rebuilt, all other entries are left
 // untouched.
 func (l systemdLog) String() string {
+	// Quotes are doubled to stay inside the quoted values.
+	q := func(s string) string { return strings.ReplaceAll(s, `"`, `""`) }
 	switch {
 	case l.PolicyType == "apparmor":
 		return fmt.Sprintf(
 			`apparmor="DENIED" operation="dbus_%s" bus="%s" path="%s" interface="%s" member="%s" mask="%s" name="%s" label="%s" peer_label="%s"`,
-			l.Type, l.bus(), l.Path, l.Interface, l.Member, l.Action, l.Destination,
-			securityLabel(l.Sender), securityLabel(l.Receiver),
+			q(l.Type), l.bus(), q(l.Path), q(l.Interface), q(l.Member), q(l.Action),
+			q(l.Destination), q(securityLabel(l.Sender)), q(securityLabel(l.Receiver)),
 		)
 
 	case strings.Contains(l.Message, ownNameDenied):
@@ -77,7 +79,7 @@ func (l systemdLog) String() string {
 		// binary name otherwise: both are only a guess.
 		return fmt.Sprintf(
 			`apparmor="DENIED" operation="dbus_bind" bus="%s" mask="bind" name="%s" label="%s" info="%s"`,
-			l.bus(), l.Identifier, l.Identifier, l.Message,
+			l.bus(), q(l.Identifier), q(l.Identifier), q(l.Message),
 		)
 	}
 	return l.Message

@@ -1,0 +1,67 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Łukasz Kozak <lakis.kozak@gmail.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/servicemenuinstaller
+profile servicemenuinstaller @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/audio-client>
+  include <abstractions/graphics>
+  include <abstractions/kde-strict>
+  include <abstractions/nameservice-strict>
+
+  signal receive set=kill peer=plasma-discover,
+
+  @{exec_path} mr,
+
+  @{bin}/kdialog   rix, # Popular among plugin installers
+  @{terminal_path} rPx,
+  @{archive_path}  rix,
+
+  # running installation scripts
+  owner @{user_share_dirs}/servicemenu-download/*-dir/** Cx -> install,
+
+  / r,
+
+  /var/lib/flatpak/exports/share/icons/*/icon-theme.cache r,
+  /var/lib/flatpak/exports/share/icons/*/index.theme r,
+
+  owner @{user_share_dirs}/kio/{,servicemenus/} w,
+  owner @{user_share_dirs}/kio/servicemenus/** rw,
+  owner @{user_share_dirs}/kio/servicemenus/*.desktop l -> @{user_share_dirs}/kio/servicemenus/#@{int},
+  owner @{user_share_dirs}/servicemenu-download/* r,
+  owner @{user_share_dirs}/servicemenu-download/*-dir/{,**} rw,
+
+  /dev/tty r,
+
+  profile install {
+    include <abstractions/base>
+    include <abstractions/consoles>
+
+    @{sh_path}        mr,
+    @{coreutils_path} rix,
+
+    # Left this way if scripts need anything else
+    priority=-1 audit @{bin}/** PUx,
+    priority=-1 audit @{lib}/** PUx,
+
+    owner @{HOME}/.bin/ w,
+    owner @{HOME}/.bin/** rw,
+    owner @{user_bin_dirs}/ w,
+    owner @{user_bin_dirs}/** rw,
+
+    owner @{user_share_dirs}/kio/servicemenus/ w,
+    owner @{user_share_dirs}/kio/servicemenus/*.desktop rw,
+    owner @{user_share_dirs}/servicemenu-download/*-dir/**  rw,
+
+    include if exists <local/servicemenuinstaller_install>
+  }
+
+  include if exists <local/servicemenuinstaller>
+}
+
+# vim:syntax=apparmor

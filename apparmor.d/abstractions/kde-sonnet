@@ -1,0 +1,31 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Łukasz Kozak <lakis.kozak@gmail.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Abstraction for binaries using KDE's Sonnet spellchecking libarary
+#
+
+  abi <abi/5.0>,
+
+  /usr/share/hunspell/{,*} r,
+  /usr/share/myspell/{,dicts/} r,
+  /usr/share/myspell/dicts/* r,
+  /usr/share/voikko/5/{,**} r,
+
+  /var/lib/aspell/*.rws r,
+  /var/lib/flatpak/runtime/org.kde.Platform.Locale/{,**/} r,
+  /var/lib/flatpak/runtime/org.kde.Platform.Locale/@{arch}/6.@{int}/@{hex64}-*/files/*/share/*/hunspell/*.{aff,dic} r,
+
+  owner @{HOME}/.aspell.*.prepl rwk,
+  owner @{HOME}/.aspell.*.pws rwk,
+  owner @{HOME}/.hunspell_* rw,
+
+  owner @{user_config_dirs}/KDE/#@{int} rwk,
+  owner @{user_config_dirs}/KDE/Sonnet.conf@{atomic} rwlk, # -> @{user_config_dirs}/KDE/#@{int},
+
+  owner @{user_share_dirs}/Sonnet/ w,
+  owner @{user_share_dirs}/Sonnet/Voikko-user-dictionary.json rw,
+
+  include if exists <abstractions/kde-sonnet.d>
+
+# vim:syntax=apparmor

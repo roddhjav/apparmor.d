@@ -1,0 +1,32 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Łukasz Kozak <lakis.kozak@gmail.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{bin}/sddmthemeinstaller
+profile sddmthemeinstaller @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/audio-client>
+  include <abstractions/bus/system/org.freedesktop.PolicyKit1>
+  include <abstractions/common/kde>
+
+  #aa:dbus talk bus=system name=org.kde.kcontrol.kcmsddm path=/ interface+=org.kde.kf[56]auth label=kauth-kcmsddm_authhelper
+
+  @{exec_path} mr,
+
+        @{HOMEDIRS}/ r,
+  owner @{HOME}/ r,
+
+  owner @{tmp}/*.@{archive_ext} rw,
+
+  @{PROC}/sys/kernel/random/boot_id r,
+
+  /dev/tty r,
+
+  include if exists <local/sddmthemeinstaller>
+}
+
+# vim:syntax=apparmor

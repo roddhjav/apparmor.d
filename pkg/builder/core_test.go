@@ -67,6 +67,23 @@ func TestBuilder_Apply(t *testing.T) {
 			  }`,
 		},
 		{
+			name: "abi4 comment with a brace in a condition",
+			b:    NewABI4(),
+			profile: `
+			  profile test {
+			    if "gnome" in @{DE} {
+			      # a comment with a brace {
+			    } else {
+			      /etc/foo r,
+			    }
+			  }`,
+			want: `
+			  profile test {
+			      # a comment with a brace {
+			      /etc/foo r,
+			  }`,
+		},
+		{
 			name: "abi4 boolean variables",
 			b:    NewABI4(),
 			profile: `@{ABI} = 4
@@ -345,6 +362,47 @@ dbus send bus=session path=/org/freedesktop/DBus
 }`,
 		},
 		{
+			name: "stacked-dbus-substring-paragraph",
+			b:    NewStackedDbus(),
+			profile: `
+profile foo {
+  dbus receive bus=session path=/a
+       interface=org.a
+       peer=(label="@{p_dbus_system}"),
+
+  dbus send bus=system path=/b
+       interface=org.b
+       peer=(label="@{p_dbus_system}"),
+  dbus receive bus=session path=/a
+       interface=org.a
+       peer=(label="@{p_dbus_system}"),
+
+}`,
+			want: `
+profile foo {
+dbus receive bus=session path=/a
+       interface=org.a
+       peer=(label=dbus-system),
+dbus receive bus=session path=/a
+       interface=org.a
+       peer=(label=dbus-system//&unconfined),
+
+dbus send bus=system path=/b
+       interface=org.b
+       peer=(label=dbus-system),
+dbus send bus=system path=/b
+       interface=org.b
+       peer=(label=dbus-system//&unconfined),
+dbus receive bus=session path=/a
+       interface=org.a
+       peer=(label=dbus-system),
+dbus receive bus=session path=/a
+       interface=org.a
+       peer=(label=dbus-system//&unconfined),
+
+}`,
+		},
+		{
 			name: "base-strict-1",
 			b:    NewBaseStrict(),
 			profile: `
@@ -388,6 +446,46 @@ profile attach-2 flags=(complain) {
   include <abstractions/base>
   include <abstractions/base-strict>
   include <abstractions/consoles>
+}`,
+		},
+		{
+			name: "attach-no-attach-disconnected",
+			b:    NewAttach(),
+			profile: `
+profile attach-no-attach-disconnected flags=(no_attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/consoles>
+}`,
+			want: `
+@{att} = ""
+profile attach-no-attach-disconnected flags=(no_attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/consoles>
+}`,
+		},
+		{
+			name: "attach-abstraction-marker",
+			b:    NewAttach(),
+			profile: `
+# attach_disconnected: tweak the build system to replace attached abstractions
+  include <abstractions/consoles>
+`,
+			want: `
+# attach_disconnected: tweak the build system to replace attached abstractions
+  include <abstractions/attached/consoles>
+`,
+		},
+		{
+			name: "attach-disconnected-ipc",
+			b:    NewAttach(),
+			profile: `
+profile attach-disconnected-ipc flags=(complain, attach_disconnected.ipc) {
+  include <abstractions/base>
+}`,
+			want: `
+@{att} = ""
+profile attach-disconnected-ipc flags=(complain, attach_disconnected.ipc) {
+  include <abstractions/base>
 }`,
 		},
 		{

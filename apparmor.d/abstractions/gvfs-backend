@@ -7,6 +7,7 @@
   abi <abi/5.0>,
 
   include <abstractions/bus/session/org.gtk.vfs.Daemon>
+  include <abstractions/bus/session/org.gtk.vfs.Metadata>
   include <abstractions/bus/session/org.gtk.vfs.Mountable>
   include <abstractions/bus/session/org.gtk.vfs.Spawner>
 
@@ -18,10 +19,19 @@
        member={AskPassword,AskQuestion}
        peer=(name=@{busname}),
 
+  dbus receive bus=session path=/org/gtk/vfs/mount/@{int}
+       interface=org.gtk.vfs.Mount
+       member=OpenForRead
+       peer=(name=@{busname}),
+
   dbus receive bus=session
        interface=org.freedesktop.DBus.Introspectable
        member=Introspect
        peer=(name=@{busname}, label="{gnome-shell,gnome-extension}"),
+
+  /etc/fstab r,
+
+  owner @{PROC}/@{pid}/comm r,
 
   include if exists <abstractions/gvfs-backend.d>
 

@@ -1,0 +1,29 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Łukasz Kozak <lakis.kozak@gmail.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/kf6/kauth/{,libexec/}kcmsddm_authhelper
+profile kauth-kcmsddm_authhelper @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/bus-system>
+  include <abstractions/bus/system/org.freedesktop.PolicyKit1>
+  include <abstractions/mime>
+  include <abstractions/nameservice-strict>
+  include <abstractions/qt>
+
+  #aa:dbus own bus=system name=org.kde.kcontrol.kcmsddm path=/ interface+=org.kde.kf[56]auth
+
+  @{exec_path} mr,
+
+  /usr/share/sddm/themes/** rw,
+
+  @{tmp}/*.@{archive_ext} r,
+
+  include if exists <local/kauth-kcmsddm_authhelper>
+}
+
+# vim:syntax=apparmor

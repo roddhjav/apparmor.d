@@ -319,6 +319,19 @@ func toValues(kind Kind, key string, input string) ([]string, error) {
 	return slices.Compact(res), nil
 }
 
+// requestedFromLog returns the requested access of a log (requested_mask or
+// requested). An inherited socket without mask defaults to send and receive.
+func requestedFromLog(log map[string]string) string {
+	requested := log["requested_mask"]
+	if requested == "" {
+		requested = log["requested"]
+	}
+	if requested == "" && log["class"] == "net" && log["operation"] == "file_inherit" {
+		requested = "send receive"
+	}
+	return requested
+}
+
 // Helper function to convert an access string to an access bitmask according to
 // the rule requirements as defined in the requirements matrix.
 func toAccess(kind Kind, input string) (AccessMask, error) {

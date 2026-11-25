@@ -239,6 +239,11 @@ func (p *Profile) Format() {
 	p.Rules = p.Rules.Format()
 }
 
+// Factorize replaces the profile rules by the abstractions providing them.
+func (p *Profile) Factorize() {
+	p.Rules = p.Rules.Factorize()
+}
+
 // GetAttachments return a nested attachment string
 func (p *Profile) GetAttachments() string {
 	switch len(p.Attachments) {
@@ -323,6 +328,15 @@ func (p *Profile) AddRule(log map[string]string) {
 	if len(log) == 0 {
 		return
 	}
+
+	// ponytail: the log constructors panic on values they cannot convert (e.g.
+	// an unknown requested_mask), skip such an entry instead of the whole run.
+	// Make the constructors return an error if this is ever used outside aa-log.
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Printf("invalid log: %v: %v\n", r, log)
+		}
+	}()
 
 	// Generate profile flags and extra rules
 	switch log["error"] {

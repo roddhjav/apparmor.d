@@ -169,6 +169,11 @@ func (r Rules) GetIncludes() []*Include {
 	return res
 }
 
+// Factorize replaces the rules by the abstractions providing them.
+func (r Rules) Factorize() Rules {
+	return r.factorizeNetwork()
+}
+
 // Merge merge similar rules together:
 //   - Remove identical rules
 //   - Merge rule access. Eg: for same path, 'r' and 'w' becomes 'rw'

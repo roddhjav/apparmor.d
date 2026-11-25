@@ -7,15 +7,13 @@ package util
 import (
 	"encoding/hex"
 	"regexp"
+	"strings"
 )
 
-var (
-	regHex = map[string]*regexp.Regexp{
-		"name":    regexp.MustCompile(`name=[0-9A-F]+`),
-		"comm":    regexp.MustCompile(`comm=[0-9A-F]+`),
-		"profile": regexp.MustCompile(`profile=[0-9A-F]+`),
-	}
-)
+// regHex matches the fields the kernel may log as hex. Quoted values are
+// matched first so they are skipped, and a key must start a field: a key
+// inside a value (fsname=, a decoded text) is never decoded.
+var regHex = regexp.MustCompile(`"[^"]*"|(^|\s)(name|srcname|comm|profile|addr|peer_addr)=("@[0-9A-F]+"|@?[0-9A-F]+\b)`)
 
 type RegexReplList []RegexRepl
 
@@ -48,13 +46,42 @@ func (rr RegexReplList) Replace(str string) string {
 
 // DecodeHexInString decode and replace all hex value in a given string of "key=value" format.
 func DecodeHexInString(str string) string {
-	for name, re := range regHex {
-		str = re.ReplaceAllStringFunc(str, func(s string) string {
-			hexa := s[len(name)+1:]
-			bs, _ := hex.DecodeString(hexa)
-			return name + "=\"" + string(bs) + "\""
-		})
-	}
-	return str
+	return regHex.ReplaceAllStringFunc(str, func(s string) string {
+		m := regHex.FindStringSubmatch(s)
+		if m[2] == "" { // Quoted value
+			return s
+		}
+		lead, name, hexa := m[1], m[2], strings.Trim(m[3], `"`)
+		prefix := ""
+		if strings.HasPrefix(hexa, "@") {
+			prefix, hexa = "@", hexa[1:]
+		}
+		// Short addr values are most likely a plain name.
+		if strings.HasSuffix(name, "addr") && len(hexa) < 5 {
+			return s
+		}
+		bs, err := hex.DecodeString(hexa)
+		if err != nil || !isUntrusted(bs) {
+			return s
+		}
+		// Abstract unix addresses may end with NUL bytes, each one is
+		// matched by a ? in unix rules.
+		value := string(bs)
+		trimmed := strings.TrimRight(value, "\x00")
+		value = trimmed + strings.Repeat("?", len(value)-len(trimmed))
+		// A quote is doubled to stay inside the quoted value.
+		value = strings.ReplaceAll(value, `"`, `""`)
+		return lead + name + "=\"" + prefix + value + "\""
+	})
 }
 
+// isUntrusted reports whether the kernel audit would have hex encoded bs: it
+// contains a double quote, a space, a control or a non ASCII character.
+func isUntrusted(bs []byte) bool {
+	for _, b := range bs {
+		if b == '"' || b < 0x21 || b > 0x7e {
+			return true
+		}
+	}
+	return false
+}

@@ -25,7 +25,7 @@ profile gsd-media-keys @{exec_path} flags=(attach_disconnected) {
   include <abstractions/udev/usb>
   include <abstractions/upower-observe>
 
-  signal (receive) set=(term, hup) peer=gdm*,
+  signal receive set=(term, hup) peer=gdm*,
 
   network inet stream,
   network netlink raw,
@@ -55,17 +55,28 @@ profile gsd-media-keys @{exec_path} flags=(attach_disconnected) {
        member=ListNames
        peer=(name=org.freedesktop.DBus, label="@{p_dbus_session}"),
 
+  dbus send bus=session path=/org/mpris/MediaPlayer2
+       interface=org.mpris.MediaPlayer2.Player
+       member={Seeked,Previous,Next,Play,PlayPause,Pause}
+       peer=(name=@{busname}),
+
   @{exec_path} mr,
 
-  @{open_path}         rPx -> child-open,
+  @{open_path}         rCx -> open,
 
   @{att}@{run}/systemd/inhibit/@{int}.ref rw,
 
-  @{sys}/devices/@{pci_bus}/uevent r,
   @{sys}/devices/**/usb@{int}/{,**/}uevent r,
 
         @{PROC}/1/cgroup r,
   owner @{PROC}/@{pid}/cgroup r,
+
+  profile open flags=(attach_disconnected) {
+    include <abstractions/base>
+    include <abstractions/app/open>
+
+    include if exists <local/gsd-media-keys_open>
+  }
 
   include if exists <local/gsd-media-keys>
 }

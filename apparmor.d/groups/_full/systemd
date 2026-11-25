@@ -21,19 +21,14 @@
 # systemd                                # PID 1, entrypoint, requires "Early policy"
 # ├── systemd                            # To restart itself
 # ├── systemd-generators-*               # Systemd system and environment generators
-# └── sd                                 # Internal service starter and config handler, handles all services
-#     ├── Px or px,                      # Any service with profile
-#     ├── Px ->                          # Any service without profile defined in the unit file (see systemd/full/systemd)
-#     ├── &*                             # Stacked service as defined in the unit file (see systemd/full/systemd)
-#     ├── sd-mount                       # Handles all mounts from services
+# └── sd (unconfined)                    # Internal service starter and config handler, handles all services
+#     ├── pix,                           # Any service with profile
 #     ├── sd//systemctl                  # Internal system systemctl
 #     └── systemd-user                   # Profile for 'systemd --user'
 #         ├── systemd-user               # To restart itself
 #         ├── systemd-user-generators-*  # Systemd user and environment generators
-#         └── sdu                        # Handles all user services
-#             ├── Px or px,              # Any user service with profile
-#             ├── Px ->                  # Any user service without profile defined in the unit file (see systemd/full/systemd)
-#             ├── &*                     # Stacked user service as defined in the unit file (see systemd/full/systemd)
+#         └── sdu (unconfined)           # Handles all user services
+#             ├── pix,                   # Any user service with profile
 #             └── sdu//systemctl         # Internal user systemctl
 # ```
 #
@@ -66,8 +61,6 @@ profile systemd flags=(attach_disconnected,mediate_deleted,complain) {
   include <abstractions/bus-system>
   include <abstractions/disks-read>
   include <abstractions/nameservice-strict>
-  include <abstractions/sys/dmi>
-  include <abstractions/sys/firmware>
   include <abstractions/wutmp>
 
   capability audit_control,
@@ -131,6 +124,7 @@ profile systemd flags=(attach_disconnected,mediate_deleted,complain) {
 
   @{etc_ro}/environment r,
   @{etc_ro}/environment.d/{,**} r,
+  @{etc_rw}/hostname r,
   @{etc_rw}/locale.conf r,
   /etc/acpi/events/{,**} r,
   /etc/binfmt.d/{,**} r,
@@ -155,12 +149,14 @@ profile systemd flags=(attach_disconnected,mediate_deleted,complain) {
 
   /var/ r,
   /var/lib/confexts/ r,
+  /var/lib/dbus/ r,
+  /var/lib/dbus/machine-id rw,
   /var/lib/extensions/ r,
 
   @{efi}/ r,
-  /home/ r,
+  @{HOMEDIRS}/ r,
+  @{snap}/*/@{int}/ r,
   /root/ r,
-  /snap/*/@{int}/ r,
   /usr/ r,
 
         /tmp/ r,
@@ -192,47 +188,9 @@ profile systemd flags=(attach_disconnected,mediate_deleted,complain) {
   @{run}/udev/data/n@{int} r,             # For network interfaces
   @{run}/udev/tags/systemd/ r,
 
-  @{sys}/**/uevent r,
-  @{sys}/bus/ r,
-  @{sys}/class/ r,
-  @{sys}/class/power_supply/ r,
-  @{sys}/devices/@{pci_bus}/ r,
-  @{sys}/devices/@{pci_bus}/pci_bus/ r,
-  @{sys}/devices/@{pci_bus}/pci_bus/@{hex4}:@{hex2}/ r,
-  @{sys}/devices/@{pci_bus}/pci_bus/@{hex4}:@{hex2}/power/ r,
-  @{sys}/devices/@{pci}/ r,
-  @{sys}/devices/@{pci}/@{pci_id}:pcie@{d}@{d}@{d}/ r,
-  @{sys}/devices/@{pci}/@{pci_id}:pcie@{d}@{d}@{d}/power/ r,
-  @{sys}/devices/@{pci}/aer/ r,
-  @{sys}/devices/@{pci}/ata@{int}/ r,
-  @{sys}/devices/@{pci}/link/ r,
-  @{sys}/devices/@{pci}/modalias r,
-  @{sys}/devices/@{pci}/msi_irqs/ r,
-  @{sys}/devices/@{pci}/pci_bus/ r,
-  @{sys}/devices/@{pci}/pci_bus/@{hex4}:@{hex2}/ r,
-  @{sys}/devices/@{pci}/PNP0B00:@{hex2}/ r,
-  @{sys}/devices/@{pci}/PNP0B00:@{hex2}/modalias r,
-  @{sys}/devices/@{pci}/PNP0B00:@{hex2}/power/ r,
-  @{sys}/devices/@{pci}/PNP0B00:@{hex2}/rtc/ r,
-  @{sys}/devices/@{pci}/PNP0B00:@{hex2}/wakeup/ r,
-  @{sys}/devices/@{pci}/power/ r,
-  @{sys}/devices/@{pci}/virtio@{int}/ r,
-  @{sys}/devices/@{pci}/wakeup/ r,
-  @{sys}/devices/@{pci}/wakeup/wakeup@{int}/ r,
-  @{sys}/devices/virtual/dmi/id/product_uuid r,
-  @{sys}/devices/virtual/tty/console/active r,
+  @{sys}/{,**} r,
   @{sys}/firmware/efi/efivars/LoaderSystemToken-@{uuid} rw,
-  @{sys}/fs/bpf/ r,
   @{sys}/fs/cgroup/{,**} rw,
-  @{sys}/fs/fuse/connections/ r,
-  @{sys}/fs/pstore/ r,
-  @{sys}/kernel/**/ r,
-  @{sys}/kernel/btf/vmlinux r,
-  @{sys}/kernel/security/lsm r,
-  @{sys}/module/*/initstate r,
-  @{sys}/module/apparmor/parameters/enabled r,
-  @{sys}/module/compression r,
-  @{sys}/module/vt/parameters/default_utf8 r,
 
         @{PROC}/@{pids}/cgroup r,
         @{PROC}/@{pids}/cmdline r,
@@ -268,13 +226,13 @@ profile systemd flags=(attach_disconnected,mediate_deleted,complain) {
         /dev/kmsg w,
         /dev/tty rw,
         /dev/tty@{u8} rw,
+        /dev/ttyS@{int} rwk,
   owner /dev/console rwk,
   owner /dev/hugepages/ rw,
   owner /dev/input/event@{int} rw,
   owner /dev/mqueue/ rw,
   owner /dev/rfkill rw,
   owner /dev/shm/ r,
-  owner /dev/ttyS@{int} rwk,
 
   include if exists <usr/systemd.d>
   include if exists <local/systemd>

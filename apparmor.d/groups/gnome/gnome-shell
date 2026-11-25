@@ -148,6 +148,16 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
        member=Embed
        peer=(name=org.a11y.atspi.Registry),
 
+  # Server side of abstractions/bus/session/org.freedesktop.Application
+  dbus send bus=session
+       interface=org.freedesktop.Application
+       member={Activate,ActivateAction},
+
+  # Server side of abstractions/bus/session/org.gtk.Actions
+  dbus send bus=session
+       interface=org.gtk.Actions
+       member=DescribeAll,
+
   # Server side of abstractions/bus/org.gnome.keyring.internal.Prompter
   dbus receive bus=session path=/org/gnome/keyring/Prompter
        interface=org.gnome.keyring.internal.Prompter
@@ -163,6 +173,15 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
        interface=org.freedesktop.Notifications
        member={ActivationToken,ActionInvoked,NotificationClosed,NotificationReplied}
        peer=(name=org.freedesktop.DBus, label=gjs),
+
+  # Server side of abstractions/bus/session/org.gnome.Shell.SearchProvider2
+  dbus send bus=session path=/**/SearchProvider
+       interface=org.gnome.Shell.SearchProvider2
+       member={GetInitialResultSet,GetSubsearchResultSet,GetResultMetas},
+
+  dbus send bus=session path=/**/Application
+       interface=org.gnome.Shell.SearchProvider2
+       member={GetInitialResultSet,GetSubsearchResultSet,GetResultMetas},
 
   # FIXME: I think gnome-shell is the owner of the notifications, it should then be
   # fully allowed to send/receive to/from anyone.
@@ -250,7 +269,7 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   /usr/share/gnome-shell/extensions/*/**               rPUx,
 
   @{system_share_dirs}/gnome-shell/{,**} r,
-  /snap/*/@{uid}/**.@{icon_ext} r,
+  @{snap}/*/@{uid}/**.@{icon_ext} r,
   /usr/share/**.@{icon_ext} r,
   /usr/share/**/icons/{,**} r,
   /usr/share/backgrounds/{,**} r,
@@ -281,6 +300,7 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{att}/ r,
   owner @{att}/.flatpak-info r,
 
+  owner @{GDM_HOME}/ w,
   owner @{gdm_cache_dirs}/ w,
   owner @{gdm_cache_dirs}/event-sound-cache.tdb.@{hex32}.@{multiarch} rwk,
   owner @{gdm_cache_dirs}/fontconfig/{,*} rwl,
@@ -394,6 +414,7 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
   @{sys}/**/uevent r,
   @{sys}/class/backlight/ r,
+  @{sys}/class/hidraw/ r,
   @{sys}/class/net/ r,
   @{sys}/devices/@{pci}/drm/card@{int}/**/{max_,actual_}brightness r,
   @{sys}/devices/@{pci}/drm/card@{int}/**/{uevent,type,enabled} r,
@@ -403,6 +424,7 @@ profile gnome-shell @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   @{sys}/devices/@{pci}/usb@{int}/**/leds/ r,
 
   owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/session.slice/cpu.max r,
+  owner @{sys}/fs/cgroup/user.slice/user-@{uid}.slice/user@@{uid}.service/session.slice/org.gnome.Shell@@{user}.service/memory.pressure rw,
 
         @{PROC}/ r,
         @{PROC}/@{pid}/attr/current r,

@@ -1,0 +1,27 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Łukasz Kozak <lakis.kozak@gmail.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+@{exec_path}  = @{lib}/knighttimed
+@{exec_path} += @{lib}/@{multiarch}/libexec/knighttimed
+profile knighttimed @{exec_path} {
+  include <abstractions/base>
+  include <abstractions/bus-session>
+  include <abstractions/kde-base>
+
+  @{exec_path} mr,
+
+  owner @{user_config_dirs}/knighttimerc r,
+
+  owner @{user_state_dirs}/knighttimestaterc r,
+
+  /dev/tty r,
+
+  include if exists <local/knighttimed>
+}
+
+# vim:syntax=apparmor

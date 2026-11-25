@@ -10,11 +10,16 @@ include <tunables/global>
 @{exec_path} = @{sbin}/cfdisk
 profile cfdisk @{exec_path} {
   include <abstractions/base>
+  include <abstractions/consoles>
   include <abstractions/disks-write>
 
+  capability dac_read_search,
   capability sys_admin,
+  capability sys_rawio,
 
   @{exec_path} mr,
+
+  /usr/share/terminfo/** r,
 
   /etc/fstab r,
 
@@ -25,6 +30,9 @@ profile cfdisk @{exec_path} {
   # A place for file images
   owner @{user_img_dirs}/{,**} rwk,
 
+  @{run}/mount/utab r,
+
+        @{run}/blkid/ rw,
   owner @{run}/blkid/blkid.tab{,-@{rand6}} rw,
   owner @{run}/blkid/blkid.tab.old rwl -> @{run}/blkid/blkid.tab,
 

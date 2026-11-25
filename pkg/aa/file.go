@@ -125,10 +125,11 @@ func newFile(q Qualifier, rule rule) (Rule, error) {
 }
 
 func newFileFromLog(log map[string]string) Rule {
+	requested := requestedFromLog(log)
 	if log["operation"] == "link" {
-		log["requested_mask"] += "l"
+		requested += "l"
 	}
-	accesses, err := toAccess("file-log", log["requested_mask"])
+	accesses, err := toAccess("file-log", requested)
 	if err != nil {
 		panic(fmt.Errorf("newFileFromLog(%v): %w", log, err))
 	}
@@ -196,8 +197,8 @@ func (r *File) Validate() error {
 
 func (r *File) Compare(other Rule) int {
 	o, _ := other.(*File)
-	if o.AccessType == "deny" {
-		return -1 // Deny file rules always come last
+	if res := compare(r.AccessType == "deny", o.AccessType == "deny"); res != 0 {
+		return res // Deny file rules always come last
 	}
 
 	// Compare by file group - use pattern matching
@@ -377,8 +378,8 @@ func (r *Link) Validate() error {
 
 func (r *Link) Compare(other Rule) int {
 	o, _ := other.(*Link)
-	if o.AccessType == "deny" {
-		return -1 // Deny file rules always come last
+	if res := compare(r.AccessType == "deny", o.AccessType == "deny"); res != 0 {
+		return res // Deny file rules always come last
 	}
 
 	// Compare by file group - use pattern matching
@@ -435,20 +436,23 @@ func (r *Link) setPaddings(max []int) {
 
 // compareFileLink compares File and Link rules by their file group weight.
 func compareFileLink(a, b Rule) int {
-	pathA := ""
+	pathA, denyA := "", false
 	switch r := a.(type) {
 	case *File:
-		pathA = r.Path
+		pathA, denyA = r.Path, r.AccessType == "deny"
 	case *Link:
-		pathA = r.Path
+		pathA, denyA = r.Path, r.AccessType == "deny"
 	}
 
-	pathB := ""
+	pathB, denyB := "", false
 	switch r := b.(type) {
 	case *File:
-		pathB = r.Path
+		pathB, denyB = r.Path, r.AccessType == "deny"
 	case *Link:
-		pathB = r.Path
+		pathB, denyB = r.Path, r.AccessType == "deny"
+	}
+	if res := compare(denyA, denyB); res != 0 {
+		return res // Deny file rules always come last
 	}
 
 	groupA := getGroup(fileWeights, pathA)

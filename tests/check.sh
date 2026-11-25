@@ -178,6 +178,7 @@ declare -A ABS_DEPRECATED=(
     ["nameservice"]="nameservice-strict"
     ["bash"]="shells"
     ["X"]="X-strict"
+    ["fonts"]="fonts-strict"
     ["gtk"]="gtk-strict"
     ["wayland"]="wayland-strict"
     ["dbus-accessibility-strict"]="bus-accessibility"

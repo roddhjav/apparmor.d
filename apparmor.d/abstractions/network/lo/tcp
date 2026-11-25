@@ -1,0 +1,20 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Allow TCP server and client on the loopback interface, on any port.
+
+  abi <abi/5.0>,
+
+  include <abstractions/network/tcp>
+
+  network (accept bind listen send receive) inet stream ip=127.0.0.1,
+  network (connect send receive) inet stream peer=(ip=127.0.0.1),
+
+  #aa:lint ignore=tunables
+  network (accept bind listen send receive) inet6 stream ip=::1,
+  network (connect send receive) inet6 stream peer=(ip=::1),
+
+  include if exists <abstractions/network/lo/tcp.d>
+
+# vim:syntax=apparmor

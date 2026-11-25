@@ -39,7 +39,7 @@ const (
 var (
 	regCleanLogs = util.ToRegexRepl([]string{
 		// Clean apparmor log file
-		`.*apparmor="`, `apparmor="`,
+		`^.*?apparmor="`, `apparmor="`,
 		`(peer_|)pid=[0-9]*\s`, " ",
 		`\x1d`, " ",
 
@@ -134,9 +134,18 @@ func splitFields(s string, sep rune) []string {
 	})
 }
 
+// unquote removes the quotes around a value, a doubled quote within it is a
+// literal quote.
+func unquote(str string) string {
+	if len(str) >= 2 && str[0] == '"' && str[len(str)-1] == '"' {
+		str = strings.ReplaceAll(str[1:len(str)-1], `""`, `"`)
+	}
+	return str
+}
+
 func toQuote(str string) string {
-	if strings.Contains(str, " ") {
-		return `"` + str + `"`
+	if strings.ContainsAny(str, ` "`) {
+		return `"` + strings.ReplaceAll(str, `"`, `""`) + `"`
 	}
 	return str
 }
@@ -155,11 +164,11 @@ func New(file io.Reader, profile string, namespace string) AppArmorLogs {
 		for _, item := range tmp {
 			kv := splitFields(item, '=')
 			if len(kv) >= 2 {
-				key, value := kv[0], kv[1]
+				key, value := kv[0], unquote(kv[1])
 				if slices.Contains(toClean, key) {
-					value = regResolveLogs.Replace(kv[1])
+					value = regResolveLogs.Replace(value)
 				}
-				aa[key] = strings.Trim(value, `"`)
+				aa[key] = value
 			}
 		}
 
@@ -202,9 +211,11 @@ func Load(file io.Reader, profile string, namespace string) AppArmorLogs {
 				if item == "owner" {
 					aa["fsuid"], aa["ouid"] = "1000", "1000"
 					aa["FSUID"], aa["OUID"] = "user", "user"
-					aa["name"] = tmp[idx+1]
+					if idx+1 < len(tmp) {
+						aa["name"] = unquote(tmp[idx+1])
+					}
 				} else {
-					aa["name"] = item
+					aa["name"] = unquote(item)
 				}
 
 			case 1:
@@ -213,8 +224,8 @@ func Load(file io.Reader, profile string, namespace string) AppArmorLogs {
 				}
 
 			case 2:
-				if item == "->" {
-					aa["target"] = tmp[idx+1]
+				if item == "->" && idx+1 < len(tmp) {
+					aa["target"] = unquote(tmp[idx+1])
 				}
 			}
 		}
@@ -222,7 +233,7 @@ func Load(file io.Reader, profile string, namespace string) AppArmorLogs {
 		for _, item := range tmp {
 			kv := strings.SplitN(item, "=", 2)
 			if len(kv) == 2 {
-				aa[kv[0]] = strings.Trim(kv[1], `"`)
+				aa[kv[0]] = unquote(kv[1])
 			}
 		}
 
@@ -282,7 +293,13 @@ func (aaLogs AppArmorLogs) String() string {
 		owner := aa.IsOwner(log)
 		hasNs := false
 		if ns, present := log["namespace"]; present {
-			res.WriteString(" " + fgBlue + ":" + getNameSpace(ns) + ":" + log["profile"] + reset)
+			res.WriteString(" ")
+			res.WriteString(fgBlue)
+			res.WriteString(":")
+			res.WriteString(getNameSpace(ns))
+			res.WriteString(":")
+			res.WriteString(log["profile"])
+			res.WriteString(reset)
 			hasNs = true
 		}
 

@@ -77,6 +77,7 @@ func Test_compare(t *testing.T) {
 		refValue float64
 		arg      string
 		want     bool
+		wantErr  bool
 	}{
 		{
 			name:     "3.1 < 4.0",
@@ -120,10 +121,28 @@ func Test_compare(t *testing.T) {
 			arg:      "apparmor>=4.1",
 			want:     true,
 		},
+		{
+			name:     "non numeric version",
+			refValue: 4.1,
+			arg:      "apparmor<=4.1.2",
+			want:     false,
+			wantErr:  true,
+		},
+		{
+			name:     "missing version",
+			refValue: 4.1,
+			arg:      "apparmor<=",
+			want:     false,
+			wantErr:  true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := compare(tt.refValue, "apparmor", tt.arg)
+			got, err := compare(tt.refValue, "apparmor", tt.arg)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("compare() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
 			if got != tt.want {
 				t.Errorf("compare() = %v, want %v", got, tt.want)
 			}
@@ -365,6 +384,19 @@ func TestFilterCmp_Apply(t *testing.T) {
 				Raw:     "  /dev/shm/ r, #aa:only abi>=5",
 			},
 			want: "",
+		},
+		{
+			name: "abi non numeric",
+			abi:  4,
+			opt: &Option{
+				Name:    "only",
+				ArgMap:  map[string]string{},
+				ArgList: []string{"abi<="},
+				File:    nil,
+				Raw:     "  /dev/shm/ r, #aa:only abi<=",
+			},
+			want:    "",
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {

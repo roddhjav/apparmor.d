@@ -24,6 +24,9 @@ type Hat struct {
 
 func newHat(rule rule) (*Hat, error) {
 	name := ""
+	if len(rule) > 1 && rule.Get(0) == HAT.String() {
+		rule = rule[1:] // "hat NAME" form
+	}
 	if len(rule) > 0 {
 		name = strings.TrimPrefix(rule.Get(0), HAT.Tok())
 	}

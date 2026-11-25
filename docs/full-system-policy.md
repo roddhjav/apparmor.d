@@ -188,7 +188,15 @@ Similarly to `systemd`, it only allows transition to two kinds of profiles:
 
 ### Profile `sdu`
 
-`sdu` is a profile for SystemD-executor run as User, it is used to run all services files and to encapsulate stacked services profiles (hence the short name). It aims at reducing the size of the systemd-user profile.
+*Part of the `systemd-user` profile.*
+
+`sdu` is a profile for **s**ystem**d**-executor run as **u**ser. It is used to run all service files and to encapsulate stacked service profiles (hence the short name). By design, this profile must be as broad as all the profiles it runs combined, so it uses the `unconfined` flag. As for `sd`, it also avoids the NNP restriction, so user services do not have to be stacked with `sdu`.
+
+It aims to reduce the size of the `systemd-user` profile.
+
+!!! note
+
+    To reduce the number of artificially stacked profiles, this profile is currently **not used** in FSP mode, as `systemd-user` purposely runs systemd-executor unconfined.
 
 !!! note "Profile requirement"
 

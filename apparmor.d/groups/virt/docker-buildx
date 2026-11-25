@@ -1,0 +1,45 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+abi <abi/5.0>,
+
+include <tunables/global>
+
+@{exec_path} = @{lib}/docker/cli-plugins/docker-buildx
+profile docker-buildx @{exec_path} flags=(attach_disconnected) {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/nameservice-strict>
+  include <abstractions/ssl_certs>
+
+  network inet dgram,
+  network inet stream,
+  network inet6 dgram,
+  network inet6 stream,
+  network netlink raw,
+
+  unix (connect send receive) type=stream peer=(label=docker, addr=@docker_cli_@{hex32}),
+
+  @{exec_path} mr,
+
+  @{bin}/git Px, # TODO: Cx
+
+  owner @{user_config_dirs}/docker/.token_seed rw,
+  owner @{user_config_dirs}/docker/.token_seed.lock rwk,
+  owner @{user_config_dirs}/docker/buildx/ rw,
+  owner @{user_config_dirs}/docker/buildx/** rwk,
+
+        /tmp/ r,
+  owner /tmp/dockerfile@{int10}/{,**} rw,
+
+  @{run}/docker.sock rw,
+
+        @{PROC}/ r,
+  owner @{PROC}/@{pid}/cgroup r,
+  owner @{PROC}/@{pid}/mountinfo r,
+
+  include if exists <local/docker-buildx>
+}
+
+# vim:syntax=apparmor

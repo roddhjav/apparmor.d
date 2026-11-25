@@ -78,6 +78,8 @@
   ptrace read peer=xdg-settings,
   ptrace read peer=kwin_wayland_wrapper,
 
+  unix type=seqpacket peer=(label=@{profile_name}//crashpad_handler),
+
   @{lib_dirs}/{,**} r,
   @{lib_dirs}/*.so* mr,
   @{lib_dirs}/WidevineCdm/_platform_specific/linux_*/libwidevinecdm.so mr,
@@ -161,6 +163,8 @@
 
   owner @{run}/user/@{uid}/app/org.keepassxc.KeePassXC/org.keepassxc.KeePassXC.BrowserServer rw,
   owner @{run}/user/@{uid}/org.keepassxc.KeePassXC.BrowserServer rw,
+
+  @{att}@{run}/systemd/inhibit/@{int}.ref w,
 
   @{sys}/bus/ r,
   @{sys}/bus/**/devices/ r,
@@ -269,6 +273,8 @@
     capability sys_ptrace,
 
     signal send peer=@{name},
+    signal receive set=term peer=@{name},
+    signal receive set=term peer=@{name}//&@{name}//crashpad_handler,
 
     ptrace read peer=@{name},
     ptrace trace peer=@{name},
@@ -283,8 +289,8 @@
     @{sys}/devices/system/cpu/cpufreq/policy@{int}/scaling_cur_freq r,
     @{sys}/devices/system/cpu/cpufreq/policy@{int}/scaling_max_freq r,
 
-          @{PROC}/@{pid}/maps r,
-          @{PROC}/@{pid}/status r,
+          @{PROC}/@{pids}/maps r,
+          @{PROC}/@{pids}/status r,
           @{PROC}/sys/kernel/yama/ptrace_scope r,
     owner @{PROC}/@{pid}/fd/ r,
     owner @{PROC}/@{pid}/mem r,

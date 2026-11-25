@@ -7,7 +7,7 @@ abi <abi/5.0>,
 
 include <tunables/global>
 
-@{name} = firefox{,-esr,-beta,-devedition,-nightly,.sh}
+@{name} = firefox{,-esr,-beta,-devedition,-nightly,-bin,.sh}
 @{lib_dirs} = @{lib}/@{name} /opt/@{name}
 @{config_dirs} = @{HOME}/.mozilla/
 @{config_dirs} += @{user_config_dirs}/mozilla/
@@ -17,7 +17,6 @@ include <tunables/global>
 @{exec_path} = @{bin}/@{name} @{lib_dirs}/@{name}
 profile firefox @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
-  include <abstractions/app/bwrap-glycin> #aa:only apparmor<5.0
   include <abstractions/app/firefox>
   include <abstractions/user-download-strict>
   include <abstractions/user-read-strict>
@@ -26,12 +25,8 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
   signal send set=term         peer=plasma-browser-integration-host,
 
   unix type=seqpacket addr=@gecko-crash-helper-pipe.@{int},
-  unix type=seqpacket peer=(label=firefox-crashhelper),
-  unix type=seqpacket peer=(label=firefox-glxtest),
 
   unix type=seqpacket,
-  unix type=seqpacket peer=(label=firefox-crashreporter),
-  unix type=stream,
 
   #aa:dbus own bus=session name=org.mozilla.firefox
 
@@ -42,10 +37,10 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
 
   @{exec_path} mrix,
 
-  @{lib_dirs}/crashhelper rPx -> firefox//&firefox-crashhelper,
-  @{lib_dirs}/glxtest     rPx -> firefox//&firefox-glxtest,
-  @{lib_dirs}/vaapitest   rPx -> firefox//&firefox-vaapitest,
-  @{lib_dirs}/gfxtest     rPx -> firefox//&firefox-gfxtest,
+  @{lib_dirs}/crashhelper rPx -> firefox//&firefox//crashhelper,
+  @{lib_dirs}/gfxtest     rPx -> firefox//&firefox//gxtest,
+  @{lib_dirs}/glxtest     rPx -> firefox//&firefox//gxtest,
+  @{lib_dirs}/vaapitest   rPx -> firefox//&firefox//vaapitest,
 
   #aa:only apparmor<5.0
   # glycin-loaders sandboxed profile stack
@@ -100,6 +95,7 @@ profile firefox @{exec_path} flags=(attach_disconnected) {
 
   owner /var/tmp/dbTemp.@{rand6}/ rw,
 
+  owner @{run}/user/@{uid}/firefox/ w,
   owner @{run}/user/@{uid}/app/ w,
   owner @{run}/user/@{uid}/app/org.keepassxc.KeePassXC/ w,
   owner @{run}/user/@{uid}/org.keepassxc.KeePassXC.BrowserServer w,

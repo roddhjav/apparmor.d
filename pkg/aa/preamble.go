@@ -218,18 +218,15 @@ func newInclude(rule rule) (Rule, error) {
 	var magic bool
 	var ifexists bool
 
-	size := len(rule)
-	if size == 0 {
-		return nil, fmt.Errorf("invalid include format: %v", rule)
-	}
-
 	r := rule.GetSlice()
-	if size >= 3 && strings.Join(r[:2], " ") == tokIFEXISTS {
+	if len(r) >= 3 && strings.Join(r[:2], " ") == tokIFEXISTS {
 		ifexists = true
 		r = r[2:]
 	}
-
 	path := strings.Join(r, " ") // Rejoin in case of spaces in path
+	if path == "" {
+		return nil, fmt.Errorf("invalid include format: %v", rule)
+	}
 	switch path[0] {
 	case '"':
 		magic = false

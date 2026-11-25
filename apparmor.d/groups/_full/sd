@@ -6,52 +6,33 @@
 
 # *Part of the `systemd` (as PID 1) profile.*
 #
-# `sd` is a profile for **S**ystem**D**-executor run as root, it is used to run
-# all services files and to encapsulate stacked services profiles (hence the
-# short name).
+# `sd` is a profile for **s**ystem**d**-executor run as root. It is used to run
+# all service files and to encapsulate stacked service profiles (hence the short
+# name, to keep the security attribute easy to read). By design, this profile
+# must be as broad as all the profiles it runs combined, so it uses the
+#  `unconfined` flag.
 #
-# It aims at reducing the size of the `systemd` profile.
+# The `unconfined` flag also avoids the AppArmor *No New Privileges* (NNP)
+# restriction. Many services run with `NoNewPrivileges=yes`, and under NNP a
+# confined task can only transition to a profile stacked on its current one
+# (`sd//&<service>`). An unconfined profile is exempt from this restriction,
+# so services can transition to their own profile without being stacked with `sd`.
 #
-# !!! info
-#
-#     Distributions and other programs can add rules in the `usr/sd.d` directory
+# It aims to reduce the size of the `systemd` profile.
 #
 
 abi <abi/5.0>,
 
 include <tunables/global>
 
-@{exec_path} = @{bin}/systemd-executor
-profile sd flags=(attach_disconnected,mediate_deleted) {
+@{exec_path} = @{lib}/systemd/systemd-executor
+profile sd flags=(unconfined) {
   include <abstractions/base>
-  include <abstractions/authentication>
-  include <abstractions/bus-system>
-  include <abstractions/consoles>
-  include <abstractions/devices-usb>
-  include <abstractions/disks-write>
-  include <abstractions/nameservice-strict>
-  include <abstractions/wutmp>
-
-  all, # FIXME: this is temporary
-
-  change_profile,
 
   @{exec_path} mr,
 
-  @{bin}/**                                       mPx,
-  @{sbin}/**                                      mPx,
-  @{lib}/**                                        Px,
-  /etc/cron.*/*                                    Px,
-  /etc/init.d/*                                    Px,
-  /etc/update-motd.d/*                             Px,
-  /usr/share/*/**                                  Px,
-
   # Systemd user: systemd --user
   @{lib}/systemd/systemd                           px -> systemd-user,
-
-  # Mount operations from services and systemd
-  @{bin}/mount                                     Px -> sd-mount,
-  @{bin}/umount                                    Px -> sd-umount,
 
   # Unit services using systemctl
   @{bin}/systemctl                                 Cx -> systemctl,
@@ -59,15 +40,17 @@ profile sd flags=(attach_disconnected,mediate_deleted) {
   # Unit services
   @{bin}/kill                                      Cx -> kill,
 
-  profile systemctl flags=(attach_disconnected,mediate_deleted,complain) {
+  profile systemctl flags=(attach_disconnected,mediate_deleted) {
     include <abstractions/base>
     include <abstractions/app/systemctl>
+
+    capability net_admin,
 
     include if exists <usr/sd_systemctl.d>
     include if exists <local/sd_systemctl>
   }
 
-  profile kill flags=(attach_disconnected,mediate_deleted,complain) {
+  profile kill flags=(attach_disconnected,mediate_deleted) {
     include <abstractions/base>
 
     signal send,

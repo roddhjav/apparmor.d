@@ -7,20 +7,24 @@ abi <abi/5.0>,
 include <tunables/global>
 
 @{exec_path} = @{bin}/systemd-run
-profile systemd-run @{exec_path} {
+profile systemd-run @{exec_path} flags=(attach_disconnected) {
   include <abstractions/base>
   include <abstractions/bus-system>
   include <abstractions/consoles>
   include <abstractions/nameservice-strict>
 
-  # capability dac_read_search,
+  capability dac_read_search,
   capability net_admin,
+  capability sys_ptrace,
+  capability sys_resource,
 
-  # unix bind type=stream addr=@@{udbus}/bus/systemd-run/,
+  ptrace read peer=@{p_systemd},
+
   unix bind type=stream addr=@@{udbus}/bus/run0/system,
+  unix bind type=stream addr=@@{udbus}/bus/systemd-run/,
 
   signal receive set=(cont term),
-  signal send    set=(cont term) peer=systemd-run//run,
+  signal send    set=(cont term)       peer=systemd-run//run,
   signal send    set=(cont term winch) peer=systemd-tty-ask-password-agent,
 
   dbus send bus=system path=/org/freedesktop/systemd1/unit/run_*service
@@ -40,7 +44,7 @@ profile systemd-run @{exec_path} {
 
   @{exec_path} mr,
 
-  @{bin}/pkttyagent  rCx -> run,
+  @{bin}/pkttyagent  rPx,
   @{bin}/systemd-tty-ask-password-agent Px,
 
   # Allow to open everything (equivalent to child-open-any)
@@ -57,30 +61,6 @@ profile systemd-run @{exec_path} {
 
         /dev/ptmx rw,
   owner /dev/pts/@{u16} rw,
-
-  profile run {
-    include <abstractions/base>
-    include <abstractions/bus-system>
-    include <abstractions/bus/system/org.freedesktop.PolicyKit1>
-    include <abstractions/consoles>
-    include <abstractions/nameservice-strict>
-
-    signal receive set=(term cont) peer=systemd-run,
-
-    ptrace read peer=systemd-run,
-
-    @{bin}/pkttyagent mr,
-
-    #aa:exec polkit-agent-helper
-
-    @{run}/polkit/agent-helper.socket rw,
-
-    owner @{PROC}/@{pid}/cgroup r,
-    owner @{PROC}/@{pid}/fdinfo/@{int} r,
-    owner @{PROC}/@{pid}/stat r,
-
-    include if exists <local/systemd-run_run>
-  }
 
   include if exists <local/systemd-run>
 }

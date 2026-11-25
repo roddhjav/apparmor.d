@@ -109,6 +109,7 @@ func aaLog(logger string, path string, profile string, namespace string, rules b
 	if rules {
 		profiles := aaLogs.ParseToProfiles()
 		for _, p := range profiles {
+			p.Factorize()
 			p.Merge(nil)
 			p.Sort()
 			p.Format()

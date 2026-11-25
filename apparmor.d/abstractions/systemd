@@ -1,0 +1,38 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2002-2009 Novell/SUSE
+# Copyright (C) 2009-2011 Canonical Ltd.
+# Copyright (C) 2021-2026 Alexandre Pujol <alexandre@pujol.io>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Minimal access to the systemd notification and journal sockets, so programs
+# can report their state to systemd (sd_notify) and log through journald.
+#
+# !!! note
+#
+#     As this abstraction is included in the `base` / `base-strict` abstractions,
+#     it is not necessary to include it manually.
+#
+
+  abi <abi/5.0>,
+
+  # Systemd: allow to receive any signal from the systemd profiles
+  signal receive peer=@{p_systemd},
+  signal receive peer=@{p_systemd_user},
+
+  # Systemd's notification write only socket
+  @{run}/systemd/notify w,
+
+  # Systemd's equivalent of /dev/log
+  @{run}/systemd/journal/dev-log w,
+
+  # Systemd native journal API (see sd_journal_print(4))
+  @{run}/systemd/journal/socket w,
+
+  # Nested containers and anything using systemd-cat need this. 'r' shouldn't
+  # be required but applications fail without it. journald doesn't leak
+  # anything when reading so this is ok.
+  @{run}/systemd/journal/stdout rw,
+
+  include if exists <abstractions/systemd.d>
+
+# vim:syntax=apparmor

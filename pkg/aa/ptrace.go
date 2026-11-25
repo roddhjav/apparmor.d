@@ -62,7 +62,7 @@ func newPtraceFromLog(log map[string]string) Rule {
 	return &Ptrace{
 		Base:      newBaseFromLog(log),
 		Qualifier: newQualifierFromLog(log),
-		Access:    Must(toAccess(PTRACE, log["requested_mask"])),
+		Access:    Must(toAccess(PTRACE, requestedFromLog(log))),
 		Peer:      log["peer"],
 	}
 }

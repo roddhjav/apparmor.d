@@ -88,7 +88,7 @@ func newUnixFromLog(log map[string]string) Rule {
 	return &Unix{
 		Base:      newBaseFromLog(log),
 		Qualifier: newQualifierFromLog(log),
-		Access:    Must(toAccess(UNIX, log["requested_mask"])),
+		Access:    Must(toAccess(UNIX, requestedFromLog(log))),
 		Type:      log["sock_type"],
 		Protocol:  log["protocol"],
 		Address:   log["addr"],

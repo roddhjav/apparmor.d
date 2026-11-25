@@ -7,6 +7,7 @@ package logs
 import (
 	"path/filepath"
 	"reflect"
+	"strings"
 	"syscall"
 	"testing"
 )
@@ -109,6 +110,109 @@ func TestGetJournalctlLogs(t *testing.T) {
 			reader, _ := GetJournalctlLogs(tt.path, "", "", tt.useFile)
 			if got := New(reader, tt.name, tt.namespace); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("New() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestSystemdLog_String(t *testing.T) {
+	tests := []struct {
+		name string
+		log  systemdLog
+		want AppArmorLogs
+	}{
+		{
+			name: "quote in destination",
+			log: systemdLog{
+				PolicyType:  "apparmor",
+				Destination: `"`,
+				Sender:      "gnome-clocks (enforce)",
+				Receiver:    "geoclue (enforce)",
+			},
+			want: AppArmorLogs{
+				{
+					"apparmor":   "DENIED",
+					"operation":  "dbus_",
+					"bus":        "session",
+					"path":       "",
+					"interface":  "",
+					"member":     "",
+					"mask":       "",
+					"name":       `"`,
+					"label":      "gnome-clocks",
+					"peer_label": "geoclue",
+				},
+			},
+		},
+		{
+			name: "quote in type",
+			log: systemdLog{
+				PolicyType: "apparmor",
+				Type:       `method_call"`,
+				Sender:     "gnome-clocks (enforce)",
+				Receiver:   "geoclue (enforce)",
+			},
+			want: AppArmorLogs{
+				{
+					"apparmor":   "DENIED",
+					"operation":  `dbus_method_call"`,
+					"bus":        "session",
+					"path":       "",
+					"interface":  "",
+					"member":     "",
+					"mask":       "",
+					"name":       "",
+					"label":      "gnome-clocks",
+					"peer_label": "geoclue",
+				},
+			},
+		},
+		{
+			name: "apparmor key in label",
+			log: systemdLog{
+				PolicyType: "apparmor",
+				Sender:     "gnome-clocks (enforce)",
+				Receiver:   `2041apparmor="DENIED"`,
+			},
+			want: AppArmorLogs{
+				{
+					"apparmor":   "DENIED",
+					"operation":  "dbus_",
+					"bus":        "session",
+					"path":       "",
+					"interface":  "",
+					"member":     "",
+					"mask":       "",
+					"name":       "",
+					"label":      "gnome-clocks",
+					"peer_label": `2041apparmor="DENIED"`,
+				},
+			},
+		},
+		{
+			name: "quote in own name message",
+			log: systemdLog{
+				Identifier: "foo",
+				UID:        "0",
+				Message:    `Failed to own "org.foo": ` + ownNameDenied,
+			},
+			want: AppArmorLogs{
+				{
+					"apparmor":  "DENIED",
+					"operation": "dbus_bind",
+					"bus":       "system",
+					"mask":      "bind",
+					"name":      "foo",
+					"label":     "foo",
+					"info":      `Failed to own "org.foo": ` + ownNameDenied,
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := New(strings.NewReader(tt.log.String()), "", ""); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("String() = %v, want %v", got, tt.want)
 			}
 		})
 	}

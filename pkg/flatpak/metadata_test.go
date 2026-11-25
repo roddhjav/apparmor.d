@@ -324,6 +324,14 @@ func TestFlatpakMetadata_Parts(t *testing.T) {
 			wantProduct: "Platform",
 			wantName:    "gl32",
 		},
+		{
+			name:        "invalid two parts does not panic",
+			appID:       "org.Foo",
+			wantTLD:     "org",
+			wantVendor:  "Foo",
+			wantProduct: "",
+			wantName:    "",
+		},
 	}
 
 	for _, tt := range tests {
@@ -335,6 +343,90 @@ func TestFlatpakMetadata_Parts(t *testing.T) {
 				t.Errorf("Parts() = %v %v %v %v, want %v %v %v %v",
 					tld, vendor, product, name,
 					tt.wantTLD, tt.wantVendor, tt.wantProduct, tt.wantName)
+			}
+		})
+	}
+}
+
+func TestFlatpakMetadata_Validate(t *testing.T) {
+	tests := []struct {
+		name    string
+		meta    *FlatpakMetadata
+		wantErr bool
+	}{
+		{
+			name: "valid",
+			meta: &FlatpakMetadata{
+				Application: Application{Name: "x1.x1.x1", Runtime: "org.freedesktop.Platform/x86_64/25.08", Command: "foo"},
+				Context:     Context{Filesystems: []string{"xdg-music:ro", "~/.config/dconf"}, Persistent: []string{"."}},
+				DbusSession: []Dbus{{Interface: "org.mpris.MediaPlayer2.*", Action: "talk"}},
+			},
+			wantErr: false,
+		},
+		{
+			name: "two components application ID",
+			meta: &FlatpakMetadata{
+				Application: Application{Name: "org.Foo"},
+			},
+			wantErr: true,
+		},
+		{
+			name: "empty application ID",
+			meta: &FlatpakMetadata{
+				Application: Application{Name: ""},
+			},
+			wantErr: true,
+		},
+		{
+			name: "empty component in application ID",
+			meta: &FlatpakMetadata{
+				Application: Application{Name: "a..b"},
+			},
+			wantErr: true,
+		},
+		{
+			name: "brace in dbus name",
+			meta: &FlatpakMetadata{
+				Application: Application{Name: "x1.x1.x1"},
+				DbusSession: []Dbus{{Interface: "{", Action: "talk"}},
+			},
+			wantErr: true,
+		},
+		{
+			name: "brace in command",
+			meta: &FlatpakMetadata{
+				Application: Application{Name: "x1.x1.x1", Command: "c{"},
+			},
+			wantErr: true,
+		},
+		{
+			name: "brace in runtime",
+			meta: &FlatpakMetadata{
+				Application: Application{Name: "x1.x1.x1", Runtime: "{/x86_64/25.08"},
+			},
+			wantErr: true,
+		},
+		{
+			name: "comment in persistent",
+			meta: &FlatpakMetadata{
+				Application: Application{Name: "x1.x1.x1"},
+				Context:     Context{Persistent: []string{"#   "}},
+			},
+			wantErr: true,
+		},
+		{
+			name: "comma in filesystem",
+			meta: &FlatpakMetadata{
+				Application: Application{Name: "x1.x1.x1"},
+				Context:     Context{Filesystems: []string{"/x r, /**"}},
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.meta.Validate(); (err != nil) != tt.wantErr {
+				t.Errorf("FlatpakMetadata.Validate() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}

@@ -40,17 +40,20 @@ func init() {
 	flag.BoolVar(&help, "help", false, "Show this help message and exit.")
 }
 
+// getIndentationLevel returns the smallest indentation of the paragraph lines,
+// as formatted rules can start with alignment padding.
 func getIndentationLevel(input string) int {
-	level := 0
-	after, found := strings.CutPrefix(input, aa.Indentation)
-	for found {
-		after, found = strings.CutPrefix(after, aa.Indentation)
-		level++
+	level := -1
+	for _, line := range strings.Split(input, "\n") {
+		trimmed := strings.TrimLeft(line, " ")
+		if trimmed == "" {
+			continue
+		}
+		if n := (len(line) - len(trimmed)) / len(aa.Indentation); level < 0 || n < level {
+			level = n
+		}
 	}
-	if strings.Contains(input, "owner") && level > 3 {
-		level = level - 3
-	}
-	return level
+	return max(level, 0)
 }
 
 func parse(kind aa.FileKind, profile string) (aa.ParaRules, []string, error) {
