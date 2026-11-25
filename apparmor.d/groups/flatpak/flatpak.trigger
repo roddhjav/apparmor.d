@@ -43,6 +43,7 @@ profile flatpak.trigger flags=(attach_disconnected) {
   @{user_share_dirs}/**/icon-theme.cache w,
   @{user_share_dirs}/applications/.mimeinfo.cache.* w,
   @{user_share_dirs}/applications/mimeinfo.cache w,
+  @{user_share_dirs}/flatpak/exports/share/icons/hicolor/index.theme w,
   @{user_share_dirs}/mime/{,**} w,
   @{user_share_dirs}/mimeinfo.cache w,
 

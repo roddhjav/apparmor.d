@@ -10,11 +10,13 @@ include <tunables/global>
 profile plasma-discover @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/base>
   include <abstractions/accounts-observe>
+  include <abstractions/appstream>
   include <abstractions/audio-client>
   include <abstractions/bus/system/org.freedesktop.locale1>
   include <abstractions/bus/system/org.freedesktop.PackageKit>
   include <abstractions/common/kde>
   include <abstractions/dconf-write>
+  include <abstractions/flatpak/store>
   include <abstractions/fontconfig-cache-write>
   include <abstractions/gvfs-metadata>
   include <abstractions/nameservice-strict>
@@ -28,30 +30,22 @@ profile plasma-discover @{exec_path} flags=(attach_disconnected,mediate_deleted)
   network netlink dgram,
   network netlink raw,
 
-  mount fstype=fuse.revokefs-fuse options=(rw nodev nosuid) revokefs-fuse -> /var/tmp/flatpak-cache-@{rand6}/*/,
-
   signal (receive) set=(kill) peer=systemsettings,
   signal (send)    set=(kill) peer=knshandler,
   signal (send)    set=(kill) peer=servicemenuinstaller,
   signal (send)    set=(term) peer=kioworker,
 
+  ptrace (read) peer=kded,
   ptrace (read) peer=systemsettings,
 
-  unix (send receive) type=seqpacket peer=(label=flatpak-system-helper),
-
-  #aa:dbus talk bus=system name=org.freedesktop.Flatpak.SystemHelper label=flatpak-system-helper
-  #aa:dbus talk bus=system name=org.freedesktop.fwupd path=/ label=fwupd
-  #aa:dbus talk bus=system name=org.freedesktop.PackageKit path=/** label=packagekitd
+  #aa:dbus talk bus=system name=org.freedesktop.fwupd path=/ label="@{p_fwupd}"
+  #aa:dbus talk bus=system name=org.freedesktop.PackageKit path=/** label="@{p_packagekitd}"
 
   @{exec_path} mr,
 
   @{sh_path}      rix,
   @{open_path}    Px -> child-open-browsers,
 
-  @{bin}/fusermount{,3}           Cx -> fusermount,
-  @{bin}/gpg                     rCx -> gpg,
-  @{bin}/gpgconf                 rCx -> gpg,
-  @{bin}/gpgsm                   rCx -> gpg,
   @{bin}/kplymouththemeinstaller rPx,
   @{bin}/kreadconfig{,5}         rPx,
   @{bin}/krunner-plugininstaller rPx,
@@ -64,50 +58,25 @@ profile plasma-discover @{exec_path} flags=(attach_disconnected,mediate_deleted)
   #aa:exec kwin-applywindowdecoration
   #aa:exec plasma-apply
 
-  @{lib}/revokefs-fuse mrix,
-
-  # We have to override usage of glycin child profile, as Discover manages flatpaks
-  priority=1 @{bin}/bwrap Px -> fbwrap,
-
   /usr/ r,
-  /usr/share/flatpak/remotes.d/{,**} r,
-  /usr/share/flatpak/triggers/{,*} r,
   /usr/share/kf6/purpose/{,*.qml} r,
   /usr/share/kf6/searchproviders/{,*.desktop} r,
   /usr/share/knsrcfiles/{,*} r,
   /usr/share/kservices{5,6}/{,*} r,
   /usr/share/kservicetypes5/{,*} r,
   /usr/share/libdiscover/** r,
-  /usr/share/metainfo/{,**} r,
   /usr/share/plasma/look-and-feel/{,**} r,
   /usr/share/publicsuffix/{,*} r,
-  /usr/share/swcatalog/{,**} r,
 
-  /etc/appstream.conf r,
-  /etc/flatpak/remotes.d/{,**} r,
   /etc/sysconfig/proxy r,
   /etc/xdg/accept-languages.codes r,
   @{etc_ro}/xdg/ r,
 
         /var/cache/swcatalog/ rw,
         /var/cache/swcatalog/cache/*-os-catalog.xb r,
-        /var/cache/swcatalog/cache/*-flatpak-flathub-@{arch}.xb r,
-        /var/cache/swcatalog/icons/{,**} r,
-        /var/cache/swcatalog/xml/{,**} r,
   owner /var/cache/swcatalog/cache/{,user/} w,
 
-  /var/lib/flatpak/app/{,**} r,
-  /var/lib/flatpak/appstream/{,**} r,
-  /var/lib/flatpak/repo/{,**} r,
-  /var/lib/flatpak/runtime/{,**} r,
-
   @{snap}/*/@{uid}/**.@{icon_ext} r,
-
-  /var/lib/swcatalog/icons/** r,
-
-  /var/tmp/#@{int} rw,
-  /var/tmp/flatpak-cache-*/ rw,
-  /var/tmp/flatpak-cache-*/** rwlk,
 
   @{log}/pacman.log r,
 
@@ -116,8 +85,6 @@ profile plasma-discover @{exec_path} flags=(attach_disconnected,mediate_deleted)
   owner @{HOME}/.icons/{,**} w,
   owner @{HOME}/.themes/{,**} w,
 
-  owner @{HOME}/.var/app/@{word}.*/{,**} rw,
-
   owner @{user_download_dirs}/*.flatpakref r,
 
   owner @{user_cache_dirs}/appstream/{,user/} rw,
@@ -125,8 +92,6 @@ profile plasma-discover @{exec_path} flags=(attach_disconnected,mediate_deleted)
   owner @{user_cache_dirs}/appstream/{,user/}.goutputstream-@{rand6} rw,
   owner @{user_cache_dirs}/discover/ rw,
   owner @{user_cache_dirs}/discover/** rwlk,
-  owner @{user_cache_dirs}/flatpak/ rw,
-  owner @{user_cache_dirs}/flatpak/system-cache/{,**} rw,
   owner @{user_cache_dirs}/kio_http/ w,
 
   owner @{user_config_dirs}/discoverrc@{atomic} rwlk, #-> @{user_config_dirs}/#@{int},
@@ -147,13 +112,6 @@ profile plasma-discover @{exec_path} flags=(attach_disconnected,mediate_deleted)
   owner @{user_share_dirs}/color-schemes/** rwl, # -> @{user_share_dirs}/color-schemes/#@{int}
   owner @{user_share_dirs}/discover/{,**/} w,
   owner @{user_share_dirs}/discover/kuserfeedback/audit/@{int8}-@{int}.log w,
-  owner @{user_share_dirs}/flatpak/** rw,
-  owner @{user_share_dirs}/flatpak/.removed/** l, # -> @{user_share_dirs}/flatpak/.removed/**#@{int},
-  owner @{user_share_dirs}/flatpak/lock k,
-  owner @{user_share_dirs}/flatpak/repo/** lk,
-  owner @{user_share_dirs}/flatpak/repo-lock k,
-  owner @{user_share_dirs}/flatpak/runtime/** l, # -> @{user_share_dirs}/flatpak/app/**#@{int},
-  owner @{user_share_dirs}/flatpak/{app{,stream},runtime}/*/@{arch}/** l, # -> @{user_share_dirs}/flatpak/repo/objects/*/@{hex}.file,
   owner @{user_share_dirs}/icons/{,**} rw,
   owner @{user_share_dirs}/kfontinst/{,*} rw,
   owner @{user_share_dirs}/knewstuff3/{,*} rw,
@@ -196,8 +154,6 @@ profile plasma-discover @{exec_path} flags=(attach_disconnected,mediate_deleted)
   owner @{tmp}/discover-@{rand6}/** rwl -> @{tmp}/discover-@{rand6}/**,
   owner @{tmp}/discover-flatpak-temporary-*/ rw, # following links
   owner @{tmp}/discover-flatpak-temporary-*/** rwlk, # -> @{tmp}/discover-flatpak-temporary-*/**
-  owner @{tmp}/ostree-gpg-@{rand6}/ rw,
-  owner @{tmp}/ostree-gpg-@{rand6}/** rwlk -> @{tmp}/ostree-gpg-@{rand6}/**,
   owner @{tmp}/remote-summary{,-sig}.@{rand6} rw,
 
   owner @{tmp}/*.@{archive_ext} w, # special case for sddm themes
@@ -214,9 +170,6 @@ profile plasma-discover @{exec_path} flags=(attach_disconnected,mediate_deleted)
 
         @{run}/snapd.socket rw,
   owner @{run}/user/@{uid}/#@{int} rw,
-  owner @{run}/user/@{uid}/.flatpak-cache rw,
-  owner @{run}/user/@{uid}/.flatpak/{,**} rw,
-  owner @{run}/user/@{uid}/.flatpak/**/*.ref k,
   owner @{run}/user/@{uid}/discover@{rand6}.@{int}.kioworker.socket rwl -> @{run}/user/@{uid}/#@{int},
 
   owner @{PROC}/@{pid}/cgroup r,
@@ -225,47 +178,10 @@ profile plasma-discover @{exec_path} flags=(attach_disconnected,mediate_deleted)
   owner @{PROC}/@{pid}/stat r,
   owner @{PROC}/@{pid}/task/@{tid}/comm w,
 
-  /dev/fuse rw,
   /dev/tty r,
 
   # Silencer
   deny /usr/share/icons/** w,
-
-  profile fusermount {
-    include <abstractions/base>
-    include <abstractions/app/fusermount>
-
-    capability setuid,
-
-    mount fstype=fuse.revokefs-fuse options=(rw, nosuid, nodev) -> /var/tmp/flatpak-cache-@{rand6}/*/,
-    umount /var/tmp/flatpak-cache-@{rand6}/*/,
-
-    unix (send receive) type=seqpacket peer=(label=flatpak-system-helper),
-
-    include if exists <local/plasma-discover_fusermount>
-  }
-
-  profile gpg {
-    include <abstractions/base>
-
-    @{bin}/gpg{,2} mr,
-    @{bin}/gpgconf mr,
-    @{bin}/gpgsm   mr,
-
-    @{bin}/gpg-agent rPx,
-
-    @{user_gpg_dirs}/*.conf r,
-
-    owner @{tmp}/ostree-gpg-@{rand6}/ r,
-    owner @{tmp}/ostree-gpg-@{rand6}/** rwlk -> /tmp/ostree-gpg-@{rand6}/**,
-
-    owner @{run}/user/@{uid}/gnupg/ w,
-    owner @{run}/user/@{uid}/gnupg/d.@{rand}/ w,
-
-    owner @{PROC}/@{pid}/fd/ r,
-
-    include if exists <local/plasma-discover_gpg>
-  }
 
   include if exists <local/plasma-discover>
 }

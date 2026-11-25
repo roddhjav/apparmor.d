@@ -60,7 +60,10 @@
 # │   ├── fbwrap//&fapp              # Generic profile for all applications
 # │   ├── fbwrap//&glycin//loaders   # Image loaders (`&:glycin:loaders` on apparmor >= 5.0)
 # │   ├── fbwrap//&xdg-dbus-proxy    # Filter the app access to the session bus (allow any dbus)
-# │   └── fbwrap//&ldconfig          # Build the app library cache in the sandbox
+# │   ├── fbwrap//&ldconfig          # Build the app library cache in the sandbox
+# │   ├── &gtk-update-icon-cache     # Refresh the icon cache
+# │   ├── &update-desktop-database   # Refresh the desktop file database
+# │   └── &update-mime-database      # Refresh the mime database
 # ├── bwrap                          # Create the sandbox, start the app (`${WITH_FLATPAKAPPS} == true`)
 # │   ├── flatpak.dbus.<appid>       # Dbus proxy profile for each applications
 # │   ├── flatpak.<appid>            # Application specific profile
@@ -73,7 +76,8 @@
 # │       └── &update-mime-database  # Refresh the mime database
 # ├── flatpak//&enter                # `flatpak enter`, not confined on purpose
 # ├── flatpak//fusermount            # Mount the revokefs-fuse install cache
-# └── flatpak//gpg                   # Check the ostree repository signatures
+# ├── flatpak//gpg                   # Check the ostree repository signatures
+# └── flatpak//revokefs-fuse         # Manage the revokefs-fuse install cache
 #
 # flatpak-validate-icon              # Validate an icon before it is exported
 # flatpak-oci-authenticator          # Authenticate on OCI remotes (`org.flatpak.Authenticator.Oci`)
@@ -113,6 +117,7 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   include <abstractions/dconf-write>
   include <abstractions/desktop-files>
   include <abstractions/gschemas>
+  include <abstractions/gvfs-metadata>
   include <abstractions/mime>
   include <abstractions/nameservice-strict>
   include <abstractions/ssl_certs>
@@ -124,8 +129,6 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   network inet stream,
   network inet6 stream,
   network netlink raw,
-
-  mount fstype=fuse.revokefs-fuse options=(rw, nosuid, nodev) -> /var/tmp/flatpak-cache-*/*/,
 
   signal receive set=int peer=flatpak-portal,
   signal receive set=term peer=flatpak-session-helper,
@@ -171,10 +174,10 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   }
 
   @{bin}/fusermount{,3}         Cx -> fusermount,
-  @{bin}/gpg                    Cx -> gpg,
+  @{bin}/gpg{,2}                Cx -> gpg,
   @{bin}/gpgconf                Cx -> gpg,
   @{bin}/gpgsm                  Cx -> gpg,
-  @{lib}/revokefs-fuse         rix,
+  @{lib}/revokefs-fuse         mCx -> revokefs-fuse,
   @{lib}/flatpak-validate-icon  Px,
 
   # For flatpack enter, the shell is not confined on purpose.
@@ -192,7 +195,7 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted) {
         / r,
   @{att}/ r,
 
-  /var/lib/flatpak/{,**} rwlk,
+  /var/lib/flatpak/{,**} r,
 
         /var/tmp/#@{int} rw,
         /var/tmp/flatpak-cache-@{rand6}/{,**/} r,
@@ -254,11 +257,6 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted) {
   owner @{PROC}/@{pid}/cgroup r,
   owner @{PROC}/@{pid}/fdinfo/@{int} r,
   owner @{PROC}/@{pid}/stat r,
-
-  /dev/fuse rw,
-
-  #aa:only test
-  mount fstype=fuse.revokefs-fuse options=(rw, nosuid, nodev) revokefs-fuse -> /tmp/test-flatpak-*/**,
 
   profile bwrap flags=(attach_disconnected,mediate_deleted) {
     include <abstractions/base>
@@ -332,14 +330,15 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
           @{tmp}/ r,
     owner @{tmp}/ostree-gpg-@{rand6}/ rw,
-    owner @{tmp}/ostree-gpg-@{rand6}/** rwlk -> /tmp/ostree-gpg-@{rand6}/**,
+    owner @{tmp}/ostree-gpg-@{rand6}/** rwlk -> @{tmp}/ostree-gpg-@{rand6}/**,
 
-    owner @{run}/user/@{uid}/gnupg/ w,
-    owner @{run}/user/@{uid}/gnupg/d.@{rand}/ w,
+    owner @{run}/user/@{uid}/gnupg/ rw,
+    owner @{run}/user/@{uid}/gnupg/d.@{rand}/ rw,
     owner @{run}/user/@{uid}/gnupg/d.@{rand}/S.{gpg-agent*,scdaemon} rw,
+    owner @{run}/user/@{uid}/gnupg/S.scdaemon rw,
 
-    owner @{PROC}/@{pid}/fd/ r,
-    owner @{PROC}/@{pid}/task/@{tid}/comm rw,
+    @{PROC}/@{pid}/fd/ r,
+    @{PROC}/@{pid}/task/@{tid}/comm rw,
 
     include if exists <local/flatpak_gpg>
   }
@@ -350,8 +349,9 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted) {
 
     capability setuid,
 
-    unix type=seqpacket peer=(label=flatpak-system-helper),
-    unix type=stream    peer=(label=flatpak),
+    unix type=seqpacket addr=none peer=(label=flatpak-system-helper),
+    unix type=stream    addr=none peer=(label=flatpak),
+    unix type=stream    addr=none peer=(label=flatpak//revokefs-fuse),
 
     mount fstype=fuse.revokefs-fuse options=(rw, nosuid, nodev) revokefs-fuse -> /var/tmp/flatpak-cache-*/*/,
     umount /var/tmp/flatpak-cache-*/*/,
@@ -367,6 +367,9 @@ profile flatpak @{exec_path} flags=(attach_disconnected,mediate_deleted) {
     include <abstractions/base>
 
     mount fstype=fuse.revokefs-fuse options=(rw nodev nosuid) revokefs-fuse -> /var/tmp/flatpak-cache-@{rand6}/*/,
+
+    #aa:only test
+    mount fstype=fuse.revokefs-fuse options=(rw, nosuid, nodev) revokefs-fuse -> /tmp/test-flatpak-*/**,
 
     unix (send receive) type=seqpacket peer=(label=flatpak-system-helper),
     unix (send receive) type=stream peer=(label=flatpak//fusermount),
