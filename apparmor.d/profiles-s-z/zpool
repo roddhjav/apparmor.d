@@ -6,27 +6,42 @@ abi <abi/5.0>,
 
 include <tunables/global>
 
-@{exec_path} = @{bin}/zpool
+@{exec_path} = @{sbin}/zpool
 profile zpool @{exec_path} {
   include <abstractions/base>
-  include <abstractions/disks-read>
+  include <abstractions/consoles>
+  include <abstractions/disks-write>
+  include <abstractions/nameservice-strict>
 
+  capability dac_override,
   capability sys_admin,
 
-  mount fstype=zfs options=(rw noatime) -> @{MOUNTS}/,
+  mount fstype=zfs options=(rw noatime)  -> @{MOUNTS}/,
+  mount fstype=zfs options=(rw relatime) -> @{MOUNTS}/,
+
+  umount @{MOUNTS}/,
 
   @{exec_path} mr,
 
   @{sh_path}        rix,
-  @{lib}/zfs-linux/zpool.d/* rix,
+  @{bin}/kmod Cx -> kmod,
+
+  @{lib}/zfs{,-linux}/zfs_prepare_disk rix,
+  @{lib}/zfs{,-linux}/zpool.d/* rix,
 
   /usr/share/zfs/{,**} r,
 
+  @{etc_ro}/blkid.conf r,
+  @{etc_ro}/blkid.conf.d/{,*.conf} r,
   /etc/hostid r,
   /etc/zfs/*.cache rwk,
 
+  / r,
+  @{MOUNTS}/ rw,
+
   /tmp/tmp.* rw,
 
+  @{run}/blkid/ rw,
   @{run}/blkid/blkid.tab rw,
   @{run}/blkid/blkid.tab.old rwl,
   @{run}/blkid/blkid.tab-@{rand6} rwl,
@@ -35,13 +50,29 @@ profile zpool @{exec_path} {
   @{sys}/bus/pci/slots/ r,
   @{sys}/bus/pci/slots/@{int}-@{int}/address r,
   @{sys}/bus/pci/slots/@{int}/address r,
+  @{sys}/devices/@{pci}/uevent r,
+  @{sys}/devices/@{pci_bus}/uevent r,
 
+  @{PROC}/1/cgroup r,
   @{PROC}/@{pids}/mountinfo r,
   @{PROC}/@{pids}/mounts r,
   @{PROC}/sys/kernel/spl/hostid r,
 
-  /dev/pts/@{u16} rw,
+  /dev/.blkid.tab rw,
+  /dev/.blkid.tab-@{rand6} rw,
+  /dev/.blkid.tab.old wl -> /dev/.blkid.tab,
   /dev/zfs rw,
+
+  profile kmod {
+    include <abstractions/base>
+    include <abstractions/app/kmod>
+
+    capability sys_module,
+
+    @{sys}/module/compression r,
+
+    include if exists <local/zpool_kmod>
+  }
 
   include if exists <local/zpool>
 }
