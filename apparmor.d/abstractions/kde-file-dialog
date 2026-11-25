@@ -1,0 +1,65 @@
+# apparmor.d - Full set of apparmor profiles
+# Copyright (C) 2026 Łukasz Kozak <lakis.kozak@gmail.com>
+# SPDX-License-Identifier: GPL-2.0-only
+
+# Abstraction for the file dialog in KDE/QT applications
+# if applicable, deny-home-dotfiles could be used as well
+#
+
+  abi <abi/5.0>,
+
+  include <abstractions/bus/system/org.freedesktop.UDisks2>
+  include <abstractions/kde-file-dialog-settings>
+  include <abstractions/kde-globals-write>
+  include <abstractions/network/netlink>
+  include <abstractions/thumbnails-cache-read>
+  include <abstractions/user-dirs-read-strict>
+
+  # Udev and sys access to all possible mounted devices
+  # include <abstractions/sys/cdrom> # checked, not detected
+  include <abstractions/sys/floppy>
+  include <abstractions/sys/md>
+  # include <abstractions/sys/usb> # checked, not detected
+  include <abstractions/udev/floppy>
+  include <abstractions/udev/cdrom>
+  # include <abstractions/udev/loop> # checked, not detected
+  include <abstractions/udev/md>
+  # include <abstractions/udev/nbd> # not checked, but similar to loop, so possibly not needed
+  include <abstractions/udev/sd>
+  include <abstractions/udev/usb>
+  # include <abstractions/udev/zfs> # checked, not detected, openZFS
+
+  signal send set=term peer=kioworker,
+
+  @{bin}/baloo_filemetadata_temp_extractor rix, # needed for proper functioning of baloo indexer
+  @{bin}/keditfiletype PUx,  # needed, if user is to be allowed to change programs connected to a given mime type
+  @{bin}/net           Px, # needed for smb shares
+  @{bin}/testparm      Px,
+
+  #aa:exec kioworker
+
+  /usr/share/templates/{,*.desktop} r,
+  /usr/share/thumbnailers/{,*} r,
+
+  /etc/exports r,
+  /etc/fstab r,
+
+  / r,
+
+  @{run}/udev/data/b24[0-9]:@{int} r, # for dynamic assignment range 240
+  @{run}/udev/data/b25[0-4]:@{int} r, #                           to 254
+  @{run}/udev/data/b259:@{int} r,     # Block Extended Major
+
+  owner @{run}/user/@{uid}/#@{int} rw,
+
+  @{sys}/bus/ r,
+  @{sys}/bus/usb/devices/ r,
+
+  /dev/disk/by-label/ r,
+
+  # Needed almost always, but tbd by the profile creator
+  # owner @{run}/user/@{uid}/@{profile_name}@{rand6}.@{int}.kioworker.socket rwl -> @{run}/user/@{uid}/#@{int},
+
+  include if exists <abstractions/kde-file-dialog.d>
+
+# vim:syntax=apparmor
