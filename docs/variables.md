@@ -102,6 +102,32 @@ title: Variables References
 </figure>
 
 
+## User files
+
+<figure markdown>
+
+| Description | Name | Default Value(s) |
+|-------------|------|------------------|
+| User directories | `@{user_dirs}` | `@{HOME}/ @{HOME}/[^.]**/ @{MOUNTS}/ @{MOUNTS}/[^.]**/` |
+| Packages | `@{package_files}` | `[^.]*.@{package_ext}` |
+| Disk images | `@{diskimage_files}` | `[^.]*.@{diskimage_ext}` |
+| Archives | `@{archive_files}` | `[^.]*.@{archive_ext}` |
+| Audio | `@{audio_files}` | `[^.]*.@{audio_ext}` |
+| Lyrics | `@{lyrics_files}` | `[^.]*.@{lyrics_ext}` |
+| Videos | `@{video_files}` | `[^.]*.@{video_ext}` |
+| Subtitles | `@{subtitles_files}` | `[^.]*.@{subtitles_ext}` |
+| Images | `@{image_files}` | `[^.]*.@{image_ext}` |
+| Multimedia | `@{multimedia_files}` | `@{audio_files} @{video_files} @{image_files}` |
+| Icons | `@{icon_files}` | `[^.]*.@{icon_ext}` |
+| Models | `@{model_files}` | `[^.]*.@{model_ext}` |
+| Fonts | `@{font_files}` | `[^.]*.@{font_ext}` |
+| Documents | `@{document_files}` | `[^.]*.@{document_ext}` |
+| Texts | `@{text_files}` | `[^.]*.@{text_ext}` |
+| Texts including hidden files | `@{text_files_all}` | `*.@{text_ext}` |
+
+</figure>
+
+
 ## System variables
 
 !!! danger
