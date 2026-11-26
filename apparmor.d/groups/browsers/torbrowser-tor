@@ -22,7 +22,7 @@ profile torbrowser-tor @{exec_path} {
 
   @{lib_dirs}/{,**}                                    r,
   @{lib_dirs}/TorBrowser/Tor/*.so*                     m,
-  @{lib_dirs}/TorBrowser/Tor/PluggableTransports/**  mix,
+  @{lib_dirs}/TorBrowser/Tor/PluggableTransports/**  rcx -> pluggable-transports,
 
   owner @{data_dirs}/Tor/ rw,
   owner @{data_dirs}/Tor/** rw,
@@ -32,6 +32,8 @@ profile torbrowser-tor @{exec_path} {
 
   @{PROC}/sys/kernel/random/uuid r,
   @{PROC}/sys/net/core/somaxconn r,
+
+  signal receive set=(term kill) peer=torbrowser,
 
   deny /etc/group r,
   deny /etc/host.conf r,
@@ -44,6 +46,29 @@ profile torbrowser-tor @{exec_path} {
   deny /etc/resolv.conf r,
   deny /etc/services r,
   deny /var/lib/dbus/machine-id r,
+
+  profile pluggable-transports {
+    include <abstractions/base>
+    include <abstractions/golang>
+    include <abstractions/nameservice-strict>
+    include <abstractions/ssl_certs>
+
+    network inet dgram,
+    network inet stream,
+    network inet6 dgram,
+    network inet6 stream,
+    network netlink raw,
+
+    @{lib_dirs}/TorBrowser/Tor/PluggableTransports/** mr,
+
+    owner @{data_dirs}/Tor/pt_state/{,**} rw,
+
+    @{PROC}/sys/net/core/somaxconn r,
+
+    signal receive set=(term kill) peer=torbrowser-tor,
+
+    include if exists <local/torbrowser-tor_pluggable-transports>
+  }
 
   include if exists <local/torbrowser-tor>
 }
